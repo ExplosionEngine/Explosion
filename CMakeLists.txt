@@ -19,9 +19,11 @@ add_library(glad SHARED 3rd/glad/src/glad.c)
 
 # build engine
 include_directories(include)
+aux_source_directory(src EXPLOSION_SOURCE)
 aux_source_directory(src/Engine ENGINE_SOURCE)
 aux_source_directory(src/Render RENDER_SOURCE)
-add_library(explosion SHARED ${ENGINE_SOURCE} ${RENDER_SOURCE})
+aux_source_directory(srd/Common COMMON_SOURCE)
+add_library(explosion SHARED ${EXPLOSION_SOURCE} ${ENGINE_SOURCE} ${RENDER_SOURCE} ${COMMON_SOURCE})
 target_link_libraries(explosion glfw glad)
 
 # link OpenGL
