@@ -1,8 +1,8 @@
 #ifndef EXPLOSION_RENDERER_H
 #define EXPLOSION_RENDERER_H
 
-#include <GLFW/glfw3.h>
 #include <glad/glad.h>
+#include <GLFW/glfw3.h>
 #include <Common/RendererType.h>
 
 namespace Explosion {
