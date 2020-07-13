@@ -3,23 +3,20 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <Common/RendererType.h>
 
 namespace Explosion {
 class Renderer {
 private:
-    explicit Renderer(RendererType rType = RendererType::OpenGL)
-        : rendererType(rType) {}
+    explicit Renderer() = default;
     ~Renderer();
     void DrawFrame();
 
-    RendererType rendererType = RendererType::OpenGL;
     GLFWwindow* window = nullptr;
     int width = 0;
     int height = 0;
     const char* name = nullptr;
 public:
-    static Renderer* Create(RendererType rType = RendererType::OpenGL);
+    static Renderer* Create();
     static void Destroy(Renderer* renderer);
 
     bool Init(int wWidth, int wHeight, const char* wName);

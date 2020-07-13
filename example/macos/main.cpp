@@ -5,7 +5,7 @@ using namespace Explosion;
 
 int main()
 {
-    Renderer* renderer = Renderer::Create(RendererType::OpenGL);
+    Renderer* renderer = Renderer::Create();
     if (!renderer->Init(800, 600, "macos-example")) {
         cout << "failed to init renderer" << endl;
         Renderer::Destroy(renderer);

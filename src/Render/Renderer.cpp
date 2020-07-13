@@ -1,9 +1,9 @@
 #include <Render/Renderer.h>
 using namespace Explosion;
 
-Renderer* Renderer::Create(RendererType rendererType)
+Renderer* Renderer::Create()
 {
-    return new Renderer(rendererType);
+    return new Renderer();
 }
 
 void Renderer::Destroy(Renderer *renderer)
@@ -31,33 +31,31 @@ bool Renderer::Init(int wWidth, int wHeight, const char* wName)
     height = wHeight;
     name = wName;
 
-    if (rendererType == RendererType::OpenGL) {
-        if (!glfwInit()) {
-            return false;
-        }
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-
-        window = glfwCreateWindow(wWidth, wHeight, name, nullptr, nullptr);
-        if (window == nullptr) {
-            return false;
-        }
-        glfwMakeContextCurrent(window);
-
-        if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
-            return false;
-        }
-        glViewport(0, 0, width, height);
+    if (!glfwInit()) {
+        return false;
     }
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+
+    window = glfwCreateWindow(wWidth, wHeight, name, nullptr, nullptr);
+    if (window == nullptr) {
+        return false;
+    }
+    glfwMakeContextCurrent(window);
+
+    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
+        return false;
+    }
+    glViewport(0, 0, width, height);
 
     return true;
 }
 
 bool Renderer::Resize(int wWidth, int wHeight)
 {
-    Init(wWidth, wHeight, name);
+    return Init(wWidth, wHeight, name);
 }
 
 bool Renderer::IsValid()
