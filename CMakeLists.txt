@@ -18,7 +18,10 @@ include_directories(${GLAD_HOME}/include)
 add_library(glad SHARED 3rd/glad/src/glad.c)
 
 # build engine
-add_library(explosion SHARED src/main.cpp)
+include_directories(include)
+aux_source_directory(src/Engine ENGINE_SOURCE)
+aux_source_directory(src/Render RENDER_SOURCE)
+add_library(explosion SHARED ${ENGINE_SOURCE} ${RENDER_SOURCE})
 target_link_libraries(explosion glfw glad)
 
 # link OpenGL
