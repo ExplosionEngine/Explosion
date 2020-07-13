@@ -1,29 +1,26 @@
 #ifndef EXPLOSION_RENDERER_H
 #define EXPLOSION_RENDERER_H
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 namespace Explosion {
 class Renderer {
-private:
+protected:
     explicit Renderer() = default;
-    ~Renderer();
-    void DrawFrame();
+    virtual ~Renderer() = default;
 
-    GLFWwindow* window = nullptr;
+    virtual void DrawFrame() = 0;
+
     int width = 0;
     int height = 0;
     const char* name = nullptr;
 public:
-    static Renderer* Create();
     static void Destroy(Renderer* renderer);
 
-    bool Init(int wWidth, int wHeight, const char* wName);
+    virtual bool Init(int wWidth, int wHeight, const char* wName) = 0;
+    virtual bool IsValid() = 0;
+    virtual void BeginFrame() = 0;
+    virtual void EndFrame() = 0;
+
     bool Resize(int wWidth, int wHeight);
-    bool IsValid();
-    void BeginFrame();
-    void EndFrame();
 };
 }
 
