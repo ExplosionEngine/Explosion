@@ -19,6 +19,8 @@ int main()
 
     while (renderer->IsValid()) {
         renderer->BeginFrame();
+        glClearColor(.2f, .3f, .3f, 1.f);
+        glClear(GL_COLOR_BUFFER_BIT);
         renderer->EndFrame();
     }
 
