@@ -9,7 +9,8 @@ GLRenderer * GLRenderer::Create()
 
 void GLRenderer::DrawFrame()
 {
-
+    glClearColor(.2f, .3f, .3f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 bool GLRenderer::IsValid()
