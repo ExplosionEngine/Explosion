@@ -22,8 +22,16 @@ include_directories(include)
 aux_source_directory(src EXPLOSION_SOURCE)
 aux_source_directory(src/Engine ENGINE_SOURCE)
 aux_source_directory(src/Render RENDER_SOURCE)
-aux_source_directory(srd/Common COMMON_SOURCE)
-add_library(explosion SHARED ${EXPLOSION_SOURCE} ${ENGINE_SOURCE} ${RENDER_SOURCE} ${COMMON_SOURCE})
+aux_source_directory(src/Common COMMON_SOURCE)
+aux_source_directory(src/Common/Utils COMMON_UTILS_SOURCE)
+add_library(
+    explosion SHARED
+    ${EXPLOSION_SOURCE}
+    ${ENGINE_SOURCE}
+    ${RENDER_SOURCE}
+    ${COMMON_SOURCE}
+    ${COMMON_UTILS_SOURCE}
+)
 target_link_libraries(explosion glfw glad)
 
 # link OpenGL
