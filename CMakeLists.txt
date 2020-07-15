@@ -21,6 +21,7 @@ add_library(glad SHARED 3rd/glad/src/glad.c)
 include_directories(include)
 aux_source_directory(src EXPLOSION_SOURCE)
 aux_source_directory(src/Engine ENGINE_SOURCE)
+aux_source_directory(src/Engine/ECS ENGINE_ECS_SOURCE)
 aux_source_directory(src/Render RENDER_SOURCE)
 aux_source_directory(src/Common COMMON_SOURCE)
 aux_source_directory(src/Common/Utils COMMON_UTILS_SOURCE)
@@ -28,6 +29,7 @@ add_library(
     explosion SHARED
     ${EXPLOSION_SOURCE}
     ${ENGINE_SOURCE}
+    ${ENGINE_ECS_SOURCE}
     ${RENDER_SOURCE}
     ${COMMON_SOURCE}
     ${COMMON_UTILS_SOURCE}
