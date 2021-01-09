@@ -3,5 +3,4 @@ project(explosion)
 
 set(CMAKE_CXX_STANDARD 20)
 
-# Engine
 add_subdirectory(engine)

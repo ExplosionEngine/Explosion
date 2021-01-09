@@ -1,4 +1,4 @@
-# Vulkan
+# Vulkan ------------------------------------------------------------------------------
 if (WIN32)
     if (NOT DEFINED ENV{VULKAN_SDK})
         message(FATAL_ERROR "found no env named VULKAN_SDK")
@@ -10,18 +10,24 @@ elseif (APPLE)
     find_package(vulkan)
 endif()
 
-# Engine
+# Engine ------------------------------------------------------------------------------
+option(VK_VALIDATION_LAYER_ENABLED "option for vulkan validation layer" ON)
+
 include_directories(include)
 aux_source_directory(src ENGINE_SOURCES)
 aux_source_directory(src/common ENGINE_COMMON_SOURCES)
 aux_source_directory(src/core ENGINE_CORE_SOURCES)
 aux_source_directory(src/driver ENGINE_DRIVER_SOURCES)
+aux_source_directory(src/driver/vulkan ENGINE_DRIVER_VULKAN_SOURCES)
+
 add_library(
     engine
     ${ENGINE_SOURCES}
     ${ENGINE_COMMON_SOURCES}
     ${ENGINE_CORE_SOURCES}
-    ${ENGINE_DRIVER_SOURCES})
+    ${ENGINE_DRIVER_SOURCES}
+    ${ENGINE_DRIVER_VULKAN_SOURCES})
+
 if (WIN32)
     target_link_libraries(
         engine
