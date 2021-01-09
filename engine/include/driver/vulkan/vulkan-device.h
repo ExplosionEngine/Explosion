@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
+#include <functional>
 
 #include <vulkan/vulkan.h>
 #ifdef _WIN32
@@ -28,23 +29,36 @@ namespace Explosion {
         ~VulkanDevice() override;
 
     private:
+        void Prepare();
         void CreateVkInstance();
         void PickVkPhysicalDevice();
         void CreateVkLogicalDevice();
-        void FetchVkQueue();
 
         void DestroyVkInstance();
         void DestroyVkLogicalDevice();
 
+#ifdef VK_VALIDATION_LAYER_ENABLED
+        void CreateDebugUtils();
+        void DestroyDebugUtils();
+#endif
+
+        // properties begin
+        std::vector<const char*> vkExtensions;
+#ifdef VK_VALIDATION_LAYER_ENABLED
+        std::vector<const char*> vkLayers;
+#endif
+
         VkInstance vkInstance = VK_NULL_HANDLE;
+
         VkPhysicalDevice vkPhysicalDevice = VK_NULL_HANDLE;
+        VkPhysicalDeviceProperties vkPhysicalDeviceProperties {};
+        VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures {};
+        uint32_t vkQueueFamilyIndex = 0;
+
         VkDevice vkLogicalDevice = VK_NULL_HANDLE;
         VkQueue vkQueue = VK_NULL_HANDLE;
 
 #ifdef VK_VALIDATION_LAYER_ENABLED
-        void CreateDebugUtils();
-        void DestroyDebugUtils();
-
         VkDebugUtilsMessengerEXT vkDebugUtilsMessenger = VK_NULL_HANDLE;
 #endif
     };

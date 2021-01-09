@@ -29,7 +29,9 @@ namespace {
     }
 #endif
 
-    void ValidateExtensions(std::vector<const char*> required, std::vector<VkExtensionProperties> available) {
+    void ValidateExtensions(
+        const std::vector<const char*>& required,
+        const std::vector<VkExtensionProperties>& available) {
         for (const auto& extension : required) {
             bool found = false;
             for (const auto& property : available) {
@@ -46,7 +48,9 @@ namespace {
         }
     }
 
-    void ValidateValidationLayers(std::vector<const char*> required, std::vector<VkLayerProperties> available) {
+    void ValidateValidationLayers(
+        const std::vector<const char*>& required,
+        const std::vector<VkLayerProperties>& available) {
         for (const auto& layer : required) {
             bool found = false;
             for (const auto& property : available) {
@@ -96,17 +100,65 @@ namespace {
         ValidateValidationLayers(required, available);
         return required;
     }
+
+    using RateRule = std::function<uint32_t(const VkPhysicalDeviceProperties& properties, const VkPhysicalDeviceFeatures& features)>;
+    const std::vector<RateRule> RATE_RULES {
+        { [](const VkPhysicalDeviceProperties& properties, const VkPhysicalDeviceFeatures& features) -> uint32_t {
+            switch (properties.deviceType) {
+                case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+                    return 1000;
+                case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+                    return 100;
+                default:
+                    return 1;
+            }
+        } }
+    };
+
+    std::vector<std::pair<VkPhysicalDevice, uint32_t>> RatePhysicalDevices(
+        const std::vector<VkPhysicalDevice>& devices) {
+        std::vector<std::pair<VkPhysicalDevice, uint32_t>> result;
+        for (const auto& device : devices) {
+            uint32_t score = 0;
+
+            VkPhysicalDeviceProperties deviceProperties {};
+            vkGetPhysicalDeviceProperties(device, &deviceProperties);
+            VkPhysicalDeviceFeatures deviceFeatures {};
+            vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+            for (const auto& rule : RATE_RULES) {
+                score += rule(deviceProperties, deviceFeatures);
+            }
+            result.emplace_back(std::make_pair(device, score));
+        }
+        return result;
+    }
+
+    uint32_t GetQueueFamilyIndex(const VkPhysicalDevice& device) {
+        uint32_t queueFamilyCnt = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCnt, nullptr);
+        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCnt);
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCnt, queueFamilies.data());
+
+        for (auto i = 0; i < queueFamilies.size(); i++) {
+            if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                // TODO judge if the graphics queue supports present
+                return i;
+            }
+        }
+        throw std::runtime_error("physical device has no queue families");
+    }
 }
 
 namespace Explosion {
     VulkanDevice::VulkanDevice() {
+        Prepare();
         CreateVkInstance();
 #ifdef VK_VALIDATION_LAYER_ENABLED
         CreateDebugUtils();
 #endif
         PickVkPhysicalDevice();
         CreateVkLogicalDevice();
-        FetchVkQueue();
     }
 
     VulkanDevice::~VulkanDevice() {
@@ -115,6 +167,11 @@ namespace Explosion {
         DestroyDebugUtils();
 #endif
         DestroyVkInstance();
+    }
+
+    void VulkanDevice::Prepare() {
+        vkExtensions = PrepareExtensions();
+        vkLayers = PrepareValidationLayers();
     }
 
     void VulkanDevice::CreateVkInstance() {
@@ -129,14 +186,12 @@ namespace Explosion {
         VkInstanceCreateInfo createInfo {};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &applicationInfo;
-        auto extensions = PrepareExtensions();
-        createInfo.enabledExtensionCount = extensions.size();
-        createInfo.ppEnabledExtensionNames = extensions.data();
+        createInfo.enabledExtensionCount = vkExtensions.size();
+        createInfo.ppEnabledExtensionNames = vkExtensions.data();
 #ifdef VK_VALIDATION_LAYER_ENABLED
-        auto layers = PrepareValidationLayers();
         auto debugUtilsMessengerCreateInfo = PopulateDebugUtilsMessengerCreateInfo();;
-        createInfo.enabledLayerCount = layers.size();
-        createInfo.ppEnabledLayerNames = layers.data();
+        createInfo.enabledLayerCount = vkLayers.size();
+        createInfo.ppEnabledLayerNames = vkLayers.data();
         createInfo.pNext = &debugUtilsMessengerCreateInfo;
 #else
         createInfo.enabledLayerCount = 0;
@@ -147,6 +202,58 @@ namespace Explosion {
         if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to create instance");
         }
+    }
+
+    void VulkanDevice::PickVkPhysicalDevice() {
+        uint32_t deviceCnt = 0;
+        vkEnumeratePhysicalDevices(vkInstance, &deviceCnt, nullptr);
+        std::vector<VkPhysicalDevice> devices(deviceCnt);
+        vkEnumeratePhysicalDevices(vkInstance, &deviceCnt, devices.data());
+        if (deviceCnt == 0) {
+            throw std::runtime_error("found no physical devices");
+        }
+
+        auto scores = RatePhysicalDevices(devices);
+        vkPhysicalDevice = scores[0].first;
+        vkGetPhysicalDeviceProperties(vkPhysicalDevice, &vkPhysicalDeviceProperties);
+        vkGetPhysicalDeviceFeatures(vkPhysicalDevice, &vkPhysicalDeviceFeatures);
+        vkQueueFamilyIndex = GetQueueFamilyIndex(vkPhysicalDevice);
+    }
+
+    void VulkanDevice::CreateVkLogicalDevice() {
+        float priority = 1.f;
+        VkDeviceQueueCreateInfo deviceQueueCreateInfo {};
+        deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        deviceQueueCreateInfo.queueFamilyIndex = GetQueueFamilyIndex(vkPhysicalDevice);
+        deviceQueueCreateInfo.queueCount = 1;
+        deviceQueueCreateInfo.pQueuePriorities = &priority;
+
+        VkDeviceCreateInfo deviceCreateInfo {};
+        deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        deviceCreateInfo.pQueueCreateInfos = &deviceQueueCreateInfo;
+        deviceCreateInfo.queueCreateInfoCount = 1;
+        deviceCreateInfo.pEnabledFeatures = &vkPhysicalDeviceFeatures;
+        deviceCreateInfo.enabledExtensionCount = 0;
+#ifdef VK_VALIDATION_LAYER_ENABLED
+        deviceCreateInfo.enabledLayerCount = vkLayers.size();
+        deviceCreateInfo.ppEnabledLayerNames = vkLayers.data();
+#else
+        deviceCreateInfo.enabledLayerCount = 0;
+#endif
+
+        VkResult result = vkCreateDevice(vkPhysicalDevice, &deviceCreateInfo, nullptr, &vkLogicalDevice);
+        if (result != VK_SUCCESS) {
+            throw std::runtime_error("failed to create logical device");
+        }
+        vkGetDeviceQueue(vkLogicalDevice, vkQueueFamilyIndex, 0, &vkQueue);
+    }
+
+    void VulkanDevice::DestroyVkInstance() {
+        vkDestroyInstance(vkInstance, nullptr);
+    }
+
+    void VulkanDevice::DestroyVkLogicalDevice() {
+        vkDestroyDevice(vkLogicalDevice, nullptr);
     }
 
 #ifdef VK_VALIDATION_LAYER_ENABLED
