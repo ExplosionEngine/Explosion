@@ -10,6 +10,7 @@
 
 #include <string>
 #include <vector>
+#include <stdexcept>
 
 #include <vulkan/vulkan.h>
 #ifdef _WIN32
