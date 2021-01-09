@@ -8,6 +8,8 @@
 // TODO remove this
 #define VK_VALIDATION_LAYER_ENABLED
 
+#include <iostream>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <stdexcept>

@@ -5,6 +5,30 @@
 #include <driver/vulkan/vulkan-device.h>
 
 namespace {
+    static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverityFlagBits,
+        VkDebugUtilsMessageTypeFlagsEXT messageTypeFlags,
+        const VkDebugUtilsMessengerCallbackDataEXT* callbackData,
+        void* pUserData) {
+        std::cerr << "[ValidationLayer] " << callbackData->pMessage << std::endl;
+        return VK_FALSE;
+    }
+
+#ifdef VK_VALIDATION_LAYER_ENABLED
+    VkDebugUtilsMessengerCreateInfoEXT PopulateDebugUtilsMessengerCreateInfo() {
+        VkDebugUtilsMessengerCreateInfoEXT createInfo {};
+        createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+                                     | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+        createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+                                 | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+                                 | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        createInfo.pfnUserCallback = DebugCallback;
+        createInfo.pUserData = nullptr;
+        return createInfo;
+    }
+#endif
+
     void ValidateExtensions(std::vector<const char*> required, std::vector<VkExtensionProperties> available) {
         for (const auto& extension : required) {
             bool found = false;
@@ -102,17 +126,49 @@ namespace Explosion {
         applicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
         applicationInfo.apiVersion = VK_API_VERSION_1_2;
 
+        VkInstanceCreateInfo createInfo {};
+        createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        createInfo.pApplicationInfo = &applicationInfo;
         auto extensions = PrepareExtensions();
-        VkInstanceCreateInfo instanceCreateInfo {};
-        instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        instanceCreateInfo.pApplicationInfo = &applicationInfo;
-        instanceCreateInfo.enabledExtensionCount = extensions.size();
-        instanceCreateInfo.ppEnabledExtensionNames = extensions.data();
-        instanceCreateInfo.enabledLayerCount = 0;
+        createInfo.enabledExtensionCount = extensions.size();
+        createInfo.ppEnabledExtensionNames = extensions.data();
+#ifdef VK_VALIDATION_LAYER_ENABLED
+        auto layers = PrepareValidationLayers();
+        auto debugUtilsMessengerCreateInfo = PopulateDebugUtilsMessengerCreateInfo();;
+        createInfo.enabledLayerCount = layers.size();
+        createInfo.ppEnabledLayerNames = layers.data();
+        createInfo.pNext = &debugUtilsMessengerCreateInfo;
+#else
+        createInfo.enabledLayerCount = 0;
+        createInfo.pNext = nullptr;
+#endif
 
-        VkResult result = vkCreateInstance(&instanceCreateInfo, nullptr, &vkInstance);
+        VkResult result = vkCreateInstance(&createInfo, nullptr, &vkInstance);
         if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to create instance");
         }
     }
+
+#ifdef VK_VALIDATION_LAYER_ENABLED
+    void VulkanDevice::CreateDebugUtils() {
+        VkDebugUtilsMessengerCreateInfoEXT createInfo = PopulateDebugUtilsMessengerCreateInfo();
+
+        auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(vkInstance, "vkCreateDebugUtilsMessengerEXT");
+        if (func == nullptr) {
+            throw std::runtime_error("failed to get func address: vkCreateDebugUtilsMessengerEXT");
+        }
+        VkResult result = func(vkInstance, &createInfo, nullptr, &vkDebugUtilsMessenger);
+        if (result != VK_SUCCESS) {
+            throw std::runtime_error("failed to create debug utils messenger");
+        }
+    }
+
+    void VulkanDevice::DestroyDebugUtils() {
+        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(vkInstance, "vkDestroyDebugUtilsMessengerEXT");
+        if (func == nullptr) {
+            throw std::runtime_error("failed to get func address: vkDestroyDebugUtilsMessengerEXT");
+        }
+        func(vkInstance, vkDebugUtilsMessenger, nullptr);
+    }
+#endif
 }
