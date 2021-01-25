@@ -1,5 +1,5 @@
 //
-// Created by Administrator on 2021/1/9 0009.
+// Created by John Kindem on 2021/1/9 0009.
 //
 
 #ifndef EXPLOSION_CONTEXT_H

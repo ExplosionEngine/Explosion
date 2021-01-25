@@ -1,5 +1,5 @@
 //
-// Created by Administrator on 2021/1/9 0009.
+// Created by John Kindem on 2021/1/9 0009.
 //
 
 #ifndef EXPLOSION_VULKAN_CONTEXT_H
@@ -17,6 +17,7 @@
 
 #include <vulkan/vulkan.h>
 #ifdef _WIN32
+#include <windows.h>
 #include <vulkan/vulkan_win32.h>
 #endif
 
