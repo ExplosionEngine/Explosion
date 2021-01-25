@@ -2,7 +2,9 @@
 // Created by Administrator on 2021/1/9 0009.
 //
 
-#include <driver/vulkan/vulkan-device.h>
+#include <optional>
+
+#include <driver/vulkan/vulkan-context.h>
 
 namespace {
     VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
@@ -29,81 +31,62 @@ namespace {
     }
 #endif
 
-    void ValidateExtensions(
-        const std::vector<const char*>& required,
-        const std::vector<VkExtensionProperties>& available) {
-        for (const auto& extension : required) {
+    template<typename A, typename B>
+    using CompareFunc = std::function<bool(const A&, const B&)>;
+
+    template<typename A, typename B>
+    std::vector<A> ValidateVectorBContainsVectorA(
+        const std::vector<A>& arrayA,
+        const std::vector<B>& arrayB,
+        const CompareFunc<A, B>& compareFunc
+    ) {
+        std::vector<A> except;
+        for (const auto& a : arrayA) {
             bool found = false;
-            for (const auto& property : available) {
-                std::string name = property.extensionName;
-                if (extension == name) {
+            for (const auto& b : arrayB) {
+                if (compareFunc(a, b)) {
                     found = true;
                     break;
                 }
             }
-
             if (!found) {
-                throw std::runtime_error(std::string("extension is not supported: ") + extension);
+                except.emplace_back(a);
             }
         }
+        return except;
+    }
+
+    void ValidateExtensions(
+        const std::vector<const char*>& required,
+        const std::vector<VkExtensionProperties>& available) {
+        std::vector<const char*> except = ValidateVectorBContainsVectorA<const char*, VkExtensionProperties>(
+            required,
+            available,
+            [](const auto& a, const auto& b) -> bool { return std::string(a) == b.extensionName; }
+        );
+        for (const auto& extension : except) {
+            std::cout << (std::string("[explosion] extension: ") + extension + " is not supported") << std::endl;
+        }
+        throw std::runtime_error("[explosion] failed to check all extensions");
     }
 
     void ValidateValidationLayers(
         const std::vector<const char*>& required,
         const std::vector<VkLayerProperties>& available) {
-        for (const auto& layer : required) {
-            bool found = false;
-            for (const auto& property : available) {
-                std::string name = property.layerName;
-                if (layer == name) {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                throw std::runtime_error(std::string("layer is not supported: ") + layer);
-            }
+        std::vector<const char*> except = ValidateVectorBContainsVectorA<const char*, VkLayerProperties>(
+            required,
+            available,
+            [](const auto& a, const auto& b) -> bool { return std::string(a) == b.layerName; }
+        );
+        for (const auto& layer : except) {
+            std::cout << (std::string("[explosion] layer: ") + layer + " is not supported") << std::endl;
         }
-    }
-
-    std::vector<const char*> PrepareExtensions() {
-        std::vector<const char*> required;
-        required.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
-#ifdef _WIN32
-        required.emplace_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-#endif
-#ifdef VK_VALIDATION_LAYER_ENABLED
-        required.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-#endif
-
-        uint32_t availableCnt = 0;
-        vkEnumerateInstanceExtensionProperties(nullptr, &availableCnt, nullptr);
-        std::vector<VkExtensionProperties> available(availableCnt);
-        vkEnumerateInstanceExtensionProperties(nullptr, &availableCnt, available.data());
-
-        ValidateExtensions(required, available);
-        return required;
-    }
-
-    std::vector<const char*> PrepareValidationLayers() {
-        std::vector<const char*> required;
-#ifdef VK_VALIDATION_LAYER_ENABLED
-        required.emplace_back("VK_LAYER_KHRONOS_validation");
-#endif
-
-        uint32_t availableCnt = 0;
-        vkEnumerateInstanceLayerProperties(&availableCnt, nullptr);
-        std::vector<VkLayerProperties> available(availableCnt);
-        vkEnumerateInstanceLayerProperties(&availableCnt, available.data());
-
-        ValidateValidationLayers(required, available);
-        return required;
+        throw std::runtime_error("[explosion] failed to check all validation layer");
     }
 
     using RateRule = std::function<uint32_t(const VkPhysicalDeviceProperties& properties, const VkPhysicalDeviceFeatures& features)>;
     const std::vector<RateRule> RATE_RULES {
-        { [](const VkPhysicalDeviceProperties& properties, const VkPhysicalDeviceFeatures& features) -> uint32_t {
+        { [](const auto& properties, const auto& features) -> uint32_t {
             switch (properties.deviceType) {
                 case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
                     return 1000;
@@ -133,35 +116,22 @@ namespace {
         }
         return result;
     }
-
-    uint32_t GetQueueFamilyIndex(const VkPhysicalDevice& device) {
-        uint32_t queueFamilyCnt = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCnt, nullptr);
-        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCnt);
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCnt, queueFamilies.data());
-
-        for (auto i = 0; i < queueFamilies.size(); i++) {
-            if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                // TODO judge if the graphics queue supports present
-                return i;
-            }
-        }
-        throw std::runtime_error("physical device has no queue families");
-    }
 }
 
 namespace Explosion {
-    VulkanDevice::VulkanDevice() {
-        Prepare();
+    VulkanContext::VulkanContext() {
+        PrepareInstanceExtensions();
+        PrepareValidationLayers();
         CreateVkInstance();
 #ifdef VK_VALIDATION_LAYER_ENABLED
         CreateDebugUtils();
 #endif
         PickVkPhysicalDevice();
+        PickQueueFamilyIndex();
         CreateVkLogicalDevice();
     }
 
-    VulkanDevice::~VulkanDevice() {
+    VulkanContext::~VulkanContext() {
         DestroyVkLogicalDevice();
 #ifdef VK_VALIDATION_LAYER_ENABLED
         DestroyDebugUtils();
@@ -169,12 +139,53 @@ namespace Explosion {
         DestroyVkInstance();
     }
 
-    void VulkanDevice::Prepare() {
-        vkExtensions = PrepareExtensions();
-        vkLayers = PrepareValidationLayers();
+    const VkInstance& VulkanContext::GetVkInstance() {
+        return vkInstance;
     }
 
-    void VulkanDevice::CreateVkInstance() {
+    const VkPhysicalDevice & VulkanContext::GetVkPhysicalDevice() {
+        return vkPhysicalDevice;
+    }
+
+    const VkDevice& VulkanContext::GetVkDevice() {
+        return vkDevice;
+    }
+
+    const VkQueue& VulkanContext::GetVkQueue() {
+        return vkQueue;
+    }
+
+    void VulkanContext::PrepareInstanceExtensions() {
+        vkInstanceExtensions.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
+#ifdef _WIN32
+        vkInstanceExtensions.emplace_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#endif
+#ifdef VK_VALIDATION_LAYER_ENABLED
+        vkInstanceExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+#endif
+
+        uint32_t availableCnt = 0;
+        vkEnumerateInstanceExtensionProperties(nullptr, &availableCnt, nullptr);
+        std::vector<VkExtensionProperties> available(availableCnt);
+        vkEnumerateInstanceExtensionProperties(nullptr, &availableCnt, available.data());
+
+        ValidateExtensions(vkInstanceExtensions, available);
+    }
+
+    void VulkanContext::PrepareValidationLayers() {
+#ifdef VK_VALIDATION_LAYER_ENABLED
+        vkValidationLayers.emplace_back("VK_LAYER_KHRONOS_validation");
+#endif
+
+        uint32_t availableCnt = 0;
+        vkEnumerateInstanceLayerProperties(&availableCnt, nullptr);
+        std::vector<VkLayerProperties> available(availableCnt);
+        vkEnumerateInstanceLayerProperties(&availableCnt, available.data());
+
+        ValidateValidationLayers(vkValidationLayers, available);
+    }
+
+    void VulkanContext::CreateVkInstance() {
         VkApplicationInfo applicationInfo {};
         applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         applicationInfo.pApplicationName = "Explosion GameEngine";
@@ -186,12 +197,12 @@ namespace Explosion {
         VkInstanceCreateInfo createInfo {};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &applicationInfo;
-        createInfo.enabledExtensionCount = vkExtensions.size();
-        createInfo.ppEnabledExtensionNames = vkExtensions.data();
+        createInfo.enabledExtensionCount = vkInstanceExtensions.size();
+        createInfo.ppEnabledExtensionNames = vkInstanceExtensions.data();
 #ifdef VK_VALIDATION_LAYER_ENABLED
         auto debugUtilsMessengerCreateInfo = PopulateDebugUtilsMessengerCreateInfo();;
-        createInfo.enabledLayerCount = vkLayers.size();
-        createInfo.ppEnabledLayerNames = vkLayers.data();
+        createInfo.enabledLayerCount = vkValidationLayers.size();
+        createInfo.ppEnabledLayerNames = vkValidationLayers.data();
         createInfo.pNext = &debugUtilsMessengerCreateInfo;
 #else
         createInfo.enabledLayerCount = 0;
@@ -204,7 +215,7 @@ namespace Explosion {
         }
     }
 
-    void VulkanDevice::PickVkPhysicalDevice() {
+    void VulkanContext::PickVkPhysicalDevice() {
         uint32_t deviceCnt = 0;
         vkEnumeratePhysicalDevices(vkInstance, &deviceCnt, nullptr);
         std::vector<VkPhysicalDevice> devices(deviceCnt);
@@ -217,14 +228,32 @@ namespace Explosion {
         vkPhysicalDevice = scores[0].first;
         vkGetPhysicalDeviceProperties(vkPhysicalDevice, &vkPhysicalDeviceProperties);
         vkGetPhysicalDeviceFeatures(vkPhysicalDevice, &vkPhysicalDeviceFeatures);
-        vkQueueFamilyIndex = GetQueueFamilyIndex(vkPhysicalDevice);
     }
 
-    void VulkanDevice::CreateVkLogicalDevice() {
+    void VulkanContext::PickQueueFamilyIndex()
+    {
+        uint32_t queueFamilyCnt = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &queueFamilyCnt, nullptr);
+        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCnt);
+        vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &queueFamilyCnt, queueFamilies.data());
+
+        std::optional<uint32_t> idx;
+        for (auto i = 0; i < queueFamilies.size(); i++) {
+            if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                idx = i;
+            }
+        }
+        if (!idx.has_value()) {
+            throw std::runtime_error("[explosion] found no suitable queue family");
+        }
+        vkQueueFamilyIndex = idx.value();
+    }
+
+    void VulkanContext::CreateVkLogicalDevice() {
         float priority = 1.f;
         VkDeviceQueueCreateInfo deviceQueueCreateInfo {};
         deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        deviceQueueCreateInfo.queueFamilyIndex = GetQueueFamilyIndex(vkPhysicalDevice);
+        deviceQueueCreateInfo.queueFamilyIndex = vkQueueFamilyIndex;
         deviceQueueCreateInfo.queueCount = 1;
         deviceQueueCreateInfo.pQueuePriorities = &priority;
 
@@ -235,29 +264,29 @@ namespace Explosion {
         deviceCreateInfo.pEnabledFeatures = &vkPhysicalDeviceFeatures;
         deviceCreateInfo.enabledExtensionCount = 0;
 #ifdef VK_VALIDATION_LAYER_ENABLED
-        deviceCreateInfo.enabledLayerCount = vkLayers.size();
-        deviceCreateInfo.ppEnabledLayerNames = vkLayers.data();
+        deviceCreateInfo.enabledLayerCount = vkValidationLayers.size();
+        deviceCreateInfo.ppEnabledLayerNames = vkValidationLayers.data();
 #else
         deviceCreateInfo.enabledLayerCount = 0;
 #endif
 
-        VkResult result = vkCreateDevice(vkPhysicalDevice, &deviceCreateInfo, nullptr, &vkLogicalDevice);
+        VkResult result = vkCreateDevice(vkPhysicalDevice, &deviceCreateInfo, nullptr, &vkDevice);
         if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to create logical device");
         }
-        vkGetDeviceQueue(vkLogicalDevice, vkQueueFamilyIndex, 0, &vkQueue);
+        vkGetDeviceQueue(vkDevice, vkQueueFamilyIndex, 0, &vkQueue);
     }
 
-    void VulkanDevice::DestroyVkInstance() {
+    void VulkanContext::DestroyVkInstance() {
         vkDestroyInstance(vkInstance, nullptr);
     }
 
-    void VulkanDevice::DestroyVkLogicalDevice() {
-        vkDestroyDevice(vkLogicalDevice, nullptr);
+    void VulkanContext::DestroyVkLogicalDevice() {
+        vkDestroyDevice(vkDevice, nullptr);
     }
 
 #ifdef VK_VALIDATION_LAYER_ENABLED
-    void VulkanDevice::CreateDebugUtils() {
+    void VulkanContext::CreateDebugUtils() {
         VkDebugUtilsMessengerCreateInfoEXT createInfo = PopulateDebugUtilsMessengerCreateInfo();
 
         auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(vkInstance, "vkCreateDebugUtilsMessengerEXT");
@@ -270,7 +299,7 @@ namespace Explosion {
         }
     }
 
-    void VulkanDevice::DestroyDebugUtils() {
+    void VulkanContext::DestroyDebugUtils() {
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(vkInstance, "vkDestroyDebugUtilsMessengerEXT");
         if (func == nullptr) {
             throw std::runtime_error("failed to get func address: vkDestroyDebugUtilsMessengerEXT");

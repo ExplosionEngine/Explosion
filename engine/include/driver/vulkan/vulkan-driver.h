@@ -8,17 +8,16 @@
 #include <memory>
 
 #include <driver/driver.h>
-#include <driver/vulkan/vulkan-device.h>
+#include <driver/vulkan/vulkan-context.h>
 
 namespace Explosion {
     class VulkanDriver : public Driver {
     public:
         VulkanDriver();
         ~VulkanDriver() override;
-        Device* GetDevice() override;
 
     private:
-        std::unique_ptr<VulkanDevice> device;
+        std::unique_ptr<VulkanContext> device;
     };
 }
 

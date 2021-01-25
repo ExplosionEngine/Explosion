@@ -7,13 +7,12 @@
 
 #include <memory>
 
-#include <driver/device.h>
+#include <driver/context.h>
 
 namespace Explosion {
     class Driver {
     public:
         virtual ~Driver() = 0;
-        virtual Device* GetDevice() = 0;
 
     protected:
         Driver() = default;

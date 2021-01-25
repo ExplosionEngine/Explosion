@@ -2,8 +2,8 @@
 // Created by Administrator on 2021/1/9 0009.
 //
 
-#ifndef EXPLOSION_VULKAN_DEVICE_H
-#define EXPLOSION_VULKAN_DEVICE_H
+#ifndef EXPLOSION_VULKAN_CONTEXT_H
+#define EXPLOSION_VULKAN_CONTEXT_H
 
 // TODO remove this
 #define VK_VALIDATION_LAYER_ENABLED
@@ -20,18 +20,25 @@
 #include <vulkan/vulkan_win32.h>
 #endif
 
-#include <driver/device.h>
+#include <driver/context.h>
 
 namespace Explosion {
-    class VulkanDevice : public Device {
+    class VulkanContext : public Context {
     public:
-        VulkanDevice();
-        ~VulkanDevice() override;
+        VulkanContext();
+        ~VulkanContext() override;
+
+        const VkInstance& GetVkInstance();
+        const VkPhysicalDevice& GetVkPhysicalDevice();
+        const VkDevice& GetVkDevice();
+        const VkQueue& GetVkQueue();
 
     private:
-        void Prepare();
+        void PrepareInstanceExtensions();
+        void PrepareValidationLayers();
         void CreateVkInstance();
         void PickVkPhysicalDevice();
+        void PickQueueFamilyIndex();
         void CreateVkLogicalDevice();
 
         void DestroyVkInstance();
@@ -42,26 +49,21 @@ namespace Explosion {
         void DestroyDebugUtils();
 #endif
 
-        // properties begin
-        std::vector<const char*> vkExtensions;
+        std::vector<const char*> vkInstanceExtensions;
 #ifdef VK_VALIDATION_LAYER_ENABLED
-        std::vector<const char*> vkLayers;
+        std::vector<const char*> vkValidationLayers;
 #endif
-
         VkInstance vkInstance = VK_NULL_HANDLE;
-
         VkPhysicalDevice vkPhysicalDevice = VK_NULL_HANDLE;
         VkPhysicalDeviceProperties vkPhysicalDeviceProperties {};
         VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures {};
         uint32_t vkQueueFamilyIndex = 0;
-
-        VkDevice vkLogicalDevice = VK_NULL_HANDLE;
+        VkDevice vkDevice = VK_NULL_HANDLE;
         VkQueue vkQueue = VK_NULL_HANDLE;
-
 #ifdef VK_VALIDATION_LAYER_ENABLED
         VkDebugUtilsMessengerEXT vkDebugUtilsMessenger = VK_NULL_HANDLE;
 #endif
     };
 }
 
-#endif //EXPLOSION_VULKAN_DEVICE_H
+#endif //EXPLOSION_VULKAN_CONTEXT_H

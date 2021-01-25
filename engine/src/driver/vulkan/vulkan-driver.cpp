@@ -5,14 +5,10 @@
 #include <driver/vulkan/vulkan-driver.h>
 
 Explosion::VulkanDriver::VulkanDriver()
-    : device(std::make_unique<VulkanDevice>()) {
+    : device(std::make_unique<VulkanContext>()) {
 
 }
 
 Explosion::VulkanDriver::~VulkanDriver() {
 
-}
-
-Explosion::Device* Explosion::VulkanDriver::GetDevice() {
-    return device.get();
 }
