@@ -1,32 +1,16 @@
 # Vulkan ------------------------------------------------------------------------------
-if (WIN32)
-    if (NOT DEFINED ENV{VULKAN_SDK})
-        message(FATAL_ERROR "found no env named VULKAN_SDK")
-    endif()
-    include_directories("$ENV{VULKAN_SDK}/Include")
-elseif (UNIX)
-    find_package(vulkan)
-elseif (APPLE)
-    find_package(vulkan)
+if (NOT DEFINED ENV{VULKAN_SDK})
+    message(FATAL_ERROR "found no env named VULKAN_SDK")
 endif()
+include_directories("$ENV{VULKAN_SDK}/Include")
 
 # Engine ------------------------------------------------------------------------------
 option(VK_VALIDATION_LAYER_ENABLED "option for vulkan validation layer" ON)
 
 include_directories(include)
-aux_source_directory(src ENGINE_SOURCES)
-aux_source_directory(src/common ENGINE_COMMON_SOURCES)
-aux_source_directory(src/core ENGINE_CORE_SOURCES)
-aux_source_directory(src/driver ENGINE_DRIVER_SOURCES)
-aux_source_directory(src/driver/vulkan ENGINE_DRIVER_VULKAN_SOURCES)
+file(GLOB_RECURSE ENGINE_SOURCES src/**/*.cpp)
 
-add_library(
-    engine
-    ${ENGINE_SOURCES}
-    ${ENGINE_COMMON_SOURCES}
-    ${ENGINE_CORE_SOURCES}
-    ${ENGINE_DRIVER_SOURCES}
-    ${ENGINE_DRIVER_VULKAN_SOURCES})
+add_library(engine ${ENGINE_SOURCES})
 
 if (WIN32)
     target_link_libraries(
@@ -36,6 +20,6 @@ if (WIN32)
 else()
     target_link_libraries(
         engine
-        vulkan
+        "$ENV{VULKAN_SDK}/lib/libvulkan.1.dylib"
     )
 endif()
