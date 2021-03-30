@@ -3,4 +3,5 @@ project(explosion)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_subdirectory(engine)
+add_subdirectory(Engine)
+add_subdirectory(Application)

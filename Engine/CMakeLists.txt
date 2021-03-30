@@ -6,8 +6,9 @@ else()
 endif()
 
 include_directories(${Vulkan_INCLUDE_DIRS})
-include_directories(include)
 
-file(GLOB_RECURSE ENGINE_SOURCES src/**/*.cpp)
-add_library(engine ${ENGINE_SOURCES})
-target_link_libraries(engine ${Vulkan_LIBRARIES})
+file(GLOB_RECURSE ENGINE_SOURCES src/*.cpp)
+add_library(explosion SHARED ${ENGINE_SOURCES})
+
+target_include_directories(explosion PUBLIC include)
+target_link_libraries(explosion ${Vulkan_LIBRARIES})
