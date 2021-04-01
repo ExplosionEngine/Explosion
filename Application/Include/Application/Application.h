@@ -14,12 +14,12 @@
 namespace Explosion {
     class Application {
     public:
-        Application(void* window, std::string name, uint32_t width, uint32_t height);
+        Application(std::string name, uint32_t width, uint32_t height);
         ~Application();
         void Run();
 
     protected:
-        void* GetWindow() const;
+        GLFWwindow* GetWindow() const;
         uint32_t GetWidth() const;
         uint32_t GetHeight() const;
 
@@ -28,11 +28,10 @@ namespace Explosion {
         virtual void OnDrawFrame() = 0;
 
     private:
-        void* window;
         std::string name;
         uint32_t width;
         uint32_t height;
-        GLFWwindow* glfwWindow;
+        GLFWwindow* window;
     };
 }
 

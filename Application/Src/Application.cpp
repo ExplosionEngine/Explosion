@@ -7,17 +7,31 @@
 #include <utility>
 
 namespace Explosion {
-    Application::Application(void* window, std::string name, uint32_t width, uint32_t height)
-        : window(window), name(std::move(name)), width(width), height(height), glfwWindow(nullptr) {}
+    Application::Application(std::string name, uint32_t width, uint32_t height)
+        : name(std::move(name)), width(width), height(height), window(nullptr) {}
 
     Application::~Application() = default;
 
     void Application::Run()
     {
-        // TODO
+        glfwInit();
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+        window = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
+        OnStart();
+
+        while (!glfwWindowShouldClose(window)) {
+            OnDrawFrame();
+            glfwPollEvents();
+        }
+
+        OnStop();
+        glfwDestroyWindow(window);
+        glfwTerminate();
     }
 
-    void* Application::GetWindow() const
+    GLFWwindow* Application::GetWindow() const
     {
         return window;
     }
