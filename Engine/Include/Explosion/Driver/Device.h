@@ -5,6 +5,8 @@
 #ifndef EXPLOSION_DEVICE_H
 #define EXPLOSION_DEVICE_H
 
+#include <vector>
+
 #include <vulkan/vulkan.h>
 
 namespace Explosion {

@@ -1,0 +1,12 @@
+//
+// Created by Administrator on 2021/4/2 0002.
+//
+
+#include <Explosion/Core/Renderer.h>
+
+namespace Explosion {
+    Renderer::Renderer(void* surface, uint32_t width, uint32_t height)
+        : surface(surface), width(width), height(height) {}
+
+    Renderer::~Renderer() = default;
+}
