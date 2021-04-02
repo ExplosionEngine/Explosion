@@ -1,0 +1,91 @@
+name: build
+
+on: [push, pull_request]
+
+jobs:
+
+  linux:
+    timeout-minutes: 10
+
+    strategy:
+      matrix:
+        compiler: [
+            g++-7, g++-8, g++-9, g++,
+            clang++-8, clang++-9, clang++
+        ]
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install g++-7
+      if: ${{ matrix.compiler == 'g++-7' }}
+      run: sudo apt install g++-7
+    - name: Install g++-8
+      if: ${{ matrix.compiler == 'g++-8' }}
+      run: sudo apt install g++-8
+    - name: Install clang-8
+      if: ${{ matrix.compiler == 'clang++-8' }}
+      run: sudo apt install clang-8
+    - name: Compile tests
+      working-directory: build
+      env:
+        CXX: ${{ matrix.compiler }}
+      run: |
+        cmake -DENTT_BUILD_TESTING=ON -DENTT_BUILD_LIB=ON -DENTT_BUILD_EXAMPLE=ON ..
+        make -j4
+    - name: Run tests
+      working-directory: build
+      env:
+        CTEST_OUTPUT_ON_FAILURE: 1
+      run: ctest --timeout 10 -C Debug -j4
+
+  windows:
+    timeout-minutes: 10
+
+    strategy:
+      matrix:
+        os: [windows-latest, windows-2016]
+        toolset: [clang-cl, default, v141]
+        include:
+          - toolset: clang-cl
+            toolset_option: -T"ClangCl"
+          - toolset: v141
+            toolset_option: -T"v141"
+        exclude:
+          - os: windows-2016
+            toolset: clang-cl
+          - os: windows-2016
+            toolset: v141
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Compile tests
+      working-directory: build
+      run: |
+        cmake -DENTT_BUILD_TESTING=ON -DENTT_BUILD_LIB=ON -DENTT_BUILD_EXAMPLE=ON ${{ matrix.toolset_option }} ..
+        cmake --build . -j 4
+    - name: Run tests
+      working-directory: build
+      env:
+        CTEST_OUTPUT_ON_FAILURE: 1
+      run: ctest --timeout 10 -C Debug -j4
+
+  macos:
+    timeout-minutes: 10
+    runs-on: macOS-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Compile tests
+      working-directory: build
+      run: |
+        cmake -DENTT_BUILD_TESTING=ON -DENTT_BUILD_LIB=ON -DENTT_BUILD_EXAMPLE=ON ..
+        make -j4
+    - name: Run tests
+      working-directory: build
+      env:
+        CTEST_OUTPUT_ON_FAILURE: 1
+      run: ctest --timeout 10 -C Debug -j4

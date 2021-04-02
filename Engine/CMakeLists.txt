@@ -5,6 +5,7 @@ else()
     message(FATAL_ERROR "-- can not find the Vulkan lib, make sure you have installed the Vulkan SDK")
 endif()
 
+include_directories(../3rd/entt/single_include)
 include_directories(${Vulkan_INCLUDE_DIRS})
 
 file(GLOB_RECURSE ENGINE_SOURCES src/*.cpp)
