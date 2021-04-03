@@ -6,8 +6,11 @@
 #define EXPLOSION_WORLD_H
 
 #include <string>
-#include <Explosion/Core/Ecs/Entity.h>
-#include <Explosion/Core/Ecs/Component.h>
+#include <memory>
+#include <unordered_map>
+
+#include <Explosion/Core/Ecs/Registry.h>
+#include <Explosion/Core/Ecs/System.h>
 
 namespace Explosion {
     class World {
@@ -19,33 +22,57 @@ namespace Explosion {
         void DestroyEntity(const Entity& entity);
 
         template <typename CompType>
-        CompType& AddComponent(const Entity& entity)
+        CompType& AddComponent()
         {
-            registry.emplace<CompType>(entity);
-            return GetComponent<CompType>(entity);
+            return registry.AddComponent<CompType>();
         }
 
         template <typename CompType>
-        CompType& GetComponent(const Entity& entity)
+        CompType& GetComponent()
         {
-            return registry.get<CompType>(entity);
+            return registry.GetComponent<CompType>();
         }
 
         template <typename CompType>
-        void RemoveComponent(const Entity& entity)
+        void RemoveComponent()
         {
-            registry.remove<CompType>(entity);
+            registry.RemoveComponent<CompType>();
         }
 
         template <typename CompType>
-        bool HasComponent(const Entity& entity)
+        bool HasComponent()
         {
-            return registry.has<CompType>(entity);
+            return registry.HasComponent<CompType>();
         }
+
+        template <typename SystemType>
+        void MountSystem()
+        {
+            systems[typeid(SystemType).hash_code()] = std::make_unique<SystemType>();
+        }
+
+        template <typename SystemType>
+        void UnmountSystem()
+        {
+            SystemType type = typeid(SystemType).hash_code();
+            auto iter = systems.template find(type);
+            if (iter == systems.end()) {
+                return;
+            }
+            systems.erase(iter);
+        }
+
+        void Update();
 
     private:
+        void UpdateSystems();
+
         std::string name;
-        entt::registry registry;
+
+        entt::registry originRegistry;
+        Registry registry;
+
+        std::unordered_map<SystemType, std::unique_ptr<System>> systems;
     };
 }
 

@@ -8,10 +8,26 @@
 #include <Explosion/Core/Ecs/Wrapper.h>
 
 namespace Explosion {
+    using CompType = size_t;
+
     struct Component {};
 
     template <typename... Args>
-    using CompView = entt::basic_view<Args...>;
+    class CompView {
+    public:
+        CompView(entt::view<Args...>& view) : view(view) {}
+
+        ~CompView() {}
+
+        template <typename Func>
+        void Each(const Func& func)
+        {
+            view.each(func);
+        }
+
+    private:
+        entt::view<Args...> view;
+    };
 }
 
 #endif //EXPLOSION_COMPONENT_H

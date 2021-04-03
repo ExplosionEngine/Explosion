@@ -5,17 +5,29 @@
 #include <Explosion/Core/World.h>
 
 namespace Explosion {
-    World::World(std::string name) : name(std::move(name)) {}
+    World::World(std::string name) : name(std::move(name)), registry(originRegistry) {}
 
     World::~World() = default;
 
     Entity World::CreateEntity()
     {
-        return registry.create();
+        return registry.CreateEntity();
     }
 
     void World::DestroyEntity(const Entity& entity)
     {
-        registry.destroy(entity);
+        registry.DestroyEntity(entity);
+    }
+
+    void World::Update()
+    {
+        UpdateSystems();
+    }
+
+    void World::UpdateSystems()
+    {
+        for (auto& system : systems) {
+            system.second->Update(registry);
+        }
     }
 }
