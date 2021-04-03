@@ -11,5 +11,5 @@ include_directories(${Vulkan_INCLUDE_DIRS})
 file(GLOB_RECURSE ENGINE_SOURCES src/*.cpp)
 add_library(explosion SHARED ${ENGINE_SOURCES})
 
-target_include_directories(explosion PUBLIC include)
+target_include_directories(explosion PUBLIC Include)
 target_link_libraries(explosion ${Vulkan_LIBRARIES})
