@@ -30,6 +30,25 @@ namespace Explosion {
         }
         return true;
     }
+
+    bool CheckLayerSupported(
+        const std::vector<const char*>& layers,
+        const std::vector<VkLayerProperties>& properties
+    ) {
+        for (auto& layer : layers) {
+            bool found = false;
+            for (auto& property : properties) {
+                if (std::string(layer) == property.layerName) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
 
 #endif //EXPLOSION_UTILS_H

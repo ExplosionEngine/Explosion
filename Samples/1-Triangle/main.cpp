@@ -2,6 +2,8 @@
 // Created by Administrator on 2021/4/4 0004.
 //
 
+#include <iostream>
+
 #include <Application/Application.h>
 
 class App : public Explosion::Application {
@@ -11,7 +13,9 @@ public:
 protected:
     void OnStart() override
     {
-
+#ifdef ENABLE_VALIDATION_LAYER
+        std::cout << "Hello" << std::endl;
+#endif
     }
 
     void OnStop() override

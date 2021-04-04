@@ -1,3 +1,7 @@
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    add_definitions(-DENABLE_VALIDATION_LAYER)
+endif()
+
 find_package(Vulkan)
 if (${Vulkan_FOUND})
     message("-- found Vulkan library")

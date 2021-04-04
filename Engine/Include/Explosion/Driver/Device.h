@@ -16,11 +16,20 @@ namespace Explosion {
         ~Device();
 
     private:
+#ifdef ENABLE_VALIDATION_LAYER
+        void CreateDebugUtils();
+        void DestroyDebugUtils();
+        VkDebugUtilsMessengerEXT vkDebugUtilsMessenger = VK_NULL_HANDLE;
+#endif
+
         void PrepareExtensions();
+        void PrepareLayers();
+
         void CreateInstance();
         void DestroyInstance();
 
         std::vector<const char*> extensions {};
+        std::vector<const char*> layers {};
         VkInstance vkInstance = VK_NULL_HANDLE;
     };
 }

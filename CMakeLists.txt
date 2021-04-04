@@ -3,6 +3,14 @@ project(explosion)
 
 set(CMAKE_CXX_STANDARD 17)
 
+if (NOT DEFINED ${CMAKE_BUILD_TYPE})
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Bin)
+
 add_subdirectory(3rd)
 add_subdirectory(Engine)
 add_subdirectory(Application)
