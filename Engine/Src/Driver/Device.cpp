@@ -2,7 +2,10 @@
 // Created by John Kindem on 2021/3/30.
 //
 
+#include <stdexcept>
+
 #include <Explosion/Driver/Device.h>
+#include <Explosion/Driver/Utils.h>
 
 namespace Explosion {
     Device::Device()
@@ -18,7 +21,18 @@ namespace Explosion {
 
     void Device::PrepareExtensions()
     {
-        // TODO
+#ifdef WIN32
+        extensions.emplace_back("VK_KHR_surface");
+        extensions.emplace_back("VK_KHR_win32_surface");
+#endif
+
+        uint32_t propertiesCnt = 0;
+        vkEnumerateInstanceExtensionProperties(nullptr, &propertiesCnt, nullptr);
+        std::vector<VkExtensionProperties> properties(propertiesCnt);
+        vkEnumerateInstanceExtensionProperties(nullptr, &propertiesCnt, properties.data());
+        if (!CheckExtensionSupported(extensions, properties)) {
+            throw std::runtime_error("there are some extension is not supported");
+        }
     }
 
     void Device::CreateInstance()
@@ -34,12 +48,17 @@ namespace Explosion {
         VkInstanceCreateInfo createInfo {};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &applicationInfo;
+        createInfo.enabledExtensionCount = extensions.size();
+        createInfo.ppEnabledExtensionNames = extensions.data();
+        createInfo.enabledLayerCount = 0;
 
-        // TODO
+        if (vkCreateInstance(&createInfo, nullptr, &vkInstance) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create vulkan instance");
+        }
     }
 
     void Device::DestroyInstance()
     {
-        // TODO
+        vkDestroyInstance(vkInstance, nullptr);
     }
 }
