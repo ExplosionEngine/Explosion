@@ -28,9 +28,12 @@ namespace Explosion {
         void CreateInstance();
         void DestroyInstance();
 
+        void PickPhysicalDevice();
+
         std::vector<const char*> extensions {};
         std::vector<const char*> layers {};
         VkInstance vkInstance = VK_NULL_HANDLE;
+        VkPhysicalDevice vkPhysicalDevice = VK_NULL_HANDLE;
     };
 }
 

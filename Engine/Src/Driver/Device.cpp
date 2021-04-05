@@ -3,6 +3,7 @@
 //
 
 #include <stdexcept>
+#include <functional>
 
 #include <Explosion/Driver/Device.h>
 #include <Explosion/Driver/Utils.h>
@@ -14,12 +15,34 @@
 #endif
 
 namespace {
+    using RateRule = std::function<uint32_t(const VkPhysicalDeviceProperties&, const VkPhysicalDeviceFeatures&)>;
+
+    const std::vector<RateRule> RULES = {
+        { [](const auto& properties, const auto& features) -> uint32_t {
+            switch (properties.deviceType) {
+                case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+                    return 1000;
+                case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+                    return 100;
+                case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+                    return 50;
+                case VK_PHYSICAL_DEVICE_TYPE_CPU:
+                    return 1;
+                default:
+                    return 0;
+            }
+        } }
+    };
+
     VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageType,
         const VkDebugUtilsMessengerCallbackDataEXT* callbackData,
         void* userData
     ) {
+        if (messageSeverity < VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+            return VK_FALSE;
+        }
         Explosion::Logger::Error(std::string("validation layer: ") + callbackData->pMessage);
         return VK_FALSE;
     }
@@ -38,6 +61,25 @@ namespace {
         createInfo.pUserData = nullptr;
         return createInfo;
     }
+
+    std::vector<std::pair<uint32_t, VkPhysicalDevice>> RatePhysicalDevices(const std::vector<VkPhysicalDevice>& devices)
+    {
+        std::vector<std::pair<uint32_t, VkPhysicalDevice>> result;
+        for (auto& device : devices) {
+            VkPhysicalDeviceProperties properties;
+            vkGetPhysicalDeviceProperties(device, &properties);
+            VkPhysicalDeviceFeatures features;
+            vkGetPhysicalDeviceFeatures(device, &features);
+
+            uint32_t scores = 0;
+            for (const auto& rule : RULES) {
+                scores += rule(properties, features);
+            }
+            result.emplace_back(std::make_pair(scores, device));
+        }
+        std::sort(result.begin(), result.end(), [](const auto& a, const auto& b) -> bool { return a.first > b.first; });
+        return result;
+    }
 }
 
 namespace Explosion {
@@ -49,6 +91,7 @@ namespace Explosion {
 #ifdef ENABLE_VALIDATION_LAYER
         CreateDebugUtils();
 #endif
+        PickPhysicalDevice();
     }
 
     Device::~Device()
@@ -147,4 +190,16 @@ namespace Explosion {
         func(vkInstance, vkDebugUtilsMessenger, nullptr);
     }
 #endif
+
+    void Device::PickPhysicalDevice()
+    {
+        uint32_t deviceCnt = 0;
+        vkEnumeratePhysicalDevices(vkInstance, &deviceCnt, nullptr);
+        if (deviceCnt == 0) {
+            throw std::runtime_error("there is no vulkan physical device available");
+        }
+        std::vector<VkPhysicalDevice> devices(deviceCnt);
+        vkEnumeratePhysicalDevices(vkInstance, &deviceCnt, devices.data());
+        vkPhysicalDevice = RatePhysicalDevices(devices)[0].second;
+    }
 }
