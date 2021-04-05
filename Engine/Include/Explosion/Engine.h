@@ -7,18 +7,22 @@
 
 #include <string>
 
+#include <Explosion/Driver/Driver.h>
+
 namespace Explosion {
     class World;
     class Renderer;
 
     class Engine {
     public:
+        static Engine* GetInstance();
         World* CreateWorld(const std::string& name);
         void DestroyWorld(World* world);
         Renderer* CreateRenderer(void* surface, uint32_t width, uint32_t height);
         void DestroyRenderer(Renderer* renderer);
 
     private:
+        Driver driver;
     };
 }
 

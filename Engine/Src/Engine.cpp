@@ -7,6 +7,12 @@
 #include <Explosion/Core/Renderer.h>
 
 namespace Explosion {
+    Engine* Engine::GetInstance()
+    {
+        static Engine* instance = new Engine();
+        return instance;
+    }
+
     World* Engine::CreateWorld(const std::string& name)
     {
         return new World(name);
@@ -19,7 +25,7 @@ namespace Explosion {
 
     Renderer* Engine::CreateRenderer(void* surface, uint32_t width, uint32_t height)
     {
-        return new Renderer(surface, width, height);
+        return new Renderer(driver, surface, width, height);
     }
 
     void Engine::DestroyRenderer(Renderer* renderer)

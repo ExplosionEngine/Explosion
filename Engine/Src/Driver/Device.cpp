@@ -9,6 +9,7 @@
 #include <Explosion/Common/Logger.h>
 
 #ifdef WIN32
+#include <windows.h>
 #include <vulkan/vulkan_win32.h>
 #endif
 

@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include <Application/Application.h>
+#include <Explosion/Engine.h>
 
 class App : public Explosion::Application {
 public:
@@ -13,9 +14,7 @@ public:
 protected:
     void OnStart() override
     {
-#ifdef ENABLE_VALIDATION_LAYER
-        std::cout << "Hello" << std::endl;
-#endif
+
     }
 
     void OnStop() override
@@ -27,6 +26,9 @@ protected:
     {
 
     }
+
+private:
+    Explosion::Engine* engine = Explosion::Engine::GetInstance();
 };
 
 int main(int argc, char* argv[])

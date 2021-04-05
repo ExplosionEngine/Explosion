@@ -8,12 +8,15 @@
 #include <cstdint>
 
 namespace Explosion {
+    class Driver;
+
     class Renderer {
     public:
-        Renderer(void* surface, uint32_t width, uint32_t height);
+        Renderer(Driver& driver, void* surface, uint32_t width, uint32_t height);
         ~Renderer();
 
     private:
+        Driver& driver;
         void* surface;
         uint32_t width;
         uint32_t height;
