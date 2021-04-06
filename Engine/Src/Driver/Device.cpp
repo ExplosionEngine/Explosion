@@ -20,6 +20,7 @@
 
 #ifdef TARGET_OS_MAC
 #include <vulkan/vulkan_macos.h>
+#define VK_EXT_METAL_SURFACE_EXTENSION_NAME "VK_EXT_metal_surface"
 #endif
 
 namespace {
@@ -117,7 +118,7 @@ namespace Explosion {
         extensions.emplace_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #endif
 #ifdef TARGET_OS_MAC
-        extensions.emplace_back("VK_EXT_metal_surface");
+        extensions.emplace_back(VK_EXT_METAL_SURFACE_EXTENSION_NAME);
 #endif
 #ifdef ENABLE_VALIDATION_LAYER
         extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);

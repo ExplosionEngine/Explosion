@@ -5,14 +5,18 @@
 #ifndef EXPLOSION_DRIVER_H
 #define EXPLOSION_DRIVER_H
 
+#include <memory>
+
 #include <Explosion/Driver/Device.h>
 
 namespace Explosion {
     class Driver {
     public:
+        Driver();
+        ~Driver();
 
     private:
-        Device device;
+        std::unique_ptr<Device> device;
     };
 }
 

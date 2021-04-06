@@ -5,5 +5,7 @@
 #include <Explosion/Driver/Driver.h>
 
 namespace Explosion {
+    Driver::Driver() : device(std::make_unique<Device>()) {}
 
+    Driver::~Driver() = default;
 }

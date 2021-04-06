@@ -9,7 +9,7 @@
 namespace Explosion {
     Engine* Engine::GetInstance()
     {
-        static Engine* instance = new Engine();
+        static auto* instance = new Engine();
         return instance;
     }
 

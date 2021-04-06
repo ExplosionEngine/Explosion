@@ -26,9 +26,6 @@ protected:
     {
 
     }
-
-private:
-    Explosion::Engine* engine = Explosion::Engine::GetInstance();
 };
 
 int main(int argc, char* argv[])
