@@ -16,6 +16,10 @@ namespace Explosion {
         Device();
         ~Device();
 
+        const VkInstance& GetVkInstance() const;
+        const VkPhysicalDevice& GetVkPhysicalDevice() const;
+        const VkDevice& GetVkDevice() const;
+
     private:
 #ifdef ENABLE_VALIDATION_LAYER
         void CreateDebugUtils();

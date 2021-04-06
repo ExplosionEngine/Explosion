@@ -19,7 +19,7 @@
 #endif
 
 #ifdef TARGET_OS_MAC
-#define VK_EXT_METAL_SURFACE_EXTENSION_NAME "VK_EXT_metal_surface"
+#define VK_MVK_MACOS_SURFACE_EXTENSION_NAME "VK_MVK_macos_surface"
 #endif
 
 #define VK_VALIDATION_LAYER_EXTENSION_NAME "VK_LAYER_KHRONOS_validation"
@@ -123,7 +123,7 @@ namespace Explosion {
         extensions.emplace_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #endif
 #ifdef TARGET_OS_MAC
-        extensions.emplace_back(VK_EXT_METAL_SURFACE_EXTENSION_NAME);
+        extensions.emplace_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
 #endif
 #ifdef ENABLE_VALIDATION_LAYER
         extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -139,6 +139,21 @@ namespace Explosion {
         ) {
             throw std::runtime_error("there are some extension is not supported");
         }
+    }
+
+    const VkInstance& Device::GetVkInstance() const
+    {
+        return vkInstance;
+    }
+
+    const VkPhysicalDevice& Device::GetVkPhysicalDevice() const
+    {
+        return vkPhysicalDevice;
+    }
+
+    const VkDevice& Device::GetVkDevice() const
+    {
+        return vkDevice;
     }
 
     void Device::PrepareLayers()

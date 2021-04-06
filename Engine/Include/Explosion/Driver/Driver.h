@@ -7,13 +7,16 @@
 
 #include <memory>
 
-#include <Explosion/Driver/Device.h>
-
 namespace Explosion {
+    class Device;
+    class SwapChain;
+
     class Driver {
     public:
         Driver();
         ~Driver();
+        SwapChain* CreateSwapChain(void* surface, uint32_t width, uint32_t height);
+        void DestroySwapChain(SwapChain* swapChain);
 
     private:
         std::unique_ptr<Device> device;
