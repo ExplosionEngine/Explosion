@@ -14,6 +14,14 @@
 #include <vulkan/vulkan_win32.h>
 #endif
 
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif
+
+#ifdef TARGET_OS_MAC
+#include <vulkan/vulkan_macos.h>
+#endif
+
 namespace {
     using RateRule = std::function<uint32_t(const VkPhysicalDeviceProperties&, const VkPhysicalDeviceFeatures&)>;
 
@@ -108,6 +116,9 @@ namespace Explosion {
 #ifdef WIN32
         extensions.emplace_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #endif
+#ifdef TARGET_OS_MAC
+        extensions.emplace_back("VK_EXT_metal_surface");
+#endif
 #ifdef ENABLE_VALIDATION_LAYER
         extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
@@ -116,7 +127,10 @@ namespace Explosion {
         vkEnumerateInstanceExtensionProperties(nullptr, &propertiesCnt, nullptr);
         std::vector<VkExtensionProperties> properties(propertiesCnt);
         vkEnumerateInstanceExtensionProperties(nullptr, &propertiesCnt, properties.data());
-        if (!CheckExtensionSupported(extensions, properties)) {
+        if (!CheckPropertySupport<VkExtensionProperties>(
+            extensions, properties,
+            [](const auto* name, const auto& prop) -> bool { return std::string(name) == prop.extensionName; })
+        ) {
             throw std::runtime_error("there are some extension is not supported");
         }
     }
@@ -131,7 +145,10 @@ namespace Explosion {
         vkEnumerateInstanceLayerProperties(&layerCnt, nullptr);
         std::vector<VkLayerProperties> properties(layerCnt);
         vkEnumerateInstanceLayerProperties(&layerCnt, properties.data());
-        if (!CheckLayerSupported(layers, properties)) {
+        if (!CheckPropertySupport<VkLayerProperties>(
+            layers, properties,
+            [](const auto* name, const auto& prop) -> bool { return std::string(name) == prop.layerName; }
+        )) {
             throw std::runtime_error("there are some layers is not supported");
         }
     }

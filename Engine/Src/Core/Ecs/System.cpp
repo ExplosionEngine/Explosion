@@ -7,8 +7,6 @@
 namespace Explosion {
     System::System() = default;
 
-    System::~System() = default;
-
     void System::Update(Registry& registry)
     {
         OnUpdate(registry);

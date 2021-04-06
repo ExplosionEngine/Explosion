@@ -15,7 +15,7 @@
 namespace Explosion {
     class World {
     public:
-        World(std::string name);
+        explicit World(std::string name);
         ~World();
 
         Entity CreateEntity();
@@ -55,7 +55,7 @@ namespace Explosion {
         void UnmountSystem()
         {
             SystemType type = typeid(SystemType).hash_code();
-            auto iter = systems.template find(type);
+            auto iter = systems.find(type);
             if (iter == systems.end()) {
                 return;
             }

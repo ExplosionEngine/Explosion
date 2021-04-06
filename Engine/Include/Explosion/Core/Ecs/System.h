@@ -12,7 +12,7 @@ namespace Explosion {
 
     class System {
     public:
-        ~System();
+        virtual ~System() = 0;
         void Update(Registry& registry);
 
     protected:

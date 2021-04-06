@@ -6,39 +6,25 @@
 #define EXPLOSION_UTILS_H
 
 #include <vector>
-#include <algorithm>
 #include <string>
+#include <functional>
 
 #include <vulkan/vulkan.h>
 
 namespace Explosion {
-    bool CheckExtensionSupported(
-        const std::vector<const char*>& extensions,
-        const std::vector<VkExtensionProperties>& properties
-    ) {
-        for (auto& extension : extensions) {
-            bool found = false;
-            for (auto& property : properties) {
-                if (std::string(extension) == property.extensionName) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                return false;
-            }
-        }
-        return true;
-    }
+    template <typename T>
+    using NameComparer = std::function<bool(const char*, const T&)>;
 
-    bool CheckLayerSupported(
-        const std::vector<const char*>& layers,
-        const std::vector<VkLayerProperties>& properties
+    template <typename T>
+    bool CheckPropertySupport(
+        const std::vector<const char*>& needs,
+        const std::vector<T>& properties,
+        const NameComparer<T>& comparer
     ) {
-        for (auto& layer : layers) {
+        for (auto& need : needs) {
             bool found = false;
             for (auto& property : properties) {
-                if (std::string(layer) == property.layerName) {
+                if (comparer(need, property)) {
                     found = true;
                     break;
                 }
