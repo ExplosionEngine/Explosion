@@ -19,9 +19,10 @@
 #endif
 
 #ifdef TARGET_OS_MAC
-#include <vulkan/vulkan_macos.h>
 #define VK_EXT_METAL_SURFACE_EXTENSION_NAME "VK_EXT_metal_surface"
 #endif
+
+#define VK_VALIDATION_LAYER_EXTENSION_NAME "VK_LAYER_KHRONOS_validation"
 
 namespace {
     using RateRule = std::function<uint32_t(const VkPhysicalDeviceProperties&, const VkPhysicalDeviceFeatures&)>;
@@ -139,7 +140,7 @@ namespace Explosion {
     void Device::PrepareLayers()
     {
 #ifdef ENABLE_VALIDATION_LAYER
-        layers.emplace_back("VK_LAYER_KHRONOS_validation");
+        layers.emplace_back(VK_VALIDATION_LAYER_EXTENSION_NAME);
 #endif
 
         uint32_t layerCnt = 0;
