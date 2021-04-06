@@ -6,6 +6,7 @@
 #define EXPLOSION_DEVICE_H
 
 #include <vector>
+#include <optional>
 
 #include <vulkan/vulkan.h>
 
@@ -29,11 +30,16 @@ namespace Explosion {
         void DestroyInstance();
 
         void PickPhysicalDevice();
+        void GetSelectedPhysicalDeviceProperties();
+        void FindQueueFamilyIndex();
 
         std::vector<const char*> extensions {};
         std::vector<const char*> layers {};
         VkInstance vkInstance = VK_NULL_HANDLE;
         VkPhysicalDevice vkPhysicalDevice = VK_NULL_HANDLE;
+        VkPhysicalDeviceProperties vkPhysicalDeviceProperties;
+        VkPhysicalDeviceFeatures  vkPhysicalDeviceFeatures;
+        std::optional<uint32_t> vkQueueFamilyIndex;
     };
 }
 

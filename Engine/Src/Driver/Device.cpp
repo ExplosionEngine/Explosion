@@ -102,6 +102,8 @@ namespace Explosion {
         CreateDebugUtils();
 #endif
         PickPhysicalDevice();
+        GetSelectedPhysicalDeviceProperties();
+        FindQueueFamilyIndex();
     }
 
     Device::~Device()
@@ -220,5 +222,29 @@ namespace Explosion {
         std::vector<VkPhysicalDevice> devices(deviceCnt);
         vkEnumeratePhysicalDevices(vkInstance, &deviceCnt, devices.data());
         vkPhysicalDevice = RatePhysicalDevices(devices)[0].second;
+    }
+
+    void Device::GetSelectedPhysicalDeviceProperties()
+    {
+        vkGetPhysicalDeviceProperties(vkPhysicalDevice, &vkPhysicalDeviceProperties);
+        vkGetPhysicalDeviceFeatures(vkPhysicalDevice, &vkPhysicalDeviceFeatures);
+    }
+
+    void Device::FindQueueFamilyIndex()
+    {
+        uint32_t queueFamilyCnt = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &queueFamilyCnt, nullptr);
+        std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCnt);
+        vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &queueFamilyCnt, queueFamilyProperties.data());
+
+        for (uint32_t i = 0; i < queueFamilyCnt; i++) {
+            if (queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                vkQueueFamilyIndex = i;
+                break;
+            }
+        }
+        if (!vkQueueFamilyIndex.has_value()) {
+            throw std::runtime_error("found no queue family with graphics queue supported");
+        }
     }
 }
