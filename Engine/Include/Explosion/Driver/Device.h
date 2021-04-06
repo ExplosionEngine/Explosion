@@ -33,6 +33,9 @@ namespace Explosion {
         void GetSelectedPhysicalDeviceProperties();
         void FindQueueFamilyIndex();
 
+        void CreateDevice();
+        void DestroyDevice();
+
         std::vector<const char*> extensions {};
         std::vector<const char*> layers {};
         VkInstance vkInstance = VK_NULL_HANDLE;
@@ -40,6 +43,7 @@ namespace Explosion {
         VkPhysicalDeviceProperties vkPhysicalDeviceProperties;
         VkPhysicalDeviceFeatures  vkPhysicalDeviceFeatures;
         std::optional<uint32_t> vkQueueFamilyIndex;
+        VkDevice vkDevice = VK_NULL_HANDLE;
     };
 }
 

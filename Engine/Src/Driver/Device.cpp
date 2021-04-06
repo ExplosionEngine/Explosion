@@ -104,10 +104,12 @@ namespace Explosion {
         PickPhysicalDevice();
         GetSelectedPhysicalDeviceProperties();
         FindQueueFamilyIndex();
+        CreateDevice();
     }
 
     Device::~Device()
     {
+        DestroyDevice();
 #ifdef ENABLE_VALIDATION_LAYER
         DestroyDebugUtils();
 #endif
@@ -246,5 +248,33 @@ namespace Explosion {
         if (!vkQueueFamilyIndex.has_value()) {
             throw std::runtime_error("found no queue family with graphics queue supported");
         }
+    }
+
+    void Device::CreateDevice()
+    {
+        VkDeviceQueueCreateInfo queueCreateInfo {};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = vkQueueFamilyIndex.value();
+        queueCreateInfo.queueCount = 1;
+        float queuePriority = 1.f;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+
+        VkDeviceCreateInfo deviceCreateInfo {};
+        deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
+        deviceCreateInfo.queueCreateInfoCount = 1;
+        deviceCreateInfo.pEnabledFeatures = &vkPhysicalDeviceFeatures;
+        deviceCreateInfo.enabledExtensionCount = 0;
+        // NB: this field is ignored in high version of Vulkan, but in low version, code will not work will
+        deviceCreateInfo.enabledLayerCount = 0;
+
+        if (vkCreateDevice(vkPhysicalDevice, &deviceCreateInfo, nullptr, &vkDevice) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create logical device");
+        }
+    }
+
+    void Device::DestroyDevice()
+    {
+        vkDestroyDevice(vkDevice, nullptr);
     }
 }
