@@ -31,7 +31,6 @@ const char** GetPlatformInstanceExtensions()
 
 bool CreatePlatformSurface(const VkInstance& vkInstance, void* surface, VkSurfaceKHR& vkSurface)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
     auto nsWindow = static_cast<NSWindow*>(surface);
     auto nsView = nsWindow.contentView;
 
@@ -45,7 +44,6 @@ bool CreatePlatformSurface(const VkInstance& vkInstance, void* surface, VkSurfac
     }
     [nsView setLayer: layer];
     [nsView setWantsLayer: YES];
-#endif
 
     VkMacOSSurfaceCreateInfoMVK createInfo {};
     createInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
