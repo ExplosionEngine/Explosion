@@ -4,14 +4,7 @@
 
 #include <Explosion/Driver/Device.h>
 #include <Explosion/Driver/SwapChain.h>
-
-#ifdef __APPLE__
-#include <TargetConditionals.h>
-#endif
-
-#ifdef TARGET_OS_MAC
-#include <vulkan/vulkan_macos.h>
-#endif
+#include <Explosion/Driver/Platform.h>
 
 namespace Explosion {
     SwapChain::SwapChain(Device& device, void* surface, uint32_t width, uint32_t height)
@@ -27,18 +20,9 @@ namespace Explosion {
 
     void SwapChain::CreateSurface()
     {
-#ifdef TARGET_OS_MAC
-        VkMacOSSurfaceCreateInfoMVK createInfo {};
-        createInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
-        createInfo.pView = surface;
-        createInfo.pNext = nullptr;
-
-        if (vkCreateMacOSSurfaceMVK(device.GetVkInstance(), &createInfo, nullptr, &vkSurface) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create MacOS surface");
+        if (!CreatePlatformSurface(device.GetVkInstance(), surface, vkSurface)) {
+            throw std::runtime_error("failed to create vulkan surface");
         }
-#endif
-
-        // TODO Windows Surface
     }
 
     void SwapChain::DestroySurface()

@@ -7,20 +7,8 @@
 
 #include <Explosion/Driver/Device.h>
 #include <Explosion/Driver/Utils.h>
+#include <Explosion/Driver/Platform.h>
 #include <Explosion/Common/Logger.h>
-
-#ifdef WIN32
-#include <windows.h>
-#include <vulkan/vulkan_win32.h>
-#endif
-
-#ifdef __APPLE__
-#include <TargetConditionals.h>
-#endif
-
-#ifdef TARGET_OS_MAC
-#define VK_MVK_MACOS_SURFACE_EXTENSION_NAME "VK_MVK_macos_surface"
-#endif
 
 #define VK_VALIDATION_LAYER_EXTENSION_NAME "VK_LAYER_KHRONOS_validation"
 
@@ -119,15 +107,12 @@ namespace Explosion {
     void Device::PrepareExtensions()
     {
         extensions.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
-#ifdef WIN32
-        extensions.emplace_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-#endif
-#ifdef TARGET_OS_MAC
-        extensions.emplace_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
-#endif
 #ifdef ENABLE_VALIDATION_LAYER
         extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
+        auto platformExtensionNum = GetPlatformInstanceExtensionNum();
+        auto platformExtensions = GetPlatformInstanceExtensions();
+        extensions.insert(extensions.end(), platformExtensions, platformExtensions + platformExtensionNum);
 
         uint32_t propertiesCnt = 0;
         vkEnumerateInstanceExtensionProperties(nullptr, &propertiesCnt, nullptr);
