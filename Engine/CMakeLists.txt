@@ -23,4 +23,7 @@ file(GLOB_RECURSE ENGINE_SOURCES Src/*.cpp)
 add_library(explosion SHARED ${ENGINE_SOURCES} ${PLATFORM_SOURCES})
 
 target_include_directories(explosion PUBLIC Include)
+if (APPLE)
+    target_link_libraries(explosion "-framework Cocoa")
+endif()
 target_link_libraries(explosion ${Vulkan_LIBRARIES})

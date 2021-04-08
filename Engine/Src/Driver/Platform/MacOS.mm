@@ -9,6 +9,8 @@
 #endif
 
 #ifdef TARGET_OS_MAC
+
+#include <Cocoa/Cocoa.h>
 #include <vulkan/vulkan_macos.h>
 
 #define VK_MVK_MACOS_SURFACE_EXTENSION_NAME "VK_MVK_macos_surface"
@@ -29,9 +31,25 @@ const char** GetPlatformInstanceExtensions()
 
 bool CreatePlatformSurface(const VkInstance& vkInstance, void* surface, VkSurfaceKHR& vkSurface)
 {
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
+    auto nsWindow = static_cast<NSWindow*>(surface);
+    auto nsView = nsWindow.contentView;
+
+    NSBundle* bundle = [NSBundle bundleWithPath: @"/System/Library/Frameworks/QuartzCore.framework"];
+    if (!bundle) {
+        return false;
+    }
+    CALayer* layer = [[bundle classNamed: @"CAMetalLayer"] layer];
+    if (!layer) {
+        return false;
+    }
+    [nsView setLayer: layer];
+    [nsView setWantsLayer: YES];
+#endif
+
     VkMacOSSurfaceCreateInfoMVK createInfo {};
     createInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
-    createInfo.pView = surface;
+    createInfo.pView = nsView;
     createInfo.pNext = nullptr;
 
     if (vkCreateMacOSSurfaceMVK(vkInstance, &createInfo, nullptr, &vkSurface) != VK_SUCCESS) {
