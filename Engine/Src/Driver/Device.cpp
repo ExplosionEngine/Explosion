@@ -83,7 +83,7 @@ namespace {
 namespace Explosion {
     Device::Device()
     {
-        PrepareExtensions();
+        PrepareInstanceExtensions();
         PrepareLayers();
         CreateInstance();
 #ifdef ENABLE_VALIDATION_LAYER
@@ -92,7 +92,9 @@ namespace Explosion {
         PickPhysicalDevice();
         GetSelectedPhysicalDeviceProperties();
         FindQueueFamilyIndex();
+        PrepareDeviceExtensions();
         CreateLogicalDevice();
+        GetQueue();
     }
 
     Device::~Device()
@@ -104,25 +106,41 @@ namespace Explosion {
         DestroyInstance();
     }
 
-    void Device::PrepareExtensions()
+    void Device::PrepareInstanceExtensions()
     {
-        extensions.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
+        instanceExtensions.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
 #ifdef ENABLE_VALIDATION_LAYER
-        extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        instanceExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
         auto platformExtensionNum = GetPlatformInstanceExtensionNum();
         auto platformExtensions = GetPlatformInstanceExtensions();
-        extensions.insert(extensions.end(), platformExtensions, platformExtensions + platformExtensionNum);
+        instanceExtensions.insert(instanceExtensions.end(), platformExtensions, platformExtensions + platformExtensionNum);
 
         uint32_t propertiesCnt = 0;
         vkEnumerateInstanceExtensionProperties(nullptr, &propertiesCnt, nullptr);
         std::vector<VkExtensionProperties> properties(propertiesCnt);
         vkEnumerateInstanceExtensionProperties(nullptr, &propertiesCnt, properties.data());
         if (!CheckPropertySupport<VkExtensionProperties>(
-            extensions, properties,
+            instanceExtensions, properties,
             [](const auto* name, const auto& prop) -> bool { return std::string(name) == prop.extensionName; })
         ) {
-            throw std::runtime_error("there are some extension is not supported");
+            throw std::runtime_error("there are some instance extension is not supported");
+        }
+    }
+
+    void Device::PrepareDeviceExtensions()
+    {
+        deviceExtensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+        uint32_t propertiesCnt = 0;
+        vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, nullptr, &propertiesCnt, nullptr);
+        std::vector<VkExtensionProperties> properties(propertiesCnt);
+        vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, nullptr, &propertiesCnt, properties.data());
+        if (!CheckPropertySupport<VkExtensionProperties>(
+            deviceExtensions, properties,
+            [](const auto* name, const auto& prop) -> bool { return std::string(name) == prop.extensionName; })
+        ) {
+            throw std::runtime_error("there are some device extension is not supported");
         }
     }
 
@@ -139,6 +157,11 @@ namespace Explosion {
     const VkDevice& Device::GetVkDevice() const
     {
         return vkDevice;
+    }
+
+    const VkQueue& Device::GetVkQueue() const
+    {
+        return vkQueue;
     }
 
     uint32_t Device::GetVkQueueFamilyIndex() const
@@ -177,8 +200,8 @@ namespace Explosion {
         VkInstanceCreateInfo createInfo {};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &applicationInfo;
-        createInfo.enabledExtensionCount = extensions.size();
-        createInfo.ppEnabledExtensionNames = extensions.data();
+        createInfo.enabledExtensionCount = instanceExtensions.size();
+        createInfo.ppEnabledExtensionNames = instanceExtensions.data();
         createInfo.enabledLayerCount = layers.size();
         createInfo.ppEnabledLayerNames = layers.data();
 #ifdef ENABLE_VALIDATION_LAYER
@@ -269,7 +292,8 @@ namespace Explosion {
         deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
         deviceCreateInfo.queueCreateInfoCount = 1;
         deviceCreateInfo.pEnabledFeatures = &vkPhysicalDeviceFeatures;
-        deviceCreateInfo.enabledExtensionCount = 0;
+        deviceCreateInfo.enabledExtensionCount = deviceExtensions.size();
+        deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
         // NB: this field is ignored in high version of Vulkan, but in low version, code will not work will
         deviceCreateInfo.enabledLayerCount = 0;
 
@@ -281,5 +305,10 @@ namespace Explosion {
     void Device::DestroyLogicalDevice()
     {
         vkDestroyDevice(vkDevice, nullptr);
+    }
+
+    void Device::GetQueue()
+    {
+        vkGetDeviceQueue(vkDevice, vkQueueFamilyIndex.value(), 0, &vkQueue);
     }
 }

@@ -11,7 +11,7 @@ namespace Explosion {
         : device(device), surface(surface), width(width), height(height)
     {
         CreateSurface();
-        GetQueue();
+        CheckPresentSupport();
     }
 
     SwapChain::~SwapChain()
@@ -31,13 +31,12 @@ namespace Explosion {
         vkDestroySurfaceKHR(device.GetVkInstance(), vkSurface, nullptr);
     }
 
-    void SwapChain::GetQueue()
+    void SwapChain::CheckPresentSupport()
     {
         VkBool32 presentSupport = VK_FALSE;
         vkGetPhysicalDeviceSurfaceSupportKHR(device.GetVkPhysicalDevice(), device.GetVkQueueFamilyIndex(), vkSurface, &presentSupport);
         if (!presentSupport) {
             throw std::runtime_error("selected queue family is not supporting presentation");
         }
-        vkGetDeviceQueue(device.GetVkDevice(), device.GetVkQueueFamilyIndex(), 0, &vkQueue);
     }
 }

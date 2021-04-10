@@ -19,6 +19,7 @@ namespace Explosion {
         const VkInstance& GetVkInstance() const;
         const VkPhysicalDevice& GetVkPhysicalDevice() const;
         const VkDevice& GetVkDevice() const;
+        const VkQueue& GetVkQueue() const;
         uint32_t GetVkQueueFamilyIndex() const;
 
     private:
@@ -28,7 +29,8 @@ namespace Explosion {
         VkDebugUtilsMessengerEXT vkDebugUtilsMessenger = VK_NULL_HANDLE;
 #endif
 
-        void PrepareExtensions();
+        void PrepareInstanceExtensions();
+        void PrepareDeviceExtensions();
         void PrepareLayers();
 
         void CreateInstance();
@@ -40,8 +42,10 @@ namespace Explosion {
 
         void CreateLogicalDevice();
         void DestroyLogicalDevice();
+        void GetQueue();
 
-        std::vector<const char*> extensions {};
+        std::vector<const char*> instanceExtensions {};
+        std::vector<const char*> deviceExtensions {};
         std::vector<const char*> layers {};
         VkInstance vkInstance = VK_NULL_HANDLE;
         VkPhysicalDevice vkPhysicalDevice = VK_NULL_HANDLE;
@@ -49,6 +53,7 @@ namespace Explosion {
         VkPhysicalDeviceFeatures  vkPhysicalDeviceFeatures;
         std::optional<uint32_t> vkQueueFamilyIndex;
         VkDevice vkDevice = VK_NULL_HANDLE;
+        VkQueue vkQueue = VK_NULL_HANDLE;
     };
 }
 
