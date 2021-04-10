@@ -22,6 +22,8 @@ namespace Explosion {
         const VkExtent2D& GetVkExtent();
         const VkSurfaceFormatKHR& GetVkSurfaceFormat();
         const VkPresentModeKHR& GetVkPresentMode();
+        const std::vector<VkImage>& GetVkImages();
+        const std::vector<VkImageView>& GetVkImageViews();
 
     private:
         void CreateSurface();
@@ -32,6 +34,10 @@ namespace Explosion {
         void CreateSwapChain();
         void DestroySwapChain();
 
+        void GetImages();
+        void CreateImageViews();
+        void DestroyImageViews();
+
         Device& device;
         void* surface;
         uint32_t width;
@@ -41,6 +47,9 @@ namespace Explosion {
         VkExtent2D vkExtent {};
         std::optional<VkSurfaceFormatKHR> vkSurfaceFormat;
         std::optional<VkPresentModeKHR> vkPresentMode;
+        VkSwapchainKHR vkSwapChain = VK_NULL_HANDLE;
+        std::vector<VkImage> vkImages {};
+        std::vector<VkImageView> vkImageViews {};
     };
 }
 
