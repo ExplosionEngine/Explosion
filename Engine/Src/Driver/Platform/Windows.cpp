@@ -6,10 +6,12 @@
 
 #ifdef WIN32
 #include <windows.h>
+#undef min
+#undef max
 #include <vulkan/vulkan_win32.h>
 
 const char* INSTANCE_EXTENSIONS[] = {
-    VK_MVK_MACOS_SURFACE_EXTENSION_NAME
+    VK_KHR_WIN32_SURFACE_EXTENSION_NAME
 };
 
 uint32_t GetPlatformInstanceExtensionNum()
