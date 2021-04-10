@@ -19,6 +19,7 @@ namespace Explosion {
         const VkInstance& GetVkInstance() const;
         const VkPhysicalDevice& GetVkPhysicalDevice() const;
         const VkDevice& GetVkDevice() const;
+        uint32_t GetVkQueueFamilyIndex() const;
 
     private:
 #ifdef ENABLE_VALIDATION_LAYER
@@ -37,8 +38,8 @@ namespace Explosion {
         void GetSelectedPhysicalDeviceProperties();
         void FindQueueFamilyIndex();
 
-        void CreateDevice();
-        void DestroyDevice();
+        void CreateLogicalDevice();
+        void DestroyLogicalDevice();
 
         std::vector<const char*> extensions {};
         std::vector<const char*> layers {};

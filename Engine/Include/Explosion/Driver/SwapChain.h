@@ -17,15 +17,17 @@ namespace Explosion {
         SwapChain(Device& device, void* surface, uint32_t width, uint32_t height);
         ~SwapChain();
 
+    private:
         void CreateSurface();
         void DestroySurface();
+        void GetQueue();
 
-    private:
         Device& device;
         void* surface;
         uint32_t width;
         uint32_t height;
         VkSurfaceKHR vkSurface = VK_NULL_HANDLE;
+        VkQueue vkQueue = VK_NULL_HANDLE;
     };
 }
 

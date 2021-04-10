@@ -92,12 +92,12 @@ namespace Explosion {
         PickPhysicalDevice();
         GetSelectedPhysicalDeviceProperties();
         FindQueueFamilyIndex();
-        CreateDevice();
+        CreateLogicalDevice();
     }
 
     Device::~Device()
     {
-        DestroyDevice();
+        DestroyLogicalDevice();
 #ifdef ENABLE_VALIDATION_LAYER
         DestroyDebugUtils();
 #endif
@@ -139,6 +139,11 @@ namespace Explosion {
     const VkDevice& Device::GetVkDevice() const
     {
         return vkDevice;
+    }
+
+    uint32_t Device::GetVkQueueFamilyIndex() const
+    {
+        return vkQueueFamilyIndex.value();
     }
 
     void Device::PrepareLayers()
@@ -250,7 +255,7 @@ namespace Explosion {
         }
     }
 
-    void Device::CreateDevice()
+    void Device::CreateLogicalDevice()
     {
         VkDeviceQueueCreateInfo queueCreateInfo {};
         queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -273,7 +278,7 @@ namespace Explosion {
         }
     }
 
-    void Device::DestroyDevice()
+    void Device::DestroyLogicalDevice()
     {
         vkDestroyDevice(vkDevice, nullptr);
     }
