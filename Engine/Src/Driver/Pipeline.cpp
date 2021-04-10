@@ -5,5 +5,17 @@
 #include <Explosion/Driver/Pipeline.h>
 
 namespace Explosion {
+    Pipeline::Pipeline(Pipeline::ShaderConfig shaderConfig) : shaderConfig(shaderConfig) {}
 
+    Pipeline::~Pipeline() = default;
+
+    void Pipeline::CreatePipeline()
+    {
+        // TODO
+    }
+
+    void Pipeline::DestroyPipeline()
+    {
+        // TODO
+    }
 }
