@@ -7,7 +7,11 @@
 
 #include <vector>
 
+#include <vulkan/vulkan.h>
+
 namespace Explosion {
+    class Device;
+
     class Pipeline {
     public:
         struct ShaderConfig {
@@ -24,14 +28,15 @@ namespace Explosion {
             VertexConfig vertexConfig {};
         };
 
-        explicit Pipeline(ShaderConfig shaderConfig);
+        explicit Pipeline(Device& device, Config config);
         ~Pipeline();
 
     private:
         void CreatePipeline();
         void DestroyPipeline();
 
-        ShaderConfig shaderConfig;
+        Device& device;
+        Config config;
     };
 }
 
