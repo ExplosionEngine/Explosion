@@ -6,7 +6,19 @@
 #define EXPLOSION_ENUMS_H
 
 namespace Explosion {
-    using DFlags = uint32_t;
+    using Flags = uint32_t;
+
+    template<typename Type, typename VkEnumType>
+    VkEnumType VkConvert(const Type& type)
+    {
+        return static_cast<VkEnumType>(type);
+    }
+
+    template<typename Type>
+    Flags GetFlags(const Type& type)
+    {
+        return static_cast<Flags>(type);
+    }
 
     enum class VertexInputRate {
         VERTEX = VK_VERTEX_INPUT_RATE_VERTEX,
@@ -31,6 +43,7 @@ namespace Explosion {
         BACK = VK_CULL_MODE_BACK_BIT,
         MAX
     };
+    using CullModeFlags = Flags;
 
     enum class FrontFace {
         CLOCKWISE = VK_FRONT_FACE_CLOCKWISE,

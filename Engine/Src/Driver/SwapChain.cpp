@@ -168,7 +168,7 @@ namespace Explosion {
         createInfo.preTransform = vkSurfaceCapabilities.currentTransform;
         createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
         createInfo.presentMode = vkPresentMode;
-        createInfo.clipped = VK_TRUE;
+        createInfo.clipped = true;
         createInfo.oldSwapchain = nullptr;
 
         if (vkCreateSwapchainKHR(device.GetVkDevice(), &createInfo, nullptr, &vkSwapChain)) {

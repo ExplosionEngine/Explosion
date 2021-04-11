@@ -3,7 +3,7 @@
 //
 
 #include <Application/Application.h>
-#include <Explosion/Engine.h>
+#include <Explosion/Core/Engine.h>
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>

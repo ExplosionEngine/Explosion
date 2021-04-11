@@ -42,7 +42,7 @@ namespace Explosion {
             bool depthClamp = false;
             bool discard = false;
             PolygonMode polygonMode = PolygonMode::FILL;
-            CullMode cullMode = CullMode::BACK;
+            CullModeFlags cullMode = GetFlags(CullMode::BACK);
             FrontFace frontFace = FrontFace::CLOCKWISE;
         };
 
@@ -63,6 +63,8 @@ namespace Explosion {
 
         Device& device;
         Config config;
+        VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
+        VkPipeline vkPipeline = VK_NULL_HANDLE;
     };
 }
 

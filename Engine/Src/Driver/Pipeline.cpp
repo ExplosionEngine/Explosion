@@ -58,7 +58,7 @@ namespace Explosion {
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo {};
         inputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        inputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
+        inputAssemblyStateCreateInfo.primitiveRestartEnable = false;
 
         VkViewport viewport {};
         viewport.x = config.viewportScissorsConfig.viewPortX;
@@ -85,9 +85,50 @@ namespace Explosion {
         rasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         rasterizationStateCreateInfo.depthClampEnable = config.rasterizationConfig.depthClamp;
         rasterizationStateCreateInfo.rasterizerDiscardEnable = config.rasterizationConfig.discard;
-        // TODO
+        rasterizationStateCreateInfo.polygonMode = VkConvert<PolygonMode, VkPolygonMode>(config.rasterizationConfig.polygonMode);
+        rasterizationStateCreateInfo.lineWidth = 1.f;
+        rasterizationStateCreateInfo.cullMode = config.rasterizationConfig.cullMode;
+        rasterizationStateCreateInfo.frontFace = VkConvert<FrontFace, VkFrontFace>(config.rasterizationConfig.frontFace);
+        rasterizationStateCreateInfo.depthBiasEnable = false;
+        rasterizationStateCreateInfo.depthBiasConstantFactor = 0.f;
+        rasterizationStateCreateInfo.depthBiasClamp = 0.f;
+        rasterizationStateCreateInfo.depthBiasSlopeFactor = 0.f;
 
-        // TODO
+        VkPipelineColorBlendAttachmentState colorBlendAttachmentState {};
+        colorBlendAttachmentState.colorWriteMask =
+            VK_COLOR_COMPONENT_R_BIT
+            | VK_COLOR_COMPONENT_G_BIT
+            | VK_COLOR_COMPONENT_B_BIT
+            | VK_COLOR_COMPONENT_A_BIT;
+        colorBlendAttachmentState.blendEnable = true;
+        colorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        colorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        colorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+        colorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        colorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        colorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+
+        VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo {};
+        colorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        colorBlendStateCreateInfo.logicOpEnable = false;
+        colorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;
+        colorBlendStateCreateInfo.attachmentCount = 1;
+        colorBlendStateCreateInfo.pAttachments = &colorBlendAttachmentState;
+        colorBlendStateCreateInfo.blendConstants[0] = 0.f;
+        colorBlendStateCreateInfo.blendConstants[1] = 0.f;
+        colorBlendStateCreateInfo.blendConstants[2] = 0.f;
+        colorBlendStateCreateInfo.blendConstants[3] = 0.f;
+
+        VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo {};
+        pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutCreateInfo.setLayoutCount = 0;
+        pipelineLayoutCreateInfo.pSetLayouts = nullptr;
+        pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+        pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+
+        if (vkCreatePipelineLayout(device.GetVkDevice(), &pipelineLayoutCreateInfo, nullptr, &vkPipelineLayout) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create pipeline layout");
+        }
 
         DestroyShaderModule(device.GetVkDevice(), vertexShaderModule);
         DestroyShaderModule(device.GetVkDevice(), fragmentShaderModule);
@@ -95,6 +136,7 @@ namespace Explosion {
 
     void Pipeline::DestroyPipeline()
     {
+        vkDestroyPipelineLayout(device.GetVkDevice(), vkPipelineLayout, nullptr);
         // TODO
     }
 }
