@@ -13,10 +13,13 @@
 #define VK_VALIDATION_LAYER_EXTENSION_NAME "VK_LAYER_KHRONOS_validation"
 
 namespace {
-    using RateRule = std::function<uint32_t(const VkPhysicalDeviceProperties&, const VkPhysicalDeviceFeatures&)>;
+    const std::vector<Explosion::RateRule<VkPhysicalDevice>> PHYSICAL_DEVICE_RATE_RULES = {
+        [](const auto& device) -> uint32_t {
+            VkPhysicalDeviceProperties properties;
+            vkGetPhysicalDeviceProperties(device, &properties);
+            VkPhysicalDeviceFeatures features;
+            vkGetPhysicalDeviceFeatures(device, &features);
 
-    const std::vector<RateRule> RULES = {
-        { [](const auto& properties, const auto& features) -> uint32_t {
             switch (properties.deviceType) {
                 case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
                     return 1000;
@@ -29,7 +32,7 @@ namespace {
                 default:
                     return 0;
             }
-        } }
+        }
     };
 
     VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
@@ -58,25 +61,6 @@ namespace {
         createInfo.pfnUserCallback = DebugCallback;
         createInfo.pUserData = nullptr;
         return createInfo;
-    }
-
-    std::vector<std::pair<uint32_t, VkPhysicalDevice>> RatePhysicalDevices(const std::vector<VkPhysicalDevice>& devices)
-    {
-        std::vector<std::pair<uint32_t, VkPhysicalDevice>> result;
-        for (auto& device : devices) {
-            VkPhysicalDeviceProperties properties;
-            vkGetPhysicalDeviceProperties(device, &properties);
-            VkPhysicalDeviceFeatures features;
-            vkGetPhysicalDeviceFeatures(device, &features);
-
-            uint32_t scores = 0;
-            for (const auto& rule : RULES) {
-                scores += rule(properties, features);
-            }
-            result.emplace_back(std::make_pair(scores, device));
-        }
-        std::sort(result.begin(), result.end(), [](const auto& a, const auto& b) -> bool { return a.first > b.first; });
-        return result;
     }
 }
 
@@ -251,7 +235,7 @@ namespace Explosion {
         }
         std::vector<VkPhysicalDevice> devices(deviceCnt);
         vkEnumeratePhysicalDevices(vkInstance, &deviceCnt, devices.data());
-        vkPhysicalDevice = RatePhysicalDevices(devices)[0].second;
+        vkPhysicalDevice = Rate<VkPhysicalDevice>(devices, PHYSICAL_DEVICE_RATE_RULES)[0].second;
     }
 
     void Device::GetSelectedPhysicalDeviceProperties()

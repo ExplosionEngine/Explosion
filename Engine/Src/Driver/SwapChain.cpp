@@ -5,6 +5,41 @@
 #include <Explosion/Driver/Device.h>
 #include <Explosion/Driver/SwapChain.h>
 #include <Explosion/Driver/Platform.h>
+#include <Explosion/Driver/Utils.h>
+
+namespace Explosion {
+    const std::vector<RateRule<VkSurfaceFormatKHR>> SURFACE_FORMAT_RATE_RULES = {
+        [](const auto& surfaceFormat) -> uint32_t {
+            switch (surfaceFormat.format) {
+                case VK_FORMAT_B8G8R8A8_SRGB:
+                    return 100;
+                default:
+                    return 0;
+            }
+        },
+        [](const auto& surfaceFormat) -> uint32_t {
+            switch (surfaceFormat.colorSpace) {
+                case VK_COLOR_SPACE_SRGB_NONLINEAR_KHR:
+                    return 100;
+                default:
+                    return 0;
+            }
+        }
+    };
+
+    const std::vector<RateRule<VkPresentModeKHR>> PRESENT_MODE_RATE_RULES = {
+        [](const VkPresentModeKHR& presentMode) -> uint32_t {
+            switch (presentMode) {
+                case VK_PRESENT_MODE_MAILBOX_KHR:
+                    return 100;
+                case VK_PRESENT_MODE_FIFO_KHR:
+                    return 50;
+                default:
+                    return 0;
+            }
+        }
+    };
+}
 
 namespace Explosion {
     SwapChain::SwapChain(Device& device, void* surface, uint32_t width, uint32_t height)
@@ -42,12 +77,12 @@ namespace Explosion {
 
     const VkSurfaceFormatKHR& SwapChain::GetVkSurfaceFormat()
     {
-        return vkSurfaceFormat.value();
+        return vkSurfaceFormat;
     }
 
     const VkPresentModeKHR& SwapChain::GetVkPresentMode()
     {
-        return vkPresentMode.value();
+        return vkPresentMode;
     }
 
     const std::vector<VkImage>& SwapChain::GetVkImages()
@@ -81,7 +116,6 @@ namespace Explosion {
         }
     }
 
-    // TODO: using rating to select surface format & present mode
     void SwapChain::SelectSwapChainConfig()
     {
         // fetch surface capabilities
@@ -92,30 +126,14 @@ namespace Explosion {
         vkGetPhysicalDeviceSurfaceFormatsKHR(device.GetVkPhysicalDevice(), vkSurface, &formatCnt, nullptr);
         std::vector<VkSurfaceFormatKHR> surfaceFormats(formatCnt);
         vkGetPhysicalDeviceSurfaceFormatsKHR(device.GetVkPhysicalDevice(), vkSurface, &formatCnt, surfaceFormats.data());
-        for (const auto& surfaceFormat : surfaceFormats) {
-            if (surfaceFormat.format == VK_FORMAT_B8G8R8A8_SRGB && surfaceFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-                vkSurfaceFormat = surfaceFormat;
-                break;
-            }
-        }
-        if (!vkSurfaceFormat.has_value()) {
-            throw std::runtime_error("there is no suitable surface format");
-        }
+        vkSurfaceFormat = Rate<VkSurfaceFormatKHR>(surfaceFormats, SURFACE_FORMAT_RATE_RULES)[0].second;
 
         // choosing surface present mode
         uint32_t presentModeCnt;
         vkGetPhysicalDeviceSurfacePresentModesKHR(device.GetVkPhysicalDevice(), vkSurface, &presentModeCnt, nullptr);
         std::vector<VkPresentModeKHR> presentModes(presentModeCnt);
         vkGetPhysicalDeviceSurfacePresentModesKHR(device.GetVkPhysicalDevice(), vkSurface, &presentModeCnt, presentModes.data());
-        for (const auto& presentMode : presentModes) {
-            if (presentMode == VK_PRESENT_MODE_FIFO_KHR) {
-                vkPresentMode = presentMode;
-                break;
-            }
-        }
-        if (!vkPresentMode.has_value()) {
-            throw std::runtime_error("there is no suitable surface present mode");
-        }
+        vkPresentMode = Rate<VkPresentModeKHR>(presentModes, PRESENT_MODE_RATE_RULES)[0].second;
 
         // choosing swap chain extent
         if (vkSurfaceCapabilities.currentExtent.width != UINT32_MAX) {
@@ -139,8 +157,8 @@ namespace Explosion {
         createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         createInfo.surface = vkSurface;
         createInfo.minImageCount = imageCnt;
-        createInfo.imageFormat = vkSurfaceFormat->format;
-        createInfo.imageColorSpace = vkSurfaceFormat->colorSpace;
+        createInfo.imageFormat = vkSurfaceFormat.format;
+        createInfo.imageColorSpace = vkSurfaceFormat.colorSpace;
         createInfo.imageExtent = vkExtent;
         createInfo.imageArrayLayers = 1;
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -149,7 +167,7 @@ namespace Explosion {
         createInfo.pQueueFamilyIndices = nullptr;
         createInfo.preTransform = vkSurfaceCapabilities.currentTransform;
         createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        createInfo.presentMode = vkPresentMode.value();
+        createInfo.presentMode = vkPresentMode;
         createInfo.clipped = VK_TRUE;
         createInfo.oldSwapchain = nullptr;
 
@@ -179,7 +197,7 @@ namespace Explosion {
             createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             createInfo.image = vkImages[i];
             createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            createInfo.format = vkSurfaceFormat->format;
+            createInfo.format = vkSurfaceFormat.format;
             createInfo.components = {
                 VK_COMPONENT_SWIZZLE_IDENTITY,
                 VK_COMPONENT_SWIZZLE_IDENTITY,

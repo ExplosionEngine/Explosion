@@ -45,8 +45,8 @@ namespace Explosion {
         VkSurfaceKHR vkSurface = VK_NULL_HANDLE;
         VkSurfaceCapabilitiesKHR vkSurfaceCapabilities {};
         VkExtent2D vkExtent {};
-        std::optional<VkSurfaceFormatKHR> vkSurfaceFormat;
-        std::optional<VkPresentModeKHR> vkPresentMode;
+        VkSurfaceFormatKHR vkSurfaceFormat;
+        VkPresentModeKHR vkPresentMode;
         VkSwapchainKHR vkSwapChain = VK_NULL_HANDLE;
         std::vector<VkImage> vkImages {};
         std::vector<VkImageView> vkImageViews {};
