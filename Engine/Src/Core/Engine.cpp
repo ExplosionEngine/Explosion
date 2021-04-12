@@ -5,7 +5,6 @@
 #include <Explosion/Core/Engine.h>
 #include <Explosion/Core/World.h>
 #include <Explosion/Core/Render/Renderer.h>
-#include <Explosion/Core/Platform.h>
 
 namespace Explosion {
     Engine::Engine()
@@ -62,12 +61,7 @@ namespace Explosion {
 
     void Engine::PrepareInstanceExtensions()
     {
-        instanceExtensions.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
-        uint32_t platformExtensionNum = GetPlatformInstanceExtensionNum();
-        const auto& platformExtensions = GetPlatformInstanceExtensions();
-        instanceExtensions.insert(instanceExtensions.end(), platformExtensions, platformExtensions + platformExtensionNum);
-
-        // TODO check support
+        // TODO
     }
 
     void Engine::CreateVkInstance()
@@ -83,13 +77,8 @@ namespace Explosion {
         VkInstanceCreateInfo instanceCreateInfo {};
         instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         instanceCreateInfo.pApplicationInfo = &applicationInfo;
-        instanceCreateInfo.enabledExtensionCount = instanceExtensions.size();
-        instanceCreateInfo.ppEnabledExtensionNames = instanceExtensions.data();
-        instanceCreateInfo.enabledLayerCount = 0;
-        instanceCreateInfo.ppEnabledLayerNames = nullptr;
-        if (vkCreateInstance(&instanceCreateInfo, nullptr, &vkInstance) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create vulkan instance");
-        }
+
+        // TODO
     }
 
     void Engine::DestroyVkInstance()
