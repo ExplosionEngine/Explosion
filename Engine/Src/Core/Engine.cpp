@@ -25,7 +25,8 @@ namespace Explosion {
 
     Renderer* Engine::CreateRenderer(void* surface, uint32_t width, uint32_t height)
     {
-        return new Renderer(driver, surface, width, height);
+        // TODO
+        return nullptr;
     }
 
     void Engine::DestroyRenderer(Renderer* renderer)

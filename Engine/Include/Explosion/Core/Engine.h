@@ -7,8 +7,6 @@
 
 #include <string>
 
-#include <Explosion/Driver/Driver.h>
-
 namespace Explosion {
     class World;
     class Renderer;
@@ -22,7 +20,6 @@ namespace Explosion {
         void DestroyRenderer(Renderer* renderer);
 
     private:
-        Driver driver;
     };
 }
 
