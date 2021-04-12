@@ -8,12 +8,17 @@
 #include <cstdint>
 
 namespace Explosion {
+    class Engine;
+    class Scene;
+
     class Renderer {
     public:
-        Renderer(void* surface, uint32_t width, uint32_t height);
+        Renderer(Engine& engine, void* surface, uint32_t width, uint32_t height);
         ~Renderer();
+        void DrawFrame(Scene& scene);
 
-    private:
+    protected:
+        Engine& engine;
         void* surface;
         uint32_t width;
         uint32_t height;

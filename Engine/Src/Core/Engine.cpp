@@ -4,9 +4,20 @@
 
 #include <Explosion/Core/Engine.h>
 #include <Explosion/Core/World.h>
-#include <Explosion/Core/Renderer.h>
+#include <Explosion/Core/Render/Renderer.h>
 
 namespace Explosion {
+    Engine::Engine()
+    {
+        PrepareInstanceExtensions();
+        CreateVkInstance();
+    }
+
+    Engine::~Engine()
+    {
+        DestroyVkInstance();
+    }
+
     Engine* Engine::GetInstance()
     {
         static auto* instance = new Engine();
@@ -25,12 +36,53 @@ namespace Explosion {
 
     Renderer* Engine::CreateRenderer(void* surface, uint32_t width, uint32_t height)
     {
-        // TODO
-        return nullptr;
+        return new Renderer(*this, surface, width, height);
     }
 
     void Engine::DestroyRenderer(Renderer* renderer)
     {
         delete renderer;
+    }
+
+    const VkInstance& Engine::GetVkInstance()
+    {
+        return vkInstance;
+    }
+
+    const VkPhysicalDevice& Engine::GetVkPhysicalDevice()
+    {
+        return vkPhysicalDevice;
+    }
+
+    const VkDevice& Engine::GetVkDevice()
+    {
+        return vkDevice;
+    }
+
+    void Engine::PrepareInstanceExtensions()
+    {
+        // TODO
+    }
+
+    void Engine::CreateVkInstance()
+    {
+        VkApplicationInfo applicationInfo {};
+        applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        applicationInfo.pApplicationName = "ExplosionEngine";
+        applicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+        applicationInfo.pEngineName = "ExplosionEngine";
+        applicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+        applicationInfo.apiVersion = VK_API_VERSION_1_0;
+
+        VkInstanceCreateInfo instanceCreateInfo {};
+        instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        instanceCreateInfo.pApplicationInfo = &applicationInfo;
+
+        // TODO
+    }
+
+    void Engine::DestroyVkInstance()
+    {
+        // TODO
     }
 }
