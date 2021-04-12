@@ -16,9 +16,6 @@ namespace Explosion {
         Renderer(Driver& driver, void* surface, uint32_t width, uint32_t height);
         ~Renderer();
 
-        void CreateSwapChain();
-        void DestroySwapChain();
-
     private:
         Driver& driver;
         void* surface;
