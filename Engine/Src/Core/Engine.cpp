@@ -6,7 +6,6 @@
 #include <Explosion/Core/World.h>
 #include <Explosion/Core/Render/Renderer.h>
 #include <Explosion/Core/Platform.h>
-#include <Explosion/Common/VkUtils.h>
 
 namespace Explosion {
     Engine::Engine()
@@ -68,13 +67,7 @@ namespace Explosion {
         const auto& platformExtensions = GetPlatformInstanceExtensions();
         instanceExtensions.insert(instanceExtensions.end(), platformExtensions, platformExtensions + platformExtensionNum);
 
-        uint32_t propertyCnt = 0;
-        vkEnumerateInstanceExtensionProperties(nullptr, &propertyCnt, nullptr);
-        std::vector<VkExtensionProperties> properties(propertyCnt);
-        vkEnumerateInstanceExtensionProperties(nullptr, &propertyCnt, properties.data());
-        if (!CheckPropertySupport<VkExtensionProperties>(instanceExtensions, properties, [](const auto* a, const auto& b) -> bool { return std::string(a) == b.extensionName; })) {
-            throw std::runtime_error("there are some instance extensions which ware not supported in this device");
-        }
+        // TODO check support
     }
 
     void Engine::CreateVkInstance()
@@ -101,6 +94,6 @@ namespace Explosion {
 
     void Engine::DestroyVkInstance()
     {
-        vkDestroyInstance(vkInstance, nullptr);
+        // TODO
     }
 }
