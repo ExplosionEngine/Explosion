@@ -6,8 +6,9 @@
 #define EXPLOSION_ENGINE_H
 
 #include <string>
+#include <vector>
 
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 
 namespace Explosion {
     class World;

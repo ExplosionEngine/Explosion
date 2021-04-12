@@ -12,8 +12,12 @@ endif()
 include_directories(../3rd/entt/single_include)
 include_directories(${Vulkan_INCLUDE_DIRS})
 
+# TODO Windows
+if (APPLE)
+    set(PLATFORM_SOURCES Src/Core/Platform/MacOS.mm)
+endif()
 file(GLOB_RECURSE ENGINE_SOURCES Src/*.cpp)
-add_library(explosion SHARED ${ENGINE_SOURCES})
+add_library(explosion SHARED ${ENGINE_SOURCES} ${PLATFORM_SOURCES})
 
 target_include_directories(explosion PUBLIC Include)
 if (APPLE)

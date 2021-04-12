@@ -21,6 +21,9 @@ public:
 protected:
     void OnStart() override
     {
+        uint32_t glfwExtensionCount = 0;
+        const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
 #ifdef TARGET_OS_MAC
         renderer = engine->CreateRenderer(glfwGetCocoaWindow(GetWindow()), GetWidth(), GetHeight());
 #endif
