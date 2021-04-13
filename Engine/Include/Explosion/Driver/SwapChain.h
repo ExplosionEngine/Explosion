@@ -17,13 +17,13 @@ namespace Explosion {
     public:
         SwapChain(Device& device, void* surface, uint32_t width, uint32_t height);
         ~SwapChain();
+        uint32_t GetImageCount();
         const VkSurfaceKHR& GetVkSurface();
         const VkSurfaceCapabilitiesKHR& GetVkSurfaceCapabilities();
         const VkExtent2D& GetVkExtent();
         const VkSurfaceFormatKHR& GetVkSurfaceFormat();
         const VkPresentModeKHR& GetVkPresentMode();
         const std::vector<VkImage>& GetVkImages();
-        const std::vector<VkImageView>& GetVkImageViews();
 
     private:
         void CreateSurface();
@@ -35,8 +35,6 @@ namespace Explosion {
         void DestroySwapChain();
 
         void GetImages();
-        void CreateImageViews();
-        void DestroyImageViews();
 
         Device& device;
         void* surface;
@@ -49,7 +47,6 @@ namespace Explosion {
         VkPresentModeKHR vkPresentMode;
         VkSwapchainKHR vkSwapChain = VK_NULL_HANDLE;
         std::vector<VkImage> vkImages {};
-        std::vector<VkImageView> vkImageViews {};
     };
 }
 

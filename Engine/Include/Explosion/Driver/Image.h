@@ -7,15 +7,26 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Explosion/Driver/Enums.h>
+
 namespace Explosion {
     class SwapChain;
     class Device;
 
     class Image {
     public:
-        struct Info {};
+        struct Info {
+            ImageType type;
+            Format format;
+            uint32_t width;
+            uint32_t height;
+            uint32_t depth;
+            uint32_t mipLevels;
+            uint32_t layers;
+            ImageViewType viewType;
+        };
 
-        virtual ~Image() = 0;
+        virtual ~Image();
         virtual const VkImage& GetVkImage() = 0;
         virtual const VkImageView& GetVkImageView() = 0;
         virtual const Info& GetInfo() = 0;
@@ -49,7 +60,9 @@ namespace Explosion {
 
     class Attachment : public Image {
     public:
-        struct Config {};
+        struct Config {
+
+        };
 
         Attachment(Device& device, Config config);
         ~Attachment() override;
@@ -75,7 +88,9 @@ namespace Explosion {
 
     class ExternalImage : public Image {
     public:
-        struct Config {};
+        struct Config {
+
+        };
 
         ExternalImage(Device& device, Config config);
         ~ExternalImage() override;

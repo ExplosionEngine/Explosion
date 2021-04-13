@@ -3,8 +3,6 @@
 //
 
 #include <Explosion/Driver/Driver.h>
-#include <Explosion/Driver/Device.h>
-#include <Explosion/Driver/SwapChain.h>
 
 namespace Explosion {
     Driver::Driver() : device(std::make_unique<Device>()) {}
@@ -19,5 +17,15 @@ namespace Explosion {
     void Driver::DestroySwapChain(SwapChain* swapChain)
     {
         delete swapChain;
+    }
+
+    Image* Driver::CreateSwapChainImage(SwapChain* swapChain, uint32_t imageIndex)
+    {
+        return new SwapChainImage(*device, *swapChain, imageIndex);
+    }
+
+    void Driver::DestroyImage(Image* image)
+    {
+        delete image;
     }
 }

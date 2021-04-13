@@ -6,10 +6,12 @@
 #define EXPLOSION_RENDERER_H
 
 #include <cstdint>
+#include <vector>
 
 namespace Explosion {
     class Driver;
     class SwapChain;
+    class Image;
 
     class Renderer {
     public:
@@ -18,6 +20,8 @@ namespace Explosion {
 
         void CreateSwapChain();
         void DestroySwapChain();
+        void CreateSwapChainImages();
+        void DestroySwapChainImages();
 
     private:
         Driver& driver;
@@ -25,6 +29,7 @@ namespace Explosion {
         uint32_t width;
         uint32_t height;
         SwapChain* swapChain = nullptr;
+        std::vector<Image*> swapChainImages;
     };
 }
 
