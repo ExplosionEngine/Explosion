@@ -20,8 +20,6 @@ namespace Explosion {
 
         void CreateSwapChain();
         void DestroySwapChain();
-        void CreateSwapChainImages();
-        void DestroySwapChainImages();
 
     private:
         Driver& driver;
@@ -29,7 +27,6 @@ namespace Explosion {
         uint32_t width;
         uint32_t height;
         SwapChain* swapChain = nullptr;
-        std::vector<Image*> swapChainImages;
     };
 }
 

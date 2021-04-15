@@ -18,14 +18,4 @@ namespace Explosion {
     {
         delete swapChain;
     }
-
-    Image* Driver::CreateSwapChainImage(SwapChain* swapChain, uint32_t imageIndex)
-    {
-        return new SwapChainImage(*device, *swapChain, imageIndex);
-    }
-
-    void Driver::DestroyImage(Image* image)
-    {
-        delete image;
-    }
 }

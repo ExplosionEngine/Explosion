@@ -10,12 +10,10 @@ namespace Explosion {
         : driver(driver), surface(surface), width(width), height(height)
     {
         CreateSwapChain();
-        CreateSwapChainImages();
     }
 
     Renderer::~Renderer()
     {
-        DestroySwapChainImages();
         DestroySwapChain();
     }
 
@@ -27,21 +25,5 @@ namespace Explosion {
     void Renderer::DestroySwapChain()
     {
         driver.DestroySwapChain(swapChain);
-    }
-
-    void Renderer::CreateSwapChainImages()
-    {
-        swapChainImages.resize(swapChain->GetImageCount());
-        for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-            swapChainImages[i] = driver.CreateSwapChainImage(swapChain, i);
-        }
-    }
-
-    void Renderer::DestroySwapChainImages()
-    {
-        for (auto & swapChainImage : swapChainImages) {
-            driver.DestroyImage(swapChainImage);
-        }
-        swapChainImages.clear();
     }
 }
