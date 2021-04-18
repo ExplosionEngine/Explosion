@@ -2,6 +2,8 @@
 // Created by John Kindem on 2021/4/8.
 //
 
+#include <stdexcept>
+
 #include <Explosion/Driver/Platform.h>
 
 #ifdef WIN32
@@ -22,5 +24,18 @@ uint32_t GetPlatformInstanceExtensionNum()
 const char** GetPlatformInstanceExtensions()
 {
     return INSTANCE_EXTENSIONS;
+}
+
+bool CreatePlatformSurface(const VkInstance& vkInstance, void* surface, VkSurfaceKHR& vkSurface)
+{
+    VkWin32SurfaceCreateInfoKHR surfaceCreateInfo {};
+    surfaceCreateInfo.sType= VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    surfaceCreateInfo.hwnd = static_cast<HWND>(surface);
+    surfaceCreateInfo.hinstance = GetModuleHandle(nullptr);
+
+    if (vkCreateWin32SurfaceKHR(vkInstance, &surfaceCreateInfo, nullptr, &vkSurface) != VK_SUCCESS) {
+        return false;
+    }
+    return true;
 }
 #endif
