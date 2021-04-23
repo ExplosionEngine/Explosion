@@ -12,6 +12,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
+    - name: Install XRandr Development Package For GLFW3
+      run: sudo apt-get install libxrandr-dev
+    
     - name: Get Lunarg Signing Key
       run: wget -qO - https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
       
