@@ -14,9 +14,10 @@ include_directories(${Vulkan_INCLUDE_DIRS})
 
 if (WIN32)
     set(PLATFORM_SOURCES Src/Driver/Platform/Windows.cpp)
-elseif(LINUX)
 elseif(APPLE)
     set(PLATFORM_SOURCES Src/Driver/Platform/MacOS.mm)
+elseif (UNIX AND NOT APPLE)
+    set(PLATFORM_SOURCES Src/Driver/Platform/Linux.cpp)
 endif()
 
 file(GLOB_RECURSE ENGINE_SOURCES Src/*.cpp)
