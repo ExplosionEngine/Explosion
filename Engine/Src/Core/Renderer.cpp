@@ -4,6 +4,7 @@
 
 #include <Explosion/Core/Renderer.h>
 #include <Explosion/Driver/Driver.h>
+#include <Explosion/Driver/SwapChain.h>
 
 namespace Explosion {
     Renderer::Renderer(Driver& driver, void* surface, uint32_t width, uint32_t height)
@@ -19,11 +20,11 @@ namespace Explosion {
 
     void Renderer::CreateSwapChain()
     {
-        swapChain = driver.CreateSwapChain(surface, width, height);
+        swapChain = driver.CreateGpuRes<SwapChain>(surface, width, height);
     }
 
     void Renderer::DestroySwapChain()
     {
-        driver.DestroySwapChain(swapChain);
+        driver.DestroyGpuRes<SwapChain>(swapChain);
     }
 }

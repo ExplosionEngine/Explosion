@@ -9,13 +9,8 @@ namespace Explosion {
 
     Driver::~Driver() = default;
 
-    SwapChain* Driver::CreateSwapChain(void* surface, uint32_t width, uint32_t height)
+    Device* Driver::GetDevice()
     {
-        return new SwapChain(*device, surface, width, height);
-    }
-
-    void Driver::DestroySwapChain(SwapChain* swapChain)
-    {
-        delete swapChain;
+        return device.get();
     }
 }
