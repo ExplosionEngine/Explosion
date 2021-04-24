@@ -33,6 +33,17 @@ namespace Explosion {
         IMAGE_3D,
         MAX
     };
+
+    enum class ImageViewType {
+        VIEW_1D,
+        VIEW_2D,
+        VIEW_3D,
+        VIEW_CUBE,
+        VIEW_1D_ARRAY,
+        VIEW_2D_ARRAY,
+        VIEW_CUBE_ARRAY,
+        MAX
+    };
 }
 
 #endif //EXPLOSION_ENUM_H
