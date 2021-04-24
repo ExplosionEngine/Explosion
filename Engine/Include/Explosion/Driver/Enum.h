@@ -33,14 +33,6 @@ namespace Explosion {
         IMAGE_3D,
         MAX
     };
-
-    enum class ImageUsage {
-        TRANSFER_SRC,
-        TRANSFER_DST,
-        COLOR_ATTACHMENT,
-        DEPTH_STENCIL_ATTACHMENT,
-        MAX
-    };
 }
 
 #endif //EXPLOSION_ENUM_H

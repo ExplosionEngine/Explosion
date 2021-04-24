@@ -15,8 +15,19 @@ namespace Explosion {
     public:
         Driver();
         ~Driver();
-        SwapChain* CreateSwapChain(void* surface, uint32_t width, uint32_t height);
-        void DestroySwapChain(SwapChain* swapChain);
+        Device* GetDevice();
+
+        template <typename Type, typename... Args>
+        Type* CreateGpuRes(const Args&... args)
+        {
+            return new Type(*this, args...);
+        }
+
+        template <typename Type>
+        void DestroyGpuRes(Type* res)
+        {
+            delete res;
+        }
 
     private:
         std::unique_ptr<Device> device;

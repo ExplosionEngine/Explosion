@@ -4,7 +4,9 @@
 
 #include <stdexcept>
 
+#include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/Device.h>
+#include <Explosion/Driver/Image.h>
 #include <Explosion/Driver/SwapChain.h>
 #include <Explosion/Driver/Platform.h>
 #include <Explosion/Driver/Utils.h>
@@ -44,14 +46,14 @@ namespace Explosion {
 }
 
 namespace Explosion {
-    SwapChain::SwapChain(Device& device, void* surface, uint32_t width, uint32_t height)
-        : device(device), surface(surface), width(width), height(height)
+    SwapChain::SwapChain(Driver& driver, void* surface, uint32_t width, uint32_t height)
+        : driver(driver), device(*driver.GetDevice()), surface(surface), width(width), height(height)
     {
         CreateSurface();
         CheckPresentSupport();
         SelectSwapChainConfig();
         CreateSwapChain();
-        GetImages();
+        FetchAttachments();
     }
 
     SwapChain::~SwapChain()
@@ -60,9 +62,9 @@ namespace Explosion {
         DestroySurface();
     }
 
-    uint32_t SwapChain::GetImageCount()
+    uint32_t SwapChain::GetColorAttachmentCount()
     {
-        return vkImages.size();
+        return colorAttachments.size();
     }
 
     const VkSurfaceKHR& SwapChain::GetVkSurface()
@@ -90,9 +92,9 @@ namespace Explosion {
         return vkPresentMode;
     }
 
-    const std::vector<VkImage>& SwapChain::GetVkImages()
+    const std::vector<ColorAttachment*> SwapChain::GetColorAttachments()
     {
-        return vkImages;
+        return colorAttachments;
     }
 
     void SwapChain::CreateSurface()
@@ -181,11 +183,18 @@ namespace Explosion {
         vkDestroySwapchainKHR(device.GetVkDevice(), vkSwapChain, nullptr);
     }
 
-    void SwapChain::GetImages()
+    void SwapChain::FetchAttachments()
     {
         uint32_t imageCnt = 0;
         vkGetSwapchainImagesKHR(device.GetVkDevice(), vkSwapChain, &imageCnt, nullptr);
-        vkImages.resize(imageCnt);
-        vkGetSwapchainImagesKHR(device.GetVkDevice(), vkSwapChain, &imageCnt, vkImages.data());
+        std::vector<VkImage> images(imageCnt);
+        vkGetSwapchainImagesKHR(device.GetVkDevice(), vkSwapChain, &imageCnt, images.data());
+
+        colorAttachments.resize(imageCnt);
+        Image::Config config {};
+        config.imageType = ImageType::IMAGE_2D;
+        for (auto i  = 0; i < imageCnt; i++) {
+            colorAttachments[i] = driver.CreateGpuRes<ColorAttachment>(images[i], config);
+        }
     }
 }

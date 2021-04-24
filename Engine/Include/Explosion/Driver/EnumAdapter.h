@@ -63,16 +63,6 @@ namespace Explosion {
         };
         FIND_OR_EXCEPT
     CONVERT_INSTANCE_E
-
-    CONVERT_INSTANCE_B(ImageUsage, VkImageUsageFlagBits)
-        static std::unordered_map<ImageUsage, VkImageUsageFlagBits> MAP = {
-            { ImageUsage::TRANSFER_SRC, VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_SRC_BIT },
-            { ImageUsage::TRANSFER_DST, VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_DST_BIT },
-            { ImageUsage::COLOR_ATTACHMENT, VkImageUsageFlagBits::VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT },
-            { ImageUsage::DEPTH_STENCIL_ATTACHMENT, VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT }
-        };
-        FIND_OR_EXCEPT
-    CONVERT_INSTANCE_E
 }
 
 #endif //EXPLOSION_ENUMADAPTER_H
