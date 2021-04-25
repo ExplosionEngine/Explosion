@@ -9,6 +9,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Explosion/Driver/Enum.h>
+
 namespace Explosion {
     class Driver;
     class Device;
@@ -16,31 +18,28 @@ namespace Explosion {
 
     class RenderPass {
     public:
+        struct AttachmentConfig {
+            AttachmentType type;
+            Format format;
+            AttachmentLoadOp loadOp;
+            AttachmentStoreOp storeOp;
+        };
+
         struct Config {
-            uint32_t width;
-            uint32_t height;
-            uint32_t layers;
-            std::vector<ImageView*> colorAttachments;
-            ImageView* depthStencilAttachment;
+            std::vector<AttachmentConfig> attachmentConfigs;
         };
 
         explicit RenderPass(Driver& driver, const Config& config);
         ~RenderPass();
 
     private:
-        void ValidateAttachments();
-
         void CreateRenderPass();
         void DestroyRenderPass();
-
-        void CreateFrameBuffer();
-        void DestroyFrameBuffer();
 
         Driver& driver;
         Device& device;
         Config config {};
         VkRenderPass vkRenderPass = VK_NULL_HANDLE;
-        VkFramebuffer vkFrameBuffer = VK_NULL_HANDLE;
     };
 }
 

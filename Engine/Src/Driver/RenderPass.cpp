@@ -5,89 +5,63 @@
 #include <Explosion/Driver/RenderPass.h>
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/Image.h>
-#include <Explosion/Driver/ImageView.h>
 #include <Explosion/Driver/EnumAdapter.h>
-
-namespace {
-    template <class Type, class ObjType>
-    bool IsPointerOf(const ObjType& object)
-    {
-        return dynamic_cast<Type*>(object) != nullptr;
-    }
-}
 
 namespace Explosion {
     RenderPass::RenderPass(Driver& driver, const Config& config)
         : driver(driver), device(*driver.GetDevice()), config(config)
     {
-        ValidateAttachments();
         CreateRenderPass();
-        CreateFrameBuffer();
     }
 
     RenderPass::~RenderPass()
     {
-        DestroyFrameBuffer();
         DestroyRenderPass();
-    }
-
-    void RenderPass::ValidateAttachments()
-    {
-        for (auto& colorAttachment : config.colorAttachments) {
-            if (!IsPointerOf<ColorAttachment>(colorAttachment->GetImage())) {
-                throw std::runtime_error("the given attachments is not a color attachment");
-            }
-        }
-        if (!IsPointerOf<DepthStencilAttachment>(config.depthStencilAttachment->GetImage())) {
-            throw std::runtime_error("the given attachment is not a depth stencil attachment");
-        }
     }
 
     void RenderPass::CreateRenderPass()
     {
-        VkAttachmentDescription basicAttachmentDescription {};
-        basicAttachmentDescription.flags = 0;
-        basicAttachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
-        basicAttachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        basicAttachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        basicAttachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        basicAttachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        basicAttachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-        // color attachments
-        std::vector<VkAttachmentDescription> attachmentDescriptions(config.colorAttachments.size() + 1);
-        for (uint32_t i = 0; i < config.colorAttachments.size(); i++) {
-            attachmentDescriptions[i] = basicAttachmentDescription;
-
-            auto* image = config.colorAttachments[i]->GetImage();
-            attachmentDescriptions[i].format = VkConvert<Format, VkFormat>(image->GetConfig().format);
-
-            auto* attachmentImage = dynamic_cast<ColorAttachment*>(image);
-            if (attachmentImage != nullptr && attachmentImage->IsFromSwapChain()) {
+        std::vector<VkAttachmentDescription> attachmentDescriptions(config.attachmentConfigs.size());
+        for (uint32_t i = 0; i < attachmentDescriptions.size(); i++) {
+            auto& attachmentConfig = config.attachmentConfigs[i];
+            attachmentDescriptions[i].flags = 0;
+            attachmentDescriptions[i].format = VkConvert<Format, VkFormat>(attachmentConfig.format);
+            attachmentDescriptions[i].samples = VK_SAMPLE_COUNT_1_BIT;
+            attachmentDescriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            if (attachmentConfig.type == AttachmentType::SWAP_CHAIN_COLOR_ATTACHMENT) {
+                attachmentDescriptions[i].loadOp = VkConvert<AttachmentLoadOp, VkAttachmentLoadOp>(attachmentConfig.loadOp);
+                attachmentDescriptions[i].storeOp = VkConvert<AttachmentStoreOp, VkAttachmentStoreOp>(attachmentConfig.storeOp);
+                attachmentDescriptions[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                attachmentDescriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
                 attachmentDescriptions[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-            } else {
+            } else if (attachmentConfig.type == AttachmentType::COLOR_ATTACHMENT) {
+                attachmentDescriptions[i].loadOp = VkConvert<AttachmentLoadOp, VkAttachmentLoadOp>(attachmentConfig.loadOp);
+                attachmentDescriptions[i].storeOp = VkConvert<AttachmentStoreOp, VkAttachmentStoreOp>(attachmentConfig.storeOp);
+                attachmentDescriptions[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                attachmentDescriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
                 attachmentDescriptions[i].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            } else {
+                attachmentDescriptions[i].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                attachmentDescriptions[i].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                attachmentDescriptions[i].stencilLoadOp = VkConvert<AttachmentLoadOp, VkAttachmentLoadOp>(attachmentConfig.loadOp);
+                attachmentDescriptions[i].stencilStoreOp = VkConvert<AttachmentStoreOp, VkAttachmentStoreOp>(attachmentConfig.storeOp);
+                attachmentDescriptions[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             }
         }
 
-        // depth stencil attachment
-        if (config.depthStencilAttachment) {
-            auto& depthStencilAttachmentDescription = attachmentDescriptions[attachmentDescriptions.size() - 1];
-            depthStencilAttachmentDescription = basicAttachmentDescription;
-            depthStencilAttachmentDescription.format = VkConvert<Format, VkFormat>(config.depthStencilAttachment->GetImage()->GetConfig().format);
-            depthStencilAttachmentDescription.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        std::vector<VkAttachmentReference> colorAttachmentReferences;
+        std::vector<VkAttachmentReference> depthStencilAttachmentReferences;
+        for (uint32_t i = 0; i < config.attachmentConfigs.size(); i++) {
+            auto& attachmentConfig = config.attachmentConfigs[i];
+            if (attachmentConfig.type == AttachmentType::SWAP_CHAIN_COLOR_ATTACHMENT
+                || attachmentConfig.type == AttachmentType::COLOR_ATTACHMENT) {
+                colorAttachmentReferences.emplace_back(VkAttachmentReference { i, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
+            } else {
+                depthStencilAttachmentReferences.emplace_back(VkAttachmentReference {i, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL });
+            }
         }
-
-        // attachment reference
-        std::vector<VkAttachmentReference> colorAttachmentReferences(config.colorAttachments.size());
-        for (uint32_t i = 0; i < colorAttachmentReferences.size() - 1; i++) {
-            colorAttachmentReferences[i].attachment = i;
-            colorAttachmentReferences[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        }
-        VkAttachmentReference depthStencilAttachmentReference {};
-        if (config.depthStencilAttachment) {
-            depthStencilAttachmentReference.attachment = colorAttachmentReferences.size();
-            depthStencilAttachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        if (depthStencilAttachmentReferences.size() > 1) {
+            throw std::runtime_error("num of depth stencil attachment is upper than 1");
         }
 
         // sub pass
@@ -98,7 +72,7 @@ namespace Explosion {
         subPassDescription.pInputAttachments = nullptr;
         subPassDescription.colorAttachmentCount = colorAttachmentReferences.size();
         subPassDescription.pColorAttachments = colorAttachmentReferences.data();
-        subPassDescription.pDepthStencilAttachment = config.depthStencilAttachment ? &depthStencilAttachmentReference : nullptr;
+        subPassDescription.pDepthStencilAttachment = !depthStencilAttachmentReferences.empty() ? depthStencilAttachmentReferences.data() : nullptr;
         subPassDescription.pResolveAttachments = nullptr;
         subPassDescription.preserveAttachmentCount = 0;
         subPassDescription.pResolveAttachments = nullptr;
@@ -123,36 +97,5 @@ namespace Explosion {
     void RenderPass::DestroyRenderPass()
     {
         vkDestroyRenderPass(device.GetVkDevice(), vkRenderPass, nullptr);
-    }
-
-    void RenderPass::CreateFrameBuffer()
-    {
-        std::vector<VkImageView> attachments(config.colorAttachments.size());
-        for (uint32_t i = 0; i < config.colorAttachments.size(); i++) {
-            attachments[i] = config.colorAttachments[i]->GetVkImageView();
-        }
-        if (config.depthStencilAttachment) {
-            attachments.emplace_back(config.depthStencilAttachment->GetVkImageView());
-        }
-
-        VkFramebufferCreateInfo createInfo {};
-        createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        createInfo.pNext = nullptr;
-        createInfo.flags = 0;
-        createInfo.renderPass = vkRenderPass;
-        createInfo.attachmentCount = attachments.size();
-        createInfo.pAttachments = attachments.data();
-        createInfo.width = config.width;
-        createInfo.height = config.height;
-        createInfo.layers = config.layers;
-
-        if (vkCreateFramebuffer(device.GetVkDevice(), &createInfo, nullptr, &vkFrameBuffer) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create vulkan frame buffer");
-        }
-    }
-
-    void RenderPass::DestroyFrameBuffer()
-    {
-        vkDestroyFramebuffer(device.GetVkDevice(), vkFrameBuffer, nullptr);
     }
 }

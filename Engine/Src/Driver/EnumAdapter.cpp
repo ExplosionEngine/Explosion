@@ -67,4 +67,20 @@ namespace Explosion {
         };
         FIND_OR_EXCEPT
     CONVERT_INSTANCE_E
+
+    CONVERT_INSTANCE_B(AttachmentLoadOp, VkAttachmentLoadOp)
+        static std::unordered_map<AttachmentLoadOp, VkAttachmentLoadOp> MAP = {
+            { AttachmentLoadOp::NONE, VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_DONT_CARE },
+            { AttachmentLoadOp::CLEAR, VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR }
+        };
+        FIND_OR_EXCEPT
+    CONVERT_INSTANCE_E
+
+    CONVERT_INSTANCE_B(AttachmentStoreOp, VkAttachmentStoreOp)
+        static std::unordered_map<AttachmentStoreOp, VkAttachmentStoreOp> MAP = {
+            { AttachmentStoreOp::NONE, VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_DONT_CARE },
+            { AttachmentStoreOp::STORE, VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_STORE }
+        };
+        FIND_OR_EXCEPT
+    CONVERT_INSTANCE_E
 }
