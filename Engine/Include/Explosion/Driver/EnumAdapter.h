@@ -15,6 +15,12 @@ namespace Explosion {
     {
         throw std::runtime_error("failed to find suitable template instance");
     }
+
+    template <typename VkType, typename Type>
+    Type GetEnumByVk(const VkType& vkType)
+    {
+        throw std::runtime_error("failed to find suitable template instance");
+    }
 }
 
 #endif //EXPLOSION_ENUMADAPTER_H
