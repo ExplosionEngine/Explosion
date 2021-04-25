@@ -44,6 +44,25 @@ namespace Explosion {
         VIEW_CUBE_ARRAY,
         MAX
     };
+
+    enum class AttachmentType {
+        COLOR_ATTACHMENT,
+        SWAP_CHAIN_COLOR_ATTACHMENT,
+        DEPTH_STENCIL_ATTACHMENT,
+        MAX
+    };
+
+    enum class AttachmentLoadOp {
+        NONE,
+        CLEAR,
+        MAX
+    };
+
+    enum class AttachmentStoreOp {
+        NONE,
+        STORE,
+        MAX
+    };
 }
 
 #endif //EXPLOSION_ENUM_H

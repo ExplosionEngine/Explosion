@@ -26,6 +26,8 @@ namespace Explosion {
 
         ImageView(Driver& driver, Image* image, const Config& config);
         ~ImageView();
+        Image* GetImage();
+        const VkImageView& GetVkImageView();
 
     private:
         void CreateImageView();

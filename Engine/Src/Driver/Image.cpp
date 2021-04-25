@@ -69,11 +69,16 @@ namespace Explosion {
         vkDestroyImage(device.GetVkDevice(), vkImage, nullptr);
     }
 
-    ColorAttachment::ColorAttachment(Driver& driver, const Config& config) : Image(driver, config) {}
+    ColorAttachment::ColorAttachment(Driver& driver, const Config& config) : Image(driver, config), fromSwapChain(false) {}
 
-    ColorAttachment::ColorAttachment(Driver& driver, const VkImage& vkImage, const Config& config) : Image(driver, vkImage, config) {}
+    ColorAttachment::ColorAttachment(Driver& driver, const VkImage& vkImage, const Config& config) : Image(driver, vkImage, config), fromSwapChain(true) {}
 
     ColorAttachment::~ColorAttachment() = default;
+
+    bool ColorAttachment::IsFromSwapChain()
+    {
+        return fromSwapChain;
+    }
 
     void ColorAttachment::OnSetupImageCreateInfo(VkImageCreateInfo& createInfo)
     {
