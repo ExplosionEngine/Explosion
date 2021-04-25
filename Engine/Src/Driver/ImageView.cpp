@@ -32,6 +32,16 @@ namespace Explosion {
         DestroyImageView();
     }
 
+    Image* ImageView::GetImage()
+    {
+        return image;
+    }
+
+    const VkImageView& ImageView::GetVkImageView()
+    {
+        return vkImageView;
+    }
+
     void ImageView::CreateImageView()
     {
         VkImageViewCreateInfo createInfo {};

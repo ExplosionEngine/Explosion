@@ -52,9 +52,13 @@ namespace Explosion {
         ColorAttachment(Driver& driver, const Config& config);
         ColorAttachment(Driver& driver, const VkImage& vkImage, const Config& config);
         ~ColorAttachment();
+        bool IsFromSwapChain();
 
     protected:
         void OnSetupImageCreateInfo(VkImageCreateInfo &createInfo) override;
+
+    private:
+        bool fromSwapChain;
     };
 
     // TODO
