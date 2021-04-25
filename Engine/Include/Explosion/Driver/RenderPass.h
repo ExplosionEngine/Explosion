@@ -31,6 +31,7 @@ namespace Explosion {
 
         explicit RenderPass(Driver& driver, const Config& config);
         ~RenderPass();
+        const VkRenderPass& GetVkRenderPass();
 
     private:
         void CreateRenderPass();

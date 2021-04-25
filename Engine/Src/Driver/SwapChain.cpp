@@ -6,6 +6,7 @@
 
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/Device.h>
+#include <Explosion/Driver/EnumAdapter.h>
 #include <Explosion/Driver/Image.h>
 #include <Explosion/Driver/SwapChain.h>
 #include <Explosion/Driver/Platform.h>
@@ -92,7 +93,7 @@ namespace Explosion {
         return vkPresentMode;
     }
 
-    const std::vector<ColorAttachment*> SwapChain::GetColorAttachments()
+    const std::vector<ColorAttachment*>& SwapChain::GetColorAttachments()
     {
         return colorAttachments;
     }
@@ -191,8 +192,11 @@ namespace Explosion {
         vkGetSwapchainImagesKHR(device.GetVkDevice(), vkSwapChain, &imageCnt, images.data());
 
         colorAttachments.resize(imageCnt);
-        Image::Config config {};
-        config.imageType = ImageType::IMAGE_2D;
+        Image::Config config {
+            ImageType::IMAGE_2D,
+            GetEnumByVk<VkFormat, Format>(vkSurfaceFormat.format),
+            vkExtent.width, vkExtent.height, 1, 1, 1
+        };
         for (auto i  = 0; i < imageCnt; i++) {
             colorAttachments[i] = driver.CreateGpuRes<ColorAttachment>(images[i], config);
         }

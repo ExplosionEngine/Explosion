@@ -12,6 +12,9 @@ namespace Explosion {
     class Driver;
     class SwapChain;
     class Image;
+    class ImageView;
+    class RenderPass;
+    class FrameBuffer;
 
     class Renderer {
     public:
@@ -27,6 +30,9 @@ namespace Explosion {
         uint32_t width;
         uint32_t height;
         SwapChain* swapChain = nullptr;
+        RenderPass* renderPass = nullptr;
+        std::vector<ImageView*> colorAttachmentViews;
+        std::vector<FrameBuffer*> frameBuffers;
     };
 }
 

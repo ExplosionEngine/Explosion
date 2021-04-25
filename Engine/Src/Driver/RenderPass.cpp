@@ -19,6 +19,11 @@ namespace Explosion {
         DestroyRenderPass();
     }
 
+    const VkRenderPass& RenderPass::GetVkRenderPass()
+    {
+        return vkRenderPass;
+    }
+
     void RenderPass::CreateRenderPass()
     {
         std::vector<VkAttachmentDescription> attachmentDescriptions(config.attachmentConfigs.size());

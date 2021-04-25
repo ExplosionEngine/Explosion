@@ -24,7 +24,7 @@ namespace Explosion {
         const VkExtent2D& GetVkExtent();
         const VkSurfaceFormatKHR& GetVkSurfaceFormat();
         const VkPresentModeKHR& GetVkPresentMode();
-        const std::vector<ColorAttachment*> GetColorAttachments();
+        const std::vector<ColorAttachment*>& GetColorAttachments();
 
     private:
         void CreateSurface();
