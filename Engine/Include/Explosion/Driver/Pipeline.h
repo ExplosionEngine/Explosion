@@ -9,12 +9,19 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Explosion/Driver/Enum.h>
+
 namespace Explosion {
     class Driver;
     class Device;
 
     class Pipeline {
     public:
+        struct ShaderModule {
+            ShaderStage stage;
+            std::vector<char> code;
+        };
+
         ~Pipeline();
 
     protected:
@@ -29,8 +36,57 @@ namespace Explosion {
 
     class GraphicsPipeline : public Pipeline {
     public:
-        struct Config {
+        struct VertexBinding {
+            uint32_t binding;
+            uint32_t stride;
+            VertexInputRate inputRate;
+        };
 
+        struct VertexAttribute {
+            uint32_t binding;
+            uint32_t location;
+            Format format;
+            uint32_t offset;
+        };
+
+        struct Viewport {
+            float x;
+            float y;
+            float width;
+            float height;
+            float minDepth;
+            float maxDepth;
+        };
+
+        struct Scissor {
+            int32_t x;
+            int32_t y;
+            int32_t width;
+            int32_t height;
+        };
+
+        struct RasterizerConfig {
+            bool depthClamp;
+            bool discard;
+            CullMode cullMode;
+            FrontFace frontFace;
+        };
+
+        struct DepthStencilConfig {
+            bool depthTest;
+            bool depthWrite;
+            bool stencilTest;
+        };
+
+        struct Config {
+            std::vector<ShaderModule> shaderModules;
+            std::vector<VertexBinding> vertexBindings;
+            std::vector<VertexAttribute> vertexAttributes;
+            Viewport viewport;
+            Scissor scissor;
+            RasterizerConfig rasterizerConfig;
+            DepthStencilConfig depthStencilConfig;
+            bool colorBlend;
         };
 
         GraphicsPipeline(Driver& driver, const Config& config);
@@ -41,19 +97,7 @@ namespace Explosion {
         void DestroyGraphicsPipeline();
 
         Config config {};
-    };
-
-    class ComputePipeline : public Pipeline {
-    public:
-        struct Config {
-
-        };
-
-        ComputePipeline(Driver& driver, const Config& config);
-        ~ComputePipeline();
-
-    private:
-        Config config {};
+        VkPipeline vkPipeline = VK_NULL_HANDLE;
     };
 }
 
