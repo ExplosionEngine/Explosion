@@ -92,6 +92,41 @@ namespace Explosion {
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
 
+    VK_CONVERT_INSTANCE_B(ShaderStage, VkShaderStageFlagBits)
+        static std::unordered_map<ShaderStage, VkShaderStageFlagBits> MAP = {
+            { ShaderStage::VERTEX, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT },
+            { ShaderStage::FRAGMENT, VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT },
+            { ShaderStage::COMPUTE, VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT }
+        };
+        FIND_OR_EXCEPT
+    VK_CONVERT_INSTANCE_E
+
+    VK_CONVERT_INSTANCE_B(VertexInputRate, VkVertexInputRate)
+        static std::unordered_map<VertexInputRate, VkVertexInputRate> MAP = {
+            { VertexInputRate::PER_VERTEX, VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX },
+            { VertexInputRate::PER_INSTANCE, VkVertexInputRate::VK_VERTEX_INPUT_RATE_INSTANCE }
+        };
+        FIND_OR_EXCEPT
+    VK_CONVERT_INSTANCE_E
+
+    VK_CONVERT_INSTANCE_B(CullMode, VkCullModeFlagBits)
+        static std::unordered_map<CullMode, VkCullModeFlagBits> MAP = {
+            { CullMode::NONE, VkCullModeFlagBits::VK_CULL_MODE_NONE },
+            { CullMode::FRONT, VkCullModeFlagBits::VK_CULL_MODE_FRONT_BIT },
+            { CullMode::BACK, VkCullModeFlagBits::VK_CULL_MODE_BACK_BIT },
+            { CullMode::ALL, VkCullModeFlagBits::VK_CULL_MODE_FRONT_AND_BACK }
+        };
+        FIND_OR_EXCEPT
+    VK_CONVERT_INSTANCE_E
+
+    VK_CONVERT_INSTANCE_B(FrontFace, VkFrontFace)
+        static std::unordered_map<FrontFace, VkFrontFace> MAP = {
+            { FrontFace::COUNTER_CLOCK_WISE, VkFrontFace::VK_FRONT_FACE_COUNTER_CLOCKWISE },
+            { FrontFace::CLOCK_WISE, VkFrontFace::VK_FRONT_FACE_CLOCKWISE },
+        };
+        FIND_OR_EXCEPT
+    VK_CONVERT_INSTANCE_E
+
     GET_ENUM_BY_VK_INSTANCE_B(VkFormat, Format)
         static std::unordered_map<VkFormat, Format> MAP = {
             { VkFormat::VK_FORMAT_UNDEFINED, Format::UNDEFINED },

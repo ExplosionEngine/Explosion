@@ -63,6 +63,33 @@ namespace Explosion {
         STORE,
         MAX
     };
+
+    enum class ShaderStage {
+        VERTEX,
+        FRAGMENT,
+        COMPUTE,
+        MAX
+    };
+
+    enum class VertexInputRate {
+        PER_VERTEX,
+        PER_INSTANCE,
+        MAX
+    };
+
+    enum class CullMode {
+        NONE,
+        FRONT,
+        BACK,
+        ALL,
+        MAX
+    };
+
+    enum class FrontFace {
+        COUNTER_CLOCK_WISE,
+        CLOCK_WISE,
+        MAX
+    };
 }
 
 #endif //EXPLOSION_ENUM_H
