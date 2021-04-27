@@ -14,6 +14,7 @@
 namespace Explosion {
     class Driver;
     class Device;
+    class RenderPass;
 
     class Pipeline {
     public:
@@ -28,10 +29,11 @@ namespace Explosion {
         VkShaderModule CreateShaderModule(const std::vector<char>& code);
         void DestroyShaderModule(const VkShaderModule& shaderModule);
 
-        explicit Pipeline(Driver& driver);
+        explicit Pipeline(Driver& driver, RenderPass* renderPass);
 
         Driver& driver;
         Device& device;
+        RenderPass* renderPass;
     };
 
     class GraphicsPipeline : public Pipeline {
@@ -96,7 +98,7 @@ namespace Explosion {
             bool colorBlend;
         };
 
-        GraphicsPipeline(Driver& driver, const Config& config);
+        GraphicsPipeline(Driver& driver, RenderPass* renderPass, const Config& config);
         ~GraphicsPipeline();
 
     private:

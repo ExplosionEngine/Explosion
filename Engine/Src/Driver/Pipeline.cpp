@@ -9,6 +9,7 @@
 #include <Explosion/Driver/Pipeline.h>
 #include <Explosion/Driver/EnumAdapter.h>
 #include <Explosion/Driver/Driver.h>
+#include <Explosion/Driver/RenderPass.h>
 
 namespace {
     std::string GetShaderName(const Explosion::ShaderStage& shaderStage)
@@ -27,8 +28,8 @@ namespace {
 }
 
 namespace Explosion {
-    Pipeline::Pipeline(Driver& driver)
-        : driver(driver), device(*driver.GetDevice()) {}
+    Pipeline::Pipeline(Driver& driver, RenderPass* renderPass)
+        : driver(driver), device(*driver.GetDevice()), renderPass(renderPass) {}
 
     Pipeline::~Pipeline() = default;
 
@@ -53,8 +54,8 @@ namespace Explosion {
         vkDestroyShaderModule(device.GetVkDevice(), shaderModule, nullptr);
     }
 
-    GraphicsPipeline::GraphicsPipeline(Driver& driver, const GraphicsPipeline::Config& config)
-        : Pipeline(driver), config(config)
+    GraphicsPipeline::GraphicsPipeline(Driver& driver, RenderPass* renderPass, const GraphicsPipeline::Config& config)
+        : Pipeline(driver, renderPass), config(config)
     {
         CreateDescriptorPool();
         CreateDescriptorSetLayout();
@@ -334,7 +335,11 @@ namespace Explosion {
         graphicsPipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
         graphicsPipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
         graphicsPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
-        // TODO pipeline layout, render pass
+        graphicsPipelineCreateInfo.layout = vkPipelineLayout;
+        graphicsPipelineCreateInfo.renderPass = renderPass->GetVkRenderPass();
+        graphicsPipelineCreateInfo.subpass = 0;
+        graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+        graphicsPipelineCreateInfo.basePipelineIndex = -1;
 
         if (vkCreateGraphicsPipelines(device.GetVkDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &vkPipeline) != VK_SUCCESS) {
             throw std::runtime_error("failed to create vulkan graphics pipeline");
