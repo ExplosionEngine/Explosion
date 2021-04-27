@@ -90,6 +90,12 @@ namespace Explosion {
         CLOCK_WISE,
         MAX
     };
+
+    enum class DescriptorType {
+        UNIFORM_BUFFER,
+        STORAGE_BUFFER,
+        IMAGE_SAMPLER
+    };
 }
 
 #endif //EXPLOSION_ENUM_H

@@ -127,6 +127,15 @@ namespace Explosion {
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
 
+    VK_CONVERT_INSTANCE_B(DescriptorType, VkDescriptorType)
+        static std::unordered_map<DescriptorType, VkDescriptorType> MAP = {
+            { DescriptorType::UNIFORM_BUFFER, VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER },
+            { DescriptorType::STORAGE_BUFFER, VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_BUFFER },
+            { DescriptorType::IMAGE_SAMPLER, VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER }
+        };
+        FIND_OR_EXCEPT
+    VK_CONVERT_INSTANCE_E
+
     GET_ENUM_BY_VK_INSTANCE_B(VkFormat, Format)
         static std::unordered_map<VkFormat, Format> MAP = {
             { VkFormat::VK_FORMAT_UNDEFINED, Format::UNDEFINED },

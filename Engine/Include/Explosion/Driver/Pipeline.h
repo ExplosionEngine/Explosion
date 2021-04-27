@@ -14,6 +14,7 @@
 namespace Explosion {
     class Driver;
     class Device;
+    class RenderPass;
 
     class Pipeline {
     public:
@@ -28,10 +29,11 @@ namespace Explosion {
         VkShaderModule CreateShaderModule(const std::vector<char>& code);
         void DestroyShaderModule(const VkShaderModule& shaderModule);
 
-        explicit Pipeline(Driver& driver);
+        explicit Pipeline(Driver& driver, RenderPass* renderPass);
 
         Driver& driver;
         Device& device;
+        RenderPass* renderPass;
     };
 
     class GraphicsPipeline : public Pipeline {
@@ -78,10 +80,17 @@ namespace Explosion {
             bool stencilTest;
         };
 
+        struct DescriptorAttribute {
+            uint32_t binding;
+            DescriptorType type;
+            std::vector<ShaderStage> shaderStages;
+        };
+
         struct Config {
             std::vector<ShaderModule> shaderModules;
             std::vector<VertexBinding> vertexBindings;
             std::vector<VertexAttribute> vertexAttributes;
+            std::vector<DescriptorAttribute> descriptorAttributes;
             Viewport viewport;
             Scissor scissor;
             RasterizerConfig rasterizerConfig;
@@ -89,14 +98,29 @@ namespace Explosion {
             bool colorBlend;
         };
 
-        GraphicsPipeline(Driver& driver, const Config& config);
+        GraphicsPipeline(Driver& driver, RenderPass* renderPass, const Config& config);
         ~GraphicsPipeline();
 
     private:
+        void CreateDescriptorPool();
+        void DestroyDescriptorPool();
+
+        void CreateDescriptorSetLayout();
+        void DestroyDescriptorSetLayout();
+
+        void AllocateDescriptorSet();
+
+        void CreatePipelineLayout();
+        void DestroyPipelineLayout();
+
         void CreateGraphicsPipeline();
         void DestroyGraphicsPipeline();
 
         Config config {};
+        VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
+        VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
+        VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
+        VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
         VkPipeline vkPipeline = VK_NULL_HANDLE;
     };
 }
