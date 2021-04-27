@@ -6,11 +6,17 @@
 #define EXPLOSION_COMMANDENCODER_H
 
 namespace Explosion {
+    class Driver;
+    class Device;
+
     class CommandEncoder {
     public:
+        CommandEncoder(Driver& driver);
+        ~CommandEncoder();
 
     private:
-
+        Driver& driver;
+        Device& device;
     };
 }
 
