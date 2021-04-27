@@ -79,10 +79,12 @@ namespace Explosion {
         PrepareDeviceExtensions();
         CreateLogicalDevice();
         GetQueue();
+        CreateCommandPool();
     }
 
     Device::~Device()
     {
+        DestroyCommandPool();
         DestroyLogicalDevice();
 #ifdef ENABLE_VALIDATION_LAYER
         DestroyDebugUtils();
@@ -151,6 +153,11 @@ namespace Explosion {
     uint32_t Device::GetVkQueueFamilyIndex() const
     {
         return vkQueueFamilyIndex.value();
+    }
+
+    const VkCommandPool& Device::GetVkCommandPool() const
+    {
+        return vkCommandPool;
     }
 
     void Device::PrepareLayers()
@@ -294,5 +301,23 @@ namespace Explosion {
     void Device::GetQueue()
     {
         vkGetDeviceQueue(vkDevice, vkQueueFamilyIndex.value(), 0, &vkQueue);
+    }
+
+    void Device::CreateCommandPool()
+    {
+        VkCommandPoolCreateInfo commandPoolCreateInfo {};
+        commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        commandPoolCreateInfo.pNext = nullptr;
+        commandPoolCreateInfo.flags = 0;
+        commandPoolCreateInfo.queueFamilyIndex = vkQueueFamilyIndex.value();
+
+        if (vkCreateCommandPool(vkDevice, &commandPoolCreateInfo, nullptr, &vkCommandPool) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create vulkan command pool");
+        }
+    }
+
+    void Device::DestroyCommandPool()
+    {
+        vkDestroyCommandPool(vkDevice, vkCommandPool, nullptr);
     }
 }
