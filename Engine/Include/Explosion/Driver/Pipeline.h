@@ -78,10 +78,17 @@ namespace Explosion {
             bool stencilTest;
         };
 
+        struct DescriptorAttribute {
+            uint32_t binding;
+            DescriptorType type;
+            std::vector<ShaderStage> shaderStages;
+        };
+
         struct Config {
             std::vector<ShaderModule> shaderModules;
             std::vector<VertexBinding> vertexBindings;
             std::vector<VertexAttribute> vertexAttributes;
+            std::vector<DescriptorAttribute> descriptorAttributes;
             Viewport viewport;
             Scissor scissor;
             RasterizerConfig rasterizerConfig;
@@ -93,10 +100,24 @@ namespace Explosion {
         ~GraphicsPipeline();
 
     private:
+        void CreateDescriptorPool();
+        void DestroyDescriptorPool();
+
+        void CreateDescriptorSetLayout();
+        void DestroyDescriptorSetLayout();
+
+        void AllocateDescriptorSet();
+
+        void CreatePipelineLayout();
+        void DestroyPipelineLayout();
+
         void CreateGraphicsPipeline();
         void DestroyGraphicsPipeline();
 
         Config config {};
+        VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
+        VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
+        VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
         VkPipeline vkPipeline = VK_NULL_HANDLE;
     };
 }

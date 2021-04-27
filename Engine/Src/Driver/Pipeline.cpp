@@ -3,6 +3,8 @@
 //
 
 #include <string>
+#include <vector>
+#include <unordered_map>
 
 #include <Explosion/Driver/Pipeline.h>
 #include <Explosion/Driver/EnumAdapter.h>
@@ -54,12 +56,80 @@ namespace Explosion {
     GraphicsPipeline::GraphicsPipeline(Driver& driver, const GraphicsPipeline::Config& config)
         : Pipeline(driver), config(config)
     {
+        CreateDescriptorPool();
+        CreateDescriptorSetLayout();
+        AllocateDescriptorSet();
+        CreatePipelineLayout();
         CreateGraphicsPipeline();
     }
 
     GraphicsPipeline::~GraphicsPipeline()
     {
         DestroyGraphicsPipeline();
+        DestroyPipelineLayout();
+        DestroyDescriptorSetLayout();
+        DestroyDescriptorPool();
+    }
+
+    void GraphicsPipeline::CreateDescriptorPool()
+    {
+        std::unordered_map<DescriptorType, uint32_t> descriptorCounter;
+        for (auto& descriptorAttribute : config.descriptorAttributes) {
+            auto iter = descriptorCounter.find(descriptorAttribute.type);
+            if (iter == descriptorCounter.end()) {
+                descriptorCounter[descriptorAttribute.type] = 0;
+            }
+            descriptorCounter[descriptorAttribute.type]++;
+        }
+        std::vector<VkDescriptorPoolSize> descriptorPoolSizes;
+        for (auto& pair : descriptorCounter) {
+            VkDescriptorPoolSize poolSize {};
+            poolSize.type = VkConvert<DescriptorType, VkDescriptorType>(pair.first);
+            poolSize.descriptorCount = pair.second;
+            descriptorPoolSizes.emplace_back(poolSize);
+        }
+
+        VkDescriptorPoolCreateInfo descriptorPoolCreateInfo {};
+        descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        descriptorPoolCreateInfo.pNext = nullptr;
+        descriptorPoolCreateInfo.flags = 0;
+        descriptorPoolCreateInfo.maxSets = 1;
+        descriptorPoolCreateInfo.poolSizeCount = descriptorPoolSizes.size();
+        descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSizes.data();
+
+        if (vkCreateDescriptorPool(device.GetVkDevice(), &descriptorPoolCreateInfo, nullptr, &vkDescriptorPool) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create vulkan descriptor pool");
+        }
+    }
+
+    void GraphicsPipeline::DestroyDescriptorPool()
+    {
+        vkDestroyDescriptorPool(device.GetVkDevice(), vkDescriptorPool, nullptr);
+    }
+
+    void GraphicsPipeline::CreateDescriptorSetLayout()
+    {
+        // TODO
+    }
+
+    void GraphicsPipeline::DestroyDescriptorSetLayout()
+    {
+        // TODO
+    }
+
+    void GraphicsPipeline::AllocateDescriptorSet()
+    {
+        // TODO
+    }
+
+    void GraphicsPipeline::CreatePipelineLayout()
+    {
+        // TODO
+    }
+
+    void GraphicsPipeline::DestroyPipelineLayout()
+    {
+        // TODO
     }
 
     void GraphicsPipeline::CreateGraphicsPipeline()
