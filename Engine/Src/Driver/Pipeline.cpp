@@ -109,27 +109,69 @@ namespace Explosion {
 
     void GraphicsPipeline::CreateDescriptorSetLayout()
     {
-        // TODO
+        std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings(config.descriptorAttributes.size());
+        for (uint32_t i = 0; i < descriptorSetLayoutBindings.size(); i++) {
+            DescriptorAttribute& attribute = config.descriptorAttributes[i];
+            descriptorSetLayoutBindings[i].binding = attribute.binding;
+            descriptorSetLayoutBindings[i].descriptorType = VkConvert<DescriptorType, VkDescriptorType>(attribute.type);
+            descriptorSetLayoutBindings[i].descriptorCount = 1;
+            descriptorSetLayoutBindings[i].stageFlags = 0;
+            for (auto& stage : attribute.shaderStages) {
+                descriptorSetLayoutBindings[i].stageFlags |= VkConvert<ShaderStage, VkShaderStageFlagBits>(stage);
+            }
+            descriptorSetLayoutBindings[i].pImmutableSamplers = nullptr;
+        }
+
+        VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo {};
+        descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        descriptorSetLayoutCreateInfo.pNext = nullptr;
+        descriptorSetLayoutCreateInfo.flags = 0;
+        descriptorSetLayoutCreateInfo.bindingCount = descriptorSetLayoutBindings.size();
+        descriptorSetLayoutCreateInfo.pBindings = descriptorSetLayoutBindings.data();
+
+        if (vkCreateDescriptorSetLayout(device.GetVkDevice(), &descriptorSetLayoutCreateInfo, nullptr, &vkDescriptorSetLayout) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create vulkan descriptor set layout");
+        }
     }
 
     void GraphicsPipeline::DestroyDescriptorSetLayout()
     {
-        // TODO
+        vkDestroyDescriptorSetLayout(device.GetVkDevice(), vkDescriptorSetLayout, nullptr);
     }
 
     void GraphicsPipeline::AllocateDescriptorSet()
     {
-        // TODO
+        VkDescriptorSetAllocateInfo descriptorSetAllocateInfo {};
+        descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        descriptorSetAllocateInfo.pNext = nullptr;
+        descriptorSetAllocateInfo.descriptorPool = vkDescriptorPool;
+        descriptorSetAllocateInfo.descriptorSetCount = 1;
+        descriptorSetAllocateInfo.pSetLayouts = &vkDescriptorSetLayout;
+
+        if (vkAllocateDescriptorSets(device.GetVkDevice(), &descriptorSetAllocateInfo, &vkDescriptorSet) != VK_SUCCESS) {
+            throw std::runtime_error("failed to allocate vulkan descriptor set");
+        }
     }
 
     void GraphicsPipeline::CreatePipelineLayout()
     {
-        // TODO
+        VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo {};
+        pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutCreateInfo.pNext = nullptr;
+        pipelineLayoutCreateInfo.flags = 0;
+        pipelineLayoutCreateInfo.setLayoutCount = 1;
+        pipelineLayoutCreateInfo.pSetLayouts = &vkDescriptorSetLayout;
+        pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+        pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+
+        if (vkCreatePipelineLayout(device.GetVkDevice(), &pipelineLayoutCreateInfo, nullptr, &vkPipelineLayout) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create vulkan descriptor set layout");
+        }
     }
 
     void GraphicsPipeline::DestroyPipelineLayout()
     {
-        // TODO
+        vkDestroyPipelineLayout(device.GetVkDevice(), vkPipelineLayout, nullptr);
     }
 
     void GraphicsPipeline::CreateGraphicsPipeline()

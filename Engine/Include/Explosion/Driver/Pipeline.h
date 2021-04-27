@@ -117,6 +117,7 @@ namespace Explosion {
         Config config {};
         VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
         VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
+        VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
         VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
         VkPipeline vkPipeline = VK_NULL_HANDLE;
     };
