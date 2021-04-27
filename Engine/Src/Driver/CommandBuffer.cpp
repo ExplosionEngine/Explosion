@@ -4,6 +4,7 @@
 
 #include <Explosion/Driver/CommandBuffer.h>
 #include <Explosion/Driver/Driver.h>
+#include <Explosion/Driver/CommandEncoder.h>
 
 namespace Explosion {
     CommandBuffer::CommandBuffer(Driver& driver)
@@ -20,6 +21,28 @@ namespace Explosion {
     const VkCommandBuffer& CommandBuffer::GetVkCommandBuffer()
     {
         return vkCommandBuffer;
+    }
+
+    void CommandBuffer::EncodeCommands(const EncodingFunc& encodingFunc)
+    {
+        VkCommandBufferBeginInfo commandBufferBeginInfo {};
+        commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        commandBufferBeginInfo.pNext = nullptr;
+        commandBufferBeginInfo.flags = 0;
+        commandBufferBeginInfo.pInheritanceInfo = nullptr;
+
+        if (vkBeginCommandBuffer(vkCommandBuffer, &commandBufferBeginInfo) != VK_SUCCESS) {
+            throw std::runtime_error("failed to begin vulkan command buffer");
+        }
+
+        {
+            CommandEncoder commandEncoder(driver, this);
+            encodingFunc(&commandEncoder);
+        }
+
+        if (vkEndCommandBuffer(vkCommandBuffer) != VK_SUCCESS) {
+            throw std::runtime_error("failed to end vulkan command buffer");
+        }
     }
 
     void CommandBuffer::AllocateCommandBuffer()

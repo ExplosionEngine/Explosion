@@ -8,15 +8,17 @@
 namespace Explosion {
     class Driver;
     class Device;
+    class CommandBuffer;
 
     class CommandEncoder {
     public:
-        CommandEncoder(Driver& driver);
+        CommandEncoder(Driver& driver, CommandBuffer* commandBuffer);
         ~CommandEncoder();
 
     private:
         Driver& driver;
         Device& device;
+        CommandBuffer* commandBuffer = nullptr;
     };
 }
 
