@@ -45,6 +45,17 @@ namespace Explosion {
         }
     }
 
+    void CommandBuffer::SubmitNow()
+    {
+        VkSubmitInfo submitInfo {};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &vkCommandBuffer;
+
+        vkQueueSubmit(device.GetVkQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+        vkQueueWaitIdle(device.GetVkQueue());
+    }
+
     void CommandBuffer::AllocateCommandBuffer()
     {
         VkCommandBufferAllocateInfo commandBufferAllocateInfo {};

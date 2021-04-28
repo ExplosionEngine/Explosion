@@ -22,6 +22,7 @@ namespace Explosion {
         ~CommandBuffer();
         const VkCommandBuffer& GetVkCommandBuffer();
         void EncodeCommands(const EncodingFunc& encodingFunc);
+        void SubmitNow();
 
     private:
         void AllocateCommandBuffer();
