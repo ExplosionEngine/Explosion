@@ -1,3 +1,2 @@
 # Explosion GameEngine
-
-# Visiable Shadow
+Hello Explosion
