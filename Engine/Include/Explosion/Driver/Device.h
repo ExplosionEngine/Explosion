@@ -22,6 +22,7 @@ namespace Explosion {
         const VkQueue& GetVkQueue() const;
         uint32_t GetVkQueueFamilyIndex() const;
         const VkCommandPool& GetVkCommandPool() const;
+        const VkPhysicalDeviceMemoryProperties& GetVkPhysicalDeviceMemoryProperties() const;
 
     private:
 #ifdef ENABLE_VALIDATION_LAYER
@@ -48,6 +49,8 @@ namespace Explosion {
         void CreateCommandPool();
         void DestroyCommandPool();
 
+        void FetchPhysicalDeviceMemoryProperties();
+
         std::vector<const char*> instanceExtensions {};
         std::vector<const char*> deviceExtensions {};
         std::vector<const char*> layers {};
@@ -59,6 +62,7 @@ namespace Explosion {
         VkDevice vkDevice = VK_NULL_HANDLE;
         VkQueue vkQueue = VK_NULL_HANDLE;
         VkCommandPool vkCommandPool = VK_NULL_HANDLE;
+        VkPhysicalDeviceMemoryProperties vkPhysicalDeviceMemoryProperties;
     };
 }
 

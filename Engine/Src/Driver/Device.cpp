@@ -160,6 +160,11 @@ namespace Explosion {
         return vkCommandPool;
     }
 
+    const VkPhysicalDeviceMemoryProperties& Device::GetVkPhysicalDeviceMemoryProperties() const
+    {
+        return vkPhysicalDeviceMemoryProperties;
+    }
+
     void Device::PrepareLayers()
     {
 #ifdef ENABLE_VALIDATION_LAYER
@@ -319,5 +324,10 @@ namespace Explosion {
     void Device::DestroyCommandPool()
     {
         vkDestroyCommandPool(vkDevice, vkCommandPool, nullptr);
+    }
+
+    void Device::FetchPhysicalDeviceMemoryProperties()
+    {
+        vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &vkPhysicalDeviceMemoryProperties);
     }
 }
