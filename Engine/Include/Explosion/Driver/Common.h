@@ -8,19 +8,10 @@
 #include <cstdint>
 #include <optional>
 
+#include <vulkan/vulkan.h>
+
 namespace Explosion {
-    std::optional<uint32_t> FindMemoryType(VkPhysicalDeviceMemoryProperties physicalDeviceProps, uint32_t typeFilter, VkMemoryPropertyFlags memProps)
-    {
-        std::optional<uint32_t> result;
-        for (uint32_t i = 0; i < physicalDeviceProps.memoryTypeCount; i++) {
-            if ((typeFilter & (1 << i))
-                && (physicalDeviceProps.memoryTypes[i].propertyFlags & memProps) == memProps) {
-                result = i;
-                break;
-            }
-        }
-        return result;
-    }
+    std::optional<uint32_t> FindMemoryType(VkPhysicalDeviceMemoryProperties physicalDeviceProps, uint32_t typeFilter, VkMemoryPropertyFlags memProps);
 }
 
 #endif //EXPLOSION_COMMON_H

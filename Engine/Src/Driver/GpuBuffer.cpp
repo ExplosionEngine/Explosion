@@ -4,6 +4,8 @@
 
 #include <Explosion/Driver/GpuBuffer.h>
 #include <Explosion/Driver/Driver.h>
+#include <Explosion/Driver/CommandBuffer.h>
+#include <Explosion/Driver/CommandEncoder.h>
 
 namespace Explosion {
     GpuBuffer::GpuBuffer(Driver& driver, uint32_t size)
@@ -17,6 +19,21 @@ namespace Explosion {
     {
         FreeMemory();
         DestroyBuffer();
+    }
+
+    uint32_t GpuBuffer::GetSize() const
+    {
+        return size;
+    }
+
+    const VkBuffer& GpuBuffer::GetVkBuffer() const
+    {
+        return vkBuffer;
+    }
+
+    const VkDeviceMemory& GpuBuffer::GetVkDeviceMemory() const
+    {
+        return vkDeviceMemory;
     }
 
     void GpuBuffer::SetupBufferCreateInfo(VkBufferCreateInfo& createInfo) {}
@@ -124,8 +141,15 @@ namespace Explosion {
     {
         auto* stagingBuffer = driver.CreateGpuRes<StagingBuffer>(size);
         stagingBuffer->UpdateData(data);
-        // TODO
-        driver.DestroyGpuRes(stagingBuffer);
+        {
+            auto* commandBuffer = driver.CreateGpuRes<CommandBuffer>();
+            commandBuffer->EncodeCommands([&stagingBuffer, this](auto* encoder) -> void {
+                encoder->CopyBuffer(stagingBuffer, this);
+            });
+            commandBuffer->SubmitNow();
+            driver.DestroyGpuRes<CommandBuffer>(commandBuffer);
+        }
+        driver.DestroyGpuRes<StagingBuffer>(stagingBuffer);
     }
 
     StagingBuffer::StagingBuffer(Driver& driver, uint32_t size) : HostVisibleBuffer(driver, size) {}

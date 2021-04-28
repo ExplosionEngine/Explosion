@@ -19,6 +19,9 @@ namespace Explosion {
     public:
         GpuBuffer(Driver& driver, uint32_t size);
         ~GpuBuffer();
+        uint32_t GetSize() const;
+        const VkBuffer& GetVkBuffer() const;
+        const VkDeviceMemory& GetVkDeviceMemory() const;
         virtual void UpdateData(void* data) = 0;
 
     protected:
