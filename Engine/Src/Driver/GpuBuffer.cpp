@@ -2,6 +2,8 @@
 // Created by John Kindem on 2021/4/28.
 //
 
+#include <cstring>
+
 #include <Explosion/Driver/GpuBuffer.h>
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/CommandBuffer.h>
