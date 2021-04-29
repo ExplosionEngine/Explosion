@@ -27,6 +27,7 @@ Using cmake to generate build rules:
 
 ```cpp
 mkdir build
+cd build
 cmake ..
 ```
 
