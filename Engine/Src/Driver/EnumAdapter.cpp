@@ -33,6 +33,19 @@ namespace Explosion {
 }
 
 namespace Explosion {
+
+    template <typename Type, typename VkType>
+    VkType VkConvert(const Type& type)
+    {
+        throw std::runtime_error("failed to find suitable template instance");
+    }
+
+    template <typename VkType, typename Type>
+    Type GetEnumByVk(const VkType& vkType)
+    {
+        throw std::runtime_error("failed to find suitable template instance");
+    }
+
     VK_CONVERT_INSTANCE_B(Format, VkFormat)
         static std::unordered_map<Format, VkFormat> MAP = {
             { Format::UNDEFINED, VkFormat::VK_FORMAT_UNDEFINED },
