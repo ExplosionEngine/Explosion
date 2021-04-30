@@ -11,6 +11,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Explosion/Driver/Enum.h>
+
 namespace Explosion {
     class Driver;
     class ColorAttachment;
@@ -25,6 +27,7 @@ namespace Explosion {
         ~SwapChain();
         void DoFrame(const FrameJob& frameJob);
         uint32_t GetColorAttachmentCount();
+        Format GetSurfaceFormat() const;
         const VkSurfaceKHR& GetVkSurface();
         const VkSurfaceCapabilitiesKHR& GetVkSurfaceCapabilities();
         const VkExtent2D& GetVkExtent();

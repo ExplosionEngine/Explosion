@@ -56,7 +56,7 @@ namespace Explosion {
         SelectSwapChainConfig();
         CreateSwapChain();
         FetchAttachments();
-        CreateSignals()
+        CreateSignals();
     }
 
     SwapChain::~SwapChain()
@@ -89,6 +89,11 @@ namespace Explosion {
     uint32_t SwapChain::GetColorAttachmentCount()
     {
         return colorAttachments.size();
+    }
+
+    Format SwapChain::GetSurfaceFormat() const
+    {
+        return GetEnumByVk<VkFormat, Format>(vkSurfaceFormat.format);
     }
 
     const VkSurfaceKHR& SwapChain::GetVkSurface()
@@ -228,12 +233,12 @@ namespace Explosion {
     void SwapChain::CreateSignals()
     {
         imageReadySignal = driver.CreateGpuRes<Signal>();
-        renderFinishedSignal = driver.CreateGpuRes<Signal>();
+        frameFinishedSignal = driver.CreateGpuRes<Signal>();
     }
 
     void SwapChain::DestroySignals()
     {
         driver.DestroyGpuRes<Signal>(imageReadySignal);
-        driver.DestroyGpuRes<Signal>(renderFinishedSignal);
+        driver.DestroyGpuRes<Signal>(frameFinishedSignal);
     }
 }
