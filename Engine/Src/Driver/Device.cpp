@@ -6,7 +6,7 @@
 #include <functional>
 
 #include <Explosion/Driver/Device.h>
-#include <Explosion/Driver/Utils.h>
+#include <Explosion/Driver/Common.h>
 #include <Explosion/Driver/Platform.h>
 #include <Explosion/Common/Logger.h>
 

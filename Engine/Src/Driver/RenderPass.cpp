@@ -4,7 +4,6 @@
 
 #include <Explosion/Driver/RenderPass.h>
 #include <Explosion/Driver/Driver.h>
-#include <Explosion/Driver/Image.h>
 #include <Explosion/Driver/EnumAdapter.h>
 
 namespace Explosion {

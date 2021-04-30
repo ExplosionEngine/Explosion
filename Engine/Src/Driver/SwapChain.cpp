@@ -10,7 +10,7 @@
 #include <Explosion/Driver/Image.h>
 #include <Explosion/Driver/SwapChain.h>
 #include <Explosion/Driver/Platform.h>
-#include <Explosion/Driver/Utils.h>
+#include <Explosion/Driver/Common.h>
 
 namespace Explosion {
     const std::vector<RateRule<VkSurfaceFormatKHR>> SURFACE_FORMAT_RATE_RULES = {
