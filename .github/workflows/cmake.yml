@@ -6,7 +6,7 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build:
+  build-ubuntu:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,8 +18,17 @@ jobs:
     - name: Install SDL2 Development Package For GLFW3
       run: sudo apt-get install libsdl2-dev
     
+    - name: Get Lunarg Signing Key
+      run: wget -qO - https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
+
+    - name: Get Vulkan SDK Package List
+      run: sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-1.2.170-focal.list https://packages.lunarg.com/vulkan/1.2.170/lunarg-vulkan-1.2.170-focal.list
+
+    - name: Update Apt Infos
+      run: sudo apt update
+    
     - name: Install Vulkan SDK
-      uses: humbletim/setup-vulkan-sdk@v1.0.1
+      run: sudo apt install vulkan-sdk
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build
