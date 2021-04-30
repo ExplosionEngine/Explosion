@@ -57,7 +57,7 @@ jobs:
       run: 7z x ${{github.workspace}}/VulkanSDK-1.2.170.0-Installer.exe -o${{github.workspace}}/VulkanSDK
       
     - name: Setup Vulkan SDK ENV
-      run: $env:VULKAN_SDK="${{github.workspace}}/VulkanSDK"
+      run: $env:VULKAN_SDK="${{github.workspace}}\VulkanSDK"
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build
