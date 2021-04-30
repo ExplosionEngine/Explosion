@@ -11,6 +11,7 @@
 #include <Explosion/Driver/SwapChain.h>
 #include <Explosion/Driver/Platform.h>
 #include <Explosion/Driver/Common.h>
+#include <Explosion/Driver/Signal.h>
 
 namespace Explosion {
     const std::vector<RateRule<VkSurfaceFormatKHR>> SURFACE_FORMAT_RATE_RULES = {
@@ -55,12 +56,34 @@ namespace Explosion {
         SelectSwapChainConfig();
         CreateSwapChain();
         FetchAttachments();
+        CreateSignals()
     }
 
     SwapChain::~SwapChain()
     {
+        DestroySignals();
         DestroySwapChain();
         DestroySurface();
+    }
+
+    void SwapChain::DoFrame(const FrameJob& frameJob)
+    {
+        uint32_t imageIdx;
+        vkAcquireNextImageKHR(device.GetVkDevice(), vkSwapChain, UINT64_MAX, imageReadySignal->GetVkSemaphore(), VK_NULL_HANDLE, &imageIdx);
+
+        frameJob(imageIdx, imageReadySignal, frameFinishedSignal);
+
+        VkPresentInfoKHR presentInfo {};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = &frameFinishedSignal->GetVkSemaphore();
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = &vkSwapChain;
+        presentInfo.pImageIndices = &imageIdx;
+        presentInfo.pResults = nullptr;
+
+        vkQueuePresentKHR(device.GetVkQueue(), &presentInfo);
+        vkQueueWaitIdle(device.GetVkQueue());
     }
 
     uint32_t SwapChain::GetColorAttachmentCount()
@@ -200,5 +223,17 @@ namespace Explosion {
         for (auto i  = 0; i < imageCnt; i++) {
             colorAttachments[i] = driver.CreateGpuRes<ColorAttachment>(images[i], config);
         }
+    }
+
+    void SwapChain::CreateSignals()
+    {
+        imageReadySignal = driver.CreateGpuRes<Signal>();
+        renderFinishedSignal = driver.CreateGpuRes<Signal>();
+    }
+
+    void SwapChain::DestroySignals()
+    {
+        driver.DestroyGpuRes<Signal>(imageReadySignal);
+        driver.DestroyGpuRes<Signal>(renderFinishedSignal);
     }
 }

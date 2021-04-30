@@ -13,6 +13,7 @@ namespace Explosion {
     class Driver;
     class Device;
     class CommandEncoder;
+    class Signal;
 
     using EncodingFunc = std::function<void(CommandEncoder* commandEncoder)>;
 
@@ -23,14 +24,27 @@ namespace Explosion {
         const VkCommandBuffer& GetVkCommandBuffer();
         void EncodeCommands(const EncodingFunc& encodingFunc);
         void SubmitNow();
+        void Submit(Signal* waitSignal, Signal* notifySignal);
 
-    private:
-        void AllocateCommandBuffer();
-        void FreeCommandBuffer();
+    protected:
+        virtual void SetupSubmitInfo(VkSubmitInfo& submitInfo);
 
         Driver& driver;
         Device& device;
         VkCommandBuffer vkCommandBuffer = VK_NULL_HANDLE;
+
+    private:
+        void AllocateCommandBuffer();
+        void FreeCommandBuffer();
+    };
+
+    class FrameOutputCommandBuffer : public CommandBuffer {
+    public:
+        explicit FrameOutputCommandBuffer(Driver& driver);
+        ~FrameOutputCommandBuffer();
+
+    protected:
+        void SetupSubmitInfo(VkSubmitInfo& submitInfo) override;
     };
 }
 
