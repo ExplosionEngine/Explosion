@@ -18,7 +18,7 @@ namespace Explosion {
     class GpuBuffer {
     public:
         GpuBuffer(Driver& driver, uint32_t size);
-        ~GpuBuffer();
+        virtual ~GpuBuffer();
         uint32_t GetSize() const;
         const VkBuffer& GetVkBuffer() const;
         const VkDeviceMemory& GetVkDeviceMemory() const;
@@ -45,7 +45,7 @@ namespace Explosion {
     class HostVisibleBuffer : public GpuBuffer {
     public:
         HostVisibleBuffer(Driver& driver, uint32_t size);
-        ~HostVisibleBuffer();
+        ~HostVisibleBuffer() override;
         void UpdateData(void *data) override;
 
     protected:
@@ -57,7 +57,7 @@ namespace Explosion {
     class DeviceLocalBuffer : public GpuBuffer {
     public:
         DeviceLocalBuffer(Driver& driver, uint32_t size);
-        ~DeviceLocalBuffer();
+        ~DeviceLocalBuffer() override;
         void UpdateData(void *data) override;
 
     protected:
@@ -68,7 +68,7 @@ namespace Explosion {
     class StagingBuffer : public HostVisibleBuffer {
     public:
         StagingBuffer(Driver& driver, uint32_t size);
-        ~StagingBuffer();
+        ~StagingBuffer() override;
 
     private:
         void SetupBufferCreateInfo(VkBufferCreateInfo &createInfo) override;
@@ -78,7 +78,7 @@ namespace Explosion {
     class UniformBuffer : public HostVisibleBuffer {
     public:
         UniformBuffer(Driver& driver, uint32_t size);
-        ~UniformBuffer();
+        ~UniformBuffer() override;
 
     protected:
         void SetupBufferCreateInfo(VkBufferCreateInfo &createInfo) override;
@@ -88,7 +88,7 @@ namespace Explosion {
     class VertexBuffer : public DeviceLocalBuffer {
     public:
         VertexBuffer(Driver& driver, uint32_t size);
-        ~VertexBuffer();
+        ~VertexBuffer() override;
 
     protected:
         void SetupBufferCreateInfo(VkBufferCreateInfo &createInfo) override;
@@ -98,7 +98,7 @@ namespace Explosion {
     class IndexBuffer : public DeviceLocalBuffer {
     public:
         IndexBuffer(Driver& driver, uint32_t size);
-        ~IndexBuffer();
+        ~IndexBuffer() override;
 
     private:
         void SetupBufferCreateInfo(VkBufferCreateInfo &createInfo) override;

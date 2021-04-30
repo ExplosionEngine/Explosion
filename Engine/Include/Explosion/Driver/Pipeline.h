@@ -23,7 +23,7 @@ namespace Explosion {
             std::vector<char> code;
         };
 
-        ~Pipeline();
+        virtual ~Pipeline();
 
     protected:
         VkShaderModule CreateShaderModule(const std::vector<char>& code);
@@ -99,7 +99,7 @@ namespace Explosion {
         };
 
         GraphicsPipeline(Driver& driver, RenderPass* renderPass, const Config& config);
-        ~GraphicsPipeline();
+        ~GraphicsPipeline() override;
 
     private:
         void CreateDescriptorPool();
