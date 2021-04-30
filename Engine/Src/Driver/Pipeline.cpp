@@ -11,22 +11,6 @@
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/RenderPass.h>
 
-namespace {
-    std::string GetShaderName(const Explosion::ShaderStage& shaderStage)
-    {
-        switch (shaderStage) {
-            case Explosion::ShaderStage::VERTEX:
-                return "VertexShader";
-            case Explosion::ShaderStage::FRAGMENT:
-                return "FragmentShader";
-            case Explosion::ShaderStage::COMPUTE:
-                return "ComputeShader";
-            default:
-                return "UnknownShader";
-        }
-    }
-}
-
 namespace Explosion {
     Pipeline::Pipeline(Driver& driver, RenderPass* renderPass)
         : driver(driver), device(*driver.GetDevice()), renderPass(renderPass) {}
@@ -90,6 +74,9 @@ namespace Explosion {
             descriptorPoolSizes.emplace_back(poolSize);
         }
 
+        if (config.descriptorAttributes.empty()) {
+            return;
+        }
         VkDescriptorPoolCreateInfo descriptorPoolCreateInfo {};
         descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         descriptorPoolCreateInfo.pNext = nullptr;
@@ -142,6 +129,9 @@ namespace Explosion {
 
     void GraphicsPipeline::AllocateDescriptorSet()
     {
+        if (config.descriptorAttributes.empty()) {
+            return;
+        }
         VkDescriptorSetAllocateInfo descriptorSetAllocateInfo {};
         descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         descriptorSetAllocateInfo.pNext = nullptr;
@@ -196,8 +186,9 @@ namespace Explosion {
             shaderStageCreateInfo.flags = 0;
             shaderStageCreateInfo.stage = VkConvert<ShaderStage, VkShaderStageFlagBits>(stage);
             shaderStageCreateInfo.module = pendingReleaseShaderModules.back();
-            shaderStageCreateInfo.pName = GetShaderName(stage).c_str();
+            shaderStageCreateInfo.pName = "main";
             shaderStageCreateInfo.pSpecializationInfo = nullptr;
+            shaderStageCreateInfos.emplace_back(shaderStageCreateInfo);
         }
 
         std::vector<VkVertexInputBindingDescription> vertexInputBindingDescriptions(config.vertexBindings.size());
@@ -328,6 +319,7 @@ namespace Explosion {
         graphicsPipelineCreateInfo.stageCount = shaderStageCreateInfos.size();
         graphicsPipelineCreateInfo.pStages = shaderStageCreateInfos.data();
         graphicsPipelineCreateInfo.pVertexInputState = &vertexInputStateCreateInfo;
+        graphicsPipelineCreateInfo.pInputAssemblyState = &inputAssemblyStateCreateInfo;
         graphicsPipelineCreateInfo.pTessellationState = nullptr;
         graphicsPipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
         graphicsPipelineCreateInfo.pRasterizationState = &rasterizationStateCreateInfo;
