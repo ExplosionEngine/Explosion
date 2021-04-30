@@ -13,7 +13,7 @@
 
 Explosion is a cross-platform game engine, based on modern graphics api (aka Vulkan, DirectX 12, Metal) and powered by advanced logical framework called ECS.
 
-Welcome to join next generation game order.
+Explosion is awesome, welcome to join the next generation game order.
 
 # Build The Engine
 
