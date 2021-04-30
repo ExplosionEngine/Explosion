@@ -319,6 +319,7 @@ namespace Explosion {
         graphicsPipelineCreateInfo.stageCount = shaderStageCreateInfos.size();
         graphicsPipelineCreateInfo.pStages = shaderStageCreateInfos.data();
         graphicsPipelineCreateInfo.pVertexInputState = &vertexInputStateCreateInfo;
+        graphicsPipelineCreateInfo.pInputAssemblyState = &inputAssemblyStateCreateInfo;
         graphicsPipelineCreateInfo.pTessellationState = nullptr;
         graphicsPipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
         graphicsPipelineCreateInfo.pRasterizationState = &rasterizationStateCreateInfo;

@@ -2,6 +2,8 @@
 // Created by Administrator on 2021/4/4 0004.
 //
 
+#include <cstdint>
+
 #include <Application/Application.h>
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/SwapChain.h>
@@ -27,8 +29,8 @@ using namespace Explosion;
 
 namespace {
     struct Vertex {
-        std::vector<float> position;
-        std::vector<float> color;
+        float position[3];
+        float color[3];
     };
 
     using Index = uint32_t;
@@ -97,19 +99,39 @@ protected:
         pipelineConfig.colorBlend = false;
         pipeline = driver->CreateGpuRes<GraphicsPipeline>(renderPass, pipelineConfig);
 
-        // TODO
+        vertices = {
+            { 0.f, -.5f, 0.f },
+            { .5f, .5f, .0f },
+            { -.5f, .5f, 0.f }
+        };
+        indices = {
+            0, 1, 2
+        };
+        // TODO vertex buffer / index buffer
     }
 
     void OnStop() override
     {
+        driver->DestroyGpuRes<Pipeline>(pipeline);
+        for (auto* frameBuffer : frameBuffers) {
+            driver->DestroyGpuRes<FrameBuffer>(frameBuffer);
+        }
+        driver->DestroyGpuRes<RenderPass>(renderPass);
+        for (auto* imageView : imageViews) {
+            driver->DestroyGpuRes<ImageView>(imageView);
+        }
+        driver->DestroyGpuRes<SwapChain>(swapChain);
     }
 
     void OnDrawFrame() override
     {
-
+        // TODO
     }
 
 private:
+    std::vector<Vertex> vertices;
+    std::vector<Index> indices;
+
     std::unique_ptr<Driver> driver;
     SwapChain* swapChain = nullptr;
     std::vector<ImageView*> imageViews;
