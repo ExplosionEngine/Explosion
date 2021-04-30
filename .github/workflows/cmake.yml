@@ -42,38 +42,3 @@ jobs:
       working-directory: ${{github.workspace}}/build
       shell: bash
       run: cmake --build . --config $BUILD_TYPE
-
-        
-  build-windows:
-    runs-on: windows-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    
-#     - name: Download Vulkan SDK
-#       run: Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.170.0/windows/VulkanSDK-1.2.170.0-Installer.exe" -OutFile "${{github.workspace}}/VulkanSDK-1.2.170.0-Installer.exe"
-
-#     - name: Install Vulkan SDK
-#       run: ${{github.workspace}}/VulkanSDK-1.2.170.0-Installer.exe /S
-      
-#     - name: Setup Vulkan SDK ENV
-#       run: $env:VULKAN_SDK="C:\VulkanSDK\1.2.170.0"
-
-    - name: Download Scoop
-      run: Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
-      
-    - name: Install Vulkan SDK
-      run: scoop install vulkan
-
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{github.workspace}}/build
-
-    - name: Configure CMake
-      shell: bash
-      working-directory: ${{github.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-
-    - name: Build
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: cmake --build . --config $BUILD_TYPE
