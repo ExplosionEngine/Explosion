@@ -2,8 +2,6 @@
 // Created by Administrator on 2021/4/4 0004.
 //
 
-#include <cstdint>
-
 #include <Application/Application.h>
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/SwapChain.h>
@@ -56,7 +54,7 @@ protected:
         imageViewConfig.layerCount = 1;
         imageViewConfig.baseLayer = 0;
         imageViews.resize(swapChain->GetColorAttachmentCount());
-        for (uint32 i = 0; i < imageViews.size(); i++) {
+        for (uint32_t i = 0; i < imageViews.size(); i++) {
             imageViews[i] = driver->CreateGpuRes<ImageView>(swapChain->GetColorAttachments()[i], imageViewConfig);
         }
         
@@ -74,7 +72,7 @@ protected:
         frameBufferConfig.height = GetHeight();
         frameBufferConfig.layers = 1;
         frameBuffers.resize(swapChain->GetColorAttachmentCount());
-        for (uint32 i = 0; i < frameBuffers.size(); i++) {
+        for (uint32_t i = 0; i < frameBuffers.size(); i++) {
             frameBufferConfig.attachments = { imageViews[i] };
             frameBuffers[i] = driver->CreateGpuRes<FrameBuffer>(renderPass, frameBufferConfig);
         }
