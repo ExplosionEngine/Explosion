@@ -54,10 +54,10 @@ jobs:
       run: Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.170.0/windows/VulkanSDK-1.2.170.0-Installer.exe" -OutFile "${{github.workspace}}/VulkanSDK-1.2.170.0-Installer.exe"
 
     - name: Install Vulkan SDK
-      run: 7z x ${{github.workspace}}/VulkanSDK-1.2.170.0-Installer.exe -o${{github.workspace}}/VulkanSDK
+      run: ${{github.workspace}}/VulkanSDK-1.2.170.0-Installer.exe /S
       
     - name: Setup Vulkan SDK ENV
-      run: $env:VULKAN_SDK="${{github.workspace}}\VulkanSDK"
+      run: $env:VULKAN_SDK="C:\VulkanSDK\1.2.170.0"
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build
