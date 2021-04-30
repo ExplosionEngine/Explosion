@@ -44,30 +44,30 @@ jobs:
       run: cmake --build . --config $BUILD_TYPE
 
         
-  build-windows:
-    runs-on: windows-latest
+#   build-windows:
+#     runs-on: windows-latest
 
-    steps:
-    - uses: actions/checkout@v2
+#     steps:
+#     - uses: actions/checkout@v2
     
-    - name: Download Vulkan SDK
-      run: Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.170.0/windows/VulkanSDK-1.2.170.0-Installer.exe" -OutFile "${{github.workspace}}/VulkanSDK-1.2.170.0-Installer.exe"
+#     - name: Download Vulkan SDK
+#       run: Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.170.0/windows/VulkanSDK-1.2.170.0-Installer.exe" -OutFile "${{github.workspace}}/VulkanSDK-1.2.170.0-Installer.exe"
 
-    - name: Install Vulkan SDK
-      run: ${{github.workspace}}/VulkanSDK-1.2.170.0-Installer.exe /S
+#     - name: Install Vulkan SDK
+#       run: ${{github.workspace}}/VulkanSDK-1.2.170.0-Installer.exe /S
       
-    - name: Setup Vulkan SDK ENV
-      run: $env:VULKAN_SDK="C:\VulkanSDK\1.2.170.0"
+#     - name: Setup Vulkan SDK ENV
+#       run: $env:VULKAN_SDK="C:\VulkanSDK\1.2.170.0"
 
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{github.workspace}}/build
+#     - name: Create Build Environment
+#       run: cmake -E make_directory ${{github.workspace}}/build
 
-    - name: Configure CMake
-      shell: bash
-      working-directory: ${{github.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+#     - name: Configure CMake
+#       shell: bash
+#       working-directory: ${{github.workspace}}/build
+#       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
-    - name: Build
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: cmake --build . --config $BUILD_TYPE
+#     - name: Build
+#       working-directory: ${{github.workspace}}/build
+#       shell: bash
+#       run: cmake --build . --config $BUILD_TYPE
