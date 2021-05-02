@@ -49,8 +49,13 @@ namespace Explosion {
 
 namespace Explosion {
     SwapChain::SwapChain(Driver& driver, void* surface, uint32_t width, uint32_t height)
-        : driver(driver), device(*driver.GetDevice()), surface(surface), width(width), height(height)
+        : GpuRes(driver), device(*driver.GetDevice()), surface(surface), width(width), height(height) {}
+
+    SwapChain::~SwapChain() = default;
+
+    void SwapChain::OnCreate()
     {
+        GpuRes::OnCreate();
         CreateSurface();
         CheckPresentSupport();
         SelectSwapChainConfig();
@@ -59,8 +64,9 @@ namespace Explosion {
         CreateSignals();
     }
 
-    SwapChain::~SwapChain()
+    void SwapChain::OnDestroy()
     {
+        GpuRes::OnDestroy();
         DestroySignals();
         DestroySwapChain();
         DestroySurface();

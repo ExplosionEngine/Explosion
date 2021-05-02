@@ -10,28 +10,29 @@
 #include <vulkan/vulkan.h>
 
 #include <Explosion/Driver/Enum.h>
+#include <Explosion/Driver/GpuRes.h>
 
 namespace Explosion {
     class Driver;
     class Device;
     class RenderPass;
 
-    class Pipeline {
+    class Pipeline : public GpuRes {
     public:
         struct ShaderModule {
             ShaderStage stage;
             std::vector<char> code;
         };
 
-        virtual ~Pipeline();
+        explicit Pipeline(Driver& driver, RenderPass* renderPass);
+        ~Pipeline() override;
 
     protected:
+        void OnCreate() override;
+        void OnDestroy() override;
         VkShaderModule CreateShaderModule(const std::vector<char>& code);
         void DestroyShaderModule(const VkShaderModule& shaderModule);
 
-        explicit Pipeline(Driver& driver, RenderPass* renderPass);
-
-        Driver& driver;
         Device& device;
         RenderPass* renderPass;
     };
@@ -100,6 +101,10 @@ namespace Explosion {
 
         GraphicsPipeline(Driver& driver, RenderPass* renderPass, const Config& config);
         ~GraphicsPipeline() override;
+
+    protected:
+        void OnCreate() override;
+        void OnDestroy() override;
 
     private:
         void CreateDescriptorPool();

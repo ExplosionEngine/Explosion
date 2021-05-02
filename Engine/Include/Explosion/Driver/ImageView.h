@@ -8,13 +8,14 @@
 #include <vulkan/vulkan.h>
 
 #include <Explosion/Driver/Enum.h>
+#include <Explosion/Driver/GpuRes.h>
 
 namespace Explosion {
     class Driver;
     class Device;
     class Image;
 
-    class ImageView {
+    class ImageView : public GpuRes {
     public:
         struct Config {
             Image* image;
@@ -26,15 +27,18 @@ namespace Explosion {
         };
 
         ImageView(Driver& driver, const Config& config);
-        ~ImageView();
-        Image* GetImage();
+        ~ImageView() override;
+        Image* GetImage() const;
         const VkImageView& GetVkImageView();
+
+    protected:
+        void OnCreate() override;
+        void OnDestroy() override;
 
     private:
         void CreateImageView();
         void DestroyImageView();
 
-        Driver& driver;
         Device& device;
         Config config {};
         VkImageView vkImageView = VK_NULL_HANDLE;

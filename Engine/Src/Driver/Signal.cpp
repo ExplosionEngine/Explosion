@@ -7,13 +7,19 @@
 
 namespace Explosion {
     Signal::Signal(Driver& driver)
-        : driver(driver), device(*driver.GetDevice())
+        : GpuRes(driver), device(*driver.GetDevice()) {}
+
+    Signal::~Signal() = default;
+
+    void Signal::OnCreate()
     {
+        GpuRes::OnCreate();
         CreateSemaphore();
     }
 
-    Signal::~Signal()
+    void Signal::OnDestroy()
     {
+        GpuRes::OnDestroy();
         DestroySemaphore();
     }
 

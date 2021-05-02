@@ -22,17 +22,23 @@ namespace {
 
 namespace Explosion {
     ImageView::ImageView(Driver& driver, const ImageView::Config& config)
-        : driver(driver), device(*driver.GetDevice()), config(config)
+        : GpuRes(driver), device(*driver.GetDevice()), config(config) {}
+
+    ImageView::~ImageView() = default;
+
+    void ImageView::OnCreate()
     {
+        GpuRes::OnCreate();
         CreateImageView();
     }
 
-    ImageView::~ImageView()
+    void ImageView::OnDestroy()
     {
+        GpuRes::OnDestroy();
         DestroyImageView();
     }
 
-    Image* ImageView::GetImage()
+    Image* ImageView::GetImage() const
     {
         return config.image;
     }

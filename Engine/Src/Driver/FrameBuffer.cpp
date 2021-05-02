@@ -9,13 +9,19 @@
 
 namespace Explosion {
     FrameBuffer::FrameBuffer(Driver& driver, const FrameBuffer::Config& config)
-        : driver(driver), device(*driver.GetDevice()), config(config)
+        : GpuRes(driver), device(*driver.GetDevice()), config(config) {}
+
+    FrameBuffer::~FrameBuffer() = default;
+
+    void FrameBuffer::OnCreate()
     {
+        GpuRes::OnCreate();
         CreateFrameBuffer();
     }
 
-    FrameBuffer::~FrameBuffer()
+    void FrameBuffer::OnDestroy()
     {
+        GpuRes::OnDestroy();
         DestroyFrameBuffer();
     }
 

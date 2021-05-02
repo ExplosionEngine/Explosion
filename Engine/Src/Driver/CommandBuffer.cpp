@@ -3,19 +3,25 @@
 //
 
 #include <Explosion/Driver/CommandBuffer.h>
+#include <Explosion/Driver/GpuBuffer.h>
 #include <Explosion/Driver/Driver.h>
-#include <Explosion/Driver/CommandEncoder.h>
 #include <Explosion/Driver/Signal.h>
 
 namespace Explosion {
     CommandBuffer::CommandBuffer(Driver& driver)
-        : driver(driver), device(*driver.GetDevice())
+        : GpuRes(driver), device(*driver.GetDevice()) {}
+
+    CommandBuffer::~CommandBuffer() = default;
+
+    void CommandBuffer::OnCreate()
     {
+        GpuRes::OnCreate();
         AllocateCommandBuffer();
     }
 
-    CommandBuffer::~CommandBuffer()
+    void CommandBuffer::OnDestroy()
     {
+        GpuRes::OnDestroy();
         FreeCommandBuffer();
     }
 
@@ -95,6 +101,20 @@ namespace Explosion {
     void CommandBuffer::FreeCommandBuffer()
     {
         vkFreeCommandBuffers(device.GetVkDevice(), device.GetVkCommandPool(), 1, &vkCommandBuffer);
+    }
+
+    CommandEncoder::CommandEncoder(Driver& driver, CommandBuffer* commandBuffer)
+        : driver(driver), device(*driver.GetDevice()), commandBuffer(commandBuffer) {}
+
+    CommandEncoder::~CommandEncoder() = default;
+
+    void CommandEncoder::CopyBuffer(GpuBuffer* srcBuffer, GpuBuffer* dstBuffer)
+    {
+        VkBufferCopy bufferCopy {};
+        bufferCopy.srcOffset = 0;
+        bufferCopy.dstOffset = 0;
+        bufferCopy.size = srcBuffer->GetSize();
+        vkCmdCopyBuffer(commandBuffer->GetVkCommandBuffer(), srcBuffer->GetVkBuffer(), dstBuffer->GetVkBuffer(), 1, &bufferCopy);
     }
 
     FrameOutputCommandBuffer::FrameOutputCommandBuffer(Driver& driver) : CommandBuffer(driver) {}

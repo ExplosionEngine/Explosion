@@ -13,9 +13,19 @@
 
 namespace Explosion {
     Pipeline::Pipeline(Driver& driver, RenderPass* renderPass)
-        : driver(driver), device(*driver.GetDevice()), renderPass(renderPass) {}
+        : GpuRes(driver), device(*driver.GetDevice()), renderPass(renderPass) {}
 
     Pipeline::~Pipeline() = default;
+
+    void Pipeline::OnCreate()
+    {
+        GpuRes::OnCreate();
+    }
+
+    void Pipeline::OnDestroy()
+    {
+        GpuRes::OnDestroy();
+    }
 
     VkShaderModule Pipeline::CreateShaderModule(const std::vector<char>& code)
     {
@@ -39,8 +49,13 @@ namespace Explosion {
     }
 
     GraphicsPipeline::GraphicsPipeline(Driver& driver, RenderPass* renderPass, const GraphicsPipeline::Config& config)
-        : Pipeline(driver, renderPass), config(config)
+        : Pipeline(driver, renderPass), config(config) {}
+
+    GraphicsPipeline::~GraphicsPipeline() = default;
+
+    void GraphicsPipeline::OnCreate()
     {
+        Pipeline::OnCreate();
         CreateDescriptorPool();
         CreateDescriptorSetLayout();
         AllocateDescriptorSet();
@@ -48,8 +63,9 @@ namespace Explosion {
         CreateGraphicsPipeline();
     }
 
-    GraphicsPipeline::~GraphicsPipeline()
+    void GraphicsPipeline::OnDestroy()
     {
+        Pipeline::OnDestroy();
         DestroyGraphicsPipeline();
         DestroyPipelineLayout();
         DestroyDescriptorSetLayout();

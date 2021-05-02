@@ -13,7 +13,7 @@ namespace Explosion {
     class Driver;
     class Device;
 
-    class Image {
+    class Image : public GpuRes {
     public:
         struct Config {
             ImageType imageType;
@@ -27,16 +27,17 @@ namespace Explosion {
 
         Image(Driver& driver, const Config& config);
         explicit Image(Driver& driver, const VkImage& vkImage, const Config& config);
-        ~Image();
+        ~Image() override;
 
         const VkImage& GetVkImage();
         const Config& GetConfig();
 
     protected:
-        Driver& driver;
-        Device& device;
-
+        void OnCreate() override;
+        void OnDestroy() override;
         virtual void OnSetupImageCreateInfo(VkImageCreateInfo& createInfo);
+
+        Device& device;
 
     private:
         void CreateImage();
@@ -51,7 +52,7 @@ namespace Explosion {
     public:
         ColorAttachment(Driver& driver, const Config& config);
         ColorAttachment(Driver& driver, const VkImage& vkImage, const Config& config);
-        ~ColorAttachment();
+        ~ColorAttachment() override;
         bool IsFromSwapChain();
 
     protected:

@@ -9,26 +9,28 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Explosion/Driver/GpuRes.h>
 #include <Explosion/Driver/Common.h>
 
 namespace Explosion {
     class Driver;
     class Device;
 
-    class GpuBuffer {
+    class GpuBuffer : public GpuRes {
     public:
         GpuBuffer(Driver& driver, uint32_t size);
-        virtual ~GpuBuffer();
+        ~GpuBuffer() override;
         uint32_t GetSize() const;
         const VkBuffer& GetVkBuffer() const;
         const VkDeviceMemory& GetVkDeviceMemory() const;
         virtual void UpdateData(void* data) = 0;
 
     protected:
+        void OnCreate() override;
+        void OnDestroy() override;
         virtual void SetupBufferCreateInfo(VkBufferCreateInfo& createInfo);
         virtual VkMemoryPropertyFlags GetMemoryPropertyFlags();
 
-        Driver& driver;
         Device& device;
         uint32_t size;
         VkBuffer vkBuffer = VK_NULL_HANDLE;

@@ -12,6 +12,7 @@
 #include <vulkan/vulkan.h>
 
 #include <Explosion/Driver/Enum.h>
+#include <Explosion/Driver/GpuRes.h>
 
 namespace Explosion {
     class Driver;
@@ -21,10 +22,10 @@ namespace Explosion {
 
     using FrameJob = std::function<void(uint32_t, Signal*, Signal*)>;
 
-    class SwapChain {
+    class SwapChain : public GpuRes {
     public:
         SwapChain(Driver& driver, void* surface, uint32_t width, uint32_t height);
-        ~SwapChain();
+        ~SwapChain() override;
         void DoFrame(const FrameJob& frameJob);
         uint32_t GetColorAttachmentCount();
         Format GetSurfaceFormat() const;
@@ -34,6 +35,10 @@ namespace Explosion {
         const VkSurfaceFormatKHR& GetVkSurfaceFormat();
         const VkPresentModeKHR& GetVkPresentMode();
         const std::vector<ColorAttachment*>& GetColorAttachments();
+
+    protected:
+        void OnCreate() override;
+        void OnDestroy() override;
 
     private:
         void CreateSurface();
@@ -49,7 +54,6 @@ namespace Explosion {
         void CreateSignals();
         void DestroySignals();
 
-        Driver& driver;
         Device& device;
         void* surface;
         uint32_t width;

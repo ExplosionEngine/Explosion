@@ -9,13 +9,15 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Explosion/Driver/GpuRes.h>
+
 namespace Explosion {
     class Driver;
     class Device;
     class ImageView;
     class RenderPass;
 
-    class FrameBuffer {
+    class FrameBuffer : public GpuRes {
     public:
         struct Config {
             RenderPass* renderPass;
@@ -26,13 +28,16 @@ namespace Explosion {
         };
 
         FrameBuffer(Driver& driver, const Config& config);
-        ~FrameBuffer();
+        ~FrameBuffer() override;
+
+    protected:
+        void OnCreate() override;
+        void OnDestroy() override;
 
     private:
         void CreateFrameBuffer();
         void DestroyFrameBuffer();
 
-        Driver& driver;
         Device& device;
         Config config {};
         VkFramebuffer vkFramebuffer = VK_NULL_HANDLE;
