@@ -65,8 +65,13 @@ namespace {
 }
 
 namespace Explosion {
-    Device::Device()
+    Device::Device(Driver& driver) : GpuRes(driver) {}
+
+    Device::~Device() = default;
+
+    void Device::OnCreate()
     {
+        GpuRes::OnCreate();
         PrepareInstanceExtensions();
         PrepareLayers();
         CreateInstance();
@@ -80,10 +85,12 @@ namespace Explosion {
         CreateLogicalDevice();
         GetQueue();
         CreateCommandPool();
+        FetchPhysicalDeviceMemoryProperties();
     }
 
-    Device::~Device()
+    void Device::OnDestroy()
     {
+        GpuRes::OnDestroy();
         DestroyCommandPool();
         DestroyLogicalDevice();
 #ifdef ENABLE_VALIDATION_LAYER

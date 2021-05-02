@@ -10,30 +10,40 @@
 #include <vulkan/vulkan.h>
 
 #include <Explosion/Driver/Enum.h>
+#include <Explosion/Driver/GpuRes.h>
 
 namespace Explosion {
     class Driver;
     class Device;
     class RenderPass;
 
-    class Pipeline {
+    class Pipeline : public GpuRes {
     public:
         struct ShaderModule {
             ShaderStage stage;
             std::vector<char> code;
         };
 
-        virtual ~Pipeline();
+        explicit Pipeline(Driver& driver, RenderPass* renderPass);
+        ~Pipeline() override;
+        const VkPipelineLayout& GetVkPipelineLayout() const;
+        const VkPipeline& GetVkPipeline() const;
+        const VkDescriptorSetLayout& GetVkDescriptorSetLayout() const;
+        const VkDescriptorSet& GetVkDescriptorSet() const;
 
     protected:
+        void OnCreate() override;
+        void OnDestroy() override;
         VkShaderModule CreateShaderModule(const std::vector<char>& code);
         void DestroyShaderModule(const VkShaderModule& shaderModule);
 
-        explicit Pipeline(Driver& driver, RenderPass* renderPass);
-
-        Driver& driver;
         Device& device;
         RenderPass* renderPass;
+        VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
+        VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
+        VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
+        VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
+        VkPipeline vkPipeline = VK_NULL_HANDLE;
     };
 
     class GraphicsPipeline : public Pipeline {
@@ -63,8 +73,8 @@ namespace Explosion {
         struct Scissor {
             int32_t x;
             int32_t y;
-            int32_t width;
-            int32_t height;
+            uint32_t width;
+            uint32_t height;
         };
 
         struct RasterizerConfig {
@@ -101,6 +111,10 @@ namespace Explosion {
         GraphicsPipeline(Driver& driver, RenderPass* renderPass, const Config& config);
         ~GraphicsPipeline() override;
 
+    protected:
+        void OnCreate() override;
+        void OnDestroy() override;
+
     private:
         void CreateDescriptorPool();
         void DestroyDescriptorPool();
@@ -117,11 +131,6 @@ namespace Explosion {
         void DestroyGraphicsPipeline();
 
         Config config {};
-        VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
-        VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
-        VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
-        VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
-        VkPipeline vkPipeline = VK_NULL_HANDLE;
     };
 }
 

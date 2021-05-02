@@ -12,6 +12,7 @@
 #include <Explosion/Driver/ImageView.h>
 #include <Explosion/Driver/GpuBuffer.h>
 #include <Explosion/Driver/Signal.h>
+#include <Explosion/Driver/CommandBuffer.h>
 #include <Explosion/Common/FileReader.h>
 
 #ifdef __APPLE__
@@ -55,7 +56,8 @@ protected:
         imageViewConfig.baseLayer = 0;
         imageViews.resize(swapChain->GetColorAttachmentCount());
         for (uint32_t i = 0; i < imageViews.size(); i++) {
-            imageViews[i] = driver->CreateGpuRes<ImageView>(swapChain->GetColorAttachments()[i], imageViewConfig);
+            imageViewConfig.image = swapChain->GetColorAttachments()[i];
+            imageViews[i] = driver->CreateGpuRes<ImageView>(imageViewConfig);
         }
         
         RenderPass::Config renderPassConfig {};
@@ -68,13 +70,14 @@ protected:
         renderPass = driver->CreateGpuRes<RenderPass>(renderPassConfig);
 
         FrameBuffer::Config frameBufferConfig {};
+        frameBufferConfig.renderPass = renderPass;
         frameBufferConfig.width = GetWidth();
         frameBufferConfig.height = GetHeight();
         frameBufferConfig.layers = 1;
         frameBuffers.resize(swapChain->GetColorAttachmentCount());
         for (uint32_t i = 0; i < frameBuffers.size(); i++) {
             frameBufferConfig.attachments = { imageViews[i] };
-            frameBuffers[i] = driver->CreateGpuRes<FrameBuffer>(renderPass, frameBufferConfig);
+            frameBuffers[i] = driver->CreateGpuRes<FrameBuffer>(frameBufferConfig);
         }
 
         GraphicsPipeline::Config pipelineConfig {};
@@ -87,11 +90,10 @@ protected:
         };
         pipelineConfig.vertexAttributes = {
             { 0, 0, Format::R32_G32_B32_FLOAT, offsetof(Vertex, position) },
-            { 0, 1, Format::R32_G32_B32_FLOAT, offsetof(Vertex, color) }
         };
         pipelineConfig.descriptorAttributes = {};
         pipelineConfig.viewport = { 0, 0, static_cast<float>(GetWidth()), static_cast<float>(GetHeight()), 0, 0 };
-        pipelineConfig.scissor = { 0, 0, static_cast<int32_t>(GetWidth()), static_cast<int32_t>(GetHeight()) };
+        pipelineConfig.scissor = { 0, 0, GetWidth(), GetHeight() };
         pipelineConfig.rasterizerConfig = { false, false, CullMode::NONE, FrontFace::COUNTER_CLOCK_WISE };
         pipelineConfig.depthStencilConfig = { false, false, false };
         pipelineConfig.colorBlend = false;
@@ -105,11 +107,16 @@ protected:
         indices = {
             0, 1, 2
         };
-        // TODO vertex buffer / index buffer
+        vertexBuffer = driver->CreateGpuRes<VertexBuffer>(sizeof(Vertex) * vertices.size());
+        vertexBuffer->UpdateData(vertices.data());
+        indexBuffer = driver->CreateGpuRes<IndexBuffer>(sizeof(Index) * indices.size());
+        indexBuffer->UpdateData(indices.data());
     }
 
     void OnStop() override
     {
+        driver->DestroyGpuRes<GpuBuffer>(vertexBuffer);
+        driver->DestroyGpuRes<GpuBuffer>(indexBuffer);
         driver->DestroyGpuRes<Pipeline>(pipeline);
         for (auto* frameBuffer : frameBuffers) {
             driver->DestroyGpuRes<FrameBuffer>(frameBuffer);
@@ -123,7 +130,27 @@ protected:
 
     void OnDrawFrame() override
     {
-        // TODO
+        swapChain->DoFrame([this](uint32_t imageIdx, Signal* imageReadySignal, Signal* frameFinishedSignal) -> void {
+            auto* commandBuffer = driver->CreateGpuRes<FrameOutputCommandBuffer>();
+            commandBuffer->EncodeCommands([imageIdx, this](CommandEncoder* encoder) -> void {
+                CommandEncoder::RenderPassBeginInfo beginInfo {};
+                beginInfo.frameBuffer = frameBuffers[imageIdx];
+                beginInfo.renderArea = { 0, 0, GetWidth(), GetHeight() };
+                beginInfo.clearValue = { 0.f, 0.f, 0.f, 1.f };
+                encoder->BeginRenderPass(renderPass, beginInfo);
+                {
+                    encoder->BindGraphicsPipeline(pipeline);
+                    encoder->SetViewPort({ 0, 0, static_cast<float>(GetWidth()), static_cast<float>(GetHeight()), 0.f, 1.f });
+                    encoder->SetScissor({ 0, 0, GetWidth(), GetHeight() });
+
+                    encoder->BindVertexBuffer(0, vertexBuffer);
+                    encoder->BindIndexBuffer(indexBuffer);
+                    encoder->DrawIndexed(0, indices.size(), 0, 0, 1);
+                }
+                encoder->EndRenderPass();
+            });
+            commandBuffer->Submit(imageReadySignal, frameFinishedSignal);
+        });
     }
 
 private:

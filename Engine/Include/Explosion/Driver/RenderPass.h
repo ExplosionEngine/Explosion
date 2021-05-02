@@ -10,13 +10,14 @@
 #include <vulkan/vulkan.h>
 
 #include <Explosion/Driver/Enum.h>
+#include <Explosion/Driver/GpuRes.h>
 
 namespace Explosion {
     class Driver;
     class Device;
     class ImageView;
 
-    class RenderPass {
+    class RenderPass : public GpuRes {
     public:
         struct AttachmentConfig {
             AttachmentType type;
@@ -30,14 +31,15 @@ namespace Explosion {
         };
 
         explicit RenderPass(Driver& driver, const Config& config);
-        ~RenderPass();
+        ~RenderPass() override;
         const VkRenderPass& GetVkRenderPass();
 
     private:
+        void OnCreate() override;
+        void OnDestroy() override;
         void CreateRenderPass();
         void DestroyRenderPass();
 
-        Driver& driver;
         Device& device;
         Config config {};
         VkRenderPass vkRenderPass = VK_NULL_HANDLE;

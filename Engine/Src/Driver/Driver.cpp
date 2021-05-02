@@ -5,9 +5,15 @@
 #include <Explosion/Driver/Driver.h>
 
 namespace Explosion {
-    Driver::Driver() : device(std::make_unique<Device>()) {}
+    Driver::Driver() : device(std::make_unique<Device>(*this))
+    {
+        device->Create();
+    }
 
-    Driver::~Driver() = default;
+    Driver::~Driver()
+    {
+        device->Destroy();
+    }
 
     Device* Driver::GetDevice()
     {

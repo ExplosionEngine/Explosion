@@ -10,11 +10,13 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Explosion/Driver/GpuRes.h>
+
 namespace Explosion {
-    class Device {
+    class Device : public GpuRes {
     public:
-        Device();
-        ~Device();
+        explicit Device(Driver& driver);
+        ~Device() override;
 
         const VkInstance& GetVkInstance() const;
         const VkPhysicalDevice& GetVkPhysicalDevice() const;
@@ -23,6 +25,10 @@ namespace Explosion {
         uint32_t GetVkQueueFamilyIndex() const;
         const VkCommandPool& GetVkCommandPool() const;
         const VkPhysicalDeviceMemoryProperties& GetVkPhysicalDeviceMemoryProperties() const;
+
+    protected:
+        void OnCreate() override;
+        void OnDestroy() override;
 
     private:
 #ifdef ENABLE_VALIDATION_LAYER
@@ -56,13 +62,13 @@ namespace Explosion {
         std::vector<const char*> layers {};
         VkInstance vkInstance = VK_NULL_HANDLE;
         VkPhysicalDevice vkPhysicalDevice = VK_NULL_HANDLE;
-        VkPhysicalDeviceProperties vkPhysicalDeviceProperties;
-        VkPhysicalDeviceFeatures  vkPhysicalDeviceFeatures;
+        VkPhysicalDeviceProperties vkPhysicalDeviceProperties{};
+        VkPhysicalDeviceFeatures  vkPhysicalDeviceFeatures{};
         std::optional<uint32_t> vkQueueFamilyIndex;
         VkDevice vkDevice = VK_NULL_HANDLE;
         VkQueue vkQueue = VK_NULL_HANDLE;
         VkCommandPool vkCommandPool = VK_NULL_HANDLE;
-        VkPhysicalDeviceMemoryProperties vkPhysicalDeviceMemoryProperties;
+        VkPhysicalDeviceMemoryProperties vkPhysicalDeviceMemoryProperties{};
     };
 }
 
