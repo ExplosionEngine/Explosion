@@ -90,7 +90,6 @@ protected:
         };
         pipelineConfig.vertexAttributes = {
             { 0, 0, Format::R32_G32_B32_FLOAT, offsetof(Vertex, position) },
-            { 0, 1, Format::R32_G32_B32_FLOAT, offsetof(Vertex, color) }
         };
         pipelineConfig.descriptorAttributes = {};
         pipelineConfig.viewport = { 0, 0, static_cast<float>(GetWidth()), static_cast<float>(GetHeight()), 0, 0 };
@@ -146,7 +145,7 @@ protected:
 
                     encoder->BindVertexBuffer(0, vertexBuffer);
                     encoder->BindIndexBuffer(indexBuffer);
-                    encoder->Draw(0, vertices.size(), 0, 1);
+                    encoder->DrawIndexed(0, indices.size(), 0, 0, 1);
                 }
                 encoder->EndRenderPass();
             });

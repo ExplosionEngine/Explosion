@@ -77,6 +77,7 @@ namespace Explosion {
         void BindVertexBuffer(uint32_t binding, GpuBuffer* vertexBuffer);
         void BindIndexBuffer(GpuBuffer* indexBuffer);
         void Draw(uint32_t firstVertex, uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount);
+        void DrawIndexed(uint32_t firstIndex, uint32_t indexCount, int32_t vertexOffset, uint32_t firstInstance, uint32_t instanceCount);
         void SetViewPort(const GraphicsPipeline::Viewport& viewport);
         void SetScissor(const GraphicsPipeline::Scissor& scissor);
 
@@ -93,6 +94,9 @@ namespace Explosion {
 
     protected:
         void SetupSubmitInfo(VkSubmitInfo& submitInfo) override;
+
+    private:
+        VkPipelineStageFlags waitStages = 0;
     };
 }
 

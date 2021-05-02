@@ -171,6 +171,11 @@ namespace Explosion {
         vkCmdDraw(commandBuffer->GetVkCommandBuffer(), vertexCount, instanceCount, firstVertex, firstInstance);
     }
 
+    void CommandEncoder::DrawIndexed(uint32_t firstIndex, uint32_t indexCount, int32_t vertexOffset, uint32_t firstInstance, uint32_t instanceCount)
+    {
+        vkCmdDrawIndexed(commandBuffer->GetVkCommandBuffer(), indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+    }
+
     void CommandEncoder::SetViewPort(const GraphicsPipeline::Viewport& viewport)
     {
         VkViewport vp = {
@@ -201,7 +206,7 @@ namespace Explosion {
     {
         CommandBuffer::SetupSubmitInfo(submitInfo);
 
-        VkPipelineStageFlags waitStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        waitStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         submitInfo.pWaitDstStageMask = &waitStages;
     }
 }
