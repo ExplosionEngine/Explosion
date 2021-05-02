@@ -55,7 +55,8 @@ protected:
         imageViewConfig.baseLayer = 0;
         imageViews.resize(swapChain->GetColorAttachmentCount());
         for (uint32_t i = 0; i < imageViews.size(); i++) {
-            imageViews[i] = driver->CreateGpuRes<ImageView>(swapChain->GetColorAttachments()[i], imageViewConfig);
+            imageViewConfig.image = swapChain->GetColorAttachments()[i];
+            imageViews[i] = driver->CreateGpuRes<ImageView>(imageViewConfig);
         }
         
         RenderPass::Config renderPassConfig {};
@@ -68,13 +69,14 @@ protected:
         renderPass = driver->CreateGpuRes<RenderPass>(renderPassConfig);
 
         FrameBuffer::Config frameBufferConfig {};
+        frameBufferConfig.renderPass = renderPass;
         frameBufferConfig.width = GetWidth();
         frameBufferConfig.height = GetHeight();
         frameBufferConfig.layers = 1;
         frameBuffers.resize(swapChain->GetColorAttachmentCount());
         for (uint32_t i = 0; i < frameBuffers.size(); i++) {
             frameBufferConfig.attachments = { imageViews[i] };
-            frameBuffers[i] = driver->CreateGpuRes<FrameBuffer>(renderPass, frameBufferConfig);
+            frameBuffers[i] = driver->CreateGpuRes<FrameBuffer>(frameBufferConfig);
         }
 
         GraphicsPipeline::Config pipelineConfig {};

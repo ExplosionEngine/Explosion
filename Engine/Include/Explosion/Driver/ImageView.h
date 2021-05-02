@@ -17,6 +17,7 @@ namespace Explosion {
     class ImageView {
     public:
         struct Config {
+            Image* image;
             ImageViewType type;
             uint32_t mipLevelCount;
             uint32_t baseMipLevel;
@@ -24,7 +25,7 @@ namespace Explosion {
             uint32_t baseLayer;
         };
 
-        ImageView(Driver& driver, Image* image, const Config& config);
+        ImageView(Driver& driver, const Config& config);
         ~ImageView();
         Image* GetImage();
         const VkImageView& GetVkImageView();
@@ -36,7 +37,6 @@ namespace Explosion {
         Driver& driver;
         Device& device;
         Config config {};
-        Image* image = nullptr;
         VkImageView vkImageView = VK_NULL_HANDLE;
     };
 }

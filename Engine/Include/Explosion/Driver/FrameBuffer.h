@@ -18,13 +18,14 @@ namespace Explosion {
     class FrameBuffer {
     public:
         struct Config {
+            RenderPass* renderPass;
             uint32_t width;
             uint32_t height;
             uint32_t layers;
             std::vector<ImageView*> attachments;
         };
 
-        FrameBuffer(Driver& driver, RenderPass* renderPass, const Config& config);
+        FrameBuffer(Driver& driver, const Config& config);
         ~FrameBuffer();
 
     private:
@@ -33,7 +34,6 @@ namespace Explosion {
 
         Driver& driver;
         Device& device;
-        RenderPass* renderPass = nullptr;
         Config config {};
         VkFramebuffer vkFramebuffer = VK_NULL_HANDLE;
     };

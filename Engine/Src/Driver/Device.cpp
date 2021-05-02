@@ -80,6 +80,7 @@ namespace Explosion {
         CreateLogicalDevice();
         GetQueue();
         CreateCommandPool();
+        FetchPhysicalDeviceMemoryProperties();
     }
 
     Device::~Device()
