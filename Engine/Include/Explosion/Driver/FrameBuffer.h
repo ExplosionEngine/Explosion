@@ -29,6 +29,7 @@ namespace Explosion {
 
         FrameBuffer(Driver& driver, const Config& config);
         ~FrameBuffer() override;
+        const VkFramebuffer& GetVkFrameBuffer() const;
 
     protected:
         void OnCreate() override;

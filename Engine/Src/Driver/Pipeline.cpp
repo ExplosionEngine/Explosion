@@ -17,6 +17,26 @@ namespace Explosion {
 
     Pipeline::~Pipeline() = default;
 
+    const VkPipelineLayout& Pipeline::GetVkPipelineLayout() const
+    {
+        return vkPipelineLayout;
+    }
+
+    const VkPipeline& Pipeline::GetVkPipeline() const
+    {
+        return vkPipeline;
+    }
+
+    const VkDescriptorSetLayout& Pipeline::GetVkDescriptorSetLayout() const
+    {
+        return vkDescriptorSetLayout;
+    }
+
+    const VkDescriptorSet& Pipeline::GetVkDescriptorSet() const
+    {
+        return vkDescriptorSet;
+    }
+
     void Pipeline::OnCreate()
     {
         GpuRes::OnCreate();

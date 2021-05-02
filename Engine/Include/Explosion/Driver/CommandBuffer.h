@@ -10,6 +10,7 @@
 #include <vulkan/vulkan.h>
 
 #include <Explosion/Driver/GpuRes.h>
+#include <Explosion/Driver/Pipeline.h>
 
 namespace Explosion {
     class Driver;
@@ -17,6 +18,9 @@ namespace Explosion {
     class CommandEncoder;
     class Signal;
     class GpuBuffer;
+    class RenderPass;
+    class FrameBuffer;
+    class Pipeline;
 
     using EncodingFunc = std::function<void(CommandEncoder* commandEncoder)>;
 
@@ -44,9 +48,37 @@ namespace Explosion {
 
     class CommandEncoder {
     public:
+        struct RenderArea {
+            int32_t x;
+            int32_t y;
+            uint32_t width;
+            uint32_t height;
+        };
+
+        struct ClearValue {
+            float r;
+            float g;
+            float b;
+            float a;
+        };
+
+        struct RenderPassBeginInfo {
+            FrameBuffer* frameBuffer;
+            RenderArea renderArea;
+            ClearValue clearValue;
+        };
+
         CommandEncoder(Driver& driver, CommandBuffer* commandBuffer);
         ~CommandEncoder();
         void CopyBuffer(GpuBuffer* srcBuffer, GpuBuffer* dstBuffer);
+        void BeginRenderPass(RenderPass* renderPass, const RenderPassBeginInfo& renderPassBeginInfo);
+        void EndRenderPass();
+        void BindGraphicsPipeline(Pipeline* pipeline);
+        void BindVertexBuffer(uint32_t binding, GpuBuffer* vertexBuffer);
+        void BindIndexBuffer(GpuBuffer* indexBuffer);
+        void Draw(uint32_t firstVertex, uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount);
+        void SetViewPort(const GraphicsPipeline::Viewport& viewport);
+        void SetScissor(const GraphicsPipeline::Scissor& scissor);
 
     private:
         Driver& driver;
@@ -57,7 +89,7 @@ namespace Explosion {
     class FrameOutputCommandBuffer : public CommandBuffer {
     public:
         explicit FrameOutputCommandBuffer(Driver& driver);
-        ~FrameOutputCommandBuffer();
+        ~FrameOutputCommandBuffer() override;
 
     protected:
         void SetupSubmitInfo(VkSubmitInfo& submitInfo) override;

@@ -25,6 +25,11 @@ namespace Explosion {
         DestroyFrameBuffer();
     }
 
+    const VkFramebuffer& FrameBuffer::GetVkFrameBuffer() const
+    {
+        return vkFramebuffer;
+    }
+
     void FrameBuffer::CreateFrameBuffer()
     {
         std::vector<VkImageView> attachments(config.attachments.size());
