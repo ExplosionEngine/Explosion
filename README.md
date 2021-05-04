@@ -17,6 +17,19 @@ Welcome to join the next generation game order.
 
 # Build The Engine
 
+Clone the repository at first:
+
+```shell
+git clone --recurse-submodules https://github.com/ExplosionEngine/Explosion.git
+```
+
+If you already cloned the repository but has not updated sub-modules, please update them:
+
+```shell
+git submodule init
+git submodule update
+```
+
 Install [Vulkan SDK](https://vulkan.lunarg.com/sdk/home) and setup environment variable:
 
 ```cpp
