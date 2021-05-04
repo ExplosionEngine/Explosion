@@ -39,12 +39,6 @@ namespace Explosion {
             registry.RemoveComponent<CompType>();
         }
 
-        template <typename CompType>
-        bool HasComponent()
-        {
-            return registry.HasComponent<CompType>();
-        }
-
         template <typename SystemType>
         void MountSystem()
         {
