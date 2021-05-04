@@ -1,6 +1,6 @@
 name: CMake
 
-on: [push, pull_request]
+on: [pull_request]
 
 env:
   BUILD_TYPE: Release
@@ -11,6 +11,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    
+    - name: Init Git SubModule
+      run: git submodule init
+      
+    - name: Update Git SubModule
+      run: git submodule update
     
     - name: Install XRandr Development Package For GLFW3
       run: sudo apt-get install libxrandr-dev
