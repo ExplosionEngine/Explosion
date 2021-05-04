@@ -37,12 +37,6 @@ namespace Explosion {
             registry.remove<CompType>(entity);
         }
 
-        template <typename CompType>
-        bool HasComponent(const Entity& entity)
-        {
-            return registry.has<CompType>(entity);
-        }
-
         template <typename... Args>
         CompView<Args...> ComponentView()
         {
