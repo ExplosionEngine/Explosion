@@ -4,7 +4,7 @@
 
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/Image.h>
-#include <Explosion/Driver/EnumAdapter.h>
+#include <Explosion/Driver/VkAdapater.h>
 
 namespace Explosion {
     Image::Image(Driver& driver, const Config& config)

@@ -5,7 +5,7 @@
 #include <Explosion/Driver/ImageView.h>
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/Image.h>
-#include <Explosion/Driver/EnumAdapter.h>
+#include <Explosion/Driver/VkAdapater.h>
 
 namespace {
     VkImageAspectFlags GetImageAspect(Explosion::Image* image)

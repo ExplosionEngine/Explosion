@@ -2,9 +2,7 @@
 // Created by John Kindem on 2021/4/24.
 //
 
-#include <vulkan/vulkan.h>
-
-#include <Explosion/Driver/EnumAdapter.h>
+#include <Explosion/Driver/VkAdapater.h>
 
 namespace Explosion {
 #define FIND_OR_EXCEPT                                            \
@@ -33,6 +31,10 @@ namespace Explosion {
 }
 
 namespace Explosion {
+    VkBool32 VkBoolConvert(bool value)
+    {
+        return value ? VK_TRUE : VK_FALSE;
+    }
 
     template <typename Type, typename VkType>
     VkType VkConvert(const Type& type)
