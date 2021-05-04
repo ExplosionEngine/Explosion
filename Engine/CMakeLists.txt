@@ -10,6 +10,7 @@ else()
 endif()
 
 include_directories(../3rd/entt/single_include)
+include_directories(../3rd/glm)
 include_directories(${Vulkan_INCLUDE_DIRS})
 
 if (WIN32)
