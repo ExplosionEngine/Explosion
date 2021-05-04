@@ -6,7 +6,7 @@
 
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/Device.h>
-#include <Explosion/Driver/EnumAdapter.h>
+#include <Explosion/Driver/VkAdapater.h>
 #include <Explosion/Driver/Image.h>
 #include <Explosion/Driver/SwapChain.h>
 #include <Explosion/Driver/Platform.h>

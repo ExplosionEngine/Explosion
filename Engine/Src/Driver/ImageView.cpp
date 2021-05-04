@@ -5,7 +5,7 @@
 #include <Explosion/Driver/ImageView.h>
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/Image.h>
-#include <Explosion/Driver/EnumAdapter.h>
+#include <Explosion/Driver/VkAdapater.h>
 
 namespace {
     VkImageAspectFlags GetImageAspect(Explosion::Image* image)
@@ -57,10 +57,10 @@ namespace Explosion {
         createInfo.image = config.image->GetVkImage();
         createInfo.viewType = VkConvert<ImageViewType, VkImageViewType>(config.type);
         createInfo.format = VkConvert<Format, VkFormat>(config.image->GetConfig().format);
-        createInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-        createInfo.components.g = VK_COMPONENT_SWIZZLE_G;
-        createInfo.components.b = VK_COMPONENT_SWIZZLE_B;
-        createInfo.components.a = VK_COMPONENT_SWIZZLE_A;
+        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.subresourceRange.aspectMask = GetImageAspect(config.image);
         createInfo.subresourceRange.levelCount = config.mipLevelCount;
         createInfo.subresourceRange.baseMipLevel = config.baseMipLevel;

@@ -4,7 +4,7 @@
 
 #include <Explosion/Driver/RenderPass.h>
 #include <Explosion/Driver/Driver.h>
-#include <Explosion/Driver/EnumAdapter.h>
+#include <Explosion/Driver/VkAdapater.h>
 
 namespace Explosion {
     RenderPass::RenderPass(Driver& driver, const Config& config)

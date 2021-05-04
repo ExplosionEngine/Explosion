@@ -7,7 +7,7 @@
 #include <unordered_map>
 
 #include <Explosion/Driver/Pipeline.h>
-#include <Explosion/Driver/EnumAdapter.h>
+#include <Explosion/Driver/VkAdapater.h>
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/RenderPass.h>
 
@@ -281,8 +281,8 @@ namespace Explosion {
         rasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         rasterizationStateCreateInfo.pNext = nullptr;
         rasterizationStateCreateInfo.flags = 0;
-        rasterizationStateCreateInfo.depthClampEnable = config.rasterizerConfig.depthClamp;
-        rasterizationStateCreateInfo.rasterizerDiscardEnable = config.rasterizerConfig.discard;
+        rasterizationStateCreateInfo.depthClampEnable = VkBoolConvert(config.rasterizerConfig.depthClamp);
+        rasterizationStateCreateInfo.rasterizerDiscardEnable = VkBoolConvert(config.rasterizerConfig.discard);
         rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
         rasterizationStateCreateInfo.cullMode = VkConvert<CullMode, VkCullModeFlagBits>(config.rasterizerConfig.cullMode);
         rasterizationStateCreateInfo.frontFace = VkConvert<FrontFace, VkFrontFace>(config.rasterizerConfig.frontFace);
@@ -292,7 +292,6 @@ namespace Explosion {
         rasterizationStateCreateInfo.depthBiasSlopeFactor = 0.0f;
         rasterizationStateCreateInfo.lineWidth = 1.f;
 
-        // TODO using hardware multi sample
         VkPipelineMultisampleStateCreateInfo multiSampleStateCreateInfo {};
         multiSampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multiSampleStateCreateInfo.pNext = nullptr;
@@ -308,18 +307,19 @@ namespace Explosion {
         depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
         depthStencilStateCreateInfo.pNext = nullptr;
         depthStencilStateCreateInfo.flags = 0;
-        depthStencilStateCreateInfo.depthTestEnable = config.depthStencilConfig.depthTest;
-        depthStencilStateCreateInfo.depthWriteEnable = config.depthStencilConfig.depthWrite;
+        depthStencilStateCreateInfo.depthTestEnable = VkBoolConvert(config.depthStencilConfig.depthTest);
+        depthStencilStateCreateInfo.depthWriteEnable = VkBoolConvert(config.depthStencilConfig.depthWrite);
         depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
         depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
-        depthStencilStateCreateInfo.stencilTestEnable = config.depthStencilConfig.stencilTest;
+        depthStencilStateCreateInfo.stencilTestEnable = VkBoolConvert(config.depthStencilConfig.stencilTest);
         depthStencilStateCreateInfo.front = {};
         depthStencilStateCreateInfo.back = {};
         depthStencilStateCreateInfo.minDepthBounds = 0.f;
         depthStencilStateCreateInfo.maxDepthBounds = 1.f;
 
         VkPipelineColorBlendAttachmentState colorBlendAttachmentState {};
-        colorBlendAttachmentState.blendEnable = config.colorBlend;
+        colorBlendAttachmentState.blendEnable = VkBoolConvert(config.colorBlend);
+        colorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         colorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
         colorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
         colorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
@@ -330,7 +330,7 @@ namespace Explosion {
         colorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
         colorBlendStateCreateInfo.pNext = nullptr;
         colorBlendStateCreateInfo.flags = 0;
-        colorBlendStateCreateInfo.logicOpEnable = config.colorBlend;
+        colorBlendStateCreateInfo.logicOpEnable = VkBoolConvert(config.colorBlend);
         colorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;
         colorBlendStateCreateInfo.attachmentCount = 1;
         colorBlendStateCreateInfo.pAttachments = &colorBlendAttachmentState;

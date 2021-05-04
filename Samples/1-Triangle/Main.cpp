@@ -29,7 +29,6 @@ using namespace Explosion;
 namespace {
     struct Vertex {
         float position[3];
-        float color[3];
     };
 
     using Index = uint32_t;
@@ -92,9 +91,9 @@ protected:
             { 0, 0, Format::R32_G32_B32_FLOAT, offsetof(Vertex, position) },
         };
         pipelineConfig.descriptorAttributes = {};
-        pipelineConfig.viewport = { 0, 0, static_cast<float>(GetWidth()), static_cast<float>(GetHeight()), 0, 0 };
+        pipelineConfig.viewport = { 0, 0, static_cast<float>(GetWidth()), static_cast<float>(GetHeight()), 0, 1.0 };
         pipelineConfig.scissor = { 0, 0, GetWidth(), GetHeight() };
-        pipelineConfig.rasterizerConfig = { false, false, CullMode::NONE, FrontFace::COUNTER_CLOCK_WISE };
+        pipelineConfig.rasterizerConfig = { false, false, CullMode::NONE, FrontFace::CLOCK_WISE };
         pipelineConfig.depthStencilConfig = { false, false, false };
         pipelineConfig.colorBlend = false;
         pipeline = driver->CreateGpuRes<GraphicsPipeline>(renderPass, pipelineConfig);
