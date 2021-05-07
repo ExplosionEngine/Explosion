@@ -2,6 +2,8 @@
 // Created by John Kindem on 2021/4/30.
 //
 
+#include <stdexcept>
+
 #include <Explosion/Driver/Signal.h>
 #include <Explosion/Driver/Driver.h>
 

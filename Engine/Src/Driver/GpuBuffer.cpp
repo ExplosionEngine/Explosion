@@ -3,6 +3,7 @@
 //
 
 #include <cstring>
+#include <stdexcept>
 
 #include <Explosion/Driver/GpuBuffer.h>
 #include <Explosion/Driver/Driver.h>

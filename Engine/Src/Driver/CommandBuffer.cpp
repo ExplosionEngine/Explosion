@@ -2,6 +2,8 @@
 // Created by John Kindem on 2021/3/30.
 //
 
+#include <stdexcept>
+
 #include <Explosion/Driver/CommandBuffer.h>
 #include <Explosion/Driver/GpuBuffer.h>
 #include <Explosion/Driver/Driver.h>
