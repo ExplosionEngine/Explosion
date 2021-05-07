@@ -4,20 +4,29 @@
 
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/Image.h>
-#include <Explosion/Driver/EnumAdapter.h>
+#include <Explosion/Driver/VkAdapater.h>
 
 namespace Explosion {
     Image::Image(Driver& driver, const Config& config)
-        : driver(driver), device(*driver.GetDevice()), fromSwapChain(false), config(config)
+        : GpuRes(driver), device(*driver.GetDevice()), fromSwapChain(false), config(config) {}
+
+    Image::Image(Driver& driver, const VkImage& vkImage, const Config& config)
+        : GpuRes(driver), device(*driver.GetDevice()), fromSwapChain(true), vkImage(vkImage), config(config) {}
+
+    Image::~Image() = default;
+
+    void Image::OnCreate()
     {
+        GpuRes::OnCreate();
+        if (fromSwapChain) {
+            return;
+        }
         CreateImage();
     }
 
-    Image::Image(Driver& driver, const VkImage& vkImage, const Config& config)
-        : driver(driver), device(*driver.GetDevice()), fromSwapChain(true), vkImage(vkImage), config(config) {}
-
-    Image::~Image()
+    void Image::OnDestroy()
     {
+        GpuRes::OnDestroy();
         if (fromSwapChain) {
             return;
         }

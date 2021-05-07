@@ -5,7 +5,7 @@
 #include <Explosion/Driver/ImageView.h>
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/Image.h>
-#include <Explosion/Driver/EnumAdapter.h>
+#include <Explosion/Driver/VkAdapater.h>
 
 namespace {
     VkImageAspectFlags GetImageAspect(Explosion::Image* image)
@@ -21,20 +21,26 @@ namespace {
 }
 
 namespace Explosion {
-    ImageView::ImageView(Driver& driver, Image* image, const ImageView::Config& config)
-        : driver(driver), device(*driver.GetDevice()), image(image), config(config)
+    ImageView::ImageView(Driver& driver, const ImageView::Config& config)
+        : GpuRes(driver), device(*driver.GetDevice()), config(config) {}
+
+    ImageView::~ImageView() = default;
+
+    void ImageView::OnCreate()
     {
+        GpuRes::OnCreate();
         CreateImageView();
     }
 
-    ImageView::~ImageView()
+    void ImageView::OnDestroy()
     {
+        GpuRes::OnDestroy();
         DestroyImageView();
     }
 
-    Image* ImageView::GetImage()
+    Image* ImageView::GetImage() const
     {
-        return image;
+        return config.image;
     }
 
     const VkImageView& ImageView::GetVkImageView()
@@ -48,14 +54,14 @@ namespace Explosion {
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.pNext = nullptr;
         createInfo.flags = 0;
-        createInfo.image = image->GetVkImage();
+        createInfo.image = config.image->GetVkImage();
         createInfo.viewType = VkConvert<ImageViewType, VkImageViewType>(config.type);
-        createInfo.format = VkConvert<Format, VkFormat>(image->GetConfig().format);
-        createInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-        createInfo.components.g = VK_COMPONENT_SWIZZLE_G;
-        createInfo.components.b = VK_COMPONENT_SWIZZLE_B;
-        createInfo.components.a = VK_COMPONENT_SWIZZLE_A;
-        createInfo.subresourceRange.aspectMask = GetImageAspect(image);
+        createInfo.format = VkConvert<Format, VkFormat>(config.image->GetConfig().format);
+        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.subresourceRange.aspectMask = GetImageAspect(config.image);
         createInfo.subresourceRange.levelCount = config.mipLevelCount;
         createInfo.subresourceRange.baseMipLevel = config.baseMipLevel;
         createInfo.subresourceRange.layerCount = config.layerCount;

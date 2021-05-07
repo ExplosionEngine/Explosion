@@ -2,21 +2,34 @@
 // Created by John Kindem on 2021/4/25.
 //
 
+#include <stdexcept>
+
 #include <Explosion/Driver/FrameBuffer.h>
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/ImageView.h>
 #include <Explosion/Driver/RenderPass.h>
 
 namespace Explosion {
-    FrameBuffer::FrameBuffer(Driver& driver, RenderPass* renderPass, const FrameBuffer::Config& config)
-        : driver(driver), device(*driver.GetDevice()), renderPass(renderPass), config(config)
+    FrameBuffer::FrameBuffer(Driver& driver, const FrameBuffer::Config& config)
+        : GpuRes(driver), device(*driver.GetDevice()), config(config) {}
+
+    FrameBuffer::~FrameBuffer() = default;
+
+    void FrameBuffer::OnCreate()
     {
+        GpuRes::OnCreate();
         CreateFrameBuffer();
     }
 
-    FrameBuffer::~FrameBuffer()
+    void FrameBuffer::OnDestroy()
     {
+        GpuRes::OnDestroy();
         DestroyFrameBuffer();
+    }
+
+    const VkFramebuffer& FrameBuffer::GetVkFrameBuffer() const
+    {
+        return vkFramebuffer;
     }
 
     void FrameBuffer::CreateFrameBuffer()
@@ -30,7 +43,7 @@ namespace Explosion {
         createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         createInfo.pNext = nullptr;
         createInfo.flags = 0;
-        createInfo.renderPass = renderPass->GetVkRenderPass();
+        createInfo.renderPass = config.renderPass->GetVkRenderPass();
         createInfo.attachmentCount = attachments.size();
         createInfo.pAttachments = attachments.data();
         createInfo.width = config.width;

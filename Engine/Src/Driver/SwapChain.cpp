@@ -6,11 +6,12 @@
 
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/Device.h>
-#include <Explosion/Driver/EnumAdapter.h>
+#include <Explosion/Driver/VkAdapater.h>
 #include <Explosion/Driver/Image.h>
 #include <Explosion/Driver/SwapChain.h>
 #include <Explosion/Driver/Platform.h>
-#include <Explosion/Driver/Utils.h>
+#include <Explosion/Driver/Common.h>
+#include <Explosion/Driver/Signal.h>
 
 namespace Explosion {
     const std::vector<RateRule<VkSurfaceFormatKHR>> SURFACE_FORMAT_RATE_RULES = {
@@ -48,24 +49,57 @@ namespace Explosion {
 
 namespace Explosion {
     SwapChain::SwapChain(Driver& driver, void* surface, uint32_t width, uint32_t height)
-        : driver(driver), device(*driver.GetDevice()), surface(surface), width(width), height(height)
+        : GpuRes(driver), device(*driver.GetDevice()), surface(surface), width(width), height(height) {}
+
+    SwapChain::~SwapChain() = default;
+
+    void SwapChain::OnCreate()
     {
+        GpuRes::OnCreate();
         CreateSurface();
         CheckPresentSupport();
         SelectSwapChainConfig();
         CreateSwapChain();
         FetchAttachments();
+        CreateSignals();
     }
 
-    SwapChain::~SwapChain()
+    void SwapChain::OnDestroy()
     {
+        GpuRes::OnDestroy();
+        DestroySignals();
         DestroySwapChain();
         DestroySurface();
+    }
+
+    void SwapChain::DoFrame(const FrameJob& frameJob)
+    {
+        uint32_t imageIdx;
+        vkAcquireNextImageKHR(device.GetVkDevice(), vkSwapChain, UINT64_MAX, imageReadySignal->GetVkSemaphore(), VK_NULL_HANDLE, &imageIdx);
+
+        frameJob(imageIdx, imageReadySignal, frameFinishedSignal);
+
+        VkPresentInfoKHR presentInfo {};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = &frameFinishedSignal->GetVkSemaphore();
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = &vkSwapChain;
+        presentInfo.pImageIndices = &imageIdx;
+        presentInfo.pResults = nullptr;
+
+        vkQueuePresentKHR(device.GetVkQueue(), &presentInfo);
+        vkQueueWaitIdle(device.GetVkQueue());
     }
 
     uint32_t SwapChain::GetColorAttachmentCount()
     {
         return colorAttachments.size();
+    }
+
+    Format SwapChain::GetSurfaceFormat() const
+    {
+        return GetEnumByVk<VkFormat, Format>(vkSurfaceFormat.format);
     }
 
     const VkSurfaceKHR& SwapChain::GetVkSurface()
@@ -200,5 +234,17 @@ namespace Explosion {
         for (auto i  = 0; i < imageCnt; i++) {
             colorAttachments[i] = driver.CreateGpuRes<ColorAttachment>(images[i], config);
         }
+    }
+
+    void SwapChain::CreateSignals()
+    {
+        imageReadySignal = driver.CreateGpuRes<Signal>();
+        frameFinishedSignal = driver.CreateGpuRes<Signal>();
+    }
+
+    void SwapChain::DestroySignals()
+    {
+        driver.DestroyGpuRes<Signal>(imageReadySignal);
+        driver.DestroyGpuRes<Signal>(frameFinishedSignal);
     }
 }

@@ -4,18 +4,23 @@
 
 #include <Explosion/Driver/RenderPass.h>
 #include <Explosion/Driver/Driver.h>
-#include <Explosion/Driver/Image.h>
-#include <Explosion/Driver/EnumAdapter.h>
+#include <Explosion/Driver/VkAdapater.h>
 
 namespace Explosion {
     RenderPass::RenderPass(Driver& driver, const Config& config)
-        : driver(driver), device(*driver.GetDevice()), config(config)
+        : GpuRes(driver), device(*driver.GetDevice()), config(config) {}
+
+    RenderPass::~RenderPass() = default;
+
+    void RenderPass::OnCreate()
     {
+        GpuRes::OnCreate();
         CreateRenderPass();
     }
 
-    RenderPass::~RenderPass()
+    void RenderPass::OnDestroy()
     {
+        GpuRes::OnDestroy();
         DestroyRenderPass();
     }
 

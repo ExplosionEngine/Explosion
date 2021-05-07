@@ -7,24 +7,38 @@
 
 #include <cstdint>
 #include <optional>
+#include <functional>
 
 #include <vulkan/vulkan.h>
+
+#include <Explosion/Driver/Enum.h>
+#include <Explosion/Driver/GpuRes.h>
 
 namespace Explosion {
     class Driver;
     class ColorAttachment;
+    class Signal;
+    class CommandBuffer;
 
-    class SwapChain {
+    using FrameJob = std::function<void(uint32_t, Signal*, Signal*)>;
+
+    class SwapChain : public GpuRes {
     public:
         SwapChain(Driver& driver, void* surface, uint32_t width, uint32_t height);
-        ~SwapChain();
+        ~SwapChain() override;
+        void DoFrame(const FrameJob& frameJob);
         uint32_t GetColorAttachmentCount();
+        Format GetSurfaceFormat() const;
         const VkSurfaceKHR& GetVkSurface();
         const VkSurfaceCapabilitiesKHR& GetVkSurfaceCapabilities();
         const VkExtent2D& GetVkExtent();
         const VkSurfaceFormatKHR& GetVkSurfaceFormat();
         const VkPresentModeKHR& GetVkPresentMode();
         const std::vector<ColorAttachment*>& GetColorAttachments();
+
+    protected:
+        void OnCreate() override;
+        void OnDestroy() override;
 
     private:
         void CreateSurface();
@@ -37,7 +51,9 @@ namespace Explosion {
 
         void FetchAttachments();
 
-        Driver& driver;
+        void CreateSignals();
+        void DestroySignals();
+
         Device& device;
         void* surface;
         uint32_t width;
@@ -49,6 +65,8 @@ namespace Explosion {
         VkPresentModeKHR vkPresentMode;
         VkSwapchainKHR vkSwapChain = VK_NULL_HANDLE;
         std::vector<ColorAttachment*> colorAttachments {};
+        Signal* imageReadySignal;
+        Signal* frameFinishedSignal;
     };
 }
 

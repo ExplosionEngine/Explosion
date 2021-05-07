@@ -8,7 +8,6 @@
 #include <memory>
 
 #include <Explosion/Driver/Device.h>
-#include <Explosion/Driver/SwapChain.h>
 
 namespace Explosion {
     class Driver {
@@ -20,12 +19,15 @@ namespace Explosion {
         template <typename Type, typename... Args>
         Type* CreateGpuRes(const Args&... args)
         {
-            return new Type(*this, args...);
+            Type* gpuRes = new Type(*this, args...);
+            gpuRes->Create();
+            return gpuRes;
         }
 
         template <typename Type>
         void DestroyGpuRes(Type* res)
         {
+            res->Destroy();
             delete res;
         }
 

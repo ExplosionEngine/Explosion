@@ -9,26 +9,28 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Explosion/Driver/GpuRes.h>
 #include <Explosion/Driver/Common.h>
 
 namespace Explosion {
     class Driver;
     class Device;
 
-    class GpuBuffer {
+    class GpuBuffer : public GpuRes {
     public:
         GpuBuffer(Driver& driver, uint32_t size);
-        ~GpuBuffer();
+        ~GpuBuffer() override;
         uint32_t GetSize() const;
         const VkBuffer& GetVkBuffer() const;
         const VkDeviceMemory& GetVkDeviceMemory() const;
         virtual void UpdateData(void* data) = 0;
 
     protected:
+        void OnCreate() override;
+        void OnDestroy() override;
         virtual void SetupBufferCreateInfo(VkBufferCreateInfo& createInfo);
         virtual VkMemoryPropertyFlags GetMemoryPropertyFlags();
 
-        Driver& driver;
         Device& device;
         uint32_t size;
         VkBuffer vkBuffer = VK_NULL_HANDLE;
@@ -45,7 +47,7 @@ namespace Explosion {
     class HostVisibleBuffer : public GpuBuffer {
     public:
         HostVisibleBuffer(Driver& driver, uint32_t size);
-        ~HostVisibleBuffer();
+        ~HostVisibleBuffer() override;
         void UpdateData(void *data) override;
 
     protected:
@@ -57,7 +59,7 @@ namespace Explosion {
     class DeviceLocalBuffer : public GpuBuffer {
     public:
         DeviceLocalBuffer(Driver& driver, uint32_t size);
-        ~DeviceLocalBuffer();
+        ~DeviceLocalBuffer() override;
         void UpdateData(void *data) override;
 
     protected:
@@ -68,7 +70,7 @@ namespace Explosion {
     class StagingBuffer : public HostVisibleBuffer {
     public:
         StagingBuffer(Driver& driver, uint32_t size);
-        ~StagingBuffer();
+        ~StagingBuffer() override;
 
     private:
         void SetupBufferCreateInfo(VkBufferCreateInfo &createInfo) override;
@@ -78,7 +80,7 @@ namespace Explosion {
     class UniformBuffer : public HostVisibleBuffer {
     public:
         UniformBuffer(Driver& driver, uint32_t size);
-        ~UniformBuffer();
+        ~UniformBuffer() override;
 
     protected:
         void SetupBufferCreateInfo(VkBufferCreateInfo &createInfo) override;
@@ -88,7 +90,7 @@ namespace Explosion {
     class VertexBuffer : public DeviceLocalBuffer {
     public:
         VertexBuffer(Driver& driver, uint32_t size);
-        ~VertexBuffer();
+        ~VertexBuffer() override;
 
     protected:
         void SetupBufferCreateInfo(VkBufferCreateInfo &createInfo) override;
@@ -98,7 +100,7 @@ namespace Explosion {
     class IndexBuffer : public DeviceLocalBuffer {
     public:
         IndexBuffer(Driver& driver, uint32_t size);
-        ~IndexBuffer();
+        ~IndexBuffer() override;
 
     private:
         void SetupBufferCreateInfo(VkBufferCreateInfo &createInfo) override;

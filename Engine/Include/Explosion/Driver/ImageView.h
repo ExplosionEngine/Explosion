@@ -8,15 +8,17 @@
 #include <vulkan/vulkan.h>
 
 #include <Explosion/Driver/Enum.h>
+#include <Explosion/Driver/GpuRes.h>
 
 namespace Explosion {
     class Driver;
     class Device;
     class Image;
 
-    class ImageView {
+    class ImageView : public GpuRes {
     public:
         struct Config {
+            Image* image;
             ImageViewType type;
             uint32_t mipLevelCount;
             uint32_t baseMipLevel;
@@ -24,19 +26,21 @@ namespace Explosion {
             uint32_t baseLayer;
         };
 
-        ImageView(Driver& driver, Image* image, const Config& config);
-        ~ImageView();
-        Image* GetImage();
+        ImageView(Driver& driver, const Config& config);
+        ~ImageView() override;
+        Image* GetImage() const;
         const VkImageView& GetVkImageView();
+
+    protected:
+        void OnCreate() override;
+        void OnDestroy() override;
 
     private:
         void CreateImageView();
         void DestroyImageView();
 
-        Driver& driver;
         Device& device;
         Config config {};
-        Image* image = nullptr;
         VkImageView vkImageView = VK_NULL_HANDLE;
     };
 }

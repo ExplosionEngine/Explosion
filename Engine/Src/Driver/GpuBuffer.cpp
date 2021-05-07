@@ -3,22 +3,28 @@
 //
 
 #include <cstring>
+#include <stdexcept>
 
 #include <Explosion/Driver/GpuBuffer.h>
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/CommandBuffer.h>
-#include <Explosion/Driver/CommandEncoder.h>
 
 namespace Explosion {
     GpuBuffer::GpuBuffer(Driver& driver, uint32_t size)
-        : driver(driver), device(*driver.GetDevice()), size(size)
+        : GpuRes(driver), device(*driver.GetDevice()), size(size) {}
+
+    GpuBuffer::~GpuBuffer() = default;
+
+    void GpuBuffer::OnCreate()
     {
+        GpuRes::OnCreate();
         CreateBuffer();
         AllocateMemory();
     }
 
-    GpuBuffer::~GpuBuffer()
+    void GpuBuffer::OnDestroy()
     {
+        GpuRes::OnDestroy();
         FreeMemory();
         DestroyBuffer();
     }
