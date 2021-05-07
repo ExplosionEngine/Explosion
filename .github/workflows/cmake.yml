@@ -64,17 +64,11 @@ jobs:
     - name: Install Scoop
       run: Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
       
-    - name: Configure Scoop Env Variable
-      run: $env:PATH+=";~\scoop\shims"
-      
     - name: Install Vulkan SDK
-      run: scoop install vulkan
-
-    - name: Configure Vulkan SDK Env Variable
-      run: $env:VULKAN_SDK="~\scoop\apps\vulkan\1.2.170.0"
+      run: ~\scoop\shims\scoop install vulkan
 
     - name: Create Build Environment
-      run: cmake -E make_directory ${{github.workspace}}/build
+      run: cmake -E make_directory ${{github.workspace}}/build -DVULKAN_SDK="~\scoop\apps\vulkan\1.2.170.0"
 
     - name: Configure CMake
       shell: bash
