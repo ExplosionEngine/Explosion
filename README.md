@@ -33,7 +33,7 @@ git submodule update
 Install [Vulkan SDK](https://vulkan.lunarg.com/sdk/home) and setup environment variable:
 
 ```cpp
-VULKAN_SDK=${your_path}
+VULKAN_SDK=${your_sdk_path}
 ```
 
 Using cmake to generate build rules:
