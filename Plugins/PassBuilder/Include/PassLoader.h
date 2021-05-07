@@ -7,13 +7,14 @@
 
 #include <string>
 #include "PassBuilderApi.h"
+#include "PassDefines.h"
 
 class PASS_API PassLoader {
 public:
     PassLoader() {}
     ~PassLoader() {}
 
-    void Load(const std::string& url);
+    static GraphInfo Load(const std::string& url);
 };
 
 #endif
