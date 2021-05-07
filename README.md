@@ -50,6 +50,6 @@ Building the engine:
 cmake --build .
 ```
 
-# About
+# License
 
-Explosion development team, all right reserved.
+[MIT](https://github.com/ExplosionEngine/Explosion/blob/master/LICENSE) @ Explosion Development Team All right Reserved 2021.
