@@ -27,8 +27,6 @@ Table of Contents
 
 # Introduction
 
----
-
 **Explosion** is a cross-platform game engine, based on modern **Graphic APIs** (aka Vulkan, DirectX 12, Metal) and powered by advanced logical framework called ECS.
 
 Welcome to join the next generation game order.
@@ -36,8 +34,6 @@ Welcome to join the next generation game order.
 <br>
 
 # Change Log
-
----
 
 ### v0.0.1 ( 2021/0X/0X )
 
@@ -47,8 +43,6 @@ Welcome to join the next generation game order.
 <br>
 
 # Usage
-
----
 
 ## 1. Build Game Engine
 
@@ -89,15 +83,11 @@ cmake --build .
 
 # License
 
----
-
 [MIT](https://github.com/ExplosionEngine/Explosion/blob/master/LICENSE) @ Explosion Development Team All right Reserved 2021.
 
 <br>
 
 # URL
-
----
 
 Repository Page: https://github.com/ExplosionEngine/Explosion
 
