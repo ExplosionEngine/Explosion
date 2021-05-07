@@ -64,11 +64,11 @@ jobs:
     - name: Install Scoop
       run: Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
       
-    - name: Install Vulkan SDK
-      run: scoop install vulkan
-    
     - name: Configure Scoop Env Variable
       run: $env:PATH+=";~\scoop\shims"
+      
+    - name: Install Vulkan SDK
+      run: scoop install vulkan
 
     - name: Configure Vulkan SDK Env Variable
       run: $env:VULKAN_SDK="~\scoop\apps\vulkan\1.2.170.0"
