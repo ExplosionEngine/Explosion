@@ -66,6 +66,9 @@ jobs:
       
     - name: Configure Scoop Env
       run: echo "~\scoop\shims" >> $GITHUB_PATH
+    
+    - name: Show Path
+      run: echo "$PATH"
       
     - name: Install Vulkan SDK
       run: scoop install vulkan
