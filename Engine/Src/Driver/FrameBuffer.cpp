@@ -2,6 +2,8 @@
 // Created by John Kindem on 2021/4/25.
 //
 
+#include <stdexcept>
+
 #include <Explosion/Driver/FrameBuffer.h>
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/ImageView.h>

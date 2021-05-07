@@ -8,7 +8,6 @@
 #include <memory>
 
 #include <Explosion/Driver/Device.h>
-#include <Explosion/Driver/SwapChain.h>
 
 namespace Explosion {
     class Driver {

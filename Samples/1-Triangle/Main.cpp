@@ -22,6 +22,9 @@
 #ifdef TARGET_OS_MAC
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
+#ifdef _WIN32
+#define GLFW_EXPOSE_NATIVE_WIN32
+#endif
 #include <GLFW/glfw3native.h>
 
 using namespace Explosion;
@@ -46,7 +49,10 @@ protected:
 #ifdef TARGET_OS_MAC
         swapChain = driver->CreateGpuRes<SwapChain>(glfwGetCocoaWindow(GetWindow()), GetWidth(), GetHeight());
 #endif
-        
+#ifdef _WIN32
+        swapChain = driver->CreateGpuRes<SwapChain>(glfwGetWin32Window(GetWindow()), GetWidth(), GetHeight());
+#endif
+
         ImageView::Config imageViewConfig {};
         imageViewConfig.type = ImageViewType::VIEW_2D;
         imageViewConfig.mipLevelCount = 1;
@@ -88,7 +94,7 @@ protected:
             { 0, sizeof(Vertex), VertexInputRate::PER_VERTEX }
         };
         pipelineConfig.vertexAttributes = {
-            { 0, 0, Format::R32_G32_B32_FLOAT, offsetof(Vertex, position) },
+            { 0, 0, Format::R32_G32_B32_FLOAT, static_cast<uint32_t>(offsetof(Vertex, position)) },
         };
         pipelineConfig.descriptorAttributes = {};
         pipelineConfig.viewport = { 0, 0, static_cast<float>(GetWidth()), static_cast<float>(GetHeight()), 0, 1.0 };

@@ -22,7 +22,7 @@ elseif (UNIX AND NOT APPLE)
 endif()
 
 file(GLOB_RECURSE ENGINE_SOURCES Src/*.cpp)
-add_library(explosion SHARED ${ENGINE_SOURCES} ${PLATFORM_SOURCES})
+add_library(explosion ${ENGINE_SOURCES} ${PLATFORM_SOURCES})
 
 target_include_directories(explosion PUBLIC Include)
 if (APPLE)
