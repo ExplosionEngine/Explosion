@@ -66,9 +66,12 @@ jobs:
       
     - name: Install Vulkan SDK
       run: scoop install vulkan
+    
+    - name: Configure Scoop Env Variable
+      run: $env:PATH+=";~\scoop\shims"
 
     - name: Configure Vulkan SDK Env Variable
-      run: $env:VULKAN_SDK=~\scoop\apps\vulkan\1.2.170.0
+      run: $env:VULKAN_SDK="~\scoop\apps\vulkan\1.2.170.0"
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build
