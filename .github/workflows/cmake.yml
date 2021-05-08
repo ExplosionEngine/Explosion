@@ -18,6 +18,9 @@ jobs:
     - name: Update Git SubModule
       run: git submodule update
     
+    - name: Update Apt-Get Repo
+      run: sudo apt-get update
+    
     - name: Install XRandr Development Package For GLFW3
       run: sudo apt-get install libxrandr-dev
       
