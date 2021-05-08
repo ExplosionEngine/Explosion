@@ -65,16 +65,10 @@ jobs:
       run: Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
 
     - name: Configure Scoop Env
-      run: echo $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("~\scoop\shims") >> $GITHUB_PATH
-
-    - name: Show Path
-      run: echo ${env:PATH}
+      run: $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("~\scoop\shims") | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Install Vulkan SDK
       run: scoop install vulkan
-
-    - name: Configure Vulkan SDK Env
-      run: echo $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("VULKAN_SDK=~\scoop\apps\vulkan\1.2.170.0") >> $GITHUB_ENV
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build
