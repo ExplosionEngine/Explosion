@@ -69,6 +69,9 @@ jobs:
 
     - name: Install Vulkan SDK
       run: scoop install vulkan
+    
+    - name: Configure Vulkan Env
+      run: $value=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("~\scoop\apps\vulkan\1.2.170.0"); echo VULKAN_SDK=$value | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build
