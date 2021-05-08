@@ -48,3 +48,43 @@ jobs:
       working-directory: ${{github.workspace}}/build
       shell: bash
       run: cmake --build . --config $BUILD_TYPE
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Init Git SubModule
+      run: git submodule init
+
+    - name: Update Git SubModule
+      run: git submodule update
+
+    - name: Install Scoop
+      run: Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+
+    - name: Configure Scoop Env
+      run: echo $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("~\scoop\shims") >> $GITHUB_PATH
+
+    - name: Show Path
+      run: echo ${env:PATH}
+
+    - name: Install Vulkan SDK
+      run: scoop install vulkan
+
+    - name: Configure Vulkan SDK Env
+      run: echo $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("VULKAN_SDK=~\scoop\apps\vulkan\1.2.170.0") >> $GITHUB_ENV
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{github.workspace}}/build
+
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{github.workspace}}/build
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+
+    - name: Build
+      working-directory: ${{github.workspace}}/build
+      shell: bash
+      run: cmake --build . --config $BUILD_TYPE
