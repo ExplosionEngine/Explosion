@@ -8,7 +8,14 @@ protected:
 };
 
 TEST_F(PassLoaderTest, TestLoad) {
-    GraphInfo graph = PassLoader::Load("../../../Plugins/PassBuilder/Test/test.json");
+    GraphInfo graph = PassLoader::Load("test.json");
+    ASSERT_EQ(graph.targets.size(), 4);
+
+    ASSERT_EQ(graph.targets[0].width, 1024);
+    ASSERT_EQ(graph.targets[0].height, 1024);
+
+    ASSERT_EQ(graph.targets[1].width, 0);
+    ASSERT_EQ(graph.targets[1].height, 0);
 
     EXPECT_EQ(0, 0);
 }

@@ -31,17 +31,27 @@ target_link_libraries(${PLUG_TARGET}
 
 ## TEST
 if (BUILD_TEST)
+    enable_testing()
     file(GLOB_RECURSE TEST_FILES Test/*)
 
     include_directories(${PROJECT_ROOT}/3rd/googletest/include/gtest)
 
-    add_executable(PassTest
+    set(UNIT_TEST PassTest)
+
+    add_executable(${UNIT_TEST}
         ${TEST_FILES}
     )
 
-    target_link_libraries(PassTest
+    target_link_libraries(${UNIT_TEST}
         ${PLUG_TARGET}
         gtest
     )
-endif ()
 
+    add_custom_command(
+        TARGET ${UNIT_TEST}
+        COMMENT "Run tests"
+        POST_BUILD 
+        COMMAND ${UNIT_TEST}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Test
+   )
+endif ()

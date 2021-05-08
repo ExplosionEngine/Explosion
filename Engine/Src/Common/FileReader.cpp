@@ -7,9 +7,10 @@
 #include <Explosion/Common/FileReader.h>
 
 namespace Explosion {
-    std::vector<char> FileReader::Read(const std::string& filename)
+    std::vector<char> FileReader::Read(const std::string& filename, bool binary)
     {
-        std::ifstream file(filename, std::ios::ate | std::ios::binary);
+        auto mode = binary ? std::ios::ate | std::ios::binary : std::ios::ate;
+        std::ifstream file(filename, mode);
         if (!file.is_open()) {
             throw std::runtime_error(std::string("failed to open file: ") + filename);
         }
