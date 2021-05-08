@@ -73,7 +73,7 @@ jobs:
     - name: Configure Vulkan Env
       run: $value=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("~\scoop\apps\vulkan\1.2.170.0"); echo VULKAN_SDK=$value | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
     
-    - name: Add Bin Dir Of Vulkan SDK To Path
+    - name: Add Vulkan SDK Binaries to Path
       run: echo $env:VULKAN_SDK\Bin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Create Build Environment
