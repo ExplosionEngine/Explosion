@@ -4,7 +4,7 @@ set(PLUG_TARGET PassBuilder)
 project(${PLUG_TARGET})
 
 set(THIRD_PARTY_INC
-    ${PROJECT_ROOT}/3rd/json/single_include
+    ${PROJECT_ROOT}/3rd/rapidjson/include
 )
 
 include_directories(Include)

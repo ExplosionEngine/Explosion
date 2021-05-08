@@ -1,77 +1,67 @@
 #include "PassLoader.h"
 #include "Explosion/Common/FileReader.h"
 #include "Explosion/Common/Logger.h"
-#include <nlohmann/json.hpp>
 
-using namespace nlohmann;
+#include "rapidjson/document.h"
+#include "rapidjson/filereadstream.h"
+
 using namespace Explosion;
 
 template <typename T>
 struct TypeTraits {
-    static constexpr auto VALUE = json::value_t::null;
+    static constexpr rapidjson::Type TYPE = rapidjson::Type::kNullType;
 };
 
-template<>
-struct TypeTraits<std::string> {
-    static constexpr auto VALUE = json::value_t::string;
-};
-
-template<>
+template <>
 struct TypeTraits<uint32_t> {
-    static constexpr auto VALUE = json::value_t::number_unsigned;
-};
-
-template<>
-struct TypeTraits<int32_t> {
-    static constexpr auto VALUE = json::value_t::number_integer;
-};
-
-template<>
-struct TypeTraits<float> {
-    static constexpr auto VALUE = json::value_t::number_float;
-};
-
-template<>
-struct TypeTraits<bool> {
-    static constexpr auto VALUE = json::value_t::boolean;
+    static constexpr rapidjson::Type TYPE = rapidjson::Type::kNumberType;
 };
 
 template <typename F>
-static bool ForEachInArray(const json& v, const char* member, const F& f)
+static bool ForEachInArray(rapidjson::Document& doc, const char* member, const F& f)
 {
-    auto iter = v.find(member);
-    if (iter == v.end() || !iter.value().is_array()) {
+    if (!doc.HasMember(member)) {
         return false;
     }
-    const json &root = iter.value();
-    for (auto it = root.begin(); it != root.end(); ++it) {
-        if (!f(*it)) return false;
+    const rapidjson::Value &val = doc[member];
+    if (!val.IsArray()) {
+        return false;
+    }
+
+    for (size_t i = 0; i < val.Size(); i++) {
+        f(val[i]);
     }
     return true;
 }
 
-template<typename T>
-static bool ParseProperty(T& ret, const json &o, const std::string& property)
+template<typename T, typename U>
+static bool ParseProperty(T& ret, const U& dft, const rapidjson::Value &parent, const char* property)
 {
-    auto iter = o.find(property);
-    if (iter == o.end()) {
+    ret = static_cast<T>(dft);
+    if (!parent.HasMember(property)) {
         return false;
     }
 
-    const json& val = iter.value();
-    if (val.type() != TypeTraits<T>::VALUE) {
+    const rapidjson::Value& val = parent[property];
+    if (val.GetType() != TypeTraits<T>::TYPE) {
         return false;
     }
-    ret = val.get<T>();
+
+    ret = val.Get<T>();
     return true;
 }
 
-static bool ParseTargets(json& root, GraphInfo& graph)
+static bool ParseTargets(rapidjson::Document& root, GraphInfo& graph)
 {
-    bool ret = ForEachInArray(root, "targets", [&graph](const json& v) -> bool {
-        TargetInfo target = {};
-        ParseProperty(target.width, v, "width");
-        ParseProperty(target.height, v, "height");
+    if (!root.HasMember("targets")) {
+        return false;
+    }
+
+    rapidjson::Value& obj = root["targets"];
+    ForEachInArray(root, "targets", [&graph](const rapidjson::Value& v) -> bool {
+        TargetInfo target;
+        ParseProperty(target.width, 0, v, "width");
+        ParseProperty(target.height, 0, v, "height");
         graph.targets.emplace_back(target);
         return true;
     });
@@ -85,10 +75,13 @@ GraphInfo PassLoader::Load(const std::string& url)
     GraphInfo ret;
 
     auto data = FileReader::Read(url);
-    json root = json::parse(data);
-    ParseTargets(root, ret);
-    for(auto& t : ret.targets) {
-        printf("target width-%u, height-%u\n", t.width, t.height);
+
+    rapidjson::Document document;
+
+    document.Parse(data.data());
+    ParseTargets(document, ret);
+    for (auto& target : ret.targets) {
+        printf("width:%u, height:%u\n", target.width, target.height);
     }
 
     return ret;

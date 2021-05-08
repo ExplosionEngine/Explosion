@@ -25,6 +25,8 @@ include_directories(${GEN_PRE_DIR})
 # options
 option(BUILD_TEST "Build Test" ON)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 add_subdirectory(3rd)
 add_subdirectory(Engine)
 add_subdirectory(Application)
