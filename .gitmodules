@@ -1,15 +1,15 @@
 [submodule "3rd/entt"]
 	path = 3rd/entt
-	url = https://github.com/skypjack/entt.git
+	url = https://github.com/ExplosionEngine/entt.git
 [submodule "3rd/glfw"]
 	path = 3rd/glfw
-	url = https://github.com/glfw/glfw.git
+	url = https://github.com/ExplosionEngine/glfw.git
 [submodule "3rd/glm"]
 	path = 3rd/glm
-	url = https://github.com/g-truc/glm.git
+	url = https://github.com/ExplosionEngine/glm.git
 [submodule "3rd/rapidjson"]
 	path = 3rd/rapidjson
-	url = https://github.com/Tencent/rapidjson.git
+	url = https://github.com/ExplosionEngine/rapidjson.git
 [submodule "3rd/googletest"]
 	path = 3rd/googletest
-	url = https://github.com/google/googletest.git
+	url = https://github.com/ExplosionEngine/googletest.git
