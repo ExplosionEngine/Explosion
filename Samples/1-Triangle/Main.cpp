@@ -112,9 +112,15 @@ protected:
         indices = {
             0, 1, 2
         };
-        vertexBuffer = driver->CreateGpuRes<VertexBuffer>(sizeof(Vertex) * vertices.size());
+        GpuBuffer::Config bufferConfig {};
+        bufferConfig.size = sizeof(Vertex) * vertices.size();
+        bufferConfig.usages = { BufferUsage::VERTEX_BUFFER };
+        vertexBuffer = driver->CreateGpuRes<DeviceLocalBuffer>(bufferConfig);
         vertexBuffer->UpdateData(vertices.data());
-        indexBuffer = driver->CreateGpuRes<IndexBuffer>(sizeof(Index) * indices.size());
+
+        bufferConfig.size = sizeof(Index) * indices.size();
+        bufferConfig.usages = { BufferUsage::INDEX_BUFFER };
+        indexBuffer = driver->CreateGpuRes<DeviceLocalBuffer>(bufferConfig);
         indexBuffer->UpdateData(indices.data());
     }
 
