@@ -29,3 +29,6 @@ if (APPLE)
     target_link_libraries(explosion "-framework Cocoa")
 endif()
 target_link_libraries(explosion ${Vulkan_LIBRARIES})
+
+# Unit Test
+add_subdirectory(Test)

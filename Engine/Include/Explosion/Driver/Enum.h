@@ -96,6 +96,16 @@ namespace Explosion {
         STORAGE_BUFFER,
         IMAGE_SAMPLER
     };
+
+    enum class BufferUsage {
+        VERTEX_BUFFER,
+        INDEX_BUFFER,
+        UNIFORM_BUFFER,
+        STORAGE_BUFFER,
+        TRANSFER_SRC,
+        TRANSFER_DST,
+        MAX
+    };
 }
 
 #endif //EXPLOSION_ENUM_H

@@ -151,6 +151,18 @@ namespace Explosion {
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
 
+    VK_CONVERT_INSTANCE_B(BufferUsage, VkBufferUsageFlagBits)
+        static std::unordered_map<BufferUsage, VkBufferUsageFlagBits> MAP = {
+            { BufferUsage::VERTEX_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_VERTEX_BUFFER_BIT },
+            { BufferUsage::INDEX_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_INDEX_BUFFER_BIT },
+            { BufferUsage::UNIFORM_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT },
+            { BufferUsage::STORAGE_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_STORAGE_BUFFER_BIT },
+            { BufferUsage::TRANSFER_SRC, VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_SRC_BIT },
+            { BufferUsage::TRANSFER_DST, VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_DST_BIT }
+        };
+        FIND_OR_EXCEPT
+    VK_CONVERT_INSTANCE_E
+
     GET_ENUM_BY_VK_INSTANCE_B(VkFormat, Format)
         static std::unordered_map<VkFormat, Format> MAP = {
             { VkFormat::VK_FORMAT_UNDEFINED, Format::UNDEFINED },
