@@ -51,7 +51,11 @@ cmake --build .
 ```
 # Documentation
 
+[placeholder]
+
 # Examples
+
+[placeholder]
 
 # License
 
