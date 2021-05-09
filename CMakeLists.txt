@@ -24,6 +24,9 @@ include_directories(${GEN_PRE_DIR})
 
 # options
 option(BUILD_TEST "Build Test" ON)
+if (${BUILD_TEST})
+    enable_testing()
+endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 

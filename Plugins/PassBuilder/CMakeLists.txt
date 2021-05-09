@@ -31,7 +31,6 @@ target_link_libraries(${PLUG_TARGET}
 
 ## TEST
 if (BUILD_TEST)
-    enable_testing()
     file(GLOB_RECURSE TEST_FILES Test/*)
 
     include_directories(${PROJECT_ROOT}/3rd/googletest/include/gtest)
@@ -47,11 +46,9 @@ if (BUILD_TEST)
         gtest
     )
 
-    add_custom_command(
-        TARGET ${UNIT_TEST}
-        COMMENT "Run tests"
-        POST_BUILD 
+    add_test(
+        NAME ${UNIT_TEST}
         COMMAND ${UNIT_TEST}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Test
-   )
+    )
 endif ()
