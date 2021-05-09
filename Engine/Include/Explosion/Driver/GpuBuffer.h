@@ -9,6 +9,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Explosion/Driver/Enum.h>
 #include <Explosion/Driver/GpuRes.h>
 #include <Explosion/Driver/Common.h>
 
@@ -18,7 +19,12 @@ namespace Explosion {
 
     class GpuBuffer : public GpuRes {
     public:
-        GpuBuffer(Driver& driver, uint32_t size);
+        struct Config {
+            uint32_t size;
+            std::vector<BufferUsage> usages;
+        };
+
+        GpuBuffer(Driver& driver, const Config& config);
         ~GpuBuffer() override;
         uint32_t GetSize() const;
         const VkBuffer& GetVkBuffer() const;
@@ -31,8 +37,8 @@ namespace Explosion {
         virtual void SetupBufferCreateInfo(VkBufferCreateInfo& createInfo);
         virtual VkMemoryPropertyFlags GetMemoryPropertyFlags();
 
+        Config config;
         Device& device;
-        uint32_t size;
         VkBuffer vkBuffer = VK_NULL_HANDLE;
         VkDeviceMemory vkDeviceMemory = VK_NULL_HANDLE;
 
@@ -46,64 +52,22 @@ namespace Explosion {
 
     class HostVisibleBuffer : public GpuBuffer {
     public:
-        HostVisibleBuffer(Driver& driver, uint32_t size);
+        HostVisibleBuffer(Driver& driver, const Config& config);
         ~HostVisibleBuffer() override;
         void UpdateData(void *data) override;
 
     protected:
-        void SetupBufferCreateInfo(VkBufferCreateInfo &createInfo) override;
         VkMemoryPropertyFlags GetMemoryPropertyFlags() override;
     };
 
-
     class DeviceLocalBuffer : public GpuBuffer {
     public:
-        DeviceLocalBuffer(Driver& driver, uint32_t size);
+        DeviceLocalBuffer(Driver& driver, const Config& config);
         ~DeviceLocalBuffer() override;
         void UpdateData(void *data) override;
 
     protected:
-        void SetupBufferCreateInfo(VkBufferCreateInfo &createInfo) override;
-        VkMemoryPropertyFlags GetMemoryPropertyFlags() override;
-    };
-
-    class StagingBuffer : public HostVisibleBuffer {
-    public:
-        StagingBuffer(Driver& driver, uint32_t size);
-        ~StagingBuffer() override;
-
-    private:
-        void SetupBufferCreateInfo(VkBufferCreateInfo &createInfo) override;
-        VkMemoryPropertyFlags GetMemoryPropertyFlags() override;
-    };
-
-    class UniformBuffer : public HostVisibleBuffer {
-    public:
-        UniformBuffer(Driver& driver, uint32_t size);
-        ~UniformBuffer() override;
-
-    protected:
-        void SetupBufferCreateInfo(VkBufferCreateInfo &createInfo) override;
-        VkMemoryPropertyFlags GetMemoryPropertyFlags() override;
-    };
-
-    class VertexBuffer : public DeviceLocalBuffer {
-    public:
-        VertexBuffer(Driver& driver, uint32_t size);
-        ~VertexBuffer() override;
-
-    protected:
-        void SetupBufferCreateInfo(VkBufferCreateInfo &createInfo) override;
-        VkMemoryPropertyFlags GetMemoryPropertyFlags() override;
-    };
-
-    class IndexBuffer : public DeviceLocalBuffer {
-    public:
-        IndexBuffer(Driver& driver, uint32_t size);
-        ~IndexBuffer() override;
-
-    private:
-        void SetupBufferCreateInfo(VkBufferCreateInfo &createInfo) override;
+        void SetupBufferCreateInfo(VkBufferCreateInfo& createInfo) override;
         VkMemoryPropertyFlags GetMemoryPropertyFlags() override;
     };
 }

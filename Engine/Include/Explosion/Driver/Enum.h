@@ -94,7 +94,18 @@ namespace Explosion {
     enum class DescriptorType {
         UNIFORM_BUFFER,
         STORAGE_BUFFER,
-        IMAGE_SAMPLER
+        IMAGE_SAMPLER,
+        MAX
+    };
+
+    enum class BufferUsage {
+        VERTEX_BUFFER,
+        INDEX_BUFFER,
+        UNIFORM_BUFFER,
+        STORAGE_BUFFER,
+        TRANSFER_SRC,
+        TRANSFER_DST,
+        MAX
     };
 }
 

@@ -8,10 +8,11 @@
 #include <Explosion/Driver/GpuBuffer.h>
 #include <Explosion/Driver/Driver.h>
 #include <Explosion/Driver/CommandBuffer.h>
+#include <Explosion/Driver/VkAdapater.h>
 
 namespace Explosion {
-    GpuBuffer::GpuBuffer(Driver& driver, uint32_t size)
-        : GpuRes(driver), device(*driver.GetDevice()), size(size) {}
+    GpuBuffer::GpuBuffer(Driver& driver, const Config& config)
+        : GpuRes(driver), device(*driver.GetDevice()), config(config) {}
 
     GpuBuffer::~GpuBuffer() = default;
 
@@ -31,7 +32,7 @@ namespace Explosion {
 
     uint32_t GpuBuffer::GetSize() const
     {
-        return size;
+        return config.size;
     }
 
     const VkBuffer& GpuBuffer::GetVkBuffer() const
@@ -57,12 +58,11 @@ namespace Explosion {
         createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         createInfo.pNext = nullptr;
         createInfo.flags = 0;
-        createInfo.size = static_cast<VkDeviceSize>(size);
-        createInfo.usage = 0;
+        createInfo.size = static_cast<VkDeviceSize>(config.size);
+        createInfo.usage = VkGetFlags<BufferUsage, VkBufferUsageFlagBits>(config.usages);
         createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         createInfo.queueFamilyIndexCount = 0;
         createInfo.pQueueFamilyIndices = nullptr;
-        SetupBufferCreateInfo(createInfo);
 
         if (vkCreateBuffer(device.GetVkDevice(), &createInfo, nullptr, &vkBuffer) != VK_SUCCESS) {
             throw std::runtime_error("failed to create vulkan buffer");
@@ -91,7 +91,7 @@ namespace Explosion {
         VkMemoryAllocateInfo allocateInfo {};
         allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocateInfo.pNext = nullptr;
-        allocateInfo.allocationSize = static_cast<VkDeviceSize>(size);
+        allocateInfo.allocationSize = static_cast<VkDeviceSize>(config.size);
         allocateInfo.memoryTypeIndex = memType.value();
 
         if (vkAllocateMemory(device.GetVkDevice(), &allocateInfo, nullptr, &vkDeviceMemory) != VK_SUCCESS) {
@@ -105,21 +105,16 @@ namespace Explosion {
         vkFreeMemory(device.GetVkDevice(), vkDeviceMemory, nullptr);
     }
 
-    HostVisibleBuffer::HostVisibleBuffer(Driver& driver, uint32_t size) : GpuBuffer(driver, size) {}
+    HostVisibleBuffer::HostVisibleBuffer(Driver& driver, const Config& config) : GpuBuffer(driver, config) {}
 
     HostVisibleBuffer::~HostVisibleBuffer() = default;
 
     void HostVisibleBuffer::UpdateData(void* data)
     {
         void* mapped = nullptr;
-        vkMapMemory(device.GetVkDevice(), vkDeviceMemory, 0, static_cast<VkDeviceSize>(size), 0, &mapped);
-        memcpy(mapped, data, static_cast<size_t>(size));
+        vkMapMemory(device.GetVkDevice(), vkDeviceMemory, 0, static_cast<VkDeviceSize>(config.size), 0, &mapped);
+        memcpy(mapped, data, static_cast<size_t>(config.size));
         vkUnmapMemory(device.GetVkDevice(), vkDeviceMemory);
-    }
-
-    void HostVisibleBuffer::SetupBufferCreateInfo(VkBufferCreateInfo& createInfo)
-    {
-        GpuBuffer::SetupBufferCreateInfo(createInfo);
     }
 
     VkMemoryPropertyFlags HostVisibleBuffer::GetMemoryPropertyFlags()
@@ -129,7 +124,7 @@ namespace Explosion {
             | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     }
 
-    DeviceLocalBuffer::DeviceLocalBuffer(Driver& driver, uint32_t size) : GpuBuffer(driver, size) {}
+    DeviceLocalBuffer::DeviceLocalBuffer(Driver& driver, const Config& config) : GpuBuffer(driver, config) {}
 
     DeviceLocalBuffer::~DeviceLocalBuffer() = default;
 
@@ -147,7 +142,11 @@ namespace Explosion {
 
     void DeviceLocalBuffer::UpdateData(void* data)
     {
-        auto* stagingBuffer = driver.CreateGpuRes<StagingBuffer>(size);
+        GpuBuffer::Config stagingConfig = {
+            config.size,
+            { BufferUsage::TRANSFER_SRC }
+        };
+        auto* stagingBuffer = driver.CreateGpuRes<HostVisibleBuffer>(stagingConfig);
         stagingBuffer->UpdateData(data);
         {
             auto* commandBuffer = driver.CreateGpuRes<CommandBuffer>();
@@ -157,66 +156,6 @@ namespace Explosion {
             commandBuffer->SubmitNow();
             driver.DestroyGpuRes<CommandBuffer>(commandBuffer);
         }
-        driver.DestroyGpuRes<StagingBuffer>(stagingBuffer);
-    }
-
-    StagingBuffer::StagingBuffer(Driver& driver, uint32_t size) : HostVisibleBuffer(driver, size) {}
-
-    StagingBuffer::~StagingBuffer() = default;
-
-    void StagingBuffer::SetupBufferCreateInfo(VkBufferCreateInfo& createInfo)
-    {
-        HostVisibleBuffer::SetupBufferCreateInfo(createInfo);
-        createInfo.usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    }
-
-    VkMemoryPropertyFlags StagingBuffer::GetMemoryPropertyFlags()
-    {
-        return HostVisibleBuffer::GetMemoryPropertyFlags();
-    }
-
-    UniformBuffer::UniformBuffer(Driver& driver, uint32_t size) : HostVisibleBuffer(driver, size) {}
-
-    UniformBuffer::~UniformBuffer() = default;
-
-    void UniformBuffer::SetupBufferCreateInfo(VkBufferCreateInfo& createInfo)
-    {
-        HostVisibleBuffer::SetupBufferCreateInfo(createInfo);
-        createInfo.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    }
-
-    VkMemoryPropertyFlags UniformBuffer::GetMemoryPropertyFlags()
-    {
-        return HostVisibleBuffer::GetMemoryPropertyFlags();
-    }
-
-    VertexBuffer::VertexBuffer(Driver& driver, uint32_t size) : DeviceLocalBuffer(driver, size) {}
-
-    VertexBuffer::~VertexBuffer() = default;
-
-    void VertexBuffer::SetupBufferCreateInfo(VkBufferCreateInfo& createInfo)
-    {
-        DeviceLocalBuffer::SetupBufferCreateInfo(createInfo);
-        createInfo.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    }
-
-    VkMemoryPropertyFlags VertexBuffer::GetMemoryPropertyFlags()
-    {
-        return DeviceLocalBuffer::GetMemoryPropertyFlags();
-    }
-
-    IndexBuffer::IndexBuffer(Driver& driver, uint32_t size) : DeviceLocalBuffer(driver, size) {}
-
-    IndexBuffer::~IndexBuffer() = default;
-
-    void IndexBuffer::SetupBufferCreateInfo(VkBufferCreateInfo& createInfo)
-    {
-        DeviceLocalBuffer::SetupBufferCreateInfo(createInfo);
-        createInfo.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    }
-
-    VkMemoryPropertyFlags IndexBuffer::GetMemoryPropertyFlags()
-    {
-        return DeviceLocalBuffer::GetMemoryPropertyFlags();
+        driver.DestroyGpuRes<HostVisibleBuffer>(stagingBuffer);
     }
 }
