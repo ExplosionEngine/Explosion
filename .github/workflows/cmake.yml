@@ -57,7 +57,7 @@ jobs:
     - name: Run Unit Test
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ctest -C Debug
+      run: ctest -C $BUILD_TYPE
 
   build-windows:
     runs-on: windows-latest
@@ -102,4 +102,4 @@ jobs:
     - name: Run Unit Test
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: ctest -C Debug
+      run: ctest -C $BUILD_TYPE
