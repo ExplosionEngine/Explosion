@@ -8,7 +8,7 @@ if (NOT DEFINED ${CMAKE_BUILD_TYPE})
 endif()
 
 set(PROJECT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
-set(GEN_PRE_DIR ${PROJECT_ROOT}/build/ExporterHeader)
+set(GEN_PRE_DIR ${CMAKE_BINARY_DIR}/Gen/ApiHeader)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Lib)
@@ -29,6 +29,11 @@ if (${BUILD_TEST})
 endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+string(TOLOWER ${CMAKE_BUILD_TYPE} BUILD_TYPE_LOWER)
+if(${BUILD_TYPE_LOWER} STREQUAL "debug")
+    add_definitions(-DEXPLOSION_DEBUG)
+endif()
 
 add_subdirectory(3rd)
 add_subdirectory(Engine)
