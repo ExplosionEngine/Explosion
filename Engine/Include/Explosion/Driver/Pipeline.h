@@ -29,7 +29,6 @@ namespace Explosion {
         const VkPipelineLayout& GetVkPipelineLayout() const;
         const VkPipeline& GetVkPipeline() const;
         const VkDescriptorSetLayout& GetVkDescriptorSetLayout() const;
-        const VkDescriptorSet& GetVkDescriptorSet() const;
 
     protected:
         void OnCreate() override;
@@ -41,13 +40,16 @@ namespace Explosion {
         RenderPass* renderPass;
         VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
         VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
-        VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
         VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
         VkPipeline vkPipeline = VK_NULL_HANDLE;
     };
 
     class GraphicsPipeline : public Pipeline {
     public:
+        struct ShaderConfig {
+            std::vector<ShaderModule> shaderModules;
+        };
+
         struct VertexBinding {
             uint32_t binding;
             uint32_t stride;
@@ -59,6 +61,28 @@ namespace Explosion {
             uint32_t location;
             Format format;
             uint32_t offset;
+        };
+
+        struct VertexConfig {
+            std::vector<VertexBinding> vertexBindings;
+            std::vector<VertexAttribute> vertexAttributes;
+        };
+
+        struct DescriptorAttribute {
+            uint32_t binding;
+            DescriptorType type;
+            std::vector<ShaderStage> shaderStages;
+        };
+
+        struct DescriptorPoolSize {
+            DescriptorType type;
+            uint32_t count;
+        };
+
+        struct DescriptorConfig {
+            std::vector<DescriptorAttribute> descriptorAttributes;
+            std::vector<DescriptorPoolSize> descriptorPoolSizes;
+            uint32_t maxSets;
         };
 
         struct Viewport {
@@ -77,6 +101,11 @@ namespace Explosion {
             uint32_t height;
         };
 
+        struct ViewportScissorConfig {
+            Viewport viewport;
+            Scissor scissor;
+        };
+
         struct RasterizerConfig {
             bool depthClamp;
             bool discard;
@@ -90,22 +119,18 @@ namespace Explosion {
             bool stencilTest;
         };
 
-        struct DescriptorAttribute {
-            uint32_t binding;
-            DescriptorType type;
-            std::vector<ShaderStage> shaderStages;
+        struct ColorBlendConfig {
+            bool enabled;
         };
 
         struct Config {
-            std::vector<ShaderModule> shaderModules;
-            std::vector<VertexBinding> vertexBindings;
-            std::vector<VertexAttribute> vertexAttributes;
-            std::vector<DescriptorAttribute> descriptorAttributes;
-            Viewport viewport;
-            Scissor scissor;
+            ShaderConfig shaderConfig;
+            VertexConfig vertexConfig;
+            DescriptorConfig descriptorConfig;
+            ViewportScissorConfig viewportScissorConfig;
             RasterizerConfig rasterizerConfig;
             DepthStencilConfig depthStencilConfig;
-            bool colorBlend;
+            ColorBlendConfig colorBlendConfig;
         };
 
         GraphicsPipeline(Driver& driver, RenderPass* renderPass, const Config& config);
@@ -121,8 +146,6 @@ namespace Explosion {
 
         void CreateDescriptorSetLayout();
         void DestroyDescriptorSetLayout();
-
-        void AllocateDescriptorSet();
 
         void CreatePipelineLayout();
         void DestroyPipelineLayout();

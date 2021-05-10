@@ -63,6 +63,7 @@ namespace Explosion {
         createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         createInfo.queueFamilyIndexCount = 0;
         createInfo.pQueueFamilyIndices = nullptr;
+        SetupBufferCreateInfo(createInfo);
 
         if (vkCreateBuffer(device.GetVkDevice(), &createInfo, nullptr, &vkBuffer) != VK_SUCCESS) {
             throw std::runtime_error("failed to create vulkan buffer");

@@ -32,11 +32,6 @@ namespace Explosion {
         return vkDescriptorSetLayout;
     }
 
-    const VkDescriptorSet& Pipeline::GetVkDescriptorSet() const
-    {
-        return vkDescriptorSet;
-    }
-
     void Pipeline::OnCreate()
     {
         GpuRes::OnCreate();
@@ -78,7 +73,6 @@ namespace Explosion {
         Pipeline::OnCreate();
         CreateDescriptorPool();
         CreateDescriptorSetLayout();
-        AllocateDescriptorSet();
         CreatePipelineLayout();
         CreateGraphicsPipeline();
     }
@@ -94,30 +88,22 @@ namespace Explosion {
 
     void GraphicsPipeline::CreateDescriptorPool()
     {
-        std::unordered_map<DescriptorType, uint32_t> descriptorCounter;
-        for (auto& descriptorAttribute : config.descriptorAttributes) {
-            auto iter = descriptorCounter.find(descriptorAttribute.type);
-            if (iter == descriptorCounter.end()) {
-                descriptorCounter[descriptorAttribute.type] = 0;
-            }
-            descriptorCounter[descriptorAttribute.type]++;
-        }
-        std::vector<VkDescriptorPoolSize> descriptorPoolSizes;
-        for (auto& pair : descriptorCounter) {
-            VkDescriptorPoolSize poolSize {};
-            poolSize.type = VkConvert<DescriptorType, VkDescriptorType>(pair.first);
-            poolSize.descriptorCount = pair.second;
-            descriptorPoolSizes.emplace_back(poolSize);
+        if (config.descriptorConfig.descriptorPoolSizes.empty()) {
+            return;
         }
 
-        if (config.descriptorAttributes.empty()) {
-            return;
+        std::vector<VkDescriptorPoolSize> descriptorPoolSizes;
+        for (auto& descriptorPoolSize : config.descriptorConfig.descriptorPoolSizes) {
+            VkDescriptorPoolSize poolSize {};
+            poolSize.type = VkConvert<DescriptorType, VkDescriptorType>(descriptorPoolSize.type);
+            poolSize.descriptorCount = descriptorPoolSize.count;
+            descriptorPoolSizes.emplace_back(poolSize);
         }
         VkDescriptorPoolCreateInfo descriptorPoolCreateInfo {};
         descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         descriptorPoolCreateInfo.pNext = nullptr;
         descriptorPoolCreateInfo.flags = 0;
-        descriptorPoolCreateInfo.maxSets = 1;
+        descriptorPoolCreateInfo.maxSets = config.descriptorConfig.maxSets;
         descriptorPoolCreateInfo.poolSizeCount = descriptorPoolSizes.size();
         descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSizes.data();
 
@@ -133,16 +119,14 @@ namespace Explosion {
 
     void GraphicsPipeline::CreateDescriptorSetLayout()
     {
-        std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings(config.descriptorAttributes.size());
+        std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings(config.descriptorConfig.descriptorAttributes.size());
         for (uint32_t i = 0; i < descriptorSetLayoutBindings.size(); i++) {
-            DescriptorAttribute& attribute = config.descriptorAttributes[i];
+            DescriptorAttribute& attribute = config.descriptorConfig.descriptorAttributes[i];
             descriptorSetLayoutBindings[i].binding = attribute.binding;
             descriptorSetLayoutBindings[i].descriptorType = VkConvert<DescriptorType, VkDescriptorType>(attribute.type);
             descriptorSetLayoutBindings[i].descriptorCount = 1;
             descriptorSetLayoutBindings[i].stageFlags = 0;
-            for (auto& stage : attribute.shaderStages) {
-                descriptorSetLayoutBindings[i].stageFlags |= VkConvert<ShaderStage, VkShaderStageFlagBits>(stage);
-            }
+            descriptorSetLayoutBindings[i].stageFlags = VkGetFlags<ShaderStage, VkShaderStageFlagBits>(attribute.shaderStages);
             descriptorSetLayoutBindings[i].pImmutableSamplers = nullptr;
         }
 
@@ -161,23 +145,6 @@ namespace Explosion {
     void GraphicsPipeline::DestroyDescriptorSetLayout()
     {
         vkDestroyDescriptorSetLayout(device.GetVkDevice(), vkDescriptorSetLayout, nullptr);
-    }
-
-    void GraphicsPipeline::AllocateDescriptorSet()
-    {
-        if (config.descriptorAttributes.empty()) {
-            return;
-        }
-        VkDescriptorSetAllocateInfo descriptorSetAllocateInfo {};
-        descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        descriptorSetAllocateInfo.pNext = nullptr;
-        descriptorSetAllocateInfo.descriptorPool = vkDescriptorPool;
-        descriptorSetAllocateInfo.descriptorSetCount = 1;
-        descriptorSetAllocateInfo.pSetLayouts = &vkDescriptorSetLayout;
-
-        if (vkAllocateDescriptorSets(device.GetVkDevice(), &descriptorSetAllocateInfo, &vkDescriptorSet) != VK_SUCCESS) {
-            throw std::runtime_error("failed to allocate vulkan descriptor set");
-        }
     }
 
     void GraphicsPipeline::CreatePipelineLayout()
@@ -207,7 +174,7 @@ namespace Explosion {
         std::unordered_map<ShaderStage, bool> stageExists;
         std::vector<VkPipelineShaderStageCreateInfo> shaderStageCreateInfos;
         std::vector<VkShaderModule> pendingReleaseShaderModules;
-        for (auto& shaderModule : config.shaderModules) {
+        for (auto& shaderModule : config.shaderConfig.shaderModules) {
             ShaderStage stage = shaderModule.stage;
             auto iter = stageExists.find(stage);
             if (iter != stageExists.end() && iter->second) {
@@ -227,18 +194,20 @@ namespace Explosion {
             shaderStageCreateInfos.emplace_back(shaderStageCreateInfo);
         }
 
-        std::vector<VkVertexInputBindingDescription> vertexInputBindingDescriptions(config.vertexBindings.size());
+        std::vector<VkVertexInputBindingDescription> vertexInputBindingDescriptions(config.vertexConfig.vertexBindings.size());
         for (uint32_t i = 0; i < vertexInputBindingDescriptions.size(); i++) {
-            vertexInputBindingDescriptions[i].binding = config.vertexBindings[i].binding;
-            vertexInputBindingDescriptions[i].stride = config.vertexBindings[i].stride;
-            vertexInputBindingDescriptions[i].inputRate = VkConvert<VertexInputRate, VkVertexInputRate>(config.vertexBindings[i].inputRate);
+            VertexBinding& vertexBinding = config.vertexConfig.vertexBindings[i];
+            vertexInputBindingDescriptions[i].binding = vertexBinding.binding;
+            vertexInputBindingDescriptions[i].stride = vertexBinding.stride;
+            vertexInputBindingDescriptions[i].inputRate = VkConvert<VertexInputRate, VkVertexInputRate>(vertexBinding.inputRate);
         }
-        std::vector<VkVertexInputAttributeDescription> vertexInputAttributeDescriptions(config.vertexAttributes.size());
+        std::vector<VkVertexInputAttributeDescription> vertexInputAttributeDescriptions(config.vertexConfig.vertexAttributes.size());
         for (uint32_t i = 0; i < vertexInputAttributeDescriptions.size(); i++) {
-            vertexInputAttributeDescriptions[i].binding = config.vertexAttributes[i].binding;
-            vertexInputAttributeDescriptions[i].location = config.vertexAttributes[i].location;
-            vertexInputAttributeDescriptions[i].format = VkConvert<Format, VkFormat>(config.vertexAttributes[i].format);
-            vertexInputAttributeDescriptions[i].offset = config.vertexAttributes[i].offset;
+            VertexAttribute& vertexAttribute = config.vertexConfig.vertexAttributes[i];
+            vertexInputAttributeDescriptions[i].binding = vertexAttribute.binding;
+            vertexInputAttributeDescriptions[i].location = vertexAttribute.location;
+            vertexInputAttributeDescriptions[i].format = VkConvert<Format, VkFormat>(vertexAttribute.format);
+            vertexInputAttributeDescriptions[i].offset = vertexAttribute.offset;
         }
         VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo {};
         vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -257,17 +226,19 @@ namespace Explosion {
         inputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
 
         VkViewport viewport {};
-        viewport.x = config.viewport.x;
-        viewport.y = config.viewport.y;
-        viewport.width = config.viewport.width;
-        viewport.height = config.viewport.height;
-        viewport.minDepth = config.viewport.minDepth;
-        viewport.maxDepth = config.viewport.maxDepth;
+        Viewport& vpConfig = config.viewportScissorConfig.viewport;
+        viewport.x = vpConfig.x;
+        viewport.y = vpConfig.y;
+        viewport.width = vpConfig.width;
+        viewport.height = vpConfig.height;
+        viewport.minDepth = vpConfig.minDepth;
+        viewport.maxDepth = vpConfig.maxDepth;
         VkRect2D scissor {};
-        scissor.offset.x = config.scissor.x;
-        scissor.offset.y = config.scissor.y;
-        scissor.extent.width = config.scissor.width;
-        scissor.extent.height = config.scissor.height;
+        Scissor& scConfig = config.viewportScissorConfig.scissor;
+        scissor.offset.x = scConfig.x;
+        scissor.offset.y = scConfig.y;
+        scissor.extent.width = scConfig.width;
+        scissor.extent.height = scConfig.height;
         VkPipelineViewportStateCreateInfo viewportStateCreateInfo {};
         viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         viewportStateCreateInfo.pNext = nullptr;
@@ -318,7 +289,7 @@ namespace Explosion {
         depthStencilStateCreateInfo.maxDepthBounds = 1.f;
 
         VkPipelineColorBlendAttachmentState colorBlendAttachmentState {};
-        colorBlendAttachmentState.blendEnable = VkBoolConvert(config.colorBlend);
+        colorBlendAttachmentState.blendEnable = VkBoolConvert(config.colorBlendConfig.enabled);
         colorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         colorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
         colorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -330,7 +301,7 @@ namespace Explosion {
         colorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
         colorBlendStateCreateInfo.pNext = nullptr;
         colorBlendStateCreateInfo.flags = 0;
-        colorBlendStateCreateInfo.logicOpEnable = VkBoolConvert(config.colorBlend);
+        colorBlendStateCreateInfo.logicOpEnable = VkBoolConvert(config.colorBlendConfig.enabled);
         colorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;
         colorBlendStateCreateInfo.attachmentCount = 1;
         colorBlendStateCreateInfo.pAttachments = &colorBlendAttachmentState;

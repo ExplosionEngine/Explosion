@@ -152,9 +152,6 @@ namespace Explosion {
     void CommandEncoder::BindGraphicsPipeline(Pipeline* pipeline)
     {
         vkCmdBindPipeline(commandBuffer->GetVkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetVkPipeline());
-        if (pipeline->GetVkDescriptorSet() != VK_NULL_HANDLE) {
-            vkCmdBindDescriptorSets(commandBuffer->GetVkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetVkPipelineLayout(), 0, 1, &pipeline->GetVkDescriptorSet(), 0, nullptr);
-        }
     }
 
     void CommandEncoder::BindVertexBuffer(uint32_t binding, GpuBuffer* vertexBuffer)
