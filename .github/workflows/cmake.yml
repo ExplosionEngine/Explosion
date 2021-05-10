@@ -52,12 +52,12 @@ jobs:
     - name: Build
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: cmake --build . --config $BUILD_TYPE
+      run: cmake --build . --config $BUILD_TYPE -j 8
     
     - name: Run Unit Test
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ctest
+      run: ctest -C Debug
 
   build-windows:
     runs-on: windows-latest
@@ -97,9 +97,9 @@ jobs:
     - name: Build
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: cmake --build . --config $BUILD_TYPE
+      run: cmake --build . --config $BUILD_TYPE -j 8
     
     - name: Run Unit Test
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: ctest
+      run: ctest -C Debug
