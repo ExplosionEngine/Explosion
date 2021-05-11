@@ -7,20 +7,21 @@
 
 #include <functional>
 #include <string>
-#include <Explosion/Common/NonCopy.h>
+#include <utility>
 #include <Explosion/Render/FrameGraph/FgResources.h>
-#include <Explosion/Driver/Driver.h>
+#include <Explosion/Render/FrameGraph/FgNode.h>
 
 namespace Explosion {
-    class FrameGraphBuilder;
+    class FrameGraph;
+    class Driver;
 
-    class FgRenderPassBase : public NonCopy {
+    class FgRenderPassBase : public FgNode {
     public:
         explicit FgRenderPassBase(const std::string& n) : name(n) {}
 
         ~FgRenderPassBase() override = default;
 
-        virtual void Execute(const FgResources&, Driver&) = 0;
+        virtual void Execute(const FrameGraph&, Driver&) = 0;
     private:
         std::string name;
     };
@@ -28,14 +29,14 @@ namespace Explosion {
     template<typename Data>
     class FgRenderPass : public FgRenderPassBase {
     public:
-        using ExecuteType = std::function<void(const Data &, const FgResources &, Driver&)>;
+        using ExecuteType = std::function<void(const Data &, const FrameGraph&, Driver&)>;
 
         FgRenderPass(const std::string& name, ExecuteType &&e) : FgRenderPassBase(name), execute(std::move(e)) {}
 
         ~FgRenderPass() override = default;
 
-        void Execute(const FgResources &res, Driver& driver) override {
-            if (execute) execute(data, res, driver);
+        void Execute(const FrameGraph& graph, Driver& driver) override {
+            if (execute) execute(data, graph, driver);
         }
 
     private:
