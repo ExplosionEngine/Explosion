@@ -7,6 +7,8 @@
 #include <atomic>
 #include <Explosion/Common/Template/RefObject.h>
 
+using namespace Explosion;
+
 struct TestObject : public URefObject<TestObject> {};
 struct ThreadSafeObject : public UTsRefObject<ThreadSafeObject> {};
 
