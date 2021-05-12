@@ -6,7 +6,6 @@
 #define EXPLOSION_FGRENDERPASS_H
 
 #include <functional>
-#include <string>
 #include <utility>
 #include <Explosion/Render/FrameGraph/FgResources.h>
 #include <Explosion/Render/FrameGraph/FgNode.h>
@@ -17,13 +16,11 @@ namespace Explosion {
 
     class FgRenderPassBase : public FgNode {
     public:
-        explicit FgRenderPassBase(const std::string& n) : name(n) {}
+        explicit FgRenderPassBase(const char*& n) : FgNode(n) {}
 
         ~FgRenderPassBase() override = default;
 
         virtual void Execute(const FrameGraph&, Driver&) = 0;
-    private:
-        std::string name;
     };
 
     template<typename Data>
@@ -31,7 +28,7 @@ namespace Explosion {
     public:
         using ExecuteType = std::function<void(const Data &, const FrameGraph&, Driver&)>;
 
-        FgRenderPass(const std::string& name, ExecuteType &&e) : FgRenderPassBase(name), execute(std::move(e)) {}
+        FgRenderPass(const char*& name, ExecuteType &&e) : FgRenderPassBase(name), execute(std::move(e)) {}
 
         ~FgRenderPass() override = default;
 
