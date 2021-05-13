@@ -6,43 +6,33 @@
 #include <vector>
 #include <unordered_map>
 
-#include <Explosion/RHI/Pipeline.h>
+#include <Explosion/RHI/GraphicsPipeline.h>
 #include <Explosion/RHI/VkAdapater.h>
 #include <Explosion/RHI/Driver.h>
 #include <Explosion/RHI/RenderPass.h>
 
 namespace Explosion {
-    Pipeline::Pipeline(Driver& driver, RenderPass* renderPass)
-        : GpuRes(driver), device(*driver.GetDevice()), renderPass(renderPass) {}
+    GraphicsPipeline::GraphicsPipeline(Driver& driver, const Config& config)
+        : GpuRes(driver), device(*driver.GetDevice()), config(config) {}
 
-    Pipeline::~Pipeline() = default;
+    GraphicsPipeline::~GraphicsPipeline() = default;
 
-    const VkPipelineLayout& Pipeline::GetVkPipelineLayout() const
+    const VkPipelineLayout& GraphicsPipeline::GetVkPipelineLayout() const
     {
         return vkPipelineLayout;
     }
 
-    const VkPipeline& Pipeline::GetVkPipeline() const
+    const VkPipeline& GraphicsPipeline::GetVkPipeline() const
     {
         return vkPipeline;
     }
 
-    const VkDescriptorSetLayout& Pipeline::GetVkDescriptorSetLayout() const
+    const VkDescriptorSetLayout& GraphicsPipeline::GetVkDescriptorSetLayout() const
     {
         return vkDescriptorSetLayout;
     }
 
-    void Pipeline::OnCreate()
-    {
-        GpuRes::OnCreate();
-    }
-
-    void Pipeline::OnDestroy()
-    {
-        GpuRes::OnDestroy();
-    }
-
-    VkShaderModule Pipeline::CreateShaderModule(const std::vector<char>& code)
+    VkShaderModule GraphicsPipeline::CreateShaderModule(const std::vector<char>& code)
     {
         VkShaderModuleCreateInfo createInfo {};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -58,19 +48,14 @@ namespace Explosion {
         return shaderModule;
     }
 
-    void Pipeline::DestroyShaderModule(const VkShaderModule& shaderModule)
+    void GraphicsPipeline::DestroyShaderModule(const VkShaderModule& shaderModule)
     {
         vkDestroyShaderModule(device.GetVkDevice(), shaderModule, nullptr);
     }
 
-    GraphicsPipeline::GraphicsPipeline(Driver& driver, RenderPass* renderPass, const GraphicsPipeline::Config& config)
-        : Pipeline(driver, renderPass), config(config) {}
-
-    GraphicsPipeline::~GraphicsPipeline() = default;
-
     void GraphicsPipeline::OnCreate()
     {
-        Pipeline::OnCreate();
+        GpuRes::OnCreate();
         CreateDescriptorPool();
         CreateDescriptorSetLayout();
         CreatePipelineLayout();
@@ -79,7 +64,7 @@ namespace Explosion {
 
     void GraphicsPipeline::OnDestroy()
     {
-        Pipeline::OnDestroy();
+        GpuRes::OnDestroy();
         DestroyGraphicsPipeline();
         DestroyPipelineLayout();
         DestroyDescriptorSetLayout();
@@ -335,7 +320,7 @@ namespace Explosion {
         graphicsPipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
         graphicsPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
         graphicsPipelineCreateInfo.layout = vkPipelineLayout;
-        graphicsPipelineCreateInfo.renderPass = renderPass->GetVkRenderPass();
+        graphicsPipelineCreateInfo.renderPass = config.renderPass->GetVkRenderPass();
         graphicsPipelineCreateInfo.subpass = 0;
         graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
         graphicsPipelineCreateInfo.basePipelineIndex = -1;

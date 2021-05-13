@@ -43,8 +43,6 @@ namespace Explosion {
         return config;
     }
 
-    void Image::OnSetupImageCreateInfo(VkImageCreateInfo& createInfo) {}
-
     void Image::CreateImage()
     {
         VkImageCreateInfo createInfo {};
@@ -66,7 +64,8 @@ namespace Explosion {
         createInfo.queueFamilyIndexCount = 0;
         createInfo.pQueueFamilyIndices = nullptr;
         createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        OnSetupImageCreateInfo(createInfo);
+        createInfo.usage = VkGetFlags<ImageUsage, VkImageUsageFlagBits>(config.usages);
+        createInfo.initialLayout = VkConvert<ImageLayout, VkImageLayout>(config.initialLayout);
 
         if (vkCreateImage(device.GetVkDevice(), &createInfo, nullptr, &vkImage) != VK_SUCCESS) {
             throw std::runtime_error("failed to create vulkan image");
@@ -76,23 +75,5 @@ namespace Explosion {
     void Image::DestroyImage()
     {
         vkDestroyImage(device.GetVkDevice(), vkImage, nullptr);
-    }
-
-    ColorAttachment::ColorAttachment(Driver& driver, const Config& config) : Image(driver, config), fromSwapChain(false) {}
-
-    ColorAttachment::ColorAttachment(Driver& driver, const VkImage& vkImage, const Config& config) : Image(driver, vkImage, config), fromSwapChain(true) {}
-
-    ColorAttachment::~ColorAttachment() = default;
-
-    bool ColorAttachment::IsFromSwapChain()
-    {
-        return fromSwapChain;
-    }
-
-    void ColorAttachment::OnSetupImageCreateInfo(VkImageCreateInfo& createInfo)
-    {
-        Image::OnSetupImageCreateInfo(createInfo);
-        createInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-        createInfo.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     }
 }

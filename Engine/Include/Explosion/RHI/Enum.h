@@ -119,6 +119,31 @@ namespace Explosion {
         HOST_COHERENT,
         MAX
     };
+
+    enum class ImageUsage {
+        TRANSFER_SRC,
+        TRANSFER_DST,
+        COLOR_ATTACHMENT,
+        DEPTH_STENCIL_ATTACHMENT,
+        MAX
+    };
+
+    enum class ImageLayout {
+        UNDEFINED,
+        COLOR_ATTACHMENT_OPTIMAL,
+        DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        TRANSFER_SRC_OPTIMAL,
+        TRANSFER_DST_OPTIMAL,
+        PRESENT_SRC,
+        MAX
+    };
+
+    enum class ImageAspect {
+        COLOR,
+        DEPTH,
+        STENCIL,
+        MAX
+    };
 }
 
 #endif //EXPLOSION_ENUM_H

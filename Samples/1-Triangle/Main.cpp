@@ -7,7 +7,7 @@
 #include <Explosion/RHI/SwapChain.h>
 #include <Explosion/RHI/RenderPass.h>
 #include <Explosion/RHI/FrameBuffer.h>
-#include <Explosion/RHI/Pipeline.h>
+#include <Explosion/RHI/GraphicsPipeline.h>
 #include <Explosion/RHI/Image.h>
 #include <Explosion/RHI/ImageView.h>
 #include <Explosion/RHI/GpuBuffer.h>
@@ -59,6 +59,7 @@ protected:
         imageViewConfig.baseMipLevel = 0;
         imageViewConfig.layerCount = 1;
         imageViewConfig.baseLayer = 0;
+        imageViewConfig.aspects = { ImageAspect::COLOR };
         imageViews.resize(swapChain->GetColorAttachmentCount());
         for (uint32_t i = 0; i < imageViews.size(); i++) {
             imageViewConfig.image = swapChain->GetColorAttachments()[i];
@@ -86,6 +87,7 @@ protected:
         }
 
         GraphicsPipeline::Config pipelineConfig {};
+        pipelineConfig.renderPass = renderPass;
         pipelineConfig.shaderConfig.shaderModules = {
             { ShaderStage::VERTEX, FileReader::Read("1-Triangle-Vertex.spv") },
             { ShaderStage::FRAGMENT, FileReader::Read("1-Triangle-Fragment.spv") }
@@ -104,7 +106,7 @@ protected:
         pipelineConfig.rasterizerConfig = { false, false, CullMode::NONE, FrontFace::CLOCK_WISE };
         pipelineConfig.depthStencilConfig = { false, false, false };
         pipelineConfig.colorBlendConfig.enabled = false;
-        pipeline = driver->CreateGpuRes<GraphicsPipeline>(renderPass, pipelineConfig);
+        pipeline = driver->CreateGpuRes<GraphicsPipeline>(pipelineConfig);
 
         vertices = {
             { 0.f, -.5f, 0.f },
@@ -132,7 +134,7 @@ protected:
     {
         driver->DestroyGpuRes<GpuBuffer>(vertexBuffer);
         driver->DestroyGpuRes<GpuBuffer>(indexBuffer);
-        driver->DestroyGpuRes<Pipeline>(pipeline);
+        driver->DestroyGpuRes<GraphicsPipeline>(pipeline);
         for (auto* frameBuffer : frameBuffers) {
             driver->DestroyGpuRes<FrameBuffer>(frameBuffer);
         }
@@ -177,7 +179,7 @@ private:
     std::vector<ImageView*> imageViews;
     RenderPass* renderPass = nullptr;
     std::vector<FrameBuffer*> frameBuffers;
-    Pipeline* pipeline = nullptr;
+    GraphicsPipeline* pipeline = nullptr;
     GpuBuffer* vertexBuffer = nullptr;
     GpuBuffer* indexBuffer = nullptr;
 };

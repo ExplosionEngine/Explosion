@@ -2,8 +2,8 @@
 // Created by John Kindem on 2021/4/26.
 //
 
-#ifndef EXPLOSION_PIPELINE_H
-#define EXPLOSION_PIPELINE_H
+#ifndef EXPLOSION_GRAPHICSPIPELINE_H
+#define EXPLOSION_GRAPHICSPIPELINE_H
 
 #include <vector>
 
@@ -17,35 +17,13 @@ namespace Explosion {
     class Device;
     class RenderPass;
 
-    class Pipeline : public GpuRes {
+    class GraphicsPipeline : public GpuRes {
     public:
         struct ShaderModule {
             ShaderStage stage;
             std::vector<char> code;
         };
 
-        explicit Pipeline(Driver& driver, RenderPass* renderPass);
-        ~Pipeline() override;
-        const VkPipelineLayout& GetVkPipelineLayout() const;
-        const VkPipeline& GetVkPipeline() const;
-        const VkDescriptorSetLayout& GetVkDescriptorSetLayout() const;
-
-    protected:
-        void OnCreate() override;
-        void OnDestroy() override;
-        VkShaderModule CreateShaderModule(const std::vector<char>& code);
-        void DestroyShaderModule(const VkShaderModule& shaderModule);
-
-        Device& device;
-        RenderPass* renderPass;
-        VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
-        VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
-        VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
-        VkPipeline vkPipeline = VK_NULL_HANDLE;
-    };
-
-    class GraphicsPipeline : public Pipeline {
-    public:
         struct ShaderConfig {
             std::vector<ShaderModule> shaderModules;
         };
@@ -124,6 +102,7 @@ namespace Explosion {
         };
 
         struct Config {
+            RenderPass* renderPass;
             ShaderConfig shaderConfig;
             VertexConfig vertexConfig;
             DescriptorConfig descriptorConfig;
@@ -133,12 +112,23 @@ namespace Explosion {
             ColorBlendConfig colorBlendConfig;
         };
 
-        GraphicsPipeline(Driver& driver, RenderPass* renderPass, const Config& config);
+        explicit GraphicsPipeline(Driver& driver, const Config& config);
         ~GraphicsPipeline() override;
+        const VkPipelineLayout& GetVkPipelineLayout() const;
+        const VkPipeline& GetVkPipeline() const;
+        const VkDescriptorSetLayout& GetVkDescriptorSetLayout() const;
 
     protected:
         void OnCreate() override;
         void OnDestroy() override;
+        VkShaderModule CreateShaderModule(const std::vector<char>& code);
+        void DestroyShaderModule(const VkShaderModule& shaderModule);
+
+        Device& device;
+        VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
+        VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
+        VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
+        VkPipeline vkPipeline = VK_NULL_HANDLE;
 
     private:
         void CreateDescriptorPool();
@@ -157,4 +147,4 @@ namespace Explosion {
     };
 }
 
-#endif //EXPLOSION_PIPELINE_H
+#endif //EXPLOSION_GRAPHICSPIPELINE_H

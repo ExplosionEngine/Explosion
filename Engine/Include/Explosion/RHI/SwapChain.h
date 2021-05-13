@@ -16,8 +16,8 @@
 
 namespace Explosion {
     class Driver;
-    class ColorAttachment;
     class Signal;
+    class Image;
     class CommandBuffer;
 
     using FrameJob = std::function<void(uint32_t, Signal*, Signal*)>;
@@ -34,7 +34,7 @@ namespace Explosion {
         const VkExtent2D& GetVkExtent();
         const VkSurfaceFormatKHR& GetVkSurfaceFormat();
         const VkPresentModeKHR& GetVkPresentMode();
-        const std::vector<ColorAttachment*>& GetColorAttachments();
+        const std::vector<Image*>& GetColorAttachments();
 
     protected:
         void OnCreate() override;
@@ -64,7 +64,7 @@ namespace Explosion {
         VkSurfaceFormatKHR vkSurfaceFormat;
         VkPresentModeKHR vkPresentMode;
         VkSwapchainKHR vkSwapChain = VK_NULL_HANDLE;
-        std::vector<ColorAttachment*> colorAttachments {};
+        std::vector<Image*> colorAttachments {};
         Signal* imageReadySignal;
         Signal* frameFinishedSignal;
     };

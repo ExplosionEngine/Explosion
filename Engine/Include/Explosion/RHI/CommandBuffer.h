@@ -10,7 +10,7 @@
 #include <vulkan/vulkan.h>
 
 #include <Explosion/RHI/GpuRes.h>
-#include <Explosion/RHI/Pipeline.h>
+#include <Explosion/RHI/GraphicsPipeline.h>
 
 namespace Explosion {
     class Driver;
@@ -20,7 +20,7 @@ namespace Explosion {
     class GpuBuffer;
     class RenderPass;
     class FrameBuffer;
-    class Pipeline;
+    class GraphicsPipeline;
 
     using EncodingFunc = std::function<void(CommandEncoder* commandEncoder)>;
 
@@ -72,7 +72,7 @@ namespace Explosion {
         void CopyBuffer(GpuBuffer* srcBuffer, GpuBuffer* dstBuffer);
         void BeginRenderPass(RenderPass* renderPass, const RenderPassBeginInfo& renderPassBeginInfo);
         void EndRenderPass();
-        void BindGraphicsPipeline(Pipeline* pipeline);
+        void BindGraphicsPipeline(GraphicsPipeline* pipeline);
         void BindVertexBuffer(uint32_t binding, GpuBuffer* vertexBuffer);
         void BindIndexBuffer(GpuBuffer* indexBuffer);
         void Draw(uint32_t firstVertex, uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount);

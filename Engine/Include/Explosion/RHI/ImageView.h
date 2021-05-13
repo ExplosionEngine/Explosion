@@ -5,6 +5,8 @@
 #ifndef EXPLOSION_IMAGEVIEW_H
 #define EXPLOSION_IMAGEVIEW_H
 
+#include <vector>
+
 #include <vulkan/vulkan.h>
 
 #include <Explosion/RHI/Enum.h>
@@ -20,6 +22,7 @@ namespace Explosion {
         struct Config {
             Image* image;
             ImageViewType type;
+            std::vector<ImageAspect> aspects;
             uint32_t mipLevelCount;
             uint32_t baseMipLevel;
             uint32_t layerCount;

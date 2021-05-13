@@ -10,7 +10,7 @@
 #include <Explosion/RHI/Signal.h>
 #include <Explosion/RHI/RenderPass.h>
 #include <Explosion/RHI/FrameBuffer.h>
-#include <Explosion/RHI/Pipeline.h>
+#include <Explosion/RHI/GraphicsPipeline.h>
 #include <Explosion/RHI/VkAdapater.h>
 
 namespace Explosion {
@@ -149,7 +149,7 @@ namespace Explosion {
         vkCmdEndRenderPass(commandBuffer->GetVkCommandBuffer());
     }
 
-    void CommandEncoder::BindGraphicsPipeline(Pipeline* pipeline)
+    void CommandEncoder::BindGraphicsPipeline(GraphicsPipeline* pipeline)
     {
         vkCmdBindPipeline(commandBuffer->GetVkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetVkPipeline());
     }

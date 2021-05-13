@@ -127,7 +127,7 @@ namespace Explosion {
         return vkPresentMode;
     }
 
-    const std::vector<ColorAttachment*>& SwapChain::GetColorAttachments()
+    const std::vector<Image*>& SwapChain::GetColorAttachments()
     {
         return colorAttachments;
     }
@@ -226,13 +226,18 @@ namespace Explosion {
         vkGetSwapchainImagesKHR(device.GetVkDevice(), vkSwapChain, &imageCnt, images.data());
 
         colorAttachments.resize(imageCnt);
-        Image::Config config {
-            ImageType::IMAGE_2D,
-            GetEnumByVk<VkFormat, Format>(vkSurfaceFormat.format),
-            vkExtent.width, vkExtent.height, 1, 1, 1
-        };
+        Image::Config config {};
+        config.imageType = ImageType::IMAGE_2D;
+        config.format = GetEnumByVk<VkFormat, Format>(vkSurfaceFormat.format);
+        config.width = vkExtent.width;
+        config.height = vkExtent.height;
+        config.depth = 1;
+        config.mipLevels = 1;
+        config.layers = 1;
+        config.usages = { ImageUsage::COLOR_ATTACHMENT };
+        config.initialLayout = ImageLayout::COLOR_ATTACHMENT_OPTIMAL;
         for (auto i  = 0; i < imageCnt; i++) {
-            colorAttachments[i] = driver.CreateGpuRes<ColorAttachment>(images[i], config);
+            colorAttachments[i] = driver.CreateGpuRes<Image>(images[i], config);
         }
     }
 

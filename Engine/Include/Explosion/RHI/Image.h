@@ -23,6 +23,8 @@ namespace Explosion {
             uint32_t depth;
             uint32_t mipLevels;
             uint32_t layers;
+            ImageLayout initialLayout;
+            std::vector<ImageUsage> usages;
         };
 
         Image(Driver& driver, const Config& config);
@@ -35,7 +37,6 @@ namespace Explosion {
     protected:
         void OnCreate() override;
         void OnDestroy() override;
-        virtual void OnSetupImageCreateInfo(VkImageCreateInfo& createInfo);
 
         Device& device;
 
@@ -46,34 +47,6 @@ namespace Explosion {
         bool fromSwapChain = false;
         VkImage vkImage = VK_NULL_HANDLE;
         Config config {};
-    };
-
-    class ColorAttachment : public Image {
-    public:
-        ColorAttachment(Driver& driver, const Config& config);
-        ColorAttachment(Driver& driver, const VkImage& vkImage, const Config& config);
-        ~ColorAttachment() override;
-        bool IsFromSwapChain();
-
-    protected:
-        void OnSetupImageCreateInfo(VkImageCreateInfo &createInfo) override;
-
-    private:
-        bool fromSwapChain;
-    };
-
-    // TODO
-    class DepthStencilAttachment : public Image {
-    public:
-
-    private:
-    };
-
-    // TODO
-    class ExternalImage : public Image {
-    public:
-
-    private:
     };
 }
 
