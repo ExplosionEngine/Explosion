@@ -100,12 +100,10 @@ namespace Explosion {
 
     void GpuBuffer::AllocateMemory()
     {
-        VkMemoryPropertyFlags memoryPropertyFlags = 0;
         for (auto& memoryProperty : config.memoryProperties) {
             if (memoryProperty == MemoryProperty::DEVICE_LOCAL) {
                 isDeviceLocal = true;
             }
-            memoryPropertyFlags |= VkConvert<MemoryProperty, VkMemoryPropertyFlagBits>(memoryProperty);
         }
 
         VkMemoryRequirements memoryRequirements {};
@@ -113,7 +111,7 @@ namespace Explosion {
         std::optional<uint32_t> memType = FindMemoryType(
             device.GetVkPhysicalDeviceMemoryProperties(),
             memoryRequirements.memoryTypeBits,
-            memoryPropertyFlags
+            VkGetFlags<MemoryProperty, VkMemoryPropertyFlagBits>(config.memoryProperties)
         );
         if (!memType.has_value()) {
             throw std::runtime_error("failed to find suitable memory type");

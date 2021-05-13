@@ -82,10 +82,7 @@ namespace Explosion {
         submitInfo.pSignalSemaphores = &notifySignal->GetVkSemaphore();
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &vkCommandBuffer;
-        VkPipelineStageFlags flags = 0;
-        for (auto& stage : waitStages) {
-            flags |= VkConvert<PipelineStage, VkPipelineStageFlagBits>(stage);
-        }
+        VkPipelineStageFlags flags = VkGetFlags<PipelineStage, VkPipelineStageFlagBits>(waitStages);
         submitInfo.pWaitDstStageMask = &flags;
 
         if (vkQueueSubmit(device.GetVkQueue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
