@@ -12,13 +12,20 @@ namespace Explosion {
 
     class FgNode : public URefObject<FgNode>, public NonCopy {
     public:
-        explicit FgNode(const char* str) : name(str) {}
+        explicit FgNode(const char* str) : name(str), sideEffect(false) {}
         ~FgNode() override = default;
 
         const std::string& GetName() const { return name; }
 
+        void SideEffect() { sideEffect = true; }
+
+        bool IsSideEffect() const { return sideEffect; }
+
+        explicit operator bool() const { return GetRef() != 0 || sideEffect;  }
+
     private:
         std::string name;
+        bool sideEffect;
     };
 
 }

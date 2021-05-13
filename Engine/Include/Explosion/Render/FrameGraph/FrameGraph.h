@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <memory>
+#include <unordered_map>
 #include <Explosion/Common/NonCopy.h>
 #include <Explosion/Render/FrameGraph/FgRenderPass.h>
 #include <Explosion/Render/FrameGraph/FgResources.h>
@@ -28,6 +29,8 @@ namespace Explosion {
 
         FgHandle Write(FgHandle handle);
 
+        void SideEffect();
+
     private:
         FrameGraph& graph;
         FgRenderPassBase* renderPass;
@@ -35,22 +38,28 @@ namespace Explosion {
 
     class FrameGraph : public NonCopy {
     public:
-        FrameGraph() {}
+        FrameGraph() = default;
 
-        ~FrameGraph() override {}
+        ~FrameGraph() override = default;
 
         template<typename Data, typename Setup, typename Execute>
-        FgRenderPass<Data> &AddCallbackPass(const char* name, Setup &&s, Execute &&e)
+        void AddCallbackPass(const char* name, Setup &&s, Execute &&e)
         {
             auto pass = new FgRenderPass<Data>(name, std::forward<Execute>(e));
             passes.template emplace_back(pass);
             s(FrameGraphBuilder(*this, pass), pass->data);
-            return *pass;
         }
 
         FrameGraph& Compile();
 
         FrameGraph& Execute(Driver&);
+
+        using PassVector = std::vector<std::unique_ptr<FgRenderPassBase>>;
+        using ResourceVector = std::vector<std::unique_ptr<FgVirtualResource>>;
+
+        const PassVector& GetPasses() const { return passes; }
+
+        const ResourceVector& GetResources() const { return resources; }
 
     private:
         struct Edge {
@@ -58,11 +67,14 @@ namespace Explosion {
             FgNode* to;
         };
 
+        void Cull();
+
         friend class FrameGraphBuilder;
-        std::vector<std::unique_ptr<FgRenderPassBase>> passes;
-        std::vector<std::unique_ptr<FgVirtualResource>> resources;
+        PassVector passes;
+        ResourceVector resources;
         std::vector<FgHandle> resHandles;
         std::vector<Edge> edges;
+        std::unordered_map<FgNode*, std::vector<FgNode*>> incomingEdgeMap;
     };
 
 
