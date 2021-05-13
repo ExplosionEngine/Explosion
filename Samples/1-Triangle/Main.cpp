@@ -3,16 +3,16 @@
 //
 
 #include <Application/Application.h>
-#include <Explosion/Driver/Driver.h>
-#include <Explosion/Driver/SwapChain.h>
-#include <Explosion/Driver/RenderPass.h>
-#include <Explosion/Driver/FrameBuffer.h>
-#include <Explosion/Driver/Pipeline.h>
-#include <Explosion/Driver/Image.h>
-#include <Explosion/Driver/ImageView.h>
-#include <Explosion/Driver/GpuBuffer.h>
-#include <Explosion/Driver/Signal.h>
-#include <Explosion/Driver/CommandBuffer.h>
+#include <Explosion/RHI/Driver.h>
+#include <Explosion/RHI/SwapChain.h>
+#include <Explosion/RHI/RenderPass.h>
+#include <Explosion/RHI/FrameBuffer.h>
+#include <Explosion/RHI/Pipeline.h>
+#include <Explosion/RHI/Image.h>
+#include <Explosion/RHI/ImageView.h>
+#include <Explosion/RHI/GpuBuffer.h>
+#include <Explosion/RHI/Signal.h>
+#include <Explosion/RHI/CommandBuffer.h>
 #include <Explosion/Common/FileReader.h>
 
 #ifdef __APPLE__

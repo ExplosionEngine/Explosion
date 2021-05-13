@@ -4,8 +4,8 @@
 
 #include <gtest/gtest.h>
 
-#include <Explosion/Driver/Enum.h>
-#include <Explosion/Driver/VkAdapater.h>
+#include <Explosion/RHI/Enum.h>
+#include <Explosion/RHI/VkAdapater.h>
 
 TEST(VkAdapaterTest, VkBoolConvertTest)
 {
