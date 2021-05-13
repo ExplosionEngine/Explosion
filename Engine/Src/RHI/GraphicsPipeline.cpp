@@ -12,7 +12,7 @@
 #include <Explosion/RHI/Driver.h>
 #include <Explosion/RHI/RenderPass.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     GraphicsPipeline::GraphicsPipeline(Driver& driver, Config config)
         : driver(driver), device(*driver.GetDevice()), config(std::move(config))
     {

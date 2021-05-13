@@ -9,7 +9,7 @@
 
 #include <Explosion/RHI/Device.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     class Driver {
     public:
         Driver();

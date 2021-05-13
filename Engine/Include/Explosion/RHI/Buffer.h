@@ -2,8 +2,8 @@
 // Created by John Kindem on 2021/4/28.
 //
 
-#ifndef EXPLOSION_GPUBUFFER_H
-#define EXPLOSION_GPUBUFFER_H
+#ifndef EXPLOSION_BUFFER_H
+#define EXPLOSION_BUFFER_H
 
 #include <cstdint>
 
@@ -12,11 +12,11 @@
 #include <Explosion/RHI/Enum.h>
 #include <Explosion/RHI/Common.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     class Driver;
     class Device;
 
-    class GpuBuffer {
+    class Buffer {
     public:
         struct Config {
             uint32_t size;
@@ -24,8 +24,8 @@ namespace Explosion {
             std::vector<MemoryProperty> memoryProperties;
         };
 
-        GpuBuffer(Driver& driver, Config config);
-        ~GpuBuffer();
+        Buffer(Driver& driver, Config config);
+        ~Buffer();
         uint32_t GetSize();
         const VkBuffer& GetVkBuffer();
         const VkDeviceMemory& GetVkDeviceMemory();
@@ -47,4 +47,4 @@ namespace Explosion {
     };
 }
 
-#endif //EXPLOSION_GPUBUFFER_H
+#endif //EXPLOSION_BUFFER_H

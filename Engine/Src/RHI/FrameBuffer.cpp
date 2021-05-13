@@ -10,7 +10,7 @@
 #include <Explosion/RHI/ImageView.h>
 #include <Explosion/RHI/RenderPass.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     FrameBuffer::FrameBuffer(Driver& driver, FrameBuffer::Config config)
         : driver(driver), device(*driver.GetDevice()), config(std::move(config))
     {

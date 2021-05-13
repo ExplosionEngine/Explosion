@@ -4,7 +4,7 @@
 
 #include <Explosion/RHI/Driver.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     Driver::Driver() : device(std::make_unique<Device>(*this)) {}
 
     Driver::~Driver() = default;

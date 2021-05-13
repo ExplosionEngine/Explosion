@@ -7,7 +7,7 @@
 #include <Explosion/RHI/Signal.h>
 #include <Explosion/RHI/Driver.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     Signal::Signal(Driver& driver)
         : driver(driver), device(*driver.GetDevice())
     {

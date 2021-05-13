@@ -7,30 +7,32 @@
 #include <Explosion/RHI/Enum.h>
 #include <Explosion/RHI/VkAdapater.h>
 
+using namespace Explosion::RHI;
+
 TEST(VkAdapaterTest, VkBoolConvertTest)
 {
-    ASSERT_EQ(Explosion::VkBoolConvert(true), VK_TRUE);
-    ASSERT_EQ(Explosion::VkBoolConvert(false), VK_FALSE);
+    ASSERT_EQ(VkBoolConvert(true), VK_TRUE);
+    ASSERT_EQ(VkBoolConvert(false), VK_FALSE);
 }
 
 TEST(VkAdapterTest, VkConvertTest)
 {
-    VkFormat format = Explosion::VkConvert<Explosion::Format, VkFormat>(Explosion::Format::R32_G32_B32_FLOAT);
+    VkFormat format = VkConvert<Format, VkFormat>(Format::R32_G32_B32_FLOAT);
     ASSERT_EQ(format, VK_FORMAT_R32G32B32_SFLOAT);
 }
 
 TEST(VkAdapterTest, GetEnumByVkTest)
 {
-    Explosion::Format format = Explosion::GetEnumByVk<VkFormat, Explosion::Format>(VK_FORMAT_R32G32B32_SFLOAT);
-    ASSERT_EQ(format, Explosion::Format::R32_G32_B32_FLOAT);
+    Format format = GetEnumByVk<VkFormat, Format>(VK_FORMAT_R32G32B32_SFLOAT);
+    ASSERT_EQ(format, Format::R32_G32_B32_FLOAT);
 }
 
 TEST(VkAdapterTest, VkGetFlagsTest)
 {
-    std::vector<Explosion::BufferUsage> bufferUsages = {
-        Explosion::BufferUsage::VERTEX_BUFFER,
-        Explosion::BufferUsage::TRANSFER_DST
+    std::vector<BufferUsage> bufferUsages = {
+        BufferUsage::VERTEX_BUFFER,
+        BufferUsage::TRANSFER_DST
     };
-    VkFlags targetFlags = Explosion::VkGetFlags<Explosion::BufferUsage, VkBufferUsageFlagBits>(bufferUsages);
+    VkFlags targetFlags = VkGetFlags<BufferUsage, VkBufferUsageFlagBits>(bufferUsages);
     ASSERT_EQ(targetFlags, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 }

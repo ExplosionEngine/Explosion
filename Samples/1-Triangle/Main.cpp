@@ -10,7 +10,7 @@
 #include <Explosion/RHI/GraphicsPipeline.h>
 #include <Explosion/RHI/Image.h>
 #include <Explosion/RHI/ImageView.h>
-#include <Explosion/RHI/GpuBuffer.h>
+#include <Explosion/RHI/Buffer.h>
 #include <Explosion/RHI/Signal.h>
 #include <Explosion/RHI/CommandBuffer.h>
 #include <Explosion/Common/FileReader.h>
@@ -28,6 +28,7 @@
 #include <GLFW/glfw3native.h>
 
 using namespace Explosion;
+using namespace Explosion::RHI;
 
 namespace {
     struct Vertex {
@@ -116,24 +117,24 @@ protected:
         indices = {
             0, 1, 2
         };
-        GpuBuffer::Config bufferConfig {};
+        Buffer::Config bufferConfig {};
         bufferConfig.size = sizeof(Vertex) * vertices.size();
         bufferConfig.usages = { BufferUsage::VERTEX_BUFFER, BufferUsage::TRANSFER_DST };
         bufferConfig.memoryProperties = { MemoryProperty::DEVICE_LOCAL };
-        vertexBuffer = driver->CreateGpuRes<GpuBuffer>(bufferConfig);
+        vertexBuffer = driver->CreateGpuRes<Buffer>(bufferConfig);
         vertexBuffer->UpdateData(vertices.data());
 
         bufferConfig.size = sizeof(Index) * indices.size();
         bufferConfig.usages = { BufferUsage::INDEX_BUFFER, BufferUsage::TRANSFER_DST };
         bufferConfig.memoryProperties = { MemoryProperty::DEVICE_LOCAL };
-        indexBuffer = driver->CreateGpuRes<GpuBuffer>(bufferConfig);
+        indexBuffer = driver->CreateGpuRes<Buffer>(bufferConfig);
         indexBuffer->UpdateData(indices.data());
     }
 
     void OnStop() override
     {
-        driver->DestroyGpuRes<GpuBuffer>(vertexBuffer);
-        driver->DestroyGpuRes<GpuBuffer>(indexBuffer);
+        driver->DestroyGpuRes<Buffer>(vertexBuffer);
+        driver->DestroyGpuRes<Buffer>(indexBuffer);
         driver->DestroyGpuRes<GraphicsPipeline>(pipeline);
         for (auto* frameBuffer : frameBuffers) {
             driver->DestroyGpuRes<FrameBuffer>(frameBuffer);
@@ -180,8 +181,8 @@ private:
     RenderPass* renderPass = nullptr;
     std::vector<FrameBuffer*> frameBuffers;
     GraphicsPipeline* pipeline = nullptr;
-    GpuBuffer* vertexBuffer = nullptr;
-    GpuBuffer* indexBuffer = nullptr;
+    Buffer* vertexBuffer = nullptr;
+    Buffer* indexBuffer = nullptr;
 };
 
 int main(int argc, char* argv[])

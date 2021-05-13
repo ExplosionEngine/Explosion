@@ -13,7 +13,7 @@
 #define VK_VALIDATION_LAYER_EXTENSION_NAME "VK_LAYER_KHRONOS_validation"
 
 namespace {
-    const std::vector<Explosion::RateRule<VkPhysicalDevice>> PHYSICAL_DEVICE_RATE_RULES = {
+    const std::vector<Explosion::RHI::RateRule<VkPhysicalDevice>> PHYSICAL_DEVICE_RATE_RULES = {
         [](const auto& device) -> uint32_t {
             VkPhysicalDeviceProperties properties;
             vkGetPhysicalDeviceProperties(device, &properties);
@@ -64,7 +64,7 @@ namespace {
     }
 }
 
-namespace Explosion {
+namespace Explosion::RHI {
     Device::Device(Driver& driver) : driver(driver)
     {
         PrepareInstanceExtensions();

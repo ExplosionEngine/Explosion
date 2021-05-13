@@ -13,8 +13,8 @@
 #include <Explosion/RHI/Common.h>
 #include <Explosion/RHI/Signal.h>
 
-namespace Explosion {
-    const std::vector<RateRule<VkSurfaceFormatKHR>> SURFACE_FORMAT_RATE_RULES = {
+namespace {
+    const std::vector<Explosion::RHI::RateRule<VkSurfaceFormatKHR>> SURFACE_FORMAT_RATE_RULES = {
         [](const auto& surfaceFormat) -> uint32_t {
             switch (surfaceFormat.format) {
                 case VK_FORMAT_B8G8R8A8_SRGB:
@@ -33,7 +33,7 @@ namespace Explosion {
         }
     };
 
-    const std::vector<RateRule<VkPresentModeKHR>> PRESENT_MODE_RATE_RULES = {
+    const std::vector<Explosion::RHI::RateRule<VkPresentModeKHR>> PRESENT_MODE_RATE_RULES = {
         [](const VkPresentModeKHR& presentMode) -> uint32_t {
             switch (presentMode) {
                 case VK_PRESENT_MODE_MAILBOX_KHR:
@@ -47,7 +47,7 @@ namespace Explosion {
     };
 }
 
-namespace Explosion {
+namespace Explosion::RHI {
     SwapChain::SwapChain(Driver& driver, void* surface, uint32_t width, uint32_t height)
         : driver(driver), device(*driver.GetDevice()), surface(surface), width(width), height(height)
     {

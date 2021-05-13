@@ -9,7 +9,7 @@
 
 #include <vulkan/vulkan.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     class Driver;
     class Device;
     class ImageView;

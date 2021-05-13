@@ -9,7 +9,7 @@
 #include <Explosion/RHI/Image.h>
 #include <Explosion/RHI/VkAdapater.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     ImageView::ImageView(Driver& driver, Config config)
         : driver(driver), device(*driver.GetDevice()), config(std::move(config))
     {

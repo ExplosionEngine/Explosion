@@ -8,7 +8,7 @@
 #include <Explosion/RHI/Driver.h>
 #include <Explosion/RHI/VkAdapater.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     RenderPass::RenderPass(Driver& driver, Config config)
         : driver(driver), device(*driver.GetDevice()), config(std::move(config))
     {

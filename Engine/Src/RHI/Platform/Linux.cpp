@@ -5,23 +5,25 @@
 #include <Explosion/RHI/Platform.h>
 
 #ifdef __linux__
-const char* INSTANCE_EXTENSIONS[] = {
-    // TODO
-};
+namespace Explosion::RHI {
+    const char* INSTANCE_EXTENSIONS[] = {
+        // TODO
+    };
 
-uint32_t GetPlatformInstanceExtensionNum()
-{
-    return sizeof(INSTANCE_EXTENSIONS) / sizeof(const char*);
-}
+    uint32_t GetPlatformInstanceExtensionNum()
+    {
+        return sizeof(INSTANCE_EXTENSIONS) / sizeof(const char*);
+    }
 
-const char** GetPlatformInstanceExtensions()
-{
-    return INSTANCE_EXTENSIONS;
-}
+    const char** GetPlatformInstanceExtensions()
+    {
+        return INSTANCE_EXTENSIONS;
+    }
 
-bool CreatePlatformSurface(const VkInstance& vkInstance, void* surface, VkSurfaceKHR& vkSurface)
-{
-    // TODO
-    return false;
+    bool CreatePlatformSurface(const VkInstance& vkInstance, void* surface, VkSurfaceKHR& vkSurface)
+    {
+        // TODO
+        return false;
+    }
 }
 #endif

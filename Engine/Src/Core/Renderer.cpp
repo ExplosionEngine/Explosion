@@ -3,12 +3,11 @@
 //
 
 #include <Explosion/Core/Renderer.h>
-#include <Explosion/RHI/VkAdapater.h>
 #include <Explosion/RHI/Driver.h>
 #include <Explosion/RHI/Signal.h>
 
 namespace Explosion {
-    Renderer::Renderer(Driver& driver, void* surface, uint32_t width, uint32_t height)
+    Renderer::Renderer(RHI::Driver& driver, void* surface, uint32_t width, uint32_t height)
         : driver(driver), surface(surface), width(width), height(height) {}
 
     Renderer::~Renderer() {}

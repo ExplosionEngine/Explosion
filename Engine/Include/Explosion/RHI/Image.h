@@ -9,7 +9,7 @@
 
 #include <Explosion/RHI/Enum.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     class Driver;
     class Device;
 

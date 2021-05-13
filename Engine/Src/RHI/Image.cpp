@@ -8,7 +8,7 @@
 #include <Explosion/RHI/Image.h>
 #include <Explosion/RHI/VkAdapater.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     Image::Image(Driver& driver, Config config)
         : driver(driver), device(*driver.GetDevice()), fromSwapChain(false), config(std::move(config))
     {
