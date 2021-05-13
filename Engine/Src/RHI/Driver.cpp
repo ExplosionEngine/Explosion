@@ -4,16 +4,10 @@
 
 #include <Explosion/RHI/Driver.h>
 
-namespace Explosion {
-    Driver::Driver() : device(std::make_unique<Device>(*this))
-    {
-        device->Create();
-    }
+namespace Explosion::RHI {
+    Driver::Driver() : device(std::make_unique<Device>(*this)) {}
 
-    Driver::~Driver()
-    {
-        device->Destroy();
-    }
+    Driver::~Driver() = default;
 
     Device* Driver::GetDevice()
     {

@@ -8,17 +8,17 @@
 #include <cstdint>
 #include <vector>
 
-namespace Explosion {
-    class Driver;
-    class SwapChain;
+#include <Explosion/RHI/Driver.h>
+#include <Explosion/RHI/SwapChain.h>
 
+namespace Explosion {
     class Renderer {
     public:
-        Renderer(Driver& driver, void* surface, uint32_t width, uint32_t height);
+        Renderer(RHI::Driver& driver, void* surface, uint32_t width, uint32_t height);
         ~Renderer();
 
     private:
-        Driver& driver;
+        RHI::Driver& driver;
         void* surface;
         uint32_t width;
         uint32_t height;

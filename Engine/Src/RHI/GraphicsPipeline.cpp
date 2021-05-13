@@ -3,6 +3,7 @@
 //
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <unordered_map>
 
@@ -11,23 +12,35 @@
 #include <Explosion/RHI/Driver.h>
 #include <Explosion/RHI/RenderPass.h>
 
-namespace Explosion {
-    GraphicsPipeline::GraphicsPipeline(Driver& driver, const Config& config)
-        : GpuRes(driver), device(*driver.GetDevice()), config(config) {}
+namespace Explosion::RHI {
+    GraphicsPipeline::GraphicsPipeline(Driver& driver, Config config)
+        : driver(driver), device(*driver.GetDevice()), config(std::move(config))
+    {
+        CreateDescriptorPool();
+        CreateDescriptorSetLayout();
+        CreatePipelineLayout();
+        CreateGraphicsPipeline();
+    }
 
-    GraphicsPipeline::~GraphicsPipeline() = default;
+    GraphicsPipeline::~GraphicsPipeline()
+    {
+        DestroyGraphicsPipeline();
+        DestroyPipelineLayout();
+        DestroyDescriptorSetLayout();
+        DestroyDescriptorPool();
+    }
 
-    const VkPipelineLayout& GraphicsPipeline::GetVkPipelineLayout() const
+    const VkPipelineLayout& GraphicsPipeline::GetVkPipelineLayout()
     {
         return vkPipelineLayout;
     }
 
-    const VkPipeline& GraphicsPipeline::GetVkPipeline() const
+    const VkPipeline& GraphicsPipeline::GetVkPipeline()
     {
         return vkPipeline;
     }
 
-    const VkDescriptorSetLayout& GraphicsPipeline::GetVkDescriptorSetLayout() const
+    const VkDescriptorSetLayout& GraphicsPipeline::GetVkDescriptorSetLayout()
     {
         return vkDescriptorSetLayout;
     }
@@ -51,24 +64,6 @@ namespace Explosion {
     void GraphicsPipeline::DestroyShaderModule(const VkShaderModule& shaderModule)
     {
         vkDestroyShaderModule(device.GetVkDevice(), shaderModule, nullptr);
-    }
-
-    void GraphicsPipeline::OnCreate()
-    {
-        GpuRes::OnCreate();
-        CreateDescriptorPool();
-        CreateDescriptorSetLayout();
-        CreatePipelineLayout();
-        CreateGraphicsPipeline();
-    }
-
-    void GraphicsPipeline::OnDestroy()
-    {
-        GpuRes::OnDestroy();
-        DestroyGraphicsPipeline();
-        DestroyPipelineLayout();
-        DestroyDescriptorSetLayout();
-        DestroyDescriptorPool();
     }
 
     void GraphicsPipeline::CreateDescriptorPool()

@@ -10,25 +10,21 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Explosion/RHI/GpuRes.h>
+namespace Explosion::RHI {
+    class Driver;
 
-namespace Explosion {
-    class Device : public GpuRes {
+    class Device {
     public:
         explicit Device(Driver& driver);
-        ~Device() override;
+        ~Device();
 
-        const VkInstance& GetVkInstance() const;
-        const VkPhysicalDevice& GetVkPhysicalDevice() const;
-        const VkDevice& GetVkDevice() const;
-        const VkQueue& GetVkQueue() const;
-        uint32_t GetVkQueueFamilyIndex() const;
-        const VkCommandPool& GetVkCommandPool() const;
-        const VkPhysicalDeviceMemoryProperties& GetVkPhysicalDeviceMemoryProperties() const;
-
-    protected:
-        void OnCreate() override;
-        void OnDestroy() override;
+        const VkInstance& GetVkInstance();
+        const VkPhysicalDevice& GetVkPhysicalDevice();
+        const VkDevice& GetVkDevice();
+        const VkQueue& GetVkQueue();
+        uint32_t GetVkQueueFamilyIndex();
+        const VkCommandPool& GetVkCommandPool();
+        const VkPhysicalDeviceMemoryProperties& GetVkPhysicalDeviceMemoryProperties();
 
     private:
 #ifdef ENABLE_VALIDATION_LAYER
@@ -57,6 +53,7 @@ namespace Explosion {
 
         void FetchPhysicalDeviceMemoryProperties();
 
+        Driver& driver;
         std::vector<const char*> instanceExtensions {};
         std::vector<const char*> deviceExtensions {};
         std::vector<const char*> layers {};

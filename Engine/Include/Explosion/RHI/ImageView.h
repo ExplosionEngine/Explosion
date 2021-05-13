@@ -10,14 +10,13 @@
 #include <vulkan/vulkan.h>
 
 #include <Explosion/RHI/Enum.h>
-#include <Explosion/RHI/GpuRes.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     class Driver;
     class Device;
     class Image;
 
-    class ImageView : public GpuRes {
+    class ImageView {
     public:
         struct Config {
             Image* image;
@@ -29,19 +28,16 @@ namespace Explosion {
             uint32_t baseLayer;
         };
 
-        ImageView(Driver& driver, const Config& config);
-        ~ImageView() override;
-        Image* GetImage() const;
+        ImageView(Driver& driver, Config config);
+        ~ImageView();
+        Image* GetImage();
         const VkImageView& GetVkImageView();
-
-    protected:
-        void OnCreate() override;
-        void OnDestroy() override;
 
     private:
         void CreateImageView();
         void DestroyImageView();
 
+        Driver& driver;
         Device& device;
         Config config {};
         VkImageView vkImageView = VK_NULL_HANDLE;

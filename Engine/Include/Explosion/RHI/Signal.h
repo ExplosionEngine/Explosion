@@ -7,24 +7,21 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Explosion/RHI/GpuRes.h>
-
-namespace Explosion {
+namespace Explosion::RHI {
     class Driver;
     class Device;
 
-    class Signal : public GpuRes {
+    class Signal {
     public:
         explicit Signal(Driver& driver);
-        ~Signal() override;
+        ~Signal();
         const VkSemaphore& GetVkSemaphore();
 
     private:
-        void OnCreate() override;
-        void OnDestroy() override;
         void CreateSemaphore();
         void DestroySemaphore();
 
+        Driver& driver;
         Device& device;
         VkSemaphore vkSemaphore = VK_NULL_HANDLE;
     };

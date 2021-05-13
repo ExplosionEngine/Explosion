@@ -7,9 +7,11 @@
 
 #include <vulkan/vulkan.h>
 
-uint32_t GetPlatformInstanceExtensionNum();
-const char** GetPlatformInstanceExtensions();
+namespace Explosion::RHI {
+    uint32_t GetPlatformInstanceExtensionNum();
+    const char** GetPlatformInstanceExtensions();
 
-bool CreatePlatformSurface(const VkInstance& vkInstance, void* surface, VkSurfaceKHR& vkSurface);
+    bool CreatePlatformSurface(const VkInstance& vkInstance, void* surface, VkSurfaceKHR& vkSurface);
+}
 
 #endif //EXPLOSION_PLATFORM_H

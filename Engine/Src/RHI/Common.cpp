@@ -4,7 +4,7 @@
 
 #include <Explosion/RHI/Common.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     std::optional<uint32_t> FindMemoryType(VkPhysicalDeviceMemoryProperties physicalDeviceProps, uint32_t typeFilter, VkMemoryPropertyFlags memProps)
     {
         std::optional<uint32_t> result;

@@ -13,7 +13,7 @@
 
 #include <vulkan/vulkan.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     template <typename T>
     using NameComparer = std::function<bool(const char*, const T&)>;
 
@@ -57,7 +57,7 @@ namespace Explosion {
     }
 }
 
-namespace Explosion {
+namespace Explosion::RHI {
     std::optional<uint32_t> FindMemoryType(VkPhysicalDeviceMemoryProperties physicalDeviceProps, uint32_t typeFilter, VkMemoryPropertyFlags memProps);
 }
 

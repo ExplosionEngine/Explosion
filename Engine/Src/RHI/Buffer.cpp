@@ -4,56 +4,51 @@
 
 #include <cstring>
 #include <stdexcept>
+#include <utility>
 
-#include <Explosion/RHI/GpuBuffer.h>
+#include <Explosion/RHI/Buffer.h>
 #include <Explosion/RHI/Driver.h>
 #include <Explosion/RHI/CommandBuffer.h>
 #include <Explosion/RHI/VkAdapater.h>
 
-namespace Explosion {
-    GpuBuffer::GpuBuffer(Driver& driver, const Config& config)
-        : GpuRes(driver), device(*driver.GetDevice()), config(config) {}
-
-    GpuBuffer::~GpuBuffer() = default;
-
-    void GpuBuffer::OnCreate()
+namespace Explosion::RHI {
+    Buffer::Buffer(Driver& driver, Config config)
+        : driver(driver), device(*driver.GetDevice()), config(std::move(config))
     {
-        GpuRes::OnCreate();
         CreateBuffer();
         AllocateMemory();
     }
 
-    void GpuBuffer::OnDestroy()
+    Buffer::~Buffer()
     {
-        GpuRes::OnDestroy();
         FreeMemory();
         DestroyBuffer();
     }
 
-    uint32_t GpuBuffer::GetSize() const
+    uint32_t Buffer::GetSize()
     {
         return config.size;
     }
 
-    const VkBuffer& GpuBuffer::GetVkBuffer() const
+    const VkBuffer& Buffer::GetVkBuffer()
     {
         return vkBuffer;
     }
 
-    const VkDeviceMemory& GpuBuffer::GetVkDeviceMemory() const
+    const VkDeviceMemory& Buffer::GetVkDeviceMemory()
     {
         return vkDeviceMemory;
     }
 
-    void GpuBuffer::UpdateData(void* data)
+    void Buffer::UpdateData(void* data)
     {
         if (isDeviceLocal) {
-            GpuBuffer::Config stagingConfig = {
+            Buffer::Config stagingConfig = {
                 config.size,
                 { BufferUsage::TRANSFER_SRC },
                 { MemoryProperty::HOST_VISIBLE, MemoryProperty::HOST_COHERENT }
             };
-            auto* stagingBuffer = driver.CreateGpuRes<GpuBuffer>(stagingConfig);
+            auto* stagingBuffer = driver.CreateGpuRes<Buffer>(stagingConfig);
             stagingBuffer->UpdateData(data);
             {
                 auto* commandBuffer = driver.CreateGpuRes<CommandBuffer>();
@@ -63,7 +58,7 @@ namespace Explosion {
                 commandBuffer->SubmitNow();
                 driver.DestroyGpuRes<CommandBuffer>(commandBuffer);
             }
-            driver.DestroyGpuRes<GpuBuffer>(stagingBuffer);
+            driver.DestroyGpuRes<Buffer>(stagingBuffer);
         } else {
             void* mapped = nullptr;
             vkMapMemory(device.GetVkDevice(), vkDeviceMemory, 0, static_cast<VkDeviceSize>(config.size), 0, &mapped);
@@ -72,7 +67,7 @@ namespace Explosion {
         }
     }
 
-    void GpuBuffer::CreateBuffer()
+    void Buffer::CreateBuffer()
     {
         VkBufferCreateInfo createInfo {};
         createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -92,13 +87,13 @@ namespace Explosion {
         }
     }
 
-    void GpuBuffer::DestroyBuffer()
+    void Buffer::DestroyBuffer()
     {
         vkDestroyBuffer(device.GetVkDevice(), vkBuffer, nullptr);
     }
 
 
-    void GpuBuffer::AllocateMemory()
+    void Buffer::AllocateMemory()
     {
         for (auto& memoryProperty : config.memoryProperties) {
             if (memoryProperty == MemoryProperty::DEVICE_LOCAL) {
@@ -129,7 +124,7 @@ namespace Explosion {
         vkBindBufferMemory(device.GetVkDevice(), vkBuffer, vkDeviceMemory, 0);
     }
 
-    void GpuBuffer::FreeMemory()
+    void Buffer::FreeMemory()
     {
         vkFreeMemory(device.GetVkDevice(), vkDeviceMemory, nullptr);
     }

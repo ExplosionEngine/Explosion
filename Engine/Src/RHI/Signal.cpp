@@ -7,21 +7,15 @@
 #include <Explosion/RHI/Signal.h>
 #include <Explosion/RHI/Driver.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     Signal::Signal(Driver& driver)
-        : GpuRes(driver), device(*driver.GetDevice()) {}
-
-    Signal::~Signal() = default;
-
-    void Signal::OnCreate()
+        : driver(driver), device(*driver.GetDevice())
     {
-        GpuRes::OnCreate();
         CreateSemaphore();
     }
 
-    void Signal::OnDestroy()
+    Signal::~Signal()
     {
-        GpuRes::OnDestroy();
         DestroySemaphore();
     }
 

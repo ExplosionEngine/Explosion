@@ -4,7 +4,7 @@
 
 #include <Explosion/RHI/VkAdapater.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
 #define FIND_OR_EXCEPT                                            \
     auto iter = MAP.find(value);                                  \
     if (iter == MAP.end()) {                                      \
@@ -30,7 +30,7 @@ namespace Explosion {
 
 }
 
-namespace Explosion {
+namespace Explosion::RHI {
     VkBool32 VkBoolConvert(bool value)
     {
         return value ? VK_TRUE : VK_FALSE;

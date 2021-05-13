@@ -7,7 +7,7 @@
 
 #include <unordered_map>
 
-namespace Explosion {
+namespace Explosion::RHI {
     enum class Format {
         UNDEFINED,
         R8_G8_B8_A8_RGB,

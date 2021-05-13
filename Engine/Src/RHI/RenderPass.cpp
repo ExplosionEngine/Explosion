@@ -2,25 +2,21 @@
 // Created by John Kindem on 2021/4/25.
 //
 
+#include <utility>
+
 #include <Explosion/RHI/RenderPass.h>
 #include <Explosion/RHI/Driver.h>
 #include <Explosion/RHI/VkAdapater.h>
 
-namespace Explosion {
-    RenderPass::RenderPass(Driver& driver, const Config& config)
-        : GpuRes(driver), device(*driver.GetDevice()), config(config) {}
-
-    RenderPass::~RenderPass() = default;
-
-    void RenderPass::OnCreate()
+namespace Explosion::RHI {
+    RenderPass::RenderPass(Driver& driver, Config config)
+        : driver(driver), device(*driver.GetDevice()), config(std::move(config))
     {
-        GpuRes::OnCreate();
         CreateRenderPass();
     }
 
-    void RenderPass::OnDestroy()
+    RenderPass::~RenderPass()
     {
-        GpuRes::OnDestroy();
         DestroyRenderPass();
     }
 

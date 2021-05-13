@@ -22,7 +22,7 @@ namespace Explosion {
         void DestroyRenderer(Renderer* renderer);
 
     private:
-        Driver driver;
+        RHI::Driver driver;
     };
 }
 

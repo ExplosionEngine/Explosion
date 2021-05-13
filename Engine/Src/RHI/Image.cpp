@@ -2,31 +2,24 @@
 // Created by Administrator on 2021/4/23 0023.
 //
 
+#include <utility>
+
 #include <Explosion/RHI/Driver.h>
 #include <Explosion/RHI/Image.h>
 #include <Explosion/RHI/VkAdapater.h>
 
-namespace Explosion {
-    Image::Image(Driver& driver, const Config& config)
-        : GpuRes(driver), device(*driver.GetDevice()), fromSwapChain(false), config(config) {}
-
-    Image::Image(Driver& driver, const VkImage& vkImage, const Config& config)
-        : GpuRes(driver), device(*driver.GetDevice()), fromSwapChain(true), vkImage(vkImage), config(config) {}
-
-    Image::~Image() = default;
-
-    void Image::OnCreate()
+namespace Explosion::RHI {
+    Image::Image(Driver& driver, Config config)
+        : driver(driver), device(*driver.GetDevice()), fromSwapChain(false), config(std::move(config))
     {
-        GpuRes::OnCreate();
-        if (fromSwapChain) {
-            return;
-        }
         CreateImage();
     }
 
-    void Image::OnDestroy()
+    Image::Image(Driver& driver, const VkImage& vkImage, Config config)
+        : driver(driver), device(*driver.GetDevice()), fromSwapChain(true), vkImage(vkImage), config(std::move(config)) {}
+
+    Image::~Image()
     {
-        GpuRes::OnDestroy();
         if (fromSwapChain) {
             return;
         }

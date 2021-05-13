@@ -9,7 +9,7 @@
 
 #include <Explosion/RHI/Device.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     class Driver {
     public:
         Driver();
@@ -19,15 +19,12 @@ namespace Explosion {
         template <typename Type, typename... Args>
         Type* CreateGpuRes(const Args&... args)
         {
-            Type* gpuRes = new Type(*this, args...);
-            gpuRes->Create();
-            return gpuRes;
+            return new Type(*this, args...);
         }
 
         template <typename Type>
         void DestroyGpuRes(Type* res)
         {
-            res->Destroy();
             delete res;
         }
 
@@ -36,4 +33,4 @@ namespace Explosion {
     };
 }
 
-#endif //EXPLOSION_DRIVER_Hw
+#endif //EXPLOSION_DRIVER_H

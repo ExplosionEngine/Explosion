@@ -12,7 +12,7 @@
 
 #include <Explosion/RHI/Enum.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     VkBool32 VkBoolConvert(bool value);
 
     template <typename Type, typename VkType>

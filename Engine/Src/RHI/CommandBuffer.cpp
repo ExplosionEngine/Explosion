@@ -5,7 +5,7 @@
 #include <stdexcept>
 
 #include <Explosion/RHI/CommandBuffer.h>
-#include <Explosion/RHI/GpuBuffer.h>
+#include <Explosion/RHI/Buffer.h>
 #include <Explosion/RHI/Driver.h>
 #include <Explosion/RHI/Signal.h>
 #include <Explosion/RHI/RenderPass.h>
@@ -13,21 +13,15 @@
 #include <Explosion/RHI/GraphicsPipeline.h>
 #include <Explosion/RHI/VkAdapater.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     CommandBuffer::CommandBuffer(Driver& driver)
-        : GpuRes(driver), device(*driver.GetDevice()) {}
-
-    CommandBuffer::~CommandBuffer() = default;
-
-    void CommandBuffer::OnCreate()
+        : driver(driver), device(*driver.GetDevice())
     {
-        GpuRes::OnCreate();
         AllocateCommandBuffer();
     }
 
-    void CommandBuffer::OnDestroy()
+    CommandBuffer::~CommandBuffer()
     {
-        GpuRes::OnDestroy();
         FreeCommandBuffer();
     }
 
@@ -114,7 +108,7 @@ namespace Explosion {
 
     CommandEncoder::~CommandEncoder() = default;
 
-    void CommandEncoder::CopyBuffer(GpuBuffer* srcBuffer, GpuBuffer* dstBuffer)
+    void CommandEncoder::CopyBuffer(Buffer* srcBuffer, Buffer* dstBuffer)
     {
         VkBufferCopy bufferCopy {};
         bufferCopy.srcOffset = 0;
@@ -154,13 +148,13 @@ namespace Explosion {
         vkCmdBindPipeline(commandBuffer->GetVkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetVkPipeline());
     }
 
-    void CommandEncoder::BindVertexBuffer(uint32_t binding, GpuBuffer* vertexBuffer)
+    void CommandEncoder::BindVertexBuffer(uint32_t binding, Buffer* vertexBuffer)
     {
         VkDeviceSize offset[] = { 0 };
         vkCmdBindVertexBuffers(commandBuffer->GetVkCommandBuffer(), binding, 1, &vertexBuffer->GetVkBuffer(), offset);
     }
 
-    void CommandEncoder::BindIndexBuffer(GpuBuffer* indexBuffer)
+    void CommandEncoder::BindIndexBuffer(Buffer* indexBuffer)
     {
         vkCmdBindIndexBuffer(commandBuffer->GetVkCommandBuffer(), indexBuffer->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
     }

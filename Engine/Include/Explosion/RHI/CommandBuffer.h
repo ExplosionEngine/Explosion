@@ -9,40 +9,36 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Explosion/RHI/GpuRes.h>
 #include <Explosion/RHI/GraphicsPipeline.h>
 
-namespace Explosion {
+namespace Explosion::RHI {
     class Driver;
     class Device;
     class CommandEncoder;
     class Signal;
-    class GpuBuffer;
+    class Buffer;
     class RenderPass;
     class FrameBuffer;
     class GraphicsPipeline;
 
     using EncodingFunc = std::function<void(CommandEncoder* commandEncoder)>;
 
-    class CommandBuffer : public GpuRes {
+    class CommandBuffer {
     public:
         explicit CommandBuffer(Driver& driver);
-        ~CommandBuffer() override;
+        ~CommandBuffer();
         const VkCommandBuffer& GetVkCommandBuffer();
         void EncodeCommands(const EncodingFunc& encodingFunc);
         void SubmitNow();
         void Submit(Signal* waitSignal, Signal* notifySignal, const std::vector<PipelineStage>& waitStages);
 
-    protected:
-        void OnCreate() override;
-        void OnDestroy() override;
-
-        Device& device;
-        VkCommandBuffer vkCommandBuffer = VK_NULL_HANDLE;
-
     private:
         void AllocateCommandBuffer();
         void FreeCommandBuffer();
+
+        Driver& driver;
+        Device& device;
+        VkCommandBuffer vkCommandBuffer = VK_NULL_HANDLE;
     };
 
     class CommandEncoder {
@@ -69,12 +65,12 @@ namespace Explosion {
 
         CommandEncoder(Driver& driver, CommandBuffer* commandBuffer);
         ~CommandEncoder();
-        void CopyBuffer(GpuBuffer* srcBuffer, GpuBuffer* dstBuffer);
+        void CopyBuffer(Buffer* srcBuffer, Buffer* dstBuffer);
         void BeginRenderPass(RenderPass* renderPass, const RenderPassBeginInfo& renderPassBeginInfo);
         void EndRenderPass();
         void BindGraphicsPipeline(GraphicsPipeline* pipeline);
-        void BindVertexBuffer(uint32_t binding, GpuBuffer* vertexBuffer);
-        void BindIndexBuffer(GpuBuffer* indexBuffer);
+        void BindVertexBuffer(uint32_t binding, Buffer* vertexBuffer);
+        void BindIndexBuffer(Buffer* indexBuffer);
         void Draw(uint32_t firstVertex, uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount);
         void DrawIndexed(uint32_t firstIndex, uint32_t indexCount, int32_t vertexOffset, uint32_t firstInstance, uint32_t instanceCount);
         void SetViewPort(const GraphicsPipeline::Viewport& viewport);

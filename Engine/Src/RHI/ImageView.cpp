@@ -2,30 +2,26 @@
 // Created by John Kindem on 2021/4/24.
 //
 
+#include <utility>
+
 #include <Explosion/RHI/ImageView.h>
 #include <Explosion/RHI/Driver.h>
 #include <Explosion/RHI/Image.h>
 #include <Explosion/RHI/VkAdapater.h>
 
-namespace Explosion {
-    ImageView::ImageView(Driver& driver, const ImageView::Config& config)
-        : GpuRes(driver), device(*driver.GetDevice()), config(config) {}
-
-    ImageView::~ImageView() = default;
-
-    void ImageView::OnCreate()
+namespace Explosion::RHI {
+    ImageView::ImageView(Driver& driver, Config config)
+        : driver(driver), device(*driver.GetDevice()), config(std::move(config))
     {
-        GpuRes::OnCreate();
         CreateImageView();
     }
 
-    void ImageView::OnDestroy()
+    ImageView::~ImageView()
     {
-        GpuRes::OnDestroy();
         DestroyImageView();
     }
 
-    Image* ImageView::GetImage() const
+    Image* ImageView::GetImage()
     {
         return config.image;
     }
