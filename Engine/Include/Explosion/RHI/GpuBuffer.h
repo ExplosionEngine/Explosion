@@ -10,14 +10,13 @@
 #include <vulkan/vulkan.h>
 
 #include <Explosion/RHI/Enum.h>
-#include <Explosion/RHI/GpuRes.h>
 #include <Explosion/RHI/Common.h>
 
 namespace Explosion {
     class Driver;
     class Device;
 
-    class GpuBuffer : public GpuRes {
+    class GpuBuffer {
     public:
         struct Config {
             uint32_t size;
@@ -25,22 +24,12 @@ namespace Explosion {
             std::vector<MemoryProperty> memoryProperties;
         };
 
-        GpuBuffer(Driver& driver, const Config& config);
-        ~GpuBuffer() override;
-        uint32_t GetSize() const;
-        const VkBuffer& GetVkBuffer() const;
-        const VkDeviceMemory& GetVkDeviceMemory() const;
+        GpuBuffer(Driver& driver, Config config);
+        ~GpuBuffer();
+        uint32_t GetSize();
+        const VkBuffer& GetVkBuffer();
+        const VkDeviceMemory& GetVkDeviceMemory();
         void UpdateData(void* data);
-
-    protected:
-        void OnCreate() override;
-        void OnDestroy() override;
-
-        Config config;
-        Device& device;
-        VkBuffer vkBuffer = VK_NULL_HANDLE;
-        VkDeviceMemory vkDeviceMemory = VK_NULL_HANDLE;
-        bool isDeviceLocal = false;
 
     private:
         void DestroyBuffer();
@@ -48,6 +37,13 @@ namespace Explosion {
 
         void AllocateMemory();
         void FreeMemory();
+
+        Driver& driver;
+        Device& device;
+        Config config;
+        VkBuffer vkBuffer = VK_NULL_HANDLE;
+        VkDeviceMemory vkDeviceMemory = VK_NULL_HANDLE;
+        bool isDeviceLocal = false;
     };
 }
 

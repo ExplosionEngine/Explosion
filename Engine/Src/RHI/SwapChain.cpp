@@ -49,13 +49,8 @@ namespace Explosion {
 
 namespace Explosion {
     SwapChain::SwapChain(Driver& driver, void* surface, uint32_t width, uint32_t height)
-        : GpuRes(driver), device(*driver.GetDevice()), surface(surface), width(width), height(height) {}
-
-    SwapChain::~SwapChain() = default;
-
-    void SwapChain::OnCreate()
+        : driver(driver), device(*driver.GetDevice()), surface(surface), width(width), height(height)
     {
-        GpuRes::OnCreate();
         CreateSurface();
         CheckPresentSupport();
         SelectSwapChainConfig();
@@ -64,9 +59,8 @@ namespace Explosion {
         CreateSignals();
     }
 
-    void SwapChain::OnDestroy()
+    SwapChain::~SwapChain()
     {
-        GpuRes::OnDestroy();
         DestroySignals();
         DestroySwapChain();
         DestroySurface();
@@ -97,7 +91,7 @@ namespace Explosion {
         return colorAttachments.size();
     }
 
-    Format SwapChain::GetSurfaceFormat() const
+    Format SwapChain::GetSurfaceFormat()
     {
         return GetEnumByVk<VkFormat, Format>(vkSurfaceFormat.format);
     }

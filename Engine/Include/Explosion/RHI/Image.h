@@ -13,7 +13,7 @@ namespace Explosion {
     class Driver;
     class Device;
 
-    class Image : public GpuRes {
+    class Image {
     public:
         struct Config {
             ImageType imageType;
@@ -27,26 +27,22 @@ namespace Explosion {
             std::vector<ImageUsage> usages;
         };
 
-        Image(Driver& driver, const Config& config);
-        explicit Image(Driver& driver, const VkImage& vkImage, const Config& config);
-        ~Image() override;
+        Image(Driver& driver, Config config);
+        explicit Image(Driver& driver, const VkImage& vkImage, Config config);
+        ~Image();
 
         const VkImage& GetVkImage();
         const Config& GetConfig();
-
-    protected:
-        void OnCreate() override;
-        void OnDestroy() override;
-
-        Device& device;
 
     private:
         void CreateImage();
         void DestroyImage();
 
+        Driver& driver;
+        Device& device;
+        Config config {};
         bool fromSwapChain = false;
         VkImage vkImage = VK_NULL_HANDLE;
-        Config config {};
     };
 }
 

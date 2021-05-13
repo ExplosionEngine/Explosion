@@ -15,19 +15,13 @@
 
 namespace Explosion {
     CommandBuffer::CommandBuffer(Driver& driver)
-        : GpuRes(driver), device(*driver.GetDevice()) {}
-
-    CommandBuffer::~CommandBuffer() = default;
-
-    void CommandBuffer::OnCreate()
+        : driver(driver), device(*driver.GetDevice())
     {
-        GpuRes::OnCreate();
         AllocateCommandBuffer();
     }
 
-    void CommandBuffer::OnDestroy()
+    CommandBuffer::~CommandBuffer()
     {
-        GpuRes::OnDestroy();
         FreeCommandBuffer();
     }
 

@@ -4,6 +4,7 @@
 
 #include <cstring>
 #include <stdexcept>
+#include <utility>
 
 #include <Explosion/RHI/GpuBuffer.h>
 #include <Explosion/RHI/Driver.h>
@@ -11,36 +12,30 @@
 #include <Explosion/RHI/VkAdapater.h>
 
 namespace Explosion {
-    GpuBuffer::GpuBuffer(Driver& driver, const Config& config)
-        : GpuRes(driver), device(*driver.GetDevice()), config(config) {}
-
-    GpuBuffer::~GpuBuffer() = default;
-
-    void GpuBuffer::OnCreate()
+    GpuBuffer::GpuBuffer(Driver& driver, Config config)
+        : driver(driver), device(*driver.GetDevice()), config(std::move(config))
     {
-        GpuRes::OnCreate();
         CreateBuffer();
         AllocateMemory();
     }
 
-    void GpuBuffer::OnDestroy()
+    GpuBuffer::~GpuBuffer()
     {
-        GpuRes::OnDestroy();
         FreeMemory();
         DestroyBuffer();
     }
 
-    uint32_t GpuBuffer::GetSize() const
+    uint32_t GpuBuffer::GetSize()
     {
         return config.size;
     }
 
-    const VkBuffer& GpuBuffer::GetVkBuffer() const
+    const VkBuffer& GpuBuffer::GetVkBuffer()
     {
         return vkBuffer;
     }
 
-    const VkDeviceMemory& GpuBuffer::GetVkDeviceMemory() const
+    const VkDeviceMemory& GpuBuffer::GetVkDeviceMemory()
     {
         return vkDeviceMemory;
     }

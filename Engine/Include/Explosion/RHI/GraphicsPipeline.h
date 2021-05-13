@@ -10,14 +10,13 @@
 #include <vulkan/vulkan.h>
 
 #include <Explosion/RHI/Enum.h>
-#include <Explosion/RHI/GpuRes.h>
 
 namespace Explosion {
     class Driver;
     class Device;
     class RenderPass;
 
-    class GraphicsPipeline : public GpuRes {
+    class GraphicsPipeline {
     public:
         struct ShaderModule {
             ShaderStage stage;
@@ -112,25 +111,16 @@ namespace Explosion {
             ColorBlendConfig colorBlendConfig;
         };
 
-        explicit GraphicsPipeline(Driver& driver, const Config& config);
-        ~GraphicsPipeline() override;
-        const VkPipelineLayout& GetVkPipelineLayout() const;
-        const VkPipeline& GetVkPipeline() const;
-        const VkDescriptorSetLayout& GetVkDescriptorSetLayout() const;
+        explicit GraphicsPipeline(Driver& driver, Config config);
+        ~GraphicsPipeline();
+        const VkPipelineLayout& GetVkPipelineLayout();
+        const VkPipeline& GetVkPipeline();
+        const VkDescriptorSetLayout& GetVkDescriptorSetLayout();
 
-    protected:
-        void OnCreate() override;
-        void OnDestroy() override;
+    private:
         VkShaderModule CreateShaderModule(const std::vector<char>& code);
         void DestroyShaderModule(const VkShaderModule& shaderModule);
 
-        Device& device;
-        VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
-        VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
-        VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
-        VkPipeline vkPipeline = VK_NULL_HANDLE;
-
-    private:
         void CreateDescriptorPool();
         void DestroyDescriptorPool();
 
@@ -143,7 +133,13 @@ namespace Explosion {
         void CreateGraphicsPipeline();
         void DestroyGraphicsPipeline();
 
+        Driver& driver;
+        Device& device;
         Config config {};
+        VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
+        VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
+        VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
+        VkPipeline vkPipeline = VK_NULL_HANDLE;
     };
 }
 

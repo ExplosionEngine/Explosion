@@ -65,13 +65,8 @@ namespace {
 }
 
 namespace Explosion {
-    Device::Device(Driver& driver) : GpuRes(driver) {}
-
-    Device::~Device() = default;
-
-    void Device::OnCreate()
+    Device::Device(Driver& driver) : driver(driver)
     {
-        GpuRes::OnCreate();
         PrepareInstanceExtensions();
         PrepareLayers();
         CreateInstance();
@@ -88,9 +83,8 @@ namespace Explosion {
         FetchPhysicalDeviceMemoryProperties();
     }
 
-    void Device::OnDestroy()
+    Device::~Device()
     {
-        GpuRes::OnDestroy();
         DestroyCommandPool();
         DestroyLogicalDevice();
 #ifdef ENABLE_VALIDATION_LAYER
@@ -137,37 +131,37 @@ namespace Explosion {
         }
     }
 
-    const VkInstance& Device::GetVkInstance() const
+    const VkInstance& Device::GetVkInstance()
     {
         return vkInstance;
     }
 
-    const VkPhysicalDevice& Device::GetVkPhysicalDevice() const
+    const VkPhysicalDevice& Device::GetVkPhysicalDevice()
     {
         return vkPhysicalDevice;
     }
 
-    const VkDevice& Device::GetVkDevice() const
+    const VkDevice& Device::GetVkDevice()
     {
         return vkDevice;
     }
 
-    const VkQueue& Device::GetVkQueue() const
+    const VkQueue& Device::GetVkQueue()
     {
         return vkQueue;
     }
 
-    uint32_t Device::GetVkQueueFamilyIndex() const
+    uint32_t Device::GetVkQueueFamilyIndex()
     {
         return vkQueueFamilyIndex.value();
     }
 
-    const VkCommandPool& Device::GetVkCommandPool() const
+    const VkCommandPool& Device::GetVkCommandPool()
     {
         return vkCommandPool;
     }
 
-    const VkPhysicalDeviceMemoryProperties& Device::GetVkPhysicalDeviceMemoryProperties() const
+    const VkPhysicalDeviceMemoryProperties& Device::GetVkPhysicalDeviceMemoryProperties()
     {
         return vkPhysicalDeviceMemoryProperties;
     }

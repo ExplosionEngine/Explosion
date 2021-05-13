@@ -9,7 +9,6 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Explosion/RHI/GpuRes.h>
 #include <Explosion/RHI/GraphicsPipeline.h>
 
 namespace Explosion {
@@ -24,25 +23,22 @@ namespace Explosion {
 
     using EncodingFunc = std::function<void(CommandEncoder* commandEncoder)>;
 
-    class CommandBuffer : public GpuRes {
+    class CommandBuffer {
     public:
         explicit CommandBuffer(Driver& driver);
-        ~CommandBuffer() override;
+        ~CommandBuffer();
         const VkCommandBuffer& GetVkCommandBuffer();
         void EncodeCommands(const EncodingFunc& encodingFunc);
         void SubmitNow();
         void Submit(Signal* waitSignal, Signal* notifySignal, const std::vector<PipelineStage>& waitStages);
 
-    protected:
-        void OnCreate() override;
-        void OnDestroy() override;
-
-        Device& device;
-        VkCommandBuffer vkCommandBuffer = VK_NULL_HANDLE;
-
     private:
         void AllocateCommandBuffer();
         void FreeCommandBuffer();
+
+        Driver& driver;
+        Device& device;
+        VkCommandBuffer vkCommandBuffer = VK_NULL_HANDLE;
     };
 
     class CommandEncoder {

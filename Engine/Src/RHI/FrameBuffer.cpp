@@ -3,6 +3,7 @@
 //
 
 #include <stdexcept>
+#include <utility>
 
 #include <Explosion/RHI/FrameBuffer.h>
 #include <Explosion/RHI/Driver.h>
@@ -10,24 +11,18 @@
 #include <Explosion/RHI/RenderPass.h>
 
 namespace Explosion {
-    FrameBuffer::FrameBuffer(Driver& driver, const FrameBuffer::Config& config)
-        : GpuRes(driver), device(*driver.GetDevice()), config(config) {}
-
-    FrameBuffer::~FrameBuffer() = default;
-
-    void FrameBuffer::OnCreate()
+    FrameBuffer::FrameBuffer(Driver& driver, FrameBuffer::Config config)
+        : driver(driver), device(*driver.GetDevice()), config(std::move(config))
     {
-        GpuRes::OnCreate();
         CreateFrameBuffer();
     }
 
-    void FrameBuffer::OnDestroy()
+    FrameBuffer::~FrameBuffer()
     {
-        GpuRes::OnDestroy();
         DestroyFrameBuffer();
     }
 
-    const VkFramebuffer& FrameBuffer::GetVkFrameBuffer() const
+    const VkFramebuffer& FrameBuffer::GetVkFrameBuffer()
     {
         return vkFramebuffer;
     }
