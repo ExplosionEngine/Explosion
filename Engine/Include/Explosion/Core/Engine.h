@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include <Explosion/Driver/Driver.h>
+#include <Explosion/RHI/Driver.h>
 
 namespace Explosion {
     class World;

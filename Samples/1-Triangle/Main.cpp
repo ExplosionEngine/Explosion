@@ -3,16 +3,16 @@
 //
 
 #include <Application/Application.h>
-#include <Explosion/Driver/Driver.h>
-#include <Explosion/Driver/SwapChain.h>
-#include <Explosion/Driver/RenderPass.h>
-#include <Explosion/Driver/FrameBuffer.h>
-#include <Explosion/Driver/Pipeline.h>
-#include <Explosion/Driver/Image.h>
-#include <Explosion/Driver/ImageView.h>
-#include <Explosion/Driver/GpuBuffer.h>
-#include <Explosion/Driver/Signal.h>
-#include <Explosion/Driver/CommandBuffer.h>
+#include <Explosion/RHI/Driver.h>
+#include <Explosion/RHI/SwapChain.h>
+#include <Explosion/RHI/RenderPass.h>
+#include <Explosion/RHI/FrameBuffer.h>
+#include <Explosion/RHI/GraphicsPipeline.h>
+#include <Explosion/RHI/Image.h>
+#include <Explosion/RHI/ImageView.h>
+#include <Explosion/RHI/GpuBuffer.h>
+#include <Explosion/RHI/Signal.h>
+#include <Explosion/RHI/CommandBuffer.h>
 #include <Explosion/Common/FileReader.h>
 
 #ifdef __APPLE__
@@ -59,6 +59,7 @@ protected:
         imageViewConfig.baseMipLevel = 0;
         imageViewConfig.layerCount = 1;
         imageViewConfig.baseLayer = 0;
+        imageViewConfig.aspects = { ImageAspect::COLOR };
         imageViews.resize(swapChain->GetColorAttachmentCount());
         for (uint32_t i = 0; i < imageViews.size(); i++) {
             imageViewConfig.image = swapChain->GetColorAttachments()[i];
@@ -86,6 +87,7 @@ protected:
         }
 
         GraphicsPipeline::Config pipelineConfig {};
+        pipelineConfig.renderPass = renderPass;
         pipelineConfig.shaderConfig.shaderModules = {
             { ShaderStage::VERTEX, FileReader::Read("1-Triangle-Vertex.spv") },
             { ShaderStage::FRAGMENT, FileReader::Read("1-Triangle-Fragment.spv") }
@@ -104,7 +106,7 @@ protected:
         pipelineConfig.rasterizerConfig = { false, false, CullMode::NONE, FrontFace::CLOCK_WISE };
         pipelineConfig.depthStencilConfig = { false, false, false };
         pipelineConfig.colorBlendConfig.enabled = false;
-        pipeline = driver->CreateGpuRes<GraphicsPipeline>(renderPass, pipelineConfig);
+        pipeline = driver->CreateGpuRes<GraphicsPipeline>(pipelineConfig);
 
         vertices = {
             { 0.f, -.5f, 0.f },
@@ -116,13 +118,15 @@ protected:
         };
         GpuBuffer::Config bufferConfig {};
         bufferConfig.size = sizeof(Vertex) * vertices.size();
-        bufferConfig.usages = { BufferUsage::VERTEX_BUFFER };
-        vertexBuffer = driver->CreateGpuRes<DeviceLocalBuffer>(bufferConfig);
+        bufferConfig.usages = { BufferUsage::VERTEX_BUFFER, BufferUsage::TRANSFER_DST };
+        bufferConfig.memoryProperties = { MemoryProperty::DEVICE_LOCAL };
+        vertexBuffer = driver->CreateGpuRes<GpuBuffer>(bufferConfig);
         vertexBuffer->UpdateData(vertices.data());
 
         bufferConfig.size = sizeof(Index) * indices.size();
-        bufferConfig.usages = { BufferUsage::INDEX_BUFFER };
-        indexBuffer = driver->CreateGpuRes<DeviceLocalBuffer>(bufferConfig);
+        bufferConfig.usages = { BufferUsage::INDEX_BUFFER, BufferUsage::TRANSFER_DST };
+        bufferConfig.memoryProperties = { MemoryProperty::DEVICE_LOCAL };
+        indexBuffer = driver->CreateGpuRes<GpuBuffer>(bufferConfig);
         indexBuffer->UpdateData(indices.data());
     }
 
@@ -130,7 +134,7 @@ protected:
     {
         driver->DestroyGpuRes<GpuBuffer>(vertexBuffer);
         driver->DestroyGpuRes<GpuBuffer>(indexBuffer);
-        driver->DestroyGpuRes<Pipeline>(pipeline);
+        driver->DestroyGpuRes<GraphicsPipeline>(pipeline);
         for (auto* frameBuffer : frameBuffers) {
             driver->DestroyGpuRes<FrameBuffer>(frameBuffer);
         }
@@ -144,7 +148,7 @@ protected:
     void OnDrawFrame() override
     {
         swapChain->DoFrame([this](uint32_t imageIdx, Signal* imageReadySignal, Signal* frameFinishedSignal) -> void {
-            auto* commandBuffer = driver->CreateGpuRes<FrameOutputCommandBuffer>();
+            auto* commandBuffer = driver->CreateGpuRes<CommandBuffer>();
             commandBuffer->EncodeCommands([imageIdx, this](CommandEncoder* encoder) -> void {
                 CommandEncoder::RenderPassBeginInfo beginInfo {};
                 beginInfo.frameBuffer = frameBuffers[imageIdx];
@@ -162,7 +166,7 @@ protected:
                 }
                 encoder->EndRenderPass();
             });
-            commandBuffer->Submit(imageReadySignal, frameFinishedSignal);
+            commandBuffer->Submit(imageReadySignal, frameFinishedSignal, { PipelineStage::COLOR_ATTACHMENT_OUTPUT });
         });
     }
 
@@ -175,7 +179,7 @@ private:
     std::vector<ImageView*> imageViews;
     RenderPass* renderPass = nullptr;
     std::vector<FrameBuffer*> frameBuffers;
-    Pipeline* pipeline = nullptr;
+    GraphicsPipeline* pipeline = nullptr;
     GpuBuffer* vertexBuffer = nullptr;
     GpuBuffer* indexBuffer = nullptr;
 };

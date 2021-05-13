@@ -3,9 +3,9 @@
 //
 
 #include <Explosion/Core/Renderer.h>
-#include <Explosion/Driver/VkAdapater.h>
-#include <Explosion/Driver/Driver.h>
-#include <Explosion/Driver/Signal.h>
+#include <Explosion/RHI/VkAdapater.h>
+#include <Explosion/RHI/Driver.h>
+#include <Explosion/RHI/Signal.h>
 
 namespace Explosion {
     Renderer::Renderer(Driver& driver, void* surface, uint32_t width, uint32_t height)
