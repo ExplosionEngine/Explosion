@@ -22,6 +22,7 @@ namespace Explosion {
         struct Config {
             uint32_t size;
             std::vector<BufferUsage> usages;
+            std::vector<MemoryProperty> memoryProperties;
         };
 
         GpuBuffer(Driver& driver, const Config& config);
@@ -29,18 +30,17 @@ namespace Explosion {
         uint32_t GetSize() const;
         const VkBuffer& GetVkBuffer() const;
         const VkDeviceMemory& GetVkDeviceMemory() const;
-        virtual void UpdateData(void* data) = 0;
+        void UpdateData(void* data);
 
     protected:
         void OnCreate() override;
         void OnDestroy() override;
-        virtual void SetupBufferCreateInfo(VkBufferCreateInfo& createInfo);
-        virtual VkMemoryPropertyFlags GetMemoryPropertyFlags();
 
         Config config;
         Device& device;
         VkBuffer vkBuffer = VK_NULL_HANDLE;
         VkDeviceMemory vkDeviceMemory = VK_NULL_HANDLE;
+        bool isDeviceLocal = false;
 
     private:
         void DestroyBuffer();
@@ -48,27 +48,6 @@ namespace Explosion {
 
         void AllocateMemory();
         void FreeMemory();
-    };
-
-    class HostVisibleBuffer : public GpuBuffer {
-    public:
-        HostVisibleBuffer(Driver& driver, const Config& config);
-        ~HostVisibleBuffer() override;
-        void UpdateData(void *data) override;
-
-    protected:
-        VkMemoryPropertyFlags GetMemoryPropertyFlags() override;
-    };
-
-    class DeviceLocalBuffer : public GpuBuffer {
-    public:
-        DeviceLocalBuffer(Driver& driver, const Config& config);
-        ~DeviceLocalBuffer() override;
-        void UpdateData(void *data) override;
-
-    protected:
-        void SetupBufferCreateInfo(VkBufferCreateInfo& createInfo) override;
-        VkMemoryPropertyFlags GetMemoryPropertyFlags() override;
     };
 }
 

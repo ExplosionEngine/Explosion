@@ -107,6 +107,18 @@ namespace Explosion {
         TRANSFER_DST,
         MAX
     };
+
+    enum class PipelineStage {
+        COLOR_ATTACHMENT_OUTPUT,
+        MAX
+    };
+
+    enum class MemoryProperty {
+        DEVICE_LOCAL,
+        HOST_VISIBLE,
+        HOST_COHERENT,
+        MAX
+    };
 }
 
 #endif //EXPLOSION_ENUM_H

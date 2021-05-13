@@ -31,12 +31,11 @@ namespace Explosion {
         const VkCommandBuffer& GetVkCommandBuffer();
         void EncodeCommands(const EncodingFunc& encodingFunc);
         void SubmitNow();
-        void Submit(Signal* waitSignal, Signal* notifySignal);
+        void Submit(Signal* waitSignal, Signal* notifySignal, const std::vector<PipelineStage>& waitStages);
 
     protected:
         void OnCreate() override;
         void OnDestroy() override;
-        virtual void SetupSubmitInfo(VkSubmitInfo& submitInfo);
 
         Device& device;
         VkCommandBuffer vkCommandBuffer = VK_NULL_HANDLE;
@@ -85,18 +84,6 @@ namespace Explosion {
         Driver& driver;
         Device& device;
         CommandBuffer* commandBuffer = nullptr;
-    };
-
-    class FrameOutputCommandBuffer : public CommandBuffer {
-    public:
-        explicit FrameOutputCommandBuffer(Driver& driver);
-        ~FrameOutputCommandBuffer() override;
-
-    protected:
-        void SetupSubmitInfo(VkSubmitInfo& submitInfo) override;
-
-    private:
-        VkPipelineStageFlags waitStages = 0;
     };
 }
 

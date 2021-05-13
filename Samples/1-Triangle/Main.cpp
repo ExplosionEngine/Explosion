@@ -116,13 +116,15 @@ protected:
         };
         GpuBuffer::Config bufferConfig {};
         bufferConfig.size = sizeof(Vertex) * vertices.size();
-        bufferConfig.usages = { BufferUsage::VERTEX_BUFFER };
-        vertexBuffer = driver->CreateGpuRes<DeviceLocalBuffer>(bufferConfig);
+        bufferConfig.usages = { BufferUsage::VERTEX_BUFFER, BufferUsage::TRANSFER_DST };
+        bufferConfig.memoryProperties = { MemoryProperty::DEVICE_LOCAL };
+        vertexBuffer = driver->CreateGpuRes<GpuBuffer>(bufferConfig);
         vertexBuffer->UpdateData(vertices.data());
 
         bufferConfig.size = sizeof(Index) * indices.size();
-        bufferConfig.usages = { BufferUsage::INDEX_BUFFER };
-        indexBuffer = driver->CreateGpuRes<DeviceLocalBuffer>(bufferConfig);
+        bufferConfig.usages = { BufferUsage::INDEX_BUFFER, BufferUsage::TRANSFER_DST };
+        bufferConfig.memoryProperties = { MemoryProperty::DEVICE_LOCAL };
+        indexBuffer = driver->CreateGpuRes<GpuBuffer>(bufferConfig);
         indexBuffer->UpdateData(indices.data());
     }
 
@@ -144,7 +146,7 @@ protected:
     void OnDrawFrame() override
     {
         swapChain->DoFrame([this](uint32_t imageIdx, Signal* imageReadySignal, Signal* frameFinishedSignal) -> void {
-            auto* commandBuffer = driver->CreateGpuRes<FrameOutputCommandBuffer>();
+            auto* commandBuffer = driver->CreateGpuRes<CommandBuffer>();
             commandBuffer->EncodeCommands([imageIdx, this](CommandEncoder* encoder) -> void {
                 CommandEncoder::RenderPassBeginInfo beginInfo {};
                 beginInfo.frameBuffer = frameBuffers[imageIdx];
@@ -162,7 +164,7 @@ protected:
                 }
                 encoder->EndRenderPass();
             });
-            commandBuffer->Submit(imageReadySignal, frameFinishedSignal);
+            commandBuffer->Submit(imageReadySignal, frameFinishedSignal, { PipelineStage::COLOR_ATTACHMENT_OUTPUT });
         });
     }
 

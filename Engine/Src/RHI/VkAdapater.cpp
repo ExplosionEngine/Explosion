@@ -39,13 +39,13 @@ namespace Explosion {
     template <typename Type, typename VkType>
     VkType VkConvert(const Type& type)
     {
-        throw std::runtime_error("failed to find suitable template instance");
+        static_assert("failed to find suitable template instance of VkConvert<Type, VkType>");
     }
 
     template <typename VkType, typename Type>
     Type GetEnumByVk(const VkType& vkType)
     {
-        throw std::runtime_error("failed to find suitable template instance");
+        static_assert("failed to find suitable template instance of GetEnumByVk(VkType, Type)");
     }
 
     VK_CONVERT_INSTANCE_B(Format, VkFormat)
@@ -159,6 +159,22 @@ namespace Explosion {
             { BufferUsage::STORAGE_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_STORAGE_BUFFER_BIT },
             { BufferUsage::TRANSFER_SRC, VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_SRC_BIT },
             { BufferUsage::TRANSFER_DST, VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_DST_BIT }
+        };
+        FIND_OR_EXCEPT
+    VK_CONVERT_INSTANCE_E
+
+    VK_CONVERT_INSTANCE_B(PipelineStage, VkPipelineStageFlagBits)
+        static std::unordered_map<PipelineStage, VkPipelineStageFlagBits> MAP = {
+            { PipelineStage::COLOR_ATTACHMENT_OUTPUT, VkPipelineStageFlagBits::VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT }
+        };
+        FIND_OR_EXCEPT
+    VK_CONVERT_INSTANCE_E
+
+    VK_CONVERT_INSTANCE_B(MemoryProperty, VkMemoryPropertyFlagBits)
+        static std::unordered_map<MemoryProperty, VkMemoryPropertyFlagBits> MAP = {
+            { MemoryProperty::DEVICE_LOCAL, VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT },
+            { MemoryProperty::HOST_VISIBLE, VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT },
+            { MemoryProperty::HOST_COHERENT, VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_HOST_COHERENT_BIT }
         };
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E

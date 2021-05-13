@@ -11,6 +11,7 @@
 #include <Explosion/RHI/RenderPass.h>
 #include <Explosion/RHI/FrameBuffer.h>
 #include <Explosion/RHI/Pipeline.h>
+#include <Explosion/RHI/VkAdapater.h>
 
 namespace Explosion {
     CommandBuffer::CommandBuffer(Driver& driver)
@@ -70,7 +71,7 @@ namespace Explosion {
         vkQueueWaitIdle(device.GetVkQueue());
     }
 
-    void CommandBuffer::Submit(Signal* waitSignal, Signal* notifySignal)
+    void CommandBuffer::Submit(Signal* waitSignal, Signal* notifySignal, const std::vector<PipelineStage>& waitStages)
     {
         VkSubmitInfo submitInfo {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -81,14 +82,16 @@ namespace Explosion {
         submitInfo.pSignalSemaphores = &notifySignal->GetVkSemaphore();
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &vkCommandBuffer;
-        SetupSubmitInfo(submitInfo);
+        VkPipelineStageFlags flags = 0;
+        for (auto& stage : waitStages) {
+            flags |= VkConvert<PipelineStage, VkPipelineStageFlagBits>(stage);
+        }
+        submitInfo.pWaitDstStageMask = &flags;
 
         if (vkQueueSubmit(device.GetVkQueue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
             throw std::runtime_error("failed to submit vulkan command buffer");
         }
     }
-
-    void CommandBuffer::SetupSubmitInfo(VkSubmitInfo& submitInfo) {}
 
     void CommandBuffer::AllocateCommandBuffer()
     {
@@ -195,17 +198,5 @@ namespace Explosion {
             { scissor.width, scissor.height }
         };
         vkCmdSetScissor(commandBuffer->GetVkCommandBuffer(), 0, 1, &sc);
-    }
-
-    FrameOutputCommandBuffer::FrameOutputCommandBuffer(Driver& driver) : CommandBuffer(driver) {}
-
-    FrameOutputCommandBuffer::~FrameOutputCommandBuffer() = default;
-
-    void FrameOutputCommandBuffer::SetupSubmitInfo(VkSubmitInfo& submitInfo)
-    {
-        CommandBuffer::SetupSubmitInfo(submitInfo);
-
-        waitStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        submitInfo.pWaitDstStageMask = &waitStages;
     }
 }
