@@ -6,36 +6,35 @@
 #define EXPLOSION_FGRENDERPASS_H
 
 #include <functional>
-#include <string>
 #include <utility>
 #include <Explosion/Render/FrameGraph/FgResources.h>
 #include <Explosion/Render/FrameGraph/FgNode.h>
 
 namespace Explosion {
     class FrameGraph;
-    class Driver;
+    namespace RHI {
+        class Driver;
+    }
 
     class FgRenderPassBase : public FgNode {
     public:
-        explicit FgRenderPassBase(const std::string& n) : name(n) {}
+        explicit FgRenderPassBase(const char*& n) : FgNode(n) {}
 
         ~FgRenderPassBase() override = default;
 
-        virtual void Execute(const FrameGraph&, Driver&) = 0;
-    private:
-        std::string name;
+        virtual void Execute(const FrameGraph&, RHI::Driver&) = 0;
     };
 
     template<typename Data>
     class FgRenderPass : public FgRenderPassBase {
     public:
-        using ExecuteType = std::function<void(const Data &, const FrameGraph&, Driver&)>;
+        using ExecuteType = std::function<void(const Data &, const FrameGraph&, RHI::Driver&)>;
 
-        FgRenderPass(const std::string& name, ExecuteType &&e) : FgRenderPassBase(name), execute(std::move(e)) {}
+        FgRenderPass(const char*& name, ExecuteType &&e) : FgRenderPassBase(name), execute(std::move(e)) {}
 
         ~FgRenderPass() override = default;
 
-        void Execute(const FrameGraph& graph, Driver& driver) override {
+        void Execute(const FrameGraph& graph, RHI::Driver& driver) override {
             if (execute) execute(data, graph, driver);
         }
 
