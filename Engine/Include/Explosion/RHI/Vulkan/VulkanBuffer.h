@@ -21,7 +21,7 @@ namespace Explosion::RHI {
         struct Config {
             uint32_t size;
             std::vector<BufferUsage> usages;
-            std::vector<MemoryProperty> memoryProperties;
+            std::vector<MemoryPropertyBits> memoryProperties;
         };
 
         VulkanBuffer(VulkanDriver& driver, Config config);

@@ -65,7 +65,7 @@ namespace Explosion::RHI {
         vkQueueWaitIdle(device.GetVkQueue());
     }
 
-    void VulkanCommandBuffer::Submit(VulkanSignal* waitSignal, VulkanSignal* notifySignal, const std::vector<PipelineStage>& waitStages)
+    void VulkanCommandBuffer::Submit(VulkanSignal* waitSignal, VulkanSignal* notifySignal, const std::vector<PipelineStageBits>& waitStages)
     {
         VkSubmitInfo submitInfo {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -76,7 +76,7 @@ namespace Explosion::RHI {
         submitInfo.pSignalSemaphores = &notifySignal->GetVkSemaphore();
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &vkCommandBuffer;
-        VkPipelineStageFlags flags = VkGetFlags<PipelineStage, VkPipelineStageFlagBits>(waitStages);
+        VkPipelineStageFlags flags = VkGetFlags<PipelineStageBits, VkPipelineStageFlagBits>(waitStages);
         submitInfo.pWaitDstStageMask = &flags;
 
         if (vkQueueSubmit(device.GetVkQueue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {

@@ -44,7 +44,7 @@ namespace Explosion::RHI {
         createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.subresourceRange.aspectMask = VkGetFlags<ImageAspect, VkImageAspectFlagBits>(config.aspects);
+        createInfo.subresourceRange.aspectMask = VkGetFlags<ImageAspectBits, VkImageAspectFlagBits>(config.aspects);
         createInfo.subresourceRange.levelCount = config.mipLevelCount;
         createInfo.subresourceRange.baseMipLevel = config.baseMipLevel;
         createInfo.subresourceRange.layerCount = config.layerCount;

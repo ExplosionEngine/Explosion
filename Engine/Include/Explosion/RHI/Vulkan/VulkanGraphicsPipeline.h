@@ -19,7 +19,7 @@ namespace Explosion::RHI {
     class VulkanGraphicsPipeline {
     public:
         struct ShaderModule {
-            ShaderStage stage;
+            ShaderStageBits stage;
             std::vector<char> code;
         };
 
@@ -48,7 +48,7 @@ namespace Explosion::RHI {
         struct DescriptorAttribute {
             uint32_t binding;
             DescriptorType type;
-            std::vector<ShaderStage> shaderStages;
+            std::vector<ShaderStageBits> shaderStages;
         };
 
         struct DescriptorPoolSize {
@@ -86,7 +86,7 @@ namespace Explosion::RHI {
         struct RasterizerConfig {
             bool depthClamp;
             bool discard;
-            CullMode cullMode;
+            CullModeBits cullMode;
             FrontFace frontFace;
         };
 

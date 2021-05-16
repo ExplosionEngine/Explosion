@@ -57,8 +57,8 @@ namespace Explosion::RHI {
         createInfo.queueFamilyIndexCount = 0;
         createInfo.pQueueFamilyIndices = nullptr;
         createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        createInfo.usage = VkGetFlags<ImageUsage, VkImageUsageFlagBits>(config.usages);
-        createInfo.initialLayout = VkConvert<ImageLayout, VkImageLayout>(config.initialLayout);
+        createInfo.usage = VkGetFlags<ImageUsageBits, VkImageUsageFlagBits>(config.usages);
+        createInfo.initialLayout = VkConvert<ImageLayoutBits, VkImageLayout>(config.initialLayout);
 
         if (vkCreateImage(device.GetVkDevice(), &createInfo, nullptr, &vkImage) != VK_SUCCESS) {
             throw std::runtime_error("failed to create vulkan image");

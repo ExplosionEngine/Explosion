@@ -30,7 +30,7 @@ namespace Explosion::RHI {
         const VkCommandBuffer& GetVkCommandBuffer();
         void EncodeCommands(const EncodingFunc& encodingFunc);
         void SubmitNow();
-        void Submit(VulkanSignal* waitSignal, VulkanSignal* notifySignal, const std::vector<PipelineStage>& waitStages);
+        void Submit(VulkanSignal* waitSignal, VulkanSignal* notifySignal, const std::vector<PipelineStageBits>& waitStages);
 
     private:
         void AllocateCommandBuffer();

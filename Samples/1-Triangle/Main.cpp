@@ -60,7 +60,7 @@ protected:
         imageViewConfig.baseMipLevel = 0;
         imageViewConfig.layerCount = 1;
         imageViewConfig.baseLayer = 0;
-        imageViewConfig.aspects = { ImageAspect::COLOR };
+        imageViewConfig.aspects = {ImageAspectBits::COLOR };
         imageViews.resize(swapChain->GetColorAttachmentCount());
         for (uint32_t i = 0; i < imageViews.size(); i++) {
             imageViewConfig.image = swapChain->GetColorAttachments()[i];
@@ -90,8 +90,8 @@ protected:
         VulkanGraphicsPipeline::Config pipelineConfig {};
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.shaderConfig.shaderModules = {
-            { ShaderStage::VERTEX, FileReader::Read("1-Triangle-Vertex.spv") },
-            { ShaderStage::FRAGMENT, FileReader::Read("1-Triangle-Fragment.spv") }
+            {ShaderStageBits::VERTEX,   FileReader::Read("1-Triangle-Vertex.spv") },
+            {ShaderStageBits::FRAGMENT, FileReader::Read("1-Triangle-Fragment.spv") }
         };
         pipelineConfig.vertexConfig.vertexBindings = {
             { 0, sizeof(Vertex), VertexInputRate::PER_VERTEX }
@@ -104,7 +104,7 @@ protected:
         pipelineConfig.descriptorConfig.maxSets = 0;
         pipelineConfig.viewportScissorConfig.viewport = { 0, 0, static_cast<float>(GetWidth()), static_cast<float>(GetHeight()), 0, 1.0 };
         pipelineConfig.viewportScissorConfig.scissor = { 0, 0, GetWidth(), GetHeight() };
-        pipelineConfig.rasterizerConfig = { false, false, CullMode::NONE, FrontFace::CLOCK_WISE };
+        pipelineConfig.rasterizerConfig = {false, false, CullModeBits::NONE, FrontFace::CLOCK_WISE };
         pipelineConfig.depthStencilConfig = { false, false, false };
         pipelineConfig.colorBlendConfig.enabled = false;
         pipeline = driver->CreateGpuRes<VulkanGraphicsPipeline>(pipelineConfig);
@@ -120,13 +120,13 @@ protected:
         VulkanBuffer::Config bufferConfig {};
         bufferConfig.size = sizeof(Vertex) * vertices.size();
         bufferConfig.usages = { BufferUsage::VERTEX_BUFFER, BufferUsage::TRANSFER_DST };
-        bufferConfig.memoryProperties = { MemoryProperty::DEVICE_LOCAL };
+        bufferConfig.memoryProperties = {MemoryPropertyBits::DEVICE_LOCAL };
         vertexBuffer = driver->CreateGpuRes<VulkanBuffer>(bufferConfig);
         vertexBuffer->UpdateData(vertices.data());
 
         bufferConfig.size = sizeof(Index) * indices.size();
         bufferConfig.usages = { BufferUsage::INDEX_BUFFER, BufferUsage::TRANSFER_DST };
-        bufferConfig.memoryProperties = { MemoryProperty::DEVICE_LOCAL };
+        bufferConfig.memoryProperties = {MemoryPropertyBits::DEVICE_LOCAL };
         indexBuffer = driver->CreateGpuRes<VulkanBuffer>(bufferConfig);
         indexBuffer->UpdateData(indices.data());
     }
@@ -167,7 +167,7 @@ protected:
                 }
                 encoder->EndRenderPass();
             });
-            commandBuffer->Submit(imageReadySignal, frameFinishedSignal, { PipelineStage::COLOR_ATTACHMENT_OUTPUT });
+            commandBuffer->Submit(imageReadySignal, frameFinishedSignal, {PipelineStageBits::COLOR_ATTACHMENT_OUTPUT });
         });
     }
 

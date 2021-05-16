@@ -106,7 +106,7 @@ namespace Explosion::RHI {
             descriptorSetLayoutBindings[i].descriptorType = VkConvert<DescriptorType, VkDescriptorType>(attribute.type);
             descriptorSetLayoutBindings[i].descriptorCount = 1;
             descriptorSetLayoutBindings[i].stageFlags = 0;
-            descriptorSetLayoutBindings[i].stageFlags = VkGetFlags<ShaderStage, VkShaderStageFlagBits>(attribute.shaderStages);
+            descriptorSetLayoutBindings[i].stageFlags = VkGetFlags<ShaderStageBits, VkShaderStageFlagBits>(attribute.shaderStages);
             descriptorSetLayoutBindings[i].pImmutableSamplers = nullptr;
         }
 
@@ -151,11 +151,11 @@ namespace Explosion::RHI {
     void VulkanGraphicsPipeline::CreateGraphicsPipeline()
     {
         // load shader module and populate shader stage create info
-        std::unordered_map<ShaderStage, bool> stageExists;
+        std::unordered_map<ShaderStageBits, bool> stageExists;
         std::vector<VkPipelineShaderStageCreateInfo> shaderStageCreateInfos;
         std::vector<VkShaderModule> pendingReleaseShaderModules;
         for (auto& shaderModule : config.shaderConfig.shaderModules) {
-            ShaderStage stage = shaderModule.stage;
+            ShaderStageBits stage = shaderModule.stage;
             auto iter = stageExists.find(stage);
             if (iter != stageExists.end() && iter->second) {
                 throw std::runtime_error("specific shader stage is already added to graphics pipeline");
@@ -167,7 +167,7 @@ namespace Explosion::RHI {
             shaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             shaderStageCreateInfo.pNext = nullptr;
             shaderStageCreateInfo.flags = 0;
-            shaderStageCreateInfo.stage = VkConvert<ShaderStage, VkShaderStageFlagBits>(stage);
+            shaderStageCreateInfo.stage = VkConvert<ShaderStageBits, VkShaderStageFlagBits>(stage);
             shaderStageCreateInfo.module = pendingReleaseShaderModules.back();
             shaderStageCreateInfo.pName = "main";
             shaderStageCreateInfo.pSpecializationInfo = nullptr;
@@ -235,7 +235,7 @@ namespace Explosion::RHI {
         rasterizationStateCreateInfo.depthClampEnable = VkBoolConvert(config.rasterizerConfig.depthClamp);
         rasterizationStateCreateInfo.rasterizerDiscardEnable = VkBoolConvert(config.rasterizerConfig.discard);
         rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
-        rasterizationStateCreateInfo.cullMode = VkConvert<CullMode, VkCullModeFlagBits>(config.rasterizerConfig.cullMode);
+        rasterizationStateCreateInfo.cullMode = VkConvert<CullModeBits, VkCullModeFlagBits>(config.rasterizerConfig.cullMode);
         rasterizationStateCreateInfo.frontFace = VkConvert<FrontFace, VkFrontFace>(config.rasterizerConfig.frontFace);
         rasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
         rasterizationStateCreateInfo.depthBiasConstantFactor = 0.0f;

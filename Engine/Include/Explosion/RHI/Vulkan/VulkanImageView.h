@@ -21,7 +21,7 @@ namespace Explosion::RHI {
         struct Config {
             VulkanImage* image;
             ImageViewType type;
-            std::vector<ImageAspect> aspects;
+            std::vector<ImageAspectBits> aspects;
             uint32_t mipLevelCount;
             uint32_t baseMipLevel;
             uint32_t layerCount;

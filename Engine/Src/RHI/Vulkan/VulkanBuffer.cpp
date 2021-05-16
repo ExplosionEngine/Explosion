@@ -46,7 +46,7 @@ namespace Explosion::RHI {
             VulkanBuffer::Config stagingConfig = {
                 config.size,
                 { BufferUsage::TRANSFER_SRC },
-                { MemoryProperty::HOST_VISIBLE, MemoryProperty::HOST_COHERENT }
+                {MemoryPropertyBits::HOST_VISIBLE, MemoryPropertyBits::HOST_COHERENT }
             };
             auto* stagingBuffer = driver.CreateGpuRes<VulkanBuffer>(stagingConfig);
             stagingBuffer->UpdateData(data);
@@ -96,7 +96,7 @@ namespace Explosion::RHI {
     void VulkanBuffer::AllocateMemory()
     {
         for (auto& memoryProperty : config.memoryProperties) {
-            if (memoryProperty == MemoryProperty::DEVICE_LOCAL) {
+            if (memoryProperty == MemoryPropertyBits::DEVICE_LOCAL) {
                 isDeviceLocal = true;
             }
         }
@@ -106,7 +106,7 @@ namespace Explosion::RHI {
         std::optional<uint32_t> memType = FindMemoryType(
             device.GetVkPhysicalDeviceMemoryProperties(),
             memoryRequirements.memoryTypeBits,
-            VkGetFlags<MemoryProperty, VkMemoryPropertyFlagBits>(config.memoryProperties)
+            VkGetFlags<MemoryPropertyBits, VkMemoryPropertyFlagBits>(config.memoryProperties)
         );
         if (!memType.has_value()) {
             throw std::runtime_error("failed to find suitable memory type");

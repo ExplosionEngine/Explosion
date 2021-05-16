@@ -7,6 +7,31 @@
 
 #include <unordered_map>
 
+/**
+ * common defines
+ */
+namespace Explosion::RHI {
+    using Flags = uint32_t;
+
+    template <typename E, typename T>
+    using enable_if_enum_t = std::enable_if_t<std::is_enum_v<E>, T>;
+
+    template <typename E>
+    Flags operator|(enable_if_enum_t<E, const E&> l, enable_if_enum_t<E, const E&> r)
+    {
+        return static_cast<Flags>(l) | static_cast<Flags>(r);
+    }
+
+    template <typename E>
+    Flags operator&(enable_if_enum_t<E, const E&> l, enable_if_enum_t<E, const E&> r)
+    {
+        return static_cast<Flags>(l) & static_cast<Flags>(r);
+    }
+}
+
+/**
+ * enum class
+ */
 namespace Explosion::RHI {
     enum class Format {
         UNDEFINED,
@@ -64,24 +89,9 @@ namespace Explosion::RHI {
         MAX
     };
 
-    enum class ShaderStage {
-        VERTEX,
-        FRAGMENT,
-        COMPUTE,
-        MAX
-    };
-
     enum class VertexInputRate {
         PER_VERTEX,
         PER_INSTANCE,
-        MAX
-    };
-
-    enum class CullMode {
-        NONE,
-        FRONT,
-        BACK,
-        ALL,
         MAX
     };
 
@@ -97,53 +107,80 @@ namespace Explosion::RHI {
         IMAGE_SAMPLER,
         MAX
     };
+}
+
+/**
+ * flags
+ */
+namespace Explosion::RHI {
+    enum class ShaderStageBits {
+        VERTEX = 0x1,
+        FRAGMENT = 0x2,
+        COMPUTE = 0x4,
+        MAX
+    };
+    using ShaderStageFlags = Flags;
+
+    enum class CullModeBits {
+        NONE = 0x1,
+        FRONT = 0x2,
+        BACK = 0x4,
+        MAX
+    };
+    using CullModeFlags = Flags;
 
     enum class BufferUsage {
-        VERTEX_BUFFER,
-        INDEX_BUFFER,
-        UNIFORM_BUFFER,
-        STORAGE_BUFFER,
-        TRANSFER_SRC,
-        TRANSFER_DST,
+        VERTEX_BUFFER = 0x1,
+        INDEX_BUFFER = 0x2,
+        UNIFORM_BUFFER = 0x4,
+        STORAGE_BUFFER = 0x8,
+        TRANSFER_SRC = 0x10,
+        TRANSFER_DST = 0x20,
         MAX
     };
+    using BufferUsageFlags = Flags;
 
-    enum class PipelineStage {
-        COLOR_ATTACHMENT_OUTPUT,
+    enum class PipelineStageBits {
+        COLOR_ATTACHMENT_OUTPUT = 0x1,
         MAX
     };
+    using PipelineStageFlags = Flags;
 
-    enum class MemoryProperty {
-        DEVICE_LOCAL,
-        HOST_VISIBLE,
-        HOST_COHERENT,
+    enum class MemoryPropertyBits {
+        DEVICE_LOCAL = 0x1,
+        HOST_VISIBLE = 0x2,
+        HOST_COHERENT = 0x4,
         MAX
     };
+    using MemoryPropertyFlags = Flags;
 
-    enum class ImageUsage {
-        TRANSFER_SRC,
-        TRANSFER_DST,
-        COLOR_ATTACHMENT,
-        DEPTH_STENCIL_ATTACHMENT,
+    enum class ImageUsageBits {
+        TRANSFER_SRC = 0x1,
+        TRANSFER_DST = 0x2,
+        COLOR_ATTACHMENT = 0x3,
+        DEPTH_STENCIL_ATTACHMENT = 0x4,
         MAX
     };
+    using ImageUsageFlags = Flags;
 
-    enum class ImageLayout {
-        UNDEFINED,
-        COLOR_ATTACHMENT_OPTIMAL,
-        DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        TRANSFER_SRC_OPTIMAL,
-        TRANSFER_DST_OPTIMAL,
-        PRESENT_SRC,
+    enum class ImageLayoutBits {
+        UNDEFINED = 0x1,
+        COLOR_ATTACHMENT_OPTIMAL = 0x2,
+        DEPTH_STENCIL_ATTACHMENT_OPTIMAL = 0x4,
+        TRANSFER_SRC_OPTIMAL = 0x8,
+        TRANSFER_DST_OPTIMAL = 0x10,
+        PRESENT_SRC = 0x20,
         MAX
     };
+    using ImageLayoutFlags = Flags;
 
-    enum class ImageAspect {
-        COLOR,
-        DEPTH,
-        STENCIL,
+    enum class ImageAspectBits {
+        COLOR = 0x1,
+        DEPTH = 0x2,
+        STENCIL = 0x4,
         MAX
     };
+    using ImageAspectFlags = Flags;
 }
 
 #endif //EXPLOSION_ENUM_H

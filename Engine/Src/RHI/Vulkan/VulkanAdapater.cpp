@@ -107,11 +107,11 @@ namespace Explosion::RHI {
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
 
-    VK_CONVERT_INSTANCE_B(ShaderStage, VkShaderStageFlagBits)
-        static std::unordered_map<ShaderStage, VkShaderStageFlagBits> MAP = {
-            { ShaderStage::VERTEX, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT },
-            { ShaderStage::FRAGMENT, VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT },
-            { ShaderStage::COMPUTE, VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT }
+    VK_CONVERT_INSTANCE_B(ShaderStageBits, VkShaderStageFlagBits)
+        static std::unordered_map<ShaderStageBits, VkShaderStageFlagBits> MAP = {
+            {ShaderStageBits::VERTEX,   VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT },
+            {ShaderStageBits::FRAGMENT, VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT },
+            {ShaderStageBits::COMPUTE,  VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT }
         };
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
@@ -124,12 +124,11 @@ namespace Explosion::RHI {
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
 
-    VK_CONVERT_INSTANCE_B(CullMode, VkCullModeFlagBits)
-        static std::unordered_map<CullMode, VkCullModeFlagBits> MAP = {
-            { CullMode::NONE, VkCullModeFlagBits::VK_CULL_MODE_NONE },
-            { CullMode::FRONT, VkCullModeFlagBits::VK_CULL_MODE_FRONT_BIT },
-            { CullMode::BACK, VkCullModeFlagBits::VK_CULL_MODE_BACK_BIT },
-            { CullMode::ALL, VkCullModeFlagBits::VK_CULL_MODE_FRONT_AND_BACK }
+    VK_CONVERT_INSTANCE_B(CullModeBits, VkCullModeFlagBits)
+        static std::unordered_map<CullModeBits, VkCullModeFlagBits> MAP = {
+            {CullModeBits::NONE,  VkCullModeFlagBits::VK_CULL_MODE_NONE },
+            {CullModeBits::FRONT, VkCullModeFlagBits::VK_CULL_MODE_FRONT_BIT },
+            {CullModeBits::BACK,  VkCullModeFlagBits::VK_CULL_MODE_BACK_BIT },
         };
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
@@ -163,49 +162,49 @@ namespace Explosion::RHI {
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
 
-    VK_CONVERT_INSTANCE_B(PipelineStage, VkPipelineStageFlagBits)
-        static std::unordered_map<PipelineStage, VkPipelineStageFlagBits> MAP = {
-            { PipelineStage::COLOR_ATTACHMENT_OUTPUT, VkPipelineStageFlagBits::VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT }
+    VK_CONVERT_INSTANCE_B(PipelineStageBits, VkPipelineStageFlagBits)
+        static std::unordered_map<PipelineStageBits, VkPipelineStageFlagBits> MAP = {
+            {PipelineStageBits::COLOR_ATTACHMENT_OUTPUT, VkPipelineStageFlagBits::VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT }
         };
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
 
-    VK_CONVERT_INSTANCE_B(MemoryProperty, VkMemoryPropertyFlagBits)
-        static std::unordered_map<MemoryProperty, VkMemoryPropertyFlagBits> MAP = {
-            { MemoryProperty::DEVICE_LOCAL, VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT },
-            { MemoryProperty::HOST_VISIBLE, VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT },
-            { MemoryProperty::HOST_COHERENT, VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_HOST_COHERENT_BIT }
+    VK_CONVERT_INSTANCE_B(MemoryPropertyBits, VkMemoryPropertyFlagBits)
+        static std::unordered_map<MemoryPropertyBits, VkMemoryPropertyFlagBits> MAP = {
+            {MemoryPropertyBits::DEVICE_LOCAL,  VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT },
+            {MemoryPropertyBits::HOST_VISIBLE,  VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT },
+            {MemoryPropertyBits::HOST_COHERENT, VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_HOST_COHERENT_BIT }
         };
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
 
-    VK_CONVERT_INSTANCE_B(ImageUsage, VkImageUsageFlagBits)
-        static std::unordered_map<ImageUsage, VkImageUsageFlagBits> MAP = {
-            { ImageUsage::TRANSFER_DST, VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_SRC_BIT },
-            { ImageUsage::TRANSFER_DST, VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_DST_BIT },
-            { ImageUsage::COLOR_ATTACHMENT, VkImageUsageFlagBits::VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT },
-            { ImageUsage::DEPTH_STENCIL_ATTACHMENT, VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT }
+    VK_CONVERT_INSTANCE_B(ImageUsageBits, VkImageUsageFlagBits)
+        static std::unordered_map<ImageUsageBits, VkImageUsageFlagBits> MAP = {
+            {ImageUsageBits::TRANSFER_DST,             VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_SRC_BIT },
+            {ImageUsageBits::TRANSFER_DST,             VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_DST_BIT },
+            {ImageUsageBits::COLOR_ATTACHMENT,         VkImageUsageFlagBits::VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT },
+            {ImageUsageBits::DEPTH_STENCIL_ATTACHMENT, VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT }
         };
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
 
-    VK_CONVERT_INSTANCE_B(ImageLayout, VkImageLayout)
-        static std::unordered_map<ImageLayout, VkImageLayout> MAP = {
-            { ImageLayout::UNDEFINED, VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED },
-            { ImageLayout::COLOR_ATTACHMENT_OPTIMAL, VkImageLayout::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
-            { ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL },
-            { ImageLayout::TRANSFER_SRC_OPTIMAL, VkImageLayout::VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL },
-            { ImageLayout::TRANSFER_DST_OPTIMAL, VkImageLayout::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL },
-            { ImageLayout::PRESENT_SRC, VkImageLayout::VK_IMAGE_LAYOUT_PRESENT_SRC_KHR }
+    VK_CONVERT_INSTANCE_B(ImageLayoutBits, VkImageLayout)
+        static std::unordered_map<ImageLayoutBits, VkImageLayout> MAP = {
+            {ImageLayoutBits::UNDEFINED,                        VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED },
+            {ImageLayoutBits::COLOR_ATTACHMENT_OPTIMAL,         VkImageLayout::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
+            {ImageLayoutBits::DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL },
+            {ImageLayoutBits::TRANSFER_SRC_OPTIMAL,             VkImageLayout::VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL },
+            {ImageLayoutBits::TRANSFER_DST_OPTIMAL,             VkImageLayout::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL },
+            {ImageLayoutBits::PRESENT_SRC,                      VkImageLayout::VK_IMAGE_LAYOUT_PRESENT_SRC_KHR }
         };
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
 
-    VK_CONVERT_INSTANCE_B(ImageAspect, VkImageAspectFlagBits)
-        static std::unordered_map<ImageAspect, VkImageAspectFlagBits> MAP = {
-            { ImageAspect::COLOR, VkImageAspectFlagBits::VK_IMAGE_ASPECT_COLOR_BIT },
-            { ImageAspect::DEPTH, VkImageAspectFlagBits::VK_IMAGE_ASPECT_DEPTH_BIT },
-            { ImageAspect::STENCIL, VkImageAspectFlagBits::VK_IMAGE_ASPECT_STENCIL_BIT }
+    VK_CONVERT_INSTANCE_B(ImageAspectBits, VkImageAspectFlagBits)
+        static std::unordered_map<ImageAspectBits, VkImageAspectFlagBits> MAP = {
+            {ImageAspectBits::COLOR,   VkImageAspectFlagBits::VK_IMAGE_ASPECT_COLOR_BIT },
+            {ImageAspectBits::DEPTH,   VkImageAspectFlagBits::VK_IMAGE_ASPECT_DEPTH_BIT },
+            {ImageAspectBits::STENCIL, VkImageAspectFlagBits::VK_IMAGE_ASPECT_STENCIL_BIT }
         };
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
