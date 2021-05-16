@@ -2,7 +2,7 @@
 // Created by John Kindem on 2021/4/8.
 //
 
-#include <Explosion/RHI/Platform.h>
+#include <Explosion/RHI/Vulkan/VulkanPlatform.h>
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>

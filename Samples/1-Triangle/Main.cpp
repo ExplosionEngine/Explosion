@@ -48,7 +48,7 @@ protected:
         driver = std::make_unique<VulkanDriver>();
 
 #ifdef TARGET_OS_MAC
-        swapChain = driver->CreateGpuRes<SwapChain>(glfwGetCocoaWindow(GetWindow()), GetWidth(), GetHeight());
+        swapChain = driver->CreateGpuRes<VulkanSwapChain>(glfwGetCocoaWindow(GetWindow()), GetWidth(), GetHeight());
 #endif
 #ifdef _WIN32
         swapChain = driver->CreateGpuRes<VulkanSwapChain>(glfwGetWin32Window(GetWindow()), GetWidth(), GetHeight());
