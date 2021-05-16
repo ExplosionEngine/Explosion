@@ -4,8 +4,8 @@
 
 #include <gtest/gtest.h>
 
-#include <Explosion/RHI/Enum.h>
-#include <Explosion/RHI/VkAdapater.h>
+#include <Explosion/RHI/Common/Enum.h>
+#include <Explosion/RHI/Vulkan/VulkanAdapater.h>
 
 using namespace Explosion::RHI;
 

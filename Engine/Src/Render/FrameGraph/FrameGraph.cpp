@@ -4,7 +4,7 @@
 
 #include <Explosion/Common/Exception.h>
 #include <Explosion/Render/FrameGraph/FrameGraph.h>
-#include <Explosion/RHI/Driver.h>
+#include <Explosion/RHI/Vulkan/VulkanDriver.h>
 
 namespace Explosion {
 
@@ -45,7 +45,7 @@ namespace Explosion {
         return *this;
     }
 
-    FrameGraph& FrameGraph::Execute(RHI::Driver& driver)
+    FrameGraph& FrameGraph::Execute(RHI::VulkanDriver& driver)
     {
         return *this;
     }

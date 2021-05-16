@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include <Explosion/RHI/Driver.h>
+#include <Explosion/RHI/Vulkan/VulkanDriver.h>
 
 namespace Explosion {
     class World;
@@ -22,7 +22,7 @@ namespace Explosion {
         void DestroyRenderer(Renderer* renderer);
 
     private:
-        RHI::Driver driver;
+        RHI::VulkanDriver driver;
     };
 }
 
