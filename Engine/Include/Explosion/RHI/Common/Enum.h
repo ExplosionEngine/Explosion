@@ -13,19 +13,22 @@
 namespace Explosion::RHI {
     using Flags = uint32_t;
 
-    template <typename E, typename T>
-    using enable_if_enum_t = std::enable_if_t<std::is_enum_v<E>, T>;
-
     template <typename E>
-    Flags operator|(enable_if_enum_t<E, const E&> l, enable_if_enum_t<E, const E&> r)
+    std::enable_if_t<std::is_enum_v<E>, Flags> FlagsCast(const E& e)
     {
-        return static_cast<Flags>(l) | static_cast<Flags>(r);
+        return static_cast<Flags>(e);
     }
 
     template <typename E>
-    Flags operator&(enable_if_enum_t<E, const E&> l, enable_if_enum_t<E, const E&> r)
+    std::enable_if_t<std::is_enum_v<E>, Flags> operator|(const E& l, const E& r)
     {
-        return static_cast<Flags>(l) & static_cast<Flags>(r);
+        return FlagsCast(l) | FlagsCast(r);
+    }
+
+    template <typename E>
+    std::enable_if_t<std::is_enum_v<E>, Flags> operator&(const E& l, const E& r)
+    {
+        return FlagsCast(l) & FlagsCast(r);
     }
 }
 

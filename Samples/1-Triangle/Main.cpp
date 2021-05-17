@@ -60,7 +60,7 @@ protected:
         imageViewConfig.baseMipLevel = 0;
         imageViewConfig.layerCount = 1;
         imageViewConfig.baseLayer = 0;
-        imageViewConfig.aspects = {ImageAspectBits::COLOR };
+        imageViewConfig.aspects = { ImageAspectBits::COLOR };
         imageViews.resize(swapChain->GetColorAttachmentCount());
         for (uint32_t i = 0; i < imageViews.size(); i++) {
             imageViewConfig.image = swapChain->GetColorAttachments()[i];
