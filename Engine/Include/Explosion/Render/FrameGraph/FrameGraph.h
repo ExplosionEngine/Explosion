@@ -9,6 +9,7 @@
 #include <memory>
 #include <unordered_map>
 #include <Explosion/Common/NonCopy.h>
+#include <Explosion/Common/Exception.h>
 #include <Explosion/Render/FrameGraph/FgRenderPass.h>
 #include <Explosion/Render/FrameGraph/FgResources.h>
 
@@ -24,6 +25,13 @@ namespace Explosion {
 
         template <typename Resource>
         FgHandle Create(const char* name, const typename Resource::Descriptor& desc);
+
+        template <typename Resource>
+        FgHandle CreateSubResource(const char* name, const typename Resource::Descriptor& desc);
+
+        template <typename Resource>
+        FgHandle CreateSubResource(const char* name, FgHandle parent,
+                                   const typename Resource::SubResource::Descriptor& desc);
 
         FgHandle Read(FgHandle handle);
 
@@ -47,7 +55,8 @@ namespace Explosion {
         {
             auto pass = new FgRenderPass<Data>(name, std::forward<Execute>(e));
             passes.template emplace_back(pass);
-            s(FrameGraphBuilder(*this, pass), pass->data);
+            FrameGraphBuilder builder(*this, pass);
+            s(builder, pass->data);
         }
 
         FrameGraph& Compile();
@@ -57,9 +66,11 @@ namespace Explosion {
         using PassVector = std::vector<std::unique_ptr<FgRenderPassBase>>;
         using ResourceVector = std::vector<std::unique_ptr<FgVirtualResource>>;
 
-        const PassVector& GetPasses() const { return passes; }
+        [[nodiscard]] const PassVector& GetPasses() const { return passes; }
 
-        const ResourceVector& GetResources() const { return resources; }
+        [[nodiscard]] const ResourceVector& GetResources() const { return resources; }
+
+        const FgVirtualResource* GetResource(FgHandle handle) const;
 
     private:
         struct Edge {
@@ -82,9 +93,30 @@ namespace Explosion {
     FgHandle FrameGraphBuilder::Create(const char* name, const typename Resource::Descriptor& desc)
     {
         auto res = new Resource(name, desc);
-        FgResourceHandle handle(static_cast<FgHandle::HandleType>(graph.resources.size()));
+        FgHandle handle(static_cast<FgHandle::HandleType>(graph.resources.size()));
         graph.resources.template emplace_back(res);
-        graph.resources.template emplace_back(handle);
+        graph.resHandles.template emplace_back(handle);
+        return handle;
+    }
+
+    template <typename Resource>
+    FgHandle FrameGraphBuilder::CreateSubResource(const char* name, const typename Resource::Descriptor& desc)
+    {
+        FgHandle res = Create<Resource>(name, desc);
+        return CreateSubResource<Resource>(name, res, SubResourceTrait<Resource>().Init());
+    }
+
+    template <typename Resource>
+    FgHandle FrameGraphBuilder::CreateSubResource(const char* name, FgHandle parent,
+                                                  const typename Resource::SubResource::Descriptor& desc)
+    {
+        EXPLOSION_ASSERT(parent.Index() < graph.resources.size(), "invalid subresource parent");
+        FgHandle handle(static_cast<FgHandle::HandleType>(graph.resources.size()));
+        auto parentRes = static_cast<Resource*>(graph.resources[parent.Index()].get());
+        EXPLOSION_ASSERT(parentRes != nullptr, "invalid subresource parent");
+        auto res = new typename Resource::SubResource(name, *parentRes, desc);
+        graph.resources.template emplace_back(res);
+        graph.resHandles.template emplace_back(handle);
         return handle;
     }
 }

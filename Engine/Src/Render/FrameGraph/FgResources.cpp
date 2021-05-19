@@ -3,3 +3,19 @@
 //
 
 #include <Explosion/Render/FrameGraph/FgResources.h>
+
+namespace Explosion {
+
+    void FgTextureSubResource::AddRef()
+    {
+        RefObject::AddRef();
+        parent->AddRef();
+    }
+
+    void FgTextureSubResource::RemoveRef()
+    {
+        parent->RemoveRef();
+        RefObject::RemoveRef();
+    }
+
+}
