@@ -54,7 +54,7 @@ namespace Explosion {
         void AddCallbackPass(const char* name, Setup &&s, Execute &&e)
         {
             auto pass = new FgRenderPass<Data>(name, std::forward<Execute>(e));
-            passes.template emplace_back(pass);
+            passes.emplace_back(pass);
             FrameGraphBuilder builder(*this, pass);
             s(builder, pass->data);
         }
@@ -94,8 +94,8 @@ namespace Explosion {
     {
         auto res = new Resource(name, desc);
         FgHandle handle(static_cast<FgHandle::HandleType>(graph.resources.size()));
-        graph.resources.template emplace_back(res);
-        graph.resHandles.template emplace_back(handle);
+        graph.resources.emplace_back(res);
+        graph.resHandles.emplace_back(handle);
         return handle;
     }
 
@@ -115,8 +115,8 @@ namespace Explosion {
         auto parentRes = static_cast<Resource*>(graph.resources[parent.Index()].get());
         EXPLOSION_ASSERT(parentRes != nullptr, "invalid subresource parent");
         auto res = new typename Resource::SubResource(name, *parentRes, desc);
-        graph.resources.template emplace_back(res);
-        graph.resHandles.template emplace_back(handle);
+        graph.resources.emplace_back(res);
+        graph.resHandles.emplace_back(handle);
         return handle;
     }
 }
