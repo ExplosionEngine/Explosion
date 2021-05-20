@@ -72,6 +72,8 @@ namespace Explosion {
         HandleType handle;
     };
 
+    using FgHandle = FgResourceHandle<uint32_t>;
+
     class FgVirtualResource : public FgNode {
     public:
         explicit FgVirtualResource(const char* name) : FgNode(name) {}

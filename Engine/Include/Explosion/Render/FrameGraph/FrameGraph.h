@@ -12,10 +12,10 @@
 #include <Explosion/Common/Exception.h>
 #include <Explosion/Render/FrameGraph/FgRenderPass.h>
 #include <Explosion/Render/FrameGraph/FgResources.h>
+#include <Explosion/Render/FrameGraph/FgBlackBoard.h>
 
 namespace Explosion {
     class FrameGraph;
-    using FgHandle = FgResourceHandle<uint32_t>;
 
     class FrameGraphBuilder {
     public:
@@ -37,10 +37,13 @@ namespace Explosion {
 
         FgHandle Write(FgHandle handle);
 
+        FgBlackBoard& GetBlackBoard() { return blackboard; }
+
         void SideEffect();
 
     private:
         FrameGraph& graph;
+        FgBlackBoard blackboard;
         FgRenderPassBase* renderPass;
     };
 
