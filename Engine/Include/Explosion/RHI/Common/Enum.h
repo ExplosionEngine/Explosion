@@ -110,6 +110,16 @@ namespace Explosion::RHI {
         IMAGE_SAMPLER,
         MAX
     };
+
+    enum class ImageLayout {
+        UNDEFINED = 0x1,
+        COLOR_ATTACHMENT_OPTIMAL = 0x2,
+        DEPTH_STENCIL_ATTACHMENT_OPTIMAL = 0x4,
+        TRANSFER_SRC_OPTIMAL = 0x8,
+        TRANSFER_DST_OPTIMAL = 0x10,
+        PRESENT_SRC = 0x20,
+        MAX
+    };
 }
 
 /**
@@ -165,17 +175,6 @@ namespace Explosion::RHI {
         MAX
     };
     using ImageUsageFlags = Flags;
-
-    enum class ImageLayoutBits {
-        UNDEFINED = 0x1,
-        COLOR_ATTACHMENT_OPTIMAL = 0x2,
-        DEPTH_STENCIL_ATTACHMENT_OPTIMAL = 0x4,
-        TRANSFER_SRC_OPTIMAL = 0x8,
-        TRANSFER_DST_OPTIMAL = 0x10,
-        PRESENT_SRC = 0x20,
-        MAX
-    };
-    using ImageLayoutFlags = Flags;
 
     enum class ImageAspectBits {
         COLOR = 0x1,

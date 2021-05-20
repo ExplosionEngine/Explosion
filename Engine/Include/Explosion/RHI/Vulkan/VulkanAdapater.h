@@ -21,15 +21,8 @@ namespace Explosion::RHI {
     template <typename VkType, typename Type>
     Type GetEnumByVk(const VkType& vkType);
 
-    template<typename Type, typename VkType>
-    VkFlags VkGetFlags(const std::vector<Type>& flagBits)
-    {
-        VkFlags flags = 0;
-        for (auto& flagBit : flagBits) {
-            flags |= VkConvert<Type, VkType>(flagBit);
-        }
-        return flags;
-    }
+    template <typename VkType, typename Type>
+    VkFlags VkGetFlags(Flags flags);
 }
 
 #endif //EXPLOSION_VULKANADAPATER_H

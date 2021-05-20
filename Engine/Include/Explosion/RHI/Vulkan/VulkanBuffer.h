@@ -20,8 +20,8 @@ namespace Explosion::RHI {
     public:
         struct Config {
             uint32_t size;
-            std::vector<BufferUsage> usages;
-            std::vector<MemoryPropertyBits> memoryProperties;
+            BufferUsageFlags usages;
+            MemoryPropertyFlags memoryProperties;
         };
 
         VulkanBuffer(VulkanDriver& driver, Config config);
@@ -43,7 +43,6 @@ namespace Explosion::RHI {
         Config config;
         VkBuffer vkBuffer = VK_NULL_HANDLE;
         VkDeviceMemory vkDeviceMemory = VK_NULL_HANDLE;
-        bool isDeviceLocal = false;
     };
 }
 

@@ -235,7 +235,7 @@ namespace Explosion::RHI {
         rasterizationStateCreateInfo.depthClampEnable = VkBoolConvert(config.rasterizerConfig.depthClamp);
         rasterizationStateCreateInfo.rasterizerDiscardEnable = VkBoolConvert(config.rasterizerConfig.discard);
         rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
-        rasterizationStateCreateInfo.cullMode = VkConvert<CullModeBits, VkCullModeFlagBits>(config.rasterizerConfig.cullMode);
+        rasterizationStateCreateInfo.cullMode = VkGetFlags<CullModeBits, VkCullModeFlagBits>(config.rasterizerConfig.cullModes);
         rasterizationStateCreateInfo.frontFace = VkConvert<FrontFace, VkFrontFace>(config.rasterizerConfig.frontFace);
         rasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
         rasterizationStateCreateInfo.depthBiasConstantFactor = 0.0f;

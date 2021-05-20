@@ -65,7 +65,7 @@ namespace Explosion::RHI {
         vkQueueWaitIdle(device.GetVkQueue());
     }
 
-    void VulkanCommandBuffer::Submit(VulkanSignal* waitSignal, VulkanSignal* notifySignal, const std::vector<PipelineStageBits>& waitStages)
+    void VulkanCommandBuffer::Submit(VulkanSignal* waitSignal, VulkanSignal* notifySignal, PipelineStageFlags waitStages)
     {
         VkSubmitInfo submitInfo {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

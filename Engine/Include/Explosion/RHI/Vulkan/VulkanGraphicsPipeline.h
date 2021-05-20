@@ -48,7 +48,7 @@ namespace Explosion::RHI {
         struct DescriptorAttribute {
             uint32_t binding;
             DescriptorType type;
-            std::vector<ShaderStageBits> shaderStages;
+            VkShaderStageFlags shaderStages;
         };
 
         struct DescriptorPoolSize {
@@ -86,7 +86,7 @@ namespace Explosion::RHI {
         struct RasterizerConfig {
             bool depthClamp;
             bool discard;
-            CullModeBits cullMode;
+            CullModeFlags cullModes;
             FrontFace frontFace;
         };
 

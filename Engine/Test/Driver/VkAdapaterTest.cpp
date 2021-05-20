@@ -29,10 +29,7 @@ TEST(VkAdapterTest, GetEnumByVkTest)
 
 TEST(VkAdapterTest, VkGetFlagsTest)
 {
-    std::vector<BufferUsage> bufferUsages = {
-        BufferUsage::VERTEX_BUFFER,
-        BufferUsage::TRANSFER_DST
-    };
-    VkFlags targetFlags = VkGetFlags<BufferUsage, VkBufferUsageFlagBits>(bufferUsages);
+    BufferUsageFlags bufferUsageFlags = BufferUsage::VERTEX_BUFFER | BufferUsage::TRANSFER_DST;
+    VkFlags targetFlags = VkGetFlags<BufferUsage, VkBufferUsageFlagBits>(bufferUsageFlags);
     ASSERT_EQ(targetFlags, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 }

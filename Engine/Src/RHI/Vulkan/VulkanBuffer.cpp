@@ -42,11 +42,11 @@ namespace Explosion::RHI {
 
     void VulkanBuffer::UpdateData(void* data)
     {
-        if (isDeviceLocal) {
+        if (config.memoryProperties & FlagsCast(MemoryPropertyBits::DEVICE_LOCAL)) {
             VulkanBuffer::Config stagingConfig = {
                 config.size,
-                { BufferUsage::TRANSFER_SRC },
-                {MemoryPropertyBits::HOST_VISIBLE, MemoryPropertyBits::HOST_COHERENT }
+                FlagsCast(BufferUsage::TRANSFER_SRC),
+                MemoryPropertyBits::HOST_VISIBLE | MemoryPropertyBits::HOST_COHERENT
             };
             auto* stagingBuffer = driver.CreateGpuRes<VulkanBuffer>(stagingConfig);
             stagingBuffer->UpdateData(data);
@@ -78,9 +78,7 @@ namespace Explosion::RHI {
         createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         createInfo.queueFamilyIndexCount = 0;
         createInfo.pQueueFamilyIndices = nullptr;
-        for (auto& usage : config.usages) {
-            createInfo.usage |= VkConvert<BufferUsage, VkBufferUsageFlagBits>(usage);
-        }
+        createInfo.usage = VkGetFlags<BufferUsage, VkBufferUsageFlagBits>(config.usages);
 
         if (vkCreateBuffer(device.GetVkDevice(), &createInfo, nullptr, &vkBuffer) != VK_SUCCESS) {
             throw std::runtime_error("failed to create vulkan buffer");
@@ -95,12 +93,6 @@ namespace Explosion::RHI {
 
     void VulkanBuffer::AllocateMemory()
     {
-        for (auto& memoryProperty : config.memoryProperties) {
-            if (memoryProperty == MemoryPropertyBits::DEVICE_LOCAL) {
-                isDeviceLocal = true;
-            }
-        }
-
         VkMemoryRequirements memoryRequirements {};
         vkGetBufferMemoryRequirements(device.GetVkDevice(), vkBuffer, &memoryRequirements);
         std::optional<uint32_t> memType = FindMemoryType(

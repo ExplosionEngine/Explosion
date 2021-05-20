@@ -228,8 +228,8 @@ namespace Explosion::RHI {
         config.depth = 1;
         config.mipLevels = 1;
         config.layers = 1;
-        config.usages = {ImageUsageBits::COLOR_ATTACHMENT };
-        config.initialLayout = ImageLayoutBits::COLOR_ATTACHMENT_OPTIMAL;
+        config.usages = FlagsCast(ImageUsageBits::COLOR_ATTACHMENT);
+        config.initialLayout = ImageLayout::COLOR_ATTACHMENT_OPTIMAL;
         for (auto i  = 0; i < imageCnt; i++) {
             colorAttachments[i] = driver.CreateGpuRes<VulkanImage>(images[i], config);
         }

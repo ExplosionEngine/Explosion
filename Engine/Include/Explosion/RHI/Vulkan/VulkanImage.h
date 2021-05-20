@@ -23,8 +23,8 @@ namespace Explosion::RHI {
             uint32_t depth;
             uint32_t mipLevels;
             uint32_t layers;
-            ImageLayoutBits initialLayout;
-            std::vector<ImageUsageBits> usages;
+            ImageLayout initialLayout;
+            BufferUsageFlags usages;
         };
 
         VulkanImage(VulkanDriver& driver, Config config);
