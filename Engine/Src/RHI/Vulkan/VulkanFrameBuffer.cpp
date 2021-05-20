@@ -45,7 +45,7 @@ namespace Explosion::RHI {
         createInfo.height = config.height;
         createInfo.layers = config.layers;
 
-        if (vkCreateFramebuffer(device.GetVkDevice(), &createInfo, nullptr, &vkFramebuffer) != VK_NULL_HANDLE) {
+        if (vkCreateFramebuffer(device.GetVkDevice(), &createInfo, nullptr, &vkFramebuffer) != VK_SUCCESS) {
             throw std::runtime_error("failed to create vulkan frame buffer");
         }
     }

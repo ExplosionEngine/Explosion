@@ -42,6 +42,12 @@ namespace Explosion {
         static bool Invalid(HandleType handle) { return Index(handle) == INVALID_INDEX; }
     };
 
+    template <typename T>
+    struct SubResourceTrait {
+        using Descriptor = typename T::SubResource::Descriptor;
+        Descriptor Init() { return Descriptor{}; };
+    };
+
     template <typename Type = uint32_t>
     class FgResourceHandle {
     public:
@@ -72,7 +78,9 @@ namespace Explosion {
         ~FgVirtualResource() override = default;
     };
 
-    using PixelFormat = uint32_t;
+    using PixelFormat = uint32_t; // TODO: replace me with rhi pixel format
+
+    class FgTextureSubResource;
 
     class FgTexture : public FgVirtualResource {
     public:
@@ -82,11 +90,35 @@ namespace Explosion {
             PixelFormat format;
         };
 
+        using SubResource = FgTextureSubResource;
+        static constexpr bool HAS_SUB_RES = true;
+
         FgTexture(const char* name, const Descriptor& desc) : FgVirtualResource(name), descriptor(desc) {}
         ~FgTexture() override = default;
 
     private:
         Descriptor descriptor;
+    };
+
+    class FgTextureSubResource : public FgVirtualResource {
+    public:
+        struct Descriptor {
+            uint32_t mipLevel;
+            uint32_t layer;
+        };
+
+        FgTextureSubResource(const char* name, FgTexture& tex, const Descriptor& desc)
+            : FgVirtualResource(name),
+              descriptor(desc),
+              parent(&tex) {}
+        ~FgTextureSubResource() override = default;
+
+        void AddRef() override;
+        void RemoveRef() override;
+
+    private:
+        Descriptor descriptor;
+        FgTexture* parent;
     };
 }
 
