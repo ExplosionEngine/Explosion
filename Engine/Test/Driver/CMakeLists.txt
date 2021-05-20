@@ -1,4 +1,4 @@
-file(GLOB DRIVER_TEST_SOURCES *.cpp)
+file(GLOB_RECURSE DRIVER_TEST_SOURCES *.cpp)
 add_executable(DriverTest ${DRIVER_TEST_SOURCES})
 target_link_libraries(DriverTest gtest explosion)
 add_test(
