@@ -1,5 +1,5 @@
 //
-// Created by Administrator on 2021/4/23 0023.
+// Created by John Kindem on 2021/4/23 0023.
 //
 
 #ifndef EXPLOSION_ENUM_H
