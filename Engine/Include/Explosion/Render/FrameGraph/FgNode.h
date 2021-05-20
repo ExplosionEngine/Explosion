@@ -21,7 +21,7 @@ namespace Explosion {
 
         bool IsSideEffect() const { return sideEffect; }
 
-        explicit operator bool() const { return GetRef() != 0 || sideEffect;  }
+        bool IsActive() const { return GetRef() != 0 || sideEffect;  }
 
     private:
         std::string name;

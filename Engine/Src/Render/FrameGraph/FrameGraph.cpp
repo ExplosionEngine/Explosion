@@ -50,6 +50,13 @@ namespace Explosion {
         return *this;
     }
 
+    const FgVirtualResource* FrameGraph::GetResource(FgHandle handle) const
+    {
+        EXPLOSION_ASSERT(handle.Index() < resources.size(), "invalid frame graph resource handle");
+        return resources[handle.Index()].get();
+    }
+
+
     /**
      * Step1.
      *   pass.RefCount++ for every resource write
@@ -71,10 +78,10 @@ namespace Explosion {
         }
         std::vector<FgNode*> stack;
         for (auto& res : resources) {
-            if (!res) stack.emplace_back(res.get());
+            if (!res->IsActive()) stack.emplace_back(res.get());
         }
         for (auto& pass : passes) {
-            if (!pass) stack.emplace_back(pass.get());
+            if (!pass->IsActive()) stack.emplace_back(pass.get());
         }
 
         while (!stack.empty()) {
@@ -83,7 +90,7 @@ namespace Explosion {
             auto& vector = incomingEdgeMap[node];
             for (auto& in : vector) {
                 in->RemoveRef();
-                if (!in) stack.emplace_back(in);
+                if (!in->IsActive()) stack.emplace_back(in);
             }
         }
     }

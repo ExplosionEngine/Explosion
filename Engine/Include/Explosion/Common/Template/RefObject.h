@@ -36,11 +36,11 @@ namespace Explosion {
 
         virtual ~RefObject() {}
 
-        void AddRef() {
+        virtual void AddRef() {
             counter++;
         }
 
-        void RemoveRef() {
+        virtual void RemoveRef() {
             if (counter != 0) counter--;
         }
 
