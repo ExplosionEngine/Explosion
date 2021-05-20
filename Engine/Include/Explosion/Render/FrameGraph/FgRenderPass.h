@@ -13,7 +13,7 @@
 namespace Explosion {
     class FrameGraph;
     namespace RHI {
-        class VulkanDriver;
+        class Driver;
     }
 
     class FgRenderPassBase : public FgNode {
@@ -22,19 +22,19 @@ namespace Explosion {
 
         ~FgRenderPassBase() override = default;
 
-        virtual void Execute(const FrameGraph&, RHI::VulkanDriver&) = 0;
+        virtual void Execute(const FrameGraph&, RHI::Driver&) = 0;
     };
 
     template<typename Data>
     class FgRenderPass : public FgRenderPassBase {
     public:
-        using ExecuteType = std::function<void(const Data &, const FrameGraph&, RHI::VulkanDriver&)>;
+        using ExecuteType = std::function<void(const Data &, const FrameGraph&, RHI::Driver&)>;
 
         FgRenderPass(const char*& name, ExecuteType &&e) : FgRenderPassBase(name), execute(std::move(e)) {}
 
         ~FgRenderPass() override = default;
 
-        void Execute(const FrameGraph& graph, RHI::VulkanDriver& driver) override {
+        void Execute(const FrameGraph& graph, RHI::Driver& driver) override {
             if (execute) execute(data, graph, driver);
         }
 

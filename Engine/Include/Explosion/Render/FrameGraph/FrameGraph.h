@@ -61,7 +61,7 @@ namespace Explosion {
 
         FrameGraph& Compile();
 
-        FrameGraph& Execute(RHI::VulkanDriver&);
+        FrameGraph& Execute(RHI::Driver&);
 
         using PassVector = std::vector<std::unique_ptr<FgRenderPassBase>>;
         using ResourceVector = std::vector<std::unique_ptr<FgVirtualResource>>;

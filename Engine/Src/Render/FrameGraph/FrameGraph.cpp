@@ -45,7 +45,7 @@ namespace Explosion {
         return *this;
     }
 
-    FrameGraph& FrameGraph::Execute(RHI::VulkanDriver& driver)
+    FrameGraph& FrameGraph::Execute(RHI::Driver& driver)
     {
         return *this;
     }
