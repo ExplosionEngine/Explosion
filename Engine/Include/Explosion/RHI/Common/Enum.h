@@ -142,7 +142,7 @@ namespace Explosion::RHI {
     };
     using CullModeFlags = Flags;
 
-    enum class BufferUsage {
+    enum class BufferUsageBits {
         VERTEX_BUFFER = 0x1,
         INDEX_BUFFER = 0x2,
         UNIFORM_BUFFER = 0x4,

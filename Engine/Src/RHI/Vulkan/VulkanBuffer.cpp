@@ -45,7 +45,7 @@ namespace Explosion::RHI {
         if (config.memoryProperties & FlagsCast(MemoryPropertyBits::DEVICE_LOCAL)) {
             VulkanBuffer::Config stagingConfig = {
                 config.size,
-                FlagsCast(BufferUsage::TRANSFER_SRC),
+                FlagsCast(BufferUsageBits::TRANSFER_SRC),
                 MemoryPropertyBits::HOST_VISIBLE | MemoryPropertyBits::HOST_COHERENT
             };
             auto* stagingBuffer = driver.CreateGpuRes<VulkanBuffer>(stagingConfig);
@@ -74,11 +74,11 @@ namespace Explosion::RHI {
         createInfo.pNext = nullptr;
         createInfo.flags = 0;
         createInfo.size = static_cast<VkDeviceSize>(config.size);
-        createInfo.usage = VkGetFlags<BufferUsage, VkBufferUsageFlagBits>(config.usages);
+        createInfo.usage = VkGetFlags<BufferUsageBits, VkBufferUsageFlagBits>(config.usages);
         createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         createInfo.queueFamilyIndexCount = 0;
         createInfo.pQueueFamilyIndices = nullptr;
-        createInfo.usage = VkGetFlags<BufferUsage, VkBufferUsageFlagBits>(config.usages);
+        createInfo.usage = VkGetFlags<BufferUsageBits, VkBufferUsageFlagBits>(config.usages);
 
         if (vkCreateBuffer(device.GetVkDevice(), &createInfo, nullptr, &vkBuffer) != VK_SUCCESS) {
             throw std::runtime_error("failed to create vulkan buffer");

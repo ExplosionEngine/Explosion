@@ -119,13 +119,13 @@ protected:
         };
         VulkanBuffer::Config bufferConfig {};
         bufferConfig.size = sizeof(Vertex) * vertices.size();
-        bufferConfig.usages = BufferUsage::VERTEX_BUFFER | BufferUsage::TRANSFER_DST;
+        bufferConfig.usages = BufferUsageBits::VERTEX_BUFFER | BufferUsageBits::TRANSFER_DST;
         bufferConfig.memoryProperties = FlagsCast(MemoryPropertyBits::DEVICE_LOCAL);
         vertexBuffer = driver->CreateGpuRes<VulkanBuffer>(bufferConfig);
         vertexBuffer->UpdateData(vertices.data());
 
         bufferConfig.size = sizeof(Index) * indices.size();
-        bufferConfig.usages = BufferUsage::INDEX_BUFFER | BufferUsage::TRANSFER_DST;
+        bufferConfig.usages = BufferUsageBits::INDEX_BUFFER | BufferUsageBits::TRANSFER_DST;
         bufferConfig.memoryProperties = FlagsCast(MemoryPropertyBits::DEVICE_LOCAL);
         indexBuffer = driver->CreateGpuRes<VulkanBuffer>(bufferConfig);
         indexBuffer->UpdateData(indices.data());

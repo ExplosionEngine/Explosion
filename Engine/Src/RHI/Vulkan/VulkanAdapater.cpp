@@ -158,14 +158,14 @@ namespace Explosion::RHI {
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
 
-    VK_CONVERT_INSTANCE_B(BufferUsage, VkBufferUsageFlagBits)
-        static std::unordered_map<BufferUsage, VkBufferUsageFlagBits> MAP = {
-            { BufferUsage::VERTEX_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_VERTEX_BUFFER_BIT },
-            { BufferUsage::INDEX_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_INDEX_BUFFER_BIT },
-            { BufferUsage::UNIFORM_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT },
-            { BufferUsage::STORAGE_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_STORAGE_BUFFER_BIT },
-            { BufferUsage::TRANSFER_SRC, VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_SRC_BIT },
-            { BufferUsage::TRANSFER_DST, VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_DST_BIT }
+    VK_CONVERT_INSTANCE_B(BufferUsageBits, VkBufferUsageFlagBits)
+        static std::unordered_map<BufferUsageBits, VkBufferUsageFlagBits> MAP = {
+            {BufferUsageBits::VERTEX_BUFFER,  VkBufferUsageFlagBits::VK_BUFFER_USAGE_VERTEX_BUFFER_BIT },
+            {BufferUsageBits::INDEX_BUFFER,   VkBufferUsageFlagBits::VK_BUFFER_USAGE_INDEX_BUFFER_BIT },
+            {BufferUsageBits::UNIFORM_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT },
+            {BufferUsageBits::STORAGE_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_STORAGE_BUFFER_BIT },
+            {BufferUsageBits::TRANSFER_SRC,   VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_SRC_BIT },
+            {BufferUsageBits::TRANSFER_DST,   VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_DST_BIT }
         };
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
@@ -212,14 +212,14 @@ namespace Explosion::RHI {
         COMBINE_FLAGS_AND_RETURN
     VK_GET_FLAGS_INSTANCE_E
 
-    VK_GET_FLAGS_INSTANCE_B(BufferUsage, VkBufferUsageFlagBits)
-        static std::unordered_map<BufferUsage, VkBufferUsageFlagBits> MAP = {
-            { BufferUsage::VERTEX_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_VERTEX_BUFFER_BIT },
-            { BufferUsage::INDEX_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_INDEX_BUFFER_BIT },
-            { BufferUsage::UNIFORM_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT },
-            { BufferUsage::STORAGE_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_STORAGE_BUFFER_BIT },
-            { BufferUsage::TRANSFER_SRC, VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_SRC_BIT },
-            { BufferUsage::TRANSFER_DST, VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_DST_BIT }
+    VK_GET_FLAGS_INSTANCE_B(BufferUsageBits, VkBufferUsageFlagBits)
+        static std::unordered_map<BufferUsageBits, VkBufferUsageFlagBits> MAP = {
+            {BufferUsageBits::VERTEX_BUFFER,  VkBufferUsageFlagBits::VK_BUFFER_USAGE_VERTEX_BUFFER_BIT },
+            {BufferUsageBits::INDEX_BUFFER,   VkBufferUsageFlagBits::VK_BUFFER_USAGE_INDEX_BUFFER_BIT },
+            {BufferUsageBits::UNIFORM_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT },
+            {BufferUsageBits::STORAGE_BUFFER, VkBufferUsageFlagBits::VK_BUFFER_USAGE_STORAGE_BUFFER_BIT },
+            {BufferUsageBits::TRANSFER_SRC,   VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_SRC_BIT },
+            {BufferUsageBits::TRANSFER_DST,   VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_DST_BIT }
         };
         COMBINE_FLAGS_AND_RETURN
     VK_GET_FLAGS_INSTANCE_E
