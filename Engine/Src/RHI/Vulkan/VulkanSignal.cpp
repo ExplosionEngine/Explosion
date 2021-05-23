@@ -9,7 +9,7 @@
 
 namespace Explosion::RHI {
     VulkanSignal::VulkanSignal(VulkanDriver& driver)
-        : driver(driver), device(*driver.GetDevice())
+        : Signal(), driver(driver), device(*driver.GetDevice())
     {
         CreateSemaphore();
     }

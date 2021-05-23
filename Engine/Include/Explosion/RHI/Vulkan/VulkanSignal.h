@@ -7,14 +7,16 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Explosion/RHI/Common/Signal.h>
+
 namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
 
-    class VulkanSignal {
+    class VulkanSignal : public Signal {
     public:
         explicit VulkanSignal(VulkanDriver& driver);
-        ~VulkanSignal();
+        ~VulkanSignal() override;
         const VkSemaphore& GetVkSemaphore();
 
     private:

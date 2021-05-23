@@ -8,4 +8,8 @@ namespace Explosion::RHI {
     CommandBuffer::CommandBuffer() = default;
 
     CommandBuffer::~CommandBuffer() = default;
+
+    CommandEncoder::CommandEncoder() = default;
+
+    CommandEncoder::~CommandEncoder() = default;
 }

@@ -43,7 +43,7 @@ namespace Explosion::RHI {
         }
 
         {
-            CommandEncoder commandEncoder(driver, this);
+            VulkanCommandEncoder commandEncoder(driver, this);
             encodingFunc(&commandEncoder);
         }
 
@@ -65,15 +65,15 @@ namespace Explosion::RHI {
         vkQueueWaitIdle(device.GetVkQueue());
     }
 
-    void VulkanCommandBuffer::Submit(VulkanSignal* waitSignal, VulkanSignal* notifySignal, PipelineStageFlags waitStages)
+    void VulkanCommandBuffer::Submit(Signal* waitSignal, Signal* notifySignal, PipelineStageFlags waitStages)
     {
         VkSubmitInfo submitInfo {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.pNext = nullptr;
         submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = &waitSignal->GetVkSemaphore();
+        submitInfo.pWaitSemaphores = &dynamic_cast<VulkanSignal*>(waitSignal)->GetVkSemaphore();
         submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = &notifySignal->GetVkSemaphore();
+        submitInfo.pSignalSemaphores = &dynamic_cast<VulkanSignal*>(notifySignal)->GetVkSemaphore();
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &vkCommandBuffer;
         VkPipelineStageFlags flags = VkGetFlags<PipelineStageBits, VkPipelineStageFlagBits>(waitStages);
@@ -103,21 +103,27 @@ namespace Explosion::RHI {
         vkFreeCommandBuffers(device.GetVkDevice(), device.GetVkCommandPool(), 1, &vkCommandBuffer);
     }
 
-    CommandEncoder::CommandEncoder(VulkanDriver& driver, VulkanCommandBuffer* commandBuffer)
+    VulkanCommandEncoder::VulkanCommandEncoder(VulkanDriver& driver, VulkanCommandBuffer* commandBuffer)
         : driver(driver), device(*driver.GetDevice()), commandBuffer(commandBuffer) {}
 
-    CommandEncoder::~CommandEncoder() = default;
+    VulkanCommandEncoder::~VulkanCommandEncoder() = default;
 
-    void CommandEncoder::CopyBuffer(VulkanBuffer* srcBuffer, VulkanBuffer* dstBuffer)
+    void VulkanCommandEncoder::CopyBuffer(Buffer* srcBuffer, Buffer* dstBuffer)
     {
         VkBufferCopy bufferCopy {};
         bufferCopy.srcOffset = 0;
         bufferCopy.dstOffset = 0;
         bufferCopy.size = srcBuffer->GetSize();
-        vkCmdCopyBuffer(commandBuffer->GetVkCommandBuffer(), srcBuffer->GetVkBuffer(), dstBuffer->GetVkBuffer(), 1, &bufferCopy);
+        vkCmdCopyBuffer(
+            commandBuffer->GetVkCommandBuffer(),
+            dynamic_cast<VulkanBuffer*>(srcBuffer)->GetVkBuffer(),
+            dynamic_cast<VulkanBuffer*>(dstBuffer)->GetVkBuffer(),
+            1,
+            &bufferCopy
+        );
     }
 
-    void CommandEncoder::BeginRenderPass(VulkanRenderPass* renderPass, const RenderPassBeginInfo& renderPassBeginInfo)
+    void VulkanCommandEncoder::BeginRenderPass(RenderPass* renderPass, const RenderPassBeginInfo& renderPassBeginInfo)
     {
         VkClearValue clearValue = {
             renderPassBeginInfo.clearValue.r,
@@ -129,47 +135,47 @@ namespace Explosion::RHI {
         VkRenderPassBeginInfo beginInfo {};
         beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         beginInfo.pNext = nullptr;
-        beginInfo.renderPass = renderPass->GetVkRenderPass();
+        beginInfo.renderPass = dynamic_cast<VulkanRenderPass*>(renderPass)->GetVkRenderPass();
         beginInfo.renderArea.offset = { renderPassBeginInfo.renderArea.x, renderPassBeginInfo.renderArea.y };
         beginInfo.renderArea.extent = { renderPassBeginInfo.renderArea.width, renderPassBeginInfo.renderArea.height };
-        beginInfo.framebuffer = renderPassBeginInfo.frameBuffer->GetVkFrameBuffer();
+        beginInfo.framebuffer = dynamic_cast<VulkanFrameBuffer*>(renderPassBeginInfo.frameBuffer)->GetVkFrameBuffer();
         beginInfo.clearValueCount = 1;
         beginInfo.pClearValues = &clearValue;
         vkCmdBeginRenderPass(commandBuffer->GetVkCommandBuffer(), &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
     }
 
-    void CommandEncoder::EndRenderPass()
+    void VulkanCommandEncoder::EndRenderPass()
     {
         vkCmdEndRenderPass(commandBuffer->GetVkCommandBuffer());
     }
 
-    void CommandEncoder::BindGraphicsPipeline(VulkanGraphicsPipeline* pipeline)
+    void VulkanCommandEncoder::BindGraphicsPipeline(GraphicsPipeline* pipeline)
     {
-        vkCmdBindPipeline(commandBuffer->GetVkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetVkPipeline());
+        vkCmdBindPipeline(commandBuffer->GetVkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, dynamic_cast<VulkanGraphicsPipeline*>(pipeline)->GetVkPipeline());
     }
 
-    void CommandEncoder::BindVertexBuffer(uint32_t binding, VulkanBuffer* vertexBuffer)
+    void VulkanCommandEncoder::BindVertexBuffer(uint32_t binding, Buffer* vertexBuffer)
     {
         VkDeviceSize offset[] = { 0 };
-        vkCmdBindVertexBuffers(commandBuffer->GetVkCommandBuffer(), binding, 1, &vertexBuffer->GetVkBuffer(), offset);
+        vkCmdBindVertexBuffers(commandBuffer->GetVkCommandBuffer(), binding, 1, &dynamic_cast<VulkanBuffer*>(vertexBuffer)->GetVkBuffer(), offset);
     }
 
-    void CommandEncoder::BindIndexBuffer(VulkanBuffer* indexBuffer)
+    void VulkanCommandEncoder::BindIndexBuffer(Buffer* indexBuffer)
     {
-        vkCmdBindIndexBuffer(commandBuffer->GetVkCommandBuffer(), indexBuffer->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer(commandBuffer->GetVkCommandBuffer(), dynamic_cast<VulkanBuffer*>(indexBuffer)->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
     }
 
-    void CommandEncoder::Draw(uint32_t firstVertex, uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount)
+    void VulkanCommandEncoder::Draw(uint32_t firstVertex, uint32_t vertexCount, uint32_t firstInstance, uint32_t instanceCount)
     {
         vkCmdDraw(commandBuffer->GetVkCommandBuffer(), vertexCount, instanceCount, firstVertex, firstInstance);
     }
 
-    void CommandEncoder::DrawIndexed(uint32_t firstIndex, uint32_t indexCount, int32_t vertexOffset, uint32_t firstInstance, uint32_t instanceCount)
+    void VulkanCommandEncoder::DrawIndexed(uint32_t firstIndex, uint32_t indexCount, int32_t vertexOffset, uint32_t firstInstance, uint32_t instanceCount)
     {
         vkCmdDrawIndexed(commandBuffer->GetVkCommandBuffer(), indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
     }
 
-    void CommandEncoder::SetViewPort(const VulkanGraphicsPipeline::Viewport& viewport)
+    void VulkanCommandEncoder::SetViewPort(const GraphicsPipeline::Viewport& viewport)
     {
         VkViewport vp = {
             viewport.x,
@@ -182,7 +188,7 @@ namespace Explosion::RHI {
         vkCmdSetViewport(commandBuffer->GetVkCommandBuffer(), 0, 1, &vp);
     }
 
-    void CommandEncoder::SetScissor(const VulkanGraphicsPipeline::Scissor& scissor)
+    void VulkanCommandEncoder::SetScissor(const GraphicsPipeline::Scissor& scissor)
     {
         VkRect2D sc = {
             { scissor.x, scissor.y },

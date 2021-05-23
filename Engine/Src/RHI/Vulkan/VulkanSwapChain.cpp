@@ -5,7 +5,6 @@
 #include <stdexcept>
 
 #include <Explosion/RHI/Vulkan/VulkanDriver.h>
-#include <Explosion/RHI/Vulkan/VulkanDevice.h>
 #include <Explosion/RHI/Vulkan/VulkanAdapater.h>
 #include <Explosion/RHI/Vulkan/VulkanImage.h>
 #include <Explosion/RHI/Vulkan/VulkanSwapChain.h>
@@ -48,8 +47,8 @@ namespace {
 }
 
 namespace Explosion::RHI {
-    VulkanSwapChain::VulkanSwapChain(VulkanDriver& driver, void* surface, uint32_t width, uint32_t height)
-        : driver(driver), device(*driver.GetDevice()), surface(surface), width(width), height(height)
+    VulkanSwapChain::VulkanSwapChain(VulkanDriver& driver, Config config)
+        : SwapChain(config), driver(driver), device(*driver.GetDevice())
     {
         CreateSurface();
         CheckPresentSupport();
@@ -121,14 +120,18 @@ namespace Explosion::RHI {
         return vkPresentMode;
     }
 
-    const std::vector<VulkanImage*>& VulkanSwapChain::GetColorAttachments()
+    std::vector<Image*> VulkanSwapChain::GetColorAttachments()
     {
-        return colorAttachments;
+        std::vector<Image*> result(colorAttachments.size());
+        for (auto& colorAttachment : colorAttachments) {
+            result.emplace_back(static_cast<Image*>(colorAttachment));
+        }
+        return result;
     }
 
     void VulkanSwapChain::CreateSurface()
     {
-        if (!CreatePlatformSurface(device.GetVkInstance(), surface, vkSurface)) {
+        if (!CreatePlatformSurface(device.GetVkInstance(), config.surface, vkSurface)) {
             throw std::runtime_error("failed to create vulkan surface");
         }
     }
@@ -170,7 +173,7 @@ namespace Explosion::RHI {
         if (vkSurfaceCapabilities.currentExtent.width != UINT32_MAX) {
             vkExtent = vkSurfaceCapabilities.currentExtent;
         } else {
-            VkExtent2D extent = { width, height };
+            VkExtent2D extent = { config.width, config.height };
             extent.width = std::max(vkSurfaceCapabilities.minImageExtent.width, std::min(vkSurfaceCapabilities.maxImageExtent.width, extent.width));
             extent.height = std::max(vkSurfaceCapabilities.minImageExtent.height, std::min(vkSurfaceCapabilities.maxImageExtent.height, extent.height));
             vkExtent = extent;

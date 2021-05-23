@@ -4,7 +4,6 @@
 
 #include <cstring>
 #include <stdexcept>
-#include <utility>
 
 #include <Explosion/RHI/Vulkan/VulkanBuffer.h>
 #include <Explosion/RHI/Vulkan/VulkanDriver.h>
@@ -13,7 +12,7 @@
 
 namespace Explosion::RHI {
     VulkanBuffer::VulkanBuffer(VulkanDriver& driver, Config config)
-        : driver(driver), device(*driver.GetDevice()), config(std::move(config))
+        : Buffer(config), driver(driver), device(*driver.GetDevice())
     {
         CreateBuffer();
         AllocateMemory();

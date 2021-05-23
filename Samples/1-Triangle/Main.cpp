@@ -150,8 +150,8 @@ protected:
     {
         swapChain->DoFrame([this](uint32_t imageIdx, VulkanSignal* imageReadySignal, VulkanSignal* frameFinishedSignal) -> void {
             auto* commandBuffer = driver->CreateGpuRes<VulkanCommandBuffer>();
-            commandBuffer->EncodeCommands([imageIdx, this](CommandEncoder* encoder) -> void {
-                CommandEncoder::RenderPassBeginInfo beginInfo {};
+            commandBuffer->EncodeCommands([imageIdx, this](VulkanCommandEncoder* encoder) -> void {
+                VulkanCommandEncoder::RenderPassBeginInfo beginInfo {};
                 beginInfo.frameBuffer = frameBuffers[imageIdx];
                 beginInfo.renderArea = { 0, 0, GetWidth(), GetHeight() };
                 beginInfo.clearValue = { 0.f, 0.f, 0.f, 1.f };

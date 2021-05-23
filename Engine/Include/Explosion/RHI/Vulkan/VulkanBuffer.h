@@ -9,27 +9,22 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Explosion/RHI/Common/Enum.h>
+#include <Explosion/RHI/Common/Buffer.h>
 #include <Explosion/RHI/Vulkan/VulkanUtils.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
 
-    class VulkanBuffer {
+    class VulkanBuffer : public Buffer {
     public:
-        struct Config {
-            uint32_t size;
-            BufferUsageFlags usages;
-            MemoryPropertyFlags memoryProperties;
-        };
-
         VulkanBuffer(VulkanDriver& driver, Config config);
-        ~VulkanBuffer();
-        uint32_t GetSize();
+        ~VulkanBuffer() override;
+        uint32_t GetSize() override;
+        void UpdateData(void* data) override;
+
         const VkBuffer& GetVkBuffer();
         const VkDeviceMemory& GetVkDeviceMemory();
-        void UpdateData(void* data);
 
     private:
         void DestroyBuffer();
@@ -40,7 +35,6 @@ namespace Explosion::RHI {
 
         VulkanDriver& driver;
         VulkanDevice& device;
-        Config config;
         VkBuffer vkBuffer = VK_NULL_HANDLE;
         VkDeviceMemory vkDeviceMemory = VK_NULL_HANDLE;
     };

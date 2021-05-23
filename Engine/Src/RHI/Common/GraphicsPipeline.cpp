@@ -5,7 +5,7 @@
 #include <Explosion/RHI/Common/GraphicsPipeline.h>
 
 namespace Explosion::RHI {
-    GraphicsPipeline::GraphicsPipeline() = default;
+    GraphicsPipeline::GraphicsPipeline(Config config) : config(config) {}
 
     GraphicsPipeline::~GraphicsPipeline() = default;
 }

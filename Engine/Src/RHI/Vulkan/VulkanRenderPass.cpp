@@ -10,7 +10,7 @@
 
 namespace Explosion::RHI {
     VulkanRenderPass::VulkanRenderPass(VulkanDriver& driver, Config config)
-        : driver(driver), device(*driver.GetDevice()), config(std::move(config))
+        : RenderPass(std::move(config)), driver(driver), device(*driver.GetDevice())
     {
         CreateRenderPass();
     }

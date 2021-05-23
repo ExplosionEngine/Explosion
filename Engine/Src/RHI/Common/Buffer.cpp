@@ -7,5 +7,5 @@
 namespace Explosion::RHI {
     Buffer::~Buffer() = default;
 
-    Buffer::Buffer() = default;
+    Buffer::Buffer(Buffer::Config config) : config(config) {}
 }

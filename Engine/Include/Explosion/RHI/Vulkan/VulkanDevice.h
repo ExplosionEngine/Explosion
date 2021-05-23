@@ -10,13 +10,15 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Explosion/RHI/Common/Device.h>
+
 namespace Explosion::RHI {
     class VulkanDriver;
 
-    class VulkanDevice {
+    class VulkanDevice : public Device {
     public:
         explicit VulkanDevice(VulkanDriver& driver);
-        ~VulkanDevice();
+        ~VulkanDevice() override;
 
         const VkInstance& GetVkInstance();
         const VkPhysicalDevice& GetVkPhysicalDevice();

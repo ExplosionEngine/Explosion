@@ -2,8 +2,6 @@
 // Created by John Kindem on 2021/4/24.
 //
 
-#include <utility>
-
 #include <Explosion/RHI/Vulkan/VulkanImageView.h>
 #include <Explosion/RHI/Vulkan/VulkanDriver.h>
 #include <Explosion/RHI/Vulkan/VulkanImage.h>
@@ -11,7 +9,7 @@
 
 namespace Explosion::RHI {
     VulkanImageView::VulkanImageView(VulkanDriver& driver, Config config)
-        : driver(driver), device(*driver.GetDevice()), config(std::move(config))
+        : ImageView(config), driver(driver), device(*driver.GetDevice())
     {
         CreateImageView();
     }
@@ -21,7 +19,7 @@ namespace Explosion::RHI {
         DestroyImageView();
     }
 
-    VulkanImage* VulkanImageView::GetImage()
+    Image* VulkanImageView::GetImage()
     {
         return config.image;
     }
@@ -37,7 +35,7 @@ namespace Explosion::RHI {
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.pNext = nullptr;
         createInfo.flags = 0;
-        createInfo.image = config.image->GetVkImage();
+        createInfo.image = dynamic_cast<VulkanImage*>(config.image)->GetVkImage();
         createInfo.viewType = VkConvert<ImageViewType, VkImageViewType>(config.type);
         createInfo.format = VkConvert<Format, VkFormat>(config.image->GetConfig().format);
         createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;

@@ -5,13 +5,28 @@
 #ifndef EXPLOSION_RENDERPASS_H
 #define EXPLOSION_RENDERPASS_H
 
+#include <Explosion/RHI/Common/Enum.h>
+
 namespace Explosion::RHI {
     class RenderPass {
     public:
+        struct AttachmentConfig {
+            AttachmentType type;
+            Format format;
+            AttachmentLoadOp loadOp;
+            AttachmentStoreOp storeOp;
+        };
+
+        struct Config {
+            std::vector<AttachmentConfig> attachmentConfigs;
+        };
+
         virtual ~RenderPass();
 
     protected:
-        RenderPass();
+        explicit RenderPass(Config config);
+
+        Config config;
     };
 }
 
