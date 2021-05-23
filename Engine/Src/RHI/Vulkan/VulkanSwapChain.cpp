@@ -61,6 +61,7 @@ namespace Explosion::RHI {
     VulkanSwapChain::~VulkanSwapChain()
     {
         DestroySignals();
+        ClearAttachments();
         DestroySwapChain();
         DestroySurface();
     }
@@ -68,14 +69,14 @@ namespace Explosion::RHI {
     void VulkanSwapChain::DoFrame(const FrameJob& frameJob)
     {
         uint32_t imageIdx;
-        vkAcquireNextImageKHR(device.GetVkDevice(), vkSwapChain, UINT64_MAX, imageReadySignal->GetVkSemaphore(), VK_NULL_HANDLE, &imageIdx);
+        vkAcquireNextImageKHR(device.GetVkDevice(), vkSwapChain, UINT64_MAX, dynamic_cast<VulkanSignal*>(imageReadySignal)->GetVkSemaphore(), VK_NULL_HANDLE, &imageIdx);
 
         frameJob(imageIdx, imageReadySignal, frameFinishedSignal);
 
         VkPresentInfoKHR presentInfo {};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = &frameFinishedSignal->GetVkSemaphore();
+        presentInfo.pWaitSemaphores = &dynamic_cast<VulkanSignal*>(imageReadySignal)->GetVkSemaphore();
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = &vkSwapChain;
         presentInfo.pImageIndices = &imageIdx;
@@ -234,19 +235,26 @@ namespace Explosion::RHI {
         config.usages = FlagsCast(ImageUsageBits::COLOR_ATTACHMENT);
         config.initialLayout = ImageLayout::COLOR_ATTACHMENT_OPTIMAL;
         for (auto i  = 0; i < imageCnt; i++) {
-            colorAttachments[i] = driver.CreateGpuRes<VulkanImage>(images[i], config);
+            colorAttachments[i] = new VulkanImage(driver, images[i], config);
+        }
+    }
+
+    void VulkanSwapChain::ClearAttachments()
+    {
+        for (auto* colorAttachment : colorAttachments) {
+            delete colorAttachment;
         }
     }
 
     void VulkanSwapChain::CreateSignals()
     {
-        imageReadySignal = driver.CreateGpuRes<VulkanSignal>();
-        frameFinishedSignal = driver.CreateGpuRes<VulkanSignal>();
+        imageReadySignal = driver.CreateSignal();
+        frameFinishedSignal = driver.CreateSignal();
     }
 
     void VulkanSwapChain::DestroySignals()
     {
-        driver.DestroyGpuRes<VulkanSignal>(imageReadySignal);
-        driver.DestroyGpuRes<VulkanSignal>(frameFinishedSignal);
+        driver.DestroySignal(imageReadySignal);
+        driver.DestroySignal(frameFinishedSignal);
     }
 }

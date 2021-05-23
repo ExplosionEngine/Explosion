@@ -17,6 +17,9 @@ namespace Explosion::RHI {
         ~VulkanDriver() override;
         VulkanDevice* GetDevice();
 
+        Buffer* CreateBuffer(const Buffer::Config& config) override;
+        void DestroyBuffer(Buffer* buffer) override;
+
         Image* CreateImage(const Image::Config& config) override;
         void DestroyImage(Image* image) override;
 
@@ -37,6 +40,10 @@ namespace Explosion::RHI {
 
         CommandBuffer* CreateCommandBuffer() override;
         void DestroyCommandBuffer(CommandBuffer* commandBuffer) override;
+
+        Signal* CreateSignal() override;
+
+        void DestroySignal(Signal* signal) override;
 
     private:
         std::unique_ptr<VulkanDevice> device;

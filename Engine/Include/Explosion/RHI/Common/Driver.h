@@ -5,6 +5,7 @@
 #ifndef EXPLOSION_DRIVER_H
 #define EXPLOSION_DRIVER_H
 
+#include <Explosion/RHI/Common/Buffer.h>
 #include <Explosion/RHI/Common/Image.h>
 #include <Explosion/RHI/Common/ImageView.h>
 #include <Explosion/RHI/Common/FrameBuffer.h>
@@ -12,11 +13,15 @@
 #include <Explosion/RHI/Common/RenderPass.h>
 #include <Explosion/RHI/Common/GraphicsPipeline.h>
 #include <Explosion/RHI/Common/CommandBuffer.h>
+#include <Explosion/RHI/Common/Signal.h>
 
 namespace Explosion::RHI {
     class Driver {
     public:
         virtual ~Driver();
+
+        virtual Buffer* CreateBuffer(const Buffer::Config& config) = 0;
+        virtual void DestroyBuffer(Buffer* buffer) = 0;
 
         virtual Image* CreateImage(const Image::Config& config) = 0;
         virtual void DestroyImage(Image* image) = 0;
@@ -38,6 +43,9 @@ namespace Explosion::RHI {
 
         virtual CommandBuffer* CreateCommandBuffer() = 0;
         virtual void DestroyCommandBuffer(CommandBuffer* commandBuffer) = 0;
+
+        virtual Signal* CreateSignal() = 0;
+        virtual void DestroySignal(Signal* signal) = 0;
 
     protected:
         Driver();

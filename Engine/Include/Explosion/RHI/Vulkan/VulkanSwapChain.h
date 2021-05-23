@@ -44,6 +44,7 @@ namespace Explosion::RHI {
         void DestroySwapChain();
 
         void FetchAttachments();
+        void ClearAttachments();
 
         void CreateSignals();
         void DestroySignals();
@@ -57,8 +58,8 @@ namespace Explosion::RHI {
         VkPresentModeKHR vkPresentMode;
         VkSwapchainKHR vkSwapChain = VK_NULL_HANDLE;
         std::vector<VulkanImage*> colorAttachments {};
-        VulkanSignal* imageReadySignal;
-        VulkanSignal* frameFinishedSignal;
+        Signal* imageReadySignal;
+        Signal* frameFinishedSignal;
     };
 }
 

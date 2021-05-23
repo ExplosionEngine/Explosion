@@ -2,7 +2,16 @@
 // Created by John Kindem on 2021/3/30.
 //
 
+#include <Explosion/RHI/Vulkan/VulkanBuffer.h>
 #include <Explosion/RHI/Vulkan/VulkanDriver.h>
+#include <Explosion/RHI/Vulkan/VulkanImage.h>
+#include <Explosion/RHI/Vulkan/VulkanImageView.h>
+#include <Explosion/RHI/Vulkan/VulkanFrameBuffer.h>
+#include <Explosion/RHI/Vulkan/VulkanSwapChain.h>
+#include <Explosion/RHI/Vulkan/VulkanRenderPass.h>
+#include <Explosion/RHI/Vulkan/VulkanGraphicsPipeline.h>
+#include <Explosion/RHI/Vulkan/VulkanCommandBuffer.h>
+#include <Explosion/RHI/Vulkan/VulkanSignal.h>
 
 namespace Explosion::RHI {
     VulkanDriver::VulkanDriver() : device(std::make_unique<VulkanDevice>(*this)) {}
@@ -12,5 +21,95 @@ namespace Explosion::RHI {
     VulkanDevice* VulkanDriver::GetDevice()
     {
         return device.get();
+    }
+
+    Buffer* VulkanDriver::CreateBuffer(const Buffer::Config& config)
+    {
+        return static_cast<Buffer*>(new VulkanBuffer(*this, config));
+    }
+
+    void VulkanDriver::DestroyBuffer(Buffer* buffer)
+    {
+        delete buffer;
+    }
+
+    Image* VulkanDriver::CreateImage(const Image::Config& config)
+    {
+        return static_cast<Image*>(new VulkanImage(*this, config));
+    }
+
+    void VulkanDriver::DestroyImage(Image* image)
+    {
+        delete image;
+    }
+
+    ImageView* VulkanDriver::CreateImageView(const ImageView::Config& config)
+    {
+        return static_cast<ImageView*>(new VulkanImageView(*this, config));
+    }
+
+    void VulkanDriver::DestroyImageView(ImageView* imageView)
+    {
+        delete imageView;
+    }
+
+    FrameBuffer* VulkanDriver::CreateFrameBuffer(const FrameBuffer::Config& config)
+    {
+        return static_cast<FrameBuffer*>(new VulkanFrameBuffer(*this, config));
+    }
+
+    void VulkanDriver::DestroyFrameBuffer(FrameBuffer* frameBuffer)
+    {
+        delete frameBuffer;
+    }
+
+    SwapChain* VulkanDriver::CreateSwapChain(const SwapChain::Config& config)
+    {
+        return static_cast<SwapChain*>(new VulkanSwapChain(*this, config));
+    }
+
+    void VulkanDriver::DestroySwapChain(SwapChain* swapChain)
+    {
+        delete swapChain;
+    }
+
+    RenderPass* VulkanDriver::CreateRenderPass(const RenderPass::Config& config)
+    {
+        return static_cast<RenderPass*>(new VulkanRenderPass(*this, config));
+    }
+
+    void VulkanDriver::DestroyRenderPass(RenderPass* renderPass)
+    {
+        delete renderPass;
+    }
+
+    GraphicsPipeline* VulkanDriver::CreateGraphicsPipeline(const GraphicsPipeline::Config& config)
+    {
+        return static_cast<GraphicsPipeline*>(new VulkanGraphicsPipeline(*this, config));
+    }
+
+    void VulkanDriver::DestroyGraphicsPipeline(GraphicsPipeline* graphicsPipeline)
+    {
+        delete graphicsPipeline;
+    }
+
+    CommandBuffer* VulkanDriver::CreateCommandBuffer()
+    {
+        return static_cast<CommandBuffer*>(new VulkanCommandBuffer(*this));
+    }
+
+    void VulkanDriver::DestroyCommandBuffer(CommandBuffer* commandBuffer)
+    {
+        delete commandBuffer;
+    }
+
+    Signal* VulkanDriver::CreateSignal()
+    {
+        return static_cast<Signal*>(new VulkanSignal(*this));
+    }
+
+    void VulkanDriver::DestroySignal(Signal* signal)
+    {
+        delete signal;
     }
 }

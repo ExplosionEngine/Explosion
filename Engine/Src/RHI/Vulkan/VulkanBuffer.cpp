@@ -47,17 +47,17 @@ namespace Explosion::RHI {
                 FlagsCast(BufferUsageBits::TRANSFER_SRC),
                 MemoryPropertyBits::HOST_VISIBLE | MemoryPropertyBits::HOST_COHERENT
             };
-            auto* stagingBuffer = driver.CreateGpuRes<VulkanBuffer>(stagingConfig);
+            auto* stagingBuffer = driver.CreateBuffer(stagingConfig);
             stagingBuffer->UpdateData(data);
             {
-                auto* commandBuffer = driver.CreateGpuRes<VulkanCommandBuffer>();
+                auto* commandBuffer = driver.CreateCommandBuffer();
                 commandBuffer->EncodeCommands([&stagingBuffer, this](auto* encoder) -> void {
                     encoder->CopyBuffer(stagingBuffer, this);
                 });
                 commandBuffer->SubmitNow();
-                driver.DestroyGpuRes<VulkanCommandBuffer>(commandBuffer);
+                driver.DestroyCommandBuffer(commandBuffer);
             }
-            driver.DestroyGpuRes<VulkanBuffer>(stagingBuffer);
+            driver.DestroyBuffer(stagingBuffer);
         } else {
             void* mapped = nullptr;
             vkMapMemory(device.GetVkDevice(), vkDeviceMemory, 0, static_cast<VkDeviceSize>(config.size), 0, &mapped);
