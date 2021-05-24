@@ -124,8 +124,8 @@ namespace Explosion::RHI {
     std::vector<Image*> VulkanSwapChain::GetColorAttachments()
     {
         std::vector<Image*> result(colorAttachments.size());
-        for (auto& colorAttachment : colorAttachments) {
-            result.emplace_back(static_cast<Image*>(colorAttachment));
+        for (uint32_t i = 0; i < colorAttachments.size(); i++) {
+            result[i] = static_cast<Image*>(colorAttachments[i]);
         }
         return result;
     }

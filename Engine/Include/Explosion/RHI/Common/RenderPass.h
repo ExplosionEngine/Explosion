@@ -5,6 +5,8 @@
 #ifndef EXPLOSION_RENDERPASS_H
 #define EXPLOSION_RENDERPASS_H
 
+#include <vector>
+
 #include <Explosion/RHI/Common/Enum.h>
 
 namespace Explosion::RHI {
