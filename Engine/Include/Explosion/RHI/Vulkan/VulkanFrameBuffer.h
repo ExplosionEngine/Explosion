@@ -9,24 +9,18 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Explosion/RHI/Common/FrameBuffer.h>
+
 namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
     class VulkanImageView;
     class VulkanRenderPass;
 
-    class VulkanFrameBuffer {
+    class VulkanFrameBuffer : public FrameBuffer {
     public:
-        struct Config {
-            VulkanRenderPass* renderPass;
-            uint32_t width;
-            uint32_t height;
-            uint32_t layers;
-            std::vector<VulkanImageView*> attachments;
-        };
-
         VulkanFrameBuffer(VulkanDriver& driver, Config config);
-        ~VulkanFrameBuffer();
+        ~VulkanFrameBuffer() override;
         const VkFramebuffer& GetVkFrameBuffer();
 
     private:
@@ -35,7 +29,6 @@ namespace Explosion::RHI {
 
         VulkanDriver& driver;
         VulkanDevice& device;
-        Config config {};
         VkFramebuffer vkFramebuffer = VK_NULL_HANDLE;
     };
 }

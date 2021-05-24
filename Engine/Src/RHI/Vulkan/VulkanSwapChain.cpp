@@ -5,7 +5,6 @@
 #include <stdexcept>
 
 #include <Explosion/RHI/Vulkan/VulkanDriver.h>
-#include <Explosion/RHI/Vulkan/VulkanDevice.h>
 #include <Explosion/RHI/Vulkan/VulkanAdapater.h>
 #include <Explosion/RHI/Vulkan/VulkanImage.h>
 #include <Explosion/RHI/Vulkan/VulkanSwapChain.h>
@@ -48,8 +47,8 @@ namespace {
 }
 
 namespace Explosion::RHI {
-    VulkanSwapChain::VulkanSwapChain(VulkanDriver& driver, void* surface, uint32_t width, uint32_t height)
-        : driver(driver), device(*driver.GetDevice()), surface(surface), width(width), height(height)
+    VulkanSwapChain::VulkanSwapChain(VulkanDriver& driver, Config config)
+        : SwapChain(config), driver(driver), device(*driver.GetDevice())
     {
         CreateSurface();
         CheckPresentSupport();
@@ -62,6 +61,7 @@ namespace Explosion::RHI {
     VulkanSwapChain::~VulkanSwapChain()
     {
         DestroySignals();
+        ClearAttachments();
         DestroySwapChain();
         DestroySurface();
     }
@@ -69,14 +69,14 @@ namespace Explosion::RHI {
     void VulkanSwapChain::DoFrame(const FrameJob& frameJob)
     {
         uint32_t imageIdx;
-        vkAcquireNextImageKHR(device.GetVkDevice(), vkSwapChain, UINT64_MAX, imageReadySignal->GetVkSemaphore(), VK_NULL_HANDLE, &imageIdx);
+        vkAcquireNextImageKHR(device.GetVkDevice(), vkSwapChain, UINT64_MAX, dynamic_cast<VulkanSignal*>(imageReadySignal)->GetVkSemaphore(), VK_NULL_HANDLE, &imageIdx);
 
         frameJob(imageIdx, imageReadySignal, frameFinishedSignal);
 
         VkPresentInfoKHR presentInfo {};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = &frameFinishedSignal->GetVkSemaphore();
+        presentInfo.pWaitSemaphores = &dynamic_cast<VulkanSignal*>(frameFinishedSignal)->GetVkSemaphore();
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = &vkSwapChain;
         presentInfo.pImageIndices = &imageIdx;
@@ -121,14 +121,18 @@ namespace Explosion::RHI {
         return vkPresentMode;
     }
 
-    const std::vector<VulkanImage*>& VulkanSwapChain::GetColorAttachments()
+    std::vector<Image*> VulkanSwapChain::GetColorAttachments()
     {
-        return colorAttachments;
+        std::vector<Image*> result(colorAttachments.size());
+        for (uint32_t i = 0; i < colorAttachments.size(); i++) {
+            result[i] = static_cast<Image*>(colorAttachments[i]);
+        }
+        return result;
     }
 
     void VulkanSwapChain::CreateSurface()
     {
-        if (!CreatePlatformSurface(device.GetVkInstance(), surface, vkSurface)) {
+        if (!CreatePlatformSurface(device.GetVkInstance(), config.surface, vkSurface)) {
             throw std::runtime_error("failed to create vulkan surface");
         }
     }
@@ -170,7 +174,7 @@ namespace Explosion::RHI {
         if (vkSurfaceCapabilities.currentExtent.width != UINT32_MAX) {
             vkExtent = vkSurfaceCapabilities.currentExtent;
         } else {
-            VkExtent2D extent = { width, height };
+            VkExtent2D extent = { config.width, config.height };
             extent.width = std::max(vkSurfaceCapabilities.minImageExtent.width, std::min(vkSurfaceCapabilities.maxImageExtent.width, extent.width));
             extent.height = std::max(vkSurfaceCapabilities.minImageExtent.height, std::min(vkSurfaceCapabilities.maxImageExtent.height, extent.height));
             vkExtent = extent;
@@ -231,19 +235,26 @@ namespace Explosion::RHI {
         config.usages = FlagsCast(ImageUsageBits::COLOR_ATTACHMENT);
         config.initialLayout = ImageLayout::COLOR_ATTACHMENT_OPTIMAL;
         for (auto i  = 0; i < imageCnt; i++) {
-            colorAttachments[i] = driver.CreateGpuRes<VulkanImage>(images[i], config);
+            colorAttachments[i] = new VulkanImage(driver, images[i], config);
+        }
+    }
+
+    void VulkanSwapChain::ClearAttachments()
+    {
+        for (auto* colorAttachment : colorAttachments) {
+            delete colorAttachment;
         }
     }
 
     void VulkanSwapChain::CreateSignals()
     {
-        imageReadySignal = driver.CreateGpuRes<VulkanSignal>();
-        frameFinishedSignal = driver.CreateGpuRes<VulkanSignal>();
+        imageReadySignal = driver.CreateSignal();
+        frameFinishedSignal = driver.CreateSignal();
     }
 
     void VulkanSwapChain::DestroySignals()
     {
-        driver.DestroyGpuRes<VulkanSignal>(imageReadySignal);
-        driver.DestroyGpuRes<VulkanSignal>(frameFinishedSignal);
+        driver.DestroySignal(imageReadySignal);
+        driver.DestroySignal(frameFinishedSignal);
     }
 }

@@ -65,7 +65,7 @@ namespace {
 }
 
 namespace Explosion::RHI {
-    VulkanDevice::VulkanDevice(VulkanDriver& driver) : driver(driver)
+    VulkanDevice::VulkanDevice(VulkanDriver& driver) : Device(), driver(driver)
     {
         PrepareInstanceExtensions();
         PrepareLayers();

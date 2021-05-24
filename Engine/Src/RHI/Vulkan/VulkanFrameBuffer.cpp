@@ -12,7 +12,7 @@
 
 namespace Explosion::RHI {
     VulkanFrameBuffer::VulkanFrameBuffer(VulkanDriver& driver, VulkanFrameBuffer::Config config)
-        : driver(driver), device(*driver.GetDevice()), config(std::move(config))
+        : FrameBuffer(std::move(config)), driver(driver), device(*driver.GetDevice())
     {
         CreateFrameBuffer();
     }
@@ -31,14 +31,14 @@ namespace Explosion::RHI {
     {
         std::vector<VkImageView> attachments(config.attachments.size());
         for (uint32_t i = 0; i < attachments.size(); i++) {
-            attachments[i] = config.attachments[i]->GetVkImageView();
+            attachments[i] = dynamic_cast<VulkanImageView*>(config.attachments[i])->GetVkImageView();
         }
 
         VkFramebufferCreateInfo createInfo {};
         createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         createInfo.pNext = nullptr;
         createInfo.flags = 0;
-        createInfo.renderPass = config.renderPass->GetVkRenderPass();
+        createInfo.renderPass = dynamic_cast<VulkanRenderPass*>(config.renderPass)->GetVkRenderPass();
         createInfo.attachmentCount = attachments.size();
         createInfo.pAttachments = attachments.data();
         createInfo.width = config.width;

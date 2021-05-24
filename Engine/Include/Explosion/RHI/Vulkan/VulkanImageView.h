@@ -9,29 +9,19 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Explosion/RHI/Common/Enum.h>
+#include <Explosion/RHI/Common/ImageView.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
     class VulkanImage;
 
-    class VulkanImageView {
+    class VulkanImageView : public ImageView {
     public:
-        struct Config {
-            VulkanImage* image;
-            ImageViewType type;
-            ImageAspectFlags aspects;
-            uint32_t mipLevelCount;
-            uint32_t baseMipLevel;
-            uint32_t layerCount;
-            uint32_t baseLayer;
-        };
-
         VulkanImageView(VulkanDriver& driver, Config config);
-        ~VulkanImageView();
-        VulkanImage* GetImage();
+        ~VulkanImageView() override;
         const VkImageView& GetVkImageView();
+        Image* GetImage() override;
 
     private:
         void CreateImageView();
@@ -39,7 +29,6 @@ namespace Explosion::RHI {
 
         VulkanDriver& driver;
         VulkanDevice& device;
-        Config config {};
         VkImageView vkImageView = VK_NULL_HANDLE;
     };
 }

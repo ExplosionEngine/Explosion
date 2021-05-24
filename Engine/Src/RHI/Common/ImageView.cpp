@@ -5,7 +5,7 @@
 #include <Explosion/RHI/Common/ImageView.h>
 
 namespace Explosion::RHI {
-    ImageView::~ImageView() = default;
+    ImageView::ImageView(ImageView::Config config) : config(config) {}
 
-    ImageView::ImageView() = default;
+    ImageView::~ImageView() = default;
 }

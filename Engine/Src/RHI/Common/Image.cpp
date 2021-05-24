@@ -5,7 +5,12 @@
 #include <Explosion/RHI/Common/Image.h>
 
 namespace Explosion::RHI {
-    Image::Image() = default;
+    Image::Image(Config config) : config(config) {}
 
     Image::~Image() = default;
+
+    const Image::Config& Image::GetConfig()
+    {
+        return config;
+    }
 }

@@ -8,7 +8,7 @@
 namespace Explosion::RHI {
     class Signal {
     public:
-        ~Signal();
+        virtual ~Signal();
 
     protected:
         Signal();

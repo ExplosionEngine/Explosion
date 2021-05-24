@@ -4,15 +4,15 @@
 
 #include <Application/Application.h>
 #include <Explosion/RHI/Vulkan/VulkanDriver.h>
-#include <Explosion/RHI/Vulkan/VulkanSwapChain.h>
-#include <Explosion/RHI/Vulkan/VulkanRenderPass.h>
-#include <Explosion/RHI/Vulkan/VulkanFrameBuffer.h>
-#include <Explosion/RHI/Vulkan/VulkanGraphicsPipeline.h>
-#include <Explosion/RHI/Vulkan/VulkanImage.h>
-#include <Explosion/RHI/Vulkan/VulkanImageView.h>
-#include <Explosion/RHI/Vulkan/VulkanBuffer.h>
-#include <Explosion/RHI/Vulkan/VulkanSignal.h>
-#include <Explosion/RHI/Vulkan/VulkanCommandBuffer.h>
+#include <Explosion/RHI/Common/SwapChain.h>
+#include <Explosion/RHI/Common/RenderPass.h>
+#include <Explosion/RHI/Common/FrameBuffer.h>
+#include <Explosion/RHI/Common/GraphicsPipeline.h>
+#include <Explosion/RHI/Common/Image.h>
+#include <Explosion/RHI/Common/ImageView.h>
+#include <Explosion/RHI/Common/Buffer.h>
+#include <Explosion/RHI/Common/Signal.h>
+#include <Explosion/RHI/Common/CommandBuffer.h>
 #include <Explosion/Common/FileReader.h>
 
 #ifdef __APPLE__
@@ -47,14 +47,18 @@ protected:
     {
         driver = std::make_unique<VulkanDriver>();
 
+        SwapChain::Config swapChainConfig {};
+        swapChainConfig.width = GetWidth();
+        swapChainConfig.height = GetHeight();
 #ifdef TARGET_OS_MAC
-        swapChain = driver->CreateGpuRes<VulkanSwapChain>(glfwGetCocoaWindow(GetWindow()), GetWidth(), GetHeight());
+        swapChainConfig.surface = static_cast<void*>(glfwGetCocoaWindow(GetWindow()));
 #endif
 #ifdef _WIN32
-        swapChain = driver->CreateGpuRes<VulkanSwapChain>(glfwGetWin32Window(GetWindow()), GetWidth(), GetHeight());
+        swapChainConfig.surface = static_cast<void*>(glfwGetWin32Window(GetWindow()));
 #endif
+        swapChain = driver->CreateSwapChain(swapChainConfig);
 
-        VulkanImageView::Config imageViewConfig {};
+        ImageView::Config imageViewConfig {};
         imageViewConfig.type = ImageViewType::VIEW_2D;
         imageViewConfig.mipLevelCount = 1;
         imageViewConfig.baseMipLevel = 0;
@@ -64,19 +68,19 @@ protected:
         imageViews.resize(swapChain->GetColorAttachmentCount());
         for (uint32_t i = 0; i < imageViews.size(); i++) {
             imageViewConfig.image = swapChain->GetColorAttachments()[i];
-            imageViews[i] = driver->CreateGpuRes<VulkanImageView>(imageViewConfig);
+            imageViews[i] = driver->CreateImageView(imageViewConfig);
         }
         
-        VulkanRenderPass::Config renderPassConfig {};
+        RenderPass::Config renderPassConfig {};
         renderPassConfig.attachmentConfigs = {{
             AttachmentType::SWAP_CHAIN_COLOR_ATTACHMENT,
             swapChain->GetSurfaceFormat(),
             AttachmentLoadOp::CLEAR,
             AttachmentStoreOp::STORE
         }};
-        renderPass = driver->CreateGpuRes<VulkanRenderPass>(renderPassConfig);
+        renderPass = driver->CreateRenderPass(renderPassConfig);
 
-        VulkanFrameBuffer::Config frameBufferConfig {};
+        FrameBuffer::Config frameBufferConfig {};
         frameBufferConfig.renderPass = renderPass;
         frameBufferConfig.width = GetWidth();
         frameBufferConfig.height = GetHeight();
@@ -84,10 +88,10 @@ protected:
         frameBuffers.resize(swapChain->GetColorAttachmentCount());
         for (uint32_t i = 0; i < frameBuffers.size(); i++) {
             frameBufferConfig.attachments = { imageViews[i] };
-            frameBuffers[i] = driver->CreateGpuRes<VulkanFrameBuffer>(frameBufferConfig);
+            frameBuffers[i] = driver->CreateFrameBuffer(frameBufferConfig);
         }
 
-        VulkanGraphicsPipeline::Config pipelineConfig {};
+        GraphicsPipeline::Config pipelineConfig {};
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.shaderConfig.shaderModules = {
             {ShaderStageBits::VERTEX,   FileReader::Read("1-Triangle-Vertex.spv") },
@@ -107,7 +111,7 @@ protected:
         pipelineConfig.rasterizerConfig = { false, false, FlagsCast(CullModeBits::NONE), FrontFace::CLOCK_WISE };
         pipelineConfig.depthStencilConfig = { false, false, false };
         pipelineConfig.colorBlendConfig.enabled = false;
-        pipeline = driver->CreateGpuRes<VulkanGraphicsPipeline>(pipelineConfig);
+        pipeline = driver->CreateGraphicsPipeline(pipelineConfig);
 
         vertices = {
             { 0.f, -.5f, 0.f },
@@ -117,39 +121,39 @@ protected:
         indices = {
             0, 1, 2
         };
-        VulkanBuffer::Config bufferConfig {};
+        Buffer::Config bufferConfig {};
         bufferConfig.size = sizeof(Vertex) * vertices.size();
         bufferConfig.usages = BufferUsageBits::VERTEX_BUFFER | BufferUsageBits::TRANSFER_DST;
         bufferConfig.memoryProperties = FlagsCast(MemoryPropertyBits::DEVICE_LOCAL);
-        vertexBuffer = driver->CreateGpuRes<VulkanBuffer>(bufferConfig);
+        vertexBuffer = driver->CreateBuffer(bufferConfig);
         vertexBuffer->UpdateData(vertices.data());
 
         bufferConfig.size = sizeof(Index) * indices.size();
         bufferConfig.usages = BufferUsageBits::INDEX_BUFFER | BufferUsageBits::TRANSFER_DST;
         bufferConfig.memoryProperties = FlagsCast(MemoryPropertyBits::DEVICE_LOCAL);
-        indexBuffer = driver->CreateGpuRes<VulkanBuffer>(bufferConfig);
+        indexBuffer = driver->CreateBuffer(bufferConfig);
         indexBuffer->UpdateData(indices.data());
     }
 
     void OnStop() override
     {
-        driver->DestroyGpuRes<VulkanBuffer>(vertexBuffer);
-        driver->DestroyGpuRes<VulkanBuffer>(indexBuffer);
-        driver->DestroyGpuRes<VulkanGraphicsPipeline>(pipeline);
+        driver->DestroyBuffer(vertexBuffer);
+        driver->DestroyBuffer(indexBuffer);
+        driver->DestroyGraphicsPipeline(pipeline);
         for (auto* frameBuffer : frameBuffers) {
-            driver->DestroyGpuRes<VulkanFrameBuffer>(frameBuffer);
+            driver->DestroyFrameBuffer(frameBuffer);
         }
-        driver->DestroyGpuRes<VulkanRenderPass>(renderPass);
+        driver->DestroyRenderPass(renderPass);
         for (auto* imageView : imageViews) {
-            driver->DestroyGpuRes<VulkanImageView>(imageView);
+            driver->DestroyImageView(imageView);
         }
-        driver->DestroyGpuRes<VulkanSwapChain>(swapChain);
+        driver->DestroySwapChain(swapChain);
     }
 
     void OnDrawFrame() override
     {
-        swapChain->DoFrame([this](uint32_t imageIdx, VulkanSignal* imageReadySignal, VulkanSignal* frameFinishedSignal) -> void {
-            auto* commandBuffer = driver->CreateGpuRes<VulkanCommandBuffer>();
+        swapChain->DoFrame([this](uint32_t imageIdx, Signal* imageReadySignal, Signal* frameFinishedSignal) -> void {
+            auto* commandBuffer = driver->CreateCommandBuffer();
             commandBuffer->EncodeCommands([imageIdx, this](CommandEncoder* encoder) -> void {
                 CommandEncoder::RenderPassBeginInfo beginInfo {};
                 beginInfo.frameBuffer = frameBuffers[imageIdx];
@@ -175,14 +179,14 @@ private:
     std::vector<Vertex> vertices;
     std::vector<Index> indices;
 
-    std::unique_ptr<VulkanDriver> driver;
-    VulkanSwapChain* swapChain = nullptr;
-    std::vector<VulkanImageView*> imageViews;
-    VulkanRenderPass* renderPass = nullptr;
-    std::vector<VulkanFrameBuffer*> frameBuffers;
-    VulkanGraphicsPipeline* pipeline = nullptr;
-    VulkanBuffer* vertexBuffer = nullptr;
-    VulkanBuffer* indexBuffer = nullptr;
+    std::unique_ptr<Driver> driver;
+    SwapChain* swapChain = nullptr;
+    std::vector<ImageView*> imageViews;
+    RenderPass* renderPass = nullptr;
+    std::vector<FrameBuffer*> frameBuffers;
+    GraphicsPipeline* pipeline = nullptr;
+    Buffer* vertexBuffer = nullptr;
+    Buffer* indexBuffer = nullptr;
 };
 
 int main(int argc, char* argv[])

@@ -5,7 +5,7 @@
 #include <Explosion/RHI/Common/SwapChain.h>
 
 namespace Explosion::RHI {
-    SwapChain::SwapChain() = default;
+    SwapChain::SwapChain(Config config) : config(config) {}
 
     SwapChain::~SwapChain() = default;
 }

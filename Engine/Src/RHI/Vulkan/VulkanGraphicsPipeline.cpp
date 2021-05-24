@@ -14,7 +14,7 @@
 
 namespace Explosion::RHI {
     VulkanGraphicsPipeline::VulkanGraphicsPipeline(VulkanDriver& driver, Config config)
-        : driver(driver), device(*driver.GetDevice()), config(std::move(config))
+        : GraphicsPipeline(config), driver(driver), device(*driver.GetDevice())
     {
         CreateDescriptorPool();
         CreateDescriptorSetLayout();
@@ -315,7 +315,7 @@ namespace Explosion::RHI {
         graphicsPipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
         graphicsPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
         graphicsPipelineCreateInfo.layout = vkPipelineLayout;
-        graphicsPipelineCreateInfo.renderPass = config.renderPass->GetVkRenderPass();
+        graphicsPipelineCreateInfo.renderPass = dynamic_cast<VulkanRenderPass*>(config.renderPass)->GetVkRenderPass();
         graphicsPipelineCreateInfo.subpass = 0;
         graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
         graphicsPipelineCreateInfo.basePipelineIndex = -1;

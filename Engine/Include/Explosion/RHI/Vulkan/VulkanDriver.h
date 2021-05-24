@@ -7,26 +7,43 @@
 
 #include <memory>
 
+#include <Explosion/RHI/Common/Driver.h>
 #include <Explosion/RHI/Vulkan/VulkanDevice.h>
 
 namespace Explosion::RHI {
-    class VulkanDriver {
+    class VulkanDriver : public Driver {
     public:
         VulkanDriver();
-        ~VulkanDriver();
+        ~VulkanDriver() override;
         VulkanDevice* GetDevice();
 
-        template <typename Type, typename... Args>
-        Type* CreateGpuRes(const Args&... args)
-        {
-            return new Type(*this, args...);
-        }
+        Buffer* CreateBuffer(const Buffer::Config& config) override;
+        void DestroyBuffer(Buffer* buffer) override;
 
-        template <typename Type>
-        void DestroyGpuRes(Type* res)
-        {
-            delete res;
-        }
+        Image* CreateImage(const Image::Config& config) override;
+        void DestroyImage(Image* image) override;
+
+        ImageView* CreateImageView(const ImageView::Config& config) override;
+        void DestroyImageView(ImageView* imageView) override;
+
+        FrameBuffer* CreateFrameBuffer(const FrameBuffer::Config& config) override;
+        void DestroyFrameBuffer(FrameBuffer* frameBuffer) override;
+
+        SwapChain* CreateSwapChain(const SwapChain::Config& config) override;
+        void DestroySwapChain(SwapChain* swapChain) override;
+
+        RenderPass* CreateRenderPass(const RenderPass::Config& config) override;
+        void DestroyRenderPass(RenderPass* renderPass) override;
+
+        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipeline::Config& config) override;
+        void DestroyGraphicsPipeline(GraphicsPipeline* graphicsPipeline) override;
+
+        CommandBuffer* CreateCommandBuffer() override;
+        void DestroyCommandBuffer(CommandBuffer* commandBuffer) override;
+
+        Signal* CreateSignal() override;
+
+        void DestroySignal(Signal* signal) override;
 
     private:
         std::unique_ptr<VulkanDevice> device;

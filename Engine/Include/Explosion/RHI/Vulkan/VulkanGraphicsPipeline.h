@@ -9,110 +9,17 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Explosion/RHI/Common/Enum.h>
+#include <Explosion/RHI/Common/GraphicsPipeline.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
     class VulkanRenderPass;
 
-    class VulkanGraphicsPipeline {
+    class VulkanGraphicsPipeline : public GraphicsPipeline {
     public:
-        struct ShaderModule {
-            ShaderStageBits stage;
-            std::vector<char> code;
-        };
-
-        struct ShaderConfig {
-            std::vector<ShaderModule> shaderModules;
-        };
-
-        struct VertexBinding {
-            uint32_t binding;
-            uint32_t stride;
-            VertexInputRate inputRate;
-        };
-
-        struct VertexAttribute {
-            uint32_t binding;
-            uint32_t location;
-            Format format;
-            uint32_t offset;
-        };
-
-        struct VertexConfig {
-            std::vector<VertexBinding> vertexBindings;
-            std::vector<VertexAttribute> vertexAttributes;
-        };
-
-        struct DescriptorAttribute {
-            uint32_t binding;
-            DescriptorType type;
-            VkShaderStageFlags shaderStages;
-        };
-
-        struct DescriptorPoolSize {
-            DescriptorType type;
-            uint32_t count;
-        };
-
-        struct DescriptorConfig {
-            std::vector<DescriptorAttribute> descriptorAttributes;
-            std::vector<DescriptorPoolSize> descriptorPoolSizes;
-            uint32_t maxSets;
-        };
-
-        struct Viewport {
-            float x;
-            float y;
-            float width;
-            float height;
-            float minDepth;
-            float maxDepth;
-        };
-
-        struct Scissor {
-            int32_t x;
-            int32_t y;
-            uint32_t width;
-            uint32_t height;
-        };
-
-        struct ViewportScissorConfig {
-            Viewport viewport;
-            Scissor scissor;
-        };
-
-        struct RasterizerConfig {
-            bool depthClamp;
-            bool discard;
-            CullModeFlags cullModes;
-            FrontFace frontFace;
-        };
-
-        struct DepthStencilConfig {
-            bool depthTest;
-            bool depthWrite;
-            bool stencilTest;
-        };
-
-        struct ColorBlendConfig {
-            bool enabled;
-        };
-
-        struct Config {
-            VulkanRenderPass* renderPass;
-            ShaderConfig shaderConfig;
-            VertexConfig vertexConfig;
-            DescriptorConfig descriptorConfig;
-            ViewportScissorConfig viewportScissorConfig;
-            RasterizerConfig rasterizerConfig;
-            DepthStencilConfig depthStencilConfig;
-            ColorBlendConfig colorBlendConfig;
-        };
-
         explicit VulkanGraphicsPipeline(VulkanDriver& driver, Config config);
-        ~VulkanGraphicsPipeline();
+        ~VulkanGraphicsPipeline() override;
         const VkPipelineLayout& GetVkPipelineLayout();
         const VkPipeline& GetVkPipeline();
         const VkDescriptorSetLayout& GetVkDescriptorSetLayout();
@@ -135,7 +42,6 @@ namespace Explosion::RHI {
 
         VulkanDriver& driver;
         VulkanDevice& device;
-        Config config {};
         VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
         VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
         VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;

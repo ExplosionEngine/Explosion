@@ -7,32 +7,19 @@
 
 #include <vulkan/vulkan.h>
 
-#include <Explosion/RHI/Common/Enum.h>
+#include <Explosion/RHI/Common/Image.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
 
-    class VulkanImage {
+    class VulkanImage : public Image {
     public:
-        struct Config {
-            ImageType imageType;
-            Format format;
-            uint32_t width;
-            uint32_t height;
-            uint32_t depth;
-            uint32_t mipLevels;
-            uint32_t layers;
-            ImageLayout initialLayout;
-            BufferUsageFlags usages;
-        };
-
         VulkanImage(VulkanDriver& driver, Config config);
         explicit VulkanImage(VulkanDriver& driver, const VkImage& vkImage, Config config);
-        ~VulkanImage();
+        ~VulkanImage() override;
 
         const VkImage& GetVkImage();
-        const Config& GetConfig();
 
     private:
         void CreateImage();
@@ -40,7 +27,6 @@ namespace Explosion::RHI {
 
         VulkanDriver& driver;
         VulkanDevice& device;
-        Config config {};
         bool fromSwapChain = false;
         VkImage vkImage = VK_NULL_HANDLE;
     };

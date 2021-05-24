@@ -2,21 +2,19 @@
 // Created by John Kindem on 2021/4/23 0023.
 //
 
-#include <utility>
-
 #include <Explosion/RHI/Vulkan/VulkanDriver.h>
 #include <Explosion/RHI/Vulkan/VulkanImage.h>
 #include <Explosion/RHI/Vulkan/VulkanAdapater.h>
 
 namespace Explosion::RHI {
     VulkanImage::VulkanImage(VulkanDriver& driver, Config config)
-        : driver(driver), device(*driver.GetDevice()), fromSwapChain(false), config(std::move(config))
+        : Image(config), driver(driver), device(*driver.GetDevice()), fromSwapChain(false)
     {
         CreateImage();
     }
 
     VulkanImage::VulkanImage(VulkanDriver& driver, const VkImage& vkImage, Config config)
-        : driver(driver), device(*driver.GetDevice()), fromSwapChain(true), vkImage(vkImage), config(std::move(config)) {}
+        : Image(config), driver(driver), device(*driver.GetDevice()), fromSwapChain(true), vkImage(vkImage) {}
 
     VulkanImage::~VulkanImage()
     {
@@ -29,11 +27,6 @@ namespace Explosion::RHI {
     const VkImage& VulkanImage::GetVkImage()
     {
         return vkImage;
-    }
-
-    const VulkanImage::Config& VulkanImage::GetConfig()
-    {
-        return config;
     }
 
     void VulkanImage::CreateImage()
