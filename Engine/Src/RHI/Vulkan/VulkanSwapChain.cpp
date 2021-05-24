@@ -76,7 +76,7 @@ namespace Explosion::RHI {
         VkPresentInfoKHR presentInfo {};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = &dynamic_cast<VulkanSignal*>(imageReadySignal)->GetVkSemaphore();
+        presentInfo.pWaitSemaphores = &dynamic_cast<VulkanSignal*>(frameFinishedSignal)->GetVkSemaphore();
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = &vkSwapChain;
         presentInfo.pImageIndices = &imageIdx;
