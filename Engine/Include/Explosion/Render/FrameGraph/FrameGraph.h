@@ -47,11 +47,13 @@ namespace Explosion {
         FgRenderPassBase* renderPass;
     };
 
-    class FrameGraph : public NonCopy {
+    class FrameGraph {
     public:
         FrameGraph() = default;
 
-        ~FrameGraph() override = default;
+        ~FrameGraph() = default;
+
+        EXPLOSION_NON_COPY(FrameGraph);
 
         template<typename Data, typename Setup, typename Execute>
         void AddCallbackPass(const char* name, Setup &&s, Execute &&e)
@@ -66,8 +68,11 @@ namespace Explosion {
 
         FrameGraph& Execute(RHI::Driver&);
 
-        using PassVector = std::vector<std::unique_ptr<FgRenderPassBase>>;
-        using ResourceVector = std::vector<std::unique_ptr<FgVirtualResource>>;
+        using PassPtr = std::unique_ptr<FgRenderPassBase>;
+        using ResPtr = std::unique_ptr<FgVirtualResource>;
+
+        using PassVector = std::vector<PassPtr>;
+        using ResourceVector = std::vector<ResPtr>;
 
         [[nodiscard]] const PassVector& GetPasses() const { return passes; }
 
@@ -81,7 +86,11 @@ namespace Explosion {
             FgNode* to;
         };
 
-        void Cull();
+        using PassIter = PassVector::const_iterator;
+
+        void PerformCulling();
+
+        PassIter ReOrderRenderPass();
 
         friend class FrameGraphBuilder;
         PassVector passes;

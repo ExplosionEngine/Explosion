@@ -76,8 +76,15 @@ namespace Explosion {
 
     class FgVirtualResource : public FgNode {
     public:
-        explicit FgVirtualResource(const char* name) : FgNode(name) {}
+        explicit FgVirtualResource(const char* name) : FgNode(name), isVirtual(false) {}
         ~FgVirtualResource() override = default;
+
+        virtual void DeVirtualize() {}
+
+        virtual void Release() {}
+
+    private:
+        bool isVirtual;
     };
 
     using PixelFormat = uint32_t; // TODO: replace me with rhi pixel format
@@ -91,6 +98,10 @@ namespace Explosion {
             uint32_t height;
             PixelFormat format;
         };
+
+        void DeVirtualize() override;
+
+        void Release() override;
 
         using SubResource = FgTextureSubResource;
         static constexpr bool HAS_SUB_RES = true;

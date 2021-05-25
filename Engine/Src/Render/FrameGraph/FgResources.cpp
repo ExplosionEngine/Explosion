@@ -18,4 +18,14 @@ namespace Explosion {
         RefObject::RemoveRef();
     }
 
+    void FgTexture::DeVirtualize()
+    {
+
+    }
+
+    void FgTexture::Release()
+    {
+
+    }
+
 }

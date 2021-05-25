@@ -6,6 +6,8 @@
 #include <Explosion/Render/FrameGraph/FrameGraph.h>
 #include <Explosion/RHI/Vulkan/VulkanDriver.h>
 
+#include <algorithm>
+
 namespace Explosion {
 
     FgHandle FrameGraphBuilder::Read(FgHandle handle)
@@ -41,7 +43,10 @@ namespace Explosion {
 
     FrameGraph& FrameGraph::Compile()
     {
-        Cull();
+        PerformCulling();
+
+        auto end = ReOrderRenderPass();
+
         return *this;
     }
 
@@ -71,7 +76,7 @@ namespace Explosion {
      *     decrement refCount of resources tha it reads
      *     Add them to the satck when refCount == 0
      */
-    void FrameGraph::Cull()
+    void FrameGraph::PerformCulling()
     {
         for (auto& edge : edges) {
             edge.from->AddRef();
@@ -94,5 +99,16 @@ namespace Explosion {
             }
         }
     }
+
+    /**
+     * Do not re-order during compilation, with stable_partition order of the elements is preserved.
+     */
+    FrameGraph::PassIter FrameGraph::ReOrderRenderPass()
+    {
+        return std::stable_partition(passes.begin(), passes.end(),[](PassPtr & pass) {
+            return pass->IsActive();
+        });
+    }
+
 
 }
