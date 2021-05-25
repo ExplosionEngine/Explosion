@@ -2,9 +2,16 @@
 <center>
     <div><img width="800" src="./Docs/Img/logo.png" alt="Explosion Logo"/></div>
     <div>
-        <img src="https://img.shields.io/github/workflow/status/ExplosionEngine/Explosion/CMake?style=for-the-badge" alt="Build Status"/>
+        <a href="https://app.codacy.com/gh/ExplosionEngine/Explosion/dashboard?branch=master">
+            <img src="https://img.shields.io/codacy/grade/98afe27fd39b4b39b4c6acd8361e6d02?style=for-the-badge" alt="Codacy Grade"/>
+        </a>
+        <a href="https://github.com/ExplosionEngine/Explosion/actions">
+            <img src="https://img.shields.io/github/workflow/status/ExplosionEngine/Explosion/CMake?style=for-the-badge" alt="Build Status"/>
+        </a>
+        <a href="https://github.com/ExplosionEngine/Explosion/blob/master/LICENSE">
+            <img src="https://img.shields.io/github/license/ExplosionEngine/Explosion?style=for-the-badge" alt="License"/>
+        </a>
         <img src="https://img.shields.io/github/commit-activity/m/ExplosionEngine/Explosion?style=for-the-badge" alt="Commit Activity"/>
-        <img src="https://img.shields.io/github/license/ExplosionEngine/Explosion?style=for-the-badge" alt="License"/>
         <img src="https://img.shields.io/github/languages/code-size/ExplosionEngine/Explosion?style=for-the-badge" alt="Code Size"/>
     </div>
 </center>
