@@ -28,9 +28,6 @@ namespace Explosion::RHI {
         VkShaderModule CreateShaderModule(const std::vector<char>& code);
         void DestroyShaderModule(const VkShaderModule& shaderModule);
 
-        void CreateDescriptorPool();
-        void DestroyDescriptorPool();
-
         void CreateDescriptorSetLayout();
         void DestroyDescriptorSetLayout();
 
@@ -42,7 +39,6 @@ namespace Explosion::RHI {
 
         VulkanDriver& driver;
         VulkanDevice& device;
-        VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
         VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
         VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
         VkPipeline vkPipeline = VK_NULL_HANDLE;

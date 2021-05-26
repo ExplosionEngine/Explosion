@@ -103,9 +103,7 @@ protected:
         pipelineConfig.vertexConfig.vertexAttributes = {
             { 0, 0, Format::R32_G32_B32_FLOAT, static_cast<uint32_t>(offsetof(Vertex, position)) },
         };
-        pipelineConfig.descriptorConfig.descriptorPoolSizes = {};
         pipelineConfig.descriptorConfig.descriptorAttributes = {};
-        pipelineConfig.descriptorConfig.maxSets = 0;
         pipelineConfig.viewportScissorConfig.viewport = { 0, 0, static_cast<float>(GetWidth()), static_cast<float>(GetHeight()), 0, 1.0 };
         pipelineConfig.viewportScissorConfig.scissor = { 0, 0, GetWidth(), GetHeight() };
         pipelineConfig.rasterizerConfig = { false, false, FlagsCast(CullModeBits::NONE), FrontFace::CLOCK_WISE };

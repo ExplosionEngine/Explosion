@@ -42,8 +42,10 @@ namespace Explosion::RHI {
         void DestroyCommandBuffer(CommandBuffer* commandBuffer) override;
 
         Signal* CreateSignal() override;
-
         void DestroySignal(Signal* signal) override;
+
+        DescriptorPool* CreateDescriptorPool(const DescriptorPool::Config& config) override;
+        void DestroyDescriptorPool(DescriptorPool* descriptorPool) override;
 
     private:
         std::unique_ptr<VulkanDevice> device;
