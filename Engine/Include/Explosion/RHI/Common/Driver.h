@@ -15,6 +15,7 @@
 #include <Explosion/RHI/Common/CommandBuffer.h>
 #include <Explosion/RHI/Common/Signal.h>
 #include <Explosion/RHI/Common/DescriptorPool.h>
+#include <Explosion/RHI/Common/DescriptorSet.h>
 
 namespace Explosion::RHI {
     class Driver {
@@ -50,6 +51,9 @@ namespace Explosion::RHI {
 
         virtual DescriptorPool* CreateDescriptorPool(const DescriptorPool::Config& config) = 0;
         virtual void DestroyDescriptorPool(DescriptorPool* descriptorPool) = 0;
+
+        virtual DescriptorSet* AllocateDescriptorSet(DescriptorPool* descriptorPool, GraphicsPipeline* pipeline) = 0;
+        virtual void FreeDescriptorSet(DescriptorSet* descriptorSet) = 0;
 
     protected:
         Driver();

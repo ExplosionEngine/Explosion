@@ -47,6 +47,9 @@ namespace Explosion::RHI {
         DescriptorPool* CreateDescriptorPool(const DescriptorPool::Config& config) override;
         void DestroyDescriptorPool(DescriptorPool* descriptorPool) override;
 
+        DescriptorSet* AllocateDescriptorSet(DescriptorPool* descriptorPool, GraphicsPipeline* pipeline) override;
+        void FreeDescriptorSet(DescriptorSet* descriptorSet) override;
+
     private:
         std::unique_ptr<VulkanDevice> device;
     };
