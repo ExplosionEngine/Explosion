@@ -21,14 +21,18 @@ elseif (UNIX AND NOT APPLE)
     set(PLATFORM_SOURCES Src/RHI/Vulkan/Platform/VulkanLinux.cpp)
 endif()
 
-file(GLOB_RECURSE ENGINE_SOURCES Src/*.cpp)
-add_library(explosion ${ENGINE_SOURCES} ${PLATFORM_SOURCES})
-
-target_include_directories(explosion PUBLIC Include)
 if (APPLE)
-    target_link_libraries(explosion "-framework Cocoa")
+    set(PLATFORM_LIBS "-framework Cocoa")
+else()
+    set(PLATFORM_LIBS "")
 endif()
-target_link_libraries(explosion ${Vulkan_LIBRARIES})
+file(GLOB_RECURSE ENGINE_SOURCES Src/*.cpp)
+exp_add_library(
+    NAME explosion
+    SRCS ${ENGINE_SOURCES} ${PLATFORM_SOURCES}
+    PUBLIC_INC_DIRS Include
+    LIBS ${Vulkan_LIBRARIES} ${PLATFORM_LIBS}
+)
 
 # Unit Test
 add_subdirectory(Test)
