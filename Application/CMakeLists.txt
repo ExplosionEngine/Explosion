@@ -6,6 +6,9 @@ else()
 endif()
 
 file(GLOB APPLICATION_SOURCES Src/*.cpp)
-add_library(application ${APPLICATION_SOURCES})
-target_include_directories(application PUBLIC Include ${Vulkan_INCLUDE_DIRS})
-target_link_libraries(application glfw ${Vulkan_LIBRARIES})
+exp_add_library(
+    NAME application
+    SRCS ${APPLICATION_SOURCES}
+    PUBLIC_INC_DIRS Include ${Vulkan_INCLUDE_DIRS}
+    LIBS glfw ${Vulkan_LIBRARIES}
+)
