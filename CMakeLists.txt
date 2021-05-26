@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 include(cmake/Explosion.cmake)
 
-option(CMAKE_VERBOSE_INFO "verbose info for cmake debug" ON)
-option(BUILD_TEST "Build Test" ON)
+option(EXP_VERBOSE_INFO "verbose info for cmake debug" ON)
+option(EXP_BUILD_TEST "build test" ON)
 
 if (NOT DEFINED ${CMAKE_BUILD_TYPE})
     set(CMAKE_BUILD_TYPE Debug)
@@ -27,8 +27,8 @@ include(GenerateExportHeader)
 
 include_directories(${GEN_PRE_DIR})
 
-# options
-if (${BUILD_TEST})
+if (${EXP_BUILD_TEST})
+    message("-- enable testing")
     enable_testing()
 endif()
 

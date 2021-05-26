@@ -7,7 +7,7 @@ function(exp_add_executable)
         ${ARGN}
     )
 
-    if (CMAKE_VERBOSE_INFO)
+    if (${EXP_VERBOSE_INFO})
         message("")
         message("[exp_add_executable begin]")
         message("-name: ${PARAMS_NAME}")
@@ -27,7 +27,7 @@ function(exp_add_executable)
 endfunction()
 
 function(exp_add_test)
-    if (NOT BUILD_TEST)
+    if (NOT ${EXP_BUILD_TEST})
         return()
     endif()
 
@@ -39,7 +39,7 @@ function(exp_add_test)
         ${ARGN}
     )
 
-    if (CMAKE_VERBOSE_INFO)
+    if (${EXP_VERBOSE_INFO})
         message("")
         message("[exp_add_test begin]")
         message("-name: ${PARAMS_NAME}")
@@ -73,7 +73,7 @@ function(exp_add_library)
         ${ARGN}
     )
 
-    if (CMAKE_VERBOSE_INFO)
+    if (${EXP_VERBOSE_INFO})
         message("")
         message("[exp_add_library begin]")
         message("-name: ${PARAMS_NAME}")
