@@ -2,8 +2,8 @@
 // Created by LiZhen on 2021/5/7.
 //
 
-#ifndef EXPLOSION_PLUGIN_PASSDEFINES_H
-#define EXPLOSION_PLUGIN_PASSDEFINES_H
+#ifndef EXPLOSION_MODULE_PASSDEFINES_H
+#define EXPLOSION_MODULE_PASSDEFINES_H
 
 #include <cstdint>
 #include <vector>

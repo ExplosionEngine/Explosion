@@ -6,6 +6,7 @@
 #define EXPLOSION_FGRESOURCES_H
 
 #include <limits>
+#include <memory>
 #include <Explosion/Common/NonCopy.h>
 #include <Explosion/Common/Exception.h>
 #include <Explosion/Common/Template/RefObject.h>
