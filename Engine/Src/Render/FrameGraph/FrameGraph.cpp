@@ -46,6 +46,9 @@ namespace Explosion {
         PerformCulling();
 
         auto end = ReOrderRenderPass();
+        auto begin = passes.begin();
+
+
 
         return *this;
     }

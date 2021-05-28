@@ -26,13 +26,6 @@ namespace Explosion {
         template <typename Resource>
         FgHandle Create(const char* name, const typename Resource::Descriptor& desc);
 
-        template <typename Resource>
-        FgHandle CreateSubResource(const char* name, const typename Resource::Descriptor& desc);
-
-        template <typename Resource>
-        FgHandle CreateSubResource(const char* name, FgHandle parent,
-                                   const typename Resource::SubResource::Descriptor& desc);
-
         FgHandle Read(FgHandle handle);
 
         FgHandle Write(FgHandle handle);
@@ -106,27 +99,6 @@ namespace Explosion {
     {
         auto res = new Resource(name, desc);
         FgHandle handle(static_cast<FgHandle::HandleType>(graph.resources.size()));
-        graph.resources.emplace_back(res);
-        graph.resHandles.emplace_back(handle);
-        return handle;
-    }
-
-    template <typename Resource>
-    FgHandle FrameGraphBuilder::CreateSubResource(const char* name, const typename Resource::Descriptor& desc)
-    {
-        FgHandle res = Create<Resource>(name, desc);
-        return CreateSubResource<Resource>(name, res, SubResourceTrait<Resource>().Init());
-    }
-
-    template <typename Resource>
-    FgHandle FrameGraphBuilder::CreateSubResource(const char* name, FgHandle parent,
-                                                  const typename Resource::SubResource::Descriptor& desc)
-    {
-        EXPLOSION_ASSERT(parent.Index() < graph.resources.size(), "invalid subresource parent");
-        FgHandle handle(static_cast<FgHandle::HandleType>(graph.resources.size()));
-        auto parentRes = static_cast<Resource*>(graph.resources[parent.Index()].get());
-        EXPLOSION_ASSERT(parentRes != nullptr, "invalid subresource parent");
-        auto res = new typename Resource::SubResource(name, *parentRes, desc);
         graph.resources.emplace_back(res);
         graph.resHandles.emplace_back(handle);
         return handle;
