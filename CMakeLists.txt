@@ -3,6 +3,11 @@ project(Explosion)
 
 set(CMAKE_CXX_STANDARD 17)
 
+include(cmake/Explosion.cmake)
+
+option(EXP_VERBOSE_INFO "verbose info for cmake debug" ON)
+option(EXP_BUILD_TEST "build test" ON)
+
 if (NOT DEFINED ${CMAKE_BUILD_TYPE})
     set(CMAKE_BUILD_TYPE Debug)
 endif()
@@ -16,15 +21,14 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Bin)
 set(PROJECT_RUNTIME_DIRECTORY ${CMAKE_BINARY_DIR}/Bin)
 
 include(GenerateExportHeader)
-# [TODO] using api define in each module
+# TODO using api define in each module
 # set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 # set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
 
 include_directories(${GEN_PRE_DIR})
 
-# options
-option(BUILD_TEST "Build Test" ON)
-if (${BUILD_TEST})
+if (${EXP_BUILD_TEST})
+    message("-- enable testing")
     enable_testing()
 endif()
 

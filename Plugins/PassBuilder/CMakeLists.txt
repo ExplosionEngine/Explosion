@@ -1,4 +1,3 @@
-
 set(PLUG_TARGET PassBuilder)
 
 project(${PLUG_TARGET})
@@ -7,48 +6,29 @@ set(THIRD_PARTY_INC
     ${PROJECT_ROOT}/3rd/rapidjson/include
 )
 
-include_directories(Include)
-include_directories(${PROJECT_ROOT}/Engine/Include)
-include_directories(${THIRD_PARTY_INC})
-
 file(GLOB_RECURSE SRC_FILES Src/*.cpp Src/*.h)
 file(GLOB_RECURSE INC_FILES Include/*h)
 list(APPEND INC_FILES ${GEN_PRE_DIR}/PassBuilderApi.h)
 
-add_library(${PLUG_TARGET} SHARED
-    ${SRC_FILES}
-    ${INC_FILES}
+exp_add_library(
+    NAME ${PLUG_TARGET}
+    TYPE SHARED
+    SRCS ${SRC_FILES} ${INC_FILES}
+    PUBLIC_INC_DIRS Include ${PROJECT_ROOT}/Engine/Include ${THIRD_PARTY_INC}
+    LIBS explosion
+)
+
+set(UNIT_TEST PassTest)
+file(GLOB_RECURSE TEST_FILES Test/*)
+exp_add_test(
+    NAME ${UNIT_TEST}
+    WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Test
+    SRCS ${TEST_FILES}
+    INC_DIRS ${PROJECT_ROOT}/3rd/googletest/googletest/include
+    LIBS ${PLUG_TARGET} gtest
 )
 
 generate_export_header(${PLUG_TARGET}
     EXPORT_MACRO_NAME PASS_API
     EXPORT_FILE_NAME ${GEN_PRE_DIR}/PassBuilderApi.h
 )
-
-target_link_libraries(${PLUG_TARGET}
-    explosion
-)
-
-## TEST
-if (BUILD_TEST)
-    file(GLOB_RECURSE TEST_FILES Test/*)
-
-    include_directories(${PROJECT_ROOT}/3rd/googletest/include/gtest)
-
-    set(UNIT_TEST PassTest)
-
-    add_executable(${UNIT_TEST}
-        ${TEST_FILES}
-    )
-
-    target_link_libraries(${UNIT_TEST}
-        ${PLUG_TARGET}
-        gtest
-    )
-
-    add_test(
-        NAME ${UNIT_TEST}
-        COMMAND ${UNIT_TEST}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Test
-    )
-endif ()
