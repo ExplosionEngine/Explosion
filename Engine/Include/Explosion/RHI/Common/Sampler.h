@@ -5,13 +5,35 @@
 #ifndef EXPLOSION_SAMPLER_H
 #define EXPLOSION_SAMPLER_H
 
+#include <Explosion/RHI/Common/Enum.h>
+
 namespace Explosion::RHI {
     class Sampler {
     public:
+        struct Config {
+            SamplerFilter magFilter;
+            SamplerFilter minFilter;
+            SamplerAddressMode addressModeU;
+            SamplerAddressMode addressModeV;
+            SamplerAddressMode addressModeW;
+            bool anisotropyEnabled;
+            float maxAnisotropy;
+            BorderColor borderColor;
+            bool unNormalizedCoordinates;
+            bool compareEnabled;
+            CompareOp compareOp;
+            SamplerMipmapMode mipmapMode;
+            float mipLodBias;
+            float minLod;
+            float maxLod;
+        };
+
         virtual ~Sampler();
 
     protected:
-        Sampler();
+        explicit Sampler(Config config);
+
+        Config config;
     };
 }
 

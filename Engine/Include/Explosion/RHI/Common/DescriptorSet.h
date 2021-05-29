@@ -23,7 +23,7 @@ namespace Explosion::RHI {
         };
 
         struct DescriptorTextureInfo {
-            Sampler* texture = nullptr;
+            Sampler* sampler = nullptr;
             ImageView* imageView = nullptr;
             ImageLayout imageLayout = ImageLayout::UNDEFINED;
         };

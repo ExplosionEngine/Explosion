@@ -112,12 +112,56 @@ namespace Explosion::RHI {
     };
 
     enum class ImageLayout {
-        UNDEFINED = 0x1,
-        COLOR_ATTACHMENT_OPTIMAL = 0x2,
-        DEPTH_STENCIL_ATTACHMENT_OPTIMAL = 0x4,
-        TRANSFER_SRC_OPTIMAL = 0x8,
-        TRANSFER_DST_OPTIMAL = 0x10,
-        PRESENT_SRC = 0x20,
+        UNDEFINED,
+        COLOR_ATTACHMENT_OPTIMAL,
+        DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        TRANSFER_SRC_OPTIMAL,
+        TRANSFER_DST_OPTIMAL,
+        PRESENT_SRC,
+        MAX
+    };
+
+    enum class SamplerFilter {
+        NEAREST,
+        LINEAR,
+        CUBIC_IMG,
+        MAX
+    };
+
+    enum class SamplerAddressMode {
+        REPEAT,
+        MIRRORED_REPEAT,
+        CLAMP_TO_EDGE,
+        CLAMP_TO_BORDER,
+        MIRROR_CLAMP_TO_EDGE,
+        MAX
+    };
+
+    enum class SamplerMipmapMode {
+        NEAREST,
+        LINEAR,
+        MAX
+    };
+
+    enum class BorderColor {
+        FLOAT_TRANSPARENT_BLACK,
+        INT_TRANSPARENT_BLACK,
+        FLOAT_OPAQUE_BLACK,
+        INT_OPAQUE_BLACK,
+        FLOAT_OPAQUE_WHITE,
+        INT_OPAQUE_WHITE,
+        MAX
+    };
+
+    enum class CompareOp {
+        NEVER,
+        LESS,
+        EQUAL,
+        LESS_OR_EQUAL,
+        GREATER,
+        NOT_EQUAL,
+        GREATER_OR_EQUAL,
+        ALWAYS,
         MAX
     };
 }

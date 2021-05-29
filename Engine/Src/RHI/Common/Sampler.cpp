@@ -5,7 +5,7 @@
 #include <Explosion/RHI/Common/Sampler.h>
 
 namespace Explosion::RHI {
-    Sampler::Sampler() = default;
+    Sampler::Sampler(Config config) : config(config) {}
 
     Sampler::~Sampler() = default;
 }

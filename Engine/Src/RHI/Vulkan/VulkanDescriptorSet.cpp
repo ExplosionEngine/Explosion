@@ -11,6 +11,8 @@
 #include <Explosion/RHI/Vulkan/VulkanGraphicsPipeline.h>
 #include <Explosion/RHI/Vulkan/VulkanAdapater.h>
 #include <Explosion/RHI/Vulkan/VulkanBuffer.h>
+#include <Explosion/RHI/Vulkan/VulkanImageView.h>
+#include <Explosion/RHI/Vulkan/VulkanSampler.h>
 
 namespace Explosion::RHI {
     VulkanDescriptorSet::VulkanDescriptorSet(VulkanDriver& driver, VulkanDescriptorPool* descriptorPool, VulkanGraphicsPipeline* pipeline)
@@ -35,7 +37,11 @@ namespace Explosion::RHI {
             }
 
             VkDescriptorImageInfo imageInfo {};
-            // TODO
+            if (writeInfo.textureInfo != nullptr) {
+                imageInfo.sampler = dynamic_cast<VulkanSampler*>(writeInfo.textureInfo->sampler)->GetVkSampler();
+                imageInfo.imageView = dynamic_cast<VulkanImageView*>(writeInfo.textureInfo->imageView)->GetVkImageView();
+                imageInfo.imageLayout = VkConvert<ImageLayout, VkImageLayout>(writeInfo.textureInfo->imageLayout);
+            }
 
             VkWriteDescriptorSet writeDescriptorSet {};
             writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

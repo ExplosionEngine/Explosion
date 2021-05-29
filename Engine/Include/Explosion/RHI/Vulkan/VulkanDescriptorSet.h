@@ -5,6 +5,8 @@
 #ifndef EXPLOSION_VULKANDESCRIPTOR_H
 #define EXPLOSION_VULKANDESCRIPTOR_H
 
+#include <vector>
+
 #include <vulkan/vulkan.h>
 
 #include <Explosion/RHI/Common/DescriptorSet.h>
