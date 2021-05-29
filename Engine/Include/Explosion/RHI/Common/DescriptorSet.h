@@ -10,14 +10,29 @@
 namespace Explosion::RHI {
     class DescriptorPool;
     class GraphicsPipeline;
+    class Buffer;
+    class Sampler;
+    class ImageView;
 
     class DescriptorSet {
     public:
+        struct DescriptorBufferInfo {
+            Buffer* buffer = nullptr;
+            uint32_t offset = 0;
+            uint32_t range = 0;
+        };
+
+        struct DescriptorTextureInfo {
+            Sampler* texture = nullptr;
+            ImageView* imageView = nullptr;
+            ImageLayout imageLayout = ImageLayout::UNDEFINED;
+        };
+
         struct DescriptorWriteInfo {
             uint32_t binding = 0;
             DescriptorType type = DescriptorType::MAX;
-            // TODO buffer info
-            // TODO texture info
+            DescriptorBufferInfo* bufferInfo = nullptr;
+            DescriptorTextureInfo* textureInfo = nullptr;
         };
 
         virtual ~DescriptorSet();

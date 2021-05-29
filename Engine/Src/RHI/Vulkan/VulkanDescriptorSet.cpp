@@ -2,11 +2,15 @@
 // Created by John Kindem on 2021/5/27.
 //
 
+#include <stdexcept>
+
 #include <Explosion/RHI/Vulkan/VulkanDescriptorSet.h>
 #include <Explosion/RHI/Vulkan/VulkanDriver.h>
 #include <Explosion/RHI/Vulkan/VulkanDevice.h>
 #include <Explosion/RHI/Vulkan/VulkanDescriptorPool.h>
 #include <Explosion/RHI/Vulkan/VulkanGraphicsPipeline.h>
+#include <Explosion/RHI/Vulkan/VulkanAdapater.h>
+#include <Explosion/RHI/Vulkan/VulkanBuffer.h>
 
 namespace Explosion::RHI {
     VulkanDescriptorSet::VulkanDescriptorSet(VulkanDriver& driver, VulkanDescriptorPool* descriptorPool, VulkanGraphicsPipeline* pipeline)
@@ -22,7 +26,29 @@ namespace Explosion::RHI {
 
     void VulkanDescriptorSet::WriteDescriptors(const std::vector<DescriptorWriteInfo>& writeInfos)
     {
-        // TODO
+        for (auto& writeInfo : writeInfos) {
+            VkDescriptorBufferInfo bufferInfo {};
+            if (writeInfo.bufferInfo != nullptr) {
+                bufferInfo.buffer = dynamic_cast<VulkanBuffer*>(writeInfo.bufferInfo->buffer)->GetVkBuffer();
+                bufferInfo.offset = writeInfo.bufferInfo->offset;
+                bufferInfo.range = writeInfo.bufferInfo->range;
+            }
+
+            VkDescriptorImageInfo imageInfo {};
+            // TODO
+
+            VkWriteDescriptorSet writeDescriptorSet {};
+            writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writeDescriptorSet.dstSet = vkDescriptorSet;
+            writeDescriptorSet.dstBinding = writeInfo.binding;
+            writeDescriptorSet.dstArrayElement = 0;
+            writeDescriptorSet.descriptorType = VkConvert<DescriptorType, VkDescriptorType>(writeInfo.type);
+            writeDescriptorSet.descriptorCount = 1;
+            writeDescriptorSet.pBufferInfo = writeInfo.bufferInfo == nullptr ? nullptr : &bufferInfo;
+            writeDescriptorSet.pImageInfo = writeInfo.bufferInfo == nullptr ? nullptr : &imageInfo;
+
+            vkUpdateDescriptorSets(device.GetVkDevice(), 1, &writeDescriptorSet, 0, nullptr);
+        }
     }
 
     const VkDescriptorSet& VulkanDescriptorSet::GetVkDescriptorSet()
