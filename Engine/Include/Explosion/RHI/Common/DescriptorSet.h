@@ -5,6 +5,8 @@
 #ifndef EXPLOSION_DESCRIPTORSET_H
 #define EXPLOSION_DESCRIPTORSET_H
 
+#include <vector>
+
 #include <Explosion/RHI/Common/Enum.h>
 
 namespace Explosion::RHI {
