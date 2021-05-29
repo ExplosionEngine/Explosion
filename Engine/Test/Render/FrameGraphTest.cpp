@@ -50,80 +50,14 @@ TEST(FrameGraphTest, FrameGraphResourceHandleTest2)
 // with side effect.
 TEST(FrameGraphTest, FrameGraphCreateTest1)
 {
-    FrameGraph graph;
-    struct PassData {
-        FgHandle attachment;
-    };
 
-    FgHandle attachmentHandle;
-
-    graph.AddCallbackPass<PassData>("test", [&](FrameGraphBuilder& builder, PassData& data) {
-        auto tex = builder.CreateSubResource<FgTexture>("test",
-                                                        FgTexture::Descriptor{1, 1, 0});
-        attachmentHandle = data.attachment = builder.Write(tex);
-    }, [=](const PassData& data, const FrameGraph& graph, RHI::Driver& driver) {
-    });
-
-    graph.Compile();
-
-    ASSERT_EQ(graph.GetPasses()[0]->IsActive(), false);
 }
 
 TEST(FrameGraphTest, FrameGraphCreateTest2)
 {
-    FrameGraph graph;
-    struct PassData1 {
-        FgHandle output;
-    };
-
-    struct PassData2 {
-        FgHandle input;
-    };
-
-    FgHandle attachmentHandle;
-
-    graph.AddCallbackPass<PassData1>("test", [&](FrameGraphBuilder& builder, PassData1& data) {
-        auto tex = builder.CreateSubResource<FgTexture>("test", FgTexture::Descriptor{1, 1, 0});
-        attachmentHandle = data.output = builder.Write(tex);
-    }, [=](const PassData1& data, const FrameGraph& graph, RHI::Driver& driver) {
-    });
-
-    graph.AddCallbackPass<PassData2>("present", [&](FrameGraphBuilder& builder, PassData2& data) {
-        data.input = builder.Read(attachmentHandle);
-    }, [=](const PassData2& data, const FrameGraph& graph, RHI::Driver& driver) {
-    });
-    graph.Compile();
-
-    ASSERT_EQ(graph.GetPasses()[0]->IsActive(), false);
-    ASSERT_EQ(graph.GetPasses()[1]->IsActive(), false);
 }
 
 TEST(FrameGraphTest, FrameGraphCreateTest3)
 {
-    FrameGraph graph;
-    struct PassData1 {
-        FgHandle output;
-    };
 
-    struct PassData2 {
-        FgHandle input;
-    };
-
-    FgHandle attachmentHandle;
-
-    graph.AddCallbackPass<PassData1>("test", [&](FrameGraphBuilder& builder, PassData1& data) {
-        auto tex = builder.CreateSubResource<FgTexture>("test", FgTexture::Descriptor{1, 1, 0});
-        attachmentHandle = data.output = builder.Write(tex);
-    }, [=](const PassData1& data, const FrameGraph& graph, RHI::Driver& driver) {
-    });
-
-    graph.AddCallbackPass<PassData2>("present", [&](FrameGraphBuilder& builder, PassData2& data) {
-        data.input = builder.Read(attachmentHandle);
-        builder.SideEffect();
-    }, [=](const PassData2& data, const FrameGraph& graph, RHI::Driver& driver) {
-    });
-    graph.Compile();
-
-    ASSERT_EQ(graph.GetPasses()[0]->IsActive(), true);
-    ASSERT_EQ(graph.GetPasses()[1]->IsActive(), true);
 }

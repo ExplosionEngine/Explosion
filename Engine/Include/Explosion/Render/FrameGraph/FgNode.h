@@ -10,10 +10,12 @@
 
 namespace Explosion {
 
-    class FgNode : public URefObject<FgNode>, public NonCopy {
+    class FgNode : public URefObject<FgNode> {
     public:
         explicit FgNode(const char* str) : name(str), sideEffect(false) {}
         ~FgNode() override = default;
+
+        EXPLOSION_NON_COPY(FgNode);
 
         const std::string& GetName() const { return name; }
 

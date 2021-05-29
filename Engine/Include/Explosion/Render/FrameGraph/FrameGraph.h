@@ -12,10 +12,10 @@
 #include <Explosion/Common/Exception.h>
 #include <Explosion/Render/FrameGraph/FgRenderPass.h>
 #include <Explosion/Render/FrameGraph/FgResources.h>
+#include <Explosion/Render/FrameGraph/FgBlackBoard.h>
 
 namespace Explosion {
     class FrameGraph;
-    using FgHandle = FgResourceHandle<uint32_t>;
 
     class FrameGraphBuilder {
     public:
@@ -26,29 +26,27 @@ namespace Explosion {
         template <typename Resource>
         FgHandle Create(const char* name, const typename Resource::Descriptor& desc);
 
-        template <typename Resource>
-        FgHandle CreateSubResource(const char* name, const typename Resource::Descriptor& desc);
-
-        template <typename Resource>
-        FgHandle CreateSubResource(const char* name, FgHandle parent,
-                                   const typename Resource::SubResource::Descriptor& desc);
-
         FgHandle Read(FgHandle handle);
 
         FgHandle Write(FgHandle handle);
+
+        FgBlackBoard& GetBlackBoard() { return blackboard; }
 
         void SideEffect();
 
     private:
         FrameGraph& graph;
+        FgBlackBoard blackboard;
         FgRenderPassBase* renderPass;
     };
 
-    class FrameGraph : public NonCopy {
+    class FrameGraph {
     public:
         FrameGraph() = default;
 
-        ~FrameGraph() override = default;
+        ~FrameGraph() = default;
+
+        EXPLOSION_NON_COPY(FrameGraph);
 
         template<typename Data, typename Setup, typename Execute>
         void AddCallbackPass(const char* name, Setup &&s, Execute &&e)
@@ -63,8 +61,11 @@ namespace Explosion {
 
         FrameGraph& Execute(RHI::Driver&);
 
-        using PassVector = std::vector<std::unique_ptr<FgRenderPassBase>>;
-        using ResourceVector = std::vector<std::unique_ptr<FgVirtualResource>>;
+        using PassPtr = std::unique_ptr<FgRenderPassBase>;
+        using ResPtr = std::unique_ptr<FgVirtualResource>;
+
+        using PassVector = std::vector<PassPtr>;
+        using ResourceVector = std::vector<ResPtr>;
 
         [[nodiscard]] const PassVector& GetPasses() const { return passes; }
 
@@ -78,7 +79,11 @@ namespace Explosion {
             FgNode* to;
         };
 
-        void Cull();
+        using PassIter = PassVector::const_iterator;
+
+        void PerformCulling();
+
+        PassIter ReOrderRenderPass();
 
         friend class FrameGraphBuilder;
         PassVector passes;
@@ -94,27 +99,6 @@ namespace Explosion {
     {
         auto res = new Resource(name, desc);
         FgHandle handle(static_cast<FgHandle::HandleType>(graph.resources.size()));
-        graph.resources.emplace_back(res);
-        graph.resHandles.emplace_back(handle);
-        return handle;
-    }
-
-    template <typename Resource>
-    FgHandle FrameGraphBuilder::CreateSubResource(const char* name, const typename Resource::Descriptor& desc)
-    {
-        FgHandle res = Create<Resource>(name, desc);
-        return CreateSubResource<Resource>(name, res, SubResourceTrait<Resource>().Init());
-    }
-
-    template <typename Resource>
-    FgHandle FrameGraphBuilder::CreateSubResource(const char* name, FgHandle parent,
-                                                  const typename Resource::SubResource::Descriptor& desc)
-    {
-        EXPLOSION_ASSERT(parent.Index() < graph.resources.size(), "invalid subresource parent");
-        FgHandle handle(static_cast<FgHandle::HandleType>(graph.resources.size()));
-        auto parentRes = static_cast<Resource*>(graph.resources[parent.Index()].get());
-        EXPLOSION_ASSERT(parentRes != nullptr, "invalid subresource parent");
-        auto res = new typename Resource::SubResource(name, *parentRes, desc);
         graph.resources.emplace_back(res);
         graph.resHandles.emplace_back(handle);
         return handle;
