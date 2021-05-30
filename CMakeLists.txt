@@ -7,6 +7,7 @@ include(cmake/Explosion.cmake)
 
 option(EXP_VERBOSE_INFO "verbose info for cmake debug" ON)
 option(EXP_BUILD_TEST "build test" ON)
+option(EXP_BUILD_SAMPLES "build samples" ON)
 
 if (NOT DEFINED ${CMAKE_BUILD_TYPE})
     set(CMAKE_BUILD_TYPE Debug)
@@ -41,6 +42,4 @@ endif()
 
 add_subdirectory(3rd)
 add_subdirectory(Engine)
-add_subdirectory(Application)
-add_subdirectory(Samples)
 add_subdirectory(Modules)
