@@ -10,13 +10,13 @@
 
 namespace Explosion {
 
-    class ParticleCollisionEffector : public ParticleEffector {
+    class PARTICLE_API ParticleCollisionEffector : public ParticleEffector {
     public:
         ParticleCollisionEffector() {}
         ~ParticleCollisionEffector() {}
     };
 
-    class ParticleGroundCollision : public ParticleCollisionEffector {
+    class PARTICLE_API ParticleGroundCollision : public ParticleCollisionEffector {
     public:
         ParticleGroundCollision() {}
         ~ParticleGroundCollision() {}

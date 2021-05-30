@@ -17,7 +17,7 @@ namespace Explosion {
         ~ParticleLocationEffector() = default;
     };
 
-    class ParticlePointLocation : public ParticleLocationEffector {
+    class PARTICLE_API ParticlePointLocation : public ParticleLocationEffector {
     public:
         ParticlePointLocation() = default;
         ~ParticlePointLocation() = default;
@@ -27,7 +27,7 @@ namespace Explosion {
         Math::Vector<3> pivot = {0.f, 0.f, 0.f};
     };
 
-    class ParticleBoxLocation : public ParticleLocationEffector {
+    class PARTICLE_API ParticleBoxLocation : public ParticleLocationEffector {
     public:
         ParticleBoxLocation() = default;
         ~ParticleBoxLocation() = default;
