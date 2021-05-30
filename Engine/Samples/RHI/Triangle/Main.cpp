@@ -86,8 +86,8 @@ protected:
         GraphicsPipeline::Config pipelineConfig {};
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.shaderConfig.shaderModules = {
-            {ShaderStageBits::VERTEX,   FileReader::Read("RHI-Triangle-Vertex.spv") },
-            {ShaderStageBits::FRAGMENT, FileReader::Read("RHI-Triangle-Fragment.spv") }
+            { ShaderStageBits::VERTEX,   FileReader::Read("RHI-Triangle-Vertex.spv") },
+            { ShaderStageBits::FRAGMENT, FileReader::Read("RHI-Triangle-Fragment.spv") }
         };
         pipelineConfig.vertexConfig.vertexBindings = {
             { 0, sizeof(Vertex), VertexInputRate::PER_VERTEX }
