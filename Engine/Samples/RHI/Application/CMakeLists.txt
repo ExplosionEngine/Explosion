@@ -9,6 +9,7 @@ file(GLOB APPLICATION_SOURCES Src/*.cpp)
 exp_add_library(
     NAME application
     SRCS ${APPLICATION_SOURCES}
-    PUBLIC_INC_DIRS Include ${Vulkan_INCLUDE_DIRS}
+    PRIVATE_INC_DIRS ${Vulkan_INCLUDE_DIRS}
+    PUBLIC_INC_DIRS Include
     LIBS glfw ${Vulkan_LIBRARIES}
 )

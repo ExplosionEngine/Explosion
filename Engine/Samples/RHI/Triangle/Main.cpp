@@ -3,16 +3,8 @@
 //
 
 #include <Application/Application.h>
+
 #include <Explosion/RHI/Vulkan/VulkanDriver.h>
-#include <Explosion/RHI/Common/SwapChain.h>
-#include <Explosion/RHI/Common/RenderPass.h>
-#include <Explosion/RHI/Common/FrameBuffer.h>
-#include <Explosion/RHI/Common/GraphicsPipeline.h>
-#include <Explosion/RHI/Common/Image.h>
-#include <Explosion/RHI/Common/ImageView.h>
-#include <Explosion/RHI/Common/Buffer.h>
-#include <Explosion/RHI/Common/Signal.h>
-#include <Explosion/RHI/Common/CommandBuffer.h>
 #include <Explosion/Common/FileReader.h>
 
 #ifdef __APPLE__
@@ -94,8 +86,8 @@ protected:
         GraphicsPipeline::Config pipelineConfig {};
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.shaderConfig.shaderModules = {
-            {ShaderStageBits::VERTEX,   FileReader::Read("1-Triangle-Vertex.spv") },
-            {ShaderStageBits::FRAGMENT, FileReader::Read("1-Triangle-Fragment.spv") }
+            { ShaderStageBits::VERTEX,   FileReader::Read("RHI-Triangle-Vertex.spv") },
+            { ShaderStageBits::FRAGMENT, FileReader::Read("RHI-Triangle-Fragment.spv") }
         };
         pipelineConfig.vertexConfig.vertexBindings = {
             { 0, sizeof(Vertex), VertexInputRate::PER_VERTEX }

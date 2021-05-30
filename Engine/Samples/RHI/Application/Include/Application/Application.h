@@ -19,9 +19,9 @@ namespace Explosion {
         void Run();
 
     protected:
-        GLFWwindow* GetWindow() const;
-        uint32_t GetWidth() const;
-        uint32_t GetHeight() const;
+        [[nodiscard]] GLFWwindow* GetWindow() const;
+        [[nodiscard]] uint32_t GetWidth() const;
+        [[nodiscard]] uint32_t GetHeight() const;
 
         virtual void OnStart() = 0;
         virtual void OnStop() = 0;
