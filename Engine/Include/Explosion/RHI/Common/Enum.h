@@ -227,6 +227,11 @@ namespace Explosion::RHI {
         MAX
     };
     using ImageAspectFlags = Flags;
+
+    enum class PrimitiveTopology {
+        POINT_LIST,
+        TRIANGLE_LIST
+    };
 }
 
 #endif //EXPLOSION_ENUM_H

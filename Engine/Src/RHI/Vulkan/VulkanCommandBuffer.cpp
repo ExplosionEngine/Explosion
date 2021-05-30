@@ -3,6 +3,7 @@
 //
 
 #include <stdexcept>
+#include <vector>
 
 #include <Explosion/RHI/Vulkan/VulkanCommandBuffer.h>
 #include <Explosion/RHI/Vulkan/VulkanBuffer.h>
@@ -12,6 +13,7 @@
 #include <Explosion/RHI/Vulkan/VulkanFrameBuffer.h>
 #include <Explosion/RHI/Vulkan/VulkanGraphicsPipeline.h>
 #include <Explosion/RHI/Vulkan/VulkanAdapater.h>
+#include <Explosion/RHI/Vulkan/VulkanDescriptorSet.h>
 
 namespace Explosion::RHI {
     VulkanCommandBuffer::VulkanCommandBuffer(VulkanDriver& driver)
@@ -195,5 +197,22 @@ namespace Explosion::RHI {
             { scissor.width, scissor.height }
         };
         vkCmdSetScissor(commandBuffer->GetVkCommandBuffer(), 0, 1, &sc);
+    }
+
+    void VulkanCommandEncoder::BindDescriptorSet(DescriptorSet* set, uint32_t num)
+    {
+        if (set == nullptr || num == 0) {
+            return;
+        }
+        VkPipelineLayout layout = VK_NULL_HANDLE;
+        std::vector<VkDescriptorSet> descriptorSets(num);
+        for (uint32_t i = 0; i < num; ++i) {
+            VulkanDescriptorSet* vkSet = static_cast<VulkanDescriptorSet*>(&set[i]);
+            layout = vkSet->GetPipelineLayout();
+            descriptorSets[i] = vkSet->GetVkDescriptorSet();
+        }
+
+        vkCmdBindDescriptorSets(commandBuffer->GetVkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,
+             layout, 0, (uint32_t)descriptorSets.size(), descriptorSets.data(), 0, nullptr);
     }
 }

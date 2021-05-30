@@ -89,6 +89,10 @@ namespace Explosion::RHI {
             bool enabled;
         };
 
+        struct AssemblyConfig {
+            PrimitiveTopology topology;
+        };
+
         struct Config {
             RenderPass* renderPass;
             ShaderConfig shaderConfig;
@@ -98,6 +102,7 @@ namespace Explosion::RHI {
             RasterizerConfig rasterizerConfig;
             DepthStencilConfig depthStencilConfig;
             ColorBlendConfig colorBlendConfig;
+            AssemblyConfig assemblyConfig;
         };
 
         virtual ~GraphicsPipeline();

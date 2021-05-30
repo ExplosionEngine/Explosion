@@ -57,9 +57,14 @@ namespace Explosion::RHI {
         }
     }
 
-    const VkDescriptorSet& VulkanDescriptorSet::GetVkDescriptorSet()
+    const VkDescriptorSet& VulkanDescriptorSet::GetVkDescriptorSet() const
     {
         return vkDescriptorSet;
+    }
+
+    const VkPipelineLayout& VulkanDescriptorSet::GetPipelineLayout() const
+    {
+        return pipeline->GetVkPipelineLayout();
     }
 
     void VulkanDescriptorSet::AllocateDescriptorSet()

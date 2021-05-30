@@ -28,17 +28,17 @@ namespace Explosion::RHI {
         DestroyDescriptorSetLayout();
     }
 
-    const VkPipelineLayout& VulkanGraphicsPipeline::GetVkPipelineLayout()
+    const VkPipelineLayout& VulkanGraphicsPipeline::GetVkPipelineLayout() const
     {
         return vkPipelineLayout;
     }
 
-    const VkPipeline& VulkanGraphicsPipeline::GetVkPipeline()
+    const VkPipeline& VulkanGraphicsPipeline::GetVkPipeline() const
     {
         return vkPipeline;
     }
 
-    const VkDescriptorSetLayout& VulkanGraphicsPipeline::GetVkDescriptorSetLayout()
+    const VkDescriptorSetLayout& VulkanGraphicsPipeline::GetVkDescriptorSetLayout() const
     {
         return vkDescriptorSetLayout;
     }
@@ -169,7 +169,7 @@ namespace Explosion::RHI {
         inputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         inputAssemblyStateCreateInfo.pNext = nullptr;
         inputAssemblyStateCreateInfo.flags = 0;
-        inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        inputAssemblyStateCreateInfo.topology = VkConvert<PrimitiveTopology, VkPrimitiveTopology>(config.assemblyConfig.topology);
         inputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
 
         VkViewport viewport {};
