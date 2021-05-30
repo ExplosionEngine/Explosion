@@ -16,7 +16,6 @@ namespace Explosion::RHI {
     VulkanGraphicsPipeline::VulkanGraphicsPipeline(VulkanDriver& driver, Config config)
         : GraphicsPipeline(config), driver(driver), device(*driver.GetDevice())
     {
-        CreateDescriptorPool();
         CreateDescriptorSetLayout();
         CreatePipelineLayout();
         CreateGraphicsPipeline();
@@ -27,7 +26,6 @@ namespace Explosion::RHI {
         DestroyGraphicsPipeline();
         DestroyPipelineLayout();
         DestroyDescriptorSetLayout();
-        DestroyDescriptorPool();
     }
 
     const VkPipelineLayout& VulkanGraphicsPipeline::GetVkPipelineLayout()
@@ -64,37 +62,6 @@ namespace Explosion::RHI {
     void VulkanGraphicsPipeline::DestroyShaderModule(const VkShaderModule& shaderModule)
     {
         vkDestroyShaderModule(device.GetVkDevice(), shaderModule, nullptr);
-    }
-
-    void VulkanGraphicsPipeline::CreateDescriptorPool()
-    {
-        if (config.descriptorConfig.descriptorPoolSizes.empty()) {
-            return;
-        }
-
-        std::vector<VkDescriptorPoolSize> descriptorPoolSizes;
-        for (auto& descriptorPoolSize : config.descriptorConfig.descriptorPoolSizes) {
-            VkDescriptorPoolSize poolSize {};
-            poolSize.type = VkConvert<DescriptorType, VkDescriptorType>(descriptorPoolSize.type);
-            poolSize.descriptorCount = descriptorPoolSize.count;
-            descriptorPoolSizes.emplace_back(poolSize);
-        }
-        VkDescriptorPoolCreateInfo descriptorPoolCreateInfo {};
-        descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        descriptorPoolCreateInfo.pNext = nullptr;
-        descriptorPoolCreateInfo.flags = 0;
-        descriptorPoolCreateInfo.maxSets = config.descriptorConfig.maxSets;
-        descriptorPoolCreateInfo.poolSizeCount = descriptorPoolSizes.size();
-        descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSizes.data();
-
-        if (vkCreateDescriptorPool(device.GetVkDevice(), &descriptorPoolCreateInfo, nullptr, &vkDescriptorPool) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create vulkan descriptor pool");
-        }
-    }
-
-    void VulkanGraphicsPipeline::DestroyDescriptorPool()
-    {
-        vkDestroyDescriptorPool(device.GetVkDevice(), vkDescriptorPool, nullptr);
     }
 
     void VulkanGraphicsPipeline::CreateDescriptorSetLayout()

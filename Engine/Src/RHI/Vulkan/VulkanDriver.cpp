@@ -12,6 +12,8 @@
 #include <Explosion/RHI/Vulkan/VulkanGraphicsPipeline.h>
 #include <Explosion/RHI/Vulkan/VulkanCommandBuffer.h>
 #include <Explosion/RHI/Vulkan/VulkanSignal.h>
+#include <Explosion/RHI/Vulkan/VulkanDescriptorPool.h>
+#include <Explosion/RHI/Vulkan/VulkanDescriptorSet.h>
 
 namespace Explosion::RHI {
     VulkanDriver::VulkanDriver() : device(std::make_unique<VulkanDevice>(*this)) {}
@@ -111,5 +113,25 @@ namespace Explosion::RHI {
     void VulkanDriver::DestroySignal(Signal* signal)
     {
         delete signal;
+    }
+
+    DescriptorPool* VulkanDriver::CreateDescriptorPool(const DescriptorPool::Config& config)
+    {
+        return static_cast<DescriptorPool*>(new VulkanDescriptorPool(*this, config));
+    }
+
+    void VulkanDriver::DestroyDescriptorPool(DescriptorPool* descriptorPool)
+    {
+        delete descriptorPool;
+    }
+
+    DescriptorSet* VulkanDriver::AllocateDescriptorSet(DescriptorPool* descriptorPool, GraphicsPipeline* pipeline)
+    {
+        return static_cast<DescriptorSet*>(new VulkanDescriptorSet(*this, dynamic_cast<VulkanDescriptorPool*>(descriptorPool), dynamic_cast<VulkanGraphicsPipeline*>(pipeline)));
+    }
+
+    void VulkanDriver::FreeDescriptorSet(DescriptorSet* descriptorSet)
+    {
+        delete descriptorSet;
     }
 }

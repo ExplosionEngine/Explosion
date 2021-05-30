@@ -47,15 +47,8 @@ namespace Explosion::RHI {
             ShaderStageFlags shaderStages;
         };
 
-        struct DescriptorPoolSize {
-            DescriptorType type;
-            uint32_t count;
-        };
-
         struct DescriptorConfig {
             std::vector<DescriptorAttribute> descriptorAttributes;
-            std::vector<DescriptorPoolSize> descriptorPoolSizes;
-            uint32_t maxSets;
         };
 
         struct Viewport {

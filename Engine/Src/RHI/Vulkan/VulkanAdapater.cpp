@@ -182,6 +182,60 @@ namespace Explosion::RHI {
         FIND_OR_EXCEPT
     VK_CONVERT_INSTANCE_E
 
+    VK_CONVERT_INSTANCE_B(SamplerFilter, VkFilter)
+        static std::unordered_map<SamplerFilter, VkFilter> MAP = {
+            {SamplerFilter::NEAREST,   VkFilter::VK_FILTER_NEAREST },
+            {SamplerFilter::LINEAR,    VkFilter::VK_FILTER_LINEAR },
+            {SamplerFilter::CUBIC_IMG, VkFilter::VK_FILTER_CUBIC_IMG }
+        };
+        FIND_OR_EXCEPT
+    VK_CONVERT_INSTANCE_E
+
+    VK_CONVERT_INSTANCE_B(SamplerAddressMode, VkSamplerAddressMode)
+        static std::unordered_map<SamplerAddressMode, VkSamplerAddressMode> MAP = {
+            {SamplerAddressMode::REPEAT,               VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_REPEAT },
+            {SamplerAddressMode::MIRRORED_REPEAT,      VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT },
+            {SamplerAddressMode::CLAMP_TO_EDGE,        VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE },
+            {SamplerAddressMode::CLAMP_TO_BORDER,      VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER },
+            {SamplerAddressMode::MIRROR_CLAMP_TO_EDGE, VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE }
+        };
+        FIND_OR_EXCEPT
+    VK_CONVERT_INSTANCE_E
+
+    VK_CONVERT_INSTANCE_B(SamplerMipmapMode, VkSamplerMipmapMode)
+        static std::unordered_map<SamplerMipmapMode, VkSamplerMipmapMode> MAP = {
+            { SamplerMipmapMode::NEAREST, VkSamplerMipmapMode::VK_SAMPLER_MIPMAP_MODE_NEAREST },
+            { SamplerMipmapMode::LINEAR, VkSamplerMipmapMode::VK_SAMPLER_MIPMAP_MODE_LINEAR }
+        };
+        FIND_OR_EXCEPT
+    VK_CONVERT_INSTANCE_E
+
+    VK_CONVERT_INSTANCE_B(BorderColor, VkBorderColor)
+        static std::unordered_map<BorderColor, VkBorderColor> MAP = {
+            { BorderColor::FLOAT_TRANSPARENT_BLACK, VkBorderColor::VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK },
+            { BorderColor::INT_TRANSPARENT_BLACK, VkBorderColor::VK_BORDER_COLOR_INT_TRANSPARENT_BLACK },
+            { BorderColor::FLOAT_OPAQUE_BLACK, VkBorderColor::VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK },
+            { BorderColor::INT_OPAQUE_BLACK, VkBorderColor::VK_BORDER_COLOR_INT_OPAQUE_BLACK },
+            { BorderColor::FLOAT_OPAQUE_WHITE, VkBorderColor::VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE },
+            { BorderColor::INT_OPAQUE_WHITE, VkBorderColor::VK_BORDER_COLOR_INT_OPAQUE_WHITE }
+        };
+        FIND_OR_EXCEPT
+    VK_CONVERT_INSTANCE_E
+
+    VK_CONVERT_INSTANCE_B(CompareOp, VkCompareOp)
+        static std::unordered_map<CompareOp, VkCompareOp> MAP = {
+            { CompareOp::NEVER, VkCompareOp::VK_COMPARE_OP_NEVER },
+            { CompareOp::LESS, VkCompareOp::VK_COMPARE_OP_LESS },
+            { CompareOp::EQUAL, VkCompareOp::VK_COMPARE_OP_EQUAL },
+            { CompareOp::LESS_OR_EQUAL, VkCompareOp::VK_COMPARE_OP_LESS_OR_EQUAL },
+            { CompareOp::GREATER, VkCompareOp::VK_COMPARE_OP_GREATER },
+            { CompareOp::NOT_EQUAL, VkCompareOp::VK_COMPARE_OP_NOT_EQUAL },
+            { CompareOp::GREATER_OR_EQUAL, VkCompareOp::VK_COMPARE_OP_GREATER_OR_EQUAL },
+            { CompareOp::ALWAYS, VkCompareOp::VK_COMPARE_OP_ALWAYS }
+        };
+        FIND_OR_EXCEPT
+    VK_CONVERT_INSTANCE_E
+
     // reserved
     VK_CONVERT_INSTANCE_B(ShaderStageBits, VkShaderStageFlagBits)
         static std::unordered_map<ShaderStageBits, VkShaderStageFlagBits> MAP = {
