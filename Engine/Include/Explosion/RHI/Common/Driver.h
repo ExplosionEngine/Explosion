@@ -16,6 +16,7 @@
 #include <Explosion/RHI/Common/Signal.h>
 #include <Explosion/RHI/Common/DescriptorPool.h>
 #include <Explosion/RHI/Common/DescriptorSet.h>
+#include <Explosion/RHI/Common/Sampler.h>
 
 namespace Explosion::RHI {
     class Driver {
@@ -54,6 +55,9 @@ namespace Explosion::RHI {
 
         virtual DescriptorSet* AllocateDescriptorSet(DescriptorPool* descriptorPool, GraphicsPipeline* pipeline) = 0;
         virtual void FreeDescriptorSet(DescriptorSet* descriptorSet) = 0;
+
+        virtual Sampler* CreateSampler(const Sampler::Config& config) = 0;
+        virtual void DestroySampler(Sampler* sampler) = 0;
 
     protected:
         Driver();

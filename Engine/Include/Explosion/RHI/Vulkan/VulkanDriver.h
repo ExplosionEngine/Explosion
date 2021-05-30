@@ -50,6 +50,9 @@ namespace Explosion::RHI {
         DescriptorSet* AllocateDescriptorSet(DescriptorPool* descriptorPool, GraphicsPipeline* pipeline) override;
         void FreeDescriptorSet(DescriptorSet* descriptorSet) override;
 
+        Sampler* CreateSampler(const Sampler::Config& config) override;
+        void DestroySampler(Sampler* sampler) override;
+
     private:
         std::unique_ptr<VulkanDevice> device;
     };

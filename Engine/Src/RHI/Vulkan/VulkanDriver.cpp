@@ -14,6 +14,7 @@
 #include <Explosion/RHI/Vulkan/VulkanSignal.h>
 #include <Explosion/RHI/Vulkan/VulkanDescriptorPool.h>
 #include <Explosion/RHI/Vulkan/VulkanDescriptorSet.h>
+#include <Explosion/RHI/Vulkan/VulkanSampler.h>
 
 namespace Explosion::RHI {
     VulkanDriver::VulkanDriver() : device(std::make_unique<VulkanDevice>(*this)) {}
@@ -133,5 +134,15 @@ namespace Explosion::RHI {
     void VulkanDriver::FreeDescriptorSet(DescriptorSet* descriptorSet)
     {
         delete descriptorSet;
+    }
+
+    Sampler* VulkanDriver::CreateSampler(const Sampler::Config& config)
+    {
+        return static_cast<Sampler*>(new VulkanSampler(*this, config));
+    }
+
+    void VulkanDriver::DestroySampler(Sampler* sampler)
+    {
+        delete sampler;
     }
 }
