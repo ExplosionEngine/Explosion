@@ -20,9 +20,9 @@ namespace Explosion::RHI {
     public:
         explicit VulkanGraphicsPipeline(VulkanDriver& driver, Config config);
         ~VulkanGraphicsPipeline() override;
-        const VkPipelineLayout& GetVkPipelineLayout();
-        const VkPipeline& GetVkPipeline();
-        const VkDescriptorSetLayout& GetVkDescriptorSetLayout();
+        const VkPipelineLayout& GetVkPipelineLayout() const;
+        const VkPipeline& GetVkPipeline() const;
+        const VkDescriptorSetLayout& GetVkDescriptorSetLayout() const;
 
     private:
         VkShaderModule CreateShaderModule(const std::vector<char>& code);

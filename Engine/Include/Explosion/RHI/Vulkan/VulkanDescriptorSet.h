@@ -21,7 +21,9 @@ namespace Explosion::RHI {
         ~VulkanDescriptorSet() override;
         void WriteDescriptors(const std::vector<DescriptorWriteInfo>& writeInfos) override;
 
-        const VkDescriptorSet& GetVkDescriptorSet();
+        const VkDescriptorSet& GetVkDescriptorSet() const;
+
+        const VkPipelineLayout& GetPipelineLayout() const;
 
     private:
         void AllocateDescriptorSet();

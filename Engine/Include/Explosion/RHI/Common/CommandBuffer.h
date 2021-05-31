@@ -16,6 +16,7 @@ namespace Explosion::RHI {
     class Signal;
     class Buffer;
     class RenderPass;
+    class DescriptorSet;
 
     using EncodingFunc = std::function<void(CommandEncoder* commandEncoder)>;
 
@@ -63,6 +64,7 @@ namespace Explosion::RHI {
         virtual void DrawIndexed(uint32_t firstIndex, uint32_t indexCount, int32_t vertexOffset, uint32_t firstInstance, uint32_t instanceCount) = 0;
         virtual void SetViewPort(const GraphicsPipeline::Viewport& viewport) = 0;
         virtual void SetScissor(const GraphicsPipeline::Scissor& scissor) = 0;
+        virtual void BindDescriptorSet(DescriptorSet* set, uint32_t num) = 0;
 
     protected:
         explicit CommandEncoder();
