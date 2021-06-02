@@ -199,20 +199,17 @@ namespace Explosion::RHI {
         vkCmdSetScissor(commandBuffer->GetVkCommandBuffer(), 0, 1, &sc);
     }
 
-    void VulkanCommandEncoder::BindDescriptorSet(DescriptorSet* set, uint32_t num)
+    void VulkanCommandEncoder::BindDescriptorSet(const std::vector<DescriptorSet*>& descriptorSets)
     {
-        if (set == nullptr || num == 0) {
-            return;
-        }
         VkPipelineLayout layout = VK_NULL_HANDLE;
-        std::vector<VkDescriptorSet> descriptorSets(num);
-        for (uint32_t i = 0; i < num; ++i) {
-            VulkanDescriptorSet* vkSet = static_cast<VulkanDescriptorSet*>(&set[i]);
+        std::vector<VkDescriptorSet> vulkanDescriptorSets(descriptorSets.size());
+        for (uint32_t i = 0; i < vulkanDescriptorSets.size(); ++i) {
+            auto* vkSet = dynamic_cast<VulkanDescriptorSet*>(descriptorSets[i]);
             layout = vkSet->GetPipelineLayout();
-            descriptorSets[i] = vkSet->GetVkDescriptorSet();
+            vulkanDescriptorSets[i] = vkSet->GetVkDescriptorSet();
         }
 
         vkCmdBindDescriptorSets(commandBuffer->GetVkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS,
-             layout, 0, (uint32_t)descriptorSets.size(), descriptorSets.data(), 0, nullptr);
+             layout, 0, static_cast<uint32_t>(vulkanDescriptorSets.size()), vulkanDescriptorSets.data(), 0, nullptr);
     }
 }

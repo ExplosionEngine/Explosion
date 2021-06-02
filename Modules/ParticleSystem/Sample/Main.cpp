@@ -213,7 +213,7 @@ protected:
                     encoder->SetViewPort(
                             {0, 0, static_cast<float>(GetWidth()), static_cast<float>(GetHeight()), 0.f, 1.f});
                     encoder->SetScissor({0, 0, GetWidth(), GetHeight()});
-                    encoder->BindDescriptorSet(set, 1);
+                    encoder->BindDescriptorSet({ set });
                     encoder->BindVertexBuffer(0, vertexBuffer);
                     encoder->Draw(0, emitter->GetActiveCount(), 0, 1);
                 }

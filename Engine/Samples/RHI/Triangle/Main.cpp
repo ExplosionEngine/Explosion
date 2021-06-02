@@ -101,6 +101,7 @@ protected:
         pipelineConfig.rasterizerConfig = { false, false, FlagsCast(CullModeBits::NONE), FrontFace::CLOCK_WISE };
         pipelineConfig.depthStencilConfig = { false, false, false };
         pipelineConfig.colorBlendConfig.enabled = false;
+        pipelineConfig.assemblyConfig.topology = PrimitiveTopology::TRIANGLE_LIST;
         pipeline = driver->CreateGraphicsPipeline(pipelineConfig);
 
         vertices = {
