@@ -5,12 +5,34 @@
 #ifndef EXPLOSION_ECS_H
 #define EXPLOSION_ECS_H
 
+#include <functional>
+
 #include <entt/entt.hpp>
 
 namespace Explosion::ECS {
     using Entity = entt::entity;
 
     struct Component {};
+
+    template <typename... Args>
+    class View {
+    public:
+        explicit View(entt::view<Args...>& view) : view(view) {}
+        ~View() = default;
+
+        void Each(const std::function<void(const Args&...)>& func)
+        {
+            view.template each(func);
+        }
+
+        void Each(const std::function<void(Entity entity, const Args&...)>& func)
+        {
+            view.template each(func);
+        }
+
+    private:
+        entt::view<Args...>& view;
+    };
 
     class Registry {
     public:
@@ -37,6 +59,12 @@ namespace Explosion::ECS {
         Comp& GetComponent(Entity entity)
         {
             registry.template get<Comp>(entity);
+        }
+
+        template <typename... Args>
+        View<Args...> View()
+        {
+            return registry.template view<Args...>();
         }
 
     private:
