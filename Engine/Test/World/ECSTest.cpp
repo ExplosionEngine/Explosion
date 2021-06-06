@@ -3,6 +3,7 @@
 //
 
 #include <string>
+#include <utility>
 
 #include <gtest/gtest.h>
 
@@ -10,23 +11,31 @@
 
 using namespace Explosion::ECS;
 
+struct PositionComponent {
+    PositionComponent() = default;
+
+    PositionComponent(float x, float y, float z)
+    {
+        this->x = x;
+        this->y = y;
+        this->z = z;
+    }
+
+    float x;
+    float y;
+    float z;
+};
+
+struct NameComponent : public Component {
+    NameComponent() = default;
+
+    explicit NameComponent(std::string name) : name(std::move(name)) {}
+
+    std::string name;
+};
+
 TEST(ECSTest, EntityComponentTest)
 {
-    struct PositionComponent {
-        PositionComponent() = default;
-
-        PositionComponent(float x, float y, float z)
-        {
-            this->x = x;
-            this->y = y;
-            this->z = z;
-        }
-
-        float x;
-        float y;
-        float z;
-    };
-
     Registry registry;
 
     Entity entity1 = registry.CreateEntity();
@@ -55,4 +64,33 @@ TEST(ECSTest, EntityComponentTest)
 
     auto* comp3 = registry.GetComponent<PositionComponent>(entity3);
     ASSERT_EQ(comp3, nullptr);
+}
+
+TEST(ECSTest, ViewTest)
+{
+    Registry registry;
+
+    static const uint32_t ENTITY_NUM = 5;
+
+    std::vector<Entity> entities(ENTITY_NUM);
+    for (auto i = 0; i < ENTITY_NUM; i++) {
+        entities[i] = registry.CreateEntity();
+        registry.AddComponent<NameComponent>(entities[i], std::string("entity-") + std::to_string(i));
+    }
+
+    uint32_t count = ENTITY_NUM - 1;
+    auto view = registry.CreateView<NameComponent>();
+    view.Each([&count](const NameComponent& nameComponent) -> void {
+        ASSERT_EQ(nameComponent.name, std::string("entity-") + std::to_string(count--));
+    });
+
+    view.Each([](NameComponent& nameComponent) -> void {
+        nameComponent.name += "-updated";
+    });
+    for (auto i = 0; i < ENTITY_NUM; i++) {
+        ASSERT_EQ(
+            registry.GetComponent<NameComponent>(entities[i])->name,
+            std::string("entity-") + std::to_string(i) + "-updated"
+        );
+    }
 }

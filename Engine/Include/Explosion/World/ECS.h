@@ -14,6 +14,30 @@ namespace Explosion::ECS {
 
     struct Component {};
 
+    class Registry;
+
+    template <typename... T>
+    using ExcludeT = entt::exclude_t<T...>;
+
+    template <typename... T>
+    class View {
+    public:
+        ~View() = default;
+
+        template <typename Func>
+        void Each(const Func& func)
+        {
+            return view.each(func);
+        }
+
+    private:
+        friend Registry;
+
+        explicit View(entt::view<T...> view) : view(std::move(view)) {}
+
+        entt::view<T...> view;
+    };
+
     class Registry {
     public:
         Registry() = default;
@@ -39,6 +63,12 @@ namespace Explosion::ECS {
         Comp* GetComponent(Entity entity)
         {
             return registry.template try_get<Comp>(entity);
+        }
+
+        template <typename... Comp, typename... Exclude>
+        View<ExcludeT<Exclude...>, Comp...> CreateView(const ExcludeT<Exclude...>& excludes = {})
+        {
+            return View<ExcludeT<Exclude...>, Comp...>(registry.template view<Comp...>(excludes));
         }
 
     private:
