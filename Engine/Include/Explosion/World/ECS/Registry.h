@@ -6,6 +6,7 @@
 #define EXPLOSION_REGISTRY_H
 
 #include <Explosion/World/ECS/Entity.h>
+#include <Explosion/World/ECS/View.h>
 
 namespace Explosion::ECS {
     class Registry {
