@@ -4,4 +4,13 @@
 
 #include <Explosion/World/World.h>
 
-namespace Explosion {}
+namespace Explosion {
+    World::World() = default;
+
+    World::~World() = default;
+
+    void World::Tick(float time)
+    {
+        // TODO
+    }
+}

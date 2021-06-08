@@ -7,7 +7,10 @@
 
 #include <gtest/gtest.h>
 
-#include <Explosion/World/ECS.h>
+#include <Explosion/World/ECS/Entity.h>
+#include <Explosion/World/ECS/Component.h>
+#include <Explosion/World/ECS/View.h>
+#include <Explosion/World/ECS/Registry.h>
 
 using namespace Explosion::ECS;
 

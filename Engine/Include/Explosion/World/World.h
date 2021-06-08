@@ -5,11 +5,17 @@
 #ifndef EXPLOSION_WORLD_H
 #define EXPLOSION_WORLD_H
 
-#include <Explosion/World/ECS.h>
+#include <Explosion/World/ECS/Registry.h>
 
 namespace Explosion {
     class World {
+    public:
+        World();
+        ~World();
+        void Tick(float time);
 
+    private:
+        ECS::Registry registry;
     };
 }
 
