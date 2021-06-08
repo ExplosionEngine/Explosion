@@ -13,3 +13,6 @@
 [submodule "3rd/googletest"]
 	path = 3rd/googletest
 	url = https://github.com/ExplosionEngine/googletest.git
+[submodule "3rd/taskflow"]
+	path = 3rd/taskflow
+	url = https://github.com/ExplosionEngine/taskflow.git
