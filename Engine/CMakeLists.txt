@@ -31,7 +31,7 @@ exp_add_library(
     NAME explosion
     SRCS ${ENGINE_SOURCES} ${PLATFORM_SOURCES}
     PUBLIC_INC_DIRS Include
-    LIBS ${Vulkan_LIBRARIES} ${PLATFORM_LIBS}
+    LIBS ${Vulkan_LIBRARIES} ${PLATFORM_LIBS} Taskflow
 )
 
 add_subdirectory(Test)

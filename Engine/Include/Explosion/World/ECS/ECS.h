@@ -7,6 +7,8 @@
 
 #include <entt/entt.hpp>
 
+#include <Explosion/JobSystem/JobSystem.h>
+
 namespace Explosion::ECS {
     using Entity = entt::entity;
 
@@ -71,7 +73,7 @@ namespace Explosion::ECS {
         entt::registry registry;
     };
 
-    using System = std::function<void(Registry& registry)>;
+    using System = std::function<JobSystem::TaskFlow(Registry& registry, float time)>;
 }
 
 #endif //EXPLOSION_ECS_H
