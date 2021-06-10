@@ -1,14 +1,39 @@
 //
-// Created by John Kindem on 2021/6/8.
+// Created by John Kindem on 2021/6/10.
 //
 
-#ifndef EXPLOSION_REGISTRY_H
-#define EXPLOSION_REGISTRY_H
+#ifndef EXPLOSION_ECS_H
+#define EXPLOSION_ECS_H
 
-#include <Explosion/World/ECS/Entity.h>
-#include <Explosion/World/ECS/View.h>
+#include <entt/entt.hpp>
 
 namespace Explosion::ECS {
+    using Entity = entt::entity;
+
+    class Registry;
+
+    template <typename... T>
+    using ExcludeT = entt::exclude_t<T...>;
+
+    template <typename... T>
+    class View {
+    public:
+        ~View() = default;
+
+        template <typename Func>
+        void Each(const Func& func)
+        {
+            return view.each(func);
+        }
+
+    private:
+        friend Registry;
+
+        explicit View(entt::view<T...> view) : view(std::move(view)) {}
+
+        entt::view<T...> view;
+    };
+
     class Registry {
     public:
         Registry() = default;
@@ -45,6 +70,8 @@ namespace Explosion::ECS {
     private:
         entt::registry registry;
     };
+
+    using System = std::function<void(Registry& registry)>;
 }
 
-#endif //EXPLOSION_REGISTRY_H
+#endif //EXPLOSION_ECS_H

@@ -7,33 +7,17 @@
 
 #include <gtest/gtest.h>
 
-#include <Explosion/World/ECS/Entity.h>
-#include <Explosion/World/ECS/Component.h>
-#include <Explosion/World/ECS/View.h>
-#include <Explosion/World/ECS/Registry.h>
+#include <Explosion/World/ECS/ECS.h>
 
 using namespace Explosion::ECS;
 
 struct PositionComponent {
-    PositionComponent() = default;
-
-    PositionComponent(float x, float y, float z)
-    {
-        this->x = x;
-        this->y = y;
-        this->z = z;
-    }
-
     float x;
     float y;
     float z;
 };
 
-struct NameComponent : public Component {
-    NameComponent() = default;
-
-    explicit NameComponent(std::string name) : name(std::move(name)) {}
-
+struct NameComponent {
     std::string name;
 };
 
