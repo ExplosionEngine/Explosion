@@ -1,4 +1,3 @@
-
 <center>
     <div><img width="800" src="./Docs/Img/logo.png" alt="Explosion Logo"/></div>
     <div>
@@ -8,6 +7,7 @@
         <a href="https://github.com/ExplosionEngine/Explosion/actions">
             <img src="https://img.shields.io/github/workflow/status/ExplosionEngine/Explosion/CMake?style=for-the-badge" alt="Build Status"/>
         </a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2FExplosionEngine%2FExplosion?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FExplosionEngine%2FExplosion.svg?type=shield"/></a>
         <a href="https://github.com/ExplosionEngine/Explosion/blob/master/LICENSE">
             <img src="https://img.shields.io/github/license/ExplosionEngine/Explosion?style=for-the-badge" alt="License"/>
         </a>
@@ -15,6 +15,9 @@
         <img src="https://img.shields.io/github/languages/code-size/ExplosionEngine/Explosion?style=for-the-badge" alt="Code Size"/>
     </div>
 </center>
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FExplosionEngine%2FExplosion.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FExplosionEngine%2FExplosion?ref=badge_large)
 
 # Introduction
 
