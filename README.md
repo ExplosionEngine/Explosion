@@ -2,6 +2,9 @@
 <center>
     <div><img width="800" src="./Docs/Img/logo.png" alt="Explosion Logo"/></div>
     <div>
+        <a href="https://discord.gg/Tn5G3ReYhD">
+            <img src="https://img.shields.io/discord/852860169045278720?style=for-the-badge" alt="Discord"/>
+        </a>
         <a href="https://app.codacy.com/gh/ExplosionEngine/Explosion/dashboard?branch=master">
             <img src="https://img.shields.io/codacy/grade/98afe27fd39b4b39b4c6acd8361e6d02?style=for-the-badge" alt="Codacy Grade"/>
         </a>
