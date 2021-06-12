@@ -11,18 +11,14 @@
 
 using namespace Explosion::ECS;
 
-struct PositionComponent {
-    float x;
-    float y;
-    float z;
-};
-
-struct NameComponent {
-    std::string name;
-};
-
 TEST(ECSTest, EntityComponentTest)
 {
+    struct PositionComponent {
+        float x;
+        float y;
+        float z;
+    };
+
     Registry registry;
 
     Entity entity1 = registry.CreateEntity();
@@ -55,6 +51,10 @@ TEST(ECSTest, EntityComponentTest)
 
 TEST(ECSTest, ViewTest)
 {
+    struct NameComponent {
+        std::string name;
+    };
+
     Registry registry;
 
     static const uint32_t ENTITY_NUM = 5;
