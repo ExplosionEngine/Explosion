@@ -5,6 +5,8 @@
 #ifndef EXPLOSION_ECS_H
 #define EXPLOSION_ECS_H
 
+#include <memory>
+
 #include <entt/entt.hpp>
 
 #include <Explosion/JobSystem/JobSystem.h>
@@ -76,9 +78,8 @@ namespace Explosion::ECS {
     using System = std::function<JobSystem::TaskFlow(Registry& registry, float time)>;
 
     struct SystemNode {
-        uint32_t ref;
-        std::string name;
-        std::vector<std::unique_ptr<SystemNode>> afters;
+        std::string name {};
+        std::vector<std::unique_ptr<SystemNode>> afters {};
     };
 
     struct SystemGraph {
@@ -92,20 +93,36 @@ namespace Explosion::ECS {
 
         SystemGraphBuilder& Emplace(const std::string& name)
         {
-            // TODO
+            if (auto iter = nodes.find(name); iter != nodes.end()) {
+                throw std::runtime_error("specific system node already exists in graph");
+            }
+            nodes[name] = std::make_unique<SystemNode>();
+            nodes[name]->name = name;
             return *this;
         }
 
         SystemGraphBuilder& Emplace(const std::string& name, const std::string& last)
         {
-            // TODO
+            if (auto iter = nodes.find(last); iter == nodes.end()) {
+                throw std::runtime_error("there is no system node with specific name");
+            }
+            Emplace(name);
+            dependencies[name] = last;
             return *this;
         }
 
         SystemGraph Build()
         {
-            // TODO
-            return SystemGraph();
+            for (auto& dependency : dependencies) {
+                nodes[dependency.second]->afters.emplace_back(std::move(nodes[dependency.first]));
+                nodes.erase(nodes.find(dependency.first));
+            }
+
+            SystemGraph systemGraph;
+            for (auto& node : nodes) {
+                systemGraph.roots.emplace_back(std::move(node.second));
+            }
+            return systemGraph;
         }
 
     private:
