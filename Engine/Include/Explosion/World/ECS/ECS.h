@@ -74,6 +74,51 @@ namespace Explosion::ECS {
     };
 
     using System = std::function<JobSystem::TaskFlow(Registry& registry, float time)>;
+
+    struct SystemNode {
+        uint32_t ref;
+        std::string name;
+        std::vector<std::unique_ptr<SystemNode>> afters;
+    };
+
+    struct SystemGraph {
+        std::vector<std::unique_ptr<SystemNode>> roots;
+    };
+
+    class SystemGraphBuilder {
+    public:
+        SystemGraphBuilder() = default;
+        ~SystemGraphBuilder() = default;
+
+        SystemGraphBuilder& Emplace(const std::string& name)
+        {
+            // TODO
+            return *this;
+        }
+
+        SystemGraphBuilder& Emplace(const std::string& name, const std::string& last)
+        {
+            // TODO
+            return *this;
+        }
+
+        SystemGraph Build()
+        {
+            // TODO
+            return SystemGraph();
+        }
+
+    private:
+        std::unordered_map<std::string, std::unique_ptr<SystemNode>> nodes;
+        std::unordered_map<std::string, std::string> dependencies;
+    };
+
+    struct SystemGroup {
+        std::string name;
+        uint32_t priority;
+        std::unordered_map<std::string, System> systems;
+        SystemGraph systemGraph;
+    };
 }
 
 #endif //EXPLOSION_ECS_H

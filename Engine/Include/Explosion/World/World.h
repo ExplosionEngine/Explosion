@@ -14,11 +14,9 @@ namespace Explosion {
         ~World();
 
         void Tick(float time);
-        void AddSystem(ECS::System system);
 
     private:
         ECS::Registry registry;
-        std::vector<ECS::System> systems;
     };
 }
 
