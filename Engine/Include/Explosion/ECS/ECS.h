@@ -7,9 +7,9 @@
 
 #include <memory>
 
-#include <entt/entt.hpp>
+#include "entt/entt.hpp"
 
-#include <Explosion/JobSystem/JobSystem.h>
+#include "Explosion/JobSystem/JobSystem.h"
 
 namespace Explosion::ECS {
     using Entity = entt::entity;
@@ -93,41 +93,21 @@ namespace Explosion::ECS {
 
         SystemGraphBuilder& Emplace(const std::string& name)
         {
-            if (auto iter = nodes.find(name); iter != nodes.end()) {
-                throw std::runtime_error("specific system node already exists in graph");
-            }
-            nodes[name] = std::make_unique<SystemNode>();
-            nodes[name]->name = name;
+            // TODO
             return *this;
         }
 
         SystemGraphBuilder& Emplace(const std::string& name, const std::string& last)
         {
-            if (auto iter = nodes.find(last); iter == nodes.end()) {
-                throw std::runtime_error("there is no system node with specific name");
-            }
-            Emplace(name);
-            dependencies[name] = last;
+            // TODO
             return *this;
         }
 
         SystemGraph Build()
         {
-            for (auto& dependency : dependencies) {
-                nodes[dependency.second]->afters.emplace_back(std::move(nodes[dependency.first]));
-                nodes.erase(nodes.find(dependency.first));
-            }
-
-            SystemGraph systemGraph;
-            for (auto& node : nodes) {
-                systemGraph.roots.emplace_back(std::move(node.second));
-            }
-            return systemGraph;
+            // TODO
+            return SystemGraph {};
         }
-
-    private:
-        std::unordered_map<std::string, std::unique_ptr<SystemNode>> nodes;
-        std::unordered_map<std::string, std::string> dependencies;
     };
 
     struct SystemGroup {
