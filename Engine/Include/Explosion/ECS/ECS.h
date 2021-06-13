@@ -93,21 +93,42 @@ namespace Explosion::ECS {
 
         SystemGraphBuilder& Emplace(const std::string& name)
         {
-            // TODO
+            if (auto iter = nodes.find(name); iter != nodes.end()) {
+                throw std::runtime_error("specific system node is already exists in graph");
+            }
+            roots.emplace_back(std::make_unique<SystemNode>());
+            roots.back()->name = name;
+            nodes[roots.back()->name] = roots.back().get();
             return *this;
         }
 
         SystemGraphBuilder& Emplace(const std::string& name, const std::string& last)
         {
-            // TODO
+            if (auto iter = nodes.find(name); iter != nodes.end()) {
+                throw std::runtime_error("specific system node is already exists in graph");
+            }
+
+            auto iter = nodes.find(last);
+            if (iter == nodes.end()) {
+                throw std::runtime_error(std::string("found no system node named: ") + last);
+            }
+            std::unique_ptr node = std::make_unique<SystemNode>();
+            node->name = name;
+            nodes[name] = node.get();
+            iter->second->afters.emplace_back(std::move(node));
             return *this;
         }
 
         SystemGraph Build()
         {
-            // TODO
-            return SystemGraph {};
+            SystemGraph systemGraph {};
+            systemGraph.roots = std::move(roots);
+            return std::move(systemGraph);
         }
+
+    private:
+        std::vector<std::unique_ptr<SystemNode>> roots;
+        std::unordered_map<std::string, SystemNode*> nodes;
     };
 
     struct SystemGroup {
