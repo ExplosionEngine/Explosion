@@ -103,3 +103,51 @@ jobs:
       shell: bash
       working-directory: ${{github.workspace}}/build
       run: ctest -C $BUILD_TYPE
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Init Submodules
+        run: git submodule init
+
+      - name: Update Submodule
+        run: git submodule update
+
+      - name: Set env
+        id: env
+        run: |
+          VULKAN_SDK=$GITHUB_WORKSPACE/../vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}/macOS
+          echo ::set-output name=VULKAN_SDK::$VULKAN_SDK
+          echo "VK_LAYER_PATH=$VULKAN_SDK/etc/vulkan/explicit_layer.d" >> $GITHUB_ENV
+          echo "VK_ICD_FILENAMES=$VULKAN_SDK/etc/vulkan/icd.d/MoltenVK_icd.json" >> $GITHUB_ENV
+
+      - name: Cache
+        id: cache
+        uses: actions/cache@v1.1.2
+        with:
+          path: ${{steps.env.outputs.VULKAN_SDK}}
+          key: VulkanSdk${{env.VULKAN_SDK_VERSION}}ExtractedMacos
+
+      - name: Download & Extract Vulkan SDK
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          wget --no-cookies -O ../vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}.dmg https://sdk.lunarg.com/sdk/download/${{env.VULKAN_SDK_VERSION}}/mac/vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}.dmg?u=
+          hdiutil attach ../vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}.dmg
+          cp -r /Volumes/vulkansdk-macos-${{env.VULKAN_SDK_VERSION}} $GITHUB_WORKSPACE/..
+          hdiutil detach /Volumes/vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}
+
+      - name: CMake
+        run: |
+          echo "DYLD_LIBRARY_PATH=$VULKAN_SDK/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "PATH=$VULKAN_SDK:$VULKAN_SDK/bin:$PATH" >> $GITHUB_ENV
+          cmake -D CMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/../vsg-$GITHUB_SHA" .
+        env:
+          VULKAN_SDK: ${{steps.env.outputs.VULKAN_SDK}}
+
+      - name: Make
+        run: make -j 8
+
+      - name: Run Unit Test
+        run: ctest -C $BUILD_TYPE
