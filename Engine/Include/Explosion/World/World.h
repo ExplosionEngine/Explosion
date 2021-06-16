@@ -5,7 +5,7 @@
 #ifndef EXPLOSION_WORLD_H
 #define EXPLOSION_WORLD_H
 
-#include <Explosion/World/ECS/ECS.h>
+#include <Explosion/ECS/ECS.h>
 
 namespace Explosion {
     class World {
