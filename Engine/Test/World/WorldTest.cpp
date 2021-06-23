@@ -24,10 +24,11 @@ TEST(WorldTest, AddSystemGroupTest)
     world.AddSystemGroup(systemGroup1);
     world.AddSystemGroup(systemGroup2);
     world.AddSystemGroup(systemGroup3);
+    world.AddSystemGroup(systemGroup4);
 
     const auto& systemGroups = world.GetSystemGroups();
-    ASSERT_EQ(systemGroup1.priority, 1);
-    ASSERT_EQ(systemGroup2.priority, 3);
-    ASSERT_EQ(systemGroup3.priority, 5);
-    ASSERT_EQ(systemGroup4.priority, 10);
+    ASSERT_EQ(systemGroup1.priority, 10);
+    ASSERT_EQ(systemGroup2.priority, 5);
+    ASSERT_EQ(systemGroup3.priority, 3);
+    ASSERT_EQ(systemGroup4.priority, 1);
 }

@@ -52,10 +52,9 @@ namespace Explosion {
         }
     }
 
-    void World::AddSystemGroup(const ECS::SystemGroup& systemGroup)
+    void World::AddSystemGroup(ECS::SystemGroup& systemGroup)
     {
-        auto insertIter = std::lower_bound(systemGroups.begin(), systemGroups.end(), systemGroup);
-        systemGroups.insert(insertIter, systemGroup);
+        // TODO
     }
 
     const std::vector<ECS::SystemGroup>& World::GetSystemGroups()

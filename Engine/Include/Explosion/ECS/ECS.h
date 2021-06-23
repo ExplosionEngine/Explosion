@@ -139,7 +139,7 @@ namespace Explosion::ECS {
 
         bool operator<(const SystemGroup& systemGroup) const
         {
-            return priority < systemGroup.priority;
+            return priority > systemGroup.priority;
         }
     };
 }
