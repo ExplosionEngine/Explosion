@@ -75,7 +75,7 @@ namespace Explosion::ECS {
         entt::registry registry;
     };
 
-    using System = std::function<JobSystem::TaskFlow(Registry& registry, float time)>;
+    using System = std::function<void(Registry& registry, float time)>;
 
     struct SystemNode {
         std::string name {};
