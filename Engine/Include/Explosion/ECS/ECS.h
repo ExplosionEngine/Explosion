@@ -136,6 +136,11 @@ namespace Explosion::ECS {
         uint32_t priority;
         std::unordered_map<std::string, System> systems;
         SystemGraph systemGraph;
+
+        bool operator<(const SystemGroup& systemGroup) const
+        {
+            return priority < systemGroup.priority;
+        }
     };
 }
 

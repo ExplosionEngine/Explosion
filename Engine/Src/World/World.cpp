@@ -54,7 +54,7 @@ namespace Explosion {
 
     void World::AddSystemGroup(ECS::SystemGroup systemGroup)
     {
-        // TODO insert sort by priority
-        systemGroups.emplace_back(std::move(systemGroup));
+        auto insertIter = std::lower_bound(systemGroups.begin(), systemGroups.end(), systemGroup);
+        systemGroups.insert(insertIter, std::move(systemGroup));
     }
 }
