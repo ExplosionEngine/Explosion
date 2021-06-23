@@ -13,7 +13,8 @@ namespace Explosion {
         World();
         ~World();
         void Tick(float time);
-        void AddSystemGroup(ECS::SystemGroup systemGroup);
+        void AddSystemGroup(const ECS::SystemGroup& systemGroup);
+        const std::vector<ECS::SystemGroup>& GetSystemGroups();
 
     private:
         void TickSystem(float time);
