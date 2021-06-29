@@ -1,0 +1,20 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+Language: Cpp
+
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+AlignAfterOpenBracket: Align
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: Empty
+AlwaysBreakTemplateDeclarations: Yes
+AlwaysBreakBeforeMultilineStrings: false
+
+BraceWrapping:
+  AfterClass: false
+  AfterControlStatement: Always
+  AfterFunction: false
+  AfterNamespace: false
+  AfterObjCDeclaration: false
