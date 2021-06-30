@@ -11,6 +11,13 @@ namespace Explosion {
 
     void World::Tick(float time)
     {
+        TickSystem(time);
+
+        // TODO tick others
+    }
+
+    void World::TickSystem(float time)
+    {
         // TODO
     }
 }

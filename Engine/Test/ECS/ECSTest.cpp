@@ -83,32 +83,5 @@ TEST(ECSTest, ViewTest)
 
 TEST(ECSTest, SystemGraphTest)
 {
-    /**
-     * ------------------------------------------------------------
-     * root1 -> system1
-     *       -> system2
-     *
-     * root2 -> system3 -> system4
-     * ------------------------------------------------------------
-     */
-    SystemGraphBuilder builder;
-    SystemGraph systemGraph = builder
-        .Emplace("root1")
-        .Emplace("root2")
-        .Emplace("system1", "root1")
-        .Emplace("system2", "root1")
-        .Emplace("system3", "root2")
-        .Emplace("system4", "system3")
-        .Build();
-
-    ASSERT_EQ(systemGraph.roots.size(), 2);
-    ASSERT_EQ(systemGraph.roots[0]->name, "root1");
-    ASSERT_EQ(systemGraph.roots[1]->name, "root2");
-    ASSERT_EQ(systemGraph.roots[0]->afters.size(), 2);
-    ASSERT_EQ(systemGraph.roots[0]->afters[0]->name, "system1");
-    ASSERT_EQ(systemGraph.roots[0]->afters[1]->name, "system2");
-    ASSERT_EQ(systemGraph.roots[1]->afters.size(), 1);
-    ASSERT_EQ(systemGraph.roots[1]->afters[0]->name, "system3");
-    ASSERT_EQ(systemGraph.roots[1]->afters[0]->afters.size(), 1);
-    ASSERT_EQ(systemGraph.roots[1]->afters[0]->afters[0]->name, "system4");
+    // TODO
 }

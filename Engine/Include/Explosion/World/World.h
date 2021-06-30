@@ -15,6 +15,8 @@ namespace Explosion {
         void Tick(float time);
 
     private:
+        void TickSystem(float time);
+
         ECS::Registry registry;
     };
 }

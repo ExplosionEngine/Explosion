@@ -8,6 +8,7 @@
 #include <taskflow/taskflow.hpp>
 
 namespace Explosion::JobSystem {
+    using Task = tf::Task;
     using TaskFlow = tf::Taskflow;
     using Executor = tf::Executor;
 }
