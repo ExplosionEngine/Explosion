@@ -80,8 +80,3 @@ TEST(ECSTest, ViewTest)
         );
     }
 }
-
-TEST(ECSTest, SystemGraphTest)
-{
-    // TODO
-}
