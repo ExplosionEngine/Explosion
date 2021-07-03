@@ -9,7 +9,7 @@ option(EXP_VERBOSE_INFO "verbose info for cmake debug" ON)
 option(EXP_BUILD_TEST "build test" ON)
 option(EXP_BUILD_SAMPLES "build samples" ON)
 
-if (NOT DEFINED ${CMAKE_BUILD_TYPE})
+if (NOT DEFINED CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
