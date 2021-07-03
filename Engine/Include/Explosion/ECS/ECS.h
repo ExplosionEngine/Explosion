@@ -7,9 +7,9 @@
 
 #include <memory>
 
-#include "entt/entt.hpp"
+#include <entt/entt.hpp>
 
-#include "Explosion/JobSystem/JobSystem.h"
+#include <Explosion/JobSystem/JobSystem.h>
 
 namespace Explosion::ECS {
     using Entity = entt::entity;
@@ -76,6 +76,13 @@ namespace Explosion::ECS {
     };
 
     using System = std::function<void(Registry& registry, float time)>;
+
+    struct SystemGroup {
+        std::string name;
+        uint32_t priority;
+        std::unordered_map<std::string, System> systems;
+        std::unordered_map<std::string, std::string> dependencies;
+    };
 }
 
 #endif //EXPLOSION_ECS_H

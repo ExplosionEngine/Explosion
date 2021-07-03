@@ -12,12 +12,15 @@ namespace Explosion {
     public:
         World();
         ~World();
+        ECS::Registry& GetRegistry();
         void Tick(float time);
+        void AddSystemGroups(const ECS::SystemGroup& systemGroup);
 
     private:
         void TickSystem(float time);
 
         ECS::Registry registry;
+        std::vector<ECS::SystemGroup> systemGroups;
     };
 }
 
