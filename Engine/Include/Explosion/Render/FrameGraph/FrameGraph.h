@@ -8,8 +8,10 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
-#include <Explosion/Common/NonCopy.h>
-#include <Explosion/Common/Exception.h>
+
+#include <Common/NonCopy.h>
+#include <Common/Exception.h>
+
 #include <Explosion/Render/FrameGraph/FgRenderPass.h>
 #include <Explosion/Render/FrameGraph/FgResources.h>
 #include <Explosion/Render/FrameGraph/FgBlackBoard.h>

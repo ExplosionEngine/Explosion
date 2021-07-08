@@ -5,7 +5,6 @@
 #include <Application/Application.h>
 
 #include <Explosion/RHI/Vulkan/VulkanDriver.h>
-
 #include <FileSystem/FileReader.h>
 
 #ifdef __APPLE__
@@ -20,16 +19,28 @@
 #endif
 #include <GLFW/glfw3native.h>
 
+#include <ParticleSystem.h>
+#include <Emitters/ParticleSpriteEmitter.h>
+#include <Effectors/ParticleLocationEffector.h>
+#include <Effectors/ParticleLifeTimeEffector.h>
+#include <Effectors/ParticleForceEffector.h>
+#include <Effectors/ParticleCollisionEffector.h>
+#include <Effectors/ParticleVelocityEffector.h>
+
+#include <Math/Math.h>
+
+#include <chrono>
+#include <iostream>
+#include <thread>
+#include <Effectors/ParticleForceEffector.h>
+
 using namespace Explosion;
 using namespace Explosion::RHI;
 
-namespace {
-    struct Vertex {
-        float position[3];
-    };
-
-    using Index = uint32_t;
-}
+struct Ubo {
+    Math::Matrix<4> view;
+    Math::Matrix<4> proj;
+};
 
 class App : public Application {
 public:
@@ -87,50 +98,77 @@ protected:
         GraphicsPipeline::Config pipelineConfig {};
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.shaderConfig.shaderModules = {
-            { ShaderStageBits::VERTEX,   FileSystem::FileReader::Read("RHI-Triangle-Vertex.spv") },
-            { ShaderStageBits::FRAGMENT, FileSystem::FileReader::Read("RHI-Triangle-Fragment.spv") }
+            { ShaderStageBits::VERTEX,   FileSystem::FileReader::Read("ParticleSpriteVertex.spv") },
+            { ShaderStageBits::FRAGMENT, FileSystem::FileReader::Read("ParticleSpriteFragment.spv") }
         };
+
         pipelineConfig.vertexConfig.vertexBindings = {
-            { 0, sizeof(Vertex), VertexInputRate::PER_VERTEX }
+            { 0, sizeof(Particle), VertexInputRate::PER_VERTEX }
         };
+
         pipelineConfig.vertexConfig.vertexAttributes = {
-            { 0, 0, Format::R32_G32_B32_FLOAT, static_cast<uint32_t>(offsetof(Vertex, position)) },
+            { 0, 0, Format::R32_G32_B32_FLOAT, static_cast<uint32_t>(offsetof(Particle, position)) },
         };
-        pipelineConfig.descriptorConfig.descriptorAttributes = {};
+
+        pipelineConfig.descriptorConfig.descriptorAttributes = {
+            {0, DescriptorType::UNIFORM_BUFFER, (uint32_t)ShaderStageBits::VERTEX},
+        };
+
+        pipelineConfig.assemblyConfig.topology = PrimitiveTopology::POINT_LIST;
+
         pipelineConfig.viewportScissorConfig.viewport = { 0, 0, static_cast<float>(GetWidth()), static_cast<float>(GetHeight()), 0, 1.0 };
         pipelineConfig.viewportScissorConfig.scissor = { 0, 0, GetWidth(), GetHeight() };
         pipelineConfig.rasterizerConfig = { false, false, FlagsCast(CullModeBits::NONE), FrontFace::CLOCK_WISE };
         pipelineConfig.depthStencilConfig = { false, false, false };
         pipelineConfig.colorBlendConfig.enabled = false;
-        pipelineConfig.assemblyConfig.topology = PrimitiveTopology::TRIANGLE_LIST;
         pipeline = driver->CreateGraphicsPipeline(pipelineConfig);
 
-        vertices = {
-            { 0.f, -.5f, 0.f },
-            { .5f, .5f, .0f },
-            { -.5f, .5f, 0.f }
-        };
-        indices = {
-            0, 1, 2
-        };
         Buffer::Config bufferConfig {};
-        bufferConfig.size = sizeof(Vertex) * vertices.size();
+        bufferConfig.size = sizeof(Particle) * 1000;
         bufferConfig.usages = BufferUsageBits::VERTEX_BUFFER | BufferUsageBits::TRANSFER_DST;
-        bufferConfig.memoryProperties = FlagsCast(MemoryPropertyBits::DEVICE_LOCAL);
+        bufferConfig.memoryProperties = FlagsCast(MemoryPropertyBits::HOST_VISIBLE) | FlagsCast(MemoryPropertyBits::HOST_COHERENT);
         vertexBuffer = driver->CreateBuffer(bufferConfig);
-        vertexBuffer->UpdateData(vertices.data());
 
-        bufferConfig.size = sizeof(Index) * indices.size();
-        bufferConfig.usages = BufferUsageBits::INDEX_BUFFER | BufferUsageBits::TRANSFER_DST;
-        bufferConfig.memoryProperties = FlagsCast(MemoryPropertyBits::DEVICE_LOCAL);
-        indexBuffer = driver->CreateBuffer(bufferConfig);
-        indexBuffer->UpdateData(indices.data());
+        Buffer::Config uboConfig {};
+        uboConfig.size = sizeof(Ubo);
+        uboConfig.usages = BufferUsageBits::UNIFORM_BUFFER | BufferUsageBits::TRANSFER_DST;
+        uboConfig.memoryProperties = FlagsCast(MemoryPropertyBits::HOST_VISIBLE) | FlagsCast(MemoryPropertyBits::HOST_COHERENT);
+        uniformBuffer = driver->CreateBuffer(uboConfig);
+
+        DescriptorPool::Config poolConfig = {};
+        poolConfig.maxSets = 1000;
+        poolConfig.poolSizes = {
+                {DescriptorType::UNIFORM_BUFFER, 1000},
+        };
+        pool = driver->CreateDescriptorPool(poolConfig);
+        set = driver->AllocateDescriptorSet(pool, pipeline);
+
+        DescriptorSet::DescriptorBufferInfo dbi = {};
+        dbi.buffer = uniformBuffer;
+        dbi.offset = 0;
+        dbi.range = sizeof(Ubo);
+        set->WriteDescriptors({
+            { 0, DescriptorType::UNIFORM_BUFFER, &dbi, nullptr}
+        });
+
+        emitter = particleSystem.CreateEmitter<ParticleSpriteEmitter>(ParticleSpriteEmitter::Descriptor{});
+        box.SetRandomDevice(random);
+        cone.SetRandomDevice(random);
+        ground.SetGroundHeight(-1.f);
+
+        emitter->AddEffector(&lifetime, PARTICLE_EFFECT_BOTH);
+        emitter->AddEffector(&point, PARTICLE_EFFECT_SPAWN);
+        emitter->AddEffector(&gravity, PARTICLE_EFFECT_UPDATE);
+        emitter->AddEffector(&cone, PARTICLE_EFFECT_SPAWN);
+//        emitter->AddEffector(&ground, PARTICLE_EFFECT_UPDATE);
     }
 
     void OnStop() override
     {
         driver->DestroyBuffer(vertexBuffer);
-        driver->DestroyBuffer(indexBuffer);
+        driver->DestroyBuffer(uniformBuffer);
+        driver->DestroyDescriptorPool(pool);
+
         driver->DestroyGraphicsPipeline(pipeline);
         for (auto* frameBuffer : frameBuffers) {
             driver->DestroyFrameBuffer(frameBuffer);
@@ -144,22 +182,40 @@ protected:
 
     void OnDrawFrame() override
     {
+        static auto start = std::chrono::steady_clock::now();
+        auto curr = std::chrono::steady_clock::now();
+        auto delta = std::chrono::duration<float, std::milli>(curr - start).count();
+
+        particleSystem.Tick(delta / 1000.f);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds (16));
+        start = curr;
+
         swapChain->DoFrame([this](uint32_t imageIdx, Signal* imageReadySignal, Signal* frameFinishedSignal) -> void {
             auto* commandBuffer = driver->CreateCommandBuffer();
             commandBuffer->EncodeCommands([imageIdx, this](CommandEncoder* encoder) -> void {
+
                 CommandEncoder::RenderPassBeginInfo beginInfo {};
                 beginInfo.frameBuffer = frameBuffers[imageIdx];
                 beginInfo.renderArea = { 0, 0, GetWidth(), GetHeight() };
                 beginInfo.clearValue = { 0.f, 0.f, 0.f, 1.f };
                 encoder->BeginRenderPass(renderPass, beginInfo);
-                {
-                    encoder->BindGraphicsPipeline(pipeline);
-                    encoder->SetViewPort({ 0, 0, static_cast<float>(GetWidth()), static_cast<float>(GetHeight()), 0.f, 1.f });
-                    encoder->SetScissor({ 0, 0, GetWidth(), GetHeight() });
 
+                void* vtx = const_cast<uint8_t*>(emitter->GetVertexData());
+                if (vtx != nullptr) {
+                    vertexBuffer->UpdateData(vtx);
+                    ubo.view = glm::inverse(
+                            glm::lookAt(glm::vec3(0.f, 0.f, -5.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f)));
+                    ubo.proj = glm::perspective(60.f / 180.f * 3.14f, GetWidth() / (float) GetHeight(), 0.01f, 100.f);
+                    uniformBuffer->UpdateData((void *) &ubo);
+
+                    encoder->BindGraphicsPipeline(pipeline);
+                    encoder->SetViewPort(
+                            {0, 0, static_cast<float>(GetWidth()), static_cast<float>(GetHeight()), 0.f, 1.f});
+                    encoder->SetScissor({0, 0, GetWidth(), GetHeight()});
+                    encoder->BindDescriptorSet({ set });
                     encoder->BindVertexBuffer(0, vertexBuffer);
-                    encoder->BindIndexBuffer(indexBuffer);
-                    encoder->DrawIndexed(0, indices.size(), 0, 0, 1);
+                    encoder->Draw(0, emitter->GetActiveCount(), 0, 1);
                 }
                 encoder->EndRenderPass();
             });
@@ -168,17 +224,28 @@ protected:
     }
 
 private:
-    std::vector<Vertex> vertices;
-    std::vector<Index> indices;
-
     std::unique_ptr<Driver> driver;
     SwapChain* swapChain = nullptr;
     std::vector<ImageView*> imageViews;
     RenderPass* renderPass = nullptr;
     std::vector<FrameBuffer*> frameBuffers;
     GraphicsPipeline* pipeline = nullptr;
+    DescriptorPool* pool = nullptr;
+    DescriptorSet* set = nullptr;
+    Buffer* uniformBuffer = nullptr;
     Buffer* vertexBuffer = nullptr;
-    Buffer* indexBuffer = nullptr;
+
+    ParticleSystem particleSystem;
+    ParticleBoxLocation box;
+    ParticlePointLocation point;
+    ParticleLifeTimeEffector lifetime;
+    ParticleGravityEffector gravity;
+    ParticleGroundCollision ground;
+    ParticleConeEffector cone;
+    ParticleSpriteEmitter* emitter;
+    RandomDevice random;
+
+    Ubo ubo;
 };
 
 int main(int argc, char* argv[])

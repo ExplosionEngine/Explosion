@@ -6,7 +6,9 @@
 #define EXPLOSION_FGNODE_H
 
 #include <string>
-#include <Explosion/Common/NonCopy.h>
+
+#include <Common/NonCopy.h>
+#include <Common/RefObject.h>
 
 namespace Explosion {
 

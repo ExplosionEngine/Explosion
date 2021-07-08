@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <utility>
+
 #include <Explosion/Render/FrameGraph/FgResources.h>
 #include <Explosion/Render/FrameGraph/FgNode.h>
 

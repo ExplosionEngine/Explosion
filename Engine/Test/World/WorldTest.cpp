@@ -4,8 +4,8 @@
 
 #include <gtest/gtest.h>
 
-#include <Explosion/ECS/ECS.h>
-#include <Explosion/World/World.h>
+#include <Explosion/ECS.h>
+#include <Explosion/World.h>
 
 using namespace Explosion;
 using namespace Explosion::ECS;

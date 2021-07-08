@@ -2,7 +2,7 @@
 // Created by LiZhen on 2021/5/30.
 //
 
-#include <Explosion/Common/Math.h>
+#include <Math/Math.h>
 
 #ifndef EXPLOSION_PARTICLE_H
 #define EXPLOSION_PARTICLE_H

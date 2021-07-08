@@ -5,7 +5,8 @@
 #ifndef EXPLOSION_PARTICLELOCATIONEFFECTOR_H
 #define EXPLOSION_PARTICLELOCATIONEFFECTOR_H
 
-#include <Explosion/Common/Math.h>
+#include <Math/Math.h>
+
 #include <ParticleEffector.h>
 #include <ParticleSystemApi.h>
 

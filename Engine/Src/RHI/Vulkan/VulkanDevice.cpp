@@ -5,10 +5,11 @@
 #include <stdexcept>
 #include <functional>
 
+#include <Common/Logger.h>
+
 #include <Explosion/RHI/Vulkan/VulkanDevice.h>
 #include <Explosion/RHI/Vulkan/VulkanUtils.h>
 #include <Explosion/RHI/Vulkan/VulkanPlatform.h>
-#include <Explosion/Common/Logger.h>
 
 #define VK_VALIDATION_LAYER_EXTENSION_NAME "VK_LAYER_KHRONOS_validation"
 
