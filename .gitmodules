@@ -16,3 +16,6 @@
 [submodule "3rd/taskflow"]
 	path = 3rd/taskflow
 	url = https://github.com/ExplosionEngine/taskflow.git
+[submodule "3rd/meta"]
+	path = 3rd/meta
+	url = https://github.com/ExplosionEngine/meta.git
