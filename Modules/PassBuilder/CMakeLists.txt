@@ -15,7 +15,7 @@ exp_add_library(
     TYPE SHARED
     SRCS ${SRC_FILES} ${INC_FILES}
     PUBLIC_INC_DIRS Include ${PROJECT_ROOT}/Engine/Include ${THIRD_PARTY_INC}
-    LIBS explosion FileSystem
+    LIBS FileSystem
 )
 
 set(UNIT_TEST PassTest)

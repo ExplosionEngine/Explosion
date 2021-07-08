@@ -29,7 +29,7 @@ exp_add_library(
             ${PROJECT_ROOT}/Engine/Include
             ${THIRD_PARTY_INC}
             Include
-        LIBS explosion Math
+        LIBS CommonBase Math
 )
 
 add_subdirectory(Samples)

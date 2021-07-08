@@ -13,7 +13,7 @@ include_directories(../)
 exp_add_executable(
     NAME ParticleSample
     SRCS ${SAMPLE_SOURCES}
-    LIBS explosion ParticleSystem application FileSystem
+    LIBS Engine ParticleSystem SampleApplication FileSystem
 )
 add_custom_command(
     TARGET ParticleSample PRE_BUILD

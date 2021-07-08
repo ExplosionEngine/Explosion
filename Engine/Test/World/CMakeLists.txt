@@ -3,5 +3,5 @@ exp_add_test(
     NAME WorldTest
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     SRCS ${WORLD_TEST_SOURCES}
-    LIBS gtest explosion
+    LIBS gtest Engine
 )
