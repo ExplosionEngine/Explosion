@@ -3,7 +3,8 @@
 //
 
 #include <ParticleEmitter.h>
-#include <Explosion/Common/Exception.h>
+
+#include <Common/Exception.h>
 
 namespace Explosion {
 

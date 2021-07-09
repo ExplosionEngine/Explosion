@@ -3,7 +3,7 @@
 //
 
 #include <Explosion/Engine.h>
-#include <Explosion/World/World.h>
+#include <Explosion/World.h>
 
 namespace Explosion {
     Engine* Engine::GetInstance()

@@ -29,10 +29,10 @@ exp_add_library(
             ${PROJECT_ROOT}/Engine/Include
             ${THIRD_PARTY_INC}
             Include
-        LIBS explosion
+        LIBS CommonBase Math
 )
 
-add_subdirectory(Sample)
+add_subdirectory(Samples)
 
 set(UNIT_TEST ParticleTest)
 file(GLOB_RECURSE TEST_FILES Test/*)

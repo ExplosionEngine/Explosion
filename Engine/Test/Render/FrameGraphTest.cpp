@@ -3,9 +3,7 @@
 //
 
 #include <gtest/gtest.h>
-#include <Explosion/RHI/Common/Driver.h>
 #include <Explosion/Render/FrameGraph/FgResources.h>
-#include <Explosion/Render/FrameGraph/FrameGraph.h>
 
 using namespace Explosion;
 

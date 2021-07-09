@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 
-#include <Explosion/ECS/ECS.h>
+#include <Explosion/ECS.h>
 
 using namespace Explosion::ECS;
 

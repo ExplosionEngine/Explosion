@@ -7,9 +7,11 @@
 
 #include <limits>
 #include <memory>
-#include <Explosion/Common/NonCopy.h>
-#include <Explosion/Common/Exception.h>
-#include <Explosion/Common/Template/RefObject.h>
+
+#include <Common/NonCopy.h>
+#include <Common/Exception.h>
+#include <Common/RefObject.h>
+
 #include <Explosion/Render/FrameGraph/FgNode.h>
 #include <Explosion/Render/FrameGraph/FgHandle.h>
 

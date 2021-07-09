@@ -44,5 +44,6 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 endif()
 
 add_subdirectory(3rd)
+add_subdirectory(Common)
 add_subdirectory(Engine)
 add_subdirectory(Modules)

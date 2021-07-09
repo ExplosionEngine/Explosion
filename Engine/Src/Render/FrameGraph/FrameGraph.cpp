@@ -2,7 +2,8 @@
 // Created by LiZhen on 2021/5/9.
 //
 
-#include <Explosion/Common/Exception.h>
+#include <Common/Exception.h>
+
 #include <Explosion/Render/FrameGraph/FrameGraph.h>
 #include <Explosion/RHI/Vulkan/VulkanDriver.h>
 

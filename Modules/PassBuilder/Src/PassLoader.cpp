@@ -1,5 +1,6 @@
 #include "PassLoader.h"
-#include "Explosion/Common/FileReader.h"
+
+#include <FileSystem/FileReader.h>
 
 #include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
@@ -70,7 +71,7 @@ static bool ParseTargets(rapidjson::Document& root, GraphInfo& graph)
 GraphInfo PassLoader::Load(const std::string& url)
 {
     GraphInfo ret;
-    auto data = FileReader::Read(url, false);
+    auto data = FileSystem::FileReader::Read(url, false);
     rapidjson::Document document;
     document.Parse(data.data());
     ParseTargets(document, ret);

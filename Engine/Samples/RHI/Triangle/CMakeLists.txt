@@ -2,7 +2,7 @@ file(GLOB TRIANGLE_SOURCES Main.cpp)
 exp_add_executable(
     NAME RHI-Triangle
     SRCS ${TRIANGLE_SOURCES}
-    LIBS explosion application
+    LIBS Engine SampleApplication FileSystem
 )
 add_custom_command(
     TARGET RHI-Triangle PRE_BUILD
