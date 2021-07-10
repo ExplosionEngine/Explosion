@@ -10,6 +10,6 @@ exp_add_library(
     NAME SampleApplication
     SRCS ${APPLICATION_SOURCES}
     PRIVATE_INC_DIRS ${Vulkan_INCLUDE_DIRS}
-    PUBLIC_INC_DIRS Include
-    LIBS glfw ${Vulkan_LIBRARIES}
+    PUBLIC_INC_DIRS Include ${glfw_INCS}
+    LIBS ${Vulkan_LIBRARIES} ${glfw_LIBS}
 )

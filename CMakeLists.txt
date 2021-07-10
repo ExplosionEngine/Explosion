@@ -21,6 +21,10 @@ else()
     message("-- generator is single config, using $CMAKE_BUILD_TYPE to build, current build type is ${CMAKE_BUILD_TYPE}")
 endif()
 
+if (NOT EXP_3RD_ROOT)
+    message(FATAL_ERROR "please download the Explosion3rdParty package and define $EXP_3RD_ROOT, see https://github.com/ExplosionEngine/Explosion3rdParty/releases")
+endif()
+
 set(PROJECT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(GEN_PRE_DIR ${CMAKE_BINARY_DIR}/Gen/ApiHeader)
 
@@ -51,7 +55,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     add_definitions(-DEXPLOSION_DEBUG)
 endif()
 
-add_subdirectory(3rd)
+add_subdirectory(${EXP_3RD_ROOT} 3rd)
 add_subdirectory(Common)
 add_subdirectory(Engine)
 add_subdirectory(Modules)
