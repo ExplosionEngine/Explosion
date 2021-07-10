@@ -8,6 +8,7 @@ endif()
 file(GLOB APPLICATION_SOURCES Src/*.cpp)
 exp_add_library(
     NAME SampleApplication
+    TYPE STATIC
     SRCS ${APPLICATION_SOURCES}
     PRIVATE_INC_DIRS ${Vulkan_INCLUDE_DIRS}
     PUBLIC_INC_DIRS Include ${glfw_INCS}

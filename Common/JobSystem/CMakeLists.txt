@@ -8,7 +8,9 @@ exp_add_library(
 file(GLOB_RECURSE TEST_SOURCES Test/*.cpp)
 exp_add_test(
     NAME JobSystemTest
+    TYPE STATIC
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     SRCS ${TEST_SOURCES}
-    LIBS gtest JobSystem
+    INC_DIRS ${googletest_INCS}
+    LIBS JobSystem ${googletest_LIBS}
 )

@@ -29,6 +29,7 @@ endif()
 file(GLOB_RECURSE ENGINE_SOURCES Src/*.cpp)
 exp_add_library(
     NAME Engine
+    TYPE STATIC
     SRCS ${ENGINE_SOURCES} ${PLATFORM_SOURCES}
     PUBLIC_INC_DIRS Include ${entt_INCS}
     LIBS ${Vulkan_LIBRARIES} ${PLATFORM_LIBS} CommonBase JobSystem

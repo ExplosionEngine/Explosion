@@ -69,7 +69,7 @@ function(exp_add_library)
         PARAMS
         ""
         "NAME;TYPE"
-        "SRCS;PRIVATE_INC_DIRS;PUBLIC_INC_DIRS;LIBS"
+        "SRCS;PRIVATE_INC_DIRS;PUBLIC_INC_DIRS;LIBS;MSVC_IGNORE_LIBS"
         ${ARGN}
     )
 
@@ -94,6 +94,10 @@ function(exp_add_library)
     target_include_directories(${PARAMS_NAME} PRIVATE ${PARAMS_PRIVATE_INC_DIRS})
     target_include_directories(${PARAMS_NAME} PUBLIC ${PARAMS_PUBLIC_INC_DIRS})
     target_link_libraries(${PARAMS_NAME} ${PARAMS_LIBS})
+
+    if (${MSVC})
+        target_compile_options(${PARAMS_NAME} PUBLIC "/MTd")
+    endif()
 endfunction()
 
 function(exp_external_library)
