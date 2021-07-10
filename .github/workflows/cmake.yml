@@ -142,7 +142,7 @@ jobs:
         run: |
           echo "DYLD_LIBRARY_PATH=$VULKAN_SDK/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "PATH=$VULKAN_SDK:$VULKAN_SDK/bin:$PATH" >> $GITHUB_ENV
-          cmake -D CMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/../vsg-$GITHUB_SHA" .
+          cmake -D CMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/../vsg-$GITHUB_SHA" . -DCMAKE_BUILD_TYPE=$BUILD_TYPE
         env:
           VULKAN_SDK: ${{steps.env.outputs.VULKAN_SDK}}
 
