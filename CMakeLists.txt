@@ -10,7 +10,15 @@ option(EXP_BUILD_TEST "build test" ON)
 option(EXP_BUILD_SAMPLES "build samples" ON)
 
 if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
+    message(FATAL_ERROR "please set $CMAKE_BUILD_TYPE on configuring cmake")
+endif()
+
+get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if (${GENERATOR_IS_MULTI_CONFIG})
+    set(CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}" CACHE STRING "cmake configuration types for multi config generator" FORCE)
+    message("-- generator is multi config, but just using $CMAKE_BUILD_TYPE as the only one config, current config is ${CMAKE_CONFIGURATION_TYPES}")
+else()
+    message("-- generator is single config, using $CMAKE_BUILD_TYPE to build, current build type is ${CMAKE_BUILD_TYPE}")
 endif()
 
 set(PROJECT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
