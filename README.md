@@ -46,26 +46,17 @@ Install [Vulkan SDK](https://vulkan.lunarg.com/sdk/home) and setup environment v
 VULKAN_SDK=${your_sdk_path}
 ```
 
-Using cmake to generate build rules:
+Using cmake to configure and build project:
 
 ```cpp
-mkdir build
-cd build
-cmake ..
+# Debug
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build --config Debug
+
+# Release
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
 ```
-
-Building the engine:
-
-```cpp
-cmake --build .
-```
-# Documentation
-
-[placeholder]
-
-# Examples
-
-[placeholder]
 
 # License
 
