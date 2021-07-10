@@ -38,25 +38,18 @@ jobs:
         echo VULKAN_SDK=$value | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         echo $env:VULKAN_SDK\Bin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{github.workspace}}/build
-
     - name: Configure CMake
-      shell: bash
-      working-directory: ${{github.workspace}}/build
       run: |
-        $value=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath(".\Win")
-        cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DEXP_3RD_ROOT="$value"
+        $value=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("Win")
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DEXP_3RD_ROOT="$value"
 
     - name: Build
-      shell: bash
       working-directory: ${{github.workspace}}/build
-      run: cmake --build . --config $BUILD_TYPE -j 8
+      run: cmake --build . --config ${{env.BUILD_TYPE}} -j 8
     
     - name: Run Unit Test
-      shell: bash
       working-directory: ${{github.workspace}}/build
-      run: ctest -C $BUILD_TYPE
+      run: ctest -C ${{env.BUILD_TYPE}}
 
   build-macos:
     runs-on: macos-latest
