@@ -35,7 +35,7 @@ jobs:
         Invoke-WebRequest -Uri https://sdk.lunarg.com/sdk/download/${{env.VULKAN_SDK_VERSION}}/windows/VulkanSDK-${{env.VULKAN_SDK_VERSION}}-Installer.exe -OutFile Vulkan-Installer.exe
         .\Vulkan-Installer.exe /S
         $value=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("C:\VulkanSDK\1.2.170.0")
-        echo $value
+        ls $value
         echo VULKAN_SDK=$value | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         echo $env:VULKAN_SDK\Bin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
