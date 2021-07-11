@@ -67,16 +67,13 @@ jobs:
           unzip MacOS.zip
 
       - name: Download & Extract Vulkan SDK
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           wget --no-cookies -O ../vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}.dmg https://sdk.lunarg.com/sdk/download/${{env.VULKAN_SDK_VERSION}}/mac/vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}.dmg?u=
           hdiutil attach ../vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}.dmg
           cp -r /Volumes/vulkansdk-macos-${{env.VULKAN_SDK_VERSION}} $GITHUB_WORKSPACE/..
           hdiutil detach /Volumes/vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}
-          echo "VULKAN_SDK=$GITHUB_WORKSPACE/../vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}/macOS" >> $GITHUB_ENV
-          echo "VK_LAYER_PATH=$VULKAN_SDK/etc/vulkan/explicit_layer.d" >> $GITHUB_ENV
-          echo "VK_ICD_FILENAMES=$VULKAN_SDK/etc/vulkan/icd.d/MoltenVK_icd.json" >> $GITHUB_ENV
-          echo "DYLD_LIBRARY_PATH=$VULKAN_SDK/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
+          VULKAN_SDK=$GITHUB_WORKSPACE/../vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}/macOS
+          echo "VULKAN_SDK=$VULKAN_SDK" >> $GITHUB_ENV
           echo "$VULKAN_SDK/bin" >> $GITHUB_PATH
 
       - name: Build
