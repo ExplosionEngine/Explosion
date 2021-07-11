@@ -63,7 +63,7 @@ jobs:
       
       - name: Get 3rd Party Package
         run: |
-          Invoke-WebRequest -Uri https://github.com/ExplosionEngine/Explosion3rdParty/releases/download/MacOS-${{env.EXP_3RD_VERSION}}/MacOS.zip -OutFile MacOS.zip
+          wget https://github.com/ExplosionEngine/Explosion3rdParty/releases/download/MacOS-${{env.EXP_3RD_VERSION}}/MacOS.zip
           unip MacOS.zip
 
       - name: Download & Extract Vulkan SDK
