@@ -77,7 +77,7 @@ jobs:
           echo "VK_LAYER_PATH=$VULKAN_SDK/etc/vulkan/explicit_layer.d" >> $GITHUB_ENV
           echo "VK_ICD_FILENAMES=$VULKAN_SDK/etc/vulkan/icd.d/MoltenVK_icd.json" >> $GITHUB_ENV
           echo "DYLD_LIBRARY_PATH=$VULKAN_SDK/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "$VULKAN_SDK:$VULKAN_SDK/bin:$PATH" >> $GITHUB_PATH
+          echo "$VULKAN_SDK/bin" >> $GITHUB_PATH
 
       - name: Build
         run: |
