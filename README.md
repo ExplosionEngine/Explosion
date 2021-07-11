@@ -46,26 +46,19 @@ Install [Vulkan SDK](https://vulkan.lunarg.com/sdk/home) and setup environment v
 VULKAN_SDK=${your_sdk_path}
 ```
 
-Using cmake to generate build rules:
+Download the 3rd-party package at [portal](https://github.com/ExplosionEngine/Explosion3rdParty/releases), extract files to a directory for next step.
+
+Using cmake to configure and build project:
 
 ```cpp
-mkdir build
-cd build
-cmake ..
+# Debug
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DEXP_3RD_ROOT=${your_3rd_root}
+cmake --build build --config Debug
+
+# Release
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DEXP_3RD_ROOT=${your_3rd_root}
+cmake --build build --config Release
 ```
-
-Building the engine:
-
-```cpp
-cmake --build .
-```
-# Documentation
-
-[placeholder]
-
-# Examples
-
-[placeholder]
 
 # License
 

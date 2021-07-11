@@ -69,7 +69,7 @@ function(exp_add_library)
         PARAMS
         ""
         "NAME;TYPE"
-        "SRCS;PRIVATE_INC_DIRS;PUBLIC_INC_DIRS;LIBS"
+        "SRCS;PRIVATE_INC_DIRS;PUBLIC_INC_DIRS;LIBS;MSVC_IGNORE_LIBS"
         ${ARGN}
     )
 
@@ -94,4 +94,35 @@ function(exp_add_library)
     target_include_directories(${PARAMS_NAME} PRIVATE ${PARAMS_PRIVATE_INC_DIRS})
     target_include_directories(${PARAMS_NAME} PUBLIC ${PARAMS_PUBLIC_INC_DIRS})
     target_link_libraries(${PARAMS_NAME} ${PARAMS_LIBS})
+
+    if (${MSVC})
+        if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+            target_compile_options(${PARAMS_NAME} PUBLIC "/MTd")
+        endif()
+        if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+            target_compile_options(${PARAMS_NAME} PUBLIC "/MT")
+        endif()
+    endif()
+endfunction()
+
+function(exp_external_library)
+    cmake_parse_arguments(
+        PARAMS
+        ""
+        "NAME"
+        ""
+        ${ARGN}
+    )
+
+    if (EXISTS "${EXP_3RD_ROOT}/${PARAMS_NAME}/Include")
+        set("${PARAMS_NAME}_INCS" "${EXP_3RD_ROOT}/${PARAMS_NAME}/Include" CACHE STRING "include dirs of ${PARAMS_NAME} library")
+    endif()
+    if (EXISTS "${EXP_3RD_ROOT}/${PARAMS_NAME}/Lib")
+        if (${WIN32})
+            set(LIBS "${EXP_3RD_ROOT}/${PARAMS_NAME}/Lib/${CMAKE_BUILD_TYPE}/*.lib")
+        else(${APPLE})
+            file(GLOB LIBS "${EXP_3RD_ROOT}/${PARAMS_NAME}/Lib/${CMAKE_BUILD_TYPE}/*.a")
+        endif ()
+        set("${PARAMS_NAME}_LIBS" ${LIBS} CACHE STRING "include dirs of ${PARAMS_NAME} library")
+    endif()
 endfunction()

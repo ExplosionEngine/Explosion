@@ -3,5 +3,6 @@ exp_add_test(
     NAME DriverTest
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     SRCS ${DRIVER_TEST_SOURCES}
-    LIBS gtest Engine
+    INC_DIRS ${googletest_INCS}
+    LIBS Engine ${googletest_LIBS}
 )

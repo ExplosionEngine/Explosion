@@ -1,153 +1,86 @@
 name: CMake
 
-on: [pull_request]
+on: [pull_request, workflow_dispatch]
 
 env:
   BUILD_TYPE: Release
-  VULKAN_SDK_REPO_VERSION: 1.2.170
   VULKAN_SDK_VERSION: 1.2.170.0
+  EXP_3RD_VERSION: v0.4
 
 jobs:
-  build-ubuntu:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    
-    - name: Init Git SubModule
-      run: git submodule init
-      
-    - name: Update Git SubModule
-      run: git submodule update
-    
-    - name: Update Apt-Get Repo
-      run: sudo apt-get update
-    
-    - name: Install XRandr Development Package For GLFW3
-      run: sudo apt-get install libxrandr-dev
-      
-    - name: Install SDL2 Development Package For GLFW3
-      run: sudo apt-get install libsdl2-dev
-    
-    - name: Get Lunarg Signing Key
-      run: wget -qO - https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
-
-    - name: Get Vulkan SDK Package List
-      run: sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-$VULKAN_SDK_REPO_VERSION-focal.list https://packages.lunarg.com/vulkan/$VULKAN_SDK_REPO_VERSION/lunarg-vulkan-$VULKAN_SDK_REPO_VERSION-focal.list
-
-    - name: Update Apt Infos
-      run: sudo apt update
-    
-    - name: Install Vulkan SDK
-      run: sudo apt install vulkan-sdk
-
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{github.workspace}}/build
-
-    - name: Configure CMake
-      shell: bash
-      working-directory: ${{github.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-
-    - name: Build
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: cmake --build . --config $BUILD_TYPE -j 8
-    
-    - name: Run Unit Test
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: ctest -C $BUILD_TYPE
-
   build-windows:
     runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v2
+    
+    - name: Update SubModules
+      run: |
+        git submodule init
+        git submodule update
 
-    - name: Init Git SubModule
-      run: git submodule init
-
-    - name: Update Git SubModule
-      run: git submodule update
-
-    - name: Install Scoop
-      run: Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
-
-    - name: Configure Scoop Env
-      run: $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("~\scoop\shims") | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
+    - name: Install 7-zip
+      run: |
+        Invoke-WebRequest -Uri https://7-zip.org/a/7z1900-x64.msi -OutFile 7z.msi
+        msiexec.exe /package 7z.msi /qn
+        echo "C:\Program Files\7-Zip" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        
+    - name: Get 3rd Party Package
+      run: |
+        Invoke-WebRequest -Uri https://github.com/ExplosionEngine/Explosion3rdParty/releases/download/Win-${{env.EXP_3RD_VERSION}}/Win.zip -OutFile Win.zip
+        7z x Win.zip
+    
     - name: Install Vulkan SDK
-      run: scoop install vulkan$VULKAN_SDK_VERSION
-    
-    - name: Configure Vulkan Env
-      run: $value=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("~\scoop\apps\vulkan\current"); echo VULKAN_SDK=$value | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-    
-    - name: Add Vulkan SDK Binaries to Path
-      run: echo $env:VULKAN_SDK\Bin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{github.workspace}}/build
+      run: |
+        Invoke-WebRequest -Uri https://sdk.lunarg.com/sdk/download/${{env.VULKAN_SDK_VERSION}}/windows/VulkanSDK-${{env.VULKAN_SDK_VERSION}}-Installer.exe -OutFile Vulkan-Installer.exe
+        7z x .\Vulkan-Installer.exe -oVulkanSDK
+        $value=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("VulkanSDK")
+        echo VULKAN_SDK=$value | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        echo $value\Bin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Configure CMake
-      shell: bash
-      working-directory: ${{github.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      run: |
+        $value=$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("Win")
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DEXP_3RD_ROOT="$value"
 
     - name: Build
-      shell: bash
       working-directory: ${{github.workspace}}/build
-      run: cmake --build . --config $BUILD_TYPE -j 8
+      run: cmake --build . --config ${{env.BUILD_TYPE}} -j 8
     
     - name: Run Unit Test
-      shell: bash
       working-directory: ${{github.workspace}}/build
-      run: ctest -C $BUILD_TYPE
+      run: ctest -C ${{env.BUILD_TYPE}}
 
   build-macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
 
-      - name: Init Submodules
-        run: git submodule init
-
-      - name: Update Submodule
-        run: git submodule update
-
-      - name: Set env
-        id: env
+      - name: Update Submodules
         run: |
-          VULKAN_SDK=$GITHUB_WORKSPACE/../vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}/macOS
-          echo ::set-output name=VULKAN_SDK::$VULKAN_SDK
-          echo "VK_LAYER_PATH=$VULKAN_SDK/etc/vulkan/explicit_layer.d" >> $GITHUB_ENV
-          echo "VK_ICD_FILENAMES=$VULKAN_SDK/etc/vulkan/icd.d/MoltenVK_icd.json" >> $GITHUB_ENV
-
-      - name: Cache
-        id: cache
-        uses: actions/cache@v1.1.2
-        with:
-          path: ${{steps.env.outputs.VULKAN_SDK}}
-          key: VulkanSdk${{env.VULKAN_SDK_VERSION}}ExtractedMacos
+          git submodule init
+          git submodule update
+      
+      - name: Get 3rd Party Package
+        run: |
+          wget https://github.com/ExplosionEngine/Explosion3rdParty/releases/download/MacOS-${{env.EXP_3RD_VERSION}}/MacOS.zip
+          unzip MacOS.zip
 
       - name: Download & Extract Vulkan SDK
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           wget --no-cookies -O ../vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}.dmg https://sdk.lunarg.com/sdk/download/${{env.VULKAN_SDK_VERSION}}/mac/vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}.dmg?u=
           hdiutil attach ../vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}.dmg
           cp -r /Volumes/vulkansdk-macos-${{env.VULKAN_SDK_VERSION}} $GITHUB_WORKSPACE/..
           hdiutil detach /Volumes/vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}
+          VULKAN_SDK=$GITHUB_WORKSPACE/../vulkansdk-macos-${{env.VULKAN_SDK_VERSION}}/macOS
+          echo "VULKAN_SDK=$VULKAN_SDK" >> $GITHUB_ENV
+          echo "$VULKAN_SDK/bin" >> $GITHUB_PATH
 
-      - name: CMake
+      - name: Build
         run: |
-          echo "DYLD_LIBRARY_PATH=$VULKAN_SDK/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "PATH=$VULKAN_SDK:$VULKAN_SDK/bin:$PATH" >> $GITHUB_ENV
-          cmake -D CMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/../vsg-$GITHUB_SHA" .
-        env:
-          VULKAN_SDK: ${{steps.env.outputs.VULKAN_SDK}}
-
-      - name: Make
-        run: make -j 8
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DEXP_3RD_ROOT="$(pwd)/MacOS"
+          cmake --build build -j 8
 
       - name: Run Unit Test
-        run: ctest -C $BUILD_TYPE
+        working-directory: ${{github.workspace}}/build
+        run: ctest -C ${{env.BUILD_TYPE}}
