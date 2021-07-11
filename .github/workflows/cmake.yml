@@ -82,6 +82,7 @@ jobs:
       - name: Build
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DEXP_3RD_ROOT="$(pwd)/MacOS"
+          cmake --build build -j 8
 
       - name: Run Unit Test
         working-directory: ${{github.workspace}}/build
