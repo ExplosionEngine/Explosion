@@ -1,0 +1,6 @@
+#include <Common/ResourceCommon.esli>
+
+UniformGroup(PER_VIEW, ViewGroup, 0) {
+    mat4 viewMatrix;
+    mat4 projMatrix;
+} viewGroup;
