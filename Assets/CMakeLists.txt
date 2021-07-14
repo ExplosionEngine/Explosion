@@ -1,0 +1,3 @@
+add_subdirectory(ResourceCommon)
+add_subdirectory(AssetsCommon)
+add_subdirectory(AssetsCompiler)
