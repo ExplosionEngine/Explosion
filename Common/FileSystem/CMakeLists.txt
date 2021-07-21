@@ -4,6 +4,7 @@ exp_add_library(
     TYPE STATIC
     SRCS ${SOURCES}
     PUBLIC_INC_DIRS Include
+    LIBS CommonBase
 )
 
 file(GLOB_RECURSE TEST_SOURCES Test/*.cpp)
