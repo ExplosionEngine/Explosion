@@ -6,14 +6,9 @@
 #define EXPLOSION_REFLECTION_H
 
 #include <entt/entt.hpp>
+#include <Reflection/ReflFactory.h>
 
 namespace Explosion {
-
-    template <typename Type, typename...Spec>
-    using ReflFactory = entt::meta_factory<Type, Spec...>;
-    using ReflType = entt::meta_type;
-    using ReflIdType = entt::id_type;
-    using ReflAny = entt::meta_any;
 
     class Reflection {
     public:
@@ -23,7 +18,7 @@ namespace Explosion {
         template <typename Type>
         static auto Factory() noexcept
         {
-            return entt::meta<Type>();
+            return ReflFactory<Type, Type>(entt::meta<Type>());
         }
 
         template <typename Type>
@@ -36,6 +31,14 @@ namespace Explosion {
         {
             return entt::resolve(id);
         }
+
+        static auto Resolve(const std::string_view& name)
+        {
+            return Resolve(entt::hashed_string{name.data()});
+        }
+
+      private:
+        static std::unordered_map<ReflIdType, std::string_view> idMap;
     };
 }
 

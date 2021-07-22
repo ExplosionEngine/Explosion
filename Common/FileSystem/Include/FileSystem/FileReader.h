@@ -14,6 +14,9 @@ namespace Explosion::FileSystem {
         static std::vector<char> Read(const std::string& filename, bool binary);
 
         static std::string Read(const std::string& filename);
+
+        static void Write(const std::string& filename, const char* data, uint32_t size, bool binary);
+
         ~FileReader();
 
     private:

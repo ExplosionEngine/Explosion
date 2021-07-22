@@ -37,6 +37,16 @@ namespace Explosion::FileSystem {
         return output;
     }
 
+    void FileReader::Write(const std::string& filename, const char* data, uint32_t size, bool binary)
+    {
+        auto mode = binary ? std::ios::ate | std::ios::binary : std::ios::ate;
+        std::ofstream file(filename, mode);
+        if (!file.is_open()) {
+            throw std::runtime_error(std::string("failed to open file: ") + filename);
+        }
+        file.write(data, size);
+    }
+
     FileReader::~FileReader() = default;
 
     FileReader::FileReader() = default;
