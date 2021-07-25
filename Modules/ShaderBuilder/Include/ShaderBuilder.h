@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include <Explosion/RHI/Common/Enum.h>
+#include <RHI/Enum.h>
 #include <Shader.h>
 
 namespace Explosion::Builder {
