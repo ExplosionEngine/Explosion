@@ -3,7 +3,7 @@ project(Explosion)
 
 set(CMAKE_CXX_STANDARD 17)
 
-include(cmake/Explosion.cmake)
+include(CMake/Explosion.cmake)
 
 option(EXP_VERBOSE_INFO "verbose info for cmake debug" ON)
 option(EXP_BUILD_TEST "build test" ON)
