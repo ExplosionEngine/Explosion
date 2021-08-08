@@ -1,5 +1,5 @@
 //
-// Created by John Kindem on 2021/8/8.
+// Created by Mevol on 2021/8/8.
 //
 
 #ifndef EXPLOSION_ENTRY_H
