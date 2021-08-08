@@ -21,9 +21,11 @@ namespace fs = std::filesystem;
 
 
 namespace FileSystem {
+
     template <typename T>
     class Entry {
-    public:
+      public:
+
         explicit Entry(std::string path)
             : path(std::move(path)) {
         }
@@ -32,41 +34,46 @@ namespace FileSystem {
             : path(entry.path) {
         }
 
-        bool IsExists(){
+
+        const T& cast() const {
+            return static_cast<const T&>(*this);
+        }
+
+        bool IsExists() const {
             return exists(path);
         }
 
-        std::string GetAbsolutePath() {
+        std::string GetAbsolutePath() const {
             if(IsExists())
                 return absolute(path).string();
             throw std::runtime_error("Path not exist!");
         }
 
-        std::string GetRelativePath(std::string inputPath) {
+        std::string GetRelativePath(std::string inputPath) const {
             if(IsExists())
                 return path.relative_path().string();
             throw std::runtime_error("Path not exist!");
         }
 
-        Entry<T> GetParent() {
+        Entry<T> GetParent() const {
             if(IsExists())
                 return Entry<T>(path.parent_path().string);
             throw std::runtime_error("Path not exist!");
         }
 
-        bool IsDirectory() {
+        bool IsDirectory() const {
             if(IsExists())
                 return fs::is_directory(path);
             return false;
         }
 
-        bool IsFile() {
+        bool IsFile() const {
             if(IsExists())
                 return fs::is_regular_file(path);
             return false;
         }
 
-        void Rename(const std::string& fullName) {
+        void Rename(const std::string& fullName) const {
             if(IsExists())
                 rename(GetAbsolutePath().c_str(),fullName.c_str());
             throw std::runtime_error("Path not exist!");
@@ -81,7 +88,8 @@ namespace FileSystem {
             static_cast<T*>(this)->MakeImpl();
         }
 
-    protected:
+      protected:
+        friend T;
         fs::path path;
     };
 
@@ -104,8 +112,50 @@ namespace FileSystem {
 
         explicit Directory(const std::string &path) : Entry(path) {}
 
-        std::vector<Entry<File>> ListFile();
-        std::vector<Entry<Directory>> ListDir();
+        std::vector<Entry<File>> ListFile() {
+            std::vector<Entry<File>> result = {};
+            if (!IsExists())
+            {
+                return result;
+            }
+            const fs::directory_entry fsentry(path);
+            if (fsentry.status().type() != fs::file_type::directory)
+            {
+                return result;
+            }
+            fs::directory_iterator list(fsentry);
+            for (auto& iter : list)
+            {
+                if(iter.status().type() != fs::file_type::directory)
+                {
+                    Entry<File> temp(iter.path().string());
+                    result.push_back(temp);
+                }
+            }
+            return result;
+        }
+        std::vector<Entry<Directory>> ListDir() {
+            std::vector<Entry<Directory>> result = {};
+            if (!IsExists())
+            {
+                return result;
+            }
+            const fs::directory_entry fsentry(path);
+            if (fsentry.status().type() != fs::file_type::directory)
+            {
+                return result;
+            }
+            fs::directory_iterator list(fsentry);
+            for (auto& iter : list)
+            {
+                if(iter.status().type() == fs::file_type::directory)
+                {
+                    Entry<Directory> temp(iter.path().string());
+                    result.push_back(temp);
+                }
+            }
+            return result;
+        }
 
     private:
         friend Entry<Directory>;
@@ -113,11 +163,12 @@ namespace FileSystem {
         void MakeImpl();
     };
 
+    class File;
     template <typename T>
     class Stream {
     public:
 
-        explicit Stream(File& file) : file(file),openFlag(false),failFlag(true) {}
+        explicit Stream(File* ifile) : openFlag(false),failFlag(true),file(ifile) {}
 
         bool IsOpen() {
             return openFlag;
@@ -127,7 +178,7 @@ namespace FileSystem {
             if(fileType == FileType::TEXT)
             {
                 openType = FileType::TEXT;
-                fileStream.open(file.GetAbsolutePath(),std::ios::in | std::ios::out);
+                fileStream.open(file->GetAbsolutePath().c_str(),std::ios::in | std::ios::out);
                 if(!fileStream.fail())
                 {
                     failFlag  = false;
@@ -137,7 +188,7 @@ namespace FileSystem {
             if(fileType == FileType::BINARY)
             {
                 openType == FileType::BINARY;
-                fileStream.open(file.GetAbsolutePath(),std::ios::in | std::ios::out | std::ios::binary);
+                fileStream.open(file->GetAbsolutePath().c_str(),std::ios::in | std::ios::out | std::ios::binary);
                 if(!fileStream.fail())
                 {
                     failFlag  = false;
@@ -168,14 +219,13 @@ namespace FileSystem {
         bool failFlag;
         FileType openType;
         std::fstream fileStream;
-        File file;
+        const File *file;
     };
-
 
 
     class ReadStream : public Stream<ReadStream> {
     public:
-        ReadStream(File& file) : Stream<ReadStream>(file){}
+        ReadStream(File* file) : Stream<ReadStream>(file){}
         template <typename T>
         ReadStream& operator>>(T &t) {
             throw std::runtime_error("ReadStream::operator>>(): unrealized type!");
@@ -208,7 +258,7 @@ namespace FileSystem {
             if (fileType == FileType::TEXT)
             {
                 openType = FileType::TEXT;
-                fileStream.open(file.GetAbsolutePath(),std::ios::in );
+                fileStream.open(file->GetAbsolutePath().c_str(),std::ios::in );
                 if(!fileStream.fail())
                 {
                     failFlag  = false;
@@ -218,7 +268,7 @@ namespace FileSystem {
             if(fileType == FileType::BINARY)
             {
                 openType == FileType::BINARY;
-                fileStream.open(file.GetAbsolutePath(),std::ios::in | std::ios::binary);
+                fileStream.open(file->GetAbsolutePath().c_str(),std::ios::in | std::ios::binary);
                 if(!fileStream.fail())
                 {
                     failFlag  = false;
@@ -242,7 +292,7 @@ namespace FileSystem {
 
     class WriteStream : public Stream<WriteStream> {
     public:
-        explicit WriteStream(File& file) : Stream(file){}
+        explicit WriteStream(File* file) : Stream(file){}
         template <typename T>
         WriteStream& operator<<(const T &t) {
             throw std::runtime_error("WriteStream::operator<<(): unrealized type!");
@@ -275,7 +325,7 @@ namespace FileSystem {
         {
             if(fileType == FileType::TEXT) {
                 openType = FileType::TEXT;
-                fileStream.open(file.GetAbsolutePath(), std::ios::out);
+                fileStream.open(file->GetAbsolutePath().c_str(), std::ios::out);
                 if(!fileStream.fail()){
                     failFlag  = false;
                     openFlag = true;
@@ -284,7 +334,7 @@ namespace FileSystem {
             if(fileType == FileType::BINARY)
             {
                 openType == FileType::BINARY;
-                fileStream.open(file.GetAbsolutePath(), std::ios::out | std::ios::binary);
+                fileStream.open(file->GetAbsolutePath().c_str(), std::ios::out | std::ios::binary);
                 if(!fileStream.fail())
                 {
                     failFlag  = false;
@@ -307,7 +357,10 @@ namespace FileSystem {
 
     class File : public Entry<File> {
       public:
-        explicit File(const std::string &path) : Entry(path) {}
+        File(const std::string &path) : Entry(path) {}
+        File(const File &file) : Entry(file.path.string()) {
+            path = file.path;
+        }
 
         std::string GetName() {
             if(IsFile())
@@ -330,21 +383,28 @@ namespace FileSystem {
         template<typename T>
         Stream<T> OpenStream(const FileType& fileType) {
             File curFile(*this);
-            Stream<T> retStream(curFile);
+            Stream<T> retStream(&curFile);
             retStream.Open(fileType);
             return retStream;
         }
+
         ReadStream OpenReadStream(const FileType& fileType) {
             File curFile(*this);
-            ReadStream retStream(curFile);
+            ReadStream retStream(&curFile);
             retStream.Open(fileType);
             return retStream;
         }
+
         WriteStream OpenWriteStream(const FileType& fileType) {
             File curFile(*this);
-            WriteStream retStream(curFile);
+            WriteStream retStream(&curFile);
             retStream.Open(fileType);
             return retStream;
+        }
+
+        File &operator=(const File &file) {
+            path = file.path;
+            return *this;
         }
 
       private:
@@ -354,10 +414,11 @@ namespace FileSystem {
             if(IsExists())
                 return ;
             WriteStream wstream = OpenWriteStream(FileType::BINARY);
-            wstream.Open();
+            wstream.Open(FileType::BINARY);
             wstream.Close();
         }
     };
 }
+
 
 #endif //EXFILESYSTEM_FILESYSTEM_HPP
