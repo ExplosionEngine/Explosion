@@ -5,7 +5,6 @@
 #include <fstream>
 
 #include <FileSystem/FileReader.h>
-#include <FileSystem/FileSystem.hpp>
 
 namespace Explosion::FileSystem {
     std::vector<char> FileReader::Read(const std::string& filename, bool binary)
