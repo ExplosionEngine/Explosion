@@ -18,7 +18,7 @@ namespace Explosion::FileSystem {
         return *this;
     }
 
-    std::string File::GetName() const
+    std::string File::GetName()
     {
         if (IsFile()) {
             return path.stem().string();
@@ -26,7 +26,7 @@ namespace Explosion::FileSystem {
         throw std::runtime_error("Path not exist!");
     }
 
-    std::string File::GetFullName() const
+    std::string File::GetFullName()
     {
         if (IsFile()) {
             return path.filename().string();
@@ -34,7 +34,7 @@ namespace Explosion::FileSystem {
         throw std::runtime_error("Path not exist!");
     }
 
-    std::string File::GetExtension() const
+    std::string File::GetExtension()
     {
         if (IsFile()) {
             return path.extension().string();

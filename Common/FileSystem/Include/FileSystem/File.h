@@ -6,7 +6,6 @@
 #define EXPLOSION_FILE_H
 
 #include <FileSystem/Entry.h>
-#include <FileSystem/Stream.h>
 
 namespace Explosion::FileSystem {
     class File : public Entry<File> {
@@ -17,17 +16,10 @@ namespace Explosion::FileSystem {
         File &operator=(const File &file);
 
     public:
-        [[nodiscard]] std::string GetName() const;
-        [[nodiscard]] std::string GetFullName() const;
-        [[nodiscard]] std::string GetExtension() const;
+        [[nodiscard]] std::string GetName() ;
+        [[nodiscard]] std::string GetFullName() ;
+        [[nodiscard]] std::string GetExtension() ;
 
-        template<typename T>
-        Stream<T> OpenStream(const FileType& fileType) {
-            File curFile(*this);
-            Stream<T> retStream(&curFile);
-            retStream.Open(fileType);
-            return retStream;
-        }
 
     private:
         friend Entry<File>;

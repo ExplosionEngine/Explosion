@@ -5,6 +5,7 @@
 #ifndef EXPLOSION_ENTRY_H
 #define EXPLOSION_ENTRY_H
 
+#include <iostream>
 #include <string>
 #include <filesystem>
 
@@ -14,21 +15,84 @@ namespace Explosion::FileSystem {
     template <typename T>
     class Entry {
     public:
-        explicit Entry(std::string path);
-        virtual ~Entry();
-        Entry(const Entry<T>& entry);
-        Entry<T> &operator=(const Entry<T> &entry);
+        explicit Entry<T>::Entry(std::string inPath)
+        {
+            fs::path fullpath(std::move(inPath));
+            path = absolute(fullpath);
+        }
+
+        virtual ~Entry() = default;
+
+        Entry(const Entry<T>& entry)
+        {
+            path = entry.path;
+            return *this;
+        }
+
+        Entry<T> &operator=(const Entry<T> &entry)
+        {
+            path = entry.path;
+            return *this;
+        }
 
     public:
-        const T& cast() const;
-        [[nodiscard]] bool IsExists() const;
-        std::string GetAbsolutePath();
-        std::string GetRelativePath(std::string inputPath);
-        Entry<T> GetParent();
-        bool IsDirectory();
-        [[nodiscard]] bool IsFile() const;
-        void Rename(const std::string& fullName);
-        void Make();
+
+        const T& cast()
+        {
+            return static_cast<const T&>(*this);
+        }
+
+        [[nodiscard]] bool IsExists()
+        {
+            return exists(path);
+        }
+
+        std::string GetAbsolutePath()
+        {
+            return absolute(path).string();
+        }
+
+        std::string GetRelativePath(std::string inputPath)
+        {
+            return path.relative_path().string();
+        }
+
+        std::string GetParent()
+        {
+            if (IsExists()) {
+                return path.parent_path().string();
+            }
+            throw std::runtime_error("Path not exist!");
+        }
+
+        bool IsDirectory()
+        {
+            return IsExists() && fs::is_directory(path);
+        }
+
+        [[nodiscard]] bool IsFile()
+        {
+            return IsExists() && fs::is_regular_file(path);
+        }
+
+        void Rename(const std::string& fullName)
+        {
+            if (IsExists()) {
+                fs::path renamePath(fullName);
+                if (exists(renamePath)) {
+                    std::cout << "Warning: rename dstination: '" << fullName << "' already exist!" << std::endl;
+                    return ;
+                }
+                rename(GetAbsolutePath().c_str(),fullName.c_str());
+                return ;
+            }
+            throw std::runtime_error("Path not exist!");
+        }
+
+        void Make()
+        {
+            static_cast<T*>(this)->MakeImpl();
+        }
 
     protected:
         friend T;
