@@ -10,10 +10,10 @@
 namespace Explosion::FileSystem {
     class File : public Entry<File> {
     public:
-        explicit File(const std::string &path);
+        explicit File(const std::string& path);
         ~File() override;
-        File(const File &file);
-        File &operator=(const File &file);
+        File(const File& file);
+        File& operator=(const File& file);
 
     public:
         [[nodiscard]] std::string GetName() ;

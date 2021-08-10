@@ -14,8 +14,8 @@ namespace Explosion::FileSystem {
     class Stream {
     public:
 
-        explicit Stream<T>::Stream(File& file)
-                : openFlag(false), openType(FileType::TEXT), failFlag(true), file(file) {}
+        explicit Stream(File& file)
+            : openFlag(false), openType(FileType::TEXT), failFlag(true), file(file) {}
 
         virtual ~Stream() = default;
 
@@ -23,7 +23,7 @@ namespace Explosion::FileSystem {
 
         void operator=(Stream<T>&) = delete;
 
-        bool IsOpen() const
+        [[nodiscard]] bool IsOpen() const
         {
             return openFlag;
         }

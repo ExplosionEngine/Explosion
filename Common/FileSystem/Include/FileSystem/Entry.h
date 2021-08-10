@@ -15,10 +15,10 @@ namespace Explosion::FileSystem {
     template <typename T>
     class Entry {
     public:
-        explicit Entry<T>::Entry(std::string inPath)
+        explicit Entry(std::string& inPath)
         {
-            fs::path fullpath(std::move(inPath));
-            path = absolute(fullpath);
+            fs::path input(inPath);
+            path = absolute(input);
         }
 
         virtual ~Entry() = default;
@@ -29,7 +29,7 @@ namespace Explosion::FileSystem {
             return *this;
         }
 
-        Entry<T> &operator=(const Entry<T> &entry)
+        Entry<T>& operator=(const Entry<T>& entry)
         {
             path = entry.path;
             return *this;
@@ -52,7 +52,7 @@ namespace Explosion::FileSystem {
             return absolute(path).string();
         }
 
-        std::string GetRelativePath(std::string inputPath)
+        std::string GetRelativePath(const std::string& inputPath)
         {
             return path.relative_path().string();
         }

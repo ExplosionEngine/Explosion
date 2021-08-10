@@ -26,7 +26,7 @@ namespace Explosion::FileSystem {
         }
 
         WriteStream& operator()(uint32_t pos);
-        void Open(const FileType &fileType) override;
+        void Open(const FileType& fileType) override;
 
     private:
         friend Stream<WriteStream>;
