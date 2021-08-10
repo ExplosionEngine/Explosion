@@ -61,7 +61,7 @@ namespace Explosion::FileSystem {
             fileStream.close();
         }
 
-        size_t Size() const
+        [[nodiscard]] size_t Size() const
         {
             return static_cast<T*>(this)->MakeImpl();
         }

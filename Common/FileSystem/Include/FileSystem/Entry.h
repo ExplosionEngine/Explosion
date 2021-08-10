@@ -15,7 +15,7 @@ namespace Explosion::FileSystem {
     template <typename T>
     class Entry {
     public:
-        explicit Entry(std::string& inPath)
+        explicit Entry(const std::string& inPath)
         {
             fs::path input(inPath);
             path = absolute(input);
@@ -80,7 +80,7 @@ namespace Explosion::FileSystem {
             if (IsExists()) {
                 fs::path renamePath(fullName);
                 if (exists(renamePath)) {
-                    std::cout << "Warning: rename dstination: '" << fullName << "' already exist!" << std::endl;
+                    std::cout << "Warning: rename destination: '" << fullName << "' already exist!" << std::endl;
                     return ;
                 }
                 rename(GetAbsolutePath().c_str(),fullName.c_str());
