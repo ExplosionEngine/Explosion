@@ -17,9 +17,10 @@ exp_add_test(
 )
 
 
-file(GLOB_RECURSE DEMO_SOURCES Src/*.cpp Sample/*.cpp)
+file(GLOB_RECURSE DEMO_SOURCES Sample/*.cpp)
 exp_add_executable(
     NAME FileSystemSample
     SRCS ${DEMO_SOURCES}
     INC_DIRS Include
+    LIBS FileSystem ${googletest_LIBS}
 )

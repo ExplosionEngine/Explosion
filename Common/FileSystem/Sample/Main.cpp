@@ -20,14 +20,14 @@ int main()
         tmpFile.Make();
     }
 
-    std::cout << "relative path: "<< tmpFile.GetRelativePath("") << std::endl;
-    std::cout << "absolute path: "<< tmpFile.GetAbsolutePath() << std::endl;
-    std::cout << "extension: "<<tmpFile.GetExtension() << std::endl;
-    std::cout << "fullname: "<<tmpFile.GetFullName() << std::endl;
-    std::cout << "filename: "<<tmpFile.GetName() << std::endl;
-    std::cout << "parent: "<<tmpFile.GetParent() << std::endl;
-    std::cout << "isDir: "<<tmpFile.IsDirectory() << std::endl;
-    std::cout << "isFile: "<<tmpFile.IsFile() << std::endl;
+    std::cout << "relative path: " << tmpFile.GetRelativePath("") << std::endl;
+    std::cout << "absolute path: " << tmpFile.GetAbsolutePath() << std::endl;
+    std::cout << "extension: " << tmpFile.GetExtension() << std::endl;
+    std::cout << "fullname: " << tmpFile.GetFullName() << std::endl;
+    std::cout << "filename: " << tmpFile.GetName() << std::endl;
+    std::cout << "parent: " << tmpFile.GetParent() << std::endl;
+    std::cout << "isDir: " << tmpFile.IsDirectory() << std::endl;
+    std::cout << "isFile: " << tmpFile.IsFile() << std::endl;
 
     WriteStream wStream(tmpFile);
     wStream.Open(FileType::TEXT);
@@ -55,7 +55,6 @@ int main()
     int i  = 1;
     i++;
     std::cout << "str: " << i << std::endl;
-
 
     return 0;
 }
