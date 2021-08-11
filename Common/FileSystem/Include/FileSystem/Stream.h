@@ -23,43 +23,13 @@ namespace Explosion::FileSystem {
 
         void operator=(Stream<T>&) = delete;
 
-        [[nodiscard]] bool IsOpen() const
-        {
-            return openFlag;
-        }
+        bool IsOpen();
 
-        virtual void Open(const FileType& fileType)
-        {
-            if(fileType == FileType::TEXT) {
-                openType = FileType::TEXT;
-                fileStream.open(file.GetAbsolutePath().c_str(),std::ios::in | std::ios::out);
-                if (!fileStream.fail()) {
-                    failFlag  = false;
-                    openFlag = true;
-                }
-            }
-            if(fileType == FileType::BINARY) {
-                openType = FileType::BINARY;
-                fileStream.open(file.GetAbsolutePath().c_str(),std::ios::in | std::ios::out | std::ios::binary);
-                if (!fileStream.fail()) {
-                    failFlag  = false;
-                    openFlag = true;
-                }
-            }
-        }
+        virtual void Open(const FileType& fileType);
 
-        bool Fail()
-        {
-            return failFlag;
-        }
+        bool Fail();
 
-        void Close()
-        {
-            if (!IsOpen()) {
-                return;
-            }
-            fileStream.close();
-        }
+        void Close();
 
         [[nodiscard]] size_t Size() const
         {

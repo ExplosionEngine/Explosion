@@ -42,52 +42,19 @@ namespace Explosion::FileSystem {
             return static_cast<const T&>(*this);
         }
 
-        [[nodiscard]] bool IsExists()
-        {
-            return exists(path);
-        }
+        bool IsExists();
 
-        std::string GetAbsolutePath()
-        {
-            return absolute(path).string();
-        }
+        std::string GetAbsolutePath();
 
-        std::string GetRelativePath(const std::string& inputPath)
-        {
-            return path.relative_path().string();
-        }
+        std::string GetRelativePath(const std::string& inputPath);
 
-        std::string GetParent()
-        {
-            if (IsExists()) {
-                return path.parent_path().string();
-            }
-            throw std::runtime_error("Path not exist!");
-        }
+        std::string GetParent();
 
-        bool IsDirectory()
-        {
-            return IsExists() && fs::is_directory(path);
-        }
+        bool IsDirectory();
 
-        [[nodiscard]] bool IsFile()
-        {
-            return IsExists() && fs::is_regular_file(path);
-        }
+        bool IsFile();
 
-        void Rename(const std::string& fullName)
-        {
-            if (IsExists()) {
-                fs::path renamePath(fullName);
-                if (exists(renamePath)) {
-                    std::cout << "Warning: rename destination: '" << fullName << "' already exist!" << std::endl;
-                    return ;
-                }
-                rename(GetAbsolutePath().c_str(),fullName.c_str());
-                return ;
-            }
-            throw std::runtime_error("Path not exist!");
-        }
+        void Rename(const std::string& fullName);
 
         void Make()
         {
