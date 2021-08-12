@@ -27,7 +27,6 @@ namespace Explosion::FileSystem {
         Entry(const Entry<T>& entry)
         {
             path = entry.path;
-            return *this;
         }
 
         Entry<T>& operator=(const Entry<T>& entry)
