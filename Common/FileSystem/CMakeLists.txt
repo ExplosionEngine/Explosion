@@ -22,5 +22,5 @@ exp_add_executable(
     NAME FileSystemSample
     SRCS ${DEMO_SOURCES}
     INC_DIRS Include
-    LIBS FileSystem ${googletest_LIBS}
+    LIBS FileSystem
 )

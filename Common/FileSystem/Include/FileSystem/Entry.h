@@ -83,7 +83,7 @@ namespace Explosion::FileSystem {
             SplitStr(inPath,'\\',inPathList);
 #else
             SplitStr(curPath,'/',curPathList);
-            SplitStr(another,'/',anotherPathList);
+            SplitStr(inPath,'/',inPathList);
 #endif
             int samePos = -1;
             std::string result = "";
