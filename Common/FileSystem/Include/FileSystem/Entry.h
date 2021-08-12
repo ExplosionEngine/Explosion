@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 #include <filesystem>
 
 namespace fs = std::filesystem;
@@ -52,9 +53,65 @@ namespace Explosion::FileSystem {
             return absolute(path).string();
         }
 
+        static void SplitStr(const std::string& str, const char symbol, std::vector<std::string>& list)
+        {
+            if (str.empty()) {
+                return ;
+            }
+            list.clear();
+            int startIndex = 0;
+            for (int i = 0; i < str.size(); ++i) {
+                if (str.at(i) == symbol && (i-startIndex) > 0) {
+                    list.push_back(str.substr(startIndex,i-startIndex));
+                    startIndex = i+1;
+                }
+                if (i == str.size()-1 && (i-startIndex) > 0) {
+                    list.push_back(str.substr(startIndex,i-startIndex+1));
+                }
+            }
+        }
+
         std::string GetRelativePath(const std::string& inputPath)
         {
-            return path.relative_path().string();
+            std::string curPath = GetAbsolutePath();
+            fs::path tmpPath(inputPath);
+            std::string inPath = absolute(tmpPath).string();
+            std::vector<std::string> curPathList = {};
+            std::vector<std::string> inPathList = {};
+#ifdef _WIN32
+            SplitStr(curPath,'\\',curPathList);
+            SplitStr(inPath,'\\',inPathList);
+#else
+            SplitStr(curPath,'/',curPathList);
+            SplitStr(another,'/',anotherPathList);
+#endif
+            int samePos = -1;
+            std::string result = "";
+
+            for (int i = 0; i < std::min(inPathList.size(),curPathList.size()); ++i) {
+                if (curPathList.at(i) == inPathList.at(i)) {
+                    samePos = i;
+                }
+                else {
+                    break;
+                }
+            }
+            for (int i = 0; i < inPathList.size()-samePos-1; ++i) {
+#ifdef _WIN32
+                result += "..\\";
+#else
+                result += "../";
+#endif
+            }
+            for (int i = 0; i < curPathList.size()-samePos-1; ++i) {
+                result += curPathList.at(samePos+1+i);
+#ifdef _WIN32
+                result += "\\";
+#else
+                result += "/";
+#endif
+            }
+            return result;
         }
 
         std::string GetParent()
