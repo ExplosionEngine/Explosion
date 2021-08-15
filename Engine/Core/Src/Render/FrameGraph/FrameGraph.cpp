@@ -5,7 +5,6 @@
 #include <Common/Exception.h>
 
 #include <Engine/Render/FrameGraph/FrameGraph.h>
-#include <Engine/RHI/Vulkan/VulkanDriver.h>
 
 #include <algorithm>
 
