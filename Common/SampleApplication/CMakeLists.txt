@@ -1,9 +1,4 @@
-find_package(Vulkan)
-if (${Vulkan_FOUND})
-    message("-- found Vulkan library")
-else()
-    message(FATAL_ERROR "-- can not find the Vulkan lib, make sure you have installed the Vulkan SDK")
-endif()
+find_package(Vulkan REQUIRED)
 
 if (${APPLE})
     set(PLATFORM_LIBS "-framework IOKit")

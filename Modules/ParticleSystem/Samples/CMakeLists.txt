@@ -1,18 +1,11 @@
 file(GLOB SAMPLE_SOURCES Main.cpp)
 
-# TODO
-find_package(Vulkan)
-if (${Vulkan_FOUND})
-    message("-- found Vulkan library")
-else()
-    message(FATAL_ERROR "-- can not find the Vulkan lib, make sure you have installed the Vulkan SDK")
-endif()
-include_directories(${Vulkan_INCLUDE_DIRS})
-include_directories(../)
+find_package(Vulkan REQUIRED)
 
 exp_add_executable(
     NAME ParticleSample
     SRCS ${SAMPLE_SOURCES}
+    INC_DIRS ${Vulkan_INCLUDE_DIRS} ..
     LIBS Engine ParticleSystem SampleApplication FileSystem
 )
 add_custom_command(
