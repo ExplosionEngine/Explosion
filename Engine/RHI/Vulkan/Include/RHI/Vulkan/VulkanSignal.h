@@ -8,12 +8,13 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/Signal.h>
+#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
 
-    class VulkanSignal : public Signal {
+    class RHI_VULKAN_API VulkanSignal : public Signal {
     public:
         explicit VulkanSignal(VulkanDriver& driver);
         ~VulkanSignal() override;

@@ -9,9 +9,10 @@
 
 #include <RHI/Driver.h>
 #include <RHI/Vulkan/VulkanDevice.h>
+#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
-    class VulkanDriver : public Driver {
+    class RHI_VULKAN_API VulkanDriver : public Driver {
     public:
         VulkanDriver();
         ~VulkanDriver() override;

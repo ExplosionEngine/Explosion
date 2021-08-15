@@ -8,12 +8,13 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/Image.h>
+#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
 
-    class VulkanImage : public Image {
+    class RHI_VULKAN_API VulkanImage : public Image {
     public:
         VulkanImage(VulkanDriver& driver, Config config);
         explicit VulkanImage(VulkanDriver& driver, const VkImage& vkImage, Config config);

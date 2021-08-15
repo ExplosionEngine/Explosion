@@ -10,13 +10,14 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/ImageView.h>
+#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
     class VulkanImage;
 
-    class VulkanImageView : public ImageView {
+    class RHI_VULKAN_API VulkanImageView : public ImageView {
     public:
         VulkanImageView(VulkanDriver& driver, Config config);
         ~VulkanImageView() override;

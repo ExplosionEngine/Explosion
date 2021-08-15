@@ -7,11 +7,13 @@
 
 #include <vulkan/vulkan.h>
 
-namespace Explosion::RHI {
-    uint32_t GetPlatformInstanceExtensionNum();
-    const char** GetPlatformInstanceExtensions();
+#include <RHI/Vulkan/Api.h>
 
-    bool CreatePlatformSurface(const VkInstance& vkInstance, void* surface, VkSurfaceKHR& vkSurface);
+namespace Explosion::RHI {
+    uint32_t RHI_VULKAN_API GetPlatformInstanceExtensionNum();
+    const char** RHI_VULKAN_API GetPlatformInstanceExtensions();
+
+    bool RHI_VULKAN_API CreatePlatformSurface(const VkInstance& vkInstance, void* surface, VkSurfaceKHR& vkSurface);
 }
 
 #endif //EXPLOSION_VULKANPLATFORM_H

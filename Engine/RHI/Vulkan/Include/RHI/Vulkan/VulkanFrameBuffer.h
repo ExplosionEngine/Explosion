@@ -10,6 +10,7 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/FrameBuffer.h>
+#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
@@ -17,7 +18,7 @@ namespace Explosion::RHI {
     class VulkanImageView;
     class VulkanRenderPass;
 
-    class VulkanFrameBuffer : public FrameBuffer {
+    class RHI_VULKAN_API VulkanFrameBuffer : public FrameBuffer {
     public:
         VulkanFrameBuffer(VulkanDriver& driver, Config config);
         ~VulkanFrameBuffer() override;

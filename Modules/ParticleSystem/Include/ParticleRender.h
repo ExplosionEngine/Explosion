@@ -6,7 +6,7 @@
 #define EXPLOSION_PARTICLERENDER_H
 
 #include <ParticleEmitter.h>
-#include <ParticleSystemApi.h>
+#include <ParticleSystem/Api.h>
 
 namespace Explosion {
 

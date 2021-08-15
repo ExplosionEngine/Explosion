@@ -5,7 +5,7 @@
 #ifndef EXPLOSION_MODULE_PASSBUILDER_H
 #define EXPLOSION_MODULE_PASSBUILDER_H
 
-#include "PassBuilderApi.h"
+#include <PassBuilder/Api.h>
 
 class PASS_API PassBuilder {
 public:

@@ -40,5 +40,5 @@ exp_add_test(
 generate_export_header(
     ${MODULE_TARGET}
     EXPORT_MACRO_NAME PARTICLE_API
-    EXPORT_FILE_NAME ${GEN_PRE_DIR}/ParticleSystemApi.h
+    EXPORT_FILE_NAME ${GEN_PRE_DIR}/ParticleSystem/Api.h
 )

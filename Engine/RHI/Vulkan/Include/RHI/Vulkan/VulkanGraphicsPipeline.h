@@ -10,13 +10,14 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/GraphicsPipeline.h>
+#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
     class VulkanRenderPass;
 
-    class VulkanGraphicsPipeline : public GraphicsPipeline {
+    class RHI_VULKAN_API VulkanGraphicsPipeline : public GraphicsPipeline {
     public:
         explicit VulkanGraphicsPipeline(VulkanDriver& driver, Config config);
         ~VulkanGraphicsPipeline() override;

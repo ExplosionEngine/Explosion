@@ -11,11 +11,12 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/Device.h>
+#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
 
-    class VulkanDevice : public Device {
+    class RHI_VULKAN_API VulkanDevice : public Device {
     public:
         explicit VulkanDevice(VulkanDriver& driver);
         ~VulkanDevice() override;

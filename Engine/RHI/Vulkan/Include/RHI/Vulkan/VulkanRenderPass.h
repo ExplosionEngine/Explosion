@@ -8,13 +8,14 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/RenderPass.h>
+#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
     class VulkanImageView;
 
-    class VulkanRenderPass : public RenderPass {
+    class RHI_VULKAN_API VulkanRenderPass : public RenderPass {
     public:
         explicit VulkanRenderPass(VulkanDriver& driver, Config config);
         ~VulkanRenderPass() override;

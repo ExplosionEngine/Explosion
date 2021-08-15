@@ -12,6 +12,7 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/SwapChain.h>
+#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
@@ -19,7 +20,7 @@ namespace Explosion::RHI {
     class VulkanImage;
     class VulkanCommandBuffer;
 
-    class VulkanSwapChain : public SwapChain {
+    class RHI_VULKAN_API VulkanSwapChain : public SwapChain {
     public:
         VulkanSwapChain(VulkanDriver& driver, Config config);
         ~VulkanSwapChain() override;

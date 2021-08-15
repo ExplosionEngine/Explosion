@@ -26,5 +26,5 @@ exp_add_test(
 
 generate_export_header(${MODULE_TARGET}
     EXPORT_MACRO_NAME PASS_API
-    EXPORT_FILE_NAME ${GEN_PRE_DIR}/PassBuilderApi.h
+    EXPORT_FILE_NAME ${GEN_PRE_DIR}/PassBuilder/Api.h
 )

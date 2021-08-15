@@ -8,6 +8,7 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/DescriptorSet.h>
+#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
@@ -15,7 +16,7 @@ namespace Explosion::RHI {
     class VulkanDescriptorPool;
     class VulkanGraphicsPipeline;
 
-    class VulkanDescriptorSet : public DescriptorSet {
+    class RHI_VULKAN_API VulkanDescriptorSet : public DescriptorSet {
     public:
         VulkanDescriptorSet(VulkanDriver& driver, VulkanDescriptorPool* descriptorPool, VulkanGraphicsPipeline* pipeline);
         ~VulkanDescriptorSet() override;

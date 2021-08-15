@@ -8,12 +8,13 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/DescriptorPool.h>
+#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
 
-    class VulkanDescriptorPool : public DescriptorPool {
+    class RHI_VULKAN_API VulkanDescriptorPool : public DescriptorPool {
     public:
         VulkanDescriptorPool(VulkanDriver& driver, Config config);
         ~VulkanDescriptorPool() override;

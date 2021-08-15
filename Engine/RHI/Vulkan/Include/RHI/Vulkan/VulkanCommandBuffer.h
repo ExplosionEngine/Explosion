@@ -8,6 +8,7 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/CommandBuffer.h>
+#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
@@ -18,7 +19,7 @@ namespace Explosion::RHI {
     class VulkanFrameBuffer;
     class VulkanGraphicsPipeline;
 
-    class VulkanCommandBuffer : public CommandBuffer {
+    class RHI_VULKAN_API VulkanCommandBuffer : public CommandBuffer {
     public:
         explicit VulkanCommandBuffer(VulkanDriver& driver);
         ~VulkanCommandBuffer() override;

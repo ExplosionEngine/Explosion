@@ -23,8 +23,14 @@ exp_add_library(
     NAME RHIVulkan
     TYPE SHARED
     SRCS ${SOURCES} ${PLATFORM_SOURCES}
-    PUBLIC_INC_DIRS Include ${Vulkan_INCLUDE_DIRS}
+    PUBLIC_INC_DIRS Include ${Vulkan_INCLUDE_DIRS} ${GEN_PRE_DIR}
     LIBS CommonBase RHI ${Vulkan_LIBRARIES} ${PLATFORM_LIBS}
+)
+
+generate_export_header(
+    RHIVulkan
+    EXPORT_MACRO_NAME RHI_VULKAN_API
+    EXPORT_FILE_NAME ${GEN_PRE_DIR}/RHI/Vulkan/Api.h
 )
 
 file(GLOB_RECURSE TEST_SOURCES Test/*.cpp)

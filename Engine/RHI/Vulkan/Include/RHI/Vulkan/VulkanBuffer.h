@@ -10,13 +10,14 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/Buffer.h>
+#include <RHI/Vulkan/Api.h>
 #include <RHI/Vulkan/VulkanUtils.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
 
-    class VulkanBuffer : public Buffer {
+    class RHI_VULKAN_API VulkanBuffer : public Buffer {
     public:
         VulkanBuffer(VulkanDriver& driver, Config config);
         ~VulkanBuffer() override;

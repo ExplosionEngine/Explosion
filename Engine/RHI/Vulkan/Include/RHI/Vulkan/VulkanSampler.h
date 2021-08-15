@@ -8,12 +8,13 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/Sampler.h>
+#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
 
-    class VulkanSampler : public Sampler {
+    class RHI_VULKAN_API VulkanSampler : public Sampler {
     public:
         VulkanSampler(VulkanDriver& driver, Config config);
         ~VulkanSampler() override;

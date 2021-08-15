@@ -6,7 +6,7 @@
 #define EXPLOSION_PARTICLEEFFECTOR_H
 
 #include <Particle.h>
-#include <ParticleSystemApi.h>
+#include <ParticleSystem/Api.h>
 #include <Random.h>
 
 namespace Explosion {
