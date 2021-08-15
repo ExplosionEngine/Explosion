@@ -73,6 +73,10 @@ function(exp_add_library)
         ${ARGN}
     )
 
+    if (NOT DEFINED ${PARAMS_TYPE})
+        set(PARAMS_TYPE "STATIC")
+    endif()
+
     if (${EXP_VERBOSE_INFO})
         message("")
         message("[exp_add_library begin]")
