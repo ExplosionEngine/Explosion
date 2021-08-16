@@ -17,7 +17,7 @@ namespace Explosion::RHI {
     class VulkanDevice;
     class VulkanRenderPass;
 
-    class RHI_VULKAN_API VulkanGraphicsPipeline : public GraphicsPipeline {
+    class VulkanGraphicsPipeline : public GraphicsPipeline {
     public:
         explicit VulkanGraphicsPipeline(VulkanDriver& driver, Config config);
         ~VulkanGraphicsPipeline() override;

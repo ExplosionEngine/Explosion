@@ -17,7 +17,7 @@ namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
 
-    class RHI_VULKAN_API VulkanBuffer : public Buffer {
+    class VulkanBuffer : public Buffer {
     public:
         VulkanBuffer(VulkanDriver& driver, Config config);
         ~VulkanBuffer() override;

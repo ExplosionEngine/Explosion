@@ -19,7 +19,7 @@ namespace Explosion::RHI {
     class VulkanFrameBuffer;
     class VulkanGraphicsPipeline;
 
-    class RHI_VULKAN_API VulkanCommandBuffer : public CommandBuffer {
+    class VulkanCommandBuffer : public CommandBuffer {
     public:
         explicit VulkanCommandBuffer(VulkanDriver& driver);
         ~VulkanCommandBuffer() override;

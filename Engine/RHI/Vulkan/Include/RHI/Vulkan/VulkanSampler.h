@@ -14,7 +14,7 @@ namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
 
-    class RHI_VULKAN_API VulkanSampler : public Sampler {
+    class VulkanSampler : public Sampler {
     public:
         VulkanSampler(VulkanDriver& driver, Config config);
         ~VulkanSampler() override;

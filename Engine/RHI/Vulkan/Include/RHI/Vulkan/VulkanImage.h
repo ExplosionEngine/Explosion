@@ -14,7 +14,7 @@ namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
 
-    class RHI_VULKAN_API VulkanImage : public Image {
+    class VulkanImage : public Image {
     public:
         VulkanImage(VulkanDriver& driver, Config config);
         explicit VulkanImage(VulkanDriver& driver, const VkImage& vkImage, Config config);

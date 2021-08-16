@@ -14,7 +14,7 @@ namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
 
-    class RHI_VULKAN_API VulkanDescriptorPool : public DescriptorPool {
+    class VulkanDescriptorPool : public DescriptorPool {
     public:
         VulkanDescriptorPool(VulkanDriver& driver, Config config);
         ~VulkanDescriptorPool() override;

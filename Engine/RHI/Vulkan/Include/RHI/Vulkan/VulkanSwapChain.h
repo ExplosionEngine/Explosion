@@ -20,7 +20,7 @@ namespace Explosion::RHI {
     class VulkanImage;
     class VulkanCommandBuffer;
 
-    class RHI_VULKAN_API VulkanSwapChain : public SwapChain {
+    class VulkanSwapChain : public SwapChain {
     public:
         VulkanSwapChain(VulkanDriver& driver, Config config);
         ~VulkanSwapChain() override;

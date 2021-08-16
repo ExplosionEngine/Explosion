@@ -15,7 +15,7 @@ namespace Explosion::RHI {
     class VulkanDevice;
     class VulkanImageView;
 
-    class RHI_VULKAN_API VulkanRenderPass : public RenderPass {
+    class VulkanRenderPass : public RenderPass {
     public:
         explicit VulkanRenderPass(VulkanDriver& driver, Config config);
         ~VulkanRenderPass() override;

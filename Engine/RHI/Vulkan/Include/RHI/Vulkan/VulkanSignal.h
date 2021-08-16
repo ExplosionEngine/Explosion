@@ -14,7 +14,7 @@ namespace Explosion::RHI {
     class VulkanDriver;
     class VulkanDevice;
 
-    class RHI_VULKAN_API VulkanSignal : public Signal {
+    class VulkanSignal : public Signal {
     public:
         explicit VulkanSignal(VulkanDriver& driver);
         ~VulkanSignal() override;

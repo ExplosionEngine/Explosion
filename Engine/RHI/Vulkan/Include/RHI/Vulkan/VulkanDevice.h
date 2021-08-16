@@ -16,7 +16,7 @@
 namespace Explosion::RHI {
     class VulkanDriver;
 
-    class RHI_VULKAN_API VulkanDevice : public Device {
+    class VulkanDevice : public Device {
     public:
         explicit VulkanDevice(VulkanDriver& driver);
         ~VulkanDevice() override;

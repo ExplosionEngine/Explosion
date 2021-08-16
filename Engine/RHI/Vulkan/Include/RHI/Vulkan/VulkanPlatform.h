@@ -10,10 +10,10 @@
 #include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
-    uint32_t RHI_VULKAN_API GetPlatformInstanceExtensionNum();
-    const char** RHI_VULKAN_API GetPlatformInstanceExtensions();
+    uint32_t GetPlatformInstanceExtensionNum();
+    const char** GetPlatformInstanceExtensions();
 
-    bool RHI_VULKAN_API CreatePlatformSurface(const VkInstance& vkInstance, void* surface, VkSurfaceKHR& vkSurface);
+    bool CreatePlatformSurface(const VkInstance& vkInstance, void* surface, VkSurfaceKHR& vkSurface);
 }
 
 #endif //EXPLOSION_VULKANPLATFORM_H

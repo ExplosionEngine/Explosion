@@ -12,7 +12,7 @@
 #include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
-    class RHI_VULKAN_API VulkanDriver : public Driver {
+    class VulkanDriver : public Driver {
     public:
         VulkanDriver();
         ~VulkanDriver() override;

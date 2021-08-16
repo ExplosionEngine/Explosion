@@ -18,7 +18,7 @@ namespace Explosion::RHI {
     class VulkanImageView;
     class VulkanRenderPass;
 
-    class RHI_VULKAN_API VulkanFrameBuffer : public FrameBuffer {
+    class VulkanFrameBuffer : public FrameBuffer {
     public:
         VulkanFrameBuffer(VulkanDriver& driver, Config config);
         ~VulkanFrameBuffer() override;

@@ -17,7 +17,7 @@ namespace Explosion::RHI {
     class VulkanDevice;
     class VulkanImage;
 
-    class RHI_VULKAN_API VulkanImageView : public ImageView {
+    class VulkanImageView : public ImageView {
     public:
         VulkanImageView(VulkanDriver& driver, Config config);
         ~VulkanImageView() override;

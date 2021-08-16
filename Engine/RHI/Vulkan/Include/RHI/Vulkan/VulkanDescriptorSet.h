@@ -16,7 +16,7 @@ namespace Explosion::RHI {
     class VulkanDescriptorPool;
     class VulkanGraphicsPipeline;
 
-    class RHI_VULKAN_API VulkanDescriptorSet : public DescriptorSet {
+    class VulkanDescriptorSet : public DescriptorSet {
     public:
         VulkanDescriptorSet(VulkanDriver& driver, VulkanDescriptorPool* descriptorPool, VulkanGraphicsPipeline* pipeline);
         ~VulkanDescriptorSet() override;
