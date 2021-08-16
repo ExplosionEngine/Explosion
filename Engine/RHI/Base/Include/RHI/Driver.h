@@ -5,6 +5,7 @@
 #ifndef EXPLOSION_DRIVER_H
 #define EXPLOSION_DRIVER_H
 
+#include <Common/DynLib.h>
 #include <RHI/Buffer.h>
 #include <RHI/Image.h>
 #include <RHI/ImageView.h>
@@ -61,6 +62,24 @@ namespace Explosion::RHI {
 
     protected:
         Driver();
+    };
+
+    class DriverFactory {
+    public:
+        static DriverFactory& Singleton();
+
+        ~DriverFactory() = default;
+        DriverFactory(DriverFactory&) = delete;
+        void operator=(DriverFactory&) = delete;
+
+        Driver* CreateFromLib(const std::string& name);
+
+    private:
+        DriverFactory() = default;
+
+        DynLib* FetchOrLoadLib(const std::string& name);
+
+        std::unordered_map<std::string, std::unique_ptr<DynLib>> libs;
     };
 }
 

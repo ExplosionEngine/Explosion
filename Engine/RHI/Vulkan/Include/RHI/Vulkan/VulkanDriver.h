@@ -59,4 +59,8 @@ namespace Explosion::RHI {
     };
 }
 
+extern "C" {
+    RHI_VULKAN_API Explosion::RHI::Driver* CreateDriver();
+}
+
 #endif //EXPLOSION_VULKANDRIVER_H

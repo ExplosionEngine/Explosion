@@ -14,16 +14,16 @@
 #include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
-    VkBool32 RHI_VULKAN_API VkBoolConvert(bool value);
+    RHI_VULKAN_API VkBool32 VkBoolConvert(bool value);
 
     template <typename Type, typename VkType>
-    VkType RHI_VULKAN_API VkConvert(const Type& type);
+    RHI_VULKAN_API VkType VkConvert(const Type& type);
 
     template <typename VkType, typename Type>
-    Type RHI_VULKAN_API GetEnumByVk(const VkType& vkType);
+    RHI_VULKAN_API Type GetEnumByVk(const VkType& vkType);
 
     template <typename VkType, typename Type>
-    VkFlags RHI_VULKAN_API VkGetFlags(Flags flags);
+    RHI_VULKAN_API VkFlags VkGetFlags(Flags flags);
 }
 
 #endif //EXPLOSION_VULKANADAPATER_H

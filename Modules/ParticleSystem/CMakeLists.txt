@@ -15,7 +15,7 @@ file(GLOB_RECURSE INC_FILES
     Effectors/*.h
     Emitters/*.h)
 
-list(APPEND INC_FILES ${GEN_PRE_DIR}/ParticleSystemApi.h)
+list(APPEND INC_FILES ${GEN_PRE_DIR}/ParticleSystem/Api.h)
 
 exp_add_library(
     NAME ${MODULE_TARGET}

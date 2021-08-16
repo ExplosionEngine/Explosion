@@ -1,7 +1,7 @@
 find_package(Vulkan REQUIRED)
 
 if (${APPLE})
-    set(PLATFORM_LIBS "-framework IOKit")
+    set(PLATFORM_LIBS "-framework IOKit -framework Cocoa")
 else()
     set(PLATFORM_LIBS "")
 endif()

@@ -4,7 +4,7 @@ project(${MODULE_TARGET})
 
 file(GLOB_RECURSE SRC_FILES Src/*.cpp Src/*.h)
 file(GLOB_RECURSE INC_FILES Include/*h)
-list(APPEND INC_FILES ${GEN_PRE_DIR}/PassBuilderApi.h)
+list(APPEND INC_FILES ${GEN_PRE_DIR}/PassBuilder/Api.h)
 
 exp_add_library(
     NAME ${MODULE_TARGET}

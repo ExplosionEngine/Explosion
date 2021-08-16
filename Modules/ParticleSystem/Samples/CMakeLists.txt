@@ -6,7 +6,7 @@ exp_add_executable(
     NAME ParticleSample
     SRCS ${SAMPLE_SOURCES}
     INC_DIRS ${Vulkan_INCLUDE_DIRS} ..
-    LIBS Engine RHI RHIVulkan ParticleSystem SampleApplication FileSystem
+    LIBS Engine RHI ParticleSystem SampleApplication FileSystem
 )
 add_custom_command(
     TARGET ParticleSample PRE_BUILD

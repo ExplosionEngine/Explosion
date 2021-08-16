@@ -146,3 +146,10 @@ namespace Explosion::RHI {
         delete sampler;
     }
 }
+
+extern "C" {
+    Explosion::RHI::Driver* CreateDriver()
+    {
+        return new Explosion::RHI::VulkanDriver;
+    }
+}
