@@ -37,17 +37,17 @@ namespace Explosion::FileSystem {
 
     public:
 
-        const T& cast()
+        const T& cast() const
         {
             return static_cast<const T&>(*this);
         }
 
-        [[nodiscard]] bool IsExists()
+        [[nodiscard]] bool IsExists() const
         {
             return exists(path);
         }
 
-        std::string GetAbsolutePath()
+        [[nodiscard]] std::string GetAbsolutePath() const
         {
             return absolute(path).string();
         }
@@ -70,7 +70,7 @@ namespace Explosion::FileSystem {
             }
         }
 
-        std::string GetRelativePath(const std::string& inputPath)
+        [[nodiscard]] std::string GetRelativePath(const std::string& inputPath) const
         {
             std::string curPath = GetAbsolutePath();
             fs::path tmpPath(inputPath);
@@ -85,7 +85,7 @@ namespace Explosion::FileSystem {
             SplitStr(inPath,'/',inPathList);
 #endif
             int samePos = -1;
-            std::string result = "";
+            std::string result;
 
             for (int i = 0; i < std::min(inPathList.size(),curPathList.size()); ++i) {
                 if (curPathList.at(i) == inPathList.at(i)) {
@@ -105,15 +105,19 @@ namespace Explosion::FileSystem {
             for (int i = 0; i < curPathList.size()-samePos-1; ++i) {
                 result += curPathList.at(samePos+1+i);
 #ifdef _WIN32
-                result += "\\";
+                if (i != curPathList.size()-samePos-2) {
+                    result += "\\";
+                }
 #else
-                result += "/";
+                if (i != curPathList.size()-samePos-2) {
+                    result += "/";
+                }
 #endif
             }
             return result;
         }
 
-        std::string GetParent()
+        [[nodiscard]] std::string GetParent() const
         {
             if (IsExists()) {
                 return path.parent_path().string();
@@ -121,12 +125,12 @@ namespace Explosion::FileSystem {
             throw std::runtime_error("Path not exist!");
         }
 
-        bool IsDirectory()
+        [[nodiscard]] bool IsDirectory() const
         {
             return IsExists() && fs::is_directory(path);
         }
 
-        [[nodiscard]] bool IsFile()
+        [[nodiscard]] bool IsFile() const
         {
             return IsExists() && fs::is_regular_file(path);
         }

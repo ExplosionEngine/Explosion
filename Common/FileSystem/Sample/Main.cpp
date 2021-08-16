@@ -11,7 +11,7 @@
 using namespace Explosion::FileSystem;
 int main()
 {
-    File tmpFile("./test.cpp");
+    File tmpFile("./FSSamplePath/test.cpp");
 
     if (tmpFile.IsExists()) {
         std::cout << "file exist!" << std::endl;
@@ -20,7 +20,7 @@ int main()
         tmpFile.Make();
     }
 
-    std::cout << "relative path: " << tmpFile.GetRelativePath("") << std::endl;
+    std::cout << "relative path: " << tmpFile.GetRelativePath("./") << std::endl;
     std::cout << "absolute path: " << tmpFile.GetAbsolutePath() << std::endl;
     std::cout << "extension: " << tmpFile.GetExtension() << std::endl;
     std::cout << "fullname: " << tmpFile.GetFullName() << std::endl;
@@ -50,11 +50,18 @@ int main()
     std::cout << "str: " << str << std::endl << "num: " << num << std::endl;
     rStream.Close();
 
-    tmpFile.Rename("./test2.cpp");
+    tmpFile.Rename("./FSSamplePath/test2.cpp");
     std::cout << "after rename file exist?" << tmpFile.IsExists() << std::endl;
-    int i  = 1;
-    i++;
-    std::cout << "str: " << i << std::endl;
+
+    Directory tmpDir("./");
+    std::vector<File> fileList(std::move(tmpDir.ListFile()));
+    std::vector<Directory> dirList(std::move(tmpDir.ListDir()));
+    for (auto iter : fileList) {
+        std::cout << "File : " << iter.GetAbsolutePath() << std::endl;
+    }
+    for (auto iter : dirList) {
+        std::cout << "Dir : " << iter.GetAbsolutePath() << std::endl;
+    }
 
     return 0;
 }

@@ -16,9 +16,9 @@ namespace Explosion::FileSystem {
         File& operator=(const File& file);
 
     public:
-        [[nodiscard]] std::string GetName() ;
-        [[nodiscard]] std::string GetFullName() ;
-        [[nodiscard]] std::string GetExtension() ;
+        [[nodiscard]] std::string GetName() const;
+        [[nodiscard]] std::string GetFullName() const;
+        [[nodiscard]] std::string GetExtension() const;
 
 
     private:

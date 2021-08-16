@@ -18,8 +18,8 @@ namespace Explosion::FileSystem {
         Directory& operator=(const Directory& directory);
 
     public:
-        std::vector<File> ListFile();
-        std::vector<Directory> ListDir();
+        [[nodiscard]] std::vector<File> ListFile() const;
+        [[nodiscard]] std::vector<Directory> ListDir() const;
 
     private:
         friend Entry<Directory>;
