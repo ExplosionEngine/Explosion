@@ -10,7 +10,7 @@ file(GLOB_RECURSE TEST_SOURCES Test/*.cpp)
 exp_add_test(
     NAME FileSystemTest
     TYPE STATIC
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    WORKING_DIRECTORY ${PROJECT_RUNTIME_DIRECTORY}
     SRCS ${TEST_SOURCES}
     INC_DIRS ${googletest_INCS}
     LIBS FileSystem ${googletest_LIBS}
@@ -27,12 +27,15 @@ exp_add_executable(
 
 set(FILESYSTEMTEST_PATH ${PROJECT_RUNTIME_DIRECTORY}/FSTestPath)
 set(FILESYSTEMSAMPLE_PATH ${PROJECT_RUNTIME_DIRECTORY}/FSSamplePath)
+set(FILESYSTEMALLTEST_PATH ${PROJECT_BINARY_DIR}/Common/FileSystem/FSTestPath)
 
 add_custom_command(
     TARGET FileSystemTest
     PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${FILESYSTEMTEST_PATH}
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${FILESYSTEMALLTEST_PATH}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${FILESYSTEMTEST_PATH}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${FILESYSTEMALLTEST_PATH}
 )
 
 add_custom_command(
