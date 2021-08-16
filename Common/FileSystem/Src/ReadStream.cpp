@@ -21,8 +21,7 @@ namespace Explosion::FileSystem {
 
     void ReadStream::Open(const FileType& fileType)
     {
-        if (fileType == FileType::TEXT)
-        {
+        if (fileType == FileType::TEXT) {
             openType = FileType::TEXT;
             fileStream.open(file.GetAbsolutePath().c_str(), std::ios::in);
             if (!fileStream.fail()) {
@@ -30,8 +29,7 @@ namespace Explosion::FileSystem {
                 openFlag = true;
             }
         }
-        if(fileType == FileType::BINARY)
-        {
+        if(fileType == FileType::BINARY) {
             openType = FileType::BINARY;
             fileStream.open(file.GetAbsolutePath().c_str(), std::ios::in | std::ios::binary);
             if (!fileStream.fail()) {

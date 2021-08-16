@@ -3,7 +3,7 @@
 //
 
 #include <FileSystem/File.h>
-#include <FileSystem/WriteStream.h>
+#include <fstream>
 
 namespace Explosion::FileSystem {
     File::File(const std::string& path) : Entry<File>(path) {}
@@ -47,8 +47,8 @@ namespace Explosion::FileSystem {
         if (IsExists()) {
             return;
         }
-        WriteStream stream(*this);
-        stream.Open(FileType::TEXT);
-        stream.Close();
+        std::fstream fileStream;
+        fileStream.open(GetAbsolutePath().c_str(),std::ios::out);
+        fileStream.close();
     }
 }
