@@ -12,6 +12,11 @@
 #include <RHI/Vulkan/VulkanUtils.h>
 #include <RHI/Vulkan/VulkanSignal.h>
 
+#ifdef _WIN32
+#undef max
+#undef min
+#endif
+
 namespace {
     const std::vector<Explosion::RHI::RateRule<VkSurfaceFormatKHR>> SURFACE_FORMAT_RATE_RULES = {
         [](const auto& surfaceFormat) -> uint32_t {
@@ -121,13 +126,9 @@ namespace Explosion::RHI {
         return vkPresentMode;
     }
 
-    std::vector<Image*> VulkanSwapChain::GetColorAttachments()
+    Image* VulkanSwapChain::GetColorAttachment(uint32_t index)
     {
-        std::vector<Image*> result(colorAttachments.size());
-        for (uint32_t i = 0; i < colorAttachments.size(); i++) {
-            result[i] = static_cast<Image*>(colorAttachments[i]);
-        }
-        return result;
+        return colorAttachments[index];
     }
 
     void VulkanSwapChain::CreateSurface()

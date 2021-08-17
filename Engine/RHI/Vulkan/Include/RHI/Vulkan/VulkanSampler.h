@@ -8,7 +8,6 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/Sampler.h>
-#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;

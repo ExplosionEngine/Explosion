@@ -11,7 +11,6 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/Device.h>
-#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;

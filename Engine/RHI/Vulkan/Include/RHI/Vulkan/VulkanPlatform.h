@@ -7,8 +7,6 @@
 
 #include <vulkan/vulkan.h>
 
-#include <RHI/Vulkan/Api.h>
-
 namespace Explosion::RHI {
     uint32_t GetPlatformInstanceExtensionNum();
     const char** GetPlatformInstanceExtensions();

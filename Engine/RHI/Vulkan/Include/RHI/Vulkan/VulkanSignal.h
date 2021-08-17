@@ -8,7 +8,6 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/Signal.h>
-#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
@@ -21,8 +20,8 @@ namespace Explosion::RHI {
         const VkSemaphore& GetVkSemaphore();
 
     private:
-        void CreateSemaphore();
-        void DestroySemaphore();
+        void CreateSignal();
+        void DestroySignal();
 
         VulkanDriver& driver;
         VulkanDevice& device;

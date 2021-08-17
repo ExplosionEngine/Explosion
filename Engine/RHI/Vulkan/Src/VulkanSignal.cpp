@@ -11,12 +11,12 @@ namespace Explosion::RHI {
     VulkanSignal::VulkanSignal(VulkanDriver& driver)
         : Signal(), driver(driver), device(*driver.GetDevice())
     {
-        CreateSemaphore();
+        CreateSignal();
     }
 
     VulkanSignal::~VulkanSignal()
     {
-        DestroySemaphore();
+        DestroySignal();
     }
 
     const VkSemaphore& VulkanSignal::GetVkSemaphore()
@@ -24,7 +24,7 @@ namespace Explosion::RHI {
         return vkSemaphore;
     }
 
-    void VulkanSignal::CreateSemaphore()
+    void VulkanSignal::CreateSignal()
     {
         VkSemaphoreCreateInfo createInfo {};
         createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -36,7 +36,7 @@ namespace Explosion::RHI {
         }
     }
 
-    void VulkanSignal::DestroySemaphore()
+    void VulkanSignal::DestroySignal()
     {
         vkDestroySemaphore(device.GetVkDevice(), vkSemaphore, nullptr);
     }

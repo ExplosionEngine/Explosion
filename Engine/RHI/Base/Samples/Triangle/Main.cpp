@@ -58,7 +58,7 @@ protected:
         imageViewConfig.aspects = FlagsCast(ImageAspectBits::COLOR);
         imageViews.resize(swapChain->GetColorAttachmentCount());
         for (uint32_t i = 0; i < imageViews.size(); i++) {
-            imageViewConfig.image = swapChain->GetColorAttachments()[i];
+            imageViewConfig.image = swapChain->GetColorAttachment(i);
             imageViews[i] = driver->CreateImageView(imageViewConfig);
         }
         

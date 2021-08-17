@@ -10,7 +10,6 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/Buffer.h>
-#include <RHI/Vulkan/Api.h>
 #include <RHI/Vulkan/VulkanUtils.h>
 
 namespace Explosion::RHI {

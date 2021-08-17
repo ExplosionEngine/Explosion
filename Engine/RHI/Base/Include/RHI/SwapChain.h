@@ -27,7 +27,7 @@ namespace Explosion::RHI {
         virtual void DoFrame(const FrameJob& frameJob) = 0;
         virtual uint32_t GetColorAttachmentCount() = 0;
         virtual Format GetSurfaceFormat() = 0;
-        virtual std::vector<Image*> GetColorAttachments() = 0;
+        virtual Image* GetColorAttachment(uint32_t index) = 0;
 
     protected:
         explicit SwapChain(Config config);

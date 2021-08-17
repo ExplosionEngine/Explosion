@@ -12,7 +12,6 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/SwapChain.h>
-#include <RHI/Vulkan/Api.h>
 
 namespace Explosion::RHI {
     class VulkanDriver;
@@ -27,7 +26,7 @@ namespace Explosion::RHI {
         void DoFrame(const FrameJob& frameJob) override;
         uint32_t GetColorAttachmentCount() override;
         Format GetSurfaceFormat() override;
-        std::vector<Image*> GetColorAttachments() override;
+        Image* GetColorAttachment(uint32_t index) override;
 
         const VkSurfaceKHR& GetVkSurface();
         const VkSurfaceCapabilitiesKHR& GetVkSurfaceCapabilities();

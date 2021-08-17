@@ -12,26 +12,26 @@ namespace Explosion::RHI {
     }                                                             \
     return iter->second;                                          \
 
-#define VK_CONVERT_INSTANCE_B(Type, VkType)           \
-    template <>                                       \
-    VkType VkConvert<Type, VkType>(const Type& value) \
-    {                                                 \
+#define VK_CONVERT_INSTANCE_B(Type, VkType)                          \
+    template <>                                                      \
+    RHI_VULKAN_API VkType VkConvert<Type, VkType>(const Type& value) \
+    {                                                                \
 
 #define VK_CONVERT_INSTANCE_E \
     }                         \
 
-#define GET_ENUM_BY_VK_INSTANCE_B(VkType, Type)         \
-    template <>                                         \
-    Type GetEnumByVk<VkType, Type>(const VkType& value) \
-    {                                                   \
+#define GET_ENUM_BY_VK_INSTANCE_B(VkType, Type)                        \
+    template <>                                                        \
+    RHI_VULKAN_API Type GetEnumByVk<VkType, Type>(const VkType& value) \
+    {                                                                  \
 
 #define GET_ENUM_BY_VK_INSTANCE_E \
     }                             \
 
-#define VK_GET_FLAGS_INSTANCE_B(Type, VkType)     \
-    template <>                                   \
-    VkFlags VkGetFlags<Type, VkType>(Flags flags) \
-    {                                             \
+#define VK_GET_FLAGS_INSTANCE_B(Type, VkType)                    \
+    template <>                                                  \
+    RHI_VULKAN_API VkFlags VkGetFlags<Type, VkType>(Flags flags) \
+    {                                                            \
 
 #define VK_GET_FLAGS_INSTANCE_E \
     }                           \
@@ -48,7 +48,7 @@ namespace Explosion::RHI {
 }
 
 namespace Explosion::RHI {
-    VkBool32 VkBoolConvert(bool value)
+    RHI_VULKAN_API VkBool32 VkBoolConvert(bool value)
     {
         return value ? VK_TRUE : VK_FALSE;
     }
