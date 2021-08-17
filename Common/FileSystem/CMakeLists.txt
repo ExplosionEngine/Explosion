@@ -25,18 +25,7 @@ exp_add_executable(
     LIBS FileSystem
 )
 
-set(FILESYSTEMTEST_PATH ${PROJECT_RUNTIME_DIRECTORY}/FSTestPath)
 set(FILESYSTEMSAMPLE_PATH ${PROJECT_RUNTIME_DIRECTORY}/FSSamplePath)
-set(FILESYSTEMALLTEST_PATH ${PROJECT_BINARY_DIR}/Common/FileSystem/FSTestPath)
-
-add_custom_command(
-    TARGET FileSystemTest
-    PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E remove_directory ${FILESYSTEMTEST_PATH}
-    COMMAND ${CMAKE_COMMAND} -E remove_directory ${FILESYSTEMALLTEST_PATH}
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${FILESYSTEMTEST_PATH}
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${FILESYSTEMALLTEST_PATH}
-)
 
 add_custom_command(
     TARGET FileSystemSample
