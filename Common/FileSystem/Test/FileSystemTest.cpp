@@ -130,7 +130,7 @@ TEST(FileSystemTest, DirectoryInterfaceTest)
                 break;
             }
         }
-        EXPECT_TRUE(sameFlag) << dirVec.at(i).GetAbsolutePath() << " not exist in vector 'fileListResult'!" ;
+        EXPECT_TRUE(sameFlag) << dirVec.at(i).GetAbsolutePath() << " not exist in vector 'dirListResult'!" ;
     }
     removeDir();
 }
