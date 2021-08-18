@@ -3,9 +3,8 @@
 //
 
 #include <Application/Application.h>
-
-#include <Explosion/RHI/Vulkan/VulkanDriver.h>
 #include <FileSystem/FileReader.h>
+#include <RHI/Driver.h>
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
@@ -35,7 +34,7 @@
 #include <Effectors/ParticleForceEffector.h>
 
 using namespace Explosion;
-using namespace Explosion::RHI;
+using namespace RHI;
 
 struct Ubo {
     Math::Matrix<4> view;
@@ -49,7 +48,7 @@ public:
 protected:
     void OnStart() override
     {
-        driver = std::make_unique<VulkanDriver>();
+        driver = std::unique_ptr<Driver>(DriverFactory::Singleton().CreateFromLib("RHIVulkan"));
 
         SwapChain::Config swapChainConfig {};
         swapChainConfig.width = GetWidth();
@@ -71,7 +70,7 @@ protected:
         imageViewConfig.aspects = FlagsCast(ImageAspectBits::COLOR);
         imageViews.resize(swapChain->GetColorAttachmentCount());
         for (uint32_t i = 0; i < imageViews.size(); i++) {
-            imageViewConfig.image = swapChain->GetColorAttachments()[i];
+            imageViewConfig.image = swapChain->GetColorAttachment(i);
             imageViews[i] = driver->CreateImageView(imageViewConfig);
         }
         

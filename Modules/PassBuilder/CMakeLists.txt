@@ -4,7 +4,7 @@ project(${MODULE_TARGET})
 
 file(GLOB_RECURSE SRC_FILES Src/*.cpp Src/*.h)
 file(GLOB_RECURSE INC_FILES Include/*h)
-list(APPEND INC_FILES ${GEN_PRE_DIR}/PassBuilderApi.h)
+list(APPEND INC_FILES ${GEN_PRE_DIR}/PassBuilder/Api.h)
 
 exp_add_library(
     NAME ${MODULE_TARGET}
@@ -26,5 +26,5 @@ exp_add_test(
 
 generate_export_header(${MODULE_TARGET}
     EXPORT_MACRO_NAME PASS_API
-    EXPORT_FILE_NAME ${GEN_PRE_DIR}/PassBuilderApi.h
+    EXPORT_FILE_NAME ${GEN_PRE_DIR}/PassBuilder/Api.h
 )

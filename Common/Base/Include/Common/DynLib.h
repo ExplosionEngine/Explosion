@@ -27,17 +27,19 @@ namespace Explosion {
     public:
         explicit DynLib(std::string n) : name(std::move(n)) {}
         ~DynLib() = default;
+        DynLib(DynLib&) = delete;
+        void operator=(DynLib&) = delete;
 
         void Load();
-
         void Unload();
-
         bool Valid();
-
-        void* GetSymbol(const std::string& func) const;
+        [[nodiscard]] void* GetSymbol(const std::string& func) const;
 
     private:
-        LIB_HANDLE handle{};
+        void RepairLibPrefix();
+        void RepairExtension(const std::string& extension);
+
+        LIB_HANDLE handle {};
         std::string name;
     };
 }

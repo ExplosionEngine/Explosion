@@ -8,7 +8,7 @@
 #include <Math/Math.h>
 
 #include <ParticleEffector.h>
-#include <ParticleSystemApi.h>
+#include <ParticleSystem/Api.h>
 
 namespace Explosion {
 

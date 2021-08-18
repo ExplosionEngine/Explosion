@@ -6,7 +6,7 @@
 #define EXPLOSION_MODULE_PASSBLOADER_H
 
 #include <string>
-#include "PassBuilderApi.h"
+#include <PassBuilder/Api.h>
 #include "PassDefines.h"
 
 class PASS_API PassLoader {
