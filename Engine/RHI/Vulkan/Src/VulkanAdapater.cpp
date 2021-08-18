@@ -14,7 +14,7 @@ namespace Explosion::RHI {
 
 #define VK_CONVERT_INSTANCE_B(Type, VkType)                          \
     template <>                                                      \
-    RHI_VULKAN_API VkType VkConvert<Type, VkType>(const Type& value) \
+    VkType VkConvert<Type, VkType>(const Type& value) \
     {                                                                \
 
 #define VK_CONVERT_INSTANCE_E \
@@ -22,7 +22,7 @@ namespace Explosion::RHI {
 
 #define GET_ENUM_BY_VK_INSTANCE_B(VkType, Type)                        \
     template <>                                                        \
-    RHI_VULKAN_API Type GetEnumByVk<VkType, Type>(const VkType& value) \
+    Type GetEnumByVk<VkType, Type>(const VkType& value) \
     {                                                                  \
 
 #define GET_ENUM_BY_VK_INSTANCE_E \
@@ -30,7 +30,7 @@ namespace Explosion::RHI {
 
 #define VK_GET_FLAGS_INSTANCE_B(Type, VkType)                    \
     template <>                                                  \
-    RHI_VULKAN_API VkFlags VkGetFlags<Type, VkType>(Flags flags) \
+    VkFlags VkGetFlags<Type, VkType>(Flags flags) \
     {                                                            \
 
 #define VK_GET_FLAGS_INSTANCE_E \
@@ -48,7 +48,7 @@ namespace Explosion::RHI {
 }
 
 namespace Explosion::RHI {
-    RHI_VULKAN_API VkBool32 VkBoolConvert(bool value)
+    VkBool32 VkBoolConvert(bool value)
     {
         return value ? VK_TRUE : VK_FALSE;
     }

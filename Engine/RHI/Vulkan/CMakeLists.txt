@@ -32,12 +32,3 @@ generate_export_header(
     EXPORT_MACRO_NAME RHI_VULKAN_API
     EXPORT_FILE_NAME ${GEN_PRE_DIR}/RHI/Vulkan/Api.h
 )
-
-file(GLOB_RECURSE TEST_SOURCES Test/*.cpp)
-exp_add_test(
-    NAME RHIVulkanTest
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    SRCS ${TEST_SOURCES}
-    INC_DIRS Include ${googletest_INCS}
-    LIBS RHIVulkan ${googletest_LIBS}
-)
