@@ -97,8 +97,8 @@ protected:
         GraphicsPipeline::Config pipelineConfig {};
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.shaderConfig.shaderModules = {
-            { ShaderStageBits::VERTEX,   FileSystem::FileReader::Read("ParticleSpriteVertex.spv") },
-            { ShaderStageBits::FRAGMENT, FileSystem::FileReader::Read("ParticleSpriteFragment.spv") }
+            { ShaderStageBits::VERTEX,   FileSystem::FileReader::Read("ParticleSpriteVertex.spv", true) },
+            { ShaderStageBits::FRAGMENT, FileSystem::FileReader::Read("ParticleSpriteFragment.spv", true) }
         };
 
         pipelineConfig.vertexConfig.vertexBindings = {

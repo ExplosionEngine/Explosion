@@ -71,9 +71,9 @@ static bool ParseTargets(rapidjson::Document& root, GraphInfo& graph)
 GraphInfo PassLoader::Load(const std::string& url)
 {
     GraphInfo ret;
-    auto data = FileSystem::FileReader::Read(url, false);
+    auto data = FileSystem::FileReader::Read(url);
     rapidjson::Document document;
-    document.Parse(data.data());
+    document.Parse(data.c_str());
     ParseTargets(document, ret);
     return ret;
 }
