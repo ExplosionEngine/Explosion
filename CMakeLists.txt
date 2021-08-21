@@ -3,7 +3,7 @@ project(Explosion)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(min_3rd_version v0.8)
+set(MIN_3RD_VERSION v0.8)
 
 set(THIRDPARTY_VERSION_CHECK FALSE)
 
@@ -94,8 +94,8 @@ endfunction()
 if (${THIRDPARTY_VERSION_CHECK})
     message(STATUS "enable 3rdparty version check")
     compare_version(
-            CURRENT_VERSION ${cur_3rd_version}
-            REQUIRED_MIN_VERSION ${min_3rd_version}
+            CURRENT_VERSION ${EXP_3RD_VERSION}
+            REQUIRED_MIN_VERSION ${MIN_3RD_VERSION}
     )
 else()
     message(WARNING "3rdparty version check is not enabled, compilation may fail.")
