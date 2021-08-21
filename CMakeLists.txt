@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(min_3rd_version v0.8)
 
+set(THIRDPARTY_VERSION_CHECK FALSE)
+
 include(CMake/Explosion.cmake)
 
 option(EXP_VERBOSE_INFO "verbose info for cmake debug" ON)
@@ -89,7 +91,14 @@ function(compare_version)
 
 endfunction()
 
-compare_version(
-        CURRENT_VERSION ${cur_3rd_version}
-        REQUIRED_MIN_VERSION ${min_3rd_version}
-)
+if (${THIRDPARTY_VERSION_CHECK})
+    message(STATUS "enable 3rdparty version check")
+    compare_version(
+            CURRENT_VERSION ${cur_3rd_version}
+            REQUIRED_MIN_VERSION ${min_3rd_version}
+    )
+else()
+    message(WARNING "disable 3rdparty version check")
+endif()
+
+
