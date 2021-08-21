@@ -6,7 +6,7 @@
 #define EXPLOSION_PARTICLELIFETIMEEFFECTOR_H
 
 #include <ParticleEffector.h>
-#include <ParticleSystemApi.h>
+#include <ParticleSystem/Api.h>
 
 namespace Explosion {
 

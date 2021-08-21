@@ -5,7 +5,7 @@ on: [pull_request, workflow_dispatch]
 env:
   BUILD_TYPE: Release
   VULKAN_SDK_VERSION: 1.2.170.0
-  EXP_3RD_VERSION: v0.6
+  EXP_3RD_VERSION: v0.8
 
 jobs:
   build-windows:
@@ -49,7 +49,7 @@ jobs:
     
     - name: Run Unit Test
       working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{env.BUILD_TYPE}}
+      run: ctest -C ${{env.BUILD_TYPE}} --rerun-failed --output-on-failure --verbose
 
   build-macos:
     runs-on: macos-latest
@@ -83,4 +83,4 @@ jobs:
 
       - name: Run Unit Test
         working-directory: ${{github.workspace}}/build
-        run: ctest -C ${{env.BUILD_TYPE}}
+        run: ctest -C ${{env.BUILD_TYPE}} --rerun-failed --output-on-failure --verbose

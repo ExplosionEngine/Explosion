@@ -1,2 +1,3 @@
 add_subdirectory(PassBuilder)
 add_subdirectory(ParticleSystem)
+add_subdirectory(ShaderBuilder)

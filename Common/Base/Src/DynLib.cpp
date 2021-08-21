@@ -1,20 +1,19 @@
 #include <Common/DynLib.h>
 
-const char TAG[] = "DynLoader";
-
 namespace Explosion {
     void DynLib::Load()
     {
-    #ifdef _WIN32
-    #elif __APPLE__
-        if (name.find("lib") == std::string::npos) {
-            name = "lib" + name;
-        }
+#ifndef _WIN32
+        RepairLibPrefix();
+#endif
 
-        if (name.substr(name.find_last_of(".") + 1) != "dylib") {
-            name += ".dylib";
-        }
-    #endif
+#ifdef _WIN32
+        RepairExtension("dll");
+#elif __APPLE__
+        RepairExtension("dylib");
+#else
+        RepairExtension("so");
+#endif
 
         handle = LIB_LOAD(name.c_str(), RTLD_LOCAL | RTLD_LAZY);
     }
@@ -28,11 +27,28 @@ namespace Explosion {
 
     bool DynLib::Valid()
     {
-        return !!handle;
+        return handle != nullptr;
     }
 
     void* DynLib::GetSymbol(const std::string& func) const
     {
-        return (void*)LIB_GET(handle, func.c_str());
+        return static_cast<void*>(LIB_GET(handle, func.c_str()));
+    }
+
+    void DynLib::RepairLibPrefix()
+    {
+        if (name.find("lib") != std::string::npos) {
+            return;
+        }
+        name = "lib" + name;
+    }
+
+    void DynLib::RepairExtension(const std::string& extension)
+    {
+        if (name.substr(name.find_last_of('.') + 1) == extension) {
+            return;
+        }
+        name += '.';
+        name += extension;
     }
 }

@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <vector>
 #include <ParticleEffector.h>
-#include <ParticleSystemApi.h>
+#include <ParticleSystem/Api.h>
 
 namespace Explosion {
     class PARTICLE_API ParticleEmitter {

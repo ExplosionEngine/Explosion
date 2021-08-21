@@ -15,7 +15,7 @@ file(GLOB_RECURSE INC_FILES
     Effectors/*.h
     Emitters/*.h)
 
-list(APPEND INC_FILES ${GEN_PRE_DIR}/ParticleSystemApi.h)
+list(APPEND INC_FILES ${GEN_PRE_DIR}/ParticleSystem/Api.h)
 
 exp_add_library(
     NAME ${MODULE_TARGET}
@@ -40,5 +40,5 @@ exp_add_test(
 generate_export_header(
     ${MODULE_TARGET}
     EXPORT_MACRO_NAME PARTICLE_API
-    EXPORT_FILE_NAME ${GEN_PRE_DIR}/ParticleSystemApi.h
+    EXPORT_FILE_NAME ${GEN_PRE_DIR}/ParticleSystem/Api.h
 )

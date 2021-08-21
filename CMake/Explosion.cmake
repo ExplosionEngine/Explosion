@@ -73,10 +73,6 @@ function(exp_add_library)
         ${ARGN}
     )
 
-    if (NOT DEFINED ${PARAMS_TYPE})
-        set(PARAMS_TYPE "STATIC")
-    endif()
-
     if (${EXP_VERBOSE_INFO})
         message("")
         message("[exp_add_library begin]")
@@ -100,7 +96,7 @@ function(exp_add_library)
     target_link_libraries(${PARAMS_NAME} ${PARAMS_LIBS})
 
     if (${MSVC})
-        if (${PARAMS_TYPE} STREQUAL "SHARED")
+        if ("${PARAMS_TYPE}" STREQUAL "SHARED")
             if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
                 target_compile_options(${PARAMS_NAME} PUBLIC "/MDd")
             endif()
