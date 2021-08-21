@@ -98,7 +98,7 @@ if (${THIRDPARTY_VERSION_CHECK})
             REQUIRED_MIN_VERSION ${min_3rd_version}
     )
 else()
-    message(WARNING "disable 3rdparty version check, compilation may fail.")
+    message(WARNING "3rdparty version check is not enabled, compilation may fail.")
 endif()
 
 
