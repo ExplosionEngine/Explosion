@@ -48,7 +48,7 @@ public:
 protected:
     void OnStart() override
     {
-        driver = std::unique_ptr<Driver>(DriverFactory::Singleton().CreateFromLib("RHIVulkan"));
+        driver = std::unique_ptr<Driver>(DriverFactory::Singleton().CreateDriverBySuggestion());
 
         SwapChain::Config swapChainConfig {};
         swapChainConfig.width = GetWidth();
@@ -249,7 +249,7 @@ private:
 
 int main(int argc, char* argv[])
 {
-    App app("Triangle", 1024, 768);
+    App app("Particle", 1024, 768);
     app.Run();
     return 0;
 }
