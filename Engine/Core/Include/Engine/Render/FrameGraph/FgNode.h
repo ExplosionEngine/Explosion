@@ -8,7 +8,7 @@
 #include <string>
 
 #include <Common/NonCopy.h>
-#include <Common/RefObject.h>
+#include <Common/Templates/RefObject.h>
 
 namespace Explosion {
 

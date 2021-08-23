@@ -10,7 +10,7 @@
 
 #include <Common/NonCopy.h>
 #include <Common/Exception.h>
-#include <Common/RefObject.h>
+#include <Common/Templates/RefObject.h>
 
 #include <Engine/Render/FrameGraph/FgNode.h>
 #include <Engine/Render/FrameGraph/FgHandle.h>

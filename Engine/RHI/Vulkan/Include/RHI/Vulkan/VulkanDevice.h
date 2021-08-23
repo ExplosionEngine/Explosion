@@ -20,6 +20,8 @@ namespace Explosion::RHI {
         explicit VulkanDevice(VulkanDriver& driver);
         ~VulkanDevice() override;
 
+        const DeviceInfo& GetDeviceInfo() const override;
+
         const VkInstance& GetVkInstance();
         const VkPhysicalDevice& GetVkPhysicalDevice();
         const VkDevice& GetVkDevice();
@@ -54,6 +56,7 @@ namespace Explosion::RHI {
         void DestroyCommandPool();
 
         void FetchPhysicalDeviceMemoryProperties();
+        void FillDeviceFeature();
 
         VulkanDriver& driver;
         std::vector<const char*> instanceExtensions {};
@@ -68,6 +71,7 @@ namespace Explosion::RHI {
         VkQueue vkQueue = VK_NULL_HANDLE;
         VkCommandPool vkCommandPool = VK_NULL_HANDLE;
         VkPhysicalDeviceMemoryProperties vkPhysicalDeviceMemoryProperties{};
+        DeviceInfo devInfo;
     };
 }
 

@@ -145,6 +145,11 @@ namespace Explosion::RHI {
     {
         delete sampler;
     }
+
+    const DeviceInfo& VulkanDriver::GetDeviceInfo() const
+    {
+        return device->GetDeviceInfo();
+    }
 }
 
 extern "C" {

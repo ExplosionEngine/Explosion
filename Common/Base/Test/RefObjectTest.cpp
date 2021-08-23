@@ -6,7 +6,7 @@
 #include <thread>
 #include <atomic>
 
-#include <Common/RefObject.h>
+#include <Common/Templates/RefObject.h>
 
 using namespace Explosion;
 

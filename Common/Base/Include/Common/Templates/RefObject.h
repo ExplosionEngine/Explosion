@@ -2,8 +2,8 @@
 // Created by LiZhen on 2021/5/9.
 //
 
-#ifndef EXPLOSION_REFOBJECT_H
-#define EXPLOSION_REFOBJECT_H
+#ifndef EXPLOSION_REF_OBJECT_H
+#define EXPLOSION_REF_OBJECT_H
 
 #include <type_traits>
 #include <atomic>

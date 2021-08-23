@@ -1,4 +1,4 @@
-file(GLOB_RECURSE SOURCES Src/*.cpp)
+file(GLOB_RECURSE SOURCES Src/* Include/*)
 exp_add_library(
     NAME CommonBase
     SRCS ${SOURCES}

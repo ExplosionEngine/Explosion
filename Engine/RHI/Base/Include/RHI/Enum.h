@@ -164,6 +164,12 @@ namespace Explosion::RHI {
         ALWAYS,
         MAX
     };
+
+    enum class DeviceType {
+        INTERGRATED_GPU,
+        DISCRETE_GPU,
+        OTHER
+    };
 }
 
 /**

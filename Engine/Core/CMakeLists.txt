@@ -7,4 +7,5 @@ exp_add_library(
     LIBS CommonBase JobSystem RHI
 )
 
+add_subdirectory(Sample)
 add_subdirectory(Test)

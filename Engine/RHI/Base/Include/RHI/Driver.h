@@ -18,6 +18,7 @@
 #include <RHI/DescriptorPool.h>
 #include <RHI/DescriptorSet.h>
 #include <RHI/Sampler.h>
+#include <RHI/DeviceInfo.h>
 
 namespace Explosion::RHI {
     class Driver {
@@ -59,6 +60,8 @@ namespace Explosion::RHI {
 
         virtual Sampler* CreateSampler(const Sampler::Config& config) = 0;
         virtual void DestroySampler(Sampler* sampler) = 0;
+
+        virtual const DeviceInfo& GetDeviceInfo() const = 0;
 
     protected:
         Driver();

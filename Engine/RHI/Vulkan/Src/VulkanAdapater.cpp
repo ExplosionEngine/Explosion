@@ -12,6 +12,13 @@ namespace Explosion::RHI {
     }                                                             \
     return iter->second;                                          \
 
+#define FIND_OR_DEFAULT(defValue)                                 \
+    auto iter = MAP.find(value);                                  \
+    if (iter == MAP.end()) {                                      \
+        return defValue;                                          \
+    }                                                             \
+    return iter->second;                                          \
+
 #define VK_CONVERT_INSTANCE_B(Type, VkType)                          \
     template <>                                                      \
     VkType VkConvert<Type, VkType>(const Type& value) \
@@ -319,5 +326,14 @@ namespace Explosion::RHI {
                 {PrimitiveTopology::TRIANGLE_LIST, VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST},
         };
         FIND_OR_EXCEPT
+    VK_CONVERT_INSTANCE_E
+    
+
+    VK_CONVERT_INSTANCE_B(VkPhysicalDeviceType, DeviceType)
+        static std::unordered_map<VkPhysicalDeviceType, DeviceType> MAP = {
+                {VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, DeviceType::INTERGRATED_GPU},
+                {VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, DeviceType::DISCRETE_GPU}
+        };
+        FIND_OR_DEFAULT(DeviceType::OTHER)
     VK_CONVERT_INSTANCE_E
 }
