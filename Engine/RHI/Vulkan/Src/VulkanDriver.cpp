@@ -145,6 +145,11 @@ namespace Explosion::RHI {
     {
         delete sampler;
     }
+
+    DriverType VulkanDriver::GetType()
+    {
+        return DriverType::VULKAN;
+    }
 }
 
 extern "C" {
