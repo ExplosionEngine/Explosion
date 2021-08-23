@@ -64,8 +64,8 @@ add_subdirectory(Modules)
 
 message(STATUS "3rdparty version check")
 exp_compare_version(
-        CURRENT_VERSION ${EXP_3RD_VERSION}
-        REQUIRED_MIN_VERSION ${MIN_3RD_VERSION}
+    CURRENT_VERSION ${EXP_3RD_VERSION}
+    REQUIRED_MIN_VERSION ${MIN_3RD_VERSION}
 )
 
 
