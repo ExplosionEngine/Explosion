@@ -139,11 +139,11 @@ endfunction()
 function(exp_compare_version)
 
     cmake_parse_arguments(
-            PARAMS
-            ""
-            "CURRENT_VERSION;REQUIRED_MIN_VERSION"
-            ""
-            ${ARGN}
+        PARAMS
+        ""
+        "CURRENT_VERSION;REQUIRED_MIN_VERSION"
+        ""
+        ${ARGN}
     )
 
     string(LENGTH ${PARAMS_CURRENT_VERSION} CURRENT_VERSION_LEN)
@@ -160,13 +160,13 @@ function(exp_compare_version)
 
     if (${CURRENT_VERSION_ARGS0} GREATER ${MINIMUM_VERSION_ARGS0})
         message(STATUS "required minimun thirdparty version: ${PARAMS_REQUIRED_MIN_VERSION}      current thirdparty version: ${PARAMS_CURRENT_VERSION}.")
-    elseif((${CURRENT_VERSION_ARGS0} EQUAL ${MINIMUM_VERSION_ARGS0}) AND (${CURRENT_VERSION_ARGS1} GREATER ${MINIMUM_VERSION_ARGS1}))
+    elseif((${CURRENT_VERSION_ARGS0} EQUAL ${MINIMUM_VERSION_ARGS0}) AND (NOT ${CURRENT_VERSION_ARGS1} LESS ${MINIMUM_VERSION_ARGS1}))
         message(STATUS "required minimun thirdparty version: ${PARAMS_REQUIRED_MIN_VERSION}      current thirdparty version: ${PARAMS_CURRENT_VERSION}.")
     else()
         message(FATAL_ERROR
-                "Thirdparty version ${PARAMS_REQUIRED_MIN_VERSION} or higher is required."
-                "Your current thirdparty version is ${PARAMS_CURRENT_VERSION} ."
-                "Please get latest thirdparty at https://github.com/ExplosionEngine/Explosion3rdParty/releases ")
+            "Thirdparty version ${PARAMS_REQUIRED_MIN_VERSION} or higher is required."
+            "Your current thirdparty version is ${PARAMS_CURRENT_VERSION} ."
+            "Please get latest thirdparty at https://github.com/ExplosionEngine/Explosion3rdParty/releases ")
     endif ()
 
 endfunction()
