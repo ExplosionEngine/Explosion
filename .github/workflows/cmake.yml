@@ -5,7 +5,7 @@ on: [pull_request, workflow_dispatch]
 env:
   BUILD_TYPE: Release
   VULKAN_SDK_VERSION: 1.2.170.0
-  EXP_3RD_VERSION: v0.8
+  EXP_3RD_VERSION: v0.9
 
 jobs:
   build-windows:
