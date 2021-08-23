@@ -3,8 +3,6 @@ project(Explosion)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(MIN_3RD_VERSION v0.9)
-
 include(CMake/Explosion.cmake)
 
 option(EXP_VERBOSE_INFO "verbose info for cmake debug" ON)
@@ -58,15 +56,12 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 endif()
 
 add_subdirectory(${EXP_3RD_ROOT} 3rd)
+message(STATUS "starting 3rdparty version check")
+exp_compare_3rd_version(
+    CURRENT_VERSION ${EXP_3RD_VERSION}
+    REQUIRED_MIN_VERSION v0.9
+)
+
 add_subdirectory(Common)
 add_subdirectory(Engine)
 add_subdirectory(Modules)
-
-message(STATUS "3rdparty version check")
-exp_compare_version(
-    CURRENT_VERSION ${EXP_3RD_VERSION}
-    REQUIRED_MIN_VERSION ${MIN_3RD_VERSION}
-)
-
-
-
