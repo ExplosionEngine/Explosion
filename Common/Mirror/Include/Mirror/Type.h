@@ -8,6 +8,7 @@
 #include <string>
 #include <unordered_map>
 #include <functional>
+#include <vector>
 
 namespace Explosion::Mirror::Internal {
     class Any;
@@ -36,6 +37,19 @@ namespace Explosion::Mirror::Internal {
 
     struct ClassTypeInfo : public StructTypeInfo {
         std::vector<FunctionInfo> memberFuncs;
+    };
+
+    template <typename T>
+    struct TypeTraits {
+        static std::string Name()
+        {
+            return typeid(T).name();
+        }
+
+        static size_t Id()
+        {
+            return typeid(T).hash_code();
+        }
     };
 }
 

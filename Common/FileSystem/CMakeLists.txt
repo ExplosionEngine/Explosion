@@ -10,7 +10,6 @@ exp_add_library(
 file(GLOB_RECURSE TEST_SOURCES Test/*.cpp)
 exp_add_test(
     NAME FileSystemTest
-    TYPE STATIC
     WORKING_DIRECTORY ${PROJECT_RUNTIME_DIRECTORY}
     SRCS ${TEST_SOURCES}
     INC_DIRS ${googletest_INCS}
