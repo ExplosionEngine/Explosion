@@ -144,13 +144,14 @@ namespace Explosion::Mirror {
             if (Internal::TypeTraits<T>::Id() != typeId) {
                 throw BadAnyCastException {};
             }
-            if (storageCategory == StorageCategory::SMALL) {
-                auto& s = std::get<SmallStorage>(storage);
-                return static_cast<T*>(static_cast<void*>(s.memory));
-            } else {
-                auto& s = std::get<BigStorage>(storage);
-                return static_cast<T*>(s.memory);
-            }
+            return static_cast<T*>(RawValue());
+        }
+
+        void* RawValue()
+        {
+            return storageCategory == StorageCategory::SMALL ?
+                static_cast<void*>(std::get<SmallStorage>(storage).memory) :
+                std::get<BigStorage>(storage).memory;
         }
 
     private:
