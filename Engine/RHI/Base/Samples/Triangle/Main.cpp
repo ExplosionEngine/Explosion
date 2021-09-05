@@ -94,7 +94,9 @@ protected:
         pipelineConfig.vertexConfig.vertexAttributes = {
             { 0, 0, Format::R32_G32_B32_FLOAT, static_cast<uint32_t>(offsetof(Vertex, position)) },
         };
-        pipelineConfig.descriptorConfig.descriptorAttributes = {};
+        pipelineConfig.descriptorConfig.descriptorAttributes = {
+            {0, DescriptorType::UNIFORM_BUFFER, (uint32_t)ShaderStageBits::VERTEX},
+        };
         pipelineConfig.viewportScissorConfig.viewport = { 0, 0, static_cast<float>(GetWidth()), static_cast<float>(GetHeight()), 0, 1.0 };
         pipelineConfig.viewportScissorConfig.scissor = { 0, 0, GetWidth(), GetHeight() };
         pipelineConfig.rasterizerConfig = { false, false, FlagsCast(CullModeBits::NONE), FrontFace::CLOCK_WISE };
@@ -123,12 +125,37 @@ protected:
         bufferConfig.memoryProperties = FlagsCast(MemoryPropertyBits::DEVICE_LOCAL);
         indexBuffer = driver->CreateBuffer(bufferConfig);
         indexBuffer->UpdateData(indices.data());
+
+        bufferConfig.size = sizeof(float);
+        bufferConfig.usages = BufferUsageBits::UNIFORM_BUFFER | BufferUsageBits::TRANSFER_DST;
+        bufferConfig.memoryProperties = MemoryPropertyBits::HOST_VISIBLE | MemoryPropertyBits::HOST_COHERENT;
+        ubo = driver->CreateBuffer(bufferConfig);
+        ubo->UpdateData(&angle);
+
+        DescriptorPool::Config poolConfig = {};
+        poolConfig.maxSets = 100;
+        poolConfig.poolSizes = {
+            {DescriptorType::UNIFORM_BUFFER, 100},
+        };
+        pool = driver->CreateDescriptorPool(poolConfig);
+        set = driver->AllocateDescriptorSet(pool, pipeline);
+
+        DescriptorSet::DescriptorBufferInfo dbi = {};
+        dbi.buffer = ubo;
+        dbi.offset = 0;
+        dbi.range = sizeof(float);
+        set->WriteDescriptors({{ 0, DescriptorType::UNIFORM_BUFFER, &dbi, nullptr}});
+
+        commandBuffer = driver->CreateCommandBuffer();
     }
 
     void OnStop() override
     {
+        driver->DestroyCommandBuffer(commandBuffer);
         driver->DestroyBuffer(vertexBuffer);
         driver->DestroyBuffer(indexBuffer);
+        driver->DestroyBuffer(ubo);
+        driver->DestroyDescriptorPool(pool);
         driver->DestroyGraphicsPipeline(pipeline);
         for (auto* frameBuffer : frameBuffers) {
             driver->DestroyFrameBuffer(frameBuffer);
@@ -143,7 +170,8 @@ protected:
     void OnDrawFrame() override
     {
         swapChain->DoFrame([this](uint32_t imageIdx, Signal* imageReadySignal, Signal* frameFinishedSignal) -> void {
-            auto* commandBuffer = driver->CreateCommandBuffer();
+            ubo->UpdateData(&angle);
+            angle += 0.01f;
             commandBuffer->EncodeCommands([imageIdx, this](CommandEncoder* encoder) -> void {
                 CommandEncoder::RenderPassBeginInfo beginInfo {};
                 beginInfo.frameBuffer = frameBuffers[imageIdx];
@@ -157,6 +185,7 @@ protected:
 
                     encoder->BindVertexBuffer(0, vertexBuffer);
                     encoder->BindIndexBuffer(indexBuffer);
+                    encoder->BindDescriptorSet({set});
                     encoder->DrawIndexed(0, indices.size(), 0, 0, 1);
                 }
                 encoder->EndRenderPass();
@@ -166,6 +195,7 @@ protected:
     }
 
 private:
+    float angle = 0.f;
     std::vector<Vertex> vertices;
     std::vector<Index> indices;
 
@@ -177,6 +207,10 @@ private:
     GraphicsPipeline* pipeline = nullptr;
     Buffer* vertexBuffer = nullptr;
     Buffer* indexBuffer = nullptr;
+    Buffer* ubo = nullptr;
+    CommandBuffer* commandBuffer = nullptr;
+    DescriptorPool* pool = nullptr;
+    DescriptorSet* set = nullptr;
 };
 
 int main(int argc, char* argv[])

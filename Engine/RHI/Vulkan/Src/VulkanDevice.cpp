@@ -322,7 +322,7 @@ namespace Explosion::RHI {
         VkCommandPoolCreateInfo commandPoolCreateInfo {};
         commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         commandPoolCreateInfo.pNext = nullptr;
-        commandPoolCreateInfo.flags = 0;
+        commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         commandPoolCreateInfo.queueFamilyIndex = vkQueueFamilyIndex.value();
 
         if (vkCreateCommandPool(vkDevice, &commandPoolCreateInfo, nullptr, &vkCommandPool) != VK_SUCCESS) {

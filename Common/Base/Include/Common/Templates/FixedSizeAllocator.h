@@ -16,14 +16,14 @@ namespace Explosion {
 
         inline void* Allocate()
         {
-            used.Inc();
-            return container.Pop();
+            used.template Inc();
+            return container.template Pop();
         }
 
         inline void Free(void* ptr)
         {
-            container.Push(ptr);
-            used.Dec();
+            container.template Push(ptr);
+            used.template Dec();
         }
 
     private:

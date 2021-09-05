@@ -29,11 +29,15 @@ namespace Explosion::RHI {
         const VkCommandBuffer& GetVkCommandBuffer();
 
     private:
+        void CreateFence();
+        void DestroyFence();
+
         void AllocateCommandBuffer();
         void FreeCommandBuffer();
 
         VulkanDriver& driver;
         VulkanDevice& device;
+        VkFence fence = VK_NULL_HANDLE;
         VkCommandBuffer vkCommandBuffer = VK_NULL_HANDLE;
     };
 
