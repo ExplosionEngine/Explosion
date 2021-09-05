@@ -105,7 +105,7 @@ namespace Explosion::Mirror {
             }
         }
 
-        Any(Any&& any) : storageCategory(any.storageCategory), typeId(any.typeId)
+        Any(Any&& any)  noexcept : storageCategory(any.storageCategory), typeId(any.typeId)
         {
             if (storageCategory == StorageCategory::SMALL) {
                 storage = SmallStorage {};
