@@ -8,10 +8,10 @@
 namespace Explosion {
 
     template <typename T, typename Allocator>
-    class FIFOQueue {
+    class RingQueue {
     public:
-        FIFOQueue() = default;
-        ~FIFOQueue() = default;
+        RingQueue() = default;
+        ~RingQueue() = default;
     };
 
 }

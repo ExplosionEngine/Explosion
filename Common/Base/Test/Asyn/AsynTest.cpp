@@ -5,8 +5,11 @@
 #include <gtest/gtest.h>
 #include <thread>
 #include <Common/Asyn/NamedThread.h>
+#include <Common/Asyn/Task.h>
 
 using namespace Explosion;
+
+void func() {}
 
 TEST(NamedThreadTest, NamedThreadTest1)
 {
@@ -23,4 +26,21 @@ TEST(NamedThreadTest, NamedThreadTest1)
 
     thd.ExitThread();
     ASSERT_EQ(val, 10);
+
+    struct Test {
+        uint8_t data[64];
+        float v = 2.0f;
+    };
+
+    int v1 = 1;
+    Test v2;
+    auto task1 = Task::CreateTask([v1]() {
+        std::cout << v1 << std::endl;
+    });
+
+    auto task2 = Task::CreateTask([v2]() {
+      std::cout << v2.v << std::endl;
+    });
+    task1->Execute();
+    task2->Execute();
 }
