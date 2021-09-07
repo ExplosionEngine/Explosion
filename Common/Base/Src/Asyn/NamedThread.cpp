@@ -6,7 +6,7 @@
 
 namespace Explosion {
 
-    NamedThread::NamedThread(const std::string_view& str)
+    NamedThread::NamedThread(std::string_view str)
         : name(str)
     {
     }

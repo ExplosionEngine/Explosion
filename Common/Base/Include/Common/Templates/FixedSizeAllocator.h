@@ -7,23 +7,26 @@
 
 namespace Explosion {
 
-    template <int N, class Container, typename Counter>
+    template <int Size, class Container, typename Counter>
     class FixedSizeAllocator {
     public:
-        static constexpr int FIXED_SIZE = N;
+        FixedSizeAllocator() = default;
+        ~FixedSizeAllocator() = default;
+
+        static constexpr int FIXED_SIZE = Size;
         using ContainerType = Container;
         using CounterType = Counter;
 
         inline void* Allocate()
         {
-            used.template Inc();
-            return container.template Pop();
+            used.Inc();
+            return container.Pop();
         }
 
         inline void Free(void* ptr)
         {
-            container.template Push(ptr);
-            used.template Dec();
+            container.Push(ptr);
+            used.Dec();
         }
 
     private:

@@ -3,9 +3,10 @@
 //
 
 #include <gtest/gtest.h>
-#include <thread>
+#include <future>
 #include <Common/Asyn/NamedThread.h>
 #include <Common/Asyn/Task.h>
+#include <Common/Asyn/TaskQueue.h>
 
 using namespace Explosion;
 
@@ -26,21 +27,126 @@ TEST(NamedThreadTest, NamedThreadTest1)
 
     thd.ExitThread();
     ASSERT_EQ(val, 10);
+}
 
-    struct Test {
-        uint8_t data[64];
-        float v = 2.0f;
-    };
+class TestThread {
+public:
+    explicit TestThread(std::string_view name)
+        : thread(name)
+    {
 
-    int v1 = 1;
-    Test v2;
-    auto task1 = Task::CreateTask([v1]() {
-        std::cout << v1 << std::endl;
+    }
+    ~TestThread() = default;
+
+    void Start()
+    {
+        thread.StartThread(&TestThread::Main, this);
+    }
+
+    void Stop()
+    {
+        thread.ExitThread();
+    }
+
+    void Main()
+    {
+        taskQueue.Execute();
+    }
+
+    template <typename Func>
+    void Enqueue(Func&& f)
+    {
+        taskQueue.template Emplace(std::forward<Func>(f));
+    }
+
+    void Wait()
+    {
+        if (future.valid()) {
+            future.wait();
+        }
+    }
+
+    void Flush()
+    {
+        struct Functor {
+            std::promise<void> promise;
+            void operator() () {
+                promise.set_value();
+            }
+        };
+        Functor f;
+        future = f.promise.get_future();
+        taskQueue.Emplace(std::move(f));
+        thread.Notify();
+    }
+
+private:
+    NamedThread thread;
+    TaskQueue taskQueue;
+    std::future<void> future;
+};
+
+TEST(NamedThreadTest, NamedThreadTest2)
+{
+    TestThread testThread("test");
+
+    testThread.Start();
+
+    testThread.Wait();
+    int a = 0;
+    int b = 0;
+
+    testThread.Enqueue([&a]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        a = 1;
     });
 
-    auto task2 = Task::CreateTask([v2]() {
-      std::cout << v2.v << std::endl;
+    testThread.Enqueue([&b]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        b = 2;
     });
-    task1->Execute();
-    task2->Execute();
+
+    ASSERT_EQ(a, 0);
+    ASSERT_EQ(b, 0);
+    testThread.Flush();
+    testThread.Wait();
+    ASSERT_EQ(a, 1);
+    ASSERT_EQ(b, 2);
+
+    testThread.Enqueue([&a]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        a = 3;
+    });
+
+    testThread.Enqueue([&b]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        b = 4;
+    });
+    testThread.Flush();
+    testThread.Wait();
+    ASSERT_EQ(a, 3);
+    ASSERT_EQ(b, 4);
+
+    testThread.Stop();
+}
+
+TEST(TaskQueueTest, TaskQueueTest1)
+{
+    TaskQueue taskQueue;
+    int a = 0;
+    int b = 0;
+
+    taskQueue.Emplace([&a]() {
+        a = 1;
+    });
+
+    taskQueue.Emplace([&b]() {
+        b = 2;
+    });
+
+    ASSERT_EQ(a, 0);
+    ASSERT_EQ(b, 0);
+    taskQueue.Execute();
+    ASSERT_EQ(a, 1);
+    ASSERT_EQ(b, 2);
 }

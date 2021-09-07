@@ -10,7 +10,7 @@
 
 namespace Explosion {
 
-    template <int N, int BlockSize>
+    template <int Size, int NumPerBlock>
     class LinkedFreeList {
     public:
         struct LinkedNode {
@@ -19,10 +19,10 @@ namespace Explosion {
 
         static constexpr int64_t BLOCK_ALIGNMENT = 64;
         static constexpr int64_t HEAD_ALIGNMENT = Alignment(sizeof(LinkedNode), 16);
-        static constexpr int NODE_SIZE = N;
-        static constexpr int BLOCK_SIZE = Alignment(BlockSize + HEAD_ALIGNMENT, BLOCK_ALIGNMENT);
+        static constexpr int NODE_SIZE = Size;
+        static constexpr int BLOCK_SIZE = Alignment(NumPerBlock * NODE_SIZE + HEAD_ALIGNMENT, BLOCK_ALIGNMENT);
 
-        static_assert(IsPowerOfTwo(N), "Block must be power of two");
+        static_assert(IsPowerOfTwo(Size), "Block must be power of two");
         static_assert(BLOCK_SIZE > NODE_SIZE, "BLOCK_SIZE must larger than NODE_SIZE");
 
         LinkedFreeList() : offset(0), head(nullptr), tail(nullptr), link(&head) {}

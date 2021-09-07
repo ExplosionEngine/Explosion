@@ -23,9 +23,10 @@ struct TestData {
 
 TEST(LinkedFreeListTest, LinkedFreeListTest1)
 {
-    using List = LinkedFreeList<sizeof(TestData), 64>;
+    constexpr int num = 2;
+    using List = LinkedFreeList<sizeof(TestData), num>;
     List list;
-    ASSERT_EQ(List::BLOCK_SIZE, 128);
+    ASSERT_EQ(List::BLOCK_SIZE, 64 + 64);
     void* ptr1 = list.Pop();
     TestData* data = new (ptr1) TestData{1, 2, 3, 4};
     void* ptr2 = list.Pop();

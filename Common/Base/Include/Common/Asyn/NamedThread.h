@@ -8,13 +8,12 @@
 #include <thread>
 #include <mutex>
 #include <string_view>
-#include <Common/Templates/Allocators.h>
 
 namespace Explosion {
 
     class NamedThread {
     public:
-        NamedThread(const std::string_view& name);
+        NamedThread(std::string_view name);
         ~NamedThread();
 
         template <typename F, typename ...Args>

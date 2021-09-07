@@ -7,39 +7,15 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <Common/Templates/Allocators.h>
 
 namespace Explosion {
 
     class Task {
     public:
-        ~Task();
+        ~Task() = default;
 
         using TaskFunc = void(*)(Task* task);
-
-        template <typename Func>
-        static constexpr Task* CreateTask(Func&& f)
-        {
-            Task* task = new Task();
-            struct Stub {
-                static constexpr void Call(Task* task) noexcept {
-                    if constexpr (sizeof(Func) <= STORAGE_SIZE) {
-                        Func& func = *reinterpret_cast<Func*>(&task->data.meta[0]);
-                        func();
-                    } else {
-                        Func& func = *static_cast<Func*>(task->ptr);
-                        func();
-                    }
-                }
-            };
-            task->func = &Stub::Call;
-
-            if constexpr (sizeof(Func) <= STORAGE_SIZE) {
-                new (&task->data.meta[0]) Func(std::move(f));
-            } else {
-                task->ptr = (void*)(new Func(std::move(f)));
-            }
-            return task;
-        }
 
         void Execute()
         {
@@ -48,6 +24,8 @@ namespace Explosion {
 
     private:
         Task() = default;
+        friend class TaskQueue;
+
         static constexpr uint32_t DEFAULT_SIZE = 64;
         static constexpr uint32_t STORAGE_SIZE = DEFAULT_SIZE - sizeof(TaskFunc);
 

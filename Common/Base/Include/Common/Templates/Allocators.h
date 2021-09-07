@@ -7,11 +7,13 @@
 
 #include <Common/Templates/FixedSizeAllocator.h>
 #include <Common/Templates/LinkedFreeList.h>
+#include <Common/Templates/TypeTraits.h>
 
 namespace Explosion {
 
-    template <int N, int BlockSize>
-    using FreeListFixedSizeAllocator = FixedSizeAllocator<N, LinkedFreeList<N, BlockSize>, uint32_t>;
+    template <int Size, int NumPerBlock>
+    using FreeListFixedSizeAllocator =
+        FixedSizeAllocator<Size, LinkedFreeList<Size, NumPerBlock>, Counter<uint32_t>>;
 
 }
 
