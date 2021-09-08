@@ -44,7 +44,7 @@ namespace Explosion::Mirror::Internal {
     };
 
     template <typename T>
-    struct TypeTraits {
+    struct RuntimeTraits {
         static std::string Name()
         {
             return typeid(T).name();
