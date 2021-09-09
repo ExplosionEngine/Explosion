@@ -14,7 +14,7 @@
       "cacheVariables": {
         "EXP_3RD_ROOT": {
           "type": "STRING",
-          "value": "$env{EXP_3RD_HOME}"
+          "value": "$env{EXP_3RD_ROOT}"
         }
       }
     },
