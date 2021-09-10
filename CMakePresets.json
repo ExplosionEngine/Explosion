@@ -1,0 +1,83 @@
+{
+  "version": 2,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 15,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "windows",
+      "hidden": true,
+      "generator": "Visual Studio 16 2019",
+      "architecture": "x64",
+      "cacheVariables": {
+        "EXP_3RD_ROOT": {
+          "type": "STRING",
+          "value": "$env{EXP_3RD_ROOT}"
+        }
+      }
+    },
+    {
+      "name": "release",
+      "configurationType": "Release",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "type": "STRING",
+          "value": "Release"
+        }
+      }
+    },
+    {
+      "name": "debug",
+      "configurationType": "Debug",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "type": "STRING",
+          "value": "Debug"
+        }
+      }
+    },
+    {
+      "name": "windows--release",
+      "displayName": "Windows Release",
+      "inherits": [
+        "windows",
+        "release"
+      ],
+      "binaryDir": "${sourceDir}/cmake-build-release"
+    },
+    {
+      "name": "windows--debug",
+      "displayName": "Windows Debug",
+      "inherits": [
+        "windows",
+        "debug"
+      ],
+      "binaryDir": "${sourceDir}/cmake-build-debug"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows release",
+      "configurePreset": "windows--release"
+    },
+    {
+      "name": "windows debug",
+      "configurePreset": "windows--debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "windows release",
+      "configurePreset": "windows--release"
+    },
+    {
+      "name": "windows debug",
+      "configurePreset": "windows--debug"
+    }
+
+  ]
+}
