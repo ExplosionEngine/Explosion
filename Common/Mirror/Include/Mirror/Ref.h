@@ -17,7 +17,7 @@ namespace Explosion::Mirror {
         ~Ref() = default;
         Ref& operator=(const Ref& ref) = default;
 
-        void* Value()
+        [[nodiscard]] void* Value() const
         {
             return instance;
         }

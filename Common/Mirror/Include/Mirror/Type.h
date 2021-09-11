@@ -10,47 +10,53 @@
 #include <functional>
 #include <vector>
 
-namespace Explosion::Mirror::Internal {
+#include <Mirror/Exception.h>
+
+namespace Explosion::Mirror {
     class Any;
     class Ref;
+}
 
+namespace Explosion::Mirror::Internal {
     struct TypeInfo {
         size_t id;
         std::string name;
-        std::unordered_map<std::string, std::string> metas;
     };
 
-    struct VariableInfo : public TypeInfo {
-        std::function<Any(Ref, size_t)> getter;
-        std::function<void(Ref, size_t, Ref)> setter;
+    struct VariableInfo {
+        TypeInfo* type;
+        std::function<Any(Ref)> getter;
+        std::function<void(Ref, Ref)> setter;
     };
 
-    struct FunctionInfo : public TypeInfo {
+    struct FunctionInfo {
+        TypeInfo* retType;
+        std::vector<TypeInfo*> argTypes;
         std::function<Any(Ref, std::vector<Ref>)> invoker;
     };
 
-    struct ComplexTypeInfo : public TypeInfo {};
-
-    struct StructTypeInfo : public ComplexTypeInfo {
-        std::vector<VariableInfo> memberVars;
+    struct StructInfo {
+        TypeInfo* typeInfo;
+        std::vector<VariableInfo*> memberVariables;
     };
 
-    struct ClassTypeInfo : public StructTypeInfo {
-        std::vector<FunctionInfo> memberFuncs;
+    struct ClassInfo {
+        TypeInfo* typeInfo;
+        std::vector<VariableInfo*> memberVariables;
+        std::vector<FunctionInfo*> memberFunctions;
     };
 
     template <typename T>
-    struct TypeTraits {
-        static std::string Name()
-        {
-            return typeid(T).name();
-        }
-
-        static size_t Id()
-        {
-            return typeid(T).hash_code();
-        }
-    };
+    TypeInfo* FetchTypeInfo()
+    {
+        static TypeInfo info {
+            typeid(T).hash_code(),
+            typeid(T).name()
+        };
+        return &info;
+    }
 }
+
+namespace Explosion::Mirror {}
 
 #endif //EXPLOSION_TYPE_H

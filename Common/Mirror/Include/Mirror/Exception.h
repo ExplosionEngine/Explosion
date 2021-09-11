@@ -15,6 +15,14 @@ namespace Explosion::Mirror {
             return "bad any cast";
         }
     };
+
+    class NoSuchKeyException : public std::exception {
+    public:
+        [[nodiscard]] const char * what() const noexcept override
+        {
+            return "no such key";
+        }
+    };
 }
 
 #endif //EXPLOSION_MIRROR_EXCEPTION_H

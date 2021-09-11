@@ -141,7 +141,7 @@ namespace Explosion::Mirror {
         template <typename T>
         T* CastToPointer()
         {
-            if (Internal::TypeTraits<T>::Id() != typeId) {
+            if (Internal::FetchTypeInfo<T>()->id != typeId) {
                 throw BadAnyCastException {};
             }
             return static_cast<T*>(RawValue());
@@ -159,7 +159,7 @@ namespace Explosion::Mirror {
         void Construct(T&& value)
         {
             storageCategory = GetStorageCategory<T>();
-            typeId = Internal::TypeTraits<T>().Id();
+            typeId = Internal::FetchTypeInfo<T>()->id;
             if (storageCategory == StorageCategory::SMALL) {
                 storage = SmallStorage {};
                 auto& s = std::get<SmallStorage>(storage);
