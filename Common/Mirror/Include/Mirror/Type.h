@@ -47,25 +47,16 @@ namespace Explosion::Mirror::Internal {
     };
 
     template <typename T>
-    struct RuntimeTypeInfo {
-        static std::string Name()
-        {
-            return typeid(T).name();
-        }
-
-        static size_t HashCode()
-        {
-            return typeid(T).hash_code();
-        }
-    };
+    TypeInfo* FetchTypeInfo()
+    {
+        static TypeInfo info {
+            typeid(T).hash_code(),
+            typeid(T).name()
+        };
+        return &info;
+    }
 }
 
-namespace Explosion::Mirror {
-    class Type;
-    class Variable;
-    class Function;
-    class Struct;
-    class Class;
-}
+namespace Explosion::Mirror {}
 
 #endif //EXPLOSION_TYPE_H

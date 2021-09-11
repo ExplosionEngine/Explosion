@@ -5,7 +5,7 @@
 #ifndef EXPLOSION_FACTORY_H
 #define EXPLOSION_FACTORY_H
 
-#include <type_traits>
+#include <string>
 #include <memory>
 
 #include <Mirror/Type.h>
@@ -18,7 +18,14 @@ namespace Explosion::Mirror {
         GlobalFactory& operator=(const GlobalFactory&) = delete;
         ~GlobalFactory() = default;
 
+        template <typename Value>
+        GlobalFactory& Variable(const std::string&, Value* address);
+
+        template <typename Ret, typename... Args>
+        GlobalFactory& Function(const std::string&, Ret(*func)(Args...));
+
     private:
+
     };
 
     template <typename S>
@@ -27,41 +34,48 @@ namespace Explosion::Mirror {
         StructFactory() = default;
         StructFactory(const StructFactory<S>&) = delete;
         StructFactory& operator=(const StructFactory<S>&) = delete;
-        ~StructFactory() = default;
+        virtual ~StructFactory() = default;
+
+        template <auto T>
+        StructFactory<S>& Variable(const std::string& name);
 
     private:
+        std::unique_ptr<std::string, std::unique_ptr<Internal::VariableInfo>> variables;
     };
 
     template <typename C>
-    class ClassFactory {
+    class ClassFactory : public StructFactory<C> {
     public:
         ClassFactory() = default;
         ClassFactory(const ClassFactory<C>&) = delete;
         ClassFactory& operator=(const ClassFactory<C>&) = delete;
-        ~ClassFactory() = default;
+        ~ClassFactory() override = default;
+
+        template <auto T>
+        ClassFactory<C>& Function(const std::string& name);
 
     private:
+        std::unique_ptr<std::string, std::unique_ptr<Internal::FunctionInfo>> functions;
     };
 
-    template <typename T>
-    std::enable_if_t<std::is_void_v<T>, GlobalFactory&> Factory()
+    GlobalFactory& Global()
     {
-        static GlobalFactory factory;
-        return factory;
+        static GlobalFactory instance;
+        return instance;
     }
 
-    template <typename T>
-    std::enable_if_t<std::is_trivially_copyable_v<T>, StructFactory<T>&> Factory()
+    template <typename S>
+    StructFactory<S> Struct()
     {
-        static StructFactory<T> factory;
-        return factory;
+        static StructFactory<S> instance;
+        return instance;
     }
 
-    template <typename T>
-    std::enable_if_t<std::is_class_v<T>, ClassFactory<T>&> Factory()
+    template <typename C>
+    ClassFactory<C> Class()
     {
-        static ClassFactory<T> factory;
-        return factory;
+        static ClassFactory<C> instance;
+        return instance;
     }
 }
 
