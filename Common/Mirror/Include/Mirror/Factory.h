@@ -7,6 +7,7 @@
 
 #include <string>
 #include <memory>
+#include <unordered_map>
 
 #include <Mirror/Type.h>
 
@@ -19,13 +20,14 @@ namespace Explosion::Mirror {
         ~GlobalFactory() = default;
 
         template <typename Value>
-        GlobalFactory& Variable(const std::string&, Value* address);
+        GlobalFactory& Variable(const std::string& name, Value* address);
 
         template <typename Ret, typename... Args>
-        GlobalFactory& Function(const std::string&, Ret(*func)(Args...));
+        GlobalFactory& Function(const std::string& name, Ret(*func)(Args...));
 
     private:
-
+        std::unordered_map<std::string, std::unique_ptr<Internal::VariableInfo>> variables;
+        std::unordered_map<std::string, std::unique_ptr<Internal::FunctionInfo>> functions;
     };
 
     template <typename S>
@@ -40,7 +42,7 @@ namespace Explosion::Mirror {
         StructFactory<S>& Variable(const std::string& name);
 
     private:
-        std::unique_ptr<std::string, std::unique_ptr<Internal::VariableInfo>> variables;
+        std::unordered_map<std::string, std::unique_ptr<Internal::VariableInfo>> variables;
     };
 
     template <typename C>
@@ -55,7 +57,7 @@ namespace Explosion::Mirror {
         ClassFactory<C>& Function(const std::string& name);
 
     private:
-        std::unique_ptr<std::string, std::unique_ptr<Internal::FunctionInfo>> functions;
+        std::unordered_map<std::string, std::unique_ptr<Internal::FunctionInfo>> functions;
     };
 
     GlobalFactory& Global()
