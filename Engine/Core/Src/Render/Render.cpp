@@ -49,6 +49,11 @@ namespace Explosion {
         renderThread.Notify();
     }
 
+    RHI::Driver* Render::GetDriver()
+    {
+        return driver.get();
+    }
+
     void Render::RenderMain()
     {
         std::cout << "render" << std::endl;

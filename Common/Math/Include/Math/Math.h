@@ -12,6 +12,10 @@ namespace Explosion::Math {
     template <int L>
     using Vector = glm::vec<L, float, glm::defaultp>;
 
+    using Vector2 = Vector<2>;
+    using Vector3 = Vector<3>;
+    using Vector4 = Vector<4>;
+
     template <int L>
     using Matrix = glm::mat<L, L, float, glm::defaultp>;
 

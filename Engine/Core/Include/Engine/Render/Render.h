@@ -25,6 +25,8 @@ namespace Explosion {
 
         static Render* GetRender();
 
+        RHI::Driver* GetDriver();
+
         void Tick(float time);
 
     private:
