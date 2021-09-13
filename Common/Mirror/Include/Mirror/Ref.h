@@ -10,6 +10,7 @@
 namespace Explosion::Mirror {
     class Ref {
     public:
+        Ref() : instance(nullptr) {}
         explicit Ref(void* instance) : instance(instance) {}
         explicit Ref(Any& any) : instance(any.RawValue()) {}
         Ref(Ref& ref) = default;
