@@ -25,6 +25,17 @@ Explosion is a cross-platform game engine, based on modern graphics api (aka Vul
 
 Welcome to join the next generation game order.
 
+# Requirements
+
+There are some supported compilers yet:
+
+| OS | Compiler |
+| - | - |
+| Windows | Visual Studio 16 2019 x64 |
+| MacOS | Apple Clang x64 |
+
+If you are using other compiler, maybe you need to build [3rd-party package](https://github.com/ExplosionEngine/Explosion3rdParty) manually.
+
 # Build The Engine
 
 Clone the repository at first:
