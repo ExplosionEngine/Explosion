@@ -23,6 +23,14 @@ namespace Explosion::Mirror {
             return "no such key";
         }
     };
+
+    class NoSuchDefinitionException : public std::exception {
+    public:
+        [[nodiscard]] const char * what() const noexcept override
+        {
+            return "no such definition";
+        }
+    };
 }
 
 #endif //EXPLOSION_MIRROR_EXCEPTION_H

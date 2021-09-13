@@ -24,26 +24,16 @@ namespace Explosion::Mirror::Internal {
     };
 
     struct VariableInfo {
-        TypeInfo* type;
+        const TypeInfo* type;
         std::function<Any(Ref)> getter;
         std::function<void(Ref, Ref)> setter;
     };
 
     struct FunctionInfo {
-        TypeInfo* retType;
-        std::vector<TypeInfo*> argTypes;
+        const TypeInfo* type;
+        const TypeInfo* retType;
+        std::vector<const TypeInfo*> argTypes;
         std::function<Any(Ref, std::vector<Ref>)> invoker;
-    };
-
-    struct StructInfo {
-        TypeInfo* typeInfo;
-        std::vector<VariableInfo*> memberVariables;
-    };
-
-    struct ClassInfo {
-        TypeInfo* typeInfo;
-        std::vector<VariableInfo*> memberVariables;
-        std::vector<FunctionInfo*> memberFunctions;
     };
 
     template <typename T>
@@ -57,6 +47,56 @@ namespace Explosion::Mirror::Internal {
     }
 }
 
-namespace Explosion::Mirror {}
+namespace Explosion::Mirror {
+    class Type {
+    public:
+        explicit Type(const Internal::TypeInfo* info) : info(info) {}
+        ~Type() = default;
+
+    private:
+        const Internal::TypeInfo* info;
+    };
+
+    class Definition {
+    public:
+        Definition() = default;
+        ~Definition() = default;
+
+        virtual Type GetType() = 0;
+    };
+
+    class Variable : public Definition {
+    public:
+        explicit Variable(const Internal::VariableInfo* info) : Definition(), info(info) {}
+        Variable(Variable&& variable) noexcept : info(variable.info) {}
+        Variable(const Variable&) = default;
+        Variable& operator=(const Variable&) = default;
+        ~Variable() = default;
+
+        Type GetType() override;
+        Any Get(Ref instance);
+        void Set(Ref instance, Ref value);
+
+    private:
+        const Internal::VariableInfo* info;
+    };
+
+    class Function : public Definition {
+    public:
+        explicit Function(const Internal::FunctionInfo* info) : Definition(), info(info) {}
+        Function(Function&& function) noexcept : info(function.info) {}
+        Function(const Function&) = default;
+        Function& operator=(const Function&) = default;
+        ~Function() = default;
+
+        Type GetType() override;
+
+        template <typename... Args>
+        Any Invoke(Ref instance, Args&&... args);
+
+    private:
+        const Internal::FunctionInfo* info;
+    };
+}
 
 #endif //EXPLOSION_TYPE_H
