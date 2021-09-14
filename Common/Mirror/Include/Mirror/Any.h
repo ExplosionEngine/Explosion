@@ -5,6 +5,7 @@
 #ifndef EXPLOSION_ANY_H
 #define EXPLOSION_ANY_H
 
+#include <iostream>
 #include <memory>
 #include <variant>
 #include <functional>
@@ -158,17 +159,18 @@ namespace Explosion::Mirror {
         template <typename T>
         void Construct(T&& value)
         {
-            storageCategory = GetStorageCategory<T>();
-            typeId = Internal::FetchTypeInfo<T>()->id;
+            using NoneRefType = std::remove_reference_t<T>;
+            storageCategory = GetStorageCategory<NoneRefType>();
+            typeId = Internal::FetchTypeInfo<NoneRefType>()->id;
             if (storageCategory == StorageCategory::SMALL) {
                 storage = SmallStorage {};
                 auto& s = std::get<SmallStorage>(storage);
-                memcpy(s.memory, &value, sizeof(T));
+                memcpy(s.memory, &value, sizeof(NoneRefType));
             } else {
                 storage = BigStorage {};
                 auto& s = std::get<BigStorage>(storage);
-                s.memory = new T(std::forward<T>(value));
-                s.rtti = &bigStorageRtti<T>;
+                s.memory = new NoneRefType(std::forward<T>(value));
+                s.rtti = &bigStorageRtti<NoneRefType>;
             }
         }
 

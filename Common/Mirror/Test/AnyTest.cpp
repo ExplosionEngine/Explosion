@@ -36,7 +36,7 @@ TEST(MirrorTest, AnyTest0)
     EXCEPTION_COUNTER({ any.CastTo<float>(); })
 
     any = 2.f;
-    ASSERT_EQ(any.CastTo<float>() - 2.f < 0.001f, true);
+    ASSERT_EQ(std::abs(any.CastTo<float>() - 2.f) < 0.001f, true);
     EXCEPTION_COUNTER({ any.CastTo<int>(); })
 
     ASSERT_EQ(exceptionTimes, 2);
@@ -81,4 +81,29 @@ TEST(MirrorTest, AnyTest3)
 
     Any any3 = std::move(any0);
     ASSERT_EQ(any3.CastTo<int>(), 1);
+}
+
+TEST(MirrorTest, AnyTest4)
+{
+    uint32_t exceptionTimes = 0;
+
+    int value0 = 1;
+    int* pointer0 = &value0;
+    Any any0(*pointer0);
+    ASSERT_EQ(any0.CastTo<int>(), 1);
+    EXCEPTION_COUNTER({ any0.CastTo<float>(); })
+
+    float value1 = 2.f;
+    float* pointer1 = &value1;
+    Any any1(*pointer1);
+    ASSERT_EQ(std::abs(any1.CastTo<float>() - 2.f) < 0.0001f, true);
+    EXCEPTION_COUNTER({ any1.CastTo<double>(); })
+
+    double value2 = 3.0;
+    double* pointer2 = &value2;
+    Any any2(*pointer2);
+    ASSERT_EQ(std::abs(any2.CastTo<double>() - 3.0) < 0.0001, true);
+    EXCEPTION_COUNTER({ any2.CastTo<int>(); })
+
+    ASSERT_EQ(exceptionTimes, 3);
 }

@@ -37,7 +37,7 @@ namespace Explosion::Mirror::Internal {
     };
 
     template <typename T>
-    TypeInfo* FetchTypeInfo()
+    const TypeInfo* FetchTypeInfo()
     {
         static TypeInfo info {
             typeid(T).hash_code(),

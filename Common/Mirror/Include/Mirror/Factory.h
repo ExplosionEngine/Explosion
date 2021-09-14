@@ -15,10 +15,10 @@
 
 namespace Explosion::Mirror::Internal {
     template <typename... Args>
-    std::vector<TypeInfo*> FetchArgTypeInfos(const std::tuple<Args...>&)
+    std::vector<const TypeInfo*> FetchArgTypeInfos(const std::tuple<Args...>&)
     {
-        std::vector<TypeInfo*> typeInfos;
-        std::initializer_list<int> { (typeInfos.template emplace_back(FetchTypeInfo<Args>()), 0)... };
+        std::vector<const TypeInfo*> typeInfos;
+        std::initializer_list<int> { (typeInfos.emplace_back(FetchTypeInfo<Args>()), 0)... };
         return typeInfos;
     }
 
@@ -31,7 +31,7 @@ namespace Explosion::Mirror::Internal {
     template <typename... Args>
     std::tuple<Args...> ForwardRefVectorAsTuple(const std::vector<Ref>& refs)
     {
-        auto tuple = std::make_tuple<Args...>();
+        auto tuple = std::tuple<Args...> {};
         FillTupleWithRefVector(tuple, refs, std::make_index_sequence<sizeof...(Args)> {});
         return tuple;
     }
@@ -92,26 +92,26 @@ namespace Explosion::Mirror {
         template <typename Value>
         GlobalFactory& DefineVariable(const std::string& name, Value* address)
         {
-            variables[name] = std::make_unique<Internal::VariableInfo>(
+            variables[name] = std::make_unique<Internal::VariableInfo>(Internal::VariableInfo {
                 Internal::FetchTypeInfo<Value>(),
                 [address](Ref instance) -> Any { return Any(*address); },
                 [address](Ref instance, Ref value) -> void { *address = *static_cast<Value*>(value.Value()); }
-            );
+            });
             return *this;
         }
 
         template <typename Ret, typename... Args>
         GlobalFactory& DefineFunction(const std::string& name, Ret(*func)(Args...))
         {
-            functions[name] = std::make_unique<Internal::FunctionInfo>(
+            functions[name] = std::make_unique<Internal::FunctionInfo>(Internal::FunctionInfo {
                 Internal::FetchTypeInfo<Ret(*)(Args...)>(),
                 Internal::FetchTypeInfo<Ret>(),
-                Internal::FetchArgTypeInfos(std::make_tuple<Args...>()),
+                Internal::FetchArgTypeInfos(std::tuple<Args...> {}),
                 [func](Ref instance, std::vector<Ref> args) -> Any {
                     auto argsTuple = Internal::ForwardRefVectorAsTuple<Args...>(args);
-                    return Any(Internal::InvokeFunc<decltype(func)>(func, argsTuple));
+                    return Any(Internal::InvokeFunc<std::function<Ret(Args...)>, Ret, Args...>(func, argsTuple));
                 }
-            );
+            });
             return *this;
         }
 
