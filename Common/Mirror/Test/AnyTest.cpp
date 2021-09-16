@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 
-#include <Mirror/Any.h>
+#include <Mirror/Mirror.h>
 using namespace Explosion::Mirror;
 
 #define EXCEPTION_COUNTER(block) \

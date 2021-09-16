@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 
-#include <Mirror/Ref.h>
+#include <Mirror/Mirror.h>
 using namespace Explosion::Mirror;
 
 struct Hello {
