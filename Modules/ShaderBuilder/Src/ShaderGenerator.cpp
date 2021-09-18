@@ -9,7 +9,7 @@
 #include <iostream>
 
 #include <Common/Logger.h>
-#include <FileSystem/FileReader.h>
+#include <IO/FileManager.h>
 
 namespace Explosion {
 
@@ -37,7 +37,7 @@ namespace Explosion {
         }
 
         std::vector<char> file;
-        file = FileSystem::FileReader::Read(url, false);
+        file = IO::FileManager::ReadFile(url, false);
         std::string src(file.begin(), file.end());
 
         auto it = src.find(INCLUDE_MACRO);
