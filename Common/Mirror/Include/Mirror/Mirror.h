@@ -348,9 +348,9 @@ namespace Explosion::Mirror::Internal {
     R InvokeMemberFunc(C& instance, const std::tuple<Args...>& args)
     {
         if constexpr (std::is_void_v<R>) {
-            InvokeMemberFuncInternal<C, T, R>(std::forward<C>(instance), args, std::make_index_sequence<sizeof...(Args)> {});
+            InvokeMemberFuncInternal<C, T, R>(instance, args, std::make_index_sequence<sizeof...(Args)> {});
         } else {
-            return InvokeMemberFuncInternal<C, T, R>(std::forward<C>(instance), args, std::make_index_sequence<sizeof...(Args)> {});
+            return InvokeMemberFuncInternal<C, T, R>(instance, args, std::make_index_sequence<sizeof...(Args)> {});
         }
     }
 }

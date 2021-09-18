@@ -3,11 +3,20 @@
 //
 
 #include <cstring>
+#include <stdexcept>
 
 #include <gtest/gtest.h>
 
 #include <Mirror/Mirror.h>
 using namespace Explosion::Mirror;
+
+class F4Exception : public std::exception {
+public:
+    const char* what() const noexcept override
+    {
+        return "F4";
+    }
+};
 
 int v0 = 1;
 float v1 = 2.f;
@@ -35,7 +44,7 @@ int F3()
 
 void F4()
 {
-    throw std::exception("F4");
+    throw F4Exception {};
 }
 
 struct S0 {
