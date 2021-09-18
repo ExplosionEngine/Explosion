@@ -5,10 +5,12 @@
 #ifndef EXPLOSION_MIRROR_H
 #define EXPLOSION_MIRROR_H
 
+#include <string>
 #include <type_traits>
 #include <functional>
 #include <unordered_map>
 #include <vector>
+#include <tuple>
 #include <variant>
 
 namespace Explosion::Mirror {
@@ -105,6 +107,149 @@ namespace Explosion::Mirror::Internal {
     }
 }
 
+namespace Explosion::Mirror {
+    class BadAnyCastException : public std::exception {
+    public:
+        [[nodiscard]] const char* what() const noexcept override
+        {
+            return "bad any cast";
+        }
+    };
+
+    class NoSuchDefinitionException : public std::exception {
+    public:
+        [[nodiscard]] const char * what() const noexcept override
+        {
+            return "no such definition";
+        }
+    };
+
+    class Any {
+    public:
+        Any() : storageCategory(Internal::StorageCategory::SMALL), typeId(0) {}
+
+        template <typename T>
+        Any(T&& value)
+        {
+            Construct(std::forward<T>(value));
+        }
+
+        template <typename T>
+        Any& operator=(T&& value)
+            {
+            Construct(std::forward<T>(value));
+            return *this;
+            }
+
+            Any(Any& any) : storageCategory(any.storageCategory), typeId(any.typeId)
+            {
+            if (storageCategory == Internal::StorageCategory::SMALL) {
+                storage = Internal::SmallStorage {};
+                auto& sThis = std::get<Internal::SmallStorage>(storage);
+                auto& sAny = std::get<Internal::SmallStorage>(any.storage);
+                memcpy(sThis.memory, sAny.memory, Internal::MAX_SMALL_STORAGE_SIZE);
+            } else {
+                storage = Internal::BigStorage {};
+                auto& sThis = std::get<Internal::BigStorage>(storage);
+                auto& sAny = std::get<Internal::BigStorage>(any.storage);
+                sThis.memory = sAny.rtti->copyFunc(sAny.memory);
+                sThis.rtti = sAny.rtti;
+            }
+            }
+
+            Any(Any&& any)  noexcept : storageCategory(any.storageCategory), typeId(any.typeId)
+            {
+            if (storageCategory == Internal::StorageCategory::SMALL) {
+                storage = Internal::SmallStorage {};
+                auto& sThis = std::get<Internal::SmallStorage>(storage);
+                auto& sAny = std::get<Internal::SmallStorage>(any.storage);
+                std::swap(sThis.memory, sAny.memory);
+            } else {
+                storage = Internal::BigStorage {};
+                auto& sThis = std::get<Internal::BigStorage>(storage);
+                auto& sAny = std::get<Internal::BigStorage>(any.storage);
+                sThis.memory = sAny.rtti->moveFunc(sAny.memory);
+                sThis.rtti = sAny.rtti;
+            }
+            }
+
+            ~Any()
+            {
+            if (storageCategory == Internal::StorageCategory::SMALL) {
+                auto& s = std::get<Internal::SmallStorage>(storage);
+                memset(s.memory, 0, Internal::MAX_SMALL_STORAGE_SIZE);
+            } else {
+                auto& s = std::get<Internal::BigStorage>(storage);
+                s.rtti->destroyFunc(s.memory);
+            }
+            }
+
+            template <typename T>
+            T CastTo()
+            {
+            return *CastToPointer<T>();
+            }
+
+            template <typename T>
+            T* CastToPointer()
+            {
+            if (Internal::FetchTypeInfo<T>()->id != typeId) {
+                throw BadAnyCastException {};
+            }
+            return static_cast<T*>(RawValue());
+            }
+
+            void* RawValue()
+            {
+            return storageCategory == Internal::StorageCategory::SMALL ?
+            static_cast<void*>(std::get<Internal::SmallStorage>(storage).memory) :
+            std::get<Internal::BigStorage>(storage).memory;
+            }
+
+    private:
+        template <typename T>
+        void Construct(T&& value)
+        {
+            using NoneRefType = std::remove_reference_t<T>;
+            storageCategory = Internal::GetStorageCategory<NoneRefType>();
+            typeId = Internal::FetchTypeInfo<NoneRefType>()->id;
+            if (storageCategory == Internal::StorageCategory::SMALL) {
+                storage = Internal::SmallStorage {};
+                auto& s = std::get<Internal::SmallStorage>(storage);
+                memcpy(s.memory, &value, sizeof(NoneRefType));
+            } else {
+                storage = Internal::BigStorage {};
+                auto& s = std::get<Internal::BigStorage>(storage);
+                s.memory = new NoneRefType(std::forward<T>(value));
+                s.rtti = &Internal::bigStorageRtti<NoneRefType>;
+            }
+        }
+
+        Internal::StorageCategory storageCategory;
+        Internal::Storage storage;
+        size_t typeId;
+    };
+
+    class Ref {
+    public:
+        Ref() : instance(nullptr) {}
+        explicit Ref(void* instance) : instance(instance) {}
+        explicit Ref(Any& any) : instance(any.RawValue()) {}
+        Ref(Ref& ref) = default;
+        Ref(Ref&& ref)  noexcept : instance(ref.instance) {}
+        ~Ref() = default;
+        Ref& operator=(const Ref& ref) = default;
+
+        [[nodiscard]] void* Value() const
+        {
+            return instance;
+        }
+
+    private:
+        void* instance;
+    };
+}
+
 namespace Explosion::Mirror::Internal {
     template <typename... Args, size_t ... I>
     void ForwardArgsAsRefVectorInternal(
@@ -179,149 +324,6 @@ namespace Explosion::Mirror::Internal {
     struct MemberPointerTraits<R S::*(Args...)> {
         using RetType = R;
         using ArgsTupleType = std::tuple<Args...>;
-    };
-}
-
-namespace Explosion::Mirror {
-    class BadAnyCastException : public std::exception {
-    public:
-        [[nodiscard]] const char* what() const noexcept override
-        {
-            return "bad any cast";
-        }
-    };
-
-    class NoSuchDefinitionException : public std::exception {
-    public:
-        [[nodiscard]] const char * what() const noexcept override
-        {
-            return "no such definition";
-        }
-    };
-
-    class Any {
-    public:
-        Any() : storageCategory(Internal::StorageCategory::SMALL), typeId(0) {}
-
-        template <typename T>
-        Any(T&& value)
-        {
-            Construct(std::forward<T>(value));
-        }
-
-        template <typename T>
-        Any& operator=(T&& value)
-        {
-            Construct(std::forward<T>(value));
-            return *this;
-        }
-
-        Any(Any& any) : storageCategory(any.storageCategory), typeId(any.typeId)
-        {
-            if (storageCategory == Internal::StorageCategory::SMALL) {
-                storage = Internal::SmallStorage {};
-                auto& sThis = std::get<Internal::SmallStorage>(storage);
-                auto& sAny = std::get<Internal::SmallStorage>(any.storage);
-                memcpy(sThis.memory, sAny.memory, Internal::MAX_SMALL_STORAGE_SIZE);
-            } else {
-                storage = Internal::BigStorage {};
-                auto& sThis = std::get<Internal::BigStorage>(storage);
-                auto& sAny = std::get<Internal::BigStorage>(any.storage);
-                sThis.memory = sAny.rtti->copyFunc(sAny.memory);
-                sThis.rtti = sAny.rtti;
-            }
-        }
-
-        Any(Any&& any)  noexcept : storageCategory(any.storageCategory), typeId(any.typeId)
-        {
-            if (storageCategory == Internal::StorageCategory::SMALL) {
-                storage = Internal::SmallStorage {};
-                auto& sThis = std::get<Internal::SmallStorage>(storage);
-                auto& sAny = std::get<Internal::SmallStorage>(any.storage);
-                std::swap(sThis.memory, sAny.memory);
-            } else {
-                storage = Internal::BigStorage {};
-                auto& sThis = std::get<Internal::BigStorage>(storage);
-                auto& sAny = std::get<Internal::BigStorage>(any.storage);
-                sThis.memory = sAny.rtti->moveFunc(sAny.memory);
-                sThis.rtti = sAny.rtti;
-            }
-        }
-
-        ~Any()
-        {
-            if (storageCategory == Internal::StorageCategory::SMALL) {
-                auto& s = std::get<Internal::SmallStorage>(storage);
-                memset(s.memory, 0, Internal::MAX_SMALL_STORAGE_SIZE);
-            } else {
-                auto& s = std::get<Internal::BigStorage>(storage);
-                s.rtti->destroyFunc(s.memory);
-            }
-        }
-
-        template <typename T>
-        T CastTo()
-        {
-            return *CastToPointer<T>();
-        }
-
-        template <typename T>
-        T* CastToPointer()
-        {
-            if (Internal::FetchTypeInfo<T>()->id != typeId) {
-                throw BadAnyCastException {};
-            }
-            return static_cast<T*>(RawValue());
-        }
-
-        void* RawValue()
-        {
-            return storageCategory == Internal::StorageCategory::SMALL ?
-                static_cast<void*>(std::get<Internal::SmallStorage>(storage).memory) :
-                std::get<Internal::BigStorage>(storage).memory;
-        }
-
-    private:
-        template <typename T>
-        void Construct(T&& value)
-        {
-            using NoneRefType = std::remove_reference_t<T>;
-            storageCategory = Internal::GetStorageCategory<NoneRefType>();
-            typeId = Internal::FetchTypeInfo<NoneRefType>()->id;
-            if (storageCategory == Internal::StorageCategory::SMALL) {
-                storage = Internal::SmallStorage {};
-                auto& s = std::get<Internal::SmallStorage>(storage);
-                memcpy(s.memory, &value, sizeof(NoneRefType));
-            } else {
-                storage = Internal::BigStorage {};
-                auto& s = std::get<Internal::BigStorage>(storage);
-                s.memory = new NoneRefType(std::forward<T>(value));
-                s.rtti = &Internal::bigStorageRtti<NoneRefType>;
-            }
-        }
-
-        Internal::StorageCategory storageCategory;
-        Internal::Storage storage;
-        size_t typeId;
-    };
-
-    class Ref {
-    public:
-        Ref() : instance(nullptr) {}
-        explicit Ref(void* instance) : instance(instance) {}
-        explicit Ref(Any& any) : instance(any.RawValue()) {}
-        Ref(Ref& ref) = default;
-        Ref(Ref&& ref)  noexcept : instance(ref.instance) {}
-        ~Ref() = default;
-        Ref& operator=(const Ref& ref) = default;
-
-        [[nodiscard]] void* Value() const
-        {
-            return instance;
-        }
-
-    private:
-        void* instance;
     };
 }
 
