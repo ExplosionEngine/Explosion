@@ -78,9 +78,23 @@ namespace Explosion::Mirror::Internal {
 }
 
 namespace Explosion::Mirror::Internal {
+    // NB: once you added a type trait to this struct, please
+    //     add it to func 'FetchTypeInfo' and struct 'Type' as well
     struct TypeInfo {
         size_t id;
         std::string name;
+        const bool isConst;
+        const bool isVolatile;
+        const bool isVoid;
+        const bool isIntegral;
+        const bool isFloatingPoint;
+        const bool isArray;
+        const bool isEnum;
+        const bool isClass;
+        const bool isUnion;
+        const bool isFunction;
+        const bool isPointer;
+        const bool isMemberPointer;
     };
 
     struct VariableInfo {
@@ -101,7 +115,19 @@ namespace Explosion::Mirror::Internal {
     {
         static TypeInfo info {
             typeid(T).hash_code(),
-            typeid(T).name()
+            typeid(T).name(),
+            std::is_const_v<T>,
+            std::is_volatile_v<T>,
+            std::is_void_v<T>,
+            std::is_integral_v<T>,
+            std::is_floating_point_v<T>,
+            std::is_array_v<T>,
+            std::is_enum_v<T>,
+            std::is_class_v<T>,
+            std::is_union_v<T>,
+            std::is_function_v<T>,
+            std::is_pointer_v<T>,
+            std::is_member_pointer_v<T>
         };
         return &info;
     }
@@ -291,27 +317,45 @@ namespace Explosion::Mirror::Internal {
     template <typename T, typename R, typename... Args, size_t... I>
     R InvokeFuncInternal(T&& func, const std::tuple<Args...>& args, std::index_sequence<I...>)
     {
-        return func(std::get<I>(args)...);
+        if constexpr (std::is_void_v<R>) {
+            func(std::get<I>(args)...);
+        } else {
+            return func(std::get<I>(args)...);
+        }
     }
 
     template <typename T, typename R, typename... Args>
     R InvokeFunc(T&& func, const std::tuple<Args...>& args)
     {
-        return InvokeFuncInternal<T, R>(std::forward<T>(func), args, std::make_index_sequence<sizeof...(Args)> {});
+        if constexpr (std::is_void_v<R>) {
+            InvokeFuncInternal<T, R>(std::forward<T>(func), args, std::make_index_sequence<sizeof...(Args)> {});
+        } else {
+            return InvokeFuncInternal<T, R>(std::forward<T>(func), args, std::make_index_sequence<sizeof...(Args)> {});
+        }
     }
 
     template <typename C, auto T, typename R, typename... Args, size_t... I>
-    R InvokeMemberFuncInternal(C&& instance, const std::tuple<Args...>& args, std::index_sequence<I...>)
+    R InvokeMemberFuncInternal(C& instance, const std::tuple<Args...>& args, std::index_sequence<I...>)
     {
-        return instance.*T(std::get<I>(args)...);
+        if constexpr (std::is_void_v<R>) {
+            (instance.*T)(std::get<I>(args)...);
+        } else {
+            return (instance.*T)(std::get<I>(args)...);
+        }
     }
 
     template <typename C, auto T, typename R, typename... Args>
-    R InvokeMemberFunc(C&& instance, const std::tuple<Args...>& args)
+    R InvokeMemberFunc(C& instance, const std::tuple<Args...>& args)
     {
-        return InvokeMemberFuncInternal<C, T, R>(std::forward<C>(instance), args, std::make_index_sequence<sizeof...(Args)> {});
+        if constexpr (std::is_void_v<R>) {
+            InvokeMemberFuncInternal<C, T, R>(instance, args, std::make_index_sequence<sizeof...(Args)> {});
+        } else {
+            return InvokeMemberFuncInternal<C, T, R>(instance, args, std::make_index_sequence<sizeof...(Args)> {});
+        }
     }
+}
 
+namespace Explosion::Mirror::Internal {
     template <typename T>
     struct MemberPointerTraits {};
 
@@ -321,7 +365,13 @@ namespace Explosion::Mirror::Internal {
     };
 
     template <typename S, typename R, typename... Args>
-    struct MemberPointerTraits<R S::*(Args...)> {
+    struct MemberPointerTraits<R (S::*)(Args...)> {
+        using RetType = R;
+        using ArgsTupleType = std::tuple<Args...>;
+    };
+
+    template <typename S, typename R, typename... Args>
+    struct MemberPointerTraits<R (S::*)(Args...) const> {
         using RetType = R;
         using ArgsTupleType = std::tuple<Args...>;
     };
@@ -330,8 +380,84 @@ namespace Explosion::Mirror::Internal {
 namespace Explosion::Mirror {
     class Type {
     public:
+        template <typename T>
+        static Type Resolve()
+        {
+            return Type(Internal::FetchTypeInfo<T>());
+        }
+
         explicit Type(const Internal::TypeInfo* info) : info(info) {}
         ~Type() = default;
+
+        bool operator==(const Type& type)
+        {
+            return info == type.info;
+        }
+
+        bool operator!=(const Type& type)
+        {
+            return !(info == type.info);
+        }
+
+        [[nodiscard]] bool IsConst() const
+        {
+            return info->isConst;
+        }
+
+        [[nodiscard]] bool IsVolatile() const
+        {
+            return info->isVolatile;
+        }
+
+        [[nodiscard]] bool IsVoid() const
+        {
+            return info->isVoid;
+        }
+
+        [[nodiscard]] bool IsIntegral() const
+        {
+            return info->isIntegral;
+        }
+
+        [[nodiscard]] bool IsFloatingPoint() const
+        {
+            return info->isFloatingPoint;
+        }
+
+        [[nodiscard]] bool IsArray() const
+        {
+            return info->isArray;
+        }
+
+        [[nodiscard]] bool IsEnum() const
+        {
+            return info->isEnum;
+        }
+
+        [[nodiscard]] bool IsClass() const
+        {
+            return info->isClass;
+        }
+
+        [[nodiscard]] bool IsUnion() const
+        {
+            return info->isUnion;
+        }
+
+        [[nodiscard]] bool IsFunction() const
+        {
+            return info->isFunction;
+        }
+
+        [[nodiscard]] bool IsPointer() const
+        {
+            return info->isPointer;
+        }
+
+        [[nodiscard]] bool IsMemberPointer() const
+        {
+            return info->isMemberPointer;
+        }
 
     private:
         const Internal::TypeInfo* info;
@@ -430,7 +556,11 @@ namespace Explosion::Mirror {
                 Internal::FetchArgTypeInfos(std::tuple<Args...> {}),
                 [func](Ref instance, std::vector<Ref> args) -> Any {
                     auto argsTuple = Internal::ForwardRefVectorAsTuple<Args...>(args);
-                    return Any(Internal::InvokeFunc<std::function<Ret(Args...)>, Ret, Args...>(func, argsTuple));
+                    if constexpr (std::is_void_v<Ret>) {
+                        return (Internal::InvokeFunc<std::function<Ret(Args...)>, Ret, Args...>(func, argsTuple), Any());
+                    } else {
+                        return Any(Internal::InvokeFunc<std::function<Ret(Args...)>, Ret, Args...>(func, argsTuple));
+                    }
                 }
             });
             return *this;
@@ -473,32 +603,32 @@ namespace Explosion::Mirror {
         std::unordered_map<std::string, std::unique_ptr<Internal::FunctionInfo>> functions;
     };
 
-    template <typename S>
-    class StructFactory {
+    template <typename C>
+    class ClassFactory {
     public:
-        StructFactory() = default;
-        StructFactory(const StructFactory<S>&) = delete;
-        StructFactory& operator=(const StructFactory<S>&) = delete;
-        virtual ~StructFactory() = default;
+        ClassFactory() = default;
+        ClassFactory(const ClassFactory<C>&) = delete;
+        ClassFactory& operator=(const ClassFactory<C>&) = delete;
+        ~ClassFactory() = default;
 
-        static StructFactory<S>& Singleton()
+        static ClassFactory<C>& Singleton()
         {
-            static StructFactory<S> instance;
+            static ClassFactory<C> instance;
             return instance;
         }
 
         template <auto T>
-        StructFactory<S>& DefineVariable(const std::string& name)
+        ClassFactory<C>& DefineVariable(const std::string& name)
         {
             using ValueType = typename Internal::MemberPointerTraits<decltype(T)>::ValueType;
 
             variables[name] = std::make_unique<Internal::VariableInfo>(Internal::VariableInfo {
                 Internal::FetchTypeInfo<ValueType>(),
                 [](Ref instance) -> Any {
-                    return Any(static_cast<S*>(instance.Value())->*T);
+                    return Any(static_cast<C*>(instance.Value())->*T);
                 },
                 [](Ref instance, Ref value) -> Any {
-                    return Any(static_cast<S*>(instance.Value())->*T = *static_cast<ValueType*>(value.Value()));
+                    return Any(static_cast<C*>(instance.Value())->*T = *static_cast<ValueType*>(value.Value()));
                 }
             });
             return *this;
@@ -520,24 +650,6 @@ namespace Explosion::Mirror {
             }
         }
 
-    private:
-        std::unordered_map<std::string, std::unique_ptr<Internal::VariableInfo>> variables;
-    };
-
-    template <typename C>
-    class ClassFactory : public StructFactory<C> {
-    public:
-        ClassFactory() = default;
-        ClassFactory(const ClassFactory<C>&) = delete;
-        ClassFactory& operator=(const ClassFactory<C>&) = delete;
-        ~ClassFactory() override = default;
-
-        static ClassFactory<C>& Singleton()
-        {
-            static ClassFactory<C> instance;
-            return instance;
-        }
-
         template <auto T>
         ClassFactory<C>& DefineFunction(const std::string& name)
         {
@@ -550,8 +662,12 @@ namespace Explosion::Mirror {
                 Internal::FetchArgTypeInfos(ArgsTupleType {}),
                 [](Ref instance, std::vector<Ref> args) -> Any {
                     ArgsTupleType argsTuple {};
-                    Internal::FillTupleWithRefVector(argsTuple, args, std::make_index_sequence<ArgsTupleType::size()> {});
-                    return Any(Internal::InvokeMemberFunc<C, T, RetType>(*static_cast<C*>(instance.Value()), argsTuple));
+                    Internal::FillTupleWithRefVector(argsTuple, args, std::make_index_sequence<std::tuple_size_v<ArgsTupleType>> {});
+                    if constexpr (std::is_void_v<RetType>) {
+                        return (Internal::InvokeMemberFunc<C, T, RetType>(*static_cast<C*>(instance.Value()), argsTuple), Any());
+                    } else {
+                        return Any(Internal::InvokeMemberFunc<C, T, RetType>(*static_cast<C*>(instance.Value()), argsTuple));
+                    }
                 }
             });
             return *this;
@@ -574,6 +690,7 @@ namespace Explosion::Mirror {
         }
 
     private:
+        std::unordered_map<std::string, std::unique_ptr<Internal::VariableInfo>> variables;
         std::unordered_map<std::string, std::unique_ptr<Internal::FunctionInfo>> functions;
     };
 }
