@@ -3,7 +3,7 @@
 //
 
 #include <Application/Application.h>
-#include <FileSystem/FileReader.h>
+#include <IO/FileManager.h>
 #include <RHI/Driver.h>
 
 #ifdef __APPLE__
@@ -85,8 +85,8 @@ protected:
         GraphicsPipeline::Config pipelineConfig {};
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.shaderConfig.shaderModules = {
-            { ShaderStageBits::VERTEX,   FileSystem::FileReader::Read("RHI-Triangle-Vertex.spv", true) },
-            { ShaderStageBits::FRAGMENT, FileSystem::FileReader::Read("RHI-Triangle-Fragment.spv", true) }
+            { ShaderStageBits::VERTEX,   IO::FileManager::ReadFile("RHI-Triangle-Vertex.spv", true) },
+            { ShaderStageBits::FRAGMENT, IO::FileManager::ReadFile("RHI-Triangle-Fragment.spv", true) }
         };
         pipelineConfig.vertexConfig.vertexBindings = {
             { 0, sizeof(Vertex), VertexInputRate::PER_VERTEX }

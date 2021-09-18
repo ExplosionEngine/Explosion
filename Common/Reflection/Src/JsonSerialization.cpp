@@ -4,7 +4,7 @@
 
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/document.h>
-#include <FileSystem/FileReader.h>
+#include <IO/FileManager.h>
 #include <Reflection/JsonSerialization.h>
 
 using namespace rapidjson;
@@ -124,13 +124,13 @@ namespace Explosion {
         WriteString(ReflTypeNameMap::TypeName(any.type().id()), writer);
         WriteObject(any, writer);
         writer.EndObject();
-        FileSystem::FileReader::Write(path, buffer.GetString(), buffer.GetSize(), false);
+        IO::FileManager::WriteFile(path, buffer.GetString(), buffer.GetSize(), false);
     }
 
     ReflAny JsonSerialization::FromJson(const std::string& path)
     {
         std::string jsonContent;
-        jsonContent = FileSystem::FileReader::Read(path);
+        jsonContent = IO::FileManager::ReadFile(path);
         Document document;
         if (document.Parse(jsonContent.c_str()).HasParseError()) {
             return {};

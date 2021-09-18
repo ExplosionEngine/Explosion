@@ -4,9 +4,9 @@
 
 #include <fstream>
 #include <Common/Exception.h>
-#include <FileSystem/FileReader.h>
+#include <IO/FileManager.h>
 
-namespace Explosion::FileSystem {
+namespace Explosion::IO {
     template <typename T>
     static void ReadInternal(const std::string& filename, bool binary, T& output, uint32_t stride = 1)
     {
@@ -23,21 +23,21 @@ namespace Explosion::FileSystem {
         file.close();
     }
 
-    std::vector<char> FileReader::Read(const std::string& filename, bool binary)
+    std::vector<char> FileManager::ReadFile(const std::string& filename, bool binary)
     {
         std::vector<char> buffer;
         ReadInternal(filename, binary, buffer, 1);
         return buffer;
     }
 
-    std::string FileReader::Read(const std::string& filename)
+    std::string FileManager::ReadFile(const std::string& filename)
     {
         std::string output;
         ReadInternal(filename, false, output, 1);
         return output;
     }
 
-    void FileReader::Write(const std::string& filename, const char* data, uint32_t size, bool binary)
+    void FileManager::WriteFile(const std::string& filename, const char* data, uint32_t size, bool binary)
     {
         auto mode = binary ? std::ios::ate | std::ios::binary : std::ios::ate;
         std::ofstream file(filename, mode);
@@ -46,8 +46,4 @@ namespace Explosion::FileSystem {
         }
         file.write(data, size);
     }
-
-    FileReader::~FileReader() = default;
-
-    FileReader::FileReader() = default;
 }
