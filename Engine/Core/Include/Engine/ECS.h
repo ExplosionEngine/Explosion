@@ -13,6 +13,7 @@
 
 namespace Explosion::ECS {
     using Entity = entt::entity;
+    constexpr Entity INVALID_ENTITY = Entity{entt::entt_traits<Entity>::entity_mask};
 
     class Registry;
 
@@ -53,6 +54,11 @@ namespace Explosion::ECS {
             registry.destroy(entity);
         }
 
+        bool IsActive(Entity entity) const
+        {
+            return registry.valid(entity);
+        }
+
         template <typename Comp, typename... Args>
         void AddComponent(Entity entity, Args&&... args)
         {
@@ -69,6 +75,12 @@ namespace Explosion::ECS {
         View<ExcludeT<Exclude...>, Comp...> CreateView(const ExcludeT<Exclude...>& excludes = {})
         {
             return View<ExcludeT<Exclude...>, Comp...>(registry.template view<Comp...>(excludes));
+        }
+
+        template <typename Proxy>
+        Proxy CreateProxy()
+        {
+            return Proxy(*this);
         }
 
     private:
