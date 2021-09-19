@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/5/30.
+// Created by Zach Lee on 2021/5/30.
 //
 
 #ifndef EXPLOSION_PARTICLEEFFECTOR_H

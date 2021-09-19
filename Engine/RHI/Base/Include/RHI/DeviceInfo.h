@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/8/22 0016.
+// Created by Zach Lee on 2021/8/22 0016.
 //
 
 #ifndef EXPLOSION_DEVICEINFO_H

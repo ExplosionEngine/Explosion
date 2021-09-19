@@ -19,6 +19,8 @@ namespace Explosion {
     private:
         void TickSystem(float time);
 
+        void SetupBuiltInSystems();
+
         ECS::Registry registry;
         std::vector<ECS::SystemGroup> systemGroups;
     };

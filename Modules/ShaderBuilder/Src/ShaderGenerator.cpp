@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/7/13.
+// Created by Zach Lee on 2021/7/13.
 //
 
 #include "ShaderGenerator.h"

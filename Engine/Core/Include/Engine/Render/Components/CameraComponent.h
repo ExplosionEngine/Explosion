@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/9/12.
+// Created by Zach Lee on 2021/9/12.
 //
 
 #ifndef EXPLOSION_CAMERACOMPONENT_H

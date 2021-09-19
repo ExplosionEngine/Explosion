@@ -1,5 +1,5 @@
 //
-// Created by LiZHen on 2021/8/25.
+// Created by Zach Lee on 2021/8/25.
 //
 
 #ifndef EXPLOSION_QUEUE_H

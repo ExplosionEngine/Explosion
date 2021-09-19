@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/5/9.
+// Created by Zach Lee on 2021/5/9.
 //
 
 #ifndef EXPLOSION_REF_OBJECT_H

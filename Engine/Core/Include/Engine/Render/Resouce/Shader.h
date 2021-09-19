@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/9/11.
+// Created by Zach Lee on 2021/9/11.
 //
 
 #ifndef EXPLOSION_SHADER_H

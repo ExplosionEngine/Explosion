@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/8/24.
+// Created by Zach Lee on 2021/8/24.
 //
 
 #ifndef EXPLOSION_LINKED_FREELIST_H

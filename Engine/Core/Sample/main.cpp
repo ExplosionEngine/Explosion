@@ -1,19 +1,26 @@
-#include <Engine/Render/Render.h>
+#include <Engine/Engine.h>
+#include <Engine/ECS.h>
+#include <Engine/World.h>
+#include <thread>
 
 using namespace Explosion;
 
 int main()
 {
-    RenderCreateInfo ci;
-    ci.rhiName = "RHIVulkan";
+    Engine* engine = Engine::GetInstance();
 
-    auto render = Render::CreateRender(ci);
+    Engine::StartInfo info = {"RHIVulkan"};
+    engine->Start(info);
+
+    World* world = engine->CreateWorld();
 
     for (int i = 0; i < 10; ++i) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        render->Tick(0.f);
+        engine->Tick();
     }
 
-    Render::DestroyRender();
+    engine->DestroyWorld(world);
+
+    engine->Stop();
     return 0;
 }

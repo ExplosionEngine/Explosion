@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/9/14.
+// Created by Zach Lee on 2021/9/14.
 //
 
 #ifndef EXPLOSION_ASSETINSTANCE_H

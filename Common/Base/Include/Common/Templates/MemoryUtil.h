@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/8/23.
+// Created by Zach Lee on 2021/8/23.
 //
 
 #ifndef EXPLOSION_MEMORY_UTIL_H

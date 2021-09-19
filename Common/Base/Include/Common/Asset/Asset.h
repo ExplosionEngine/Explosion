@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/9/9.
+// Created by Zach Lee on 2021/9/9.
 //
 
 #ifndef EXPLOSION_ASSET_H

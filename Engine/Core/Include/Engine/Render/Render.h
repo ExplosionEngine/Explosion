@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/8/22.
+// Created by Zach Lee on 2021/8/22.
 //
 
 #include <memory>
@@ -11,28 +11,26 @@
 
 namespace Explosion {
 
-    struct RenderCreateInfo {
-        std::string rhiName;
-    };
-
     class Render {
     public:
         ~Render();
 
-        static Render* CreateRender(const RenderCreateInfo& ci);
+        struct Descriptor {
+            std::string rhiName;
+        };
 
-        static void DestroyRender();
+        static Render* CreateRender(const Descriptor& ci);
 
-        static Render* GetRender();
+        static void DestroyRender(Render*);
 
         RHI::Driver* GetDriver();
 
         void Tick(float time);
 
     private:
-        Render(const RenderCreateInfo& ci);
+        Render(const Descriptor& ci);
 
-        void InitRHI(const RenderCreateInfo& ci);
+        void InitRHI(const Descriptor& ci);
 
         void InitRenderThread();
 

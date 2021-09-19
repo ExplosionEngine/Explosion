@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/9/12.
+// Created by Zach Lee on 2021/9/12.
 //
 
 #ifndef EXPLOSION_TRANSFORMCOMPONENT_H
@@ -15,9 +15,19 @@ namespace Explosion {
         Quaternion rotate;
     };
 
-    struct TransformComponent {
+    struct LocalTransformComponent {
         Transform local;
+    };
+
+    struct GlobalTransformComponent {
         Transform global;
+    };
+
+    struct HierarchyComponent {
+        Entity first;
+        Entity next;
+        Entity prev;
+        Entity parent;
     };
 
 }

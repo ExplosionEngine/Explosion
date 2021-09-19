@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/8/22.
+// Created by Zach Lee on 2021/8/22.
 //
 
 #include <Engine/Render/Render.h>
@@ -10,9 +10,7 @@
 
 namespace Explosion {
 
-    std::unique_ptr<Render> g_render;
-
-    Render::Render(const RenderCreateInfo& ci)
+    Render::Render(const Descriptor& ci)
         : driver(RHI::DriverFactory::Singleton().CreateFromLib(ci.rhiName))
         , renderThread("renderThread")
     {
@@ -23,25 +21,19 @@ namespace Explosion {
         renderThread.ExitThread();
     }
 
-    Render* Render::CreateRender(const RenderCreateInfo& ci)
+    Render* Render::CreateRender(const Descriptor& ci)
     {
-        if (!g_render) {
-            g_render.reset(new Render(ci));
-            g_render->InitRHI(ci);
-            g_render->InitRenderThread();
+        auto render = new Render(ci);
+        render->InitRHI(ci);
+        render->InitRenderThread();
+        return render;
+    }
+
+    void Render::DestroyRender(Render* render)
+    {
+        if (render != nullptr) {
+            delete render;
         }
-        return g_render.get();
-    }
-
-    void Render::DestroyRender()
-    {
-        g_render.reset();
-    }
-
-    Render* Render::GetRender()
-    {
-        EXPLOSION_ASSERT(g_render.get() != nullptr, "CreateRender should be called first");
-        return g_render.get();
     }
 
     void Render::Tick(float time)
@@ -59,7 +51,7 @@ namespace Explosion {
         std::cout << "render" << std::endl;
     }
 
-    void Render::InitRHI(const RenderCreateInfo& ci)
+    void Render::InitRHI(const Descriptor& ci)
     {
         const auto& devInfo = driver->GetDeviceInfo();
 

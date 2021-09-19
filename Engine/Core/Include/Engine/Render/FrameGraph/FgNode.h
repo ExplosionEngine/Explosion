@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/5/10.
+// Created by Zach Lee on 2021/5/10.
 //
 
 #ifndef EXPLOSION_FGNODE_H

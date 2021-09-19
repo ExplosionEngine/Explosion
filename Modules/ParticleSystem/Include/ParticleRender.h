@@ -1,5 +1,5 @@
 //
-// Created by liZhen on 2021/5/30.
+// Created by Zach Lee on 2021/5/30.
 //
 
 #ifndef EXPLOSION_PARTICLERENDER_H
