@@ -6,6 +6,7 @@
 
 #include <RHI/Enum.h>
 
+using namespace Explosion;
 using namespace Explosion::RHI;
 
 TEST(EnumTest, FlagsCastTest)

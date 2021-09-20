@@ -11,7 +11,7 @@
 namespace Explosion {
 
     Render::Render(const Descriptor& ci)
-        : driver(RHI::DriverFactory::Singleton().CreateFromLib(ci.rhiName))
+        : driver(RHI::DriverFactory::Singleton().CreateDriverFromLib(ci.rhiName))
         , renderThread("renderThread")
     {
     }
