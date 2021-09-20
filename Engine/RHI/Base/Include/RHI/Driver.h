@@ -21,6 +21,10 @@
 #include <RHI/DeviceInfo.h>
 
 namespace Explosion::RHI {
+    enum class DriverType {
+        VULKAN
+    };
+
     class Driver {
     public:
         virtual ~Driver();
@@ -62,7 +66,7 @@ namespace Explosion::RHI {
         virtual void DestroySampler(Sampler* sampler) = 0;
 
         virtual const DeviceInfo& GetDeviceInfo() const = 0;
-
+        virtual DriverType GetType() const = 0;
     protected:
         Driver();
     };
@@ -75,7 +79,8 @@ namespace Explosion::RHI {
         DriverFactory(DriverFactory&) = delete;
         void operator=(DriverFactory&) = delete;
 
-        Driver* CreateFromLib(const std::string& name);
+        Driver* CreateDriverFromLib(const std::string& name);
+        Driver* CreateDriverBySuggestion();
 
     private:
         DriverFactory() = default;

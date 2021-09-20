@@ -11,7 +11,7 @@ exp_add_library(
     TYPE STATIC
     SRCS ${SRC_FILES} ${INC_FILES}
     PUBLIC_INC_DIRS Include ${PROJECT_ROOT}/Engine/Include ${rapidjson_INCS}
-    LIBS FileSystem
+    LIBS IO
 )
 
 set(UNIT_TEST PassTest)

@@ -15,7 +15,7 @@ namespace Explosion::RHI {
         return instance;
     }
 
-    Driver* DriverFactory::CreateFromLib(const std::string& name)
+    Driver* DriverFactory::CreateDriverFromLib(const std::string& name)
     {
         using CreateDriverFunc = Explosion::RHI::Driver*(*)();
 
@@ -28,6 +28,12 @@ namespace Explosion::RHI {
             return nullptr;
         }
         return createDriverFunc();
+    }
+
+    Driver* DriverFactory::CreateDriverBySuggestion()
+    {
+        // TODO Windows -> DX12, MacOS & Linux -> Vulkan
+        return CreateDriverFromLib("RHIVulkan");
     }
 
     DynLib* DriverFactory::FetchOrLoadLib(const std::string& name)

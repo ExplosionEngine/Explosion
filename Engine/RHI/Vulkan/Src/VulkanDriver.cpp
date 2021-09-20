@@ -150,6 +150,11 @@ namespace Explosion::RHI {
     {
         return device->GetDeviceInfo();
     }
+
+    DriverType VulkanDriver::GetType() const
+    {
+        return DriverType::VULKAN;
+    }
 }
 
 extern "C" {
