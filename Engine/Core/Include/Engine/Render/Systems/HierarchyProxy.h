@@ -29,6 +29,7 @@ namespace Explosion {
 
         std::vector<ECS::Entity> GetChildren(ECS::Entity entity) const;
 
+        void Tick(ECS::Registry& registry, float time);
     private:
         ECS::Registry& registry;
     };

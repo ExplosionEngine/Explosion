@@ -14,7 +14,6 @@ namespace Explosion {
         ECS::Entity next   = ECS::INVALID_ENTITY;
         ECS::Entity prev   = ECS::INVALID_ENTITY;
         ECS::Entity parent = ECS::INVALID_ENTITY;
-        bool refreshFlag = false;
     };
 
 }

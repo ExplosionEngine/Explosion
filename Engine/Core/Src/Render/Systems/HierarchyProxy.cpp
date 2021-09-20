@@ -3,17 +3,26 @@
 //
 
 #include <Engine/ECS.h>
+#include <Engine/Render/Components/BasicComponent.h>
 #include <Engine/Render/Systems/HierarchyProxy.h>
 #include "../Components/HierarchyComponent.h"
 
 namespace Explosion {
 
+    template <typename T>
     static void TryAdd(ECS::Registry& registry, ECS::Entity entity)
     {
-        auto comp = registry.GetComponent<HierarchyComponent>(entity);
+        auto comp = registry.GetComponent<T>(entity);
         if (comp == nullptr) {
-            registry.AddComponent<HierarchyComponent>(entity, HierarchyComponent{});
+            registry.AddComponent<T>(entity, T{});
         }
+    }
+
+    static void TryAddRequiredComponent(ECS::Registry& registry, ECS::Entity entity)
+    {
+        TryAdd<HierarchyComponent>(registry, entity);
+        TryAdd<LocalTransformComponent>(registry, entity);
+        TryAdd<GlobalTransformComponent>(registry, entity);
     }
 
     template <typename Pred>
@@ -41,11 +50,11 @@ namespace Explosion {
 
         auto child = hp->first;
         while (registry.IsActive(child)) {
-            auto cp = registry.GetComponent<HierarchyComponent>(child);
-            if (!pred(child, cp)) {
+            auto ch = registry.GetComponent<HierarchyComponent>(child);
+            if (!pred(child)) {
                 break;
             }
-            child = cp->next;
+            child = ch->next;
         }
     }
 
@@ -72,6 +81,20 @@ namespace Explosion {
         ep->parent = ECS::INVALID_ENTITY;
     }
 
+    void RefreshTree(ECS::Registry& registry, ECS::Entity curr, const Math::Matrix4& parent)
+    {
+        auto lt = registry.GetComponent<LocalTransformComponent>(curr);
+        auto gt = registry.GetComponent<GlobalTransformComponent>(curr);
+        auto mtx = lt->local.ToMatrix();
+        gt->matrix = parent * lt->local.ToMatrix();
+        gt->global.Decompose(gt->matrix);
+
+        ForEachChild(registry, curr, [&registry, gt](ECS::Entity entity) {
+            RefreshTree(registry, entity, gt->matrix);
+            return true;
+        });
+    }
+
     HierarchyProxy::HierarchyProxy(ECS::Registry& reg)
         : registry(reg)
     {
@@ -82,8 +105,8 @@ namespace Explosion {
         if (!registry.IsActive(entity) || !registry.IsActive(parent))
             return;
 
-        TryAdd(registry, entity);
-        TryAdd(registry, parent);
+        TryAddRequiredComponent(registry, entity);
+        TryAddRequiredComponent(registry, parent);
         auto eh = registry.GetComponent<HierarchyComponent>(entity);
         auto ph = registry.GetComponent<HierarchyComponent>(parent);
         RemoveFromOldParent(registry, entity, eh->parent);
@@ -149,11 +172,28 @@ namespace Explosion {
             return {};
 
         std::vector<ECS::Entity> res;
-        ForEachChild(registry, entity, [&res](ECS::Entity entity, HierarchyComponent*) {
+        ForEachChild(registry, entity, [&res](ECS::Entity entity) {
             res.emplace_back(entity);
             return true;
         });
         return res;
+    }
+
+    void HierarchyProxy::Tick(ECS::Registry& registry, float time)
+    {
+        auto view = registry.CreateView<LocalTransformComponent,
+                            GlobalTransformComponent,
+                            HierarchyComponent>();
+
+        view.Each([&registry](ECS::Entity entity,
+                     LocalTransformComponent& local,
+                     GlobalTransformComponent& global,
+                     HierarchyComponent& hierarchy) {
+            if (hierarchy.parent != ECS::INVALID_ENTITY || hierarchy.first == ECS::INVALID_ENTITY) {
+                return;
+            }
+            RefreshTree(registry, entity, Math::ConstMatrix::UNIT);
+        });
     }
 
 }

@@ -20,6 +20,9 @@ namespace Explosion::Math {
     template <int L>
     using Matrix = glm::mat<L, L, float, glm::defaultp>;
 
+    using Matrix3 = Matrix<3>;
+    using Matrix4 = Matrix<4>;
+
     using Quaternion = glm::qua<float, glm::defaultp>;
     
     namespace ConstVector {
@@ -33,6 +36,10 @@ namespace Explosion::Math {
     namespace ConstMatrix {
         const Matrix<4> ZERO = Matrix<4>(0.f);
         const Matrix<4> UNIT = Matrix<4>(1.f);
+    }
+
+    namespace ConstQuaternion {
+        const Quaternion UNIT = glm::identity<Quaternion>();
     }
 
     namespace Calculator {

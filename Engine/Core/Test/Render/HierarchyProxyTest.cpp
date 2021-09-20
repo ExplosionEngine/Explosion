@@ -6,6 +6,8 @@
 
 #include <Engine/ECS.h>
 #include <Engine/Render/Systems/HierarchyProxy.h>
+#include <Engine/Render/Components/BasicComponent.h>
+
 using namespace Explosion;
 
 TEST(HierarchyProxyTest, SetParent01)
@@ -219,4 +221,36 @@ TEST(HierarchyProxyTest, SetParent04)
         auto children = proxy.GetChildren(e4);
         ASSERT_EQ(children.size(), (size_t)0);
     }
+}
+
+TEST(HierarchyProxyTest, Tick01)
+{
+    using namespace ECS;
+    Registry registry;
+
+    auto e1 = registry.CreateEntity();
+    auto e2 = registry.CreateEntity();
+    auto e3 = registry.CreateEntity();
+
+    auto proxy = registry.CreateProxy<HierarchyProxy>();
+    proxy.SetParent(e2, e1);
+    proxy.SetParent(e3, e2);
+
+    auto t1 = registry.GetComponent<LocalTransformComponent>(e1);
+    auto t2 = registry.GetComponent<LocalTransformComponent>(e2);
+    auto t3 = registry.GetComponent<LocalTransformComponent>(e3);
+
+    t1->local.position.y = 0.5f;
+    t2->local.position.y = 0.5f;
+    t3->local.position.y = 0.5f;
+
+    proxy.Tick(registry, 0.f);
+
+    auto g1 = registry.GetComponent<GlobalTransformComponent>(e1);
+    auto g2 = registry.GetComponent<GlobalTransformComponent>(e2);
+    auto g3 = registry.GetComponent<GlobalTransformComponent>(e3);
+
+    ASSERT_EQ(g1->global.position.y, 0.5f);
+    ASSERT_EQ(g2->global.position.y, 1.0f);
+    ASSERT_EQ(g3->global.position.y, 1.5f);
 }

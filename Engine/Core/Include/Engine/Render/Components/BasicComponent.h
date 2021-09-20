@@ -6,22 +6,18 @@
 #define EXPLOSION_TRANSFORMCOMPONENT_H
 
 #include <Math/Math.h>
+#include <Math/Transform.h>
 #include <Engine/ECS.h>
 
 namespace Explosion {
 
-    struct Transform {
-        Math::Vector3 position;
-        Math::Vector3 scale;
-        Math::Quaternion rotate;
-    };
-
     struct LocalTransformComponent {
-        Transform local;
+        Math::Transform local;
     };
 
     struct GlobalTransformComponent {
-        Transform global;
+        Math::Transform global;
+        Math::Matrix4 matrix;
     };
 }
 
