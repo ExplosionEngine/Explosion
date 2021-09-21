@@ -20,10 +20,12 @@ namespace Explosion::RHI {
         : driver(driver), device(*driver.GetDevice())
     {
         AllocateCommandBuffer();
+        CreateFence();
     }
 
     VulkanCommandBuffer::~VulkanCommandBuffer()
     {
+        DestroyFence();
         FreeCommandBuffer();
     }
 
@@ -56,12 +58,16 @@ namespace Explosion::RHI {
 
     void VulkanCommandBuffer::SubmitNow()
     {
+        vkWaitForFences(device.GetVkDevice(), 1, &fence, VK_TRUE, UINT64_MAX);
+
         VkSubmitInfo submitInfo {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &vkCommandBuffer;
 
-        if (vkQueueSubmit(device.GetVkQueue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+        vkResetFences(device.GetVkDevice(), 1, &fence);
+
+        if (vkQueueSubmit(device.GetVkQueue(), 1, &submitInfo, fence) != VK_SUCCESS) {
             throw std::runtime_error("failed to submit vulkan command buffer");
         }
         vkQueueWaitIdle(device.GetVkQueue());
@@ -69,6 +75,8 @@ namespace Explosion::RHI {
 
     void VulkanCommandBuffer::Submit(Signal* waitSignal, Signal* notifySignal, PipelineStageFlags waitStages)
     {
+        vkWaitForFences(device.GetVkDevice(), 1, &fence, VK_TRUE, UINT64_MAX);
+
         VkSubmitInfo submitInfo {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.pNext = nullptr;
@@ -81,9 +89,29 @@ namespace Explosion::RHI {
         VkPipelineStageFlags flags = VkGetFlags<PipelineStageBits, VkPipelineStageFlagBits>(waitStages);
         submitInfo.pWaitDstStageMask = &flags;
 
-        if (vkQueueSubmit(device.GetVkQueue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+        vkResetFences(device.GetVkDevice(), 1, &fence);
+
+        if (vkQueueSubmit(device.GetVkQueue(), 1, &submitInfo, fence) != VK_SUCCESS) {
             throw std::runtime_error("failed to submit vulkan command buffer");
         }
+    }
+
+    void VulkanCommandBuffer::CreateFence()
+    {
+        VkFenceCreateInfo fenceInfo = {};
+        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+        if (vkCreateFence(device.GetVkDevice(), &fenceInfo, nullptr, &fence) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create fence");
+        }
+    }
+
+    void VulkanCommandBuffer::DestroyFence()
+    {
+        if (fence != VK_NULL_HANDLE) {
+            vkDestroyFence(device.GetVkDevice(), fence, nullptr);
+        }
+        fence = VK_NULL_HANDLE;
     }
 
     void VulkanCommandBuffer::AllocateCommandBuffer()

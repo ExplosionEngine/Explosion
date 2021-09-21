@@ -146,7 +146,12 @@ namespace Explosion::RHI {
         delete sampler;
     }
 
-    DriverType VulkanDriver::GetType()
+    const DeviceInfo& VulkanDriver::GetDeviceInfo() const
+    {
+        return device->GetDeviceInfo();
+    }
+
+    DriverType VulkanDriver::GetType() const
     {
         return DriverType::VULKAN;
     }

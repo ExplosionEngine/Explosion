@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/5/9.
+// Created by Zach Lee on 2021/5/9.
 //
 
 #ifndef EXPLOSION_FGRESOURCES_H
@@ -10,7 +10,7 @@
 
 #include <Common/NonCopy.h>
 #include <Common/Exception.h>
-#include <Common/RefObject.h>
+#include <Common/Templates/RefObject.h>
 
 #include <Engine/Render/FrameGraph/FgNode.h>
 #include <Engine/Render/FrameGraph/FgHandle.h>

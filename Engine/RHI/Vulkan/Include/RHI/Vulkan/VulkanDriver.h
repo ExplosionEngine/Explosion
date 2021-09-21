@@ -54,8 +54,8 @@ namespace Explosion::RHI {
         Sampler* CreateSampler(const Sampler::Config& config) override;
         void DestroySampler(Sampler* sampler) override;
 
-        DriverType GetType() override;
-
+        const DeviceInfo& GetDeviceInfo() const override;
+        DriverType GetType() const override;
     private:
         std::unique_ptr<VulkanDevice> device;
     };

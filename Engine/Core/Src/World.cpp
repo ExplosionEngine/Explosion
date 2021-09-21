@@ -53,4 +53,10 @@ namespace Explosion {
             executor.run(taskFlow).wait();
         }
     }
+
+    void World::SetupBuiltInSystems()
+    {
+
+    }
+
 }

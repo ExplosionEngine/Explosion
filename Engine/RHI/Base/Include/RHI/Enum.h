@@ -6,31 +6,7 @@
 #define EXPLOSION_ENUM_H
 
 #include <unordered_map>
-
-/**
- * common defines
- */
-namespace Explosion::RHI {
-    using Flags = uint32_t;
-
-    template <typename E>
-    std::enable_if_t<std::is_enum_v<E>, Flags> FlagsCast(const E& e)
-    {
-        return static_cast<Flags>(e);
-    }
-
-    template <typename E>
-    std::enable_if_t<std::is_enum_v<E>, Flags> operator|(const E& l, const E& r)
-    {
-        return FlagsCast(l) | FlagsCast(r);
-    }
-
-    template <typename E>
-    std::enable_if_t<std::is_enum_v<E>, Flags> operator&(const E& l, const E& r)
-    {
-        return FlagsCast(l) & FlagsCast(r);
-    }
-}
+#include <Common/Templates/Flags.h>
 
 /**
  * enum class
@@ -163,6 +139,12 @@ namespace Explosion::RHI {
         GREATER_OR_EQUAL,
         ALWAYS,
         MAX
+    };
+
+    enum class DeviceType {
+        INTERGRATED_GPU,
+        DISCRETE_GPU,
+        OTHER
     };
 }
 

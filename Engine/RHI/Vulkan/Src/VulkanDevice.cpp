@@ -10,6 +10,7 @@
 #include <RHI/Vulkan/VulkanDevice.h>
 #include <RHI/Vulkan/VulkanUtils.h>
 #include <RHI/Vulkan/VulkanPlatform.h>
+#include <RHI/Vulkan/VulkanAdapater.h>
 
 #define VK_VALIDATION_LAYER_EXTENSION_NAME "VK_LAYER_KHRONOS_validation"
 
@@ -82,6 +83,7 @@ namespace Explosion::RHI {
         GetQueue();
         CreateCommandPool();
         FetchPhysicalDeviceMemoryProperties();
+        FillDeviceFeature();
     }
 
     VulkanDevice::~VulkanDevice()
@@ -130,6 +132,11 @@ namespace Explosion::RHI {
         ) {
             throw std::runtime_error("there are some device extension is not supported");
         }
+    }
+
+    const DeviceInfo& VulkanDevice::GetDeviceInfo() const
+    {
+        return devInfo;
     }
 
     const VkInstance& VulkanDevice::GetVkInstance()
@@ -315,7 +322,7 @@ namespace Explosion::RHI {
         VkCommandPoolCreateInfo commandPoolCreateInfo {};
         commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         commandPoolCreateInfo.pNext = nullptr;
-        commandPoolCreateInfo.flags = 0;
+        commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         commandPoolCreateInfo.queueFamilyIndex = vkQueueFamilyIndex.value();
 
         if (vkCreateCommandPool(vkDevice, &commandPoolCreateInfo, nullptr, &vkCommandPool) != VK_SUCCESS) {
@@ -331,5 +338,23 @@ namespace Explosion::RHI {
     void VulkanDevice::FetchPhysicalDeviceMemoryProperties()
     {
         vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &vkPhysicalDeviceMemoryProperties);
+    }
+
+    void VulkanDevice::FillDeviceFeature()
+    {
+        devInfo.device = vkPhysicalDeviceProperties.deviceID;
+        devInfo.vender = vkPhysicalDeviceProperties.vendorID;
+        devInfo.deviceName = vkPhysicalDeviceProperties.deviceName;
+        devInfo.type = VkConvert<VkPhysicalDeviceType, DeviceType>(vkPhysicalDeviceProperties.deviceType);
+
+        devInfo.limits.maxColorAttachments = vkPhysicalDeviceProperties.limits.maxColorAttachments;
+        devInfo.limits.maxPushConstantSize = vkPhysicalDeviceProperties.limits.maxPushConstantsSize;
+        devInfo.limits.minMemoryMapAlignment = vkPhysicalDeviceProperties.limits.minMemoryMapAlignment;
+        devInfo.limits.minTexelOffsetAlignment = vkPhysicalDeviceProperties.limits.minTexelBufferOffsetAlignment;
+        devInfo.limits.minUboOffsetAlignment = vkPhysicalDeviceProperties.limits.minUniformBufferOffsetAlignment;
+        devInfo.limits.minSboOffsetAlignment = vkPhysicalDeviceProperties.limits.minStorageBufferOffsetAlignment;
+
+        devInfo.features.tessellation = vkPhysicalDeviceFeatures.tessellationShader;
+        devInfo.features.geometry = vkPhysicalDeviceFeatures.geometryShader;
     }
 }

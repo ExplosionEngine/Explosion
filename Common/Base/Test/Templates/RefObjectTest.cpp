@@ -1,12 +1,12 @@
 //
-// Created by LiZhen on 2021/5/9.
+// Created by Zach Lee on 2021/5/9.
 //
 
 #include <gtest/gtest.h>
 #include <thread>
 #include <atomic>
 
-#include <Common/RefObject.h>
+#include <Common/Templates/RefObject.h>
 
 using namespace Explosion;
 

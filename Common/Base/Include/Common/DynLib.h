@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/5/6.
+// Created by Zach Lee on 2021/5/6.
 //
 
 #ifndef EXPLOSION_DYNLIB_H
@@ -13,7 +13,7 @@
     #define LIB_HANDLE         HINSTANCE
     #define LIB_LOAD(lib, tag) LoadLibraryEx(lib, nullptr, 0)
     #define LIB_GET(lib, func) GetProcAddress(lib, func)
-    #define LIB_UNLOAD(lib)    !FreeLibrary(lib)
+    #define LIB_UNLOAD(lib)    FreeLibrary(lib)
 #elif defined(__APPLE__) || defined(__linux__)
     #include <dlfcn.h>
     #define LIB_HANDLE         void*

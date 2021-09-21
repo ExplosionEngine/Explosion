@@ -4,7 +4,8 @@ exp_add_library(
     TYPE STATIC
     SRCS ${ENGINE_SOURCES}
     PUBLIC_INC_DIRS Include ${entt_INCS}
-    LIBS CommonBase JobSystem RHI
+    LIBS CommonBase Math JobSystem RHI
 )
 
+add_subdirectory(Sample)
 add_subdirectory(Test)

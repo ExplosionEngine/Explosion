@@ -1,5 +1,5 @@
 //
-// Created by LiZhen on 2021/5/30.
+// Created by Zach Lee on 2021/5/30.
 //
 
 #ifndef EXPLOSION_PARTICLEEFFECTOR_H
@@ -15,7 +15,7 @@ namespace Explosion {
         PARTICLE_EFFECT_NONE   = 0x00,
         PARTICLE_EFFECT_SPAWN  = 0x01,
         PARTICLE_EFFECT_UPDATE = 0x02,
-        PARTICLE_EFFECT_BOTH   = PARTICLE_EFFECT_SPAWN | PARTICLE_EFFECT_UPDATE
+        PARTICLE_EFFECT_BOTH   = 0x03,
     };
     using EffectorFlags = uint32_t;
 
