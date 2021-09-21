@@ -19,6 +19,10 @@ namespace Explosion {
         Math::Transform global;
         Math::Matrix4 matrix;
     };
+
+    struct ObjectIdComponent {
+        ECS::Entity id;  // Entity & EntityMask
+    };
 }
 
 #endif // EXPLOSION_TRANSFORMCOMPONENT_H

@@ -56,7 +56,7 @@ public:
     template <typename Func>
     void Enqueue(Func&& f)
     {
-        taskQueue.template Emplace(std::forward<Func>(f));
+        taskQueue.Emplace(std::forward<Func>(f));
     }
 
     void Wait()
