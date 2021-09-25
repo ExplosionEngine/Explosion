@@ -54,6 +54,9 @@ namespace Explosion::RHI {
         Sampler* CreateSampler(const Sampler::Config& config) override;
         void DestroySampler(Sampler* sampler) override;
 
+        Shader* CreateShader(const Shader::Config& config) override;
+        void DestroyShader(Shader* shader) override;
+
         const DeviceInfo& GetDeviceInfo() const override;
         DriverType GetType() const override;
     private:

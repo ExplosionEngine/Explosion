@@ -25,9 +25,6 @@ namespace Explosion::RHI {
         const VkDescriptorSetLayout& GetVkDescriptorSetLayout() const;
 
     private:
-        VkShaderModule CreateShaderModule(const std::vector<char>& code);
-        void DestroyShaderModule(const VkShaderModule& shaderModule);
-
         void CreateDescriptorSetLayout();
         void DestroyDescriptorSetLayout();
 

@@ -11,6 +11,7 @@
 #include <RHI/Vulkan/VulkanAdapater.h>
 #include <RHI/Vulkan/VulkanDriver.h>
 #include <RHI/Vulkan/VulkanRenderPass.h>
+#include <RHI/Vulkan/VulkanShader.h>
 
 namespace Explosion::RHI {
     VulkanGraphicsPipeline::VulkanGraphicsPipeline(VulkanDriver& driver, Config config)
@@ -41,27 +42,6 @@ namespace Explosion::RHI {
     const VkDescriptorSetLayout& VulkanGraphicsPipeline::GetVkDescriptorSetLayout() const
     {
         return vkDescriptorSetLayout;
-    }
-
-    VkShaderModule VulkanGraphicsPipeline::CreateShaderModule(const std::vector<char>& code)
-    {
-        VkShaderModuleCreateInfo createInfo {};
-        createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        createInfo.pNext = nullptr;
-        createInfo.flags = 0;
-        createInfo.codeSize = code.size();
-        createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
-
-        VkShaderModule shaderModule = VK_NULL_HANDLE;
-        if (vkCreateShaderModule(device.GetVkDevice(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create vulkan shader module");
-        }
-        return shaderModule;
-    }
-
-    void VulkanGraphicsPipeline::DestroyShaderModule(const VkShaderModule& shaderModule)
-    {
-        vkDestroyShaderModule(device.GetVkDevice(), shaderModule, nullptr);
     }
 
     void VulkanGraphicsPipeline::CreateDescriptorSetLayout()
@@ -118,24 +98,22 @@ namespace Explosion::RHI {
     void VulkanGraphicsPipeline::CreateGraphicsPipeline()
     {
         // load shader module and populate shader stage create info
-        std::unordered_map<ShaderStageBits, bool> stageExists;
+        std::unordered_map<VkShaderStageFlagBits, bool> stageExists;
         std::vector<VkPipelineShaderStageCreateInfo> shaderStageCreateInfos;
-        std::vector<VkShaderModule> pendingReleaseShaderModules;
-        for (auto& shaderModule : config.shaderConfig.shaderModules) {
-            ShaderStageBits stage = shaderModule.stage;
+        for (auto shader : config.shaderConfig.shaderModules) {
+            auto vulkanShader = static_cast<VulkanShader*>(shader);
+            auto stage = vulkanShader->GetShaderStage();
             auto iter = stageExists.find(stage);
             if (iter != stageExists.end() && iter->second) {
                 throw std::runtime_error("specific shader stage is already added to graphics pipeline");
             }
 
-            pendingReleaseShaderModules.emplace_back(CreateShaderModule(shaderModule.code));
-
             VkPipelineShaderStageCreateInfo shaderStageCreateInfo {};
             shaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             shaderStageCreateInfo.pNext = nullptr;
             shaderStageCreateInfo.flags = 0;
-            shaderStageCreateInfo.stage = VkConvert<ShaderStageBits, VkShaderStageFlagBits>(stage);
-            shaderStageCreateInfo.module = pendingReleaseShaderModules.back();
+            shaderStageCreateInfo.stage = stage;
+            shaderStageCreateInfo.module = vulkanShader->GetShaderModule();
             shaderStageCreateInfo.pName = "main";
             shaderStageCreateInfo.pSpecializationInfo = nullptr;
             shaderStageCreateInfos.emplace_back(shaderStageCreateInfo);
@@ -289,11 +267,6 @@ namespace Explosion::RHI {
 
         if (vkCreateGraphicsPipelines(device.GetVkDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &vkPipeline) != VK_SUCCESS) {
             throw std::runtime_error("failed to create vulkan graphics pipeline");
-        }
-
-        // release shader modules
-        for (auto& pendingReleaseShaderModule : pendingReleaseShaderModules) {
-            DestroyShaderModule(pendingReleaseShaderModule);
         }
     }
 

@@ -11,16 +11,12 @@
 
 namespace Explosion::RHI {
     class RenderPass;
+    class Shader;
 
     class GraphicsPipeline {
     public:
-        struct ShaderModule {
-            ShaderStageBits stage;
-            std::vector<char> code;
-        };
-
         struct ShaderConfig {
-            std::vector<ShaderModule> shaderModules;
+            std::vector<Shader*> shaderModules;
         };
 
         struct VertexBinding {
