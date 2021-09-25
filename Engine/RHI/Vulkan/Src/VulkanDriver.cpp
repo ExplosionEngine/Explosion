@@ -15,6 +15,7 @@
 #include <RHI/Vulkan/VulkanDescriptorPool.h>
 #include <RHI/Vulkan/VulkanDescriptorSet.h>
 #include <RHI/Vulkan/VulkanSampler.h>
+#include <RHI/Vulkan/VulkanShader.h>
 
 namespace Explosion::RHI {
     VulkanDriver::VulkanDriver() : device(std::make_unique<VulkanDevice>(*this)) {}
@@ -144,6 +145,16 @@ namespace Explosion::RHI {
     void VulkanDriver::DestroySampler(Sampler* sampler)
     {
         delete sampler;
+    }
+
+    Shader* VulkanDriver::CreateShader(const Shader::Config& config)
+    {
+        return static_cast<Shader*>(new VulkanShader(*this, config));
+    }
+
+    void VulkanDriver::DestroyShader(Shader* shader)
+    {
+        delete shader;
     }
 
     const DeviceInfo& VulkanDriver::GetDeviceInfo() const

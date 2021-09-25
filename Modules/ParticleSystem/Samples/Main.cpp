@@ -94,12 +94,18 @@ protected:
             frameBuffers[i] = driver->CreateFrameBuffer(frameBufferConfig);
         }
 
+        Shader::Config vsConfig = {
+            ShaderStageBits::VERTEX,   IO::FileManager::ReadFile("RHI-Triangle-Vertex.spv", true)
+        };
+        Shader::Config fsConfig = {
+            ShaderStageBits::FRAGMENT, IO::FileManager::ReadFile("RHI-Triangle-Fragment.spv", true)
+        };
+        Shader* vsShader = driver->CreateShader(vsConfig);
+        Shader* fsShader = driver->CreateShader(fsConfig);
+
         GraphicsPipeline::Config pipelineConfig {};
         pipelineConfig.renderPass = renderPass;
-        pipelineConfig.shaderConfig.shaderModules = {
-            { ShaderStageBits::VERTEX,   IO::FileManager::ReadFile("ParticleSpriteVertex.spv", true) },
-            { ShaderStageBits::FRAGMENT, IO::FileManager::ReadFile("ParticleSpriteFragment.spv", true) }
-        };
+        pipelineConfig.shaderConfig.shaderModules = {vsShader, fsShader};
 
         pipelineConfig.vertexConfig.vertexBindings = {
             { 0, sizeof(Particle), VertexInputRate::PER_VERTEX }
