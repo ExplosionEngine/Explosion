@@ -22,11 +22,24 @@ using namespace Explosion;
 using namespace RHI;
 
 namespace {
+    struct Vector3 {
+        float v[3];
+    };
+
     struct Vertex {
-        float position[3];
+        Vector3 position;
+        Vector3 color;
+    };
+
+    struct UboData {
+        float aspect;
+        float angle;
     };
 
     using Index = uint32_t;
+
+    const uint32_t width = 1024;
+    const uint32_t height = 768;
 }
 
 class App : public Application {
@@ -88,17 +101,18 @@ protected:
         Shader::Config fsConfig = {
             ShaderStageBits::FRAGMENT, IO::FileManager::ReadFile("RHI-Triangle-Fragment.spv", true)
         };
-        Shader* vsShader = driver->CreateShader(vsConfig);
-        Shader* fsShader = driver->CreateShader(fsConfig);
+        vs = driver->CreateShader(vsConfig);
+        fs = driver->CreateShader(fsConfig);
 
         GraphicsPipeline::Config pipelineConfig {};
         pipelineConfig.renderPass = renderPass;
-        pipelineConfig.shaderConfig.shaderModules = {vsShader, fsShader};
+        pipelineConfig.shaderConfig.shaderModules = {vs, fs};
         pipelineConfig.vertexConfig.vertexBindings = {
             { 0, sizeof(Vertex), VertexInputRate::PER_VERTEX }
         };
         pipelineConfig.vertexConfig.vertexAttributes = {
-            { 0, 0, Format::R32_G32_B32_FLOAT, static_cast<uint32_t>(offsetof(Vertex, position)) },
+            {0, 0, Format::R32_G32_B32_FLOAT, static_cast<uint32_t>(offsetof(Vertex, position))},
+            {0, 1, Format::R32_G32_B32_FLOAT, static_cast<uint32_t>(offsetof(Vertex, color))}
         };
         pipelineConfig.descriptorConfig.descriptorAttributes = {
             {0, DescriptorType::UNIFORM_BUFFER, (uint32_t)ShaderStageBits::VERTEX},
@@ -111,10 +125,13 @@ protected:
         pipelineConfig.assemblyConfig.topology = PrimitiveTopology::TRIANGLE_LIST;
         pipeline = driver->CreateGraphicsPipeline(pipelineConfig);
 
+        float length = 0.5f;
+        float s60 = length * sin(60.f / 180.f * 3.14f);
+        float c60 = length * cos(60.f / 180.f * 3.14f);
         vertices = {
-            { 0.f, -.5f, 0.f },
-            { .5f, .5f, .0f },
-            { -.5f, .5f, 0.f }
+            { {0.f, length, 0.f}, {1.f, 0.f, 0.f} },
+            { {-s60, -c60, .0f}, {0.f, 1.f, 0.f} },
+            { {s60, -c60, 0.f}, {0.f, 0.f, 1.f} },
         };
         indices = {
             0, 1, 2
@@ -132,11 +149,14 @@ protected:
         indexBuffer = driver->CreateBuffer(bufferConfig);
         indexBuffer->UpdateData(indices.data());
 
-        bufferConfig.size = sizeof(float);
+        bufferConfig.size = sizeof(UboData);
         bufferConfig.usages = BufferUsageBits::UNIFORM_BUFFER | BufferUsageBits::TRANSFER_DST;
         bufferConfig.memoryProperties = MemoryPropertyBits::HOST_VISIBLE | MemoryPropertyBits::HOST_COHERENT;
         ubo = driver->CreateBuffer(bufferConfig);
-        ubo->UpdateData(&angle);
+
+        data.aspect = GetWidth() / (float)GetHeight();
+        data.angle = 0.f;
+        ubo->UpdateData(&data);
 
         DescriptorPool::Config poolConfig = {};
         poolConfig.maxSets = 100;
@@ -149,7 +169,7 @@ protected:
         DescriptorSet::DescriptorBufferInfo dbi = {};
         dbi.buffer = ubo;
         dbi.offset = 0;
-        dbi.range = sizeof(float);
+        dbi.range = sizeof(UboData);
         set->WriteDescriptors({{ 0, DescriptorType::UNIFORM_BUFFER, &dbi, nullptr}});
 
         commandBuffer = driver->CreateCommandBuffer();
@@ -163,6 +183,8 @@ protected:
         driver->DestroyBuffer(ubo);
         driver->DestroyDescriptorPool(pool);
         driver->DestroyGraphicsPipeline(pipeline);
+        driver->DestroyShader(vs);
+        driver->DestroyShader(fs);
         for (auto* frameBuffer : frameBuffers) {
             driver->DestroyFrameBuffer(frameBuffer);
         }
@@ -176,8 +198,8 @@ protected:
     void OnDrawFrame() override
     {
         swapChain->DoFrame([this](uint32_t imageIdx, Signal* imageReadySignal, Signal* frameFinishedSignal) -> void {
-            ubo->UpdateData(&angle);
-            angle += 0.01f;
+            ubo->UpdateData(&data);
+            data.angle += 0.01f;
             commandBuffer->EncodeCommands([imageIdx, this](CommandEncoder* encoder) -> void {
                 CommandEncoder::RenderPassBeginInfo beginInfo {};
                 beginInfo.frameBuffer = frameBuffers[imageIdx];
@@ -201,7 +223,7 @@ protected:
     }
 
 private:
-    float angle = 0.f;
+    UboData data = {};
     std::vector<Vertex> vertices;
     std::vector<Index> indices;
 
@@ -214,6 +236,8 @@ private:
     Buffer* vertexBuffer = nullptr;
     Buffer* indexBuffer = nullptr;
     Buffer* ubo = nullptr;
+    Shader* vs = nullptr;
+    Shader* fs = nullptr;
     CommandBuffer* commandBuffer = nullptr;
     DescriptorPool* pool = nullptr;
     DescriptorSet* set = nullptr;
@@ -221,7 +245,7 @@ private:
 
 int main(int argc, char* argv[])
 {
-    App app("Triangle", 1024, 768);
+    App app("Triangle", width, height);
     app.Run();
     return 0;
 }
