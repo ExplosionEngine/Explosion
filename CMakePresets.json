@@ -16,11 +16,18 @@
           "type": "STRING",
           "value": "$env{EXP_3RD_ROOT}"
         }
-      },
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "MacOS-XCode",
+      "hidden": true,
+      "generator": "Xcode",
+      "architecture": "x64",
+      "cacheVariables": {
+        "EXP_3RD_ROOT": {
+          "type": "STRING",
+          "value": "$env{EXP_3RD_ROOT}"
+        }
       }
     },
     {
@@ -62,6 +69,24 @@
         "Release"
       ],
       "binaryDir": "${sourceDir}/cmake-build-release"
+    },
+    {
+      "name": "MacOS-XCode-Debug",
+      "displayName": "MacOS-XCode-Debug",
+      "inherits": [
+        "MacOS-XCode",
+        "Debug"
+      ],
+      "binaryDir": "${sourceDir}/cmake-build-debug"
+    },
+    {
+      "name": "MacOS-XCode-Release",
+      "displayName": "MacOS-XCode",
+      "inherits": [
+        "MacOS-XCode",
+        "Release"
+      ],
+      "binaryDir": "${sourceDir}/cmake-build-release"
     }
   ],
   "buildPresets": [
@@ -72,6 +97,14 @@
     {
       "name": "Win-MSVC-2019-Release",
       "configurePreset": "Win-MSVC-2019-Release"
+    },
+    {
+      "name": "MacOS-XCode-Debug",
+      "configurePreset": "MacOS-XCode-Debug"
+    },
+    {
+      "name": "MacOS-XCode-Release",
+      "configurePreset": "MacOS-XCode-Release"
     }
   ],
   "testPresets": [
@@ -82,6 +115,14 @@
     {
       "name": "Win-MSVC-2019-Release",
       "configurePreset": "Win-MSVC-2019-Release"
+    },
+    {
+      "name": "MacOS-XCode-Debug",
+      "configurePreset": "MacOS-XCode-Debug"
+    },
+    {
+      "name": "MacOS-XCode-Release",
+      "configurePreset": "MacOS-XCode-Release"
     }
   ]
 }
