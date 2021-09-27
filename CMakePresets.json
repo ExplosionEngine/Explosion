@@ -7,7 +7,7 @@
   },
   "configurePresets": [
     {
-      "name": "windows",
+      "name": "Win-MSVC-2019",
       "hidden": true,
       "generator": "Visual Studio 16 2019",
       "architecture": "x64",
@@ -16,21 +16,15 @@
           "type": "STRING",
           "value": "$env{EXP_3RD_ROOT}"
         }
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
       }
     },
     {
-      "name": "release",
-      "configurationType": "Release",
-      "hidden": true,
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": {
-          "type": "STRING",
-          "value": "Release"
-        }
-      }
-    },
-    {
-      "name": "debug",
+      "name": "Debug",
       "configurationType": "Debug",
       "hidden": true,
       "cacheVariables": {
@@ -41,43 +35,53 @@
       }
     },
     {
-      "name": "windows--release",
-      "displayName": "Windows Release",
-      "inherits": [
-        "windows",
-        "release"
-      ],
-      "binaryDir": "${sourceDir}/cmake-build-release"
+      "name": "Release",
+      "configurationType": "Release",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "type": "STRING",
+          "value": "Release"
+        }
+      }
     },
     {
-      "name": "windows--debug",
-      "displayName": "Windows Debug",
+      "name": "Win-MSVC-2019-Debug",
+      "displayName": "Win-MSVC-2019-Debug",
       "inherits": [
-        "windows",
-        "debug"
+        "Win-MSVC-2019",
+        "Debug"
       ],
       "binaryDir": "${sourceDir}/cmake-build-debug"
+    },
+    {
+      "name": "Win-MSVC-2019-Release",
+      "displayName": "Win-MSVC-2019-Release",
+      "inherits": [
+        "Win-MSVC-2019",
+        "Release"
+      ],
+      "binaryDir": "${sourceDir}/cmake-build-release"
     }
   ],
   "buildPresets": [
     {
-      "name": "windows release",
-      "configurePreset": "windows--release"
+      "name": "Win-MSVC-2019-Debug",
+      "configurePreset": "Win-MSVC-2019-Debug"
     },
     {
-      "name": "windows debug",
-      "configurePreset": "windows--debug"
+      "name": "Win-MSVC-2019-Release",
+      "configurePreset": "Win-MSVC-2019-Release"
     }
   ],
   "testPresets": [
     {
-      "name": "windows release",
-      "configurePreset": "windows--release"
+      "name": "Win-MSVC-2019-Debug",
+      "configurePreset": "Win-MSVC-2019-Debug"
     },
     {
-      "name": "windows debug",
-      "configurePreset": "windows--debug"
+      "name": "Win-MSVC-2019-Release",
+      "configurePreset": "Win-MSVC-2019-Release"
     }
-
   ]
 }
