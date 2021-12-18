@@ -1,6 +1,5 @@
-/**/cmake-build-debug
-/**/cmake-build-release
-/.idea
-/**/.DS_Store
-/build
-/.vscode
+# JetBrains
+.idea
+
+# Visual Studio Code
+.vscode
