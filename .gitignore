@@ -3,3 +3,6 @@
 
 # Visual Studio Code
 .vscode
+
+# Binaries
+cmake-build-debug
