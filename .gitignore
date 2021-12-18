@@ -6,3 +6,6 @@
 
 # Binaries
 cmake-build-debug
+
+# 3rd
+ThirdParty/Lib

@@ -45,7 +45,7 @@ endfunction()
 #  - PUBLIC_INC  {List}                : public include directories of target
 #  - LIB         {List}                : libraries of target
 function(AddLibrary)
-    cmake_parse_arguments(PARAMS "" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;LIB")
+    cmake_parse_arguments(PARAMS "" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;LIB" ${ARGN})
 
     if (${ENABLE_TARGET_DEBUG_INFO})
         message()
@@ -73,6 +73,13 @@ function(AddLibrary)
         ${PARAMS_NAME}
         ${PARAMS_LIB}
     )
+
+    if (${MSVC})
+        target_compile_options(
+            ${PARAMS_NAME}
+            PUBLIC $<IF:$<STREQUAL:${PARAMS_TYPE},"SHARED">,/MD$<$<CONFIG:Debug>:d>,/MT$<$<CONFIG:Debug>:d>>
+        )
+    endif()
 endfunction()
 
 # AddTest
@@ -88,7 +95,7 @@ function(AddTest)
         return()
     endif()
 
-    cmake_parse_arguments(PARAMS "" "NAME;WORKING_DIR" "SRC;INC;LIB")
+    cmake_parse_arguments(PARAMS "" "NAME;WORKING_DIR" "SRC;INC;LIB" ${ARGN})
 
     if (${ENABLE_TARGET_DEBUG_INFO})
         message()
