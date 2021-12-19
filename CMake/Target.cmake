@@ -1,5 +1,5 @@
 option(BUILD_TEST "Build unit tests" ON)
-option(ENABLE_TARGET_DEBUG_INFO "Enable debug info when add cmake targets" OFF)
+option(ENABLE_TARGET_DEBUG_INFO "Enable debug info when add cmake targets" ON)
 
 # AddExecutable
 # Description: add a new executable target
@@ -12,13 +12,13 @@ function(AddExecutable)
     cmake_parse_arguments(PARAMS "" "NAME" "SRC;INC;LIB" ${ARGN})
 
     if (${ENABLE_TARGET_DEBUG_INFO})
-        message()
+        message("")
             message("[AddExecutable]")
             message(" - name: ${PARAMS_NAME}")
             message(" - sources: ${PARAMS_SRC}")
             message(" - includes: ${PARAMS_INC}")
             message(" - libraries: ${PARAMS_LIB}")
-        message()
+        message("")
     endif()
 
     add_executable(
@@ -48,7 +48,7 @@ function(AddLibrary)
     cmake_parse_arguments(PARAMS "" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;LIB" ${ARGN})
 
     if (${ENABLE_TARGET_DEBUG_INFO})
-        message()
+        message("")
             message("[AddLibrary]")
             message(" - name: ${PARAMS_NAME}")
             message(" - type: ${PARAMS_TYPE}")
@@ -56,7 +56,7 @@ function(AddLibrary)
             message(" - private include directories: ${PARAMS_PRIVATE_INC}")
             message(" - public include directories: ${PARAMS_PUBLIC_INC}")
             message(" - libraries: ${PARAMS_LIB}")
-        message()
+        message("")
     endif()
 
     add_library(
@@ -98,14 +98,14 @@ function(AddTest)
     cmake_parse_arguments(PARAMS "" "NAME;WORKING_DIR" "SRC;INC;LIB" ${ARGN})
 
     if (${ENABLE_TARGET_DEBUG_INFO})
-        message()
+        message("")
             message("[AddTest]")
             message(" - name: ${PARAMS_NAME}")
             message(" - working directory: ${PARAMS_WORKING_DIR}")
             message(" - sources: ${PARAMS_SRC}")
             message(" - includes: ${PARAMS_INC}")
             message(" - libraries: ${PARAMS_LIB}")
-        message()
+        message("")
     endif()
 
     add_executable(
