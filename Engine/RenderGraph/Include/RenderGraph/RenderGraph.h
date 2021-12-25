@@ -9,59 +9,45 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <functional>
 
 #include <Common/Utility.h>
 
 namespace RenderGraph {
-    template <typename T>
-    using Handle = uint64_t;
-
-    template <typename T>
-    const Handle<T> HANDLE_NONE = -1;
-
-    template <typename T1, typename T2>
-    Handle<T1> HandleCast(Handle<T2> handle)
-    {
-        return static_cast<Handle<T1>>(handle);
-    }
-
-    class Node {
-    public:
-        NON_COPYABLE(Node)
-        explicit Node(std::string name) : name(std::move(name)) {}
-        virtual ~Node() = 0;
-
-        const std::string& GetName()
-        {
-            return name;
-        }
-
-    private:
-        std::string name;
-    };
-
-    class ResourceNode : public Node {
-    public:
-        NON_COPYABLE(ResourceNode)
-        explicit ResourceNode(std::string name) : Node(std::move(name)) {}
-        ~ResourceNode() override = default;
-
-    private:
-        uint64_t refCount = 0;
-    };
-
-    class PassNode : public Node {
-    public:
-        NON_COPYABLE(PassNode)
-        explicit PassNode(std::string name) : Node(std::move(name)) {}
-        ~PassNode() override = default;
-
-    private:
-        std::vector<Handle<Node>> readResources;
-        std::vector<Handle<Node>> writeResources;
-    };
-
     class RenderGraphBuilder;
+    class RenderGraphPassBuilder;
+    class RenderGraphCuller;
+    class InstancedResources;
+
+    using PassExecutor = std::function<void(InstancedResources&)>;
+    using PassSetup = std::function<PassExecutor(RenderGraphPassBuilder&)>;
+
+    class VirtualResource {};
+    class Texture : public VirtualResource {};
+    class Buffer : public VirtualResource {};
+
+    class GlobalTexture : public Texture {};
+    class GlobalBuffer : public Buffer {};
+
+    class InstancedResource {};
+    class InstancedTexture : public InstancedResource {};
+    class InstancedBuffer : public InstancedResource {};
+
+    template <typename VR>
+    struct VirtualResourceTraits {};
+
+    template <typename VR>
+    using GetIRTypeByVR = typename VirtualResourceTraits<VR>::IR;
+
+    template <>
+    struct VirtualResourceTraits<Texture> {
+        using IR = InstancedTexture;
+    };
+
+    template <>
+    struct VirtualResourceTraits<Buffer> {
+        using IR = InstancedBuffer;
+    };
 
     class RenderGraph {
     public:
@@ -71,9 +57,18 @@ namespace RenderGraph {
 
     private:
         friend RenderGraphBuilder;
+        friend RenderGraphPassBuilder;
+        friend RenderGraphCuller;
 
-        std::vector<std::unique_ptr<Node>> nodes;
-        std::vector<Handle<Node>> freeNodeSlots;
+        struct Pass {
+            std::string name;
+            PassSetup setup;
+            std::vector<VirtualResource*> reads;
+            std::vector<VirtualResource*> writes;
+        };
+
+        std::vector<std::unique_ptr<Pass>> passes;
+        std::vector<std::unique_ptr<VirtualResource>> virtualResources;
     };
 
     class RenderGraphBuilder {
@@ -82,45 +77,73 @@ namespace RenderGraph {
         explicit RenderGraphBuilder(RenderGraph& g) : graph(g) {}
         ~RenderGraphBuilder() = default;
 
-        template <typename NodeType, typename... Args>
-        Handle<NodeType> Create(Args&&... args)
+        void AddPass(const std::string& name, PassSetup&& setup)
         {
-            static_assert(std::is_base_of_v<Node, NodeType>);
-            if (graph.freeNodeSlots.empty()) {
-                graph.nodes.template emplace_back(std::make_unique<NodeType>(std::forward<Args...>(args...)));
-                return graph.nodes.size() - 1;
-            } else {
-                auto handle = *(graph.freeNodeSlots.end() - 1);
-                graph.nodes[handle] = std::make_unique<NodeType>(std::forward<Args...>(args...));
-                graph.freeNodeSlots.pop_back();
-                return handle;
-            }
-        }
-
-        template <typename PassNodeType, typename ResourceNodeType>
-        bool ReadResource(Handle<PassNodeType> pass, Handle<ResourceNodeType> resource)
-        {
-            static_assert(std::is_base_of_v<PassNode, PassNodeType>);
-            static_assert(std::is_base_of_v<ResourceNode, ResourceNodeType>);
             // TODO
         }
 
-        template <typename PassNodeType, typename ResourceNodeType>
-        bool WriteResource(Handle<PassNodeType> pass, Handle<ResourceNodeType> resource)
+        template <typename VR, typename... Args>
+        VR* CreateVirtualResource(const std::string& name, Args&&... args)
         {
-            static_assert(std::is_base_of_v<PassNode, PassNodeType>);
-            static_assert(std::is_base_of_v<ResourceNode, ResourceNodeType>);
             // TODO
         }
 
-        template <typename NodeType>
-        bool VerifyHandle(Handle<NodeType> handle)
+        template <typename VR, typename... Args>
+        VR* RegisterGlobalResource(const std::string& name, Args&&... args)
         {
-            return handle >= 0 && handle < graph.nodes.size();
+            // TODO
         }
 
     private:
         RenderGraph& graph;
+    };
+
+    class RenderGraphPassBuilder {
+    public:
+        NON_COPYABLE(RenderGraphPassBuilder)
+        explicit RenderGraphPassBuilder(RenderGraph& g, RenderGraph::Pass& p) : graph(g), pass(p) {}
+        ~RenderGraphPassBuilder() = default;
+
+        void ReadResource(VirtualResource* virtualResource)
+        {
+            // TODO
+        }
+
+        void WriteResource(VirtualResource* virtualResource)
+        {
+            // TODO
+        }
+
+    private:
+        RenderGraph& graph;
+        RenderGraph::Pass& pass;
+    };
+
+    class RenderGraphCuller {
+    public:
+        NON_COPYABLE(RenderGraphCuller)
+        explicit RenderGraphCuller(RenderGraph& g) : graph(g) {}
+        ~RenderGraphCuller() = default;
+
+        void CullGraph()
+        {
+            // TODO
+        }
+
+    private:
+        RenderGraph& graph;
+    };
+
+    class InstancedResources {
+    public:
+        template <typename VR>
+        GetIRTypeByVR<VR>* GetInstancedResource(VR* virtualResource)
+        {
+            // TODO
+        }
+
+    private:
+        std::unordered_map<VirtualResource*, InstancedResource*> instancedResources;
     };
 }
 
