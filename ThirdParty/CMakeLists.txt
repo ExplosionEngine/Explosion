@@ -12,3 +12,7 @@ AddThirdPartyPackage(
     VERSION 1.4.9
     ARG -DBUILD_TESTING=OFF
 )
+AddThirdPartyPackage(
+    NAME DirectX-Headers
+    VERSION 1.4.9
+)
