@@ -39,7 +39,7 @@ endfunction()
 #  - VERSION {Single} : version of third party package
 #  - ARG     {List}   : arguments of cmake command
 function(AddThirdPartyPackage)
-    cmake_parse_arguments(PARAMS "" "NAME;VERSION" "ARG;INC;LIB" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME;VERSION" "ARG" ${ARGN})
 
     set(3RD_PACKAGE_NAME "${PARAMS_NAME}")
     set(3RD_PACKAGE_FULL_NAME "${PARAMS_NAME}-${PARAMS_VERSION}")
