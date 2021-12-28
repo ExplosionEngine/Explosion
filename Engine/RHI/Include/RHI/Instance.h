@@ -13,7 +13,7 @@ namespace RHI {
         static Instance* CreateByPlatform();
 
         NON_COPYABLE(Instance)
-        virtual ~Instance() = 0;
+        virtual ~Instance();
 
     protected:
         Instance();

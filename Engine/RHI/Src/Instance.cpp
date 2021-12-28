@@ -35,4 +35,6 @@ namespace RHI {
     }
 
     Instance::Instance() = default;
+
+    Instance::~Instance() = default;
 }
