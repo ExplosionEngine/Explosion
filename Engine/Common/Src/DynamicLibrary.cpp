@@ -58,12 +58,17 @@ namespace Common {
 }
 
 namespace Common {
+    DynamicLibraryManager& DynamicLibraryManager::Singleton()
+    {
+        static DynamicLibraryManager instance;
+        return instance;
+    }
+
     DynamicLibraryManager::DynamicLibraryManager() : libs() {}
 
     DynamicLibraryManager::~DynamicLibraryManager()
     {
-        for (auto&& iter : libs)
-        {
+        for (auto&& iter : libs) {
             DYNAMIC_LIB_UNLOAD(iter.second->GetHandle());
         }
     }
@@ -71,9 +76,12 @@ namespace Common {
     DynamicLibrary* DynamicLibraryManager::FindOrLoad(const std::string& name)
     {
         auto iter = libs.find(name);
-        if (iter == libs.end())
-        {
-            libs[name] = std::make_unique<DynamicLibrary>(DYNAMIC_LIB_LOAD(name.c_str(), RTLD_LOCAL | RTLD_LAZY));
+        if (iter == libs.end()) {
+            DYNAMIC_LIB_HANDLE handle = DYNAMIC_LIB_LOAD(name.c_str(), RTLD_LOCAL | RTLD_LAZY);
+            if (handle == nullptr) {
+                return nullptr;
+            }
+            libs[name] = std::make_unique<DynamicLibrary>(handle);
         }
         return libs[name].get();
     }
@@ -81,8 +89,7 @@ namespace Common {
     void DynamicLibraryManager::Unload(const std::string& name)
     {
         auto iter = libs.find(name);
-        if (iter == libs.end())
-        {
+        if (iter == libs.end()) {
             return;
         }
         DYNAMIC_LIB_UNLOAD(iter->second->GetHandle());
