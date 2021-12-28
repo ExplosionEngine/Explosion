@@ -1,7 +1,6 @@
 file(GLOB SOURCES Src/*.cpp)
 AddLibrary(
-    NAME RHI
-    TYPE STATIC
+    NAME Console
     SRC ${SOURCES}
     PUBLIC_INC Include
     LIB Common

@@ -1,8 +1,8 @@
 file(GLOB SOURCES Src/*.cpp)
 AddLibrary(
-    NAME RHI
-    TYPE STATIC
+    NAME RHI-DirectX12
+    TYPE SHARED
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB Common
+    LIB RHI
 )
