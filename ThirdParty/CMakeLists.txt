@@ -25,3 +25,10 @@ AddThirdPartyPackage(
     VERSION 1.4.9
 )
 set(DirectXHeaders_INC ${DirectXHeaders_SOURCE_DIR}/include CACHE PATH "" FORCE)
+
+# VulkanHpp
+AddThirdPartyPackage(
+    NAME VulkanHpp
+    VERSION 1.2.202
+)
+set(VulkanHpp_INC ${VulkanHpp_SOURCE_DIR} CACHE PATH "" FORCE)
