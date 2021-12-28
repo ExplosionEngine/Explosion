@@ -4,6 +4,7 @@ project(Explosion)
 set(CMAKE_CXX_STANDARD 17)
 
 include(ExternalProject)
+include(GenerateExportHeader)
 include(CMake/Target.cmake)
 include(CMake/ThirdParty.cmake)
 

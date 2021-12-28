@@ -1,6 +1,8 @@
 option(BUILD_TEST "Build unit tests" ON)
 option(ENABLE_TARGET_DEBUG_INFO "Enable debug info when add cmake targets" ON)
 
+set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Api CACHE PATH "" FORCE)
+
 # AddExecutable
 # Description: add a new executable target
 # Params:
@@ -78,6 +80,21 @@ function(AddLibrary)
         target_compile_options(
             ${PARAMS_NAME}
             PUBLIC $<IF:$<STREQUAL:${PARAMS_TYPE},"SHARED">,/MD$<$<CONFIG:Debug>:d>,/MT$<$<CONFIG:Debug>:d>>
+        )
+    endif()
+
+    if ("${PARAMS_TYPE}" STREQUAL "SHARED")
+        string(TOUPPER ${PARAMS_NAME}_API API_NAME)
+        string(REPLACE "-" "/" API_DIR ${PARAMS_NAME})
+
+        generate_export_header(
+            ${PARAMS_NAME}
+            EXPORT_MACRO_NAME ${API_NAME}
+            EXPORT_FILE_NAME ${API_HEADER_DIR}/${PARAMS_NAME}/${API_DIR}/Api.h
+        )
+        target_include_directories(
+            ${PARAMS_NAME}
+            PUBLIC ${API_HEADER_DIR}/${PARAMS_NAME}
         )
     endif()
 endfunction()
