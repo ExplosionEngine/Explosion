@@ -32,3 +32,13 @@ AddThirdPartyPackage(
     VERSION 1.2.202
 )
 set(VulkanHpp_INC ${VulkanHpp_SOURCE_DIR} CACHE PATH "" FORCE)
+
+# GLFW
+AddThirdPartyPackage(
+    NAME glfw
+    VERSION 3.3.6
+    BUILD
+)
+set(glfw_INC ${glfw_INSTALL_DIR}/include CACHE PATH "" FORCE)
+set(glfw_LINK ${glfw_INSTALL_DIR}/lib CACHE PATH "" FORCE)
+set(glfw_LIB glfw3 CACHE STRING "" FORCE)

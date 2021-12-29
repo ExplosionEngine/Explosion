@@ -40,14 +40,16 @@ endfunction()
 # AddLibrary
 # Description: add a new library target
 # Params:
-#  - NAME        {Single}              : name of target
-#  - TYPE        {"STATIC" | "SHARED"} : type of target
-#  - SRC         {List}                : sources of target
-#  - PRIVATE_INC {List}                : private include directories of target
-#  - PUBLIC_INC  {List}                : public include directories of target
-#  - LIB         {List}                : libraries of target
+#  - NAME         {Single}              : name of target
+#  - TYPE         {"STATIC" | "SHARED"} : type of target
+#  - SRC          {List}                : sources of target
+#  - PRIVATE_INC  {List}                : private include directories of target
+#  - PUBLIC_INC   {List}                : public include directories of target
+#  - PRIVATE_LINK {List}                : private link directories of target
+#  - PUBLIC_LINK  {List}                : public link directories of target
+#  - LIB          {List}                : libraries of target
 function(AddLibrary)
-    cmake_parse_arguments(PARAMS "" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;LIB" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;LINK;LIB" ${ARGN})
 
     if (${ENABLE_TARGET_DEBUG_INFO})
         message("")
@@ -70,6 +72,11 @@ function(AddLibrary)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_PRIVATE_INC}
         PUBLIC ${PARAMS_PUBLIC_INC}
+    )
+    target_link_directories(
+        ${PARAMS_NAME}
+        PRIVATE ${PARAMS_PRIVATE_LINK}
+        PUBLIC ${PARAMS_PUBLIC_LINK}
     )
     target_link_libraries(
         ${PARAMS_NAME}
