@@ -9,9 +9,10 @@ set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Api CACHE PATH "" FORCE)
 #  - NAME {Single} : name of target
 #  - SRC  {List}   : sources of target
 #  - INC  {List}   : private include directories of target
+#  - LINK {List}   : private link directories of target
 #  - LIB: {List}   : private libraries of target
 function(AddExecutable)
-    cmake_parse_arguments(PARAMS "" "NAME" "SRC;INC;LIB" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME" "SRC;INC;LINK;LIB" ${ARGN})
 
     if (${ENABLE_TARGET_DEBUG_INFO})
         message("")
@@ -30,6 +31,10 @@ function(AddExecutable)
     target_include_directories(
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_INC}
+    )
+    target_link_directories(
+        ${PARAMS_NAME}
+        PRIVATE ${PARAMS_LINK}
     )
     target_link_libraries(
         ${PARAMS_NAME}

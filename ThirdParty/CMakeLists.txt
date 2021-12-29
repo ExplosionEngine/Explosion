@@ -38,6 +38,7 @@ AddThirdPartyPackage(
     NAME glfw
     VERSION 3.3.6
     BUILD
+    ARG -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF
 )
 set(glfw_INC ${glfw_INSTALL_DIR}/include CACHE PATH "" FORCE)
 set(glfw_LINK ${glfw_INSTALL_DIR}/lib CACHE PATH "" FORCE)

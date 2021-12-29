@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.20)
 project(Explosion)
-
-set(CMAKE_CXX_STANDARD 17)
 
 include(ExternalProject)
 include(GenerateExportHeader)
+
+include(CMake/Common.cmake)
 include(CMake/Target.cmake)
 include(CMake/ThirdParty.cmake)
 
