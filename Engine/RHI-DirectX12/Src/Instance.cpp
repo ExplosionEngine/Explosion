@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include <RHI/DirectX12/Instance.h>
+#include <RHI/DirectX12/PhysicalDevice.h>
 #include <RHI/DirectX12/Utility.h>
 
 extern "C" {
@@ -19,6 +20,7 @@ namespace RHI::DirectX12 {
         : Instance(info)
     {
         CreateFactory(info);
+        LoadPhysicalDevices();
     }
 
     DX12Instance::~DX12Instance() = default;
@@ -40,5 +42,24 @@ namespace RHI::DirectX12 {
             CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&dxgiFactory)),
             "failed to create DXGI factory"
         );
+    }
+
+    void DX12Instance::LoadPhysicalDevices()
+    {
+        ComPtr<IDXGIAdapter1> adapter;
+        while (SUCCEEDED(dxgiFactory->EnumAdapters1(physicalDevices.size(), &adapter))) {
+            physicalDevices.emplace_back(std::make_unique<DX12PhysicalDevice>(std::move(adapter)));
+            adapter = nullptr;
+        }
+    }
+
+    uint32_t DX12Instance::CountPhysicalDevices()
+    {
+        return physicalDevices.size();
+    }
+
+    PhysicalDevice* DX12Instance::GetPhysicalDevice(uint32_t idx)
+    {
+        return physicalDevices[idx].get();
     }
 }

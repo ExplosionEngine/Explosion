@@ -2,6 +2,8 @@
 // Created by johnk on 29/12/2021.
 //
 
+#include <vector>
+
 #include <GLFW/glfw3.h>
 #include <RHI/Instance.h>
 
@@ -9,12 +11,14 @@ using namespace RHI;
 
 GLFWwindow* window;
 Instance* instance;
+std::vector<PhysicalDevice*> physicalDevices;
 
 void Init()
 {
     InstanceCreateInfo createInfo {};
     createInfo.debugMode = false;
     instance = RHI::Instance::CreateByPlatform(createInfo);
+    physicalDevices.resize(instance->CountPhysicalDevices());
 }
 
 void DrawFrame()

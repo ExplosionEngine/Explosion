@@ -8,6 +8,8 @@
 #include <Common/Utility.h>
 
 namespace RHI {
+    class PhysicalDevice;
+
     struct InstanceCreateInfo {
         bool debugMode;
     };
@@ -18,6 +20,9 @@ namespace RHI {
 
         NON_COPYABLE(Instance)
         virtual ~Instance();
+
+        virtual uint32_t CountPhysicalDevices() = 0;
+        virtual PhysicalDevice* GetPhysicalDevice(uint32_t idx) = 0;
 
     protected:
         explicit Instance(const InstanceCreateInfo& info);
