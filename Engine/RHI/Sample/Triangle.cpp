@@ -5,13 +5,16 @@
 #include <GLFW/glfw3.h>
 #include <RHI/Instance.h>
 
+using namespace RHI;
+
 GLFWwindow* window;
-RHI::Instance* instance;
+Instance* instance;
 
 void Init()
 {
-    // TODO
-    instance = RHI::Instance::CreateByPlatform();
+    InstanceCreateInfo createInfo {};
+    createInfo.debugMode = false;
+    instance = RHI::Instance::CreateByPlatform(createInfo);
 }
 
 void DrawFrame()

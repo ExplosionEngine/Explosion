@@ -4,5 +4,6 @@ AddLibrary(
     TYPE SHARED
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB RHI
+    PRIVATE_INC ${DirectXHeaders_INC}
+    LIB RHI d3d12 dxgi
 )

@@ -2,6 +2,8 @@
 // Created by johnk on 27/12/2021.
 //
 
+#include <utility>
+
 #include <RHI/Instance.h>
 #include <Common/DynamicLibrary.h>
 
@@ -19,7 +21,7 @@ namespace {
 }
 
 namespace RHI {
-    Instance* Instance::CreateByPlatform()
+    Instance* Instance::CreateByPlatform(const InstanceCreateInfo& info)
     {
         DynamicLibrary* rhiLib = DynamicLibraryManager::Singleton().FindOrLoad(GetPlatformRHILibName());
         if (rhiLib == nullptr)
@@ -31,10 +33,10 @@ namespace RHI {
         {
             return nullptr;
         }
-        return symbol();
+        return symbol(info);
     }
 
-    Instance::Instance() = default;
+    Instance::Instance(const InstanceCreateInfo& info) {}
 
     Instance::~Instance() = default;
 }
