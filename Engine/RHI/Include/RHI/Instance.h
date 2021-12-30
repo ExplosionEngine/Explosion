@@ -9,6 +9,7 @@
 
 namespace RHI {
     class PhysicalDevice;
+    class LogicalDevice;
 
     struct InstanceCreateInfo {
         bool debugMode;
@@ -23,6 +24,8 @@ namespace RHI {
 
         virtual uint32_t CountPhysicalDevices() = 0;
         virtual PhysicalDevice* GetPhysicalDevice(uint32_t idx) = 0;
+        virtual LogicalDevice* CreateLogicalDevice(PhysicalDevice* physicalDevice) = 0;
+        virtual void DestroyLogicalDevice(LogicalDevice* logicalDevice) = 0;
 
     protected:
         explicit Instance(const InstanceCreateInfo& info);

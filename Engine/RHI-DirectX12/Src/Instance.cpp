@@ -6,6 +6,7 @@
 
 #include <RHI/DirectX12/Instance.h>
 #include <RHI/DirectX12/PhysicalDevice.h>
+#include <RHI/DirectX12/LogicalDevice.h>
 #include <RHI/DirectX12/Utility.h>
 
 extern "C" {
@@ -16,8 +17,7 @@ extern "C" {
 }
 
 namespace RHI::DirectX12 {
-    DX12Instance::DX12Instance(const InstanceCreateInfo& info)
-        : Instance(info)
+    DX12Instance::DX12Instance(const InstanceCreateInfo& info) : Instance(info)
     {
         CreateFactory(info);
         LoadPhysicalDevices();
@@ -61,5 +61,20 @@ namespace RHI::DirectX12 {
     PhysicalDevice* DX12Instance::GetPhysicalDevice(uint32_t idx)
     {
         return physicalDevices[idx].get();
+    }
+
+    LogicalDevice* DX12Instance::CreateLogicalDevice(PhysicalDevice* physicalDevice)
+    {
+        return new DX12LogicalDevice(*this, *static_cast<DX12PhysicalDevice*>(physicalDevice));
+    }
+
+    void DX12Instance::DestroyLogicalDevice(LogicalDevice* logicalDevice)
+    {
+        delete logicalDevice;
+    }
+
+    ComPtr<IDXGIFactory4>& DX12Instance::GetDXGIFactory()
+    {
+        return dxgiFactory;
     }
 }

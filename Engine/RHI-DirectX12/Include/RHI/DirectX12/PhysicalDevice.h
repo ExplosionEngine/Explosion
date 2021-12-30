@@ -24,6 +24,8 @@ namespace RHI::DirectX12 {
 
         PhysicalDeviceProperty GetProperty() override;
 
+        ComPtr<IDXGIAdapter1>& GetDXGIAdapter();
+
     private:
         ComPtr<IDXGIAdapter1> dxgiAdapter;
     };

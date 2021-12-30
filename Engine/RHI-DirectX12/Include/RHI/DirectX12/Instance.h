@@ -33,6 +33,10 @@ namespace RHI::DirectX12 {
 
         uint32_t CountPhysicalDevices() override;
         PhysicalDevice* GetPhysicalDevice(uint32_t idx) override;
+        LogicalDevice* CreateLogicalDevice(PhysicalDevice* physicalDevice) override;
+        void DestroyLogicalDevice(LogicalDevice *logicalDevice) override;
+
+        ComPtr<IDXGIFactory4>& GetDXGIFactory();
 
     private:
         void CreateFactory(const InstanceCreateInfo& info);

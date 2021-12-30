@@ -5,7 +5,7 @@
 #include <RHI/DirectX12/PhysicalDevice.h>
 
 namespace RHI::DirectX12 {
-    DX12PhysicalDevice::DX12PhysicalDevice(ComPtr<IDXGIAdapter1>&& adapter) : dxgiAdapter(adapter) {}
+    DX12PhysicalDevice::DX12PhysicalDevice(ComPtr<IDXGIAdapter1>&& adapter) : PhysicalDevice(), dxgiAdapter(adapter) {}
 
     DX12PhysicalDevice::~DX12PhysicalDevice() = default;
 
@@ -17,5 +17,10 @@ namespace RHI::DirectX12 {
         PhysicalDeviceProperty property {};
         property.isSoftware = desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE;
         return property;
+    }
+
+    ComPtr<IDXGIAdapter1>& DX12PhysicalDevice::GetDXGIAdapter()
+    {
+        return dxgiAdapter;
     }
 }
