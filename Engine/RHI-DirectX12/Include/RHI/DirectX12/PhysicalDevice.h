@@ -19,11 +19,13 @@ namespace RHI::DirectX12 {
     class DX12PhysicalDevice : public PhysicalDevice {
     public:
         NON_COPYABLE(DX12PhysicalDevice)
-        DX12PhysicalDevice(ComPtr<IDXGIAdapter1>&& adapter);
+        explicit DX12PhysicalDevice(ComPtr<IDXGIAdapter1>&& adapter);
         ~DX12PhysicalDevice() override;
 
+        PhysicalDeviceProperty GetProperty() override;
+
     private:
-        ComPtr<IDXGIAdapter1> adapter;
+        ComPtr<IDXGIAdapter1> dxgiAdapter;
     };
 }
 

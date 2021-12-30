@@ -8,10 +8,16 @@
 #include <Common/Utility.h>
 
 namespace RHI {
+    struct PhysicalDeviceProperty {
+        bool isSoftware;
+    };
+
     class PhysicalDevice {
     public:
         NON_COPYABLE(PhysicalDevice)
         virtual ~PhysicalDevice();
+
+        virtual PhysicalDeviceProperty GetProperty() = 0;
 
     protected:
         PhysicalDevice();
