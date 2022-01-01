@@ -1,13 +1,10 @@
 name: Build
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+on: [pull_request, workflow_dispatch]
 
 env:
   BUILD_TYPE: Release
+  MAKE_THREAD_NUM: 16
 
 jobs:
   build:
@@ -26,7 +23,7 @@ jobs:
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
       - name: Build
-        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j ${{env.MAKE_THREAD_NUM}}
 
       - name: Test
         working-directory: ${{github.workspace}}/build
