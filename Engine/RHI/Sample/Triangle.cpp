@@ -8,6 +8,7 @@
 #include <RHI/Instance.h>
 #include <RHI/PhysicalDevice.h>
 #include <RHI/LogicalDevice.h>
+#include <RHI/CommandQueue.h>
 
 using namespace RHI;
 
@@ -15,21 +16,32 @@ GLFWwindow* window;
 Instance* instance;
 std::vector<PhysicalDevice*> physicalDevices;
 LogicalDevice* logicalDevice;
+CommandQueue* commandQueue;
 
 void Init()
 {
-    InstanceCreateInfo createInfo {};
-    createInfo.debugMode = false;
-    instance = RHI::Instance::CreateByPlatform(createInfo);
-    physicalDevices.resize(instance->CountPhysicalDevices());
+    {
+        InstanceCreateInfo createInfo {};
+        createInfo.debugMode = false;
+        instance = Instance::CreateByPlatform(createInfo);
+    }
 
-    for (uint32_t i = 0; i < physicalDevices.size(); i++) {
-        physicalDevices[i] = instance->GetPhysicalDevice(i);
-        if (physicalDevices[i]->GetProperty().isSoftware) {
-            continue;
+    {
+        physicalDevices.resize(instance->CountPhysicalDevices());
+        for (uint32_t i = 0; i < physicalDevices.size(); i++) {
+            physicalDevices[i] = instance->GetPhysicalDevice(i);
+            if (physicalDevices[i]->GetProperty().isSoftware) {
+                continue;
+            }
+            logicalDevice = instance->CreateLogicalDevice(physicalDevices[i]);
+            break;
         }
-        logicalDevice = instance->CreateLogicalDevice(physicalDevices[i]);
-        break;
+    }
+
+    {
+        CommandQueueCreateInfo createInfo {};
+        createInfo.type = CommandQueueType::GRAPHICS;
+        commandQueue = logicalDevice->CreateCommandQueue(createInfo);
     }
 }
 

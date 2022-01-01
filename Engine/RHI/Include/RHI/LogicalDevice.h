@@ -8,10 +8,16 @@
 #include <Common/Utility.h>
 
 namespace RHI {
+    class CommandQueue;
+    struct CommandQueueCreateInfo;
+
     class LogicalDevice {
     public:
         NON_COPYABLE(LogicalDevice)
         virtual ~LogicalDevice();
+
+        virtual CommandQueue* CreateCommandQueue(const CommandQueueCreateInfo& createInfo) = 0;
+        virtual void DestroyCommandQueue(CommandQueue* commandQueue) = 0;
 
     protected:
         LogicalDevice();

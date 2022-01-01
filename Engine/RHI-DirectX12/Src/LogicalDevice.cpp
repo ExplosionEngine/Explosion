@@ -5,6 +5,7 @@
 #include <RHI/DirectX12/Instance.h>
 #include <RHI/DirectX12/PhysicalDevice.h>
 #include <RHI/DirectX12/LogicalDevice.h>
+#include <RHI/DirectX12/CommandQueue.h>
 #include <RHI/DirectX12/Utility.h>
 
 namespace RHI::DirectX12 {
@@ -26,5 +27,15 @@ namespace RHI::DirectX12 {
     ComPtr<ID3D12Device>& DX12LogicalDevice::GetDX12Device()
     {
         return dx12Device;
+    }
+
+    CommandQueue* DX12LogicalDevice::CreateCommandQueue(const CommandQueueCreateInfo& createInfo)
+    {
+        return new DX12CommandQueue(*this, createInfo);
+    }
+
+    void DX12LogicalDevice::DestroyCommandQueue(CommandQueue* commandQueue)
+    {
+        delete commandQueue;
     }
 }
