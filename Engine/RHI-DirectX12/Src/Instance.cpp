@@ -3,7 +3,9 @@
 //
 
 #include <cstdint>
+#include <unordered_map>
 
+#include <RHI/Enum.h>
 #include <RHI/DirectX12/Instance.h>
 #include <RHI/DirectX12/PhysicalDevice.h>
 #include <RHI/DirectX12/LogicalDevice.h>
@@ -19,6 +21,7 @@ extern "C" {
 namespace RHI::DirectX12 {
     DX12Instance::DX12Instance(const InstanceCreateInfo& info) : Instance(info)
     {
+        ProduceExtensions(info);
         CreateFactory(info);
         LoadPhysicalDevices();
     }
@@ -73,8 +76,29 @@ namespace RHI::DirectX12 {
         delete logicalDevice;
     }
 
+    const DX12InstanceProperty& DX12Instance::GetProperty()
+    {
+        return property;
+    }
+
     ComPtr<IDXGIFactory4>& DX12Instance::GetDXGIFactory()
     {
         return dxgiFactory;
+    }
+
+    void DX12Instance::ProduceExtensions(const InstanceCreateInfo& info)
+    {
+        static const std::unordered_map<std::string, ExtensionProducer> EXTENSION_PRODUCERS = {
+            { RHI_EXT_NAME_SURFACE, [](DX12InstanceProperty& prop) -> void { prop.supportSurface = true; } },
+            { RHI_EXT_NAME_WINDOWS_SURFACE, [](DX12InstanceProperty& prop) -> void { prop.supportWindowsSurface = true; } }
+        };
+
+        for (size_t i = 0; i < info.extensionNum; i++) {
+            auto iter = EXTENSION_PRODUCERS.find(std::string(info.extensions[i]));
+            if (iter == EXTENSION_PRODUCERS.end()) {
+                continue;
+            }
+            iter->second(property);
+        }
     }
 }

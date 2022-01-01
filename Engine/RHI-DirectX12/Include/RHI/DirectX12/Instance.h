@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <memory>
+#include <functional>
 
 #include <d3d12.h>
 #include <dxgi1_4.h>
@@ -25,6 +26,13 @@ extern "C" {
 namespace RHI::DirectX12 {
     class DX12PhysicalDevice;
 
+    struct DX12InstanceProperty {
+        bool supportSurface;
+        bool supportWindowsSurface;
+    };
+
+    using ExtensionProducer = std::function<void(DX12InstanceProperty&)>;
+
     class DX12Instance : public Instance {
     public:
         NON_COPYABLE(DX12Instance)
@@ -36,12 +44,15 @@ namespace RHI::DirectX12 {
         LogicalDevice* CreateLogicalDevice(PhysicalDevice* physicalDevice) override;
         void DestroyLogicalDevice(LogicalDevice *logicalDevice) override;
 
+        const DX12InstanceProperty& GetProperty();
         ComPtr<IDXGIFactory4>& GetDXGIFactory();
 
     private:
         void CreateFactory(const InstanceCreateInfo& info);
+        void ProduceExtensions(const InstanceCreateInfo& info);
         void LoadPhysicalDevices();
 
+        DX12InstanceProperty property;
         ComPtr<IDXGIFactory4> dxgiFactory;
         std::vector<std::unique_ptr<DX12PhysicalDevice>> physicalDevices;
     };

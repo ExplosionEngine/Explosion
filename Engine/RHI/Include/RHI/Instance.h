@@ -6,6 +6,7 @@
 #define EXPLOSION_RHI_INSTANCE_H
 
 #include <Common/Utility.h>
+#include <string>
 
 namespace RHI {
     class PhysicalDevice;
@@ -13,6 +14,8 @@ namespace RHI {
 
     struct InstanceCreateInfo {
         bool debugMode;
+        size_t extensionNum;
+        const char** extensions;
     };
 
     class Instance {

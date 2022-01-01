@@ -5,6 +5,8 @@
 #include <vector>
 
 #include <GLFW/glfw3.h>
+
+#include <RHI/Enum.h>
 #include <RHI/Instance.h>
 #include <RHI/PhysicalDevice.h>
 #include <RHI/LogicalDevice.h>
@@ -21,8 +23,15 @@ CommandQueue* commandQueue;
 void Init()
 {
     {
+        std::vector<const char*> extensions = {
+            RHI_EXT_NAME_SURFACE.c_str(),
+            RHI_EXT_NAME_WINDOWS_SURFACE.c_str()
+        };
+
         InstanceCreateInfo createInfo {};
         createInfo.debugMode = false;
+        createInfo.extensionNum = extensions.size();
+        createInfo.extensions = extensions.data();
         instance = Instance::CreateByPlatform(createInfo);
     }
 
