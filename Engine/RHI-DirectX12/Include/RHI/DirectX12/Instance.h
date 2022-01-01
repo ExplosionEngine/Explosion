@@ -43,6 +43,8 @@ namespace RHI::DirectX12 {
         PhysicalDevice* GetPhysicalDevice(uint32_t idx) override;
         LogicalDevice* CreateLogicalDevice(PhysicalDevice* physicalDevice) override;
         void DestroyLogicalDevice(LogicalDevice *logicalDevice) override;
+        Surface* CreateSurface(const SurfaceCreateInfo &createInfo) override;
+        void DestroySurface(Surface* surface) override;
 
         const DX12InstanceProperty& GetProperty();
         ComPtr<IDXGIFactory4>& GetDXGIFactory();

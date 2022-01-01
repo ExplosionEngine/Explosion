@@ -9,6 +9,7 @@
 #include <RHI/DirectX12/Instance.h>
 #include <RHI/DirectX12/PhysicalDevice.h>
 #include <RHI/DirectX12/LogicalDevice.h>
+#include <RHI/DirectX12/Surface.h>
 #include <RHI/DirectX12/Utility.h>
 
 extern "C" {
@@ -19,7 +20,7 @@ extern "C" {
 }
 
 namespace RHI::DirectX12 {
-    DX12Instance::DX12Instance(const InstanceCreateInfo& info) : Instance(info)
+    DX12Instance::DX12Instance(const InstanceCreateInfo& info) : Instance(info), property({})
     {
         ProduceExtensions(info);
         CreateFactory(info);
@@ -74,6 +75,16 @@ namespace RHI::DirectX12 {
     void DX12Instance::DestroyLogicalDevice(LogicalDevice* logicalDevice)
     {
         delete logicalDevice;
+    }
+
+    Surface* DX12Instance::CreateSurface(const SurfaceCreateInfo& createInfo)
+    {
+        return new DX12Surface(*this, createInfo);
+    }
+
+    void DX12Instance::DestroySurface(Surface* surface)
+    {
+        delete surface;
     }
 
     const DX12InstanceProperty& DX12Instance::GetProperty()
