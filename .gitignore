@@ -5,7 +5,8 @@
 .vscode
 
 # Binaries
-cmake-build-debug
+cmake-build-*
+build-*
 
 # 3rd
 ThirdParty/Lib
