@@ -10,7 +10,7 @@
 #include <RHI/Instance.h>
 #include <RHI/PhysicalDevice.h>
 #include <RHI/LogicalDevice.h>
-#include <RHI/CommandQueue.h>
+#include <RHI/Queue.h>
 
 using namespace RHI;
 
@@ -18,7 +18,7 @@ GLFWwindow* window;
 Instance* instance;
 std::vector<PhysicalDevice*> physicalDevices;
 LogicalDevice* logicalDevice;
-CommandQueue* commandQueue;
+Queue* graphicsQueue;
 
 void Init()
 {
@@ -42,15 +42,18 @@ void Init()
             if (physicalDevices[i]->GetProperty().isSoftware) {
                 continue;
             }
-            logicalDevice = instance->CreateLogicalDevice(physicalDevices[i]);
+
+            QueueFamilyCreateInfo queueFamilyCreateInfo {};
+            queueFamilyCreateInfo.type = QueueFamilyType::GRAPHICS;
+            queueFamilyCreateInfo.queueNum = 1;
+
+            LogicalDeviceCreateInfo logicalDeviceCreateInfo {};
+            logicalDeviceCreateInfo.queueFamilyNum = 1;
+            logicalDeviceCreateInfo.queueFamilyCreateInfos = &queueFamilyCreateInfo;
+            logicalDevice = instance->CreateLogicalDevice(physicalDevices[i], &logicalDeviceCreateInfo);
             break;
         }
-    }
-
-    {
-        CommandQueueCreateInfo createInfo {};
-        createInfo.type = CommandQueueType::GRAPHICS;
-        commandQueue = logicalDevice->CreateCommandQueue(&createInfo);
+        graphicsQueue = logicalDevice->GetCommandQueue(QueueFamilyType::GRAPHICS, 0);
     }
 }
 

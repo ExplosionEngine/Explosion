@@ -13,6 +13,7 @@ namespace RHI {
     class LogicalDevice;
     class Surface;
     struct SurfaceCreateInfo;
+    struct LogicalDeviceCreateInfo;
 
     struct InstanceCreateInfo {
         bool debugMode;
@@ -29,7 +30,7 @@ namespace RHI {
 
         virtual uint32_t CountPhysicalDevices() = 0;
         virtual PhysicalDevice* GetPhysicalDevice(uint32_t idx) = 0;
-        virtual LogicalDevice* CreateLogicalDevice(PhysicalDevice* physicalDevice) = 0;
+        virtual LogicalDevice* CreateLogicalDevice(PhysicalDevice* physicalDevice, const LogicalDeviceCreateInfo* createInfo) = 0;
         virtual void DestroyLogicalDevice(LogicalDevice* logicalDevice) = 0;
         virtual Surface* CreateSurface(const SurfaceCreateInfo* createInfo) = 0;
         virtual void DestroySurface(Surface* surface) = 0;

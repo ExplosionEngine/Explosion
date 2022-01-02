@@ -15,11 +15,11 @@ namespace RHI::DirectX12 {
     const std::unordered_map<E, uint64_t> ENUM_MAP;
 
     template <>
-    const std::unordered_map<CommandQueueType, D3D12_COMMAND_LIST_TYPE> ENUM_MAP<CommandQueueType, D3D12_COMMAND_LIST_TYPE> = {
-        { CommandQueueType::GRAPHICS, D3D12_COMMAND_LIST_TYPE_DIRECT },
-        { CommandQueueType::SECONDARY, D3D12_COMMAND_LIST_TYPE_BUNDLE },
-        { CommandQueueType::COMPUTE, D3D12_COMMAND_LIST_TYPE_COMPUTE },
-        { CommandQueueType::COPY, D3D12_COMMAND_LIST_TYPE_COPY }
+    const std::unordered_map<QueueFamilyType, D3D12_COMMAND_LIST_TYPE> ENUM_MAP<QueueFamilyType, D3D12_COMMAND_LIST_TYPE> = {
+        { QueueFamilyType::GRAPHICS,  D3D12_COMMAND_LIST_TYPE_DIRECT },
+        { QueueFamilyType::SECONDARY, D3D12_COMMAND_LIST_TYPE_BUNDLE },
+        { QueueFamilyType::COMPUTE,   D3D12_COMMAND_LIST_TYPE_COMPUTE },
+        { QueueFamilyType::COPY,      D3D12_COMMAND_LIST_TYPE_COPY }
     };
 
     template <typename E, typename DXE>

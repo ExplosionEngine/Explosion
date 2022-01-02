@@ -41,7 +41,7 @@ namespace RHI::DirectX12 {
 
         uint32_t CountPhysicalDevices() override;
         PhysicalDevice* GetPhysicalDevice(uint32_t idx) override;
-        LogicalDevice* CreateLogicalDevice(PhysicalDevice* physicalDevice) override;
+        LogicalDevice* CreateLogicalDevice(PhysicalDevice* physicalDevice, const LogicalDeviceCreateInfo* createInfo) override;
         void DestroyLogicalDevice(LogicalDevice* logicalDevice) override;
         Surface* CreateSurface(const SurfaceCreateInfo* createInfo) override;
         void DestroySurface(Surface* surface) override;

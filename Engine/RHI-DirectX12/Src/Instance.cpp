@@ -67,9 +67,9 @@ namespace RHI::DirectX12 {
         return physicalDevices[idx].get();
     }
 
-    LogicalDevice* DX12Instance::CreateLogicalDevice(PhysicalDevice* physicalDevice)
+    LogicalDevice* DX12Instance::CreateLogicalDevice(PhysicalDevice* physicalDevice, const LogicalDeviceCreateInfo* createInfo)
     {
-        return new DX12LogicalDevice(*this, *static_cast<DX12PhysicalDevice*>(physicalDevice));
+        return new DX12LogicalDevice(*this, *static_cast<DX12PhysicalDevice*>(physicalDevice), createInfo);
     }
 
     void DX12Instance::DestroyLogicalDevice(LogicalDevice* logicalDevice)

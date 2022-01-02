@@ -5,6 +5,9 @@
 #ifndef EXPLOSION_RHI_DX12_LOGICAL_DEVICE_H
 #define EXPLOSION_RHI_DX12_LOGICAL_DEVICE_H
 
+#include <unordered_map>
+#include <memory>
+
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include <wrl/client.h>
@@ -20,18 +23,21 @@ namespace RHI::DirectX12 {
     class DX12LogicalDevice : public LogicalDevice {
     public:
         NON_COPYABLE(DX12LogicalDevice)
-        DX12LogicalDevice(DX12Instance& instance, DX12PhysicalDevice& physicalDevice);
+        DX12LogicalDevice(DX12Instance& instance, DX12PhysicalDevice& physicalDevice, const LogicalDeviceCreateInfo* createInfo);
         ~DX12LogicalDevice() override;
 
-        CommandQueue* CreateCommandQueue(const CommandQueueCreateInfo* createInfo) override;
-        void DestroyCommandQueue(CommandQueue* commandQueue) override;
+        size_t GetQueueNum(QueueFamilyType familyType) override;
+        Queue* GetCommandQueue(QueueFamilyType familyType, size_t idx) override;
 
         ComPtr<ID3D12Device>& GetDX12Device();
 
     private:
         void CreateDevice(ComPtr<IDXGIFactory4>& dxgiFactory, ComPtr<IDXGIAdapter1>& dxgiAdapter);
+        void CreateCommandQueue(const LogicalDeviceCreateInfo* createInfo);
 
+        DX12Instance& instance;
         ComPtr<ID3D12Device> dx12Device;
+        std::unordered_map<QueueFamilyType, std::vector<std::unique_ptr<Queue>>> queueFamilies;
     };
 }
 

@@ -6,21 +6,27 @@
 #define EXPLOSION_RHI_LOGICAL_DEVICE_H
 
 #include <Common/Utility.h>
+#include <RHI/Enum.h>
 
 namespace RHI {
-    class CommandQueue;
-    struct CommandQueueCreateInfo;
+    class Queue;
+    struct QueueFamilyCreateInfo;
+
+    struct LogicalDeviceCreateInfo {
+        size_t queueFamilyNum;
+        const QueueFamilyCreateInfo* queueFamilyCreateInfos;
+    };
 
     class LogicalDevice {
     public:
         NON_COPYABLE(LogicalDevice)
         virtual ~LogicalDevice();
 
-        virtual CommandQueue* CreateCommandQueue(const CommandQueueCreateInfo* createInfo) = 0;
-        virtual void DestroyCommandQueue(CommandQueue* commandQueue) = 0;
+        virtual size_t GetQueueNum(QueueFamilyType familyType) = 0;
+        virtual Queue* GetCommandQueue(QueueFamilyType familyType, size_t idx) = 0;
 
     protected:
-        LogicalDevice();
+        explicit LogicalDevice(const LogicalDeviceCreateInfo* createInfo);
     };
 }
 

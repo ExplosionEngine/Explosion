@@ -5,13 +5,15 @@
 #include <RHI/DirectX12/Instance.h>
 #include <RHI/DirectX12/PhysicalDevice.h>
 #include <RHI/DirectX12/LogicalDevice.h>
-#include <RHI/DirectX12/CommandQueue.h>
+#include <RHI/DirectX12/Queue.h>
 #include <RHI/DirectX12/Utility.h>
 
 namespace RHI::DirectX12 {
-    DX12LogicalDevice::DX12LogicalDevice(DX12Instance& instance, DX12PhysicalDevice& physicalDevice)
+    DX12LogicalDevice::DX12LogicalDevice(DX12Instance& instance, DX12PhysicalDevice& physicalDevice, const LogicalDeviceCreateInfo* createInfo)
+        : LogicalDevice(createInfo), instance(instance)
     {
         CreateDevice(instance.GetDXGIFactory(), physicalDevice.GetDXGIAdapter());
+        CreateCommandQueue(createInfo);
     }
 
     DX12LogicalDevice::~DX12LogicalDevice() = default;
@@ -29,13 +31,39 @@ namespace RHI::DirectX12 {
         return dx12Device;
     }
 
-    CommandQueue* DX12LogicalDevice::CreateCommandQueue(const CommandQueueCreateInfo* createInfo)
+    void DX12LogicalDevice::CreateCommandQueue(const LogicalDeviceCreateInfo* createInfo)
     {
-        return new DX12CommandQueue(*this, createInfo);
+        for (size_t i = 0; i < createInfo->queueFamilyNum; i++) {
+            auto& familyCreateInfo = createInfo->queueFamilyCreateInfos[i];
+            auto& familyQueues = queueFamilies[familyCreateInfo.type];
+            familyQueues.resize(familyCreateInfo.queueNum);
+
+            QueueCreateInfo commandQueueCreateInfo {};
+            commandQueueCreateInfo.type = familyCreateInfo.type;
+            for (auto& familyQueue : familyQueues) {
+                familyQueue = std::make_unique<DX12Queue>(*this, &commandQueueCreateInfo);
+            }
+        }
     }
 
-    void DX12LogicalDevice::DestroyCommandQueue(CommandQueue* commandQueue)
+    size_t DX12LogicalDevice::GetQueueNum(QueueFamilyType familyType)
     {
-        delete commandQueue;
+        auto iter = queueFamilies.find(familyType);
+        if (iter == queueFamilies.end()) {
+            return 0;
+        }
+        return iter->second.size();
+    }
+
+    Queue* DX12LogicalDevice::GetCommandQueue(QueueFamilyType familyType, size_t idx)
+    {
+        auto iter = queueFamilies.find(familyType);
+        if (iter == queueFamilies.end()) {
+            return nullptr;
+        }
+        if (idx < 0 || idx >= iter->second.size()) {
+            return nullptr;
+        }
+        return iter->second[idx].get();
     }
 }

@@ -11,7 +11,7 @@ namespace RHI {
     const std::string RHI_EXT_NAME_SURFACE = "Surface";
     const std::string RHI_EXT_NAME_WINDOWS_SURFACE = "WindowsSurface";
 
-    enum class CommandQueueType {
+    enum class QueueFamilyType {
         GRAPHICS = 0,
         SECONDARY,
         COMPUTE,
