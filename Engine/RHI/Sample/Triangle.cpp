@@ -24,8 +24,8 @@ void Init()
 {
     {
         std::vector<const char*> extensions = {
-            RHI_EXT_NAME_SURFACE.c_str(),
-            RHI_EXT_NAME_WINDOWS_SURFACE.c_str()
+            RHI_INSTANCE_EXT_NAME_SURFACE.c_str(),
+            RHI_INSTANCE_EXT_NAME_WINDOWS_SURFACE.c_str()
         };
 
         InstanceCreateInfo createInfo {};

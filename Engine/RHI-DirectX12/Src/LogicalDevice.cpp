@@ -10,10 +10,11 @@
 
 namespace RHI::DirectX12 {
     DX12LogicalDevice::DX12LogicalDevice(DX12Instance& instance, DX12PhysicalDevice& physicalDevice, const LogicalDeviceCreateInfo* createInfo)
-        : LogicalDevice(createInfo), instance(instance)
+        : LogicalDevice(createInfo), instance(instance), property({})
     {
         CreateDevice(instance.GetDXGIFactory(), physicalDevice.GetDXGIAdapter());
         CreateCommandQueue(createInfo);
+        ProcessExtensions(createInfo);
     }
 
     DX12LogicalDevice::~DX12LogicalDevice() = default;
@@ -65,5 +66,25 @@ namespace RHI::DirectX12 {
             return nullptr;
         }
         return iter->second[idx].get();
+    }
+
+    DX12LogicalDeviceProperty DX12LogicalDevice::GetProperty()
+    {
+        return property;
+    }
+
+    void DX12LogicalDevice::ProcessExtensions(const LogicalDeviceCreateInfo* createInfo)
+    {
+        static const std::unordered_map<std::string, DeviceExtProcessor> PROCESSORS = {
+            { RHI_DEVICE_EXT_NAME_SWAP_CHAIN, [](DX12LogicalDeviceProperty& prop) -> void { prop.supportSwapChain = true; } }
+        };
+
+        for (size_t i = 0; i < createInfo->extensionNum; i++) {
+            auto iter =  PROCESSORS.find(std::string(createInfo->extensions[i]));
+            if (iter == PROCESSORS.end()) {
+                continue;
+            }
+            iter->second(property);
+        }
     }
 }

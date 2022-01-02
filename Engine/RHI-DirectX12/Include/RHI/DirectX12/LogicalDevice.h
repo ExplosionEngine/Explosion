@@ -20,6 +20,12 @@ namespace RHI::DirectX12 {
     class DX12Instance;
     class DX12PhysicalDevice;
 
+    struct DX12LogicalDeviceProperty {
+        bool supportSwapChain;
+    };
+
+    using DeviceExtProcessor = std::function<void(DX12LogicalDeviceProperty&)>;
+
     class DX12LogicalDevice : public LogicalDevice {
     public:
         NON_COPYABLE(DX12LogicalDevice)
@@ -29,14 +35,18 @@ namespace RHI::DirectX12 {
         size_t GetQueueNum(QueueFamilyType familyType) override;
         Queue* GetCommandQueue(QueueFamilyType familyType, size_t idx) override;
 
+        DX12LogicalDeviceProperty GetProperty();
         ComPtr<ID3D12Device>& GetDX12Device();
 
     private:
         void CreateDevice(ComPtr<IDXGIFactory4>& dxgiFactory, ComPtr<IDXGIAdapter1>& dxgiAdapter);
+        void ProcessExtensions(const LogicalDeviceCreateInfo* createInfo);
         void CreateCommandQueue(const LogicalDeviceCreateInfo* createInfo);
 
-        DX12Instance& instance;
         ComPtr<ID3D12Device> dx12Device;
+
+        DX12Instance& instance;
+        DX12LogicalDeviceProperty property;
         std::unordered_map<QueueFamilyType, std::vector<std::unique_ptr<Queue>>> queueFamilies;
     };
 }

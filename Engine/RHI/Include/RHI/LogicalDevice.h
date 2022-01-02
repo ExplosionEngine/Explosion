@@ -15,6 +15,8 @@ namespace RHI {
     struct LogicalDeviceCreateInfo {
         size_t queueFamilyNum;
         const QueueFamilyCreateInfo* queueFamilyCreateInfos;
+        size_t extensionNum;
+        const char** extensions;
     };
 
     class LogicalDevice {

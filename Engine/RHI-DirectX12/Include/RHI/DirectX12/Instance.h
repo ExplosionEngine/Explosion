@@ -31,7 +31,7 @@ namespace RHI::DirectX12 {
         bool supportWindowsSurface;
     };
 
-    using ExtensionProducer = std::function<void(DX12InstanceProperty&)>;
+    using InstanceExtProcessor = std::function<void(DX12InstanceProperty&)>;
 
     class DX12Instance : public Instance {
     public:
@@ -51,11 +51,12 @@ namespace RHI::DirectX12 {
 
     private:
         void CreateFactory(const InstanceCreateInfo* info);
-        void ProduceExtensions(const InstanceCreateInfo* info);
+        void ProcessExtensions(const InstanceCreateInfo* info);
         void LoadPhysicalDevices();
 
-        DX12InstanceProperty property;
         ComPtr<IDXGIFactory4> dxgiFactory;
+
+        DX12InstanceProperty property;
         std::vector<std::unique_ptr<DX12PhysicalDevice>> physicalDevices;
     };
 }

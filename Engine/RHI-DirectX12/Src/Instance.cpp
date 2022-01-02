@@ -22,7 +22,7 @@ extern "C" {
 namespace RHI::DirectX12 {
     DX12Instance::DX12Instance(const InstanceCreateInfo* info) : Instance(info), property({})
     {
-        ProduceExtensions(info);
+        ProcessExtensions(info);
         CreateFactory(info);
         LoadPhysicalDevices();
     }
@@ -97,16 +97,16 @@ namespace RHI::DirectX12 {
         return dxgiFactory;
     }
 
-    void DX12Instance::ProduceExtensions(const InstanceCreateInfo* info)
+    void DX12Instance::ProcessExtensions(const InstanceCreateInfo* info)
     {
-        static const std::unordered_map<std::string, ExtensionProducer> EXTENSION_PRODUCERS = {
-            { RHI_EXT_NAME_SURFACE, [](DX12InstanceProperty& prop) -> void { prop.supportSurface = true; } },
-            { RHI_EXT_NAME_WINDOWS_SURFACE, [](DX12InstanceProperty& prop) -> void { prop.supportWindowsSurface = true; } }
+        static const std::unordered_map<std::string, InstanceExtProcessor> PROCESSORS = {
+            { RHI_INSTANCE_EXT_NAME_SURFACE, [](DX12InstanceProperty& prop) -> void { prop.supportSurface = true; } },
+            { RHI_INSTANCE_EXT_NAME_WINDOWS_SURFACE, [](DX12InstanceProperty& prop) -> void { prop.supportWindowsSurface = true; } }
         };
 
         for (size_t i = 0; i < info->extensionNum; i++) {
-            auto iter = EXTENSION_PRODUCERS.find(std::string(info->extensions[i]));
-            if (iter == EXTENSION_PRODUCERS.end()) {
+            auto iter = PROCESSORS.find(std::string(info->extensions[i]));
+            if (iter == PROCESSORS.end()) {
                 continue;
             }
             iter->second(property);
