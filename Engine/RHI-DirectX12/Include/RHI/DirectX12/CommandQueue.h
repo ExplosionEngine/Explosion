@@ -13,13 +13,13 @@ namespace RHI::DirectX12 {
     class DX12CommandQueue : public CommandQueue {
     public:
         NON_COPYABLE(DX12CommandQueue)
-        DX12CommandQueue(DX12LogicalDevice& logicalDevice, const CommandQueueCreateInfo& createInfo);
+        DX12CommandQueue(DX12LogicalDevice& logicalDevice, const CommandQueueCreateInfo* createInfo);
         ~DX12CommandQueue() override;
 
         ComPtr<ID3D12CommandQueue>& GetDX12CommandQueue();
 
     private:
-        void CreateCommandQueue(DX12LogicalDevice& logicalDevice, const CommandQueueCreateInfo& createInfo);
+        void CreateCommandQueue(DX12LogicalDevice& logicalDevice, const CommandQueueCreateInfo* createInfo);
 
         ComPtr<ID3D12CommandQueue> dx12CommandQueue;
     };

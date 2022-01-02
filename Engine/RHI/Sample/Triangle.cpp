@@ -32,7 +32,7 @@ void Init()
         createInfo.debugMode = false;
         createInfo.extensionNum = extensions.size();
         createInfo.extensions = extensions.data();
-        instance = Instance::CreateByPlatform(createInfo);
+        instance = Instance::CreateByPlatform(&createInfo);
     }
 
     {
@@ -50,7 +50,7 @@ void Init()
     {
         CommandQueueCreateInfo createInfo {};
         createInfo.type = CommandQueueType::GRAPHICS;
-        commandQueue = logicalDevice->CreateCommandQueue(createInfo);
+        commandQueue = logicalDevice->CreateCommandQueue(&createInfo);
     }
 }
 

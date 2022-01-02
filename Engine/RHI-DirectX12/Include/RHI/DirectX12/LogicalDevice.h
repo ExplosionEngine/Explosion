@@ -23,7 +23,7 @@ namespace RHI::DirectX12 {
         DX12LogicalDevice(DX12Instance& instance, DX12PhysicalDevice& physicalDevice);
         ~DX12LogicalDevice() override;
 
-        CommandQueue* CreateCommandQueue(const CommandQueueCreateInfo& createInfo) override;
+        CommandQueue* CreateCommandQueue(const CommandQueueCreateInfo* createInfo) override;
         void DestroyCommandQueue(CommandQueue* commandQueue) override;
 
         ComPtr<ID3D12Device>& GetDX12Device();

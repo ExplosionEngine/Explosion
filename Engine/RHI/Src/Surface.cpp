@@ -5,7 +5,7 @@
 #include <RHI/Surface.h>
 
 namespace RHI {
-    Surface::Surface(const SurfaceCreateInfo& createInfo) {}
+    Surface::Surface(const SurfaceCreateInfo* createInfo) {}
 
     Surface::~Surface() = default;
 }

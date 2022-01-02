@@ -13,14 +13,14 @@
 #include <RHI/DirectX12/Utility.h>
 
 extern "C" {
-    RHI::Instance* RHICreateInstance(const RHI::InstanceCreateInfo& info)
+    RHI::Instance* RHICreateInstance(const RHI::InstanceCreateInfo* info)
     {
         return new RHI::DirectX12::DX12Instance(info);
     }
 }
 
 namespace RHI::DirectX12 {
-    DX12Instance::DX12Instance(const InstanceCreateInfo& info) : Instance(info), property({})
+    DX12Instance::DX12Instance(const InstanceCreateInfo* info) : Instance(info), property({})
     {
         ProduceExtensions(info);
         CreateFactory(info);
@@ -29,10 +29,10 @@ namespace RHI::DirectX12 {
 
     DX12Instance::~DX12Instance() = default;
 
-    void DX12Instance::CreateFactory(const InstanceCreateInfo& info)
+    void DX12Instance::CreateFactory(const InstanceCreateInfo* info)
     {
         uint32_t dxgiFactoryFlags = 0;
-        if (info.debugMode) {
+        if (info->debugMode) {
             ComPtr<ID3D12Debug> debugController;
             ThrowIfFailed(
                 D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)),
@@ -77,7 +77,7 @@ namespace RHI::DirectX12 {
         delete logicalDevice;
     }
 
-    Surface* DX12Instance::CreateSurface(const SurfaceCreateInfo& createInfo)
+    Surface* DX12Instance::CreateSurface(const SurfaceCreateInfo* createInfo)
     {
         return new DX12Surface(*this, createInfo);
     }
@@ -97,15 +97,15 @@ namespace RHI::DirectX12 {
         return dxgiFactory;
     }
 
-    void DX12Instance::ProduceExtensions(const InstanceCreateInfo& info)
+    void DX12Instance::ProduceExtensions(const InstanceCreateInfo* info)
     {
         static const std::unordered_map<std::string, ExtensionProducer> EXTENSION_PRODUCERS = {
             { RHI_EXT_NAME_SURFACE, [](DX12InstanceProperty& prop) -> void { prop.supportSurface = true; } },
             { RHI_EXT_NAME_WINDOWS_SURFACE, [](DX12InstanceProperty& prop) -> void { prop.supportWindowsSurface = true; } }
         };
 
-        for (size_t i = 0; i < info.extensionNum; i++) {
-            auto iter = EXTENSION_PRODUCERS.find(std::string(info.extensions[i]));
+        for (size_t i = 0; i < info->extensionNum; i++) {
+            auto iter = EXTENSION_PRODUCERS.find(std::string(info->extensions[i]));
             if (iter == EXTENSION_PRODUCERS.end()) {
                 continue;
             }

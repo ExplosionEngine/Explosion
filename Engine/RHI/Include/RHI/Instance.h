@@ -22,7 +22,7 @@ namespace RHI {
 
     class Instance {
     public:
-        static Instance* CreateByPlatform(const InstanceCreateInfo& info);
+        static Instance* CreateByPlatform(const InstanceCreateInfo* info);
 
         NON_COPYABLE(Instance)
         virtual ~Instance();
@@ -31,14 +31,14 @@ namespace RHI {
         virtual PhysicalDevice* GetPhysicalDevice(uint32_t idx) = 0;
         virtual LogicalDevice* CreateLogicalDevice(PhysicalDevice* physicalDevice) = 0;
         virtual void DestroyLogicalDevice(LogicalDevice* logicalDevice) = 0;
-        virtual Surface* CreateSurface(const SurfaceCreateInfo& createInfo) = 0;
+        virtual Surface* CreateSurface(const SurfaceCreateInfo* createInfo) = 0;
         virtual void DestroySurface(Surface* surface) = 0;
 
     protected:
-        explicit Instance(const InstanceCreateInfo& info);
+        explicit Instance(const InstanceCreateInfo* info);
     };
 }
 
-using RHICreateInstanceFunc = RHI::Instance*(*)(const RHI::InstanceCreateInfo&);
+using RHICreateInstanceFunc = RHI::Instance*(*)(const RHI::InstanceCreateInfo*);
 
 #endif //EXPLOSION_RHI_INSTANCE_H

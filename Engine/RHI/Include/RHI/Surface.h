@@ -23,7 +23,7 @@ namespace RHI {
         virtual ~Surface();
 
     protected:
-        explicit Surface(const SurfaceCreateInfo& createInfo);
+        explicit Surface(const SurfaceCreateInfo* createInfo);
     };
 }
 

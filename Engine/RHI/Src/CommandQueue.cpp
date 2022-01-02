@@ -5,7 +5,7 @@
 #include <RHI/CommandQueue.h>
 
 namespace RHI {
-    CommandQueue::CommandQueue() = default;
+    CommandQueue::CommandQueue(const CommandQueueCreateInfo* createInfo) {}
 
     CommandQueue::~CommandQueue() = default;
 }

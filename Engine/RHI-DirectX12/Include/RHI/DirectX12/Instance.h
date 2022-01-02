@@ -20,7 +20,7 @@
 using namespace Microsoft::WRL;
 
 extern "C" {
-    RHI_DIRECTX12_API RHI::Instance* RHICreateInstance(const RHI::InstanceCreateInfo& info);
+    RHI_DIRECTX12_API RHI::Instance* RHICreateInstance(const RHI::InstanceCreateInfo* info);
 };
 
 namespace RHI::DirectX12 {
@@ -36,22 +36,22 @@ namespace RHI::DirectX12 {
     class DX12Instance : public Instance {
     public:
         NON_COPYABLE(DX12Instance)
-        explicit DX12Instance(const InstanceCreateInfo& info);
+        explicit DX12Instance(const InstanceCreateInfo* info);
         ~DX12Instance() override;
 
         uint32_t CountPhysicalDevices() override;
         PhysicalDevice* GetPhysicalDevice(uint32_t idx) override;
         LogicalDevice* CreateLogicalDevice(PhysicalDevice* physicalDevice) override;
-        void DestroyLogicalDevice(LogicalDevice *logicalDevice) override;
-        Surface* CreateSurface(const SurfaceCreateInfo &createInfo) override;
+        void DestroyLogicalDevice(LogicalDevice* logicalDevice) override;
+        Surface* CreateSurface(const SurfaceCreateInfo* createInfo) override;
         void DestroySurface(Surface* surface) override;
 
         const DX12InstanceProperty& GetProperty();
         ComPtr<IDXGIFactory4>& GetDXGIFactory();
 
     private:
-        void CreateFactory(const InstanceCreateInfo& info);
-        void ProduceExtensions(const InstanceCreateInfo& info);
+        void CreateFactory(const InstanceCreateInfo* info);
+        void ProduceExtensions(const InstanceCreateInfo* info);
         void LoadPhysicalDevices();
 
         DX12InstanceProperty property;

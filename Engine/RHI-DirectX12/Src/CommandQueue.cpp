@@ -6,7 +6,7 @@
 #include <RHI/DirectX12/Enum.h>
 
 namespace RHI::DirectX12 {
-    DX12CommandQueue::DX12CommandQueue(DX12LogicalDevice& logicalDevice, const CommandQueueCreateInfo& createInfo)
+    DX12CommandQueue::DX12CommandQueue(DX12LogicalDevice& logicalDevice, const CommandQueueCreateInfo* createInfo) : CommandQueue(createInfo)
     {
         CreateCommandQueue(logicalDevice, createInfo);
     }
@@ -18,11 +18,11 @@ namespace RHI::DirectX12 {
         return dx12CommandQueue;
     }
 
-    void DX12CommandQueue::CreateCommandQueue(DX12LogicalDevice& logicalDevice, const CommandQueueCreateInfo& createInfo)
+    void DX12CommandQueue::CreateCommandQueue(DX12LogicalDevice& logicalDevice, const CommandQueueCreateInfo* createInfo)
     {
         D3D12_COMMAND_QUEUE_DESC desc {};
         desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-        desc.Type = EnumCast<CommandQueueType, D3D12_COMMAND_LIST_TYPE>(createInfo.type);
+        desc.Type = EnumCast<CommandQueueType, D3D12_COMMAND_LIST_TYPE>(createInfo->type);
 
         ThrowIfFailed(
             logicalDevice.GetDX12Device()->CreateCommandQueue(&desc, IID_PPV_ARGS(&dx12CommandQueue)),

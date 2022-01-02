@@ -21,7 +21,7 @@ namespace {
 }
 
 namespace RHI {
-    Instance* Instance::CreateByPlatform(const InstanceCreateInfo& info)
+    Instance* Instance::CreateByPlatform(const InstanceCreateInfo* info)
     {
         DynamicLibrary* rhiLib = DynamicLibraryManager::Singleton().FindOrLoad(GetPlatformRHILibName());
         if (rhiLib == nullptr)
@@ -36,7 +36,7 @@ namespace RHI {
         return symbol(info);
     }
 
-    Instance::Instance(const InstanceCreateInfo& info) {}
+    Instance::Instance(const InstanceCreateInfo* info) {}
 
     Instance::~Instance() = default;
 }

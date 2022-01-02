@@ -19,7 +19,7 @@ namespace RHI {
         virtual ~CommandQueue();
 
     protected:
-        CommandQueue();
+        explicit CommandQueue(const CommandQueueCreateInfo* createInfo);
     };
 }
 

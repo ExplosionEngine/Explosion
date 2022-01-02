@@ -29,7 +29,7 @@ namespace RHI::DirectX12 {
         return dx12Device;
     }
 
-    CommandQueue* DX12LogicalDevice::CreateCommandQueue(const CommandQueueCreateInfo& createInfo)
+    CommandQueue* DX12LogicalDevice::CreateCommandQueue(const CommandQueueCreateInfo* createInfo)
     {
         return new DX12CommandQueue(*this, createInfo);
     }
