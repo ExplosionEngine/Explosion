@@ -24,7 +24,26 @@ namespace RHI {
     };
 
     enum class PixelFormat {
-        R8G8B8A8_UNORM,
+        R8G8B8A8_UNORM = 0,
+        MAX
+    };
+
+    enum class DeviceMemoryType {
+        HOST_VISIBLE = 0,
+        DEVICE_LOCAL,
+        MAX
+    };
+
+    enum class SharingMode {
+        EXCLUSIVE = 0,
+        CONCURRENT,
+        MAX
+    };
+
+    enum class BufferUsage {
+        STAGING = 0,
+        VERTEX,
+        INDEX,
         MAX
     };
 }
