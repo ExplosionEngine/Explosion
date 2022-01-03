@@ -6,19 +6,35 @@
 
 #include <GLFW/glfw3.h>
 
+#ifdef _WIN32
+#define GLFW_EXPOSE_NATIVE_WIN32 1
+#endif
+#include <GLFW/glfw3native.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include <RHI/Enum.h>
 #include <RHI/Instance.h>
 #include <RHI/PhysicalDevice.h>
 #include <RHI/LogicalDevice.h>
+#include <RHI/Surface.h>
+#include <RHI/SwapChain.h>
 #include <RHI/Queue.h>
 
 using namespace RHI;
+
+size_t windowWidth = 1024;
+size_t windowHeight = 768;
 
 GLFWwindow* window;
 Instance* instance;
 std::vector<PhysicalDevice*> physicalDevices;
 LogicalDevice* logicalDevice;
 Queue* graphicsQueue;
+Surface* surface;
+SwapChain* swapChain;
 
 void Init()
 {
@@ -47,13 +63,45 @@ void Init()
             queueFamilyCreateInfo.type = QueueFamilyType::GRAPHICS;
             queueFamilyCreateInfo.queueNum = 1;
 
+            std::vector<const char*> extensions = {
+                RHI_DEVICE_EXT_NAME_SWAP_CHAIN.c_str()
+            };
+
             LogicalDeviceCreateInfo logicalDeviceCreateInfo {};
             logicalDeviceCreateInfo.queueFamilyNum = 1;
             logicalDeviceCreateInfo.queueFamilyCreateInfos = &queueFamilyCreateInfo;
+            logicalDeviceCreateInfo.extensionNum = extensions.size();
+            logicalDeviceCreateInfo.extensions = extensions.data();
             logicalDevice = instance->CreateLogicalDevice(physicalDevices[i], &logicalDeviceCreateInfo);
             break;
         }
         graphicsQueue = logicalDevice->GetCommandQueue(QueueFamilyType::GRAPHICS, 0);
+    }
+
+    {
+#ifdef _WIN32
+        WindowsSurfaceCreateInfo wCreateInfo {};
+        wCreateInfo.hWnd = glfwGetWin32Window(window);
+        wCreateInfo.hInstance = GetModuleHandle(nullptr);
+#endif
+
+        SurfaceCreateInfo createInfo {};
+#ifdef _WIN32
+        createInfo.windows = &wCreateInfo;
+#endif
+
+        surface = instance->CreateSurface(&createInfo);
+    }
+
+    {
+        SwapChainCreateInfo createInfo {};
+        createInfo.surface = surface;
+        createInfo.queue = graphicsQueue;
+        createInfo.imageNum = 2;
+        createInfo.extent = { windowWidth, windowHeight };
+        createInfo.format = PixelFormat::R8G8B8A8_UNORM;
+
+        swapChain = logicalDevice->CreateSwapChain(&createInfo);
     }
 }
 
@@ -66,7 +114,7 @@ int main(int argc, char* argv[])
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    window = glfwCreateWindow(1280, 720, "RHI-Triangle", nullptr, nullptr);
+    window = glfwCreateWindow(windowWidth, windowHeight, "RHI-Triangle", nullptr, nullptr);
 
     Init();
     while (!glfwWindowShouldClose(window))

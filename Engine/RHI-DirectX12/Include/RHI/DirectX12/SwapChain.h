@@ -15,6 +15,7 @@ using namespace Microsoft::WRL;
 
 namespace RHI::DirectX12 {
     struct DX12Instance;
+    struct DX12LogicalDevice;
 
     class DX12SwapChain : public SwapChain {
     public:

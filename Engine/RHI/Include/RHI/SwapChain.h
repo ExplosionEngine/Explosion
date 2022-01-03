@@ -10,8 +10,10 @@
 
 namespace RHI {
     class Surface;
+    class Queue;
 
     struct SwapChainCreateInfo {
+        Queue* queue;
         Surface* surface;
         size_t imageNum;
         Extent2D extent;
