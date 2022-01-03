@@ -6,6 +6,7 @@
 #include <RHI/DirectX12/PhysicalDevice.h>
 #include <RHI/DirectX12/LogicalDevice.h>
 #include <RHI/DirectX12/Queue.h>
+#include <RHI/DirectX12/SwapChain.h>
 #include <RHI/DirectX12/Utility.h>
 
 namespace RHI::DirectX12 {
@@ -66,6 +67,16 @@ namespace RHI::DirectX12 {
             return nullptr;
         }
         return iter->second[idx].get();
+    }
+
+    SwapChain* DX12LogicalDevice::CreateSwapChain(const SwapChainCreateInfo* createInfo)
+    {
+        return new DX12SwapChain(instance, createInfo);
+    }
+
+    void DX12LogicalDevice::DestroySwapChain(SwapChain* swapChain)
+    {
+        delete swapChain;
     }
 
     DX12LogicalDeviceProperty DX12LogicalDevice::GetProperty()

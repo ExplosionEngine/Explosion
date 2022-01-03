@@ -10,7 +10,9 @@
 
 namespace RHI {
     class Queue;
+    class SwapChain;
     struct QueueFamilyCreateInfo;
+    struct SwapChainCreateInfo;
 
     struct LogicalDeviceCreateInfo {
         size_t queueFamilyNum;
@@ -26,6 +28,8 @@ namespace RHI {
 
         virtual size_t GetQueueNum(QueueFamilyType familyType) = 0;
         virtual Queue* GetCommandQueue(QueueFamilyType familyType, size_t idx) = 0;
+        virtual SwapChain* CreateSwapChain(const SwapChainCreateInfo* createInfo) = 0;
+        virtual void DestroySwapChain(SwapChain* swapChain) = 0;
 
     protected:
         explicit LogicalDevice(const LogicalDeviceCreateInfo* createInfo);
