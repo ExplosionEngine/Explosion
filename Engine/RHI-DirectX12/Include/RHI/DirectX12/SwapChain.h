@@ -14,8 +14,10 @@
 using namespace Microsoft::WRL;
 
 namespace RHI::DirectX12 {
-    struct DX12Instance;
-    struct DX12LogicalDevice;
+    class DX12Instance;
+    class DX12LogicalDevice;
+    class DX12DeviceMemory;
+    class DX12Image;
 
     class DX12SwapChain : public SwapChain {
     public:
@@ -23,12 +25,18 @@ namespace RHI::DirectX12 {
         explicit DX12SwapChain(DX12Instance& instance, const SwapChainCreateInfo* createInfo);
         ~DX12SwapChain() override;
 
+        size_t GetImageNum() override;
+        Image* GetImage(size_t index) override;
+
         ComPtr<IDXGISwapChain3>& GetDX12SwapChain();
 
     private:
         void CreateSwapChain(DX12Instance& instance, const SwapChainCreateInfo* createInfo);
+        void FetchImages(const SwapChainCreateInfo* createInfo);
 
         ComPtr<IDXGISwapChain3> dx12SwapChain;
+        std::vector<std::unique_ptr<DX12Image>> frameImages;
+        std::vector<std::unique_ptr<DX12DeviceMemory>> frameMemories;
     };
 }
 

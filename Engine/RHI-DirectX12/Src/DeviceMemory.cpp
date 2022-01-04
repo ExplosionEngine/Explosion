@@ -9,6 +9,8 @@
 #include <RHI/DirectX12/Enum.h>
 
 namespace RHI::DirectX12 {
+    DX12DeviceMemory::DX12DeviceMemory(ComPtr<ID3D12Resource>&& resource) : DeviceMemory(), dx12Resource(resource) {}
+
     DX12DeviceMemory::DX12DeviceMemory(DX12LogicalDevice& logicalDevice, const DeviceMemoryAllocateInfo* allocateInfo) : DeviceMemory(allocateInfo)
     {
         CreateResource(logicalDevice, allocateInfo);

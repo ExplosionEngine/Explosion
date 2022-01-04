@@ -18,7 +18,8 @@ namespace RHI::DirectX12 {
     class DX12DeviceMemory : public DeviceMemory {
     public:
         NON_COPYABLE(DX12DeviceMemory)
-        explicit DX12DeviceMemory(DX12LogicalDevice& logicalDevice, const DeviceMemoryAllocateInfo* allocateInfo);
+        explicit DX12DeviceMemory(ComPtr<ID3D12Resource>&& resource);
+        DX12DeviceMemory(DX12LogicalDevice& logicalDevice, const DeviceMemoryAllocateInfo* allocateInfo);
         ~DX12DeviceMemory() override;
 
         ComPtr<ID3D12Resource>& GetDX12Resource();

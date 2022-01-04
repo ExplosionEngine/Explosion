@@ -6,12 +6,15 @@
 #include <RHI/DirectX12/Queue.h>
 #include <RHI/DirectX12/SwapChain.h>
 #include <RHI/DirectX12/Surface.h>
+#include <RHI/DirectX12/DeviceMemory.h>
+#include <RHI/DirectX12/Image.h>
 #include <RHI/DirectX12/Enum.h>
 
 namespace RHI::DirectX12 {
     DX12SwapChain::DX12SwapChain(DX12Instance& instance, const SwapChainCreateInfo* createInfo) : SwapChain(createInfo)
     {
         CreateSwapChain(instance, createInfo);
+        FetchImages(createInfo);
     }
 
     DX12SwapChain::~DX12SwapChain() = default;
@@ -50,5 +53,33 @@ namespace RHI::DirectX12 {
             sc.As(&dx12SwapChain),
             "failed to cast dx12 swap chain"
         );
+    }
+
+    void DX12SwapChain::FetchImages(const SwapChainCreateInfo* createInfo)
+    {
+        frameMemories.resize(createInfo->imageNum);
+        frameImages.resize(createInfo->imageNum);
+        for (auto i = 0; i < createInfo->imageNum; i++) {
+            ComPtr<ID3D12Resource> frameResource;
+            ThrowIfFailed(
+                dx12SwapChain->GetBuffer(i, IID_PPV_ARGS(&frameResource)),
+                "failed to fetch dx12 images from swap chain"
+            );
+            frameMemories[i] = std::make_unique<DX12DeviceMemory>(std::move(frameResource));
+            frameImages[i] = std::make_unique<DX12Image>(frameMemories[i].get());
+        }
+    }
+
+    size_t DX12SwapChain::GetImageNum()
+    {
+        return frameImages.size();
+    }
+
+    Image* DX12SwapChain::GetImage(size_t index)
+    {
+        if (index < 0 || index >= frameImages.size()) {
+            return nullptr;
+        }
+        return frameImages[index].get();
     }
 }

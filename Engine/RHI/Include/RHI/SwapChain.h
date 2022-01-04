@@ -11,6 +11,7 @@
 namespace RHI {
     class Surface;
     class Queue;
+    class Image;
 
     struct SwapChainCreateInfo {
         Queue* queue;
@@ -24,6 +25,9 @@ namespace RHI {
     public:
         NON_COPYABLE(SwapChain)
         virtual ~SwapChain();
+
+        virtual size_t GetImageNum() = 0;
+        virtual Image* GetImage(size_t index) = 0;
 
     protected:
         explicit SwapChain(const SwapChainCreateInfo* createInfo);

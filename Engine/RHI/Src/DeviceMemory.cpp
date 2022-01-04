@@ -5,6 +5,8 @@
 #include <RHI/DeviceMemory.h>
 
 namespace RHI {
+    DeviceMemory::DeviceMemory() = default;
+
     DeviceMemory::DeviceMemory(const DeviceMemoryAllocateInfo* allocateInfo) {}
 
     DeviceMemory::~DeviceMemory() = default;

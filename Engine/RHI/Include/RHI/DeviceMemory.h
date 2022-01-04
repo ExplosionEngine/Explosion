@@ -20,6 +20,7 @@ namespace RHI {
         virtual ~DeviceMemory();
 
     protected:
+        DeviceMemory();
         explicit DeviceMemory(const DeviceMemoryAllocateInfo* allocateInfo);
     };
 }
