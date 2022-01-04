@@ -35,9 +35,12 @@ namespace RHI {
         virtual SwapChain* CreateSwapChain(const SwapChainCreateInfo* createInfo) = 0;
         virtual void DestroySwapChain(SwapChain* swapChain) = 0;
         virtual DeviceMemory* AllocateDeviceMemory(const DeviceMemoryAllocateInfo* createInfo) = 0;
-        virtual void FreeDeviceMemory() = 0;
+        virtual void FreeDeviceMemory(DeviceMemory* deviceMemory) = 0;
         virtual Buffer* CreateBuffer(const BufferCreateInfo* createInfo) = 0;
-        virtual void DestroyBuffer() = 0;
+        virtual void DestroyBuffer(Buffer* buffer) = 0;
+        virtual void BindBufferMemory(Buffer* buffer, DeviceMemory* deviceMemory) = 0;
+        virtual void* MapDeviceMemory(DeviceMemory* deviceMemory) = 0;
+        virtual void UnmapDeviceMemory(DeviceMemory* deviceMemory) = 0;
 
     protected:
         explicit LogicalDevice(const LogicalDeviceCreateInfo* createInfo);

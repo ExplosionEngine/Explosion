@@ -2,11 +2,15 @@
 // Created by johnk on 31/12/2021.
 //
 
+#include <directx/d3dx12.h>
+
 #include <RHI/DirectX12/Instance.h>
 #include <RHI/DirectX12/PhysicalDevice.h>
 #include <RHI/DirectX12/LogicalDevice.h>
 #include <RHI/DirectX12/Queue.h>
 #include <RHI/DirectX12/SwapChain.h>
+#include <RHI/DirectX12/DeviceMemory.h>
+#include <RHI/DirectX12/Buffer.h>
 #include <RHI/DirectX12/Utility.h>
 
 namespace RHI::DirectX12 {
@@ -97,5 +101,51 @@ namespace RHI::DirectX12 {
             }
             iter->second(property);
         }
+    }
+
+    DeviceMemory* DX12LogicalDevice::AllocateDeviceMemory(const DeviceMemoryAllocateInfo* createInfo)
+    {
+        return new DX12DeviceMemory(*this, createInfo);
+    }
+
+    void DX12LogicalDevice::FreeDeviceMemory(DeviceMemory* deviceMemory)
+    {
+        delete deviceMemory;
+    }
+
+    Buffer* DX12LogicalDevice::CreateBuffer(const BufferCreateInfo* createInfo)
+    {
+        return new DX12Buffer(createInfo);
+    }
+
+    void DX12LogicalDevice::DestroyBuffer(Buffer* buffer)
+    {
+        delete buffer;
+    }
+
+    void DX12LogicalDevice::BindBufferMemory(Buffer* buffer, DeviceMemory* deviceMemory)
+    {
+        auto dx12Buffer = static_cast<DX12Buffer*>(buffer);
+        auto dx12DeviceMemory = static_cast<DX12DeviceMemory*>(deviceMemory);
+        dx12Buffer->BindMemory(dx12DeviceMemory);
+    }
+
+    void* DX12LogicalDevice::MapDeviceMemory(DeviceMemory* deviceMemory)
+    {
+        auto dx12DeviceMemory = static_cast<DX12DeviceMemory*>(deviceMemory);
+        auto range = CD3DX12_RANGE(0, 0);
+
+        void* result;
+        ThrowIfFailed(
+            dx12DeviceMemory->GetDX12Resource()->Map(0, &range, &result),
+            "failed to map dx12 resource"
+        );
+        return result;
+    }
+
+    void DX12LogicalDevice::UnmapDeviceMemory(DeviceMemory* deviceMemory)
+    {
+        auto dx12DeviceMemory = static_cast<DX12DeviceMemory*>(deviceMemory);
+        dx12DeviceMemory->GetDX12Resource()->Unmap(0, nullptr);
     }
 }

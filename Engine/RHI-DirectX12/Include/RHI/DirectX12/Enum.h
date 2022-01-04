@@ -32,6 +32,11 @@ namespace RHI::DirectX12 {
         ENUM_CONVERTER_ITEM(PixelFormat::R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM)
     END_ENUM_CONVERTER()
 
+    BEGIN_ENUM_CONVERTER(DeviceMemoryType, D3D12_HEAP_TYPE)
+        ENUM_CONVERTER_ITEM(DeviceMemoryType::DEVICE_LOCAL, D3D12_HEAP_TYPE_DEFAULT)
+        ENUM_CONVERTER_ITEM(DeviceMemoryType::HOST_VISIBLE, D3D12_HEAP_TYPE_UPLOAD)
+    END_ENUM_CONVERTER()
+
     template <typename E, typename DXE>
     DXE EnumCast(const E& e)
     {

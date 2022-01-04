@@ -37,6 +37,13 @@ namespace RHI::DirectX12 {
         Queue* GetCommandQueue(QueueFamilyType familyType, size_t idx) override;
         SwapChain* CreateSwapChain(const SwapChainCreateInfo* createInfo) override;
         void DestroySwapChain(SwapChain* swapChain) override;
+        DeviceMemory* AllocateDeviceMemory(const DeviceMemoryAllocateInfo* createInfo) override;
+        void FreeDeviceMemory(DeviceMemory* deviceMemory) override;
+        Buffer* CreateBuffer(const BufferCreateInfo* createInfo) override;
+        void DestroyBuffer(Buffer* buffer) override;
+        void BindBufferMemory(Buffer* buffer, DeviceMemory* deviceMemory) override;
+        void* MapDeviceMemory(DeviceMemory* deviceMemory) override;
+        void UnmapDeviceMemory(DeviceMemory* deviceMemory) override;
 
         DX12LogicalDeviceProperty GetProperty();
         ComPtr<ID3D12Device>& GetDX12Device();

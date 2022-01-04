@@ -21,7 +21,7 @@ namespace RHI {
         virtual ~Buffer();
 
     protected:
-        Buffer(const BufferCreateInfo* createInfo);
+        explicit Buffer(const BufferCreateInfo* createInfo);
     };
 }
 
