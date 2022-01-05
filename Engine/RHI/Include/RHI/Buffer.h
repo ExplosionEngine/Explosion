@@ -12,7 +12,6 @@ namespace RHI {
     struct BufferCreateInfo {
         size_t size;
         BufferUsage usage;
-        SharingMode sharingMode;
     };
 
     class Buffer {

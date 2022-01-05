@@ -22,8 +22,20 @@ namespace RHI::DirectX12 {
         explicit DX12Image(const ImageCreateInfo* createInfo);
         ~DX12Image() override;
 
+        bool IsSwapChainImage();
+        void BindMemory(DX12DeviceMemory* deviceMemory);
+        DX12DeviceMemory* GetDeviceMemory();
+
     private:
         DX12DeviceMemory* deviceMemory;
+        bool isSwapChainImage;
+        Extent2D extent;
+        ImageType type;
+        PixelFormat format;
+        ImageUsage usage;
+        size_t mipLevels;
+        size_t arrayLayers;
+        size_t samples;
     };
 }
 

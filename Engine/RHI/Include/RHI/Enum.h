@@ -34,16 +34,25 @@ namespace RHI {
         MAX
     };
 
-    enum class SharingMode {
-        EXCLUSIVE = 0,
-        CONCURRENT,
+    enum class BufferUsage {
+        TRANSFER_SRC = 0,
+        TRANSFER_DST,
+        VERTEX,
+        INDEX,
         MAX
     };
 
-    enum class BufferUsage {
-        STAGING = 0,
-        VERTEX,
-        INDEX,
+    enum class ImageUsage {
+        TRANSFER_SRC = 0,
+        TRANSFER_DST,
+        SAMPLED,
+        MAX
+    };
+
+    enum class ImageType {
+        IMAGE_1D = 0,
+        IMAGE_2D,
+        IMAGE_3D,
         MAX
     };
 }
