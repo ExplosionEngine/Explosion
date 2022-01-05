@@ -39,6 +39,7 @@ namespace RHI::DirectX12 {
         explicit DX12Instance(const InstanceCreateInfo* info);
         ~DX12Instance() override;
 
+        ShaderCompiler* GetShaderCompiler() override;
         uint32_t CountPhysicalDevices() override;
         PhysicalDevice* GetPhysicalDevice(uint32_t idx) override;
         LogicalDevice* CreateLogicalDevice(PhysicalDevice* physicalDevice, const LogicalDeviceCreateInfo* createInfo) override;

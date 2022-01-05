@@ -7,6 +7,7 @@
 
 #include <RHI/Enum.h>
 #include <RHI/DirectX12/Instance.h>
+#include <RHI/DirectX12/ShaderCompiler.h>
 #include <RHI/DirectX12/PhysicalDevice.h>
 #include <RHI/DirectX12/LogicalDevice.h>
 #include <RHI/DirectX12/Surface.h>
@@ -55,6 +56,11 @@ namespace RHI::DirectX12 {
             physicalDevices.emplace_back(std::make_unique<DX12PhysicalDevice>(std::move(adapter)));
             adapter = nullptr;
         }
+    }
+
+    ShaderCompiler* DX12Instance::GetShaderCompiler()
+    {
+        return &DX12ShaderCompiler::Get();
     }
 
     uint32_t DX12Instance::CountPhysicalDevices()

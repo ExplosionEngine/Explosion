@@ -12,6 +12,7 @@ namespace RHI {
     class PhysicalDevice;
     class LogicalDevice;
     class Surface;
+    class ShaderCompiler;
     struct SurfaceCreateInfo;
     struct LogicalDeviceCreateInfo;
 
@@ -28,6 +29,7 @@ namespace RHI {
         NON_COPYABLE(Instance)
         virtual ~Instance();
 
+        virtual ShaderCompiler* GetShaderCompiler() = 0;
         virtual uint32_t CountPhysicalDevices() = 0;
         virtual PhysicalDevice* GetPhysicalDevice(uint32_t idx) = 0;
         virtual LogicalDevice* CreateLogicalDevice(PhysicalDevice* physicalDevice, const LogicalDeviceCreateInfo* createInfo) = 0;
