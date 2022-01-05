@@ -38,6 +38,7 @@ endfunction()
 #  - NAME    {Single} : name of third party package
 #  - VERSION {Single} : version of third party package
 #  - ARG     {List}   : arguments of cmake command
+#  - BUILD   {Bool}   : build package or not (just using sources)
 function(AddThirdPartyPackage)
     cmake_parse_arguments(PARAMS "BUILD" "NAME;VERSION" "ARG" ${ARGN})
 
