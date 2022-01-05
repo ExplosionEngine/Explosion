@@ -34,27 +34,74 @@ namespace RHI {
         MAX
     };
 
-    enum class BufferUsage {
-        TRANSFER_SRC = 0,
-        TRANSFER_DST,
-        VERTEX,
-        INDEX,
-        MAX
-    };
-
-    enum class ImageUsage {
-        TRANSFER_SRC = 0,
-        TRANSFER_DST,
-        SAMPLED,
-        MAX
-    };
-
     enum class ImageType {
         IMAGE_1D = 0,
         IMAGE_2D,
         IMAGE_3D,
         MAX
     };
+
+    enum class ImageViewType {
+        IMAGE_VIEW_1D = 0,
+        IMAGE_VIEW_2D,
+        IMAGE_VIEW_3D,
+        IMAGE_VIEW_CUBE,
+        IMAGE_VIEW_1D_ARRAY,
+        IMAGE_VIEW_2D_ARRAY,
+        IMAGE_VIEW_CUBE_ARRAY,
+        MAX
+    };
+
+    enum class ComponentSwizzle {
+        IDENTITY = 0,
+        ZERO,
+        ONE,
+        R,
+        G,
+        B,
+        A,
+        MAX
+    };
+}
+
+namespace RHI {
+    using Flags = uint64_t;
+
+    enum class BufferUsageBits {
+        NONE = 0x0,
+        TRANSFER_SRC = 0x1,
+        TRANSFER_DST = 0x2,
+        VERTEX = 0x4,
+        INDEX = 0x8,
+        MAX
+    };
+    using BufferUsageFlags = Flags;
+
+    enum class ImageUsageBits {
+        NONE = 0x0,
+        TRANSFER_SRC = 0x1,
+        TRANSFER_DST = 0x2,
+        SAMPLED = 0x4,
+        MAX
+    };
+    using ImageUsageFlags = Flags;
+
+    enum class ImageAspectBits {
+        NONE = 0x0,
+        COLOR = 0x1,
+        DEPTH = 0x2,
+        STENCIL = 0x4,
+        MAX
+    };
+    using ImageAspectFlags = Flags;
+
+    template <typename... E>
+    Flags CombineBits(E&&... e)
+    {
+        Flags result;
+        std::initializer_list<int> { (result |= static_cast<Flags>(e), 0)... };
+        return result;
+    }
 }
 
 namespace RHI {

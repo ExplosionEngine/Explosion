@@ -3,6 +3,7 @@
 //
 
 #include <RHI/DirectX12/Image.h>
+#include <RHI/Enum.h>
 
 namespace RHI::DirectX12 {
     DX12Image::DX12Image(DX12DeviceMemory* dm)
@@ -12,7 +13,7 @@ namespace RHI::DirectX12 {
         extent({}),
         type(ImageType::MAX),
         format(PixelFormat::MAX),
-        usage(ImageUsage::MAX),
+        usage(CombineBits(ImageUsageBits::MAX)),
         mipLevels(0),
         arrayLayers(0),
         samples(0) {}

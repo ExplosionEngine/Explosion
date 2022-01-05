@@ -22,7 +22,7 @@ namespace RHI::DirectX12 {
     private:
         DX12DeviceMemory* deviceMemory;
         size_t size;
-        BufferUsage usage;
+        BufferUsageFlags usage;
     };
 }
 
