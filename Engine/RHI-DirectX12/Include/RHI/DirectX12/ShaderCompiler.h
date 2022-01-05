@@ -15,6 +15,9 @@ namespace RHI::DirectX12 {
         NON_COPYABLE(DX12ShaderCompiler)
         ~DX12ShaderCompiler() override;
 
+        ShaderBinary* CompileHLSL(const ShaderCompileInfo* compileInfo) override;
+        void DestroyShaderBinary(ShaderBinary* binary) override;
+
     private:
         DX12ShaderCompiler();
     };

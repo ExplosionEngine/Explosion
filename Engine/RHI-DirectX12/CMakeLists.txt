@@ -5,5 +5,5 @@ AddLibrary(
     SRC ${SOURCES}
     PUBLIC_INC Include
     PRIVATE_INC ${DirectXHeaders_INC}
-    LIB RHI d3d12 dxgi
+    LIB RHI d3d12 dxgi d3dcompiler
 )

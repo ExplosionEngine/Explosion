@@ -8,10 +8,16 @@
 #include <Common/Utility.h>
 
 namespace RHI {
+    class ShaderBinary;
+    struct ShaderCompileInfo;
+
     class ShaderCompiler {
     public:
         NON_COPYABLE(ShaderCompiler)
         virtual ~ShaderCompiler();
+
+        virtual ShaderBinary* CompileHLSL(const ShaderCompileInfo* compileInfo) = 0;
+        virtual void DestroyShaderBinary(ShaderBinary* binary) = 0;
 
     protected:
         ShaderCompiler();

@@ -62,6 +62,12 @@ namespace RHI {
         A,
         MAX
     };
+
+    enum class ShaderStage {
+        VERTEX = 0,
+        FRAGMENT,
+        MAX
+    };
 }
 
 namespace RHI {
@@ -94,6 +100,14 @@ namespace RHI {
         MAX
     };
     using ImageAspectFlags = Flags;
+
+    enum class ShaderCompileBits {
+        NONE = 0x0,
+        DEBUG = 0x1,
+        NO_OPT = 0x2,
+        MAX
+    };
+    using ShaderCompileFlags = Flags;
 
     template <typename... E>
     Flags CombineBits(E&&... e)

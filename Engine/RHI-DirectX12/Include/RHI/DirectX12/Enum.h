@@ -5,6 +5,9 @@
 #ifndef EXPLOSION_RHI_DX12_ENUM_H
 #define EXPLOSION_RHI_DX12_ENUM_H
 
+#include <d3d12.h>
+#include <d3dcompiler.h>
+
 #include <unordered_map>
 
 #include <RHI/Enum.h>
@@ -15,9 +18,6 @@ namespace RHI::DirectX12 {
 #define END_ENUM_CONVERTER() };
 #define ENUM_CONVERTER_ITEM(from, to) { from, to },
 
-}
-
-namespace RHI::DirectX12 {
     template <typename E, typename DXE>
     const std::unordered_map<E, uint64_t> ENUM_MAP;
 
@@ -46,6 +46,37 @@ namespace RHI::DirectX12 {
         }
         return iter->second;
     }
+}
+
+namespace RHI::DirectX12 {
+#define BEGIN_BITS_CONVERTER(Type) template <> const std::unordered_map<Type, UINT> BITS_MAP<Type> = {
+#define END_BITS_CONVERTER };
+#define BITS_CONVERTER_ITEM(from, to) { from, to },
+
+    template <typename E>
+    const std::unordered_map<E, UINT> BITS_MAP;
+
+    BEGIN_BITS_CONVERTER(ShaderCompileBits)
+        BITS_CONVERTER_ITEM(ShaderCompileBits::DEBUG, D3DCOMPILE_DEBUG)
+        BITS_CONVERTER_ITEM(ShaderCompileBits::NO_OPT, D3DCOMPILE_SKIP_OPTIMIZATION)
+    END_BITS_CONVERTER
+
+    template <typename B>
+    UINT FlagsCast(Flags flags)
+    {
+        UINT result = 0;
+        for (auto iter : BITS_MAP<B>) {
+            if (!(flags & static_cast<Flags>(iter.first))) {
+                continue;
+            }
+            result |= iter.second;
+        }
+        return result;
+    }
+}
+
+namespace RHI::DirectX12 {
+    std::string GetShaderStageTargetString(ShaderStage stage);
 }
 
 #endif //EXPLOSION_RHI_DX12_ENUM_H
