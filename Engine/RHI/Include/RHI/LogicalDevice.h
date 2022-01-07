@@ -13,10 +13,14 @@ namespace RHI {
     class SwapChain;
     class DeviceMemory;
     class Buffer;
+    class RenderPass;
+    class FrameBuffer;
     struct QueueFamilyCreateInfo;
     struct SwapChainCreateInfo;
     struct DeviceMemoryAllocateInfo;
     struct BufferCreateInfo;
+    struct RenderPassCreateInfo;
+    struct FrameBufferCreateInfo;
 
     struct LogicalDeviceCreateInfo {
         size_t queueFamilyNum;
@@ -41,6 +45,10 @@ namespace RHI {
         virtual void BindBufferMemory(Buffer* buffer, DeviceMemory* deviceMemory) = 0;
         virtual void* MapDeviceMemory(DeviceMemory* deviceMemory) = 0;
         virtual void UnmapDeviceMemory(DeviceMemory* deviceMemory) = 0;
+        virtual RenderPass* CreateRenderPass(const RenderPassCreateInfo* createInfo) = 0;
+        virtual void DestroyRenderPass(RenderPass* renderPass) = 0;
+        virtual FrameBuffer* CreateFrameBuffer(const FrameBufferCreateInfo* createInfo) = 0;
+        virtual void DestroyFrameBuffer(FrameBuffer* frameBuffer) = 0;
 
     protected:
         explicit LogicalDevice(const LogicalDeviceCreateInfo* createInfo);
