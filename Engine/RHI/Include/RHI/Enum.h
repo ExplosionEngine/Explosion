@@ -68,6 +68,24 @@ namespace RHI {
         FRAGMENT,
         MAX
     };
+
+    enum class AttachmentLoadOp {
+        WHATEVER = 0,
+        CLEAR,
+        MAX
+    };
+
+    enum class AttachmentStoreOp {
+        WHATEVER = 0,
+        STORE,
+        MAX
+    };
+
+    enum class AttachmentType {
+        COLOR = 0,
+        DEPTH_STENCIL,
+        MAX
+    };
 }
 
 namespace RHI {
@@ -108,6 +126,15 @@ namespace RHI {
         MAX
     };
     using ShaderCompileFlags = Flags;
+
+    enum class ImageLayoutBits {
+        UNDEFINED = 0x0,
+        PRESENT_SRC = 0x1,
+        TRANSFER_DST = 0x2,
+        COLOR_ATTACHMENT = 0x3,
+        MAX
+    };
+    using ImageLayoutFlags = Flags;
 
     template <typename... E>
     Flags CombineBits(E&&... e)
