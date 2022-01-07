@@ -86,55 +86,108 @@ namespace RHI {
         DEPTH_STENCIL,
         MAX
     };
+
+    enum class VertexInputRate {
+        VERTEX = 0,
+        INSTANCE,
+        MAX
+    };
+
+    enum class PrimitiveTopology {
+        TRIANGLE_LIST = 0,
+        MAX
+    };
+
+    enum class PolygonMode {
+        FILL = 0,
+        MAX
+    };
+
+    enum class CullMode {
+        FRONT = 0,
+        BACK,
+        MAX
+    };
+
+    enum class FrontFace {
+        CLOCKWISE = 0,
+        MAX
+    };
+
+    enum class BlendFactor {
+        ZERO,
+        ONE,
+        MAX
+    };
+
+    enum class BlendOp {
+        ADD,
+        MAX
+    };
+
+    enum class DynamicState {
+        VIEWPORT = 0,
+        LINE_WIDTH,
+        MAX
+    };
 }
 
 namespace RHI {
     using Flags = uint64_t;
 
     enum class BufferUsageBits {
-        NONE = 0x0,
-        TRANSFER_SRC = 0x1,
-        TRANSFER_DST = 0x2,
-        VERTEX = 0x4,
-        INDEX = 0x8,
+        NONE = 0x1,
+        TRANSFER_SRC = 0x2,
+        TRANSFER_DST = 0x4,
+        VERTEX = 0x8,
+        INDEX = 0x10,
         MAX
     };
     using BufferUsageFlags = Flags;
 
     enum class ImageUsageBits {
-        NONE = 0x0,
-        TRANSFER_SRC = 0x1,
-        TRANSFER_DST = 0x2,
-        SAMPLED = 0x4,
+        NONE = 0x1,
+        TRANSFER_SRC = 0x2,
+        TRANSFER_DST = 0x4,
+        SAMPLED = 0x8,
         MAX
     };
     using ImageUsageFlags = Flags;
 
     enum class ImageAspectBits {
-        NONE = 0x0,
-        COLOR = 0x1,
-        DEPTH = 0x2,
-        STENCIL = 0x4,
+        NONE = 0x1,
+        COLOR = 0x2,
+        DEPTH = 0x4,
+        STENCIL = 0x8,
         MAX
     };
     using ImageAspectFlags = Flags;
 
     enum class ShaderCompileBits {
-        NONE = 0x0,
-        DEBUG = 0x1,
-        NO_OPT = 0x2,
+        NONE = 0x1,
+        DEBUG = 0x2,
+        NO_OPT = 0x4,
         MAX
     };
     using ShaderCompileFlags = Flags;
 
     enum class ImageLayoutBits {
-        UNDEFINED = 0x0,
-        PRESENT_SRC = 0x1,
-        TRANSFER_DST = 0x2,
-        COLOR_ATTACHMENT = 0x3,
+        UNDEFINED = 0x1,
+        PRESENT_SRC = 0x2,
+        TRANSFER_DST = 0x4,
+        COLOR_ATTACHMENT = 0x8,
         MAX
     };
     using ImageLayoutFlags = Flags;
+
+    enum class ColorComponentBits {
+        R = 0x1,
+        G = 0x2,
+        B = 0x4,
+        A = 0x8,
+        MAX
+    };
+    using ColorComponentFlags = Flags;
 
     template <typename... E>
     Flags CombineBits(E&&... e)
@@ -155,6 +208,20 @@ namespace RHI {
         size_t x;
         size_t y;
         size_t z;
+    };
+
+    struct Viewport {
+        float x;
+        float y;
+        float width;
+        float height;
+        float minDepth;
+        float maxDepth;
+    };
+
+    struct Scissor {
+        Extent2D offset;
+        Extent2D extent;
     };
 }
 
