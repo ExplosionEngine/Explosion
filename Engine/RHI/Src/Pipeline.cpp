@@ -5,7 +5,7 @@
 #include <RHI/Pipeline.h>
 
 namespace RHI {
-    Pipeline::Pipeline(const PipelineCreateInfo* createInfo) {}
+    Pipeline::Pipeline(const GraphicsPipelineCreateInfo* createInfo) {}
 
     Pipeline::~Pipeline() = default;
 }

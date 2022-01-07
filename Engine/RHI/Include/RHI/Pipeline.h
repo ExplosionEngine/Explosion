@@ -75,7 +75,7 @@ namespace RHI {
         DynamicState dynamicStates;
     };
 
-    struct PipelineCreateInfo {
+    struct GraphicsPipelineCreateInfo {
         const PipelineVertexInputState* vertexInputState;
         const PipelineViewportState* viewportState;
         const PipelineRasterizerState* rasterizerState;
@@ -92,7 +92,7 @@ namespace RHI {
         virtual ~Pipeline();
 
     protected:
-        explicit Pipeline(const PipelineCreateInfo* createInfo);
+        explicit Pipeline(const GraphicsPipelineCreateInfo* createInfo);
     };
 }
 

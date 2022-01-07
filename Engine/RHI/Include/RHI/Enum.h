@@ -130,6 +130,13 @@ namespace RHI {
         LINE_WIDTH,
         MAX
     };
+
+    enum class DescriptorType {
+        UNIFORM_BUFFER = 0,
+        STORAGE_BUFFER,
+        SAMPLER,
+        MAX
+    };
 }
 
 namespace RHI {

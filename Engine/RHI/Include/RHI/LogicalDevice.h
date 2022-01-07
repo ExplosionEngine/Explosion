@@ -15,12 +15,16 @@ namespace RHI {
     class Buffer;
     class RenderPass;
     class FrameBuffer;
+    class Pipeline;
+    class DescriptorSetLayout;
     struct QueueFamilyCreateInfo;
     struct SwapChainCreateInfo;
     struct DeviceMemoryAllocateInfo;
     struct BufferCreateInfo;
     struct RenderPassCreateInfo;
     struct FrameBufferCreateInfo;
+    struct GraphicsPipelineCreateInfo;
+    struct DescriptorSetLayoutCreateInfo;
 
     struct LogicalDeviceCreateInfo {
         size_t queueFamilyNum;
@@ -49,6 +53,10 @@ namespace RHI {
         virtual void DestroyRenderPass(RenderPass* renderPass) = 0;
         virtual FrameBuffer* CreateFrameBuffer(const FrameBufferCreateInfo* createInfo) = 0;
         virtual void DestroyFrameBuffer(FrameBuffer* frameBuffer) = 0;
+        virtual DescriptorSetLayout* CreateDescriptorSetLayout(const DescriptorSetLayoutCreateInfo* createInfo) = 0;
+        virtual void DestroyDescriptorSetLayout(DescriptorSetLayout* descriptorSetLayout) = 0;
+        virtual Pipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) = 0;
+        virtual void DestroyPipeline(Pipeline* pipeline) = 0;
 
     protected:
         explicit LogicalDevice(const LogicalDeviceCreateInfo* createInfo);
