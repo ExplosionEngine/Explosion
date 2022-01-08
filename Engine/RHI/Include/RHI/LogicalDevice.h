@@ -20,6 +20,9 @@ namespace RHI {
     class PipelineLayout;
     class DescriptorPool;
     class DescriptorSet;
+    class CommandPool;
+    class CommandBuffer;
+    class CommandList;
     struct QueueFamilyCreateInfo;
     struct SwapChainCreateInfo;
     struct DeviceMemoryAllocateInfo;
@@ -32,6 +35,9 @@ namespace RHI {
     struct DescriptorPoolCreateInfo;
     struct DescriptorSetAllocateInfo;
     struct DescriptorWriteInfo;
+    struct CommandPoolCreateInfo;
+    struct CommandBufferAllocateInfo;
+    struct CommandBufferBeginInfo;
 
     struct LogicalDeviceCreateInfo {
         size_t queueFamilyNum;
@@ -71,6 +77,12 @@ namespace RHI {
         virtual DescriptorSet** AllocateDescriptorSets(const DescriptorPool* descriptorPool, const DescriptorSetAllocateInfo* allocateInfo) = 0;
         virtual void FreeDescriptors(DescriptorSet** pDescriptorSets) = 0;
         virtual void WriteDescriptorSets(size_t writeInfoNum, const DescriptorWriteInfo* writeInfos) = 0;
+        virtual CommandPool* CreateCommandPool(const CommandPoolCreateInfo* createInfo) = 0;
+        virtual void DestroyCommandPool(CommandPool* commandPool) = 0;
+        virtual CommandBuffer** AllocateCommandBuffer(const CommandBufferAllocateInfo* allocateInfo) = 0;
+        virtual void FreeCommandBuffer(CommandBuffer** pCommandBuffer) = 0;
+        virtual CommandList* BeginCommandBuffer(const CommandBufferBeginInfo* beginInfo) = 0;
+        virtual void EndCommandBuffer(CommandList* commandList) = 0;
 
     protected:
         explicit LogicalDevice(const LogicalDeviceCreateInfo* createInfo);

@@ -196,6 +196,11 @@ namespace RHI {
     };
     using ColorComponentFlags = Flags;
 
+    enum class CommandBufferLevel {
+        PRIMARY = 0,
+        MAX
+    };
+
     template <typename... E>
     Flags CombineBits(E&&... e)
     {
