@@ -9,6 +9,8 @@
 #include <RHI/Enum.h>
 
 namespace RHI {
+    class PipelineLayout;
+
     struct PipelineVertexInputBinding {
         size_t binding;
         size_t stride;
@@ -83,6 +85,7 @@ namespace RHI {
         const PipelineDepthStencilState* depthStencilState;
         const PipelineColorBlendState* colorBlendState;
         const PipelineDynamicState* dynamicState;
+        const PipelineLayout* layout;
         PrimitiveTopology topology;
     };
 

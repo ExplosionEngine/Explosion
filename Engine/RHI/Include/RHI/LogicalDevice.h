@@ -17,6 +17,7 @@ namespace RHI {
     class FrameBuffer;
     class Pipeline;
     class DescriptorSetLayout;
+    class PipelineLayout;
     struct QueueFamilyCreateInfo;
     struct SwapChainCreateInfo;
     struct DeviceMemoryAllocateInfo;
@@ -25,6 +26,7 @@ namespace RHI {
     struct FrameBufferCreateInfo;
     struct GraphicsPipelineCreateInfo;
     struct DescriptorSetLayoutCreateInfo;
+    struct PipelineLayoutCreateInfo;
 
     struct LogicalDeviceCreateInfo {
         size_t queueFamilyNum;
@@ -55,6 +57,8 @@ namespace RHI {
         virtual void DestroyFrameBuffer(FrameBuffer* frameBuffer) = 0;
         virtual DescriptorSetLayout* CreateDescriptorSetLayout(const DescriptorSetLayoutCreateInfo* createInfo) = 0;
         virtual void DestroyDescriptorSetLayout(DescriptorSetLayout* descriptorSetLayout) = 0;
+        virtual PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo) = 0;
+        virtual void DestroyPipelineLayout(PipelineLayout* pipelineLayout) = 0;
         virtual Pipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) = 0;
         virtual void DestroyPipeline(Pipeline* pipeline) = 0;
 
