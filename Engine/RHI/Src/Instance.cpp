@@ -1,15 +1,11 @@
 //
-// Created by johnk on 27/12/2021.
+// Created by johnk on 9/1/2022.
 //
 
-#include <utility>
-
-#include <RHI/Instance.h>
 #include <Common/DynamicLibrary.h>
+#include <RHI/Instance.h>
 
-using namespace Common;
-
-namespace {
+namespace RHI {
     std::string GetPlatformRHILibName()
     {
 #ifdef _WIN32
@@ -18,25 +14,21 @@ namespace {
         return "RHI-Vulkan";
 #endif
     }
-}
 
-namespace RHI {
-    Instance* Instance::CreateByPlatform(const InstanceCreateInfo* info)
+    Instance* Instance::CreateInstanceByPlatform(const InstanceCreateInfo* createInfo)
     {
-        DynamicLibrary* rhiLib = DynamicLibraryManager::Singleton().FindOrLoad(GetPlatformRHILibName());
-        if (rhiLib == nullptr)
-        {
+        auto* dynamicLibrary = Common::DynamicLibraryManager::Singleton().FindOrLoad(GetPlatformRHILibName());
+        if (dynamicLibrary == nullptr) {
             return nullptr;
         }
-        RHICreateInstanceFunc symbol = static_cast<RHICreateInstanceFunc>(rhiLib->GetSymbol("RHICreateInstance"));
-        if (symbol == nullptr)
-        {
+        RHICreateInstanceFunc symbol = static_cast<RHICreateInstanceFunc>(dynamicLibrary->GetSymbol("RHICreateInstance"));
+        if (symbol == nullptr) {
             return nullptr;
         }
-        return symbol(info);
+        return symbol(createInfo);
     }
 
-    Instance::Instance(const InstanceCreateInfo* info) {}
-
     Instance::~Instance() = default;
+
+    Instance::Instance(const InstanceCreateInfo& createInfo) {}
 }
