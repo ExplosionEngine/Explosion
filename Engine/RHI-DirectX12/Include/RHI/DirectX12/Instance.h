@@ -26,8 +26,10 @@ namespace RHI::DirectX12 {
 
         ComPtr<IDXGIFactory4> dx12Factory;
     };
+}
 
-    RHI_DIRECTX12_API Instance* RHICreateInstance();
+extern "C" {
+    RHI_DIRECTX12_API RHI::Instance* RHICreateInstance();
 }
 
 #endif //EXPLOSION_RHI_DX12_INSTANCE_H

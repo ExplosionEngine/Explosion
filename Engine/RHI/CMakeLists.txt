@@ -10,7 +10,7 @@ AddLibrary(
 AddExecutable(
     NAME RHI-Triangle
     SRC Sample/Triangle.cpp
-    INC ${glfw_INC}
+    INC Sample ${glfw_INC}
     LINK ${glfw_LINK}
     LIB RHI ${glfw_LIB}
 )

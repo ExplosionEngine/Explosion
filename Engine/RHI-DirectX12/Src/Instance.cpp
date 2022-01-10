@@ -7,8 +7,6 @@
 #include <RHI/DirectX12/Instance.h>
 
 namespace RHI::DirectX12 {
-    static auto& logger = Common::Logger::Singleton().FindOrCreateDelegator("RHI-DirectX12");
-
     DX12Instance::DX12Instance() : Instance()
     {
         CreateDX12Factory();
@@ -39,10 +37,12 @@ namespace RHI::DirectX12 {
             throw DX12Exception("failed to create dxgi factory");
         }
     }
+}
 
-    Instance* RHICreateInstance()
+extern "C" {
+    RHI::Instance* RHICreateInstance()
     {
-        static DX12Instance singleton;
+        static RHI::DirectX12::DX12Instance singleton;
         return &singleton;
     }
 }
