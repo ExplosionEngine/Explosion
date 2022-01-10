@@ -8,14 +8,14 @@
 namespace RHI {
     std::string GetPlatformRHILibName()
     {
-#ifdef _WIN32
+#if PLATFORM_WINDOWS
         return "RHI-DirectX12";
 #else
         return "RHI-Vulkan";
 #endif
     }
 
-    Instance* Instance::CreateInstanceByPlatform(const InstanceCreateInfo* createInfo)
+    Instance* Instance::CreateInstanceByPlatform()
     {
         auto* dynamicLibrary = Common::DynamicLibraryManager::Singleton().FindOrLoad(GetPlatformRHILibName());
         if (dynamicLibrary == nullptr) {
@@ -25,10 +25,10 @@ namespace RHI {
         if (symbol == nullptr) {
             return nullptr;
         }
-        return symbol(createInfo);
+        return symbol();
     }
 
     Instance::~Instance() = default;
 
-    Instance::Instance(const InstanceCreateInfo& createInfo) {}
+    Instance::Instance() = default;
 }

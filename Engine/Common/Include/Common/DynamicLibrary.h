@@ -12,7 +12,7 @@
 
 #include <Common/Utility.h>
 
-#ifdef _WIN32
+#if PLATFORM_WINDOWS
 #include <Windows.h>
 #define DYNAMIC_LIB_HANDLE               HINSTANCE
 #define DYNAMIC_LIB_LOAD(lib, tag)       LoadLibraryEx(lib, nullptr, 0)

@@ -7,23 +7,22 @@
 
 #include <Common/Utility.h>
 
-namespace RHI {
-    struct InstanceCreateInfo {
-        bool debugMode;
-    };
+#include <RHI/Enum.h>
 
+namespace RHI {
     class Instance {
     public:
-        static Instance* CreateInstanceByPlatform(const InstanceCreateInfo* createInfo);
+        static Instance* CreateInstanceByPlatform();
 
         NON_COPYABLE(Instance)
         virtual ~Instance();
+        virtual RHIType GetRHIType() = 0;
 
     protected:
-        explicit Instance(const InstanceCreateInfo& createInfo);
+        explicit Instance();
     };
 
-    using RHICreateInstanceFunc = Instance*(*)(const InstanceCreateInfo*);
+    using RHICreateInstanceFunc = Instance*(*)();
 }
 
 #endif //EXPLOSION_RHI_INSTANCE_H
