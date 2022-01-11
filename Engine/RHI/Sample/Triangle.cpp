@@ -15,7 +15,7 @@ public:
 protected:
     void OnCreate() override
     {
-        instance = Instance::CreateInstanceByPlatform();
+        instance = Instance::CreateByType(RHIType::DIRECTX_12);
     }
 
     void OnDestroy() override {}

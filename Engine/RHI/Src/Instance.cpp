@@ -6,18 +6,33 @@
 #include <RHI/Instance.h>
 
 namespace RHI {
-    std::string GetPlatformRHILibName()
+    static RHIType GetPlatformRHIType()
     {
 #if PLATFORM_WINDOWS
-        return "RHI-DirectX12";
+        return RHIType::DIRECTX_12;
 #else
-        return "RHI-Vulkan";
+        return RHIType::VULKAN;
 #endif
     }
 
-    Instance* Instance::CreateInstanceByPlatform()
+    static std::string GetRHILibNameByType(const RHIType& type)
     {
-        auto* dynamicLibrary = Common::DynamicLibraryManager::Singleton().FindOrLoad(GetPlatformRHILibName());
+        switch (type) {
+            case RHIType::DIRECTX_12:
+                return "RHI-DirectX12";
+            default:
+                return "RHI-Vulkan";
+        }
+    }
+
+    Instance* Instance::CreateByPlatform()
+    {
+        return CreateByType(GetPlatformRHIType());
+    }
+
+    Instance* Instance::CreateByType(const RHIType& type)
+    {
+        auto* dynamicLibrary = Common::DynamicLibraryManager::Singleton().FindOrLoad(GetRHILibNameByType(type));
         if (dynamicLibrary == nullptr) {
             return nullptr;
         }

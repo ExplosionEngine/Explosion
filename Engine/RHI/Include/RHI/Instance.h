@@ -12,7 +12,8 @@
 namespace RHI {
     class Instance {
     public:
-        static Instance* CreateInstanceByPlatform();
+        static Instance* CreateByPlatform();
+        static Instance* CreateByType(const RHIType& type);
 
         NON_COPYABLE(Instance)
         virtual ~Instance();
