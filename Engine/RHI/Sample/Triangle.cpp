@@ -15,7 +15,7 @@ public:
 protected:
     void OnCreate() override
     {
-        instance = Instance::CreateByType(RHIType::DIRECTX_12);
+        instance = Instance::CreateByType(RHIType::VULKAN);
     }
 
     void OnDestroy() override {}

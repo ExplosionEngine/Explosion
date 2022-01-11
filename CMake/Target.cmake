@@ -54,7 +54,7 @@ endfunction()
 #  - PUBLIC_LINK  {List}                : public link directories of target
 #  - LIB          {List}                : libraries of target
 function(AddLibrary)
-    cmake_parse_arguments(PARAMS "" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;LINK;LIB" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB" ${ARGN})
 
     if (${ENABLE_TARGET_DEBUG_INFO})
         message("")

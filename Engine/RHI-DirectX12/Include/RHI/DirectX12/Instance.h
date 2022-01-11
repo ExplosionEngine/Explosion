@@ -17,6 +17,7 @@ using Microsoft::WRL::ComPtr;
 namespace RHI::DirectX12 {
     class RHI_DIRECTX12_API DX12Instance : public Instance {
     public:
+        NON_COPYABLE(DX12Instance)
         DX12Instance();
         ~DX12Instance() noexcept override;
         RHIType GetRHIType() override;

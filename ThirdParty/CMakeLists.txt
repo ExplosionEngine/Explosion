@@ -26,12 +26,16 @@ AddThirdPartyPackage(
 )
 set(DirectXHeaders_INC ${DirectXHeaders_SOURCE_DIR}/include CACHE PATH "" FORCE)
 
-# VulkanHpp
+# VulkanSDK
 AddThirdPartyPackage(
-    NAME VulkanHpp
-    VERSION 1.2.202
+    PLATFORM
+    NAME VulkanSDK
+    VERSION 1.2.198.1
 )
-set(VulkanHpp_INC ${VulkanHpp_SOURCE_DIR} CACHE PATH "" FORCE)
+set(VulkanSDK_INC ${VulkanSDK_SOURCE_DIR}/Include CACHE PATH "" FORCE)
+set(VulkanSDK_LINK ${VulkanSDK_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
+set(VulkanSDK_BIN ${VulkanSDK_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
+set(VulkanSDK_VULKAN_LIB vulkan-1 CACHE PATH "" FORCE)
 
 # GLFW
 AddThirdPartyPackage(

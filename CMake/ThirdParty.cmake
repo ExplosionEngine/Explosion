@@ -40,11 +40,16 @@ endfunction()
 #  - ARG     {List}   : arguments of cmake command
 #  - BUILD   {Bool}   : build package or not (just using sources)
 function(AddThirdPartyPackage)
-    cmake_parse_arguments(PARAMS "BUILD" "NAME;VERSION" "ARG" ${ARGN})
+    cmake_parse_arguments(PARAMS "BUILD;PLATFORM" "NAME;VERSION" "ARG" ${ARGN})
 
     set(3RD_PACKAGE_NAME "${PARAMS_NAME}")
-    set(3RD_PACKAGE_FULL_NAME "${PARAMS_NAME}-${PARAMS_VERSION}")
+    if (${PARAMS_PLATFORM})
+        set(3RD_PACKAGE_FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${PARAMS_VERSION}")
+    else()
+        set(3RD_PACKAGE_FULL_NAME "${PARAMS_NAME}-${PARAMS_VERSION}")
+    endif()
     set(3RD_PACKAGE_SOURCE_DIR "${3RD_SOURCE_DIR}/${3RD_PACKAGE_FULL_NAME}")
+
     if (${PARAMS_BUILD})
         set(3RD_PACKAGE_BINARY_DIR "${3RD_BINARY_DIR}/${3RD_PACKAGE_NAME}")
         set(3RD_PACKAGE_INSTALL_DIR "${3RD_INSTALL_DIR}/${3RD_PACKAGE_NAME}/$<CONFIG>")
