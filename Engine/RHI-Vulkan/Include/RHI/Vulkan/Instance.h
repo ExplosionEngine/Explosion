@@ -19,9 +19,11 @@ namespace RHI::Vulkan {
         RHIType GetRHIType() override;
 
     private:
+        void PrepareExtensions();
         void CreateVKInstance();
         void DestroyVKInstance();
 
+        std::vector<const char*> vkEnabledExtensionNames;
         vk::Instance vkInstance;
     };
 }

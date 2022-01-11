@@ -2,12 +2,17 @@
 // Created by johnk on 11/1/2022.
 //
 
+#if PLATFORM_WINDOWS
+#define VK_KHR_WIN32_SURFACE_EXTENSION_NAME "VK_KHR_win32_surface"
+#endif
+
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Instance.h>
 
 namespace RHI::Vulkan {
     VKInstance::VKInstance() : Instance()
     {
+        PrepareExtensions();
         CreateVKInstance();
     }
 
@@ -21,6 +26,33 @@ namespace RHI::Vulkan {
         return RHIType::VULKAN;
     }
 
+    void VKInstance::PrepareExtensions()
+    {
+        static std::vector<const char*> requiredExtensionNames = {
+            VK_KHR_SURFACE_EXTENSION_NAME,
+#if PLATFORM_WINDOWS
+            VK_KHR_WIN32_SURFACE_EXTENSION_NAME
+#endif
+        };
+
+        uint32_t supportedExtensionCount = 0;
+        vk::enumerateInstanceExtensionProperties(nullptr, &supportedExtensionCount, nullptr);
+        std::vector<vk::ExtensionProperties> supportedExtensions(supportedExtensionCount);
+        vk::enumerateInstanceExtensionProperties(nullptr, &supportedExtensionCount, supportedExtensions.data());
+
+        for (auto&& requiredExtensionName : requiredExtensionNames) {
+            auto iter = std::find_if(
+                supportedExtensions.begin(),
+                supportedExtensions.end(),
+                [&requiredExtensionName](const auto& elem) -> bool { return std::string(requiredExtensionName) == elem.extensionName; }
+            );
+            if (iter == supportedExtensions.end()) {
+                continue;
+            }
+            vkEnabledExtensionNames.emplace_back(requiredExtensionName);
+        }
+    }
+
     void VKInstance::CreateVKInstance()
     {
         vk::ApplicationInfo applicationInfo;
@@ -32,8 +64,8 @@ namespace RHI::Vulkan {
 
         vk::InstanceCreateInfo createInfo;
         createInfo.pApplicationInfo = &applicationInfo;
-        createInfo.enabledExtensionCount = 0;
-        createInfo.ppEnabledExtensionNames = nullptr;
+        createInfo.enabledExtensionCount = vkEnabledExtensionNames.size();
+        createInfo.ppEnabledExtensionNames = vkEnabledExtensionNames.data();
         createInfo.enabledLayerCount = 0;
         createInfo.ppEnabledLayerNames = nullptr;
 
