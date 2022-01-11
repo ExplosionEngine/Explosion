@@ -21,18 +21,21 @@ namespace RHI::Vulkan {
     private:
 #if BUILD_CONFIG_DEBUG
         void PrepareLayers();
+        void CreateDebugMessenger();
+        void DestroyDebugMessenger();
 #endif
-
         void PrepareExtensions();
         void CreateVKInstance();
         void DestroyVKInstance();
+        void PrepareDispatch();
 
 #if BUILD_CONFIG_DEBUG
         std::vector<const char*> vkEnabledLayerNames;
+        vk::DebugUtilsMessengerEXT vkDebugMessenger;
 #endif
-
         std::vector<const char*> vkEnabledExtensionNames;
         vk::Instance vkInstance;
+        vk::DispatchLoaderDynamic vkDispatch;
     };
 }
 
