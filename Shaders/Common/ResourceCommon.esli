@@ -1,9 +1,0 @@
-#define PER_OBJ  0
-#define PER_VIEW 1
-#define PER_MAT  2
-#define PER_DRAW 3
-#define GLOBAL   4
-
-#define UniformGroup(Freq, Name, Binding) layout (set = Freq, binding = Binding, std140) uniform Name
-
-#define StorageBuffer(Freq, Name, Binding) layout (set = Freq, binding = Binding, std140) buffer Name
