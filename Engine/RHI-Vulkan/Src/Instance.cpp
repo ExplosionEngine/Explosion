@@ -2,16 +2,16 @@
 // Created by johnk on 11/1/2022.
 //
 
-#if PLATFORM_WINDOWS
-#define VK_KHR_WIN32_SURFACE_EXTENSION_NAME "VK_KHR_win32_surface"
-#endif
-
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Instance.h>
 
 namespace RHI::Vulkan {
     VKInstance::VKInstance() : Instance()
     {
+#if BUILD_CONFIG_DEBUG
+        PrepareLayers();
+#endif
+
         PrepareExtensions();
         CreateVKInstance();
     }
@@ -26,12 +26,38 @@ namespace RHI::Vulkan {
         return RHIType::VULKAN;
     }
 
+#if BUILD_CONFIG_DEBUG
+    void VKInstance::PrepareLayers()
+    {
+        static std::vector<const char*> requiredLayerNames = {
+            VK_KHRONOS_VALIDATION_LAYER_NAME
+        };
+
+        uint32_t supportedLayerCount = 0;
+        vk::enumerateInstanceLayerProperties(&supportedLayerCount, nullptr);
+        std::vector<vk::LayerProperties> supportedLayers(supportedLayerCount);
+        vk::enumerateInstanceLayerProperties(&supportedLayerCount, supportedLayers.data());
+
+        for (auto&& requiredLayerName : requiredLayerNames) {
+            auto iter = std::find_if(
+                supportedLayers.begin(),
+                supportedLayers.end(),
+                [&requiredLayerName](const auto& elem) -> bool { return std::string(requiredLayerName) == elem.layerName; }
+            );
+            if (iter == supportedLayers.end()) {
+                continue;
+            }
+            vkEnabledLayerNames.emplace_back(requiredLayerName);
+        }
+    }
+#endif
+
     void VKInstance::PrepareExtensions()
     {
         static std::vector<const char*> requiredExtensionNames = {
             VK_KHR_SURFACE_EXTENSION_NAME,
 #if PLATFORM_WINDOWS
-            VK_KHR_WIN32_SURFACE_EXTENSION_NAME
+            VK_KHR_PLATFORM_SURFACE_EXTENSION_NAME
 #endif
         };
 
@@ -66,8 +92,10 @@ namespace RHI::Vulkan {
         createInfo.pApplicationInfo = &applicationInfo;
         createInfo.enabledExtensionCount = vkEnabledExtensionNames.size();
         createInfo.ppEnabledExtensionNames = vkEnabledExtensionNames.data();
-        createInfo.enabledLayerCount = 0;
-        createInfo.ppEnabledLayerNames = nullptr;
+#if BUILD_CONFIG_DEBUG
+        createInfo.enabledLayerCount = vkEnabledLayerNames.size();
+        createInfo.ppEnabledLayerNames = vkEnabledLayerNames.data();
+#endif
 
         vk::Result result = vk::createInstance(&createInfo, nullptr, &vkInstance);
         if (result != vk::Result::eSuccess) {

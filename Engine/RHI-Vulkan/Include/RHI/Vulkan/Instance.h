@@ -19,9 +19,17 @@ namespace RHI::Vulkan {
         RHIType GetRHIType() override;
 
     private:
+#if BUILD_CONFIG_DEBUG
+        void PrepareLayers();
+#endif
+
         void PrepareExtensions();
         void CreateVKInstance();
         void DestroyVKInstance();
+
+#if BUILD_CONFIG_DEBUG
+        std::vector<const char*> vkEnabledLayerNames;
+#endif
 
         std::vector<const char*> vkEnabledExtensionNames;
         vk::Instance vkInstance;
