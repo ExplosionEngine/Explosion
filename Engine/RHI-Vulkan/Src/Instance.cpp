@@ -5,6 +5,7 @@
 #include <Common/Logger.h>
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Instance.h>
+#include <RHI/Vulkan/Gpu.h>
 
 namespace RHI::Vulkan {
     static auto& GLogger = Common::Logger::Singleton().FindOrCreateDelegator("RHI-Vulkan");
@@ -36,6 +37,7 @@ namespace RHI::Vulkan {
 #if BUILD_CONFIG_DEBUG
         CreateDebugMessenger();
 #endif
+        EnumeratePhysicalDevices();
     }
 
     VKInstance::~VKInstance()
@@ -142,6 +144,29 @@ namespace RHI::Vulkan {
         vkDispatch.vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkInstance.getProcAddr("vkCreateDebugUtilsMessengerEXT"));
         vkDispatch.vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkInstance.getProcAddr("vkDestroyDebugUtilsMessengerEXT"));
 #endif
+    }
+
+    uint32_t VKInstance::GetGpuNum()
+    {
+        return gpus.size();
+    }
+
+    Gpu* VKInstance::GetGpu(uint32_t index)
+    {
+        return gpus[index].get();
+    }
+
+    void VKInstance::EnumeratePhysicalDevices()
+    {
+        uint32_t count = 0;
+        vkInstance.enumeratePhysicalDevices(&count, nullptr);
+        vkPhysicalDevices.resize(count);
+        vkInstance.enumeratePhysicalDevices(&count, vkPhysicalDevices.data());
+
+        gpus.resize(count);
+        for (uint32_t i = 0; i < count; i++) {
+            gpus[i] = std::make_unique<VKGpu>(vkPhysicalDevices[i]);
+        }
     }
 
 #if BUILD_CONFIG_DEBUG

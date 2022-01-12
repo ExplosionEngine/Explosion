@@ -13,6 +13,12 @@ namespace RHI {
         GNN,
         MAX
     };
+
+    enum class GpuType {
+        HARDWARE,
+        SOFTWARE,
+        MAX
+    };
 }
 
 #endif //EXPLOSION_RHI_ENUM_H
