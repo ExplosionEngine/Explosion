@@ -15,17 +15,24 @@
 using Microsoft::WRL::ComPtr;
 
 namespace RHI::DirectX12 {
+    class DX12Gpu;
+
     class RHI_DIRECTX12_API DX12Instance : public Instance {
     public:
         NON_COPYABLE(DX12Instance)
         DX12Instance();
         ~DX12Instance() noexcept override;
+
         RHIType GetRHIType() override;
+        uint32_t GetGpuNum() override;
+        Gpu* GetGpu(uint32_t index) override;
 
     private:
         void CreateDX12Factory();
+        void EnumerateAdapters();
 
         ComPtr<IDXGIFactory4> dx12Factory;
+        std::vector<std::unique_ptr<DX12Gpu>> gpus;
     };
 }
 

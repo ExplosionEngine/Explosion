@@ -5,6 +5,8 @@
 #ifndef EXPLOSION_RHI_GRAPHICS_CARD_H
 #define EXPLOSION_RHI_GRAPHICS_CARD_H
 
+#include <cstdint>
+
 #include <Common/Utility.h>
 #include <RHI/Enum.h>
 
@@ -21,7 +23,7 @@ namespace RHI {
     public:
         NON_COPYABLE(Gpu)
         virtual ~Gpu();
-        virtual const GpuProperty& GetProperty() = 0;
+        virtual GpuProperty GetProperty() = 0;
 
     protected:
         Gpu();

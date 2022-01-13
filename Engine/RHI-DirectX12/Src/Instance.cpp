@@ -5,11 +5,13 @@
 #include <Common/Logger.h>
 #include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Instance.h>
+#include <RHI/DirectX12/Gpu.h>
 
 namespace RHI::DirectX12 {
     DX12Instance::DX12Instance() : Instance()
     {
         CreateDX12Factory();
+        EnumerateAdapters();
     }
 
     DX12Instance::~DX12Instance() noexcept = default;
@@ -36,6 +38,25 @@ namespace RHI::DirectX12 {
         if (FAILED(CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&dx12Factory)))) {
             throw DX12Exception("failed to create dxgi factory");
         }
+    }
+
+    void DX12Instance::EnumerateAdapters()
+    {
+        ComPtr<IDXGIAdapter1> tempAdapter;
+        for (uint32_t i = 0; SUCCEEDED(dx12Factory->EnumAdapters1(i, &tempAdapter)); i++) {
+            gpus.emplace_back(std::make_unique<DX12Gpu>(std::move(tempAdapter)));
+            tempAdapter = nullptr;
+        }
+    }
+
+    uint32_t DX12Instance::GetGpuNum()
+    {
+        return gpus.size();
+    }
+
+    Gpu* DX12Instance::GetGpu(uint32_t index)
+    {
+        return gpus[index].get();
     }
 }
 

@@ -5,23 +5,21 @@
 #include <RHI/Vulkan/Gpu.h>
 
 namespace RHI::Vulkan {
-    VKGpu::VKGpu(vk::PhysicalDevice d) : Gpu(), vkPhysicalDevice(d), property({})
-    {
-        GetPhysicalDeviceProperties();
-    }
+    VKGpu::VKGpu(vk::PhysicalDevice d) : Gpu(), vkPhysicalDevice(d) {}
 
     VKGpu::~VKGpu() = default;
 
-    const GpuProperty& VKGpu::GetProperty()
+    GpuProperty VKGpu::GetProperty()
     {
-        return property;
-    }
-
-    void VKGpu::GetPhysicalDeviceProperties()
-    {
+        vk::PhysicalDeviceProperties vkPhysicalDeviceProperties;
         vkPhysicalDevice.getProperties(&vkPhysicalDeviceProperties);
+        vk::PhysicalDeviceMemoryProperties vkPhysicalDeviceMemoryProperties;
         vkPhysicalDevice.getMemoryProperties(&vkPhysicalDeviceMemoryProperties);
 
+        GpuProperty property {};
+        property.vendorId = vkPhysicalDeviceProperties.vendorID;
+        property.deviceId = vkPhysicalDeviceProperties.deviceID;
         // TODO
+        return property;
     }
 }
