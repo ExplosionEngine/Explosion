@@ -3,6 +3,7 @@
 //
 
 #include <RHI/DirectX12/Gpu.h>
+#include <RHI/DirectX12/Common.h>
 
 namespace RHI::DirectX12 {
     DX12Gpu::DX12Gpu(ComPtr<IDXGIAdapter1>&& a) : Gpu(), dx12Adapter(a) {}
@@ -17,7 +18,7 @@ namespace RHI::DirectX12 {
         GpuProperty property {};
         property.vendorId = desc.VendorId;
         property.deviceId = desc.DeviceId;
-        // TODO
+        property.type = GetGpuTypeByAdapterFlag(desc.Flags);
         return property;
     }
 }

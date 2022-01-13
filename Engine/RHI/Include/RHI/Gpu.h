@@ -12,11 +12,9 @@
 
 namespace RHI {
     struct GpuProperty {
-        // TODO check different of Vulkan and DX12
         uint32_t vendorId;
         uint32_t deviceId;
         GpuType type;
-        size_t memorySize;
     };
 
     class Gpu {

@@ -16,7 +16,7 @@ namespace RHI::DirectX12 {
     class DX12Gpu : public Gpu {
     public:
         NON_COPYABLE(DX12Gpu)
-        DX12Gpu(ComPtr<IDXGIAdapter1>&& adapater);
+        explicit DX12Gpu(ComPtr<IDXGIAdapter1>&& adapter);
         ~DX12Gpu() override;
 
         GpuProperty GetProperty() override;

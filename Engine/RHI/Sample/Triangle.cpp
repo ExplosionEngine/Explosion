@@ -16,7 +16,7 @@ public:
 protected:
     void OnCreate() override
     {
-        instance = Instance::CreateByType(RHIType::VULKAN);
+        instance = Instance::CreateByType(RHIType::DIRECTX_12);
         gpu = instance->GetGpu(0);
         auto property = gpu->GetProperty();
     }
