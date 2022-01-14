@@ -22,4 +22,4 @@ namespace RHI::Vulkan {
     };
 }
 
-#endif //EXPLOSION_RHI_DX12_GRAPHICS_CARD_H
+#endif //EXPLOSION_RHI_VULKAN_GPU_H
