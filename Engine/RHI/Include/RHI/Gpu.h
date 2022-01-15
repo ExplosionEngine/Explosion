@@ -11,6 +11,8 @@
 #include <RHI/Enum.h>
 
 namespace RHI {
+    class Device;
+
     struct GpuProperty {
         uint32_t vendorId;
         uint32_t deviceId;
@@ -22,6 +24,7 @@ namespace RHI {
         NON_COPYABLE(Gpu)
         virtual ~Gpu();
         virtual GpuProperty GetProperty() = 0;
+        virtual Device* RequestDevice() = 0;
 
     protected:
         Gpu();

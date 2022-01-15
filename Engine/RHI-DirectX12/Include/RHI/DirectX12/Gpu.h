@@ -20,6 +20,7 @@ namespace RHI::DirectX12 {
         ~DX12Gpu() override;
 
         GpuProperty GetProperty() override;
+        ComPtr<IDXGIAdapter1>& GetDX12Adapter();
 
     private:
         ComPtr<IDXGIAdapter1> dx12Adapter;

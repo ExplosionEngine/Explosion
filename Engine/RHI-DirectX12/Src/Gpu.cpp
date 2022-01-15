@@ -21,4 +21,9 @@ namespace RHI::DirectX12 {
         property.type = GetGpuTypeByAdapterFlag(desc.Flags);
         return property;
     }
+
+    ComPtr<IDXGIAdapter1>& DX12Gpu::GetDX12Adapter()
+    {
+        return dx12Adapter;
+    }
 }

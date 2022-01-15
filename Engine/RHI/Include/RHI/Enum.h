@@ -19,6 +19,13 @@ namespace RHI {
         SOFTWARE,
         MAX
     };
+
+    enum class QueueType {
+        GRAPHICS,
+        COMPUTE,
+        TRANSFER,
+        MAX
+    };
 }
 
 #endif //EXPLOSION_RHI_ENUM_H

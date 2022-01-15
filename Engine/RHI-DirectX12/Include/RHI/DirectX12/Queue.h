@@ -1,0 +1,29 @@
+//
+// Created by johnk on 15/1/2022.
+//
+
+#ifndef EXPLOSION_RHI_DX12_QUEUE_H
+#define EXPLOSION_RHI_DX12_QUEUE_H
+
+#include <wrl/client.h>
+#include <d3d12.h>
+
+#include <RHI/Queue.h>
+
+using namespace Microsoft::WRL;
+
+namespace RHI::DirectX12 {
+    class DX12Queue : public Queue {
+    public:
+        NON_COPYABLE(DX12Queue)
+        explicit DX12Queue(ComPtr<ID3D12CommandQueue>&& dx12CommandQueue);
+        ~DX12Queue() override;
+
+        ComPtr<ID3D12CommandQueue>& GetDX12CommandQueue();
+
+    private:
+        ComPtr<ID3D12CommandQueue> dx12CommandQueue;
+    };
+}
+
+#endif //EXPLOSION_RHI_DX12_QUEUE_H
