@@ -13,7 +13,7 @@ namespace RHI {
         NON_COPYABLE(Queue)
         virtual ~Queue();
 
-    private:
+    protected:
         Queue();
     };
 }

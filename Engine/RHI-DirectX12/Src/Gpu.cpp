@@ -2,8 +2,9 @@
 // Created by johnk on 13/1/2022.
 //
 
-#include <RHI/DirectX12/Gpu.h>
 #include <RHI/DirectX12/Common.h>
+#include <RHI/DirectX12/Gpu.h>
+#include <RHI/DirectX12/Device.h>
 
 namespace RHI::DirectX12 {
     DX12Gpu::DX12Gpu(ComPtr<IDXGIAdapter1>&& a) : Gpu(), dx12Adapter(a) {}
@@ -25,5 +26,10 @@ namespace RHI::DirectX12 {
     ComPtr<IDXGIAdapter1>& DX12Gpu::GetDX12Adapter()
     {
         return dx12Adapter;
+    }
+
+    Device* DX12Gpu::RequestDevice(const DeviceCreateInfo* createInfo)
+    {
+        return new DX12Device(*this, createInfo);
     }
 }

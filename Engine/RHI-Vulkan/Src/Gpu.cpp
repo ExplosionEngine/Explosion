@@ -4,6 +4,7 @@
 
 #include <RHI/Vulkan/Gpu.h>
 #include <RHI/Vulkan/Common.h>
+#include <RHI/Vulkan/Device.h>
 
 namespace RHI::Vulkan {
     VKGpu::VKGpu(vk::PhysicalDevice d) : Gpu(), vkPhysicalDevice(d) {}
@@ -22,5 +23,15 @@ namespace RHI::Vulkan {
         property.deviceId = vkPhysicalDeviceProperties.deviceID;
         property.type = VKEnumCast<vk::PhysicalDeviceType, GpuType>(vkPhysicalDeviceProperties.deviceType);
         return property;
+    }
+
+    Device* VKGpu::RequestDevice(const DeviceCreateInfo* createInfo)
+    {
+        return new VKDevice(*this, createInfo);
+    }
+
+    vk::PhysicalDevice VKGpu::GetVkPhysicalDevice()
+    {
+        return vkPhysicalDevice;
     }
 }

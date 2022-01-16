@@ -12,6 +12,7 @@
 
 namespace RHI {
     class Device;
+    struct DeviceCreateInfo;
 
     struct GpuProperty {
         uint32_t vendorId;
@@ -24,7 +25,7 @@ namespace RHI {
         NON_COPYABLE(Gpu)
         virtual ~Gpu();
         virtual GpuProperty GetProperty() = 0;
-        virtual Device* RequestDevice() = 0;
+        virtual Device* RequestDevice(const DeviceCreateInfo* createInfo) = 0;
 
     protected:
         Gpu();

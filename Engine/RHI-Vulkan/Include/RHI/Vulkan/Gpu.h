@@ -15,7 +15,11 @@ namespace RHI::Vulkan {
         NON_COPYABLE(VKGpu)
         explicit VKGpu(vk::PhysicalDevice vkPhysicalDevice);
         ~VKGpu() override;
+
         GpuProperty GetProperty() override;
+        Device* RequestDevice(const DeviceCreateInfo* createInfo) override;
+
+        vk::PhysicalDevice GetVkPhysicalDevice();
 
     private:
         vk::PhysicalDevice vkPhysicalDevice;

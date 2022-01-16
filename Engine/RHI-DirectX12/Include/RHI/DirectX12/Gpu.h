@@ -21,6 +21,7 @@ namespace RHI::DirectX12 {
 
         GpuProperty GetProperty() override;
         ComPtr<IDXGIAdapter1>& GetDX12Adapter();
+        Device* RequestDevice(const DeviceCreateInfo* createInfo) override;
 
     private:
         ComPtr<IDXGIAdapter1> dx12Adapter;
