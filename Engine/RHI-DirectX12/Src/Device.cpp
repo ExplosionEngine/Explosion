@@ -57,6 +57,20 @@ namespace RHI::DirectX12 {
 
     void DX12Device::CreateQueues(const DeviceCreateInfo* createInfo)
     {
-        // TODO
+        for (size_t i = 0; i < createInfo->queueCreateInfoNum; i++) {
+            auto& queueCreateInfo = createInfo->queueCreateInfos[i];
+            std::vector<std::unique_ptr<DX12Queue>> temp(queueCreateInfo.num);
+
+            D3D12_COMMAND_QUEUE_DESC queueDesc {};
+            queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+            queueDesc.Type = DX12EnumCast<QueueType, D3D12_COMMAND_LIST_TYPE>(queueCreateInfo.type);
+            for (auto& j : temp) {
+                ComPtr<ID3D12CommandQueue> commandQueue;
+                dx12Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue));
+                j = std::make_unique<DX12Queue>(std::move(commandQueue));
+            }
+
+            queues[queueCreateInfo.type] = std::move(temp);
+        }
     }
 }
