@@ -4,6 +4,7 @@
 
 #include <Application.h>
 #include <RHI/Instance.h>
+#include <RHI/Gpu.h>
 using namespace RHI;
 
 class TriangleApplication : public Application {
@@ -15,7 +16,9 @@ public:
 protected:
     void OnCreate() override
     {
-        instance = Instance::CreateByType(RHIType::VULKAN);
+        instance = Instance::CreateByType(RHIType::DIRECTX_12);
+        gpu = instance->GetGpu(0);
+        auto property = gpu->GetProperty();
     }
 
     void OnDestroy() override {}
@@ -24,6 +27,7 @@ protected:
 
 private:
     Instance* instance = nullptr;
+    Gpu* gpu = nullptr;
 };
 
 int main(int argc, char* argv[])
