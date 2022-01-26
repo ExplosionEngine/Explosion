@@ -1,5 +1,5 @@
 option(BUILD_TEST "Build unit tests" ON)
-option(ENABLE_TARGET_DEBUG_INFO "Enable debug info when add cmake targets" ON)
+option(ENABLE_TARGET_DEBUG_INFO "Enable debug info when add cmake targets" OFF)
 
 set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Api CACHE PATH "" FORCE)
 

@@ -24,13 +24,18 @@ namespace RHI::Vulkan {
         size_t GetQueueNum(QueueType type) override;
         Queue* GetQueue(QueueType type, size_t index) override;
         void Destroy() override;
+        Buffer* CreateBuffer(const BufferCreateInfo *createInfo) override;
+        Texture* CreateTexture(const TextureCreateInfo *createInfo) override;
+
+        vk::Device GetVkDevice();
 
     private:
-        static std::optional<uint32_t> FindQueueFamilyIndex(const std::vector<vk::QueueFamilyProperties>& properties, QueueType queueType);
+        static std::optional<uint32_t> FindQueueFamilyIndex(const std::vector<vk::QueueFamilyProperties>& properties, std::vector<uint32_t>& usedQueueFamily, QueueType queueType);
         void CreateDevice(VKGpu& gpu, const DeviceCreateInfo* createInfo);
         void GetQueues();
 
         vk::Device vkDevice;
+        std::unordered_map<QueueType, std::pair<uint32_t, uint32_t>> queueFamilyMappings;
         std::unordered_map<QueueType, std::vector<std::unique_ptr<VKQueue>>> queues;
     };
 }

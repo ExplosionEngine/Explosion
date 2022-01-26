@@ -11,7 +11,11 @@
 #include <RHI/Enum.h>
 
 namespace RHI {
+    struct BufferCreateInfo;
+    struct TextureCreateInfo;
     class Queue;
+    class Buffer;
+    class Texture;
 
     struct QueueCreateInfo {
         QueueType type;
@@ -31,6 +35,8 @@ namespace RHI {
         virtual void Destroy() = 0;
         virtual size_t GetQueueNum(QueueType type) = 0;
         virtual Queue* GetQueue(QueueType type, size_t index) = 0;
+        virtual Buffer* CreateBuffer(const BufferCreateInfo* createInfo) = 0;
+        virtual Texture* CreateTexture(const TextureCreateInfo* createInfo) = 0;
 
     protected:
         explicit Device(const DeviceCreateInfo* createInfo);

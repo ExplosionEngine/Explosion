@@ -43,6 +43,18 @@ namespace RHI::DirectX12 {
         return queueArray[index].get();
     }
 
+    Buffer* DX12Device::CreateBuffer(const BufferCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    Texture* DX12Device::CreateTexture(const TextureCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
     ComPtr<ID3D12Device>& DX12Device::GetDX12Device()
     {
         return dx12Device;
@@ -57,20 +69,32 @@ namespace RHI::DirectX12 {
 
     void DX12Device::CreateQueues(const DeviceCreateInfo* createInfo)
     {
+        std::unordered_map<QueueType, size_t> queueNumMap;
         for (size_t i = 0; i < createInfo->queueCreateInfoNum; i++) {
-            auto& queueCreateInfo = createInfo->queueCreateInfos[i];
-            std::vector<std::unique_ptr<DX12Queue>> temp(queueCreateInfo.num);
+            const auto& queueCreateInfo = createInfo->queueCreateInfos[i];
+            auto iter = queueNumMap.find(queueCreateInfo.type);
+            if (iter == queueNumMap.end()) {
+                queueNumMap[queueCreateInfo.type] = 0;
+            }
+            queueNumMap[queueCreateInfo.type] += queueCreateInfo.num;
+        }
+
+        for (auto iter : queueNumMap) {
+            std::vector<std::unique_ptr<DX12Queue>> tempQueues(iter.second);
 
             D3D12_COMMAND_QUEUE_DESC queueDesc {};
             queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-            queueDesc.Type = DX12EnumCast<QueueType, D3D12_COMMAND_LIST_TYPE>(queueCreateInfo.type);
-            for (auto& j : temp) {
+            queueDesc.Type = DX12EnumCast<QueueType, D3D12_COMMAND_LIST_TYPE>(iter.first);
+            for (auto& j : tempQueues) {
                 ComPtr<ID3D12CommandQueue> commandQueue;
                 dx12Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue));
+                if (commandQueue == nullptr) {
+                    throw DX12Exception("failed to create dx12 queue with specific type");
+                }
                 j = std::make_unique<DX12Queue>(std::move(commandQueue));
             }
 
-            queues[queueCreateInfo.type] = std::move(temp);
+            queues[iter.first] = std::move(tempQueues);
         }
     }
 }

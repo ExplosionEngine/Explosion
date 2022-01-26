@@ -57,6 +57,10 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ```
 
+# Sponsor
+
+<img width="200dp" src=".github/resource/JetBrains.png" alt="JetBrains Open Source"/>
+
 # License
 
 [MIT](https://github.com/ExplosionEngine/Explosion/blob/master/LICENSE) @ Explosion Development Team All right Reserved 2022.
