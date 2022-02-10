@@ -6,6 +6,7 @@
 #define EXPLOSION_RHI_VULKAN_DEVICE_H
 
 #include <optional>
+#include <unordered_map>
 
 #include <vulkan/vulkan.hpp>
 

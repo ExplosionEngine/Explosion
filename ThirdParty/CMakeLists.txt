@@ -39,8 +39,11 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(VulkanSDK_LINK ${VulkanSDK_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
     set(VulkanSDK_BIN ${VulkanSDK_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
     set(VulkanSDK_VULKAN_LIB vulkan-1 CACHE PATH "" FORCE)
-else()
-    # TODO
+else(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    set(VulkanSDK_INC ${VulkanSDK_SOURCE_DIR}/macOS/include CACHE PATH "" FORCE)
+    set(VulkanSDK_LINK ${VulkanSDK_SOURCE_DIR}/macOS/lib CACHE PATH "" FORCE)
+    set(VulkanSDK_BIN ${VulkanSDK_SOURCE_DIR}/macOS/bin CACHE PATH "" FORCE)
+    set(VulkanSDK_VULKAN_LIB vulkan.1 CACHE PATH "" FORCE)
 endif()
 
 # GLFW
