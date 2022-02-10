@@ -1,4 +1,4 @@
-option(ENABLE_3RD_DEBUG_INFO "3rd package debug" ON)
+option(ENABLE_3RD_DEBUG_INFO "3rd package debug" OFF)
 option(CUSTOM_3RD_REPO "using custom 3rd repo" OFF)
 
 if (${CUSTOM_3RD_REPO})
@@ -31,6 +31,7 @@ function(AddThirdPartyPackage)
         set(3RD_PACKAGE_FULL_NAME "${PARAMS_NAME}-${PARAMS_VERSION}")
     endif()
     set(3RD_PACKAGE_URL "${3RD_REPO}/${3RD_PACKAGE_FULL_NAME}.zip")
+    set(3RD_PACKAGE_ZIP "${3RD_ZIP_DIR}/${3RD_PACKAGE_FULL_NAME}.zip")
     set(3RD_PACKAGE_SOURCE_DIR "${3RD_SOURCE_DIR}/${3RD_PACKAGE_FULL_NAME}")
 
     if (${PARAMS_BUILD})
@@ -49,27 +50,31 @@ function(AddThirdPartyPackage)
         message("")
     endif()
 
+    if (EXISTS ${3RD_PACKAGE_ZIP})
+        # TODO check file hash value
+        message("found downloaded file for ${3RD_PACKAGE_URL} -> ${3RD_PACKAGE_ZIP}")
+    else()
+        message("starting download package ${3RD_PACKAGE_URL}")
+        file(
+            DOWNLOAD
+            ${3RD_PACKAGE_URL} ${3RD_PACKAGE_ZIP}
+            SHOW_PROGRESS
+        )
+        file(
+            ARCHIVE_EXTRACT
+            INPUT ${3RD_PACKAGE_ZIP}
+            DESTINATION ${3RD_PACKAGE_SOURCE_DIR}
+        )
+    endif()
+
     if (${PARAMS_BUILD})
         ExternalProject_Add(
             ${3RD_PACKAGE_NAME}
-            URL ${3RD_PACKAGE_URL}
-            DOWNLOAD_DIR ${3RD_ZIP_DIR}
             SOURCE_DIR ${3RD_PACKAGE_SOURCE_DIR}
             BINARY_DIR ${3RD_PACKAGE_BINARY_DIR}
             CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${3RD_PACKAGE_INSTALL_DIR} ${PARAMS_ARG}
             BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG>
             INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG>
-        )
-    else()
-        ExternalProject_Add(
-            ${3RD_PACKAGE_NAME}
-            URL ${3RD_PACKAGE_URL}
-            DOWNLOAD_DIR ${3RD_ZIP_DIR}
-            SOURCE_DIR ${3RD_PACKAGE_SOURCE_DIR}
-            BINARY_DIR ${3RD_PACKAGE_BINARY_DIR}
-            CMAKE_ARGS ""
-            BUILD_COMMAND ""
-            INSTALL_COMMAND ""
         )
     endif()
 
