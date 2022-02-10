@@ -20,11 +20,13 @@ AddThirdPartyPackage(
 set(Meta_INC ${Meta_SOURCE_DIR}/src CACHE PATH "" FORCE)
 
 # DirectX 12 Headers
-AddThirdPartyPackage(
-    NAME DirectXHeaders
-    VERSION 1.4.9
-)
-set(DirectXHeaders_INC ${DirectXHeaders_SOURCE_DIR}/include CACHE PATH "" FORCE)
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    AddThirdPartyPackage(
+        NAME DirectXHeaders
+        VERSION 1.4.9
+    )
+    set(DirectXHeaders_INC ${DirectXHeaders_SOURCE_DIR}/include CACHE PATH "" FORCE)
+endif()
 
 # VulkanSDK
 AddThirdPartyPackage(
@@ -32,10 +34,14 @@ AddThirdPartyPackage(
     NAME VulkanSDK
     VERSION 1.2.198.1
 )
-set(VulkanSDK_INC ${VulkanSDK_SOURCE_DIR}/Include CACHE PATH "" FORCE)
-set(VulkanSDK_LINK ${VulkanSDK_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
-set(VulkanSDK_BIN ${VulkanSDK_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
-set(VulkanSDK_VULKAN_LIB vulkan-1 CACHE PATH "" FORCE)
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(VulkanSDK_INC ${VulkanSDK_SOURCE_DIR}/Include CACHE PATH "" FORCE)
+    set(VulkanSDK_LINK ${VulkanSDK_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
+    set(VulkanSDK_BIN ${VulkanSDK_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
+    set(VulkanSDK_VULKAN_LIB vulkan-1 CACHE PATH "" FORCE)
+else()
+    # TODO
+endif()
 
 # GLFW
 AddThirdPartyPackage(

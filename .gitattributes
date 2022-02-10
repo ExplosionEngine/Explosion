@@ -1,6 +1,0 @@
-ThirdParty/Zip/DirectXHeaders-1.4.9.zip filter=lfs diff=lfs merge=lfs -text
-ThirdParty/Zip/EnTT-3.8.1.zip filter=lfs diff=lfs merge=lfs -text
-ThirdParty/Zip/GLM-0.9.9.8.zip filter=lfs diff=lfs merge=lfs -text
-ThirdParty/Zip/Meta-1.4.9.zip filter=lfs diff=lfs merge=lfs -text
-ThirdParty/Zip/glfw-3.3.6.zip filter=lfs diff=lfs merge=lfs -text
-ThirdParty/Zip/VulkanSDK-Windows-1.2.198.1.zip filter=lfs diff=lfs merge=lfs -text
