@@ -2,14 +2,11 @@
 // Created by johnk on 11/1/2022.
 //
 
-#include <Common/Logger.h>
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Instance.h>
 #include <RHI/Vulkan/Gpu.h>
 
 namespace RHI::Vulkan {
-    static auto& GLogger = Common::Logger::Singleton().FindOrCreateDelegator("RHI-Vulkan");
-
 #if BUILD_CONFIG_DEBUG
     static VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -17,11 +14,7 @@ namespace RHI::Vulkan {
         const VkDebugUtilsMessengerCallbackDataEXT* callbackData,
         void* userData)
     {
-        if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-            GLogger.Warning(callbackData->pMessage);
-        } else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-            GLogger.Error(callbackData->pMessage);
-        }
+        // TODO
         return VK_FALSE;
     }
 #endif

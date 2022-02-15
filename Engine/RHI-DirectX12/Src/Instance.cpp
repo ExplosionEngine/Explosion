@@ -2,7 +2,6 @@
 // Created by johnk on 10/1/2022.
 //
 
-#include <Common/Logger.h>
 #include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Instance.h>
 #include <RHI/DirectX12/Gpu.h>

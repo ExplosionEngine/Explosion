@@ -42,7 +42,7 @@ namespace Common {
 }
 
 namespace Common {
-    DynamicLibrary::DynamicLibrary(HINSTANCE h) : handle(h) {}
+    DynamicLibrary::DynamicLibrary(DYNAMIC_LIB_HANDLE h) : handle(h) {}
 
     DynamicLibrary::~DynamicLibrary() = default;
 

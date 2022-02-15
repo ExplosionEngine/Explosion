@@ -5,6 +5,9 @@
 #ifndef EXPLOSION_RHI_DX12_INSTANCE_H
 #define EXPLOSION_RHI_DX12_INSTANCE_H
 
+#include <vector>
+#include <memory>
+
 #include <wrl/client.h>
 #include <d3d12.h>
 #include <dxgi1_4.h>

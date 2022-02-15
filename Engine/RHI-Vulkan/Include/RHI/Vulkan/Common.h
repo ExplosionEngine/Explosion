@@ -6,7 +6,7 @@
 #define EXPLOSION_RHI_VULKAN_H
 
 #include <stdexcept>
-#include <format>
+#include <unordered_map>
 
 #include <vulkan/vulkan.hpp>
 
@@ -18,7 +18,7 @@ namespace RHI::Vulkan {
         explicit VKException(std::string m) : msg(std::move(m)) {}
         ~VKException() override = default;
 
-        [[nodiscard]] const char* what() const override
+        [[nodiscard]] const char* what() const noexcept override
         {
             return msg.c_str();
         }
@@ -45,7 +45,7 @@ namespace RHI::Vulkan {
     {
         auto iter = VK_ENUM_MAP<A, B>.find(value);
         if (iter == VK_ENUM_MAP<A, B>.end()) {
-            throw VKException(std::format("failed to find suitable enum cast result for {}", typeid(A).name()));
+            throw VKException("failed to find suitable enum cast");
         }
         return static_cast<B>(iter->second);
     }

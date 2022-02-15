@@ -9,4 +9,5 @@ cmake-build-*
 build-*
 
 # 3rd
+ThirdParty/Zip
 ThirdParty/Lib
