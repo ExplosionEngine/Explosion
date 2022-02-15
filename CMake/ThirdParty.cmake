@@ -18,6 +18,7 @@ set(3RD_INSTALL_DIR ${CMAKE_BINARY_DIR}/ThirdPartyInstall CACHE PATH "" FORCE)
 # Params:
 #  - NAME     {Single} : name of third party package
 #  - VERSION  {Single} : version of third party package
+#  - HASH     {Single} : zip file hash (sha256)
 #  - ARG      {List}   : arguments of cmake command
 #  - BUILD    {Bool}   : build package or not (just using sources)
 #  - PLATFORM {Bool}   : true if package is platform relative
@@ -51,7 +52,6 @@ function(AddThirdPartyPackage)
     endif()
 
     if (EXISTS ${3RD_PACKAGE_ZIP})
-        # TODO check file hash value
         message("found downloaded file for ${3RD_PACKAGE_URL} -> ${3RD_PACKAGE_ZIP}")
     else()
         message("starting download package ${3RD_PACKAGE_URL}")
@@ -65,6 +65,13 @@ function(AddThirdPartyPackage)
             INPUT ${3RD_PACKAGE_ZIP}
             DESTINATION ${3RD_PACKAGE_SOURCE_DIR}
         )
+    endif()
+
+    if (${PARAMS_HASH})
+        file(SHA256 ${3RD_PACKAGE_ZIP} 3RD_PACKAGE_HASH_VALUE)
+        if (NOT (${PARAMS_HASH} STREQUAL ${3RD_PACKAGE_HASH_VALUE}))
+            message(FATAL_ERROR "check hash failed for file ${3RD_PACKAGE_ZIP}")
+        endif()
     endif()
 
     if (${PARAMS_BUILD})
