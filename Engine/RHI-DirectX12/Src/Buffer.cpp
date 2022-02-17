@@ -22,7 +22,7 @@ namespace RHI::DirectX12 {
         };
         static D3D12_HEAP_TYPE fallback = D3D12_HEAP_TYPE_DEFAULT;
 
-        for (auto rule : rules) {
+        for (const auto& rule : rules) {
             if (bufferUsage & rule.first) {
                 return rule.second;
             }
@@ -35,16 +35,16 @@ namespace RHI::DirectX12 {
         static std::unordered_map<BufferUsageBits, D3D12_RESOURCE_STATES> rules = {
             { BufferUsageBits::TRANSFER_SRC, D3D12_RESOURCE_STATE_COPY_SOURCE },
             { BufferUsageBits::TRANSFER_DST, D3D12_RESOURCE_STATE_COPY_DEST },
-            { BufferUsageBits::INDEX, D3D12_RESOURCE_STATE_INDEX_BUFFER },
-            { BufferUsageBits::VERTEX, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER },
+            { BufferUsageBits::INDEX, D3D12_RESOURCE_STATE_GENERIC_READ },
+            { BufferUsageBits::VERTEX, D3D12_RESOURCE_STATE_GENERIC_READ },
             { BufferUsageBits::UNIFORM, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER },
             { BufferUsageBits::STORAGE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS },
-            { BufferUsageBits::INDIRECT, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT },
+            { BufferUsageBits::INDIRECT, D3D12_RESOURCE_STATE_GENERIC_READ },
             // TODO check other conditions ?
         };
 
         D3D12_RESOURCE_STATES result = D3D12_RESOURCE_STATE_COMMON;
-        for (auto rule : rules) {
+        for (const auto& rule : rules) {
             if (bufferUsage & rule.first) {
                 result |= rule.second;
             }

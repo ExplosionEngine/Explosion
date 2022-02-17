@@ -28,7 +28,7 @@ public:
 protected:
     void OnCreate() override
     {
-        instance = Instance::CreateByType(RHIType::VULKAN);
+        instance = Instance::CreateByType(RHIType::DIRECTX_12);
         gpu = instance->GetGpu(0);
 
         {
@@ -55,7 +55,7 @@ protected:
 
             BufferCreateInfo createInfo {};
             createInfo.size = vertices.size() * sizeof(Vertex);
-            createInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::STAGING;
+            createInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::STAGING | BufferUsageBits::TRANSFER_SRC;
             vertexBuffer = device->CreateBuffer(&createInfo);
 
             auto* data = vertexBuffer->Map(MapMode::READ_WRITE, 0, createInfo.size);

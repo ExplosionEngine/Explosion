@@ -6,6 +6,7 @@
 #include <RHI/DirectX12/Gpu.h>
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/Queue.h>
+#include <RHI/DirectX12/Buffer.h>
 
 namespace RHI::DirectX12 {
     DX12Device::DX12Device(DX12Gpu& gpu, const DeviceCreateInfo* createInfo) : Device(createInfo)
@@ -45,8 +46,7 @@ namespace RHI::DirectX12 {
 
     Buffer* DX12Device::CreateBuffer(const BufferCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new DX12Buffer(*this, createInfo);
     }
 
     Texture* DX12Device::CreateTexture(const TextureCreateInfo* createInfo)
