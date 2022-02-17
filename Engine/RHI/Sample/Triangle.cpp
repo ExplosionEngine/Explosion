@@ -4,12 +4,20 @@
 
 #include <vector>
 
+#include <glm/glm.hpp>
+
 #include <Application.h>
 #include <RHI/Instance.h>
 #include <RHI/Gpu.h>
 #include <RHI/Device.h>
 #include <RHI/Queue.h>
+#include <RHI/Buffer.h>
 using namespace RHI;
+
+struct Vertex {
+    glm::vec3 position;
+    glm::vec3 color;
+};
 
 class TriangleApplication : public Application {
 public:
@@ -37,6 +45,22 @@ protected:
         {
             graphicsQueue = device->GetQueue(QueueType::COMPUTE, 0);
         }
+
+        {
+            std::vector<Vertex> vertices = {
+                { { -.5f, -.5f, 0.f }, { 1.f, 0.f, 0.f } },
+                { { .5f, -.5f, 0.f }, { 0.f, 1.f, 0.f } },
+                { { 0.f, .5f, 0.f }, { 0.f, 0.f, 1.f } },
+            };
+
+            BufferCreateInfo createInfo {};
+            createInfo.size = vertices.size() * sizeof(Vertex);
+            createInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::STAGING;
+            vertexBuffer = device->CreateBuffer(&createInfo);
+
+            auto* data = vertexBuffer->Map(MapMode::READ_WRITE, 0, createInfo.size);
+            memcpy(data, vertices.data(), createInfo.size);
+        }
     }
 
     void OnDestroy() override {}
@@ -44,10 +68,11 @@ protected:
     void OnDrawFrame() override {}
 
 private:
-    Instance* instance = nullptr;
-    Gpu* gpu = nullptr;
-    Device* device = nullptr;
-    Queue* graphicsQueue = nullptr;
+    Instance* instance {};
+    Gpu* gpu {};
+    Device* device {};
+    Queue* graphicsQueue {};
+    Buffer* vertexBuffer {};
 };
 
 int main(int argc, char* argv[])
