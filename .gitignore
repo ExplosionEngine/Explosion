@@ -5,8 +5,8 @@
 .vscode
 
 # Binaries
-cmake-build-*
-build-*
+cmake-build*
+build*
 
 # 3rd
 ThirdParty/Zip
