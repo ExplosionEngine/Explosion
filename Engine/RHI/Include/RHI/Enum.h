@@ -33,8 +33,8 @@ namespace RHI {
     };
 
     enum class MapMode : EnumType {
-        READ_ONLY,
-        READ_WRITE,
+        READ,
+        WRITE,
         MAX
     };
 
@@ -138,22 +138,23 @@ namespace RHI {
 
     using BufferUsageFlags = Flags;
     enum class BufferUsageBits : BufferUsageFlags {
-        TRANSFER_SRC  = 0x1,
-        TRANSFER_DST  = 0x2,
-        STAGING       = 0x4,
-        INDEX         = 0x8,
-        VERTEX        = 0x10,
-        UNIFORM       = 0x20,
-        STORAGE       = 0x40,
-        INDIRECT      = 0x80,
-        QUERY_RESOLVE = 0x100,
+        MAP_READ      = 0x1,
+        MAP_WRITE     = 0x2,
+        COPY_SRC      = 0x4,
+        COPY_DST      = 0x8,
+        INDEX         = 0x10,
+        VERTEX        = 0x20,
+        UNIFORM       = 0x40,
+        STORAGE       = 0x80,
+        INDIRECT      = 0x100,
+        QUERY_RESOLVE = 0x200,
         MAX
     };
 
     using TextureUsageFlags = Flags;
     enum class TextureUsageBits : TextureUsageFlags {
-        TRANSFER_SRC      = 0x1,
-        TRANSFER_DST      = 0x2,
+        COPY_SRC          = 0x1,
+        COPY_DST          = 0x2,
         TEXTURE_BINDING   = 0x4,
         STORAGE_BINDING   = 0x8,
         RENDER_ATTACHMENT = 0x10,

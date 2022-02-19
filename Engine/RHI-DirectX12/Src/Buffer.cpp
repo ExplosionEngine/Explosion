@@ -13,31 +13,31 @@
 #include <RHI/DirectX12/Buffer.h>
 
 namespace RHI::DirectX12 {
-    static D3D12_HEAP_TYPE GetDX12HeapType(BufferUsageFlags bufferUsage)
+    static D3D12_HEAP_TYPE GetDX12HeapType(BufferUsageFlags bufferUsages)
     {
         static std::unordered_map<BufferUsageFlags, D3D12_HEAP_TYPE> rules = {
-            { BufferUsageBits::STAGING | BufferUsageBits::TRANSFER_SRC, D3D12_HEAP_TYPE_UPLOAD },
-            { BufferUsageBits::STAGING | BufferUsageBits::TRANSFER_DST, D3D12_HEAP_TYPE_READBACK },
+            { BufferUsageBits::MAP_WRITE & BufferUsageBits::COPY_SRC, D3D12_HEAP_TYPE_UPLOAD },
+            { BufferUsageBits::MAP_READ & BufferUsageBits::COPY_DST, D3D12_HEAP_TYPE_READBACK }
             // TODO check other conditions ?
         };
         static D3D12_HEAP_TYPE fallback = D3D12_HEAP_TYPE_DEFAULT;
 
         for (const auto& rule : rules) {
-            if (bufferUsage & rule.first) {
+            if (bufferUsages & rule.first) {
                 return rule.second;
             }
         }
         return fallback;
     }
 
-    static D3D12_RESOURCE_STATES GetDX12ResourceStates(BufferUsageFlags bufferUsage)
+    static D3D12_RESOURCE_STATES GetDX12ResourceStates(BufferUsageFlags bufferUsages)
     {
         static std::unordered_map<BufferUsageBits, D3D12_RESOURCE_STATES> rules = {
-            { BufferUsageBits::TRANSFER_SRC, D3D12_RESOURCE_STATE_COPY_SOURCE },
-            { BufferUsageBits::TRANSFER_DST, D3D12_RESOURCE_STATE_COPY_DEST },
+            { BufferUsageBits::COPY_SRC, D3D12_RESOURCE_STATE_COPY_SOURCE },
+            { BufferUsageBits::COPY_DST, D3D12_RESOURCE_STATE_COPY_DEST },
             { BufferUsageBits::INDEX, D3D12_RESOURCE_STATE_GENERIC_READ },
             { BufferUsageBits::VERTEX, D3D12_RESOURCE_STATE_GENERIC_READ },
-            { BufferUsageBits::UNIFORM, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER },
+            { BufferUsageBits::UNIFORM, D3D12_RESOURCE_STATE_GENERIC_READ },
             { BufferUsageBits::STORAGE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS },
             { BufferUsageBits::INDIRECT, D3D12_RESOURCE_STATE_GENERIC_READ },
             // TODO check other conditions ?
@@ -45,25 +45,43 @@ namespace RHI::DirectX12 {
 
         D3D12_RESOURCE_STATES result = D3D12_RESOURCE_STATE_COMMON;
         for (const auto& rule : rules) {
-            if (bufferUsage & rule.first) {
+            if (bufferUsages & rule.first) {
                 result |= rule.second;
             }
         }
         return result;
     }
+
+    static MapMode GetMapMode(BufferUsageFlags bufferUsages)
+    {
+        static std::unordered_map<BufferUsageBits, MapMode> rules = {
+            { BufferUsageBits::MAP_READ, MapMode::READ },
+            { BufferUsageBits::MAP_WRITE, MapMode::WRITE }
+        };
+
+        for (const auto& rule : rules) {
+            if (bufferUsages & rule.first) {
+                return rule.second;
+            }
+        }
+        return MapMode::READ;
+    }
 }
 
 namespace RHI::DirectX12 {
-    DX12Buffer::DX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo) : Buffer(createInfo)
+    DX12Buffer::DX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo) : Buffer(createInfo), mapMode(GetMapMode(createInfo->usages))
     {
         CreateBuffer(device, createInfo);
     }
 
     DX12Buffer::~DX12Buffer() = default;
 
-    void* DX12Buffer::Map(MapMode mapMode, size_t offset, size_t length)
+    void* DX12Buffer::Map(MapMode mode, size_t offset, size_t length)
     {
-        // TODO map mode
+        if (mapMode != mode) {
+            throw DX12Exception("unsuitable map mode");
+        }
+
         void* data;
         CD3DX12_RANGE range(offset, offset + length);
         if (FAILED(dx12Resource->Map(0, &range, &data))) {

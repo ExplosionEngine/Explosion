@@ -55,10 +55,10 @@ protected:
 
             BufferCreateInfo createInfo {};
             createInfo.size = vertices.size() * sizeof(Vertex);
-            createInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::STAGING | BufferUsageBits::TRANSFER_SRC;
+            createInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
             vertexBuffer = device->CreateBuffer(&createInfo);
 
-            auto* data = vertexBuffer->Map(MapMode::READ_WRITE, 0, createInfo.size);
+            auto* data = vertexBuffer->Map(MapMode::WRITE, 0, createInfo.size);
             memcpy(data, vertices.data(), createInfo.size);
         }
     }
