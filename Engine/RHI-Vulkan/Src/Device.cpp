@@ -91,6 +91,18 @@ namespace RHI::Vulkan {
         return nullptr;
     }
 
+    ComputePipeline* VKDevice::CreateComputePipeline(const ComputePipelineCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    GraphicsPipeline* VKDevice::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
     vk::Device VKDevice::GetVkDevice()
     {
         return vkDevice;

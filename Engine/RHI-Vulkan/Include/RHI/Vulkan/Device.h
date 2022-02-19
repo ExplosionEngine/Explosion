@@ -32,6 +32,8 @@ namespace RHI::Vulkan {
         BindGroup* CreateBindGroup(const BindGroupCreateInfo* createInfo) override;
         PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo) override;
         ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) override;
+        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) override;
+        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override;
 
         vk::Device GetVkDevice();
 

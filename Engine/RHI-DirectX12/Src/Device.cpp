@@ -85,6 +85,18 @@ namespace RHI::DirectX12 {
         return nullptr;
     }
 
+    ComputePipeline* DX12Device::CreateComputePipeline(const ComputePipelineCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    GraphicsPipeline* DX12Device::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
     ComPtr<ID3D12Device>& DX12Device::GetDX12Device()
     {
         return dx12Device;

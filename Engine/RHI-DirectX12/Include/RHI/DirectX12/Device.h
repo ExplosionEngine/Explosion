@@ -36,6 +36,8 @@ namespace RHI::DirectX12 {
         BindGroup* CreateBindGroup(const BindGroupCreateInfo* createInfo) override;
         PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo) override;
         ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) override;
+        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) override;
+        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override;
 
         ComPtr<ID3D12Device>& GetDX12Device();
 
