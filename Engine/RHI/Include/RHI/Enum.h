@@ -113,6 +113,31 @@ namespace RHI {
         DEPTH_ONLY,
         MAX
     };
+
+    enum class AddressMode : EnumType {
+        CLAMP_TO_EDGE,
+        REPEAT,
+        MIRROR_REPEAT,
+        MAX
+    };
+
+    enum class FilterMode : EnumType {
+        NEAREST,
+        LINEAR,
+        MAX
+    };
+
+    enum class CompareFunction : EnumType {
+        NEVER,
+        LESS,
+        EQUAL,
+        LESS_EQUAL,
+        GREATER,
+        NOT_EQUAL,
+        GREATER_EQUAL,
+        ALWAYS,
+        MAX
+    };
 }
 
 namespace RHI {
