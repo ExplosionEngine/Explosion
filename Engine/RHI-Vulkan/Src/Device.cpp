@@ -79,6 +79,12 @@ namespace RHI::Vulkan {
         return nullptr;
     }
 
+    PipelineLayout* VKDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
     vk::Device VKDevice::GetVkDevice()
     {
         return vkDevice;

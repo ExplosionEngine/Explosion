@@ -16,12 +16,14 @@ namespace RHI {
     struct SamplerCreateInfo;
     struct BindGroupLayoutCreateInfo;
     struct BindGroupCreateInfo;
+    struct PipelineLayoutCreateInfo;
     class Queue;
     class Buffer;
     class Texture;
     class Sampler;
     class BindGroupLayout;
     class BindGroup;
+    class PipelineLayout;
 
     struct QueueInfo {
         QueueType type;
@@ -46,6 +48,7 @@ namespace RHI {
         virtual Sampler* CreateSampler(const SamplerCreateInfo* createInfo) = 0;
         virtual BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo) = 0;
         virtual BindGroup* CreateBindGroup(const BindGroupCreateInfo* createInfo) = 0;
+        virtual PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo) = 0;
 
     protected:
         explicit Device(const DeviceCreateInfo* createInfo);
