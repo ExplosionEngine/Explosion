@@ -17,6 +17,7 @@ namespace RHI {
     struct BindGroupLayoutCreateInfo;
     struct BindGroupCreateInfo;
     struct PipelineLayoutCreateInfo;
+    struct ShaderModuleCreateInfo;
     class Queue;
     class Buffer;
     class Texture;
@@ -24,6 +25,7 @@ namespace RHI {
     class BindGroupLayout;
     class BindGroup;
     class PipelineLayout;
+    class ShaderModule;
 
     struct QueueInfo {
         QueueType type;
@@ -49,6 +51,7 @@ namespace RHI {
         virtual BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo) = 0;
         virtual BindGroup* CreateBindGroup(const BindGroupCreateInfo* createInfo) = 0;
         virtual PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo) = 0;
+        virtual ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) = 0;
 
     protected:
         explicit Device(const DeviceCreateInfo* createInfo);

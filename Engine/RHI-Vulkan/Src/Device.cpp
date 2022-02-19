@@ -85,6 +85,12 @@ namespace RHI::Vulkan {
         return nullptr;
     }
 
+    ShaderModule* VKDevice::CreateShaderModule(const ShaderModuleCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
     vk::Device VKDevice::GetVkDevice()
     {
         return vkDevice;
