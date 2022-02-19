@@ -28,6 +28,7 @@ namespace RHI::Vulkan {
         Buffer* CreateBuffer(const BufferCreateInfo* createInfo) override;
         Texture* CreateTexture(const TextureCreateInfo* createInfo) override;
         Sampler* CreateSampler(const SamplerCreateInfo* createInfo) override;
+        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo) override;
 
         vk::Device GetVkDevice();
 

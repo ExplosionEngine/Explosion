@@ -138,6 +138,34 @@ namespace RHI {
         ALWAYS,
         MAX
     };
+
+    enum class BufferBindingType : EnumType {
+        UNIFORM,
+        STORAGE,
+        READ_ONLY_STORAGE,
+        MAX
+    };
+
+    enum class SamplerBindingType : EnumType {
+        FILTERING,
+        NON_FILTERING,
+        COMPARISON,
+        MAX
+    };
+
+    enum class TextureSampleType : EnumType {
+        FLOAT,
+        NON_FILTERABLE_FLOAT,
+        DEPTH,
+        SINT,
+        UINT,
+        MAX
+    };
+
+    enum class StorageTextureAccess : EnumType {
+        WRITE_ONLY,
+        MAX
+    };
 }
 
 namespace RHI {
@@ -183,6 +211,14 @@ namespace RHI {
         TEXTURE_BINDING   = 0x4,
         STORAGE_BINDING   = 0x8,
         RENDER_ATTACHMENT = 0x10,
+        MAX
+    };
+
+    using ShaderStageFlags = Flags;
+    enum class ShaderStageBits : ShaderStageFlags {
+        VERTEX,
+        FRAGMENT,
+        COMPUTE,
         MAX
     };
 }

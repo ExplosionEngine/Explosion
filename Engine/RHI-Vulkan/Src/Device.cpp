@@ -67,6 +67,12 @@ namespace RHI::Vulkan {
         return nullptr;
     }
 
+    BindGroupLayout* VKDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
     vk::Device VKDevice::GetVkDevice()
     {
         return vkDevice;
@@ -118,7 +124,7 @@ namespace RHI::Vulkan {
             tempCreateInfo.queueCount = iter.second;
             queueCreateInfos.emplace_back(tempCreateInfo);
 
-            queueFamilyMappings[iter.first] = std::make_pair(queueFamilyIndex.value(), iter.second);
+            queueFamilyMappings[iter.first] = std::make_pair(queueFamilyIndex.value(), static_cast<uint32_t>(iter.second));
         }
 
         vk::PhysicalDeviceFeatures deviceFeatures;

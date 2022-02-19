@@ -32,6 +32,7 @@ namespace RHI::DirectX12 {
         Buffer* CreateBuffer(const BufferCreateInfo* createInfo) override;
         Texture* CreateTexture(const TextureCreateInfo* createInfo) override;
         Sampler* CreateSampler(const SamplerCreateInfo* createInfo) override;
+        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo) override;
 
         ComPtr<ID3D12Device>& GetDX12Device();
 

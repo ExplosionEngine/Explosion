@@ -61,6 +61,12 @@ namespace RHI::DirectX12 {
         return nullptr;
     }
 
+    BindGroupLayout* DX12Device::CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
     ComPtr<ID3D12Device>& DX12Device::GetDX12Device()
     {
         return dx12Device;

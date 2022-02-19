@@ -32,7 +32,7 @@ protected:
         gpu = instance->GetGpu(0);
 
         {
-            std::vector<QueueCreateInfo> queueCreateInfos = {
+            std::vector<QueueInfo> queueCreateInfos = {
                 { QueueType::GRAPHICS, 2 },
                 { QueueType::COMPUTE, 1 }
             };
