@@ -73,6 +73,12 @@ namespace RHI::Vulkan {
         return nullptr;
     }
 
+    BindGroup* VKDevice::CreateBindGroup(const BindGroupCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
     vk::Device VKDevice::GetVkDevice()
     {
         return vkDevice;

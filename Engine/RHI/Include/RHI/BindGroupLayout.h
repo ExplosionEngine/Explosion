@@ -31,8 +31,6 @@ namespace RHI {
         TextureViewDimension viewDimension;
     };
 
-    struct ExternalTextureBindingLayout {};
-
     struct BindGroupLayoutEntry {
         size_t binding;
         ShaderStageFlags shaderVisibility;
@@ -40,7 +38,6 @@ namespace RHI {
         SamplerBindingLayout sampler;
         TextureBindingLayout texture;
         StorageTextureBindingLayout storageTexture;
-        ExternalTextureBindingLayout externalTexture;
     };
 
     struct BindGroupLayoutCreateInfo {
