@@ -33,8 +33,8 @@ namespace RHI {
     };
 
     enum class MapMode : EnumType {
-        READ_ONLY,
-        READ_WRITE,
+        READ,
+        WRITE,
         MAX
     };
 
@@ -90,6 +90,40 @@ namespace RHI {
         MAX
     };
 
+    enum class VertexFormat {
+        UINT8_X2,
+        UINT8_X4,
+        SINT8_X2,
+        SINT8_X4,
+        UNORM8_X2,
+        UNORM8_X4,
+        SNORM8_X2,
+        SNORM8_X4,
+        UINT16_X2,
+        UINT16_X4,
+        SINT16_X2,
+        SINT16_X4,
+        UNORM16_X2,
+        UNORM16_X4,
+        SNORM16_X2,
+        SNORM16_X4,
+        FLOAT16_X2,
+        FLOAT16_X4,
+        FLOAT32_X1,
+        FLOAT32_X2,
+        FLOAT32_X3,
+        FLOAT32_X4,
+        UINT32_X1,
+        UINT32_X2,
+        UINT32_X3,
+        UINT32_X4,
+        SINT32_X1,
+        SINT32_X2,
+        SINT32_X3,
+        SINT32_X4,
+        MAX
+    };
+
     enum class TextureDimension : EnumType {
         T_1D,
         T_2D,
@@ -111,6 +145,131 @@ namespace RHI {
         ALL,
         STENCIL_ONLY,
         DEPTH_ONLY,
+        MAX
+    };
+
+    enum class AddressMode : EnumType {
+        CLAMP_TO_EDGE,
+        REPEAT,
+        MIRROR_REPEAT,
+        MAX
+    };
+
+    enum class FilterMode : EnumType {
+        NEAREST,
+        LINEAR,
+        MAX
+    };
+
+    enum class CompareFunction : EnumType {
+        NEVER,
+        LESS,
+        EQUAL,
+        LESS_EQUAL,
+        GREATER,
+        NOT_EQUAL,
+        GREATER_EQUAL,
+        ALWAYS,
+        MAX
+    };
+
+    enum class BufferBindingType : EnumType {
+        UNIFORM,
+        STORAGE,
+        READ_ONLY_STORAGE,
+        MAX
+    };
+
+    enum class SamplerBindingType : EnumType {
+        FILTERING,
+        NON_FILTERING,
+        COMPARISON,
+        MAX
+    };
+
+    enum class TextureSampleType : EnumType {
+        FLOAT,
+        NON_FILTERABLE_FLOAT,
+        DEPTH,
+        SINT,
+        UINT,
+        MAX
+    };
+
+    enum class StorageTextureAccess : EnumType {
+        WRITE_ONLY,
+        MAX
+    };
+
+    enum class VertexStepMode : EnumType {
+        PER_VERTEX,
+        PER_INSTANCE,
+        MAX
+    };
+
+    enum class PrimitiveTopology : EnumType {
+        POINT_LIST,
+        LINE_LIST,
+        LINE_STRIP,
+        TRIANGLE_LIST,
+        TRIANGLE_STRIP,
+        MAX
+    };
+
+    enum class IndexFormat : EnumType {
+        UINT16,
+        UINT32,
+        MAX
+    };
+
+    enum class FrontFace : EnumType {
+        CCW,
+        CW,
+        MAX
+    };
+
+    enum class CullMode : EnumType {
+        NONE,
+        FRONT,
+        BACK,
+        MAX
+    };
+
+    enum class StencilOp : EnumType {
+        KEEP,
+        ZERO,
+        REPLACE,
+        INVERT,
+        INCREMENT_CLAMP,
+        DECREMENT_CLAMP,
+        INCREMENT_WRAP,
+        DECREMENT_WRAP,
+        MAX
+    };
+
+    enum class BlendFactor : EnumType {
+        ZERO,
+        ONE,
+        SRC,
+        ONE_MINUS_SRC,
+        SRC_ALPHA,
+        ONE_MINUS_SRC_ALPHA,
+        DST,
+        ONE_MINUS_DST,
+        DST_ALPHA,
+        ONE_MINUS_DST_ALPHA,
+        SRC_ALPHA_SATURATED,
+        CONSTANT,
+        ONE_MINUS_CONSTANT,
+        MAX
+    };
+
+    enum class BlendOp : EnumType {
+        OP_ADD,
+        OP_SUBTRACT,
+        OP_REVERSE_SUBTRACT,
+        OP_MIN,
+        OP_MAX,
         MAX
     };
 }
@@ -138,25 +297,43 @@ namespace RHI {
 
     using BufferUsageFlags = Flags;
     enum class BufferUsageBits : BufferUsageFlags {
-        TRANSFER_SRC  = 0x1,
-        TRANSFER_DST  = 0x2,
-        STAGING       = 0x4,
-        INDEX         = 0x8,
-        VERTEX        = 0x10,
-        UNIFORM       = 0x20,
-        STORAGE       = 0x40,
-        INDIRECT      = 0x80,
-        QUERY_RESOLVE = 0x100,
+        MAP_READ      = 0x1,
+        MAP_WRITE     = 0x2,
+        COPY_SRC      = 0x4,
+        COPY_DST      = 0x8,
+        INDEX         = 0x10,
+        VERTEX        = 0x20,
+        UNIFORM       = 0x40,
+        STORAGE       = 0x80,
+        INDIRECT      = 0x100,
+        QUERY_RESOLVE = 0x200,
         MAX
     };
 
     using TextureUsageFlags = Flags;
     enum class TextureUsageBits : TextureUsageFlags {
-        TRANSFER_SRC      = 0x1,
-        TRANSFER_DST      = 0x2,
+        COPY_SRC          = 0x1,
+        COPY_DST          = 0x2,
         TEXTURE_BINDING   = 0x4,
         STORAGE_BINDING   = 0x8,
         RENDER_ATTACHMENT = 0x10,
+        MAX
+    };
+
+    using ShaderStageFlags = Flags;
+    enum class ShaderStageBits : ShaderStageFlags {
+        VERTEX   = 0x1,
+        FRAGMENT = 0x2,
+        COMPUTE  = 0x4,
+        MAX
+    };
+
+    using ColorWriteFlags = Flags;
+    enum class ColorWriteBits : ColorWriteFlags {
+        RED   = 0x1,
+        GREEN = 0x2,
+        BLUE  = 0x4,
+        ALPHA = 0x8,
         MAX
     };
 }

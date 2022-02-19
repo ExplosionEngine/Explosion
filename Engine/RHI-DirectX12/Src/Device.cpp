@@ -6,6 +6,7 @@
 #include <RHI/DirectX12/Gpu.h>
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/Queue.h>
+#include <RHI/DirectX12/Buffer.h>
 
 namespace RHI::DirectX12 {
     DX12Device::DX12Device(DX12Gpu& gpu, const DeviceCreateInfo* createInfo) : Device(createInfo)
@@ -45,11 +46,52 @@ namespace RHI::DirectX12 {
 
     Buffer* DX12Device::CreateBuffer(const BufferCreateInfo* createInfo)
     {
+        return new DX12Buffer(*this, createInfo);
+    }
+
+    Texture* DX12Device::CreateTexture(const TextureCreateInfo* createInfo)
+    {
         // TODO
         return nullptr;
     }
 
-    Texture* DX12Device::CreateTexture(const TextureCreateInfo* createInfo)
+    Sampler* DX12Device::CreateSampler(const SamplerCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    BindGroupLayout* DX12Device::CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    BindGroup* DX12Device::CreateBindGroup(const BindGroupCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    PipelineLayout* DX12Device::CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    ShaderModule* DX12Device::CreateShaderModule(const ShaderModuleCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    ComputePipeline* DX12Device::CreateComputePipeline(const ComputePipelineCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    GraphicsPipeline* DX12Device::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
     {
         // TODO
         return nullptr;

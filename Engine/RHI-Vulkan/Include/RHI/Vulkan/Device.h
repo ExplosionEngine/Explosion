@@ -25,8 +25,15 @@ namespace RHI::Vulkan {
         size_t GetQueueNum(QueueType type) override;
         Queue* GetQueue(QueueType type, size_t index) override;
         void Destroy() override;
-        Buffer* CreateBuffer(const BufferCreateInfo *createInfo) override;
-        Texture* CreateTexture(const TextureCreateInfo *createInfo) override;
+        Buffer* CreateBuffer(const BufferCreateInfo* createInfo) override;
+        Texture* CreateTexture(const TextureCreateInfo* createInfo) override;
+        Sampler* CreateSampler(const SamplerCreateInfo* createInfo) override;
+        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo) override;
+        BindGroup* CreateBindGroup(const BindGroupCreateInfo* createInfo) override;
+        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo) override;
+        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) override;
+        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) override;
+        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override;
 
         vk::Device GetVkDevice();
 

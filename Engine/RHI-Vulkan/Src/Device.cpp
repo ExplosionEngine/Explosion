@@ -61,6 +61,48 @@ namespace RHI::Vulkan {
         return nullptr;
     }
 
+    Sampler* VKDevice::CreateSampler(const SamplerCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    BindGroupLayout* VKDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    BindGroup* VKDevice::CreateBindGroup(const BindGroupCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    PipelineLayout* VKDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    ShaderModule* VKDevice::CreateShaderModule(const ShaderModuleCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    ComputePipeline* VKDevice::CreateComputePipeline(const ComputePipelineCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
+    GraphicsPipeline* VKDevice::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
     vk::Device VKDevice::GetVkDevice()
     {
         return vkDevice;
@@ -112,7 +154,7 @@ namespace RHI::Vulkan {
             tempCreateInfo.queueCount = iter.second;
             queueCreateInfos.emplace_back(tempCreateInfo);
 
-            queueFamilyMappings[iter.first] = std::make_pair(queueFamilyIndex.value(), iter.second);
+            queueFamilyMappings[iter.first] = std::make_pair(queueFamilyIndex.value(), static_cast<uint32_t>(iter.second));
         }
 
         vk::PhysicalDeviceFeatures deviceFeatures;

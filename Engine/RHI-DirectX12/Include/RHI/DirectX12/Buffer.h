@@ -29,6 +29,7 @@ namespace RHI::DirectX12 {
     private:
         void CreateBuffer(DX12Device& device, const BufferCreateInfo* createInfo);
 
+        MapMode mapMode;
         ComPtr<ID3D12Resource> dx12Resource;
     };
 }

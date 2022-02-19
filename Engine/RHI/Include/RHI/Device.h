@@ -13,18 +13,32 @@
 namespace RHI {
     struct BufferCreateInfo;
     struct TextureCreateInfo;
+    struct SamplerCreateInfo;
+    struct BindGroupLayoutCreateInfo;
+    struct BindGroupCreateInfo;
+    struct PipelineLayoutCreateInfo;
+    struct ShaderModuleCreateInfo;
+    struct ComputePipelineCreateInfo;
+    struct GraphicsPipelineCreateInfo;
     class Queue;
     class Buffer;
     class Texture;
+    class Sampler;
+    class BindGroupLayout;
+    class BindGroup;
+    class PipelineLayout;
+    class ShaderModule;
+    class ComputePipeline;
+    class GraphicsPipeline;
 
-    struct QueueCreateInfo {
+    struct QueueInfo {
         QueueType type;
         size_t num;
     };
 
     struct DeviceCreateInfo {
         uint32_t queueCreateInfoNum;
-        const QueueCreateInfo* queueCreateInfos;
+        const QueueInfo* queueCreateInfos;
     };
 
     class Device {
@@ -37,6 +51,13 @@ namespace RHI {
         virtual Queue* GetQueue(QueueType type, size_t index) = 0;
         virtual Buffer* CreateBuffer(const BufferCreateInfo* createInfo) = 0;
         virtual Texture* CreateTexture(const TextureCreateInfo* createInfo) = 0;
+        virtual Sampler* CreateSampler(const SamplerCreateInfo* createInfo) = 0;
+        virtual BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo) = 0;
+        virtual BindGroup* CreateBindGroup(const BindGroupCreateInfo* createInfo) = 0;
+        virtual PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo) = 0;
+        virtual ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) = 0;
+        virtual ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) = 0;
+        virtual GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) = 0;
 
     protected:
         explicit Device(const DeviceCreateInfo* createInfo);
