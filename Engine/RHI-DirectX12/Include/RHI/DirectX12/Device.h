@@ -29,8 +29,9 @@ namespace RHI::DirectX12 {
         void Destroy() override;
         size_t GetQueueNum(QueueType type) override;
         Queue* GetQueue(QueueType type, size_t index) override;
-        Buffer* CreateBuffer(const BufferCreateInfo *createInfo) override;
-        Texture* CreateTexture(const TextureCreateInfo *createInfo) override;
+        Buffer* CreateBuffer(const BufferCreateInfo* createInfo) override;
+        Texture* CreateTexture(const TextureCreateInfo* createInfo) override;
+        Sampler* CreateSampler(const SamplerCreateInfo* createInfo) override;
 
         ComPtr<ID3D12Device>& GetDX12Device();
 

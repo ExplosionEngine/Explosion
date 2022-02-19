@@ -61,6 +61,12 @@ namespace RHI::Vulkan {
         return nullptr;
     }
 
+    Sampler* VKDevice::CreateSampler(const SamplerCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
     vk::Device VKDevice::GetVkDevice()
     {
         return vkDevice;

@@ -13,9 +13,11 @@
 namespace RHI {
     struct BufferCreateInfo;
     struct TextureCreateInfo;
+    struct SamplerCreateInfo;
     class Queue;
     class Buffer;
     class Texture;
+    class Sampler;
 
     struct QueueCreateInfo {
         QueueType type;
@@ -37,6 +39,7 @@ namespace RHI {
         virtual Queue* GetQueue(QueueType type, size_t index) = 0;
         virtual Buffer* CreateBuffer(const BufferCreateInfo* createInfo) = 0;
         virtual Texture* CreateTexture(const TextureCreateInfo* createInfo) = 0;
+        virtual Sampler* CreateSampler(const SamplerCreateInfo* createInfo) = 0;
 
     protected:
         explicit Device(const DeviceCreateInfo* createInfo);

@@ -26,6 +26,8 @@ namespace RHI {
         NON_COPYABLE(Sampler)
         virtual ~Sampler();
 
+        virtual void Destroy() = 0;
+
     protected:
         explicit Sampler(const SamplerCreateInfo* createInfo);
     };

@@ -55,6 +55,12 @@ namespace RHI::DirectX12 {
         return nullptr;
     }
 
+    Sampler* DX12Device::CreateSampler(const SamplerCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
     ComPtr<ID3D12Device>& DX12Device::GetDX12Device()
     {
         return dx12Device;
