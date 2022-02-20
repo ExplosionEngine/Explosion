@@ -21,3 +21,15 @@ AddExecutable(
     LINK ${glfw_LINK}
     LIB RHI ${glfw_LIB} ${PLATFORM_EXT_LIBS}
 )
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(Triangle-Dependencies
+        RHI-Vulkan RHI-DirectX12
+    )
+else ()
+    set(Triangle-Dependencies
+        RHI-Vulkan
+    )
+endif ()
+
+add_dependencies(RHI-Triangle ${Triangle-Dependencies})

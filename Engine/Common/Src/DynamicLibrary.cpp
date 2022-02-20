@@ -75,15 +75,16 @@ namespace Common {
 
     DynamicLibrary* DynamicLibraryManager::FindOrLoad(const std::string& name)
     {
-        auto iter = libs.find(name);
+        auto fullName = GetPlatformDynLibFullName(name);
+        auto iter = libs.find(fullName);
         if (iter == libs.end()) {
-            DYNAMIC_LIB_HANDLE handle = DYNAMIC_LIB_LOAD(name.c_str(), RTLD_LOCAL | RTLD_LAZY);
+            DYNAMIC_LIB_HANDLE handle = DYNAMIC_LIB_LOAD(fullName.c_str(), RTLD_LOCAL | RTLD_LAZY);
             if (handle == nullptr) {
                 return nullptr;
             }
-            libs[name] = std::make_unique<DynamicLibrary>(handle);
+            libs[fullName] = std::make_unique<DynamicLibrary>(handle);
         }
-        return libs[name].get();
+        return libs[fullName].get();
     }
 
     void DynamicLibraryManager::Unload(const std::string& name)

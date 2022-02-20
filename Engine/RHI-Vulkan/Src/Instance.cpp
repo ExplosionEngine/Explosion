@@ -152,9 +152,9 @@ namespace RHI::Vulkan {
     void VKInstance::EnumeratePhysicalDevices()
     {
         uint32_t count = 0;
-        vkInstance.enumeratePhysicalDevices(&count, nullptr);
+        (void)vkInstance.enumeratePhysicalDevices(&count, nullptr);
         vkPhysicalDevices.resize(count);
-        vkInstance.enumeratePhysicalDevices(&count, vkPhysicalDevices.data());
+        (void)vkInstance.enumeratePhysicalDevices(&count, vkPhysicalDevices.data());
 
         gpus.resize(count);
         for (uint32_t i = 0; i < count; i++) {
@@ -166,10 +166,10 @@ namespace RHI::Vulkan {
     void VKInstance::CreateDebugMessenger()
     {
         vk::DebugUtilsMessengerCreateInfoEXT createInfo;
-        createInfo.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose
-            | vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo
+        createInfo.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo
             | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning
             | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+//            | vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose;
         createInfo.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral
             | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
             | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;

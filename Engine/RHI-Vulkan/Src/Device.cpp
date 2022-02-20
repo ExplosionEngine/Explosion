@@ -11,6 +11,18 @@
 #include <RHI/Vulkan/Queue.h>
 
 namespace RHI::Vulkan {
+    const std::vector<const char*> DEVICE_EXTENSIONS = {
+        "VK_KHR_swapchain",
+#ifdef __APPLE__
+        "VK_KHR_portability_subset"
+#endif
+    };
+
+    const std::vector<const char*> VALIDATION_LAYERS = {
+        "VK_LAYER_KHRONOS_validation"
+    };
+
+
     VKDevice::VKDevice(VKGpu& gpu, const DeviceCreateInfo* createInfo) : Device(createInfo)
     {
         CreateDevice(gpu, createInfo);
@@ -131,8 +143,8 @@ namespace RHI::Vulkan {
         std::vector<vk::QueueFamilyProperties> queueFamilyProperties(queueFamilyPropertyCnt);
         gpu.GetVkPhysicalDevice().getQueueFamilyProperties(&queueFamilyPropertyCnt, queueFamilyProperties.data());
 
-        std::map<QueueType, size_t> queueNumMap;
-        for (size_t i = 0; i < createInfo->queueCreateInfoNum; i++) {
+        std::map<QueueType, uint32_t> queueNumMap;
+        for (uint32_t i = 0; i < createInfo->queueCreateInfoNum; i++) {
             const auto& queueCreateInfo = createInfo->queueCreateInfos[i];
             auto iter = queueNumMap.find(queueCreateInfo.type);
             if (iter == queueNumMap.end()) {
@@ -143,18 +155,25 @@ namespace RHI::Vulkan {
 
         std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
         std::vector<uint32_t> usedQueueFamily;
+        std::vector<float> queuePriorities;
         for (auto iter : queueNumMap) {
             auto queueFamilyIndex = FindQueueFamilyIndex(queueFamilyProperties, usedQueueFamily, iter.first);
             if (!queueFamilyIndex.has_value()) {
                 throw VKException("failed to found suitable queue family");
             }
+            auto queueCount = std::min(queueFamilyProperties[queueFamilyIndex.value()].queueCount, iter.second);
+
+            if (queueCount > queuePriorities.size()) {
+                queuePriorities.resize(queueCount, 1.0f);
+            }
 
             vk::DeviceQueueCreateInfo tempCreateInfo {};
-            tempCreateInfo.queueFamilyIndex = queueFamilyIndex.value();
-            tempCreateInfo.queueCount = iter.second;
+            tempCreateInfo.setQueueFamilyIndex(queueFamilyIndex.value())
+                .setQueueCount(queueCount)
+                .setPQueuePriorities(queuePriorities.data());
             queueCreateInfos.emplace_back(tempCreateInfo);
 
-            queueFamilyMappings[iter.first] = std::make_pair(queueFamilyIndex.value(), static_cast<uint32_t>(iter.second));
+            queueFamilyMappings[iter.first] = std::make_pair(queueFamilyIndex.value(), queueCount);
         }
 
         vk::PhysicalDeviceFeatures deviceFeatures;
@@ -162,6 +181,15 @@ namespace RHI::Vulkan {
         deviceCreateInfo.queueCreateInfoCount = queueCreateInfos.size();
         deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
+
+        deviceCreateInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
+        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
+
+#ifdef BUILD_CONFIG_DEBUG
+        deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
+        deviceCreateInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
+#endif
+
         if (gpu.GetVkPhysicalDevice().createDevice(&deviceCreateInfo, nullptr, &vkDevice) != vk::Result::eSuccess) {
             throw VKException("failed to create device");
         }

@@ -16,6 +16,11 @@ public:
     Application(std::string n, const uint32_t w, const uint32_t h) : window(nullptr), name(std::move(n)), width(w), height(h) {}
     virtual ~Application() = default;
 
+    void Start(int argc, char* argv[])
+    {
+        OnStart(argc, argv);
+    }
+
     int Run()
     {
         glfwInit();
@@ -34,6 +39,7 @@ public:
     }
 
 protected:
+    virtual void OnStart(int argc, char* argv[]) = 0;
     virtual void OnCreate() = 0;
     virtual void OnDestroy() = 0;
     virtual void OnDrawFrame() = 0;
