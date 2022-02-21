@@ -9,6 +9,11 @@ namespace RHI::DirectX12 {
 
     DX12Queue::~DX12Queue() = default;
 
+    void DX12Queue::Submit(CommandBuffer* commandBuffer)
+    {
+        // TODO
+    }
+
     ComPtr<ID3D12CommandQueue>& DX12Queue::GetDX12CommandQueue()
     {
         return dx12CommandQueue;

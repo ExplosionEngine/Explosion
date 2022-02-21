@@ -272,6 +272,18 @@ namespace RHI {
         OP_MAX,
         MAX
     };
+
+    enum class LoadOp : EnumType {
+        LOAD,
+        CLEAR,
+        MAX
+    };
+
+    enum class StoreOp : EnumType {
+        STORE,
+        DISCARD,
+        MAX
+    };
 }
 
 namespace RHI {
@@ -358,6 +370,35 @@ namespace RHI {
         size_t x;
         size_t y;
         size_t z;
+    };
+
+    template <uint8_t N>
+    struct Color;
+
+    template <>
+    struct Color<1> {
+        size_t r;
+    };
+
+    template <>
+    struct Color<2> {
+        size_t r;
+        size_t g;
+    };
+
+    template <>
+    struct Color<3> {
+        size_t r;
+        size_t g;
+        size_t b;
+    };
+
+    template <>
+    struct Color<4> {
+        size_t r;
+        size_t g;
+        size_t b;
+        size_t a;
     };
 }
 
