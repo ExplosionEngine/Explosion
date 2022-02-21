@@ -7,10 +7,29 @@ AddLibrary(
     LIB Common
 )
 
+if (APPLE)
+set(PLATFORM_EXT_LIBS
+    "-framework Cocoa"
+    "-framework IOKit"
+    "-framework CoreFoundation")
+endif()
+
 AddExecutable(
     NAME RHI-Triangle
     SRC Sample/Triangle.cpp
     INC Sample ${glfw_INC} ${GLM_INC}
     LINK ${glfw_LINK}
-    LIB RHI ${glfw_LIB}
+    LIB RHI ${glfw_LIB} ${PLATFORM_EXT_LIBS}
 )
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(Triangle-Dependencies
+        RHI-Vulkan RHI-DirectX12
+    )
+else ()
+    set(Triangle-Dependencies
+        RHI-Vulkan
+    )
+endif ()
+
+add_dependencies(RHI-Triangle ${Triangle-Dependencies})

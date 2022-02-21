@@ -6,6 +6,7 @@
 #define EXPLOSION_RHI_PIPELINE_LAYOUT_H
 
 #include <Common/Utility.h>
+#include <cstdio>
 
 namespace RHI {
     class BindGroupLayout;

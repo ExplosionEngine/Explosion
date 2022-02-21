@@ -28,7 +28,7 @@ public:
 protected:
     void OnCreate() override
     {
-        instance = Instance::CreateByType(RHIType::DIRECTX_12);
+        instance = Instance::CreateByType(rhiType);
         gpu = instance->GetGpu(0);
 
         {
@@ -57,9 +57,29 @@ protected:
             createInfo.size = vertices.size() * sizeof(Vertex);
             createInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
             vertexBuffer = device->CreateBuffer(&createInfo);
+            if (vertexBuffer != nullptr) {
+                auto* data = vertexBuffer->Map(MapMode::WRITE, 0, createInfo.size);
+                memcpy(data, vertices.data(), createInfo.size);
+            }
+        }
+    }
 
-            auto* data = vertexBuffer->Map(MapMode::WRITE, 0, createInfo.size);
-            memcpy(data, vertices.data(), createInfo.size);
+    void OnStart(int argc, char* argv[]) override
+    {
+        if (argc < 2) {
+            return;
+        }
+        for (int i = 1; i < argc; ++i) {
+            if (std::string(argv[i]) == "--rhi") {
+                if (i + 1 < argc) {
+                    std::string rhi = argv[++i];
+                    if (rhi == std::string("vulkan")) {
+                        rhiType = RHIType::VULKAN;
+                    } else if (rhi == std::string("dx12")) {
+                        rhiType = RHIType::DIRECTX_12;
+                    }
+                }
+            }
         }
     }
 
@@ -73,10 +93,12 @@ private:
     Device* device {};
     Queue* graphicsQueue {};
     Buffer* vertexBuffer {};
+    RHIType rhiType = RHIType::DIRECTX_12;
 };
 
 int main(int argc, char* argv[])
 {
     TriangleApplication application("RHI-Triangle", 1024, 768);
+    application.Start(argc, argv);
     return application.Run();
 }
