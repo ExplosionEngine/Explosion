@@ -115,6 +115,12 @@ namespace RHI::Vulkan {
         return nullptr;
     }
 
+    CommandBuffer* VKDevice::CreateCommandBuffer(const CommandBufferCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
     vk::Device VKDevice::GetVkDevice()
     {
         return vkDevice;

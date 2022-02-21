@@ -20,6 +20,7 @@ namespace RHI {
     struct ShaderModuleCreateInfo;
     struct ComputePipelineCreateInfo;
     struct GraphicsPipelineCreateInfo;
+    struct CommandBufferCreateInfo;
     class Queue;
     class Buffer;
     class Texture;
@@ -30,6 +31,7 @@ namespace RHI {
     class ShaderModule;
     class ComputePipeline;
     class GraphicsPipeline;
+    class CommandBuffer;
 
     struct QueueInfo {
         QueueType type;
@@ -58,6 +60,7 @@ namespace RHI {
         virtual ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) = 0;
         virtual ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) = 0;
         virtual GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) = 0;
+        virtual CommandBuffer* CreateCommandBuffer(const CommandBufferCreateInfo* createInfo) = 0;
 
     protected:
         explicit Device(const DeviceCreateInfo* createInfo);

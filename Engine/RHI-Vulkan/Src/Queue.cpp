@@ -9,6 +9,11 @@ namespace RHI::Vulkan {
 
     VKQueue::~VKQueue() = default;
 
+    void VKQueue::Submit(CommandBuffer* commandBuffer)
+    {
+        // TODO
+    }
+
     vk::Queue VKQueue::GetVkQueue()
     {
         return vkQueue;
