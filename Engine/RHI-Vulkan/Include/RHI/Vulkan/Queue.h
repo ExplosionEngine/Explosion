@@ -16,6 +16,8 @@ namespace RHI::Vulkan {
         explicit VKQueue(vk::Queue vkQueue);
         ~VKQueue() override;
 
+        void Submit(CommandBuffer* commandBuffer) override;
+
         vk::Queue GetVkQueue();
 
     private:

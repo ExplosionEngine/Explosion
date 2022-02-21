@@ -8,6 +8,8 @@
 #include <Common/Utility.h>
 
 namespace RHI {
+    class CommandEncoder;
+
     struct CommandBufferCreateInfo {
         // TODO
     };
@@ -17,6 +19,7 @@ namespace RHI {
         NON_COPYABLE(CommandBuffer)
         virtual ~CommandBuffer();
 
+        virtual CommandEncoder* Begin() = 0;
         virtual void Destroy() = 0;
 
     protected:
