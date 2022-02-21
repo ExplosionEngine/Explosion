@@ -21,6 +21,8 @@ namespace RHI::Vulkan {
 
         vk::PhysicalDevice GetVkPhysicalDevice();
 
+        uint32_t FindMemoryType(uint32_t filter, vk::MemoryPropertyFlags propertyFlag);
+
     private:
         vk::PhysicalDevice vkPhysicalDevice;
     };

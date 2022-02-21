@@ -9,6 +9,7 @@
 #include <RHI/Vulkan/Gpu.h>
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Queue.h>
+#include <RHI/Vulkan/Buffer.h>
 
 namespace RHI::Vulkan {
     const std::vector<const char*> DEVICE_EXTENSIONS = {
@@ -23,9 +24,9 @@ namespace RHI::Vulkan {
     };
 
 
-    VKDevice::VKDevice(VKGpu& gpu, const DeviceCreateInfo* createInfo) : Device(createInfo)
+    VKDevice::VKDevice(VKGpu& vkGpu, const DeviceCreateInfo* createInfo) : Device(createInfo), gpu(&vkGpu)
     {
-        CreateDevice(gpu, createInfo);
+        CreateDevice(createInfo);
         GetQueues();
     }
 
@@ -63,8 +64,7 @@ namespace RHI::Vulkan {
 
     Buffer* VKDevice::CreateBuffer(const BufferCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new VKBuffer(*this, createInfo);
     }
 
     Texture* VKDevice::CreateTexture(const TextureCreateInfo* createInfo)
@@ -120,6 +120,11 @@ namespace RHI::Vulkan {
         return vkDevice;
     }
 
+    VKGpu* VKDevice::GetGpu() const
+    {
+        return gpu;
+    }
+
     std::optional<uint32_t> VKDevice::FindQueueFamilyIndex(const std::vector<vk::QueueFamilyProperties>& properties, std::vector<uint32_t>& usedQueueFamily, QueueType queueType)
     {
         for (uint32_t i = 0; i < properties.size(); i++) {
@@ -136,12 +141,12 @@ namespace RHI::Vulkan {
         return {};
     }
 
-    void VKDevice::CreateDevice(VKGpu& gpu, const DeviceCreateInfo* createInfo)
+    void VKDevice::CreateDevice(const DeviceCreateInfo* createInfo)
     {
         uint32_t queueFamilyPropertyCnt = 0;
-        gpu.GetVkPhysicalDevice().getQueueFamilyProperties(&queueFamilyPropertyCnt, nullptr);
+        gpu->GetVkPhysicalDevice().getQueueFamilyProperties(&queueFamilyPropertyCnt, nullptr);
         std::vector<vk::QueueFamilyProperties> queueFamilyProperties(queueFamilyPropertyCnt);
-        gpu.GetVkPhysicalDevice().getQueueFamilyProperties(&queueFamilyPropertyCnt, queueFamilyProperties.data());
+        gpu->GetVkPhysicalDevice().getQueueFamilyProperties(&queueFamilyPropertyCnt, queueFamilyProperties.data());
 
         std::map<QueueType, uint32_t> queueNumMap;
         for (uint32_t i = 0; i < createInfo->queueCreateInfoNum; i++) {
@@ -190,7 +195,7 @@ namespace RHI::Vulkan {
         deviceCreateInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
 #endif
 
-        if (gpu.GetVkPhysicalDevice().createDevice(&deviceCreateInfo, nullptr, &vkDevice) != vk::Result::eSuccess) {
+        if (gpu->GetVkPhysicalDevice().createDevice(&deviceCreateInfo, nullptr, &vkDevice) != vk::Result::eSuccess) {
             throw VKException("failed to create device");
         }
     }
