@@ -38,6 +38,7 @@ namespace RHI::DirectX12 {
         ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) override;
         ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) override;
         GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override;
+        CommandBuffer* CreateCommandBuffer(const CommandBufferCreateInfo* createInfo) override;
 
         ComPtr<ID3D12Device>& GetDX12Device();
 

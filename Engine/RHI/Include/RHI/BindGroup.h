@@ -5,8 +5,9 @@
 #ifndef EXPLOSION_RHI_BIND_GROUP_H
 #define EXPLOSION_RHI_BIND_GROUP_H
 
+#include <cstddef>
+
 #include <Common/Utility.h>
-#include <cstdio>
 
 namespace RHI {
     class BindGroupLayout;
