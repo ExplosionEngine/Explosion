@@ -83,7 +83,9 @@ protected:
         }
     }
 
-    void OnDestroy() override {}
+    void OnDestroy() override
+    {
+    }
 
     void OnDrawFrame() override {}
 
