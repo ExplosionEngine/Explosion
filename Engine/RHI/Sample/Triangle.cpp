@@ -85,10 +85,6 @@ protected:
 
     void OnDestroy() override
     {
-        if (device != nullptr) {
-            delete device;
-            device = nullptr;
-        }
     }
 
     void OnDrawFrame() override {}
