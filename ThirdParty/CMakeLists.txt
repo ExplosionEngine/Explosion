@@ -2,6 +2,7 @@
 AddThirdPartyPackage(
     NAME EnTT
     VERSION 3.8.1
+    HASH 77e55bfc4774c1be3a5a6a7a35b321a20c5dff37e688af3895e20cc56011e5f4
 )
 set(EnTT_INC ${EnTT_SOURCE_DIR}/single_include CACHE PATH "" FORCE)
 
@@ -9,6 +10,7 @@ set(EnTT_INC ${EnTT_SOURCE_DIR}/single_include CACHE PATH "" FORCE)
 AddThirdPartyPackage(
     NAME GLM
     VERSION 0.9.9.8
+    HASH 29876d3440386464c781853caf73eb49eaa1b04a5e648a0cff92381c5e9e69b4
 )
 set(GLM_INC ${GLM_SOURCE_DIR} CACHE PATH "" FORCE)
 
@@ -16,6 +18,7 @@ set(GLM_INC ${GLM_SOURCE_DIR} CACHE PATH "" FORCE)
 AddThirdPartyPackage(
     NAME Meta
     VERSION 1.4.9
+    HASH 9cd04221c4865fdef37f8a92646087ec777ded6b1ff1a5e932cd0cd72b175eba
 )
 set(Meta_INC ${Meta_SOURCE_DIR}/src CACHE PATH "" FORCE)
 
@@ -24,6 +27,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     AddThirdPartyPackage(
         NAME DirectXHeaders
         VERSION 1.4.9
+        HASH 32a28d1172eb5d6b1574a2ba51d628ba446f0e8a1d3291b5a4903a661c430738
     )
     set(DirectXHeaders_INC ${DirectXHeaders_SOURCE_DIR}/include CACHE PATH "" FORCE)
 endif()
@@ -51,6 +55,7 @@ AddThirdPartyPackage(
     NAME glfw
     VERSION 3.3.6
     BUILD
+    HASH e2eb069a70da0fc862af4d14e6a80748883f12e20bdce101c028968165d9c688
     ARG -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF
 )
 set(glfw_INC ${glfw_INSTALL_DIR}/include CACHE PATH "" FORCE)
