@@ -121,4 +121,9 @@ namespace RHI::DirectX12 {
             throw DX12Exception("failed to create dx12 buffer");
         }
     }
+
+    void DX12Buffer::CreateDesc(const BufferCreateInfo* createInfo)
+    {
+        // TODO
+    }
 }

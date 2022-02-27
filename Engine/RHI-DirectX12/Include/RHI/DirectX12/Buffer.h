@@ -28,9 +28,12 @@ namespace RHI::DirectX12 {
 
     private:
         void CreateBuffer(DX12Device& device, const BufferCreateInfo* createInfo);
+        void CreateDesc(const BufferCreateInfo* createInfo);
 
         MapMode mapMode;
         ComPtr<ID3D12Resource> dx12Resource;
+        std::unique_ptr<D3D12_CONSTANT_BUFFER_VIEW_DESC> cbvDesc;
+        std::unique_ptr<D3D12_UNORDERED_ACCESS_VIEW_DESC> uavDesc;
     };
 }
 

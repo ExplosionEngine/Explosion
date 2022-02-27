@@ -66,9 +66,9 @@ namespace RHI {
         RGBA8_SINT,
         BGRA8_UNORM,
         BGRA8_UNORM_SRGB,
-        RGB9_E5_UFLOAT,
+        RGB9_E5_FLOAT,
         RGB10A2_UNORM,
-        RG11B10_UFLOAT,
+        RG11B10_FLOAT,
         // 64-Bits
         RG32_UINT,
         RG32_SINT,
@@ -81,11 +81,9 @@ namespace RHI {
         RGBA32_SINT,
         RGBA32_FLOAT,
         // Depth-Stencil
-        STENCIL_8,
-        DEPTH_16_UNORM,
-        DEPTH_24_PLUS,
-        DEPTH_24_PLUS_STENCIL_8,
-        DEPTH_32_FLOAT,
+        D16_UNORM,
+        D24_UNORM_S8_UINT,
+        D32_FLOAT,
         // TODO features / bc / etc / astc
         MAX
     };
