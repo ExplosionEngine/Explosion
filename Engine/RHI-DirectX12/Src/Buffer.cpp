@@ -66,6 +66,16 @@ namespace RHI::DirectX12 {
         }
         return MapMode::READ;
     }
+
+    static bool IsConstantBuffer(BufferUsageFlags bufferUsages)
+    {
+        return bufferUsages & BufferUsageBits::UNIFORM;
+    }
+
+    static bool IsUnorderedAccessBuffer (BufferUsageFlags bufferUsages)
+    {
+        return bufferUsages & BufferUsageBits::STORAGE;
+    }
 }
 
 namespace RHI::DirectX12 {
@@ -124,6 +134,16 @@ namespace RHI::DirectX12 {
 
     void DX12Buffer::CreateDesc(const BufferCreateInfo* createInfo)
     {
-        // TODO
+        if (IsConstantBuffer(createInfo->usages)) {
+            cbvDesc = std::make_unique<D3D12_CONSTANT_BUFFER_VIEW_DESC>();
+            cbvDesc->BufferLocation = dx12Resource->GetGPUVirtualAddress();
+            cbvDesc->SizeInBytes = createInfo->size;
+        } else if (IsUnorderedAccessBuffer(createInfo->usages)) {
+            uavDesc = std::make_unique<D3D12_UNORDERED_ACCESS_VIEW_DESC>();
+            uavDesc->Format = DXGI_FORMAT_UNKNOWN;
+            uavDesc->ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+            uavDesc->Buffer.FirstElement = 0;
+            uavDesc->Buffer.NumElements = createInfo->size;
+        }
     }
 }

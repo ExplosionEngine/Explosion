@@ -7,6 +7,7 @@
 #include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/Texture.h>
+#include <RHI/DirectX12/TextureView.h>
 
 namespace RHI::DirectX12 {
     static D3D12_RESOURCE_DIMENSION GetDX12ResourceDimension(const TextureDimension& dimension)
@@ -44,7 +45,8 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12Texture::DX12Texture(DX12Device& device, const TextureCreateInfo* createInfo) : Texture(createInfo)
+    DX12Texture::DX12Texture(DX12Device& device, const TextureCreateInfo* createInfo)
+        : Texture(createInfo), usages(createInfo->usages)
     {
         CreateTexture(device, createInfo);
     }
@@ -53,13 +55,17 @@ namespace RHI::DirectX12 {
 
     TextureView* DX12Texture::CreateTextureView(const TextureViewCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new DX12TextureView(*this, createInfo);
     }
 
     void DX12Texture::Destroy()
     {
         delete this;
+    }
+
+    TextureUsageFlags DX12Texture::GetUsages()
+    {
+        return usages;
     }
 
     void DX12Texture::CreateTexture(DX12Device& device, const TextureCreateInfo* createInfo)

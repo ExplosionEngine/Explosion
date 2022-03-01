@@ -20,15 +20,15 @@ namespace RHI::DirectX12 {
     class DX12TextureView : public TextureView {
     public:
         NON_COPYABLE(DX12TextureView)
-        explicit DX12TextureView(DX12Texture* texture, const TextureViewCreateInfo* createInfo);
+        explicit DX12TextureView(DX12Texture& texture, const TextureViewCreateInfo* createInfo);
         ~DX12TextureView() override;
 
         void Destroy() override;
 
     private:
-        void CreateDesc();
+        void CreateDesc(const TextureViewCreateInfo* createInfo);
 
-        DX12Texture* texture;
+        DX12Texture& texture;
         std::unique_ptr<D3D12_SHADER_RESOURCE_VIEW_DESC> srvDesc;
         std::unique_ptr<D3D12_UNORDERED_ACCESS_VIEW_DESC> uavDesc;
         std::unique_ptr<D3D12_RENDER_TARGET_VIEW_DESC> rtvDesc;

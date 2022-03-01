@@ -23,10 +23,13 @@ namespace RHI::DirectX12 {
         TextureView* CreateTextureView(const TextureViewCreateInfo* createInfo) override;
         void Destroy() override;
 
+        TextureUsageFlags GetUsages();
+
     private:
         void CreateTexture(DX12Device& device, const TextureCreateInfo* createInfo);
 
         ComPtr<ID3D12Resource> dx12Resource;
+        TextureUsageFlags usages;
     };
 }
 
