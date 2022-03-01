@@ -15,8 +15,6 @@ namespace RHI::Vulkan {
     {
         vk::PhysicalDeviceProperties vkPhysicalDeviceProperties;
         vkPhysicalDevice.getProperties(&vkPhysicalDeviceProperties);
-        vk::PhysicalDeviceMemoryProperties vkPhysicalDeviceMemoryProperties;
-        vkPhysicalDevice.getMemoryProperties(&vkPhysicalDeviceMemoryProperties);
 
         GpuProperty property {};
         property.vendorId = vkPhysicalDeviceProperties.vendorID;
@@ -33,5 +31,18 @@ namespace RHI::Vulkan {
     vk::PhysicalDevice VKGpu::GetVkPhysicalDevice()
     {
         return vkPhysicalDevice;
+    }
+
+    uint32_t VKGpu::FindMemoryType(uint32_t filter, vk::MemoryPropertyFlags propertyFlags)
+    {
+        vk::PhysicalDeviceMemoryProperties memProperties;
+        vkPhysicalDevice.getMemoryProperties(&memProperties);
+
+        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+            if ((filter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & propertyFlags) == propertyFlags) {
+                return i;
+            }
+        }
+        throw VKException("failed to found suitable memory type");
     }
 }
