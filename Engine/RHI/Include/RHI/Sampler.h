@@ -15,6 +15,8 @@ namespace RHI {
         AddressMode addressModeW = AddressMode::CLAMP_TO_EDGE;
         FilterMode magFilter = FilterMode::NEAREST;
         FilterMode minFilter = FilterMode::NEAREST;
+        // TODO remove mip filter ?
+        FilterMode mipFilter = FilterMode::NEAREST;
         float lodMinClamp = 0;
         float lodMaxClamp = 32;
         CompareFunction compare = CompareFunction::NEVER;
