@@ -14,17 +14,17 @@ namespace RHI::DirectX12 {
     class DX12Sampler : public Sampler {
     public:
         NON_COPYABLE(DX12Sampler)
-        DX12Sampler(const SamplerCreateInfo* createInfo);
-        ~DX12Sampler();
+        explicit DX12Sampler(const SamplerCreateInfo* createInfo);
+        ~DX12Sampler() override;
 
         void Destroy() override;
 
-        D3D12_STATIC_SAMPLER_DESC* GetDesc() const;
+        D3D12_STATIC_SAMPLER_DESC* GetDesc();
 
     private:
         void CreateDesc(const SamplerCreateInfo* createInfo);
 
-        std::unique_ptr<D3D12_STATIC_SAMPLER_DESC> desc;
+        D3D12_STATIC_SAMPLER_DESC desc;
     };
 }
 

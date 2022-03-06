@@ -24,7 +24,7 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12Sampler::DX12Sampler(const SamplerCreateInfo* createInfo) : Sampler(createInfo)
+    DX12Sampler::DX12Sampler(const SamplerCreateInfo* createInfo) : Sampler(createInfo), desc({})
     {
         CreateDesc(createInfo);
     }
@@ -36,21 +36,20 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    D3D12_STATIC_SAMPLER_DESC* DX12Sampler::GetDesc() const
+    D3D12_STATIC_SAMPLER_DESC* DX12Sampler::GetDesc()
     {
-        return desc.get();
+        return &desc;
     }
 
     void DX12Sampler::CreateDesc(const SamplerCreateInfo* createInfo)
     {
-        desc = std::make_unique<D3D12_STATIC_SAMPLER_DESC>();
-        desc->AddressU = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeU);
-        desc->AddressV = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeV);
-        desc->AddressW = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeW);
-        desc->Filter = GetDX12Filter(createInfo);
-        desc->MinLOD = createInfo->lodMinClamp;
-        desc->MaxLOD = createInfo->lodMaxClamp;
-        desc->ComparisonFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(createInfo->comparisonFunc);
-        desc->MaxAnisotropy = createInfo->maxAnisotropy;
+        desc.AddressU = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeU);
+        desc.AddressV = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeV);
+        desc.AddressW = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeW);
+        desc.Filter = GetDX12Filter(createInfo);
+        desc.MinLOD = createInfo->lodMinClamp;
+        desc.MaxLOD = createInfo->lodMaxClamp;
+        desc.ComparisonFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(createInfo->comparisonFunc);
+        desc.MaxAnisotropy = createInfo->maxAnisotropy;
     }
 }
