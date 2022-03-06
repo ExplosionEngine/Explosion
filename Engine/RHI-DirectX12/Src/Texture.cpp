@@ -48,7 +48,7 @@ namespace RHI::DirectX12 {
     DX12Texture::DX12Texture(DX12Device& device, const TextureCreateInfo* createInfo)
         : Texture(createInfo), usages(createInfo->usages)
     {
-        CreateTexture(device, createInfo);
+        CreateDX12Texture(device, createInfo);
     }
 
     DX12Texture::~DX12Texture() = default;
@@ -68,7 +68,12 @@ namespace RHI::DirectX12 {
         return usages;
     }
 
-    void DX12Texture::CreateTexture(DX12Device& device, const TextureCreateInfo* createInfo)
+    ComPtr<ID3D12Resource>& DX12Texture::GetDX12Resource()
+    {
+        return dx12Resource;
+    }
+
+    void DX12Texture::CreateDX12Texture(DX12Device& device, const TextureCreateInfo* createInfo)
     {
         CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_DEFAULT);
         D3D12_RESOURCE_DESC textureDesc = {};

@@ -25,15 +25,17 @@ namespace RHI::DirectX12 {
         void Destroy() override;
 
         ComPtr<ID3D12Resource>& GetDX12Resource();
+        D3D12_CONSTANT_BUFFER_VIEW_DESC* GetDX12CBVDesc();
+        D3D12_UNORDERED_ACCESS_VIEW_DESC* GetDX12UAVDesc();
 
     private:
-        void CreateBuffer(DX12Device& device, const BufferCreateInfo* createInfo);
-        void CreateDesc(const BufferCreateInfo* createInfo);
+        void CreateDX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo);
+        void CreateDX12ViewDesc(const BufferCreateInfo* createInfo);
 
         MapMode mapMode;
         ComPtr<ID3D12Resource> dx12Resource;
-        std::unique_ptr<D3D12_CONSTANT_BUFFER_VIEW_DESC> cbvDesc;
-        std::unique_ptr<D3D12_UNORDERED_ACCESS_VIEW_DESC> uavDesc;
+        std::unique_ptr<D3D12_CONSTANT_BUFFER_VIEW_DESC> dx12CBVDesc;
+        std::unique_ptr<D3D12_UNORDERED_ACCESS_VIEW_DESC> dx12UAVDesc;
     };
 }
 

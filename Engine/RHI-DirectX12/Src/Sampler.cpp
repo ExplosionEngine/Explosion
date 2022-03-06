@@ -24,9 +24,9 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12Sampler::DX12Sampler(const SamplerCreateInfo* createInfo) : Sampler(createInfo), desc({})
+    DX12Sampler::DX12Sampler(const SamplerCreateInfo* createInfo) : Sampler(createInfo), dx12SamplerDesc({})
     {
-        CreateDesc(createInfo);
+        CreateDX12SamplerDesc(createInfo);
     }
 
     DX12Sampler::~DX12Sampler() = default;
@@ -36,20 +36,20 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    D3D12_STATIC_SAMPLER_DESC* DX12Sampler::GetDesc()
+    D3D12_STATIC_SAMPLER_DESC* DX12Sampler::GetDX12SamplerDesc()
     {
-        return &desc;
+        return &dx12SamplerDesc;
     }
 
-    void DX12Sampler::CreateDesc(const SamplerCreateInfo* createInfo)
+    void DX12Sampler::CreateDX12SamplerDesc(const SamplerCreateInfo* createInfo)
     {
-        desc.AddressU = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeU);
-        desc.AddressV = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeV);
-        desc.AddressW = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeW);
-        desc.Filter = GetDX12Filter(createInfo);
-        desc.MinLOD = createInfo->lodMinClamp;
-        desc.MaxLOD = createInfo->lodMaxClamp;
-        desc.ComparisonFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(createInfo->comparisonFunc);
-        desc.MaxAnisotropy = createInfo->maxAnisotropy;
+        dx12SamplerDesc.AddressU = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeU);
+        dx12SamplerDesc.AddressV = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeV);
+        dx12SamplerDesc.AddressW = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeW);
+        dx12SamplerDesc.Filter = GetDX12Filter(createInfo);
+        dx12SamplerDesc.MinLOD = createInfo->lodMinClamp;
+        dx12SamplerDesc.MaxLOD = createInfo->lodMaxClamp;
+        dx12SamplerDesc.ComparisonFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(createInfo->comparisonFunc);
+        dx12SamplerDesc.MaxAnisotropy = createInfo->maxAnisotropy;
     }
 }

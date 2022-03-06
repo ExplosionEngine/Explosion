@@ -25,13 +25,17 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
 
+        D3D12_SHADER_RESOURCE_VIEW_DESC* GetDX12SRVDesc();
+        D3D12_UNORDERED_ACCESS_VIEW_DESC* GetDX12UAVDesc();
+        D3D12_RENDER_TARGET_VIEW_DESC* GetDX12RTVDesc();
+
     private:
-        void CreateDesc(const TextureViewCreateInfo* createInfo);
+        void CreateDX12ViewDesc(const TextureViewCreateInfo* createInfo);
 
         DX12Texture& texture;
-        std::unique_ptr<D3D12_SHADER_RESOURCE_VIEW_DESC> srvDesc;
-        std::unique_ptr<D3D12_UNORDERED_ACCESS_VIEW_DESC> uavDesc;
-        std::unique_ptr<D3D12_RENDER_TARGET_VIEW_DESC> rtvDesc;
+        std::unique_ptr<D3D12_SHADER_RESOURCE_VIEW_DESC> dx12SRVDesc;
+        std::unique_ptr<D3D12_UNORDERED_ACCESS_VIEW_DESC> dx12UAVDesc;
+        std::unique_ptr<D3D12_RENDER_TARGET_VIEW_DESC> dx12RTVDesc;
     };
 }
 

@@ -30,12 +30,14 @@ namespace RHI::DirectX12 {
         uint32_t GetGpuNum() override;
         Gpu* GetGpu(uint32_t index) override;
 
+        ComPtr<IDXGIFactory4>& GetDX12Factory();
+
     private:
         void CreateDX12Factory();
         void EnumerateAdapters();
 
-        ComPtr<IDXGIFactory4> dx12Factory;
         std::vector<std::unique_ptr<DX12Gpu>> gpus;
+        ComPtr<IDXGIFactory4> dx12Factory;
     };
 }
 
