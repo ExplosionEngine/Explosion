@@ -33,18 +33,6 @@ There are some supported compilers yet:
 
 # Build The Engine
 
-Install [Git-LFS](https://git-lfs.github.com/) and clone the project:
-
-```shell
-git clone https://github.com/ExplosionEngine/Explosion.git
-```
-
-If you had cloned the project but not install Git-LFS, you need to pull all large files after clone:
-
-```shell
-git lfs fetch
-```
-
 Using cmake to configure and build project:
 
 ```cpp
