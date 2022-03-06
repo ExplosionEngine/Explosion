@@ -36,7 +36,7 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    D3D12_STATIC_SAMPLER_DESC* DX12Sampler::GetDX12SamplerDesc()
+    D3D12_SAMPLER_DESC* DX12Sampler::GetDX12SamplerDesc()
     {
         return &dx12SamplerDesc;
     }

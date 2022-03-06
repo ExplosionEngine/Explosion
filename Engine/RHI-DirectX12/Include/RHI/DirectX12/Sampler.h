@@ -19,12 +19,12 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
 
-        D3D12_STATIC_SAMPLER_DESC* GetDX12SamplerDesc();
+        D3D12_SAMPLER_DESC* GetDX12SamplerDesc();
 
     private:
         void CreateDX12SamplerDesc(const SamplerCreateInfo* createInfo);
 
-        D3D12_STATIC_SAMPLER_DESC dx12SamplerDesc;
+        D3D12_SAMPLER_DESC dx12SamplerDesc;
     };
 }
 
