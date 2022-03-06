@@ -19,7 +19,7 @@ namespace RHI {
         FilterMode mipFilter = FilterMode::NEAREST;
         float lodMinClamp = 0;
         float lodMaxClamp = 32;
-        CompareFunction compare = CompareFunction::NEVER;
+        ComparisonFunc comparisonFunc = ComparisonFunc::NEVER;
         size_t maxAnisotropy = 1;
     };
 

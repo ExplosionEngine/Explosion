@@ -2,6 +2,7 @@
 // Created by johnk on 5/3/2022.
 //
 
+#include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Sampler.h>
 
 namespace RHI::DirectX12 {
@@ -43,7 +44,13 @@ namespace RHI::DirectX12 {
     void DX12Sampler::CreateDesc(const SamplerCreateInfo* createInfo)
     {
         desc = std::make_unique<D3D12_STATIC_SAMPLER_DESC>();
+        desc->AddressU = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeU);
+        desc->AddressV = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeV);
+        desc->AddressW = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo->addressModeW);
         desc->Filter = GetDX12Filter(createInfo);
-        // TODO
+        desc->MinLOD = createInfo->lodMinClamp;
+        desc->MaxLOD = createInfo->lodMaxClamp;
+        desc->ComparisonFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(createInfo->comparisonFunc);
+        desc->MaxAnisotropy = createInfo->maxAnisotropy;
     }
 }

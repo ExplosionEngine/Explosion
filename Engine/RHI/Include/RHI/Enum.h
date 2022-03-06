@@ -159,7 +159,7 @@ namespace RHI {
         MAX
     };
 
-    enum class CompareFunction : EnumType {
+    enum class ComparisonFunc : EnumType {
         NEVER,
         LESS,
         EQUAL,

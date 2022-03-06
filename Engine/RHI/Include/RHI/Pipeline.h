@@ -60,7 +60,7 @@ namespace RHI {
     };
 
     struct StencilFaceState {
-        CompareFunction compare = CompareFunction::ALWAYS;
+        ComparisonFunc compare = ComparisonFunc::ALWAYS;
         StencilOp failOp = StencilOp::KEEP;
         StencilOp depthFailOp = StencilOp::KEEP;
         StencilOp passOp = StencilOp::KEEP;
@@ -69,7 +69,7 @@ namespace RHI {
     struct DepthStencilState {
         PixelFormat format = PixelFormat::D32_FLOAT;
         bool writeDepth = false;
-        CompareFunction depthCompare = CompareFunction::ALWAYS;
+        ComparisonFunc depthCompare = ComparisonFunc::ALWAYS;
         StencilFaceState stencilFront;
         StencilFaceState stencilBack;
         uint32_t stencilReadMask = 0xffffffff;
