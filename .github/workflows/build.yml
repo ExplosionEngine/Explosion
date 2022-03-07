@@ -22,6 +22,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{github.workspace}}/ThirdParty/Zip
+          key: ${{ runner.os }}-3rd-zip
 
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
