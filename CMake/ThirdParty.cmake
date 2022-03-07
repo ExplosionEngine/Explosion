@@ -23,7 +23,7 @@ set(3RD_INSTALL_DIR ${CMAKE_BINARY_DIR}/ThirdPartyInstall CACHE PATH "" FORCE)
 #  - BUILD    {Bool}   : build package or not (just using sources)
 #  - PLATFORM {Bool}   : true if package is platform relative
 function(AddThirdPartyPackage)
-    cmake_parse_arguments(PARAMS "BUILD;PLATFORM" "NAME;VERSION" "ARG" ${ARGN})
+    cmake_parse_arguments(PARAMS "BUILD;PLATFORM" "NAME;VERSION;HASH" "ARG" ${ARGN})
 
     set(3RD_PACKAGE_NAME "${PARAMS_NAME}")
     if (${PARAMS_PLATFORM})
@@ -67,10 +67,10 @@ function(AddThirdPartyPackage)
         )
     endif()
 
-    if (${PARAMS_HASH})
+    if (DEFINED PARAMS_HASH)
         file(SHA256 ${3RD_PACKAGE_ZIP} 3RD_PACKAGE_HASH_VALUE)
         if (NOT (${PARAMS_HASH} STREQUAL ${3RD_PACKAGE_HASH_VALUE}))
-            message(FATAL_ERROR "check hash failed for file ${3RD_PACKAGE_ZIP}")
+            message(FATAL_ERROR "check hash failed for file ${3RD_PACKAGE_ZIP}, please delete file and try again")
         endif()
     endif()
 

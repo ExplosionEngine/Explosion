@@ -20,6 +20,11 @@ namespace RHI::DirectX12 {
         return RHIType::DIRECTX_12;
     }
 
+    ComPtr<IDXGIFactory4>& DX12Instance::GetDX12Factory()
+    {
+        return dx12Factory;
+    }
+
     void DX12Instance::CreateDX12Factory()
     {
         UINT factoryFlags = 0;

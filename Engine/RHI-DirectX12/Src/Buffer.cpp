@@ -66,12 +66,22 @@ namespace RHI::DirectX12 {
         }
         return MapMode::READ;
     }
+
+    static bool IsConstantBuffer(BufferUsageFlags bufferUsages)
+    {
+        return bufferUsages & BufferUsageBits::UNIFORM;
+    }
+
+    static bool IsUnorderedAccessBuffer (BufferUsageFlags bufferUsages)
+    {
+        return bufferUsages & BufferUsageBits::STORAGE;
+    }
 }
 
 namespace RHI::DirectX12 {
     DX12Buffer::DX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo) : Buffer(createInfo), mapMode(GetMapMode(createInfo->usages))
     {
-        CreateBuffer(device, createInfo);
+        CreateDX12Buffer(device, createInfo);
     }
 
     DX12Buffer::~DX12Buffer() = default;
@@ -105,7 +115,17 @@ namespace RHI::DirectX12 {
         return dx12Resource;
     }
 
-    void DX12Buffer::CreateBuffer(DX12Device& device, const BufferCreateInfo* createInfo)
+    D3D12_CONSTANT_BUFFER_VIEW_DESC* DX12Buffer::GetDX12CBVDesc()
+    {
+        return dx12CBVDesc.get();
+    }
+
+    D3D12_UNORDERED_ACCESS_VIEW_DESC* DX12Buffer::GetDX12UAVDesc()
+    {
+        return dx12UAVDesc.get();
+    }
+
+    void DX12Buffer::CreateDX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo)
     {
         CD3DX12_HEAP_PROPERTIES heapProperties(GetDX12HeapType(createInfo->usages));
         CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(createInfo->size);
@@ -119,6 +139,21 @@ namespace RHI::DirectX12 {
             IID_PPV_ARGS(&dx12Resource)
         ))) {
             throw DX12Exception("failed to create dx12 buffer");
+        }
+    }
+
+    void DX12Buffer::CreateDX12ViewDesc(const BufferCreateInfo* createInfo)
+    {
+        if (IsConstantBuffer(createInfo->usages)) {
+            dx12CBVDesc = std::make_unique<D3D12_CONSTANT_BUFFER_VIEW_DESC>();
+            dx12CBVDesc->BufferLocation = dx12Resource->GetGPUVirtualAddress();
+            dx12CBVDesc->SizeInBytes = createInfo->size;
+        } else if (IsUnorderedAccessBuffer(createInfo->usages)) {
+            dx12UAVDesc = std::make_unique<D3D12_UNORDERED_ACCESS_VIEW_DESC>();
+            dx12UAVDesc->Format = DXGI_FORMAT_UNKNOWN;
+            dx12UAVDesc->ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+            dx12UAVDesc->Buffer.FirstElement = 0;
+            dx12UAVDesc->Buffer.NumElements = createInfo->size;
         }
     }
 }

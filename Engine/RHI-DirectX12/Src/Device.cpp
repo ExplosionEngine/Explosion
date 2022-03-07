@@ -11,8 +11,8 @@
 namespace RHI::DirectX12 {
     DX12Device::DX12Device(DX12Gpu& gpu, const DeviceCreateInfo* createInfo) : Device(createInfo)
     {
-        CreateDevice(gpu);
-        CreateQueues(createInfo);
+        CreateDX12Device(gpu);
+        CreateDX12Queues(createInfo);
     }
 
     DX12Device::~DX12Device() = default;
@@ -108,14 +108,14 @@ namespace RHI::DirectX12 {
         return dx12Device;
     }
 
-    void DX12Device::CreateDevice(DX12Gpu& gpu)
+    void DX12Device::CreateDX12Device(DX12Gpu& gpu)
     {
         if (FAILED(D3D12CreateDevice(gpu.GetDX12Adapter().Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&dx12Device)))) {
             throw DX12Exception("failed to create dx12 device");
         }
     }
 
-    void DX12Device::CreateQueues(const DeviceCreateInfo* createInfo)
+    void DX12Device::CreateDX12Queues(const DeviceCreateInfo* createInfo)
     {
         std::unordered_map<QueueType, size_t> queueNumMap;
         for (size_t i = 0; i < createInfo->queueCreateInfoNum; i++) {

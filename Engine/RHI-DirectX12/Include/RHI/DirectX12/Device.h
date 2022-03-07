@@ -43,11 +43,11 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12Device>& GetDX12Device();
 
     private:
-        void CreateDevice(DX12Gpu& gpu);
-        void CreateQueues(const DeviceCreateInfo* createInfo);
+        void CreateDX12Device(DX12Gpu& gpu);
+        void CreateDX12Queues(const DeviceCreateInfo* createInfo);
 
-        ComPtr<ID3D12Device> dx12Device;
         std::unordered_map<QueueType, std::vector<std::unique_ptr<DX12Queue>>> queues;
+        ComPtr<ID3D12Device> dx12Device;
     };
 }
 
