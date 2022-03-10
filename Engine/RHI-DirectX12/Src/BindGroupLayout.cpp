@@ -2,17 +2,46 @@
 // Created by johnk on 6/3/2022.
 //
 
+#include <functional>
+#include <unordered_map>
+
+#include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/BindGroupLayout.h>
+
+namespace RHI::DirectX12 {
+    static void InitDX12RootParametersRange(CD3DX12_DESCRIPTOR_RANGE1& range, const BindGroupLayoutEntry* entry)
+    {
+        using InitFunc = std::function<void(CD3DX12_DESCRIPTOR_RANGE1&, const BindGroupLayoutEntry*)>;
+        // TODO scope?
+        static std::unordered_map<BindingType, InitFunc> initFuncs = {
+            { BindingType::BUFFER, [](CD3DX12_DESCRIPTOR_RANGE1& range, const BindGroupLayoutEntry* entry) -> void {
+                range.Init(DX12EnumCast<BufferBindingType, D3D12_DESCRIPTOR_RANGE_TYPE>(entry->buffer.type), 1, entry->binding, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+            } },
+            { BindingType::SAMPLER, [](CD3DX12_DESCRIPTOR_RANGE1& range, const BindGroupLayoutEntry* entry) -> void {
+                range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, entry->binding, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+            } },
+            { BindingType::TEXTURE, [](CD3DX12_DESCRIPTOR_RANGE1& range, const BindGroupLayoutEntry* entry) -> void {
+                range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, entry->binding, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+            } },
+            { BindingType::STORAGE_TEXTURE, [](CD3DX12_DESCRIPTOR_RANGE1& range, const BindGroupLayoutEntry* entry) -> void {
+                range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, entry->binding, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+            } }
+        };
+
+        auto iter = initFuncs.find(entry->type);
+        if (iter == initFuncs.end()) {
+            return;
+        }
+        iter->second(range, entry);
+    }
+}
 
 namespace RHI::DirectX12 {
     DX12BindGroupLayout::DX12BindGroupLayout(DX12Device& device, const BindGroupLayoutCreateInfo* createInfo)
         : BindGroupLayout(createInfo), dx12RootSignatureFeatureData({}), dx12RootSignatureDesc(), dx12DescriptorRanges({}), dx12RootParameters({})
     {
-        CreateDX12RootSignatureFeatureData(device, createInfo);
-        CreateDX12DescriptorRanges(createInfo);
-        CreateDX12RootParameters(createInfo);
-        CreateDX12RootSignatureDesc(createInfo);
+        CreateDX12RootSignatureDesc(device, createInfo);
     }
 
     DX12BindGroupLayout::~DX12BindGroupLayout() = default;
@@ -27,26 +56,36 @@ namespace RHI::DirectX12 {
         return &dx12RootSignatureDesc;
     }
 
-    void DX12BindGroupLayout::CreateDX12RootSignatureFeatureData(DX12Device& device, const BindGroupLayoutCreateInfo* createInfo)
+    void DX12BindGroupLayout::CreateDX12RootSignatureDesc(DX12Device& device, const BindGroupLayoutCreateInfo* createInfo)
     {
-        dx12RootSignatureFeatureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-        if (FAILED(device.GetDX12Device()->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &dx12RootSignatureFeatureData, sizeof(D3D12_FEATURE_DATA_ROOT_SIGNATURE)))) {
-            dx12RootSignatureFeatureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+        std::unordered_map<ShaderStageBits, std::vector<const BindGroupLayoutEntry*>> visibilitiesMap;
+        {
+            using UBitsType = std::underlying_type_t<ShaderStageBits>;
+            for (UBitsType i = 0; i < static_cast<UBitsType>(ShaderStageBits::MAX); i = i << 1) {
+                visibilitiesMap[static_cast<ShaderStageBits>(i)] = {};
+            }
+            for (auto i = 0; i < createInfo->entryNum; i++) {
+                for (auto& visibility : visibilitiesMap) {
+                    if (!(createInfo->entries[i].shaderVisibility & visibility.first)) {
+                        continue;
+                    }
+                    visibility.second.emplace_back(createInfo->entries + i);
+                }
+            }
         }
-    }
 
-    void DX12BindGroupLayout::CreateDX12DescriptorRanges(const BindGroupLayoutCreateInfo* createInfo)
-    {
-        // TODO
-    }
+        for (const auto& visibility : visibilitiesMap) {
+            auto lastRange = dx12DescriptorRanges.end();
+            for (const auto* entry : visibility.second) {
+                dx12DescriptorRanges.emplace_back();
+                InitDX12RootParametersRange(dx12DescriptorRanges.back(), entry);
+            }
+            auto newLastRange = dx12DescriptorRanges.end();
+            dx12RootParameters.emplace_back();
+            dx12RootParameters.back().InitAsDescriptorTable(newLastRange - lastRange, &*lastRange, DX12EnumCast<ShaderStageBits, D3D12_SHADER_VISIBILITY>(visibility.first));
+        }
 
-    void DX12BindGroupLayout::CreateDX12RootParameters(const BindGroupLayoutCreateInfo* createInfo)
-    {
-        // TODO
-    }
-
-    void DX12BindGroupLayout::CreateDX12RootSignatureDesc(const BindGroupLayoutCreateInfo* createInfo)
-    {
-        // TODO
+        dx12RootSignatureFeatureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+        dx12RootSignatureDesc.Init_1_1(dx12RootParameters.size(), dx12RootParameters.data(), 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
     }
 }

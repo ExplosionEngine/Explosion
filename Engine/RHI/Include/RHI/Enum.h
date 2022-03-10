@@ -171,6 +171,14 @@ namespace RHI {
         MAX
     };
 
+    enum class BindingType : EnumType {
+        BUFFER,
+        SAMPLER,
+        TEXTURE,
+        STORAGE_TEXTURE,
+        MAX
+    };
+
     enum class BufferBindingType : EnumType {
         UNIFORM,
         STORAGE,

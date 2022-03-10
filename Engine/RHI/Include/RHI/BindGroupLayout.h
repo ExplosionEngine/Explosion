@@ -33,11 +33,14 @@ namespace RHI {
 
     struct BindGroupLayoutEntry {
         size_t binding;
+        BindingType type;
         ShaderStageFlags shaderVisibility;
-        BufferBindingLayout buffer;
-        SamplerBindingLayout sampler;
-        TextureBindingLayout texture;
-        StorageTextureBindingLayout storageTexture;
+        union {
+            BufferBindingLayout buffer;
+            SamplerBindingLayout sampler;
+            TextureBindingLayout texture;
+            StorageTextureBindingLayout storageTexture;
+        };
     };
 
     struct BindGroupLayoutCreateInfo {

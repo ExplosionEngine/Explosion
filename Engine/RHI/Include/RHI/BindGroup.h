@@ -23,9 +23,11 @@ namespace RHI {
 
     struct BindGroupEntry {
         size_t binding;
-        Sampler* sampler;
-        TextureView* textureView;
-        BufferBinding buffer;
+        union {
+            Sampler* sampler;
+            TextureView* textureView;
+            BufferBinding buffer;
+        };
     };
 
     struct BindGroupCreateInfo {

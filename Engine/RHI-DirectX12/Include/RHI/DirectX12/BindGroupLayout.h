@@ -25,10 +25,7 @@ namespace RHI::DirectX12 {
         D3D12_VERSIONED_ROOT_SIGNATURE_DESC* GetDX12RootSignatureDesc();
 
     private:
-        void CreateDX12RootSignatureFeatureData(DX12Device& device, const BindGroupLayoutCreateInfo* createInfo);
-        void CreateDX12DescriptorRanges(const BindGroupLayoutCreateInfo* createInfo);
-        void CreateDX12RootParameters(const BindGroupLayoutCreateInfo* createInfo);
-        void CreateDX12RootSignatureDesc(const BindGroupLayoutCreateInfo* createInfo);
+        void CreateDX12RootSignatureDesc(DX12Device& device, const BindGroupLayoutCreateInfo* createInfo);
 
         D3D12_FEATURE_DATA_ROOT_SIGNATURE dx12RootSignatureFeatureData;
         std::vector<CD3DX12_DESCRIPTOR_RANGE1> dx12DescriptorRanges;
