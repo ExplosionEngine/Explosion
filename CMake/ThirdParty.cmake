@@ -16,21 +16,16 @@ set(3RD_INSTALL_DIR ${CMAKE_BINARY_DIR}/ThirdPartyInstall CACHE PATH "" FORCE)
 # AddThirdPartyPackage
 # Description: add a third party package
 # Params:
-#  - NAME     {Single} : name of third party package
-#  - VERSION  {Single} : version of third party package
-#  - HASH     {Single} : zip file hash (sha256)
-#  - ARG      {List}   : arguments of cmake command
-#  - BUILD    {Bool}   : build package or not (just using sources)
-#  - PLATFORM {Bool}   : true if package is platform relative
+#  - NAME         {Single} : name of third party package
+#  - VERSION      {Single} : version of third party package
+#  - HASH         {Single} : zip file hash (sha256)
+#  - ARG          {List}   : arguments of cmake command
+#  - BUILD        {Bool}   : build package or not (just using sources)
 function(AddThirdPartyPackage)
-    cmake_parse_arguments(PARAMS "BUILD;PLATFORM" "NAME;VERSION;HASH" "ARG" ${ARGN})
+    cmake_parse_arguments(PARAMS "BUILD" "NAME;VERSION;HASH" "ARG" ${ARGN})
 
     set(3RD_PACKAGE_NAME "${PARAMS_NAME}")
-    if (${PARAMS_PLATFORM})
-        set(3RD_PACKAGE_FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${PARAMS_VERSION}")
-    else()
-        set(3RD_PACKAGE_FULL_NAME "${PARAMS_NAME}-${PARAMS_VERSION}")
-    endif()
+    set(3RD_PACKAGE_FULL_NAME "${PARAMS_NAME}-${PARAMS_VERSION}")
     set(3RD_PACKAGE_URL "${3RD_REPO}/${3RD_PACKAGE_FULL_NAME}.zip")
     set(3RD_PACKAGE_ZIP "${3RD_ZIP_DIR}/${3RD_PACKAGE_FULL_NAME}.zip")
     set(3RD_PACKAGE_SOURCE_DIR "${3RD_SOURCE_DIR}/${3RD_PACKAGE_FULL_NAME}")
@@ -45,7 +40,7 @@ function(AddThirdPartyPackage)
         message("[3rd Package]")
         message(" - name: ${PARAMS_NAME}")
         message(" - version: ${PARAMS_VERSION}")
-        message(" - platform: ${PARAMS_PLATFORM}")
+        message(" - hash: ${PARAMS_HASH}")
         message(" - full name: ${3RD_PACKAGE_FULL_NAME}")
         message(" - url: ${3RD_PACKAGE_URL}")
         message("")

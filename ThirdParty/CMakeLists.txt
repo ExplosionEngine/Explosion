@@ -33,20 +33,25 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 endif()
 
 # VulkanSDK
-AddThirdPartyPackage(
-    PLATFORM
-    NAME VulkanSDK
-    VERSION 1.2.198.1
-)
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set(VulkanSDK_INC ${VulkanSDK_SOURCE_DIR}/Include CACHE PATH "" FORCE)
-    set(VulkanSDK_LINK ${VulkanSDK_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
-    set(VulkanSDK_BIN ${VulkanSDK_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
+    AddThirdPartyPackage(
+        NAME VulkanSDK-Windows
+        HASH 006dfa3a63644fed382089402f64095ee9ca8ce3ec3107b80aae6e8941de9e9b
+        VERSION 1.2.198.1
+    )
+    set(VulkanSDK_INC ${VulkanSDK-Windows_SOURCE_DIR}/Include CACHE PATH "" FORCE)
+    set(VulkanSDK_LINK ${VulkanSDK-Windows_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
+    set(VulkanSDK_BIN ${VulkanSDK-Windows_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
     set(VulkanSDK_VULKAN_LIB vulkan-1 CACHE PATH "" FORCE)
 else(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    set(VulkanSDK_INC ${VulkanSDK_SOURCE_DIR}/macOS/include CACHE PATH "" FORCE)
-    set(VulkanSDK_LINK ${VulkanSDK_SOURCE_DIR}/macOS/lib CACHE PATH "" FORCE)
-    set(VulkanSDK_BIN ${VulkanSDK_SOURCE_DIR}/macOS/bin CACHE PATH "" FORCE)
+    AddThirdPartyPackage(
+        NAME VulkanSDK-Darwin
+        HASH 6394c8e1f355820a8f6808bab2d87d518ee284e42b761da24e516f8ab0e2f75d
+        VERSION 1.2.198.1
+    )
+    set(VulkanSDK_INC ${VulkanSDK-Darwin_SOURCE_DIR}/macOS/include CACHE PATH "" FORCE)
+    set(VulkanSDK_LINK ${VulkanSDK-Darwin_SOURCE_DIR}/macOS/lib CACHE PATH "" FORCE)
+    set(VulkanSDK_BIN ${VulkanSDK-Darwin_SOURCE_DIR}/macOS/bin CACHE PATH "" FORCE)
     set(VulkanSDK_VULKAN_LIB vulkan.1 CACHE PATH "" FORCE)
 endif()
 
