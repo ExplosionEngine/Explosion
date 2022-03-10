@@ -51,6 +51,7 @@ function(AddThirdPartyPackage)
         message("")
     endif()
 
+    # download zip file and check hash
     if (EXISTS ${3RD_PACKAGE_ZIP})
         message("found downloaded file for ${3RD_PACKAGE_URL} -> ${3RD_PACKAGE_ZIP}")
     else()
@@ -60,18 +61,23 @@ function(AddThirdPartyPackage)
             ${3RD_PACKAGE_URL} ${3RD_PACKAGE_ZIP}
             SHOW_PROGRESS
         )
+    endif()
+
+    # check zip file hash
+    if (DEFINED PARAMS_HASH)
+        file(SHA256 ${3RD_PACKAGE_ZIP} 3RD_PACKAGE_HASH_VALUE)
+        if (NOT (${PARAMS_HASH} STREQUAL ${3RD_PACKAGE_HASH_VALUE}))
+            message(FATAL_ERROR "check hash failed for file ${3RD_PACKAGE_ZIP}, please delete zip file and extracted files and try again")
+        endif()
+    endif()
+
+    # extract files
+    if (NOT EXISTS ${3RD_PACKAGE_SOURCE_DIR})
         file(
             ARCHIVE_EXTRACT
             INPUT ${3RD_PACKAGE_ZIP}
             DESTINATION ${3RD_PACKAGE_SOURCE_DIR}
         )
-    endif()
-
-    if (DEFINED PARAMS_HASH)
-        file(SHA256 ${3RD_PACKAGE_ZIP} 3RD_PACKAGE_HASH_VALUE)
-        if (NOT (${PARAMS_HASH} STREQUAL ${3RD_PACKAGE_HASH_VALUE}))
-            message(FATAL_ERROR "check hash failed for file ${3RD_PACKAGE_ZIP}, please delete file and try again")
-        endif()
     endif()
 
     if (${PARAMS_BUILD})
