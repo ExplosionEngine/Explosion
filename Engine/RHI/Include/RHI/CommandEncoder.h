@@ -18,7 +18,7 @@ namespace RHI {
     class TextureView;
 
     struct TextureSubResourceInfo {
-        size_t mipLevels = 0;
+        uint8_t mipLevels = 0;
         Extent<3> origin {};
         TextureAspect aspect = TextureAspect::ALL;
     };
@@ -48,7 +48,7 @@ namespace RHI {
     };
 
     struct GraphicsPassBeginInfo {
-        size_t colorAttachmentNum;
+        uint32_t colorAttachmentNum;
         const GraphicsPassColorAttachment* colorAttachments;
         const GraphicsPassDepthStencilAttachment* depthStencilAttachment;
         // TODO occlusionQuerySet #see https://gpuweb.github.io/gpuweb/#render-pass-encoder-creation

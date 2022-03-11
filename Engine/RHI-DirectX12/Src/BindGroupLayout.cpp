@@ -10,34 +10,6 @@
 #include <RHI/DirectX12/BindGroupLayout.h>
 
 namespace RHI::DirectX12 {
-    static void InitDX12RootParametersRange(CD3DX12_DESCRIPTOR_RANGE1& range, const BindGroupLayoutEntry* entry)
-    {
-        using InitFunc = std::function<void(CD3DX12_DESCRIPTOR_RANGE1&, const BindGroupLayoutEntry*)>;
-        // TODO scope?
-        static std::unordered_map<BindingType, InitFunc> initFuncs = {
-            { BindingType::BUFFER, [](CD3DX12_DESCRIPTOR_RANGE1& range, const BindGroupLayoutEntry* entry) -> void {
-                range.Init(DX12EnumCast<BufferBindingType, D3D12_DESCRIPTOR_RANGE_TYPE>(entry->buffer.type), 1, entry->binding, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-            } },
-            { BindingType::SAMPLER, [](CD3DX12_DESCRIPTOR_RANGE1& range, const BindGroupLayoutEntry* entry) -> void {
-                range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, entry->binding, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-            } },
-            { BindingType::TEXTURE, [](CD3DX12_DESCRIPTOR_RANGE1& range, const BindGroupLayoutEntry* entry) -> void {
-                range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, entry->binding, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-            } },
-            { BindingType::STORAGE_TEXTURE, [](CD3DX12_DESCRIPTOR_RANGE1& range, const BindGroupLayoutEntry* entry) -> void {
-                range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, entry->binding, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-            } }
-        };
-
-        auto iter = initFuncs.find(entry->type);
-        if (iter == initFuncs.end()) {
-            return;
-        }
-        iter->second(range, entry);
-    }
-}
-
-namespace RHI::DirectX12 {
     DX12BindGroupLayout::DX12BindGroupLayout(DX12Device& device, const BindGroupLayoutCreateInfo* createInfo)
         : BindGroupLayout(createInfo), dx12RootSignatureFeatureData({}), dx12RootSignatureDesc(), dx12DescriptorRanges({}), dx12RootParameters({})
     {
@@ -78,7 +50,7 @@ namespace RHI::DirectX12 {
             auto lastRange = dx12DescriptorRanges.end();
             for (const auto* entry : visibility.second) {
                 dx12DescriptorRanges.emplace_back();
-                InitDX12RootParametersRange(dx12DescriptorRanges.back(), entry);
+                dx12DescriptorRanges.back().Init(DX12EnumCast<BindingType, D3D12_DESCRIPTOR_RANGE_TYPE>(entry->type), 1, entry->binding, createInfo->layoutIndex, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
             }
             auto newLastRange = dx12DescriptorRanges.end();
             dx12RootParameters.emplace_back();

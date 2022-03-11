@@ -23,7 +23,7 @@ namespace RHI {
     struct ProgrammableStage {
         ShaderModule* shaderModule = nullptr;
         std::string entryPoint {};
-        size_t constantNum = 0;
+        uint32_t constantNum = 0;
         const PipelineConstant* constants = nullptr;
     };
 
@@ -34,19 +34,19 @@ namespace RHI {
     struct VertexAttribute {
         VertexFormat format;
         size_t offset;
-        size_t location;
+        uint8_t location;
     };
 
     struct VertexBufferLayout {
         size_t stride;
         VertexStepMode stepMode;
-        size_t attributeNum;
+        uint32_t attributeNum;
         const VertexAttribute* attributes;
     };
 
     struct VertexState {
         ProgrammableStage stage;
-        size_t bufferLayoutNum = 0;
+        uint32_t bufferLayoutNum = 0;
         const VertexBufferLayout* bufferLayouts = nullptr;
     };
 
@@ -80,7 +80,7 @@ namespace RHI {
     };
 
     struct MultiSampleState {
-        size_t count = 0;
+        uint8_t count = 0;
         uint32_t mask = 0xffffffff;
         bool alphaToCoverage = false;
     };
@@ -104,7 +104,7 @@ namespace RHI {
 
     struct FragmentState {
         ProgrammableStage stage;
-        size_t targetNum = 0;
+        uint32_t targetNum = 0;
         const ColorTargetState* targets = nullptr;
     };
 

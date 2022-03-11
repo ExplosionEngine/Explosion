@@ -35,7 +35,7 @@ namespace RHI {
 
     struct QueueInfo {
         QueueType type;
-        size_t num;
+        uint8_t num;
     };
 
     struct DeviceCreateInfo {
