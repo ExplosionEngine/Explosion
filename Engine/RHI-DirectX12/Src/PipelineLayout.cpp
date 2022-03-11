@@ -14,7 +14,7 @@
 namespace RHI::DirectX12 {
     DX12PipelineLayout::DX12PipelineLayout(DX12Device& device, const PipelineLayoutCreateInfo* createInfo) : PipelineLayout(createInfo)
     {
-        CreateRootSignature(device, createInfo);
+        CreateDX12RootSignature(device, createInfo);
     }
 
     DX12PipelineLayout::~DX12PipelineLayout() = default;
@@ -29,7 +29,7 @@ namespace RHI::DirectX12 {
         return dx12RootSignature;
     }
 
-    void DX12PipelineLayout::CreateRootSignature(DX12Device& device, const PipelineLayoutCreateInfo* createInfo)
+    void DX12PipelineLayout::CreateDX12RootSignature(DX12Device& device, const PipelineLayoutCreateInfo* createInfo)
     {
         D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
         featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;

@@ -114,7 +114,6 @@ namespace RHI {
         NON_COPYABLE(Pipeline)
         virtual ~Pipeline();
 
-        virtual BindGroupLayout* GetBindGroupLayout(size_t index) = 0;
         virtual void Destroy() = 0;
 
     protected:
@@ -126,7 +125,6 @@ namespace RHI {
         NON_COPYABLE(ComputePipeline)
         ~ComputePipeline() override;
 
-        BindGroupLayout* GetBindGroupLayout(size_t index) override = 0;
         void Destroy() override = 0;
 
     protected:
@@ -138,7 +136,6 @@ namespace RHI {
         NON_COPYABLE(GraphicsPipeline)
         ~GraphicsPipeline() override;
 
-        BindGroupLayout* GetBindGroupLayout(size_t index) override = 0;
         void Destroy() override = 0;
 
     protected:

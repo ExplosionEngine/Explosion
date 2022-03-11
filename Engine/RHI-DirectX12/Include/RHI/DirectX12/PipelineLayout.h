@@ -26,7 +26,7 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12RootSignature>& GetDX12RootSignature();
 
     private:
-        void CreateRootSignature(DX12Device& device, const PipelineLayoutCreateInfo* createInfo);
+        void CreateDX12RootSignature(DX12Device& device, const PipelineLayoutCreateInfo* createInfo);
 
         ComPtr<ID3D12RootSignature> dx12RootSignature;
     };
