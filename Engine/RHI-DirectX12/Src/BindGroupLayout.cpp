@@ -2,18 +2,16 @@
 // Created by johnk on 6/3/2022.
 //
 
-#include <functional>
 #include <unordered_map>
 
 #include <RHI/DirectX12/Common.h>
-#include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/BindGroupLayout.h>
 
 namespace RHI::DirectX12 {
-    DX12BindGroupLayout::DX12BindGroupLayout(DX12Device& device, const BindGroupLayoutCreateInfo* createInfo)
+    DX12BindGroupLayout::DX12BindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
         : BindGroupLayout(createInfo), dx12DescriptorRanges({}), dx12RootParameters({})
     {
-        CreateDX12RootSignatureDesc(device, createInfo);
+        CreateDX12RootParameters(createInfo);
     }
 
     DX12BindGroupLayout::~DX12BindGroupLayout() = default;
@@ -23,12 +21,12 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    const std::vector<CD3DX12_ROOT_PARAMETER1>& DX12BindGroupLayout::GetDX12RootParameters()
+    const std::vector<CD3DX12_ROOT_PARAMETER1>& DX12BindGroupLayout::GetDX12RootParameters() const
     {
         return dx12RootParameters;
     }
 
-    void DX12BindGroupLayout::CreateDX12RootSignatureDesc(DX12Device& device, const BindGroupLayoutCreateInfo* createInfo)
+    void DX12BindGroupLayout::CreateDX12RootParameters(const BindGroupLayoutCreateInfo* createInfo)
     {
         std::unordered_map<ShaderStageBits, std::vector<const BindGroupLayoutEntry*>> visibilitiesMap;
         {
