@@ -11,7 +11,7 @@
 
 namespace RHI::DirectX12 {
     DX12BindGroupLayout::DX12BindGroupLayout(DX12Device& device, const BindGroupLayoutCreateInfo* createInfo)
-        : BindGroupLayout(createInfo), dx12RootSignatureFeatureData({}), dx12RootSignatureDesc(), dx12DescriptorRanges({}), dx12RootParameters({})
+        : BindGroupLayout(createInfo), dx12DescriptorRanges({}), dx12RootParameters({})
     {
         CreateDX12RootSignatureDesc(device, createInfo);
     }
