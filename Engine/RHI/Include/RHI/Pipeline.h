@@ -15,22 +15,6 @@ namespace RHI {
     class PipelineLayout;
     class ShaderModule;
 
-    struct PipelineConstant {
-        std::string key;
-        double value;
-    };
-
-    struct ProgrammableStage {
-        ShaderModule* shaderModule = nullptr;
-        std::string entryPoint {};
-        uint32_t constantNum = 0;
-        const PipelineConstant* constants = nullptr;
-    };
-
-    struct PipelineCreateInfo {
-        PipelineLayout* layout;
-    };
-
     struct VertexAttribute {
         VertexFormat format;
         size_t offset;
@@ -45,7 +29,6 @@ namespace RHI {
     };
 
     struct VertexState {
-        ProgrammableStage stage;
         uint32_t bufferLayoutNum = 0;
         const VertexBufferLayout* bufferLayouts = nullptr;
     };
@@ -103,21 +86,21 @@ namespace RHI {
     };
 
     struct FragmentState {
-        ProgrammableStage stage;
-        uint32_t targetNum = 0;
-        const ColorTargetState* targets = nullptr;
+        uint32_t colorTargetNum = 0;
+        const ColorTargetState* colorTargets = nullptr;
     };
 
-    struct ComputePipelineCreateInfo : public PipelineCreateInfo {
-    public:
-        ComputePipelineCreateInfo() : PipelineCreateInfo() {}
-
-        ProgrammableStage computeStage;
+    struct ComputePipelineCreateInfo {
+        PipelineLayout* layout;
+        ShaderModule* computeShader;
     };
 
-    struct GraphicsPipelineCreateInfo : public PipelineCreateInfo {
-    public:
-        GraphicsPipelineCreateInfo() : PipelineCreateInfo() {}
+    struct GraphicsPipelineCreateInfo {
+        PipelineLayout* layout = nullptr;
+
+        ShaderModule* vertexShader = nullptr;
+        ShaderModule* fragmentShader = nullptr;
+        // TODO more shader?
 
         VertexState vertex;
         PrimitiveState primitive;

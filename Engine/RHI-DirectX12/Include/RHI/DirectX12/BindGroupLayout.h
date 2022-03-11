@@ -22,15 +22,13 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
 
-        D3D12_VERSIONED_ROOT_SIGNATURE_DESC* GetDX12RootSignatureDesc();
+        const std::vector<CD3DX12_ROOT_PARAMETER1>& GetDX12RootParameters();
 
     private:
         void CreateDX12RootSignatureDesc(DX12Device& device, const BindGroupLayoutCreateInfo* createInfo);
 
-        D3D12_FEATURE_DATA_ROOT_SIGNATURE dx12RootSignatureFeatureData;
         std::vector<CD3DX12_DESCRIPTOR_RANGE1> dx12DescriptorRanges;
         std::vector<CD3DX12_ROOT_PARAMETER1> dx12RootParameters;
-        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC dx12RootSignatureDesc;
     };
 }
 

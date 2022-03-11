@@ -23,9 +23,9 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    D3D12_VERSIONED_ROOT_SIGNATURE_DESC* DX12BindGroupLayout::GetDX12RootSignatureDesc()
+    const std::vector<CD3DX12_ROOT_PARAMETER1>& DX12BindGroupLayout::GetDX12RootParameters()
     {
-        return &dx12RootSignatureDesc;
+        return dx12RootParameters;
     }
 
     void DX12BindGroupLayout::CreateDX12RootSignatureDesc(DX12Device& device, const BindGroupLayoutCreateInfo* createInfo)
@@ -56,8 +56,5 @@ namespace RHI::DirectX12 {
             dx12RootParameters.emplace_back();
             dx12RootParameters.back().InitAsDescriptorTable(newLastRange - lastRange, &*lastRange, DX12EnumCast<ShaderStageBits, D3D12_SHADER_VISIBILITY>(visibility.first));
         }
-
-        dx12RootSignatureFeatureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-        dx12RootSignatureDesc.Init_1_1(dx12RootParameters.size(), dx12RootParameters.data(), 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
     }
 }

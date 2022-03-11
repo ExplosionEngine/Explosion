@@ -11,6 +11,7 @@
 namespace RHI {
     struct ShaderModuleCreateInfo {
         std::string code;
+        std::string entryPoint;
     };
 
     class ShaderModule {
