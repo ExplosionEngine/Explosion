@@ -171,10 +171,12 @@ namespace RHI {
         MAX
     };
 
-    enum class BufferBindingType : EnumType {
-        UNIFORM,
-        STORAGE,
-        READ_ONLY_STORAGE,
+    enum class BindingType : EnumType {
+        UNIFORM_BUFFER,
+        STORAGE_BUFFER,
+        SAMPLER,
+        TEXTURE,
+        STORAGE_TEXTURE,
         MAX
     };
 

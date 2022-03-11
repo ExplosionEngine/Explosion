@@ -20,7 +20,7 @@ namespace RHI {
         float lodMinClamp = 0;
         float lodMaxClamp = 32;
         ComparisonFunc comparisonFunc = ComparisonFunc::NEVER;
-        size_t maxAnisotropy = 1;
+        uint8_t maxAnisotropy = 1;
     };
 
     class Sampler {

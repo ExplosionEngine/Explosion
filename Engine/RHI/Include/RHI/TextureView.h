@@ -13,10 +13,10 @@ namespace RHI {
         PixelFormat format;
         TextureViewDimension dimension;
         TextureAspect aspect;
-        size_t baseMipLevel;
-        size_t mipLevelNum;
-        size_t baseArrayLayer;
-        size_t arrayLayerNum;
+        uint8_t baseMipLevel;
+        uint8_t mipLevelNum;
+        uint8_t baseArrayLayer;
+        uint8_t arrayLayerNum;
     };
 
     class TextureView {

@@ -9,39 +9,15 @@
 #include <RHI/Enum.h>
 
 namespace RHI {
-    struct BufferBindingLayout {
-        BufferBindingType type;
-        bool hasDynamicOffset;
-        size_t minBindingSize;
-    };
-
-    struct SamplerBindingLayout {
-        SamplerBindingType type;
-    };
-
-    struct TextureBindingLayout {
-        TextureSampleType type;
-        TextureViewDimension viewDimension;
-        bool multiSampled;
-    };
-
-    struct StorageTextureBindingLayout {
-        StorageTextureAccess access;
-        PixelFormat format;
-        TextureViewDimension viewDimension;
-    };
-
     struct BindGroupLayoutEntry {
-        size_t binding;
+        uint8_t binding;
+        BindingType type;
         ShaderStageFlags shaderVisibility;
-        BufferBindingLayout buffer;
-        SamplerBindingLayout sampler;
-        TextureBindingLayout texture;
-        StorageTextureBindingLayout storageTexture;
     };
 
     struct BindGroupLayoutCreateInfo {
-        size_t entryNum;
+        uint8_t layoutIndex;
+        uint32_t entryNum;
         const BindGroupLayoutEntry* entries;
     };
 

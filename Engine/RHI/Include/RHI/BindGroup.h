@@ -8,6 +8,7 @@
 #include <cstddef>
 
 #include <Common/Utility.h>
+#include <RHI/Enum.h>
 
 namespace RHI {
     class BindGroupLayout;
@@ -22,15 +23,18 @@ namespace RHI {
     };
 
     struct BindGroupEntry {
-        size_t binding;
-        Sampler* sampler;
-        TextureView* textureView;
-        BufferBinding buffer;
+        uint8_t binding;
+        BindingType type;
+        union {
+            Sampler* sampler;
+            TextureView* textureView;
+            BufferBinding buffer;
+        };
     };
 
     struct BindGroupCreateInfo {
         BindGroupLayout* layout;
-        size_t entryNum;
+        uint32_t entryNum;
         const BindGroupEntry* entries;
     };
 
