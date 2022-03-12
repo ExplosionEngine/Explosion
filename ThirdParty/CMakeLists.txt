@@ -43,7 +43,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(VulkanSDK_LINK ${VulkanSDK-Windows_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
     set(VulkanSDK_BIN ${VulkanSDK-Windows_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
     set(VulkanSDK_VULKAN_LIB vulkan-1 CACHE PATH "" FORCE)
-else(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     AddThirdPartyPackage(
         NAME VulkanSDK-Darwin
         HASH 6394c8e1f355820a8f6808bab2d87d518ee284e42b761da24e516f8ab0e2f75d
@@ -52,7 +52,30 @@ else(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(VulkanSDK_INC ${VulkanSDK-Darwin_SOURCE_DIR}/macOS/include CACHE PATH "" FORCE)
     set(VulkanSDK_LINK ${VulkanSDK-Darwin_SOURCE_DIR}/macOS/lib CACHE PATH "" FORCE)
     set(VulkanSDK_BIN ${VulkanSDK-Darwin_SOURCE_DIR}/macOS/bin CACHE PATH "" FORCE)
-    set(VulkanSDK_VULKAN_LIB vulkan.1 CACHE PATH "" FORCE)
+    set(VulkanSDK_VULKAN_LIB vulkan.1 CACHE STRING "" FORCE)
+endif()
+
+# ShaderConductor
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    AddThirdPartyPackage(
+        NAME ShaderConductor-Windows
+        HASH d31bf92bb922dda070fac67affad3ae728ef86b29c27e8c775b051336293f468
+        VERSION 20200430.1
+    )
+    set(ShaderConductor_BIN ${ShaderConductor-Windows_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
+    set(ShaderConductor_INC ${ShaderConductor-Windows_SOURCE_DIR}/Include CACHE PATH "" FORCE)
+    set(ShaderConductor_LINK ${ShaderConductor-Windows_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
+    set(ShaderConductor_LIB ShaderConductor CACHE STRING "" FORCE)
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    AddThirdPartyPackage(
+        NAME ShaderConductor-Darwin
+        HASH 9701c4f58014d1b087e2b0f2d22f01d35b505078813579050a4e3ccab1124275
+        VERSION 20200430.1
+    )
+    set(ShaderConductor_BIN ${ShaderConductor-Darwin_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
+    set(ShaderConductor_INC ${ShaderConductor-Darwin_SOURCE_DIR}/Include CACHE PATH "" FORCE)
+    set(ShaderConductor_LINK ${ShaderConductor-Darwin_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
+    set(ShaderConductor_LIB "dxcompiler ShaderConductor" CACHE STRING "" FORCE)
 endif()
 
 # GLFW
