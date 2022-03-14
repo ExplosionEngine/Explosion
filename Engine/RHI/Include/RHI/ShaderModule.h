@@ -11,6 +11,7 @@
 namespace RHI {
     struct ShaderModuleCreateInfo {
         void* byteCode;
+        size_t size;
     };
 
     class ShaderModule {
