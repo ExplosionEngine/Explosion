@@ -6,6 +6,7 @@
 #define EXPLOSION_SHADER_UTILITY_SHADER_COMPILER_H
 
 #include <cstdint>
+#include <string>
 
 #include <ShaderConductor/ShaderConductor.hpp>
 
@@ -26,13 +27,27 @@ namespace ShaderUtility {
         MAX
     };
 
-    struct HLSLDesc {
-        std::string code;
-        std::string entryPoint;
-        CompileStage stage;
+    struct ShaderVersion {
+        uint8_t major;
+        uint8_t minor;
     };
 
-    struct ByteCodeDesc {
+    struct ShaderMacros {
+        std::string name;
+        std::string value;
+    };
+
+    struct ShaderSourceDesc {
+        CompileStage stage;
+        std::string fileName;
+        std::string entryPoint;
+        const ShaderMacros* macros;
+        size_t macroNum;
+    };
+
+    struct ShaderCompilerOptions {};
+
+    struct ByteCodeOutputDesc {
         ByteCodeType type;
     };
 
@@ -46,7 +61,7 @@ namespace ShaderUtility {
         NON_COPYABLE(Compiler)
         ~Compiler();
 
-        static void CompileHLSL(const HLSLDesc& hlsl, const ByteCodeDesc& byteCode, ByteCodeOutput& output);
+        static void CompileHLSL(const ShaderSourceDesc& hlsl, const ShaderCompilerOptions& options, ByteCodeOutputDesc& outputDesc, ByteCodeOutput& output);
 
     private:
         Compiler();

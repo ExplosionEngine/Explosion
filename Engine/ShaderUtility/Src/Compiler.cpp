@@ -9,7 +9,7 @@ namespace ShaderUtility {
 
     Compiler::~Compiler() = default;
 
-    void Compiler::CompileHLSL(const HLSLDesc& hlsl, const ByteCodeDesc& byteCode, ByteCodeOutput& output)
+    void Compiler::CompileHLSL(const ShaderSourceDesc& hlsl, const ShaderCompilerOptions& options, ByteCodeOutputDesc& outputDesc, ByteCodeOutput& output)
     {
         // TODO
     }
