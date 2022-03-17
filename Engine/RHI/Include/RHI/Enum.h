@@ -208,11 +208,9 @@ namespace RHI {
     };
 
     enum class PrimitiveTopology : EnumType {
-        POINT_LIST,
-        LINE_LIST,
-        LINE_STRIP,
-        TRIANGLE_LIST,
-        TRIANGLE_STRIP,
+        POINT,
+        LINE,
+        TRIANGLE,
         MAX
     };
 

@@ -11,8 +11,21 @@
 namespace RHI::DirectX12 {
     CD3DX12_RASTERIZER_DESC GetDX12RasterizerDesc(const GraphicsPipelineCreateInfo* createInfo)
     {
-        // TODO
-        return {};
+        CD3DX12_RASTERIZER_DESC desc(D3D12_DEFAULT);
+        // TODO expose to RHI interface?
+        desc.FillMode = D3D12_FILL_MODE_SOLID;
+        desc.CullMode = DX12EnumCast<CullMode, D3D12_CULL_MODE>(createInfo->primitive.cullMode);
+        desc.FrontCounterClockwise = createInfo->primitive.frontFace == FrontFace::CCW;
+        desc.DepthBias = createInfo->depthStencil.depthBias;
+        desc.DepthBiasClamp = createInfo->depthStencil.depthBiasClamp;
+        desc.SlopeScaledDepthBias = createInfo->depthStencil.depthBiasSlopeScale;
+        desc.DepthClipEnable = createInfo->primitive.depthClip;
+        // TODO check this
+        desc.MultisampleEnable = createInfo->multiSample.count > 1;
+        desc.AntialiasedLineEnable = false;
+        desc.ForcedSampleCount = 0;
+        desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+        return desc;
     }
 
     CD3DX12_BLEND_DESC GetDX12BlendDesc(const GraphicsPipelineCreateInfo* createInfo)
@@ -27,10 +40,21 @@ namespace RHI::DirectX12 {
         return {};
     }
 
+    DXGI_SAMPLE_DESC GetDX12SampleDesc(const GraphicsPipelineCreateInfo* createInfo)
+    {
+        // TODO
+        return {};
+    }
+
     UINT GetDX12SampleMask(const GraphicsPipelineCreateInfo* createInfo)
     {
         // TODO
         return {};
+    }
+
+    void UpdateDX12RenderTargetsDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const GraphicsPipelineCreateInfo* createInfo)
+    {
+        // TODO
     }
 }
 
@@ -97,10 +121,9 @@ namespace RHI::DirectX12 {
         desc.BlendState = GetDX12BlendDesc(createInfo);
         desc.DepthStencilState = GetDX12DepthStencilDesc(createInfo);
         desc.SampleMask = GetDX12SampleMask(createInfo);
-        // TODO PrimitiveTopologyType
-        // TODO NumRenderTargets
-        // TODO RTVFormats
-        // TODO SampleDesc.Count
+        desc.SampleDesc = GetDX12SampleDesc(createInfo);
+        desc.PrimitiveTopologyType = DX12EnumCast<PrimitiveTopology, D3D12_PRIMITIVE_TOPOLOGY_TYPE>(createInfo->primitive.topology);
+        UpdateDX12RenderTargetsDesc(desc, createInfo);
 
         if (FAILED(device.GetDX12Device()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&dx12PipelineState)))) {
             throw DX12Exception("failed to create dx12 graphics pipeline state");

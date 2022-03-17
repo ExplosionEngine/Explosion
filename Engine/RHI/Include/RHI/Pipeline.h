@@ -34,11 +34,11 @@ namespace RHI {
     };
 
     struct PrimitiveState {
-        PrimitiveTopology topology = PrimitiveTopology::TRIANGLE_LIST;
+        // TODO fill mode ?
+        PrimitiveTopology topology = PrimitiveTopology::TRIANGLE;
         IndexFormat stripIndexFormat = IndexFormat::UINT16;
         FrontFace frontFace = FrontFace::CCW;
         CullMode cullMode = CullMode::NONE;
-        // TODO WebGPU spec ?
         bool depthClip = false;
     };
 
@@ -57,7 +57,7 @@ namespace RHI {
         StencilFaceState stencilBack;
         uint32_t stencilReadMask = 0xffffffff;
         uint32_t stencilWriteMask = 0xffffffff;
-        uint32_t depthBias = 0;
+        int32_t depthBias = 0;
         float depthBiasSlopeScale = 0.f;
         float depthBiasClamp = 0.f;
     };
