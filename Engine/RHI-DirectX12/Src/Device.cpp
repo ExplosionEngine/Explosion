@@ -9,10 +9,11 @@
 #include <RHI/DirectX12/Buffer.h>
 
 namespace RHI::DirectX12 {
-    DX12Device::DX12Device(DX12Gpu& gpu, const DeviceCreateInfo* createInfo) : Device(createInfo)
+    DX12Device::DX12Device(DX12Gpu& gpu, const DeviceCreateInfo* createInfo) : Device(createInfo), rtvDescriptorSize(0), cbvSrvUavDescriptorSize(0)
     {
         CreateDX12Device(gpu);
         CreateDX12Queues(createInfo);
+        GetDX12DescriptorSize();
     }
 
     DX12Device::~DX12Device() = default;
@@ -108,6 +109,57 @@ namespace RHI::DirectX12 {
         return dx12Device;
     }
 
+    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Device::AllocateRtvDescriptor()
+    {
+        return AllocateDescriptor(rtvHeapList, 4, rtvDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+    }
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Device::AllocateCbvSrvUavDescriptor()
+    {
+        return AllocateDescriptor(cbvSrvUavHeapList, 4, cbvSrvUavDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    }
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Device::AllocateDescriptor(std::list<DescriptorHeapListNode>& list, uint8_t capacity, uint32_t descriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlag)
+    {
+        if (list.empty() || list.back().used >= capacity) {
+            DescriptorHeapListNode node {};
+
+            D3D12_DESCRIPTOR_HEAP_DESC desc {};
+            desc.NumDescriptors = capacity;
+            desc.Type = heapType;
+            desc.Flags = heapFlag;
+            if (FAILED(dx12Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&node.descriptorHeap)))) {
+                throw DX12Exception("failed allocate new descriptor heap");
+            }
+
+            list.emplace_back(std::move(node));
+        }
+
+        auto& last = list.back();
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE handle(last.descriptorHeap->GetCPUDescriptorHandleForHeapStart());
+        return handle.Offset(last.used++, descriptorSize);
+    }
+
+    std::vector<ID3D12DescriptorHeap*> DX12Device::GetAllRtvDescriptorHeap()
+    {
+        return GetAllDescriptorHeap(rtvHeapList);
+    }
+
+    std::vector<ID3D12DescriptorHeap*> DX12Device::GetAllCbvSrvUavDescriptorHeap()
+    {
+        return GetAllDescriptorHeap(cbvSrvUavHeapList);
+    }
+
+    std::vector<ID3D12DescriptorHeap*> DX12Device::GetAllDescriptorHeap(std::list<DescriptorHeapListNode>& list)
+    {
+        std::vector<ID3D12DescriptorHeap*> result;
+        for (auto& iter : list) {
+            result.emplace_back(iter.descriptorHeap.Get());
+        }
+        return result;
+    }
+
     void DX12Device::CreateDX12Device(DX12Gpu& gpu)
     {
         if (FAILED(D3D12CreateDevice(gpu.GetDX12Adapter().Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&dx12Device)))) {
@@ -144,5 +196,11 @@ namespace RHI::DirectX12 {
 
             queues[iter.first] = std::move(tempQueues);
         }
+    }
+
+    void DX12Device::GetDX12DescriptorSize()
+    {
+        rtvDescriptorSize = dx12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        cbvSrvUavDescriptorSize = dx12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     }
 }
