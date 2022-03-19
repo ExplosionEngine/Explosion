@@ -57,27 +57,52 @@ namespace RHI::DirectX12 {
         return desc;
     }
 
+    D3D12_DEPTH_STENCILOP_DESC GetDX12DepthStencilOpDesc(const StencilFaceState& stencilFaceState)
+    {
+        D3D12_DEPTH_STENCILOP_DESC desc {};
+        desc.StencilFailOp = DX12EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.failOp);
+        desc.StencilDepthFailOp = DX12EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.depthFailOp);
+        desc.StencilPassOp = DX12EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.passOp);
+        desc.StencilFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(stencilFaceState.comparisonFunc);
+        return desc;
+    }
+
     CD3DX12_DEPTH_STENCIL_DESC GetDX12DepthStencilDesc(const GraphicsPipelineCreateInfo* createInfo)
     {
-        // TODO
-        return {};
+        CD3DX12_DEPTH_STENCIL_DESC desc(D3D12_DEFAULT);
+        // TODO check this
+        desc.DepthEnable = createInfo->depthStencil.depthEnable;
+        desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+        desc.DepthFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(createInfo->depthStencil.depthComparisonFunc);
+        desc.StencilEnable = createInfo->depthStencil.stencilEnable;
+        desc.StencilReadMask = createInfo->depthStencil.stencilReadMask;
+        desc.StencilWriteMask = createInfo->depthStencil.stencilWriteMask;
+        desc.FrontFace = GetDX12DepthStencilOpDesc(createInfo->depthStencil.stencilFront);
+        desc.BackFace = GetDX12DepthStencilOpDesc(createInfo->depthStencil.stencilBack);
+        return desc;
     }
 
     DXGI_SAMPLE_DESC GetDX12SampleDesc(const GraphicsPipelineCreateInfo* createInfo)
     {
-        // TODO
-        return {};
+        DXGI_SAMPLE_DESC desc {};
+        desc.Count = createInfo->multiSample.count;
+        // TODO https://docs.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc
+        desc.Quality = 0;
+        return desc;
     }
 
     UINT GetDX12SampleMask(const GraphicsPipelineCreateInfo* createInfo)
     {
-        // TODO
-        return {};
+        return createInfo->multiSample.mask;
     }
 
     void UpdateDX12RenderTargetsDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const GraphicsPipelineCreateInfo* createInfo)
     {
-        // TODO
+        // have been checked num in function #GetDX12BlendDesc()
+        desc.NumRenderTargets = createInfo->fragment.colorTargetNum;
+        for (auto i = 0; i < createInfo->fragment.colorTargetNum; i++) {
+            desc.RTVFormats[i] = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo->fragment.colorTargets[i].format);
+        }
     }
 }
 

@@ -43,20 +43,21 @@ namespace RHI {
     };
 
     struct StencilFaceState {
-        ComparisonFunc compare = ComparisonFunc::ALWAYS;
+        ComparisonFunc comparisonFunc = ComparisonFunc::ALWAYS;
         StencilOp failOp = StencilOp::KEEP;
         StencilOp depthFailOp = StencilOp::KEEP;
         StencilOp passOp = StencilOp::KEEP;
     };
 
     struct DepthStencilState {
+        bool depthEnable = false;
+        bool stencilEnable = false;
         PixelFormat format = PixelFormat::D32_FLOAT;
-        bool writeDepth = false;
-        ComparisonFunc depthCompare = ComparisonFunc::ALWAYS;
+        ComparisonFunc depthComparisonFunc = ComparisonFunc::ALWAYS;
         StencilFaceState stencilFront;
         StencilFaceState stencilBack;
-        uint32_t stencilReadMask = 0xffffffff;
-        uint32_t stencilWriteMask = 0xffffffff;
+        uint8_t stencilReadMask = 0xff;
+        uint8_t stencilWriteMask = 0xff;
         int32_t depthBias = 0;
         float depthBiasSlopeScale = 0.f;
         float depthBiasClamp = 0.f;

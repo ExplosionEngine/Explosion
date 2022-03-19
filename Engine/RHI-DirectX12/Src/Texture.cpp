@@ -84,6 +84,7 @@ namespace RHI::DirectX12 {
         textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
         textureDesc.DepthOrArraySize = createInfo->extent.z;
         textureDesc.SampleDesc.Count = createInfo->samples;
+        // TODO https://docs.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc
         textureDesc.SampleDesc.Quality = 0;
         textureDesc.Dimension = GetDX12ResourceDimension(createInfo->dimension);
 
