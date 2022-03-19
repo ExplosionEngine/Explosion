@@ -11,7 +11,9 @@
 
 #include <wrl/client.h>
 #include <d3d12.h>
+#include <directx/d3dx12.h>
 
+#include <RHI/Enum.h>
 #include <RHI/Device.h>
 
 using namespace Microsoft::WRL;
@@ -41,12 +43,32 @@ namespace RHI::DirectX12 {
         CommandBuffer* CreateCommandBuffer(const CommandBufferCreateInfo* createInfo) override;
 
         ComPtr<ID3D12Device>& GetDX12Device();
+        CD3DX12_CPU_DESCRIPTOR_HANDLE AllocateRtvDescriptor();
+        CD3DX12_CPU_DESCRIPTOR_HANDLE AllocateCbvSrvUavDescriptor();
+        CD3DX12_CPU_DESCRIPTOR_HANDLE AllocateSamplerDescriptor();
+        std::vector<ID3D12DescriptorHeap*> GetAllRtvDescriptorHeap();
+        std::vector<ID3D12DescriptorHeap*> GetAllCbvSrvUavDescriptorHeap();
+        std::vector<ID3D12DescriptorHeap*> GetAllSamplerDescriptorHeap();
 
     private:
+        struct DescriptorHeapListNode {
+            uint8_t used;
+            ComPtr<ID3D12DescriptorHeap> descriptorHeap;
+        };
+
+        static inline std::vector<ID3D12DescriptorHeap*> GetAllDescriptorHeap(std::list<DescriptorHeapListNode>& list);
+        inline CD3DX12_CPU_DESCRIPTOR_HANDLE AllocateDescriptor(std::list<DescriptorHeapListNode>& list, uint8_t capacity, uint32_t descriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlag);
         void CreateDX12Device(DX12Gpu& gpu);
         void CreateDX12Queues(const DeviceCreateInfo* createInfo);
+        void GetDX12DescriptorSize();
 
         std::unordered_map<QueueType, std::vector<std::unique_ptr<DX12Queue>>> queues;
+        uint32_t rtvDescriptorSize;
+        uint32_t cbvSrvUavDescriptorSize;
+        uint32_t samplerDescriptorSize;
+        std::list<DescriptorHeapListNode> rtvHeapList;
+        std::list<DescriptorHeapListNode> cbvSrvUavHeapList;
+        std::list<DescriptorHeapListNode> samplerHeapList;
         ComPtr<ID3D12Device> dx12Device;
     };
 }

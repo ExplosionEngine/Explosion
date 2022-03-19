@@ -67,21 +67,22 @@ namespace RHI::DirectX12 {
         return MapMode::READ;
     }
 
-    static bool IsConstantBuffer(BufferUsageFlags bufferUsages)
+    static inline bool IsConstantBuffer(BufferUsageFlags bufferUsages)
     {
         return bufferUsages & BufferUsageBits::UNIFORM;
     }
 
-    static bool IsUnorderedAccessBuffer (BufferUsageFlags bufferUsages)
+    static inline bool IsUnorderedAccessBuffer (BufferUsageFlags bufferUsages)
     {
         return bufferUsages & BufferUsageBits::STORAGE;
     }
 }
 
 namespace RHI::DirectX12 {
-    DX12Buffer::DX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo) : Buffer(createInfo), mapMode(GetMapMode(createInfo->usages))
+    DX12Buffer::DX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo) : Buffer(createInfo), mapMode(GetMapMode(createInfo->usages)), dx12CpuDescriptorHandle()
     {
         CreateDX12Buffer(device, createInfo);
+        CreateDX12Descriptor(device, createInfo);
     }
 
     DX12Buffer::~DX12Buffer() = default;
@@ -115,14 +116,9 @@ namespace RHI::DirectX12 {
         return dx12Resource;
     }
 
-    D3D12_CONSTANT_BUFFER_VIEW_DESC* DX12Buffer::GetDX12CBVDesc()
+    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Buffer::GetDX12CpuDescriptorHandle()
     {
-        return dx12CBVDesc.get();
-    }
-
-    D3D12_UNORDERED_ACCESS_VIEW_DESC* DX12Buffer::GetDX12UAVDesc()
-    {
-        return dx12UAVDesc.get();
+        return dx12CpuDescriptorHandle;
     }
 
     void DX12Buffer::CreateDX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo)
@@ -142,18 +138,24 @@ namespace RHI::DirectX12 {
         }
     }
 
-    void DX12Buffer::CreateDX12ViewDesc(const BufferCreateInfo* createInfo)
+    void DX12Buffer::CreateDX12Descriptor(DX12Device& device, const BufferCreateInfo* createInfo)
     {
         if (IsConstantBuffer(createInfo->usages)) {
-            dx12CBVDesc = std::make_unique<D3D12_CONSTANT_BUFFER_VIEW_DESC>();
-            dx12CBVDesc->BufferLocation = dx12Resource->GetGPUVirtualAddress();
-            dx12CBVDesc->SizeInBytes = createInfo->size;
+            D3D12_CONSTANT_BUFFER_VIEW_DESC desc {};
+            desc.BufferLocation = dx12Resource->GetGPUVirtualAddress();
+            desc.SizeInBytes = createInfo->size;
+
+            dx12CpuDescriptorHandle = device.AllocateCbvSrvUavDescriptor();
+            device.GetDX12Device()->CreateConstantBufferView(&desc, dx12CpuDescriptorHandle);
         } else if (IsUnorderedAccessBuffer(createInfo->usages)) {
-            dx12UAVDesc = std::make_unique<D3D12_UNORDERED_ACCESS_VIEW_DESC>();
-            dx12UAVDesc->Format = DXGI_FORMAT_UNKNOWN;
-            dx12UAVDesc->ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-            dx12UAVDesc->Buffer.FirstElement = 0;
-            dx12UAVDesc->Buffer.NumElements = createInfo->size;
+            D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
+            desc.Format = DXGI_FORMAT_UNKNOWN;
+            desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+            desc.Buffer.FirstElement = 0;
+            desc.Buffer.NumElements = createInfo->size;
+
+            dx12CpuDescriptorHandle = device.AllocateCbvSrvUavDescriptor();
+            device.GetDX12Device()->CreateUnorderedAccessView(dx12Resource.Get(), nullptr, &desc, dx12CpuDescriptorHandle);
         }
     }
 }

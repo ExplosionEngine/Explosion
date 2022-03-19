@@ -46,7 +46,7 @@ namespace RHI::DirectX12 {
 
 namespace RHI::DirectX12 {
     DX12Texture::DX12Texture(DX12Device& device, const TextureCreateInfo* createInfo)
-        : Texture(createInfo), usages(createInfo->usages)
+        : Texture(createInfo), device(device), usages(createInfo->usages)
     {
         CreateDX12Texture(device, createInfo);
     }
@@ -55,7 +55,7 @@ namespace RHI::DirectX12 {
 
     TextureView* DX12Texture::CreateTextureView(const TextureViewCreateInfo* createInfo)
     {
-        return new DX12TextureView(*this, createInfo);
+        return new DX12TextureView(device, *this, createInfo);
     }
 
     void DX12Texture::Destroy()
@@ -84,6 +84,7 @@ namespace RHI::DirectX12 {
         textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
         textureDesc.DepthOrArraySize = createInfo->extent.z;
         textureDesc.SampleDesc.Count = createInfo->samples;
+        // TODO https://docs.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc
         textureDesc.SampleDesc.Quality = 0;
         textureDesc.Dimension = GetDX12ResourceDimension(createInfo->dimension);
 

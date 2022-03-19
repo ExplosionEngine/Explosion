@@ -10,8 +10,8 @@
 
 namespace RHI {
     struct ShaderModuleCreateInfo {
-        std::string code;
-        std::string entryPoint;
+        void* byteCode;
+        size_t size;
     };
 
     class ShaderModule {

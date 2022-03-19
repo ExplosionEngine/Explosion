@@ -8,7 +8,7 @@
 #include <memory>
 
 #include <wrl/client.h>
-#include <d3d12.h>
+#include <directx/d3dx12.h>
 using namespace Microsoft::WRL;
 
 #include <RHI/TextureView.h>
@@ -20,22 +20,18 @@ namespace RHI::DirectX12 {
     class DX12TextureView : public TextureView {
     public:
         NON_COPYABLE(DX12TextureView)
-        explicit DX12TextureView(DX12Texture& texture, const TextureViewCreateInfo* createInfo);
+        explicit DX12TextureView(DX12Device& device, DX12Texture& texture, const TextureViewCreateInfo* createInfo);
         ~DX12TextureView() override;
 
         void Destroy() override;
 
-        D3D12_SHADER_RESOURCE_VIEW_DESC* GetDX12SRVDesc();
-        D3D12_UNORDERED_ACCESS_VIEW_DESC* GetDX12UAVDesc();
-        D3D12_RENDER_TARGET_VIEW_DESC* GetDX12RTVDesc();
+        CD3DX12_CPU_DESCRIPTOR_HANDLE GetDX12CpuDescriptorHandle();
 
     private:
-        void CreateDX12ViewDesc(const TextureViewCreateInfo* createInfo);
+        void CreateDX12Descriptor(DX12Device& device, const TextureViewCreateInfo* createInfo);
 
         DX12Texture& texture;
-        std::unique_ptr<D3D12_SHADER_RESOURCE_VIEW_DESC> dx12SRVDesc;
-        std::unique_ptr<D3D12_UNORDERED_ACCESS_VIEW_DESC> dx12UAVDesc;
-        std::unique_ptr<D3D12_RENDER_TARGET_VIEW_DESC> dx12RTVDesc;
+        CD3DX12_CPU_DESCRIPTOR_HANDLE dx12CpuDescriptorHandle;
     };
 }
 
