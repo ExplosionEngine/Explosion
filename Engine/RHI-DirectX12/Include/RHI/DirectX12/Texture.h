@@ -29,6 +29,7 @@ namespace RHI::DirectX12 {
     private:
         void CreateDX12Texture(DX12Device& device, const TextureCreateInfo* createInfo);
 
+        DX12Device& device;
         TextureUsageFlags usages;
         ComPtr<ID3D12Resource> dx12Resource;
     };

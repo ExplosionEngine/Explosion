@@ -144,6 +144,7 @@ namespace RHI::DirectX12 {
             D3D12_CONSTANT_BUFFER_VIEW_DESC desc {};
             desc.BufferLocation = dx12Resource->GetGPUVirtualAddress();
             desc.SizeInBytes = createInfo->size;
+
             dx12CpuDescriptorHandle = device.AllocateCbvSrvUavDescriptor();
             device.GetDX12Device()->CreateConstantBufferView(&desc, dx12CpuDescriptorHandle);
         } else if (IsUnorderedAccessBuffer(createInfo->usages)) {
@@ -152,6 +153,7 @@ namespace RHI::DirectX12 {
             desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
             desc.Buffer.FirstElement = 0;
             desc.Buffer.NumElements = createInfo->size;
+
             dx12CpuDescriptorHandle = device.AllocateCbvSrvUavDescriptor();
             device.GetDX12Device()->CreateUnorderedAccessView(dx12Resource.Get(), nullptr, &desc, dx12CpuDescriptorHandle);
         }

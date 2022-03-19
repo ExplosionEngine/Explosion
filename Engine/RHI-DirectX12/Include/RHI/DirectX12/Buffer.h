@@ -6,7 +6,6 @@
 #define EXPLOSION_RHI_DX12_BUFFER_H
 
 #include <wrl/client.h>
-#include <d3d12.h>
 #include <directx/d3dx12.h>
 
 #include <RHI/Buffer.h>

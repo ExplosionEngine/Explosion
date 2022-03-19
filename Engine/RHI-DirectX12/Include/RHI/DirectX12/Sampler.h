@@ -7,7 +7,6 @@
 
 #include <memory>
 
-#include <d3d12.h>
 #include <directx/d3dx12.h>
 
 #include <RHI/Sampler.h>

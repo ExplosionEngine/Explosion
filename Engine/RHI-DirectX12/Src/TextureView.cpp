@@ -4,6 +4,7 @@
 
 #include <RHI/Enum.h>
 #include <RHI/DirectX12/Common.h>
+#include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/Texture.h>
 #include <RHI/DirectX12/TextureView.h>
 
@@ -167,9 +168,9 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12TextureView::DX12TextureView(DX12Texture& texture, const TextureViewCreateInfo* createInfo) : TextureView(createInfo), texture(texture)
+    DX12TextureView::DX12TextureView(DX12Device& device, DX12Texture& texture, const TextureViewCreateInfo* createInfo) : TextureView(createInfo), texture(texture), dx12CpuDescriptorHandle()
     {
-        CreateDX12ViewDesc(createInfo);
+        CreateDX12Descriptor(device, createInfo);
     }
 
     DX12TextureView::~DX12TextureView() = default;
@@ -179,50 +180,49 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC* DX12TextureView::GetDX12SRVDesc()
+    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12TextureView::GetDX12CpuDescriptorHandle()
     {
-        return dx12SRVDesc.get();
+        return dx12CpuDescriptorHandle;
     }
 
-    D3D12_UNORDERED_ACCESS_VIEW_DESC* DX12TextureView::GetDX12UAVDesc()
-    {
-        return dx12UAVDesc.get();
-    }
-
-    D3D12_RENDER_TARGET_VIEW_DESC* DX12TextureView::GetDX12RTVDesc()
-    {
-        return dx12RTVDesc.get();
-    }
-
-    void DX12TextureView::CreateDX12ViewDesc(const TextureViewCreateInfo* createInfo)
+    void DX12TextureView::CreateDX12Descriptor(DX12Device& device, const TextureViewCreateInfo* createInfo)
     {
         const auto usages = texture.GetUsages();
         if (IsShaderResource(usages)) {
-            dx12SRVDesc = std::make_unique<D3D12_SHADER_RESOURCE_VIEW_DESC>();
-            dx12SRVDesc->Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo->format);
-            dx12SRVDesc->ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_SRV_DIMENSION>(createInfo->dimension);
-            FillTexture1DSRV(dx12SRVDesc->Texture1D, createInfo);
-            FillTexture2DSRV(dx12SRVDesc->Texture2D, createInfo);
-            FillTexture2DArraySRV(dx12SRVDesc->Texture2DArray, createInfo);
-            FillTextureCubeSRV(dx12SRVDesc->TextureCube, createInfo);
-            FillTextureCubeArraySRV(dx12SRVDesc->TextureCubeArray, createInfo);
-            FillTexture3DSRV(dx12SRVDesc->Texture3D, createInfo);
+            D3D12_SHADER_RESOURCE_VIEW_DESC desc {};
+            desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo->format);
+            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_SRV_DIMENSION>(createInfo->dimension);
+            FillTexture1DSRV(desc.Texture1D, createInfo);
+            FillTexture2DSRV(desc.Texture2D, createInfo);
+            FillTexture2DArraySRV(desc.Texture2DArray, createInfo);
+            FillTextureCubeSRV(desc.TextureCube, createInfo);
+            FillTextureCubeArraySRV(desc.TextureCubeArray, createInfo);
+            FillTexture3DSRV(desc.Texture3D, createInfo);
+
+            dx12CpuDescriptorHandle = device.AllocateCbvSrvUavDescriptor();
+            device.GetDX12Device()->CreateShaderResourceView(texture.GetDX12Resource().Get(), &desc, dx12CpuDescriptorHandle);
         } else if (IsUnorderedAccess(usages)) {
-            dx12UAVDesc = std::make_unique<D3D12_UNORDERED_ACCESS_VIEW_DESC>();
-            dx12UAVDesc->Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo->format);
-            dx12UAVDesc->ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_UAV_DIMENSION>(createInfo->dimension);
-            FillTexture1DUAV(dx12UAVDesc->Texture1D, createInfo);
-            FillTexture2DUAV(dx12UAVDesc->Texture2D, createInfo);
-            FillTexture2DArrayUAV(dx12UAVDesc->Texture2DArray, createInfo);
-            FillTexture3DUAV(dx12UAVDesc->Texture3D, createInfo);
+            D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
+            desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo->format);
+            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_UAV_DIMENSION>(createInfo->dimension);
+            FillTexture1DUAV(desc.Texture1D, createInfo);
+            FillTexture2DUAV(desc.Texture2D, createInfo);
+            FillTexture2DArrayUAV(desc.Texture2DArray, createInfo);
+            FillTexture3DUAV(desc.Texture3D, createInfo);
+
+            dx12CpuDescriptorHandle = device.AllocateCbvSrvUavDescriptor();
+            device.GetDX12Device()->CreateUnorderedAccessView(texture.GetDX12Resource().Get(), nullptr, &desc, dx12CpuDescriptorHandle);
         } else if (IsRenderTarget(usages)) {
-            dx12RTVDesc = std::make_unique<D3D12_RENDER_TARGET_VIEW_DESC>();
-            dx12RTVDesc->Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo->format);
-            dx12RTVDesc->ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_RTV_DIMENSION>(createInfo->dimension);
-            FillTexture1DRTV(dx12RTVDesc->Texture1D, createInfo);
-            FillTexture2DRTV(dx12RTVDesc->Texture2D, createInfo);
-            FillTexture2DArrayRTV(dx12RTVDesc->Texture2DArray, createInfo);
-            FillTexture3DRTV(dx12RTVDesc->Texture3D, createInfo);
+            D3D12_RENDER_TARGET_VIEW_DESC desc {};
+            desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo->format);
+            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_RTV_DIMENSION>(createInfo->dimension);
+            FillTexture1DRTV(desc.Texture1D, createInfo);
+            FillTexture2DRTV(desc.Texture2D, createInfo);
+            FillTexture2DArrayRTV(desc.Texture2DArray, createInfo);
+            FillTexture3DRTV(desc.Texture3D, createInfo);
+
+            dx12CpuDescriptorHandle = device.AllocateRtvDescriptor();
+            device.GetDX12Device()->CreateRenderTargetView(texture.GetDX12Resource().Get(), &desc, dx12CpuDescriptorHandle);
         }
     }
 }
