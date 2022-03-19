@@ -9,6 +9,20 @@
 #include <RHI/DirectX12/Pipeline.h>
 
 namespace RHI::DirectX12 {
+    D3D12_RENDER_TARGET_BLEND_DESC GetDX12RenderTargetBlendDesc(const BlendState& blendState)
+    {
+        D3D12_RENDER_TARGET_BLEND_DESC desc {};
+        desc.BlendEnable = true;
+        desc.LogicOpEnable = false;
+        desc.BlendOp = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(blendState.color.op);
+        desc.SrcBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(blendState.color.srcFactor);
+        desc.DestBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(blendState.color.dstFactor);
+        desc.BlendOpAlpha = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(blendState.alpha.op);
+        desc.SrcBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(blendState.alpha.srcFactor);
+        desc.DestBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(blendState.alpha.dstFactor);
+        return desc;
+    }
+
     CD3DX12_RASTERIZER_DESC GetDX12RasterizerDesc(const GraphicsPipelineCreateInfo* createInfo)
     {
         CD3DX12_RASTERIZER_DESC desc(D3D12_DEFAULT);
@@ -30,8 +44,17 @@ namespace RHI::DirectX12 {
 
     CD3DX12_BLEND_DESC GetDX12BlendDesc(const GraphicsPipelineCreateInfo* createInfo)
     {
-        // TODO
-        return {};
+        CD3DX12_BLEND_DESC desc(D3D12_DEFAULT);
+        desc.AlphaToCoverageEnable = createInfo->multiSample.alphaToCoverage;
+        desc.IndependentBlendEnable = true;
+
+        if (createInfo->fragment.colorTargetNum > 8) {
+            throw DX12Exception("max color target num is 8");
+        }
+        for (auto i = 0; i < createInfo->fragment.colorTargetNum; i++) {
+            desc.RenderTarget[i] = GetDX12RenderTargetBlendDesc(createInfo->fragment.colorTargets[i].blend);
+        }
+        return desc;
     }
 
     CD3DX12_DEPTH_STENCIL_DESC GetDX12DepthStencilDesc(const GraphicsPipelineCreateInfo* createInfo)

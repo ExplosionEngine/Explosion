@@ -86,7 +86,7 @@ namespace RHI {
     };
 
     struct FragmentState {
-        uint32_t colorTargetNum = 0;
+        uint8_t colorTargetNum = 0;
         const ColorTargetState* colorTargets = nullptr;
     };
 

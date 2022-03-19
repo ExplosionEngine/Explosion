@@ -256,9 +256,10 @@ namespace RHI {
         ONE_MINUS_DST,
         DST_ALPHA,
         ONE_MINUS_DST_ALPHA,
-        SRC_ALPHA_SATURATED,
-        CONSTANT,
-        ONE_MINUS_CONSTANT,
+        // TODO check spec
+        // SRC_ALPHA_SATURATED,
+        // CONSTANT,
+        // ONE_MINUS_CONSTANT,
         MAX
     };
 
