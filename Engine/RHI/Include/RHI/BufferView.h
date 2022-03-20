@@ -5,7 +5,7 @@
 #ifndef EXPLOSION_RHI_BUFFER_VIEW_H
 #define EXPLOSION_RHI_BUFFER_VIEW_H
 
-#include <cstdint>
+#include <cstddef>
 
 #include <Common/Utility.h>
 
