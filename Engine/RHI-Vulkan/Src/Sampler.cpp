@@ -79,6 +79,9 @@ namespace RHI::Vulkan {
 
     VKSampler::~VKSampler()
     {
+        if (vkSampler) {
+            device.GetVkDevice().destroySampler(vkSampler, nullptr);
+        }
     }
 
     void VKSampler::Destroy()

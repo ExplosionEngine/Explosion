@@ -49,6 +49,9 @@ namespace RHI::Vulkan {
 
     VKBindGroupLayout::~VKBindGroupLayout()
     {
+        if (setLayout) {
+            device.GetVkDevice().destroyDescriptorSetLayout(setLayout, nullptr);
+        }
     }
 
     void VKBindGroupLayout::Destroy()
