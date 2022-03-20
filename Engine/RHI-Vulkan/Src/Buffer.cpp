@@ -28,13 +28,13 @@ namespace RHI::Vulkan {
 
     static vk::BufferUsageFlags GetVkResourceStates(BufferUsageFlags bufferUsages)
     {
-        static std::unordered_map<BufferUsageBits, vk::BufferUsageFlagBits> rules = {
+        static std::unordered_map<BufferUsageBits, vk::BufferUsageFlags> rules = {
             { BufferUsageBits::COPY_SRC, vk::BufferUsageFlagBits::eTransferSrc },
             { BufferUsageBits::COPY_DST, vk::BufferUsageFlagBits::eTransferDst },
-            { BufferUsageBits::INDEX, vk::BufferUsageFlagBits::eIndexBuffer },
-            { BufferUsageBits::VERTEX, vk::BufferUsageFlagBits::eVertexBuffer },
-            { BufferUsageBits::UNIFORM, vk::BufferUsageFlagBits::eUniformBuffer },
-            { BufferUsageBits::STORAGE, vk::BufferUsageFlagBits::eStorageBuffer },
+            { BufferUsageBits::INDEX,    vk::BufferUsageFlagBits::eIndexBuffer },
+            { BufferUsageBits::VERTEX,   vk::BufferUsageFlagBits::eVertexBuffer },
+            { BufferUsageBits::UNIFORM,  vk::BufferUsageFlagBits::eUniformBuffer },
+            { BufferUsageBits::STORAGE,  vk::BufferUsageFlagBits::eStorageBuffer },
             { BufferUsageBits::INDIRECT, vk::BufferUsageFlagBits::eIndirectBuffer },
         };
 

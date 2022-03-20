@@ -20,6 +20,16 @@ namespace RHI::Vulkan {
 
         void Destroy() override;
 
+        vk::Image GetImage() const;
+
     private:
+        void CreateImage(const TextureCreateInfo* createInfo);
+
+        // TODO use memory pool.
+        void AllocateMemory(const TextureCreateInfo* createInfo);
+        void FreeMemory();
+        VKDevice& device;
+        vk::DeviceMemory vkDeviceMemory;
+        vk::Image vkImage;
     };
 }

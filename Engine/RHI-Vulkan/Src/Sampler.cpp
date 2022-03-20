@@ -7,70 +7,6 @@
 #include <RHI/Vulkan/Common.h>
 
 namespace RHI::Vulkan {
-
-    static vk::SamplerAddressMode GetVKAddressMode(AddressMode type)
-    {
-        static std::unordered_map<AddressMode, vk::SamplerAddressMode> modes = {
-            { AddressMode::CLAMP_TO_EDGE,  vk::SamplerAddressMode::eClampToEdge },
-            { AddressMode::REPEAT,         vk::SamplerAddressMode::eRepeat },
-            { AddressMode::MIRROR_REPEAT,  vk::SamplerAddressMode::eMirroredRepeat }
-        };
-
-        auto iter = modes.find(type);
-        if (iter == modes.end()) {
-            throw VKException("AddressMode not supported.");
-        }
-        return iter->second;
-    }
-
-    static vk::Filter GetVKFilterMode(FilterMode type)
-    {
-        static std::unordered_map<FilterMode, vk::Filter> modes = {
-            { FilterMode::NEAREST,  vk::Filter::eNearest },
-            { FilterMode::LINEAR,   vk::Filter::eLinear },
-        };
-
-        auto iter = modes.find(type);
-        if (iter == modes.end()) {
-            throw VKException("FilterMode not supported.");
-        }
-        return iter->second;
-    }
-
-    static vk::SamplerMipmapMode GetVKMipmapMode(FilterMode type)
-    {
-        static std::unordered_map<FilterMode, vk::SamplerMipmapMode> modes = {
-            { FilterMode::NEAREST,  vk::SamplerMipmapMode::eNearest },
-            { FilterMode::LINEAR,   vk::SamplerMipmapMode::eLinear },
-        };
-
-        auto iter = modes.find(type);
-        if (iter == modes.end()) {
-            throw VKException("FilterMode not supported.");
-        }
-        return iter->second;
-    }
-
-    static vk::CompareOp GetCompareOp(ComparisonFunc type)
-    {
-        static std::unordered_map<ComparisonFunc, vk::CompareOp> compareOps = {
-            { ComparisonFunc::NEVER,         vk::CompareOp::eNever },
-            { ComparisonFunc::LESS,          vk::CompareOp::eLess },
-            { ComparisonFunc::EQUAL,         vk::CompareOp::eEqual },
-            { ComparisonFunc::LESS_EQUAL,    vk::CompareOp::eLessOrEqual },
-            { ComparisonFunc::GREATER,       vk::CompareOp::eGreater },
-            { ComparisonFunc::NOT_EQUAL,     vk::CompareOp::eNotEqual },
-            { ComparisonFunc::GREATER_EQUAL, vk::CompareOp::eGreaterOrEqual },
-            { ComparisonFunc::ALWAYS,        vk::CompareOp::eAlways },
-        };
-
-        auto iter = compareOps.find(type);
-        if (iter == compareOps.end()) {
-            throw VKException("ComparisonFunc not supported.");
-        }
-        return iter->second;
-    }
-
     VKSampler::VKSampler(VKDevice& dev, const SamplerCreateInfo* createInfo)
         : Sampler(createInfo), device(dev), vkSampler(VK_NULL_HANDLE)
     {
@@ -93,16 +29,16 @@ namespace RHI::Vulkan {
     {
         vk::SamplerCreateInfo samplerInfo = {};
 
-        samplerInfo.setAddressModeU(GetVKAddressMode(createInfo->addressModeU))
-            .setAddressModeV(GetVKAddressMode(createInfo->addressModeV))
-            .setAddressModeW(GetVKAddressMode(createInfo->addressModeW))
-            .setMinFilter(GetVKFilterMode(createInfo->minFilter))
-            .setMagFilter(GetVKFilterMode(createInfo->magFilter))
-            .setMipmapMode(GetVKMipmapMode(createInfo->mipFilter))
+        samplerInfo.setAddressModeU(VKEnumCast<AddressMode, vk::SamplerAddressMode>(createInfo->addressModeU))
+            .setAddressModeV(VKEnumCast<AddressMode, vk::SamplerAddressMode>(createInfo->addressModeV))
+            .setAddressModeW(VKEnumCast<AddressMode, vk::SamplerAddressMode>(createInfo->addressModeW))
+            .setMinFilter(VKEnumCast<FilterMode, vk::Filter>(createInfo->minFilter))
+            .setMagFilter(VKEnumCast<FilterMode, vk::Filter>(createInfo->magFilter))
+            .setMipmapMode(VKEnumCast<FilterMode, vk::SamplerMipmapMode>(createInfo->mipFilter))
             .setMinLod(createInfo->lodMinClamp)
             .setMaxLod(createInfo->lodMaxClamp)
             .setCompareEnable(createInfo->comparisonFunc != ComparisonFunc::NEVER)
-            .setCompareOp(GetCompareOp(createInfo->comparisonFunc))
+            .setCompareOp(VKEnumCast<ComparisonFunc, vk::CompareOp>(createInfo->comparisonFunc))
             .setAnisotropyEnable(createInfo->maxAnisotropy > 1)
             .setMaxAnisotropy(createInfo->maxAnisotropy);
 

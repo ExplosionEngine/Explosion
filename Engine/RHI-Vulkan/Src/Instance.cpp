@@ -54,9 +54,9 @@ namespace RHI::Vulkan {
         };
 
         uint32_t supportedLayerCount = 0;
-        vk::enumerateInstanceLayerProperties(&supportedLayerCount, nullptr);
+        (void)vk::enumerateInstanceLayerProperties(&supportedLayerCount, nullptr);
         std::vector<vk::LayerProperties> supportedLayers(supportedLayerCount);
-        vk::enumerateInstanceLayerProperties(&supportedLayerCount, supportedLayers.data());
+        (void)vk::enumerateInstanceLayerProperties(&supportedLayerCount, supportedLayers.data());
 
         for (auto&& requiredLayerName : requiredLayerNames) {
             auto iter = std::find_if(
@@ -85,9 +85,9 @@ namespace RHI::Vulkan {
         };
 
         uint32_t supportedExtensionCount = 0;
-        vk::enumerateInstanceExtensionProperties(nullptr, &supportedExtensionCount, nullptr);
+        (void)vk::enumerateInstanceExtensionProperties(nullptr, &supportedExtensionCount, nullptr);
         std::vector<vk::ExtensionProperties> supportedExtensions(supportedExtensionCount);
-        vk::enumerateInstanceExtensionProperties(nullptr, &supportedExtensionCount, supportedExtensions.data());
+        (void)vk::enumerateInstanceExtensionProperties(nullptr, &supportedExtensionCount, supportedExtensions.data());
 
         for (auto&& requiredExtensionName : requiredExtensionNames) {
             auto iter = std::find_if(

@@ -8,39 +8,6 @@
 #include <vector>
 
 namespace RHI::Vulkan {
-    static vk::DescriptorType GetVKDescriptorType(BindingType type)
-    {
-        static std::unordered_map<BindingType, vk::DescriptorType> types = {
-            { BindingType::UNIFORM_BUFFER,  vk::DescriptorType::eUniformBuffer },
-            { BindingType::STORAGE_BUFFER,  vk::DescriptorType::eStorageBuffer },
-            { BindingType::SAMPLER,         vk::DescriptorType::eCombinedImageSampler },
-            { BindingType::TEXTURE,         vk::DescriptorType::eSampledImage },
-            { BindingType::STORAGE_TEXTURE, vk::DescriptorType::eStorageImage }
-        };
-
-        auto iter = types.find(type);
-        if (iter == types.end()) {
-            throw VKException("BindType not supported.");
-        }
-        return iter->second;
-    }
-
-    static vk::ShaderStageFlags GetShaderStageFlags(ShaderStageFlags flag)
-    {
-        static std::unordered_map<ShaderStageBits, vk::ShaderStageFlagBits> stageBits = {
-            { ShaderStageBits::VERTEX, vk::ShaderStageFlagBits::eVertex },
-            { ShaderStageBits::FRAGMENT, vk::ShaderStageFlagBits::eFragment },
-            { ShaderStageBits::COMPUTE, vk::ShaderStageFlagBits::eCompute }
-        };
-        vk::ShaderStageFlags result = {};
-        for (const auto& stage : stageBits) {
-            if (flag & stage.first) {
-                result |= stage.second;
-            }
-        }
-        return result;
-    }
-
     VKBindGroupLayout::VKBindGroupLayout(VKDevice& dev, const BindGroupLayoutCreateInfo* createInfo)
         : BindGroupLayout(createInfo), device(dev)
     {
@@ -67,10 +34,18 @@ namespace RHI::Vulkan {
         for (size_t i = 0; i < createInfo->entryNum; ++i) {
             auto& entry = createInfo->entries[i];
             auto& binding = bindings[i];
-            binding.setDescriptorType(GetVKDescriptorType(entry.type))
+
+            vk::ShaderStageFlags flags = {};
+            for (auto& pair : VK_ENUM_MAP<ShaderStageBits, vk::ShaderStageFlagBits>) {
+                if (entry.shaderVisibility & pair.first) {
+                    flags |= pair.second;
+                }
+            }
+
+            binding.setDescriptorType(VKEnumCast<BindingType, vk::DescriptorType>(entry.type))
                 .setDescriptorCount(1)
                 .setBinding(entry.binding)
-                .setStageFlags(GetShaderStageFlags(entry.shaderVisibility));
+                .setStageFlags(flags);
         }
 
         layoutInfo.setBindings(bindings);
