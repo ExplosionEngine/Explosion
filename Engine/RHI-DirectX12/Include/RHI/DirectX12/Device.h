@@ -22,6 +22,11 @@ namespace RHI::DirectX12 {
     class DX12Gpu;
     class DX12Queue;
 
+    struct DescriptorAllocation {
+        CD3DX12_CPU_DESCRIPTOR_HANDLE handle;
+        ID3D12DescriptorHeap* descriptorHeap;
+    };
+
     class DX12Device : public Device {
     public:
         NON_COPYABLE(DX12Device)
@@ -43,12 +48,9 @@ namespace RHI::DirectX12 {
         CommandBuffer* CreateCommandBuffer(const CommandBufferCreateInfo* createInfo) override;
 
         ComPtr<ID3D12Device>& GetDX12Device();
-        CD3DX12_CPU_DESCRIPTOR_HANDLE AllocateRtvDescriptor();
-        CD3DX12_CPU_DESCRIPTOR_HANDLE AllocateCbvSrvUavDescriptor();
-        CD3DX12_CPU_DESCRIPTOR_HANDLE AllocateSamplerDescriptor();
-        std::vector<ID3D12DescriptorHeap*> GetAllRtvDescriptorHeap();
-        std::vector<ID3D12DescriptorHeap*> GetAllCbvSrvUavDescriptorHeap();
-        std::vector<ID3D12DescriptorHeap*> GetAllSamplerDescriptorHeap();
+        DescriptorAllocation AllocateRtvDescriptor();
+        DescriptorAllocation AllocateCbvSrvUavDescriptor();
+        DescriptorAllocation AllocateSamplerDescriptor();
 
     private:
         struct DescriptorHeapListNode {
@@ -56,8 +58,7 @@ namespace RHI::DirectX12 {
             ComPtr<ID3D12DescriptorHeap> descriptorHeap;
         };
 
-        static inline std::vector<ID3D12DescriptorHeap*> GetAllDescriptorHeap(std::list<DescriptorHeapListNode>& list);
-        inline CD3DX12_CPU_DESCRIPTOR_HANDLE AllocateDescriptor(std::list<DescriptorHeapListNode>& list, uint8_t capacity, uint32_t descriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlag);
+        inline DescriptorAllocation AllocateDescriptor(std::list<DescriptorHeapListNode>& list, uint8_t capacity, uint32_t descriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlag);
         void CreateDX12Device(DX12Gpu& gpu);
         void CreateDX12Queues(const DeviceCreateInfo* createInfo);
         void GetDX12DescriptorSize();

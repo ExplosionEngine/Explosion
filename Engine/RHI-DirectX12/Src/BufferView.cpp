@@ -19,7 +19,7 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12BufferView::DX12BufferView(DX12Buffer& buffer, const BufferViewCreateInfo* createInfo) : BufferView(createInfo), buffer(buffer)
+    DX12BufferView::DX12BufferView(DX12Buffer& buffer, const BufferViewCreateInfo* createInfo) : BufferView(createInfo), buffer(buffer), dx12DescriptorHeap(nullptr), dx12CpuDescriptorHandle()
     {
         CreateDX12Descriptor(createInfo);
     }
@@ -36,6 +36,11 @@ namespace RHI::DirectX12 {
         return dx12CpuDescriptorHandle;
     }
 
+    ID3D12DescriptorHeap* DX12BufferView::GetDX12DescriptorHeap()
+    {
+        return dx12DescriptorHeap;
+    }
+
     void DX12BufferView::CreateDX12Descriptor(const BufferViewCreateInfo* createInfo)
     {
         if (IsConstantBuffer(buffer.GetUsages())) {
@@ -43,7 +48,9 @@ namespace RHI::DirectX12 {
             desc.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo->offset;
             desc.SizeInBytes = createInfo->size;
 
-            dx12CpuDescriptorHandle = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
+            auto allocation = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
+            dx12CpuDescriptorHandle = allocation.handle;
+            dx12DescriptorHeap = allocation.descriptorHeap;
             buffer.GetDevice().GetDX12Device()->CreateConstantBufferView(&desc, dx12CpuDescriptorHandle);
         } else if (IsUnorderedAccessBuffer(buffer.GetUsages())) {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
@@ -52,7 +59,9 @@ namespace RHI::DirectX12 {
             desc.Buffer.FirstElement = createInfo->offset;
             desc.Buffer.NumElements = createInfo->size;
 
-            dx12CpuDescriptorHandle = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
+            auto allocation = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
+            dx12CpuDescriptorHandle = allocation.handle;
+            dx12DescriptorHeap = allocation.descriptorHeap;
             buffer.GetDevice().GetDX12Device()->CreateUnorderedAccessView(buffer.GetDX12Resource().Get(), nullptr, &desc, dx12CpuDescriptorHandle);
         }
     }

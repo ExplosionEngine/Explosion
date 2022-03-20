@@ -19,16 +19,18 @@ namespace RHI::DirectX12 {
     public:
         NON_COPYABLE(DX12BufferView)
         DX12BufferView(DX12Buffer& buffer, const BufferViewCreateInfo* createInfo);
-        ~DX12BufferView();
+        ~DX12BufferView() override;
 
         void Destroy() override;
 
+        ID3D12DescriptorHeap* GetDX12DescriptorHeap();
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetDX12CpuDescriptorHandle();
 
     private:
         void CreateDX12Descriptor(const BufferViewCreateInfo* createInfo);
 
         DX12Buffer& buffer;
+        ID3D12DescriptorHeap* dx12DescriptorHeap;
         CD3DX12_CPU_DESCRIPTOR_HANDLE dx12CpuDescriptorHandle;
     };
 }

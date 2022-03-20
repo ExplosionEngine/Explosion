@@ -25,12 +25,14 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
 
+        ID3D12DescriptorHeap* GetDX12DescriptorHeap();
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetDX12CpuDescriptorHandle();
 
     private:
         void CreateDX12Descriptor(DX12Device& device, const TextureViewCreateInfo* createInfo);
 
         DX12Texture& texture;
+        ID3D12DescriptorHeap* dx12DescriptorHeap;
         CD3DX12_CPU_DESCRIPTOR_HANDLE dx12CpuDescriptorHandle;
     };
 }

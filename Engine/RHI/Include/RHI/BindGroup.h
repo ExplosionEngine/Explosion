@@ -22,7 +22,7 @@ namespace RHI {
         union {
             Sampler* sampler;
             TextureView* textureView;
-            BufferView* buffer;
+            BufferView* bufferView;
         };
     };
 
