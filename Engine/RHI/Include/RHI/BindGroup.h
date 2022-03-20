@@ -12,15 +12,9 @@
 
 namespace RHI {
     class BindGroupLayout;
-    class Buffer;
+    class BufferView;
     class Sampler;
     class TextureView;
-
-    struct BufferBinding {
-        Buffer* buffer;
-        size_t offset;
-        size_t size;
-    };
 
     struct BindGroupEntry {
         uint8_t binding;
@@ -28,7 +22,7 @@ namespace RHI {
         union {
             Sampler* sampler;
             TextureView* textureView;
-            BufferBinding buffer;
+            BufferView* buffer;
         };
     };
 
