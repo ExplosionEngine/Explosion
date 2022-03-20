@@ -24,7 +24,7 @@ AddExecutable(
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(Triangle-Dependencies
-        RHI-Vulkan RHI-DirectX12
+        RHI-Vulkan
     )
 else ()
     set(Triangle-Dependencies
