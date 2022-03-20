@@ -19,7 +19,8 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12BufferView::DX12BufferView(DX12Buffer& buffer, const BufferViewCreateInfo* createInfo) : BufferView(createInfo), buffer(buffer), dx12DescriptorHeap(nullptr), dx12CpuDescriptorHandle()
+    DX12BufferView::DX12BufferView(DX12Buffer& buffer, const BufferViewCreateInfo* createInfo)
+        : BufferView(createInfo), buffer(buffer), dx12DescriptorHeap(nullptr), dx12CpuDescriptorHandle(), dx12GpuDescriptorHandle()
     {
         CreateDX12Descriptor(createInfo);
     }
@@ -36,6 +37,11 @@ namespace RHI::DirectX12 {
         return dx12CpuDescriptorHandle;
     }
 
+    CD3DX12_GPU_DESCRIPTOR_HANDLE DX12BufferView::GetDX12GpuDescriptorHandle()
+    {
+        return dx12GpuDescriptorHandle;
+    }
+
     ID3D12DescriptorHeap* DX12BufferView::GetDX12DescriptorHeap()
     {
         return dx12DescriptorHeap;
@@ -49,7 +55,8 @@ namespace RHI::DirectX12 {
             desc.SizeInBytes = createInfo->size;
 
             auto allocation = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
-            dx12CpuDescriptorHandle = allocation.handle;
+            dx12CpuDescriptorHandle = allocation.cpuHandle;
+            dx12GpuDescriptorHandle = allocation.gpuHandle;
             dx12DescriptorHeap = allocation.descriptorHeap;
             buffer.GetDevice().GetDX12Device()->CreateConstantBufferView(&desc, dx12CpuDescriptorHandle);
         } else if (IsUnorderedAccessBuffer(buffer.GetUsages())) {
@@ -60,7 +67,8 @@ namespace RHI::DirectX12 {
             desc.Buffer.NumElements = createInfo->size;
 
             auto allocation = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
-            dx12CpuDescriptorHandle = allocation.handle;
+            dx12CpuDescriptorHandle = allocation.cpuHandle;
+            dx12GpuDescriptorHandle = allocation.gpuHandle;
             dx12DescriptorHeap = allocation.descriptorHeap;
             buffer.GetDevice().GetDX12Device()->CreateUnorderedAccessView(buffer.GetDX12Resource().Get(), nullptr, &desc, dx12CpuDescriptorHandle);
         }

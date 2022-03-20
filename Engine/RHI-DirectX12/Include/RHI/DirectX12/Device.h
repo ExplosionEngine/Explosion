@@ -23,7 +23,8 @@ namespace RHI::DirectX12 {
     class DX12Queue;
 
     struct DescriptorAllocation {
-        CD3DX12_CPU_DESCRIPTOR_HANDLE handle;
+        CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle;
         ID3D12DescriptorHeap* descriptorHeap;
     };
 

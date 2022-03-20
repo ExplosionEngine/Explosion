@@ -142,9 +142,12 @@ namespace RHI::DirectX12 {
 
         auto& last = list.back();
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE handle(last.descriptorHeap->GetCPUDescriptorHandleForHeapStart());
+        CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(last.descriptorHeap->GetCPUDescriptorHandleForHeapStart());
+        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(last.descriptorHeap->GetGPUDescriptorHandleForHeapStart());
+        auto offset = last.used++;
         return {
-            handle.Offset(last.used++, descriptorSize),
+            cpuHandle.Offset(offset, descriptorSize),
+            gpuHandle.Offset(offset, descriptorSize),
             last.descriptorHeap.Get()
         };
     }

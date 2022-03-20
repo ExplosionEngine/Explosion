@@ -24,12 +24,14 @@ namespace RHI::DirectX12 {
 
         ID3D12DescriptorHeap* GetDX12DescriptorHeap();
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetDX12CpuDescriptorHandle();
+        CD3DX12_GPU_DESCRIPTOR_HANDLE GetDX12GpuDescriptorHandle();
 
     private:
         void CreateDX12Descriptor(DX12Device& device, const SamplerCreateInfo* createInfo);
 
         ID3D12DescriptorHeap* dx12DescriptorHeap;
         CD3DX12_CPU_DESCRIPTOR_HANDLE dx12CpuDescriptorHandle;
+        CD3DX12_GPU_DESCRIPTOR_HANDLE dx12GpuDescriptorHandle;
     };
 }
 

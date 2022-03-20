@@ -168,7 +168,8 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12TextureView::DX12TextureView(DX12Device& device, DX12Texture& texture, const TextureViewCreateInfo* createInfo) : TextureView(createInfo), texture(texture), dx12DescriptorHeap(nullptr), dx12CpuDescriptorHandle()
+    DX12TextureView::DX12TextureView(DX12Device& device, DX12Texture& texture, const TextureViewCreateInfo* createInfo)
+        : TextureView(createInfo), texture(texture), dx12DescriptorHeap(nullptr), dx12CpuDescriptorHandle(), dx12GpuDescriptorHandle()
     {
         CreateDX12Descriptor(device, createInfo);
     }
@@ -183,6 +184,11 @@ namespace RHI::DirectX12 {
     CD3DX12_CPU_DESCRIPTOR_HANDLE DX12TextureView::GetDX12CpuDescriptorHandle()
     {
         return dx12CpuDescriptorHandle;
+    }
+
+    CD3DX12_GPU_DESCRIPTOR_HANDLE DX12TextureView::GetDX12GpuDescriptorHandle()
+    {
+        return dx12GpuDescriptorHandle;
     }
 
     ID3D12DescriptorHeap* DX12TextureView::GetDX12DescriptorHeap()
@@ -205,7 +211,8 @@ namespace RHI::DirectX12 {
             FillTexture3DSRV(desc.Texture3D, createInfo);
 
             auto allocation = device.AllocateCbvSrvUavDescriptor();
-            dx12CpuDescriptorHandle = allocation.handle;
+            dx12CpuDescriptorHandle = allocation.cpuHandle;
+            dx12GpuDescriptorHandle = allocation.gpuHandle;
             dx12DescriptorHeap = allocation.descriptorHeap;
             device.GetDX12Device()->CreateShaderResourceView(texture.GetDX12Resource().Get(), &desc, dx12CpuDescriptorHandle);
         } else if (IsUnorderedAccess(usages)) {
@@ -218,7 +225,8 @@ namespace RHI::DirectX12 {
             FillTexture3DUAV(desc.Texture3D, createInfo);
 
             auto allocation = device.AllocateCbvSrvUavDescriptor();
-            dx12CpuDescriptorHandle = allocation.handle;
+            dx12CpuDescriptorHandle = allocation.cpuHandle;
+            dx12GpuDescriptorHandle = allocation.gpuHandle;
             dx12DescriptorHeap = allocation.descriptorHeap;
             device.GetDX12Device()->CreateUnorderedAccessView(texture.GetDX12Resource().Get(), nullptr, &desc, dx12CpuDescriptorHandle);
         } else if (IsRenderTarget(usages)) {
@@ -231,7 +239,8 @@ namespace RHI::DirectX12 {
             FillTexture3DRTV(desc.Texture3D, createInfo);
 
             auto allocation = device.AllocateRtvDescriptor();
-            dx12CpuDescriptorHandle = allocation.handle;
+            dx12CpuDescriptorHandle = allocation.cpuHandle;
+            dx12GpuDescriptorHandle = allocation.gpuHandle;
             dx12DescriptorHeap = allocation.descriptorHeap;
             device.GetDX12Device()->CreateRenderTargetView(texture.GetDX12Resource().Get(), &desc, dx12CpuDescriptorHandle);
         }

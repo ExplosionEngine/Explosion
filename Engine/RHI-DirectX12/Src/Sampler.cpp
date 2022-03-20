@@ -25,7 +25,8 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12Sampler::DX12Sampler(DX12Device& device, const SamplerCreateInfo* createInfo) : Sampler(createInfo), dx12DescriptorHeap(nullptr), dx12CpuDescriptorHandle()
+    DX12Sampler::DX12Sampler(DX12Device& device, const SamplerCreateInfo* createInfo)
+        : Sampler(createInfo), dx12DescriptorHeap(nullptr), dx12CpuDescriptorHandle(), dx12GpuDescriptorHandle()
     {
         CreateDX12Descriptor(device, createInfo);
     }
@@ -40,6 +41,11 @@ namespace RHI::DirectX12 {
     CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Sampler::GetDX12CpuDescriptorHandle()
     {
         return dx12CpuDescriptorHandle;
+    }
+
+    CD3DX12_GPU_DESCRIPTOR_HANDLE DX12Sampler::GetDX12GpuDescriptorHandle()
+    {
+        return dx12GpuDescriptorHandle;
     }
 
     ID3D12DescriptorHeap* DX12Sampler::GetDX12DescriptorHeap()
@@ -60,7 +66,8 @@ namespace RHI::DirectX12 {
         desc.MaxAnisotropy = createInfo->maxAnisotropy;
 
         auto allocation = device.AllocateSamplerDescriptor();
-        dx12CpuDescriptorHandle = allocation.handle;
+        dx12CpuDescriptorHandle = allocation.cpuHandle;
+        dx12GpuDescriptorHandle = allocation.gpuHandle;
         dx12DescriptorHeap = allocation.descriptorHeap;
         device.GetDX12Device()->CreateSampler(&desc, dx12CpuDescriptorHandle);
     }
