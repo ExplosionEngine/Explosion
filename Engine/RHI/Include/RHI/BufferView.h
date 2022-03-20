@@ -5,6 +5,8 @@
 #ifndef EXPLOSION_RHI_BUFFER_VIEW_H
 #define EXPLOSION_RHI_BUFFER_VIEW_H
 
+#include <cstdint>
+
 #include <Common/Utility.h>
 
 namespace RHI {
