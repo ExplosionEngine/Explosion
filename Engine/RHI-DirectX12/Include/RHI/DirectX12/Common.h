@@ -2,8 +2,7 @@
 // Created by johnk on 10/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_DX12_COMMON_H
-#define EXPLOSION_RHI_DX12_COMMON_H
+#pragma once
 
 #include <stdexcept>
 #include <utility>
@@ -212,5 +211,3 @@ namespace RHI::DirectX12 {
         DX12_ENUM_MAP_ITEM(StencilOp::DECREMENT_WRAP, D3D12_STENCIL_OP_DECR)
     DX12_ENUM_MAP_END()
 }
-
-#endif //EXPLOSION_RHI_DX12_COMMON_H

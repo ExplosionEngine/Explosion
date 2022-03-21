@@ -2,8 +2,7 @@
 // Created by johnk on 2022/1/24.
 //
 
-#ifndef EXPLOSION_RHI_DX12_BUFFER_H
-#define EXPLOSION_RHI_DX12_BUFFER_H
+#pragma once
 
 #include <wrl/client.h>
 #include <directx/d3dx12.h>
@@ -39,5 +38,3 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12Resource> dx12Resource;
     };
 }
-
-#endif //EXPLOSION_RHI_DX12_BUFFER_H

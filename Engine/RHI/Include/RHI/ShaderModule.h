@@ -2,8 +2,7 @@
 // Created by johnk on 19/2/2022.
 //
 
-#ifndef EXPLOSION_RHI_SHADER_MODULE_H
-#define EXPLOSION_RHI_SHADER_MODULE_H
+#pragma once
 
 #include <Common/Utility.h>
 #include <string>
@@ -25,5 +24,3 @@ namespace RHI {
         explicit ShaderModule(const ShaderModuleCreateInfo* createInfo);
     };
 }
-
-#endif//EXPLOSION_RHI_SHADER_MODULE_H

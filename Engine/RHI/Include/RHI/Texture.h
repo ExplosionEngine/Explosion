@@ -2,8 +2,7 @@
 // Created by johnk on 2022/1/23.
 //
 
-#ifndef EXPLOSION_RHI_TEXTURE_H
-#define EXPLOSION_RHI_TEXTURE_H
+#pragma once
 
 #include <Common/Utility.h>
 #include <RHI/Enum.h>
@@ -33,5 +32,3 @@ namespace RHI {
         explicit Texture(const TextureCreateInfo* createInfo);
     };
 }
-
-#endif //EXPLOSION_RHI_TEXTURE_H

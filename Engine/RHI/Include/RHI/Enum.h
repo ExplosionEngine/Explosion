@@ -2,8 +2,7 @@
 // Created by johnk on 10/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_ENUM_H
-#define EXPLOSION_RHI_ENUM_H
+#pragma once
 
 #include <cstdint>
 #include <type_traits>
@@ -400,5 +399,3 @@ namespace RHI {
         size_t a;
     };
 }
-
-#endif //EXPLOSION_RHI_ENUM_H

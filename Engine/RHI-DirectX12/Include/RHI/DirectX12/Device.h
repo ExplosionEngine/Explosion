@@ -2,8 +2,7 @@
 // Created by johnk on 15/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_DX12_DEVICE_H
-#define EXPLOSION_RHI_DX12_DEVICE_H
+#pragma once
 
 #include <vector>
 #include <memory>
@@ -74,5 +73,3 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12Device> dx12Device;
     };
 }
-
-#endif //EXPLOSION_RHI_DX12_DEVICE_H

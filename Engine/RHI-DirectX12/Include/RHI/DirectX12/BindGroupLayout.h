@@ -2,8 +2,7 @@
 // Created by johnk on 6/3/2022.
 //
 
-#ifndef EXPLOSION_RHI_DX12_BIND_GROUP_LAYOUT_H
-#define EXPLOSION_RHI_DX12_BIND_GROUP_LAYOUT_H
+#pragma once
 
 #include <memory>
 
@@ -31,5 +30,3 @@ namespace RHI::DirectX12 {
         std::vector<CD3DX12_ROOT_PARAMETER1> dx12RootParameters;
     };
 }
-
-#endif//EXPLOSION_RHI_DX12_BIND_GROUP_LAYOUT_H

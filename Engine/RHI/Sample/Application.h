@@ -2,8 +2,7 @@
 // Created by johnk on 11/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_SAMPLE_APPLICATION_H
-#define EXPLOSION_RHI_SAMPLE_APPLICATION_H
+#pragma once
 
 #include <string>
 #include <utility>
@@ -50,5 +49,3 @@ private:
     uint32_t width;
     uint32_t height;
 };
-
-#endif //EXPLOSION_RHI_SAMPLE_APPLICATION_H

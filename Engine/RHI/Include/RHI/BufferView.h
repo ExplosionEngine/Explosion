@@ -2,8 +2,7 @@
 // Created by johnk on 20/3/2022.
 //
 
-#ifndef EXPLOSION_RHI_BUFFER_VIEW_H
-#define EXPLOSION_RHI_BUFFER_VIEW_H
+#pragma once
 
 #include <cstddef>
 
@@ -26,5 +25,3 @@ namespace RHI {
         explicit BufferView(const BufferViewCreateInfo* createInfo);
     };
 }
-
-#endif//EXPLOSION_RHI_BUFFER_VIEW_H

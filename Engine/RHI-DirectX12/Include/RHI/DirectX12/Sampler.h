@@ -2,8 +2,7 @@
 // Created by johnk on 5/3/2022.
 //
 
-#ifndef EXPLOSION_RHI_DX12_SAMPLER_H
-#define EXPLOSION_RHI_DX12_SAMPLER_H
+#pragma once
 
 #include <memory>
 
@@ -34,5 +33,3 @@ namespace RHI::DirectX12 {
         CD3DX12_GPU_DESCRIPTOR_HANDLE dx12GpuDescriptorHandle;
     };
 }
-
-#endif//EXPLOSION_RHI_DX12_SAMPLER_H

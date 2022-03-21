@@ -2,8 +2,7 @@
 // Created by johnk on 10/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_DX12_INSTANCE_H
-#define EXPLOSION_RHI_DX12_INSTANCE_H
+#pragma once
 
 #include <vector>
 #include <memory>
@@ -44,5 +43,3 @@ namespace RHI::DirectX12 {
 extern "C" {
     RHI_DIRECTX12_API RHI::Instance* RHICreateInstance();
 }
-
-#endif //EXPLOSION_RHI_DX12_INSTANCE_H

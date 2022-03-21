@@ -2,8 +2,7 @@
 // Created by johnk on 15/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_DX12_QUEUE_H
-#define EXPLOSION_RHI_DX12_QUEUE_H
+#pragma once
 
 #include <wrl/client.h>
 #include <d3d12.h>
@@ -27,5 +26,3 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12CommandQueue> dx12CommandQueue;
     };
 }
-
-#endif //EXPLOSION_RHI_DX12_QUEUE_H

@@ -2,8 +2,7 @@
 // Created by johnk on 11/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_VULKAN_H
-#define EXPLOSION_RHI_VULKAN_H
+#pragma once
 
 #include <stdexcept>
 #include <unordered_map>
@@ -71,5 +70,3 @@ namespace RHI::Vulkan {
         VK_ENUM_MAP_ITEM(QueueType::TRANSFER, vk::QueueFlagBits::eCompute)
     VK_ENUM_MAP_END()
 }
-
-#endif //EXPLOSION_RHI_VULKAN_H

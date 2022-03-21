@@ -2,8 +2,7 @@
 // Created by johnk on 15/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_DEVICE_H
-#define EXPLOSION_RHI_DEVICE_H
+#pragma once
 
 #include <cstdint>
 
@@ -66,5 +65,3 @@ namespace RHI {
         explicit Device(const DeviceCreateInfo* createInfo);
     };
 }
-
-#endif //EXPLOSION_RHI_DEVICE_H

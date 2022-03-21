@@ -2,8 +2,7 @@
 // Created by johnk on 12/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_VULKAN_GPU_H
-#define EXPLOSION_RHI_VULKAN_GPU_H
+#pragma once
 
 #include <vulkan/vulkan.hpp>
 
@@ -27,5 +26,3 @@ namespace RHI::Vulkan {
         vk::PhysicalDevice vkPhysicalDevice;
     };
 }
-
-#endif //EXPLOSION_RHI_VULKAN_GPU_H

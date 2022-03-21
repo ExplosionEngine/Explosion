@@ -2,8 +2,7 @@
 // Created by johnk on 9/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_INSTANCE_H
-#define EXPLOSION_RHI_INSTANCE_H
+#pragma once
 
 #include <cstdint>
 
@@ -31,5 +30,3 @@ namespace RHI {
 
     using RHICreateInstanceFunc = Instance*(*)();
 }
-
-#endif //EXPLOSION_RHI_INSTANCE_H

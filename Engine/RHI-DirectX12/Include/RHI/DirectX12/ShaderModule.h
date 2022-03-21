@@ -2,8 +2,7 @@
 // Created by johnk on 16/3/2022.
 //
 
-#ifndef EXPLOSION_RHI_DX12_SHADER_MODULE_H
-#define EXPLOSION_RHI_DX12_SHADER_MODULE_H
+#pragma once
 
 #include <d3d12.h>
 #include <directx/d3dx12.h>
@@ -25,5 +24,3 @@ namespace RHI::DirectX12 {
         CD3DX12_SHADER_BYTECODE dx12ShaderBytecode;
     };
 }
-
-#endif//EXPLOSION_RHI_DX12_SHADER_MODULE_H

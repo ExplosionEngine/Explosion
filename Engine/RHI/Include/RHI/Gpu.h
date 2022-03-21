@@ -2,8 +2,7 @@
 // Created by johnk on 12/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_GRAPHICS_CARD_H
-#define EXPLOSION_RHI_GRAPHICS_CARD_H
+#pragma once
 
 #include <cstdint>
 
@@ -31,5 +30,3 @@ namespace RHI {
         Gpu();
     };
 }
-
-#endif //EXPLOSION_RHI_GRAPHICS_CARD_H

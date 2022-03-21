@@ -2,8 +2,7 @@
 // Created by johnk on 13/3/2022.
 //
 
-#ifndef EXPLOSION_COMMON_PLATFORM_H
-#define EXPLOSION_COMMON_PLATFORM_H
+#pragma once
 
 namespace Common {
     enum class DevelopmentPlatform {
@@ -31,5 +30,3 @@ namespace Common {
         MAX
     };
 }
-
-#endif//EXPLOSION_COMMON_PLATFORM_H

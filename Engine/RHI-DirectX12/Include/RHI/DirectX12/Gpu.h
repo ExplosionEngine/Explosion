@@ -2,8 +2,7 @@
 // Created by johnk on 13/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_DX12_GPU_H
-#define EXPLOSION_RHI_DX12_GPU_H
+#pragma once
 
 #include <wrl/client.h>
 #include <dxgi1_4.h>
@@ -28,5 +27,3 @@ namespace RHI::DirectX12 {
         ComPtr<IDXGIAdapter1> dx12Adapter;
     };
 }
-
-#endif //EXPLOSION_RHI_DX12_GPU_H

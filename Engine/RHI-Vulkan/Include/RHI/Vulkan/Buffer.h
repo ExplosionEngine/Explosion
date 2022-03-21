@@ -2,8 +2,7 @@
 // Created by johnk on 2022/1/26.
 //
 
-#ifndef EXPLOSION_RHI_VULKAN_BUFFER_H
-#define EXPLOSION_RHI_VULKAN_BUFFER_H
+#pragma once
 
 #include <vulkan/vulkan.hpp>
 
@@ -33,5 +32,3 @@ namespace RHI::Vulkan {
         vk::Buffer vkBuffer;
     };
 }
-
-#endif //EXPLOSION_RHI_VULKAN_BUFFER_H

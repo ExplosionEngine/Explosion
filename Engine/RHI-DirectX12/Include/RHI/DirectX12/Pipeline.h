@@ -2,8 +2,7 @@
 // Created by johnk on 11/3/2022.
 //
 
-#ifndef EXPLOSION_RHI_DX12_PIPELINE_H
-#define EXPLOSION_RHI_DX12_PIPELINE_H
+#pragma once
 
 #include <wrl/client.h>
 #include <d3d12.h>
@@ -47,5 +46,3 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12PipelineState> dx12PipelineState;
     };
 }
-
-#endif//EXPLOSION_RHI_DX12_PIPELINE_H
