@@ -73,6 +73,11 @@ namespace RHI::Vulkan {
         device.GetVkDevice().unmapMemory(vkDeviceMemory);
     }
 
+    BufferView* VKBuffer::CreateBufferView(const BufferViewCreateInfo* createInfo)
+    {
+        return nullptr;
+    }
+
     void VKBuffer::Destroy()
     {
         delete this;

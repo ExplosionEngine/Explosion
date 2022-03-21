@@ -11,6 +11,7 @@
 #include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/Buffer.h>
+#include <RHI/DirectX12/BufferView.h>
 
 namespace RHI::DirectX12 {
     static D3D12_HEAP_TYPE GetDX12HeapType(BufferUsageFlags bufferUsages)
@@ -66,23 +67,12 @@ namespace RHI::DirectX12 {
         }
         return MapMode::READ;
     }
-
-    static inline bool IsConstantBuffer(BufferUsageFlags bufferUsages)
-    {
-        return bufferUsages & BufferUsageBits::UNIFORM;
-    }
-
-    static inline bool IsUnorderedAccessBuffer (BufferUsageFlags bufferUsages)
-    {
-        return bufferUsages & BufferUsageBits::STORAGE;
-    }
 }
 
 namespace RHI::DirectX12 {
-    DX12Buffer::DX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo) : Buffer(createInfo), mapMode(GetMapMode(createInfo->usages)), dx12CpuDescriptorHandle()
+    DX12Buffer::DX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo) : Buffer(createInfo), mapMode(GetMapMode(createInfo->usages)), usages(createInfo->usages), device(device)
     {
         CreateDX12Buffer(device, createInfo);
-        CreateDX12Descriptor(device, createInfo);
     }
 
     DX12Buffer::~DX12Buffer() = default;
@@ -106,6 +96,11 @@ namespace RHI::DirectX12 {
         dx12Resource->Unmap(0, nullptr);
     }
 
+    BufferView* DX12Buffer::CreateBufferView(const BufferViewCreateInfo* createInfo)
+    {
+        return new DX12BufferView(*this, createInfo);
+    }
+
     void DX12Buffer::Destroy()
     {
         delete this;
@@ -116,9 +111,14 @@ namespace RHI::DirectX12 {
         return dx12Resource;
     }
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Buffer::GetDX12CpuDescriptorHandle()
+    BufferUsageFlags DX12Buffer::GetUsages()
     {
-        return dx12CpuDescriptorHandle;
+        return usages;
+    }
+
+    DX12Device& DX12Buffer::GetDevice()
+    {
+        return device;
     }
 
     void DX12Buffer::CreateDX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo)
@@ -135,27 +135,6 @@ namespace RHI::DirectX12 {
             IID_PPV_ARGS(&dx12Resource)
         ))) {
             throw DX12Exception("failed to create dx12 buffer");
-        }
-    }
-
-    void DX12Buffer::CreateDX12Descriptor(DX12Device& device, const BufferCreateInfo* createInfo)
-    {
-        if (IsConstantBuffer(createInfo->usages)) {
-            D3D12_CONSTANT_BUFFER_VIEW_DESC desc {};
-            desc.BufferLocation = dx12Resource->GetGPUVirtualAddress();
-            desc.SizeInBytes = createInfo->size;
-
-            dx12CpuDescriptorHandle = device.AllocateCbvSrvUavDescriptor();
-            device.GetDX12Device()->CreateConstantBufferView(&desc, dx12CpuDescriptorHandle);
-        } else if (IsUnorderedAccessBuffer(createInfo->usages)) {
-            D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
-            desc.Format = DXGI_FORMAT_UNKNOWN;
-            desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-            desc.Buffer.FirstElement = 0;
-            desc.Buffer.NumElements = createInfo->size;
-
-            dx12CpuDescriptorHandle = device.AllocateCbvSrvUavDescriptor();
-            device.GetDX12Device()->CreateUnorderedAccessView(dx12Resource.Get(), nullptr, &desc, dx12CpuDescriptorHandle);
         }
     }
 }
