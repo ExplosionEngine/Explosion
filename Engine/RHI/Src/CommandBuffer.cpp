@@ -5,7 +5,7 @@
 #include <RHI/CommandBuffer.h>
 
 namespace RHI {
-    CommandBuffer::CommandBuffer(const CommandBufferCreateInfo* createInfo) {}
+    CommandBuffer::CommandBuffer() = default;
 
     CommandBuffer::~CommandBuffer() = default;
 }

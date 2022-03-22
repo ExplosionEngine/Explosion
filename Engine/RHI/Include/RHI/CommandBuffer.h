@@ -9,10 +9,6 @@
 namespace RHI {
     class CommandEncoder;
 
-    struct CommandBufferCreateInfo {
-        // TODO
-    };
-
     class CommandBuffer {
     public:
         NON_COPYABLE(CommandBuffer)
@@ -22,6 +18,6 @@ namespace RHI {
         virtual void Destroy() = 0;
 
     protected:
-        explicit CommandBuffer(const CommandBufferCreateInfo* createInfo);
+        CommandBuffer();
     };
 }

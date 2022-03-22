@@ -59,7 +59,7 @@ namespace RHI {
         virtual ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) = 0;
         virtual ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) = 0;
         virtual GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) = 0;
-        virtual CommandBuffer* CreateCommandBuffer(const CommandBufferCreateInfo* createInfo) = 0;
+        virtual CommandBuffer* CreateCommandBuffer() = 0;
 
     protected:
         explicit Device(const DeviceCreateInfo* createInfo);

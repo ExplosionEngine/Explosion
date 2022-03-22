@@ -33,7 +33,7 @@ namespace RHI::Vulkan {
         ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) override;
         ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) override;
         GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override;
-        CommandBuffer* CreateCommandBuffer(const CommandBufferCreateInfo* createInfo) override;
+        CommandBuffer* CreateCommandBuffer() override;
 
         vk::Device GetVkDevice();
 
