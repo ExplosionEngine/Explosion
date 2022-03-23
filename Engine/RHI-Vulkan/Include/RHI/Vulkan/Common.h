@@ -116,7 +116,7 @@ namespace RHI::Vulkan {
     VK_ENUM_MAP_BEGIN(QueueType, vk::QueueFlagBits)
         VK_ENUM_MAP_ITEM(QueueType::GRAPHICS, vk::QueueFlagBits::eGraphics)
         VK_ENUM_MAP_ITEM(QueueType::COMPUTE,  vk::QueueFlagBits::eCompute)
-        VK_ENUM_MAP_ITEM(QueueType::TRANSFER, vk::QueueFlagBits::eCompute)
+        VK_ENUM_MAP_ITEM(QueueType::TRANSFER, vk::QueueFlagBits::eTransfer)
     VK_ENUM_MAP_END()
 
     VK_ENUM_MAP_BEGIN(TextureDimension, vk::ImageType)
