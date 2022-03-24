@@ -15,7 +15,6 @@ namespace RHI {
     };
 
     struct BindGroupLayoutCreateInfo {
-        uint8_t layoutIndex;
         uint32_t entryNum;
         const BindGroupLayoutEntry* entries;
     };
