@@ -3,6 +3,9 @@
 //
 
 #include <RHI/DirectX12/CommandEncoder.h>
+#include <RHI/DirectX12/CommandBuffer.h>
+#include <RHI/DirectX12/Pipeline.h>
+#include <RHI/DirectX12/PipelineLayout.h>
 
 namespace RHI::DirectX12 {
     DX12ComputePassCommandEncoder::DX12ComputePassCommandEncoder(DX12CommandBuffer& commandBuffer) : ComputePassCommandEncoder(), commandBuffer(commandBuffer)
@@ -14,7 +17,9 @@ namespace RHI::DirectX12 {
 
     void DX12ComputePassCommandEncoder::SetPipeline(ComputePipeline* pipeline)
     {
-        // TODO
+        auto* computePipeline = dynamic_cast<DX12ComputePipeline*>(pipeline);
+        commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(computePipeline->GetDX12PipelineState().Get());
+        commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(computePipeline->GetPipelineLayout().GetDX12RootSignature().Get());
     }
 
     void DX12ComputePassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
@@ -46,7 +51,9 @@ namespace RHI::DirectX12 {
 
     void DX12GraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
     {
-        // TODO
+        auto* graphicsPipeline = dynamic_cast<DX12GraphicsPipeline*>(pipeline);
+        commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(graphicsPipeline->GetDX12PipelineState().Get());
+        commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(graphicsPipeline->GetPipelineLayout().GetDX12RootSignature().Get());
     }
 
     void DX12GraphicsPassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
