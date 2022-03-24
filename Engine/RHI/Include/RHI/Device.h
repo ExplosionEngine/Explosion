@@ -2,8 +2,7 @@
 // Created by johnk on 15/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_DEVICE_H
-#define EXPLOSION_RHI_DEVICE_H
+#pragma once
 
 #include <cstdint>
 
@@ -60,11 +59,9 @@ namespace RHI {
         virtual ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) = 0;
         virtual ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) = 0;
         virtual GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) = 0;
-        virtual CommandBuffer* CreateCommandBuffer(const CommandBufferCreateInfo* createInfo) = 0;
+        virtual CommandBuffer* CreateCommandBuffer() = 0;
 
     protected:
         explicit Device(const DeviceCreateInfo* createInfo);
     };
 }
-
-#endif //EXPLOSION_RHI_DEVICE_H

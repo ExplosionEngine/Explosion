@@ -2,8 +2,7 @@
 // Created by johnk on 15/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_QUEUE_H
-#define EXPLOSION_RHI_QUEUE_H
+#pragma once
 
 #include <Common/Utility.h>
 
@@ -21,5 +20,3 @@ namespace RHI {
         Queue();
     };
 }
-
-#endif //EXPLOSION_RHI_QUEUE_H

@@ -2,8 +2,7 @@
 // Created by johnk on 28/12/2021.
 //
 
-#ifndef EXPLOSION_COMMON_DYNAMIC_LIBRARY_H
-#define EXPLOSION_COMMON_DYNAMIC_LIBRARY_H
+#pragma once
 
 #include <string>
 #include <utility>
@@ -58,5 +57,3 @@ namespace Common {
         std::unordered_map<std::string, std::unique_ptr<DynamicLibrary>> libs;
     };
 }
-
-#endif //EXPLOSION_COMMON_DYNAMIC_LIBRARY_H

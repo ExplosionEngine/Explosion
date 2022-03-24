@@ -2,8 +2,7 @@
 // Created by johnk on 20/3/2022.
 //
 
-#ifndef EXPLOSION_RHI_DX12_BUFFER_VIEW_H
-#define EXPLOSION_RHI_DX12_BUFFER_VIEW_H
+#pragma once
 
 #include <wrl/client.h>
 #include <directx/d3dx12.h>
@@ -36,5 +35,3 @@ namespace RHI::DirectX12 {
         CD3DX12_GPU_DESCRIPTOR_HANDLE dx12GpuDescriptorHandle;
     };
 }
-
-#endif//EXPLOSION_RHI_DX12_BUFFER_VIEW_H

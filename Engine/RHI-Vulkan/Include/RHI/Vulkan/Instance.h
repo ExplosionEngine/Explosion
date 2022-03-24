@@ -2,8 +2,7 @@
 // Created by johnk on 11/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_VULKAN_INSTANCE_H
-#define EXPLOSION_RHI_VULKAN_INSTANCE_H
+#pragma once
 
 #include <vulkan/vulkan.hpp>
 
@@ -48,5 +47,3 @@ namespace RHI::Vulkan {
 extern "C" {
     RHI_VULKAN_API RHI::Instance* RHICreateInstance();
 }
-
-#endif //EXPLOSION_RHI_VULKAN_INSTANCE_H

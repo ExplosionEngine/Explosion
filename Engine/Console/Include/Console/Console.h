@@ -2,8 +2,7 @@
 // Created by johnk on 2021/12/25.
 //
 
-#ifndef EXPLOSION_CONSOLE_H
-#define EXPLOSION_CONSOLE_H
+#pragma once
 
 #include <unordered_map>
 #include <string>
@@ -35,5 +34,3 @@ namespace Console {
         std::unordered_map<std::string, IConsoleVariable*> variables;
     };
 }
-
-#endif //EXPLOSION_CONSOLE_H

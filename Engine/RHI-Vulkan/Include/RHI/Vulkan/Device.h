@@ -2,8 +2,7 @@
 // Created by johnk on 16/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_VULKAN_DEVICE_H
-#define EXPLOSION_RHI_VULKAN_DEVICE_H
+#pragma once
 
 #include <optional>
 #include <unordered_map>
@@ -34,7 +33,7 @@ namespace RHI::Vulkan {
         ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) override;
         ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) override;
         GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override;
-        CommandBuffer* CreateCommandBuffer(const CommandBufferCreateInfo* createInfo) override;
+        CommandBuffer* CreateCommandBuffer() override;
 
         vk::Device GetVkDevice();
 
@@ -51,5 +50,3 @@ namespace RHI::Vulkan {
         std::unordered_map<QueueType, std::vector<std::unique_ptr<VKQueue>>> queues;
     };
 }
-
-#endif //EXPLOSION_RHI_VULKAN_DEVICE_H

@@ -2,8 +2,7 @@
 // Created by johnk on 11/3/2022.
 //
 
-#ifndef EXPLOSION_RHI_DX12_PIPELINE_LAYOUT_H
-#define EXPLOSION_RHI_DX12_PIPELINE_LAYOUT_H
+#pragma once
 
 #include <wrl/client.h>
 #include <d3d12.h>
@@ -31,5 +30,3 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12RootSignature> dx12RootSignature;
     };
 }
-
-#endif//EXPLOSION_RHI_DX12_PIPELINE_LAYOUT_H

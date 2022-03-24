@@ -2,8 +2,7 @@
 // Created by johnk on 19/2/2022.
 //
 
-#ifndef EXPLOSION_RHI_BIND_GROUP_LAYOUT_H
-#define EXPLOSION_RHI_BIND_GROUP_LAYOUT_H
+#pragma once
 
 #include <Common/Utility.h>
 #include <RHI/Enum.h>
@@ -32,5 +31,3 @@ namespace RHI {
         explicit BindGroupLayout(const BindGroupLayoutCreateInfo* createInfo);
     };
 }
-
-#endif//EXPLOSION_RHI_BIND_GROUP_LAYOUT_H

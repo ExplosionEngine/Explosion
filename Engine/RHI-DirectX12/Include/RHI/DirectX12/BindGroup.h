@@ -2,8 +2,7 @@
 // Created by johnk on 20/3/2022.
 //
 
-#ifndef EXPLOSION_RHI_DX12_BIND_GROUP_H
-#define EXPLOSION_RHI_DX12_BIND_GROUP_H
+#pragma once
 
 #include <utility>
 #include <vector>
@@ -32,5 +31,3 @@ namespace RHI::DirectX12 {
         std::vector<std::pair<uint8_t, CD3DX12_GPU_DESCRIPTOR_HANDLE>> bindings;
     };
 }
-
-#endif//EXPLOSION_RHI_DX12_BIND_GROUP_H

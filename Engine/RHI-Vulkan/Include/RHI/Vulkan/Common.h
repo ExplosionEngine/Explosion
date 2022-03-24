@@ -2,8 +2,7 @@
 // Created by johnk on 11/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_VULKAN_H
-#define EXPLOSION_RHI_VULKAN_H
+#pragma once
 
 #include <stdexcept>
 #include <unordered_map>
@@ -180,5 +179,3 @@ namespace RHI::Vulkan {
         return { static_cast<uint32_t>(ext.x), static_cast<uint32_t>(ext.y), static_cast<uint32_t>(ext.z) };
     }
 }
-
-#endif //EXPLOSION_RHI_VULKAN_H

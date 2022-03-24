@@ -2,8 +2,7 @@
 // Created by johnk on 2021/12/25.
 //
 
-#ifndef EXPLOSION_CONSOLE_CONSOLE_VARIABLE_H
-#define EXPLOSION_CONSOLE_CONSOLE_VARIABLE_H
+#pragma once
 
 #include <string>
 #include <utility>
@@ -126,5 +125,3 @@ namespace Console {
         T& value;
     };
 }
-
-#endif //EXPLOSION_CONSOLE_CONSOLE_VARIABLE_H

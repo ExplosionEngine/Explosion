@@ -45,14 +45,12 @@ namespace RHI::DirectX12 {
         }
 
         for (const auto& visibility : visibilitiesMap) {
-            auto lastRange = dx12DescriptorRanges.end();
             for (const auto* entry : visibility.second) {
-                dx12DescriptorRanges.emplace_back();
-                dx12DescriptorRanges.back().Init(DX12EnumCast<BindingType, D3D12_DESCRIPTOR_RANGE_TYPE>(entry->type), 1, entry->binding, createInfo->layoutIndex, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+                CD3DX12_DESCRIPTOR_RANGE1 dx12DescriptorRange;
+                dx12DescriptorRange.Init(DX12EnumCast<BindingType, D3D12_DESCRIPTOR_RANGE_TYPE>(entry->type), 1, entry->binding, createInfo->layoutIndex, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+                dx12RootParameters.emplace_back();
+                dx12RootParameters.back().InitAsDescriptorTable(1, &dx12DescriptorRange, DX12EnumCast<ShaderStageBits, D3D12_SHADER_VISIBILITY>(visibility.first));
             }
-            auto newLastRange = dx12DescriptorRanges.end();
-            dx12RootParameters.emplace_back();
-            dx12RootParameters.back().InitAsDescriptorTable(newLastRange - lastRange, &*lastRange, DX12EnumCast<ShaderStageBits, D3D12_SHADER_VISIBILITY>(visibility.first));
         }
     }
 }

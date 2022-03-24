@@ -2,8 +2,7 @@
 // Created by johnk on 2022/2/21.
 //
 
-#ifndef EXPLOSION_RHI_DX12_TEXTURE_H
-#define EXPLOSION_RHI_DX12_TEXTURE_H
+#pragma once
 
 #include <RHI/Texture.h>
 #include <d3d12.h>
@@ -34,5 +33,3 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12Resource> dx12Resource;
     };
 }
-
-#endif //EXPLOSION_RHI_DX12_TEXTURE_H

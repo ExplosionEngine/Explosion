@@ -2,8 +2,7 @@
 // Created by johnk on 2022/2/25.
 //
 
-#ifndef EXPLOSION_RHI_DX12_TEXTURE_VIEW_H
-#define EXPLOSION_RHI_DX12_TEXTURE_VIEW_H
+#pragma once
 
 #include <memory>
 
@@ -38,5 +37,3 @@ namespace RHI::DirectX12 {
         CD3DX12_GPU_DESCRIPTOR_HANDLE dx12GpuDescriptorHandle;
     };
 }
-
-#endif //EXPLOSION_RHI_DX12_TEXTURE_VIEW_H

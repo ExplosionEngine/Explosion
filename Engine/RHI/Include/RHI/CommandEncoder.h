@@ -2,8 +2,7 @@
 // Created by johnk on 21/2/2022.
 //
 
-#ifndef EXPLOSION_RHI_COMMAND_ENCODER_H
-#define EXPLOSION_RHI_COMMAND_ENCODER_H
+#pragma once
 
 #include <cstdint>
 
@@ -77,6 +76,7 @@ namespace RHI {
         virtual ~GraphicsPassCommandEncoder();
 
         virtual void SetPipeline(GraphicsPipeline* pipeline) = 0;
+        virtual void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) = 0;
         virtual void SetIndexBuffer(Buffer* buffer, const IndexFormat& indexFormat, size_t offset, size_t size) = 0;
         virtual void SetVertexBuffer(size_t slot, Buffer* buffer, size_t offset, size_t size) = 0;
         virtual void Draw(size_t vertexCount, size_t instanceCount, size_t firstVertex, size_t firstInstance) = 0;
@@ -106,7 +106,6 @@ namespace RHI {
         virtual void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size) = 0;
         virtual void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size) = 0;
         virtual void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Extent<3>& size) = 0;
-        virtual void ClearBuffer(Buffer* buffer, size_t offset, size_t size) = 0;
         // TODO WriteTimeStamp(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-writetimestamp
         // TODO ResolveQuerySet(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-resolvequeryset
 
@@ -118,5 +117,3 @@ namespace RHI {
         CommandEncoder();
     };
 }
-
-#endif//EXPLOSION_RHI_COMMAND_ENCODER_H

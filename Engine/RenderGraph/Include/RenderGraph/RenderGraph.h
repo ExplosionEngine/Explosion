@@ -2,8 +2,7 @@
 // Created by johnk on 2021/12/20.
 //
 
-#ifndef EXPLOSION_RENDER_GRAPH_H
-#define EXPLOSION_RENDER_GRAPH_H
+#pragma once
 
 #include <cstdint>
 #include <string>
@@ -147,5 +146,3 @@ namespace RenderGraph {
         std::unordered_map<VirtualResource*, InstancedResource*> instancedResources;
     };
 }
-
-#endif //EXPLOSION_RENDER_GRAPH_H

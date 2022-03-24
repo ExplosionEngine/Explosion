@@ -2,8 +2,7 @@
 // Created by johnk on 19/2/2022.
 //
 
-#ifndef EXPLOSION_RHI_PIPELINE_LAYOUT_H
-#define EXPLOSION_RHI_PIPELINE_LAYOUT_H
+#pragma once
 
 #include <cstdint>
 #include <Common/Utility.h>
@@ -30,5 +29,3 @@ namespace RHI {
         explicit PipelineLayout(const PipelineLayoutCreateInfo* createInfo);
     };
 }
-
-#endif//EXPLOSION_RHI_PIPELINE_LAYOUT_H

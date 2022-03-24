@@ -7,12 +7,21 @@
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/Queue.h>
 #include <RHI/DirectX12/Buffer.h>
+#include <RHI/DirectX12/Texture.h>
+#include <RHI/DirectX12/Sampler.h>
+#include <RHI/DirectX12/BindGroupLayout.h>
+#include <RHI/DirectX12/BindGroup.h>
+#include <RHI/DirectX12/PipelineLayout.h>
+#include <RHI/DirectX12/ShaderModule.h>
+#include <RHI/DirectX12/Pipeline.h>
+#include <RHI/DirectX12/CommandBuffer.h>
 
 namespace RHI::DirectX12 {
     DX12Device::DX12Device(DX12Gpu& gpu, const DeviceCreateInfo* createInfo) : Device(createInfo), rtvDescriptorSize(0), cbvSrvUavDescriptorSize(0)
     {
         CreateDX12Device(gpu);
         CreateDX12Queues(createInfo);
+        CreateDX12CommandAllocator();
         GetDX12DescriptorSize();
     }
 
@@ -45,6 +54,11 @@ namespace RHI::DirectX12 {
         return queueArray[index].get();
     }
 
+    ComPtr<ID3D12CommandAllocator>& DX12Device::GetDX12CommandAllocator()
+    {
+        return dx12CommandAllocator;
+    }
+
     Buffer* DX12Device::CreateBuffer(const BufferCreateInfo* createInfo)
     {
         return new DX12Buffer(*this, createInfo);
@@ -52,56 +66,47 @@ namespace RHI::DirectX12 {
 
     Texture* DX12Device::CreateTexture(const TextureCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new DX12Texture(*this, createInfo);
     }
 
     Sampler* DX12Device::CreateSampler(const SamplerCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new DX12Sampler(*this, createInfo);
     }
 
     BindGroupLayout* DX12Device::CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new DX12BindGroupLayout(createInfo);
     }
 
     BindGroup* DX12Device::CreateBindGroup(const BindGroupCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new DX12BindGroup(createInfo);
     }
 
     PipelineLayout* DX12Device::CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new DX12PipelineLayout(*this, createInfo);
     }
 
     ShaderModule* DX12Device::CreateShaderModule(const ShaderModuleCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new DX12ShaderModule(createInfo);
     }
 
     ComputePipeline* DX12Device::CreateComputePipeline(const ComputePipelineCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new DX12ComputePipeline(*this, createInfo);
     }
 
     GraphicsPipeline* DX12Device::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new DX12GraphicsPipeline(*this, createInfo);
     }
 
-    CommandBuffer* DX12Device::CreateCommandBuffer(const CommandBufferCreateInfo* createInfo)
+    CommandBuffer* DX12Device::CreateCommandBuffer()
     {
-        // TODO
-        return nullptr;
+        return new DX12CommandBuffer(*this);
     }
 
     ComPtr<ID3D12Device>& DX12Device::GetDX12Device()
@@ -188,6 +193,11 @@ namespace RHI::DirectX12 {
 
             queues[iter.first] = std::move(tempQueues);
         }
+    }
+
+    void DX12Device::CreateDX12CommandAllocator()
+    {
+        dx12Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&dx12CommandAllocator));
     }
 
     void DX12Device::GetDX12DescriptorSize()

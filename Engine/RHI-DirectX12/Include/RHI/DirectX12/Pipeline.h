@@ -2,8 +2,7 @@
 // Created by johnk on 11/3/2022.
 //
 
-#ifndef EXPLOSION_RHI_DX12_PIPELINE_H
-#define EXPLOSION_RHI_DX12_PIPELINE_H
+#pragma once
 
 #include <wrl/client.h>
 #include <d3d12.h>
@@ -14,6 +13,7 @@ using namespace Microsoft::WRL;
 
 namespace RHI::DirectX12 {
     class DX12Device;
+    class DX12PipelineLayout;
 
     class DX12ComputePipeline : public ComputePipeline {
     public:
@@ -23,11 +23,14 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
 
+        DX12PipelineLayout& GetPipelineLayout();
         ComPtr<ID3D12PipelineState>& GetDX12PipelineState();
 
     private:
+        void SavePipelineLayout(const ComputePipelineCreateInfo* createInfo);
         void CreateDX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo* createInfo);
 
+        DX12PipelineLayout* pipelineLayout;
         ComPtr<ID3D12PipelineState> dx12PipelineState;
     };
 
@@ -39,13 +42,14 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
 
+        DX12PipelineLayout& GetPipelineLayout();
         ComPtr<ID3D12PipelineState>& GetDX12PipelineState();
 
     private:
+        void SavePipelineLayout(const GraphicsPipelineCreateInfo* createInfo);
         void CreateDX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo* createInfo);
 
+        DX12PipelineLayout* pipelineLayout;
         ComPtr<ID3D12PipelineState> dx12PipelineState;
     };
 }
-
-#endif//EXPLOSION_RHI_DX12_PIPELINE_H

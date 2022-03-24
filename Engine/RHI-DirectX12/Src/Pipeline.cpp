@@ -109,6 +109,7 @@ namespace RHI::DirectX12 {
 namespace RHI::DirectX12 {
     DX12ComputePipeline::DX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo* createInfo) : ComputePipeline(createInfo)
     {
+        SavePipelineLayout(createInfo);
         CreateDX12ComputePipeline(device, createInfo);
     }
 
@@ -119,14 +120,27 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
+    DX12PipelineLayout& DX12ComputePipeline::GetPipelineLayout()
+    {
+        return *pipelineLayout;
+    }
+
     ComPtr<ID3D12PipelineState>& DX12ComputePipeline::GetDX12PipelineState()
     {
         return dx12PipelineState;
     }
 
+    void DX12ComputePipeline::SavePipelineLayout(const ComputePipelineCreateInfo* createInfo)
+    {
+        auto* pl = dynamic_cast<DX12PipelineLayout*>(createInfo->layout);
+        if (pl == nullptr) {
+            throw DX12Exception("must set dx12 pipeline layout to '.layout' member in ComputePipelineCreateInfo");
+        }
+        pipelineLayout = pl;
+    }
+
     void DX12ComputePipeline::CreateDX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo* createInfo)
     {
-        auto* pipelineLayout = dynamic_cast<DX12PipelineLayout*>(createInfo->layout);
         auto* computeShader = dynamic_cast<DX12ShaderModule*>(createInfo->computeShader);
 
         D3D12_COMPUTE_PIPELINE_STATE_DESC desc {};
@@ -140,6 +154,7 @@ namespace RHI::DirectX12 {
 
     DX12GraphicsPipeline::DX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo* createInfo) : GraphicsPipeline(createInfo)
     {
+        SavePipelineLayout(createInfo);
         CreateDX12GraphicsPipeline(device, createInfo);
     }
 
@@ -150,14 +165,27 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
+    DX12PipelineLayout& DX12GraphicsPipeline::GetPipelineLayout()
+    {
+        return *pipelineLayout;
+    }
+
     ComPtr<ID3D12PipelineState>& DX12GraphicsPipeline::GetDX12PipelineState()
     {
         return dx12PipelineState;
     }
 
+    void DX12GraphicsPipeline::SavePipelineLayout(const GraphicsPipelineCreateInfo* createInfo)
+    {
+        auto* pl = dynamic_cast<DX12PipelineLayout*>(createInfo->layout);
+        if (pl == nullptr) {
+            throw DX12Exception("must set dx12 pipeline layout to '.layout' member in ComputePipelineCreateInfo");
+        }
+        pipelineLayout = pl;
+    }
+
     void DX12GraphicsPipeline::CreateDX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo* createInfo)
     {
-        auto* pipelineLayout = dynamic_cast<DX12PipelineLayout*>(createInfo->layout);
         auto* vertexShader = dynamic_cast<DX12ShaderModule*>(createInfo->vertexShader);
         auto* fragmentShader = dynamic_cast<DX12ShaderModule*>(createInfo->fragmentShader);
 

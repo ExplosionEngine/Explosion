@@ -2,8 +2,7 @@
 // Created by johnk on 15/1/2022.
 //
 
-#ifndef EXPLOSION_RHI_DX12_DEVICE_H
-#define EXPLOSION_RHI_DX12_DEVICE_H
+#pragma once
 
 #include <vector>
 #include <memory>
@@ -46,9 +45,10 @@ namespace RHI::DirectX12 {
         ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) override;
         ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) override;
         GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override;
-        CommandBuffer* CreateCommandBuffer(const CommandBufferCreateInfo* createInfo) override;
+        CommandBuffer* CreateCommandBuffer() override;
 
         ComPtr<ID3D12Device>& GetDX12Device();
+        ComPtr<ID3D12CommandAllocator>& GetDX12CommandAllocator();
         DescriptorAllocation AllocateRtvDescriptor();
         DescriptorAllocation AllocateCbvSrvUavDescriptor();
         DescriptorAllocation AllocateSamplerDescriptor();
@@ -62,6 +62,7 @@ namespace RHI::DirectX12 {
         inline DescriptorAllocation AllocateDescriptor(std::list<DescriptorHeapListNode>& list, uint8_t capacity, uint32_t descriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlag);
         void CreateDX12Device(DX12Gpu& gpu);
         void CreateDX12Queues(const DeviceCreateInfo* createInfo);
+        void CreateDX12CommandAllocator();
         void GetDX12DescriptorSize();
 
         std::unordered_map<QueueType, std::vector<std::unique_ptr<DX12Queue>>> queues;
@@ -72,7 +73,6 @@ namespace RHI::DirectX12 {
         std::list<DescriptorHeapListNode> cbvSrvUavHeapList;
         std::list<DescriptorHeapListNode> samplerHeapList;
         ComPtr<ID3D12Device> dx12Device;
+        ComPtr<ID3D12CommandAllocator> dx12CommandAllocator;
     };
 }
-
-#endif //EXPLOSION_RHI_DX12_DEVICE_H
