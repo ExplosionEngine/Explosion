@@ -4,6 +4,10 @@
 
 #pragma once
 
+#include <wrl/client.h>
+#include <d3d12.h>
+using namespace Microsoft::WRL;
+
 #include <RHI/CommandBuffer.h>
 
 namespace RHI::DirectX12 {
@@ -17,5 +21,12 @@ namespace RHI::DirectX12 {
 
         CommandEncoder* Begin() override;
         void Destroy() override;
+
+        ComPtr<ID3D12GraphicsCommandList>& GetDX12GraphicsCommandList();
+
+    private:
+        void AllocateDX12CommandList(DX12Device& device);
+
+        ComPtr<ID3D12GraphicsCommandList> dx12GraphicsCommandList;
     };
 }
