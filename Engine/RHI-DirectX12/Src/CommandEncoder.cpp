@@ -9,12 +9,10 @@
 #include <RHI/DirectX12/BindGroup.h>
 #include <RHI/DirectX12/BindGroupLayout.h>
 #include <RHI/DirectX12/Common.h>
+#include <RHI/DirectX12/Device.h>
 
 namespace RHI::DirectX12 {
-    DX12ComputePassCommandEncoder::DX12ComputePassCommandEncoder(DX12CommandBuffer& commandBuffer) : ComputePassCommandEncoder(), commandBuffer(commandBuffer)
-    {
-        // TODO
-    }
+    DX12ComputePassCommandEncoder::DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : ComputePassCommandEncoder(), device(device), commandBuffer(commandBuffer) {}
 
     DX12ComputePassCommandEncoder::~DX12ComputePassCommandEncoder() = default;
 
@@ -25,7 +23,7 @@ namespace RHI::DirectX12 {
             throw DX12Exception("pipeline cannot be nullptr");
         }
 
-        // TODO reset
+        commandBuffer.GetDX12GraphicsCommandList()->Reset(device.GetDX12CommandAllocator().Get(), computePipeline->GetDX12PipelineState().Get());
         commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(computePipeline->GetDX12PipelineState().Get());
         commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(computePipeline->GetPipelineLayout().GetDX12RootSignature().Get());
     }
@@ -68,10 +66,7 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12CommandBuffer& commandBuffer) : GraphicsPassCommandEncoder(), commandBuffer(commandBuffer)
-    {
-        // TODO
-    }
+    DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : GraphicsPassCommandEncoder(), device(device), commandBuffer(commandBuffer) {}
 
     DX12GraphicsPassCommandEncoder::~DX12GraphicsPassCommandEncoder() = default;
 
@@ -79,6 +74,7 @@ namespace RHI::DirectX12 {
     {
         graphicsPipeline = dynamic_cast<DX12GraphicsPipeline*>(pipeline);
 
+        commandBuffer.GetDX12GraphicsCommandList()->Reset(device.GetDX12CommandAllocator().Get(), graphicsPipeline->GetDX12PipelineState().Get());
         commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(graphicsPipeline->GetDX12PipelineState().Get());
         commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(graphicsPipeline->GetPipelineLayout().GetDX12RootSignature().Get());
     }
@@ -166,7 +162,7 @@ namespace RHI::DirectX12 {
         // TODO
     }
 
-    DX12CommandEncoder::DX12CommandEncoder(DX12CommandBuffer& commandBuffer) : CommandEncoder(), commandBuffer(commandBuffer) {}
+    DX12CommandEncoder::DX12CommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : CommandEncoder(), device(device), commandBuffer(commandBuffer) {}
 
     DX12CommandEncoder::~DX12CommandEncoder() = default;
 
@@ -192,16 +188,16 @@ namespace RHI::DirectX12 {
 
     ComputePassCommandEncoder* DX12CommandEncoder::BeginComputePass(const ComputePassBeginInfo* beginInfo)
     {
-        return new DX12ComputePassCommandEncoder(commandBuffer);
+        return new DX12ComputePassCommandEncoder(device, commandBuffer);
     }
 
     GraphicsPassCommandEncoder* DX12CommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo)
     {
-        return new DX12GraphicsPassCommandEncoder(commandBuffer);
+        return new DX12GraphicsPassCommandEncoder(device, commandBuffer);
     }
 
     void DX12CommandEncoder::End()
     {
-        // TODO
+        commandBuffer.GetDX12GraphicsCommandList()->Close();
     }
 }

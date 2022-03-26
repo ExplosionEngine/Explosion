@@ -7,6 +7,7 @@
 #include <RHI/CommandEncoder.h>
 
 namespace RHI::DirectX12 {
+    class DX12Device;
     class DX12CommandBuffer;
     class DX12ComputePipeline;
     class DX12GraphicsPipeline;
@@ -15,7 +16,7 @@ namespace RHI::DirectX12 {
     class DX12CommandEncoder : public CommandEncoder {
     public:
         NON_COPYABLE(DX12CommandEncoder)
-        explicit DX12CommandEncoder(DX12CommandBuffer& commandBuffer);
+        explicit DX12CommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer);
         ~DX12CommandEncoder() override;
 
         void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
@@ -28,13 +29,14 @@ namespace RHI::DirectX12 {
         void End() override;
 
     private:
+        DX12Device& device;
         DX12CommandBuffer& commandBuffer;
     };
 
     class DX12ComputePassCommandEncoder : public ComputePassCommandEncoder {
     public:
         NON_COPYABLE(DX12ComputePassCommandEncoder)
-        explicit DX12ComputePassCommandEncoder(DX12CommandBuffer& commandBuffer);
+        explicit DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer);
         ~DX12ComputePassCommandEncoder() override;
 
         void SetPipeline(ComputePipeline* pipeline) override;
@@ -43,6 +45,7 @@ namespace RHI::DirectX12 {
         void EndPass() override;
 
     private:
+        DX12Device& device;
         DX12ComputePipeline* computePipeline;
         DX12CommandBuffer& commandBuffer;
     };
@@ -50,7 +53,7 @@ namespace RHI::DirectX12 {
     class DX12GraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
     public:
         NON_COPYABLE(DX12GraphicsPassCommandEncoder)
-        explicit DX12GraphicsPassCommandEncoder(DX12CommandBuffer& commandBuffer);
+        explicit DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer);
         ~DX12GraphicsPassCommandEncoder() override;
 
         void SetPipeline(GraphicsPipeline* pipeline) override;
@@ -68,6 +71,7 @@ namespace RHI::DirectX12 {
         void EndPass() override;
 
     private:
+        DX12Device& device;
         DX12GraphicsPipeline* graphicsPipeline;
         DX12CommandBuffer& commandBuffer;
     };
