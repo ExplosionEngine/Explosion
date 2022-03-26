@@ -31,16 +31,16 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    BindingTypeAndRootParameterIndex DX12PipelineLayout::QueryRootDescriptorParameterIndex(ShaderStageBits shaderStage, uint8_t layoutIndex, uint8_t binding)
+    std::optional<BindingTypeAndRootParameterIndex> DX12PipelineLayout::QueryRootDescriptorParameterIndex(ShaderStageBits shaderStage, uint8_t layoutIndex, uint8_t binding)
     {
         auto iter1 = rootDescriptorParameterIndexMaps.find(shaderStage);
         if (iter1 == rootDescriptorParameterIndexMaps.end()) {
-            throw DX12Exception("failed to find slot with correct shader visibility");
+            return {};
         }
 
         auto iter2 = iter1->second.find(EncodeLayoutIndexAndBinding(layoutIndex, binding));
         if (iter2 == iter1->second.end()) {
-            throw DX12Exception("failed to find slot with specific layout index and binding");
+            throw DX12Exception("can not find suitable slot for specific layout index / binding");
         }
         return iter2->second;
     }
@@ -55,11 +55,7 @@ namespace RHI::DirectX12 {
         D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
         featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
 
-        using UBitsType = std::underlying_type_t<ShaderStageBits>;
-        for (UBitsType i = 0; i < static_cast<UBitsType>(ShaderStageBits::MAX); i = i << 1) {
-            rootDescriptorParameterIndexMaps[static_cast<ShaderStageBits>(i)] = {};
-        }
-
+        ForEachBitsType<ShaderStageBits>([this](ShaderStageBits shaderStage) -> void { rootDescriptorParameterIndexMaps[shaderStage] = {}; });
         std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
         {
             for (auto i = 0; i < createInfo->bindGroupNum; i++) {

@@ -28,12 +28,14 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
 
+        uint8_t GetLayoutIndex();
         [[nodiscard]] const std::vector<RootParameterKeyInfo>& GetRootParameterKeyInfos() const;
         [[nodiscard]] const std::vector<CD3DX12_ROOT_PARAMETER1>& GetDX12RootParameters() const;
 
     private:
         void CreateDX12RootParameters(const BindGroupLayoutCreateInfo* createInfo);
 
+        uint8_t layoutIndex;
         std::vector<RootParameterKeyInfo> rootParameterKeyInfos;
         std::vector<CD3DX12_ROOT_PARAMETER1> dx12RootParameters;
     };

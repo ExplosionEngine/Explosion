@@ -5,6 +5,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <optional>
 
 #include <wrl/client.h>
 #include <d3d12.h>
@@ -29,7 +30,7 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
 
-        BindingTypeAndRootParameterIndex QueryRootDescriptorParameterIndex(ShaderStageBits shaderStage, uint8_t layoutIndex, uint8_t binding);
+        std::optional<BindingTypeAndRootParameterIndex> QueryRootDescriptorParameterIndex(ShaderStageBits shaderStage, uint8_t layoutIndex, uint8_t binding);
         ComPtr<ID3D12RootSignature>& GetDX12RootSignature();
 
     private:

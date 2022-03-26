@@ -6,6 +6,8 @@
 #include <RHI/DirectX12/BufferView.h>
 #include <RHI/DirectX12/TextureView.h>
 #include <RHI/DirectX12/Sampler.h>
+#include <RHI/DirectX12/BindGroupLayout.h>
+#include <RHI/DirectX12/Common.h>
 
 namespace RHI::DirectX12 {
     static inline void GetDescriptorHandleAndHeap(CD3DX12_GPU_DESCRIPTOR_HANDLE& handle, ID3D12DescriptorHeap** heap, const BindGroupEntry& entry)
@@ -27,8 +29,9 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12BindGroup::DX12BindGroup(const BindGroupCreateInfo* createInfo) : BindGroup(createInfo)
+    DX12BindGroup::DX12BindGroup(const BindGroupCreateInfo* createInfo) : BindGroup(createInfo), bindGroupLayout(nullptr)
     {
+        SaveBindGroupLayout(createInfo);
         CacheBindings(createInfo);
     }
 
@@ -39,14 +42,28 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
+    DX12BindGroupLayout& DX12BindGroup::GetBindGroupLayout()
+    {
+        return *bindGroupLayout;
+    }
+
     const std::unordered_set<ID3D12DescriptorHeap*>& DX12BindGroup::GetDX12DescriptorHeaps()
     {
         return dx12DescriptorHeaps;
     }
 
-    const std::vector<std::pair<uint8_t, CD3DX12_GPU_DESCRIPTOR_HANDLE>>& DX12BindGroup::GetBindings()
+    const std::vector<std::pair<uint8_t, std::pair<BindingType, CD3DX12_GPU_DESCRIPTOR_HANDLE>>>& DX12BindGroup::GetBindings()
     {
         return bindings;
+    }
+
+    void DX12BindGroup::SaveBindGroupLayout(const BindGroupCreateInfo* createInfo)
+    {
+        auto* tBindGroupLayout = dynamic_cast<DX12BindGroupLayout*>(createInfo->layout);
+        if (tBindGroupLayout == nullptr) {
+            throw DX12Exception("must set layout in create info");
+        }
+        bindGroupLayout = tBindGroupLayout;
     }
 
     void DX12BindGroup::CacheBindings(const BindGroupCreateInfo* createInfo)
@@ -59,7 +76,7 @@ namespace RHI::DirectX12 {
             GetDescriptorHandleAndHeap(handle, &heap, entry);
 
             dx12DescriptorHeaps.emplace(heap);
-            bindings.emplace_back(std::pair<uint8_t, CD3DX12_GPU_DESCRIPTOR_HANDLE> { entry.binding, handle });
+            bindings.emplace_back(std::pair<uint8_t, std::pair<BindingType, CD3DX12_GPU_DESCRIPTOR_HANDLE>> { entry.binding, { entry.type, handle } });
         }
     }
 }

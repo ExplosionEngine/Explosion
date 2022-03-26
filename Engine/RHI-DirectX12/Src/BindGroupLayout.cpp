@@ -9,7 +9,7 @@
 
 namespace RHI::DirectX12 {
     DX12BindGroupLayout::DX12BindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
-        : BindGroupLayout(createInfo), dx12RootParameters({})
+        : BindGroupLayout(createInfo), dx12RootParameters({}), layoutIndex(createInfo->layoutIndex)
     {
         CreateDX12RootParameters(createInfo);
     }
@@ -19,6 +19,11 @@ namespace RHI::DirectX12 {
     void DX12BindGroupLayout::Destroy()
     {
         delete this;
+    }
+
+    uint8_t DX12BindGroupLayout::GetLayoutIndex()
+    {
+        return layoutIndex;
     }
 
     const std::vector<RootParameterKeyInfo>& DX12BindGroupLayout::GetRootParameterKeyInfos() const
@@ -35,10 +40,7 @@ namespace RHI::DirectX12 {
     {
         std::unordered_map<ShaderStageBits, std::vector<const BindGroupLayoutEntry*>> visibilitiesMap;
         {
-            using UBitsType = std::underlying_type_t<ShaderStageBits>;
-            for (UBitsType i = 0; i < static_cast<UBitsType>(ShaderStageBits::MAX); i = i << 1) {
-                visibilitiesMap[static_cast<ShaderStageBits>(i)] = {};
-            }
+            ForEachBitsType<ShaderStageBits>([&visibilitiesMap](ShaderStageBits shaderStage) -> void { visibilitiesMap[shaderStage] = {}; });
             for (auto i = 0; i < createInfo->entryNum; i++) {
                 for (auto& visibility : visibilitiesMap) {
                     if (!(createInfo->entries[i].shaderVisibility & visibility.first)) {

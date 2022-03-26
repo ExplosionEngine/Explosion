@@ -8,6 +8,9 @@
 
 namespace RHI::DirectX12 {
     class DX12CommandBuffer;
+    class DX12ComputePipeline;
+    class DX12GraphicsPipeline;
+    class DX12PipelineLayout;
 
     class DX12CommandEncoder : public CommandEncoder {
     public:
@@ -41,6 +44,7 @@ namespace RHI::DirectX12 {
         void EndPass() override;
 
     private:
+        DX12ComputePipeline* computePipeline;
         DX12CommandBuffer& commandBuffer;
     };
 
@@ -65,6 +69,7 @@ namespace RHI::DirectX12 {
         void EndPass() override;
 
     private:
+        DX12GraphicsPipeline* graphicsPipeline;
         DX12CommandBuffer& commandBuffer;
     };
 }

@@ -6,6 +6,9 @@
 #include <RHI/DirectX12/CommandBuffer.h>
 #include <RHI/DirectX12/Pipeline.h>
 #include <RHI/DirectX12/PipelineLayout.h>
+#include <RHI/DirectX12/BindGroup.h>
+#include <RHI/DirectX12/BindGroupLayout.h>
+#include <RHI/DirectX12/Common.h>
 
 namespace RHI::DirectX12 {
     DX12ComputePassCommandEncoder::DX12ComputePassCommandEncoder(DX12CommandBuffer& commandBuffer) : ComputePassCommandEncoder(), commandBuffer(commandBuffer)
@@ -17,14 +20,41 @@ namespace RHI::DirectX12 {
 
     void DX12ComputePassCommandEncoder::SetPipeline(ComputePipeline* pipeline)
     {
-        auto* computePipeline = dynamic_cast<DX12ComputePipeline*>(pipeline);
+        computePipeline = dynamic_cast<DX12ComputePipeline*>(pipeline);
+        if (computePipeline == nullptr) {
+            throw DX12Exception("pipeline cannot be nullptr");
+        }
+
         commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(computePipeline->GetDX12PipelineState().Get());
         commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(computePipeline->GetPipelineLayout().GetDX12RootSignature().Get());
     }
 
-    void DX12ComputePassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
+    void DX12ComputePassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* tBindGroup)
     {
-        // TODO
+        auto* bindGroup = dynamic_cast<DX12BindGroup*>(tBindGroup);
+        auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
+        auto& pipelineLayout = computePipeline->GetPipelineLayout();
+
+        if (layoutIndex != bindGroupLayout.GetLayoutIndex()) {
+            throw DX12Exception("bad layout index");
+        }
+        if (computePipeline == nullptr) {
+            throw DX12Exception("must cal SetPipeline() before SetBindGroup()");
+        }
+
+        const auto& bindings= bindGroup->GetBindings();
+        for (const auto& binding : bindings) {
+            ForEachBitsType<ShaderStageBits>([this, &binding, &pipelineLayout, layoutIndex](ShaderStageBits shaderStage) -> void {
+                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first);
+                if (!t.has_value()) {
+                    return;
+                }
+                if (t.value().first != binding.second.first) {
+                    throw DX12Exception(std::string("bad binding type on slot [layoutIndex: ") + std::to_string(layoutIndex) + ", binding: " + std::to_string(binding.first) + "]");
+                }
+                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second.second);
+            });
+        }
     }
 
     void DX12ComputePassCommandEncoder::Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ)
@@ -51,14 +81,38 @@ namespace RHI::DirectX12 {
 
     void DX12GraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
     {
-        auto* graphicsPipeline = dynamic_cast<DX12GraphicsPipeline*>(pipeline);
+        graphicsPipeline = dynamic_cast<DX12GraphicsPipeline*>(pipeline);
+
         commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(graphicsPipeline->GetDX12PipelineState().Get());
         commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(graphicsPipeline->GetPipelineLayout().GetDX12RootSignature().Get());
     }
 
-    void DX12GraphicsPassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
+    void DX12GraphicsPassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* tBindGroup)
     {
-        // TODO
+        auto* bindGroup = dynamic_cast<DX12BindGroup*>(tBindGroup);
+        auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
+        auto& pipelineLayout = graphicsPipeline->GetPipelineLayout();
+
+        if (layoutIndex != bindGroupLayout.GetLayoutIndex()) {
+            throw DX12Exception("bad layout index");
+        }
+        if (graphicsPipeline == nullptr) {
+            throw DX12Exception("must cal SetPipeline() before SetBindGroup()");
+        }
+
+        const auto& bindings= bindGroup->GetBindings();
+        for (const auto& binding : bindings) {
+            ForEachBitsType<ShaderStageBits>([this, &binding, &pipelineLayout, layoutIndex](ShaderStageBits shaderStage) -> void {
+                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first);
+                if (!t.has_value()) {
+                    return;
+                }
+                if (t.value().first != binding.second.first) {
+                    throw DX12Exception(std::string("bad binding type on slot [layoutIndex: ") + std::to_string(layoutIndex) + ", binding: " + std::to_string(binding.first) + "]");
+                }
+                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second.second);
+            });
+        }
     }
 
     void DX12GraphicsPassCommandEncoder::SetIndexBuffer(Buffer* buffer, const IndexFormat& indexFormat, size_t offset, size_t size)
