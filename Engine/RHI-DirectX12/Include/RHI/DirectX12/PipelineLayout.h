@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <unordered_map>
+
 #include <wrl/client.h>
 #include <d3d12.h>
 
@@ -14,6 +16,11 @@ using namespace Microsoft::WRL;
 namespace RHI::DirectX12 {
     class DX12Device;
 
+    using LayoutIndexAndBinding = uint16_t;
+    using RootParameterIndex = uint32_t;
+    using BindingTypeAndRootParameterIndex = std::pair<BindingType, uint32_t>;
+    using RootParameterIndexMap = std::unordered_map<LayoutIndexAndBinding, BindingTypeAndRootParameterIndex>;
+
     class DX12PipelineLayout : public PipelineLayout {
     public:
         NON_COPYABLE(DX12PipelineLayout)
@@ -22,11 +29,13 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
 
+        BindingTypeAndRootParameterIndex QueryRootDescriptorParameterIndex(ShaderStageBits shaderStage, uint8_t layoutIndex, uint8_t binding);
         ComPtr<ID3D12RootSignature>& GetDX12RootSignature();
 
     private:
         void CreateDX12RootSignature(DX12Device& device, const PipelineLayoutCreateInfo* createInfo);
 
         ComPtr<ID3D12RootSignature> dx12RootSignature;
+        std::unordered_map<ShaderStageBits, RootParameterIndexMap> rootDescriptorParameterIndexMaps;
     };
 }
