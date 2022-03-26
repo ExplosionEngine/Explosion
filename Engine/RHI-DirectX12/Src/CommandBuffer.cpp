@@ -8,7 +8,7 @@
 #include <RHI/DirectX12/CommandEncoder.h>
 
 namespace RHI::DirectX12 {
-    DX12CommandBuffer::DX12CommandBuffer(DX12Device& device) : CommandBuffer()
+    DX12CommandBuffer::DX12CommandBuffer(DX12Device& device) : CommandBuffer(), device(device)
     {
         AllocateDX12CommandList(device);
     }
@@ -17,7 +17,7 @@ namespace RHI::DirectX12 {
 
     CommandEncoder* DX12CommandBuffer::Begin()
     {
-        return new DX12CommandEncoder(*this);
+        return new DX12CommandEncoder(device, *this);
     }
 
     void DX12CommandBuffer::Destroy()

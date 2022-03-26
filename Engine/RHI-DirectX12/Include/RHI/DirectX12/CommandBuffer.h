@@ -27,6 +27,7 @@ namespace RHI::DirectX12 {
     private:
         void AllocateDX12CommandList(DX12Device& device);
 
+        DX12Device& device;
         ComPtr<ID3D12GraphicsCommandList> dx12GraphicsCommandList;
     };
 }
