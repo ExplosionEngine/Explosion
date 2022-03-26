@@ -63,7 +63,6 @@ namespace RHI {
         virtual void SetPipeline(ComputePipeline* pipeline) = 0;
         virtual void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) = 0;
         virtual void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) = 0;
-        virtual void DispatchIndirect(Buffer* indirectBuffer, size_t indirectOffset) = 0;
         virtual void EndPass() = 0;
 
     protected:

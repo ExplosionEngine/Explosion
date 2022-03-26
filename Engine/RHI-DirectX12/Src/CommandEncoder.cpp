@@ -25,6 +25,7 @@ namespace RHI::DirectX12 {
             throw DX12Exception("pipeline cannot be nullptr");
         }
 
+        // TODO reset
         commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(computePipeline->GetDX12PipelineState().Get());
         commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(computePipeline->GetPipelineLayout().GetDX12RootSignature().Get());
     }
@@ -59,17 +60,12 @@ namespace RHI::DirectX12 {
 
     void DX12ComputePassCommandEncoder::Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ)
     {
-        // TODO
-    }
-
-    void DX12ComputePassCommandEncoder::DispatchIndirect(Buffer* indirectBuffer, size_t indirectOffset)
-    {
-        // TODO
+        commandBuffer.GetDX12GraphicsCommandList()->Dispatch(groupCountX, groupCountY, groupCountZ);
     }
 
     void DX12ComputePassCommandEncoder::EndPass()
     {
-        // TODO
+        delete this;
     }
 
     DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12CommandBuffer& commandBuffer) : GraphicsPassCommandEncoder(), commandBuffer(commandBuffer)

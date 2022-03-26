@@ -40,7 +40,6 @@ namespace RHI::DirectX12 {
         void SetPipeline(ComputePipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override;
-        void DispatchIndirect(Buffer* indirectBuffer, size_t indirectOffset) override;
         void EndPass() override;
 
     private:
