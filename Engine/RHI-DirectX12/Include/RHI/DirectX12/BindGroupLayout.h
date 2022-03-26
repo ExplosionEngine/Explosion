@@ -13,6 +13,13 @@
 namespace RHI::DirectX12 {
     class DX12Device;
 
+    struct RootParameterKeyInfo {
+        ShaderStageBits shaderStage;
+        BindingType bindingType;
+        uint8_t layoutIndex;
+        uint8_t binding;
+    };
+
     class DX12BindGroupLayout : public BindGroupLayout {
     public:
         NON_COPYABLE(DX12BindGroupLayout)
@@ -21,11 +28,13 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
 
+        [[nodiscard]] const std::vector<RootParameterKeyInfo>& GetRootParameterKeyInfos() const;
         [[nodiscard]] const std::vector<CD3DX12_ROOT_PARAMETER1>& GetDX12RootParameters() const;
 
     private:
         void CreateDX12RootParameters(const BindGroupLayoutCreateInfo* createInfo);
 
+        std::vector<RootParameterKeyInfo> rootParameterKeyInfos;
         std::vector<CD3DX12_ROOT_PARAMETER1> dx12RootParameters;
     };
 }
