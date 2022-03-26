@@ -113,15 +113,21 @@ namespace RHI::DirectX12 {
         auto* buffer = dynamic_cast<DX12Buffer*>(tBuffer);
 
         D3D12_INDEX_BUFFER_VIEW bufferView {};
-        bufferView.BufferLocation = buffer->GetDX12Resource()->GetGPUVirtualAddress();
+        bufferView.BufferLocation = buffer->GetDX12Resource()->GetGPUVirtualAddress() + offset;
         bufferView.SizeInBytes = size;
         bufferView.Format = DX12EnumCast<IndexFormat, DXGI_FORMAT>(indexFormat);
         commandBuffer.GetDX12GraphicsCommandList()->IASetIndexBuffer(&bufferView);
     }
 
-    void DX12GraphicsPassCommandEncoder::SetVertexBuffer(size_t slot, Buffer* buffer, size_t offset, size_t size)
+    void DX12GraphicsPassCommandEncoder::SetVertexBuffer(size_t slot, Buffer* tBuffer, size_t offset, size_t size, size_t stride)
     {
-        // TODO
+        auto* buffer = dynamic_cast<DX12Buffer*>(tBuffer);
+
+        D3D12_VERTEX_BUFFER_VIEW bufferView {};
+        bufferView.BufferLocation = buffer->GetDX12Resource()->GetGPUVirtualAddress() + offset;
+        bufferView.SizeInBytes = size;
+        bufferView.StrideInBytes = stride;
+        commandBuffer.GetDX12GraphicsCommandList()->IASetVertexBuffers(slot, 1, &bufferView);
     }
 
     void DX12GraphicsPassCommandEncoder::Draw(size_t vertexCount, size_t instanceCount, size_t firstVertex, size_t firstInstance)
