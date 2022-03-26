@@ -371,31 +371,31 @@ namespace RHI {
     };
 
     template <uint8_t N>
-    struct Color;
+    struct ColorNormalized;
 
     template <>
-    struct Color<1> {
-        size_t r;
+    struct ColorNormalized<1> {
+        float r;
     };
 
     template <>
-    struct Color<2> {
-        size_t r;
-        size_t g;
+    struct ColorNormalized<2> {
+        float r;
+        float g;
     };
 
     template <>
-    struct Color<3> {
-        size_t r;
-        size_t g;
-        size_t b;
+    struct ColorNormalized<3> {
+        float r;
+        float g;
+        float b;
     };
 
     template <>
-    struct Color<4> {
-        size_t r;
-        size_t g;
-        size_t b;
-        size_t a;
+    struct ColorNormalized<4> {
+        float r;
+        float g;
+        float b;
+        float a;
     };
 }

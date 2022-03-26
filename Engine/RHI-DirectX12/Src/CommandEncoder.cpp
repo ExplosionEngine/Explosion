@@ -140,34 +140,27 @@ namespace RHI::DirectX12 {
         commandBuffer.GetDX12GraphicsCommandList()->DrawIndexedInstanced(indexCount, instanceCount, firstIndex, baseVertex, firstInstance);
     }
 
-    void DX12GraphicsPassCommandEncoder::DrawIndirect(Buffer* indirectBuffer, size_t indirectOffset)
-    {
-        // TODO
-    }
-
-    void DX12GraphicsPassCommandEncoder::DrawIndexedIndirect(Buffer* indirectBuffer, size_t indirectOffset)
-    {
-        // TODO
-    }
-
     void DX12GraphicsPassCommandEncoder::SetViewport(float x, float y, float width, float height, float minDepth, float maxDepth)
     {
-        // TODO
+        // (x, y) = topLeft
+        CD3DX12_VIEWPORT viewport = CD3DX12_VIEWPORT(x, y, width, height, minDepth, maxDepth);
+        commandBuffer.GetDX12GraphicsCommandList()->RSSetViewports(1, &viewport);
     }
 
-    void DX12GraphicsPassCommandEncoder::SetScissor(const Extent<2>& origin, const Extent<2>& extent)
+    void DX12GraphicsPassCommandEncoder::SetScissor(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom)
     {
-        // TODO
+        CD3DX12_RECT scissor = CD3DX12_RECT(left, top, right, bottom);
+        commandBuffer.GetDX12GraphicsCommandList()->RSSetScissorRects(1, &scissor);
     }
 
-    void DX12GraphicsPassCommandEncoder::SetBlendConstant(const Color<4>& color)
+    void DX12GraphicsPassCommandEncoder::SetBlendConstant(const float* constants)
     {
-        // TODO
+        commandBuffer.GetDX12GraphicsCommandList()->OMSetBlendFactor(constants);
     }
 
     void DX12GraphicsPassCommandEncoder::SetStencilReference(uint32_t reference)
     {
-        // TODO
+        commandBuffer.GetDX12GraphicsCommandList()->OMSetStencilRef(reference);
     }
 
     void DX12GraphicsPassCommandEncoder::EndPass()
@@ -199,7 +192,7 @@ namespace RHI::DirectX12 {
         // TODO
     }
 
-    ComputePassCommandEncoder* DX12CommandEncoder::BeginComputePass(const ComputePassBeginInfo* beginInfo)
+    ComputePassCommandEncoder* DX12CommandEncoder::BeginComputePass()
     {
         return new DX12ComputePassCommandEncoder(device, commandBuffer);
     }

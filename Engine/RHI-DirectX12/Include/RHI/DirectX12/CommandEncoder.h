@@ -24,7 +24,7 @@ namespace RHI::DirectX12 {
         void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size) override;
         void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Extent<3>& size) override;
 
-        ComputePassCommandEncoder* BeginComputePass(const ComputePassBeginInfo* beginInfo) override;
+        ComputePassCommandEncoder* BeginComputePass() override;
         GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
         void End() override;
 
@@ -62,11 +62,9 @@ namespace RHI::DirectX12 {
         void SetVertexBuffer(size_t slot, Buffer* buffer, size_t offset, size_t size, size_t stride) override;
         void Draw(size_t vertexCount, size_t instanceCount, size_t firstVertex, size_t firstInstance) override;
         void DrawIndexed(size_t indexCount, size_t instanceCount, size_t firstIndex, size_t baseVertex, size_t firstInstance) override;
-        void DrawIndirect(Buffer* indirectBuffer, size_t indirectOffset) override;
-        void DrawIndexedIndirect(Buffer* indirectBuffer, size_t indirectOffset) override;
         void SetViewport(float x, float y, float width, float height, float minDepth, float maxDepth) override;
-        void SetScissor(const Extent<2> &origin, const Extent<2> &extent) override;
-        void SetBlendConstant(const Color<4>& color) override;
+        void SetScissor(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom) override;
+        void SetBlendConstant(const float *constants) override;
         void SetStencilReference(uint32_t reference) override;
         void EndPass() override;
 

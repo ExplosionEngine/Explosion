@@ -23,14 +23,10 @@ namespace RHI {
         TextureAspect aspect = TextureAspect::ALL;
     };
 
-    struct ComputePassBeginInfo {
-        // TODO #see https://gpuweb.github.io/gpuweb/#typedefdef-gpucomputepasstimestampwrites
-    };
-
     struct GraphicsPassColorAttachment {
         TextureView* view;
         TextureView* resolveTarget;
-        Color<4> clearValue;
+        ColorNormalized<4> clearValue;
         LoadOp loadOp;
         LoadOp storeOp;
     };
@@ -80,13 +76,13 @@ namespace RHI {
         virtual void SetVertexBuffer(size_t slot, Buffer* buffer, size_t offset, size_t size, size_t stride) = 0;
         virtual void Draw(size_t vertexCount, size_t instanceCount, size_t firstVertex, size_t firstInstance) = 0;
         virtual void DrawIndexed(size_t indexCount, size_t instanceCount, size_t firstIndex, size_t baseVertex, size_t firstInstance) = 0;
-        virtual void DrawIndirect(Buffer* indirectBuffer, size_t indirectOffset) = 0;
-        virtual void DrawIndexedIndirect(Buffer* indirectBuffer, size_t indirectOffset) = 0;
-        // TODO MultiIndirectDraw(...)
-        virtual void SetViewport(float x, float y, float width, float height, float minDepth, float maxDepth) = 0;
-        virtual void SetScissor(const Extent<2>& origin, const Extent<2>& extent) = 0;
-        virtual void SetBlendConstant(const Color<4>& color) = 0;
+        virtual void SetViewport(float topLeftX, float topLeftY, float width, float height, float minDepth, float maxDepth) = 0;
+        virtual void SetScissor(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom) = 0;
+        virtual void SetBlendConstant(const float*/*[4]*/ constants) = 0;
         virtual void SetStencilReference(uint32_t reference) = 0;
+        // TODO DrawIndirect(...)
+        // TODO DrawIndexedIndirect(...)
+        // TODO MultiIndirectDraw(...)
         // TODO BeginOcclusionQuery(...)
         // TODO EndOcclusionQuery(...)
         // TODO ExecuteBundles(...)
@@ -108,7 +104,7 @@ namespace RHI {
         // TODO WriteTimeStamp(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-writetimestamp
         // TODO ResolveQuerySet(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-resolvequeryset
 
-        virtual ComputePassCommandEncoder* BeginComputePass(const ComputePassBeginInfo* beginInfo) = 0;
+        virtual ComputePassCommandEncoder* BeginComputePass() = 0;
         virtual GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) = 0;
         virtual void End() = 0;
 
