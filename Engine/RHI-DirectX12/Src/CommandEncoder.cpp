@@ -10,6 +10,7 @@
 #include <RHI/DirectX12/BindGroupLayout.h>
 #include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Device.h>
+#include <RHI/DirectX12/Buffer.h>
 
 namespace RHI::DirectX12 {
     DX12ComputePassCommandEncoder::DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : ComputePassCommandEncoder(), device(device), commandBuffer(commandBuffer) {}
@@ -107,9 +108,15 @@ namespace RHI::DirectX12 {
         }
     }
 
-    void DX12GraphicsPassCommandEncoder::SetIndexBuffer(Buffer* buffer, const IndexFormat& indexFormat, size_t offset, size_t size)
+    void DX12GraphicsPassCommandEncoder::SetIndexBuffer(Buffer* tBuffer, const IndexFormat& indexFormat, size_t offset, size_t size)
     {
-        // TODO
+        auto* buffer = dynamic_cast<DX12Buffer*>(tBuffer);
+
+        D3D12_INDEX_BUFFER_VIEW bufferView {};
+        bufferView.BufferLocation = buffer->GetDX12Resource()->GetGPUVirtualAddress();
+        bufferView.SizeInBytes = size;
+        bufferView.Format = DX12EnumCast<IndexFormat, DXGI_FORMAT>(indexFormat);
+        commandBuffer.GetDX12GraphicsCommandList()->IASetIndexBuffer(&bufferView);
     }
 
     void DX12GraphicsPassCommandEncoder::SetVertexBuffer(size_t slot, Buffer* buffer, size_t offset, size_t size)
@@ -159,7 +166,7 @@ namespace RHI::DirectX12 {
 
     void DX12GraphicsPassCommandEncoder::EndPass()
     {
-        // TODO
+        delete this;
     }
 
     DX12CommandEncoder::DX12CommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : CommandEncoder(), device(device), commandBuffer(commandBuffer) {}

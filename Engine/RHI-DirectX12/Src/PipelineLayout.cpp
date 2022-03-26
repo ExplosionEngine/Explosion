@@ -12,7 +12,7 @@
 #include <RHI/DirectX12/BindGroupLayout.h>
 
 namespace RHI::DirectX12 {
-    LayoutIndexAndBinding EncodeLayoutIndexAndBinding(uint8_t layoutIndex, uint8_t binding)
+    static LayoutIndexAndBinding EncodeLayoutIndexAndBinding(uint8_t layoutIndex, uint8_t binding)
     {
         return (layoutIndex << 8) + binding;
     }
