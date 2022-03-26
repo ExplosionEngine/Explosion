@@ -132,12 +132,12 @@ namespace RHI::DirectX12 {
 
     void DX12GraphicsPassCommandEncoder::Draw(size_t vertexCount, size_t instanceCount, size_t firstVertex, size_t firstInstance)
     {
-        // TODO
+        commandBuffer.GetDX12GraphicsCommandList()->DrawInstanced(vertexCount, instanceCount, firstVertex, firstInstance);
     }
 
     void DX12GraphicsPassCommandEncoder::DrawIndexed(size_t indexCount, size_t instanceCount, size_t firstIndex, size_t baseVertex, size_t firstInstance)
     {
-        // TODO
+        commandBuffer.GetDX12GraphicsCommandList()->DrawIndexedInstanced(indexCount, instanceCount, firstIndex, baseVertex, firstInstance);
     }
 
     void DX12GraphicsPassCommandEncoder::DrawIndirect(Buffer* indirectBuffer, size_t indirectOffset)
