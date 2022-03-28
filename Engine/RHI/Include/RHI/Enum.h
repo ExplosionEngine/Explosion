@@ -282,6 +282,15 @@ namespace RHI {
         DISCARD,
         MAX
     };
+
+    enum class PresentMode : EnumType {
+        // TODO check this
+        // 1. DirectX SwapEffect #see https://docs.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_swap_effect
+        // 2. Vulkan VkPresentModeKHR #see https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VkPresentModeKHR.html
+        IMMEDIATELY,
+        VSYNC,
+        MAX
+    };
 }
 
 namespace RHI {
