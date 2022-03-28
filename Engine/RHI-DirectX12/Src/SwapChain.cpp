@@ -2,6 +2,8 @@
 // Created by johnk on 28/3/2022.
 //
 
+#include <windows.h>
+
 #include <RHI/DirectX12/Instance.h>
 #include <RHI/DirectX12/SwapChain.h>
 #include <RHI/DirectX12/Queue.h>
@@ -60,7 +62,7 @@ namespace RHI::DirectX12 {
         ComPtr<IDXGISwapChain1> dx12SwapChain1;
         if (FAILED(instance.GetDX12Factory()->CreateSwapChainForHwnd(
             dx12Queue->GetDX12CommandQueue().Get(),
-            createInfo->hWnd,
+            static_cast<HWND>(createInfo->window),
             &desc,
             /* TODO fullscreen */ nullptr,
             nullptr,

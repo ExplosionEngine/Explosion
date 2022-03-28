@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <windows.h>
-
 #include <Common/Utility.h>
 #include <RHI/Enum.h>
 
@@ -15,7 +13,7 @@ namespace RHI {
 
     struct SwapChainCreateInfo {
         Queue* presentQueue;
-        HWND hWnd;
+        void* window;
         uint8_t textureNum;
         PixelFormat format;
         Extent<2> extent;
