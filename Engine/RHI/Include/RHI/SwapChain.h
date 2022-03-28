@@ -4,24 +4,28 @@
 
 #pragma once
 
+#include <windows.h>
+
 #include <Common/Utility.h>
 #include <RHI/Enum.h>
 
 namespace RHI {
     class Texture;
+    class Queue;
 
     struct SwapChainCreateInfo {
-        uint8_t textureCount;
+        Queue* presentQueue;
+        HWND hWnd;
+        uint8_t textureNum;
         PixelFormat format;
         Extent<2> extent;
-        TextureUsageFlags textureUsages;
         PresentMode presentMode;
     };
 
     class SwapChain {
     public:
         NON_COPYABLE(SwapChain)
-        ~SwapChain();
+        virtual ~SwapChain();
 
         virtual Texture* GetTexture(uint8_t index) = 0;
         virtual uint8_t GetBackTextureIndex() = 0;
