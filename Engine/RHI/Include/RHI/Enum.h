@@ -282,6 +282,15 @@ namespace RHI {
         DISCARD,
         MAX
     };
+
+    enum class PresentMode : EnumType {
+        // TODO check this
+        // 1. DirectX SwapEffect #see https://docs.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_swap_effect
+        // 2. Vulkan VkPresentModeKHR #see https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VkPresentModeKHR.html
+        IMMEDIATELY,
+        VSYNC,
+        MAX
+    };
 }
 
 namespace RHI {
@@ -371,31 +380,31 @@ namespace RHI {
     };
 
     template <uint8_t N>
-    struct Color;
+    struct ColorNormalized;
 
     template <>
-    struct Color<1> {
-        size_t r;
+    struct ColorNormalized<1> {
+        float r;
     };
 
     template <>
-    struct Color<2> {
-        size_t r;
-        size_t g;
+    struct ColorNormalized<2> {
+        float r;
+        float g;
     };
 
     template <>
-    struct Color<3> {
-        size_t r;
-        size_t g;
-        size_t b;
+    struct ColorNormalized<3> {
+        float r;
+        float g;
+        float b;
     };
 
     template <>
-    struct Color<4> {
-        size_t r;
-        size_t g;
-        size_t b;
-        size_t a;
+    struct ColorNormalized<4> {
+        float r;
+        float g;
+        float b;
+        float a;
     };
 }

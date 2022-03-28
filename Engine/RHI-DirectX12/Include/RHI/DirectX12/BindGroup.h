@@ -13,6 +13,8 @@
 #include <RHI/BindGroup.h>
 
 namespace RHI::DirectX12 {
+    class DX12BindGroupLayout;
+
     class DX12BindGroup : public BindGroup {
     public:
         NON_COPYABLE(DX12BindGroup)
@@ -21,13 +23,16 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
 
+        DX12BindGroupLayout& GetBindGroupLayout();
         const std::unordered_set<ID3D12DescriptorHeap*>& GetDX12DescriptorHeaps();
-        const std::vector<std::pair<uint8_t, CD3DX12_GPU_DESCRIPTOR_HANDLE>>& GetBindings();
+        const std::vector<std::pair<uint8_t, std::pair<BindingType, CD3DX12_GPU_DESCRIPTOR_HANDLE>>>& GetBindings();
 
     private:
+        void SaveBindGroupLayout(const BindGroupCreateInfo* createInfo);
         void CacheBindings(const BindGroupCreateInfo* createInfo);
 
+        DX12BindGroupLayout* bindGroupLayout;
         std::unordered_set<ID3D12DescriptorHeap*> dx12DescriptorHeaps;
-        std::vector<std::pair<uint8_t, CD3DX12_GPU_DESCRIPTOR_HANDLE>> bindings;
+        std::vector<std::pair<uint8_t, std::pair<BindingType, CD3DX12_GPU_DESCRIPTOR_HANDLE>>> bindings;
     };
 }

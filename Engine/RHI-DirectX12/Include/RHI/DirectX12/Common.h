@@ -8,6 +8,7 @@
 #include <utility>
 #include <unordered_map>
 #include <format>
+#include <functional>
 
 #include <dxgi1_4.h>
 #include <d3d12.h>
@@ -47,6 +48,18 @@ namespace RHI::DirectX12 {
 #define DX12_ENUM_MAP_BEGIN(A, B) template <> static const std::unordered_map<A, B> DX12_ENUM_MAP<A, B> = {
 #define DX12_ENUM_MAP_ITEM(A, B) { A, B },
 #define DX12_ENUM_MAP_END() };
+
+    template <typename E>
+    using BitsTypeForEachFunc = std::function<void(E e)>;
+
+    template <typename E>
+    void ForEachBitsType(BitsTypeForEachFunc<E>&& func)
+    {
+        using UBitsType = std::underlying_type_t<E>;
+        for (UBitsType i = 0; i < static_cast<UBitsType>(E::MAX); i = i << i) {
+            func(static_cast<E>(i));
+        }
+    }
 }
 
 // hard code convert
@@ -209,5 +222,15 @@ namespace RHI::DirectX12 {
         DX12_ENUM_MAP_ITEM(StencilOp::DECREMENT_CLAMP, D3D12_STENCIL_OP_DECR_SAT)
         DX12_ENUM_MAP_ITEM(StencilOp::INCREMENT_WRAP, D3D12_STENCIL_OP_INCR)
         DX12_ENUM_MAP_ITEM(StencilOp::DECREMENT_WRAP, D3D12_STENCIL_OP_DECR)
+    DX12_ENUM_MAP_END()
+
+    DX12_ENUM_MAP_BEGIN(IndexFormat, DXGI_FORMAT)
+        DX12_ENUM_MAP_ITEM(IndexFormat::UINT16, DXGI_FORMAT_R16_UINT)
+        DX12_ENUM_MAP_ITEM(IndexFormat::UINT32, DXGI_FORMAT_R32_UINT)
+    DX12_ENUM_MAP_END()
+
+    DX12_ENUM_MAP_BEGIN(PresentMode, DXGI_SWAP_EFFECT)
+        DX12_ENUM_MAP_ITEM(PresentMode::IMMEDIATELY, DXGI_SWAP_EFFECT_FLIP_DISCARD)
+        DX12_ENUM_MAP_ITEM(PresentMode::VSYNC, DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL)
     DX12_ENUM_MAP_END()
 }

@@ -12,6 +12,13 @@
 #include <RHI/DirectX12/BindGroupLayout.h>
 
 namespace RHI::DirectX12 {
+    static LayoutIndexAndBinding EncodeLayoutIndexAndBinding(uint8_t layoutIndex, uint8_t binding)
+    {
+        return (layoutIndex << 8) + binding;
+    }
+}
+
+namespace RHI::DirectX12 {
     DX12PipelineLayout::DX12PipelineLayout(DX12Device& device, const PipelineLayoutCreateInfo* createInfo) : PipelineLayout(createInfo)
     {
         CreateDX12RootSignature(device, createInfo);
@@ -24,6 +31,20 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
+    std::optional<BindingTypeAndRootParameterIndex> DX12PipelineLayout::QueryRootDescriptorParameterIndex(ShaderStageBits shaderStage, uint8_t layoutIndex, uint8_t binding)
+    {
+        auto iter1 = rootDescriptorParameterIndexMaps.find(shaderStage);
+        if (iter1 == rootDescriptorParameterIndexMaps.end()) {
+            return {};
+        }
+
+        auto iter2 = iter1->second.find(EncodeLayoutIndexAndBinding(layoutIndex, binding));
+        if (iter2 == iter1->second.end()) {
+            throw DX12Exception("can not find suitable slot for specific layout index / binding");
+        }
+        return iter2->second;
+    }
+
     ComPtr<ID3D12RootSignature>& DX12PipelineLayout::GetDX12RootSignature()
     {
         return dx12RootSignature;
@@ -34,13 +55,22 @@ namespace RHI::DirectX12 {
         D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
         featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
 
+        ForEachBitsType<ShaderStageBits>([this](ShaderStageBits shaderStage) -> void { rootDescriptorParameterIndexMaps[shaderStage] = {}; });
         std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
         {
             for (auto i = 0; i < createInfo->bindGroupNum; i++) {
                 auto* bindGroupLayout = dynamic_cast<const DX12BindGroupLayout*>(createInfo->bindGroupLayouts + i);
+                const auto baseIndex = static_cast<uint32_t>(rootParameters.size());
+
                 const auto& pendingRootParameters = bindGroupLayout->GetDX12RootParameters();
-                for (const auto& pendingRootParameter : pendingRootParameters) {
-                    rootParameters.emplace_back(pendingRootParameter);
+                const auto& keyInfos = bindGroupLayout->GetRootParameterKeyInfos();
+                for (auto j = 0; j < pendingRootParameters.size(); j++) {
+                    const auto index = static_cast<uint32_t>(baseIndex + j);
+                    rootParameters.emplace_back(pendingRootParameters[index]);
+
+                    const auto& keyInfo = keyInfos[index];
+                    auto layoutIndexAndBinding = EncodeLayoutIndexAndBinding(keyInfo.layoutIndex, keyInfo.binding);
+                    rootDescriptorParameterIndexMaps[keyInfo.shaderStage][layoutIndexAndBinding] = { keyInfo.bindingType, index };
                 }
             }
         }
