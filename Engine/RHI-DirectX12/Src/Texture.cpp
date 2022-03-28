@@ -46,16 +46,19 @@ namespace RHI::DirectX12 {
 
 namespace RHI::DirectX12 {
     DX12Texture::DX12Texture(DX12Device& device, const TextureCreateInfo* createInfo)
-        : Texture(createInfo), device(device), usages(createInfo->usages)
+        : Texture(createInfo), usages(createInfo->usages)
     {
         CreateDX12Texture(device, createInfo);
     }
 
+    DX12Texture::DX12Texture(ComPtr<ID3D12Resource>&& dx12Res)
+        : Texture(), usages(static_cast<TextureUsageFlags>(TextureUsageBits::RENDER_ATTACHMENT)), dx12Resource(dx12Res) {}
+
     DX12Texture::~DX12Texture() = default;
 
-    TextureView* DX12Texture::CreateTextureView(const TextureViewCreateInfo* createInfo)
+    TextureView* DX12Texture::CreateTextureView(Device& device, const TextureViewCreateInfo* createInfo)
     {
-        return new DX12TextureView(device, *this, createInfo);
+        return new DX12TextureView(dynamic_cast<DX12Device&>(device), *this, createInfo);
     }
 
     void DX12Texture::Destroy()

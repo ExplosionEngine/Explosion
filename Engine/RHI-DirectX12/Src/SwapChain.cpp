@@ -81,7 +81,7 @@ namespace RHI::DirectX12 {
             if (FAILED(dx12SwapChain->GetBuffer(i, IID_PPV_ARGS(&dx12Resource)))) {
                 throw DX12Exception("failed to get dx12 resource from swap chain");
             }
-            // TODO
+            textures[i] = std::make_unique<DX12Texture>(std::move(dx12Resource));
         }
     }
 }

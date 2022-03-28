@@ -10,6 +10,7 @@
 namespace RHI {
     struct TextureViewCreateInfo;
     class TextureView;
+    class Device;
 
     struct TextureCreateInfo {
         Extent<3> extent;
@@ -25,7 +26,7 @@ namespace RHI {
         NON_COPYABLE(Texture)
         virtual ~Texture();
 
-        virtual TextureView* CreateTextureView(const TextureViewCreateInfo* createInfo) = 0;
+        virtual TextureView* CreateTextureView(Device& device, const TextureViewCreateInfo* createInfo) = 0;
         virtual void Destroy() = 0;
 
     protected:
