@@ -22,16 +22,34 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
 
-        ID3D12DescriptorHeap* GetDX12DescriptorHeap();
-        CD3DX12_CPU_DESCRIPTOR_HANDLE GetDX12CpuDescriptorHandle();
-        CD3DX12_GPU_DESCRIPTOR_HANDLE GetDX12GpuDescriptorHandle();
+        ID3D12DescriptorHeap* GetDX12DescriptorHeap() const;
+        CD3DX12_CPU_DESCRIPTOR_HANDLE GetDX12CpuDescriptorHandle() const;
+        CD3DX12_GPU_DESCRIPTOR_HANDLE GetDX12GpuDescriptorHandle() const;
+        [[nodiscard]] const D3D12_VERTEX_BUFFER_VIEW& GetDX12VertexBufferView() const;
+        [[nodiscard]] const D3D12_INDEX_BUFFER_VIEW& GetDX12IndexBufferView() const;
 
     private:
+        struct DescriptorBufferInfo {
+            ID3D12DescriptorHeap* dx12DescriptorHeap;
+            CD3DX12_CPU_DESCRIPTOR_HANDLE dx12CpuDescriptorHandle;
+            CD3DX12_GPU_DESCRIPTOR_HANDLE dx12GpuDescriptorHandle;
+        };
+
+        struct VertexBufferInfo {
+            D3D12_VERTEX_BUFFER_VIEW dx12VertexBufferView;
+        };
+
+        struct IndexBufferInfo {
+            D3D12_INDEX_BUFFER_VIEW dx12IndexBufferView;
+        };
+
         void CreateDX12Descriptor(const BufferViewCreateInfo* createInfo);
 
         DX12Buffer& buffer;
-        ID3D12DescriptorHeap* dx12DescriptorHeap;
-        CD3DX12_CPU_DESCRIPTOR_HANDLE dx12CpuDescriptorHandle;
-        CD3DX12_GPU_DESCRIPTOR_HANDLE dx12GpuDescriptorHandle;
+        union {
+            DescriptorBufferInfo descriptor;
+            VertexBufferInfo vertex;
+            IndexBufferInfo index;
+        };
     };
 }

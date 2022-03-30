@@ -5,6 +5,7 @@
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/Buffer.h>
 #include <RHI/DirectX12/BufferView.h>
+#include <RHI/DirectX12/Common.h>
 
 namespace RHI::DirectX12 {
     static inline bool IsConstantBuffer(BufferUsageFlags bufferUsages)
@@ -12,15 +13,25 @@ namespace RHI::DirectX12 {
         return bufferUsages & BufferUsageBits::UNIFORM;
     }
 
-    static inline bool IsUnorderedAccessBuffer (BufferUsageFlags bufferUsages)
+    static inline bool IsUnorderedAccessBuffer(BufferUsageFlags bufferUsages)
     {
         return bufferUsages & BufferUsageBits::STORAGE;
+    }
+
+    static inline bool IsVertexBuffer(BufferUsageFlags bufferUsages)
+    {
+        return bufferUsages & BufferUsageBits::VERTEX;
+    }
+
+    static inline bool IsIndexBuffer(BufferUsageFlags bufferUsages)
+    {
+        return bufferUsages & BufferUsageBits::INDEX;
     }
 }
 
 namespace RHI::DirectX12 {
     DX12BufferView::DX12BufferView(DX12Buffer& buffer, const BufferViewCreateInfo* createInfo)
-        : BufferView(createInfo), buffer(buffer), dx12DescriptorHeap(nullptr), dx12CpuDescriptorHandle(), dx12GpuDescriptorHandle()
+        : BufferView(createInfo), buffer(buffer)
     {
         CreateDX12Descriptor(createInfo);
     }
@@ -32,19 +43,29 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12BufferView::GetDX12CpuDescriptorHandle()
+    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12BufferView::GetDX12CpuDescriptorHandle() const
     {
-        return dx12CpuDescriptorHandle;
+        return descriptor.dx12CpuDescriptorHandle;
     }
 
-    CD3DX12_GPU_DESCRIPTOR_HANDLE DX12BufferView::GetDX12GpuDescriptorHandle()
+    CD3DX12_GPU_DESCRIPTOR_HANDLE DX12BufferView::GetDX12GpuDescriptorHandle() const
     {
-        return dx12GpuDescriptorHandle;
+        return descriptor.dx12GpuDescriptorHandle;
     }
 
-    ID3D12DescriptorHeap* DX12BufferView::GetDX12DescriptorHeap()
+    ID3D12DescriptorHeap* DX12BufferView::GetDX12DescriptorHeap() const
     {
-        return dx12DescriptorHeap;
+        return descriptor.dx12DescriptorHeap;
+    }
+
+    const D3D12_VERTEX_BUFFER_VIEW& DX12BufferView::GetDX12VertexBufferView() const
+    {
+        return vertex.dx12VertexBufferView;
+    }
+
+    const D3D12_INDEX_BUFFER_VIEW& DX12BufferView::GetDX12IndexBufferView() const
+    {
+        return index.dx12IndexBufferView;
     }
 
     void DX12BufferView::CreateDX12Descriptor(const BufferViewCreateInfo* createInfo)
@@ -55,10 +76,10 @@ namespace RHI::DirectX12 {
             desc.SizeInBytes = createInfo->size;
 
             auto allocation = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
-            dx12CpuDescriptorHandle = allocation.cpuHandle;
-            dx12GpuDescriptorHandle = allocation.gpuHandle;
-            dx12DescriptorHeap = allocation.descriptorHeap;
-            buffer.GetDevice().GetDX12Device()->CreateConstantBufferView(&desc, dx12CpuDescriptorHandle);
+            descriptor.dx12CpuDescriptorHandle = allocation.cpuHandle;
+            descriptor.dx12GpuDescriptorHandle = allocation.gpuHandle;
+            descriptor.dx12DescriptorHeap = allocation.descriptorHeap;
+            buffer.GetDevice().GetDX12Device()->CreateConstantBufferView(&desc, descriptor.dx12CpuDescriptorHandle);
         } else if (IsUnorderedAccessBuffer(buffer.GetUsages())) {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
             desc.Format = DXGI_FORMAT_UNKNOWN;
@@ -67,10 +88,18 @@ namespace RHI::DirectX12 {
             desc.Buffer.NumElements = createInfo->size;
 
             auto allocation = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
-            dx12CpuDescriptorHandle = allocation.cpuHandle;
-            dx12GpuDescriptorHandle = allocation.gpuHandle;
-            dx12DescriptorHeap = allocation.descriptorHeap;
-            buffer.GetDevice().GetDX12Device()->CreateUnorderedAccessView(buffer.GetDX12Resource().Get(), nullptr, &desc, dx12CpuDescriptorHandle);
+            descriptor.dx12CpuDescriptorHandle = allocation.cpuHandle;
+            descriptor.dx12GpuDescriptorHandle = allocation.gpuHandle;
+            descriptor.dx12DescriptorHeap = allocation.descriptorHeap;
+            buffer.GetDevice().GetDX12Device()->CreateUnorderedAccessView(buffer.GetDX12Resource().Get(), nullptr, &desc, descriptor.dx12CpuDescriptorHandle);
+        } else if (IsVertexBuffer(buffer.GetUsages())) {
+            vertex.dx12VertexBufferView.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo->offset;
+            vertex.dx12VertexBufferView.SizeInBytes = createInfo->size;
+            vertex.dx12VertexBufferView.StrideInBytes = createInfo->vertex.stride;
+        } else if (IsIndexBuffer(buffer.GetUsages())) {
+            index.dx12IndexBufferView.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo->offset;
+            index.dx12IndexBufferView.SizeInBytes = createInfo->size;
+            index.dx12IndexBufferView.Format = DX12EnumCast<IndexFormat, DXGI_FORMAT>(createInfo->index.format);
         }
     }
 }

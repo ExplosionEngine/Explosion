@@ -58,8 +58,8 @@ namespace RHI::DirectX12 {
 
         void SetPipeline(GraphicsPipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
-        void SetIndexBuffer(Buffer* buffer, const IndexFormat& indexFormat, size_t offset, size_t size) override;
-        void SetVertexBuffer(size_t slot, Buffer* buffer, size_t offset, size_t size, size_t stride) override;
+        void SetIndexBuffer(BufferView *bufferView) override;
+        void SetVertexBuffer(size_t slot, BufferView *bufferView) override;
         void Draw(size_t vertexCount, size_t instanceCount, size_t firstVertex, size_t firstInstance) override;
         void DrawIndexed(size_t indexCount, size_t instanceCount, size_t firstIndex, size_t baseVertex, size_t firstInstance) override;
         void SetViewport(float x, float y, float width, float height, float minDepth, float maxDepth) override;
