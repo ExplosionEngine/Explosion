@@ -12,6 +12,7 @@
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/Buffer.h>
 #include <RHI/DirectX12/BufferView.h>
+#include <RHI/Synchronous.h>
 
 namespace RHI::DirectX12 {
     DX12ComputePassCommandEncoder::DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : ComputePassCommandEncoder(), device(device), commandBuffer(commandBuffer) {}
@@ -68,7 +69,10 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : GraphicsPassCommandEncoder(), device(device), commandBuffer(commandBuffer) {}
+    DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : GraphicsPassCommandEncoder(), device(device), commandBuffer(commandBuffer)
+    {
+        // TODO set render targets & others
+    }
 
     DX12GraphicsPassCommandEncoder::~DX12GraphicsPassCommandEncoder() = default;
 
@@ -181,6 +185,15 @@ namespace RHI::DirectX12 {
     void DX12CommandEncoder::CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo , const Extent<3>& size)
     {
         // TODO
+    }
+
+    void DX12CommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+        if (barrier.type == ResourceType::BUFFER) {
+            // TODO
+        } else if (barrier.type == ResourceType::TEXTURE) {
+            // TODO
+        }
     }
 
     ComputePassCommandEncoder* DX12CommandEncoder::BeginComputePass()

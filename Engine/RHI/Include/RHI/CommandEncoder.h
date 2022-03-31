@@ -17,6 +17,7 @@ namespace RHI {
     class GraphicsPipeline;
     class TextureView;
     class BindGroup;
+    struct Barrier;
 
     struct TextureSubResourceInfo {
         uint8_t mipLevels = 0;
@@ -102,6 +103,7 @@ namespace RHI {
         virtual void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size) = 0;
         virtual void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size) = 0;
         virtual void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Extent<3>& size) = 0;
+        virtual void ResourceBarrier(const Barrier& barrier) = 0;
         // TODO WriteTimeStamp(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-writetimestamp
         // TODO ResolveQuerySet(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-resolvequeryset
 
