@@ -139,6 +139,18 @@ namespace RHI::Vulkan {
         VK_ENUM_MAP_ITEM(ShaderStageBits::COMPUTE,  vk::ShaderStageFlagBits::eCompute)
     VK_ENUM_MAP_END()
 
+    VK_ENUM_MAP_BEGIN(PrimitiveTopology, vk::PrimitiveTopology)
+        VK_ENUM_MAP_ITEM(PrimitiveTopology::POINT, vk::PrimitiveTopology::ePointList)
+        VK_ENUM_MAP_ITEM(PrimitiveTopology::LINE, vk::PrimitiveTopology::eLineList)
+        VK_ENUM_MAP_ITEM(PrimitiveTopology::TRIANGLE, vk::PrimitiveTopology::eTriangleList)
+    VK_ENUM_MAP_END()
+
+    VK_ENUM_MAP_BEGIN(CullMode, vk::CullModeFlagBits)
+        VK_ENUM_MAP_ITEM(CullMode::NONE, vk::CullModeFlagBits::eNone)
+        VK_ENUM_MAP_ITEM(CullMode::FRONT, vk::CullModeFlagBits::eFront)
+        VK_ENUM_MAP_ITEM(CullMode::BACK, vk::CullModeFlagBits::eBack)
+    VK_ENUM_MAP_END()
+
     VK_ENUM_MAP_BEGIN(BindingType, vk::DescriptorType)
         VK_ENUM_MAP_ITEM(BindingType::UNIFORM_BUFFER,  vk::DescriptorType::eUniformBuffer)
         VK_ENUM_MAP_ITEM(BindingType::STORAGE_BUFFER,  vk::DescriptorType::eStorageBuffer)
