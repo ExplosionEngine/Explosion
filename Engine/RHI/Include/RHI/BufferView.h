@@ -7,11 +7,24 @@
 #include <cstddef>
 
 #include <Common/Utility.h>
+#include <RHI/Enum.h>
 
 namespace RHI {
+    struct VertexBufferViewInfo {
+        size_t stride;
+    };
+
+    struct IndexBufferViewInfo {
+        IndexFormat format;
+    };
+
     struct BufferViewCreateInfo {
         size_t offset;
         size_t size;
+        union {
+            VertexBufferViewInfo vertex;
+            IndexBufferViewInfo index;
+        };
     };
 
     class BufferView {

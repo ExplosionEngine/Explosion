@@ -11,6 +11,8 @@
 #include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/Buffer.h>
+#include <RHI/DirectX12/BufferView.h>
+#include <RHI/Synchronous.h>
 
 namespace RHI::DirectX12 {
     DX12ComputePassCommandEncoder::DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : ComputePassCommandEncoder(), device(device), commandBuffer(commandBuffer) {}
@@ -67,7 +69,10 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : GraphicsPassCommandEncoder(), device(device), commandBuffer(commandBuffer) {}
+    DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : GraphicsPassCommandEncoder(), device(device), commandBuffer(commandBuffer)
+    {
+        // TODO set render targets & others
+    }
 
     DX12GraphicsPassCommandEncoder::~DX12GraphicsPassCommandEncoder() = default;
 
@@ -108,26 +113,16 @@ namespace RHI::DirectX12 {
         }
     }
 
-    void DX12GraphicsPassCommandEncoder::SetIndexBuffer(Buffer* tBuffer, const IndexFormat& indexFormat, size_t offset, size_t size)
+    void DX12GraphicsPassCommandEncoder::SetIndexBuffer(BufferView* tBufferView)
     {
-        auto* buffer = dynamic_cast<DX12Buffer*>(tBuffer);
-
-        D3D12_INDEX_BUFFER_VIEW bufferView {};
-        bufferView.BufferLocation = buffer->GetDX12Resource()->GetGPUVirtualAddress() + offset;
-        bufferView.SizeInBytes = size;
-        bufferView.Format = DX12EnumCast<IndexFormat, DXGI_FORMAT>(indexFormat);
-        commandBuffer.GetDX12GraphicsCommandList()->IASetIndexBuffer(&bufferView);
+        auto* bufferView = dynamic_cast<DX12BufferView*>(tBufferView);
+        commandBuffer.GetDX12GraphicsCommandList()->IASetIndexBuffer(&bufferView->GetDX12IndexBufferView());
     }
 
-    void DX12GraphicsPassCommandEncoder::SetVertexBuffer(size_t slot, Buffer* tBuffer, size_t offset, size_t size, size_t stride)
+    void DX12GraphicsPassCommandEncoder::SetVertexBuffer(size_t slot, BufferView* tBufferView)
     {
-        auto* buffer = dynamic_cast<DX12Buffer*>(tBuffer);
-
-        D3D12_VERTEX_BUFFER_VIEW bufferView {};
-        bufferView.BufferLocation = buffer->GetDX12Resource()->GetGPUVirtualAddress() + offset;
-        bufferView.SizeInBytes = size;
-        bufferView.StrideInBytes = stride;
-        commandBuffer.GetDX12GraphicsCommandList()->IASetVertexBuffers(slot, 1, &bufferView);
+        auto* bufferView = dynamic_cast<DX12BufferView*>(tBufferView);
+        commandBuffer.GetDX12GraphicsCommandList()->IASetVertexBuffers(slot, 1, &bufferView->GetDX12VertexBufferView());
     }
 
     void DX12GraphicsPassCommandEncoder::Draw(size_t vertexCount, size_t instanceCount, size_t firstVertex, size_t firstInstance)
@@ -190,6 +185,15 @@ namespace RHI::DirectX12 {
     void DX12CommandEncoder::CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo , const Extent<3>& size)
     {
         // TODO
+    }
+
+    void DX12CommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+        if (barrier.type == ResourceType::BUFFER) {
+            // TODO
+        } else if (barrier.type == ResourceType::TEXTURE) {
+            // TODO
+        }
     }
 
     ComputePassCommandEncoder* DX12CommandEncoder::BeginComputePass()

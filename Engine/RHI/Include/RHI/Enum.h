@@ -291,6 +291,21 @@ namespace RHI {
         VSYNC,
         MAX
     };
+
+    enum class ResourceType : EnumType {
+        BUFFER,
+        TEXTURE,
+        MAX
+    };
+
+    enum class BufferState : EnumType {
+        // TODO check this ?
+    };
+
+    enum class TextureState : EnumType {
+
+        // TODO check this ?
+    };
 }
 
 namespace RHI {
