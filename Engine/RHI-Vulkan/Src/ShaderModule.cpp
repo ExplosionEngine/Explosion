@@ -4,7 +4,7 @@
 
 #include <RHI/Vulkan/ShaderModule.h>
 #include <RHI/Vulkan/Device.h>
-#include "RHI/Vulkan/Common.h"
+#include <RHI/Vulkan/Common.h>
 
 namespace RHI::Vulkan {
 
