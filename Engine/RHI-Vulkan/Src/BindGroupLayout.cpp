@@ -26,6 +26,11 @@ namespace RHI::Vulkan {
         delete this;
     }
 
+    vk::DescriptorSetLayout VKBindGroupLayout::GetNativeHandle() const
+    {
+        return setLayout;
+    }
+
     void VKBindGroupLayout::CreateDescriptorSetLayout(const BindGroupLayoutCreateInfo* createInfo)
     {
         vk::DescriptorSetLayoutCreateInfo layoutInfo = {};
