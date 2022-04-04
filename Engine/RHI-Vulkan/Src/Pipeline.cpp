@@ -20,6 +20,7 @@ namespace RHI::Vulkan {
             .setCompareMask(readMask)
             .setWriteMask(writeMask)
             .setReference(0);
+        return state;
     }
 
     static vk::PipelineDepthStencilStateCreateInfo ConstructDepthStencil(const GraphicsPipelineCreateInfo* createInfo)
@@ -71,7 +72,7 @@ namespace RHI::Vulkan {
         return multiSampleInfo;
     }
 
-    static vk::PipelineViewportStateCreateInfo ConstructViewportInfo(const GraphicsPipelineCreateInfo* createInfo)
+    static vk::PipelineViewportStateCreateInfo ConstructViewportInfo(const GraphicsPipelineCreateInfo*)
     {
         vk::PipelineViewportStateCreateInfo viewportState = {};
         viewportState.setScissorCount(1)
@@ -199,10 +200,11 @@ namespace RHI::Vulkan {
             .setPVertexInputState(&vtxInput);
 
         auto result =  device.GetVkDevice().createGraphicsPipeline(VK_NULL_HANDLE,
-            pipelineCreateInfo, nullptr, &pipeline);
+            pipelineCreateInfo, nullptr);
         if (result.result != vk::Result::eSuccess) {
             throw VKException("failed to create pipeline");
         }
+
         pipeline = result.value;
     }
 
