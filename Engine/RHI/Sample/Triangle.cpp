@@ -31,36 +31,27 @@ protected:
         instance = Instance::CreateByType(rhiType);
         gpu = instance->GetGpu(0);
 
-        {
-            std::vector<QueueInfo> queueCreateInfos = {
-                { QueueType::GRAPHICS, 2 },
-                { QueueType::COMPUTE, 1 }
-            };
-            DeviceCreateInfo deviceCreateInfo {};
-            deviceCreateInfo.queueCreateInfoNum = queueCreateInfos.size();
-            deviceCreateInfo.queueCreateInfos = queueCreateInfos.data();
-            device = gpu->RequestDevice(&deviceCreateInfo);
-        }
+        std::vector<QueueInfo> queueCreateInfos = {{ QueueType::GRAPHICS, 1 }};
+        DeviceCreateInfo deviceCreateInfo {};
+        deviceCreateInfo.queueCreateInfoNum = queueCreateInfos.size();
+        deviceCreateInfo.queueCreateInfos = queueCreateInfos.data();
+        device = gpu->RequestDevice(&deviceCreateInfo);
 
-        {
-            graphicsQueue = device->GetQueue(QueueType::COMPUTE, 0);
-        }
+        graphicsQueue = device->GetQueue(QueueType::GRAPHICS, 0);
 
-        {
-            std::vector<Vertex> vertices = {
-                { { -.5f, -.5f, 0.f }, { 1.f, 0.f, 0.f } },
-                { { .5f, -.5f, 0.f }, { 0.f, 1.f, 0.f } },
-                { { 0.f, .5f, 0.f }, { 0.f, 0.f, 1.f } },
-            };
+        std::vector<Vertex> vertices = {
+            { { -.5f, -.5f, 0.f }, { 1.f, 0.f, 0.f } },
+            { { .5f, -.5f, 0.f }, { 0.f, 1.f, 0.f } },
+            { { 0.f, .5f, 0.f }, { 0.f, 0.f, 1.f } },
+        };
 
-            BufferCreateInfo createInfo {};
-            createInfo.size = vertices.size() * sizeof(Vertex);
-            createInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
-            vertexBuffer = device->CreateBuffer(&createInfo);
-            if (vertexBuffer != nullptr) {
-                auto* data = vertexBuffer->Map(MapMode::WRITE, 0, createInfo.size);
-                memcpy(data, vertices.data(), createInfo.size);
-            }
+        BufferCreateInfo createInfo {};
+        createInfo.size = vertices.size() * sizeof(Vertex);
+        createInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        vertexBuffer = device->CreateBuffer(&createInfo);
+        if (vertexBuffer != nullptr) {
+            auto* data = vertexBuffer->Map(MapMode::WRITE, 0, createInfo.size);
+            memcpy(data, vertices.data(), createInfo.size);
         }
     }
 
