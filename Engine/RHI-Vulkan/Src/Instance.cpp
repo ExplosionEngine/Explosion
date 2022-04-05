@@ -149,6 +149,11 @@ namespace RHI::Vulkan {
         return gpus[index].get();
     }
 
+    vk::Instance VKInstance::GetInstance() const
+    {
+        return vkInstance;
+    }
+
     void VKInstance::EnumeratePhysicalDevices()
     {
         uint32_t count = 0;

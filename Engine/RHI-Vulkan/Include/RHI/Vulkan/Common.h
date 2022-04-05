@@ -4,28 +4,10 @@
 
 #pragma once
 
-#include <stdexcept>
 #include <unordered_map>
-
 #include <vulkan/vulkan.hpp>
-
 #include <RHI/Enum.h>
-
-namespace RHI::Vulkan {
-    class VKException : public std::exception {
-    public:
-        explicit VKException(std::string m) : msg(std::move(m)) {}
-        ~VKException() override = default;
-
-        [[nodiscard]] const char* what() const noexcept override
-        {
-            return msg.c_str();
-        }
-
-    private:
-        std::string msg;
-    };
-}
+#include <RHI/Vulkan/Exception.h>
 
 namespace RHI::Vulkan {
 #if PLATFORM_WINDOWS
