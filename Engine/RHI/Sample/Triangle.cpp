@@ -7,7 +7,6 @@
 #include <glm/glm.hpp>
 
 #include <Application.h>
-#include <RHI/Instance.h>
 #include <RHI/Gpu.h>
 #include <RHI/Device.h>
 #include <RHI/Queue.h>
@@ -55,31 +54,6 @@ protected:
         }
     }
 
-    void OnStart(int argc, char* argv[]) override
-    {
-        if (argc < 2) {
-            return;
-        }
-        for (int i = 1; i < argc; ++i) {
-            if (std::string(argv[i]) == "--rhi") {
-                if (i + 1 < argc) {
-                    std::string rhi = argv[++i];
-                    if (rhi == std::string("vulkan")) {
-                        rhiType = RHIType::VULKAN;
-                    } else if (rhi == std::string("dx12")) {
-                        rhiType = RHIType::DIRECTX_12;
-                    }
-                }
-            }
-        }
-    }
-
-    void OnDestroy() override
-    {
-    }
-
-    void OnDrawFrame() override {}
-
 private:
     Instance* instance {};
     Gpu* gpu {};
@@ -92,6 +66,5 @@ private:
 int main(int argc, char* argv[])
 {
     TriangleApplication application("RHI-Triangle", 1024, 768);
-    application.Start(argc, argv);
-    return application.Run();
+    return application.Run(argc, argv);
 }

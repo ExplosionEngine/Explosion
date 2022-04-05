@@ -89,3 +89,11 @@ AddThirdPartyPackage(
 set(glfw_INC ${glfw_INSTALL_DIR}/include CACHE PATH "" FORCE)
 set(glfw_LINK ${glfw_INSTALL_DIR}/lib CACHE PATH "" FORCE)
 set(glfw_LIB glfw3 CACHE STRING "" FORCE)
+
+# clipp
+AddThirdPartyPackage(
+    NAME clipp
+    VERSION 1.2.3
+    HASH 90ff9435eb7610cb365f3e891d8d30c8ed864b3ac221dd1d02480e831016c64a
+)
+set(clipp_INC ${clipp_SOURCE_DIR}/include CACHE PATH "" FORCE)
