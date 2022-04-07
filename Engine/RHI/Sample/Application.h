@@ -6,22 +6,40 @@
 
 #include <string>
 #include <utility>
+#include <iostream>
+
+#include <clipp.h>
 #include <GLFW/glfw3.h>
+#if PLATFORM_WINDOWS
+#define GLFW_EXPOSE_NATIVE_WIN32
+#elif PLATFORM_MACOS
+#define GLFW_EXPOSE_NATIVE_COCOA
+#endif
+#include <GLFW/glfw3native.h>
+
 #include <Common/Utility.h>
+#include <RHI/Instance.h>
 
 class Application {
 public:
     NON_COPYABLE(Application)
-    Application(std::string n, const uint32_t w, const uint32_t h) : window(nullptr), name(std::move(n)), width(w), height(h) {}
+    explicit Application(std::string n) : rhiType(RHI::RHIType::VULKAN), window(nullptr), name(std::move(n)), width(1024), height(768) {}
     virtual ~Application() = default;
 
-    void Start(int argc, char* argv[])
+    int Run(int argc, char* argv[])
     {
-        OnStart(argc, argv);
-    }
+        std::string rhiString;
+        auto cli = (
+            clipp::option("-w").doc("window width, 1024 by default") & clipp::value("width", width),
+            clipp::option("-h").doc("window height, 768 by default") & clipp::value("height", height),
+            clipp::required("-rhi").doc("RHI type, can be 'DirectX12' or 'Vulkan'") & clipp::value("RHI type", rhiString)
+        );
+        if (!clipp::parse(argc, argv, cli)) {
+            std::cout << clipp::make_man_page(cli, argv[0]);
+            return -1;
+        }
+        rhiType = rhiString == "DirectX12" ? RHI::RHIType::DIRECTX_12 : RHI::RHIType::VULKAN;
 
-    int Run()
-    {
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         window = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), name.c_str(), nullptr, nullptr);
@@ -38,12 +56,12 @@ public:
     }
 
 protected:
-    virtual void OnStart(int argc, char* argv[]) = 0;
-    virtual void OnCreate() = 0;
-    virtual void OnDestroy() = 0;
-    virtual void OnDrawFrame() = 0;
+    virtual void OnStart() {}
+    virtual void OnCreate() {}
+    virtual void OnDestroy() {}
+    virtual void OnDrawFrame() {}
 
-private:
+    RHI::RHIType rhiType;
     GLFWwindow* window;
     std::string name;
     uint32_t width;

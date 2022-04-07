@@ -7,7 +7,6 @@
 #include <glm/glm.hpp>
 
 #include <Application.h>
-#include <RHI/Instance.h>
 #include <RHI/Gpu.h>
 #include <RHI/Device.h>
 #include <RHI/Queue.h>
@@ -22,7 +21,7 @@ struct Vertex {
 class TriangleApplication : public Application {
 public:
     NON_COPYABLE(TriangleApplication)
-    TriangleApplication(const std::string& n, const uint32_t w, const uint32_t h) : Application(n, w, h) {}
+    explicit TriangleApplication(const std::string& n) : Application(n) {}
     ~TriangleApplication() override = default;
 
 protected:
@@ -31,63 +30,29 @@ protected:
         instance = Instance::CreateByType(rhiType);
         gpu = instance->GetGpu(0);
 
-        {
-            std::vector<QueueInfo> queueCreateInfos = {
-                { QueueType::GRAPHICS, 2 },
-                { QueueType::COMPUTE, 1 }
-            };
-            DeviceCreateInfo deviceCreateInfo {};
-            deviceCreateInfo.queueCreateInfoNum = queueCreateInfos.size();
-            deviceCreateInfo.queueCreateInfos = queueCreateInfos.data();
-            device = gpu->RequestDevice(&deviceCreateInfo);
-        }
+        std::vector<QueueInfo> queueCreateInfos = {{ QueueType::GRAPHICS, 1 }};
+        DeviceCreateInfo deviceCreateInfo {};
+        deviceCreateInfo.queueCreateInfoNum = queueCreateInfos.size();
+        deviceCreateInfo.queueCreateInfos = queueCreateInfos.data();
+        device = gpu->RequestDevice(&deviceCreateInfo);
 
-        {
-            graphicsQueue = device->GetQueue(QueueType::COMPUTE, 0);
-        }
+        graphicsQueue = device->GetQueue(QueueType::GRAPHICS, 0);
 
-        {
-            std::vector<Vertex> vertices = {
-                { { -.5f, -.5f, 0.f }, { 1.f, 0.f, 0.f } },
-                { { .5f, -.5f, 0.f }, { 0.f, 1.f, 0.f } },
-                { { 0.f, .5f, 0.f }, { 0.f, 0.f, 1.f } },
-            };
+        std::vector<Vertex> vertices = {
+            { { -.5f, -.5f, 0.f }, { 1.f, 0.f, 0.f } },
+            { { .5f, -.5f, 0.f }, { 0.f, 1.f, 0.f } },
+            { { 0.f, .5f, 0.f }, { 0.f, 0.f, 1.f } },
+        };
 
-            BufferCreateInfo createInfo {};
-            createInfo.size = vertices.size() * sizeof(Vertex);
-            createInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
-            vertexBuffer = device->CreateBuffer(&createInfo);
-            if (vertexBuffer != nullptr) {
-                auto* data = vertexBuffer->Map(MapMode::WRITE, 0, createInfo.size);
-                memcpy(data, vertices.data(), createInfo.size);
-            }
+        BufferCreateInfo createInfo {};
+        createInfo.size = vertices.size() * sizeof(Vertex);
+        createInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        vertexBuffer = device->CreateBuffer(&createInfo);
+        if (vertexBuffer != nullptr) {
+            auto* data = vertexBuffer->Map(MapMode::WRITE, 0, createInfo.size);
+            memcpy(data, vertices.data(), createInfo.size);
         }
     }
-
-    void OnStart(int argc, char* argv[]) override
-    {
-        if (argc < 2) {
-            return;
-        }
-        for (int i = 1; i < argc; ++i) {
-            if (std::string(argv[i]) == "--rhi") {
-                if (i + 1 < argc) {
-                    std::string rhi = argv[++i];
-                    if (rhi == std::string("vulkan")) {
-                        rhiType = RHIType::VULKAN;
-                    } else if (rhi == std::string("dx12")) {
-                        rhiType = RHIType::DIRECTX_12;
-                    }
-                }
-            }
-        }
-    }
-
-    void OnDestroy() override
-    {
-    }
-
-    void OnDrawFrame() override {}
 
 private:
     Instance* instance {};
@@ -100,7 +65,6 @@ private:
 
 int main(int argc, char* argv[])
 {
-    TriangleApplication application("RHI-Triangle", 1024, 768);
-    application.Start(argc, argv);
-    return application.Run();
+    TriangleApplication application("RHI-Triangle");
+    return application.Run(argc, argv);
 }
