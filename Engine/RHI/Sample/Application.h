@@ -30,9 +30,9 @@ public:
     {
         std::string rhiString;
         auto cli = (
-            clipp::option("-w").set(width).doc("window width, 1024 by default"),
-            clipp::option("-h").set(height).doc("window height, 768 by default"),
-            clipp::required("-rhi").set(rhiString).doc("RHI type, can be 'DirectX12' or 'Vulkan'")
+            clipp::option("-w").doc("window width, 1024 by default") & clipp::value("width", width),
+            clipp::option("-h").doc("window height, 768 by default") & clipp::value("height", height),
+            clipp::required("-rhi").doc("RHI type, can be 'DirectX12' or 'Vulkan'") & clipp::value("RHI type", rhiString)
         );
         if (!clipp::parse(argc, argv, cli)) {
             std::cout << clipp::make_man_page(cli, argv[0]);
@@ -56,7 +56,7 @@ public:
     }
 
 protected:
-    virtual bool OnStart() {}
+    virtual void OnStart() {}
     virtual void OnCreate() {}
     virtual void OnDestroy() {}
     virtual void OnDrawFrame() {}

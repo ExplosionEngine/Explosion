@@ -21,7 +21,7 @@ struct Vertex {
 class TriangleApplication : public Application {
 public:
     NON_COPYABLE(TriangleApplication)
-    TriangleApplication(const std::string& n, const uint32_t w, const uint32_t h) : Application(n, w, h) {}
+    explicit TriangleApplication(const std::string& n) : Application(n) {}
     ~TriangleApplication() override = default;
 
 protected:
@@ -65,6 +65,6 @@ private:
 
 int main(int argc, char* argv[])
 {
-    TriangleApplication application("RHI-Triangle", 1024, 768);
+    TriangleApplication application("RHI-Triangle");
     return application.Run(argc, argv);
 }
