@@ -97,3 +97,11 @@ AddThirdPartyPackage(
     HASH 26c5dbff7310d153125b0f9ea8c587d9b5255fa14c61800f93cb358779cb503f
 )
 set(clipp_INC ${clipp_SOURCE_DIR}/include CACHE PATH "" FORCE)
+
+# DebugBreak
+AddThirdPartyPackage(
+    NAME debugbreak
+    VERSION 1.0
+    HASH 609053a8a508063ec4312d6991de39767eb12cbf36dd048e02a6a4e41ce13319
+)
+set(debugbreak_INC ${debugbreak_SOURCE_DIR} CACHE PATH "" FORCE)
