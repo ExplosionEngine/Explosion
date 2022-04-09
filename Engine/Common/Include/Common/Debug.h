@@ -17,10 +17,10 @@
 namespace Common {
     class Debug {
     public:
-        static void AssertImpl(bool target, const std::string& name, const std::string& file, uint32_t line)
+        static void AssertImpl(bool expression, const std::string& name, const std::string& file, uint32_t line)
         {
 #if BUILD_CONFIG_DEBUG
-            if (target) {
+            if (expression) {
                 return;
             }
             std::cerr << "Assert failed: " << name << ", " << file << ", " << line << std::endl;
