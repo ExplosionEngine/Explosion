@@ -8,7 +8,7 @@
 #include <d3d12.h>
 #include <wrl/client.h>
 
-using namespace Microsoft::WRL;
+using Microsoft::WRL::ComPtr;
 
 namespace RHI::DirectX12 {
     class DX12Device;

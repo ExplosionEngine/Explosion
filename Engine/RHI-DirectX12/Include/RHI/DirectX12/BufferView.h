@@ -6,7 +6,7 @@
 
 #include <wrl/client.h>
 #include <directx/d3dx12.h>
-using namespace Microsoft::WRL;
+using Microsoft::WRL::ComPtr;
 
 #include <RHI/BufferView.h>
 
