@@ -79,15 +79,12 @@ namespace RHI::DirectX12 {
 
     void* DX12Buffer::Map(MapMode mode, size_t offset, size_t length)
     {
-        if (mapMode != mode) {
-            throw DX12Exception("unsuitable map mode");
-        }
+        Assert(mapMode == mode);
 
         void* data;
         CD3DX12_RANGE range(offset, offset + length);
-        if (FAILED(dx12Resource->Map(0, &range, &data))) {
-            throw DX12Exception("failed to map dx12 buffer");
-        }
+        bool success = SUCCEEDED(dx12Resource->Map(0, &range, &data));
+        Assert(success);
         return data;
     }
 
@@ -126,15 +123,13 @@ namespace RHI::DirectX12 {
         CD3DX12_HEAP_PROPERTIES heapProperties(GetDX12HeapType(createInfo->usages));
         CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(createInfo->size);
 
-        if (FAILED(device.GetDX12Device()->CreateCommittedResource(
+        bool success = SUCCEEDED(device.GetDX12Device()->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &resourceDesc,
             GetDX12ResourceStates(createInfo->usages),
             nullptr,
-            IID_PPV_ARGS(&dx12Resource)
-        ))) {
-            throw DX12Exception("failed to create dx12 buffer");
-        }
+            IID_PPV_ARGS(&dx12Resource)));
+        Assert(success);
     }
 }

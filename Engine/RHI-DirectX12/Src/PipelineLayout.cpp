@@ -39,9 +39,7 @@ namespace RHI::DirectX12 {
         }
 
         auto iter2 = iter1->second.find(EncodeLayoutIndexAndBinding(layoutIndex, binding));
-        if (iter2 == iter1->second.end()) {
-            throw DX12Exception("can not find suitable slot for specific layout index / binding");
-        }
+        Assert(iter2 != iter1->second.end());
         return iter2->second;
     }
 
@@ -81,11 +79,9 @@ namespace RHI::DirectX12 {
 
         ComPtr<ID3DBlob> signature;
         ComPtr<ID3DBlob> error;
-        if (FAILED(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error))) {
-            throw DX12Exception("failed to serialize versioned root signature");
-        }
-        if (FAILED(device.GetDX12Device()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&dx12RootSignature)))) {
-            throw DX12Exception("failed to create root signature");
-        }
+        bool success = SUCCEEDED(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
+        Assert(success);
+        success = SUCCEEDED(device.GetDX12Device()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&dx12RootSignature)));
+        Assert(success);
     }
 }

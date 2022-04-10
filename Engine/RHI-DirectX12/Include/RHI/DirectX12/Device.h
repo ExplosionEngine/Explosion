@@ -15,7 +15,7 @@
 #include <RHI/Enum.h>
 #include <RHI/Device.h>
 
-using namespace Microsoft::WRL;
+using Microsoft::WRL::ComPtr;
 
 namespace RHI::DirectX12 {
     class DX12Gpu;

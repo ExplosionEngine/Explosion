@@ -14,21 +14,7 @@
 #include <d3d12.h>
 
 #include <RHI/Enum.h>
-
-namespace RHI::DirectX12 {
-    class DX12Exception : public std::exception {
-    public:
-        explicit DX12Exception(std::string msg) : message(std::move(msg)) {}
-
-        [[nodiscard]] const char* what() const override
-        {
-            return message.c_str();
-        }
-
-    private:
-        std::string message;
-    };
-}
+#include <Common/Debug.h>
 
 // duplicated code because static variable and namespace
 namespace RHI::DirectX12 {
@@ -39,9 +25,7 @@ namespace RHI::DirectX12 {
     B DX12EnumCast(const A& value)
     {
         auto iter = DX12_ENUM_MAP<A, B>.find(value);
-        if (iter == DX12_ENUM_MAP<A, B>.end()) {
-            throw DX12Exception(std::format("failed to find suitable enum cast result for {}", typeid(A).name()));
-        }
+        Assert((iter != DX12_ENUM_MAP<A, B>.end()));
         return static_cast<B>(iter->second);
     }
 

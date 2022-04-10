@@ -22,9 +22,7 @@ namespace RHI::DirectX12 {
     void DX12ComputePassCommandEncoder::SetPipeline(ComputePipeline* pipeline)
     {
         computePipeline = dynamic_cast<DX12ComputePipeline*>(pipeline);
-        if (computePipeline == nullptr) {
-            throw DX12Exception("pipeline cannot be nullptr");
-        }
+        Assert(computePipeline);
 
         commandBuffer.GetDX12GraphicsCommandList()->Reset(device.GetDX12CommandAllocator().Get(), computePipeline->GetDX12PipelineState().Get());
         commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(computePipeline->GetDX12PipelineState().Get());
@@ -37,12 +35,8 @@ namespace RHI::DirectX12 {
         auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
         auto& pipelineLayout = computePipeline->GetPipelineLayout();
 
-        if (layoutIndex != bindGroupLayout.GetLayoutIndex()) {
-            throw DX12Exception("bad layout index");
-        }
-        if (computePipeline == nullptr) {
-            throw DX12Exception("must cal SetPipeline() before SetBindGroup()");
-        }
+        Assert(layoutIndex == bindGroupLayout.GetLayoutIndex());
+        Assert(computePipeline);
 
         const auto& bindings= bindGroup->GetBindings();
         for (const auto& binding : bindings) {
@@ -51,9 +45,7 @@ namespace RHI::DirectX12 {
                 if (!t.has_value()) {
                     return;
                 }
-                if (t.value().first != binding.second.first) {
-                    throw DX12Exception(std::string("bad binding type on slot [layoutIndex: ") + std::to_string(layoutIndex) + ", binding: " + std::to_string(binding.first) + "]");
-                }
+                Assert(t.value().first == binding.second.first);
                 commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second.second);
             });
         }
@@ -91,12 +83,8 @@ namespace RHI::DirectX12 {
         auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
         auto& pipelineLayout = graphicsPipeline->GetPipelineLayout();
 
-        if (layoutIndex != bindGroupLayout.GetLayoutIndex()) {
-            throw DX12Exception("bad layout index");
-        }
-        if (graphicsPipeline == nullptr) {
-            throw DX12Exception("must cal SetPipeline() before SetBindGroup()");
-        }
+        Assert(layoutIndex == bindGroupLayout.GetLayoutIndex());
+        Assert(graphicsPipeline);
 
         const auto& bindings= bindGroup->GetBindings();
         for (const auto& binding : bindings) {
@@ -105,9 +93,7 @@ namespace RHI::DirectX12 {
                 if (!t.has_value()) {
                     return;
                 }
-                if (t.value().first != binding.second.first) {
-                    throw DX12Exception(std::string("bad binding type on slot [layoutIndex: ") + std::to_string(layoutIndex) + ", binding: " + std::to_string(binding.first) + "]");
-                }
+                Assert(t.value().first == binding.second.first);
                 commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second.second);
             });
         }

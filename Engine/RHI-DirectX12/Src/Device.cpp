@@ -35,22 +35,16 @@ namespace RHI::DirectX12 {
     size_t DX12Device::GetQueueNum(QueueType type)
     {
         auto iter = queues.find(type);
-        if (iter == queues.end()) {
-            throw DX12Exception("failed to find specific queue family");
-        }
+        Assert(iter != queues.end());
         return iter->second.size();
     }
 
     Queue* DX12Device::GetQueue(QueueType type, size_t index)
     {
         auto iter = queues.find(type);
-        if (iter == queues.end()) {
-            throw DX12Exception("failed to find specific queue family");
-        }
+        Assert(iter != queues.end());
         auto& queueArray = iter->second;
-        if (index < 0 || index >= queueArray.size()) {
-            throw DX12Exception("bad queue index");
-        }
+        Assert(index >= 0 && index < queueArray.size());
         return queueArray[index].get();
     }
 
@@ -138,10 +132,8 @@ namespace RHI::DirectX12 {
             desc.NumDescriptors = capacity;
             desc.Type = heapType;
             desc.Flags = heapFlag;
-            if (FAILED(dx12Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&node.descriptorHeap)))) {
-                throw DX12Exception("failed allocate new descriptor heap");
-            }
-
+            bool success = SUCCEEDED(dx12Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&node.descriptorHeap)));
+            Assert(success);
             list.emplace_back(std::move(node));
         }
 
@@ -159,9 +151,8 @@ namespace RHI::DirectX12 {
 
     void DX12Device::CreateDX12Device(DX12Gpu& gpu)
     {
-        if (FAILED(D3D12CreateDevice(gpu.GetDX12Adapter().Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&dx12Device)))) {
-            throw DX12Exception("failed to create dx12 device");
-        }
+        bool success = SUCCEEDED(D3D12CreateDevice(gpu.GetDX12Adapter().Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&dx12Device)));
+        Assert(success);
     }
 
     void DX12Device::CreateDX12Queues(const DeviceCreateInfo* createInfo)
@@ -185,9 +176,7 @@ namespace RHI::DirectX12 {
             for (auto& j : tempQueues) {
                 ComPtr<ID3D12CommandQueue> commandQueue;
                 dx12Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue));
-                if (commandQueue == nullptr) {
-                    throw DX12Exception("failed to create dx12 queue with specific type");
-                }
+                Assert(commandQueue);
                 j = std::make_unique<DX12Queue>(std::move(commandQueue));
             }
 
