@@ -60,9 +60,7 @@ namespace RHI::DirectX12 {
     void DX12BindGroup::SaveBindGroupLayout(const BindGroupCreateInfo* createInfo)
     {
         auto* tBindGroupLayout = dynamic_cast<DX12BindGroupLayout*>(createInfo->layout);
-        if (tBindGroupLayout == nullptr) {
-            throw DX12Exception("must set layout in create info");
-        }
+        Assert(tBindGroupLayout);
         bindGroupLayout = tBindGroupLayout;
     }
 

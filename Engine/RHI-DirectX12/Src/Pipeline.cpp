@@ -48,9 +48,7 @@ namespace RHI::DirectX12 {
         desc.AlphaToCoverageEnable = createInfo->multiSample.alphaToCoverage;
         desc.IndependentBlendEnable = true;
 
-        if (createInfo->fragment.colorTargetNum > 8) {
-            throw DX12Exception("max color target num is 8");
-        }
+        Assert(createInfo->fragment.colorTargetNum <= 8);
         for (auto i = 0; i < createInfo->fragment.colorTargetNum; i++) {
             desc.RenderTarget[i] = GetDX12RenderTargetBlendDesc(createInfo->fragment.colorTargets[i].blend);
         }
@@ -133,9 +131,7 @@ namespace RHI::DirectX12 {
     void DX12ComputePipeline::SavePipelineLayout(const ComputePipelineCreateInfo* createInfo)
     {
         auto* pl = dynamic_cast<DX12PipelineLayout*>(createInfo->layout);
-        if (pl == nullptr) {
-            throw DX12Exception("must set dx12 pipeline layout to '.layout' member in ComputePipelineCreateInfo");
-        }
+        Assert(pl);
         pipelineLayout = pl;
     }
 
@@ -147,9 +143,8 @@ namespace RHI::DirectX12 {
         desc.pRootSignature = pipelineLayout->GetDX12RootSignature().Get();
         desc.CS = computeShader->GetDX12ShaderBytecode();
 
-        if (FAILED(device.GetDX12Device()->CreateComputePipelineState(&desc, IID_PPV_ARGS(&dx12PipelineState)))) {
-            throw DX12Exception("failed to create dx12 compute pipeline state");
-        }
+        bool success = SUCCEEDED(device.GetDX12Device()->CreateComputePipelineState(&desc, IID_PPV_ARGS(&dx12PipelineState)));
+        Assert(success);
     }
 
     DX12GraphicsPipeline::DX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo* createInfo) : GraphicsPipeline(createInfo)
@@ -178,9 +173,7 @@ namespace RHI::DirectX12 {
     void DX12GraphicsPipeline::SavePipelineLayout(const GraphicsPipelineCreateInfo* createInfo)
     {
         auto* pl = dynamic_cast<DX12PipelineLayout*>(createInfo->layout);
-        if (pl == nullptr) {
-            throw DX12Exception("must set dx12 pipeline layout to '.layout' member in ComputePipelineCreateInfo");
-        }
+        Assert(pl);
         pipelineLayout = pl;
     }
 
@@ -201,8 +194,7 @@ namespace RHI::DirectX12 {
         desc.PrimitiveTopologyType = DX12EnumCast<PrimitiveTopology, D3D12_PRIMITIVE_TOPOLOGY_TYPE>(createInfo->primitive.topology);
         UpdateDX12RenderTargetsDesc(desc, createInfo);
 
-        if (FAILED(device.GetDX12Device()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&dx12PipelineState)))) {
-            throw DX12Exception("failed to create dx12 graphics pipeline state");
-        }
+        bool success = SUCCEEDED(device.GetDX12Device()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&dx12PipelineState)));
+        Assert(success);
     }
 }

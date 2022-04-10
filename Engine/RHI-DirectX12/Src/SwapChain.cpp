@@ -60,29 +60,25 @@ namespace RHI::DirectX12 {
         desc.SampleDesc.Count = 1;
 
         ComPtr<IDXGISwapChain1> dx12SwapChain1;
-        if (FAILED(instance.GetDX12Factory()->CreateSwapChainForHwnd(
+        bool success = SUCCEEDED(instance.GetDX12Factory()->CreateSwapChainForHwnd(
             dx12Queue->GetDX12CommandQueue().Get(),
             static_cast<HWND>(createInfo->window),
             &desc,
             /* TODO fullscreen */ nullptr,
             nullptr,
-            &dx12SwapChain1
-        ))) {
-            throw DX12Exception("failed to create dx12 swap chain");
-        }
+            &dx12SwapChain1));
+        Assert(success);
 
-        if (FAILED(dx12SwapChain1.As(&dx12SwapChain))) {
-            throw DX12Exception("failed to cast IDXGISwapChain1 to IDXGISwapChain3");
-        }
+        success = SUCCEEDED(dx12SwapChain1.As(&dx12SwapChain));
+        Assert(success);
     }
 
     void DX12SwapChain::FetchTextures()
     {
         for (auto i = 0; i < textureNum; i++) {
             ComPtr<ID3D12Resource> dx12Resource;
-            if (FAILED(dx12SwapChain->GetBuffer(i, IID_PPV_ARGS(&dx12Resource)))) {
-                throw DX12Exception("failed to get dx12 resource from swap chain");
-            }
+            bool success = SUCCEEDED(dx12SwapChain->GetBuffer(i, IID_PPV_ARGS(&dx12Resource)));
+            Assert(success);
             textures[i] = std::make_unique<DX12Texture>(std::move(dx12Resource));
         }
     }

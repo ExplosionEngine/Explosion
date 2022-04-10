@@ -32,8 +32,7 @@ namespace RHI::DirectX12 {
 
     void DX12CommandBuffer::AllocateDX12CommandList(DX12Device& device)
     {
-        if (FAILED(device.GetDX12Device()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, device.GetDX12CommandAllocator().Get(), nullptr, IID_PPV_ARGS(&dx12GraphicsCommandList)))) {
-            throw DX12Exception("failed to allocate dx12 command list");
-        }
+        bool success = SUCCEEDED(device.GetDX12Device()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, device.GetDX12CommandAllocator().Get(), nullptr, IID_PPV_ARGS(&dx12GraphicsCommandList)));
+        Assert(success);
     }
 }

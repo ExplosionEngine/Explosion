@@ -39,9 +39,8 @@ namespace RHI::DirectX12 {
         }
 #endif
 
-        if (FAILED(CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&dx12Factory)))) {
-            throw DX12Exception("failed to create dxgi factory");
-        }
+        bool success = SUCCEEDED(CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&dx12Factory)));
+        Assert(success);
     }
 
     void DX12Instance::EnumerateAdapters()

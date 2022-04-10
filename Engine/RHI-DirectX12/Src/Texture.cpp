@@ -18,9 +18,7 @@ namespace RHI::DirectX12 {
             { TextureDimension::T_3D, D3D12_RESOURCE_DIMENSION_TEXTURE3D }
         };
         auto iter = MAP.find(dimension);
-        if (iter == MAP.end()) {
-            throw DirectX12::DX12Exception("bad texture dimension");
-        }
+        Assert(iter != MAP.end());
         return iter->second;
     }
 
@@ -91,14 +89,13 @@ namespace RHI::DirectX12 {
         textureDesc.SampleDesc.Quality = 0;
         textureDesc.Dimension = GetDX12ResourceDimension(createInfo->dimension);
 
-        if (FAILED(device.GetDX12Device()->CreateCommittedResource(
+        bool success = SUCCEEDED(device.GetDX12Device()->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &textureDesc,
             D3D12_RESOURCE_STATE_COPY_DEST,
             nullptr,
-            IID_PPV_ARGS(&dx12Resource)))) {
-            throw DX12Exception("failed to create texture resource");
-        }
+            IID_PPV_ARGS(&dx12Resource)));
+        Assert(success);
     }
 }
