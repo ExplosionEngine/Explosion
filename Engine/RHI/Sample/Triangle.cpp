@@ -77,7 +77,6 @@ private:
     SwapChain* swapChain = nullptr;
     Buffer* vertexBuffer = nullptr;
     BufferView* vertexBufferView = nullptr;
-    RHIType rhiType = RHIType::DIRECTX_12;
 };
 
 int main(int argc, char* argv[])
