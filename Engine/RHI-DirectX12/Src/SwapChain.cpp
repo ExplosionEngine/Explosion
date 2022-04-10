@@ -75,6 +75,7 @@ namespace RHI::DirectX12 {
 
     void DX12SwapChain::FetchTextures()
     {
+        textures.resize(textureNum);
         for (auto i = 0; i < textureNum; i++) {
             ComPtr<ID3D12Resource> dx12Resource;
             bool success = SUCCEEDED(dx12SwapChain->GetBuffer(i, IID_PPV_ARGS(&dx12Resource)));
