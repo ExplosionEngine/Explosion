@@ -61,6 +61,16 @@ protected:
     virtual void OnDestroy() {}
     virtual void OnDrawFrame() {}
 
+    void* GetPlatformWindow()
+    {
+#if PLATFORM_WINDOWS
+        return glfwGetWin32Window(window);
+#else
+        // TODO
+        return nullptr;
+#endif
+    }
+
     RHI::RHIType rhiType;
     GLFWwindow* window;
     std::string name;
