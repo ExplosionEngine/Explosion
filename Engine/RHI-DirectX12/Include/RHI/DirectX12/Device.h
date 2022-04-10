@@ -36,6 +36,7 @@ namespace RHI::DirectX12 {
         void Destroy() override;
         size_t GetQueueNum(QueueType type) override;
         Queue* GetQueue(QueueType type, size_t index) override;
+        SwapChain* CreateSwapChain(const SwapChainCreateInfo* createInfo) override;
         Buffer* CreateBuffer(const BufferCreateInfo* createInfo) override;
         Texture* CreateTexture(const TextureCreateInfo* createInfo) override;
         Sampler* CreateSampler(const SamplerCreateInfo* createInfo) override;
@@ -47,6 +48,7 @@ namespace RHI::DirectX12 {
         GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
 
+        DX12Gpu& GetGpu();
         ComPtr<ID3D12Device>& GetDX12Device();
         ComPtr<ID3D12CommandAllocator>& GetDX12CommandAllocator();
         DescriptorAllocation AllocateRtvDescriptor();
@@ -60,11 +62,12 @@ namespace RHI::DirectX12 {
         };
 
         inline DescriptorAllocation AllocateDescriptor(std::list<DescriptorHeapListNode>& list, uint8_t capacity, uint32_t descriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlag);
-        void CreateDX12Device(DX12Gpu& gpu);
+        void CreateDX12Device();
         void CreateDX12Queues(const DeviceCreateInfo* createInfo);
         void CreateDX12CommandAllocator();
         void GetDX12DescriptorSize();
 
+        DX12Gpu& gpu;
         std::unordered_map<QueueType, std::vector<std::unique_ptr<DX12Queue>>> queues;
         uint32_t rtvDescriptorSize;
         uint32_t cbvSrvUavDescriptorSize;

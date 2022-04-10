@@ -57,6 +57,12 @@ namespace RHI::Vulkan {
         return queueArray[index].get();
     }
 
+    SwapChain* VKDevice::CreateSwapChain(const SwapChainCreateInfo* createInfo)
+    {
+        // TODO
+        return nullptr;
+    }
+
     void VKDevice::Destroy()
     {
         delete this;

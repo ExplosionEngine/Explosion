@@ -37,6 +37,7 @@ protected:
         deviceCreateInfo.queueCreateInfoNum = queueCreateInfos.size();
         deviceCreateInfo.queueCreateInfos = queueCreateInfos.data();
         device = gpu->RequestDevice(&deviceCreateInfo);
+        graphicsQueue = device->GetQueue(QueueType::GRAPHICS, 0);
 
         SwapChainCreateInfo swapChainCreateInfo {};
         swapChainCreateInfo.format = PixelFormat::RGBA8_UNORM;
@@ -45,9 +46,7 @@ protected:
         swapChainCreateInfo.extent = { width, height };
         swapChainCreateInfo.window = GetPlatformWindow();
         swapChainCreateInfo.presentQueue = graphicsQueue;
-        // TODO create swap chain
-
-        graphicsQueue = device->GetQueue(QueueType::GRAPHICS, 0);
+        swapChain = device->CreateSwapChain(&swapChainCreateInfo);
 
         std::vector<Vertex> vertices = {
             { { -.5f, -.5f, 0.f }, { 1.f, 0.f, 0.f } },

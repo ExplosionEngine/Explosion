@@ -15,11 +15,12 @@
 #include <RHI/DirectX12/ShaderModule.h>
 #include <RHI/DirectX12/Pipeline.h>
 #include <RHI/DirectX12/CommandBuffer.h>
+#include <RHI/DirectX12/SwapChain.h>
 
 namespace RHI::DirectX12 {
-    DX12Device::DX12Device(DX12Gpu& gpu, const DeviceCreateInfo* createInfo) : Device(createInfo), rtvDescriptorSize(0), cbvSrvUavDescriptorSize(0)
+    DX12Device::DX12Device(DX12Gpu& g, const DeviceCreateInfo* createInfo) : Device(createInfo), gpu(g), rtvDescriptorSize(0), cbvSrvUavDescriptorSize(0)
     {
-        CreateDX12Device(gpu);
+        CreateDX12Device();
         CreateDX12Queues(createInfo);
         CreateDX12CommandAllocator();
         GetDX12DescriptorSize();
@@ -46,6 +47,11 @@ namespace RHI::DirectX12 {
         auto& queueArray = iter->second;
         Assert(index >= 0 && index < queueArray.size());
         return queueArray[index].get();
+    }
+
+    SwapChain* DX12Device::CreateSwapChain(const SwapChainCreateInfo* createInfo)
+    {
+        return new DX12SwapChain(GetGpu().GetInstance(), createInfo);
     }
 
     ComPtr<ID3D12CommandAllocator>& DX12Device::GetDX12CommandAllocator()
@@ -103,6 +109,11 @@ namespace RHI::DirectX12 {
         return new DX12CommandBuffer(*this);
     }
 
+    DX12Gpu& DX12Device::GetGpu()
+    {
+        return gpu;
+    }
+
     ComPtr<ID3D12Device>& DX12Device::GetDX12Device()
     {
         return dx12Device;
@@ -149,7 +160,7 @@ namespace RHI::DirectX12 {
         };
     }
 
-    void DX12Device::CreateDX12Device(DX12Gpu& gpu)
+    void DX12Device::CreateDX12Device()
     {
         bool success = SUCCEEDED(D3D12CreateDevice(gpu.GetDX12Adapter().Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&dx12Device)));
         Assert(success);

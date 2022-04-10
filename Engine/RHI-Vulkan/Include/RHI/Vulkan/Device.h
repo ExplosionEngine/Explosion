@@ -23,6 +23,7 @@ namespace RHI::Vulkan {
 
         size_t GetQueueNum(QueueType type) override;
         Queue* GetQueue(QueueType type, size_t index) override;
+        SwapChain* CreateSwapChain(const SwapChainCreateInfo* createInfo) override;
         void Destroy() override;
         Buffer* CreateBuffer(const BufferCreateInfo* createInfo) override;
         Texture* CreateTexture(const TextureCreateInfo* createInfo) override;
