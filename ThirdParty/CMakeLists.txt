@@ -1,4 +1,5 @@
 # EnTT
+# TODO replace this with add_library(IMPORTED)
 AddThirdPartyPackage(
     NAME EnTT
     VERSION 3.8.1
@@ -7,6 +8,7 @@ AddThirdPartyPackage(
 set(EnTT_INC ${EnTT_SOURCE_DIR}/single_include CACHE PATH "" FORCE)
 
 # GLM
+# TODO replace this with add_library(IMPORTED)
 AddThirdPartyPackage(
     NAME GLM
     VERSION 0.9.9.8
@@ -15,6 +17,7 @@ AddThirdPartyPackage(
 set(GLM_INC ${GLM_SOURCE_DIR} CACHE PATH "" FORCE)
 
 # Meta
+# TODO replace this with add_library(IMPORTED)
 AddThirdPartyPackage(
     NAME Meta
     VERSION 1.4.9
@@ -23,6 +26,7 @@ AddThirdPartyPackage(
 set(Meta_INC ${Meta_SOURCE_DIR}/src CACHE PATH "" FORCE)
 
 # DirectX 12 Headers
+# TODO replace this with add_library(IMPORTED)
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     AddThirdPartyPackage(
         NAME DirectXHeaders
@@ -33,6 +37,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 endif()
 
 # VulkanSDK
+# TODO replace this with add_library(IMPORTED)
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     AddThirdPartyPackage(
         NAME VulkanSDK-Windows
@@ -56,6 +61,7 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 endif()
 
 # ShaderConductor
+# TODO replace this with add_library(IMPORTED)
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     AddThirdPartyPackage(
         NAME ShaderConductor-Windows
@@ -91,6 +97,7 @@ set(glfw_LINK ${glfw_INSTALL_DIR}/lib CACHE PATH "" FORCE)
 set(glfw_LIB glfw3 CACHE STRING "" FORCE)
 
 # clipp
+# TODO replace this with add_library(IMPORTED)
 AddThirdPartyPackage(
     NAME clipp
     VERSION forked-f7cffbd61a7b64189d6573e8c3848d094c35168a
@@ -99,6 +106,7 @@ AddThirdPartyPackage(
 set(clipp_INC ${clipp_SOURCE_DIR}/include CACHE PATH "" FORCE)
 
 # DebugBreak
+# TODO replace this with add_library(IMPORTED)
 AddThirdPartyPackage(
     NAME debugbreak
     VERSION 1.0

@@ -22,6 +22,7 @@ set(3RD_INSTALL_DIR ${CMAKE_BINARY_DIR}/ThirdPartyInstall CACHE PATH "" FORCE)
 #  - ARG          {List}   : arguments of cmake command
 #  - BUILD        {Bool}   : build package or not (just using sources)
 function(AddThirdPartyPackage)
+    # TODO repackage this with BUILD and IMPORTED mode
     cmake_parse_arguments(PARAMS "BUILD" "NAME;VERSION;HASH" "ARG" ${ARGN})
 
     set(3RD_PACKAGE_NAME "${PARAMS_NAME}")

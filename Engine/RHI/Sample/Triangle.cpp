@@ -67,6 +67,12 @@ protected:
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.vertex.stride = sizeof(Vertex);
         vertexBufferView = vertexBuffer->CreateBufferView(&bufferViewCreateInfo);
+
+        std::string shaderSource = ReadTextFile("Triangle.hlsl");
+        std::vector<uint8_t> vsByteCode;
+        CompileShader(vsByteCode, shaderSource, "VSMain", RHI::ShaderStageBits::VERTEX);
+        std::vector<uint8_t> fsByteCode;
+        CompileShader(fsByteCode, shaderSource, "FSMain", RHI::ShaderStageBits::FRAGMENT);
     }
 
 private:
