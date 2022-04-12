@@ -10,6 +10,7 @@
 #include <fstream>
 #include <sstream>
 #include <functional>
+#include <unordered_map>
 
 #include <clipp.h>
 #include <GLFW/glfw3.h>
