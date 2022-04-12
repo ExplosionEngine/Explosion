@@ -7,29 +7,37 @@ AddLibrary(
     LIB Common
 )
 
-if (APPLE)
-set(PLATFORM_EXT_LIBS
-    "-framework Cocoa"
-    "-framework IOKit"
-    "-framework CoreFoundation")
-endif()
+function(AddRHISample)
+    cmake_parse_arguments(PARAMS "" "NAME" "SRC;SHADER" ${ARGN})
 
-AddExecutable(
+    if (APPLE)
+        set(PLATFORM_EXT_LIBS
+            "-framework Cocoa"
+            "-framework IOKit"
+            "-framework CoreFoundation")
+    endif()
+
+    AddExecutable(
+        NAME ${PARAMS_NAME}
+        SRC ${CMAKE_CURRENT_SOURCE_DIR}/${PARAMS_SRC}
+        INC Sample ${glfw_INC} ${GLM_INC} ${clipp_INC} ${ShaderConductor_INC}
+        LINK ${glfw_LINK} ${ShaderConductor_LINK}
+        LIB RHI ${glfw_LIB} ${PLATFORM_EXT_LIBS} ${ShaderConductor_LIB}
+    )
+    add_custom_command(
+        TARGET ${PARAMS_NAME} PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${PARAMS_SHADER} $<TARGET_FILE_DIR:${PARAMS_NAME}>
+    )
+
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+        add_dependencies(${PARAMS_NAME} RHI-DirectX12 RHI-Vulkan)
+    else ()
+        add_dependencies(${PARAMS_NAME} RHI-Vulkan)
+    endif ()
+endfunction()
+
+AddRHISample(
     NAME RHI-Triangle
     SRC Sample/Triangle.cpp
-    INC Sample ${glfw_INC} ${GLM_INC} ${clipp_INC}
-    LINK ${glfw_LINK}
-    LIB RHI ${glfw_LIB} ${PLATFORM_EXT_LIBS}
+    SHADER Sample/Triangle.hlsl
 )
-
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set(Triangle-Dependencies
-        RHI-Vulkan RHI-DirectX12
-    )
-else ()
-    set(Triangle-Dependencies
-        RHI-Vulkan
-    )
-endif ()
-
-add_dependencies(RHI-Triangle ${Triangle-Dependencies})

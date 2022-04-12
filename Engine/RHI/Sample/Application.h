@@ -7,6 +7,9 @@
 #include <string>
 #include <utility>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <functional>
 
 #include <clipp.h>
 #include <GLFW/glfw3.h>
@@ -16,9 +19,34 @@
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
 #include <GLFW/glfw3native.h>
+#include <ShaderConductor/ShaderConductor.hpp>
 
 #include <Common/Utility.h>
+#include <Common/Debug.h>
 #include <RHI/Instance.h>
+
+static ShaderConductor::ShaderStage CastShaderStage(RHI::ShaderStageBits stage)
+{
+    static std::unordered_map<RHI::ShaderStageBits, ShaderConductor::ShaderStage> MAP = {
+        { RHI::ShaderStageBits::VERTEX, ShaderConductor::ShaderStage::VertexShader },
+        { RHI::ShaderStageBits::FRAGMENT, ShaderConductor::ShaderStage::PixelShader },
+        { RHI::ShaderStageBits::COMPUTE, ShaderConductor::ShaderStage::ComputeShader }
+    };
+    auto iter = MAP.find(stage);
+    Assert(iter != MAP.end());
+    return iter->second;
+}
+
+static ShaderConductor::ShadingLanguage GetShadingLanguage(RHI::RHIType rhiType)
+{
+    static std::unordered_map<RHI::RHIType, ShaderConductor::ShadingLanguage> MAP = {
+        { RHI::RHIType::DIRECTX_12, ShaderConductor::ShadingLanguage::Dxil },
+        { RHI::RHIType::VULKAN, ShaderConductor::ShadingLanguage::SpirV }
+    };
+    auto iter = MAP.find(rhiType);
+    Assert(iter != MAP.end());
+    return iter->second;
+}
 
 class Application {
 public:
@@ -65,10 +93,52 @@ protected:
     {
 #if PLATFORM_WINDOWS
         return glfwGetWin32Window(window);
+#elif PLATFORM_MACOS
+        return glfwGetCocoaWindow(window);
 #else
-        // TODO
+        Assert(false);
         return nullptr;
 #endif
+    }
+
+    static std::string ReadTextFile(const std::string& fileName)
+    {
+        std::ifstream file(fileName, std::ios::ate);
+        Assert(file.is_open());
+        std::stringstream stringstream;
+        stringstream << file.rdbuf();
+        return stringstream.str();
+    }
+
+    bool CompileShader(std::vector<uint8_t>& byteCode, const std::string& source, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
+    {
+        using ShaderConductor::Compiler;
+
+        Compiler::SourceDesc sourceDesc {};
+        sourceDesc.source = source.c_str();
+        sourceDesc.entryPoint = entryPoint.c_str();
+        sourceDesc.stage = CastShaderStage(shaderStage);
+
+        Compiler::Options options {};
+        options.disableOptimizations = true;
+        options.enable16bitTypes = true;
+        options.enableDebugInfo = true;
+        options.shaderModel = { 6, 0 };
+
+        Compiler::TargetDesc targetDesc {};
+        targetDesc.asModule = true;
+        targetDesc.language = GetShadingLanguage(rhiType);
+
+        auto result = Compiler::Compile(sourceDesc, options, targetDesc);
+        if (result.hasError) {
+            std::cout << result.errorWarningMsg->Data() << std::endl;
+            return false;
+        }
+
+        const auto* dataBegin = static_cast<const uint8_t*>(result.target->Data());
+        const auto* dataEnd = static_cast<const uint8_t*>(result.target->Data()) + result.target->Size();
+        byteCode = std::vector(dataBegin, dataEnd);
+        return true;
     }
 
     RHI::RHIType rhiType;
