@@ -13,16 +13,7 @@ set(3RD_SOURCE_DIR ${3RD_DIR}/Lib CACHE PATH "" FORCE)
 set(3RD_BINARY_DIR ${CMAKE_BINARY_DIR}/ThirdPartyBuild CACHE PATH "" FORCE)
 set(3RD_INSTALL_DIR ${CMAKE_BINARY_DIR}/ThirdPartyInstall CACHE PATH "" FORCE)
 
-# AddThirdPartyPackage
-# Description: add a third party package
-# Params:
-#  - NAME         {Single} : name of third party package
-#  - VERSION      {Single} : version of third party package
-#  - HASH         {Single} : zip file hash (sha256)
-#  - ARG          {List}   : arguments of cmake command
-#  - BUILD        {Bool}   : build package or not (just using sources)
 function(AddThirdPartyPackage)
-    # TODO repackage this with BUILD and IMPORTED mode
     cmake_parse_arguments(PARAMS "BUILD" "NAME;VERSION;HASH" "ARG" ${ARGN})
 
     set(3RD_PACKAGE_NAME "${PARAMS_NAME}")
