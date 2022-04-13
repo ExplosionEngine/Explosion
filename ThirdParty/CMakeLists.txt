@@ -66,6 +66,8 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(ShaderConductor_INC ${ShaderConductor-Windows_SOURCE_DIR}/Include CACHE PATH "" FORCE)
     set(ShaderConductor_LINK ${ShaderConductor-Windows_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
     set(ShaderConductor_LIB ShaderConductor CACHE STRING "" FORCE)
+    file(GLOB DLL ${ShaderConductor_BIN}/*.dll)
+    set(ShaderConductor_DLL ${DLL} CACHE STRING "" FORCE)
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     AddThirdPartyPackage(
         NAME ShaderConductor-Darwin
