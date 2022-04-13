@@ -59,8 +59,8 @@ endif()
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     AddThirdPartyPackage(
         NAME ShaderConductor-Windows
-        HASH d31bf92bb922dda070fac67affad3ae728ef86b29c27e8c775b051336293f468
         VERSION 20200430.1
+        HASH d31bf92bb922dda070fac67affad3ae728ef86b29c27e8c775b051336293f468
     )
     set(ShaderConductor_BIN ${ShaderConductor-Windows_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
     set(ShaderConductor_INC ${ShaderConductor-Windows_SOURCE_DIR}/Include CACHE PATH "" FORCE)
@@ -69,8 +69,8 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     AddThirdPartyPackage(
         NAME ShaderConductor-Darwin
-        HASH 9701c4f58014d1b087e2b0f2d22f01d35b505078813579050a4e3ccab1124275
         VERSION 20200430.1
+        HASH 9701c4f58014d1b087e2b0f2d22f01d35b505078813579050a4e3ccab1124275
     )
     set(ShaderConductor_BIN ${ShaderConductor-Darwin_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
     set(ShaderConductor_INC ${ShaderConductor-Darwin_SOURCE_DIR}/Include CACHE PATH "" FORCE)
