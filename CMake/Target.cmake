@@ -11,9 +11,9 @@ set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Api CACHE PATH "" FORCE)
 #  - INC  {List}   : private include directories of target
 #  - LINK {List}   : private link directories of target
 #  - LIB: {List}   : private libraries of target
-#  - DLL: {List}   : dll to copy (windows only)
+#  - RUNTIME_DEP: {List}   : dll to copy (windows only)
 function(AddExecutable)
-    cmake_parse_arguments(PARAMS "" "NAME" "SRC;INC;LINK;LIB;DLL" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME" "SRC;INC;LINK;LIB;RUNTIME_DEP" ${ARGN})
 
     if (${ENABLE_TARGET_DEBUG_INFO})
         message("")
@@ -42,7 +42,7 @@ function(AddExecutable)
         ${PARAMS_LIB}
     )
     if ((${CMAKE_SYSTEM_NAME} STREQUAL "Windows") AND (DEFINED PARAMS_DLL))
-        foreach(D ${PARAMS_DLL})
+        foreach(D ${PARAMS_RUNTIME_DEP})
             add_custom_command(
                 TARGET ${PARAMS_NAME} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${D} $<TARGET_FILE_DIR:${PARAMS_NAME}>
