@@ -22,6 +22,8 @@ function(AddExecutable)
             message(" - sources: ${PARAMS_SRC}")
             message(" - includes: ${PARAMS_INC}")
             message(" - libraries: ${PARAMS_LIB}")
+            message(" - link: ${PARAMS_LINK}")
+            message(" - dlls: ${PARAMS_DLL}")
         message("")
     endif()
 
