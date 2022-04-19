@@ -40,7 +40,7 @@ namespace RHI::DirectX12 {
     void ForEachBitsType(BitsTypeForEachFunc<E>&& func)
     {
         using UBitsType = std::underlying_type_t<E>;
-        for (UBitsType i = 0; i < static_cast<UBitsType>(E::MAX); i = i << i) {
+        for (UBitsType i = 0x1; i < static_cast<UBitsType>(E::MAX); i = i << 1) {
             func(static_cast<E>(i));
         }
     }

@@ -28,6 +28,7 @@ protected:
         RequestDeviceAndFetchQueues();
         CreateSwapChain();
         CreateVertexBuffer();
+        CreatePipelineLayout();
         CreatePipeline();
     }
 
@@ -149,7 +150,6 @@ private:
         createInfo.depthStencil.depthEnable = false;
         createInfo.depthStencil.stencilEnable = false;
         createInfo.multiSample.count = 1;
-
         pipeline = device->CreateGraphicsPipeline(&createInfo);
     }
 
