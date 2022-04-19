@@ -104,11 +104,11 @@ protected:
 
     static std::string ReadTextFile(const std::string& fileName)
     {
-        std::ifstream file(fileName, std::ios::ate);
+        std::ifstream file(fileName, std::ios::in);
         Assert(file.is_open());
-        std::stringstream stringstream;
-        stringstream << file.rdbuf();
-        return stringstream.str();
+        std::stringstream stream;
+        stream << file.rdbuf();
+        return stream.str();
     }
 
     bool CompileShader(std::vector<uint8_t>& byteCode, const std::string& source, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
@@ -122,9 +122,7 @@ protected:
 
         Compiler::Options options {};
         options.disableOptimizations = true;
-        options.enable16bitTypes = true;
         options.enableDebugInfo = true;
-        options.shaderModel = { 6, 0 };
 
         Compiler::TargetDesc targetDesc {};
         targetDesc.asModule = true;
@@ -132,7 +130,7 @@ protected:
 
         auto result = Compiler::Compile(sourceDesc, options, targetDesc);
         if (result.hasError) {
-            std::cout << result.errorWarningMsg->Data() << std::endl;
+            std::cout << (const char*)(result.errorWarningMsg->Data()) << std::endl;
             return false;
         }
 
