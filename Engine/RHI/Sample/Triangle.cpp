@@ -9,8 +9,10 @@
 #include <Application.h>
 #include <RHI/Gpu.h>
 #include <RHI/Device.h>
+#include <RHI/SwapChain.h>
 #include <RHI/Queue.h>
 #include <RHI/Buffer.h>
+#include <RHI/BufferView.h>
 using namespace RHI;
 
 struct Vertex {
@@ -35,32 +37,52 @@ protected:
         deviceCreateInfo.queueCreateInfoNum = queueCreateInfos.size();
         deviceCreateInfo.queueCreateInfos = queueCreateInfos.data();
         device = gpu->RequestDevice(&deviceCreateInfo);
-
         graphicsQueue = device->GetQueue(QueueType::GRAPHICS, 0);
+
+        SwapChainCreateInfo swapChainCreateInfo {};
+        swapChainCreateInfo.format = PixelFormat::RGBA8_UNORM;
+        swapChainCreateInfo.presentMode = PresentMode::IMMEDIATELY;
+        swapChainCreateInfo.textureNum = 2;
+        swapChainCreateInfo.extent = { width, height };
+        swapChainCreateInfo.window = GetPlatformWindow();
+        swapChainCreateInfo.presentQueue = graphicsQueue;
+        swapChain = device->CreateSwapChain(&swapChainCreateInfo);
 
         std::vector<Vertex> vertices = {
             { { -.5f, -.5f, 0.f }, { 1.f, 0.f, 0.f } },
             { { .5f, -.5f, 0.f }, { 0.f, 1.f, 0.f } },
             { { 0.f, .5f, 0.f }, { 0.f, 0.f, 1.f } },
         };
-
-        BufferCreateInfo createInfo {};
-        createInfo.size = vertices.size() * sizeof(Vertex);
-        createInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
-        vertexBuffer = device->CreateBuffer(&createInfo);
+        BufferCreateInfo bufferCreateInfo {};
+        bufferCreateInfo.size = vertices.size() * sizeof(Vertex);
+        bufferCreateInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        vertexBuffer = device->CreateBuffer(&bufferCreateInfo);
         if (vertexBuffer != nullptr) {
-            auto* data = vertexBuffer->Map(MapMode::WRITE, 0, createInfo.size);
-            memcpy(data, vertices.data(), createInfo.size);
+            auto* data = vertexBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
+            memcpy(data, vertices.data(), bufferCreateInfo.size);
         }
+
+        BufferViewCreateInfo bufferViewCreateInfo {};
+        bufferViewCreateInfo.size = vertices.size() * sizeof(Vertex);
+        bufferViewCreateInfo.offset = 0;
+        bufferViewCreateInfo.vertex.stride = sizeof(Vertex);
+        vertexBufferView = vertexBuffer->CreateBufferView(&bufferViewCreateInfo);
+
+        std::string shaderSource = ReadTextFile("Triangle.hlsl");
+        std::vector<uint8_t> vsByteCode;
+        CompileShader(vsByteCode, shaderSource, "VSMain", RHI::ShaderStageBits::VERTEX);
+        std::vector<uint8_t> fsByteCode;
+        CompileShader(fsByteCode, shaderSource, "FSMain", RHI::ShaderStageBits::FRAGMENT);
     }
 
 private:
-    Instance* instance {};
-    Gpu* gpu {};
-    Device* device {};
-    Queue* graphicsQueue {};
-    Buffer* vertexBuffer {};
-    RHIType rhiType = RHIType::DIRECTX_12;
+    Instance* instance = nullptr;
+    Gpu* gpu = nullptr;
+    Device* device = nullptr;
+    Queue* graphicsQueue = nullptr;
+    SwapChain* swapChain = nullptr;
+    Buffer* vertexBuffer = nullptr;
+    BufferView* vertexBufferView = nullptr;
 };
 
 int main(int argc, char* argv[])

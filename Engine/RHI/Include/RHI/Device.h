@@ -19,7 +19,7 @@ namespace RHI {
     struct ShaderModuleCreateInfo;
     struct ComputePipelineCreateInfo;
     struct GraphicsPipelineCreateInfo;
-    struct CommandBufferCreateInfo;
+    struct SwapChainCreateInfo;
     class Queue;
     class Buffer;
     class Texture;
@@ -31,6 +31,7 @@ namespace RHI {
     class ComputePipeline;
     class GraphicsPipeline;
     class CommandBuffer;
+    class SwapChain;
 
     struct QueueInfo {
         QueueType type;
@@ -50,6 +51,7 @@ namespace RHI {
         virtual void Destroy() = 0;
         virtual size_t GetQueueNum(QueueType type) = 0;
         virtual Queue* GetQueue(QueueType type, size_t index) = 0;
+        virtual SwapChain* CreateSwapChain(const SwapChainCreateInfo* createInfo) = 0;
         virtual Buffer* CreateBuffer(const BufferCreateInfo* createInfo) = 0;
         virtual Texture* CreateTexture(const TextureCreateInfo* createInfo) = 0;
         virtual Sampler* CreateSampler(const SamplerCreateInfo* createInfo) = 0;

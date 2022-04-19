@@ -7,7 +7,7 @@
 #include <RHI/DirectX12/Device.h>
 
 namespace RHI::DirectX12 {
-    DX12Gpu::DX12Gpu(ComPtr<IDXGIAdapter1>&& a) : Gpu(), dx12Adapter(a) {}
+    DX12Gpu::DX12Gpu(DX12Instance& i, ComPtr<IDXGIAdapter1>&& a) : Gpu(), instance(i), dx12Adapter(a) {}
 
     DX12Gpu::~DX12Gpu() = default;
 
@@ -21,6 +21,11 @@ namespace RHI::DirectX12 {
         property.deviceId = desc.DeviceId;
         property.type = GetGpuTypeByAdapterFlag(desc.Flags);
         return property;
+    }
+
+    DX12Instance& DX12Gpu::GetInstance()
+    {
+        return instance;
     }
 
     ComPtr<IDXGIAdapter1>& DX12Gpu::GetDX12Adapter()
