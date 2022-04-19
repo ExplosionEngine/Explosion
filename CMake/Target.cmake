@@ -22,8 +22,8 @@ function(AddExecutable)
             message(" - sources: ${PARAMS_SRC}")
             message(" - includes: ${PARAMS_INC}")
             message(" - libraries: ${PARAMS_LIB}")
-            message(" - link: ${PARAMS_LINK}")
-            message(" - dlls: ${PARAMS_DLL}")
+            message(" - links: ${PARAMS_LINK}")
+            message(" - runtime_deps: ${PARAMS_RUNTIME_DEP}")
         message("")
     endif()
 
@@ -43,14 +43,13 @@ function(AddExecutable)
         ${PARAMS_NAME}
         ${PARAMS_LIB}
     )
-    if ((${CMAKE_SYSTEM_NAME} STREQUAL "Windows") AND (DEFINED PARAMS_DLL))
-        foreach(D ${PARAMS_RUNTIME_DEP})
-            add_custom_command(
-                TARGET ${PARAMS_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${D} $<TARGET_FILE_DIR:${PARAMS_NAME}>
-            )
-        endforeach()
-    endif()
+
+    foreach(D ${PARAMS_RUNTIME_DEP})
+        add_custom_command(
+            TARGET ${PARAMS_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${D} $<TARGET_FILE_DIR:${PARAMS_NAME}>
+        )
+    endforeach()
 endfunction()
 
 # AddLibrary

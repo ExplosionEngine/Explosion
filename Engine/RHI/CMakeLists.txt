@@ -10,11 +10,15 @@ AddLibrary(
 function(AddRHISample)
     cmake_parse_arguments(PARAMS "" "NAME" "SRC;SHADER" ${ARGN})
 
-    if (APPLE)
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
         set(PLATFORM_EXT_LIBS
             "-framework Cocoa"
             "-framework IOKit"
             "-framework CoreFoundation")
+    endif()
+
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+        set(RUNTIME_DEPS ${ShaderConductor_DLL})
     endif()
 
     AddExecutable(
@@ -23,7 +27,7 @@ function(AddRHISample)
         INC Sample ${glfw_INC} ${GLM_INC} ${clipp_INC} ${ShaderConductor_INC}
         LINK ${glfw_LINK} ${ShaderConductor_LINK}
         LIB RHI ${glfw_LIB} ${PLATFORM_EXT_LIBS} ${ShaderConductor_LIB}
-        RUNTIME_DEP ${ShaderConductor_DLL}
+        RUNTIME_DEP ${RUNTIME_DEPS}
     )
     add_custom_command(
         TARGET ${PARAMS_NAME} PRE_BUILD
