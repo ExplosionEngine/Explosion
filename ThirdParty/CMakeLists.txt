@@ -77,7 +77,7 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(ShaderConductor_BIN ${ShaderConductor-Darwin_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
     set(ShaderConductor_INC ${ShaderConductor-Darwin_SOURCE_DIR}/Include CACHE PATH "" FORCE)
     set(ShaderConductor_LINK ${ShaderConductor-Darwin_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
-    set(ShaderConductor_LIB "dxcompiler ShaderConductor" CACHE STRING "" FORCE)
+    set(ShaderConductor_LIB dxcompiler ShaderConductor CACHE STRING "" FORCE)
 endif()
 
 # GLFW
