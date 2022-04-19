@@ -24,7 +24,7 @@
 
 #include <Common/Utility.h>
 #include <Common/Debug.h>
-#include <RHI/Instance.h>
+#include <RHI/RHI.h>
 
 static ShaderConductor::ShaderStage CastShaderStage(RHI::ShaderStageBits stage)
 {

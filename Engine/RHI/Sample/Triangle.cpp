@@ -3,16 +3,11 @@
 //
 
 #include <vector>
+#include <array>
 
 #include <glm/glm.hpp>
 
 #include <Application.h>
-#include <RHI/Gpu.h>
-#include <RHI/Device.h>
-#include <RHI/SwapChain.h>
-#include <RHI/Queue.h>
-#include <RHI/Buffer.h>
-#include <RHI/BufferView.h>
 using namespace RHI;
 
 struct Vertex {
@@ -29,16 +24,33 @@ public:
 protected:
     void OnCreate() override
     {
+        CreateInstanceAndSelectGPU();
+        RequestDeviceAndFetchQueues();
+        CreateSwapChain();
+        CreateVertexBuffer();
+        CreatePipeline();
+    }
+
+private:
+    void CreateInstanceAndSelectGPU()
+    {
         instance = Instance::CreateByType(rhiType);
+
         gpu = instance->GetGpu(0);
+    }
 
+    void RequestDeviceAndFetchQueues()
+    {
         std::vector<QueueInfo> queueCreateInfos = {{ QueueType::GRAPHICS, 1 }};
-        DeviceCreateInfo deviceCreateInfo {};
-        deviceCreateInfo.queueCreateInfoNum = queueCreateInfos.size();
-        deviceCreateInfo.queueCreateInfos = queueCreateInfos.data();
-        device = gpu->RequestDevice(&deviceCreateInfo);
+        DeviceCreateInfo createInfo {};
+        createInfo.queueCreateInfoNum = queueCreateInfos.size();
+        createInfo.queueCreateInfos = queueCreateInfos.data();
+        device = gpu->RequestDevice(&createInfo);
         graphicsQueue = device->GetQueue(QueueType::GRAPHICS, 0);
+    }
 
+    void CreateSwapChain()
+    {
         SwapChainCreateInfo swapChainCreateInfo {};
         swapChainCreateInfo.format = PixelFormat::RGBA8_UNORM;
         swapChainCreateInfo.presentMode = PresentMode::IMMEDIATELY;
@@ -47,12 +59,16 @@ protected:
         swapChainCreateInfo.window = GetPlatformWindow();
         swapChainCreateInfo.presentQueue = graphicsQueue;
         swapChain = device->CreateSwapChain(&swapChainCreateInfo);
+    }
 
+    void CreateVertexBuffer()
+    {
         std::vector<Vertex> vertices = {
             { { -.5f, -.5f, 0.f }, { 1.f, 0.f, 0.f } },
             { { .5f, -.5f, 0.f }, { 0.f, 1.f, 0.f } },
             { { 0.f, .5f, 0.f }, { 0.f, 0.f, 1.f } },
         };
+
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = vertices.size() * sizeof(Vertex);
         bufferCreateInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
@@ -67,15 +83,76 @@ protected:
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.vertex.stride = sizeof(Vertex);
         vertexBufferView = vertexBuffer->CreateBufferView(&bufferViewCreateInfo);
-
-        std::string shaderSource = ReadTextFile("Triangle.hlsl");
-        std::vector<uint8_t> vsByteCode;
-        CompileShader(vsByteCode, shaderSource, "VSMain", RHI::ShaderStageBits::VERTEX);
-        std::vector<uint8_t> fsByteCode;
-        CompileShader(fsByteCode, shaderSource, "FSMain", RHI::ShaderStageBits::FRAGMENT);
     }
 
-private:
+    void CreatePipelineLayout()
+    {
+        PipelineLayoutCreateInfo createInfo {};
+        createInfo.bindGroupNum = 0;
+        createInfo.bindGroupLayouts = nullptr;
+        pipelineLayout = device->CreatePipelineLayout(&createInfo);
+    }
+
+    void CreatePipeline()
+    {
+        std::string shaderSource = ReadTextFile("Triangle.hlsl");
+        ShaderModule* vertexShader;
+        ShaderModule* fragmentShader;
+        {
+            std::vector<uint8_t> byteCode;
+            CompileShader(byteCode, shaderSource, "VSMain", RHI::ShaderStageBits::VERTEX);
+
+            ShaderModuleCreateInfo createInfo {};
+            createInfo.size = byteCode.size();
+            createInfo.byteCode = byteCode.data();
+            vertexShader = device->CreateShaderModule(&createInfo);
+
+            std::vector<uint8_t> fsByteCode;
+            CompileShader(byteCode, shaderSource, "FSMain", RHI::ShaderStageBits::FRAGMENT);
+
+            createInfo.size = byteCode.size();
+            createInfo.byteCode = byteCode.data();
+            fragmentShader = device->CreateShaderModule(&createInfo);
+        }
+
+        std::array<VertexAttribute, 2> vertexAttributes {};
+        vertexAttributes[0].format = VertexFormat::FLOAT32_X3;
+        vertexAttributes[0].offset = 0;
+        vertexAttributes[0].location = 0;
+        vertexAttributes[1].format = VertexFormat::FLOAT32_X3;
+        vertexAttributes[1].offset = 0;
+        vertexAttributes[1].location = 1;
+
+        VertexBufferLayout vertexBufferLayout {};
+        vertexBufferLayout.stepMode = RHI::VertexStepMode::PER_VERTEX;
+        vertexBufferLayout.stride = sizeof(Vertex);
+        vertexBufferLayout.attributeNum = vertexAttributes.size();
+        vertexBufferLayout.attributes = vertexAttributes.data();
+
+        ColorTargetState colorTargetState {};
+        colorTargetState.format = PixelFormat::RGBA8_UNORM;
+        colorTargetState.writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+
+        GraphicsPipelineCreateInfo createInfo {};
+        createInfo.vertexShader = vertexShader;
+        createInfo.fragmentShader = fragmentShader;
+        createInfo.layout = pipelineLayout;
+        createInfo.vertex.bufferLayoutNum = 1;
+        createInfo.vertex.bufferLayouts = &vertexBufferLayout;
+        createInfo.fragment.colorTargetNum = 1;
+        createInfo.fragment.colorTargets = &colorTargetState;
+        createInfo.primitive.depthClip = false;
+        createInfo.primitive.frontFace = RHI::FrontFace::CCW;
+        createInfo.primitive.cullMode = CullMode::NONE;
+        createInfo.primitive.topology = RHI::PrimitiveTopology::TRIANGLE;
+        createInfo.primitive.stripIndexFormat = IndexFormat::UINT16;
+        createInfo.depthStencil.depthEnable = false;
+        createInfo.depthStencil.stencilEnable = false;
+        createInfo.multiSample.count = 1;
+
+        pipeline = device->CreateGraphicsPipeline(&createInfo);
+    }
+
     Instance* instance = nullptr;
     Gpu* gpu = nullptr;
     Device* device = nullptr;
@@ -83,6 +160,8 @@ private:
     SwapChain* swapChain = nullptr;
     Buffer* vertexBuffer = nullptr;
     BufferView* vertexBufferView = nullptr;
+    PipelineLayout* pipelineLayout = nullptr;
+    Pipeline* pipeline = nullptr;
 };
 
 int main(int argc, char* argv[])
