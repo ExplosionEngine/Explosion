@@ -30,6 +30,7 @@ There are some supported OS and compilers yet:
 | OS | Compiler |
 | - | - |
 | Windows | Visual Studio 16 2019 x64 |
+| Windows | Visual Studio 17 2022 x64 |
 | macOS | Apple Clang x64 |
 
 # Build The Engine
