@@ -99,22 +99,21 @@ private:
         std::string shaderSource = ReadTextFile("Triangle.hlsl");
         ShaderModule* vertexShader;
         ShaderModule* fragmentShader;
-        {
-            std::vector<uint8_t> byteCode;
-            CompileShader(byteCode, shaderSource, "VSMain", RHI::ShaderStageBits::VERTEX);
 
-            ShaderModuleCreateInfo createInfo {};
-            createInfo.size = byteCode.size();
-            createInfo.byteCode = byteCode.data();
-            vertexShader = device->CreateShaderModule(&createInfo);
+        std::vector<uint8_t> vsByteCode;
+        CompileShader(vsByteCode, shaderSource, "VSMain", RHI::ShaderStageBits::VERTEX);
 
-            std::vector<uint8_t> fsByteCode;
-            CompileShader(byteCode, shaderSource, "FSMain", RHI::ShaderStageBits::FRAGMENT);
+        ShaderModuleCreateInfo shaderModuleCreateInfo {};
+        shaderModuleCreateInfo.size = vsByteCode.size();
+        shaderModuleCreateInfo.byteCode = vsByteCode.data();
+        vertexShader = device->CreateShaderModule(&shaderModuleCreateInfo);
 
-            createInfo.size = byteCode.size();
-            createInfo.byteCode = byteCode.data();
-            fragmentShader = device->CreateShaderModule(&createInfo);
-        }
+        std::vector<uint8_t> fsByteCode;
+        CompileShader(fsByteCode, shaderSource, "FSMain", RHI::ShaderStageBits::FRAGMENT);
+
+        shaderModuleCreateInfo.size = fsByteCode.size();
+        shaderModuleCreateInfo.byteCode = fsByteCode.data();
+        fragmentShader = device->CreateShaderModule(&shaderModuleCreateInfo);
 
         std::array<VertexAttribute, 2> vertexAttributes {};
         vertexAttributes[0].format = VertexFormat::FLOAT32_X3;
