@@ -123,9 +123,9 @@ protected:
         Compiler::Options options {};
         options.disableOptimizations = true;
         options.enableDebugInfo = true;
+        options.shaderModel = { 6, 2 };
 
         Compiler::TargetDesc targetDesc {};
-        targetDesc.asModule = true;
         targetDesc.language = GetShadingLanguage(rhiType);
 
         auto result = Compiler::Compile(sourceDesc, options, targetDesc);
