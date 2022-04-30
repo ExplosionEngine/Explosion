@@ -20,34 +20,11 @@
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
 #include <GLFW/glfw3native.h>
-#include <ShaderConductor/ShaderConductor.hpp>
+#include <dxc/dxcapi.h>
 
 #include <Common/Utility.h>
 #include <Common/Debug.h>
 #include <RHI/RHI.h>
-
-static ShaderConductor::ShaderStage CastShaderStage(RHI::ShaderStageBits stage)
-{
-    static std::unordered_map<RHI::ShaderStageBits, ShaderConductor::ShaderStage> MAP = {
-        { RHI::ShaderStageBits::VERTEX, ShaderConductor::ShaderStage::VertexShader },
-        { RHI::ShaderStageBits::FRAGMENT, ShaderConductor::ShaderStage::PixelShader },
-        { RHI::ShaderStageBits::COMPUTE, ShaderConductor::ShaderStage::ComputeShader }
-    };
-    auto iter = MAP.find(stage);
-    Assert(iter != MAP.end());
-    return iter->second;
-}
-
-static ShaderConductor::ShadingLanguage GetShadingLanguage(RHI::RHIType rhiType)
-{
-    static std::unordered_map<RHI::RHIType, ShaderConductor::ShadingLanguage> MAP = {
-        { RHI::RHIType::DIRECTX_12, ShaderConductor::ShadingLanguage::Dxil },
-        { RHI::RHIType::VULKAN, ShaderConductor::ShadingLanguage::SpirV }
-    };
-    auto iter = MAP.find(rhiType);
-    Assert(iter != MAP.end());
-    return iter->second;
-}
 
 class Application {
 public:
@@ -113,31 +90,11 @@ protected:
 
     bool CompileShader(std::vector<uint8_t>& byteCode, const std::string& source, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
     {
-        using ShaderConductor::Compiler;
-
-        Compiler::SourceDesc sourceDesc {};
-        sourceDesc.source = source.c_str();
-        sourceDesc.entryPoint = entryPoint.c_str();
-        sourceDesc.stage = CastShaderStage(shaderStage);
-
-        Compiler::Options options {};
-        options.disableOptimizations = true;
-        options.enableDebugInfo = true;
-        options.shaderModel = { 6, 2 };
-
-        Compiler::TargetDesc targetDesc {};
-        targetDesc.language = GetShadingLanguage(rhiType);
-
-        auto result = Compiler::Compile(sourceDesc, options, targetDesc);
-        if (result.hasError) {
-            std::cout << (const char*)(result.errorWarningMsg->Data()) << std::endl;
-            return false;
-        }
-
-        const auto* dataBegin = static_cast<const uint8_t*>(result.target->Data());
-        const auto* dataEnd = static_cast<const uint8_t*>(result.target->Data()) + result.target->Size();
-        byteCode = std::vector(dataBegin, dataEnd);
-        return true;
+// TODO remove this when macOS dxc ready
+#if PLATFORM_WINDOWS
+        // TODO
+#endif
+        return false;
     }
 
     RHI::RHIType rhiType;

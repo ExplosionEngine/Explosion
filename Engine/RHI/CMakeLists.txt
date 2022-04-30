@@ -18,15 +18,15 @@ function(AddRHISample)
     endif()
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-        set(RUNTIME_DEPS ${ShaderConductor_DLL})
+        set(RUNTIME_DEPS ${dxc_DLL})
     endif()
 
     AddExecutable(
         NAME ${PARAMS_NAME}
         SRC ${CMAKE_CURRENT_SOURCE_DIR}/${PARAMS_SRC}
-        INC Sample ${glfw_INC} ${GLM_INC} ${clipp_INC} ${ShaderConductor_INC}
-        LINK ${glfw_LINK} ${ShaderConductor_LINK}
-        LIB RHI ${glfw_LIB} ${PLATFORM_EXT_LIBS} ${ShaderConductor_LIB}
+        INC Sample ${glfw_INC} ${GLM_INC} ${clipp_INC} ${dxc_INC}
+        LINK ${glfw_LINK} ${dxc_LINK}
+        LIB RHI ${glfw_LIB} ${PLATFORM_EXT_LIBS} ${dxc_LIB}
         RUNTIME_DEP ${RUNTIME_DEPS}
     )
     add_custom_command(
