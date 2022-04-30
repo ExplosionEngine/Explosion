@@ -101,7 +101,7 @@ private:
         ShaderModule* fragmentShader;
 
         std::vector<uint8_t> vsByteCode;
-        CompileShader(vsByteCode, shaderSource, "VSMain", RHI::ShaderStageBits::VERTEX);
+        Assert(CompileShader(vsByteCode, shaderSource, "VSMain", RHI::ShaderStageBits::VERTEX));
 
         ShaderModuleCreateInfo shaderModuleCreateInfo {};
         shaderModuleCreateInfo.size = vsByteCode.size();
@@ -109,7 +109,7 @@ private:
         vertexShader = device->CreateShaderModule(&shaderModuleCreateInfo);
 
         std::vector<uint8_t> fsByteCode;
-        CompileShader(fsByteCode, shaderSource, "FSMain", RHI::ShaderStageBits::FRAGMENT);
+        Assert(CompileShader(fsByteCode, shaderSource, "FSMain", RHI::ShaderStageBits::FRAGMENT));
 
         shaderModuleCreateInfo.size = fsByteCode.size();
         shaderModuleCreateInfo.byteCode = fsByteCode.data();
