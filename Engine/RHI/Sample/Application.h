@@ -20,7 +20,11 @@
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
 #include <GLFW/glfw3native.h>
+
+// TODO remove this macro when macOS dcx ready
+#if PLATFORM_WINDOWS
 #include <dxc/dxcapi.h>
+#endif
 
 #include <Common/Utility.h>
 #include <Common/Debug.h>
