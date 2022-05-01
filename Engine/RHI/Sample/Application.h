@@ -20,11 +20,7 @@
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
 #include <GLFW/glfw3native.h>
-
-// TODO remove this macro when macOS dcx ready
-#if PLATFORM_WINDOWS
 #include <dxc/dxcapi.h>
-#endif
 
 #include <Common/Utility.h>
 #include <Common/Debug.h>
@@ -94,10 +90,7 @@ protected:
 
     bool CompileShader(std::vector<uint8_t>& byteCode, const std::string& source, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
     {
-// TODO remove this when macOS dxc ready
-#if PLATFORM_WINDOWS
         // TODO
-#endif
         return false;
     }
 
