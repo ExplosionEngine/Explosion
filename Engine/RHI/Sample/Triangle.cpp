@@ -96,12 +96,11 @@ private:
 
     void CreatePipeline()
     {
-        std::string shaderSource = ReadTextFile("Triangle.hlsl");
         ShaderModule* vertexShader;
         ShaderModule* fragmentShader;
 
         std::vector<uint8_t> vsByteCode;
-        Assert(CompileShader(vsByteCode, shaderSource, "VSMain", RHI::ShaderStageBits::VERTEX));
+        CompileShader(vsByteCode, "Triangle.hlsl", "VSMain", RHI::ShaderStageBits::VERTEX);
 
         ShaderModuleCreateInfo shaderModuleCreateInfo {};
         shaderModuleCreateInfo.size = vsByteCode.size();
@@ -109,7 +108,7 @@ private:
         vertexShader = device->CreateShaderModule(&shaderModuleCreateInfo);
 
         std::vector<uint8_t> fsByteCode;
-        Assert(CompileShader(fsByteCode, shaderSource, "FSMain", RHI::ShaderStageBits::FRAGMENT));
+        CompileShader(fsByteCode, "Triangle.hlsl", "FSMain", RHI::ShaderStageBits::FRAGMENT);
 
         shaderModuleCreateInfo.size = fsByteCode.size();
         shaderModuleCreateInfo.byteCode = fsByteCode.data();
