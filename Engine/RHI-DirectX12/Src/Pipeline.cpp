@@ -122,8 +122,8 @@ namespace RHI::DirectX12 {
                 desc.InputSlot = i;
                 desc.InputSlotClass = DX12EnumCast<VertexStepMode, D3D12_INPUT_CLASSIFICATION>(layout.stepMode);
                 desc.AlignedByteOffset = attribute.offset;
-                desc.SemanticName = attribute.name;
-                desc.SemanticIndex = attribute.location;
+                desc.SemanticName = attribute.semanticName;
+                desc.SemanticIndex = attribute.semanticIndex;
                 result.emplace_back(desc);
             }
         }

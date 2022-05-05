@@ -17,8 +17,11 @@ namespace RHI {
     struct VertexAttribute {
         VertexFormat format;
         size_t offset;
+        // for Vulkan
         uint8_t location;
-        const char* name;
+        // for DirectX 12
+        const char* semanticName;
+        uint8_t semanticIndex;
     };
 
     struct VertexBufferLayout {
