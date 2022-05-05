@@ -50,6 +50,10 @@ function(AddExecutable)
             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${D} $<TARGET_FILE_DIR:${PARAMS_NAME}>
         )
     endforeach()
+
+    if (${MSVC})
+        set_target_properties(${PARAMS_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>)
+    endif()
 endfunction()
 
 # AddLibrary

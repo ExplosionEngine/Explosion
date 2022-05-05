@@ -55,29 +55,22 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(VulkanSDK_VULKAN_LIB vulkan.1 CACHE STRING "" FORCE)
 endif()
 
-# ShaderConductor
+# DXC
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     AddThirdPartyPackage(
-        NAME ShaderConductor-Windows
-        VERSION 20200430.1
-        HASH d31bf92bb922dda070fac67affad3ae728ef86b29c27e8c775b051336293f468
+        NAME dxc-Windows
+        HASH 257911471331a93ecd5b1137e0bae21894c2deea607e27db53971dd4fa7ce723
+        VERSION 1.6.2112
     )
-    set(ShaderConductor_BIN ${ShaderConductor-Windows_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
-    set(ShaderConductor_INC ${ShaderConductor-Windows_SOURCE_DIR}/Include CACHE PATH "" FORCE)
-    set(ShaderConductor_LINK ${ShaderConductor-Windows_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
-    set(ShaderConductor_LIB ShaderConductor CACHE STRING "" FORCE)
-    file(GLOB DLL ${ShaderConductor_BIN}/*.dll)
-    set(ShaderConductor_DLL ${DLL} CACHE STRING "" FORCE)
+    set(dxc_INC ${dxc-Windows_SOURCE_DIR}/inc CACHE PATH "" FORCE)
+    set(dxc_LINK ${dxc-Windows_SOURCE_DIR}/lib CACHE PATH "" FORCE)
+    set(dxc_BIN ${dxc-Windows_SOURCE_DIR}/bin/x64 CACHE PATH "" FORCE)
+    set(dxc_LIB dxcompiler CACHE STRING "" FORCE)
+    file(GLOB DLL ${dxc_BIN}/*.dll)
+    set(dxc_DLL ${DLL} CACHE STRING "" FORCE)
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    AddThirdPartyPackage(
-        NAME ShaderConductor-Darwin
-        VERSION 20200430.1
-        HASH 9701c4f58014d1b087e2b0f2d22f01d35b505078813579050a4e3ccab1124275
-    )
-    set(ShaderConductor_BIN ${ShaderConductor-Darwin_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
-    set(ShaderConductor_INC ${ShaderConductor-Darwin_SOURCE_DIR}/Include CACHE PATH "" FORCE)
-    set(ShaderConductor_LINK ${ShaderConductor-Darwin_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
-    set(ShaderConductor_LIB dxcompiler ShaderConductor CACHE STRING "" FORCE)
+    # using dxc in VulkanSDK
+    set(dxc_LIB dxcompiler CACHE STRING "" FORCE)
 endif()
 
 # GLFW

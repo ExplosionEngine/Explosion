@@ -20,39 +20,35 @@
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
 #include <GLFW/glfw3native.h>
-#include <ShaderConductor/ShaderConductor.hpp>
+
+#if !PLATFORM_WINDOWS
+#define __EMULATE_UUID 1
+#endif
+#include <dxc/dxcapi.h>
+
+#if PLATFORM_WINDOWS
+#include <wrl/client.h>
+using namespace Microsoft::WRL;
+#else
+// defined in dxc WinAdapter.h
+template <typename T>
+using ComPtr = CComPtr<T>;
+#endif
 
 #include <Common/Utility.h>
 #include <Common/Debug.h>
-#include <RHI/Instance.h>
-
-static ShaderConductor::ShaderStage CastShaderStage(RHI::ShaderStageBits stage)
-{
-    static std::unordered_map<RHI::ShaderStageBits, ShaderConductor::ShaderStage> MAP = {
-        { RHI::ShaderStageBits::VERTEX, ShaderConductor::ShaderStage::VertexShader },
-        { RHI::ShaderStageBits::FRAGMENT, ShaderConductor::ShaderStage::PixelShader },
-        { RHI::ShaderStageBits::COMPUTE, ShaderConductor::ShaderStage::ComputeShader }
-    };
-    auto iter = MAP.find(stage);
-    Assert(iter != MAP.end());
-    return iter->second;
-}
-
-static ShaderConductor::ShadingLanguage GetShadingLanguage(RHI::RHIType rhiType)
-{
-    static std::unordered_map<RHI::RHIType, ShaderConductor::ShadingLanguage> MAP = {
-        { RHI::RHIType::DIRECTX_12, ShaderConductor::ShadingLanguage::Dxil },
-        { RHI::RHIType::VULKAN, ShaderConductor::ShadingLanguage::SpirV }
-    };
-    auto iter = MAP.find(rhiType);
-    Assert(iter != MAP.end());
-    return iter->second;
-}
+#include <Common/String.h>
+#include <RHI/RHI.h>
+using namespace Common;
 
 class Application {
 public:
     NON_COPYABLE(Application)
-    explicit Application(std::string n) : rhiType(RHI::RHIType::VULKAN), window(nullptr), name(std::move(n)), width(1024), height(768) {}
+    explicit Application(std::string n) : rhiType(RHI::RHIType::VULKAN), window(nullptr), name(std::move(n)), width(1024), height(768)
+    {
+        CreateDXCCompilerInstance();
+    }
+
     virtual ~Application() = default;
 
     int Run(int argc, char* argv[])
@@ -102,42 +98,55 @@ protected:
 #endif
     }
 
-    static std::string ReadTextFile(const std::string& fileName)
+    void CompileShader(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
     {
-        std::ifstream file(fileName, std::ios::in);
-        Assert(file.is_open());
-        std::stringstream stream;
-        stream << file.rdbuf();
-        return stream.str();
-    }
+        uint32_t codePage = CP_UTF8;
+        ComPtr<IDxcBlobEncoding> shaderSource;
+        Assert(SUCCEEDED(dxcLibrary->CreateBlobFromFile(StringUtils::ToWideString(fileName).c_str(), &codePage, &shaderSource)));
 
-    bool CompileShader(std::vector<uint8_t>& byteCode, const std::string& source, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
-    {
-        using ShaderConductor::Compiler;
+        std::vector<LPCWSTR> arguments = {
+#if !PLATFORM_WINDOWS
+            L"-spirv",
+#endif
+            L"-Qembed_debug",
+            DXC_ARG_WARNINGS_ARE_ERRORS,
+            DXC_ARG_DEBUG,
+            DXC_ARG_PACK_MATRIX_ROW_MAJOR
+        };
 
-        Compiler::SourceDesc sourceDesc {};
-        sourceDesc.source = source.c_str();
-        sourceDesc.entryPoint = entryPoint.c_str();
-        sourceDesc.stage = CastShaderStage(shaderStage);
+        ComPtr<IDxcOperationResult> result;
+        HRESULT success = dxcCompiler->Compile(
+// ComPtr
+#if PLATFORM_WINDOWS
+            shaderSource.Get(),
+// CComPtr
+#else
+            shaderSource,
+#endif
+            nullptr,
+            StringUtils::ToWideString(entryPoint).c_str(),
+            GetDXCTargetProfile(shaderStage).c_str(),
+            arguments.data(),
+            static_cast<uint32_t>(arguments.size()),
+            nullptr,
+            0,
+            nullptr,
+            &result);
 
-        Compiler::Options options {};
-        options.disableOptimizations = true;
-        options.enableDebugInfo = true;
-
-        Compiler::TargetDesc targetDesc {};
-        targetDesc.asModule = true;
-        targetDesc.language = GetShadingLanguage(rhiType);
-
-        auto result = Compiler::Compile(sourceDesc, options, targetDesc);
-        if (result.hasError) {
-            std::cout << (const char*)(result.errorWarningMsg->Data()) << std::endl;
-            return false;
+        if (FAILED(success)) {
+            ComPtr<IDxcBlobEncoding> errorInfo;
+            Assert(SUCCEEDED(result->GetErrorBuffer(&errorInfo)));
+            std::cout << "failed to compiler shader (" << fileName << ", " << entryPoint << ")" << std::endl
+                << static_cast<const char*>(errorInfo->GetBufferPointer()) << std::endl;
         }
+        Assert(SUCCEEDED(success));
 
-        const auto* dataBegin = static_cast<const uint8_t*>(result.target->Data());
-        const auto* dataEnd = static_cast<const uint8_t*>(result.target->Data()) + result.target->Size();
-        byteCode = std::vector(dataBegin, dataEnd);
-        return true;
+        ComPtr<IDxcBlob> code;
+        Assert(SUCCEEDED(result->GetResult(&code)));
+
+        const auto* codeStart = static_cast<const uint8_t*>(code->GetBufferPointer());
+        const auto* codeEnd = codeStart + code->GetBufferSize();
+        byteCode = std::vector<uint8_t>(codeStart, codeEnd);
     }
 
     RHI::RHIType rhiType;
@@ -145,4 +154,26 @@ protected:
     std::string name;
     uint32_t width;
     uint32_t height;
+    ComPtr<IDxcLibrary> dxcLibrary;
+    ComPtr<IDxcCompiler> dxcCompiler;
+
+private:
+    static std::wstring GetDXCTargetProfile(RHI::ShaderStageBits shaderStage)
+    {
+        std::wstring result;
+        if (shaderStage == RHI::ShaderStageBits::VERTEX) {
+            result = L"vs";
+        } else if (shaderStage == RHI::ShaderStageBits::FRAGMENT) {
+            result = L"ps";
+        } else {
+            Assert(false);
+        }
+        return result + L"_6_2";
+    }
+
+    void CreateDXCCompilerInstance()
+    {
+        Assert(SUCCEEDED(DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&dxcLibrary))));
+        Assert(SUCCEEDED(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&dxcCompiler))));
+    }
 };

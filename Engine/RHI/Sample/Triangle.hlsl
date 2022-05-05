@@ -1,9 +1,9 @@
 struct FragmentInput {
-    float4 position : SV_POSITION;
-    float4 color : COLOR;
+    float4 position;
+    float4 color;
 };
 
-FragmentInput VSMain(float4 position : SV_POSITION, float4 color : COLOR)
+FragmentInput VSMain(float4 position : SV_POSITION, float4 color : SV_COLOR)
 {
     FragmentInput fragmentInput;
     fragmentInput.position = position;
