@@ -32,7 +32,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(DirectXHeaders_INC ${DirectXHeaders_SOURCE_DIR}/include CACHE PATH "" FORCE)
 endif()
 
-# VulkanSDK + DXC
+# VulkanSDK
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     AddThirdPartyPackage(
         NAME VulkanSDK-Windows
@@ -43,8 +43,6 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(VulkanSDK_LINK ${VulkanSDK-Windows_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
     set(VulkanSDK_BIN ${VulkanSDK-Windows_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
     set(VulkanSDK_VULKAN_LIB vulkan-1 CACHE PATH "" FORCE)
-    set(VulkanSDK_DXC_LIB dxcompiler CACHE STRING "" FORCE)
-    set(VulkanSDK_DXC_DLL ${VulkanSDK-Windows_SOURCE_DIR}/Bin/dxcompiler.dll CACHE STRING "" FORCE)
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     AddThirdPartyPackage(
         NAME VulkanSDK-Darwin
@@ -55,7 +53,24 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(VulkanSDK_LINK ${VulkanSDK-Darwin_SOURCE_DIR}/macOS/lib CACHE PATH "" FORCE)
     set(VulkanSDK_BIN ${VulkanSDK-Darwin_SOURCE_DIR}/macOS/bin CACHE PATH "" FORCE)
     set(VulkanSDK_VULKAN_LIB vulkan.1 CACHE STRING "" FORCE)
-    set(VulkanSDK_DXC_LIB dxcompiler CACHE STRING "" FORCE)
+endif()
+
+# DXC
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    AddThirdPartyPackage(
+        NAME dxc-Windows
+        HASH 257911471331a93ecd5b1137e0bae21894c2deea607e27db53971dd4fa7ce723
+        VERSION 1.6.2112
+    )
+    set(dxc_INC ${dxc-Windows_SOURCE_DIR}/inc CACHE PATH "" FORCE)
+    set(dxc_LINK ${dxc-Windows_SOURCE_DIR}/lib CACHE PATH "" FORCE)
+    set(dxc_BIN ${dxc-Windows_SOURCE_DIR}/bin/x64 CACHE PATH "" FORCE)
+    set(dxc_LIB dxcompiler CACHE STRING "" FORCE)
+    file(GLOB DLL ${dxc_BIN}/*.dll)
+    set(dxc_DLL ${DLL} CACHE STRING "" FORCE)
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    # TODO
+    message(FATAL_ERROR "fix me")
 endif()
 
 # GLFW

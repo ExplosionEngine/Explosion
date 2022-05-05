@@ -20,7 +20,7 @@
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
 #include <GLFW/glfw3native.h>
-#include <dxc/dxcapi.h>
+#include <dxcapi.h>
 
 #if PLATFORM_WINDOWS
 #include <wrl/client.h>
@@ -103,6 +103,7 @@ protected:
 #if !PLATFORM_WINDOWS
             L"-spirv",
 #endif
+            L"-Qembed_debug",
             DXC_ARG_WARNINGS_ARE_ERRORS,
             DXC_ARG_DEBUG,
             DXC_ARG_PACK_MATRIX_ROW_MAJOR
