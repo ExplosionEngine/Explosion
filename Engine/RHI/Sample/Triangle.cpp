@@ -118,9 +118,11 @@ private:
         vertexAttributes[0].format = VertexFormat::FLOAT32_X3;
         vertexAttributes[0].offset = 0;
         vertexAttributes[0].location = 0;
+        vertexAttributes[0].name = "POSITION";
         vertexAttributes[1].format = VertexFormat::FLOAT32_X3;
         vertexAttributes[1].offset = 0;
         vertexAttributes[1].location = 1;
+        vertexAttributes[1].name = "COLOR";
 
         VertexBufferLayout vertexBufferLayout {};
         vertexBufferLayout.stepMode = RHI::VertexStepMode::PER_VERTEX;
