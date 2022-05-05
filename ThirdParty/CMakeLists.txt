@@ -69,8 +69,8 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     file(GLOB DLL ${dxc_BIN}/*.dll)
     set(dxc_DLL ${DLL} CACHE STRING "" FORCE)
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    # TODO
-    message(FATAL_ERROR "fix me")
+    # using dxc in VulkanSDK
+    set(dxc_LIB dxcompiler CACHE STRING "" FORCE)
 endif()
 
 # GLFW

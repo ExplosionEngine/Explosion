@@ -20,14 +20,19 @@
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
 #include <GLFW/glfw3native.h>
-#include <dxcapi.h>
+
+#if !PLATFORM_WINDOWS
+#define __EMULATE_UUID 1
+#endif
+#include <dxc/dxcapi.h>
 
 #if PLATFORM_WINDOWS
 #include <wrl/client.h>
 using namespace Microsoft::WRL;
 #else
 // defined in dxc WinAdapter.h
-using ComPtr = CComPtr;
+template <typename T>
+using ComPtr = CComPtr<T>;
 #endif
 
 #include <Common/Utility.h>
@@ -111,7 +116,13 @@ protected:
 
         ComPtr<IDxcOperationResult> result;
         HRESULT success = dxcCompiler->Compile(
+// ComPtr
+#if PLATFORM_WINDOWS
             shaderSource.Get(),
+// CComPtr
+#else
+            shaderSource,
+#endif
             nullptr,
             StringUtils::ToWideString(entryPoint).c_str(),
             GetDXCTargetProfile(shaderStage).c_str(),
