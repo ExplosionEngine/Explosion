@@ -122,13 +122,13 @@ protected:
             nullptr,
             &result);
 
-        if (!success) {
+        if (FAILED(success)) {
             ComPtr<IDxcBlobEncoding> errorInfo;
             Assert(SUCCEEDED(result->GetErrorBuffer(&errorInfo)));
             std::cout << "failed to compiler shader (" << fileName << ", " << entryPoint << ")" << std::endl
                 << static_cast<const char*>(errorInfo->GetBufferPointer()) << std::endl;
         }
-        Assert(success);
+        Assert(SUCCEEDED(success));
 
         ComPtr<IDxcBlob> code;
         Assert(SUCCEEDED(result->GetResult(&code)));
@@ -157,7 +157,7 @@ private:
         } else {
             Assert(false);
         }
-        return result + L"_6_1";
+        return result + L"_6_2";
     }
 
     void CreateDXCCompilerInstance()
