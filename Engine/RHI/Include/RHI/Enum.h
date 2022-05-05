@@ -88,6 +88,7 @@ namespace RHI {
     };
 
     enum class VertexFormat {
+        // 8-Bits Channel
         UINT8_X2,
         UINT8_X4,
         SINT8_X2,
@@ -96,6 +97,7 @@ namespace RHI {
         UNORM8_X4,
         SNORM8_X2,
         SNORM8_X4,
+        // 16-Bits Channel
         UINT16_X2,
         UINT16_X4,
         SINT16_X2,
@@ -106,6 +108,7 @@ namespace RHI {
         SNORM16_X4,
         FLOAT16_X2,
         FLOAT16_X4,
+        // 32-Bits Channel
         FLOAT32_X1,
         FLOAT32_X2,
         FLOAT32_X3,

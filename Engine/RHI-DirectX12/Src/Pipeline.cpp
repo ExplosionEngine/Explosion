@@ -2,6 +2,9 @@
 // Created by johnk on 11/3/2022.
 //
 
+#include <vector>
+#include <utility>
+
 #include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/ShaderModule.h>
@@ -102,10 +105,40 @@ namespace RHI::DirectX12 {
             desc.RTVFormats[i] = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo->fragment.colorTargets[i].format);
         }
     }
+
+    std::vector<D3D12_INPUT_ELEMENT_DESC> GetDX12InputElements(const GraphicsPipelineCreateInfo* createInfo)
+    {
+        std::vector<D3D12_INPUT_ELEMENT_DESC> result {};
+        const auto& vertexState = createInfo->vertex;
+
+        for (auto i = 0; i < vertexState.bufferLayoutNum; i++) {
+            const auto& layout = vertexState.bufferLayouts[i];
+
+            for (auto j = 0; j < layout.attributeNum; j++) {
+                const auto& attribute = layout.attributes[j];
+
+                D3D12_INPUT_ELEMENT_DESC desc {};
+                desc.Format = DX12EnumCast<VertexFormat, DXGI_FORMAT>(attribute.format);
+                desc.InputSlot = i;
+                desc.InputSlotClass = DX12EnumCast<VertexStepMode, D3D12_INPUT_CLASSIFICATION>(layout.stepMode);
+                desc.AlignedByteOffset = attribute.offset;
+                desc.SemanticName = attribute.name;
+                desc.SemanticIndex = attribute.location;
+                result.emplace_back(desc);
+            }
+        }
+        return result;
+    }
+
+    void UpdateDX12InputLayoutDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const std::vector<D3D12_INPUT_ELEMENT_DESC>& inputElements)
+    {
+        desc.InputLayout.NumElements = inputElements.size();
+        desc.InputLayout.pInputElementDescs = inputElements.data();
+    }
 }
 
 namespace RHI::DirectX12 {
-    DX12ComputePipeline::DX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo* createInfo) : ComputePipeline(createInfo)
+    DX12ComputePipeline::DX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo* createInfo) : ComputePipeline(createInfo), pipelineLayout(nullptr)
     {
         SavePipelineLayout(createInfo);
         CreateDX12ComputePipeline(device, createInfo);
@@ -147,7 +180,7 @@ namespace RHI::DirectX12 {
         Assert(success);
     }
 
-    DX12GraphicsPipeline::DX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo* createInfo) : GraphicsPipeline(createInfo)
+    DX12GraphicsPipeline::DX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo* createInfo) : GraphicsPipeline(createInfo), pipelineLayout(nullptr)
     {
         SavePipelineLayout(createInfo);
         CreateDX12GraphicsPipeline(device, createInfo);
@@ -193,6 +226,8 @@ namespace RHI::DirectX12 {
         desc.SampleDesc = GetDX12SampleDesc(createInfo);
         desc.PrimitiveTopologyType = DX12EnumCast<PrimitiveTopology, D3D12_PRIMITIVE_TOPOLOGY_TYPE>(createInfo->primitive.topology);
         UpdateDX12RenderTargetsDesc(desc, createInfo);
+        auto inputElements = GetDX12InputElements(createInfo);
+        UpdateDX12InputLayoutDesc(desc, inputElements);
 
         bool success = SUCCEEDED(device.GetDX12Device()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&dx12PipelineState)));
         Assert(success);

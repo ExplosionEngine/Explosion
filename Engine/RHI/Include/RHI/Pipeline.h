@@ -18,6 +18,7 @@ namespace RHI {
         VertexFormat format;
         size_t offset;
         uint8_t location;
+        const char* name;
     };
 
     struct VertexBufferLayout {
