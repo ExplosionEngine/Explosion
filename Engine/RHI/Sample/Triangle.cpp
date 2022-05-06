@@ -182,38 +182,32 @@ private:
     void SubmitCommandBuffer()
     {
         commandBuffer = device->CreateCommandBuffer();
+        CommandEncoder* commandEncoder = commandBuffer->Begin();
         {
-            CommandEncoder* commandEncoder = commandBuffer->Begin();
+            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
+            colorAttachments[0].clearValue = ColorNormalized<4> { 1.0f, 1.0f, 1.0f, 1.0f };
+            colorAttachments[0].loadOp = LoadOp::CLEAR;
+            colorAttachments[0].storeOp = StoreOp::STORE;
+            colorAttachments[0].view = swapChainTextureViews[swapChain->GetBackTextureIndex()];
+            colorAttachments[0].resolveTarget = nullptr;
+
+            GraphicsPassBeginInfo graphicsPassBeginInfo {};
+            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
+            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
+            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
+
+            auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
-                std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-                colorAttachments[0].clearValue = ColorNormalized<4> { 1.0f, 1.0f, 1.0f, 1.0f };
-                colorAttachments[0].loadOp = LoadOp::CLEAR;
-                colorAttachments[0].storeOp = StoreOp::STORE;
-                colorAttachments[0].view = swapChainTextureViews[swapChain->GetBackTextureIndex()];
-                colorAttachments[0].resolveTarget = nullptr;
-
-                GraphicsPassBeginInfo graphicsPassBeginInfo {};
-                graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
-                graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
-                graphicsPassBeginInfo.depthStencilAttachment = nullptr;
-
-                auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
-                {
-                    graphicsEncoder->SetPipeline(pipeline);
-                    graphicsEncoder->SetScissor(0, 0, width, height);
-                    graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
-                    graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
-
-                    graphicsEncoder->SetVertexBuffer(0, vertexBufferView);
-                    graphicsEncoder->Draw(3, 1, 0, 0);
-                }
-                graphicsEncoder->EndPass();
+                graphicsEncoder->SetPipeline(pipeline);
+                graphicsEncoder->SetScissor(0, 0, width, height);
+                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
+                graphicsEncoder->SetVertexBuffer(0, vertexBufferView);
+                graphicsEncoder->Draw(3, 1, 0, 0);
             }
-            commandEncoder->End();
+            graphicsEncoder->EndPass();
         }
-        graphicsQueue->Submit(commandBuffer);
-        swapChain->Present();
-        commandBuffer->Destroy();
+        commandEncoder->End();
     }
 
     Instance* instance = nullptr;
