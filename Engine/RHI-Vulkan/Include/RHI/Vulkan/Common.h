@@ -121,10 +121,10 @@ namespace RHI::Vulkan {
         VK_ENUM_MAP_ITEM(ShaderStageBits::COMPUTE,  vk::ShaderStageFlagBits::eCompute)
     VK_ENUM_MAP_END()
 
-    VK_ENUM_MAP_BEGIN(PrimitiveTopology, vk::PrimitiveTopology)
-        VK_ENUM_MAP_ITEM(PrimitiveTopology::POINT, vk::PrimitiveTopology::ePointList)
-        VK_ENUM_MAP_ITEM(PrimitiveTopology::LINE, vk::PrimitiveTopology::eLineList)
-        VK_ENUM_MAP_ITEM(PrimitiveTopology::TRIANGLE, vk::PrimitiveTopology::eTriangleList)
+    VK_ENUM_MAP_BEGIN(PrimitiveTopologyType, vk::PrimitiveTopology)
+        VK_ENUM_MAP_ITEM(PrimitiveTopologyType::POINT, vk::PrimitiveTopology::ePointList)
+        VK_ENUM_MAP_ITEM(PrimitiveTopologyType::LINE, vk::PrimitiveTopology::eLineList)
+        VK_ENUM_MAP_ITEM(PrimitiveTopologyType::TRIANGLE, vk::PrimitiveTopology::eTriangleList)
     VK_ENUM_MAP_END()
 
     VK_ENUM_MAP_BEGIN(CullMode, vk::CullModeFlagBits)

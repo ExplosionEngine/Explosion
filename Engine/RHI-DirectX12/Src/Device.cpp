@@ -51,7 +51,7 @@ namespace RHI::DirectX12 {
 
     SwapChain* DX12Device::CreateSwapChain(const SwapChainCreateInfo* createInfo)
     {
-        return new DX12SwapChain(GetGpu().GetInstance(), createInfo);
+        return new DX12SwapChain(*this, createInfo);
     }
 
     ComPtr<ID3D12CommandAllocator>& DX12Device::GetDX12CommandAllocator()
@@ -151,7 +151,10 @@ namespace RHI::DirectX12 {
         auto& last = list.back();
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(last.descriptorHeap->GetCPUDescriptorHandleForHeapStart());
-        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(last.descriptorHeap->GetGPUDescriptorHandleForHeapStart());
+        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle;
+        if (heapFlag & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE) {
+            gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(last.descriptorHeap->GetGPUDescriptorHandleForHeapStart());
+        }
         auto offset = last.used++;
         return {
             cpuHandle.Offset(offset, descriptorSize),

@@ -59,7 +59,7 @@ endif()
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     AddThirdPartyPackage(
         NAME dxc-Windows
-        HASH 257911471331a93ecd5b1137e0bae21894c2deea607e27db53971dd4fa7ce723
+        HASH 389901e244e15852adc25197f01bdd1860d4d15ebd3a9f683b869721a06e15f9
         VERSION 1.6.2112
     )
     set(dxc_INC ${dxc-Windows_SOURCE_DIR}/inc CACHE PATH "" FORCE)

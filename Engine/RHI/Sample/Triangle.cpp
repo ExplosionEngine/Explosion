@@ -32,6 +32,16 @@ protected:
         CreatePipeline();
     }
 
+    void OnDrawFrame() override
+    {
+        CreateCommandBuffer();
+    }
+
+    void OnDestroy() override
+    {
+        // TODO
+    }
+
 private:
     void CreateInstanceAndSelectGPU()
     {
@@ -60,6 +70,20 @@ private:
         swapChainCreateInfo.window = GetPlatformWindow();
         swapChainCreateInfo.presentQueue = graphicsQueue;
         swapChain = device->CreateSwapChain(&swapChainCreateInfo);
+
+        for (auto i = 0; i < 2; i++) {
+            swapChainTextures[i] = swapChain->GetTexture(i);
+
+            TextureViewCreateInfo viewCreateInfo {};
+            viewCreateInfo.format = PixelFormat::RGBA8_UNORM;
+            viewCreateInfo.dimension = TextureViewDimension::TV_2D;
+            viewCreateInfo.baseArrayLayer = 0;
+            viewCreateInfo.arrayLayerNum = 1;
+            viewCreateInfo.baseMipLevel = 0;
+            viewCreateInfo.mipLevelNum = 1;
+            viewCreateInfo.aspect = TextureAspect::COLOR;
+            swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(&viewCreateInfo);
+        }
     }
 
     void CreateVertexBuffer()
@@ -118,9 +142,13 @@ private:
         vertexAttributes[0].format = VertexFormat::FLOAT32_X3;
         vertexAttributes[0].offset = 0;
         vertexAttributes[0].location = 0;
+        vertexAttributes[0].semanticName = "POSITION";
+        vertexAttributes[0].semanticIndex = 0;
         vertexAttributes[1].format = VertexFormat::FLOAT32_X3;
         vertexAttributes[1].offset = 0;
         vertexAttributes[1].location = 1;
+        vertexAttributes[1].semanticName = "COLOR";
+        vertexAttributes[1].semanticIndex = 0;
 
         VertexBufferLayout vertexBufferLayout {};
         vertexBufferLayout.stepMode = RHI::VertexStepMode::PER_VERTEX;
@@ -143,12 +171,45 @@ private:
         createInfo.primitive.depthClip = false;
         createInfo.primitive.frontFace = RHI::FrontFace::CCW;
         createInfo.primitive.cullMode = CullMode::NONE;
-        createInfo.primitive.topology = RHI::PrimitiveTopology::TRIANGLE;
+        createInfo.primitive.topologyType = RHI::PrimitiveTopologyType::TRIANGLE;
         createInfo.primitive.stripIndexFormat = IndexFormat::UINT16;
         createInfo.depthStencil.depthEnable = false;
         createInfo.depthStencil.stencilEnable = false;
         createInfo.multiSample.count = 1;
         pipeline = device->CreateGraphicsPipeline(&createInfo);
+    }
+
+    void CreateCommandBuffer()
+    {
+        commandBuffer = device->CreateCommandBuffer();
+        CommandEncoder* commandEncoder = commandBuffer->Begin();
+        {
+            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
+            colorAttachments[0].clearValue = ColorNormalized<4> { 1.0f, 1.0f, 1.0f, 1.0f };
+            colorAttachments[0].loadOp = LoadOp::CLEAR;
+            colorAttachments[0].storeOp = StoreOp::STORE;
+            colorAttachments[0].view = swapChainTextureViews[swapChain->GetBackTextureIndex()];
+            colorAttachments[0].resolveTarget = nullptr;
+
+            GraphicsPassBeginInfo graphicsPassBeginInfo {};
+            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
+            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
+            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
+
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[swapChain->GetBackTextureIndex()], TextureState::PRESENT, TextureState::RENDER_TARGET));
+            auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            {
+                graphicsEncoder->SetPipeline(pipeline);
+                graphicsEncoder->SetScissor(0, 0, width, height);
+                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
+                graphicsEncoder->SetVertexBuffer(0, vertexBufferView);
+                graphicsEncoder->Draw(3, 1, 0, 0);
+            }
+            graphicsEncoder->EndPass();
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[swapChain->GetBackTextureIndex()], TextureState::RENDER_TARGET, TextureState::PRESENT));
+        }
+        commandEncoder->End();
     }
 
     Instance* instance = nullptr;
@@ -158,8 +219,11 @@ private:
     SwapChain* swapChain = nullptr;
     Buffer* vertexBuffer = nullptr;
     BufferView* vertexBufferView = nullptr;
+    std::array<Texture*, 2> swapChainTextures;
+    std::array<TextureView*, 2> swapChainTextureViews;
     PipelineLayout* pipelineLayout = nullptr;
-    Pipeline* pipeline = nullptr;
+    GraphicsPipeline* pipeline = nullptr;
+    CommandBuffer* commandBuffer = nullptr;
 };
 
 int main(int argc, char* argv[])

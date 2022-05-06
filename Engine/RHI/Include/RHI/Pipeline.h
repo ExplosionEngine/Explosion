@@ -17,8 +17,11 @@ namespace RHI {
     struct VertexAttribute {
         VertexFormat format;
         size_t offset;
+        // for Vulkan
         uint8_t location;
-        const char* name;
+        // for DirectX 12
+        const char* semanticName;
+        uint8_t semanticIndex;
     };
 
     struct VertexBufferLayout {
@@ -35,7 +38,7 @@ namespace RHI {
 
     struct PrimitiveState {
         // TODO fill mode ?
-        PrimitiveTopology topology = PrimitiveTopology::TRIANGLE;
+        PrimitiveTopologyType topologyType = PrimitiveTopologyType::TRIANGLE;
         IndexFormat stripIndexFormat = IndexFormat::UINT16;
         FrontFace frontFace = FrontFace::CCW;
         CullMode cullMode = CullMode::NONE;

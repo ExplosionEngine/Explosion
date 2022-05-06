@@ -122,8 +122,8 @@ namespace RHI::DirectX12 {
                 desc.InputSlot = i;
                 desc.InputSlotClass = DX12EnumCast<VertexStepMode, D3D12_INPUT_CLASSIFICATION>(layout.stepMode);
                 desc.AlignedByteOffset = attribute.offset;
-                desc.SemanticName = attribute.name;
-                desc.SemanticIndex = attribute.location;
+                desc.SemanticName = attribute.semanticName;
+                desc.SemanticIndex = attribute.semanticIndex;
                 result.emplace_back(desc);
             }
         }
@@ -224,7 +224,7 @@ namespace RHI::DirectX12 {
         desc.DepthStencilState = GetDX12DepthStencilDesc(createInfo);
         desc.SampleMask = GetDX12SampleMask(createInfo);
         desc.SampleDesc = GetDX12SampleDesc(createInfo);
-        desc.PrimitiveTopologyType = DX12EnumCast<PrimitiveTopology, D3D12_PRIMITIVE_TOPOLOGY_TYPE>(createInfo->primitive.topology);
+        desc.PrimitiveTopologyType = DX12EnumCast<PrimitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY_TYPE>(createInfo->primitive.topologyType);
         UpdateDX12RenderTargetsDesc(desc, createInfo);
         auto inputElements = GetDX12InputElements(createInfo);
         UpdateDX12InputLayoutDesc(desc, inputElements);

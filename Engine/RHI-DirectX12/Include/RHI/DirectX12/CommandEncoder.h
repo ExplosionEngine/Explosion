@@ -54,7 +54,7 @@ namespace RHI::DirectX12 {
     class DX12GraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
     public:
         NON_COPYABLE(DX12GraphicsPassCommandEncoder)
-        explicit DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer);
+        explicit DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo);
         ~DX12GraphicsPassCommandEncoder() override;
 
         void SetPipeline(GraphicsPipeline* pipeline) override;
@@ -65,6 +65,7 @@ namespace RHI::DirectX12 {
         void DrawIndexed(size_t indexCount, size_t instanceCount, size_t firstIndex, size_t baseVertex, size_t firstInstance) override;
         void SetViewport(float x, float y, float width, float height, float minDepth, float maxDepth) override;
         void SetScissor(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom) override;
+        void SetPrimitiveTopology(PrimitiveTopology primitiveTopology) override;
         void SetBlendConstant(const float *constants) override;
         void SetStencilReference(uint32_t reference) override;
         void EndPass() override;

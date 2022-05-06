@@ -5,6 +5,8 @@
 #include <windows.h>
 
 #include <RHI/DirectX12/Instance.h>
+#include <RHI/DirectX12/Device.h>
+#include <RHI/DirectX12/Gpu.h>
 #include <RHI/DirectX12/SwapChain.h>
 #include <RHI/DirectX12/Queue.h>
 #include <RHI/DirectX12/Common.h>
@@ -18,9 +20,9 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12SwapChain::DX12SwapChain(DX12Instance& instance, const SwapChainCreateInfo* createInfo) : SwapChain(createInfo), presentMode(createInfo->presentMode), textureNum(createInfo->textureNum)
+    DX12SwapChain::DX12SwapChain(DX12Device& device, const SwapChainCreateInfo* createInfo) : SwapChain(createInfo), device(device), presentMode(createInfo->presentMode), textureNum(createInfo->textureNum)
     {
-        CreateDX12SwapChain(instance, createInfo);
+        CreateDX12SwapChain(createInfo);
         FetchTextures();
     }
 
@@ -46,8 +48,9 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    void DX12SwapChain::CreateDX12SwapChain(DX12Instance& instance, const SwapChainCreateInfo* createInfo)
+    void DX12SwapChain::CreateDX12SwapChain(const SwapChainCreateInfo* createInfo)
     {
+        auto& instance = device.GetGpu().GetInstance();
         auto* dx12Queue = dynamic_cast<DX12Queue*>(createInfo->presentQueue);
 
         DXGI_SWAP_CHAIN_DESC1 desc {};
@@ -80,7 +83,7 @@ namespace RHI::DirectX12 {
             ComPtr<ID3D12Resource> dx12Resource;
             bool success = SUCCEEDED(dx12SwapChain->GetBuffer(i, IID_PPV_ARGS(&dx12Resource)));
             Assert(success);
-            textures[i] = std::make_unique<DX12Texture>(std::move(dx12Resource));
+            textures[i] = std::make_unique<DX12Texture>(device, std::move(dx12Resource));
         }
     }
 }

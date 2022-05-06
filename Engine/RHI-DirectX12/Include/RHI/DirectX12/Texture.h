@@ -17,18 +17,19 @@ namespace RHI::DirectX12 {
     public:
         NON_COPYABLE(DX12Texture)
         explicit DX12Texture(DX12Device& device, const TextureCreateInfo* createInfo);
-        explicit DX12Texture(ComPtr<ID3D12Resource>&& dx12Res);
+        explicit DX12Texture(DX12Device& device, ComPtr<ID3D12Resource>&& dx12Res);
         ~DX12Texture() override;
 
-        TextureView* CreateTextureView(Device& device, const TextureViewCreateInfo* createInfo) override;
+        TextureView* CreateTextureView(const TextureViewCreateInfo* createInfo) override;
         void Destroy() override;
 
         TextureUsageFlags GetUsages();
         ComPtr<ID3D12Resource>& GetDX12Resource();
 
     private:
-        void CreateDX12Texture(DX12Device& device, const TextureCreateInfo* createInfo);
+        void CreateDX12Texture(const TextureCreateInfo* createInfo);
 
+        DX12Device& device;
         TextureUsageFlags usages;
         ComPtr<ID3D12Resource> dx12Resource;
     };

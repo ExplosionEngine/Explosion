@@ -22,7 +22,7 @@ namespace RHI {
     struct TextureSubResourceInfo {
         uint8_t mipLevels = 0;
         Extent<3> origin {};
-        TextureAspect aspect = TextureAspect::ALL;
+        TextureAspect aspect = TextureAspect::COLOR;
     };
 
     struct GraphicsPassColorAttachment {
@@ -30,7 +30,7 @@ namespace RHI {
         TextureView* resolveTarget;
         ColorNormalized<4> clearValue;
         LoadOp loadOp;
-        LoadOp storeOp;
+        StoreOp storeOp;
     };
 
     struct GraphicsPassDepthStencilAttachment {
@@ -80,6 +80,7 @@ namespace RHI {
         virtual void DrawIndexed(size_t indexCount, size_t instanceCount, size_t firstIndex, size_t baseVertex, size_t firstInstance) = 0;
         virtual void SetViewport(float topLeftX, float topLeftY, float width, float height, float minDepth, float maxDepth) = 0;
         virtual void SetScissor(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom) = 0;
+        virtual void SetPrimitiveTopology(PrimitiveTopology primitiveTopology) = 0;
         virtual void SetBlendConstant(const float*/*[4]*/ constants) = 0;
         virtual void SetStencilReference(uint32_t reference) = 0;
         // TODO DrawIndirect(...)

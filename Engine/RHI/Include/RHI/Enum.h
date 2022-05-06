@@ -142,9 +142,10 @@ namespace RHI {
     };
 
     enum class TextureAspect : EnumType {
-        ALL,
-        STENCIL_ONLY,
-        DEPTH_ONLY,
+        COLOR,
+        DEPTH,
+        STENCIL,
+        DEPTH_STENCIL,
         MAX
     };
 
@@ -209,10 +210,23 @@ namespace RHI {
         MAX
     };
 
-    enum class PrimitiveTopology : EnumType {
+    enum class PrimitiveTopologyType : EnumType {
         POINT,
         LINE,
         TRIANGLE,
+        MAX
+    };
+
+    enum class PrimitiveTopology : EnumType {
+        POINT_LIST,
+        LINE_LIST,
+        LINE_STRIP,
+        TRIANGLE_LIST,
+        TRIANGLE_STRIP,
+        LINE_LIST_ADJ,
+        LINE_STRIP_ADJ,
+        TRIANGLE_LIST_ADJ,
+        TRIANGLE_STRIP_ADJ,
         MAX
     };
 
@@ -306,8 +320,10 @@ namespace RHI {
     };
 
     enum class TextureState : EnumType {
-
-        // TODO check this ?
+        UNDEFINED,
+        RENDER_TARGET,
+        PRESENT,
+        MAX
     };
 }
 

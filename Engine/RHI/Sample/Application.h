@@ -133,6 +133,9 @@ protected:
             nullptr,
             &result);
 
+        if (SUCCEEDED(success)) {
+            result->GetStatus(&success);
+        }
         if (FAILED(success)) {
             ComPtr<IDxcBlobEncoding> errorInfo;
             Assert(SUCCEEDED(result->GetErrorBuffer(&errorInfo)));

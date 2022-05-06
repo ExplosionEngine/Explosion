@@ -26,7 +26,7 @@ namespace RHI {
         NON_COPYABLE(Texture)
         virtual ~Texture();
 
-        virtual TextureView* CreateTextureView(Device& device, const TextureViewCreateInfo* createInfo) = 0;
+        virtual TextureView* CreateTextureView(const TextureViewCreateInfo* createInfo) = 0;
         virtual void Destroy() = 0;
 
     protected:
