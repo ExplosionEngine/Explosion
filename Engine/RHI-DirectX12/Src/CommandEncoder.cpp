@@ -139,6 +139,11 @@ namespace RHI::DirectX12 {
         commandBuffer.GetDX12GraphicsCommandList()->OMSetBlendFactor(constants);
     }
 
+    void DX12GraphicsPassCommandEncoder::SetPrimitiveTopology(PrimitiveTopology primitiveTopology)
+    {
+        commandBuffer.GetDX12GraphicsCommandList()->IASetPrimitiveTopology(DX12EnumCast<PrimitiveTopology, D3D_PRIMITIVE_TOPOLOGY>(primitiveTopology));
+    }
+
     void DX12GraphicsPassCommandEncoder::SetStencilReference(uint32_t reference)
     {
         commandBuffer.GetDX12GraphicsCommandList()->OMSetStencilRef(reference);

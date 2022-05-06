@@ -42,7 +42,7 @@ namespace RHI::Vulkan {
     static vk::PipelineInputAssemblyStateCreateInfo ConstructInputAssembly(const GraphicsPipelineCreateInfo* createInfo)
     {
         vk::PipelineInputAssemblyStateCreateInfo assemblyInfo = {};
-        assemblyInfo.setTopology(VKEnumCast<PrimitiveTopology, vk::PrimitiveTopology>(createInfo->primitive.topology))
+        assemblyInfo.setTopology(VKEnumCast<PrimitiveTopologyType, vk::PrimitiveTopology>(createInfo->primitive.topologyType))
             .setPrimitiveRestartEnable(VK_FALSE);
 
         return assemblyInfo;

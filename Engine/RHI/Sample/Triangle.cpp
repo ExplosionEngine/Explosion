@@ -171,7 +171,7 @@ private:
         createInfo.primitive.depthClip = false;
         createInfo.primitive.frontFace = RHI::FrontFace::CCW;
         createInfo.primitive.cullMode = CullMode::NONE;
-        createInfo.primitive.topology = RHI::PrimitiveTopology::TRIANGLE;
+        createInfo.primitive.topologyType = RHI::PrimitiveTopologyType::TRIANGLE;
         createInfo.primitive.stripIndexFormat = IndexFormat::UINT16;
         createInfo.depthStencil.depthEnable = false;
         createInfo.depthStencil.stencilEnable = false;
@@ -200,9 +200,10 @@ private:
                 auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
                 {
                     graphicsEncoder->SetPipeline(pipeline);
-                    // TODO ???
                     graphicsEncoder->SetScissor(0, 0, width, height);
-                    graphicsEncoder->SetViewport(0, 0, width, height, 0, 1);
+                    graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                    graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
+
                     graphicsEncoder->SetVertexBuffer(0, vertexBufferView);
                     graphicsEncoder->Draw(3, 1, 0, 0);
                 }

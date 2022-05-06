@@ -38,7 +38,7 @@ namespace RHI {
 
     struct PrimitiveState {
         // TODO fill mode ?
-        PrimitiveTopology topology = PrimitiveTopology::TRIANGLE;
+        PrimitiveTopologyType topologyType = PrimitiveTopologyType::TRIANGLE;
         IndexFormat stripIndexFormat = IndexFormat::UINT16;
         FrontFace frontFace = FrontFace::CCW;
         CullMode cullMode = CullMode::NONE;
