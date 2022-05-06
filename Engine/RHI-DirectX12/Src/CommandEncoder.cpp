@@ -2,6 +2,8 @@
 // Created by johnk on 2022/3/23.
 //
 
+#include <optional>
+
 #include <RHI/DirectX12/CommandEncoder.h>
 #include <RHI/DirectX12/CommandBuffer.h>
 #include <RHI/DirectX12/Pipeline.h>
@@ -12,7 +14,22 @@
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/Buffer.h>
 #include <RHI/DirectX12/BufferView.h>
+#include <RHI/DirectX12/TextureView.h>
 #include <RHI/Synchronous.h>
+
+namespace RHI::DirectX12 {
+    D3D12_CLEAR_FLAGS GetDX12ClearFlags(const GraphicsPassDepthStencilAttachment& depthStencilAttachment)
+    {
+        D3D12_CLEAR_FLAGS result;
+        if (depthStencilAttachment.depthLoadOp == LoadOp::CLEAR) {
+            result |= D3D12_CLEAR_FLAG_DEPTH;
+        }
+        if (depthStencilAttachment.stencilLoadOp == LoadOp::CLEAR) {
+            result |= D3D12_CLEAR_FLAG_STENCIL;
+        }
+        return result;
+    }
+}
 
 namespace RHI::DirectX12 {
     DX12ComputePassCommandEncoder::DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : ComputePassCommandEncoder(), device(device), commandBuffer(commandBuffer) {}
@@ -61,9 +78,39 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : GraphicsPassCommandEncoder(), device(device), commandBuffer(commandBuffer)
+    DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo) : GraphicsPassCommandEncoder(), device(device), commandBuffer(commandBuffer), graphicsPipeline(nullptr)
     {
-        // TODO set render targets & others
+        // set render targets
+        std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rtvHandles(beginInfo->colorAttachmentNum);
+        for (auto i = 0; i < rtvHandles.size(); i++) {
+            auto* view = dynamic_cast<DX12TextureView*>(beginInfo->colorAttachments[i].view);
+            Assert(view);
+            rtvHandles[i] = view->GetDX12CpuDescriptorHandle();
+        }
+        std::optional<CD3DX12_CPU_DESCRIPTOR_HANDLE> dsvHandle;
+        if (beginInfo->depthStencilAttachment != nullptr) {
+            auto* view = dynamic_cast<DX12TextureView*>(beginInfo->depthStencilAttachment->view);
+            Assert(view);
+            dsvHandle = view->GetDX12CpuDescriptorHandle();
+        }
+        commandBuffer.GetDX12GraphicsCommandList()->OMSetRenderTargets(rtvHandles.size(), rtvHandles.data(), false, dsvHandle.has_value() ? &dsvHandle.value() : nullptr);
+
+        // clear render targets
+        for (auto i = 0; i < rtvHandles.size(); i++) {
+            const auto& colorAttachment = beginInfo->colorAttachments[i];
+            if (colorAttachment.loadOp != LoadOp::CLEAR) {
+                continue;
+            }
+            const auto* clearValue = reinterpret_cast<const float*>(&colorAttachment.clearValue);
+            commandBuffer.GetDX12GraphicsCommandList()->ClearRenderTargetView(rtvHandles[i], clearValue, 0, nullptr);
+        }
+        if (dsvHandle.has_value()) {
+            const auto& depthStencilAttachment = *beginInfo->depthStencilAttachment;
+            if (depthStencilAttachment.depthLoadOp != LoadOp::CLEAR && depthStencilAttachment.stencilLoadOp != LoadOp::CLEAR) {
+                return;
+            }
+            commandBuffer.GetDX12GraphicsCommandList()->ClearDepthStencilView(dsvHandle.value(), GetDX12ClearFlags(depthStencilAttachment), depthStencilAttachment.depthClearValue, depthStencilAttachment.stencilClearValue, 0, nullptr);
+        }
     }
 
     DX12GraphicsPassCommandEncoder::~DX12GraphicsPassCommandEncoder() = default;
@@ -194,7 +241,7 @@ namespace RHI::DirectX12 {
 
     GraphicsPassCommandEncoder* DX12CommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo)
     {
-        return new DX12GraphicsPassCommandEncoder(device, commandBuffer);
+        return new DX12GraphicsPassCommandEncoder(device, commandBuffer, beginInfo);
     }
 
     void DX12CommandEncoder::End()

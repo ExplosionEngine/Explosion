@@ -203,7 +203,6 @@ private:
                     graphicsEncoder->SetScissor(0, 0, width, height);
                     graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
                     graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
-
                     graphicsEncoder->SetVertexBuffer(0, vertexBufferView);
                     graphicsEncoder->Draw(3, 1, 0, 0);
                 }
