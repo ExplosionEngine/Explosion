@@ -22,7 +22,7 @@ namespace RHI {
     struct TextureSubResourceInfo {
         uint8_t mipLevels = 0;
         Extent<3> origin {};
-        TextureAspect aspect = TextureAspect::ALL;
+        TextureAspect aspect = TextureAspect::COLOR;
     };
 
     struct GraphicsPassColorAttachment {
@@ -30,7 +30,7 @@ namespace RHI {
         TextureView* resolveTarget;
         ColorNormalized<4> clearValue;
         LoadOp loadOp;
-        LoadOp storeOp;
+        StoreOp storeOp;
     };
 
     struct GraphicsPassDepthStencilAttachment {

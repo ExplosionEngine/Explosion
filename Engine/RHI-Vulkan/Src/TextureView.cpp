@@ -11,10 +11,10 @@ namespace RHI::Vulkan {
     static vk::ImageAspectFlags GetAspectMask(TextureAspect aspect)
     {
         static std::unordered_map<TextureAspect, vk::ImageAspectFlags> rules = {
-            // TODO ? which for color
-            { TextureAspect::ALL,          vk::ImageAspectFlagBits::eColor },
-            { TextureAspect::STENCIL_ONLY, vk::ImageAspectFlagBits::eStencil},
-            { TextureAspect::DEPTH_ONLY,   vk::ImageAspectFlagBits::eDepth },
+            { TextureAspect::COLOR, vk::ImageAspectFlagBits::eColor },
+            { TextureAspect::DEPTH, vk::ImageAspectFlagBits::eDepth},
+            { TextureAspect::STENCIL, vk::ImageAspectFlagBits::eStencil },
+            { TextureAspect::DEPTH_STENCIL, vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil }
         };
 
         vk::ImageAspectFlags result = {};

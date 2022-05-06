@@ -142,9 +142,10 @@ namespace RHI {
     };
 
     enum class TextureAspect : EnumType {
-        ALL,
-        STENCIL_ONLY,
-        DEPTH_ONLY,
+        COLOR,
+        DEPTH,
+        STENCIL,
+        DEPTH_STENCIL,
         MAX
     };
 

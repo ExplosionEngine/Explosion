@@ -32,6 +32,16 @@ protected:
         CreatePipeline();
     }
 
+    void OnDrawFrame() override
+    {
+        SubmitCommandBuffer();
+    }
+
+    void OnDestroy() override
+    {
+        // TODO
+    }
+
 private:
     void CreateInstanceAndSelectGPU()
     {
@@ -60,6 +70,20 @@ private:
         swapChainCreateInfo.window = GetPlatformWindow();
         swapChainCreateInfo.presentQueue = graphicsQueue;
         swapChain = device->CreateSwapChain(&swapChainCreateInfo);
+
+        for (auto i = 0; i < 2; i++) {
+            swapChainTextures[i] = swapChain->GetTexture(i);
+
+            TextureViewCreateInfo viewCreateInfo {};
+            viewCreateInfo.format = PixelFormat::RGBA8_UNORM;
+            viewCreateInfo.dimension = TextureViewDimension::TV_2D;
+            viewCreateInfo.baseArrayLayer = 0;
+            viewCreateInfo.arrayLayerNum = 1;
+            viewCreateInfo.baseMipLevel = 0;
+            viewCreateInfo.mipLevelNum = 1;
+            viewCreateInfo.aspect = TextureAspect::COLOR;
+            swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(&viewCreateInfo);
+        }
     }
 
     void CreateVertexBuffer()
@@ -155,6 +179,42 @@ private:
         pipeline = device->CreateGraphicsPipeline(&createInfo);
     }
 
+    void SubmitCommandBuffer()
+    {
+        commandBuffer = device->CreateCommandBuffer();
+        {
+            CommandEncoder* commandEncoder = commandBuffer->Begin();
+            {
+                std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
+                colorAttachments[0].clearValue = ColorNormalized<4> { 1.0f, 1.0f, 1.0f, 1.0f };
+                colorAttachments[0].loadOp = LoadOp::CLEAR;
+                colorAttachments[0].storeOp = StoreOp::STORE;
+                colorAttachments[0].view = swapChainTextureViews[swapChain->GetBackTextureIndex()];
+                colorAttachments[0].resolveTarget = nullptr;
+
+                GraphicsPassBeginInfo graphicsPassBeginInfo {};
+                graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
+                graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
+                graphicsPassBeginInfo.depthStencilAttachment = nullptr;
+
+                auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+                {
+                    graphicsEncoder->SetPipeline(pipeline);
+                    // TODO ???
+                    graphicsEncoder->SetScissor(0, 0, width, height);
+                    graphicsEncoder->SetViewport(0, 0, width, height, 0, 1);
+                    graphicsEncoder->SetVertexBuffer(0, vertexBufferView);
+                    graphicsEncoder->Draw(3, 1, 0, 0);
+                }
+                graphicsEncoder->EndPass();
+            }
+            commandEncoder->End();
+        }
+        graphicsQueue->Submit(commandBuffer);
+        swapChain->Present();
+        commandBuffer->Destroy();
+    }
+
     Instance* instance = nullptr;
     Gpu* gpu = nullptr;
     Device* device = nullptr;
@@ -162,8 +222,11 @@ private:
     SwapChain* swapChain = nullptr;
     Buffer* vertexBuffer = nullptr;
     BufferView* vertexBufferView = nullptr;
+    std::array<Texture*, 2> swapChainTextures;
+    std::array<TextureView*, 2> swapChainTextureViews;
     PipelineLayout* pipelineLayout = nullptr;
-    Pipeline* pipeline = nullptr;
+    GraphicsPipeline* pipeline = nullptr;
+    CommandBuffer* commandBuffer = nullptr;
 };
 
 int main(int argc, char* argv[])

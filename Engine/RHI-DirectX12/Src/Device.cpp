@@ -51,7 +51,7 @@ namespace RHI::DirectX12 {
 
     SwapChain* DX12Device::CreateSwapChain(const SwapChainCreateInfo* createInfo)
     {
-        return new DX12SwapChain(GetGpu().GetInstance(), createInfo);
+        return new DX12SwapChain(*this, createInfo);
     }
 
     ComPtr<ID3D12CommandAllocator>& DX12Device::GetDX12CommandAllocator()

@@ -14,13 +14,13 @@ using Microsoft::WRL::ComPtr;
 #include <RHI/SwapChain.h>
 
 namespace RHI::DirectX12 {
-    class DX12Instance;
+    class DX12Device;
     class DX12Texture;
 
     class DX12SwapChain : public SwapChain {
     public:
         NON_COPYABLE(DX12SwapChain)
-        explicit DX12SwapChain(DX12Instance& instance, const SwapChainCreateInfo* createInfo);
+        explicit DX12SwapChain(DX12Device& device, const SwapChainCreateInfo* createInfo);
         ~DX12SwapChain() override;
 
         Texture* GetTexture(uint8_t index) override;
@@ -29,9 +29,10 @@ namespace RHI::DirectX12 {
         void Destroy() override;
 
     private:
-        void CreateDX12SwapChain(DX12Instance& instance, const SwapChainCreateInfo* createInfo);
+        void CreateDX12SwapChain(const SwapChainCreateInfo* createInfo);
         void FetchTextures();
 
+        DX12Device& device;
         uint8_t textureNum;
         PresentMode presentMode;
         ComPtr<IDXGISwapChain3> dx12SwapChain;
