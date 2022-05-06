@@ -320,8 +320,10 @@ namespace RHI {
     };
 
     enum class TextureState : EnumType {
-
-        // TODO check this ?
+        UNDEFINED,
+        RENDER_TARGET,
+        PRESENT,
+        MAX
     };
 }
 

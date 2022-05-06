@@ -34,7 +34,7 @@ protected:
 
     void OnDrawFrame() override
     {
-        SubmitCommandBuffer();
+        CreateCommandBuffer();
     }
 
     void OnDestroy() override
@@ -179,7 +179,7 @@ private:
         pipeline = device->CreateGraphicsPipeline(&createInfo);
     }
 
-    void SubmitCommandBuffer()
+    void CreateCommandBuffer()
     {
         commandBuffer = device->CreateCommandBuffer();
         CommandEncoder* commandEncoder = commandBuffer->Begin();
@@ -196,6 +196,7 @@ private:
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
 
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[swapChain->GetBackTextureIndex()], TextureState::PRESENT, TextureState::RENDER_TARGET));
             auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
                 graphicsEncoder->SetPipeline(pipeline);
@@ -206,6 +207,7 @@ private:
                 graphicsEncoder->Draw(3, 1, 0, 0);
             }
             graphicsEncoder->EndPass();
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[swapChain->GetBackTextureIndex()], TextureState::RENDER_TARGET, TextureState::PRESENT));
         }
         commandEncoder->End();
     }

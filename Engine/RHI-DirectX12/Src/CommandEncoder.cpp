@@ -14,6 +14,7 @@
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/Buffer.h>
 #include <RHI/DirectX12/BufferView.h>
+#include <RHI/DirectX12/Texture.h>
 #include <RHI/DirectX12/TextureView.h>
 #include <RHI/Synchronous.h>
 
@@ -227,11 +228,25 @@ namespace RHI::DirectX12 {
 
     void DX12CommandEncoder::ResourceBarrier(const Barrier& barrier)
     {
+        ID3D12Resource* resource;
+        D3D12_RESOURCE_STATES beforeState;
+        D3D12_RESOURCE_STATES afterState;
         if (barrier.type == ResourceType::BUFFER) {
-            // TODO
-        } else if (barrier.type == ResourceType::TEXTURE) {
-            // TODO
+            auto* buffer = dynamic_cast<DX12Buffer*>(barrier.buffer.pointer);
+            Assert(buffer);
+            resource = buffer->GetDX12Resource().Get();
+            beforeState = DX12EnumCast<BufferState, D3D12_RESOURCE_STATES>(barrier.buffer.before);
+            afterState = DX12EnumCast<BufferState, D3D12_RESOURCE_STATES>(barrier.buffer.after);
+        } else {
+            auto* texture = dynamic_cast<DX12Texture*>(barrier.texture.pointer);
+            Assert(texture);
+            resource = texture->GetDX12Resource().Get();
+            beforeState = DX12EnumCast<TextureState, D3D12_RESOURCE_STATES>(barrier.texture.before);
+            afterState = DX12EnumCast<TextureState, D3D12_RESOURCE_STATES>(barrier.texture.after);
         }
+
+        CD3DX12_RESOURCE_BARRIER resourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(resource, beforeState, afterState);
+        commandBuffer.GetDX12GraphicsCommandList()->ResourceBarrier(1, &resourceBarrier);
     }
 
     ComputePassCommandEncoder* DX12CommandEncoder::BeginComputePass()
