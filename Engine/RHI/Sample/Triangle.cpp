@@ -35,6 +35,8 @@ protected:
     void OnDrawFrame() override
     {
         CreateCommandBuffer();
+        SubmitCommandBufferAndPresent();
+        WaitPreviousFrame();
     }
 
     void OnDestroy() override
@@ -210,6 +212,17 @@ private:
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[swapChain->GetBackTextureIndex()], TextureState::RENDER_TARGET, TextureState::PRESENT));
         }
         commandEncoder->End();
+    }
+
+    void SubmitCommandBufferAndPresent()
+    {
+        graphicsQueue->Submit(commandBuffer);
+        // TODO
+    }
+
+    void WaitPreviousFrame()
+    {
+        // TODO
     }
 
     Instance* instance = nullptr;
