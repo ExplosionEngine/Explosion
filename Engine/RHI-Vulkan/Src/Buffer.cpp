@@ -88,7 +88,7 @@ namespace RHI::Vulkan {
             .setUsage(GetVkResourceStates(createInfo->usages))
             .setSize(createInfo->size);
 
-        Assert(device.GetVkDevice().createBuffer(&bufferInfo, nullptr, &vkBuffer) != vk::Result::eSuccess);
+        Assert(device.GetVkDevice().createBuffer(&bufferInfo, nullptr, &vkBuffer) == vk::Result::eSuccess);
     }
 
     void VKBuffer::AllocateMemory(const BufferCreateInfo* createInfo)
