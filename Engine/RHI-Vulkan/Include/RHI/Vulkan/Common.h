@@ -10,9 +10,6 @@
 #include <Common/Debug.h>
 
 namespace RHI::Vulkan {
-#if PLATFORM_WINDOWS
-#define VK_KHR_PLATFORM_SURFACE_EXTENSION_NAME "VK_KHR_win32_surface"
-#endif
 #define VK_KHRONOS_VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"
 }
 

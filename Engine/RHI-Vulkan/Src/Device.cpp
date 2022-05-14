@@ -13,6 +13,7 @@
 #include <RHI/Vulkan/ShaderModule.h>
 #include <RHI/Vulkan/PipelineLayout.h>
 #include <RHI/Vulkan/BindGroupLayout.h>
+#include <RHI/Vulkan/SwapChain.h>
 
 namespace RHI::Vulkan {
     const std::vector<const char*> DEVICE_EXTENSIONS = {
@@ -56,8 +57,7 @@ namespace RHI::Vulkan {
 
     SwapChain* VKDevice::CreateSwapChain(const SwapChainCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new VKSwapChain(gpu->GetVKInstance(), createInfo);
     }
 
     void VKDevice::Destroy()

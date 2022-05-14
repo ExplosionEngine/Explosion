@@ -11,7 +11,7 @@ namespace RHI::Vulkan {
     class VKSwapChain : public SwapChain {
     public:
         NON_COPYABLE(VKSwapChain)
-        explicit VKSwapChain(VKInstance& instance, const SwapChainCreateInfo* createInfo);
+        explicit VKSwapChain(const vk::Instance& instance, const SwapChainCreateInfo* createInfo);
         ~VKSwapChain() override;
 
         Texture* GetTexture(uint8_t index) override;
@@ -20,7 +20,7 @@ namespace RHI::Vulkan {
         void Destroy() override;
 
     private:
-        void CreateNativeSwapChain(VKInstance& instance, const SwapChainCreateInfo* createInfo);
+        void CreateNativeSwapChain(const vk::Instance& instance, const SwapChainCreateInfo* createInfo);
 
         vk::SwapchainKHR swapChain = VK_NULL_HANDLE;
         vk::SurfaceKHR surface = VK_NULL_HANDLE;

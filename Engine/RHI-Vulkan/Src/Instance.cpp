@@ -77,7 +77,10 @@ namespace RHI::Vulkan {
         static std::vector<const char*> requiredExtensionNames = {
             VK_KHR_SURFACE_EXTENSION_NAME,
 #if PLATFORM_WINDOWS
-            VK_KHR_PLATFORM_SURFACE_EXTENSION_NAME,
+            "VK_KHR_win32_surface",
+#elif PLATFORM_MACOS
+            "VK_MVK_macos_surface",
+            "VK_EXT_metal_surface",
 #endif
 #if BUILD_CONFIG_DEBUG
             VK_EXT_DEBUG_UTILS_EXTENSION_NAME
@@ -161,7 +164,7 @@ namespace RHI::Vulkan {
 
         gpus.resize(count);
         for (uint32_t i = 0; i < count; i++) {
-            gpus[i] = std::make_unique<VKGpu>(vkPhysicalDevices[i]);
+            gpus[i] = std::make_unique<VKGpu>(vkInstance, vkPhysicalDevices[i]);
         }
     }
 

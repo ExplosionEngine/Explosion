@@ -9,7 +9,7 @@
 
 namespace RHI::Vulkan {
 
-    VKSwapChain::VKSwapChain(VKInstance& instance, const SwapChainCreateInfo* createInfo) : SwapChain(createInfo)
+    VKSwapChain::VKSwapChain(const vk::Instance& instance, const SwapChainCreateInfo* createInfo) : SwapChain(createInfo)
     {
         CreateNativeSwapChain(instance, createInfo);
     }
@@ -39,10 +39,9 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    void VKSwapChain::CreateNativeSwapChain(VKInstance& instance, const SwapChainCreateInfo* createInfo)
+    void VKSwapChain::CreateNativeSwapChain(const vk::Instance& instance, const SwapChainCreateInfo* createInfo)
     {
-        auto vkInstance = instance.GetInstance();
-        surface = CreateNativeSurface(vkInstance, createInfo);
+        surface = CreateNativeSurface(instance, createInfo);
 
         vk::SwapchainCreateInfoKHR swapChainInfo = {};
         swapChainInfo.setSurface(surface)

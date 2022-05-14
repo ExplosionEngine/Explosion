@@ -12,7 +12,7 @@
 
 namespace RHI::Vulkan {
 
-    vk::SurfaceKHR CreateNativeSurface(vk::Instance& instance, const SwapChainCreateInfo* createInfo)
+    vk::SurfaceKHR CreateNativeSurface(const vk::Instance& instance, const SwapChainCreateInfo* createInfo)
     {
         auto view = static_cast<NSView*>(createInfo->window);
 
