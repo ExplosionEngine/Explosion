@@ -49,9 +49,7 @@ namespace RHI::Vulkan {
 
         vk::PipelineLayoutCreateInfo plInfo= {};
         plInfo.setSetLayouts(setLayouts);
-        if (device.GetVkDevice().createPipelineLayout(&plInfo, nullptr, &pipelineLayout) != vk::Result::eSuccess) {
-            throw VKException("failed to create pipeline layout");
-        }
+        Assert(device.GetVkDevice().createPipelineLayout(&plInfo, nullptr, &pipelineLayout) == vk::Result::eSuccess);
     }
 
 }

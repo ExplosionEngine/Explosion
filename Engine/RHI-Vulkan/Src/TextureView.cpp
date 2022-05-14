@@ -58,9 +58,7 @@ namespace RHI::Vulkan {
                 createInfo->arrayLayerNum
                 ));
 
-        if (device.GetVkDevice().createImageView(&viewInfo, nullptr, &vkTextureView) != vk::Result::eSuccess) {
-            throw VKException("failed to create imageView");
-        }
+        Assert(device.GetVkDevice().createImageView(&viewInfo, nullptr, &vkTextureView) == vk::Result::eSuccess);
     }
 
 }

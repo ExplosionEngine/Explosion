@@ -43,6 +43,6 @@ namespace RHI::Vulkan {
                 return i;
             }
         }
-        throw VKException("failed to found suitable memory type");
+        Assert(false && "failed to found suitable memory type");
     }
 }

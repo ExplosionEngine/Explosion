@@ -42,8 +42,6 @@ namespace RHI::Vulkan {
             .setAnisotropyEnable(createInfo->maxAnisotropy > 1)
             .setMaxAnisotropy(createInfo->maxAnisotropy);
 
-        if (device.GetVkDevice().createSampler(&samplerInfo, nullptr, &vkSampler) != vk::Result::eSuccess) {
-            throw VKException("failed to create renderPass");
-        }
+        Assert(device.GetVkDevice().createSampler(&samplerInfo, nullptr, &vkSampler) == vk::Result::eSuccess);
     }
 }

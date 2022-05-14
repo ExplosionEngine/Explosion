@@ -121,9 +121,7 @@ namespace RHI::Vulkan {
 #endif
 
         vk::Result result = vk::createInstance(&createInfo, nullptr, &vkInstance);
-        if (result != vk::Result::eSuccess) {
-            throw VKException("failed to create vulkan instance");
-        }
+        Assert(result == vk::Result::eSuccess);
     }
 
     void VKInstance::DestroyVKInstance()
@@ -180,10 +178,7 @@ namespace RHI::Vulkan {
             | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
         createInfo.pfnUserCallback = DebugCallback;
 
-        vk::Result result = vkInstance.createDebugUtilsMessengerEXT(&createInfo, nullptr, &vkDebugMessenger, vkDispatch);
-        if (result != vk::Result::eSuccess) {
-            throw VKException("failed to create vulkan debug messenger");
-        }
+        Assert(vkInstance.createDebugUtilsMessengerEXT(&createInfo, nullptr, &vkDebugMessenger, vkDispatch) == vk::Result::eSuccess);
     }
 
     void VKInstance::DestroyDebugMessenger()

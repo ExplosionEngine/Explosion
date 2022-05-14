@@ -41,22 +41,16 @@ namespace RHI::Vulkan {
     size_t VKDevice::GetQueueNum(QueueType type)
     {
         auto iter = queues.find(type);
-        if (iter == queues.end()) {
-            throw VKException("failed to find specific queue family");
-        }
+        Assert(iter != queues.end());
         return iter->second.size();
     }
 
     Queue* VKDevice::GetQueue(QueueType type, size_t index)
     {
         auto iter = queues.find(type);
-        if (iter == queues.end()) {
-            throw VKException("failed to find queue with specific type");
-        }
+        Assert(iter != queues.end());
         auto& queueArray = iter->second;
-        if (index < 0 || index >= queueArray.size()) {
-            throw VKException("bad queue index");
-        }
+        Assert(index < queueArray.size());
         return queueArray[index].get();
     }
 
@@ -175,9 +169,7 @@ namespace RHI::Vulkan {
         std::vector<float> queuePriorities;
         for (auto iter : queueNumMap) {
             auto queueFamilyIndex = FindQueueFamilyIndex(queueFamilyProperties, usedQueueFamily, iter.first);
-            if (!queueFamilyIndex.has_value()) {
-                throw VKException("failed to found suitable queue family");
-            }
+            Assert(queueFamilyIndex.has_value());
             auto queueCount = std::min(queueFamilyProperties[queueFamilyIndex.value()].queueCount, iter.second);
 
             if (queueCount > queuePriorities.size()) {
@@ -207,9 +199,7 @@ namespace RHI::Vulkan {
         deviceCreateInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
 #endif
 
-        if (gpu->GetVkPhysicalDevice().createDevice(&deviceCreateInfo, nullptr, &vkDevice) != vk::Result::eSuccess) {
-            throw VKException("failed to create device");
-        }
+        Assert(gpu->GetVkPhysicalDevice().createDevice(&deviceCreateInfo, nullptr, &vkDevice) == vk::Result::eSuccess);
     }
 
     void VKDevice::GetQueues()

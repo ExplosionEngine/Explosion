@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vulkan/vulkan.hpp>
 #include <RHI/Enum.h>
-#include <RHI/Vulkan/Exception.h>
+#include <Common/Debug.h>
 
 namespace RHI::Vulkan {
 #if PLATFORM_WINDOWS
@@ -25,9 +25,7 @@ namespace RHI::Vulkan {
     B VKEnumCast(const A& value)
     {
         auto iter = VK_ENUM_MAP<A, B>.find(value);
-        if (iter == VK_ENUM_MAP<A, B>.end()) {
-            throw VKException("failed to find suitable enum cast");
-        }
+        Assert((iter != VK_ENUM_MAP<A, B>.end()));
         return static_cast<B>(iter->second);
     }
 

@@ -50,9 +50,7 @@ namespace RHI::Vulkan {
 
         layoutInfo.setBindings(bindings);
 
-        if (device.GetVkDevice().createDescriptorSetLayout(&layoutInfo, nullptr, &setLayout) != vk::Result::eSuccess) {
-            throw VKException("failed to create descriptorSetLayout");
-        }
+        Assert(device.GetVkDevice().createDescriptorSetLayout(&layoutInfo, nullptr, &setLayout) == vk::Result::eSuccess);
     }
 
 }
