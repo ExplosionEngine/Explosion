@@ -10,6 +10,9 @@
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Queue.h>
 #include <RHI/Vulkan/Buffer.h>
+#include <RHI/Vulkan/ShaderModule.h>
+#include <RHI/Vulkan/PipelineLayout.h>
+#include <RHI/Vulkan/BindGroupLayout.h>
 
 namespace RHI::Vulkan {
     const std::vector<const char*> DEVICE_EXTENSIONS = {
@@ -87,8 +90,7 @@ namespace RHI::Vulkan {
 
     BindGroupLayout* VKDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new VKBindGroupLayout(*this, createInfo);
     }
 
     BindGroup* VKDevice::CreateBindGroup(const BindGroupCreateInfo* createInfo)
@@ -99,14 +101,12 @@ namespace RHI::Vulkan {
 
     PipelineLayout* VKDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new VKPipelineLayout(*this, createInfo);
     }
 
     ShaderModule* VKDevice::CreateShaderModule(const ShaderModuleCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new VKShaderModule(*this, createInfo);
     }
 
     ComputePipeline* VKDevice::CreateComputePipeline(const ComputePipelineCreateInfo* createInfo)

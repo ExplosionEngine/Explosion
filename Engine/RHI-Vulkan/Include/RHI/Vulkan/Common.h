@@ -237,4 +237,15 @@ namespace RHI::Vulkan {
     {
         return { static_cast<uint32_t>(ext.x), static_cast<uint32_t>(ext.y), static_cast<uint32_t>(ext.z) };
     }
+
+    inline vk::ShaderStageFlags FromRHI(const ShaderStageFlags& src)
+    {
+        vk::ShaderStageFlags flags = {};
+        for (auto& pair : VK_ENUM_MAP<ShaderStageBits, vk::ShaderStageFlagBits>) {
+            if (src & pair.first) {
+                flags |= pair.second;
+            }
+        }
+        return flags;
+    }
 }

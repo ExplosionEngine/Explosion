@@ -40,12 +40,7 @@ namespace RHI::Vulkan {
             auto& entry = createInfo->entries[i];
             auto& binding = bindings[i];
 
-            vk::ShaderStageFlags flags = {};
-            for (auto& pair : VK_ENUM_MAP<ShaderStageBits, vk::ShaderStageFlagBits>) {
-                if (entry.shaderVisibility & pair.first) {
-                    flags |= pair.second;
-                }
-            }
+            vk::ShaderStageFlags flags = FromRHI(entry.shaderVisibility);
 
             binding.setDescriptorType(VKEnumCast<BindingType, vk::DescriptorType>(entry.type))
                 .setDescriptorCount(1)

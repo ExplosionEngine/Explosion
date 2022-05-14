@@ -192,11 +192,3 @@ namespace RHI::Vulkan {
     }
 #endif
 }
-
-extern "C" {
-    RHI_VULKAN_API RHI::Instance* RHICreateInstance()
-    {
-        static RHI::Vulkan::VKInstance instance;
-        return &instance;
-    }
-}
