@@ -16,6 +16,7 @@
 #include <RHI/DirectX12/Pipeline.h>
 #include <RHI/DirectX12/CommandBuffer.h>
 #include <RHI/DirectX12/SwapChain.h>
+#include <RHI/DirectX12/Synchronous.h>
 
 namespace RHI::DirectX12 {
     DX12Device::DX12Device(DX12Gpu& g, const DeviceCreateInfo* createInfo) : Device(createInfo), gpu(g), rtvDescriptorSize(0), cbvSrvUavDescriptorSize(0)
@@ -107,6 +108,11 @@ namespace RHI::DirectX12 {
     CommandBuffer* DX12Device::CreateCommandBuffer()
     {
         return new DX12CommandBuffer(*this);
+    }
+
+    Fence* DX12Device::CreateFence()
+    {
+        return new DX12Fence(*this);
     }
 
     DX12Gpu& DX12Device::GetGpu()

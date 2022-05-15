@@ -121,6 +121,12 @@ namespace RHI::Vulkan {
         return nullptr;
     }
 
+    Fence* VKDevice::CreateFence()
+    {
+        // TODO
+        return nullptr;
+    }
+
     vk::Device VKDevice::GetVkDevice()
     {
         return vkDevice;

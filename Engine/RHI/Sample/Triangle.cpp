@@ -30,6 +30,7 @@ protected:
         CreateVertexBuffer();
         CreatePipelineLayout();
         CreatePipeline();
+        CreateFence();
     }
 
     void OnDrawFrame() override
@@ -181,6 +182,11 @@ private:
         pipeline = device->CreateGraphicsPipeline(&createInfo);
     }
 
+    void CreateFence()
+    {
+        fence = device->CreateFence();
+    }
+
     void CreateCommandBuffer()
     {
         commandBuffer = device->CreateCommandBuffer();
@@ -216,14 +222,13 @@ private:
 
     void SubmitCommandBufferAndPresent()
     {
-        graphicsQueue->Submit(commandBuffer, nullptr);
+        graphicsQueue->Submit(commandBuffer, fence);
         swapChain->Present();
-        // TODO
     }
 
     void WaitPreviousFrame()
     {
-        // TODO
+        fence->Wait();
     }
 
     Instance* instance = nullptr;
@@ -238,6 +243,7 @@ private:
     PipelineLayout* pipelineLayout = nullptr;
     GraphicsPipeline* pipeline = nullptr;
     CommandBuffer* commandBuffer = nullptr;
+    Fence* fence = nullptr;
 };
 
 int main(int argc, char* argv[])

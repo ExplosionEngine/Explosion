@@ -12,8 +12,9 @@
 #include <d3d12.h>
 #include <directx/d3dx12.h>
 
-#include <RHI/Enum.h>
+#include "RHI/Synchronous.h"
 #include <RHI/Device.h>
+#include <RHI/Enum.h>
 
 using Microsoft::WRL::ComPtr;
 
@@ -47,6 +48,7 @@ namespace RHI::DirectX12 {
         ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) override;
         GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
+        Fence* CreateFence() override;
 
         DX12Gpu& GetGpu();
         ComPtr<ID3D12Device>& GetDX12Device();
