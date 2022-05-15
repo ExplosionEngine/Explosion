@@ -148,7 +148,7 @@ private:
         vertexAttributes[0].semanticName = "POSITION";
         vertexAttributes[0].semanticIndex = 0;
         vertexAttributes[1].format = VertexFormat::FLOAT32_X3;
-        vertexAttributes[1].offset = 0;
+        vertexAttributes[1].offset = offsetof(Vertex, color);
         vertexAttributes[1].location = 1;
         vertexAttributes[1].semanticName = "COLOR";
         vertexAttributes[1].semanticIndex = 0;
@@ -193,7 +193,7 @@ private:
         CommandEncoder* commandEncoder = commandBuffer->Begin();
         {
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = ColorNormalized<4> { 1.0f, 1.0f, 1.0f, 1.0f };
+            colorAttachments[0].clearValue = ColorNormalized<4> { 0.0f, 0.0f, 0.0f, 1.0f };
             colorAttachments[0].loadOp = LoadOp::CLEAR;
             colorAttachments[0].storeOp = StoreOp::STORE;
             colorAttachments[0].view = swapChainTextureViews[swapChain->GetBackTextureIndex()];
