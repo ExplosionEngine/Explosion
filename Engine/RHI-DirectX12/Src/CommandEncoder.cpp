@@ -42,7 +42,6 @@ namespace RHI::DirectX12 {
         computePipeline = dynamic_cast<DX12ComputePipeline*>(pipeline);
         Assert(computePipeline);
 
-        commandBuffer.GetDX12GraphicsCommandList()->Reset(device.GetDX12CommandAllocator().Get(), computePipeline->GetDX12PipelineState().Get());
         commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(computePipeline->GetDX12PipelineState().Get());
         commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(computePipeline->GetPipelineLayout().GetDX12RootSignature().Get());
     }
@@ -120,7 +119,6 @@ namespace RHI::DirectX12 {
     {
         graphicsPipeline = dynamic_cast<DX12GraphicsPipeline*>(pipeline);
 
-        commandBuffer.GetDX12GraphicsCommandList()->Reset(device.GetDX12CommandAllocator().Get(), graphicsPipeline->GetDX12PipelineState().Get());
         commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(graphicsPipeline->GetDX12PipelineState().Get());
         commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(graphicsPipeline->GetPipelineLayout().GetDX12RootSignature().Get());
     }
@@ -202,7 +200,11 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    DX12CommandEncoder::DX12CommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : CommandEncoder(), device(device), commandBuffer(commandBuffer) {}
+    DX12CommandEncoder::DX12CommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : CommandEncoder(), device(device), commandBuffer(commandBuffer)
+    {
+        commandBuffer.GetDX12GraphicsCommandList()->Close();
+        commandBuffer.GetDX12GraphicsCommandList()->Reset(device.GetDX12CommandAllocator().Get(), nullptr);
+    }
 
     DX12CommandEncoder::~DX12CommandEncoder() = default;
 

@@ -2,6 +2,7 @@
 // Created by johnk on 30/3/2022.
 //
 
+#include "RHI/Synchronous.h"
 #include <RHI/Synchronous.h>
 
 namespace RHI {
@@ -24,4 +25,8 @@ namespace RHI {
         barrier.texture.after = after;
         return barrier;
     }
+
+    Fence::Fence(Device& device) {}
+
+    Fence::~Fence() = default;
 }

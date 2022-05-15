@@ -18,7 +18,7 @@ namespace RHI::DirectX12 {
         explicit DX12Queue(ComPtr<ID3D12CommandQueue>&& dx12CommandQueue);
         ~DX12Queue() override;
 
-        void Submit(CommandBuffer* commandBuffer) override;
+        void Submit(CommandBuffer* commandBuffer, Fence* fenceToSignal) override;
 
         ComPtr<ID3D12CommandQueue>& GetDX12CommandQueue();
 

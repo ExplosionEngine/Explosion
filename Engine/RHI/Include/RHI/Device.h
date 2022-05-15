@@ -32,6 +32,7 @@ namespace RHI {
     class GraphicsPipeline;
     class CommandBuffer;
     class SwapChain;
+    class Fence;
 
     struct QueueInfo {
         QueueType type;
@@ -62,6 +63,7 @@ namespace RHI {
         virtual ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) = 0;
         virtual GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) = 0;
         virtual CommandBuffer* CreateCommandBuffer() = 0;
+        virtual Fence* CreateFence() = 0;
 
     protected:
         explicit Device(const DeviceCreateInfo* createInfo);

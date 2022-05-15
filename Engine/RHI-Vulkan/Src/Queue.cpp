@@ -9,7 +9,7 @@ namespace RHI::Vulkan {
 
     VKQueue::~VKQueue() = default;
 
-    void VKQueue::Submit(CommandBuffer* commandBuffer)
+    void VKQueue::Submit(CommandBuffer* commandBuffer, Fence* fenceToSignal)
     {
         // TODO
     }

@@ -8,13 +8,14 @@
 
 namespace RHI {
     class CommandBuffer;
+    class Fence;
 
     class Queue {
     public:
         NON_COPYABLE(Queue)
         virtual ~Queue();
 
-        virtual void Submit(CommandBuffer* commandBuffer) = 0;
+        virtual void Submit(CommandBuffer* commandBuffer, Fence* fenceToSignal) = 0;
 
     protected:
         Queue();
