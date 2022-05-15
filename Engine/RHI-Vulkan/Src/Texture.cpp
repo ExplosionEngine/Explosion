@@ -64,10 +64,7 @@ namespace RHI::Vulkan {
             .setFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo->format))
             .setUsage(GetVkResourceStates(createInfo->usages));
 
-        if (device.GetVkDevice().createImage(&imageInfo, nullptr, &vkImage) != vk::Result::eSuccess) {
-            throw VKException("failed to create image");
-        }
-
+        Assert(device.GetVkDevice().createImage(&imageInfo, nullptr, &vkImage) == vk::Result::eSuccess);
     }
 
     void VKTexture::AllocateMemory(const TextureCreateInfo* createInfo)
@@ -79,10 +76,7 @@ namespace RHI::Vulkan {
         memoryInfo.setAllocationSize(memoryRequirements.size)
             .setMemoryTypeIndex(device.GetGpu()->FindMemoryType(memoryRequirements.memoryTypeBits,
                                                                 vk::MemoryPropertyFlagBits::eDeviceLocal));
-        if (device.GetVkDevice().allocateMemory(&memoryInfo, nullptr, &vkDeviceMemory) != vk::Result::eSuccess) {
-            throw VKException("failed to allocate memory");
-        }
-
+        Assert(device.GetVkDevice().allocateMemory(&memoryInfo, nullptr, &vkDeviceMemory) == vk::Result::eSuccess);
         device.GetVkDevice().bindImageMemory(vkImage, vkDeviceMemory, 0);
     }
 

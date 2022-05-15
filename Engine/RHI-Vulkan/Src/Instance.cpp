@@ -77,7 +77,10 @@ namespace RHI::Vulkan {
         static std::vector<const char*> requiredExtensionNames = {
             VK_KHR_SURFACE_EXTENSION_NAME,
 #if PLATFORM_WINDOWS
-            VK_KHR_PLATFORM_SURFACE_EXTENSION_NAME,
+            "VK_KHR_win32_surface",
+#elif PLATFORM_MACOS
+            "VK_MVK_macos_surface",
+            "VK_EXT_metal_surface",
 #endif
 #if BUILD_CONFIG_DEBUG
             VK_EXT_DEBUG_UTILS_EXTENSION_NAME
@@ -121,9 +124,7 @@ namespace RHI::Vulkan {
 #endif
 
         vk::Result result = vk::createInstance(&createInfo, nullptr, &vkInstance);
-        if (result != vk::Result::eSuccess) {
-            throw VKException("failed to create vulkan instance");
-        }
+        Assert(result == vk::Result::eSuccess);
     }
 
     void VKInstance::DestroyVKInstance()
@@ -163,7 +164,7 @@ namespace RHI::Vulkan {
 
         gpus.resize(count);
         for (uint32_t i = 0; i < count; i++) {
-            gpus[i] = std::make_unique<VKGpu>(vkPhysicalDevices[i]);
+            gpus[i] = std::make_unique<VKGpu>(vkInstance, vkPhysicalDevices[i]);
         }
     }
 
@@ -180,10 +181,7 @@ namespace RHI::Vulkan {
             | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
         createInfo.pfnUserCallback = DebugCallback;
 
-        vk::Result result = vkInstance.createDebugUtilsMessengerEXT(&createInfo, nullptr, &vkDebugMessenger, vkDispatch);
-        if (result != vk::Result::eSuccess) {
-            throw VKException("failed to create vulkan debug messenger");
-        }
+        Assert(vkInstance.createDebugUtilsMessengerEXT(&createInfo, nullptr, &vkDebugMessenger, vkDispatch) == vk::Result::eSuccess);
     }
 
     void VKInstance::DestroyDebugMessenger()
@@ -191,12 +189,4 @@ namespace RHI::Vulkan {
         vkInstance.destroyDebugUtilsMessengerEXT(vkDebugMessenger, nullptr, vkDispatch);
     }
 #endif
-}
-
-extern "C" {
-    RHI_VULKAN_API RHI::Instance* RHICreateInstance()
-    {
-        static RHI::Vulkan::VKInstance instance;
-        return &instance;
-    }
 }

@@ -5,12 +5,10 @@
 #pragma once
 
 #include <vulkan/vulkan.hpp>
-
 #include <RHI/Instance.h>
-#include <RHI/Vulkan/Api.h>
 
 namespace RHI::Vulkan {
-    class RHI_VULKAN_API VKInstance : public Instance {
+    class VKInstance : public Instance {
     public:
         NON_COPYABLE(VKInstance)
         VKInstance();
@@ -43,8 +41,4 @@ namespace RHI::Vulkan {
         vk::DebugUtilsMessengerEXT vkDebugMessenger;
 #endif
     };
-}
-
-extern "C" {
-    RHI_VULKAN_API RHI::Instance* RHICreateInstance();
 }
