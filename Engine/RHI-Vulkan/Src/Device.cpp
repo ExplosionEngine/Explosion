@@ -10,6 +10,10 @@
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Queue.h>
 #include <RHI/Vulkan/Buffer.h>
+#include <RHI/Vulkan/ShaderModule.h>
+#include <RHI/Vulkan/PipelineLayout.h>
+#include <RHI/Vulkan/BindGroupLayout.h>
+#include <RHI/Vulkan/SwapChain.h>
 
 namespace RHI::Vulkan {
     const std::vector<const char*> DEVICE_EXTENSIONS = {
@@ -38,29 +42,22 @@ namespace RHI::Vulkan {
     size_t VKDevice::GetQueueNum(QueueType type)
     {
         auto iter = queues.find(type);
-        if (iter == queues.end()) {
-            throw VKException("failed to find specific queue family");
-        }
+        Assert(iter != queues.end());
         return iter->second.size();
     }
 
     Queue* VKDevice::GetQueue(QueueType type, size_t index)
     {
         auto iter = queues.find(type);
-        if (iter == queues.end()) {
-            throw VKException("failed to find queue with specific type");
-        }
+        Assert(iter != queues.end());
         auto& queueArray = iter->second;
-        if (index < 0 || index >= queueArray.size()) {
-            throw VKException("bad queue index");
-        }
+        Assert(index < queueArray.size());
         return queueArray[index].get();
     }
 
     SwapChain* VKDevice::CreateSwapChain(const SwapChainCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new VKSwapChain(gpu->GetVKInstance(), createInfo);
     }
 
     void VKDevice::Destroy()
@@ -87,8 +84,7 @@ namespace RHI::Vulkan {
 
     BindGroupLayout* VKDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new VKBindGroupLayout(*this, createInfo);
     }
 
     BindGroup* VKDevice::CreateBindGroup(const BindGroupCreateInfo* createInfo)
@@ -99,14 +95,12 @@ namespace RHI::Vulkan {
 
     PipelineLayout* VKDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new VKPipelineLayout(*this, createInfo);
     }
 
     ShaderModule* VKDevice::CreateShaderModule(const ShaderModuleCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new VKShaderModule(*this, createInfo);
     }
 
     ComputePipeline* VKDevice::CreateComputePipeline(const ComputePipelineCreateInfo* createInfo)
@@ -175,9 +169,7 @@ namespace RHI::Vulkan {
         std::vector<float> queuePriorities;
         for (auto iter : queueNumMap) {
             auto queueFamilyIndex = FindQueueFamilyIndex(queueFamilyProperties, usedQueueFamily, iter.first);
-            if (!queueFamilyIndex.has_value()) {
-                throw VKException("failed to found suitable queue family");
-            }
+            Assert(queueFamilyIndex.has_value());
             auto queueCount = std::min(queueFamilyProperties[queueFamilyIndex.value()].queueCount, iter.second);
 
             if (queueCount > queuePriorities.size()) {
@@ -207,9 +199,7 @@ namespace RHI::Vulkan {
         deviceCreateInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
 #endif
 
-        if (gpu->GetVkPhysicalDevice().createDevice(&deviceCreateInfo, nullptr, &vkDevice) != vk::Result::eSuccess) {
-            throw VKException("failed to create device");
-        }
+        Assert(gpu->GetVkPhysicalDevice().createDevice(&deviceCreateInfo, nullptr, &vkDevice) == vk::Result::eSuccess);
     }
 
     void VKDevice::GetQueues()

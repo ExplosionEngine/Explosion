@@ -62,9 +62,7 @@ namespace RHI::Vulkan {
     void* VKBuffer::Map(MapMode mapMode, size_t offset, size_t length)
     {
         void* data;
-        if (device.GetVkDevice().mapMemory(vkDeviceMemory, offset, length, {}, &data) != vk::Result::eSuccess) {
-            throw VKException("failed to map vulkan device memory");
-        }
+        Assert(device.GetVkDevice().mapMemory(vkDeviceMemory, offset, length, {}, &data) == vk::Result::eSuccess);
         return data;
     }
 
@@ -90,9 +88,7 @@ namespace RHI::Vulkan {
             .setUsage(GetVkResourceStates(createInfo->usages))
             .setSize(createInfo->size);
 
-        if (device.GetVkDevice().createBuffer(&bufferInfo, nullptr, &vkBuffer) != vk::Result::eSuccess) {
-            throw VKException("failed to create buffer");
-        }
+        Assert(device.GetVkDevice().createBuffer(&bufferInfo, nullptr, &vkBuffer) == vk::Result::eSuccess);
     }
 
     void VKBuffer::AllocateMemory(const BufferCreateInfo* createInfo)
@@ -104,9 +100,7 @@ namespace RHI::Vulkan {
         memoryInfo.setAllocationSize(memoryRequirements.size)
             .setMemoryTypeIndex(device.GetGpu()->FindMemoryType(memoryRequirements.memoryTypeBits,
                                                                 GetVkMemoryType(createInfo->usages)));
-        if (device.GetVkDevice().allocateMemory(&memoryInfo, nullptr, &vkDeviceMemory) != vk::Result::eSuccess) {
-            throw VKException("failed to allocate memory");
-        }
+        Assert(device.GetVkDevice().allocateMemory(&memoryInfo, nullptr, &vkDeviceMemory) == vk::Result::eSuccess);
 
         device.GetVkDevice().bindBufferMemory(vkBuffer, vkDeviceMemory, 0);
     }

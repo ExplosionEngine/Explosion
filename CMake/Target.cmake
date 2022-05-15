@@ -138,7 +138,7 @@ function(AddTest)
         return()
     endif()
 
-    cmake_parse_arguments(PARAMS "" "NAME;WORKING_DIR" "SRC;INC;LIB" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME;WORKING_DIR" "SRC;INC;LINK;LIB" ${ARGN})
 
     if (${ENABLE_TARGET_DEBUG_INFO})
         message("")
@@ -158,6 +158,10 @@ function(AddTest)
     target_include_directories(
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_INC}
+    )
+    target_link_directories(
+        ${PARAMS_NAME}
+        PRIVATE ${PARAMS_LINK}
     )
     target_link_libraries(
         ${PARAMS_NAME}

@@ -80,9 +80,7 @@ namespace RHI::Vulkan {
             .setSubpassCount(1)
             .setPSubpasses(&subPassDesc);
 
-        if (device.GetVkDevice().createRenderPass(&passInfo, nullptr, &renderPass) != vk::Result::eSuccess) {
-            throw VKException("failed to create renderPass");
-        }
+        Assert(device.GetVkDevice().createRenderPass(&passInfo, nullptr, &renderPass) == vk::Result::eSuccess);
     }
 
 }

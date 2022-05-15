@@ -37,8 +37,6 @@ namespace RHI::Vulkan {
         moduleCreateInfo.setCodeSize(createInfo->size)
             .setPCode(static_cast<const uint32_t*>(createInfo->byteCode));
 
-        if (device.GetVkDevice().createShaderModule(&moduleCreateInfo, nullptr, &shaderModule) != vk::Result::eSuccess) {
-            throw VKException("failed to create shader module");
-        }
+        Assert(device.GetVkDevice().createShaderModule(&moduleCreateInfo, nullptr, &shaderModule) == vk::Result::eSuccess);
     }
 }

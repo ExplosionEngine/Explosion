@@ -7,12 +7,9 @@
 #include <unordered_map>
 #include <vulkan/vulkan.hpp>
 #include <RHI/Enum.h>
-#include <RHI/Vulkan/Exception.h>
+#include <Common/Debug.h>
 
 namespace RHI::Vulkan {
-#if PLATFORM_WINDOWS
-#define VK_KHR_PLATFORM_SURFACE_EXTENSION_NAME "VK_KHR_win32_surface"
-#endif
 #define VK_KHRONOS_VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"
 }
 
@@ -25,9 +22,7 @@ namespace RHI::Vulkan {
     B VKEnumCast(const A& value)
     {
         auto iter = VK_ENUM_MAP<A, B>.find(value);
-        if (iter == VK_ENUM_MAP<A, B>.end()) {
-            throw VKException("failed to find suitable enum cast");
-        }
+        Assert((iter != VK_ENUM_MAP<A, B>.end()));
         return static_cast<B>(iter->second);
     }
 
@@ -236,5 +231,16 @@ namespace RHI::Vulkan {
     inline vk::Extent3D FromRHI(const RHI::Extent<3>& ext)
     {
         return { static_cast<uint32_t>(ext.x), static_cast<uint32_t>(ext.y), static_cast<uint32_t>(ext.z) };
+    }
+
+    inline vk::ShaderStageFlags FromRHI(const ShaderStageFlags& src)
+    {
+        vk::ShaderStageFlags flags = {};
+        for (auto& pair : VK_ENUM_MAP<ShaderStageBits, vk::ShaderStageFlagBits>) {
+            if (src & pair.first) {
+                flags |= pair.second;
+            }
+        }
+        return flags;
     }
 }

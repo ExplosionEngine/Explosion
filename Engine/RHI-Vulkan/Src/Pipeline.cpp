@@ -201,10 +201,7 @@ namespace RHI::Vulkan {
 
         auto result =  device.GetVkDevice().createGraphicsPipeline(VK_NULL_HANDLE,
             pipelineCreateInfo, nullptr);
-        if (result.result != vk::Result::eSuccess) {
-            throw VKException("failed to create pipeline");
-        }
-
+        Assert(result.result == vk::Result::eSuccess);
         pipeline = result.value;
     }
 
