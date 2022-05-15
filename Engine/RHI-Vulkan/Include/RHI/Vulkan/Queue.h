@@ -7,6 +7,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include <RHI/Queue.h>
+#include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
     class VKQueue : public Queue {
@@ -15,7 +16,7 @@ namespace RHI::Vulkan {
         explicit VKQueue(vk::Queue vkQueue);
         ~VKQueue() override;
 
-        void Submit(CommandBuffer* commandBuffer) override;
+        void Submit(CommandBuffer* commandBuffer, Fence* fenceToSignal) override;
 
         vk::Queue GetVkQueue();
 

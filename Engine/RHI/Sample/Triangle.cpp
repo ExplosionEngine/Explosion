@@ -216,7 +216,7 @@ private:
 
     void SubmitCommandBufferAndPresent()
     {
-        graphicsQueue->Submit(commandBuffer);
+        graphicsQueue->Submit(commandBuffer, nullptr);
         swapChain->Present();
         // TODO
     }
