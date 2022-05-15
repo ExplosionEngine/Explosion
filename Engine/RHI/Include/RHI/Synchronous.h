@@ -6,6 +6,7 @@
 
 #include <Common/Utility.h>
 #include <RHI/Enum.h>
+#include <RHI/Device.h>
 
 namespace RHI {
     class Buffer;
@@ -36,5 +37,24 @@ namespace RHI {
             BufferTransition buffer;
             TextureTransition texture;
         };
+    };
+
+    enum class FenceStatus {
+        SIGNALED,
+        NOT_READY,
+        MAX
+    };
+
+    class Fence {
+    public:
+        NON_COPYABLE(Fence)
+        ~Fence();
+
+        virtual FenceStatus GetStatus() = 0;
+        virtual void Reset() = 0;
+        virtual void Wait() = 0;
+
+    protected:
+        explicit Fence(Device& device);
     };
 }

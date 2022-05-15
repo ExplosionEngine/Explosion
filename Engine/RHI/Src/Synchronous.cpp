@@ -24,4 +24,8 @@ namespace RHI {
         barrier.texture.after = after;
         return barrier;
     }
+
+    Fence::Fence(Device& device) {}
+
+    Fence::~Fence() = default;
 }
