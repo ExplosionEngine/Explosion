@@ -254,6 +254,9 @@ namespace RHI::Vulkan {
         std::vector<vk::VertexInputBindingDescription> bindings;
         vk::PipelineVertexInputStateCreateInfo vtxInput = ConstructVertexInput(createInfo, attributes, bindings);
 
+        // FrameBuffers and graphics pipelines are created based on a specific render pass object. They must
+        // only be used with that render pass object, or one compatible with it.
+        // Vulkan Spec. 8.2. Render Pass Compatibility.
         CreateNativeRenderPass(createInfo);
 
         vk::GraphicsPipelineCreateInfo pipelineCreateInfo = {};
