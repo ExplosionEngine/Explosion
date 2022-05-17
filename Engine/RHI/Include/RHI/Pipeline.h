@@ -17,9 +17,7 @@ namespace RHI {
     struct VertexAttribute {
         VertexFormat format;
         size_t offset;
-        // for Vulkan
-        uint8_t location;
-        // for DirectX 12
+        // DirectX 12 using SemanticName and SemanticIndex to specific vertex layout, Vulkan using SPRI-V Reflection to get location
         const char* semanticName;
         uint8_t semanticIndex;
     };

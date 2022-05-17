@@ -122,7 +122,7 @@ namespace RHI::Vulkan {
             for (uint32_t j = 0; j < binding.attributeNum; ++j) {
                 vk::VertexInputAttributeDescription desc = {};
                 desc.setBinding(i)
-                    .setLocation(binding.attributes[j].location)
+                    // .setLocation(binding.attributes[j].location)
                     .setOffset(binding.attributes[j].offset)
                     .setFormat(VKEnumCast<VertexFormat, vk::Format>(binding.attributes[j].format));
                 attributes.emplace_back(desc);

@@ -12,17 +12,36 @@
 #include <RHI/DirectX12/Pipeline.h>
 
 namespace RHI::DirectX12 {
-    D3D12_RENDER_TARGET_BLEND_DESC GetDX12RenderTargetBlendDesc(const BlendState& blendState)
+    uint8_t GetDX12RenderTargetWriteMasks(ColorWriteFlags writeFlags)
+    {
+        static std::unordered_map<ColorWriteBits, uint8_t> MAP = {
+            { ColorWriteBits::RED, D3D12_COLOR_WRITE_ENABLE_RED },
+            { ColorWriteBits::GREEN, D3D12_COLOR_WRITE_ENABLE_GREEN },
+            { ColorWriteBits::BLUE, D3D12_COLOR_WRITE_ENABLE_BLUE },
+            { ColorWriteBits::ALPHA, D3D12_COLOR_WRITE_ENABLE_ALPHA }
+        };
+
+        uint8_t result = 0;
+        for (auto iter : MAP) {
+            if (writeFlags & static_cast<uint8_t>(iter.first)) {
+                result |= iter.second;
+            }
+        }
+        return result;
+    }
+
+    D3D12_RENDER_TARGET_BLEND_DESC GetDX12RenderTargetBlendDesc(const ColorTargetState& colorTargetState)
     {
         D3D12_RENDER_TARGET_BLEND_DESC desc {};
         desc.BlendEnable = true;
         desc.LogicOpEnable = false;
-        desc.BlendOp = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(blendState.color.op);
-        desc.SrcBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(blendState.color.srcFactor);
-        desc.DestBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(blendState.color.dstFactor);
-        desc.BlendOpAlpha = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(blendState.alpha.op);
-        desc.SrcBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(blendState.alpha.srcFactor);
-        desc.DestBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(blendState.alpha.dstFactor);
+        desc.RenderTargetWriteMask = GetDX12RenderTargetWriteMasks(colorTargetState.writeFlags);
+        desc.BlendOp = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.blend.color.op);
+        desc.SrcBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.blend.color.srcFactor);
+        desc.DestBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.blend.color.dstFactor);
+        desc.BlendOpAlpha = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.blend.alpha.op);
+        desc.SrcBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.blend.alpha.srcFactor);
+        desc.DestBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.blend.alpha.dstFactor);
         return desc;
     }
 
@@ -53,7 +72,7 @@ namespace RHI::DirectX12 {
 
         Assert(createInfo->fragment.colorTargetNum <= 8);
         for (auto i = 0; i < createInfo->fragment.colorTargetNum; i++) {
-            desc.RenderTarget[i] = GetDX12RenderTargetBlendDesc(createInfo->fragment.colorTargets[i].blend);
+            desc.RenderTarget[i] = GetDX12RenderTargetBlendDesc(createInfo->fragment.colorTargets[i]);
         }
         return desc;
     }
