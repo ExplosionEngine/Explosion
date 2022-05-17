@@ -144,12 +144,10 @@ private:
         std::array<VertexAttribute, 2> vertexAttributes {};
         vertexAttributes[0].format = VertexFormat::FLOAT32_X3;
         vertexAttributes[0].offset = 0;
-        vertexAttributes[0].location = 0;
         vertexAttributes[0].semanticName = "POSITION";
         vertexAttributes[0].semanticIndex = 0;
         vertexAttributes[1].format = VertexFormat::FLOAT32_X3;
         vertexAttributes[1].offset = offsetof(Vertex, color);
-        vertexAttributes[1].location = 1;
         vertexAttributes[1].semanticName = "COLOR";
         vertexAttributes[1].semanticIndex = 0;
 
@@ -159,9 +157,9 @@ private:
         vertexBufferLayout.attributeNum = vertexAttributes.size();
         vertexBufferLayout.attributes = vertexAttributes.data();
 
-        ColorTargetState colorTargetState {};
-        colorTargetState.format = PixelFormat::RGBA8_UNORM;
-        colorTargetState.writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+        std::array<ColorTargetState, 1> colorTargetStates {};
+        colorTargetStates[0].format = PixelFormat::RGBA8_UNORM;
+        colorTargetStates[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
 
         GraphicsPipelineCreateInfo createInfo {};
         createInfo.vertexShader = vertexShader;
@@ -169,8 +167,8 @@ private:
         createInfo.layout = pipelineLayout;
         createInfo.vertex.bufferLayoutNum = 1;
         createInfo.vertex.bufferLayouts = &vertexBufferLayout;
-        createInfo.fragment.colorTargetNum = 1;
-        createInfo.fragment.colorTargets = &colorTargetState;
+        createInfo.fragment.colorTargetNum = colorTargetStates.size();
+        createInfo.fragment.colorTargets = colorTargetStates.data();
         createInfo.primitive.depthClip = false;
         createInfo.primitive.frontFace = RHI::FrontFace::CCW;
         createInfo.primitive.cullMode = CullMode::NONE;
@@ -238,8 +236,8 @@ private:
     SwapChain* swapChain = nullptr;
     Buffer* vertexBuffer = nullptr;
     BufferView* vertexBufferView = nullptr;
-    std::array<Texture*, 2> swapChainTextures;
-    std::array<TextureView*, 2> swapChainTextureViews;
+    std::array<Texture*, 2> swapChainTextures {};
+    std::array<TextureView*, 2> swapChainTextureViews {};
     PipelineLayout* pipelineLayout = nullptr;
     GraphicsPipeline* pipeline = nullptr;
     CommandBuffer* commandBuffer = nullptr;
