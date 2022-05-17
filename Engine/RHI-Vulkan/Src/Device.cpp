@@ -14,6 +14,7 @@
 #include <RHI/Vulkan/PipelineLayout.h>
 #include <RHI/Vulkan/BindGroupLayout.h>
 #include <RHI/Vulkan/SwapChain.h>
+#include <RHI/Vulkan/Pipeline.h>
 
 namespace RHI::Vulkan {
     const std::vector<const char*> DEVICE_EXTENSIONS = {
@@ -111,8 +112,7 @@ namespace RHI::Vulkan {
 
     GraphicsPipeline* VKDevice::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new VKGraphicsPipeline(*this, createInfo);
     }
 
     CommandBuffer* VKDevice::CreateCommandBuffer()

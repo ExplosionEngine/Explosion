@@ -141,7 +141,7 @@ int main()
         0, 1, &layoutEntry
     };
     auto bindGroupLayout = device->CreateBindGroupLayout(&groupLayoutInfo);
-    RHI::PipelineConstantLayout constantLayout =  {RHI::ShaderStageFlags(RHI::ShaderStageBits::FRAGMENT), 0, 4 * sizeof(float)};
+    RHI::PipelineConstantLayout constantLayout =  {RHI::ShaderStageFlags(RHI::ShaderStageBits::VERTEX), 0, 4 * sizeof(float)};
 
     RHI::PipelineLayoutCreateInfo pLayoutInfo = {
         1, &bindGroupLayout,
@@ -159,16 +159,35 @@ int main()
     };
     auto fs = device->CreateShaderModule(&fsInfo);
 
-//    RHI::GraphicsPipelineCreateInfo psoInfo = {
-//        pipelineLayout, vs, fs,
-//    };
-//
-//    device->CreateGraphicsPipeline(&psoInfo);
+    RHI::ColorTargetState color = {};
+
+    std::vector<RHI::VertexAttribute> attributes = {
+        {RHI::VertexFormat::FLOAT32_X2, 0, 0, "", 0},
+        {RHI::VertexFormat::FLOAT32_X2, 8, 1, "", 0},
+        {RHI::VertexFormat::FLOAT32_X4, 16, 2, "", 0}
+    };
+    RHI::VertexBufferLayout layouts = {
+        32,
+        RHI::VertexStepMode::PER_VERTEX,
+        static_cast<uint32_t>(attributes.size()),
+        attributes.data()
+    };
+
+    RHI::GraphicsPipelineCreateInfo psoInfo = {
+        pipelineLayout,
+        vs, fs,
+        {1, &layouts},
+        {}, {}, {},
+        {1, &color}
+    };
+
+    auto pso = device->CreateGraphicsPipeline(&psoInfo);
 
     vs->Destroy();
     fs->Destroy();
     bindGroupLayout->Destroy();
     pipelineLayout->Destroy();
+    pso->Destroy();
     device->Destroy();
     return 0;
 }
