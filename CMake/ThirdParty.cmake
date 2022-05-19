@@ -1,4 +1,3 @@
-option(ENABLE_3RD_DEBUG_INFO "3rd package debug" OFF)
 option(CUSTOM_3RD_REPO "using custom 3rd repo" OFF)
 
 if (${CUSTOM_3RD_REPO})
@@ -13,74 +12,71 @@ set(3RD_SOURCE_DIR ${3RD_DIR}/Lib CACHE PATH "" FORCE)
 set(3RD_BINARY_DIR ${CMAKE_BINARY_DIR}/ThirdPartyBuild CACHE PATH "" FORCE)
 set(3RD_INSTALL_DIR ${CMAKE_BINARY_DIR}/ThirdPartyInstall CACHE PATH "" FORCE)
 
-function(AddThirdPartyPackage)
-    cmake_parse_arguments(PARAMS "BUILD" "NAME;VERSION;HASH" "ARG" ${ARGN})
+function(DownloadAndExtract3rdPackage)
+    cmake_parse_arguments(PARAMS "" "URL;SAVE_AS;EXTRACT_TO;HASH" "ARG" ${ARGN})
 
-    set(3RD_PACKAGE_NAME "${PARAMS_NAME}")
-    set(3RD_PACKAGE_FULL_NAME "${PARAMS_NAME}-${PARAMS_VERSION}")
-    set(3RD_PACKAGE_URL "${3RD_REPO}/${3RD_PACKAGE_FULL_NAME}.zip")
-    set(3RD_PACKAGE_ZIP "${3RD_ZIP_DIR}/${3RD_PACKAGE_FULL_NAME}.zip")
-    set(3RD_PACKAGE_SOURCE_DIR "${3RD_SOURCE_DIR}/${3RD_PACKAGE_FULL_NAME}")
-
-    if (${PARAMS_BUILD})
-        set(3RD_PACKAGE_BINARY_DIR "${3RD_BINARY_DIR}/${3RD_PACKAGE_NAME}")
-        set(3RD_PACKAGE_INSTALL_DIR "${3RD_INSTALL_DIR}/${3RD_PACKAGE_NAME}/$<CONFIG>")
-    endif()
-
-    if (${ENABLE_3RD_DEBUG_INFO})
-        message("")
-        message("[3rd Package]")
-        message(" - name: ${PARAMS_NAME}")
-        message(" - version: ${PARAMS_VERSION}")
-        message(" - hash: ${PARAMS_HASH}")
-        message(" - full name: ${3RD_PACKAGE_FULL_NAME}")
-        message(" - url: ${3RD_PACKAGE_URL}")
-        message("")
-    endif()
-
-    # download zip file and check hash
-    if (EXISTS ${3RD_PACKAGE_ZIP})
-        message("found downloaded file for ${3RD_PACKAGE_URL} -> ${3RD_PACKAGE_ZIP}")
+    if (EXISTS ${PARAMS_SAVE_AS})
+        message("found downloaded file for ${PARAMS_URL} -> ${PARAMS_SAVE_AS}")
     else()
-        message("starting download package ${3RD_PACKAGE_URL}")
+        message("starting download package ${PARAMS_URL}")
         file(
             DOWNLOAD
-            ${3RD_PACKAGE_URL} ${3RD_PACKAGE_ZIP}
+            ${PARAMS_URL} ${PARAMS_SAVE_AS}
             SHOW_PROGRESS
         )
     endif()
 
-    # check zip file hash
     if (DEFINED PARAMS_HASH)
-        file(SHA256 ${3RD_PACKAGE_ZIP} 3RD_PACKAGE_HASH_VALUE)
-        if (NOT (${PARAMS_HASH} STREQUAL ${3RD_PACKAGE_HASH_VALUE}))
-            message(FATAL_ERROR "check hash failed for file ${3RD_PACKAGE_ZIP}, please delete zip file and extracted files and try again")
-        endif()
+        file(SHA256 ${PARAMS_SAVE_AS} HASH_VALUE)
+        if (NOT (${PARAMS_HASH} STREQUAL ${HASH_VALUE}))
+            message(FATAL_ERROR "check hash value failed for file ${PARAMS_SAVE_AS}")
+        endif ()
     endif()
 
-    # extract files
-    if (NOT EXISTS ${3RD_PACKAGE_SOURCE_DIR})
+    if (NOT EXISTS ${PARAMS_EXTRACT_TO})
         file(
             ARCHIVE_EXTRACT
-            INPUT ${3RD_PACKAGE_ZIP}
-            DESTINATION ${3RD_PACKAGE_SOURCE_DIR}
+            INPUT ${PARAMS_SAVE_AS}
+            DESTINATION ${PARAMS_EXTRACT_TO}
         )
     endif()
+endfunction()
+
+function(AddThirdPartyPackage)
+    cmake_parse_arguments(PARAMS "BUILD" "NAME;VERSION;HASH" "ARG" ${ARGN})
+
+    set(NAME "${PARAMS_NAME}")
+    set(FULL_NAME "${PARAMS_NAME}-${PARAMS_VERSION}")
+    set(URL "${3RD_REPO}/${FULL_NAME}.zip")
+    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.zip")
+    set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
+
+    if (${PARAMS_BUILD})
+        set(BINARY_DIR "${3RD_BINARY_DIR}/${NAME}")
+        set(INSTALL_DIR "${3RD_INSTALL_DIR}/${NAME}/$<CONFIG>")
+    endif()
+
+    DownloadAndExtract3rdPackage(
+        URL ${URL}
+        SAVE_AS ${ZIP}
+        EXTRACT_TO ${SOURCE_DIR}
+        HASH ${PARAMS_HASH}
+    )
 
     if (${PARAMS_BUILD})
         ExternalProject_Add(
-            ${3RD_PACKAGE_NAME}
-            SOURCE_DIR ${3RD_PACKAGE_SOURCE_DIR}
-            BINARY_DIR ${3RD_PACKAGE_BINARY_DIR}
-            CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${3RD_PACKAGE_INSTALL_DIR} ${PARAMS_ARG}
+            ${NAME}
+            SOURCE_DIR ${SOURCE_DIR}
+            BINARY_DIR ${BINARY_DIR}
+            CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${PARAMS_ARG}
             BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG>
             INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG>
         )
     endif()
 
-    set(${3RD_PACKAGE_NAME}_SOURCE_DIR ${3RD_PACKAGE_SOURCE_DIR} CACHE PATH "" FORCE)
+    set(${NAME}_SOURCE_DIR ${SOURCE_DIR} CACHE PATH "" FORCE)
     if (${PARAMS_BUILD})
-        set(${3RD_PACKAGE_NAME}_BINARY_DIR ${3RD_PACKAGE_BINARY_DIR} CACHE PATH "" FORCE)
-        set(${3RD_PACKAGE_NAME}_INSTALL_DIR ${3RD_PACKAGE_INSTALL_DIR} CACHE PATH "" FORCE)
+        set(${NAME}_BINARY_DIR ${BINARY_DIR} CACHE PATH "" FORCE)
+        set(${NAME}_INSTALL_DIR ${INSTALL_DIR} CACHE PATH "" FORCE)
     endif()
 endfunction()
