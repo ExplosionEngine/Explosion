@@ -42,7 +42,23 @@ function(DownloadAndExtract3rdPackage)
     endif()
 endfunction()
 
-# TODO check this
+function(Replace3rdDirExpression)
+    cmake_parse_arguments(PARAMS "" "INPUT;OUTPUT;SOURCE_DIR;BINARY_DIR;INSTALL_DIR" "" ${ARGN})
+
+    set(TEMP "${PARAMS_INPUT}")
+    if (DEFINED PARAMS_SOURCE_DIR)
+        string(REPLACE "$<SOURCE_DIR>" ${PARAMS_SOURCE_DIR} TEMP ${TEMP})
+    endif()
+    if (DEFINED PARAMS_BINARY_DIR)
+        string(REPLACE "$<BINARY_DIR>" ${PARAMS_BINARY_DIR} TEMP ${TEMP})
+    endif()
+    if (DEFINED PARAMS_INSTALL_DIR)
+        string(REPLACE "$<INSTALL_DIR>" ${PARAMS_INSTALL_DIR} TEMP ${TEMP})
+    endif()
+
+    set(${PARAMS_OUTPUT} ${TEMP} PARENT_SCOPE)
+endfunction()
+
 function(Add3rdHeaderOnlyPackage)
     cmake_parse_arguments(PARAMS "BUILD" "NAME;VERSION;HASH" "INCLUDE" ${ARGN})
 
@@ -59,19 +75,15 @@ function(Add3rdHeaderOnlyPackage)
         HASH ${PARAMS_HASH}
     )
 
-    foreach(INC ${PARAMS_INCLUDE})
-        list(APPEND R_INCLUDE "${SOURCE_DIR}/${INC}")
-    endforeach()
+    add_custom_target(${NAME} ALL)
+    set_target_properties(${NAME} PROPERTIES 3RD_TYPE "HeaderOnly")
 
-    add_custom_target(
-        ${NAME} ALL
-        COMMAND ${CMAKE_COMMAND} -E echo "3rd header only target: ${NAME}"
+    Replace3rdDirExpression(
+        INPUT ${PARAMS_INCLUDE}
+        OUTPUT R_INCLUDE
+        SOURCE_DIR ${SOURCE_DIR}
     )
-    set_target_properties(
-        ${NAME} PROPERTIES
-        3RD_TYPE "HeaderOnly"
-        INCLUDE ${R_INCLUDE}
-    )
+    set_target_properties(${NAME} PROPERTIES INCLUDE ${R_INCLUDE})
 endfunction()
 
 function(Add3rdPackage)
