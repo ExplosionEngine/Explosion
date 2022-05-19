@@ -13,8 +13,8 @@
 #include <dxgi1_4.h>
 #include <d3d12.h>
 
-#include <RHI/Enum.h>
 #include <Common/Debug.h>
+#include <RHI/Common.h>
 
 // duplicated code because static variable and namespace
 namespace RHI::DirectX12 {

@@ -2,7 +2,7 @@
 // Created by johnk on 2022/2/25.
 //
 
-#include <RHI/Enum.h>
+#include <RHI/Common.h>
 #include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/Texture.h>

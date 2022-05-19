@@ -7,11 +7,11 @@
 
 #include <directx/d3dx12.h>
 
-#include <RHI/Enum.h>
-#include <RHI/DirectX12/Common.h>
-#include <RHI/DirectX12/Device.h>
+#include <RHI/Common.h>
 #include <RHI/DirectX12/Buffer.h>
 #include <RHI/DirectX12/BufferView.h>
+#include <RHI/DirectX12/Common.h>
+#include <RHI/DirectX12/Device.h>
 
 namespace RHI::DirectX12 {
     static D3D12_HEAP_TYPE GetDX12HeapType(BufferUsageFlags bufferUsages)
