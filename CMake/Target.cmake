@@ -1,22 +1,9 @@
 option(BUILD_TEST "Build unit tests" ON)
-option(ENABLE_TARGET_DEBUG_INFO "Enable debug info when add cmake targets" OFF)
 
 set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Api CACHE PATH "" FORCE)
 
 function(AddExecutable)
     cmake_parse_arguments(PARAMS "" "NAME" "SRC;INC;LINK;LIB;RUNTIME_DEP" ${ARGN})
-
-    if (${ENABLE_TARGET_DEBUG_INFO})
-        message("")
-            message("[AddExecutable]")
-            message(" - name: ${PARAMS_NAME}")
-            message(" - sources: ${PARAMS_SRC}")
-            message(" - includes: ${PARAMS_INC}")
-            message(" - libraries: ${PARAMS_LIB}")
-            message(" - links: ${PARAMS_LINK}")
-            message(" - runtime_deps: ${PARAMS_RUNTIME_DEP}")
-        message("")
-    endif()
 
     add_executable(
         ${PARAMS_NAME}
@@ -49,18 +36,6 @@ endfunction()
 
 function(AddLibrary)
     cmake_parse_arguments(PARAMS "" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB" ${ARGN})
-
-    if (${ENABLE_TARGET_DEBUG_INFO})
-        message("")
-            message("[AddLibrary]")
-            message(" - name: ${PARAMS_NAME}")
-            message(" - type: ${PARAMS_TYPE}")
-            message(" - sources: ${PARAMS_SRC}")
-            message(" - private include directories: ${PARAMS_PRIVATE_INC}")
-            message(" - public include directories: ${PARAMS_PUBLIC_INC}")
-            message(" - libraries: ${PARAMS_LIB}")
-        message("")
-    endif()
 
     add_library(
         ${PARAMS_NAME}
@@ -111,17 +86,6 @@ function(AddTest)
     endif()
 
     cmake_parse_arguments(PARAMS "" "NAME;WORKING_DIR" "SRC;INC;LINK;LIB" ${ARGN})
-
-    if (${ENABLE_TARGET_DEBUG_INFO})
-        message("")
-            message("[AddTest]")
-            message(" - name: ${PARAMS_NAME}")
-            message(" - working directory: ${PARAMS_WORKING_DIR}")
-            message(" - sources: ${PARAMS_SRC}")
-            message(" - includes: ${PARAMS_INC}")
-            message(" - libraries: ${PARAMS_LIB}")
-        message("")
-    endif()
 
     add_executable(
         ${PARAMS_NAME}

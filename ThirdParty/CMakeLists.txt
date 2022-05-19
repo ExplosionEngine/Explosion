@@ -1,5 +1,5 @@
 # EnTT
-AddThirdPartyPackage(
+Add3rdPackage(
     NAME EnTT
     VERSION 3.8.1
     HASH 77e55bfc4774c1be3a5a6a7a35b321a20c5dff37e688af3895e20cc56011e5f4
@@ -7,7 +7,7 @@ AddThirdPartyPackage(
 set(EnTT_INC ${EnTT_SOURCE_DIR}/single_include CACHE PATH "" FORCE)
 
 # GLM
-AddThirdPartyPackage(
+Add3rdPackage(
     NAME GLM
     VERSION 0.9.9.8
     HASH 29876d3440386464c781853caf73eb49eaa1b04a5e648a0cff92381c5e9e69b4
@@ -15,7 +15,7 @@ AddThirdPartyPackage(
 set(GLM_INC ${GLM_SOURCE_DIR} CACHE PATH "" FORCE)
 
 # Meta
-AddThirdPartyPackage(
+Add3rdPackage(
     NAME Meta
     VERSION 1.4.9
     HASH 9cd04221c4865fdef37f8a92646087ec777ded6b1ff1a5e932cd0cd72b175eba
@@ -24,7 +24,7 @@ set(Meta_INC ${Meta_SOURCE_DIR}/src CACHE PATH "" FORCE)
 
 # DirectX 12 Headers
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    AddThirdPartyPackage(
+    Add3rdPackage(
         NAME DirectXHeaders
         VERSION 1.4.9
         HASH 32a28d1172eb5d6b1574a2ba51d628ba446f0e8a1d3291b5a4903a661c430738
@@ -34,7 +34,7 @@ endif()
 
 # VulkanSDK
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    AddThirdPartyPackage(
+    Add3rdPackage(
         NAME VulkanSDK-Windows
         HASH 006dfa3a63644fed382089402f64095ee9ca8ce3ec3107b80aae6e8941de9e9b
         VERSION 1.2.198.1
@@ -44,7 +44,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(VulkanSDK_BIN ${VulkanSDK-Windows_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
     set(VulkanSDK_VULKAN_LIB vulkan-1 CACHE PATH "" FORCE)
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    AddThirdPartyPackage(
+    Add3rdPackage(
         NAME VulkanSDK-Darwin
         HASH 6394c8e1f355820a8f6808bab2d87d518ee284e42b761da24e516f8ab0e2f75d
         VERSION 1.2.198.1
@@ -57,7 +57,7 @@ endif()
 
 # DXC
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    AddThirdPartyPackage(
+    Add3rdPackage(
         NAME dxc-Windows
         HASH 389901e244e15852adc25197f01bdd1860d4d15ebd3a9f683b869721a06e15f9
         VERSION 1.6.2112
@@ -74,7 +74,7 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 endif()
 
 # GLFW
-AddThirdPartyPackage(
+Add3rdPackage(
     NAME glfw
     VERSION 3.3.6
     BUILD
@@ -86,7 +86,7 @@ set(glfw_LINK ${glfw_INSTALL_DIR}/lib CACHE PATH "" FORCE)
 set(glfw_LIB glfw3 CACHE STRING "" FORCE)
 
 # clipp
-AddThirdPartyPackage(
+Add3rdPackage(
     NAME clipp
     VERSION forked-f7cffbd61a7b64189d6573e8c3848d094c35168a
     HASH 26c5dbff7310d153125b0f9ea8c587d9b5255fa14c61800f93cb358779cb503f
@@ -94,7 +94,7 @@ AddThirdPartyPackage(
 set(clipp_INC ${clipp_SOURCE_DIR}/include CACHE PATH "" FORCE)
 
 # DebugBreak
-AddThirdPartyPackage(
+Add3rdPackage(
     NAME debugbreak
     VERSION 1.0
     HASH 609053a8a508063ec4312d6991de39767eb12cbf36dd048e02a6a4e41ce13319

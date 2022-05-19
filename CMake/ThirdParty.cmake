@@ -42,7 +42,39 @@ function(DownloadAndExtract3rdPackage)
     endif()
 endfunction()
 
-function(AddThirdPartyPackage)
+# TODO check this
+function(Add3rdHeaderOnlyPackage)
+    cmake_parse_arguments(PARAMS "BUILD" "NAME;VERSION;HASH" "INCLUDE" ${ARGN})
+
+    set(NAME "${PARAMS_NAME}")
+    set(FULL_NAME "${PARAMS_NAME}-${PARAMS_VERSION}")
+    set(URL "${3RD_REPO}/${FULL_NAME}.zip")
+    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.zip")
+    set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
+
+    DownloadAndExtract3rdPackage(
+        URL ${URL}
+        SAVE_AS ${ZIP}
+        EXTRACT_TO ${SOURCE_DIR}
+        HASH ${PARAMS_HASH}
+    )
+
+    foreach(INC ${PARAMS_INCLUDE})
+        list(APPEND R_INCLUDE "${SOURCE_DIR}/${INC}")
+    endforeach()
+
+    add_custom_target(
+        ${NAME} ALL
+        COMMAND ${CMAKE_COMMAND} -E echo "3rd header only target: ${NAME}"
+    )
+    set_target_properties(
+        ${NAME} PROPERTIES
+        3RD_TYPE "HeaderOnly"
+        INCLUDE ${R_INCLUDE}
+    )
+endfunction()
+
+function(Add3rdPackage)
     cmake_parse_arguments(PARAMS "BUILD" "NAME;VERSION;HASH" "ARG" ${ARGN})
 
     set(NAME "${PARAMS_NAME}")
