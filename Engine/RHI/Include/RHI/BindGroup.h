@@ -7,7 +7,7 @@
 #include <cstddef>
 
 #include <Common/Utility.h>
-#include <RHI/Enum.h>
+#include <RHI/Common.h>
 
 namespace RHI {
     class BindGroupLayout;

@@ -13,8 +13,8 @@
 #include <directx/d3dx12.h>
 
 #include "RHI/Synchronous.h"
+#include <RHI/Common.h>
 #include <RHI/Device.h>
-#include <RHI/Enum.h>
 
 using Microsoft::WRL::ComPtr;
 

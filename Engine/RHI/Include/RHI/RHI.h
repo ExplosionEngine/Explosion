@@ -10,8 +10,8 @@
 #include <RHI/BufferView.h>
 #include <RHI/CommandBuffer.h>
 #include <RHI/CommandEncoder.h>
+#include <RHI/Common.h>
 #include <RHI/Device.h>
-#include <RHI/Enum.h>
 #include <RHI/Gpu.h>
 #include <RHI/Instance.h>
 #include <RHI/Pipeline.h>

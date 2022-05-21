@@ -7,7 +7,7 @@
 #include <cstdint>
 
 #include <Common/Utility.h>
-#include <RHI/Enum.h>
+#include <RHI/Common.h>
 
 namespace RHI {
     struct BufferCreateInfo;

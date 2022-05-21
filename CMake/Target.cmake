@@ -1,31 +1,74 @@
 option(BUILD_TEST "Build unit tests" ON)
-option(ENABLE_TARGET_DEBUG_INFO "Enable debug info when add cmake targets" OFF)
 
 set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Api CACHE PATH "" FORCE)
 
-# AddExecutable
-# Description: add a new executable target
-# Params:
-#  - NAME {Single} : name of target
-#  - SRC  {List}   : sources of target
-#  - INC  {List}   : private include directories of target
-#  - LINK {List}   : private link directories of target
-#  - LIB: {List}   : private libraries of target
-#  - RUNTIME_DEP: {List}   : dll to copy (windows only)
-function(AddExecutable)
-    cmake_parse_arguments(PARAMS "" "NAME" "SRC;INC;LINK;LIB;RUNTIME_DEP" ${ARGN})
+function(CombineRuntimeDependencies)
+    cmake_parse_arguments(PARAMS "" "NAME" "RUNTIME_DEP" ${ARGN})
 
-    if (${ENABLE_TARGET_DEBUG_INFO})
-        message("")
-            message("[AddExecutable]")
-            message(" - name: ${PARAMS_NAME}")
-            message(" - sources: ${PARAMS_SRC}")
-            message(" - includes: ${PARAMS_INC}")
-            message(" - libraries: ${PARAMS_LIB}")
-            message(" - links: ${PARAMS_LINK}")
-            message(" - runtime_deps: ${PARAMS_RUNTIME_DEP}")
-        message("")
+    get_target_property(RESULT ${PARAMS_NAME} RUNTIME_DEP)
+    if ("${RESULT}" STREQUAL "RESULT-NOTFOUND")
+        set(RESULT ${PARAMS_RUNTIME_DEP})
+    else()
+        list(APPEND RESULT ${PARAMS_RUNTIME_DEP})
     endif()
+    set_target_properties(
+        ${PARAMS_NAME} PROPERTIES
+        RUNTIME_DEP "${RESULT}"
+    )
+endfunction()
+
+function(LinkLibraries)
+    cmake_parse_arguments(PARAMS "" "NAME" "LIB" ${ARGN})
+
+    foreach(L ${PARAMS_LIB})
+        if (TARGET ${L})
+            get_target_property(3RD_TYPE ${L} 3RD_TYPE)
+            if (${3RD_TYPE} STREQUAL "3RD_TYPE-NOTFOUND")
+                target_link_libraries(${PARAMS_NAME} ${L})
+            else()
+                get_target_property(${L}_INCLUDE ${L} INCLUDE)
+                get_target_property(${L}_LINK ${L} LINK)
+                get_target_property(${L}_LIB ${L} LIB)
+                get_target_property(${L}_RUNTIME_DEP ${L} RUNTIME_DEP)
+
+                if (NOT ("${${L}_INCLUDE}" STREQUAL "${L}_INCLUDE-NOTFOUND"))
+                    target_include_directories(${PARAMS_NAME} PUBLIC ${${L}_INCLUDE})
+                endif()
+                if (NOT ("${${L}_LINK}" STREQUAL "${L}_LINK-NOTFOUND"))
+                    target_link_directories(${PARAMS_NAME} PUBLIC ${${L}_LINK})
+                endif()
+                if (NOT ("${${L}_LIB}" STREQUAL "${L}_LIB-NOTFOUND"))
+                    target_link_libraries(${PARAMS_NAME} ${${L}_LIB})
+                endif()
+                if (NOT ("${${L}_RUNTIME_DEP}" STREQUAL "${L}_RUNTIME_DEP-NOTFOUND"))
+                    CombineRuntimeDependencies(
+                        NAME ${PARAMS_NAME}
+                        RUNTIME_DEP "${${L}_RUNTIME_DEP}"
+                    )
+                endif()
+            endif()
+        else()
+            target_link_libraries(${PARAMS_NAME} ${L})
+        endif()
+    endforeach()
+endfunction()
+
+function(AddRuntimeDependenciesCopyCommand)
+    cmake_parse_arguments(PARAMS "" "NAME" "" ${ARGN})
+
+    get_target_property(RUNTIME_DEP ${PARAMS_NAME} RUNTIME_DEP)
+    if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
+        foreach(R ${RUNTIME_DEP})
+            add_custom_command(
+                TARGET ${PARAMS_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${R} $<TARGET_FILE_DIR:${PARAMS_NAME}>
+            )
+        endforeach()
+    endif()
+endfunction()
+
+function(AddExecutable)
+    cmake_parse_arguments(PARAMS "" "NAME" "SRC;INC;LINK;LIB" ${ARGN})
 
     add_executable(
         ${PARAMS_NAME}
@@ -39,48 +82,21 @@ function(AddExecutable)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_LINK}
     )
-    target_link_libraries(
-        ${PARAMS_NAME}
-        ${PARAMS_LIB}
+    LinkLibraries(
+        NAME ${PARAMS_NAME}
+        LIB ${PARAMS_LIB}
     )
-
-    foreach(D ${PARAMS_RUNTIME_DEP})
-        add_custom_command(
-            TARGET ${PARAMS_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${D} $<TARGET_FILE_DIR:${PARAMS_NAME}>
-        )
-    endforeach()
+    AddRuntimeDependenciesCopyCommand(
+        NAME ${PARAMS_NAME}
+    )
 
     if (${MSVC})
         set_target_properties(${PARAMS_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>)
     endif()
 endfunction()
 
-# AddLibrary
-# Description: add a new library target
-# Params:
-#  - NAME         {Single}              : name of target
-#  - TYPE         {"STATIC" | "SHARED"} : type of target
-#  - SRC          {List}                : sources of target
-#  - PRIVATE_INC  {List}                : private include directories of target
-#  - PUBLIC_INC   {List}                : public include directories of target
-#  - PRIVATE_LINK {List}                : private link directories of target
-#  - PUBLIC_LINK  {List}                : public link directories of target
-#  - LIB          {List}                : libraries of target
 function(AddLibrary)
     cmake_parse_arguments(PARAMS "" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB" ${ARGN})
-
-    if (${ENABLE_TARGET_DEBUG_INFO})
-        message("")
-            message("[AddLibrary]")
-            message(" - name: ${PARAMS_NAME}")
-            message(" - type: ${PARAMS_TYPE}")
-            message(" - sources: ${PARAMS_SRC}")
-            message(" - private include directories: ${PARAMS_PRIVATE_INC}")
-            message(" - public include directories: ${PARAMS_PUBLIC_INC}")
-            message(" - libraries: ${PARAMS_LIB}")
-        message("")
-    endif()
 
     add_library(
         ${PARAMS_NAME}
@@ -97,9 +113,9 @@ function(AddLibrary)
         PRIVATE ${PARAMS_PRIVATE_LINK}
         PUBLIC ${PARAMS_PUBLIC_LINK}
     )
-    target_link_libraries(
-        ${PARAMS_NAME}
-        ${PARAMS_LIB}
+    LinkLibraries(
+        NAME ${PARAMS_NAME}
+        LIB ${PARAMS_LIB}
     )
 
     if (${MSVC})
@@ -125,31 +141,12 @@ function(AddLibrary)
     endif()
 endfunction()
 
-# AddTest
-# Description: add a mew test target
-# Params:
-#  - NAME        {Single} : name of target
-#  - WORKING_DIR {Single} : working dir to running test command
-#  - SRC         {List}   : sources of target
-#  - INC         {List}   : private include directories of target
-#  - LIB         {List}   : private libraries of target
 function(AddTest)
     if (NOT ${BUILD_TEST})
         return()
     endif()
 
     cmake_parse_arguments(PARAMS "" "NAME;WORKING_DIR" "SRC;INC;LINK;LIB" ${ARGN})
-
-    if (${ENABLE_TARGET_DEBUG_INFO})
-        message("")
-            message("[AddTest]")
-            message(" - name: ${PARAMS_NAME}")
-            message(" - working directory: ${PARAMS_WORKING_DIR}")
-            message(" - sources: ${PARAMS_SRC}")
-            message(" - includes: ${PARAMS_INC}")
-            message(" - libraries: ${PARAMS_LIB}")
-        message("")
-    endif()
 
     add_executable(
         ${PARAMS_NAME}
@@ -163,10 +160,14 @@ function(AddTest)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_LINK}
     )
-    target_link_libraries(
-        ${PARAMS_NAME}
-        ${PARAMS_LIB}
+    LinkLibraries(
+        NAME ${PARAMS_NAME}
+        LIB ${PARAMS_LIB}
     )
+    AddRuntimeDependenciesCopyCommand(
+        NAME ${PARAMS_NAME}
+    )
+
     add_test(
         NAME ${PARAMS_NAME}
         COMMAND ${PARAMS_NAME}

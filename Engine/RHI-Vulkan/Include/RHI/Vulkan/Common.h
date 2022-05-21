@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include <Common/Debug.h>
+#include <RHI/Common.h>
 #include <unordered_map>
 #include <vulkan/vulkan.hpp>
-#include <RHI/Enum.h>
-#include <Common/Debug.h>
 
 namespace RHI::Vulkan {
 #define VK_KHRONOS_VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"

@@ -1,102 +1,104 @@
 # EnTT
-AddThirdPartyPackage(
+Add3rdHeaderOnlyPackage(
     NAME EnTT
+    PLATFORM All
     VERSION 3.8.1
     HASH 77e55bfc4774c1be3a5a6a7a35b321a20c5dff37e688af3895e20cc56011e5f4
+    INCLUDE $<SOURCE_DIR>/single_include
 )
-set(EnTT_INC ${EnTT_SOURCE_DIR}/single_include CACHE PATH "" FORCE)
 
 # GLM
-AddThirdPartyPackage(
+Add3rdHeaderOnlyPackage(
     NAME GLM
+    PLATFORM All
     VERSION 0.9.9.8
     HASH 29876d3440386464c781853caf73eb49eaa1b04a5e648a0cff92381c5e9e69b4
+    INCLUDE $<SOURCE_DIR>
 )
-set(GLM_INC ${GLM_SOURCE_DIR} CACHE PATH "" FORCE)
 
 # Meta
-AddThirdPartyPackage(
+Add3rdHeaderOnlyPackage(
     NAME Meta
+    PLATFORM All
     VERSION 1.4.9
     HASH 9cd04221c4865fdef37f8a92646087ec777ded6b1ff1a5e932cd0cd72b175eba
+    INCLUDE $<SOURCE_DIR>/src
 )
-set(Meta_INC ${Meta_SOURCE_DIR}/src CACHE PATH "" FORCE)
 
 # DirectX 12 Headers
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    AddThirdPartyPackage(
-        NAME DirectXHeaders
-        VERSION 1.4.9
-        HASH 32a28d1172eb5d6b1574a2ba51d628ba446f0e8a1d3291b5a4903a661c430738
-    )
-    set(DirectXHeaders_INC ${DirectXHeaders_SOURCE_DIR}/include CACHE PATH "" FORCE)
-endif()
+Add3rdBinaryPackage(
+    NAME DirectXHeaders
+    PLATFORM Windows
+    VERSION 1.4.9
+    HASH 32a28d1172eb5d6b1574a2ba51d628ba446f0e8a1d3291b5a4903a661c430738
+    INCLUDE $<SOURCE_DIR>/include
+)
 
 # VulkanSDK
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    AddThirdPartyPackage(
-        NAME VulkanSDK-Windows
-        HASH 006dfa3a63644fed382089402f64095ee9ca8ce3ec3107b80aae6e8941de9e9b
-        VERSION 1.2.198.1
-    )
-    set(VulkanSDK_INC ${VulkanSDK-Windows_SOURCE_DIR}/Include CACHE PATH "" FORCE)
-    set(VulkanSDK_LINK ${VulkanSDK-Windows_SOURCE_DIR}/Lib CACHE PATH "" FORCE)
-    set(VulkanSDK_BIN ${VulkanSDK-Windows_SOURCE_DIR}/Bin CACHE PATH "" FORCE)
-    set(VulkanSDK_VULKAN_LIB vulkan-1 CACHE PATH "" FORCE)
-elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    AddThirdPartyPackage(
-        NAME VulkanSDK-Darwin
-        HASH 6394c8e1f355820a8f6808bab2d87d518ee284e42b761da24e516f8ab0e2f75d
-        VERSION 1.2.198.1
-    )
-    set(VulkanSDK_INC ${VulkanSDK-Darwin_SOURCE_DIR}/macOS/include CACHE PATH "" FORCE)
-    set(VulkanSDK_LINK ${VulkanSDK-Darwin_SOURCE_DIR}/macOS/lib CACHE PATH "" FORCE)
-    set(VulkanSDK_BIN ${VulkanSDK-Darwin_SOURCE_DIR}/macOS/bin CACHE PATH "" FORCE)
-    set(VulkanSDK_VULKAN_LIB vulkan.1 CACHE STRING "" FORCE)
-endif()
+Add3rdBinaryPackage(
+    NAME VulkanSDK
+    PLATFORM Windows
+    HASH 006dfa3a63644fed382089402f64095ee9ca8ce3ec3107b80aae6e8941de9e9b
+    VERSION 1.2.198.1
+    INCLUDE $<SOURCE_DIR>/Include
+    LINK $<SOURCE_DIR>/Lib
+    LIB vulkan-1
+)
+Add3rdBinaryPackage(
+    NAME VulkanSDK
+    PLATFORM Darwin
+    HASH 6394c8e1f355820a8f6808bab2d87d518ee284e42b761da24e516f8ab0e2f75d
+    VERSION 1.2.198.1
+    INCLUDE $<SOURCE_DIR>/macOS/include
+    LINK $<SOURCE_DIR>/macOS/lib
+    LIB vulkan.1
+)
 
 # DXC
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    AddThirdPartyPackage(
-        NAME dxc-Windows
-        HASH 389901e244e15852adc25197f01bdd1860d4d15ebd3a9f683b869721a06e15f9
-        VERSION 1.6.2112
-    )
-    set(dxc_INC ${dxc-Windows_SOURCE_DIR}/inc CACHE PATH "" FORCE)
-    set(dxc_LINK ${dxc-Windows_SOURCE_DIR}/lib CACHE PATH "" FORCE)
-    set(dxc_BIN ${dxc-Windows_SOURCE_DIR}/bin/x64 CACHE PATH "" FORCE)
-    set(dxc_LIB dxcompiler CACHE STRING "" FORCE)
-    file(GLOB DLL ${dxc_BIN}/*.dll)
-    set(dxc_DLL ${DLL} CACHE STRING "" FORCE)
-elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    # using dxc in VulkanSDK
-    set(dxc_LIB dxcompiler CACHE STRING "" FORCE)
-endif()
+# Windows uses standalone package, macOS uses lib in VulkanSDK
+Add3rdBinaryPackage(
+    NAME dxc
+    PLATFORM Windows
+    HASH 389901e244e15852adc25197f01bdd1860d4d15ebd3a9f683b869721a06e15f9
+    VERSION 1.6.2112
+    INCLUDE $<SOURCE_DIR>/inc
+    LINK $<SOURCE_DIR>/lib
+    LIB dxcompiler
+    RUNTIME_DEP $<SOURCE_DIR>/bin/x64/dxcompiler.dll $<SOURCE_DIR>/bin/x64/dxil.dll
+)
+Add3rdAliasPackage(
+    NAME dxc
+    PLATFORM Darwin
+    LIB dxcompiler
+)
 
 # GLFW
-AddThirdPartyPackage(
+Add3rdCMakeProject(
     NAME glfw
+    PLATFORM All
     VERSION 3.3.6
     BUILD
     HASH e2eb069a70da0fc862af4d14e6a80748883f12e20bdce101c028968165d9c688
-    ARG -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF
+    CMAKE_ARG -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF
+    INCLUDE $<INSTALL_DIR>/include
+    LINK $<INSTALL_DIR>/lib
+    LIB glfw3
 )
-set(glfw_INC ${glfw_INSTALL_DIR}/include CACHE PATH "" FORCE)
-set(glfw_LINK ${glfw_INSTALL_DIR}/lib CACHE PATH "" FORCE)
-set(glfw_LIB glfw3 CACHE STRING "" FORCE)
 
 # clipp
-AddThirdPartyPackage(
+Add3rdHeaderOnlyPackage(
     NAME clipp
+    PLATFORM All
     VERSION forked-f7cffbd61a7b64189d6573e8c3848d094c35168a
     HASH 26c5dbff7310d153125b0f9ea8c587d9b5255fa14c61800f93cb358779cb503f
+    INCLUDE $<SOURCE_DIR>/include
 )
-set(clipp_INC ${clipp_SOURCE_DIR}/include CACHE PATH "" FORCE)
 
 # DebugBreak
-AddThirdPartyPackage(
+Add3rdHeaderOnlyPackage(
     NAME debugbreak
+    PLATFORM All
     VERSION 1.0
     HASH 609053a8a508063ec4312d6991de39767eb12cbf36dd048e02a6a4e41ce13319
+    INCLUDE $<SOURCE_DIR>
 )
-set(debugbreak_INC ${debugbreak_SOURCE_DIR} CACHE PATH "" FORCE)
