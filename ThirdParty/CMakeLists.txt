@@ -26,58 +26,51 @@ Add3rdHeaderOnlyPackage(
 )
 
 # DirectX 12 Headers
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    Add3rdBinaryPackage(
-        NAME DirectXHeaders
-        PLATFORM Windows
-        VERSION 1.4.9
-        HASH 32a28d1172eb5d6b1574a2ba51d628ba446f0e8a1d3291b5a4903a661c430738
-        INCLUDE $<SOURCE_DIR>/include
-    )
-endif()
+Add3rdBinaryPackage(
+    NAME DirectXHeaders
+    PLATFORM Windows
+    VERSION 1.4.9
+    HASH 32a28d1172eb5d6b1574a2ba51d628ba446f0e8a1d3291b5a4903a661c430738
+    INCLUDE $<SOURCE_DIR>/include
+)
 
 # VulkanSDK
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    Add3rdBinaryPackage(
-        NAME VulkanSDK
-        PLATFORM Windows
-        HASH 006dfa3a63644fed382089402f64095ee9ca8ce3ec3107b80aae6e8941de9e9b
-        VERSION 1.2.198.1
-        INCLUDE $<SOURCE_DIR>/Include
-        LINK $<SOURCE_DIR>/Lib
-        LIB vulkan-1
-    )
-elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    Add3rdBinaryPackage(
-        NAME VulkanSDK
-        PLATFORM Darwin
-        HASH 6394c8e1f355820a8f6808bab2d87d518ee284e42b761da24e516f8ab0e2f75d
-        VERSION 1.2.198.1
-        INCLUDE $<SOURCE_DIR>/macOS/include
-        LINK $<SOURCE_DIR>/macOS/lib
-        LIB vulkan.1
-    )
-endif()
+Add3rdBinaryPackage(
+    NAME VulkanSDK
+    PLATFORM Windows
+    HASH 006dfa3a63644fed382089402f64095ee9ca8ce3ec3107b80aae6e8941de9e9b
+    VERSION 1.2.198.1
+    INCLUDE $<SOURCE_DIR>/Include
+    LINK $<SOURCE_DIR>/Lib
+    LIB vulkan-1
+)
+Add3rdBinaryPackage(
+    NAME VulkanSDK
+    PLATFORM Darwin
+    HASH 6394c8e1f355820a8f6808bab2d87d518ee284e42b761da24e516f8ab0e2f75d
+    VERSION 1.2.198.1
+    INCLUDE $<SOURCE_DIR>/macOS/include
+    LINK $<SOURCE_DIR>/macOS/lib
+    LIB vulkan.1
+)
 
 # DXC
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    Add3rdBinaryPackage(
-        NAME dxc
-        PLATFORM Windows
-        HASH 389901e244e15852adc25197f01bdd1860d4d15ebd3a9f683b869721a06e15f9
-        VERSION 1.6.2112
-        INCLUDE $<SOURCE_DIR>/inc
-        LINK $<SOURCE_DIR>/lib
-        LIB dxcompiler
-        RUNTIME_DEP $<SOURCE_DIR>/bin/x64/dxcompiler.dll $<SOURCE_DIR>/bin/x64/dxil.dll
-    )
-elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    Add3rdAliasPackage(
-        NAME dxc
-        PLATFORM Darwin
-        LIB dxcompiler
-    )
-endif()
+# Windows uses standalone package, macOS uses lib in VulkanSDK
+Add3rdBinaryPackage(
+    NAME dxc
+    PLATFORM Windows
+    HASH 389901e244e15852adc25197f01bdd1860d4d15ebd3a9f683b869721a06e15f9
+    VERSION 1.6.2112
+    INCLUDE $<SOURCE_DIR>/inc
+    LINK $<SOURCE_DIR>/lib
+    LIB dxcompiler
+    RUNTIME_DEP $<SOURCE_DIR>/bin/x64/dxcompiler.dll $<SOURCE_DIR>/bin/x64/dxil.dll
+)
+Add3rdAliasPackage(
+    NAME dxc
+    PLATFORM Darwin
+    LIB dxcompiler
+)
 
 # GLFW
 Add3rdCMakeProject(

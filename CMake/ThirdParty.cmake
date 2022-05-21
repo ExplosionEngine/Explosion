@@ -65,6 +65,10 @@ endfunction()
 function(Add3rdHeaderOnlyPackage)
     cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION;HASH" "INCLUDE" ${ARGN})
 
+    if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
+        return()
+    endif()
+
     set(NAME "${PARAMS_NAME}")
     set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
     set(URL "${3RD_REPO}/${FULL_NAME}.zip")
@@ -99,6 +103,10 @@ endfunction()
 
 function(Add3rdBinaryPackage)
     cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION;HASH" "INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
+
+    if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
+        return()
+    endif()
 
     set(NAME "${PARAMS_NAME}")
     set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
@@ -170,6 +178,10 @@ endfunction()
 
 function(Add3rdCMakeProject)
     cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION;HASH" "CMAKE_ARG;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
+
+    if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
+        return()
+    endif()
 
     set(NAME "${PARAMS_NAME}")
     set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
@@ -258,6 +270,10 @@ endfunction()
 
 function(Add3rdAliasPackage)
     cmake_parse_arguments(PARAMS "" "NAME;PLATFORM" "LIB" ${ARGN})
+
+    if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
+        return()
+    endif()
 
     add_custom_target(${PARAMS_NAME} ALL)
     set_target_properties(
