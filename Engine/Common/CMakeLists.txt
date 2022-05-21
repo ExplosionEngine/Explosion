@@ -4,5 +4,6 @@ AddLibrary(
     NAME Common
     TYPE STATIC
     SRC ${SOURCES}
-    PUBLIC_INC Include ${debugbreak_INC}
+    PUBLIC_INC Include
+    LIB debugbreak
 )

@@ -29,7 +29,7 @@ function(DownloadAndExtract3rdPackage)
     if (DEFINED PARAMS_HASH)
         file(SHA256 ${PARAMS_SAVE_AS} HASH_VALUE)
         if (NOT (${PARAMS_HASH} STREQUAL ${HASH_VALUE}))
-            message(FATAL_ERROR "check hash value failed for file ${PARAMS_SAVE_AS}")
+            message(FATAL_ERROR "check hash value failed for file ${PARAMS_SAVE_AS}, given ${PARAMS_HASH} actual ${HASH_VALUE}")
         endif ()
     endif()
 
@@ -42,7 +42,7 @@ function(DownloadAndExtract3rdPackage)
     endif()
 endfunction()
 
-function(Replace3rdDirExpression)
+function(Expand3rdPathExpression)
     cmake_parse_arguments(PARAMS "" "INPUT;OUTPUT;SOURCE_DIR;BINARY_DIR;INSTALL_DIR" "" ${ARGN})
 
     set(TEMP "${PARAMS_INPUT}")
@@ -60,10 +60,10 @@ function(Replace3rdDirExpression)
 endfunction()
 
 function(Add3rdHeaderOnlyPackage)
-    cmake_parse_arguments(PARAMS "BUILD" "NAME;VERSION;HASH" "INCLUDE" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION;HASH" "INCLUDE" ${ARGN})
 
     set(NAME "${PARAMS_NAME}")
-    set(FULL_NAME "${PARAMS_NAME}-${PARAMS_VERSION}")
+    set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
     set(URL "${3RD_REPO}/${FULL_NAME}.zip")
     set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.zip")
     set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
@@ -76,29 +76,32 @@ function(Add3rdHeaderOnlyPackage)
     )
 
     add_custom_target(${NAME} ALL)
-    set_target_properties(${NAME} PROPERTIES 3RD_TYPE "HeaderOnly")
-
-    Replace3rdDirExpression(
-        INPUT ${PARAMS_INCLUDE}
-        OUTPUT R_INCLUDE
-        SOURCE_DIR ${SOURCE_DIR}
+    set_target_properties(
+        ${NAME} PROPERTIES
+        3RD_TYPE "HeaderOnly"
     )
-    set_target_properties(${NAME} PROPERTIES INCLUDE ${R_INCLUDE})
+
+    if (DEFINED PARAMS_INCLUDE)
+        Expand3rdPathExpression(
+            INPUT ${PARAMS_INCLUDE}
+            OUTPUT R_INCLUDE
+            SOURCE_DIR ${SOURCE_DIR}
+        )
+        set_target_properties(
+            ${NAME} PROPERTIES
+            INCLUDE ${R_INCLUDE}
+        )
+    endif()
 endfunction()
 
-function(Add3rdPackage)
-    cmake_parse_arguments(PARAMS "BUILD" "NAME;VERSION;HASH" "ARG" ${ARGN})
+function(Add3rdBinaryPackage)
+    cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION;HASH" "INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
 
     set(NAME "${PARAMS_NAME}")
-    set(FULL_NAME "${PARAMS_NAME}-${PARAMS_VERSION}")
+    set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
     set(URL "${3RD_REPO}/${FULL_NAME}.zip")
     set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.zip")
     set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
-
-    if (${PARAMS_BUILD})
-        set(BINARY_DIR "${3RD_BINARY_DIR}/${NAME}")
-        set(INSTALL_DIR "${3RD_INSTALL_DIR}/${NAME}/$<CONFIG>")
-    endif()
 
     DownloadAndExtract3rdPackage(
         URL ${URL}
@@ -107,20 +110,156 @@ function(Add3rdPackage)
         HASH ${PARAMS_HASH}
     )
 
-    if (${PARAMS_BUILD})
-        ExternalProject_Add(
-            ${NAME}
+    add_custom_target(${NAME} ALL)
+    set_target_properties(
+        ${NAME} PROPERTIES
+        3RD_TYPE "Binary"
+    )
+
+    if (DEFINED PARAMS_INCLUDE)
+        Expand3rdPathExpression(
+            INPUT ${PARAMS_INCLUDE}
+            OUTPUT R_INCLUDE
             SOURCE_DIR ${SOURCE_DIR}
-            BINARY_DIR ${BINARY_DIR}
-            CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${PARAMS_ARG}
-            BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG>
-            INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG>
+        )
+        set_target_properties(
+            ${NAME} PROPERTIES
+            INCLUDE ${R_INCLUDE}
         )
     endif()
 
-    set(${NAME}_SOURCE_DIR ${SOURCE_DIR} CACHE PATH "" FORCE)
-    if (${PARAMS_BUILD})
-        set(${NAME}_BINARY_DIR ${BINARY_DIR} CACHE PATH "" FORCE)
-        set(${NAME}_INSTALL_DIR ${INSTALL_DIR} CACHE PATH "" FORCE)
+    if (DEFINED PARAMS_LINK)
+        Expand3rdPathExpression(
+            INPUT ${PARAMS_LINK}
+            OUTPUT R_LINK
+            SOURCE_DIR ${SOURCE_DIR}
+        )
+        set_target_properties(
+            ${NAME} PROPERTIES
+            LINK ${R_LINK}
+        )
     endif()
+
+    if (DEFINED PARAMS_LIB)
+        Expand3rdPathExpression(
+            INPUT ${PARAMS_LIB}
+            OUTPUT R_LIB
+            SOURCE_DIR ${SOURCE_DIR}
+        )
+        set_target_properties(
+            ${NAME} PROPERTIES
+            LIB ${R_LIB}
+        )
+    endif()
+
+    if (DEFINED PARAMS_RUNTIME_DEP)
+        Expand3rdPathExpression(
+            INPUT ${PARAMS_RUNTIME_DEP}
+            OUTPUT R_RUNTIME_DEP
+            SOURCE_DIR ${SOURCE_DIR}
+        )
+        set_target_properties(
+            ${NAME} PROPERTIES
+            RUNTIME_DEP ${R_RUNTIME_DEP}
+        )
+    endif()
+endfunction()
+
+function(Add3rdCMakeProject)
+    cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION;HASH" "CMAKE_ARG;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
+
+    set(NAME "${PARAMS_NAME}")
+    set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
+    set(URL "${3RD_REPO}/${FULL_NAME}.zip")
+    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.zip")
+    set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
+    set(BINARY_DIR "${3RD_BINARY_DIR}/${NAME}")
+    set(INSTALL_DIR "${3RD_INSTALL_DIR}/${NAME}/$<CONFIG>")
+
+    DownloadAndExtract3rdPackage(
+        URL ${URL}
+        SAVE_AS ${ZIP}
+        EXTRACT_TO ${SOURCE_DIR}
+        HASH ${PARAMS_HASH}
+    )
+
+    ExternalProject_Add(
+        ${NAME}
+        SOURCE_DIR ${SOURCE_DIR}
+        BINARY_DIR ${BINARY_DIR}
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${PARAMS_CMAKE_ARG}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG>
+        INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG>
+    )
+    set_target_properties(
+        ${NAME} PROPERTIES
+        3RD_TYPE "CMakeProject"
+    )
+
+    if (DEFINED PARAMS_INCLUDE)
+        Expand3rdPathExpression(
+            INPUT ${PARAMS_INCLUDE}
+            OUTPUT R_INCLUDE
+            SOURCE_DIR ${SOURCE_DIR}
+            BINARY_DIR ${BINARY_DIR}
+            INSTALL_DIR ${INSTALL_DIR}
+        )
+        set_target_properties(
+            ${NAME} PROPERTIES
+            INCLUDE ${R_INCLUDE}
+        )
+    endif()
+
+    if (DEFINED PARAMS_LINK)
+        Expand3rdPathExpression(
+            INPUT ${PARAMS_LINK}
+            OUTPUT R_LINK
+            SOURCE_DIR ${SOURCE_DIR}
+            BINARY_DIR ${BINARY_DIR}
+            INSTALL_DIR ${INSTALL_DIR}
+        )
+        set_target_properties(
+            ${NAME} PROPERTIES
+            LINK ${R_LINK}
+        )
+    endif()
+
+    if (DEFINED PARAMS_LIB)
+        Expand3rdPathExpression(
+            INPUT ${PARAMS_LIB}
+            OUTPUT R_LIB
+            SOURCE_DIR ${SOURCE_DIR}
+            BINARY_DIR ${BINARY_DIR}
+            INSTALL_DIR ${INSTALL_DIR}
+        )
+        set_target_properties(
+            ${NAME} PROPERTIES
+            LIB ${R_LIB}
+        )
+    endif()
+
+    if (DEFINED PARAMS_RUNTIME_DEP)
+        Expand3rdPathExpression(
+            INPUT ${PARAMS_RUNTIME_DEP}
+            OUTPUT R_RUNTIME_DEP
+            SOURCE_DIR ${SOURCE_DIR}
+            BINARY_DIR ${BINARY_DIR}
+            INSTALL_DIR ${INSTALL_DIR}
+        )
+        set_target_properties(
+            ${NAME} PROPERTIES
+            RUNTIME_DEP ${R_RUNTIME_DEP}
+        )
+    endif()
+endfunction()
+
+function(Add3rdAliasPackage)
+    cmake_parse_arguments(PARAMS "" "NAME;PLATFORM" "LIB" ${ARGN})
+
+    add_custom_target(${PARAMS_NAME} ALL)
+    set_target_properties(
+        ${PARAMS_NAME} PROPERTIES
+        3RD_TYPE "Alias"
+        LIB ${PARAMS_LIB}
+    )
 endfunction()

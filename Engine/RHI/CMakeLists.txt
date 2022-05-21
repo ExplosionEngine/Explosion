@@ -17,17 +17,11 @@ function(AddRHISample)
             "-framework CoreFoundation")
     endif()
 
-    if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-        set(RUNTIME_DEPS ${dxc_DLL})
-    endif()
-
     AddExecutable(
         NAME ${PARAMS_NAME}
         SRC ${CMAKE_CURRENT_SOURCE_DIR}/${PARAMS_SRC}
-        INC Sample ${glfw_INC} ${GLM_INC} ${clipp_INC} ${dxc_INC} ${VulkanSDK_INC}
-        LINK ${glfw_LINK} ${dxc_LINK} ${VulkanSDK_LINK}
-        LIB RHI ${glfw_LIB} ${dxc_LIB} ${PLATFORM_EXT_LIBS}
-        RUNTIME_DEP ${RUNTIME_DEPS}
+        INC Sample
+        LIB RHI glfw GLM clipp dxc VulkanSDK ${PLATFORM_EXT_LIBS}
     )
     add_custom_command(
         TARGET ${PARAMS_NAME} PRE_BUILD
