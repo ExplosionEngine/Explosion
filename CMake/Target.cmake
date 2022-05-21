@@ -6,14 +6,14 @@ function(CombineRuntimeDependencies)
     cmake_parse_arguments(PARAMS "" "NAME" "RUNTIME_DEP" ${ARGN})
 
     get_target_property(RESULT ${PARAMS_NAME} RUNTIME_DEP)
-    if (${RESULT} STREQUAL "RESULT-NOTFOUND")
+    if ("${RESULT}" STREQUAL "RESULT-NOTFOUND")
         set(RESULT ${PARAMS_RUNTIME_DEP})
     else()
         list(APPEND RESULT ${PARAMS_RUNTIME_DEP})
     endif()
     set_target_properties(
         ${PARAMS_NAME} PROPERTIES
-        RUNTIME_DEP ${RESULT}
+        RUNTIME_DEP "${RESULT}"
     )
 endfunction()
 
@@ -31,19 +31,19 @@ function(LinkLibraries)
                 get_target_property(${L}_LIB ${L} LIB)
                 get_target_property(${L}_RUNTIME_DEP ${L} RUNTIME_DEP)
 
-                if (NOT (${${L}_INCLUDE} STREQUAL "${L}_INCLUDE-NOTFOUND"))
+                if (NOT ("${${L}_INCLUDE}" STREQUAL "${L}_INCLUDE-NOTFOUND"))
                     target_include_directories(${PARAMS_NAME} PUBLIC ${${L}_INCLUDE})
                 endif()
-                if (NOT (${${L}_LINK} STREQUAL "${L}_LINK-NOTFOUND"))
+                if (NOT ("${${L}_LINK}" STREQUAL "${L}_LINK-NOTFOUND"))
                     target_link_directories(${PARAMS_NAME} PUBLIC ${${L}_LINK})
                 endif()
-                if (NOT (${${L}_LIB} STREQUAL "${L}_LIB-NOTFOUND"))
+                if (NOT ("${${L}_LIB}" STREQUAL "${L}_LIB-NOTFOUND"))
                     target_link_libraries(${PARAMS_NAME} ${${L}_LIB})
                 endif()
-                if (NOT (${${L}_RUNTIME_DEP} STREQUAL "${L}_RUNTIME_DEP-NOTFOUND"))
+                if (NOT ("${${L}_RUNTIME_DEP}" STREQUAL "${L}_RUNTIME_DEP-NOTFOUND"))
                     CombineRuntimeDependencies(
                         NAME ${PARAMS_NAME}
-                        RUNTIME_DEP ${${L}_RUNTIME_DEP}
+                        RUNTIME_DEP "${${L}_RUNTIME_DEP}"
                     )
                 endif()
             endif()
@@ -57,7 +57,7 @@ function(AddRuntimeDependenciesCopyCommand)
     cmake_parse_arguments(PARAMS "" "NAME" "" ${ARGN})
 
     get_target_property(RUNTIME_DEP ${PARAMS_NAME} RUNTIME_DEP)
-    if (NOT (${RUNTIME_DEP} STREQUAL "RUNTIME_DEP-NOTFOUND"))
+    if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
         foreach(R ${RUNTIME_DEP})
             add_custom_command(
                 TARGET ${PARAMS_NAME} POST_BUILD

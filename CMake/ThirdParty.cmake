@@ -43,20 +43,23 @@ function(DownloadAndExtract3rdPackage)
 endfunction()
 
 function(Expand3rdPathExpression)
-    cmake_parse_arguments(PARAMS "" "INPUT;OUTPUT;SOURCE_DIR;BINARY_DIR;INSTALL_DIR" "" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "OUTPUT;SOURCE_DIR;BINARY_DIR;INSTALL_DIR" "INPUT" ${ARGN})
 
-    set(TEMP "${PARAMS_INPUT}")
-    if (DEFINED PARAMS_SOURCE_DIR)
-        string(REPLACE "$<SOURCE_DIR>" ${PARAMS_SOURCE_DIR} TEMP ${TEMP})
-    endif()
-    if (DEFINED PARAMS_BINARY_DIR)
-        string(REPLACE "$<BINARY_DIR>" ${PARAMS_BINARY_DIR} TEMP ${TEMP})
-    endif()
-    if (DEFINED PARAMS_INSTALL_DIR)
-        string(REPLACE "$<INSTALL_DIR>" ${PARAMS_INSTALL_DIR} TEMP ${TEMP})
-    endif()
+    foreach(I ${PARAMS_INPUT})
+        set(TEMP "${I}")
+        if (DEFINED PARAMS_SOURCE_DIR)
+            string(REPLACE "$<SOURCE_DIR>" ${PARAMS_SOURCE_DIR} TEMP ${TEMP})
+        endif()
+        if (DEFINED PARAMS_BINARY_DIR)
+            string(REPLACE "$<BINARY_DIR>" ${PARAMS_BINARY_DIR} TEMP ${TEMP})
+        endif()
+        if (DEFINED PARAMS_INSTALL_DIR)
+            string(REPLACE "$<INSTALL_DIR>" ${PARAMS_INSTALL_DIR} TEMP ${TEMP})
+        endif()
+        list(APPEND RESULT ${TEMP})
+    endforeach()
 
-    set(${PARAMS_OUTPUT} ${TEMP} PARENT_SCOPE)
+    set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
 endfunction()
 
 function(Add3rdHeaderOnlyPackage)
@@ -89,7 +92,7 @@ function(Add3rdHeaderOnlyPackage)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            INCLUDE ${R_INCLUDE}
+            INCLUDE "${R_INCLUDE}"
         )
     endif()
 endfunction()
@@ -124,7 +127,7 @@ function(Add3rdBinaryPackage)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            INCLUDE ${R_INCLUDE}
+            INCLUDE "${R_INCLUDE}"
         )
     endif()
 
@@ -136,7 +139,7 @@ function(Add3rdBinaryPackage)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            LINK ${R_LINK}
+            LINK "${R_LINK}"
         )
     endif()
 
@@ -148,7 +151,7 @@ function(Add3rdBinaryPackage)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            LIB ${R_LIB}
+            LIB "${R_LIB}"
         )
     endif()
 
@@ -160,7 +163,7 @@ function(Add3rdBinaryPackage)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            RUNTIME_DEP ${R_RUNTIME_DEP}
+            RUNTIME_DEP "${R_RUNTIME_DEP}"
         )
     endif()
 endfunction()
@@ -206,7 +209,7 @@ function(Add3rdCMakeProject)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            INCLUDE ${R_INCLUDE}
+            INCLUDE "${R_INCLUDE}"
         )
     endif()
 
@@ -220,7 +223,7 @@ function(Add3rdCMakeProject)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            LINK ${R_LINK}
+            LINK "${R_LINK}"
         )
     endif()
 
@@ -234,7 +237,7 @@ function(Add3rdCMakeProject)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            LIB ${R_LIB}
+            LIB "${R_LIB}"
         )
     endif()
 
@@ -248,7 +251,7 @@ function(Add3rdCMakeProject)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            RUNTIME_DEP ${R_RUNTIME_DEP}
+            RUNTIME_DEP "${R_RUNTIME_DEP}"
         )
     endif()
 endfunction()
@@ -260,6 +263,6 @@ function(Add3rdAliasPackage)
     set_target_properties(
         ${PARAMS_NAME} PROPERTIES
         3RD_TYPE "Alias"
-        LIB ${PARAMS_LIB}
+        LIB "${PARAMS_LIB}"
     )
 endfunction()
