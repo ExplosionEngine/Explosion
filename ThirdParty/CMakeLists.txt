@@ -102,3 +102,24 @@ Add3rdHeaderOnlyPackage(
     HASH 609053a8a508063ec4312d6991de39767eb12cbf36dd048e02a6a4e41ce13319
     INCLUDE $<SOURCE_DIR>
 )
+
+# LLVM
+Add3rdBinaryPackage(
+    NAME LLVM
+    PLATFORM Windows
+    VERSION 14.0.3
+    HASH 6639417bf5e54b584819818b91dd21031d64b7600fba7d309e88033fe25e4b09
+    INCLUDE $<SOURCE_DIR>/include
+    LINK $<SOURCE_DIR>/lib
+    LIB libclang
+    RUNTIME_DEP $<SOURCE_DIR>/bin/libclang.dll
+)
+Add3rdBinaryPackage(
+    NAME LLVM
+    PLATFORM Darwin
+    VERSION 14.0.3
+    HASH c28df5decc632b2dd1c13e2e30f27e9a5934db5de365e7d31e2a964b479e928c
+    INCLUDE $<SOURCE_DIR>/include
+    LINK $<SOURCE_DIR>/lib
+    LIB clang
+)
