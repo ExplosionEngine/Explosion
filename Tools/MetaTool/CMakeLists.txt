@@ -3,5 +3,5 @@ AddExecutable(
     NAME MetaTool
     SRC ${SOURCES}
     INC Include
-    LIB Common LLVM
+    LIB Common LLVM clipp
 )

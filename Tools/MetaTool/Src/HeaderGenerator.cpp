@@ -3,3 +3,18 @@
 //
 
 #include <MetaTool/HeaderGenerator.h>
+#include <MetaTool/ClangParser.h>
+
+namespace MetaTool {
+    HeaderGenerator::HeaderGenerator(const char* outputFilePath)
+    {
+        // TODO
+    }
+
+    HeaderGenerator::~HeaderGenerator() = default;
+
+    void HeaderGenerator::Generate(const MetaInfo& metaInfo)
+    {
+        // TODO
+    }
+}

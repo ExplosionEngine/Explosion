@@ -9,6 +9,8 @@
 
 #include <clang-c/Index.h>
 
+#include <Common/Utility.h>
+
 namespace MetaTool {
     struct SourceInfo {
         const char* sourceFile;
@@ -42,7 +44,8 @@ namespace MetaTool {
 
     class ClangParser {
     public:
-        ClangParser(const SourceInfo& sourceInfo);
+        NON_COPYABLE(ClangParser)
+        explicit ClangParser(const SourceInfo& sourceInfo);
         ~ClangParser();
 
         void Parse();
