@@ -3,4 +3,5 @@ AddExecutable(
     NAME MetaTool
     SRC ${SOURCES}
     INC Include
+    LIB Common LLVM
 )
