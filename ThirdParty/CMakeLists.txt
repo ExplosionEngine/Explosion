@@ -77,7 +77,6 @@ Add3rdCMakeProject(
     NAME glfw
     PLATFORM All
     VERSION 3.3.6
-    BUILD
     HASH e2eb069a70da0fc862af4d14e6a80748883f12e20bdce101c028968165d9c688
     CMAKE_ARG -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF
     INCLUDE $<INSTALL_DIR>/include
@@ -122,4 +121,15 @@ Add3rdBinaryPackage(
     INCLUDE $<SOURCE_DIR>/include
     LINK $<SOURCE_DIR>/lib
     LIB clang
+)
+
+# Google Test
+Add3rdCMakeProject(
+    NAME googletest
+    PLATFORM All
+    VERSION 1.11.0
+    HASH d15f6f53d20ed98e1ee4669663b4af7d072c3397ee6d8125de1fd6922115c6a4
+    INCLUDE $<INSTALL_DIR>/include
+    LINK $<INSTALL_DIR>/lib
+    LIB gtest$<IF:$<CONFIG:Debug>,d,> gmock$<IF:$<CONFIG:Debug>,d,>
 )
