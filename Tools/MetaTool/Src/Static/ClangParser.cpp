@@ -8,15 +8,31 @@
 #include <MetaTool/ClangParser.h>
 #include <Common/Debug.h>
 
-#define PFProxy(Func) [](CXCursor current, CXCursor parent, CXClientData clientData) -> CXChildVisitResult { return MetaTool::Func(current, parent, *static_cast<MetaTool::MetaInfo*>(clientData)); }
-#define DeclarePF(Func) CXChildVisitResult Func(CXCursor current, CXCursor parent, MetaInfo& clientData)
+namespace MetaTool {
+    struct StructContext {
+
+    };
+}
 
 namespace MetaTool {
-    using ProcessorFunc = std::function<CXVisitorResult(CXCursor current, CXCursor parent, MetaInfo& metaInfo)>;
-
-    DeclarePF(PFMain)
+    CXChildVisitResult PFStruct(CXCursor current, CXCursor parent, CXClientData data)
     {
         // TODO
+        return CXChildVisit_Continue;
+    }
+
+    CXChildVisitResult PFMain(CXCursor current, CXCursor parent, CXClientData data)
+    {
+        auto* metaInfo = static_cast<MetaInfo*>(data);
+        CXCursorKind kind = clang_getCursorKind(current);
+        switch (kind) {
+            case CXCursorKind::CXCursor_StructDecl:
+                StructContext context;
+                clang_visitChildren(current, PFStruct, &context);
+                break;
+            default:
+                break;
+        }
         return CXChildVisit_Continue;
     }
 }
@@ -35,7 +51,7 @@ namespace MetaTool {
     void ClangParser::Parse()
     {
         CXCursor cursor = clang_getTranslationUnitCursor(clangTranslationUnit);
-        clang_visitChildren(cursor, PFProxy(PFMain), &metaInfo);
+        clang_visitChildren(cursor, PFMain, &metaInfo);
     }
 
     const MetaInfo& ClangParser::GetMetaInfo()

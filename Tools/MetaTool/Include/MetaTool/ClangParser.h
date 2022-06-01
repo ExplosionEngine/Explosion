@@ -18,29 +18,7 @@ namespace MetaTool {
         const char** includePaths;
     };
 
-    struct PropertyInfo {
-
-    };
-
-    struct FunctionInfo {
-
-    };
-
-    struct EnumInfo {
-
-    };
-
-    struct ClassInfo {
-        std::vector<PropertyInfo> properties;
-        std::vector<FunctionInfo> functions;
-    };
-
-    struct MetaInfo {
-        std::vector<PropertyInfo> globalProperties;
-        std::vector<FunctionInfo> globalFunctions;
-        std::vector<EnumInfo> enums;
-        std::vector<ClassInfo> classes;
-    };
+    struct MetaInfo {};
 
     class ClangParser {
     public:
