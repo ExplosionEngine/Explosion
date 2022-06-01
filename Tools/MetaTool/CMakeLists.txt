@@ -18,5 +18,5 @@ AddTest(
     NAME MetaTool.Test
     SRC Test/Main.cpp
     LIB MetaTool.Static googletest
-    WORKING_DIR Test
+    WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Test
 )

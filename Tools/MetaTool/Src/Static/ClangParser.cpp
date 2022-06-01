@@ -9,27 +9,77 @@
 #include <Common/Debug.h>
 
 namespace MetaTool {
-    struct StructContext {
+#define DEBUG_OUTPUT 1
 
+    void DebugPrintCursorInfo(const std::string& tag, CXCursor cursor)
+    {
+#if BUILD_CONFIG_DEBUG && DEBUG_OUTPUT
+        CXCursorKind kind = clang_getCursorKind(cursor);
+        std::cout << tag << ": " << clang_getCString(clang_getCursorSpelling(cursor)) << ", " << clang_getCString(clang_getCursorKindSpelling(kind)) << std::endl;
+#endif
+    }
+}
+
+namespace MetaTool {
+    struct NamespaceContext {
+        std::string name;
+    };
+
+    struct StructContext {
+        NamespaceContext* nameSpaceContext;
+        std::string name;
     };
 }
 
 namespace MetaTool {
     CXChildVisitResult PFStruct(CXCursor current, CXCursor parent, CXClientData data)
     {
+        DebugPrintCursorInfo("PFStruct", current);
+        auto* structContext = static_cast<StructContext*>(data);
+
         // TODO
+        return CXChildVisit_Continue;
+    }
+
+    CXChildVisitResult PFNameSpace(CXCursor current, CXCursor parent, CXClientData data)
+    {
+        DebugPrintCursorInfo("PFNameSpace", current);
+        auto* nameSpaceContext = static_cast<NamespaceContext*>(data);
+
+        CXCursorKind kind = clang_getCursorKind(current);
+        switch (kind) {
+            case CXCursorKind::CXCursor_StructDecl:
+            {
+                StructContext structContext {};
+                structContext.nameSpaceContext = nameSpaceContext;
+                clang_visitChildren(current, PFStruct, &structContext);
+            }
+            default:
+                break;
+        }
         return CXChildVisit_Continue;
     }
 
     CXChildVisitResult PFMain(CXCursor current, CXCursor parent, CXClientData data)
     {
+        DebugPrintCursorInfo("PFMain", current);
         auto* metaInfo = static_cast<MetaInfo*>(data);
+
         CXCursorKind kind = clang_getCursorKind(current);
         switch (kind) {
             case CXCursorKind::CXCursor_StructDecl:
-                StructContext context;
-                clang_visitChildren(current, PFStruct, &context);
+                {
+                    StructContext structContext {};
+                    structContext.name = clang_getCString(clang_getCursorSpelling(current));
+                    clang_visitChildren(current, PFStruct, &structContext);
+                }
                 break;
+            case CXCursorKind::CXCursor_Namespace:
+                {
+                    NamespaceContext namespaceContext {};
+                    namespaceContext.name = clang_getCString(clang_getCursorSpelling(current));
+                    clang_visitChildren(current, PFNameSpace, &namespaceContext);
+                }
             default:
                 break;
         }

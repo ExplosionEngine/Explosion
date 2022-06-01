@@ -175,6 +175,6 @@ function(AddTest)
     add_test(
         NAME ${PARAMS_NAME}
         COMMAND ${PARAMS_NAME}
-        WORKING_DIRECTORY ${PARAM_WORKING_DIR}
+        WORKING_DIRECTORY ${PARAMS_WORKING_DIR}
     )
 endfunction()

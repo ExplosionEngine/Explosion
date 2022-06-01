@@ -4,6 +4,19 @@
 
 #include <gtest/gtest.h>
 
+#include <MetaTool/ClangParser.h>
+
+TEST(MetaToolTest, ClangParserStructTest)
+{
+    MetaTool::SourceInfo sourceInfo {};
+    sourceInfo.sourceFile = "Struct.cpp";
+
+    MetaTool::ClangParser clangParser(sourceInfo);
+    clangParser.Parse();
+
+    // TODO
+}
+
 int main(int argc, char* argv[])
 {
     testing::InitGoogleTest(&argc, argv);
