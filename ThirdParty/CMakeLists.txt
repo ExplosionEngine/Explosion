@@ -77,7 +77,6 @@ Add3rdCMakeProject(
     NAME glfw
     PLATFORM All
     VERSION 3.3.6
-    BUILD
     HASH e2eb069a70da0fc862af4d14e6a80748883f12e20bdce101c028968165d9c688
     CMAKE_ARG -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF
     INCLUDE $<INSTALL_DIR>/include
@@ -101,4 +100,36 @@ Add3rdHeaderOnlyPackage(
     VERSION 1.0
     HASH 609053a8a508063ec4312d6991de39767eb12cbf36dd048e02a6a4e41ce13319
     INCLUDE $<SOURCE_DIR>
+)
+
+# LLVM
+Add3rdBinaryPackage(
+    NAME LLVM
+    PLATFORM Windows
+    VERSION 14.0.3
+    HASH 6639417bf5e54b584819818b91dd21031d64b7600fba7d309e88033fe25e4b09
+    INCLUDE $<SOURCE_DIR>/include
+    LINK $<SOURCE_DIR>/lib
+    LIB libclang
+    RUNTIME_DEP $<SOURCE_DIR>/bin/libclang.dll
+)
+Add3rdBinaryPackage(
+    NAME LLVM
+    PLATFORM Darwin
+    VERSION 14.0.3
+    HASH c28df5decc632b2dd1c13e2e30f27e9a5934db5de365e7d31e2a964b479e928c
+    INCLUDE $<SOURCE_DIR>/include
+    LINK $<SOURCE_DIR>/lib
+    LIB clang
+)
+
+# Google Test
+Add3rdCMakeProject(
+    NAME googletest
+    PLATFORM All
+    VERSION 1.11.0
+    HASH d15f6f53d20ed98e1ee4669663b4af7d072c3397ee6d8125de1fd6922115c6a4
+    INCLUDE $<INSTALL_DIR>/include
+    LINK $<INSTALL_DIR>/lib
+    LIB gtest$<IF:$<CONFIG:Debug>,d,> gmock$<IF:$<CONFIG:Debug>,d,>
 )

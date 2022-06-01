@@ -46,6 +46,10 @@ function(LinkLibraries)
                         RUNTIME_DEP "${${L}_RUNTIME_DEP}"
                     )
                 endif()
+
+                if (${3RD_TYPE} STREQUAL "CMakeProject")
+                    add_dependencies(${PARAMS_NAME} ${L})
+                endif()
             endif()
         else()
             target_link_libraries(${PARAMS_NAME} ${L})
