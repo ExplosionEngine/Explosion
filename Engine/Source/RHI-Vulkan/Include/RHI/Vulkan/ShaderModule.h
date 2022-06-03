@@ -20,6 +20,8 @@ namespace RHI::Vulkan {
 
         vk::ShaderModule GetNativeHandle() const;
 
+        void BuildReflection(const ShaderModuleCreateInfo* createInfo);
+
     private:
         void CreateNativeShaderModule(const ShaderModuleCreateInfo* createInfo);
 

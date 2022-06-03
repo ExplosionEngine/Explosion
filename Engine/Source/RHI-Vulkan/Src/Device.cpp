@@ -58,7 +58,7 @@ namespace RHI::Vulkan {
 
     SwapChain* VKDevice::CreateSwapChain(const SwapChainCreateInfo* createInfo)
     {
-        return new VKSwapChain(gpu->GetVKInstance(), createInfo);
+        return new VKSwapChain(*this, createInfo);
     }
 
     void VKDevice::Destroy()

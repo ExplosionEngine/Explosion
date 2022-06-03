@@ -42,7 +42,9 @@ Add3rdBinaryPackage(
     VERSION 1.2.198.1
     INCLUDE $<SOURCE_DIR>/Include
     LINK $<SOURCE_DIR>/Lib
-    LIB vulkan-1
+    LIB
+        vulkan-1
+        spirv-cross-core
 )
 Add3rdBinaryPackage(
     NAME VulkanSDK
@@ -51,7 +53,9 @@ Add3rdBinaryPackage(
     VERSION 1.2.198.1
     INCLUDE $<SOURCE_DIR>/macOS/include
     LINK $<SOURCE_DIR>/macOS/lib
-    LIB vulkan.1
+    LIB
+        vulkan.1
+        spirv-cross-core
 )
 
 # DXC

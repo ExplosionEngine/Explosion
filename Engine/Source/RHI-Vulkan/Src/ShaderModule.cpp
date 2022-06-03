@@ -5,6 +5,7 @@
 #include <RHI/Vulkan/ShaderModule.h>
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Common.h>
+#include <spirv_cross/spirv_cross.hpp>
 
 namespace RHI::Vulkan {
 
@@ -38,5 +39,16 @@ namespace RHI::Vulkan {
             .setPCode(static_cast<const uint32_t*>(createInfo->byteCode));
 
         Assert(device.GetVkDevice().createShaderModule(&moduleCreateInfo, nullptr, &shaderModule) == vk::Result::eSuccess);
+        BuildReflection(createInfo);
+    }
+
+    void VKShaderModule::BuildReflection(const ShaderModuleCreateInfo* createInfo)
+    {
+        spirv_cross::Compiler compiler(static_cast<const uint32_t*>(createInfo->byteCode),
+                                       createInfo->size / sizeof(uint32_t));
+        auto resources = compiler.get_shader_resources();
+        for (auto& input : resources.stage_inputs) {
+            auto set = compiler.get_decoration(input.id, spv::DecorationLocation);
+        }
     }
 }

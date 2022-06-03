@@ -20,6 +20,7 @@
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
 #include <GLFW/glfw3native.h>
+#include "PlatformLayer.h"
 
 #if !PLATFORM_WINDOWS
 #define __EMULATE_UUID 1
@@ -68,7 +69,7 @@ public:
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         window = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), name.c_str(), nullptr, nullptr);
-
+        CreateLayer(GetPlatformWindow());
         OnCreate();
         while (!glfwWindowShouldClose(window)) {
             OnDrawFrame();
