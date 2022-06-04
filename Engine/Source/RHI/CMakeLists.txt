@@ -37,6 +37,6 @@ endfunction()
 
 AddRHISample(
     NAME RHI-Triangle
-    SRC Sample/Triangle.cpp Sample/PlatformLayer.mm
+    SRC Sample/Triangle.cpp
     SHADER Sample/Triangle.hlsl
 )
