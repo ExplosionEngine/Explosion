@@ -6,6 +6,8 @@
 
 #include <RHI/ShaderModule.h>
 #include <vulkan/vulkan.hpp>
+#include <string>
+#include <unordered_map>
 
 namespace RHI::Vulkan {
     class VKDevice;
@@ -22,11 +24,15 @@ namespace RHI::Vulkan {
 
         void BuildReflection(const ShaderModuleCreateInfo* createInfo);
 
+        using ShaderInputLocationTable = std::unordered_map<std::string, uint32_t>;
+        const ShaderInputLocationTable& GetLocationTable() const;
+
     private:
         void CreateNativeShaderModule(const ShaderModuleCreateInfo* createInfo);
 
         VKDevice& device;
         vk::ShaderModule shaderModule = VK_NULL_HANDLE;
+        std::unordered_map<std::string, uint32_t> inputLocationTable;
     };
 
 }

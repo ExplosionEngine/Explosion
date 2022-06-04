@@ -7,8 +7,20 @@
 #include <RHI/Vulkan/ShaderModule.h>
 #include <RHI/Vulkan/PipelineLayout.h>
 #include <RHI/Vulkan/Common.h>
+#include <unordered_map>
 
 namespace RHI::Vulkan {
+
+    static const char* GetShaderEntry(vk::ShaderStageFlagBits stage)
+    {
+        static std::unordered_map<vk::ShaderStageFlagBits, const char*> ENTRY_MAP = {
+            {vk::ShaderStageFlagBits::eVertex, "VSMain"},
+            {vk::ShaderStageFlagBits::eFragment, "FSMain"}
+        };
+        auto iter = ENTRY_MAP.find(stage);
+        Assert(iter != ENTRY_MAP.end() && "invalid shader stage");
+        return iter->second;
+    }
 
     static vk::StencilOpState ConvertStencilOp(const StencilFaceState& stencilOp, uint32_t readMask, uint32_t writeMask)
     {
@@ -113,6 +125,9 @@ namespace RHI::Vulkan {
         std::vector<vk::VertexInputAttributeDescription>& attributes,
         std::vector<vk::VertexInputBindingDescription>& bindings)
     {
+        auto vs = static_cast<VKShaderModule*>(createInfo->vertexShader);
+        auto& locationTable = vs->GetLocationTable();
+
         vk::PipelineVertexInputStateCreateInfo vtxInput = {};
 
         bindings.resize(createInfo->vertex.bufferLayoutNum);
@@ -125,8 +140,12 @@ namespace RHI::Vulkan {
 
             for (uint32_t j = 0; j < binding.attributeNum; ++j) {
                 vk::VertexInputAttributeDescription desc = {};
+                auto inputName = std::string("in.var.") + std::string(binding.attributes[j].semanticName);
+                auto iter = locationTable.find(inputName);
+                Assert(iter != locationTable.end());
+
                 desc.setBinding(i)
-                    // .setLocation(binding.attributes[j].location)
+                    .setLocation(iter->second)
                     .setOffset(binding.attributes[j].offset)
                     .setFormat(VKEnumCast<VertexFormat, vk::Format>(binding.attributes[j].format));
                 attributes.emplace_back(desc);
@@ -227,7 +246,7 @@ namespace RHI::Vulkan {
             if (module == nullptr) return;
             vk::PipelineShaderStageCreateInfo stageInfo = {};
             stageInfo.setModule(static_cast<const VKShaderModule*>(module)->GetNativeHandle())
-                .setPName("main")
+                .setPName(GetShaderEntry(stage))
                 .setStage(stage);
             stages.emplace_back(std::move(stageInfo));
         };

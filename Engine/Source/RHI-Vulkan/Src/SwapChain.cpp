@@ -50,12 +50,47 @@ namespace RHI::Vulkan {
     {
         surface = CreateNativeSurface(device.GetGpu()->GetVKInstance(), createInfo);
 
+        auto surfaceCap = device.GetGpu()->GetVkPhysicalDevice().getSurfaceCapabilitiesKHR(surface);
+        vk::Extent2D extent = {static_cast<uint32_t>(createInfo->extent.x), static_cast<uint32_t>(createInfo->extent.y)};
+        extent.width = std::clamp(extent.width, surfaceCap.minImageExtent.width, surfaceCap.maxImageExtent.width);
+        extent.height = std::clamp(extent.height, surfaceCap.minImageExtent.height, surfaceCap.minImageExtent.height);
+
+        vk::Format supportedFormat = VKEnumCast<PixelFormat, vk::Format>(createInfo->format);
+        vk::ColorSpaceKHR colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
+        auto surfaceFormats = device.GetGpu()->GetVkPhysicalDevice().getSurfaceFormatsKHR(surface);
+        {
+            Assert(!surfaceFormats.empty());
+            auto iter = std::find_if(surfaceFormats.begin(), surfaceFormats.end(),
+                                     [supportedFormat, colorSpace, createInfo](vk::SurfaceFormatKHR format) {
+                return supportedFormat == format.format && colorSpace == format.colorSpace;
+            });
+            if (iter == surfaceFormats.end()) {
+                supportedFormat = surfaceFormats.begin()->format;
+                colorSpace = surfaceFormats.begin()->colorSpace;
+            }
+        }
+
+        auto presentModes = device.GetGpu()->GetVkPhysicalDevice().getSurfacePresentModesKHR(surface);
+        vk::PresentModeKHR supportedMode = vk::PresentModeKHR::eMailbox;
+        {
+            Assert(!presentModes.empty());
+            auto iter = std::find_if(presentModes.begin(), presentModes.end(),
+                                     [supportedMode](vk::PresentModeKHR mode) {
+                                         return mode == supportedMode;
+                                     });
+            if (iter == presentModes.end()) {
+                supportedMode = presentModes[0];
+            }
+        }
+
         vk::SwapchainCreateInfoKHR swapChainInfo = {};
         swapChainInfo.setSurface(surface)
-            .setImageFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo->format))
+            .setImageFormat(supportedFormat)
+            .setImageColorSpace(colorSpace)
+            .setPresentMode(supportedMode)
             .setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
             .setPreTransform(vk::SurfaceTransformFlagBitsKHR::eIdentity)
-            .setImageExtent(vk::Extent2D{static_cast<uint32_t>(createInfo->extent.x), static_cast<uint32_t>(createInfo->extent.y)})
+            .setImageExtent(extent)
             .setClipped(VK_TRUE)
             .setImageSharingMode(vk::SharingMode::eExclusive)
             .setImageArrayLayers(1)
@@ -68,8 +103,8 @@ namespace RHI::Vulkan {
         textureInfo.mipLevels = 1;
         textureInfo.samples = 1;
         textureInfo.dimension = TextureDimension::T_2D;
-        textureInfo.extent.x = createInfo->extent.x;
-        textureInfo.extent.y = createInfo->extent.y;
+        textureInfo.extent.x = extent.width;
+        textureInfo.extent.y = extent.height;
         textureInfo.extent.z = 1;
 
         auto images = device.GetVkDevice().getSwapchainImagesKHR(swapChain);

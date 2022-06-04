@@ -48,7 +48,13 @@ namespace RHI::Vulkan {
                                        createInfo->size / sizeof(uint32_t));
         auto resources = compiler.get_shader_resources();
         for (auto& input : resources.stage_inputs) {
-            auto set = compiler.get_decoration(input.id, spv::DecorationLocation);
+            auto location = compiler.get_decoration(input.id, spv::DecorationLocation);
+            inputLocationTable.emplace(input.name, location);
         }
+    }
+
+    const VKShaderModule::ShaderInputLocationTable& VKShaderModule::GetLocationTable() const
+    {
+        return inputLocationTable;
     }
 }
