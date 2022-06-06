@@ -9,7 +9,7 @@
 TEST(MetaToolTest, ClangParserStructTest)
 {
     MetaTool::SourceInfo sourceInfo {};
-    sourceInfo.sourceFile = "Struct.cpp";
+    sourceInfo.sourceFile = "Test.h";
 
     MetaTool::ClangParser clangParser(sourceInfo);
     clangParser.Parse();

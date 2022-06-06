@@ -18,7 +18,29 @@ namespace MetaTool {
         const char** includePaths;
     };
 
-    struct MetaInfo {};
+    struct PropertyContext {
+
+    };
+
+    struct FunctionContext {
+
+    };
+
+    struct ClassContext {
+        std::string name;
+        std::string metaData;
+        std::vector<FunctionContext> functions;
+    };
+
+    struct NamespaceContext {
+        std::string name;
+        std::vector<ClassContext> classes;
+    };
+
+    struct MetaContext {
+        std::vector<NamespaceContext> namespaces;
+        std::vector<ClassContext> classes;
+    };
 
     class ClangParser {
     public:
@@ -27,7 +49,7 @@ namespace MetaTool {
         ~ClangParser();
 
         void Parse();
-        const MetaInfo& GetMetaInfo();
+        const MetaContext& GetMetaContext();
 
     private:
         static std::vector<const char*> GetCommandLineArguments(const SourceInfo& sourceInfo);
@@ -37,6 +59,6 @@ namespace MetaTool {
 
         CXIndex clangIndex;
         CXTranslationUnit clangTranslationUnit;
-        MetaInfo metaInfo;
+        MetaContext metaContext;
     };
 }

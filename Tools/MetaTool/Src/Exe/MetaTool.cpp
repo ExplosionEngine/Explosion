@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 
     MetaTool::ClangParser clangParser(sourceInfo);
     clangParser.Parse();
-    const auto& metaInfo = clangParser.GetMetaInfo();
+    const auto& metaInfo = clangParser.GetMetaContext();
 
     MetaTool::HeaderGenerator headerGenerator(outputFile.c_str());
     headerGenerator.Generate(metaInfo);
