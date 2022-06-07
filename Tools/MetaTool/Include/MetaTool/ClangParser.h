@@ -18,28 +18,56 @@ namespace MetaTool {
         const char** includePaths;
     };
 
-    struct PropertyInfo {
-
+    enum class AccessSpecifier {
+        DEFAULT,
+        PUBLIC,
+        PROTECTED,
+        PRIVATE,
+        MAX
     };
 
-    struct FunctionInfo {
-
+    struct VariableContext {
+        std::string name;
+        std::string type;
     };
 
-    struct EnumInfo {
-
+    struct FunctionContext {
+        std::string name;
+        std::string prototype;
+        std::string returnType;
+        std::vector<std::string> paramNames;
+        std::vector<std::string> paramTypes;
     };
 
-    struct ClassInfo {
-        std::vector<PropertyInfo> properties;
-        std::vector<FunctionInfo> functions;
+    struct MemberVariableContext : VariableContext {
+        AccessSpecifier accessSpecifier = AccessSpecifier::DEFAULT;
     };
 
-    struct MetaInfo {
-        std::vector<PropertyInfo> globalProperties;
-        std::vector<FunctionInfo> globalFunctions;
-        std::vector<EnumInfo> enums;
-        std::vector<ClassInfo> classes;
+    struct MemberFunctionContext : FunctionContext {
+        AccessSpecifier accessSpecifier = AccessSpecifier::DEFAULT;
+    };
+
+    struct StructContext {
+        std::string name;
+        std::vector<MemberVariableContext> variables;
+        std::vector<MemberFunctionContext> functions;
+    };
+
+    struct ClassContext : public StructContext {};
+
+    struct ScopeContext {
+        std::vector<VariableContext> variables;
+        std::vector<FunctionContext> functions;
+        std::vector<StructContext> structs;
+        std::vector<ClassContext> classes;
+    };
+
+    struct NamespaceContext : public ScopeContext {
+        std::string name;
+    };
+
+    struct MetaContext : public ScopeContext {
+        std::vector<NamespaceContext> namespaces;
     };
 
     class ClangParser {
@@ -49,7 +77,7 @@ namespace MetaTool {
         ~ClangParser();
 
         void Parse();
-        const MetaInfo& GetMetaInfo();
+        const MetaContext& GetMetaContext();
 
     private:
         static std::vector<const char*> GetCommandLineArguments(const SourceInfo& sourceInfo);
@@ -59,6 +87,6 @@ namespace MetaTool {
 
         CXIndex clangIndex;
         CXTranslationUnit clangTranslationUnit;
-        MetaInfo metaInfo;
+        MetaContext metaContext;
     };
 }

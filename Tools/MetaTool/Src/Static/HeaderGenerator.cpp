@@ -13,7 +13,7 @@ namespace MetaTool {
 
     HeaderGenerator::~HeaderGenerator() = default;
 
-    void HeaderGenerator::Generate(const MetaInfo& metaInfo)
+    void HeaderGenerator::Generate(const MetaContext& metaInfo)
     {
         // TODO
     }

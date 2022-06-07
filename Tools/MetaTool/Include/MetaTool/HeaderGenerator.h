@@ -9,7 +9,7 @@
 #include <Common/Utility.h>
 
 namespace MetaTool {
-    struct MetaInfo;
+    struct MetaContext;
 
     class HeaderGenerator {
     public:
@@ -17,7 +17,7 @@ namespace MetaTool {
         explicit HeaderGenerator(const char* outputFilePath);
         ~HeaderGenerator();
 
-        void Generate(const MetaTool::MetaInfo& metaInfo);
+        void Generate(const MetaTool::MetaContext& metaInfo);
 
     private:
     };
