@@ -18,28 +18,56 @@ namespace MetaTool {
         const char** includePaths;
     };
 
-    struct PropertyContext {
+    enum class AccessSpecifier {
+        DEFAULT,
+        PUBLIC,
+        PROTECTED,
+        PRIVATE,
+        MAX
+    };
 
+    struct VariableContext {
+        std::string name;
+        std::string type;
     };
 
     struct FunctionContext {
-
+        std::string name;
+        std::string prototype;
+        std::string returnType;
+        std::vector<std::string> paramNames;
+        std::vector<std::string> paramTypes;
     };
 
-    struct ClassContext {
+    struct MemberVariableContext : VariableContext {
+        AccessSpecifier accessSpecifier = AccessSpecifier::DEFAULT;
+    };
+
+    struct MemberFunctionContext : FunctionContext {
+        AccessSpecifier accessSpecifier = AccessSpecifier::DEFAULT;
+    };
+
+    struct StructContext {
         std::string name;
-        std::string metaData;
+        std::vector<MemberVariableContext> variables;
+        std::vector<MemberFunctionContext> functions;
+    };
+
+    struct ClassContext : public StructContext {};
+
+    struct ScopeContext {
+        std::vector<VariableContext> variables;
         std::vector<FunctionContext> functions;
+        std::vector<StructContext> structs;
+        std::vector<ClassContext> classes;
     };
 
-    struct NamespaceContext {
+    struct NamespaceContext : public ScopeContext {
         std::string name;
-        std::vector<ClassContext> classes;
     };
 
-    struct MetaContext {
+    struct MetaContext : public ScopeContext {
         std::vector<NamespaceContext> namespaces;
-        std::vector<ClassContext> classes;
     };
 
     class ClangParser {

@@ -21,34 +21,61 @@ namespace MetaTool {
 }
 
 namespace MetaTool {
-    CXChildVisitResult PFClass(CXCursor current, CXCursor parrent, CXClientData data)
+    CXChildVisitResult PFFunction(CXCursor current, CXCursor parent, CXClientData data)
     {
-        DebugPrintCursorInfo("PFClass", current);
-        auto* classContext = static_cast<ClassContext*>(data);
+        DebugPrintCursorInfo("PFFunction", current);
+        auto* functionContext = static_cast<FunctionContext*>(data);
 
         CXCursorKind kind = clang_getCursorKind(current);
         switch (kind) {
-            default:
+            case CXCursorKind::CXCursor_ParmDecl:
+            {
+                functionContext->paramNames.emplace_back(clang_getCString(clang_getCursorSpelling(current)));
+                functionContext->paramTypes.emplace_back(clang_getCString(clang_getTypeSpelling(clang_getCursorType(current))));
                 break;
+            }
+            default: break;
         }
         return CXChildVisit_Continue;
     }
 
-    CXChildVisitResult PFNameSpace(CXCursor current, CXCursor parent, CXClientData data)
+    CXChildVisitResult PFStructClass(CXCursor current, CXCursor parent, CXClientData data)
     {
-        DebugPrintCursorInfo("PFNameSpace", current);
-        auto* namespaceContext = static_cast<NamespaceContext*>(data);
+        static struct InnerContext {
+            AccessSpecifier currentAccessSpecifier = AccessSpecifier::DEFAULT;
+        } innerContext;
+
+        DebugPrintCursorInfo("PFStructClass", current);
+        auto* structContext = static_cast<StructContext*>(data);
 
         CXCursorKind kind = clang_getCursorKind(current);
         switch (kind) {
-            case CXCursorKind::CXCursor_ClassDecl:
+            case CXCursorKind::CXCursor_FieldDecl:
             {
-                namespaceContext->classes.emplace_back();
-                clang_visitChildren(current, PFClass, &namespaceContext->classes.back());
+                MemberVariableContext memberVariableContext {};
+                memberVariableContext.accessSpecifier = innerContext.currentAccessSpecifier;
+                memberVariableContext.name = clang_getCString(clang_getCursorSpelling(current));
+                memberVariableContext.type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
+                structContext->variables.emplace_back(std::move(memberVariableContext));
                 break;
             }
-            default:
+            case CXCursorKind::CXCursor_CXXMethod:
+            {
+                MemberFunctionContext memberFunctionContext {};
+                memberFunctionContext.accessSpecifier = innerContext.currentAccessSpecifier;
+                memberFunctionContext.name = clang_getCString(clang_getCursorSpelling(current));
+                memberFunctionContext.prototype = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
+                memberFunctionContext.returnType = clang_getCString(clang_getTypeSpelling(clang_getCursorResultType(current)));
+                structContext->functions.emplace_back(std::move(memberFunctionContext));
+                clang_visitChildren(current, PFFunction, &structContext->functions.back());
                 break;
+            }
+            case CXCursorKind::CXCursor_CXXAccessSpecifier:
+            {
+                innerContext.currentAccessSpecifier = static_cast<AccessSpecifier>(clang_getCXXAccessSpecifier(current));
+                break;
+            }
+            default: break;
         }
         return CXChildVisit_Continue;
     }
@@ -60,20 +87,41 @@ namespace MetaTool {
 
         CXCursorKind kind = clang_getCursorKind(current);
         switch (kind) {
-            case CXCursorKind::CXCursor_Namespace:
+            case CXCursorKind::CXCursor_VarDecl:
             {
-                metaContext->namespaces.emplace_back();
-                clang_visitChildren(current, PFNameSpace, &metaContext->namespaces.back());
+                VariableContext variableContext {};
+                variableContext.name = clang_getCString(clang_getCursorSpelling(current));
+                variableContext.type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
+                metaContext->variables.emplace_back(std::move(variableContext));
+                break;
+            }
+            case CXCursorKind::CXCursor_FunctionDecl:
+            {
+                FunctionContext functionContext {};
+                functionContext.name = clang_getCString(clang_getCursorSpelling(current));
+                functionContext.prototype = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
+                functionContext.returnType = clang_getCString(clang_getTypeSpelling(clang_getCursorResultType(current)));
+                metaContext->functions.emplace_back(std::move(functionContext));
+                clang_visitChildren(current, PFFunction, &metaContext->functions.back());
+                break;
+            }
+            case CXCursorKind::CXCursor_StructDecl:
+            {
+                StructContext structContext {};
+                structContext.name = clang_getCString(clang_getCursorSpelling(current));
+                metaContext->structs.emplace_back(std::move(structContext));
+                clang_visitChildren(current, PFStructClass, &metaContext->structs.back());
                 break;
             }
             case CXCursorKind::CXCursor_ClassDecl:
             {
-                metaContext->classes.emplace_back();
-                clang_visitChildren(current, PFClass, &metaContext->classes.back());
+                ClassContext classContext {};
+                classContext.name = clang_getCString(clang_getCursorSpelling(current));
+                metaContext->classes.emplace_back(std::move(classContext));
+                clang_visitChildren(current, PFStructClass, &metaContext->classes.back());
                 break;
             }
-            default:
-                break;
+            default: break;
         }
         return CXChildVisit_Continue;
     }
