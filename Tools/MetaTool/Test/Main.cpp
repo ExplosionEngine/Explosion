@@ -66,7 +66,7 @@ TEST(MetaToolTest, ClangParserGlobalTest)
 TEST(MetaToolTest, ClangParserStructTest)
 {
     MetaTool::SourceInfo sourceInfo {};
-    sourceInfo.sourceFile = "Test/MetaTool/StructTest.h";
+    sourceInfo.sourceFile = "Test/MetaTool/StructClassTest.h";
 
     MetaTool::ClangParser clangParser(sourceInfo);
     clangParser.Parse();
@@ -119,6 +119,21 @@ TEST(MetaToolTest, ClangParserStructTest)
     ASSERT_EQ(metaContext.structs[2].functions[1].paramNames[0], "t");
     ASSERT_EQ(metaContext.structs[2].functions[1].paramTypes.size(), 1);
     ASSERT_EQ(metaContext.structs[2].functions[1].paramTypes[0], "int");
+
+    ASSERT_EQ(metaContext.classes[0].name, "C0");
+    ASSERT_EQ(metaContext.classes[0].variables.size(), 1);
+    ASSERT_EQ(metaContext.classes[0].variables[0].accessSpecifier, MetaTool::AccessSpecifier::PRIVATE);
+    ASSERT_EQ(metaContext.classes[0].variables[0].name, "a");
+    ASSERT_EQ(metaContext.classes[0].variables[0].type, "int");
+    ASSERT_EQ(metaContext.classes[0].functions.size(), 1);
+    ASSERT_EQ(metaContext.classes[0].functions[0].accessSpecifier, MetaTool::AccessSpecifier::PUBLIC);
+    ASSERT_EQ(metaContext.classes[0].functions[0].name, "GetA");
+    ASSERT_EQ(metaContext.classes[0].functions[0].prototype, "int *(float *)");
+    ASSERT_EQ(metaContext.classes[0].functions[0].returnType, "int *");
+    ASSERT_EQ(metaContext.classes[0].functions[0].paramNames.size(), 1);
+    ASSERT_EQ(metaContext.classes[0].functions[0].paramNames[0], "b");
+    ASSERT_EQ(metaContext.classes[0].functions[0].paramTypes.size(), 1);
+    ASSERT_EQ(metaContext.classes[0].functions[0].paramTypes[0], "float *");
 }
 
 int main(int argc, char* argv[])

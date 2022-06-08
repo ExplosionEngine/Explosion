@@ -18,5 +18,7 @@ AddTest(
     NAME MetaTool.Test
     SRC Test/Main.cpp
     LIB MetaTool.Static googletest
-    RES ${CMAKE_CURRENT_SOURCE_DIR}/Test/GlobalTest.h->Test/MetaTool/GlobalTest.h ${CMAKE_CURRENT_SOURCE_DIR}/Test/StructTest.h->Test/MetaTool/StructTest.h
+    RES
+        ${CMAKE_CURRENT_SOURCE_DIR}/Test/GlobalTest.h->Test/MetaTool/GlobalTest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Test/StructClassTest.h->Test/MetaTool/StructClassTest.h
 )

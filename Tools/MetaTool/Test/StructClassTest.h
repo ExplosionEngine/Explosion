@@ -28,3 +28,11 @@ private:
     int a;
     float b;
 };
+
+class C0 {
+public:
+    int* GetA(float* b) { return &a; }
+
+private:
+    int a;
+};
