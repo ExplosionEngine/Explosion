@@ -21,4 +21,5 @@ AddTest(
     RES
         ${CMAKE_CURRENT_SOURCE_DIR}/Test/GlobalTest.h->Test/MetaTool/GlobalTest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/Test/StructClassTest.h->Test/MetaTool/StructClassTest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Test/NamespaceTest.h->Test/MetaTool/NamespaceTest.h
 )

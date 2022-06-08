@@ -63,7 +63,7 @@ TEST(MetaToolTest, ClangParserGlobalTest)
     ASSERT_EQ(metaContext.functions[3].paramTypes[1], "int *");
 }
 
-TEST(MetaToolTest, ClangParserStructTest)
+TEST(MetaToolTest, ClangParserStructClassTest)
 {
     MetaTool::SourceInfo sourceInfo {};
     sourceInfo.sourceFile = "Test/MetaTool/StructClassTest.h";
@@ -134,6 +134,49 @@ TEST(MetaToolTest, ClangParserStructTest)
     ASSERT_EQ(metaContext.classes[0].functions[0].paramNames[0], "b");
     ASSERT_EQ(metaContext.classes[0].functions[0].paramTypes.size(), 1);
     ASSERT_EQ(metaContext.classes[0].functions[0].paramTypes[0], "float *");
+}
+
+TEST(MetaToolTest, ClangParserNamespaceTest)
+{
+    MetaTool::SourceInfo sourceInfo {};
+    sourceInfo.sourceFile = "Test/MetaTool/NamespaceTest.h";
+
+    MetaTool::ClangParser clangParser(sourceInfo);
+    clangParser.Parse();
+    const auto& metaContext = clangParser.GetMetaContext();
+
+    ASSERT_EQ(metaContext.functions.size(), 1);
+    ASSERT_EQ(metaContext.functions[0].name, "F0");
+    ASSERT_EQ(metaContext.functions[0].prototype, "int ()");
+    ASSERT_EQ(metaContext.functions[0].returnType, "int");
+    ASSERT_EQ(metaContext.functions[0].paramNames.size(), 0);
+    ASSERT_EQ(metaContext.functions[0].paramTypes.size(), 0);
+    ASSERT_EQ(metaContext.namespaces.size(), 1);
+    ASSERT_EQ(metaContext.namespaces[0].name, "N0");
+    ASSERT_EQ(metaContext.namespaces[0].variables.size(), 1);
+    ASSERT_EQ(metaContext.namespaces[0].variables[0].name, "v0");
+    ASSERT_EQ(metaContext.namespaces[0].variables[0].type, "int");
+    ASSERT_EQ(metaContext.namespaces[0].functions.size(), 1);
+    ASSERT_EQ(metaContext.namespaces[0].functions[0].name, "F1");
+    ASSERT_EQ(metaContext.namespaces[0].functions[0].prototype, "float (int)");
+    ASSERT_EQ(metaContext.namespaces[0].functions[0].returnType, "float");
+    ASSERT_EQ(metaContext.namespaces[0].functions[0].paramNames.size(), 1);
+    ASSERT_EQ(metaContext.namespaces[0].functions[0].paramNames[0], "a");
+    ASSERT_EQ(metaContext.namespaces[0].functions[0].paramTypes.size(), 1);
+    ASSERT_EQ(metaContext.namespaces[0].functions[0].paramTypes[0], "int");
+    ASSERT_EQ(metaContext.namespaces[0].classes.size(), 1);
+    ASSERT_EQ(metaContext.namespaces[0].classes[0].name, "C0");
+    ASSERT_EQ(metaContext.namespaces[0].classes[0].variables.size(), 1);
+    ASSERT_EQ(metaContext.namespaces[0].classes[0].variables[0].accessSpecifier, MetaTool::AccessSpecifier::DEFAULT);
+    ASSERT_EQ(metaContext.namespaces[0].classes[0].variables[0].name, "a");
+    ASSERT_EQ(metaContext.namespaces[0].classes[0].variables[0].type, "int *");
+    ASSERT_EQ(metaContext.namespaces[0].classes[0].functions.size(), 1);
+    ASSERT_EQ(metaContext.namespaces[0].classes[0].functions[0].accessSpecifier, MetaTool::AccessSpecifier::PUBLIC);
+    ASSERT_EQ(metaContext.namespaces[0].classes[0].functions[0].name, "GetA");
+    ASSERT_EQ(metaContext.namespaces[0].classes[0].functions[0].prototype, "int **()");
+    ASSERT_EQ(metaContext.namespaces[0].classes[0].functions[0].returnType, "int **");
+    ASSERT_EQ(metaContext.namespaces[0].classes[0].functions[0].paramNames.size(), 0);
+    ASSERT_EQ(metaContext.namespaces[0].classes[0].functions[0].paramTypes.size(), 0);
 }
 
 int main(int argc, char* argv[])

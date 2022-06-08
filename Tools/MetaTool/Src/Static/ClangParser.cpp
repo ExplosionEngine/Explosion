@@ -21,6 +21,12 @@ namespace MetaTool {
 }
 
 namespace MetaTool {
+    struct StructClassInnerContext {
+        AccessSpecifier currentAccessSpecifier = AccessSpecifier::DEFAULT;
+    } structClassInnerContext;
+}
+
+namespace MetaTool {
     CXChildVisitResult PFFunction(CXCursor current, CXCursor parent, CXClientData data)
     {
         DebugPrintCursorInfo("PFFunction", current);
@@ -41,10 +47,6 @@ namespace MetaTool {
 
     CXChildVisitResult PFStructClass(CXCursor current, CXCursor parent, CXClientData data)
     {
-        static struct InnerContext {
-            AccessSpecifier currentAccessSpecifier = AccessSpecifier::DEFAULT;
-        } innerContext;
-
         DebugPrintCursorInfo("PFStructClass", current);
         auto* structContext = static_cast<StructContext*>(data);
 
@@ -53,7 +55,7 @@ namespace MetaTool {
             case CXCursorKind::CXCursor_FieldDecl:
             {
                 MemberVariableContext memberVariableContext {};
-                memberVariableContext.accessSpecifier = innerContext.currentAccessSpecifier;
+                memberVariableContext.accessSpecifier = structClassInnerContext.currentAccessSpecifier;
                 memberVariableContext.name = clang_getCString(clang_getCursorSpelling(current));
                 memberVariableContext.type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
                 structContext->variables.emplace_back(std::move(memberVariableContext));
@@ -62,7 +64,7 @@ namespace MetaTool {
             case CXCursorKind::CXCursor_CXXMethod:
             {
                 MemberFunctionContext memberFunctionContext {};
-                memberFunctionContext.accessSpecifier = innerContext.currentAccessSpecifier;
+                memberFunctionContext.accessSpecifier = structClassInnerContext.currentAccessSpecifier;
                 memberFunctionContext.name = clang_getCString(clang_getCursorSpelling(current));
                 memberFunctionContext.prototype = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
                 memberFunctionContext.returnType = clang_getCString(clang_getTypeSpelling(clang_getCursorResultType(current)));
@@ -72,7 +74,7 @@ namespace MetaTool {
             }
             case CXCursorKind::CXCursor_CXXAccessSpecifier:
             {
-                innerContext.currentAccessSpecifier = static_cast<AccessSpecifier>(clang_getCXXAccessSpecifier(current));
+                structClassInnerContext.currentAccessSpecifier = static_cast<AccessSpecifier>(clang_getCXXAccessSpecifier(current));
                 break;
             }
             default: break;
@@ -106,6 +108,7 @@ namespace MetaTool {
                 StructContext structContext {};
                 structContext.name = clang_getCString(clang_getCursorSpelling(current));
                 scopeContext->structs.emplace_back(std::move(structContext));
+                structClassInnerContext = StructClassInnerContext();
                 clang_visitChildren(current, PFStructClass, &scopeContext->structs.back());
                 break;
             }
@@ -114,6 +117,7 @@ namespace MetaTool {
                 ClassContext classContext {};
                 classContext.name = clang_getCString(clang_getCursorSpelling(current));
                 scopeContext->classes.emplace_back(std::move(classContext));
+                structClassInnerContext = StructClassInnerContext();
                 clang_visitChildren(current, PFStructClass, &scopeContext->classes.back());
                 break;
             }
