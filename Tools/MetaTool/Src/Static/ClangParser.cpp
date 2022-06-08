@@ -80,19 +80,15 @@ namespace MetaTool {
         return CXChildVisit_Continue;
     }
 
-    CXChildVisitResult PFMain(CXCursor current, CXCursor parent, CXClientData data)
+    void ParseScopeChildCursor(ScopeContext* scopeContext, CXCursor current, CXCursorKind kind)
     {
-        DebugPrintCursorInfo("PFMain", current);
-        auto* metaContext = static_cast<MetaContext*>(data);
-
-        CXCursorKind kind = clang_getCursorKind(current);
         switch (kind) {
             case CXCursorKind::CXCursor_VarDecl:
             {
                 VariableContext variableContext {};
                 variableContext.name = clang_getCString(clang_getCursorSpelling(current));
                 variableContext.type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
-                metaContext->variables.emplace_back(std::move(variableContext));
+                scopeContext->variables.emplace_back(std::move(variableContext));
                 break;
             }
             case CXCursorKind::CXCursor_FunctionDecl:
@@ -101,27 +97,60 @@ namespace MetaTool {
                 functionContext.name = clang_getCString(clang_getCursorSpelling(current));
                 functionContext.prototype = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
                 functionContext.returnType = clang_getCString(clang_getTypeSpelling(clang_getCursorResultType(current)));
-                metaContext->functions.emplace_back(std::move(functionContext));
-                clang_visitChildren(current, PFFunction, &metaContext->functions.back());
+                scopeContext->functions.emplace_back(std::move(functionContext));
+                clang_visitChildren(current, PFFunction, &scopeContext->functions.back());
                 break;
             }
             case CXCursorKind::CXCursor_StructDecl:
             {
                 StructContext structContext {};
                 structContext.name = clang_getCString(clang_getCursorSpelling(current));
-                metaContext->structs.emplace_back(std::move(structContext));
-                clang_visitChildren(current, PFStructClass, &metaContext->structs.back());
+                scopeContext->structs.emplace_back(std::move(structContext));
+                clang_visitChildren(current, PFStructClass, &scopeContext->structs.back());
                 break;
             }
             case CXCursorKind::CXCursor_ClassDecl:
             {
                 ClassContext classContext {};
                 classContext.name = clang_getCString(clang_getCursorSpelling(current));
-                metaContext->classes.emplace_back(std::move(classContext));
-                clang_visitChildren(current, PFStructClass, &metaContext->classes.back());
+                scopeContext->classes.emplace_back(std::move(classContext));
+                clang_visitChildren(current, PFStructClass, &scopeContext->classes.back());
                 break;
             }
             default: break;
+        }
+    }
+
+    CXChildVisitResult PFNamespace(CXCursor current, CXCursor parent, CXClientData data)
+    {
+        DebugPrintCursorInfo("PFNamespace", current);
+        auto* namespaceContext = static_cast<NamespaceContext*>(data);
+
+        CXCursorKind kind = clang_getCursorKind(current);
+        ParseScopeChildCursor(namespaceContext, current, kind);
+        return CXChildVisit_Continue;
+    }
+
+    CXChildVisitResult PFMain(CXCursor current, CXCursor parent, CXClientData data)
+    {
+        DebugPrintCursorInfo("PFMain", current);
+        auto* metaContext = static_cast<MetaContext*>(data);
+
+        CXCursorKind kind = clang_getCursorKind(current);
+        switch (kind) {
+            case CXCursor_Namespace:
+            {
+                NamespaceContext namespaceContext {};
+                namespaceContext.name = clang_getCString(clang_getCursorSpelling(current));
+                metaContext->namespaces.emplace_back(std::move(namespaceContext));
+                clang_visitChildren(current, PFNamespace, &metaContext->namespaces.back());
+                break;
+            }
+            default:
+            {
+                ParseScopeChildCursor(metaContext, current, kind);
+                break;
+            }
         }
         return CXChildVisit_Continue;
     }
