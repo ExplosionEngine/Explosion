@@ -28,47 +28,41 @@ namespace MetaTool {
 
     struct VariableContext {
         std::string name;
+        std::string metaData;
+        std::string type;
+    };
+
+    struct ParamContext {
+        std::string name;
         std::string type;
     };
 
     struct FunctionContext {
         std::string name;
-        std::string prototype;
+        std::string metaData;
         std::string returnType;
-        std::vector<std::string> paramNames;
-        std::vector<std::string> paramTypes;
-    };
-
-    struct MemberVariableContext : VariableContext {
-        AccessSpecifier accessSpecifier = AccessSpecifier::DEFAULT;
-    };
-
-    struct MemberFunctionContext : FunctionContext {
-        AccessSpecifier accessSpecifier = AccessSpecifier::DEFAULT;
+        std::vector<ParamContext> params;
     };
 
     struct StructContext {
         std::string name;
-        std::vector<MemberVariableContext> variables;
-        std::vector<MemberFunctionContext> functions;
+        std::string metaData;
+        std::vector<VariableContext> variables;
+        std::vector<FunctionContext> functions;
     };
 
     struct ClassContext : public StructContext {};
 
-    struct ScopeContext {
+    struct NamespaceContext {
+        std::string name;
         std::vector<VariableContext> variables;
         std::vector<FunctionContext> functions;
         std::vector<StructContext> structs;
         std::vector<ClassContext> classes;
-    };
-
-    struct NamespaceContext : public ScopeContext {
-        std::string name;
-    };
-
-    struct MetaContext : public ScopeContext {
         std::vector<NamespaceContext> namespaces;
     };
+
+    struct MetaContext : public NamespaceContext {};
 
     class ClangParser {
     public:

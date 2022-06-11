@@ -4,7 +4,7 @@ AddLibrary(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB Common LLVM
+    LIB Common llvm-clang
 )
 
 file(GLOB SOURCES Src/Exe/*.cpp)
@@ -18,5 +18,9 @@ AddTest(
     NAME MetaTool.Test
     SRC Test/Main.cpp
     LIB MetaTool.Static googletest
-    RES ${CMAKE_CURRENT_SOURCE_DIR}/Test/GlobalTest.h->Test/MetaTool/GlobalTest.h ${CMAKE_CURRENT_SOURCE_DIR}/Test/StructTest.h->Test/MetaTool/StructTest.h
+    RES
+        ${CMAKE_SOURCE_DIR}/Engine/Source/Common/Include/Common/Meta.h->Test/MetaTool/Include/Common/Meta.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Test/GlobalTest.h->Test/MetaTool/GlobalTest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Test/StructClassTest.h->Test/MetaTool/StructClassTest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Test/NamespaceTest.h->Test/MetaTool/NamespaceTest.h
 )

@@ -21,6 +21,59 @@ namespace MetaTool {
 }
 
 namespace MetaTool {
+    struct StructClassInnerContext {
+        AccessSpecifier currentAccessSpecifier = AccessSpecifier::DEFAULT;
+    } structClassInnerContext;
+}
+
+namespace MetaTool {
+    template <typename T>
+    bool PopBackIfHasNoMetaData(std::vector<T>& vector)
+    {
+        if (vector.back().metaData != "") {
+            return false;
+        }
+        vector.pop_back();
+        return true;
+    }
+
+    template <typename T>
+    void PopBackIfNotPublic(AccessSpecifier accessSpecifier, std::vector<T>& vector)
+    {
+        if (accessSpecifier == AccessSpecifier::PUBLIC) {
+            return;
+        }
+        vector.pop_back();
+    }
+
+    AccessSpecifier GetActualAccessSpecifier(CXCursorKind parrentKind, AccessSpecifier accessSpecifier)
+    {
+        if (parrentKind == CXCursor_ClassDecl) {
+            return accessSpecifier == AccessSpecifier::DEFAULT ? AccessSpecifier::PRIVATE : accessSpecifier;
+        } else if (parrentKind == CXCursor_StructDecl) {
+            return accessSpecifier == AccessSpecifier::DEFAULT ? AccessSpecifier::PUBLIC : accessSpecifier;
+        } else {
+            return AccessSpecifier::DEFAULT;
+        }
+    }
+
+    CXChildVisitResult PFVariable(CXCursor current, CXCursor parent, CXClientData data)
+    {
+        DebugPrintCursorInfo("PFVariable", current);
+        auto* variableContext = static_cast<VariableContext*>(data);
+
+        CXCursorKind kind = clang_getCursorKind(current);
+        switch (kind) {
+            case CXCursorKind::CXCursor_AnnotateAttr:
+            {
+                variableContext->metaData = clang_getCString(clang_getCursorSpelling(current));
+                break;
+            }
+            default: break;
+        }
+        return CXChildVisit_Continue;
+    }
+
     CXChildVisitResult PFFunction(CXCursor current, CXCursor parent, CXClientData data)
     {
         DebugPrintCursorInfo("PFFunction", current);
@@ -30,8 +83,15 @@ namespace MetaTool {
         switch (kind) {
             case CXCursorKind::CXCursor_ParmDecl:
             {
-                functionContext->paramNames.emplace_back(clang_getCString(clang_getCursorSpelling(current)));
-                functionContext->paramTypes.emplace_back(clang_getCString(clang_getTypeSpelling(clang_getCursorType(current))));
+                ParamContext context {};
+                context.name = clang_getCString(clang_getCursorSpelling(current));
+                context.type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
+                functionContext->params.emplace_back(std::move(context));
+                break;
+            }
+            case CXCursorKind::CXCursor_AnnotateAttr:
+            {
+                functionContext->metaData = clang_getCString(clang_getCursorSpelling(current));
                 break;
             }
             default: break;
@@ -41,10 +101,6 @@ namespace MetaTool {
 
     CXChildVisitResult PFStructClass(CXCursor current, CXCursor parent, CXClientData data)
     {
-        static struct InnerContext {
-            AccessSpecifier currentAccessSpecifier = AccessSpecifier::DEFAULT;
-        } innerContext;
-
         DebugPrintCursorInfo("PFStructClass", current);
         auto* structContext = static_cast<StructContext*>(data);
 
@@ -52,27 +108,38 @@ namespace MetaTool {
         switch (kind) {
             case CXCursorKind::CXCursor_FieldDecl:
             {
-                MemberVariableContext memberVariableContext {};
-                memberVariableContext.accessSpecifier = innerContext.currentAccessSpecifier;
-                memberVariableContext.name = clang_getCString(clang_getCursorSpelling(current));
-                memberVariableContext.type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
-                structContext->variables.emplace_back(std::move(memberVariableContext));
+                VariableContext context {};
+                AccessSpecifier accessSpecifier = GetActualAccessSpecifier(clang_getCursorKind(parent), structClassInnerContext.currentAccessSpecifier);
+                context.name = clang_getCString(clang_getCursorSpelling(current));
+                context.type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
+                structContext->variables.emplace_back(std::move(context));
+                clang_visitChildren(current, PFVariable, &structContext->variables.back());
+                if (!PopBackIfHasNoMetaData(structContext->variables)) {
+                    PopBackIfNotPublic(accessSpecifier, structContext->variables);
+                }
                 break;
             }
             case CXCursorKind::CXCursor_CXXMethod:
             {
-                MemberFunctionContext memberFunctionContext {};
-                memberFunctionContext.accessSpecifier = innerContext.currentAccessSpecifier;
-                memberFunctionContext.name = clang_getCString(clang_getCursorSpelling(current));
-                memberFunctionContext.prototype = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
-                memberFunctionContext.returnType = clang_getCString(clang_getTypeSpelling(clang_getCursorResultType(current)));
-                structContext->functions.emplace_back(std::move(memberFunctionContext));
+                FunctionContext context {};
+                AccessSpecifier accessSpecifier = GetActualAccessSpecifier(clang_getCursorKind(parent), structClassInnerContext.currentAccessSpecifier);
+                context.name = clang_getCString(clang_getCursorSpelling(current));
+                context.returnType = clang_getCString(clang_getTypeSpelling(clang_getCursorResultType(current)));
+                structContext->functions.emplace_back(std::move(context));
                 clang_visitChildren(current, PFFunction, &structContext->functions.back());
+                if (!PopBackIfHasNoMetaData(structContext->functions)) {
+                    PopBackIfNotPublic(accessSpecifier, structContext->functions);
+                }
                 break;
             }
             case CXCursorKind::CXCursor_CXXAccessSpecifier:
             {
-                innerContext.currentAccessSpecifier = static_cast<AccessSpecifier>(clang_getCXXAccessSpecifier(current));
+                structClassInnerContext.currentAccessSpecifier = static_cast<AccessSpecifier>(clang_getCXXAccessSpecifier(current));
+                break;
+            }
+            case CXCursorKind::CXCursor_AnnotateAttr:
+            {
+                structContext->metaData = clang_getCString(clang_getCursorSpelling(current));
                 break;
             }
             default: break;
@@ -80,45 +147,59 @@ namespace MetaTool {
         return CXChildVisit_Continue;
     }
 
-    CXChildVisitResult PFMain(CXCursor current, CXCursor parent, CXClientData data)
+    CXChildVisitResult PFNamespace(CXCursor current, CXCursor parent, CXClientData data)
     {
-        DebugPrintCursorInfo("PFMain", current);
-        auto* metaContext = static_cast<MetaContext*>(data);
+        DebugPrintCursorInfo("PFNamespace", current);
+        auto* namespaceContext = static_cast<NamespaceContext*>(data);
 
         CXCursorKind kind = clang_getCursorKind(current);
         switch (kind) {
             case CXCursorKind::CXCursor_VarDecl:
             {
-                VariableContext variableContext {};
-                variableContext.name = clang_getCString(clang_getCursorSpelling(current));
-                variableContext.type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
-                metaContext->variables.emplace_back(std::move(variableContext));
+                VariableContext context {};
+                context.name = clang_getCString(clang_getCursorSpelling(current));
+                context.type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
+                namespaceContext->variables.emplace_back(std::move(context));
+                clang_visitChildren(current, PFVariable, &namespaceContext->variables.back());
+                PopBackIfHasNoMetaData(namespaceContext->variables);
                 break;
             }
             case CXCursorKind::CXCursor_FunctionDecl:
             {
-                FunctionContext functionContext {};
-                functionContext.name = clang_getCString(clang_getCursorSpelling(current));
-                functionContext.prototype = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
-                functionContext.returnType = clang_getCString(clang_getTypeSpelling(clang_getCursorResultType(current)));
-                metaContext->functions.emplace_back(std::move(functionContext));
-                clang_visitChildren(current, PFFunction, &metaContext->functions.back());
+                FunctionContext context {};
+                context.name = clang_getCString(clang_getCursorSpelling(current));
+                context.returnType = clang_getCString(clang_getTypeSpelling(clang_getCursorResultType(current)));
+                namespaceContext->functions.emplace_back(std::move(context));
+                clang_visitChildren(current, PFFunction, &namespaceContext->functions.back());
+                PopBackIfHasNoMetaData(namespaceContext->functions);
                 break;
             }
             case CXCursorKind::CXCursor_StructDecl:
             {
-                StructContext structContext {};
-                structContext.name = clang_getCString(clang_getCursorSpelling(current));
-                metaContext->structs.emplace_back(std::move(structContext));
-                clang_visitChildren(current, PFStructClass, &metaContext->structs.back());
+                StructContext context {};
+                context.name = clang_getCString(clang_getCursorSpelling(current));
+                namespaceContext->structs.emplace_back(std::move(context));
+                structClassInnerContext = StructClassInnerContext();
+                clang_visitChildren(current, PFStructClass, &namespaceContext->structs.back());
+                PopBackIfHasNoMetaData(namespaceContext->structs);
                 break;
             }
             case CXCursorKind::CXCursor_ClassDecl:
             {
-                ClassContext classContext {};
-                classContext.name = clang_getCString(clang_getCursorSpelling(current));
-                metaContext->classes.emplace_back(std::move(classContext));
-                clang_visitChildren(current, PFStructClass, &metaContext->classes.back());
+                ClassContext context {};
+                context.name = clang_getCString(clang_getCursorSpelling(current));
+                namespaceContext->classes.emplace_back(std::move(context));
+                structClassInnerContext = StructClassInnerContext();
+                clang_visitChildren(current, PFStructClass, &namespaceContext->classes.back());
+                PopBackIfHasNoMetaData(namespaceContext->classes);
+                break;
+            }
+            case CXCursor_Namespace:
+            {
+                NamespaceContext context {};
+                context.name = clang_getCString(clang_getCursorSpelling(current));
+                namespaceContext->namespaces.emplace_back(std::move(context));
+                clang_visitChildren(current, PFNamespace, &namespaceContext->namespaces.back());
                 break;
             }
             default: break;
@@ -141,7 +222,8 @@ namespace MetaTool {
     void ClangParser::Parse()
     {
         CXCursor cursor = clang_getTranslationUnitCursor(clangTranslationUnit);
-        clang_visitChildren(cursor, PFMain, &metaContext);
+        metaContext.name = "Global";
+        clang_visitChildren(cursor, PFNamespace, &metaContext);
     }
 
     const MetaContext& ClangParser::GetMetaContext()
@@ -156,6 +238,7 @@ namespace MetaTool {
         std::vector<const char*> result(basicCommandLineArguments.begin(), basicCommandLineArguments.end());
         result.reserve(result.size() + sourceInfo.includePathNum);
         for (auto i = 0; i < sourceInfo.includePathNum; i++) {
+            result.emplace_back("-I");
             result.emplace_back(sourceInfo.includePaths[i]);
         }
         return result;

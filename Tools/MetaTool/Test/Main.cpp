@@ -5,120 +5,153 @@
 #include <gtest/gtest.h>
 
 #include <MetaTool/ClangParser.h>
+using namespace MetaTool;
+
+std::vector<const char*> includePaths = { "Test/MetaTool/Include" };
+
+void AssertVariableContextEqual(const VariableContext& a, const VariableContext& b)
+{
+    ASSERT_EQ(a.name, b.name);
+    ASSERT_EQ(a.metaData, b.metaData);
+    ASSERT_EQ(a.type, b.type);
+}
+
+void AssertFunctionContextEqual(const FunctionContext& a, const FunctionContext& b)
+{
+    ASSERT_EQ(a.name, b.name);
+    ASSERT_EQ(a.metaData, b.metaData);
+    ASSERT_EQ(a.returnType, b.returnType);
+    ASSERT_EQ(a.params.size(), b.params.size());
+    for (auto i = 0; i < a.params.size(); i++) {
+        ASSERT_EQ(a.params[i].name, b.params[i].name);
+        ASSERT_EQ(a.params[i].type, b.params[i].type);
+    }
+}
+
+void AssertStructClassContextEqual(const StructContext& a, const StructContext& b)
+{
+    ASSERT_EQ(a.name, b.name);
+    ASSERT_EQ(a.metaData, b.metaData);
+    ASSERT_EQ(a.variables.size(), b.variables.size());
+    for (auto i = 0; i < a.variables.size(); i++) {
+        AssertVariableContextEqual(a.variables[i], b.variables[i]);
+    }
+    ASSERT_EQ(a.functions.size(), b.functions.size());
+    for (auto i = 0; i < a.functions.size(); i++) {
+        AssertFunctionContextEqual(a.functions[i], b.functions[i]);
+    }
+}
 
 TEST(MetaToolTest, ClangParserGlobalTest)
 {
-    MetaTool::SourceInfo sourceInfo {};
+    SourceInfo sourceInfo {};
     sourceInfo.sourceFile = "Test/MetaTool/GlobalTest.h";
+    sourceInfo.includePathNum = includePaths.size();
+    sourceInfo.includePaths = includePaths.data();
 
-    MetaTool::ClangParser clangParser(sourceInfo);
+    ClangParser clangParser(sourceInfo);
     clangParser.Parse();
     const auto& metaContext = clangParser.GetMetaContext();
 
-    ASSERT_EQ(metaContext.variables[0].name, "v0");
-    ASSERT_EQ(metaContext.variables[0].type, "int");
+    ASSERT_EQ(metaContext.variables.size(), 5);
+    AssertVariableContextEqual(metaContext.variables[0], VariableContext { "v0", "Property", "int" });
+    AssertVariableContextEqual(metaContext.variables[1], VariableContext { "v1", "Property", "float" });
+    AssertVariableContextEqual(metaContext.variables[2], VariableContext { "v2", "Property", "double" });
+    AssertVariableContextEqual(metaContext.variables[3], VariableContext { "v3", "Property", "int *" });
+    AssertVariableContextEqual(metaContext.variables[4], VariableContext { "v4", "Property", "int **" });
 
-    ASSERT_EQ(metaContext.variables[1].name, "v1");
-    ASSERT_EQ(metaContext.variables[1].type, "float");
-
-    ASSERT_EQ(metaContext.variables[2].name, "v2");
-    ASSERT_EQ(metaContext.variables[2].type, "double");
-
-    ASSERT_EQ(metaContext.variables[3].name, "v3");
-    ASSERT_EQ(metaContext.variables[3].type, "int *");
-
-    ASSERT_EQ(metaContext.variables[4].name, "v4");
-    ASSERT_EQ(metaContext.variables[4].type, "int **");
-
-    ASSERT_EQ(metaContext.functions[0].name, "f0");
-    ASSERT_EQ(metaContext.functions[0].prototype, "void ()");
-    ASSERT_EQ(metaContext.functions[0].returnType, "void");
-    ASSERT_EQ(metaContext.functions[0].paramNames.size(), 0);
-    ASSERT_EQ(metaContext.functions[0].paramTypes.size(), 0);
-
-    ASSERT_EQ(metaContext.functions[1].name, "f1");
-    ASSERT_EQ(metaContext.functions[1].prototype, "int ()");
-    ASSERT_EQ(metaContext.functions[1].returnType, "int");
-    ASSERT_EQ(metaContext.functions[1].paramNames.size(), 0);
-    ASSERT_EQ(metaContext.functions[1].paramTypes.size(), 0);
-
-    ASSERT_EQ(metaContext.functions[2].name, "f2");
-    ASSERT_EQ(metaContext.functions[2].prototype, "float (int, int)");
-    ASSERT_EQ(metaContext.functions[2].returnType, "float");
-    ASSERT_EQ(metaContext.functions[2].paramNames.size(), 2);
-    ASSERT_EQ(metaContext.functions[2].paramNames[0], "a");
-    ASSERT_EQ(metaContext.functions[2].paramNames[1], "b");
-    ASSERT_EQ(metaContext.functions[2].paramTypes.size(), 2);
-    ASSERT_EQ(metaContext.functions[2].paramTypes[0], "int");
-    ASSERT_EQ(metaContext.functions[2].paramTypes[1], "int");
-
-    ASSERT_EQ(metaContext.functions[3].name, "f3");
-    ASSERT_EQ(metaContext.functions[3].prototype, "double *(int *, int *)");
-    ASSERT_EQ(metaContext.functions[3].returnType, "double *");
-    ASSERT_EQ(metaContext.functions[3].paramNames.size(), 2);
-    ASSERT_EQ(metaContext.functions[3].paramNames[0], "a");
-    ASSERT_EQ(metaContext.functions[3].paramNames[1], "b");
-    ASSERT_EQ(metaContext.functions[3].paramTypes.size(), 2);
-    ASSERT_EQ(metaContext.functions[3].paramTypes[0], "int *");
-    ASSERT_EQ(metaContext.functions[3].paramTypes[1], "int *");
+    ASSERT_EQ(metaContext.functions.size(), 4);
+    AssertFunctionContextEqual(metaContext.functions[0], FunctionContext { "f0", "Function, EditorUI(Alias(\"TestButton\"))", "void", {} });
+    AssertFunctionContextEqual(metaContext.functions[1], FunctionContext { "f1", "Function", "int", {} });
+    AssertFunctionContextEqual(metaContext.functions[2], FunctionContext { "f2", "Function", "float", { ParamContext { "a", "int" }, ParamContext { "b", "int" } } });
+    AssertFunctionContextEqual(metaContext.functions[3], FunctionContext { "f3", "Function", "double *", { ParamContext { "a", "int *" }, ParamContext { "b", "int *" } } });
 }
 
-TEST(MetaToolTest, ClangParserStructTest)
+TEST(MetaToolTest, ClangParserStructClassTest)
 {
-    MetaTool::SourceInfo sourceInfo {};
-    sourceInfo.sourceFile = "Test/MetaTool/StructTest.h";
+    SourceInfo sourceInfo {};
+    sourceInfo.sourceFile = "Test/MetaTool/StructClassTest.h";
+    sourceInfo.includePathNum = includePaths.size();
+    sourceInfo.includePaths = includePaths.data();
 
-    MetaTool::ClangParser clangParser(sourceInfo);
+    ClangParser clangParser(sourceInfo);
     clangParser.Parse();
     const auto& metaContext = clangParser.GetMetaContext();
 
-    ASSERT_EQ(metaContext.structs[0].name, "S0");
-    ASSERT_EQ(metaContext.structs[0].variables.size(), 3);
-    ASSERT_EQ(metaContext.structs[0].variables[0].accessSpecifier, MetaTool::AccessSpecifier::DEFAULT);
-    ASSERT_EQ(metaContext.structs[0].variables[0].name, "a");
-    ASSERT_EQ(metaContext.structs[0].variables[0].type, "int");
-    ASSERT_EQ(metaContext.structs[0].variables[1].accessSpecifier, MetaTool::AccessSpecifier::DEFAULT);
-    ASSERT_EQ(metaContext.structs[0].variables[1].name, "b");
-    ASSERT_EQ(metaContext.structs[0].variables[1].type, "float");
-    ASSERT_EQ(metaContext.structs[0].variables[2].accessSpecifier, MetaTool::AccessSpecifier::DEFAULT);
-    ASSERT_EQ(metaContext.structs[0].variables[2].name, "c");
-    ASSERT_EQ(metaContext.structs[0].variables[2].type, "double");
+    ASSERT_EQ(metaContext.structs.size(), 3);
 
-    ASSERT_EQ(metaContext.structs[1].name, "S1");
-    ASSERT_EQ(metaContext.structs[1].variables.size(), 3);
-    ASSERT_EQ(metaContext.structs[1].variables[0].accessSpecifier, MetaTool::AccessSpecifier::PUBLIC);
-    ASSERT_EQ(metaContext.structs[1].variables[0].name, "c");
-    ASSERT_EQ(metaContext.structs[1].variables[0].type, "double");
-    ASSERT_EQ(metaContext.structs[1].variables[1].accessSpecifier, MetaTool::AccessSpecifier::PROTECTED);
-    ASSERT_EQ(metaContext.structs[1].variables[1].name, "b");
-    ASSERT_EQ(metaContext.structs[1].variables[1].type, "float");
-    ASSERT_EQ(metaContext.structs[1].variables[2].accessSpecifier, MetaTool::AccessSpecifier::PRIVATE);
-    ASSERT_EQ(metaContext.structs[1].variables[2].name, "a");
-    ASSERT_EQ(metaContext.structs[1].variables[2].type, "int");
+    StructContext structContext {};
+    structContext.metaData = "Struct";
+    structContext.name = "S0";
+    structContext.variables = {
+        VariableContext { "a", "Property", "int" },
+        VariableContext { "b", "Property", "float" },
+        VariableContext { "c", "Property", "double" }
+    };
+    AssertStructClassContextEqual(metaContext.structs[0], structContext);
 
-    ASSERT_EQ(metaContext.structs[2].name, "S2");
-    ASSERT_EQ(metaContext.structs[2].variables.size(), 2);
-    ASSERT_EQ(metaContext.structs[2].variables[0].accessSpecifier, MetaTool::AccessSpecifier::PRIVATE);
-    ASSERT_EQ(metaContext.structs[2].variables[0].name, "a");
-    ASSERT_EQ(metaContext.structs[2].variables[0].type, "int");
-    ASSERT_EQ(metaContext.structs[2].variables[1].accessSpecifier, MetaTool::AccessSpecifier::PRIVATE);
-    ASSERT_EQ(metaContext.structs[2].variables[1].name, "b");
-    ASSERT_EQ(metaContext.structs[2].variables[1].type, "float");
-    ASSERT_EQ(metaContext.structs[2].functions.size(), 2);
-    ASSERT_EQ(metaContext.structs[2].functions[0].accessSpecifier, MetaTool::AccessSpecifier::PUBLIC);
-    ASSERT_EQ(metaContext.structs[2].functions[0].name, "GetA");
-    ASSERT_EQ(metaContext.structs[2].functions[0].prototype, "int ()");
-    ASSERT_EQ(metaContext.structs[2].functions[0].returnType, "int");
-    ASSERT_EQ(metaContext.structs[2].functions[0].paramNames.size(), 0);
-    ASSERT_EQ(metaContext.structs[2].functions[0].paramTypes.size(), 0);
-    ASSERT_EQ(metaContext.structs[2].functions[1].accessSpecifier, MetaTool::AccessSpecifier::PUBLIC);
-    ASSERT_EQ(metaContext.structs[2].functions[1].name, "GetPointerB");
-    ASSERT_EQ(metaContext.structs[2].functions[1].prototype, "float *(int)");
-    ASSERT_EQ(metaContext.structs[2].functions[1].returnType, "float *");
-    ASSERT_EQ(metaContext.structs[2].functions[1].paramNames.size(), 1);
-    ASSERT_EQ(metaContext.structs[2].functions[1].paramNames[0], "t");
-    ASSERT_EQ(metaContext.structs[2].functions[1].paramTypes.size(), 1);
-    ASSERT_EQ(metaContext.structs[2].functions[1].paramTypes[0], "int");
+    structContext = StructContext {};
+    structContext.metaData = "Struct";
+    structContext.name = "S1";
+    structContext.variables = {
+        VariableContext { "c", "Property", "double" },
+    };
+    AssertStructClassContextEqual(metaContext.structs[1], structContext);
+
+    structContext = StructContext {};
+    structContext.metaData = "Struct";
+    structContext.name = "S2";
+    structContext.functions = {
+        FunctionContext { "GetA", "Function", "int", {} },
+        FunctionContext { "GetPointerB", "Function", "float *", { ParamContext { "t", "int" } } }
+    };
+    AssertStructClassContextEqual(metaContext.structs[2], structContext);
+
+    ASSERT_EQ(metaContext.classes.size(), 1);
+
+    ClassContext classContext {};
+    classContext.metaData = "Class";
+    classContext.name = "C0";
+    classContext.functions = {
+        FunctionContext { "GetA", "Function", "int *", { ParamContext { "b", "float *" } } }
+    };
+    AssertStructClassContextEqual(metaContext.classes[0], classContext);
+}
+
+TEST(MetaToolTest, ClangParserNamespaceTest)
+{
+    SourceInfo sourceInfo {};
+    sourceInfo.sourceFile = "Test/MetaTool/NamespaceTest.h";
+    sourceInfo.includePathNum = includePaths.size();
+    sourceInfo.includePaths = includePaths.data();
+
+    ClangParser clangParser(sourceInfo);
+    clangParser.Parse();
+    const auto& metaContext = clangParser.GetMetaContext();
+
+    ASSERT_EQ(metaContext.name, "Global");
+
+    ASSERT_EQ(metaContext.functions.size(), 1);
+    AssertFunctionContextEqual(metaContext.functions[0], FunctionContext { "F0", "Function", "int", {} });
+
+    ASSERT_EQ(metaContext.namespaces.size(), 1);
+    ASSERT_EQ(metaContext.namespaces[0].name, "N0");
+
+    ASSERT_EQ(metaContext.namespaces[0].variables.size(), 1);
+    AssertVariableContextEqual(metaContext.namespaces[0].variables[0], VariableContext { "v0", "Property", "int" });
+
+    ASSERT_EQ(metaContext.namespaces[0].functions.size(), 1);
+    AssertFunctionContextEqual(metaContext.namespaces[0].functions[0], FunctionContext { "F1", "Function", "float", { ParamContext { "a", "int" } } });
+
+    ASSERT_EQ(metaContext.namespaces[0].classes.size(), 1);
+
+    ClassContext classContext {};
+    classContext.metaData = "Class";
+    classContext.name = "C0";
+    classContext.functions = {
+        FunctionContext { "GetA", "Function", "int **", {} }
+    };
+    AssertStructClassContextEqual(metaContext.namespaces[0].classes[0], classContext);
 }
 
 int main(int argc, char* argv[])
