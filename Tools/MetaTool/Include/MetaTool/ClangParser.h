@@ -55,8 +55,6 @@ namespace MetaTool {
 
     struct NamespaceContext {
         std::string name;
-        std::vector<VariableContext> variables;
-        std::vector<FunctionContext> functions;
         std::vector<StructContext> structs;
         std::vector<ClassContext> classes;
         std::vector<NamespaceContext> namespaces;

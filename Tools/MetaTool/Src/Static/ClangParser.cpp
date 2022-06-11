@@ -154,26 +154,6 @@ namespace MetaTool {
 
         CXCursorKind kind = clang_getCursorKind(current);
         switch (kind) {
-            case CXCursorKind::CXCursor_VarDecl:
-            {
-                VariableContext context {};
-                context.name = clang_getCString(clang_getCursorSpelling(current));
-                context.type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
-                namespaceContext->variables.emplace_back(std::move(context));
-                clang_visitChildren(current, PFVariable, &namespaceContext->variables.back());
-                PopBackIfHasNoMetaData(namespaceContext->variables);
-                break;
-            }
-            case CXCursorKind::CXCursor_FunctionDecl:
-            {
-                FunctionContext context {};
-                context.name = clang_getCString(clang_getCursorSpelling(current));
-                context.returnType = clang_getCString(clang_getTypeSpelling(clang_getCursorResultType(current)));
-                namespaceContext->functions.emplace_back(std::move(context));
-                clang_visitChildren(current, PFFunction, &namespaceContext->functions.back());
-                PopBackIfHasNoMetaData(namespaceContext->functions);
-                break;
-            }
             case CXCursorKind::CXCursor_StructDecl:
             {
                 StructContext context {};
