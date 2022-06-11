@@ -44,19 +44,11 @@ namespace MetaTool {
         std::vector<ParamContext> params;
     };
 
-    struct MemberVariableContext : VariableContext {
-        AccessSpecifier accessSpecifier = AccessSpecifier::DEFAULT;
-    };
-
-    struct MemberFunctionContext : FunctionContext {
-        AccessSpecifier accessSpecifier = AccessSpecifier::DEFAULT;
-    };
-
     struct StructContext {
         std::string name;
         std::string metaData;
-        std::vector<MemberVariableContext> variables;
-        std::vector<MemberFunctionContext> functions;
+        std::vector<VariableContext> variables;
+        std::vector<FunctionContext> functions;
     };
 
     struct ClassContext : public StructContext {};

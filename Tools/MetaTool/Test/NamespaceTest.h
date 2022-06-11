@@ -4,17 +4,17 @@
 
 #include <Common/Meta.h>
 
-int F0() { return 0; };
+Meta(Function) int F0() { return 0; };
 
 namespace N0 {
-    int v0;
+    Meta(Property) int v0;
 
-    float F1(int a) { return 0.0f; }
+    Meta(Function) float F1(int a) { return 0.0f; }
 
-    class C0 {
+    class Meta(Class) C0 {
         int* a;
 
     public:
-        int** GetA() { return &a; }
+        Meta(Function) int** GetA() { return &a; }
     };
 }

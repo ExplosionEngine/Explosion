@@ -7,6 +7,7 @@
 #define Meta(...) __attribute__((annotate(#__VA_ARGS__)))
 
 #define Class ""
+#define Struct ""
 #define Enum ""
 #define Function ""
 #define Property ""
