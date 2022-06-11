@@ -4,7 +4,7 @@ AddLibrary(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB Common LLVM
+    LIB Common clang
 )
 
 file(GLOB SOURCES Src/Exe/*.cpp)
