@@ -4,13 +4,13 @@
 
 #include <Common/Meta.h>
 
-struct Meta(Struct) S0 {
+struct Meta(Class) S0 {
     Meta(Property) int a;
     Meta(Property) float b;
     Meta(Property) double c;
 };
 
-struct Meta(Struct) S1 {
+struct Meta(Class) S1 {
 public:
     Meta(Property) double c;
 
@@ -21,7 +21,7 @@ private:
     int a;
 };
 
-struct Meta(Struct) S2 {
+struct Meta(Class) S2 {
 public:
     Meta(Function) int GetA() { return a; }
     Meta(Function) float* GetPointerB(int t) { return &b; }

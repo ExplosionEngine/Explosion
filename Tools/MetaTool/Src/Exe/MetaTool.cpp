@@ -41,8 +41,24 @@ int main(int argc, char* argv[])
     clangParser.Parse();
     const auto& metaInfo = clangParser.GetMetaContext();
 
-    MetaTool::HeaderGenerator headerGenerator(outputFile.c_str());
+    std::string sourceFileShortPath;
+    for (const auto& includePath : includePaths) {
+        if (!sourceFile.starts_with(includePath)) {
+            continue;
+        }
+        sourceFileShortPath = sourceFile.substr(includePath.length() + 1);
+        break;
+    }
+    if (sourceFileShortPath.empty()) {
+        return 1;
+    }
+
+    MetaTool::HeaderGeneratorInfo headerGeneratorInfo {};
+    headerGeneratorInfo.sourceFileShortPath = sourceFileShortPath.c_str();
+    headerGeneratorInfo.outputFilePath = outputFile.c_str();
+    MetaTool::HeaderGenerator headerGenerator(headerGeneratorInfo);
     headerGenerator.Generate(metaInfo);
 
+    std::cout << sourceFile << "->" << sourceFileShortPath << std::endl;
     return 0;
 }

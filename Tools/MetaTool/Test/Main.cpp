@@ -28,7 +28,7 @@ void AssertFunctionContextEqual(const FunctionContext& a, const FunctionContext&
     }
 }
 
-void AssertStructClassContextEqual(const StructContext& a, const StructContext& b)
+void AssertClassContextEqual(const ClassContext& a, const ClassContext& b)
 {
     ASSERT_EQ(a.name, b.name);
     ASSERT_EQ(a.metaData, b.metaData);
@@ -53,44 +53,42 @@ TEST(MetaToolTest, ClangParserStructClassTest)
     clangParser.Parse();
     const auto& metaContext = clangParser.GetMetaContext();
 
-    ASSERT_EQ(metaContext.structs.size(), 3);
+    ASSERT_EQ(metaContext.classes.size(), 4);
 
-    StructContext structContext {};
-    structContext.metaData = "Struct";
-    structContext.name = "S0";
-    structContext.variables = {
+    ClassContext classContext {};
+    classContext.metaData = "Class";
+    classContext.name = "S0";
+    classContext.variables = {
         VariableContext { "a", "Property", "int" },
         VariableContext { "b", "Property", "float" },
         VariableContext { "c", "Property", "double" }
     };
-    AssertStructClassContextEqual(metaContext.structs[0], structContext);
+    AssertClassContextEqual(metaContext.classes[0], classContext);
 
-    structContext = StructContext {};
-    structContext.metaData = "Struct";
-    structContext.name = "S1";
-    structContext.variables = {
+    classContext = ClassContext {};
+    classContext.metaData = "Class";
+    classContext.name = "S1";
+    classContext.variables = {
         VariableContext { "c", "Property", "double" },
     };
-    AssertStructClassContextEqual(metaContext.structs[1], structContext);
+    AssertClassContextEqual(metaContext.classes[1], classContext);
 
-    structContext = StructContext {};
-    structContext.metaData = "Struct";
-    structContext.name = "S2";
-    structContext.functions = {
+    classContext = ClassContext {};
+    classContext.metaData = "Class";
+    classContext.name = "S2";
+    classContext.functions = {
         FunctionContext { "GetA", "Function", "int", {} },
         FunctionContext { "GetPointerB", "Function", "float *", { ParamContext { "t", "int" } } }
     };
-    AssertStructClassContextEqual(metaContext.structs[2], structContext);
+    AssertClassContextEqual(metaContext.classes[2], classContext);
 
-    ASSERT_EQ(metaContext.classes.size(), 1);
-
-    ClassContext classContext {};
+    classContext = ClassContext {};
     classContext.metaData = "Class";
     classContext.name = "C0";
     classContext.functions = {
         FunctionContext { "GetA", "Function", "int *", { ParamContext { "b", "float *" } } }
     };
-    AssertStructClassContextEqual(metaContext.classes[0], classContext);
+    AssertClassContextEqual(metaContext.classes[3], classContext);
 }
 
 TEST(MetaToolTest, ClangParserNamespaceTest)
@@ -115,7 +113,7 @@ TEST(MetaToolTest, ClangParserNamespaceTest)
     classContext.functions = {
         FunctionContext { "GetA", "Function", "int **", {} }
     };
-    AssertStructClassContextEqual(metaContext.namespaces[0].classes[0], classContext);
+    AssertClassContextEqual(metaContext.namespaces[0].classes[0], classContext);
 }
 
 int main(int argc, char* argv[])
