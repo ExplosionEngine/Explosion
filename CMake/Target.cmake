@@ -2,6 +2,8 @@ option(BUILD_TEST "Build unit tests" ON)
 option(BUILD_SAMPLE "Build sample" ON)
 
 set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Api CACHE PATH "" FORCE)
+set(BASIC_LIBS Common CACHE STRING "" FORCE)
+set(BASIC_TEST_LIBS googletest CACHE STRING "" FORCE)
 
 function(CombineRuntimeDependencies)
     cmake_parse_arguments(PARAMS "" "NAME" "RUNTIME_DEP" ${ARGN})
@@ -55,6 +57,19 @@ function(LinkLibraries)
             endif()
         else()
             target_link_libraries(${PARAMS_NAME} ${L})
+        endif()
+    endforeach()
+endfunction()
+
+function(LinkBasicLibs)
+    cmake_parse_arguments(PARAMS "" "NAME" "LIB" ${ARGN})
+
+    foreach(L ${PARAMS_LIB})
+        if (NOT (${PARAMS_NAME} STREQUAL ${L}))
+            LinkLibraries(
+                NAME ${PARAMS_NAME}
+                LIB ${L}
+            )
         endif()
     endforeach()
 endfunction()
@@ -119,6 +134,10 @@ function(AddExecutable)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_LINK}
     )
+    LinkBasicLibs(
+        NAME ${PARAMS_NAME}
+        LIB ${BASIC_LIBS}
+    )
     LinkLibraries(
         NAME ${PARAMS_NAME}
         LIB ${PARAMS_LIB}
@@ -156,6 +175,10 @@ function(AddLibrary)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_PRIVATE_LINK}
         PUBLIC ${PARAMS_PUBLIC_LINK}
+    )
+    LinkBasicLibs(
+        NAME ${PARAMS_NAME}
+        LIB ${BASIC_LIBS}
     )
     LinkLibraries(
         NAME ${PARAMS_NAME}
@@ -203,6 +226,10 @@ function(AddTest)
     target_link_directories(
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_LINK}
+    )
+    LinkBasicLibs(
+        NAME ${PARAMS_NAME}
+        LIB ${BASIC_LIBS} ${BASIC_TEST_LIBS}
     )
     LinkLibraries(
         NAME ${PARAMS_NAME}

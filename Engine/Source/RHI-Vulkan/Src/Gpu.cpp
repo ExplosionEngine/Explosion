@@ -49,5 +49,7 @@ namespace RHI::Vulkan {
             }
         }
         Assert(false && "failed to found suitable memory type");
+        // compile warning, has no effects
+        return -1;
     }
 }

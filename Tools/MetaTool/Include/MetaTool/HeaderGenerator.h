@@ -32,10 +32,10 @@ namespace MetaTool {
         void GenerateFileHeader();
         void GenerateIncludes();
         void GenerateRegistry(const MetaTool::MetaContext& metaInfo);
-        void GenerateMetaCodeForNamespace(const std::string& prefix, const MetaTool::NamespaceContext& namespaceContext);
-        void GenerateMetaCodeForClasses(const std::string& prefix, const MetaTool::ClassContext& classContext);
-        void GenerateMetaCodeForProperty(const std::string& prefix, const MetaTool::VariableContext& variableContext);
-        void GenerateMetaCodeForFunction(const std::string& prefix, const MetaTool::FunctionContext& functionContext);
+        void GenerateCodeForNamespace(const std::string& prefix, const MetaTool::NamespaceContext& namespaceContext);
+        void GenerateCodeForClasses(const std::string& prefix, const MetaTool::ClassContext& classContext);
+        void GenerateCodeForProperty(const std::string& prefix, const MetaTool::VariableContext& variableContext);
+        void GenerateCodeForFunction(const std::string& prefix, const MetaTool::FunctionContext& functionContext);
 
         HeaderGeneratorInfo info;
         std::ofstream file;

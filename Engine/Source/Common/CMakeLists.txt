@@ -11,5 +11,4 @@ file(GLOB TEST_SOURCES Test/*.cpp)
 AddTest(
     NAME Common.Test
     SRC ${TEST_SOURCES}
-    LIB Common googletest
 )
