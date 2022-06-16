@@ -17,6 +17,7 @@ AddExecutable(
 AddTest(
     NAME MetaTool.Test
     SRC Test/Main.cpp
+    INC Test
     LIB MetaTool.Static
     RES
         ${CMAKE_SOURCE_DIR}/Engine/Source/Common/Include/Common/Meta.h->Test/MetaTool/Include/Common/Meta.h

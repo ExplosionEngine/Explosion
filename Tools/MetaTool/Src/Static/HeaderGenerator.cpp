@@ -3,6 +3,7 @@
 //
 
 #include <sstream>
+#include <filesystem>
 #include <unordered_map>
 
 #include <MetaTool/HeaderGenerator.h>
@@ -38,8 +39,15 @@ namespace MetaTool {
 
 namespace MetaTool {
     HeaderGenerator::HeaderGenerator(const HeaderGeneratorInfo& info)
-        : info(info), file(info.outputFilePath)
+        : info(info)
     {
+        std::filesystem::path path(info.outputFilePath);
+        std::filesystem::path targetDirPath = path.parent_path();
+        if (!std::filesystem::exists(targetDirPath)) {
+            std::filesystem::create_directories(targetDirPath);
+        }
+
+        file = std::ofstream(info.outputFilePath);
         Assert(file.is_open());
     }
 

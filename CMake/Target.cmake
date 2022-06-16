@@ -1,7 +1,8 @@
 option(BUILD_TEST "Build unit tests" ON)
 option(BUILD_SAMPLE "Build sample" ON)
 
-set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Api CACHE PATH "" FORCE)
+set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Generated/Api CACHE PATH "" FORCE)
+set(META_HEADER_DIR ${CMAKE_BINARY_DIR}/Generated/Meta CACHE PATH "" FORCE)
 set(BASIC_LIBS Common CACHE STRING "" FORCE)
 set(BASIC_TEST_LIBS googletest CACHE STRING "" FORCE)
 
@@ -115,10 +116,51 @@ function(AddResourcesCopyCommand)
     endforeach()
 endfunction()
 
-function(AddExecutable)
-    cmake_parse_arguments(PARAMS "SAMPLE" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES" ${ARGN})
+function(AddMetaHeaderGenerationCommand)
+    cmake_parse_arguments(PARAMS "" "NAME" "INC" ${ARGN})
 
-    if ((DEFINED PARAMS_SAMPLE) AND (NOT ${BUILD_SAMPLE}))
+    foreach(L ${BASIC_LIBS})
+        if (${PARAMS_NAME} STREQUAL ${L})
+            return()
+        endif()
+    endforeach()
+    set(EXCEPT_TARGETS MetaTool.Static MetaTool)
+    foreach(L ${EXCEPT_TARGETS})
+        if (${PARAMS_NAME} STREQUAL ${L})
+            return()
+        endif()
+    endforeach()
+
+    add_dependencies(${PARAMS_NAME} MetaTool)
+    target_include_directories(${PARAMS_NAME} PUBLIC ${META_HEADER_DIR})
+
+    foreach(I ${PARAMS_INC})
+        file(GLOB_RECURSE HL ${I}/*.h)
+        foreach(H ${HL})
+            list(APPEND HEADERS ${H})
+        endforeach()
+    endforeach()
+
+    foreach(H ${HEADERS})
+        STRING(REGEX REPLACE ".+/(.+)\\..*" "\\1" FILE_NAME ${H})
+
+        get_target_property(TARGET_INCS ${PARAMS_NAME} INCLUDE_DIRECTORIES)
+        foreach(TARGET_INC ${TARGET_INCS})
+            list(APPEND INC_ARGS -i ${TARGET_INC})
+        endforeach()
+
+        add_custom_command(
+            TARGET ${PARAMS_NAME} PRE_BUILD
+            WORKING_DIRECTORY $<TARGET_FILE_DIR:${PARAMS_NAME}>
+            COMMAND MetaTool -s ${H} -o ${META_HEADER_DIR}/${PARAMS_NAME}/${FILE_NAME}.meta.h ${INC_ARGS}
+        )
+    endforeach()
+endfunction()
+
+function(AddExecutable)
+    cmake_parse_arguments(PARAMS "SAMPLE;META" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES" ${ARGN})
+
+    if (${PARAMS_SAMPLE} AND (NOT ${BUILD_SAMPLE}))
         return()
     endif()
 
@@ -156,10 +198,17 @@ function(AddExecutable)
     if (${MSVC})
         set_target_properties(${PARAMS_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>)
     endif()
+
+    if (${PARAMS_META})
+        AddMetaHeaderGenerationCommand(
+            NAME ${PARAMS_NAME}
+            INC ${PARAMS_INC}
+        )
+    endif()
 endfunction()
 
 function(AddLibrary)
-    cmake_parse_arguments(PARAMS "" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB" ${ARGN})
+    cmake_parse_arguments(PARAMS "META" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB" ${ARGN})
 
     add_library(
         ${PARAMS_NAME}
@@ -206,6 +255,13 @@ function(AddLibrary)
             PUBLIC ${API_HEADER_DIR}/${PARAMS_NAME}
         )
     endif()
+
+    if (${PARAMS_META})
+        AddMetaHeaderGenerationCommand(
+            NAME ${PARAMS_NAME}
+            INC ${PARAMS_PUBLIC_INC} ${PARAMS_PRIVATE_INC}
+        )
+    endif()
 endfunction()
 
 function(AddTest)
@@ -213,7 +269,7 @@ function(AddTest)
         return()
     endif()
 
-    cmake_parse_arguments(PARAMS "" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES" ${ARGN})
+    cmake_parse_arguments(PARAMS "META" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES" ${ARGN})
 
     add_executable(
         ${PARAMS_NAME}
@@ -251,4 +307,11 @@ function(AddTest)
         COMMAND ${PARAMS_NAME}
         WORKING_DIRECTORY $<TARGET_FILE_DIR:${PARAMS_NAME}>
     )
+
+    if (${PARAMS_META})
+        AddMetaHeaderGenerationCommand(
+            NAME ${PARAMS_NAME}
+            INC ${PARAMS_INC}
+        )
+    endif()
 endfunction()
