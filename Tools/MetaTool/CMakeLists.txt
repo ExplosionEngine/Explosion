@@ -15,6 +15,7 @@ AddExecutable(
 )
 
 AddTest(
+    META
     NAME MetaTool.Test
     SRC Test/Main.cpp
     INC Test

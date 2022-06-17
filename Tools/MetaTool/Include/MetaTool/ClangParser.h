@@ -47,6 +47,7 @@ namespace MetaTool {
     struct ClassContext {
         std::string name;
         std::string metaData;
+        std::vector<FunctionContext> constructors;
         std::vector<VariableContext> variables;
         std::vector<FunctionContext> functions;
     };

@@ -12,6 +12,10 @@ struct Meta(Class) S0 {
 
 struct Meta(Class) S1 {
 public:
+    Meta(Function) S1(int inA, float inB, double inC)
+        : a(inA), b(inB), c(inC) {}
+    Meta(Function) ~S1() = default;
+
     Meta(Property) double c;
 
 protected:
@@ -23,6 +27,8 @@ private:
 
 struct Meta(Class) S2 {
 public:
+    Meta(Function) S2(int inA, float inB) : a(inA), b(inB) {}
+
     Meta(Function) int GetA() { return a; }
     Meta(Function) float* GetPointerB(int t) { return &b; }
 
@@ -33,6 +39,8 @@ private:
 
 class Meta(Class) C0 {
 public:
+    Meta(Function) explicit C0(int inA) : a(inA) {}
+
     Meta(Function) int* GetA(float* b) { return &a; }
 
 private:

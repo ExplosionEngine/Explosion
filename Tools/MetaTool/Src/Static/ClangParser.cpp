@@ -21,31 +21,12 @@ namespace MetaTool {
 }
 
 namespace MetaTool {
-    struct StructClassInnerContext {
+    struct ClassInnerContext {
         AccessSpecifier currentAccessSpecifier = AccessSpecifier::DEFAULT;
-    } structClassInnerContext;
+    } classInnerContext;
 }
 
 namespace MetaTool {
-    template <typename T>
-    bool PopBackIfHasNoMetaData(std::vector<T>& vector)
-    {
-        if (vector.back().metaData != "") {
-            return false;
-        }
-        vector.pop_back();
-        return true;
-    }
-
-    template <typename T>
-    void PopBackIfNotPublic(AccessSpecifier accessSpecifier, std::vector<T>& vector)
-    {
-        if (accessSpecifier == AccessSpecifier::PUBLIC) {
-            return;
-        }
-        vector.pop_back();
-    }
-
     AccessSpecifier GetActualAccessSpecifier(CXCursorKind parrentKind, AccessSpecifier accessSpecifier)
     {
         if (parrentKind == CXCursor_ClassDecl) {
@@ -109,32 +90,43 @@ namespace MetaTool {
             case CXCursorKind::CXCursor_FieldDecl:
             {
                 VariableContext context {};
-                AccessSpecifier accessSpecifier = GetActualAccessSpecifier(clang_getCursorKind(parent), structClassInnerContext.currentAccessSpecifier);
+                AccessSpecifier accessSpecifier = GetActualAccessSpecifier(clang_getCursorKind(parent), classInnerContext.currentAccessSpecifier);
                 context.name = clang_getCString(clang_getCursorSpelling(current));
                 context.type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
                 classContext->variables.emplace_back(std::move(context));
                 clang_visitChildren(current, PFVariable, &classContext->variables.back());
-                if (!PopBackIfHasNoMetaData(classContext->variables)) {
-                    PopBackIfNotPublic(accessSpecifier, classContext->variables);
+                if (classContext->variables.back().metaData.empty() || accessSpecifier != AccessSpecifier::PUBLIC) {
+                    classContext->variables.pop_back();
                 }
                 break;
             }
             case CXCursorKind::CXCursor_CXXMethod:
             {
                 FunctionContext context {};
-                AccessSpecifier accessSpecifier = GetActualAccessSpecifier(clang_getCursorKind(parent), structClassInnerContext.currentAccessSpecifier);
+                AccessSpecifier accessSpecifier = GetActualAccessSpecifier(clang_getCursorKind(parent), classInnerContext.currentAccessSpecifier);
                 context.name = clang_getCString(clang_getCursorSpelling(current));
                 context.returnType = clang_getCString(clang_getTypeSpelling(clang_getCursorResultType(current)));
                 classContext->functions.emplace_back(std::move(context));
                 clang_visitChildren(current, PFFunction, &classContext->functions.back());
-                if (!PopBackIfHasNoMetaData(classContext->functions)) {
-                    PopBackIfNotPublic(accessSpecifier, classContext->functions);
+                if (classContext->functions.back().metaData.empty() || accessSpecifier != AccessSpecifier::PUBLIC) {
+                    classContext->functions.pop_back();
+                }
+                break;
+            }
+            case CXCursorKind::CXCursor_Constructor:
+            {
+                FunctionContext context {};
+                AccessSpecifier accessSpecifier = GetActualAccessSpecifier(clang_getCursorKind(parent), classInnerContext.currentAccessSpecifier);
+                classContext->constructors.emplace_back(std::move(context));
+                clang_visitChildren(current, PFFunction, &classContext->functions.back());
+                if (classContext->constructors.back().metaData.empty() || accessSpecifier != AccessSpecifier::PUBLIC) {
+                    classContext->constructors.pop_back();
                 }
                 break;
             }
             case CXCursorKind::CXCursor_CXXAccessSpecifier:
             {
-                structClassInnerContext.currentAccessSpecifier = static_cast<AccessSpecifier>(clang_getCXXAccessSpecifier(current));
+                classInnerContext.currentAccessSpecifier = static_cast<AccessSpecifier>(clang_getCXXAccessSpecifier(current));
                 break;
             }
             case CXCursorKind::CXCursor_AnnotateAttr:
@@ -159,9 +151,11 @@ namespace MetaTool {
                 ClassContext context {};
                 context.name = clang_getCString(clang_getCursorSpelling(current));
                 namespaceContext->classes.emplace_back(std::move(context));
-                structClassInnerContext = StructClassInnerContext();
+                classInnerContext = ClassInnerContext();
                 clang_visitChildren(current, PFClass, &namespaceContext->classes.back());
-                PopBackIfHasNoMetaData(namespaceContext->classes);
+                if (namespaceContext->classes.back().metaData.empty()) {
+                    namespaceContext->classes.pop_back();
+                }
                 break;
             }
             case CXCursorKind::CXCursor_ClassDecl:
@@ -169,9 +163,11 @@ namespace MetaTool {
                 ClassContext context {};
                 context.name = clang_getCString(clang_getCursorSpelling(current));
                 namespaceContext->classes.emplace_back(std::move(context));
-                structClassInnerContext = StructClassInnerContext();
+                classInnerContext = ClassInnerContext();
                 clang_visitChildren(current, PFClass, &namespaceContext->classes.back());
-                PopBackIfHasNoMetaData(namespaceContext->classes);
+                if (namespaceContext->classes.back().metaData.empty()) {
+                    namespaceContext->classes.pop_back();
+                }
                 break;
             }
             case CXCursor_Namespace:
@@ -212,7 +208,7 @@ namespace MetaTool {
 
     std::vector<const char*> ClangParser::GetCommandLineArguments(const SourceInfo& sourceInfo)
     {
-        static std::vector<const char*> basicCommandLineArguments = { "-x", "c++" };
+        static std::vector<const char*> basicCommandLineArguments = { "-x", "c++", "-DMETA_TOOL" };
 
         std::vector<const char*> result(basicCommandLineArguments.begin(), basicCommandLineArguments.end());
         result.reserve(result.size() + sourceInfo.includePathNum);

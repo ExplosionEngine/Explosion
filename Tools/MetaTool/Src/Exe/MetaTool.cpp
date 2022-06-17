@@ -59,6 +59,6 @@ int main(int argc, char* argv[])
     MetaTool::HeaderGenerator headerGenerator(headerGeneratorInfo);
     headerGenerator.Generate(metaInfo);
 
-    std::cout << sourceFile << "->" << sourceFileShortPath << std::endl;
+    std::cout << "[Explosion MetaTool] " << sourceFile << " -> " << outputFile << std::endl;
     return 0;
 }

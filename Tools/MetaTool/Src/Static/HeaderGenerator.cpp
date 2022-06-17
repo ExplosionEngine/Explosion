@@ -35,6 +35,19 @@ namespace MetaTool {
         }
         return stream.str();
     }
+
+    std::string CombineParameterTypes(const std::vector<ParamContext>& params)
+    {
+        std::stringstream stream;
+        for (auto i = 0; i < params.size(); i++) {
+            if (i == 0) {
+                stream << params[i].type;
+            } else {
+                stream << ", " << params[i].type;
+            }
+        }
+        return stream.str();
+    }
 }
 
 namespace MetaTool {
@@ -86,8 +99,10 @@ namespace MetaTool {
 
     void HeaderGenerator::GenerateRegistry(const MetaTool::MetaContext& metaInfo)
     {
-        file << "static int _registry = []() -> int {" << std::endl;
-        file << "    using MData = std::make_pair<size_t, std::string_view>;" << std::endl;
+        std::hash<std::string> hash {};
+
+        file << "static int _registry_" << hash(info.outputFilePath) << " = []() -> int {" << std::endl;
+        file << "    auto MData = [](size_t key, std::string_view value) -> std::pair<size_t, std::string_view> { return std::make_pair<size_t, std::string_view>(std::move(key), std::move(value)); };" << std::endl;
         file << "    std::hash<std::string_view> hash {};" << std::endl;
         file << std::endl;
         GenerateCodeForNamespace(metaInfo.name, metaInfo);
@@ -111,6 +126,9 @@ namespace MetaTool {
     {
         std::string fullName = GetContextFullName(prefix, classContext);
         file << "    meta::reflect<" << fullName << ">(hash(\"" << fullName << "\")" << GetMetaDatasCode(classContext) << ")";
+        for (const auto& c : classContext.constructors) {
+            GenerateCodeForConstructor(c);
+        }
         for (const auto& v : classContext.variables) {
             GenerateCodeForProperty(fullName, v);
         }
@@ -119,6 +137,12 @@ namespace MetaTool {
         }
         file << ";" << std::endl;
         file << std::endl;
+    }
+
+    void HeaderGenerator::GenerateCodeForConstructor(const MetaTool::FunctionContext& functionContext)
+    {
+        file << std::endl;
+        file << "        .ctor<" << CombineParameterTypes(functionContext.params) << ">()";
     }
 
     void HeaderGenerator::GenerateCodeForProperty(const std::string& prefix, const VariableContext& variableContext)

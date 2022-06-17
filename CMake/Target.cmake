@@ -25,39 +25,40 @@ function(LinkLibraries)
     cmake_parse_arguments(PARAMS "" "NAME" "LIB" ${ARGN})
 
     foreach(L ${PARAMS_LIB})
-        if (TARGET ${L})
-            get_target_property(3RD_TYPE ${L} 3RD_TYPE)
-            if (${3RD_TYPE} STREQUAL "3RD_TYPE-NOTFOUND")
-                target_link_libraries(${PARAMS_NAME} ${L})
-            else()
-                get_target_property(${L}_INCLUDE ${L} INCLUDE)
-                get_target_property(${L}_LINK ${L} LINK)
-                get_target_property(${L}_LIB ${L} LIB)
-
-                if (NOT ("${${L}_INCLUDE}" STREQUAL "${L}_INCLUDE-NOTFOUND"))
-                    target_include_directories(${PARAMS_NAME} PUBLIC ${${L}_INCLUDE})
-                endif()
-                if (NOT ("${${L}_LINK}" STREQUAL "${L}_LINK-NOTFOUND"))
-                    target_link_directories(${PARAMS_NAME} PUBLIC ${${L}_LINK})
-                endif()
-                if (NOT ("${${L}_LIB}" STREQUAL "${L}_LIB-NOTFOUND"))
-                    target_link_libraries(${PARAMS_NAME} ${${L}_LIB})
-                endif()
-
-                if (${3RD_TYPE} STREQUAL "CMakeProject")
-                    add_dependencies(${PARAMS_NAME} ${L})
-                endif()
-            endif()
-
-            get_target_property(${L}_RUNTIME_DEP ${L} RUNTIME_DEP)
-            if (NOT ("${${L}_RUNTIME_DEP}" STREQUAL "${L}_RUNTIME_DEP-NOTFOUND"))
-                CombineRuntimeDependencies(
-                    NAME ${PARAMS_NAME}
-                    RUNTIME_DEP "${${L}_RUNTIME_DEP}"
-                )
-            endif()
-        else()
+        if (NOT (TARGET ${L}))
             target_link_libraries(${PARAMS_NAME} ${L})
+            continue()
+        endif()
+
+        get_target_property(3RD_TYPE ${L} 3RD_TYPE)
+        if (${3RD_TYPE} STREQUAL "3RD_TYPE-NOTFOUND")
+            target_link_libraries(${PARAMS_NAME} ${L})
+        else()
+            get_target_property(INCLUDE ${L} 3RD_INCLUDE)
+            get_target_property(LINK ${L} 3RD_LINK)
+            get_target_property(LIB ${L} 3RD_LIB)
+
+            if (NOT ("${INCLUDE}" STREQUAL "INCLUDE-NOTFOUND"))
+                target_include_directories(${PARAMS_NAME} PUBLIC ${INCLUDE})
+            endif()
+            if (NOT ("${LINK}" STREQUAL "LINK-NOTFOUND"))
+                target_link_directories(${PARAMS_NAME} PUBLIC ${LINK})
+            endif()
+            if (NOT ("${LIB}" STREQUAL "LIB-NOTFOUND"))
+                target_link_libraries(${PARAMS_NAME} ${LIB})
+            endif()
+
+            if (${3RD_TYPE} STREQUAL "CMakeProject")
+                add_dependencies(${PARAMS_NAME} ${L})
+            endif()
+        endif()
+
+        get_target_property(RUNTIME_DEP ${L} RUNTIME_DEP)
+        if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
+            CombineRuntimeDependencies(
+                NAME ${PARAMS_NAME}
+                RUNTIME_DEP "${RUNTIME_DEP}"
+            )
         endif()
     endforeach()
 endfunction()
@@ -116,8 +117,39 @@ function(AddResourcesCopyCommand)
     endforeach()
 endfunction()
 
+function(GetTargetIncludeDirectoriesRecurse)
+    cmake_parse_arguments(PARAMS "" "NAME;OUTPUT" "" ${ARGN})
+
+    if (NOT (TARGET ${PARAMS_NAME}))
+        return()
+    endif()
+
+    get_target_property(TARGET_INCS ${PARAMS_NAME} INCLUDE_DIRECTORIES)
+    if (NOT ("${TARGET_INCS}" STREQUAL "TARGET_INCS-NOTFOUND"))
+        foreach(TARGET_INC ${TARGET_INCS})
+            list(APPEND RESULT ${TARGET_INC})
+        endforeach()
+    endif()
+
+    get_target_property(TARGET_LIBS ${PARAMS_NAME} LINK_LIBRARIES)
+    if (NOT ("${TARGET_LIBS}" STREQUAL "TARGET_LIBS-NOTFOUND"))
+        foreach(TARGET_LIB ${TARGET_LIBS})
+            GetTargetIncludeDirectoriesRecurse(
+                NAME ${TARGET_LIB}
+                OUTPUT LIB_INCS
+            )
+            foreach(LIB_INC ${LIB_INCS})
+                list(APPEND RESULT ${LIB_INC})
+            endforeach()
+        endforeach()
+    endif()
+
+    list(REMOVE_DUPLICATES RESULT)
+    set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
+endfunction()
+
 function(AddMetaHeaderGenerationCommand)
-    cmake_parse_arguments(PARAMS "" "NAME" "INC" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME" "INC;LIB" ${ARGN})
 
     foreach(L ${BASIC_LIBS})
         if (${PARAMS_NAME} STREQUAL ${L})
@@ -144,9 +176,13 @@ function(AddMetaHeaderGenerationCommand)
     foreach(H ${HEADERS})
         STRING(REGEX REPLACE ".+/(.+)\\..*" "\\1" FILE_NAME ${H})
 
-        get_target_property(TARGET_INCS ${PARAMS_NAME} INCLUDE_DIRECTORIES)
-        foreach(TARGET_INC ${TARGET_INCS})
-            list(APPEND INC_ARGS -i ${TARGET_INC})
+        GetTargetIncludeDirectoriesRecurse(
+            NAME ${PARAMS_NAME}
+            OUTPUT INCS
+        )
+
+        foreach(INC ${INCS})
+            list(APPEND INC_ARGS -i ${INC})
         endforeach()
 
         add_custom_command(

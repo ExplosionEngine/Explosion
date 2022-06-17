@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <MetaTool/ClangParser.h>
+#include <MetaTool.Test/StructClassTest.meta.h>
 using namespace MetaTool;
 
 std::vector<const char*> includePaths = { "Test/MetaTool/Include" };
@@ -114,6 +115,23 @@ TEST(MetaToolTest, ClangParserNamespaceTest)
         FunctionContext { "GetA", "Function", "int **", {} }
     };
     AssertClassContextEqual(metaContext.namespaces[0].classes[0], classContext);
+}
+
+TEST(MetaToolTest, HeaderGeneratorTest)
+{
+    std::hash<std::string_view> hash {};
+
+    {
+        meta::type s0 = meta::resolve(hash("S0"));
+        meta::data a = s0.data(hash("a"));
+        meta::data b = s0.data(hash("b"));
+        meta::data c = s0.data(hash("c"));
+
+        meta::any instance = S0 { 1, 2.0f, 3.0 };
+        ASSERT_EQ(a.get(instance).cast<int>(), 1);
+        ASSERT_EQ(b.get(instance).cast<float>(), 2.0f);
+        ASSERT_EQ(c.get(instance).cast<double>(), 3.0);
+    }
 }
 
 int main(int argc, char* argv[])
