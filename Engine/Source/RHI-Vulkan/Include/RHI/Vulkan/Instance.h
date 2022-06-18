@@ -18,6 +18,7 @@ namespace RHI::Vulkan {
         uint32_t GetGpuNum() override;
         Gpu* GetGpu(uint32_t index) override;
         vk::Instance GetInstance() const;
+        void Destroy() override;
 
     private:
         void PrepareExtensions();

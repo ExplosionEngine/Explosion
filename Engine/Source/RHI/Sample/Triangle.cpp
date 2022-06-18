@@ -42,7 +42,18 @@ protected:
 
     void OnDestroy() override
     {
-        // TODO
+        fence->Destroy();
+        commandBuffer->Destroy();
+        pipeline->Destroy();
+        pipelineLayout->Destroy();
+        for (auto* textureView : swapChainTextureViews) {
+            textureView->Destroy();
+        }
+        vertexBufferView->Destroy();
+        vertexBuffer->Destroy();
+        swapChain->Destroy();
+        device->Destroy();
+        instance->Destroy();
     }
 
 private:

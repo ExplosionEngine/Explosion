@@ -24,6 +24,7 @@ namespace RHI::DirectX12 {
         FenceStatus GetStatus() override;
         void Reset() override;
         void Wait() override;
+        void Destroy() override;
 
         ComPtr<ID3D12Fence>& GetDX12Fence();
 
