@@ -43,7 +43,7 @@ void AssertClassContextEqual(const ClassContext& a, const ClassContext& b)
     }
 }
 
-TEST(MetaToolTest, ClangParserStructClassTest)
+TEST(MetaToolTest, ClangParserClassTest)
 {
     SourceInfo sourceInfo {};
     sourceInfo.sourceFile = "Test/MetaTool/ClassTest.h";
@@ -117,7 +117,7 @@ TEST(MetaToolTest, ClangParserNamespaceTest)
     AssertClassContextEqual(metaContext.namespaces[0].classes[0], classContext);
 }
 
-TEST(MetaToolTest, HeaderGeneratorTest)
+TEST(MetaToolTest, HeaderGeneratorClassTest)
 {
     std::hash<std::string_view> hash {};
 
@@ -131,6 +131,24 @@ TEST(MetaToolTest, HeaderGeneratorTest)
         ASSERT_EQ(a.get(instance).cast<int>(), 1);
         ASSERT_EQ(b.get(instance).cast<float>(), 2.0f);
         ASSERT_EQ(c.get(instance).cast<double>(), 3.0);
+    }
+
+    {
+        meta::type s1 = meta::resolve(hash("S1"));
+        meta::ctor s1Ctor = s1.ctor<int, float, double>();
+        meta::data c = s1.data(hash("c"));
+
+        meta::any instance = s1Ctor.invoke(1, 2.0f, 3.0);
+        ASSERT_EQ(c.get(instance).cast<double>(), 3.0);
+    }
+
+    {
+        meta::type s2 = meta::resolve(hash("S2"));
+        meta::ctor s2Ctor = s2.ctor<int, float>();
+        meta::func getA = s2.func(hash("GetA"));
+
+        meta::any instance = s2Ctor.invoke(1, 2.0f);
+        ASSERT_EQ(getA.invoke(instance).cast<int>(), 1);
     }
 }
 
