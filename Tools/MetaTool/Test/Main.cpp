@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <MetaTool/ClangParser.h>
-#include <MetaTool.Test/StructClassTest.meta.h>
+#include <MetaTool.Test/ClassTest.meta.h>
 using namespace MetaTool;
 
 std::vector<const char*> includePaths = { "Test/MetaTool/Include" };
@@ -46,7 +46,7 @@ void AssertClassContextEqual(const ClassContext& a, const ClassContext& b)
 TEST(MetaToolTest, ClangParserStructClassTest)
 {
     SourceInfo sourceInfo {};
-    sourceInfo.sourceFile = "Test/MetaTool/StructClassTest.h";
+    sourceInfo.sourceFile = "Test/MetaTool/ClassTest.h";
     sourceInfo.includePathNum = includePaths.size();
     sourceInfo.includePaths = includePaths.data();
 

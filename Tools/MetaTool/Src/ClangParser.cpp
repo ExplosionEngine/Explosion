@@ -118,7 +118,7 @@ namespace MetaTool {
                 FunctionContext context {};
                 AccessSpecifier accessSpecifier = GetActualAccessSpecifier(clang_getCursorKind(parent), classInnerContext.currentAccessSpecifier);
                 classContext->constructors.emplace_back(std::move(context));
-                clang_visitChildren(current, PFFunction, &classContext->functions.back());
+                clang_visitChildren(current, PFFunction, &classContext->constructors.back());
                 if (classContext->constructors.back().metaData.empty() || accessSpecifier != AccessSpecifier::PUBLIC) {
                     classContext->constructors.pop_back();
                 }

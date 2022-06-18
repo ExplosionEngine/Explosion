@@ -53,7 +53,7 @@ function(LinkLibraries)
             endif()
         endif()
 
-        get_target_property(RUNTIME_DEP ${L} RUNTIME_DEP)
+        get_target_property(RUNTIME_DEP ${L} 3RD_RUNTIME_DEP)
         if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
             CombineRuntimeDependencies(
                 NAME ${PARAMS_NAME}
@@ -76,18 +76,49 @@ function(LinkBasicLibs)
     endforeach()
 endfunction()
 
-function(AddRuntimeDependenciesCopyCommand)
-    cmake_parse_arguments(PARAMS "" "NAME" "" ${ARGN})
+function(GetTargetRuntimeDependenciesRecurse)
+    cmake_parse_arguments(PARAMS "" "NAME;OUTPUT" "" ${ARGN})
 
     get_target_property(RUNTIME_DEP ${PARAMS_NAME} RUNTIME_DEP)
     if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
         foreach(R ${RUNTIME_DEP})
-            add_custom_command(
-                TARGET ${PARAMS_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${R} $<TARGET_FILE_DIR:${PARAMS_NAME}>
-            )
+            list(APPEND RESULT ${R})
         endforeach()
     endif()
+
+    get_target_property(LINK_LIBRARIES ${PARAMS_NAME} LINK_LIBRARIES)
+    if (NOT ("${LINK_LIBRARIES}" STREQUAL "LINK_LIBRARIES-NOTFOUND"))
+        foreach(L ${LINK_LIBRARIES})
+            if (NOT TARGET ${L})
+                continue()
+            endif()
+
+            GetTargetRuntimeDependenciesRecurse(
+                NAME ${L}
+                OUTPUT TEMP
+            )
+            foreach(T ${TEMP})
+                list(APPEND RESULT ${T})
+            endforeach()
+        endforeach()
+    endif()
+
+    set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
+endfunction()
+
+function(AddRuntimeDependenciesCopyCommand)
+    cmake_parse_arguments(PARAMS "" "NAME" "" ${ARGN})
+
+    GetTargetRuntimeDependenciesRecurse(
+        NAME ${PARAMS_NAME}
+        OUTPUT RUNTIME_DEPS
+    )
+    foreach(R ${RUNTIME_DEPS})
+        add_custom_command(
+            TARGET ${PARAMS_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${R} $<TARGET_FILE_DIR:${PARAMS_NAME}>
+        )
+    endforeach()
 endfunction()
 
 function(ExpandResourcePathExpression)
