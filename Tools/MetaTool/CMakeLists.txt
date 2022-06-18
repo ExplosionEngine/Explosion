@@ -1,13 +1,13 @@
-file(GLOB SOURCES Src/Static/*.cpp)
+file(GLOB SOURCES Src/*.cpp)
 AddLibrary(
     NAME MetaTool.Static
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB Common llvm-clang
+    LIB llvm-clang
 )
 
-file(GLOB SOURCES Src/Exe/*.cpp)
+file(GLOB SOURCES ExeSrc/*.cpp)
 AddExecutable(
     NAME MetaTool
     SRC ${SOURCES}
@@ -15,12 +15,13 @@ AddExecutable(
 )
 
 AddTest(
+    META
     NAME MetaTool.Test
     SRC Test/Main.cpp
-    LIB MetaTool.Static googletest
+    INC Test
+    LIB MetaTool.Static
     RES
         ${CMAKE_SOURCE_DIR}/Engine/Source/Common/Include/Common/Meta.h->Test/MetaTool/Include/Common/Meta.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/Test/GlobalTest.h->Test/MetaTool/GlobalTest.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/Test/StructClassTest.h->Test/MetaTool/StructClassTest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Test/ClassTest.h->Test/MetaTool/ClassTest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/Test/NamespaceTest.h->Test/MetaTool/NamespaceTest.h
 )

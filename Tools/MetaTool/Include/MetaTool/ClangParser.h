@@ -44,20 +44,16 @@ namespace MetaTool {
         std::vector<ParamContext> params;
     };
 
-    struct StructContext {
+    struct ClassContext {
         std::string name;
         std::string metaData;
+        std::vector<FunctionContext> constructors;
         std::vector<VariableContext> variables;
         std::vector<FunctionContext> functions;
     };
 
-    struct ClassContext : public StructContext {};
-
     struct NamespaceContext {
         std::string name;
-        std::vector<VariableContext> variables;
-        std::vector<FunctionContext> functions;
-        std::vector<StructContext> structs;
         std::vector<ClassContext> classes;
         std::vector<NamespaceContext> namespaces;
     };

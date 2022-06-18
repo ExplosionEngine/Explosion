@@ -1,7 +1,10 @@
 option(BUILD_TEST "Build unit tests" ON)
 option(BUILD_SAMPLE "Build sample" ON)
 
-set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Api CACHE PATH "" FORCE)
+set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Generated/Api CACHE PATH "" FORCE)
+set(META_HEADER_DIR ${CMAKE_BINARY_DIR}/Generated/Meta CACHE PATH "" FORCE)
+set(BASIC_LIBS Common CACHE STRING "" FORCE)
+set(BASIC_TEST_LIBS googletest CACHE STRING "" FORCE)
 
 function(CombineRuntimeDependencies)
     cmake_parse_arguments(PARAMS "" "NAME" "RUNTIME_DEP" ${ARGN})
@@ -22,55 +25,100 @@ function(LinkLibraries)
     cmake_parse_arguments(PARAMS "" "NAME" "LIB" ${ARGN})
 
     foreach(L ${PARAMS_LIB})
-        if (TARGET ${L})
-            get_target_property(3RD_TYPE ${L} 3RD_TYPE)
-            if (${3RD_TYPE} STREQUAL "3RD_TYPE-NOTFOUND")
-                target_link_libraries(${PARAMS_NAME} ${L})
-            else()
-                get_target_property(${L}_INCLUDE ${L} INCLUDE)
-                get_target_property(${L}_LINK ${L} LINK)
-                get_target_property(${L}_LIB ${L} LIB)
-
-                if (NOT ("${${L}_INCLUDE}" STREQUAL "${L}_INCLUDE-NOTFOUND"))
-                    target_include_directories(${PARAMS_NAME} PUBLIC ${${L}_INCLUDE})
-                endif()
-                if (NOT ("${${L}_LINK}" STREQUAL "${L}_LINK-NOTFOUND"))
-                    target_link_directories(${PARAMS_NAME} PUBLIC ${${L}_LINK})
-                endif()
-                if (NOT ("${${L}_LIB}" STREQUAL "${L}_LIB-NOTFOUND"))
-                    target_link_libraries(${PARAMS_NAME} ${${L}_LIB})
-                endif()
-
-                if (${3RD_TYPE} STREQUAL "CMakeProject")
-                    add_dependencies(${PARAMS_NAME} ${L})
-                endif()
-            endif()
-
-            get_target_property(${L}_RUNTIME_DEP ${L} RUNTIME_DEP)
-            if (NOT ("${${L}_RUNTIME_DEP}" STREQUAL "${L}_RUNTIME_DEP-NOTFOUND"))
-                CombineRuntimeDependencies(
-                    NAME ${PARAMS_NAME}
-                    RUNTIME_DEP "${${L}_RUNTIME_DEP}"
-                )
-            endif()
-        else()
+        if (NOT (TARGET ${L}))
             target_link_libraries(${PARAMS_NAME} ${L})
+            continue()
+        endif()
+
+        get_target_property(3RD_TYPE ${L} 3RD_TYPE)
+        if (${3RD_TYPE} STREQUAL "3RD_TYPE-NOTFOUND")
+            target_link_libraries(${PARAMS_NAME} ${L})
+        else()
+            get_target_property(INCLUDE ${L} 3RD_INCLUDE)
+            get_target_property(LINK ${L} 3RD_LINK)
+            get_target_property(LIB ${L} 3RD_LIB)
+
+            if (NOT ("${INCLUDE}" STREQUAL "INCLUDE-NOTFOUND"))
+                target_include_directories(${PARAMS_NAME} PUBLIC ${INCLUDE})
+            endif()
+            if (NOT ("${LINK}" STREQUAL "LINK-NOTFOUND"))
+                target_link_directories(${PARAMS_NAME} PUBLIC ${LINK})
+            endif()
+            if (NOT ("${LIB}" STREQUAL "LIB-NOTFOUND"))
+                target_link_libraries(${PARAMS_NAME} ${LIB})
+            endif()
+
+            if (${3RD_TYPE} STREQUAL "CMakeProject")
+                add_dependencies(${PARAMS_NAME} ${L})
+            endif()
+        endif()
+
+        get_target_property(RUNTIME_DEP ${L} 3RD_RUNTIME_DEP)
+        if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
+            CombineRuntimeDependencies(
+                NAME ${PARAMS_NAME}
+                RUNTIME_DEP "${RUNTIME_DEP}"
+            )
         endif()
     endforeach()
+endfunction()
+
+function(LinkBasicLibs)
+    cmake_parse_arguments(PARAMS "" "NAME" "LIB" ${ARGN})
+
+    foreach(L ${PARAMS_LIB})
+        if (NOT (${PARAMS_NAME} STREQUAL ${L}))
+            LinkLibraries(
+                NAME ${PARAMS_NAME}
+                LIB ${L}
+            )
+        endif()
+    endforeach()
+endfunction()
+
+function(GetTargetRuntimeDependenciesRecurse)
+    cmake_parse_arguments(PARAMS "" "NAME;OUTPUT" "" ${ARGN})
+
+    get_target_property(RUNTIME_DEP ${PARAMS_NAME} RUNTIME_DEP)
+    if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
+        foreach(R ${RUNTIME_DEP})
+            list(APPEND RESULT ${R})
+        endforeach()
+    endif()
+
+    get_target_property(LINK_LIBRARIES ${PARAMS_NAME} LINK_LIBRARIES)
+    if (NOT ("${LINK_LIBRARIES}" STREQUAL "LINK_LIBRARIES-NOTFOUND"))
+        foreach(L ${LINK_LIBRARIES})
+            if (NOT TARGET ${L})
+                continue()
+            endif()
+
+            GetTargetRuntimeDependenciesRecurse(
+                NAME ${L}
+                OUTPUT TEMP
+            )
+            foreach(T ${TEMP})
+                list(APPEND RESULT ${T})
+            endforeach()
+        endforeach()
+    endif()
+
+    set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
 endfunction()
 
 function(AddRuntimeDependenciesCopyCommand)
     cmake_parse_arguments(PARAMS "" "NAME" "" ${ARGN})
 
-    get_target_property(RUNTIME_DEP ${PARAMS_NAME} RUNTIME_DEP)
-    if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
-        foreach(R ${RUNTIME_DEP})
-            add_custom_command(
-                TARGET ${PARAMS_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${R} $<TARGET_FILE_DIR:${PARAMS_NAME}>
-            )
-        endforeach()
-    endif()
+    GetTargetRuntimeDependenciesRecurse(
+        NAME ${PARAMS_NAME}
+        OUTPUT RUNTIME_DEPS
+    )
+    foreach(R ${RUNTIME_DEPS})
+        add_custom_command(
+            TARGET ${PARAMS_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${R} $<TARGET_FILE_DIR:${PARAMS_NAME}>
+        )
+    endforeach()
 endfunction()
 
 function(ExpandResourcePathExpression)
@@ -100,10 +148,99 @@ function(AddResourcesCopyCommand)
     endforeach()
 endfunction()
 
-function(AddExecutable)
-    cmake_parse_arguments(PARAMS "SAMPLE" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES" ${ARGN})
+function(GetTargetIncludeDirectoriesRecurse)
+    cmake_parse_arguments(PARAMS "" "NAME;OUTPUT" "" ${ARGN})
 
-    if ((DEFINED PARAMS_SAMPLE) AND (NOT ${BUILD_SAMPLE}))
+    if (NOT (TARGET ${PARAMS_NAME}))
+        return()
+    endif()
+
+    get_target_property(TARGET_INCS ${PARAMS_NAME} INCLUDE_DIRECTORIES)
+    if (NOT ("${TARGET_INCS}" STREQUAL "TARGET_INCS-NOTFOUND"))
+        foreach(TARGET_INC ${TARGET_INCS})
+            list(APPEND RESULT ${TARGET_INC})
+        endforeach()
+    endif()
+
+    get_target_property(TARGET_LIBS ${PARAMS_NAME} LINK_LIBRARIES)
+    if (NOT ("${TARGET_LIBS}" STREQUAL "TARGET_LIBS-NOTFOUND"))
+        foreach(TARGET_LIB ${TARGET_LIBS})
+            GetTargetIncludeDirectoriesRecurse(
+                NAME ${TARGET_LIB}
+                OUTPUT LIB_INCS
+            )
+            foreach(LIB_INC ${LIB_INCS})
+                list(APPEND RESULT ${LIB_INC})
+            endforeach()
+        endforeach()
+    endif()
+
+    list(REMOVE_DUPLICATES RESULT)
+    set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
+endfunction()
+
+function(AddMetaHeaderGenerationCommand)
+    cmake_parse_arguments(PARAMS "" "NAME" "INC;LIB" ${ARGN})
+
+    foreach(L ${BASIC_LIBS})
+        if (${PARAMS_NAME} STREQUAL ${L})
+            return()
+        endif()
+    endforeach()
+    set(EXCEPT_TARGETS MetaTool.Static MetaTool)
+    foreach(L ${EXCEPT_TARGETS})
+        if (${PARAMS_NAME} STREQUAL ${L})
+            return()
+        endif()
+    endforeach()
+
+    add_dependencies(${PARAMS_NAME} MetaTool)
+    target_include_directories(${PARAMS_NAME} PUBLIC ${META_HEADER_DIR})
+
+    foreach(I ${PARAMS_INC})
+        file(GLOB_RECURSE HL ${I}/*.h)
+        foreach(H ${HL})
+            list(APPEND HEADERS ${H})
+        endforeach()
+    endforeach()
+
+    foreach(H ${HEADERS})
+        STRING(REGEX REPLACE ".+/(.+)\\..*" "\\1" FILE_NAME ${H})
+
+        GetTargetIncludeDirectoriesRecurse(
+            NAME ${PARAMS_NAME}
+            OUTPUT INCS
+        )
+
+        foreach(INC ${INCS})
+            list(APPEND INC_ARGS -i ${INC})
+        endforeach()
+
+        # Flag PRE_BUILD in add_custom_command is only supported by Visual Studio 7+,
+        # this flag will be treated as PRE_LINK in other generators, so just replace it with add_custom_target and add_dependencies
+        # #see https://cmake.org/cmake/help/latest/command/add_custom_command.html
+        if (${MSVC})
+            add_custom_command(
+                TARGET ${PARAMS_NAME} PRE_BUILD
+                WORKING_DIRECTORY $<TARGET_FILE_DIR:${PARAMS_NAME}>
+                COMMAND MetaTool -s ${H} -o ${META_HEADER_DIR}/${PARAMS_NAME}/${FILE_NAME}.meta.h ${INC_ARGS}
+            )
+        else()
+            set(TARGET_NAME MetaToolTask-${PARAMS_NAME}-${FILE_NAME}.meta.h)
+            add_custom_target(
+                ${TARGET_NAME}
+                WORKING_DIRECTORY $<TARGET_FILE_DIR:${PARAMS_NAME}>
+                COMMAND MetaTool -s ${H} -o ${META_HEADER_DIR}/${PARAMS_NAME}/${FILE_NAME}.meta.h ${INC_ARGS}
+            )
+            add_dependencies(${PARAMS_NAME} ${TARGET_NAME})
+        endif()
+    endforeach()
+endfunction()
+
+function(AddExecutable)
+    cmake_parse_arguments(PARAMS "SAMPLE;META" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES" ${ARGN})
+
+    if (${PARAMS_SAMPLE} AND (NOT ${BUILD_SAMPLE}))
         return()
     endif()
 
@@ -118,6 +255,10 @@ function(AddExecutable)
     target_link_directories(
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_LINK}
+    )
+    LinkBasicLibs(
+        NAME ${PARAMS_NAME}
+        LIB ${BASIC_LIBS}
     )
     LinkLibraries(
         NAME ${PARAMS_NAME}
@@ -137,10 +278,17 @@ function(AddExecutable)
     if (${MSVC})
         set_target_properties(${PARAMS_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>)
     endif()
+
+    if (${PARAMS_META})
+        AddMetaHeaderGenerationCommand(
+            NAME ${PARAMS_NAME}
+            INC ${PARAMS_INC}
+        )
+    endif()
 endfunction()
 
 function(AddLibrary)
-    cmake_parse_arguments(PARAMS "" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB" ${ARGN})
+    cmake_parse_arguments(PARAMS "META" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB" ${ARGN})
 
     add_library(
         ${PARAMS_NAME}
@@ -156,6 +304,10 @@ function(AddLibrary)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_PRIVATE_LINK}
         PUBLIC ${PARAMS_PUBLIC_LINK}
+    )
+    LinkBasicLibs(
+        NAME ${PARAMS_NAME}
+        LIB ${BASIC_LIBS}
     )
     LinkLibraries(
         NAME ${PARAMS_NAME}
@@ -183,6 +335,13 @@ function(AddLibrary)
             PUBLIC ${API_HEADER_DIR}/${PARAMS_NAME}
         )
     endif()
+
+    if (${PARAMS_META})
+        AddMetaHeaderGenerationCommand(
+            NAME ${PARAMS_NAME}
+            INC ${PARAMS_PUBLIC_INC} ${PARAMS_PRIVATE_INC}
+        )
+    endif()
 endfunction()
 
 function(AddTest)
@@ -190,7 +349,7 @@ function(AddTest)
         return()
     endif()
 
-    cmake_parse_arguments(PARAMS "" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES" ${ARGN})
+    cmake_parse_arguments(PARAMS "META" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES" ${ARGN})
 
     add_executable(
         ${PARAMS_NAME}
@@ -203,6 +362,10 @@ function(AddTest)
     target_link_directories(
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_LINK}
+    )
+    LinkBasicLibs(
+        NAME ${PARAMS_NAME}
+        LIB ${BASIC_LIBS} ${BASIC_TEST_LIBS}
     )
     LinkLibraries(
         NAME ${PARAMS_NAME}
@@ -224,4 +387,11 @@ function(AddTest)
         COMMAND ${PARAMS_NAME}
         WORKING_DIRECTORY $<TARGET_FILE_DIR:${PARAMS_NAME}>
     )
+
+    if (${PARAMS_META})
+        AddMetaHeaderGenerationCommand(
+            NAME ${PARAMS_NAME}
+            INC ${PARAMS_INC}
+        )
+    endif()
 endfunction()

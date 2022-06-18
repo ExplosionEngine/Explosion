@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <MetaTool/ClangParser.h>
+#include <MetaTool.Test/ClassTest.meta.h>
 using namespace MetaTool;
 
 std::vector<const char*> includePaths = { "Test/MetaTool/Include" };
@@ -28,7 +29,7 @@ void AssertFunctionContextEqual(const FunctionContext& a, const FunctionContext&
     }
 }
 
-void AssertStructClassContextEqual(const StructContext& a, const StructContext& b)
+void AssertClassContextEqual(const ClassContext& a, const ClassContext& b)
 {
     ASSERT_EQ(a.name, b.name);
     ASSERT_EQ(a.metaData, b.metaData);
@@ -42,10 +43,10 @@ void AssertStructClassContextEqual(const StructContext& a, const StructContext& 
     }
 }
 
-TEST(MetaToolTest, ClangParserGlobalTest)
+TEST(MetaToolTest, ClangParserClassTest)
 {
     SourceInfo sourceInfo {};
-    sourceInfo.sourceFile = "Test/MetaTool/GlobalTest.h";
+    sourceInfo.sourceFile = "Test/MetaTool/ClassTest.h";
     sourceInfo.includePathNum = includePaths.size();
     sourceInfo.includePaths = includePaths.data();
 
@@ -53,69 +54,42 @@ TEST(MetaToolTest, ClangParserGlobalTest)
     clangParser.Parse();
     const auto& metaContext = clangParser.GetMetaContext();
 
-    ASSERT_EQ(metaContext.variables.size(), 5);
-    AssertVariableContextEqual(metaContext.variables[0], VariableContext { "v0", "Property", "int" });
-    AssertVariableContextEqual(metaContext.variables[1], VariableContext { "v1", "Property", "float" });
-    AssertVariableContextEqual(metaContext.variables[2], VariableContext { "v2", "Property", "double" });
-    AssertVariableContextEqual(metaContext.variables[3], VariableContext { "v3", "Property", "int *" });
-    AssertVariableContextEqual(metaContext.variables[4], VariableContext { "v4", "Property", "int **" });
+    ASSERT_EQ(metaContext.classes.size(), 4);
 
-    ASSERT_EQ(metaContext.functions.size(), 4);
-    AssertFunctionContextEqual(metaContext.functions[0], FunctionContext { "f0", "Function, EditorUI(Alias(\"TestButton\"))", "void", {} });
-    AssertFunctionContextEqual(metaContext.functions[1], FunctionContext { "f1", "Function", "int", {} });
-    AssertFunctionContextEqual(metaContext.functions[2], FunctionContext { "f2", "Function", "float", { ParamContext { "a", "int" }, ParamContext { "b", "int" } } });
-    AssertFunctionContextEqual(metaContext.functions[3], FunctionContext { "f3", "Function", "double *", { ParamContext { "a", "int *" }, ParamContext { "b", "int *" } } });
-}
-
-TEST(MetaToolTest, ClangParserStructClassTest)
-{
-    SourceInfo sourceInfo {};
-    sourceInfo.sourceFile = "Test/MetaTool/StructClassTest.h";
-    sourceInfo.includePathNum = includePaths.size();
-    sourceInfo.includePaths = includePaths.data();
-
-    ClangParser clangParser(sourceInfo);
-    clangParser.Parse();
-    const auto& metaContext = clangParser.GetMetaContext();
-
-    ASSERT_EQ(metaContext.structs.size(), 3);
-
-    StructContext structContext {};
-    structContext.metaData = "Struct";
-    structContext.name = "S0";
-    structContext.variables = {
+    ClassContext classContext {};
+    classContext.metaData = "Class";
+    classContext.name = "S0";
+    classContext.variables = {
         VariableContext { "a", "Property", "int" },
         VariableContext { "b", "Property", "float" },
         VariableContext { "c", "Property", "double" }
     };
-    AssertStructClassContextEqual(metaContext.structs[0], structContext);
+    AssertClassContextEqual(metaContext.classes[0], classContext);
 
-    structContext = StructContext {};
-    structContext.metaData = "Struct";
-    structContext.name = "S1";
-    structContext.variables = {
+    classContext = ClassContext {};
+    classContext.metaData = "Class";
+    classContext.name = "S1";
+    classContext.variables = {
         VariableContext { "c", "Property", "double" },
     };
-    AssertStructClassContextEqual(metaContext.structs[1], structContext);
+    AssertClassContextEqual(metaContext.classes[1], classContext);
 
-    structContext = StructContext {};
-    structContext.metaData = "Struct";
-    structContext.name = "S2";
-    structContext.functions = {
+    classContext = ClassContext {};
+    classContext.metaData = "Class";
+    classContext.name = "S2";
+    classContext.functions = {
         FunctionContext { "GetA", "Function", "int", {} },
         FunctionContext { "GetPointerB", "Function", "float *", { ParamContext { "t", "int" } } }
     };
-    AssertStructClassContextEqual(metaContext.structs[2], structContext);
+    AssertClassContextEqual(metaContext.classes[2], classContext);
 
-    ASSERT_EQ(metaContext.classes.size(), 1);
-
-    ClassContext classContext {};
+    classContext = ClassContext {};
     classContext.metaData = "Class";
     classContext.name = "C0";
     classContext.functions = {
         FunctionContext { "GetA", "Function", "int *", { ParamContext { "b", "float *" } } }
     };
-    AssertStructClassContextEqual(metaContext.classes[0], classContext);
+    AssertClassContextEqual(metaContext.classes[3], classContext);
 }
 
 TEST(MetaToolTest, ClangParserNamespaceTest)
@@ -129,19 +103,8 @@ TEST(MetaToolTest, ClangParserNamespaceTest)
     clangParser.Parse();
     const auto& metaContext = clangParser.GetMetaContext();
 
-    ASSERT_EQ(metaContext.name, "Global");
-
-    ASSERT_EQ(metaContext.functions.size(), 1);
-    AssertFunctionContextEqual(metaContext.functions[0], FunctionContext { "F0", "Function", "int", {} });
-
     ASSERT_EQ(metaContext.namespaces.size(), 1);
     ASSERT_EQ(metaContext.namespaces[0].name, "N0");
-
-    ASSERT_EQ(metaContext.namespaces[0].variables.size(), 1);
-    AssertVariableContextEqual(metaContext.namespaces[0].variables[0], VariableContext { "v0", "Property", "int" });
-
-    ASSERT_EQ(metaContext.namespaces[0].functions.size(), 1);
-    AssertFunctionContextEqual(metaContext.namespaces[0].functions[0], FunctionContext { "F1", "Function", "float", { ParamContext { "a", "int" } } });
 
     ASSERT_EQ(metaContext.namespaces[0].classes.size(), 1);
 
@@ -151,7 +114,42 @@ TEST(MetaToolTest, ClangParserNamespaceTest)
     classContext.functions = {
         FunctionContext { "GetA", "Function", "int **", {} }
     };
-    AssertStructClassContextEqual(metaContext.namespaces[0].classes[0], classContext);
+    AssertClassContextEqual(metaContext.namespaces[0].classes[0], classContext);
+}
+
+TEST(MetaToolTest, HeaderGeneratorClassTest)
+{
+    std::hash<std::string_view> hash {};
+
+    {
+        meta::type s0 = meta::resolve(hash("S0"));
+        meta::data a = s0.data(hash("a"));
+        meta::data b = s0.data(hash("b"));
+        meta::data c = s0.data(hash("c"));
+
+        meta::any instance = S0 { 1, 2.0f, 3.0 };
+        ASSERT_EQ(a.get(instance).cast<int>(), 1);
+        ASSERT_EQ(b.get(instance).cast<float>(), 2.0f);
+        ASSERT_EQ(c.get(instance).cast<double>(), 3.0);
+    }
+
+    {
+        meta::type s1 = meta::resolve(hash("S1"));
+        meta::ctor s1Ctor = s1.ctor<int, float, double>();
+        meta::data c = s1.data(hash("c"));
+
+        meta::any instance = s1Ctor.invoke(1, 2.0f, 3.0);
+        ASSERT_EQ(c.get(instance).cast<double>(), 3.0);
+    }
+
+    {
+        meta::type s2 = meta::resolve(hash("S2"));
+        meta::ctor s2Ctor = s2.ctor<int, float>();
+        meta::func getA = s2.func(hash("GetA"));
+
+        meta::any instance = s2Ctor.invoke(1, 2.0f);
+        ASSERT_EQ(getA.invoke(instance).cast<int>(), 1);
+    }
 }
 
 int main(int argc, char* argv[])
