@@ -216,11 +216,24 @@ function(AddMetaHeaderGenerationCommand)
             list(APPEND INC_ARGS -i ${INC})
         endforeach()
 
-        add_custom_command(
-            TARGET ${PARAMS_NAME} PRE_BUILD
-            WORKING_DIRECTORY $<TARGET_FILE_DIR:${PARAMS_NAME}>
-            COMMAND MetaTool -s ${H} -o ${META_HEADER_DIR}/${PARAMS_NAME}/${FILE_NAME}.meta.h ${INC_ARGS}
-        )
+        # Flag PRE_BUILD in add_custom_command is only supported by Visual Studio 7+,
+        # this flag will be treated as PRE_LINK in other generators, so just replace it with add_custom_target and add_dependencies
+        # #see https://cmake.org/cmake/help/latest/command/add_custom_command.html
+        if (${MSVC})
+            add_custom_command(
+                TARGET ${PARAMS_NAME} PRE_BUILD
+                WORKING_DIRECTORY $<TARGET_FILE_DIR:${PARAMS_NAME}>
+                COMMAND MetaTool -s ${H} -o ${META_HEADER_DIR}/${PARAMS_NAME}/${FILE_NAME}.meta.h ${INC_ARGS}
+            )
+        else()
+            set(TARGET_NAME MetaToolTask-${PARAMS_NAME}-${FILE_NAME}.meta.h)
+            add_custom_target(
+                ${TARGET_NAME}
+                WORKING_DIRECTORY $<TARGET_FILE_DIR:${PARAMS_NAME}>
+                COMMAND MetaTool -s ${H} -o ${META_HEADER_DIR}/${PARAMS_NAME}/${FILE_NAME}.meta.h ${INC_ARGS}
+            )
+            add_dependencies(${PARAMS_NAME} ${TARGET_NAME})
+        endif()
     endforeach()
 endfunction()
 

@@ -131,5 +131,5 @@ Add3rdCMakeProject(
     HASH d15f6f53d20ed98e1ee4669663b4af7d072c3397ee6d8125de1fd6922115c6a4
     INCLUDE $<INSTALL_DIR>/include
     LINK $<INSTALL_DIR>/lib
-    LIB gtest$<IF:$<CONFIG:Debug>,d,> gmock$<IF:$<CONFIG:Debug>,d,>
+    LIB gtest$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,> gmock$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
 )
