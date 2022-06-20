@@ -96,7 +96,7 @@ function(Add3rdHeaderOnlyPackage)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            INCLUDE "${R_INCLUDE}"
+            3RD_INCLUDE "${R_INCLUDE}"
         )
     endif()
 endfunction()
@@ -135,7 +135,7 @@ function(Add3rdBinaryPackage)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            INCLUDE "${R_INCLUDE}"
+            3RD_INCLUDE "${R_INCLUDE}"
         )
     endif()
 
@@ -147,7 +147,7 @@ function(Add3rdBinaryPackage)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            LINK "${R_LINK}"
+            3RD_LINK "${R_LINK}"
         )
     endif()
 
@@ -159,7 +159,7 @@ function(Add3rdBinaryPackage)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            LIB "${R_LIB}"
+            3RD_LIB "${R_LIB}"
         )
     endif()
 
@@ -171,7 +171,7 @@ function(Add3rdBinaryPackage)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            RUNTIME_DEP "${R_RUNTIME_DEP}"
+            3RD_RUNTIME_DEP "${R_RUNTIME_DEP}"
         )
     endif()
 endfunction()
@@ -221,7 +221,7 @@ function(Add3rdCMakeProject)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            INCLUDE "${R_INCLUDE}"
+            3RD_INCLUDE "${R_INCLUDE}"
         )
     endif()
 
@@ -235,7 +235,7 @@ function(Add3rdCMakeProject)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            LINK "${R_LINK}"
+            3RD_LINK "${R_LINK}"
         )
     endif()
 
@@ -249,7 +249,7 @@ function(Add3rdCMakeProject)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            LIB "${R_LIB}"
+            3RD_LIB "${R_LIB}"
         )
     endif()
 
@@ -263,7 +263,7 @@ function(Add3rdCMakeProject)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            RUNTIME_DEP "${R_RUNTIME_DEP}"
+            3RD_RUNTIME_DEP "${R_RUNTIME_DEP}"
         )
     endif()
 endfunction()
@@ -279,6 +279,6 @@ function(Add3rdAliasPackage)
     set_target_properties(
         ${PARAMS_NAME} PROPERTIES
         3RD_TYPE "Alias"
-        LIB "${PARAMS_LIB}"
+        3RD_LIB "${PARAMS_LIB}"
     )
 endfunction()

@@ -4,7 +4,6 @@ AddLibrary(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB Common
 )
 
 function(AddRHISample)
@@ -17,22 +16,21 @@ function(AddRHISample)
             "-framework CoreFoundation")
     endif()
 
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+        set(PLATFORM_DEP_TARGET RHI-DirectX12 RHI-Vulkan)
+    else()
+        set(PLATFORM_DEP_TARGET RHI-Vulkan)
+    endif()
+
     AddExecutable(
+        SAMPLE
         NAME ${PARAMS_NAME}
         SRC ${CMAKE_CURRENT_SOURCE_DIR}/${PARAMS_SRC}
         INC Sample
         LIB RHI glfw GLM clipp dxc VulkanSDK ${PLATFORM_EXT_LIBS}
+        DEP_TARGET ${PLATFORM_DEP_TARGET}
+        RES ${CMAKE_CURRENT_SOURCE_DIR}/${PARAMS_SHADER}->Shader/${PARAMS_SHADER}
     )
-    add_custom_command(
-        TARGET ${PARAMS_NAME} PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${PARAMS_SHADER} $<TARGET_FILE_DIR:${PARAMS_NAME}>
-    )
-
-    if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-        add_dependencies(${PARAMS_NAME} RHI-DirectX12 RHI-Vulkan)
-    else ()
-        add_dependencies(${PARAMS_NAME} RHI-Vulkan)
-    endif ()
 endfunction()
 
 AddRHISample(

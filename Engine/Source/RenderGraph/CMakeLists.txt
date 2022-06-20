@@ -3,5 +3,4 @@ AddLibrary(
     NAME RenderGraph
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB Common
 )

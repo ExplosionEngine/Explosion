@@ -3,5 +3,4 @@ AddLibrary(
     NAME Console
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB Common
 )

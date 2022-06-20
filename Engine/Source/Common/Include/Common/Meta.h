@@ -4,22 +4,28 @@
 
 #pragma once
 
+#ifdef META_TOOL
 #define Meta(...) __attribute__((annotate(#__VA_ARGS__)))
+#else
+#define Meta(...)
+#endif
 
-#define Class "Class;"
-#define Enum "Enum;"
-#define Function "Function;"
-#define Property "Property;"
+#define Class
+#define Struct
+#define Enum
+#define Function
+#define Property
 
-#define Transient "Transient;"
+#define Transient
 
-#define ScriptVisible "ScriptVisible;"
-#define ScriptReadOnly "ScriptReadOnly;"
-#define ScriptReadWrite "ScriptReadWrite;"
+#define ScriptVisible
+#define ScriptReadOnly
+#define ScriptReadWrite
 
-#define EditorOnly "EditorOnly;"
-#define EditorUI(...) "EditorUI:" #__VA_ARGS__ ";"
-#define DefaultValue(...) "DefaultValue:" #__VA_ARGS__ ";"
-#define MinValue(...) "MinValue:" #__VA_ARGS__ ";"
-#define MaxValue(...) "MaxValue:" #__VA_ARGS__ ";"
-#define Alias(...) "Alias:" #__VA_ARGS__ ";"
+#define EnginePrivate
+
+#define EditorUI(...)
+#define DefaultValue(...)
+#define MinValue(...)
+#define MaxValue(...)
+#define Alias(...)

@@ -25,7 +25,7 @@ AddLibrary(
 
 # TODO fix this unit test
 #AddTest(
-#    NAME RHI-VulkanTest
+#    NAME RHI-Vulkan.Test
 #    SRC ${TEST_SOURCES}
 #    LIB RHI-Vulkan.Static
 #)

@@ -18,29 +18,47 @@ namespace MetaTool {
         const char** includePaths;
     };
 
-    struct PropertyInfo {
-
+    enum class AccessSpecifier {
+        DEFAULT,
+        PUBLIC,
+        PROTECTED,
+        PRIVATE,
+        MAX
     };
 
-    struct FunctionInfo {
-
+    struct VariableContext {
+        std::string name;
+        std::string metaData;
+        std::string type;
     };
 
-    struct EnumInfo {
-
+    struct ParamContext {
+        std::string name;
+        std::string type;
     };
 
-    struct ClassInfo {
-        std::vector<PropertyInfo> properties;
-        std::vector<FunctionInfo> functions;
+    struct FunctionContext {
+        std::string name;
+        std::string metaData;
+        std::string returnType;
+        std::vector<ParamContext> params;
     };
 
-    struct MetaInfo {
-        std::vector<PropertyInfo> globalProperties;
-        std::vector<FunctionInfo> globalFunctions;
-        std::vector<EnumInfo> enums;
-        std::vector<ClassInfo> classes;
+    struct ClassContext {
+        std::string name;
+        std::string metaData;
+        std::vector<FunctionContext> constructors;
+        std::vector<VariableContext> variables;
+        std::vector<FunctionContext> functions;
     };
+
+    struct NamespaceContext {
+        std::string name;
+        std::vector<ClassContext> classes;
+        std::vector<NamespaceContext> namespaces;
+    };
+
+    struct MetaContext : public NamespaceContext {};
 
     class ClangParser {
     public:
@@ -49,7 +67,7 @@ namespace MetaTool {
         ~ClangParser();
 
         void Parse();
-        const MetaInfo& GetMetaInfo();
+        const MetaContext& GetMetaContext();
 
     private:
         static std::vector<const char*> GetCommandLineArguments(const SourceInfo& sourceInfo);
@@ -59,6 +77,6 @@ namespace MetaTool {
 
         CXIndex clangIndex;
         CXTranslationUnit clangTranslationUnit;
-        MetaInfo metaInfo;
+        MetaContext metaContext;
     };
 }
