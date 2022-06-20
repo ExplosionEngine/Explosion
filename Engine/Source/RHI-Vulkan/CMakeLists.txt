@@ -13,7 +13,7 @@ AddLibrary(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB RHI VulkanSDK ${PLATFORM_EXT_LIBS}
+    LIB RHI VulkanSDK ${PLATFORM_EXT_LIBS} spirv-cross
 )
 
 AddLibrary(

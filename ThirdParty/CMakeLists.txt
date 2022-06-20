@@ -42,9 +42,7 @@ Add3rdBinaryPackage(
     VERSION 1.2.198.1
     INCLUDE $<SOURCE_DIR>/Include
     LINK $<SOURCE_DIR>/Lib
-    LIB
-        vulkan-1
-        spirv-cross-core
+    LIB vulkan-1
 )
 Add3rdBinaryPackage(
     NAME VulkanSDK
@@ -53,9 +51,7 @@ Add3rdBinaryPackage(
     VERSION 1.2.198.1
     INCLUDE $<SOURCE_DIR>/macOS/include
     LINK $<SOURCE_DIR>/macOS/lib
-    LIB
-        vulkan.1
-        spirv-cross-core
+    LIB vulkan.1
 )
 
 # DXC
@@ -136,4 +132,16 @@ Add3rdCMakeProject(
     INCLUDE $<INSTALL_DIR>/include
     LINK $<INSTALL_DIR>/lib
     LIB gtest$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,> gmock$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
+)
+
+# spirv-cross
+Add3rdCMakeProject(
+    NAME spirv-cross
+    PLATFORM All
+    VERSION 1.1.5
+    HASH 34ea2bb2dd528c1a7627e72431c376d6c53f0f38201eefcd0488ca5be81f6f6d
+    CMAKE_ARG -DSPIRV_CROSS_CLI=OFF -DSPIRV_CROSS_ENABLE_C_API=OFF -DSPIRV_CROSS_ENABLE_TESTS=OFF
+    INCLUDE $<INSTALL_DIR>/include
+    LINK $<INSTALL_DIR>/lib
+    LIB spirv-cross-core$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
 )
