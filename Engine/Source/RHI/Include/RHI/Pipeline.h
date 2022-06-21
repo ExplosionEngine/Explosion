@@ -65,7 +65,7 @@ namespace RHI {
     };
 
     struct MultiSampleState {
-        uint8_t count = 0;
+        uint8_t count = 1;
         uint32_t mask = 0xffffffff;
         bool alphaToCoverage = false;
     };

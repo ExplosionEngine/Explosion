@@ -68,7 +68,6 @@ public:
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         window = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), name.c_str(), nullptr, nullptr);
-
         OnCreate();
         while (!glfwWindowShouldClose(window)) {
             OnDrawFrame();

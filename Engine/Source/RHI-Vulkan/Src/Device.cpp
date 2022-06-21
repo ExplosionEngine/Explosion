@@ -14,6 +14,8 @@
 #include <RHI/Vulkan/PipelineLayout.h>
 #include <RHI/Vulkan/BindGroupLayout.h>
 #include <RHI/Vulkan/SwapChain.h>
+#include <RHI/Vulkan/Pipeline.h>
+#include <RHI/Vulkan/CommandBuffer.h>
 
 namespace RHI::Vulkan {
     const std::vector<const char*> DEVICE_EXTENSIONS = {
@@ -57,7 +59,7 @@ namespace RHI::Vulkan {
 
     SwapChain* VKDevice::CreateSwapChain(const SwapChainCreateInfo* createInfo)
     {
-        return new VKSwapChain(gpu->GetVKInstance(), createInfo);
+        return new VKSwapChain(*this, createInfo);
     }
 
     void VKDevice::Destroy()
@@ -111,14 +113,12 @@ namespace RHI::Vulkan {
 
     GraphicsPipeline* VKDevice::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new VKGraphicsPipeline(*this, createInfo);
     }
 
     CommandBuffer* VKDevice::CreateCommandBuffer()
     {
-        // TODO
-        return nullptr;
+        return new VKCommandBuffer(*this, pools[QueueType::GRAPHICS]);
     }
 
     Fence* VKDevice::CreateFence()
@@ -210,6 +210,9 @@ namespace RHI::Vulkan {
 
     void VKDevice::GetQueues()
     {
+        vk::CommandPoolCreateInfo poolInfo = {};
+        poolInfo.setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
+
         for (auto iter : queueFamilyMappings) {
             auto queueType = iter.first;
             auto queueFamilyIndex = iter.second.first;
@@ -220,6 +223,12 @@ namespace RHI::Vulkan {
                 tempQueues[i] = std::make_unique<VKQueue>(vkDevice.getQueue(queueFamilyIndex, i));
             }
             queues[queueType] = std::move(tempQueues);
+
+            poolInfo.setQueueFamilyIndex(iter.second.first);
+
+            vk::CommandPool pool;
+            Assert(vkDevice.createCommandPool(&poolInfo, nullptr, &pool) == vk::Result::eSuccess);
+            pools.emplace(queueType, pool);
         }
     }
 }

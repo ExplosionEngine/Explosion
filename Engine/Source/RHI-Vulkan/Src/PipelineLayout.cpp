@@ -48,7 +48,8 @@ namespace RHI::Vulkan {
         }
 
         vk::PipelineLayoutCreateInfo plInfo= {};
-        plInfo.setSetLayouts(setLayouts);
+        plInfo.setSetLayouts(setLayouts)
+            .setPushConstantRanges(pushConstants);
         Assert(device.GetVkDevice().createPipelineLayout(&plInfo, nullptr, &pipelineLayout) == vk::Result::eSuccess);
     }
 
