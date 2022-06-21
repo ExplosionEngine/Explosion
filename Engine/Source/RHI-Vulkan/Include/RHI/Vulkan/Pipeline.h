@@ -20,7 +20,10 @@ namespace RHI::Vulkan {
     private:
         void CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo);
 
+        void CreateNativeRenderPass(const GraphicsPipelineCreateInfo* createInfo);
+
         VKDevice& device;
+        vk::RenderPass renderPass = VK_NULL_HANDLE;
         vk::Pipeline pipeline = VK_NULL_HANDLE;
     };
 

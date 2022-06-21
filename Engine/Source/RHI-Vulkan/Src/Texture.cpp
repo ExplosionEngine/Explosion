@@ -3,6 +3,7 @@
 //
 
 #include <RHI/Vulkan/Texture.h>
+#include <RHI/Vulkan/TextureView.h>
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Gpu.h>
@@ -28,6 +29,11 @@ namespace RHI::Vulkan {
         return result;
     }
 
+    VKTexture::VKTexture(VKDevice& dev, const TextureCreateInfo* createInfo, vk::Image image)
+        : Texture(createInfo), device(dev), vkDeviceMemory(VK_NULL_HANDLE), vkImage(image)
+    {
+    }
+
     VKTexture::VKTexture(VKDevice& dev, const TextureCreateInfo* createInfo)
         : Texture(createInfo), device(dev)
     {
@@ -46,6 +52,11 @@ namespace RHI::Vulkan {
     void VKTexture::Destroy()
     {
         delete this;
+    }
+
+    TextureView* VKTexture::CreateTextureView(const TextureViewCreateInfo* createInfo)
+    {
+        return new VKTextureView(*this, device, createInfo);
     }
 
     vk::Image VKTexture::GetImage() const

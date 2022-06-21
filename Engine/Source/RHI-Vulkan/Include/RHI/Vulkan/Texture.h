@@ -15,13 +15,16 @@ namespace RHI::Vulkan {
     class VKTexture : public Texture {
     public:
         NON_COPYABLE(VKTexture)
+
+        VKTexture(VKDevice& device, const TextureCreateInfo* createInfo, vk::Image image);
         VKTexture(VKDevice& device, const TextureCreateInfo* createInfo);
         ~VKTexture() override;
 
         void Destroy() override;
 
-        vk::Image GetImage() const;
+        TextureView* CreateTextureView(const TextureViewCreateInfo* createInfo) override;
 
+        vk::Image GetImage() const;
     private:
         void CreateImage(const TextureCreateInfo* createInfo);
 
