@@ -125,15 +125,15 @@ namespace MetaTool {
             const auto& pair = iter.second;
             switch (pair.first) {
                 case MetaDataType::BOOL: {
-                    stream << ", std::make_pair(hash(\"" << iter.first << "\"), " << (any_cast<bool>(pair.second) ? "true" : "false") << ")";
+                    stream << ", std::make_pair<size_t, bool>(hash(\"" << iter.first << "\"), " << (any_cast<bool>(pair.second) ? "true" : "false") << ")";
                     break;
                 }
                 case MetaDataType::NUMBER: {
-                    stream << ", std::make_pair(hash(\"" << iter.first << "\"), " << std::to_string(any_cast<float>(pair.second)) << ")";
+                    stream << ", std::make_pair<size_t, float>(hash(\"" << iter.first << "\"), " << std::to_string(any_cast<float>(pair.second)) << ")";
                     break;
                 }
                 case MetaDataType::STRING: {
-                    stream << ", std::make_pair(hash(\"" << iter.first << "\"), " << "\"" << *any_cast<std::string>(&pair.second) << "\")";
+                    stream << ", std::make_pair<size_t, std::string_view>(hash(\"" << iter.first << "\"), " << "\"" << *any_cast<std::string>(&pair.second) << "\")";
                     break;
                 }
                 default: break;
