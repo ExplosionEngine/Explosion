@@ -24,8 +24,13 @@
 
 #define EnginePrivate
 
-#define EditorUI(...)
-#define DefaultValue(...)
-#define MinValue(...)
-#define MaxValue(...)
-#define Alias(...)
+#define EditorUI
+#define DefaultValue
+#define MinValue
+#define MaxValue
+#define Alias
+
+#define ShaderVariant(...)
+#define Macro
+#define RangeFrom
+#define RangeTo

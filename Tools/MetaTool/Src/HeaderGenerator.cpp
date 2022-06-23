@@ -94,7 +94,7 @@ namespace MetaTool {
 
     void ParseMetaDatas(MetaDataMap& result, const std::string& name, const std::string& metaData)
     {
-        result["name"] = { MetaDataType::STRING, name };
+        result["Name"] = { MetaDataType::STRING, name };
         ParseMetaDataGroup(result, "", Common::StringUtils::Replace(metaData, " ", ""));
     }
     
