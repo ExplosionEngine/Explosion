@@ -4,5 +4,12 @@ AddLibrary(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB dxc
+    LIB dxc RHI GLM
+)
+
+file(GLOB SOURCES Test/*.cpp)
+AddTest(
+    NAME Shader.Test
+    SRC ${SOURCES}
+    LIB Shader
 )

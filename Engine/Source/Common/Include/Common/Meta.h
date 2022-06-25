@@ -10,27 +10,43 @@
 #define Meta(...)
 #endif
 
+// Basic
 #define Class
 #define Struct
 #define Enum
 #define Function
 #define Property
 
+// Runtime
 #define Transient
 
+// Script
 #define ScriptVisible
 #define ScriptReadOnly
 #define ScriptReadWrite
 
+// Engine
 #define EnginePrivate
 
+// Editor
 #define EditorUI
 #define DefaultValue
 #define MinValue
 #define MaxValue
 #define Alias
 
-#define ShaderVariant(...)
+// Shaders
+#define ShaderDefine
+
+#define ShaderVariantSet
 #define Macro
 #define RangeFrom
 #define RangeTo
+
+#define VertexFactory
+#define VertexInput
+
+#define ShaderBuffer
+
+#define ShaderParameterSet
+#define BufferType
