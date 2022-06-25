@@ -4,6 +4,7 @@
 
 #include <Shader/Shader.h>
 #include <Shader/ShaderMap.h>
+#include <Shader/ShaderCompiler.h>
 
 namespace Shader {
 
