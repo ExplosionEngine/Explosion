@@ -9,36 +9,45 @@
 #include <Shader/Parameter.h>
 
 namespace Shader {
+    class IShader {
+    public:
+        ~IShader() = default;
+
+        virtual bool IsCompiled() = 0;
+        virtual std::vector<uint8_t>& GetByteCode() = 0;
+
+    protected:
+        IShader() = default;
+    };
+
     template <typename VertexFactory, typename ParameterSet, typename VariantSet>
-    class Shader {
+    class EngineShader : public IShader {
     public:
         using VertexFactoryType = VertexFactory;
         using ParameterSetType = ParameterSet;
         using VariantSetType = VariantSet;
 
-        ~Shader() = default;
+        ~EngineShader() = default;
+
+        bool IsCompiled() override
+        {
+            return !byteCode.empty();
+        }
+
+        std::vector<uint8_t>& GetByteCode() override
+        {
+            return byteCode;
+        }
+
+        void SetByteCode(std::vector<uint8_t>&& inByteCode)
+        {
+            byteCode = inByteCode;
+        }
 
     protected:
-        Shader() = default;
-    };
-
-    class ShaderRegistry {
-    public:
-        static ShaderRegistry& Get()
-        {
-            static ShaderRegistry instance;
-            return instance;
-        }
-
-        template <typename T>
-        void RegisterShader()
-        {
-            // TODO
-        }
-
-        ~ShaderRegistry() = default;
+        EngineShader() = default;
 
     private:
-        ShaderRegistry() = default;
+        std::vector<uint8_t> byteCode;
     };
 }

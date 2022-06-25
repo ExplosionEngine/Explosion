@@ -3,6 +3,7 @@
 //
 
 #include <Shader/Shader.h>
+#include <Shader/ShaderMap.h>
 
 namespace Shader {
 

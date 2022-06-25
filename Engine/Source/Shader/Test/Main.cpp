@@ -50,7 +50,7 @@ TestShaderVariantSet {
     int32_t testRangedInt = 0;
 };
 
-class TestShader : public Shader::Shader<TestVertexFactory, TestShaderParameterSet, TestShaderVariantSet> {
+class TestShader : public Shader::EngineShader<TestVertexFactory, TestShaderParameterSet, TestShaderVariantSet> {
     static constexpr std::string_view sourceFile = "Shader/Test/TestShader.esl";
     static constexpr std::string_view entryPoint = "VSMain";
     static constexpr RHI::ShaderStageBits stage = RHI::ShaderStageBits::VERTEX;
