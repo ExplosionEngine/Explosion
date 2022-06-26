@@ -145,3 +145,12 @@ Add3rdCMakeProject(
     LINK $<INSTALL_DIR>/lib
     LIB spirv-cross-core$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
 )
+
+# TaskFlow
+Add3rdHeaderOnlyPackage(
+    NAME taskflow
+    PLATFORM All
+    VERSION 3.4.0
+    HASH d6eb4674f2ca0feaed78044a05a1e59d62774ed9510d22bb8316a5fb48b8757b
+    INCLUDE $<SOURCE_DIR>
+)
