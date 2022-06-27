@@ -8,36 +8,35 @@
 #include <Common/Meta.h>
 #include <Shader/Shader.h>
 
-struct Meta(Class, VertexFactory)
-TestVertexFactory {
+struct Meta(Class, VertexFactory) TestVertexFactory {
     Meta(Property) glm::vec3 position;
     Meta(Property) glm::vec3 color;
 };
 
-struct Meta(Class, ShaderBuffer)
-TestShaderBuffer {
+struct Meta(Class, ShaderBuffer) TestShaderBuffer {
     Meta(Property) glm::mat4 model;
     Meta(Property) glm::mat4 view;
     Meta(Property) glm::mat4 projection;
 };
 
-struct Meta(Class, ShaderParameterSet)
-TestShaderParameterSet {
+struct Meta(Class, ShaderParameterSet) TestShaderParameterSet {
     Meta(Property, BufferType = "TestShaderBuffer") Shader::Buffer testShaderBuffer;
     Meta(Property) Shader::SamplerState testSamplerState;
     Meta(Property) Shader::Texture<float, 2> testTexture;
 };
 
-struct Meta(Class, ShaderVariantSet)
-TestShaderVariantSet {
+struct Meta(Class, ShaderVariantSet) TestShaderVariantSet {
     Meta(Property, Macro = "TEST_BOOL") bool testBool = false;
     Meta(Property, Macro = "TEST_RANGED_INT", RangeFrom = 0, RangeTo = 2) int32_t testRangedInt = 0;
 };
 
-class TestShader : public Shader::EngineShader<TestVertexFactory, TestShaderParameterSet, TestShaderVariantSet> {
+class TestShader : public Shader::EngineShader {
     static constexpr std::string_view sourceFile = "Shader/Test/TestShader.esl";
     static constexpr std::string_view entryPoint = "VSMain";
     static constexpr RHI::ShaderStageBits stage = RHI::ShaderStageBits::VERTEX;
+    using VertexFactoryType = TestVertexFactory;
+    using ParameterSetType = TestShaderParameterSet;
+    using VariantSetType = TestShaderVariantSet;
 };
 
 int main(int argc, char* argv[])

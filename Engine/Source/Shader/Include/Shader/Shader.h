@@ -20,13 +20,8 @@ namespace Shader {
         IShader() = default;
     };
 
-    template <typename VertexFactory, typename ParameterSet, typename VariantSet>
     class EngineShader : public IShader {
     public:
-        using VertexFactoryType = VertexFactory;
-        using ParameterSetType = ParameterSet;
-        using VariantSetType = VariantSet;
-
         ~EngineShader() = default;
 
         bool IsCompiled() override

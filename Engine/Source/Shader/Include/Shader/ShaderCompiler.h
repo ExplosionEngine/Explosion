@@ -15,29 +15,6 @@ namespace Shader {
 
         ~ShaderCompiler() = default;
 
-        template <typename T>
-        void EnqueueEngineShaderCompileTask(T&& shader)
-        {
-            // TODO
-        }
-
-        bool AllTasksDown()
-        {
-            // TODO
-            return false;
-        }
-
-        uint32_t TasksRemains()
-        {
-            // TODO
-            return 0;
-        }
-
-        void WaitAllTasks()
-        {
-            // TODO
-        }
-
     private:
         ShaderCompiler() = default;
     };
