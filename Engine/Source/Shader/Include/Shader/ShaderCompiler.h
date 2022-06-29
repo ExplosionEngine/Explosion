@@ -5,17 +5,5 @@
 #pragma once
 
 namespace Shader {
-    class ShaderCompiler {
-    public:
-        static ShaderCompiler& Get()
-        {
-            static ShaderCompiler instance;
-            return instance;
-        }
-
-        ~ShaderCompiler() = default;
-
-    private:
-        ShaderCompiler() = default;
-    };
+    // TODO
 }

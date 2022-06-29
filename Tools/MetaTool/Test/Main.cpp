@@ -163,11 +163,6 @@ TEST(MetaToolTest, HeaderGeneratorClassTest)
     }
 }
 
-TEST(MetaToolTest, HeaderGeneratorShaderTest)
-{
-    // TODO
-}
-
 int main(int argc, char* argv[])
 {
     testing::InitGoogleTest(&argc, argv);

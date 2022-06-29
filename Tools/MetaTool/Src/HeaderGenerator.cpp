@@ -15,7 +15,8 @@
 namespace MetaTool {
     enum class MetaDataType {
         BOOL,
-        NUMBER,
+        INTEGER,
+        FLOATING,
         STRING,
         MAX
     };
@@ -76,8 +77,10 @@ namespace MetaTool {
             auto fullName = GetMetaDataFullName(prefix, splits[0]);
             if (Common::StringUtils::RegexMatch(splits[1], R"(\".+\")")) {
                 result[fullName] = { MetaDataType::STRING, splits[1].substr(1, splits[1].size() - 2) };
-            } else {
-                result[fullName] = { MetaDataType::NUMBER, std::stof(splits[1]) };
+            } else if (Common::StringUtils::RegexMatch(splits[1], R"(\-{0,1}\d+)")) {
+                result[fullName] = { MetaDataType::INTEGER, std::stoi(splits[1]) };
+            } else if (Common::StringUtils::RegexMatch(splits[2], R"(\-{0,1}\d+\.\d+)")) {
+                result[fullName] = { MetaDataType::FLOATING, std::stof(splits[1]) };
             }
         } else {
             result[GetMetaDataFullName(prefix, metaData)] = { MetaDataType::BOOL, true };
@@ -128,7 +131,11 @@ namespace MetaTool {
                     stream << ", std::make_pair<size_t, bool>(hash(\"" << iter.first << "\"), " << (any_cast<bool>(pair.second) ? "true" : "false") << ")";
                     break;
                 }
-                case MetaDataType::NUMBER: {
+                case MetaDataType::INTEGER: {
+                    stream << ", std::make_pair<size_t, int32_t>(hash(\"" << iter.first << "\"), " << std::to_string(any_cast<int32_t>(pair.second)) << ")";
+                    break;
+                }
+                case MetaDataType::FLOATING: {
                     stream << ", std::make_pair<size_t, float>(hash(\"" << iter.first << "\"), " << std::to_string(any_cast<float>(pair.second)) << ")";
                     break;
                 }

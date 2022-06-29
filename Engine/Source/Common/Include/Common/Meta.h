@@ -36,17 +36,7 @@
 #define Alias
 
 // Shaders
-#define ShaderDefine
-
-#define ShaderVariantSet
-#define Macro
-#define RangeFrom
-#define RangeTo
-
-#define VertexFactory
-#define VertexInput
-
-#define ShaderBuffer
-
-#define ShaderParameterSet
+#define ShaderMacro
+#define MinValue
+#define MaxValue
 #define BufferType
