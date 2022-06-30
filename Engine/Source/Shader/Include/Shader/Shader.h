@@ -14,6 +14,12 @@
 #include <Common/Hash.h>
 #include <Shader/Parameter.h>
 
+#define RegisterEngineShader(Name) \
+    static int _NameRegister = []() -> int { \
+        Shader::EngineShaderMap<Name>::Get(); \
+        return 0; \
+    }(); \
+
 namespace Shader {
     class IShader {
     public:
@@ -91,11 +97,11 @@ namespace Shader {
         static std::pair<uint8_t, uint8_t> GetShaderMacroRange(meta::data data)
         {
             std::hash<std::string_view> hash {};
-            auto minValueProp = data.template prop(hash("MinValue"));
-            auto maxValueProp = data.template prop(hash("MaxValue"));
+            auto minValueProp = data.prop(hash("MinValue"));
+            auto maxValueProp = data.prop(hash("MaxValue"));
 
-            auto minValue = minValueProp ? minValueProp.value().template cast<uint8_t>() : 0;
-            auto maxValue = maxValueProp ? maxValueProp.value().template cast<uint8_t>() : 1;
+            auto minValue = minValueProp ? minValueProp.value().cast<uint8_t>() : 0;
+            auto maxValue = maxValueProp ? maxValueProp.value().cast<uint8_t>() : 1;
             Assert(minValue <= maxValue);
             return std::make_pair(minValue, maxValue);
         }
@@ -118,14 +124,14 @@ namespace Shader {
         void EmplaceAllVariants()
         {
             shaders.reserve(GetVariantNum());
-            shaders.template emplace_back(std::make_pair({}, T()));
+            shaders.emplace_back(std::make_pair<VariantSet, T>({}, T()));
             meta::resolve<VariantSet>().data([this](meta::data data) -> void {
                 auto range = GetShaderMacroRange(data);
                 auto currentSize = shaders.size();
                 for (auto i = range.first; i < range.second; i++) {
                     for (auto j = 0; j < currentSize; j++) {
                         shaders.push_back(shaders[j]);
-                        data.template set(shaders.back(), 0, i);
+                        data.set(shaders.back().first, 0, i);
                     }
                 }
             });

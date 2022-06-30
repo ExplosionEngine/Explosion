@@ -40,3 +40,4 @@ public:
     using ParameterSet = TestParameterSet;
     using VariantSet = TestVariantSet;
 };
+RegisterEngineShader(TestShader);
