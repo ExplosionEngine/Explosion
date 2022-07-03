@@ -4,7 +4,7 @@ AddLibrary(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB debugbreak Meta cityhash
+    LIB debugbreak Meta cityhash taskflow
 )
 
 file(GLOB TEST_SOURCES Test/*.cpp)
