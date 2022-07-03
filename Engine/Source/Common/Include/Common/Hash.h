@@ -6,13 +6,14 @@
 
 #include <cstdint>
 
+#include <city.h>
+
 namespace Common {
     class HashUtils {
     public:
-        static size_t CityHash(const void* buffer, size_t length)
+        static uint64_t CityHash(const void* buffer, size_t length)
         {
-            // TODO
-            return 0;
+            return CityHash64(static_cast<const char*>(buffer), length);
         }
     };
 }
