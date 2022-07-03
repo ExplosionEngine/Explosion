@@ -188,10 +188,10 @@ namespace RHI::Vulkan {
     {
         vkInstance.destroyDebugUtilsMessengerEXT(vkDebugMessenger, nullptr, vkDispatch);
     }
+#endif
 
     void VKInstance::Destroy()
     {
         delete this;
     }
-#endif
 }
