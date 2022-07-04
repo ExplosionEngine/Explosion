@@ -5,31 +5,15 @@
 #pragma once
 
 #include <sstream>
+#include <vector>
+#include <utility>
+#include <string_view>
 
+#include <meta/factory.hpp>
+
+#include <Common/Platform.h>
 #include <Common/Hash.h>
 #include <Shader/Shader.h>
-
-namespace Shader {
-    template <typename VertexFactory>
-    std::string_view vertexFactoryCode = []() -> void {
-        // TODO
-    };
-
-    template <typename ParameterSet>
-    std::string_view parameterSetCode = []() -> void {
-        // TODO
-    }();
-
-    template <typename VariantSet>
-    std::string_view variantSetCode = []() -> void {
-        // TODO
-    };
-
-    template <typename T>
-    std::string_view shaderMainCode = []() -> void {
-        // TODO
-    };
-}
 
 namespace Shader {
     class ShaderCompiler {
@@ -43,31 +27,98 @@ namespace Shader {
         ~ShaderCompiler() = default;
 
         template <typename T>
-        void CompileEngineShader()
+        std::vector<uint8_t> CompileEngineShader(const Common::TargetPlatform& targetPlatform, const typename T::VariantSet& variantSet)
         {
-            // TODO using single thread to compile now, wille replace it with multi thread / multi process in the future
-            EngineShaderMap<T>::Get().TraverseVariant([](const auto& variantSet, auto& shader) -> void {
-                std::stringstream shaderCodeStream;
-                shaderCodeStream << vertexFactoryCode<typename T::VertexFactory>;
-                shaderCodeStream << parameterSetCode<typename T::ParameterSet>;
-                shaderCodeStream << variantSetCode<typename T::VariantSet>;
-
-                std::string shaderCode = shaderCodeStream.str();
-                uint64_t hashCode = Common::HashUtils::CityHash(shaderCode.data(), shaderCode.size());
-                if (IsCachedShaderFound(hashCode)) {
-                    // TODO
-                } else {
-                    // TODO
-                }
-            });
+            ShaderCompileInfo shaderCompileInfo;
+            shaderCompileInfo.targetPlatform = targetPlatform;
+            shaderCompileInfo.source = EngineShaderCode<T>::GetFullCode();
+            shaderCompileInfo.entryPoint = T::entryPoint;
+            shaderCompileInfo.shaderStage = T::stage;
+            shaderCompileInfo.definitions = EngineShaderVariants<T>::GetDefinitions(variantSet);
+            return CompileShader(shaderCompileInfo);
         }
 
     private:
-        static bool IsCachedShaderFound(uint64_t shaderCodeHash)
-        {
-            // TODO
-            return false;
-        }
+        template <typename T>
+        struct EngineShaderCode {
+        public:
+            static std::string GetFullCode()
+            {
+                static const std::string result = []() -> std::string {
+                    std::stringstream codeStream;
+                    codeStream << GetVertexFactoryCode();
+                    codeStream << GetParameterSetCode();
+                    codeStream << GetMainBodyCode();
+                    return codeStream.str();
+                }();
+                return result;
+            }
+
+            static uint64_t GetCodeHash()
+            {
+                static const uint64_t result = []() -> uint64_t {
+                    std::string fullCode = GetFullCode();
+                    return Common::HashUtils::CityHash(fullCode.data(), fullCode.size());
+                }();
+                return result;
+            }
+
+        private:
+            static std::string GetVertexFactoryCode()
+            {
+                static const std::string result = []() -> std::string {
+                    // TODO
+                }();
+                return result;
+            }
+
+            static std::string GetParameterSetCode()
+            {
+                static const std::string result = []() -> std::string {
+                    // TODO
+                }();
+                return result;
+            }
+
+            static std::string GetMainBodyCode()
+            {
+                static const std::string result = []() -> std::string {
+                    // TODO
+                }();
+                return result;
+            }
+        };
+
+        template <typename T>
+        struct EngineShaderVariants {
+        public:
+            static std::vector<std::pair<std::string, std::string>> GetDefinitions(const typename T::VariantSet& variantSet)
+            {
+                std::vector<std::pair<std::string, std::string>> result;
+                meta::resolve<typename T::VariantSet>().template data([&result, &variantSet](meta::data data) -> void {
+                    std::hash<std::string_view> hash {};
+                    auto macroProp = data.template prop(hash("Macro"));
+                    if (!macroProp) {
+                        return;
+                    }
+                    result.template emplace_back(std::make_pair(
+                        macroProp.value().template cast<std::string_view>(),
+                        std::to_string(data.get(variantSet, 0).template cast<int32_t>())
+                    ));
+                });
+                return result;
+            }
+        };
+
+        struct ShaderCompileInfo {
+            Common::TargetPlatform targetPlatform;
+            std::string source;
+            std::string entryPoint;
+            RHI::ShaderStageBits shaderStage;
+            std::vector<std::pair<std::string, std::string>> definitions;
+        };
+
+        static std::vector<uint8_t> CompileShader(const ShaderCompileInfo& shaderCompileInfo);
 
         ShaderCompiler() = default;
     };

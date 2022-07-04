@@ -7,12 +7,15 @@
 #include <unordered_map>
 #include <memory>
 #include <functional>
+#include <string_view>
+#include <sstream>
 
 #include <meta/factory.hpp>
 
 #include <Common/Debug.h>
 #include <Common/Hash.h>
 #include <Shader/Parameter.h>
+#include <Shader/ShaderCompiler.h>
 
 #define RegisterEngineShader(Name) \
     static int _NameRegister = []() -> int { \
@@ -63,7 +66,7 @@ namespace Shader {
     using VariantHash = size_t;
 
     template <typename VariantSet, typename Shader>
-    using VariantOp = std::function<void(const VariantSet&, const Shader&)>;
+    using VariantOp = std::function<void(const VariantSet&, Shader&)>;
 
     template <typename T>
     class EngineShaderMap {
@@ -80,7 +83,7 @@ namespace Shader {
 
         T& GetVariant(const VariantSet& variantSet)
         {
-            auto iter = shaders.template find(Common::HashUtils::CityHash(&variantSet, sizeof(variantSet)));
+            auto iter = shaders.template find(GetVariantSetHash(variantSet));
             Assert(iter != shaders.end());
             return *iter->second;
         }
@@ -88,7 +91,7 @@ namespace Shader {
         template <typename VariantOp>
         void TraverseVariant(VariantOp&& op)
         {
-            for (const auto& shader : shaders) {
+            for (auto& shader : shaders) {
                 op(shader.first, shader.second);
             }
         }
@@ -116,6 +119,11 @@ namespace Shader {
             return result;
         }
 
+        static uint64_t GetVariantSetHash(const VariantSet& variantSet)
+        {
+            return Common::HashUtils::CityHash(&variantSet, sizeof(variantSet));
+        }
+
         EngineShaderMap()
         {
             EmplaceAllVariants();
@@ -137,7 +145,7 @@ namespace Shader {
             });
 
             for (auto i = 0; i < shaders.size(); i++) {
-                variantHashs[Common::HashUtils::CityHash(&shaders[i].first, sizeof(VariantSet))] = i;
+                variantHashs[GetVariantSetHash(shaders[i].first)] = i;
             }
         }
 
