@@ -45,8 +45,7 @@ namespace MetaTool {
 
         CXCursorKind kind = clang_getCursorKind(current);
         switch (kind) {
-            case CXCursorKind::CXCursor_AnnotateAttr:
-            {
+            case CXCursorKind::CXCursor_AnnotateAttr: {
                 variableContext->metaData = clang_getCString(clang_getCursorSpelling(current));
                 break;
             }
@@ -62,16 +61,14 @@ namespace MetaTool {
 
         CXCursorKind kind = clang_getCursorKind(current);
         switch (kind) {
-            case CXCursorKind::CXCursor_ParmDecl:
-            {
+            case CXCursorKind::CXCursor_ParmDecl: {
                 ParamContext context {};
                 context.name = clang_getCString(clang_getCursorSpelling(current));
                 context.type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(current)));
                 functionContext->params.emplace_back(std::move(context));
                 break;
             }
-            case CXCursorKind::CXCursor_AnnotateAttr:
-            {
+            case CXCursorKind::CXCursor_AnnotateAttr: {
                 functionContext->metaData = clang_getCString(clang_getCursorSpelling(current));
                 break;
             }
@@ -87,8 +84,7 @@ namespace MetaTool {
 
         CXCursorKind kind = clang_getCursorKind(current);
         switch (kind) {
-            case CXCursorKind::CXCursor_FieldDecl:
-            {
+            case CXCursorKind::CXCursor_FieldDecl: {
                 VariableContext context {};
                 AccessSpecifier accessSpecifier = GetActualAccessSpecifier(clang_getCursorKind(parent), classInnerContext.currentAccessSpecifier);
                 context.name = clang_getCString(clang_getCursorSpelling(current));
@@ -100,8 +96,7 @@ namespace MetaTool {
                 }
                 break;
             }
-            case CXCursorKind::CXCursor_CXXMethod:
-            {
+            case CXCursorKind::CXCursor_CXXMethod: {
                 FunctionContext context {};
                 AccessSpecifier accessSpecifier = GetActualAccessSpecifier(clang_getCursorKind(parent), classInnerContext.currentAccessSpecifier);
                 context.name = clang_getCString(clang_getCursorSpelling(current));
@@ -113,8 +108,7 @@ namespace MetaTool {
                 }
                 break;
             }
-            case CXCursorKind::CXCursor_Constructor:
-            {
+            case CXCursorKind::CXCursor_Constructor: {
                 FunctionContext context {};
                 AccessSpecifier accessSpecifier = GetActualAccessSpecifier(clang_getCursorKind(parent), classInnerContext.currentAccessSpecifier);
                 classContext->constructors.emplace_back(std::move(context));
@@ -124,13 +118,11 @@ namespace MetaTool {
                 }
                 break;
             }
-            case CXCursorKind::CXCursor_CXXAccessSpecifier:
-            {
+            case CXCursorKind::CXCursor_CXXAccessSpecifier: {
                 classInnerContext.currentAccessSpecifier = static_cast<AccessSpecifier>(clang_getCXXAccessSpecifier(current));
                 break;
             }
-            case CXCursorKind::CXCursor_AnnotateAttr:
-            {
+            case CXCursorKind::CXCursor_AnnotateAttr: {
                 classContext->metaData = clang_getCString(clang_getCursorSpelling(current));
                 break;
             }
@@ -146,8 +138,7 @@ namespace MetaTool {
 
         CXCursorKind kind = clang_getCursorKind(current);
         switch (kind) {
-            case CXCursorKind::CXCursor_StructDecl:
-            {
+            case CXCursorKind::CXCursor_StructDecl: {
                 ClassContext context {};
                 context.name = clang_getCString(clang_getCursorSpelling(current));
                 namespaceContext->classes.emplace_back(std::move(context));
@@ -158,8 +149,7 @@ namespace MetaTool {
                 }
                 break;
             }
-            case CXCursorKind::CXCursor_ClassDecl:
-            {
+            case CXCursorKind::CXCursor_ClassDecl: {
                 ClassContext context {};
                 context.name = clang_getCString(clang_getCursorSpelling(current));
                 namespaceContext->classes.emplace_back(std::move(context));
@@ -170,8 +160,7 @@ namespace MetaTool {
                 }
                 break;
             }
-            case CXCursor_Namespace:
-            {
+            case CXCursor_Namespace: {
                 NamespaceContext context {};
                 context.name = clang_getCString(clang_getCursorSpelling(current));
                 namespaceContext->namespaces.emplace_back(std::move(context));

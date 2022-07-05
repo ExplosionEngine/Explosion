@@ -49,4 +49,9 @@ namespace RHI::DirectX12 {
         dx12FenceEvent = CreateEvent(nullptr, false, false, nullptr);
         Assert(dx12FenceEvent);
     }
+
+    void DX12Fence::Destroy()
+    {
+        delete this;
+    }
 }

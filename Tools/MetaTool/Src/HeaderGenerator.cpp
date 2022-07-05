@@ -5,33 +5,145 @@
 #include <sstream>
 #include <filesystem>
 #include <unordered_map>
+#include <any>
 
 #include <MetaTool/HeaderGenerator.h>
 #include <MetaTool/ClangParser.h>
 #include <Common/Debug.h>
+#include <Common/String.h>
 
 namespace MetaTool {
+    enum class MetaDataType {
+        BOOL,
+        INTEGER,
+        FLOATING,
+        STRING,
+        MAX
+    };
+
+    enum class ContextType {
+        CLASS,
+        PROPERTY,
+        FUNCTION,
+        MAX
+    };
+
+    template <typename T>
+    struct ContextTraits {};
+
+    template <>
+    struct ContextTraits<ClassContext> {
+        static constexpr ContextType type = ContextType::CLASS;
+    };
+
+    template <>
+    struct ContextTraits<VariableContext> {
+        static constexpr ContextType type = ContextType::PROPERTY;
+    };
+
+    template <>
+    struct ContextTraits<FunctionContext> {
+        static constexpr ContextType type = ContextType::FUNCTION;
+    };
+    
+    using MetaDataMap = std::unordered_map<std::string, std::pair<MetaDataType, std::any>>;
+
+    void ParseMetaDataGroup(MetaDataMap& result, const std::string& prefix, const std::string& metaData);
+
     template <typename T>
     std::string GetContextFullName(const std::string& prefix, const T& context)
     {
         return prefix.empty() ? context.name : (prefix + "::" + context.name);
     }
 
-    std::unordered_map<std::string, std::string> ParseMetaDatas(const std::string& name, const std::string& metaData)
+    std::string GetMetaDataFullName(const std::string& prefix, const std::string& metaData)
     {
-        // TODO
-        return {
-            { "name", name }
-        };
+        return prefix.empty() ? metaData : (prefix + "." + metaData);
+    }
+    
+    void ParseSingleMetaData(MetaDataMap& result, const std::string& prefix, const std::string& metaData)
+    {
+        if (Common::StringUtils::RegexMatch(metaData, R"(.+\(.+\))")) {
+            auto name = metaData.substr(0, metaData.find('('));
+            auto temp = Common::StringUtils::RegexSearchFirst(metaData, R"(\(.+\))");
+            ParseMetaDataGroup(result, GetMetaDataFullName(prefix, name), temp.substr(1, temp.size() - 2));
+            return;
+        }
+
+        if (Common::StringUtils::RegexMatch(metaData, R"(.+=.+)")) {
+            auto splits = Common::StringUtils::Split(metaData, "=");
+            Assert(splits.size() == 2);
+            auto fullName = GetMetaDataFullName(prefix, splits[0]);
+            if (Common::StringUtils::RegexMatch(splits[1], R"(\".+\")")) {
+                result[fullName] = { MetaDataType::STRING, splits[1].substr(1, splits[1].size() - 2) };
+            } else if (Common::StringUtils::RegexMatch(splits[1], R"(\-{0,1}\d+)")) {
+                result[fullName] = { MetaDataType::INTEGER, std::stoi(splits[1]) };
+            } else if (Common::StringUtils::RegexMatch(splits[2], R"(\-{0,1}\d+\.\d+)")) {
+                result[fullName] = { MetaDataType::FLOATING, std::stof(splits[1]) };
+            }
+        } else {
+            result[GetMetaDataFullName(prefix, metaData)] = { MetaDataType::BOOL, true };
+        }
     }
 
+    void ParseMetaDataGroup(MetaDataMap& result, const std::string& prefix, const std::string& metaData)
+    {
+        auto splits = Common::StringUtils::Split(metaData, ",");
+        for (const auto& split : splits) {
+            ParseSingleMetaData(result, prefix, split);
+        }
+    }
+
+    void ParseMetaDatas(MetaDataMap& result, const std::string& name, const std::string& metaData)
+    {
+        result["Name"] = { MetaDataType::STRING, name };
+        ParseMetaDataGroup(result, "", Common::StringUtils::Replace(metaData, " ", ""));
+    }
+    
+    template <typename Context>
+    void VerifyMetaDataTag(Context&& context, const MetaDataMap& metaDatas)
+    {
+        static const std::unordered_map<ContextType, std::string> stringToFindMap = {
+            { ContextType::CLASS, "Class" },
+            { ContextType::PROPERTY, "Property" },
+            { ContextType::FUNCTION, "Function" }
+        };
+        auto iter = stringToFindMap.find(ContextTraits<std::remove_cvref_t<Context>>::type);
+        Assert(iter != stringToFindMap.end());
+        
+        auto iter2 = metaDatas.find(iter->second);
+        Assert(iter2 != metaDatas.end() && iter2->second.first == MetaDataType::BOOL && std::any_cast<bool>(iter2->second.second));
+    }
+    
     template <typename Context>
     std::string GetMetaDatasCode(Context&& context)
     {
-        std::unordered_map<std::string, std::string> metaDatas = ParseMetaDatas(context.name, context.metaData);
+        MetaDataMap metaDatas;
+        ParseMetaDatas(metaDatas, context.name, context.metaData);
+        VerifyMetaDataTag(std::forward<Context>(context), metaDatas);
+
         std::stringstream stream;
         for (const auto& iter : metaDatas) {
-            stream << ", MData(hash(\"" << iter.first << "\"), " << "\"" << iter.second << "\")";
+            const auto& pair = iter.second;
+            switch (pair.first) {
+                case MetaDataType::BOOL: {
+                    stream << ", std::make_pair<size_t, bool>(hash(\"" << iter.first << "\"), " << (any_cast<bool>(pair.second) ? "true" : "false") << ")";
+                    break;
+                }
+                case MetaDataType::INTEGER: {
+                    stream << ", std::make_pair<size_t, int32_t>(hash(\"" << iter.first << "\"), " << std::to_string(any_cast<int32_t>(pair.second)) << ")";
+                    break;
+                }
+                case MetaDataType::FLOATING: {
+                    stream << ", std::make_pair<size_t, float>(hash(\"" << iter.first << "\"), " << std::to_string(any_cast<float>(pair.second)) << ")";
+                    break;
+                }
+                case MetaDataType::STRING: {
+                    stream << ", std::make_pair<size_t, std::string_view>(hash(\"" << iter.first << "\"), " << "\"" << *any_cast<std::string>(&pair.second) << "\")";
+                    break;
+                }
+                default: break;
+            }
         }
         return stream.str();
     }
@@ -102,7 +214,6 @@ namespace MetaTool {
         std::hash<std::string> hash {};
 
         file << "static int _registry_" << hash(info.outputFilePath) << " = []() -> int {" << std::endl;
-        file << "    auto MData = [](size_t key, std::string_view value) -> std::pair<size_t, std::string_view> { return std::make_pair<size_t, std::string_view>(std::move(key), std::move(value)); };" << std::endl;
         file << "    std::hash<std::string_view> hash {};" << std::endl;
         file << std::endl;
         GenerateCodeForNamespace(metaInfo.name, metaInfo);

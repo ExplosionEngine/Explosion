@@ -61,6 +61,11 @@ namespace RHI::DirectX12 {
     {
         return gpus[index].get();
     }
+
+    void DX12Instance::Destroy()
+    {
+        delete this;
+    }
 }
 
 extern "C" {

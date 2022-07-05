@@ -53,6 +53,7 @@ namespace RHI {
         virtual FenceStatus GetStatus() = 0;
         virtual void Reset() = 0;
         virtual void Wait() = 0;
+        virtual void Destroy() = 0;
 
     protected:
         explicit Fence(Device& device);

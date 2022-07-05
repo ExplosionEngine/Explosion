@@ -2,12 +2,12 @@
 // Created by johnk on 2022/5/2.
 //
 
-#ifndef EXPLOSION_COMMON_STRING_H
-#define EXPLOSION_COMMON_STRING_H
+#pragma once
 
 #include <string>
 #include <locale>
 #include <codecvt>
+#include <regex>
 
 namespace Common {
     class StringUtils {
@@ -17,7 +17,56 @@ namespace Common {
             std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
             return converter.from_bytes(src);
         }
+
+        static inline std::string Replace(const std::string& src, const std::string& match, const std::string& replace)
+        {
+            std::string result = src;
+            size_t pos;
+            while ((pos = result.find(match)) != std::string::npos) {
+                result.replace(pos, match.size(), replace);
+            }
+            return result;
+        }
+
+        static inline std::vector<std::string> Split(const std::string& src, const std::string& split)
+        {
+            std::vector<std::string> result;
+            size_t pos;
+            size_t searchStart = 0;
+            while ((pos = src.find(split, searchStart)) != std::string::npos) {
+                result.emplace_back(src.substr(searchStart, pos - searchStart));
+                searchStart = pos + split.length();
+            }
+            if (searchStart < src.size()) {
+                result.emplace_back(src.substr(searchStart, src.size() - searchStart));
+            }
+            return result;
+        }
+
+        static inline bool RegexMatch(const std::string& src, const std::string& regex)
+        {
+            std::regex expression(regex);
+            return std::regex_match(src.begin(), src.end(), expression);
+        }
+
+        static inline std::string RegexSearchFirst(const std::string& src, const std::string& regex)
+        {
+            std::regex expression(regex);
+            std::smatch match;
+            return std::regex_search(src.begin(), src.end(), match, expression) ? match[0].str() : "";
+        }
+
+        static inline std::vector<std::string> RegexSearch(const std::string& src, const std::string& regex)
+        {
+            std::vector<std::string> result;
+            std::regex expression(regex);
+            std::smatch match;
+            auto searchStart = src.begin();
+            while (std::regex_search(searchStart, src.end(), match, expression)) {
+                result.emplace_back(match[0].str());
+                searchStart = match[0].second;
+            }
+            return result;
+        }
     };
 }
-
-#endif//EXPLOSION_COMMON_STRING_H

@@ -123,9 +123,14 @@ TEST(MetaToolTest, HeaderGeneratorClassTest)
 
     {
         meta::type s0 = meta::resolve(hash("S0"));
+        ASSERT_EQ(s0.prop(hash("Name")).value().cast<std::string_view>(), "S0");
+
         meta::data a = s0.data(hash("a"));
         meta::data b = s0.data(hash("b"));
         meta::data c = s0.data(hash("c"));
+        ASSERT_EQ(a.prop(hash("Name")).value().cast<std::string_view>(), "a");
+        ASSERT_EQ(b.prop(hash("Name")).value().cast<std::string_view>(), "b");
+        ASSERT_EQ(c.prop(hash("Name")).value().cast<std::string_view>(), "c");
 
         meta::any instance = S0 { 1, 2.0f, 3.0 };
         ASSERT_EQ(a.get(instance).cast<int>(), 1);
@@ -135,8 +140,11 @@ TEST(MetaToolTest, HeaderGeneratorClassTest)
 
     {
         meta::type s1 = meta::resolve(hash("S1"));
+        ASSERT_EQ(s1.prop(hash("Name")).value().cast<std::string_view>(), "S1");
+
         meta::ctor s1Ctor = s1.ctor<int, float, double>();
         meta::data c = s1.data(hash("c"));
+        ASSERT_EQ(c.prop(hash("Name")).value().cast<std::string_view>(), "c");
 
         meta::any instance = s1Ctor.invoke(1, 2.0f, 3.0);
         ASSERT_EQ(c.get(instance).cast<double>(), 3.0);
@@ -144,8 +152,11 @@ TEST(MetaToolTest, HeaderGeneratorClassTest)
 
     {
         meta::type s2 = meta::resolve(hash("S2"));
+        ASSERT_EQ(s2.prop(hash("Name")).value().cast<std::string_view>(), "S2");
+
         meta::ctor s2Ctor = s2.ctor<int, float>();
         meta::func getA = s2.func(hash("GetA"));
+        ASSERT_EQ(getA.prop(hash("Name")).value().cast<std::string_view>(), "GetA");
 
         meta::any instance = s2Ctor.invoke(1, 2.0f);
         ASSERT_EQ(getA.invoke(instance).cast<int>(), 1);

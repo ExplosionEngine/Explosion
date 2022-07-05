@@ -10,22 +10,33 @@
 #define Meta(...)
 #endif
 
+// Basic
 #define Class
 #define Struct
 #define Enum
 #define Function
 #define Property
 
+// Runtime
 #define Transient
 
+// Script
 #define ScriptVisible
 #define ScriptReadOnly
 #define ScriptReadWrite
 
+// Engine
 #define EnginePrivate
 
-#define EditorUI(...)
-#define DefaultValue(...)
-#define MinValue(...)
-#define MaxValue(...)
-#define Alias(...)
+// Editor
+#define EditorUI
+#define DefaultValue
+#define MinValue
+#define MaxValue
+#define Alias
+
+// Shaders
+#define ShaderMacro
+#define MinValue
+#define MaxValue
+#define BufferType
