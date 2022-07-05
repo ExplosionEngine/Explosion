@@ -29,22 +29,21 @@ namespace MetaTool {
     };
 
     template <typename T>
-    struct ContextTraits {
-    };
+    struct ContextTraits {};
 
     template <>
     struct ContextTraits<ClassContext> {
-        static const ContextType type = ContextType::CLASS;
+        static constexpr ContextType type = ContextType::CLASS;
     };
 
     template <>
     struct ContextTraits<VariableContext> {
-        static const ContextType type = ContextType::PROPERTY;
+        static constexpr ContextType type = ContextType::PROPERTY;
     };
 
     template <>
     struct ContextTraits<FunctionContext> {
-        static const ContextType type = ContextType::FUNCTION;
+        static constexpr ContextType type = ContextType::FUNCTION;
     };
     
     using MetaDataMap = std::unordered_map<std::string, std::pair<MetaDataType, std::any>>;
