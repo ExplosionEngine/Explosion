@@ -6,7 +6,21 @@
 
 #include <Common/String.h>
 
-TEST(StringUtilsTest, SplitText)
+TEST(StringUtilsTest, ToUpperCaseTest)
+{
+    ASSERT_EQ(Common::StringUtils::ToUpperCase("abc"), "ABC");
+    ASSERT_EQ(Common::StringUtils::ToUpperCase("temp"), "TEMP");
+    ASSERT_EQ(Common::StringUtils::ToUpperCase("a,b,c"), "A,B,C");
+}
+
+TEST(StringUtilsTest, ToLowerCaseTest)
+{
+    ASSERT_EQ(Common::StringUtils::ToLowerCase("ABC"), "abc");
+    ASSERT_EQ(Common::StringUtils::ToLowerCase("TEMP"), "temp");
+    ASSERT_EQ(Common::StringUtils::ToLowerCase("A,B,C"), "a,b,c");
+}
+
+TEST(StringUtilsTest, SplitTest)
 {
     auto result = Common::StringUtils::Split("hello world", " ");
     ASSERT_EQ(result.size(), 2);

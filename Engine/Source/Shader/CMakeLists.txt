@@ -13,7 +13,6 @@ AddLibrary(
 
 file(GLOB SOURCES Test/*.cpp)
 AddTest(
-    META
     NAME Shader.Test
     SRC ${SOURCES}
     INC Test

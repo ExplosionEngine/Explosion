@@ -4,13 +4,6 @@
 
 #include <gtest/gtest.h>
 
-#include <Shader.Test/TestShader.meta.h>
-
-TEST(ShaderTest, ShaderMapTest)
-{
-    // TODO
-}
-
 int main(int argc, char* argv[])
 {
     testing::InitGoogleTest(&argc, argv);
