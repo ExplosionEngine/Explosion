@@ -179,64 +179,6 @@ function(GetTargetIncludeDirectoriesRecurse)
     set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
 endfunction()
 
-function(AddMetaHeaderGenerationCommand)
-    cmake_parse_arguments(PARAMS "" "NAME" "INC;LIB" ${ARGN})
-
-    foreach(L ${BASIC_LIBS})
-        if (${PARAMS_NAME} STREQUAL ${L})
-            return()
-        endif()
-    endforeach()
-    set(EXCEPT_TARGETS MetaTool.Static MetaTool)
-    foreach(L ${EXCEPT_TARGETS})
-        if (${PARAMS_NAME} STREQUAL ${L})
-            return()
-        endif()
-    endforeach()
-
-    add_dependencies(${PARAMS_NAME} MetaTool)
-    target_include_directories(${PARAMS_NAME} PUBLIC ${META_HEADER_DIR})
-
-    foreach(I ${PARAMS_INC})
-        file(GLOB_RECURSE HL ${I}/*.h)
-        foreach(H ${HL})
-            list(APPEND HEADERS ${H})
-        endforeach()
-    endforeach()
-
-    foreach(H ${HEADERS})
-        STRING(REGEX REPLACE ".+/(.+)\\..*" "\\1" FILE_NAME ${H})
-
-        GetTargetIncludeDirectoriesRecurse(
-            NAME ${PARAMS_NAME}
-            OUTPUT INCS
-        )
-
-        foreach(INC ${INCS})
-            list(APPEND INC_ARGS -i ${INC})
-        endforeach()
-
-        # Flag PRE_BUILD in add_custom_command is only supported by Visual Studio 7+,
-        # this flag will be treated as PRE_LINK in other generators, so just replace it with add_custom_target and add_dependencies
-        # #see https://cmake.org/cmake/help/latest/command/add_custom_command.html
-        if (${MSVC})
-            add_custom_command(
-                TARGET ${PARAMS_NAME} PRE_BUILD
-                WORKING_DIRECTORY $<TARGET_FILE_DIR:${PARAMS_NAME}>
-                COMMAND MetaTool -s ${H} -o ${META_HEADER_DIR}/${PARAMS_NAME}/${FILE_NAME}.meta.h ${INC_ARGS}
-            )
-        else()
-            set(TARGET_NAME MetaToolTask-${PARAMS_NAME}-${FILE_NAME}.meta.h)
-            add_custom_target(
-                ${TARGET_NAME}
-                WORKING_DIRECTORY $<TARGET_FILE_DIR:${PARAMS_NAME}>
-                COMMAND MetaTool -s ${H} -o ${META_HEADER_DIR}/${PARAMS_NAME}/${FILE_NAME}.meta.h ${INC_ARGS}
-            )
-            add_dependencies(${PARAMS_NAME} ${TARGET_NAME})
-        endif()
-    endforeach()
-endfunction()
-
 function(AddExecutable)
     cmake_parse_arguments(PARAMS "SAMPLE;META" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES" ${ARGN})
 
@@ -277,13 +219,6 @@ function(AddExecutable)
 
     if (${MSVC})
         set_target_properties(${PARAMS_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>)
-    endif()
-
-    if (${PARAMS_META})
-        AddMetaHeaderGenerationCommand(
-            NAME ${PARAMS_NAME}
-            INC ${PARAMS_INC}
-        )
     endif()
 endfunction()
 
@@ -335,13 +270,6 @@ function(AddLibrary)
             PUBLIC ${API_HEADER_DIR}/${PARAMS_NAME}
         )
     endif()
-
-    if (${PARAMS_META})
-        AddMetaHeaderGenerationCommand(
-            NAME ${PARAMS_NAME}
-            INC ${PARAMS_PUBLIC_INC} ${PARAMS_PRIVATE_INC}
-        )
-    endif()
 endfunction()
 
 function(AddTest)
@@ -387,11 +315,4 @@ function(AddTest)
         COMMAND ${PARAMS_NAME}
         WORKING_DIRECTORY $<TARGET_FILE_DIR:${PARAMS_NAME}>
     )
-
-    if (${PARAMS_META})
-        AddMetaHeaderGenerationCommand(
-            NAME ${PARAMS_NAME}
-            INC ${PARAMS_INC}
-        )
-    endif()
 endfunction()

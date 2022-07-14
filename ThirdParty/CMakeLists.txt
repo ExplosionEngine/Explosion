@@ -16,15 +16,6 @@ Add3rdHeaderOnlyPackage(
     INCLUDE $<SOURCE_DIR>
 )
 
-# Meta
-Add3rdHeaderOnlyPackage(
-    NAME Meta
-    PLATFORM All
-    VERSION 1.4.9
-    HASH 9cd04221c4865fdef37f8a92646087ec777ded6b1ff1a5e932cd0cd72b175eba
-    INCLUDE $<SOURCE_DIR>/src
-)
-
 # DirectX 12 Headers
 Add3rdBinaryPackage(
     NAME DirectXHeaders

@@ -18,6 +18,20 @@ namespace Common {
             return converter.from_bytes(src);
         }
 
+        static inline std::string ToUpperCase(const std::string& src)
+        {
+            std::string result = src;
+            std::transform(src.begin(), src.end(), result.begin(), [](const auto& c) { return std::toupper(c); });
+            return result;
+        }
+
+        static inline std::string ToLowerCase(const std::string& src)
+        {
+            std::string result = src;
+            std::transform(src.begin(), src.end(), result.begin(), [](const auto& c) { return std::tolower(c); });
+            return result;
+        }
+
         static inline std::string Replace(const std::string& src, const std::string& match, const std::string& replace)
         {
             std::string result = src;
