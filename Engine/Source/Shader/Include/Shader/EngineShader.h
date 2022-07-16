@@ -7,17 +7,19 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <unordered_map>
 
 #include <Common/Hash.h>
+#include <Common/Debug.h>
 
 #define BoolVariant(macroName) \
-    : public Shader::BoolVariantDef { \
+    Shader::BoolVariantDef { \
     public: \
         static constexpr std::string_view macro = macroName; \
     } \
 
 #define RangedIntVariant(macroName, From, To) \
-    : public Shader::RangedIntVariantDef<From, To> { \
+    Shader::RangedIntVariantDef<From, To> { \
     public: \
         static constexpr std::string_view macro = macroName; \
     } \
@@ -26,6 +28,8 @@ namespace Shader {
     struct BoolVariantDef {
         using ValueType = bool;
 
+        static void CheckValue(ValueType inValue) {}
+
         ValueType value;
     };
 
@@ -33,7 +37,12 @@ namespace Shader {
     struct RangedIntVariantDef {
         using ValueType = uint8_t;
         static constexpr uint8_t RangeFrom = F;
-        static constexpr uint8_t RagenTo = T;
+        static constexpr uint8_t RangeTo = T;
+
+        static void CheckValue(ValueType inValue)
+        {
+            Assert(inValue >= RangeFrom && inValue <= RangeTo);
+        }
 
         ValueType value;
     };
@@ -44,6 +53,7 @@ namespace Shader {
         template <typename V>
         void Set(typename V::ValueType value)
         {
+            V::CheckValue(value);
             std::get<V>(values).value = value;
         }
 
@@ -64,7 +74,7 @@ namespace Shader {
 }
 
 namespace Shader {
-    struct EngineShader {};
+    class EngineShader {};
 
     template <typename T>
     class EngineShaderMap {
@@ -84,7 +94,15 @@ namespace Shader {
             // TODO
         }
 
+        template <typename F>
+        void ForEachVariant(F&& func)
+        {
+            // TODO
+        }
+
     private:
         EngineShaderMap() = default;
+
+        std::unordered_map<uint64_t, std::vector<uint8_t>> byteCodes;
     };
 }
