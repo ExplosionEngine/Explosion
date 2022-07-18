@@ -6,6 +6,10 @@ set(META_HEADER_DIR ${CMAKE_BINARY_DIR}/Generated/Meta CACHE PATH "" FORCE)
 set(BASIC_LIBS Common CACHE STRING "" FORCE)
 set(BASIC_TEST_LIBS googletest CACHE STRING "" FORCE)
 
+if (${BUILD_TEST})
+    enable_testing()
+endif()
+
 function(CombineRuntimeDependencies)
     cmake_parse_arguments(PARAMS "" "NAME" "RUNTIME_DEP" ${ARGN})
 
