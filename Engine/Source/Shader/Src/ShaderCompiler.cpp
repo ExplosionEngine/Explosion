@@ -82,7 +82,7 @@ namespace Shader {
 
             ComPtr<IDxcBlobEncoding> source;
             std::wstring utf8Source = Common::StringUtils::ToWideString(info.source);
-            utils->CreateBlob(utf8Source.data(), utf8Source.size(), CP_UTF8, &source);
+            utils->CreateBlobFromPinned(utf8Source.data(), utf8Source.size(), CP_UTF8, &source);
 
             std::vector<LPCWSTR> arguments = GetDXCArguments(info);
             ComPtr<IDxcOperationResult> result;
