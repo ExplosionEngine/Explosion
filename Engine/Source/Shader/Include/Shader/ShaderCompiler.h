@@ -8,17 +8,26 @@
 #include <string>
 
 #include <RHI/Common.h>
+#include <Common/Concurrent.h>
 
 namespace Shader {
+    struct ShaderCompileInfo {
+        std::string shaderName;
+        std::string source;
+        std::string entryPoint;
+        RHI::ShaderStageBits stage;
+        bool debugInfo;
+    };
+
     class ShaderCompiler {
     public:
         static ShaderCompiler& Get();
-
         ~ShaderCompiler();
-
-        void Compile(std::vector<uint8_t>& byteCode, const std::string& source, const std::string& entryPoint, RHI::ShaderStageBits stage);
+        std::future<std::vector<uint8_t>> Compile(const ShaderCompileInfo& compileInfo);
 
     private:
         ShaderCompiler();
+
+        Common::ThreadPool threadPool;
     };
 }
