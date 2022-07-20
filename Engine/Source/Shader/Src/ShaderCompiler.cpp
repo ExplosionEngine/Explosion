@@ -42,13 +42,13 @@ namespace Shader {
 #if !PLATFORM_WINDOWS
             L"-spirv",
 #endif
-            L"-Qembed_debug",
             DXC_ARG_WARNINGS_ARE_ERRORS,
             DXC_ARG_PACK_MATRIX_ROW_MAJOR
         };
 
         std::vector<LPCWSTR> result = basicArguments;
         if (compileInfo.debugInfo) {
+            result.emplace_back(L"-Qembed_debug");
             result.emplace_back(DXC_ARG_DEBUG);
         }
         return result;
@@ -78,10 +78,11 @@ namespace Shader {
             Assert(SUCCEEDED(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler))));
 
             ComPtr<IDxcUtils> utils;
-            Assert(SUCCEEDED(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&compiler))));
+            Assert(SUCCEEDED(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils))));
 
             ComPtr<IDxcBlobEncoding> source;
-            utils->CreateBlob(info.source.data(), info.source.size(), CP_UTF8, &source);
+            std::wstring utf8Source = Common::StringUtils::ToWideString(info.source);
+            utils->CreateBlob(utf8Source.data(), utf8Source.size(), CP_UTF8, &source);
 
             std::vector<LPCWSTR> arguments = GetDXCArguments(info);
             ComPtr<IDxcOperationResult> result;

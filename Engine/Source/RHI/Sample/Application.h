@@ -21,33 +21,17 @@
 #endif
 #include <GLFW/glfw3native.h>
 
-#if !PLATFORM_WINDOWS
-#define __EMULATE_UUID 1
-#endif
-#include <dxc/dxcapi.h>
-
-#if PLATFORM_WINDOWS
-#include <wrl/client.h>
-using namespace Microsoft::WRL;
-#else
-// defined in dxc WinAdapter.h
-template <typename T>
-using ComPtr = CComPtr<T>;
-#endif
-
 #include <Common/Utility.h>
 #include <Common/Debug.h>
 #include <Common/String.h>
 #include <RHI/RHI.h>
+#include <Shader/ShaderCompiler.h>
 using namespace Common;
 
 class Application {
 public:
     NON_COPYABLE(Application)
-    explicit Application(std::string n) : rhiType(RHI::RHIType::VULKAN), window(nullptr), name(std::move(n)), width(1024), height(768)
-    {
-        CreateDXCCompilerInstance();
-    }
+    explicit Application(std::string n) : rhiType(RHI::RHIType::VULKAN), window(nullptr), name(std::move(n)), width(1024), height(768) {}
 
     virtual ~Application() = default;
 
@@ -99,56 +83,26 @@ protected:
 
     void CompileShader(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
     {
-        uint32_t codePage = CP_UTF8;
-        ComPtr<IDxcBlobEncoding> shaderSource;
-        Assert(SUCCEEDED(dxcLibrary->CreateBlobFromFile(StringUtils::ToWideString(fileName).c_str(), &codePage, &shaderSource)));
-
-        std::vector<LPCWSTR> arguments = {
-#if !PLATFORM_WINDOWS
-            L"-spirv",
-#endif
-            L"-Qembed_debug",
-            DXC_ARG_WARNINGS_ARE_ERRORS,
-            DXC_ARG_DEBUG,
-            DXC_ARG_PACK_MATRIX_ROW_MAJOR
-        };
-
-        ComPtr<IDxcOperationResult> result;
-        HRESULT success = dxcCompiler->Compile(
-// ComPtr
-#if PLATFORM_WINDOWS
-            shaderSource.Get(),
-// CComPtr
-#else
-            shaderSource,
-#endif
-            nullptr,
-            StringUtils::ToWideString(entryPoint).c_str(),
-            GetDXCTargetProfile(shaderStage).c_str(),
-            arguments.data(),
-            static_cast<uint32_t>(arguments.size()),
-            nullptr,
-            0,
-            nullptr,
-            &result);
-
-        if (SUCCEEDED(success)) {
-            result->GetStatus(&success);
+        std::string shaderSource;
+        {
+            std::ifstream file(fileName, std::ios::ate);
+            Assert(file.is_open());
+            size_t size = file.tellg();
+            shaderSource.resize(size);
+            file.seekg(0);
+            file.read(shaderSource.data(), size);
+            file.close();
         }
-        if (FAILED(success)) {
-            ComPtr<IDxcBlobEncoding> errorInfo;
-            Assert(SUCCEEDED(result->GetErrorBuffer(&errorInfo)));
-            std::cout << "failed to compiler shader (" << fileName << ", " << entryPoint << ")" << std::endl
-                << static_cast<const char*>(errorInfo->GetBufferPointer()) << std::endl;
-        }
-        Assert(SUCCEEDED(success));
 
-        ComPtr<IDxcBlob> code;
-        Assert(SUCCEEDED(result->GetResult(&code)));
-
-        const auto* codeStart = static_cast<const uint8_t*>(code->GetBufferPointer());
-        const auto* codeEnd = codeStart + code->GetBufferSize();
-        byteCode = std::vector<uint8_t>(codeStart, codeEnd);
+        Shader::ShaderCompileInfo info;
+        info.shaderName = "";
+        info.source = shaderSource;
+        info.entryPoint = entryPoint;
+        info.stage = shaderStage;
+        info.debugInfo = false;
+        auto future = Shader::ShaderCompiler::Get().Compile(info);
+        future.wait();
+        byteCode = future.get();
     }
 
     RHI::RHIType rhiType;
@@ -156,26 +110,4 @@ protected:
     std::string name;
     uint32_t width;
     uint32_t height;
-    ComPtr<IDxcLibrary> dxcLibrary;
-    ComPtr<IDxcCompiler> dxcCompiler;
-
-private:
-    static std::wstring GetDXCTargetProfile(RHI::ShaderStageBits shaderStage)
-    {
-        std::wstring result;
-        if (shaderStage == RHI::ShaderStageBits::VERTEX) {
-            result = L"vs";
-        } else if (shaderStage == RHI::ShaderStageBits::FRAGMENT) {
-            result = L"ps";
-        } else {
-            Assert(false);
-        }
-        return result + L"_6_2";
-    }
-
-    void CreateDXCCompilerInstance()
-    {
-        Assert(SUCCEEDED(DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&dxcLibrary))));
-        Assert(SUCCEEDED(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&dxcCompiler))));
-    }
 };
