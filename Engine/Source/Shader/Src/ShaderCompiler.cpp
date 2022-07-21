@@ -36,20 +36,20 @@ namespace Shader {
         return iter->second + L"_6_2";
     }
 
-    static std::vector<LPCWSTR> GetDXCArguments(const ShaderCompileInfo& compileInfo)
+    static std::vector<LPCWSTR> GetDXCArguments(const ShaderCompileInput& compileInfo)
     {
         static std::vector<LPCWSTR> basicArguments = {
-#if !PLATFORM_WINDOWS
-            L"-spirv",
-#endif
             DXC_ARG_WARNINGS_ARE_ERRORS,
             DXC_ARG_PACK_MATRIX_ROW_MAJOR
         };
 
         std::vector<LPCWSTR> result = basicArguments;
-        if (compileInfo.debugInfo) {
+        if (compileInfo.withDebugInfo) {
             result.emplace_back(L"-Qembed_debug");
             result.emplace_back(DXC_ARG_DEBUG);
+        }
+        if (compileInfo.spriv) {
+            result.emplace_back(L"-spirv");
         }
         return result;
     }
@@ -68,9 +68,9 @@ namespace Shader {
 
     ShaderCompiler::~ShaderCompiler() = default;
 
-    std::future<std::vector<uint8_t>> ShaderCompiler::Compile(const ShaderCompileInfo& compileInfo)
+    std::future<ShaderCompileOutput> ShaderCompiler::Compile(const ShaderCompileInput& compileInfo)
     {
-        return threadPool.EmplaceTask([](ShaderCompileInfo info) -> std::vector<uint8_t> {
+        return threadPool.EmplaceTask([](const ShaderCompileInput& info) -> ShaderCompileOutput {
             ComPtr<IDxcLibrary> library;
             Assert(SUCCEEDED(DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library))));
 
@@ -81,8 +81,7 @@ namespace Shader {
             Assert(SUCCEEDED(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils))));
 
             ComPtr<IDxcBlobEncoding> source;
-            std::wstring utf8Source = Common::StringUtils::ToWideString(info.source);
-            utils->CreateBlobFromPinned(utf8Source.data(), utf8Source.size(), CP_UTF8, &source);
+            utils->CreateBlobFromPinned(info.source.c_str(), std::strlen(info.source.c_str()), CP_UTF8, &source);
 
             std::vector<LPCWSTR> arguments = GetDXCArguments(info);
             ComPtr<IDxcOperationResult> result;
@@ -104,8 +103,12 @@ namespace Shader {
             if (FAILED(success)) {
                 ComPtr<IDxcBlobEncoding> errorInfo;
                 Assert(SUCCEEDED(result->GetErrorBuffer(&errorInfo)));
-                std::cout << "failed to compiler shader (" << info.shaderName << ", " << info.entryPoint << ")" << std::endl
-                          << static_cast<const char*>(errorInfo->GetBufferPointer()) << std::endl;
+
+                ShaderCompileOutput output;
+                output.success = false;
+                output.errorInfo.resize(errorInfo->GetBufferSize());
+                memcpy(output.errorInfo.data(), errorInfo->GetBufferPointer(), errorInfo->GetBufferSize());
+                return output;
             }
             Assert(SUCCEEDED(success));
 
@@ -114,8 +117,10 @@ namespace Shader {
 
             const auto* codeStart = static_cast<const uint8_t*>(code->GetBufferPointer());
             const auto* codeEnd = codeStart + code->GetBufferSize();
-            std::vector<uint8_t> byteCode(codeStart, codeEnd);
-            return byteCode;
+            ShaderCompileOutput output;
+            output.success = true;
+            output.byteCode = std::vector<uint8_t>(codeStart, codeEnd);
+            return output;
         }, compileInfo);
     }
 }

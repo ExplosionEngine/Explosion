@@ -85,24 +85,30 @@ protected:
     {
         std::string shaderSource;
         {
-            std::ifstream file(fileName, std::ios::ate);
+            std::ifstream file(fileName, std::ios::ate | std::ios::binary);
             Assert(file.is_open());
             size_t size = file.tellg();
             shaderSource.resize(size);
             file.seekg(0);
-            file.read(shaderSource.data(), size);
+            file.read(shaderSource.data(), static_cast<std::streamsize>(size));
             file.close();
         }
 
-        Shader::ShaderCompileInfo info;
-        info.shaderName = "";
+        Shader::ShaderCompileInput info;
+        info.spriv = rhiType == RHI::RHIType::VULKAN;
         info.source = shaderSource;
         info.entryPoint = entryPoint;
         info.stage = shaderStage;
-        info.debugInfo = false;
+        info.withDebugInfo = false;
         auto future = Shader::ShaderCompiler::Get().Compile(info);
+
         future.wait();
-        byteCode = future.get();
+        auto result = future.get();
+        if (!result.success) {
+            std::cout << "failed to compiler shader (" << fileName << ", " << info.entryPoint << ")" << std::endl << result.errorInfo << std::endl;
+        }
+        Assert(result.success);
+        byteCode = result.byteCode;
     }
 
     RHI::RHIType rhiType;

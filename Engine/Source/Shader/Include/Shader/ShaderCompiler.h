@@ -9,21 +9,28 @@
 
 #include <RHI/Common.h>
 #include <Common/Concurrent.h>
+#include <Common/Platform.h>
 
 namespace Shader {
-    struct ShaderCompileInfo {
-        std::string shaderName;
+    struct ShaderCompileInput {
         std::string source;
         std::string entryPoint;
         RHI::ShaderStageBits stage;
-        bool debugInfo;
+        bool withDebugInfo;
+        bool spriv;
+    };
+
+    struct ShaderCompileOutput {
+        bool success;
+        std::vector<uint8_t> byteCode;
+        std::string errorInfo;
     };
 
     class ShaderCompiler {
     public:
         static ShaderCompiler& Get();
         ~ShaderCompiler();
-        std::future<std::vector<uint8_t>> Compile(const ShaderCompileInfo& compileInfo);
+        std::future<ShaderCompileOutput> Compile(const ShaderCompileInput& compileInfo);
 
     private:
         ShaderCompiler();
