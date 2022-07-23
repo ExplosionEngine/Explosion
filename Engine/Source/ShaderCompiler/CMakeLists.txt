@@ -4,17 +4,9 @@ endif()
 
 file(GLOB SOURCES Src/*.cpp)
 AddLibrary(
-    NAME Shader
+    NAME ShaderCompiler
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
     LIB RHI GLM ${PLATFORM_LIBS} dxc
-)
-
-file(GLOB SOURCES Test/*.cpp)
-AddTest(
-    NAME Shader.Test
-    SRC ${SOURCES}
-    INC Test
-    LIB Shader
 )

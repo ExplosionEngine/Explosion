@@ -22,13 +22,8 @@ namespace Runtime {
 
         void Initialize(const EngineInitializer& initializer);
         void MainLoop();
-        [[nodiscard]] const std::string& EngineRoot() const;
-        [[nodiscard]] const std::string& GameRoot() const;
 
     protected:
         Engine();
-
-        std::string engineRoot;
-        std::string gameRoot;
     };
 }

@@ -23,22 +23,11 @@ namespace Runtime {
 
     void Engine::Initialize(const EngineInitializer& initializer)
     {
-        engineRoot = initializer.engineRoot;
-        gameRoot = initializer.gameRoot;
+        // TODO
     }
 
     void Engine::MainLoop()
     {
         // TODO
-    }
-
-    const std::string& Engine::EngineRoot() const
-    {
-        return engineRoot;
-    }
-
-    const std::string& Engine::GameRoot() const
-    {
-        return gameRoot;
     }
 }

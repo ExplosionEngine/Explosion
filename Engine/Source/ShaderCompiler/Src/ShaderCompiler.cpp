@@ -19,7 +19,7 @@ using namespace Microsoft::WRL;
 #define ComPtrGet(name) name
 #endif
 
-#include <Shader/ShaderCompiler.h>
+#include <ShaderCompiler/ShaderCompiler.h>
 #include <Common/Debug.h>
 #include <Common/String.h>
 

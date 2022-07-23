@@ -25,7 +25,7 @@
 #include <Common/Debug.h>
 #include <Common/String.h>
 #include <RHI/RHI.h>
-#include <Shader/ShaderCompiler.h>
+#include <ShaderCompiler/ShaderCompiler.h>
 using namespace Common;
 
 class Application {
