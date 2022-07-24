@@ -1,6 +1,7 @@
 file(GLOB SOURCES Src/*.cpp)
 AddLibrary(
-    NAME RenderGraph
+    NAME Render
+    TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
 )
