@@ -48,7 +48,7 @@ namespace Common {
 #if PLATFORM_WINDOWS
             SetThreadDescription(thread.native_handle(), Common::StringUtils::ToWideString(name).c_str());
 #else
-            pthread_setname_np(t.native_handle(), name.c_str());
+            pthread_setname_np(thread.native_handle(), name.c_str());
 #endif
         }
 

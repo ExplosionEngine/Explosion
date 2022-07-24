@@ -2,6 +2,8 @@
 // Created by johnk on 2022/7/16.
 //
 
+#include <unordered_map>
+
 #if PLATFORM_WINDOWS
 #include <Windows.h>
 #else
