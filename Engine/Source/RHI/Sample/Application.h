@@ -24,6 +24,7 @@
 #include <Common/Utility.h>
 #include <Common/Debug.h>
 #include <Common/String.h>
+#include <Common/File.h>
 #include <RHI/RHI.h>
 #include <ShaderCompiler/ShaderCompiler.h>
 using namespace Common;
@@ -83,16 +84,7 @@ protected:
 
     void CompileShader(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
     {
-        std::string shaderSource;
-        {
-            std::ifstream file(fileName, std::ios::ate | std::ios::binary);
-            Assert(file.is_open());
-            size_t size = file.tellg();
-            shaderSource.resize(size);
-            file.seekg(0);
-            file.read(shaderSource.data(), static_cast<std::streamsize>(size));
-            file.close();
-        }
+        std::string shaderSource = Common::FileUtils::ReadTextFile(fileName);
 
         Shader::ShaderCompileInput info;
         info.spriv = rhiType == RHI::RHIType::VULKAN;

@@ -6,10 +6,13 @@
 
 #include <vector>
 #include <unordered_map>
+#include <utility>
 
 #include <Common/Utility.h>
 #include <Common/Debug.h>
 #include <Common/Hash.h>
+#include <Common/File.h>
+#include <Common/Path.h>
 
 namespace Render {
     class Shader {};
@@ -19,49 +22,9 @@ namespace Render {
 
     class IShaderType {
         virtual std::string GetName() = 0;
-        virtual std::string GetCode() = 0;
+        virtual std::string GetCode(const Common::PathMapper& pathMapper) = 0;
         virtual std::vector<VariantKey> GetVariants() = 0;
         virtual std::vector<std::string> GetDefinitions(VariantKey variantKey) = 0;
-        virtual std::string GetVariantName(VariantKey variantKey) = 0;
-    };
-
-    template <typename Shader>
-    class GlobalShaderType : IShaderType {
-    public:
-        static GlobalShaderType& Get()
-        {
-            GlobalShaderType instance;
-            return instance;
-        }
-
-        GlobalShaderType() = default;
-        ~GlobalShaderType() = default;
-        NON_COPYABLE(GlobalShaderType)
-
-        std::string GetName() override
-        {
-            // TODO
-        }
-
-        std::string GetCode() override
-        {
-            // TODO
-        }
-
-        std::vector<VariantKey> GetVariants() override
-        {
-            // TODO
-        }
-
-        std::vector<std::string> GetDefinitions(VariantKey variantKey) override
-        {
-            // TODO
-        }
-
-        std::string GetVariantName(VariantKey variantKey) override
-        {
-            // TODO
-        }
     };
 
     class ShaderByteCodeStorage {
@@ -81,6 +44,61 @@ namespace Render {
 
 namespace Render {
     class GlobalShader : public Shader {};
+
+    template <typename Shader>
+    class GlobalShaderType : public IShaderType {
+    public:
+        static GlobalShaderType& Get()
+        {
+            static GlobalShaderType instance;
+            return instance;
+        }
+
+        GlobalShaderType()
+        {
+            ComputeVariantDefinitions();
+        }
+
+        ~GlobalShaderType() = default;
+        NON_COPYABLE(GlobalShaderType)
+
+        std::string GetName() override
+        {
+            return Shader::name;
+        }
+
+        std::string GetCode(const Common::PathMapper& pathMapper) override
+        {
+            return Common::FileUtils::ReadTextFile(pathMapper.Map(Shader::sourceFile));
+        }
+
+        std::vector<VariantKey> GetVariants() override
+        {
+            std::vector<VariantKey> result;
+            {
+                result.reserve(variantDefinitions.size());
+                for (const auto& iter : variantDefinitions) {
+                    result.emplace_back(iter.first);
+                }
+            }
+            return result;
+        }
+
+        std::vector<std::string> GetDefinitions(VariantKey variantKey) override
+        {
+            auto iter = variantDefinitions.find(variantKey);
+            Assert(iter != variantDefinitions.end());
+            return iter->second;
+        }
+
+    private:
+        void ComputeVariantDefinitions()
+        {
+            // TODO
+        }
+
+        std::unordered_map<VariantKey, std::vector<std::string>> variantDefinitions;
+    };
 
     template <typename T>
     class GlobalShaderMap {
@@ -127,8 +145,13 @@ namespace Render {
         std::vector<IShaderType*> pendingShaderTypes;
     };
 
-    struct StaticBoolShaderVariantImpl {
+    struct StaticBoolShaderVariantFieldImpl {
         using ValueType = bool;
+
+        static std::pair<uint32_t, uint32_t> ValueRange()
+        {
+            return { 0, 1 };
+        }
 
         void CheckValue() {}
 
@@ -136,8 +159,13 @@ namespace Render {
     };
 
     template <uint32_t From, uint32_t To>
-    struct StaticRangedIntShaderVariantImpl {
+    struct StaticRangedIntShaderVariantFieldImpl {
         using ValueType = uint32_t;
+
+        static std::pair<uint32_t, uint32_t> ValueRange()
+        {
+            return { From, To };
+        }
 
         void CheckValue()
         {
@@ -148,11 +176,22 @@ namespace Render {
     };
 
     template <typename... Variants>
-    class StaticShaderVariantSet {
+    class StaticShaderVariantSetImpl {
     public:
-        StaticShaderVariantSet() = default;
-        ~StaticShaderVariantSet() = default;
-        StaticShaderVariantSet(StaticShaderVariantSet&& other) noexcept : variants(std::move(other)) {}
+        StaticShaderVariantSetImpl() = default;
+        ~StaticShaderVariantSetImpl() = default;
+        StaticShaderVariantSetImpl(StaticShaderVariantSetImpl&& other) noexcept : variants(std::move(other)) {}
+
+        static uint32_t VariantNum()
+        {
+            uint32_t result = 1;
+            std::initializer_list<int> { ([&result]() -> void {
+                auto valueRange = Variants::ValueRange();
+                Assert(valueRange.first <= valueRange.second);
+                result *= valueRange.second - valueRange.first + 1;
+            }(), 0)... };
+            return result;
+        }
 
         template <typename Variant>
         void Set(typename Variant::ValueType value)
@@ -177,17 +216,33 @@ namespace Render {
     };
 }
 
-#define StaticBoolShaderVariant(inMacro) \
-    StaticBoolShaderVariantImpl {     \
-        static constexpr std::string_view macro = inMacro; \
-    };
+#define GlobalShaderInfo(inName, inSourceFile) \
+    static constexpr const char* name = inName; \
+    static constexpr const char* sourceFile = inSourceFile; \
 
-#define StaticRangedIntShaderVariant(inMacro, inRangeFrom, inRangeTo) \
-    StaticRangedIntShaderVariantImpl {                    \
-        static constexpr std::string_view macro = inMacro; \
-        static constexpr uint32_t rangeFrom = inRangeFrom; \
-        static constexpr uint32_t rangeTo = inRangeTo; \
+#define DefaultStaticVariantFilter \
+    static bool StaticVariantFilter(const VariantSet& variantSet) { return true; } \
+
+#define StaticBoolShaderVariantField(inClass, inMacro) \
+    struct inClass : public Render::StaticBoolShaderVariantFieldImpl { \
+        static constexpr const char* name = #inClass; \
+        static constexpr const char* macro = inMacro; \
+    }; \
+
+#define StaticRangedIntShaderVariantField(inClass, inMacro, inRangeFrom, inRangeTo) \
+    struct inClass : public Render::StaticRangedIntShaderVariantFieldImpl<inRangeFrom, inRangeTo> { \
+        static constexpr const char* name = #inClass; \
+        static constexpr const char* macro = inMacro; \
     }
+
+#define StaticVariantSet(...) \
+    class VariantSet : public Render::StaticShaderVariantSetImpl<__VA_ARGS__> {};
+
+#define RegisterGlobalShader(inClass) \
+    static uint8_t _globalShaderRegister_inClass = []() -> uint8_t { \
+        Render::GlobalShaderRegistry::Get().Register<inClass>(); \
+        return 0; \
+    }(); \
 
 namespace Render {
     class MaterialShader : public Shader {};
