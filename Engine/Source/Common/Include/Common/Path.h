@@ -3,35 +3,42 @@
 //
 
 #include <unordered_map>
+#include <utility>
 
 #include <Common/Utility.h>
+#include <Common/String.h>
 
 namespace Common {
     class PathMapper {
     public:
-        static PathMapper From(const std::unordered_map<std::string, std::string>& map)
+        static PathMapper From(std::unordered_map<std::string, std::string>&& map)
         {
-            // TODO
-            return PathMapper();
+            std::vector<std::pair<std::string, std::string>> result;
+            result.reserve(map.size());
+
+            for (const auto& iter : map) {
+                result.emplace_back(std::make_pair(iter.first, iter.second));
+            }
+            std::sort(result.begin(), result.end(), [](const auto& a, const auto& b) -> bool { return a.second.length() < b.second.length(); });
+            return PathMapper(std::move(result));
         }
 
+        PathMapper() = default;
         ~PathMapper() = default;
+        NON_COPYABLE(PathMapper)
 
-        std::string Map(const std::string& path) const
+        [[nodiscard]] std::string Map(const std::string& path) const
         {
-            // TODO
-            return "";
+            for (const auto& mapper : mappers) {
+                if (path.starts_with(mapper.first)) {
+                    return Common::StringUtils::Replace(path, mapper.first, mapper.second);
+                }
+            }
+            return path;
         }
 
     private:
-        PathMapper() = default;
-
-        PathMapper(const std::vector<std::pair<std::string, std::string>>& inMappers)
-        {
-            // TODO
-        }
-
-        NON_COPYABLE(PathMapper)
+        explicit PathMapper(std::vector<std::pair<std::string, std::string>> inMappers) : mappers(std::move(inMappers)) {}
 
         std::vector<std::pair<std::string, std::string>> mappers;
     };

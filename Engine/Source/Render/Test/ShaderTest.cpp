@@ -8,17 +8,21 @@
 
 class TestGlobalShader : public Render::GlobalShader {
 public:
-    GlobalShaderInfo("TestGlobalShader", "/Engine/Shader/TestGlobalShader.esl");
+    ShaderInfo("TestGlobalShader", "/Engine/Shader/TestGlobalShader.esl");
 
-    StaticBoolShaderVariantField(TestBoolVariant, "TEST_BOOL");
-    StaticRangedIntShaderVariantField(TestRangedIntVariant, "TEST_RANGED_INT", 0, 3);
-    StaticVariantSet(TestBoolVariant, TestRangedIntVariant);
+    BoolShaderVariantField(TestBoolVariant, "TEST_BOOL");
+    RangedIntShaderVariantField(TestRangedIntVariant, "TEST_RANGED_INT", 0, 3);
+    VariantSet(TestBoolVariant, TestRangedIntVariant);
 
-    DefaultStaticVariantFilter
+    DefaultVariantFilter
 };
 RegisterGlobalShader(TestGlobalShader);
 
 TEST(ShaderTest, StaticVariantSetTest)
 {
     ASSERT_EQ(TestGlobalShader::VariantSet::VariantNum(), 8);
+
+    auto count = 0;
+    TestGlobalShader::VariantSet::TraverseAll([&count](auto&&) -> void { count++; });
+    ASSERT_EQ(count, 8);
 }

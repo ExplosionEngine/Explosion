@@ -15,8 +15,6 @@
 
 #if PLATFORM_WINDOWS
 #include <Windows.h>
-#else
-#include <pthread.h>
 #endif
 
 #include <Common/String.h>
@@ -48,7 +46,7 @@ namespace Common {
 #if PLATFORM_WINDOWS
             SetThreadDescription(thread.native_handle(), Common::StringUtils::ToWideString(name).c_str());
 #else
-            pthread_setname_np(thread.native_handle(), name.c_str());
+            // TODO
 #endif
         }
 

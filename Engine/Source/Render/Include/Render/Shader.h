@@ -7,6 +7,7 @@
 #include <vector>
 #include <unordered_map>
 #include <utility>
+#include <tuple>
 
 #include <Common/Utility.h>
 #include <Common/Debug.h>
@@ -94,7 +95,14 @@ namespace Render {
     private:
         void ComputeVariantDefinitions()
         {
-            // TODO
+            variantDefinitions.reserve(Shader::VariantSet::VariantNum());
+            Shader::VariantSet::TraverseAll([this](auto&& variantSetImpl) -> void {
+                const auto* variantSet = static_cast<typename Shader::VariantSet*>(&variantSetImpl);
+                if (!Shader::VariantFilter(*variantSet)) {
+                    return;
+                }
+                variantDefinitions[variantSet->Hash()] = variantSet->ComputeDefinitions();
+            });
         }
 
         std::unordered_map<VariantKey, std::vector<std::string>> variantDefinitions;
@@ -145,68 +153,147 @@ namespace Render {
         std::vector<IShaderType*> pendingShaderTypes;
     };
 
-    struct StaticBoolShaderVariantFieldImpl {
+    class BoolShaderVariantFieldImpl {
+    public:
         using ValueType = bool;
 
-        static std::pair<uint32_t, uint32_t> ValueRange()
+        static constexpr std::pair<uint32_t, uint32_t> valueRange = { 0, 1 };
+        static constexpr ValueType defaultValue = false;
+
+        BoolShaderVariantFieldImpl() : value(defaultValue) {}
+        BoolShaderVariantFieldImpl(BoolShaderVariantFieldImpl&& other) noexcept : value(other.value) {}
+        ~BoolShaderVariantFieldImpl() = default;
+
+        void Set(ValueType inValue)
         {
-            return { 0, 1 };
+            value = inValue ? 1 : 0;
         }
 
-        void CheckValue() {}
+        [[nodiscard]] ValueType Get() const
+        {
+            return value == 1;
+        }
 
-        ValueType value;
+        [[nodiscard]] uint32_t GetNumberValue() const
+        {
+            return value;
+        }
+
+    private:
+        uint32_t value;
     };
 
     template <uint32_t From, uint32_t To>
-    struct StaticRangedIntShaderVariantFieldImpl {
+    struct RangedIntShaderVariantFieldImpl {
+    public:
         using ValueType = uint32_t;
 
-        static std::pair<uint32_t, uint32_t> ValueRange()
-        {
-            return { From, To };
-        }
+        static constexpr std::pair<uint32_t, uint32_t> valueRange = { From, To };
+        static constexpr ValueType defaultValue = From;
 
-        void CheckValue()
+        RangedIntShaderVariantFieldImpl() : value(defaultValue) {}
+        RangedIntShaderVariantFieldImpl(RangedIntShaderVariantFieldImpl&& other) noexcept : value(other.value) {}
+        ~RangedIntShaderVariantFieldImpl() = default;
+
+        void Set(ValueType inValue)
         {
             Assert(From <= value && value <= To);
+            value = inValue;
         }
 
-        ValueType value;
+        [[nodiscard]] ValueType Get() const
+        {
+            return value;
+        }
+
+        [[nodiscard]] uint32_t GetNumberValue() const
+        {
+            return value;
+        }
+
+    private:
+        uint32_t value;
     };
 
     template <typename... Variants>
-    class StaticShaderVariantSetImpl {
+    class VariantSetImpl {
     public:
-        StaticShaderVariantSetImpl() = default;
-        ~StaticShaderVariantSetImpl() = default;
-        StaticShaderVariantSetImpl(StaticShaderVariantSetImpl&& other) noexcept : variants(std::move(other)) {}
+        VariantSetImpl()
+        {
+            std::initializer_list<int> { ([this]() -> void { std::get<Variants>(variants).Set(Variants::defaultValue); }(), 0)... };
+        }
+
+        VariantSetImpl(const VariantSetImpl& other)
+        {
+            std::initializer_list<int> { ([this, &other]() -> void { std::get<Variants>(variants).Set(std::get<Variants>(other.variants).Get()); }(), 0)... };
+        }
+
+        VariantSetImpl(VariantSetImpl&& other) noexcept : variants(std::move(other.variants)) {}
+        ~VariantSetImpl() = default;
 
         static uint32_t VariantNum()
         {
             uint32_t result = 1;
             std::initializer_list<int> { ([&result]() -> void {
-                auto valueRange = Variants::ValueRange();
+                auto valueRange = Variants::valueRange;
                 Assert(valueRange.first <= valueRange.second);
                 result *= valueRange.second - valueRange.first + 1;
             }(), 0)... };
             return result;
         }
 
+        template <typename F>
+        static void TraverseAll(F&& func)
+        {
+            std::vector<VariantSetImpl<Variants...>> variantSets;
+            variantSets.reserve(VariantNum());
+            variantSets.emplace_back(VariantSetImpl<Variants...>());
+
+            std::initializer_list<int> { ([&variantSets]() -> void {
+                auto valueRange = Variants::valueRange;
+                auto variantSetsSize = variantSets.size();
+                for (auto i = valueRange.first; i <= valueRange.second; i++) {
+                    if (i == valueRange.first) {
+                        for (auto j = 0; j < variantSetsSize; j++) {
+                            variantSets[j].template Set<Variants>(static_cast<typename Variants::ValueType>(i));
+                        }
+                    } else {
+                        for (auto j = 0; j < variantSetsSize; j++) {
+                            variantSets.emplace_back(variantSets[j]);
+                            variantSets.back().template Set<Variants>(static_cast<typename Variants::ValueType>(i));
+                        }
+                    }
+                }
+            }(), 0)... };
+
+            for (auto& variantSet : variantSets) {
+                func(variantSet);
+            }
+        }
+
         template <typename Variant>
         void Set(typename Variant::ValueType value)
         {
-            std::get<Variant>(variants).value = value;
-            std::get<Variant>(variants).CheckValue();
+            std::get<Variant>(variants).Set(value);
         }
 
         template <typename Variant>
         typename Variant::ValueType Get()
         {
-            return std::get<Variant>(variants).value;
+            return std::get<Variant>(variants).Get();
         }
 
-        VariantKey Hash()
+        [[nodiscard]] std::vector<std::string> ComputeDefinitions() const
+        {
+            std::vector<std::string> result;
+            result.reserve(sizeof...(Variants));
+            std::initializer_list<int> { ([&result, this]() -> void {
+                result.emplace_back(std::string(Variants::macro) + "=" + std::to_string(std::get<Variants>(variants).GetNumberValue()));
+            }(), 0)... };
+            return result;
+        }
+
+        [[nodiscard]] VariantKey Hash() const
         {
             return Common::HashUtils::CityHash(&variants, sizeof(std::tuple<Variants...>));
         }
@@ -216,27 +303,27 @@ namespace Render {
     };
 }
 
-#define GlobalShaderInfo(inName, inSourceFile) \
+#define ShaderInfo(inName, inSourceFile) \
     static constexpr const char* name = inName; \
     static constexpr const char* sourceFile = inSourceFile; \
 
-#define DefaultStaticVariantFilter \
-    static bool StaticVariantFilter(const VariantSet& variantSet) { return true; } \
+#define DefaultVariantFilter \
+    static bool VariantFilter(const VariantSet& variantSet) { return true; } \
 
-#define StaticBoolShaderVariantField(inClass, inMacro) \
-    struct inClass : public Render::StaticBoolShaderVariantFieldImpl { \
+#define BoolShaderVariantField(inClass, inMacro) \
+    struct inClass : public Render::BoolShaderVariantFieldImpl { \
         static constexpr const char* name = #inClass; \
         static constexpr const char* macro = inMacro; \
     }; \
 
-#define StaticRangedIntShaderVariantField(inClass, inMacro, inRangeFrom, inRangeTo) \
-    struct inClass : public Render::StaticRangedIntShaderVariantFieldImpl<inRangeFrom, inRangeTo> { \
+#define RangedIntShaderVariantField(inClass, inMacro, inRangeFrom, inRangeTo) \
+    struct inClass : public Render::RangedIntShaderVariantFieldImpl<inRangeFrom, inRangeTo> { \
         static constexpr const char* name = #inClass; \
         static constexpr const char* macro = inMacro; \
     }
 
-#define StaticVariantSet(...) \
-    class VariantSet : public Render::StaticShaderVariantSetImpl<__VA_ARGS__> {};
+#define VariantSet(...) \
+    class VariantSet : public Render::VariantSetImpl<__VA_ARGS__> {};
 
 #define RegisterGlobalShader(inClass) \
     static uint8_t _globalShaderRegister_inClass = []() -> uint8_t { \
