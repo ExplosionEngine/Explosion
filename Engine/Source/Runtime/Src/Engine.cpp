@@ -4,6 +4,8 @@
 
 #include <Engine/Engine.h>
 
+#include <Common/Debug.h>
+
 namespace Runtime {
     EngineInitializer EngineInitializer::FromCommandline(int argc, char* argv)
     {
@@ -23,11 +25,17 @@ namespace Runtime {
 
     void Engine::Initialize(const EngineInitializer& initializer)
     {
-        // TODO
+        pathMapper = std::make_unique<Common::PathMapper>(std::move(Common::PathMapper::From(initializer.pathMap)));
     }
 
     void Engine::MainLoop()
     {
         // TODO
+    }
+
+    const Common::PathMapper& Engine::GetPathMapper() const
+    {
+        Assert(pathMapper != nullptr);
+        return *pathMapper;
     }
 }
