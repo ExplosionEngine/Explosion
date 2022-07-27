@@ -5,7 +5,7 @@
 #include <RHI/Vulkan/Api.h>
 
 extern "C" {
-RHI_VULKAN_API RHI::Instance* RHICreateInstance()
+RHI_VULKAN_API RHI::Instance* RHIGetInstance()
 {
     static RHI::Vulkan::VKInstance instance;
     return &instance;

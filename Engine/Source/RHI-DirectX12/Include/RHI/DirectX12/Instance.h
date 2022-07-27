@@ -42,5 +42,5 @@ namespace RHI::DirectX12 {
 }
 
 extern "C" {
-    RHI_DIRECTX12_API RHI::Instance* RHICreateInstance();
+    RHI_DIRECTX12_API RHI::Instance* RHIGetInstance();
 }

@@ -69,7 +69,7 @@ namespace RHI::DirectX12 {
 }
 
 extern "C" {
-    RHI::Instance* RHICreateInstance()
+    RHI::Instance* RHIGetInstance()
     {
         static RHI::DirectX12::DX12Instance singleton;
         return &singleton;
