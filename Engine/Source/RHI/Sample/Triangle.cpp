@@ -115,6 +115,7 @@ private:
         if (vertexBuffer != nullptr) {
             auto* data = vertexBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
             memcpy(data, vertices.data(), bufferCreateInfo.size);
+            vertexBuffer->UnMap();
         }
 
         BufferViewCreateInfo bufferViewCreateInfo {};
