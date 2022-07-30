@@ -43,11 +43,13 @@ protected:
 
     void OnDestroy() override
     {
+        graphicsQueue->Wait(fence);
+        fence->Wait();
         fence->Destroy();
         commandBuffer->Destroy();
         pipeline->Destroy();
         pipelineLayout->Destroy();
-        for (auto* textureView : swapChainTextureViews) {
+        for (auto* textureView: swapChainTextureViews) {
             textureView->Destroy();
         }
         vertexBufferView->Destroy();
@@ -67,7 +69,7 @@ private:
 
     void RequestDeviceAndFetchQueues()
     {
-        std::vector<QueueInfo> queueCreateInfos = {{ QueueType::GRAPHICS, 1 }};
+        std::vector<QueueInfo> queueCreateInfos = {{QueueType::GRAPHICS, 1}};
         DeviceCreateInfo createInfo {};
         createInfo.queueCreateInfoNum = queueCreateInfos.size();
         createInfo.queueCreateInfos = queueCreateInfos.data();
@@ -81,7 +83,7 @@ private:
         swapChainCreateInfo.format = PixelFormat::RGBA8_UNORM;
         swapChainCreateInfo.presentMode = PresentMode::IMMEDIATELY;
         swapChainCreateInfo.textureNum = 2;
-        swapChainCreateInfo.extent = { width, height };
+        swapChainCreateInfo.extent = {width, height};
         swapChainCreateInfo.window = GetPlatformWindow();
         swapChainCreateInfo.presentQueue = graphicsQueue;
         swapChain = device->CreateSwapChain(&swapChainCreateInfo);
@@ -104,9 +106,9 @@ private:
     void CreateVertexBuffer()
     {
         std::vector<Vertex> vertices = {
-            { { -.5f, -.5f, 0.f }, { 1.f, 0.f, 0.f } },
-            { { .5f, -.5f, 0.f }, { 0.f, 1.f, 0.f } },
-            { { 0.f, .5f, 0.f }, { 0.f, 0.f, 1.f } },
+            {{-.5f, -.5f, 0.f}, {1.f, 0.f, 0.f}},
+            {{.5f, -.5f, 0.f}, {0.f, 1.f, 0.f}},
+            {{0.f, .5f, 0.f}, {0.f, 0.f, 1.f}},
         };
 
         BufferCreateInfo bufferCreateInfo {};
@@ -208,7 +210,7 @@ private:
         CommandEncoder* commandEncoder = commandBuffer->Begin();
         {
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = ColorNormalized<4> { 0.0f, 0.0f, 0.0f, 1.0f };
+            colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::CLEAR;
             colorAttachments[0].storeOp = StoreOp::STORE;
             colorAttachments[0].view = swapChainTextureViews[swapChain->GetBackTextureIndex()];
