@@ -11,7 +11,7 @@
 namespace Common {
     class PathMapper {
     public:
-        static PathMapper From(std::unordered_map<std::string, std::string>&& map)
+        static PathMapper From(const std::unordered_map<std::string, std::string>& map)
         {
             std::vector<std::pair<std::string, std::string>> result;
             result.reserve(map.size());
@@ -25,6 +25,7 @@ namespace Common {
 
         PathMapper() = default;
         ~PathMapper() = default;
+        PathMapper(PathMapper&& other) noexcept : mappers(std::move(other.mappers)) {}
         NON_COPYABLE(PathMapper)
 
         [[nodiscard]] std::string Map(const std::string& path) const

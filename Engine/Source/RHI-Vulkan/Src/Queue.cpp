@@ -14,6 +14,11 @@ namespace RHI::Vulkan {
         // TODO
     }
 
+    void VKQueue::Wait(Fence* fenceToSignal)
+    {
+        // TODO
+    }
+
     vk::Queue VKQueue::GetVkQueue()
     {
         return vkQueue;

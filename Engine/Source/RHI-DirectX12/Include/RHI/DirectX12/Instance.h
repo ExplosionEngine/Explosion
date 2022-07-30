@@ -36,11 +36,11 @@ namespace RHI::DirectX12 {
         void CreateDX12Factory();
         void EnumerateAdapters();
 
-        std::vector<std::unique_ptr<DX12Gpu>> gpus;
         ComPtr<IDXGIFactory4> dx12Factory;
+        std::vector<std::unique_ptr<DX12Gpu>> gpus;
     };
 }
 
 extern "C" {
-    RHI_DIRECTX12_API RHI::Instance* RHICreateInstance();
+    RHI_DIRECTX12_API RHI::Instance* RHIGetInstance();
 }

@@ -36,7 +36,7 @@ namespace RHI {
         if (dynamicLibrary == nullptr) {
             return nullptr;
         }
-        RHICreateInstanceFunc symbol = reinterpret_cast<RHICreateInstanceFunc>(dynamicLibrary->GetSymbol("RHICreateInstance"));
+        RHIGetInstanceFunc symbol = reinterpret_cast<RHIGetInstanceFunc>(dynamicLibrary->GetSymbol("RHIGetInstance"));
         if (symbol == nullptr) {
             return nullptr;
         }

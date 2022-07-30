@@ -17,6 +17,7 @@ namespace RHI::Vulkan {
         ~VKQueue() override;
 
         void Submit(CommandBuffer* commandBuffer, Fence* fenceToSignal) override;
+        void Wait(Fence* fenceToSignal) override;
 
         vk::Queue GetVkQueue();
 

@@ -34,5 +34,6 @@ namespace RHI::DirectX12 {
     {
         bool success = SUCCEEDED(device.GetDX12Device()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, device.GetDX12CommandAllocator().Get(), nullptr, IID_PPV_ARGS(&dx12GraphicsCommandList)));
         Assert(success);
+        dx12GraphicsCommandList->Close();
     }
 }

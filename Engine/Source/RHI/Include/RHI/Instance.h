@@ -29,5 +29,5 @@ namespace RHI {
         explicit Instance();
     };
 
-    using RHICreateInstanceFunc = Instance*(*)();
+    using RHIGetInstanceFunc = Instance*(*)();
 }

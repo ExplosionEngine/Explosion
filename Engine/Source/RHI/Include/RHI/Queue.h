@@ -16,6 +16,7 @@ namespace RHI {
         virtual ~Queue();
 
         virtual void Submit(CommandBuffer* commandBuffer, Fence* fenceToSignal) = 0;
+        virtual void Wait(Fence* fenceToSignal) = 0;
 
     protected:
         Queue();
