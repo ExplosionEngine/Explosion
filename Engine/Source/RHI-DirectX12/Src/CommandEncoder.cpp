@@ -202,7 +202,6 @@ namespace RHI::DirectX12 {
 
     DX12CommandEncoder::DX12CommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : CommandEncoder(), device(device), commandBuffer(commandBuffer)
     {
-        commandBuffer.GetDX12GraphicsCommandList()->Close();
         commandBuffer.GetDX12GraphicsCommandList()->Reset(device.GetDX12CommandAllocator().Get(), nullptr);
     }
 

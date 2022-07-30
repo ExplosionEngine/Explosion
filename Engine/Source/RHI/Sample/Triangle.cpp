@@ -31,11 +31,12 @@ protected:
         CreatePipelineLayout();
         CreatePipeline();
         CreateFence();
+        CreateCommandBuffer();
     }
 
     void OnDrawFrame() override
     {
-        CreateCommandBuffer();
+        PopulateCommandBuffer();
         SubmitCommandBufferAndPresent();
         WaitPreviousFrame();
     }
@@ -200,6 +201,10 @@ private:
     void CreateCommandBuffer()
     {
         commandBuffer = device->CreateCommandBuffer();
+    }
+
+    void PopulateCommandBuffer()
+    {
         CommandEncoder* commandEncoder = commandBuffer->Begin();
         {
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
