@@ -56,7 +56,6 @@ protected:
         vertexBuffer->Destroy();
         swapChain->Destroy();
         device->Destroy();
-        instance->Destroy();
     }
 
 private:
