@@ -2,6 +2,8 @@
 // Created by johnk on 10/1/2022.
 //
 
+#include <utility>
+
 #include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Instance.h>
 #include <RHI/DirectX12/Gpu.h>
@@ -57,7 +59,7 @@ namespace RHI::DirectX12 {
     {
         auto iter = debugLayerExceptionHandlers.find(device);
         Assert(iter == debugLayerExceptionHandlers.end());
-        debugLayerExceptionHandlers[device] = handler;
+        debugLayerExceptionHandlers[device] = std::move(handler);
     }
 
     void DX12Instance::RemoveDebugLayerExceptionHandler(const DX12Device* device)

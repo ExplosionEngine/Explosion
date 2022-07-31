@@ -231,6 +231,10 @@ namespace RHI::DirectX12 {
 #if BUILD_CONFIG_DEBUG
     void DX12Device::RegisterDebugLayerExceptionHandler()
     {
+        ComPtr<ID3D12InfoQueue> dx12InfoQueue;
+        Assert(SUCCEEDED(dx12Device->QueryInterface(IID_PPV_ARGS(&dx12InfoQueue))));
+        dx12InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+
         gpu.GetInstance().AddDebugLayerExceptionHandler(this, [this]() -> void {
             ComPtr<ID3D12Debug> dx12Debug;
             Assert(SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&dx12Debug))));
@@ -245,8 +249,7 @@ namespace RHI::DirectX12 {
                 message.first = static_cast<D3D12_MESSAGE*>(malloc(message.second));
                 Assert(SUCCEEDED(dx12InfoQueue->GetMessageA(i, message.first, &message.second)));
 
-                if (message.first->Severity == D3D12_MESSAGE_SEVERITY_WARNING
-                    || message.first->Severity == D3D12_MESSAGE_SEVERITY_ERROR) {
+                if (message.first->Severity == D3D12_MESSAGE_SEVERITY_ERROR) {
                     std::cout << message.first->pDescription << std::endl;
                 }
                 free(message.first);
