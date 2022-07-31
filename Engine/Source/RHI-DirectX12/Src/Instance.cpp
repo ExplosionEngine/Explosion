@@ -9,6 +9,7 @@
 #include <RHI/DirectX12/Gpu.h>
 
 namespace RHI::DirectX12 {
+#if BUILD_CONFIG_DEBUG
     static LONG __stdcall DX12VectoredExceptionHandler(EXCEPTION_POINTERS* info)
     {
         if (info->ExceptionRecord->ExceptionCode != _FACDXGI)
@@ -19,6 +20,7 @@ namespace RHI::DirectX12 {
         dynamic_cast<DX12Instance*>(RHIGetInstance())->BroadcastDebugLayerExceptions();
         return EXCEPTION_CONTINUE_EXECUTION;
     }
+#endif
 }
 
 namespace RHI::DirectX12 {
@@ -26,12 +28,16 @@ namespace RHI::DirectX12 {
     {
         CreateDX12Factory();
         EnumerateAdapters();
+#if BUILD_CONFIG_DEBUG
         RegisterDX12ExceptionHandler();
+#endif
     }
 
     DX12Instance::~DX12Instance()
     {
+#if BUILD_CONFIG_DEBUG
         UnregisterDX12ExceptionHandler();
+#endif
     }
 
     RHIType DX12Instance::GetRHIType()
