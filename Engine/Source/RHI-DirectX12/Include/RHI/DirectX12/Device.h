@@ -12,7 +12,7 @@
 #include <d3d12.h>
 #include <directx/d3dx12.h>
 
-#include "RHI/Synchronous.h"
+#include <RHI/Synchronous.h>
 #include <RHI/Common.h>
 #include <RHI/Device.h>
 
@@ -68,6 +68,10 @@ namespace RHI::DirectX12 {
         void CreateDX12Queues(const DeviceCreateInfo* createInfo);
         void CreateDX12CommandAllocator();
         void GetDX12DescriptorSize();
+#if BUILD_CONFIG_DEBUG
+        void RegisterDebugLayerExceptionHandler();
+        void UnregisterDebugLayerExceptionHandler();
+#endif
 
         DX12Gpu& gpu;
         std::unordered_map<QueueType, std::vector<std::unique_ptr<DX12Queue>>> queues;

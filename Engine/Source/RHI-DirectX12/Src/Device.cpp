@@ -2,9 +2,10 @@
 // Created by johnk on 15/1/2022.
 //
 
-#include <RHI/DirectX12/Common.h>
-#include <RHI/DirectX12/Gpu.h>
 #include <RHI/DirectX12/Device.h>
+#include <RHI/DirectX12/Common.h>
+#include <RHI/DirectX12/Instance.h>
+#include <RHI/DirectX12/Gpu.h>
 #include <RHI/DirectX12/Queue.h>
 #include <RHI/DirectX12/Buffer.h>
 #include <RHI/DirectX12/Texture.h>
@@ -25,9 +26,17 @@ namespace RHI::DirectX12 {
         CreateDX12Queues(createInfo);
         CreateDX12CommandAllocator();
         GetDX12DescriptorSize();
+#if BUILD_CONFIG_DEBUG
+        RegisterDebugLayerExceptionHandler();
+#endif
     }
 
-    DX12Device::~DX12Device() = default;
+    DX12Device::~DX12Device()
+    {
+#if BUILD_CONFIG_DEBUG
+        UnregisterDebugLayerExceptionHandler();
+#endif
+    }
 
     void DX12Device::Destroy()
     {
@@ -214,4 +223,18 @@ namespace RHI::DirectX12 {
         rtvDescriptorSize = dx12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
         cbvSrvUavDescriptorSize = dx12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     }
+
+#if BUILD_CONFIG_DEBUG
+    void DX12Device::RegisterDebugLayerExceptionHandler()
+    {
+        gpu.GetInstance().AddDebugLayerExceptionHandler(this, []() -> void {
+            // TODO
+        });
+    }
+
+    void DX12Device::UnregisterDebugLayerExceptionHandler()
+    {
+        gpu.GetInstance().RemoveDebugLayerExceptionHandler(this);
+    }
+#endif
 }

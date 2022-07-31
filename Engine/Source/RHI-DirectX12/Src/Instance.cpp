@@ -7,13 +7,30 @@
 #include <RHI/DirectX12/Gpu.h>
 
 namespace RHI::DirectX12 {
+    static LONG __stdcall DX12VectoredExceptionHandler(EXCEPTION_POINTERS* info)
+    {
+        if (info->ExceptionRecord->ExceptionCode != _FACDXGI)
+        {
+            return EXCEPTION_CONTINUE_SEARCH;
+        }
+
+        dynamic_cast<DX12Instance*>(RHIGetInstance())->BroadcastDebugLayerExceptions();
+        return EXCEPTION_CONTINUE_EXECUTION;
+    }
+}
+
+namespace RHI::DirectX12 {
     DX12Instance::DX12Instance() : Instance()
     {
         CreateDX12Factory();
         EnumerateAdapters();
+        RegisterDX12ExceptionHandler();
     }
 
-    DX12Instance::~DX12Instance() noexcept = default;
+    DX12Instance::~DX12Instance()
+    {
+        UnregisterDX12ExceptionHandler();
+    }
 
     RHIType DX12Instance::GetRHIType()
     {
@@ -24,6 +41,40 @@ namespace RHI::DirectX12 {
     {
         return dx12Factory;
     }
+
+#if BUILD_CONFIG_DEBUG
+    void DX12Instance::RegisterDX12ExceptionHandler()
+    {
+        dx12ExceptionHandler = AddVectoredExceptionHandler(1, DX12VectoredExceptionHandler);
+    }
+
+    void DX12Instance::UnregisterDX12ExceptionHandler()
+    {
+        RemoveVectoredExceptionHandler(dx12ExceptionHandler);
+    }
+
+    void DX12Instance::AddDebugLayerExceptionHandler(const DX12Device* device, DebugLayerExceptionHandler handler)
+    {
+        auto iter = debugLayerExceptionHandlers.find(device);
+        Assert(iter == debugLayerExceptionHandlers.end());
+        debugLayerExceptionHandlers[device] = handler;
+    }
+
+    void DX12Instance::RemoveDebugLayerExceptionHandler(const DX12Device* device)
+    {
+        auto iter = debugLayerExceptionHandlers.find(device);
+        Assert(iter != debugLayerExceptionHandlers.end());
+        debugLayerExceptionHandlers.erase(iter);
+    }
+
+    void DX12Instance::BroadcastDebugLayerExceptions()
+    {
+        for (const auto& handler : debugLayerExceptionHandlers)
+        {
+            handler.second();
+        }
+    }
+#endif
 
     void DX12Instance::CreateDX12Factory()
     {
