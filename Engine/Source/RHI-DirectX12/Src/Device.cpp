@@ -2,6 +2,10 @@
 // Created by johnk on 15/1/2022.
 //
 
+#include <iostream>
+
+#include <directx/d3d12sdklayers.h>
+
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Instance.h>
@@ -227,8 +231,26 @@ namespace RHI::DirectX12 {
 #if BUILD_CONFIG_DEBUG
     void DX12Device::RegisterDebugLayerExceptionHandler()
     {
-        gpu.GetInstance().AddDebugLayerExceptionHandler(this, []() -> void {
-            // TODO
+        gpu.GetInstance().AddDebugLayerExceptionHandler(this, [this]() -> void {
+            ComPtr<ID3D12Debug> dx12Debug;
+            Assert(SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&dx12Debug))));
+
+            ComPtr<ID3D12InfoQueue> dx12InfoQueue;
+            Assert(SUCCEEDED(dx12Device->QueryInterface(IID_PPV_ARGS(&dx12InfoQueue))));
+
+            auto messageCount = dx12InfoQueue->GetNumStoredMessagesAllowedByRetrievalFilter();
+            for (auto i = 0; i < messageCount; i++) {
+                std::pair<D3D12_MESSAGE*, size_t> message;
+                Assert(SUCCEEDED(dx12InfoQueue->GetMessageA(i, nullptr, &message.second)));
+                message.first = static_cast<D3D12_MESSAGE*>(malloc(message.second));
+                Assert(SUCCEEDED(dx12InfoQueue->GetMessageA(i, message.first, &message.second)));
+
+                if (message.first->Severity == D3D12_MESSAGE_SEVERITY_WARNING
+                    || message.first->Severity == D3D12_MESSAGE_SEVERITY_ERROR) {
+                    std::cout << message.first->pDescription << std::endl;
+                }
+                free(message.first);
+            }
         });
     }
 
