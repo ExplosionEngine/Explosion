@@ -11,17 +11,13 @@
 #include <Common/Path.h>
 
 namespace Runtime {
-    struct EngineInitializer {
-        std::unordered_map<std::string, std::string> pathMap;
-    };
-
     class Engine {
     public:
         static Engine& Get();
 
         ~Engine();
 
-        void Initialize(const EngineInitializer& initializer);
+        bool Initialize(int argc, char* argv[]);
         [[nodiscard]] const Common::PathMapper& GetPathMapper() const;
         void Tick();
 
