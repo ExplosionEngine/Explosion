@@ -86,13 +86,18 @@ protected:
     {
         std::string shaderSource = Common::FileUtils::ReadTextFile(fileName);
 
-        Shader::ShaderCompileInput info;
-        info.spriv = rhiType == RHI::RHIType::VULKAN;
+        Shader::CompileInput info;
         info.source = shaderSource;
         info.entryPoint = entryPoint;
         info.stage = shaderStage;
-        info.withDebugInfo = false;
-        auto future = Shader::ShaderCompiler::Get().Compile(info);
+        Shader::CompileOptions options;
+        if (rhiType == RHI::RHIType::DIRECTX_12) {
+            options.byteCodeType = Shader::ByteCodeType::DXIL;
+        } else if (rhiType == RHI::RHIType::VULKAN) {
+            options.byteCodeType = Shader::ByteCodeType::SPRIV;
+        }
+        options.withDebugInfo = false;
+        auto future = Shader::ShaderCompiler::Get().Compile(info, options);
 
         future.wait();
         auto result = future.get();

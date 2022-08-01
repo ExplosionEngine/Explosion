@@ -12,8 +12,6 @@
 
 namespace Runtime {
     struct EngineInitializer {
-        static EngineInitializer FromCommandline(int argc, char* argv);
-
         std::unordered_map<std::string, std::string> pathMap;
     };
 

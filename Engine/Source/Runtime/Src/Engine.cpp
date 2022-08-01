@@ -7,12 +7,6 @@
 #include <Common/Debug.h>
 
 namespace Runtime {
-    EngineInitializer EngineInitializer::FromCommandline(int argc, char* argv)
-    {
-        // TODO
-        return {};
-    }
-
     Engine& Engine::Get()
     {
         static Engine instance;

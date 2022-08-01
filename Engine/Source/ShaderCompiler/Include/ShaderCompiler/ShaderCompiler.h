@@ -9,18 +9,27 @@
 
 #include <RHI/Common.h>
 #include <Common/Concurrent.h>
-#include <Common/Platform.h>
 
 namespace Shader {
-    struct ShaderCompileInput {
+    enum class ByteCodeType {
+        DXIL,
+        SPRIV,
+        MBC,
+        MAX
+    };
+
+    struct CompileInput {
         std::string source;
         std::string entryPoint;
         RHI::ShaderStageBits stage;
-        bool withDebugInfo;
-        bool spriv;
     };
 
-    struct ShaderCompileOutput {
+    struct CompileOptions {
+        ByteCodeType byteCodeType = ByteCodeType::MAX;
+        bool withDebugInfo = false;
+    };
+
+    struct CompileOutput {
         bool success;
         std::vector<uint8_t> byteCode;
         std::string errorInfo;
@@ -30,7 +39,7 @@ namespace Shader {
     public:
         static ShaderCompiler& Get();
         ~ShaderCompiler();
-        std::future<ShaderCompileOutput> Compile(const ShaderCompileInput& compileInfo);
+        std::future<CompileOutput> Compile(const CompileInput& inInput, const CompileOptions& inOptions);
 
     private:
         ShaderCompiler();
