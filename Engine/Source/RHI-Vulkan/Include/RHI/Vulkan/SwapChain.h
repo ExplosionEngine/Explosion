@@ -8,6 +8,7 @@
 
 namespace RHI::Vulkan {
     class VKDevice;
+    class VKQueue;
 
     class VKSwapChain : public SwapChain {
     public:
@@ -26,6 +27,7 @@ namespace RHI::Vulkan {
         vk::SwapchainKHR swapChain = VK_NULL_HANDLE;
         vk::SurfaceKHR surface = VK_NULL_HANDLE;
         std::vector<Texture*> textures;
+        vk::Queue queue;
     };
 
 }

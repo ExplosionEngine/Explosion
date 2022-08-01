@@ -16,6 +16,7 @@
 #include <RHI/Vulkan/SwapChain.h>
 #include <RHI/Vulkan/Pipeline.h>
 #include <RHI/Vulkan/CommandBuffer.h>
+#include <RHI/Vulkan/Synchronous.h>
 
 namespace RHI::Vulkan {
     const std::vector<const char*> DEVICE_EXTENSIONS = {
@@ -123,8 +124,7 @@ namespace RHI::Vulkan {
 
     Fence* VKDevice::CreateFence()
     {
-        // TODO
-        return nullptr;
+        return new VKFence(*this);
     }
 
     vk::Device VKDevice::GetVkDevice()
