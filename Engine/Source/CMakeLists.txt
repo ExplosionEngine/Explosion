@@ -3,6 +3,7 @@ add_subdirectory(RHI)
 add_subdirectory(ShaderCompiler)
 add_subdirectory(Render)
 add_subdirectory(Runtime)
+add_subdirectory(GameEntry)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_subdirectory(RHI-DirectX12)

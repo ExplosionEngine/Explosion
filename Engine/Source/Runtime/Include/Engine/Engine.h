@@ -22,8 +22,8 @@ namespace Runtime {
         ~Engine();
 
         void Initialize(const EngineInitializer& initializer);
-        void MainLoop();
         [[nodiscard]] const Common::PathMapper& GetPathMapper() const;
+        void Tick();
 
     protected:
         Engine();
