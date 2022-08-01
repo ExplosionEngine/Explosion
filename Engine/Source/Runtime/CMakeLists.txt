@@ -4,4 +4,5 @@ AddLibrary(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
+    LIB clipp
 )

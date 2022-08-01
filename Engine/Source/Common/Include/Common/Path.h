@@ -2,8 +2,11 @@
 // Created by johnk on 2022/7/25.
 //
 
+#pragma once
+
 #include <unordered_map>
 #include <utility>
+#include <filesystem>
 
 #include <Common/Utility.h>
 #include <Common/String.h>
@@ -42,5 +45,14 @@ namespace Common {
         explicit PathMapper(std::vector<std::pair<std::string, std::string>> inMappers) : mappers(std::move(inMappers)) {}
 
         std::vector<std::pair<std::string, std::string>> mappers;
+    };
+
+    class PathUtils {
+    public:
+        static inline std::string GetParentPath(const std::string& absolutePath)
+        {
+            std::filesystem::path path(absolutePath);
+            return Common::StringUtils::Replace(path.parent_path().string(), "\\", "/");
+        }
     };
 }
