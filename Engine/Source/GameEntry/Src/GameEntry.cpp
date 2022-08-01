@@ -34,8 +34,14 @@ static bool ParseCommandLineArguments(CommandLineParseResult& result, int argc, 
 
 static Runtime::EngineInitializer PopulateEngineInitializer(const CommandLineParseResult& result)
 {
-    // TODO
-    return {};
+    Runtime::EngineInitializer initializer;
+#if BUILD_EDITOR
+    initializer.pathMap["/Engine"] = Common::PathUtils::GetParentPath(result.exeFile) + "/Engine";
+#else
+    initializer.pathMap["/Engine"] = Common::PathUtils::GetParentPath(result.projectFile) + "/Engine";
+#endif
+    initializer.pathMap["/Game"] = Common::PathUtils::GetParentPath(result.exeFile) + "/Game";
+    return initializer;
 }
 
 int main(int argc, char* argv[])

@@ -52,7 +52,7 @@ namespace Common {
         static inline std::string GetParentPath(const std::string& absolutePath)
         {
             std::filesystem::path path(absolutePath);
-            return path.parent_path().string();
+            return Common::StringUtils::Replace(path.parent_path().string(), "\\", "/");
         }
     };
 }
