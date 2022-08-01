@@ -6,6 +6,8 @@
 
 #include <vector>
 #include <memory>
+#include <unordered_map>
+#include <functional>
 
 #include <wrl/client.h>
 #include <d3d12.h>
@@ -18,6 +20,11 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI::DirectX12 {
     class DX12Gpu;
+    class DX12Device;
+
+#if BUILD_CONFIG_DEBUG
+    using DebugLayerExceptionHandler = std::function<void()>;
+#endif
 
     class RHI_DIRECTX12_API DX12Instance : public Instance {
     public:
@@ -31,13 +38,26 @@ namespace RHI::DirectX12 {
         void Destroy() override;
 
         ComPtr<IDXGIFactory4>& GetDX12Factory();
+#if BUILD_CONFIG_DEBUG
+        void AddDebugLayerExceptionHandler(const DX12Device* device, DebugLayerExceptionHandler handler);
+        void RemoveDebugLayerExceptionHandler(const DX12Device* device);
+        void BroadcastDebugLayerExceptions();
+#endif
 
     private:
         void CreateDX12Factory();
         void EnumerateAdapters();
+#if BUILD_CONFIG_DEBUG
+        void RegisterDX12ExceptionHandler();
+        void UnregisterDX12ExceptionHandler();
+#endif
 
         ComPtr<IDXGIFactory4> dx12Factory;
         std::vector<std::unique_ptr<DX12Gpu>> gpus;
+#if BUILD_CONFIG_DEBUG
+        void* dx12ExceptionHandler;
+        std::unordered_map<const DX12Device*, DebugLayerExceptionHandler> debugLayerExceptionHandlers;
+#endif
     };
 }
 
