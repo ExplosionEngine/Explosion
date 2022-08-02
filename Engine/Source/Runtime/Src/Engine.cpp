@@ -57,6 +57,13 @@ namespace Runtime {
         return true;
     }
 
+    void Engine::BindGameWindow(IWindow* inGameWindow)
+    {
+        gameWindow = inGameWindow;
+        gameWindow->SetOnTickListener([this]() -> void { Tick(); });
+        // TODO window resize & inputs
+    }
+
     void Engine::Tick()
     {
         // TODO
