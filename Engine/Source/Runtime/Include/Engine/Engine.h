@@ -9,6 +9,7 @@
 #include <memory>
 
 #include <Common/Path.h>
+#include <Engine/Window.h>
 
 namespace Runtime {
     class Engine {
@@ -18,13 +19,15 @@ namespace Runtime {
         ~Engine();
 
         bool Initialize(int argc, char* argv[]);
+        void BindGameWindow(IWindow* inGameWindow);
         [[nodiscard]] const Common::PathMapper& GetPathMapper() const;
-        void Tick();
-
-    protected:
-        Engine();
 
     private:
+        Engine();
+
+        void Tick();
+
+        IWindow* gameWindow;
         std::unique_ptr<Common::PathMapper> pathMapper;
     };
 }

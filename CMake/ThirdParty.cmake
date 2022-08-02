@@ -3,7 +3,7 @@ option(CUSTOM_3RD_REPO "using custom 3rd repo" OFF)
 if (${CUSTOM_3RD_REPO})
     set(3RD_REPO ${3RD_REPO_URL} CACHE STRING "" FORCE)
 else()
-    set(3RD_REPO "http://124.223.92.162" CACHE STRING "" FORCE)
+    set(3RD_REPO "http://1.13.181.171" CACHE STRING "" FORCE)
 endif()
 
 set(3RD_DIR ${CMAKE_SOURCE_DIR}/ThirdParty CACHE PATH "" FORCE)
@@ -71,8 +71,8 @@ function(Add3rdHeaderOnlyPackage)
 
     set(NAME "${PARAMS_NAME}")
     set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
-    set(URL "${3RD_REPO}/${FULL_NAME}.zip")
-    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.zip")
+    set(URL "${3RD_REPO}/${FULL_NAME}.7z")
+    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.7z")
     set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
 
     DownloadAndExtract3rdPackage(
@@ -110,8 +110,8 @@ function(Add3rdBinaryPackage)
 
     set(NAME "${PARAMS_NAME}")
     set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
-    set(URL "${3RD_REPO}/${FULL_NAME}.zip")
-    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.zip")
+    set(URL "${3RD_REPO}/${FULL_NAME}.7z")
+    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.7z")
     set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
 
     DownloadAndExtract3rdPackage(
@@ -185,8 +185,8 @@ function(Add3rdCMakeProject)
 
     set(NAME "${PARAMS_NAME}")
     set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
-    set(URL "${3RD_REPO}/${FULL_NAME}.zip")
-    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.zip")
+    set(URL "${3RD_REPO}/${FULL_NAME}.7z")
+    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.7z")
     set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
     set(BINARY_DIR "${3RD_BINARY_DIR}/${NAME}")
     set(INSTALL_DIR "${3RD_INSTALL_DIR}/${NAME}/$<CONFIG>")
