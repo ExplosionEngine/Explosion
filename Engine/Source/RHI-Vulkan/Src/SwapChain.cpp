@@ -34,17 +34,20 @@ namespace RHI::Vulkan {
 
     uint8_t VKSwapChain::GetBackTextureIndex()
     {
+        // TODO
         return 0;
     }
 
     void VKSwapChain::Present()
     {
-//        vk::PresentInfoKHR presetInfo{};
-//        presetInfo.setSwapchainCount(1)
-//            .setSwapchains(swapChain)
-//            .setPImageIndices(0);
-//
-//        Assert(queue.presentKHR(&presetInfo) == vk::Result::eSuccess);
+        const uint32_t curImageIndex = GetBackTextureIndex();
+
+        vk::PresentInfoKHR presetInfo{};
+        presetInfo.setSwapchainCount(1)
+            .setSwapchains(swapChain)
+            .setPImageIndices(&curImageIndex);
+
+        Assert(queue.presentKHR(&presetInfo) == vk::Result::eSuccess);
     }
 
     void VKSwapChain::Destroy()

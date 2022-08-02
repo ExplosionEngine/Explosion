@@ -1,10 +1,13 @@
+//
+// Created by swtpotato on 2022/8/2.
+//
+
 #pragma once
 
 #include <vulkan/vulkan.hpp>
-
 #include <RHI/Synchronous.h>
 
-namespace  RHI::Vulkan {
+namespace RHI::Vulkan {
     class VKDevice;
 
     class VKFence : public Fence {
@@ -17,7 +20,7 @@ namespace  RHI::Vulkan {
         void Wait() override;
         void Destroy() override;
 
-        vk::Fence GetVKFence();
+        vk::Fence GetVkFence();
 
     private:
         void CreateVKFence();

@@ -51,16 +51,15 @@ namespace RHI::Vulkan {
 
     void VKCommandEncoder::End()
     {
-        commandBuffer.GetNativeHandle().end();
+        commandBuffer.GetVkCommandBuffer().end();
     }
 
     VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandBuffer& cmd,
         const GraphicsPassBeginInfo* beginInfo) : device(dev), commandBuffer(cmd)
     {
-        cmdHandle = commandBuffer.GetNativeHandle();
+        cmdHandle = commandBuffer.GetVkCommandBuffer();
 
         vk::RenderPassBeginInfo passBegin = {};
-//        commandBuffer.GetNativeHandle().beginRenderPass()
     }
 
     VKGraphicsPassCommandEncoder::~VKGraphicsPassCommandEncoder()

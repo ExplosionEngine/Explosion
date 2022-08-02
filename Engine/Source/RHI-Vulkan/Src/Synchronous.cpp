@@ -1,3 +1,7 @@
+//
+// Created by swtpotato on 2022/8/2.
+//
+
 #include <Common/Debug.h>
 #include <RHI/Vulkan/Synchronous.h>
 #include <RHI/Vulkan/Device.h>
@@ -29,7 +33,7 @@ namespace RHI::Vulkan {
         Assert(device.GetVkDevice().waitForFences(1, &fence, VK_TRUE, UINT64_MAX) == vk::Result::eSuccess);
     }
 
-    vk::Fence VKFence::GetVKFence()
+    vk::Fence VKFence::GetVkFence()
     {
         return fence;
     }
@@ -37,7 +41,6 @@ namespace RHI::Vulkan {
     void VKFence::CreateVKFence()
     {
         vk::FenceCreateInfo fenceInfo{};
-//        fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
 
         Assert(device.GetVkDevice().createFence(&fenceInfo, nullptr, &fence) == vk::Result::eSuccess);
     }

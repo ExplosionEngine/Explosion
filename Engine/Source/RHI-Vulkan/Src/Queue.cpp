@@ -14,19 +14,19 @@ namespace RHI::Vulkan {
 
     void VKQueue::Submit(CommandBuffer* cb, Fence* fts)
     {
-//        auto* commandBuffer = dynamic_cast<VKCommandBuffer*>(cb);
-//        auto* fenceToSignaled = dynamic_cast<VKFence*>(fts);
-//        Assert(commandBuffer && fenceToSignaled);
-//
-//        const vk::CommandBuffer& vcb = commandBuffer->GetNativeHandle();
-//        const vk::Fence& fence = fenceToSignaled->GetVKFence();
-//
-//        vk::SubmitInfo submitInfo{};
-//        submitInfo.setCommandBufferCount(1)
-//            .setPCommandBuffers(&vcb);
-//
-//        fenceToSignaled->Reset();
-//        Assert(vkQueue.submit(1, &submitInfo, fence) == vk::Result::eSuccess);
+        auto* commandBuffer = dynamic_cast<VKCommandBuffer*>(cb);
+        auto* fenceToSignaled = dynamic_cast<VKFence*>(fts);
+        Assert(commandBuffer && fenceToSignaled);
+
+        const vk::CommandBuffer& vcb = commandBuffer->GetVkCommandBuffer();
+        const vk::Fence& fence = fenceToSignaled->GetVkFence();
+
+        vk::SubmitInfo submitInfo{};
+        submitInfo.setCommandBufferCount(1)
+            .setPCommandBuffers(&vcb);
+
+        fenceToSignaled->Reset();
+        Assert(vkQueue.submit(1, &submitInfo, fence) == vk::Result::eSuccess);
     }
 
     void VKQueue::Wait(Fence* fenceToSignal)

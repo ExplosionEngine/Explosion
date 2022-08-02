@@ -26,7 +26,7 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    vk::PipelineLayout VKPipelineLayout::GetNativeHandle() const
+    vk::PipelineLayout VKPipelineLayout::GetVkPipelineLayout() const
     {
         return pipelineLayout;
     }
@@ -36,7 +36,7 @@ namespace RHI::Vulkan {
         std::vector<vk::DescriptorSetLayout> setLayouts(createInfo->bindGroupNum);
         for (uint32_t i = 0; i < createInfo->bindGroupNum; ++i) {
             auto vulkanBindGroup = static_cast<const VKBindGroupLayout*>(createInfo->bindGroupLayouts[i]);
-            setLayouts[i] = vulkanBindGroup->GetNativeHandle();
+            setLayouts[i] = vulkanBindGroup->GetVkDescriptorSetLayout();
         }
 
         std::vector<vk::PushConstantRange> pushConstants(createInfo->pipelineConstantNum);
