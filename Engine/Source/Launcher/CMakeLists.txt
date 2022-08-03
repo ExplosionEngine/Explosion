@@ -1,7 +1,7 @@
 file(GLOB SOURCES Src/*.cpp)
 AddExecutable(
-    NAME GameEntry
+    NAME Launcher
     SRC ${SOURCES}
     INC Include
-    LIB Runtime glfw
+    LIB Engine
 )
