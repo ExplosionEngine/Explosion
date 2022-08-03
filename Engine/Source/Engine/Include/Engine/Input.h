@@ -10,7 +10,7 @@ namespace Engine {
         InputManager();
         ~InputManager();
 
-        void MouseMove(float x, float y);
+        void MouseMove(double x, double y);
         // TODO
     };
 }

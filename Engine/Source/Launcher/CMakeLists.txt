@@ -3,5 +3,5 @@ AddExecutable(
     NAME Launcher
     SRC ${SOURCES}
     INC Include
-    LIB Engine
+    LIB Engine Renderer glfw
 )

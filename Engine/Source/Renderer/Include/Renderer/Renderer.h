@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 #include <Render/Canvas.h>
 #include <Render/SceneView.h>
 
@@ -13,7 +15,7 @@ namespace Renderer {
         static Renderer& Get();
         ~Renderer();
 
-        Render::Canvas* CreateCanvas();
+        Render::Canvas* CreateCanvas(void* nativeWindow, uint32_t width, uint32_t height);
         void RenderFrame(Render::Canvas* inCanvas, const Render::SceneView& inSceneView);
 
     private:

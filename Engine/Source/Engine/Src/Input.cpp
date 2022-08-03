@@ -9,7 +9,7 @@ namespace Engine {
 
     InputManager::~InputManager() = default;
 
-    void InputManager::MouseMove(float x, float y)
+    void InputManager::MouseMove(double x, double y)
     {
         // TODO
     }

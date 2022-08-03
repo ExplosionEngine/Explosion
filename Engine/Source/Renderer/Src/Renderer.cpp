@@ -15,7 +15,7 @@ namespace Renderer {
         return instance;
     }
 
-    Render::Canvas* Renderer::CreateCanvas()
+    Render::Canvas* Renderer::CreateCanvas(void* nativeWindow, uint32_t width, uint32_t height)
     {
         // TODO
         return nullptr;

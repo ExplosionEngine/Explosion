@@ -4,25 +4,31 @@
 
 #pragma once
 
+#include <string>
+
+#include <GLFW/glfw3.h>
+
 #include <Engine/Application.h>
+#include <Render/Canvas.h>
 
 namespace Launcher {
-    class GameWindow : public Engine::IWindow {
-    public:
-        GameWindow();
-        ~GameWindow();
-
-        void* GetCanvas() override;
-        uint32_t GetWidth() override;
-        uint32_t GetHeight() override;
-    };
-
     class GameApplication : public Engine::IApplication {
     public:
         GameApplication();
         ~GameApplication();
 
-        void SetMainWindow(Engine::IWindow* inWindow) override;
         int Exec(int argc, char* argv[]) override;
+
+    private:
+        static void OnResize(GLFWwindow* inWindow, int inWidth, int inHeight);
+        static void OnMouseMove(GLFWwindow* inWindow, double inX, double inY);
+        void* GetNativeWindow();
+        void RecreateCanvas();
+
+        GLFWwindow* window;
+        uint32_t width;
+        uint32_t height;
+        std::string name;
+        Render::Canvas* canvas;
     };
 }

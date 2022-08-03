@@ -6,8 +6,6 @@
 
 int main(int argc, char* argv[])
 {
-    Launcher::GameWindow window;
     Launcher::GameApplication application;
-    application.SetMainWindow(&window);
     return application.Exec(argc, argv);
 }
