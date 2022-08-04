@@ -5,15 +5,15 @@
 #include <Renderer/Renderer.h>
 
 namespace Renderer {
-    Renderer::Renderer() = default;
-
-    Renderer::~Renderer() = default;
-
     Renderer& Renderer::Get()
     {
         static Renderer instance;
         return instance;
     }
+
+    Renderer::Renderer() = default;
+
+    Renderer::~Renderer() = default;
 
     Render::Canvas* Renderer::CreateCanvas(void* nativeWindow, uint32_t width, uint32_t height)
     {

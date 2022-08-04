@@ -3,6 +3,7 @@
 //
 
 #include <Engine/Engine.h>
+#include <Common/Debug.h>
 
 namespace Engine {
     Engine& Engine::Get()
@@ -15,9 +16,11 @@ namespace Engine {
 
     Engine::~Engine() = default;
 
-    void Engine::Initialize(int argc, char** argv)
+    void Engine::Initialize(const EngineInitializer& inInitializer)
     {
-        // TODO
+        InitPathMapper(inInitializer.execFile, inInitializer.projectFile);
+        InitInputManager();
+        InitConfigManager();
     }
 
     void Engine::Tick()
@@ -25,8 +28,33 @@ namespace Engine {
         // TODO
     }
 
+    Common::PathMapper& Engine::GetPathMapper()
+    {
+        return *pathMapper;
+    }
+
     InputManager& Engine::GetInputManager()
     {
-        return inputManager;
+        return *inputManager;
+    }
+
+    ConfigManager& Engine::GetConfigManager()
+    {
+        return *configManager;
+    }
+
+    void Engine::InitPathMapper(const std::string& execFile, const std::string& projectFile)
+    {
+        // TODO
+    }
+
+    void Engine::InitInputManager()
+    {
+        inputManager = std::make_unique<InputManager>();
+    }
+
+    void Engine::InitConfigManager()
+    {
+        configManager = std::make_unique<ConfigManager>(*pathMapper);
     }
 }
