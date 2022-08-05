@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <filesystem>
@@ -49,10 +50,21 @@ namespace Common {
 
     class PathUtils {
     public:
+        static inline std::string GetUnixStylePath(const std::string& inString)
+        {
+            return Common::StringUtils::Replace(inString, "\\", "/");
+        }
+
+        static inline std::string GetStandardPath(const std::string& inString)
+        {
+            auto unixStylePath = GetUnixStylePath(inString);
+            return unixStylePath.back() == '/' ? unixStylePath.substr(0, unixStylePath.length() - 1) : unixStylePath;
+        }
+
         static inline std::string GetParentPath(const std::string& absolutePath)
         {
             std::filesystem::path path(absolutePath);
-            return Common::StringUtils::Replace(path.parent_path().string(), "\\", "/");
+            return GetStandardPath(absolutePath);
         }
     };
 }

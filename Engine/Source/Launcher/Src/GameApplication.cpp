@@ -28,6 +28,7 @@ namespace Launcher {
             std::string execFile;
             std::string projectFile;
             std::string map;
+            std::string rhiString;
         } parseResult;
 
         {
@@ -35,8 +36,8 @@ namespace Launcher {
             parseResult.execFile = argv[0];
             auto cli = (
                 clipp::value("projectFile", parseResult.projectFile),
-                clipp::value("map", parseResult.map)
-                // TODO window override, DX12 / Vulkan arguments, parse to engine, application give engine a trigger, and engine use trigger to notify application, application will notify renderer
+                clipp::value("map", parseResult.map),
+                clipp::required("-rhi").doc("RHI type") & clipp::value("RHI type", parseResult.rhiString)
             );
             if (!clipp::parse(argc, argv, cli)) {
                 std::cout << clipp::make_man_page(cli, argv[0]);
@@ -47,32 +48,45 @@ namespace Launcher {
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
+        window = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), name.c_str(), nullptr, nullptr);
+        RecreateCanvas();
+        glfwSetWindowUserPointer(window, this);
+        glfwSetWindowSizeCallback(window, &GameApplication::OnResize);
+        glfwSetCursorPosCallback(window, &GameApplication::OnMouseMove);
+
         auto& engine = Engine::Engine::Get();
         auto& renderer = Renderer::Renderer::Get();
         {
             Engine::EngineInitializer initializer {};
+            initializer.application = this;
             initializer.execFile = parseResult.execFile;
             initializer.projectFile = parseResult.projectFile;
-
+            // TODO
             engine.Initialize(initializer);
         }
-
-        window = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), name.c_str(), nullptr, nullptr);
-        glfwSetWindowUserPointer(window, this);
-        glfwSetWindowSizeCallback(window, &GameApplication::OnResize);
-        glfwSetCursorPosCallback(window, &GameApplication::OnMouseMove);
-        RecreateCanvas();
+        {
+            Renderer::RendererInitializer initializer {};
+            initializer.rhiString = parseResult.rhiString;
+            renderer.Initialize(initializer);
+        }
 
         while (!glfwWindowShouldClose(window)) {
             engine.Tick();
             // TODO
-            Render::SceneView sceneView;
+            Render::SceneViewCluster sceneView;
             renderer.RenderFrame(canvas, sceneView);
             glfwPollEvents();
         }
         canvas->Destroy();
         glfwDestroyWindow(window);
         return 0;
+    }
+
+    void GameApplication::ResizeMainWindow(uint32_t inWidth, uint32_t inHeight)
+    {
+        width = inWidth;
+        height = inHeight;
+        RecreateCanvas();
     }
 
     void GameApplication::OnResize(GLFWwindow* inWindow, int inWidth, int inHeight)

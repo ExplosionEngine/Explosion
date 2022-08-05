@@ -15,13 +15,18 @@ namespace Renderer {
 
     Renderer::~Renderer() = default;
 
+    void Renderer::Initialize(const RendererInitializer& inInitializer)
+    {
+        // TODO
+    }
+
     Render::Canvas* Renderer::CreateCanvas(void* nativeWindow, uint32_t width, uint32_t height)
     {
         // TODO
         return nullptr;
     }
 
-    void Renderer::RenderFrame(Render::Canvas* inCanvas, const Render::SceneView& inSceneView)
+    void Renderer::RenderFrame(Render::Canvas* inCanvas, const Render::SceneViewCluster& inSceneView)
     {
         // TODO
     }
