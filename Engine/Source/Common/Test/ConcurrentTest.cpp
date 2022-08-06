@@ -64,3 +64,26 @@ TEST(ConcurrentTest, ThreadPoolTest3)
     }
     ASSERT_EQ(count, 200);
 }
+
+TEST(ConcurrentTest, WorkerThread0)
+{
+    uint32_t value = 0;
+    {
+        Common::WorkerThread workerThread("TestWorkerThread");
+        for (auto i = 0; i < 10; i++) {
+            workerThread.EmplaceTask([&value]() -> void { value++; });
+        }
+    }
+    ASSERT_EQ(value, 10);
+}
+
+TEST(ConcurrentTest, WorkerThread1)
+{
+    uint32_t value = 0;
+    Common::WorkerThread workerThread("TestWorkerThread");
+    for (auto i = 0; i < 10; i++) {
+        workerThread.EmplaceTask([&value]() -> void { value++; });
+    }
+    workerThread.Flush();
+    ASSERT_EQ(value, 10);
+}

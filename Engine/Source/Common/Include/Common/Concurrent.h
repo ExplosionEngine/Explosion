@@ -15,6 +15,8 @@
 
 #if PLATFORM_WINDOWS
 #include <Windows.h>
+#else
+#include <pthread.h>
 #endif
 
 #include <Common/String.h>
@@ -26,14 +28,23 @@ namespace Common {
         NamedThread() = default;
 
         template <typename F, typename... Args>
-        explicit NamedThread(const std::string& name, F&& task, Args&&... args) : thread(std::forward<F>(task), std::forward<Args>(args)...)
+        explicit NamedThread(const std::string& name, F&& task, Args&&... args)
         {
-            SetThreadName(name);
+            thread = std::thread([this, task = std::forward<F>(task), name](Args&&... args) -> void {
+                SetThreadName(name);
+                task(args...);
+            }, std::forward<Args>(args)...);
         }
 
         NamedThread(NamedThread&& other) noexcept : thread(std::move(other.thread)) {}
 
         ~NamedThread() = default;
+
+        NamedThread& operator=(NamedThread&& other) noexcept
+        {
+            thread = std::move(other.thread);
+            return *this;
+        }
 
         void Join()
         {
@@ -45,8 +56,10 @@ namespace Common {
         {
 #if PLATFORM_WINDOWS
             SetThreadDescription(thread.native_handle(), Common::StringUtils::ToWideString(name).c_str());
+#elif PLATFORM_MACOS
+            pthread_setname_np(name.c_str());
 #else
-            // TODO
+            pthread_setname_np(thread.native_handle(), name.c_str());
 #endif
         }
 
