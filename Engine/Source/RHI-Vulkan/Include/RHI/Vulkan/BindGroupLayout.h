@@ -20,7 +20,7 @@ namespace RHI::Vulkan {
 
         void Destroy() override;
 
-        vk::DescriptorSetLayout GetNativeHandle() const;
+        vk::DescriptorSetLayout GetVkDescriptorSetLayout() const;
 
     private:
         void CreateDescriptorSetLayout(const BindGroupLayoutCreateInfo* createInfo);

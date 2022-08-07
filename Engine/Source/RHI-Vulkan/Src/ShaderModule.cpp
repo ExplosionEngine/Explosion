@@ -27,7 +27,7 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    vk::ShaderModule VKShaderModule::GetNativeHandle() const
+    vk::ShaderModule VKShaderModule::GetVkShaderModule() const
     {
         return shaderModule;
     }

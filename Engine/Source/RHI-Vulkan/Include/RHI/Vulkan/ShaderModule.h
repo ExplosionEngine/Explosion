@@ -20,7 +20,7 @@ namespace RHI::Vulkan {
 
         void Destroy() override;
 
-        vk::ShaderModule GetNativeHandle() const;
+        vk::ShaderModule GetVkShaderModule() const;
 
         void BuildReflection(const ShaderModuleCreateInfo* createInfo);
 

@@ -34,7 +34,7 @@ namespace RHI::Vulkan {
         return new VKCommandEncoder(device, *this);
     }
 
-    vk::CommandBuffer VKCommandBuffer::GetNativeHandle() const
+    vk::CommandBuffer VKCommandBuffer::GetVkCommandBuffer() const
     {
         return commandBuffer;
     }
