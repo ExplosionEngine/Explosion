@@ -2,7 +2,7 @@
 // Created by johnk on 28/3/2022.
 //
 
-#include <windows.h>
+#include <Windows.h>
 
 #include <RHI/DirectX12/Instance.h>
 #include <RHI/DirectX12/Device.h>

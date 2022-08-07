@@ -9,23 +9,9 @@ if (APPLE)
 endif()
 
 AddLibrary(
-    NAME RHI-Vulkan.Static
-    TYPE STATIC
+    NAME RHI-Vulkan
+    TYPE SHARED
     SRC ${SOURCES}
     PUBLIC_INC Include
     LIB RHI spirv-cross VulkanSDK ${PLATFORM_EXT_LIBS}
 )
-
-AddLibrary(
-    NAME RHI-Vulkan
-    TYPE SHARED
-    SRC RHIVulkan.cpp
-    LIB RHI-Vulkan.Static
-)
-
-# TODO fix this unit test
-#AddTest(
-#    NAME RHI-Vulkan.Test
-#    SRC ${TEST_SOURCES}
-#    LIB RHI-Vulkan.Static
-#)
