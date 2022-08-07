@@ -125,4 +125,89 @@ namespace Common {
         std::vector<NamedThread> threads;
         std::queue<std::function<void()>> tasks;
     };
+
+    class WorkerThread {
+    public:
+        explicit WorkerThread(const std::string& name) : stop(false), flush(false)
+        {
+            thread = NamedThread(name, [this]() -> void {
+                while (true) {
+                    bool needNotifyMainThread = false;
+                    std::vector<std::function<void()>> tasksToExecute;
+                    {
+                        std::unique_lock<std::mutex> lock(mutex);
+                        taskCondition.wait(lock, [this]() -> bool { return stop || flush || !tasks.empty(); });
+                        if (stop && tasks.empty()) {
+                            return;
+                        }
+                        if (flush) {
+                            tasksToExecute.reserve(tasks.size());
+                            while (!tasks.empty()) {
+                                tasksToExecute.emplace_back(std::move(tasks.front()));
+                                tasks.pop();
+                            }
+                            flush = false;
+                            needNotifyMainThread = true;
+                        } else {
+                            tasksToExecute.emplace_back(std::move(tasks.front()));
+                            tasks.pop();
+                        }
+                    }
+                    for (auto& task : tasksToExecute) {
+                        task();
+                    }
+                    if (needNotifyMainThread) {
+                        flushCondition.notify_one();
+                    }
+                }
+            });
+        }
+
+        ~WorkerThread()
+        {
+            {
+                std::unique_lock<std::mutex> lock(mutex);
+                stop = true;
+            }
+            taskCondition.notify_all();
+            thread.Join();
+        }
+
+        void Flush()
+        {
+            {
+                std::unique_lock<std::mutex> lock(mutex);
+                flush = true;
+            }
+            taskCondition.notify_one();
+            {
+                std::unique_lock<std::mutex> lock(mutex);
+                flushCondition.wait(lock);
+            }
+        }
+
+        template <typename F, typename... Args>
+        auto EmplaceTask(F&& task, Args&&... args)
+        {
+            using RetType = std::invoke_result_t<F, Args...>;
+            auto packagedTask = std::make_shared<std::packaged_task<RetType()>>(std::bind(std::forward<F>(task), std::forward<Args>(args)...));
+            auto result = packagedTask->get_future();
+            {
+                std::unique_lock<std::mutex> lock(mutex);
+                Assert(!stop);
+                tasks.emplace([packagedTask]() -> void { (*packagedTask)(); });
+            }
+            taskCondition.notify_one();
+            return result;
+        }
+
+    private:
+        bool stop;
+        bool flush;
+        std::mutex mutex;
+        std::condition_variable taskCondition;
+        std::condition_variable flushCondition;
+        NamedThread thread;
+        std::queue<std::function<void()>> tasks;
+    };
 }
