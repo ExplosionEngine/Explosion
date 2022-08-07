@@ -9,6 +9,8 @@
 namespace RHI::Vulkan {
     class VKDevice;
 
+    vk::SurfaceKHR CreateNativeSurface(const vk::Instance& instance, const SwapChainCreateInfo* createInfo);
+
     class VKSwapChain : public SwapChain {
     public:
         NON_COPYABLE(VKSwapChain)
