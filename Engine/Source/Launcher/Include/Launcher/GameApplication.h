@@ -18,6 +18,7 @@ namespace Launcher {
         ~GameApplication();
 
         int Exec(int argc, char* argv[]) override;
+        void ResizeMainWindow(uint32_t inWidth, uint32_t inHeight) override;
 
     private:
         static void OnResize(GLFWwindow* inWindow, int inWidth, int inHeight);

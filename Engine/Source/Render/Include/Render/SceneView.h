@@ -5,6 +5,11 @@
 #pragma once
 
 namespace Render {
+    class SceneViewCluster {
+    public:
+        // TODO
+    };
+
     class SceneView {
     public:
         // TODO

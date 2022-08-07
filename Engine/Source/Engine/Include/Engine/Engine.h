@@ -9,9 +9,11 @@
 #include <Common/Path.h>
 #include <Engine/Input.h>
 #include <Engine/Config.h>
+#include <Engine/Application.h>
 
 namespace Engine {
     struct EngineInitializer {
+        IApplication* application;
         std::string execFile;
         std::string projectFile;
         std::string map;
@@ -24,6 +26,7 @@ namespace Engine {
 
         void Initialize(const EngineInitializer& inInitializer);
         void Tick();
+        IApplication* GetApplication();
         Common::PathMapper& GetPathMapper();
         InputManager& GetInputManager();
         ConfigManager& GetConfigManager();
@@ -35,6 +38,7 @@ namespace Engine {
         void InitInputManager();
         void InitConfigManager();
 
+        IApplication* application;
         std::unique_ptr<Common::PathMapper> pathMapper;
         std::unique_ptr<InputManager> inputManager;
         std::unique_ptr<ConfigManager> configManager;

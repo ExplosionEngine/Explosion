@@ -4,6 +4,7 @@
 
 #include <Engine/Engine.h>
 #include <Common/Debug.h>
+#include <Engine/Application.h>
 
 namespace Engine {
     Engine& Engine::Get()
@@ -12,12 +13,13 @@ namespace Engine {
         return instance;
     }
 
-    Engine::Engine() = default;
+    Engine::Engine() : application(nullptr) {}
 
     Engine::~Engine() = default;
 
     void Engine::Initialize(const EngineInitializer& inInitializer)
     {
+        application = inInitializer.application;
         InitPathMapper(inInitializer.execFile, inInitializer.projectFile);
         InitInputManager();
         InitConfigManager();
@@ -26,6 +28,11 @@ namespace Engine {
     void Engine::Tick()
     {
         // TODO
+    }
+
+    IApplication* Engine::GetApplication()
+    {
+        return application;
     }
 
     Common::PathMapper& Engine::GetPathMapper()
@@ -45,7 +52,10 @@ namespace Engine {
 
     void Engine::InitPathMapper(const std::string& execFile, const std::string& projectFile)
     {
-        // TODO
+        std::unordered_map<std::string, std::string> pathMap;
+        pathMap["/Engine"] = Common::PathUtils::GetParentPath(execFile);
+        pathMap["/Game"] = Common::PathUtils::GetParentPath(projectFile);
+        pathMapper = std::make_unique<Common::PathMapper>(Common::PathMapper::From(pathMap));
     }
 
     void Engine::InitInputManager()

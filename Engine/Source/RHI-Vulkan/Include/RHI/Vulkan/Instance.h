@@ -6,6 +6,7 @@
 
 #include <vulkan/vulkan.hpp>
 #include <RHI/Instance.h>
+#include <RHI/Vulkan/Api.h>
 
 namespace RHI::Vulkan {
     class VKInstance : public Instance {
@@ -42,4 +43,8 @@ namespace RHI::Vulkan {
         vk::DebugUtilsMessengerEXT vkDebugMessenger;
 #endif
     };
+}
+
+extern "C" {
+RHI_VULKAN_API RHI::Instance* RHIGetInstance();
 }
