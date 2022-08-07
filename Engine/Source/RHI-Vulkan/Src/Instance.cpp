@@ -195,3 +195,11 @@ namespace RHI::Vulkan {
         delete this;
     }
 }
+
+extern "C" {
+    RHI::Instance* RHIGetInstance()
+    {
+        static RHI::Vulkan::VKInstance instance;
+        return &instance;
+    }
+}

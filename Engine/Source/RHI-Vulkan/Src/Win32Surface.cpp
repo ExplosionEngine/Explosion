@@ -2,9 +2,9 @@
 // Created by Zach Lee on 2022/4/4.
 //
 
-#if defined(WIN32)
+#if PLATFORM_WINDOWS
 #include <RHI/SwapChain.h>
-#include <windows.h>
+#include <Windows.h>
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.hpp>
 #include <Common/Debug.h>
@@ -21,5 +21,4 @@ namespace RHI::Vulkan {
         return surface;
     }
 }
-
 #endif

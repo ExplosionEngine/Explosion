@@ -2,7 +2,7 @@
 // Created by Zach Lee on 2022/4/4.
 //
 
-#if defined(__APPLE__)
+#if PLATFORM_MACOS
 #include <RHI/SwapChain.h>
 #include <Cocoa/Cocoa.h>
 #include <Common/Debug.h>
@@ -29,5 +29,4 @@ namespace RHI::Vulkan {
         return surface;
     }
 }
-
 #endif

@@ -4,6 +4,7 @@ AddLibrary(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
+    LIB RHI
 )
 
 file(GLOB TEST_SOURCES Test/*.cpp)
