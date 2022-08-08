@@ -4,7 +4,7 @@
 
 #include <Renderer/Renderer.h>
 
-namespace Renderer {
+namespace Rendering {
     Renderer& Renderer::Get()
     {
         static Renderer instance;

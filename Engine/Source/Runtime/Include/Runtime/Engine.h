@@ -7,11 +7,13 @@
 #include <memory>
 
 #include <Common/Path.h>
-#include <Engine/Input.h>
-#include <Engine/Config.h>
-#include <Engine/Application.h>
+#include <Runtime/Input.h>
+#include <Runtime/Config.h>
+#include <Runtime/Application.h>
 
-namespace Engine {
+namespace Runtime{
+    class World;
+
     struct EngineInitializer {
         IApplication* application;
         std::string execFile;
@@ -26,10 +28,13 @@ namespace Engine {
 
         void Initialize(const EngineInitializer& inInitializer);
         void Tick();
+
         IApplication* GetApplication();
         Common::PathMapper& GetPathMapper();
         InputManager& GetInputManager();
         ConfigManager& GetConfigManager();
+
+        // TODO world
 
     private:
         Engine();

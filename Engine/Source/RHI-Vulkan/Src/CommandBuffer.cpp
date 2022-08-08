@@ -30,7 +30,7 @@ namespace RHI::Vulkan {
     {
         vk::CommandBufferBeginInfo beginInfo = {};
         beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-        commandBuffer.begin(&beginInfo);
+        (void) commandBuffer.begin(&beginInfo);
         return new VKCommandEncoder(device, *this);
     }
 

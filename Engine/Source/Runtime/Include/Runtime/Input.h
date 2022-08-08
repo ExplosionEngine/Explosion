@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace Engine {
+namespace Runtime{
     class InputManager {
     public:
         InputManager();

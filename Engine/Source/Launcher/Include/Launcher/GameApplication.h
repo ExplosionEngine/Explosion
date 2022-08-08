@@ -8,11 +8,11 @@
 
 #include <GLFW/glfw3.h>
 
-#include <Engine/Application.h>
+#include <Runtime/Application.h>
 #include <Render/Canvas.h>
 
 namespace Launcher {
-    class GameApplication : public Engine::IApplication {
+    class GameApplication : public Runtime::IApplication {
     public:
         GameApplication();
         ~GameApplication();

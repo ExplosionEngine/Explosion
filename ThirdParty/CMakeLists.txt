@@ -53,7 +53,7 @@ Add3rdBinaryPackage(
     VERSION 1.6.2112
     HASH b8d8e5cd03234e477bc3fe5d4258652a7fb61916141660408ee4c54a4f1eb939
     INCLUDE $<SOURCE_DIR>/inc
-    LINK $<SOURCE_DIR>/lib
+    LINK $<SOURCE_DIR>/lib/x64
     LIB dxcompiler
     RUNTIME_DEP $<SOURCE_DIR>/bin/x64/dxcompiler.dll $<SOURCE_DIR>/bin/x64/dxil.dll
 )

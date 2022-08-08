@@ -10,7 +10,7 @@
 #include <Render/Canvas.h>
 #include <Render/SceneView.h>
 
-namespace Renderer {
+namespace Rendering {
     struct RendererInitializer {
         std::string rhiString;
     };

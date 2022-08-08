@@ -14,7 +14,7 @@
 #endif
 #include <GLFW/glfw3native.h>
 
-#include <Engine/Engine.h>
+#include <Runtime/Engine.h>
 #include <Renderer/Renderer.h>
 
 namespace Launcher {
@@ -54,10 +54,10 @@ namespace Launcher {
         glfwSetWindowSizeCallback(window, &GameApplication::OnResize);
         glfwSetCursorPosCallback(window, &GameApplication::OnMouseMove);
 
-        auto& engine = Engine::Engine::Get();
-        auto& renderer = Renderer::Renderer::Get();
+        auto& engine = Runtime::Engine::Get();
+        auto& renderer = Rendering::Renderer::Get();
         {
-            Engine::EngineInitializer initializer {};
+            Runtime::EngineInitializer initializer {};
             initializer.application = this;
             initializer.execFile = parseResult.execFile;
             initializer.projectFile = parseResult.projectFile;
@@ -65,7 +65,7 @@ namespace Launcher {
             engine.Initialize(initializer);
         }
         {
-            Renderer::RendererInitializer initializer {};
+            Rendering::RendererInitializer initializer {};
             initializer.rhiString = parseResult.rhiString;
             renderer.Initialize(initializer);
         }
@@ -97,7 +97,7 @@ namespace Launcher {
 
     void GameApplication::OnMouseMove(GLFWwindow* inWindow, double inX, double inY)
     {
-        Engine::Engine::Get().GetInputManager().MouseMove(inX, inY);
+        Runtime::Engine::Get().GetInputManager().MouseMove(inX, inY);
     }
 
     void* GameApplication::GetNativeWindow()
@@ -117,6 +117,6 @@ namespace Launcher {
         if (canvas != nullptr) {
             canvas->Destroy();
         }
-        canvas = Renderer::Renderer::Get().CreateCanvas(GetNativeWindow(), width, height);
+        canvas = Rendering::Renderer::Get().CreateCanvas(GetNativeWindow(), width, height);
     }
 }

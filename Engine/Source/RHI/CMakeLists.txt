@@ -27,7 +27,7 @@ function(AddRHISample)
         NAME ${PARAMS_NAME}
         SRC ${CMAKE_CURRENT_SOURCE_DIR}/${PARAMS_SRC}
         INC Sample
-        LIB RHI glfw GLM clipp dxc VulkanSDK ${PLATFORM_EXT_LIBS} ShaderCompiler
+        LIB RHI glfw GLM clipp ${PLATFORM_EXT_LIBS} Render
         DEP_TARGET ${PLATFORM_DEP_TARGET}
         RES ${CMAKE_CURRENT_SOURCE_DIR}/${PARAMS_SHADER}->Shader/${PARAMS_SHADER}
     )
