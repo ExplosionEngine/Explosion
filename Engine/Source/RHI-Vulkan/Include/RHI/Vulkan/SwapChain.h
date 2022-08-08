@@ -8,6 +8,7 @@
 
 namespace RHI::Vulkan {
     class VKDevice;
+    class VKQueue;
 
     vk::SurfaceKHR CreateNativeSurface(const vk::Instance& instance, const SwapChainCreateInfo* createInfo);
 
@@ -28,6 +29,7 @@ namespace RHI::Vulkan {
         vk::SwapchainKHR swapChain = VK_NULL_HANDLE;
         vk::SurfaceKHR surface = VK_NULL_HANDLE;
         std::vector<Texture*> textures;
+        vk::Queue queue;
     };
 
 }

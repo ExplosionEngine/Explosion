@@ -21,7 +21,7 @@ namespace RHI::Vulkan {
 
         CommandEncoder* Begin() override;
 
-        vk::CommandBuffer GetNativeHandle() const;
+        vk::CommandBuffer GetVkCommandBuffer() const;
     private:
         void CreateNativeCommandBuffer();
 

@@ -245,7 +245,7 @@ namespace RHI::Vulkan {
         auto setStage = [&stages](ShaderModule* module, vk::ShaderStageFlagBits stage) {
             if (module == nullptr) return;
             vk::PipelineShaderStageCreateInfo stageInfo = {};
-            stageInfo.setModule(static_cast<const VKShaderModule*>(module)->GetNativeHandle())
+            stageInfo.setModule(static_cast<const VKShaderModule*>(module)->GetVkShaderModule())
                 .setPName(GetShaderEntry(stage))
                 .setStage(stage);
             stages.emplace_back(std::move(stageInfo));
@@ -280,7 +280,7 @@ namespace RHI::Vulkan {
 
         vk::GraphicsPipelineCreateInfo pipelineCreateInfo = {};
         pipelineCreateInfo.setStages(stages)
-            .setLayout(static_cast<const VKPipelineLayout*>(createInfo->layout)->GetNativeHandle())
+            .setLayout(static_cast<const VKPipelineLayout*>(createInfo->layout)->GetVkPipelineLayout())
             .setPDynamicState(&dynStateInfo)
             .setPMultisampleState(&multiSampleInfo)
             .setPDepthStencilState(&dsInfo)

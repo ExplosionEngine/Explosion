@@ -17,7 +17,7 @@ namespace RHI::Vulkan {
 
         void Destroy() override;
 
-        vk::PipelineLayout GetNativeHandle() const;
+        vk::PipelineLayout GetVkPipelineLayout() const;
     private:
         void CreateNativePipelineLayout(const PipelineLayoutCreateInfo* createInfo);
 
