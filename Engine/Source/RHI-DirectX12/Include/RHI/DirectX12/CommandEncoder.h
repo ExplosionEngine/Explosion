@@ -25,7 +25,7 @@ namespace RHI::DirectX12 {
         void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Extent<3>& size) override;
         void ResourceBarrier(const Barrier& barrier) override;
 
-        ComputePassCommandEncoder* BeginComputePass() override;
+        ComputePassCommandEncoder* BeginComputePass(const ComputePassBeginInfo* beginInfo) override;
         GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
         void End() override;
 
@@ -40,7 +40,6 @@ namespace RHI::DirectX12 {
         explicit DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer);
         ~DX12ComputePassCommandEncoder() override;
 
-        void SetPipeline(ComputePipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override;
         void EndPass() override;
@@ -57,7 +56,6 @@ namespace RHI::DirectX12 {
         explicit DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo);
         ~DX12GraphicsPassCommandEncoder() override;
 
-        void SetPipeline(GraphicsPipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void SetIndexBuffer(BufferView *bufferView) override;
         void SetVertexBuffer(size_t slot, BufferView *bufferView) override;

@@ -17,9 +17,15 @@ namespace RHI::Vulkan {
         ~VKBufferView() override;
         void Destroy() override;
 
+        size_t GetOffset() const;
+        IndexFormat GetIndexFormat() const;
+        VKBuffer& GetBuffer();
+
     private:
         VKBuffer& buffer;
+        size_t offset;
+        IndexFormat format;
 
-        void CreateVKDescriptor(const BufferViewCreateInfo* createInfo);
+        void InitializeBufferAttrib(const BufferViewCreateInfo* createInfo);
     };
 }

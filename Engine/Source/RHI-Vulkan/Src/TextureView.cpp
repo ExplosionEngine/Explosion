@@ -61,4 +61,9 @@ namespace RHI::Vulkan {
         Assert(device.GetVkDevice().createImageView(&viewInfo, nullptr, &vkTextureView) == vk::Result::eSuccess);
     }
 
+    vk::ImageView VKTextureView::GetVkImageView()
+    {
+        return vkTextureView;
+    }
+
 }

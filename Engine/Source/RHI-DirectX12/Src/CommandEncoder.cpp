@@ -37,15 +37,6 @@ namespace RHI::DirectX12 {
 
     DX12ComputePassCommandEncoder::~DX12ComputePassCommandEncoder() = default;
 
-    void DX12ComputePassCommandEncoder::SetPipeline(ComputePipeline* pipeline)
-    {
-        computePipeline = dynamic_cast<DX12ComputePipeline*>(pipeline);
-        Assert(computePipeline);
-
-        commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(computePipeline->GetDX12PipelineState().Get());
-        commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(computePipeline->GetPipelineLayout().GetDX12RootSignature().Get());
-    }
-
     void DX12ComputePassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* tBindGroup)
     {
         auto* bindGroup = dynamic_cast<DX12BindGroup*>(tBindGroup);
@@ -114,14 +105,6 @@ namespace RHI::DirectX12 {
     }
 
     DX12GraphicsPassCommandEncoder::~DX12GraphicsPassCommandEncoder() = default;
-
-    void DX12GraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
-    {
-        graphicsPipeline = dynamic_cast<DX12GraphicsPipeline*>(pipeline);
-
-        commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(graphicsPipeline->GetDX12PipelineState().Get());
-        commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(graphicsPipeline->GetPipelineLayout().GetDX12RootSignature().Get());
-    }
 
     void DX12GraphicsPassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* tBindGroup)
     {
@@ -250,14 +233,26 @@ namespace RHI::DirectX12 {
         commandBuffer.GetDX12GraphicsCommandList()->ResourceBarrier(1, &resourceBarrier);
     }
 
-    ComputePassCommandEncoder* DX12CommandEncoder::BeginComputePass()
+    ComputePassCommandEncoder* DX12CommandEncoder::BeginComputePass(const ComputePassBeginInfo* beginInfo)
     {
-        return new DX12ComputePassCommandEncoder(device, commandBuffer);
+        auto* computePipeline = dynamic_cast<DX12ComputePipeline*>(beginInfo->pipeline);
+        Assert(computePipeline);
+
+        auto* result = new DX12ComputePassCommandEncoder(device, commandBuffer);
+        commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(computePipeline->GetDX12PipelineState().Get());
+        commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(computePipeline->GetPipelineLayout().GetDX12RootSignature().Get());
+        return result;
     }
 
     GraphicsPassCommandEncoder* DX12CommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo)
     {
-        return new DX12GraphicsPassCommandEncoder(device, commandBuffer, beginInfo);
+        auto* graphicsPipeline = dynamic_cast<DX12GraphicsPipeline*>(beginInfo->pipeline);
+        Assert(graphicsPipeline);
+
+        auto* result = new DX12GraphicsPassCommandEncoder(device, commandBuffer, beginInfo);
+        commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(graphicsPipeline->GetDX12PipelineState().Get());
+        commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(graphicsPipeline->GetPipelineLayout().GetDX12RootSignature().Get());
+        return result;
     }
 
     void DX12CommandEncoder::End()
