@@ -14,7 +14,7 @@ namespace Runtime{
         return instance;
     }
 
-    Engine::Engine() : application(nullptr) {}
+    Engine::Engine() : application(nullptr), activeWorld(nullptr) {}
 
     Engine::~Engine() = default;
 
@@ -49,6 +49,11 @@ namespace Runtime{
     ConfigManager& Engine::GetConfigManager()
     {
         return *configManager;
+    }
+
+    void Engine::SetActiveWorld(World* inWorld)
+    {
+        activeWorld = inWorld;
     }
 
     void Engine::InitPathMapper(const std::string& execFile, const std::string& projectFile)

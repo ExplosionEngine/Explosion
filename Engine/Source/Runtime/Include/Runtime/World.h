@@ -8,7 +8,7 @@
 #include <utility>
 
 #include <Common/Utility.h>
-#include <Runtime/Entity.h>
+#include <Runtime/ECS.h>
 
 namespace Runtime {
     class World {
@@ -45,8 +45,33 @@ namespace Runtime {
             registry.remove<T>(entity);
         }
 
+        template <typename... Components>
+        Query<Components...> CreateQuery(ComponentSet<Components...> = {})
+        {
+            return Query<Components...>(std::move(registry.view<Components...>()));
+        }
+
+        template <typename S>
+        void AddSystem(S* system)
+        {
+            using QueryTuple = typename SystemFuncTraits<decltype(&S::Tick)>::QueryTuple;
+            // TODO
+        }
+
+        void Tick()
+        {
+            // TODO
+        }
+
     private:
+        struct SystemInfo {
+            System* system;
+            std::function<void()> setupFunc;
+            std::function<void()> tickFunc;
+        };
+
         std::string name;
         entt::registry registry;
+        std::vector<SystemInfo> systemInfos;
     };
 }

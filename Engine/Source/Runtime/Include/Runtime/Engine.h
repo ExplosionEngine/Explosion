@@ -34,7 +34,7 @@ namespace Runtime{
         InputManager& GetInputManager();
         ConfigManager& GetConfigManager();
 
-        // TODO world
+        void SetActiveWorld(World* inWorld);
 
     private:
         Engine();
@@ -43,6 +43,7 @@ namespace Runtime{
         void InitInputManager();
         void InitConfigManager();
 
+        World* activeWorld;
         IApplication* application;
         std::unique_ptr<Common::PathMapper> pathMapper;
         std::unique_ptr<InputManager> inputManager;
