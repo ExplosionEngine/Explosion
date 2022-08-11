@@ -6,6 +6,7 @@
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Gpu.h>
+#include <RHI/Vulkan/BufferView.h>
 
 namespace RHI::Vulkan {
     static vk::MemoryPropertyFlags GetVkMemoryType(BufferUsageFlags bufferUsages)
@@ -73,7 +74,7 @@ namespace RHI::Vulkan {
 
     BufferView* VKBuffer::CreateBufferView(const BufferViewCreateInfo* createInfo)
     {
-        return nullptr;
+        return new VKBufferView(*this, createInfo);
     }
 
     void VKBuffer::Destroy()
@@ -119,5 +120,15 @@ namespace RHI::Vulkan {
             device.GetVkDevice().free(vkDeviceMemory);
             vkDeviceMemory = nullptr;
         }
+    }
+
+    vk::Buffer VKBuffer::GetVkBuffer()
+    {
+        return vkBuffer;
+    }
+
+    BufferUsageFlags VKBuffer::GetUsages()
+    {
+        return usages;
     }
 }
