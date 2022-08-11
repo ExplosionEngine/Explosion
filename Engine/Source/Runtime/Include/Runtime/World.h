@@ -6,6 +6,7 @@
 
 #include <entt/entt.hpp>
 #include <utility>
+#include <future>
 
 #include <Common/Utility.h>
 #include <Runtime/ECS.h>
@@ -55,7 +56,7 @@ namespace Runtime {
         void AddSystem(S* system)
         {
             using QueryTuple = typename SystemFuncTraits<decltype(&S::Tick)>::QueryTuple;
-            // TODO
+            return MakeSystemInfo<S, QueryTuple>(system, std::make_index_sequence<std::tuple_size_v<QueryTuple>> {});
         }
 
         void Tick()
@@ -66,9 +67,23 @@ namespace Runtime {
     private:
         struct SystemInfo {
             System* system;
+            bool working;
             std::function<void()> setupFunc;
             std::function<void()> tickFunc;
+            std::future<void> setupFuture;
+            std::future<void> tickFuture;
         };
+
+        template <typename S, typename QueryTuple, size_t... I>
+        SystemInfo MakeSystemInfo(S* system, std::index_sequence<I...> = {})
+        {
+            SystemInfo result;
+            result.system = system;
+            result.working = false;
+            result.setupFunc = [system, this]() -> void { system->Setup(CreateQuery<std::tuple_element_t<I, QueryTuple>>()...); };
+            result.tickFunc = [system, this]() -> void { system->Tick(CreateQuery<std::tuple_element_t<I, QueryTuple>>()...); };
+            return result;
+        }
 
         std::string name;
         entt::registry registry;
