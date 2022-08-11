@@ -6,6 +6,9 @@
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Pipeline.h>
 #include <RHI/Vulkan/CommandBuffer.h>
+#include <RHI/Vulkan/Buffer.h>
+#include <RHI/Vulkan/BufferView.h>
+#include <RHI/Vulkan/TextureView.h>
 #include <RHI/Vulkan/Common.h>
 
 namespace RHI::Vulkan {
@@ -39,7 +42,7 @@ namespace RHI::Vulkan {
     {
     }
 
-    ComputePassCommandEncoder* VKCommandEncoder::BeginComputePass()
+    ComputePassCommandEncoder* VKCommandEncoder::BeginComputePass(const ComputePassBeginInfo* beginInfo)
     {
         return nullptr;
     }
@@ -58,17 +61,38 @@ namespace RHI::Vulkan {
         const GraphicsPassBeginInfo* beginInfo) : device(dev), commandBuffer(cmd)
     {
         cmdHandle = commandBuffer.GetVkCommandBuffer();
+        auto pipeline = dynamic_cast<VKGraphicsPipeline*>(beginInfo->pipeline);
+
+        auto textureView = dynamic_cast<VKTextureView*>(beginInfo->colorAttachments[0].view);
+        std::array<vk::ImageView, 1> attachments = {textureView->GetVkImageView()};
+
+        vk::FramebufferCreateInfo framebufferInfo = {};
+        framebufferInfo.setRenderPass(pipeline->GetVkRenderPass())
+            .setAttachmentCount(1)
+            .setPAttachments(attachments.data())
+            .setLayers(1)
+            .setWidth(1024)
+            .setHeight(768);
+
+        vk::Framebuffer framebuffer;
+        Assert(device.GetVkDevice().createFramebuffer(&framebufferInfo, nullptr, &framebuffer) == vk::Result::eSuccess);
+
+        auto color = beginInfo->colorAttachments[0].clearValue;
+        vk::ClearColorValue colorValue = std::array<float, 4> {color.r, color.g, color.b, color.a};
+        std::array<vk::ClearValue, 1> clearValue = {colorValue};
 
         vk::RenderPassBeginInfo passBegin = {};
+        passBegin.setRenderPass(pipeline->GetVkRenderPass())
+            .setFramebuffer(framebuffer)
+            .setClearValueCount(clearValue.size())
+            .setPClearValues(clearValue.data());
+
+        cmdHandle.beginRenderPass(&passBegin, vk::SubpassContents::eInline);
+        cmdHandle.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->GetVkPipeline());
     }
 
     VKGraphicsPassCommandEncoder::~VKGraphicsPassCommandEncoder()
     {
-    }
-
-    void VKGraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
-    {
-        graphicsPipeline = static_cast<VKGraphicsPipeline*>(pipeline);
     }
 
     void VKGraphicsPassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
@@ -77,13 +101,27 @@ namespace RHI::Vulkan {
 
     void VKGraphicsPassCommandEncoder::SetIndexBuffer(BufferView *bufferView)
     {
-//        cmdHandle.bindIndexBuffer()
+        auto mBufferView = dynamic_cast<VKBufferView*>(bufferView);
+
+        vk::Buffer indexBuffer = mBufferView->GetBuffer().GetVkBuffer();
+        IndexFormat format = mBufferView->GetIndexFormat();
+        vk::IndexType vkFormat;
+        if (format == IndexFormat::UINT16) {
+            vkFormat = vk::IndexType::eUint16;
+        } else if (format == IndexFormat::UINT32) {
+            vkFormat = vk::IndexType::eUint32;
+        }
+
+        cmdHandle.bindIndexBuffer(indexBuffer, 0, vkFormat);
     }
 
     void VKGraphicsPassCommandEncoder::SetVertexBuffer(size_t slot, BufferView *bufferView)
     {
-        // TODO gather slot buffer.
-//        cmdHandle.bindVertexBuffers()
+        auto mBufferView = dynamic_cast<VKBufferView*>(bufferView);
+
+        vk::Buffer vertexBuffer = mBufferView->GetBuffer().GetVkBuffer();
+        vk::DeviceSize offset[] = {mBufferView->GetOffset()};
+        cmdHandle.bindVertexBuffers(slot, 1, &vertexBuffer, offset);
     }
 
     void VKGraphicsPassCommandEncoder::Draw(size_t vertexCount, size_t instanceCount, size_t firstVertex, size_t firstInstance)

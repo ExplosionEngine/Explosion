@@ -21,6 +21,9 @@ namespace RHI::Vulkan {
         BufferView* CreateBufferView(const BufferViewCreateInfo* createInfo) override;
         void Destroy() override;
 
+        vk::Buffer GetVkBuffer();
+        BufferUsageFlags GetUsages();
+
     private:
         void CreateBuffer(const BufferCreateInfo* createInfo);
         void AllocateMemory(const BufferCreateInfo* createInfo);
@@ -30,5 +33,7 @@ namespace RHI::Vulkan {
         VKDevice& device;
         vk::DeviceMemory vkDeviceMemory;
         vk::Buffer vkBuffer;
+        MapMode mapMode;
+        BufferUsageFlags usages;
     };
 }

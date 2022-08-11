@@ -18,8 +18,9 @@ namespace RHI::Vulkan {
         NON_COPYABLE(VKTextureView)
         VKTextureView(VKTexture& tex, VKDevice& device, const TextureViewCreateInfo* createInfo);
         ~VKTextureView() override;
-
         void Destroy() override;
+
+        vk::ImageView GetVkImageView();
 
     private:
         void CreateImageView(const TextureViewCreateInfo* createInfo);

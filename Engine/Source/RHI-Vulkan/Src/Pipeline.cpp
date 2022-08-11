@@ -298,4 +298,13 @@ namespace RHI::Vulkan {
         pipeline = result.value;
     }
 
+    vk::Pipeline VKGraphicsPipeline::GetVkPipeline()
+    {
+        return pipeline;
+    }
+    vk::RenderPass VKGraphicsPipeline::GetVkRenderPass()
+    {
+        return renderPass;
+    }
+
 }

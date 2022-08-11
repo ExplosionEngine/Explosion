@@ -45,7 +45,12 @@ namespace RHI {
         bool stencilReadOnly;
     };
 
+    struct ComputePassBeginInfo {
+        ComputePipeline* pipeline;
+    };
+
     struct GraphicsPassBeginInfo {
+        GraphicsPipeline* pipeline;
         uint32_t colorAttachmentNum;
         const GraphicsPassColorAttachment* colorAttachments;
         const GraphicsPassDepthStencilAttachment* depthStencilAttachment;
@@ -58,7 +63,6 @@ namespace RHI {
         NON_COPYABLE(ComputePassCommandEncoder)
         virtual ~ComputePassCommandEncoder();
 
-        virtual void SetPipeline(ComputePipeline* pipeline) = 0;
         virtual void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) = 0;
         virtual void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) = 0;
         virtual void EndPass() = 0;
@@ -72,7 +76,6 @@ namespace RHI {
         NON_COPYABLE(GraphicsPassCommandEncoder)
         virtual ~GraphicsPassCommandEncoder();
 
-        virtual void SetPipeline(GraphicsPipeline* pipeline) = 0;
         virtual void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) = 0;
         virtual void SetIndexBuffer(BufferView* bufferView) = 0;
         virtual void SetVertexBuffer(size_t slot, BufferView* bufferView) = 0;
@@ -108,7 +111,7 @@ namespace RHI {
         // TODO WriteTimeStamp(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-writetimestamp
         // TODO ResolveQuerySet(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-resolvequeryset
 
-        virtual ComputePassCommandEncoder* BeginComputePass() = 0;
+        virtual ComputePassCommandEncoder* BeginComputePass(const ComputePassBeginInfo* beginInfo) = 0;
         virtual GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) = 0;
         virtual void End() = 0;
 
