@@ -24,11 +24,18 @@ namespace Runtime{
         InitPathMapper(inInitializer.execFile, inInitializer.projectFile);
         InitInputManager();
         InitConfigManager();
+        for (const auto& listener : listeners.onInits) {
+            listener();
+        }
     }
 
     void Engine::Tick()
     {
         // TODO
+
+        for (const auto& listener : listeners.onTicks) {
+            listener();
+        }
     }
 
     IApplication* Engine::GetApplication()
@@ -53,7 +60,18 @@ namespace Runtime{
 
     void Engine::SetActiveWorld(World* inWorld)
     {
+        inWorld->Setup();
         activeWorld = inWorld;
+    }
+
+    void Engine::AddOnInitListener(std::function<void()> listener)
+    {
+        listeners.onInits.emplace_back(std::move(listener));
+    }
+
+    void Engine::AddOnTickListener(std::function<void()> listener)
+    {
+        listeners.onTicks.emplace_back(std::move(listener));
     }
 
     void Engine::InitPathMapper(const std::string& execFile, const std::string& projectFile)

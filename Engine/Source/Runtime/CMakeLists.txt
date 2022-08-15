@@ -4,5 +4,12 @@ AddLibrary(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB EnTT
+    LIB EnTT GLM
+)
+
+file(GLOB TEST_SOURCES Test/*.cpp)
+AddTest(
+    NAME Runtime.Test
+    SRC ${TEST_SOURCES}
+    LIB Runtime
 )

@@ -5,18 +5,27 @@
 #pragma once
 
 #include <entt/entt.hpp>
+#include <taskflow/taskflow.hpp>
+
 #include <utility>
 #include <future>
 
 #include <Common/Utility.h>
+#include <Common/Debug.h>
 #include <Runtime/ECS.h>
 
 namespace Runtime {
     class World {
     public:
         NON_COPYABLE(World)
-        explicit World(std::string inName) : name(std::move(inName)) {}
-        ~World() = default;
+        explicit World(std::string inName) : setup(false), name(std::move(inName)) {}
+
+        ~World()
+        {
+            for (auto& systemInfo : systemInfos) {
+                delete systemInfo.system;
+            }
+        }
 
         Entity CreateEntity()
         {
@@ -29,7 +38,7 @@ namespace Runtime {
         }
 
         template <typename T, typename... Args>
-        T& EmplaceComponent(Entity entity, Args&&... args)
+        T& AddComponent(Entity entity, Args&&... args)
         {
             return registry.emplace_or_replace<T>(entity, std::forward<Args>(args)...);
         }
@@ -37,7 +46,7 @@ namespace Runtime {
         template <typename T>
         T* GetComponent(Entity entity)
         {
-            return registry.get<T>(entity);
+            return registry.try_get<T>(entity);
         }
 
         template <typename T>
@@ -59,19 +68,36 @@ namespace Runtime {
             return MakeSystemInfo<S, QueryTuple>(system, std::make_index_sequence<std::tuple_size_v<QueryTuple>> {});
         }
 
+        void Setup()
+        {
+            if (setup) {
+                return;
+            }
+            DispatchSystemTasksAndWait([](const SystemInfo& systemInfo) -> auto{ return systemInfo.setupFunc; });
+        }
+
         void Tick()
         {
-            // TODO
+            DispatchSystemTasksAndWait([](const SystemInfo& systemInfo) -> auto{ return systemInfo.tickFunc; });
+        }
+
+        [[nodiscard]] const std::vector<System*>& EngineSystems() const
+        {
+            return engineSystems;
+        }
+
+        template <typename S>
+        S* FindEngineSystem()
+        {
+            auto iter = engineSystemMap.find(typeid(S).hash_code());
+            return iter == engineSystemMap.end() ? nullptr : iter->second;
         }
 
     private:
         struct SystemInfo {
             System* system;
-            bool working;
             std::function<void()> setupFunc;
             std::function<void()> tickFunc;
-            std::future<void> setupFuture;
-            std::future<void> tickFuture;
         };
 
         template <typename S, typename QueryTuple, size_t... I>
@@ -79,14 +105,40 @@ namespace Runtime {
         {
             SystemInfo result;
             result.system = system;
-            result.working = false;
             result.setupFunc = [system, this]() -> void { system->Setup(CreateQuery<std::tuple_element_t<I, QueryTuple>>()...); };
             result.tickFunc = [system, this]() -> void { system->Tick(CreateQuery<std::tuple_element_t<I, QueryTuple>>()...); };
             return result;
         }
 
+        template <typename F>
+        void DispatchSystemTasksAndWait(F&& taskGetter)
+        {
+            std::unordered_map<System*, tf::Task> tasks;
+            tf::Taskflow taskflow;
+            {
+                for (const auto& systemInfo : systemInfos) {
+                    tasks[systemInfo.system] = taskflow.emplace(taskGetter(systemInfo));
+                }
+                for (const auto& systemInfo : systemInfos) {
+                    auto& task = tasks[systemInfo.system];
+
+                    const auto& systemsToWait = systemInfo.system->GetSystemsToWait();
+                    for (auto* systemToWait : systemsToWait) {
+                        auto iter = tasks.find(systemToWait);
+                        Assert(iter != tasks.end());
+                        iter->second.succeed(task);
+                    }
+                }
+            }
+            tf::Executor executor;
+            executor.run_and_wait(taskflow);
+        }
+
+        bool setup;
         std::string name;
         entt::registry registry;
         std::vector<SystemInfo> systemInfos;
+        std::vector<System*> engineSystems;
+        std::unordered_map<size_t, System*> engineSystemMap;
     };
 }

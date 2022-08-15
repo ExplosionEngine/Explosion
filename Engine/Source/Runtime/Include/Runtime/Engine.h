@@ -5,6 +5,7 @@
 #pragma once
 
 #include <memory>
+#include <functional>
 
 #include <Common/Path.h>
 #include <Runtime/Input.h>
@@ -36,7 +37,15 @@ namespace Runtime{
 
         void SetActiveWorld(World* inWorld);
 
+        void AddOnInitListener(std::function<void()> listener);
+        void AddOnTickListener(std::function<void()> listener);
+
     private:
+        struct Listeners {
+            std::vector<std::function<void()>> onInits;
+            std::vector<std::function<void()>> onTicks;
+        };
+
         Engine();
 
         void InitPathMapper(const std::string& execFile, const std::string& projectFile);
@@ -48,5 +57,6 @@ namespace Runtime{
         std::unique_ptr<Common::PathMapper> pathMapper;
         std::unique_ptr<InputManager> inputManager;
         std::unique_ptr<ConfigManager> configManager;
+        Listeners listeners;
     };
 }

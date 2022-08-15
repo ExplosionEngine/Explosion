@@ -19,7 +19,7 @@ namespace Runtime {
     public:
         using ComponentSet = ComponentSet<Components...>;
 
-        explicit Query(entt::view<Components...>&& inView) : view(inView) {}
+        explicit Query(entt::view<entt::exclude_t<>, Components...>&& inView) : view(inView) {}
         ~Query() = default;
 
         template <typename F>
@@ -29,7 +29,7 @@ namespace Runtime {
         }
 
     private:
-        entt::view<Components...> view;
+        entt::view<entt::exclude_t<>, Components...> view;
     };
 
     template <typename T>
@@ -46,10 +46,23 @@ namespace Runtime {
 
         void Wait(System* systemToWait)
         {
+            if (systemToWait == nullptr) {
+                return;
+            }
             systemsToWait.emplace_back(systemToWait);
         }
 
-        std::vector<System*> GetSystemsToWait()
+        void Wait(const std::vector<System*>& inSystemsToWait)
+        {
+            for (auto* systemToWait : inSystemsToWait) {
+                if (systemToWait == nullptr) {
+                    continue;
+                }
+                systemsToWait.emplace_back(systemToWait);
+            }
+        }
+
+        [[nodiscard]] const std::vector<System*>& GetSystemsToWait()
         {
             return systemsToWait;
         }
