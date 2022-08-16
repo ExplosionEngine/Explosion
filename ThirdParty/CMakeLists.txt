@@ -29,8 +29,8 @@ Add3rdBinaryPackage(
 Add3rdBinaryPackage(
     NAME VulkanSDK
     PLATFORM Windows
-    VERSION 1.2.198.1
-    HASH b31f2a42f23d28679fd979e0bd4028e72c53ca2dd1a389fae8fb2715aa07b9d9
+    VERSION 1.3.216.0
+    HASH cf52875b10661939e484135c33331e2f883e6530c578f5be8698f3afb8e39c13
     INCLUDE $<SOURCE_DIR>/Include
     LINK $<SOURCE_DIR>/Lib
     LIB vulkan-1
@@ -38,8 +38,8 @@ Add3rdBinaryPackage(
 Add3rdBinaryPackage(
     NAME VulkanSDK
     PLATFORM Darwin
-    VERSION 1.2.198.1
-    HASH 06584e6a18dac9a1e8ce2490c829cb55fe27f6102e15e472865beefeb947035a
+    VERSION 1.3.216.0
+    HASH 9315737591b3d62275418b724ef03dcf8686a2e748044487677c80e4d7e47ba9
     INCLUDE $<SOURCE_DIR>/macOS/include
     LINK $<SOURCE_DIR>/macOS/lib
     LIB vulkan.1
