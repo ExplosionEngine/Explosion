@@ -60,35 +60,7 @@ namespace RHI::Vulkan {
     VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandBuffer& cmd,
         const GraphicsPassBeginInfo* beginInfo) : device(dev), commandBuffer(cmd)
     {
-        cmdHandle = commandBuffer.GetVkCommandBuffer();
-        auto pipeline = dynamic_cast<VKGraphicsPipeline*>(beginInfo->pipeline);
-
-        auto textureView = dynamic_cast<VKTextureView*>(beginInfo->colorAttachments[0].view);
-        std::array<vk::ImageView, 1> attachments = {textureView->GetVkImageView()};
-
-        vk::FramebufferCreateInfo framebufferInfo = {};
-        framebufferInfo.setRenderPass(pipeline->GetVkRenderPass())
-            .setAttachmentCount(1)
-            .setPAttachments(attachments.data())
-            .setLayers(1)
-            .setWidth(1024)
-            .setHeight(768);
-
-        vk::Framebuffer framebuffer;
-        Assert(device.GetVkDevice().createFramebuffer(&framebufferInfo, nullptr, &framebuffer) == vk::Result::eSuccess);
-
-        auto color = beginInfo->colorAttachments[0].clearValue;
-        vk::ClearColorValue colorValue = std::array<float, 4> {color.r, color.g, color.b, color.a};
-        std::array<vk::ClearValue, 1> clearValue = {colorValue};
-
-        vk::RenderPassBeginInfo passBegin = {};
-        passBegin.setRenderPass(pipeline->GetVkRenderPass())
-            .setFramebuffer(framebuffer)
-            .setClearValueCount(clearValue.size())
-            .setPClearValues(clearValue.data());
-
-        cmdHandle.beginRenderPass(&passBegin, vk::SubpassContents::eInline);
-        cmdHandle.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->GetVkPipeline());
+        //TODO
     }
 
     VKGraphicsPassCommandEncoder::~VKGraphicsPassCommandEncoder()
