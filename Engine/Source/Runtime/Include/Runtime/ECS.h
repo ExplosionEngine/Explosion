@@ -23,7 +23,7 @@ namespace Runtime {
         ~Query() = default;
 
         template <typename F>
-        void ForEach(F&& func)
+        void ForEach(F&& func) const
         {
             view.each(std::forward<F>(func));
         }
@@ -36,8 +36,16 @@ namespace Runtime {
     struct SystemFuncTraits {};
 
     template <typename Class, typename... Queries>
-    struct SystemFuncTraits<void(Class::*)(Queries&&...)> {
+    struct SystemFuncTraits<void(Class::*)(const Queries&...)> {
         using QueryTuple = std::tuple<Queries...>;
+    };
+
+    template <typename T>
+    struct QueryTraits {};
+
+    template <typename... Components>
+    struct QueryTraits<Query<Components...>> {
+        using ComponentSet = ComponentSet<Components...>;
     };
 
     class System {

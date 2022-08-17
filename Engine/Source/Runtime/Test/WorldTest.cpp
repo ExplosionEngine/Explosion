@@ -23,13 +23,33 @@ public:
 
     void Setup() {}
 
-    void Tick(Runtime::Query<Position, Velocity>& query)
+    void Tick(const Runtime::Query<Position, Velocity>& query) // NOLINT
     {
         query.ForEach([](Position& position, Velocity& velocity) -> void {
-            velocity.x += position.x;
-            velocity.y += position.y;
+            position.x += velocity.x;
+            position.y += velocity.y;
         });
     }
+};
+
+class PositionSetupSystem : public Runtime::System {
+public:
+    PositionSetupSystem(float inX, float inY) : Runtime::System(), x(inX), y(inY) {}
+    ~PositionSetupSystem() override = default;
+
+    void Setup(const Runtime::Query<Position>& query)
+    {
+        query.ForEach([this](Position& position) -> void {
+            position.x = x;
+            position.y = y;
+        });
+    }
+
+    void Tick() {}
+
+private:
+    float x;
+    float y;
 };
 
 TEST(WorldTest, ComponentBasicTest)
@@ -51,7 +71,7 @@ TEST(WorldTest, ComponentBasicTest)
 
 TEST(WorldTest, SystemBasicTest)
 {
-    Runtime::World world("TestWorld");
+    Runtime::World world("SystemBasicTestWorld");
 
     auto entity0 = world.CreateEntity();
     world.AddComponent<Position>(entity0) = Position { 1.0f, 2.0f };
@@ -67,4 +87,25 @@ TEST(WorldTest, SystemBasicTest)
 
     world.Setup();
     world.Tick();
+
+    auto* position0 = world.GetComponent<Position>(entity0);
+    ASSERT_EQ(position0->x, 1.0f);
+    ASSERT_EQ(position0->y, 2.0f);
+
+    auto* position1 = world.GetComponent<Position>(entity1);
+    ASSERT_EQ(position1->x, 6.0f);
+    ASSERT_EQ(position1->y, 8.0f);
+
+    world.Tick();
+
+    ASSERT_EQ(position0->x, 1.0f);
+    ASSERT_EQ(position0->y, 2.0f);
+
+    ASSERT_EQ(position1->x, 7.0f);
+    ASSERT_EQ(position1->y, 10.0f);
+}
+
+TEST(WorldTest, SystemSetupTest)
+{
+    // TODO
 }

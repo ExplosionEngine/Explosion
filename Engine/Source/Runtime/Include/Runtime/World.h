@@ -64,8 +64,14 @@ namespace Runtime {
         template <typename S>
         void AddSystem(S* system)
         {
-            using QueryTuple = typename SystemFuncTraits<decltype(&S::Tick)>::QueryTuple;
-            return MakeSystemInfo<S, QueryTuple>(system, std::make_index_sequence<std::tuple_size_v<QueryTuple>> {});
+            using SetupQueryType = typename SystemFuncTraits<decltype(&S::Setup)>::QueryTuple;
+            using TickQueryType = typename SystemFuncTraits<decltype(&S::Tick)>::QueryTuple;
+
+            SystemInfo systemInfo;
+            systemInfo.system = system;
+            systemInfo.setupFunc = MakeSystemFuncProxy<S, SetupQueryType>(system, &S::Setup, std::make_index_sequence<std::tuple_size_v<SetupQueryType>> {});
+            systemInfo.tickFunc = MakeSystemFuncProxy<S, TickQueryType>(system, &S::Tick, std::make_index_sequence<std::tuple_size_v<TickQueryType>> {});
+            systemInfos.emplace_back(std::move(systemInfo));
         }
 
         void Setup()
@@ -100,14 +106,10 @@ namespace Runtime {
             std::function<void()> tickFunc;
         };
 
-        template <typename S, typename QueryTuple, size_t... I>
-        SystemInfo MakeSystemInfo(S* system, std::index_sequence<I...> = {})
+        template <typename S, typename QueryTuple, typename F, size_t... I>
+        std::function<void()> MakeSystemFuncProxy(S* system, F func, std::index_sequence<I...> = {})
         {
-            SystemInfo result;
-            result.system = system;
-            result.setupFunc = [system, this]() -> void { system->Setup(CreateQuery<std::tuple_element_t<I, QueryTuple>>()...); };
-            result.tickFunc = [system, this]() -> void { system->Tick(CreateQuery<std::tuple_element_t<I, QueryTuple>>()...); };
-            return result;
+            return [system, func, this]() -> void { (system->*func)(CreateQuery(typename QueryTraits<std::tuple_element_t<I, QueryTuple>>::ComponentSet {})...); };
         }
 
         template <typename F>
@@ -131,7 +133,7 @@ namespace Runtime {
                 }
             }
             tf::Executor executor;
-            executor.run_and_wait(taskflow);
+            executor.run(taskflow);
         }
 
         bool setup;
