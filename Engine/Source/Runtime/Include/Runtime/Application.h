@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-namespace Engine {
+namespace Runtime{
     class IApplication {
     public:
         virtual int Exec(int argc, char* argv[]) = 0;

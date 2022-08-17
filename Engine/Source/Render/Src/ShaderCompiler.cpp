@@ -21,11 +21,11 @@ using namespace Microsoft::WRL;
 #define ComPtrGet(name) name
 #endif
 
-#include <ShaderCompiler/ShaderCompiler.h>
+#include <Render/ShaderCompiler.h>
 #include <Common/Debug.h>
 #include <Common/String.h>
 
-namespace Shader {
+namespace Render {
     static std::wstring GetDXCTargetProfile(RHI::ShaderStageBits stage)
     {
         static const std::unordered_map<RHI::ShaderStageBits, std::wstring> map = {
@@ -38,7 +38,7 @@ namespace Shader {
         return iter->second + L"_6_2";
     }
 
-    static std::vector<LPCWSTR> GetDXCArguments(const CompileOptions& options)
+    static std::vector<LPCWSTR> GetDXCArguments(const ShaderCompileOptions& options)
     {
         static std::vector<LPCWSTR> basicArguments = {
             DXC_ARG_WARNINGS_ARE_ERRORS,
@@ -50,16 +50,16 @@ namespace Shader {
             result.emplace_back(L"-Qembed_debug");
             result.emplace_back(DXC_ARG_DEBUG);
         }
-        if (options.byteCodeType != ByteCodeType::DXIL) {
+        if (options.byteCodeType != ShaderByteCodeType::DXIL) {
             result.emplace_back(L"-spirv");
         }
         return result;
     }
 
     static void CompileDxilOrSpriv(
-        const CompileInput& input,
-        const CompileOptions& options,
-        CompileOutput& output)
+        const ShaderCompileInput& input,
+        const ShaderCompileOptions& options,
+        ShaderCompileOutput& output)
     {
         ComPtr<IDxcLibrary> library;
         Assert(SUCCEEDED(DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library))));
@@ -111,14 +111,14 @@ namespace Shader {
     }
 
     static void ConvertSprivToMetalByteCode(
-        const CompileOptions& options,
-        CompileOutput& output)
+        const ShaderCompileOptions& options,
+        ShaderCompileOutput& output)
     {
         // TODO
     }
 }
 
-namespace Shader {
+namespace Render {
     ShaderCompiler& ShaderCompiler::Get()
     {
         static ShaderCompiler instance;
@@ -131,12 +131,12 @@ namespace Shader {
 
     ShaderCompiler::~ShaderCompiler() = default;
 
-    std::future<CompileOutput> ShaderCompiler::Compile(const CompileInput& inInput, const CompileOptions& inOptions)
+    std::future<ShaderCompileOutput> ShaderCompiler::Compile(const ShaderCompileInput& inInput, const ShaderCompileOptions& inOptions)
     {
-        return threadPool.EmplaceTask([](const CompileInput& input, const CompileOptions& options) -> CompileOutput {
-            CompileOutput output;
+        return threadPool.EmplaceTask([](const ShaderCompileInput& input, const ShaderCompileOptions& options) -> ShaderCompileOutput {
+            ShaderCompileOutput output;
             CompileDxilOrSpriv(input, options, output);
-            if (!output.success || options.byteCodeType != ByteCodeType::MBC) {
+            if (!output.success || options.byteCodeType != ShaderByteCodeType::MBC) {
                 return output;
             }
             ConvertSprivToMetalByteCode(options, output);

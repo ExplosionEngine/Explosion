@@ -9,10 +9,8 @@
 #include <RHI/Vulkan/Gpu.h>
 #include <RHI/Vulkan/Texture.h>
 #include <RHI/Vulkan/Queue.h>
-#include "PlatformSurface.h"
 
 namespace RHI::Vulkan {
-
     VKSwapChain::VKSwapChain(VKDevice& dev, const SwapChainCreateInfo* createInfo)
         : device(dev), SwapChain(createInfo)
     {

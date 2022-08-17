@@ -26,7 +26,7 @@
 #include <Common/String.h>
 #include <Common/File.h>
 #include <RHI/RHI.h>
-#include <ShaderCompiler/ShaderCompiler.h>
+#include <Render/ShaderCompiler.h>
 using namespace Common;
 
 class Application {
@@ -86,18 +86,18 @@ protected:
     {
         std::string shaderSource = Common::FileUtils::ReadTextFile(fileName);
 
-        Shader::CompileInput info;
+        Render::ShaderCompileInput info;
         info.source = shaderSource;
         info.entryPoint = entryPoint;
         info.stage = shaderStage;
-        Shader::CompileOptions options;
+        Render::ShaderCompileOptions options;
         if (rhiType == RHI::RHIType::DIRECTX_12) {
-            options.byteCodeType = Shader::ByteCodeType::DXIL;
+            options.byteCodeType = Render::ShaderByteCodeType::DXIL;
         } else if (rhiType == RHI::RHIType::VULKAN) {
-            options.byteCodeType = Shader::ByteCodeType::SPRIV;
+            options.byteCodeType = Render::ShaderByteCodeType::SPRIV;
         }
         options.withDebugInfo = false;
-        auto future = Shader::ShaderCompiler::Get().Compile(info, options);
+        auto future = Render::ShaderCompiler::Get().Compile(info, options);
 
         future.wait();
         auto result = future.get();

@@ -10,5 +10,5 @@ AddExecutable(
     NAME Launcher
     SRC ${SOURCES}
     INC Include
-    LIB Engine Renderer glfw clipp ${PLATFORM_EXT_LIBS}
+    LIB Runtime Rendering glfw clipp ${PLATFORM_EXT_LIBS}
 )

@@ -6,7 +6,7 @@
 
 #include <Common/Path.h>
 
-namespace Engine {
+namespace Runtime{
     // TODO rewrite config manager interfaces with reflection
     class ConfigManager {
     public:

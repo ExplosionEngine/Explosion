@@ -2,18 +2,19 @@
 // Created by johnk on 2022/8/3.
 //
 
-#include <Engine/Engine.h>
+#include <Runtime/Engine.h>
 #include <Common/Debug.h>
-#include <Engine/Application.h>
+#include <Runtime/Application.h>
+#include <Runtime/World.h>
 
-namespace Engine {
+namespace Runtime{
     Engine& Engine::Get()
     {
         static Engine instance;
         return instance;
     }
 
-    Engine::Engine() : application(nullptr) {}
+    Engine::Engine() : application(nullptr), activeWorld(nullptr) {}
 
     Engine::~Engine() = default;
 
@@ -23,11 +24,18 @@ namespace Engine {
         InitPathMapper(inInitializer.execFile, inInitializer.projectFile);
         InitInputManager();
         InitConfigManager();
+        for (const auto& listener : listeners.onInits) {
+            listener();
+        }
     }
 
     void Engine::Tick()
     {
         // TODO
+
+        for (const auto& listener : listeners.onTicks) {
+            listener();
+        }
     }
 
     IApplication* Engine::GetApplication()
@@ -48,6 +56,22 @@ namespace Engine {
     ConfigManager& Engine::GetConfigManager()
     {
         return *configManager;
+    }
+
+    void Engine::SetActiveWorld(World* inWorld)
+    {
+        inWorld->Setup();
+        activeWorld = inWorld;
+    }
+
+    void Engine::AddOnInitListener(std::function<void()> listener)
+    {
+        listeners.onInits.emplace_back(std::move(listener));
+    }
+
+    void Engine::AddOnTickListener(std::function<void()> listener)
+    {
+        listeners.onTicks.emplace_back(std::move(listener));
     }
 
     void Engine::InitPathMapper(const std::string& execFile, const std::string& projectFile)

@@ -1,9 +1,8 @@
 add_subdirectory(Common)
 add_subdirectory(RHI)
-add_subdirectory(ShaderCompiler)
 add_subdirectory(Render)
-add_subdirectory(Engine)
-add_subdirectory(Renderer)
+add_subdirectory(Runtime)
+add_subdirectory(Rendering)
 add_subdirectory(Launcher)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
