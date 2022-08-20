@@ -81,6 +81,7 @@ namespace RHI::Vulkan {
 #elif PLATFORM_MACOS
             "VK_MVK_macos_surface",
             "VK_EXT_metal_surface",
+            VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
 #endif
 #if BUILD_CONFIG_DEBUG
             VK_EXT_DEBUG_UTILS_EXTENSION_NAME
@@ -121,6 +122,9 @@ namespace RHI::Vulkan {
 #if BUILD_CONFIG_DEBUG
         createInfo.enabledLayerCount = vkEnabledLayerNames.size();
         createInfo.ppEnabledLayerNames = vkEnabledLayerNames.data();
+#endif
+#if PLATFORM_MACOS
+        createInfo.flags = vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
 #endif
 
         vk::Result result = vk::createInstance(&createInfo, nullptr, &vkInstance);
