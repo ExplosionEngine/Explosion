@@ -82,6 +82,7 @@ namespace RHI::Vulkan {
             "VK_MVK_macos_surface",
             "VK_EXT_metal_surface",
             VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
+            VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
 #endif
 #if BUILD_CONFIG_DEBUG
             VK_EXT_DEBUG_UTILS_EXTENSION_NAME

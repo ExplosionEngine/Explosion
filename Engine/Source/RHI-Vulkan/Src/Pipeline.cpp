@@ -22,6 +22,25 @@ namespace RHI::Vulkan {
         return iter->second;
     }
 
+    static vk::Format GetVkPixelFormat(PixelFormat format)
+    {
+        // TODO
+        // add more correspond format
+        static std::unordered_map<PixelFormat, vk::Format> rules = {
+            {PixelFormat::RGBA8_UNORM,vk::Format::eR8G8B8A8Unorm},
+            {PixelFormat::D32_FLOAT,  vk::Format::eD32Sfloat    }
+        };
+
+        vk::Format result = {};
+        for (const auto& rule : rules) {
+            if (format & rule.first) {
+                result = rule.second;
+                break;
+            }
+        }
+        return result;
+    }
+
     static vk::StencilOpState ConvertStencilOp(const StencilFaceState& stencilOp, uint32_t readMask, uint32_t writeMask)
     {
         vk::StencilOpState state = {};
@@ -273,10 +292,18 @@ namespace RHI::Vulkan {
         std::vector<vk::VertexInputBindingDescription> bindings;
         vk::PipelineVertexInputStateCreateInfo vtxInput = ConstructVertexInput(createInfo, attributes, bindings);
 
-        // FrameBuffers and graphics pipelines are created based on a specific render pass object. They must
-        // only be used with that render pass object, or one compatible with it.
-        // Vulkan Spec. 8.2. Render Pass Compatibility.
-        CreateNativeRenderPass(createInfo);
+        //As for dynamic rendering, we no longer need to set a render pass
+        //instead, create info to define color、depth and stencil attachment at pipeline create time
+        std::vector<vk::Format> pixelFormats(createInfo->fragment.colorTargetNum);
+        for (size_t i = 0; i < createInfo->fragment.colorTargetNum; i++)
+        {
+            pixelFormats[i] = GetVkPixelFormat(createInfo->fragment.colorTargets[i].format);
+        }
+        vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo;
+        pipelineRenderingCreateInfo.setColorAttachmentCount(createInfo->fragment.colorTargetNum)
+            .setPColorAttachmentFormats(pixelFormats.data())
+            .setDepthAttachmentFormat(GetVkPixelFormat(createInfo->depthStencil.format))
+            .setStencilAttachmentFormat(GetVkPixelFormat(createInfo->depthStencil.format));
 
         vk::GraphicsPipelineCreateInfo pipelineCreateInfo = {};
         pipelineCreateInfo.setStages(stages)
@@ -290,7 +317,7 @@ namespace RHI::Vulkan {
             .setPTessellationState(nullptr)
             .setPColorBlendState(&colorInfo)
             .setPVertexInputState(&vtxInput)
-            .setRenderPass(renderPass);
+            .setPNext(&pipelineRenderingCreateInfo);
 
         auto result =  device.GetVkDevice().createGraphicsPipeline(VK_NULL_HANDLE,
             pipelineCreateInfo, nullptr);

@@ -13,6 +13,47 @@
 
 namespace RHI::Vulkan {
 
+    static vk::IndexType GetVkIndexFormat(IndexFormat format)
+    {
+        static std::unordered_map<IndexFormat, vk::IndexType> rules = {
+            {IndexFormat::UINT16,vk::IndexType::eUint16},
+            {IndexFormat::UINT32,vk::IndexType::eUint32}
+        };
+
+        vk::IndexType result = {};
+        for (const auto& rule : rules) {
+            if (format & rule.first) {
+                result = rule.second;
+                break;
+            }
+        }
+        return result;
+    }
+
+    static vk::AttachmentLoadOp GetVkLoadOp(LoadOp option)
+    {
+        if (option == LoadOp::LOAD) {
+            return vk::AttachmentLoadOp::eLoad;
+        } else if (option == LoadOp::CLEAR) {
+            return vk::AttachmentLoadOp::eClear;
+        } else {
+            return vk::AttachmentLoadOp::eNoneEXT;
+        }
+    }
+
+    static vk::AttachmentStoreOp GetVkStoreOp(StoreOp option)
+    {
+        if (option == StoreOp::STORE) {
+            return vk::AttachmentStoreOp::eStore;
+        } else if (option == StoreOp::DISCARD) {
+            //TODO
+            //Is Discard correspond to DontCare?
+            return vk::AttachmentStoreOp::eDontCare;
+        } else {
+            return vk::AttachmentStoreOp::eNoneEXT;
+        }
+    }
+
     VKCommandEncoder::VKCommandEncoder(VKDevice& dev, VKCommandBuffer& cmd)
         : device(dev), commandBuffer(cmd)
     {
@@ -60,7 +101,53 @@ namespace RHI::Vulkan {
     VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandBuffer& cmd,
         const GraphicsPassBeginInfo* beginInfo) : device(dev), commandBuffer(cmd)
     {
+        std::vector<vk::RenderingAttachmentInfo> colorAttachmentInfos(beginInfo->colorAttachmentNum);
+        for (size_t i = 0; i < beginInfo->colorAttachmentNum; i++)
+        {
+            //TODO
+            //How to cast ColorNormalized to vk::ClearColorValue more simpler?
+            auto value = beginInfo->colorAttachments[i].clearValue;
+            std::array<float, 4> colorValue = {value.a, value.b, value.g, value.r};
+            vk::ClearValue clearValue;
+            clearValue.setColor(colorValue);
+            auto* colorTextureView = dynamic_cast<VKTextureView*>(beginInfo->colorAttachments[i].view);
+
+            colorAttachmentInfos[i].setImageView(colorTextureView->GetVkImageView())
+                //TODO
+                //imageLayout is the layout that imageView will be in during rendering.
+                //Is the value of imageLayout fixd to VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR
+                .setImageLayout(vk::ImageLayout::eAttachmentOptimalKHR)
+                .setLoadOp(GetVkLoadOp(beginInfo->colorAttachments[i].loadOp))
+                .setStoreOp(GetVkStoreOp(beginInfo->colorAttachments[i].storeOp))
+                .setClearValue(clearValue);
+        }
+
+        vk::ClearValue clearValue;
+        clearValue.setDepthStencil({beginInfo->depthStencilAttachment->depthClearValue, beginInfo->depthStencilAttachment->stencilClearValue});
+        auto* depthStencilTextureView = dynamic_cast<VKTextureView*>(beginInfo->depthStencilAttachment->view);
+
         //TODO
+        //A single depth stencil attachment info can be used, they can also be specified separately.
+        //Depth and stencil have their own loadOp and storeOp separately
+        vk::RenderingAttachmentInfo depthStencilAttachmentInfo;
+        depthStencilAttachmentInfo.setImageView(depthStencilTextureView->GetVkImageView())
+            .setImageLayout(vk::ImageLayout::eDepthAttachmentOptimalKHR) // TODO as color attachment above
+            .setLoadOp(GetVkLoadOp(beginInfo->depthStencilAttachment->depthLoadOp))
+            .setStoreOp(GetVkStoreOp(beginInfo->depthStencilAttachment->depthStoreOp))
+            .setClearValue(clearValue);
+
+        vk::RenderingInfoKHR renderingInfo;
+        renderingInfo.setColorAttachmentCount(colorAttachmentInfos.size())
+            .setPColorAttachments(colorAttachmentInfos.data())
+            .setPDepthAttachment(&depthStencilAttachmentInfo)
+            .setPStencilAttachment(&depthStencilAttachmentInfo);
+        // layerCount is the number of layers rendered to in each attachment when viewMask is 0.
+        //.setLayerCount(1);
+        //TODO: how to get width and height of render area
+        //.setRenderArea({0, 0,  0, 0})
+
+        cmdHandle = cmd.GetVkCommandBuffer();
+        cmdHandle.beginRenderingKHR(&renderingInfo);
     }
 
     VKGraphicsPassCommandEncoder::~VKGraphicsPassCommandEncoder()
@@ -76,13 +163,7 @@ namespace RHI::Vulkan {
         auto mBufferView = dynamic_cast<VKBufferView*>(bufferView);
 
         vk::Buffer indexBuffer = mBufferView->GetBuffer().GetVkBuffer();
-        IndexFormat format = mBufferView->GetIndexFormat();
-        vk::IndexType vkFormat;
-        if (format == IndexFormat::UINT16) {
-            vkFormat = vk::IndexType::eUint16;
-        } else if (format == IndexFormat::UINT32) {
-            vkFormat = vk::IndexType::eUint32;
-        }
+        auto vkFormat = GetVkIndexFormat(mBufferView->GetIndexFormat());
 
         cmdHandle.bindIndexBuffer(indexBuffer, 0, vkFormat);
     }
@@ -145,7 +226,7 @@ namespace RHI::Vulkan {
 
     void VKGraphicsPassCommandEncoder::EndPass()
     {
-        cmdHandle.endRenderPass();
+        cmdHandle.endRenderingKHR();
         delete this;
     }
 }

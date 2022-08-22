@@ -21,6 +21,8 @@
 namespace RHI::Vulkan {
     const std::vector<const char*> DEVICE_EXTENSIONS = {
         "VK_KHR_swapchain",
+        "VK_KHR_dynamic_rendering",
+        "VK_KHR_depth_stencil_resolve",
 #ifdef __APPLE__
         "VK_KHR_portability_subset"
 #endif
@@ -196,6 +198,10 @@ namespace RHI::Vulkan {
         deviceCreateInfo.queueCreateInfoCount = queueCreateInfos.size();
         deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
+
+        vk::PhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures;
+        dynamicRenderingFeatures.setDynamicRendering(VK_TRUE);
+        deviceCreateInfo.pNext = &dynamicRenderingFeatures;
 
         deviceCreateInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
         deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
