@@ -31,6 +31,8 @@ namespace RHI {
         ColorNormalized<4> clearValue;
         LoadOp loadOp;
         StoreOp storeOp;
+        uint8_t width;
+        uint8_t height;
     };
 
     struct GraphicsPassDepthStencilAttachment {

@@ -14,7 +14,11 @@ namespace RHI::Vulkan {
         const VkDebugUtilsMessengerCallbackDataEXT* callbackData,
         void* userData)
     {
-        // TODO
+        if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+            std::cout << callbackData->pMessage << std::endl;
+        } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+            std::cerr << callbackData->pMessage << std::endl;
+        }
         return VK_FALSE;
     }
 #endif
@@ -123,6 +127,10 @@ namespace RHI::Vulkan {
 #if BUILD_CONFIG_DEBUG
         createInfo.enabledLayerCount = vkEnabledLayerNames.size();
         createInfo.ppEnabledLayerNames = vkEnabledLayerNames.data();
+
+        vk::DebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+        populateDebugMessengerCreateInfo(debugCreateInfo);
+        createInfo.pNext = &debugCreateInfo;
 #endif
 #if PLATFORM_MACOS
         createInfo.flags = vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
@@ -177,6 +185,17 @@ namespace RHI::Vulkan {
     void VKInstance::CreateDebugMessenger()
     {
         vk::DebugUtilsMessengerCreateInfoEXT createInfo;
+        populateDebugMessengerCreateInfo(createInfo);
+
+        Assert(vkInstance.createDebugUtilsMessengerEXT(&createInfo, nullptr, &vkDebugMessenger, vkDispatch) == vk::Result::eSuccess);
+    }
+
+    void VKInstance::DestroyDebugMessenger()
+    {
+        vkInstance.destroyDebugUtilsMessengerEXT(vkDebugMessenger, nullptr, vkDispatch);
+    }
+
+    void VKInstance::populateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo) {
         createInfo.messageSeverity =
             vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning
             | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
@@ -185,13 +204,6 @@ namespace RHI::Vulkan {
             | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
             | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
         createInfo.pfnUserCallback = DebugCallback;
-
-        Assert(vkInstance.createDebugUtilsMessengerEXT(&createInfo, nullptr, &vkDebugMessenger, vkDispatch) == vk::Result::eSuccess);
-    }
-
-    void VKInstance::DestroyDebugMessenger()
-    {
-        vkInstance.destroyDebugUtilsMessengerEXT(vkDebugMessenger, nullptr, vkDispatch);
     }
 #endif
 

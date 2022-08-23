@@ -31,6 +31,7 @@ namespace RHI::Vulkan {
         void PrepareLayers();
         void CreateDebugMessenger();
         void DestroyDebugMessenger();
+        void populateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo);
 #endif
 
         vk::Instance vkInstance;

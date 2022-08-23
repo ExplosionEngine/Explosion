@@ -23,6 +23,7 @@ namespace RHI::Vulkan {
         "VK_KHR_swapchain",
         "VK_KHR_dynamic_rendering",
         "VK_KHR_depth_stencil_resolve",
+        "VK_KHR_create_renderpass2",
 #ifdef __APPLE__
         "VK_KHR_portability_subset"
 #endif

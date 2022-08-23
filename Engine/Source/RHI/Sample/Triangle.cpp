@@ -214,6 +214,8 @@ private:
             colorAttachments[0].storeOp = StoreOp::STORE;
             colorAttachments[0].view = swapChainTextureViews[swapChain->GetBackTextureIndex()];
             colorAttachments[0].resolveTarget = nullptr;
+            colorAttachments[0].width = width;
+            colorAttachments[0].height = height;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
             graphicsPassBeginInfo.pipeline = pipeline;

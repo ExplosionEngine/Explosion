@@ -9,6 +9,7 @@
 
 namespace RHI::Vulkan {
 
+    class VKGpu;
     class VKDevice;
     class VKCommandBuffer;
     class VKGraphicsPipeline;
@@ -72,6 +73,7 @@ namespace RHI::Vulkan {
         VKCommandBuffer& commandBuffer;
         vk::CommandBuffer cmdHandle;
         VKGraphicsPipeline* graphicsPipeline;
+        vk::DispatchLoaderDynamic dynamicLoader;
     };
 
 }
