@@ -22,25 +22,6 @@ namespace RHI::Vulkan {
         return iter->second;
     }
 
-    static vk::Format GetVkPixelFormat(PixelFormat format)
-    {
-        // TODO
-        // add more correspond format
-        static std::unordered_map<PixelFormat, vk::Format> rules = {
-            {PixelFormat::RGBA8_UNORM,vk::Format::eR8G8B8A8Unorm},
-            {PixelFormat::D32_FLOAT,  vk::Format::eD32Sfloat    }
-        };
-
-        vk::Format result = {};
-        for (const auto& rule : rules) {
-            if (format & rule.first) {
-                result = rule.second;
-                break;
-            }
-        }
-        return result;
-    }
-
     static vk::StencilOpState ConvertStencilOp(const StencilFaceState& stencilOp, uint32_t readMask, uint32_t writeMask)
     {
         vk::StencilOpState state = {};
@@ -297,13 +278,13 @@ namespace RHI::Vulkan {
         std::vector<vk::Format> pixelFormats(createInfo->fragment.colorTargetNum);
         for (size_t i = 0; i < createInfo->fragment.colorTargetNum; i++)
         {
-            pixelFormats[i] = GetVkPixelFormat(createInfo->fragment.colorTargets[i].format);
+            pixelFormats[i] = VKEnumCast<PixelFormat, vk::Format>(createInfo->fragment.colorTargets[i].format);
         }
         vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo;
         pipelineRenderingCreateInfo.setColorAttachmentCount(createInfo->fragment.colorTargetNum)
             .setPColorAttachmentFormats(pixelFormats.data())
-            .setDepthAttachmentFormat(GetVkPixelFormat(createInfo->depthStencil.format))
-            .setStencilAttachmentFormat(GetVkPixelFormat(createInfo->depthStencil.format));
+            .setDepthAttachmentFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo->depthStencil.format))
+            .setStencilAttachmentFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo->depthStencil.format));
 
         vk::GraphicsPipelineCreateInfo pipelineCreateInfo = {};
         pipelineCreateInfo.setStages(stages)

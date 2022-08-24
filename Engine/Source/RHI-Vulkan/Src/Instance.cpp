@@ -14,11 +14,7 @@ namespace RHI::Vulkan {
         const VkDebugUtilsMessengerCallbackDataEXT* callbackData,
         void* userData)
     {
-        if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-            std::cout << callbackData->pMessage << std::endl;
-        } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-            std::cerr << callbackData->pMessage << std::endl;
-        }
+        std::cerr << callbackData->pMessage << std::endl;
         return VK_FALSE;
     }
 #endif
@@ -197,8 +193,7 @@ namespace RHI::Vulkan {
 
     void VKInstance::populateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo) {
         createInfo.messageSeverity =
-            vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning
-            | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
         createInfo.messageType =
             vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral
             | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation

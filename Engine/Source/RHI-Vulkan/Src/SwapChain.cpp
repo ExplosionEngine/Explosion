@@ -95,6 +95,7 @@ namespace RHI::Vulkan {
 
         vk::SwapchainCreateInfoKHR swapChainInfo = {};
         swapChainInfo.setSurface(surface)
+            .setMinImageCount(surfaceCap.minImageCount)
             .setImageFormat(supportedFormat)
             .setImageColorSpace(colorSpace)
             .setPresentMode(supportedMode)

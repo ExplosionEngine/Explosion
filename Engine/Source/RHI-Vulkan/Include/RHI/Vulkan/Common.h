@@ -228,6 +228,31 @@ namespace RHI::Vulkan {
         VK_ENUM_MAP_ITEM(StencilOp::DECREMENT_WRAP,  vk::StencilOp::eDecrementAndWrap)
     VK_ENUM_MAP_END()
 
+    VK_ENUM_MAP_BEGIN(LoadOp, vk::AttachmentLoadOp)
+        VK_ENUM_MAP_ITEM(LoadOp::LOAD,  vk::AttachmentLoadOp::eLoad)
+        VK_ENUM_MAP_ITEM(LoadOp::CLEAR, vk::AttachmentLoadOp::eClear)
+        VK_ENUM_MAP_ITEM(LoadOp::MAX,   vk::AttachmentLoadOp::eNoneEXT)
+    VK_ENUM_MAP_END()
+
+    VK_ENUM_MAP_BEGIN(StoreOp, vk::AttachmentStoreOp)
+        VK_ENUM_MAP_ITEM(StoreOp::STORE,   vk::AttachmentStoreOp::eStore)
+        VK_ENUM_MAP_ITEM(StoreOp::DISCARD, vk::AttachmentStoreOp::eDontCare)
+        VK_ENUM_MAP_ITEM(StoreOp::MAX,     vk::AttachmentStoreOp::eNoneEXT)
+    VK_ENUM_MAP_END()
+
+    VK_ENUM_MAP_BEGIN(IndexFormat, vk::IndexType)
+        VK_ENUM_MAP_ITEM(IndexFormat::UINT16, vk::IndexType::eUint16)
+        VK_ENUM_MAP_ITEM(IndexFormat::UINT16, vk::IndexType::eUint32)
+        VK_ENUM_MAP_ITEM(IndexFormat::MAX,    vk::IndexType::eNoneKHR)
+    VK_ENUM_MAP_END()
+
+    VK_ENUM_MAP_BEGIN(TextureState, vk::ImageLayout)
+        VK_ENUM_MAP_ITEM(TextureState::UNDEFINED,     vk::ImageLayout::eUndefined)
+        VK_ENUM_MAP_ITEM(TextureState::RENDER_TARGET, vk::ImageLayout::eColorAttachmentOptimal)
+        VK_ENUM_MAP_ITEM(TextureState::PRESENT,       vk::ImageLayout::ePresentSrcKHR)
+        VK_ENUM_MAP_ITEM(TextureState::MAX,           vk::ImageLayout::eGeneral)
+    VK_ENUM_MAP_END()
+
     inline vk::Extent3D FromRHI(const RHI::Extent<3>& ext)
     {
         return { static_cast<uint32_t>(ext.x), static_cast<uint32_t>(ext.y), static_cast<uint32_t>(ext.z) };

@@ -87,7 +87,7 @@ namespace RHI {
         MAX
     };
 
-    enum class VertexFormat {
+    enum class VertexFormat : EnumType {
         // 8-Bits Channel
         UINT8_X2,
         UINT8_X4,
@@ -142,10 +142,10 @@ namespace RHI {
     };
 
     enum class TextureAspect : EnumType {
-        COLOR,
-        DEPTH,
-        STENCIL,
-        DEPTH_STENCIL,
+        COLOR         = 0x1,
+        DEPTH         = 0x2,
+        STENCIL       = 0x4,
+        DEPTH_STENCIL = 0x8,
         MAX
     };
 
