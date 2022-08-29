@@ -10,7 +10,9 @@
 #include <RHI/Vulkan/Buffer.h>
 #include <RHI/Vulkan/BufferView.h>
 #include <RHI/Vulkan/TextureView.h>
+#include <RHI/Vulkan/Texture.h>
 #include <RHI/Vulkan/Common.h>
+#include <RHI/Vulkan/Instance.h>
 
 namespace RHI::Vulkan {
 
@@ -61,10 +63,6 @@ namespace RHI::Vulkan {
     VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandBuffer& cmd,
         const GraphicsPassBeginInfo* beginInfo) : device(dev), commandBuffer(cmd)
     {
-        dynamicLoader = vk::DispatchLoaderDynamic(dev.GetGpu()->GetVKInstance(), vkGetInstanceProcAddr, dev.GetVkDevice());
-        dynamicLoader.vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(dev.GetGpu()->GetVKInstance().getProcAddr("vkCmdBeginRenderingKHR"));
-        dynamicLoader.vkCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(dev.GetGpu()->GetVKInstance().getProcAddr("vkCmdEndRenderingKHR"));
-
         std::vector<vk::RenderingAttachmentInfo> colorAttachmentInfos(beginInfo->colorAttachmentNum);
         for (size_t i = 0; i < beginInfo->colorAttachmentNum; i++)
         {
@@ -81,14 +79,12 @@ namespace RHI::Vulkan {
                     }));
         }
 
-        auto width = beginInfo->colorAttachments[0].width;
-        auto height = beginInfo->colorAttachments[0].height;
+        auto* textureView = dynamic_cast<VKTextureView*>(beginInfo->colorAttachments[0].view);
         vk::RenderingInfoKHR renderingInfo;
         renderingInfo.setColorAttachmentCount(colorAttachmentInfos.size())
             .setPColorAttachments(colorAttachmentInfos.data())
-            //TODO layerCount is the number of layers rendered to in each attachment when viewMask is 0.
-//            .setLayerCount()
-            .setRenderArea({{0, 0}, {width, height}});
+            .setLayerCount(textureView->GetArrayLayerNum())
+            .setRenderArea({{0, 0}, {static_cast<uint32_t>(textureView->GetTexture().GetExtent().x), static_cast<uint32_t>(textureView->GetTexture().GetExtent().y)}});
 
         if (beginInfo->depthStencilAttachment != nullptr)
         {
@@ -110,9 +106,9 @@ namespace RHI::Vulkan {
         }
 
         cmdHandle = cmd.GetVkCommandBuffer();
-        cmdHandle.beginRenderingKHR(&renderingInfo, dynamicLoader);
+        cmdHandle.beginRenderingKHR(&renderingInfo, device.GetGpu().GetInstance().GetVkDispatch());
 
-        auto pipeline = dynamic_cast<VKGraphicsPipeline*>(beginInfo->pipeline);
+        auto* pipeline = dynamic_cast<VKGraphicsPipeline*>(beginInfo->pipeline);
         cmdHandle.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->GetVkPipeline());
     }
 
@@ -129,7 +125,7 @@ namespace RHI::Vulkan {
         auto mBufferView = dynamic_cast<VKBufferView*>(bufferView);
 
         vk::Buffer indexBuffer = mBufferView->GetBuffer().GetVkBuffer();
-        auto vkFormat = VKEnumCast<IndexFormat ,vk::IndexType>(mBufferView->GetIndexFormat());
+        auto vkFormat = VKEnumCast<IndexFormat, vk::IndexType>(mBufferView->GetIndexFormat());
 
         cmdHandle.bindIndexBuffer(indexBuffer, 0, vkFormat);
     }
@@ -192,7 +188,7 @@ namespace RHI::Vulkan {
 
     void VKGraphicsPassCommandEncoder::EndPass()
     {
-        cmdHandle.endRenderingKHR(dynamicLoader);
+        cmdHandle.endRenderingKHR(device.GetGpu().GetInstance().GetVkDispatch());
         delete this;
     }
 }

@@ -21,11 +21,20 @@ namespace RHI::Vulkan {
         void Destroy() override;
 
         vk::ImageView GetVkImageView();
+        VKTexture& GetTexture() const;
+        uint8_t GetBaseMipLevel() const;
+        uint8_t GetMipLevelNum() const;
+        uint8_t GetBaseArrayLayer() const;
+        uint8_t GetArrayLayerNum() const;
 
     private:
         void CreateImageView(const TextureViewCreateInfo* createInfo);
         VKDevice& device;
         VKTexture& vkTexture;
         vk::ImageView vkTextureView;
+        uint8_t baseMipLevel;
+        uint8_t mipLevelNum;
+        uint8_t baseArrayLayer;
+        uint8_t arrayLayerNum;
     };
 }

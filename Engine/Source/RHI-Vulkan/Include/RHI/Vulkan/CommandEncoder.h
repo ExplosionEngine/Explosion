@@ -73,7 +73,6 @@ namespace RHI::Vulkan {
         VKCommandBuffer& commandBuffer;
         vk::CommandBuffer cmdHandle;
         VKGraphicsPipeline* graphicsPipeline;
-        vk::DispatchLoaderDynamic dynamicLoader;
     };
 
 }

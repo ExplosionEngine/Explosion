@@ -99,7 +99,7 @@ namespace RHI::Vulkan {
 
         vk::MemoryAllocateInfo memoryInfo = {};
         memoryInfo.setAllocationSize(memoryRequirements.size)
-            .setMemoryTypeIndex(device.GetGpu()->FindMemoryType(memoryRequirements.memoryTypeBits,
+            .setMemoryTypeIndex(device.GetGpu().FindMemoryType(memoryRequirements.memoryTypeBits,
                                                                 GetVkMemoryType(createInfo->usages)));
         Assert(device.GetVkDevice().allocateMemory(&memoryInfo, nullptr, &vkDeviceMemory) == vk::Result::eSuccess);
 

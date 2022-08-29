@@ -25,6 +25,7 @@ namespace RHI::Vulkan {
         TextureView* CreateTextureView(const TextureViewCreateInfo* createInfo) override;
 
         vk::Image GetImage() const;
+        Extent<3> GetExtent() const;
     private:
         void CreateImage(const TextureCreateInfo* createInfo);
 
@@ -34,5 +35,6 @@ namespace RHI::Vulkan {
         VKDevice& device;
         vk::DeviceMemory vkDeviceMemory;
         vk::Image vkImage;
+        Extent<3> extent;
     };
 }

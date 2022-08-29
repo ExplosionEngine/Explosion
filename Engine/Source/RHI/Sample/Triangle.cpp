@@ -79,7 +79,7 @@ private:
     void CreateSwapChain()
     {
         SwapChainCreateInfo swapChainCreateInfo {};
-        swapChainCreateInfo.format = PixelFormat::BGRA8_UNORM;
+        swapChainCreateInfo.format = PixelFormat::RGBA8_UNORM;
         swapChainCreateInfo.presentMode = PresentMode::IMMEDIATELY;
         swapChainCreateInfo.textureNum = 2;
         swapChainCreateInfo.extent = {width, height};
@@ -91,7 +91,7 @@ private:
             swapChainTextures[i] = swapChain->GetTexture(i);
 
             TextureViewCreateInfo viewCreateInfo {};
-            viewCreateInfo.format = PixelFormat::BGRA8_UNORM;
+            viewCreateInfo.format = PixelFormat::RGBA8_UNORM;
             viewCreateInfo.dimension = TextureViewDimension::TV_2D;
             viewCreateInfo.baseArrayLayer = 0;
             viewCreateInfo.arrayLayerNum = 1;
@@ -172,7 +172,7 @@ private:
         vertexBufferLayout.attributes = vertexAttributes.data();
 
         std::array<ColorTargetState, 1> colorTargetStates {};
-        colorTargetStates[0].format = PixelFormat::BGRA8_UNORM;
+        colorTargetStates[0].format = PixelFormat::RGBA8_UNORM;
         colorTargetStates[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
 
         GraphicsPipelineCreateInfo createInfo {};
@@ -214,8 +214,6 @@ private:
             colorAttachments[0].storeOp = StoreOp::STORE;
             colorAttachments[0].view = swapChainTextureViews[swapChain->GetBackTextureIndex()];
             colorAttachments[0].resolveTarget = nullptr;
-            colorAttachments[0].width = width;
-            colorAttachments[0].height = height;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
             graphicsPassBeginInfo.pipeline = pipeline;

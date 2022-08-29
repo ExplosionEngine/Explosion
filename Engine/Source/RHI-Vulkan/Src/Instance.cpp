@@ -125,7 +125,12 @@ namespace RHI::Vulkan {
         createInfo.ppEnabledLayerNames = vkEnabledLayerNames.data();
 
         vk::DebugUtilsMessengerCreateInfoEXT debugCreateInfo;
-        populateDebugMessengerCreateInfo(debugCreateInfo);
+        debugCreateInfo.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+        debugCreateInfo.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral
+                                      | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
+                                      | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
+        debugCreateInfo.pfnUserCallback = DebugCallback;
+
         createInfo.pNext = &debugCreateInfo;
 #endif
 #if PLATFORM_MACOS
@@ -147,6 +152,8 @@ namespace RHI::Vulkan {
         vkDispatch.vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkInstance.getProcAddr("vkCreateDebugUtilsMessengerEXT"));
         vkDispatch.vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkInstance.getProcAddr("vkDestroyDebugUtilsMessengerEXT"));
 #endif
+        vkDispatch.vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkInstance.getProcAddr("vkCmdBeginRenderingKHR"));
+        vkDispatch.vkCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkInstance.getProcAddr("vkCmdEndRenderingKHR"));
     }
 
     uint32_t VKInstance::GetGpuNum()
@@ -159,9 +166,14 @@ namespace RHI::Vulkan {
         return gpus[index].get();
     }
 
-    vk::Instance VKInstance::GetInstance() const
+    vk::Instance VKInstance::GetVkInstance() const
     {
         return vkInstance;
+    }
+
+    vk::DispatchLoaderDynamic VKInstance::GetVkDispatch() const
+    {
+        return vkDispatch;
     }
 
     void VKInstance::EnumeratePhysicalDevices()
@@ -173,32 +185,26 @@ namespace RHI::Vulkan {
 
         gpus.resize(count);
         for (uint32_t i = 0; i < count; i++) {
-            gpus[i] = std::make_unique<VKGpu>(vkInstance, vkPhysicalDevices[i]);
+            gpus[i] = std::make_unique<VKGpu>(*this, vkPhysicalDevices[i]);
         }
     }
 
 #if BUILD_CONFIG_DEBUG
     void VKInstance::CreateDebugMessenger()
     {
-        vk::DebugUtilsMessengerCreateInfoEXT createInfo;
-        populateDebugMessengerCreateInfo(createInfo);
+        vk::DebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+        debugCreateInfo.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+        debugCreateInfo.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral
+                                      | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
+                                      | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
+        debugCreateInfo.pfnUserCallback = DebugCallback;
 
-        Assert(vkInstance.createDebugUtilsMessengerEXT(&createInfo, nullptr, &vkDebugMessenger, vkDispatch) == vk::Result::eSuccess);
+        Assert(vkInstance.createDebugUtilsMessengerEXT(&debugCreateInfo, nullptr, &vkDebugMessenger, vkDispatch) == vk::Result::eSuccess);
     }
 
     void VKInstance::DestroyDebugMessenger()
     {
         vkInstance.destroyDebugUtilsMessengerEXT(vkDebugMessenger, nullptr, vkDispatch);
-    }
-
-    void VKInstance::populateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo) {
-        createInfo.messageSeverity =
-            vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
-        createInfo.messageType =
-            vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral
-            | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
-            | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
-        createInfo.pfnUserCallback = DebugCallback;
     }
 #endif
 
