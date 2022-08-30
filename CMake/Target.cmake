@@ -256,7 +256,7 @@ function(AddLibrary)
     if (${MSVC})
         target_compile_options(
             ${PARAMS_NAME}
-            PUBLIC $<IF:$<STREQUAL:${PARAMS_TYPE},"SHARED">,/MD$<$<CONFIG:Debug>:d>,/MT$<$<CONFIG:Debug>:d>>
+            PUBLIC /MD$<$<CONFIG:Debug>:d>
         )
     endif()
 
