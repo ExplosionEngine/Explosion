@@ -89,9 +89,9 @@ namespace RHI::Vulkan {
         if (beginInfo->depthStencilAttachment != nullptr)
         {
             auto* depthStencilTextureView = dynamic_cast<VKTextureView*>(beginInfo->depthStencilAttachment->view);
-            //TODO
-            //A single depth stencil attachment info can be used, they can also be specified separately.
-            //Depth and stencil have their own loadOp and storeOp separately
+            // TODO
+            // A single depth stencil attachment info can be used, they can also be specified separately.
+            // Depth and stencil have their own loadOp and storeOp separately
             vk::RenderingAttachmentInfo depthStencilAttachmentInfo;
             depthStencilAttachmentInfo.setImageView(depthStencilTextureView->GetVkImageView())
                 .setImageLayout(vk::ImageLayout::eDepthAttachmentOptimalKHR) // TODO as color attachment above
