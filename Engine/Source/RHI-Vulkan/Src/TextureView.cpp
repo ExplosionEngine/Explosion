@@ -19,8 +19,8 @@ namespace RHI::Vulkan {
 
         vk::ImageAspectFlags result = {};
         for (const auto& rule : rules) {
-            if (aspect & rule.first) {
-                result |= rule.second;
+            if (aspect == rule.first) {
+                result = rule.second;
             }
         }
         return result;
@@ -29,6 +29,12 @@ namespace RHI::Vulkan {
     VKTextureView::VKTextureView(VKTexture& tex, VKDevice& dev, const TextureViewCreateInfo* createInfo)
         : TextureView(createInfo), device(dev), vkTexture(tex), vkTextureView(VK_NULL_HANDLE)
     {
+        Assert(createInfo != nullptr);
+        baseMipLevel   = createInfo->baseMipLevel;
+        mipLevelNum    = createInfo->mipLevelNum;
+        baseArrayLayer = createInfo->baseArrayLayer;
+        arrayLayerNum  = createInfo->arrayLayerNum;
+
         CreateImageView(createInfo);
     }
 
@@ -66,4 +72,28 @@ namespace RHI::Vulkan {
         return vkTextureView;
     }
 
+    VKTexture& VKTextureView::GetTexture() const
+    {
+        return vkTexture;
+    }
+
+    uint8_t VKTextureView::GetBaseMipLevel() const
+    {
+        return baseMipLevel;
+    }
+
+    uint8_t VKTextureView::GetMipLevelNum() const
+    {
+        return mipLevelNum;
+    }
+
+    uint8_t VKTextureView::GetBaseArrayLayer() const
+    {
+        return baseArrayLayer;
+    }
+
+    uint8_t VKTextureView::GetArrayLayerNum() const
+    {
+        return arrayLayerNum;
+    }
 }

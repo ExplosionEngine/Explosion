@@ -5,9 +5,10 @@
 #include <RHI/Vulkan/Gpu.h>
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Device.h>
+#include <RHI/Vulkan/Instance.h>
 
 namespace RHI::Vulkan {
-    VKGpu::VKGpu(vk::Instance inst, vk::PhysicalDevice d) : Gpu(), vkInstance(inst), vkPhysicalDevice(d) {}
+    VKGpu::VKGpu(VKInstance& inst, vk::PhysicalDevice d) : Gpu(), instance(inst), vkPhysicalDevice(d) {}
 
     VKGpu::~VKGpu() = default;
 
@@ -33,9 +34,9 @@ namespace RHI::Vulkan {
         return vkPhysicalDevice;
     }
 
-    const vk::Instance& VKGpu::GetVKInstance() const
+    VKInstance& VKGpu::GetInstance() const
     {
-        return vkInstance;
+        return instance;
     }
 
     uint32_t VKGpu::FindMemoryType(uint32_t filter, vk::MemoryPropertyFlags propertyFlags) const

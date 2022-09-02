@@ -18,7 +18,8 @@ namespace RHI::Vulkan {
         RHIType GetRHIType() override;
         uint32_t GetGpuNum() override;
         Gpu* GetGpu(uint32_t index) override;
-        vk::Instance GetInstance() const;
+        vk::Instance GetVkInstance() const;
+        vk::DispatchLoaderDynamic GetVkDispatch() const;
         void Destroy() override;
 
     private:

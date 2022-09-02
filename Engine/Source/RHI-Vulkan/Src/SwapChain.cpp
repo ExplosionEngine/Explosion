@@ -55,19 +55,19 @@ namespace RHI::Vulkan {
 
     void VKSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo* createInfo)
     {
-        surface = CreateNativeSurface(device.GetGpu()->GetVKInstance(), createInfo);
+        surface = CreateNativeSurface(device.GetGpu().GetInstance().GetVkInstance(), createInfo);
 
         auto* mQueue = dynamic_cast<VKQueue*>(createInfo->presentQueue);
         queue = mQueue->GetVkQueue();
 
-        auto surfaceCap = device.GetGpu()->GetVkPhysicalDevice().getSurfaceCapabilitiesKHR(surface);
+        auto surfaceCap = device.GetGpu().GetVkPhysicalDevice().getSurfaceCapabilitiesKHR(surface);
         vk::Extent2D extent = {static_cast<uint32_t>(createInfo->extent.x), static_cast<uint32_t>(createInfo->extent.y)};
         extent.width = std::clamp(extent.width, surfaceCap.minImageExtent.width, surfaceCap.maxImageExtent.width);
         extent.height = std::clamp(extent.height, surfaceCap.minImageExtent.height, surfaceCap.minImageExtent.height);
 
         vk::Format supportedFormat = VKEnumCast<PixelFormat, vk::Format>(createInfo->format);
         vk::ColorSpaceKHR colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
-        auto surfaceFormats = device.GetGpu()->GetVkPhysicalDevice().getSurfaceFormatsKHR(surface);
+        auto surfaceFormats = device.GetGpu().GetVkPhysicalDevice().getSurfaceFormatsKHR(surface);
         {
             Assert(!surfaceFormats.empty());
             auto iter = std::find_if(surfaceFormats.begin(), surfaceFormats.end(),
@@ -80,7 +80,7 @@ namespace RHI::Vulkan {
             }
         }
 
-        auto presentModes = device.GetGpu()->GetVkPhysicalDevice().getSurfacePresentModesKHR(surface);
+        auto presentModes = device.GetGpu().GetVkPhysicalDevice().getSurfacePresentModesKHR(surface);
         vk::PresentModeKHR supportedMode = vk::PresentModeKHR::eMailbox;
         {
             Assert(!presentModes.empty());
@@ -95,6 +95,7 @@ namespace RHI::Vulkan {
 
         vk::SwapchainCreateInfoKHR swapChainInfo = {};
         swapChainInfo.setSurface(surface)
+            .setMinImageCount(surfaceCap.minImageCount)
             .setImageFormat(supportedFormat)
             .setImageColorSpace(colorSpace)
             .setPresentMode(supportedMode)

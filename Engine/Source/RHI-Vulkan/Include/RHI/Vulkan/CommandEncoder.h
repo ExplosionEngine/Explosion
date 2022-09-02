@@ -9,6 +9,7 @@
 
 namespace RHI::Vulkan {
 
+    class VKGpu;
     class VKDevice;
     class VKCommandBuffer;
     class VKGraphicsPipeline;

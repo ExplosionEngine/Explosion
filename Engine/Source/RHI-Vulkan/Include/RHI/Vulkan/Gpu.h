@@ -9,10 +9,12 @@
 #include <RHI/Gpu.h>
 
 namespace RHI::Vulkan {
+    class VKInstance;
+
     class VKGpu : public Gpu {
     public:
         NON_COPYABLE(VKGpu)
-        explicit VKGpu(vk::Instance instance, vk::PhysicalDevice vkPhysicalDevice);
+        explicit VKGpu(VKInstance& instance, vk::PhysicalDevice vkPhysicalDevice);
         ~VKGpu() override;
 
         GpuProperty GetProperty() override;
@@ -20,12 +22,12 @@ namespace RHI::Vulkan {
 
         const vk::PhysicalDevice& GetVkPhysicalDevice() const;
 
-        const vk::Instance& GetVKInstance() const;
+        VKInstance& GetInstance() const;
 
         uint32_t FindMemoryType(uint32_t filter, vk::MemoryPropertyFlags propertyFlag) const;
 
     private:
-        vk::Instance vkInstance;
+        VKInstance& instance;
         vk::PhysicalDevice vkPhysicalDevice;
     };
 }

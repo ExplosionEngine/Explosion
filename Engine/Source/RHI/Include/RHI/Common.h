@@ -87,7 +87,7 @@ namespace RHI {
         MAX
     };
 
-    enum class VertexFormat {
+    enum class VertexFormat : EnumType {
         // 8-Bits Channel
         UINT8_X2,
         UINT8_X4,

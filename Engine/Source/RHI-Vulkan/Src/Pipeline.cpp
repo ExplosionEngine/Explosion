@@ -273,10 +273,18 @@ namespace RHI::Vulkan {
         std::vector<vk::VertexInputBindingDescription> bindings;
         vk::PipelineVertexInputStateCreateInfo vtxInput = ConstructVertexInput(createInfo, attributes, bindings);
 
-        // FrameBuffers and graphics pipelines are created based on a specific render pass object. They must
-        // only be used with that render pass object, or one compatible with it.
-        // Vulkan Spec. 8.2. Render Pass Compatibility.
-        CreateNativeRenderPass(createInfo);
+        //As for dynamic rendering, we no longer need to set a render pass
+        //instead, create info to define color、depth and stencil attachment at pipeline create time
+        std::vector<vk::Format> pixelFormats(createInfo->fragment.colorTargetNum);
+        for (size_t i = 0; i < createInfo->fragment.colorTargetNum; i++)
+        {
+            pixelFormats[i] = VKEnumCast<PixelFormat, vk::Format>(createInfo->fragment.colorTargets[i].format);
+        }
+        vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo;
+        pipelineRenderingCreateInfo.setColorAttachmentCount(createInfo->fragment.colorTargetNum)
+            .setPColorAttachmentFormats(pixelFormats.data())
+            .setDepthAttachmentFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo->depthStencil.format))
+            .setStencilAttachmentFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo->depthStencil.format));
 
         vk::GraphicsPipelineCreateInfo pipelineCreateInfo = {};
         pipelineCreateInfo.setStages(stages)
@@ -290,7 +298,7 @@ namespace RHI::Vulkan {
             .setPTessellationState(nullptr)
             .setPColorBlendState(&colorInfo)
             .setPVertexInputState(&vtxInput)
-            .setRenderPass(renderPass);
+            .setPNext(&pipelineRenderingCreateInfo);
 
         auto result =  device.GetVkDevice().createGraphicsPipeline(VK_NULL_HANDLE,
             pipelineCreateInfo, nullptr);

@@ -21,6 +21,9 @@
 namespace RHI::Vulkan {
     const std::vector<const char*> DEVICE_EXTENSIONS = {
         "VK_KHR_swapchain",
+        "VK_KHR_dynamic_rendering",
+        "VK_KHR_depth_stencil_resolve",
+        "VK_KHR_create_renderpass2",
 #ifdef __APPLE__
         "VK_KHR_portability_subset"
 #endif
@@ -31,7 +34,7 @@ namespace RHI::Vulkan {
     };
 
 
-    VKDevice::VKDevice(VKGpu& vkGpu, const DeviceCreateInfo* createInfo) : Device(createInfo), gpu(&vkGpu)
+    VKDevice::VKDevice(VKGpu& vkGpu, const DeviceCreateInfo* createInfo) : Device(createInfo), gpu(vkGpu)
     {
         CreateDevice(createInfo);
         GetQueues();
@@ -132,7 +135,7 @@ namespace RHI::Vulkan {
         return vkDevice;
     }
 
-    VKGpu* VKDevice::GetGpu() const
+    VKGpu& VKDevice::GetGpu() const
     {
         return gpu;
     }
@@ -156,9 +159,9 @@ namespace RHI::Vulkan {
     void VKDevice::CreateDevice(const DeviceCreateInfo* createInfo)
     {
         uint32_t queueFamilyPropertyCnt = 0;
-        gpu->GetVkPhysicalDevice().getQueueFamilyProperties(&queueFamilyPropertyCnt, nullptr);
+        gpu.GetVkPhysicalDevice().getQueueFamilyProperties(&queueFamilyPropertyCnt, nullptr);
         std::vector<vk::QueueFamilyProperties> queueFamilyProperties(queueFamilyPropertyCnt);
-        gpu->GetVkPhysicalDevice().getQueueFamilyProperties(&queueFamilyPropertyCnt, queueFamilyProperties.data());
+        gpu.GetVkPhysicalDevice().getQueueFamilyProperties(&queueFamilyPropertyCnt, queueFamilyProperties.data());
 
         std::map<QueueType, uint32_t> queueNumMap;
         for (uint32_t i = 0; i < createInfo->queueCreateInfoNum; i++) {
@@ -197,6 +200,10 @@ namespace RHI::Vulkan {
         deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 
+        vk::PhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures;
+        dynamicRenderingFeatures.setDynamicRendering(VK_TRUE);
+        deviceCreateInfo.pNext = &dynamicRenderingFeatures;
+
         deviceCreateInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
         deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
 
@@ -205,7 +212,7 @@ namespace RHI::Vulkan {
         deviceCreateInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
 #endif
 
-        Assert(gpu->GetVkPhysicalDevice().createDevice(&deviceCreateInfo, nullptr, &vkDevice) == vk::Result::eSuccess);
+        Assert(gpu.GetVkPhysicalDevice().createDevice(&deviceCreateInfo, nullptr, &vkDevice) == vk::Result::eSuccess);
     }
 
     void VKDevice::GetQueues()
