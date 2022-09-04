@@ -38,7 +38,7 @@ namespace Render {
         return iter->second + L"_6_2";
     }
 
-    static std::vector<LPCWSTR> GetDXCArguments(const ShaderCompileOptions& options)
+    static std::vector<LPCWSTR> GetDXCBaseArguments(const ShaderCompileOptions& options)
     {
         static std::vector<LPCWSTR> basicArguments = {
             DXC_ARG_WARNINGS_ARE_ERRORS,
@@ -54,6 +54,23 @@ namespace Render {
             result.emplace_back(L"-spirv");
         }
         return result;
+    }
+
+    static std::vector<std::wstring> GetDefinitions(const ShaderCompileOptions& options)
+    {
+        std::vector<std::wstring> result;
+        for (const auto& definition : options.definitions) {
+            result.emplace_back(L"-D");
+            result.emplace_back(Common::StringUtils::ToWideString(definition));
+        }
+        return result;
+    }
+
+    static void FillDefinitionsToDXCArguments(std::vector<LPCWSTR>& result, const std::vector<std::wstring>& definitions)
+    {
+        for (const auto& definition : definitions) {
+            result.emplace_back(definition.c_str());
+        }
     }
 
     static void CompileDxilOrSpriv(
@@ -73,7 +90,10 @@ namespace Render {
         ComPtr<IDxcBlobEncoding> source;
         utils->CreateBlobFromPinned(input.source.c_str(), std::strlen(input.source.c_str()), CP_UTF8, &source);
 
-        std::vector<LPCWSTR> arguments = GetDXCArguments(options);
+        std::vector<LPCWSTR> arguments = GetDXCBaseArguments(options);
+        auto definitions = GetDefinitions(options);
+        FillDefinitionsToDXCArguments(arguments, definitions);
+
         ComPtr<IDxcOperationResult> result;
         HRESULT success = compiler->Compile(
             ComPtrGet(source),
