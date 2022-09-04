@@ -33,7 +33,7 @@ namespace RHI::DirectX12 {
         return textures[index].get();
     }
 
-    uint8_t DX12SwapChain::GetBackTextureIndex()
+    uint8_t DX12SwapChain::AcquireBackTexture()
     {
         return static_cast<uint8_t>(dx12SwapChain->GetCurrentBackBufferIndex());
     }

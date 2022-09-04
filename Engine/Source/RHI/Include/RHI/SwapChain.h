@@ -26,7 +26,7 @@ namespace RHI {
         virtual ~SwapChain();
 
         virtual Texture* GetTexture(uint8_t index) = 0;
-        virtual uint8_t GetBackTextureIndex() = 0;
+        virtual uint8_t AcquireBackTexture() = 0;
         virtual void Present() = 0;
         virtual void Destroy() = 0;
 
