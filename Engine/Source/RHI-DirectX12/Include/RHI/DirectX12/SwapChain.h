@@ -24,7 +24,7 @@ namespace RHI::DirectX12 {
         ~DX12SwapChain() override;
 
         Texture* GetTexture(uint8_t index) override;
-        uint8_t GetBackTextureIndex() override;
+        uint8_t AcquireBackTexture() override;
         void Present() override;
         void Destroy() override;
 

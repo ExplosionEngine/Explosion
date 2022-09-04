@@ -38,7 +38,6 @@ protected:
     {
         PopulateCommandBuffer();
         SubmitCommandBufferAndPresent();
-        WaitPreviousFrame();
     }
 
     void OnDestroy() override
@@ -206,13 +205,14 @@ private:
 
     void PopulateCommandBuffer()
     {
+        auto backTextureIndex = swapChain->AcquireBackTexture();
         CommandEncoder* commandEncoder = commandBuffer->Begin();
         {
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::CLEAR;
             colorAttachments[0].storeOp = StoreOp::STORE;
-            colorAttachments[0].view = swapChainTextureViews[swapChain->GetBackTextureIndex()];
+            colorAttachments[0].view = swapChainTextureViews[backTextureIndex];
             colorAttachments[0].resolveTarget = nullptr;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
@@ -221,7 +221,7 @@ private:
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
 
-            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[swapChain->GetBackTextureIndex()], TextureState::PRESENT, TextureState::RENDER_TARGET));
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::PRESENT, TextureState::RENDER_TARGET));
             auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
                 graphicsEncoder->SetScissor(0, 0, width, height);
@@ -231,7 +231,7 @@ private:
                 graphicsEncoder->Draw(3, 1, 0, 0);
             }
             graphicsEncoder->EndPass();
-            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[swapChain->GetBackTextureIndex()], TextureState::RENDER_TARGET, TextureState::PRESENT));
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::RENDER_TARGET, TextureState::PRESENT));
         }
         commandEncoder->End();
     }
@@ -239,12 +239,8 @@ private:
     void SubmitCommandBufferAndPresent()
     {
         graphicsQueue->Submit(commandBuffer, fence);
-        swapChain->Present();
-    }
-
-    void WaitPreviousFrame()
-    {
         fence->Wait();
+        swapChain->Present();
     }
 
     Instance* instance = nullptr;

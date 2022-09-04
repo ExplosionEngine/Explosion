@@ -27,6 +27,7 @@ namespace Render {
     struct ShaderCompileOptions {
         ShaderByteCodeType byteCodeType = ShaderByteCodeType::MAX;
         bool withDebugInfo = false;
+        std::vector<std::string> definitions;
     };
 
     struct ShaderCompileOutput {

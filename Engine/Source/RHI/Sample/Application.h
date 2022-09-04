@@ -93,8 +93,10 @@ protected:
         Render::ShaderCompileOptions options;
         if (rhiType == RHI::RHIType::DIRECTX_12) {
             options.byteCodeType = Render::ShaderByteCodeType::DXIL;
+            options.definitions.emplace_back("VULKAN=0");
         } else if (rhiType == RHI::RHIType::VULKAN) {
             options.byteCodeType = Render::ShaderByteCodeType::SPRIV;
+            options.definitions.emplace_back("VULKAN=1");
         }
         options.withDebugInfo = false;
         auto future = Render::ShaderCompiler::Get().Compile(info, options);

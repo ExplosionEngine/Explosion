@@ -30,7 +30,7 @@ namespace RHI::Vulkan {
         return textures[index];
     }
 
-    uint8_t VKSwapChain::GetBackTextureIndex()
+    uint8_t VKSwapChain::AcquireBackTexture()
     {
         // TODO
         return 0;
@@ -38,7 +38,7 @@ namespace RHI::Vulkan {
 
     void VKSwapChain::Present()
     {
-        const uint32_t curImageIndex = GetBackTextureIndex();
+        const uint32_t curImageIndex = AcquireBackTexture();
 
         vk::PresentInfoKHR presetInfo{};
         presetInfo.setSwapchainCount(1)
