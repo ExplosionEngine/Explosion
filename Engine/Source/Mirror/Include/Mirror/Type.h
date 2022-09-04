@@ -7,27 +7,41 @@
 #include <cstdint>
 #include <string>
 #include <type_traits>
+#include <typeinfo>
+#include <functional>
+
+#include <Mirror/Api.h>
+
+#ifdef COMPILER_MSVC
+#define functionSignature __FUNCSIG__
+#else
+#define functionSignature __PRETTY_FUNCTION__
+#endif
 
 namespace Mirror {
-    using TypeHash = size_t;
+    using TypeId = size_t;
 
-    TypeHash CalculateTypeHash(const std::string& name);
+    MIRROR_API TypeId ComputeTypeId(std::string_view sigName);
 
     struct TypeInfo {
-        bool isConst;
-        bool isPointer;
-        bool isLValueRef;
-        bool isRValueRef;
+#if BUILD_CONFIG_DEBUG
+        std::string debugName;
+#endif
+        TypeId id;
+        const bool isConst;
+        std::function<TypeInfo*()> removeConst;
     };
 
     template <typename T>
     TypeInfo* GetTypeInfo()
     {
         static TypeInfo typeInfo = {
+#if BUILD_CONFIG_DEBUG
+            functionSignature,
+#endif
+            ComputeTypeId(functionSignature),
             std::is_const_v<T>,
-            std::is_pointer_v<T>,
-            std::is_lvalue_reference_v<T>,
-            std::is_rvalue_reference_v<T>
+            []() -> TypeInfo* { return GetTypeInfo<std::remove_const_t<T>>(); }
         };
         return &typeInfo;
     }

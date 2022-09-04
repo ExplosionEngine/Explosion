@@ -6,8 +6,8 @@
 #include <Common/Hash.h>
 
 namespace Mirror {
-    TypeHash CalculateTypeHash(const std::string& name)
+    TypeId ComputeTypeId(std::string_view sigName)
     {
-        return Common::HashUtils::CityHash(name.data(), name.size());
+        return Common::HashUtils::CityHash(sigName.data(), sigName.size());
     }
 }
