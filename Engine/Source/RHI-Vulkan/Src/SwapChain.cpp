@@ -32,20 +32,21 @@ namespace RHI::Vulkan {
 
     uint8_t VKSwapChain::AcquireBackTexture()
     {
-        // TODO
-        return 0;
+        currentSemaphore = imageAvailableSemaphore[currentImage];
+        auto result = device.GetVkDevice().acquireNextImageKHR(swapChain, UINT64_MAX, currentSemaphore, {});
+        currentImage = result.value;
+        return currentImage;
     }
 
     void VKSwapChain::Present()
     {
-        const uint32_t curImageIndex = AcquireBackTexture();
-
         vk::PresentInfoKHR presetInfo{};
         presetInfo.setSwapchainCount(1)
             .setSwapchains(swapChain)
-            .setPImageIndices(&curImageIndex);
-
+            .setWaitSemaphores(waitSemaphores)
+            .setPImageIndices(&currentImage);
         Assert(queue.presentKHR(&presetInfo) == vk::Result::eSuccess);
+        waitSemaphores.clear();
     }
 
     void VKSwapChain::Destroy()
@@ -53,8 +54,19 @@ namespace RHI::Vulkan {
         delete this;
     }
 
+    vk::Semaphore VKSwapChain::GetImageSemaphore() const
+    {
+        return currentSemaphore;
+    }
+
+    void VKSwapChain::AddWaitSemaphore(vk::Semaphore semaphore)
+    {
+        waitSemaphores.emplace_back(semaphore);
+    }
+
     void VKSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo* createInfo)
     {
+        auto vkDevice = device.GetVkDevice();
         surface = CreateNativeSurface(device.GetGpu().GetInstance().GetVkInstance(), createInfo);
 
         auto* mQueue = dynamic_cast<VKQueue*>(createInfo->presentQueue);
@@ -93,9 +105,10 @@ namespace RHI::Vulkan {
             }
         }
 
+        swapChainImageCount = std::clamp(static_cast<uint32_t>(createInfo->textureNum), surfaceCap.minImageCount, surfaceCap.maxImageCount);
         vk::SwapchainCreateInfoKHR swapChainInfo = {};
         swapChainInfo.setSurface(surface)
-            .setMinImageCount(surfaceCap.minImageCount)
+            .setMinImageCount(swapChainImageCount)
             .setImageFormat(supportedFormat)
             .setImageColorSpace(colorSpace)
             .setPresentMode(supportedMode)
@@ -106,7 +119,7 @@ namespace RHI::Vulkan {
             .setImageSharingMode(vk::SharingMode::eExclusive)
             .setImageArrayLayers(1)
             .setImageUsage(vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eColorAttachment);
-        Assert(device.GetVkDevice().createSwapchainKHR(&swapChainInfo, nullptr, &swapChain) == vk::Result::eSuccess);
+        Assert(vkDevice.createSwapchainKHR(&swapChainInfo, nullptr, &swapChain) == vk::Result::eSuccess);
 
         TextureCreateInfo textureInfo = {};
         textureInfo.format = createInfo->format;
@@ -118,9 +131,15 @@ namespace RHI::Vulkan {
         textureInfo.extent.y = extent.height;
         textureInfo.extent.z = 1;
 
-        auto images = device.GetVkDevice().getSwapchainImagesKHR(swapChain);
+        auto images = vkDevice.getSwapchainImagesKHR(swapChain);
         for (auto& image : images) {
             textures.emplace_back(new VKTexture(device, &textureInfo, static_cast<vk::Image>(image)));
+        }
+        swapChainImageCount = static_cast<uint32_t>(images.size());
+
+        imageAvailableSemaphore.resize(swapChainImageCount);
+        for (uint32_t i = 0; i < swapChainImageCount; ++i) {
+            imageAvailableSemaphore[i] = vkDevice.createSemaphore({}, nullptr);
         }
     }
 }

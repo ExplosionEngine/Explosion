@@ -53,7 +53,7 @@ namespace RHI {
     struct DepthStencilState {
         bool depthEnable = false;
         bool stencilEnable = false;
-        PixelFormat format = PixelFormat::D32_FLOAT;
+        PixelFormat format = PixelFormat::MAX;
         ComparisonFunc depthComparisonFunc = ComparisonFunc::ALWAYS;
         StencilFaceState stencilFront;
         StencilFaceState stencilBack;

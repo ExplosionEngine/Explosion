@@ -58,6 +58,8 @@ protected:
     }
 
 private:
+    static const uint8_t BACK_BUFFER_COUNT = 2;
+
     void CreateInstanceAndSelectGPU()
     {
         instance = Instance::CreateByType(rhiType);
@@ -80,13 +82,13 @@ private:
         SwapChainCreateInfo swapChainCreateInfo {};
         swapChainCreateInfo.format = PixelFormat::RGBA8_UNORM;
         swapChainCreateInfo.presentMode = PresentMode::IMMEDIATELY;
-        swapChainCreateInfo.textureNum = 2;
+        swapChainCreateInfo.textureNum = BACK_BUFFER_COUNT;
         swapChainCreateInfo.extent = {width, height};
         swapChainCreateInfo.window = GetPlatformWindow();
         swapChainCreateInfo.presentQueue = graphicsQueue;
         swapChain = device->CreateSwapChain(&swapChainCreateInfo);
 
-        for (auto i = 0; i < 2; i++) {
+        for (auto i = 0; i < swapChainCreateInfo.textureNum; i++) {
             swapChainTextures[i] = swapChain->GetTexture(i);
 
             TextureViewCreateInfo viewCreateInfo {};
@@ -234,6 +236,7 @@ private:
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::RENDER_TARGET, TextureState::PRESENT));
         }
         commandEncoder->End();
+        commandEncoder->SwapChainSync(swapChain);
     }
 
     void SubmitCommandBufferAndPresent()
@@ -250,8 +253,8 @@ private:
     SwapChain* swapChain = nullptr;
     Buffer* vertexBuffer = nullptr;
     BufferView* vertexBufferView = nullptr;
-    std::array<Texture*, 2> swapChainTextures {};
-    std::array<TextureView*, 2> swapChainTextureViews {};
+    std::array<Texture*, BACK_BUFFER_COUNT> swapChainTextures {};
+    std::array<TextureView*, BACK_BUFFER_COUNT> swapChainTextureViews {};
     PipelineLayout* pipelineLayout = nullptr;
     GraphicsPipeline* pipeline = nullptr;
     CommandBuffer* commandBuffer = nullptr;

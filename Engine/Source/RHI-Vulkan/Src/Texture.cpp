@@ -74,6 +74,11 @@ namespace RHI::Vulkan {
         return extent;
     }
 
+    vk::ImageSubresourceRange VKTexture::GetRange(vk::ImageAspectFlags aspect)
+    {
+        return {aspect, 0, 1, 0, 1};
+    }
+
     void VKTexture::CreateImage(const TextureCreateInfo* createInfo)
     {
         vk::ImageCreateInfo imageInfo = {};
