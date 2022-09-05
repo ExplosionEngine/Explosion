@@ -30,6 +30,8 @@ namespace RHI::Vulkan {
         GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
         void End() override;
 
+        void SwapChainSync(SwapChain* swapChain) override;
+
     private:
         VKDevice& device;
         VKCommandBuffer& commandBuffer;

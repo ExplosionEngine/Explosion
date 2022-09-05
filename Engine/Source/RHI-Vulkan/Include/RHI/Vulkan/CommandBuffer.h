@@ -22,12 +22,23 @@ namespace RHI::Vulkan {
         CommandEncoder* Begin() override;
 
         vk::CommandBuffer GetVkCommandBuffer() const;
+
+        void AddWaitSemaphore(vk::Semaphore semaphore, vk::PipelineStageFlags stage);
+
+        const std::vector<vk::Semaphore>& GetSignalSemaphores() const;
+
+        const std::vector<vk::Semaphore>& GetWaitSemaphores() const;
+
+        const std::vector<vk::PipelineStageFlags>& GetWaitStages() const;
     private:
         void CreateNativeCommandBuffer();
 
         VKDevice& device;
         vk::CommandPool pool;
         vk::CommandBuffer commandBuffer;
+        std::vector<vk::Semaphore> signalSemaphores;
+        std::vector<vk::Semaphore> waitSemaphores;
+        std::vector<vk::PipelineStageFlags> waitStages;
     };
 
 }
