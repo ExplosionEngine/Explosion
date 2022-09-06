@@ -30,6 +30,7 @@ namespace RHI::Vulkan {
         void EnumeratePhysicalDevices();
 #if BUILD_CONFIG_DEBUG
         void PrepareLayers();
+        void PopulateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo);
         void CreateDebugMessenger();
         void DestroyDebugMessenger();
 #endif
