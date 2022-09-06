@@ -75,7 +75,7 @@ namespace RHI::Vulkan {
         auto surfaceCap = device.GetGpu().GetVkPhysicalDevice().getSurfaceCapabilitiesKHR(surface);
         vk::Extent2D extent = {static_cast<uint32_t>(createInfo->extent.x), static_cast<uint32_t>(createInfo->extent.y)};
         extent.width = std::clamp(extent.width, surfaceCap.minImageExtent.width, surfaceCap.maxImageExtent.width);
-        extent.height = std::clamp(extent.height, surfaceCap.minImageExtent.height, surfaceCap.minImageExtent.height);
+        extent.height = std::clamp(extent.height, surfaceCap.minImageExtent.height, surfaceCap.maxImageExtent.height);
 
         vk::Format supportedFormat = VKEnumCast<PixelFormat, vk::Format>(createInfo->format);
         vk::ColorSpaceKHR colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
