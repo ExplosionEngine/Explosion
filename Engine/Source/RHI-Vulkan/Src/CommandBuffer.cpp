@@ -9,7 +9,9 @@
 
 namespace RHI::Vulkan {
 
-    VKCommandBuffer::VKCommandBuffer(VKDevice& dev, vk::CommandPool p) : device(dev), pool(p)
+    VKCommandBuffer::VKCommandBuffer(VKDevice& dev, vk::CommandPool p)
+        : device(dev)
+        , pool(p)
     {
         CreateNativeCommandBuffer();
     }
@@ -28,6 +30,9 @@ namespace RHI::Vulkan {
 
     CommandEncoder* VKCommandBuffer::Begin()
     {
+        waitSemaphores.clear();
+        waitStages.clear();
+
         vk::CommandBufferBeginInfo beginInfo = {};
         beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
         (void) commandBuffer.begin(&beginInfo);
@@ -39,6 +44,27 @@ namespace RHI::Vulkan {
         return commandBuffer;
     }
 
+    void VKCommandBuffer::AddWaitSemaphore(vk::Semaphore semaphore, vk::PipelineStageFlags stage)
+    {
+        waitSemaphores.emplace_back(semaphore);
+        waitStages.emplace_back(stage);
+    }
+
+    const std::vector<vk::Semaphore>& VKCommandBuffer::GetWaitSemaphores() const
+    {
+        return waitSemaphores;
+    }
+
+    const std::vector<vk::Semaphore>& VKCommandBuffer::GetSignalSemaphores() const
+    {
+        return signalSemaphores;
+    }
+
+    const std::vector<vk::PipelineStageFlags>& VKCommandBuffer::GetWaitStages() const
+    {
+        return waitStages;
+    }
+
     void VKCommandBuffer::CreateNativeCommandBuffer()
     {
         vk::CommandBufferAllocateInfo cmdInfo;
@@ -47,6 +73,9 @@ namespace RHI::Vulkan {
             .setLevel(vk::CommandBufferLevel::ePrimary);
 
         Assert(device.GetVkDevice().allocateCommandBuffers(&cmdInfo, &commandBuffer) == vk::Result::eSuccess);
+
+        signalSemaphores.resize(1); // TODO
+        signalSemaphores[0] = device.GetVkDevice().createSemaphore({}, nullptr);
     }
 
 }

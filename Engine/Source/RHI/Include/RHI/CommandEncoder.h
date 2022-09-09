@@ -17,6 +17,7 @@ namespace RHI {
     class GraphicsPipeline;
     class TextureView;
     class BindGroup;
+    class SwapChain;
     struct Barrier;
 
     struct TextureSubResourceInfo {
@@ -114,6 +115,7 @@ namespace RHI {
         virtual ComputePassCommandEncoder* BeginComputePass(const ComputePassBeginInfo* beginInfo) = 0;
         virtual GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) = 0;
         virtual void End() = 0;
+        virtual void SwapChainSync(SwapChain* swapChain) {}
 
     protected:
         CommandEncoder();

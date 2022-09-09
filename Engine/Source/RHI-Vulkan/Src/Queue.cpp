@@ -23,6 +23,9 @@ namespace RHI::Vulkan {
 
         vk::SubmitInfo submitInfo{};
         submitInfo.setCommandBufferCount(1)
+            .setWaitSemaphores(commandBuffer->GetWaitSemaphores())
+            .setWaitDstStageMask(commandBuffer->GetWaitStages())
+            .setSignalSemaphores(commandBuffer->GetSignalSemaphores())
             .setPCommandBuffers(&vcb);
 
         fenceToSignaled->Reset();

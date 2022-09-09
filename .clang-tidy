@@ -1,0 +1,36 @@
+Checks: >
+    -*,
+    bugprone-*,
+    modernize-*,
+    performance-*,
+    portability-*,
+    readability-*,
+    mpi-*,
+    
+    google-default-arguments,
+    google-explicit-constructor,
+    google-runtime-int,
+    google-runtime-operator,
+    
+    misc-misplaced-const,
+    misc-new-delete-overloads,
+    misc-no-recursion,
+    misc-non-copyable-objects,
+    misc-throw-by-value-catch-by-reference,
+    misc-unconventional-assign-operator,
+    misc-uniqueptr-reset-release,
+    
+    -modernize-avoid-c-arrays,
+    -modernize-concat-nested-namespaces,
+    -modernize-use-nodiscard,
+    -modernize-use-trailing-return-type,
+    -modernize-use-default-member-init,
+
+    -bugprone-easily-swappable-parameters,
+    -bugprone-implicit-widening-of-multiplication-result,
+
+    -readability-implicit-bool-cast,
+    -readability-magic-numbers,
+    -readability-named-parameter,
+    -readability-uppercase-literal-suffix
+    -readability-identifier-length

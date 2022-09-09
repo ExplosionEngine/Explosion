@@ -26,6 +26,8 @@ namespace RHI::Vulkan {
 
         vk::Image GetImage() const;
         Extent<3> GetExtent() const;
+
+        vk::ImageSubresourceRange GetRange(vk::ImageAspectFlags aspect);
     private:
         void CreateImage(const TextureCreateInfo* createInfo);
 

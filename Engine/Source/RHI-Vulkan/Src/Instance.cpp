@@ -125,11 +125,7 @@ namespace RHI::Vulkan {
         createInfo.ppEnabledLayerNames = vkEnabledLayerNames.data();
 
         vk::DebugUtilsMessengerCreateInfoEXT debugCreateInfo;
-        debugCreateInfo.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
-        debugCreateInfo.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral
-                                      | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
-                                      | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
-        debugCreateInfo.pfnUserCallback = DebugCallback;
+        PopulateDebugMessengerCreateInfo(debugCreateInfo);
 
         createInfo.pNext = &debugCreateInfo;
 #endif
@@ -190,14 +186,20 @@ namespace RHI::Vulkan {
     }
 
 #if BUILD_CONFIG_DEBUG
+    void VKInstance::PopulateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo)
+    {
+        createInfo.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError
+                                     | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning;
+        createInfo.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral
+                                 | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
+                                 | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
+        createInfo.pfnUserCallback = DebugCallback;
+    }
+
     void VKInstance::CreateDebugMessenger()
     {
         vk::DebugUtilsMessengerCreateInfoEXT debugCreateInfo;
-        debugCreateInfo.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
-        debugCreateInfo.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral
-                                      | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
-                                      | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
-        debugCreateInfo.pfnUserCallback = DebugCallback;
+        PopulateDebugMessengerCreateInfo(debugCreateInfo);
 
         Assert(vkInstance.createDebugUtilsMessengerEXT(&debugCreateInfo, nullptr, &vkDebugMessenger, vkDispatch) == vk::Result::eSuccess);
     }

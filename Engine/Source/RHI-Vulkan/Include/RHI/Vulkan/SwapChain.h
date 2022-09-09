@@ -23,13 +23,21 @@ namespace RHI::Vulkan {
         void Present() override;
         void Destroy() override;
 
+        vk::Semaphore GetImageSemaphore() const;
+        void AddWaitSemaphore(vk::Semaphore);
+
     private:
         void CreateNativeSwapChain(const SwapChainCreateInfo* createInfo);
         VKDevice& device;
         vk::SwapchainKHR swapChain = VK_NULL_HANDLE;
         vk::SurfaceKHR surface = VK_NULL_HANDLE;
         std::vector<Texture*> textures;
-        vk::Queue queue;
+        vk::Queue queue = VK_NULL_HANDLE;
+        vk::Semaphore currentSemaphore;
+        std::vector<vk::Semaphore> imageAvailableSemaphore;
+        std::vector<vk::Semaphore> waitSemaphores;
+        uint32_t swapChainImageCount = 0;
+        uint32_t currentImage = 0;
     };
 
 }

@@ -13,6 +13,8 @@
 #include <RHI/Vulkan/Texture.h>
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Instance.h>
+#include <RHI/Vulkan/SwapChain.h>
+#include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
 
@@ -41,8 +43,33 @@ namespace RHI::Vulkan {
     {
     }
 
+    static std::tuple<vk::ImageLayout, vk::AccessFlags, vk::PipelineStageFlags> GetBarrierInfo(TextureState status)
+    {
+        if (status == TextureState::PRESENT) {
+            return {vk::ImageLayout::ePresentSrcKHR, vk::AccessFlagBits::eMemoryRead, vk::PipelineStageFlagBits::eBottomOfPipe};
+        } else if (status == TextureState::RENDER_TARGET) {
+            return {vk::ImageLayout::eColorAttachmentOptimal, vk::AccessFlagBits::eColorAttachmentWrite, vk::PipelineStageFlagBits::eColorAttachmentOutput};
+        }
+        return {vk::ImageLayout::eUndefined, vk::AccessFlags{}, vk::PipelineStageFlagBits::eTopOfPipe};
+    }
+
     void VKCommandEncoder::ResourceBarrier(const Barrier& barrier)
     {
+        if (barrier.type == ResourceType::TEXTURE) {
+            auto& textureBarrierInfo = barrier.texture;
+            auto oldLayout = GetBarrierInfo(textureBarrierInfo.before == TextureState::PRESENT ? TextureState::UNDEFINED : textureBarrierInfo.before);
+            auto newLayout = GetBarrierInfo(textureBarrierInfo.after);
+
+            auto vkTexture = static_cast<VKTexture*>(textureBarrierInfo.pointer);
+            vk::ImageMemoryBarrier imageBarrier = {};
+            imageBarrier.setImage(vkTexture->GetImage())
+                .setOldLayout(std::get<0>(oldLayout))
+                .setSrcAccessMask(std::get<1>(oldLayout))
+                .setNewLayout(std::get<0>(newLayout))
+                .setDstAccessMask(std::get<1>(newLayout))
+                .setSubresourceRange(vkTexture->GetRange(vk::ImageAspectFlagBits::eColor));
+            commandBuffer.GetVkCommandBuffer().pipelineBarrier(std::get<2>(oldLayout), std::get<2>(newLayout), vk::DependencyFlagBits::eByRegion, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+        }
     }
 
     ComputePassCommandEncoder* VKCommandEncoder::BeginComputePass(const ComputePassBeginInfo* beginInfo)
@@ -58,6 +85,14 @@ namespace RHI::Vulkan {
     void VKCommandEncoder::End()
     {
         commandBuffer.GetVkCommandBuffer().end();
+    }
+
+    void VKCommandEncoder::SwapChainSync(SwapChain* swapChain)
+    {
+        auto vkSwapChain = static_cast<VKSwapChain*>(swapChain);
+        auto signal = vkSwapChain->GetImageSemaphore();
+        commandBuffer.AddWaitSemaphore(signal, vk::PipelineStageFlagBits::eColorAttachmentOutput);
+        vkSwapChain->AddWaitSemaphore(commandBuffer.GetSignalSemaphores()[0]);
     }
 
     VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandBuffer& cmd,
