@@ -62,6 +62,13 @@ namespace Mirror {
             return *this;
         }
 
+        template <typename T>
+        Any& operator=(std::reference_wrapper<T>&& ref)
+        {
+            ConstructRef(ref);
+            return *this;
+        }
+
         Any& operator=(const Any& inAny)
         {
             if (&inAny == this) {
@@ -136,7 +143,11 @@ namespace Mirror {
             copy = [this](const void* inData) -> void { new(data.data()) RemoveCVRefType(*reinterpret_cast<const RemoveCVRefType*>(inData)); };
             move = [this](const void* inData) -> void { new(data.data()) RemoveCVRefType(std::move(*reinterpret_cast<const RemoveCVRefType*>(inData))); };
             data.resize(sizeof(RemoveCVRefType));
-            memcpy(data.data(), &value, sizeof(RemoveCVRefType));
+            if constexpr (std::is_rvalue_reference_v<T>) {
+                move(&value);
+            } else {
+                copy(&value);
+            }
         }
 
         template <typename T>
@@ -153,7 +164,7 @@ namespace Mirror {
             copy = [this](const void* inData) -> void { new(data.data()) RefWrapperType(*reinterpret_cast<const RefWrapperType*>(inData)); };
             move = [this](const void* inData) -> void { new(data.data()) RefWrapperType(std::move(*reinterpret_cast<const RefWrapperType*>(inData))); };
             data.resize(sizeof(RefWrapperType));
-            memcpy(data.data(), &ref, sizeof(RefWrapperType));
+            copy(&ref);
         }
 
         bool isReference = false;
