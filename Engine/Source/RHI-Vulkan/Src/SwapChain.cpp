@@ -19,10 +19,26 @@ namespace RHI::Vulkan {
 
     VKSwapChain::~VKSwapChain()
     {
+        auto vkDevice = device.GetVkDevice();
+        vkDevice.waitIdle();
+
         for (auto& tex : textures) {
             delete tex;
         }
         textures.clear();
+
+        for (auto &semaphore : imageAvailableSemaphore) {
+            vkDevice.destroySemaphore(semaphore);
+        }
+
+        if (swapChain) {
+            vkDevice.destroySwapchainKHR(swapChain);
+        }
+
+        if (surface) {
+            device.GetGpu().GetInstance().GetVkInstance().destroySurfaceKHR(surface);
+        }
+
     }
 
     Texture* VKSwapChain::GetTexture(uint8_t index)
