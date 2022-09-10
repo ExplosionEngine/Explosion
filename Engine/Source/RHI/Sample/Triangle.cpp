@@ -46,6 +46,8 @@ protected:
         fence->Wait();
         fence->Destroy();
         commandBuffer->Destroy();
+        vertexShader->Destroy();
+        fragmentShader->Destroy();
         pipeline->Destroy();
         pipelineLayout->Destroy();
         for (auto* textureView: swapChainTextureViews) {
@@ -138,9 +140,6 @@ private:
 
     void CreatePipeline()
     {
-        ShaderModule* vertexShader;
-        ShaderModule* fragmentShader;
-
         std::vector<uint8_t> vsByteCode;
         CompileShader(vsByteCode, "Shader/Sample/Triangle.hlsl", "VSMain", RHI::ShaderStageBits::VERTEX);
 
@@ -257,6 +256,8 @@ private:
     std::array<TextureView*, BACK_BUFFER_COUNT> swapChainTextureViews {};
     PipelineLayout* pipelineLayout = nullptr;
     GraphicsPipeline* pipeline = nullptr;
+    ShaderModule* vertexShader = nullptr;
+    ShaderModule* fragmentShader = nullptr;
     CommandBuffer* commandBuffer = nullptr;
     Fence* fence = nullptr;
 };

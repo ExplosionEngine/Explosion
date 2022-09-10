@@ -42,6 +42,9 @@ namespace RHI::Vulkan {
 
     VKDevice::~VKDevice()
     {
+        for (auto& [queue, pool] : pools) {
+            vkDevice.destroyCommandPool(pool);
+        }
         vkDevice.destroy();
     }
 
