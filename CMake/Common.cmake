@@ -12,8 +12,8 @@ add_definitions(-DPLATFORM_WINDOWS=$<IF:$<PLATFORM_ID:Windows>,1,0>)
 add_definitions(-DPLATFORM_LINUX=$<IF:$<PLATFORM_ID:Linux>,1,0>)
 add_definitions(-DPLATFORM_MACOS=$<IF:$<PLATFORM_ID:Darwin>,1,0>)
 
-add_definitions(-DCOMPILER_MSVC=$<IF:$<STREQUAL:$<CXX_COMPILER_ID>,"MSVC">,1,0>)
-add_definitions(-DCOMPILER_APPLE_CLANG=$<IF:$<STREQUAL:$<CXX_COMPILER_ID>,"AppleClang">,1,0>)
-add_definitions(-DCOMPILER_GCC=$<IF:$<STREQUAL:$<CXX_COMPILER_ID>,"GNU">,1,0>)
+add_definitions(-DCOMPILER_MSVC=$<IF:$<CXX_COMPILER_ID:MSVC>,1,0>)
+add_definitions(-DCOMPILER_APPLE_CLANG=$<IF:$<CXX_COMPILER_ID:AppleClang>,1,0>)
+add_definitions(-DCOMPILER_GCC=$<IF:$<CXX_COMPILER_ID:GNU>,1,0>)
 
 add_definitions(-DBUILD_EDITOR=$<BOOL:BUILD_EDITOR>)

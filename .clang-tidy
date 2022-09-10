@@ -32,5 +32,5 @@ Checks: >
     -readability-implicit-bool-cast,
     -readability-magic-numbers,
     -readability-named-parameter,
-    -readability-uppercase-literal-suffix
+    -readability-uppercase-literal-suffix,
     -readability-identifier-length

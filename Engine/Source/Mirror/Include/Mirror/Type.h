@@ -12,7 +12,7 @@
 
 #include <Mirror/Api.h>
 
-#ifdef COMPILER_MSVC
+#if COMPILER_MSVC
 #define functionSignature __FUNCSIG__
 #else
 #define functionSignature __PRETTY_FUNCTION__
