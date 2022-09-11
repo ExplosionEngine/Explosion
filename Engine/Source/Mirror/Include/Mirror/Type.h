@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <typeinfo>
 #include <functional>
+#include <tuple>
 
 #include <Mirror/Api.h>
 
@@ -45,4 +46,47 @@ namespace Mirror {
         };
         return &typeInfo;
     }
+}
+
+namespace Mirror {
+    template <typename T>
+    struct GlobalFunctionTraits {};
+
+    template <typename Ret, typename... Args>
+    struct GlobalFunctionTraits<Ret(Args...)> {
+        using RetType = Ret;
+        using ArgsTupleType = std::tuple<Args...>;
+    };
+
+    template <typename T>
+    struct MemberVariableTraits {};
+
+    template <typename Class, typename T>
+    struct MemberVariableTraits<T Class::*> {
+        using ClassType = Class;
+        using ValueType = T;
+    };
+
+    template <typename Class, typename T>
+    struct MemberVariableTraits<T Class::* const> {
+        using ClassType = Class;
+        using ValueType = T;
+    };
+
+    template <typename T>
+    struct MemberFunctionTraits {};
+
+    template <typename Class, typename Ret, typename... Args>
+    struct MemberFunctionTraits<Ret(Class::*)(Args...)> {
+        using ClassType = Class;
+        using RetType = Ret;
+        using ArgsTupleType = std::tuple<Args...>;
+    };
+
+    template <typename Class, typename Ret, typename... Args>
+    struct MemberFunctionTraits<Ret(Class::*)(Args...) const> {
+        using ClassType = Class;
+        using RetType = Ret;
+        using ArgsTupleType = std::tuple<Args...>;
+    };
 }
