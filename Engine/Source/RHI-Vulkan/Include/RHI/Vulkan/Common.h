@@ -255,6 +255,13 @@ namespace RHI::Vulkan {
         VK_ENUM_MAP_ITEM(TextureState::MAX,           vk::ImageLayout::eGeneral)
     VK_ENUM_MAP_END()
 
+    VK_ENUM_MAP_BEGIN(TextureAspect, vk::ImageAspectFlags)
+        VK_ENUM_MAP_ITEM(TextureAspect::COLOR,         vk::ImageAspectFlagBits::eColor)
+        VK_ENUM_MAP_ITEM(TextureAspect::DEPTH,         vk::ImageAspectFlagBits::eDepth)
+        VK_ENUM_MAP_ITEM(TextureAspect::STENCIL,       vk::ImageAspectFlagBits::eStencil)
+        VK_ENUM_MAP_ITEM(TextureAspect::DEPTH_STENCIL, vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil)
+    VK_ENUM_MAP_END()
+
     inline vk::Extent3D FromRHI(const RHI::Extent<3>& ext)
     {
         return { static_cast<uint32_t>(ext.x), static_cast<uint32_t>(ext.y), static_cast<uint32_t>(ext.z) };

@@ -61,7 +61,8 @@ namespace RHI::Vulkan {
 
     TextureView* VKTexture::CreateTextureView(const TextureViewCreateInfo* createInfo)
     {
-        return new VKTextureView(*this, device, createInfo);
+        textureView = new VKTextureView(*this, device, createInfo);
+        return textureView;
     }
 
     vk::Image VKTexture::GetImage() const
@@ -77,6 +78,11 @@ namespace RHI::Vulkan {
     vk::ImageSubresourceRange VKTexture::GetRange(vk::ImageAspectFlags aspect)
     {
         return {aspect, 0, 1, 0, 1};
+    }
+
+    VKTextureView* VKTexture::GetTextureView()
+    {
+        return textureView;
     }
 
     void VKTexture::CreateImage(const TextureCreateInfo* createInfo)
