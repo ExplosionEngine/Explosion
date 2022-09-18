@@ -5,28 +5,54 @@
 #pragma once
 
 #include <vector>
+#include <unordered_map>
 
 #include <Mirror/Api.h>
 #include <Mirror/Type.h>
 #include <Mirror/Any.h>
 
 namespace Mirror {
-    struct GlobalVariableRegisterInfo {
-        std::function<void(Any&)> setter;
-        std::function<Any()> getter;
+    class Field {
+    public:
+        virtual ~Field();
+
+        const std::string& GetMeta(const std::string& key) const;
+        bool HasMeta(const std::string& key) const;
+
+    protected:
+        explicit Field(std::string inName);
+
+    private:
+        friend class Registry;
+
+        void SetMeta(const std::string& key, const std::string& value);
+
+        std::string name;
+        std::unordered_map<std::string, std::string> metas;
     };
 
-    class GlobalVariable {
+    class Variable : public Field {
     public:
-        explicit GlobalVariable(const GlobalVariableRegisterInfo& inInfo);
-        ~GlobalVariable();
+        ~Variable() override;
 
-        void Set(Any& value);
+        template <typename T>
+        void Set(T&& value)
+        {
+            Any ref = Any(std::ref(std::forward<T>(value)));
+            Set(&ref);
+        }
+
+        void Set(Any* value);
         Any Get();
 
     private:
-        std::function<void(Any&)> setter;
-        std::function<Any()> getter;
+        using Setter = std::function<void(Any*)>;
+        using Getter = std::function<Any()>;
+
+        Variable(std::string inName, Setter inSetter, Getter inGetter);
+
+        Setter setter;
+        Getter getter;
     };
 }
 
@@ -39,18 +65,8 @@ namespace Mirror {
             return instance;
         }
 
-        template <typename T>
-        void RegisterVariable(T* ptr)
-        {
-            GlobalVariableRegisterInfo info;
-            info.setter = [ptr](Any& value) -> void { *ptr = value.CastTo<T>(); };
-            info.getter = [ptr]() -> Any { return Any(std::ref(*ptr)); };
-            globalVariables.emplace_back(info);
-        }
-
         // TODO
 
     private:
-        std::vector<GlobalVariable> globalVariables;
     };
 }
