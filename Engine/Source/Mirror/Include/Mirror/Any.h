@@ -7,8 +7,8 @@
 #include <vector>
 #include <functional>
 
-#include <Mirror/Type.h>
 #include <Common/Debug.h>
+#include <Mirror/TypeInfo.h>
 
 namespace Mirror {
     class Any {
