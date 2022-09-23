@@ -46,11 +46,10 @@ namespace RHI::Vulkan {
         vk::BufferImageCopy copyRegion {};
         copyRegion.setImageExtent(vk::Extent3D(size.x, size.y, size.z))
             .setImageSubresource(vk::ImageSubresourceLayers(
-                vk::ImageAspectFlags(VKEnumCast<TextureAspect, vk::ImageAspectFlags>(subResourceInfo->aspect)),
-                subResourceInfo->mipLevels,
-                texture->GetTextureView()->GetBaseArrayLayer(),
-                texture->GetTextureView()->GetArrayLayerNum()
-                ));
+                vk::ImageAspectFlags(GetAspectMask(subResourceInfo->aspect)),
+                subResourceInfo->mipLevel,
+                subResourceInfo->baseArrayLayer,
+                subResourceInfo->arrayLayerNum));
 
         commandBuffer.GetVkCommandBuffer().copyBufferToImage(buffer->GetVkBuffer(), texture->GetImage(), vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
     }
@@ -63,11 +62,10 @@ namespace RHI::Vulkan {
         vk::BufferImageCopy copyRegion {};
         copyRegion.setImageExtent(vk::Extent3D(size.x, size.y, size.z))
             .setImageSubresource(vk::ImageSubresourceLayers(
-                vk::ImageAspectFlags(VKEnumCast<TextureAspect, vk::ImageAspectFlags>(subResourceInfo->aspect)),
-                subResourceInfo->mipLevels,
-                texture->GetTextureView()->GetBaseArrayLayer(),
-                texture->GetTextureView()->GetArrayLayerNum()
-                    ));
+                vk::ImageAspectFlags(GetAspectMask(subResourceInfo->aspect)),
+                subResourceInfo->mipLevel,
+                subResourceInfo->baseArrayLayer,
+                subResourceInfo->arrayLayerNum));
 
         commandBuffer.GetVkCommandBuffer().copyImageToBuffer(texture->GetImage(), vk::ImageLayout::eTransferSrcOptimal, buffer->GetVkBuffer(), 1, &copyRegion);
     }
@@ -81,15 +79,15 @@ namespace RHI::Vulkan {
         vk::ImageCopy copyRegion {};
         copyRegion.setExtent(vk::Extent3D(size.x, size.y, size.z))
             .setSrcSubresource(vk::ImageSubresourceLayers(
-                vk::ImageAspectFlags(VKEnumCast<TextureAspect, vk::ImageAspectFlags>(srcSubResourceInfo->aspect)),
-                srcSubResourceInfo->mipLevels,
-                srcTexture->GetTextureView()->GetBaseArrayLayer(),
-                srcTexture->GetTextureView()->GetArrayLayerNum()))
+                vk::ImageAspectFlags(GetAspectMask(srcSubResourceInfo->aspect)),
+                srcSubResourceInfo->mipLevel,
+                srcSubResourceInfo->baseArrayLayer,
+                srcSubResourceInfo->arrayLayerNum))
             .setDstSubresource(vk::ImageSubresourceLayers(
-                vk::ImageAspectFlags(VKEnumCast<TextureAspect, vk::ImageAspectFlags>(dstSubResourceInfo->aspect)),
-                dstSubResourceInfo->mipLevels,
-                dstTexture->GetTextureView()->GetBaseArrayLayer(),
-                dstTexture->GetTextureView()->GetArrayLayerNum()));
+                vk::ImageAspectFlags(GetAspectMask(dstSubResourceInfo->aspect)),
+                dstSubResourceInfo->mipLevel,
+                dstSubResourceInfo->baseArrayLayer,
+                dstSubResourceInfo->arrayLayerNum));
 
         commandBuffer.GetVkCommandBuffer().copyImage(srcTexture->GetImage(), vk::ImageLayout::eTransferSrcOptimal, dstTexture->GetImage(), vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
     }

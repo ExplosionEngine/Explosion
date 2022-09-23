@@ -29,7 +29,6 @@ namespace RHI::Vulkan {
         Extent<3> GetExtent() const;
 
         vk::ImageSubresourceRange GetRange(vk::ImageAspectFlags aspect);
-        VKTextureView* GetTextureView();
     private:
         void CreateImage(const TextureCreateInfo* createInfo);
 
@@ -41,6 +40,5 @@ namespace RHI::Vulkan {
         vk::Image vkImage;
         bool ownMemory;
         Extent<3> extent;
-        VKTextureView* textureView;
     };
 }
