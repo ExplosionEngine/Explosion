@@ -270,4 +270,22 @@ namespace RHI::Vulkan {
         }
         return flags;
     }
+
+    inline vk::ImageAspectFlags GetAspectMask(TextureAspect aspect)
+    {
+        static std::unordered_map<TextureAspect, vk::ImageAspectFlags> rules = {
+            { TextureAspect::COLOR, vk::ImageAspectFlagBits::eColor },
+            { TextureAspect::DEPTH, vk::ImageAspectFlagBits::eDepth},
+            { TextureAspect::STENCIL, vk::ImageAspectFlagBits::eStencil },
+            { TextureAspect::DEPTH_STENCIL, vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil }
+        };
+
+        vk::ImageAspectFlags result = {};
+        for (const auto& rule : rules) {
+            if (aspect == rule.first) {
+                result = rule.second;
+            }
+        }
+        return result;
+    }
 }
