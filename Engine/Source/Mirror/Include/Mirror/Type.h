@@ -23,9 +23,8 @@ namespace Mirror {
         explicit Type(std::string inName);
 
     private:
-        friend class Registry;
-
-        void SetMeta(const std::string& key, const std::string& value);
+        template <typename E>
+        friend class MetaDataRegistry;
 
         std::string name;
         std::unordered_map<std::string, std::string> metas;
@@ -146,7 +145,7 @@ namespace Mirror {
         // TODO
 
     private:
-        friend class ClassRegistry;
+        friend class Registry;
 
         explicit Class(std::string name) : Type(std::move(name)) {}
 

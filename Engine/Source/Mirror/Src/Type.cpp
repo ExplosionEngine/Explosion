@@ -14,11 +14,6 @@ namespace Mirror {
 
     Type::~Type() = default;
 
-    void Type::SetMeta(const std::string& key, const std::string& value)
-    {
-        metas[key] = value;
-    }
-
     const std::string& Type::GetMeta(const std::string& key) const
     {
         auto iter = metas.find(key);
