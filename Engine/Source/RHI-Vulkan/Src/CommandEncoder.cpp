@@ -14,6 +14,8 @@
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Instance.h>
 #include <RHI/Vulkan/SwapChain.h>
+#include <RHI/Vulkan/BindGroup.h>
+#include <RHI/Vulkan/PipelineLayout.h>
 #include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
@@ -147,6 +149,8 @@ namespace RHI::Vulkan {
     VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandBuffer& cmd,
         const GraphicsPassBeginInfo* beginInfo) : device(dev), commandBuffer(cmd)
     {
+        graphicsPipeline = dynamic_cast<VKGraphicsPipeline*>(beginInfo->pipeline);
+
         std::vector<vk::RenderingAttachmentInfo> colorAttachmentInfos(beginInfo->colorAttachmentNum);
         for (size_t i = 0; i < beginInfo->colorAttachmentNum; i++)
         {
@@ -192,8 +196,7 @@ namespace RHI::Vulkan {
         cmdHandle = cmd.GetVkCommandBuffer();
         cmdHandle.beginRenderingKHR(&renderingInfo, device.GetGpu().GetInstance().GetVkDispatch());
 
-        auto* pipeline = dynamic_cast<VKGraphicsPipeline*>(beginInfo->pipeline);
-        cmdHandle.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->GetVkPipeline());
+        cmdHandle.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline->GetVkPipeline());
     }
 
     VKGraphicsPassCommandEncoder::~VKGraphicsPassCommandEncoder()
@@ -202,6 +205,11 @@ namespace RHI::Vulkan {
 
     void VKGraphicsPassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
     {
+        auto* vBindGroup = dynamic_cast<VKBindGroup*>(bindGroup);
+        vk::DescriptorSet descriptorSet = vBindGroup->GetVkDescritorSet();
+        vk::PipelineLayout layout = graphicsPipeline->GetPipelineLayout()->GetVkPipelineLayout();
+
+        cmdHandle.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, 0, 1, &descriptorSet, 0, nullptr);
     }
 
     void VKGraphicsPassCommandEncoder::SetIndexBuffer(BufferView *bufferView)

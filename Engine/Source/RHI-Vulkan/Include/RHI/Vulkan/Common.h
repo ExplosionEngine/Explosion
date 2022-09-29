@@ -187,7 +187,7 @@ namespace RHI::Vulkan {
     VK_ENUM_MAP_BEGIN(BindingType, vk::DescriptorType)
         VK_ENUM_MAP_ITEM(BindingType::UNIFORM_BUFFER,  vk::DescriptorType::eUniformBuffer)
         VK_ENUM_MAP_ITEM(BindingType::STORAGE_BUFFER,  vk::DescriptorType::eStorageBuffer)
-        VK_ENUM_MAP_ITEM(BindingType::SAMPLER,         vk::DescriptorType::eCombinedImageSampler)
+        VK_ENUM_MAP_ITEM(BindingType::SAMPLER,         vk::DescriptorType::eSampler)
         VK_ENUM_MAP_ITEM(BindingType::TEXTURE,         vk::DescriptorType::eSampledImage)
         VK_ENUM_MAP_ITEM(BindingType::STORAGE_TEXTURE, vk::DescriptorType::eStorageImage)
     VK_ENUM_MAP_END()

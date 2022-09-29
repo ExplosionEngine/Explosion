@@ -25,6 +25,11 @@ namespace RHI::Vulkan {
         delete this;
     }
 
+    vk::Sampler VKSampler::GetVkSampler() const
+    {
+        return vkSampler;
+    }
+
     void VKSampler::CreateSampler(const SamplerCreateInfo* createInfo)
     {
         vk::SamplerCreateInfo samplerInfo = {};

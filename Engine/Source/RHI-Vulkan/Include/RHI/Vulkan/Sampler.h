@@ -19,6 +19,7 @@ namespace RHI::Vulkan {
         ~VKSampler() override;
 
         void Destroy() override;
+        vk::Sampler GetVkSampler() const;
 
     private:
         void CreateSampler(const SamplerCreateInfo* createInfo);
