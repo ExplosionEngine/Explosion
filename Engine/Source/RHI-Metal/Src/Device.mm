@@ -3,10 +3,12 @@
 //
 
 #include <Metal/Device.h>
+#include <Metal/Gpu.h>
 
 namespace RHI::Metal {
     MTLDevice::MTLDevice(MTLGpu& gpu_, const DeviceCreateInfo* createInfo) : Device(createInfo), gpu(gpu_)
     {
+        mtlDevice = gpu.GetDevice();
     }
 
     MTLDevice::~MTLDevice()
@@ -15,9 +17,21 @@ namespace RHI::Metal {
 
     size_t MTLDevice::GetQueueNum(QueueType type)
     {
-        return 0;
+        return 1;
     }
-//    Queue* MTLDevice::GetQueue(QueueType type, size_t index)
+
+    Queue* MTLDevice::GetQueue(QueueType type, size_t index)
+    {
+        auto &queueList = queues[type];
+        if (index >= queueList.size()) {
+            return nullptr;
+        }
+        if (queueList.empty()) {
+            queueList.emplace_back(new MTLQueue(*this));
+        }
+        return queueList[index].get();
+    }
+
 //    SwapChain* MTLDevice::CreateSwapChain(const SwapChainCreateInfo* createInfo)
 //    Buffer* MTLDevice::CreateBuffer(const BufferCreateInfo* createInfo)
 //    Texture* MTLDevice::CreateTexture(const TextureCreateInfo* createInfo)
@@ -41,4 +55,8 @@ namespace RHI::Metal {
         return gpu;
     }
 
+    id<MTLDevice> MTLDevice::GetDevice() const
+    {
+        return mtlDevice;
+    }
 }
