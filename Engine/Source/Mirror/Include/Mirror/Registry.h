@@ -8,81 +8,129 @@
 
 #include <Mirror/Api.h>
 #include <Mirror/Type.h>
+#include <Mirror/TypeInfo.h>
+#include <Common/Debug.h>
+
+namespace Mirror::Internal {
+    template <typename ArgsTuple, size_t... I>
+    auto CastAnyArrayToArgsTuple(Any* args, std::index_sequence<I...>)
+    {
+        return ArgsTuple { args->CastTo<std::tuple_element_t<I, ArgsTuple>>()... };
+    }
+
+    template <auto Ptr, typename ArgsTuple, size_t... I>
+    auto InvokeFunction(ArgsTuple& args, std::index_sequence<I...>)
+    {
+        return Ptr(std::get<I>(args)...);
+    }
+}
 
 namespace Mirror {
-    template <typename E>
+    template <typename Registry>
     class MIRROR_API MetaDataRegistry {
     public:
         ~MetaDataRegistry() = default;
 
-        MetaDataRegistry Value(const std::string& key, const std::string& value)
+        Registry& Meta(const std::string& inKey, const std::string& inValue)
         {
-            type.metas[key] = value;
+            type.metas[inKey] = inValue;
+            return *static_cast<Registry*>(this);
         }
 
-        E& End()
-        {
-            return end;
-        }
+    protected:
+        explicit MetaDataRegistry(Type& inType) : type(inType) {}
 
     private:
-        friend E;
-
-        explicit MetaDataRegistry(E& inEnd, Type& inType) : end(inEnd), type(inType) {}
-
-        E& end;
         Type& type;
     };
 
-    class MIRROR_API VariableRegistry {
-    public:
-        ~VariableRegistry() = default;
-
-        auto MetaData()
-        {
-            return MetaDataRegistry<VariableRegistry>(*this, variable);
-        }
-
-        // TODO
-
-    private:
-        friend class GlobalRegistry;
-
-        explicit VariableRegistry(Variable& inVariable) : variable(inVariable) {}
-
-        Variable& variable;
-    };
-
     template <typename C>
-    class MIRROR_API ClassRegistry {
+    class MIRROR_API ClassRegistry : public MetaDataRegistry<ClassRegistry<C>> {
     public:
         ~ClassRegistry() = default;
 
-        auto MetaData()
+        template <auto Ptr>
+        ClassRegistry& StaticVariable(const std::string& inName)
         {
-            return MetaDataRegistry<ClassRegistry<C>>(*this, clazz);
+            // TODO
         }
 
-        // TODO
+        template <auto Ptr>
+        ClassRegistry& StaticFunction(const std::string& inName)
+        {
+            // TODO
+        }
+
+        template <auto Ptr>
+        ClassRegistry& MemberVariable(const std::string& inName)
+        {
+            // TODO
+        }
+
+        template <auto Ptr>
+        ClassRegistry& MemberFunction(const std::string& inName)
+        {
+            // TODO
+        }
 
     private:
         friend class Registry;
 
-        explicit ClassRegistry(Class& inClass) : clazz(inClass) {}
+        explicit ClassRegistry(Class& inClass) : MetaDataRegistry<ClassRegistry<C>>(inClass), clazz(inClass) {}
 
         Class& clazz;
     };
 
-    class MIRROR_API GlobalRegistry {
+    class MIRROR_API GlobalRegistry : public MetaDataRegistry<GlobalRegistry> {
     public:
         ~GlobalRegistry() = default;
 
-        // TODO
+        template <auto Ptr>
+        GlobalRegistry& Variable(const std::string& inName)
+        {
+            using ValueType = typename VariableTraits<decltype(Ptr)>::ValueType;
+
+            auto iter = globalScope.variables.find(inName);
+            Assert(iter != globalScope.variables.end());
+
+            globalScope.variables.emplace(std::make_pair(inName, Mirror::Variable(
+                inName,
+                [](Any* inValue) -> void {
+                    *Ptr = inValue->CastTo<ValueType>();
+                },
+                []() -> Any {
+                    return Any(std::ref(*Ptr));
+                }
+            )));
+            return *this;
+        }
+
+        template <auto Ptr>
+        GlobalRegistry& Function(const std::string& inName)
+        {
+            using RetType = typename FunctionTraits<decltype(Ptr)>::RetType;
+            using ArgsTupleType = typename FunctionTraits<decltype(Ptr)>::ArgsTupleType;
+
+            auto iter = globalScope.functions.find(inName);
+            Assert(iter != globalScope.functions.end());
+
+            globalScope.functions.emplace(std::make_pair(inName, Mirror::Function(
+                inName,
+                [](Any* args, size_t argSize) -> Any {
+                    constexpr size_t tupleSize = std::tuple_size_v<ArgsTupleType>;
+                    Assert(tupleSize == argSize);
+
+                    auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
+                    return Any(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
+                }
+            )));
+            return *this;
+        }
 
     private:
         friend class Registry;
 
-        explicit GlobalRegistry(GlobalScope& inGlobalScope) : globalScope(inGlobalScope) {}
+        explicit GlobalRegistry(GlobalScope& inGlobalScope) : MetaDataRegistry<GlobalRegistry>(inGlobalScope), globalScope(inGlobalScope) {}
 
         GlobalScope& globalScope;
     };

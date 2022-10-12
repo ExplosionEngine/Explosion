@@ -51,10 +51,18 @@ namespace Mirror {
 
 namespace Mirror {
     template <typename T>
+    struct VariableTraits {};
+
+    template <typename T>
+    struct VariableTraits<T*> {
+        using ValueType = T;
+    };
+
+    template <typename T>
     struct FunctionTraits {};
 
     template <typename Ret, typename... Args>
-    struct FunctionTraits<Ret(Args...)> {
+    struct FunctionTraits<Ret(*)(Args...)> {
         using RetType = Ret;
         using ArgsTupleType = std::tuple<Args...>;
     };

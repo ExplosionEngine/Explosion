@@ -23,8 +23,7 @@ namespace Mirror {
         explicit Type(std::string inName);
 
     private:
-        template <typename E>
-        friend class MetaDataRegistry;
+        template <typename Derived> friend class MetaDataRegistry;
 
         std::string name;
         std::unordered_map<std::string, std::string> metas;
@@ -45,6 +44,9 @@ namespace Mirror {
         Any Get();
 
     private:
+        friend class GlobalRegistry;
+        template <typename C> friend class ClassRegistry;
+
         using Setter = std::function<void(Any*)>;
         using Getter = std::function<Any()>;
 
@@ -68,6 +70,9 @@ namespace Mirror {
         Any Invoke(Any* arguments, size_t argumentsSize);
 
     private:
+        friend class GlobalRegistry;
+        template <typename C> friend class ClassRegistry;
+
         using Invoker = std::function<Any(Any*, size_t)>;
 
         Function(std::string inName, Invoker inInvoker);
