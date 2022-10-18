@@ -6,9 +6,14 @@
 
 #include <RHI/Device.h>
 #import <Metal/Metal.h>
+#include <Metal/Queue.h>
+#include <unordered_map>
+#include <vector>
+#include <memory>
 
 namespace RHI::Metal {
     class MTLGpu;
+    class MTLQueue;
 
     class MTLDevice : public Device {
     public:
@@ -18,7 +23,7 @@ namespace RHI::Metal {
         ~MTLDevice() override;
 
         size_t GetQueueNum(QueueType type) override;
-        Queue* GetQueue(QueueType type, size_t index) override { return nullptr; }
+        Queue* GetQueue(QueueType type, size_t index) override;
         SwapChain* CreateSwapChain(const SwapChainCreateInfo* createInfo) override { return nullptr; }
         Buffer* CreateBuffer(const BufferCreateInfo* createInfo) override { return nullptr; }
         Texture* CreateTexture(const TextureCreateInfo* createInfo) override { return nullptr; }
@@ -36,8 +41,11 @@ namespace RHI::Metal {
 
         MTLGpu& GetGpu() const;
 
+        id<MTLDevice> GetDevice() const;
+
     private:
         MTLGpu &gpu;
-        id<MTLDevice> mtlDevice = nil;
+        id <MTLDevice> mtlDevice = nil;
+        std::unordered_map<QueueType, std::vector<std::unique_ptr<MTLQueue>>> queues;
     };
 }

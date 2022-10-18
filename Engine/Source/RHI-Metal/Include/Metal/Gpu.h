@@ -21,12 +21,12 @@ namespace RHI::Metal {
         GpuProperty GetProperty() override;
         Device* RequestDevice(const DeviceCreateInfo* createInfo) override;
 
-        id<MTLDevice> GetDevice() const;
+        id <MTLDevice> GetDevice() const;
         void Init(id<MTLDevice> device);
 
     private:
         MTLInstance& instance;
-        id<MTLDevice> mtlDevice = nil;
+        id <MTLDevice> mtlDevice = nil;
         GpuProperty property;
     };
 
