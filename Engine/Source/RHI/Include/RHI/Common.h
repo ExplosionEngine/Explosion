@@ -323,6 +323,8 @@ namespace RHI {
         UNDEFINED,
         RENDER_TARGET,
         PRESENT,
+        COPY_DST,
+        SHADER_READ_ONLY,
         MAX
     };
 }

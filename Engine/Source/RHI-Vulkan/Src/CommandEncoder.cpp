@@ -100,6 +100,10 @@ namespace RHI::Vulkan {
             return {vk::ImageLayout::ePresentSrcKHR, vk::AccessFlagBits::eMemoryRead, vk::PipelineStageFlagBits::eBottomOfPipe};
         } else if (status == TextureState::RENDER_TARGET) {
             return {vk::ImageLayout::eColorAttachmentOptimal, vk::AccessFlagBits::eColorAttachmentWrite, vk::PipelineStageFlagBits::eColorAttachmentOutput};
+        } else if (status == TextureState::COPY_DST) {
+            return {vk::ImageLayout::eTransferDstOptimal, vk::AccessFlagBits::eTransferWrite, vk::PipelineStageFlagBits::eTransfer};
+        } else if (status == TextureState::SHADER_READ_ONLY) {
+            return {vk::ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderRead, vk::PipelineStageFlagBits::eFragmentShader};
         }
         return {vk::ImageLayout::eUndefined, vk::AccessFlags{}, vk::PipelineStageFlagBits::eTopOfPipe};
     }

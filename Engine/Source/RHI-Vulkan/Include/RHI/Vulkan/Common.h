@@ -62,7 +62,7 @@ namespace RHI::Vulkan {
         VK_ENUM_MAP_ITEM(PixelFormat::RG16_UINT,        vk::Format::eR16G16Uint)
         VK_ENUM_MAP_ITEM(PixelFormat::RG16_SINT,        vk::Format::eR16G16Sint)
         VK_ENUM_MAP_ITEM(PixelFormat::RG16_FLOAT,       vk::Format::eR16G16Sfloat)
-        VK_ENUM_MAP_ITEM(PixelFormat::RGBA8_UNORM,      vk::Format::eB8G8R8A8Unorm)
+        VK_ENUM_MAP_ITEM(PixelFormat::RGBA8_UNORM,      vk::Format::eR8G8B8A8Unorm)
         VK_ENUM_MAP_ITEM(PixelFormat::RGBA8_UNORM_SRGB, vk::Format::eR8G8B8A8Srgb)
         VK_ENUM_MAP_ITEM(PixelFormat::RGBA8_SNORM,      vk::Format::eR8G8B8A8Snorm)
         VK_ENUM_MAP_ITEM(PixelFormat::RGBA8_UINT,       vk::Format::eR8G8B8A8Uint)
@@ -244,7 +244,7 @@ namespace RHI::Vulkan {
 
     VK_ENUM_MAP_BEGIN(IndexFormat, vk::IndexType)
         VK_ENUM_MAP_ITEM(IndexFormat::UINT16, vk::IndexType::eUint16)
-        VK_ENUM_MAP_ITEM(IndexFormat::UINT16, vk::IndexType::eUint32)
+        VK_ENUM_MAP_ITEM(IndexFormat::UINT32, vk::IndexType::eUint32)
         VK_ENUM_MAP_ITEM(IndexFormat::MAX,    vk::IndexType::eNoneKHR)
     VK_ENUM_MAP_END()
 
