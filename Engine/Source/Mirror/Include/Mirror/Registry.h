@@ -15,7 +15,7 @@ namespace Mirror::Internal {
     template <typename ArgsTuple, size_t... I>
     auto CastAnyArrayToArgsTuple(Any* args, std::index_sequence<I...>)
     {
-        return ArgsTuple { args->CastTo<std::tuple_element_t<I, ArgsTuple>>()... };
+        return ArgsTuple { args[I].CastTo<std::tuple_element_t<I, ArgsTuple>>()... };
     }
 
     template <auto Ptr, typename ArgsTuple, size_t... I>
@@ -23,65 +23,131 @@ namespace Mirror::Internal {
     {
         return Ptr(std::get<I>(args)...);
     }
+
+    template <typename Class, auto Ptr, typename ArgsTuple, size_t... I>
+    auto InvokeMemberFunction(Class& object, ArgsTuple& args, std::index_sequence<I...>)
+    {
+        return object.*Ptr(std::get<I>(args)...);
+    }
 }
 
 namespace Mirror {
-    template <typename Registry>
-    class MIRROR_API MetaDataRegistry {
-    public:
-        ~MetaDataRegistry() = default;
-
-        Registry& Meta(const std::string& inKey, const std::string& inValue)
-        {
-            type.metas[inKey] = inValue;
-            return *static_cast<Registry*>(this);
-        }
-
-    protected:
-        explicit MetaDataRegistry(Type& inType) : type(inType) {}
-
-    private:
-        Type& type;
-    };
-
     template <typename C>
-    class MIRROR_API ClassRegistry : public MetaDataRegistry<ClassRegistry<C>> {
+    class MIRROR_API ClassRegistry {
     public:
         ~ClassRegistry() = default;
+
+        template <typename... Args>
+        ClassRegistry& Constructor(const std::string& inName)
+        {
+            // TODO
+        }
 
         template <auto Ptr>
         ClassRegistry& StaticVariable(const std::string& inName)
         {
-            // TODO
+            using ValueType = typename VariableTraits<decltype(Ptr)>::ValueType;
+
+            auto iter = clazz.staticVariables.find(inName);
+            Assert(iter == clazz.staticVariables.end());
+
+            clazz.staticVariables.emplace(std::make_pair(inName, Mirror::Variable(
+                inName,
+                [](Any* inValue) -> void {
+                    *Ptr = inValue->CastTo<ValueType>();
+                },
+                []() -> Any {
+                    return Any(std::ref(*Ptr));
+                }
+            )));
+            return *this;
         }
 
         template <auto Ptr>
         ClassRegistry& StaticFunction(const std::string& inName)
         {
-            // TODO
+            using ArgsTupleType = typename FunctionTraits<decltype(Ptr)>::ArgsTupleType;
+            using RetType = typename FunctionTraits<decltype(Ptr)>::RetType;
+
+            auto iter = clazz.staticFunctions.find(inName);
+            Assert(iter == clazz.staticFunctions.end());
+
+            clazz.staticFunctions.emplace(std::make_pair(inName, Mirror::Function(
+                inName,
+                [](Any* args, size_t argSize) -> Any {
+                    constexpr size_t tupleSize = std::tuple_size_v<ArgsTupleType>;
+                    Assert(tupleSize == argSize);
+
+                    auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
+                    if constexpr (std::is_void_v<RetType>) {
+                        Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {});
+                        return {};
+                    } else {
+                        return Any(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
+                    }
+                }
+            )));
+            return *this;
         }
 
         template <auto Ptr>
         ClassRegistry& MemberVariable(const std::string& inName)
         {
-            // TODO
+            using ClassType = typename MemberVariableTraits<decltype(Ptr)>::ClassType;
+            using ValueType = typename MemberVariableTraits<decltype(Ptr)>::ValueType;
+
+            auto iter = clazz.memberVariables.find(inName);
+            Assert(iter == clazz.memberVariables.end());
+
+            clazz.memberVariables.emplace(std::make_pair(inName, Mirror::MemberVariable(
+                inName,
+                [](Any* object, Any* value) -> void {
+                    object->CastTo<ClassType&>().*Ptr = value->CastTo<ValueType>();
+                },
+                [](Any* object) -> Any {
+                    return std::ref(object->CastTo<ClassType&>().*Ptr);
+                }
+            )));
+            return *this;
         }
 
         template <auto Ptr>
         ClassRegistry& MemberFunction(const std::string& inName)
         {
-            // TODO
+            using ClassType = typename MemberFunctionTraits<decltype(Ptr)>::ClassType;
+            using ArgsTupleType = typename MemberFunctionTraits<decltype(Ptr)>::ArgsTupleType;
+            using RetType = typename MemberFunctionTraits<decltype(Ptr)>::RetType;
+
+            auto iter = clazz.memberFunctions.find(inName);
+            Assert(iter == clazz.memberFunctions.end());
+
+            clazz.memberFunctions[inName] = Mirror::MemberFunction(
+                inName,
+                [](Any* object, Any* args, size_t argSize) -> Any {
+                    constexpr size_t tupleSize = std::tuple_size_v<ArgsTupleType>;
+                    Assert(tupleSize == argSize);
+
+                    auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
+                    if constexpr (std::is_void_v<RetType>) {
+                        Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->CastTo<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {});
+                        return {};
+                    } else {
+                        return Any::From(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->CastTo<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {}));
+                    }
+                }
+            );
+            return *this;
         }
 
     private:
         friend class Registry;
 
-        explicit ClassRegistry(Class& inClass) : MetaDataRegistry<ClassRegistry<C>>(inClass), clazz(inClass) {}
+        explicit ClassRegistry(Class& inClass) : clazz(inClass) {}
 
         Class& clazz;
     };
 
-    class MIRROR_API GlobalRegistry : public MetaDataRegistry<GlobalRegistry> {
+    class MIRROR_API GlobalRegistry {
     public:
         ~GlobalRegistry() = default;
 
@@ -91,7 +157,7 @@ namespace Mirror {
             using ValueType = typename VariableTraits<decltype(Ptr)>::ValueType;
 
             auto iter = globalScope.variables.find(inName);
-            Assert(iter != globalScope.variables.end());
+            Assert(iter == globalScope.variables.end());
 
             globalScope.variables.emplace(std::make_pair(inName, Mirror::Variable(
                 inName,
@@ -108,11 +174,11 @@ namespace Mirror {
         template <auto Ptr>
         GlobalRegistry& Function(const std::string& inName)
         {
-            using RetType = typename FunctionTraits<decltype(Ptr)>::RetType;
             using ArgsTupleType = typename FunctionTraits<decltype(Ptr)>::ArgsTupleType;
+            using RetType = typename FunctionTraits<decltype(Ptr)>::RetType;
 
             auto iter = globalScope.functions.find(inName);
-            Assert(iter != globalScope.functions.end());
+            Assert(iter == globalScope.functions.end());
 
             globalScope.functions.emplace(std::make_pair(inName, Mirror::Function(
                 inName,
@@ -121,7 +187,12 @@ namespace Mirror {
                     Assert(tupleSize == argSize);
 
                     auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
-                    return Any(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
+                    if constexpr (std::is_void_v<RetType>) {
+                        Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {});
+                        return {};
+                    } else {
+                        return Any::From(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
+                    }
                 }
             )));
             return *this;
@@ -130,14 +201,14 @@ namespace Mirror {
     private:
         friend class Registry;
 
-        explicit GlobalRegistry(GlobalScope& inGlobalScope) : MetaDataRegistry<GlobalRegistry>(inGlobalScope), globalScope(inGlobalScope) {}
+        explicit GlobalRegistry(GlobalScope& inGlobalScope) : globalScope(inGlobalScope) {}
 
         GlobalScope& globalScope;
     };
 
     class MIRROR_API Registry {
     public:
-        static Registry Get()
+        static Registry& Get()
         {
             static Registry instance;
             return instance;
@@ -158,6 +229,9 @@ namespace Mirror {
         }
 
     private:
+        friend class GlobalScope;
+        friend class Class;
+
         Registry() noexcept = default;
 
         GlobalScope globalScope;

@@ -13,11 +13,45 @@
 namespace Mirror {
     class Any {
     public:
+        template <typename T>
+        requires IsLValueRef<T>
+        static Any From(T value)
+        {
+            return Any(std::ref(value));
+        }
+
+        template <typename T>
+        requires IsRValueRef<T>
+        static Any From(T value)
+        {
+            return Any(std::move(value));
+        }
+
+        template <typename T>
+        static Any From(T value)
+        {
+            return Any(value);
+        }
+
+        template <typename T>
+        static Any From(const std::reference_wrapper<T>& ref)
+        {
+            return Any(ref);
+        }
+
+        template <typename T>
+        static Any From(std::reference_wrapper<T>&& ref)
+        {
+            return Any(std::forward<std::reference_wrapper<T>>(ref));
+        }
+
         Any() = default;
 
         ~Any()
         {
-            detor();
+            if (detor) {
+                detor();
+            }
         }
 
         template <typename T>
@@ -36,6 +70,16 @@ namespace Mirror {
         Any(std::reference_wrapper<T>&& ref) // NOLINT
         {
             ConstructRef(std::move(ref));
+        }
+
+        Any(const Any& inAny)
+        {
+            isReference = inAny.isReference;
+            typeInfo = inAny.typeInfo;
+            detor = inAny.detor;
+            copy = inAny.copy;
+            move = inAny.move;
+            data = inAny.data;
         }
 
         Any(Any&& inAny) noexcept

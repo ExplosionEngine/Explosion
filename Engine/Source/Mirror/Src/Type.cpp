@@ -7,6 +7,7 @@
 #include <utility>
 
 #include <Mirror/Type.h>
+#include <Mirror/Registry.h>
 #include <Common/Debug.h>
 
 namespace Mirror {
@@ -33,12 +34,12 @@ namespace Mirror {
 
     Variable::~Variable() = default;
 
-    void Variable::Set(Any* value)
+    void Variable::Set(Any* value) const
     {
         setter(value);
     }
 
-    Any Variable::Get()
+    Any Variable::Get() const
     {
         return getter();
     }
@@ -49,9 +50,26 @@ namespace Mirror {
 
     Function::~Function() = default;
 
-    Any Function::Invoke(Any* args, size_t argsSize)
+    Any Function::InvokeWith(Any* args, size_t argsSize) const
     {
         return invoker(args, argsSize);
+    }
+
+    Constructor::Constructor(std::string inName, Constructor::Invoker inStackConstructor, Constructor::Invoker inHeapConstructor)
+        : Type(std::move(inName))
+        , stackConstructor(std::move(inStackConstructor))
+        , heapConstructor(std::move(inHeapConstructor)) {}
+
+    Constructor::~Constructor() = default;
+
+    Any Constructor::ConstructOnStackWith(Any* arguments, size_t argumentsSize)
+    {
+        return stackConstructor(arguments, argumentsSize);
+    }
+
+    Any Constructor::NewObjectWith(Any* arguments, size_t argumentsSize)
+    {
+        return heapConstructor(arguments, argumentsSize);
     }
 
     MemberVariable::MemberVariable(std::string inName, MemberVariable::Setter inSetter, MemberVariable::Getter inGetter)
@@ -81,8 +99,127 @@ namespace Mirror {
 
     MemberFunction::~MemberFunction() = default;
 
-    Any MemberFunction::Invoke(Any* clazz, Any* args, size_t argsSize)
+    Any MemberFunction::InvokeWith(Any* clazz, Any* args, size_t argsSize) const
     {
         return invoker(clazz, args, argsSize);
+    }
+
+    GlobalScope::GlobalScope() : Type("_GlobalScope") {}
+
+    GlobalScope::~GlobalScope() = default;
+
+    const GlobalScope& GlobalScope::Get()
+    {
+        return Registry::Get().globalScope;
+    }
+
+    const Variable* GlobalScope::FindVariable(const std::string& name) const
+    {
+        auto iter = variables.find(name);
+        return iter == variables.end() ? nullptr : &iter->second;
+    }
+
+    const Variable& GlobalScope::GetVariable(const std::string& name) const
+    {
+        auto iter = variables.find(name);
+        Assert(iter != variables.end());
+        return iter->second;
+    }
+
+    const Function* GlobalScope::FindFunction(const std::string& name) const
+    {
+        auto iter = functions.find(name);
+        return iter == functions.end() ? nullptr : &iter->second;
+    }
+
+    const Function& GlobalScope::GetFunction(const std::string& name) const
+    {
+        auto iter = functions.find(name);
+        Assert(iter != functions.end());
+        return iter->second;
+    }
+
+    Class::Class(std::string name) : Type(std::move(name)) {}
+
+    Class::~Class() = default;
+
+    const Class* Class::Find(const std::string& name)
+    {
+        const auto& classes = Registry::Get().classes;
+        auto iter = classes.find(name);
+        return iter == classes.end() ? nullptr : &iter->second;
+    }
+
+    const Class& Class::Get(const std::string& name)
+    {
+        const auto& classes = Registry::Get().classes;
+        auto iter = classes.find(name);
+        Assert(iter != classes.end());
+        return iter->second;
+    }
+
+    const Constructor* Class::FindConstructor(const std::string& name) const
+    {
+        auto iter = constructors.find(name);
+        return iter == constructors.end() ? nullptr : &iter->second;
+    }
+
+    const Constructor& Class::GetConstructor(const std::string& name) const
+    {
+        auto iter = constructors.find(name);
+        Assert(iter != constructors.end());
+        return iter->second;
+    }
+
+    const Variable* Class::FindStaticVariable(const std::string& name) const
+    {
+        auto iter = staticVariables.find(name);
+        return iter == staticVariables.end() ? nullptr : &iter->second;
+    }
+
+    const Variable& Class::GetStaticVariable(const std::string& name) const
+    {
+        auto iter = staticVariables.find(name);
+        Assert(iter != staticVariables.end());
+        return iter->second;
+    }
+
+    const Function* Class::FindStaticFunction(const std::string& name) const
+    {
+        auto iter = staticFunctions.find(name);
+        return iter == staticFunctions.end() ? nullptr : &iter->second;
+    }
+
+    const Function& Class::GetStaticFunction(const std::string& name) const
+    {
+        auto iter = staticFunctions.find(name);
+        Assert(iter != staticFunctions.end());
+        return iter->second;
+    }
+
+    const MemberVariable* Class::FindMemberVariable(const std::string& name) const
+    {
+        auto iter = memberVariables.find(name);
+        return iter == memberVariables.end() ? nullptr : &iter->second;
+    }
+
+    const MemberVariable& Class::GetMemberVariable(const std::string& name) const
+    {
+        auto iter = memberVariables.find(name);
+        Assert(iter != memberVariables.end());
+        return iter->second;
+    }
+
+    const MemberFunction* Class::FindMemberFunction(const std::string& name) const
+    {
+        auto iter = memberFunctions.find(name);
+        return iter == memberFunctions.end() ? nullptr : &iter->second;
+    }
+
+    const MemberFunction& Class::GetMemberFunction(const std::string& name) const
+    {
+        auto iter = memberFunctions.find(name);
+        Assert(iter != memberFunctions.end());
+        return iter->second;
     }
 }

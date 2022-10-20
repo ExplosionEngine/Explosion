@@ -99,3 +99,11 @@ namespace Mirror {
         using ArgsTupleType = std::tuple<Args...>;
     };
 }
+
+namespace Mirror {
+    template <typename T>
+    concept IsLValueRef = std::is_rvalue_reference_v<T>;
+
+    template <typename T>
+    concept IsRValueRef = std::is_rvalue_reference_v<T>;
+}
