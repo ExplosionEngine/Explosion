@@ -39,9 +39,15 @@ AddRHISample(
     SHADER Sample/Triangle.hlsl
 )
 
+AddRHISample(
+    NAME RHI-TexSampling
+    SRC Sample/TexSampling.cpp
+    SHADER Sample/TexSampling.hlsl
+)
+
 # Provisionally copy the source image to the Bin dir
 add_custom_command(
-    TARGET RHI-Triangle PRE_BUILD
+    TARGET RHI-TexSampling PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/Sample/awesomeface.png
     ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
