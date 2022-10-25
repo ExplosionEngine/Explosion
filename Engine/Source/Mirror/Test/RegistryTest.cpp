@@ -23,6 +23,44 @@ void F2(int& outValue)
     outValue = 1;
 }
 
+struct C0 {
+    static int& F0();
+
+    static int v0;
+};
+
+int C0::v0 = 0;
+
+int& C0::F0()
+{
+    return v0;
+}
+
+class C1 {
+public:
+    explicit C1(int inV0) : v0(inV0) {}
+
+    int GetV0() const
+    {
+        return v0;
+    }
+
+    void SetV0(int inV0)
+    {
+        v0 = inV0;
+    }
+
+private:
+    int v0;
+};
+
+struct C2 {
+    C2(int inA, int inB) : a(inA), b(inB) {}
+
+    int a;
+    int b;
+};
+
 TEST(RegistryTest, GlobalScopeTest)
 {
     Mirror::Registry::Get()
@@ -76,5 +114,66 @@ TEST(RegistryTest, GlobalScopeTest)
         std::vector<Mirror::Any> arguments = { std::ref(value) };
         function.InvokeWith(arguments.data(), arguments.size());
         ASSERT_EQ(value, 1);
+    }
+}
+
+TEST(RegistryTest, ClassTest)
+{
+    Mirror::Registry::Get()
+        .Class<C0>("C0")
+            .StaticVariable<&C0::v0>("v0")
+            .StaticFunction<&C0::F0>("F0");
+
+    Mirror::Registry::Get()
+        .Class<C1>("C1")
+            .Constructor<int>("Constructor0")
+            .MemberFunction<&C1::SetV0>("SetV0")
+            .MemberFunction<&C1::GetV0>("GetV0");
+
+    Mirror::Registry::Get()
+        .Class<C2>("C2")
+            .Constructor<int, int>("Constructor0")
+            .MemberVariable<&C2::a>("a")
+            .MemberVariable<&C2::b>("b");
+
+    {
+        const auto& clazz = Mirror::Class::Get("C0");
+        {
+            const auto& variable = clazz.GetStaticVariable("v0");
+            variable.Set(1);
+            ASSERT_EQ(variable.Get().CastTo<int>(), 1);
+        }
+
+        {
+            const auto& function = clazz.GetStaticFunction("F0");
+            auto result = function.Invoke();
+            ASSERT_EQ(result.CastTo<int&>(), 1);
+        }
+    }
+
+    {
+        const auto& clazz = Mirror::Class::Get("C1");
+        const auto& constructor = clazz.GetConstructor("Constructor0");
+        const auto& setter = clazz.GetMemberFunction("SetV0");
+        const auto& getter = clazz.GetMemberFunction("GetV0");
+
+        auto object = constructor.ConstructOnStack(1);
+        ASSERT_EQ(getter.Invoke(object.CastTo<C1&>()).CastTo<int>(), 1);
+        setter.Invoke(object.CastTo<C1&>(), 2);
+        ASSERT_EQ(getter.Invoke(object.CastTo<C1&>()).CastTo<int>(), 2);
+    }
+
+    {
+        const auto& clazz = Mirror::Class::Get("C2");
+        const auto& constructor = clazz.GetConstructor("Constructor0");
+        const auto& desctructor = clazz.GetDestructor();
+        const auto& a = clazz.GetMemberVariable("a");
+        const auto& b = clazz.GetMemberVariable("b");
+
+        auto object = constructor.NewObject(1, 2);
+        auto objectRef = Mirror::Any::From(*object.CastTo<C2*>());
+        ASSERT_EQ(a.Get(&objectRef).CastTo<int>(), 1);
+        ASSERT_EQ(b.Get(&objectRef).CastTo<int>(), 2);
+        desctructor.InvokeWith(&objectRef);
     }
 }
