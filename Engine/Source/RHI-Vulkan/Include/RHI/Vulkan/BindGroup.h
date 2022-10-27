@@ -15,12 +15,17 @@ namespace RHI::Vulkan {
     class VKBindGroup : public BindGroup {
     public:
         NON_COPYABLE(VKBindGroup)
-        VKBindGroup(VKDevice& device, const BindGroupLayoutCreateInfo* createInfo);
+        VKBindGroup(VKDevice& device, const BindGroupCreateInfo* createInfo);
         ~VKBindGroup() override;
 
         void Destroy() override;
 
+        vk::DescriptorSet GetVkDescritorSet() const;
     private:
-        vk::DescriptorSetLayout setLayout;
+        void CreateDescriptorPool(const BindGroupCreateInfo* createInfo);
+        void CreateDescriptorSet(const BindGroupCreateInfo* createInfo);
+        VKDevice& device;
+        vk::DescriptorSet descriptorSet;
+        vk::DescriptorPool descriptorPool;
     };
 }

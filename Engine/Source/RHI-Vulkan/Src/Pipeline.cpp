@@ -159,6 +159,7 @@ namespace RHI::Vulkan {
     VKGraphicsPipeline::VKGraphicsPipeline(VKDevice& dev, const GraphicsPipelineCreateInfo* createInfo)
         : device(dev), GraphicsPipeline(createInfo)
     {
+        SavePipelineLayout(createInfo);
         CreateNativeGraphicsPipeline(createInfo);
     }
 
@@ -237,6 +238,18 @@ namespace RHI::Vulkan {
         auto result = device.GetVkDevice().createRenderPass(passInfo, nullptr);
         Assert(!!result);
         renderPass = result;
+    }
+
+    VKPipelineLayout* VKGraphicsPipeline::GetPipelineLayout() const
+    {
+        return pipelineLayout;
+    }
+
+    void VKGraphicsPipeline::SavePipelineLayout(const GraphicsPipelineCreateInfo* createInfo)
+    {
+        auto* layout = dynamic_cast<VKPipelineLayout*>(createInfo->layout);
+        Assert(layout);
+        pipelineLayout = layout;
     }
 
     void VKGraphicsPipeline::CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)

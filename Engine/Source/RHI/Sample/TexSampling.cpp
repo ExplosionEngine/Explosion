@@ -1,5 +1,5 @@
 //
-// Created by johnk on 9/1/2022.
+// Created by swtpotato on 2022/10/21.
 //
 
 #include <vector>
@@ -8,18 +8,20 @@
 #include <glm/glm.hpp>
 
 #include <Application.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 using namespace RHI;
 
 struct Vertex {
     glm::vec3 position;
-    glm::vec3 color;
+    glm::vec2 uv;
 };
 
-class TriangleApplication : public Application {
+class TexSamplingApplication : public Application {
 public:
-    NON_COPYABLE(TriangleApplication)
-    explicit TriangleApplication(const std::string& n) : Application(n) {}
-    ~TriangleApplication() override = default;
+    NON_COPYABLE(TexSamplingApplication)
+    explicit TexSamplingApplication(const std::string& n) : Application(n) {}
+    ~TexSamplingApplication() override = default;
 
 protected:
     void OnCreate() override
@@ -28,6 +30,10 @@ protected:
         RequestDeviceAndFetchQueues();
         CreateSwapChain();
         CreateVertexBuffer();
+        CreateIndexBuffer();
+        CreateTextureAndSampler();
+        CreateBindGroupLayout();
+        CreateBindGroup();
         CreatePipelineLayout();
         CreatePipeline();
         CreateFence();
@@ -46,6 +52,7 @@ protected:
         fence->Wait();
         fence->Destroy();
         commandBuffer->Destroy();
+        texCommandBuffer->Destroy();
         vertexShader->Destroy();
         fragmentShader->Destroy();
         pipeline->Destroy();
@@ -55,6 +62,14 @@ protected:
         }
         vertexBufferView->Destroy();
         vertexBuffer->Destroy();
+        indexBufferView->Destroy();
+        indexBuffer->Destroy();
+        bindGroupLayout->Destroy();
+        bindGroup->Destroy();
+        sampleTextureView->Destroy();
+        sampleTexture->Destroy();
+        sampler->Destroy();
+        pixelBuffer->Destroy();
         swapChain->Destroy();
         device->Destroy();
     }
@@ -116,9 +131,10 @@ private:
     void CreateVertexBuffer()
     {
         std::vector<Vertex> vertices = {
-            {{-.5f, -.5f, 0.f}, {1.f, 0.f, 0.f}},
-            {{.5f, -.5f, 0.f}, {0.f, 1.f, 0.f}},
-            {{0.f, .5f, 0.f}, {0.f, 0.f, 1.f}},
+            {{-.5f, -.5f, 0.f}, {0.f, 0.f}},
+            {{.5f, -.5f, 0.f}, {1.f, 0.f}},
+            {{.5f, .5f, 0.f}, {1.f, 1.f}},
+            {{-.5f, .5f, 0.f}, {0.f, 1.f}},
         };
 
         BufferCreateInfo bufferCreateInfo {};
@@ -138,18 +154,129 @@ private:
         vertexBufferView = vertexBuffer->CreateBufferView(&bufferViewCreateInfo);
     }
 
+    void CreateIndexBuffer()
+    {
+        std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
+        BufferCreateInfo bufferCreateInfo {};
+        bufferCreateInfo.size = indices.size() * sizeof(uint32_t);
+        bufferCreateInfo.usages = BufferUsageBits::INDEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        indexBuffer = device->CreateBuffer(&bufferCreateInfo);
+        if (indexBuffer != nullptr) {
+            auto* data = indexBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
+            memcpy(data, indices.data(), bufferCreateInfo.size);
+            indexBuffer->UnMap();
+        }
+
+        BufferViewCreateInfo bufferViewCreateInfo {};
+        bufferViewCreateInfo.size = indices.size() * sizeof(uint32_t);
+        bufferViewCreateInfo.offset = 0;
+        bufferViewCreateInfo.index.format = IndexFormat::UINT32;
+        indexBufferView = indexBuffer->CreateBufferView(&bufferViewCreateInfo);
+    }
+
+    void CreateTextureAndSampler()
+    {
+        int texWidth, texHeight, texChannels;
+        stbi_uc* pixels = stbi_load("./awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        Assert(pixels != nullptr);
+
+        BufferCreateInfo bufferCreateInfo {};
+        bufferCreateInfo.size = texWidth * texHeight * 4;
+        bufferCreateInfo.usages = BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        pixelBuffer = device->CreateBuffer(&bufferCreateInfo);
+        if (pixelBuffer != nullptr) {
+            auto* data = pixelBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
+            memcpy(data, pixels, bufferCreateInfo.size);
+            pixelBuffer->UnMap();
+        }
+        stbi_image_free(pixels);
+
+        TextureCreateInfo texCreateInfo {};
+        texCreateInfo.format = PixelFormat::RGBA8_UNORM;
+        texCreateInfo.mipLevels = 1;
+        texCreateInfo.extent = {static_cast<size_t>(texWidth), static_cast<size_t>(texHeight), 1};
+        texCreateInfo.dimension = TextureDimension::T_2D;
+        texCreateInfo.samples = 1;
+        texCreateInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::TEXTURE_BINDING;
+        sampleTexture = device->CreateTexture(&texCreateInfo);
+
+        TextureViewCreateInfo viewCreateInfo {};
+        viewCreateInfo.format = PixelFormat::RGBA8_UNORM;
+        viewCreateInfo.dimension = TextureViewDimension::TV_2D;
+        viewCreateInfo.baseArrayLayer = 0;
+        viewCreateInfo.arrayLayerNum = 1;
+        viewCreateInfo.baseMipLevel = 0;
+        viewCreateInfo.mipLevelNum = 1;
+        viewCreateInfo.aspect = TextureAspect::COLOR;
+        sampleTextureView = sampleTexture->CreateTextureView(&viewCreateInfo);
+
+        // use the default attrib to create sampler
+        SamplerCreateInfo samplerCreateInfo {};
+        sampler = device->CreateSampler(&samplerCreateInfo);
+
+        texCommandBuffer = device->CreateCommandBuffer();
+        auto* commandEncoder = texCommandBuffer->Begin();
+        commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture, TextureState::UNDEFINED, TextureState::COPY_DST));
+        TextureSubResourceInfo subResourceInfo {};
+        subResourceInfo.mipLevel = 0;
+        subResourceInfo.arrayLayerNum = 1;
+        subResourceInfo.baseArrayLayer = 0;
+        subResourceInfo.aspect = TextureAspect::COLOR;
+        commandEncoder->CopyBufferToTexture(pixelBuffer, sampleTexture, &subResourceInfo, {static_cast<size_t>(texWidth), static_cast<size_t>(texHeight), 1});
+        commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture, TextureState::COPY_DST, TextureState::SHADER_READ_ONLY));
+        commandEncoder->End();
+
+        graphicsQueue->Submit(texCommandBuffer, nullptr);
+    }
+
+    void CreateBindGroupLayout()
+    {
+        std::vector<BindGroupLayoutEntry> entries(2);
+        entries[0].type = BindingType::TEXTURE;
+        entries[0].binding = 0;
+        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::FRAGMENT);
+        entries[1].type = BindingType::SAMPLER;
+        entries[1].binding = 1;
+        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::FRAGMENT);
+
+        BindGroupLayoutCreateInfo createInfo {};
+        createInfo.entries = entries.data();
+        createInfo.entryNum = static_cast<uint32_t>(entries.size());
+        createInfo.layoutIndex = 0;
+
+        bindGroupLayout = device->CreateBindGroupLayout(&createInfo);
+    }
+
+    void CreateBindGroup()
+    {
+        std::vector<BindGroupEntry> entries(2);
+        entries[0].type = BindingType::TEXTURE;
+        entries[0].binding = 0;
+        entries[0].textureView = sampleTextureView;
+        entries[1].type = BindingType::SAMPLER;
+        entries[1].binding = 1;
+        entries[1].sampler = sampler;
+
+        BindGroupCreateInfo createInfo {};
+        createInfo.entries = entries.data();
+        createInfo.entryNum = static_cast<uint32_t>(entries.size());
+        createInfo.layout = bindGroupLayout;
+
+        bindGroup = device->CreateBindGroup(&createInfo);
+    }
+
     void CreatePipelineLayout()
     {
         PipelineLayoutCreateInfo createInfo {};
-        createInfo.bindGroupNum = 0;
-        createInfo.bindGroupLayouts = nullptr;
+        createInfo.bindGroupNum = 1;
+        createInfo.bindGroupLayouts = &bindGroupLayout;
         pipelineLayout = device->CreatePipelineLayout(&createInfo);
     }
 
     void CreatePipeline()
     {
         std::vector<uint8_t> vsByteCode;
-        CompileShader(vsByteCode, "Shader/Sample/Triangle.hlsl", "VSMain", RHI::ShaderStageBits::VERTEX);
+        CompileShader(vsByteCode, "Shader/Sample/TexSampling.hlsl", "VSMain", RHI::ShaderStageBits::VERTEX);
 
         ShaderModuleCreateInfo shaderModuleCreateInfo {};
         shaderModuleCreateInfo.size = vsByteCode.size();
@@ -157,7 +284,7 @@ private:
         vertexShader = device->CreateShaderModule(&shaderModuleCreateInfo);
 
         std::vector<uint8_t> fsByteCode;
-        CompileShader(fsByteCode, "Shader/Sample/Triangle.hlsl", "FSMain", RHI::ShaderStageBits::FRAGMENT);
+        CompileShader(fsByteCode, "Shader/Sample/TexSampling.hlsl", "FSMain", RHI::ShaderStageBits::FRAGMENT);
 
         shaderModuleCreateInfo.size = fsByteCode.size();
         shaderModuleCreateInfo.byteCode = fsByteCode.data();
@@ -168,9 +295,9 @@ private:
         vertexAttributes[0].offset = 0;
         vertexAttributes[0].semanticName = "POSITION";
         vertexAttributes[0].semanticIndex = 0;
-        vertexAttributes[1].format = VertexFormat::FLOAT32_X3;
-        vertexAttributes[1].offset = offsetof(Vertex, color);
-        vertexAttributes[1].semanticName = "COLOR";
+        vertexAttributes[1].format = VertexFormat::FLOAT32_X2;
+        vertexAttributes[1].offset = offsetof(Vertex, uv);
+        vertexAttributes[1].semanticName = "TEXCOORD0";
         vertexAttributes[1].semanticIndex = 0;
 
         VertexBufferLayout vertexBufferLayout {};
@@ -240,8 +367,10 @@ private:
                 graphicsEncoder->SetScissor(0, 0, width, height);
                 graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
                 graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
+                graphicsEncoder->SetBindGroup(0, bindGroup);
                 graphicsEncoder->SetVertexBuffer(0, vertexBufferView);
-                graphicsEncoder->Draw(3, 1, 0, 0);
+                graphicsEncoder->SetIndexBuffer(indexBufferView);
+                graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
             }
             graphicsEncoder->EndPass();
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::RENDER_TARGET, TextureState::PRESENT));
@@ -264,6 +393,15 @@ private:
     SwapChain* swapChain = nullptr;
     Buffer* vertexBuffer = nullptr;
     BufferView* vertexBufferView = nullptr;
+    Buffer* indexBuffer = nullptr;
+    BufferView* indexBufferView = nullptr;
+    BindGroupLayout* bindGroupLayout = nullptr;
+    BindGroup* bindGroup = nullptr;
+    Texture* sampleTexture = nullptr;
+    TextureView* sampleTextureView = nullptr;
+    Sampler* sampler = nullptr;
+    CommandBuffer* texCommandBuffer = nullptr;
+    Buffer* pixelBuffer = nullptr;
     std::array<Texture*, BACK_BUFFER_COUNT> swapChainTextures {};
     std::array<TextureView*, BACK_BUFFER_COUNT> swapChainTextureViews {};
     PipelineLayout* pipelineLayout = nullptr;
@@ -276,6 +414,6 @@ private:
 
 int main(int argc, char* argv[])
 {
-    TriangleApplication application("RHI-Triangle");
+    TexSamplingApplication application("RHI-TexSampling");
     return application.Run(argc, argv);
 }

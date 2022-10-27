@@ -12,7 +12,6 @@
 namespace RHI::Vulkan {
     class VKDevice;
 
-    class VKTextureView;
     class VKTexture : public Texture {
     public:
         NON_COPYABLE(VKTexture)
