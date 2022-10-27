@@ -36,7 +36,7 @@ namespace RHI::Vulkan {
     {
         vk::ImageViewCreateInfo viewInfo = {};
 
-        viewInfo.setFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo->format))
+        viewInfo.setFormat(VKEnumCast<PixelFormat, vk::Format>(vkTexture.GetFormat()))
             .setImage(vkTexture.GetImage())
             .setViewType(VKEnumCast<TextureViewDimension, vk::ImageViewType>(createInfo->dimension))
             .setSubresourceRange(vk::ImageSubresourceRange(GetAspectMask(createInfo->aspect),

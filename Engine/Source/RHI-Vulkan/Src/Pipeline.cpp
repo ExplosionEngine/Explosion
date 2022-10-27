@@ -291,7 +291,9 @@ namespace RHI::Vulkan {
         std::vector<vk::Format> pixelFormats(createInfo->fragment.colorTargetNum);
         for (size_t i = 0; i < createInfo->fragment.colorTargetNum; i++)
         {
-            pixelFormats[i] = VKEnumCast<PixelFormat, vk::Format>(createInfo->fragment.colorTargets[i].format);
+            // Vulkan swapChain images does not surpport RGBA8_UNORM, so the foramt of corresponding colorAttachment should be the same with swapChain image
+            auto format = createInfo->fragment.colorTargets[i].format == PixelFormat::RGBA8_UNORM ? PixelFormat::BGRA8_UNORM : createInfo->fragment.colorTargets[i].format;
+            pixelFormats[i] = VKEnumCast<PixelFormat, vk::Format>(format);
         }
         vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo;
         pipelineRenderingCreateInfo.setColorAttachmentCount(createInfo->fragment.colorTargetNum)

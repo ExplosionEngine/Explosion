@@ -34,6 +34,7 @@ namespace RHI::Vulkan {
     {
         Assert(createInfo != nullptr);
         extent = createInfo->extent;
+        format = createInfo->format;
     }
 
     VKTexture::VKTexture(VKDevice& dev, const TextureCreateInfo* createInfo)
@@ -41,6 +42,7 @@ namespace RHI::Vulkan {
     {
         Assert(createInfo != nullptr);
         extent = createInfo->extent;
+        format = createInfo->format;
 
         CreateImage(createInfo);
         AllocateMemory(createInfo);
@@ -114,4 +116,8 @@ namespace RHI::Vulkan {
         }
     }
 
+    PixelFormat VKTexture::GetFormat() const
+    {
+        return format;
+    }
 }
