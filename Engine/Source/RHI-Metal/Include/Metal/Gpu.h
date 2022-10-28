@@ -26,7 +26,7 @@ namespace RHI::Metal {
 
     private:
         MTLInstance& instance;
-        id <MTLDevice> mtlDevice = nil;
+        id<MTLDevice> mtlDevice = nil;
         GpuProperty property;
     };
 

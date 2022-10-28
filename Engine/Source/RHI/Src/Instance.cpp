@@ -20,6 +20,8 @@ namespace RHI {
         switch (type) {
             case RHIType::DIRECTX_12:
                 return "RHI-DirectX12";
+            case RHIType::METAL:
+                return "RHI-Metal";
             default:
                 return "RHI-Vulkan";
         }

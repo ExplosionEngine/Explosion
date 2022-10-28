@@ -26,10 +26,12 @@ protected:
     {
         CreateInstanceAndSelectGPU();
         RequestDeviceAndFetchQueues();
-        CreateSwapChain();
-        CreateVertexBuffer();
+
         CreatePipelineLayout();
         CreatePipeline();
+        CreateVertexBuffer();
+
+        CreateSwapChain();
         CreateFence();
         CreateCommandBuffer();
     }

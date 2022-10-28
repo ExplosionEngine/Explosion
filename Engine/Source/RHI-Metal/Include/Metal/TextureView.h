@@ -6,6 +6,7 @@
 
 #import <Metal/Metal.h>
 #include <RHI/TextureView.h>
+#import <Metal/MTLTexture.h>
 
 namespace RHI::Metal {
     class MTLDevice;
@@ -17,6 +18,6 @@ namespace RHI::Metal {
 
         void Destroy() override;
     private:
-
+        id<MTLTexture> textureView;
     };
 }

@@ -4,8 +4,9 @@
 
 #pragma once
 
-#import <Metal/Metal.h>
 #include <RHI/Texture.h>
+#import <Metal/Metal.h>
+#import <Metal/MTLTexture.h>
 
 namespace RHI::Metal {
     class MTLDevice;
@@ -15,9 +16,12 @@ namespace RHI::Metal {
         MTLTexture(MTLDevice &device, const TextureCreateInfo* createInfo);
         ~MTLTexture();
 
+        id<MTLTexture> GetTexture() const;
+
         TextureView* CreateTextureView(const TextureViewCreateInfo* createInfo) override;
         void Destroy() override;
     private:
-
+        MTLDevice &device;
+        id<MTLTexture> texture;
     };
 }

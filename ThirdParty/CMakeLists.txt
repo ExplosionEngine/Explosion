@@ -136,6 +136,8 @@ Add3rdCMakeProject(
     INCLUDE $<INSTALL_DIR>/include
     LINK $<INSTALL_DIR>/lib
     LIB spirv-cross-core$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
+        spirv-cross-msl$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
+        spirv-cross-glsl$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
 )
 
 # TaskFlow

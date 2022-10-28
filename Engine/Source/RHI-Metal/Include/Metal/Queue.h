@@ -26,6 +26,6 @@ namespace RHI::Metal {
         void CreateNativeQueue();
 
         MTLDevice& device;
-        id <MTLCommandQueue> mtlQueue = nil;
+        id<MTLCommandQueue> mtlQueue = nil;
     };
 }

@@ -21,9 +21,9 @@ namespace RHI::Metal {
         void Destroy() override;
     private:
         void CreateNativeBuffer(const BufferCreateInfo* createInfo);
-        
+
         MTLDevice &mtlDevice;
-        id <MTLBuffer> mtlBuffer = nil;
+        id<MTLBuffer> mtlBuffer = nil;
     };
 
 }

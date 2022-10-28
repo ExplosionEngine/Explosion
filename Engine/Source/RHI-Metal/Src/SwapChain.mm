@@ -27,6 +27,7 @@ namespace RHI::Metal {
     uint8_t MTLSwapChain::AcquireBackTexture()
     {
         drawables[currentImage] = [view.metalLayer nextDrawable];
+        [drawables[currentImage] retain];
         return currentImage;
     }
 
@@ -46,10 +47,10 @@ namespace RHI::Metal {
         view = [[MetalView alloc] initWithFrame:nativeWindow
                                          device:mtlDevice.GetDevice()];
         [view retain];
-        
+
         CGSize size = CGSizeMake(createInfo->extent.x, createInfo->extent.y);
         view.metalLayer.drawableSize = size;
-        
+
         swapChainImageCount = createInfo->textureNum;
         drawables.resize(createInfo->textureNum);
     }
