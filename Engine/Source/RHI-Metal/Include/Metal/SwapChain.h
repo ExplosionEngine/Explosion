@@ -7,6 +7,7 @@
 #include <RHI/SwapChain.h>
 #include <Metal/Queue.h>
 #include <Metal/MetalView.h>
+#include <Metal/Texture.h>
 #import <Metal/Metal.h>
 #include <vector>
 
@@ -29,6 +30,7 @@ namespace RHI::Metal {
         MTLDevice& mtlDevice;
         MetalView* view = nullptr;
         NSWindow* nativeWindow = nullptr;
+        std::vector<std::unique_ptr<MTLTexture>> textures;
         std::vector<id<CAMetalDrawable>> drawables;
         uint32_t swapChainImageCount = 0;
         uint32_t currentImage = 0;

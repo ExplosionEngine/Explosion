@@ -8,7 +8,7 @@
 namespace RHI::Metal {
 
     MTLTexture::MTLTexture(MTLDevice &dev, const TextureCreateInfo* createInfo)
-        : Texture(createInfo), device(dev)
+        : Texture(createInfo), device(dev), isDrawable(createInfo == nullptr)
     {
     }
 
@@ -25,8 +25,13 @@ namespace RHI::Metal {
         delete this;
     }
 
-    id<MTLTexture> MTLTexture::GetTexture() const
+    id<MTLTexture> MTLTexture::GetNativeTexture() const
     {
         return texture;
+    }
+
+    bool MTLTexture::IsDrawableTexture() const
+    {
+        return isDrawable;
     }
 }

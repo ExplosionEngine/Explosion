@@ -17,10 +17,13 @@ namespace RHI::Metal {
     MTLDevice::MTLDevice(MTLGpu& gpu_, const DeviceCreateInfo* createInfo) : Device(createInfo), gpu(gpu_)
     {
         mtlDevice = gpu.GetDevice();
+        listener = [[MTLSharedEventListener alloc] init];
     }
 
     MTLDevice::~MTLDevice()
     {
+        [listener release];
+        listener = nil;
     }
 
     size_t MTLDevice::GetQueueNum(QueueType type)
@@ -96,5 +99,10 @@ namespace RHI::Metal {
     id<MTLDevice> MTLDevice::GetDevice() const
     {
         return mtlDevice;
+    }
+
+    MTLSharedEventListener *MTLDevice::GetSharedEventListener() const
+    {
+        return listener;
     }
 }

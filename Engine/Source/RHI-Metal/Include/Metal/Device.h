@@ -43,9 +43,12 @@ namespace RHI::Metal {
 
         id<MTLDevice> GetDevice() const;
 
+        MTLSharedEventListener *GetSharedEventListener() const;
+
     private:
         MTLGpu &gpu;
         id<MTLDevice> mtlDevice = nil;
+        MTLSharedEventListener *listener = nil;
         std::unordered_map<QueueType, std::vector<std::unique_ptr<MTLQueue>>> queues;
     };
 }

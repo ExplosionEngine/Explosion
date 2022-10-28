@@ -4,20 +4,22 @@
 
 #pragma once
 
-#import <Metal/Metal.h>
 #include <RHI/TextureView.h>
 #import <Metal/MTLTexture.h>
+#import <Metal/Metal.h>
 
 namespace RHI::Metal {
-    class MTLDevice;
+    class MTLTexture;
 
     class MTLTextureView : public TextureView {
     public:
-        MTLTextureView(MTLDevice &device, const TextureViewCreateInfo* createInfo);
+        MTLTextureView(MTLTexture &texture, const TextureViewCreateInfo* createInfo);
         ~MTLTextureView();
 
         void Destroy() override;
     private:
+        void CreateNativeTextureView(MTLTexture &texture, const TextureViewCreateInfo *createInfo);
+
         id<MTLTexture> textureView;
     };
 }

@@ -16,12 +16,15 @@ namespace RHI::Metal {
         MTLTexture(MTLDevice &device, const TextureCreateInfo* createInfo);
         ~MTLTexture();
 
-        id<MTLTexture> GetTexture() const;
+        id<MTLTexture> GetNativeTexture() const;
+
+        bool IsDrawableTexture() const;
 
         TextureView* CreateTextureView(const TextureViewCreateInfo* createInfo) override;
         void Destroy() override;
     private:
         MTLDevice &device;
         id<MTLTexture> texture;
+        bool isDrawable = false;
     };
 }

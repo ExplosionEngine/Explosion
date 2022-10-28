@@ -21,7 +21,7 @@ namespace RHI::Metal {
 
     Texture* MTLSwapChain::GetTexture(uint8_t index)
     {
-        return nullptr;
+        return textures[index].get();
     }
 
     uint8_t MTLSwapChain::AcquireBackTexture()
@@ -33,7 +33,10 @@ namespace RHI::Metal {
 
     void MTLSwapChain::Present()
     {
+        [drawables[currentImage] release];
+        drawables[currentImage] = nil;
 
+        currentImage = (currentImage + 1) % swapChainImageCount;
     }
 
     void MTLSwapChain::Destroy()
@@ -53,5 +56,9 @@ namespace RHI::Metal {
 
         swapChainImageCount = createInfo->textureNum;
         drawables.resize(createInfo->textureNum);
+        textures.resize(createInfo->textureNum);
+        for (uint32_t i = 0; i < createInfo->textureNum; ++i) {
+            textures[i] = std::make_unique<MTLTexture>(mtlDevice, nullptr);
+        }
     }
 }
