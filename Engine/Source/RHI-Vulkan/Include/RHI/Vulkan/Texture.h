@@ -37,6 +37,7 @@ namespace RHI::Vulkan {
         VKDevice& device;
         vk::DeviceMemory vkDeviceMemory;
         vk::Image vkImage;
+        bool ownMemory;
         Extent<3> extent;
     };
 }

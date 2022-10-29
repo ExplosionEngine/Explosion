@@ -16,10 +16,10 @@ namespace RHI::Vulkan {
     {
         auto* commandBuffer = dynamic_cast<VKCommandBuffer*>(cb);
         auto* fenceToSignaled = dynamic_cast<VKFence*>(fts);
-        Assert(commandBuffer && fenceToSignaled);
+        Assert(commandBuffer);
 
         const vk::CommandBuffer& vcb = commandBuffer->GetVkCommandBuffer();
-        const vk::Fence& fence = fenceToSignaled->GetVkFence();
+        const vk::Fence& fence = fenceToSignaled == nullptr ? VK_NULL_HANDLE : fenceToSignaled->GetVkFence();
 
         vk::SubmitInfo submitInfo{};
         submitInfo.setCommandBufferCount(1)
@@ -28,7 +28,9 @@ namespace RHI::Vulkan {
             .setSignalSemaphores(commandBuffer->GetSignalSemaphores())
             .setPCommandBuffers(&vcb);
 
-        fenceToSignaled->Reset();
+        if (fenceToSignaled != nullptr) {
+            fenceToSignaled->Reset();
+        }
         Assert(vkQueue.submit(1, &submitInfo, fence) == vk::Result::eSuccess);
     }
 

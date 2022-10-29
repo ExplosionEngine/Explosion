@@ -14,6 +14,8 @@
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Instance.h>
 #include <RHI/Vulkan/SwapChain.h>
+#include <RHI/Vulkan/BindGroup.h>
+#include <RHI/Vulkan/PipelineLayout.h>
 #include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
@@ -28,19 +30,68 @@ namespace RHI::Vulkan {
 
     void VKCommandEncoder::CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size)
     {
+        auto* srcBuffer = dynamic_cast<VKBuffer*>(src);
+        auto* dstBuffer = dynamic_cast<VKBuffer*>(dst);
+
+        vk::BufferCopy copyRegion {};
+        copyRegion.setSrcOffset(srcOffset)
+            .setDstOffset(dstOffset)
+            .setSrcOffset(size);
+        commandBuffer.GetVkCommandBuffer().copyBuffer(srcBuffer->GetVkBuffer(), dstBuffer->GetVkBuffer(), 1, &copyRegion);
     }
 
     void VKCommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size)
     {
+        auto* buffer = dynamic_cast<VKBuffer*>(src);
+        auto* texture = dynamic_cast<VKTexture*>(dst);
+
+        vk::BufferImageCopy copyRegion {};
+        copyRegion.setImageExtent(vk::Extent3D(size.x, size.y, size.z))
+            .setImageSubresource(vk::ImageSubresourceLayers(
+                vk::ImageAspectFlags(GetAspectMask(subResourceInfo->aspect)),
+                subResourceInfo->mipLevel,
+                subResourceInfo->baseArrayLayer,
+                subResourceInfo->arrayLayerNum));
+
+        commandBuffer.GetVkCommandBuffer().copyBufferToImage(buffer->GetVkBuffer(), texture->GetImage(), vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
     }
 
     void VKCommandEncoder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size)
     {
+        auto* buffer = dynamic_cast<VKBuffer*>(dst);
+        auto* texture = dynamic_cast<VKTexture*>(src);
+
+        vk::BufferImageCopy copyRegion {};
+        copyRegion.setImageExtent(vk::Extent3D(size.x, size.y, size.z))
+            .setImageSubresource(vk::ImageSubresourceLayers(
+                vk::ImageAspectFlags(GetAspectMask(subResourceInfo->aspect)),
+                subResourceInfo->mipLevel,
+                subResourceInfo->baseArrayLayer,
+                subResourceInfo->arrayLayerNum));
+
+        commandBuffer.GetVkCommandBuffer().copyImageToBuffer(texture->GetImage(), vk::ImageLayout::eTransferSrcOptimal, buffer->GetVkBuffer(), 1, &copyRegion);
     }
 
     void VKCommandEncoder::CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo,
         Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Extent<3>& size)
     {
+        auto* srcTexture = dynamic_cast<VKTexture*>(src);
+        auto* dstTexture = dynamic_cast<VKTexture*>(dst);
+
+        vk::ImageCopy copyRegion {};
+        copyRegion.setExtent(vk::Extent3D(size.x, size.y, size.z))
+            .setSrcSubresource(vk::ImageSubresourceLayers(
+                vk::ImageAspectFlags(GetAspectMask(srcSubResourceInfo->aspect)),
+                srcSubResourceInfo->mipLevel,
+                srcSubResourceInfo->baseArrayLayer,
+                srcSubResourceInfo->arrayLayerNum))
+            .setDstSubresource(vk::ImageSubresourceLayers(
+                vk::ImageAspectFlags(GetAspectMask(dstSubResourceInfo->aspect)),
+                dstSubResourceInfo->mipLevel,
+                dstSubResourceInfo->baseArrayLayer,
+                dstSubResourceInfo->arrayLayerNum));
+
+        commandBuffer.GetVkCommandBuffer().copyImage(srcTexture->GetImage(), vk::ImageLayout::eTransferSrcOptimal, dstTexture->GetImage(), vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
     }
 
     static std::tuple<vk::ImageLayout, vk::AccessFlags, vk::PipelineStageFlags> GetBarrierInfo(TextureState status)
@@ -49,6 +100,10 @@ namespace RHI::Vulkan {
             return {vk::ImageLayout::ePresentSrcKHR, vk::AccessFlagBits::eMemoryRead, vk::PipelineStageFlagBits::eBottomOfPipe};
         } else if (status == TextureState::RENDER_TARGET) {
             return {vk::ImageLayout::eColorAttachmentOptimal, vk::AccessFlagBits::eColorAttachmentWrite, vk::PipelineStageFlagBits::eColorAttachmentOutput};
+        } else if (status == TextureState::COPY_DST) {
+            return {vk::ImageLayout::eTransferDstOptimal, vk::AccessFlagBits::eTransferWrite, vk::PipelineStageFlagBits::eTransfer};
+        } else if (status == TextureState::SHADER_READ_ONLY) {
+            return {vk::ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderRead, vk::PipelineStageFlagBits::eFragmentShader};
         }
         return {vk::ImageLayout::eUndefined, vk::AccessFlags{}, vk::PipelineStageFlagBits::eTopOfPipe};
     }
@@ -98,6 +153,8 @@ namespace RHI::Vulkan {
     VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandBuffer& cmd,
         const GraphicsPassBeginInfo* beginInfo) : device(dev), commandBuffer(cmd)
     {
+        graphicsPipeline = dynamic_cast<VKGraphicsPipeline*>(beginInfo->pipeline);
+
         std::vector<vk::RenderingAttachmentInfo> colorAttachmentInfos(beginInfo->colorAttachmentNum);
         for (size_t i = 0; i < beginInfo->colorAttachmentNum; i++)
         {
@@ -143,8 +200,7 @@ namespace RHI::Vulkan {
         cmdHandle = cmd.GetVkCommandBuffer();
         cmdHandle.beginRenderingKHR(&renderingInfo, device.GetGpu().GetInstance().GetVkDispatch());
 
-        auto* pipeline = dynamic_cast<VKGraphicsPipeline*>(beginInfo->pipeline);
-        cmdHandle.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->GetVkPipeline());
+        cmdHandle.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline->GetVkPipeline());
     }
 
     VKGraphicsPassCommandEncoder::~VKGraphicsPassCommandEncoder()
@@ -153,6 +209,11 @@ namespace RHI::Vulkan {
 
     void VKGraphicsPassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
     {
+        auto* vBindGroup = dynamic_cast<VKBindGroup*>(bindGroup);
+        vk::DescriptorSet descriptorSet = vBindGroup->GetVkDescritorSet();
+        vk::PipelineLayout layout = graphicsPipeline->GetPipelineLayout()->GetVkPipelineLayout();
+
+        cmdHandle.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, 0, 1, &descriptorSet, 0, nullptr);
     }
 
     void VKGraphicsPassCommandEncoder::SetIndexBuffer(BufferView *bufferView)

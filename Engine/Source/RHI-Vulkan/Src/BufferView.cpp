@@ -32,7 +32,6 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-
     void VKBufferView::InitializeBufferAttrib(const BufferViewCreateInfo* createInfo)
     {
         offset = createInfo->offset;
@@ -42,6 +41,11 @@ namespace RHI::Vulkan {
             // TODO
             // Uniform buffer
         }
+    }
+
+    size_t VKBufferView::GetBufferSize() const
+    {
+        return size;
     }
 
     size_t VKBufferView::GetOffset() const

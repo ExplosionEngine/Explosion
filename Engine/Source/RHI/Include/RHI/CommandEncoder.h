@@ -21,7 +21,9 @@ namespace RHI {
     struct Barrier;
 
     struct TextureSubResourceInfo {
-        uint8_t mipLevels = 0;
+        uint8_t mipLevel;
+        uint8_t baseArrayLayer;
+        uint8_t arrayLayerNum;
         Extent<3> origin {};
         TextureAspect aspect = TextureAspect::COLOR;
     };

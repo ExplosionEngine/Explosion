@@ -18,8 +18,12 @@ namespace RHI::Vulkan {
 
     VKCommandBuffer::~VKCommandBuffer()
     {
+        auto vkDevice = device.GetVkDevice();
         if (commandBuffer) {
-            device.GetVkDevice().freeCommandBuffers(pool, 1, &commandBuffer);
+            vkDevice.freeCommandBuffers(pool, 1, &commandBuffer);
+        }
+        for (auto& semaphore : signalSemaphores) {
+            vkDevice.destroySemaphore(semaphore);
         }
     }
 

@@ -12,7 +12,12 @@ namespace RHI::Vulkan {
         CreateVKFence();
     }
 
-    VKFence::~VKFence() = default;
+    VKFence::~VKFence()
+    {
+        if (fence) {
+            device.GetVkDevice().destroyFence(fence);
+        }
+    }
 
     FenceStatus VKFence::GetStatus()
     {

@@ -30,14 +30,14 @@ namespace RHI::Vulkan {
     }
 
     VKTexture::VKTexture(VKDevice& dev, const TextureCreateInfo* createInfo, vk::Image image)
-        : Texture(createInfo), device(dev), vkDeviceMemory(VK_NULL_HANDLE), vkImage(image)
+        : Texture(createInfo), device(dev), vkDeviceMemory(VK_NULL_HANDLE), vkImage(image), ownMemory(false)
     {
         Assert(createInfo != nullptr);
         extent = createInfo->extent;
     }
 
     VKTexture::VKTexture(VKDevice& dev, const TextureCreateInfo* createInfo)
-        : Texture(createInfo), device(dev)
+        : Texture(createInfo), device(dev), vkImage(VK_NULL_HANDLE), ownMemory(true)
     {
         Assert(createInfo != nullptr);
         extent = createInfo->extent;
@@ -48,7 +48,7 @@ namespace RHI::Vulkan {
 
     VKTexture::~VKTexture()
     {
-        if (vkImage) {
+        if (vkImage && ownMemory) {
             device.GetVkDevice().destroyImage(vkImage, nullptr);
         }
         FreeMemory();
