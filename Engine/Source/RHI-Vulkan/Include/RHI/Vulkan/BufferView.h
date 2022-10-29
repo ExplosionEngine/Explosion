@@ -18,11 +18,13 @@ namespace RHI::Vulkan {
         void Destroy() override;
 
         size_t GetOffset() const;
+        size_t GetBufferSize() const;
         IndexFormat GetIndexFormat() const;
         VKBuffer& GetBuffer();
 
     private:
         VKBuffer& buffer;
+        size_t size;
         size_t offset;
         IndexFormat format;
 

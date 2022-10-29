@@ -159,3 +159,12 @@ Add3rdCMakeProject(
     LINK $<INSTALL_DIR>/lib
     LIB city
 )
+
+# stb-image
+Add3rdHeaderOnlyPackage(
+    NAME stb
+    PLATFORM All
+    VERSION master-8b5f1f37b5b75829fc72d38e7b5d4bcbf8a26d55
+    HASH 32e28f89a85b3bb6749e8caed9eb5226f7f5956769005d2b5a41d48d9481d90c
+    INCLUDE $<SOURCE_DIR>
+)

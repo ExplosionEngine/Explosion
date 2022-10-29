@@ -13,6 +13,9 @@
 #include <RHI/Vulkan/ShaderModule.h>
 #include <RHI/Vulkan/PipelineLayout.h>
 #include <RHI/Vulkan/BindGroupLayout.h>
+#include <RHI/Vulkan/BindGroup.h>
+#include <RHI/Vulkan/Sampler.h>
+#include <RHI/Vulkan/Texture.h>
 #include <RHI/Vulkan/SwapChain.h>
 #include <RHI/Vulkan/Pipeline.h>
 #include <RHI/Vulkan/CommandBuffer.h>
@@ -81,14 +84,12 @@ namespace RHI::Vulkan {
 
     Texture* VKDevice::CreateTexture(const TextureCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new VKTexture(*this, createInfo);
     }
 
     Sampler* VKDevice::CreateSampler(const SamplerCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new VKSampler(*this, createInfo);
     }
 
     BindGroupLayout* VKDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
@@ -98,8 +99,7 @@ namespace RHI::Vulkan {
 
     BindGroup* VKDevice::CreateBindGroup(const BindGroupCreateInfo* createInfo)
     {
-        // TODO
-        return nullptr;
+        return new VKBindGroup(*this, createInfo);
     }
 
     PipelineLayout* VKDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo)

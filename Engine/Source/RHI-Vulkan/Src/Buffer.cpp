@@ -48,7 +48,7 @@ namespace RHI::Vulkan {
         return result;
     }
 
-    VKBuffer::VKBuffer(VKDevice& d, const BufferCreateInfo* createInfo) : Buffer(createInfo), device(d)
+    VKBuffer::VKBuffer(VKDevice& d, const BufferCreateInfo* createInfo) : Buffer(createInfo), device(d), usages(createInfo->usages)
     {
         CreateBuffer(createInfo);
         AllocateMemory(createInfo);

@@ -9,6 +9,7 @@
 namespace RHI::Vulkan {
 
     class VKDevice;
+    class VKPipelineLayout;
 
     class VKGraphicsPipeline : public GraphicsPipeline {
     public:
@@ -19,13 +20,15 @@ namespace RHI::Vulkan {
 
         vk::Pipeline GetVkPipeline();
         vk::RenderPass GetVkRenderPass();
+        VKPipelineLayout* GetPipelineLayout() const;
 
     private:
+        void SavePipelineLayout(const GraphicsPipelineCreateInfo* createInfo);
         void CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo);
-
         void CreateNativeRenderPass(const GraphicsPipelineCreateInfo* createInfo);
 
         VKDevice& device;
+        VKPipelineLayout* pipelineLayout;
         vk::RenderPass renderPass = VK_NULL_HANDLE;
         vk::Pipeline pipeline = VK_NULL_HANDLE;
     };

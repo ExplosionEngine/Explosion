@@ -27,7 +27,7 @@ function(AddRHISample)
         NAME ${PARAMS_NAME}
         SRC ${CMAKE_CURRENT_SOURCE_DIR}/${PARAMS_SRC}
         INC Sample
-        LIB RHI glfw GLM clipp ${PLATFORM_EXT_LIBS} Render
+        LIB RHI glfw GLM clipp ${PLATFORM_EXT_LIBS} Render stb
         DEP_TARGET ${PLATFORM_DEP_TARGET}
         RES ${CMAKE_CURRENT_SOURCE_DIR}/${PARAMS_SHADER}->Shader/${PARAMS_SHADER}
     )
@@ -38,3 +38,18 @@ AddRHISample(
     SRC Sample/Triangle.cpp
     SHADER Sample/Triangle.hlsl
 )
+
+AddRHISample(
+    NAME RHI-TexSampling
+    SRC Sample/TexSampling.cpp
+    SHADER Sample/TexSampling.hlsl
+)
+
+# Provisionally copy the source image to the Bin dir
+add_custom_command(
+    TARGET RHI-TexSampling PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/Sample/awesomeface.png
+    ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+)
+
