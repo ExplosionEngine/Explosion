@@ -234,19 +234,18 @@ private:
                 graphicsEncoder->Draw(3, 1, 0, 0);
             }
             graphicsEncoder->EndPass();
-            delete graphicsEncoder;
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::RENDER_TARGET, TextureState::PRESENT));
         }
         commandEncoder->End();
         commandEncoder->SwapChainSync(swapChain);
-        delete commandEncoder;
     }
 
     void SubmitCommandBufferAndPresent()
     {
+        fence->Reset();
         graphicsQueue->Submit(commandBuffer, fence);
-        fence->Wait();
         swapChain->Present();
+        fence->Wait();
     }
 
     Instance* instance = nullptr;

@@ -61,10 +61,13 @@ namespace RHI::Metal {
         nativeWindow = static_cast<NSWindow*>(createInfo->window);
         view = [[MetalView alloc] initWithFrame:nativeWindow
                                          device:mtlDevice.GetDevice()];
-        [view retain];
-
         CGSize size = CGSizeMake(createInfo->extent.x, createInfo->extent.y);
-        view.metalLayer.drawableSize = size;
+        [view setFrameSize: size];
+//        view.metalLayer.drawableSize = size;
+        
+        [view retain];
+        
+        nativeWindow.contentView = view;
 
         swapChainImageCount = createInfo->textureNum;
         drawables.resize(createInfo->textureNum);

@@ -50,7 +50,7 @@ public:
         }
         static const std::unordered_map<std::string, RHI::RHIType> RHI_MAP = {
             {"DirectX12", RHI::RHIType::DIRECTX_12},
-            {"VULKAN", RHI::RHIType::VULKAN},
+            {"Vulkan", RHI::RHIType::VULKAN},
             {"Metal", RHI::RHIType::METAL}
         };
         auto iter = RHI_MAP.find(rhiString);

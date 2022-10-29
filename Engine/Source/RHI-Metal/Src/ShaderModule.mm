@@ -44,7 +44,7 @@ namespace RHI::Metal {
 
         MTLCompileOptions* mtlOptions = [MTLCompileOptions alloc];
         mtlOptions.fastMathEnabled = YES;
-//        mtlOptions.languageVersion = MTLLanguageVersion2_2;
+        mtlOptions.languageVersion = MTLLanguageVersion2_2;
 
         NSError* error = nil;
         library = [device.GetDevice() newLibraryWithSource:nsSource
