@@ -20,10 +20,15 @@ namespace RHI::Metal {
         void Destroy() override;
 
         CommandEncoder* Begin() override;
+
+        void Reset();
+
+        id<MTLCommandBuffer> GetNativeCommandBuffer() const;
     private:
-        void CreateNativeCommandBuffer();
+        id<MTLCommandBuffer> CreateNativeCommandBuffer();
 
         MTLDevice& device;
+        id<MTLCommandBuffer> commandBuffer = nil;
     };
 
 }

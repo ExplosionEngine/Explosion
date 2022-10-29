@@ -34,8 +34,8 @@ namespace RHI::Metal {
         ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) override;
         ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) override { return nullptr; }
         GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override;
-        CommandBuffer* CreateCommandBuffer() override { return nullptr; }
-        Fence* CreateFence() override { return nullptr; }
+        CommandBuffer* CreateCommandBuffer() override;
+        Fence* CreateFence() override;
 
         void Destroy() override;
 

@@ -5,6 +5,8 @@
 #pragma once
 
 #include <RHI/Texture.h>
+#include <Metal/TextureView.h>
+#import <QuartzCore/CAMetalLayer.h>
 #import <Metal/Metal.h>
 #import <Metal/MTLTexture.h>
 
@@ -18,13 +20,17 @@ namespace RHI::Metal {
 
         id<MTLTexture> GetNativeTexture() const;
 
+        void SetDrawable(id<CAMetalDrawable> value);
+
+        void ResetDrawable();
+
         bool IsDrawableTexture() const;
 
         TextureView* CreateTextureView(const TextureViewCreateInfo* createInfo) override;
         void Destroy() override;
     private:
         MTLDevice &device;
-        id<MTLTexture> texture;
-        bool isDrawable = false;
+        id<MTLTexture> texture = nil;
+        DrawablePtr drawable;
     };
 }

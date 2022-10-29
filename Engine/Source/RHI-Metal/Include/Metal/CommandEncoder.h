@@ -14,7 +14,7 @@ namespace RHI::Metal {
     class MTLCommandEncoder : public CommandEncoder {
     public:
         NON_COPYABLE(MTLCommandEncoder)
-        explicit MTLCommandEncoder(MTLDevice& dev, MTLCommandBuffer& cmd);
+        explicit MTLCommandEncoder(MTLDevice& dev, id<MTLCommandBuffer> cmd);
         ~MTLCommandEncoder() override;
 
         void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
@@ -26,15 +26,17 @@ namespace RHI::Metal {
         ComputePassCommandEncoder* BeginComputePass(const ComputePassBeginInfo* beginInfo) override;
         GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
         void End() override;
+
+        void SwapChainSync(SwapChain* swapChain) override;
     private:
         MTLDevice& device;
-        MTLCommandBuffer& commandBuffer;
+        id<MTLCommandBuffer> commandBuffer;
     };
 
     class MTLComputePassCommandEncoder : public ComputePassCommandEncoder {
     public:
         NON_COPYABLE(MTLComputePassCommandEncoder)
-        explicit MTLComputePassCommandEncoder(MTLDevice &dev, MTLCommandBuffer &cmd);
+        explicit MTLComputePassCommandEncoder(MTLDevice &dev, id<MTLCommandBuffer> cmd);
         ~MTLComputePassCommandEncoder() override;
 
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
@@ -43,13 +45,13 @@ namespace RHI::Metal {
 
     private:
         MTLDevice& device;
-        MTLCommandBuffer& commandBuffer;
+        id<MTLCommandBuffer> commandBuffer = nil;
     };
 
     class MTLGraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
     public:
         NON_COPYABLE(MTLGraphicsPassCommandEncoder)
-        explicit MTLGraphicsPassCommandEncoder(MTLDevice &dev, MTLCommandBuffer &cmd, const GraphicsPassBeginInfo* beginInfo);
+        explicit MTLGraphicsPassCommandEncoder(MTLDevice &dev, id<MTLCommandBuffer> cmd, const GraphicsPassBeginInfo* beginInfo);
         ~MTLGraphicsPassCommandEncoder() override;
 
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
@@ -65,7 +67,16 @@ namespace RHI::Metal {
         void EndPass() override;
 
     private:
+        void CommitRenderResources();
+
         MTLDevice& device;
-        MTLCommandBuffer& commandBuffer;
+        id<MTLCommandBuffer> commandBuffer = nil;
+        id<MTLRenderCommandEncoder> renderEncoder = nil;
+
+        id<MTLBuffer> indexBuffer = nil;
+        uint32_t indexOffset = 0;
+        MTLIndexType indexType = MTLIndexTypeUInt32;
+
+        MTLPrimitiveType primitiveType = MTLPrimitiveTypeTriangle;
     };
 }

@@ -22,6 +22,8 @@ namespace RHI::Metal {
         void Submit(CommandBuffer* commandBuffer, Fence* fenceToSignal) override;
         void Wait(Fence* fenceToSignal) override;
 
+        id<MTLCommandQueue> GetNativeQueue() const;
+
     private:
         void CreateNativeQueue();
 

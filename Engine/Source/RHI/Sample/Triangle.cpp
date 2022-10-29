@@ -84,7 +84,7 @@ private:
     void CreateSwapChain()
     {
         SwapChainCreateInfo swapChainCreateInfo {};
-        swapChainCreateInfo.format = PixelFormat::RGBA8_UNORM;
+        swapChainCreateInfo.format = PixelFormat::BGRA8_UNORM;
         swapChainCreateInfo.presentMode = PresentMode::IMMEDIATELY;
         swapChainCreateInfo.textureNum = BACK_BUFFER_COUNT;
         swapChainCreateInfo.extent = {width, height};
@@ -96,7 +96,7 @@ private:
             swapChainTextures[i] = swapChain->GetTexture(i);
 
             TextureViewCreateInfo viewCreateInfo {};
-            viewCreateInfo.format = PixelFormat::RGBA8_UNORM;
+            viewCreateInfo.format = PixelFormat::BGRA8_UNORM;
             viewCreateInfo.dimension = TextureViewDimension::TV_2D;
             viewCreateInfo.baseArrayLayer = 0;
             viewCreateInfo.arrayLayerNum = 1;
@@ -174,7 +174,7 @@ private:
         vertexBufferLayout.attributes = vertexAttributes.data();
 
         std::array<ColorTargetState, 1> colorTargetStates {};
-        colorTargetStates[0].format = PixelFormat::RGBA8_UNORM;
+        colorTargetStates[0].format = PixelFormat::BGRA8_UNORM;
         colorTargetStates[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
 
         GraphicsPipelineCreateInfo createInfo {};
@@ -234,10 +234,12 @@ private:
                 graphicsEncoder->Draw(3, 1, 0, 0);
             }
             graphicsEncoder->EndPass();
+            delete graphicsEncoder;
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::RENDER_TARGET, TextureState::PRESENT));
         }
         commandEncoder->End();
         commandEncoder->SwapChainSync(swapChain);
+        delete commandEncoder;
     }
 
     void SubmitCommandBufferAndPresent()

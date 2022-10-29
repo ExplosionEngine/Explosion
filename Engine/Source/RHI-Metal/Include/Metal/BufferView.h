@@ -17,6 +17,10 @@ namespace RHI::Metal {
         ~MTLBufferView();
 
         void Destroy() override;
+
+        id<MTLBuffer> GetNativeBuffer() const;
+        uint32_t GetOffset() const;
+        MTLIndexType GetIndexType() const;
     private:
         id<MTLBuffer> mtlBuffer = nil;
         BufferViewCreateInfo info;

@@ -17,6 +17,7 @@ namespace RHI::Metal {
         ~MTLGraphicsPipeline() override;
         void Destroy() override;
 
+        id<MTLRenderPipelineState> GetNativePipeline() const;
     private:
         void CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo);
         id<MTLFunction> CreateFunction(ShaderStageBits stage, ShaderModule *module);

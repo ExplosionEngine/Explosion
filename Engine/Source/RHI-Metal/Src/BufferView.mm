@@ -22,4 +22,24 @@ namespace RHI::Metal {
     {
         delete this;
     }
+
+    id<MTLBuffer> MTLBufferView::GetNativeBuffer() const
+    {
+        return mtlBuffer;
+    }
+
+    uint32_t MTLBufferView::GetOffset() const
+    {
+        return info.offset;
+    }
+
+    MTLIndexType MTLBufferView::GetIndexType() const
+    {
+        if (info.index.format == IndexFormat::UINT16) {
+            return MTLIndexTypeUInt16;
+        } else {
+            return MTLIndexTypeUInt32;
+        }
+    }
+
 }

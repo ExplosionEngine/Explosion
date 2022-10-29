@@ -23,11 +23,21 @@ namespace RHI::Metal {
         delete this;
     }
 
+    id<MTLTexture> MTLTextureView::GetTexture() const
+    {
+        return drawable ? drawable->GetTexture() : textureView;
+    }
+
     void MTLTextureView::CreateNativeTextureView(MTLTexture &texture, const TextureViewCreateInfo *createInfo)
     {
         if (texture.IsDrawableTexture()) {
             textureView = texture.GetNativeTexture();
         }
+    }
+
+    void MTLTextureView::SetDrawable(const DrawablePtr &value)
+    {
+        drawable = value;
     }
 
 }

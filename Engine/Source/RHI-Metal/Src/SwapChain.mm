@@ -27,21 +27,33 @@ namespace RHI::Metal {
     uint8_t MTLSwapChain::AcquireBackTexture()
     {
         drawables[currentImage] = [view.metalLayer nextDrawable];
-        [drawables[currentImage] retain];
+        textures[currentImage]->SetDrawable(drawables[currentImage]);
         return currentImage;
     }
 
     void MTLSwapChain::Present()
     {
-        [drawables[currentImage] release];
-        drawables[currentImage] = nil;
+//        MTLQueue *queue = static_cast<MTLQueue*>(mtlDevice.GetQueue(QueueType::GRAPHICS, 0));
+//        id<MTLCommandBuffer> commandBuffer = [queue->GetNativeQueue() commandBuffer];
+//        [commandBuffer encodeWaitForEvent:event value:1];
+//        [commandBuffer encodeSignalEvent:event value:0];
+//        [commandBuffer presentDrawable:drawables[currentImage]];
+//        [commandBuffer commit];
 
+        textures[currentImage]->ResetDrawable();
+        drawables[currentImage] = nil;
         currentImage = (currentImage + 1) % swapChainImageCount;
     }
 
     void MTLSwapChain::Destroy()
     {
         delete this;
+    }
+
+    void MTLSwapChain::AddSignalEventToCmd(id<MTLCommandBuffer> commandBuffer)
+    {
+        [commandBuffer presentDrawable:drawables[currentImage]];
+//        [commandBuffer encodeSignalEvent:event value:1];
     }
 
     void MTLSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo* createInfo)
@@ -60,5 +72,7 @@ namespace RHI::Metal {
         for (uint32_t i = 0; i < createInfo->textureNum; ++i) {
             textures[i] = std::make_unique<MTLTexture>(mtlDevice, nullptr);
         }
+
+        event = [mtlDevice.GetDevice() newEvent];
     }
 }

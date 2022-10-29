@@ -192,17 +192,17 @@ namespace RHI::Metal {
 //    VK_ENUM_MAP_ITEM(StencilOp::DECREMENT_WRAP,  vk::StencilOp::eDecrementAndWrap)
 //    VK_ENUM_MAP_END()
 //
-//    VK_ENUM_MAP_BEGIN(LoadOp, vk::AttachmentLoadOp)
-//    VK_ENUM_MAP_ITEM(LoadOp::LOAD,  vk::AttachmentLoadOp::eLoad)
-//    VK_ENUM_MAP_ITEM(LoadOp::CLEAR, vk::AttachmentLoadOp::eClear)
-//    VK_ENUM_MAP_ITEM(LoadOp::MAX,   vk::AttachmentLoadOp::eNoneEXT)
-//    VK_ENUM_MAP_END()
-//
-//    VK_ENUM_MAP_BEGIN(StoreOp, vk::AttachmentStoreOp)
-//    VK_ENUM_MAP_ITEM(StoreOp::STORE,   vk::AttachmentStoreOp::eStore)
-//    VK_ENUM_MAP_ITEM(StoreOp::DISCARD, vk::AttachmentStoreOp::eDontCare)
-//    VK_ENUM_MAP_ITEM(StoreOp::MAX,     vk::AttachmentStoreOp::eNoneEXT)
-//    VK_ENUM_MAP_END()
+    MTL_ENUM_MAP_BEGIN(LoadOp, MTLLoadAction)
+    MTL_ENUM_MAP_ITEM(LoadOp::LOAD,      MTLLoadActionLoad)
+    MTL_ENUM_MAP_ITEM(LoadOp::CLEAR,     MTLLoadActionClear)
+    MTL_ENUM_MAP_ITEM(LoadOp::MAX,       MTLLoadActionDontCare)
+    MTL_ENUM_MAP_END()
+
+    MTL_ENUM_MAP_BEGIN(StoreOp, MTLStoreAction)
+    MTL_ENUM_MAP_ITEM(StoreOp::STORE,     MTLStoreActionStore)
+    MTL_ENUM_MAP_ITEM(StoreOp::DISCARD,   MTLStoreActionDontCare)
+    MTL_ENUM_MAP_ITEM(StoreOp::MAX,       MTLStoreActionUnknown)
+    MTL_ENUM_MAP_END()
 //
 //    VK_ENUM_MAP_BEGIN(IndexFormat, vk::IndexType)
 //    VK_ENUM_MAP_ITEM(IndexFormat::UINT16, vk::IndexType::eUint16)
@@ -227,5 +227,10 @@ namespace RHI::Metal {
         if (mask & ColorWriteBits::BLUE) res |= MTLColorWriteMaskBlue;
         if (mask & ColorWriteBits::ALPHA) res |= MTLColorWriteMaskAlpha;
         return res;
+    }
+
+    inline MTLClearColor MakeClearColor(const ColorNormalized<4> &color)
+    {
+        MTLClearColorMake(color.r, color.g, color.b, color.a);
     }
 }

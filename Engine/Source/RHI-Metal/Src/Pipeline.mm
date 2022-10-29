@@ -37,6 +37,11 @@ namespace RHI::Metal {
         delete this;
     }
 
+    id<MTLRenderPipelineState> MTLGraphicsPipeline::GetNativePipeline() const
+    {
+        return pipeline;
+    }
+
     void MTLGraphicsPipeline::CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
     {
         MTLRenderPipelineDescriptor *pipelineDesc = [[MTLRenderPipelineDescriptor alloc] init];

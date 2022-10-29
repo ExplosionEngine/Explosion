@@ -24,14 +24,15 @@ namespace RHI::Metal {
         uint8_t AcquireBackTexture() override;
         void Present() override;
         void Destroy() override;
-
+        void AddSignalEventToCmd(id<MTLCommandBuffer> commandBuffer);
     private:
         void CreateNativeSwapChain(const SwapChainCreateInfo* createInfo);
         MTLDevice& mtlDevice;
         MetalView* view = nullptr;
         NSWindow* nativeWindow = nullptr;
-        std::vector<std::unique_ptr<MTLTexture>> textures;
+        id<MTLEvent> event = nil;
         std::vector<id<CAMetalDrawable>> drawables;
+        std::vector<std::unique_ptr<MTLTexture>> textures;
         uint32_t swapChainImageCount = 0;
         uint32_t currentImage = 0;
     };

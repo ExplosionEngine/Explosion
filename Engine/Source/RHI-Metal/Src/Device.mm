@@ -12,6 +12,8 @@
 #include <Metal/BufferView.h>
 #include <Metal/Pipeline.h>
 #include <Metal/PipelineLayout.h>
+#include <Metal/CommandBuffer.h>
+#include <Metal/Synchronous.h>
 
 namespace RHI::Metal {
     MTLDevice::MTLDevice(MTLGpu& gpu_, const DeviceCreateInfo* createInfo) : Device(createInfo), gpu(gpu_)
@@ -34,13 +36,10 @@ namespace RHI::Metal {
     Queue* MTLDevice::GetQueue(QueueType type, size_t index)
     {
         auto &queueList = queues[type];
-        if (index >= queueList.size()) {
-            return nullptr;
-        }
         if (queueList.empty()) {
             queueList.emplace_back(new MTLQueue(*this));
         }
-        return queueList[index].get();
+        return index >= queueList.size() ? queueList[0].get() : queueList[index].get();
     }
 
     SwapChain* MTLDevice::CreateSwapChain(const SwapChainCreateInfo* createInfo)
@@ -71,6 +70,16 @@ namespace RHI::Metal {
     GraphicsPipeline* MTLDevice::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
     {
         return new MTLGraphicsPipeline(*this, createInfo);
+    }
+
+    CommandBuffer* MTLDevice::CreateCommandBuffer()
+    {
+        return new MTLCommandBuffer(*this);
+    }
+
+    Fence* MTLDevice::CreateFence()
+    {
+        return new MTLFence(*this);
     }
 
 //    SwapChain* MTLDevice::CreateSwapChain(const SwapChainCreateInfo* createInfo)
