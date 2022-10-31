@@ -138,7 +138,11 @@ namespace RHI::Vulkan {
         Assert(vkDevice.createSwapchainKHR(&swapChainInfo, nullptr, &swapChain) == vk::Result::eSuccess);
 
         TextureCreateInfo textureInfo = {};
-        textureInfo.format = createInfo->format == PixelFormat::RGBA8_UNORM ? PixelFormat::BGRA8_UNORM : createInfo->format;
+#ifdef __APPLE__
+        textureInfo.format = PixelFormat::BGRA8_UNORM;
+#else
+        textureInfo.format = createInfo->format;
+#endif
         textureInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::RENDER_ATTACHMENT;
         textureInfo.mipLevels = 1;
         textureInfo.samples = 1;
