@@ -15,6 +15,11 @@ namespace Mirror {
 
     Type::~Type() = default;
 
+    const std::string& Type::GetName() const
+    {
+        return name;
+    }
+
     const std::string& Type::GetMeta(const std::string& key) const
     {
         auto iter = metas.find(key);
@@ -62,14 +67,26 @@ namespace Mirror {
 
     Constructor::~Constructor() = default;
 
-    Any Constructor::ConstructOnStackWith(Any* arguments, size_t argumentsSize)
+    Any Constructor::ConstructOnStackWith(Any* arguments, size_t argumentsSize) const
     {
         return stackConstructor(arguments, argumentsSize);
     }
 
-    Any Constructor::NewObjectWith(Any* arguments, size_t argumentsSize)
+    Any Constructor::NewObjectWith(Any* arguments, size_t argumentsSize) const
     {
         return heapConstructor(arguments, argumentsSize);
+    }
+
+    Destructor::Destructor(Destructor::Invoker inDestructor)
+        : Type(std::string(NamePresets::destructor)), destructor(std::move(inDestructor))
+    {
+    }
+
+    Destructor::~Destructor() = default;
+
+    void Destructor::InvokeWith(Any* object) const
+    {
+        destructor(object);
     }
 
     MemberVariable::MemberVariable(std::string inName, MemberVariable::Setter inSetter, MemberVariable::Getter inGetter)
@@ -81,14 +98,14 @@ namespace Mirror {
 
     MemberVariable::~MemberVariable() = default;
 
-    void MemberVariable::Set(Any* clazz, Any* value)
+    void MemberVariable::Set(Any* object, Any* value) const
     {
-        setter(clazz, value);
+        setter(object, value);
     }
 
-    Any MemberVariable::Get(Any* clazz)
+    Any MemberVariable::Get(Any* object) const
     {
-        return getter(clazz);
+        return getter(object);
     }
 
     MemberFunction::MemberFunction(std::string inName, Invoker inInvoker)
@@ -99,12 +116,12 @@ namespace Mirror {
 
     MemberFunction::~MemberFunction() = default;
 
-    Any MemberFunction::InvokeWith(Any* clazz, Any* args, size_t argsSize) const
+    Any MemberFunction::InvokeWith(Any* object, Any* args, size_t argsSize) const
     {
-        return invoker(clazz, args, argsSize);
+        return invoker(object, args, argsSize);
     }
 
-    GlobalScope::GlobalScope() : Type("_GlobalScope") {}
+    GlobalScope::GlobalScope() : Type(std::string(NamePresets::globalScope)) {}
 
     GlobalScope::~GlobalScope() = default;
 
@@ -156,6 +173,12 @@ namespace Mirror {
         auto iter = classes.find(name);
         Assert(iter != classes.end());
         return iter->second;
+    }
+
+    const Destructor& Class::GetDestructor() const
+    {
+        Assert(destructor.has_value());
+        return destructor.value();
     }
 
     const Constructor* Class::FindConstructor(const std::string& name) const

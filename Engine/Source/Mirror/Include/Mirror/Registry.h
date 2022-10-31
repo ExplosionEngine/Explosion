@@ -27,20 +27,51 @@ namespace Mirror::Internal {
     template <typename Class, auto Ptr, typename ArgsTuple, size_t... I>
     auto InvokeMemberFunction(Class& object, ArgsTuple& args, std::index_sequence<I...>)
     {
-        return object.*Ptr(std::get<I>(args)...);
+        return (object.*Ptr)(std::get<I>(args)...);
+    }
+
+    template <typename Class, typename ArgsTuple, size_t... I>
+    auto InvokeConstructorStack(ArgsTuple& args, std::index_sequence<I...>)
+    {
+        return Class(std::get<I>(args)...);
+    }
+
+    template <typename Class, typename ArgsTuple, size_t... I>
+    auto InvokeConstructorNew(ArgsTuple& args, std::index_sequence<I...>)
+    {
+        return new Class(std::get<I>(args)...);
     }
 }
 
 namespace Mirror {
     template <typename C>
-    class MIRROR_API ClassRegistry {
+    class ClassRegistry {
     public:
         ~ClassRegistry() = default;
 
         template <typename... Args>
         ClassRegistry& Constructor(const std::string& inName)
         {
-            // TODO
+            using ArgsTupleType = std::tuple<Args...>;
+            constexpr size_t tupleSize = std::tuple_size_v<ArgsTupleType>;
+
+            auto iter = clazz.constructors.find(inName);
+            Assert(iter == clazz.constructors.end());
+
+            clazz.constructors.emplace(std::make_pair(inName, Mirror::Constructor(
+                inName,
+                [](Any* args, size_t argSize) -> Any {
+                    Assert(tupleSize == argSize);
+                    auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
+                    return Any::From(Internal::InvokeConstructorStack<C, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
+                },
+                [](Any* args, size_t argSize) -> Any {
+                    Assert(tupleSize == argSize);
+                    auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
+                    return Any::From(Internal::InvokeConstructorNew<C, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
+                }
+            )));
+            return *this;
         }
 
         template <auto Ptr>
@@ -57,7 +88,7 @@ namespace Mirror {
                     *Ptr = inValue->CastTo<ValueType>();
                 },
                 []() -> Any {
-                    return Any(std::ref(*Ptr));
+                    return Any::From(std::ref(*Ptr));
                 }
             )));
             return *this;
@@ -83,7 +114,7 @@ namespace Mirror {
                         Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {});
                         return {};
                     } else {
-                        return Any(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
+                        return Any::From(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
                     }
                 }
             )));
@@ -121,7 +152,7 @@ namespace Mirror {
             auto iter = clazz.memberFunctions.find(inName);
             Assert(iter == clazz.memberFunctions.end());
 
-            clazz.memberFunctions[inName] = Mirror::MemberFunction(
+            clazz.memberFunctions.emplace(std::make_pair(inName, Mirror::MemberFunction(
                 inName,
                 [](Any* object, Any* args, size_t argSize) -> Any {
                     constexpr size_t tupleSize = std::tuple_size_v<ArgsTupleType>;
@@ -135,14 +166,17 @@ namespace Mirror {
                         return Any::From(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->CastTo<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {}));
                     }
                 }
-            );
+            )));
             return *this;
         }
 
     private:
         friend class Registry;
 
-        explicit ClassRegistry(Class& inClass) : clazz(inClass) {}
+        explicit ClassRegistry(Class& inClass) : clazz(inClass)
+        {
+            clazz.destructor = Mirror::Destructor([](Any* object) -> void { object->CastTo<C&>().~C(); });
+        }
 
         Class& clazz;
     };
@@ -165,7 +199,7 @@ namespace Mirror {
                     *Ptr = inValue->CastTo<ValueType>();
                 },
                 []() -> Any {
-                    return Any(std::ref(*Ptr));
+                    return Any::From(std::ref(*Ptr));
                 }
             )));
             return *this;
@@ -224,8 +258,8 @@ namespace Mirror {
         template <typename C>
         ClassRegistry<C> Class(const std::string& name)
         {
-            classes[name] = Mirror::Class(name);
-            return ClassRegistry<C>(classes[name]);
+            classes.emplace(std::make_pair(name, Mirror::Class(name)));
+            return ClassRegistry<C>(classes.at(name));
         }
 
     private:
