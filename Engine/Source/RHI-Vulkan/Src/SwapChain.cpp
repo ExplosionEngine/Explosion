@@ -138,8 +138,8 @@ namespace RHI::Vulkan {
         Assert(vkDevice.createSwapchainKHR(&swapChainInfo, nullptr, &swapChain) == vk::Result::eSuccess);
 
         TextureCreateInfo textureInfo = {};
-#ifdef __APPLE__
-        textureInfo.format = PixelFormat::BGRA8_UNORM;
+#if PLATFORM_MACOS
+        textureInfo.format = createInfo->format == PixelFormat::RGBA8_UNORM ? PixelFormat::BGRA8_UNORM : createInfo->format;
 #else
         textureInfo.format = createInfo->format;
 #endif
