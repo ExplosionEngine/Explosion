@@ -94,7 +94,6 @@ private:
             swapChainTextures[i] = swapChain->GetTexture(i);
 
             TextureViewCreateInfo viewCreateInfo {};
-            viewCreateInfo.format = PixelFormat::RGBA8_UNORM;
             viewCreateInfo.dimension = TextureViewDimension::TV_2D;
             viewCreateInfo.baseArrayLayer = 0;
             viewCreateInfo.arrayLayerNum = 1;
