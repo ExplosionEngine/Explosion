@@ -9,7 +9,6 @@
 
 namespace RHI {
     struct TextureViewCreateInfo {
-        PixelFormat format;
         TextureViewDimension dimension;
         TextureAspect aspect;
         uint8_t baseMipLevel;
