@@ -29,8 +29,8 @@ namespace RHI::DirectX12 {
         void Destroy() override;
 
     private:
-        void CreateDX12SwapChain(const SwapChainCreateInfo* createInfo);
-        void FetchTextures();
+        void CreateDX12SwapChain(const SwapChainCreateInfo* createInfo) ;
+        void FetchTextures(PixelFormat format);
 
         DX12Device& device;
         uint8_t textureNum;
