@@ -103,6 +103,9 @@ protected:
         } else if (rhiType == RHI::RHIType::VULKAN) {
             options.byteCodeType = Render::ShaderByteCodeType::SPRIV;
             options.definitions.emplace_back("VULKAN=1");
+        } else if (rhiType == RHI::RHIType::METAL) {
+            options.byteCodeType = Render::ShaderByteCodeType::MBC;
+            options.definitions.emplace_back("VULKAN=0");
         }
         options.withDebugInfo = false;
         auto future = Render::ShaderCompiler::Get().Compile(info, options);

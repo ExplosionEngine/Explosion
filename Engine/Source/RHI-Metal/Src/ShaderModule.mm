@@ -4,8 +4,6 @@
 
 #include <Metal/ShaderModule.h>
 #include <Metal/Device.h>
-#include <spirv_cross/spirv_cross.hpp>
-#include <spirv_cross/spirv_msl.hpp>
 
 namespace RHI::Metal {
 
@@ -32,15 +30,7 @@ namespace RHI::Metal {
 
     void MTLShaderModule::CreateNativeShaderLibrary(const ShaderModuleCreateInfo* createInfo)
     {
-        spirv_cross::CompilerMSL compiler(static_cast<const uint32_t*>(createInfo->byteCode), createInfo->size / sizeof(uint32_t));
-        spirv_cross::CompilerMSL::Options options;
-        options.platform = spirv_cross::CompilerMSL::Options::Platform::macOS;
-        options.enable_decoration_binding = true;
-        options.pad_fragment_output_components = true;
-        compiler.set_msl_options(options);
-
-        std::string source = compiler.compile();
-        NSString* nsSource = [[NSString alloc] initWithCString:source.data() encoding:NSASCIIStringEncoding];
+        NSString* nsSource = [[NSString alloc] initWithCString:static_cast<const char*>(createInfo->byteCode) encoding:NSASCIIStringEncoding];
 
         MTLCompileOptions* mtlOptions = [MTLCompileOptions alloc];
         mtlOptions.fastMathEnabled = YES;
