@@ -173,7 +173,8 @@ private:
 
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = texWidth * texHeight * 4;
-        bufferCreateInfo.usages = BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        // TO make this buffer has correct resource state(D3D12_RESOURCE_STATE_GENERIC_READ) in dx, add uniform usage flag
+        bufferCreateInfo.usages = BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
         pixelBuffer = device->CreateBuffer(&bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
@@ -206,7 +207,8 @@ private:
 
         texCommandBuffer = device->CreateCommandBuffer();
         auto* commandEncoder = texCommandBuffer->Begin();
-        commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture, TextureState::UNDEFINED, TextureState::COPY_DST));
+        // Dx need not to transition resource state before copy
+//        commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture, TextureState::UNDEFINED, TextureState::COPY_DST));
         TextureSubResourceInfo subResourceInfo {};
         subResourceInfo.mipLevel = 0;
         subResourceInfo.arrayLayerNum = 1;
