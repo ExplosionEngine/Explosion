@@ -44,10 +44,38 @@ namespace Mirror::Internal {
 }
 
 namespace Mirror {
-    template <typename C>
-    class ClassRegistry {
+    template <typename Derived>
+    class MetaDataRegistry {
     public:
-        ~ClassRegistry() = default;
+        virtual ~MetaDataRegistry() = default;
+
+        Derived& MetaData(const std::string& key, const std::string& value)
+        {
+            context->metas[key] = value;
+            return static_cast<Derived&>(*this);
+        }
+
+    protected:
+        explicit MetaDataRegistry(Type* inContext) : context(inContext)
+        {
+            Assert(context);
+        }
+
+        Derived& SetContext(Type* inContext)
+        {
+            Assert(inContext);
+            context = inContext;
+            return static_cast<Derived&>(*this);
+        }
+
+    private:
+        Type* context;
+    };
+
+    template <typename C>
+    class ClassRegistry : public MetaDataRegistry<ClassRegistry<C>> {
+    public:
+        ~ClassRegistry() override = default;
 
         template <typename... Args>
         ClassRegistry& Constructor(const std::string& inName)
@@ -63,15 +91,15 @@ namespace Mirror {
                 [](Any* args, size_t argSize) -> Any {
                     Assert(tupleSize == argSize);
                     auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
-                    return Any::From(Internal::InvokeConstructorStack<C, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
+                    return Any(Internal::InvokeConstructorStack<C, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
                 },
                 [](Any* args, size_t argSize) -> Any {
                     Assert(tupleSize == argSize);
                     auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
-                    return Any::From(Internal::InvokeConstructorNew<C, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
+                    return Any(Internal::InvokeConstructorNew<C, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
                 }
             )));
-            return *this;
+            return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.constructors.at(inName));
         }
 
         template <auto Ptr>
@@ -88,10 +116,10 @@ namespace Mirror {
                     *Ptr = inValue->CastTo<ValueType>();
                 },
                 []() -> Any {
-                    return Any::From(std::ref(*Ptr));
+                    return Any(std::ref(*Ptr));
                 }
             )));
-            return *this;
+            return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.staticVariables.at(inName));
         }
 
         template <auto Ptr>
@@ -114,11 +142,11 @@ namespace Mirror {
                         Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {});
                         return {};
                     } else {
-                        return Any::From(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
+                        return Any(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
                     }
                 }
             )));
-            return *this;
+            return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.staticFunctions.at(inName));
         }
 
         template <auto Ptr>
@@ -139,7 +167,7 @@ namespace Mirror {
                     return std::ref(object->CastTo<ClassType&>().*Ptr);
                 }
             )));
-            return *this;
+            return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.memberVariables.at(inName));
         }
 
         template <auto Ptr>
@@ -163,17 +191,17 @@ namespace Mirror {
                         Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->CastTo<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {});
                         return {};
                     } else {
-                        return Any::From(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->CastTo<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {}));
+                        return Any(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->CastTo<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {}));
                     }
                 }
             )));
-            return *this;
+            return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.memberFunctions.at(inName));
         }
 
     private:
         friend class Registry;
 
-        explicit ClassRegistry(Class& inClass) : clazz(inClass)
+        explicit ClassRegistry(Class& inClass) : MetaDataRegistry<ClassRegistry<C>>(&inClass), clazz(inClass)
         {
             clazz.destructor = Mirror::Destructor([](Any* object) -> void { object->CastTo<C&>().~C(); });
         }
@@ -181,9 +209,9 @@ namespace Mirror {
         Class& clazz;
     };
 
-    class MIRROR_API GlobalRegistry {
+    class MIRROR_API GlobalRegistry : public MetaDataRegistry<GlobalRegistry> {
     public:
-        ~GlobalRegistry() = default;
+        ~GlobalRegistry() override = default;
 
         template <auto Ptr>
         GlobalRegistry& Variable(const std::string& inName)
@@ -199,10 +227,10 @@ namespace Mirror {
                     *Ptr = inValue->CastTo<ValueType>();
                 },
                 []() -> Any {
-                    return Any::From(std::ref(*Ptr));
+                    return Any(std::ref(*Ptr));
                 }
             )));
-            return *this;
+            return MetaDataRegistry<GlobalRegistry>::SetContext(&globalScope.variables.at(inName));
         }
 
         template <auto Ptr>
@@ -225,17 +253,17 @@ namespace Mirror {
                         Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {});
                         return {};
                     } else {
-                        return Any::From(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
+                        return Any(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
                     }
                 }
             )));
-            return *this;
+            return MetaDataRegistry<GlobalRegistry>::SetContext(&globalScope.functions.at(inName));
         }
 
     private:
         friend class Registry;
 
-        explicit GlobalRegistry(GlobalScope& inGlobalScope) : globalScope(inGlobalScope) {}
+        explicit GlobalRegistry(GlobalScope& inGlobalScope) : MetaDataRegistry<GlobalRegistry>(&inGlobalScope), globalScope(inGlobalScope) {}
 
         GlobalScope& globalScope;
     };
