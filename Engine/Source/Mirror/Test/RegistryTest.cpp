@@ -65,14 +65,18 @@ TEST(RegistryTest, GlobalScopeTest)
 {
     Mirror::Registry::Get()
         .Global()
+            .MetaData("TestKey", "Global")
             .Variable<&v0>("v0")
+                .MetaData("TestKey", "v0")
             .Function<&F0>("F0")
             .Function<&F1>("F1")
             .Function<&F2>("F2");
 
     const auto& globalScope = Mirror::GlobalScope::Get();
+    ASSERT_EQ(globalScope.GetMeta("TestKey"), "Global");
     {
         const auto& variable = globalScope.GetVariable("v0");
+        ASSERT_EQ(variable.GetMeta("TestKey"), "v0");
 
         auto value = variable.Get();
         ASSERT_EQ(value.CastTo<int>(), 1);
@@ -121,8 +125,11 @@ TEST(RegistryTest, ClassTest)
 {
     Mirror::Registry::Get()
         .Class<C0>("C0")
+            .MetaData("TestKey", "C0")
             .StaticVariable<&C0::v0>("v0")
-            .StaticFunction<&C0::F0>("F0");
+                .MetaData("TestKey", "v0")
+            .StaticFunction<&C0::F0>("F0")
+                .MetaData("TestKey", "F0");
 
     Mirror::Registry::Get()
         .Class<C1>("C1")
@@ -138,14 +145,17 @@ TEST(RegistryTest, ClassTest)
 
     {
         const auto& clazz = Mirror::Class::Get("C0");
+        ASSERT_EQ(clazz.GetMeta("TestKey"), "C0");
         {
             const auto& variable = clazz.GetStaticVariable("v0");
+            ASSERT_EQ(variable.GetMeta("TestKey"), "v0");
             variable.Set(1);
             ASSERT_EQ(variable.Get().CastTo<int>(), 1);
         }
 
         {
             const auto& function = clazz.GetStaticFunction("F0");
+            ASSERT_EQ(function.GetMeta("TestKey"), "F0");
             auto result = function.Invoke();
             ASSERT_EQ(result.CastTo<int&>(), 1);
         }
@@ -166,14 +176,14 @@ TEST(RegistryTest, ClassTest)
     {
         const auto& clazz = Mirror::Class::Get("C2");
         const auto& constructor = clazz.GetConstructor("Constructor0");
-        const auto& desctructor = clazz.GetDestructor();
+        const auto& destructor = clazz.GetDestructor();
         const auto& a = clazz.GetMemberVariable("a");
         const auto& b = clazz.GetMemberVariable("b");
 
         auto object = constructor.NewObject(1, 2);
-        auto objectRef = Mirror::Any::From(*object.CastTo<C2*>());
+        auto objectRef = Mirror::Any(*object.CastTo<C2*>());
         ASSERT_EQ(a.Get(&objectRef).CastTo<int>(), 1);
         ASSERT_EQ(b.Get(&objectRef).CastTo<int>(), 2);
-        desctructor.InvokeWith(&objectRef);
+        destructor.InvokeWith(&objectRef);
     }
 }

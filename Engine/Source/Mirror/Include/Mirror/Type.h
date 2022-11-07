@@ -48,7 +48,7 @@ namespace Mirror {
         template <typename T>
         void Set(T value) const
         {
-            Any ref = Any::From(std::forward<std::remove_reference_t<T>>(value));
+            Any ref = Any(std::forward<std::remove_reference_t<T>>(value));
             Set(&ref);
         }
 
@@ -75,7 +75,7 @@ namespace Mirror {
         template <typename... Args>
         Any Invoke(Args... args) const
         {
-            std::array<Any, sizeof...(args)> refs = { Any::From(std::forward<std::remove_reference_t<Args>>(args))... };
+            std::array<Any, sizeof...(args)> refs = { Any(std::forward<std::remove_reference_t<Args>>(args))... };
             return InvokeWith(refs.data(), refs.size());
         }
 
@@ -99,14 +99,14 @@ namespace Mirror {
         template <typename... Args>
         Any ConstructOnStack(Args... args) const
         {
-            std::array<Any, sizeof...(args)> refs = { Any::From(std::forward<std::remove_reference_t<Args>>(args))... };
+            std::array<Any, sizeof...(args)> refs = { Any(std::forward<std::remove_reference_t<Args>>(args))... };
             return ConstructOnStackWith(refs.data(), refs.size());
         }
 
         template <typename... Args>
         Any NewObject(Args... args) const
         {
-            std::array<Any, sizeof...(args)> refs = { Any::From(std::forward<std::remove_reference_t<Args>>(args))... };
+            std::array<Any, sizeof...(args)> refs = { Any(std::forward<std::remove_reference_t<Args>>(args))... };
             return NewObjectWith(refs.data(), refs.size());
         }
 
@@ -155,7 +155,7 @@ namespace Mirror {
         void Set(C&& object, T value) const
         {
             Any classRef = Any(std::ref(std::forward<C>(object)));
-            Any valueRef = Any::From(std::forward<std::remove_reference_t<T>>(value));
+            Any valueRef = Any(std::forward<std::remove_reference_t<T>>(value));
             Set(&classRef, &valueRef);
         }
 
@@ -182,7 +182,7 @@ namespace Mirror {
         Any Invoke(C&& object, Args&&... args) const
         {
             Any classRef = Any(std::ref(std::forward<C>(object)));
-            std::array<Any, sizeof...(Args)> argRefs = { Any::From(std::forward<std::remove_reference_t<Args>>(args))... };
+            std::array<Any, sizeof...(Args)> argRefs = { Any(std::forward<std::remove_reference_t<Args>>(args))... };
             return InvokeWith(&classRef, argRefs.data(), argRefs.size());
         }
 
