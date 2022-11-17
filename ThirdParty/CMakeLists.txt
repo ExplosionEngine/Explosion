@@ -166,3 +166,11 @@ Add3rdHeaderOnlyPackage(
     HASH 32e28f89a85b3bb6749e8caed9eb5226f7f5956769005d2b5a41d48d9481d90c
     INCLUDE $<SOURCE_DIR>
 )
+
+# Assimp
+Add3rdCMakeProject(
+    NAME assimp
+    PLATFORM All
+    VERSION 5.2.4
+    HASH bc7b2c170294a4f76e94ed28fe36610ea6dad24f5bfb3e165e8f0ef0263996a1
+)
