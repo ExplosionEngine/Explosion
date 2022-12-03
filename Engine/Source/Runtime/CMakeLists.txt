@@ -1,4 +1,4 @@
-file(GLOB SOURCES Src/*.cpp)
+file(GLOB_RECURSE SOURCES Src/*.cpp)
 AddLibrary(
     NAME Runtime
     TYPE STATIC
