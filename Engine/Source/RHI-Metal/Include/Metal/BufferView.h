@@ -9,14 +9,20 @@
 
 namespace RHI::Metal {
     class MTLDevice;
+    class MTLBuffer;
 
     class MTLBufferView : public BufferView {
     public:
-        MTLBufferView(MTLDevice &device, const BufferViewCreateInfo* createInfo);
+        MTLBufferView(MTLBuffer &buffer, const BufferViewCreateInfo* createInfo);
         ~MTLBufferView();
 
         void Destroy() override;
-    private:
 
+        id<MTLBuffer> GetNativeBuffer() const;
+        uint32_t GetOffset() const;
+        MTLIndexType GetIndexType() const;
+    private:
+        id<MTLBuffer> mtlBuffer = nil;
+        BufferViewCreateInfo info;
     };
 }

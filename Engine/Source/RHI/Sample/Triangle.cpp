@@ -26,10 +26,12 @@ protected:
     {
         CreateInstanceAndSelectGPU();
         RequestDeviceAndFetchQueues();
-        CreateSwapChain();
-        CreateVertexBuffer();
+
         CreatePipelineLayout();
         CreatePipeline();
+        CreateVertexBuffer();
+
+        CreateSwapChain();
         CreateFence();
         CreateCommandBuffer();
     }
@@ -239,9 +241,10 @@ private:
 
     void SubmitCommandBufferAndPresent()
     {
+        fence->Reset();
         graphicsQueue->Submit(commandBuffer, fence);
-        fence->Wait();
         swapChain->Present();
+        fence->Wait();
     }
 
     Instance* instance = nullptr;
