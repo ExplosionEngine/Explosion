@@ -6,6 +6,8 @@
 
 #if PLATFORM_WINDOWS
 #include <Windows.h>
+#undef min
+#undef max
 #else
 #define __EMULATE_UUID 1
 #endif
