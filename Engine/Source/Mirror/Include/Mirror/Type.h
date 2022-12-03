@@ -14,11 +14,21 @@
 #include <Mirror/TypeInfo.h>
 
 namespace Mirror {
+    struct NamePresets {
+        static constexpr std::string_view globalScope = "globalScope";
+        static constexpr std::string_view destructor = "destructor";
+        static constexpr std::string_view defaultConstructor = "defaultConstructor";
+        // TODO
+    };
+}
+
+namespace Mirror {
     class MIRROR_API Type {
     public:
         virtual ~Type();
 
-        const std::string& GetMeta(const std::string& key) const;
+        [[nodiscard]] const std::string& GetName() const;
+        [[nodiscard]] const std::string& GetMeta(const std::string& key) const;
         bool HasMeta(const std::string& key) const;
 
     protected:
@@ -38,7 +48,7 @@ namespace Mirror {
         template <typename T>
         void Set(T value) const
         {
-            Any ref = Any::From(std::forward<std::remove_reference_t<T>>(value));
+            Any ref = Any(std::forward<std::remove_reference_t<T>>(value));
             Set(&ref);
         }
 
@@ -65,7 +75,7 @@ namespace Mirror {
         template <typename... Args>
         Any Invoke(Args... args) const
         {
-            std::array<Any, sizeof...(args)> refs = { Any::From(std::forward<std::remove_reference_t<Args>>(args))... };
+            std::array<Any, sizeof...(args)> refs = { Any(std::forward<std::remove_reference_t<Args>>(args))... };
             return InvokeWith(refs.data(), refs.size());
         }
 
@@ -87,21 +97,21 @@ namespace Mirror {
         ~Constructor() override;
 
         template <typename... Args>
-        Any ConstructOnStack(Args... args)
+        Any ConstructOnStack(Args... args) const
         {
-            std::array<Any, sizeof...(args)> refs = { Any::From(std::forward<std::remove_reference_t<Args>>(args))... };
+            std::array<Any, sizeof...(args)> refs = { Any(std::forward<std::remove_reference_t<Args>>(args))... };
             return ConstructOnStackWith(refs.data(), refs.size());
         }
 
         template <typename... Args>
-        Any NewObject(Args... args)
+        Any NewObject(Args... args) const
         {
-            std::array<Any, sizeof...(args)> refs = { Any::From(std::forward<std::remove_reference_t<Args>>(args))... };
+            std::array<Any, sizeof...(args)> refs = { Any(std::forward<std::remove_reference_t<Args>>(args))... };
             return NewObjectWith(refs.data(), refs.size());
         }
 
-        Any ConstructOnStackWith(Any* arguments, size_t argumentsSize);
-        Any NewObjectWith(Any* arguments, size_t argumentsSize);
+        Any ConstructOnStackWith(Any* arguments, size_t argumentsSize) const;
+        Any NewObjectWith(Any* arguments, size_t argumentsSize) const;
 
     private:
         template <typename C> friend class ClassRegistry;
@@ -114,22 +124,47 @@ namespace Mirror {
         Invoker heapConstructor;
     };
 
+    class MIRROR_API Destructor : public Type {
+    public:
+        ~Destructor() override;
+
+        template <typename C>
+        void Invoke(C&& object) const
+        {
+            Any classRef = Any(std::ref(std::forward<C>(object)));
+            InvokeWith(&classRef);
+        }
+
+        void InvokeWith(Any* object) const;
+
+    private:
+        template <typename C> friend class ClassRegistry;
+
+        using Invoker = std::function<void(Any*)>;
+
+        explicit Destructor(Invoker inDestructor);
+
+        Invoker destructor;
+    };
+
     class MIRROR_API MemberVariable : public Type {
     public:
         ~MemberVariable() override;
 
         template <typename C, typename T>
-        void Set(C&& clazz, T value)
+        void Set(C&& object, T value) const
         {
-            Any classRef = Any(std::ref(std::forward<C>(clazz)));
-            Any valueRef = Any::From(std::forward<std::remove_reference_t<T>>(value));
+            Any classRef = Any(std::ref(std::forward<C>(object)));
+            Any valueRef = Any(std::forward<std::remove_reference_t<T>>(value));
             Set(&classRef, &valueRef);
         }
 
-        void Set(Any* clazz, Any* value);
-        Any Get(Any* clazz);
+        void Set(Any* object, Any* value) const;
+        Any Get(Any* object) const;
 
     private:
+        template <typename C> friend class ClassRegistry;
+
         using Setter = std::function<void(Any*, Any*)>;
         using Getter = std::function<Any(Any*)>;
 
@@ -144,16 +179,18 @@ namespace Mirror {
         ~MemberFunction() override;
 
         template <typename C, typename... Args>
-        Any Invoke(C&& clazz, Args&&... args) const
+        Any Invoke(C&& object, Args&&... args) const
         {
-            Any classRef = Any(std::ref(std::forward<C>(clazz)));
-            std::array<Any, sizeof...(Args)> argRefs = { Any::From(std::forward<std::remove_reference_t<Args>>(args))... };
+            Any classRef = Any(std::ref(std::forward<C>(object)));
+            std::array<Any, sizeof...(Args)> argRefs = { Any(std::forward<std::remove_reference_t<Args>>(args))... };
             return InvokeWith(&classRef, argRefs.data(), argRefs.size());
         }
 
-        Any InvokeWith(Any* clazz, Any* args, size_t argsSize) const;
+        Any InvokeWith(Any* object, Any* args, size_t argsSize) const;
 
     private:
+        template <typename C> friend class ClassRegistry;
+
         using Invoker = std::function<Any(Any*, Any*, size_t)>;
 
         MemberFunction(std::string inName, Invoker inInvoker);
@@ -205,6 +242,7 @@ namespace Mirror {
         [[nodiscard]] static const Class* Find(const std::string& name);
         [[nodiscard]] static const Class& Get(const std::string& name);
 
+        [[nodiscard]] const Destructor& GetDestructor() const;
         [[nodiscard]] const Constructor* FindConstructor(const std::string& name) const;
         [[nodiscard]] const Constructor& GetConstructor(const std::string& name) const;
         [[nodiscard]] const Variable* FindStaticVariable(const std::string& name) const;
@@ -222,7 +260,7 @@ namespace Mirror {
 
         explicit Class(std::string name);
 
-        std::optional<Function> destructor;
+        std::optional<Destructor> destructor;
         std::unordered_map<std::string, Constructor> constructors;
         std::unordered_map<std::string, Variable> staticVariables;
         std::unordered_map<std::string, Function> staticFunctions;

@@ -44,7 +44,7 @@ namespace RHI::DirectX12 {
 
 namespace RHI::DirectX12 {
     DX12Texture::DX12Texture(DX12Device& device, const TextureCreateInfo* createInfo)
-        : Texture(createInfo), device(device), usages(createInfo->usages)
+        : Texture(createInfo), device(device), usages(createInfo->usages), format(createInfo->format)
     {
         CreateDX12Texture(createInfo);
     }
@@ -64,9 +64,14 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    TextureUsageFlags DX12Texture::GetUsages()
+    TextureUsageFlags DX12Texture::GetUsages() const
     {
         return usages;
+    }
+
+    PixelFormat DX12Texture::GetFormat() const
+    {
+        return format;
     }
 
     ComPtr<ID3D12Resource>& DX12Texture::GetDX12Resource()

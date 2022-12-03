@@ -97,11 +97,7 @@ private:
     void CreateSwapChain()
     {
         SwapChainCreateInfo swapChainCreateInfo {};
-        if (rhiType == RHIType::VULKAN) {
-            swapChainCreateInfo.format = PixelFormat::BGRA8_UNORM;
-        } else {
-            swapChainCreateInfo.format = PixelFormat::RGBA8_UNORM;
-        }
+        swapChainCreateInfo.format = PixelFormat::RGBA8_UNORM;
         swapChainCreateInfo.presentMode = PresentMode::IMMEDIATELY;
         swapChainCreateInfo.textureNum = BACK_BUFFER_COUNT;
         swapChainCreateInfo.extent = {width, height};
@@ -113,11 +109,6 @@ private:
             swapChainTextures[i] = swapChain->GetTexture(i);
 
             TextureViewCreateInfo viewCreateInfo {};
-            if (rhiType == RHIType::VULKAN) {
-                viewCreateInfo.format = PixelFormat::BGRA8_UNORM;
-            } else {
-                viewCreateInfo.format = PixelFormat::RGBA8_UNORM;
-            }
             viewCreateInfo.dimension = TextureViewDimension::TV_2D;
             viewCreateInfo.baseArrayLayer = 0;
             viewCreateInfo.arrayLayerNum = 1;
@@ -201,7 +192,6 @@ private:
         sampleTexture = device->CreateTexture(&texCreateInfo);
 
         TextureViewCreateInfo viewCreateInfo {};
-        viewCreateInfo.format = PixelFormat::RGBA8_UNORM;
         viewCreateInfo.dimension = TextureViewDimension::TV_2D;
         viewCreateInfo.baseArrayLayer = 0;
         viewCreateInfo.arrayLayerNum = 1;
@@ -307,11 +297,8 @@ private:
         vertexBufferLayout.attributes = vertexAttributes.data();
 
         std::array<ColorTargetState, 1> colorTargetStates {};
-        if (rhiType == RHIType::VULKAN) {
-            colorTargetStates[0].format = PixelFormat::BGRA8_UNORM;
-        } else {
-            colorTargetStates[0].format = PixelFormat::RGBA8_UNORM;
-        }
+        colorTargetStates[0].format = PixelFormat::RGBA8_UNORM;
+
         colorTargetStates[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
 
         GraphicsPipelineCreateInfo createInfo {};

@@ -291,7 +291,13 @@ namespace RHI::Vulkan {
         std::vector<vk::Format> pixelFormats(createInfo->fragment.colorTargetNum);
         for (size_t i = 0; i < createInfo->fragment.colorTargetNum; i++)
         {
-            pixelFormats[i] = VKEnumCast<PixelFormat, vk::Format>(createInfo->fragment.colorTargets[i].format);
+            auto format = createInfo->fragment.colorTargets[i].format;
+#if PLATFORM_MACOS
+            if (format == PixelFormat::RGBA8_UNORM) {
+                format = PixelFormat::BGRA8_UNORM;
+            }
+#endif
+            pixelFormats[i] = VKEnumCast<PixelFormat, vk::Format>(format);
         }
         vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo;
         pipelineRenderingCreateInfo.setColorAttachmentCount(createInfo->fragment.colorTargetNum)

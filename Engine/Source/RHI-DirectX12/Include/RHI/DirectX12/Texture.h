@@ -23,7 +23,8 @@ namespace RHI::DirectX12 {
         TextureView* CreateTextureView(const TextureViewCreateInfo* createInfo) override;
         void Destroy() override;
 
-        TextureUsageFlags GetUsages();
+        TextureUsageFlags GetUsages() const;
+        PixelFormat GetFormat() const;
         ComPtr<ID3D12Resource>& GetDX12Resource();
 
     private:
@@ -31,6 +32,7 @@ namespace RHI::DirectX12 {
 
         DX12Device& device;
         TextureUsageFlags usages;
+        PixelFormat format;
         ComPtr<ID3D12Resource> dx12Resource;
     };
 }

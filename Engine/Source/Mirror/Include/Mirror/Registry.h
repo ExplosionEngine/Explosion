@@ -27,20 +27,79 @@ namespace Mirror::Internal {
     template <typename Class, auto Ptr, typename ArgsTuple, size_t... I>
     auto InvokeMemberFunction(Class& object, ArgsTuple& args, std::index_sequence<I...>)
     {
-        return object.*Ptr(std::get<I>(args)...);
+        return (object.*Ptr)(std::get<I>(args)...);
+    }
+
+    template <typename Class, typename ArgsTuple, size_t... I>
+    auto InvokeConstructorStack(ArgsTuple& args, std::index_sequence<I...>)
+    {
+        return Class(std::get<I>(args)...);
+    }
+
+    template <typename Class, typename ArgsTuple, size_t... I>
+    auto InvokeConstructorNew(ArgsTuple& args, std::index_sequence<I...>)
+    {
+        return new Class(std::get<I>(args)...);
     }
 }
 
 namespace Mirror {
-    template <typename C>
-    class MIRROR_API ClassRegistry {
+    template <typename Derived>
+    class MetaDataRegistry {
     public:
-        ~ClassRegistry() = default;
+        virtual ~MetaDataRegistry() = default;
+
+        Derived& MetaData(const std::string& key, const std::string& value)
+        {
+            context->metas[key] = value;
+            return static_cast<Derived&>(*this);
+        }
+
+    protected:
+        explicit MetaDataRegistry(Type* inContext) : context(inContext)
+        {
+            Assert(context);
+        }
+
+        Derived& SetContext(Type* inContext)
+        {
+            Assert(inContext);
+            context = inContext;
+            return static_cast<Derived&>(*this);
+        }
+
+    private:
+        Type* context;
+    };
+
+    template <typename C>
+    class ClassRegistry : public MetaDataRegistry<ClassRegistry<C>> {
+    public:
+        ~ClassRegistry() override = default;
 
         template <typename... Args>
         ClassRegistry& Constructor(const std::string& inName)
         {
-            // TODO
+            using ArgsTupleType = std::tuple<Args...>;
+            constexpr size_t tupleSize = std::tuple_size_v<ArgsTupleType>;
+
+            auto iter = clazz.constructors.find(inName);
+            Assert(iter == clazz.constructors.end());
+
+            clazz.constructors.emplace(std::make_pair(inName, Mirror::Constructor(
+                inName,
+                [](Any* args, size_t argSize) -> Any {
+                    Assert(tupleSize == argSize);
+                    auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
+                    return Any(Internal::InvokeConstructorStack<C, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
+                },
+                [](Any* args, size_t argSize) -> Any {
+                    Assert(tupleSize == argSize);
+                    auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
+                    return Any(Internal::InvokeConstructorNew<C, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
+                }
+            )));
+            return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.constructors.at(inName));
         }
 
         template <auto Ptr>
@@ -60,7 +119,7 @@ namespace Mirror {
                     return Any(std::ref(*Ptr));
                 }
             )));
-            return *this;
+            return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.staticVariables.at(inName));
         }
 
         template <auto Ptr>
@@ -87,7 +146,7 @@ namespace Mirror {
                     }
                 }
             )));
-            return *this;
+            return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.staticFunctions.at(inName));
         }
 
         template <auto Ptr>
@@ -108,7 +167,7 @@ namespace Mirror {
                     return std::ref(object->CastTo<ClassType&>().*Ptr);
                 }
             )));
-            return *this;
+            return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.memberVariables.at(inName));
         }
 
         template <auto Ptr>
@@ -121,7 +180,7 @@ namespace Mirror {
             auto iter = clazz.memberFunctions.find(inName);
             Assert(iter == clazz.memberFunctions.end());
 
-            clazz.memberFunctions[inName] = Mirror::MemberFunction(
+            clazz.memberFunctions.emplace(std::make_pair(inName, Mirror::MemberFunction(
                 inName,
                 [](Any* object, Any* args, size_t argSize) -> Any {
                     constexpr size_t tupleSize = std::tuple_size_v<ArgsTupleType>;
@@ -132,24 +191,27 @@ namespace Mirror {
                         Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->CastTo<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {});
                         return {};
                     } else {
-                        return Any::From(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->CastTo<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {}));
+                        return Any(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->CastTo<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {}));
                     }
                 }
-            );
-            return *this;
+            )));
+            return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.memberFunctions.at(inName));
         }
 
     private:
         friend class Registry;
 
-        explicit ClassRegistry(Class& inClass) : clazz(inClass) {}
+        explicit ClassRegistry(Class& inClass) : MetaDataRegistry<ClassRegistry<C>>(&inClass), clazz(inClass)
+        {
+            clazz.destructor = Mirror::Destructor([](Any* object) -> void { object->CastTo<C&>().~C(); });
+        }
 
         Class& clazz;
     };
 
-    class MIRROR_API GlobalRegistry {
+    class MIRROR_API GlobalRegistry : public MetaDataRegistry<GlobalRegistry> {
     public:
-        ~GlobalRegistry() = default;
+        ~GlobalRegistry() override = default;
 
         template <auto Ptr>
         GlobalRegistry& Variable(const std::string& inName)
@@ -168,7 +230,7 @@ namespace Mirror {
                     return Any(std::ref(*Ptr));
                 }
             )));
-            return *this;
+            return MetaDataRegistry<GlobalRegistry>::SetContext(&globalScope.variables.at(inName));
         }
 
         template <auto Ptr>
@@ -191,17 +253,17 @@ namespace Mirror {
                         Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {});
                         return {};
                     } else {
-                        return Any::From(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
+                        return Any(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
                     }
                 }
             )));
-            return *this;
+            return MetaDataRegistry<GlobalRegistry>::SetContext(&globalScope.functions.at(inName));
         }
 
     private:
         friend class Registry;
 
-        explicit GlobalRegistry(GlobalScope& inGlobalScope) : globalScope(inGlobalScope) {}
+        explicit GlobalRegistry(GlobalScope& inGlobalScope) : MetaDataRegistry<GlobalRegistry>(&inGlobalScope), globalScope(inGlobalScope) {}
 
         GlobalScope& globalScope;
     };
@@ -224,8 +286,8 @@ namespace Mirror {
         template <typename C>
         ClassRegistry<C> Class(const std::string& name)
         {
-            classes[name] = Mirror::Class(name);
-            return ClassRegistry<C>(classes[name]);
+            classes.emplace(std::make_pair(name, Mirror::Class(name)));
+            return ClassRegistry<C>(classes.at(name));
         }
 
     private:

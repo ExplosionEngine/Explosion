@@ -201,7 +201,7 @@ namespace RHI::DirectX12 {
         const auto usages = texture.GetUsages();
         if (IsShaderResource(usages)) {
             D3D12_SHADER_RESOURCE_VIEW_DESC desc {};
-            desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo->format);
+            desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
             desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_SRV_DIMENSION>(createInfo->dimension);
             FillTexture1DSRV(desc.Texture1D, createInfo);
             FillTexture2DSRV(desc.Texture2D, createInfo);
@@ -217,7 +217,7 @@ namespace RHI::DirectX12 {
             device.GetDX12Device()->CreateShaderResourceView(texture.GetDX12Resource().Get(), &desc, dx12CpuDescriptorHandle);
         } else if (IsUnorderedAccess(usages)) {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
-            desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo->format);
+            desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
             desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_UAV_DIMENSION>(createInfo->dimension);
             FillTexture1DUAV(desc.Texture1D, createInfo);
             FillTexture2DUAV(desc.Texture2D, createInfo);
@@ -231,7 +231,7 @@ namespace RHI::DirectX12 {
             device.GetDX12Device()->CreateUnorderedAccessView(texture.GetDX12Resource().Get(), nullptr, &desc, dx12CpuDescriptorHandle);
         } else if (IsRenderTarget(usages)) {
             D3D12_RENDER_TARGET_VIEW_DESC desc {};
-            desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo->format);
+            desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
             desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_RTV_DIMENSION>(createInfo->dimension);
             FillTexture1DRTV(desc.Texture1D, createInfo);
             FillTexture2DRTV(desc.Texture2D, createInfo);

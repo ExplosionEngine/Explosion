@@ -26,6 +26,7 @@ namespace RHI::Vulkan {
 
         vk::Image GetImage() const;
         Extent<3> GetExtent() const;
+        PixelFormat GetFormat() const;
 
         vk::ImageSubresourceRange GetRange(vk::ImageAspectFlags aspect);
     private:
@@ -39,5 +40,6 @@ namespace RHI::Vulkan {
         vk::Image vkImage;
         bool ownMemory;
         Extent<3> extent;
+        PixelFormat format;
     };
 }
