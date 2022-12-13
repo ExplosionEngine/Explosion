@@ -5,7 +5,8 @@
 #include <MirrorTool/Generator.h>
 
 namespace MirrorTool {
-    Generator::Generator(std::string inOutputFile) : outputFile(std::move(inOutputFile)) {}
+    Generator::Generator(std::string inOutputFile, std::string inHeaderDir, const MetaInfo& inMetaInfo)
+        : outputFile(std::move(inOutputFile)), headerDir(std::move(inHeaderDir)), metaInfo(inMetaInfo) {}
 
     Generator::~Generator() = default;
 

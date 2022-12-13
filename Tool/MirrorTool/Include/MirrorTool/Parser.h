@@ -49,10 +49,10 @@ namespace MirrorTool {
 
     class Parser {
     public:
-        using Result = std::pair<bool, std::variant<std::string, std::unique_ptr<MetaInfo>>>;
+        using Result = std::pair<bool, std::variant<std::string, MetaInfo>>;
 
         NON_COPYABLE(Parser)
-        explicit Parser(std::string inSourceFile);
+        explicit Parser(std::string inSourceFile, std::vector<std::string> inHeaderDirs);
         ~Parser();
 
         Result Parse();
@@ -62,5 +62,6 @@ namespace MirrorTool {
         static Result CleanUpAndConstructFailResult(CXIndex index, CXTranslationUnit translationUnit, std::string reason);
 
         std::string sourceFile;
+        std::vector<std::string> headerDirs;
     };
 }

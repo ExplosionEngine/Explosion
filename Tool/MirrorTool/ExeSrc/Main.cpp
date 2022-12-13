@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include <MirrorTool/Parser.h>
+#include <MirrorTool/Generator.h>
 
 int main(int argc, char* argv[])
 {
@@ -32,9 +33,19 @@ int main(int argc, char* argv[])
     }
 
     MirrorTool::Parser parser(inputFile);
-    MirrorTool::MetaInfo metaInfo = parser.Parse();
+    auto metaInfo = parser.Parse();
 
-    // TODO
+    if (!metaInfo.first) {
+        std::cout << std::get<std::string>(metaInfo.second) << std::endl;
+        return 1;
+    }
 
+    MirrorTool::Generator generator(outputFile, metaInfo);
+    auto result = generator.Generate();
+
+    if (!result.first) {
+        std::cout << result.second << std::endl;
+        return 1;
+    }
     return 0;
 }
