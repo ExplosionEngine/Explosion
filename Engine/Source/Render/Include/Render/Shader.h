@@ -111,7 +111,8 @@ namespace Render {
     template <typename T>
     class GlobalShaderMap {
     public:
-        GlobalShaderMap() = default;
+        GlobalShaderMap() : byteCodePackage(ShaderByteCodeStorage::Get().GetByteCodePackage(&GlobalShaderType<T>::Get)) {}
+
         ~GlobalShaderMap() = default;
         NON_COPYABLE(GlobalShaderMap)
 
