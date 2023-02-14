@@ -15,7 +15,18 @@
 #include <Common/Utility.h>
 
 namespace MirrorTool {
+    enum class FieldAccess {
+        PUBLIC,
+        PROTECTED,
+        PRIVATE,
+        MAX
+    };
+
+    using ParamNameAndType = std::pair<std::string, std::string>;
+    using MetaDataMap = std::unordered_map<std::string, std::string>;
+
     struct Node {
+        std::string outerName;
         std::string name;
         std::unordered_map<std::string, std::string> metaDatas;
     };
@@ -26,20 +37,30 @@ namespace MirrorTool {
 
     struct FunctionInfo : public Node {
         std::string retType;
-        std::vector<std::string> argTypes;
+        std::vector<ParamNameAndType> parameters;
+    };
+
+    struct ClassVariableInfo : public VariableInfo {
+        FieldAccess fieldAccess;
+    };
+
+    struct ClassFunctionInfo : public FunctionInfo {
+        FieldAccess fieldAccess;
     };
 
     struct ClassInfo : public Node {
-        std::vector<VariableInfo> staticVariables;
-        std::vector<FunctionInfo> staticFunctions;
-        std::vector<VariableInfo> variables;
-        std::vector<FunctionInfo> functions;
+        FieldAccess lastFieldAccess;
+        std::vector<ClassVariableInfo> staticVariables;
+        std::vector<ClassFunctionInfo> staticFunctions;
+        std::vector<ClassVariableInfo> variables;
+        std::vector<ClassFunctionInfo> functions;
     };
 
-    struct NamespaceInfo {
+    struct NamespaceInfo : public Node {
         std::vector<VariableInfo> variables;
         std::vector<FunctionInfo> functions;
         std::vector<ClassInfo> classes;
+        std::vector<NamespaceInfo> namespaces;
     };
 
     struct MetaInfo {
