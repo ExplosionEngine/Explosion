@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <functional>
 
 #include <RHI/RHI.h>
