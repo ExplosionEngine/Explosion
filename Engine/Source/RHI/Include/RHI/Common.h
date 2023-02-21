@@ -316,7 +316,11 @@ namespace RHI {
     };
 
     enum class BufferState : EnumType {
-        // TODO check this ?
+        UNDEFINED,
+        STORAGE,
+        COPY_DST,
+        SHADER_READ_ONLY,
+        MAX
     };
 
     enum class TextureState : EnumType {

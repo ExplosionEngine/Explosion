@@ -215,7 +215,7 @@ private:
             colorAttachments[0].loadOp = LoadOp::CLEAR;
             colorAttachments[0].storeOp = StoreOp::STORE;
             colorAttachments[0].view = swapChainTextureViews[backTextureIndex];
-            colorAttachments[0].resolveTarget = nullptr;
+            colorAttachments[0].resolve = nullptr;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
             graphicsPassBeginInfo.pipeline = pipeline;

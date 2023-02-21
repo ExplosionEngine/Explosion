@@ -19,7 +19,6 @@ namespace RHI {
         static Barrier Transition(Buffer* buffer, BufferState before, BufferState after);
         static Barrier Transition(Texture* texture, TextureState before, TextureState after);
 
-    public:
         struct BufferTransition {
             Buffer* pointer;
             BufferState before;

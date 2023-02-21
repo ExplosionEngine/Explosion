@@ -30,7 +30,7 @@ namespace RHI {
 
     struct GraphicsPassColorAttachment {
         TextureView* view;
-        TextureView* resolveTarget;
+        TextureView* resolve;
         ColorNormalized<4> clearValue;
         LoadOp loadOp;
         StoreOp storeOp;
