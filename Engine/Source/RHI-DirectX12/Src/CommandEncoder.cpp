@@ -258,5 +258,6 @@ namespace RHI::DirectX12 {
     void DX12CommandEncoder::End()
     {
         commandBuffer.GetDX12GraphicsCommandList()->Close();
+        delete this;
     }
 }

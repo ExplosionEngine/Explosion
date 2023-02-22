@@ -8,12 +8,17 @@
 #include <unordered_map>
 #include <utility>
 #include <tuple>
+#include <functional>
 
 #include <Common/Utility.h>
 #include <Common/Debug.h>
 #include <Common/Hash.h>
 #include <Common/File.h>
 #include <Common/Path.h>
+#include <Common/Math/Vector2.h>
+#include <Common/Math/Vector3.h>
+#include <Common/Math/Vector4.h>
+#include <Common/Math/Matrix4.h>
 
 namespace Render {
     class Shader {};

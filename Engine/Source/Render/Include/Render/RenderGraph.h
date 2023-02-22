@@ -7,14 +7,19 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <functional>
 
 #include <RHI/RHI.h>
 
 namespace Render {
     class RGResource;
+    class RGTextureView;
     class RGPass;
     class RGPassBuilder;
+    class RGCopyPassBuilder;
+    class RGComputePassBuilder;
+    class RGRasterPassBuilder;
 
     enum class RGResourceType {
         BUFFER,
@@ -46,10 +51,12 @@ namespace Render {
         std::string name;
         bool isExternal;
         bool rhiAccess;
+        bool isCulled;
 
     private:
         friend class RenderGraph;
 
+        void SetCulled(bool inCulled);
         void SetRHIAccess(bool inRhiAccess);
     };
 
@@ -102,6 +109,36 @@ namespace Render {
         float lodMaxClamp = 32;
         RHI::ComparisonFunc comparisonFunc = RHI::ComparisonFunc::NEVER;
         uint8_t maxAnisotropy = 1;
+    };
+
+    struct RGColorAttachment {
+        RGTextureView* view;
+        RGTextureView* resolve;
+        RHI::ColorNormalized<4> clearValue;
+        RHI::LoadOp loadOp;
+        RHI::StoreOp storeOp;
+    };
+
+    struct RGDepthStencilAttachment {
+        RGTextureView* view;
+        float depthClearValue;
+        RHI::LoadOp depthLoadOp;
+        RHI::StoreOp depthStoreOp;
+        bool depthReadOnly;
+        uint32_t stencilClearValue;
+        RHI::LoadOp stencilLoadOp;
+        RHI::StoreOp stencilStoreOp;
+        bool stencilReadOnly;
+    };
+
+    struct RGComputePassDesc {
+        RHI::ComputePipeline* pipeline;
+    };
+
+    struct RGRasterPassDesc {
+        RHI::GraphicsPipeline* pipeline;
+        std::vector<RGColorAttachment> colorAttachments;
+        std::optional<RGDepthStencilAttachment> depthStencilAttachment;
     };
 
     class RGBuffer : public RGResource {
@@ -196,9 +233,9 @@ namespace Render {
         explicit RGPass(std::string inName);
 
         virtual RGPassType GetType() = 0;
-        virtual void Setup(RGPassBuilder& builder) = 0;
 
     private:
+        friend class RenderGraph;
         friend class RGPassBuilder;
 
         std::string name;
@@ -214,7 +251,12 @@ namespace Render {
         explicit RGCopyPass(std::string inName);
 
         RGPassType GetType() override;
+        virtual void Setup(RGCopyPassBuilder& builder) = 0;
         virtual void Execute(RHI::CommandEncoder& encoder) = 0;
+
+    private:
+        friend class RenderGraph;
+        friend class RGCopyPassBuilder;
     };
 
     class RGComputePass : public RGPass {
@@ -225,7 +267,15 @@ namespace Render {
         explicit RGComputePass(std::string inName);
 
         RGPassType GetType() override;
+        virtual void Setup(RGComputePassBuilder& builder) = 0;
         virtual void Execute(RHI::ComputePassCommandEncoder& encoder) = 0;
+
+    private:
+        friend class RenderGraph;
+        friend class RGComputePassBuilder;
+
+        bool isAsyncCompute;
+        RGComputePassDesc passDesc;
     };
 
     class RGRasterPass : public RGPass {
@@ -236,25 +286,34 @@ namespace Render {
         explicit RGRasterPass(std::string inName);
 
         RGPassType GetType() override;
+        virtual void Setup(RGRasterPassBuilder& builder) = 0;
         virtual void Execute(RHI::GraphicsPassCommandEncoder& encoder) = 0;
+
+    private:
+        friend class RenderGraph;
+        friend class RGRasterPassBuilder;
+
+        RGRasterPassDesc passDesc;
     };
 
     using RGCopyPassExecuteFunc = std::function<void(RHI::CommandEncoder&)>;
-    using RGCopyPassSetupFunc = std::function<RGCopyPassExecuteFunc(RGPassBuilder&)>;
+    using RGCopyPassSetupFunc = std::function<RGCopyPassExecuteFunc(RGCopyPassBuilder&)>;
     using RGComputePassExecuteFunc = std::function<void(RHI::ComputePassCommandEncoder&)>;
-    using RGComputePassSetupFunc = std::function<RGComputePassExecuteFunc(RGPassBuilder&)>;
+    using RGComputePassSetupFunc = std::function<RGComputePassExecuteFunc(RGComputePassBuilder&)>;
     using RGRasterPassExecuteFunc = std::function<void(RHI::GraphicsPassCommandEncoder&)>;
-    using RGRasterPassSetupFunc = std::function<RGRasterPassExecuteFunc(RGPassBuilder&)>;
+    using RGRasterPassSetupFunc = std::function<RGRasterPassExecuteFunc(RGRasterPassBuilder&)>;
 
     class RGFuncCopyPass : public RGCopyPass {
     public:
         RGFuncCopyPass(std::string inName, RGCopyPassSetupFunc inSetupFunc);
         ~RGFuncCopyPass() override;
 
-        void Setup(RGPassBuilder& builder) override;
+        void Setup(RGCopyPassBuilder& builder) override;
         void Execute(RHI::CommandEncoder& encoder) override;
 
     private:
+        friend class RGCopyPassBuilder;
+
         RGCopyPassSetupFunc setupFunc;
         RGCopyPassExecuteFunc executeFunc;
     };
@@ -264,7 +323,7 @@ namespace Render {
         RGFuncComputePass(std::string inName, RGComputePassSetupFunc inSetupFunc);
         ~RGFuncComputePass() override;
 
-        void Setup(RGPassBuilder& builder) override;
+        void Setup(RGComputePassBuilder& builder) override;
         void Execute(RHI::ComputePassCommandEncoder &encoder) override;
 
     private:
@@ -277,7 +336,7 @@ namespace Render {
         RGFuncRasterPass(std::string inName, RGRasterPassSetupFunc inSetupFunc);
         ~RGFuncRasterPass() override;
 
-        void Setup(RGPassBuilder& builder) override;
+        void Setup(RGRasterPassBuilder& builder) override;
         void Execute(RHI::GraphicsPassCommandEncoder &encoder) override;
 
     private:
@@ -297,22 +356,38 @@ namespace Render {
         void AddComputePass(std::string inName, RGComputePassSetupFunc inSetupFunc);
         void AddRasterPass(std::string inName, RGRasterPassSetupFunc inSetupFunc);
 
-        void Compile();
         void Setup();
-        void Execute();
+        void Compile();
+        void Execute(RHI::Fence* mainFence, RHI::Fence* asyncFence);
 
     private:
         friend class RGPassBuilder;
 
+        static RHI::BufferState SpeculateBufferStateFrom(RGPass* writePass);
+        static RHI::BufferState SpeculateBufferStateTo(RGPass* readPass);
+        static RHI::TextureState SpeculateTextureStateFrom(RGPass* writePass);
+        static RHI::TextureState SpeculateTextureStateTo(RGPass* readPass);
+        static void TransitionSingleBuffer(RHI::CommandEncoder* encoder, RGBuffer* buffer, RGPass* writePass, RGPass* readPass);
+        static void TransitionSingleBufferView(RHI::CommandEncoder* encoder, RGBufferView* bufferView, RGPass* writePass, RGPass* readPass);
+        static void TransitionSingleTexture(RHI::CommandEncoder* encoder, RGTexture* texture, RGPass* writePass, RGPass* readPass);
+        static void TransitionSingleTextureView(RHI::CommandEncoder* encoder, RGTextureView* textureView, RGPass* writePass, RGPass* readPass);
+        static void TransitionSingleResource(RHI::CommandEncoder* encoder, RGResource* resource, RGPass* writePass, RGPass* readPass);
+        static void ExecuteCopyPass(RHI::CommandEncoder* encoder, RGCopyPass* copyPass);
+        static void ExecuteComputePass(RHI::CommandEncoder* encoder, RGComputePass* computePass);
+        static void ExecuteRasterPass(RHI::CommandEncoder* encoder, RGRasterPass* rasterPass);
+
+        void TransitionResources(RHI::CommandEncoder* encoder, RGPass* readPass);
+
         RHI::Device& device;
         std::vector<std::unique_ptr<RGResource>> resources;
         std::vector<std::unique_ptr<RGPass>> passes;
+        std::unordered_map<RGResource*, RGPass*> writes;
     };
 
     class RGPassBuilder {
     public:
         RGPassBuilder(RenderGraph& inGraph, RGPass& inPass);
-        ~RGPassBuilder();
+        virtual ~RGPassBuilder();
 
         template <typename R, typename... Args>
         R* Create(Args&&... args)
@@ -340,8 +415,49 @@ namespace Render {
             pass.writes.emplace_back(resource);
         }
 
-    private:
+    protected:
         RenderGraph& graph;
         RGPass& pass;
+    };
+
+    class RGCopyPassBuilder : public RGPassBuilder {
+    public:
+        ~RGCopyPassBuilder() override;
+
+    private:
+        friend class RenderGraph;
+
+        RGCopyPassBuilder(RenderGraph& inGraph, RGCopyPass& inPass);
+
+        RGCopyPass& copyPass;
+    };
+
+    class RGComputePassBuilder : public RGPassBuilder {
+    public:
+        ~RGComputePassBuilder() override;
+
+        void SetAsyncCompute(bool inAsyncCompute);
+        void SetPassDesc(const RGComputePassDesc& inDesc);
+
+    private:
+        friend class RenderGraph;
+
+        RGComputePassBuilder(RenderGraph& inGraph, RGComputePass& inPass);
+
+        RGComputePass& computePass;
+    };
+
+    class RGRasterPassBuilder : public RGPassBuilder {
+    public:
+        ~RGRasterPassBuilder() override;
+
+        void SetPassDesc(const RGRasterPassDesc& inDesc);
+
+    private:
+        friend class RenderGraph;
+
+        RGRasterPassBuilder(RenderGraph& inGraph, RGRasterPass& inPass);
+
+        RGRasterPass& rasterPass;
     };
 }
