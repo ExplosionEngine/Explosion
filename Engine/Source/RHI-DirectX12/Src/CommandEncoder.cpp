@@ -197,7 +197,21 @@ namespace RHI::DirectX12 {
 
     void DX12CommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size)
     {
-        // TODO
+        auto* buffer = dynamic_cast<DX12Buffer*>(src);
+        auto* texture = dynamic_cast<DX12Texture*>(dst);
+        auto origin = subResourceInfo->origin;
+
+        D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
+        layout.Offset = 0;
+        layout.Footprint.Depth = size.z;
+        layout.Footprint.Width = size.x;
+        layout.Footprint.Height = size.y;
+        layout.Footprint.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture->GetFormat()); // Can this attrib of buffer retrive from texture?
+        layout.Footprint.RowPitch = 4 * size.x; // TODO get pixel component nums
+
+        CD3DX12_TEXTURE_COPY_LOCATION dest(texture->GetDX12Resource().Get(), 0);
+        CD3DX12_TEXTURE_COPY_LOCATION source(buffer->GetDX12Resource().Get(), layout);
+        commandBuffer.GetDX12GraphicsCommandList()->CopyTextureRegion(&dest, origin.x, origin.y, origin.z, &source, nullptr);
     }
 
     void DX12CommandEncoder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size)

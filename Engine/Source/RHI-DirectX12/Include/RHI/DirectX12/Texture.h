@@ -17,7 +17,7 @@ namespace RHI::DirectX12 {
     public:
         NON_COPYABLE(DX12Texture)
         explicit DX12Texture(DX12Device& device, const TextureCreateInfo* createInfo);
-        explicit DX12Texture(DX12Device& device, ComPtr<ID3D12Resource>&& dx12Res);
+        explicit DX12Texture(DX12Device& device, PixelFormat format, ComPtr<ID3D12Resource>&& dx12Res);
         ~DX12Texture() override;
 
         TextureView* CreateTextureView(const TextureViewCreateInfo* createInfo) override;
