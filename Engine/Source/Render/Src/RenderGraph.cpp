@@ -67,6 +67,20 @@ namespace Render {
         result.depthStencilAttachment = depthStencilAttachment;
         return result;
     }
+
+    static RHI::Barrier GetBarrier(const RGResTransition& transition)
+    {
+        if (transition.resType == RHI::ResourceType::BUFFER) {
+            const auto& bufferTransition = transition.buffer;
+            return RHI::Barrier::Transition(bufferTransition.buffer->GetRHI(), bufferTransition.before, bufferTransition.after);
+        }
+        if (transition.resType == RHI::ResourceType::TEXTURE) {
+            const auto& textureTransition = transition.texture;
+            return RHI::Barrier::Transition(textureTransition.texture->GetRHI(), textureTransition.before, textureTransition.after);
+        }
+        Assert(false);
+        return {};
+    }
 }
 
 namespace Render {
@@ -108,7 +122,7 @@ namespace Render {
         return RGResourceType::BUFFER;
     }
 
-    void RGBuffer::Devirtualize()
+    void RGBuffer::Devirtualize(RHI::Device& device)
     {
         // TODO
     }
@@ -145,7 +159,7 @@ namespace Render {
         return RGResourceType::TEXTURE;
     }
 
-    void RGTexture::Devirtualize()
+    void RGTexture::Devirtualize(RHI::Device& device)
     {
         // TODO
     }
@@ -183,7 +197,7 @@ namespace Render {
         return RGResourceType::BUFFER_VIEW;
     }
 
-    void RGBufferView::Devirtualize()
+    void RGBufferView::Devirtualize(RHI::Device& device)
     {
         // TODO
     }
@@ -227,7 +241,7 @@ namespace Render {
         return RGResourceType::TEXTURE_VIEW;
     }
 
-    void RGTextureView::Devirtualize()
+    void RGTextureView::Devirtualize(RHI::Device& device)
     {
         // TODO
     }
@@ -270,7 +284,7 @@ namespace Render {
         return RGResourceType::SAMPLER;
     }
 
-    void RGSampler::Devirtualize()
+    void RGSampler::Devirtualize(RHI::Device& device)
     {
         // TODO
     }
@@ -456,7 +470,7 @@ namespace Render {
 
         std::unordered_set<RGResource*> consumeds;
         for (auto& pass : passes) {
-            for (auto& read : pass->reads) {
+            for (const auto& read : pass->reads) {
                 consumeds.emplace(read);
             }
         }
@@ -465,26 +479,16 @@ namespace Render {
             if (!consumeds.contains(resource.get())) {
                 resource->SetCulled(true);
             }
-
-            if (resource->isCulled) {
-                continue;
-            }
-            for (auto& pass : passes) {
-                auto iter = std::find(pass->writes.begin(), pass->writes.end(), resource.get());
-                if (iter == pass->writes.end()) {
-                    continue;
-                }
-                writes[resource.get()] = pass.get();
-                break;
-            }
         }
+
+        ComputeResBarriers();
     }
 
     void RenderGraph::Execute(RHI::Fence* mainFence, RHI::Fence* asyncFence)
     {
         for (auto& resource : resources) {
             if (!resource->isCulled) {
-                resource->Devirtualize();
+                resource->Devirtualize(device);
                 resource->SetRHIAccess(true);
             }
         }
@@ -556,54 +560,102 @@ namespace Render {
         graphicsEncoder->EndPass();
     }
 
-    void RenderGraph::TransitionResources(RHI::CommandEncoder* encoder, RGPass* readPass)
+    RGBuffer* RenderGraph::GetActualBufferRes(RGResource* res)
     {
-        auto& readResources = readPass->reads;
-        for (auto* readResource : readResources) {
-            auto iter = writes.find(readResource);
-            auto* writePass = iter == writes.end() ? nullptr : iter->second;
-            TransitionSingleResource(encoder, readResource, writePass, readPass);
+        if (res->GetType() == RGResourceType::BUFFER) {
+            return static_cast<RGBuffer*>(res);
         }
+        if (res->GetType() == RGResourceType::BUFFER_VIEW) {
+            return static_cast<RGBufferView*>(res)->GetBuffer();
+        }
+        Assert(false);
+        return nullptr;
     }
 
-    void RenderGraph::TransitionSingleResource(RHI::CommandEncoder* encoder, RGResource* resource, RGPass* writePass, RGPass* readPass)
+    RGTexture* RenderGraph::GetActualTextureRes(RGResource* res)
     {
-        auto type = resource->GetType();
-        if (type == RGResourceType::BUFFER) {
-            TransitionSingleBuffer(encoder, static_cast<RGBuffer*>(resource), writePass, readPass);
-        } else if (type == RGResourceType::BUFFER_VIEW) {
-            TransitionSingleBufferView(encoder, static_cast<RGBufferView*>(resource), writePass, readPass);
-        } else if (type == RGResourceType::TEXTURE) {
-            TransitionSingleTexture(encoder, static_cast<RGTexture*>(resource), writePass, readPass);
-        } else if (type == RGResourceType::TEXTURE_VIEW) {
-            TransitionSingleTextureView(encoder, static_cast<RGTextureView*>(resource), writePass, readPass);
+        if (res->GetType() == RGResourceType::TEXTURE) {
+            return static_cast<RGTexture*>(res);
+        }
+        if (res->GetType() == RGResourceType::TEXTURE_VIEW) {
+            return static_cast<RGTextureView*>(res)->GetTexture();
+        }
+        Assert(false);
+        return nullptr;
+    }
+
+    RHI::BufferState RenderGraph::ComputeBufferState(RGPassType passType, RGResourceAccessType accessType)
+    {
+        if (passType == RGPassType::COPY) {
+            if (accessType == RGResourceAccessType::READ) {
+                return RHI::BufferState::COPY_SRC;
+            }
+            if (accessType == RGResourceAccessType::WRITE) {
+                return RHI::BufferState::COPY_DST;
+            }
         } else {
-            Assert(false);
+            if (accessType == RGResourceAccessType::READ) {
+                return RHI::BufferState::SHADER_READ_ONLY;
+            }
+            if (accessType == RGResourceAccessType::WRITE) {
+                return RHI::BufferState::STORAGE;
+            }
+        }
+        return RHI::BufferState::UNDEFINED;
+    }
+
+    RHI::TextureState RenderGraph::ComputeTextureState(RGPassType passType, RGResourceAccessType accessType)
+    {
+        if (passType == RGPassType::COPY) {
+            if (accessType == RGResourceAccessType::READ) {
+                return RHI::TextureState::COPY_SRC;
+            }
+            if (accessType == RGResourceAccessType::WRITE) {
+                return RHI::TextureState::COPY_DST;
+            }
+        }
+        if (passType == RGPassType::COMPUTE) {
+            if (accessType == RGResourceAccessType::READ) {
+                return RHI::TextureState::SHADER_READ_ONLY;
+            }
+            if (accessType == RGResourceAccessType::WRITE) {
+                return RHI::TextureState::STORAGE;
+            }
+        }
+        if (passType == RGPassType::RASTER) {
+            if (accessType == RGResourceAccessType::READ) {
+                return RHI::TextureState::SHADER_READ_ONLY;
+            }
+            if (accessType == RGResourceAccessType::WRITE) {
+                return RHI::TextureState::RENDER_TARGET;
+            }
+        }
+        return RHI::TextureState::UNDEFINED;
+    }
+
+    void RenderGraph::ComputeResBarriers()
+    {
+        LastResStates lastResStates;
+        for (const auto& pass : passes) {
+            ComputeResTransitionsByAccessGroup<RGResourceAccessType::READ>(pass.get(), pass->reads, lastResStates);
+            ComputeResTransitionsByAccessGroup<RGResourceAccessType::WRITE>(pass.get(), pass->writes, lastResStates);
+            UpdateLastResStatesByAccessGroup<RGResourceAccessType::READ>(pass->GetType(), pass->reads, lastResStates);
+            UpdateLastResStatesByAccessGroup<RGResourceAccessType::WRITE>(pass->GetType(), pass->writes, lastResStates);
         }
     }
 
-    RHI::BufferState RenderGraph::SpeculateBufferStateFrom(RGPass* writePass)
+    void RenderGraph::TransitionResources(RHI::CommandEncoder* encoder, RGPass* pass)
     {
-        // TODO
-        return RHI::BufferState::MAX;
-    }
-
-    RHI::BufferState RenderGraph::SpeculateBufferStateTo(RGPass* readPass)
-    {
-        // TODO
-        return RHI::BufferState::MAX;
-    }
-
-    RHI::TextureState RenderGraph::SpeculateTextureStateFrom(RGPass* writePass)
-    {
-        // TODO
-        return RHI::TextureState::PRESENT;
-    }
-
-    RHI::TextureState RenderGraph::SpeculateTextureStateTo(RGPass* readPass)
-    {
-        // TODO
-        return RHI::TextureState::PRESENT;
+        std::vector<RGResource*> transitionResources;
+        for (auto* read : pass->reads) {
+            transitionResources.emplace_back(read);
+        }
+        for (auto* write : pass->writes) {
+            transitionResources.emplace_back(write);
+        }
+        for (auto* res : transitionResources) {
+            encoder->ResourceBarrier(GetBarrier(resTransitionMap[std::make_pair(res, pass)]));
+        }
     }
 
     RGPassBuilder::RGPassBuilder(RenderGraph& inGraph, RGPass& inPass)
@@ -613,6 +665,11 @@ namespace Render {
     }
 
     RGPassBuilder::~RGPassBuilder() = default;
+
+    void RGPassBuilder::CheckReadWriteOnce(RGResource* resource)
+    {
+        Assert(!pass.reads.contains(resource) && !pass.writes.contains(resource));
+    }
 
     RGCopyPassBuilder::RGCopyPassBuilder(RenderGraph& inGraph, RGCopyPass& inPass)
         : RGPassBuilder(inGraph, inPass)

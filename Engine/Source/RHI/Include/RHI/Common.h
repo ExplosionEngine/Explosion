@@ -317,18 +317,21 @@ namespace RHI {
 
     enum class BufferState : EnumType {
         UNDEFINED,
-        STORAGE,
+        COPY_SRC,
         COPY_DST,
         SHADER_READ_ONLY,
+        STORAGE,
         MAX
     };
 
     enum class TextureState : EnumType {
         UNDEFINED,
-        RENDER_TARGET,
-        PRESENT,
+        COPY_SRC,
         COPY_DST,
         SHADER_READ_ONLY,
+        RENDER_TARGET,
+        STORAGE,
+        PRESENT,
         MAX
     };
 }
