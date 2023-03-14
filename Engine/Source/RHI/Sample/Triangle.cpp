@@ -235,8 +235,8 @@ private:
             graphicsEncoder->EndPass();
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::RENDER_TARGET, TextureState::PRESENT));
         }
-        commandEncoder->End();
         commandEncoder->SwapChainSync(swapChain);
+        commandEncoder->End();
     }
 
     void SubmitCommandBufferAndPresent()

@@ -5,6 +5,7 @@ add_subdirectory(Render)
 add_subdirectory(Runtime)
 add_subdirectory(Rendering)
 add_subdirectory(Launcher)
+add_subdirectory(Example)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_subdirectory(RHI-DirectX12)

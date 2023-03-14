@@ -168,3 +168,10 @@ Add3rdHeaderOnlyPackage(
     HASH 32e28f89a85b3bb6749e8caed9eb5226f7f5956769005d2b5a41d48d9481d90c
     INCLUDE $<SOURCE_DIR>
 )
+
+Add3rdHeaderOnlyPackage(
+    NAME tinyglft
+    PLATFORM All
+    VERSION 2.8.3
+    INCLUDE $<SOURCE_DIR>
+)

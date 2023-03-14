@@ -208,7 +208,7 @@ private:
         texCommandBuffer = device->CreateCommandBuffer();
         auto* commandEncoder = texCommandBuffer->Begin();
         // Dx need not to transition resource state before copy
-//        commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture, TextureState::UNDEFINED, TextureState::COPY_DST));
+        commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture, TextureState::UNDEFINED, TextureState::COPY_DST));
         TextureSubResourceInfo subResourceInfo {};
         subResourceInfo.mipLevel = 0;
         subResourceInfo.arrayLayerNum = 1;
@@ -364,8 +364,8 @@ private:
             graphicsEncoder->EndPass();
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::RENDER_TARGET, TextureState::PRESENT));
         }
-        commandEncoder->End();
         commandEncoder->SwapChainSync(swapChain);
+        commandEncoder->End();
     }
 
     void SubmitCommandBufferAndPresent()

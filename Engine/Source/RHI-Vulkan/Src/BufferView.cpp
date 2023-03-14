@@ -35,6 +35,7 @@ namespace RHI::Vulkan {
     void VKBufferView::InitializeBufferAttrib(const BufferViewCreateInfo* createInfo)
     {
         offset = createInfo->offset;
+        size   = createInfo->size;
         if (IsIndexBuffer(buffer.GetUsages())) {
             format = createInfo->index.format;
         } else {

@@ -214,7 +214,7 @@ namespace RHI::Vulkan {
         vk::DescriptorSet descriptorSet = vBindGroup->GetVkDescritorSet();
         vk::PipelineLayout layout = graphicsPipeline->GetPipelineLayout()->GetVkPipelineLayout();
 
-        cmdHandle.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, 0, 1, &descriptorSet, 0, nullptr);
+        cmdHandle.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, layoutIndex, 1, &descriptorSet, 0, nullptr);
     }
 
     void VKGraphicsPassCommandEncoder::SetIndexBuffer(BufferView *bufferView)
