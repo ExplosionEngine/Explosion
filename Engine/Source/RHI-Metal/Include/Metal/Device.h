@@ -5,11 +5,11 @@
 #pragma once
 
 #include <RHI/Device.h>
-#import <Metal/Metal.h>
-#include <Metal/Queue.h>
 #include <unordered_map>
 #include <vector>
 #include <memory>
+
+#import <Metal/Metal.h>
 
 namespace RHI::Metal {
     class MTLGpu;
@@ -24,18 +24,18 @@ namespace RHI::Metal {
 
         size_t GetQueueNum(QueueType type) override;
         Queue* GetQueue(QueueType type, size_t index) override;
-        SwapChain* CreateSwapChain(const SwapChainCreateInfo* createInfo) override { return nullptr; }
-        Buffer* CreateBuffer(const BufferCreateInfo* createInfo) override { return nullptr; }
-        Texture* CreateTexture(const TextureCreateInfo* createInfo) override { return nullptr; }
+        SwapChain* CreateSwapChain(const SwapChainCreateInfo* createInfo) override;
+        Buffer* CreateBuffer(const BufferCreateInfo* createInfo) override;
+        Texture* CreateTexture(const TextureCreateInfo* createInfo) override;
         Sampler* CreateSampler(const SamplerCreateInfo* createInfo) override { return nullptr; }
         BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo) override { return nullptr; }
         BindGroup* CreateBindGroup(const BindGroupCreateInfo* createInfo) override { return nullptr; }
-        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo) override { return nullptr; }
-        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) override { return nullptr; }
+        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo) override;
+        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) override;
         ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) override { return nullptr; }
-        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override { return nullptr; }
-        CommandBuffer* CreateCommandBuffer() override { return nullptr; }
-        Fence* CreateFence() override { return nullptr; }
+        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override;
+        CommandBuffer* CreateCommandBuffer() override;
+        Fence* CreateFence() override;
 
         void Destroy() override;
 
@@ -43,9 +43,12 @@ namespace RHI::Metal {
 
         id<MTLDevice> GetDevice() const;
 
+        MTLSharedEventListener *GetSharedEventListener() const;
+
     private:
         MTLGpu &gpu;
-        id <MTLDevice> mtlDevice = nil;
+        id<MTLDevice> mtlDevice = nil;
+        MTLSharedEventListener *listener = nil;
         std::unordered_map<QueueType, std::vector<std::unique_ptr<MTLQueue>>> queues;
     };
 }

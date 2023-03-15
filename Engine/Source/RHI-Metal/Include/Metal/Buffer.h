@@ -19,11 +19,13 @@ namespace RHI::Metal {
         void UnMap() override;
         BufferView* CreateBufferView(const BufferViewCreateInfo* createInfo) override;
         void Destroy() override;
+
+        id<MTLBuffer> GetNativeBuffer() const;
     private:
         void CreateNativeBuffer(const BufferCreateInfo* createInfo);
-        
+
         MTLDevice &mtlDevice;
-        id <MTLBuffer> mtlBuffer = nil;
+        id<MTLBuffer> mtlBuffer = nil;
     };
 
 }

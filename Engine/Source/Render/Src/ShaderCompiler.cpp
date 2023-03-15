@@ -6,6 +6,8 @@
 
 #if PLATFORM_WINDOWS
 #include <Windows.h>
+#undef min
+#undef max
 #else
 #define __EMULATE_UUID 1
 #endif
@@ -24,6 +26,8 @@ using namespace Microsoft::WRL;
 #include <Render/ShaderCompiler.h>
 #include <Common/Debug.h>
 #include <Common/String.h>
+#include <spirv_cross/spirv_cross.hpp>
+#include <spirv_cross/spirv_msl.hpp>
 
 namespace Render {
     static std::wstring GetDXCTargetProfile(RHI::ShaderStageBits stage)
@@ -134,7 +138,16 @@ namespace Render {
         const ShaderCompileOptions& options,
         ShaderCompileOutput& output)
     {
-        // TODO
+        spirv_cross::CompilerMSL compiler(reinterpret_cast<const uint32_t*>(output.byteCode.data()), output.byteCode.size() / sizeof(uint32_t));
+        spirv_cross::CompilerMSL::Options mslOptions;
+        mslOptions.platform = spirv_cross::CompilerMSL::Options::Platform::macOS;
+        mslOptions.enable_decoration_binding = true;
+        mslOptions.pad_fragment_output_components = true;
+        compiler.set_msl_options(mslOptions);
+
+        std::string source = compiler.compile();
+        output.byteCode.resize(source.length() + 1, 0);
+        memcpy(output.byteCode.data(), source.c_str(), source.length());
     }
 }
 

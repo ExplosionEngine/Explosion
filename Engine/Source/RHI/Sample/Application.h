@@ -42,13 +42,19 @@ public:
         auto cli = (
             clipp::option("-w").doc("window width, 1024 by default") & clipp::value("width", width),
             clipp::option("-h").doc("window height, 768 by default") & clipp::value("height", height),
-            clipp::required("-rhi").doc("RHI type, can be 'DirectX12' or 'Vulkan'") & clipp::value("RHI type", rhiString)
+            clipp::required("-rhi").doc("RHI type, can be 'DirectX12', 'Metal' or 'Vulkan'") & clipp::value("RHI type", rhiString)
         );
         if (!clipp::parse(argc, argv, cli)) {
             std::cout << clipp::make_man_page(cli, argv[0]);
             return -1;
         }
-        rhiType = rhiString == "DirectX12" ? RHI::RHIType::DIRECTX_12 : RHI::RHIType::VULKAN;
+        static const std::unordered_map<std::string, RHI::RHIType> RHI_MAP = {
+            {"DirectX12", RHI::RHIType::DIRECTX_12},
+            {"Vulkan", RHI::RHIType::VULKAN},
+            {"Metal", RHI::RHIType::METAL}
+        };
+        auto iter = RHI_MAP.find(rhiString);
+        rhiType = iter == RHI_MAP.end() ? RHI::RHIType::DIRECTX_12 : iter->second;
 
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -97,6 +103,9 @@ protected:
         } else if (rhiType == RHI::RHIType::VULKAN) {
             options.byteCodeType = Render::ShaderByteCodeType::SPRIV;
             options.definitions.emplace_back("VULKAN=1");
+        } else if (rhiType == RHI::RHIType::METAL) {
+            options.byteCodeType = Render::ShaderByteCodeType::MBC;
+            options.definitions.emplace_back("VULKAN=0");
         }
         options.withDebugInfo = false;
         auto future = Render::ShaderCompiler::Get().Compile(info, options);

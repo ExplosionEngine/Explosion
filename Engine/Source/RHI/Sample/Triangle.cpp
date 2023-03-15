@@ -26,10 +26,12 @@ protected:
     {
         CreateInstanceAndSelectGPU();
         RequestDeviceAndFetchQueues();
-        CreateSwapChain();
-        CreateVertexBuffer();
+
         CreatePipelineLayout();
         CreatePipeline();
+        CreateVertexBuffer();
+
+        CreateSwapChain();
         CreateFence();
         CreateCommandBuffer();
     }
@@ -213,7 +215,7 @@ private:
             colorAttachments[0].loadOp = LoadOp::CLEAR;
             colorAttachments[0].storeOp = StoreOp::STORE;
             colorAttachments[0].view = swapChainTextureViews[backTextureIndex];
-            colorAttachments[0].resolveTarget = nullptr;
+            colorAttachments[0].resolve = nullptr;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
             graphicsPassBeginInfo.pipeline = pipeline;
@@ -239,9 +241,10 @@ private:
 
     void SubmitCommandBufferAndPresent()
     {
+        fence->Reset();
         graphicsQueue->Submit(commandBuffer, fence);
-        fence->Wait();
         swapChain->Present();
+        fence->Wait();
     }
 
     Instance* instance = nullptr;

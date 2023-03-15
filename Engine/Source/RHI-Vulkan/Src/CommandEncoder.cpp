@@ -140,6 +140,7 @@ namespace RHI::Vulkan {
     void VKCommandEncoder::End()
     {
         commandBuffer.GetVkCommandBuffer().end();
+        delete this;
     }
 
     void VKCommandEncoder::SwapChainSync(SwapChain* swapChain)
