@@ -33,8 +33,8 @@ namespace Render {
     static std::wstring GetDXCTargetProfile(RHI::ShaderStageBits stage)
     {
         static const std::unordered_map<RHI::ShaderStageBits, std::wstring> map = {
-            { RHI::ShaderStageBits::VERTEX, L"vs" },
-            { RHI::ShaderStageBits::FRAGMENT, L"ps" },
+            { RHI::ShaderStageBits::S_VERTEX, L"vs" },
+            { RHI::ShaderStageBits::S_PIXEL, L"ps" },
             // TODO
         };
         auto iter = map.find(stage);

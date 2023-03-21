@@ -39,9 +39,9 @@ namespace RHI::Vulkan {
             setLayouts[i] = vulkanBindGroup->GetVkDescriptorSetLayout();
         }
 
-        std::vector<vk::PushConstantRange> pushConstants(createInfo->pipelineConstantNum);
-        for (uint32_t i = 0; i < createInfo->pipelineConstantNum; ++i) {
-            auto& constantInfo = createInfo->pipelineConstants[i];
+        std::vector<vk::PushConstantRange> pushConstants(createInfo->pipelineConstantLayoutNum);
+        for (uint32_t i = 0; i < createInfo->pipelineConstantLayoutNum; ++i) {
+            auto& constantInfo = createInfo->pipelineConstantLayouts[i];
             pushConstants[i].setStageFlags(FromRHI(constantInfo.stageFlags))
                 .setOffset(constantInfo.offset)
                 .setSize(constantInfo.size);
