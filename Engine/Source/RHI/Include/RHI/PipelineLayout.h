@@ -20,9 +20,8 @@ namespace RHI {
     struct PipelineLayoutCreateInfo {
         uint32_t bindGroupNum;
         const BindGroupLayout* const* bindGroupLayouts;
-        // TODO[DX12] pipeline constant
-        uint32_t pipelineConstantNum;
-        const PipelineConstantLayout* pipelineConstants;
+        uint32_t pipelineConstantLayoutNum;
+        const PipelineConstantLayout* pipelineConstantLayouts;
     };
 
     class PipelineLayout {

@@ -48,5 +48,5 @@ namespace RHI::Vulkan {
 }
 
 extern "C" {
-RHI_VULKAN_API RHI::Instance* RHIGetInstance();
+    RHI_VULKAN_API RHI::Instance* RHIGetInstance();
 }

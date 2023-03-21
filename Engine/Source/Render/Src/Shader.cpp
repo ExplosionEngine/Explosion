@@ -15,7 +15,7 @@ namespace Render {
 
     ShaderByteCodeStorage::~ShaderByteCodeStorage() = default;
 
-    void ShaderByteCodeStorage::EmplaceByteCodePackage(IShaderType* shaderTypeKey, std::unordered_map<VariantKey, ShaderByteCode>&& byteCodePackage)
+    void ShaderByteCodeStorage::UpdateByteCodePackage(IShaderType* shaderTypeKey, std::unordered_map<VariantKey, ShaderByteCode>&& byteCodePackage)
     {
         byteCodePackages[shaderTypeKey] = byteCodePackage;
     }

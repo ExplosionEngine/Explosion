@@ -117,6 +117,7 @@ namespace Render {
 
     struct RGBufferDesc {
         size_t size;
+        RHI::BufferUsageFlags usages;
     };
 
     struct RGTextureDesc {
@@ -125,6 +126,7 @@ namespace Render {
         uint8_t samples;
         RHI::TextureDimension dimension;
         RHI::PixelFormat format;
+        RHI::TextureUsageFlags usages;
     };
 
     struct RGVertexBufferDesc {
@@ -147,23 +149,10 @@ namespace Render {
     struct RGTextureViewDesc {
         RHI::TextureViewDimension dimension;
         RHI::TextureAspect aspect;
-        uint8_t baseMipLevels;
+        uint8_t baseMipLevel;
         uint8_t mipLevelNum;
         uint8_t baseArrayLayer;
         uint8_t arrayLayerNum;
-    };
-
-    struct RGSamplerDesc {
-        RHI::AddressMode addressModeU = RHI::AddressMode::CLAMP_TO_EDGE;
-        RHI::AddressMode addressModeV = RHI::AddressMode::CLAMP_TO_EDGE;
-        RHI::AddressMode addressModeW = RHI::AddressMode::CLAMP_TO_EDGE;
-        RHI::FilterMode magFilter = RHI::FilterMode::NEAREST;
-        RHI::FilterMode minFilter = RHI::FilterMode::NEAREST;
-        RHI::FilterMode mipFilter = RHI::FilterMode::NEAREST;
-        float lodMinClamp = 0;
-        float lodMaxClamp = 32;
-        RHI::ComparisonFunc comparisonFunc = RHI::ComparisonFunc::NEVER;
-        uint8_t maxAnisotropy = 1;
     };
 
     struct RGColorAttachment {
@@ -262,22 +251,6 @@ namespace Render {
         RGTextureViewDesc desc;
         RGTexture* texture;
         RHI::TextureView* rhiHandle;
-    };
-
-    class RGSampler : public RGResource {
-    public:
-        RGSampler(std::string inName, RGSamplerDesc inDesc);
-        RGSampler(std::string inName, RHI::Sampler* inSampler);
-        ~RGSampler() override;
-
-        RGResourceType GetType() override;
-        void Devirtualize(RHI::Device& device) override;
-        void Destroy() override;
-        RHI::Sampler* GetRHI();
-
-    private:
-        RGSamplerDesc desc;
-        RHI::Sampler* rhiHandle;
     };
 
     class RGPass {
