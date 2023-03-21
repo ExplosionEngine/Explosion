@@ -65,7 +65,7 @@ namespace RHI::Metal {
 
         pipelineDesc.label = @"Graphics Pipeline";
         pipelineDesc.vertexFunction = CreateFunction(ShaderStageBits::S_VERTEX, createInfo->vertexShader);
-        pipelineDesc.fragmentFunction = CreateFunction(ShaderStageBits::S_FRAGMENT, createInfo->pixelShader);
+        pipelineDesc.fragmentFunction = CreateFunction(ShaderStageBits::S_PIXEL, createInfo->pixelShader);
         pipelineDesc.vertexDescriptor = vertexDesc;
 
         for (uint32_t i = 0; i < createInfo->fragmentState.colorTargetNum; ++i) {
