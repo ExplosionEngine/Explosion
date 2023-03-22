@@ -14,7 +14,7 @@ namespace RHI {
         DIRECTX_12,
         VULKAN,
         METAL,
-        GNN,
+        DUMMY,
         MAX
     };
 
@@ -317,18 +317,21 @@ namespace RHI {
 
     enum class BufferState : EnumType {
         UNDEFINED,
-        STORAGE,
+        COPY_SRC,
         COPY_DST,
         SHADER_READ_ONLY,
+        STORAGE,
         MAX
     };
 
     enum class TextureState : EnumType {
         UNDEFINED,
-        RENDER_TARGET,
-        PRESENT,
+        COPY_SRC,
         COPY_DST,
         SHADER_READ_ONLY,
+        RENDER_TARGET,
+        STORAGE,
+        PRESENT,
         MAX
     };
 }
@@ -381,9 +384,12 @@ namespace RHI {
 
     using ShaderStageFlags = Flags;
     enum class ShaderStageBits : ShaderStageFlags {
-        VERTEX   = 0x1,
-        FRAGMENT = 0x2,
-        COMPUTE  = 0x4,
+        S_VERTEX   = 0x1,
+        S_PIXEL    = 0x2,
+        S_COMPUTE  = 0x4,
+        S_GEOMETRY = 0x8,
+        S_DOMAIN   = 0x10,
+        S_HULL     = 0x20,
         MAX
     };
 

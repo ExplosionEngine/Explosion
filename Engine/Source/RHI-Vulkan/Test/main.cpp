@@ -141,7 +141,7 @@ int main()
         0, 1, &layoutEntry
     };
     auto bindGroupLayout = device->CreateBindGroupLayout(&groupLayoutInfo);
-    RHI::PipelineConstantLayout constantLayout =  {RHI::ShaderStageFlags(RHI::ShaderStageBits::VERTEX), 0, 4 * sizeof(float)};
+    RHI::PipelineConstantLayout constantLayout =  {RHI::ShaderStageFlags(RHI::ShaderStageBits::S_VERTEX), 0, 4 * sizeof(float)};
 
     RHI::PipelineLayoutCreateInfo pLayoutInfo = {
         1, &bindGroupLayout,

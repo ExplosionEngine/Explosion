@@ -12,8 +12,8 @@ namespace RHI::Metal {
     static const char* GetShaderEntry(ShaderStageBits stage)
     {
         static std::unordered_map<ShaderStageBits, const char*> ENTRY_MAP = {
-            {ShaderStageBits::VERTEX, "VSMain"},
-            {ShaderStageBits::FRAGMENT, "FSMain"}
+            {ShaderStageBits::S_VERTEX, "VSMain"},
+            {ShaderStageBits::S_PIXEL, "FSMain"}
         };
         auto iter = ENTRY_MAP.find(stage);
         Assert(iter != ENTRY_MAP.end() && "invalid shader stage");
@@ -48,8 +48,8 @@ namespace RHI::Metal {
 
         MTLVertexDescriptor* vertexDesc = [[MTLVertexDescriptor alloc] init];
         uint32_t attributeIndex = 0;
-        for (uint32_t i = 0; i < createInfo->vertex.bufferLayoutNum; ++i) {
-            const VertexBufferLayout &vbLayout = createInfo->vertex.bufferLayouts[i];
+        for (uint32_t i = 0; i < createInfo->vertexState.bufferLayoutNum; ++i) {
+            const VertexBufferLayout &vbLayout = createInfo->vertexState.bufferLayouts[i];
             vertexDesc.layouts[i].stepFunction = vbLayout.stepMode == VertexStepMode::PER_VERTEX ? MTLVertexStepFunctionPerVertex : MTLVertexStepFunctionPerInstance;
             vertexDesc.layouts[i].stepRate = 1;
             vertexDesc.layouts[i].stride = vbLayout.stride;
@@ -64,12 +64,12 @@ namespace RHI::Metal {
         }
 
         pipelineDesc.label = @"Graphics Pipeline";
-        pipelineDesc.vertexFunction = CreateFunction(ShaderStageBits::VERTEX, createInfo->vertexShader);
-        pipelineDesc.fragmentFunction = CreateFunction(ShaderStageBits::FRAGMENT, createInfo->fragmentShader);
+        pipelineDesc.vertexFunction = CreateFunction(ShaderStageBits::S_VERTEX, createInfo->vertexShader);
+        pipelineDesc.fragmentFunction = CreateFunction(ShaderStageBits::S_PIXEL, createInfo->pixelShader);
         pipelineDesc.vertexDescriptor = vertexDesc;
 
-        for (uint32_t i = 0; i < createInfo->fragment.colorTargetNum; ++i) {
-            const ColorTargetState &colorTargetState = createInfo->fragment.colorTargets[i];
+        for (uint32_t i = 0; i < createInfo->fragmentState.colorTargetNum; ++i) {
+            const ColorTargetState &colorTargetState = createInfo->fragmentState.colorTargets[i];
             pipelineDesc.colorAttachments[i].pixelFormat = MTLEnumCast<PixelFormat, MTLPixelFormat>(colorTargetState.format);
             pipelineDesc.colorAttachments[i].writeMask = GetColorWriteMask(colorTargetState.writeFlags);
         }

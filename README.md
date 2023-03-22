@@ -9,7 +9,7 @@
             <img src="https://img.shields.io/codacy/grade/98afe27fd39b4b39b4c6acd8361e6d02?style=for-the-badge" alt="Codacy Grade"/>
         </a>
         <a href="https://github.com/ExplosionEngine/Explosion/actions">
-            <img src="https://img.shields.io/github/workflow/status/ExplosionEngine/Explosion/CMake?style=for-the-badge" alt="Build Status"/>
+            <img src="https://img.shields.io/github/actions/workflow/status/ExplosionEngine/Explosion/build.yml?style=for-the-badge" alt="Build Status"/>
         </a>
         <a href="https://github.com/ExplosionEngine/Explosion/blob/master/LICENSE">
             <img src="https://img.shields.io/github/license/ExplosionEngine/Explosion?style=for-the-badge" alt="License"/>

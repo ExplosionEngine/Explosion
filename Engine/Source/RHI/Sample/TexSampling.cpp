@@ -226,10 +226,10 @@ private:
         std::vector<BindGroupLayoutEntry> entries(2);
         entries[0].type = BindingType::TEXTURE;
         entries[0].binding = 0;
-        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::FRAGMENT);
+        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
         entries[1].type = BindingType::SAMPLER;
         entries[1].binding = 1;
-        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::FRAGMENT);
+        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
 
         BindGroupLayoutCreateInfo createInfo {};
         createInfo.entries = entries.data();
@@ -268,7 +268,7 @@ private:
     void CreatePipeline()
     {
         std::vector<uint8_t> vsByteCode;
-        CompileShader(vsByteCode, "Shader/Sample/TexSampling.hlsl", "VSMain", RHI::ShaderStageBits::VERTEX);
+        CompileShader(vsByteCode, "Shader/Sample/TexSampling.hlsl", "VSMain", RHI::ShaderStageBits::S_VERTEX);
 
         ShaderModuleCreateInfo shaderModuleCreateInfo {};
         shaderModuleCreateInfo.size = vsByteCode.size();
@@ -276,7 +276,7 @@ private:
         vertexShader = device->CreateShaderModule(&shaderModuleCreateInfo);
 
         std::vector<uint8_t> fsByteCode;
-        CompileShader(fsByteCode, "Shader/Sample/TexSampling.hlsl", "FSMain", RHI::ShaderStageBits::FRAGMENT);
+        CompileShader(fsByteCode, "Shader/Sample/TexSampling.hlsl", "FSMain", RHI::ShaderStageBits::S_PIXEL);
 
         shaderModuleCreateInfo.size = fsByteCode.size();
         shaderModuleCreateInfo.byteCode = fsByteCode.data();
@@ -305,20 +305,20 @@ private:
 
         GraphicsPipelineCreateInfo createInfo {};
         createInfo.vertexShader = vertexShader;
-        createInfo.fragmentShader = fragmentShader;
+        createInfo.pixelShader = fragmentShader;
         createInfo.layout = pipelineLayout;
-        createInfo.vertex.bufferLayoutNum = 1;
-        createInfo.vertex.bufferLayouts = &vertexBufferLayout;
-        createInfo.fragment.colorTargetNum = colorTargetStates.size();
-        createInfo.fragment.colorTargets = colorTargetStates.data();
-        createInfo.primitive.depthClip = false;
-        createInfo.primitive.frontFace = RHI::FrontFace::CCW;
-        createInfo.primitive.cullMode = CullMode::NONE;
-        createInfo.primitive.topologyType = RHI::PrimitiveTopologyType::TRIANGLE;
-        createInfo.primitive.stripIndexFormat = IndexFormat::UINT16;
-        createInfo.depthStencil.depthEnable = false;
-        createInfo.depthStencil.stencilEnable = false;
-        createInfo.multiSample.count = 1;
+        createInfo.vertexState.bufferLayoutNum = 1;
+        createInfo.vertexState.bufferLayouts = &vertexBufferLayout;
+        createInfo.fragmentState.colorTargetNum = colorTargetStates.size();
+        createInfo.fragmentState.colorTargets = colorTargetStates.data();
+        createInfo.primitiveState.depthClip = false;
+        createInfo.primitiveState.frontFace = RHI::FrontFace::CCW;
+        createInfo.primitiveState.cullMode = CullMode::NONE;
+        createInfo.primitiveState.topologyType = RHI::PrimitiveTopologyType::TRIANGLE;
+        createInfo.primitiveState.stripIndexFormat = IndexFormat::UINT16;
+        createInfo.depthStencilState.depthEnable = false;
+        createInfo.depthStencilState.stencilEnable = false;
+        createInfo.multiSampleState.count = 1;
         pipeline = device->CreateGraphicsPipeline(&createInfo);
     }
 
@@ -364,8 +364,8 @@ private:
             graphicsEncoder->EndPass();
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::RENDER_TARGET, TextureState::PRESENT));
         }
-        commandEncoder->End();
         commandEncoder->SwapChainSync(swapChain);
+        commandEncoder->End();
     }
 
     void SubmitCommandBufferAndPresent()
