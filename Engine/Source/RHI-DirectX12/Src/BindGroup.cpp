@@ -47,7 +47,7 @@ namespace RHI::DirectX12 {
         return *bindGroupLayout;
     }
 
-    const std::unordered_set<ID3D12DescriptorHeap*>& DX12BindGroup::GetDX12DescriptorHeaps()
+    const std::vector<ID3D12DescriptorHeap*>& DX12BindGroup::GetDX12DescriptorHeaps()
     {
         return dx12DescriptorHeaps;
     }
@@ -73,7 +73,7 @@ namespace RHI::DirectX12 {
             ID3D12DescriptorHeap* heap;
             GetDescriptorHandleAndHeap(handle, &heap, entry);
 
-            dx12DescriptorHeaps.emplace(heap);
+            dx12DescriptorHeaps.emplace_back(heap);
             bindings.emplace_back(std::pair<uint8_t, std::pair<BindingType, CD3DX12_GPU_DESCRIPTOR_HANDLE>> { entry.binding, { entry.type, handle } });
         }
     }

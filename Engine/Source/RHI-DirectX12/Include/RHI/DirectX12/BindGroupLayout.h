@@ -38,5 +38,6 @@ namespace RHI::DirectX12 {
         uint8_t layoutIndex;
         std::vector<RootParameterKeyInfo> rootParameterKeyInfos;
         std::vector<CD3DX12_ROOT_PARAMETER1> dx12RootParameters;
+        std::vector<CD3DX12_DESCRIPTOR_RANGE1> dx12DescriptorRanges;
     };
 }

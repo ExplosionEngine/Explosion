@@ -12,9 +12,10 @@
 #include <RHI/DirectX12/BindGroupLayout.h>
 
 namespace RHI::DirectX12 {
-    static LayoutIndexAndBinding EncodeLayoutIndexAndBinding(uint8_t layoutIndex, uint8_t binding)
+    static LayoutIndexAndBinding EncodeUniqueID(uint8_t layoutIndex, uint8_t binding, BindingType type)
     {
-        return (layoutIndex << 8) + binding;
+        auto t = static_cast<uint8_t>(type);
+        return (layoutIndex << 8) + binding + t;
     }
 }
 
@@ -31,14 +32,14 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    std::optional<BindingTypeAndRootParameterIndex> DX12PipelineLayout::QueryRootDescriptorParameterIndex(ShaderStageBits shaderStage, uint8_t layoutIndex, uint8_t binding)
+    std::optional<BindingTypeAndRootParameterIndex> DX12PipelineLayout::QueryRootDescriptorParameterIndex(ShaderStageBits shaderStage, uint8_t layoutIndex, uint8_t binding, BindingType type)
     {
         auto iter1 = rootDescriptorParameterIndexMaps.find(shaderStage);
-        if (iter1 == rootDescriptorParameterIndexMaps.end()) {
+        if (iter1->second.size() <= 0) {
             return {};
         }
 
-        auto iter2 = iter1->second.find(EncodeLayoutIndexAndBinding(layoutIndex, binding));
+        auto iter2 = iter1->second.find(EncodeUniqueID(layoutIndex, binding, type));
         Assert(iter2 != iter1->second.end());
         return iter2->second;
     }
@@ -67,7 +68,7 @@ namespace RHI::DirectX12 {
                     rootParameters.emplace_back(pendingRootParameters[index]);
 
                     const auto& keyInfo = keyInfos[index];
-                    auto layoutIndexAndBinding = EncodeLayoutIndexAndBinding(keyInfo.layoutIndex, keyInfo.binding);
+                    auto layoutIndexAndBinding = EncodeUniqueID(keyInfo.layoutIndex, keyInfo.binding, keyInfo.bindingType);
                     rootDescriptorParameterIndexMaps[keyInfo.shaderStage][layoutIndexAndBinding] = { keyInfo.bindingType, index };
                 }
             }

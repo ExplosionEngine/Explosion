@@ -49,7 +49,7 @@ namespace RHI::DirectX12 {
         const auto& bindings= bindGroup->GetBindings();
         for (const auto& binding : bindings) {
             ForEachBitsType<ShaderStageBits>([this, &binding, &pipelineLayout, layoutIndex](ShaderStageBits shaderStage) -> void {
-                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first);
+                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first, binding.second.first);
                 if (!t.has_value()) {
                     return;
                 }
@@ -71,6 +71,8 @@ namespace RHI::DirectX12 {
 
     DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo) : GraphicsPassCommandEncoder(), device(device), commandBuffer(commandBuffer), graphicsPipeline(nullptr)
     {
+        graphicsPipeline = dynamic_cast<DX12GraphicsPipeline*>(beginInfo->pipeline);
+
         // set render targets
         std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rtvHandles(beginInfo->colorAttachmentNum);
         for (auto i = 0; i < rtvHandles.size(); i++) {
@@ -110,15 +112,17 @@ namespace RHI::DirectX12 {
     {
         auto* bindGroup = dynamic_cast<DX12BindGroup*>(tBindGroup);
         auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
+        Assert(layoutIndex == bindGroupLayout.GetLayoutIndex());
+
+        Assert(graphicsPipeline);
         auto& pipelineLayout = graphicsPipeline->GetPipelineLayout();
 
-        Assert(layoutIndex == bindGroupLayout.GetLayoutIndex());
-        Assert(graphicsPipeline);
+        commandBuffer.GetDX12GraphicsCommandList()->SetDescriptorHeaps(bindGroup->GetDX12DescriptorHeaps().size(), bindGroup->GetDX12DescriptorHeaps().data());
 
         const auto& bindings= bindGroup->GetBindings();
         for (const auto& binding : bindings) {
             ForEachBitsType<ShaderStageBits>([this, &binding, &pipelineLayout, layoutIndex](ShaderStageBits shaderStage) -> void {
-                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first);
+                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first, binding.second.first);
                 if (!t.has_value()) {
                     return;
                 }

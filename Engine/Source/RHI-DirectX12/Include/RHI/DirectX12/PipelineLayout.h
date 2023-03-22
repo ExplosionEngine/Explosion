@@ -30,7 +30,7 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
 
-        std::optional<BindingTypeAndRootParameterIndex> QueryRootDescriptorParameterIndex(ShaderStageBits shaderStage, uint8_t layoutIndex, uint8_t binding);
+        std::optional<BindingTypeAndRootParameterIndex> QueryRootDescriptorParameterIndex(ShaderStageBits shaderStage, uint8_t layoutIndex, uint8_t binding, BindingType type);
         ComPtr<ID3D12RootSignature>& GetDX12RootSignature();
 
     private:
