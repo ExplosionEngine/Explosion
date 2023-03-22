@@ -71,7 +71,7 @@ namespace Example {
                 const auto localMatrix = node->localMatrix();
                 for (auto* primitive : node->mesh->primitives) {
                     for (uint32_t i = 0; i < primitive->vertexCount; i ++) {
-                        Vertex& vertex = raw_vertex_buffer[primitive->firstIndex + i];
+                        Vertex& vertex = raw_vertex_buffer[primitive->firstVertex + i];
 
                         // Pre transform vertex postion by node hierarchy
                         vertex.pos = glm::vec3(localMatrix * glm::vec4(vertex.pos, 1.0f));

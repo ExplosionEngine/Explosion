@@ -219,7 +219,7 @@ namespace Example {
         bindGroupLayouts.gBuffer = device->CreateBindGroupLayout(&createInfo);
 
         // renderable layout
-        entries.resize(1);
+        entries.resize(2);
         entries[0].type = BindingType::TEXTURE;
         entries[0].binding = 0;
         entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::FRAGMENT);
