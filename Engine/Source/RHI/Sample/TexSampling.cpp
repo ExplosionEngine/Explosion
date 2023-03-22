@@ -173,7 +173,7 @@ private:
 
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = texWidth * texHeight * 4;
-        bufferCreateInfo.usages = BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        bufferCreateInfo.usages = BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
         pixelBuffer = device->CreateBuffer(&bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
@@ -206,8 +206,7 @@ private:
 
         texCommandBuffer = device->CreateCommandBuffer();
         auto* commandEncoder = texCommandBuffer->Begin();
-        // Dx need not to transition resource state before copy
-//        commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture, TextureState::UNDEFINED, TextureState::COPY_DST));
+        commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture, TextureState::UNDEFINED, TextureState::COPY_DST));
         TextureSubResourceInfo subResourceInfo {};
         subResourceInfo.mipLevel = 0;
         subResourceInfo.arrayLayerNum = 1;
@@ -228,7 +227,7 @@ private:
         entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
         entries[1].type = BindingType::SAMPLER;
         entries[1].binding = 0;
-        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::FRAGMENT);
+        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
 
         BindGroupLayoutCreateInfo createInfo {};
         createInfo.entries = entries.data();
