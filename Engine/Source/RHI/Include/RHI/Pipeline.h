@@ -101,14 +101,16 @@ namespace RHI {
         PipelineLayout* layout = nullptr;
 
         ShaderModule* vertexShader = nullptr;
-        ShaderModule* fragmentShader = nullptr;
-        // TODO more shader?
+        ShaderModule* pixelShader = nullptr;
+        ShaderModule* geometryShader = nullptr;
+        ShaderModule* domainShader = nullptr;
+        ShaderModule* hullShader = nullptr;
 
-        VertexState vertex;
-        PrimitiveState primitive;
-        DepthStencilState depthStencil;
-        MultiSampleState multiSample;
-        FragmentState fragment;
+        VertexState vertexState;
+        PrimitiveState primitiveState;
+        DepthStencilState depthStencilState;
+        MultiSampleState multiSampleState;
+        FragmentState fragmentState;
     };
 
     class Pipeline {

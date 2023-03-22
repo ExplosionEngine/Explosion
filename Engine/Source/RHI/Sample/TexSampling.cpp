@@ -173,8 +173,7 @@ private:
 
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = texWidth * texHeight * 4;
-        // TO make this buffer has correct resource state(D3D12_RESOURCE_STATE_GENERIC_READ) in dx, add uniform usage flag
-        bufferCreateInfo.usages = BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        bufferCreateInfo.usages = BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
         pixelBuffer = device->CreateBuffer(&bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
@@ -226,7 +225,7 @@ private:
         std::vector<BindGroupLayoutEntry> entries(2);
         entries[0].type = BindingType::TEXTURE;
         entries[0].binding = 0;
-        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::FRAGMENT);
+        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
         entries[1].type = BindingType::SAMPLER;
         entries[1].binding = 0;
         entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::FRAGMENT);
@@ -268,7 +267,7 @@ private:
     void CreatePipeline()
     {
         std::vector<uint8_t> vsByteCode;
-        CompileShader(vsByteCode, "Shader/Sample/TexSampling.hlsl", "VSMain", RHI::ShaderStageBits::VERTEX);
+        CompileShader(vsByteCode, "Shader/Sample/TexSampling.hlsl", "VSMain", RHI::ShaderStageBits::S_VERTEX);
 
         ShaderModuleCreateInfo shaderModuleCreateInfo {};
         shaderModuleCreateInfo.size = vsByteCode.size();
@@ -276,7 +275,7 @@ private:
         vertexShader = device->CreateShaderModule(&shaderModuleCreateInfo);
 
         std::vector<uint8_t> fsByteCode;
-        CompileShader(fsByteCode, "Shader/Sample/TexSampling.hlsl", "FSMain", RHI::ShaderStageBits::FRAGMENT);
+        CompileShader(fsByteCode, "Shader/Sample/TexSampling.hlsl", "FSMain", RHI::ShaderStageBits::S_PIXEL);
 
         shaderModuleCreateInfo.size = fsByteCode.size();
         shaderModuleCreateInfo.byteCode = fsByteCode.data();
@@ -305,20 +304,20 @@ private:
 
         GraphicsPipelineCreateInfo createInfo {};
         createInfo.vertexShader = vertexShader;
-        createInfo.fragmentShader = fragmentShader;
+        createInfo.pixelShader = fragmentShader;
         createInfo.layout = pipelineLayout;
-        createInfo.vertex.bufferLayoutNum = 1;
-        createInfo.vertex.bufferLayouts = &vertexBufferLayout;
-        createInfo.fragment.colorTargetNum = colorTargetStates.size();
-        createInfo.fragment.colorTargets = colorTargetStates.data();
-        createInfo.primitive.depthClip = false;
-        createInfo.primitive.frontFace = RHI::FrontFace::CCW;
-        createInfo.primitive.cullMode = CullMode::NONE;
-        createInfo.primitive.topologyType = RHI::PrimitiveTopologyType::TRIANGLE;
-        createInfo.primitive.stripIndexFormat = IndexFormat::UINT16;
-        createInfo.depthStencil.depthEnable = false;
-        createInfo.depthStencil.stencilEnable = false;
-        createInfo.multiSample.count = 1;
+        createInfo.vertexState.bufferLayoutNum = 1;
+        createInfo.vertexState.bufferLayouts = &vertexBufferLayout;
+        createInfo.fragmentState.colorTargetNum = colorTargetStates.size();
+        createInfo.fragmentState.colorTargets = colorTargetStates.data();
+        createInfo.primitiveState.depthClip = false;
+        createInfo.primitiveState.frontFace = RHI::FrontFace::CCW;
+        createInfo.primitiveState.cullMode = CullMode::NONE;
+        createInfo.primitiveState.topologyType = RHI::PrimitiveTopologyType::TRIANGLE;
+        createInfo.primitiveState.stripIndexFormat = IndexFormat::UINT16;
+        createInfo.depthStencilState.depthEnable = false;
+        createInfo.depthStencilState.stencilEnable = false;
+        createInfo.multiSampleState.count = 1;
         pipeline = device->CreateGraphicsPipeline(&createInfo);
     }
 

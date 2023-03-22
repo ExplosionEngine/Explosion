@@ -19,15 +19,20 @@
 #include <Common/Math/Vector3.h>
 #include <Common/Math/Vector4.h>
 #include <Common/Math/Matrix4.h>
+#include <RHI/Common.h>
+#include <RHI/ShaderModule.h>
 
 namespace Render {
     class Shader {};
 
+    using ShaderTypeKey = uint64_t;
     using VariantKey = uint64_t;
     using ShaderByteCode = std::vector<uint8_t>;
+    using ShaderStage = RHI::ShaderStageBits;
 
     class IShaderType {
         virtual std::string GetName() = 0;
+        virtual ShaderTypeKey GetHash() = 0;
         virtual std::string GetCode(const Common::PathMapper& pathMapper) = 0;
         virtual std::vector<VariantKey> GetVariants() = 0;
         virtual std::vector<std::string> GetDefinitions(VariantKey variantKey) = 0;
@@ -40,11 +45,35 @@ namespace Render {
         ~ShaderByteCodeStorage();
         NON_COPYABLE(ShaderByteCodeStorage)
 
-        void EmplaceByteCodePackage(IShaderType* shaderTypeKey, std::unordered_map<VariantKey, ShaderByteCode>&& byteCodePackage);
+        void UpdateByteCodePackage(IShaderType* shaderTypeKey, std::unordered_map<VariantKey, ShaderByteCode>&& byteCodePackage);
         const std::unordered_map<VariantKey, ShaderByteCode>& GetByteCodePackage(IShaderType* shaderTypeKey);
 
     private:
         std::unordered_map<IShaderType*, std::unordered_map<VariantKey, ShaderByteCode>> byteCodePackages;
+    };
+
+    struct ShaderInstance {
+        RHI::ShaderModule* rhiHandle = nullptr;
+        ShaderTypeKey typeKey = 0;
+        VariantKey variantKey = 0;
+
+        bool IsAvaiable() const
+        {
+            return rhiHandle != nullptr;
+        }
+
+        size_t Hash() const
+        {
+            if (!IsAvaiable()) {
+                return 0;
+            }
+
+            std::vector<size_t> values = {
+                typeKey,
+                variantKey
+            };
+            return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        }
     };
 }
 
@@ -71,6 +100,11 @@ namespace Render {
         std::string GetName() override
         {
             return Shader::name;
+        }
+
+        ShaderTypeKey GetHash() override
+        {
+            return Common::HashUtils::CityHash(Shader::name, sizeof(Shader::name));
         }
 
         std::string GetCode(const Common::PathMapper& pathMapper) override
@@ -116,20 +150,52 @@ namespace Render {
     template <typename T>
     class GlobalShaderMap {
     public:
-        GlobalShaderMap() : byteCodePackage(ShaderByteCodeStorage::Get().GetByteCodePackage(&GlobalShaderType<T>::Get)) {}
+        GlobalShaderMap()
+        {
+            auto variantNum = T::VariantSet::VariantNum();
+            shaderModules.reserve(variantNum);
+        }
 
         ~GlobalShaderMap() = default;
         NON_COPYABLE(GlobalShaderMap)
 
+        void Invalidate()
+        {
+            auto variantNum = T::VariantSet::VariantNum();
+            shaderModules.clear();
+            shaderModules.reserve(variantNum);
+        }
+
+        ShaderInstance FindOrCreateShaderInstance(const typename T::VariantSet& variantSet)
+        {
+            auto variantKey = variantSet.Hash();
+            auto iter = shaderModules.find(variantKey);
+            if (iter != shaderModules.end()) {
+                const auto& shaderByteCode = GetByteCode(variantSet);
+                RHI::ShaderModuleCreateInfo createInfo;
+                createInfo.size = shaderByteCode.size();
+                createInfo.byteCode = shaderByteCode.data();
+                shaderModules[variantKey] = std::make_unique<RHI::ShaderModule>(&createInfo);
+            }
+
+            ShaderInstance result;
+            result.rhiHandle = shaderModules[variantKey];
+            result.typeKey = GlobalShaderType<T>::Get().GetHash();
+            result.variantKey = variantKey;
+            return result;
+        }
+
+    private:
         [[nodiscard]] const ShaderByteCode& GetByteCode(const typename T::VariantSet& variantSet) const
         {
+            const auto& byteCodePackage = ShaderByteCodeStorage::Get().GetByteCodePackage(&GlobalShaderType<T>::Get());
+
             auto iter = byteCodePackage.find(variantSet.Hash());
             Assert(iter != byteCodePackage.end());
             return iter->second();
         }
 
-    private:
-        const std::unordered_map<VariantKey, ShaderByteCode>& byteCodePackage;
+        std::unordered_map<VariantKey , std::unique_ptr<RHI::ShaderModule>> shaderModules;
     };
 
     class GlobalShaderRegistry {
@@ -147,16 +213,16 @@ namespace Render {
         template <typename Shader>
         void Register()
         {
-            pendingShaderTypes.emplace_back(&GlobalShaderType<Shader>::Get());
+            shaderTypes.emplace_back(&GlobalShaderType<Shader>::Get());
         }
 
-        std::vector<IShaderType*>&& GetPendingShaderType()
+        std::vector<IShaderType*>&& GetShaderTypes()
         {
-            return std::move(pendingShaderTypes);
+            return std::move(shaderTypes);
         }
 
     private:
-        std::vector<IShaderType*> pendingShaderTypes;
+        std::vector<IShaderType*> shaderTypes;
     };
 
     class BoolShaderVariantFieldImpl {
@@ -166,7 +232,7 @@ namespace Render {
         static constexpr std::pair<uint32_t, uint32_t> valueRange = { 0, 1 };
         static constexpr ValueType defaultValue = false;
 
-        BoolShaderVariantFieldImpl() : value(defaultValue) {}
+        BoolShaderVariantFieldImpl() : value(static_cast<uint32_t>(defaultValue)) {}
         BoolShaderVariantFieldImpl(BoolShaderVariantFieldImpl&& other) noexcept : value(other.value) {}
         ~BoolShaderVariantFieldImpl() = default;
 
@@ -309,9 +375,11 @@ namespace Render {
     };
 }
 
-#define ShaderInfo(inName, inSourceFile) \
+#define ShaderInfo(inName, inSourceFile, inEntryPoint, inStage) \
     static constexpr const char* name = inName; \
     static constexpr const char* sourceFile = inSourceFile; \
+    static constexpr const char* entryPoint = inEntryPoint; \
+    static constexpr Render::ShaderStage stage = inStage; \
 
 #define DefaultVariantFilter \
     static bool VariantFilter(const VariantSet& variantSet) { return true; } \

@@ -81,6 +81,47 @@ namespace Render {
         Assert(false);
         return {};
     }
+
+    static RHI::BufferCreateInfo GetRHIBufferCreateInfo(const RGBufferDesc& desc)
+    {
+        RHI::BufferCreateInfo createInfo;
+        createInfo.size = desc.size;
+        createInfo.usages = desc.usages;
+        return createInfo;
+    }
+
+    static RHI::TextureCreateInfo GetRHITextureCreateInfo(const RGTextureDesc& desc)
+    {
+        RHI::TextureCreateInfo createInfo;
+        createInfo.extent = desc.extent;
+        createInfo.mipLevels = desc.mipLevels;
+        createInfo.samples = desc.samples;
+        createInfo.dimension = desc.dimension;
+        createInfo.format = desc.format;
+        createInfo.usages = desc.usages;
+        return createInfo;
+    }
+
+    static RHI::BufferViewCreateInfo GetRHIBufferViewCreateInfo(const RGBufferViewDesc& desc)
+    {
+        RHI::BufferViewCreateInfo createInfo;
+        createInfo.offset = desc.offset;
+        createInfo.size = desc.size;
+        createInfo.vertex.stride = desc.vertex.stride;
+        return createInfo;
+    }
+
+    static RHI::TextureViewCreateInfo GetRHITextureViewCreateInfo(const RGTextureViewDesc& desc)
+    {
+        RHI::TextureViewCreateInfo createInfo;
+        createInfo.dimension = desc.dimension;
+        createInfo.aspect = desc.aspect;
+        createInfo.baseMipLevel = desc.baseMipLevel;
+        createInfo.mipLevelNum = desc.mipLevelNum;
+        createInfo.baseArrayLayer = desc.baseArrayLayer;
+        createInfo.arrayLayerNum = desc.arrayLayerNum;
+        return createInfo;
+    }
 }
 
 namespace Render {
@@ -124,7 +165,13 @@ namespace Render {
 
     void RGBuffer::Devirtualize(RHI::Device& device)
     {
-        // TODO
+        if (rhiHandle == nullptr && !isExternal) {
+            auto createInfo = GetRHIBufferCreateInfo(desc);
+            rhiHandle = device.CreateBuffer(&createInfo);
+        }
+
+        Assert(rhiHandle);
+        rhiAccess = true;
     }
 
     void RGBuffer::Destroy()
@@ -161,7 +208,13 @@ namespace Render {
 
     void RGTexture::Devirtualize(RHI::Device& device)
     {
-        // TODO
+        if (rhiHandle == nullptr && !isExternal) {
+            auto createInfo = GetRHITextureCreateInfo(desc);
+            rhiHandle = device.CreateTexture(&createInfo);
+        }
+
+        Assert(rhiHandle);
+        rhiAccess = true;
     }
 
     void RGTexture::Destroy()
@@ -199,7 +252,15 @@ namespace Render {
 
     void RGBufferView::Devirtualize(RHI::Device& device)
     {
-        // TODO
+        if (rhiHandle == nullptr && !isExternal) {
+            auto createInfo = GetRHIBufferViewCreateInfo(desc);
+            Assert(buffer);
+            Assert(buffer->GetRHI());
+            rhiHandle = buffer->GetRHI()->CreateBufferView(&createInfo);
+        }
+
+        Assert(rhiHandle);
+        rhiAccess = true;
     }
 
     void RGBufferView::Destroy()
@@ -243,7 +304,15 @@ namespace Render {
 
     void RGTextureView::Devirtualize(RHI::Device& device)
     {
-        // TODO
+        if (rhiHandle == nullptr && !isExternal) {
+            auto createInfo = GetRHITextureViewCreateInfo(desc);
+            Assert(texture);
+            Assert(texture->GetRHI());
+            rhiHandle = texture->GetRHI()->CreateTextureView(&createInfo);
+        }
+
+        Assert(rhiHandle);
+        rhiAccess = true;
     }
 
     void RGTextureView::Destroy()
@@ -263,43 +332,6 @@ namespace Render {
     {
         Assert(!isExternal);
         return texture;
-    }
-
-    RGSampler::RGSampler(std::string inName, RGSamplerDesc inDesc)
-        : RGResource(std::move(inName), false)
-        , desc(inDesc)
-    {
-    }
-
-    RGSampler::RGSampler(std::string inName, RHI::Sampler* inSampler)
-        : RGResource(std::move(inName), true)
-        , rhiHandle(inSampler)
-    {
-    }
-
-    RGSampler::~RGSampler() = default;
-
-    RGResourceType RGSampler::GetType()
-    {
-        return RGResourceType::SAMPLER;
-    }
-
-    void RGSampler::Devirtualize(RHI::Device& device)
-    {
-        // TODO
-    }
-
-    void RGSampler::Destroy()
-    {
-        if (!isExternal && rhiHandle != nullptr) {
-            rhiHandle->Destroy();
-        }
-    }
-
-    RHI::Sampler* RGSampler::GetRHI()
-    {
-        Assert(rhiAccess);
-        return rhiHandle;
     }
 
     RGPass::RGPass(std::string inName)
@@ -486,10 +518,29 @@ namespace Render {
 
     void RenderGraph::Execute(RHI::Fence* mainFence, RHI::Fence* asyncFence)
     {
+        std::vector<RGResource*> actualResesToDevirtualize;
+        std::vector<RGResource*> actualResViewsToDevirtualize;
+
         for (auto& resource : resources) {
+            resource->SetRHIAccess(false);
+
+            auto type = resource->GetType();
+            if (type == RGResourceType::BUFFER || type == RGResourceType::TEXTURE) {
+                actualResesToDevirtualize.emplace_back(resource.get());
+            }
+            if (type == RGResourceType::BUFFER_VIEW || type == RGResourceType::TEXTURE_VIEW) {
+                actualResViewsToDevirtualize.emplace_back(resource.get());
+            }
+        }
+
+        for (auto* resource : actualResesToDevirtualize) {
             if (!resource->isCulled) {
                 resource->Devirtualize(device);
-                resource->SetRHIAccess(true);
+            }
+        }
+        for (auto* resource : actualResViewsToDevirtualize) {
+            if (!resource->isCulled) {
+                resource->Devirtualize(device);
             }
         }
 
