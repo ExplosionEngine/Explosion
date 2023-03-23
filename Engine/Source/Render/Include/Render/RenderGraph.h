@@ -10,8 +10,10 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
+#include <optional>
 
 #include <Common/Hash.h>
+#include <Common/Debug.h>
 #include <RHI/RHI.h>
 
 namespace Render {
@@ -96,23 +98,31 @@ namespace Render {
     public:
         virtual ~RGResource();
 
+        bool IsExternal() const;
+        bool IsCulled() const;
+        const std::string& GetName() const;
+        bool CanAccessRHI() const;
+        RGResource* GetParent() const;
+
     protected:
-        RGResource(std::string inName, bool inIsExternal);
+        RGResource(std::string inName, bool inIsExternal, RGResource* inParent = nullptr);
 
         virtual RGResourceType GetType() = 0;
         virtual void Devirtualize(RHI::Device& device) = 0;
         virtual void Destroy() = 0;
 
-        std::string name;
-        bool isExternal;
-        bool rhiAccess;
-        bool isCulled;
+        void SetRHIAccess(bool inRhiAccess);
 
     private:
         friend class RenderGraph;
 
         void SetCulled(bool inCulled);
-        void SetRHIAccess(bool inRhiAccess);
+
+        std::string name;
+        RGResource* parent;
+        bool isExternal;
+        bool rhiAccess;
+        bool isCulled;
     };
 
     struct RGBufferDesc {
@@ -187,7 +197,7 @@ namespace Render {
 
     class RGBuffer : public RGResource {
     public:
-        RGBuffer(std::string inName, RGBufferDesc inDesc);
+        RGBuffer(std::string inName, const RGBufferDesc& inDesc);
         RGBuffer(std::string inName, RHI::Buffer* inBuffer);
         ~RGBuffer() override;
 
@@ -203,7 +213,7 @@ namespace Render {
 
     class RGTexture : public RGResource {
     public:
-        RGTexture(std::string inName, RGTextureDesc inDesc);
+        RGTexture(std::string inName, const RGTextureDesc& inDesc);
         RGTexture(std::string inName, RHI::Texture* inTexture);
         ~RGTexture() override;
 
@@ -219,7 +229,7 @@ namespace Render {
 
     class RGBufferView : public RGResource {
     public:
-        RGBufferView(std::string inName, RGBuffer* inBuffer, RGBufferViewDesc inDesc);
+        RGBufferView(std::string inName, RGBuffer* inBuffer, const RGBufferViewDesc& inDesc);
         RGBufferView(std::string inName, RHI::BufferView* inBufferView);
         ~RGBufferView() override;
 
@@ -237,7 +247,7 @@ namespace Render {
 
     class RGTextureView : public RGResource {
     public:
-        RGTextureView(std::string inName, RGTexture* inTexture, RGTextureViewDesc inDesc);
+        RGTextureView(std::string inName, RGTexture* inTexture, const RGTextureViewDesc& inDesc);
         RGTextureView(std::string inName, RHI::TextureView* inTextureView);
         ~RGTextureView() override;
 
@@ -463,36 +473,45 @@ namespace Render {
         R* Create(Args&&... args)
         {
             graph.resources.emplace_back(new R(std::forward<Args>(args)...));
-            return graph.resources.back().get();
+            return static_cast<R*>(graph.resources.back().get());
         }
 
         template <typename R, typename... Args>
         R* RegisterExternal(Args&&... args)
         {
             graph.resources.emplace_back(new R(std::forward<Args>(args)...));
-            return graph.resources.back().get();
+            return static_cast<R*>(graph.resources.back().get());
         }
 
         template <typename R>
         void Read(R* resource)
         {
-            CheckReadWriteOnce(resource);
+            Assert(!pass.writes.contains(resource));
             pass.reads.emplace(resource);
+
+            auto* parent = resource->GetParent();
+            if (parent == nullptr) {
+                return;
+            }
+            Read(parent);
         }
 
         template <typename R>
         void Write(R* resource)
         {
-            CheckReadWriteOnce(resource);
+            Assert(!pass.reads.contains(resource));
             pass.writes.emplace(resource);
+
+            auto* parent = resource->GetParent();
+            if (parent == nullptr) {
+                return;
+            }
+            Write(parent);
         }
 
     protected:
         RenderGraph& graph;
         RGPass& pass;
-
-    private:
-        void CheckReadWriteOnce(RGResource* resource);
     };
 
     class RGCopyPassBuilder : public RGPassBuilder {

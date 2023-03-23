@@ -57,6 +57,11 @@ namespace RHI::Metal {
     {
     }
 
+    void MTLCommandEncoder::Destroy()
+    {
+        delete this;
+    }
+
     void MTLCommandEncoder::SwapChainSync(SwapChain* swapChain)
     {
         static_cast<MTLSwapChain*>(swapChain)->AddSignalEventToCmd(commandBuffer);
@@ -81,6 +86,11 @@ namespace RHI::Metal {
 
     void MTLComputePassCommandEncoder::EndPass()
     {
+    }
+
+    void MTLComputePassCommandEncoder::Destroy()
+    {
+        delete this;
     }
 
     // Graphics Pass Encoder
@@ -178,5 +188,10 @@ namespace RHI::Metal {
     void MTLGraphicsPassCommandEncoder::EndPass()
     {
         [renderEncoder endEncoding];
+    }
+
+    void MTLGraphicsPassCommandEncoder::Destroy()
+    {
+        delete this;
     }
 }

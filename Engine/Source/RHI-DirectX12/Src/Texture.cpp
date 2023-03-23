@@ -49,8 +49,8 @@ namespace RHI::DirectX12 {
         CreateDX12Texture(createInfo);
     }
 
-    DX12Texture::DX12Texture(DX12Device& device, PixelFormat format, ComPtr<ID3D12Resource>&& dx12Res)
-        : Texture(), device(device), usages(static_cast<TextureUsageFlags>(TextureUsageBits::RENDER_ATTACHMENT)), dx12Resource(dx12Res), format(format) {}
+    DX12Texture::DX12Texture(DX12Device& device, PixelFormat inFormat, ComPtr<ID3D12Resource>&& dx12Res)
+        : Texture(), device(device), usages(static_cast<TextureUsageFlags>(TextureUsageBits::RENDER_ATTACHMENT)), dx12Resource(dx12Res), format(inFormat) {}
 
     DX12Texture::~DX12Texture() = default;
 
