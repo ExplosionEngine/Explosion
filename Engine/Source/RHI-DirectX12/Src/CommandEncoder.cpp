@@ -49,7 +49,7 @@ namespace RHI::DirectX12 {
         const auto& bindings= bindGroup->GetBindings();
         for (const auto& binding : bindings) {
             ForEachBitsType<ShaderStageBits>([this, &binding, &pipelineLayout, layoutIndex](ShaderStageBits shaderStage) -> void {
-                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first);
+                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first, binding.second.first);
                 if (!t.has_value()) {
                     return;
                 }
@@ -71,6 +71,8 @@ namespace RHI::DirectX12 {
 
     DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo) : GraphicsPassCommandEncoder(), device(device), commandBuffer(commandBuffer), graphicsPipeline(nullptr)
     {
+        graphicsPipeline = dynamic_cast<DX12GraphicsPipeline*>(beginInfo->pipeline);
+
         // set render targets
         std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rtvHandles(beginInfo->colorAttachmentNum);
         for (auto i = 0; i < rtvHandles.size(); i++) {
@@ -110,15 +112,17 @@ namespace RHI::DirectX12 {
     {
         auto* bindGroup = dynamic_cast<DX12BindGroup*>(tBindGroup);
         auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
+        Assert(layoutIndex == bindGroupLayout.GetLayoutIndex());
+
+        Assert(graphicsPipeline);
         auto& pipelineLayout = graphicsPipeline->GetPipelineLayout();
 
-        Assert(layoutIndex == bindGroupLayout.GetLayoutIndex());
-        Assert(graphicsPipeline);
+        commandBuffer.GetDX12GraphicsCommandList()->SetDescriptorHeaps(bindGroup->GetDX12DescriptorHeaps().size(), bindGroup->GetDX12DescriptorHeaps().data());
 
         const auto& bindings= bindGroup->GetBindings();
         for (const auto& binding : bindings) {
             ForEachBitsType<ShaderStageBits>([this, &binding, &pipelineLayout, layoutIndex](ShaderStageBits shaderStage) -> void {
-                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first);
+                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first, binding.second.first);
                 if (!t.has_value()) {
                     return;
                 }
@@ -197,7 +201,21 @@ namespace RHI::DirectX12 {
 
     void DX12CommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size)
     {
-        // TODO
+        auto* buffer = dynamic_cast<DX12Buffer*>(src);
+        auto* texture = dynamic_cast<DX12Texture*>(dst);
+        auto origin = subResourceInfo->origin;
+
+        D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
+        layout.Offset = 0;
+        layout.Footprint.Depth = size.z;
+        layout.Footprint.Width = size.x;
+        layout.Footprint.Height = size.y;
+        layout.Footprint.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture->GetFormat()); // Can this attrib of buffer retrive from texture?
+        layout.Footprint.RowPitch = 4 * size.x; // TODO get pixel component nums
+
+        CD3DX12_TEXTURE_COPY_LOCATION dest(texture->GetDX12Resource().Get(), 0);
+        CD3DX12_TEXTURE_COPY_LOCATION source(buffer->GetDX12Resource().Get(), layout);
+        commandBuffer.GetDX12GraphicsCommandList()->CopyTextureRegion(&dest, origin.x, origin.y, origin.z, &source, nullptr);
     }
 
     void DX12CommandEncoder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size)

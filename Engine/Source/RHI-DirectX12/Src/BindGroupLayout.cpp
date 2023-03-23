@@ -38,6 +38,7 @@ namespace RHI::DirectX12 {
 
     void DX12BindGroupLayout::CreateDX12RootParameters(const BindGroupLayoutCreateInfo* createInfo)
     {
+        uint32_t rangeNum = 0;
         std::unordered_map<ShaderStageBits, std::vector<const BindGroupLayoutEntry*>> visibilitiesMap;
         {
             ForEachBitsType<ShaderStageBits>([&visibilitiesMap](ShaderStageBits shaderStage) -> void { visibilitiesMap[shaderStage] = {}; });
@@ -46,19 +47,20 @@ namespace RHI::DirectX12 {
                     if (!(createInfo->entries[i].shaderVisibility & visibility.first)) {
                         continue;
                     }
+                    rangeNum++;
                     visibility.second.emplace_back(createInfo->entries + i);
                 }
             }
         }
 
+        dx12DescriptorRanges.reserve(rangeNum);
         for (const auto& visibility : visibilitiesMap) {
             for (const auto* entry : visibility.second) {
                 dx12RootParameters.emplace_back();
-                {
-                    CD3DX12_DESCRIPTOR_RANGE1 dx12DescriptorRange;
-                    dx12DescriptorRange.Init(DX12EnumCast<BindingType, D3D12_DESCRIPTOR_RANGE_TYPE>(entry->type), 1, entry->binding, createInfo->layoutIndex, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-                    dx12RootParameters.back().InitAsDescriptorTable(1, &dx12DescriptorRange, DX12EnumCast<ShaderStageBits, D3D12_SHADER_VISIBILITY>(visibility.first));
-                }
+                dx12DescriptorRanges.emplace_back();
+
+                dx12DescriptorRanges.back().Init(DX12EnumCast<BindingType, D3D12_DESCRIPTOR_RANGE_TYPE>(entry->type), 1, entry->binding, createInfo->layoutIndex);
+                dx12RootParameters.back().InitAsDescriptorTable(1, &dx12DescriptorRanges.back(), DX12EnumCast<ShaderStageBits, D3D12_SHADER_VISIBILITY>(visibility.first));
 
                 rootParameterKeyInfos.emplace_back();
                 {

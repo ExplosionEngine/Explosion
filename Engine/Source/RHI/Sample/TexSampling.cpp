@@ -168,12 +168,12 @@ private:
     void CreateTextureAndSampler()
     {
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load("./awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        stbi_uc* pixels = stbi_load("../awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         Assert(pixels != nullptr);
 
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = texWidth * texHeight * 4;
-        bufferCreateInfo.usages = BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        bufferCreateInfo.usages = BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
         pixelBuffer = device->CreateBuffer(&bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
@@ -226,7 +226,7 @@ private:
         entries[0].binding = 0;
         entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
         entries[1].type = BindingType::SAMPLER;
-        entries[1].binding = 1;
+        entries[1].binding = 0;
         entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
 
         BindGroupLayoutCreateInfo createInfo {};
@@ -244,7 +244,7 @@ private:
         entries[0].binding = 0;
         entries[0].textureView = sampleTextureView;
         entries[1].type = BindingType::SAMPLER;
-        entries[1].binding = 1;
+        entries[1].binding = 0;
         entries[1].sampler = sampler;
 
         BindGroupCreateInfo createInfo {};
@@ -287,7 +287,7 @@ private:
         vertexAttributes[0].semanticIndex = 0;
         vertexAttributes[1].format = VertexFormat::FLOAT32_X2;
         vertexAttributes[1].offset = offsetof(Vertex, uv);
-        vertexAttributes[1].semanticName = "TEXCOORD0";
+        vertexAttributes[1].semanticName = "TEXCOORD";
         vertexAttributes[1].semanticIndex = 0;
 
         VertexBufferLayout vertexBufferLayout {};

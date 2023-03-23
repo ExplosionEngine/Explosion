@@ -16,7 +16,7 @@ FragmentInput VSMain(float4 position : POSITION, float2 uv : TEXCOORD0)
 }
 
 Texture2D       textureColor : register(t0);
-SamplerState    samplerColor : register(s1);
+SamplerState    samplerColor : register(s0);
 
 float4 FSMain(FragmentInput input) : SV_TARGET
 {

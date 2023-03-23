@@ -23,7 +23,7 @@ namespace RHI::DirectX12 {
     DX12SwapChain::DX12SwapChain(DX12Device& device, const SwapChainCreateInfo* createInfo) : SwapChain(createInfo), device(device), presentMode(createInfo->presentMode), textureNum(createInfo->textureNum)
     {
         CreateDX12SwapChain(createInfo);
-        FetchTextures();
+        FetchTextures(createInfo->format);
     }
 
     DX12SwapChain::~DX12SwapChain() = default;
@@ -76,14 +76,14 @@ namespace RHI::DirectX12 {
         Assert(success);
     }
 
-    void DX12SwapChain::FetchTextures()
+    void DX12SwapChain::FetchTextures(PixelFormat format)
     {
         textures.resize(textureNum);
         for (auto i = 0; i < textureNum; i++) {
             ComPtr<ID3D12Resource> dx12Resource;
             bool success = SUCCEEDED(dx12SwapChain->GetBuffer(i, IID_PPV_ARGS(&dx12Resource)));
             Assert(success);
-            textures[i] = std::make_unique<DX12Texture>(device, std::move(dx12Resource));
+            textures[i] = std::make_unique<DX12Texture>(device, format, std::move(dx12Resource));
         }
     }
 }

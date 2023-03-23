@@ -203,6 +203,7 @@ namespace RHI::DirectX12 {
             D3D12_SHADER_RESOURCE_VIEW_DESC desc {};
             desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
             desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_SRV_DIMENSION>(createInfo->dimension);
+            desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
             FillTexture1DSRV(desc.Texture1D, createInfo);
             FillTexture2DSRV(desc.Texture2D, createInfo);
             FillTexture2DArraySRV(desc.Texture2DArray, createInfo);
