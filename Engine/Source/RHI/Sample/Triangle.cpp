@@ -44,21 +44,8 @@ protected:
 
     void OnDestroy() override
     {
-        graphicsQueue->Wait(fence);
+        graphicsQueue->Wait(fence.Get());
         fence->Wait();
-        fence->Destroy();
-        commandBuffer->Destroy();
-        vertexShader->Destroy();
-        fragmentShader->Destroy();
-        pipeline->Destroy();
-        pipelineLayout->Destroy();
-        for (auto* textureView: swapChainTextureViews) {
-            textureView->Destroy();
-        }
-        vertexBufferView->Destroy();
-        vertexBuffer->Destroy();
-        swapChain->Destroy();
-        device->Destroy();
     }
 
 private:
@@ -66,7 +53,7 @@ private:
 
     void CreateInstanceAndSelectGPU()
     {
-        instance = Instance::CreateByType(rhiType);
+        instance = Instance::GetByType(rhiType);
 
         gpu = instance->GetGpu(0);
     }
@@ -177,9 +164,9 @@ private:
         colorTargetStates[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
 
         GraphicsPipelineCreateInfo createInfo {};
-        createInfo.vertexShader = vertexShader;
-        createInfo.pixelShader = fragmentShader;
-        createInfo.layout = pipelineLayout;
+        createInfo.vertexShader = vertexShader.Get();
+        createInfo.pixelShader = fragmentShader.Get();
+        createInfo.layout = pipelineLayout.Get();
         createInfo.vertexState.bufferLayoutNum = 1;
         createInfo.vertexState.bufferLayouts = &vertexBufferLayout;
         createInfo.fragmentState.colorTargetNum = colorTargetStates.size();
@@ -214,11 +201,11 @@ private:
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::CLEAR;
             colorAttachments[0].storeOp = StoreOp::STORE;
-            colorAttachments[0].view = swapChainTextureViews[backTextureIndex];
+            colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();
             colorAttachments[0].resolve = nullptr;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.pipeline = pipeline;
+            graphicsPassBeginInfo.pipeline = pipeline.Get();
             graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
@@ -229,39 +216,39 @@ private:
                 graphicsEncoder->SetScissor(0, 0, width, height);
                 graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
                 graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
-                graphicsEncoder->SetVertexBuffer(0, vertexBufferView);
+                graphicsEncoder->SetVertexBuffer(0, vertexBufferView.Get());
                 graphicsEncoder->Draw(3, 1, 0, 0);
             }
             graphicsEncoder->EndPass();
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::RENDER_TARGET, TextureState::PRESENT));
         }
-        commandEncoder->SwapChainSync(swapChain);
+        commandEncoder->SwapChainSync(swapChain.Get());
         commandEncoder->End();
     }
 
     void SubmitCommandBufferAndPresent()
     {
         fence->Reset();
-        graphicsQueue->Submit(commandBuffer, fence);
+        graphicsQueue->Submit(commandBuffer.Get(), fence.Get());
         swapChain->Present();
         fence->Wait();
     }
 
     Instance* instance = nullptr;
     Gpu* gpu = nullptr;
-    Device* device = nullptr;
+    UniqueRef<Device> device;
     Queue* graphicsQueue = nullptr;
-    SwapChain* swapChain = nullptr;
-    Buffer* vertexBuffer = nullptr;
-    BufferView* vertexBufferView = nullptr;
+    UniqueRef<SwapChain> swapChain;
+    UniqueRef<Buffer> vertexBuffer;
+    UniqueRef<BufferView> vertexBufferView;
     std::array<Texture*, BACK_BUFFER_COUNT> swapChainTextures {};
-    std::array<TextureView*, BACK_BUFFER_COUNT> swapChainTextureViews {};
-    PipelineLayout* pipelineLayout = nullptr;
-    GraphicsPipeline* pipeline = nullptr;
-    ShaderModule* vertexShader = nullptr;
-    ShaderModule* fragmentShader = nullptr;
-    CommandBuffer* commandBuffer = nullptr;
-    Fence* fence = nullptr;
+    std::array<UniqueRef<TextureView>, BACK_BUFFER_COUNT> swapChainTextureViews;
+    UniqueRef<PipelineLayout> pipelineLayout;
+    UniqueRef<GraphicsPipeline> pipeline;
+    UniqueRef<ShaderModule> vertexShader;
+    UniqueRef<ShaderModule> fragmentShader;
+    UniqueRef<CommandBuffer> commandBuffer;
+    UniqueRef<Fence> fence;
 };
 
 int main(int argc, char* argv[])

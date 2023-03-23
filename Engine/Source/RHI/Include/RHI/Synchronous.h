@@ -47,7 +47,7 @@ namespace RHI {
     class Fence {
     public:
         NON_COPYABLE(Fence)
-        ~Fence();
+        virtual ~Fence();
 
         virtual FenceStatus GetStatus() = 0;
         virtual void Reset() = 0;
