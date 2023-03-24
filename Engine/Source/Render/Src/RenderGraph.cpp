@@ -497,6 +497,11 @@ namespace Render {
         passes.emplace_back(new RGFuncRasterPass(std::move(inName), std::move(inSetupFunc)));
     }
 
+    RHI::Device& RenderGraph::GetDevice()
+    {
+        return device;
+    }
+
     void RenderGraph::Setup()
     {
         for (auto& pass : passes) {

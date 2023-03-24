@@ -33,22 +33,26 @@ namespace Render {
         size_t Hash() const;
     };
 
-    struct ComputePipelineDesc {
-        PipelineLayout* layout;
+    struct ComputePipelineShaderSet {
         ShaderInstance computeShader;
-
-        size_t Hash() const;
     };
 
-    struct RasterPipelineDesc {
-        PipelineLayout* layout;
-
+    struct RasterPipelineShaderSet {
         ShaderInstance vertexShader;
         ShaderInstance pixelShader;
         ShaderInstance geometryShader;
         ShaderInstance domainShader;
         ShaderInstance hullShader;
+    };
 
+    struct ComputePipelineDesc {
+        ComputePipelineShaderSet shaders;
+
+        size_t Hash() const;
+    };
+
+    struct RasterPipelineDesc {
+        RasterPipelineShaderSet shaders;
         VertexState vertexState;
         PrimitiveState primitiveState;
         DepthStencilState depthStencilState;
@@ -69,7 +73,7 @@ namespace Render {
 
         Sampler(RHI::Device& inDevice, const SamplerDesc& inDesc);
 
-        std::unique_ptr<RHI::Sampler> rhiHandle;
+        RHI::UniqueRef<RHI::Sampler> rhiHandle;
     };
 
     class PipelineLayout {
@@ -86,14 +90,15 @@ namespace Render {
         PipelineLayout(RHI::Device& inDevice, const PipelineLayoutDesc& inDesc, size_t inHash);
 
         size_t hash;
-        std::unordered_map<uint32_t, std::unique_ptr<RHI::BindGroupLayout>> rhiBindGroupLayouts;
-        std::unique_ptr<RHI::PipelineLayout> rhiHandle;
+        std::unordered_map<uint32_t, RHI::UniqueRef<RHI::BindGroupLayout>> rhiBindGroupLayouts;
+        RHI::UniqueRef<RHI::PipelineLayout> rhiHandle;
     };
 
     class ComputePipeline {
     public:
         ~ComputePipeline();
 
+        PipelineLayout* GetPipelineLayout() const;
         RHI::ComputePipeline* GetRHI() const;
         size_t GetHash() const;
 
@@ -103,13 +108,15 @@ namespace Render {
         ComputePipeline(RHI::Device& inDevice, const ComputePipelineDesc& inDesc, size_t inHash);
 
         size_t hash;
-        std::unique_ptr<RHI::ComputePipeline> rhiHandle;
+        PipelineLayout* pipelineLayout;
+        RHI::UniqueRef<RHI::ComputePipeline> rhiHandle;
     };
 
     class RasterPipeline {
     public:
         ~RasterPipeline();
 
+        PipelineLayout* GetPipelineLayout() const;
         RHI::GraphicsPipeline* GetRHI() const;
         size_t GetHash() const;
 
@@ -119,7 +126,8 @@ namespace Render {
         RasterPipeline(RHI::Device& inDevice, const RasterPipelineDesc& inDesc, size_t inHash);
 
         size_t hash;
-        std::unique_ptr<RHI::GraphicsPipeline> rhiHandle;
+        PipelineLayout* pipelineLayout;
+        RHI::UniqueRef<RHI::GraphicsPipeline> rhiHandle;
     };
 
     class SamplerCache {
@@ -136,21 +144,6 @@ namespace Render {
         std::unordered_map<size_t, std::unique_ptr<Sampler>> samplers;
     };
 
-    class PipelineLayoutCache {
-    public:
-        static PipelineLayoutCache& Get(RHI::Device& device);
-        ~PipelineLayoutCache();
-
-        void Invalidate();
-        PipelineLayout* FindOrCreatePipelineLayout(const PipelineLayoutDesc& desc);
-
-    private:
-        explicit PipelineLayoutCache(RHI::Device& inDevice);
-
-        RHI::Device& device;
-        std::unordered_map<size_t, std::unique_ptr<PipelineLayout>> pipelineLayouts;
-    };
-
     class PipelineCache {
     public:
         static PipelineCache& Get(RHI::Device& device);
@@ -158,8 +151,8 @@ namespace Render {
 
         // TODO offline pipeline cache
         void Invalidate();
-        ComputePipeline* FindOrCreateComputePipeline(const ComputePipelineDesc& desc);
-        RasterPipeline* FindOrCreateRasterPipeline(const RasterPipelineDesc& desc);
+        ComputePipeline* GetPipeline(const ComputePipelineDesc& desc);
+        RasterPipeline* GetPipeline(const RasterPipelineDesc& desc);
 
     private:
         explicit PipelineCache(RHI::Device& inDevice);

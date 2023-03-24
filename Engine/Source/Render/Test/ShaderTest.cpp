@@ -10,7 +10,7 @@ class TestGlobalShaderVS : public Render::GlobalShader {
 public:
     ShaderInfo(
         "TestGlobalShader",
-        "/Engine/Shader/TestGlobalShader.esl",
+        "/Engine/Shader/Test/TestGlobalShader.esl",
         "VSMain",
         Render::ShaderStage::S_VERTEX);
 

@@ -6,6 +6,54 @@
 
 #include <RHI/RHI.h>
 #include <Render/RenderGraph.h>
+#include <Render/Pipeline.h>
+#include <Render/Shader.h>
+
+class RenderGraphTestCS : public Render::GlobalShader {
+public:
+    ShaderInfo(
+        "RenderGraphTestCS",
+        "/Engine/Shader/Test/RenderGraphTest.esl",
+        "CSMain",
+        Render::ShaderStage::S_COMPUTE);
+
+    VariantSet();
+    DefaultVariantFilter
+};
+RegisterGlobalShader(RenderGraphTestCS);
+
+class TestComputePass : public Render::RGComputePass {
+protected:
+    void Setup(Render::RGComputePassBuilder& builder) override
+    {
+        RHI::Device& device = builder.GetDevice();
+
+        RenderGraphTestCS::VariantSet variantSet;
+        Render::ShaderInstance testCS = Render::GlobalShaderMap<RenderGraphTestCS>::Get(device).FindOrCreateShaderInstance(variantSet);
+        Render::ComputePipelineShaderSet shaders = { testCS };
+
+        Render::ComputePipelineDesc pipelineDesc;
+        pipelineDesc.shaders = shaders;
+        Render::ComputePipeline* pipeline = Render::PipelineCache::Get(device).GetPipeline(pipelineDesc);
+
+        Render::RGComputePassDesc passDesc;
+        passDesc.pipeline = pipeline->GetRHI();
+
+        builder.SetPassDesc(passDesc);
+        builder.SetAsyncCompute(false);
+
+        // TODO
+    }
+
+    void Execute(RHI::ComputePassCommandEncoder& encoder) override
+    {
+        encoder.Dispatch(8, 8, 1);
+    }
+
+private:
+    Render::RGBuffer* uniformBuffer;
+    Render::RGTexture* outputTexture;
+};
 
 struct RenderGraphTest : public testing::Test {
     void SetUp() override
@@ -36,4 +84,9 @@ TEST_F(RenderGraphTest, BasicTest)
     renderGraph.Compile();
     renderGraph.Execute(mainFence.Get(), nullptr);
     mainFence->Wait();
+}
+
+TEST_F(RenderGraphTest, ComputePassTest)
+{
+    // TODO
 }
