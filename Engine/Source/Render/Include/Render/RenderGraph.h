@@ -394,6 +394,7 @@ namespace Render {
         void AddComputePass(std::string inName, RGComputePassSetupFunc inSetupFunc);
         void AddRasterPass(std::string inName, RGRasterPassSetupFunc inSetupFunc);
 
+        RHI::Device& GetDevice();
         void Setup();
         void Compile();
         void Execute(RHI::Fence* mainFence, RHI::Fence* asyncFence);
@@ -507,6 +508,11 @@ namespace Render {
                 return;
             }
             Write(parent);
+        }
+
+        RHI::Device& GetDevice()
+        {
+            return graph.GetDevice();
         }
 
     protected:

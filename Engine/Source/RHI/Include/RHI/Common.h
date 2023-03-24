@@ -507,7 +507,7 @@ namespace RHI {
             return ref != nullptr;
         }
 
-        T* Get()
+        T* Get() const
         {
             return ref.get();
         }

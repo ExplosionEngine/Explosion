@@ -20,6 +20,7 @@
 #include <Common/Math/Vector4.h>
 #include <Common/Math/Matrix4.h>
 #include <RHI/Common.h>
+#include <RHI/Device.h>
 #include <RHI/ShaderModule.h>
 
 namespace Render {
@@ -150,10 +151,14 @@ namespace Render {
     template <typename T>
     class GlobalShaderMap {
     public:
-        GlobalShaderMap()
+        static GlobalShaderMap& Get(RHI::Device& device)
         {
-            auto variantNum = T::VariantSet::VariantNum();
-            shaderModules.reserve(variantNum);
+            static std::unordered_map<RHI::Device*, std::unique_ptr<GlobalShaderMap<T>>> map;
+            auto iter = map.find(&device);
+            if (iter == map.end()) {
+                map[&device] = std::unique_ptr<GlobalShaderMap<T>>(new GlobalShaderMap<T>(device));
+            }
+            return *map[&device];
         }
 
         ~GlobalShaderMap() = default;
@@ -175,27 +180,35 @@ namespace Render {
                 RHI::ShaderModuleCreateInfo createInfo;
                 createInfo.size = shaderByteCode.size();
                 createInfo.byteCode = shaderByteCode.data();
-                shaderModules[variantKey] = std::make_unique<RHI::ShaderModule>(&createInfo);
+                shaderModules[variantKey] = device.CreateShaderModule(&createInfo);
             }
 
             ShaderInstance result;
-            result.rhiHandle = shaderModules[variantKey];
+            result.rhiHandle = shaderModules[variantKey].Get();
             result.typeKey = GlobalShaderType<T>::Get().GetHash();
             result.variantKey = variantKey;
             return result;
         }
 
     private:
+        explicit GlobalShaderMap(RHI::Device& inDevice)
+            : device(inDevice)
+        {
+            auto variantNum = T::VariantSet::VariantNum();
+            shaderModules.reserve(variantNum);
+        }
+
         [[nodiscard]] const ShaderByteCode& GetByteCode(const typename T::VariantSet& variantSet) const
         {
             const auto& byteCodePackage = ShaderByteCodeStorage::Get().GetByteCodePackage(&GlobalShaderType<T>::Get());
 
             auto iter = byteCodePackage.find(variantSet.Hash());
             Assert(iter != byteCodePackage.end());
-            return iter->second();
+            return iter->second;
         }
 
-        std::unordered_map<VariantKey , std::unique_ptr<RHI::ShaderModule>> shaderModules;
+        RHI::Device& device;
+        std::unordered_map<VariantKey, RHI::UniqueRef<RHI::ShaderModule>> shaderModules;
     };
 
     class GlobalShaderRegistry {
