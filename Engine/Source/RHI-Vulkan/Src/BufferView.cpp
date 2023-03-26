@@ -9,12 +9,12 @@
 namespace RHI::Vulkan {
     static inline bool IsVertexBuffer(BufferUsageFlags bufferUsages)
     {
-        return bufferUsages & BufferUsageBits::VERTEX;
+        return (bufferUsages & BufferUsageBits::VERTEX) != 0;
     }
 
     static inline bool IsIndexBuffer(BufferUsageFlags bufferUsages)
     {
-        return bufferUsages & BufferUsageBits::INDEX;
+        return (bufferUsages & BufferUsageBits::INDEX) != 0;
     }
 }
 

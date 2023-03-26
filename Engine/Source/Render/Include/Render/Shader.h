@@ -171,7 +171,7 @@ namespace Render {
             shaderModules.reserve(variantNum);
         }
 
-        ShaderInstance FindOrCreateShaderInstance(const typename T::VariantSet& variantSet)
+        ShaderInstance GetShaderInstance(const typename T::VariantSet& variantSet)
         {
             auto variantKey = variantSet.Hash();
             auto iter = shaderModules.find(variantKey);

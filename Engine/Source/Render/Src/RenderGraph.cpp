@@ -725,6 +725,7 @@ namespace Render {
 
     void RenderGraph::TransitionResources(RHI::CommandEncoder* encoder, RGPass* pass)
     {
+        // TODO skip vertex buffer and index buffer
         std::vector<RGResource*> transitionResources;
         for (auto* read : pass->reads) {
             transitionResources.emplace_back(read);

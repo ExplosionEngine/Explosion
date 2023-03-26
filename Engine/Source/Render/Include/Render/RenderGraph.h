@@ -128,6 +128,14 @@ namespace Render {
     struct RGBufferDesc {
         size_t size;
         RHI::BufferUsageFlags usages;
+
+        static RGBufferDesc Create(size_t size, RHI::BufferUsageFlags usages)
+        {
+            RGBufferDesc result;
+            result.size = size;
+            result.usages = usages;
+            return result;
+        }
     };
 
     struct RGTextureDesc {
@@ -137,6 +145,42 @@ namespace Render {
         RHI::TextureDimension dimension;
         RHI::PixelFormat format;
         RHI::TextureUsageFlags usages;
+
+        static RGTextureDesc Create1D(uint32_t length, RHI::PixelFormat format, RHI::TextureUsageFlags usages, uint8_t mipLevels = 1, uint8_t samples = 1)
+        {
+            RGTextureDesc result;
+            result.extent = { length, 1, 1 };
+            result.mipLevels = mipLevels;
+            result.samples = samples;
+            result.dimension = RHI::TextureDimension::T_1D;
+            result.format = format;
+            result.usages = usages;
+            return result;
+        }
+
+        static RGTextureDesc Create2D(uint32_t width, uint32_t height, RHI::PixelFormat format, RHI::TextureUsageFlags usages, uint32_t layers = 1, uint8_t mipLevels = 1, uint8_t samples = 1)
+        {
+            RGTextureDesc result;
+            result.extent = { width, height, layers };
+            result.mipLevels = mipLevels;
+            result.samples = samples;
+            result.dimension = RHI::TextureDimension::T_2D;
+            result.format = format;
+            result.usages = usages;
+            return result;
+        }
+
+        static RGTextureDesc Create3D(uint32_t width, uint32_t height, uint32_t depth, RHI::PixelFormat format, RHI::TextureUsageFlags usages, uint8_t mipLevels = 1, uint8_t samples = 1)
+        {
+            RGTextureDesc result;
+            result.extent = { width, height, depth };
+            result.mipLevels = mipLevels;
+            result.samples = samples;
+            result.dimension = RHI::TextureDimension::T_3D;
+            result.format = format;
+            result.usages = usages;
+            return result;
+        }
     };
 
     struct RGVertexBufferDesc {
@@ -154,6 +198,32 @@ namespace Render {
             RGVertexBufferDesc vertex;
             RGIndexBufferDesc index;
         };
+
+        static RGBufferViewDesc Create(size_t offset, size_t size)
+        {
+            RGBufferViewDesc result;
+            result.offset = offset;
+            result.size = size;
+            return result;
+        }
+
+        static RGBufferViewDesc CreateVertex(size_t offset, size_t size, size_t stride)
+        {
+            RGBufferViewDesc result;
+            result.offset = offset;
+            result.size = size;
+            result.vertex.stride = stride;
+            return result;
+        }
+
+        static RGBufferViewDesc CreateIndex(size_t offset, size_t size, RHI::IndexFormat indexFormat)
+        {
+            RGBufferViewDesc result;
+            result.offset = offset;
+            result.size = size;
+            result.index.format = indexFormat;
+            return result;
+        }
     };
 
     struct RGTextureViewDesc {
@@ -163,6 +233,78 @@ namespace Render {
         uint8_t mipLevelNum;
         uint8_t baseArrayLayer;
         uint8_t arrayLayerNum;
+
+        static RGTextureViewDesc Create1D(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1)
+        {
+            RGTextureViewDesc result;
+            result.dimension = RHI::TextureViewDimension::TV_1D;
+            result.aspect = aspect;
+            result.baseMipLevel = baseMipLevel;
+            result.mipLevelNum = mipLevelNum;
+            result.baseArrayLayer = 0;
+            result.arrayLayerNum = 1;
+            return result;
+        }
+
+        static RGTextureViewDesc Create2D(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1)
+        {
+            RGTextureViewDesc result;
+            result.dimension = RHI::TextureViewDimension::TV_2D;
+            result.aspect = aspect;
+            result.baseMipLevel = baseMipLevel;
+            result.mipLevelNum = mipLevelNum;
+            result.baseArrayLayer = 0;
+            result.arrayLayerNum = 1;
+            return result;
+        }
+
+        static RGTextureViewDesc Create2DArray(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseArrayLayer = 0, uint8_t arrayLayerNum = 1, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1)
+        {
+            RGTextureViewDesc result;
+            result.dimension = RHI::TextureViewDimension::TV_2D_ARRAY;
+            result.aspect = aspect;
+            result.baseMipLevel = baseMipLevel;
+            result.mipLevelNum = mipLevelNum;
+            result.baseArrayLayer = baseArrayLayer;
+            result.arrayLayerNum = arrayLayerNum;
+            return result;
+        }
+
+        static RGTextureViewDesc CreateCubemap(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1)
+        {
+            RGTextureViewDesc result;
+            result.dimension = RHI::TextureViewDimension::TV_CUBE;
+            result.aspect = aspect;
+            result.baseMipLevel = baseMipLevel;
+            result.mipLevelNum = mipLevelNum;
+            result.baseArrayLayer = 0;
+            result.arrayLayerNum = 6;
+            return result;
+        }
+
+        static RGTextureViewDesc CreateCubemapArray(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseCubemapIndex = 0, uint8_t cubemapNum = 1, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1)
+        {
+            RGTextureViewDesc result;
+            result.dimension = RHI::TextureViewDimension::TV_CUBE_ARRAY;
+            result.aspect = aspect;
+            result.baseMipLevel = baseMipLevel;
+            result.mipLevelNum = mipLevelNum;
+            result.baseArrayLayer = baseCubemapIndex * 6;
+            result.arrayLayerNum = cubemapNum * 6;
+            return result;
+        }
+
+        static RGTextureViewDesc Create3D(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1)
+        {
+            RGTextureViewDesc result;
+            result.dimension = RHI::TextureViewDimension::TV_3D;
+            result.aspect = aspect;
+            result.baseMipLevel = baseMipLevel;
+            result.mipLevelNum = mipLevelNum;
+            result.baseArrayLayer = 0;
+            result.arrayLayerNum = 1;
+            return result;
+        }
     };
 
     struct RGColorAttachment {
@@ -482,32 +624,6 @@ namespace Render {
         {
             graph.resources.emplace_back(new R(std::forward<Args>(args)...));
             return static_cast<R*>(graph.resources.back().get());
-        }
-
-        template <typename R>
-        void Read(R* resource)
-        {
-            Assert(!pass.writes.contains(resource));
-            pass.reads.emplace(resource);
-
-            auto* parent = resource->GetParent();
-            if (parent == nullptr) {
-                return;
-            }
-            Read(parent);
-        }
-
-        template <typename R>
-        void Write(R* resource)
-        {
-            Assert(!pass.reads.contains(resource));
-            pass.writes.emplace(resource);
-
-            auto* parent = resource->GetParent();
-            if (parent == nullptr) {
-                return;
-            }
-            Write(parent);
         }
 
         RHI::Device& GetDevice()
