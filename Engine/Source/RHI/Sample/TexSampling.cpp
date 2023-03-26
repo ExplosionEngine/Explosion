@@ -163,7 +163,7 @@ private:
         TextureCreateInfo texCreateInfo {};
         texCreateInfo.format = PixelFormat::RGBA8_UNORM;
         texCreateInfo.mipLevels = 1;
-        texCreateInfo.extent = {static_cast<size_t>(texWidth), static_cast<size_t>(texHeight), 1};
+        texCreateInfo.extent = {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1};
         texCreateInfo.dimension = TextureDimension::T_2D;
         texCreateInfo.samples = 1;
         texCreateInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::TEXTURE_BINDING;
@@ -191,7 +191,7 @@ private:
             subResourceInfo.arrayLayerNum = 1;
             subResourceInfo.baseArrayLayer = 0;
             subResourceInfo.aspect = TextureAspect::COLOR;
-            commandEncoder->CopyBufferToTexture(pixelBuffer.Get(), sampleTexture.Get(), &subResourceInfo, {static_cast<size_t>(texWidth), static_cast<size_t>(texHeight), 1});
+            commandEncoder->CopyBufferToTexture(pixelBuffer.Get(), sampleTexture.Get(), &subResourceInfo, {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1});
             commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::COPY_DST, TextureState::SHADER_READ_ONLY));
         }
         commandEncoder->End();
