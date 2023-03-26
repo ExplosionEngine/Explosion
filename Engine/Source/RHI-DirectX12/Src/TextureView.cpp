@@ -11,22 +11,22 @@
 namespace RHI::DirectX12 {
     static bool IsShaderResource(TextureUsageFlags textureUsages)
     {
-        return textureUsages & TextureUsageBits::TEXTURE_BINDING;
+        return (textureUsages & TextureUsageBits::TEXTURE_BINDING) != 0;
     }
 
     static bool IsUnorderedAccess(TextureUsageFlags textureUsages)
     {
-        return textureUsages & TextureUsageBits::STORAGE_BINDING;
+        return (textureUsages & TextureUsageBits::STORAGE_BINDING) != 0;
     }
 
     static bool IsRenderTarget(TextureUsageFlags textureUsages)
     {
-        return textureUsages & TextureUsageBits::RENDER_ATTACHMENT;
+        return (textureUsages & TextureUsageBits::RENDER_ATTACHMENT) != 0;
     }
 
     static void FillTexture1DSRV(D3D12_TEX1D_SRV& srv, const TextureViewCreateInfo* createInfo)
     {
-        if (!(createInfo->dimension & TextureViewDimension::TV_1D)) {
+        if (createInfo->dimension != TextureViewDimension::TV_1D) {
             return;
         }
         srv.MostDetailedMip = createInfo->baseMipLevel;
@@ -36,7 +36,7 @@ namespace RHI::DirectX12 {
 
     static void FillTexture2DSRV(D3D12_TEX2D_SRV& srv, const TextureViewCreateInfo* createInfo)
     {
-        if (!(createInfo->dimension & TextureViewDimension::TV_2D)) {
+        if (createInfo->dimension != TextureViewDimension::TV_2D) {
             return;
         }
         srv.MostDetailedMip = createInfo->baseMipLevel;
@@ -47,7 +47,7 @@ namespace RHI::DirectX12 {
 
     static void FillTexture2DArraySRV(D3D12_TEX2D_ARRAY_SRV& srv, const TextureViewCreateInfo* createInfo)
     {
-        if (!(createInfo->dimension & TextureViewDimension::TV_2D_ARRAY)) {
+        if (createInfo->dimension != TextureViewDimension::TV_2D_ARRAY) {
             return;
         }
         srv.MostDetailedMip = createInfo->baseMipLevel;
@@ -60,7 +60,7 @@ namespace RHI::DirectX12 {
 
     static void FillTextureCubeSRV(D3D12_TEXCUBE_SRV& srv, const TextureViewCreateInfo* createInfo)
     {
-        if (!(createInfo->dimension & TextureViewDimension::TV_CUBE)) {
+        if (createInfo->dimension != TextureViewDimension::TV_CUBE) {
             return;
         }
         srv.MostDetailedMip = createInfo->baseMipLevel;
@@ -70,7 +70,7 @@ namespace RHI::DirectX12 {
 
     static void FillTextureCubeArraySRV(D3D12_TEXCUBE_ARRAY_SRV& srv, const TextureViewCreateInfo* createInfo)
     {
-        if (!(createInfo->dimension & TextureViewDimension::TV_CUBE_ARRAY)) {
+        if (createInfo->dimension != TextureViewDimension::TV_CUBE_ARRAY) {
             return;
         }
         srv.MostDetailedMip = createInfo->baseMipLevel;
@@ -82,7 +82,7 @@ namespace RHI::DirectX12 {
 
     static void FillTexture3DSRV(D3D12_TEX3D_SRV& srv, const TextureViewCreateInfo* createInfo)
     {
-        if (!(createInfo->dimension & TextureViewDimension::TV_3D)) {
+        if (createInfo->dimension != TextureViewDimension::TV_3D) {
             return;
         }
         srv.MostDetailedMip = createInfo->baseMipLevel;
@@ -92,7 +92,7 @@ namespace RHI::DirectX12 {
 
     static void FillTexture1DUAV(D3D12_TEX1D_UAV& uav, const TextureViewCreateInfo* createInfo)
     {
-        if (!(createInfo->dimension & TextureViewDimension::TV_1D)) {
+        if (createInfo->dimension != TextureViewDimension::TV_1D) {
             return;
         }
         uav.MipSlice = createInfo->baseMipLevel;
@@ -100,7 +100,7 @@ namespace RHI::DirectX12 {
 
     static void FillTexture2DUAV(D3D12_TEX2D_UAV& uav, const TextureViewCreateInfo* createInfo)
     {
-        if (!(createInfo->dimension & TextureViewDimension::TV_2D)) {
+        if (createInfo->dimension != TextureViewDimension::TV_2D) {
             return;
         }
         uav.MipSlice = createInfo->baseMipLevel;
@@ -109,7 +109,7 @@ namespace RHI::DirectX12 {
 
     static void FillTexture2DArrayUAV(D3D12_TEX2D_ARRAY_UAV& uav, const TextureViewCreateInfo* createInfo)
     {
-        if (!(createInfo->dimension & TextureViewDimension::TV_2D_ARRAY)) {
+        if (createInfo->dimension != TextureViewDimension::TV_2D_ARRAY) {
             return;
         }
         uav.MipSlice = createInfo->baseMipLevel;
@@ -120,7 +120,7 @@ namespace RHI::DirectX12 {
 
     static void FillTexture3DUAV(D3D12_TEX3D_UAV& uav, const TextureViewCreateInfo* createInfo)
     {
-        if (!(createInfo->dimension & TextureViewDimension::TV_3D)) {
+        if (createInfo->dimension != TextureViewDimension::TV_3D) {
             return;
         }
         uav.MipSlice = createInfo->baseMipLevel;
@@ -130,7 +130,7 @@ namespace RHI::DirectX12 {
 
     static void FillTexture1DRTV(D3D12_TEX1D_RTV& rtv, const TextureViewCreateInfo* createInfo)
     {
-        if (!(createInfo->dimension & TextureViewDimension::TV_1D)) {
+        if (createInfo->dimension != TextureViewDimension::TV_1D) {
             return;
         }
         rtv.MipSlice = createInfo->baseMipLevel;
@@ -138,7 +138,7 @@ namespace RHI::DirectX12 {
 
     static void FillTexture2DRTV(D3D12_TEX2D_RTV& rtv, const TextureViewCreateInfo* createInfo)
     {
-        if (!(createInfo->dimension & TextureViewDimension::TV_2D)) {
+        if (createInfo->dimension != TextureViewDimension::TV_2D) {
             return;
         }
         rtv.MipSlice = createInfo->baseMipLevel;
@@ -147,7 +147,7 @@ namespace RHI::DirectX12 {
 
     static void FillTexture2DArrayRTV(D3D12_TEX2D_ARRAY_RTV& rtv, const TextureViewCreateInfo* createInfo)
     {
-        if (!(createInfo->dimension & TextureViewDimension::TV_2D_ARRAY)) {
+        if (createInfo->dimension != TextureViewDimension::TV_2D_ARRAY) {
             return;
         }
         rtv.MipSlice = createInfo->baseMipLevel;
@@ -158,7 +158,7 @@ namespace RHI::DirectX12 {
 
     static void FillTexture3DRTV(D3D12_TEX3D_RTV& rtv, const TextureViewCreateInfo* createInfo)
     {
-        if (!(createInfo->dimension & TextureViewDimension::TV_3D)) {
+        if (createInfo->dimension != TextureViewDimension::TV_3D) {
             return;
         }
         rtv.MipSlice = createInfo->baseMipLevel;

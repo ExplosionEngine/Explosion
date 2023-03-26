@@ -23,7 +23,7 @@ namespace RHI::DirectX12 {
 
         uint8_t result = 0;
         for (auto iter : MAP) {
-            if (writeFlags & static_cast<uint8_t>(iter.first)) {
+            if (writeFlags & iter.first) {
                 result |= iter.second;
             }
         }
