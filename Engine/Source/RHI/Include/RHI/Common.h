@@ -177,6 +177,14 @@ namespace RHI {
         MAX
     };
 
+    enum class HlslBindingRangeType : EnumType {
+        CONSTANT_BUFFER,
+        TEXTURE,
+        SAMPLER,
+        UNORDERED_ACCESS,
+        MAX
+    };
+
     enum class BindingType : EnumType {
         UNIFORM_BUFFER,
         STORAGE_BUFFER,

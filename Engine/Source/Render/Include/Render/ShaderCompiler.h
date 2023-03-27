@@ -8,6 +8,7 @@
 #include <string>
 
 #include <RHI/Common.h>
+#include <RHI/BindGroupLayout.h>
 #include <Common/Concurrent.h>
 
 namespace Render {
@@ -28,11 +29,17 @@ namespace Render {
         ShaderByteCodeType byteCodeType = ShaderByteCodeType::MAX;
         bool withDebugInfo = false;
         std::vector<std::string> definitions;
+        std::vector<std::string> includePaths;
+    };
+
+    struct ShaderReflectionData {
+        std::unordered_map<std::string, RHI::BindGroupLayoutEntry> resourceBindings;
     };
 
     struct ShaderCompileOutput {
         bool success;
         std::vector<uint8_t> byteCode;
+        ShaderReflectionData reflectionData;
         std::string errorInfo;
     };
 

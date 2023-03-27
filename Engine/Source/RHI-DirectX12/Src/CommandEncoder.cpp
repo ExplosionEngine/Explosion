@@ -49,12 +49,11 @@ namespace RHI::DirectX12 {
         const auto& bindings= bindGroup->GetBindings();
         for (const auto& binding : bindings) {
             ForEachBitsType<ShaderStageBits>([this, &binding, &pipelineLayout, layoutIndex](ShaderStageBits shaderStage) -> void {
-                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first, binding.second.first);
+                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first);
                 if (!t.has_value()) {
                     return;
                 }
-                Assert(t.value().first == binding.second.first);
-                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second.second);
+                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second);
             });
         }
     }
@@ -126,12 +125,11 @@ namespace RHI::DirectX12 {
         const auto& bindings= bindGroup->GetBindings();
         for (const auto& binding : bindings) {
             ForEachBitsType<ShaderStageBits>([this, &binding, &pipelineLayout, layoutIndex](ShaderStageBits shaderStage) -> void {
-                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first, binding.second.first);
+                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first);
                 if (!t.has_value()) {
                     return;
                 }
-                Assert(t.value().first == binding.second.first);
-                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second.second);
+                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second);
             });
         }
     }

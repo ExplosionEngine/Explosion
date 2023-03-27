@@ -44,11 +44,8 @@ protected:
 
         uniformBuffer = builder.Create<Render::RGBuffer>("TestUniformBuffer", Render::RGBufferDesc::Create(512, RHI::BufferUsageBits::UNIFORM));
         outputTexture = builder.Create<Render::RGTexture>("TestOutputTexture", Render::RGTextureDesc::Create2D(1024, 1024, RHI::PixelFormat::BGRA8_UNORM, RHI::TextureUsageBits::STORAGE_BINDING));
-        uniformBufferView = builder.Create<Render::RGBufferView>("TestUniformBufferView", uniformBuffer, Render::RGBufferViewDesc::Create(0, 512));
-        outputTextureView = builder.Create<Render::RGTextureView>("TestOutputTextureView", outputTexture, Render::RGTextureViewDesc::Create2D());
 
-        // TOOD bind group & auto read write
-        // TODO resource view package
+        // TODO bind group & auto mark read write
     }
 
     void Execute(RHI::ComputePassCommandEncoder& encoder) override
@@ -60,8 +57,6 @@ protected:
 private:
     Render::RGBuffer* uniformBuffer;
     Render::RGTexture* outputTexture;
-    Render::RGBufferView* uniformBufferView;
-    Render::RGTextureView* outputTextureView;
 };
 
 struct RenderGraphTest : public testing::Test {
