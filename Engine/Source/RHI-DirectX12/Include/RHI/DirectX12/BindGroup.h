@@ -11,6 +11,7 @@
 #include <directx/d3dx12.h>
 
 #include <RHI/BindGroup.h>
+#include <Common/Hash.h>
 
 namespace RHI::DirectX12 {
     class DX12BindGroupLayout;
@@ -25,7 +26,7 @@ namespace RHI::DirectX12 {
 
         DX12BindGroupLayout& GetBindGroupLayout();
         const std::vector<ID3D12DescriptorHeap*>& GetDX12DescriptorHeaps();
-        const std::vector<std::pair<uint8_t, std::pair<BindingType, CD3DX12_GPU_DESCRIPTOR_HANDLE>>>& GetBindings();
+        const std::vector<std::pair<HlslBinding, CD3DX12_GPU_DESCRIPTOR_HANDLE>>& GetBindings();
 
     private:
         void SaveBindGroupLayout(const BindGroupCreateInfo* createInfo);
@@ -33,6 +34,6 @@ namespace RHI::DirectX12 {
 
         DX12BindGroupLayout* bindGroupLayout;
         std::vector<ID3D12DescriptorHeap*> dx12DescriptorHeaps;
-        std::vector<std::pair<uint8_t, std::pair<BindingType, CD3DX12_GPU_DESCRIPTOR_HANDLE>>> bindings;
+        std::vector<std::pair<HlslBinding, CD3DX12_GPU_DESCRIPTOR_HANDLE>> bindings;
     };
 }

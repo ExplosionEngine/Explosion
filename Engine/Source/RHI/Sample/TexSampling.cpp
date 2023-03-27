@@ -202,11 +202,16 @@ private:
     {
         std::vector<BindGroupLayoutEntry> entries(2);
         entries[0].type = BindingType::TEXTURE;
-        entries[0].binding = 0;
         entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
         entries[1].type = BindingType::SAMPLER;
-        entries[1].binding = 0;
         entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
+        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
+            entries[0].binding.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
+            entries[1].binding.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+        } else {
+            entries[0].binding.glsl.index = 0;
+            entries[1].binding.glsl.index = 1;
+        }
 
         BindGroupLayoutCreateInfo createInfo {};
         createInfo.entries = entries.data();
@@ -220,11 +225,16 @@ private:
     {
         std::vector<BindGroupEntry> entries(2);
         entries[0].type = BindingType::TEXTURE;
-        entries[0].binding = 0;
         entries[0].textureView = sampleTextureView.Get();
         entries[1].type = BindingType::SAMPLER;
-        entries[1].binding = 0;
         entries[1].sampler = sampler.Get();
+        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
+            entries[0].binding.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
+            entries[1].binding.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+        } else {
+            entries[0].binding.glsl.index = 0;
+            entries[1].binding.glsl.index = 1;
+        }
 
         BindGroupCreateInfo createInfo {};
         createInfo.entries = entries.data();

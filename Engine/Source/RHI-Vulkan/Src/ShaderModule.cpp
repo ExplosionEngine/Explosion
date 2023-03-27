@@ -44,6 +44,7 @@ namespace RHI::Vulkan {
 
     void VKShaderModule::BuildReflection(const ShaderModuleCreateInfo* createInfo)
     {
+        // TODO move to render module
         spirv_cross::Compiler compiler(static_cast<const uint32_t*>(createInfo->byteCode),
                                        createInfo->size / sizeof(uint32_t));
         auto resources = compiler.get_shader_resources();

@@ -12,14 +12,6 @@
 #include <RHI/DirectX12/BindGroupLayout.h>
 
 namespace RHI::DirectX12 {
-    static LayoutIndexAndBinding EncodeUniqueID(uint8_t layoutIndex, uint8_t binding, BindingType type)
-    {
-        auto t = static_cast<uint8_t>(type);
-        return (layoutIndex << 8) + binding + t;
-    }
-}
-
-namespace RHI::DirectX12 {
     DX12PipelineLayout::DX12PipelineLayout(DX12Device& device, const PipelineLayoutCreateInfo* createInfo) : PipelineLayout(createInfo)
     {
         CreateDX12RootSignature(device, createInfo);
@@ -32,14 +24,14 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    std::optional<BindingTypeAndRootParameterIndex> DX12PipelineLayout::QueryRootDescriptorParameterIndex(ShaderStageBits shaderStage, uint8_t layoutIndex, uint8_t binding, BindingType type)
+    std::optional<BindingTypeAndRootParameterIndex> DX12PipelineLayout::QueryRootDescriptorParameterIndex(ShaderStageBits shaderStage, uint8_t layoutIndex, const HlslBinding& binding)
     {
         auto iter1 = rootDescriptorParameterIndexMaps.find(shaderStage);
-        if (iter1->second.size() <= 0) {
+        if (iter1->second.empty()) {
             return {};
         }
 
-        auto iter2 = iter1->second.find(EncodeUniqueID(layoutIndex, binding, type));
+        auto iter2 = iter1->second.find(RootParameterKey { layoutIndex, binding });
         Assert(iter2 != iter1->second.end());
         return iter2->second;
     }
@@ -68,8 +60,8 @@ namespace RHI::DirectX12 {
                     rootParameters.emplace_back(pendingRootParameters[index]);
 
                     const auto& keyInfo = keyInfos[index];
-                    auto layoutIndexAndBinding = EncodeUniqueID(keyInfo.layoutIndex, keyInfo.binding, keyInfo.bindingType);
-                    rootDescriptorParameterIndexMaps[keyInfo.shaderStage][layoutIndexAndBinding] = { keyInfo.bindingType, index };
+                    auto rootParameterKey = RootParameterKey { keyInfo.layoutIndex, keyInfo.binding };
+                    rootDescriptorParameterIndexMaps[keyInfo.shaderStage][rootParameterKey] = { keyInfo.bindingType, index };
                 }
             }
         }
