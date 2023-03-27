@@ -6,6 +6,7 @@
 
 #if PLATFORM_WINDOWS
 #include <Windows.h>
+#include <dxc/d3d12shader.h>
 #undef min
 #undef max
 #else
@@ -23,7 +24,6 @@ using namespace Microsoft::WRL;
 #define ComPtrGet(name) name
 #endif
 
-#include <d3d12shader.h>
 #include <spirv_cross/spirv_cross.hpp>
 #include <spirv_cross/spirv_msl.hpp>
 
@@ -105,6 +105,7 @@ namespace Render {
         }
     }
 
+#if PLATFORM_WINDOWS
     static void BuildHlslReflectionData(ComPtr<ID3D12ShaderReflection>& shaderReflection, ShaderReflectionData& result)
     {
         D3D12_SHADER_DESC shaderDesc;
@@ -112,6 +113,7 @@ namespace Render {
 
         // TODO
     }
+#endif
 
     static void BuildGlslReflectionData(const spirv_cross::Compiler& compiler, ShaderReflectionData& result)
     {
@@ -158,7 +160,7 @@ namespace Render {
             &sourceBuffer,
             arguments.data(),
             arguments.size(),
-            includeHandler.Get(),
+            ComPtrGet(includeHandler),
             IID_PPV_ARGS(&result));
 
         ComPtr<IDxcBlobEncoding> errorBlob;
@@ -180,6 +182,7 @@ namespace Render {
         output.byteCode = std::vector<uint8_t>(codeStart, codeEnd);
 
         if (options.byteCodeType == ShaderByteCodeType::DXIL) {
+#if PLATFORM_WINDOWS
             ComPtr<IDxcBlob> reflectionBlob;
             Assert(SUCCEEDED(result->GetOutput(DXC_OUT_REFLECTION, IID_PPV_ARGS(&reflectionBlob), nullptr)));
 
@@ -191,6 +194,7 @@ namespace Render {
             ComPtr<ID3D12ShaderReflection> shaderReflection;
             utils->CreateReflection(&reflectionBuffer, IID_PPV_ARGS(&shaderReflection));
             BuildHlslReflectionData(shaderReflection, output.reflectionData);
+#endif
         } else {
             spirv_cross::Compiler sprivCrossCompiler(reinterpret_cast<const uint32_t*>(output.byteCode.data()), output.byteCode.size() * sizeof(uint8_t) / sizeof(uint32_t));
             BuildGlslReflectionData(sprivCrossCompiler, output.reflectionData);
