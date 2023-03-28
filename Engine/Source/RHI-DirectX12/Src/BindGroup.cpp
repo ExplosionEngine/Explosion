@@ -52,7 +52,7 @@ namespace RHI::DirectX12 {
         return dx12DescriptorHeaps;
     }
 
-    const std::vector<std::pair<uint8_t, std::pair<BindingType, CD3DX12_GPU_DESCRIPTOR_HANDLE>>>& DX12BindGroup::GetBindings()
+    const std::vector<std::pair<HlslBinding, CD3DX12_GPU_DESCRIPTOR_HANDLE>>& DX12BindGroup::GetBindings()
     {
         return bindings;
     }
@@ -67,14 +67,14 @@ namespace RHI::DirectX12 {
     void DX12BindGroup::CacheBindings(const BindGroupCreateInfo* createInfo)
     {
         for (auto i = 0; i < createInfo->entryNum; i++) {
-            auto& entry = createInfo->entries[i];
+            const auto& entry = createInfo->entries[i];
 
             CD3DX12_GPU_DESCRIPTOR_HANDLE handle;
             ID3D12DescriptorHeap* heap;
             GetDescriptorHandleAndHeap(handle, &heap, entry);
 
             dx12DescriptorHeaps.emplace_back(heap);
-            bindings.emplace_back(std::pair<uint8_t, std::pair<BindingType, CD3DX12_GPU_DESCRIPTOR_HANDLE>> { entry.hlslBinding, { entry.type, handle } });
+            bindings.emplace_back( entry.binding.hlsl, handle );
         }
     }
 }

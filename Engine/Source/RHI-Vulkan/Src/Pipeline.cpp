@@ -106,7 +106,7 @@ namespace RHI::Vulkan {
             vk::PipelineColorBlendAttachmentState& blendState = blendStates[i];
             auto& srcState = createInfo->fragmentState.colorTargets[i];
             blendState.setBlendEnable(true)
-                .setColorWriteMask(static_cast<vk::ColorComponentFlags>(srcState.writeFlags))
+                .setColorWriteMask(static_cast<vk::ColorComponentFlags>(srcState.writeFlags.Value()))
                 .setAlphaBlendOp(VKEnumCast<BlendOp, vk::BlendOp>(srcState.blend.color.op))
                 .setAlphaBlendOp(VKEnumCast<BlendOp, vk::BlendOp>(srcState.blend.alpha.op))
                 .setSrcColorBlendFactor(VKEnumCast<BlendFactor, vk::BlendFactor>(srcState.blend.color.srcFactor))

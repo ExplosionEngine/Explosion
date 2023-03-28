@@ -21,6 +21,10 @@ namespace RHI::Dummy {
 
     void DummyComputePassCommandEncoder::EndPass()
     {
+    }
+
+    void DummyComputePassCommandEncoder::Destroy()
+    {
         delete this;
     }
 
@@ -72,6 +76,10 @@ namespace RHI::Dummy {
 
     void DummyGraphicsPassCommandEncoder::EndPass()
     {
+    }
+
+    void DummyGraphicsPassCommandEncoder::Destroy()
+    {
         delete this;
     }
 
@@ -112,7 +120,15 @@ namespace RHI::Dummy {
         return new DummyGraphicsPassCommandEncoder(dummyCommandBuffer);
     }
 
+    void DummyCommandEncoder::SwapChainSync(SwapChain* swapChain)
+    {
+    }
+
     void DummyCommandEncoder::End()
+    {
+    }
+
+    void DummyCommandEncoder::Destroy()
     {
         delete this;
     }

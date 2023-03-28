@@ -17,7 +17,7 @@ namespace RHI::DirectX12 {
         ShaderStageBits shaderStage;
         BindingType bindingType;
         uint8_t layoutIndex;
-        uint8_t binding;
+        HlslBinding binding;
     };
 
     class DX12BindGroupLayout : public BindGroupLayout {

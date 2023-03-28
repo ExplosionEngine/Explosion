@@ -8,17 +8,19 @@
 
 #include <Common/Utility.h>
 #include <RHI/Common.h>
+#include <RHI/BindGroupLayout.h>
 
 namespace RHI {
-    class BindGroupLayout;
     class BufferView;
     class Sampler;
     class TextureView;
 
     struct BindGroupEntry {
-        uint8_t hlslBinding;
-        uint8_t glslBinding;
         BindingType type;
+        union {
+            HlslBinding hlsl;
+            GlslBinding glsl;
+        } binding;
         union {
             Sampler* sampler;
             TextureView* textureView;

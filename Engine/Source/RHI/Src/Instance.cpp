@@ -22,17 +22,19 @@ namespace RHI {
                 return "RHI-DirectX12";
             case RHIType::METAL:
                 return "RHI-Metal";
+            case RHIType::DUMMY:
+                return "RHI-Dummy";
             default:
                 return "RHI-Vulkan";
         }
     }
 
-    Instance* Instance::CreateByPlatform()
+    Instance* Instance::GetByPlatform()
     {
-        return CreateByType(GetPlatformRHIType());
+        return GetByType(GetPlatformRHIType());
     }
 
-    Instance* Instance::CreateByType(const RHIType& type)
+    Instance* Instance::GetByType(const RHIType& type)
     {
         auto* dynamicLibrary = Common::DynamicLibraryManager::Singleton().FindOrLoad(GetRHILibNameByType(type));
         if (dynamicLibrary == nullptr) {

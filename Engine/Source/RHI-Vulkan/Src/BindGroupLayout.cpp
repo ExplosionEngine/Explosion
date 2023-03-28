@@ -44,7 +44,7 @@ namespace RHI::Vulkan {
 
             binding.setDescriptorType(VKEnumCast<BindingType, vk::DescriptorType>(entry.type))
                 .setDescriptorCount(1)
-                .setBinding(entry.glslBinding)
+                .setBinding(entry.binding.glsl.index)
                 .setStageFlags(flags);
         }
 

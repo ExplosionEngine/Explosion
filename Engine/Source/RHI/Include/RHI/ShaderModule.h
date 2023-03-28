@@ -9,7 +9,7 @@
 
 namespace RHI {
     struct ShaderModuleCreateInfo {
-        void* byteCode;
+        const void* byteCode;
         size_t size;
     };
 

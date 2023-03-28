@@ -49,12 +49,11 @@ namespace RHI::DirectX12 {
         const auto& bindings= bindGroup->GetBindings();
         for (const auto& binding : bindings) {
             ForEachBitsType<ShaderStageBits>([this, &binding, &pipelineLayout, layoutIndex](ShaderStageBits shaderStage) -> void {
-                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first, binding.second.first);
+                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first);
                 if (!t.has_value()) {
                     return;
                 }
-                Assert(t.value().first == binding.second.first);
-                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second.second);
+                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second);
             });
         }
     }
@@ -65,6 +64,10 @@ namespace RHI::DirectX12 {
     }
 
     void DX12ComputePassCommandEncoder::EndPass()
+    {
+    }
+
+    void DX12ComputePassCommandEncoder::Destroy()
     {
         delete this;
     }
@@ -122,12 +125,11 @@ namespace RHI::DirectX12 {
         const auto& bindings= bindGroup->GetBindings();
         for (const auto& binding : bindings) {
             ForEachBitsType<ShaderStageBits>([this, &binding, &pipelineLayout, layoutIndex](ShaderStageBits shaderStage) -> void {
-                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first, binding.second.first);
+                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first);
                 if (!t.has_value()) {
                     return;
                 }
-                Assert(t.value().first == binding.second.first);
-                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second.second);
+                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second);
             });
         }
     }
@@ -183,6 +185,10 @@ namespace RHI::DirectX12 {
     }
 
     void DX12GraphicsPassCommandEncoder::EndPass()
+    {
+    }
+
+    void DX12GraphicsPassCommandEncoder::Destroy()
     {
         delete this;
     }
@@ -273,9 +279,17 @@ namespace RHI::DirectX12 {
         return result;
     }
 
+    void DX12CommandEncoder::SwapChainSync(SwapChain* swapChain)
+    {
+    }
+
     void DX12CommandEncoder::End()
     {
         commandBuffer.GetDX12GraphicsCommandList()->Close();
+    }
+
+    void DX12CommandEncoder::Destroy()
+    {
         delete this;
     }
 }

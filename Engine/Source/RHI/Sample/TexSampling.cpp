@@ -48,30 +48,8 @@ protected:
 
     void OnDestroy() override
     {
-        graphicsQueue->Wait(fence);
+        graphicsQueue->Wait(fence.Get());
         fence->Wait();
-        fence->Destroy();
-        commandBuffer->Destroy();
-        texCommandBuffer->Destroy();
-        vertexShader->Destroy();
-        fragmentShader->Destroy();
-        pipeline->Destroy();
-        pipelineLayout->Destroy();
-        for (auto* textureView: swapChainTextureViews) {
-            textureView->Destroy();
-        }
-        vertexBufferView->Destroy();
-        vertexBuffer->Destroy();
-        indexBufferView->Destroy();
-        indexBuffer->Destroy();
-        bindGroupLayout->Destroy();
-        bindGroup->Destroy();
-        sampleTextureView->Destroy();
-        sampleTexture->Destroy();
-        sampler->Destroy();
-        pixelBuffer->Destroy();
-        swapChain->Destroy();
-        device->Destroy();
     }
 
 private:
@@ -79,7 +57,7 @@ private:
 
     void CreateInstanceAndSelectGPU()
     {
-        instance = Instance::CreateByType(rhiType);
+        instance = Instance::GetByType(rhiType);
 
         gpu = instance->GetGpu(0);
     }
@@ -186,7 +164,7 @@ private:
         TextureCreateInfo texCreateInfo {};
         texCreateInfo.format = PixelFormat::RGBA8_UNORM;
         texCreateInfo.mipLevels = 1;
-        texCreateInfo.extent = {static_cast<size_t>(texWidth), static_cast<size_t>(texHeight), 1};
+        texCreateInfo.extent = {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1};
         texCreateInfo.dimension = TextureDimension::T_2D;
         texCreateInfo.samples = 1;
         texCreateInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::TEXTURE_BINDING;
@@ -206,31 +184,35 @@ private:
         sampler = device->CreateSampler(&samplerCreateInfo);
 
         texCommandBuffer = device->CreateCommandBuffer();
-        auto* commandEncoder = texCommandBuffer->Begin();
-        commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture, TextureState::UNDEFINED, TextureState::COPY_DST));
-        TextureSubResourceInfo subResourceInfo {};
-        subResourceInfo.mipLevel = 0;
-        subResourceInfo.arrayLayerNum = 1;
-        subResourceInfo.baseArrayLayer = 0;
-        subResourceInfo.aspect = TextureAspect::COLOR;
-        commandEncoder->CopyBufferToTexture(pixelBuffer, sampleTexture, &subResourceInfo, {static_cast<size_t>(texWidth), static_cast<size_t>(texHeight), 1});
-        commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture, TextureState::COPY_DST, TextureState::SHADER_READ_ONLY));
+        UniqueRef<CommandEncoder> commandEncoder = texCommandBuffer->Begin();
+        {
+            commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::UNDEFINED, TextureState::COPY_DST));
+            TextureSubResourceInfo subResourceInfo {};
+            subResourceInfo.mipLevel = 0;
+            subResourceInfo.arrayLayerNum = 1;
+            subResourceInfo.baseArrayLayer = 0;
+            subResourceInfo.aspect = TextureAspect::COLOR;
+            commandEncoder->CopyBufferToTexture(pixelBuffer.Get(), sampleTexture.Get(), &subResourceInfo, {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1});
+            commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::COPY_DST, TextureState::SHADER_READ_ONLY));
+        }
         commandEncoder->End();
-
-        graphicsQueue->Submit(texCommandBuffer, nullptr);
+        graphicsQueue->Submit(texCommandBuffer.Get(), nullptr);
     }
 
     void CreateBindGroupLayout()
     {
         std::vector<BindGroupLayoutEntry> entries(2);
         entries[0].type = BindingType::TEXTURE;
-        entries[0].hlslBinding = 0;
-        entries[1].glslBinding = 0;
         entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
         entries[1].type = BindingType::SAMPLER;
-        entries[1].hlslBinding = 0;
-        entries[1].glslBinding = 1;
         entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
+        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
+            entries[0].binding.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
+            entries[1].binding.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+        } else {
+            entries[0].binding.glsl.index = 0;
+            entries[1].binding.glsl.index = 1;
+        }
 
         BindGroupLayoutCreateInfo createInfo {};
         createInfo.entries = entries.data();
@@ -244,27 +226,32 @@ private:
     {
         std::vector<BindGroupEntry> entries(2);
         entries[0].type = BindingType::TEXTURE;
-        entries[0].hlslBinding = 0;
-        entries[1].glslBinding = 0;
-        entries[0].textureView = sampleTextureView;
+        entries[0].textureView = sampleTextureView.Get();
         entries[1].type = BindingType::SAMPLER;
-        entries[0].hlslBinding = 1;
-        entries[1].glslBinding = 1;
-        entries[1].sampler = sampler;
+        entries[1].sampler = sampler.Get();
+        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
+            entries[0].binding.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
+            entries[1].binding.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+        } else {
+            entries[0].binding.glsl.index = 0;
+            entries[1].binding.glsl.index = 1;
+        }
 
         BindGroupCreateInfo createInfo {};
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
-        createInfo.layout = bindGroupLayout;
+        createInfo.layout = bindGroupLayout.Get();
 
         bindGroup = device->CreateBindGroup(&createInfo);
     }
 
     void CreatePipelineLayout()
     {
+        std::vector<BindGroupLayout*> bindGroupLayouts = { bindGroupLayout.Get() };
+
         PipelineLayoutCreateInfo createInfo {};
-        createInfo.bindGroupNum = 1;
-        createInfo.bindGroupLayouts = &bindGroupLayout;
+        createInfo.bindGroupNum = bindGroupLayouts.size();
+        createInfo.bindGroupLayouts = bindGroupLayouts.data();
         pipelineLayout = device->CreatePipelineLayout(&createInfo);
     }
 
@@ -307,9 +294,9 @@ private:
         colorTargetStates[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
 
         GraphicsPipelineCreateInfo createInfo {};
-        createInfo.vertexShader = vertexShader;
-        createInfo.pixelShader = fragmentShader;
-        createInfo.layout = pipelineLayout;
+        createInfo.vertexShader = vertexShader.Get();
+        createInfo.pixelShader = fragmentShader.Get();
+        createInfo.layout = pipelineLayout.Get();
         createInfo.vertexState.bufferLayoutNum = 1;
         createInfo.vertexState.bufferLayouts = &vertexBufferLayout;
         createInfo.fragmentState.colorTargetNum = colorTargetStates.size();
@@ -338,17 +325,17 @@ private:
     void PopulateCommandBuffer()
     {
         auto backTextureIndex = swapChain->AcquireBackTexture();
-        CommandEncoder* commandEncoder = commandBuffer->Begin();
+        UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
         {
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::CLEAR;
             colorAttachments[0].storeOp = StoreOp::STORE;
-            colorAttachments[0].view = swapChainTextureViews[backTextureIndex];
+            colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();
             colorAttachments[0].resolve = nullptr;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.pipeline = pipeline;
+            graphicsPassBeginInfo.pipeline = pipeline.Get();
             graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
@@ -359,49 +346,49 @@ private:
                 graphicsEncoder->SetScissor(0, 0, width, height);
                 graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
                 graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
-                graphicsEncoder->SetBindGroup(0, bindGroup);
-                graphicsEncoder->SetVertexBuffer(0, vertexBufferView);
-                graphicsEncoder->SetIndexBuffer(indexBufferView);
+                graphicsEncoder->SetBindGroup(0, bindGroup.Get());
+                graphicsEncoder->SetVertexBuffer(0, vertexBufferView.Get());
+                graphicsEncoder->SetIndexBuffer(indexBufferView.Get());
                 graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
             }
             graphicsEncoder->EndPass();
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::RENDER_TARGET, TextureState::PRESENT));
         }
-        commandEncoder->SwapChainSync(swapChain);
+        commandEncoder->SwapChainSync(swapChain.Get());
         commandEncoder->End();
     }
 
     void SubmitCommandBufferAndPresent()
     {
-        graphicsQueue->Submit(commandBuffer, fence);
+        graphicsQueue->Submit(commandBuffer.Get(), fence.Get());
         fence->Wait();
         swapChain->Present();
     }
 
     Instance* instance = nullptr;
     Gpu* gpu = nullptr;
-    Device* device = nullptr;
+    UniqueRef<Device> device;
     Queue* graphicsQueue = nullptr;
-    SwapChain* swapChain = nullptr;
-    Buffer* vertexBuffer = nullptr;
-    BufferView* vertexBufferView = nullptr;
-    Buffer* indexBuffer = nullptr;
-    BufferView* indexBufferView = nullptr;
-    BindGroupLayout* bindGroupLayout = nullptr;
-    BindGroup* bindGroup = nullptr;
-    Texture* sampleTexture = nullptr;
-    TextureView* sampleTextureView = nullptr;
-    Sampler* sampler = nullptr;
-    CommandBuffer* texCommandBuffer = nullptr;
-    Buffer* pixelBuffer = nullptr;
+    UniqueRef<SwapChain> swapChain;
+    UniqueRef<Buffer> vertexBuffer;
+    UniqueRef<BufferView> vertexBufferView;
+    UniqueRef<Buffer> indexBuffer;
+    UniqueRef<BufferView> indexBufferView;
+    UniqueRef<BindGroupLayout> bindGroupLayout;
+    UniqueRef<BindGroup> bindGroup;
+    UniqueRef<Texture> sampleTexture;
+    UniqueRef<TextureView> sampleTextureView;
+    UniqueRef<Sampler> sampler;
+    UniqueRef<CommandBuffer> texCommandBuffer;
+    UniqueRef<Buffer> pixelBuffer;
     std::array<Texture*, BACK_BUFFER_COUNT> swapChainTextures {};
-    std::array<TextureView*, BACK_BUFFER_COUNT> swapChainTextureViews {};
-    PipelineLayout* pipelineLayout = nullptr;
-    GraphicsPipeline* pipeline = nullptr;
-    ShaderModule* vertexShader = nullptr;
-    ShaderModule* fragmentShader = nullptr;
-    CommandBuffer* commandBuffer = nullptr;
-    Fence* fence = nullptr;
+    std::array<UniqueRef<TextureView>, BACK_BUFFER_COUNT> swapChainTextureViews;
+    UniqueRef<PipelineLayout> pipelineLayout;
+    UniqueRef<GraphicsPipeline> pipeline;
+    UniqueRef<ShaderModule> vertexShader;
+    UniqueRef<ShaderModule> fragmentShader;
+    UniqueRef<CommandBuffer> commandBuffer;
+    UniqueRef<Fence> fence;
 };
 
 int main(int argc, char* argv[])
