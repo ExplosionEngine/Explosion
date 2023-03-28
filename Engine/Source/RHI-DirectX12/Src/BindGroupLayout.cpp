@@ -59,7 +59,7 @@ namespace RHI::DirectX12 {
                 dx12RootParameters.emplace_back();
                 dx12DescriptorRanges.emplace_back();
 
-                dx12DescriptorRanges.back().Init(DX12EnumCast<BindingType, D3D12_DESCRIPTOR_RANGE_TYPE>(entry->type), 1, entry->binding, createInfo->layoutIndex);
+                dx12DescriptorRanges.back().Init(DX12EnumCast<BindingType, D3D12_DESCRIPTOR_RANGE_TYPE>(entry->type), 1, entry->hlslBinding, createInfo->layoutIndex);
                 dx12RootParameters.back().InitAsDescriptorTable(1, &dx12DescriptorRanges.back(), DX12EnumCast<ShaderStageBits, D3D12_SHADER_VISIBILITY>(visibility.first));
 
                 rootParameterKeyInfos.emplace_back();
@@ -68,7 +68,7 @@ namespace RHI::DirectX12 {
                     keyInfo.shaderStage = visibility.first;
                     keyInfo.bindingType = entry->type;
                     keyInfo.layoutIndex = createInfo->layoutIndex;
-                    keyInfo.binding = entry->binding;
+                    keyInfo.binding = entry->hlslBinding;
                 }
             }
         }

@@ -74,7 +74,7 @@ namespace RHI::DirectX12 {
             GetDescriptorHandleAndHeap(handle, &heap, entry);
 
             dx12DescriptorHeaps.emplace_back(heap);
-            bindings.emplace_back(std::pair<uint8_t, std::pair<BindingType, CD3DX12_GPU_DESCRIPTOR_HANDLE>> { entry.binding, { entry.type, handle } });
+            bindings.emplace_back(std::pair<uint8_t, std::pair<BindingType, CD3DX12_GPU_DESCRIPTOR_HANDLE>> { entry.hlslBinding, { entry.type, handle } });
         }
     }
 }

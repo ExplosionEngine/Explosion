@@ -168,7 +168,8 @@ private:
     void CreateTextureAndSampler()
     {
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load("../awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        stbi_set_flip_vertically_on_load(true);
+        stbi_uc* pixels = stbi_load("Image/Sample/awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         Assert(pixels != nullptr);
 
         BufferCreateInfo bufferCreateInfo {};
@@ -223,10 +224,12 @@ private:
     {
         std::vector<BindGroupLayoutEntry> entries(2);
         entries[0].type = BindingType::TEXTURE;
-        entries[0].binding = 0;
+        entries[0].hlslBinding = 0;
+        entries[1].glslBinding = 0;
         entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
         entries[1].type = BindingType::SAMPLER;
-        entries[1].binding = 0;
+        entries[1].hlslBinding = 0;
+        entries[1].glslBinding = 1;
         entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
 
         BindGroupLayoutCreateInfo createInfo {};
@@ -241,10 +244,12 @@ private:
     {
         std::vector<BindGroupEntry> entries(2);
         entries[0].type = BindingType::TEXTURE;
-        entries[0].binding = 0;
+        entries[0].hlslBinding = 0;
+        entries[1].glslBinding = 0;
         entries[0].textureView = sampleTextureView;
         entries[1].type = BindingType::SAMPLER;
-        entries[1].binding = 0;
+        entries[0].hlslBinding = 1;
+        entries[1].glslBinding = 1;
         entries[1].sampler = sampler;
 
         BindGroupCreateInfo createInfo {};

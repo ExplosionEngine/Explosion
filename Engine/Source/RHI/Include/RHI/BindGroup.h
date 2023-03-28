@@ -16,7 +16,8 @@ namespace RHI {
     class TextureView;
 
     struct BindGroupEntry {
-        uint8_t binding;
+        uint8_t hlslBinding;
+        uint8_t glslBinding;
         BindingType type;
         union {
             Sampler* sampler;

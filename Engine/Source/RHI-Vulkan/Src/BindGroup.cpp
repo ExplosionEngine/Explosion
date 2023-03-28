@@ -71,7 +71,7 @@ namespace RHI::Vulkan {
             auto& entry = createInfo->entries[i];
 
             descriptorWrites[i].setDstSet(descriptorSet)
-                .setDstBinding(entry.binding)
+                .setDstBinding(entry.glslBinding)
                 .setDescriptorCount(1)
                 .setDescriptorType(VKEnumCast<BindingType, vk::DescriptorType>(entry.type));
 

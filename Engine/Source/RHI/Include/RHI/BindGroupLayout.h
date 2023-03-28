@@ -9,7 +9,8 @@
 
 namespace RHI {
     struct BindGroupLayoutEntry {
-        uint8_t binding;
+        uint8_t hlslBinding;
+        uint8_t glslBinding;
         BindingType type;
         ShaderStageFlags shaderVisibility;
     };
