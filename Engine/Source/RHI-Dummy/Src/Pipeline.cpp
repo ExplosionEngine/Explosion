@@ -5,7 +5,7 @@
 #include <RHI/Dummy/Pipeline.h>
 
 namespace RHI::Dummy {
-    DummyComputePipeline::DummyComputePipeline(const ComputePipelineCreateInfo* createInfo)
+    DummyComputePipeline::DummyComputePipeline(const ComputePipelineCreateInfo& createInfo)
         : ComputePipeline(createInfo)
     {
     }
@@ -17,7 +17,7 @@ namespace RHI::Dummy {
         delete this;
     }
 
-    DummyGraphicsPipeline::DummyGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
+    DummyGraphicsPipeline::DummyGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo)
         : GraphicsPipeline(createInfo)
     {
     }

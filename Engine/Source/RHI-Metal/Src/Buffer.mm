@@ -8,7 +8,7 @@
 
 namespace RHI::Metal {
 
-    MTLBuffer::MTLBuffer(MTLDevice &device, const BufferCreateInfo* createInfo)
+    MTLBuffer::MTLBuffer(MTLDevice &device, const BufferCreateInfo& createInfo)
         : Buffer(createInfo), mtlDevice(device)
     {
         CreateNativeBuffer(createInfo);
@@ -28,7 +28,7 @@ namespace RHI::Metal {
     {
     }
 
-    BufferView* MTLBuffer::CreateBufferView(const BufferViewCreateInfo* createInfo)
+    BufferView* MTLBuffer::CreateBufferView(const BufferViewCreateInfo& createInfo)
     {
         return new MTLBufferView(*this, createInfo);
     }
@@ -43,7 +43,7 @@ namespace RHI::Metal {
         return mtlBuffer;
     }
 
-    void MTLBuffer::CreateNativeBuffer(const BufferCreateInfo* createInfo)
+    void MTLBuffer::CreateNativeBuffer(const BufferCreateInfo& createInfo)
     {
         // MTLResourceCPUCacheModeDefaultCache : Read and Write executed in expected order.
         // MTLResourceCPUCacheModeWriteCombined : CPU Write Only.
@@ -53,7 +53,7 @@ namespace RHI::Metal {
         // MTLResourceStorageModePrivate : GPU
         // MTLResourceStorageModeMemoryless : Trasient
 
-        auto &usage = createInfo->usages;
+        auto &usage = createInfo.usages;
         MTLResourceOptions options = 0;
 
         if ((usage & BufferUsageBits::MAP_READ) || (usage & BufferUsageBits::COPY_SRC)) {
@@ -68,7 +68,7 @@ namespace RHI::Metal {
             options |= MTLResourceStorageModePrivate;
         }
 
-        mtlBuffer = [mtlDevice.GetDevice() newBufferWithLength:(createInfo->size)
+        mtlBuffer = [mtlDevice.GetDevice() newBufferWithLength:(createInfo.size)
                                                        options:(options)];
     }
 

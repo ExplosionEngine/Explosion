@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummyPipelineLayout : public PipelineLayout {
     public:
-        explicit DummyPipelineLayout(const PipelineLayoutCreateInfo* createInfo);
+        explicit DummyPipelineLayout(const PipelineLayoutCreateInfo& createInfo);
         ~DummyPipelineLayout() override;
 
         void Destroy() override;

@@ -44,7 +44,7 @@ namespace RHI::DirectX12 {
     class DX12PipelineLayout : public PipelineLayout {
     public:
         NON_COPYABLE(DX12PipelineLayout)
-        DX12PipelineLayout(DX12Device& device, const PipelineLayoutCreateInfo* createInfo);
+        DX12PipelineLayout(DX12Device& device, const PipelineLayoutCreateInfo& createInfo);
         ~DX12PipelineLayout() override;
 
         void Destroy() override;
@@ -53,7 +53,7 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12RootSignature>& GetDX12RootSignature();
 
     private:
-        void CreateDX12RootSignature(DX12Device& device, const PipelineLayoutCreateInfo* createInfo);
+        void CreateDX12RootSignature(DX12Device& device, const PipelineLayoutCreateInfo& createInfo);
 
         ComPtr<ID3D12RootSignature> dx12RootSignature;
         std::unordered_map<ShaderStageBits, RootParameterIndexMap> rootDescriptorParameterIndexMaps;

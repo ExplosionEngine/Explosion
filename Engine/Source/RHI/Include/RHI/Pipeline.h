@@ -132,7 +132,7 @@ namespace RHI {
         void Destroy() override = 0;
 
     protected:
-        explicit ComputePipeline(const ComputePipelineCreateInfo* createInfo);
+        explicit ComputePipeline(const ComputePipelineCreateInfo& createInfo);
     };
 
     class GraphicsPipeline : public Pipeline {
@@ -143,6 +143,6 @@ namespace RHI {
         void Destroy() override = 0;
 
     protected:
-        explicit GraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo);
+        explicit GraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo);
     };
 }

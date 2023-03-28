@@ -13,7 +13,7 @@ namespace RHI::Vulkan {
     class VKBufferView : public BufferView {
     public:
         NON_COPYABLE(VKBufferView)
-        VKBufferView(VKBuffer& buffer, const BufferViewCreateInfo* createInfo);
+        VKBufferView(VKBuffer& buffer, const BufferViewCreateInfo& createInfo);
         ~VKBufferView() override;
         void Destroy() override;
 
@@ -28,6 +28,6 @@ namespace RHI::Vulkan {
         size_t offset;
         IndexFormat format;
 
-        void InitializeBufferAttrib(const BufferViewCreateInfo* createInfo);
+        void InitializeBufferAttrib(const BufferViewCreateInfo& createInfo);
     };
 }

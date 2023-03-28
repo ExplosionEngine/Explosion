@@ -5,7 +5,7 @@
 #include <RHI/Dummy/BufferView.h>
 
 namespace RHI::Dummy {
-    DummyBufferView::DummyBufferView(const BufferViewCreateInfo* createInfo)
+    DummyBufferView::DummyBufferView(const BufferViewCreateInfo& createInfo)
         : BufferView(createInfo)
     {
     }

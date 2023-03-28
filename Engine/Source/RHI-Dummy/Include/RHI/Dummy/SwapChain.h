@@ -14,7 +14,7 @@ namespace RHI::Dummy {
 
     class DummySwapChain : public SwapChain {
     public:
-        explicit DummySwapChain(const SwapChainCreateInfo* createInfo);
+        explicit DummySwapChain(const SwapChainCreateInfo& createInfo);
         ~DummySwapChain() override;
 
         Texture* GetTexture(uint8_t index) override;

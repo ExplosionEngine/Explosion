@@ -29,20 +29,18 @@ namespace RHI::Vulkan {
         return result;
     }
 
-    VKTexture::VKTexture(VKDevice& dev, const TextureCreateInfo* createInfo, vk::Image image)
+    VKTexture::VKTexture(VKDevice& dev, const TextureCreateInfo& createInfo, vk::Image image)
         : Texture(createInfo), device(dev), vkDeviceMemory(VK_NULL_HANDLE), vkImage(image), ownMemory(false)
     {
-        Assert(createInfo != nullptr);
-        extent = createInfo->extent;
-        format = createInfo->format;
+        extent = createInfo.extent;
+        format = createInfo.format;
     }
 
-    VKTexture::VKTexture(VKDevice& dev, const TextureCreateInfo* createInfo)
+    VKTexture::VKTexture(VKDevice& dev, const TextureCreateInfo& createInfo)
         : Texture(createInfo), device(dev), vkImage(VK_NULL_HANDLE), ownMemory(true)
     {
-        Assert(createInfo != nullptr);
-        extent = createInfo->extent;
-        format = createInfo->format;
+        extent = createInfo.extent;
+        format = createInfo.format;
 
         CreateImage(createInfo);
         AllocateMemory(createInfo);
@@ -61,7 +59,7 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    TextureView* VKTexture::CreateTextureView(const TextureViewCreateInfo* createInfo)
+    TextureView* VKTexture::CreateTextureView(const TextureViewCreateInfo& createInfo)
     {
         return new VKTextureView(*this, device, createInfo);
     }
@@ -81,21 +79,21 @@ namespace RHI::Vulkan {
         return {aspect, 0, 1, 0, 1};
     }
 
-    void VKTexture::CreateImage(const TextureCreateInfo* createInfo)
+    void VKTexture::CreateImage(const TextureCreateInfo& createInfo)
     {
         vk::ImageCreateInfo imageInfo = {};
         imageInfo.setArrayLayers(1)
-            .setMipLevels(createInfo->mipLevels)
-            .setExtent(FromRHI(createInfo->extent))
-            .setSamples(static_cast<vk::SampleCountFlagBits>(createInfo->samples))
-            .setImageType(VKEnumCast<TextureDimension, vk::ImageType>(createInfo->dimension))
-            .setFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo->format))
-            .setUsage(GetVkResourceStates(createInfo->usages));
+            .setMipLevels(createInfo.mipLevels)
+            .setExtent(FromRHI(createInfo.extent))
+            .setSamples(static_cast<vk::SampleCountFlagBits>(createInfo.samples))
+            .setImageType(VKEnumCast<TextureDimension, vk::ImageType>(createInfo.dimension))
+            .setFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo.format))
+            .setUsage(GetVkResourceStates(createInfo.usages));
 
         Assert(device.GetVkDevice().createImage(&imageInfo, nullptr, &vkImage) == vk::Result::eSuccess);
     }
 
-    void VKTexture::AllocateMemory(const TextureCreateInfo* createInfo)
+    void VKTexture::AllocateMemory(const TextureCreateInfo& createInfo)
     {
         vk::MemoryRequirements memoryRequirements = {};
         device.GetVkDevice().getImageMemoryRequirements(vkImage, &memoryRequirements);

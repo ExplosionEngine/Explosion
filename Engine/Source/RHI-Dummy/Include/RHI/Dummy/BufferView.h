@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummyBufferView : public BufferView {
     public:
-        explicit DummyBufferView(const BufferViewCreateInfo* createInfo);
+        explicit DummyBufferView(const BufferViewCreateInfo& createInfo);
         ~DummyBufferView() override;
 
         void Destroy() override;

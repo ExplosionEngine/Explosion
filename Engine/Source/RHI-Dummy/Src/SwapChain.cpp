@@ -7,12 +7,12 @@
 #include <Common/Debug.h>
 
 namespace RHI::Dummy {
-    DummySwapChain::DummySwapChain(const SwapChainCreateInfo* createInfo)
+    DummySwapChain::DummySwapChain(const SwapChainCreateInfo& createInfo)
         : SwapChain(createInfo)
     {
         dummyTextures.reserve(2);
         for (auto i = 0; i < 2; i++) {
-            dummyTextures.emplace_back(std::make_unique<DummyTexture>(nullptr));
+            dummyTextures.emplace_back(std::make_unique<DummyTexture>());
         }
     }
 

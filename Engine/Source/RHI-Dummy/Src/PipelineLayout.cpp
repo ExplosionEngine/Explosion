@@ -5,7 +5,7 @@
 #include <RHI/Dummy/PipelineLayout.h>
 
 namespace RHI::Dummy {
-    DummyPipelineLayout::DummyPipelineLayout(const PipelineLayoutCreateInfo* createInfo)
+    DummyPipelineLayout::DummyPipelineLayout(const PipelineLayoutCreateInfo& createInfo)
         : PipelineLayout(createInfo)
     {
     }

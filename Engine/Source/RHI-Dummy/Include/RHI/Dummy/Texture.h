@@ -9,10 +9,11 @@
 namespace RHI::Dummy {
     class DummyTexture : public Texture {
     public:
-        explicit DummyTexture(const TextureCreateInfo* createInfo);
+        explicit DummyTexture(const TextureCreateInfo& createInfo);
+        DummyTexture() {}
         ~DummyTexture() override;
 
-        TextureView* CreateTextureView(const TextureViewCreateInfo *createInfo) override;
+        TextureView* CreateTextureView(const TextureViewCreateInfo& createInfo) override;
         void Destroy() override;
     };
 }

@@ -35,9 +35,9 @@ namespace RHI::Vulkan {
         return state;
     }
 
-    static vk::PipelineDepthStencilStateCreateInfo ConstructDepthStencil(const GraphicsPipelineCreateInfo* createInfo)
+    static vk::PipelineDepthStencilStateCreateInfo ConstructDepthStencil(const GraphicsPipelineCreateInfo& createInfo)
     {
-        auto& dsState = createInfo->depthStencilState;
+        auto& dsState = createInfo.depthStencilState;
         vk::PipelineDepthStencilStateCreateInfo dsInfo = {};
         dsInfo.setDepthTestEnable(dsState.depthEnable)
             .setDepthWriteEnable(dsState.depthEnable)
@@ -51,44 +51,44 @@ namespace RHI::Vulkan {
         return dsInfo;
     }
 
-    static vk::PipelineInputAssemblyStateCreateInfo ConstructInputAssembly(const GraphicsPipelineCreateInfo* createInfo)
+    static vk::PipelineInputAssemblyStateCreateInfo ConstructInputAssembly(const GraphicsPipelineCreateInfo& createInfo)
     {
         vk::PipelineInputAssemblyStateCreateInfo assemblyInfo = {};
-        assemblyInfo.setTopology(VKEnumCast<PrimitiveTopologyType, vk::PrimitiveTopology>(createInfo->primitiveState.topologyType))
+        assemblyInfo.setTopology(VKEnumCast<PrimitiveTopologyType, vk::PrimitiveTopology>(createInfo.primitiveState.topologyType))
             .setPrimitiveRestartEnable(VK_FALSE);
 
         return assemblyInfo;
     }
 
-    static vk::PipelineRasterizationStateCreateInfo ConstructRasterization(const GraphicsPipelineCreateInfo* createInfo)
+    static vk::PipelineRasterizationStateCreateInfo ConstructRasterization(const GraphicsPipelineCreateInfo& createInfo)
     {
         vk::PipelineRasterizationStateCreateInfo rasterState = {};
-        rasterState.setCullMode(VKEnumCast<CullMode, vk::CullModeFlagBits>(createInfo->primitiveState.cullMode))
-            .setFrontFace(createInfo->primitiveState.frontFace == FrontFace::CW ? vk::FrontFace::eClockwise : vk::FrontFace::eCounterClockwise)
-            .setDepthBiasClamp(createInfo->depthStencilState.depthBiasClamp)
-            .setDepthBiasSlopeFactor(createInfo->depthStencilState.depthBiasSlopeScale)
-            .setDepthBiasEnable(createInfo->depthStencilState.depthBias == 0 ? VK_FALSE : VK_TRUE)
-            .setDepthBiasConstantFactor(static_cast<float>(createInfo->depthStencilState.depthBias))
+        rasterState.setCullMode(VKEnumCast<CullMode, vk::CullModeFlagBits>(createInfo.primitiveState.cullMode))
+            .setFrontFace(createInfo.primitiveState.frontFace == FrontFace::CW ? vk::FrontFace::eClockwise : vk::FrontFace::eCounterClockwise)
+            .setDepthBiasClamp(createInfo.depthStencilState.depthBiasClamp)
+            .setDepthBiasSlopeFactor(createInfo.depthStencilState.depthBiasSlopeScale)
+            .setDepthBiasEnable(createInfo.depthStencilState.depthBias == 0 ? VK_FALSE : VK_TRUE)
+            .setDepthBiasConstantFactor(static_cast<float>(createInfo.depthStencilState.depthBias))
             .setLineWidth(1.0);
 
         // TODO DepthClampEnable requires check depth clamping feature
         rasterState.setDepthClampEnable(VK_FALSE);
-        // rasterState.setDepthClampEnable(createInfo->primitive.depthClip ? VK_FALSE : VK_TRUE);
+        // rasterState.setDepthClampEnable(createInfo.primitive.depthClip ? VK_FALSE : VK_TRUE);
         // TODO DepthClipEnable requires VK_EXT_depth_clip_enable
 
         return rasterState;
     }
 
-    static vk::PipelineMultisampleStateCreateInfo ConstructMultiSampleState(const GraphicsPipelineCreateInfo* createInfo)
+    static vk::PipelineMultisampleStateCreateInfo ConstructMultiSampleState(const GraphicsPipelineCreateInfo& createInfo)
     {
         vk::PipelineMultisampleStateCreateInfo multiSampleInfo = {};
-        multiSampleInfo.setAlphaToCoverageEnable(createInfo->multiSampleState.alphaToCoverage)
-            .setPSampleMask(&createInfo->multiSampleState.mask)
-            .setRasterizationSamples(static_cast<vk::SampleCountFlagBits>(createInfo->multiSampleState.count));
+        multiSampleInfo.setAlphaToCoverageEnable(createInfo.multiSampleState.alphaToCoverage)
+            .setPSampleMask(&createInfo.multiSampleState.mask)
+            .setRasterizationSamples(static_cast<vk::SampleCountFlagBits>(createInfo.multiSampleState.count));
         return multiSampleInfo;
     }
 
-    static vk::PipelineViewportStateCreateInfo ConstructViewportInfo(const GraphicsPipelineCreateInfo*)
+    static vk::PipelineViewportStateCreateInfo ConstructViewportInfo(const GraphicsPipelineCreateInfo&)
     {
         vk::PipelineViewportStateCreateInfo viewportState = {};
         viewportState.setViewportCount(1)
@@ -98,13 +98,13 @@ namespace RHI::Vulkan {
         return viewportState;
     }
 
-    static vk::PipelineColorBlendStateCreateInfo ConstructAttachmentInfo(const GraphicsPipelineCreateInfo* createInfo, std::vector<vk::PipelineColorBlendAttachmentState>& blendStates)
+    static vk::PipelineColorBlendStateCreateInfo ConstructAttachmentInfo(const GraphicsPipelineCreateInfo& createInfo, std::vector<vk::PipelineColorBlendAttachmentState>& blendStates)
     {
-        blendStates.resize(createInfo->fragmentState.colorTargetNum);
+        blendStates.resize(createInfo.fragmentState.colorTargetNum);
         vk::PipelineColorBlendStateCreateInfo colorInfo = {};
-        for (uint8_t i = 0; i < createInfo->fragmentState.colorTargetNum; ++i) {
+        for (uint8_t i = 0; i < createInfo.fragmentState.colorTargetNum; ++i) {
             vk::PipelineColorBlendAttachmentState& blendState = blendStates[i];
-            auto& srcState = createInfo->fragmentState.colorTargets[i];
+            auto& srcState = createInfo.fragmentState.colorTargets[i];
             blendState.setBlendEnable(true)
                 .setColorWriteMask(static_cast<vk::ColorComponentFlags>(srcState.writeFlags.Value()))
                 .setAlphaBlendOp(VKEnumCast<BlendOp, vk::BlendOp>(srcState.blend.color.op))
@@ -121,18 +121,18 @@ namespace RHI::Vulkan {
         return colorInfo;
     }
 
-    static vk::PipelineVertexInputStateCreateInfo ConstructVertexInput(const GraphicsPipelineCreateInfo* createInfo,
+    static vk::PipelineVertexInputStateCreateInfo ConstructVertexInput(const GraphicsPipelineCreateInfo& createInfo,
         std::vector<vk::VertexInputAttributeDescription>& attributes,
         std::vector<vk::VertexInputBindingDescription>& bindings)
     {
-        auto vs = static_cast<VKShaderModule*>(createInfo->vertexShader);
+        auto vs = static_cast<VKShaderModule*>(createInfo.vertexShader);
         auto& locationTable = vs->GetLocationTable();
 
         vk::PipelineVertexInputStateCreateInfo vtxInput = {};
 
-        bindings.resize(createInfo->vertexState.bufferLayoutNum);
-        for (uint32_t i = 0; i < createInfo->vertexState.bufferLayoutNum; ++i) {
-            auto &binding = createInfo->vertexState.bufferLayouts[i];
+        bindings.resize(createInfo.vertexState.bufferLayoutNum);
+        for (uint32_t i = 0; i < createInfo.vertexState.bufferLayoutNum; ++i) {
+            auto &binding = createInfo.vertexState.bufferLayouts[i];
             bindings[i].binding = i;
             bindings[i].inputRate = binding.stepMode == VertexStepMode::PER_INSTANCE ? vk::VertexInputRate::eInstance
                                                                                      : vk::VertexInputRate::eVertex;
@@ -156,7 +156,7 @@ namespace RHI::Vulkan {
         return vtxInput;
     }
 
-    VKGraphicsPipeline::VKGraphicsPipeline(VKDevice& dev, const GraphicsPipelineCreateInfo* createInfo)
+    VKGraphicsPipeline::VKGraphicsPipeline(VKDevice& dev, const GraphicsPipelineCreateInfo& createInfo)
         : device(dev), GraphicsPipeline(createInfo)
     {
         SavePipelineLayout(createInfo);
@@ -179,7 +179,7 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    void VKGraphicsPipeline::CreateNativeRenderPass(const GraphicsPipelineCreateInfo* createInfo)
+    void VKGraphicsPipeline::CreateNativeRenderPass(const GraphicsPipelineCreateInfo& createInfo)
     {
         std::vector<vk::SubpassDescription> subPasses;
         std::vector<vk::AttachmentDescription> attachments;
@@ -190,10 +190,10 @@ namespace RHI::Vulkan {
             vk::SubpassDescription subPassInfo = {};
             subPassInfo.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
 
-            vk::SampleCountFlagBits sampleCount = static_cast<vk::SampleCountFlagBits>(createInfo->multiSampleState.count);
+            vk::SampleCountFlagBits sampleCount = static_cast<vk::SampleCountFlagBits>(createInfo.multiSampleState.count);
 
-            for (uint32_t i = 0; i < createInfo->fragmentState.colorTargetNum; ++i) {
-                auto color = createInfo->fragmentState.colorTargets[i];
+            for (uint32_t i = 0; i < createInfo.fragmentState.colorTargetNum; ++i) {
+                auto color = createInfo.fragmentState.colorTargets[i];
                 vk::AttachmentDescription desc = {};
                 desc.setFormat(VKEnumCast<PixelFormat, vk::Format>(color.format))
                     .setSamples(sampleCount)
@@ -214,9 +214,9 @@ namespace RHI::Vulkan {
                 subPassInfo.setColorAttachments(colors);
             }
 
-            if (createInfo->depthStencilState.depthEnable || createInfo->depthStencilState.stencilEnable) {
+            if (createInfo.depthStencilState.depthEnable || createInfo.depthStencilState.stencilEnable) {
                 vk::AttachmentDescription desc = {};
-                desc.setFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo->depthStencilState.format))
+                desc.setFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo.depthStencilState.format))
                     .setSamples(sampleCount)
                     .setInitialLayout(vk::ImageLayout::eUndefined)
                     .setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
@@ -245,14 +245,14 @@ namespace RHI::Vulkan {
         return pipelineLayout;
     }
 
-    void VKGraphicsPipeline::SavePipelineLayout(const GraphicsPipelineCreateInfo* createInfo)
+    void VKGraphicsPipeline::SavePipelineLayout(const GraphicsPipelineCreateInfo& createInfo)
     {
-        auto* layout = dynamic_cast<VKPipelineLayout*>(createInfo->layout);
+        auto* layout = dynamic_cast<VKPipelineLayout*>(createInfo.layout);
         Assert(layout);
         pipelineLayout = layout;
     }
 
-    void VKGraphicsPipeline::CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
+    void VKGraphicsPipeline::CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo)
     {
         std::vector<vk::PipelineShaderStageCreateInfo> stages;
         auto setStage = [&stages](ShaderModule* module, vk::ShaderStageFlagBits stage) {
@@ -263,8 +263,8 @@ namespace RHI::Vulkan {
                 .setStage(stage);
             stages.emplace_back(std::move(stageInfo));
         };
-        setStage(createInfo->vertexShader, vk::ShaderStageFlagBits::eVertex);
-        setStage(createInfo->pixelShader, vk::ShaderStageFlagBits::eFragment);
+        setStage(createInfo.vertexShader, vk::ShaderStageFlagBits::eVertex);
+        setStage(createInfo.pixelShader, vk::ShaderStageFlagBits::eFragment);
 
         std::vector<vk::DynamicState> dynamicStates = {
             vk::DynamicState::eViewport,
@@ -288,10 +288,10 @@ namespace RHI::Vulkan {
 
         //As for dynamic rendering, we no longer need to set a render pass
         //instead, create info to define color、depth and stencil attachment at pipeline create time
-        std::vector<vk::Format> pixelFormats(createInfo->fragmentState.colorTargetNum);
-        for (size_t i = 0; i < createInfo->fragmentState.colorTargetNum; i++)
+        std::vector<vk::Format> pixelFormats(createInfo.fragmentState.colorTargetNum);
+        for (size_t i = 0; i < createInfo.fragmentState.colorTargetNum; i++)
         {
-            auto format = createInfo->fragmentState.colorTargets[i].format;
+            auto format = createInfo.fragmentState.colorTargets[i].format;
 #if PLATFORM_MACOS
             if (format == PixelFormat::RGBA8_UNORM) {
                 format = PixelFormat::BGRA8_UNORM;
@@ -300,14 +300,14 @@ namespace RHI::Vulkan {
             pixelFormats[i] = VKEnumCast<PixelFormat, vk::Format>(format);
         }
         vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo;
-        pipelineRenderingCreateInfo.setColorAttachmentCount(createInfo->fragmentState.colorTargetNum)
+        pipelineRenderingCreateInfo.setColorAttachmentCount(createInfo.fragmentState.colorTargetNum)
             .setPColorAttachmentFormats(pixelFormats.data())
-            .setDepthAttachmentFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo->depthStencilState.format))
-            .setStencilAttachmentFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo->depthStencilState.format));
+            .setDepthAttachmentFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo.depthStencilState.format))
+            .setStencilAttachmentFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo.depthStencilState.format));
 
         vk::GraphicsPipelineCreateInfo pipelineCreateInfo = {};
         pipelineCreateInfo.setStages(stages)
-            .setLayout(static_cast<const VKPipelineLayout*>(createInfo->layout)->GetVkPipelineLayout())
+            .setLayout(static_cast<const VKPipelineLayout*>(createInfo.layout)->GetVkPipelineLayout())
             .setPDynamicState(&dynStateInfo)
             .setPMultisampleState(&multiSampleInfo)
             .setPDepthStencilState(&dsInfo)

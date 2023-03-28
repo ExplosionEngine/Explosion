@@ -5,7 +5,7 @@
 #include <RHI/BindGroup.h>
 
 namespace RHI {
-    BindGroup::BindGroup(const BindGroupCreateInfo* createInfo) {}
+    BindGroup::BindGroup(const BindGroupCreateInfo& createInfo) {}
 
     BindGroup::~BindGroup() = default;
 }

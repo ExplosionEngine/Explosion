@@ -26,11 +26,11 @@ namespace RHI {
         NON_COPYABLE(Texture)
         virtual ~Texture();
 
-        virtual TextureView* CreateTextureView(const TextureViewCreateInfo* createInfo) = 0;
+        virtual TextureView* CreateTextureView(const TextureViewCreateInfo& createInfo) = 0;
         virtual void Destroy() = 0;
 
     protected:
         Texture();
-        explicit Texture(const TextureCreateInfo* createInfo);
+        explicit Texture(const TextureCreateInfo& createInfo);
     };
 }

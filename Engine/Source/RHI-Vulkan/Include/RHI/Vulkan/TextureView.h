@@ -16,7 +16,7 @@ namespace RHI::Vulkan {
     class VKTextureView : public TextureView {
     public:
         NON_COPYABLE(VKTextureView)
-        VKTextureView(VKTexture& tex, VKDevice& device, const TextureViewCreateInfo* createInfo);
+        VKTextureView(VKTexture& tex, VKDevice& device, const TextureViewCreateInfo& createInfo);
         ~VKTextureView() override;
         void Destroy() override;
 
@@ -28,7 +28,7 @@ namespace RHI::Vulkan {
         uint8_t GetArrayLayerNum() const;
 
     private:
-        void CreateImageView(const TextureViewCreateInfo* createInfo);
+        void CreateImageView(const TextureViewCreateInfo& createInfo);
         VKDevice& device;
         VKTexture& vkTexture;
         vk::ImageView vkTextureView;

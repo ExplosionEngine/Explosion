@@ -8,8 +8,8 @@
 #include <RHI/DirectX12/BindGroupLayout.h>
 
 namespace RHI::DirectX12 {
-    DX12BindGroupLayout::DX12BindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
-        : BindGroupLayout(createInfo), dx12RootParameters({}), layoutIndex(createInfo->layoutIndex)
+    DX12BindGroupLayout::DX12BindGroupLayout(const BindGroupLayoutCreateInfo& createInfo)
+        : BindGroupLayout(createInfo), dx12RootParameters({}), layoutIndex(createInfo.layoutIndex)
     {
         CreateDX12RootParameters(createInfo);
     }
@@ -36,19 +36,19 @@ namespace RHI::DirectX12 {
         return dx12RootParameters;
     }
 
-    void DX12BindGroupLayout::CreateDX12RootParameters(const BindGroupLayoutCreateInfo* createInfo)
+    void DX12BindGroupLayout::CreateDX12RootParameters(const BindGroupLayoutCreateInfo& createInfo)
     {
         uint32_t rangeNum = 0;
         std::unordered_map<ShaderStageBits, std::vector<const BindGroupLayoutEntry*>> visibilitiesMap;
         {
             ForEachBitsType<ShaderStageBits>([&visibilitiesMap](ShaderStageBits shaderStage) -> void { visibilitiesMap[shaderStage] = {}; });
-            for (auto i = 0; i < createInfo->entryNum; i++) {
+            for (auto i = 0; i < createInfo.entryNum; i++) {
                 for (auto& visibility : visibilitiesMap) {
-                    if (!(createInfo->entries[i].shaderVisibility & visibility.first)) {
+                    if (!(createInfo.entries[i].shaderVisibility & visibility.first)) {
                         continue;
                     }
                     rangeNum++;
-                    visibility.second.emplace_back(createInfo->entries + i);
+                    visibility.second.emplace_back(createInfo.entries + i);
                 }
             }
         }
@@ -59,7 +59,7 @@ namespace RHI::DirectX12 {
                 dx12RootParameters.emplace_back();
                 dx12DescriptorRanges.emplace_back();
 
-                dx12DescriptorRanges.back().Init(DX12EnumCast<HlslBindingRangeType, D3D12_DESCRIPTOR_RANGE_TYPE>(entry->binding.hlsl.rangeType), 1, entry->binding.hlsl.index, createInfo->layoutIndex);
+                dx12DescriptorRanges.back().Init(DX12EnumCast<HlslBindingRangeType, D3D12_DESCRIPTOR_RANGE_TYPE>(entry->binding.hlsl.rangeType), 1, entry->binding.hlsl.index, createInfo.layoutIndex);
                 dx12RootParameters.back().InitAsDescriptorTable(1, &dx12DescriptorRanges.back(), DX12EnumCast<ShaderStageBits, D3D12_SHADER_VISIBILITY>(visibility.first));
 
                 rootParameterKeyInfos.emplace_back();
@@ -67,7 +67,7 @@ namespace RHI::DirectX12 {
                     auto& keyInfo = rootParameterKeyInfos.back();
                     keyInfo.shaderStage = visibility.first;
                     keyInfo.bindingType = entry->type;
-                    keyInfo.layoutIndex = createInfo->layoutIndex;
+                    keyInfo.layoutIndex = createInfo.layoutIndex;
                     keyInfo.binding = entry->binding.hlsl;
                 }
             }

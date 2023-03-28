@@ -14,7 +14,7 @@ namespace RHI::Vulkan {
     class VKGraphicsPipeline : public GraphicsPipeline {
     public:
         NON_COPYABLE(VKGraphicsPipeline)
-        VKGraphicsPipeline(VKDevice& device, const GraphicsPipelineCreateInfo* createInfo);
+        VKGraphicsPipeline(VKDevice& device, const GraphicsPipelineCreateInfo& createInfo);
         ~VKGraphicsPipeline() override;
         void Destroy() override;
 
@@ -23,9 +23,9 @@ namespace RHI::Vulkan {
         VKPipelineLayout* GetPipelineLayout() const;
 
     private:
-        void SavePipelineLayout(const GraphicsPipelineCreateInfo* createInfo);
-        void CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo);
-        void CreateNativeRenderPass(const GraphicsPipelineCreateInfo* createInfo);
+        void SavePipelineLayout(const GraphicsPipelineCreateInfo& createInfo);
+        void CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo);
+        void CreateNativeRenderPass(const GraphicsPipelineCreateInfo& createInfo);
 
         VKDevice& device;
         VKPipelineLayout* pipelineLayout;

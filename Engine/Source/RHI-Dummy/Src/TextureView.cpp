@@ -5,7 +5,7 @@
 #include <RHI/Dummy/TextureView.h>
 
 namespace RHI::Dummy {
-    DummyTextureView::DummyTextureView(const TextureViewCreateInfo* createInfo)
+    DummyTextureView::DummyTextureView(const TextureViewCreateInfo& createInfo)
         : TextureView(createInfo)
     {
     }

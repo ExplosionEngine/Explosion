@@ -30,7 +30,7 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12BufferView::DX12BufferView(DX12Buffer& buffer, const BufferViewCreateInfo* createInfo)
+    DX12BufferView::DX12BufferView(DX12Buffer& buffer, const BufferViewCreateInfo& createInfo)
         : BufferView(createInfo), buffer(buffer)
     {
         CreateDX12Descriptor(createInfo);
@@ -68,12 +68,12 @@ namespace RHI::DirectX12 {
         return index.dx12IndexBufferView;
     }
 
-    void DX12BufferView::CreateDX12Descriptor(const BufferViewCreateInfo* createInfo)
+    void DX12BufferView::CreateDX12Descriptor(const BufferViewCreateInfo& createInfo)
     {
         if (IsConstantBuffer(buffer.GetUsages())) {
             D3D12_CONSTANT_BUFFER_VIEW_DESC desc {};
-            desc.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo->offset;
-            desc.SizeInBytes = createInfo->size;
+            desc.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo.offset;
+            desc.SizeInBytes = createInfo.size;
 
             auto allocation = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
             descriptor.dx12CpuDescriptorHandle = allocation.cpuHandle;
@@ -84,8 +84,8 @@ namespace RHI::DirectX12 {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
             desc.Format = DXGI_FORMAT_UNKNOWN;
             desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-            desc.Buffer.FirstElement = createInfo->offset;
-            desc.Buffer.NumElements = createInfo->size;
+            desc.Buffer.FirstElement = createInfo.offset;
+            desc.Buffer.NumElements = createInfo.size;
 
             auto allocation = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
             descriptor.dx12CpuDescriptorHandle = allocation.cpuHandle;
@@ -93,13 +93,13 @@ namespace RHI::DirectX12 {
             descriptor.dx12DescriptorHeap = allocation.descriptorHeap;
             buffer.GetDevice().GetDX12Device()->CreateUnorderedAccessView(buffer.GetDX12Resource().Get(), nullptr, &desc, descriptor.dx12CpuDescriptorHandle);
         } else if (IsVertexBuffer(buffer.GetUsages())) {
-            vertex.dx12VertexBufferView.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo->offset;
-            vertex.dx12VertexBufferView.SizeInBytes = createInfo->size;
-            vertex.dx12VertexBufferView.StrideInBytes = createInfo->vertex.stride;
+            vertex.dx12VertexBufferView.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo.offset;
+            vertex.dx12VertexBufferView.SizeInBytes = createInfo.size;
+            vertex.dx12VertexBufferView.StrideInBytes = createInfo.vertex.stride;
         } else if (IsIndexBuffer(buffer.GetUsages())) {
-            index.dx12IndexBufferView.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo->offset;
-            index.dx12IndexBufferView.SizeInBytes = createInfo->size;
-            index.dx12IndexBufferView.Format = DX12EnumCast<IndexFormat, DXGI_FORMAT>(createInfo->index.format);
+            index.dx12IndexBufferView.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo.offset;
+            index.dx12IndexBufferView.SizeInBytes = createInfo.size;
+            index.dx12IndexBufferView.Format = DX12EnumCast<IndexFormat, DXGI_FORMAT>(createInfo.index.format);
         }
     }
 }

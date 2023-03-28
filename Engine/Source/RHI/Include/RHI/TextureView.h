@@ -25,6 +25,6 @@ namespace RHI {
         virtual void Destroy() = 0;
 
     protected:
-        explicit TextureView(const TextureViewCreateInfo* createInfo);
+        explicit TextureView(const TextureViewCreateInfo& createInfo);
     };
 }

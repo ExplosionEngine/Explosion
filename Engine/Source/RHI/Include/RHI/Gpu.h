@@ -24,7 +24,7 @@ namespace RHI {
         NON_COPYABLE(Gpu)
         virtual ~Gpu();
         virtual GpuProperty GetProperty() = 0;
-        virtual Device* RequestDevice(const DeviceCreateInfo* createInfo) = 0;
+        virtual Device* RequestDevice(const DeviceCreateInfo& createInfo) = 0;
 
     protected:
         Gpu();

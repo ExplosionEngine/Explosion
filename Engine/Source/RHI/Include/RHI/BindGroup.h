@@ -42,6 +42,6 @@ namespace RHI {
         virtual void Destroy() = 0;
 
     protected:
-        explicit BindGroup(const BindGroupCreateInfo* createInfo);
+        explicit BindGroup(const BindGroupCreateInfo& createInfo);
     };
 }

@@ -18,22 +18,22 @@ namespace RHI::Vulkan {
     class VKDevice : public Device {
     public:
         NON_COPYABLE(VKDevice)
-        VKDevice(VKGpu& gpu, const DeviceCreateInfo* createInfo);
+        VKDevice(VKGpu& gpu, const DeviceCreateInfo& createInfo);
         ~VKDevice() override;
 
         size_t GetQueueNum(QueueType type) override;
         Queue* GetQueue(QueueType type, size_t index) override;
-        SwapChain* CreateSwapChain(const SwapChainCreateInfo* createInfo) override;
+        SwapChain* CreateSwapChain(const SwapChainCreateInfo& createInfo) override;
         void Destroy() override;
-        Buffer* CreateBuffer(const BufferCreateInfo* createInfo) override;
-        Texture* CreateTexture(const TextureCreateInfo* createInfo) override;
-        Sampler* CreateSampler(const SamplerCreateInfo* createInfo) override;
-        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo) override;
-        BindGroup* CreateBindGroup(const BindGroupCreateInfo* createInfo) override;
-        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo) override;
-        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) override;
-        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) override;
-        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override;
+        Buffer* CreateBuffer(const BufferCreateInfo& createInfo) override;
+        Texture* CreateTexture(const TextureCreateInfo& createInfo) override;
+        Sampler* CreateSampler(const SamplerCreateInfo& createInfo) override;
+        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo) override;
+        BindGroup* CreateBindGroup(const BindGroupCreateInfo& createInfo) override;
+        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo) override;
+        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo& createInfo) override;
+        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) override;
+        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
         Fence* CreateFence() override;
 
@@ -43,7 +43,7 @@ namespace RHI::Vulkan {
 
     private:
         static std::optional<uint32_t> FindQueueFamilyIndex(const std::vector<vk::QueueFamilyProperties>& properties, std::vector<uint32_t>& usedQueueFamily, QueueType queueType);
-        void CreateDevice(const DeviceCreateInfo* createInfo);
+        void CreateDevice(const DeviceCreateInfo& createInfo);
         void GetQueues();
 
         VKGpu& gpu;

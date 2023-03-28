@@ -24,7 +24,7 @@ namespace RHI::Vulkan {
         return property;
     }
 
-    Device* VKGpu::RequestDevice(const DeviceCreateInfo* createInfo)
+    Device* VKGpu::RequestDevice(const DeviceCreateInfo& createInfo)
     {
         return new VKDevice(*this, createInfo);
     }

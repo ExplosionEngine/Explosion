@@ -43,8 +43,8 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12Texture::DX12Texture(DX12Device& device, const TextureCreateInfo* createInfo)
-        : Texture(createInfo), device(device), usages(createInfo->usages), format(createInfo->format)
+    DX12Texture::DX12Texture(DX12Device& device, const TextureCreateInfo& createInfo)
+        : Texture(createInfo), device(device), usages(createInfo.usages), format(createInfo.format)
     {
         CreateDX12Texture(createInfo);
     }
@@ -54,7 +54,7 @@ namespace RHI::DirectX12 {
 
     DX12Texture::~DX12Texture() = default;
 
-    TextureView* DX12Texture::CreateTextureView(const TextureViewCreateInfo* createInfo)
+    TextureView* DX12Texture::CreateTextureView(const TextureViewCreateInfo& createInfo)
     {
         return new DX12TextureView(dynamic_cast<DX12Device&>(device), *this, createInfo);
     }
@@ -79,20 +79,20 @@ namespace RHI::DirectX12 {
         return dx12Resource;
     }
 
-    void DX12Texture::CreateDX12Texture(const TextureCreateInfo* createInfo)
+    void DX12Texture::CreateDX12Texture(const TextureCreateInfo& createInfo)
     {
         CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_DEFAULT);
         D3D12_RESOURCE_DESC textureDesc = {};
-        textureDesc.MipLevels = createInfo->mipLevels;
-        textureDesc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo->format);
-        textureDesc.Width = createInfo->extent.x;
-        textureDesc.Height = createInfo->extent.y;
+        textureDesc.MipLevels = createInfo.mipLevels;
+        textureDesc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.format);
+        textureDesc.Width = createInfo.extent.x;
+        textureDesc.Height = createInfo.extent.y;
         textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-        textureDesc.DepthOrArraySize = createInfo->extent.z;
-        textureDesc.SampleDesc.Count = createInfo->samples;
+        textureDesc.DepthOrArraySize = createInfo.extent.z;
+        textureDesc.SampleDesc.Count = createInfo.samples;
         // TODO https://docs.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc
         textureDesc.SampleDesc.Quality = 0;
-        textureDesc.Dimension = GetDX12ResourceDimension(createInfo->dimension);
+        textureDesc.Dimension = GetDX12ResourceDimension(createInfo.dimension);
 
         bool success = SUCCEEDED(device.GetDX12Device()->CreateCommittedResource(
             &heapProperties,

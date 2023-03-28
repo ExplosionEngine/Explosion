@@ -29,6 +29,6 @@ namespace RHI {
         virtual void Destroy() = 0;
 
     protected:
-        explicit Sampler(const SamplerCreateInfo* createInfo);
+        explicit Sampler(const SamplerCreateInfo& createInfo);
     };
 }

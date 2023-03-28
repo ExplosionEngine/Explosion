@@ -17,12 +17,12 @@ namespace RHI::DirectX12 {
     class DX12Buffer : public Buffer {
     public:
         NON_COPYABLE(DX12Buffer)
-        explicit DX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo);
+        explicit DX12Buffer(DX12Device& device, const BufferCreateInfo& createInfo);
         ~DX12Buffer() override;
 
         void* Map(MapMode mapMode, size_t offset, size_t length) override;
         void UnMap() override;
-        BufferView* CreateBufferView(const BufferViewCreateInfo* createInfo) override;
+        BufferView* CreateBufferView(const BufferViewCreateInfo& createInfo) override;
         void Destroy() override;
 
         ComPtr<ID3D12Resource>& GetDX12Resource();
@@ -30,7 +30,7 @@ namespace RHI::DirectX12 {
         BufferUsageFlags GetUsages();
 
     private:
-        void CreateDX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo);
+        void CreateDX12Buffer(DX12Device& device, const BufferCreateInfo& createInfo);
 
         DX12Device& device;
         MapMode mapMode;

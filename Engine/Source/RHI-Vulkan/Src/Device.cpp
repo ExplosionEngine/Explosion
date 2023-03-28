@@ -37,7 +37,7 @@ namespace RHI::Vulkan {
     };
 
 
-    VKDevice::VKDevice(VKGpu& vkGpu, const DeviceCreateInfo* createInfo) : Device(createInfo), gpu(vkGpu)
+    VKDevice::VKDevice(VKGpu& vkGpu, const DeviceCreateInfo& createInfo) : Device(createInfo), gpu(vkGpu)
     {
         CreateDevice(createInfo);
         GetQueues();
@@ -67,7 +67,7 @@ namespace RHI::Vulkan {
         return queueArray[index].get();
     }
 
-    SwapChain* VKDevice::CreateSwapChain(const SwapChainCreateInfo* createInfo)
+    SwapChain* VKDevice::CreateSwapChain(const SwapChainCreateInfo& createInfo)
     {
         return new VKSwapChain(*this, createInfo);
     }
@@ -77,48 +77,48 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    Buffer* VKDevice::CreateBuffer(const BufferCreateInfo* createInfo)
+    Buffer* VKDevice::CreateBuffer(const BufferCreateInfo& createInfo)
     {
         return new VKBuffer(*this, createInfo);
     }
 
-    Texture* VKDevice::CreateTexture(const TextureCreateInfo* createInfo)
+    Texture* VKDevice::CreateTexture(const TextureCreateInfo& createInfo)
     {
         return new VKTexture(*this, createInfo);
     }
 
-    Sampler* VKDevice::CreateSampler(const SamplerCreateInfo* createInfo)
+    Sampler* VKDevice::CreateSampler(const SamplerCreateInfo& createInfo)
     {
         return new VKSampler(*this, createInfo);
     }
 
-    BindGroupLayout* VKDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
+    BindGroupLayout* VKDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo)
     {
         return new VKBindGroupLayout(*this, createInfo);
     }
 
-    BindGroup* VKDevice::CreateBindGroup(const BindGroupCreateInfo* createInfo)
+    BindGroup* VKDevice::CreateBindGroup(const BindGroupCreateInfo& createInfo)
     {
         return new VKBindGroup(*this, createInfo);
     }
 
-    PipelineLayout* VKDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo)
+    PipelineLayout* VKDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo)
     {
         return new VKPipelineLayout(*this, createInfo);
     }
 
-    ShaderModule* VKDevice::CreateShaderModule(const ShaderModuleCreateInfo* createInfo)
+    ShaderModule* VKDevice::CreateShaderModule(const ShaderModuleCreateInfo& createInfo)
     {
         return new VKShaderModule(*this, createInfo);
     }
 
-    ComputePipeline* VKDevice::CreateComputePipeline(const ComputePipelineCreateInfo* createInfo)
+    ComputePipeline* VKDevice::CreateComputePipeline(const ComputePipelineCreateInfo& createInfo)
     {
         // TODO
         return nullptr;
     }
 
-    GraphicsPipeline* VKDevice::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
+    GraphicsPipeline* VKDevice::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo)
     {
         return new VKGraphicsPipeline(*this, createInfo);
     }
@@ -159,7 +159,7 @@ namespace RHI::Vulkan {
         return {};
     }
 
-    void VKDevice::CreateDevice(const DeviceCreateInfo* createInfo)
+    void VKDevice::CreateDevice(const DeviceCreateInfo& createInfo)
     {
         uint32_t queueFamilyPropertyCnt = 0;
         gpu.GetVkPhysicalDevice().getQueueFamilyProperties(&queueFamilyPropertyCnt, nullptr);
@@ -167,8 +167,8 @@ namespace RHI::Vulkan {
         gpu.GetVkPhysicalDevice().getQueueFamilyProperties(&queueFamilyPropertyCnt, queueFamilyProperties.data());
 
         std::map<QueueType, uint32_t> queueNumMap;
-        for (uint32_t i = 0; i < createInfo->queueCreateInfoNum; i++) {
-            const auto& queueCreateInfo = createInfo->queueCreateInfos[i];
+        for (uint32_t i = 0; i < createInfo.queueCreateInfoNum; i++) {
+            const auto& queueCreateInfo = createInfo.queueCreateInfos[i];
             auto iter = queueNumMap.find(queueCreateInfo.type);
             if (iter == queueNumMap.end()) {
                 queueNumMap[queueCreateInfo.type] = 0;

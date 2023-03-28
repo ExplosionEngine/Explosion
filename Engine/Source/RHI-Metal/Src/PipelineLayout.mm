@@ -7,7 +7,7 @@
 
 namespace RHI::Metal {
 
-    MTLPipelineLayout::MTLPipelineLayout(MTLDevice& dev, const PipelineLayoutCreateInfo* createInfo)
+    MTLPipelineLayout::MTLPipelineLayout(MTLDevice& dev, const PipelineLayoutCreateInfo& createInfo)
         : PipelineLayout(createInfo), device(dev)
     {
     }

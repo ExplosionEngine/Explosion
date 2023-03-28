@@ -16,7 +16,7 @@ namespace RHI::DirectX12 {
     class DX12Sampler : public Sampler {
     public:
         NON_COPYABLE(DX12Sampler)
-        explicit DX12Sampler(DX12Device& device, const SamplerCreateInfo* createInfo);
+        explicit DX12Sampler(DX12Device& device, const SamplerCreateInfo& createInfo);
         ~DX12Sampler() override;
 
         void Destroy() override;
@@ -26,7 +26,7 @@ namespace RHI::DirectX12 {
         CD3DX12_GPU_DESCRIPTOR_HANDLE GetDX12GpuDescriptorHandle();
 
     private:
-        void CreateDX12Descriptor(DX12Device& device, const SamplerCreateInfo* createInfo);
+        void CreateDX12Descriptor(DX12Device& device, const SamplerCreateInfo& createInfo);
 
         ID3D12DescriptorHeap* dx12DescriptorHeap;
         CD3DX12_CPU_DESCRIPTOR_HANDLE dx12CpuDescriptorHandle;

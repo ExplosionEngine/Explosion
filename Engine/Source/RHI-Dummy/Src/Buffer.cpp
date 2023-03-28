@@ -6,7 +6,7 @@
 #include <RHI/Dummy/BufferView.h>
 
 namespace RHI::Dummy {
-    DummyBuffer::DummyBuffer(const BufferCreateInfo* createInfo)
+    DummyBuffer::DummyBuffer(const BufferCreateInfo& createInfo)
         : Buffer(createInfo)
         , dummyData(1)
     {
@@ -23,7 +23,7 @@ namespace RHI::Dummy {
     {
     }
 
-    BufferView* DummyBuffer::CreateBufferView(const BufferViewCreateInfo* createInfo)
+    BufferView* DummyBuffer::CreateBufferView(const BufferViewCreateInfo& createInfo)
     {
         return new DummyBufferView(createInfo);
     }

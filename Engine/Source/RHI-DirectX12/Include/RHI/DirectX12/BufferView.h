@@ -17,7 +17,7 @@ namespace RHI::DirectX12 {
     class DX12BufferView : public BufferView {
     public:
         NON_COPYABLE(DX12BufferView)
-        DX12BufferView(DX12Buffer& buffer, const BufferViewCreateInfo* createInfo);
+        DX12BufferView(DX12Buffer& buffer, const BufferViewCreateInfo& createInfo);
         ~DX12BufferView() override;
 
         void Destroy() override;
@@ -43,7 +43,7 @@ namespace RHI::DirectX12 {
             D3D12_INDEX_BUFFER_VIEW dx12IndexBufferView;
         };
 
-        void CreateDX12Descriptor(const BufferViewCreateInfo* createInfo);
+        void CreateDX12Descriptor(const BufferViewCreateInfo& createInfo);
 
         DX12Buffer& buffer;
         union {
