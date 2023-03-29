@@ -70,7 +70,7 @@ struct RenderGraphTest : public testing::Test {
         RHI::DeviceCreateInfo deviceCreateInfo {};
         deviceCreateInfo.queueCreateInfoNum = 1;
         deviceCreateInfo.queueCreateInfos = &queueInfo;
-        device = instance->GetGpu(0)->RequestDevice(&deviceCreateInfo);
+        device = instance->GetGpu(0)->RequestDevice(deviceCreateInfo);
     }
 
     void TearDown() override {}
