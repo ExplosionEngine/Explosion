@@ -20,7 +20,7 @@ namespace RHI::DirectX12 {
     class DX12SwapChain : public SwapChain {
     public:
         NON_COPYABLE(DX12SwapChain)
-        explicit DX12SwapChain(DX12Device& device, const SwapChainCreateInfo* createInfo);
+        explicit DX12SwapChain(DX12Device& device, const SwapChainCreateInfo& createInfo);
         ~DX12SwapChain() override;
 
         Texture* GetTexture(uint8_t index) override;
@@ -29,7 +29,7 @@ namespace RHI::DirectX12 {
         void Destroy() override;
 
     private:
-        void CreateDX12SwapChain(const SwapChainCreateInfo* createInfo) ;
+        void CreateDX12SwapChain(const SwapChainCreateInfo& createInfo) ;
         void FetchTextures(PixelFormat format);
 
         DX12Device& device;

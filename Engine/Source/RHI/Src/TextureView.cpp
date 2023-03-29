@@ -5,7 +5,7 @@
 #include <RHI/TextureView.h>
 
 namespace RHI {
-    TextureView::TextureView(const TextureViewCreateInfo *createInfo) {}
+    TextureView::TextureView(const TextureViewCreateInfo& createInfo) {}
 
     TextureView::~TextureView() = default;
 }

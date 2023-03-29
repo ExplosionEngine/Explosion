@@ -15,20 +15,20 @@ namespace RHI::Vulkan {
     class VKShaderModule : public ShaderModule {
     public:
         NON_COPYABLE(VKShaderModule)
-        VKShaderModule(VKDevice& device, const ShaderModuleCreateInfo* createInfo);
+        VKShaderModule(VKDevice& device, const ShaderModuleCreateInfo& createInfo);
         ~VKShaderModule() override;
 
         void Destroy() override;
 
         vk::ShaderModule GetVkShaderModule() const;
 
-        void BuildReflection(const ShaderModuleCreateInfo* createInfo);
+        void BuildReflection(const ShaderModuleCreateInfo& createInfo);
 
         using ShaderInputLocationTable = std::unordered_map<std::string, uint32_t>;
         const ShaderInputLocationTable& GetLocationTable() const;
 
     private:
-        void CreateNativeShaderModule(const ShaderModuleCreateInfo* createInfo);
+        void CreateNativeShaderModule(const ShaderModuleCreateInfo& createInfo);
 
         VKDevice& device;
         vk::ShaderModule shaderModule = VK_NULL_HANDLE;

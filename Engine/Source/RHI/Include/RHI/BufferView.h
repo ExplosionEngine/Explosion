@@ -35,6 +35,6 @@ namespace RHI {
         virtual void Destroy() = 0;
 
     protected:
-        explicit BufferView(const BufferViewCreateInfo* createInfo);
+        explicit BufferView(const BufferViewCreateInfo& createInfo);
     };
 }

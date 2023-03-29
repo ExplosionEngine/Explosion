@@ -7,21 +7,24 @@
 
 namespace RHI::Metal {
 
-    MTLTexture::MTLTexture(MTLDevice &dev, const TextureCreateInfo* createInfo)
+    MTLTexture::MTLTexture(MTLDevice& dev, const TextureCreateInfo& createInfo)
         : Texture(createInfo), device(dev)
     {
-        if (createInfo != nullptr) {
-            // Create Native Texture
-        } else {
-            drawable = std::make_shared<DrawableProvider>();
-        }
+        // TODO Create Native Texture
+
+    }
+
+    MTLTexture::MTLTexture(MTLDevice& device)
+        : device(device)
+    {
+        drawable = std::make_shared<DrawableProvider>();
     }
 
     MTLTexture::~MTLTexture()
     {
     }
 
-    TextureView* MTLTexture::CreateTextureView(const TextureViewCreateInfo* createInfo)
+    TextureView* MTLTexture::CreateTextureView(const TextureViewCreateInfo& createInfo)
     {
         auto textureView = new MTLTextureView(*this, createInfo);
         textureView->SetDrawable(drawable);

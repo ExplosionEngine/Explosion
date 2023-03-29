@@ -220,7 +220,7 @@ namespace Render {
     {
         if (rhiHandle == nullptr && !IsExternal()) {
             auto createInfo = GetRHIBufferCreateInfo(desc);
-            rhiHandle = device.CreateBuffer(&createInfo);
+            rhiHandle = device.CreateBuffer(createInfo);
         }
 
         Assert(rhiHandle);
@@ -304,7 +304,7 @@ namespace Render {
     {
         if (rhiHandle == nullptr && !IsExternal()) {
             auto createInfo = GetRHITextureCreateInfo(desc);
-            rhiHandle = device.CreateTexture(&createInfo);
+            rhiHandle = device.CreateTexture(createInfo);
         }
 
         Assert(rhiHandle);
@@ -428,7 +428,7 @@ namespace Render {
             auto createInfo = GetRHIBufferViewCreateInfo(desc);
             Assert(buffer);
             Assert(buffer->GetRHI());
-            rhiHandle = buffer->GetRHI()->CreateBufferView(&createInfo);
+            rhiHandle = buffer->GetRHI()->CreateBufferView(createInfo);
         }
 
         Assert(rhiHandle);
@@ -649,7 +649,7 @@ namespace Render {
             auto createInfo = GetRHITextureViewCreateInfo(desc);
             Assert(texture);
             Assert(texture->GetRHI());
-            rhiHandle = texture->GetRHI()->CreateTextureView(&createInfo);
+            rhiHandle = texture->GetRHI()->CreateTextureView(createInfo);
         }
 
         Assert(rhiHandle);

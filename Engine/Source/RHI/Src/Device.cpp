@@ -5,7 +5,7 @@
 #include <RHI/Device.h>
 
 namespace RHI {
-    Device::Device(const DeviceCreateInfo* createInfo) {}
+    Device::Device(const DeviceCreateInfo& createInfo) {}
 
     Device::~Device() = default;
 }

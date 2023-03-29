@@ -5,7 +5,7 @@
 #include <RHI/BufferView.h>
 
 namespace RHI {
-    BufferView::BufferView(const BufferViewCreateInfo* createInfo) {}
+    BufferView::BufferView(const BufferViewCreateInfo& createInfo) {}
 
     BufferView::~BufferView() = default;
 }

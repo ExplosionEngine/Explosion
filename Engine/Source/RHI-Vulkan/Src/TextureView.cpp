@@ -8,14 +8,13 @@
 #include <RHI/Vulkan/Common.h>
 
 namespace RHI::Vulkan {
-    VKTextureView::VKTextureView(VKTexture& tex, VKDevice& dev, const TextureViewCreateInfo* createInfo)
+    VKTextureView::VKTextureView(VKTexture& tex, VKDevice& dev, const TextureViewCreateInfo& createInfo)
         : TextureView(createInfo), device(dev), vkTexture(tex), vkTextureView(VK_NULL_HANDLE)
     {
-        Assert(createInfo != nullptr);
-        baseMipLevel   = createInfo->baseMipLevel;
-        mipLevelNum    = createInfo->mipLevelNum;
-        baseArrayLayer = createInfo->baseArrayLayer;
-        arrayLayerNum  = createInfo->arrayLayerNum;
+        baseMipLevel   = createInfo.baseMipLevel;
+        mipLevelNum    = createInfo.mipLevelNum;
+        baseArrayLayer = createInfo.baseArrayLayer;
+        arrayLayerNum  = createInfo.arrayLayerNum;
 
         CreateImageView(createInfo);
     }
@@ -32,18 +31,18 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    void VKTextureView::CreateImageView(const TextureViewCreateInfo* createInfo)
+    void VKTextureView::CreateImageView(const TextureViewCreateInfo& createInfo)
     {
         vk::ImageViewCreateInfo viewInfo = {};
 
         viewInfo.setFormat(VKEnumCast<PixelFormat, vk::Format>(vkTexture.GetFormat()))
             .setImage(vkTexture.GetImage())
-            .setViewType(VKEnumCast<TextureViewDimension, vk::ImageViewType>(createInfo->dimension))
-            .setSubresourceRange(vk::ImageSubresourceRange(GetAspectMask(createInfo->aspect),
-                createInfo->baseMipLevel,
-                createInfo->mipLevelNum,
-                createInfo->baseArrayLayer,
-                createInfo->arrayLayerNum
+            .setViewType(VKEnumCast<TextureViewDimension, vk::ImageViewType>(createInfo.dimension))
+            .setSubresourceRange(vk::ImageSubresourceRange(GetAspectMask(createInfo.aspect),
+                createInfo.baseMipLevel,
+                createInfo.mipLevelNum,
+                createInfo.baseArrayLayer,
+                createInfo.arrayLayerNum
                 ));
 
         Assert(device.GetVkDevice().createImageView(&viewInfo, nullptr, &vkTextureView) == vk::Result::eSuccess);

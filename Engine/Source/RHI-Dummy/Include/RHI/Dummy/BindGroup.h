@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummyBindGroup : public BindGroup {
     public:
-        explicit DummyBindGroup(const BindGroupCreateInfo* createInfo);
+        explicit DummyBindGroup(const BindGroupCreateInfo& createInfo);
         ~DummyBindGroup() override;
 
         void Destroy() override;

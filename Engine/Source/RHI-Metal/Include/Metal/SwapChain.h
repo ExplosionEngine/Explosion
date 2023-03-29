@@ -17,7 +17,7 @@ namespace RHI::Metal {
     class MTLSwapChain : public SwapChain {
     public:
         NON_COPYABLE(MTLSwapChain)
-        explicit MTLSwapChain(MTLDevice& dev, const SwapChainCreateInfo* createInfo);
+        explicit MTLSwapChain(MTLDevice& dev, const SwapChainCreateInfo& createInfo);
         ~MTLSwapChain() override;
 
         Texture* GetTexture(uint8_t index) override;
@@ -26,7 +26,7 @@ namespace RHI::Metal {
         void Destroy() override;
         void AddSignalEventToCmd(id<MTLCommandBuffer> commandBuffer);
     private:
-        void CreateNativeSwapChain(const SwapChainCreateInfo* createInfo);
+        void CreateNativeSwapChain(const SwapChainCreateInfo& createInfo);
         MTLDevice& mtlDevice;
         MetalView* view = nullptr;
         NSWindow* nativeWindow = nullptr;

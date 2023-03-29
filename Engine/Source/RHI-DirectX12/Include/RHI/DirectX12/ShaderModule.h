@@ -13,7 +13,7 @@ namespace RHI::DirectX12 {
     class DX12ShaderModule : public ShaderModule {
     public:
         NON_COPYABLE(DX12ShaderModule)
-        explicit DX12ShaderModule(const ShaderModuleCreateInfo* createInfo);
+        explicit DX12ShaderModule(const ShaderModuleCreateInfo& createInfo);
         ~DX12ShaderModule() override;
 
         void Destroy() override;

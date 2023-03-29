@@ -5,7 +5,7 @@
 #include <RHI/Dummy/BindGroupLayout.h>
 
 namespace RHI::Dummy {
-    DummyBindGroupLayout::DummyBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
+    DummyBindGroupLayout::DummyBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo)
         : BindGroupLayout(createInfo)
     {
     }

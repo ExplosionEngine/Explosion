@@ -7,8 +7,8 @@
 
 namespace RHI::Metal {
 
-    MTLBufferView::MTLBufferView(MTLBuffer &buffer, const BufferViewCreateInfo* createInfo)
-        : BufferView(createInfo), mtlBuffer(buffer.GetNativeBuffer()), info(*createInfo)
+    MTLBufferView::MTLBufferView(MTLBuffer &buffer, const BufferViewCreateInfo& createInfo)
+        : BufferView(createInfo), mtlBuffer(buffer.GetNativeBuffer()), info(createInfo)
     {
         [mtlBuffer retain];
     }

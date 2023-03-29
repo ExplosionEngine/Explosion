@@ -13,7 +13,7 @@ namespace RHI::Metal {
     class MTLShaderModule : public ShaderModule {
     public:
         NON_COPYABLE(MTLShaderModule)
-        MTLShaderModule(MTLDevice &dev, const ShaderModuleCreateInfo* createInfo);
+        MTLShaderModule(MTLDevice &dev, const ShaderModuleCreateInfo& createInfo);
         ~MTLShaderModule() override;
 
         void Destroy() override;
@@ -21,7 +21,7 @@ namespace RHI::Metal {
         id<MTLLibrary> GetNativeLibrary() const;
 
     private:
-        void CreateNativeShaderLibrary(const ShaderModuleCreateInfo* createInfo);
+        void CreateNativeShaderLibrary(const ShaderModuleCreateInfo& createInfo);
 
         MTLDevice& device;
         id<MTLLibrary> library;

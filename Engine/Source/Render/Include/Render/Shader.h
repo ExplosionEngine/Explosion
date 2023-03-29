@@ -180,7 +180,7 @@ namespace Render {
                 RHI::ShaderModuleCreateInfo createInfo;
                 createInfo.size = shaderByteCode.size();
                 createInfo.byteCode = shaderByteCode.data();
-                shaderModules[variantKey] = device.CreateShaderModule(&createInfo);
+                shaderModules[variantKey] = device.CreateShaderModule(createInfo);
             }
 
             ShaderInstance result;

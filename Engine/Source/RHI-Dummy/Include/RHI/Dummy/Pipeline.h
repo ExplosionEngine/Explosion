@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummyComputePipeline : public ComputePipeline {
     public:
-        explicit DummyComputePipeline(const ComputePipelineCreateInfo* createInfo);
+        explicit DummyComputePipeline(const ComputePipelineCreateInfo& createInfo);
         ~DummyComputePipeline() override;
 
         void Destroy() override;
@@ -17,7 +17,7 @@ namespace RHI::Dummy {
 
     class DummyGraphicsPipeline : public GraphicsPipeline {
     public:
-        explicit DummyGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo);
+        explicit DummyGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo);
         ~DummyGraphicsPipeline() override;
 
         void Destroy() override;

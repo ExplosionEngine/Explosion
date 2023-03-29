@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummySampler : public Sampler {
     public:
-        explicit DummySampler(const SamplerCreateInfo* createInfo);
+        explicit DummySampler(const SamplerCreateInfo& createInfo);
         ~DummySampler() override;
 
         void Destroy() override;

@@ -5,7 +5,7 @@
 #include <RHI/DirectX12/ShaderModule.h>
 
 namespace RHI::DirectX12 {
-    DX12ShaderModule::DX12ShaderModule(const ShaderModuleCreateInfo* createInfo) : ShaderModule(createInfo), dx12ShaderBytecode(createInfo->byteCode, createInfo->size) {}
+    DX12ShaderModule::DX12ShaderModule(const ShaderModuleCreateInfo& createInfo) : ShaderModule(createInfo), dx12ShaderBytecode(createInfo.byteCode, createInfo.size) {}
 
     DX12ShaderModule::~DX12ShaderModule() = default;
 

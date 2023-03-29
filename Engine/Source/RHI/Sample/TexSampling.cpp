@@ -68,7 +68,7 @@ private:
         DeviceCreateInfo createInfo {};
         createInfo.queueCreateInfoNum = queueCreateInfos.size();
         createInfo.queueCreateInfos = queueCreateInfos.data();
-        device = gpu->RequestDevice(&createInfo);
+        device = gpu->RequestDevice(createInfo);
         graphicsQueue = device->GetQueue(QueueType::GRAPHICS, 0);
     }
 
@@ -81,7 +81,7 @@ private:
         swapChainCreateInfo.extent = {width, height};
         swapChainCreateInfo.window = GetPlatformWindow();
         swapChainCreateInfo.presentQueue = graphicsQueue;
-        swapChain = device->CreateSwapChain(&swapChainCreateInfo);
+        swapChain = device->CreateSwapChain(swapChainCreateInfo);
 
         for (auto i = 0; i < swapChainCreateInfo.textureNum; i++) {
             swapChainTextures[i] = swapChain->GetTexture(i);
@@ -93,7 +93,7 @@ private:
             viewCreateInfo.baseMipLevel = 0;
             viewCreateInfo.mipLevelNum = 1;
             viewCreateInfo.aspect = TextureAspect::COLOR;
-            swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(&viewCreateInfo);
+            swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(viewCreateInfo);
         }
     }
 
@@ -109,7 +109,7 @@ private:
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = vertices.size() * sizeof(Vertex);
         bufferCreateInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
-        vertexBuffer = device->CreateBuffer(&bufferCreateInfo);
+        vertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (vertexBuffer != nullptr) {
             auto* data = vertexBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
             memcpy(data, vertices.data(), bufferCreateInfo.size);
@@ -120,7 +120,7 @@ private:
         bufferViewCreateInfo.size = vertices.size() * sizeof(Vertex);
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.vertex.stride = sizeof(Vertex);
-        vertexBufferView = vertexBuffer->CreateBufferView(&bufferViewCreateInfo);
+        vertexBufferView = vertexBuffer->CreateBufferView(bufferViewCreateInfo);
     }
 
     void CreateIndexBuffer()
@@ -129,7 +129,7 @@ private:
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = indices.size() * sizeof(uint32_t);
         bufferCreateInfo.usages = BufferUsageBits::INDEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
-        indexBuffer = device->CreateBuffer(&bufferCreateInfo);
+        indexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (indexBuffer != nullptr) {
             auto* data = indexBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
             memcpy(data, indices.data(), bufferCreateInfo.size);
@@ -140,19 +140,20 @@ private:
         bufferViewCreateInfo.size = indices.size() * sizeof(uint32_t);
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.index.format = IndexFormat::UINT32;
-        indexBufferView = indexBuffer->CreateBufferView(&bufferViewCreateInfo);
+        indexBufferView = indexBuffer->CreateBufferView(bufferViewCreateInfo);
     }
 
     void CreateTextureAndSampler()
     {
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load("../awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        stbi_set_flip_vertically_on_load(1);
+        stbi_uc* pixels = stbi_load("Image/Sample/awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         Assert(pixels != nullptr);
 
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = texWidth * texHeight * 4;
         bufferCreateInfo.usages = BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
-        pixelBuffer = device->CreateBuffer(&bufferCreateInfo);
+        pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
             memcpy(data, pixels, bufferCreateInfo.size);
@@ -167,7 +168,7 @@ private:
         texCreateInfo.dimension = TextureDimension::T_2D;
         texCreateInfo.samples = 1;
         texCreateInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::TEXTURE_BINDING;
-        sampleTexture = device->CreateTexture(&texCreateInfo);
+        sampleTexture = device->CreateTexture(texCreateInfo);
 
         TextureViewCreateInfo viewCreateInfo {};
         viewCreateInfo.dimension = TextureViewDimension::TV_2D;
@@ -176,11 +177,11 @@ private:
         viewCreateInfo.baseMipLevel = 0;
         viewCreateInfo.mipLevelNum = 1;
         viewCreateInfo.aspect = TextureAspect::COLOR;
-        sampleTextureView = sampleTexture->CreateTextureView(&viewCreateInfo);
+        sampleTextureView = sampleTexture->CreateTextureView(viewCreateInfo);
 
         // use the default attrib to create sampler
         SamplerCreateInfo samplerCreateInfo {};
-        sampler = device->CreateSampler(&samplerCreateInfo);
+        sampler = device->CreateSampler(samplerCreateInfo);
 
         texCommandBuffer = device->CreateCommandBuffer();
         UniqueRef<CommandEncoder> commandEncoder = texCommandBuffer->Begin();
@@ -218,7 +219,7 @@ private:
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
         createInfo.layoutIndex = 0;
 
-        bindGroupLayout = device->CreateBindGroupLayout(&createInfo);
+        bindGroupLayout = device->CreateBindGroupLayout(createInfo);
     }
 
     void CreateBindGroup()
@@ -241,7 +242,7 @@ private:
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
         createInfo.layout = bindGroupLayout.Get();
 
-        bindGroup = device->CreateBindGroup(&createInfo);
+        bindGroup = device->CreateBindGroup(createInfo);
     }
 
     void CreatePipelineLayout()
@@ -251,7 +252,7 @@ private:
         PipelineLayoutCreateInfo createInfo {};
         createInfo.bindGroupNum = bindGroupLayouts.size();
         createInfo.bindGroupLayouts = bindGroupLayouts.data();
-        pipelineLayout = device->CreatePipelineLayout(&createInfo);
+        pipelineLayout = device->CreatePipelineLayout(createInfo);
     }
 
     void CreatePipeline()
@@ -262,14 +263,14 @@ private:
         ShaderModuleCreateInfo shaderModuleCreateInfo {};
         shaderModuleCreateInfo.size = vsByteCode.size();
         shaderModuleCreateInfo.byteCode = vsByteCode.data();
-        vertexShader = device->CreateShaderModule(&shaderModuleCreateInfo);
+        vertexShader = device->CreateShaderModule(shaderModuleCreateInfo);
 
         std::vector<uint8_t> fsByteCode;
         CompileShader(fsByteCode, "Shader/Sample/TexSampling.hlsl", "FSMain", RHI::ShaderStageBits::S_PIXEL);
 
         shaderModuleCreateInfo.size = fsByteCode.size();
         shaderModuleCreateInfo.byteCode = fsByteCode.data();
-        fragmentShader = device->CreateShaderModule(&shaderModuleCreateInfo);
+        fragmentShader = device->CreateShaderModule(shaderModuleCreateInfo);
 
         std::array<VertexAttribute, 2> vertexAttributes {};
         vertexAttributes[0].format = VertexFormat::FLOAT32_X3;
@@ -308,7 +309,7 @@ private:
         createInfo.depthStencilState.depthEnable = false;
         createInfo.depthStencilState.stencilEnable = false;
         createInfo.multiSampleState.count = 1;
-        pipeline = device->CreateGraphicsPipeline(&createInfo);
+        pipeline = device->CreateGraphicsPipeline(createInfo);
     }
 
     void CreateFence()

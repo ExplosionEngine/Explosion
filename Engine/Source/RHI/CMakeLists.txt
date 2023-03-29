@@ -7,7 +7,7 @@ AddLibrary(
 )
 
 function(AddRHISample)
-    cmake_parse_arguments(PARAMS "" "NAME" "SRC;SHADER" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME" "SRC;SHADER;IMAGE;MODEL" ${ARGN})
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
         set(PLATFORM_EXT_LIBS
@@ -22,6 +22,21 @@ function(AddRHISample)
         set(PLATFORM_DEP_TARGET RHI-Metal RHI-Vulkan)
     endif()
 
+    foreach(S ${PARAMS_SHADER})
+        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${S}->Shader/${S}")
+        list(APPEND PATHS ${path})
+    endforeach()
+
+    foreach(I ${PARAMS_IMAGE})
+        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${I}->Image/${I}")
+        list(APPEND PATHS ${path})
+    endforeach()
+
+    foreach(M ${PARAMS_MODEL})
+        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${M}->Model/${M}")
+        list(APPEND PATHS ${path})
+    endforeach()
+
     AddExecutable(
         SAMPLE
         NAME ${PARAMS_NAME}
@@ -29,7 +44,7 @@ function(AddRHISample)
         INC Sample
         LIB RHI glfw GLM clipp ${PLATFORM_EXT_LIBS} Render stb
         DEP_TARGET ${PLATFORM_DEP_TARGET}
-        RES ${CMAKE_CURRENT_SOURCE_DIR}/${PARAMS_SHADER}->Shader/${PARAMS_SHADER}
+        RES ${PATHS}
     )
 endfunction()
 
@@ -43,13 +58,6 @@ AddRHISample(
     NAME RHI-TexSampling
     SRC Sample/TexSampling.cpp
     SHADER Sample/TexSampling.hlsl
-)
-
-# Provisionally copy the source image to the Bin dir
-add_custom_command(
-    TARGET RHI-TexSampling PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-    ${CMAKE_CURRENT_SOURCE_DIR}/Sample/awesomeface.png
-    ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+    IMAGE Sample/awesomeface.png
 )
 

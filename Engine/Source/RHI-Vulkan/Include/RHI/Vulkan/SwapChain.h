@@ -10,12 +10,12 @@ namespace RHI::Vulkan {
     class VKDevice;
     class VKQueue;
 
-    vk::SurfaceKHR CreateNativeSurface(const vk::Instance& instance, const SwapChainCreateInfo* createInfo);
+    vk::SurfaceKHR CreateNativeSurface(const vk::Instance& instance, const SwapChainCreateInfo& createInfo);
 
     class VKSwapChain : public SwapChain {
     public:
         NON_COPYABLE(VKSwapChain)
-        explicit VKSwapChain(VKDevice& dev, const SwapChainCreateInfo* createInfo);
+        explicit VKSwapChain(VKDevice& dev, const SwapChainCreateInfo& createInfo);
         ~VKSwapChain() override;
 
         Texture* GetTexture(uint8_t index) override;
@@ -27,7 +27,7 @@ namespace RHI::Vulkan {
         void AddWaitSemaphore(vk::Semaphore);
 
     private:
-        void CreateNativeSwapChain(const SwapChainCreateInfo* createInfo);
+        void CreateNativeSwapChain(const SwapChainCreateInfo& createInfo);
         VKDevice& device;
         vk::SwapchainKHR swapChain = VK_NULL_HANDLE;
         vk::SurfaceKHR surface = VK_NULL_HANDLE;

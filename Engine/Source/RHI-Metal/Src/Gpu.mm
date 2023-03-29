@@ -20,7 +20,7 @@ namespace RHI::Metal {
         return property;
     }
 
-    Device* MTLGpu::RequestDevice(const DeviceCreateInfo* createInfo)
+    Device* MTLGpu::RequestDevice(const DeviceCreateInfo& createInfo)
     {
         return new MTLDevice(*this, createInfo);
     }

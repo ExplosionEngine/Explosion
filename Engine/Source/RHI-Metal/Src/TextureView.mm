@@ -8,7 +8,7 @@
 
 namespace RHI::Metal {
 
-    MTLTextureView::MTLTextureView(MTLTexture &texture, const TextureViewCreateInfo* createInfo)
+    MTLTextureView::MTLTextureView(MTLTexture &texture, const TextureViewCreateInfo& createInfo)
         : TextureView(createInfo)
     {
         CreateNativeTextureView(texture, createInfo);
@@ -28,7 +28,7 @@ namespace RHI::Metal {
         return drawable ? drawable->GetTexture() : textureView;
     }
 
-    void MTLTextureView::CreateNativeTextureView(MTLTexture &texture, const TextureViewCreateInfo *createInfo)
+    void MTLTextureView::CreateNativeTextureView(MTLTexture &texture, const TextureViewCreateInfo& createInfo)
     {
         if (texture.IsDrawableTexture()) {
             textureView = texture.GetNativeTexture();

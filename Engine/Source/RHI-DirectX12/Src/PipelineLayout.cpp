@@ -12,7 +12,7 @@
 #include <RHI/DirectX12/BindGroupLayout.h>
 
 namespace RHI::DirectX12 {
-    DX12PipelineLayout::DX12PipelineLayout(DX12Device& device, const PipelineLayoutCreateInfo* createInfo) : PipelineLayout(createInfo)
+    DX12PipelineLayout::DX12PipelineLayout(DX12Device& device, const PipelineLayoutCreateInfo& createInfo) : PipelineLayout(createInfo)
     {
         CreateDX12RootSignature(device, createInfo);
     }
@@ -41,7 +41,7 @@ namespace RHI::DirectX12 {
         return dx12RootSignature;
     }
 
-    void DX12PipelineLayout::CreateDX12RootSignature(DX12Device& device, const PipelineLayoutCreateInfo* createInfo)
+    void DX12PipelineLayout::CreateDX12RootSignature(DX12Device& device, const PipelineLayoutCreateInfo& createInfo)
     {
         D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
         featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
@@ -49,8 +49,8 @@ namespace RHI::DirectX12 {
         ForEachBitsType<ShaderStageBits>([this](ShaderStageBits shaderStage) -> void { rootDescriptorParameterIndexMaps[shaderStage] = {}; });
         std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
         {
-            for (auto i = 0; i < createInfo->bindGroupNum; i++) {
-                auto* bindGroupLayout = dynamic_cast<const DX12BindGroupLayout*>(createInfo->bindGroupLayouts[i]);
+            for (auto i = 0; i < createInfo.bindGroupNum; i++) {
+                auto* bindGroupLayout = dynamic_cast<const DX12BindGroupLayout*>(createInfo.bindGroupLayouts[i]);
                 const auto baseIndex = static_cast<uint32_t>(rootParameters.size());
 
                 const auto& pendingRootParameters = bindGroupLayout->GetDX12RootParameters();

@@ -15,7 +15,8 @@ namespace RHI::Metal {
 
     class MTLTexture : public Texture {
     public:
-        MTLTexture(MTLDevice &device, const TextureCreateInfo* createInfo);
+        MTLTexture(MTLDevice &device, const TextureCreateInfo& createInfo);
+        MTLTexture(MTLDevice &device);
         ~MTLTexture();
 
         id<MTLTexture> GetNativeTexture() const;
@@ -26,7 +27,7 @@ namespace RHI::Metal {
 
         bool IsDrawableTexture() const;
 
-        TextureView* CreateTextureView(const TextureViewCreateInfo* createInfo) override;
+        TextureView* CreateTextureView(const TextureViewCreateInfo& createInfo) override;
         void Destroy() override;
     private:
         MTLDevice &device;

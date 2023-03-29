@@ -70,7 +70,7 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12Buffer::DX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo) : Buffer(createInfo), mapMode(GetMapMode(createInfo->usages)), usages(createInfo->usages), device(device)
+    DX12Buffer::DX12Buffer(DX12Device& device, const BufferCreateInfo& createInfo) : Buffer(createInfo), mapMode(GetMapMode(createInfo.usages)), usages(createInfo.usages), device(device)
     {
         CreateDX12Buffer(device, createInfo);
     }
@@ -93,7 +93,7 @@ namespace RHI::DirectX12 {
         dx12Resource->Unmap(0, nullptr);
     }
 
-    BufferView* DX12Buffer::CreateBufferView(const BufferViewCreateInfo* createInfo)
+    BufferView* DX12Buffer::CreateBufferView(const BufferViewCreateInfo& createInfo)
     {
         return new DX12BufferView(*this, createInfo);
     }
@@ -118,16 +118,16 @@ namespace RHI::DirectX12 {
         return device;
     }
 
-    void DX12Buffer::CreateDX12Buffer(DX12Device& device, const BufferCreateInfo* createInfo)
+    void DX12Buffer::CreateDX12Buffer(DX12Device& device, const BufferCreateInfo& createInfo)
     {
-        CD3DX12_HEAP_PROPERTIES heapProperties(GetDX12HeapType(createInfo->usages));
-        CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(createInfo->size);
+        CD3DX12_HEAP_PROPERTIES heapProperties(GetDX12HeapType(createInfo.usages));
+        CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(createInfo.size);
 
         bool success = SUCCEEDED(device.GetDX12Device()->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &resourceDesc,
-            GetDX12ResourceStates(createInfo->usages),
+            GetDX12ResourceStates(createInfo.usages),
             nullptr,
             IID_PPV_ARGS(&dx12Resource)));
         Assert(success);
