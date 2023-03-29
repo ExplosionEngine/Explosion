@@ -33,7 +33,8 @@ namespace Render {
     };
 
     struct ShaderReflectionData {
-        std::unordered_map<std::string, RHI::BindGroupLayoutEntry> resourceBindings;
+        using LayoutIndex = uint8_t;
+        std::unordered_map<std::string, std::pair<LayoutIndex, RHI::BindGroupLayoutEntry>> resourceBindings;
     };
 
     struct ShaderCompileOutput {

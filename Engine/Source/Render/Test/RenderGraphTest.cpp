@@ -9,54 +9,62 @@
 #include <Render/Pipeline.h>
 #include <Render/Shader.h>
 
-class RenderGraphTestCS : public Render::GlobalShader {
+using namespace Render;
+
+class RenderGraphTestCS : public GlobalShader {
 public:
     ShaderInfo(
         "RenderGraphTestCS",
         "/Engine/Shader/Test/RenderGraphTest.esl",
         "CSMain",
-        Render::ShaderStage::S_COMPUTE);
+        ShaderStage::S_COMPUTE);
 
     VariantSet();
     DefaultVariantFilter
 };
 RegisterGlobalShader(RenderGraphTestCS);
 
-class TestComputePass : public Render::RGComputePass {
+class TestComputePass : public RGComputePass {
 protected:
-    void Setup(Render::RGComputePassBuilder& builder) override
+    void Setup(RGComputePassBuilder& builder) override
     {
         RHI::Device& device = builder.GetDevice();
 
         RenderGraphTestCS::VariantSet variantSet;
-        Render::ShaderInstance testCS = Render::GlobalShaderMap<RenderGraphTestCS>::Get(device).GetShaderInstance(variantSet);
-        Render::ComputePipelineShaderSet shaders = { testCS };
+        ShaderInstance testCS = GlobalShaderMap<RenderGraphTestCS>::Get(device).GetShaderInstance(variantSet);
+        ComputePipelineShaderSet shaders = { testCS };
 
-        Render::ComputePipelineDesc pipelineDesc;
+        ComputePipelineStateDesc pipelineDesc;
         pipelineDesc.shaders = shaders;
-        Render::ComputePipeline* pipeline = Render::PipelineCache::Get(device).GetPipeline(pipelineDesc);
+        ComputePipelineState* pipeline = PipelineCache::Get(device).GetPipeline(pipelineDesc);
 
-        Render::RGComputePassDesc passDesc;
+        RGComputePassDesc passDesc;
         passDesc.pipeline = pipeline->GetRHI();
-
         builder.SetPassDesc(passDesc);
         builder.SetAsyncCompute(false);
 
-        uniformBuffer = builder.Create<Render::RGBuffer>("TestUniformBuffer", Render::RGBufferDesc::Create(512, RHI::BufferUsageBits::UNIFORM));
-        outputTexture = builder.Create<Render::RGTexture>("TestOutputTexture", Render::RGTextureDesc::Create2D(1024, 1024, RHI::PixelFormat::BGRA8_UNORM, RHI::TextureUsageBits::STORAGE_BINDING));
+        uniformBuffer = builder.CreateBuffer("TestUniformBuffer", RGBufferDesc::Create(512, RHI::BufferUsageBits::UNIFORM));
+        outputTexture = builder.CreateTexture("TestOutputTexture", RGTextureDesc::Create2D(1024, 1024, RHI::PixelFormat::BGRA8_UNORM, RHI::TextureUsageBits::STORAGE_BINDING));
+        auto* uniformBufferView = builder.CreateBufferView(RGBufferViewDesc::Create(uniformBuffer));
+        auto* outputTextureView = builder.CreateTextureView(RGTextureViewDesc::Create2D(outputTexture));
 
-        // TODO bind group & auto mark read write
+        builder.MarkAsConsumed(outputTexture);
+        bindGroup = builder.AllocateBindGroup(RGBindGroupDesc::Create(
+            pipeline->GetPipelineLayout()->GetRHIBindGroupLayout(0),
+            RGBindItem::UniformBuffer("inputBuffer", uniformBufferView),
+            RGBindItem::StorageTexture("outputTexture", outputTextureView)));
     }
 
     void Execute(RHI::ComputePassCommandEncoder& encoder) override
     {
-        // TODO
+        encoder.SetBindGroup(0, bindGroup->GetRHI());
         encoder.Dispatch(8, 8, 1);
     }
 
 private:
-    Render::RGBuffer* uniformBuffer;
-    Render::RGTexture* outputTexture;
+    RGBuffer* uniformBuffer;
+    RGTexture* outputTexture;
+    RGBindGroup* bindGroup;
 };
 
 struct RenderGraphTest : public testing::Test {
@@ -83,7 +91,7 @@ TEST_F(RenderGraphTest, BasicTest)
 {
     RHI::UniqueRef<RHI::Fence> mainFence = device->CreateFence();
 
-    Render::RenderGraph renderGraph(*device);
+    RenderGraph renderGraph(*device);
     renderGraph.Setup();
     renderGraph.Compile();
     renderGraph.Execute(mainFence.Get(), nullptr);

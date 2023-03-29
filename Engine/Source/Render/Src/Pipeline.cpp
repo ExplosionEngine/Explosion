@@ -88,7 +88,7 @@ namespace Render {
         return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
     }
 
-    size_t ComputePipelineDesc::Hash() const
+    size_t ComputePipelineStateDesc::Hash() const
     {
         std::vector<size_t> values = {
             shaders.computeShader.Hash()
@@ -96,7 +96,7 @@ namespace Render {
         return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
     }
 
-    size_t RasterPipelineDesc::Hash() const
+    size_t RasterPipelineStateDesc::Hash() const
     {
         auto computeVertexAttributeHash = [](const RHI::VertexAttribute& attribute) -> size_t {
             std::vector<size_t> values = {
@@ -198,7 +198,7 @@ namespace Render {
         return hash;
     }
 
-    ComputePipeline::ComputePipeline(RHI::Device& inDevice, const ComputePipelineDesc& inDesc, size_t inHash)
+    ComputePipelineState::ComputePipelineState(RHI::Device& inDevice, const ComputePipelineStateDesc& inDesc, size_t inHash)
         : hash(inHash)
     {
         pipelineLayout = PipelineLayoutCache::Get(inDevice).GetLayout(inDesc.shaders);
@@ -209,24 +209,24 @@ namespace Render {
         rhiHandle = inDevice.CreateComputePipeline(&createInfo);
     }
 
-    ComputePipeline::~ComputePipeline() = default;
+    ComputePipelineState::~ComputePipelineState() = default;
 
-    PipelineLayout* ComputePipeline::GetPipelineLayout() const
+    PipelineLayout* ComputePipelineState::GetPipelineLayout() const
     {
         return pipelineLayout;
     }
 
-    RHI::ComputePipeline* ComputePipeline::GetRHI() const
+    RHI::ComputePipeline* ComputePipelineState::GetRHI() const
     {
         return rhiHandle.Get();
     }
 
-    size_t ComputePipeline::GetHash() const
+    size_t ComputePipelineState::GetHash() const
     {
         return hash;
     }
 
-    RasterPipeline::RasterPipeline(RHI::Device& inDevice, const RasterPipelineDesc& inDesc, size_t inHash)
+    RasterPipelineState::RasterPipelineState(RHI::Device& inDevice, const RasterPipelineStateDesc& inDesc, size_t inHash)
         : hash(inHash)
     {
         pipelineLayout = PipelineLayoutCache::Get(inDevice).GetLayout(inDesc.shaders);
@@ -246,19 +246,19 @@ namespace Render {
         rhiHandle = inDevice.CreateGraphicsPipeline(&createInfo);
     }
 
-    RasterPipeline::~RasterPipeline() = default;
+    RasterPipelineState::~RasterPipelineState() = default;
 
-    PipelineLayout* RasterPipeline::GetPipelineLayout() const
+    PipelineLayout* RasterPipelineState::GetPipelineLayout() const
     {
         return pipelineLayout;
     }
 
-    RHI::GraphicsPipeline* RasterPipeline::GetRHI() const
+    RHI::GraphicsPipeline* RasterPipelineState::GetRHI() const
     {
         return rhiHandle.Get();
     }
 
-    size_t RasterPipeline::GetHash() const
+    size_t RasterPipelineState::GetHash() const
     {
         return hash;
     }
@@ -315,22 +315,22 @@ namespace Render {
         rasterPipelines.clear();
     }
 
-    ComputePipeline* PipelineCache::GetPipeline(const ComputePipelineDesc& desc)
+    ComputePipelineState* PipelineCache::GetPipeline(const ComputePipelineStateDesc& desc)
     {
         auto hash = desc.Hash();
         auto iter = computePipelines.find(hash);
         if (iter == computePipelines.end()) {
-            computePipelines[hash] = std::unique_ptr<ComputePipeline>(new ComputePipeline(device, desc, hash));
+            computePipelines[hash] = std::unique_ptr<ComputePipelineState>(new ComputePipelineState(device, desc, hash));
         }
         return computePipelines[hash].get();
     }
 
-    RasterPipeline* PipelineCache::GetPipeline(const RasterPipelineDesc& desc)
+    RasterPipelineState* PipelineCache::GetPipeline(const RasterPipelineStateDesc& desc)
     {
         auto hash = desc.Hash();
         auto iter = rasterPipelines.find(hash);
         if (iter == rasterPipelines.end()) {
-            rasterPipelines[hash] = std::unique_ptr<RasterPipeline>(new RasterPipeline(device, desc, hash));
+            rasterPipelines[hash] = std::unique_ptr<RasterPipelineState>(new RasterPipelineState(device, desc, hash));
         }
         return rasterPipelines[hash].get();
     }
