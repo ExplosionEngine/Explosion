@@ -146,7 +146,7 @@ namespace Render {
 
     Sampler::Sampler(RHI::Device& inDevice, const SamplerDesc& inDesc)
     {
-        rhiHandle = inDevice.CreateSampler(&inDesc);
+        rhiHandle = inDevice.CreateSampler(inDesc);
     }
 
     Sampler::~Sampler() = default;
@@ -163,7 +163,7 @@ namespace Render {
             const auto& bindGroupLayoutCreateInfo = inDesc.bindGroupLayoutDescs[i];
             auto iter = rhiBindGroupLayouts.find(bindGroupLayoutCreateInfo.layoutIndex);
             Assert(iter == rhiBindGroupLayouts.end());
-            rhiBindGroupLayouts[bindGroupLayoutCreateInfo.layoutIndex] = inDevice.CreateBindGroupLayout(&bindGroupLayoutCreateInfo);
+            rhiBindGroupLayouts[bindGroupLayoutCreateInfo.layoutIndex] = inDevice.CreateBindGroupLayout(bindGroupLayoutCreateInfo);
         }
 
         std::vector<RHI::BindGroupLayout*> bindGroupLayouts;
@@ -177,7 +177,7 @@ namespace Render {
         createInfo.bindGroupLayouts = bindGroupLayouts.data();
         createInfo.pipelineConstantLayoutNum = inDesc.pipelineConstantNum;
         createInfo.pipelineConstantLayouts = inDesc.pipelineConstantLayoutDescs;
-        rhiHandle = inDevice.CreatePipelineLayout(&createInfo);
+        rhiHandle = inDevice.CreatePipelineLayout(createInfo);
     }
 
     PipelineLayout::~PipelineLayout() = default;
@@ -206,7 +206,7 @@ namespace Render {
         RHI::ComputePipelineCreateInfo createInfo;
         createInfo.layout = pipelineLayout->GetRHI();
         createInfo.computeShader = inDesc.shaders.computeShader.rhiHandle;
-        rhiHandle = inDevice.CreateComputePipeline(&createInfo);
+        rhiHandle = inDevice.CreateComputePipeline(createInfo);
     }
 
     ComputePipelineState::~ComputePipelineState() = default;
@@ -243,7 +243,7 @@ namespace Render {
         createInfo.depthStencilState = inDesc.depthStencilState;
         createInfo.multiSampleState = inDesc.multiSampleState;
         createInfo.fragmentState = inDesc.fragmentState;
-        rhiHandle = inDevice.CreateGraphicsPipeline(&createInfo);
+        rhiHandle = inDevice.CreateGraphicsPipeline(createInfo);
     }
 
     RasterPipelineState::~RasterPipelineState() = default;

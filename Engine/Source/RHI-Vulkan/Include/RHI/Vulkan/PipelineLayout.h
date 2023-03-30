@@ -12,14 +12,14 @@ namespace RHI::Vulkan {
     class VKPipelineLayout : public PipelineLayout {
     public:
         NON_COPYABLE(VKPipelineLayout)
-        VKPipelineLayout(VKDevice& device, const PipelineLayoutCreateInfo* createInfo);
+        VKPipelineLayout(VKDevice& device, const PipelineLayoutCreateInfo& createInfo);
         ~VKPipelineLayout() override;
 
         void Destroy() override;
 
         vk::PipelineLayout GetVkPipelineLayout() const;
     private:
-        void CreateNativePipelineLayout(const PipelineLayoutCreateInfo* createInfo);
+        void CreateNativePipelineLayout(const PipelineLayoutCreateInfo& createInfo);
 
         VKDevice& device;
         vk::PipelineLayout pipelineLayout = VK_NULL_HANDLE;

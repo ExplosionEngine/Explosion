@@ -5,7 +5,7 @@
 #include <RHI/Dummy/BindGroup.h>
 
 namespace RHI::Dummy {
-    DummyBindGroup::DummyBindGroup(const BindGroupCreateInfo* createInfo)
+    DummyBindGroup::DummyBindGroup(const BindGroupCreateInfo& createInfo)
         : BindGroup(createInfo)
     {
     }

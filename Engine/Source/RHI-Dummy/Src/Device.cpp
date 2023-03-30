@@ -18,7 +18,7 @@
 #include <Common/Debug.h>
 
 namespace RHI::Dummy {
-    DummyDevice::DummyDevice(const DeviceCreateInfo* createInfo)
+    DummyDevice::DummyDevice(const DeviceCreateInfo& createInfo)
         : Device(createInfo)
         , dummyQueue(std::make_unique<DummyQueue>())
     {
@@ -42,52 +42,52 @@ namespace RHI::Dummy {
         return dummyQueue.get();
     }
 
-    SwapChain* DummyDevice::CreateSwapChain(const SwapChainCreateInfo* createInfo)
+    SwapChain* DummyDevice::CreateSwapChain(const SwapChainCreateInfo& createInfo)
     {
         return new DummySwapChain(createInfo);
     }
 
-    Buffer* DummyDevice::CreateBuffer(const BufferCreateInfo* createInfo)
+    Buffer* DummyDevice::CreateBuffer(const BufferCreateInfo& createInfo)
     {
         return new DummyBuffer(createInfo);
     }
 
-    Texture* DummyDevice::CreateTexture(const TextureCreateInfo* createInfo)
+    Texture* DummyDevice::CreateTexture(const TextureCreateInfo& createInfo)
     {
         return new DummyTexture(createInfo);
     }
 
-    Sampler* DummyDevice::CreateSampler(const SamplerCreateInfo* createInfo)
+    Sampler* DummyDevice::CreateSampler(const SamplerCreateInfo& createInfo)
     {
         return new DummySampler(createInfo);
     }
 
-    BindGroupLayout* DummyDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
+    BindGroupLayout* DummyDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo)
     {
         return new DummyBindGroupLayout(createInfo);
     }
 
-    BindGroup* DummyDevice::CreateBindGroup(const BindGroupCreateInfo* createInfo)
+    BindGroup* DummyDevice::CreateBindGroup(const BindGroupCreateInfo& createInfo)
     {
         return new DummyBindGroup(createInfo);
     }
 
-    PipelineLayout* DummyDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo)
+    PipelineLayout* DummyDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo)
     {
         return new DummyPipelineLayout(createInfo);
     }
 
-    ShaderModule* DummyDevice::CreateShaderModule(const ShaderModuleCreateInfo* createInfo)
+    ShaderModule* DummyDevice::CreateShaderModule(const ShaderModuleCreateInfo& createInfo)
     {
         return new DummyShaderModule(createInfo);
     }
 
-    ComputePipeline* DummyDevice::CreateComputePipeline(const ComputePipelineCreateInfo* createInfo)
+    ComputePipeline* DummyDevice::CreateComputePipeline(const ComputePipelineCreateInfo& createInfo)
     {
         return new DummyComputePipeline(createInfo);
     }
 
-    GraphicsPipeline* DummyDevice::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
+    GraphicsPipeline* DummyDevice::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo)
     {
         return new DummyGraphicsPipeline(createInfo);
     }

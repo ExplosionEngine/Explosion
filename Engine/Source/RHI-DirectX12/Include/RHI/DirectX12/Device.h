@@ -31,22 +31,22 @@ namespace RHI::DirectX12 {
     class DX12Device : public Device {
     public:
         NON_COPYABLE(DX12Device)
-        DX12Device(DX12Gpu& gpu, const DeviceCreateInfo* createInfo);
+        DX12Device(DX12Gpu& gpu, const DeviceCreateInfo& createInfo);
         ~DX12Device() override;
 
         void Destroy() override;
         size_t GetQueueNum(QueueType type) override;
         Queue* GetQueue(QueueType type, size_t index) override;
-        SwapChain* CreateSwapChain(const SwapChainCreateInfo* createInfo) override;
-        Buffer* CreateBuffer(const BufferCreateInfo* createInfo) override;
-        Texture* CreateTexture(const TextureCreateInfo* createInfo) override;
-        Sampler* CreateSampler(const SamplerCreateInfo* createInfo) override;
-        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo) override;
-        BindGroup* CreateBindGroup(const BindGroupCreateInfo* createInfo) override;
-        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo) override;
-        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) override;
-        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) override;
-        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override;
+        SwapChain* CreateSwapChain(const SwapChainCreateInfo& createInfo) override;
+        Buffer* CreateBuffer(const BufferCreateInfo& createInfo) override;
+        Texture* CreateTexture(const TextureCreateInfo& createInfo) override;
+        Sampler* CreateSampler(const SamplerCreateInfo& createInfo) override;
+        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo) override;
+        BindGroup* CreateBindGroup(const BindGroupCreateInfo& createInfo) override;
+        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo) override;
+        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo& createInfo) override;
+        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) override;
+        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
         Fence* CreateFence() override;
 
@@ -65,7 +65,7 @@ namespace RHI::DirectX12 {
 
         inline DescriptorAllocation AllocateDescriptor(std::list<DescriptorHeapListNode>& list, uint8_t capacity, uint32_t descriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlag);
         void CreateDX12Device();
-        void CreateDX12Queues(const DeviceCreateInfo* createInfo);
+        void CreateDX12Queues(const DeviceCreateInfo& createInfo);
         void CreateDX12CommandAllocator();
         void GetDX12DescriptorSize();
 #if BUILD_CONFIG_DEBUG

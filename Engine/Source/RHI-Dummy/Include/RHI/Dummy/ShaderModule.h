@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummyShaderModule : public ShaderModule {
     public:
-        explicit DummyShaderModule(const ShaderModuleCreateInfo* createInfo);
+        explicit DummyShaderModule(const ShaderModuleCreateInfo& createInfo);
         ~DummyShaderModule() override;
 
         void Destroy() override;

@@ -88,9 +88,22 @@ namespace Render {
         return result;
     }
 
+    static std::vector<std::wstring> GetInternalPredefinition(const ShaderCompileOptions& options)
+    {
+        std::vector<std::wstring> result { L"-D" };
+        auto def = options.byteCodeType == Render::ShaderByteCodeType::SPRIV ? std::wstring{L"VULKAN=1"} : std::wstring{L"VULKAN=0"};
+        result.emplace_back(def);
+
+        return result;
+    }
+
     static std::vector<std::wstring> GetDefinitionArguments(const ShaderCompileOptions& options)
     {
         std::vector<std::wstring> result;
+
+        auto preDef = GetInternalPredefinition(options);
+        result.insert(result.end(), preDef.begin(), preDef.end());
+
         for (const auto& definition : options.definitions) {
             result.emplace_back(L"-D");
             result.emplace_back(Common::StringUtils::ToWideString(definition));

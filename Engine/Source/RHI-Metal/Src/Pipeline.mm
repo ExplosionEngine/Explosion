@@ -21,7 +21,7 @@ namespace RHI::Metal {
     }
 
 
-    MTLGraphicsPipeline::MTLGraphicsPipeline(MTLDevice& dev, const GraphicsPipelineCreateInfo* createInfo)
+    MTLGraphicsPipeline::MTLGraphicsPipeline(MTLDevice& dev, const GraphicsPipelineCreateInfo& createInfo)
         : GraphicsPipeline(createInfo), device(dev)
     {
         CreateNativeGraphicsPipeline(createInfo);
@@ -42,14 +42,14 @@ namespace RHI::Metal {
         return pipeline;
     }
 
-    void MTLGraphicsPipeline::CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
+    void MTLGraphicsPipeline::CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo)
     {
         MTLRenderPipelineDescriptor *pipelineDesc = [[MTLRenderPipelineDescriptor alloc] init];
 
         MTLVertexDescriptor* vertexDesc = [[MTLVertexDescriptor alloc] init];
         uint32_t attributeIndex = 0;
-        for (uint32_t i = 0; i < createInfo->vertexState.bufferLayoutNum; ++i) {
-            const VertexBufferLayout &vbLayout = createInfo->vertexState.bufferLayouts[i];
+        for (uint32_t i = 0; i < createInfo.vertexState.bufferLayoutNum; ++i) {
+            const VertexBufferLayout &vbLayout = createInfo.vertexState.bufferLayouts[i];
             vertexDesc.layouts[i].stepFunction = vbLayout.stepMode == VertexStepMode::PER_VERTEX ? MTLVertexStepFunctionPerVertex : MTLVertexStepFunctionPerInstance;
             vertexDesc.layouts[i].stepRate = 1;
             vertexDesc.layouts[i].stride = vbLayout.stride;
@@ -64,12 +64,12 @@ namespace RHI::Metal {
         }
 
         pipelineDesc.label = @"Graphics Pipeline";
-        pipelineDesc.vertexFunction = CreateFunction(ShaderStageBits::S_VERTEX, createInfo->vertexShader);
-        pipelineDesc.fragmentFunction = CreateFunction(ShaderStageBits::S_PIXEL, createInfo->pixelShader);
+        pipelineDesc.vertexFunction = CreateFunction(ShaderStageBits::S_VERTEX, createInfo.vertexShader);
+        pipelineDesc.fragmentFunction = CreateFunction(ShaderStageBits::S_PIXEL, createInfo.pixelShader);
         pipelineDesc.vertexDescriptor = vertexDesc;
 
-        for (uint32_t i = 0; i < createInfo->fragmentState.colorTargetNum; ++i) {
-            const ColorTargetState &colorTargetState = createInfo->fragmentState.colorTargets[i];
+        for (uint32_t i = 0; i < createInfo.fragmentState.colorTargetNum; ++i) {
+            const ColorTargetState &colorTargetState = createInfo.fragmentState.colorTargets[i];
             pipelineDesc.colorAttachments[i].pixelFormat = MTLEnumCast<PixelFormat, MTLPixelFormat>(colorTargetState.format);
             pipelineDesc.colorAttachments[i].writeMask = GetColorWriteMask(colorTargetState.writeFlags);
         }

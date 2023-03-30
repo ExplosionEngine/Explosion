@@ -19,7 +19,7 @@ namespace RHI::Metal {
         ~MTLGpu() override;
 
         GpuProperty GetProperty() override;
-        Device* RequestDevice(const DeviceCreateInfo* createInfo) override;
+        Device* RequestDevice(const DeviceCreateInfo& createInfo) override;
 
         id <MTLDevice> GetDevice() const;
         void Init(id<MTLDevice> device);

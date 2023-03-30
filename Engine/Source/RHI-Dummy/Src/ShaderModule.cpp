@@ -5,7 +5,7 @@
 #include <RHI/Dummy/ShaderModule.h>
 
 namespace RHI::Dummy {
-    DummyShaderModule::DummyShaderModule(const ShaderModuleCreateInfo* createInfo)
+    DummyShaderModule::DummyShaderModule(const ShaderModuleCreateInfo& createInfo)
         : ShaderModule(createInfo)
     {
     }

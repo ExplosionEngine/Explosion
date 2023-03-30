@@ -15,7 +15,7 @@ namespace RHI::Vulkan {
     class VKBindGroupLayout : public BindGroupLayout {
     public:
         NON_COPYABLE(VKBindGroupLayout)
-        VKBindGroupLayout(VKDevice& device, const BindGroupLayoutCreateInfo* createInfo);
+        VKBindGroupLayout(VKDevice& device, const BindGroupLayoutCreateInfo& createInfo);
         ~VKBindGroupLayout() override;
 
         void Destroy() override;
@@ -23,7 +23,7 @@ namespace RHI::Vulkan {
         vk::DescriptorSetLayout GetVkDescriptorSetLayout() const;
 
     private:
-        void CreateDescriptorSetLayout(const BindGroupLayoutCreateInfo* createInfo);
+        void CreateDescriptorSetLayout(const BindGroupLayoutCreateInfo& createInfo);
         VKDevice& device;
         vk::DescriptorSetLayout setLayout;
     };

@@ -42,7 +42,7 @@ namespace RHI::Metal {
 
     class MTLTextureView : public TextureView {
     public:
-        MTLTextureView(MTLTexture &texture, const TextureViewCreateInfo* createInfo);
+        MTLTextureView(MTLTexture &texture, const TextureViewCreateInfo& createInfo);
         ~MTLTextureView();
 
         void Destroy() override;
@@ -51,7 +51,7 @@ namespace RHI::Metal {
 
         void SetDrawable(const DrawablePtr &value);
     private:
-        void CreateNativeTextureView(MTLTexture &texture, const TextureViewCreateInfo *createInfo);
+        void CreateNativeTextureView(MTLTexture &texture, const TextureViewCreateInfo& createInfo);
 
         id<MTLTexture> textureView;
         DrawablePtr drawable;

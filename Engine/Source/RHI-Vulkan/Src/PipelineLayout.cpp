@@ -8,7 +8,7 @@
 
 namespace RHI::Vulkan {
 
-    VKPipelineLayout::VKPipelineLayout(VKDevice& dev, const PipelineLayoutCreateInfo* createInfo)
+    VKPipelineLayout::VKPipelineLayout(VKDevice& dev, const PipelineLayoutCreateInfo& createInfo)
         : device(dev), PipelineLayout(createInfo)
     {
         CreateNativePipelineLayout(createInfo);
@@ -31,17 +31,17 @@ namespace RHI::Vulkan {
         return pipelineLayout;
     }
 
-    void VKPipelineLayout::CreateNativePipelineLayout(const PipelineLayoutCreateInfo* createInfo)
+    void VKPipelineLayout::CreateNativePipelineLayout(const PipelineLayoutCreateInfo& createInfo)
     {
-        std::vector<vk::DescriptorSetLayout> setLayouts(createInfo->bindGroupNum);
-        for (uint32_t i = 0; i < createInfo->bindGroupNum; ++i) {
-            auto vulkanBindGroup = static_cast<const VKBindGroupLayout*>(createInfo->bindGroupLayouts[i]);
+        std::vector<vk::DescriptorSetLayout> setLayouts(createInfo.bindGroupNum);
+        for (uint32_t i = 0; i < createInfo.bindGroupNum; ++i) {
+            auto vulkanBindGroup = static_cast<const VKBindGroupLayout*>(createInfo.bindGroupLayouts[i]);
             setLayouts[i] = vulkanBindGroup->GetVkDescriptorSetLayout();
         }
 
-        std::vector<vk::PushConstantRange> pushConstants(createInfo->pipelineConstantLayoutNum);
-        for (uint32_t i = 0; i < createInfo->pipelineConstantLayoutNum; ++i) {
-            auto& constantInfo = createInfo->pipelineConstantLayouts[i];
+        std::vector<vk::PushConstantRange> pushConstants(createInfo.pipelineConstantLayoutNum);
+        for (uint32_t i = 0; i < createInfo.pipelineConstantLayoutNum; ++i) {
+            auto& constantInfo = createInfo.pipelineConstantLayouts[i];
             pushConstants[i].setStageFlags(FromRHI(constantInfo.stageFlags))
                 .setOffset(constantInfo.offset)
                 .setSize(constantInfo.size);

@@ -40,6 +40,6 @@ namespace RHI {
         virtual void Destroy() = 0;
 
     protected:
-        explicit BindGroupLayout(const BindGroupLayoutCreateInfo* createInfo);
+        explicit BindGroupLayout(const BindGroupLayoutCreateInfo& createInfo);
     };
 }

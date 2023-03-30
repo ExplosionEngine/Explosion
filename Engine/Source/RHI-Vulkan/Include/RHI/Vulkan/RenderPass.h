@@ -14,11 +14,11 @@ namespace RHI::Vulkan {
     class VKRenderPass {
     public:
         NON_COPYABLE(VKRenderPass)
-        explicit VKRenderPass(VKDevice& device, const GraphicsPipelineCreateInfo* createInfo);
+        explicit VKRenderPass(VKDevice& device, const GraphicsPipelineCreateInfo& createInfo);
         ~VKRenderPass();
 
     private:
-        void CreateNativeRenderPass(const GraphicsPipelineCreateInfo* createInfo);
+        void CreateNativeRenderPass(const GraphicsPipelineCreateInfo& createInfo);
         VKDevice& device;
         vk::RenderPass renderPass = VK_NULL_HANDLE;
     };

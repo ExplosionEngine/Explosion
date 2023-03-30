@@ -32,6 +32,6 @@ namespace RHI {
         virtual void Destroy() = 0;
 
     protected:
-        explicit PipelineLayout(const PipelineLayoutCreateInfo* createInfo);
+        explicit PipelineLayout(const PipelineLayoutCreateInfo& createInfo);
     };
 }

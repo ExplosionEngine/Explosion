@@ -5,7 +5,7 @@
 #include <RHI/Dummy/Sampler.h>
 
 namespace RHI::Dummy {
-    DummySampler::DummySampler(const SamplerCreateInfo* createInfo)
+    DummySampler::DummySampler(const SamplerCreateInfo& createInfo)
         : Sampler(createInfo)
     {
     }

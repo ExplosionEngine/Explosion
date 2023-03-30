@@ -11,7 +11,7 @@
 #include <RHI/Vulkan/Queue.h>
 
 namespace RHI::Vulkan {
-    VKSwapChain::VKSwapChain(VKDevice& dev, const SwapChainCreateInfo* createInfo)
+    VKSwapChain::VKSwapChain(VKDevice& dev, const SwapChainCreateInfo& createInfo)
         : device(dev), SwapChain(createInfo)
     {
         CreateNativeSwapChain(createInfo);
@@ -80,20 +80,20 @@ namespace RHI::Vulkan {
         waitSemaphores.emplace_back(semaphore);
     }
 
-    void VKSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo* createInfo)
+    void VKSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo& createInfo)
     {
         auto vkDevice = device.GetVkDevice();
         surface = CreateNativeSurface(device.GetGpu().GetInstance().GetVkInstance(), createInfo);
 
-        auto* mQueue = dynamic_cast<VKQueue*>(createInfo->presentQueue);
+        auto* mQueue = dynamic_cast<VKQueue*>(createInfo.presentQueue);
         queue = mQueue->GetVkQueue();
 
         auto surfaceCap = device.GetGpu().GetVkPhysicalDevice().getSurfaceCapabilitiesKHR(surface);
-        vk::Extent2D extent = {static_cast<uint32_t>(createInfo->extent.x), static_cast<uint32_t>(createInfo->extent.y)};
+        vk::Extent2D extent = {static_cast<uint32_t>(createInfo.extent.x), static_cast<uint32_t>(createInfo.extent.y)};
         extent.width = std::clamp(extent.width, surfaceCap.minImageExtent.width, surfaceCap.maxImageExtent.width);
         extent.height = std::clamp(extent.height, surfaceCap.minImageExtent.height, surfaceCap.maxImageExtent.height);
 
-        vk::Format supportedFormat = VKEnumCast<PixelFormat, vk::Format>(createInfo->format);
+        vk::Format supportedFormat = VKEnumCast<PixelFormat, vk::Format>(createInfo.format);
         vk::ColorSpaceKHR colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
         auto surfaceFormats = device.GetGpu().GetVkPhysicalDevice().getSurfaceFormatsKHR(surface);
         {
@@ -121,7 +121,7 @@ namespace RHI::Vulkan {
             }
         }
 
-        swapChainImageCount = std::clamp(static_cast<uint32_t>(createInfo->textureNum), surfaceCap.minImageCount, surfaceCap.maxImageCount);
+        swapChainImageCount = std::clamp(static_cast<uint32_t>(createInfo.textureNum), surfaceCap.minImageCount, surfaceCap.maxImageCount);
         vk::SwapchainCreateInfoKHR swapChainInfo = {};
         swapChainInfo.setSurface(surface)
             .setMinImageCount(swapChainImageCount)
@@ -139,9 +139,9 @@ namespace RHI::Vulkan {
 
         TextureCreateInfo textureInfo = {};
 #if PLATFORM_MACOS
-        textureInfo.format = createInfo->format == PixelFormat::RGBA8_UNORM ? PixelFormat::BGRA8_UNORM : createInfo->format;
+        textureInfo.format = createInfo.format == PixelFormat::RGBA8_UNORM ? PixelFormat::BGRA8_UNORM : createInfo.format;
 #else
-        textureInfo.format = createInfo->format;
+        textureInfo.format = createInfo.format;
 #endif
         textureInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::RENDER_ATTACHMENT;
         textureInfo.mipLevels = 1;
@@ -153,7 +153,7 @@ namespace RHI::Vulkan {
 
         auto images = vkDevice.getSwapchainImagesKHR(swapChain);
         for (auto& image : images) {
-            textures.emplace_back(new VKTexture(device, &textureInfo, static_cast<vk::Image>(image)));
+            textures.emplace_back(new VKTexture(device, textureInfo, static_cast<vk::Image>(image)));
         }
         swapChainImageCount = static_cast<uint32_t>(images.size());
 

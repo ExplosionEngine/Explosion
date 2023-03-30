@@ -19,7 +19,7 @@ namespace RHI::Vulkan {
 }
 
 namespace RHI::Vulkan {
-    VKBufferView::VKBufferView(VKBuffer& buffer, const BufferViewCreateInfo* createInfo)
+    VKBufferView::VKBufferView(VKBuffer& buffer, const BufferViewCreateInfo& createInfo)
         :BufferView(createInfo), buffer(buffer)
     {
         InitializeBufferAttrib(createInfo);
@@ -32,11 +32,11 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    void VKBufferView::InitializeBufferAttrib(const BufferViewCreateInfo* createInfo)
+    void VKBufferView::InitializeBufferAttrib(const BufferViewCreateInfo& createInfo)
     {
-        offset = createInfo->offset;
+        offset = createInfo.offset;
         if (IsIndexBuffer(buffer.GetUsages())) {
-            format = createInfo->index.format;
+            format = createInfo.index.format;
         } else {
             // TODO
             // Uniform buffer

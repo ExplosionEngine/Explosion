@@ -13,27 +13,26 @@ namespace RHI::Vulkan {
 
     class VKBuffer : public Buffer {
     public:
-        VKBuffer(VKDevice& device, const BufferCreateInfo* createInfo);
+        VKBuffer(VKDevice& device, const BufferCreateInfo& createInfo);
         ~VKBuffer();
 
         void* Map(MapMode mapMode, size_t offset, size_t length) override;
         void UnMap() override;
-        BufferView* CreateBufferView(const BufferViewCreateInfo* createInfo) override;
+        BufferView* CreateBufferView(const BufferViewCreateInfo& createInfo) override;
         void Destroy() override;
 
         vk::Buffer GetVkBuffer();
         BufferUsageFlags GetUsages();
 
     private:
-        void CreateBuffer(const BufferCreateInfo* createInfo);
-        void AllocateMemory(const BufferCreateInfo* createInfo);
+        void CreateBuffer(const BufferCreateInfo& createInfo);
+        void AllocateMemory(const BufferCreateInfo& createInfo);
         void DestroyBuffer();
         void FreeMemory();
 
         VKDevice& device;
         vk::DeviceMemory vkDeviceMemory;
         vk::Buffer vkBuffer;
-        MapMode mapMode;
         BufferUsageFlags usages;
     };
 }

@@ -24,7 +24,7 @@
 #include <RHI/DirectX12/Synchronous.h>
 
 namespace RHI::DirectX12 {
-    DX12Device::DX12Device(DX12Gpu& g, const DeviceCreateInfo* createInfo) : Device(createInfo), gpu(g), rtvDescriptorSize(0), cbvSrvUavDescriptorSize(0)
+    DX12Device::DX12Device(DX12Gpu& g, const DeviceCreateInfo& createInfo) : Device(createInfo), gpu(g), rtvDescriptorSize(0), cbvSrvUavDescriptorSize(0)
     {
         CreateDX12Device();
         CreateDX12Queues(createInfo);
@@ -63,7 +63,7 @@ namespace RHI::DirectX12 {
         return queueArray[index].get();
     }
 
-    SwapChain* DX12Device::CreateSwapChain(const SwapChainCreateInfo* createInfo)
+    SwapChain* DX12Device::CreateSwapChain(const SwapChainCreateInfo& createInfo)
     {
         return new DX12SwapChain(*this, createInfo);
     }
@@ -73,47 +73,47 @@ namespace RHI::DirectX12 {
         return dx12CommandAllocator;
     }
 
-    Buffer* DX12Device::CreateBuffer(const BufferCreateInfo* createInfo)
+    Buffer* DX12Device::CreateBuffer(const BufferCreateInfo& createInfo)
     {
         return new DX12Buffer(*this, createInfo);
     }
 
-    Texture* DX12Device::CreateTexture(const TextureCreateInfo* createInfo)
+    Texture* DX12Device::CreateTexture(const TextureCreateInfo& createInfo)
     {
         return new DX12Texture(*this, createInfo);
     }
 
-    Sampler* DX12Device::CreateSampler(const SamplerCreateInfo* createInfo)
+    Sampler* DX12Device::CreateSampler(const SamplerCreateInfo& createInfo)
     {
         return new DX12Sampler(*this, createInfo);
     }
 
-    BindGroupLayout* DX12Device::CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo)
+    BindGroupLayout* DX12Device::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo)
     {
         return new DX12BindGroupLayout(createInfo);
     }
 
-    BindGroup* DX12Device::CreateBindGroup(const BindGroupCreateInfo* createInfo)
+    BindGroup* DX12Device::CreateBindGroup(const BindGroupCreateInfo& createInfo)
     {
         return new DX12BindGroup(createInfo);
     }
 
-    PipelineLayout* DX12Device::CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo)
+    PipelineLayout* DX12Device::CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo)
     {
         return new DX12PipelineLayout(*this, createInfo);
     }
 
-    ShaderModule* DX12Device::CreateShaderModule(const ShaderModuleCreateInfo* createInfo)
+    ShaderModule* DX12Device::CreateShaderModule(const ShaderModuleCreateInfo& createInfo)
     {
         return new DX12ShaderModule(createInfo);
     }
 
-    ComputePipeline* DX12Device::CreateComputePipeline(const ComputePipelineCreateInfo* createInfo)
+    ComputePipeline* DX12Device::CreateComputePipeline(const ComputePipelineCreateInfo& createInfo)
     {
         return new DX12ComputePipeline(*this, createInfo);
     }
 
-    GraphicsPipeline* DX12Device::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo)
+    GraphicsPipeline* DX12Device::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo)
     {
         return new DX12GraphicsPipeline(*this, createInfo);
     }
@@ -188,11 +188,11 @@ namespace RHI::DirectX12 {
         Assert(success);
     }
 
-    void DX12Device::CreateDX12Queues(const DeviceCreateInfo* createInfo)
+    void DX12Device::CreateDX12Queues(const DeviceCreateInfo& createInfo)
     {
         std::unordered_map<QueueType, size_t> queueNumMap;
-        for (size_t i = 0; i < createInfo->queueCreateInfoNum; i++) {
-            const auto& queueCreateInfo = createInfo->queueCreateInfos[i];
+        for (size_t i = 0; i < createInfo.queueCreateInfoNum; i++) {
+            const auto& queueCreateInfo = createInfo.queueCreateInfos[i];
             auto iter = queueNumMap.find(queueCreateInfo.type);
             if (iter == queueNumMap.end()) {
                 queueNumMap[queueCreateInfo.type] = 0;

@@ -23,7 +23,7 @@ namespace RHI::DirectX12 {
     class DX12BindGroupLayout : public BindGroupLayout {
     public:
         NON_COPYABLE(DX12BindGroupLayout)
-        explicit DX12BindGroupLayout(const BindGroupLayoutCreateInfo* createInfo);
+        explicit DX12BindGroupLayout(const BindGroupLayoutCreateInfo& createInfo);
         ~DX12BindGroupLayout() override;
 
         void Destroy() override;
@@ -33,7 +33,7 @@ namespace RHI::DirectX12 {
         [[nodiscard]] const std::vector<CD3DX12_ROOT_PARAMETER1>& GetDX12RootParameters() const;
 
     private:
-        void CreateDX12RootParameters(const BindGroupLayoutCreateInfo* createInfo);
+        void CreateDX12RootParameters(const BindGroupLayoutCreateInfo& createInfo);
 
         uint8_t layoutIndex;
         std::vector<RootParameterKeyInfo> rootParameterKeyInfos;

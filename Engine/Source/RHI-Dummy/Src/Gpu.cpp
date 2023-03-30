@@ -15,7 +15,7 @@ namespace RHI::Dummy {
         return {};
     }
 
-    Device* DummyGpu::RequestDevice(const DeviceCreateInfo* createInfo)
+    Device* DummyGpu::RequestDevice(const DeviceCreateInfo& createInfo)
     {
         return new DummyDevice(createInfo);
     }

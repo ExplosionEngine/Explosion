@@ -5,7 +5,7 @@
 #include <RHI/ShaderModule.h>
 
 namespace RHI {
-    ShaderModule::ShaderModule(const ShaderModuleCreateInfo* createInfo) {}
+    ShaderModule::ShaderModule(const ShaderModuleCreateInfo& createInfo) {}
 
     ShaderModule::~ShaderModule() = default;
 }

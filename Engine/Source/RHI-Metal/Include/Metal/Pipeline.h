@@ -13,13 +13,13 @@ namespace RHI::Metal {
     class MTLGraphicsPipeline : public GraphicsPipeline {
     public:
         NON_COPYABLE(MTLGraphicsPipeline)
-        MTLGraphicsPipeline(MTLDevice& device, const GraphicsPipelineCreateInfo* createInfo);
+        MTLGraphicsPipeline(MTLDevice& device, const GraphicsPipelineCreateInfo& createInfo);
         ~MTLGraphicsPipeline() override;
         void Destroy() override;
 
         id<MTLRenderPipelineState> GetNativePipeline() const;
     private:
-        void CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo);
+        void CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo);
         id<MTLFunction> CreateFunction(ShaderStageBits stage, ShaderModule *module);
 
         MTLDevice& device;

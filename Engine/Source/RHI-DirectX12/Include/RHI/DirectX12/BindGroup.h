@@ -19,7 +19,7 @@ namespace RHI::DirectX12 {
     class DX12BindGroup : public BindGroup {
     public:
         NON_COPYABLE(DX12BindGroup)
-        explicit DX12BindGroup(const BindGroupCreateInfo* createInfo);
+        explicit DX12BindGroup(const BindGroupCreateInfo& createInfo);
         ~DX12BindGroup() override;
 
         void Destroy() override;
@@ -29,8 +29,8 @@ namespace RHI::DirectX12 {
         const std::vector<std::pair<HlslBinding, CD3DX12_GPU_DESCRIPTOR_HANDLE>>& GetBindings();
 
     private:
-        void SaveBindGroupLayout(const BindGroupCreateInfo* createInfo);
-        void CacheBindings(const BindGroupCreateInfo* createInfo);
+        void SaveBindGroupLayout(const BindGroupCreateInfo& createInfo);
+        void CacheBindings(const BindGroupCreateInfo& createInfo);
 
         DX12BindGroupLayout* bindGroupLayout;
         std::vector<ID3D12DescriptorHeap*> dx12DescriptorHeaps;

@@ -29,7 +29,7 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12BindGroup::DX12BindGroup(const BindGroupCreateInfo* createInfo) : BindGroup(createInfo), bindGroupLayout(nullptr)
+    DX12BindGroup::DX12BindGroup(const BindGroupCreateInfo& createInfo) : BindGroup(createInfo), bindGroupLayout(nullptr)
     {
         SaveBindGroupLayout(createInfo);
         CacheBindings(createInfo);
@@ -57,17 +57,17 @@ namespace RHI::DirectX12 {
         return bindings;
     }
 
-    void DX12BindGroup::SaveBindGroupLayout(const BindGroupCreateInfo* createInfo)
+    void DX12BindGroup::SaveBindGroupLayout(const BindGroupCreateInfo& createInfo)
     {
-        auto* tBindGroupLayout = dynamic_cast<DX12BindGroupLayout*>(createInfo->layout);
+        auto* tBindGroupLayout = dynamic_cast<DX12BindGroupLayout*>(createInfo.layout);
         Assert(tBindGroupLayout);
         bindGroupLayout = tBindGroupLayout;
     }
 
-    void DX12BindGroup::CacheBindings(const BindGroupCreateInfo* createInfo)
+    void DX12BindGroup::CacheBindings(const BindGroupCreateInfo& createInfo)
     {
-        for (auto i = 0; i < createInfo->entryNum; i++) {
-            const auto& entry = createInfo->entries[i];
+        for (auto i = 0; i < createInfo.entryNum; i++) {
+            const auto& entry = createInfo.entries[i];
 
             CD3DX12_GPU_DESCRIPTOR_HANDLE handle;
             ID3D12DescriptorHeap* heap;

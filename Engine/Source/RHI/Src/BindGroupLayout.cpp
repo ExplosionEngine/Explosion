@@ -5,7 +5,7 @@
 #include <RHI/BindGroupLayout.h>
 
 namespace RHI {
-    BindGroupLayout::BindGroupLayout(const BindGroupLayoutCreateInfo* createInfo) {}
+    BindGroupLayout::BindGroupLayout(const BindGroupLayoutCreateInfo& createInfo) {}
 
     BindGroupLayout::~BindGroupLayout() = default;
 }

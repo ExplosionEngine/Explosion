@@ -31,6 +31,6 @@ namespace RHI {
         virtual void Destroy() = 0;
 
     protected:
-        explicit SwapChain(const SwapChainCreateInfo* createInfo);
+        explicit SwapChain(const SwapChainCreateInfo& createInfo);
     };
 }
