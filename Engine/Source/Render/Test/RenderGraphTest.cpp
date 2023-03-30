@@ -50,7 +50,7 @@ protected:
 
         builder.MarkAsConsumed(outputTexture);
         bindGroup = builder.AllocateBindGroup(RGBindGroupDesc::Create(
-            pipeline->GetPipelineLayout()->GetRHIBindGroupLayout(0),
+            pipeline->GetPipelineLayout()->GetBindGroupLayout(0),
             RGBindItem::UniformBuffer("inputBuffer", uniformBufferView),
             RGBindItem::StorageTexture("outputTexture", outputTextureView)));
     }

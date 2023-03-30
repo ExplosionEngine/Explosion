@@ -15,6 +15,7 @@
 #include <Common/Hash.h>
 #include <Common/Debug.h>
 #include <RHI/RHI.h>
+#include <Render/Pipeline.h>
 
 namespace Render {
     class RGResource;
@@ -170,10 +171,10 @@ namespace Render {
         std::vector<std::pair<std::string, RGBindItem>> items;
 
         template <typename... B>
-        static RGBindGroupDesc Create(RHI::BindGroupLayout* layout, B&&... items)
+        static RGBindGroupDesc Create(BindGroupLayout* layout, B&&... items)
         {
             RGBindGroupDesc result;
-            result.layout = layout;
+            result.layout = layout->GetRHI();
             result.items.reserve(sizeof...(items));
             std::initializer_list<int> { ([&]() -> void { result.items.emplace_back(std::forward<B>(items)); }(), 0)... };
             return result;

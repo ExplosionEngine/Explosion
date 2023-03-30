@@ -76,11 +76,30 @@ namespace Render {
         RHI::UniqueRef<RHI::Sampler> rhiHandle;
     };
 
+    class BindGroupLayout {
+    public:
+        ~BindGroupLayout();
+
+        const RHI::ResourceBinding* GetBinding(const std::string& name, RHI::ShaderStageBits shaderStage) const;
+        RHI::BindGroupLayout* GetRHI() const;
+
+    private:
+        friend class PipelineLayout;
+
+        using LayoutIndex = uint8_t;
+        using BindingMap = std::unordered_map<std::string, std::pair<RHI::ShaderStageFlags, RHI::ResourceBinding>>;
+
+        explicit BindGroupLayout(BindingMap inBindings);
+
+        BindingMap bindings;
+        RHI::UniqueRef<RHI::BindGroupLayout> rhiHandle;
+    };
+
     class PipelineLayout {
     public:
         ~PipelineLayout();
 
-        RHI::BindGroupLayout* GetRHIBindGroupLayout(uint32_t layoutIndex) const;
+        BindGroupLayout* GetBindGroupLayout(uint8_t layoutIndex) const;
         RHI::PipelineLayout* GetRHI() const;
         size_t GetHash() const;
 
@@ -90,7 +109,7 @@ namespace Render {
         PipelineLayout(RHI::Device& inDevice, const PipelineLayoutDesc& inDesc, size_t inHash);
 
         size_t hash;
-        std::unordered_map<uint32_t, RHI::UniqueRef<RHI::BindGroupLayout>> rhiBindGroupLayouts;
+        std::unordered_map<uint32_t, std::unique_ptr<BindGroupLayout>> bindGroupLayouts;
         RHI::UniqueRef<RHI::PipelineLayout> rhiHandle;
     };
 

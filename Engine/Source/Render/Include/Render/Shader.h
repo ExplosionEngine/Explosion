@@ -22,6 +22,7 @@
 #include <RHI/Common.h>
 #include <RHI/Device.h>
 #include <RHI/ShaderModule.h>
+#include <RHI/BindGroupLayout.h>
 
 namespace Render {
     class Shader {};
@@ -39,6 +40,37 @@ namespace Render {
         virtual std::vector<std::string> GetDefinitions(VariantKey variantKey) = 0;
     };
 
+    struct ShaderReflectionData {
+        using LayoutIndex = uint8_t;
+
+        std::unordered_map<std::string, std::pair<LayoutIndex, RHI::ResourceBinding>> resourceBindings;
+    };
+
+    struct ShaderInstance {
+        RHI::ShaderModule* rhiHandle = nullptr;
+        ShaderTypeKey typeKey = 0;
+        VariantKey variantKey = 0;
+        ShaderReflectionData reflectionData;
+
+        bool IsValid() const
+        {
+            return rhiHandle != nullptr;
+        }
+
+        size_t Hash() const
+        {
+            if (!IsValid()) {
+                return 0;
+            }
+
+            std::vector<size_t> values = {
+                typeKey,
+                variantKey
+            };
+            return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        }
+    };
+
     class ShaderByteCodeStorage {
     public:
         static ShaderByteCodeStorage& Get();
@@ -51,30 +83,6 @@ namespace Render {
 
     private:
         std::unordered_map<IShaderType*, std::unordered_map<VariantKey, ShaderByteCode>> byteCodePackages;
-    };
-
-    struct ShaderInstance {
-        RHI::ShaderModule* rhiHandle = nullptr;
-        ShaderTypeKey typeKey = 0;
-        VariantKey variantKey = 0;
-
-        bool IsAvaiable() const
-        {
-            return rhiHandle != nullptr;
-        }
-
-        size_t Hash() const
-        {
-            if (!IsAvaiable()) {
-                return 0;
-            }
-
-            std::vector<size_t> values = {
-                typeKey,
-                variantKey
-            };
-            return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
-        }
     };
 }
 

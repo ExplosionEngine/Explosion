@@ -4,6 +4,8 @@
 
 #include <Render/Pipeline.h>
 
+#include <utility>
+
 namespace Render {
     class PipelineLayoutCache {
     public:
@@ -156,36 +158,42 @@ namespace Render {
         return rhiHandle.Get();
     }
 
+    BindGroupLayout::BindGroupLayout(BindGroupLayout::BindingMap inBindings)
+        : bindings(std::move(inBindings))
+    {
+        // TODO
+    }
+
+    BindGroupLayout::~BindGroupLayout() = default;
+
+    const RHI::ResourceBinding* BindGroupLayout::GetBinding(const std::string& name, RHI::ShaderStageBits shaderStage) const
+    {
+        auto iter = bindings.find(name);
+        if (iter == bindings.end()) {
+            return nullptr;
+        }
+        const auto& bindingPair = iter->second;
+        return bindingPair.first & shaderStage ? &bindingPair.second : nullptr;
+    }
+
+    RHI::BindGroupLayout* BindGroupLayout::GetRHI() const
+    {
+        return rhiHandle.Get();
+    }
+
     PipelineLayout::PipelineLayout(RHI::Device& inDevice, const PipelineLayoutDesc& inDesc, size_t inHash)
         : hash(inHash)
     {
-        for (auto i = 0; i < inDesc.bindGroupLayoutNum; i++) {
-            const auto& bindGroupLayoutCreateInfo = inDesc.bindGroupLayoutDescs[i];
-            auto iter = rhiBindGroupLayouts.find(bindGroupLayoutCreateInfo.layoutIndex);
-            Assert(iter == rhiBindGroupLayouts.end());
-            rhiBindGroupLayouts[bindGroupLayoutCreateInfo.layoutIndex] = inDevice.CreateBindGroupLayout(bindGroupLayoutCreateInfo);
-        }
-
-        std::vector<RHI::BindGroupLayout*> bindGroupLayouts;
-        bindGroupLayouts.reserve(rhiBindGroupLayouts.size());
-        for (const auto& iter : rhiBindGroupLayouts) {
-            bindGroupLayouts.emplace_back(iter.second.Get());
-        }
-
-        RHI::PipelineLayoutCreateInfo createInfo;
-        createInfo.bindGroupNum = bindGroupLayouts.size();
-        createInfo.bindGroupLayouts = bindGroupLayouts.data();
-        createInfo.pipelineConstantLayoutNum = inDesc.pipelineConstantNum;
-        createInfo.pipelineConstantLayouts = inDesc.pipelineConstantLayoutDescs;
-        rhiHandle = inDevice.CreatePipelineLayout(createInfo);
+        // TODO filter reflection data by index
+        // TODO create bind group layout and pipeline layout
     }
 
     PipelineLayout::~PipelineLayout() = default;
 
-    RHI::BindGroupLayout* PipelineLayout::GetRHIBindGroupLayout(uint32_t layoutIndex) const
+    BindGroupLayout* PipelineLayout::GetBindGroupLayout(uint8_t layoutIndex) const
     {
-        auto iter = rhiBindGroupLayouts.find(layoutIndex);
-        return iter == rhiBindGroupLayouts.end() ? nullptr : iter->second.Get();
+        auto iter = bindGroupLayouts.find(layoutIndex);
+        return iter == bindGroupLayouts.end() ? nullptr : iter->second.get();
     }
 
     RHI::PipelineLayout* PipelineLayout::GetRHI() const
