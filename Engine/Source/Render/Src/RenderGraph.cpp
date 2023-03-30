@@ -160,54 +160,6 @@ namespace Render {
         return result;
     }
 
-    RGBuffer::RGBuffer(std::string inName, const RGBufferDesc& inDesc)
-        : RGResource(std::move(inName), false)
-        , desc(inDesc)
-    {
-    }
-
-    RGBuffer::RGBuffer(std::string inName, RHI::Buffer* inBuffer)
-        : RGResource(std::move(inName), true)
-        , rhiHandle(inBuffer)
-    {
-    }
-
-    RGBuffer::~RGBuffer() = default;
-
-    RGResourceType RGBuffer::GetType()
-    {
-        return RGResourceType::BUFFER;
-    }
-
-    void RGBuffer::Devirtualize(RHI::Device& device)
-    {
-        if (rhiHandle == nullptr && !IsExternal()) {
-            auto createInfo = GetRHIBufferCreateInfo(desc);
-            rhiHandle = device.CreateBuffer(createInfo);
-        }
-
-        Assert(rhiHandle);
-        SetRHIAccess(true);
-    }
-
-    void RGBuffer::Destroy()
-    {
-        if (!IsExternal() && rhiHandle != nullptr) {
-            rhiHandle->Destroy();
-        }
-    }
-
-    RHI::Buffer* RGBuffer::GetRHI() const
-    {
-        Assert(CanAccessRHI());
-        return rhiHandle;
-    }
-
-    const RGBufferDesc& RGBuffer::GetDesc() const
-    {
-        return desc;
-    }
-
     RGTextureDesc RGTextureDesc::Create1D(uint32_t length, RHI::PixelFormat format, RHI::TextureUsageFlags usages, uint8_t mipLevels, uint8_t samples)
     {
         RGTextureDesc result;
@@ -242,54 +194,6 @@ namespace Render {
         result.format = format;
         result.usages = usages;
         return result;
-    }
-
-    RGTexture::RGTexture(std::string inName, const RGTextureDesc& inDesc)
-        : RGResource(std::move(inName), false)
-        , desc(inDesc)
-    {
-    }
-
-    RGTexture::RGTexture(std::string inName, RHI::Texture* inTexture)
-        : RGResource(std::move(inName), true)
-        , rhiHandle(inTexture)
-    {
-    }
-
-    RGTexture::~RGTexture() = default;
-
-    RGResourceType RGTexture::GetType()
-    {
-        return RGResourceType::TEXTURE;
-    }
-
-    void RGTexture::Devirtualize(RHI::Device& device)
-    {
-        if (rhiHandle == nullptr && !IsExternal()) {
-            auto createInfo = GetRHITextureCreateInfo(desc);
-            rhiHandle = device.CreateTexture(createInfo);
-        }
-
-        Assert(rhiHandle);
-        SetRHIAccess(true);
-    }
-
-    void RGTexture::Destroy()
-    {
-        if (!IsExternal() && rhiHandle != nullptr) {
-            rhiHandle->Destroy();
-        }
-    }
-
-    RHI::Texture* RGTexture::GetRHI() const
-    {
-        Assert(CanAccessRHI());
-        return rhiHandle;
-    }
-
-    const RGTextureDesc& RGTexture::GetDesc() const
-    {
-        return desc;
     }
 
     RGBufferViewDesc RGBufferViewDesc::Create(size_t size, size_t offset)
@@ -342,84 +246,6 @@ namespace Render {
         result.size = size == UINT64_MAX ? buffer->GetDesc().size : size;
         result.index.format = indexFormat;
         return std::make_pair(buffer, result);
-    }
-
-    RGBufferView::RGBufferView(RGBuffer* inBuffer, const RGBufferViewDesc& inDesc)
-        : RGResource(inBuffer->GetName() + "View", false, inBuffer)
-        , buffer(inBuffer)
-        , desc(inDesc)
-    {
-    }
-
-    RGBufferView::RGBufferView(const std::pair<RGBuffer*, RGBufferViewDesc>& bufferAndViewDesc)
-        : RGResource(bufferAndViewDesc.first->GetName() + "View", false, bufferAndViewDesc.first)
-        , buffer(bufferAndViewDesc.first)
-        , desc(bufferAndViewDesc.second)
-    {
-    }
-
-    RGBufferView::RGBufferView(std::string inName, RGBuffer* inBuffer, const RGBufferViewDesc& inDesc)
-        : RGResource(std::move(inName), false, inBuffer)
-        , buffer(inBuffer)
-        , desc(inDesc)
-    {
-    }
-
-    RGBufferView::RGBufferView(std::string inName, const std::pair<RGBuffer*, RGBufferViewDesc>& bufferAndViewDesc)
-        : RGResource(std::move(inName), false, bufferAndViewDesc.first)
-        , buffer(bufferAndViewDesc.first)
-        , desc(bufferAndViewDesc.second)
-    {
-    }
-
-    RGBufferView::RGBufferView(std::string inName, RHI::BufferView* inBufferView)
-        : RGResource(std::move(inName), true)
-        , rhiHandle(inBufferView)
-    {
-    }
-
-    RGBufferView::~RGBufferView() = default;
-
-    RGResourceType RGBufferView::GetType()
-    {
-        return RGResourceType::BUFFER_VIEW;
-    }
-
-    void RGBufferView::Devirtualize(RHI::Device& device)
-    {
-        if (rhiHandle == nullptr && !IsExternal()) {
-            auto createInfo = GetRHIBufferViewCreateInfo(desc);
-            Assert(buffer);
-            Assert(buffer->GetRHI());
-            rhiHandle = buffer->GetRHI()->CreateBufferView(createInfo);
-        }
-
-        Assert(rhiHandle);
-        SetRHIAccess(true);
-    }
-
-    void RGBufferView::Destroy()
-    {
-        if (!IsExternal() && rhiHandle != nullptr) {
-            rhiHandle->Destroy();
-        }
-    }
-
-    RHI::BufferView* RGBufferView::GetRHI() const
-    {
-        Assert(CanAccessRHI());
-        return rhiHandle;
-    }
-
-    RGBuffer* RGBufferView::GetBuffer() const
-    {
-        Assert(!IsExternal());
-        return buffer;
-    }
-
-    const RGBufferViewDesc& RGBufferView::GetDesc() const
-    {
-        return desc;
     }
 
     RGTextureViewDesc RGTextureViewDesc::Create1D(RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
@@ -576,7 +402,7 @@ namespace Render {
     RGBindItem RGBindItem::Texture(RGTextureView* textureView)
     {
         RGBindItem result;
-        result.type == RHI::BindingType::TEXTURE;
+        result.type = RHI::BindingType::TEXTURE;
         result.textureView = textureView;
         return result;
     }
@@ -584,7 +410,7 @@ namespace Render {
     RGBindItem RGBindItem::StorageTexture(RGTextureView* textureView)
     {
         RGBindItem result;
-        result.type == RHI::BindingType::STORAGE_TEXTURE;
+        result.type = RHI::BindingType::STORAGE_TEXTURE;
         result.textureView = textureView;
         return result;
     }
@@ -592,7 +418,7 @@ namespace Render {
     RGBindItem RGBindItem::UniformBuffer(RGBufferView* bufferView)
     {
         RGBindItem result;
-        result.type == RHI::BindingType::UNIFORM_BUFFER;
+        result.type = RHI::BindingType::UNIFORM_BUFFER;
         result.bufferView = bufferView;
         return result;
     }
@@ -600,7 +426,7 @@ namespace Render {
     RGBindItem RGBindItem::StorageBuffer(RGBufferView* bufferView)
     {
         RGBindItem result;
-        result.type == RHI::BindingType::UNIFORM_BUFFER;
+        result.type = RHI::BindingType::UNIFORM_BUFFER;
         result.bufferView = bufferView;
         return result;
     }
@@ -608,7 +434,7 @@ namespace Render {
     std::pair<std::string, RGBindItem> RGBindItem::Sampler(std::string name, RGSampler* sampler)
     {
         RGBindItem result;
-        result.type == RHI::BindingType::SAMPLER;
+        result.type = RHI::BindingType::SAMPLER;
         result.sampler = sampler;
         return std::make_pair(std::move(name), result);
     }
@@ -616,7 +442,7 @@ namespace Render {
     std::pair<std::string, RGBindItem> RGBindItem::Texture(std::string name, RGTextureView* textureView)
     {
         RGBindItem result;
-        result.type == RHI::BindingType::TEXTURE;
+        result.type = RHI::BindingType::TEXTURE;
         result.textureView = textureView;
         return std::make_pair(std::move(name), result);
     }
@@ -624,7 +450,7 @@ namespace Render {
     std::pair<std::string, RGBindItem> RGBindItem::StorageTexture(std::string name, RGTextureView* textureView)
     {
         RGBindItem result;
-        result.type == RHI::BindingType::STORAGE_TEXTURE;
+        result.type = RHI::BindingType::STORAGE_TEXTURE;
         result.textureView = textureView;
         return std::make_pair(std::move(name), result);
     }
@@ -632,7 +458,7 @@ namespace Render {
     std::pair<std::string, RGBindItem> RGBindItem::UniformBuffer(std::string name, RGBufferView* bufferView)
     {
         RGBindItem result;
-        result.type == RHI::BindingType::UNIFORM_BUFFER;
+        result.type = RHI::BindingType::UNIFORM_BUFFER;
         result.bufferView = bufferView;
         return std::make_pair(std::move(name), result);
     }
@@ -640,7 +466,7 @@ namespace Render {
     std::pair<std::string, RGBindItem> RGBindItem::StorageBuffer(std::string name, RGBufferView* bufferView)
     {
         RGBindItem result;
-        result.type == RHI::BindingType::STORAGE_BUFFER;
+        result.type = RHI::BindingType::STORAGE_BUFFER;
         result.bufferView = bufferView;
         return std::make_pair(std::move(name), result);
     }
@@ -705,7 +531,7 @@ namespace Render {
     {
         if (rhiHandle == nullptr && !IsExternal()) {
             auto createInfo = GetRHIBufferCreateInfo(desc);
-            rhiHandle = device.CreateBuffer(&createInfo);
+            rhiHandle = device.CreateBuffer(createInfo);
         }
 
         Assert(rhiHandle);
@@ -753,7 +579,7 @@ namespace Render {
     {
         if (rhiHandle == nullptr && !IsExternal()) {
             auto createInfo = GetRHITextureCreateInfo(desc);
-            rhiHandle = device.CreateTexture(&createInfo);
+            rhiHandle = device.CreateTexture(createInfo);
         }
 
         Assert(rhiHandle);
@@ -825,7 +651,7 @@ namespace Render {
             auto createInfo = GetRHIBufferViewCreateInfo(desc);
             Assert(buffer);
             Assert(buffer->GetRHI());
-            rhiHandle = buffer->GetRHI()->CreateBufferView(&createInfo);
+            rhiHandle = buffer->GetRHI()->CreateBufferView(createInfo);
         }
 
         Assert(rhiHandle);
