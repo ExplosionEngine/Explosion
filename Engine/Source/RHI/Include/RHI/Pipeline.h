@@ -93,6 +93,7 @@ namespace RHI {
     };
 
     struct ComputePipelineCreateInfo {
+
         PipelineLayout* layout;
         ShaderModule* computeShader;
     };

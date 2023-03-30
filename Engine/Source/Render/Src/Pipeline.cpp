@@ -4,6 +4,8 @@
 
 #include <Render/Pipeline.h>
 
+#include <utility>
+
 namespace Render {
     class PipelineLayoutCache {
     public:
@@ -88,7 +90,7 @@ namespace Render {
         return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
     }
 
-    size_t ComputePipelineDesc::Hash() const
+    size_t ComputePipelineStateDesc::Hash() const
     {
         std::vector<size_t> values = {
             shaders.computeShader.Hash()
@@ -96,7 +98,7 @@ namespace Render {
         return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
     }
 
-    size_t RasterPipelineDesc::Hash() const
+    size_t RasterPipelineStateDesc::Hash() const
     {
         auto computeVertexAttributeHash = [](const RHI::VertexAttribute& attribute) -> size_t {
             std::vector<size_t> values = {
@@ -156,36 +158,42 @@ namespace Render {
         return rhiHandle.Get();
     }
 
+    BindGroupLayout::BindGroupLayout(BindGroupLayout::BindingMap inBindings)
+        : bindings(std::move(inBindings))
+    {
+        // TODO
+    }
+
+    BindGroupLayout::~BindGroupLayout() = default;
+
+    const RHI::ResourceBinding* BindGroupLayout::GetBinding(const std::string& name, RHI::ShaderStageBits shaderStage) const
+    {
+        auto iter = bindings.find(name);
+        if (iter == bindings.end()) {
+            return nullptr;
+        }
+        const auto& bindingPair = iter->second;
+        return bindingPair.first & shaderStage ? &bindingPair.second : nullptr;
+    }
+
+    RHI::BindGroupLayout* BindGroupLayout::GetRHI() const
+    {
+        return rhiHandle.Get();
+    }
+
     PipelineLayout::PipelineLayout(RHI::Device& inDevice, const PipelineLayoutDesc& inDesc, size_t inHash)
         : hash(inHash)
     {
-        for (auto i = 0; i < inDesc.bindGroupLayoutNum; i++) {
-            const auto& bindGroupLayoutCreateInfo = inDesc.bindGroupLayoutDescs[i];
-            auto iter = rhiBindGroupLayouts.find(bindGroupLayoutCreateInfo.layoutIndex);
-            Assert(iter == rhiBindGroupLayouts.end());
-            rhiBindGroupLayouts[bindGroupLayoutCreateInfo.layoutIndex] = inDevice.CreateBindGroupLayout(bindGroupLayoutCreateInfo);
-        }
-
-        std::vector<RHI::BindGroupLayout*> bindGroupLayouts;
-        bindGroupLayouts.reserve(rhiBindGroupLayouts.size());
-        for (const auto& iter : rhiBindGroupLayouts) {
-            bindGroupLayouts.emplace_back(iter.second.Get());
-        }
-
-        RHI::PipelineLayoutCreateInfo createInfo;
-        createInfo.bindGroupNum = bindGroupLayouts.size();
-        createInfo.bindGroupLayouts = bindGroupLayouts.data();
-        createInfo.pipelineConstantLayoutNum = inDesc.pipelineConstantNum;
-        createInfo.pipelineConstantLayouts = inDesc.pipelineConstantLayoutDescs;
-        rhiHandle = inDevice.CreatePipelineLayout(createInfo);
+        // TODO filter reflection data by index
+        // TODO create bind group layout and pipeline layout
     }
 
     PipelineLayout::~PipelineLayout() = default;
 
-    RHI::BindGroupLayout* PipelineLayout::GetRHIBindGroupLayout(uint32_t layoutIndex) const
+    BindGroupLayout* PipelineLayout::GetBindGroupLayout(uint8_t layoutIndex) const
     {
-        auto iter = rhiBindGroupLayouts.find(layoutIndex);
-        return iter == rhiBindGroupLayouts.end() ? nullptr : iter->second.Get();
+        auto iter = bindGroupLayouts.find(layoutIndex);
+        return iter == bindGroupLayouts.end() ? nullptr : iter->second.get();
     }
 
     RHI::PipelineLayout* PipelineLayout::GetRHI() const
@@ -198,7 +206,7 @@ namespace Render {
         return hash;
     }
 
-    ComputePipeline::ComputePipeline(RHI::Device& inDevice, const ComputePipelineDesc& inDesc, size_t inHash)
+    ComputePipelineState::ComputePipelineState(RHI::Device& inDevice, const ComputePipelineStateDesc& inDesc, size_t inHash)
         : hash(inHash)
     {
         pipelineLayout = PipelineLayoutCache::Get(inDevice).GetLayout(inDesc.shaders);
@@ -209,24 +217,24 @@ namespace Render {
         rhiHandle = inDevice.CreateComputePipeline(createInfo);
     }
 
-    ComputePipeline::~ComputePipeline() = default;
+    ComputePipelineState::~ComputePipelineState() = default;
 
-    PipelineLayout* ComputePipeline::GetPipelineLayout() const
+    PipelineLayout* ComputePipelineState::GetPipelineLayout() const
     {
         return pipelineLayout;
     }
 
-    RHI::ComputePipeline* ComputePipeline::GetRHI() const
+    RHI::ComputePipeline* ComputePipelineState::GetRHI() const
     {
         return rhiHandle.Get();
     }
 
-    size_t ComputePipeline::GetHash() const
+    size_t ComputePipelineState::GetHash() const
     {
         return hash;
     }
 
-    RasterPipeline::RasterPipeline(RHI::Device& inDevice, const RasterPipelineDesc& inDesc, size_t inHash)
+    RasterPipelineState::RasterPipelineState(RHI::Device& inDevice, const RasterPipelineStateDesc& inDesc, size_t inHash)
         : hash(inHash)
     {
         pipelineLayout = PipelineLayoutCache::Get(inDevice).GetLayout(inDesc.shaders);
@@ -246,19 +254,19 @@ namespace Render {
         rhiHandle = inDevice.CreateGraphicsPipeline(createInfo);
     }
 
-    RasterPipeline::~RasterPipeline() = default;
+    RasterPipelineState::~RasterPipelineState() = default;
 
-    PipelineLayout* RasterPipeline::GetPipelineLayout() const
+    PipelineLayout* RasterPipelineState::GetPipelineLayout() const
     {
         return pipelineLayout;
     }
 
-    RHI::GraphicsPipeline* RasterPipeline::GetRHI() const
+    RHI::GraphicsPipeline* RasterPipelineState::GetRHI() const
     {
         return rhiHandle.Get();
     }
 
-    size_t RasterPipeline::GetHash() const
+    size_t RasterPipelineState::GetHash() const
     {
         return hash;
     }
@@ -315,22 +323,22 @@ namespace Render {
         rasterPipelines.clear();
     }
 
-    ComputePipeline* PipelineCache::GetPipeline(const ComputePipelineDesc& desc)
+    ComputePipelineState* PipelineCache::GetPipeline(const ComputePipelineStateDesc& desc)
     {
         auto hash = desc.Hash();
         auto iter = computePipelines.find(hash);
         if (iter == computePipelines.end()) {
-            computePipelines[hash] = std::unique_ptr<ComputePipeline>(new ComputePipeline(device, desc, hash));
+            computePipelines[hash] = std::unique_ptr<ComputePipelineState>(new ComputePipelineState(device, desc, hash));
         }
         return computePipelines[hash].get();
     }
 
-    RasterPipeline* PipelineCache::GetPipeline(const RasterPipelineDesc& desc)
+    RasterPipelineState* PipelineCache::GetPipeline(const RasterPipelineStateDesc& desc)
     {
         auto hash = desc.Hash();
         auto iter = rasterPipelines.find(hash);
         if (iter == rasterPipelines.end()) {
-            rasterPipelines[hash] = std::unique_ptr<RasterPipeline>(new RasterPipeline(device, desc, hash));
+            rasterPipelines[hash] = std::unique_ptr<RasterPipelineState>(new RasterPipelineState(device, desc, hash));
         }
         return rasterPipelines[hash].get();
     }

@@ -15,6 +15,7 @@
 #include <Common/Hash.h>
 #include <Common/Debug.h>
 #include <RHI/RHI.h>
+#include <Render/Pipeline.h>
 
 namespace Render {
     class RGResource;
@@ -22,6 +23,7 @@ namespace Render {
     class RGTexture;
     class RGBufferView;
     class RGTextureView;
+    class RGSampler;
     class RGPass;
     class RGPassBuilder;
     class RGCopyPassBuilder;
@@ -34,6 +36,7 @@ namespace Render {
         BUFFER_VIEW,
         TEXTURE_VIEW,
         SAMPLER,
+        BIND_GROUP,
         MAX
     };
 
@@ -75,37 +78,6 @@ namespace Render {
 
         static RGResTransition Buffer(RGBuffer* inBuffer, RGBufferState inBeforeState, RGBufferState inAfterState);
         static RGResTransition Texture(RGTexture* inTexture, RGTextureState inBeforeState, RGTextureState inAfterState);
-    };
-
-    class RGResource {
-    public:
-        virtual ~RGResource();
-
-        bool IsExternal() const;
-        bool IsCulled() const;
-        const std::string& GetName() const;
-        bool CanAccessRHI() const;
-        RGResource* GetParent() const;
-
-    protected:
-        RGResource(std::string inName, bool inIsExternal, RGResource* inParent = nullptr);
-
-        virtual RGResourceType GetType() = 0;
-        virtual void Devirtualize(RHI::Device& device) = 0;
-        virtual void Destroy() = 0;
-
-        void SetRHIAccess(bool inRhiAccess);
-
-    private:
-        friend class RenderGraph;
-
-        void SetCulled(bool inCulled);
-
-        std::string name;
-        RGResource* parent;
-        bool isExternal;
-        bool rhiAccess;
-        bool isCulled;
     };
 
     struct RGBufferDesc {
@@ -174,6 +146,41 @@ namespace Render {
         static std::pair<RGTexture*, RGTextureViewDesc> Create3D(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = UINT8_MAX, uint8_t mipLevelNum = UINT8_MAX);
     };
 
+    struct RGBindItem {
+        RHI::BindingType type;
+        union {
+            RGSampler* sampler;
+            RGTextureView* textureView;
+            RGBufferView* bufferView;
+        };
+
+        static RGBindItem Sampler(RGSampler* sampler);
+        static RGBindItem Texture(RGTextureView* textureView);
+        static RGBindItem StorageTexture(RGTextureView* textureView);
+        static RGBindItem UniformBuffer(RGBufferView* bufferView);
+        static RGBindItem StorageBuffer(RGBufferView* bufferView);
+        static std::pair<std::string, RGBindItem> Sampler(std::string name, RGSampler* sampler);
+        static std::pair<std::string, RGBindItem> Texture(std::string name, RGTextureView* textureView);
+        static std::pair<std::string, RGBindItem> StorageTexture(std::string name, RGTextureView* textureView);
+        static std::pair<std::string, RGBindItem> UniformBuffer(std::string name, RGBufferView* bufferView);
+        static std::pair<std::string, RGBindItem> StorageBuffer(std::string name, RGBufferView* bufferView);
+    };
+
+    struct RGBindGroupDesc {
+        RHI::BindGroupLayout* layout;
+        std::vector<std::pair<std::string, RGBindItem>> items;
+
+        template <typename... B>
+        static RGBindGroupDesc Create(BindGroupLayout* layout, B&&... items)
+        {
+            RGBindGroupDesc result;
+            result.layout = layout->GetRHI();
+            result.items.reserve(sizeof...(items));
+            std::initializer_list<int> { ([&]() -> void { result.items.emplace_back(std::forward<B>(items)); }(), 0)... };
+            return result;
+        }
+    };
+
     struct RGColorAttachment {
         RGTextureView* view;
         RGTextureView* resolve;
@@ -204,6 +211,37 @@ namespace Render {
         std::optional<RGDepthStencilAttachment> depthStencilAttachment;
     };
 
+    class RGResource {
+    public:
+        virtual ~RGResource();
+
+        bool IsExternal() const;
+        bool IsCulled() const;
+        const std::string& GetName() const;
+        bool CanAccessRHI() const;
+        RGResource* GetParent() const;
+        virtual RGResourceType GetType() = 0;
+
+    protected:
+        RGResource(std::string inName, bool inIsExternal, RGResource* inParent = nullptr);
+
+        virtual void Devirtualize(RHI::Device& device) = 0;
+        virtual void Destroy() = 0;
+
+        void SetRHIAccess(bool inRhiAccess);
+
+    private:
+        friend class RenderGraph;
+
+        void SetCulled(bool inCulled);
+
+        std::string name;
+        RGResource* parent;
+        bool isExternal;
+        bool rhiAccess;
+        bool isCulled;
+    };
+
     class RGBuffer : public RGResource {
     public:
         RGBuffer(std::string inName, const RGBufferDesc& inDesc);
@@ -214,6 +252,7 @@ namespace Render {
         void Devirtualize(RHI::Device& device) override;
         void Destroy() override;
         RHI::Buffer* GetRHI() const;
+        // TODO support external desc register
         const RGBufferDesc& GetDesc() const;
 
     private:
@@ -231,6 +270,7 @@ namespace Render {
         void Devirtualize(RHI::Device& device) override;
         void Destroy() override;
         RHI::Texture* GetRHI() const;
+        // TODO support external desc register
         const RGTextureDesc& GetDesc() const;
 
     private:
@@ -240,10 +280,10 @@ namespace Render {
 
     class RGBufferView : public RGResource {
     public:
+        explicit RGBufferView(const std::pair<RGBuffer*, RGBufferViewDesc>& bufferAndViewDesc);
         RGBufferView(RGBuffer* inBuffer, const RGBufferViewDesc& inDesc);
-        RGBufferView(const std::pair<RGBuffer*, RGBufferViewDesc>& bufferAndViewDesc);
-        RGBufferView(std::string inName, RGBuffer* inBuffer, const RGBufferViewDesc& inDesc);
         RGBufferView(std::string inName, const std::pair<RGBuffer*, RGBufferViewDesc>& bufferAndViewDesc);
+        RGBufferView(std::string inName, RGBuffer* inBuffer, const RGBufferViewDesc& inDesc);
         RGBufferView(std::string inName, RHI::BufferView* inBufferView);
         ~RGBufferView() override;
 
@@ -252,6 +292,7 @@ namespace Render {
         void Destroy() override;
         RHI::BufferView* GetRHI() const;
         RGBuffer* GetBuffer() const;
+        // TODO support external desc register
         const RGBufferViewDesc& GetDesc() const;
 
     private:
@@ -262,10 +303,10 @@ namespace Render {
 
     class RGTextureView : public RGResource {
     public:
+        explicit RGTextureView(const std::pair<RGTexture*, RGTextureViewDesc>& textureAndViewDesc);
         RGTextureView(RGTexture* inTexture, const RGTextureViewDesc& inDesc);
-        RGTextureView(const std::pair<RGTexture*, RGTextureViewDesc>& textureAndViewDesc);
-        RGTextureView(std::string inName, RGTexture* inTexture, const RGTextureViewDesc& inDesc);
         RGTextureView(std::string inName,const std::pair<RGTexture*, RGTextureViewDesc>& textureAndViewDesc);
+        RGTextureView(std::string inName, RGTexture* inTexture, const RGTextureViewDesc& inDesc);
         RGTextureView(std::string inName, RHI::TextureView* inTextureView);
         ~RGTextureView() override;
 
@@ -274,12 +315,33 @@ namespace Render {
         void Destroy() override;
         RHI::TextureView* GetRHI() const;
         RGTexture* GetTexture() const;
+        // TODO support external desc register
         const RGTextureViewDesc& GetDesc() const;
 
     private:
         RGTextureViewDesc desc;
         RGTexture* texture;
         RHI::TextureView* rhiHandle;
+    };
+
+    class RGBindGroup : public RGResource {
+    public:
+        explicit RGBindGroup(RGBindGroupDesc inDesc);
+        explicit RGBindGroup(RHI::BindGroup* inBindGroup);
+        RGBindGroup(std::string inName, RGBindGroupDesc inDesc);
+        RGBindGroup(std::string inName, RHI::BindGroup* inBindGroup);
+        ~RGBindGroup() override;
+
+        RGResourceType GetType() override;
+        void Devirtualize(RHI::Device &device) override;
+        void Destroy() override;
+        RHI::BindGroup* GetRHI() const;
+        // TODO support external desc register
+        const RGBindGroupDesc& GetDesc() const;
+
+    private:
+        RGBindGroupDesc desc;
+        RHI::BindGroup* rhiHandle;
     };
 
     class RGPass {
@@ -489,6 +551,48 @@ namespace Render {
         RGPassBuilder(RenderGraph& inGraph, RGPass& inPass);
         virtual ~RGPassBuilder();
 
+        template <typename... Args>
+        RGBuffer* CreateBuffer(Args&&... args)
+        {
+            return Create<RGBuffer>(std::forward<Args>(args)...);
+        }
+
+        template <typename... Args>
+        RGTexture* CreateTexture(Args&&... args)
+        {
+            return Create<RGTexture>(std::forward<Args>(args)...);
+        }
+
+        template <typename... Args>
+        RGBufferView* CreateBufferView(Args&&... args)
+        {
+            return Create<RGBufferView>(std::forward<Args>(args)...);
+        }
+
+        template <typename... Args>
+        RGTextureView* CreateTextureView(Args&&... args)
+        {
+            return Create<RGTextureView>(std::forward<Args>(args)...);
+        }
+
+        template <typename... Args>
+        RGSampler* CreateSampler(Args&&... args)
+        {
+            return Create<RGSampler>(std::forward<Args>(args)...);
+        }
+
+        template <typename... Args>
+        RGBindGroup* AllocateBindGroup(Args&&... args)
+        {
+            RGBindGroup* bindGroup = Create<RGBindGroup>(std::forward<Args>(args)...);
+            MarkDependenciesFromBindGroup(bindGroup);
+            return bindGroup;
+        }
+
+        void MarkAsConsumed(RGResource* res);
+        RHI::Device& GetDevice();
+
+    protected:
         template <typename R, typename... Args>
         R* Create(Args&&... args)
         {
@@ -496,21 +600,11 @@ namespace Render {
             return static_cast<R*>(graph.resources.back().get());
         }
 
-        template <typename R, typename... Args>
-        R* RegisterExternal(Args&&... args)
-        {
-            graph.resources.emplace_back(new R(std::forward<Args>(args)...));
-            return static_cast<R*>(graph.resources.back().get());
-        }
-
-        RHI::Device& GetDevice()
-        {
-            return graph.GetDevice();
-        }
-
-    protected:
         RenderGraph& graph;
         RGPass& pass;
+
+    private:
+        void MarkDependenciesFromBindGroup(RGBindGroup* bindGroup);
     };
 
     class RGCopyPassBuilder : public RGPassBuilder {

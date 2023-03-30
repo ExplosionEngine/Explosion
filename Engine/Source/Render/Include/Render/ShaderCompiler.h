@@ -9,6 +9,7 @@
 
 #include <RHI/Common.h>
 #include <RHI/BindGroupLayout.h>
+#include <Render/Shader.h>
 #include <Common/Concurrent.h>
 
 namespace Render {
@@ -30,10 +31,6 @@ namespace Render {
         bool withDebugInfo = false;
         std::vector<std::string> definitions;
         std::vector<std::string> includePaths;
-    };
-
-    struct ShaderReflectionData {
-        std::unordered_map<std::string, RHI::BindGroupLayoutEntry> resourceBindings;
     };
 
     struct ShaderCompileOutput {

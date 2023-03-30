@@ -16,11 +16,7 @@ namespace RHI {
     class TextureView;
 
     struct BindGroupEntry {
-        BindingType type;
-        union {
-            HlslBinding hlsl;
-            GlslBinding glsl;
-        } binding;
+        ResourceBinding binding;
         union {
             Sampler* sampler;
             TextureView* textureView;
