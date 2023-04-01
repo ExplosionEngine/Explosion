@@ -13,9 +13,18 @@ namespace Render {
         ~PipelineLayoutCache();
 
         void Invalidate();
-        PipelineLayout* GetLayout(const PipelineLayoutDesc& desc);
-        PipelineLayout* GetLayout(const ComputePipelineShaderSet& shaders);
-        PipelineLayout* GetLayout(const RasterPipelineShaderSet& shaders);
+
+        template <typename D>
+        requires std::is_same_v<D, ComputePipelineLayoutDesc> || std::is_same_v<D, RasterPipelineLayoutDesc>
+        PipelineLayout* GetLayout(const D& desc)
+        {
+            auto hash = desc.Hash();
+            auto iter = pipelineLayouts.find(hash);
+            if (iter == pipelineLayouts.end()) {
+                pipelineLayouts[hash] = std::unique_ptr<PipelineLayout>(new PipelineLayout(device, desc, hash));
+            }
+            return pipelineLayouts[hash].get();
+        }
 
     private:
         explicit PipelineLayoutCache(RHI::Device& inDevice);
@@ -46,56 +55,42 @@ namespace Render {
     {
         pipelineLayouts.clear();
     }
-
-    PipelineLayout* PipelineLayoutCache::GetLayout(const PipelineLayoutDesc& desc)
-    {
-        auto hash = desc.Hash();
-        auto iter = pipelineLayouts.find(hash);
-        if (iter == pipelineLayouts.end()) {
-            pipelineLayouts[hash] = std::unique_ptr<PipelineLayout>(new PipelineLayout(device, desc, hash));
-        }
-        return pipelineLayouts[hash].get();
-    }
-
-    PipelineLayout* PipelineLayoutCache::GetLayout(const ComputePipelineShaderSet& shaders)
-    {
-        // TODO
-        return nullptr;
-    }
-
-    PipelineLayout* PipelineLayoutCache::GetLayout(const RasterPipelineShaderSet& shaders)
-    {
-        // TODO
-        return nullptr;
-    }
 }
 
 namespace Render {
-    size_t PipelineLayoutDesc::Hash() const
+    size_t ComputePipelineShaderSet::Hash() const
     {
-        auto computeBindGroupLayoutHash = [](const BindGroupLayoutDesc& desc) -> size_t {
-            std::vector<size_t> values = {
-                Common::HashUtils::CityHash(&desc.layoutIndex, sizeof(desc.layoutIndex)),
-                Common::HashUtils::CityHash(desc.entries, desc.entryNum * sizeof(RHI::BindGroupLayoutEntry))
-            };
-            return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        std::vector<size_t> values = {
+            computeShader.Hash()
         };
-
-        std::vector<size_t> values;
-        values.reserve(bindGroupLayoutNum + 1);
-        for (auto i = 0; i < bindGroupLayoutNum; i++) {
-            values.emplace_back(computeBindGroupLayoutHash(bindGroupLayoutDescs[i]));
-        }
-        values.emplace_back(Common::HashUtils::CityHash(pipelineConstantLayoutDescs, pipelineConstantNum * sizeof(PipelineConstantLayoutDesc)));
         return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+    }
+
+    size_t RasterPipelineShaderSet::Hash() const
+    {
+        std::vector<size_t> values = {
+            vertexShader.Hash(),
+            pixelShader.Hash(),
+            geometryShader.Hash(),
+            domainShader.Hash(),
+            hullShader.Hash()
+        };
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+    }
+
+    size_t ComputePipelineLayoutDesc::Hash() const
+    {
+        return shaders.Hash();
+    }
+
+    size_t RasterPipelineLayoutDesc::Hash() const
+    {
+        return shaders.Hash();
     }
 
     size_t ComputePipelineStateDesc::Hash() const
     {
-        std::vector<size_t> values = {
-            shaders.computeShader.Hash()
-        };
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return shaders.Hash();
     }
 
     size_t RasterPipelineStateDesc::Hash() const
@@ -132,11 +127,7 @@ namespace Render {
         };
 
         std::vector<size_t> values = {
-            shaders.vertexShader.Hash(),
-            shaders.pixelShader.Hash(),
-            shaders.geometryShader.Hash(),
-            shaders.domainShader.Hash(),
-            shaders.hullShader.Hash(),
+            shaders.Hash(),
             computeVertexStateHash(vertexState),
             Common::HashUtils::CityHash(&primitiveState, sizeof(PrimitiveState)),
             Common::HashUtils::CityHash(&depthStencilState, sizeof(DepthStencilState)),
@@ -158,10 +149,20 @@ namespace Render {
         return rhiHandle.Get();
     }
 
-    BindGroupLayout::BindGroupLayout(BindGroupLayout::BindingMap inBindings)
-        : bindings(std::move(inBindings))
+    BindGroupLayout::BindGroupLayout(RHI::Device& inDevice, const BindGroupLayoutDesc& inDesc)
+        : bindings(inDesc.binding)
     {
-        // TODO
+        std::vector<RHI::BindGroupLayoutEntry> layoutEntries;
+        layoutEntries.reserve(bindings.size());
+        for (const auto& binding : bindings) {
+            layoutEntries.emplace_back(binding.second.second, binding.second.first);
+        }
+
+        RHI::BindGroupLayoutCreateInfo createInfo;
+        createInfo.layoutIndex = inDesc.layoutIndex;
+        createInfo.entries = layoutEntries.data();
+        createInfo.entryNum = layoutEntries.size();
+        rhiHandle = inDevice.CreateBindGroupLayout(createInfo);
     }
 
     BindGroupLayout::~BindGroupLayout() = default;
@@ -181,11 +182,70 @@ namespace Render {
         return rhiHandle.Get();
     }
 
-    PipelineLayout::PipelineLayout(RHI::Device& inDevice, const PipelineLayoutDesc& inDesc, size_t inHash)
+    PipelineLayout::PipelineLayout(RHI::Device& inDevice, const ComputePipelineLayoutDesc& inDesc, size_t inHash)
         : hash(inHash)
     {
-        // TODO filter reflection data by index
-        // TODO create bind group layout and pipeline layout
+        std::vector<ShaderInstancePack> shaderInstancePacks = {
+            { RHI::ShaderStageBits::S_COMPUTE, &inDesc.shaders.computeShader }
+        };
+        CreateBindGroupLayout(inDevice, shaderInstancePacks);
+        CreateRHIPipelineLayout(inDevice);
+    }
+
+    PipelineLayout::PipelineLayout(RHI::Device& inDevice, const RasterPipelineLayoutDesc& inDesc, size_t inHash)
+        : hash(inHash)
+    {
+        std::vector<ShaderInstancePack> shaderInstancePacks = {
+            { RHI::ShaderStageBits::S_VERTEX, &inDesc.shaders.vertexShader },
+            { RHI::ShaderStageBits::S_PIXEL, &inDesc.shaders.pixelShader },
+            { RHI::ShaderStageBits::S_GEOMETRY, &inDesc.shaders.geometryShader },
+            { RHI::ShaderStageBits::S_DOMAIN, &inDesc.shaders.domainShader },
+            { RHI::ShaderStageBits::S_HULL, &inDesc.shaders.hullShader }
+        };
+        CreateBindGroupLayout(inDevice, shaderInstancePacks);
+        CreateRHIPipelineLayout(inDevice);
+    }
+
+    void PipelineLayout::CreateBindGroupLayout(RHI::Device& device, const std::vector<ShaderInstancePack>& shaderInstancePack)
+    {
+        std::unordered_map<uint8_t, BindingMap> layoutBindingMaps;
+        for (const auto& pack : shaderInstancePack) {
+            const auto& resourceBindings = pack.instance->reflectionData.resourceBindings;
+            for (const auto& resourceBinding : resourceBindings) {
+                auto layoutIndex = resourceBinding.second.first;
+                const auto& name = resourceBinding.first;
+                const auto& binding = resourceBinding.second.second;
+
+                if (!layoutBindingMaps.contains(layoutIndex)) {
+                    layoutBindingMaps[layoutIndex] = {};
+                }
+                auto& layoutBindingMap = layoutBindingMaps[layoutIndex];
+                layoutBindingMap[name] = std::make_pair(pack.stage, binding);
+            }
+        }
+
+        for (const auto& iter : layoutBindingMaps) {
+            BindGroupLayoutDesc desc;
+            desc.layoutIndex = iter.first;
+            desc.binding = iter.second;
+            bindGroupLayouts[iter.first] = std::unique_ptr<BindGroupLayout>(new BindGroupLayout(device, desc));
+        }
+    }
+
+    void PipelineLayout::CreateRHIPipelineLayout(RHI::Device& device)
+    {
+        std::vector<BindGroupLayout*> tBindGroupLayouts;
+        tBindGroupLayouts.reserve(bindGroupLayouts.size());
+        for (const auto& iter : bindGroupLayouts) {
+            tBindGroupLayouts.emplace_back(iter.second.get());
+        }
+
+        RHI::PipelineLayoutCreateInfo createInfo;
+        createInfo.bindGroupLayoutNum = tBindGroupLayouts.size();
+        createInfo.bindGroupLayouts = reinterpret_cast<const RHI::BindGroupLayout* const*>(tBindGroupLayouts.data());
+        createInfo.pipelineConstantLayoutNum = 0;
+        createInfo.pipelineConstantLayouts = nullptr;
+        rhiHandle = device.CreatePipelineLayout(createInfo);
     }
 
     PipelineLayout::~PipelineLayout() = default;
@@ -209,7 +269,8 @@ namespace Render {
     ComputePipelineState::ComputePipelineState(RHI::Device& inDevice, const ComputePipelineStateDesc& inDesc, size_t inHash)
         : hash(inHash)
     {
-        pipelineLayout = PipelineLayoutCache::Get(inDevice).GetLayout(inDesc.shaders);
+        ComputePipelineLayoutDesc desc = { inDesc.shaders };
+        pipelineLayout = PipelineLayoutCache::Get(inDevice).GetLayout(desc);
 
         RHI::ComputePipelineCreateInfo createInfo;
         createInfo.layout = pipelineLayout->GetRHI();
@@ -237,7 +298,8 @@ namespace Render {
     RasterPipelineState::RasterPipelineState(RHI::Device& inDevice, const RasterPipelineStateDesc& inDesc, size_t inHash)
         : hash(inHash)
     {
-        pipelineLayout = PipelineLayoutCache::Get(inDevice).GetLayout(inDesc.shaders);
+        RasterPipelineLayoutDesc desc = { inDesc.shaders };
+        pipelineLayout = PipelineLayoutCache::Get(inDevice).GetLayout(desc);
 
         RHI::GraphicsPipelineCreateInfo createInfo;
         createInfo.layout = pipelineLayout->GetRHI();
