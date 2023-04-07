@@ -53,8 +53,7 @@ namespace RHI::DirectX12 {
                 if (!t.has_value()) {
                     return;
                 }
-                Assert(t.value().first == binding.second.first);
-                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second.second);
+                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second);
             });
         }
     }
@@ -66,11 +65,17 @@ namespace RHI::DirectX12 {
 
     void DX12ComputePassCommandEncoder::EndPass()
     {
+    }
+
+    void DX12ComputePassCommandEncoder::Destroy()
+    {
         delete this;
     }
 
     DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo) : GraphicsPassCommandEncoder(), device(device), commandBuffer(commandBuffer), graphicsPipeline(nullptr)
     {
+        graphicsPipeline = dynamic_cast<DX12GraphicsPipeline*>(beginInfo->pipeline);
+
         // set render targets
         std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rtvHandles(beginInfo->colorAttachmentNum);
         for (auto i = 0; i < rtvHandles.size(); i++) {
@@ -110,10 +115,12 @@ namespace RHI::DirectX12 {
     {
         auto* bindGroup = dynamic_cast<DX12BindGroup*>(tBindGroup);
         auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
+        Assert(layoutIndex == bindGroupLayout.GetLayoutIndex());
+
+        Assert(graphicsPipeline);
         auto& pipelineLayout = graphicsPipeline->GetPipelineLayout();
 
-        Assert(layoutIndex == bindGroupLayout.GetLayoutIndex());
-        Assert(graphicsPipeline);
+        commandBuffer.GetDX12GraphicsCommandList()->SetDescriptorHeaps(bindGroup->GetDX12DescriptorHeaps().size(), bindGroup->GetDX12DescriptorHeaps().data());
 
         const auto& bindings= bindGroup->GetBindings();
         for (const auto& binding : bindings) {
@@ -122,8 +129,7 @@ namespace RHI::DirectX12 {
                 if (!t.has_value()) {
                     return;
                 }
-                Assert(t.value().first == binding.second.first);
-                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second.second);
+                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second);
             });
         }
     }
@@ -179,6 +185,10 @@ namespace RHI::DirectX12 {
     }
 
     void DX12GraphicsPassCommandEncoder::EndPass()
+    {
+    }
+
+    void DX12GraphicsPassCommandEncoder::Destroy()
     {
         delete this;
     }
@@ -269,9 +279,17 @@ namespace RHI::DirectX12 {
         return result;
     }
 
+    void DX12CommandEncoder::SwapChainSync(SwapChain* swapChain)
+    {
+    }
+
     void DX12CommandEncoder::End()
     {
         commandBuffer.GetDX12GraphicsCommandList()->Close();
+    }
+
+    void DX12CommandEncoder::Destroy()
+    {
         delete this;
     }
 }

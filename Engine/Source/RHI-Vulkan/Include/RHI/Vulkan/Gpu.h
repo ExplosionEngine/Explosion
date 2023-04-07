@@ -18,7 +18,7 @@ namespace RHI::Vulkan {
         ~VKGpu() override;
 
         GpuProperty GetProperty() override;
-        Device* RequestDevice(const DeviceCreateInfo* createInfo) override;
+        Device* RequestDevice(const DeviceCreateInfo& createInfo) override;
 
         const vk::PhysicalDevice& GetVkPhysicalDevice() const;
 

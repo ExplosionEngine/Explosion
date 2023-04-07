@@ -8,9 +8,21 @@
 #include <RHI/Common.h>
 
 namespace RHI {
+    struct HlslBinding {
+        HlslBindingRangeType rangeType;
+        uint8_t index;
+    };
+
+    struct GlslBinding {
+        uint8_t index;
+    };
+
     struct BindGroupLayoutEntry {
-        uint8_t binding;
         BindingType type;
+        union {
+            HlslBinding hlsl;
+            GlslBinding glsl;
+        } binding;
         ShaderStageFlags shaderVisibility;
     };
 
@@ -28,6 +40,6 @@ namespace RHI {
         virtual void Destroy() = 0;
 
     protected:
-        explicit BindGroupLayout(const BindGroupLayoutCreateInfo* createInfo);
+        explicit BindGroupLayout(const BindGroupLayoutCreateInfo& createInfo);
     };
 }

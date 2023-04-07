@@ -6,6 +6,7 @@
 
 #if PLATFORM_WINDOWS
 #include <Windows.h>
+#include <dxc/d3d12shader.h>
 #undef min
 #undef max
 #else
@@ -23,18 +24,19 @@ using namespace Microsoft::WRL;
 #define ComPtrGet(name) name
 #endif
 
+#include <spirv_cross/spirv_cross.hpp>
+#include <spirv_cross/spirv_msl.hpp>
+
 #include <Render/ShaderCompiler.h>
 #include <Common/Debug.h>
 #include <Common/String.h>
-#include <spirv_cross/spirv_cross.hpp>
-#include <spirv_cross/spirv_msl.hpp>
 
 namespace Render {
     static std::wstring GetDXCTargetProfile(RHI::ShaderStageBits stage)
     {
         static const std::unordered_map<RHI::ShaderStageBits, std::wstring> map = {
-            { RHI::ShaderStageBits::VERTEX, L"vs" },
-            { RHI::ShaderStageBits::FRAGMENT, L"ps" },
+            { RHI::ShaderStageBits::S_VERTEX, L"vs" },
+            { RHI::ShaderStageBits::S_PIXEL, L"ps" },
             // TODO
         };
         auto iter = map.find(stage);
@@ -60,9 +62,48 @@ namespace Render {
         return result;
     }
 
-    static std::vector<std::wstring> GetDefinitions(const ShaderCompileOptions& options)
+    static std::vector<std::wstring> GetEntryPointArguments(const ShaderCompileInput& input)
+    {
+        return {
+            L"-E",
+            Common::StringUtils::ToWideString(input.entryPoint)
+        };
+    }
+
+    static std::vector<std::wstring> GetTargetProfileArguments(const ShaderCompileInput& input)
+    {
+        return {
+            L"-T",
+            GetDXCTargetProfile(input.stage)
+        };
+    }
+
+    static std::vector<std::wstring> GetIncludePathArguments(const ShaderCompileOptions& options)
     {
         std::vector<std::wstring> result;
+        for (const auto& includePath : options.includePaths) {
+            result.emplace_back(L"-I");
+            result.emplace_back(Common::StringUtils::ToWideString(includePath));
+        }
+        return result;
+    }
+
+    static std::vector<std::wstring> GetInternalPredefinition(const ShaderCompileOptions& options)
+    {
+        std::vector<std::wstring> result { L"-D" };
+        auto def = options.byteCodeType == Render::ShaderByteCodeType::SPRIV ? std::wstring{L"VULKAN=1"} : std::wstring{L"VULKAN=0"};
+        result.emplace_back(def);
+
+        return result;
+    }
+
+    static std::vector<std::wstring> GetDefinitionArguments(const ShaderCompileOptions& options)
+    {
+        std::vector<std::wstring> result;
+
+        auto preDef = GetInternalPredefinition(options);
+        result.insert(result.end(), preDef.begin(), preDef.end());
+
         for (const auto& definition : options.definitions) {
             result.emplace_back(L"-D");
             result.emplace_back(Common::StringUtils::ToWideString(definition));
@@ -70,11 +111,26 @@ namespace Render {
         return result;
     }
 
-    static void FillDefinitionsToDXCArguments(std::vector<LPCWSTR>& result, const std::vector<std::wstring>& definitions)
+    static void FillArguments(std::vector<LPCWSTR>& result, const std::vector<std::wstring>& arguments)
     {
-        for (const auto& definition : definitions) {
-            result.emplace_back(definition.c_str());
+        for (const auto& argument : arguments) {
+            result.emplace_back(argument.c_str());
         }
+    }
+
+#if PLATFORM_WINDOWS
+    static void BuildHlslReflectionData(ComPtr<ID3D12ShaderReflection>& shaderReflection, ShaderReflectionData& result)
+    {
+        D3D12_SHADER_DESC shaderDesc;
+        shaderReflection->GetDesc(&shaderDesc);
+
+        // TODO
+    }
+#endif
+
+    static void BuildGlslReflectionData(const spirv_cross::Compiler& compiler, ShaderReflectionData& result)
+    {
+        // TODO
     }
 
     static void CompileDxilOrSpriv(
@@ -85,53 +141,77 @@ namespace Render {
         ComPtr<IDxcLibrary> library;
         Assert(SUCCEEDED(DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library))));
 
-        ComPtr<IDxcCompiler> compiler;
+        ComPtr<IDxcCompiler3> compiler;
         Assert(SUCCEEDED(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler))));
 
         ComPtr<IDxcUtils> utils;
         Assert(SUCCEEDED(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils))));
 
+        ComPtr<IDxcIncludeHandler> includeHandler;
+        Assert(SUCCEEDED(utils->CreateDefaultIncludeHandler(&includeHandler)));
+
         ComPtr<IDxcBlobEncoding> source;
         utils->CreateBlobFromPinned(input.source.c_str(), std::strlen(input.source.c_str()), CP_UTF8, &source);
 
         std::vector<LPCWSTR> arguments = GetDXCBaseArguments(options);
-        auto definitions = GetDefinitions(options);
-        FillDefinitionsToDXCArguments(arguments, definitions);
+        auto entryPointArgs = GetEntryPointArguments(input);
+        auto targetProfileArgs = GetTargetProfileArguments(input);
+        auto includePathArgs = GetIncludePathArguments(options);
+        auto definitionArgs = GetDefinitionArguments(options);
+        FillArguments(arguments, entryPointArgs);
+        FillArguments(arguments, targetProfileArgs);
+        FillArguments(arguments, includePathArgs);
+        FillArguments(arguments, definitionArgs);
 
-        ComPtr<IDxcOperationResult> result;
-        HRESULT success = compiler->Compile(
-            ComPtrGet(source),
-            nullptr,
-            Common::StringUtils::ToWideString(input.entryPoint).c_str(),
-            GetDXCTargetProfile(input.stage).c_str(),
+        DxcBuffer sourceBuffer;
+        sourceBuffer.Ptr = source->GetBufferPointer();
+        sourceBuffer.Size = source->GetBufferSize();
+        sourceBuffer.Encoding = 0u;
+
+        ComPtr<IDxcResult> result;
+        const HRESULT operationResult = compiler->Compile(
+            &sourceBuffer,
             arguments.data(),
-            static_cast<uint32_t>(arguments.size()),
-            nullptr,
-            0,
-            nullptr,
-            &result);
+            arguments.size(),
+            ComPtrGet(includeHandler),
+            IID_PPV_ARGS(&result));
 
-        if (SUCCEEDED(success)) {
-            result->GetStatus(&success);
-        }
-        if (FAILED(success)) {
-            ComPtr<IDxcBlobEncoding> errorBlob;
-            Assert(SUCCEEDED(result->GetErrorBuffer(&errorBlob)));
+        ComPtr<IDxcBlobEncoding> errorBlob;
+        Assert(SUCCEEDED(result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errorBlob), nullptr)));
 
+        if (FAILED(operationResult) || errorBlob->GetBufferSize() > 0) {
             output.success = false;
             output.errorInfo.resize(errorBlob->GetBufferSize());
             memcpy(output.errorInfo.data(), errorBlob->GetBufferPointer(), errorBlob->GetBufferSize());
             return;
         }
-        Assert(SUCCEEDED(success));
 
-        ComPtr<IDxcBlob> code;
-        Assert(SUCCEEDED(result->GetResult(&code)));
+        ComPtr<IDxcBlob> codeBlob;
+        Assert(SUCCEEDED(result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&codeBlob), nullptr)));
 
         output.success = true;
-        const auto* codeStart = static_cast<const uint8_t*>(code->GetBufferPointer());
-        const auto* codeEnd = codeStart + code->GetBufferSize();
+        const auto* codeStart = static_cast<const uint8_t*>(codeBlob->GetBufferPointer());
+        const auto* codeEnd = codeStart + codeBlob->GetBufferSize();
         output.byteCode = std::vector<uint8_t>(codeStart, codeEnd);
+
+        if (options.byteCodeType == ShaderByteCodeType::DXIL) {
+#if PLATFORM_WINDOWS
+            ComPtr<IDxcBlob> reflectionBlob;
+            Assert(SUCCEEDED(result->GetOutput(DXC_OUT_REFLECTION, IID_PPV_ARGS(&reflectionBlob), nullptr)));
+
+            DxcBuffer reflectionBuffer;
+            reflectionBuffer.Ptr = reflectionBlob->GetBufferPointer();
+            reflectionBuffer.Size = reflectionBlob->GetBufferSize();
+            reflectionBuffer.Encoding = 0u;
+
+            ComPtr<ID3D12ShaderReflection> shaderReflection;
+            utils->CreateReflection(&reflectionBuffer, IID_PPV_ARGS(&shaderReflection));
+            BuildHlslReflectionData(shaderReflection, output.reflectionData);
+#endif
+        } else {
+            spirv_cross::Compiler sprivCrossCompiler(reinterpret_cast<const uint32_t*>(output.byteCode.data()), output.byteCode.size() * sizeof(uint8_t) / sizeof(uint32_t));
+            BuildGlslReflectionData(sprivCrossCompiler, output.reflectionData);
+        }
     }
 
     static void ConvertSprivToMetalByteCode(

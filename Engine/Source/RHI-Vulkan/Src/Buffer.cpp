@@ -49,7 +49,7 @@ namespace RHI::Vulkan {
         return result;
     }
 
-    VKBuffer::VKBuffer(VKDevice& d, const BufferCreateInfo* createInfo) : Buffer(createInfo), device(d), usages(createInfo->usages)
+    VKBuffer::VKBuffer(VKDevice& d, const BufferCreateInfo& createInfo) : Buffer(createInfo), device(d), usages(createInfo.usages)
     {
         CreateBuffer(createInfo);
         AllocateMemory(createInfo);
@@ -73,7 +73,7 @@ namespace RHI::Vulkan {
         device.GetVkDevice().unmapMemory(vkDeviceMemory);
     }
 
-    BufferView* VKBuffer::CreateBufferView(const BufferViewCreateInfo* createInfo)
+    BufferView* VKBuffer::CreateBufferView(const BufferViewCreateInfo& createInfo)
     {
         return new VKBufferView(*this, createInfo);
     }
@@ -83,17 +83,17 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    void VKBuffer::CreateBuffer(const BufferCreateInfo* createInfo)
+    void VKBuffer::CreateBuffer(const BufferCreateInfo& createInfo)
     {
         vk::BufferCreateInfo bufferInfo = {};
         bufferInfo.setSharingMode(vk::SharingMode::eExclusive)
-            .setUsage(GetVkResourceStates(createInfo->usages))
-            .setSize(createInfo->size);
+            .setUsage(GetVkResourceStates(createInfo.usages))
+            .setSize(createInfo.size);
 
         Assert(device.GetVkDevice().createBuffer(&bufferInfo, nullptr, &vkBuffer) == vk::Result::eSuccess);
     }
 
-    void VKBuffer::AllocateMemory(const BufferCreateInfo* createInfo)
+    void VKBuffer::AllocateMemory(const BufferCreateInfo& createInfo)
     {
         vk::MemoryRequirements memoryRequirements = {};
         device.GetVkDevice().getBufferMemoryRequirements(vkBuffer, &memoryRequirements);
@@ -101,7 +101,7 @@ namespace RHI::Vulkan {
         vk::MemoryAllocateInfo memoryInfo = {};
         memoryInfo.setAllocationSize(memoryRequirements.size)
             .setMemoryTypeIndex(device.GetGpu().FindMemoryType(memoryRequirements.memoryTypeBits,
-                                                                GetVkMemoryType(createInfo->usages)));
+                                                                GetVkMemoryType(createInfo.usages)));
         Assert(device.GetVkDevice().allocateMemory(&memoryInfo, nullptr, &vkDeviceMemory) == vk::Result::eSuccess);
 
         device.GetVkDevice().bindBufferMemory(vkBuffer, vkDeviceMemory, 0);

@@ -13,7 +13,7 @@ namespace RHI::Metal {
     class MTLPipelineLayout : public PipelineLayout {
     public:
         NON_COPYABLE(MTLPipelineLayout)
-        MTLPipelineLayout(MTLDevice& dev, const PipelineLayoutCreateInfo* createInfo);
+        MTLPipelineLayout(MTLDevice& dev, const PipelineLayoutCreateInfo& createInfo);
         ~MTLPipelineLayout() override;
         void Destroy() override;
 

@@ -9,11 +9,11 @@ namespace RHI {
 
     Pipeline::~Pipeline() = default;
 
-    ComputePipeline::ComputePipeline(const ComputePipelineCreateInfo* createInfo) {}
+    ComputePipeline::ComputePipeline(const ComputePipelineCreateInfo& createInfo) {}
 
     ComputePipeline::~ComputePipeline() = default;
 
-    GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) {}
+    GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) {}
 
     GraphicsPipeline::~GraphicsPipeline() = default;
 }

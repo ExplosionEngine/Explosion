@@ -18,7 +18,7 @@ namespace RHI::DirectX12 {
     class DX12ComputePipeline : public ComputePipeline {
     public:
         NON_COPYABLE(DX12ComputePipeline)
-        DX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo* createInfo);
+        DX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo& createInfo);
         ~DX12ComputePipeline() override;
 
         void Destroy() override;
@@ -27,8 +27,8 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12PipelineState>& GetDX12PipelineState();
 
     private:
-        void SavePipelineLayout(const ComputePipelineCreateInfo* createInfo);
-        void CreateDX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo* createInfo);
+        void SavePipelineLayout(const ComputePipelineCreateInfo& createInfo);
+        void CreateDX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo& createInfo);
 
         DX12PipelineLayout* pipelineLayout;
         ComPtr<ID3D12PipelineState> dx12PipelineState;
@@ -37,7 +37,7 @@ namespace RHI::DirectX12 {
     class DX12GraphicsPipeline : public GraphicsPipeline {
     public:
         NON_COPYABLE(DX12GraphicsPipeline)
-        DX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo* createInfo);
+        DX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo& createInfo);
         ~DX12GraphicsPipeline() override;
 
         void Destroy() override;
@@ -46,8 +46,8 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12PipelineState>& GetDX12PipelineState();
 
     private:
-        void SavePipelineLayout(const GraphicsPipelineCreateInfo* createInfo);
-        void CreateDX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo* createInfo);
+        void SavePipelineLayout(const GraphicsPipelineCreateInfo& createInfo);
+        void CreateDX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo& createInfo);
 
         DX12PipelineLayout* pipelineLayout;
         ComPtr<ID3D12PipelineState> dx12PipelineState;

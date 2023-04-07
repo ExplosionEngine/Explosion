@@ -13,7 +13,7 @@ namespace RHI::Metal {
 
     class MTLBufferView : public BufferView {
     public:
-        MTLBufferView(MTLBuffer &buffer, const BufferViewCreateInfo* createInfo);
+        MTLBufferView(MTLBuffer &buffer, const BufferViewCreateInfo& createInfo);
         ~MTLBufferView();
 
         void Destroy() override;

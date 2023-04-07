@@ -5,7 +5,7 @@
 #include <RHI/PipelineLayout.h>
 
 namespace RHI {
-    PipelineLayout::PipelineLayout(const PipelineLayoutCreateInfo* createInfo) {}
+    PipelineLayout::PipelineLayout(const PipelineLayoutCreateInfo& createInfo) {}
 
     PipelineLayout::~PipelineLayout() = default;
 }

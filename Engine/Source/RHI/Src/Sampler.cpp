@@ -5,7 +5,7 @@
 #include <RHI/Sampler.h>
 
 namespace RHI {
-    Sampler::Sampler(const SamplerCreateInfo* createInfo) {}
+    Sampler::Sampler(const SamplerCreateInfo& createInfo) {}
 
     Sampler::~Sampler() = default;
 }

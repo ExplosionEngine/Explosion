@@ -15,4 +15,5 @@ if(APPLE)
     add_subdirectory(RHI-Metal)
 endif ()
 
+add_subdirectory(RHI-Dummy)
 add_subdirectory(RHI-Vulkan)

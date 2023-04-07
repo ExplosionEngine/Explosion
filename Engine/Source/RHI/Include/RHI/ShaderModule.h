@@ -9,7 +9,7 @@
 
 namespace RHI {
     struct ShaderModuleCreateInfo {
-        void* byteCode;
+        const void* byteCode;
         size_t size;
     };
 
@@ -21,6 +21,6 @@ namespace RHI {
         virtual void Destroy() = 0;
 
     protected:
-        explicit ShaderModule(const ShaderModuleCreateInfo* createInfo);
+        explicit ShaderModule(const ShaderModuleCreateInfo& createInfo);
     };
 }

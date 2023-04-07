@@ -12,7 +12,7 @@
 #include <RHI/Vulkan/Common.h>
 
 namespace RHI::Vulkan {
-    VKBindGroup::VKBindGroup(VKDevice& device, const BindGroupCreateInfo* createInfo)
+    VKBindGroup::VKBindGroup(VKDevice& device, const BindGroupCreateInfo& createInfo)
         : BindGroup(createInfo), device(device)
     {
         CreateDescriptorPool(createInfo);
@@ -36,12 +36,12 @@ namespace RHI::Vulkan {
         return descriptorSet;
     }
 
-    void VKBindGroup::CreateDescriptorPool(const BindGroupCreateInfo* createInfo)
+    void VKBindGroup::CreateDescriptorPool(const BindGroupCreateInfo& createInfo)
     {
-        std::vector<vk::DescriptorPoolSize> poolSizes(createInfo->entryNum);
+        std::vector<vk::DescriptorPoolSize> poolSizes(createInfo.entryNum);
 
-        for (auto i = 0; i < createInfo->entryNum; i++) {
-            auto& entry = createInfo->entries[i];
+        for (auto i = 0; i < createInfo.entryNum; i++) {
+            const auto& entry = createInfo.entries[i];
 
             poolSizes[i].setType(VKEnumCast<BindingType, vk::DescriptorType>(entry.type))
                 .setDescriptorCount(1);
@@ -49,15 +49,15 @@ namespace RHI::Vulkan {
 
         vk::DescriptorPoolCreateInfo poolInfo {};
         poolInfo.setPPoolSizes(poolSizes.data())
-            .setPoolSizeCount(createInfo->entryNum)
+            .setPoolSizeCount(createInfo.entryNum)
             .setMaxSets(1);
 
         Assert(device.GetVkDevice().createDescriptorPool(&poolInfo, nullptr, &descriptorPool) == vk::Result::eSuccess);
     }
 
-    void VKBindGroup::CreateDescriptorSet(const BindGroupCreateInfo* createInfo)
+    void VKBindGroup::CreateDescriptorSet(const BindGroupCreateInfo& createInfo)
     {
-        vk::DescriptorSetLayout layout = dynamic_cast<VKBindGroupLayout*>(createInfo->layout)->GetVkDescriptorSetLayout();
+        vk::DescriptorSetLayout layout = dynamic_cast<VKBindGroupLayout*>(createInfo.layout)->GetVkDescriptorSetLayout();
 
         vk::DescriptorSetAllocateInfo allocInfo {};
         allocInfo.setDescriptorSetCount(1)
@@ -66,12 +66,12 @@ namespace RHI::Vulkan {
 
         Assert(device.GetVkDevice().allocateDescriptorSets(&allocInfo, &descriptorSet) == vk::Result::eSuccess);
 
-        std::vector<vk::WriteDescriptorSet> descriptorWrites(createInfo->entryNum);
-        for (int i = 0; i < createInfo->entryNum; i++) {
-            auto& entry = createInfo->entries[i];
+        std::vector<vk::WriteDescriptorSet> descriptorWrites(createInfo.entryNum);
+        for (int i = 0; i < createInfo.entryNum; i++) {
+            const auto& entry = createInfo.entries[i];
 
             descriptorWrites[i].setDstSet(descriptorSet)
-                .setDstBinding(entry.binding)
+                .setDstBinding(entry.binding.glsl.index)
                 .setDescriptorCount(1)
                 .setDescriptorType(VKEnumCast<BindingType, vk::DescriptorType>(entry.type));
 

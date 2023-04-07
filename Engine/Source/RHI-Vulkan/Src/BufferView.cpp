@@ -9,17 +9,17 @@
 namespace RHI::Vulkan {
     static inline bool IsVertexBuffer(BufferUsageFlags bufferUsages)
     {
-        return bufferUsages & BufferUsageBits::VERTEX;
+        return (bufferUsages & BufferUsageBits::VERTEX) != 0;
     }
 
     static inline bool IsIndexBuffer(BufferUsageFlags bufferUsages)
     {
-        return bufferUsages & BufferUsageBits::INDEX;
+        return (bufferUsages & BufferUsageBits::INDEX) != 0;
     }
 }
 
 namespace RHI::Vulkan {
-    VKBufferView::VKBufferView(VKBuffer& buffer, const BufferViewCreateInfo* createInfo)
+    VKBufferView::VKBufferView(VKBuffer& buffer, const BufferViewCreateInfo& createInfo)
         :BufferView(createInfo), buffer(buffer)
     {
         InitializeBufferAttrib(createInfo);
@@ -32,12 +32,12 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    void VKBufferView::InitializeBufferAttrib(const BufferViewCreateInfo* createInfo)
+    void VKBufferView::InitializeBufferAttrib(const BufferViewCreateInfo& createInfo)
     {
         offset = createInfo->offset;
         size   = createInfo->size;
         if (IsIndexBuffer(buffer.GetUsages())) {
-            format = createInfo->index.format;
+            format = createInfo.index.format;
         } else {
             // TODO
             // Uniform buffer

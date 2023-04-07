@@ -7,7 +7,7 @@
 
 namespace RHI::Metal {
 
-    MTLSwapChain::MTLSwapChain(MTLDevice& dev, const SwapChainCreateInfo* createInfo)
+    MTLSwapChain::MTLSwapChain(MTLDevice& dev, const SwapChainCreateInfo& createInfo)
         : SwapChain(createInfo), mtlDevice(dev)
     {
         CreateNativeSwapChain(createInfo);
@@ -56,12 +56,12 @@ namespace RHI::Metal {
 //        [commandBuffer encodeSignalEvent:event value:1];
     }
 
-    void MTLSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo* createInfo)
+    void MTLSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo& createInfo)
     {
-        nativeWindow = static_cast<NSWindow*>(createInfo->window);
+        nativeWindow = static_cast<NSWindow*>(createInfo.window);
         view = [[MetalView alloc] initWithFrame:nativeWindow
                                          device:mtlDevice.GetDevice()];
-        CGSize size = CGSizeMake(createInfo->extent.x, createInfo->extent.y);
+        CGSize size = CGSizeMake(createInfo.extent.x, createInfo.extent.y);
         [view setFrameSize: size];
 //        view.metalLayer.drawableSize = size;
         
@@ -69,11 +69,11 @@ namespace RHI::Metal {
         
         nativeWindow.contentView = view;
 
-        swapChainImageCount = createInfo->textureNum;
-        drawables.resize(createInfo->textureNum);
-        textures.resize(createInfo->textureNum);
-        for (uint32_t i = 0; i < createInfo->textureNum; ++i) {
-            textures[i] = std::make_unique<MTLTexture>(mtlDevice, nullptr);
+        swapChainImageCount = createInfo.textureNum;
+        drawables.resize(createInfo.textureNum);
+        textures.resize(createInfo.textureNum);
+        for (uint32_t i = 0; i < createInfo.textureNum; ++i) {
+            textures[i] = std::make_unique<MTLTexture>(mtlDevice);
         }
 
         event = [mtlDevice.GetDevice() newEvent];

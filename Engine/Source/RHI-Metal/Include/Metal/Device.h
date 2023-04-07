@@ -19,21 +19,21 @@ namespace RHI::Metal {
     public:
         NON_COPYABLE(MTLDevice)
 
-        MTLDevice(MTLGpu& gpu, const DeviceCreateInfo* createInfo);
+        MTLDevice(MTLGpu& gpu, const DeviceCreateInfo& createInfo);
         ~MTLDevice() override;
 
         size_t GetQueueNum(QueueType type) override;
         Queue* GetQueue(QueueType type, size_t index) override;
-        SwapChain* CreateSwapChain(const SwapChainCreateInfo* createInfo) override;
-        Buffer* CreateBuffer(const BufferCreateInfo* createInfo) override;
-        Texture* CreateTexture(const TextureCreateInfo* createInfo) override;
-        Sampler* CreateSampler(const SamplerCreateInfo* createInfo) override { return nullptr; }
-        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo* createInfo) override { return nullptr; }
-        BindGroup* CreateBindGroup(const BindGroupCreateInfo* createInfo) override { return nullptr; }
-        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo* createInfo) override;
-        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo* createInfo) override;
-        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo* createInfo) override { return nullptr; }
-        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo* createInfo) override;
+        SwapChain* CreateSwapChain(const SwapChainCreateInfo& createInfo) override;
+        Buffer* CreateBuffer(const BufferCreateInfo& createInfo) override;
+        Texture* CreateTexture(const TextureCreateInfo& createInfo) override;
+        Sampler* CreateSampler(const SamplerCreateInfo& createInfo) override { return nullptr; }
+        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo) override { return nullptr; }
+        BindGroup* CreateBindGroup(const BindGroupCreateInfo& createInfo) override { return nullptr; }
+        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo) override;
+        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo& createInfo) override;
+        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) override { return nullptr; }
+        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
         Fence* CreateFence() override;
 

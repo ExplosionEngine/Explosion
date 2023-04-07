@@ -113,9 +113,9 @@ namespace RHI::Vulkan {
     VK_ENUM_MAP_END()
 
     VK_ENUM_MAP_BEGIN(ShaderStageBits, vk::ShaderStageFlagBits)
-        VK_ENUM_MAP_ITEM(ShaderStageBits::VERTEX,   vk::ShaderStageFlagBits::eVertex)
-        VK_ENUM_MAP_ITEM(ShaderStageBits::FRAGMENT, vk::ShaderStageFlagBits::eFragment)
-        VK_ENUM_MAP_ITEM(ShaderStageBits::COMPUTE,  vk::ShaderStageFlagBits::eCompute)
+        VK_ENUM_MAP_ITEM(ShaderStageBits::S_VERTEX,   vk::ShaderStageFlagBits::eVertex)
+        VK_ENUM_MAP_ITEM(ShaderStageBits::S_PIXEL, vk::ShaderStageFlagBits::eFragment)
+        VK_ENUM_MAP_ITEM(ShaderStageBits::S_COMPUTE,  vk::ShaderStageFlagBits::eCompute)
     VK_ENUM_MAP_END()
 
     VK_ENUM_MAP_BEGIN(PrimitiveTopologyType, vk::PrimitiveTopology)

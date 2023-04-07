@@ -8,12 +8,19 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <functional>
+#include <optional>
 
+#include <Common/Hash.h>
+#include <Common/Debug.h>
 #include <RHI/RHI.h>
 
 namespace Render {
     class RGResource;
+    class RGBuffer;
+    class RGTexture;
+    class RGBufferView;
     class RGTextureView;
     class RGPass;
     class RGPassBuilder;
@@ -30,6 +37,10 @@ namespace Render {
         MAX
     };
 
+    using RGTransitionResType = RHI::ResourceType;
+    using RGBufferState = RHI::BufferState;
+    using RGTextureState = RHI::TextureState;
+
     enum class RGPassType {
         COPY,
         COMPUTE,
@@ -37,31 +48,71 @@ namespace Render {
         MAX
     };
 
+    enum class RGResourceAccessType {
+        READ,
+        WRITE,
+        MAX
+    };
+
+    struct RGBufferTransition {
+        RGBuffer* buffer;
+        RGBufferState before;
+        RGBufferState after;
+    };
+
+    struct RGTextureTransition {
+        RGTexture* texture;
+        RGTextureState before;
+        RGTextureState after;
+    };
+
+    struct RGResTransition {
+        RGTransitionResType resType;
+        union {
+            RGBufferTransition buffer;
+            RGTextureTransition texture;
+        };
+
+        static RGResTransition Buffer(RGBuffer* inBuffer, RGBufferState inBeforeState, RGBufferState inAfterState);
+        static RGResTransition Texture(RGTexture* inTexture, RGTextureState inBeforeState, RGTextureState inAfterState);
+    };
+
     class RGResource {
     public:
         virtual ~RGResource();
 
+        bool IsExternal() const;
+        bool IsCulled() const;
+        const std::string& GetName() const;
+        bool CanAccessRHI() const;
+        RGResource* GetParent() const;
+
     protected:
-        RGResource(std::string inName, bool inIsExternal);
+        RGResource(std::string inName, bool inIsExternal, RGResource* inParent = nullptr);
 
         virtual RGResourceType GetType() = 0;
-        virtual void Devirtualize() = 0;
+        virtual void Devirtualize(RHI::Device& device) = 0;
         virtual void Destroy() = 0;
 
-        std::string name;
-        bool isExternal;
-        bool rhiAccess;
-        bool isCulled;
+        void SetRHIAccess(bool inRhiAccess);
 
     private:
         friend class RenderGraph;
 
         void SetCulled(bool inCulled);
-        void SetRHIAccess(bool inRhiAccess);
+
+        std::string name;
+        RGResource* parent;
+        bool isExternal;
+        bool rhiAccess;
+        bool isCulled;
     };
 
     struct RGBufferDesc {
         size_t size;
+        RHI::BufferUsageFlags usages;
+
+        static RGBufferDesc Create(size_t size, RHI::BufferUsageFlags usages);
     };
 
     struct RGTextureDesc {
@@ -70,6 +121,11 @@ namespace Render {
         uint8_t samples;
         RHI::TextureDimension dimension;
         RHI::PixelFormat format;
+        RHI::TextureUsageFlags usages;
+
+        static RGTextureDesc Create1D(uint32_t length, RHI::PixelFormat format, RHI::TextureUsageFlags usages, uint8_t mipLevels = 1, uint8_t samples = 1);
+        static RGTextureDesc Create2D(uint32_t width, uint32_t height, RHI::PixelFormat format, RHI::TextureUsageFlags usages, uint32_t layers = 1, uint8_t mipLevels = 1, uint8_t samples = 1);
+        static RGTextureDesc Create3D(uint32_t width, uint32_t height, uint32_t depth, RHI::PixelFormat format, RHI::TextureUsageFlags usages, uint8_t mipLevels = 1, uint8_t samples = 1);
     };
 
     struct RGVertexBufferDesc {
@@ -87,28 +143,35 @@ namespace Render {
             RGVertexBufferDesc vertex;
             RGIndexBufferDesc index;
         };
+
+        static RGBufferViewDesc Create(size_t size, size_t offset = 0);
+        static RGBufferViewDesc CreateVertex(size_t stride, size_t size, size_t offset = 0);
+        static RGBufferViewDesc CreateIndex(RHI::IndexFormat indexFormat, size_t size, size_t offset = 0);
+        static std::pair<RGBuffer*, RGBufferViewDesc> Create(RGBuffer* buffer, size_t size = UINT64_MAX, size_t offset = 0);
+        static std::pair<RGBuffer*, RGBufferViewDesc> CreateVertex(RGBuffer* buffer, size_t stride, size_t size = UINT64_MAX, size_t offset = 0);
+        static std::pair<RGBuffer*, RGBufferViewDesc> CreateIndex(RGBuffer* buffer, RHI::IndexFormat indexFormat, size_t size = UINT64_MAX, size_t offset = 0);
     };
 
     struct RGTextureViewDesc {
         RHI::TextureViewDimension dimension;
         RHI::TextureAspect aspect;
-        uint8_t baseMipLevels;
+        uint8_t baseMipLevel;
         uint8_t mipLevelNum;
         uint8_t baseArrayLayer;
         uint8_t arrayLayerNum;
-    };
 
-    struct RGSamplerDesc {
-        RHI::AddressMode addressModeU = RHI::AddressMode::CLAMP_TO_EDGE;
-        RHI::AddressMode addressModeV = RHI::AddressMode::CLAMP_TO_EDGE;
-        RHI::AddressMode addressModeW = RHI::AddressMode::CLAMP_TO_EDGE;
-        RHI::FilterMode magFilter = RHI::FilterMode::NEAREST;
-        RHI::FilterMode minFilter = RHI::FilterMode::NEAREST;
-        RHI::FilterMode mipFilter = RHI::FilterMode::NEAREST;
-        float lodMinClamp = 0;
-        float lodMaxClamp = 32;
-        RHI::ComparisonFunc comparisonFunc = RHI::ComparisonFunc::NEVER;
-        uint8_t maxAnisotropy = 1;
+        static RGTextureViewDesc Create1D(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
+        static RGTextureViewDesc Create2D(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
+        static RGTextureViewDesc Create2DArray(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseArrayLayer = 0, uint8_t arrayLayerNum = 1, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
+        static RGTextureViewDesc CreateCube(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
+        static RGTextureViewDesc CreateCubeArray(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseCubemapIndex = 0, uint8_t cubemapNum = 1, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
+        static RGTextureViewDesc Create3D(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
+        static std::pair<RGTexture*, RGTextureViewDesc> Create1D(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
+        static std::pair<RGTexture*, RGTextureViewDesc> Create2D(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
+        static std::pair<RGTexture*, RGTextureViewDesc> Create2DArray(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseArrayLayer = 0, uint8_t arrayLayerNum = UINT8_MAX, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
+        static std::pair<RGTexture*, RGTextureViewDesc> CreateCube(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
+        static std::pair<RGTexture*, RGTextureViewDesc> CreateCubeArray(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseCubemapIndex = 0, uint8_t cubemapNum = UINT8_MAX, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
+        static std::pair<RGTexture*, RGTextureViewDesc> Create3D(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = UINT8_MAX, uint8_t mipLevelNum = UINT8_MAX);
     };
 
     struct RGColorAttachment {
@@ -143,14 +206,15 @@ namespace Render {
 
     class RGBuffer : public RGResource {
     public:
-        RGBuffer(std::string inName, RGBufferDesc inDesc);
+        RGBuffer(std::string inName, const RGBufferDesc& inDesc);
         RGBuffer(std::string inName, RHI::Buffer* inBuffer);
         ~RGBuffer() override;
 
         RGResourceType GetType() override;
-        void Devirtualize() override;
+        void Devirtualize(RHI::Device& device) override;
         void Destroy() override;
-        RHI::Buffer* GetRHI();
+        RHI::Buffer* GetRHI() const;
+        const RGBufferDesc& GetDesc() const;
 
     private:
         RGBufferDesc desc;
@@ -159,14 +223,15 @@ namespace Render {
 
     class RGTexture : public RGResource {
     public:
-        RGTexture(std::string inName, RGTextureDesc inDesc);
+        RGTexture(std::string inName, const RGTextureDesc& inDesc);
         RGTexture(std::string inName, RHI::Texture* inTexture);
         ~RGTexture() override;
 
         RGResourceType GetType() override;
-        void Devirtualize() override;
+        void Devirtualize(RHI::Device& device) override;
         void Destroy() override;
-        RHI::Texture* GetRHI();
+        RHI::Texture* GetRHI() const;
+        const RGTextureDesc& GetDesc() const;
 
     private:
         RGTextureDesc desc;
@@ -175,15 +240,19 @@ namespace Render {
 
     class RGBufferView : public RGResource {
     public:
-        RGBufferView(std::string inName, RGBuffer* inBuffer, RGBufferViewDesc inDesc);
+        RGBufferView(RGBuffer* inBuffer, const RGBufferViewDesc& inDesc);
+        RGBufferView(const std::pair<RGBuffer*, RGBufferViewDesc>& bufferAndViewDesc);
+        RGBufferView(std::string inName, RGBuffer* inBuffer, const RGBufferViewDesc& inDesc);
+        RGBufferView(std::string inName, const std::pair<RGBuffer*, RGBufferViewDesc>& bufferAndViewDesc);
         RGBufferView(std::string inName, RHI::BufferView* inBufferView);
         ~RGBufferView() override;
 
         RGResourceType GetType() override;
-        void Devirtualize() override;
+        void Devirtualize(RHI::Device& device) override;
         void Destroy() override;
-        RHI::BufferView* GetRHI();
-        RGBuffer* GetBuffer();
+        RHI::BufferView* GetRHI() const;
+        RGBuffer* GetBuffer() const;
+        const RGBufferViewDesc& GetDesc() const;
 
     private:
         RGBufferViewDesc desc;
@@ -193,36 +262,24 @@ namespace Render {
 
     class RGTextureView : public RGResource {
     public:
-        RGTextureView(std::string inName, RGTexture* inTexture, RGTextureViewDesc inDesc);
+        RGTextureView(RGTexture* inTexture, const RGTextureViewDesc& inDesc);
+        RGTextureView(const std::pair<RGTexture*, RGTextureViewDesc>& textureAndViewDesc);
+        RGTextureView(std::string inName, RGTexture* inTexture, const RGTextureViewDesc& inDesc);
+        RGTextureView(std::string inName,const std::pair<RGTexture*, RGTextureViewDesc>& textureAndViewDesc);
         RGTextureView(std::string inName, RHI::TextureView* inTextureView);
         ~RGTextureView() override;
 
         RGResourceType GetType() override;
-        void Devirtualize() override;
+        void Devirtualize(RHI::Device& device) override;
         void Destroy() override;
-        RHI::TextureView* GetRHI();
-        RGTexture* GetTexture();
+        RHI::TextureView* GetRHI() const;
+        RGTexture* GetTexture() const;
+        const RGTextureViewDesc& GetDesc() const;
 
     private:
         RGTextureViewDesc desc;
         RGTexture* texture;
         RHI::TextureView* rhiHandle;
-    };
-
-    class RGSampler : public RGResource {
-    public:
-        RGSampler(std::string inName, RGSamplerDesc inDesc);
-        RGSampler(std::string inName, RHI::Sampler* inSampler);
-        ~RGSampler() override;
-
-        RGResourceType GetType() override;
-        void Devirtualize() override;
-        void Destroy() override;
-        RHI::Sampler* GetRHI();
-
-    private:
-        RGSamplerDesc desc;
-        RHI::Sampler* rhiHandle;
     };
 
     class RGPass {
@@ -239,8 +296,8 @@ namespace Render {
         friend class RGPassBuilder;
 
         std::string name;
-        std::vector<RGResource*> reads;
-        std::vector<RGResource*> writes;
+        std::unordered_set<RGResource*> reads;
+        std::unordered_set<RGResource*> writes;
     };
 
     class RGCopyPass : public RGPass {
@@ -356,32 +413,75 @@ namespace Render {
         void AddComputePass(std::string inName, RGComputePassSetupFunc inSetupFunc);
         void AddRasterPass(std::string inName, RGRasterPassSetupFunc inSetupFunc);
 
+        RHI::Device& GetDevice();
         void Setup();
         void Compile();
         void Execute(RHI::Fence* mainFence, RHI::Fence* asyncFence);
 
     private:
+        using LastResStates = std::unordered_map<RGResource*, std::pair<RGPassType, RGResourceAccessType>>;
+
+        struct ResPassPtrPairHash {
+            size_t operator()(const std::pair<RGResource*, RGPass*>& pair) const
+            {
+                return Common::HashUtils::CityHash(&pair, sizeof(pair));
+            }
+        };
+
         friend class RGPassBuilder;
 
-        static RHI::BufferState SpeculateBufferStateFrom(RGPass* writePass);
-        static RHI::BufferState SpeculateBufferStateTo(RGPass* readPass);
-        static RHI::TextureState SpeculateTextureStateFrom(RGPass* writePass);
-        static RHI::TextureState SpeculateTextureStateTo(RGPass* readPass);
-        static void TransitionSingleBuffer(RHI::CommandEncoder* encoder, RGBuffer* buffer, RGPass* writePass, RGPass* readPass);
-        static void TransitionSingleBufferView(RHI::CommandEncoder* encoder, RGBufferView* bufferView, RGPass* writePass, RGPass* readPass);
-        static void TransitionSingleTexture(RHI::CommandEncoder* encoder, RGTexture* texture, RGPass* writePass, RGPass* readPass);
-        static void TransitionSingleTextureView(RHI::CommandEncoder* encoder, RGTextureView* textureView, RGPass* writePass, RGPass* readPass);
-        static void TransitionSingleResource(RHI::CommandEncoder* encoder, RGResource* resource, RGPass* writePass, RGPass* readPass);
         static void ExecuteCopyPass(RHI::CommandEncoder* encoder, RGCopyPass* copyPass);
         static void ExecuteComputePass(RHI::CommandEncoder* encoder, RGComputePass* computePass);
         static void ExecuteRasterPass(RHI::CommandEncoder* encoder, RGRasterPass* rasterPass);
+        static RGBuffer* GetActualBufferRes(RGResource* res);
+        static RGTexture* GetActualTextureRes(RGResource* res);
+        static RHI::BufferState ComputeBufferState(RGPassType passType, RGResourceAccessType accessType);
+        static RHI::TextureState ComputeTextureState(RGPassType passType, RGResourceAccessType accessType);
 
-        void TransitionResources(RHI::CommandEncoder* encoder, RGPass* readPass);
+        void ComputeResBarriers();
+        void TransitionResources(RHI::CommandEncoder* encoder, RGPass* pass);
+
+        template <RGResourceAccessType AT>
+        void ComputeResTransitionsByAccessGroup(RGPass* pass, const std::unordered_set<RGResource*>& resAccessGroup, LastResStates& lastResStates)
+        {
+            for (auto* res : resAccessGroup) {
+                if (res->isCulled) {
+                    continue;
+                }
+
+                const auto resType = res->GetType();
+                const bool isActualResBuffer = resType == RGResourceType::BUFFER || resType == RGResourceType::BUFFER_VIEW;
+                const bool isActualResTexture = resType == RGResourceType::TEXTURE || resType == RGResourceType::TEXTURE_VIEW;
+
+                auto iter = lastResStates.find(res);
+                if (isActualResBuffer) {
+                    auto before = iter == lastResStates.end()
+                        ? ComputeBufferState(RGPassType::MAX, RGResourceAccessType::MAX)
+                        : ComputeBufferState(iter->second.first, iter->second.second);
+                    auto after = ComputeBufferState(pass->GetType(), AT);
+                    resTransitionMap[std::make_pair(res, pass)] = RGResTransition::Buffer(GetActualBufferRes(res), before, after);
+                } else if (isActualResTexture) {
+                    auto before = iter == lastResStates.end()
+                        ? ComputeTextureState(RGPassType::MAX, RGResourceAccessType::MAX)
+                        : ComputeTextureState(iter->second.first, iter->second.second);
+                    auto after = ComputeTextureState(pass->GetType(), AT);
+                    resTransitionMap[std::make_pair(res, pass)] = RGResTransition::Texture(GetActualTextureRes(res), before, after);
+                }
+            }
+        }
+
+        template <RGResourceAccessType AT>
+        void UpdateLastResStatesByAccessGroup(RGPassType passType, const std::unordered_set<RGResource*>& resAccessGroup, LastResStates& lastResStates)
+        {
+            for (auto* res : resAccessGroup) {
+                lastResStates[res] = std::make_pair(passType, AT);
+            }
+        }
 
         RHI::Device& device;
         std::vector<std::unique_ptr<RGResource>> resources;
         std::vector<std::unique_ptr<RGPass>> passes;
-        std::unordered_map<RGResource*, RGPass*> writes;
+        std::unordered_map<std::pair<RGResource*, RGPass*>, RGResTransition, ResPassPtrPairHash> resTransitionMap;
     };
 
     class RGPassBuilder {
@@ -393,26 +493,19 @@ namespace Render {
         R* Create(Args&&... args)
         {
             graph.resources.emplace_back(new R(std::forward<Args>(args)...));
-            return graph.resources.back().get();
+            return static_cast<R*>(graph.resources.back().get());
         }
 
         template <typename R, typename... Args>
         R* RegisterExternal(Args&&... args)
         {
             graph.resources.emplace_back(new R(std::forward<Args>(args)...));
-            return graph.resources.back().get();
+            return static_cast<R*>(graph.resources.back().get());
         }
 
-        template <typename R>
-        void Read(R* resource)
+        RHI::Device& GetDevice()
         {
-            pass.reads.emplace_back(resource);
-        }
-
-        template <typename R>
-        void Write(R* resource)
-        {
-            pass.writes.emplace_back(resource);
+            return graph.GetDevice();
         }
 
     protected:

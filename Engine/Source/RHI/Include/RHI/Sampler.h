@@ -14,7 +14,6 @@ namespace RHI {
         AddressMode addressModeW = AddressMode::CLAMP_TO_EDGE;
         FilterMode magFilter = FilterMode::NEAREST;
         FilterMode minFilter = FilterMode::NEAREST;
-        // TODO remove mip filter ?
         FilterMode mipFilter = FilterMode::NEAREST;
         float lodMinClamp = 0;
         float lodMaxClamp = 32;
@@ -30,6 +29,6 @@ namespace RHI {
         virtual void Destroy() = 0;
 
     protected:
-        explicit Sampler(const SamplerCreateInfo* createInfo);
+        explicit Sampler(const SamplerCreateInfo& createInfo);
     };
 }

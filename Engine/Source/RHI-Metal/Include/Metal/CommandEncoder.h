@@ -22,12 +22,12 @@ namespace RHI::Metal {
         void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size) override;
         void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Extent<3>& size) override;
         void ResourceBarrier(const Barrier& barrier) override;
-
+        void SwapChainSync(SwapChain* swapChain) override;
         ComputePassCommandEncoder* BeginComputePass(const ComputePassBeginInfo* beginInfo) override;
         GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
         void End() override;
+        void Destroy() override;
 
-        void SwapChainSync(SwapChain* swapChain) override;
     private:
         MTLDevice& device;
         id<MTLCommandBuffer> commandBuffer;
@@ -42,6 +42,7 @@ namespace RHI::Metal {
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override;
         void EndPass() override;
+        void Destroy() override;
 
     private:
         MTLDevice& device;
@@ -65,6 +66,7 @@ namespace RHI::Metal {
         void SetBlendConstant(const float *constants) override;
         void SetStencilReference(uint32_t reference) override;
         void EndPass() override;
+        void Destroy() override;
 
     private:
         void CommitRenderResources();

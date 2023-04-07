@@ -137,18 +137,22 @@ namespace RHI::Vulkan {
         return new VKGraphicsPassCommandEncoder(device, commandBuffer, beginInfo);
     }
 
-    void VKCommandEncoder::End()
-    {
-        commandBuffer.GetVkCommandBuffer().end();
-        delete this;
-    }
-
     void VKCommandEncoder::SwapChainSync(SwapChain* swapChain)
     {
         auto vkSwapChain = static_cast<VKSwapChain*>(swapChain);
         auto signal = vkSwapChain->GetImageSemaphore();
         commandBuffer.AddWaitSemaphore(signal, vk::PipelineStageFlagBits::eColorAttachmentOutput);
         vkSwapChain->AddWaitSemaphore(commandBuffer.GetSignalSemaphores()[0]);
+    }
+
+    void VKCommandEncoder::End()
+    {
+        commandBuffer.GetVkCommandBuffer().end();
+    }
+
+    void VKCommandEncoder::Destroy()
+    {
+        delete this;
     }
 
     VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandBuffer& cmd,
@@ -204,9 +208,7 @@ namespace RHI::Vulkan {
         cmdHandle.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline->GetVkPipeline());
     }
 
-    VKGraphicsPassCommandEncoder::~VKGraphicsPassCommandEncoder()
-    {
-    }
+    VKGraphicsPassCommandEncoder::~VKGraphicsPassCommandEncoder() = default;
 
     void VKGraphicsPassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
     {
@@ -286,6 +288,10 @@ namespace RHI::Vulkan {
     void VKGraphicsPassCommandEncoder::EndPass()
     {
         cmdHandle.endRenderingKHR(device.GetGpu().GetInstance().GetVkDispatch());
+    }
+
+    void VKGraphicsPassCommandEncoder::Destroy()
+    {
         delete this;
     }
 }

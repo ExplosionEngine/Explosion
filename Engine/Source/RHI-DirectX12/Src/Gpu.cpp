@@ -33,7 +33,7 @@ namespace RHI::DirectX12 {
         return dx12Adapter;
     }
 
-    Device* DX12Gpu::RequestDevice(const DeviceCreateInfo* createInfo)
+    Device* DX12Gpu::RequestDevice(const DeviceCreateInfo& createInfo)
     {
         return new DX12Device(*this, createInfo);
     }

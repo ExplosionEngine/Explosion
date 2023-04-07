@@ -8,7 +8,7 @@
 #include <vector>
 
 namespace RHI::Vulkan {
-    VKBindGroupLayout::VKBindGroupLayout(VKDevice& dev, const BindGroupLayoutCreateInfo* createInfo)
+    VKBindGroupLayout::VKBindGroupLayout(VKDevice& dev, const BindGroupLayoutCreateInfo& createInfo)
         : BindGroupLayout(createInfo), device(dev)
     {
         CreateDescriptorSetLayout(createInfo);
@@ -31,20 +31,20 @@ namespace RHI::Vulkan {
         return setLayout;
     }
 
-    void VKBindGroupLayout::CreateDescriptorSetLayout(const BindGroupLayoutCreateInfo* createInfo)
+    void VKBindGroupLayout::CreateDescriptorSetLayout(const BindGroupLayoutCreateInfo& createInfo)
     {
         vk::DescriptorSetLayoutCreateInfo layoutInfo = {};
 
-        std::vector<vk::DescriptorSetLayoutBinding> bindings(createInfo->entryNum);
-        for (size_t i = 0; i < createInfo->entryNum; ++i) {
-            auto& entry = createInfo->entries[i];
+        std::vector<vk::DescriptorSetLayoutBinding> bindings(createInfo.entryNum);
+        for (size_t i = 0; i < createInfo.entryNum; ++i) {
+            auto& entry = createInfo.entries[i];
             auto& binding = bindings[i];
 
             vk::ShaderStageFlags flags = FromRHI(entry.shaderVisibility);
 
             binding.setDescriptorType(VKEnumCast<BindingType, vk::DescriptorType>(entry.type))
                 .setDescriptorCount(1)
-                .setBinding(entry.binding)
+                .setBinding(entry.binding.glsl.index)
                 .setStageFlags(flags);
         }
 

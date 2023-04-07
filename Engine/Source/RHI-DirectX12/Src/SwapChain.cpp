@@ -20,10 +20,10 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12SwapChain::DX12SwapChain(DX12Device& device, const SwapChainCreateInfo* createInfo) : SwapChain(createInfo), device(device), presentMode(createInfo->presentMode), textureNum(createInfo->textureNum)
+    DX12SwapChain::DX12SwapChain(DX12Device& device, const SwapChainCreateInfo& createInfo) : SwapChain(createInfo), device(device), presentMode(createInfo.presentMode), textureNum(createInfo.textureNum)
     {
         CreateDX12SwapChain(createInfo);
-        FetchTextures(createInfo->format);
+        FetchTextures(createInfo.format);
     }
 
     DX12SwapChain::~DX12SwapChain() = default;
@@ -48,24 +48,24 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    void DX12SwapChain::CreateDX12SwapChain(const SwapChainCreateInfo* createInfo)
+    void DX12SwapChain::CreateDX12SwapChain(const SwapChainCreateInfo& createInfo)
     {
         auto& instance = device.GetGpu().GetInstance();
-        auto* dx12Queue = dynamic_cast<DX12Queue*>(createInfo->presentQueue);
+        auto* dx12Queue = dynamic_cast<DX12Queue*>(createInfo.presentQueue);
 
         DXGI_SWAP_CHAIN_DESC1 desc {};
-        desc.BufferCount = createInfo->textureNum;
-        desc.Width = createInfo->extent.x;
-        desc.Height = createInfo->extent.y;
-        desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo->format);
+        desc.BufferCount = createInfo.textureNum;
+        desc.Width = createInfo.extent.x;
+        desc.Height = createInfo.extent.y;
+        desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.format);
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        desc.SwapEffect = DX12EnumCast<PresentMode, DXGI_SWAP_EFFECT>(createInfo->presentMode);
+        desc.SwapEffect = DX12EnumCast<PresentMode, DXGI_SWAP_EFFECT>(createInfo.presentMode);
         desc.SampleDesc.Count = 1;
 
         ComPtr<IDXGISwapChain1> dx12SwapChain1;
         bool success = SUCCEEDED(instance.GetDX12Factory()->CreateSwapChainForHwnd(
             dx12Queue->GetDX12CommandQueue().Get(),
-            static_cast<HWND>(createInfo->window),
+            static_cast<HWND>(createInfo.window),
             &desc,
             /* TODO fullscreen */ nullptr,
             nullptr,

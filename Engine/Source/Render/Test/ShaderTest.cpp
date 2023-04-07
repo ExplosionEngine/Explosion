@@ -6,9 +6,13 @@
 
 #include <Render/Shader.h>
 
-class TestGlobalShader : public Render::GlobalShader {
+class TestGlobalShaderVS : public Render::GlobalShader {
 public:
-    ShaderInfo("TestGlobalShader", "/Engine/Shader/TestGlobalShader.esl");
+    ShaderInfo(
+        "TestGlobalShader",
+        "/Engine/Shader/Test/TestGlobalShader.esl",
+        "VSMain",
+        Render::ShaderStage::S_VERTEX);
 
     BoolShaderVariantField(TestBoolVariant, "TEST_BOOL");
     RangedIntShaderVariantField(TestRangedIntVariant, "TEST_RANGED_INT", 0, 3);
@@ -16,13 +20,13 @@ public:
 
     DefaultVariantFilter
 };
-RegisterGlobalShader(TestGlobalShader);
+RegisterGlobalShader(TestGlobalShaderVS);
 
 TEST(ShaderTest, StaticVariantSetTest)
 {
-    ASSERT_EQ(TestGlobalShader::VariantSet::VariantNum(), 8);
+    ASSERT_EQ(TestGlobalShaderVS::VariantSet::VariantNum(), 8);
 
     auto count = 0;
-    TestGlobalShader::VariantSet::TraverseAll([&count](auto&&) -> void { count++; });
+    TestGlobalShaderVS::VariantSet::TraverseAll([&count](auto&&) -> void { count++; });
     ASSERT_EQ(count, 8);
 }

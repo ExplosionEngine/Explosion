@@ -16,13 +16,13 @@ namespace RHI::Vulkan {
     public:
         NON_COPYABLE(VKTexture)
 
-        VKTexture(VKDevice& device, const TextureCreateInfo* createInfo, vk::Image image);
-        VKTexture(VKDevice& device, const TextureCreateInfo* createInfo);
+        VKTexture(VKDevice& device, const TextureCreateInfo& createInfo, vk::Image image);
+        VKTexture(VKDevice& device, const TextureCreateInfo& createInfo);
         ~VKTexture() override;
 
         void Destroy() override;
 
-        TextureView* CreateTextureView(const TextureViewCreateInfo* createInfo) override;
+        TextureView* CreateTextureView(const TextureViewCreateInfo& createInfo) override;
 
         vk::Image GetImage() const;
         Extent<3> GetExtent() const;
@@ -30,10 +30,10 @@ namespace RHI::Vulkan {
 
         vk::ImageSubresourceRange GetRange(vk::ImageAspectFlags aspect);
     private:
-        void CreateImage(const TextureCreateInfo* createInfo);
+        void CreateImage(const TextureCreateInfo& createInfo);
 
         // TODO use memory pool.
-        void AllocateMemory(const TextureCreateInfo* createInfo);
+        void AllocateMemory(const TextureCreateInfo& createInfo);
         void FreeMemory();
         VKDevice& device;
         vk::DeviceMemory vkDeviceMemory;

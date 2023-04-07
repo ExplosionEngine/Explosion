@@ -8,7 +8,7 @@
 
 namespace RHI::Vulkan {
 
-    VKRenderPass::VKRenderPass(VKDevice& dev, const GraphicsPipelineCreateInfo* createInfo) : device(dev)
+    VKRenderPass::VKRenderPass(VKDevice& dev, const GraphicsPipelineCreateInfo& createInfo) : device(dev)
     {
         CreateNativeRenderPass(createInfo);
     }
@@ -20,11 +20,11 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VKRenderPass::CreateNativeRenderPass(const GraphicsPipelineCreateInfo* createInfo)
+    void VKRenderPass::CreateNativeRenderPass(const GraphicsPipelineCreateInfo& createInfo)
     {
-        uint32_t colorCount = createInfo->fragment.colorTargetNum;
-        uint32_t colorWithResolve = createInfo->multiSample.count > 1 ? colorCount * 2 : colorCount;
-        uint32_t dsCount = createInfo->depthStencil.depthEnable ? 1 : 0;
+        uint32_t colorCount = createInfo.fragmentState.colorTargetNum;
+        uint32_t colorWithResolve = createInfo.multiSampleState.count > 1 ? colorCount * 2 : colorCount;
+        uint32_t dsCount = createInfo.depthStencilState.depthEnable ? 1 : 0;
 
         std::vector<vk::AttachmentReference> colors(colorCount);
         std::vector<vk::AttachmentReference> resolves(colorWithResolve - colorCount);
@@ -32,7 +32,7 @@ namespace RHI::Vulkan {
 
         std::vector<vk::AttachmentDescription> attachments(colorWithResolve + dsCount);
         for (uint32_t i = 0; i < colorCount; ++i) {
-            auto colorState = createInfo->fragment.colorTargets[i];
+            auto colorState = createInfo.fragmentState.colorTargets[i];
 
             vk::AttachmentDescription& desc = attachments[i];
             desc.setFormat(VKEnumCast<PixelFormat, vk::Format>(colorState.format))
@@ -47,9 +47,9 @@ namespace RHI::Vulkan {
             vk::AttachmentReference& colorRef = colors[i];
             colorRef.setAttachment(i).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
 
-            if (createInfo->multiSample.count > 1) {
+            if (createInfo.multiSampleState.count > 1) {
                 attachments[colorCount + i] = desc;
-                attachments[colorCount + i].setSamples(static_cast<vk::SampleCountFlagBits>(createInfo->multiSample.count));
+                attachments[colorCount + i].setSamples(static_cast<vk::SampleCountFlagBits>(createInfo.multiSampleState.count));
                 vk::AttachmentReference& resolveRef = resolves[i];
                 resolveRef.setAttachment(i).setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
             }
@@ -57,8 +57,8 @@ namespace RHI::Vulkan {
 
         if (dsCount > 0) {
             vk::AttachmentDescription& desc = attachments[colorWithResolve];
-            desc.setFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo->depthStencil.format))
-                .setSamples(static_cast<vk::SampleCountFlagBits>(createInfo->multiSample.count))
+            desc.setFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo.depthStencilState.format))
+                .setSamples(static_cast<vk::SampleCountFlagBits>(createInfo.multiSampleState.count))
                 .setInitialLayout(vk::ImageLayout::eUndefined)
                 .setFinalLayout(vk::ImageLayout::eDepthAttachmentOptimal)
                 .setLoadOp(vk::AttachmentLoadOp::eDontCare)

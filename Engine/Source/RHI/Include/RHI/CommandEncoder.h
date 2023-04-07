@@ -69,6 +69,7 @@ namespace RHI {
         virtual void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) = 0;
         virtual void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) = 0;
         virtual void EndPass() = 0;
+        virtual void Destroy() = 0;
 
     protected:
         ComputePassCommandEncoder();
@@ -96,6 +97,7 @@ namespace RHI {
         // TODO EndOcclusionQuery(...)
         // TODO ExecuteBundles(...)
         virtual void EndPass() = 0;
+        virtual void Destroy() = 0;
 
     protected:
         GraphicsPassCommandEncoder();
@@ -116,8 +118,9 @@ namespace RHI {
 
         virtual ComputePassCommandEncoder* BeginComputePass(const ComputePassBeginInfo* beginInfo) = 0;
         virtual GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) = 0;
+        virtual void SwapChainSync(SwapChain* swapChain) = 0;
         virtual void End() = 0;
-        virtual void SwapChainSync(SwapChain* swapChain) {}
+        virtual void Destroy() = 0;
 
     protected:
         CommandEncoder();

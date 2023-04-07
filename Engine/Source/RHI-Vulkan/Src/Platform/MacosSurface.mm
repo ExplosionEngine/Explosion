@@ -12,9 +12,9 @@
 
 namespace RHI::Vulkan {
 
-    vk::SurfaceKHR CreateNativeSurface(const vk::Instance& instance, const SwapChainCreateInfo* createInfo)
+    vk::SurfaceKHR CreateNativeSurface(const vk::Instance& instance, const SwapChainCreateInfo& createInfo)
     {
-        auto nsWin = static_cast<NSWindow*>(createInfo->window);
+        auto nsWin = static_cast<NSWindow*>(createInfo.window);
 
         NSBundle* bundle = [NSBundle bundleWithPath: @"/System/Library/Frameworks/QuartzCore.framework"];
         CALayer* layer = [[bundle classNamed: @"CAMetalLayer"] layer];

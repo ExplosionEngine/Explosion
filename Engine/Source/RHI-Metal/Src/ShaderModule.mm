@@ -7,7 +7,7 @@
 
 namespace RHI::Metal {
 
-    MTLShaderModule::MTLShaderModule(MTLDevice &dev, const ShaderModuleCreateInfo* createInfo)
+    MTLShaderModule::MTLShaderModule(MTLDevice &dev, const ShaderModuleCreateInfo& createInfo)
         : ShaderModule(createInfo), device(dev)
     {
         CreateNativeShaderLibrary(createInfo);
@@ -28,9 +28,9 @@ namespace RHI::Metal {
         return library;
     }
 
-    void MTLShaderModule::CreateNativeShaderLibrary(const ShaderModuleCreateInfo* createInfo)
+    void MTLShaderModule::CreateNativeShaderLibrary(const ShaderModuleCreateInfo& createInfo)
     {
-        NSString* nsSource = [[NSString alloc] initWithCString:static_cast<const char*>(createInfo->byteCode) encoding:NSASCIIStringEncoding];
+        NSString* nsSource = [[NSString alloc] initWithCString:static_cast<const char*>(createInfo.byteCode) encoding:NSASCIIStringEncoding];
 
         MTLCompileOptions* mtlOptions = [MTLCompileOptions alloc];
         mtlOptions.fastMathEnabled = YES;

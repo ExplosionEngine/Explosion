@@ -9,7 +9,7 @@
 
 namespace RHI::Vulkan {
 
-    VKShaderModule::VKShaderModule(VKDevice& dev, const ShaderModuleCreateInfo* createInfo)
+    VKShaderModule::VKShaderModule(VKDevice& dev, const ShaderModuleCreateInfo& createInfo)
         : device(dev), ShaderModule(createInfo)
     {
         CreateNativeShaderModule(createInfo);
@@ -32,20 +32,21 @@ namespace RHI::Vulkan {
         return shaderModule;
     }
 
-    void VKShaderModule::CreateNativeShaderModule(const ShaderModuleCreateInfo* createInfo)
+    void VKShaderModule::CreateNativeShaderModule(const ShaderModuleCreateInfo& createInfo)
     {
         vk::ShaderModuleCreateInfo moduleCreateInfo = {};
-        moduleCreateInfo.setCodeSize(createInfo->size)
-            .setPCode(static_cast<const uint32_t*>(createInfo->byteCode));
+        moduleCreateInfo.setCodeSize(createInfo.size)
+            .setPCode(static_cast<const uint32_t*>(createInfo.byteCode));
 
         Assert(device.GetVkDevice().createShaderModule(&moduleCreateInfo, nullptr, &shaderModule) == vk::Result::eSuccess);
         BuildReflection(createInfo);
     }
 
-    void VKShaderModule::BuildReflection(const ShaderModuleCreateInfo* createInfo)
+    void VKShaderModule::BuildReflection(const ShaderModuleCreateInfo& createInfo)
     {
-        spirv_cross::Compiler compiler(static_cast<const uint32_t*>(createInfo->byteCode),
-                                       createInfo->size / sizeof(uint32_t));
+        // TODO move to render module
+        spirv_cross::Compiler compiler(static_cast<const uint32_t*>(createInfo.byteCode),
+                                       createInfo.size / sizeof(uint32_t));
         auto resources = compiler.get_shader_resources();
         for (auto& input : resources.stage_inputs) {
             auto location = compiler.get_decoration(input.id, spv::DecorationLocation);
