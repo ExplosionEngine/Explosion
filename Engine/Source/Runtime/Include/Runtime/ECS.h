@@ -15,6 +15,12 @@ namespace Runtime {
 
     class EClass() Component {
     public:
+        Component(Runtime::World* inWorld, Runtime::Entity inEntity)
+            : world(inWorld)
+            , entity(inEntity)
+        {
+        }
+
         EProperty(transient, editorHide)
         World* world;
 

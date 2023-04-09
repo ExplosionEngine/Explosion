@@ -155,7 +155,10 @@ namespace Render {
         std::vector<RHI::BindGroupLayoutEntry> layoutEntries;
         layoutEntries.reserve(bindings.size());
         for (const auto& binding : bindings) {
-            layoutEntries.emplace_back(binding.second.second, binding.second.first);
+            RHI::BindGroupLayoutEntry entry;
+            entry.binding = binding.second.second;
+            entry.shaderVisibility = binding.second.first;
+            layoutEntries.emplace_back(entry);
         }
 
         RHI::BindGroupLayoutCreateInfo createInfo;
