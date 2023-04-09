@@ -6,10 +6,10 @@
 
 #include <Mirror/Meta.h>
 
-EVar()
+EProperty()
 int gv0;
 
-EVar()
+EProperty()
 float gv1;
 
 EFunc()
@@ -19,13 +19,13 @@ int gf0(int a, int b) {
 
 struct EClass() C0 {
 public:
-    EVar()
+    EProperty()
     static int sv0;
 
-    EVar()
+    EProperty(editorHide)
     int v0;
 
-    EVar()
+    EProperty()
     float v1;
 
     EFunc()

@@ -280,6 +280,11 @@ namespace Render {
 
     ComputePipelineState::~ComputePipelineState() = default;
 
+    BindGroupLayout* ComputePipelineState::GetBindGroupLayout(uint8_t layoutIndex) const
+    {
+        return pipelineLayout->GetBindGroupLayout(layoutIndex);
+    }
+
     PipelineLayout* ComputePipelineState::GetPipelineLayout() const
     {
         return pipelineLayout;

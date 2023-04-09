@@ -2,17 +2,159 @@
 // Created by johnk on 2022/11/24.
 //
 
+#include <format>
+#include <sstream>
+#include <filesystem>
+
 #include <MirrorTool/Generator.h>
+#include <Common/Hash.h>
 
 namespace MirrorTool {
-    Generator::Generator(std::string inOutputFile, std::string inHeaderDir, const MetaInfo& inMetaInfo)
-        : outputFile(std::move(inOutputFile)), headerDir(std::move(inHeaderDir)), metaInfo(inMetaInfo) {}
+    template <uint8_t N>
+    struct Tab {
+        template <typename S>
+        friend S& operator<<(S& file, const Tab& tab)
+        {
+            for (auto i = 0; i < N * 4; i++) {
+                file << " ";
+            }
+            return file;
+        }
+    };
+
+    static std::string GetFullName(const Node& node)
+    {
+        std::string outerName = node.outerName;
+        const std::string name = node.name;
+        return outerName.empty() ? name : std::format("{}::{}", outerName, name);
+    }
+
+    template <uint8_t TabN>
+    static std::string GetMetaDataCode(const Node& node)
+    {
+        std::stringstream stream;
+        for (const auto& metaData : node.metaDatas) {
+            stream << std::endl << Tab<TabN>() << std::format(R"(.MetaData("{}", "{}"))", metaData.first, metaData.second);
+        }
+        return stream.str();
+    }
+
+    template <typename N>
+    static std::string GetTypeCode(N&& node, const std::string& pattern)
+    {
+        std::stringstream stream;
+        const std::string fullName = GetFullName(node);
+        stream << std::endl << Tab<3>() << std::format(pattern, fullName, fullName);
+        stream << GetMetaDataCode<4>(node);
+        return stream.str();
+    }
+
+    static std::string GetClassCode(const ClassInfo& clazz)
+    {
+        std::stringstream stream;
+        const std::string fullName = GetFullName(clazz);
+        stream << std::endl << std::endl << Tab<1>() << "Mirror::Registry::Get()";
+        stream << std::endl << Tab<2>() << std::format(R"(.Class<{}>("{}"))", fullName, fullName);
+        stream << GetMetaDataCode<3>(clazz);
+        for (const auto& staticVariable : clazz.staticVariables) {
+            stream << GetTypeCode(staticVariable, R"(.StaticVariable<&{}>("{}"))");
+        }
+        for (const auto& staticFunction : clazz.staticFunctions) {
+            stream << GetTypeCode(staticFunction, R"(.StaticFunction<&{}>("{}"))");
+        }
+        for (const auto& variable : clazz.variables) {
+            stream << GetTypeCode(variable, R"(.MemberVariable<&{}>("{}"))");
+        }
+        for (const auto& function : clazz.functions) {
+            stream << GetTypeCode(function, R"(.MemberFunction<&{}>("{}"))");
+        }
+        stream << ";";
+        return stream.str();
+    }
+
+    template <bool EndlOnStart>
+    static std::string GetNamespaceCode(const NamespaceInfo& ns) // NOLINT
+    {
+        std::stringstream stream;
+        if (EndlOnStart) {
+            stream << std::endl << std::endl;
+        }
+        stream << Tab<1>() << "Mirror::Registry::Get()";
+        stream << std::endl << Tab<2>() << ".Global()";
+        stream << GetMetaDataCode<3>(ns);
+        for (const auto& variable : ns.variables) {
+            stream << GetTypeCode(variable, R"(.Variable<&{}>("{}"))");
+        }
+        for (const auto& function : ns.functions) {
+            stream << GetTypeCode(function, R"(.Function<&{}>("{}"))");
+        }
+        stream << ";";
+
+        for (const auto& clazz : ns.classes) {
+            stream << GetClassCode(clazz);
+        }
+        for (const auto& childNs : ns.namespaces) {
+            stream << GetNamespaceCode<true>(childNs);
+        }
+        return stream.str();
+    }
+
+    static std::string GetMetaCode(const MetaInfo& meta)
+    {
+        std::stringstream stream;
+        stream << GetNamespaceCode<false>(meta.global);
+        for (const auto& ns : meta.namespaces) {
+            stream << GetNamespaceCode<true>(ns);
+        }
+        return stream.str();
+    }
+}
+
+namespace MirrorTool {
+    Generator::Generator(std::string inOutputFile, std::string inHeaderFile, const MetaInfo& inMetaInfo)
+        : outputFile(std::move(inOutputFile)), headerFile(std::move(inHeaderFile)), metaInfo(inMetaInfo) {}
 
     Generator::~Generator() = default;
 
     Generator::Result Generator::Generate()
     {
-        // TODO
-        return {};
+        std::filesystem::path filePath(outputFile);
+        std::filesystem::path parentPath = filePath.parent_path();
+        if (!std::filesystem::exists(parentPath)) {
+            std::filesystem::create_directory(parentPath);
+        }
+
+        std::ofstream file(outputFile);
+        if (file.fail()) {
+            return std::make_pair(false, "failed to open output file");
+        }
+
+        GenerateCode(file);
+        file.close();
+        return std::make_pair(true, "");
+    }
+
+    void Generator::GenerateCode(std::ofstream& file)
+    {
+        size_t hash = Common::HashUtils::CityHash(headerFile.data(), headerFile.size());
+        std::string registryName = std::format("_MirrorRegistry_{}", hash);
+
+        file << "/* Generated by mirror tool, do not modify this file anyway. */" << std::endl;
+        file << std::endl;
+        file << std::format("#include <{}>", headerFile) << std::endl;
+        file << "#include <Mirror/Registry.h>" << std::endl;
+        file << "using namespace Mirror;" << std::endl;
+        file << std::endl;
+        file << "struct " << registryName << " {" << std::endl;
+        file << Tab<1>() << std::format("{}();", registryName) << std::endl;
+        file << "};" << std::endl;
+        file << std::endl;
+        file << std::format("{}::{}()", registryName, registryName) << std::endl;
+        file << "{" << std::endl;
+        file << GetMetaCode(metaInfo);
+        file << std::endl;
+        file << "}" << std::endl;
+        file << std::endl;
+        file << std::format("static {} _registry;", registryName) << std::endl;
     }
 }

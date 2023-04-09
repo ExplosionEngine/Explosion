@@ -73,7 +73,7 @@ namespace Launcher {
         while (!glfwWindowShouldClose(window)) {
             engine.Tick();
             // TODO
-            Render::SceneViewCluster sceneView;
+            Render::SceneView sceneView;
             renderer.RenderFrame(canvas, sceneView);
             glfwPollEvents();
         }

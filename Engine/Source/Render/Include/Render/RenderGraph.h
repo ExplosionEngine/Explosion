@@ -255,6 +255,15 @@ namespace Render {
         // TODO support external desc register
         const RGBufferDesc& GetDesc() const;
 
+        template <typename D>
+        void UploadData(const D& data)
+        {
+            Assert((desc.usages & RHI::BufferUsageBits::UNIFORM) != 0 && CanAccessRHI() && sizeof(D) == desc.size);
+            void* mapResult = rhiHandle->Map(RHI::MapMode::WRITE, 0, desc.size);
+            memcpy(mapResult, &data, desc.size);
+            rhiHandle->UnMap();
+        }
+
     private:
         RGBufferDesc desc;
         RHI::Buffer* rhiHandle;
@@ -376,6 +385,8 @@ namespace Render {
     private:
         friend class RenderGraph;
         friend class RGCopyPassBuilder;
+
+        bool isAsyncCopy;
     };
 
     class RGComputePass : public RGPass {
@@ -478,7 +489,7 @@ namespace Render {
         RHI::Device& GetDevice();
         void Setup();
         void Compile();
-        void Execute(RHI::Fence* mainFence, RHI::Fence* asyncFence);
+        void Execute(RHI::Fence* mainFence, RHI::Fence* asyncComputeFence = nullptr, RHI::Fence* asyncCopyFence = nullptr);
 
     private:
         using LastResStates = std::unordered_map<RGResource*, std::pair<RGPassType, RGResourceAccessType>>;
@@ -610,6 +621,8 @@ namespace Render {
     class RGCopyPassBuilder : public RGPassBuilder {
     public:
         ~RGCopyPassBuilder() override;
+
+        void SetAsyncCopy(bool inAsyncCopy);
 
     private:
         friend class RenderGraph;

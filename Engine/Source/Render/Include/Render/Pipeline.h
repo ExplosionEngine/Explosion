@@ -133,6 +133,7 @@ namespace Render {
     public:
         ~ComputePipelineState();
 
+        BindGroupLayout* GetBindGroupLayout(uint8_t layoutIndex) const;
         PipelineLayout* GetPipelineLayout() const;
         RHI::ComputePipeline* GetRHI() const;
         size_t GetHash() const;
