@@ -1001,7 +1001,7 @@ namespace Render {
         ComputeResBarriers();
     }
 
-    void RenderGraph::Execute(RHI::Fence* mainFence, RHI::Fence* asyncFence)
+    void RenderGraph::Execute(RHI::Fence* mainFence, RHI::Fence* asyncComputeFence, RHI::Fence* asyncCopyFence) // NOLINT
     {
         std::vector<RGResource*> actualResesToDevirtualize;
         std::vector<RGResource*> actualResViewsToDevirtualize;
@@ -1032,17 +1032,21 @@ namespace Render {
         Assert(device.GetQueueNum(RHI::QueueType::GRAPHICS) > 0);
         RHI::Queue* mainQueue = device.GetQueue(RHI::QueueType::GRAPHICS, 0);
         RHI::Queue* asyncComputeQueue = device.GetQueueNum(RHI::QueueType::COMPUTE) > 1 ? device.GetQueue(RHI::QueueType::COMPUTE, 1) : mainQueue;
+        RHI::Queue* asyncCopyQueue = device.GetQueueNum(RHI::QueueType::GRAPHICS) > 1 ? device.GetQueue(RHI::QueueType::COMPUTE, 1) : mainQueue;
 
         RHI::UniqueRef<RHI::CommandBuffer> mainBuffer = device.CreateCommandBuffer();
         RHI::UniqueRef<RHI::CommandBuffer> asyncComputeBuffer = device.CreateCommandBuffer();
+        RHI::UniqueRef<RHI::CommandBuffer> asyncCopyBuffer = device.CreateCommandBuffer();
         RHI::UniqueRef<RHI::CommandEncoder> mainEncoder = mainBuffer->Begin();
         RHI::UniqueRef<RHI::CommandEncoder> asyncComputeEncoder = asyncComputeBuffer->Begin();
+        RHI::UniqueRef<RHI::CommandEncoder> asyncCopyEncoder = asyncCopyBuffer->Begin();
         {
             for (auto& pass : passes) {
                 if (pass->GetType() == RGPassType::COPY) {
                     auto* copyPass = static_cast<RGCopyPass*>(pass.get());
-                    TransitionResources(mainEncoder.Get(), copyPass);
-                    ExecuteCopyPass(mainEncoder.Get(), copyPass);
+                    auto& commandEncoder = copyPass->isAsyncCopy ? asyncCopyEncoder : mainEncoder;
+                    TransitionResources(commandEncoder.Get(), copyPass);
+                    ExecuteCopyPass(commandEncoder.Get(), copyPass);
                 } else if (pass->GetType() == RGPassType::RASTER) {
                     auto* computePass = static_cast<RGComputePass*>(pass.get());
                     auto& commandEncoder = computePass->isAsyncCompute ? asyncComputeEncoder : mainEncoder;
@@ -1058,9 +1062,12 @@ namespace Render {
             }
         }
         mainEncoder->End();
+        asyncComputeEncoder->End();
+        asyncCopyEncoder->End();
 
         mainQueue->Submit(mainBuffer.Get(), mainFence);
-        asyncComputeQueue->Submit(asyncComputeBuffer.Get(), asyncFence);
+        asyncComputeQueue->Submit(asyncComputeBuffer.Get(), asyncComputeFence);
+        asyncCopyQueue->Submit(asyncCopyBuffer.Get(), asyncCopyFence);
     }
 
     void RenderGraph::ExecuteCopyPass(RHI::CommandEncoder* encoder, RGCopyPass* copyPass)
@@ -1239,6 +1246,11 @@ namespace Render {
     }
 
     RGCopyPassBuilder::~RGCopyPassBuilder() = default;
+
+    void RGCopyPassBuilder::SetAsyncCopy(bool inAsyncCopy)
+    {
+        copyPass.isAsyncCopy = inAsyncCopy;
+    }
 
     RGComputePassBuilder::RGComputePassBuilder(RenderGraph& inGraph, RGComputePass& inPass)
         : RGPassBuilder(inGraph, inPass)

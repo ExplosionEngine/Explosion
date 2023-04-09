@@ -121,7 +121,7 @@ private:
     void CreatePipelineLayout()
     {
         PipelineLayoutCreateInfo createInfo {};
-        createInfo.bindGroupNum = 0;
+        createInfo.bindGroupLayoutNum = 0;
         createInfo.bindGroupLayouts = nullptr;
         pipelineLayout = device->CreatePipelineLayout(createInfo);
     }

@@ -24,6 +24,7 @@ namespace Runtime{
         InitPathMapper(inInitializer.execFile, inInitializer.projectFile);
         InitInputManager();
         InitConfigManager();
+        InitAssetManager();
         for (const auto& listener : listeners.onInits) {
             listener();
         }
@@ -38,24 +39,29 @@ namespace Runtime{
         }
     }
 
-    IApplication* Engine::GetApplication()
+    IApplication* Engine::GetApplication() const
     {
         return application;
     }
 
-    Common::PathMapper& Engine::GetPathMapper()
+    Common::PathMapper& Engine::GetPathMapper() const
     {
         return *pathMapper;
     }
 
-    InputManager& Engine::GetInputManager()
+    InputManager& Engine::GetInputManager() const
     {
         return *inputManager;
     }
 
-    ConfigManager& Engine::GetConfigManager()
+    ConfigManager& Engine::GetConfigManager() const
     {
         return *configManager;
+    }
+
+    AssetManager& Engine::GetAssetManager() const
+    {
+        return *assetManager;
     }
 
     void Engine::SetActiveWorld(World* inWorld)
@@ -84,11 +90,16 @@ namespace Runtime{
 
     void Engine::InitInputManager()
     {
-        inputManager = std::make_unique<InputManager>();
+        inputManager = std::unique_ptr<InputManager>(new InputManager);
     }
 
     void Engine::InitConfigManager()
     {
-        configManager = std::make_unique<ConfigManager>(*pathMapper);
+        configManager = std::unique_ptr<ConfigManager>(new ConfigManager(*pathMapper));
+    }
+
+    void Engine::InitAssetManager()
+    {
+        assetManager = std::unique_ptr<AssetManager>(new AssetManager(*pathMapper));
     }
 }

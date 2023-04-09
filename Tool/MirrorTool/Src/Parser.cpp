@@ -185,7 +185,7 @@ namespace MirrorTool {
             auto& variables = kind == CXCursor_VarDecl ? context.staticVariables : context.variables;
             variables.emplace_back(std::move(variableInfo));
             VisitChildren(ClassVariableVisitor, ClassVariableInfo, cursor, variables.back());
-            ApplyMetaFilter(variables, "var");
+            ApplyMetaFilter(variables, "property");
 
             clang_disposeString(typeSpelling);
         } else if (kind == CXCursor_CXXMethod) {
@@ -221,7 +221,7 @@ namespace MirrorTool {
             variableInfo.type = clang_getCString(typeSpelling);
             context.variables.emplace_back(std::move(variableInfo));
             VisitChildren(GlobalVariableVisitor, VariableInfo, cursor, context.variables.back());
-            ApplyMetaFilter(context.variables, "var");
+            ApplyMetaFilter(context.variables, "property");
 
             clang_disposeString(typeSpelling);
         } else if (kind == CXCursor_FunctionDecl) {
@@ -267,7 +267,7 @@ namespace MirrorTool {
             variableInfo.type = clang_getCString(typeSpelling);
             context.global.variables.emplace_back(std::move(variableInfo));
             VisitChildren(GlobalVariableVisitor, VariableInfo, cursor, context.global.variables.back());
-            ApplyMetaFilter(context.global.variables, "var");
+            ApplyMetaFilter(context.global.variables, "property");
 
             clang_disposeString(typeSpelling);
         } else if (kind == CXCursor_FunctionDecl) {

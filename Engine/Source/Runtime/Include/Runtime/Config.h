@@ -7,13 +7,15 @@
 #include <Common/Path.h>
 
 namespace Runtime{
-    // TODO rewrite config manager interfaces with reflection
     class ConfigManager {
     public:
-        explicit ConfigManager(const Common::PathMapper& inPathMapper);
         ~ConfigManager();
 
     private:
+        friend class Engine;
+
+        explicit ConfigManager(const Common::PathMapper& inPathMapper);
+
         const Common::PathMapper& pathMapper;
     };
 }

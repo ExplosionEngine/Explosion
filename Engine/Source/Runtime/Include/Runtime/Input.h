@@ -7,10 +7,14 @@
 namespace Runtime{
     class InputManager {
     public:
-        InputManager();
         ~InputManager();
 
         void MouseMove(double x, double y);
         // TODO
+
+    private:
+        friend class Engine;
+
+        InputManager();
     };
 }
