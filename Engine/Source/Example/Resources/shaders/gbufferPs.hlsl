@@ -1,15 +1,15 @@
-// Copyright 2020 Google LLC
+#include "common.h"
 
 struct VSOutput
 {
 	float4 Pos : SV_POSITION;
-    float3 Normal : NORMAL0;
-    float2 UV : TEXCOORD0;
-    float3 Color : COLOR0;
-    float3 WorldPos : POSITION0;
+    float3 Normal : NORMAL;
+    float2 UV : TEXCOORD;
+    float3 Color : COLOR;
+    float3 WorldPos : POSITION;
 };
 
-struct UBO
+VK_BINDING(0, 0) cbuffer UBO : register(b0)
 {
 	float4x4 projection;
 	float4x4 model;
@@ -18,10 +18,8 @@ struct UBO
 	float farPlane;
 };
 
-cbuffer ubo : register(b0) { UBO ubo; }
-
-Texture2D textureColorMap : register(t0, space1);
-SamplerState samplerColorMap : register(s0, space1);
+VK_BINDING(0, 1) Texture2D textureColorMap : register(t0, space1);
+VK_BINDING(1, 1) SamplerState samplerColorMap : register(s0, space1);
 
 struct FSOutput
 {
@@ -33,7 +31,7 @@ struct FSOutput
 float linearDepth(float depth)
 {
 	float z = depth * 2.0f - 1.0f;
-	return (2.0f * ubo.nearPlane * ubo.farPlane) / (ubo.farPlane + ubo.nearPlane - z * (ubo.farPlane - ubo.nearPlane));
+	return (2.0f * nearPlane * farPlane) / (farPlane + nearPlane - z * (farPlane - nearPlane));
 }
 
 FSOutput FSMain(VSOutput input)

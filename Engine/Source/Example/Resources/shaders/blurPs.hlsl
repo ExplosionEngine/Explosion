@@ -1,7 +1,7 @@
-// Copyright 2020 Google LLC
+#include "common.h"
 
-Texture2D textureSSAO : register(t0);
-SamplerState samplerSSAO : register(s0);
+VK_BINDING(0, 0) Texture2D textureSSAO : register(t0);
+VK_BINDING(1, 0) SamplerState samplerSSAO : register(s0);
 
 float4 FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
 {

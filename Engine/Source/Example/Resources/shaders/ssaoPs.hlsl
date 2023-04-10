@@ -1,27 +1,25 @@
-// Copyright 2020 Google LLC
+#include "common.h"
 
-Texture2D texturePositionDepth : register(t0);
-Texture2D textureNormal : register(t1);
-Texture2D ssaoNoiseTexture : register(t2);
+VK_BINDING(0, 0) Texture2D texturePositionDepth : register(t0);
+VK_BINDING(1, 0) Texture2D textureNormal : register(t1);
+VK_BINDING(2, 0) Texture2D ssaoNoiseTexture : register(t2);
 
-SamplerState texSampler : register(s0);
-SamplerState ssaoNoiseSampler : register(s1);
+VK_BINDING(3, 0) SamplerState texSampler : register(s0);
+VK_BINDING(4, 0) SamplerState ssaoNoiseSampler : register(s1);
 
-#define SSAO_KERNEL_ARRAY_SIZE 64
-const int SSAO_KERNEL_SIZE = 64;
-const float SSAO_RADIUS = 0.5;
-
-struct UBOSSAOKernel
+VK_BINDING(5, 0) cbuffer Kernel : register(b0)
 {
 	float4 samples[SSAO_KERNEL_ARRAY_SIZE];
 };
-cbuffer uboSSAOKernel : register(b0) { UBOSSAOKernel uboSSAOKernel; };
 
-struct UBO
+VK_BINDING(6, 0) cbuffer UBO : register(b1)
 {
 	float4x4 projection;
 };
-cbuffer ubo : register(b1) { UBO ubo; };
+
+const int SSAO_KERNEL_ARRAY_SIZE = 64;
+const int SSAO_KERNEL_SIZE = 64;
+const float SSAO_RADIUS = 0.5;
 
 float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
 {
@@ -46,12 +44,12 @@ float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
 	float occlusion = 0.0f;
 	for(int i = 0; i < SSAO_KERNEL_SIZE; i++)
 	{
-		float3 samplePos = mul(TBN, uboSSAOKernel.samples[i].xyz);
+		float3 samplePos = mul(TBN, samples[i].xyz);
 		samplePos = fragPos + samplePos * SSAO_RADIUS;
 
 		// project
 		float4 offset = float4(samplePos, 1.0f);
-		offset = mul(ubo.projection, offset);
+		offset = mul(projection, offset);
 		offset.xyz /= offset.w;
 		offset.xyz = offset.xyz * 0.5f + 0.5f;
 

@@ -54,7 +54,7 @@ public:
             {"Metal", RHI::RHIType::METAL}
         };
         auto iter = RHI_MAP.find(rhiString);
-        rhiType = RHI::RHIType::VULKAN;
+        rhiType = iter == RHI_MAP.end() ? RHI::RHIType::DIRECTX_12 : iter->second;
 
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);

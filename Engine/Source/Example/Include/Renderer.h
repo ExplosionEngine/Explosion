@@ -33,11 +33,13 @@
 #include <GLTFParser.h>
 #include <Camera.h>
 
+using namespace RHI;
 namespace Example {
     class Renderer;
     class Renderable {
     public:
-        Renderable() {};
+        NON_COPYABLE(Renderable)
+        Renderable()=default;
         ~Renderable();
 
         void InitalizeWithPrimitive(Renderer* renderer, Primitive* primitive);
@@ -45,42 +47,46 @@ namespace Example {
         uint32_t indexCount;
         uint32_t firstIndex;
 
-        RHI::BindGroup* bindGroup = nullptr;
-        RHI::Texture* diffuseColorMap;
-        RHI::TextureView* diffuseColorMapView;
+        UniqueRef<BindGroup> bindGroup;
+        UniqueRef<Texture> diffuseColorMap;
+        UniqueRef<TextureView> diffuseColorMapView;
     };
 
-#define SSAO_KERNEL_SIZE 64
-#define SSAO_RADIUS 0.3f
-#define SSAO_NOISE_DIM 4
+const unsigned int SSAO_KERNEL_SIZE = 64;
+const float SSAO_RADIUS  = 0.3f;
+const unsigned int SSAO_NOISE_DIM = 4;
 
     class Renderer {
     public:
-        explicit Renderer(Application* app ,RHI::RHIType rhiType) : app(app), rhiType(rhiType) {};
+        explicit Renderer(Application* app, RHIType rhiType) : app(app), rhiType(rhiType) {};
         ~Renderer();
 
         void Initialize();
 
         void RenderFrame();
 
-        RHI::Device* GetDevice()
-        {
-            return device;
+        Instance* GetInstance() {
+            return instance;
         }
 
-        RHI::BindGroupLayout* GetLayout()
+        Device* GetDevice()
         {
-            return renderableLayout;
+            return device.Get();
         }
 
-        RHI::Sampler* GetSampler()
+        BindGroupLayout* GetLayout()
         {
-            return sampler;
+            return renderableLayout.Get();
         }
 
-        RHI::Queue* GetQueue()
+        Sampler* GetSampler()
         {
-            return graphicsQueue;
+            return sampler.Get();
+        }
+
+        Queue* GetQueue()
+        {
+            return graphicsQueue.Get();
         }
 
         static const uint8_t BACK_BUFFER_COUNT = 2;
@@ -116,40 +122,35 @@ namespace Example {
 
         Application* app;
         Model* model;
-        std::vector<Renderable> renderables;
-        RHI::RHIType rhiType;
+        std::vector<Renderable*> renderables;
+        RHIType rhiType;
         Camera camera;
 
-        RHI::Instance* instance = nullptr;
-        RHI::Gpu* gpu = nullptr;
-        RHI::Device* device = nullptr;
-        RHI::Queue* graphicsQueue = nullptr;
-        RHI::SwapChain* swapChain = nullptr;
-        RHI::Buffer* vertexBuffer = nullptr;
-        RHI::BufferView* vertexBufferView = nullptr;
-        RHI::Buffer* indexBuffer = nullptr;
-        RHI::BufferView* indexBufferView = nullptr;
-        std::array<RHI::Texture*, BACK_BUFFER_COUNT> swapChainTextures {};
-        std::array<RHI::TextureView*, BACK_BUFFER_COUNT> swapChainTextureViews {};
+        Instance* instance = nullptr;
+        Gpu* gpu = nullptr;
+        UniqueRef<Device> device = nullptr;
+        UniqueRef<Queue> graphicsQueue = nullptr;
+        UniqueRef<SwapChain> swapChain = nullptr;
+        UniqueRef<Buffer> vertexBuffer = nullptr;
+        UniqueRef<BufferView> vertexBufferView = nullptr;
+        UniqueRef<Buffer> indexBuffer = nullptr;
+        UniqueRef<BufferView> indexBufferView = nullptr;
+        std::array<Texture*, BACK_BUFFER_COUNT> swapChainTextures {};
+        std::array<UniqueRef<TextureView>, BACK_BUFFER_COUNT> swapChainTextureViews {};
 
-        RHI::Buffer* quadVertexBuffer = nullptr;
-        RHI::BufferView* quadVertexBufferView = nullptr;
-        RHI::Buffer* quadIndexBuffer = nullptr;
-        RHI::BufferView* quadIndexBufferView = nullptr;
+        UniqueRef<Buffer> quadVertexBuffer = nullptr;
+        UniqueRef<BufferView> quadVertexBufferView = nullptr;
+        UniqueRef<Buffer> quadIndexBuffer = nullptr;
+        UniqueRef<BufferView> quadIndexBufferView = nullptr;
 
-        RHI::CommandBuffer* commandBuffer = nullptr;
-        RHI::Fence* fence = nullptr;
-        RHI::Sampler* sampler = nullptr;
-        RHI::Sampler* noiseSampler = nullptr;
+        UniqueRef<CommandBuffer> commandBuffer = nullptr;
+        UniqueRef<Fence> fence = nullptr;
+        UniqueRef<Sampler> sampler = nullptr;
+        UniqueRef<Sampler> noiseSampler = nullptr;
 
         struct UBuffer {
-            RHI::Buffer* buf;
-            RHI::BufferView* bufView;
-
-            ~UBuffer() {
-                safeDelete(buf);
-                safeDelete(bufView);
-            }
+            UniqueRef<Buffer> buf;
+            UniqueRef<BufferView> bufView;
         };
 
         struct UniformBuffers {
@@ -169,107 +170,59 @@ namespace Example {
 
         struct UBOSSAOParams {
             glm::mat4 projection;
-            int32_t ssao = true;
-            int32_t ssaoOnly = false;
-            int32_t ssaoBlur = true;
+            int32_t ssao = 1;
+            int32_t ssaoOnly = 0;
+            int32_t ssaoBlur = 1;
         } ubossaoParams;
 
         struct Noise {
-            RHI::Texture* tex;
-            RHI::TextureView* view;
-
-            ~Noise() {
-                safeDelete(tex);
-                safeDelete(view);
-            }
+            UniqueRef<Texture> tex;
+            UniqueRef<TextureView> view;
         } noise;
 
         struct ShaderModules {
-            RHI::ShaderModule* gBufferVert;
-            RHI::ShaderModule* gBufferFrag;
-            RHI::ShaderModule* quadVert;
-            RHI::ShaderModule* ssaoFrag;
-            RHI::ShaderModule* ssaoBlurFrag;
-            RHI::ShaderModule* compositionFrag;
-
-            ~ShaderModules() {
-                safeDelete(gBufferVert);
-                safeDelete(gBufferFrag);
-                safeDelete(quadVert);
-                safeDelete(ssaoFrag);
-                safeDelete(ssaoBlurFrag);
-                safeDelete(compositionFrag);
-            }
+            UniqueRef<ShaderModule> gBufferVert;
+            UniqueRef<ShaderModule> gBufferFrag;
+            UniqueRef<ShaderModule> quadVert;
+            UniqueRef<ShaderModule> ssaoFrag;
+            UniqueRef<ShaderModule> ssaoBlurFrag;
+            UniqueRef<ShaderModule> compositionFrag;
 
         } shaderModules;
 
         struct Pipelines {
-            RHI::GraphicsPipeline* gBuffer = nullptr;
-            RHI::GraphicsPipeline* ssao = nullptr;
-            RHI::GraphicsPipeline* ssaoBlur = nullptr;
-            RHI::GraphicsPipeline* composition = nullptr;
-
-            ~Pipelines() {
-                safeDelete(gBuffer);
-                safeDelete(ssao);
-                safeDelete(ssaoBlur);
-                safeDelete(composition);
-            }
+            UniqueRef<GraphicsPipeline> gBuffer;
+            UniqueRef<GraphicsPipeline> ssao;
+            UniqueRef<GraphicsPipeline> ssaoBlur;
+            UniqueRef<GraphicsPipeline> composition;
         } pipelines;
 
         struct PipelineLayouts {
-            RHI::PipelineLayout* gBuffer = nullptr;
-            RHI::PipelineLayout* ssao = nullptr;
-            RHI::PipelineLayout* ssaoBlur = nullptr;
-            RHI::PipelineLayout* composition = nullptr;
-
-            ~PipelineLayouts() {
-                safeDelete(gBuffer);
-                safeDelete(ssao);
-                safeDelete(ssaoBlur);
-                safeDelete(composition);
-            }
-
+            UniqueRef<PipelineLayout> gBuffer;
+            UniqueRef<PipelineLayout> ssao;
+            UniqueRef<PipelineLayout> ssaoBlur;
+            UniqueRef<PipelineLayout> composition;
         } pipelineLayouts;
 
-        RHI::BindGroupLayout* renderableLayout = nullptr;
+        UniqueRef<BindGroupLayout> renderableLayout;
 
         struct BindGroupLayouts {
-            RHI::BindGroupLayout* gBuffer = nullptr;
-            RHI::BindGroupLayout* ssao = nullptr;
-            RHI::BindGroupLayout* ssaoBlur = nullptr;
-            RHI::BindGroupLayout* composition = nullptr;
-
-            ~BindGroupLayouts() {
-                safeDelete(gBuffer);
-                safeDelete(ssao);
-                safeDelete(ssaoBlur);
-                safeDelete(composition);
-            }
+            UniqueRef<BindGroupLayout> gBuffer;
+            UniqueRef<BindGroupLayout> ssao;
+            UniqueRef<BindGroupLayout> ssaoBlur;
+            UniqueRef<BindGroupLayout> composition;
         } bindGroupLayouts;
 
         struct BindGroups {
-            RHI::BindGroup* scene = nullptr;
-            RHI::BindGroup* ssao = nullptr;
-            RHI::BindGroup* ssaoBlur = nullptr;
-            RHI::BindGroup* composition = nullptr;
-
-            ~BindGroups() {
-                safeDelete(scene);
-                safeDelete(ssao);
-                safeDelete(ssaoBlur);
-                safeDelete(composition);
-            }
+            UniqueRef<BindGroup> scene;
+            UniqueRef<BindGroup> ssao;
+            UniqueRef<BindGroup> ssaoBlur;
+            UniqueRef<BindGroup> composition;
         } bindGroups;
 
         struct ColorAttachment {
-            RHI::Texture* texture;
-            RHI::TextureView* view;
-
-            ~ColorAttachment() {
-                safeDelete(texture);
-                safeDelete(view);
-            }
+            UniqueRef<Texture> texture;
+            UniqueRef<TextureView> view;
         };
 
         struct GBufferOutput {
@@ -288,8 +241,8 @@ namespace Example {
         };
 
         // helper function
-        RHI::ShaderModule* CompileShader(const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage);
-        void CreateAttachments(RHI::PixelFormat format, RHI::TextureAspect aspect, ColorAttachment* attachment, uint32_t width, uint32_t height);
-        void CreateUniformBuffer(RHI::BufferUsageFlags flags, UBuffer* uBuffer, size_t size, void* data = nullptr);
+        ShaderModule* CompileShader(const std::string& fileName, const std::string& entryPoint, ShaderStageBits shaderStage);
+        void CreateAttachments(PixelFormat format, TextureAspect aspect, ColorAttachment* attachment, uint32_t width, uint32_t height);
+        void CreateUniformBuffer(BufferUsageFlags flags, UBuffer* uBuffer, size_t size, void* data = nullptr);
     };
 }

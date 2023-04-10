@@ -47,12 +47,12 @@ public:
         return zfar;
     }
 
-    void setPerspective(float fov, float aspect, float znear, float zfar)
+    void setPerspective(float inFov, float inAspect, float inZnear, float inZfar)
     {
-        this->fov = fov;
-        this->znear = znear;
-        this->zfar = zfar;
-        perspective = glm::perspective(glm::radians(fov), aspect, znear, zfar);
+        this->fov = inFov;
+        this->znear = inZnear;
+        this->zfar = inZfar;
+        perspective = glm::perspective(glm::radians(fov), inAspect, znear, zfar);
         if (flipY) {
             perspective[1][1] *= -1.0f;
         }
@@ -66,15 +66,15 @@ public:
         }
     }
 
-    void setPosition(glm::vec3 position)
+    void setPosition(glm::vec3 inPosition)
     {
-        this->position = position;
+        this->position = inPosition;
         UpdateViewMatrix();
     }
 
-    void setRotation(glm::vec3 rotation)
+    void setRotation(glm::vec3 inRotation)
     {
-        this->rotation = rotation;
+        this->rotation = inRotation;
         UpdateViewMatrix();
     }
 
@@ -96,14 +96,14 @@ public:
         UpdateViewMatrix();
     }
 
-    void setRotationSpeed(float rotationSpeed)
+    void setRotationSpeed(float inRotationSpeed)
     {
-        this->rotationSpeed = rotationSpeed;
+        this->rotationSpeed = inRotationSpeed;
     }
 
-    void setMovementSpeed(float movementSpeed)
+    void setMovementSpeed(float inMovementSpeed)
     {
-        this->movementSpeed = movementSpeed;
+        this->movementSpeed = inMovementSpeed;
     }
 
     void update(float deltaTime)
