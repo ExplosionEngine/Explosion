@@ -494,14 +494,14 @@ namespace Example {
 
         // random noise
         std::vector<glm::vec4> ssaoNoise(SSAO_NOISE_DIM * SSAO_NOISE_DIM);
-        for (auto& noise : ssaoNoise)
+        for (auto& randomVec : ssaoNoise)
         {
-            noise = glm::vec4(rndDist(rndEngine) * 2.0f - 1.0f, rndDist(rndEngine) * 2.0f - 1.0f, 0.0f, 0.0f);
+            randomVec = glm::vec4(rndDist(rndEngine) * 2.0f - 1.0f, rndDist(rndEngine) * 2.0f - 1.0f, 0.0f, 0.0f);
         }
 
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = ssaoNoise.size() * sizeof(glm::vec4);
-        // TO make this buffer has correct resource state(D3D12_RESOURCE_STATE_GENERIC_READ) in dx, add uniform usage flag
+        // To make this buffer has correct resource state(D3D12_RESOURCE_STATE_GENERIC_READ) in dx, add uniform usage flag
         bufferCreateInfo.usages = BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
         auto* pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
@@ -941,6 +941,7 @@ namespace Example {
 
         TextureCreateInfo texCreateInfo {};
         texCreateInfo.format = PixelFormat::RGBA8_UNORM;
+        texCreateInfo.dimension = TextureDimension::T_2D;
         texCreateInfo.mipLevels = data->mipLevels;
         texCreateInfo.extent = { data->width, data->height, 1};
         texCreateInfo.samples = 1;

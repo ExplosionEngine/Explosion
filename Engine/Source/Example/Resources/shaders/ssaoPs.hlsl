@@ -9,7 +9,7 @@ VK_BINDING(4, 0) SamplerState ssaoNoiseSampler : register(s1);
 
 VK_BINDING(5, 0) cbuffer Kernel : register(b0)
 {
-	float4 samples[SSAO_KERNEL_ARRAY_SIZE];
+	float4 samples[64];
 };
 
 VK_BINDING(6, 0) cbuffer UBO : register(b1)
@@ -17,9 +17,9 @@ VK_BINDING(6, 0) cbuffer UBO : register(b1)
 	float4x4 projection;
 };
 
-const int SSAO_KERNEL_ARRAY_SIZE = 64;
-const int SSAO_KERNEL_SIZE = 64;
-const float SSAO_RADIUS = 0.5;
+// const int SSAO_KERNEL_ARRAY_SIZE = 64;
+// const int SSAO_KERNEL_SIZE = 64;
+// const float SSAO_RADIUS = 0.5;
 
 float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
 {
@@ -42,10 +42,10 @@ float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
 
 	// Calculate occlusion value
 	float occlusion = 0.0f;
-	for(int i = 0; i < SSAO_KERNEL_SIZE; i++)
+	for(int i = 0; i < 64; i++)
 	{
 		float3 samplePos = mul(TBN, samples[i].xyz);
-		samplePos = fragPos + samplePos * SSAO_RADIUS;
+		samplePos = fragPos + samplePos * 0.5;
 
 		// project
 		float4 offset = float4(samplePos, 1.0f);
@@ -55,10 +55,10 @@ float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
 
 		float sampleDepth = -texturePositionDepth.Sample(texSampler, offset.xy).w;
 
-		float rangeCheck = smoothstep(0.0f, 1.0f, SSAO_RADIUS / abs(fragPos.z - sampleDepth));
+		float rangeCheck = smoothstep(0.0f, 1.0f, 0.5 / abs(fragPos.z - sampleDepth));
 		occlusion += (sampleDepth >= samplePos.z ? 1.0f : 0.0f) * rangeCheck;
 	}
-	occlusion = 1.0 - (occlusion / float(SSAO_KERNEL_SIZE));
+	occlusion = 1.0 - (occlusion / 64.0);
 
 	return occlusion;
 }
