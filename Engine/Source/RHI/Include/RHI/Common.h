@@ -445,11 +445,12 @@ namespace RHI {
 
     using TextureUsageFlags = Flags<>;
     enum class TextureUsageBits : TextureUsageFlags::UnderlyingType {
-        COPY_SRC          = 0x1,
-        COPY_DST          = 0x2,
-        TEXTURE_BINDING   = 0x4,
-        STORAGE_BINDING   = 0x8,
-        RENDER_ATTACHMENT = 0x10,
+        COPY_SRC                 = 0x1,
+        COPY_DST                 = 0x2,
+        TEXTURE_BINDING          = 0x4,
+        STORAGE_BINDING          = 0x8,
+        RENDER_ATTACHMENT        = 0x10,
+        DEPTH_STENCIL_ATTACHMENT = 0x20,
         MAX
     };
     RHI_FLAGS_DECLARE(TextureUsageFlags, TextureUsageBits)

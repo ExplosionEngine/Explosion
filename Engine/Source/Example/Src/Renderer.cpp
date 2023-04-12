@@ -32,8 +32,8 @@ namespace Example {
 
     void Renderer::RenderFrame()
     {
-//        PopulateCommandBuffer();
-//        SubmitCommandBufferAndPresent();
+        PopulateCommandBuffer();
+        SubmitCommandBufferAndPresent();
     }
 
     Renderer::~Renderer()
@@ -446,18 +446,18 @@ namespace Example {
         createInfo.entries = entries.data();
         createInfo.entryNum = entries.size();
         createInfo.layout = bindGroupLayouts.composition.Get();
-        bindGroups.ssao = device->CreateBindGroup(createInfo);
+        bindGroups.composition = device->CreateBindGroup(createInfo);
     }
 
     void Renderer::PrepareOffscreen()
     {
-        CreateAttachments(PixelFormat::RGBA32_FLOAT, TextureAspect::COLOR, &gBufferOutput.pos, app->width, app->height);
-        CreateAttachments(PixelFormat::RGBA8_UNORM, TextureAspect::COLOR, &gBufferOutput.normal, app->width, app->height);
-        CreateAttachments(PixelFormat::RGBA8_UNORM, TextureAspect::COLOR, &gBufferOutput.albedo, app->width, app->height);
+        CreateAttachments(PixelFormat::RGBA32_FLOAT,  &gBufferOutput.pos, app->width, app->height);
+        CreateAttachments(PixelFormat::RGBA8_UNORM,  &gBufferOutput.normal, app->width, app->height);
+        CreateAttachments(PixelFormat::RGBA8_UNORM,  &gBufferOutput.albedo, app->width, app->height);
 
-        CreateAttachments(PixelFormat::R8_UNORM, TextureAspect::COLOR, &ssaoOutput, app->width, app->height);
+        CreateAttachments(PixelFormat::R8_UNORM,  &ssaoOutput, app->width, app->height);
 
-        CreateAttachments(PixelFormat::R8_UNORM, TextureAspect::COLOR, &ssaoBlurOutput, app->width, app->height);
+        CreateAttachments(PixelFormat::R8_UNORM,  &ssaoBlurOutput, app->width, app->height);
     }
 
     void Renderer::PrepareUniformBuffers()
@@ -550,7 +550,7 @@ namespace Example {
 
     }
 
-    void Renderer::CreateAttachments(RHI::PixelFormat format, RHI::TextureAspect aspect, ColorAttachment* attachment, uint32_t width, uint32_t height)
+    void Renderer::CreateAttachments(RHI::PixelFormat format, ColorAttachment* attachment, uint32_t width, uint32_t height)
     {
         TextureCreateInfo texCreateInfo {};
         texCreateInfo.format = format;
@@ -558,7 +558,7 @@ namespace Example {
         texCreateInfo.extent = {width, height, 1};
         texCreateInfo.dimension = TextureDimension::T_2D;
         texCreateInfo.samples = 1;
-        texCreateInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::TEXTURE_BINDING;
+        texCreateInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::TEXTURE_BINDING | TextureUsageBits::RENDER_ATTACHMENT;
         attachment->texture = device->CreateTexture(texCreateInfo);
 
         TextureViewCreateInfo viewCreateInfo {};
@@ -749,6 +749,10 @@ namespace Example {
         CommandEncoder* commandEncoder = commandBuffer->Begin();
         {
             // GBuffer
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferOutput.pos.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferOutput.normal.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferOutput.albedo.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
+
             std::array<GraphicsPassColorAttachment, 3> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::CLEAR;
@@ -795,6 +799,8 @@ namespace Example {
 
         {
             // ssao
+            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
+
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::CLEAR;
@@ -813,7 +819,7 @@ namespace Example {
                 graphicsEncoder->SetScissor(0, 0, app->width, app->height);
                 graphicsEncoder->SetViewport(0, 0, app->width, app->height, 0, 1);
                 graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
-                graphicsEncoder->SetBindGroup(0, bindGroups.composition.Get());
+                graphicsEncoder->SetBindGroup(0, bindGroups.ssao.Get());
                 graphicsEncoder->SetVertexBuffer(0, quadVertexBufferView.Get());
                 graphicsEncoder->SetIndexBuffer(quadIndexBufferView.Get());
                 graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
@@ -824,6 +830,8 @@ namespace Example {
 
         {
             // ssaoBlur
+            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
+
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::CLEAR;
@@ -842,7 +850,7 @@ namespace Example {
                 graphicsEncoder->SetScissor(0, 0, app->width, app->height);
                 graphicsEncoder->SetViewport(0, 0, app->width, app->height, 0, 1);
                 graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
-                graphicsEncoder->SetBindGroup(0, bindGroups.composition.Get());
+                graphicsEncoder->SetBindGroup(0, bindGroups.ssaoBlur.Get());
                 graphicsEncoder->SetVertexBuffer(0, quadVertexBufferView.Get());
                 graphicsEncoder->SetIndexBuffer(quadIndexBufferView.Get());
                 graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
@@ -855,6 +863,8 @@ namespace Example {
             auto backTextureIndex = swapChain->AcquireBackTexture();
 
             // composition
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::PRESENT, TextureState::RENDER_TARGET));
+
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::CLEAR;
@@ -896,9 +906,9 @@ namespace Example {
 
     void Renderer::InitCamera()
     {
-        camera.type = Camera::CameraType::firstPerson;
-        camera.position = { 1.0f, 0.75f, 0.0f };
-        camera.setRotation(glm::vec3(0.0f, 90.0f, 0.0f));
+        camera.type = Camera::CameraType::lookAt;
+        camera.position = { 0.0f, 0.0f, -10.0f };
+        camera.setRotation(glm::vec3(-7.5f, 72.0f, 0.0f));
         camera.setPerspective(60.0f, (float)app->width / (float)app->height, uboSceneParams.nearPlane, uboSceneParams.farPlane);
     }
 
@@ -951,9 +961,9 @@ namespace Example {
         TextureViewCreateInfo viewCreateInfo {};
         viewCreateInfo.dimension = TextureViewDimension::TV_2D;
         viewCreateInfo.baseArrayLayer = 0;
-        viewCreateInfo.arrayLayerNum = data->arrayLayers;
+        viewCreateInfo.arrayLayerNum = 1;
         viewCreateInfo.baseMipLevel = 0;
-        viewCreateInfo.mipLevelNum = data->mipLevels;
+        viewCreateInfo.mipLevelNum = 1;
         viewCreateInfo.aspect = TextureAspect::COLOR;
         diffuseColorMapView = diffuseColorMap->CreateTextureView(viewCreateInfo);
 

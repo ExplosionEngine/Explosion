@@ -17,7 +17,8 @@ namespace RHI::Vulkan {
             { TextureUsageBits::COPY_DST,          vk::ImageUsageFlagBits::eTransferDst },
             { TextureUsageBits::TEXTURE_BINDING,   vk::ImageUsageFlagBits::eSampled },
             { TextureUsageBits::STORAGE_BINDING,   vk::ImageUsageFlagBits::eStorage },
-            { TextureUsageBits::RENDER_ATTACHMENT, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eDepthStencilAttachment },
+            { TextureUsageBits::RENDER_ATTACHMENT, vk::ImageUsageFlagBits::eColorAttachment },
+            { TextureUsageBits::DEPTH_STENCIL_ATTACHMENT, vk::ImageUsageFlagBits::eDepthStencilAttachment },
         };
 
         vk::ImageUsageFlags result = {};

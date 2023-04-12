@@ -242,7 +242,7 @@ const unsigned int SSAO_NOISE_DIM = 4;
 
         // helper function
         ShaderModule* CompileShader(const std::string& fileName, const std::string& entryPoint, ShaderStageBits shaderStage);
-        void CreateAttachments(PixelFormat format, TextureAspect aspect, ColorAttachment* attachment, uint32_t width, uint32_t height);
+        void CreateAttachments(PixelFormat format, ColorAttachment* attachment, uint32_t width, uint32_t height);
         void CreateUniformBuffer(BufferUsageFlags flags, UBuffer* uBuffer, size_t size, void* data = nullptr);
     };
 }
