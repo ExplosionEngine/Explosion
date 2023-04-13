@@ -168,3 +168,15 @@ Add3rdHeaderOnlyPackage(
     HASH 32e28f89a85b3bb6749e8caed9eb5226f7f5956769005d2b5a41d48d9481d90c
     INCLUDE $<SOURCE_DIR>
 )
+
+# assimp
+Add3rdCMakeProject(
+    NAME assimp
+    PLATFORM All
+    VERSION 5.2.5
+    HASH 2fbea1a1040e959c1f61c80ae88d2f700600d04416698ac00f3065411a58c551
+    CMAKE_ARG -DASSIMP_BUILD_TESTS=OFF
+    INCLUDE $<INSTALL_DIR>/include
+    LINK $<INSTALL_DIR>/lib
+    LIB assimp
+)
