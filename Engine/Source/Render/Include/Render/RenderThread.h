@@ -4,10 +4,9 @@
 
 #pragma once
 
-#include <memory>
-
 #include <Common/Debug.h>
 #include <Common/Concurrent.h>
+#include <Common/Memory.h>
 
 namespace Render {
     class RenderThread {
@@ -41,6 +40,6 @@ namespace Render {
         }
 
     private:
-        std::unique_ptr<Common::WorkerThread> worker;
+        Common::UniqueRef<Common::WorkerThread> worker;
     };
 }

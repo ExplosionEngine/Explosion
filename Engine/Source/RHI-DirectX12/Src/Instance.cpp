@@ -118,7 +118,7 @@ namespace RHI::DirectX12 {
 
     Gpu* DX12Instance::GetGpu(uint32_t index)
     {
-        return gpus[index].get();
+        return gpus[index].Get();
     }
 
     void DX12Instance::Destroy()

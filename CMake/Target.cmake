@@ -183,16 +183,68 @@ function(GetTargetIncludeDirectoriesRecurse)
     set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
 endfunction()
 
+function(AddMirrorInfoSourceGenerationTarget)
+    cmake_parse_arguments(PARAMS "" "NAME;OUTPUT_SRC;OUTPUT_TARGET_NAME" "SEARCH_DIR;PUBLIC_INC;PRIVATE_INC" ${ARGN})
+
+    if (DEFINED PARAMS_PUBLIC_INC)
+        list(APPEND INC ${PARAMS_PUBLIC_INC})
+    endif()
+    if (DEFINED PARAMS_PRIVATE_INC)
+        list(APPEND INC ${PARAMS_PRIVATE_INC})
+    endif()
+    list(REMOVE_DUPLICATES INC)
+
+    foreach (I ${INC})
+        get_filename_component(ABSOLUTE_I ${I} ABSOLUTE)
+        list(APPEND ABSOLUTE_INC ${ABSOLUTE_I})
+        list(APPEND INC_ARGS "-I" ${ABSOLUTE_I})
+    endforeach()
+
+    foreach (SEARCH_DIR ${PARAMS_SEARCH_DIR})
+        file(GLOB_RECURSE INPUT_HEADER_FILES "${SEARCH_DIR}/*.h")
+        foreach (INPUT_HEADER_FILE ${INPUT_HEADER_FILES})
+            get_filename_component(FILENAME ${INPUT_HEADER_FILE} NAME_WE)
+
+            set(OUTPUT_SOURCE "${CMAKE_BINARY_DIR}/Generated/MirrorInfoSource/${PARAMS_NAME}/${FILENAME}.generated.cpp")
+            list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
+
+            add_custom_command(
+                OUTPUT ${OUTPUT_SOURCE}
+                COMMAND "$<TARGET_FILE:MirrorTool>" "-i" ${INPUT_HEADER_FILE} "-o" ${OUTPUT_SOURCE} ${INC_ARGS}
+            )
+        endforeach()
+    endforeach ()
+
+    set(CUSTOM_TARGET_NAME "${PARAMS_NAME}.Generated")
+    add_custom_target(
+        ${CUSTOM_TARGET_NAME}
+        DEPENDS MirrorTool ${OUTPUT_SOURCES}
+    )
+    set(${PARAMS_OUTPUT_SRC} ${OUTPUT_SOURCES} PARENT_SCOPE)
+    set(${PARAMS_OUTPUT_TARGET_NAME} ${CUSTOM_TARGET_NAME} PARENT_SCOPE)
+endfunction()
+
 function(AddExecutable)
-    cmake_parse_arguments(PARAMS "SAMPLE;META" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES" ${ARGN})
+    cmake_parse_arguments(PARAMS "SAMPLE;META" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES;REFLECT" ${ARGN})
 
     if (${PARAMS_SAMPLE} AND (NOT ${BUILD_SAMPLE}))
         return()
     endif()
 
+    if (DEFINED PARAMS_REFLECT)
+        AddMirrorInfoSourceGenerationTarget(
+            NAME ${PARAMS_NAME}
+            OUTPUT_SRC GENERATED_SRC
+            OUTPUT_TARGET_NAME GENERATED_TARGET
+            SEARCH_DIR ${PARAMS_REFLECT}
+            PRIVATE_INC ${PARAMS_INC}
+        )
+    endif()
+
     add_executable(
         ${PARAMS_NAME}
         ${PARAMS_SRC}
+        ${GENERATED_SRC}
     )
     target_include_directories(
         ${PARAMS_NAME}
@@ -220,6 +272,9 @@ function(AddExecutable)
     if (DEFINED PARAMS_DEP_TARGET)
         add_dependencies(${PARAMS_NAME} ${PARAMS_DEP_TARGET})
     endif()
+    if (DEFINED PARAMS_REFLECT)
+        add_dependencies(${PARAMS_NAME} ${GENERATED_TARGET})
+    endif()
 
     if (${MSVC})
         set_target_properties(${PARAMS_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>)
@@ -227,12 +282,24 @@ function(AddExecutable)
 endfunction()
 
 function(AddLibrary)
-    cmake_parse_arguments(PARAMS "META" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB" ${ARGN})
+    cmake_parse_arguments(PARAMS "META" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB;REFLECT" ${ARGN})
+
+    if (DEFINED PARAMS_REFLECT)
+        AddMirrorInfoSourceGenerationTarget(
+            NAME ${PARAMS_NAME}
+            OUTPUT_SRC GENERATED_SRC
+            OUTPUT_TARGET_NAME GENERATED_TARGET
+            SEARCH_DIR ${PARAMS_REFLECT}
+            PUBLIC_INC ${PARAMS_PUBLIC_INC}
+            PRIVATE_INC ${PARAMS_PRIVATE_INC}
+        )
+    endif()
 
     add_library(
         ${PARAMS_NAME}
         ${PARAMS_TYPE}
         ${PARAMS_SRC}
+        ${GENERATED_SRC}
     )
     target_include_directories(
         ${PARAMS_NAME}
@@ -274,6 +341,10 @@ function(AddLibrary)
             PUBLIC ${API_HEADER_DIR}/${PARAMS_NAME}
         )
     endif()
+
+    if (DEFINED PARAMS_REFLECT)
+        add_dependencies(${PARAMS_NAME} ${GENERATED_TARGET})
+    endif()
 endfunction()
 
 function(AddTest)
@@ -281,11 +352,22 @@ function(AddTest)
         return()
     endif()
 
-    cmake_parse_arguments(PARAMS "META" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES" ${ARGN})
+    cmake_parse_arguments(PARAMS "META" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES;REFLECT" ${ARGN})
+
+    if (DEFINED PARAMS_REFLECT)
+        AddMirrorInfoSourceGenerationTarget(
+            NAME ${PARAMS_NAME}
+            OUTPUT_SRC GENERATED_SRC
+            OUTPUT_TARGET_NAME GENERATED_TARGET
+            SEARCH_DIR ${PARAMS_REFLECT}
+            PRIVATE_INC ${PARAMS_INC}
+        )
+    endif()
 
     add_executable(
         ${PARAMS_NAME}
         ${PARAMS_SRC}
+        ${GENERATED_SRC}
     )
     target_include_directories(
         ${PARAMS_NAME}
@@ -312,6 +394,9 @@ function(AddTest)
     )
     if (DEFINED PARAMS_DEP_TARGET)
         add_dependencies(${PARAMS_NAME} ${PARAMS_DEP_TARGET})
+    endif()
+    if (DEFINED PARAMS_REFLECT)
+        add_dependencies(${PARAMS_NAME} ${GENERATED_TARGET})
     endif()
 
     add_test(

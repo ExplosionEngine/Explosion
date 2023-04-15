@@ -84,7 +84,7 @@ namespace Common {
             }
             libs[fullName] = std::make_unique<DynamicLibrary>(handle);
         }
-        return libs[fullName].get();
+        return libs[fullName].Get();
     }
 
     void DynamicLibraryManager::Unload(const std::string& name)

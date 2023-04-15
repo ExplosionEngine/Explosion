@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <memory>
 #include <functional>
 
 #include <Common/Path.h>
+#include <Common/Memory.h>
 #include <Runtime/Input.h>
 #include <Runtime/Config.h>
 #include <Runtime/Asset.h>
@@ -57,10 +57,10 @@ namespace Runtime{
 
         World* activeWorld;
         IApplication* application;
-        std::unique_ptr<Common::PathMapper> pathMapper;
-        std::unique_ptr<InputManager> inputManager;
-        std::unique_ptr<ConfigManager> configManager;
-        std::unique_ptr<AssetManager> assetManager;
+        Common::UniqueRef<Common::PathMapper> pathMapper;
+        Common::UniqueRef<InputManager> inputManager;
+        Common::UniqueRef<ConfigManager> configManager;
+        Common::UniqueRef<AssetManager> assetManager;
         Listeners listeners;
     };
 }

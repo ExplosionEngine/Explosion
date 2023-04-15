@@ -5,7 +5,6 @@
 #pragma once
 
 #include <vector>
-#include <memory>
 #include <unordered_map>
 
 #include <wrl/client.h>
@@ -74,7 +73,7 @@ namespace RHI::DirectX12 {
 #endif
 
         DX12Gpu& gpu;
-        std::unordered_map<QueueType, std::vector<std::unique_ptr<DX12Queue>>> queues;
+        std::unordered_map<QueueType, std::vector<Common::UniqueRef<DX12Queue>>> queues;
         uint32_t rtvDescriptorSize;
         uint32_t cbvSrvUavDescriptorSize;
         uint32_t samplerDescriptorSize;

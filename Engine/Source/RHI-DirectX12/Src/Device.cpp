@@ -60,7 +60,7 @@ namespace RHI::DirectX12 {
         Assert(iter != queues.end());
         auto& queueArray = iter->second;
         Assert(index >= 0 && index < queueArray.size());
-        return queueArray[index].get();
+        return queueArray[index].Get();
     }
 
     SwapChain* DX12Device::CreateSwapChain(const SwapChainCreateInfo& createInfo)
@@ -201,7 +201,7 @@ namespace RHI::DirectX12 {
         }
 
         for (auto iter : queueNumMap) {
-            std::vector<std::unique_ptr<DX12Queue>> tempQueues(iter.second);
+            std::vector<Common::UniqueRef<DX12Queue>> tempQueues(iter.second);
 
             D3D12_COMMAND_QUEUE_DESC queueDesc {};
             queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;

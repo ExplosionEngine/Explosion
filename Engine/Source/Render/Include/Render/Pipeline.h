@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <memory>
 #include <unordered_map>
 
 #include <RHI/RHI.h>
@@ -84,7 +83,7 @@ namespace Render {
 
         Sampler(RHI::Device& inDevice, const SamplerDesc& inDesc);
 
-        RHI::UniqueRef<RHI::Sampler> rhiHandle;
+        Common::UniqueRef<RHI::Sampler> rhiHandle;
     };
 
     class BindGroupLayout {
@@ -100,7 +99,7 @@ namespace Render {
         BindGroupLayout(RHI::Device& inDevice, const BindGroupLayoutDesc& inDesc);
 
         BindingMap bindings;
-        RHI::UniqueRef<RHI::BindGroupLayout> rhiHandle;
+        Common::UniqueRef<RHI::BindGroupLayout> rhiHandle;
     };
 
     class PipelineLayout {
@@ -125,8 +124,8 @@ namespace Render {
         void CreateRHIPipelineLayout(RHI::Device& device);
 
         size_t hash;
-        std::unordered_map<uint32_t, std::unique_ptr<BindGroupLayout>> bindGroupLayouts;
-        RHI::UniqueRef<RHI::PipelineLayout> rhiHandle;
+        std::unordered_map<uint32_t, Common::UniqueRef<BindGroupLayout>> bindGroupLayouts;
+        Common::UniqueRef<RHI::PipelineLayout> rhiHandle;
     };
 
     class ComputePipelineState {
@@ -145,7 +144,7 @@ namespace Render {
 
         size_t hash;
         PipelineLayout* pipelineLayout;
-        RHI::UniqueRef<RHI::ComputePipeline> rhiHandle;
+        Common::UniqueRef<RHI::ComputePipeline> rhiHandle;
     };
 
     class RasterPipelineState {
@@ -163,7 +162,7 @@ namespace Render {
 
         size_t hash;
         PipelineLayout* pipelineLayout;
-        RHI::UniqueRef<RHI::GraphicsPipeline> rhiHandle;
+        Common::UniqueRef<RHI::GraphicsPipeline> rhiHandle;
     };
 
     class SamplerCache {
@@ -177,7 +176,7 @@ namespace Render {
         explicit SamplerCache(RHI::Device& inDevice);
 
         RHI::Device& device;
-        std::unordered_map<size_t, std::unique_ptr<Sampler>> samplers;
+        std::unordered_map<size_t, Common::UniqueRef<Sampler>> samplers;
     };
 
     class PipelineCache {
@@ -194,7 +193,7 @@ namespace Render {
         explicit PipelineCache(RHI::Device& inDevice);
 
         RHI::Device& device;
-        std::unordered_map<size_t, std::unique_ptr<ComputePipelineState>> computePipelines;
-        std::unordered_map<size_t, std::unique_ptr<RasterPipelineState>> rasterPipelines;
+        std::unordered_map<size_t, Common::UniqueRef<ComputePipelineState>> computePipelines;
+        std::unordered_map<size_t, Common::UniqueRef<RasterPipelineState>> rasterPipelines;
     };
 }
