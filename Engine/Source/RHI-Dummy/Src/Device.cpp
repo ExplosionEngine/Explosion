@@ -39,7 +39,7 @@ namespace RHI::Dummy {
     Queue* DummyDevice::GetQueue(QueueType type, size_t index)
     {
         Assert(type == QueueType::GRAPHICS && index == 0);
-        return dummyQueue.get();
+        return dummyQueue.Get();
     }
 
     SwapChain* DummyDevice::CreateSwapChain(const SwapChainCreateInfo& createInfo)

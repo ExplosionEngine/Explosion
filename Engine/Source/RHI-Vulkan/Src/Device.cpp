@@ -64,7 +64,7 @@ namespace RHI::Vulkan {
         Assert(iter != queues.end());
         auto& queueArray = iter->second;
         Assert(index < queueArray.size());
-        return queueArray[index].get();
+        return queueArray[index].Get();
     }
 
     SwapChain* VKDevice::CreateSwapChain(const SwapChainCreateInfo& createInfo)
@@ -228,7 +228,7 @@ namespace RHI::Vulkan {
             auto queueFamilyIndex = iter.second.first;
             auto queueNum = iter.second.second;
 
-            std::vector<std::unique_ptr<VKQueue>> tempQueues(queueNum);
+            std::vector<Common::UniqueRef<VKQueue>> tempQueues(queueNum);
             for (auto i = 0; i < tempQueues.size(); i++) {
                 tempQueues[i] = std::make_unique<VKQueue>(vkDevice.getQueue(queueFamilyIndex, i));
             }

@@ -9,9 +9,9 @@ AddLibrary(
 file(GLOB EXE_SOURCES ExeSrc/*.cpp)
 AddExecutable(
     NAME MirrorTool
-    SRC ${SOURCES}
+    SRC ${EXE_SOURCES}
     INC Include
-    LIB clipp llvm-clang Mirror
+    LIB MirrorTool.Static
 )
 
 AddTest(

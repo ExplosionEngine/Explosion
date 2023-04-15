@@ -162,7 +162,7 @@ TEST(RegistryTest, ClassTest)
     }
 
     {
-        const auto& clazz = Mirror::Class::Get("C1");
+        const auto& clazz = Mirror::Class::Get<C1>();
         const auto& constructor = clazz.GetConstructor("Constructor0");
         const auto& setter = clazz.GetMemberFunction("SetV0");
         const auto& getter = clazz.GetMemberFunction("GetV0");
@@ -174,7 +174,7 @@ TEST(RegistryTest, ClassTest)
     }
 
     {
-        const auto& clazz = Mirror::Class::Get("C2");
+        const auto& clazz = Mirror::Class::Get<C2>();
         const auto& constructor = clazz.GetConstructor("Constructor0");
         const auto& destructor = clazz.GetDestructor();
         const auto& a = clazz.GetMemberVariable("a");

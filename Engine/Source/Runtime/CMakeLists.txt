@@ -4,6 +4,7 @@ AddLibrary(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
+    REFLECT Include
     LIB EnTT GLM Mirror
 )
 

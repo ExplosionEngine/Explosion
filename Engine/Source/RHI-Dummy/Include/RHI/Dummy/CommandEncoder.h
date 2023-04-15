@@ -14,6 +14,7 @@ namespace RHI::Dummy {
         explicit DummyComputePassCommandEncoder(const DummyCommandBuffer& dummyCommandBuffer);
         ~DummyComputePassCommandEncoder() override;
 
+        void SetPipeline(ComputePipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup *bindGroup) override;
         void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override;
         void EndPass() override;
@@ -24,7 +25,8 @@ namespace RHI::Dummy {
     public:
         explicit DummyGraphicsPassCommandEncoder(const DummyCommandBuffer& dummyCommandBuffer);
         ~DummyGraphicsPassCommandEncoder() override;
-        
+
+        void SetPipeline(GraphicsPipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void SetIndexBuffer(BufferView* bufferView) override;
         void SetVertexBuffer(size_t slot, BufferView* bufferView) override;
@@ -51,7 +53,7 @@ namespace RHI::Dummy {
         void ResourceBarrier(const Barrier& barrier) override;
         // TODO WriteTimeStamp(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-writetimestamp
         // TODO ResolveQuerySet(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-resolvequeryset
-        ComputePassCommandEncoder* BeginComputePass(const ComputePassBeginInfo* beginInfo) override;
+        ComputePassCommandEncoder* BeginComputePass() override;
         GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
         void SwapChainSync(SwapChain *swapChain) override;
         void End() override;

@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <memory>
-
 #include <RHI/Instance.h>
 #include <RHI/Dummy/Api.h>
 
@@ -22,7 +20,7 @@ namespace RHI::Dummy {
         void Destroy() override;
 
     private:
-        std::unique_ptr<DummyGpu> dummyGpu;
+        Common::UniqueRef<DummyGpu> dummyGpu;
     };
 }
 

@@ -7,6 +7,8 @@
 #include <Runtime/World.h>
 
 struct Position : public Runtime::Component {
+    Position(Runtime::World* inWorld, Runtime::Entity inEntity) : Runtime::Component(inWorld, inEntity) {}
+
     Position(Runtime::World* inWorld, Runtime::Entity inEntity, float inX, float inY) : Runtime::Component(inWorld, inEntity), x(inX), y(inY) {}
 
     float x;
@@ -111,5 +113,18 @@ TEST(WorldTest, SystemBasicTest)
 
 TEST(WorldTest, SystemSetupTest)
 {
-    // TODO
+    Runtime::World world("SystemSetupText");
+
+    auto entity0 = world.CreateEntity();
+    world.AddComponent<Position>(entity0);
+
+    auto* system = new PositionSetupSystem(1.0f, 1.0f);
+    system->Wait(world.EngineSystems());
+    world.AddSystem(system);
+
+    world.Setup();
+
+    auto* position0 = world.GetComponent<Position>(entity0);
+    ASSERT_EQ(position0->x, 1.0f);
+    ASSERT_EQ(position0->y, 1.0f);
 }

@@ -101,18 +101,18 @@ namespace Runtime {
             return iter == engineSystemMap.end() ? nullptr : iter->second;
         }
 
-        void StreamIn(Level* level)
+        void StreamIn(AssetRef<Level>& level)
         {
             // TODO
         }
 
-        void StreamOut(Level* level)
+        void StreamOut(AssetRef<Level>& level)
         {
             // TODO
         }
 
 #if BUILD_EDITOR
-        void SaveWorld(Level* mainLevel = nullptr)
+        void SaveWorld(AssetRef<Level>& mainLevel)
         {
             // TODO
         }

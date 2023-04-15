@@ -7,13 +7,7 @@
 #include <Common/String.h>
 #include <MirrorTool/Parser.h>
 
-#define VisitChildren(funcName, contextType, cursor, context) \
-    clang_visitChildren(cursor, [](CXCursor c, CXCursor p, CXClientData cd) -> CXChildVisitResult { \
-        auto* ctx = reinterpret_cast<contextType*>(cd); \
-        return MirrorTool::funcName(c, p, *ctx); \
-    }, &context); \
-
-#define DEBUG_OUTPUT 1
+#define DEBUG_OUTPUT 0
 
 #if DEBUG_OUTPUT
 #include <iostream>

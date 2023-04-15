@@ -18,16 +18,17 @@ namespace MirrorTool {
         using Result = std::pair<bool, std::string>;
 
         NON_COPYABLE(Generator)
-        explicit Generator(std::string inOutputFile, std::string inHeaderFile, const MetaInfo& inMetaInfo);
+        explicit Generator(std::string inInputFile, std::string inOutputFile, std::vector<std::string> inHeaderDirs, const MetaInfo& inMetaInfo);
         ~Generator();
 
         Result Generate();
 
     private:
-        void GenerateCode(std::ofstream& file);
+        Result GenerateCode(std::ofstream& file);
 
         const MetaInfo& metaInfo;
+        std::string inputFile;
         std::string outputFile;
-        std::string headerFile;
+        std::vector<std::string> headerDirs;
     };
 }

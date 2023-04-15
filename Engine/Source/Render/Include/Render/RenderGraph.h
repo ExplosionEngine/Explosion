@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -201,12 +200,7 @@ namespace Render {
         bool stencilReadOnly;
     };
 
-    struct RGComputePassDesc {
-        RHI::ComputePipeline* pipeline;
-    };
-
     struct RGRasterPassDesc {
-        RHI::GraphicsPipeline* pipeline;
         std::vector<RGColorAttachment> colorAttachments;
         std::optional<RGDepthStencilAttachment> depthStencilAttachment;
     };
@@ -405,7 +399,6 @@ namespace Render {
         friend class RGComputePassBuilder;
 
         bool isAsyncCompute;
-        RGComputePassDesc passDesc;
     };
 
     class RGRasterPass : public RGPass {
@@ -552,8 +545,8 @@ namespace Render {
         }
 
         RHI::Device& device;
-        std::vector<std::unique_ptr<RGResource>> resources;
-        std::vector<std::unique_ptr<RGPass>> passes;
+        std::vector<Common::UniqueRef<RGResource>> resources;
+        std::vector<Common::UniqueRef<RGPass>> passes;
         std::unordered_map<std::pair<RGResource*, RGPass*>, RGResTransition, ResPassPtrPairHash> resTransitionMap;
     };
 
@@ -608,7 +601,7 @@ namespace Render {
         R* Create(Args&&... args)
         {
             graph.resources.emplace_back(new R(std::forward<Args>(args)...));
-            return static_cast<R*>(graph.resources.back().get());
+            return static_cast<R*>(graph.resources.back().Get());
         }
 
         RenderGraph& graph;
@@ -637,7 +630,6 @@ namespace Render {
         ~RGComputePassBuilder() override;
 
         void SetAsyncCompute(bool inAsyncCompute);
-        void SetPassDesc(const RGComputePassDesc& inDesc);
 
     private:
         friend class RenderGraph;

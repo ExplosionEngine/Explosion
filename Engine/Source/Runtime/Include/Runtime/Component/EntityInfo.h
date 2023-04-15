@@ -16,6 +16,6 @@ namespace Runtime {
         std::string name;
 
         EProperty()
-        Level* ownerLevel;
+        AssetRef<Level> ownerLevel;
     };
 }

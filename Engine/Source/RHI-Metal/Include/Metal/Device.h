@@ -49,6 +49,6 @@ namespace RHI::Metal {
         MTLGpu &gpu;
         id<MTLDevice> mtlDevice = nil;
         MTLSharedEventListener *listener = nil;
-        std::unordered_map<QueueType, std::vector<std::unique_ptr<MTLQueue>>> queues;
+        std::unordered_map<QueueType, std::vector<Common::UniqueRef<MTLQueue>>> queues;
     };
 }

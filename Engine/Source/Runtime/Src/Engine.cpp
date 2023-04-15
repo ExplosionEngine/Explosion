@@ -3,9 +3,10 @@
 //
 
 #include <Runtime/Engine.h>
-#include <Common/Debug.h>
 #include <Runtime/Application.h>
 #include <Runtime/World.h>
+#include <Common/Debug.h>
+#include <Common/Memory.h>
 
 namespace Runtime{
     Engine& Engine::Get()
@@ -90,16 +91,16 @@ namespace Runtime{
 
     void Engine::InitInputManager()
     {
-        inputManager = std::unique_ptr<InputManager>(new InputManager);
+        inputManager = Common::UniqueRef<InputManager>(new InputManager);
     }
 
     void Engine::InitConfigManager()
     {
-        configManager = std::unique_ptr<ConfigManager>(new ConfigManager(*pathMapper));
+        configManager = Common::UniqueRef<ConfigManager>(new ConfigManager(*pathMapper));
     }
 
     void Engine::InitAssetManager()
     {
-        assetManager = std::unique_ptr<AssetManager>(new AssetManager(*pathMapper));
+        assetManager = Common::UniqueRef<AssetManager>(new AssetManager(*pathMapper));
     }
 }

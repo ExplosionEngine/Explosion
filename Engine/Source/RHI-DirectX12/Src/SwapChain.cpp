@@ -30,7 +30,7 @@ namespace RHI::DirectX12 {
 
     Texture* DX12SwapChain::GetTexture(uint8_t index)
     {
-        return textures[index].get();
+        return textures[index].Get();
     }
 
     uint8_t DX12SwapChain::AcquireBackTexture()

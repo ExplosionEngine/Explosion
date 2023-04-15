@@ -27,7 +27,7 @@ namespace RHI::Dummy {
     Gpu* DummyInstance::GetGpu(uint32_t index)
     {
         Assert(index == 0);
-        return dummyGpu.get();
+        return dummyGpu.Get();
     }
 
     void DummyInstance::Destroy()

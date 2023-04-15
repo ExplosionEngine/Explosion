@@ -286,6 +286,11 @@ namespace Mirror {
         template <typename C>
         ClassRegistry<C> Class(const std::string& name)
         {
+            auto* typeInfo = GetTypeInfo<C>();
+            Assert(typeToNameMap.find(typeInfo) == typeToNameMap.end());
+            Assert(classes.find(name) == classes.end());
+
+            typeToNameMap[typeInfo] = name;
             classes.emplace(std::make_pair(name, Mirror::Class(name)));
             return ClassRegistry<C>(classes.at(name));
         }

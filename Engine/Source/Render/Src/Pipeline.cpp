@@ -21,25 +21,25 @@ namespace Render {
             auto hash = desc.Hash();
             auto iter = pipelineLayouts.find(hash);
             if (iter == pipelineLayouts.end()) {
-                pipelineLayouts[hash] = std::unique_ptr<PipelineLayout>(new PipelineLayout(device, desc, hash));
+                pipelineLayouts[hash] = Common::UniqueRef<PipelineLayout>(new PipelineLayout(device, desc, hash));
             }
-            return pipelineLayouts[hash].get();
+            return pipelineLayouts[hash].Get();
         }
 
     private:
         explicit PipelineLayoutCache(RHI::Device& inDevice);
 
         RHI::Device& device;
-        std::unordered_map<size_t, std::unique_ptr<PipelineLayout>> pipelineLayouts;
+        std::unordered_map<size_t, Common::UniqueRef<PipelineLayout>> pipelineLayouts;
     };
 
     PipelineLayoutCache& PipelineLayoutCache::Get(RHI::Device& device)
     {
-        static std::unordered_map<RHI::Device*, std::unique_ptr<PipelineLayoutCache>> map;
+        static std::unordered_map<RHI::Device*, Common::UniqueRef<PipelineLayoutCache>> map;
 
         auto iter = map.find(&device);
         if (iter == map.end()) {
-            map[&device] = std::unique_ptr<PipelineLayoutCache>(new PipelineLayoutCache(device));
+            map[&device] = Common::UniqueRef<PipelineLayoutCache>(new PipelineLayoutCache(device));
         }
         return *map[&device];
     }
@@ -231,7 +231,7 @@ namespace Render {
             BindGroupLayoutDesc desc;
             desc.layoutIndex = iter.first;
             desc.binding = iter.second;
-            bindGroupLayouts[iter.first] = std::unique_ptr<BindGroupLayout>(new BindGroupLayout(device, desc));
+            bindGroupLayouts[iter.first] = Common::UniqueRef<BindGroupLayout>(new BindGroupLayout(device, desc));
         }
     }
 
@@ -240,7 +240,7 @@ namespace Render {
         std::vector<BindGroupLayout*> tBindGroupLayouts;
         tBindGroupLayouts.reserve(bindGroupLayouts.size());
         for (const auto& iter : bindGroupLayouts) {
-            tBindGroupLayouts.emplace_back(iter.second.get());
+            tBindGroupLayouts.emplace_back(iter.second.Get());
         }
 
         RHI::PipelineLayoutCreateInfo createInfo;
@@ -256,7 +256,7 @@ namespace Render {
     BindGroupLayout* PipelineLayout::GetBindGroupLayout(uint8_t layoutIndex) const
     {
         auto iter = bindGroupLayouts.find(layoutIndex);
-        return iter == bindGroupLayouts.end() ? nullptr : iter->second.get();
+        return iter == bindGroupLayouts.end() ? nullptr : iter->second.Get();
     }
 
     RHI::PipelineLayout* PipelineLayout::GetRHI() const
@@ -343,11 +343,11 @@ namespace Render {
 
     SamplerCache& SamplerCache::Get(RHI::Device& device)
     {
-        static std::unordered_map<RHI::Device*, std::unique_ptr<SamplerCache>> map;
+        static std::unordered_map<RHI::Device*, Common::UniqueRef<SamplerCache>> map;
 
         auto iter = map.find(&device);
         if (iter == map.end()) {
-            map[&device] = std::unique_ptr<SamplerCache>(new SamplerCache(device));
+            map[&device] = Common::UniqueRef<SamplerCache>(new SamplerCache(device));
         }
         return *map[&device];
     }
@@ -364,18 +364,18 @@ namespace Render {
         size_t hash = Common::HashUtils::CityHash(&desc, sizeof(SamplerDesc));
         auto iter = samplers.find(hash);
         if (iter == samplers.end()) {
-            samplers[hash] = std::unique_ptr<Sampler>(new Sampler(device, desc));
+            samplers[hash] = Common::UniqueRef<Sampler>(new Sampler(device, desc));
         }
-        return samplers[hash].get();
+        return samplers[hash].Get();
     }
 
     PipelineCache& PipelineCache::Get(RHI::Device& device)
     {
-        static std::unordered_map<RHI::Device*, std::unique_ptr<PipelineCache>> map;
+        static std::unordered_map<RHI::Device*, Common::UniqueRef<PipelineCache>> map;
 
         auto iter = map.find(&device);
         if (iter == map.end()) {
-            map[&device] = std::unique_ptr<PipelineCache>(new PipelineCache(device));
+            map[&device] = Common::UniqueRef<PipelineCache>(new PipelineCache(device));
         }
         return *map[&device];
     }
@@ -398,9 +398,9 @@ namespace Render {
         auto hash = desc.Hash();
         auto iter = computePipelines.find(hash);
         if (iter == computePipelines.end()) {
-            computePipelines[hash] = std::unique_ptr<ComputePipelineState>(new ComputePipelineState(device, desc, hash));
+            computePipelines[hash] = Common::UniqueRef<ComputePipelineState>(new ComputePipelineState(device, desc, hash));
         }
-        return computePipelines[hash].get();
+        return computePipelines[hash].Get();
     }
 
     RasterPipelineState* PipelineCache::GetPipeline(const RasterPipelineStateDesc& desc)
@@ -408,8 +408,8 @@ namespace Render {
         auto hash = desc.Hash();
         auto iter = rasterPipelines.find(hash);
         if (iter == rasterPipelines.end()) {
-            rasterPipelines[hash] = std::unique_ptr<RasterPipelineState>(new RasterPipelineState(device, desc, hash));
+            rasterPipelines[hash] = Common::UniqueRef<RasterPipelineState>(new RasterPipelineState(device, desc, hash));
         }
-        return rasterPipelines[hash].get();
+        return rasterPipelines[hash].Get();
     }
 }

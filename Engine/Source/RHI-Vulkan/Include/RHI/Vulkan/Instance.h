@@ -39,7 +39,7 @@ namespace RHI::Vulkan {
         vk::DispatchLoaderDynamic vkDispatch;
         std::vector<const char*> vkEnabledExtensionNames;
         std::vector<vk::PhysicalDevice> vkPhysicalDevices;
-        std::vector<std::unique_ptr<Gpu>> gpus;
+        std::vector<Common::UniqueRef<Gpu>> gpus;
 #if BUILD_CONFIG_DEBUG
         std::vector<const char*> vkEnabledLayerNames;
         vk::DebugUtilsMessengerEXT vkDebugMessenger;

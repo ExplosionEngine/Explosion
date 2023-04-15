@@ -36,11 +36,8 @@ protected:
 
         ComputePipelineStateDesc pipelineDesc;
         pipelineDesc.shaders = shaders;
-        ComputePipelineState* pipeline = PipelineCache::Get(device).GetPipeline(pipelineDesc);
+        pipeline = PipelineCache::Get(device).GetPipeline(pipelineDesc);
 
-        RGComputePassDesc passDesc;
-        passDesc.pipeline = pipeline->GetRHI();
-        builder.SetPassDesc(passDesc);
         builder.SetAsyncCompute(false);
 
         uniformBuffer = builder.CreateBuffer("TestUniformBuffer", RGBufferDesc::Create(sizeof(Parameters), RHI::BufferUsageBits::UNIFORM));
@@ -60,6 +57,7 @@ protected:
         parameters.frameCount++;
         uniformBuffer->UploadData(parameters);
 
+        encoder.SetPipeline(pipeline->GetRHI());
         encoder.SetBindGroup(0, bindGroup->GetRHI());
         encoder.Dispatch(8, 8, 1);
     }
@@ -72,6 +70,7 @@ private:
     RGBuffer* uniformBuffer;
     RGTexture* outputTexture;
     RGBindGroup* bindGroup;
+    ComputePipelineState* pipeline;
 };
 
 struct RenderGraphTest : public testing::Test {
@@ -91,12 +90,12 @@ struct RenderGraphTest : public testing::Test {
     void TearDown() override {}
 
     RHI::Instance* instance;
-    RHI::UniqueRef<RHI::Device> device;
+    Common::UniqueRef<RHI::Device> device;
 };
 
 TEST_F(RenderGraphTest, BasicTest)
 {
-    RHI::UniqueRef<RHI::Fence> mainFence = device->CreateFence();
+    Common::UniqueRef<RHI::Fence> mainFence = device->CreateFence();
 
     RenderGraph renderGraph(*device);
     renderGraph.Setup();
@@ -107,7 +106,7 @@ TEST_F(RenderGraphTest, BasicTest)
 
 TEST_F(RenderGraphTest, ComputePassTest)
 {
-    RHI::UniqueRef<RHI::Fence> mainFence = device->CreateFence();
+    Common::UniqueRef<RHI::Fence> mainFence = device->CreateFence();
 
     RenderGraph renderGraph(*device);
     renderGraph.Setup();
