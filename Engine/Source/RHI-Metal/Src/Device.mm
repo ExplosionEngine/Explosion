@@ -39,7 +39,7 @@ namespace RHI::Metal {
         if (queueList.empty()) {
             queueList.emplace_back(new MTLQueue(*this));
         }
-        return index >= queueList.size() ? queueList[0].get() : queueList[index].get();
+        return index >= queueList.size() ? queueList[0].Get() : queueList[index].Get();
     }
 
     SwapChain* MTLDevice::CreateSwapChain(const SwapChainCreateInfo& createInfo)

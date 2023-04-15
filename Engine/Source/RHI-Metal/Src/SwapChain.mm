@@ -21,7 +21,7 @@ namespace RHI::Metal {
 
     Texture* MTLSwapChain::GetTexture(uint8_t index)
     {
-        return textures[index].get();
+        return textures[index].Get();
     }
 
     uint8_t MTLSwapChain::AcquireBackTexture()
