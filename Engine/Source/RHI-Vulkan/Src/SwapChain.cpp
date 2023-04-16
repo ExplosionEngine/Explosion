@@ -99,13 +99,10 @@ namespace RHI::Vulkan {
         {
             Assert(!surfaceFormats.empty());
             auto iter = std::find_if(surfaceFormats.begin(), surfaceFormats.end(),
-                                     [supportedFormat, colorSpace, createInfo](vk::SurfaceFormatKHR format) {
+                                     [supportedFormat, colorSpace](vk::SurfaceFormatKHR format) {
                 return supportedFormat == format.format && colorSpace == format.colorSpace;
             });
-            if (iter == surfaceFormats.end()) {
-                supportedFormat = surfaceFormats.begin()->format;
-                colorSpace = surfaceFormats.begin()->colorSpace;
-            }
+            Assert(iter != surfaceFormats.end());
         }
 
         auto presentModes = device.GetGpu().GetVkPhysicalDevice().getSurfacePresentModesKHR(surface);
@@ -116,9 +113,7 @@ namespace RHI::Vulkan {
                                      [supportedMode](vk::PresentModeKHR mode) {
                                          return mode == supportedMode;
                                      });
-            if (iter == presentModes.end()) {
-                supportedMode = presentModes[0];
-            }
+            Assert(iter != presentModes.end());
         }
 
         swapChainImageCount = std::clamp(static_cast<uint32_t>(createInfo.textureNum), surfaceCap.minImageCount, surfaceCap.maxImageCount);
@@ -138,11 +133,7 @@ namespace RHI::Vulkan {
         Assert(vkDevice.createSwapchainKHR(&swapChainInfo, nullptr, &swapChain) == vk::Result::eSuccess);
 
         TextureCreateInfo textureInfo = {};
-#if PLATFORM_MACOS
-        textureInfo.format = createInfo.format == PixelFormat::RGBA8_UNORM ? PixelFormat::BGRA8_UNORM : createInfo.format;
-#else
         textureInfo.format = createInfo.format;
-#endif
         textureInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::RENDER_ATTACHMENT;
         textureInfo.mipLevels = 1;
         textureInfo.samples = 1;
