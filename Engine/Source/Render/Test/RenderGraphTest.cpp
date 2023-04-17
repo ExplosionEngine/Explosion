@@ -36,35 +36,41 @@ protected:
 
         ComputePipelineStateDesc pipelineDesc;
         pipelineDesc.shaders = shaders;
-        ComputePipelineState* pipeline = PipelineCache::Get(device).GetPipeline(pipelineDesc);
+        pipeline = PipelineCache::Get(device).GetPipeline(pipelineDesc);
 
-        RGComputePassDesc passDesc;
-        passDesc.pipeline = pipeline->GetRHI();
-        builder.SetPassDesc(passDesc);
         builder.SetAsyncCompute(false);
 
-        uniformBuffer = builder.CreateBuffer("TestUniformBuffer", RGBufferDesc::Create(512, RHI::BufferUsageBits::UNIFORM));
+        uniformBuffer = builder.CreateBuffer("TestUniformBuffer", RGBufferDesc::Create(sizeof(Parameters), RHI::BufferUsageBits::UNIFORM));
         outputTexture = builder.CreateTexture("TestOutputTexture", RGTextureDesc::Create2D(1024, 1024, RHI::PixelFormat::BGRA8_UNORM, RHI::TextureUsageBits::STORAGE_BINDING));
         auto* uniformBufferView = builder.CreateBufferView(RGBufferViewDesc::Create(uniformBuffer));
         auto* outputTextureView = builder.CreateTextureView(RGTextureViewDesc::Create2D(outputTexture));
 
         builder.MarkAsConsumed(outputTexture);
         bindGroup = builder.AllocateBindGroup(RGBindGroupDesc::Create(
-            pipeline->GetPipelineLayout()->GetBindGroupLayout(0),
+            pipeline->GetBindGroupLayout(0),
             RGBindItem::UniformBuffer("inputBuffer", uniformBufferView),
             RGBindItem::StorageTexture("outputTexture", outputTextureView)));
     }
 
     void Execute(RHI::ComputePassCommandEncoder& encoder) override
     {
+        parameters.frameCount++;
+        uniformBuffer->UploadData(parameters);
+
+        encoder.SetPipeline(pipeline->GetRHI());
         encoder.SetBindGroup(0, bindGroup->GetRHI());
         encoder.Dispatch(8, 8, 1);
     }
 
 private:
+    struct Parameters {
+        size_t frameCount = 0;
+    } parameters;
+
     RGBuffer* uniformBuffer;
     RGTexture* outputTexture;
     RGBindGroup* bindGroup;
+    ComputePipelineState* pipeline;
 };
 
 struct RenderGraphTest : public testing::Test {
@@ -84,12 +90,12 @@ struct RenderGraphTest : public testing::Test {
     void TearDown() override {}
 
     RHI::Instance* instance;
-    RHI::UniqueRef<RHI::Device> device;
+    Common::UniqueRef<RHI::Device> device;
 };
 
 TEST_F(RenderGraphTest, BasicTest)
 {
-    RHI::UniqueRef<RHI::Fence> mainFence = device->CreateFence();
+    Common::UniqueRef<RHI::Fence> mainFence = device->CreateFence();
 
     RenderGraph renderGraph(*device);
     renderGraph.Setup();
@@ -100,5 +106,11 @@ TEST_F(RenderGraphTest, BasicTest)
 
 TEST_F(RenderGraphTest, ComputePassTest)
 {
-    // TODO
+    Common::UniqueRef<RHI::Fence> mainFence = device->CreateFence();
+
+    RenderGraph renderGraph(*device);
+    renderGraph.Setup();
+    renderGraph.Compile();
+    renderGraph.Execute(mainFence.Get(), nullptr);
+    mainFence->Wait();
 }

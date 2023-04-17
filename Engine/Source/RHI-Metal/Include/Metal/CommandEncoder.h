@@ -23,7 +23,7 @@ namespace RHI::Metal {
         void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Extent<3>& size) override;
         void ResourceBarrier(const Barrier& barrier) override;
         void SwapChainSync(SwapChain* swapChain) override;
-        ComputePassCommandEncoder* BeginComputePass(const ComputePassBeginInfo* beginInfo) override;
+        ComputePassCommandEncoder* BeginComputePass() override;
         GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
         void End() override;
         void Destroy() override;
@@ -39,6 +39,7 @@ namespace RHI::Metal {
         explicit MTLComputePassCommandEncoder(MTLDevice &dev, id<MTLCommandBuffer> cmd);
         ~MTLComputePassCommandEncoder() override;
 
+        void SetPipeline(ComputePipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override;
         void EndPass() override;
@@ -55,6 +56,7 @@ namespace RHI::Metal {
         explicit MTLGraphicsPassCommandEncoder(MTLDevice &dev, id<MTLCommandBuffer> cmd, const GraphicsPassBeginInfo* beginInfo);
         ~MTLGraphicsPassCommandEncoder() override;
 
+        void SetPipeline(GraphicsPipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void SetIndexBuffer(BufferView *bufferView) override;
         void SetVertexBuffer(size_t slot, BufferView *bufferView) override;

@@ -6,19 +6,25 @@
 
 #include <Runtime/World.h>
 
-struct Position {
+struct Position : public Runtime::Component {
+    Position(Runtime::World* inWorld, Runtime::Entity inEntity) : Runtime::Component(inWorld, inEntity) {}
+
+    Position(Runtime::World* inWorld, Runtime::Entity inEntity, float inX, float inY) : Runtime::Component(inWorld, inEntity), x(inX), y(inY) {}
+
     float x;
     float y;
 };
 
-struct Velocity {
+struct Velocity : public Runtime::Component {
+    Velocity(Runtime::World* inWorld, Runtime::Entity inEntity, float inX, float inY) : Runtime::Component(inWorld, inEntity), x(inX), y(inY) {}
+
     float x;
     float y;
 };
 
 class VelocitySystem : public Runtime::System {
 public:
-    VelocitySystem() : Runtime::System() {}
+    VelocitySystem() = default;
     ~VelocitySystem() override = default;
 
     void Setup() {}
@@ -34,7 +40,7 @@ public:
 
 class PositionSetupSystem : public Runtime::System {
 public:
-    PositionSetupSystem(float inX, float inY) : Runtime::System(), x(inX), y(inY) {}
+    PositionSetupSystem(float inX, float inY) : x(inX), y(inY) {}
     ~PositionSetupSystem() override = default;
 
     void Setup(const Runtime::Query<Position>& query)
@@ -57,7 +63,7 @@ TEST(WorldTest, ComponentBasicTest)
     Runtime::World world("TestWorld");
 
     auto entity = world.CreateEntity();
-    world.AddComponent<Position>(entity) = Position { 1.0f, 2.0f };
+    world.AddComponent<Position>(entity, 1.0f, 2.0f);
 
     auto* position = world.GetComponent<Position>(entity);
     ASSERT_NE(position, nullptr);
@@ -74,12 +80,12 @@ TEST(WorldTest, SystemBasicTest)
     Runtime::World world("SystemBasicTestWorld");
 
     auto entity0 = world.CreateEntity();
-    world.AddComponent<Position>(entity0) = Position { 1.0f, 2.0f };
-    world.AddComponent<Velocity>(entity0) = Velocity { 0.0f, 0.0f };
+    world.AddComponent<Position>(entity0, 1.0f, 2.0f);
+    world.AddComponent<Velocity>(entity0, 0.0f, 0.0f);
 
     auto entity1 = world.CreateEntity();
-    world.AddComponent<Position>(entity1) = Position { 5.0f, 6.0f };
-    world.AddComponent<Velocity>(entity1) = Velocity { 1.0f, 2.0f };
+    world.AddComponent<Position>(entity1, 5.0f, 6.0f);
+    world.AddComponent<Velocity>(entity1, 1.0f, 2.0f);
 
     auto* system = new VelocitySystem;
     system->Wait(world.EngineSystems());
@@ -107,5 +113,18 @@ TEST(WorldTest, SystemBasicTest)
 
 TEST(WorldTest, SystemSetupTest)
 {
-    // TODO
+    Runtime::World world("SystemSetupText");
+
+    auto entity0 = world.CreateEntity();
+    world.AddComponent<Position>(entity0);
+
+    auto* system = new PositionSetupSystem(1.0f, 1.0f);
+    system->Wait(world.EngineSystems());
+    world.AddSystem(system);
+
+    world.Setup();
+
+    auto* position0 = world.GetComponent<Position>(entity0);
+    ASSERT_EQ(position0->x, 1.0f);
+    ASSERT_EQ(position0->y, 1.0f);
 }

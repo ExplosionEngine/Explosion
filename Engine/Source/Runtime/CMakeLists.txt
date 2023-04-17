@@ -4,7 +4,8 @@ AddLibrary(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB EnTT GLM
+    REFLECT Include
+    LIB EnTT GLM Mirror
 )
 
 file(GLOB TEST_SOURCES Test/*.cpp)

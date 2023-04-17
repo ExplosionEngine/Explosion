@@ -26,7 +26,7 @@ namespace Rendering {
         return nullptr;
     }
 
-    void Renderer::RenderFrame(Render::Canvas* inCanvas, const Render::SceneViewCluster& inSceneView)
+    void Renderer::RenderFrame(Render::Canvas* inCanvas, const Render::SceneView& inSceneView)
     {
         // TODO
     }

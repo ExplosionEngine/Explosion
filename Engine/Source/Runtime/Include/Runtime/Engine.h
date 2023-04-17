@@ -4,12 +4,13 @@
 
 #pragma once
 
-#include <memory>
 #include <functional>
 
 #include <Common/Path.h>
+#include <Common/Memory.h>
 #include <Runtime/Input.h>
 #include <Runtime/Config.h>
+#include <Runtime/Asset.h>
 #include <Runtime/Application.h>
 
 namespace Runtime{
@@ -30,10 +31,11 @@ namespace Runtime{
         void Initialize(const EngineInitializer& inInitializer);
         void Tick();
 
-        IApplication* GetApplication();
-        Common::PathMapper& GetPathMapper();
-        InputManager& GetInputManager();
-        ConfigManager& GetConfigManager();
+        IApplication* GetApplication() const;
+        Common::PathMapper& GetPathMapper() const;
+        InputManager& GetInputManager() const;
+        ConfigManager& GetConfigManager() const;
+        AssetManager& GetAssetManager() const;
 
         void SetActiveWorld(World* inWorld);
 
@@ -51,12 +53,14 @@ namespace Runtime{
         void InitPathMapper(const std::string& execFile, const std::string& projectFile);
         void InitInputManager();
         void InitConfigManager();
+        void InitAssetManager();
 
         World* activeWorld;
         IApplication* application;
-        std::unique_ptr<Common::PathMapper> pathMapper;
-        std::unique_ptr<InputManager> inputManager;
-        std::unique_ptr<ConfigManager> configManager;
+        Common::UniqueRef<Common::PathMapper> pathMapper;
+        Common::UniqueRef<InputManager> inputManager;
+        Common::UniqueRef<ConfigManager> configManager;
+        Common::UniqueRef<AssetManager> assetManager;
         Listeners listeners;
     };
 }

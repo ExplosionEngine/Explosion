@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -201,12 +200,7 @@ namespace Render {
         bool stencilReadOnly;
     };
 
-    struct RGComputePassDesc {
-        RHI::ComputePipeline* pipeline;
-    };
-
     struct RGRasterPassDesc {
-        RHI::GraphicsPipeline* pipeline;
         std::vector<RGColorAttachment> colorAttachments;
         std::optional<RGDepthStencilAttachment> depthStencilAttachment;
     };
@@ -254,6 +248,15 @@ namespace Render {
         RHI::Buffer* GetRHI() const;
         // TODO support external desc register
         const RGBufferDesc& GetDesc() const;
+
+        template <typename D>
+        void UploadData(const D& data)
+        {
+            Assert((desc.usages & RHI::BufferUsageBits::UNIFORM) != 0 && CanAccessRHI() && sizeof(D) == desc.size);
+            void* mapResult = rhiHandle->Map(RHI::MapMode::WRITE, 0, desc.size);
+            memcpy(mapResult, &data, desc.size);
+            rhiHandle->UnMap();
+        }
 
     private:
         RGBufferDesc desc;
@@ -376,6 +379,8 @@ namespace Render {
     private:
         friend class RenderGraph;
         friend class RGCopyPassBuilder;
+
+        bool isAsyncCopy;
     };
 
     class RGComputePass : public RGPass {
@@ -394,7 +399,6 @@ namespace Render {
         friend class RGComputePassBuilder;
 
         bool isAsyncCompute;
-        RGComputePassDesc passDesc;
     };
 
     class RGRasterPass : public RGPass {
@@ -478,7 +482,7 @@ namespace Render {
         RHI::Device& GetDevice();
         void Setup();
         void Compile();
-        void Execute(RHI::Fence* mainFence, RHI::Fence* asyncFence);
+        void Execute(RHI::Fence* mainFence, RHI::Fence* asyncComputeFence = nullptr, RHI::Fence* asyncCopyFence = nullptr);
 
     private:
         using LastResStates = std::unordered_map<RGResource*, std::pair<RGPassType, RGResourceAccessType>>;
@@ -541,8 +545,8 @@ namespace Render {
         }
 
         RHI::Device& device;
-        std::vector<std::unique_ptr<RGResource>> resources;
-        std::vector<std::unique_ptr<RGPass>> passes;
+        std::vector<Common::UniqueRef<RGResource>> resources;
+        std::vector<Common::UniqueRef<RGPass>> passes;
         std::unordered_map<std::pair<RGResource*, RGPass*>, RGResTransition, ResPassPtrPairHash> resTransitionMap;
     };
 
@@ -597,7 +601,7 @@ namespace Render {
         R* Create(Args&&... args)
         {
             graph.resources.emplace_back(new R(std::forward<Args>(args)...));
-            return static_cast<R*>(graph.resources.back().get());
+            return static_cast<R*>(graph.resources.back().Get());
         }
 
         RenderGraph& graph;
@@ -610,6 +614,8 @@ namespace Render {
     class RGCopyPassBuilder : public RGPassBuilder {
     public:
         ~RGCopyPassBuilder() override;
+
+        void SetAsyncCopy(bool inAsyncCopy);
 
     private:
         friend class RenderGraph;
@@ -624,7 +630,6 @@ namespace Render {
         ~RGComputePassBuilder() override;
 
         void SetAsyncCompute(bool inAsyncCompute);
-        void SetPassDesc(const RGComputePassDesc& inDesc);
 
     private:
         friend class RenderGraph;

@@ -5,7 +5,6 @@
 #pragma once
 
 namespace Common {
-
     struct Color {
         union {
             float v[4];

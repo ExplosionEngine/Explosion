@@ -6,10 +6,10 @@
 
 #include <string>
 #include <utility>
-#include <memory>
 #include <unordered_map>
 
 #include <Common/Utility.h>
+#include <Common/Memory.h>
 
 #if PLATFORM_WINDOWS
 #include <Windows.h>
@@ -54,6 +54,6 @@ namespace Common {
     private:
         DynamicLibraryManager();
 
-        std::unordered_map<std::string, std::unique_ptr<DynamicLibrary>> libs;
+        std::unordered_map<std::string, Common::UniqueRef<DynamicLibrary>> libs;
     };
 }

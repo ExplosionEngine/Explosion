@@ -21,7 +21,7 @@ namespace RHI::Dummy {
     Texture* DummySwapChain::GetTexture(uint8_t index)
     {
         Assert(index < dummyTextures.size());
-        return dummyTextures[index].get();
+        return dummyTextures[index].Get();
     }
 
     uint8_t DummySwapChain::AcquireBackTexture()

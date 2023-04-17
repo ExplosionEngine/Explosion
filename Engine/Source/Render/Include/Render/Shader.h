@@ -161,10 +161,10 @@ namespace Render {
     public:
         static GlobalShaderMap& Get(RHI::Device& device)
         {
-            static std::unordered_map<RHI::Device*, std::unique_ptr<GlobalShaderMap<T>>> map;
+            static std::unordered_map<RHI::Device*, Common::UniqueRef<GlobalShaderMap<T>>> map;
             auto iter = map.find(&device);
             if (iter == map.end()) {
-                map[&device] = std::unique_ptr<GlobalShaderMap<T>>(new GlobalShaderMap<T>(device));
+                map[&device] = Common::UniqueRef<GlobalShaderMap<T>>(new GlobalShaderMap<T>(device));
             }
             return *map[&device];
         }
@@ -216,7 +216,7 @@ namespace Render {
         }
 
         RHI::Device& device;
-        std::unordered_map<VariantKey, RHI::UniqueRef<RHI::ShaderModule>> shaderModules;
+        std::unordered_map<VariantKey, Common::UniqueRef<RHI::ShaderModule>> shaderModules;
     };
 
     class GlobalShaderRegistry {

@@ -11,6 +11,10 @@ namespace RHI::Dummy {
 
     DummyComputePassCommandEncoder::~DummyComputePassCommandEncoder() = default;
 
+    void DummyComputePassCommandEncoder::SetPipeline(ComputePipeline* pipeline)
+    {
+    }
+
     void DummyComputePassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
     {
     }
@@ -33,6 +37,10 @@ namespace RHI::Dummy {
     }
 
     DummyGraphicsPassCommandEncoder::~DummyGraphicsPassCommandEncoder() = default;
+
+    void DummyGraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
+    {
+    }
 
     void DummyGraphicsPassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
     {
@@ -110,7 +118,7 @@ namespace RHI::Dummy {
     {
     }
 
-    ComputePassCommandEncoder* DummyCommandEncoder::BeginComputePass(const ComputePassBeginInfo* beginInfo)
+    ComputePassCommandEncoder* DummyCommandEncoder::BeginComputePass()
     {
         return new DummyComputePassCommandEncoder(dummyCommandBuffer);
     }

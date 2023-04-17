@@ -9,13 +9,6 @@
 #include <Render/RenderGraph.h>
 
 namespace Render {
-    static RHI::ComputePassBeginInfo GetRHIComputePassBeginInfo(const RGComputePassDesc& desc)
-    {
-        RHI::ComputePassBeginInfo result;
-        result.pipeline = desc.pipeline;
-        return result;
-    }
-
     static std::vector<RHI::GraphicsPassColorAttachment> GetRHIColorAttachments(const RGRasterPassDesc& desc)
     {
         std::vector<RHI::GraphicsPassColorAttachment> result(desc.colorAttachments.size());
@@ -60,7 +53,6 @@ namespace Render {
         const RHI::GraphicsPassDepthStencilAttachment* depthStencilAttachment)
     {
         RHI::GraphicsPassBeginInfo result;
-        result.pipeline = desc.pipeline;
         result.colorAttachmentNum = colorAttachmentNum;
         result.colorAttachments = colorAttachments;
         result.depthStencilAttachment = depthStencilAttachment;
@@ -961,15 +953,15 @@ namespace Render {
     {
         for (auto& pass : passes) {
             if (pass->GetType() == RGPassType::COPY) {
-                auto* copyPass = static_cast<RGCopyPass*>(pass.get());
+                auto* copyPass = static_cast<RGCopyPass*>(pass.Get());
                 RGCopyPassBuilder builder(*this, *copyPass);
                 copyPass->Setup(builder);
             } else if (pass->GetType() == RGPassType::COMPUTE) {
-                auto* computePass = static_cast<RGComputePass*>(pass.get());
+                auto* computePass = static_cast<RGComputePass*>(pass.Get());
                 RGComputePassBuilder builder(*this, *computePass);
                 computePass->Setup(builder);
             } else if (pass->GetType() == RGPassType::RASTER) {
-                auto* rasterPass = static_cast<RGRasterPass*>(pass.get());
+                auto* rasterPass = static_cast<RGRasterPass*>(pass.Get());
                 RGRasterPassBuilder builder(*this, *rasterPass);
                 rasterPass->Setup(builder);
             } else {
@@ -993,7 +985,7 @@ namespace Render {
         }
 
         for (auto& resource : resources) {
-            if (!consumeds.contains(resource.get())) {
+            if (!consumeds.contains(resource.Get())) {
                 resource->SetCulled(true);
             }
         }
@@ -1001,7 +993,7 @@ namespace Render {
         ComputeResBarriers();
     }
 
-    void RenderGraph::Execute(RHI::Fence* mainFence, RHI::Fence* asyncFence)
+    void RenderGraph::Execute(RHI::Fence* mainFence, RHI::Fence* asyncComputeFence, RHI::Fence* asyncCopyFence) // NOLINT
     {
         std::vector<RGResource*> actualResesToDevirtualize;
         std::vector<RGResource*> actualResViewsToDevirtualize;
@@ -1011,10 +1003,10 @@ namespace Render {
 
             auto type = resource->GetType();
             if (type == RGResourceType::BUFFER || type == RGResourceType::TEXTURE) {
-                actualResesToDevirtualize.emplace_back(resource.get());
+                actualResesToDevirtualize.emplace_back(resource.Get());
             }
             if (type == RGResourceType::BUFFER_VIEW || type == RGResourceType::TEXTURE_VIEW) {
-                actualResViewsToDevirtualize.emplace_back(resource.get());
+                actualResViewsToDevirtualize.emplace_back(resource.Get());
             }
         }
 
@@ -1032,24 +1024,28 @@ namespace Render {
         Assert(device.GetQueueNum(RHI::QueueType::GRAPHICS) > 0);
         RHI::Queue* mainQueue = device.GetQueue(RHI::QueueType::GRAPHICS, 0);
         RHI::Queue* asyncComputeQueue = device.GetQueueNum(RHI::QueueType::COMPUTE) > 1 ? device.GetQueue(RHI::QueueType::COMPUTE, 1) : mainQueue;
+        RHI::Queue* asyncCopyQueue = device.GetQueueNum(RHI::QueueType::GRAPHICS) > 1 ? device.GetQueue(RHI::QueueType::COMPUTE, 1) : mainQueue;
 
-        RHI::UniqueRef<RHI::CommandBuffer> mainBuffer = device.CreateCommandBuffer();
-        RHI::UniqueRef<RHI::CommandBuffer> asyncComputeBuffer = device.CreateCommandBuffer();
-        RHI::UniqueRef<RHI::CommandEncoder> mainEncoder = mainBuffer->Begin();
-        RHI::UniqueRef<RHI::CommandEncoder> asyncComputeEncoder = asyncComputeBuffer->Begin();
+        Common::UniqueRef<RHI::CommandBuffer> mainBuffer = device.CreateCommandBuffer();
+        Common::UniqueRef<RHI::CommandBuffer> asyncComputeBuffer = device.CreateCommandBuffer();
+        Common::UniqueRef<RHI::CommandBuffer> asyncCopyBuffer = device.CreateCommandBuffer();
+        Common::UniqueRef<RHI::CommandEncoder> mainEncoder = mainBuffer->Begin();
+        Common::UniqueRef<RHI::CommandEncoder> asyncComputeEncoder = asyncComputeBuffer->Begin();
+        Common::UniqueRef<RHI::CommandEncoder> asyncCopyEncoder = asyncCopyBuffer->Begin();
         {
             for (auto& pass : passes) {
                 if (pass->GetType() == RGPassType::COPY) {
-                    auto* copyPass = static_cast<RGCopyPass*>(pass.get());
-                    TransitionResources(mainEncoder.Get(), copyPass);
-                    ExecuteCopyPass(mainEncoder.Get(), copyPass);
+                    auto* copyPass = static_cast<RGCopyPass*>(pass.Get());
+                    auto& commandEncoder = copyPass->isAsyncCopy ? asyncCopyEncoder : mainEncoder;
+                    TransitionResources(commandEncoder.Get(), copyPass);
+                    ExecuteCopyPass(commandEncoder.Get(), copyPass);
                 } else if (pass->GetType() == RGPassType::RASTER) {
-                    auto* computePass = static_cast<RGComputePass*>(pass.get());
+                    auto* computePass = static_cast<RGComputePass*>(pass.Get());
                     auto& commandEncoder = computePass->isAsyncCompute ? asyncComputeEncoder : mainEncoder;
                     TransitionResources(commandEncoder.Get(), computePass);
                     ExecuteComputePass(commandEncoder.Get(), computePass);
                 } else if (pass->GetType() == RGPassType::COMPUTE) {
-                    auto* rasterPass = static_cast<RGRasterPass*>(pass.get());
+                    auto* rasterPass = static_cast<RGRasterPass*>(pass.Get());
                     TransitionResources(mainEncoder.Get(), rasterPass);
                     ExecuteRasterPass(mainEncoder.Get(), rasterPass);
                 } else {
@@ -1058,9 +1054,12 @@ namespace Render {
             }
         }
         mainEncoder->End();
+        asyncComputeEncoder->End();
+        asyncCopyEncoder->End();
 
         mainQueue->Submit(mainBuffer.Get(), mainFence);
-        asyncComputeQueue->Submit(asyncComputeBuffer.Get(), asyncFence);
+        asyncComputeQueue->Submit(asyncComputeBuffer.Get(), asyncComputeFence);
+        asyncCopyQueue->Submit(asyncCopyBuffer.Get(), asyncCopyFence);
     }
 
     void RenderGraph::ExecuteCopyPass(RHI::CommandEncoder* encoder, RGCopyPass* copyPass)
@@ -1070,8 +1069,7 @@ namespace Render {
 
     void RenderGraph::ExecuteComputePass(RHI::CommandEncoder* encoder, RGComputePass* computePass)
     {
-        RHI::ComputePassBeginInfo beginInfo = GetRHIComputePassBeginInfo(computePass->passDesc);
-        RHI::ComputePassCommandEncoder* computeEncoder = encoder->BeginComputePass(&beginInfo);
+        RHI::ComputePassCommandEncoder* computeEncoder = encoder->BeginComputePass();
         {
             computePass->Execute(*computeEncoder);
         }
@@ -1171,8 +1169,8 @@ namespace Render {
     {
         LastResStates lastResStates;
         for (const auto& pass : passes) {
-            ComputeResTransitionsByAccessGroup<RGResourceAccessType::READ>(pass.get(), pass->reads, lastResStates);
-            ComputeResTransitionsByAccessGroup<RGResourceAccessType::WRITE>(pass.get(), pass->writes, lastResStates);
+            ComputeResTransitionsByAccessGroup<RGResourceAccessType::READ>(pass.Get(), pass->reads, lastResStates);
+            ComputeResTransitionsByAccessGroup<RGResourceAccessType::WRITE>(pass.Get(), pass->writes, lastResStates);
             UpdateLastResStatesByAccessGroup<RGResourceAccessType::READ>(pass->GetType(), pass->reads, lastResStates);
             UpdateLastResStatesByAccessGroup<RGResourceAccessType::WRITE>(pass->GetType(), pass->writes, lastResStates);
         }
@@ -1240,6 +1238,11 @@ namespace Render {
 
     RGCopyPassBuilder::~RGCopyPassBuilder() = default;
 
+    void RGCopyPassBuilder::SetAsyncCopy(bool inAsyncCopy)
+    {
+        copyPass.isAsyncCopy = inAsyncCopy;
+    }
+
     RGComputePassBuilder::RGComputePassBuilder(RenderGraph& inGraph, RGComputePass& inPass)
         : RGPassBuilder(inGraph, inPass)
         , computePass(inPass)
@@ -1251,11 +1254,6 @@ namespace Render {
     void RGComputePassBuilder::SetAsyncCompute(bool inAsyncCompute)
     {
         computePass.isAsyncCompute = inAsyncCompute;
-    }
-
-    void RGComputePassBuilder::SetPassDesc(const RGComputePassDesc& inDesc)
-    {
-        computePass.passDesc = inDesc;
     }
 
     RGRasterPassBuilder::RGRasterPassBuilder(RenderGraph& inGraph, RGRasterPass& inPass)

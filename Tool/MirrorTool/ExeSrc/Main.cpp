@@ -13,10 +13,12 @@ int main(int argc, char* argv[])
 {
     std::string inputFile;
     std::string outputFile;
+    std::vector<std::string> headerDirs;
 
     auto cli = (
         clipp::required("-i").doc("input header file") & clipp::value("input header file", inputFile),
-        clipp::required("-o").doc("output file") & clipp::value("output file", outputFile)
+        clipp::required("-o").doc("output file") & clipp::value("output file", outputFile),
+        clipp::option("-I").doc("header search dirs") & clipp::values("header search dirs", headerDirs)
     );
     if (!clipp::parse(argc, argv, cli)) {
         std::cout << clipp::make_man_page(cli, argv[0]);
@@ -32,7 +34,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    MirrorTool::Parser parser(inputFile);
+    MirrorTool::Parser parser(inputFile, headerDirs);
     auto metaInfo = parser.Parse();
 
     if (!metaInfo.first) {
@@ -40,7 +42,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    MirrorTool::Generator generator(outputFile, metaInfo);
+    MirrorTool::Generator generator(inputFile, outputFile, headerDirs, std::get<MirrorTool::MetaInfo>(metaInfo.second));
     auto result = generator.Generate();
 
     if (!result.first) {

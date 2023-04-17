@@ -49,7 +49,7 @@ namespace RHI::DirectX12 {
         ForEachBitsType<ShaderStageBits>([this](ShaderStageBits shaderStage) -> void { rootDescriptorParameterIndexMaps[shaderStage] = {}; });
         std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
         {
-            for (auto i = 0; i < createInfo.bindGroupNum; i++) {
+            for (auto i = 0; i < createInfo.bindGroupLayoutNum; i++) {
                 auto* bindGroupLayout = dynamic_cast<const DX12BindGroupLayout*>(createInfo.bindGroupLayouts[i]);
                 const auto baseIndex = static_cast<uint32_t>(rootParameters.size());
 

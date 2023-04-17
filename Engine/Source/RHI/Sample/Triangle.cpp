@@ -121,7 +121,7 @@ private:
     void CreatePipelineLayout()
     {
         PipelineLayoutCreateInfo createInfo {};
-        createInfo.bindGroupNum = 0;
+        createInfo.bindGroupLayoutNum = 0;
         createInfo.bindGroupLayouts = nullptr;
         pipelineLayout = device->CreatePipelineLayout(createInfo);
     }
@@ -205,7 +205,6 @@ private:
             colorAttachments[0].resolve = nullptr;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.pipeline = pipeline.Get();
             graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
@@ -213,6 +212,7 @@ private:
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::PRESENT, TextureState::RENDER_TARGET));
             auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
+                graphicsEncoder->SetPipeline(pipeline.Get());
                 graphicsEncoder->SetScissor(0, 0, width, height);
                 graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
                 graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);

@@ -118,6 +118,7 @@ namespace Render {
         }
     }
 
+// TODO someday macos can build this too
 #if PLATFORM_WINDOWS
     static void BuildHlslReflectionData(ComPtr<ID3D12ShaderReflection>& shaderReflection, ShaderReflectionData& result)
     {

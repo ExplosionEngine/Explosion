@@ -3,9 +3,10 @@
 //
 
 #include <Runtime/Engine.h>
-#include <Common/Debug.h>
 #include <Runtime/Application.h>
 #include <Runtime/World.h>
+#include <Common/Debug.h>
+#include <Common/Memory.h>
 
 namespace Runtime{
     Engine& Engine::Get()
@@ -24,6 +25,7 @@ namespace Runtime{
         InitPathMapper(inInitializer.execFile, inInitializer.projectFile);
         InitInputManager();
         InitConfigManager();
+        InitAssetManager();
         for (const auto& listener : listeners.onInits) {
             listener();
         }
@@ -38,24 +40,29 @@ namespace Runtime{
         }
     }
 
-    IApplication* Engine::GetApplication()
+    IApplication* Engine::GetApplication() const
     {
         return application;
     }
 
-    Common::PathMapper& Engine::GetPathMapper()
+    Common::PathMapper& Engine::GetPathMapper() const
     {
         return *pathMapper;
     }
 
-    InputManager& Engine::GetInputManager()
+    InputManager& Engine::GetInputManager() const
     {
         return *inputManager;
     }
 
-    ConfigManager& Engine::GetConfigManager()
+    ConfigManager& Engine::GetConfigManager() const
     {
         return *configManager;
+    }
+
+    AssetManager& Engine::GetAssetManager() const
+    {
+        return *assetManager;
     }
 
     void Engine::SetActiveWorld(World* inWorld)
@@ -84,11 +91,16 @@ namespace Runtime{
 
     void Engine::InitInputManager()
     {
-        inputManager = std::make_unique<InputManager>();
+        inputManager = Common::UniqueRef<InputManager>(new InputManager);
     }
 
     void Engine::InitConfigManager()
     {
-        configManager = std::make_unique<ConfigManager>(*pathMapper);
+        configManager = Common::UniqueRef<ConfigManager>(new ConfigManager(*pathMapper));
+    }
+
+    void Engine::InitAssetManager()
+    {
+        assetManager = Common::UniqueRef<AssetManager>(new AssetManager(*pathMapper));
     }
 }

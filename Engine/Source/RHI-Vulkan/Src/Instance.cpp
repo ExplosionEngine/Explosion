@@ -159,7 +159,7 @@ namespace RHI::Vulkan {
 
     Gpu* VKInstance::GetGpu(uint32_t index)
     {
-        return gpus[index].get();
+        return gpus[index].Get();
     }
 
     vk::Instance VKInstance::GetVkInstance() const

@@ -5,11 +5,28 @@
 #pragma once
 
 #include <entt/entt.hpp>
+#include <Mirror/Meta.h>
 
 namespace Runtime {
-    using Entity = entt::entity;
+    class World;
 
-    struct Component {};
+    using Entity = entt::entity;
+    static constexpr auto ENTITY_NULL = entt::null;
+
+    class EClass() Component {
+    public:
+        Component(Runtime::World* inWorld, Runtime::Entity inEntity)
+            : world(inWorld)
+            , entity(inEntity)
+        {
+        }
+
+        EProperty(transient, editorHide)
+        World* world;
+
+        EProperty(transient, editorHide)
+        Entity entity;
+    };
 
     template <typename... Components>
     struct ComponentSet {};

@@ -134,7 +134,7 @@ TEST(MirrorTest, ParserTest)
         { "C0", "sf0", {}, "void", {}, FieldAccess::PUBLIC }
     };
     predicatedGlobalNamespace.classes[0].variables = {
-        { "C0", "v0", {}, "int", FieldAccess::PUBLIC },
+        { "C0", "v0", {{ "editorHide", "true" }}, "int", FieldAccess::PUBLIC },
         { "C0", "v1", {}, "float", FieldAccess::PUBLIC }
     };
     predicatedGlobalNamespace.classes[0].functions = {
@@ -143,20 +143,16 @@ TEST(MirrorTest, ParserTest)
     AssertNamespaceInfoEqual(globalNamespace, predicatedGlobalNamespace);
 }
 
-//TEST(MirrorTest, GeneratedTest)
-//{
-//    Parser parser("TestRes/MirrorToolInput.h", { "TestRes" });
-//    auto parseResult = parser.Parse();
-//    ASSERT_TRUE(parseResult.first);
-//
-//    Generator generator("MirrorToolTest.generated.cpp", "TestRes", std::get<MetaInfo>(parseResult.second));
-//    auto generateResult = generator.Generate();
-//    ASSERT_EQ(generateResult.first, true);
-//
-//    ASSERT_EQ(
-//        Common::FileUtils::ReadTextFile("MirrorToolTest.generated.cpp"),
-//        Common::FileUtils::ReadTextFile("TestRes/MirrorToolOutput.cpp"));
-//}
+TEST(MirrorTest, GeneratorTest)
+{
+    Parser parser("TestRes/MirrorToolInput.h", { "TestRes" });
+    auto parseResult = parser.Parse();
+    ASSERT_TRUE(parseResult.first);
+
+    Generator generator("./TestRes/MirrorToolInput.h", "TestGenerated/MirrorToolTest.generated.cpp", { "./" }, std::get<MetaInfo>(parseResult.second));
+    auto generateResult = generator.Generate();
+    ASSERT_EQ(generateResult.first, true);
+}
 
 int main(int argc, char* argv[])
 {

@@ -8,6 +8,8 @@
 
 #include <Common/Utility.h>
 
+#include <MirrorTool/Parser.h>
+
 namespace MirrorTool {
     struct MetaInfo;
 
@@ -16,15 +18,17 @@ namespace MirrorTool {
         using Result = std::pair<bool, std::string>;
 
         NON_COPYABLE(Generator)
-        explicit Generator(std::string inOutputFile, std::string inHeaderDir, const MetaInfo& inMetaInfo);
+        explicit Generator(std::string inInputFile, std::string inOutputFile, std::vector<std::string> inHeaderDirs, const MetaInfo& inMetaInfo);
         ~Generator();
 
         Result Generate();
 
     private:
+        Result GenerateCode(std::ofstream& file);
+
         const MetaInfo& metaInfo;
+        std::string inputFile;
         std::string outputFile;
-        std::string headerDir;
-        std::ofstream file;
+        std::vector<std::string> headerDirs;
     };
 }

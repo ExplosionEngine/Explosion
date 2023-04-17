@@ -5,7 +5,6 @@
 #pragma once
 
 #include <vector>
-#include <memory>
 
 #include <RHI/SwapChain.h>
 
@@ -24,6 +23,6 @@ namespace RHI::Dummy {
 
     private:
         bool pingPong;
-        std::vector<std::unique_ptr<DummyTexture>> dummyTextures;
+        std::vector<Common::UniqueRef<DummyTexture>> dummyTextures;
     };
 }
