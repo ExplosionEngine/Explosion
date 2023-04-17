@@ -49,7 +49,7 @@ namespace RHI::Vulkan {
         VKGpu& gpu;
         vk::Device vkDevice;
         std::unordered_map<QueueType, std::pair<uint32_t, uint32_t>> queueFamilyMappings;
-        std::unordered_map<QueueType, std::vector<std::unique_ptr<VKQueue>>> queues;
+        std::unordered_map<QueueType, std::vector<Common::UniqueRef<VKQueue>>> queues;
         std::unordered_map<QueueType, vk::CommandPool> pools;
     };
 }

@@ -43,7 +43,7 @@ namespace RHI::Vulkan {
         for (auto i = 0; i < createInfo.entryNum; i++) {
             const auto& entry = createInfo.entries[i];
 
-            poolSizes[i].setType(VKEnumCast<BindingType, vk::DescriptorType>(entry.type))
+            poolSizes[i].setType(VKEnumCast<BindingType, vk::DescriptorType>(entry.binding.type))
                 .setDescriptorCount(1);
         }
 
@@ -71,11 +71,11 @@ namespace RHI::Vulkan {
             const auto& entry = createInfo.entries[i];
 
             descriptorWrites[i].setDstSet(descriptorSet)
-                .setDstBinding(entry.binding.glsl.index)
+                .setDstBinding(entry.binding.platform.glsl.index)
                 .setDescriptorCount(1)
-                .setDescriptorType(VKEnumCast<BindingType, vk::DescriptorType>(entry.type));
+                .setDescriptorType(VKEnumCast<BindingType, vk::DescriptorType>(entry.binding.type));
 
-            if (entry.type == BindingType::UNIFORM_BUFFER) {
+            if (entry.binding.type == BindingType::UNIFORM_BUFFER) {
                 auto* bufferView = dynamic_cast<VKBufferView*>(entry.bufferView);
 
                 vk::DescriptorBufferInfo bufferInfo;
@@ -84,14 +84,14 @@ namespace RHI::Vulkan {
                     .setRange(bufferView->GetBufferSize());
 
                 descriptorWrites[i].setBufferInfo(bufferInfo);
-            } else if (entry.type == BindingType::SAMPLER) {
+            } else if (entry.binding.type == BindingType::SAMPLER) {
                 auto* sampler = dynamic_cast<VKSampler*>(entry.sampler);
 
                 vk::DescriptorImageInfo samplerInfo {};
                 samplerInfo.setSampler(sampler->GetVkSampler());
 
                 descriptorWrites[i].setImageInfo(samplerInfo);
-            } else if (entry.type == BindingType::TEXTURE) {
+            } else if (entry.binding.type == BindingType::TEXTURE) {
                 auto* textureView = dynamic_cast<VKTextureView*>(entry.textureView);
 
                 vk::DescriptorImageInfo imageInfo{};

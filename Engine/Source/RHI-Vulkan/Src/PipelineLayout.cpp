@@ -33,8 +33,8 @@ namespace RHI::Vulkan {
 
     void VKPipelineLayout::CreateNativePipelineLayout(const PipelineLayoutCreateInfo& createInfo)
     {
-        std::vector<vk::DescriptorSetLayout> setLayouts(createInfo.bindGroupNum);
-        for (uint32_t i = 0; i < createInfo.bindGroupNum; ++i) {
+        std::vector<vk::DescriptorSetLayout> setLayouts(createInfo.bindGroupLayoutNum);
+        for (uint32_t i = 0; i < createInfo.bindGroupLayoutNum; ++i) {
             auto vulkanBindGroup = static_cast<const VKBindGroupLayout*>(createInfo.bindGroupLayouts[i]);
             setLayouts[i] = vulkanBindGroup->GetVkDescriptorSetLayout();
         }

@@ -42,9 +42,9 @@ namespace RHI::Vulkan {
 
             vk::ShaderStageFlags flags = FromRHI(entry.shaderVisibility);
 
-            binding.setDescriptorType(VKEnumCast<BindingType, vk::DescriptorType>(entry.type))
+            binding.setDescriptorType(VKEnumCast<BindingType, vk::DescriptorType>(entry.binding.type))
                 .setDescriptorCount(1)
-                .setBinding(entry.binding.glsl.index)
+                .setBinding(entry.binding.platform.glsl.index)
                 .setStageFlags(flags);
         }
 

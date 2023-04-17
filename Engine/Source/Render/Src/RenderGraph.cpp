@@ -9,13 +9,6 @@
 #include <Render/RenderGraph.h>
 
 namespace Render {
-    static RHI::ComputePassBeginInfo GetRHIComputePassBeginInfo(const RGComputePassDesc& desc)
-    {
-        RHI::ComputePassBeginInfo result;
-        result.pipeline = desc.pipeline;
-        return result;
-    }
-
     static std::vector<RHI::GraphicsPassColorAttachment> GetRHIColorAttachments(const RGRasterPassDesc& desc)
     {
         std::vector<RHI::GraphicsPassColorAttachment> result(desc.colorAttachments.size());
@@ -60,7 +53,6 @@ namespace Render {
         const RHI::GraphicsPassDepthStencilAttachment* depthStencilAttachment)
     {
         RHI::GraphicsPassBeginInfo result;
-        result.pipeline = desc.pipeline;
         result.colorAttachmentNum = colorAttachmentNum;
         result.colorAttachments = colorAttachments;
         result.depthStencilAttachment = depthStencilAttachment;
@@ -152,97 +144,12 @@ namespace Render {
     {
     }
 
-    RGResource::~RGResource() = default;
-
-    bool RGResource::IsExternal() const
-    {
-        return isExternal;
-    }
-
-    bool RGResource::IsCulled() const
-    {
-        return isCulled;
-    }
-
-    const std::string& RGResource::GetName() const
-    {
-        return name;
-    }
-
-    bool RGResource::CanAccessRHI() const
-    {
-        return rhiAccess;
-    }
-
-    RGResource* RGResource::GetParent() const
-    {
-        return parent;
-    }
-
-    void RGResource::SetCulled(bool inCulled)
-    {
-        isCulled = inCulled;
-    }
-
-    void RGResource::SetRHIAccess(bool inRhiAccess)
-    {
-        rhiAccess = inRhiAccess;
-    }
-
     RGBufferDesc RGBufferDesc::Create(size_t size, RHI::BufferUsageFlags usages)
     {
         RGBufferDesc result;
         result.size = size;
         result.usages = usages;
         return result;
-    }
-
-    RGBuffer::RGBuffer(std::string inName, const RGBufferDesc& inDesc)
-        : RGResource(std::move(inName), false)
-        , desc(inDesc)
-    {
-    }
-
-    RGBuffer::RGBuffer(std::string inName, RHI::Buffer* inBuffer)
-        : RGResource(std::move(inName), true)
-        , rhiHandle(inBuffer)
-    {
-    }
-
-    RGBuffer::~RGBuffer() = default;
-
-    RGResourceType RGBuffer::GetType()
-    {
-        return RGResourceType::BUFFER;
-    }
-
-    void RGBuffer::Devirtualize(RHI::Device& device)
-    {
-        if (rhiHandle == nullptr && !IsExternal()) {
-            auto createInfo = GetRHIBufferCreateInfo(desc);
-            rhiHandle = device.CreateBuffer(createInfo);
-        }
-
-        Assert(rhiHandle);
-        SetRHIAccess(true);
-    }
-
-    void RGBuffer::Destroy()
-    {
-        if (!IsExternal() && rhiHandle != nullptr) {
-            rhiHandle->Destroy();
-        }
-    }
-
-    RHI::Buffer* RGBuffer::GetRHI() const
-    {
-        Assert(CanAccessRHI());
-        return rhiHandle;
-    }
-
-    const RGBufferDesc& RGBuffer::GetDesc() const
-    {
-        return desc;
     }
 
     RGTextureDesc RGTextureDesc::Create1D(uint32_t length, RHI::PixelFormat format, RHI::TextureUsageFlags usages, uint8_t mipLevels, uint8_t samples)
@@ -279,54 +186,6 @@ namespace Render {
         result.format = format;
         result.usages = usages;
         return result;
-    }
-
-    RGTexture::RGTexture(std::string inName, const RGTextureDesc& inDesc)
-        : RGResource(std::move(inName), false)
-        , desc(inDesc)
-    {
-    }
-
-    RGTexture::RGTexture(std::string inName, RHI::Texture* inTexture)
-        : RGResource(std::move(inName), true)
-        , rhiHandle(inTexture)
-    {
-    }
-
-    RGTexture::~RGTexture() = default;
-
-    RGResourceType RGTexture::GetType()
-    {
-        return RGResourceType::TEXTURE;
-    }
-
-    void RGTexture::Devirtualize(RHI::Device& device)
-    {
-        if (rhiHandle == nullptr && !IsExternal()) {
-            auto createInfo = GetRHITextureCreateInfo(desc);
-            rhiHandle = device.CreateTexture(createInfo);
-        }
-
-        Assert(rhiHandle);
-        SetRHIAccess(true);
-    }
-
-    void RGTexture::Destroy()
-    {
-        if (!IsExternal() && rhiHandle != nullptr) {
-            rhiHandle->Destroy();
-        }
-    }
-
-    RHI::Texture* RGTexture::GetRHI() const
-    {
-        Assert(CanAccessRHI());
-        return rhiHandle;
-    }
-
-    const RGTextureDesc& RGTexture::GetDesc() const
-    {
-        return desc;
     }
 
     RGBufferViewDesc RGBufferViewDesc::Create(size_t size, size_t offset)
@@ -379,84 +238,6 @@ namespace Render {
         result.size = size == UINT64_MAX ? buffer->GetDesc().size : size;
         result.index.format = indexFormat;
         return std::make_pair(buffer, result);
-    }
-
-    RGBufferView::RGBufferView(RGBuffer* inBuffer, const RGBufferViewDesc& inDesc)
-        : RGResource(inBuffer->GetName() + "View", false, inBuffer)
-        , buffer(inBuffer)
-        , desc(inDesc)
-    {
-    }
-
-    RGBufferView::RGBufferView(const std::pair<RGBuffer*, RGBufferViewDesc>& bufferAndViewDesc)
-        : RGResource(bufferAndViewDesc.first->GetName() + "View", false, bufferAndViewDesc.first)
-        , buffer(bufferAndViewDesc.first)
-        , desc(bufferAndViewDesc.second)
-    {
-    }
-
-    RGBufferView::RGBufferView(std::string inName, RGBuffer* inBuffer, const RGBufferViewDesc& inDesc)
-        : RGResource(std::move(inName), false, inBuffer)
-        , buffer(inBuffer)
-        , desc(inDesc)
-    {
-    }
-
-    RGBufferView::RGBufferView(std::string inName, const std::pair<RGBuffer*, RGBufferViewDesc>& bufferAndViewDesc)
-        : RGResource(std::move(inName), false, bufferAndViewDesc.first)
-        , buffer(bufferAndViewDesc.first)
-        , desc(bufferAndViewDesc.second)
-    {
-    }
-
-    RGBufferView::RGBufferView(std::string inName, RHI::BufferView* inBufferView)
-        : RGResource(std::move(inName), true)
-        , rhiHandle(inBufferView)
-    {
-    }
-
-    RGBufferView::~RGBufferView() = default;
-
-    RGResourceType RGBufferView::GetType()
-    {
-        return RGResourceType::BUFFER_VIEW;
-    }
-
-    void RGBufferView::Devirtualize(RHI::Device& device)
-    {
-        if (rhiHandle == nullptr && !IsExternal()) {
-            auto createInfo = GetRHIBufferViewCreateInfo(desc);
-            Assert(buffer);
-            Assert(buffer->GetRHI());
-            rhiHandle = buffer->GetRHI()->CreateBufferView(createInfo);
-        }
-
-        Assert(rhiHandle);
-        SetRHIAccess(true);
-    }
-
-    void RGBufferView::Destroy()
-    {
-        if (!IsExternal() && rhiHandle != nullptr) {
-            rhiHandle->Destroy();
-        }
-    }
-
-    RHI::BufferView* RGBufferView::GetRHI() const
-    {
-        Assert(CanAccessRHI());
-        return rhiHandle;
-    }
-
-    RGBuffer* RGBufferView::GetBuffer() const
-    {
-        Assert(!IsExternal());
-        return buffer;
-    }
-
-    const RGBufferViewDesc& RGBufferView::GetDesc() const
-    {
-        return desc;
     }
 
     RGTextureViewDesc RGTextureViewDesc::Create1D(RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
@@ -602,6 +383,297 @@ namespace Render {
         return std::make_pair(texture, result);
     }
 
+    RGBindItem RGBindItem::Sampler(RGSampler* sampler)
+    {
+        RGBindItem result;
+        result.type = RHI::BindingType::SAMPLER;
+        result.sampler = sampler;
+        return result;
+    }
+
+    RGBindItem RGBindItem::Texture(RGTextureView* textureView)
+    {
+        RGBindItem result;
+        result.type = RHI::BindingType::TEXTURE;
+        result.textureView = textureView;
+        return result;
+    }
+
+    RGBindItem RGBindItem::StorageTexture(RGTextureView* textureView)
+    {
+        RGBindItem result;
+        result.type = RHI::BindingType::STORAGE_TEXTURE;
+        result.textureView = textureView;
+        return result;
+    }
+
+    RGBindItem RGBindItem::UniformBuffer(RGBufferView* bufferView)
+    {
+        RGBindItem result;
+        result.type = RHI::BindingType::UNIFORM_BUFFER;
+        result.bufferView = bufferView;
+        return result;
+    }
+
+    RGBindItem RGBindItem::StorageBuffer(RGBufferView* bufferView)
+    {
+        RGBindItem result;
+        result.type = RHI::BindingType::UNIFORM_BUFFER;
+        result.bufferView = bufferView;
+        return result;
+    }
+
+    std::pair<std::string, RGBindItem> RGBindItem::Sampler(std::string name, RGSampler* sampler)
+    {
+        RGBindItem result;
+        result.type = RHI::BindingType::SAMPLER;
+        result.sampler = sampler;
+        return std::make_pair(std::move(name), result);
+    }
+
+    std::pair<std::string, RGBindItem> RGBindItem::Texture(std::string name, RGTextureView* textureView)
+    {
+        RGBindItem result;
+        result.type = RHI::BindingType::TEXTURE;
+        result.textureView = textureView;
+        return std::make_pair(std::move(name), result);
+    }
+
+    std::pair<std::string, RGBindItem> RGBindItem::StorageTexture(std::string name, RGTextureView* textureView)
+    {
+        RGBindItem result;
+        result.type = RHI::BindingType::STORAGE_TEXTURE;
+        result.textureView = textureView;
+        return std::make_pair(std::move(name), result);
+    }
+
+    std::pair<std::string, RGBindItem> RGBindItem::UniformBuffer(std::string name, RGBufferView* bufferView)
+    {
+        RGBindItem result;
+        result.type = RHI::BindingType::UNIFORM_BUFFER;
+        result.bufferView = bufferView;
+        return std::make_pair(std::move(name), result);
+    }
+
+    std::pair<std::string, RGBindItem> RGBindItem::StorageBuffer(std::string name, RGBufferView* bufferView)
+    {
+        RGBindItem result;
+        result.type = RHI::BindingType::STORAGE_BUFFER;
+        result.bufferView = bufferView;
+        return std::make_pair(std::move(name), result);
+    }
+
+    RGResource::~RGResource() = default;
+
+    bool RGResource::IsExternal() const
+    {
+        return isExternal;
+    }
+
+    bool RGResource::IsCulled() const
+    {
+        return isCulled;
+    }
+
+    const std::string& RGResource::GetName() const
+    {
+        return name;
+    }
+
+    bool RGResource::CanAccessRHI() const
+    {
+        return rhiAccess;
+    }
+
+    RGResource* RGResource::GetParent() const
+    {
+        return parent;
+    }
+
+    void RGResource::SetCulled(bool inCulled)
+    {
+        isCulled = inCulled;
+    }
+
+    void RGResource::SetRHIAccess(bool inRhiAccess)
+    {
+        rhiAccess = inRhiAccess;
+    }
+
+    RGBuffer::RGBuffer(std::string inName, const RGBufferDesc& inDesc)
+        : RGResource(std::move(inName), false)
+        , desc(inDesc)
+    {
+    }
+
+    RGBuffer::RGBuffer(std::string inName, RHI::Buffer* inBuffer)
+        : RGResource(std::move(inName), true)
+        , rhiHandle(inBuffer)
+    {
+    }
+
+    RGBuffer::~RGBuffer() = default;
+
+    RGResourceType RGBuffer::GetType()
+    {
+        return RGResourceType::BUFFER;
+    }
+
+    void RGBuffer::Devirtualize(RHI::Device& device)
+    {
+        if (rhiHandle == nullptr && !IsExternal()) {
+            auto createInfo = GetRHIBufferCreateInfo(desc);
+            rhiHandle = device.CreateBuffer(createInfo);
+        }
+
+        Assert(rhiHandle);
+        SetRHIAccess(true);
+    }
+
+    void RGBuffer::Destroy()
+    {
+        if (!IsExternal() && rhiHandle != nullptr) {
+            rhiHandle->Destroy();
+        }
+    }
+
+    RHI::Buffer* RGBuffer::GetRHI() const
+    {
+        Assert(CanAccessRHI());
+        return rhiHandle;
+    }
+
+    const RGBufferDesc& RGBuffer::GetDesc() const
+    {
+        return desc;
+    }
+
+    RGTexture::RGTexture(std::string inName, const RGTextureDesc& inDesc)
+        : RGResource(std::move(inName), false)
+        , desc(inDesc)
+    {
+    }
+
+    RGTexture::RGTexture(std::string inName, RHI::Texture* inTexture)
+        : RGResource(std::move(inName), true)
+        , rhiHandle(inTexture)
+    {
+    }
+
+    RGTexture::~RGTexture() = default;
+
+    RGResourceType RGTexture::GetType()
+    {
+        return RGResourceType::TEXTURE;
+    }
+
+    void RGTexture::Devirtualize(RHI::Device& device)
+    {
+        if (rhiHandle == nullptr && !IsExternal()) {
+            auto createInfo = GetRHITextureCreateInfo(desc);
+            rhiHandle = device.CreateTexture(createInfo);
+        }
+
+        Assert(rhiHandle);
+        SetRHIAccess(true);
+    }
+
+    void RGTexture::Destroy()
+    {
+        if (!IsExternal() && rhiHandle != nullptr) {
+            rhiHandle->Destroy();
+        }
+    }
+
+    RHI::Texture* RGTexture::GetRHI() const
+    {
+        Assert(CanAccessRHI());
+        return rhiHandle;
+    }
+
+    const RGTextureDesc& RGTexture::GetDesc() const
+    {
+        return desc;
+    }
+
+    RGBufferView::RGBufferView(RGBuffer* inBuffer, const RGBufferViewDesc& inDesc)
+        : RGResource(inBuffer->GetName() + "View", false, inBuffer)
+        , buffer(inBuffer)
+        , desc(inDesc)
+    {
+    }
+
+    RGBufferView::RGBufferView(const std::pair<RGBuffer*, RGBufferViewDesc>& bufferAndViewDesc)
+        : RGResource(bufferAndViewDesc.first->GetName() + "View", false, bufferAndViewDesc.first)
+        , buffer(bufferAndViewDesc.first)
+        , desc(bufferAndViewDesc.second)
+    {
+    }
+
+    RGBufferView::RGBufferView(std::string inName, RGBuffer* inBuffer, const RGBufferViewDesc& inDesc)
+        : RGResource(std::move(inName), false, inBuffer)
+        , buffer(inBuffer)
+        , desc(inDesc)
+    {
+    }
+
+    RGBufferView::RGBufferView(std::string inName, const std::pair<RGBuffer*, RGBufferViewDesc>& bufferAndViewDesc)
+        : RGResource(std::move(inName), false, bufferAndViewDesc.first)
+        , buffer(bufferAndViewDesc.first)
+        , desc(bufferAndViewDesc.second)
+    {
+    }
+
+    RGBufferView::RGBufferView(std::string inName, RHI::BufferView* inBufferView)
+        : RGResource(std::move(inName), true)
+        , rhiHandle(inBufferView)
+    {
+    }
+
+    RGBufferView::~RGBufferView() = default;
+
+    RGResourceType RGBufferView::GetType()
+    {
+        return RGResourceType::BUFFER_VIEW;
+    }
+
+    void RGBufferView::Devirtualize(RHI::Device& device)
+    {
+        if (rhiHandle == nullptr && !IsExternal()) {
+            auto createInfo = GetRHIBufferViewCreateInfo(desc);
+            Assert(buffer);
+            Assert(buffer->GetRHI());
+            rhiHandle = buffer->GetRHI()->CreateBufferView(createInfo);
+        }
+
+        Assert(rhiHandle);
+        SetRHIAccess(true);
+    }
+
+    void RGBufferView::Destroy()
+    {
+        if (!IsExternal() && rhiHandle != nullptr) {
+            rhiHandle->Destroy();
+        }
+    }
+
+    RHI::BufferView* RGBufferView::GetRHI() const
+    {
+        Assert(CanAccessRHI());
+        return rhiHandle;
+    }
+
+    RGBuffer* RGBufferView::GetBuffer() const
+    {
+        Assert(!IsExternal());
+        return buffer;
+    }
+
+    const RGBufferViewDesc& RGBufferView::GetDesc() const
+    {
+        return desc;
+    }
+
     RGTextureView::RGTextureView(RGTexture* inTexture, const RGTextureViewDesc& inDesc)
         : RGResource(inTexture->GetName() + "View", false, inTexture)
         , texture(inTexture)
@@ -676,6 +748,60 @@ namespace Render {
     }
 
     const RGTextureViewDesc& RGTextureView::GetDesc() const
+    {
+        return desc;
+    }
+
+    RGBindGroup::RGBindGroup(RGBindGroupDesc inDesc)
+        : RGResource("", false, nullptr)
+        , desc(std::move(inDesc))
+    {
+    }
+
+    RGBindGroup::RGBindGroup(RHI::BindGroup* inBindGroup)
+        : RGResource("", true, nullptr)
+        , rhiHandle(inBindGroup)
+    {
+    }
+
+    RGBindGroup::RGBindGroup(std::string inName, RGBindGroupDesc inDesc)
+        : RGResource(std::move(inName), false, nullptr)
+        , desc(std::move(inDesc))
+    {
+    }
+
+    RGBindGroup::RGBindGroup(std::string inName, RHI::BindGroup* inBindGroup)
+        : RGResource(std::move(inName), true, nullptr)
+        , rhiHandle(inBindGroup)
+    {
+    }
+
+    RGBindGroup::~RGBindGroup() = default;
+
+    RGResourceType RGBindGroup::GetType()
+    {
+        return RGResourceType::BIND_GROUP;
+    }
+
+    void RGBindGroup::Devirtualize(RHI::Device& device)
+    {
+        // TODO
+    }
+
+    void RGBindGroup::Destroy()
+    {
+        if (!IsExternal() && rhiHandle != nullptr) {
+            rhiHandle->Destroy();
+        }
+    }
+
+    RHI::BindGroup* RGBindGroup::GetRHI() const
+    {
+        Assert(CanAccessRHI());
+        return rhiHandle;
+    }
+
+    const RGBindGroupDesc& RGBindGroup::GetDesc() const
     {
         return desc;
     }
@@ -827,15 +953,15 @@ namespace Render {
     {
         for (auto& pass : passes) {
             if (pass->GetType() == RGPassType::COPY) {
-                auto* copyPass = static_cast<RGCopyPass*>(pass.get());
+                auto* copyPass = static_cast<RGCopyPass*>(pass.Get());
                 RGCopyPassBuilder builder(*this, *copyPass);
                 copyPass->Setup(builder);
             } else if (pass->GetType() == RGPassType::COMPUTE) {
-                auto* computePass = static_cast<RGComputePass*>(pass.get());
+                auto* computePass = static_cast<RGComputePass*>(pass.Get());
                 RGComputePassBuilder builder(*this, *computePass);
                 computePass->Setup(builder);
             } else if (pass->GetType() == RGPassType::RASTER) {
-                auto* rasterPass = static_cast<RGRasterPass*>(pass.get());
+                auto* rasterPass = static_cast<RGRasterPass*>(pass.Get());
                 RGRasterPassBuilder builder(*this, *rasterPass);
                 rasterPass->Setup(builder);
             } else {
@@ -859,7 +985,7 @@ namespace Render {
         }
 
         for (auto& resource : resources) {
-            if (!consumeds.contains(resource.get())) {
+            if (!consumeds.contains(resource.Get())) {
                 resource->SetCulled(true);
             }
         }
@@ -867,7 +993,7 @@ namespace Render {
         ComputeResBarriers();
     }
 
-    void RenderGraph::Execute(RHI::Fence* mainFence, RHI::Fence* asyncFence)
+    void RenderGraph::Execute(RHI::Fence* mainFence, RHI::Fence* asyncComputeFence, RHI::Fence* asyncCopyFence) // NOLINT
     {
         std::vector<RGResource*> actualResesToDevirtualize;
         std::vector<RGResource*> actualResViewsToDevirtualize;
@@ -877,10 +1003,10 @@ namespace Render {
 
             auto type = resource->GetType();
             if (type == RGResourceType::BUFFER || type == RGResourceType::TEXTURE) {
-                actualResesToDevirtualize.emplace_back(resource.get());
+                actualResesToDevirtualize.emplace_back(resource.Get());
             }
             if (type == RGResourceType::BUFFER_VIEW || type == RGResourceType::TEXTURE_VIEW) {
-                actualResViewsToDevirtualize.emplace_back(resource.get());
+                actualResViewsToDevirtualize.emplace_back(resource.Get());
             }
         }
 
@@ -898,24 +1024,28 @@ namespace Render {
         Assert(device.GetQueueNum(RHI::QueueType::GRAPHICS) > 0);
         RHI::Queue* mainQueue = device.GetQueue(RHI::QueueType::GRAPHICS, 0);
         RHI::Queue* asyncComputeQueue = device.GetQueueNum(RHI::QueueType::COMPUTE) > 1 ? device.GetQueue(RHI::QueueType::COMPUTE, 1) : mainQueue;
+        RHI::Queue* asyncCopyQueue = device.GetQueueNum(RHI::QueueType::GRAPHICS) > 1 ? device.GetQueue(RHI::QueueType::COMPUTE, 1) : mainQueue;
 
-        RHI::UniqueRef<RHI::CommandBuffer> mainBuffer = device.CreateCommandBuffer();
-        RHI::UniqueRef<RHI::CommandBuffer> asyncComputeBuffer = device.CreateCommandBuffer();
-        RHI::UniqueRef<RHI::CommandEncoder> mainEncoder = mainBuffer->Begin();
-        RHI::UniqueRef<RHI::CommandEncoder> asyncComputeEncoder = asyncComputeBuffer->Begin();
+        Common::UniqueRef<RHI::CommandBuffer> mainBuffer = device.CreateCommandBuffer();
+        Common::UniqueRef<RHI::CommandBuffer> asyncComputeBuffer = device.CreateCommandBuffer();
+        Common::UniqueRef<RHI::CommandBuffer> asyncCopyBuffer = device.CreateCommandBuffer();
+        Common::UniqueRef<RHI::CommandEncoder> mainEncoder = mainBuffer->Begin();
+        Common::UniqueRef<RHI::CommandEncoder> asyncComputeEncoder = asyncComputeBuffer->Begin();
+        Common::UniqueRef<RHI::CommandEncoder> asyncCopyEncoder = asyncCopyBuffer->Begin();
         {
             for (auto& pass : passes) {
                 if (pass->GetType() == RGPassType::COPY) {
-                    auto* copyPass = static_cast<RGCopyPass*>(pass.get());
-                    TransitionResources(mainEncoder.Get(), copyPass);
-                    ExecuteCopyPass(mainEncoder.Get(), copyPass);
+                    auto* copyPass = static_cast<RGCopyPass*>(pass.Get());
+                    auto& commandEncoder = copyPass->isAsyncCopy ? asyncCopyEncoder : mainEncoder;
+                    TransitionResources(commandEncoder.Get(), copyPass);
+                    ExecuteCopyPass(commandEncoder.Get(), copyPass);
                 } else if (pass->GetType() == RGPassType::RASTER) {
-                    auto* computePass = static_cast<RGComputePass*>(pass.get());
+                    auto* computePass = static_cast<RGComputePass*>(pass.Get());
                     auto& commandEncoder = computePass->isAsyncCompute ? asyncComputeEncoder : mainEncoder;
                     TransitionResources(commandEncoder.Get(), computePass);
                     ExecuteComputePass(commandEncoder.Get(), computePass);
                 } else if (pass->GetType() == RGPassType::COMPUTE) {
-                    auto* rasterPass = static_cast<RGRasterPass*>(pass.get());
+                    auto* rasterPass = static_cast<RGRasterPass*>(pass.Get());
                     TransitionResources(mainEncoder.Get(), rasterPass);
                     ExecuteRasterPass(mainEncoder.Get(), rasterPass);
                 } else {
@@ -924,9 +1054,12 @@ namespace Render {
             }
         }
         mainEncoder->End();
+        asyncComputeEncoder->End();
+        asyncCopyEncoder->End();
 
         mainQueue->Submit(mainBuffer.Get(), mainFence);
-        asyncComputeQueue->Submit(asyncComputeBuffer.Get(), asyncFence);
+        asyncComputeQueue->Submit(asyncComputeBuffer.Get(), asyncComputeFence);
+        asyncCopyQueue->Submit(asyncCopyBuffer.Get(), asyncCopyFence);
     }
 
     void RenderGraph::ExecuteCopyPass(RHI::CommandEncoder* encoder, RGCopyPass* copyPass)
@@ -936,8 +1069,7 @@ namespace Render {
 
     void RenderGraph::ExecuteComputePass(RHI::CommandEncoder* encoder, RGComputePass* computePass)
     {
-        RHI::ComputePassBeginInfo beginInfo = GetRHIComputePassBeginInfo(computePass->passDesc);
-        RHI::ComputePassCommandEncoder* computeEncoder = encoder->BeginComputePass(&beginInfo);
+        RHI::ComputePassCommandEncoder* computeEncoder = encoder->BeginComputePass();
         {
             computePass->Execute(*computeEncoder);
         }
@@ -1037,8 +1169,8 @@ namespace Render {
     {
         LastResStates lastResStates;
         for (const auto& pass : passes) {
-            ComputeResTransitionsByAccessGroup<RGResourceAccessType::READ>(pass.get(), pass->reads, lastResStates);
-            ComputeResTransitionsByAccessGroup<RGResourceAccessType::WRITE>(pass.get(), pass->writes, lastResStates);
+            ComputeResTransitionsByAccessGroup<RGResourceAccessType::READ>(pass.Get(), pass->reads, lastResStates);
+            ComputeResTransitionsByAccessGroup<RGResourceAccessType::WRITE>(pass.Get(), pass->writes, lastResStates);
             UpdateLastResStatesByAccessGroup<RGResourceAccessType::READ>(pass->GetType(), pass->reads, lastResStates);
             UpdateLastResStatesByAccessGroup<RGResourceAccessType::WRITE>(pass->GetType(), pass->writes, lastResStates);
         }
@@ -1067,6 +1199,37 @@ namespace Render {
 
     RGPassBuilder::~RGPassBuilder() = default;
 
+    void RGPassBuilder::MarkAsConsumed(RGResource* res)
+    {
+        auto type = res->GetType();
+        Assert(type != RGResourceType::SAMPLER && type != RGResourceType::BIND_GROUP);
+        pass.reads.emplace(res);
+    }
+
+    RHI::Device& RGPassBuilder::GetDevice()
+    {
+        return graph.GetDevice();
+    }
+
+    void RGPassBuilder::MarkDependenciesFromBindGroup(RGBindGroup* bindGroup)
+    {
+        const auto& items = bindGroup->GetDesc().items;
+        for (const auto& item : items) {
+            const auto& bind = item.second;
+            auto type = bind.type;
+
+            if (type == RHI::BindingType::UNIFORM_BUFFER) {
+                pass.reads.emplace(bind.bufferView);
+            } else if (type == RHI::BindingType::STORAGE_BUFFER) {
+                pass.writes.emplace(bind.bufferView);
+            } else if (type == RHI::BindingType::TEXTURE) {
+                pass.reads.emplace(bind.textureView);
+            } else if (type == RHI::BindingType::STORAGE_TEXTURE) {
+                pass.writes.emplace(bind.textureView);
+            }
+        }
+    }
+
     RGCopyPassBuilder::RGCopyPassBuilder(RenderGraph& inGraph, RGCopyPass& inPass)
         : RGPassBuilder(inGraph, inPass)
         , copyPass(inPass)
@@ -1074,6 +1237,11 @@ namespace Render {
     }
 
     RGCopyPassBuilder::~RGCopyPassBuilder() = default;
+
+    void RGCopyPassBuilder::SetAsyncCopy(bool inAsyncCopy)
+    {
+        copyPass.isAsyncCopy = inAsyncCopy;
+    }
 
     RGComputePassBuilder::RGComputePassBuilder(RenderGraph& inGraph, RGComputePass& inPass)
         : RGPassBuilder(inGraph, inPass)
@@ -1086,11 +1254,6 @@ namespace Render {
     void RGComputePassBuilder::SetAsyncCompute(bool inAsyncCompute)
     {
         computePass.isAsyncCompute = inAsyncCompute;
-    }
-
-    void RGComputePassBuilder::SetPassDesc(const RGComputePassDesc& inDesc)
-    {
-        computePass.passDesc = inDesc;
     }
 
     RGRasterPassBuilder::RGRasterPassBuilder(RenderGraph& inGraph, RGRasterPass& inPass)

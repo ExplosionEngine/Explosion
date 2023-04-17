@@ -17,12 +17,16 @@ namespace RHI {
         uint8_t index;
     };
 
-    struct BindGroupLayoutEntry {
+    struct ResourceBinding {
         BindingType type;
         union {
             HlslBinding hlsl;
             GlslBinding glsl;
-        } binding;
+        } platform;
+    };
+
+    struct BindGroupLayoutEntry {
+        ResourceBinding binding;
         ShaderStageFlags shaderVisibility;
     };
 

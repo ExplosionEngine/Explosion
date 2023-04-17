@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <memory>
-
 #include <RHI/Device.h>
 
 namespace RHI::Dummy {
@@ -33,6 +31,6 @@ namespace RHI::Dummy {
         Fence* CreateFence() override;
 
     private:
-        std::unique_ptr<DummyQueue> dummyQueue;
+        Common::UniqueRef<DummyQueue> dummyQueue;
     };
 }

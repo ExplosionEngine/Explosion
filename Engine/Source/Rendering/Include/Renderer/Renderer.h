@@ -22,7 +22,7 @@ namespace Rendering {
 
         void Initialize(const RendererInitializer& inInitializer);
         Render::Canvas* CreateCanvas(void* nativeWindow, uint32_t width, uint32_t height);
-        void RenderFrame(Render::Canvas* inCanvas, const Render::SceneViewCluster& inSceneView);
+        void RenderFrame(Render::Canvas* inCanvas, const Render::SceneView& inSceneView);
 
     private:
         Renderer();

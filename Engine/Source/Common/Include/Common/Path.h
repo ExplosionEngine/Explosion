@@ -64,7 +64,13 @@ namespace Common {
         static inline std::string GetParentPath(const std::string& absolutePath)
         {
             std::filesystem::path path(absolutePath);
-            return GetStandardPath(absolutePath);
+            return GetStandardPath(path.parent_path().string());
+        }
+
+        static inline std::string GetFileName(const std::string& inString)
+        {
+            std::filesystem::path path(inString);
+            return path.filename().string();
         }
     };
 }

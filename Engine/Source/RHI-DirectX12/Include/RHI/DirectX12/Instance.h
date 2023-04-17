@@ -5,7 +5,6 @@
 #pragma once
 
 #include <vector>
-#include <memory>
 #include <unordered_map>
 #include <functional>
 
@@ -53,7 +52,7 @@ namespace RHI::DirectX12 {
 #endif
 
         ComPtr<IDXGIFactory4> dx12Factory;
-        std::vector<std::unique_ptr<DX12Gpu>> gpus;
+        std::vector<Common::UniqueRef<DX12Gpu>> gpus;
 #if BUILD_CONFIG_DEBUG
         void* dx12ExceptionHandler;
         std::unordered_map<const DX12Device*, DebugLayerExceptionHandler> debugLayerExceptionHandlers;

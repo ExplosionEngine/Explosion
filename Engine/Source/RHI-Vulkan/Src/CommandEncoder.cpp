@@ -127,8 +127,9 @@ namespace RHI::Vulkan {
         }
     }
 
-    ComputePassCommandEncoder* VKCommandEncoder::BeginComputePass(const ComputePassBeginInfo* beginInfo)
+    ComputePassCommandEncoder* VKCommandEncoder::BeginComputePass()
     {
+        // TODO
         return nullptr;
     }
 
@@ -158,14 +159,12 @@ namespace RHI::Vulkan {
     VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandBuffer& cmd,
         const GraphicsPassBeginInfo* beginInfo) : device(dev), commandBuffer(cmd)
     {
-        graphicsPipeline = dynamic_cast<VKGraphicsPipeline*>(beginInfo->pipeline);
-
         std::vector<vk::RenderingAttachmentInfo> colorAttachmentInfos(beginInfo->colorAttachmentNum);
         for (size_t i = 0; i < beginInfo->colorAttachmentNum; i++)
         {
             auto* colorTextureView = dynamic_cast<VKTextureView*>(beginInfo->colorAttachments[i].view);
             colorAttachmentInfos[i].setImageView(colorTextureView->GetVkImageView())
-                .setImageLayout(vk::ImageLayout::eAttachmentOptimalKHR)
+                .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
                 .setLoadOp(VKEnumCast<LoadOp, vk::AttachmentLoadOp>(beginInfo->colorAttachments[i].loadOp))
                 .setStoreOp(VKEnumCast<StoreOp, vk::AttachmentStoreOp>(beginInfo->colorAttachments[i].storeOp))
                 .setClearValue(vk::ClearValue(std::array<float, 4>{
@@ -204,11 +203,17 @@ namespace RHI::Vulkan {
 
         cmdHandle = cmd.GetVkCommandBuffer();
         cmdHandle.beginRenderingKHR(&renderingInfo, device.GetGpu().GetInstance().GetVkDispatch());
-
-        cmdHandle.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline->GetVkPipeline());
     }
 
     VKGraphicsPassCommandEncoder::~VKGraphicsPassCommandEncoder() = default;
+
+    void VKGraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
+    {
+        graphicsPipeline = dynamic_cast<VKGraphicsPipeline*>(pipeline);
+        Assert(graphicsPipeline);
+
+        cmdHandle.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline->GetVkPipeline());
+    }
 
     void VKGraphicsPassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
     {

@@ -43,7 +43,7 @@ namespace RHI::Metal {
 
     }
 
-    ComputePassCommandEncoder* MTLCommandEncoder::BeginComputePass(const ComputePassBeginInfo* beginInfo)
+    ComputePassCommandEncoder* MTLCommandEncoder::BeginComputePass()
     {
 
     }
@@ -73,6 +73,10 @@ namespace RHI::Metal {
     }
 
     MTLComputePassCommandEncoder::~MTLComputePassCommandEncoder()
+    {
+    }
+
+    void MTLComputePassCommandEncoder::SetPipeline(ComputePipeline* pipeline)
     {
     }
 
@@ -107,14 +111,14 @@ namespace RHI::Metal {
         }
 
         renderEncoder = [cmd renderCommandEncoderWithDescriptor: descriptor];
-
-        MTLGraphicsPipeline *mtlPipeline = static_cast<MTLGraphicsPipeline*>(beginInfo->pipeline);
-        id<MTLRenderPipelineState> pipeline = mtlPipeline->GetNativePipeline();
-        [renderEncoder setRenderPipelineState: pipeline];
         [descriptor release];
     }
 
     MTLGraphicsPassCommandEncoder::~MTLGraphicsPassCommandEncoder()
+    {
+    }
+
+    void MTLGraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
     {
     }
 

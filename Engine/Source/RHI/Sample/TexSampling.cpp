@@ -202,16 +202,16 @@ private:
     void CreateBindGroupLayout()
     {
         std::vector<BindGroupLayoutEntry> entries(2);
-        entries[0].type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::TEXTURE;
         entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[1].type = BindingType::SAMPLER;
+        entries[1].binding.type = BindingType::SAMPLER;
         entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
         if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
         } else {
-            entries[0].binding.glsl.index = 0;
-            entries[1].binding.glsl.index = 1;
+            entries[0].binding.platform.glsl.index = 0;
+            entries[1].binding.platform.glsl.index = 1;
         }
 
         BindGroupLayoutCreateInfo createInfo {};
@@ -225,16 +225,16 @@ private:
     void CreateBindGroup()
     {
         std::vector<BindGroupEntry> entries(2);
-        entries[0].type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::TEXTURE;
         entries[0].textureView = sampleTextureView.Get();
-        entries[1].type = BindingType::SAMPLER;
+        entries[1].binding.type = BindingType::SAMPLER;
         entries[1].sampler = sampler.Get();
         if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
         } else {
-            entries[0].binding.glsl.index = 0;
-            entries[1].binding.glsl.index = 1;
+            entries[0].binding.platform.glsl.index = 0;
+            entries[1].binding.platform.glsl.index = 1;
         }
 
         BindGroupCreateInfo createInfo {};
@@ -250,7 +250,7 @@ private:
         std::vector<BindGroupLayout*> bindGroupLayouts = { bindGroupLayout.Get() };
 
         PipelineLayoutCreateInfo createInfo {};
-        createInfo.bindGroupNum = bindGroupLayouts.size();
+        createInfo.bindGroupLayoutNum = bindGroupLayouts.size();
         createInfo.bindGroupLayouts = bindGroupLayouts.data();
         pipelineLayout = device->CreatePipelineLayout(createInfo);
     }
@@ -335,7 +335,6 @@ private:
             colorAttachments[0].resolve = nullptr;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.pipeline = pipeline.Get();
             graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
@@ -343,6 +342,7 @@ private:
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::PRESENT, TextureState::RENDER_TARGET));
             auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
+                graphicsEncoder->SetPipeline(pipeline.Get());
                 graphicsEncoder->SetScissor(0, 0, width, height);
                 graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
                 graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);

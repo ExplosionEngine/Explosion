@@ -37,7 +37,7 @@ namespace RHI::Metal {
 
     Gpu* MTLInstance::GetGpu(uint32_t index)
     {
-        return gpus[index].get();
+        return gpus[index].Get();
     }
 
     void MTLInstance::Destroy()

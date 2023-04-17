@@ -32,7 +32,7 @@ namespace RHI::Metal {
         NSWindow* nativeWindow = nullptr;
         id<MTLEvent> event = nil;
         std::vector<id<CAMetalDrawable>> drawables;
-        std::vector<std::unique_ptr<MTLTexture>> textures;
+        std::vector<Common::UniqueRef<MTLTexture>> textures;
         uint32_t swapChainImageCount = 0;
         uint32_t currentImage = 0;
     };

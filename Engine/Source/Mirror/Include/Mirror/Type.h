@@ -20,6 +20,8 @@ namespace Mirror {
         static constexpr std::string_view defaultConstructor = "defaultConstructor";
         // TODO
     };
+
+    static std::unordered_map<TypeInfo*, std::string> typeToNameMap;
 }
 
 namespace Mirror {
@@ -238,6 +240,22 @@ namespace Mirror {
     class MIRROR_API Class : public Type {
     public:
         ~Class() override;
+
+        template <typename C>
+        [[nodiscard]] static const Class* Find()
+        {
+            auto iter = typeToNameMap.find(GetTypeInfo<C>());
+            Assert(iter != typeToNameMap.end());
+            return Find(iter->second);
+        }
+
+        template <typename C>
+        [[nodiscard]] static const Class& Get()
+        {
+            auto iter = typeToNameMap.find(GetTypeInfo<C>());
+            Assert(iter != typeToNameMap.end());
+            return Get(iter->second);
+        }
 
         [[nodiscard]] static const Class* Find(const std::string& name);
         [[nodiscard]] static const Class& Get(const std::string& name);

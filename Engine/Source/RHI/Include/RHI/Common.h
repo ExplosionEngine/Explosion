@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <type_traits>
 
-#include <Common/Utility.h>
+#include <Common/Memory.h>
 
 namespace RHI {
     using EnumType = uint32_t;
@@ -538,69 +538,5 @@ namespace RHI {
         float g;
         float b;
         float a;
-    };
-}
-
-namespace RHI {
-    template <typename T>
-    class UniqueRef {
-    public:
-        NON_COPYABLE(UniqueRef)
-        UniqueRef(T* pointer) : ref(std::unique_ptr<T>(pointer)) {} // NOLINT
-        UniqueRef(std::unique_ptr<T>&& inRef) : ref(inRef) {} // NOLINT
-        UniqueRef(UniqueRef&& other) noexcept : ref(std::move(other.ref)) {} // NOLINT
-        UniqueRef() = default;
-        ~UniqueRef() = default;
-
-        UniqueRef& operator=(T* pointer)
-        {
-            ref = std::unique_ptr<T>(pointer);
-            return *this;
-        }
-
-        UniqueRef& operator=(std::unique_ptr<T>&& inRef)
-        {
-            ref = inRef;
-            return *this;
-        }
-
-        UniqueRef& operator=(UniqueRef&& other) noexcept
-        {
-            ref = std::move(other.ref);
-            return *this;
-        }
-
-        T* operator->() const noexcept
-        {
-            return ref.operator->();
-        }
-
-        T& operator*() const noexcept
-        {
-            return ref.operator*();
-        }
-
-        bool operator==(nullptr_t) const noexcept
-        {
-            return ref == nullptr;
-        }
-
-        bool operator!=(nullptr_t) const noexcept
-        {
-            return ref != nullptr;
-        }
-
-        T* Get() const
-        {
-            return ref.get();
-        }
-
-        void Reset(T* pointer = nullptr)
-        {
-            ref.reset(pointer);
-        }
-
-    private:
-        std::unique_ptr<T> ref;
     };
 }

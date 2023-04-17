@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <memory>
 #include <vector>
 #include <RHI/Instance.h>
 #include <Metal/Gpu.h>
@@ -24,6 +23,6 @@ namespace RHI::Metal {
         void Destroy() override;
 
     private:
-        std::vector<std::unique_ptr<MTLGpu>> gpus;
+        std::vector<Common::UniqueRef<MTLGpu>> gpus;
     };
 }

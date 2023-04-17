@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <memory>
-
 #include <wrl/client.h>
 #include <d3d12.h>
 #include <dxgi1_4.h>
@@ -36,6 +34,6 @@ namespace RHI::DirectX12 {
         uint8_t textureNum;
         PresentMode presentMode;
         ComPtr<IDXGISwapChain3> dx12SwapChain;
-        std::vector<std::unique_ptr<Texture>> textures;
+        std::vector<Common::UniqueRef<Texture>> textures;
     };
 }

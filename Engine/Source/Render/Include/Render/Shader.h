@@ -22,6 +22,7 @@
 #include <RHI/Common.h>
 #include <RHI/Device.h>
 #include <RHI/ShaderModule.h>
+#include <RHI/BindGroupLayout.h>
 
 namespace Render {
     class Shader {};
@@ -39,6 +40,37 @@ namespace Render {
         virtual std::vector<std::string> GetDefinitions(VariantKey variantKey) = 0;
     };
 
+    struct ShaderReflectionData {
+        using LayoutIndex = uint8_t;
+
+        std::unordered_map<std::string, std::pair<LayoutIndex, RHI::ResourceBinding>> resourceBindings;
+    };
+
+    struct ShaderInstance {
+        RHI::ShaderModule* rhiHandle = nullptr;
+        ShaderTypeKey typeKey = 0;
+        VariantKey variantKey = 0;
+        ShaderReflectionData reflectionData;
+
+        bool IsValid() const
+        {
+            return rhiHandle != nullptr;
+        }
+
+        size_t Hash() const
+        {
+            if (!IsValid()) {
+                return 0;
+            }
+
+            std::vector<size_t> values = {
+                typeKey,
+                variantKey
+            };
+            return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        }
+    };
+
     class ShaderByteCodeStorage {
     public:
         static ShaderByteCodeStorage& Get();
@@ -51,30 +83,6 @@ namespace Render {
 
     private:
         std::unordered_map<IShaderType*, std::unordered_map<VariantKey, ShaderByteCode>> byteCodePackages;
-    };
-
-    struct ShaderInstance {
-        RHI::ShaderModule* rhiHandle = nullptr;
-        ShaderTypeKey typeKey = 0;
-        VariantKey variantKey = 0;
-
-        bool IsAvaiable() const
-        {
-            return rhiHandle != nullptr;
-        }
-
-        size_t Hash() const
-        {
-            if (!IsAvaiable()) {
-                return 0;
-            }
-
-            std::vector<size_t> values = {
-                typeKey,
-                variantKey
-            };
-            return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
-        }
     };
 }
 
@@ -153,10 +161,10 @@ namespace Render {
     public:
         static GlobalShaderMap& Get(RHI::Device& device)
         {
-            static std::unordered_map<RHI::Device*, std::unique_ptr<GlobalShaderMap<T>>> map;
+            static std::unordered_map<RHI::Device*, Common::UniqueRef<GlobalShaderMap<T>>> map;
             auto iter = map.find(&device);
             if (iter == map.end()) {
-                map[&device] = std::unique_ptr<GlobalShaderMap<T>>(new GlobalShaderMap<T>(device));
+                map[&device] = Common::UniqueRef<GlobalShaderMap<T>>(new GlobalShaderMap<T>(device));
             }
             return *map[&device];
         }
@@ -208,7 +216,7 @@ namespace Render {
         }
 
         RHI::Device& device;
-        std::unordered_map<VariantKey, RHI::UniqueRef<RHI::ShaderModule>> shaderModules;
+        std::unordered_map<VariantKey, Common::UniqueRef<RHI::ShaderModule>> shaderModules;
     };
 
     class GlobalShaderRegistry {
