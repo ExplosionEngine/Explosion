@@ -23,7 +23,7 @@ namespace Render {
 
         void Start()
         {
-            worker = std::make_unique<Common::WorkerThread>("RenderThread");
+            worker = Common::MakeUnique<Common::WorkerThread>("RenderThread");
         }
 
         void Flush()

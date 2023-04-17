@@ -8,7 +8,7 @@
 
 namespace RHI::Dummy {
     DummyInstance::DummyInstance()
-        : dummyGpu(std::make_unique<DummyGpu>())
+        : dummyGpu(Common::MakeUnique<DummyGpu>())
     {
     }
 

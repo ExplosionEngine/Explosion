@@ -12,6 +12,7 @@ namespace RHI::Dummy {
 
     class DummyInstance : public Instance {
     public:
+        NON_COPYABLE(DummyInstance)
         DummyInstance();
         ~DummyInstance() override;
         RHIType GetRHIType() override;

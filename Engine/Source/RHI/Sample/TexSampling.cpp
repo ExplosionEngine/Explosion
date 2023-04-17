@@ -74,12 +74,29 @@ private:
 
     void CreateSwapChain()
     {
+        static std::vector<PixelFormat> swapChainFormatQualifiers = {
+            PixelFormat::RGBA8_UNORM,
+            PixelFormat::BGRA8_UNORM
+        };
+
+        SurfaceCreateInfo surfaceCreateInfo {};
+        surfaceCreateInfo.window = GetPlatformWindow();
+        surface = device->CreateSurface(surfaceCreateInfo);
+
+        for (auto format : swapChainFormatQualifiers) {
+            if (device->CheckSwapChainFormatSupport(surface.Get(), format)) {
+                swapChainFormat = format;
+                break;
+            }
+        }
+        Assert(swapChainFormat != PixelFormat::MAX);
+
         SwapChainCreateInfo swapChainCreateInfo {};
-        swapChainCreateInfo.format = PixelFormat::RGBA8_UNORM;
+        swapChainCreateInfo.format = swapChainFormat;
         swapChainCreateInfo.presentMode = PresentMode::IMMEDIATELY;
         swapChainCreateInfo.textureNum = BACK_BUFFER_COUNT;
         swapChainCreateInfo.extent = {width, height};
-        swapChainCreateInfo.window = GetPlatformWindow();
+        swapChainCreateInfo.surface = surface.Get();
         swapChainCreateInfo.presentQueue = graphicsQueue;
         swapChain = device->CreateSwapChain(swapChainCreateInfo);
 
@@ -289,7 +306,7 @@ private:
         vertexBufferLayout.attributes = vertexAttributes.data();
 
         std::array<ColorTargetState, 1> colorTargetStates {};
-        colorTargetStates[0].format = PixelFormat::RGBA8_UNORM;
+        colorTargetStates[0].format = swapChainFormat;
         colorTargetStates[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
 
         GraphicsPipelineCreateInfo createInfo {};
@@ -364,10 +381,12 @@ private:
         swapChain->Present();
     }
 
+    PixelFormat swapChainFormat = PixelFormat::MAX;
     Instance* instance = nullptr;
     Gpu* gpu = nullptr;
     UniqueRef<Device> device;
     Queue* graphicsQueue = nullptr;
+    UniqueRef<Surface> surface;
     UniqueRef<SwapChain> swapChain;
     UniqueRef<Buffer> vertexBuffer;
     UniqueRef<BufferView> vertexBufferView;

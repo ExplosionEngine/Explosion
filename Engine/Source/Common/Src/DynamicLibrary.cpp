@@ -82,7 +82,7 @@ namespace Common {
             if (handle == nullptr) {
                 return nullptr;
             }
-            libs[fullName] = std::make_unique<DynamicLibrary>(handle);
+            libs[fullName] = Common::MakeUnique<DynamicLibrary>(handle);
         }
         return libs[fullName].Get();
     }

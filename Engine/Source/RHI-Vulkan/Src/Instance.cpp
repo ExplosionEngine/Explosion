@@ -181,7 +181,7 @@ namespace RHI::Vulkan {
 
         gpus.resize(count);
         for (uint32_t i = 0; i < count; i++) {
-            gpus[i] = std::make_unique<VKGpu>(*this, vkPhysicalDevices[i]);
+            gpus[i] = new VKGpu(*this, vkPhysicalDevices[i]);
         }
     }
 

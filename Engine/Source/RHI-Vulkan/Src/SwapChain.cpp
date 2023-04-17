@@ -9,6 +9,7 @@
 #include <RHI/Vulkan/Gpu.h>
 #include <RHI/Vulkan/Texture.h>
 #include <RHI/Vulkan/Queue.h>
+#include <RHI/Vulkan/Surface.h>
 
 namespace RHI::Vulkan {
     VKSwapChain::VKSwapChain(VKDevice& dev, const SwapChainCreateInfo& createInfo)
@@ -34,11 +35,6 @@ namespace RHI::Vulkan {
         if (swapChain) {
             vkDevice.destroySwapchainKHR(swapChain);
         }
-
-        if (surface) {
-            device.GetGpu().GetInstance().GetVkInstance().destroySurfaceKHR(surface);
-        }
-
     }
 
     Texture* VKSwapChain::GetTexture(uint8_t index)
@@ -83,10 +79,12 @@ namespace RHI::Vulkan {
     void VKSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo& createInfo)
     {
         auto vkDevice = device.GetVkDevice();
-        surface = CreateNativeSurface(device.GetGpu().GetInstance().GetVkInstance(), createInfo);
-
         auto* mQueue = dynamic_cast<VKQueue*>(createInfo.presentQueue);
+        Assert(mQueue);
+        auto* vkSurface = dynamic_cast<VKSurface*>(createInfo.surface);
+        Assert(vkSurface);
         queue = mQueue->GetVkQueue();
+        auto surface = vkSurface->GetVKSurface();
 
         auto surfaceCap = device.GetGpu().GetVkPhysicalDevice().getSurfaceCapabilitiesKHR(surface);
         vk::Extent2D extent = {static_cast<uint32_t>(createInfo.extent.x), static_cast<uint32_t>(createInfo.extent.y)};

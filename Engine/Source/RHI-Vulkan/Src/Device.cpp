@@ -20,6 +20,7 @@
 #include <RHI/Vulkan/Pipeline.h>
 #include <RHI/Vulkan/CommandBuffer.h>
 #include <RHI/Vulkan/Synchronous.h>
+#include <RHI/Vulkan/Surface.h>
 
 namespace RHI::Vulkan {
     const std::vector<const char*> DEVICE_EXTENSIONS = {
@@ -65,6 +66,11 @@ namespace RHI::Vulkan {
         auto& queueArray = iter->second;
         Assert(index < queueArray.size());
         return queueArray[index].Get();
+    }
+
+    Surface* VKDevice::CreateSurface(const SurfaceCreateInfo& createInfo)
+    {
+        return new VKSurface(*this, createInfo);
     }
 
     SwapChain* VKDevice::CreateSwapChain(const SwapChainCreateInfo& createInfo)
@@ -131,6 +137,22 @@ namespace RHI::Vulkan {
     Fence* VKDevice::CreateFence()
     {
         return new VKFence(*this);
+    }
+
+    bool VKDevice::CheckSwapChainFormatSupport(Surface* surface, PixelFormat format)
+    {
+        auto* vkSurface = dynamic_cast<VKSurface*>(surface);
+
+        vk::ColorSpaceKHR colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
+        auto surfaceFormats = gpu.GetVkPhysicalDevice().getSurfaceFormatsKHR(vkSurface->GetVKSurface());
+        Assert(!surfaceFormats.empty());
+        auto iter = std::find_if(
+            surfaceFormats.begin(),
+            surfaceFormats.end(),
+            [format = VKEnumCast<PixelFormat, vk::Format>(format), colorSpace](vk::SurfaceFormatKHR surfaceFormat) {
+                return format == surfaceFormat.format && colorSpace == surfaceFormat.colorSpace;
+            });
+        return iter != surfaceFormats.end();
     }
 
     vk::Device VKDevice::GetVkDevice()
@@ -230,7 +252,7 @@ namespace RHI::Vulkan {
 
             std::vector<Common::UniqueRef<VKQueue>> tempQueues(queueNum);
             for (auto i = 0; i < tempQueues.size(); i++) {
-                tempQueues[i] = std::make_unique<VKQueue>(vkDevice.getQueue(queueFamilyIndex, i));
+                tempQueues[i] = Common::MakeUnique<VKQueue>(vkDevice.getQueue(queueFamilyIndex, i));
             }
             queues[queueType] = std::move(tempQueues);
 

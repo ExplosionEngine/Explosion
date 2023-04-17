@@ -14,6 +14,7 @@
 #include <RHI/Texture.h>
 #include <RHI/TextureView.h>
 #include <RHI/Sampler.h>
+#include <RHI/Surface.h>
 #include <RHI/SwapChain.h>
 #include <RHI/CommandBuffer.h>
 #include <RHI/CommandEncoder.h>
