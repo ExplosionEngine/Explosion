@@ -193,12 +193,12 @@ namespace Example {
 
         //gBuffer
         entries.resize(1);
-        entries[0].type = BindingType::UNIFORM_BUFFER;
+        entries[0].binding.type = BindingType::UNIFORM_BUFFER;
         entries[0].shaderVisibility = ShaderStageBits::S_VERTEX | ShaderStageBits::S_PIXEL;
         if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
         } else {
-            entries[0].binding.glsl.index = 0;
+            entries[0].binding.platform.glsl.index = 0;
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
@@ -207,16 +207,16 @@ namespace Example {
 
         // renderable layout
         entries.resize(2);
-        entries[0].type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::TEXTURE;
         entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[1].type = BindingType::SAMPLER;
+        entries[1].binding.type = BindingType::SAMPLER;
         entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
         if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
         } else {
-            entries[0].binding.glsl.index = 0;
-            entries[1].binding.glsl.index = 1;
+            entries[0].binding.platform.glsl.index = 0;
+            entries[1].binding.platform.glsl.index = 1;
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
@@ -224,42 +224,42 @@ namespace Example {
         renderableLayout = device->CreateBindGroupLayout(createInfo);
 
         std::vector<BindGroupLayout*> gBufferLayouts { bindGroupLayouts.gBuffer.Get(), renderableLayout.Get() };
-        pipelineLayoutCreateInfo.bindGroupNum = 2;
+        pipelineLayoutCreateInfo.bindGroupLayoutNum = 2;
         pipelineLayoutCreateInfo.bindGroupLayouts = gBufferLayouts.data();
         pipelineLayouts.gBuffer = device->CreatePipelineLayout(pipelineLayoutCreateInfo);
 
         //ssao
         entries.resize(7);
-        entries[0].type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::TEXTURE;
         entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[1].type = BindingType::TEXTURE;
+        entries[1].binding.type = BindingType::TEXTURE;
         entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[2].type = BindingType::TEXTURE;
+        entries[2].binding.type = BindingType::TEXTURE;
         entries[2].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[3].type = BindingType::SAMPLER;
+        entries[3].binding.type = BindingType::SAMPLER;
         entries[3].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[4].type = BindingType::SAMPLER;
+        entries[4].binding.type = BindingType::SAMPLER;
         entries[4].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[5].type = BindingType::UNIFORM_BUFFER;
+        entries[5].binding.type = BindingType::UNIFORM_BUFFER;
         entries[5].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[6].type = BindingType::UNIFORM_BUFFER;
+        entries[6].binding.type = BindingType::UNIFORM_BUFFER;
         entries[6].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
         if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.hlsl = { HlslBindingRangeType::TEXTURE, 1 };
-            entries[2].binding.hlsl = { HlslBindingRangeType::TEXTURE, 2 };
-            entries[3].binding.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
-            entries[4].binding.hlsl = { HlslBindingRangeType::SAMPLER, 1 };
-            entries[5].binding.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
-            entries[6].binding.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 1 };
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 1 };
+            entries[2].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 2 };
+            entries[3].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+            entries[4].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 1 };
+            entries[5].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
+            entries[6].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 1 };
         } else {
-            entries[0].binding.glsl.index = 0;
-            entries[1].binding.glsl.index = 1;
-            entries[2].binding.glsl.index = 2;
-            entries[3].binding.glsl.index = 3;
-            entries[4].binding.glsl.index = 4;
-            entries[5].binding.glsl.index = 5;
-            entries[6].binding.glsl.index = 6;
+            entries[0].binding.platform.glsl.index = 0;
+            entries[1].binding.platform.glsl.index = 1;
+            entries[2].binding.platform.glsl.index = 2;
+            entries[3].binding.platform.glsl.index = 3;
+            entries[4].binding.platform.glsl.index = 4;
+            entries[5].binding.platform.glsl.index = 5;
+            entries[6].binding.platform.glsl.index = 6;
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
@@ -267,22 +267,22 @@ namespace Example {
         bindGroupLayouts.ssao = device->CreateBindGroupLayout(createInfo);
 
         std::vector<BindGroupLayout*> ssaoLayouts { bindGroupLayouts.ssao.Get() };
-        pipelineLayoutCreateInfo.bindGroupNum = 1;
+        pipelineLayoutCreateInfo.bindGroupLayoutNum = 1;
         pipelineLayoutCreateInfo.bindGroupLayouts = ssaoLayouts.data();
         pipelineLayouts.ssao = device->CreatePipelineLayout(pipelineLayoutCreateInfo);
 
         // ssaoBlur
         entries.resize(2);
-        entries[0].type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::TEXTURE;
         entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[1].type = BindingType::SAMPLER;
+        entries[1].binding.type = BindingType::SAMPLER;
         entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
         if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
         } else {
-            entries[0].binding.glsl.index = 0;
-            entries[1].binding.glsl.index = 1;
+            entries[0].binding.platform.glsl.index = 0;
+            entries[1].binding.platform.glsl.index = 1;
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
@@ -295,36 +295,36 @@ namespace Example {
 
         // composition
         entries.resize(7);
-        entries[0].type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::TEXTURE;
         entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[1].type = BindingType::TEXTURE;
+        entries[1].binding.type = BindingType::TEXTURE;
         entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[2].type = BindingType::TEXTURE;
+        entries[2].binding.type = BindingType::TEXTURE;
         entries[2].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[3].type = BindingType::TEXTURE;
+        entries[3].binding.type = BindingType::TEXTURE;
         entries[3].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[4].type = BindingType::TEXTURE;
+        entries[4].binding.type = BindingType::TEXTURE;
         entries[4].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[5].type = BindingType::SAMPLER;
+        entries[5].binding.type = BindingType::SAMPLER;
         entries[5].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[6].type = BindingType::UNIFORM_BUFFER;
+        entries[6].binding.type = BindingType::UNIFORM_BUFFER;
         entries[6].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
         if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.hlsl = { HlslBindingRangeType::TEXTURE, 1 };
-            entries[2].binding.hlsl = { HlslBindingRangeType::TEXTURE, 2 };
-            entries[3].binding.hlsl = { HlslBindingRangeType::TEXTURE, 3 };
-            entries[4].binding.hlsl = { HlslBindingRangeType::TEXTURE, 4 };
-            entries[5].binding.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
-            entries[6].binding.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 1 };
+            entries[2].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 2 };
+            entries[3].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 3 };
+            entries[4].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 4 };
+            entries[5].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+            entries[6].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
         } else {
-            entries[0].binding.glsl.index = 0;
-            entries[1].binding.glsl.index = 1;
-            entries[2].binding.glsl.index = 2;
-            entries[3].binding.glsl.index = 3;
-            entries[4].binding.glsl.index = 4;
-            entries[5].binding.glsl.index = 5;
-            entries[6].binding.glsl.index = 6;
+            entries[0].binding.platform.glsl.index = 0;
+            entries[1].binding.platform.glsl.index = 1;
+            entries[2].binding.platform.glsl.index = 2;
+            entries[3].binding.platform.glsl.index = 3;
+            entries[4].binding.platform.glsl.index = 4;
+            entries[5].binding.platform.glsl.index = 5;
+            entries[6].binding.platform.glsl.index = 6;
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
@@ -342,12 +342,12 @@ namespace Example {
         std::vector<BindGroupEntry> entries(1);
 
         // GBuffer scene
-        entries[0].type = BindingType::UNIFORM_BUFFER;
+        entries[0].binding.type = BindingType::UNIFORM_BUFFER;
         entries[0].bufferView = uniformBuffers.sceneParams.bufView.Get();
         if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
         } else {
-            entries[0].binding.glsl.index = 0;
+            entries[0].binding.platform.glsl.index = 0;
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = entries.size();
@@ -356,36 +356,36 @@ namespace Example {
 
         // ssao generation
         entries.resize(7);
-        entries[0].type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::TEXTURE;
         entries[0].textureView = gBufferOutput.pos.view.Get();
-        entries[1].type = BindingType::TEXTURE;
+        entries[1].binding.type = BindingType::TEXTURE;
         entries[1].textureView = gBufferOutput.normal.view.Get();
-        entries[2].type = BindingType::TEXTURE;
+        entries[2].binding.type = BindingType::TEXTURE;
         entries[2].textureView = noise.view.Get();
-        entries[3].type = BindingType::SAMPLER;
+        entries[3].binding.type = BindingType::SAMPLER;
         entries[3].sampler = sampler.Get();
-        entries[4].type = BindingType::SAMPLER;
+        entries[4].binding.type = BindingType::SAMPLER;
         entries[4].sampler = noiseSampler.Get();
-        entries[5].type = BindingType::UNIFORM_BUFFER;
+        entries[5].binding.type = BindingType::UNIFORM_BUFFER;
         entries[5].bufferView = uniformBuffers.ssaoKernel.bufView.Get();
-        entries[6].type = BindingType::UNIFORM_BUFFER;
+        entries[6].binding.type = BindingType::UNIFORM_BUFFER;
         entries[6].bufferView = uniformBuffers.ssaoParams.bufView.Get();
         if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.hlsl = { HlslBindingRangeType::TEXTURE, 1 };
-            entries[2].binding.hlsl = { HlslBindingRangeType::TEXTURE, 2 };
-            entries[3].binding.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
-            entries[4].binding.hlsl = { HlslBindingRangeType::SAMPLER, 1 };
-            entries[5].binding.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
-            entries[6].binding.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 1 };
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 1 };
+            entries[2].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 2 };
+            entries[3].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+            entries[4].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 1 };
+            entries[5].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
+            entries[6].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 1 };
         } else {
-            entries[0].binding.glsl.index = 0;
-            entries[1].binding.glsl.index = 1;
-            entries[2].binding.glsl.index = 2;
-            entries[3].binding.glsl.index = 3;
-            entries[4].binding.glsl.index = 4;
-            entries[5].binding.glsl.index = 5;
-            entries[6].binding.glsl.index = 6;
+            entries[0].binding.platform.glsl.index = 0;
+            entries[1].binding.platform.glsl.index = 1;
+            entries[2].binding.platform.glsl.index = 2;
+            entries[3].binding.platform.glsl.index = 3;
+            entries[4].binding.platform.glsl.index = 4;
+            entries[5].binding.platform.glsl.index = 5;
+            entries[6].binding.platform.glsl.index = 6;
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = entries.size();
@@ -394,16 +394,16 @@ namespace Example {
 
         // ssao blur
         entries.resize(2);
-        entries[0].type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::TEXTURE;
         entries[0].textureView = ssaoOutput.view.Get();
-        entries[1].type = BindingType::SAMPLER;
+        entries[1].binding.type = BindingType::SAMPLER;
         entries[1].sampler = sampler.Get();
         if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
         } else {
-            entries[0].binding.glsl.index = 0;
-            entries[1].binding.glsl.index = 1;
+            entries[0].binding.platform.glsl.index = 0;
+            entries[1].binding.platform.glsl.index = 1;
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = entries.size();
@@ -412,36 +412,36 @@ namespace Example {
 
         // composition
         entries.resize(7);
-        entries[0].type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::TEXTURE;
         entries[0].textureView = gBufferOutput.pos.view.Get();
-        entries[1].type = BindingType::TEXTURE;
+        entries[1].binding.type = BindingType::TEXTURE;
         entries[1].textureView = gBufferOutput.normal.view.Get();
-        entries[2].type = BindingType::TEXTURE;
+        entries[2].binding.type = BindingType::TEXTURE;
         entries[2].textureView = gBufferOutput.albedo.view.Get();
-        entries[3].type = BindingType::TEXTURE;
+        entries[3].binding.type = BindingType::TEXTURE;
         entries[3].textureView = ssaoOutput.view.Get();
-        entries[4].type = BindingType::TEXTURE;
+        entries[4].binding.type = BindingType::TEXTURE;
         entries[4].textureView = ssaoBlurOutput.view.Get();
-        entries[5].type = BindingType::SAMPLER;
+        entries[5].binding.type = BindingType::SAMPLER;
         entries[5].sampler = sampler.Get();
-        entries[6].type = BindingType::UNIFORM_BUFFER;
+        entries[6].binding.type = BindingType::UNIFORM_BUFFER;
         entries[6].bufferView = uniformBuffers.ssaoParams.bufView.Get();
         if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.hlsl = { HlslBindingRangeType::TEXTURE, 1 };
-            entries[2].binding.hlsl = { HlslBindingRangeType::TEXTURE, 2 };
-            entries[3].binding.hlsl = { HlslBindingRangeType::TEXTURE, 3 };
-            entries[4].binding.hlsl = { HlslBindingRangeType::TEXTURE, 4 };
-            entries[5].binding.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
-            entries[6].binding.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 1 };
+            entries[2].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 2 };
+            entries[3].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 3 };
+            entries[4].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 4 };
+            entries[5].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+            entries[6].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
         } else {
-            entries[0].binding.glsl.index = 0;
-            entries[1].binding.glsl.index = 1;
-            entries[2].binding.glsl.index = 2;
-            entries[3].binding.glsl.index = 3;
-            entries[4].binding.glsl.index = 4;
-            entries[5].binding.glsl.index = 5;
-            entries[6].binding.glsl.index = 6;
+            entries[0].binding.platform.glsl.index = 0;
+            entries[1].binding.platform.glsl.index = 1;
+            entries[2].binding.platform.glsl.index = 2;
+            entries[3].binding.platform.glsl.index = 3;
+            entries[4].binding.platform.glsl.index = 4;
+            entries[5].binding.platform.glsl.index = 5;
+            entries[6].binding.platform.glsl.index = 6;
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = entries.size();
@@ -533,7 +533,7 @@ namespace Example {
         samplerCreateInfo.addressModeV = AddressMode::REPEAT;
         noiseSampler = device->CreateSampler(samplerCreateInfo);
 
-        auto texCommandBuffer = device->CreateCommandBuffer();
+        auto* texCommandBuffer = device->CreateCommandBuffer();
         auto* commandEncoder = texCommandBuffer->Begin();
         // Dx need not to transition resource state before copy
         commandEncoder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::UNDEFINED, TextureState::COPY_DST));
@@ -732,7 +732,7 @@ namespace Example {
 
         // composition
         std::array<ColorTargetState, 1> colorTargetStates3 {};
-        colorTargetStates3[0].format = PixelFormat::RGBA8_UNORM;
+        colorTargetStates3[0].format = PixelFormat::BGRA8_UNORM;
         colorTargetStates3[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
 
         createInfo.vertexState.bufferLayouts = &quadVertexBufferLayout;
@@ -771,13 +771,13 @@ namespace Example {
             colorAttachments[2].resolve = nullptr;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.pipeline = pipelines.gBuffer.Get();
             graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
 
             auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
+                graphicsEncoder->SetPipeline(pipelines.gBuffer.Get());
                 graphicsEncoder->SetScissor(0, 0, app->width, app->height);
                 graphicsEncoder->SetViewport(0, 0, app->width, app->height, 0, 1);
                 graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
@@ -809,13 +809,13 @@ namespace Example {
             colorAttachments[0].resolve = nullptr;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.pipeline = pipelines.ssao.Get();
             graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
 
             auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
+                graphicsEncoder->SetPipeline(pipelines.ssao.Get());
                 graphicsEncoder->SetScissor(0, 0, app->width, app->height);
                 graphicsEncoder->SetViewport(0, 0, app->width, app->height, 0, 1);
                 graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
@@ -840,13 +840,13 @@ namespace Example {
             colorAttachments[0].resolve = nullptr;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.pipeline = pipelines.ssaoBlur.Get();
             graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
 
             auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
+                graphicsEncoder->SetPipeline(pipelines.ssaoBlur.Get());
                 graphicsEncoder->SetScissor(0, 0, app->width, app->height);
                 graphicsEncoder->SetViewport(0, 0, app->width, app->height, 0, 1);
                 graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
@@ -873,7 +873,6 @@ namespace Example {
             colorAttachments[0].resolve = nullptr;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.pipeline = pipelines.composition.Get();
             graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
@@ -881,6 +880,7 @@ namespace Example {
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::PRESENT, TextureState::RENDER_TARGET));
             auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
+                graphicsEncoder->SetPipeline(pipelines.composition.Get());
                 graphicsEncoder->SetScissor(0, 0, app->width, app->height);
                 graphicsEncoder->SetViewport(0, 0, app->width, app->height, 0, 1);
                 graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
@@ -906,9 +906,9 @@ namespace Example {
 
     void Renderer::InitCamera()
     {
-        camera.type = Camera::CameraType::lookAt;
-        camera.position = { 0.0f, 0.0f, -10.0f };
-        camera.setRotation(glm::vec3(-7.5f, 72.0f, 0.0f));
+        camera.type = Camera::CameraType::firstPerson;
+        camera.position = { 4.0f, 2.4f, -2.4f };
+        camera.setRotation(glm::vec3(.0f, 58.0f, 0.0f));
         camera.setPerspective(60.0f, (float)app->width / (float)app->height, uboSceneParams.nearPlane, uboSceneParams.farPlane);
     }
 
@@ -984,16 +984,16 @@ namespace Example {
 
         // per renderable bindGroup
         std::vector<BindGroupEntry> entries(2);
-        entries[0].type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::TEXTURE;
         entries[0].textureView = diffuseColorMapView.Get();
-        entries[1].type = BindingType::SAMPLER;
+        entries[1].binding.type = BindingType::SAMPLER;
         entries[1].sampler = renderer->GetSampler();
         if (renderer->GetInstance()->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
         } else {
-            entries[0].binding.glsl.index = 0;
-            entries[1].binding.glsl.index = 1;
+            entries[0].binding.platform.glsl.index = 0;
+            entries[1].binding.platform.glsl.index = 1;
         }
 
         BindGroupCreateInfo createInfo {};
