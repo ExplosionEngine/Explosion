@@ -9,7 +9,7 @@ AddLibrary(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB RHI ${PLATFORM_LIBS} dxc spirv-cross
+    LIB RHI ${PLATFORM_LIBS} dxc
 )
 
 file(GLOB TEST_SOURCES Test/*.cpp)

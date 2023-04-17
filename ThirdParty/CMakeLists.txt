@@ -33,7 +33,7 @@ Add3rdBinaryPackage(
     HASH 23ded0e6155a8ea265da84bd62f7a45cc3fc637fb1eeba61a5b9430fa704e4b5
     INCLUDE $<SOURCE_DIR>/Include
     LINK $<SOURCE_DIR>/Lib
-    LIB vulkan-1
+    LIB vulkan-1 spirv-cross-core spirv-cross-msl spirv-cross-glsl
 )
 Add3rdBinaryPackage(
     NAME VulkanSDK
@@ -42,7 +42,7 @@ Add3rdBinaryPackage(
     HASH a5c63a4f29984540efa00190240d31b59539413cf4783792bd9f53207f4f7d07
     INCLUDE $<SOURCE_DIR>/macOS/include
     LINK $<SOURCE_DIR>/macOS/lib
-    LIB vulkan.1
+    LIB vulkan.1 spirv-cross-core spirv-cross-msl spirv-cross-glsl
 )
 
 # DXC
@@ -124,20 +124,6 @@ Add3rdCMakeProject(
     INCLUDE $<INSTALL_DIR>/include
     LINK $<INSTALL_DIR>/lib
     LIB gtest$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,> gmock$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
-)
-
-# spirv-cross
-Add3rdCMakeProject(
-    NAME spirv-cross
-    PLATFORM All
-    VERSION 1.1.5
-    HASH 63ac3e89c489776711ee5e97bb746102bca3598048e98dcd248f5a72eba862c1
-    CMAKE_ARG -DSPIRV_CROSS_CLI=OFF -DSPIRV_CROSS_ENABLE_C_API=OFF -DSPIRV_CROSS_ENABLE_TESTS=OFF
-    INCLUDE $<INSTALL_DIR>/include
-    LINK $<INSTALL_DIR>/lib
-    LIB spirv-cross-core$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
-        spirv-cross-msl$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
-        spirv-cross-glsl$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
 )
 
 # TaskFlow
