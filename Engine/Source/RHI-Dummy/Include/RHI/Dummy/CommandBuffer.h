@@ -9,6 +9,7 @@
 namespace RHI::Dummy {
     class DummyCommandBuffer : public CommandBuffer {
     public:
+        NON_COPYABLE(DummyCommandBuffer)
         DummyCommandBuffer();
 
         CommandEncoder* Begin() override;

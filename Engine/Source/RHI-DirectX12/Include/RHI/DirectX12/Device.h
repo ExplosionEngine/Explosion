@@ -36,6 +36,7 @@ namespace RHI::DirectX12 {
         void Destroy() override;
         size_t GetQueueNum(QueueType type) override;
         Queue* GetQueue(QueueType type, size_t index) override;
+        Surface* CreateSurface(const RHI::SurfaceCreateInfo &createInfo) override;
         SwapChain* CreateSwapChain(const SwapChainCreateInfo& createInfo) override;
         Buffer* CreateBuffer(const BufferCreateInfo& createInfo) override;
         Texture* CreateTexture(const TextureCreateInfo& createInfo) override;
@@ -48,6 +49,8 @@ namespace RHI::DirectX12 {
         GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
         Fence* CreateFence() override;
+
+        bool CheckSwapChainFormatSupport(RHI::Surface* surface, PixelFormat format) override;
 
         DX12Gpu& GetGpu();
         ComPtr<ID3D12Device>& GetDX12Device();

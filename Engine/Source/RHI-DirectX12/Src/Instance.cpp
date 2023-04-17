@@ -106,7 +106,7 @@ namespace RHI::DirectX12 {
     {
         ComPtr<IDXGIAdapter1> tempAdapter;
         for (uint32_t i = 0; SUCCEEDED(dx12Factory->EnumAdapters1(i, &tempAdapter)); i++) {
-            gpus.emplace_back(std::make_unique<DX12Gpu>(*this, std::move(tempAdapter)));
+            gpus.emplace_back(Common::MakeUnique<DX12Gpu>(*this, std::move(tempAdapter)));
             tempAdapter = nullptr;
         }
     }

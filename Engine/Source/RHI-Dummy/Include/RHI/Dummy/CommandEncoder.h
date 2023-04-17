@@ -11,6 +11,7 @@ namespace RHI::Dummy {
 
     class DummyComputePassCommandEncoder : public RHI::ComputePassCommandEncoder {
     public:
+        NON_COPYABLE(DummyComputePassCommandEncoder)
         explicit DummyComputePassCommandEncoder(const DummyCommandBuffer& dummyCommandBuffer);
         ~DummyComputePassCommandEncoder() override;
 
@@ -23,6 +24,7 @@ namespace RHI::Dummy {
     
     class DummyGraphicsPassCommandEncoder : public RHI::GraphicsPassCommandEncoder {
     public:
+        NON_COPYABLE(DummyGraphicsPassCommandEncoder)
         explicit DummyGraphicsPassCommandEncoder(const DummyCommandBuffer& dummyCommandBuffer);
         ~DummyGraphicsPassCommandEncoder() override;
 
@@ -43,6 +45,7 @@ namespace RHI::Dummy {
     
     class DummyCommandEncoder : public CommandEncoder {
     public:
+        NON_COPYABLE(DummyCommandEncoder)
         explicit DummyCommandEncoder(const DummyCommandBuffer& inDummyCommandBuffer);
         ~DummyCommandEncoder() override;
         
