@@ -7,9 +7,9 @@ VK_BINDING(2, 0) Texture2D ssaoNoiseTexture : register(t2);
 VK_BINDING(3, 0) SamplerState texSampler : register(s0);
 VK_BINDING(4, 0) SamplerState ssaoNoiseSampler : register(s1);
 
-VK_BINDING(5, 0) cbuffer Kernel : register(b0)
+VK_BINDING(5, 0) cbuffer RandomKernals : register(b0)
 {
-	float4 samples[64];
+	float4 randomKernals[64];
 };
 
 VK_BINDING(6, 0) cbuffer UBO : register(b1)
@@ -44,7 +44,7 @@ float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
 	float occlusion = 0.0f;
 	for(int i = 0; i < 64; i++)
 	{
-		float3 samplePos = mul(TBN, samples[i].xyz);
+		float3 samplePos = mul(TBN, randomKernals[i].xyz);
 		samplePos = fragPos + samplePos * 0.5;
 
 		// project

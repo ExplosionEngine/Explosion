@@ -225,12 +225,9 @@ const unsigned int SSAO_NOISE_DIM = 4;
             UniqueRef<TextureView> view;
         };
 
-        struct GBufferOutput {
-            ColorAttachment pos;
-            ColorAttachment normal;
-            ColorAttachment albedo;
-
-        } gBufferOutput;
+        ColorAttachment gBufferPos;
+        ColorAttachment gBufferNormal;
+        ColorAttachment gBufferAlbedo;
 
         ColorAttachment ssaoOutput;
         ColorAttachment ssaoBlurOutput;

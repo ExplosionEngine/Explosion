@@ -80,9 +80,6 @@ namespace Example {
                         // flip y
                         vertex.pos.y *= -1.0f;
                         vertex.normal.y *= -1.0f;
-
-                        // premultiply vertex colors with material base color
-                        vertex.color = primitive->materialData->baseColorFactor * vertex.color;
                     }
                 }
             }

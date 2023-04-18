@@ -67,6 +67,21 @@ namespace RHI::Vulkan {
         Assert(device.GetVkDevice().allocateDescriptorSets(&allocInfo, &descriptorSet) == vk::Result::eSuccess);
 
         std::vector<vk::WriteDescriptorSet> descriptorWrites(createInfo.entryNum);
+        std::vector<vk::DescriptorImageInfo> imageInfos;
+        std::vector<vk::DescriptorBufferInfo> bufferInfos;
+        
+        int imageInfosNum = 0, bufferInfosNum = 0;
+        for (int i = 0; i < createInfo.entryNum; i++) {
+            const auto& entry = createInfo.entries[i];
+            if (entry.binding.type == BindingType::UNIFORM_BUFFER) {
+                bufferInfosNum++;
+            } else if (entry.binding.type == BindingType::SAMPLER || entry.binding.type == BindingType::TEXTURE) {
+                imageInfosNum++;
+            }
+        }
+        imageInfos.reserve(imageInfosNum);
+        bufferInfos.reserve(bufferInfosNum);
+        
         for (int i = 0; i < createInfo.entryNum; i++) {
             const auto& entry = createInfo.entries[i];
 
@@ -78,27 +93,27 @@ namespace RHI::Vulkan {
             if (entry.binding.type == BindingType::UNIFORM_BUFFER) {
                 auto* bufferView = dynamic_cast<VKBufferView*>(entry.bufferView);
 
-                vk::DescriptorBufferInfo bufferInfo;
-                bufferInfo.setBuffer(bufferView->GetBuffer().GetVkBuffer())
+                bufferInfos.emplace_back();
+                bufferInfos.back().setBuffer(bufferView->GetBuffer().GetVkBuffer())
                     .setOffset(bufferView->GetOffset())
                     .setRange(bufferView->GetBufferSize());
 
-                descriptorWrites[i].setBufferInfo(bufferInfo);
+                descriptorWrites[i].setPBufferInfo(&bufferInfos.back());
             } else if (entry.binding.type == BindingType::SAMPLER) {
                 auto* sampler = dynamic_cast<VKSampler*>(entry.sampler);
 
-                vk::DescriptorImageInfo samplerInfo {};
-                samplerInfo.setSampler(sampler->GetVkSampler());
+                imageInfos.emplace_back();
+                imageInfos.back().setSampler(sampler->GetVkSampler());
 
-                descriptorWrites[i].setImageInfo(samplerInfo);
+                descriptorWrites[i].setPImageInfo(&imageInfos.back());
             } else if (entry.binding.type == BindingType::TEXTURE) {
                 auto* textureView = dynamic_cast<VKTextureView*>(entry.textureView);
 
-                vk::DescriptorImageInfo imageInfo{};
-                imageInfo.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+                imageInfos.emplace_back();
+                imageInfos.back().setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
                     .setImageView(textureView->GetVkImageView());
 
-                descriptorWrites[i].setImageInfo(imageInfo);
+                descriptorWrites[i].setPImageInfo(&imageInfos.back());
             } else {
                 //TODO
             }

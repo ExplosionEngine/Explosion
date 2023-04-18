@@ -130,10 +130,10 @@ namespace Example {
     {
         // vertex buffer
         std::vector<QuadVertex> vertices {
-            {{-.5f, -.5f, 0.f}, {0.f, 0.f}},
-            {{.5f, -.5f, 0.f}, {1.f, 0.f}},
-            {{.5f, .5f, 0.f}, {1.f, 1.f}},
-            {{-.5f, .5f, 0.f}, {0.f, 1.f}},
+            {{-1.0f, -1.0f, 0.f}, {0.f, 0.f}},
+            {{1.0f, -1.0f, 0.f}, {1.f, 0.f}},
+            {{1.0f, 1.0f, 0.f}, {1.f, 1.f}},
+            {{-1.0f, 1.0f, 0.f}, {0.f, 1.f}},
         };
 
         BufferCreateInfo bufferCreateInfo {};
@@ -357,9 +357,9 @@ namespace Example {
         // ssao generation
         entries.resize(7);
         entries[0].binding.type = BindingType::TEXTURE;
-        entries[0].textureView = gBufferOutput.pos.view.Get();
+        entries[0].textureView = gBufferPos.view.Get();
         entries[1].binding.type = BindingType::TEXTURE;
-        entries[1].textureView = gBufferOutput.normal.view.Get();
+        entries[1].textureView = gBufferNormal.view.Get();
         entries[2].binding.type = BindingType::TEXTURE;
         entries[2].textureView = noise.view.Get();
         entries[3].binding.type = BindingType::SAMPLER;
@@ -413,11 +413,11 @@ namespace Example {
         // composition
         entries.resize(7);
         entries[0].binding.type = BindingType::TEXTURE;
-        entries[0].textureView = gBufferOutput.pos.view.Get();
+        entries[0].textureView = gBufferPos.view.Get();
         entries[1].binding.type = BindingType::TEXTURE;
-        entries[1].textureView = gBufferOutput.normal.view.Get();
+        entries[1].textureView = gBufferNormal.view.Get();
         entries[2].binding.type = BindingType::TEXTURE;
-        entries[2].textureView = gBufferOutput.albedo.view.Get();
+        entries[2].textureView = gBufferAlbedo.view.Get();
         entries[3].binding.type = BindingType::TEXTURE;
         entries[3].textureView = ssaoOutput.view.Get();
         entries[4].binding.type = BindingType::TEXTURE;
@@ -451,9 +451,9 @@ namespace Example {
 
     void Renderer::PrepareOffscreen()
     {
-        CreateAttachments(PixelFormat::RGBA32_FLOAT,  &gBufferOutput.pos, app->width, app->height);
-        CreateAttachments(PixelFormat::RGBA8_UNORM,  &gBufferOutput.normal, app->width, app->height);
-        CreateAttachments(PixelFormat::RGBA8_UNORM,  &gBufferOutput.albedo, app->width, app->height);
+        CreateAttachments(PixelFormat::RGBA32_FLOAT,  &gBufferPos, app->width, app->height);
+        CreateAttachments(PixelFormat::RGBA8_UNORM,  &gBufferNormal, app->width, app->height);
+        CreateAttachments(PixelFormat::RGBA8_UNORM,  &gBufferAlbedo, app->width, app->height);
 
         CreateAttachments(PixelFormat::R8_UNORM,  &ssaoOutput, app->width, app->height);
 
@@ -558,7 +558,7 @@ namespace Example {
         texCreateInfo.extent = {width, height, 1};
         texCreateInfo.dimension = TextureDimension::T_2D;
         texCreateInfo.samples = 1;
-        texCreateInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::TEXTURE_BINDING | TextureUsageBits::RENDER_ATTACHMENT;
+        texCreateInfo.usages = TextureUsageBits::TEXTURE_BINDING | TextureUsageBits::RENDER_ATTACHMENT;
         attachment->texture = device->CreateTexture(texCreateInfo);
 
         TextureViewCreateInfo viewCreateInfo {};
@@ -580,7 +580,7 @@ namespace Example {
         info.entryPoint = entryPoint;
         info.stage = shaderStage;
         Render::ShaderCompileOptions options;
-        options.includePaths.emplace_back("shaders");
+        options.includePaths.emplace_back("../shaders");
         if (rhiType == RHI::RHIType::DIRECTX_12) {
             options.byteCodeType = Render::ShaderByteCodeType::DXIL;
         } else if (rhiType == RHI::RHIType::VULKAN) {
@@ -626,12 +626,12 @@ namespace Example {
 
     void Renderer::CreatePipeline()
     {
-        shaderModules.gBufferVert     = CompileShader("shaders/gbufferVs.hlsl", "VSMain", ShaderStageBits::S_VERTEX);
-        shaderModules.gBufferFrag     = CompileShader("shaders/gbufferPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
-        shaderModules.quadVert        = CompileShader("shaders/fullscreenVs.hlsl", "VSMain", ShaderStageBits::S_VERTEX);
-        shaderModules.ssaoFrag        = CompileShader("shaders/ssaoPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
-        shaderModules.ssaoBlurFrag    = CompileShader("shaders/blurPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
-        shaderModules.compositionFrag = CompileShader("shaders/compositionPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
+        shaderModules.gBufferVert     = CompileShader("../shaders/gbufferVs.hlsl", "VSMain", ShaderStageBits::S_VERTEX);
+        shaderModules.gBufferFrag     = CompileShader("../shaders/gbufferPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
+        shaderModules.quadVert        = CompileShader("../shaders/fullscreenVs.hlsl", "VSMain", ShaderStageBits::S_VERTEX);
+        shaderModules.ssaoFrag        = CompileShader("../shaders/ssaoPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
+        shaderModules.ssaoBlurFrag    = CompileShader("../shaders/blurPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
+        shaderModules.compositionFrag = CompileShader("../shaders/compositionPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
 
         // Gbuffer vertex
         std::array<VertexAttribute, 4> vertexAttributes {};
@@ -749,25 +749,25 @@ namespace Example {
         CommandEncoder* commandEncoder = commandBuffer->Begin();
         {
             // GBuffer
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferOutput.pos.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferOutput.normal.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferOutput.albedo.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
 
             std::array<GraphicsPassColorAttachment, 3> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::CLEAR;
             colorAttachments[0].storeOp = StoreOp::STORE;
-            colorAttachments[0].view = gBufferOutput.pos.view.Get();
+            colorAttachments[0].view = gBufferPos.view.Get();
             colorAttachments[0].resolve = nullptr;
             colorAttachments[1].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[1].loadOp = LoadOp::CLEAR;
             colorAttachments[1].storeOp = StoreOp::STORE;
-            colorAttachments[1].view = gBufferOutput.normal.view.Get();
+            colorAttachments[1].view = gBufferNormal.view.Get();
             colorAttachments[1].resolve = nullptr;
             colorAttachments[2].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[2].loadOp = LoadOp::CLEAR;
             colorAttachments[2].storeOp = StoreOp::STORE;
-            colorAttachments[2].view = gBufferOutput.albedo.view.Get();
+            colorAttachments[2].view = gBufferAlbedo.view.Get();
             colorAttachments[2].resolve = nullptr;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
@@ -792,9 +792,9 @@ namespace Example {
             }
             graphicsEncoder->EndPass();
 
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferOutput.pos.texture.Get(), TextureState::RENDER_TARGET, TextureState::SHADER_READ_ONLY));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferOutput.normal.texture.Get(), TextureState::RENDER_TARGET, TextureState::SHADER_READ_ONLY));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferOutput.albedo.texture.Get(), TextureState::RENDER_TARGET, TextureState::SHADER_READ_ONLY));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::RENDER_TARGET, TextureState::SHADER_READ_ONLY));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::RENDER_TARGET, TextureState::SHADER_READ_ONLY));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::RENDER_TARGET, TextureState::SHADER_READ_ONLY));
         }
 
         {
@@ -936,6 +936,9 @@ namespace Example {
 
     void Renderable::InitalizeWithPrimitive(Renderer* renderer ,Primitive* primitive)
     {
+        indexCount = primitive->indexCount;
+        firstIndex = primitive->firstIndex;
+        
         // upload diffuseColorMap
         auto* data = primitive->materialData->baseColorTexture;
 

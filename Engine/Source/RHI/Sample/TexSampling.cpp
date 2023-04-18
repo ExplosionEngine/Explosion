@@ -289,7 +289,7 @@ private:
         vertexBufferLayout.attributes = vertexAttributes.data();
 
         std::array<ColorTargetState, 1> colorTargetStates {};
-        colorTargetStates[0].format = PixelFormat::RGBA8_UNORM;
+        colorTargetStates[0].format = PixelFormat::BGRA8_UNORM;
 
         colorTargetStates[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
 
