@@ -184,7 +184,7 @@ function(GetTargetIncludeDirectoriesRecurse)
 endfunction()
 
 function(AddMirrorInfoSourceGenerationTarget)
-    cmake_parse_arguments(PARAMS "" "NAME;OUTPUT_SRC;OUTPUT_TARGET_NAME" "SEARCH_DIR;PUBLIC_INC;PRIVATE_INC" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME;OUTPUT_SRC;OUTPUT_TARGET_NAME" "SEARCH_DIR;PUBLIC_INC;PRIVATE_INC;LIB" ${ARGN})
 
     if (DEFINED PARAMS_PUBLIC_INC)
         list(APPEND INC ${PARAMS_PUBLIC_INC})
@@ -192,12 +192,24 @@ function(AddMirrorInfoSourceGenerationTarget)
     if (DEFINED PARAMS_PRIVATE_INC)
         list(APPEND INC ${PARAMS_PRIVATE_INC})
     endif()
+    if (DEFINED PARAMS_LIB)
+        foreach (L ${PARAMS_LIB})
+            GetTargetIncludeDirectoriesRecurse(
+                NAME ${L}
+                OUTPUT TARGET_INCS
+            )
+        endforeach()
+        foreach (I ${TARGET_INCS})
+            list(APPEND INC ${I})
+        endforeach ()
+    endif()
     list(REMOVE_DUPLICATES INC)
 
+    list(APPEND INC_ARGS "-I")
     foreach (I ${INC})
         get_filename_component(ABSOLUTE_I ${I} ABSOLUTE)
         list(APPEND ABSOLUTE_INC ${ABSOLUTE_I})
-        list(APPEND INC_ARGS "-I" ${ABSOLUTE_I})
+        list(APPEND INC_ARGS ${ABSOLUTE_I})
     endforeach()
 
     foreach (SEARCH_DIR ${PARAMS_SEARCH_DIR})
@@ -211,6 +223,7 @@ function(AddMirrorInfoSourceGenerationTarget)
             add_custom_command(
                 OUTPUT ${OUTPUT_SOURCE}
                 COMMAND "$<TARGET_FILE:MirrorTool>" "-i" ${INPUT_HEADER_FILE} "-o" ${OUTPUT_SOURCE} ${INC_ARGS}
+                DEPENDS ${INPUT_HEADER_FILE}
             )
         endforeach()
     endforeach ()
@@ -238,6 +251,7 @@ function(AddExecutable)
             OUTPUT_TARGET_NAME GENERATED_TARGET
             SEARCH_DIR ${PARAMS_REFLECT}
             PRIVATE_INC ${PARAMS_INC}
+            LIB ${PARAMS_LIB}
         )
     endif()
 
@@ -292,6 +306,7 @@ function(AddLibrary)
             SEARCH_DIR ${PARAMS_REFLECT}
             PUBLIC_INC ${PARAMS_PUBLIC_INC}
             PRIVATE_INC ${PARAMS_PRIVATE_INC}
+            LIB ${PARAMS_LIB}
         )
     endif()
 
@@ -361,6 +376,7 @@ function(AddTest)
             OUTPUT_TARGET_NAME GENERATED_TARGET
             SEARCH_DIR ${PARAMS_REFLECT}
             PRIVATE_INC ${PARAMS_INC}
+            LIB ${PARAMS_LIB}
         )
     endif()
 
