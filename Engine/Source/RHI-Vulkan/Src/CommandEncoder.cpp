@@ -190,7 +190,7 @@ namespace RHI::Vulkan {
             //Depth and stencil have their own loadOp and storeOp separately
             vk::RenderingAttachmentInfo depthStencilAttachmentInfo;
             depthStencilAttachmentInfo.setImageView(depthStencilTextureView->GetVkImageView())
-                .setImageLayout(vk::ImageLayout::eDepthAttachmentOptimalKHR) // TODO as color attachment above
+                .setImageLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
                 .setLoadOp(VKEnumCast<LoadOp, vk::AttachmentLoadOp>(beginInfo->depthStencilAttachment->depthLoadOp))
                 .setStoreOp(VKEnumCast<StoreOp, vk::AttachmentStoreOp>(beginInfo->depthStencilAttachment->depthStoreOp))
                 .setClearValue(vk::ClearValue({

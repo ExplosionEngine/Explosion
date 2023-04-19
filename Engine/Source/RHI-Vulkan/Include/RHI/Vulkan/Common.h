@@ -87,6 +87,7 @@ namespace RHI::Vulkan {
         VK_ENUM_MAP_ITEM(PixelFormat::D16_UNORM,         vk::Format::eD16Unorm)
         VK_ENUM_MAP_ITEM(PixelFormat::D24_UNORM_S8_UINT, vk::Format::eD24UnormS8Uint)
         VK_ENUM_MAP_ITEM(PixelFormat::D32_FLOAT,         vk::Format::eD32Sfloat)
+        VK_ENUM_MAP_ITEM(PixelFormat::D32_FLOAT_S8_UINT, vk::Format::eD32SfloatS8Uint)
         // Undefined
         VK_ENUM_MAP_ITEM(PixelFormat::MAX,               vk::Format::eUndefined)
     VK_ENUM_MAP_END()

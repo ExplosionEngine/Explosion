@@ -86,6 +86,7 @@ namespace RHI {
         D16_UNORM,
         D24_UNORM_S8_UINT,
         D32_FLOAT,
+        D32_FLOAT_S8_UINT,
         // TODO features / bc / etc / astc
         MAX
     };

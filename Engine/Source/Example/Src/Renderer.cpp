@@ -58,7 +58,7 @@ namespace Example {
     {
         std::vector<QueueInfo> queueCreateInfos = { {QueueType::GRAPHICS, 1} };
         DeviceCreateInfo createInfo {};
-        createInfo.queueCreateInfoNum = queueCreateInfos.size();
+        createInfo.queueCreateInfoNum = static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.queueCreateInfos = queueCreateInfos.data();
         device = gpu->RequestDevice(createInfo);
         graphicsQueue = device->GetQueue(QueueType::GRAPHICS, 0);
@@ -350,7 +350,7 @@ namespace Example {
             entries[0].binding.platform.glsl.index = 0;
         }
         createInfo.entries = entries.data();
-        createInfo.entryNum = entries.size();
+        createInfo.entryNum = static_cast<uint32_t>(entries.size());
         createInfo.layout = bindGroupLayouts.gBuffer.Get();
         bindGroups.scene = device->CreateBindGroup(createInfo);
 
@@ -388,7 +388,7 @@ namespace Example {
             entries[6].binding.platform.glsl.index = 6;
         }
         createInfo.entries = entries.data();
-        createInfo.entryNum = entries.size();
+        createInfo.entryNum = static_cast<uint32_t>(entries.size());
         createInfo.layout = bindGroupLayouts.ssao.Get();
         bindGroups.ssao = device->CreateBindGroup(createInfo);
 
@@ -406,7 +406,7 @@ namespace Example {
             entries[1].binding.platform.glsl.index = 1;
         }
         createInfo.entries = entries.data();
-        createInfo.entryNum = entries.size();
+        createInfo.entryNum = static_cast<uint32_t>(entries.size());
         createInfo.layout = bindGroupLayouts.ssaoBlur.Get();
         bindGroups.ssaoBlur = device->CreateBindGroup(createInfo);
 
@@ -444,20 +444,21 @@ namespace Example {
             entries[6].binding.platform.glsl.index = 6;
         }
         createInfo.entries = entries.data();
-        createInfo.entryNum = entries.size();
+        createInfo.entryNum = static_cast<uint32_t>(entries.size());
         createInfo.layout = bindGroupLayouts.composition.Get();
         bindGroups.composition = device->CreateBindGroup(createInfo);
     }
 
     void Renderer::PrepareOffscreen()
     {
-        CreateAttachments(PixelFormat::RGBA32_FLOAT,  &gBufferPos, app->width, app->height);
-        CreateAttachments(PixelFormat::RGBA8_UNORM,  &gBufferNormal, app->width, app->height);
-        CreateAttachments(PixelFormat::RGBA8_UNORM,  &gBufferAlbedo, app->width, app->height);
+        CreateAttachments(PixelFormat::RGBA32_FLOAT, TextureUsageBits::TEXTURE_BINDING | TextureUsageBits::RENDER_ATTACHMENT, TextureAspect::COLOR, &gBufferPos, app->width, app->height);
+        CreateAttachments(PixelFormat::RGBA8_UNORM, TextureUsageBits::TEXTURE_BINDING | TextureUsageBits::RENDER_ATTACHMENT, TextureAspect::COLOR, &gBufferNormal, app->width, app->height);
+        CreateAttachments(PixelFormat::RGBA8_UNORM, TextureUsageBits::TEXTURE_BINDING | TextureUsageBits::RENDER_ATTACHMENT, TextureAspect::COLOR, &gBufferAlbedo, app->width, app->height);
+        CreateAttachments(PixelFormat::D32_FLOAT_S8_UINT, TextureUsageBits::DEPTH_STENCIL_ATTACHMENT, TextureAspect::DEPTH_STENCIL, &gBufferDepth, app->width, app->height);
 
-        CreateAttachments(PixelFormat::R8_UNORM,  &ssaoOutput, app->width, app->height);
+        CreateAttachments(PixelFormat::R8_UNORM, TextureUsageBits::TEXTURE_BINDING | TextureUsageBits::RENDER_ATTACHMENT, TextureAspect::COLOR, &ssaoOutput, app->width, app->height);
 
-        CreateAttachments(PixelFormat::R8_UNORM,  &ssaoBlurOutput, app->width, app->height);
+        CreateAttachments(PixelFormat::R8_UNORM, TextureUsageBits::TEXTURE_BINDING | TextureUsageBits::RENDER_ATTACHMENT, TextureAspect::COLOR, &ssaoBlurOutput, app->width, app->height);
     }
 
     void Renderer::PrepareUniformBuffers()
@@ -550,7 +551,7 @@ namespace Example {
 
     }
 
-    void Renderer::CreateAttachments(RHI::PixelFormat format, ColorAttachment* attachment, uint32_t width, uint32_t height)
+    void Renderer::CreateAttachments(RHI::PixelFormat format, TextureUsageFlags flags, TextureAspect aspect, ColorAttachment* attachment, uint32_t width, uint32_t height)
     {
         TextureCreateInfo texCreateInfo {};
         texCreateInfo.format = format;
@@ -558,7 +559,7 @@ namespace Example {
         texCreateInfo.extent = {width, height, 1};
         texCreateInfo.dimension = TextureDimension::T_2D;
         texCreateInfo.samples = 1;
-        texCreateInfo.usages = TextureUsageBits::TEXTURE_BINDING | TextureUsageBits::RENDER_ATTACHMENT;
+        texCreateInfo.usages = flags;
         attachment->texture = device->CreateTexture(texCreateInfo);
 
         TextureViewCreateInfo viewCreateInfo {};
@@ -567,7 +568,7 @@ namespace Example {
         viewCreateInfo.arrayLayerNum = 1;
         viewCreateInfo.baseMipLevel = 0;
         viewCreateInfo.mipLevelNum = 1;
-        viewCreateInfo.aspect = TextureAspect::COLOR;
+        viewCreateInfo.aspect = aspect;
         attachment->view = attachment->texture->CreateTextureView(viewCreateInfo);
     }
 
@@ -683,72 +684,92 @@ namespace Example {
         createInfo.primitiveState.cullMode = CullMode::NONE;
         createInfo.primitiveState.topologyType = RHI::PrimitiveTopologyType::TRIANGLE;
         createInfo.primitiveState.stripIndexFormat = IndexFormat::UINT32;
-        createInfo.depthStencilState.depthEnable = false;
-        createInfo.depthStencilState.stencilEnable = false;
         createInfo.multiSampleState.count = 1;
 
         // Gbuffer
-        std::array<ColorTargetState, 3> colorTargetStates0 {};
-        colorTargetStates0[0].format = PixelFormat::RGBA32_FLOAT;
-        colorTargetStates0[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
-        colorTargetStates0[1].format = PixelFormat::RGBA8_UNORM;
-        colorTargetStates0[1].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
-        colorTargetStates0[2].format = PixelFormat::RGBA8_UNORM;
-        colorTargetStates0[2].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+        {
+            DepthStencilState depthStencilState {};
+            depthStencilState.depthEnable = true;
+            depthStencilState.depthComparisonFunc = ComparisonFunc::LESS_EQUAL;
+            depthStencilState.format = PixelFormat::D32_FLOAT_S8_UINT;
+            
+            std::array<ColorTargetState, 3> colorTargetStates {};
+            colorTargetStates[0].format = PixelFormat::RGBA32_FLOAT;
+            colorTargetStates[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+            colorTargetStates[1].format = PixelFormat::RGBA8_UNORM;
+            colorTargetStates[1].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+            colorTargetStates[2].format = PixelFormat::RGBA8_UNORM;
+            colorTargetStates[2].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
 
-        createInfo.vertexState.bufferLayouts = &vertexBufferLayout;
-        createInfo.fragmentState.colorTargetNum = colorTargetStates0.size();
-        createInfo.fragmentState.colorTargets = colorTargetStates0.data();
-        createInfo.vertexShader = shaderModules.gBufferVert.Get();
-        createInfo.pixelShader = shaderModules.gBufferFrag.Get();
-        createInfo.layout = pipelineLayouts.gBuffer.Get();
-        pipelines.gBuffer = device->CreateGraphicsPipeline(createInfo);
+            createInfo.depthStencilState = depthStencilState;
+            createInfo.vertexState.bufferLayouts = &vertexBufferLayout;
+            createInfo.fragmentState.colorTargetNum = colorTargetStates.size();
+            createInfo.fragmentState.colorTargets = colorTargetStates.data();
+            createInfo.vertexShader = shaderModules.gBufferVert.Get();
+            createInfo.pixelShader = shaderModules.gBufferFrag.Get();
+            createInfo.layout = pipelineLayouts.gBuffer.Get();
+            pipelines.gBuffer = device->CreateGraphicsPipeline(createInfo);
+        }
 
         // ssao
-        std::array<ColorTargetState, 1> colorTargetStates1 {};
-        colorTargetStates1[0].format = PixelFormat::R8_UNORM;
-        colorTargetStates1[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+        {
+            ColorTargetState colorTargetState {};
+            colorTargetState.format = PixelFormat::R8_UNORM;
+            colorTargetState.writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+            
+            DepthStencilState depthStencilState {};
 
-        createInfo.vertexState.bufferLayouts = &quadVertexBufferLayout;
-        createInfo.fragmentState.colorTargetNum = colorTargetStates1.size();
-        createInfo.fragmentState.colorTargets = colorTargetStates1.data();
-        createInfo.vertexShader = shaderModules.quadVert.Get();
-        createInfo.pixelShader = shaderModules.ssaoFrag.Get();
-        createInfo.layout = pipelineLayouts.ssao.Get();
-        pipelines.ssao = device->CreateGraphicsPipeline(createInfo);
+            createInfo.depthStencilState = depthStencilState;
+            createInfo.vertexState.bufferLayouts = &quadVertexBufferLayout;
+            createInfo.fragmentState.colorTargetNum = 1;
+            createInfo.fragmentState.colorTargets = &colorTargetState;
+            createInfo.vertexShader = shaderModules.quadVert.Get();
+            createInfo.pixelShader = shaderModules.ssaoFrag.Get();
+            createInfo.layout = pipelineLayouts.ssao.Get();
+            pipelines.ssao = device->CreateGraphicsPipeline(createInfo);
+        }
 
         // ssaoBlur
-        std::array<ColorTargetState, 1> colorTargetStates2 {};
-        colorTargetStates2[0].format = PixelFormat::R8_UNORM;
-        colorTargetStates2[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+        {
+            ColorTargetState colorTargetState {};
+            colorTargetState.format = PixelFormat::R8_UNORM;
+            colorTargetState.writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
 
-        createInfo.vertexState.bufferLayouts = &quadVertexBufferLayout;
-        createInfo.fragmentState.colorTargetNum = colorTargetStates2.size();
-        createInfo.fragmentState.colorTargets = colorTargetStates2.data();
-        createInfo.vertexShader = shaderModules.quadVert.Get();
-        createInfo.pixelShader = shaderModules.ssaoBlurFrag.Get();
-        createInfo.layout = pipelineLayouts.ssaoBlur.Get();
-        pipelines.ssaoBlur = device->CreateGraphicsPipeline(createInfo);
+            DepthStencilState depthStencilState {};
+
+            createInfo.depthStencilState = depthStencilState;
+            createInfo.vertexState.bufferLayouts = &quadVertexBufferLayout;
+            createInfo.fragmentState.colorTargetNum = 1;
+            createInfo.fragmentState.colorTargets = &colorTargetState;
+            createInfo.vertexShader = shaderModules.quadVert.Get();
+            createInfo.pixelShader = shaderModules.ssaoBlurFrag.Get();
+            createInfo.layout = pipelineLayouts.ssaoBlur.Get();
+            pipelines.ssaoBlur = device->CreateGraphicsPipeline(createInfo);
+        }
 
         // composition
-        std::array<ColorTargetState, 1> colorTargetStates3 {};
-        colorTargetStates3[0].format = PixelFormat::BGRA8_UNORM;
-        colorTargetStates3[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
-
-        createInfo.vertexState.bufferLayouts = &quadVertexBufferLayout;
-        createInfo.fragmentState.colorTargetNum = colorTargetStates3.size();
-        createInfo.fragmentState.colorTargets = colorTargetStates3.data();
-        createInfo.vertexShader = shaderModules.quadVert.Get();
-        createInfo.pixelShader = shaderModules.compositionFrag.Get();
-        createInfo.layout = pipelineLayouts.composition.Get();
-        pipelines.composition = device->CreateGraphicsPipeline(createInfo);
+        {
+            ColorTargetState colorTargetState {};
+            colorTargetState.format = PixelFormat::BGRA8_UNORM;
+            colorTargetState.writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+            
+            DepthStencilState depthStencilState {};
+            
+            createInfo.depthStencilState = depthStencilState;
+            createInfo.vertexState.bufferLayouts = &quadVertexBufferLayout;
+            createInfo.fragmentState.colorTargetNum = 1;
+            createInfo.fragmentState.colorTargets = &colorTargetState;
+            createInfo.vertexShader = shaderModules.quadVert.Get();
+            createInfo.pixelShader = shaderModules.compositionFrag.Get();
+            createInfo.layout = pipelineLayouts.composition.Get();
+            pipelines.composition = device->CreateGraphicsPipeline(createInfo);
+        }
     }
 
     void Renderer::PopulateCommandBuffer()
     {
         CommandEncoder* commandEncoder = commandBuffer->Begin();
         {
-            // GBuffer
             commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
             commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
             commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
@@ -769,11 +790,19 @@ namespace Example {
             colorAttachments[2].storeOp = StoreOp::STORE;
             colorAttachments[2].view = gBufferAlbedo.view.Get();
             colorAttachments[2].resolve = nullptr;
+            
+            GraphicsPassDepthStencilAttachment depthAttachment {};
+            depthAttachment.view = gBufferDepth.view.Get();
+            depthAttachment.depthLoadOp = LoadOp::CLEAR;
+            depthAttachment.depthStoreOp = StoreOp::STORE;
+            depthAttachment.depthReadOnly = true;
+            depthAttachment.depthClearValue = 1.0;
+            depthAttachment.stencilClearValue = 0.0;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
             graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
-            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
+            graphicsPassBeginInfo.depthStencilAttachment = &depthAttachment;
 
             auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
