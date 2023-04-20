@@ -117,7 +117,9 @@ namespace Mirror {
                 },
                 []() -> Any {
                     return Any(std::ref(*Ptr));
-                }
+                },
+                nullptr,
+                nullptr
             )));
             return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.staticVariables.at(inName));
         }
@@ -165,7 +167,9 @@ namespace Mirror {
                 },
                 [](Any* object) -> Any {
                     return std::ref(object->CastTo<ClassType&>().*Ptr);
-                }
+                },
+                InternalMemberVariableSerializer<ClassType, ValueType>::value,
+                InternalMemberVariableDeserializer<ClassType, ValueType>::value
             )));
             return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.memberVariables.at(inName));
         }
@@ -228,7 +232,9 @@ namespace Mirror {
                 },
                 []() -> Any {
                     return Any(std::ref(*Ptr));
-                }
+                },
+                InternalVariableSerializer<ValueType>::value,
+                InternalVariableDeserializer<ValueType>::value
             )));
             return MetaDataRegistry<GlobalRegistry>::SetContext(&globalScope.variables.at(inName));
         }
