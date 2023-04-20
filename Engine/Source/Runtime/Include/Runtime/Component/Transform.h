@@ -23,7 +23,6 @@ namespace Runtime {
         EFunc()
         void TraverseBrothers(const EntityTraverseFunc& func) const;
 
-    private:
         EProperty(transient, editorHide)
         Entity parent;
 
@@ -33,13 +32,13 @@ namespace Runtime {
         EProperty(transient, editorHide)
         Entity nextBrother;
 
-        EProperty(category="Transform")
+        EProperty(category=Transform)
         Common::Vector3 position;
 
-        EProperty(category="Transform")
+        EProperty(category=Transform)
         Common::Vector3 rotation;
 
-        EProperty(category="Transform")
+        EProperty(category=Transform)
         Common::Vector3 scale;
     };
 }
