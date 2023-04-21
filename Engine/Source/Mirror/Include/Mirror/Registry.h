@@ -6,10 +6,11 @@
 
 #include <unordered_map>
 
+#include <Common/Debug.h>
 #include <Mirror/Api.h>
+#include <Mirror/Serialization.h>
 #include <Mirror/Type.h>
 #include <Mirror/TypeInfo.h>
-#include <Common/Debug.h>
 
 namespace Mirror::Internal {
     template <typename ArgsTuple, size_t... I>
@@ -168,8 +169,8 @@ namespace Mirror {
                 [](Any* object) -> Any {
                     return std::ref(object->CastTo<ClassType&>().*Ptr);
                 },
-                InternalMemberVariableSerializer<ClassType, ValueType>::value,
-                InternalMemberVariableDeserializer<ClassType, ValueType>::value
+                InternalMemberVariableSerializer<ValueType>::value,
+                InternalMemberVariableDeserializer<ValueType>::value
             )));
             return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.memberVariables.at(inName));
         }

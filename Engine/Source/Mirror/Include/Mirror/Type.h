@@ -12,7 +12,6 @@
 #include <Mirror/Any.h>
 #include <Mirror/Api.h>
 #include <Mirror/TypeInfo.h>
-#include <Mirror/Serialize.h>
 
 namespace Mirror {
     struct NamePresets {
@@ -23,6 +22,21 @@ namespace Mirror {
     };
 
     static std::unordered_map<TypeInfo*, std::string> typeToNameMap;
+
+    class FileSerializeStream;
+    class FileDeserializeStream;
+    class Variable;
+    class MemberVariable;
+
+    using VariableSerializer = std::function<void(FileSerializeStream&, const Variable&)>;
+    using MemberVariableSerializer = std::function<void(FileSerializeStream&, const MemberVariable&, Any*)>;
+    using VariableDeserializer = std::function<void(FileDeserializeStream&, const Variable&)>;
+    using MemberVariableDeserializer = std::function<void(FileDeserializeStream&, const MemberVariable&, Any*)>;
+
+    using CustomVariableSerializer = std::function<void(FileSerializeStream&, const Variable&, VariableSerializer)>;
+    using CustomMemberVariableSerializer = std::function<void(FileSerializeStream&, const MemberVariable&, Any*, MemberVariableSerializer)>;
+    using CustomVariableDeserializer = std::function<void(FileDeserializeStream&, const Variable&, VariableDeserializer)>;
+    using CustomMemberVariableDeserializer = std::function<void(FileDeserializeStream&, const MemberVariable&, Any*, MemberVariableDeserializer)>;
 }
 
 namespace Mirror {

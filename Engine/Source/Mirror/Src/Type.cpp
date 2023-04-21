@@ -342,7 +342,7 @@ namespace Mirror {
 
             auto iter = memberVariables.find(varName);
             if (iter == memberVariables.end()) {
-                stream.SeekForward(static_cast<int32_t>(varHeader.typeNameSize + varHeader.memorySize));
+                stream.SeekForward(static_cast<int32_t>(varHeader.typeNameSize + varHeader.stride * varHeader.arraySize));
                 continue;
             }
 
