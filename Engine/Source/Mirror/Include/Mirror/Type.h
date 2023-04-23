@@ -23,20 +23,20 @@ namespace Mirror {
 
     static std::unordered_map<TypeInfo*, std::string> typeToNameMap;
 
-    class FileSerializeStream;
-    class FileDeserializeStream;
+    class SerializeStream;
+    class DeserializeStream;
     class Variable;
     class MemberVariable;
 
-    using VariableSerializer = std::function<void(FileSerializeStream&, const Variable&)>;
-    using MemberVariableSerializer = std::function<void(FileSerializeStream&, const MemberVariable&, Any*)>;
-    using VariableDeserializer = std::function<void(FileDeserializeStream&, const Variable&)>;
-    using MemberVariableDeserializer = std::function<void(FileDeserializeStream&, const MemberVariable&, Any*)>;
+    using VariableSerializer = std::function<void(SerializeStream&, const Variable&)>;
+    using MemberVariableSerializer = std::function<void(SerializeStream&, const MemberVariable&, Any*)>;
+    using VariableDeserializer = std::function<void(DeserializeStream&, const Variable&)>;
+    using MemberVariableDeserializer = std::function<void(DeserializeStream&, const MemberVariable&, Any*)>;
 
-    using CustomVariableSerializer = std::function<void(FileSerializeStream&, const Variable&, VariableSerializer)>;
-    using CustomMemberVariableSerializer = std::function<void(FileSerializeStream&, const MemberVariable&, Any*, MemberVariableSerializer)>;
-    using CustomVariableDeserializer = std::function<void(FileDeserializeStream&, const Variable&, VariableDeserializer)>;
-    using CustomMemberVariableDeserializer = std::function<void(FileDeserializeStream&, const MemberVariable&, Any*, MemberVariableDeserializer)>;
+    using CustomVariableSerializer = std::function<void(SerializeStream&, const Variable&, VariableSerializer)>;
+    using CustomMemberVariableSerializer = std::function<void(SerializeStream&, const MemberVariable&, Any*, MemberVariableSerializer)>;
+    using CustomVariableDeserializer = std::function<void(DeserializeStream&, const Variable&, VariableDeserializer)>;
+    using CustomMemberVariableDeserializer = std::function<void(DeserializeStream&, const MemberVariable&, Any*, MemberVariableDeserializer)>;
 }
 
 namespace Mirror {
@@ -72,8 +72,8 @@ namespace Mirror {
 
         void Set(Any* value) const;
         Any Get() const;
-        void Serialize(FileSerializeStream& stream, const CustomVariableSerializer& customSerializer = nullptr) const;
-        void Deserialize(FileDeserializeStream& stream, const CustomVariableDeserializer& customDeserializer = nullptr) const;
+        void Serialize(SerializeStream& stream, const CustomVariableSerializer& customSerializer = nullptr) const;
+        void Deserialize(DeserializeStream& stream, const CustomVariableDeserializer& customDeserializer = nullptr) const;
 
     private:
         friend class GlobalRegistry;
@@ -183,8 +183,8 @@ namespace Mirror {
 
         void Set(Any* object, Any* value) const;
         Any Get(Any* object) const;
-        void Serialize(FileSerializeStream& stream, Any* object, const CustomMemberVariableSerializer& customSerializer = nullptr) const;
-        void Deserialize(FileDeserializeStream& stream, Any* object, const CustomMemberVariableDeserializer& customDeserializer = nullptr) const;
+        void Serialize(SerializeStream& stream, Any* object, const CustomMemberVariableSerializer& customSerializer = nullptr) const;
+        void Deserialize(DeserializeStream& stream, Any* object, const CustomMemberVariableDeserializer& customDeserializer = nullptr) const;
 
     private:
         template <typename C> friend class ClassRegistry;
@@ -327,8 +327,8 @@ namespace Mirror {
         [[nodiscard]] const MemberVariable& GetMemberVariable(const std::string& name) const;
         [[nodiscard]] const MemberFunction* FindMemberFunction(const std::string& name) const;
         [[nodiscard]] const MemberFunction& GetMemberFunction(const std::string& name) const;
-        void Serialize(FileSerializeStream& stream, Mirror::Any* obj, const CustomMemberVariableSerializer& customSerializer = nullptr) const;
-        void Deserailize(FileDeserializeStream& stream, Mirror::Any* obj, const CustomMemberVariableDeserializer& customDeserializer = nullptr) const;
+        void Serialize(SerializeStream& stream, Mirror::Any* obj, const CustomMemberVariableSerializer& customSerializer = nullptr) const;
+        void Deserailize(DeserializeStream& stream, Mirror::Any* obj, const CustomMemberVariableDeserializer& customDeserializer = nullptr) const;
 
     private:
         friend class Registry;

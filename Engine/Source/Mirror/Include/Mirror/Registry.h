@@ -169,8 +169,23 @@ namespace Mirror {
                 [](Any* object) -> Any {
                     return std::ref(object->CastTo<ClassType&>().*Ptr);
                 },
-                InternalMemberVariableSerializer<ValueType>::value,
-                InternalMemberVariableDeserializer<ValueType>::value
+                [](SerializeStream& stream, const Mirror::MemberVariable& variable, Any* object) -> void {
+                    if constexpr (TypeSerializationSupport<ValueType>::value) {
+                        ValueType& value = variable.Get(object).CastTo<ValueType&>();
+                        stream << value;
+                    } else {
+                        Assert(false);
+                    }
+                },
+                [](DeserializeStream& stream, const Mirror::MemberVariable& variable, Any* object) -> void {
+                    if constexpr (TypeSerializationSupport<ValueType>::value) {
+                        ValueType value;
+                        stream >> value;
+                        variable.Set(object, value);
+                    } else {
+                        Assert(false);
+                    }
+                }
             )));
             return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.memberVariables.at(inName));
         }
@@ -234,8 +249,23 @@ namespace Mirror {
                 []() -> Any {
                     return Any(std::ref(*Ptr));
                 },
-                InternalVariableSerializer<ValueType>::value,
-                InternalVariableDeserializer<ValueType>::value
+                [](SerializeStream& stream, const Mirror::Variable& variable) -> void {
+                    if constexpr (TypeSerializationSupport<ValueType>::value) {
+                        ValueType& value = variable.Get().CastTo<ValueType&>();
+                        stream << value;
+                    } else {
+                        Assert(false);
+                    }
+                },
+                [](DeserializeStream& stream, const Mirror::Variable& variable) -> void {
+                    if constexpr (TypeSerializationSupport<ValueType>::value) {
+                        ValueType value;
+                        stream >> value;
+                        variable.Set(value);
+                    } else {
+                        Assert(false);
+                    }
+                }
             )));
             return MetaDataRegistry<GlobalRegistry>::SetContext(&globalScope.variables.at(inName));
         }

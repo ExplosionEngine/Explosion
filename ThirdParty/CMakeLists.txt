@@ -179,13 +179,13 @@ Add3rdCMakeProject(
 )
 
 # assimp
-Add3rdCMakeProject(
-    NAME assimp-lib
-    PLATFORM All
-    VERSION 5.2.5
-    HASH ae55d305a607ad8cc598c306663796dbf6e50a3cb0b952fe1ea3175f0f342ad9
-    CMAKE_ARG -DASSIMP_BUILD_TESTS=OFF -DASSIMP_WARNINGS_AS_ERRORS=OFF
-    INCLUDE $<INSTALL_DIR>/include
-    LINK $<INSTALL_DIR>/lib
-    LIB assimp
-)
+#Add3rdCMakeProject(
+#    NAME assimp-lib
+#    PLATFORM All
+#    VERSION 5.2.5
+#    HASH ae55d305a607ad8cc598c306663796dbf6e50a3cb0b952fe1ea3175f0f342ad9
+#    CMAKE_ARG -DASSIMP_BUILD_TESTS=OFF -DASSIMP_WARNINGS_AS_ERRORS=OFF
+#    INCLUDE $<INSTALL_DIR>/include
+#    LINK $<INSTALL_DIR>/lib
+#    LIB assimp
+#)

@@ -70,7 +70,7 @@ namespace Mirror {
         return getter();
     }
 
-    void Variable::Serialize(FileSerializeStream& stream, const CustomVariableSerializer& customSerializer) const
+    void Variable::Serialize(SerializeStream& stream, const CustomVariableSerializer& customSerializer) const
     {
         if (customSerializer) {
             customSerializer(stream, *this, serializer);
@@ -79,7 +79,7 @@ namespace Mirror {
         }
     }
 
-    void Variable::Deserialize(FileDeserializeStream& stream, const CustomVariableDeserializer& customDeserializer) const
+    void Variable::Deserialize(DeserializeStream& stream, const CustomVariableDeserializer& customDeserializer) const
     {
         if (customDeserializer) {
             customDeserializer(stream, *this, deserializer);
@@ -149,7 +149,7 @@ namespace Mirror {
         return getter(object);
     }
 
-    void MemberVariable::Serialize(FileSerializeStream& stream, Any* object, const CustomMemberVariableSerializer& customSerializer) const
+    void MemberVariable::Serialize(SerializeStream& stream, Any* object, const CustomMemberVariableSerializer& customSerializer) const
     {
         if (customSerializer) {
             customSerializer(stream, *this, object, serializer);
@@ -158,7 +158,7 @@ namespace Mirror {
         }
     }
 
-    void MemberVariable::Deserialize(FileDeserializeStream& stream, Any* object, const CustomMemberVariableDeserializer& customDeserializer) const
+    void MemberVariable::Deserialize(DeserializeStream& stream, Any* object, const CustomMemberVariableDeserializer& customDeserializer) const
     {
         if (customDeserializer) {
             customDeserializer(stream, *this, object, deserializer);
@@ -305,48 +305,33 @@ namespace Mirror {
         return iter->second;
     }
 
-    void Class::Serialize(FileSerializeStream& stream, Mirror::Any* obj, const CustomMemberVariableSerializer& customSerializer) const
+    void Class::Serialize(SerializeStream& stream, Mirror::Any* obj, const CustomMemberVariableSerializer& customSerializer) const
     {
-        std::string className = GetName();
-        std::string metaData = GetAllMeta();
+        stream << GetName();
+        stream << memberVariables.size();
 
-        ClassSerializeHeader header;
-        header.nameSize = className.size();
-        header.variableNum = memberVariables.size();
-
-        stream.Write(&header, sizeof(ClassSerializeHeader));
-        stream.Write(className.data(), className.size());
-
-        for (const auto& var : memberVariables) {
-            var.second.Serialize(stream, obj, customSerializer);
+        for (const auto& memberVariable : memberVariables) {
+            stream << memberVariable.first;
+            memberVariable.second.Serialize(stream, obj, customSerializer);
         }
     }
 
-    void Class::Deserailize(FileDeserializeStream& stream, Mirror::Any* obj, const CustomMemberVariableDeserializer& customDeserializer) const
+    void Class::Deserailize(DeserializeStream& stream, Mirror::Any* obj, const CustomMemberVariableDeserializer& customDeserializer) const
     {
-        ClassSerializeHeader header;
-        stream.Read(&header, sizeof(header));
-
         std::string className;
-        className.resize(header.nameSize);
-        stream.Read(className.data(), className.size());
-        Assert(className == GetName());
+        stream >> className;
 
-        for (auto i = 0; i < header.variableNum; i++) {
-            VariableSerializeHeader varHeader;
-            stream.Read(&varHeader, sizeof(varHeader));
+        size_t memberVariableSize;
+        stream >> memberVariableSize;
 
+        for (auto i = 0; i < memberVariableSize; i++) {
             std::string varName;
-            varName.resize(varHeader.nameSize);
-            stream.Read(varName.data(), varName.size());
+            stream >> varName;
 
             auto iter = memberVariables.find(varName);
             if (iter == memberVariables.end()) {
-                stream.SeekForward(static_cast<int32_t>(varHeader.typeNameSize + varHeader.stride * varHeader.arraySize));
                 continue;
             }
-
-            stream.SeekBack(static_cast<int32_t>(varHeader.nameSize + sizeof(VariableSerializeHeader)));
             iter->second.Deserialize(stream, obj, customDeserializer);
         }
     }

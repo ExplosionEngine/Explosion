@@ -11,6 +11,7 @@
 
 #include <Common/Utility.h>
 #include <Common/String.h>
+#include <Common/Debug.h>
 
 namespace Common {
     class PathMapper {
@@ -50,27 +51,54 @@ namespace Common {
 
     class PathUtils {
     public:
-        static inline std::string GetUnixStylePath(const std::string& inString)
+        static inline std::string GetUnixStylePath(const std::string& inPath)
         {
-            return Common::StringUtils::Replace(inString, "\\", "/");
+            return Common::StringUtils::Replace(inPath, "\\", "/");
         }
 
-        static inline std::string GetStandardPath(const std::string& inString)
+        static inline std::string GetStandardPath(const std::string& inPath)
         {
-            auto unixStylePath = GetUnixStylePath(inString);
+            auto unixStylePath = GetUnixStylePath(inPath);
             return unixStylePath.back() == '/' ? unixStylePath.substr(0, unixStylePath.length() - 1) : unixStylePath;
         }
 
-        static inline std::string GetParentPath(const std::string& absolutePath)
+        static inline std::string GetParentPath(const std::string& inPath)
         {
-            std::filesystem::path path(absolutePath);
+            std::filesystem::path path(inPath);
             return GetStandardPath(path.parent_path().string());
         }
 
-        static inline std::string GetFileName(const std::string& inString)
+        static inline std::string GetFileName(const std::string& inPath)
         {
-            std::filesystem::path path(inString);
+            std::filesystem::path path(inPath);
             return path.filename().string();
+        }
+
+        static inline std::string GetAbsolutePath(const std::string& inPath)
+        {
+            std::filesystem::path path(inPath);
+            return std::filesystem::absolute(path).string();
+        }
+
+        static inline void MakeDirectories(const std::string& inPath)
+        {
+            std::filesystem::path path(inPath);
+            if (std::filesystem::exists(path)) {
+                Assert(std::filesystem::is_directory(path));
+            } else {
+                std::filesystem::create_directories(path);
+            }
+        }
+
+        static inline void MakeDirectoriesForFile(const std::string& inPath)
+        {
+            std::filesystem::path path(inPath);
+            std::filesystem::path parentPath = path.parent_path();
+            if (std::filesystem::exists(parentPath)) {
+                Assert(std::filesystem::is_directory(parentPath));
+            } else {
+                std::filesystem::create_directories(parentPath);
+            }
         }
     };
 }

@@ -133,46 +133,46 @@ namespace Runtime {
         ~AssetManager();
 
         template <typename A>
-        AssetRef<A> LoadSync(const Uri& uri)
+        AssetRef<A> LoadOrGetSync(const Uri& uri)
         {
-            return ReadFromFile<A>(uri);
+            return GetFromMemoryOrReadFromFile<A>(uri);
         }
 
         template <typename A>
-        void LoadSync(SoftRef<A>& softRef)
+        void LoadOrGetSync(SoftRef<A>& softRef)
         {
-            softRef.liveAsset = ReadFromFile<A>(softRef.uri);
+            softRef.liveAsset = GetFromMemoryOrReadFromFile<A>(softRef.uri);
         }
 
         template <typename A>
-        std::future<AssetRef<A>> LoadAsync(const Uri& uri)
+        std::future<AssetRef<A>> LoadOrGetAsync(const Uri& uri)
         {
             return threadPool.EmplaceTask([this, &uri]() -> auto {
-                return ReadFromFile<A>(uri);
+                return GetFromMemoryOrReadFromFile<A>(uri);
             });
         }
 
         template <typename A, typename F>
-        void LoadAsync(const Uri& uri, F&& onLoadOver)
+        void LoadOrGetAsync(const Uri& uri, F&& onLoadOver)
         {
             threadPool.EmplaceTask([this, &uri, &onLoadOver]() -> void {
-                onLoadOver(ReadFromFile<A>(uri));
+                onLoadOver(GetFromMemoryOrReadFromFile<A>(uri));
             });
         }
 
         template <typename A, typename F>
-        std::future<void> LoadAsync(SoftRef<A>& softRef)
+        std::future<void> LoadOrGetAsync(SoftRef<A>& softRef)
         {
             return threadPool.EmplaceTask([this, &softRef]() -> void {
-                softRef.liveAsset = ReadFromFile<A>(softRef.uri);
+                softRef.liveAsset = GetFromMemoryOrReadFromFile<A>(softRef.uri);
             });
         }
 
         template <typename A, typename F>
-        void LoadAsync(SoftRef<A>& softRef, F&& onLoadOver)
+        void LoadOrGetAsync(SoftRef<A>& softRef, F&& onLoadOver)
         {
             threadPool.EmplaceTask([this, &softRef, &onLoadOver]() -> void {
-                softRef.liveAsset = ReadFromFile<A>(softRef.uri);
+                softRef.liveAsset = GetFromMemoryOrReadFromFile<A>(softRef.uri);
                 onLoadOver();
             });
         }
@@ -235,6 +235,18 @@ namespace Runtime {
         };
 
         template <typename A>
+        AssetRef<A> GetFromMemoryOrReadFromFile(const Uri& uri)
+        {
+            auto iter = assets.find(uri);
+            if (iter == assets.end() || iter->second.Expired()) {
+                auto ref = ReadFromFile<A>(uri);
+                assets[uri] = ref;
+                return ref;
+            }
+            return iter->second.Lock().StaticCast<A>();
+        }
+
+        template <typename A>
         AssetRef<A> ReadFromFile(const Uri& uri)
         {
             // TODO
@@ -245,11 +257,7 @@ namespace Runtime {
         {
             std::ofstream file(pathMapper.Map(ref->uri), std::ios::binary);
             {
-                Mirror::Any object = std::ref(*ref.Get());
-                Mirror::Class::Get<A>().ForEachMemberVariable([&](const Mirror::MemberVariable& variable) -> void {
-                    Mirror::Any value = variable.Get(&object);
-                    // TODO
-                });
+                // TODO
             }
             file.close();
         }
@@ -260,5 +268,6 @@ namespace Runtime {
 
         const Common::PathMapper& pathMapper;
         Common::ThreadPool threadPool;
+        std::unordered_map<Uri, Common::WeakRef<Asset>> assets;
     };
 }
