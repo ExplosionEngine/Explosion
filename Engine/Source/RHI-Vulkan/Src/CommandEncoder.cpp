@@ -164,7 +164,7 @@ namespace RHI::Vulkan {
         {
             auto* colorTextureView = dynamic_cast<VKTextureView*>(beginInfo->colorAttachments[i].view);
             colorAttachmentInfos[i].setImageView(colorTextureView->GetVkImageView())
-                .setImageLayout(vk::ImageLayout::eAttachmentOptimalKHR)
+                .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
                 .setLoadOp(VKEnumCast<LoadOp, vk::AttachmentLoadOp>(beginInfo->colorAttachments[i].loadOp))
                 .setStoreOp(VKEnumCast<StoreOp, vk::AttachmentStoreOp>(beginInfo->colorAttachments[i].storeOp))
                 .setClearValue(vk::ClearValue(std::array<float, 4>{
