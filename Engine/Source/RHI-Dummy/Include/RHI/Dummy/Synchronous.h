@@ -11,8 +11,9 @@ namespace RHI::Dummy {
 
     class DummyFence : public Fence {
     public:
-        DummyFence(DummyDevice& device);
-        ~DummyFence();
+        NON_COPYABLE(DummyFence)
+        explicit DummyFence(DummyDevice& device);
+        ~DummyFence() override;
 
         FenceStatus GetStatus() override;
         void Reset() override;

@@ -6,6 +6,7 @@
 
 #include <Common/Utility.h>
 #include <RHI/Common.h>
+#include <RHI/Surface.h>
 
 namespace RHI {
     class Texture;
@@ -13,7 +14,7 @@ namespace RHI {
 
     struct SwapChainCreateInfo {
         Queue* presentQueue;
-        void* window;
+        Surface* surface;
         uint8_t textureNum;
         PixelFormat format;
         Extent<2> extent;

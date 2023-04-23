@@ -10,13 +10,13 @@
 namespace Runtime {
     class EClass() LightComponent : public Component {
     public:
-        EProperty(category="Light")
+        EProperty(category=Light)
         Common::Color color;
 
-        EProperty(category="Light")
+        EProperty(category=Light)
         float intensity;
 
-        EProperty(category="Shadow")
+        EProperty(category=Shadow)
         bool castShadows;
     };
 }

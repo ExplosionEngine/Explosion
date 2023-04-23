@@ -9,6 +9,7 @@
 namespace RHI::Dummy {
     class DummyPipelineLayout : public PipelineLayout {
     public:
+        NON_COPYABLE(DummyPipelineLayout)
         explicit DummyPipelineLayout(const PipelineLayoutCreateInfo& createInfo);
         ~DummyPipelineLayout() override;
 

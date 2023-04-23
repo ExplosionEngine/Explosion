@@ -252,6 +252,11 @@ namespace MirrorTool {
     DeclareVisitor(OutermostVisitor, MetaInfo)
     {
         FetchCursorInfo(OutermostVisitor, cursor);
+        CXSourceLocation sourceLocation = clang_getCursorLocation(cursor);
+        if (clang_Location_isFromMainFile(sourceLocation) == 0) {
+            return CXChildVisit_Continue;
+        }
+
         if (kind == CXCursor_VarDecl) {
             CXType type = clang_getCursorType(cursor);
             CXString typeSpelling = clang_getTypeSpelling(type);

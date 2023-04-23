@@ -86,7 +86,7 @@ namespace Runtime{
         std::unordered_map<std::string, std::string> pathMap;
         pathMap["/Engine"] = Common::PathUtils::GetParentPath(execFile);
         pathMap["/Game"] = Common::PathUtils::GetParentPath(projectFile);
-        pathMapper = std::make_unique<Common::PathMapper>(Common::PathMapper::From(pathMap));
+        pathMapper = Common::MakeUnique<Common::PathMapper>(Common::PathMapper::From(pathMap));
     }
 
     void Engine::InitInputManager()

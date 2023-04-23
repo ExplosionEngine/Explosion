@@ -11,7 +11,7 @@
 
 namespace RHI::Vulkan {
 
-    vk::SurfaceKHR CreateNativeSurface(const vk::Instance& instance, const SwapChainCreateInfo& createInfo)
+    vk::SurfaceKHR CreateNativeSurface(const vk::Instance& instance, const SurfaceCreateInfo& createInfo)
     {
         vk::Win32SurfaceCreateInfoKHR surfaceInfo {};
         surfaceInfo.setHwnd((HWND)createInfo.window)

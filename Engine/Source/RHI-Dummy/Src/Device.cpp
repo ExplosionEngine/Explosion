@@ -15,12 +15,13 @@
 #include <RHI/Dummy/Pipeline.h>
 #include <RHI/Dummy/CommandBuffer.h>
 #include <RHI/Dummy/Synchronous.h>
+#include <RHI/Dummy/Surface.h>
 #include <Common/Debug.h>
 
 namespace RHI::Dummy {
     DummyDevice::DummyDevice(const DeviceCreateInfo& createInfo)
         : Device(createInfo)
-        , dummyQueue(std::make_unique<DummyQueue>())
+        , dummyQueue(Common::MakeUnique<DummyQueue>())
     {
     }
 
@@ -40,6 +41,11 @@ namespace RHI::Dummy {
     {
         Assert(type == QueueType::GRAPHICS && index == 0);
         return dummyQueue.Get();
+    }
+
+    Surface* DummyDevice::CreateSurface(const SurfaceCreateInfo& createInfo)
+    {
+        return new DummySurface(createInfo);
     }
 
     SwapChain* DummyDevice::CreateSwapChain(const SwapChainCreateInfo& createInfo)
@@ -100,5 +106,10 @@ namespace RHI::Dummy {
     Fence* DummyDevice::CreateFence()
     {
         return new DummyFence(*this);
+    }
+
+    bool DummyDevice::CheckSwapChainFormatSupport(Surface* surface, PixelFormat format)
+    {
+        return true;
     }
 }

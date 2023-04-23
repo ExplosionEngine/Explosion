@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <unordered_set>
 
 #include <directx/d3d12sdklayers.h>
 
@@ -22,6 +23,7 @@
 #include <RHI/DirectX12/CommandBuffer.h>
 #include <RHI/DirectX12/SwapChain.h>
 #include <RHI/DirectX12/Synchronous.h>
+#include <RHI/DirectX12/Surface.h>
 
 namespace RHI::DirectX12 {
     DX12Device::DX12Device(DX12Gpu& g, const DeviceCreateInfo& createInfo) : Device(createInfo), gpu(g), rtvDescriptorSize(0), cbvSrvUavDescriptorSize(0)
@@ -61,6 +63,11 @@ namespace RHI::DirectX12 {
         auto& queueArray = iter->second;
         Assert(index >= 0 && index < queueArray.size());
         return queueArray[index].Get();
+    }
+
+    Surface* DX12Device::CreateSurface(const SurfaceCreateInfo& createInfo)
+    {
+        return new DX12Surface(createInfo);
     }
 
     SwapChain* DX12Device::CreateSwapChain(const SwapChainCreateInfo& createInfo)
@@ -126,6 +133,16 @@ namespace RHI::DirectX12 {
     Fence* DX12Device::CreateFence()
     {
         return new DX12Fence(*this);
+    }
+
+    bool DX12Device::CheckSwapChainFormatSupport(RHI::Surface* surface, PixelFormat format)
+    {
+        static std::unordered_set<PixelFormat> supportedFormats = {
+            PixelFormat::RGBA8_UNORM,
+            PixelFormat::BGRA8_UNORM,
+            // TODO HDR
+        };
+        return supportedFormats.contains(format);
     }
 
     DX12Gpu& DX12Device::GetGpu()
@@ -210,7 +227,7 @@ namespace RHI::DirectX12 {
                 ComPtr<ID3D12CommandQueue> commandQueue;
                 dx12Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue));
                 Assert(commandQueue);
-                j = std::make_unique<DX12Queue>(std::move(commandQueue));
+                j = Common::MakeUnique<DX12Queue>(std::move(commandQueue));
             }
 
             queues[iter.first] = std::move(tempQueues);
