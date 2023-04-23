@@ -44,12 +44,12 @@ float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
 	float occlusion = 0.0f;
 	for(int i = 0; i < 64; i++)
 	{
-		float3 samplePos = mul(TBN, randomKernals[i].xyz);
+		float3 samplePos = mul(randomKernals[i].xyz, TBN);
 		samplePos = fragPos + samplePos * 0.5;
 
 		// project
 		float4 offset = float4(samplePos, 1.0f);
-		offset = mul(projection, offset);
+		offset = mul(offset, projection);
 		offset.xyz /= offset.w;
 		offset.xyz = offset.xyz * 0.5f + 0.5f;
 

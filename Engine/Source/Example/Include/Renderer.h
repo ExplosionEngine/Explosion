@@ -42,7 +42,7 @@ namespace Example {
         Renderable()=default;
         ~Renderable();
 
-        void InitalizeWithPrimitive(Renderer* renderer, Primitive* primitive);
+        void InitalizeWithPrimitive(Renderer* renderer, Mesh* primitive);
 
         uint32_t indexCount;
         uint32_t firstIndex;
@@ -113,12 +113,6 @@ const unsigned int SSAO_NOISE_DIM = 4;
         void InitCamera();
         void LoadGLTF();
         void GenerateRenderables();
-
-        static void safeDelete(void* p) {
-            if (p != nullptr) {
-                delete p;
-            }
-        }
 
         Application* app;
         Model* model;

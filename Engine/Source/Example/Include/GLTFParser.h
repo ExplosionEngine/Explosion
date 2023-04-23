@@ -16,26 +16,21 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <tiny_gltf.h>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 namespace Example {
-    class TextureData {
+    struct TextureData {
     public:
-        uint32_t width {0};
-        uint32_t height {0};
-        uint32_t depth {0};
-        uint32_t mipLevels {1};
-        uint32_t arrayLayers {1};
-        size_t   size {0};
-        void*    pixels {nullptr};
+        uint32_t width { 0 };
+        uint32_t height { 0 };
+        uint32_t depth { 0 };
+        uint32_t mipLevels { 1 };
+        uint32_t arrayLayers { 1 };
+        size_t   size { 0 };
+        void*    pixels { nullptr };
 
-        TextureData() = default;
-        ~TextureData()
-        {
-            if (pixels)
-            {
-                free(pixels);
-            }
-        }
         bool isValid() const { return pixels != nullptr; }
     };
 
@@ -60,7 +55,10 @@ namespace Example {
         glm::vec3 normal;
     };
 
-    struct Primitive {
+    // In assimp, a mesh represents a geometry or model with a single material.
+    struct Mesh {
+        std::string name;
+
         uint32_t firstIndex;
         uint32_t indexCount;
         uint32_t firstVertex;
@@ -84,30 +82,27 @@ namespace Example {
             dimensions.radius = glm::distance(min, max) / 2.0f;
         }
 
-        Primitive(uint32_t firstIndex, uint32_t indexCount, uint32_t firstVertex, uint32_t vertexCount, MaterialData* material)
+        Mesh(uint32_t firstIndex, uint32_t indexCount, uint32_t firstVertex, uint32_t vertexCount, MaterialData* material)
             : firstIndex(firstIndex),
             indexCount(indexCount),
             firstVertex(firstVertex),
             vertexCount(vertexCount),
             materialData(material)
                 {};
-    };
 
-    struct Mesh {
-        std::string name;
-
-        std::vector<Primitive*> primitives;
-
-        ~Mesh();
+        ~Mesh() {
+            if (materialData != nullptr) {
+                delete materialData;
+            }
+        }
     };
 
     struct Node {
         Node* parent;
         std::vector<Node*> children;
 
-        uint32_t index;
         glm::mat4 matrix;
-        Mesh* mesh;
+        std::vector<Mesh*> meshes;
 
         glm::vec3 translation{};
         glm::vec3 scale{ 1.0f };
@@ -120,13 +115,13 @@ namespace Example {
 
     class Model {
     public:
-        Model() {};
+        Model() = default;
         ~Model();
 
         void LoadFromFile(std::string path);
-        void LoadNode(tinygltf::Model& model, tinygltf::Node& node, Node* parent, uint32_t nodeIndex);
-        void LoadImages(tinygltf::Model& model);
-        void LoadMaterials(tinygltf::Model& model);
+        void LoadNode(const aiScene* scene, aiNode* node, Node* parent);
+//        void LoadImages(tinygltf::Model& model);
+//        void LoadMaterials(tinygltf::Model& model);
 
     private:
         TextureData* GetTexture(uint32_t index)

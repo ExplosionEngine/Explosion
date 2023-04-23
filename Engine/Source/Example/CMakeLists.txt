@@ -18,7 +18,7 @@ AddExecutable(
     NAME SSAO
     SRC ${SOURCES}
     INC Include
-    LIB RHI glfw GLM clipp ${PLATFORM_EXT_LIBS} Render stb tinyglft
+    LIB RHI glfw GLM clipp ${PLATFORM_EXT_LIBS} Render stb tinyglft assimp-lib
     DEP_TARGET ${PLATFORM_DEP_TARGET}
 )
 

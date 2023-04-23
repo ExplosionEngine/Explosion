@@ -173,11 +173,11 @@ Add3rdHeaderOnlyPackage(
 
 # assimp
 Add3rdCMakeProject(
-    NAME assimp
+    NAME assimp-lib
     PLATFORM All
     VERSION 5.2.5
     HASH d552b2aee5b91f51313e8f6eddf4ca2b293c40657eceb5876c92ada3a3083d9d
-    CMAKE_ARG -DASSIMP_BUILD_TESTS=OFF
+    CMAKE_ARG -DASSIMP_BUILD_TESTS=OFF -DASSIMP_WARNINGS_AS_ERRORS=OFF
     INCLUDE $<INSTALL_DIR>/include
     LINK $<INSTALL_DIR>/lib
     LIB assimp
