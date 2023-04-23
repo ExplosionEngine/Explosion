@@ -8,6 +8,7 @@
 #include <future>
 #include <utility>
 #include <unordered_set>
+#include <fstream>
 
 #include <Mirror/Meta.h>
 #include <Mirror/Type.h>
@@ -132,49 +133,119 @@ namespace Runtime {
         ~AssetManager();
 
         template <typename A>
-        AssetRef<A> LoadSync(const Uri& uri)
+        AssetRef<A> LoadOrGetSync(const Uri& uri)
         {
-            // TODO
+            return GetFromMemoryOrReadFromFile<A>(uri);
         }
 
         template <typename A>
-        void LoadSync(SoftRef<A>& softRef)
+        void LoadOrGetSync(SoftRef<A>& softRef)
         {
-            // TODO
+            softRef.liveAsset = GetFromMemoryOrReadFromFile<A>(softRef.uri);
         }
 
         template <typename A>
-        std::future<AssetRef<A>> LoadAsync(const Uri& uri)
+        std::future<AssetRef<A>> LoadOrGetAsync(const Uri& uri)
         {
-            // TODO
-            return {};
+            return threadPool.EmplaceTask([this, &uri]() -> auto {
+                return GetFromMemoryOrReadFromFile<A>(uri);
+            });
         }
 
         template <typename A, typename F>
-        void LoadAsync(const Uri& uri, F&& onLoadOver)
+        void LoadOrGetAsync(const Uri& uri, F&& onLoadOver)
         {
-            // TODO
+            threadPool.EmplaceTask([this, &uri, &onLoadOver]() -> void {
+                onLoadOver(GetFromMemoryOrReadFromFile<A>(uri));
+            });
         }
 
         template <typename A, typename F>
-        std::future<void> LoadAsync(SoftRef<A>& softRef)
+        std::future<void> LoadOrGetAsync(SoftRef<A>& softRef)
         {
-            // TODO
+            return threadPool.EmplaceTask([this, &softRef]() -> void {
+                softRef.liveAsset = GetFromMemoryOrReadFromFile<A>(softRef.uri);
+            });
         }
 
         template <typename A, typename F>
-        void LoadAsync(SoftRef<A>& softRef, F&& onLoadOver)
+        void LoadOrGetAsync(SoftRef<A>& softRef, F&& onLoadOver)
         {
-            // TODO
+            threadPool.EmplaceTask([this, &softRef, &onLoadOver]() -> void {
+                softRef.liveAsset = GetFromMemoryOrReadFromFile<A>(softRef.uri);
+                onLoadOver();
+            });
         }
 
         template <typename A>
-        void Save(AssetRef<A>& asset)
+        void SaveSync(AssetRef<A>& asset)
         {
-            // TODO
+            WriteToFile(asset);
+        }
+
+        template <typename A>
+        void SaveSync(SoftRef<A>& softRef)
+        {
+            Assert(softRef.liveAsset != nullptr);
+            WriteToFile(softRef);
+        }
+
+        template <typename A>
+        std::future<void> SaveAsync(AssetRef<A>& asset)
+        {
+            return threadPool.EmplaceTask([this, &asset]() -> void {
+                WriteToFile(asset);
+            });
+        }
+
+        template <typename A, typename F>
+        void SaveAsync(AssetRef<A>& asset, F&& onSaveOver)
+        {
+            threadPool.EmplaceTask([this, &asset, &onSaveOver]() -> void {
+                WriteToFile(asset);
+                onSaveOver();
+            });
+        }
+
+        template <typename A>
+        std::future<void> SaveAsync(SoftRef<A>& softRef)
+        {
+            Assert(softRef.liveAsset != nullptr);
+            return threadPool.EmplaceTask([this, &softRef]() -> void {
+                WriteToFile(softRef.liveAsset);
+            });
+        }
+
+        template <typename A, typename F>
+        void SaveAsync(SoftRef<A>& softRef, F&& onSaveOver)
+        {
+            Assert(softRef.liveAsset != nullptr);
+            threadPool.EmplaceTask([this, &softRef, &onSaveOver]() -> void {
+                WriteToFile(softRef.liveAsset);
+                onSaveOver();
+            });
         }
 
     private:
+        struct AssetFileElementAlign {
+            size_t nameSize;
+            size_t typeNameSize;
+            size_t metaDataSize;
+            size_t memorySize;
+        };
+
+        template <typename A>
+        AssetRef<A> GetFromMemoryOrReadFromFile(const Uri& uri)
+        {
+            auto iter = assets.find(uri);
+            if (iter == assets.end() || iter->second.Expired()) {
+                auto ref = ReadFromFile<A>(uri);
+                assets[uri] = ref;
+                return ref;
+            }
+            return iter->second.Lock().StaticCast<A>();
+        }
+
         template <typename A>
         AssetRef<A> ReadFromFile(const Uri& uri)
         {
@@ -184,7 +255,11 @@ namespace Runtime {
         template <typename A>
         void WriteToFile(AssetRef<A>& ref)
         {
-            // TODO
+            std::ofstream file(pathMapper.Map(ref->uri), std::ios::binary);
+            {
+                // TODO
+            }
+            file.close();
         }
 
         friend class Engine;
@@ -193,5 +268,6 @@ namespace Runtime {
 
         const Common::PathMapper& pathMapper;
         Common::ThreadPool threadPool;
+        std::unordered_map<Uri, Common::WeakRef<Asset>> assets;
     };
 }

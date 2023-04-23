@@ -74,29 +74,31 @@ namespace Common {
     template <typename T>
     class SharedRef {
     public:
+        template <typename T2> SharedRef(std::shared_ptr<T2>& inRef) : ref(inRef) {} // NOLINT
+        template <typename T2> SharedRef(std::shared_ptr<T2>&& inRef) : ref(std::move(inRef)) {} // NOLINT
         SharedRef(T* pointer) : ref(pointer) {} // NOLINT
-        SharedRef(std::shared_ptr<T>& inRef) : ref(inRef) {} // NOLINT
-        SharedRef(std::shared_ptr<T>&& inRef) : ref(std::move(inRef)) {} // NOLINT
         SharedRef(SharedRef& other) : ref(other.ref) {} // NOLINT
         SharedRef(SharedRef&& other) noexcept : ref(std::move(other.ref)) {} // NOLINT
         SharedRef() = default;
         ~SharedRef() = default;
 
-        SharedRef& operator=(T* pointer)
-        {
-            ref = std::shared_ptr<T>(pointer);
-            return *this;
-        }
-
-        SharedRef& operator=(std::shared_ptr<T>& inRef)
+        template <typename T2>
+        SharedRef& operator=(std::shared_ptr<T2>& inRef)
         {
             ref = inRef;
             return *this;
         }
 
-        SharedRef& operator=(std::shared_ptr<T>&& inRef)
+        template <typename T2>
+        SharedRef& operator=(std::shared_ptr<T2>&& inRef)
         {
             ref = std::move(inRef);
+            return *this;
+        }
+
+        SharedRef& operator=(T* pointer)
+        {
+            ref = std::shared_ptr<T>(pointer);
             return *this;
         }
 
@@ -147,6 +149,24 @@ namespace Common {
             return ref.use_count();
         }
 
+        template <typename T2>
+        SharedRef<T2> StaticCast()
+        {
+            return static_pointer_cast<T2, T>(ref);
+        }
+
+        template <typename T2>
+        SharedRef<T2> DynamicCast()
+        {
+            return dynamic_pointer_cast<T2, T>(ref);
+        }
+
+        template <typename T2>
+        SharedRef<T2> ReinterpretCast()
+        {
+            return reinterpret_pointer_cast<T2, T>(ref);
+        }
+
         std::shared_ptr<T>& GetStd()
         {
             return ref;
@@ -159,17 +179,18 @@ namespace Common {
     template <typename T>
     class WeakRef {
     public:
-        WeakRef(SharedRef<T>& inRef) : ref(inRef.GetStd()) {} // NOLINT
+        template <typename T2> WeakRef(SharedRef<T2>& inRef) : ref(inRef.GetStd()) {} // NOLINT
         WeakRef(WeakRef& other) : ref(other.ref) {} // NOLINT
         WeakRef(WeakRef&& other) noexcept : ref(std::move(other.ref)) {} // NOLINT
 
-        WeakRef& operator=(SharedRef<T>& inRef)
+        template <typename T2>
+        WeakRef& operator=(SharedRef<T2>& inRef)
         {
             ref = inRef.GetStd();
             return *this;
         }
 
-        WeakRef& operator=(WeakRef& other)
+        WeakRef& operator=(WeakRef& other) // NOLINT
         {
             ref = other.ref;
             return *this;
