@@ -156,7 +156,7 @@ namespace MirrorTool {
         std::filesystem::path filePath(outputFile);
         std::filesystem::path parentPath = filePath.parent_path();
         if (!std::filesystem::exists(parentPath)) {
-            std::filesystem::create_directory(parentPath);
+            std::filesystem::create_directories(parentPath);
         }
 
         std::ofstream file(outputFile);
