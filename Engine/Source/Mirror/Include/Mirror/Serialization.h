@@ -144,6 +144,36 @@ namespace Mirror {
         std::ifstream& file;
     };
 
+    class MIRROR_API AutoCloseFileSerializeStream : public FileSerializeStream {
+    public:
+        explicit AutoCloseFileSerializeStream(const std::string& filePath) : file(filePath), FileSerializeStream(file) {}
+
+        ~AutoCloseFileSerializeStream() override
+        {
+            if (file.is_open()) {
+                file.close();
+            }
+        }
+
+    private:
+        std::ofstream file;
+    };
+
+    class MIRROR_API AutoCloseFileDeserializeStream : public FileDeserializeStream {
+    public:
+        explicit AutoCloseFileDeserializeStream(const std::string& filePath) : file(filePath), FileDeserializeStream(file) {}
+
+        ~AutoCloseFileDeserializeStream() override
+        {
+            if (file.is_open()) {
+                file.close();
+            }
+        }
+
+    private:
+        std::ifstream file;
+    };
+
     // TODO math
     // TODO std container
 }
