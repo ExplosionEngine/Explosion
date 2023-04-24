@@ -15,7 +15,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <tiny_gltf.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -26,7 +25,7 @@ namespace Example {
         uint32_t width { 0 };
         uint32_t height { 0 };
         uint8_t  component { 0 };
-        std::vector<unsigned char> buffer;
+        std::vector<unsigned char> buffer {};
 
         bool isValid() const { return buffer.size() == (width * height * component); }
 
@@ -88,11 +87,7 @@ namespace Example {
             materialData(material)
                 {};
 
-        ~Mesh() {
-            if (materialData != nullptr) {
-                delete materialData;
-            }
-        }
+        // mustn`t delele material here, for different meshes can point to the same material
     };
 
     struct Node {

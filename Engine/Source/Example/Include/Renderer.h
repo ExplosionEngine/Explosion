@@ -3,31 +3,8 @@
 //
 
 #pragma once
-
-#include <string>
-#include <utility>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <functional>
-#include <unordered_map>
 #include <random>
-
-#include <clipp.h>
-#include <GLFW/glfw3.h>
-#if PLATFORM_WINDOWS
-#define GLFW_EXPOSE_NATIVE_WIN32
-#elif PLATFORM_MACOS
-#define GLFW_EXPOSE_NATIVE_COCOA
-#endif
-#include <GLFW/glfw3native.h>
-
-#include <Common/Utility.h>
-#include <Common/Debug.h>
-#include <Common/String.h>
-#include <Common/File.h>
-#include <RHI/RHI.h>
-#include <Render/ShaderCompiler.h>
+#include <array>
 
 #include <Application.h>
 #include <GLTFParser.h>
@@ -130,7 +107,7 @@ const unsigned int SSAO_NOISE_DIM = 4;
         UniqueRef<Buffer> indexBuffer = nullptr;
         UniqueRef<BufferView> indexBufferView = nullptr;
         std::array<Texture*, BACK_BUFFER_COUNT> swapChainTextures {};
-        std::array<UniqueRef<TextureView>, BACK_BUFFER_COUNT> swapChainTextureViews {};
+        std::array<Common::UniqueRef<TextureView>, BACK_BUFFER_COUNT> swapChainTextureViews {};
 
         UniqueRef<Buffer> quadVertexBuffer = nullptr;
         UniqueRef<BufferView> quadVertexBufferView = nullptr;

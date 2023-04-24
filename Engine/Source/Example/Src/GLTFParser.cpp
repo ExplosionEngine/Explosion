@@ -3,9 +3,8 @@
 //
 
 
-#define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
-#define TINYGLTF_NO_STB_IMAGE_WRITE
+#include <stb_image.h>
 
 #include <GLTFParser.h>
 
@@ -89,9 +88,6 @@ namespace Example {
 
             materialDatas.emplace_back(mMaterial);
         }
-
-        // create an empty material
-        materialDatas.emplace_back(new MaterialData);
     }
 
     TextureData* Model::LoadMaterialTexture(const aiScene* scene, const aiMaterial* mat, aiTextureType type, bool fromEmbedded)
@@ -136,7 +132,7 @@ namespace Example {
 
         mTexData->width = width;
         mTexData->height = height;
-        mTexData->component = 4;
+        mTexData->component = comp;
 
         stbi_image_free(data);
 
