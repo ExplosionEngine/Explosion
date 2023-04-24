@@ -40,8 +40,6 @@ namespace Example {
         TextureData* baseColorTexture = nullptr;
         TextureData* normalTexture = nullptr;
 
-        glm::vec4 baseColorFactor = glm::vec4(1.0f);
-
         ~MaterialData() {
             delete baseColorTexture;
             delete normalTexture;
@@ -101,12 +99,9 @@ namespace Example {
         Node* parent;
         std::vector<Node*> children;
 
-        glm::mat4 matrix;
+        glm::mat4 matrix {1.0f };
         std::vector<Mesh*> meshes;
 
-        glm::vec3 translation{};
-        glm::vec3 scale{ 1.0f };
-        glm::quat rotation{};
         glm::mat4 localMatrix();
         glm::mat4 getMatrix();
         ~Node();
@@ -134,7 +129,7 @@ namespace Example {
         }
 
     public:
-        std::vector<Node*> nodes;
+        Node* rootNode;
         std::vector<Node*> linearNodes;
 
         std::vector<MaterialData*> materialDatas;

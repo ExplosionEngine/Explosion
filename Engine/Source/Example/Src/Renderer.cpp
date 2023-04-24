@@ -953,7 +953,7 @@ namespace Example {
 
     void Renderer::GenerateRenderables()
     {
-        for (auto* node : model->nodes) {
+        for (auto* node : model->linearNodes) {
             for (auto* primitive : node->meshes) {
                 auto* renderable = new Renderable();
                 renderable->InitalizeWithPrimitive(this, primitive);

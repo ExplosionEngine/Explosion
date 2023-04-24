@@ -53,8 +53,26 @@ namespace Example {
 
         LoadMaterials(scene);
 
+        rootNode = new Node();
         for (unsigned int i = 0; i < scene->mRootNode->mNumChildren; i++) {
-            LoadNode(scene, scene->mRootNode->mChildren[i], nullptr);
+            LoadNode(scene, scene->mRootNode->mChildren[i], rootNode);
+        }
+
+        for (auto* node : linearNodes) {
+            const auto localMatrix = node->getMatrix();
+            for (auto* mesh : node->meshes) {
+                for (uint32_t i = 0; i < mesh->vertexCount; i++) {
+                    auto& vertex = raw_vertex_buffer[mesh->firstVertex + i];
+
+                    // pre_transform vertices
+                    vertex.pos = glm::vec3(localMatrix * glm::vec4(vertex.pos, 1.0f));
+                    vertex.normal = glm::normalize(glm::mat3(localMatrix) * vertex.normal);
+
+                    // pre_flipY
+                    vertex.pos.y *= -1.0f;
+                    vertex.normal.y *= -1.0f;
+                }
+            }
         }
     }
 
@@ -129,8 +147,6 @@ namespace Example {
     {
         auto* mNode = new Node {};
         mNode->parent = parent;
-        mNode->matrix = glm::mat4(1.0f);
-
         mNode->matrix = glm::transpose(glm::make_mat4x4(&node->mTransformation.a1));
 
         for (unsigned int m = 0; m < node->mNumChildren; m++) {
@@ -204,8 +220,6 @@ namespace Example {
 
         if (parent != nullptr) {
             parent->children.emplace_back(mNode);
-        } else {
-            nodes.emplace_back(mNode);
         }
 
         linearNodes.push_back(mNode);
@@ -217,9 +231,7 @@ namespace Example {
             delete materialData;
         }
 
-        for (auto* node : nodes) {
-            delete node;
-        }
+        delete rootNode;
 
         delete emptyTexture;
     }
