@@ -969,23 +969,23 @@ namespace Example {
         firstIndex = primitive->firstIndex;
         
         // upload diffuseColorMap
-        auto* data = primitive->materialData->baseColorTexture;
+        auto* texData = primitive->materialData->baseColorTexture;
 
         BufferCreateInfo bufferCreateInfo {};
-        bufferCreateInfo.size = data->size;
+        bufferCreateInfo.size = texData->GetSize();
         bufferCreateInfo.usages = BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
         auto* pixelBuffer = renderer->GetDevice()->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* mapData = pixelBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
-            memcpy(mapData, data->pixels, bufferCreateInfo.size);
+            memcpy(mapData, texData->buffer.data(), bufferCreateInfo.size);
             pixelBuffer->UnMap();
         }
 
         TextureCreateInfo texCreateInfo {};
         texCreateInfo.format = PixelFormat::RGBA8_UNORM;
         texCreateInfo.dimension = TextureDimension::T_2D;
-        texCreateInfo.mipLevels = data->mipLevels;
-        texCreateInfo.extent = { data->width, data->height, 1};
+        texCreateInfo.mipLevels = 1;
+        texCreateInfo.extent = { texData->width, texData->height, 1};
         texCreateInfo.samples = 1;
         texCreateInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::TEXTURE_BINDING;
         diffuseColorMap = renderer->GetDevice()->CreateTexture(texCreateInfo);
@@ -999,7 +999,7 @@ namespace Example {
         viewCreateInfo.aspect = TextureAspect::COLOR;
         diffuseColorMapView = diffuseColorMap->CreateTextureView(viewCreateInfo);
 
-        auto texCommandBuffer = renderer->GetDevice()->CreateCommandBuffer();
+        auto* texCommandBuffer = renderer->GetDevice()->CreateCommandBuffer();
         auto* commandEncoder = texCommandBuffer->Begin();
         // Dx need not to transition resource state before copy
         commandEncoder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::UNDEFINED, TextureState::COPY_DST));
@@ -1008,7 +1008,7 @@ namespace Example {
         subResourceInfo.arrayLayerNum = 1;
         subResourceInfo.baseArrayLayer = 0;
         subResourceInfo.aspect = TextureAspect::COLOR;
-        commandEncoder->CopyBufferToTexture(pixelBuffer, diffuseColorMap.Get(), &subResourceInfo, {data->width, data->height, 1});
+        commandEncoder->CopyBufferToTexture(pixelBuffer, diffuseColorMap.Get(), &subResourceInfo, {texData->width, texData->height, 1});
         commandEncoder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::COPY_DST, TextureState::SHADER_READ_ONLY));
         commandEncoder->End();
 

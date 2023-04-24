@@ -47,9 +47,82 @@ namespace Example {
             exit(-1);
         }
 
-        for (int i = 0; i < scene->mRootNode->mNumChildren; i++) {
+        directory = path.substr(0, path.find_last_of('/'));
+
+        assert(scene->HasMaterials() && scene->HasMeshes());
+
+        LoadMaterials(scene);
+
+        for (unsigned int i = 0; i < scene->mRootNode->mNumChildren; i++) {
             LoadNode(scene, scene->mRootNode->mChildren[i], nullptr);
         }
+    }
+
+    void Model::LoadMaterials(const aiScene* scene)
+    {
+        bool fromEmbedded = scene->HasTextures();
+
+        for (unsigned int i = 0; i < scene->mNumMaterials; i++) {
+            auto* material = scene->mMaterials[i];
+
+            auto* mMaterial = new MaterialData();
+            mMaterial->baseColorTexture = LoadMaterialTexture(scene, material, aiTextureType_DIFFUSE, fromEmbedded);
+            mMaterial->normalTexture = LoadMaterialTexture(scene, material, aiTextureType_NORMALS, fromEmbedded);
+
+            materialDatas.emplace_back(mMaterial);
+        }
+
+        // create an empty material
+        materialDatas.emplace_back(new MaterialData);
+    }
+
+    TextureData* Model::LoadMaterialTexture(const aiScene* scene, const aiMaterial* mat, aiTextureType type, bool fromEmbedded)
+    {
+        if (mat->GetTextureCount(type) == 0) {
+            return nullptr;
+        }
+
+        // though a material can has multiple textures of one type, here we get the first texture of each type
+        aiString fileName;
+        mat->GetTexture(type, 0, &fileName);
+
+        void* data;
+        int width;
+        int height;
+        int comp;
+        if (fromEmbedded) {
+            const auto* texData = scene->GetEmbeddedTexture(fileName.C_Str());
+            data = stbi_load_from_memory(reinterpret_cast<unsigned char *>(texData->pcData), texData->mWidth, &width, &height, &comp,0);
+        } else {
+            auto filePath = directory + '/' + std::string(fileName.C_Str());
+            data = stbi_load(filePath.c_str(), &width, &height, &comp,0);
+        }
+
+        auto* mTexData = new TextureData();
+
+        // Most device don`t support RGB only on Vulkan, so convert if necessary
+        if (comp == 3) {
+            mTexData->buffer.resize(width * height * 4);
+            auto* rgba = mTexData->buffer.data();
+            auto* rgb = static_cast<unsigned char*>(data);
+            for (uint32_t i = 0; i < width * height * 4; i++) {
+                for (uint32_t j = 0; j < 3; j++) {
+                    rgba[j] = rgb[j];
+                }
+                rgba += 4;
+                rgb += 4;
+            }
+        } else {
+            mTexData->buffer = std::vector<unsigned char> (static_cast<unsigned char*>(data), static_cast<unsigned char*>(data) + (width * height * comp));
+        }
+
+        mTexData->width = width;
+        mTexData->height = height;
+        mTexData->component = 4;
+
+        stbi_image_free(data);
+
+        return mTexData;
     }
 
     void Model::LoadNode(const aiScene* scene, aiNode* node, Node* parent)
@@ -60,11 +133,11 @@ namespace Example {
 
         mNode->matrix = glm::transpose(glm::make_mat4x4(&node->mTransformation.a1));
 
-        for (int m = 0; m < node->mNumChildren; m++) {
+        for (unsigned int m = 0; m < node->mNumChildren; m++) {
             LoadNode(scene, node->mChildren[m], mNode);
         }
 
-        for (int k = 0; k < node->mNumMeshes; k++) {
+        for (unsigned int k = 0; k < node->mNumMeshes; k++) {
             auto* mesh = scene->mMeshes[node->mMeshes[k]];
 
             auto indexStart = static_cast<uint32_t>(raw_index_buffer.size());
@@ -79,7 +152,7 @@ namespace Example {
             {
                 vertexCount = static_cast<uint32_t>(mesh->mNumVertices);
 
-                for (size_t i = 0; i < vertexCount; i++) {
+                for (uint32_t i = 0; i < vertexCount; i++) {
                     Vertex vert {};
                     glm::vec3 vector;
 
@@ -124,8 +197,7 @@ namespace Example {
                 }
 
             }
-
-            auto* mMesh = new Mesh(indexStart, indexCount, vertexStart, vertexCount, materialDatas.back());
+            auto* mMesh = new Mesh(indexStart, indexCount, vertexStart, vertexCount, materialDatas[mesh->mMaterialIndex]);
             mMesh->setDimensions(posMin, posMax);
             mNode->meshes.emplace_back(mMesh);
         }
@@ -141,10 +213,6 @@ namespace Example {
 
     Model::~Model()
     {
-        for (auto* textureData : textureDatas) {
-            delete textureData;
-        }
-
         for (auto* materialData : materialDatas) {
             delete materialData;
         }

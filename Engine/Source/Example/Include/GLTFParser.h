@@ -25,27 +25,27 @@ namespace Example {
     public:
         uint32_t width { 0 };
         uint32_t height { 0 };
-        uint32_t depth { 0 };
-        uint32_t mipLevels { 1 };
-        uint32_t arrayLayers { 1 };
-        size_t   size { 0 };
-        void*    pixels { nullptr };
+        uint8_t  component { 0 };
+        std::vector<unsigned char> buffer;
 
-        bool isValid() const { return pixels != nullptr; }
+        bool isValid() const { return buffer.size() == (width * height * component); }
+
+        uint32_t GetSize() {
+            return buffer.size();
+        }
     };
 
     struct MaterialData
     {
-        TextureData* baseColorTexture;
-        TextureData* metallicRoughnessTexture;
-        TextureData* normalTexture;
-        TextureData* occlusionTexture;
-        TextureData* emissiveTexture;
+        TextureData* baseColorTexture = nullptr;
+        TextureData* normalTexture = nullptr;
 
-        float alphaCutoff = 1.0f;
-        float metallicFactor = 1.0f;
-        float roughnessFactor = 1.0f;
         glm::vec4 baseColorFactor = glm::vec4(1.0f);
+
+        ~MaterialData() {
+            delete baseColorTexture;
+            delete normalTexture;
+        }
     };
 
     struct Vertex {
@@ -120,38 +120,29 @@ namespace Example {
 
         void LoadFromFile(std::string path);
         void LoadNode(const aiScene* scene, aiNode* node, Node* parent);
-//        void LoadImages(tinygltf::Model& model);
-//        void LoadMaterials(tinygltf::Model& model);
+        void LoadMaterials(const aiScene* scene);
 
     private:
-        TextureData* GetTexture(uint32_t index)
-        {
-            if (index < textureDatas.size()) {
-                return textureDatas[index];
-            }
-            return nullptr;
-        }
+        TextureData* LoadMaterialTexture(const aiScene* scene, const aiMaterial* mat, aiTextureType type, bool fromEmbedded);
 
         void CreateEmptyTexture()
         {
             emptyTexture->width = 1;
             emptyTexture->height = 1;
-            emptyTexture->mipLevels = 1;
-            emptyTexture->size = 4;
-            emptyTexture->pixels = new unsigned char[emptyTexture->size];
-
-            memset(emptyTexture->pixels, 0, emptyTexture->size);
+            emptyTexture->component = 4;
+            emptyTexture->buffer = std::vector<unsigned char> { 0, 0, 0, 0 };
         }
 
     public:
         std::vector<Node*> nodes;
         std::vector<Node*> linearNodes;
 
-        std::vector<TextureData*> textureDatas;
         std::vector<MaterialData*> materialDatas;
 
         std::vector<uint32_t> raw_index_buffer;
         std::vector<Vertex> raw_vertex_buffer;
+
+        std::string directory;
     private:
 
         TextureData* emptyTexture;
