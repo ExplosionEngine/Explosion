@@ -63,7 +63,7 @@ const unsigned int SSAO_NOISE_DIM = 4;
 
         Queue* GetQueue()
         {
-            return graphicsQueue.Get();
+            return graphicsQueue;
         }
 
         static const uint8_t BACK_BUFFER_COUNT = 2;
@@ -97,10 +97,12 @@ const unsigned int SSAO_NOISE_DIM = 4;
         RHIType rhiType;
         Camera camera;
 
+        PixelFormat swapChainFormat = PixelFormat::MAX;
         Instance* instance = nullptr;
         Gpu* gpu = nullptr;
         UniqueRef<Device> device = nullptr;
-        UniqueRef<Queue> graphicsQueue = nullptr;
+        Queue* graphicsQueue = nullptr;
+        UniqueRef<Surface> surface = nullptr;
         UniqueRef<SwapChain> swapChain = nullptr;
         UniqueRef<Buffer> vertexBuffer = nullptr;
         UniqueRef<BufferView> vertexBufferView = nullptr;

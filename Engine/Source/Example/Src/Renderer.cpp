@@ -66,13 +66,30 @@ namespace Example {
 
     void Renderer::CreateSwapChain()
     {
+        static std::vector<PixelFormat> swapChainFormatQualifiers = {
+            PixelFormat::RGBA8_UNORM,
+            PixelFormat::BGRA8_UNORM
+        };
+
+        SurfaceCreateInfo surfaceCreateInfo {};
+        surfaceCreateInfo.window = app->GetPlatformWindow();
+        surface = device->CreateSurface(surfaceCreateInfo);
+
+        for (auto format : swapChainFormatQualifiers) {
+            if (device->CheckSwapChainFormatSupport(surface.Get(), format)) {
+                swapChainFormat = format;
+                break;
+            }
+        }
+        Assert(swapChainFormat != PixelFormat::MAX);
+
         SwapChainCreateInfo swapChainCreateInfo {};
-        swapChainCreateInfo.format = PixelFormat::RGBA8_UNORM;
+        swapChainCreateInfo.format = swapChainFormat;
         swapChainCreateInfo.presentMode = PresentMode::IMMEDIATELY;
         swapChainCreateInfo.textureNum = BACK_BUFFER_COUNT;
         swapChainCreateInfo.extent = {app->width, app->height};
-        swapChainCreateInfo.window = app->GetPlatformWindow();
-        swapChainCreateInfo.presentQueue = graphicsQueue.Get();
+        swapChainCreateInfo.surface = surface.Get();
+        swapChainCreateInfo.presentQueue = graphicsQueue;
         swapChain = device->CreateSwapChain(swapChainCreateInfo);
 
         for (auto i = 0; i < swapChainCreateInfo.textureNum; i++) {
@@ -750,7 +767,7 @@ namespace Example {
         // composition
         {
             ColorTargetState colorTargetState {};
-            colorTargetState.format = PixelFormat::BGRA8_UNORM;
+            colorTargetState.format = swapChainFormat;
             colorTargetState.writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
             
             DepthStencilState depthStencilState {};

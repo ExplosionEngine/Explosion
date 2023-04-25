@@ -8,7 +8,7 @@ endif()
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(PLATFORM_DEP_TARGET RHI-DirectX12 RHI-Vulkan)
 else()
-    set(PLATFORM_DEP_TARGET RHI-Metal RHI-Vulkan)
+    set(PLATFORM_DEP_TARGET RHI-Vulkan)
 endif()
 
 file(GLOB SOURCES Src/*.cpp)
