@@ -1,9 +1,9 @@
 //
-// Created by 兰俊康 on 2023/3/8.
+// Created by Junkang on 2023/3/8.
 //
 
 
-#include <Renderer.h>
+#include "Renderer.h"
 
 using namespace RHI;
 
@@ -598,7 +598,7 @@ namespace Example {
         info.entryPoint = entryPoint;
         info.stage = shaderStage;
         Render::ShaderCompileOptions options;
-        options.includePaths.emplace_back("shaders");
+        options.includePaths.emplace_back("SSAO/shaders");
         if (rhiType == RHI::RHIType::DIRECTX_12) {
             options.byteCodeType = Render::ShaderByteCodeType::DXIL;
         } else if (rhiType == RHI::RHIType::VULKAN) {
@@ -644,12 +644,12 @@ namespace Example {
 
     void Renderer::CreatePipeline()
     {
-        shaderModules.gBufferVert     = CompileShader("shaders/gbufferVs.hlsl", "VSMain", ShaderStageBits::S_VERTEX);
-        shaderModules.gBufferFrag     = CompileShader("shaders/gbufferPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
-        shaderModules.quadVert        = CompileShader("shaders/fullscreenVs.hlsl", "VSMain", ShaderStageBits::S_VERTEX);
-        shaderModules.ssaoFrag        = CompileShader("shaders/ssaoPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
-        shaderModules.ssaoBlurFrag    = CompileShader("shaders/blurPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
-        shaderModules.compositionFrag = CompileShader("shaders/compositionPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
+        shaderModules.gBufferVert     = CompileShader("SSAO/shaders/gbufferVs.hlsl", "VSMain", ShaderStageBits::S_VERTEX);
+        shaderModules.gBufferFrag     = CompileShader("SSAO/shaders/gbufferPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
+        shaderModules.quadVert        = CompileShader("SSAO/shaders/fullscreenVs.hlsl", "VSMain", ShaderStageBits::S_VERTEX);
+        shaderModules.ssaoFrag        = CompileShader("SSAO/shaders/ssaoPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
+        shaderModules.ssaoBlurFrag    = CompileShader("SSAO/shaders/blurPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
+        shaderModules.compositionFrag = CompileShader("SSAO/shaders/compositionPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
 
         // Gbuffer vertex
         std::array<VertexAttribute, 4> vertexAttributes {};
@@ -961,7 +961,7 @@ namespace Example {
     void Renderer::LoadGLTF()
     {
         model = new Model();
-        model->LoadFromFile("models/voyager.gltf");
+        model->LoadFromFile("SSAO/models/voyager.gltf");
     }
 
     Renderable::~Renderable()

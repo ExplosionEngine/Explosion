@@ -5,7 +5,6 @@ add_subdirectory(Render)
 add_subdirectory(Runtime)
 add_subdirectory(Rendering)
 add_subdirectory(Launcher)
-add_subdirectory(Example)
 
 add_subdirectory(RHI-Dummy)
 add_subdirectory(RHI-Vulkan)

@@ -1,12 +1,12 @@
 //
-// Created by 兰俊康 on 2023/3/9.
+// Created by Junkang on 2023/3/9.
 //
 
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include <GLTFParser.h>
+#include "GLTFParser.h"
 
 namespace Example {
     glm::mat4 Node::localMatrix()
