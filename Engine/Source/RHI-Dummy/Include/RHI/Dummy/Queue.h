@@ -9,6 +9,7 @@
 namespace RHI::Dummy {
     class DummyQueue : public Queue {
     public:
+        NON_COPYABLE(DummyQueue)
         DummyQueue();
         ~DummyQueue() override;
 

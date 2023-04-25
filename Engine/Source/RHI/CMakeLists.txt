@@ -18,8 +18,10 @@ function(AddRHISample)
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         set(PLATFORM_DEP_TARGET RHI-DirectX12 RHI-Vulkan)
+#    elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+#        set(PLATFORM_DEP_TARGET RHI-Metal RHI-Vulkan)
     else()
-        set(PLATFORM_DEP_TARGET RHI-Metal RHI-Vulkan)
+        set(PLATFORM_DEP_TARGET RHI-Vulkan)
     endif()
 
     foreach(S ${PARAMS_SHADER})

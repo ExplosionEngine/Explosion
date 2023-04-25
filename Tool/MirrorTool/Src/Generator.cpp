@@ -41,11 +41,20 @@ namespace MirrorTool {
         return stream.str();
     }
 
-    static std::string GetClassCode(const ClassInfo& clazz)
+    static std::string GetClassCode(const ClassInfo& clazz, bool& firstBlock)
     {
+        if (clazz.metaDatas.empty() && clazz.staticVariables.empty() && clazz.staticFunctions.empty() && clazz.variables.empty() && clazz.functions.empty()) {
+            return "";
+        }
+
         std::stringstream stream;
         const std::string fullName = GetFullName(clazz);
-        stream << std::endl << std::endl << Tab<1>() << "Mirror::Registry::Get()";
+        if (firstBlock) {
+            firstBlock = false;
+        } else {
+            stream << std::endl << std::endl;
+        }
+        stream << Tab<1>() << "Mirror::Registry::Get()";
         stream << std::endl << Tab<2>() << fmt::format(R"(.Class<{}>("{}"))", fullName, fullName);
         stream << GetMetaDataCode<3>(clazz);
         for (const auto& staticVariable : clazz.staticVariables) {
@@ -72,43 +81,51 @@ namespace MirrorTool {
         return stream.str();
     }
 
-    template <bool EndlOnStart>
-    static std::string GetNamespaceCode(const NamespaceInfo& ns) // NOLINT
+    static std::string GetNamespaceCode(const NamespaceInfo& ns, bool& firstBlock) // NOLINT
     {
+        if (ns.metaDatas.empty() && ns.variables.empty() && ns.functions.empty() && ns.classes.empty() && ns.namespaces.empty()) {
+            return "";
+        }
+
         std::stringstream stream;
-        if (EndlOnStart) {
-            stream << std::endl << std::endl;
+        if (!ns.metaDatas.empty() || !ns.metaDatas.empty()) {
+            if (firstBlock) {
+                firstBlock = false;
+            } else {
+                stream << std::endl << std::endl;
+            }
+            stream << Tab<1>() << "Mirror::Registry::Get()";
+            stream << std::endl << Tab<2>() << ".Global()";
+            stream << GetMetaDataCode<3>(ns);
+            for (const auto& variable : ns.variables) {
+                const std::string variableName = GetFullName(variable);
+                stream << std::endl << Tab<3>() << fmt::format(R"(.Variable<&{}>("{}"))", variableName, variableName);
+                stream << GetMetaDataCode<4>(variable);
+            }
+            for (const auto& function : ns.functions) {
+                const std::string functionName = GetFullName(function);
+                stream << std::endl << Tab<3>() << fmt::format(R"(.Function<&{}>("{}"))", functionName, functionName);
+                stream << GetMetaDataCode<4>(function);
+            }
+            stream << ";";
         }
-        stream << Tab<1>() << "Mirror::Registry::Get()";
-        stream << std::endl << Tab<2>() << ".Global()";
-        stream << GetMetaDataCode<3>(ns);
-        for (const auto& variable : ns.variables) {
-            const std::string variableName = GetFullName(variable);
-            stream << std::endl << Tab<3>() << fmt::format(R"(.Variable<&{}>("{}"))", variableName, variableName);
-            stream << GetMetaDataCode<4>(variable);
-        }
-        for (const auto& function : ns.functions) {
-            const std::string functionName = GetFullName(function);
-            stream << std::endl << Tab<3>() << fmt::format(R"(.Function<&{}>("{}"))", functionName, functionName);
-            stream << GetMetaDataCode<4>(function);
-        }
-        stream << ";";
 
         for (const auto& clazz : ns.classes) {
-            stream << GetClassCode(clazz);
+            stream << GetClassCode(clazz, firstBlock);
         }
         for (const auto& childNs : ns.namespaces) {
-            stream << GetNamespaceCode<true>(childNs);
+            stream << GetNamespaceCode(childNs, firstBlock);
         }
         return stream.str();
     }
 
     static std::string GetMetaCode(const MetaInfo& meta)
     {
+        bool firstBlock = true;
         std::stringstream stream;
-        stream << GetNamespaceCode<false>(meta.global);
+        stream << GetNamespaceCode(meta.global, firstBlock);
         for (const auto& ns : meta.namespaces) {
-            stream << GetNamespaceCode<true>(ns);
+            stream << GetNamespaceCode(ns, firstBlock);
         }
         return stream.str();
     }

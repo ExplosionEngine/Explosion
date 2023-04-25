@@ -131,7 +131,8 @@ namespace Runtime {
     public:
         ~AssetManager();
 
-        void LoadSync(const Uri& uri)
+        template <typename A>
+        AssetRef<A> LoadSync(const Uri& uri)
         {
             // TODO
         }
@@ -174,31 +175,23 @@ namespace Runtime {
         }
 
     private:
+        template <typename A>
+        AssetRef<A> ReadFromFile(const Uri& uri)
+        {
+            // TODO
+        }
+
+        template <typename A>
+        void WriteToFile(AssetRef<A>& ref)
+        {
+            // TODO
+        }
+
         friend class Engine;
 
         explicit AssetManager(const Common::PathMapper& inPathMapper);
 
         const Common::PathMapper& pathMapper;
         Common::ThreadPool threadPool;
-    };
-
-    class AssetSerializeContext {
-    public:
-        explicit AssetSerializeContext(AssetManager& inManager) : assetManager(inManager) {}
-
-        template <typename A>
-        AssetSerializeContext& operator<<(AssetRef<A>& ref)
-        {
-            // TODO
-        }
-
-        template <typename A>
-        AssetSerializeContext& operator>>(AssetRef<A>& ref)
-        {
-            // TODO
-        }
-
-    private:
-        AssetManager& assetManager;
     };
 }

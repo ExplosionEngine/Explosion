@@ -23,6 +23,7 @@ namespace RHI::Vulkan {
 
         size_t GetQueueNum(QueueType type) override;
         Queue* GetQueue(QueueType type, size_t index) override;
+        Surface* CreateSurface(const RHI::SurfaceCreateInfo &createInfo) override;
         SwapChain* CreateSwapChain(const SwapChainCreateInfo& createInfo) override;
         void Destroy() override;
         Buffer* CreateBuffer(const BufferCreateInfo& createInfo) override;
@@ -36,6 +37,8 @@ namespace RHI::Vulkan {
         GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
         Fence* CreateFence() override;
+
+        bool CheckSwapChainFormatSupport(Surface* surface, PixelFormat format) override;
 
         vk::Device GetVkDevice();
 

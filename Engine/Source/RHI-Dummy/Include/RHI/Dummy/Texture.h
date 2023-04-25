@@ -9,8 +9,9 @@
 namespace RHI::Dummy {
     class DummyTexture : public Texture {
     public:
+        NON_COPYABLE(DummyTexture)
         explicit DummyTexture(const TextureCreateInfo& createInfo);
-        DummyTexture() {}
+        DummyTexture() = default;
         ~DummyTexture() override;
 
         TextureView* CreateTextureView(const TextureViewCreateInfo& createInfo) override;

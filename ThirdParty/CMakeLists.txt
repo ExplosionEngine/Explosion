@@ -33,7 +33,7 @@ Add3rdBinaryPackage(
     HASH 23ded0e6155a8ea265da84bd62f7a45cc3fc637fb1eeba61a5b9430fa704e4b5
     INCLUDE $<SOURCE_DIR>/Include
     LINK $<SOURCE_DIR>/Lib
-    LIB vulkan-1 spirv-cross-core spirv-cross-msl spirv-cross-glsl
+    LIB vulkan-1
 )
 Add3rdBinaryPackage(
     NAME VulkanSDK
@@ -42,7 +42,7 @@ Add3rdBinaryPackage(
     HASH a5c63a4f29984540efa00190240d31b59539413cf4783792bd9f53207f4f7d07
     INCLUDE $<SOURCE_DIR>/macOS/include
     LINK $<SOURCE_DIR>/macOS/lib
-    LIB vulkan.1 spirv-cross-core spirv-cross-msl spirv-cross-glsl
+    LIB vulkan.1
 )
 
 # DXC
@@ -155,13 +155,6 @@ Add3rdHeaderOnlyPackage(
     INCLUDE $<SOURCE_DIR>
 )
 
-Add3rdHeaderOnlyPackage(
-    NAME tinyglft
-    PLATFORM All
-    VERSION 2.8.3
-    INCLUDE $<SOURCE_DIR>
-)
-
 # fmt-lib
 Add3rdHeaderOnlyPackage(
     NAME fmt-lib
@@ -171,12 +164,26 @@ Add3rdHeaderOnlyPackage(
     INCLUDE $<SOURCE_DIR>/include
 )
 
+# spirv-cross
+Add3rdCMakeProject(
+    NAME spirv-cross
+    PLATFORM All
+    VERSION 1.3.243.0
+    HASH 2b09e3cf9357156e8a4f1bd7cde3771184f652ec3b632993495748112a7f4665
+    CMAKE_ARG -DSPIRV_CROSS_CLI=OFF -DSPIRV_CROSS_ENABLE_C_API=OFF -DSPIRV_CROSS_ENABLE_TESTS=OFF
+    INCLUDE $<INSTALL_DIR>/include
+    LINK $<INSTALL_DIR>/lib
+    LIB spirv-cross-core$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
+    spirv-cross-msl$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
+    spirv-cross-glsl$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
+)
+
 # assimp
 Add3rdCMakeProject(
     NAME assimp-lib
     PLATFORM All
     VERSION 5.2.5
-    HASH d552b2aee5b91f51313e8f6eddf4ca2b293c40657eceb5876c92ada3a3083d9d
+    HASH ae55d305a607ad8cc598c306663796dbf6e50a3cb0b952fe1ea3175f0f342ad9
     CMAKE_ARG -DASSIMP_BUILD_TESTS=OFF -DASSIMP_WARNINGS_AS_ERRORS=OFF
     INCLUDE $<INSTALL_DIR>/include
     LINK $<INSTALL_DIR>/lib

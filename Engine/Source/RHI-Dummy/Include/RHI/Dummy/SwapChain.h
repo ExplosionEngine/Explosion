@@ -13,6 +13,7 @@ namespace RHI::Dummy {
 
     class DummySwapChain : public SwapChain {
     public:
+        NON_COPYABLE(DummySwapChain)
         explicit DummySwapChain(const SwapChainCreateInfo& createInfo);
         ~DummySwapChain() override;
 

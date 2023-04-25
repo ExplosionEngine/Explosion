@@ -73,7 +73,7 @@ namespace RHI::Metal {
         drawables.resize(createInfo.textureNum);
         textures.resize(createInfo.textureNum);
         for (uint32_t i = 0; i < createInfo.textureNum; ++i) {
-            textures[i] = std::make_unique<MTLTexture>(mtlDevice);
+            textures[i] = Common::MakeUnique<MTLTexture>(mtlDevice);
         }
 
         event = [mtlDevice.GetDevice() newEvent];

@@ -199,4 +199,16 @@ namespace Common {
     private:
         std::weak_ptr<T> ref;
     };
+
+    template <typename T, typename... Args>
+    Common::UniqueRef<T> MakeUnique(Args&&... args)
+    {
+        return Common::UniqueRef<T>(new T(std::forward<Args>(args)...));
+    }
+
+    template <typename T, typename... Args>
+    Common::SharedRef<T> MakeShared(Args&&... args)
+    {
+        return Common::SharedRef<T>(new T(std::forward<Args>(args)...));
+    }
 }

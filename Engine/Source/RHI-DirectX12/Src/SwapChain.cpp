@@ -11,6 +11,7 @@
 #include <RHI/DirectX12/Queue.h>
 #include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Texture.h>
+#include <RHI/DirectX12/Surface.h>
 
 namespace RHI::DirectX12 {
     static uint8_t GetSyncInterval(PresentMode presentMode)
@@ -52,6 +53,9 @@ namespace RHI::DirectX12 {
     {
         auto& instance = device.GetGpu().GetInstance();
         auto* dx12Queue = dynamic_cast<DX12Queue*>(createInfo.presentQueue);
+        Assert(dx12Queue != nullptr);
+        auto* dx12Surface = dynamic_cast<DX12Surface*>(createInfo.surface);
+        Assert(dx12Surface != nullptr);
 
         DXGI_SWAP_CHAIN_DESC1 desc {};
         desc.BufferCount = createInfo.textureNum;
@@ -65,7 +69,7 @@ namespace RHI::DirectX12 {
         ComPtr<IDXGISwapChain1> dx12SwapChain1;
         bool success = SUCCEEDED(instance.GetDX12Factory()->CreateSwapChainForHwnd(
             dx12Queue->GetDX12CommandQueue().Get(),
-            static_cast<HWND>(createInfo.window),
+            dx12Surface->GetWin32WindowHandle(),
             &desc,
             /* TODO fullscreen */ nullptr,
             nullptr,
@@ -83,7 +87,7 @@ namespace RHI::DirectX12 {
             ComPtr<ID3D12Resource> dx12Resource;
             bool success = SUCCEEDED(dx12SwapChain->GetBuffer(i, IID_PPV_ARGS(&dx12Resource)));
             Assert(success);
-            textures[i] = std::make_unique<DX12Texture>(device, format, std::move(dx12Resource));
+            textures[i] = new DX12Texture(device, format, std::move(dx12Resource));
         }
     }
 }
