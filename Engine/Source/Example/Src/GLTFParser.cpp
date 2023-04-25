@@ -39,7 +39,7 @@ namespace Example {
     void Model::LoadFromFile(const std::string path)
     {
         Assimp::Importer importer;
-        const auto* scene = importer.ReadFile(path, aiProcess_Triangulate);
+        const auto* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
             std::cerr << "failed to load gltf file: " << path << std::endl;
@@ -124,7 +124,7 @@ namespace Example {
                     rgba[j] = rgb[j];
                 }
                 rgba += 4;
-                rgb += 4;
+                rgb += 3;
             }
         } else {
             mTexData->buffer = std::vector<unsigned char> (static_cast<unsigned char*>(data), static_cast<unsigned char*>(data) + (width * height * comp));
@@ -132,7 +132,7 @@ namespace Example {
 
         mTexData->width = width;
         mTexData->height = height;
-        mTexData->component = comp;
+        mTexData->component = 4;
 
         stbi_image_free(data);
 
@@ -159,6 +159,19 @@ namespace Example {
 
             glm::vec3 posMin {};
             glm::vec3 posMax {};
+            
+            // node indices
+            {
+                auto indexOffset = static_cast<uint32_t>(raw_vertex_buffer.size());
+                
+                for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+                    const auto& face = mesh->mFaces[i];
+                    for (unsigned int j = 0; j < face.mNumIndices; j++) {
+                        raw_index_buffer.emplace_back(face.mIndices[j] + indexOffset);
+                        indexCount++;
+                    }
+                }
+            }
 
             // node vertices
             {
@@ -192,25 +205,20 @@ namespace Example {
                         vert.color.g = mesh->mColors[0][i].g;
                         vert.color.b = mesh->mColors[0][i].b;
                         vert.color.a = mesh->mColors[0][i].a;
+                    } else {
+                        vert.color = glm::vec4(1.0f);
                     }
 
                     raw_vertex_buffer.emplace_back(vert);
                 }
             }
 
-            // node indices
-            {
-                for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
-                    const auto& face = mesh->mFaces[i];
-                    for (unsigned int j = 0; j < face.mNumIndices; j++) {
-                        raw_index_buffer.emplace_back(face.mIndices[j]);
-                        indexCount++;
-                    }
-                }
-
-            }
             auto* mMesh = new Mesh(indexStart, indexCount, vertexStart, vertexCount, materialDatas[mesh->mMaterialIndex]);
-            mMesh->setDimensions(posMin, posMax);
+            mMesh->setDimensions(
+                     glm::make_vec3(&mesh->mAABB.mMin.x),
+                     glm::make_vec3(&mesh->mAABB.mMax.x)
+                     );
+
             mNode->meshes.emplace_back(mMesh);
         }
 

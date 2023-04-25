@@ -37,8 +37,8 @@ VSOutput VSMain(VSInput input)
 	output.WorldPos = mul(mul(input.Pos, model), view).xyz;
 
 	// Normal in view space
-	float3x3 normalMatrix = (float3x3)mul(view, model);
-	output.Normal = mul(normalMatrix, input.Normal);
+	float3x3 normalMatrix = (float3x3)mul(model, view);
+	output.Normal = mul(input.Normal, normalMatrix);
 
 	output.Color = input.Color;
 	return output;
