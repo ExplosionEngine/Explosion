@@ -10,6 +10,40 @@
 #include <Common/Debug.h>
 #include <Mirror/TypeInfo.h>
 
+namespace Mirror::Internal {
+    struct AnyRtti {
+        using DetorFunc = void(void*) noexcept;
+        using CopyFunc = void(void*, const void*);
+        using MoveFunc = void(void*, void*) noexcept;
+
+        template <class T>
+        static void DetorImpl(void* const object) noexcept {
+            reinterpret_cast<T*>(object)->~T();
+        }
+
+        template <class T>
+        static void CopyImpl(void* const object, const void* const other) {
+            new(object) T(*reinterpret_cast<const T*>(other));
+        }
+
+        template <class T>
+        static void MoveImpl(void* const object, void* const other) noexcept {
+            new(object) T(std::move(*reinterpret_cast<const T*>(other)));
+        }
+
+        DetorFunc* detor;
+        CopyFunc* copy;
+        MoveFunc* move;
+    };
+
+    template <class T>
+    inline constexpr AnyRtti anyRttiImpl = {
+        &AnyRtti::DetorImpl<T>,
+        &AnyRtti::CopyImpl<T>,
+        &AnyRtti::MoveImpl<T>
+    };
+}
+
 namespace Mirror {
     class Any {
     public:
@@ -17,8 +51,8 @@ namespace Mirror {
 
         ~Any()
         {
-            if (detor) {
-                detor();
+            if (rtti != nullptr) {
+                rtti->detor(data.data());
             }
         }
 
@@ -44,25 +78,24 @@ namespace Mirror {
         {
             isReference = inAny.isReference;
             typeInfo = inAny.typeInfo;
-            detor = inAny.detor;
-            copy = inAny.copy;
-            move = inAny.move;
-            data = inAny.data;
+            rtti = inAny.rtti;
+            data.resize(inAny.data.size());
+            rtti->copy(data.data(), inAny.data.data());
         }
 
         Any(Any&& inAny) noexcept
         {
             isReference = inAny.isReference;
             typeInfo = inAny.typeInfo;
-            detor = inAny.detor;
-            copy = inAny.copy;
-            move = inAny.move;
-            data = std::move(inAny.data);
+            rtti = inAny.rtti;
+            data.resize(inAny.data.size());
+            rtti->move(data.data(), inAny.data.data());
         }
 
         template <typename T>
         Any& operator=(T&& value)
         {
+            Reset();
             ConstructValue(std::forward<T>(value));
             return *this;
         }
@@ -70,6 +103,7 @@ namespace Mirror {
         template <typename T>
         Any& operator=(const std::reference_wrapper<T>& ref)
         {
+            Reset();
             ConstructRef(ref);
             return *this;
         }
@@ -77,6 +111,7 @@ namespace Mirror {
         template <typename T>
         Any& operator=(std::reference_wrapper<T>&& ref)
         {
+            Reset();
             ConstructRef(ref);
             return *this;
         }
@@ -86,15 +121,21 @@ namespace Mirror {
             if (&inAny == this) {
                 return *this;
             }
-            Assert(typeInfo->id == inAny.typeInfo->id);
-            copy(inAny.data.data());
+            Reset();
+            isReference = inAny.isReference;
+            typeInfo = inAny.typeInfo;
+            rtti = inAny.rtti;
+            rtti->copy(data.data(), inAny.data.data());
             return *this;
         }
 
         Any& operator=(Any&& inAny) noexcept
         {
-            Assert(typeInfo->id == inAny.typeInfo->id);
-            move(inAny.data.data());
+            Reset();
+            isReference = inAny.isReference;
+            typeInfo = inAny.typeInfo;
+            rtti = inAny.rtti;
+            rtti->move(data.data(), inAny.data.data());
             return *this;
         }
 
@@ -140,26 +181,28 @@ namespace Mirror {
             return CanCastTo<T>() ? reinterpret_cast<std::remove_cvref_t<T>*>(data.data()) : nullptr;
         }
 
+        void Reset()
+        {
+            if (rtti != nullptr) {
+                rtti->detor(data.data());
+            }
+            isReference = false;
+            typeInfo = nullptr;
+            rtti = nullptr;
+        }
+
     private:
         template <typename T>
         void ConstructValue(T&& value)
         {
             using RemoveCVRefType = std::remove_cvref_t<T>;
 
-            if (detor) {
-                detor();
-            }
             isReference = false;
             typeInfo = GetTypeInfo<RemoveCVRefType>();
-            detor = [this]() -> void { reinterpret_cast<RemoveCVRefType*>(data.data())->~RemoveCVRefType(); };
-            copy = [this](const void* inData) -> void { new(data.data()) RemoveCVRefType(*reinterpret_cast<const RemoveCVRefType*>(inData)); };
-            move = [this](const void* inData) -> void { new(data.data()) RemoveCVRefType(std::move(*reinterpret_cast<const RemoveCVRefType*>(inData))); };
+            rtti = &Internal::anyRttiImpl<RemoveCVRefType>;
+
             data.resize(sizeof(RemoveCVRefType));
-            if constexpr (std::is_rvalue_reference_v<T>) {
-                move(&value);
-            } else {
-                copy(&value);
-            }
+            new(data.data()) RemoveCVRefType(std::forward<T>(value));
         }
 
         template <typename T>
@@ -167,23 +210,17 @@ namespace Mirror {
         {
             using RefWrapperType = std::reference_wrapper<T>;
 
-            if (detor) {
-                detor();
-            }
             isReference = true;
             typeInfo = GetTypeInfo<T>();
-            detor = []() -> void {};
-            copy = [this](const void* inData) -> void { new(data.data()) RefWrapperType(*reinterpret_cast<const RefWrapperType*>(inData)); };
-            move = [this](const void* inData) -> void { new(data.data()) RefWrapperType(std::move(*reinterpret_cast<const RefWrapperType*>(inData))); };
+            rtti = &Internal::anyRttiImpl<RefWrapperType>;
+
             data.resize(sizeof(RefWrapperType));
-            copy(&ref);
+            new(data.data()) RefWrapperType(ref);
         }
 
         bool isReference = false;
         TypeInfo* typeInfo = nullptr;
-        std::function<void()> detor;
-        std::function<void(const void*)> move;
-        std::function<void(const void*)> copy;
+        const Internal::AnyRtti* rtti;
         std::vector<uint8_t> data;
     };
 }
