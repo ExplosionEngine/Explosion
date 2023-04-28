@@ -340,4 +340,63 @@ namespace Mirror {
             iter->second.Deserialize(stream, obj, customDeserializer);
         }
     }
+
+    EnumElement::EnumElement(std::string inName, EnumElement::Getter inGetter, EnumElement::Comparer inComparer)
+        : Type(std::move(inName))
+        , getter(std::move(inGetter))
+        , comparer(std::move(inComparer))
+    {
+    }
+
+    EnumElement::~EnumElement() = default;
+
+    Any EnumElement::Get() const
+    {
+        return getter();
+    }
+
+    bool EnumElement::Compare(Any* value) const
+    {
+        return comparer(value);
+    }
+
+    const Enum* Enum::Find(const std::string& name)
+    {
+        const auto& enums = Registry::Get().enums;
+        auto iter = enums.find(name);
+        return iter == enums.end() ? nullptr : &iter->second;
+    }
+
+    const Enum& Enum::Get(const std::string& name)
+    {
+        const auto& enums = Registry::Get().enums;
+        auto iter = enums.find(name);
+        Assert(iter != enums.end());
+        return iter->second;
+    }
+
+    Enum::Enum(std::string name)
+        : Type(std::move(name))
+    {
+    }
+
+    Enum::~Enum() = default;
+
+    Any Enum::GetElement(const std::string& name) const
+    {
+        auto iter = elements.find(name);
+        Assert(iter != elements.end());
+        return iter->second.Get();
+    }
+
+    std::string Enum::GetElementName(Any* value) const
+    {
+        for (const auto& element : elements) {
+            if (element.second.Compare(value)) {
+                return element.first;
+            }
+        }
+        Assert(false);
+        return "";
+    }
 }

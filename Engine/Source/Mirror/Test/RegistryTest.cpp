@@ -61,6 +61,13 @@ struct C2 {
     int b;
 };
 
+enum class E0 {
+    A,
+    B,
+    C,
+    MAX
+};
+
 TEST(RegistryTest, GlobalScopeTest)
 {
     Mirror::Registry::Get()
@@ -186,4 +193,30 @@ TEST(RegistryTest, ClassTest)
         ASSERT_EQ(b.Get(&objectRef).CastTo<int>(), 2);
         destructor.InvokeWith(&objectRef);
     }
+}
+
+TEST(RegistryTest, EnumTest)
+{
+    Mirror::Registry::Get()
+        .Enum<E0>("E0")
+            .Element<E0::A>("A")
+            .Element<E0::B>("B")
+            .Element<E0::C>("C")
+            .Element<E0::MAX>("MAX");
+
+    const auto& enumInfo = Mirror::Enum::Get<E0>();
+    auto a = enumInfo.GetElement("A");
+    auto b = enumInfo.GetElement("B");
+    auto c = enumInfo.GetElement("C");
+    auto max = enumInfo.GetElement("MAX");
+
+    ASSERT_EQ(a.CastTo<E0>(), E0::A);
+    ASSERT_EQ(b.CastTo<E0>(), E0::B);
+    ASSERT_EQ(c.CastTo<E0>(), E0::C);
+    ASSERT_EQ(max.CastTo<E0>(), E0::MAX);
+
+    ASSERT_EQ(enumInfo.GetElementName(&a), "A");
+    ASSERT_EQ(enumInfo.GetElementName(&b), "B");
+    ASSERT_EQ(enumInfo.GetElementName(&c), "C");
+    ASSERT_EQ(enumInfo.GetElementName(&max), "MAX");
 }
