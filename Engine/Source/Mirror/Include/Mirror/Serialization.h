@@ -56,6 +56,15 @@ namespace Mirror {
         virtual ~SerializeStream() = default;
         virtual void Write(const void* data, size_t size) = 0;
 
+#if PLATFORM_MACOS
+        SerializeStream& operator<<(bool value)
+        {
+            bool tValue = value;
+            Write(&tValue, sizeof(bool));
+            return *this;
+        }
+#endif
+
         template <typename T>
         requires std::is_arithmetic_v<T>
         SerializeStream& operator<<(T value)
@@ -73,7 +82,43 @@ namespace Mirror {
             return *this;
         }
 
-        // TODO container
+        template <typename T>
+        requires TypeSerializationSupport<T>::value
+        SerializeStream& operator<<(const std::vector<T>& vector)
+        {
+            size_t size = vector.size();
+            Write(&size, sizeof(size_t));
+            for (auto i = 0; i < size; i++) {
+                this->operator<<(vector[i]);
+            }
+            return *this;
+        }
+
+        template <typename T>
+        requires TypeSerializationSupport<T>::value
+        SerializeStream& operator<<(const std::unordered_set<T>& set)
+        {
+            size_t size = set.size();
+            Write(&size, sizeof(size_t));
+            for (const auto& item : set) {
+                this->operator<<(item);
+            }
+            return *this;
+        }
+
+        template <typename K, typename V>
+        requires TypeSerializationSupport<K>::value && TypeSerializationSupport<V>::value
+        SerializeStream& operator<<(const std::unordered_map<K, V>& map)
+        {
+            size_t size = map.size();
+            Write(&size, sizeof(size_t));
+            for (const auto& iter : map) {
+                this->operator<<(iter.first);
+                this->operator<<(iter.second);
+            }
+            return *this;
+        }
+
         // TODO math
     };
 
@@ -83,14 +128,6 @@ namespace Mirror {
         virtual void Read(void* data, size_t size) = 0;
         virtual void SeekForward(int32_t offset) = 0;
         virtual void SeekBack(int32_t offset) = 0;
-
-        template <typename T>
-        requires std::is_arithmetic_v<T>
-        DeserializeStream& operator>>(T& value)
-        {
-            Read(&value, sizeof(T));
-            return *this;
-        }
 
         DeserializeStream& operator>>(std::string& string)
         {
@@ -102,7 +139,64 @@ namespace Mirror {
             return *this;
         }
 
-        // TODO container
+        template <typename T>
+        requires std::is_arithmetic_v<T>
+        DeserializeStream& operator>>(T& value)
+        {
+            Read(&value, sizeof(T));
+            return *this;
+        }
+
+        template <typename T>
+        requires TypeSerializationSupport<T>::value
+        DeserializeStream& operator>>(std::vector<T>& vector)
+        {
+            size_t size;
+            Read(&size, sizeof(size_t));
+
+            vector.reserve(size);
+            for (auto i = 0; i < size; i++) {
+                T value;
+                this->operator>>(value);
+                vector.emplace_back(std::move(value));
+            }
+            return *this;
+        }
+
+        template <typename T>
+        requires TypeSerializationSupport<T>::value
+        DeserializeStream& operator>>(std::unordered_set<T>& set)
+        {
+            size_t size;
+            Read(&size, sizeof(size_t));
+
+            set.reserve(size);
+            for (auto i = 0; i < size; i++) {
+                T value;
+                this->operator>>(value);
+                set.emplace(std::move(value));
+            }
+            return *this;
+        }
+
+        template <typename K, typename V>
+        requires TypeSerializationSupport<K>::value && TypeSerializationSupport<V>::value
+        DeserializeStream& operator>>(std::unordered_map<K, V>& map)
+        {
+            size_t size;
+            Read(&size, sizeof(size_t));
+
+            map.reserve(size);
+            for (auto i = 0; i < size; i++) {
+                K key;
+                V value;
+                this->operator>>(key);
+                this->operator>>(value);
+                map.emplace(std::move(key), std::move(value));
+            }
+            return *this;
+        }
+
         // TODO math
     };
 
@@ -144,6 +238,33 @@ namespace Mirror {
         std::ifstream& file;
     };
 
-    // TODO math
-    // TODO std container
+    class MIRROR_API AutoCloseFileSerializeStream : public FileSerializeStream {
+    public:
+        explicit AutoCloseFileSerializeStream(const std::string& filePath) : file(filePath), FileSerializeStream(file) {}
+
+        ~AutoCloseFileSerializeStream() override
+        {
+            if (file.is_open()) {
+                file.close();
+            }
+        }
+
+    private:
+        std::ofstream file;
+    };
+
+    class MIRROR_API AutoCloseFileDeserializeStream : public FileDeserializeStream {
+    public:
+        explicit AutoCloseFileDeserializeStream(const std::string& filePath) : file(filePath), FileDeserializeStream(file) {}
+
+        ~AutoCloseFileDeserializeStream() override
+        {
+            if (file.is_open()) {
+                file.close();
+            }
+        }
+
+    private:
+        std::ifstream file;
+    };
 }

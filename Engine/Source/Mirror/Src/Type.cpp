@@ -219,6 +219,11 @@ namespace Mirror {
 
     Class::~Class() = default;
 
+    const Constructor& Class::GetDefaultConstructor() const
+    {
+        return GetConstructor(NamePresets::defaultConstructor);
+    }
+
     const Class* Class::Find(const std::string& name)
     {
         const auto& classes = Registry::Get().classes;

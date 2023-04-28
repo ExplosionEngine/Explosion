@@ -181,7 +181,8 @@ namespace Mirror {
                     if constexpr (TypeSerializationSupport<ValueType>::value) {
                         ValueType value;
                         stream >> value;
-                        variable.Set(object, value);
+                        Mirror::Any valueRef = std::ref(value);
+                        variable.Set(object, &valueRef);
                     } else {
                         Assert(false);
                     }

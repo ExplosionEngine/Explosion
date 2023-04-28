@@ -15,9 +15,9 @@
 
 namespace Mirror {
     struct NamePresets {
-        static constexpr std::string_view globalScope = "globalScope";
-        static constexpr std::string_view destructor = "destructor";
-        static constexpr std::string_view defaultConstructor = "defaultConstructor";
+        static constexpr const char* globalScope = "globalScope";
+        static constexpr const char* destructor = "destructor";
+        static constexpr const char* defaultConstructor = "defaultConstructor";
         // TODO
     };
 
@@ -315,6 +315,8 @@ namespace Mirror {
                 func(iter.second);
             }
         }
+
+        [[nodiscard]] const Constructor& GetDefaultConstructor() const;
 
         [[nodiscard]] const Destructor& GetDestructor() const;
         [[nodiscard]] const Constructor* FindConstructor(const std::string& name) const;
