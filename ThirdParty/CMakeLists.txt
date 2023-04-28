@@ -188,5 +188,5 @@ Add3rdCMakeProject(
     INCLUDE $<INSTALL_DIR>/include
     LINK $<INSTALL_DIR>/lib
     LIB assimp$<IF:$<PLATFORM_ID:Windows>,"-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>","">
-    RUNTIME_DEP $<INSTALL_DIR>/bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>.dll
+    RUNTIME_DEP $<IF:$<PLATFORM_ID:Windows>,"$<INSTALL_DIR>/bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>.dll","">
 )
