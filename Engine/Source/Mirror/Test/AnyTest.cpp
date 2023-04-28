@@ -11,15 +11,15 @@
 
 #include <Mirror/Any.h>
 
-struct TestStruct0 {
+struct AnyTestStruct0 {
     int intValue;
     float floatValue;
 };
 
-struct TestStruct1 {
-    explicit TestStruct1(std::vector<int>&& inValues) : values(std::move(inValues)) {}
-    TestStruct1(const TestStruct1& inOther) = default;
-    TestStruct1(TestStruct1&& inOther) noexcept : values(std::move(inOther.values)) {}
+struct AnyTestStruct1 {
+    explicit AnyTestStruct1(std::vector<int>&& inValues) : values(std::move(inValues)) {}
+    AnyTestStruct1(const AnyTestStruct1& inOther) = default;
+    AnyTestStruct1(AnyTestStruct1&& inOther) noexcept : values(std::move(inOther.values)) {}
 
     std::vector<int> values;
 };
@@ -33,18 +33,18 @@ TEST(AnyTest, ValueAssignTest)
     Mirror::Any a1 = v1;
     ASSERT_EQ(a1.CastTo<const int&>(), 2);
 
-    TestStruct0 v2 = { 1, 2.0f };
+    AnyTestStruct0 v2 = { 1, 2.0f };
     Mirror::Any a2 = v2;
-    auto& r2 = a2.CastTo<TestStruct0&>();
+    auto& r2 = a2.CastTo<AnyTestStruct0&>();
     ASSERT_EQ(r2.intValue, 1);
     ASSERT_EQ(r2.floatValue, 2.0f);
 
     r2.intValue = 3;
     ASSERT_EQ(v2.intValue, 1);
 
-    TestStruct1 v3({ 1, 2 });
+    AnyTestStruct1 v3({ 1, 2 });
     Mirror::Any a3 = std::move(v3);
-    const auto& r3 = a3.CastTo<const TestStruct1&>();
+    const auto& r3 = a3.CastTo<const AnyTestStruct1&>();
     ASSERT_EQ(r3.values[0], 1);
     ASSERT_EQ(r3.values[1], 2);
 }
@@ -119,7 +119,7 @@ TEST(AnyTest, SizeTest)
 
 TEST(AnyTest, DataTest)
 {
-    TestStruct0 v0 = { 1, 2.0f };
+    AnyTestStruct0 v0 = { 1, 2.0f };
     Mirror::Any a0 = v0;
     ASSERT_NE(a0.Data(), &v0);
 }
