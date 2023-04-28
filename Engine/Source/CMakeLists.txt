@@ -14,3 +14,7 @@ endif()
 #if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 #    add_subdirectory(RHI-Metal)
 #endif ()
+
+if (${BUILD_EDITOR})
+    add_subdirectory(AssetFactory)
+endif ()
