@@ -56,6 +56,15 @@ namespace Mirror {
         virtual ~SerializeStream() = default;
         virtual void Write(const void* data, size_t size) = 0;
 
+#if PLATFORM_MACOS
+        SerializeStream& operator<<(bool value)
+        {
+            bool tValue = value;
+            Write(&tValue, sizeof(bool));
+            return *this;
+        }
+#endif
+
         template <typename T>
         requires std::is_arithmetic_v<T>
         SerializeStream& operator<<(T value)
@@ -120,14 +129,6 @@ namespace Mirror {
         virtual void SeekForward(int32_t offset) = 0;
         virtual void SeekBack(int32_t offset) = 0;
 
-        template <typename T>
-        requires std::is_arithmetic_v<T>
-        DeserializeStream& operator>>(T& value)
-        {
-            Read(&value, sizeof(T));
-            return *this;
-        }
-
         DeserializeStream& operator>>(std::string& string)
         {
             size_t size;
@@ -135,6 +136,14 @@ namespace Mirror {
 
             string.resize(size);
             Read(string.data(), string.size());
+            return *this;
+        }
+
+        template <typename T>
+        requires std::is_arithmetic_v<T>
+        DeserializeStream& operator>>(T& value)
+        {
+            Read(&value, sizeof(T));
             return *this;
         }
 

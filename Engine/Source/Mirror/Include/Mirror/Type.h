@@ -316,7 +316,7 @@ namespace Mirror {
             }
         }
 
-        [[nodiscard]] inline const Constructor& GetDefaultConstructor() const;
+        [[nodiscard]] const Constructor& GetDefaultConstructor() const;
 
         [[nodiscard]] const Destructor& GetDestructor() const;
         [[nodiscard]] const Constructor* FindConstructor(const std::string& name) const;

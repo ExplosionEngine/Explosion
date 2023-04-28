@@ -219,7 +219,7 @@ namespace Mirror {
 
     Class::~Class() = default;
 
-    inline const Constructor& Class::GetDefaultConstructor() const
+    const Constructor& Class::GetDefaultConstructor() const
     {
         return GetConstructor(NamePresets::defaultConstructor);
     }
