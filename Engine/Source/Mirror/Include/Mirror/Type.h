@@ -266,6 +266,7 @@ namespace Mirror {
         ~Class() override;
 
         template <typename C>
+        requires std::is_class_v<C>
         [[nodiscard]] static const Class* Find()
         {
             auto iter = typeToNameMap.find(GetTypeInfo<C>());
@@ -274,6 +275,7 @@ namespace Mirror {
         }
 
         template <typename C>
+        requires std::is_class_v<C>
         [[nodiscard]] static const Class& Get()
         {
             auto iter = typeToNameMap.find(GetTypeInfo<C>());
@@ -344,5 +346,64 @@ namespace Mirror {
         std::unordered_map<std::string, Function> staticFunctions;
         std::unordered_map<std::string, MemberVariable> memberVariables;
         std::unordered_map<std::string, MemberFunction> memberFunctions;
+    };
+
+    class MIRROR_API EnumElement : public Type {
+    public:
+        ~EnumElement() override;
+
+    private:
+        friend class Registry;
+        template <typename T> friend class EnumRegistry;
+
+        friend class Enum;
+
+        [[nodiscard]] Any Get() const;
+        [[nodiscard]] bool Compare(Any* value) const;
+
+        using Getter = std::function<Any()>;
+        using Comparer = std::function<bool(Any*)>;
+
+        EnumElement(std::string inName, Getter inGetter, Comparer inComparer);
+
+        Getter getter;
+        Comparer comparer;
+    };
+
+    class MIRROR_API Enum : public Type {
+    public:
+        template <typename T>
+        requires std::is_enum_v<T>
+        [[nodiscard]] static const Enum* Find()
+        {
+            auto iter = typeToNameMap.find(GetTypeInfo<T>());
+            Assert(iter != typeToNameMap.end());
+            return Find(iter->second);
+        }
+
+        template <typename T>
+        requires std::is_enum_v<T>
+        [[nodiscard]] static const Enum& Get()
+        {
+            auto iter = typeToNameMap.find(GetTypeInfo<T>());
+            Assert(iter != typeToNameMap.end());
+            return Get(iter->second);
+        }
+
+        [[nodiscard]] static const Enum* Find(const std::string& name);
+        [[nodiscard]] static const Enum& Get(const std::string& name);
+
+        ~Enum() override;
+
+        [[nodiscard]] Any GetElement(const std::string& name) const;
+        [[nodiscard]] std::string GetElementName(Any* value) const;
+
+    private:
+        friend class Registry;
+        template <typename T> friend class EnumRegistry;
+
+        explicit Enum(std::string name);
+
+        std::unordered_map<std::string, EnumElement> elements;
     };
 }
