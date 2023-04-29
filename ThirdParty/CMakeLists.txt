@@ -187,6 +187,9 @@ Add3rdCMakeProject(
     CMAKE_ARG -DASSIMP_BUILD_TESTS=OFF -DASSIMP_WARNINGS_AS_ERRORS=OFF -DASSIMP_INSTALL_PDB=OFF
     INCLUDE $<INSTALL_DIR>/include
     LINK $<INSTALL_DIR>/lib
-    LIB assimp$<IF:$<PLATFORM_ID:Windows>,"-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>","">
-    RUNTIME_DEP $<IF:$<PLATFORM_ID:Windows>,"$<INSTALL_DIR>/bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>.dll","">
+    LIB
+        Windows "assimp-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>"
+        Darwin assimp
+    RUNTIME_DEP
+        Windows "$<INSTALL_DIR>/bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>.dll"
 )

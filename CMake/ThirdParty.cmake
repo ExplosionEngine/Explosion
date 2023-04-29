@@ -62,6 +62,44 @@ function(Expand3rdPathExpression)
     set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
 endfunction()
 
+function(Get3rdPlatformPath)
+    cmake_parse_arguments(PARAMS "" "OUTPUT" "INPUT" ${ARGN})
+
+    set(END_KEYWORDS "Windows;Darwin;Linux")
+
+    set(START_LOG FALSE)
+    foreach (I ${PARAMS_INPUT})
+        if ((NOT ${START_LOG}) AND (${I} STREQUAL ${CMAKE_SYSTEM_NAME}))
+            set(START_LOG TRUE)
+            continue()
+        endif()
+
+        if (NOT ${START_LOG})
+            continue()
+        endif()
+
+        set(END_LOG FALSE)
+        foreach (K ${END_KEYWORDS})
+            if (${K} STREQUAL ${I})
+                set(END_LOG TRUE)
+                break()
+            endif()
+        endforeach()
+
+        if (${END_LOG})
+            break()
+        endif()
+
+        list(APPEND RESULT ${I})
+    endforeach ()
+
+    if (${START_LOG})
+        set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
+    else()
+        set(${PARAMS_OUTPUT} ${PARAMS_INPUT} PARENT_SCOPE)
+    endif()
+endfunction()
+
 function(Add3rdHeaderOnlyPackage)
     cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION;HASH" "INCLUDE" ${ARGN})
 
@@ -171,7 +209,7 @@ function(Add3rdBinaryPackage)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            3RD_RUNTIME_DEP "${R_RUNTIME_DEP}"
+            3RD_RUNTIME_DEP "${P_RUNTIME_DEP}"
         )
     endif()
 endfunction()
@@ -219,9 +257,13 @@ function(Add3rdCMakeProject)
             BINARY_DIR ${BINARY_DIR}
             INSTALL_DIR ${INSTALL_DIR}
         )
+        Get3rdPlatformPath(
+            INPUT ${R_INCLUDE}
+            OUTPUT P_INCLUDE
+        )
         set_target_properties(
             ${NAME} PROPERTIES
-            3RD_INCLUDE "${R_INCLUDE}"
+            3RD_INCLUDE "${P_INCLUDE}"
         )
     endif()
 
@@ -233,9 +275,13 @@ function(Add3rdCMakeProject)
             BINARY_DIR ${BINARY_DIR}
             INSTALL_DIR ${INSTALL_DIR}
         )
+        Get3rdPlatformPath(
+            INPUT ${R_LINK}
+            OUTPUT P_LINK
+        )
         set_target_properties(
             ${NAME} PROPERTIES
-            3RD_LINK "${R_LINK}"
+            3RD_LINK "${P_LINK}"
         )
     endif()
 
@@ -247,9 +293,13 @@ function(Add3rdCMakeProject)
             BINARY_DIR ${BINARY_DIR}
             INSTALL_DIR ${INSTALL_DIR}
         )
+        Get3rdPlatformPath(
+            INPUT ${R_LIB}
+            OUTPUT P_LIB
+        )
         set_target_properties(
             ${NAME} PROPERTIES
-            3RD_LIB "${R_LIB}"
+            3RD_LIB "${P_LIB}"
         )
     endif()
 
@@ -261,9 +311,13 @@ function(Add3rdCMakeProject)
             BINARY_DIR ${BINARY_DIR}
             INSTALL_DIR ${INSTALL_DIR}
         )
+        Get3rdPlatformPath(
+            INPUT ${R_RUNTIME_DEP}
+            OUTPUT P_RUNTIME_DEP
+        )
         set_target_properties(
             ${NAME} PROPERTIES
-            3RD_RUNTIME_DEP "${R_RUNTIME_DEP}"
+            3RD_RUNTIME_DEP "${P_RUNTIME_DEP}"
         )
     endif()
 endfunction()
