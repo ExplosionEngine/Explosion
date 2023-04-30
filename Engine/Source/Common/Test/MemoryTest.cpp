@@ -22,6 +22,14 @@ struct TestStruct {
     }
 };
 
+struct ChildTestStruct : public TestStruct {
+    uint32_t cValue;
+
+    ChildTestStruct(uint32_t inValue, uint32_t inCValue, bool& inLive) : TestStruct(inValue, inLive), cValue(inCValue)
+    {
+    }
+};
+
 TEST(MemoryTest, UniqueRefTest)
 {
     bool live;
@@ -95,4 +103,34 @@ TEST(MemoryTest, WeakRefTest)
         auto lockRef = weakRef.Lock();
         ASSERT_EQ(lockRef, nullptr);
     }
+}
+
+TEST(MemoryTest, WeakRefDeriveTest)
+{
+    bool live;
+    SharedRef<ChildTestStruct> ref = new ChildTestStruct(1, 2, live);
+    ASSERT_EQ(live, true);
+    ASSERT_EQ(ref->value, 1);
+    ASSERT_EQ(ref->cValue, 2);
+    ASSERT_EQ(ref.RefCount(), 1);
+
+    WeakRef<TestStruct> weakRef = ref;
+    ASSERT_EQ(live, true);
+    ASSERT_EQ(weakRef.Expired(), false);
+    ASSERT_EQ(ref.RefCount(), 1);
+
+    {
+        SharedRef<ChildTestStruct> lockRef = weakRef.Lock().StaticCast<ChildTestStruct>();
+        ASSERT_EQ(lockRef != nullptr, true);
+        ASSERT_EQ(live, true);
+        ASSERT_EQ(lockRef->value, 1);
+        ASSERT_EQ(lockRef->cValue, 2);
+        ASSERT_EQ(ref.RefCount(), 2);
+        ASSERT_EQ(lockRef.RefCount(), 2);
+    }
+
+    ASSERT_EQ(ref.RefCount(), 1);
+    ref.Reset();
+    ASSERT_EQ(live, false);
+    ASSERT_EQ(weakRef.Expired(), true);
 }

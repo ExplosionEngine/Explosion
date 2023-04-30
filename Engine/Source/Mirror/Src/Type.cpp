@@ -5,10 +5,12 @@
 #pragma once
 
 #include <utility>
+#include <sstream>
 
 #include <Mirror/Type.h>
 #include <Mirror/Registry.h>
 #include <Common/Debug.h>
+#include <Common/Format.h>
 
 namespace Mirror {
     Type::Type(std::string inName) : name(std::move(inName)) {}
@@ -27,15 +29,34 @@ namespace Mirror {
         return iter->second;
     }
 
+    std::string Type::GetAllMeta() const
+    {
+        std::stringstream stream;
+        uint32_t count = 0;
+        for (const auto& iter : metas) {
+            stream << fmt::format("{}={}", iter.first, iter.second);
+
+            count++;
+            if (count != metas.size()) {
+                stream << ";";
+            }
+        }
+        return stream.str();
+    }
+
     bool Type::HasMeta(const std::string& key) const
     {
         return metas.find(key) != metas.end();
     }
 
-    Variable::Variable(std::string inName, Variable::Setter inSetter, Variable::Getter inGetter)
+    Variable::Variable(std::string inName, Variable::Setter inSetter, Variable::Getter inGetter, VariableSerializer inSerializer, VariableDeserializer inDeserializer)
         : Type(std::move(inName))
         , setter(std::move(inSetter))
-        , getter(std::move(inGetter)) {}
+        , getter(std::move(inGetter))
+        , serializer(std::move(inSerializer))
+        , deserializer(std::move(inDeserializer))
+    {
+    }
 
     Variable::~Variable() = default;
 
@@ -49,7 +70,25 @@ namespace Mirror {
         return getter();
     }
 
-    Function::Function(std::string inName, Function::Invoker inInvoker)
+    void Variable::Serialize(SerializeStream& stream, const CustomVariableSerializer& customSerializer) const
+    {
+        if (customSerializer) {
+            customSerializer(stream, *this, serializer);
+        } else {
+            serializer(stream, *this);
+        }
+    }
+
+    void Variable::Deserialize(DeserializeStream& stream, const CustomVariableDeserializer& customDeserializer) const
+    {
+        if (customDeserializer) {
+            customDeserializer(stream, *this, deserializer);
+        } else {
+            deserializer(stream, *this);
+        }
+    }
+
+    Function::Function(std::string inName, Invoker inInvoker)
         : Type(std::move(inName))
         , invoker(std::move(inInvoker)) {}
 
@@ -60,7 +99,7 @@ namespace Mirror {
         return invoker(args, argsSize);
     }
 
-    Constructor::Constructor(std::string inName, Constructor::Invoker inStackConstructor, Constructor::Invoker inHeapConstructor)
+    Constructor::Constructor(std::string inName, Invoker inStackConstructor, Invoker inHeapConstructor)
         : Type(std::move(inName))
         , stackConstructor(std::move(inStackConstructor))
         , heapConstructor(std::move(inHeapConstructor)) {}
@@ -77,7 +116,7 @@ namespace Mirror {
         return heapConstructor(arguments, argumentsSize);
     }
 
-    Destructor::Destructor(Destructor::Invoker inDestructor)
+    Destructor::Destructor(Invoker inDestructor)
         : Type(std::string(NamePresets::destructor)), destructor(std::move(inDestructor))
     {
     }
@@ -89,10 +128,12 @@ namespace Mirror {
         destructor(object);
     }
 
-    MemberVariable::MemberVariable(std::string inName, MemberVariable::Setter inSetter, MemberVariable::Getter inGetter)
+    MemberVariable::MemberVariable(std::string inName, Setter inSetter, Getter inGetter, MemberVariableSerializer inSerializer, MemberVariableDeserializer inDeserializer)
         : Type(std::move(inName))
         , setter(std::move(inSetter))
         , getter(std::move(inGetter))
+        , serializer(std::move(inSerializer))
+        , deserializer(std::move(inDeserializer))
     {
     }
 
@@ -106,6 +147,24 @@ namespace Mirror {
     Any MemberVariable::Get(Any* object) const
     {
         return getter(object);
+    }
+
+    void MemberVariable::Serialize(SerializeStream& stream, Any* object, const CustomMemberVariableSerializer& customSerializer) const
+    {
+        if (customSerializer) {
+            customSerializer(stream, *this, object, serializer);
+        } else {
+            serializer(stream, *this, object);
+        }
+    }
+
+    void MemberVariable::Deserialize(DeserializeStream& stream, Any* object, const CustomMemberVariableDeserializer& customDeserializer) const
+    {
+        if (customDeserializer) {
+            customDeserializer(stream, *this, object, deserializer);
+        } else {
+            deserializer(stream, *this, object);
+        }
     }
 
     MemberFunction::MemberFunction(std::string inName, Invoker inInvoker)
@@ -159,6 +218,11 @@ namespace Mirror {
     Class::Class(std::string name) : Type(std::move(name)) {}
 
     Class::~Class() = default;
+
+    const Constructor& Class::GetDefaultConstructor() const
+    {
+        return GetConstructor(NamePresets::defaultConstructor);
+    }
 
     const Class* Class::Find(const std::string& name)
     {
@@ -244,5 +308,95 @@ namespace Mirror {
         auto iter = memberFunctions.find(name);
         Assert(iter != memberFunctions.end());
         return iter->second;
+    }
+
+    void Class::Serialize(SerializeStream& stream, Mirror::Any* obj, const CustomMemberVariableSerializer& customSerializer) const
+    {
+        stream << GetName();
+        stream << memberVariables.size();
+
+        for (const auto& memberVariable : memberVariables) {
+            stream << memberVariable.first;
+            memberVariable.second.Serialize(stream, obj, customSerializer);
+        }
+    }
+
+    void Class::Deserailize(DeserializeStream& stream, Mirror::Any* obj, const CustomMemberVariableDeserializer& customDeserializer) const
+    {
+        std::string className;
+        stream >> className;
+
+        size_t memberVariableSize;
+        stream >> memberVariableSize;
+
+        for (auto i = 0; i < memberVariableSize; i++) {
+            std::string varName;
+            stream >> varName;
+
+            auto iter = memberVariables.find(varName);
+            if (iter == memberVariables.end()) {
+                continue;
+            }
+            iter->second.Deserialize(stream, obj, customDeserializer);
+        }
+    }
+
+    EnumElement::EnumElement(std::string inName, EnumElement::Getter inGetter, EnumElement::Comparer inComparer)
+        : Type(std::move(inName))
+        , getter(std::move(inGetter))
+        , comparer(std::move(inComparer))
+    {
+    }
+
+    EnumElement::~EnumElement() = default;
+
+    Any EnumElement::Get() const
+    {
+        return getter();
+    }
+
+    bool EnumElement::Compare(Any* value) const
+    {
+        return comparer(value);
+    }
+
+    const Enum* Enum::Find(const std::string& name)
+    {
+        const auto& enums = Registry::Get().enums;
+        auto iter = enums.find(name);
+        return iter == enums.end() ? nullptr : &iter->second;
+    }
+
+    const Enum& Enum::Get(const std::string& name)
+    {
+        const auto& enums = Registry::Get().enums;
+        auto iter = enums.find(name);
+        Assert(iter != enums.end());
+        return iter->second;
+    }
+
+    Enum::Enum(std::string name)
+        : Type(std::move(name))
+    {
+    }
+
+    Enum::~Enum() = default;
+
+    Any Enum::GetElement(const std::string& name) const
+    {
+        auto iter = elements.find(name);
+        Assert(iter != elements.end());
+        return iter->second.Get();
+    }
+
+    std::string Enum::GetElementName(Any* value) const
+    {
+        for (const auto& element : elements) {
+            if (element.second.Compare(value)) {
+                return element.first;
+            }
+        }
+        Assert(false);
+        return "";
     }
 }

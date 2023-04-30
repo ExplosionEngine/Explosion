@@ -6,10 +6,11 @@
 
 #include <unordered_map>
 
+#include <Common/Debug.h>
 #include <Mirror/Api.h>
+#include <Mirror/Serialization.h>
 #include <Mirror/Type.h>
 #include <Mirror/TypeInfo.h>
-#include <Common/Debug.h>
 
 namespace Mirror::Internal {
     template <typename ArgsTuple, size_t... I>
@@ -117,7 +118,9 @@ namespace Mirror {
                 },
                 []() -> Any {
                     return Any(std::ref(*Ptr));
-                }
+                },
+                nullptr,
+                nullptr
             )));
             return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.staticVariables.at(inName));
         }
@@ -165,6 +168,24 @@ namespace Mirror {
                 },
                 [](Any* object) -> Any {
                     return std::ref(object->CastTo<ClassType&>().*Ptr);
+                },
+                [](SerializeStream& stream, const Mirror::MemberVariable& variable, Any* object) -> void {
+                    if constexpr (TypeSerializationSupport<ValueType>::value) {
+                        ValueType& value = variable.Get(object).CastTo<ValueType&>();
+                        stream << value;
+                    } else {
+                        Assert(false);
+                    }
+                },
+                [](DeserializeStream& stream, const Mirror::MemberVariable& variable, Any* object) -> void {
+                    if constexpr (TypeSerializationSupport<ValueType>::value) {
+                        ValueType value;
+                        stream >> value;
+                        Mirror::Any valueRef = std::ref(value);
+                        variable.Set(object, &valueRef);
+                    } else {
+                        Assert(false);
+                    }
                 }
             )));
             return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.memberVariables.at(inName));
@@ -228,6 +249,23 @@ namespace Mirror {
                 },
                 []() -> Any {
                     return Any(std::ref(*Ptr));
+                },
+                [](SerializeStream& stream, const Mirror::Variable& variable) -> void {
+                    if constexpr (TypeSerializationSupport<ValueType>::value) {
+                        ValueType& value = variable.Get().CastTo<ValueType&>();
+                        stream << value;
+                    } else {
+                        Assert(false);
+                    }
+                },
+                [](DeserializeStream& stream, const Mirror::Variable& variable) -> void {
+                    if constexpr (TypeSerializationSupport<ValueType>::value) {
+                        ValueType value;
+                        stream >> value;
+                        variable.Set(value);
+                    } else {
+                        Assert(false);
+                    }
                 }
             )));
             return MetaDataRegistry<GlobalRegistry>::SetContext(&globalScope.variables.at(inName));
@@ -268,6 +306,37 @@ namespace Mirror {
         GlobalScope& globalScope;
     };
 
+    template <typename T>
+    class EnumRegistry : public MetaDataRegistry<EnumRegistry<T>> {
+    public:
+        ~EnumRegistry() override = default;
+
+        template <auto Value>
+        EnumRegistry& Element(const std::string& inName)
+        {
+            auto iter = enumInfo.elements.find(inName);
+            Assert(iter == enumInfo.elements.end());
+
+            enumInfo.elements.emplace(std::make_pair(inName, EnumElement(
+                inName,
+                []() -> Any {
+                    return Any(Value);
+                },
+                [](Any* value) -> bool {
+                    return value->CastTo<T>() == Value;
+                }
+            )));
+            return MetaDataRegistry<EnumRegistry<T>>::SetContext(&enumInfo.elements.at(inName));
+        }
+
+    private:
+        friend class Registry;
+
+        explicit EnumRegistry(Enum& inEnum) : MetaDataRegistry<EnumRegistry<T>>(&inEnum), enumInfo(inEnum) {}
+
+        Enum& enumInfo;
+    };
+
     class MIRROR_API Registry {
     public:
         static Registry& Get()
@@ -284,6 +353,7 @@ namespace Mirror {
         }
 
         template <typename C>
+        requires std::is_class_v<C>
         ClassRegistry<C> Class(const std::string& name)
         {
             auto* typeInfo = GetTypeInfo<C>();
@@ -295,13 +365,28 @@ namespace Mirror {
             return ClassRegistry<C>(classes.at(name));
         }
 
+        template <typename T>
+        requires std::is_enum_v<T>
+        EnumRegistry<T> Enum(const std::string& name)
+        {
+            auto* typeInfo = GetTypeInfo<T>();
+            Assert(typeToNameMap.find(typeInfo) == typeToNameMap.end());
+            Assert(enums.find(name) == enums.end());
+
+            typeToNameMap[typeInfo] = name;
+            enums.emplace(std::make_pair(name, Mirror::Enum(name)));
+            return EnumRegistry<T>(enums.at(name));
+        }
+
     private:
         friend class GlobalScope;
         friend class Class;
+        friend class Enum;
 
         Registry() noexcept = default;
 
         GlobalScope globalScope;
         std::unordered_map<std::string, Mirror::Class> classes;
+        std::unordered_map<std::string, Mirror::Enum> enums;
     };
 }

@@ -15,13 +15,28 @@
 
 namespace Mirror {
     struct NamePresets {
-        static constexpr std::string_view globalScope = "globalScope";
-        static constexpr std::string_view destructor = "destructor";
-        static constexpr std::string_view defaultConstructor = "defaultConstructor";
+        static constexpr const char* globalScope = "globalScope";
+        static constexpr const char* destructor = "destructor";
+        static constexpr const char* defaultConstructor = "defaultConstructor";
         // TODO
     };
 
     static std::unordered_map<TypeInfo*, std::string> typeToNameMap;
+
+    class SerializeStream;
+    class DeserializeStream;
+    class Variable;
+    class MemberVariable;
+
+    using VariableSerializer = std::function<void(SerializeStream&, const Variable&)>;
+    using MemberVariableSerializer = std::function<void(SerializeStream&, const MemberVariable&, Any*)>;
+    using VariableDeserializer = std::function<void(DeserializeStream&, const Variable&)>;
+    using MemberVariableDeserializer = std::function<void(DeserializeStream&, const MemberVariable&, Any*)>;
+
+    using CustomVariableSerializer = std::function<void(SerializeStream&, const Variable&, VariableSerializer)>;
+    using CustomMemberVariableSerializer = std::function<void(SerializeStream&, const MemberVariable&, Any*, MemberVariableSerializer)>;
+    using CustomVariableDeserializer = std::function<void(DeserializeStream&, const Variable&, VariableDeserializer)>;
+    using CustomMemberVariableDeserializer = std::function<void(DeserializeStream&, const MemberVariable&, Any*, MemberVariableDeserializer)>;
 }
 
 namespace Mirror {
@@ -31,6 +46,7 @@ namespace Mirror {
 
         [[nodiscard]] const std::string& GetName() const;
         [[nodiscard]] const std::string& GetMeta(const std::string& key) const;
+        [[nodiscard]] std::string GetAllMeta() const;
         bool HasMeta(const std::string& key) const;
 
     protected:
@@ -56,6 +72,8 @@ namespace Mirror {
 
         void Set(Any* value) const;
         Any Get() const;
+        void Serialize(SerializeStream& stream, const CustomVariableSerializer& customSerializer = nullptr) const;
+        void Deserialize(DeserializeStream& stream, const CustomVariableDeserializer& customDeserializer = nullptr) const;
 
     private:
         friend class GlobalRegistry;
@@ -64,10 +82,12 @@ namespace Mirror {
         using Setter = std::function<void(Any*)>;
         using Getter = std::function<Any()>;
 
-        Variable(std::string inName, Setter inSetter, Getter inGetter);
+        Variable(std::string inName, Setter inSetter, Getter inGetter, VariableSerializer inSerializer, VariableDeserializer inDeserializer);
 
         Setter setter;
         Getter getter;
+        VariableSerializer serializer;
+        VariableDeserializer deserializer;
     };
 
     class MIRROR_API Function : public Type {
@@ -163,6 +183,8 @@ namespace Mirror {
 
         void Set(Any* object, Any* value) const;
         Any Get(Any* object) const;
+        void Serialize(SerializeStream& stream, Any* object, const CustomMemberVariableSerializer& customSerializer = nullptr) const;
+        void Deserialize(DeserializeStream& stream, Any* object, const CustomMemberVariableDeserializer& customDeserializer = nullptr) const;
 
     private:
         template <typename C> friend class ClassRegistry;
@@ -170,10 +192,12 @@ namespace Mirror {
         using Setter = std::function<void(Any*, Any*)>;
         using Getter = std::function<Any(Any*)>;
 
-        MemberVariable(std::string inName, Setter inSetter, Getter inGetter);
+        MemberVariable(std::string inName, Setter inSetter, Getter inGetter, MemberVariableSerializer inSerializer, MemberVariableDeserializer inDeserializer);
 
         Setter setter;
         Getter getter;
+        MemberVariableSerializer serializer;
+        MemberVariableDeserializer deserializer;
     };
 
     class MIRROR_API MemberFunction : public Type {
@@ -242,6 +266,7 @@ namespace Mirror {
         ~Class() override;
 
         template <typename C>
+        requires std::is_class_v<C>
         [[nodiscard]] static const Class* Find()
         {
             auto iter = typeToNameMap.find(GetTypeInfo<C>());
@@ -250,6 +275,7 @@ namespace Mirror {
         }
 
         template <typename C>
+        requires std::is_class_v<C>
         [[nodiscard]] static const Class& Get()
         {
             auto iter = typeToNameMap.find(GetTypeInfo<C>());
@@ -259,6 +285,40 @@ namespace Mirror {
 
         [[nodiscard]] static const Class* Find(const std::string& name);
         [[nodiscard]] static const Class& Get(const std::string& name);
+
+        template <typename F>
+        void ForEachStaticVariable(F&& func) const
+        {
+            for (const auto& iter : staticVariables) {
+                func(iter.second);
+            }
+        }
+
+        template <typename F>
+        void ForEachStaticFunction(F&& func) const
+        {
+            for (const auto& iter : staticFunctions) {
+                func(iter.second);
+            }
+        }
+
+        template <typename F>
+        void ForEachMemberVariable(F&& func) const
+        {
+            for (const auto& iter : memberVariables) {
+                func(iter.second);
+            }
+        }
+
+        template <typename F>
+        void ForEachMemberFunction(F&& func) const
+        {
+            for (const auto& iter : memberFunctions) {
+                func(iter.second);
+            }
+        }
+
+        [[nodiscard]] const Constructor& GetDefaultConstructor() const;
 
         [[nodiscard]] const Destructor& GetDestructor() const;
         [[nodiscard]] const Constructor* FindConstructor(const std::string& name) const;
@@ -271,6 +331,8 @@ namespace Mirror {
         [[nodiscard]] const MemberVariable& GetMemberVariable(const std::string& name) const;
         [[nodiscard]] const MemberFunction* FindMemberFunction(const std::string& name) const;
         [[nodiscard]] const MemberFunction& GetMemberFunction(const std::string& name) const;
+        void Serialize(SerializeStream& stream, Mirror::Any* obj, const CustomMemberVariableSerializer& customSerializer = nullptr) const;
+        void Deserailize(DeserializeStream& stream, Mirror::Any* obj, const CustomMemberVariableDeserializer& customDeserializer = nullptr) const;
 
     private:
         friend class Registry;
@@ -284,5 +346,64 @@ namespace Mirror {
         std::unordered_map<std::string, Function> staticFunctions;
         std::unordered_map<std::string, MemberVariable> memberVariables;
         std::unordered_map<std::string, MemberFunction> memberFunctions;
+    };
+
+    class MIRROR_API EnumElement : public Type {
+    public:
+        ~EnumElement() override;
+
+    private:
+        friend class Registry;
+        template <typename T> friend class EnumRegistry;
+
+        friend class Enum;
+
+        [[nodiscard]] Any Get() const;
+        [[nodiscard]] bool Compare(Any* value) const;
+
+        using Getter = std::function<Any()>;
+        using Comparer = std::function<bool(Any*)>;
+
+        EnumElement(std::string inName, Getter inGetter, Comparer inComparer);
+
+        Getter getter;
+        Comparer comparer;
+    };
+
+    class MIRROR_API Enum : public Type {
+    public:
+        template <typename T>
+        requires std::is_enum_v<T>
+        [[nodiscard]] static const Enum* Find()
+        {
+            auto iter = typeToNameMap.find(GetTypeInfo<T>());
+            Assert(iter != typeToNameMap.end());
+            return Find(iter->second);
+        }
+
+        template <typename T>
+        requires std::is_enum_v<T>
+        [[nodiscard]] static const Enum& Get()
+        {
+            auto iter = typeToNameMap.find(GetTypeInfo<T>());
+            Assert(iter != typeToNameMap.end());
+            return Get(iter->second);
+        }
+
+        [[nodiscard]] static const Enum* Find(const std::string& name);
+        [[nodiscard]] static const Enum& Get(const std::string& name);
+
+        ~Enum() override;
+
+        [[nodiscard]] Any GetElement(const std::string& name) const;
+        [[nodiscard]] std::string GetElementName(Any* value) const;
+
+    private:
+        friend class Registry;
+        template <typename T> friend class EnumRegistry;
+
+        explicit Enum(std::string name);
+
+        std::unordered_map<std::string, EnumElement> elements;
     };
 }

@@ -27,6 +27,7 @@ namespace Mirror {
 
     struct TypeInfo {
 #if BUILD_CONFIG_DEBUG
+        // NOTICE: this name is platform relative, so do not use it unless in for debug
         std::string debugName;
 #endif
         TypeId id;
