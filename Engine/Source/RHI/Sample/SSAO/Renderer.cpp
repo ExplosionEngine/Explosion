@@ -26,7 +26,6 @@ namespace Example {
         CreatePipeline();
         CreateFence();
         CreateCommandBuffer();
-
         GenerateRenderables();
     }
 

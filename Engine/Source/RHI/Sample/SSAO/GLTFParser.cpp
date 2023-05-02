@@ -119,7 +119,7 @@ namespace Example {
             mTexData->buffer.resize(width * height * 4);
             auto* rgba = mTexData->buffer.data();
             auto* rgb = static_cast<unsigned char*>(data);
-            for (uint32_t i = 0; i < width * height * 4; i++) {
+            for (uint32_t i = 0; i < width * height; i++) {
                 for (uint32_t j = 0; j < 3; j++) {
                     rgba[j] = rgb[j];
                 }

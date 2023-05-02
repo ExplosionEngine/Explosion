@@ -32,7 +32,7 @@ namespace Example {
 
 const unsigned int SSAO_KERNEL_SIZE = 64;
 const float SSAO_RADIUS  = 0.3f;
-const unsigned int SSAO_NOISE_DIM = 4;
+const unsigned int SSAO_NOISE_DIM = 16;
 
     class Renderer {
     public:

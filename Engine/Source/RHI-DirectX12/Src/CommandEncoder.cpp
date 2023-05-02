@@ -232,8 +232,8 @@ namespace RHI::DirectX12 {
         layout.Footprint.Depth = size.z;
         layout.Footprint.Width = size.x;
         layout.Footprint.Height = size.y;
-        layout.Footprint.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture->GetFormat()); // Can this attrib of buffer retrive from texture?
-        layout.Footprint.RowPitch = 4 * size.x; // TODO get pixel component nums
+        layout.Footprint.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture->GetFormat());
+        layout.Footprint.RowPitch = size.x * GetBytesPerPixel(texture->GetFormat()); // row pitch must be a multiple of 256, let dx checks if the texture is valid
 
         CD3DX12_TEXTURE_COPY_LOCATION dest(texture->GetDX12Resource().Get(), 0);
         CD3DX12_TEXTURE_COPY_LOCATION source(buffer->GetDX12Resource().Get(), layout);

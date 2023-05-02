@@ -29,7 +29,7 @@ float4 FSMain(float2 inUV : TEXCOORD) : SV_TARGET
 	float3 L = normalize(lightPos - fragPos);
 	float NdotL = max(0.5, dot(normal, L));
 
-	float4 outFragColor;
+	float4 outFragColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
 	if (ssaoOnly == 1)
 	{
 		outFragColor.rgb = ssao.rrr;
