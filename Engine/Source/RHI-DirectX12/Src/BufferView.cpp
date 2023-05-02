@@ -73,7 +73,7 @@ namespace RHI::DirectX12 {
         if (IsConstantBuffer(buffer.GetUsages())) {
             D3D12_CONSTANT_BUFFER_VIEW_DESC desc {};
             desc.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo.offset;
-            desc.SizeInBytes = (createInfo.size + (D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1)) & ~(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1);
+            desc.SizeInBytes = GetConstantBufferSize(createInfo.size);
 
             auto allocation = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
             descriptor.dx12CpuDescriptorHandle = allocation.cpuHandle;

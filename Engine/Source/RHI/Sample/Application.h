@@ -70,7 +70,6 @@ public:
         return 0;
     }
 
-protected:
     virtual void OnStart() {}
     virtual void OnCreate() {}
     virtual void OnDestroy() {}

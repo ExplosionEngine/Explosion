@@ -121,7 +121,11 @@ namespace RHI::DirectX12 {
     void DX12Buffer::CreateDX12Buffer(DX12Device& device, const BufferCreateInfo& createInfo)
     {
         CD3DX12_HEAP_PROPERTIES heapProperties(GetDX12HeapType(createInfo.usages));
-        CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(createInfo.size);
+        CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(
+            createInfo.usages | BufferUsageBits::UNIFORM ?
+            GetConstantBufferSize(createInfo.size) :
+            createInfo.size
+            );
 
         bool success = SUCCEEDED(device.GetDX12Device()->CreateCommittedResource(
             &heapProperties,

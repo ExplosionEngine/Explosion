@@ -50,16 +50,16 @@ namespace RHI::DirectX12 {
         std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
         {
             for (auto i = 0; i < createInfo.bindGroupLayoutNum; i++) {
-                auto* bindGroupLayout = dynamic_cast<const DX12BindGroupLayout*>(createInfo.bindGroupLayouts[i]);
+                const auto* bindGroupLayout = dynamic_cast<const DX12BindGroupLayout*>(createInfo.bindGroupLayouts[i]);
                 const auto baseIndex = static_cast<uint32_t>(rootParameters.size());
 
                 const auto& pendingRootParameters = bindGroupLayout->GetDX12RootParameters();
                 const auto& keyInfos = bindGroupLayout->GetRootParameterKeyInfos();
                 for (auto j = 0; j < pendingRootParameters.size(); j++) {
                     const auto index = static_cast<uint32_t>(baseIndex + j);
-                    rootParameters.emplace_back(pendingRootParameters[index]);
+                    rootParameters.emplace_back(pendingRootParameters[j]);
 
-                    const auto& keyInfo = keyInfos[index];
+                    const auto& keyInfo = keyInfos[j];
                     auto rootParameterKey = RootParameterKey { keyInfo.layoutIndex, keyInfo.binding };
                     rootDescriptorParameterIndexMaps[keyInfo.shaderStage][rootParameterKey] = { keyInfo.bindingType, index };
                 }
