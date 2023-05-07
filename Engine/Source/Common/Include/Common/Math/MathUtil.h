@@ -3,7 +3,8 @@
 //
 
 #pragma once
-#include <Common/Math/Math.h>
+
+#include <Common/Math/Constant.h>
 #include <Common/Math/Matrix3.h>
 #include <Common/Math/Matrix4.h>
 #include <Common/Math/Vector2.h>
@@ -11,7 +12,6 @@
 #include <Common/Math/Vector4.h>
 
 namespace Common {
-
     inline Vector2 Min(const Vector2 &lhs, const Vector2 &rhs);
     inline Vector3 Min(const Vector3 &lhs, const Vector3 &rhs);
     inline Vector4 Min(const Vector4 &lhs, const Vector4 &rhs);
@@ -118,5 +118,4 @@ namespace Common {
         ret.w = std::fmax(lhs.w, rhs.w);
         return ret;
     }
-
 } // namespace Common

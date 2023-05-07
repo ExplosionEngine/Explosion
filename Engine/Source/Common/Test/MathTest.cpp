@@ -3,17 +3,7 @@
 //
 
 #include <gtest/gtest.h>
-#include <Common/Math/Vector2.h>
 #include <Common/Math/Vector3.h>
-#include <Common/Math/Vector4.h>
-
-#include <Common/Math/Matrix3.h>
-#include <Common/Math/Matrix4.h>
-
-#include <Common/Math/Color.h>
-#include <Common/Math/Box.h>
-#include <Common/Math/Rect.h>
-#include <Common/Math/Transform.h>
 
 using namespace Common;
 
