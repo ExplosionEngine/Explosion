@@ -221,6 +221,10 @@ function(Add3rdBinaryPackage)
             OUTPUT R_RUNTIME_DEP
             SOURCE_DIR ${SOURCE_DIR}
         )
+        Get3rdPlatformPath(
+            INPUT ${R_RUNTIME_DEP}
+            OUTPUT P_RUNTIME_DEP
+        )
         set_target_properties(
             ${NAME} PROPERTIES
             3RD_RUNTIME_DEP "${P_RUNTIME_DEP}"

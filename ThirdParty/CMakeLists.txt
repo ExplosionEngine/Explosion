@@ -55,7 +55,8 @@ Add3rdBinaryPackage(
     INCLUDE $<SOURCE_DIR>/inc
     LINK $<SOURCE_DIR>/lib/x64
     LIB dxcompiler
-    RUNTIME_DEP $<SOURCE_DIR>/bin/x64/dxcompiler.dll $<SOURCE_DIR>/bin/x64/dxil.dll
+    RUNTIME_DEP
+        Windows $<SOURCE_DIR>/bin/x64/dxcompiler.dll $<SOURCE_DIR>/bin/x64/dxil.dll
 )
 Add3rdAliasPackage(
     NAME dxc
@@ -102,7 +103,8 @@ Add3rdBinaryPackage(
     INCLUDE $<SOURCE_DIR>/include
     LINK $<SOURCE_DIR>/lib
     LIB libclang
-    RUNTIME_DEP $<SOURCE_DIR>/bin/libclang.dll
+    RUNTIME_DEP
+        Windows $<SOURCE_DIR>/bin/libclang.dll
 )
 Add3rdBinaryPackage(
     NAME llvm-clang
