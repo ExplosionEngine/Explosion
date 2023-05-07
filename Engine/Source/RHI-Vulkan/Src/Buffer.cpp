@@ -13,7 +13,8 @@ namespace RHI::Vulkan {
     {
         static std::unordered_map<BufferUsageFlags, vk::MemoryPropertyFlags> rules = {
             { BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC, vk::MemoryPropertyFlagBits::eHostVisible },
-            { BufferUsageBits::MAP_READ | BufferUsageBits::COPY_DST, vk::MemoryPropertyFlagBits::eHostVisible }
+            { BufferUsageBits::MAP_READ | BufferUsageBits::COPY_DST, vk::MemoryPropertyFlagBits::eHostVisible },
+            { BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE, vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible}
             // TODO check other conditions ?
         };
         static vk::MemoryPropertyFlags fallback = vk::MemoryPropertyFlagBits::eDeviceLocal;

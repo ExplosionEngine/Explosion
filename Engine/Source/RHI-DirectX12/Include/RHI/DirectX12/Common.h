@@ -105,6 +105,7 @@ namespace RHI::DirectX12 {
         DX12_ENUM_MAP_ITEM(PixelFormat::D16_UNORM, DXGI_FORMAT_D16_UNORM)
         DX12_ENUM_MAP_ITEM(PixelFormat::D24_UNORM_S8_UINT, DXGI_FORMAT_D24_UNORM_S8_UINT)
         DX12_ENUM_MAP_ITEM(PixelFormat::D32_FLOAT, DXGI_FORMAT_D32_FLOAT)
+        DX12_ENUM_MAP_ITEM(PixelFormat::D32_FLOAT_S8_UINT, DXGI_FORMAT_D32_FLOAT_S8X24_UINT)
     DX12_ENUM_MAP_END()
 
     DX12_ENUM_MAP_BEGIN(VertexFormat, DXGI_FORMAT)
@@ -281,4 +282,31 @@ namespace RHI::DirectX12 {
         DX12_ENUM_MAP_ITEM(TextureState::COPY_DST, D3D12_RESOURCE_STATE_COPY_DEST)
         DX12_ENUM_MAP_ITEM(TextureState::SHADER_READ_ONLY, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
     DX12_ENUM_MAP_END()
+
+    // constant buffer size must be a multiple of 256
+    inline size_t GetConstantBufferSize(size_t size) {
+        return (size + (D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1)) & ~(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1);
+    }
+
+    inline size_t GetBytesPerPixel(PixelFormat format) {
+        if (format >= PixelFormat::R8_UNORM && format <= PixelFormat::R8_SINT) {
+            return 1;
+        }
+        if (format >= PixelFormat::R16_UINT && format <= PixelFormat::RG8_SINT) {
+            return 2;
+        }
+        if (format >= PixelFormat::R32_UINT && format <= PixelFormat::RG11B10_FLOAT) {
+            return 4;
+        }
+        if (format >= PixelFormat::RG32_UINT && format <= PixelFormat::RGBA16_FLOAT) {
+            return 8;
+        }
+        if (format >= PixelFormat::RGBA32_UINT && format <= PixelFormat::RGBA32_FLOAT) {
+            return 16;
+        }
+
+        // TODO depth stencil texture format
+
+        return 0;
+    }
 }

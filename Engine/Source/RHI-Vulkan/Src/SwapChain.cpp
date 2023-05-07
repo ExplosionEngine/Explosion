@@ -104,7 +104,7 @@ namespace RHI::Vulkan {
         }
 
         auto presentModes = device.GetGpu().GetVkPhysicalDevice().getSurfacePresentModesKHR(surface);
-        vk::PresentModeKHR supportedMode = vk::PresentModeKHR::eImmediate;
+        vk::PresentModeKHR supportedMode = VKEnumCast<PresentMode, vk::PresentModeKHR>(createInfo.presentMode);
         {
             Assert(!presentModes.empty());
             auto iter = std::find_if(presentModes.begin(), presentModes.end(),
