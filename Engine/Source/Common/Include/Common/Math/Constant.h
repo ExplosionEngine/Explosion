@@ -8,7 +8,5 @@
 #include <cmath>
 
 namespace Common {
-
     static constexpr float PI = 3.1415926f;
-
 } // namespace Common
