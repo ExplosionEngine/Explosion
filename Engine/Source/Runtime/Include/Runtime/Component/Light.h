@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include <Common/Math/Vector3.h>
+#include <Common/Math/Vector.h>
 #include <Runtime/ECS.h>
 
 namespace Runtime {
     class EClass() LightComponent : public Component {
     public:
         EProperty(category=Light)
-        Common::Vector3 color;
+        Common::FVec3 color;
 
         EProperty(category=Light)
         float intensity;

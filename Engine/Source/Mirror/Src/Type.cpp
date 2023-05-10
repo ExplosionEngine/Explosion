@@ -242,7 +242,7 @@ namespace Mirror {
     const Destructor& Class::GetDestructor() const
     {
         Assert(destructor.has_value());
-        return destructor.value();
+        return destructor.value(); // NOLINT
     }
 
     const Constructor* Class::FindConstructor(const std::string& name) const

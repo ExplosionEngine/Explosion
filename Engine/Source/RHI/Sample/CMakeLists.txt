@@ -69,5 +69,6 @@ AddRHISample(
         SSAO/shaders/blurPs.hlsl
         SSAO/shaders/compositionPs.hlsl
         SSAO/Shaders/common.h
-    MODEL SSAO/models/voyager.gltf
+    MODEL
+        SSAO/models/voyager.gltf
 )

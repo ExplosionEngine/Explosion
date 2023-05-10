@@ -13,6 +13,7 @@
 #include <array>
 
 #include <Mirror/Api.h>
+#include <Common/Hash.h>
 
 #if COMPILER_MSVC
 #define functionSignature __FUNCSIG__
@@ -23,11 +24,14 @@
 namespace Mirror {
     using TypeId = size_t;
 
-    MIRROR_API TypeId ComputeTypeId(std::string_view sigName);
+    MIRROR_API inline TypeId ComputeTypeId(std::string_view sigName)
+    {
+        return Common::HashUtils::CityHash(sigName.data(), sigName.size());
+    }
 
     struct TypeInfo {
 #if BUILD_CONFIG_DEBUG
-        // NOTICE: this name is platform relative, so do not use it unless in for debug
+        // NOTICE: this name is platform relative, so do not use it unless for debug
         std::string debugName;
 #endif
         TypeId id;
@@ -99,12 +103,4 @@ namespace Mirror {
         using RetType = Ret;
         using ArgsTupleType = std::tuple<Args...>;
     };
-}
-
-namespace Mirror {
-    template <typename T>
-    concept IsLValueRef = std::is_rvalue_reference_v<T>;
-
-    template <typename T>
-    concept IsRValueRef = std::is_rvalue_reference_v<T>;
 }

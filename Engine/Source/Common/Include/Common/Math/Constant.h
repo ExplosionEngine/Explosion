@@ -1,12 +1,14 @@
 //
-// Created by Zach Lee on 2021/11/13.
+// Created by johnk on 2023/5/10.
 //
 
 #pragma once
 
-#include <cstdint>
 #include <cmath>
 
+#include <Common/Math/Half.h>
+
 namespace Common {
-    static constexpr float PI = 3.1415926f;
-} // namespace Common
+    static constexpr float epsilon = 0.000001f;
+    static constexpr float pi = 3.1415926f;
+}

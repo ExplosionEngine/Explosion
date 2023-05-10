@@ -9,9 +9,7 @@
 #include <Runtime/Asset.h>
 #include <Runtime/Asset/Texture.h>
 
-#include <Common/Math/Vector2.h>
-#include <Common/Math/Vector3.h>
-#include <Common/Math/Vector4.h>
+#include <Common/Math/Vector.h>
 
 namespace Runtime {
     enum class EEnum() MaterialParameterType {
@@ -32,16 +30,16 @@ namespace Runtime {
         std::vector<float> floatValues;
 
         EProperty()
-        std::vector<Common::Vector2> float2Values;
+        std::vector<Common::FVec2> float2Values;
 
         EProperty()
-        std::vector<Common::Vector3> float3Values;
+        std::vector<Common::FVec3> float3Values;
 
         EProperty()
-        std::vector<Common::Vector4> float4Values;
+        std::vector<Common::FVec4> float4Values;
 
-         EProperty()
-         std::vector<AssetRef<Texture>> textureValues;
+        EProperty()
+        std::vector<AssetRef<Texture>> textureValues;
     };
 
     class EClass() MaterialPermutationSet {
