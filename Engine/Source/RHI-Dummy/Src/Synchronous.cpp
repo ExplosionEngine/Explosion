@@ -14,7 +14,7 @@ namespace RHI::Dummy {
 
     FenceStatus DummyFence::GetStatus()
     {
-        return FenceStatus::SIGNALED;
+        return FenceStatus::signaled;
     }
 
     void DummyFence::Reset()

@@ -40,8 +40,8 @@ protected:
 
         builder.SetAsyncCompute(false);
 
-        uniformBuffer = builder.CreateBuffer("TestUniformBuffer", RGBufferDesc::Create(sizeof(Parameters), RHI::BufferUsageBits::UNIFORM));
-        outputTexture = builder.CreateTexture("TestOutputTexture", RGTextureDesc::Create2D(1024, 1024, RHI::PixelFormat::BGRA8_UNORM, RHI::TextureUsageBits::STORAGE_BINDING));
+        uniformBuffer = builder.CreateBuffer("TestUniformBuffer", RGBufferDesc::Create(sizeof(Parameters), RHI::BufferUsageBits::uniform));
+        outputTexture = builder.CreateTexture("TestOutputTexture", RGTextureDesc::Create2D(1024, 1024, RHI::PixelFormat::bgra8Unorm, RHI::TextureUsageBits::storageBinding));
         auto* uniformBufferView = builder.CreateBufferView(RGBufferViewDesc::Create(uniformBuffer));
         auto* outputTextureView = builder.CreateTextureView(RGTextureViewDesc::Create2D(outputTexture));
 
@@ -76,10 +76,10 @@ private:
 struct RenderGraphTest : public testing::Test {
     void SetUp() override
     {
-        instance = RHI::Instance::GetByType(RHI::RHIType::DUMMY);
+        instance = RHI::Instance::GetByType(RHI::RHIType::dummy);
 
         RHI::QueueInfo queueInfo {};
-        queueInfo.type = RHI::QueueType::GRAPHICS;
+        queueInfo.type = RHI::QueueType::graphics;
         queueInfo.num = 1;
         RHI::DeviceCreateInfo deviceCreateInfo {};
         deviceCreateInfo.queueCreateInfoNum = 1;

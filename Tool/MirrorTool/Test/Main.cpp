@@ -128,17 +128,17 @@ TEST(MirrorTest, ParserTest)
     };
     predicatedGlobalNamespace.classes = { { "", "C0", {} } };
     predicatedGlobalNamespace.classes[0].staticVariables = {
-        { "C0", "sv0", {}, "int", FieldAccess::PUBLIC }
+        { "C0", "sv0", {}, "int", FieldAccess::public }
     };
     predicatedGlobalNamespace.classes[0].staticFunctions = {
-        { "C0", "sf0", {}, "void", {}, FieldAccess::PUBLIC }
+        { "C0", "sf0", {}, "void", {}, FieldAccess::public }
     };
     predicatedGlobalNamespace.classes[0].variables = {
-        { "C0", "v0", {{ "editorHide", "true" }}, "int", FieldAccess::PUBLIC },
-        { "C0", "v1", {}, "float", FieldAccess::PUBLIC }
+        { "C0", "v0", {{ "editorHide", "true" }}, "int", FieldAccess::public },
+        { "C0", "v1", {}, "float", FieldAccess::public }
     };
     predicatedGlobalNamespace.classes[0].functions = {
-        { "C0", "f0", {}, "int", {}, FieldAccess::PUBLIC }
+        { "C0", "f0", {}, "int", {}, FieldAccess::public }
     };
     AssertNamespaceInfoEqual(globalNamespace, predicatedGlobalNamespace);
 }

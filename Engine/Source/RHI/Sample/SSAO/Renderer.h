@@ -98,7 +98,7 @@ const unsigned int SSAO_NOISE_DIM = 16;
         RHIType rhiType;
         Camera camera;
 
-        PixelFormat swapChainFormat = PixelFormat::MAX;
+        PixelFormat swapChainFormat = PixelFormat::max;
         Instance* instance = nullptr;
         Gpu* gpu = nullptr;
         UniqueRef<Device> device = nullptr;

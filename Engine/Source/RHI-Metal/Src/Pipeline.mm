@@ -12,8 +12,8 @@ namespace RHI::Metal {
     static const char* GetShaderEntry(ShaderStageBits stage)
     {
         static std::unordered_map<ShaderStageBits, const char*> ENTRY_MAP = {
-            {ShaderStageBits::S_VERTEX, "VSMain"},
-            {ShaderStageBits::S_PIXEL, "FSMain"}
+            {ShaderStageBits::sVertex, "VSMain"},
+            {ShaderStageBits::sPixel, "FSMain"}
         };
         auto iter = ENTRY_MAP.find(stage);
         Assert(iter != ENTRY_MAP.end() && "invalid shader stage");
@@ -50,7 +50,7 @@ namespace RHI::Metal {
         uint32_t attributeIndex = 0;
         for (uint32_t i = 0; i < createInfo.vertexState.bufferLayoutNum; ++i) {
             const VertexBufferLayout &vbLayout = createInfo.vertexState.bufferLayouts[i];
-            vertexDesc.layouts[i].stepFunction = vbLayout.stepMode == VertexStepMode::PER_VERTEX ? MTLVertexStepFunctionPerVertex : MTLVertexStepFunctionPerInstance;
+            vertexDesc.layouts[i].stepFunction = vbLayout.stepMode == VertexStepMode::perVertex ? MTLVertexStepFunctionPerVertex : MTLVertexStepFunctionPerInstance;
             vertexDesc.layouts[i].stepRate = 1;
             vertexDesc.layouts[i].stride = vbLayout.stride;
 
@@ -64,8 +64,8 @@ namespace RHI::Metal {
         }
 
         pipelineDesc.label = @"Graphics Pipeline";
-        pipelineDesc.vertexFunction = CreateFunction(ShaderStageBits::S_VERTEX, createInfo.vertexShader);
-        pipelineDesc.fragmentFunction = CreateFunction(ShaderStageBits::S_PIXEL, createInfo.pixelShader);
+        pipelineDesc.vertexFunction = CreateFunction(ShaderStageBits::sVertex, createInfo.vertexShader);
+        pipelineDesc.fragmentFunction = CreateFunction(ShaderStageBits::sPixel, createInfo.pixelShader);
         pipelineDesc.vertexDescriptor = vertexDesc;
 
         for (uint32_t i = 0; i < createInfo.fragmentState.colorTargetNum; ++i) {

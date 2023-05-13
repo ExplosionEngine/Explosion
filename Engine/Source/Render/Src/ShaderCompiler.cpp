@@ -35,8 +35,8 @@ namespace Render {
     static std::wstring GetDXCTargetProfile(RHI::ShaderStageBits stage)
     {
         static const std::unordered_map<RHI::ShaderStageBits, std::wstring> map = {
-            { RHI::ShaderStageBits::S_VERTEX, L"vs" },
-            { RHI::ShaderStageBits::S_PIXEL, L"ps" },
+            { RHI::ShaderStageBits::sVertex, L"vs" },
+            { RHI::ShaderStageBits::sPixel, L"ps" },
             // TODO
         };
         auto iter = map.find(stage);
@@ -56,7 +56,7 @@ namespace Render {
             result.emplace_back(L"-Qembed_debug");
             result.emplace_back(DXC_ARG_DEBUG);
         }
-        if (options.byteCodeType != ShaderByteCodeType::DXIL) {
+        if (options.byteCodeType != ShaderByteCodeType::dxil) {
             result.emplace_back(L"-spirv");
         }
         return result;
@@ -91,7 +91,7 @@ namespace Render {
     static std::vector<std::wstring> GetInternalPredefinition(const ShaderCompileOptions& options)
     {
         std::vector<std::wstring> result { L"-D" };
-        auto def = options.byteCodeType == Render::ShaderByteCodeType::SPRIV ? std::wstring{L"VULKAN=1"} : std::wstring{L"VULKAN=0"};
+        auto def = options.byteCodeType == Render::ShaderByteCodeType::spirv ? std::wstring{L"VULKAN=1"} : std::wstring{L"VULKAN=0"};
         result.emplace_back(def);
 
         return result;
@@ -195,7 +195,7 @@ namespace Render {
         const auto* codeEnd = codeStart + codeBlob->GetBufferSize();
         output.byteCode = std::vector<uint8_t>(codeStart, codeEnd);
 
-        if (options.byteCodeType == ShaderByteCodeType::DXIL) {
+        if (options.byteCodeType == ShaderByteCodeType::dxil) {
 #if PLATFORM_WINDOWS
             ComPtr<IDxcBlob> reflectionBlob;
             Assert(SUCCEEDED(result->GetOutput(DXC_OUT_REFLECTION, IID_PPV_ARGS(&reflectionBlob), nullptr)));
@@ -250,7 +250,7 @@ namespace Render {
         return threadPool.EmplaceTask([](const ShaderCompileInput& input, const ShaderCompileOptions& options) -> ShaderCompileOutput {
             ShaderCompileOutput output;
             CompileDxilOrSpriv(input, options, output);
-            if (!output.success || options.byteCodeType != ShaderByteCodeType::MBC) {
+            if (!output.success || options.byteCodeType != ShaderByteCodeType::mbc) {
                 return output;
             }
             ConvertSprivToMetalByteCode(options, output);

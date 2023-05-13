@@ -15,10 +15,10 @@ namespace RHI::DirectX12 {
     uint8_t GetDX12RenderTargetWriteMasks(ColorWriteFlags writeFlags)
     {
         static std::unordered_map<ColorWriteBits, uint8_t> MAP = {
-            { ColorWriteBits::RED, D3D12_COLOR_WRITE_ENABLE_RED },
-            { ColorWriteBits::GREEN, D3D12_COLOR_WRITE_ENABLE_GREEN },
-            { ColorWriteBits::BLUE, D3D12_COLOR_WRITE_ENABLE_BLUE },
-            { ColorWriteBits::ALPHA, D3D12_COLOR_WRITE_ENABLE_ALPHA }
+            { ColorWriteBits::red, D3D12_COLOR_WRITE_ENABLE_RED },
+            { ColorWriteBits::green, D3D12_COLOR_WRITE_ENABLE_GREEN },
+            { ColorWriteBits::blue, D3D12_COLOR_WRITE_ENABLE_BLUE },
+            { ColorWriteBits::alpha, D3D12_COLOR_WRITE_ENABLE_ALPHA }
         };
 
         uint8_t result = 0;
@@ -51,7 +51,7 @@ namespace RHI::DirectX12 {
         // TODO expose to RHI interface?
         desc.FillMode = D3D12_FILL_MODE_SOLID;
         desc.CullMode = DX12EnumCast<CullMode, D3D12_CULL_MODE>(createInfo.primitiveState.cullMode);
-        desc.FrontCounterClockwise = createInfo.primitiveState.frontFace == FrontFace::CCW;
+        desc.FrontCounterClockwise = createInfo.primitiveState.frontFace == FrontFace::ccw;
         desc.DepthBias = createInfo.depthStencilState.depthBias;
         desc.DepthBiasClamp = createInfo.depthStencilState.depthBiasClamp;
         desc.SlopeScaledDepthBias = createInfo.depthStencilState.depthBiasSlopeScale;

@@ -17,8 +17,8 @@ namespace RHI::DirectX12 {
     static D3D12_HEAP_TYPE GetDX12HeapType(BufferUsageFlags bufferUsages)
     {
         static std::unordered_map<BufferUsageFlags, D3D12_HEAP_TYPE> rules = {
-            { BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC, D3D12_HEAP_TYPE_UPLOAD },
-            { BufferUsageBits::MAP_READ | BufferUsageBits::COPY_DST, D3D12_HEAP_TYPE_READBACK }
+            { BufferUsageBits::mapWrite | BufferUsageBits::copySrc, D3D12_HEAP_TYPE_UPLOAD },
+            { BufferUsageBits::mapRead | BufferUsageBits::copyDst, D3D12_HEAP_TYPE_READBACK }
             // TODO check other conditions ?
         };
         static D3D12_HEAP_TYPE fallback = D3D12_HEAP_TYPE_DEFAULT;
@@ -34,13 +34,13 @@ namespace RHI::DirectX12 {
     static D3D12_RESOURCE_STATES GetDX12ResourceStates(BufferUsageFlags bufferUsages)
     {
         static std::unordered_map<BufferUsageBits, D3D12_RESOURCE_STATES> rules = {
-            { BufferUsageBits::COPY_SRC, D3D12_RESOURCE_STATE_COPY_SOURCE },
-            { BufferUsageBits::COPY_DST, D3D12_RESOURCE_STATE_COPY_DEST },
-            { BufferUsageBits::INDEX, D3D12_RESOURCE_STATE_GENERIC_READ },
-            { BufferUsageBits::VERTEX, D3D12_RESOURCE_STATE_GENERIC_READ },
-            { BufferUsageBits::UNIFORM, D3D12_RESOURCE_STATE_GENERIC_READ },
-            { BufferUsageBits::STORAGE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS },
-            { BufferUsageBits::INDIRECT, D3D12_RESOURCE_STATE_GENERIC_READ },
+            { BufferUsageBits::copySrc, D3D12_RESOURCE_STATE_COPY_SOURCE },
+            { BufferUsageBits::copyDst, D3D12_RESOURCE_STATE_COPY_DEST },
+            { BufferUsageBits::index, D3D12_RESOURCE_STATE_GENERIC_READ },
+            { BufferUsageBits::vertex, D3D12_RESOURCE_STATE_GENERIC_READ },
+            { BufferUsageBits::uniform, D3D12_RESOURCE_STATE_GENERIC_READ },
+            { BufferUsageBits::storage, D3D12_RESOURCE_STATE_UNORDERED_ACCESS },
+            { BufferUsageBits::indirect, D3D12_RESOURCE_STATE_GENERIC_READ },
             // TODO check other conditions ?
         };
 
@@ -56,8 +56,8 @@ namespace RHI::DirectX12 {
     static MapMode GetMapMode(BufferUsageFlags bufferUsages)
     {
         static std::unordered_map<BufferUsageBits, MapMode> rules = {
-            { BufferUsageBits::MAP_READ, MapMode::READ },
-            { BufferUsageBits::MAP_WRITE, MapMode::WRITE }
+            { BufferUsageBits::mapRead, MapMode::read },
+            { BufferUsageBits::mapWrite, MapMode::write }
         };
 
         for (const auto& rule : rules) {
@@ -65,7 +65,7 @@ namespace RHI::DirectX12 {
                 return rule.second;
             }
         }
-        return MapMode::READ;
+        return MapMode::read;
     }
 }
 
@@ -122,7 +122,7 @@ namespace RHI::DirectX12 {
     {
         CD3DX12_HEAP_PROPERTIES heapProperties(GetDX12HeapType(createInfo.usages));
         CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(
-            createInfo.usages | BufferUsageBits::UNIFORM ?
+            createInfo.usages | BufferUsageBits::uniform ?
             GetConstantBufferSize(createInfo.size) :
             createInfo.size
             );

@@ -138,8 +138,8 @@ namespace RHI::DirectX12 {
     bool DX12Device::CheckSwapChainFormatSupport(RHI::Surface* surface, PixelFormat format)
     {
         static std::unordered_set<PixelFormat> supportedFormats = {
-            PixelFormat::RGBA8_UNORM,
-            PixelFormat::BGRA8_UNORM,
+            PixelFormat::rgba8Unorm,
+            PixelFormat::bgra8Unorm,
             // TODO HDR
         };
         return supportedFormats.contains(format);

@@ -55,19 +55,19 @@ namespace Example {
 
     void Renderer::RequestDeviceAndFetchQueues()
     {
-        std::vector<QueueInfo> queueCreateInfos = { {QueueType::GRAPHICS, 1} };
+        std::vector<QueueInfo> queueCreateInfos = { {QueueType::graphics, 1} };
         DeviceCreateInfo createInfo {};
         createInfo.queueCreateInfoNum = static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.queueCreateInfos = queueCreateInfos.data();
         device = gpu->RequestDevice(createInfo);
-        graphicsQueue = device->GetQueue(QueueType::GRAPHICS, 0);
+        graphicsQueue = device->GetQueue(QueueType::graphics, 0);
     }
 
     void Renderer::CreateSwapChain()
     {
         static std::vector<PixelFormat> swapChainFormatQualifiers = {
-            PixelFormat::RGBA8_UNORM,
-            PixelFormat::BGRA8_UNORM
+            PixelFormat::rgba8Unorm,
+            PixelFormat::bgra8Unorm
         };
 
         SurfaceCreateInfo surfaceCreateInfo {};
@@ -80,11 +80,11 @@ namespace Example {
                 break;
             }
         }
-        Assert(swapChainFormat != PixelFormat::MAX);
+        Assert(swapChainFormat != PixelFormat::max);
 
         SwapChainCreateInfo swapChainCreateInfo {};
         swapChainCreateInfo.format = swapChainFormat;
-        swapChainCreateInfo.presentMode = PresentMode::IMMEDIATELY;
+        swapChainCreateInfo.presentMode = PresentMode::immediately;
         swapChainCreateInfo.textureNum = BACK_BUFFER_COUNT;
         swapChainCreateInfo.extent = {app->width, app->height};
         swapChainCreateInfo.surface = surface.Get();
@@ -95,12 +95,12 @@ namespace Example {
             swapChainTextures[i] = swapChain->GetTexture(i);
 
             TextureViewCreateInfo viewCreateInfo {};
-            viewCreateInfo.dimension = TextureViewDimension::TV_2D;
+            viewCreateInfo.dimension = TextureViewDimension::tv2D;
             viewCreateInfo.baseArrayLayer = 0;
             viewCreateInfo.arrayLayerNum = 1;
             viewCreateInfo.baseMipLevel = 0;
             viewCreateInfo.mipLevelNum = 1;
-            viewCreateInfo.aspect = TextureAspect::COLOR;
+            viewCreateInfo.aspect = TextureAspect::color;
             swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(viewCreateInfo);
         }
     }
@@ -109,10 +109,10 @@ namespace Example {
     {
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = model->raw_vertex_buffer.size() * sizeof(Vertex);
-        bufferCreateInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         vertexBuffer = device->CreateBuffer(bufferCreateInfo);
         assert(vertexBuffer != nullptr);
-        auto* data = vertexBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
+        auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
         memcpy(data, model->raw_vertex_buffer.data(), bufferCreateInfo.size);
         vertexBuffer->UnMap();
 
@@ -127,10 +127,10 @@ namespace Example {
     {
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = model->raw_index_buffer.size() * sizeof(uint32_t);
-        bufferCreateInfo.usages = BufferUsageBits::INDEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        bufferCreateInfo.usages = BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         indexBuffer = device->CreateBuffer(bufferCreateInfo);
         assert(indexBuffer != nullptr);
-        auto* data = indexBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
+        auto* data = indexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
         memcpy(data, model->raw_index_buffer.data(), bufferCreateInfo.size);
         indexBuffer->UnMap();
 
@@ -138,7 +138,7 @@ namespace Example {
         BufferViewCreateInfo bufferViewCreateInfo {};
         bufferViewCreateInfo.size = bufferCreateInfo.size;
         bufferViewCreateInfo.offset = 0;
-        bufferViewCreateInfo.index.format = IndexFormat::UINT32;
+        bufferViewCreateInfo.index.format = IndexFormat::uint32;
         indexBufferView = indexBuffer->CreateBufferView(bufferViewCreateInfo);
     }
 
@@ -154,10 +154,10 @@ namespace Example {
 
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = vertices.size() * sizeof(QuadVertex);
-        bufferCreateInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         quadVertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (quadVertexBuffer != nullptr) {
-            auto* data = quadVertexBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
+            auto* data = quadVertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, vertices.data(), bufferCreateInfo.size);
             quadVertexBuffer->UnMap();
         }
@@ -171,17 +171,17 @@ namespace Example {
         // index buffer
         std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
         bufferCreateInfo.size = indices.size() * sizeof(uint32_t);
-        bufferCreateInfo.usages = BufferUsageBits::INDEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        bufferCreateInfo.usages = BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         quadIndexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (quadIndexBuffer != nullptr) {
-            auto* data = quadIndexBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
+            auto* data = quadIndexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, indices.data(), bufferCreateInfo.size);
             quadIndexBuffer->UnMap();
         }
 
         bufferViewCreateInfo.size = indices.size() * sizeof(uint32_t);
         bufferViewCreateInfo.offset = 0;
-        bufferViewCreateInfo.index.format = IndexFormat::UINT32;
+        bufferViewCreateInfo.index.format = IndexFormat::uint32;
         quadIndexBufferView = quadIndexBuffer->CreateBufferView(bufferViewCreateInfo);
     }
 
@@ -209,10 +209,10 @@ namespace Example {
 
         //gBuffer
         entries.resize(1);
-        entries[0].binding.type = BindingType::UNIFORM_BUFFER;
-        entries[0].shaderVisibility = ShaderStageBits::S_VERTEX | ShaderStageBits::S_PIXEL;
-        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
+        entries[0].binding.type = BindingType::uniformBuffer;
+        entries[0].shaderVisibility = ShaderStageBits::sVertex | ShaderStageBits::sPixel;
+        if (instance->GetRHIType() == RHI::RHIType::directX12) {
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
         } else {
             entries[0].binding.platform.glsl.index = 0;
         }
@@ -223,13 +223,13 @@ namespace Example {
 
         // renderable layout
         entries.resize(2);
-        entries[0].binding.type = BindingType::TEXTURE;
-        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[1].binding.type = BindingType::SAMPLER;
-        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+        entries[0].binding.type = BindingType::texture;
+        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[1].binding.type = BindingType::sampler;
+        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        if (instance->GetRHIType() == RHI::RHIType::directX12) {
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
         } else {
             entries[0].binding.platform.glsl.index = 0;
             entries[1].binding.platform.glsl.index = 1;
@@ -246,28 +246,28 @@ namespace Example {
 
         //ssao
         entries.resize(7);
-        entries[0].binding.type = BindingType::TEXTURE;
-        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[1].binding.type = BindingType::TEXTURE;
-        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[2].binding.type = BindingType::TEXTURE;
-        entries[2].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[3].binding.type = BindingType::SAMPLER;
-        entries[3].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[4].binding.type = BindingType::SAMPLER;
-        entries[4].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[5].binding.type = BindingType::UNIFORM_BUFFER;
-        entries[5].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[6].binding.type = BindingType::UNIFORM_BUFFER;
-        entries[6].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 1 };
-            entries[2].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 2 };
-            entries[3].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
-            entries[4].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 1 };
-            entries[5].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
-            entries[6].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 1 };
+        entries[0].binding.type = BindingType::texture;
+        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[1].binding.type = BindingType::texture;
+        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[2].binding.type = BindingType::texture;
+        entries[2].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[3].binding.type = BindingType::sampler;
+        entries[3].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[4].binding.type = BindingType::sampler;
+        entries[4].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[5].binding.type = BindingType::uniformBuffer;
+        entries[5].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[6].binding.type = BindingType::uniformBuffer;
+        entries[6].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        if (instance->GetRHIType() == RHI::RHIType::directX12) {
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::texture, 1 };
+            entries[2].binding.platform.hlsl = { HlslBindingRangeType::texture, 2 };
+            entries[3].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
+            entries[4].binding.platform.hlsl = { HlslBindingRangeType::sampler, 1 };
+            entries[5].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
+            entries[6].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 1 };
         } else {
             entries[0].binding.platform.glsl.index = 0;
             entries[1].binding.platform.glsl.index = 1;
@@ -289,13 +289,13 @@ namespace Example {
 
         // ssaoBlur
         entries.resize(2);
-        entries[0].binding.type = BindingType::TEXTURE;
-        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[1].binding.type = BindingType::SAMPLER;
-        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+        entries[0].binding.type = BindingType::texture;
+        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[1].binding.type = BindingType::sampler;
+        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        if (instance->GetRHIType() == RHI::RHIType::directX12) {
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
         } else {
             entries[0].binding.platform.glsl.index = 0;
             entries[1].binding.platform.glsl.index = 1;
@@ -311,28 +311,28 @@ namespace Example {
 
         // composition
         entries.resize(7);
-        entries[0].binding.type = BindingType::TEXTURE;
-        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[1].binding.type = BindingType::TEXTURE;
-        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[2].binding.type = BindingType::TEXTURE;
-        entries[2].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[3].binding.type = BindingType::TEXTURE;
-        entries[3].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[4].binding.type = BindingType::TEXTURE;
-        entries[4].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[5].binding.type = BindingType::SAMPLER;
-        entries[5].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[6].binding.type = BindingType::UNIFORM_BUFFER;
-        entries[6].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 1 };
-            entries[2].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 2 };
-            entries[3].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 3 };
-            entries[4].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 4 };
-            entries[5].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
-            entries[6].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
+        entries[0].binding.type = BindingType::texture;
+        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[1].binding.type = BindingType::texture;
+        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[2].binding.type = BindingType::texture;
+        entries[2].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[3].binding.type = BindingType::texture;
+        entries[3].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[4].binding.type = BindingType::texture;
+        entries[4].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[5].binding.type = BindingType::sampler;
+        entries[5].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[6].binding.type = BindingType::uniformBuffer;
+        entries[6].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        if (instance->GetRHIType() == RHI::RHIType::directX12) {
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::texture, 1 };
+            entries[2].binding.platform.hlsl = { HlslBindingRangeType::texture, 2 };
+            entries[3].binding.platform.hlsl = { HlslBindingRangeType::texture, 3 };
+            entries[4].binding.platform.hlsl = { HlslBindingRangeType::texture, 4 };
+            entries[5].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
+            entries[6].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
         } else {
             entries[0].binding.platform.glsl.index = 0;
             entries[1].binding.platform.glsl.index = 1;
@@ -358,10 +358,10 @@ namespace Example {
         std::vector<BindGroupEntry> entries(1);
 
         // GBuffer scene
-        entries[0].binding.type = BindingType::UNIFORM_BUFFER;
+        entries[0].binding.type = BindingType::uniformBuffer;
         entries[0].bufferView = uniformBuffers.sceneParams.bufView.Get();
-        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
+        if (instance->GetRHIType() == RHI::RHIType::directX12) {
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
         } else {
             entries[0].binding.platform.glsl.index = 0;
         }
@@ -372,28 +372,28 @@ namespace Example {
 
         // ssao generation
         entries.resize(7);
-        entries[0].binding.type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::texture;
         entries[0].textureView = gBufferPos.view.Get();
-        entries[1].binding.type = BindingType::TEXTURE;
+        entries[1].binding.type = BindingType::texture;
         entries[1].textureView = gBufferNormal.view.Get();
-        entries[2].binding.type = BindingType::TEXTURE;
+        entries[2].binding.type = BindingType::texture;
         entries[2].textureView = noise.view.Get();
-        entries[3].binding.type = BindingType::SAMPLER;
+        entries[3].binding.type = BindingType::sampler;
         entries[3].sampler = sampler.Get();
-        entries[4].binding.type = BindingType::SAMPLER;
+        entries[4].binding.type = BindingType::sampler;
         entries[4].sampler = noiseSampler.Get();
-        entries[5].binding.type = BindingType::UNIFORM_BUFFER;
+        entries[5].binding.type = BindingType::uniformBuffer;
         entries[5].bufferView = uniformBuffers.ssaoKernel.bufView.Get();
-        entries[6].binding.type = BindingType::UNIFORM_BUFFER;
+        entries[6].binding.type = BindingType::uniformBuffer;
         entries[6].bufferView = uniformBuffers.ssaoParams.bufView.Get();
-        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 1 };
-            entries[2].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 2 };
-            entries[3].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
-            entries[4].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 1 };
-            entries[5].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
-            entries[6].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 1 };
+        if (instance->GetRHIType() == RHI::RHIType::directX12) {
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::texture, 1 };
+            entries[2].binding.platform.hlsl = { HlslBindingRangeType::texture, 2 };
+            entries[3].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
+            entries[4].binding.platform.hlsl = { HlslBindingRangeType::sampler, 1 };
+            entries[5].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
+            entries[6].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 1 };
         } else {
             entries[0].binding.platform.glsl.index = 0;
             entries[1].binding.platform.glsl.index = 1;
@@ -410,13 +410,13 @@ namespace Example {
 
         // ssao blur
         entries.resize(2);
-        entries[0].binding.type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::texture;
         entries[0].textureView = ssaoOutput.view.Get();
-        entries[1].binding.type = BindingType::SAMPLER;
+        entries[1].binding.type = BindingType::sampler;
         entries[1].sampler = sampler.Get();
-        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+        if (instance->GetRHIType() == RHI::RHIType::directX12) {
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
         } else {
             entries[0].binding.platform.glsl.index = 0;
             entries[1].binding.platform.glsl.index = 1;
@@ -428,28 +428,28 @@ namespace Example {
 
         // composition
         entries.resize(7);
-        entries[0].binding.type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::texture;
         entries[0].textureView = gBufferPos.view.Get();
-        entries[1].binding.type = BindingType::TEXTURE;
+        entries[1].binding.type = BindingType::texture;
         entries[1].textureView = gBufferNormal.view.Get();
-        entries[2].binding.type = BindingType::TEXTURE;
+        entries[2].binding.type = BindingType::texture;
         entries[2].textureView = gBufferAlbedo.view.Get();
-        entries[3].binding.type = BindingType::TEXTURE;
+        entries[3].binding.type = BindingType::texture;
         entries[3].textureView = ssaoOutput.view.Get();
-        entries[4].binding.type = BindingType::TEXTURE;
+        entries[4].binding.type = BindingType::texture;
         entries[4].textureView = ssaoBlurOutput.view.Get();
-        entries[5].binding.type = BindingType::SAMPLER;
+        entries[5].binding.type = BindingType::sampler;
         entries[5].sampler = sampler.Get();
-        entries[6].binding.type = BindingType::UNIFORM_BUFFER;
+        entries[6].binding.type = BindingType::uniformBuffer;
         entries[6].bufferView = uniformBuffers.ssaoParams.bufView.Get();
-        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 1 };
-            entries[2].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 2 };
-            entries[3].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 3 };
-            entries[4].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 4 };
-            entries[5].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
-            entries[6].binding.platform.hlsl = { HlslBindingRangeType::CONSTANT_BUFFER, 0 };
+        if (instance->GetRHIType() == RHI::RHIType::directX12) {
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::texture, 1 };
+            entries[2].binding.platform.hlsl = { HlslBindingRangeType::texture, 2 };
+            entries[3].binding.platform.hlsl = { HlslBindingRangeType::texture, 3 };
+            entries[4].binding.platform.hlsl = { HlslBindingRangeType::texture, 4 };
+            entries[5].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
+            entries[6].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
         } else {
             entries[0].binding.platform.glsl.index = 0;
             entries[1].binding.platform.glsl.index = 1;
@@ -467,14 +467,14 @@ namespace Example {
 
     void Renderer::PrepareOffscreen()
     {
-        CreateAttachments(PixelFormat::RGBA32_FLOAT, TextureUsageBits::TEXTURE_BINDING | TextureUsageBits::RENDER_ATTACHMENT, TextureAspect::COLOR, &gBufferPos, app->width, app->height);
-        CreateAttachments(PixelFormat::RGBA8_UNORM, TextureUsageBits::TEXTURE_BINDING | TextureUsageBits::RENDER_ATTACHMENT, TextureAspect::COLOR, &gBufferNormal, app->width, app->height);
-        CreateAttachments(PixelFormat::RGBA8_UNORM, TextureUsageBits::TEXTURE_BINDING | TextureUsageBits::RENDER_ATTACHMENT, TextureAspect::COLOR, &gBufferAlbedo, app->width, app->height);
-        CreateAttachments(PixelFormat::D32_FLOAT_S8_UINT, TextureUsageBits::DEPTH_STENCIL_ATTACHMENT, TextureAspect::DEPTH_STENCIL, &gBufferDepth, app->width, app->height);
+        CreateAttachments(PixelFormat::rgba32Float, TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment, TextureAspect::color, &gBufferPos, app->width, app->height);
+        CreateAttachments(PixelFormat::rgba8Unorm, TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment, TextureAspect::color, &gBufferNormal, app->width, app->height);
+        CreateAttachments(PixelFormat::rgba8Unorm, TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment, TextureAspect::color, &gBufferAlbedo, app->width, app->height);
+        CreateAttachments(PixelFormat::d32FloatS8Uint, TextureUsageBits::depthStencilAttachment, TextureAspect::depthStencil, &gBufferDepth, app->width, app->height);
 
-        CreateAttachments(PixelFormat::R8_UNORM, TextureUsageBits::TEXTURE_BINDING | TextureUsageBits::RENDER_ATTACHMENT, TextureAspect::COLOR, &ssaoOutput, app->width, app->height);
+        CreateAttachments(PixelFormat::r8Unorm, TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment, TextureAspect::color, &ssaoOutput, app->width, app->height);
 
-        CreateAttachments(PixelFormat::R8_UNORM, TextureUsageBits::TEXTURE_BINDING | TextureUsageBits::RENDER_ATTACHMENT, TextureAspect::COLOR, &ssaoBlurOutput, app->width, app->height);
+        CreateAttachments(PixelFormat::r8Unorm, TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment, TextureAspect::color, &ssaoBlurOutput, app->width, app->height);
     }
 
     void Renderer::PrepareUniformBuffers()
@@ -483,11 +483,11 @@ namespace Example {
         uboSceneParams.projection = camera.perspective;
         uboSceneParams.view = camera.view;
         uboSceneParams.model = glm::mat4(1.0f);
-        CreateUniformBuffer(BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE, &uniformBuffers.sceneParams, sizeof(UBOSceneParams), &uboSceneParams);
+        CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.sceneParams, sizeof(UBOSceneParams), &uboSceneParams);
 
         // ssao parameters
         ubossaoParams.projection = camera.perspective;
-        CreateUniformBuffer(BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE, &uniformBuffers.ssaoParams, sizeof(UBOSSAOParams), &ubossaoParams);
+        CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.ssaoParams, sizeof(UBOSSAOParams), &ubossaoParams);
 
         // ssao kennel
         std::default_random_engine rndEngine((unsigned)time(nullptr));
@@ -507,7 +507,7 @@ namespace Example {
             scale = lerp(0.1f, 1.0f, scale * scale);
             ssaoKernel[i] = glm::vec4(sample * scale, 0.0f);
         }
-        CreateUniformBuffer(BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE, &uniformBuffers.ssaoKernel, ssaoKernel.size() * sizeof(glm::vec4), ssaoKernel.data());
+        CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.ssaoKernel, ssaoKernel.size() * sizeof(glm::vec4), ssaoKernel.data());
 
         // random noise
         std::vector<glm::vec4> ssaoNoise(SSAO_NOISE_DIM * SSAO_NOISE_DIM);
@@ -519,48 +519,48 @@ namespace Example {
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = ssaoNoise.size() * sizeof(glm::vec4);
         // To make this buffer has correct resource state(D3D12_RESOURCE_STATE_GENERIC_READ) in dx, add uniform usage flag
-        bufferCreateInfo.usages = BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        bufferCreateInfo.usages = BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         auto* pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
-            auto* data = pixelBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
+            auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, ssaoNoise.data(), bufferCreateInfo.size);
             pixelBuffer->UnMap();
         }
 
         TextureCreateInfo texCreateInfo {};
-        texCreateInfo.format = PixelFormat::RGBA32_FLOAT;
+        texCreateInfo.format = PixelFormat::rgba32Float;
         texCreateInfo.mipLevels = 1;
         texCreateInfo.extent = {SSAO_NOISE_DIM, SSAO_NOISE_DIM, 1};
-        texCreateInfo.dimension = TextureDimension::T_2D;
+        texCreateInfo.dimension = TextureDimension::t2D;
         texCreateInfo.samples = 1;
-        texCreateInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::TEXTURE_BINDING;
+        texCreateInfo.usages = TextureUsageBits::copyDst | TextureUsageBits::textureBinding;
         noise.tex = device->CreateTexture(texCreateInfo);
 
         TextureViewCreateInfo viewCreateInfo {};
-        viewCreateInfo.dimension = TextureViewDimension::TV_2D;
+        viewCreateInfo.dimension = TextureViewDimension::tv2D;
         viewCreateInfo.baseArrayLayer = 0;
         viewCreateInfo.arrayLayerNum = 1;
         viewCreateInfo.baseMipLevel = 0;
         viewCreateInfo.mipLevelNum = 1;
-        viewCreateInfo.aspect = TextureAspect::COLOR;
+        viewCreateInfo.aspect = TextureAspect::color;
         noise.view = noise.tex->CreateTextureView(viewCreateInfo);
 
         SamplerCreateInfo samplerCreateInfo {};
-        samplerCreateInfo.addressModeU = AddressMode::REPEAT;
-        samplerCreateInfo.addressModeV = AddressMode::REPEAT;
+        samplerCreateInfo.addressModeU = AddressMode::repeat;
+        samplerCreateInfo.addressModeV = AddressMode::repeat;
         noiseSampler = device->CreateSampler(samplerCreateInfo);
 
         auto* texCommandBuffer = device->CreateCommandBuffer();
         auto* commandEncoder = texCommandBuffer->Begin();
         // Dx need not to transition resource state before copy
-        commandEncoder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::UNDEFINED, TextureState::COPY_DST));
+        commandEncoder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::undefined, TextureState::copyDst));
         TextureSubResourceInfo subResourceInfo {};
         subResourceInfo.mipLevel = 0;
         subResourceInfo.arrayLayerNum = 1;
         subResourceInfo.baseArrayLayer = 0;
-        subResourceInfo.aspect = TextureAspect::COLOR;
+        subResourceInfo.aspect = TextureAspect::color;
         commandEncoder->CopyBufferToTexture(pixelBuffer, noise.tex.Get(), &subResourceInfo, {SSAO_NOISE_DIM, SSAO_NOISE_DIM, 1});
-        commandEncoder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::COPY_DST, TextureState::SHADER_READ_ONLY));
+        commandEncoder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
         commandEncoder->End();
 
         graphicsQueue->Submit(texCommandBuffer, nullptr);
@@ -573,13 +573,13 @@ namespace Example {
         texCreateInfo.format = format;
         texCreateInfo.mipLevels = 1;
         texCreateInfo.extent = {width, height, 1};
-        texCreateInfo.dimension = TextureDimension::T_2D;
+        texCreateInfo.dimension = TextureDimension::t2D;
         texCreateInfo.samples = 1;
         texCreateInfo.usages = flags;
         attachment->texture = device->CreateTexture(texCreateInfo);
 
         TextureViewCreateInfo viewCreateInfo {};
-        viewCreateInfo.dimension = TextureViewDimension::TV_2D;
+        viewCreateInfo.dimension = TextureViewDimension::tv2D;
         viewCreateInfo.baseArrayLayer = 0;
         viewCreateInfo.arrayLayerNum = 1;
         viewCreateInfo.baseMipLevel = 0;
@@ -598,12 +598,12 @@ namespace Example {
         info.stage = shaderStage;
         Render::ShaderCompileOptions options;
         options.includePaths.emplace_back("SSAO/shaders");
-        if (rhiType == RHI::RHIType::DIRECTX_12) {
-            options.byteCodeType = Render::ShaderByteCodeType::DXIL;
-        } else if (rhiType == RHI::RHIType::VULKAN) {
-            options.byteCodeType = Render::ShaderByteCodeType::SPRIV;
-        } else if (rhiType == RHI::RHIType::METAL) {
-            options.byteCodeType = Render::ShaderByteCodeType::MBC;
+        if (rhiType == RHI::RHIType::directX12) {
+            options.byteCodeType = Render::ShaderByteCodeType::dxil;
+        } else if (rhiType == RHI::RHIType::vulkan) {
+            options.byteCodeType = Render::ShaderByteCodeType::spirv;
+        } else if (rhiType == RHI::RHIType::metal) {
+            options.byteCodeType = Render::ShaderByteCodeType::mbc;
         }
         options.withDebugInfo = false;
         auto future = Render::ShaderCompiler::Get().Compile(info, options);
@@ -630,7 +630,7 @@ namespace Example {
 
         uBuffer->buf = device->CreateBuffer(createInfo);
         if (uBuffer->buf != nullptr && data != nullptr) {
-            auto* mapData = uBuffer->buf->Map(MapMode::WRITE, 0, size);
+            auto* mapData = uBuffer->buf->Map(MapMode::write, 0, size);
             memcpy(mapData, data, size);
             uBuffer->buf->UnMap();
         }
@@ -643,51 +643,51 @@ namespace Example {
 
     void Renderer::CreatePipeline()
     {
-        shaderModules.gBufferVert     = CompileShader("SSAO/shaders/gbufferVs.hlsl", "VSMain", ShaderStageBits::S_VERTEX);
-        shaderModules.gBufferFrag     = CompileShader("SSAO/shaders/gbufferPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
-        shaderModules.quadVert        = CompileShader("SSAO/shaders/fullscreenVs.hlsl", "VSMain", ShaderStageBits::S_VERTEX);
-        shaderModules.ssaoFrag        = CompileShader("SSAO/shaders/ssaoPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
-        shaderModules.ssaoBlurFrag    = CompileShader("SSAO/shaders/blurPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
-        shaderModules.compositionFrag = CompileShader("SSAO/shaders/compositionPs.hlsl", "FSMain", ShaderStageBits::S_PIXEL);
+        shaderModules.gBufferVert     = CompileShader("SSAO/shaders/gbufferVs.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.gBufferFrag     = CompileShader("SSAO/shaders/gbufferPs.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.quadVert        = CompileShader("SSAO/shaders/fullscreenVs.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.ssaoFrag        = CompileShader("SSAO/shaders/ssaoPs.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.ssaoBlurFrag    = CompileShader("SSAO/shaders/blurPs.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.compositionFrag = CompileShader("SSAO/shaders/compositionPs.hlsl", "FSMain", ShaderStageBits::sPixel);
 
         // Gbuffer vertex
         std::array<VertexAttribute, 4> vertexAttributes {};
-        vertexAttributes[0].format = VertexFormat::FLOAT32_X3;
+        vertexAttributes[0].format = VertexFormat::float32X3;
         vertexAttributes[0].offset = 0;
         vertexAttributes[0].semanticName = "POSITION";
         vertexAttributes[0].semanticIndex = 0;
-        vertexAttributes[1].format = VertexFormat::FLOAT32_X2;
+        vertexAttributes[1].format = VertexFormat::float32X2;
         vertexAttributes[1].offset = offsetof(Vertex, uv);
         vertexAttributes[1].semanticName = "TEXCOORD";
         vertexAttributes[1].semanticIndex = 0;
-        vertexAttributes[2].format = VertexFormat::FLOAT32_X4;
+        vertexAttributes[2].format = VertexFormat::float32X4;
         vertexAttributes[2].offset = offsetof(Vertex, color);
         vertexAttributes[2].semanticName = "COLOR";
         vertexAttributes[2].semanticIndex = 0;
-        vertexAttributes[3].format = VertexFormat::FLOAT32_X3;
+        vertexAttributes[3].format = VertexFormat::float32X3;
         vertexAttributes[3].offset = offsetof(Vertex, normal);
         vertexAttributes[3].semanticName = "NORMAL";
         vertexAttributes[3].semanticIndex = 0;
 
         VertexBufferLayout vertexBufferLayout {};
-        vertexBufferLayout.stepMode = RHI::VertexStepMode::PER_VERTEX;
+        vertexBufferLayout.stepMode = RHI::VertexStepMode::perVertex;
         vertexBufferLayout.stride = sizeof(Vertex);
         vertexBufferLayout.attributeNum = vertexAttributes.size();
         vertexBufferLayout.attributes = vertexAttributes.data();
 
         // quad buffer vertex
         std::array<VertexAttribute, 2> quadVertexAttributes {};
-        quadVertexAttributes[0].format = VertexFormat::FLOAT32_X3;
+        quadVertexAttributes[0].format = VertexFormat::float32X3;
         quadVertexAttributes[0].offset = 0;
         quadVertexAttributes[0].semanticName = "POSITION";
         quadVertexAttributes[0].semanticIndex = 0;
-        quadVertexAttributes[1].format = VertexFormat::FLOAT32_X2;
+        quadVertexAttributes[1].format = VertexFormat::float32X2;
         quadVertexAttributes[1].offset = offsetof(QuadVertex, uv);
         quadVertexAttributes[1].semanticName = "TEXCOORD";
         quadVertexAttributes[1].semanticIndex = 0;
 
         VertexBufferLayout quadVertexBufferLayout {};
-        quadVertexBufferLayout.stepMode = RHI::VertexStepMode::PER_VERTEX;
+        quadVertexBufferLayout.stepMode = RHI::VertexStepMode::perVertex;
         quadVertexBufferLayout.stride = sizeof(QuadVertex);
         quadVertexBufferLayout.attributeNum = quadVertexAttributes.size();
         quadVertexBufferLayout.attributes = quadVertexAttributes.data();
@@ -696,26 +696,26 @@ namespace Example {
         GraphicsPipelineCreateInfo createInfo {};
         createInfo.vertexState.bufferLayoutNum = 1;
         createInfo.primitiveState.depthClip = false;
-        createInfo.primitiveState.frontFace = RHI::FrontFace::CCW;
-        createInfo.primitiveState.cullMode = CullMode::NONE;
-        createInfo.primitiveState.topologyType = RHI::PrimitiveTopologyType::TRIANGLE;
-        createInfo.primitiveState.stripIndexFormat = IndexFormat::UINT32;
+        createInfo.primitiveState.frontFace = RHI::FrontFace::ccw;
+        createInfo.primitiveState.cullMode = CullMode::none;
+        createInfo.primitiveState.topologyType = RHI::PrimitiveTopologyType::triangle;
+        createInfo.primitiveState.stripIndexFormat = IndexFormat::uint32;
         createInfo.multiSampleState.count = 1;
 
         // Gbuffer
         {
             DepthStencilState depthStencilState {};
             depthStencilState.depthEnable = true;
-            depthStencilState.depthComparisonFunc = ComparisonFunc::LESS_EQUAL;
-            depthStencilState.format = PixelFormat::D32_FLOAT_S8_UINT;
+            depthStencilState.depthComparisonFunc = ComparisonFunc::lessEqual;
+            depthStencilState.format = PixelFormat::d32FloatS8Uint;
             
             std::array<ColorTargetState, 3> colorTargetStates {};
-            colorTargetStates[0].format = PixelFormat::RGBA32_FLOAT;
-            colorTargetStates[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
-            colorTargetStates[1].format = PixelFormat::RGBA8_UNORM;
-            colorTargetStates[1].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
-            colorTargetStates[2].format = PixelFormat::RGBA8_UNORM;
-            colorTargetStates[2].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+            colorTargetStates[0].format = PixelFormat::rgba32Float;
+            colorTargetStates[0].writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
+            colorTargetStates[1].format = PixelFormat::rgba8Unorm;
+            colorTargetStates[1].writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
+            colorTargetStates[2].format = PixelFormat::rgba8Unorm;
+            colorTargetStates[2].writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
 
             createInfo.depthStencilState = depthStencilState;
             createInfo.vertexState.bufferLayouts = &vertexBufferLayout;
@@ -730,8 +730,8 @@ namespace Example {
         // ssao
         {
             ColorTargetState colorTargetState {};
-            colorTargetState.format = PixelFormat::R8_UNORM;
-            colorTargetState.writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+            colorTargetState.format = PixelFormat::r8Unorm;
+            colorTargetState.writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
             
             DepthStencilState depthStencilState {};
 
@@ -748,8 +748,8 @@ namespace Example {
         // ssaoBlur
         {
             ColorTargetState colorTargetState {};
-            colorTargetState.format = PixelFormat::R8_UNORM;
-            colorTargetState.writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+            colorTargetState.format = PixelFormat::r8Unorm;
+            colorTargetState.writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
 
             DepthStencilState depthStencilState {};
 
@@ -767,7 +767,7 @@ namespace Example {
         {
             ColorTargetState colorTargetState {};
             colorTargetState.format = swapChainFormat;
-            colorTargetState.writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+            colorTargetState.writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
             
             DepthStencilState depthStencilState {};
             
@@ -786,31 +786,31 @@ namespace Example {
     {
         CommandEncoder* commandEncoder = commandBuffer->Begin();
         {
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::undefined, TextureState::renderTarget));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::undefined, TextureState::renderTarget));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::undefined, TextureState::renderTarget));
 
             std::array<GraphicsPassColorAttachment, 3> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::CLEAR;
-            colorAttachments[0].storeOp = StoreOp::STORE;
+            colorAttachments[0].loadOp = LoadOp::clear;
+            colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = gBufferPos.view.Get();
             colorAttachments[0].resolve = nullptr;
             colorAttachments[1].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[1].loadOp = LoadOp::CLEAR;
-            colorAttachments[1].storeOp = StoreOp::STORE;
+            colorAttachments[1].loadOp = LoadOp::clear;
+            colorAttachments[1].storeOp = StoreOp::store;
             colorAttachments[1].view = gBufferNormal.view.Get();
             colorAttachments[1].resolve = nullptr;
             colorAttachments[2].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[2].loadOp = LoadOp::CLEAR;
-            colorAttachments[2].storeOp = StoreOp::STORE;
+            colorAttachments[2].loadOp = LoadOp::clear;
+            colorAttachments[2].storeOp = StoreOp::store;
             colorAttachments[2].view = gBufferAlbedo.view.Get();
             colorAttachments[2].resolve = nullptr;
             
             GraphicsPassDepthStencilAttachment depthAttachment {};
             depthAttachment.view = gBufferDepth.view.Get();
-            depthAttachment.depthLoadOp = LoadOp::CLEAR;
-            depthAttachment.depthStoreOp = StoreOp::STORE;
+            depthAttachment.depthLoadOp = LoadOp::clear;
+            depthAttachment.depthStoreOp = StoreOp::store;
             depthAttachment.depthReadOnly = true;
             depthAttachment.depthClearValue = 1.0;
             depthAttachment.stencilClearValue = 0.0;
@@ -825,7 +825,7 @@ namespace Example {
                 graphicsEncoder->SetPipeline(pipelines.gBuffer.Get());
                 graphicsEncoder->SetScissor(0, 0, app->width, app->height);
                 graphicsEncoder->SetViewport(0, 0, app->width, app->height, 0, 1);
-                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
+                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
                 graphicsEncoder->SetBindGroup(0, bindGroups.scene.Get());
                 graphicsEncoder->SetVertexBuffer(0, vertexBufferView.Get());
                 graphicsEncoder->SetIndexBuffer(indexBufferView.Get());
@@ -837,19 +837,19 @@ namespace Example {
             }
             graphicsEncoder->EndPass();
 
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::RENDER_TARGET, TextureState::SHADER_READ_ONLY));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::RENDER_TARGET, TextureState::SHADER_READ_ONLY));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::RENDER_TARGET, TextureState::SHADER_READ_ONLY));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
         }
 
         {
             // ssao
-            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
+            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::undefined, TextureState::renderTarget));
 
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::CLEAR;
-            colorAttachments[0].storeOp = StoreOp::STORE;
+            colorAttachments[0].loadOp = LoadOp::clear;
+            colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = ssaoOutput.view.Get();
             colorAttachments[0].resolve = nullptr;
 
@@ -863,24 +863,24 @@ namespace Example {
                 graphicsEncoder->SetPipeline(pipelines.ssao.Get());
                 graphicsEncoder->SetScissor(0, 0, app->width, app->height);
                 graphicsEncoder->SetViewport(0, 0, app->width, app->height, 0, 1);
-                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
+                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
                 graphicsEncoder->SetBindGroup(0, bindGroups.ssao.Get());
                 graphicsEncoder->SetVertexBuffer(0, quadVertexBufferView.Get());
                 graphicsEncoder->SetIndexBuffer(quadIndexBufferView.Get());
                 graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
             }
             graphicsEncoder->EndPass();
-            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::RENDER_TARGET, TextureState::SHADER_READ_ONLY));
+            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
         }
 
         {
             // ssaoBlur
-            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::UNDEFINED, TextureState::RENDER_TARGET));
+            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::undefined, TextureState::renderTarget));
 
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::CLEAR;
-            colorAttachments[0].storeOp = StoreOp::STORE;
+            colorAttachments[0].loadOp = LoadOp::clear;
+            colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = ssaoBlurOutput.view.Get();
             colorAttachments[0].resolve = nullptr;
 
@@ -894,26 +894,26 @@ namespace Example {
                 graphicsEncoder->SetPipeline(pipelines.ssaoBlur.Get());
                 graphicsEncoder->SetScissor(0, 0, app->width, app->height);
                 graphicsEncoder->SetViewport(0, 0, app->width, app->height, 0, 1);
-                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
+                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
                 graphicsEncoder->SetBindGroup(0, bindGroups.ssaoBlur.Get());
                 graphicsEncoder->SetVertexBuffer(0, quadVertexBufferView.Get());
                 graphicsEncoder->SetIndexBuffer(quadIndexBufferView.Get());
                 graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
             }
             graphicsEncoder->EndPass();
-            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::RENDER_TARGET, TextureState::SHADER_READ_ONLY));
+            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
         }
 
         {
             auto backTextureIndex = swapChain->AcquireBackTexture();
 
             // composition
-            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::PRESENT, TextureState::RENDER_TARGET));
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
 
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::CLEAR;
-            colorAttachments[0].storeOp = StoreOp::STORE;
+            colorAttachments[0].loadOp = LoadOp::clear;
+            colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();
             colorAttachments[0].resolve = nullptr;
 
@@ -922,20 +922,20 @@ namespace Example {
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
 
-            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::PRESENT, TextureState::RENDER_TARGET));
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
             auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
                 graphicsEncoder->SetPipeline(pipelines.composition.Get());
                 graphicsEncoder->SetScissor(0, 0, app->width, app->height);
                 graphicsEncoder->SetViewport(0, 0, app->width, app->height, 0, 1);
-                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
+                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
                 graphicsEncoder->SetBindGroup(0, bindGroups.composition.Get());
                 graphicsEncoder->SetVertexBuffer(0, quadVertexBufferView.Get());
                 graphicsEncoder->SetIndexBuffer(quadIndexBufferView.Get());
                 graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
             }
             graphicsEncoder->EndPass();
-            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::RENDER_TARGET, TextureState::PRESENT));
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::renderTarget, TextureState::present));
         }
 
         commandEncoder->SwapChainSync(swapChain.Get());
@@ -989,56 +989,56 @@ namespace Example {
 
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = texData->GetSize();
-        bufferCreateInfo.usages = BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        bufferCreateInfo.usages = BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         auto* pixelBuffer = renderer->GetDevice()->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
-            auto* mapData = pixelBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
+            auto* mapData = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(mapData, texData->buffer.data(), bufferCreateInfo.size);
             pixelBuffer->UnMap();
         }
 
         TextureCreateInfo texCreateInfo {};
-        texCreateInfo.format = PixelFormat::RGBA8_UNORM;
-        texCreateInfo.dimension = TextureDimension::T_2D;
+        texCreateInfo.format = PixelFormat::rgba8Unorm;
+        texCreateInfo.dimension = TextureDimension::t2D;
         texCreateInfo.mipLevels = 1;
         texCreateInfo.extent = { texData->width, texData->height, 1};
         texCreateInfo.samples = 1;
-        texCreateInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::TEXTURE_BINDING;
+        texCreateInfo.usages = TextureUsageBits::copyDst | TextureUsageBits::textureBinding;
         diffuseColorMap = renderer->GetDevice()->CreateTexture(texCreateInfo);
 
         TextureViewCreateInfo viewCreateInfo {};
-        viewCreateInfo.dimension = TextureViewDimension::TV_2D;
+        viewCreateInfo.dimension = TextureViewDimension::tv2D;
         viewCreateInfo.baseArrayLayer = 0;
         viewCreateInfo.arrayLayerNum = 1;
         viewCreateInfo.baseMipLevel = 0;
         viewCreateInfo.mipLevelNum = 1;
-        viewCreateInfo.aspect = TextureAspect::COLOR;
+        viewCreateInfo.aspect = TextureAspect::color;
         diffuseColorMapView = diffuseColorMap->CreateTextureView(viewCreateInfo);
 
         auto* texCommandBuffer = renderer->GetDevice()->CreateCommandBuffer();
         auto* commandEncoder = texCommandBuffer->Begin();
         // Dx need not to transition resource state before copy
-        commandEncoder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::UNDEFINED, TextureState::COPY_DST));
+        commandEncoder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::undefined, TextureState::copyDst));
         TextureSubResourceInfo subResourceInfo {};
         subResourceInfo.mipLevel = 0;
         subResourceInfo.arrayLayerNum = 1;
         subResourceInfo.baseArrayLayer = 0;
-        subResourceInfo.aspect = TextureAspect::COLOR;
+        subResourceInfo.aspect = TextureAspect::color;
         commandEncoder->CopyBufferToTexture(pixelBuffer, diffuseColorMap.Get(), &subResourceInfo, {texData->width, texData->height, 1});
-        commandEncoder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::COPY_DST, TextureState::SHADER_READ_ONLY));
+        commandEncoder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
         commandEncoder->End();
 
         renderer->GetQueue()->Submit(texCommandBuffer, nullptr);
 
         // per renderable bindGroup
         std::vector<BindGroupEntry> entries(2);
-        entries[0].binding.type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::texture;
         entries[0].textureView = diffuseColorMapView.Get();
-        entries[1].binding.type = BindingType::SAMPLER;
+        entries[1].binding.type = BindingType::sampler;
         entries[1].sampler = renderer->GetSampler();
-        if (renderer->GetInstance()->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+        if (renderer->GetInstance()->GetRHIType() == RHI::RHIType::directX12) {
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
         } else {
             entries[0].binding.platform.glsl.index = 0;
             entries[1].binding.platform.glsl.index = 1;

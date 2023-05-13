@@ -39,9 +39,9 @@ namespace RHI {
     };
 
     enum class FenceStatus {
-        SIGNALED,
-        NOT_READY,
-        MAX
+        signaled,
+        notReady,
+        max
     };
 
     class Fence {

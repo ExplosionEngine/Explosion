@@ -43,7 +43,7 @@ namespace RHI::Vulkan {
 
     RHIType VKInstance::GetRHIType()
     {
-        return RHIType::VULKAN;
+        return RHIType::vulkan;
     }
 
 #if BUILD_CONFIG_DEBUG

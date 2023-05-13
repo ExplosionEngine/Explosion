@@ -9,7 +9,7 @@ namespace RHI {
     Barrier Barrier::Transition(Buffer* buffer, BufferState before, BufferState after)
     {
         Barrier barrier {};
-        barrier.type = ResourceType::BUFFER;
+        barrier.type = ResourceType::buffer;
         barrier.buffer.pointer = buffer;
         barrier.buffer.before = before;
         barrier.buffer.after = after;
@@ -19,7 +19,7 @@ namespace RHI {
     Barrier Barrier::Transition(Texture* texture, TextureState before, TextureState after)
     {
         Barrier barrier {};
-        barrier.type = ResourceType::TEXTURE;
+        barrier.type = ResourceType::texture;
         barrier.texture.pointer = texture;
         barrier.texture.before = before;
         barrier.texture.after = after;

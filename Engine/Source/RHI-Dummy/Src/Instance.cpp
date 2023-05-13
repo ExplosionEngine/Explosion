@@ -16,7 +16,7 @@ namespace RHI::Dummy {
 
     RHIType DummyInstance::GetRHIType()
     {
-        return RHIType::DUMMY;
+        return RHIType::dummy;
     }
 
     uint32_t DummyInstance::GetGpuNum()

@@ -12,15 +12,15 @@
 namespace RHI::DirectX12 {
     static inline void GetDescriptorHandleAndHeap(CD3DX12_GPU_DESCRIPTOR_HANDLE& handle, ID3D12DescriptorHeap** heap, const BindGroupEntry& entry)
     {
-        if (entry.binding.type == BindingType::UNIFORM_BUFFER || entry.binding.type == BindingType::STORAGE_BUFFER) {
+        if (entry.binding.type == BindingType::uniformBuffer || entry.binding.type == BindingType::storageBuffer) {
             auto* bufferView = dynamic_cast<DX12BufferView*>(entry.bufferView);
             handle = bufferView->GetDX12GpuDescriptorHandle();
             *heap = bufferView->GetDX12DescriptorHeap();
-        } else if (entry.binding.type == BindingType::TEXTURE || entry.binding.type == BindingType::STORAGE_TEXTURE) {
+        } else if (entry.binding.type == BindingType::texture || entry.binding.type == BindingType::storagetTexture) {
             auto* textureView = dynamic_cast<DX12TextureView*>(entry.textureView);
             handle = textureView->GetDX12GpuDescriptorHandle();
             *heap = textureView->GetDX12DescriptorHeap();
-        } else if (entry.binding.type == BindingType::SAMPLER) {
+        } else if (entry.binding.type == BindingType::sampler) {
             auto* sampler = dynamic_cast<DX12Sampler*>(entry.sampler);
             handle = sampler->GetDX12GpuDescriptorHandle();
             *heap = sampler->GetDX12DescriptorHeap();
