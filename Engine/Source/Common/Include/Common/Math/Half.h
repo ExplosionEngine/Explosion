@@ -37,7 +37,7 @@ namespace Common {
         HalfFloat(const HalfFloat& inValue) : value(inValue.value) {}
         HalfFloat(HalfFloat&& inValue) noexcept : value(inValue.value) {}
 
-        explicit HalfFloat(float inValue)
+        HalfFloat(float inValue) // NOLINT
         {
             Set(inValue);
         }
@@ -130,14 +130,24 @@ namespace Common {
             return AsFloat();
         }
 
+        bool operator==(float rhs) const
+        {
+            return std::abs(AsFloat() - rhs) < halfEpsilon;
+        }
+
+        bool operator!=(float rhs) const
+        {
+            return std::abs(AsFloat() - rhs) >= halfEpsilon;
+        }
+
         bool operator==(const HalfFloat& rhs) const
         {
-            return std::abs(AsFloat() - rhs.AsFloat()) < epsilon;
+            return std::abs(AsFloat() - rhs.AsFloat()) < halfEpsilon;
         }
 
         bool operator!=(const HalfFloat& rhs) const
         {
-            return std::abs(AsFloat() - rhs.AsFloat()) > epsilon;
+            return std::abs(AsFloat() - rhs.AsFloat()) >= halfEpsilon;
         }
 
         bool operator>(const HalfFloat& rhs) const
@@ -162,42 +172,42 @@ namespace Common {
 
         HalfFloat operator+(float rhs) const
         {
-            return HalfFloat(AsFloat() + rhs);
+            return { AsFloat() + rhs };
         }
 
         HalfFloat operator-(float rhs) const
         {
-            return HalfFloat(AsFloat() - rhs);
+            return { AsFloat() - rhs };
         }
 
         HalfFloat operator*(float rhs) const
         {
-            return HalfFloat(AsFloat() * rhs);
+            return { AsFloat() * rhs };
         }
 
         HalfFloat operator/(float rhs) const
         {
-            return HalfFloat(AsFloat() / rhs);
+            return { AsFloat() / rhs };
         }
 
         HalfFloat operator+(const HalfFloat& rhs) const
         {
-            return HalfFloat(AsFloat() + rhs.AsFloat());
+            return { AsFloat() + rhs.AsFloat() };
         }
 
         HalfFloat operator-(const HalfFloat& rhs) const
         {
-            return HalfFloat(AsFloat() - rhs.AsFloat());
+            return { AsFloat() - rhs.AsFloat() };
         }
 
         HalfFloat operator*(const HalfFloat& rhs) const
         {
-            return HalfFloat(AsFloat() * rhs.AsFloat());
+            return { AsFloat() * rhs.AsFloat() };
         }
 
         HalfFloat operator/(const HalfFloat& rhs) const
         {
-            return HalfFloat(AsFloat() / rhs.AsFloat());
+            return { AsFloat() / rhs.AsFloat() };
         }
 
         HalfFloat& operator+=(float rhs)

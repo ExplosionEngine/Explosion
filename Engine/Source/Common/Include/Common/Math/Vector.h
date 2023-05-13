@@ -17,7 +17,7 @@ namespace Common {
     template <typename T>
     struct BaseVector<T, 1> {
         inline BaseVector();
-        inline explicit BaseVector(T inX);
+        inline BaseVector(T inX); // NOLINT
 
         union {
             T data[1];
@@ -30,7 +30,7 @@ namespace Common {
     template <typename T>
     struct BaseVector<T, 2> {
         inline BaseVector();
-        inline explicit BaseVector(T inValue);
+        inline BaseVector(T inValue); // NOLINT
         inline BaseVector(T inX, T inY);
 
         union {
@@ -45,7 +45,7 @@ namespace Common {
     template <typename T>
     struct BaseVector<T, 3> {
         inline BaseVector();
-        inline explicit BaseVector(T inValue);
+        inline BaseVector(T inValue); // NOLINT
         inline BaseVector(T inX, T inY, T inZ);
 
         union {
@@ -61,7 +61,7 @@ namespace Common {
     template <typename T>
     struct BaseVector<T, 4> {
         inline BaseVector();
-        inline explicit BaseVector(T inValue);
+        inline BaseVector(T inValue); // NOLINT
         inline BaseVector(T inX, T inY, T inZ, T inW);
 
         union {
@@ -78,16 +78,18 @@ namespace Common {
     template <typename T, uint8_t L>
     struct Vector : public BaseVector<T, L> {
         inline Vector();
-        inline explicit Vector(T inValue);
+        inline Vector(T inValue); // NOLINT
 
         template <typename... IT>
-        inline explicit Vector(IT&&... inValues);
+        inline Vector(IT&&... inValues); // NOLINT
 
         inline T& operator[](uint32_t i);
         inline T operator[](uint32_t i) const;
 
         inline bool operator==(T rhs) const;
         inline bool operator==(const Vector& rhs) const;
+        inline bool operator!=(T rhs) const;
+        inline bool operator!=(const Vector& rhs) const;
 
         inline Vector operator+(T rhs);
         inline Vector operator-(T rhs);
@@ -285,6 +287,18 @@ namespace Common {
             }
         }
         return result;
+    }
+
+    template <typename T, uint8_t L>
+    bool Vector<T, L>::operator!=(T rhs) const
+    {
+        return !this->operator==(rhs);
+    }
+
+    template <typename T, uint8_t L>
+    bool Vector<T, L>::operator!=(const Vector& rhs) const
+    {
+        return !this->operator==(rhs);
     }
 
     template <typename T, uint8_t L>

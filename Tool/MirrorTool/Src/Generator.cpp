@@ -8,7 +8,6 @@
 
 #include <MirrorTool/Generator.h>
 #include <Common/Hash.h>
-#include <Common/Format.h>
 #include <Common/String.h>
 
 namespace MirrorTool {

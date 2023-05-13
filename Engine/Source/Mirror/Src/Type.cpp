@@ -10,7 +10,7 @@
 #include <Mirror/Type.h>
 #include <Mirror/Registry.h>
 #include <Common/Debug.h>
-#include <Common/Format.h>
+#include <Common/String.h>
 
 namespace Mirror {
     Type::Type(std::string inName) : name(std::move(inName)) {}

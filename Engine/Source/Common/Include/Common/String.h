@@ -9,6 +9,9 @@
 #include <codecvt>
 #include <regex>
 
+#define FMT_HEADER_ONLY 1
+#include <fmt/format.h>
+
 namespace Common {
     class StringUtils {
     public:
