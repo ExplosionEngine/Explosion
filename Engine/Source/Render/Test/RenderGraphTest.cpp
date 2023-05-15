@@ -17,7 +17,7 @@ public:
         "RenderGraphTestCS",
         "/Engine/Shader/Test/RenderGraphTest.esl",
         "CSMain",
-        ShaderStage::S_COMPUTE);
+        ShaderStage::sCompute);
 
     VariantSet();
     DefaultVariantFilter
