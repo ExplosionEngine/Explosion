@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <Common/Math/Vector.h>
+#include <Common/Math/Matrix.h>
 
 using namespace Common;
 
@@ -65,8 +66,8 @@ TEST(MathTest, FVec2Test)
     ASSERT_FLOAT_EQ(v0.y, 0.0f);
 
     FVec2 v1(3.0f, 4.0f);
-    ASSERT_FLOAT_EQ(v1.x, 3.0f);
-    ASSERT_FLOAT_EQ(v1.y, 4.0f);
+    ASSERT_FLOAT_EQ(v1[0], 3.0f);
+    ASSERT_FLOAT_EQ(v1[1], 4.0f);
 
     FVec2 v2 = v0 + v1 + 1;
     ASSERT_FLOAT_EQ(v2.x, 4.0f);
@@ -192,35 +193,77 @@ TEST(MathTest, HVec2Test)
     ASSERT_TRUE(v0.x == HalfFloat(1.0f));
     ASSERT_TRUE(v0.y == 2.0f);
 
-    // TODO
+    HVec2 v1 = v0 + HalfFloat(2.0f) - HVec2(3.0f, 1.0f);
+    ASSERT_TRUE(v1.x == HalfFloat(0.0f));
+    ASSERT_TRUE(v1.y == 3.0f);
+
+    v1 /= HalfFloat(2.0f);
+    ASSERT_TRUE(v1.x == 0.0f);
+    ASSERT_TRUE(v1.y == HalfFloat(1.5f));
 }
 
 TEST(MathTest, HVec3Test)
 {
-    // TODO
+    HVec3 v0 { HalfFloat(1.0f), HalfFloat(2.0f), HalfFloat(3.0f) };
+    ASSERT_TRUE(v0.x == 1.0f);
+    ASSERT_TRUE(v0.y == HalfFloat(2.0f));
+    ASSERT_TRUE(v0.z == 3.0f);
+    ASSERT_FALSE(v0.z == 2.0f);
+
+    HVec3 v1 = v0 + HalfFloat(3.0f) / HalfFloat(2.0f) - HalfFloat(1.0f);
+    ASSERT_TRUE(v1 == HVec3(1.5f, 2.5f, 3.5f));
 }
 
 TEST(MathTest, HVec4Test)
 {
-    // TODO
+    HVec4 v0 = 2.0f;
+    ASSERT_FALSE(v0.x == 3.0f);
+    ASSERT_TRUE(v0.w == 2.0f);
+
+    HVec4 v1 = v0 - HVec4(1.0f, 2.0f, 3.0f, 4.0f);
+    ASSERT_TRUE(v1 == HVec4(1.0f, 0.0f, -1.0f, -2.0f));
 }
 
 TEST(MathTest, SubVecTest)
 {
-    // TODO
+    FVec4 v0 = FVec4(1, 2, 3, 4);
+    FVec3 v1 = v0.SubVec<0, 1, 2>();
+    ASSERT_TRUE(v1 == FVec3(1, 2, 3));
+
+    FVec2 v2 = v0.SubVec<1, 3>();
+    ASSERT_TRUE(v2 == FVec2(2, 4));
 }
 
 TEST(MathTest, VecLengthTest)
 {
-    // TODO
+    FVec4 v0 = FVec4(1.0f, 2.0f, 3.0f, 4.0f);
+    ASSERT_FLOAT_EQ(v0.Length(), std::sqrt(30.0f));
+
+    FVec2 v1 { 2.0f, 3.0f };
+    ASSERT_FLOAT_EQ(v1.Length(), std::sqrt(13.0f));
 }
 
 TEST(MathTest, VecDotTest)
 {
-    // TODO
+    FVec4 v0 = FVec4(1.0f, 2.0f, 3.0f, 4.0f);
+    FVec4 v1 = FVec4(2.0f, 3.0f, 4.0f, 5.0f);
+    ASSERT_FLOAT_EQ(v0.Dot(v1), 40.0f);
+
+    FVec2 v2 { 2.0f, 3.0f };
+    FVec2 v3 { 3.0f, 4.0f };
+    ASSERT_FLOAT_EQ(v2.Dot(v3), 18.0f);
 }
 
 TEST(MathTest, VecCrossTest)
 {
-    // TODO
+    FVec2 v0 { 1.0f, 2.0f };
+    FVec2 v1 { 3.0f, 4.0f };
+    ASSERT_FLOAT_EQ(v0.Cross(v1), -2.0f);
+
+    FVec3 v2 = FVec3(1.0f, 2.0f, 3.0f);
+    FVec3 v3 = FVec3(2.0f, 3.0f, 4.0f);
+    FVec3 v4 = v2.Cross(v3);
+    ASSERT_FLOAT_EQ(v4.x, -1.0f);
+    ASSERT_FLOAT_EQ(v4.y, 2.0f);
+    ASSERT_FLOAT_EQ(v4.z, -1.0f);
 }

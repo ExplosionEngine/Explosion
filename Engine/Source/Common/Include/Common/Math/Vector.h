@@ -9,6 +9,13 @@
 
 #include <Common/Math/Half.h>
 
+namespace Common::Internal {
+    template <typename T, uint8_t L>
+    struct VecCrossResultTraits {
+        using Type = T;
+    };
+}
+
 namespace Common {
     template <typename T, uint8_t L>
     requires (L >= 1) && (L <= 4)
@@ -79,6 +86,9 @@ namespace Common {
     struct Vector : public BaseVector<T, L> {
         inline Vector();
         inline Vector(T inValue); // NOLINT
+        inline Vector(const Vector& other);
+        inline Vector(Vector&& other) noexcept;
+        inline Vector& operator=(const Vector& other);
 
         template <typename... IT>
         inline Vector(IT&&... inValues); // NOLINT
@@ -113,6 +123,10 @@ namespace Common {
 
         template <uint8_t... I>
         Vector<T, sizeof...(I)> SubVec();
+
+        T Length();
+        T Dot(const Vector& rhs);
+        typename Internal::VecCrossResultTraits<T, L>::Type Cross(const Vector& rhs);
     };
 
     using BVec1 = Vector<bool, 1>;
@@ -139,22 +153,6 @@ namespace Common {
     using DVec2 = Vector<double, 2>;
     using DVec3 = Vector<double, 3>;
     using DVec4 = Vector<double, 4>;
-
-    template <typename T, uint8_t L>
-    requires isFloatingPointV<T>
-    T Length(const Vector<T, L>& vec);
-
-    template <typename T, uint8_t L>
-    requires isFloatingPointV<T>
-    T Dot(const Vector<T, L>& lhs, const Vector<T, L>& rhs);
-
-    template <typename T>
-    requires isFloatingPointV<T>
-    T Cross(const Vector<T, 2>& lhs, const Vector<T, 2>& rhs);
-
-    template <typename T>
-    requires isFloatingPointV<T>
-    Vector<T, 3> Cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs);
 }
 
 namespace Common::Internal {
@@ -162,8 +160,18 @@ namespace Common::Internal {
     void CopyValueToSubVec(const VecT& vec, SubVecT& subVec, std::index_sequence<SubVecIndex...>)
     {
         static_assert(sizeof...(SubVecIndex) == sizeof...(VecIndex));
-        std::initializer_list<int> { ([&]() -> void { subVec.data[SubVecIndex] == vec.data[VecIndex]; }(), 0)... };
+        (void) std::initializer_list<int> { ([&]() -> void { subVec.data[SubVecIndex] = vec.data[VecIndex]; }(), 0)... };
     }
+
+    template <typename T>
+    struct VecCrossResultTraits<T, 2> {
+        using Type = T;
+    };
+
+    template <typename T>
+    struct VecCrossResultTraits<T, 3> {
+        using Type = Vector<T, 3>;
+    };
 }
 
 namespace Common {
@@ -244,6 +252,31 @@ namespace Common {
     }
 
     template <typename T, uint8_t L>
+    Vector<T, L>::Vector(const Vector& other)
+    {
+        for (auto i = 0; i < L; i++) {
+            this->data[i] = other.data[i];
+        }
+    }
+
+    template <typename T, uint8_t L>
+    Vector<T, L>::Vector(Vector&& other) noexcept
+    {
+        for (auto i = 0; i < L; i++) {
+            this->data[i] = std::move(other.data[i]);
+        }
+    }
+
+    template <typename T, uint8_t L>
+    Vector<T, L>& Vector<T, L>::operator=(const Vector& other)
+    {
+        for (auto i = 0; i < L; i++) {
+            this->data[i] = other.data[i];
+        }
+        return *this;
+    }
+
+    template <typename T, uint8_t L>
     template <typename... IT>
     Vector<T, L>::Vector(IT&&... inValues) : BaseVector<T, L>(std::forward<IT>(inValues)...)
     {
@@ -266,11 +299,7 @@ namespace Common {
     {
         bool result = true;
         for (auto i = 0; i < L; i++) {
-            if constexpr (std::is_floating_point_v<T>) {
-                result = result && (std::abs(this->data[i] - rhs) < epsilon);
-            } else {
-                result = result && (this->data[i] == rhs);
-            }
+            result = result && CompareNumber(this->data[i], rhs);
         }
         return result;
     }
@@ -280,11 +309,7 @@ namespace Common {
     {
         bool result = true;
         for (auto i = 0; i < L; i++) {
-            if constexpr (std::is_floating_point_v<T>) {
-                result = result && (std::abs(this->data[i] - rhs.data[i]) < epsilon);
-            } else {
-                result = result && (this->data[i] == rhs.data[i]);
-            }
+            result = result && CompareNumber(this->data[i], rhs.data[i]);
         }
         return result;
     }
@@ -458,47 +483,44 @@ namespace Common {
     Vector<T, sizeof...(I)> Vector<T, L>::SubVec()
     {
         Vector<T, sizeof...(I)> result;
-        Internal::CopyValueToSubVec<T, Vector<T, sizeof...(I)>, I...>(*this, result, std::make_index_sequence<sizeof...(I)> {});
+        Internal::CopyValueToSubVec<Vector<T, L>, Vector<T, sizeof...(I)>, I...>(*this, result, std::make_index_sequence<sizeof...(I)> {});
         return result;
     }
 
     template <typename T, uint8_t L>
-    requires isFloatingPointV<T>
-    T Length(const Vector<T, L>& vec)
+    T Vector<T, L>::Length()
     {
+        static_assert(isFloatingPointV<T>);
         T temp = 0;
         for (auto i = 0; i < L; i++) {
-            temp += vec.data[i] * vec.data[i];
+            temp += this->data[i] * this->data[i];
         }
         return std::sqrt(temp);
     }
 
     template <typename T, uint8_t L>
-    requires isFloatingPointV<T>
-    T Dot(const Vector<T, L>& lhs, const Vector<T, L>& rhs)
+    T Vector<T, L>::Dot(const Vector& rhs)
     {
+        static_assert(isFloatingPointV<T>);
         T temp = 0;
         for (auto i = 0; i < L; i++) {
-            temp += lhs.data[i] * rhs.data[i];
+            temp += this->data[i] * rhs.data[i];
         }
         return temp;
     }
 
-    template <typename T>
-    requires isFloatingPointV<T>
-    T Cross(const Vector<T, 2>& lhs, const Vector<T, 2>& rhs)
+    template <typename T, uint8_t L>
+    typename Internal::VecCrossResultTraits<T, L>::Type Vector<T, L>::Cross(const Vector& rhs)
     {
-        return lhs.x * rhs.y - lhs.y * rhs.x;
-    }
-
-    template <typename T>
-    requires isFloatingPointV<T>
-    Vector<T, 3> Cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs)
-    {
-        Vector<T, 3> result;
-        result.x = lhs.y * rhs.z - lhs.z * rhs.y;
-        result.y = lhs.z * rhs.x - lhs.x * rhs.z;
-        result.z = lhs.x * rhs.y - lhs.y * rhs.x;
+        static_assert(isFloatingPointV<T> && L >= 2 && L <= 3);
+        typename Internal::VecCrossResultTraits<T, L>::Type result;
+        if constexpr (L == 2) {
+            result = this->x * rhs.y - this->y * rhs.x;
+        } else {
+            result.x = this->y * rhs.z - this->z * rhs.y;
+            result.y = this->z * rhs.x - this->x * rhs.z;
+            result.z = this->x * rhs.y - this->y * rhs.x;
+        }
         return result;
     }
 }

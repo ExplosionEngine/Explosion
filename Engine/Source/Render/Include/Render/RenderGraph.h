@@ -175,7 +175,7 @@ namespace Render {
             RGBindGroupDesc result;
             result.layout = layout->GetRHI();
             result.items.reserve(sizeof...(items));
-            std::initializer_list<int> { ([&]() -> void { result.items.emplace_back(std::forward<B>(items)); }(), 0)... };
+            (void) std::initializer_list<int> { ([&]() -> void { result.items.emplace_back(std::forward<B>(items)); }(), 0)... };
             return result;
         }
     };

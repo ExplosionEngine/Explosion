@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <cmath>
 
-#include <Common/Math/Constant.h>
+#include <Common/Math/Common.h>
 
 namespace Common::Internal {
     union FullFloat {
