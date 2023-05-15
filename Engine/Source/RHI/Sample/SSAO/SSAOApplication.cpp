@@ -858,14 +858,14 @@ private:
 
     void CreatePipeline()
     {
-        shaderModules.gBufferVs     = GetShaderModule("SSAO/Shaders/Gbuffer.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.gBufferPs     = GetShaderModule("SSAO/Shaders/Gbuffer.hlsl", "FSMain", ShaderStageBits::sPixel);
-        shaderModules.ssaoVs        = GetShaderModule("SSAO/Shaders/Ssao.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.ssaoPs        = GetShaderModule("SSAO/Shaders/Ssao.hlsl", "FSMain", ShaderStageBits::sPixel);
-        shaderModules.ssaoBlurVs    = GetShaderModule("SSAO/Shaders/Blur.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.ssaoBlurPs    = GetShaderModule("SSAO/Shaders/Blur.hlsl", "FSMain", ShaderStageBits::sPixel);
-        shaderModules.compositionVs = GetShaderModule("SSAO/Shaders/Composition.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.compositionPs = GetShaderModule("SSAO/Shaders/Composition.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.gBufferVs     = GetShaderModule("SSAO/Shader/Gbuffer.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.gBufferPs     = GetShaderModule("SSAO/Shader/Gbuffer.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.ssaoVs        = GetShaderModule("SSAO/Shader/Ssao.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.ssaoPs        = GetShaderModule("SSAO/Shader/Ssao.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.ssaoBlurVs    = GetShaderModule("SSAO/Shader/Blur.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.ssaoBlurPs    = GetShaderModule("SSAO/Shader/Blur.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.compositionVs = GetShaderModule("SSAO/Shader/Composition.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.compositionPs = GetShaderModule("SSAO/Shader/Composition.hlsl", "FSMain", ShaderStageBits::sPixel);
 
         // Gbuffer vertex
         std::array<VertexAttribute, 4> vertexAttributes {};
@@ -1180,7 +1180,7 @@ private:
     void LoadGLTF()
     {
         model = std::make_unique<Model>();
-        model->LoadFromFile("SSAO/models/Voyager.gltf");
+        model->LoadFromFile("SSAO/Model/Voyager.gltf");
     }
 
     void GenerateRenderables()
