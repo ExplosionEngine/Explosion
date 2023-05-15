@@ -8,17 +8,17 @@
 
 #include "GLTFParser.h"
 
-glm::mat4 Node::localMatrix()
+glm::mat4 Node::LocalMatrix()
 {
     return matrix;
 }
 
-glm::mat4 Node::getMatrix()
+glm::mat4 Node::GetMatrix()
 {
-    glm::mat4 m = localMatrix();
+    glm::mat4 m = LocalMatrix();
     Node* p = parent;
     while (p != nullptr) {
-        m = p->localMatrix() * m;
+        m = p->LocalMatrix() * m;
         p = p->parent;
     }
     return m;
@@ -26,16 +26,12 @@ glm::mat4 Node::getMatrix()
 
 Node::~Node()
 {
-    for (auto* mesh : meshes) {
-        delete mesh;
-    }
-
     for (auto* child : children) {
         delete child;
     }
 }
 
-void Model::LoadFromFile(const std::string path)
+void Model::LoadFromFile(const std::string& path)
 {
     Assimp::Importer importer;
     const auto* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
@@ -56,19 +52,15 @@ void Model::LoadFromFile(const std::string path)
         LoadNode(scene, scene->mRootNode->mChildren[i], rootNode);
     }
 
-    for (auto* node : linearNodes) {
-        const auto localMatrix = node->getMatrix();
-        for (auto* mesh : node->meshes) {
+    for (auto& node : linearNodes) {
+        const auto localMatrix = node->GetMatrix();
+        for (auto& mesh : node->meshes) {
             for (uint32_t i = 0; i < mesh->vertexCount; i++) {
                 auto& vertex = raw_vertex_buffer[mesh->firstVertex + i];
 
                 // pre_transform vertices
                 vertex.pos = glm::vec3(localMatrix * glm::vec4(vertex.pos, 1.0f));
                 vertex.normal = glm::normalize(glm::mat3(localMatrix) * vertex.normal);
-
-                // pre_flipY
-//                    vertex.pos.y *= -1.0f;
-//                    vertex.normal.y *= -1.0f;
             }
         }
     }
@@ -81,15 +73,15 @@ void Model::LoadMaterials(const aiScene* scene)
     for (unsigned int i = 0; i < scene->mNumMaterials; i++) {
         auto* material = scene->mMaterials[i];
 
-        auto* mMaterial = new MaterialData();
+        Common::SharedRef<MaterialData> mMaterial = new MaterialData();
         mMaterial->baseColorTexture = LoadMaterialTexture(scene, material, aiTextureType_DIFFUSE, fromEmbedded);
         mMaterial->normalTexture = LoadMaterialTexture(scene, material, aiTextureType_NORMALS, fromEmbedded);
 
-        materialDatas.emplace_back(mMaterial);
+        materialDatas.emplace_back(std::move(mMaterial));
     }
 }
 
-TextureData* Model::LoadMaterialTexture(const aiScene* scene, const aiMaterial* mat, aiTextureType type, bool fromEmbedded)
+Common::UniqueRef<TextureData> Model::LoadMaterialTexture(const aiScene* scene, const aiMaterial* mat, aiTextureType type, bool fromEmbedded)
 {
     if (mat->GetTextureCount(type) == 0) {
         return nullptr;
@@ -111,7 +103,7 @@ TextureData* Model::LoadMaterialTexture(const aiScene* scene, const aiMaterial* 
         data = stbi_load(filePath.c_str(), &width, &height, &comp,0);
     }
 
-    auto* mTexData = new TextureData();
+    Common::UniqueRef<TextureData> mTexData = new TextureData();
 
     // Most device don`t support RGB only on Vulkan, so convert if necessary
     if (comp == 3) {
@@ -212,13 +204,13 @@ void Model::LoadNode(const aiScene* scene, aiNode* node, Node* parent)
             }
         }
 
-        auto* mMesh = new Mesh(indexStart, indexCount, vertexStart, vertexCount, materialDatas[mesh->mMaterialIndex]);
-        mMesh->setDimensions(
+        Common::UniqueRef<Mesh> mMesh = new Mesh(indexStart, indexCount, vertexStart, vertexCount, materialDatas[mesh->mMaterialIndex]);
+        mMesh->SetDimensions(
                  glm::make_vec3(&mesh->mAABB.mMin.x),
                  glm::make_vec3(&mesh->mAABB.mMax.x)
                  );
 
-        mNode->meshes.emplace_back(mMesh);
+        mNode->meshes.emplace_back(std::move(mMesh));
     }
 
     if (parent != nullptr) {
@@ -230,11 +222,5 @@ void Model::LoadNode(const aiScene* scene, aiNode* node, Node* parent)
 
 Model::~Model()
 {
-    for (auto* materialData : materialDatas) {
-        delete materialData;
-    }
-
     delete rootNode;
-
-    delete emptyTexture;
 }

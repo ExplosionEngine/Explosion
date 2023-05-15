@@ -8,6 +8,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <Common/Memory.h>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -26,7 +27,7 @@ public:
     uint8_t  component { 0 };
     std::vector<unsigned char> buffer {};
 
-    bool isValid() const { return buffer.size() == (width * height * component); }
+    bool IsValid() const { return buffer.size() == (width * height * component); }
 
     uint32_t GetSize() {
         return buffer.size();
@@ -35,13 +36,8 @@ public:
 
 struct MaterialData
 {
-    TextureData* baseColorTexture = nullptr;
-    TextureData* normalTexture = nullptr;
-
-    ~MaterialData() {
-        delete baseColorTexture;
-        delete normalTexture;
-    }
+    Common::UniqueRef<TextureData> baseColorTexture = nullptr;
+    Common::UniqueRef<TextureData> normalTexture = nullptr;
 };
 
 struct Vertex {
@@ -60,7 +56,7 @@ struct Mesh {
     uint32_t firstVertex;
     uint32_t vertexCount;
 
-    MaterialData* materialData;
+    Common::SharedRef<MaterialData> materialData;
 
     struct Dimensions {
         glm::vec3 min = glm::vec3(FLT_MAX);
@@ -70,7 +66,7 @@ struct Mesh {
         float radius;
     } dimensions;
 
-    void setDimensions(glm::vec3 min, glm::vec3 max) {
+    void SetDimensions(glm::vec3 min, glm::vec3 max) {
         dimensions.min = min;
         dimensions.max = max;
         dimensions.size = max - min;
@@ -78,7 +74,7 @@ struct Mesh {
         dimensions.radius = glm::distance(min, max) / 2.0f;
     }
 
-    Mesh(uint32_t firstIndex, uint32_t indexCount, uint32_t firstVertex, uint32_t vertexCount, MaterialData* material)
+    Mesh(uint32_t firstIndex, uint32_t indexCount, uint32_t firstVertex, uint32_t vertexCount, Common::SharedRef<MaterialData>& material)
         : firstIndex(firstIndex),
         indexCount(indexCount),
         firstVertex(firstVertex),
@@ -89,15 +85,16 @@ struct Mesh {
     // mustn`t delele material here, for different meshes can point to the same material
 };
 
+// Can`t use shared_ptr because of shared_ptr cycle
 struct Node {
     Node* parent;
     std::vector<Node*> children;
 
     glm::mat4 matrix {1.0f };
-    std::vector<Mesh*> meshes;
+    std::vector<Common::UniqueRef<Mesh>> meshes;
 
-    glm::mat4 localMatrix();
-    glm::mat4 getMatrix();
+    glm::mat4 LocalMatrix();
+    glm::mat4 GetMatrix();
     ~Node();
 };
 
@@ -107,12 +104,12 @@ public:
     Model() = default;
     ~Model();
 
-    void LoadFromFile(std::string path);
+    void LoadFromFile(const std::string& path);
     void LoadNode(const aiScene* scene, aiNode* node, Node* parent);
     void LoadMaterials(const aiScene* scene);
 
 private:
-    TextureData* LoadMaterialTexture(const aiScene* scene, const aiMaterial* mat, aiTextureType type, bool fromEmbedded);
+    Common::UniqueRef<TextureData> LoadMaterialTexture(const aiScene* scene, const aiMaterial* mat, aiTextureType type, bool fromEmbedded);
 
     void CreateEmptyTexture()
     {
@@ -126,7 +123,7 @@ public:
     Node* rootNode;
     std::vector<Node*> linearNodes;
 
-    std::vector<MaterialData*> materialDatas;
+    std::vector<Common::SharedRef<MaterialData>> materialDatas;
 
     std::vector<uint32_t> raw_index_buffer;
     std::vector<Vertex> raw_vertex_buffer;
@@ -134,6 +131,6 @@ public:
     std::string directory;
 private:
 
-    TextureData* emptyTexture;
+    Common::UniqueRef<TextureData> emptyTexture = nullptr;
 
 };

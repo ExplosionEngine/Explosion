@@ -78,9 +78,9 @@ protected:
     }
 
 private:
-    static const unsigned int SSAO_KERNEL_SIZE = 64;
-    static const unsigned int SSAO_NOISE_DIM = 16;
-    static const uint8_t BACK_BUFFER_COUNT = 2;
+    static const uint8_t ssaoKernelSize = 64;
+    static const uint8_t ssaoNoiseDim = 16;
+    static const uint8_t backBufferCount = 2;
 
     PixelFormat swapChainFormat = PixelFormat::max;
     Instance* instance = nullptr;
@@ -93,8 +93,8 @@ private:
     UniqueRef<BufferView> vertexBufferView = nullptr;
     UniqueRef<Buffer> indexBuffer = nullptr;
     UniqueRef<BufferView> indexBufferView = nullptr;
-    std::array<Texture*, BACK_BUFFER_COUNT> swapChainTextures {};
-    std::array<Common::UniqueRef<TextureView>, BACK_BUFFER_COUNT> swapChainTextureViews {};
+    std::array<Texture*, backBufferCount> swapChainTextures {};
+    std::array<Common::UniqueRef<TextureView>, backBufferCount> swapChainTextureViews {};
 
     UniqueRef<Buffer> quadVertexBuffer = nullptr;
     UniqueRef<BufferView> quadVertexBufferView = nullptr;
@@ -114,12 +114,12 @@ private:
         UniqueRef<Texture> diffuseColorMap;
         UniqueRef<TextureView> diffuseColorMapView;
 
-        Renderable(SSAOApplication* app, Mesh* mesh) {
+        Renderable(SSAOApplication* app, UniqueRef<Mesh>& mesh) {
             indexCount =mesh->indexCount;
             firstIndex =mesh->firstIndex;
 
             // upload diffuseColorMap
-            auto* texData =mesh->materialData->baseColorTexture;
+            auto& texData =mesh->materialData->baseColorTexture;
 
             BufferCreateInfo bufferCreateInfo {};
             bufferCreateInfo.size = texData->GetSize();
@@ -186,8 +186,8 @@ private:
         }
     };
 
-    Model* model;
-    std::vector<Renderable*> renderables;
+    UniqueRef<Model> model = nullptr;
+    std::vector<UniqueRef<Renderable>> renderables;
     Camera camera;
 
     struct UBuffer {
@@ -320,7 +320,7 @@ private:
         SwapChainCreateInfo swapChainCreateInfo {};
         swapChainCreateInfo.format = swapChainFormat;
         swapChainCreateInfo.presentMode = PresentMode::immediately;
-        swapChainCreateInfo.textureNum = BACK_BUFFER_COUNT;
+        swapChainCreateInfo.textureNum = backBufferCount;
         swapChainCreateInfo.extent = {width, height};
         swapChainCreateInfo.surface = surface.Get();
         swapChainCreateInfo.presentQueue = graphicsQueue;
@@ -727,25 +727,25 @@ private:
         // ssao kennel
         std::default_random_engine rndEngine((unsigned)time(nullptr));
         std::uniform_real_distribution<float> rndDist(0.0f, 1.0f);
-        std::vector<glm::vec4> ssaoKernel(SSAO_KERNEL_SIZE);
+        std::vector<glm::vec4> ssaoKernel(ssaoKernelSize);
 
         auto lerp = [](float a, float b, float f) ->float {
             return a + f * (b - a);
         };
 
-        for (uint32_t i = 0; i < SSAO_KERNEL_SIZE; ++i)
+        for (uint32_t i = 0; i < ssaoKernelSize; ++i)
         {
             glm::vec3 sample(rndDist(rndEngine) * 2.0 - 1.0, rndDist(rndEngine) * 2.0 - 1.0, rndDist(rndEngine));
             sample = glm::normalize(sample);
             sample *= rndDist(rndEngine);
-            float scale = float(i) / float(SSAO_KERNEL_SIZE);
+            float scale = float(i) / float(ssaoKernelSize);
             scale = lerp(0.1f, 1.0f, scale * scale);
             ssaoKernel[i] = glm::vec4(sample * scale, 0.0f);
         }
         CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.ssaoKernel, ssaoKernel.size() * sizeof(glm::vec4), ssaoKernel.data());
 
         // random noise
-        std::vector<glm::vec4> ssaoNoise(SSAO_NOISE_DIM * SSAO_NOISE_DIM);
+        std::vector<glm::vec4> ssaoNoise(ssaoNoiseDim * ssaoNoiseDim);
         for (auto& randomVec : ssaoNoise)
         {
             randomVec = glm::vec4(rndDist(rndEngine) * 2.0f - 1.0f, rndDist(rndEngine) * 2.0f - 1.0f, 0.0f, 0.0f);
@@ -765,7 +765,7 @@ private:
         TextureCreateInfo texCreateInfo {};
         texCreateInfo.format = PixelFormat::rgba32Float;
         texCreateInfo.mipLevels = 1;
-        texCreateInfo.extent = {SSAO_NOISE_DIM, SSAO_NOISE_DIM, 1};
+        texCreateInfo.extent = {ssaoNoiseDim, ssaoNoiseDim, 1};
         texCreateInfo.dimension = TextureDimension::t2D;
         texCreateInfo.samples = 1;
         texCreateInfo.usages = TextureUsageBits::copyDst | TextureUsageBits::textureBinding;
@@ -794,7 +794,7 @@ private:
         subResourceInfo.arrayLayerNum = 1;
         subResourceInfo.baseArrayLayer = 0;
         subResourceInfo.aspect = TextureAspect::color;
-        commandEncoder->CopyBufferToTexture(pixelBuffer, noise.tex.Get(), &subResourceInfo, {SSAO_NOISE_DIM, SSAO_NOISE_DIM, 1});
+        commandEncoder->CopyBufferToTexture(pixelBuffer, noise.tex.Get(), &subResourceInfo, {ssaoNoiseDim, ssaoNoiseDim, 1});
         commandEncoder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
         commandEncoder->End();
 
@@ -1047,7 +1047,7 @@ private:
                 graphicsEncoder->SetVertexBuffer(0, vertexBufferView.Get());
                 graphicsEncoder->SetIndexBuffer(indexBufferView.Get());
 
-                for (auto* renderable : renderables) {
+                for (auto& renderable : renderables) {
                     graphicsEncoder->SetBindGroup(1, renderable->bindGroup.Get());
                     graphicsEncoder->DrawIndexed(renderable->indexCount, 1, renderable->firstIndex, 0, 0);
                 }
@@ -1179,17 +1179,15 @@ private:
 
     void LoadGLTF()
     {
-        model = new Model();
+        model = std::make_unique<Model>();
         model->LoadFromFile("SSAO/models/Voyager.gltf");
     }
 
     void GenerateRenderables()
     {
         for (auto* node : model->linearNodes) {
-            for (auto* primitive : node->meshes) {
-                auto* renderable = new Renderable(this, primitive);
-
-                renderables.emplace_back(renderable);
+            for (auto& mesh : node->meshes) {
+                renderables.emplace_back(std::make_unique<Renderable>(this, mesh));
             }
         }
     }

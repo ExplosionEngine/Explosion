@@ -53,7 +53,7 @@ protected:
     }
 
 private:
-    static const uint8_t BACK_BUFFER_COUNT = 2;
+    static const uint8_t backBufferCount = 2;
 
     void CreateInstanceAndSelectGPU()
     {
@@ -94,7 +94,7 @@ private:
         SwapChainCreateInfo swapChainCreateInfo {};
         swapChainCreateInfo.format = swapChainFormat;
         swapChainCreateInfo.presentMode = PresentMode::immediately;
-        swapChainCreateInfo.textureNum = BACK_BUFFER_COUNT;
+        swapChainCreateInfo.textureNum = backBufferCount;
         swapChainCreateInfo.extent = {width, height};
         swapChainCreateInfo.surface = surface.Get();
         swapChainCreateInfo.presentQueue = graphicsQueue;
@@ -399,8 +399,8 @@ private:
     UniqueRef<Sampler> sampler;
     UniqueRef<CommandBuffer> texCommandBuffer;
     UniqueRef<Buffer> pixelBuffer;
-    std::array<Texture*, BACK_BUFFER_COUNT> swapChainTextures {};
-    std::array<UniqueRef<TextureView>, BACK_BUFFER_COUNT> swapChainTextureViews;
+    std::array<Texture*, backBufferCount> swapChainTextures {};
+    std::array<UniqueRef<TextureView>, backBufferCount> swapChainTextureViews;
     UniqueRef<PipelineLayout> pipelineLayout;
     UniqueRef<GraphicsPipeline> pipeline;
     UniqueRef<ShaderModule> vertexShader;
