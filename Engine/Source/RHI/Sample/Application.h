@@ -70,6 +70,7 @@ public:
         return 0;
     }
 
+protected:
     virtual void OnStart() {}
     virtual void OnCreate() {}
     virtual void OnDestroy() {}
@@ -87,7 +88,7 @@ public:
 #endif
     }
 
-    void CompileShader(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
+    void CompileShader(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage, std::vector<std::string> includePaths = {})
     {
         std::string shaderSource = Common::FileUtils::ReadTextFile(fileName);
 
@@ -96,6 +97,9 @@ public:
         info.entryPoint = entryPoint;
         info.stage = shaderStage;
         Render::ShaderCompileOptions options;
+        if (!includePaths.empty()) {
+            options.includePaths.insert(options.includePaths.end(), includePaths.begin(), includePaths.end());
+        }
         if (rhiType == RHI::RHIType::directX12) {
             options.byteCodeType = Render::ShaderByteCodeType::dxil;
         } else if (rhiType == RHI::RHIType::vulkan) {

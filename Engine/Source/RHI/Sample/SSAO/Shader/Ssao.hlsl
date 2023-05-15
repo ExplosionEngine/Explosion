@@ -17,7 +17,22 @@ VK_BINDING(6, 0) cbuffer UBO : register(b1)
 	float4x4 projection;
 };
 
-float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
+struct VSOutput
+{
+	float4 Pos : SV_POSITION;
+    float2 UV : TEXCOORD;
+};
+
+VSOutput VSMain(float4 postion : POSITION, float2 uv : TEXCOORD)
+{
+	VSOutput output = (VSOutput)0;
+	output.UV = uv;
+	output.Pos = postion;
+
+	return output;
+}
+
+float FSMain(float2 inUV : TEXCOORD) : SV_TARGET
 {
 	// Get G-Buffer values
 	float3 fragPos = texturePositionDepth.Sample(texSampler, inUV).rgb;
@@ -41,21 +56,20 @@ float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
 	for(int i = 0; i < 64; i++)
 	{
 		float3 samplePos = mul(randomKernals[i].xyz, TBN);
-		samplePos = fragPos + samplePos * 0.1; // ssao radius is 0.1
+		samplePos = fragPos + samplePos * 0.2; // ssao radius is 0.2
 
 		// project
 		float4 offset = float4(samplePos, 1.0f);
 		offset = mul(offset, projection);
 		offset.xyz /= offset.w;
-		offset.xyz = offset.xyz * 0.5f + 0.5f;
+		offset.xyz = offset.xyz * 0.5f + 0.2f;
 
 		float sampleDepth = -texturePositionDepth.Sample(texSampler, offset.xy).w;
 
-		float rangeCheck = smoothstep(0.0f, 1.0f, 0.1 / abs(fragPos.z - sampleDepth));
+		float rangeCheck = smoothstep(0.0f, 1.0f, 0.5 / abs(fragPos.z - sampleDepth));
 		occlusion += (sampleDepth >= samplePos.z ? 1.0f : 0.0f) * rangeCheck;
 	}
 	occlusion = 1.0 - (occlusion / 64.0);
 
 	return occlusion;
 }
-

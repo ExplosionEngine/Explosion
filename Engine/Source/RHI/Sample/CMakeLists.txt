@@ -60,14 +60,11 @@ AddRHISample(
     SRC
         SSAO/GLTFParser.cpp
         SSAO/SSAOApplication.cpp
-        SSAO/Renderer.cpp
     SHADER
-        SSAO/Shaders/GbufferPs.hlsl
-        SSAO/Shaders/GbufferVs.hlsl
-        SSAO/Shaders/FullscreenVs.hlsl
-        SSAO/Shaders/SsaoPs.hlsl
-        SSAO/Shaders/BlurPs.hlsl
-        SSAO/Shaders/CompositionPs.hlsl
-        SSAO/Shaders/Common.h
-    MODEL SSAO/Models/Voyager.gltf
+        SSAO/Shader/Gbuffer.hlsl
+        SSAO/Shader/Ssao.hlsl
+        SSAO/Shader/Blur.hlsl
+        SSAO/Shader/Composition.hlsl
+        SSAO/Shader/Common.h
+    MODEL SSAO/Model/Voyager.gltf
 )

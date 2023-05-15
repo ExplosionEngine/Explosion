@@ -3,7 +3,22 @@
 VK_BINDING(0, 0) Texture2D textureSSAO : register(t0);
 VK_BINDING(1, 0) SamplerState samplerSSAO : register(s0);
 
-float4 FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
+struct VSOutput
+{
+	float4 Pos : SV_POSITION;
+    float2 UV : TEXCOORD;
+};
+
+VSOutput VSMain(float4 postion : POSITION, float2 uv : TEXCOORD)
+{
+	VSOutput output = (VSOutput)0;
+	output.UV = uv;
+	output.Pos = postion;
+
+	return output;
+}
+
+float4 FSMain(float2 inUV : TEXCOORD) : SV_TARGET
 {
 	const int blurRange = 2;
 	int n = 0;
