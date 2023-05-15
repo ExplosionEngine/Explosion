@@ -20,7 +20,7 @@ namespace Common {
         ios,
         xbox,
         playStation,
-        switch,
+        nintendoSwitch,
         max
     };
 

@@ -1,4 +1,4 @@
-#include "common.h"
+#include "Common.h"
 
 VK_BINDING(0, 0) Texture2D textureSSAO : register(t0);
 VK_BINDING(1, 0) SamplerState samplerSSAO : register(s0);

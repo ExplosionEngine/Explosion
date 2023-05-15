@@ -164,7 +164,7 @@ private:
     {
         int texWidth, texHeight, texChannels;
         stbi_set_flip_vertically_on_load(1);
-        stbi_uc* pixels = stbi_load("TexSampling/awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        stbi_uc* pixels = stbi_load("TexSampling/Awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         Assert(pixels != nullptr);
 
         BufferCreateInfo bufferCreateInfo {};

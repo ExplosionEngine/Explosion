@@ -1,4 +1,4 @@
-#include "common.h"
+#include "Common.h"
 
 struct VSInput
 {
@@ -39,6 +39,11 @@ VSOutput VSMain(VSInput input)
 	// Normal in view space
 	float3x3 normalMatrix = (float3x3)mul(model, view);
 	output.Normal = mul(input.Normal, normalMatrix);
+
+#if VULKAN
+    output.Pos.y = -output.Pos.y;
+    output.Normal.y = -output.Normal.y;
+#endif
 
 	output.Color = input.Color;
 	return output;

@@ -1,4 +1,4 @@
-#include "common.h"
+#include "Common.h"
 
 VK_BINDING(0, 0) Texture2D texturePositionDepth : register(t0);
 VK_BINDING(1, 0) Texture2D textureNormal : register(t1);
@@ -16,10 +16,6 @@ VK_BINDING(6, 0) cbuffer UBO : register(b1)
 {
 	float4x4 projection;
 };
-
-// const int SSAO_KERNEL_ARRAY_SIZE = 64;
-// const int SSAO_KERNEL_SIZE = 64;
-// const float SSAO_RADIUS = 0.5;
 
 float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
 {
@@ -45,7 +41,7 @@ float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
 	for(int i = 0; i < 64; i++)
 	{
 		float3 samplePos = mul(randomKernals[i].xyz, TBN);
-		samplePos = fragPos + samplePos * 0.5;
+		samplePos = fragPos + samplePos * 0.1; // ssao radius is 0.1
 
 		// project
 		float4 offset = float4(samplePos, 1.0f);
@@ -55,7 +51,7 @@ float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
 
 		float sampleDepth = -texturePositionDepth.Sample(texSampler, offset.xy).w;
 
-		float rangeCheck = smoothstep(0.0f, 1.0f, 0.5 / abs(fragPos.z - sampleDepth));
+		float rangeCheck = smoothstep(0.0f, 1.0f, 0.1 / abs(fragPos.z - sampleDepth));
 		occlusion += (sampleDepth >= samplePos.z ? 1.0f : 0.0f) * rangeCheck;
 	}
 	occlusion = 1.0 - (occlusion / 64.0);

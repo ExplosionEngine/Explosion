@@ -597,7 +597,7 @@ namespace Example {
         info.entryPoint = entryPoint;
         info.stage = shaderStage;
         Render::ShaderCompileOptions options;
-        options.includePaths.emplace_back("SSAO/shaders");
+        options.includePaths.emplace_back("SSAO/Shaders");
         if (rhiType == RHI::RHIType::directX12) {
             options.byteCodeType = Render::ShaderByteCodeType::dxil;
         } else if (rhiType == RHI::RHIType::vulkan) {
@@ -643,12 +643,12 @@ namespace Example {
 
     void Renderer::CreatePipeline()
     {
-        shaderModules.gBufferVert     = CompileShader("SSAO/shaders/gbufferVs.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.gBufferFrag     = CompileShader("SSAO/shaders/gbufferPs.hlsl", "FSMain", ShaderStageBits::sPixel);
-        shaderModules.quadVert        = CompileShader("SSAO/shaders/fullscreenVs.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.ssaoFrag        = CompileShader("SSAO/shaders/ssaoPs.hlsl", "FSMain", ShaderStageBits::sPixel);
-        shaderModules.ssaoBlurFrag    = CompileShader("SSAO/shaders/blurPs.hlsl", "FSMain", ShaderStageBits::sPixel);
-        shaderModules.compositionFrag = CompileShader("SSAO/shaders/compositionPs.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.gBufferVert     = CompileShader("SSAO/Shaders/GbufferVs.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.gBufferFrag     = CompileShader("SSAO/Shaders/GbufferPs.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.quadVert        = CompileShader("SSAO/Shaders/FullscreenVs.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.ssaoFrag        = CompileShader("SSAO/Shaders/SsaoPs.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.ssaoBlurFrag    = CompileShader("SSAO/Shaders/BlurPs.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.compositionFrag = CompileShader("SSAO/Shaders/CompositionPs.hlsl", "FSMain", ShaderStageBits::sPixel);
 
         // Gbuffer vertex
         std::array<VertexAttribute, 4> vertexAttributes {};
@@ -952,15 +952,18 @@ namespace Example {
     void Renderer::InitCamera()
     {
         camera.type = Camera::CameraType::firstPerson;
-        camera.position = { 4.0f, 2.4f, -2.4f };
-        camera.setRotation(glm::vec3(.0f, 58.0f, 0.0f));
-        camera.setPerspective(60.0f, (float)app->width / (float)app->height, uboSceneParams.nearPlane, uboSceneParams.farPlane);
+        camera.position = { 2.0f, -2.4f, -4.0f };
+        camera.setRotation(glm::vec3(10.0f, 30.0f, 0.0f));
+        camera.setPerspective(60.0f,
+                              static_cast<float>(app->width) / static_cast<float>(app->height),
+                              uboSceneParams.nearPlane,
+                              uboSceneParams.farPlane);
     }
 
     void Renderer::LoadGLTF()
     {
         model = new Model();
-        model->LoadFromFile("SSAO/models/voyager.gltf");
+        model->LoadFromFile("SSAO/models/Voyager.gltf");
     }
 
     Renderable::~Renderable()

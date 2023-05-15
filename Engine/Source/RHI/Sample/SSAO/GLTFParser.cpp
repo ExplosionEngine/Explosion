@@ -68,8 +68,8 @@ namespace Example {
                     vertex.normal = glm::normalize(glm::mat3(localMatrix) * vertex.normal);
 
                     // pre_flipY
-                    vertex.pos.y *= -1.0f;
-                    vertex.normal.y *= -1.0f;
+//                    vertex.pos.y *= -1.0f;
+//                    vertex.normal.y *= -1.0f;
                 }
             }
         }

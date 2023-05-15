@@ -52,7 +52,7 @@ AddRHISample(
     NAME RHI-TexSampling
     SRC TexSampling/TexSampling.cpp
     SHADER TexSampling/TexSampling.hlsl
-    IMAGE TexSampling/awesomeface.png
+    IMAGE TexSampling/Awesomeface.png
 )
 
 AddRHISample(
@@ -62,12 +62,12 @@ AddRHISample(
         SSAO/SSAOApplication.cpp
         SSAO/Renderer.cpp
     SHADER
-        SSAO/shaders/gbufferPs.hlsl
-        SSAO/shaders/gbufferVs.hlsl
-        SSAO/shaders/fullscreenVs.hlsl
-        SSAO/shaders/ssaoPs.hlsl
-        SSAO/shaders/blurPs.hlsl
-        SSAO/shaders/compositionPs.hlsl
-        SSAO/Shaders/common.h
-    MODEL SSAO/models/voyager.gltf
+        SSAO/Shaders/GbufferPs.hlsl
+        SSAO/Shaders/GbufferVs.hlsl
+        SSAO/Shaders/FullscreenVs.hlsl
+        SSAO/Shaders/SsaoPs.hlsl
+        SSAO/Shaders/BlurPs.hlsl
+        SSAO/Shaders/CompositionPs.hlsl
+        SSAO/Shaders/Common.h
+    MODEL SSAO/Models/Voyager.gltf
 )
