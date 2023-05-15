@@ -21,7 +21,7 @@ namespace RHI::Vulkan {
 
     FenceStatus VKFence::GetStatus()
     {
-        return signaled ? FenceStatus::SIGNALED : FenceStatus::NOT_READY;
+        return signaled ? FenceStatus::signaled : FenceStatus::notReady;
     }
 
     void VKFence::Reset()

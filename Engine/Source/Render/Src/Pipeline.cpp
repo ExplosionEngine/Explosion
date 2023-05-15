@@ -189,7 +189,7 @@ namespace Render {
         : hash(inHash)
     {
         std::vector<ShaderInstancePack> shaderInstancePacks = {
-            { RHI::ShaderStageBits::S_COMPUTE, &inDesc.shaders.computeShader }
+            { RHI::ShaderStageBits::sCompute, &inDesc.shaders.computeShader }
         };
         CreateBindGroupLayout(inDevice, shaderInstancePacks);
         CreateRHIPipelineLayout(inDevice);
@@ -199,11 +199,11 @@ namespace Render {
         : hash(inHash)
     {
         std::vector<ShaderInstancePack> shaderInstancePacks = {
-            { RHI::ShaderStageBits::S_VERTEX, &inDesc.shaders.vertexShader },
-            { RHI::ShaderStageBits::S_PIXEL, &inDesc.shaders.pixelShader },
-            { RHI::ShaderStageBits::S_GEOMETRY, &inDesc.shaders.geometryShader },
-            { RHI::ShaderStageBits::S_DOMAIN, &inDesc.shaders.domainShader },
-            { RHI::ShaderStageBits::S_HULL, &inDesc.shaders.hullShader }
+            { RHI::ShaderStageBits::sVertex, &inDesc.shaders.vertexShader },
+            { RHI::ShaderStageBits::sPixel, &inDesc.shaders.pixelShader },
+            { RHI::ShaderStageBits::sGeometry, &inDesc.shaders.geometryShader },
+            { RHI::ShaderStageBits::sDomain, &inDesc.shaders.domainShader },
+            { RHI::ShaderStageBits::sHull, &inDesc.shaders.hullShader }
         };
         CreateBindGroupLayout(inDevice, shaderInstancePacks);
         CreateRHIPipelineLayout(inDevice);

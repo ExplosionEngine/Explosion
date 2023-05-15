@@ -34,12 +34,12 @@ namespace RHI::Dummy {
 
     size_t DummyDevice::GetQueueNum(QueueType type)
     {
-        return type == QueueType::GRAPHICS ? 1 : 0;
+        return type == QueueType::graphics ? 1 : 0;
     }
 
     Queue* DummyDevice::GetQueue(QueueType type, size_t index)
     {
-        Assert(type == QueueType::GRAPHICS && index == 0);
+        Assert(type == QueueType::graphics && index == 0);
         return dummyQueue.Get();
     }
 

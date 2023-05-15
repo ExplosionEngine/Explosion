@@ -131,7 +131,7 @@ namespace RHI::Vulkan {
 
     CommandBuffer* VKDevice::CreateCommandBuffer()
     {
-        return new VKCommandBuffer(*this, pools[QueueType::GRAPHICS]);
+        return new VKCommandBuffer(*this, pools[QueueType::graphics]);
     }
 
     Fence* VKDevice::CreateFence()

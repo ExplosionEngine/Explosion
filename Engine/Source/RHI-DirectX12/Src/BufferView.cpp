@@ -10,22 +10,22 @@
 namespace RHI::DirectX12 {
     static inline bool IsConstantBuffer(BufferUsageFlags bufferUsages)
     {
-        return (bufferUsages & BufferUsageBits::UNIFORM) != 0;
+        return (bufferUsages & BufferUsageBits::uniform) != 0;
     }
 
     static inline bool IsUnorderedAccessBuffer(BufferUsageFlags bufferUsages)
     {
-        return (bufferUsages & BufferUsageBits::STORAGE) != 0;
+        return (bufferUsages & BufferUsageBits::storage) != 0;
     }
 
     static inline bool IsVertexBuffer(BufferUsageFlags bufferUsages)
     {
-        return (bufferUsages & BufferUsageBits::VERTEX) != 0;
+        return (bufferUsages & BufferUsageBits::vertex) != 0;
     }
 
     static inline bool IsIndexBuffer(BufferUsageFlags bufferUsages)
     {
-        return (bufferUsages & BufferUsageBits::INDEX) != 0;
+        return (bufferUsages & BufferUsageBits::index) != 0;
     }
 }
 

@@ -25,7 +25,7 @@ namespace RHI {
         uint8_t baseArrayLayer;
         uint8_t arrayLayerNum;
         Extent<3> origin {};
-        TextureAspect aspect = TextureAspect::COLOR;
+        TextureAspect aspect = TextureAspect::color;
     };
 
     struct GraphicsPassColorAttachment {

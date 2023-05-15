@@ -16,10 +16,10 @@
 
 namespace MirrorTool {
     enum class FieldAccess {
-        PUBLIC,
-        PROTECTED,
-        PRIVATE,
-        MAX
+        fPublic,
+        fProtected,
+        fPrivate,
+        max
     };
 
     using ParamNameAndType = std::pair<std::string, std::string>;

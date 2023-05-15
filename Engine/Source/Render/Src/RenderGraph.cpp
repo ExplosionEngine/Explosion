@@ -61,11 +61,11 @@ namespace Render {
 
     static RHI::Barrier GetBarrier(const RGResTransition& transition)
     {
-        if (transition.resType == RHI::ResourceType::BUFFER) {
+        if (transition.resType == RHI::ResourceType::buffer) {
             const auto& bufferTransition = transition.buffer;
             return RHI::Barrier::Transition(bufferTransition.buffer->GetRHI(), bufferTransition.before, bufferTransition.after);
         }
-        if (transition.resType == RHI::ResourceType::TEXTURE) {
+        if (transition.resType == RHI::ResourceType::texture) {
             const auto& textureTransition = transition.texture;
             return RHI::Barrier::Transition(textureTransition.texture->GetRHI(), textureTransition.before, textureTransition.after);
         }
@@ -119,7 +119,7 @@ namespace Render {
     RGResTransition RGResTransition::Buffer(RGBuffer* inBuffer, RGBufferState inBeforeState, RGBufferState inAfterState)
     {
         RGResTransition result;
-        result.resType = RGTransitionResType::BUFFER;
+        result.resType = RGTransitionResType::buffer;
         result.buffer.buffer = inBuffer;
         result.buffer.before = inBeforeState;
         result.buffer.after = inAfterState;
@@ -129,7 +129,7 @@ namespace Render {
     RGResTransition RGResTransition::Texture(RGTexture* inTexture, RGTextureState inBeforeState, RGTextureState inAfterState)
     {
         RGResTransition result;
-        result.resType = RGTransitionResType::TEXTURE;
+        result.resType = RGTransitionResType::texture;
         result.texture.texture = inTexture;
         result.texture.before = inBeforeState;
         result.texture.after = inAfterState;
@@ -158,7 +158,7 @@ namespace Render {
         result.extent = { length, 1, 1 };
         result.mipLevels = mipLevels;
         result.samples = samples;
-        result.dimension = RHI::TextureDimension::T_1D;
+        result.dimension = RHI::TextureDimension::t1D;
         result.format = format;
         result.usages = usages;
         return result;
@@ -170,7 +170,7 @@ namespace Render {
         result.extent = { width, height, layers };
         result.mipLevels = mipLevels;
         result.samples = samples;
-        result.dimension = RHI::TextureDimension::T_2D;
+        result.dimension = RHI::TextureDimension::t2D;
         result.format = format;
         result.usages = usages;
         return result;
@@ -182,7 +182,7 @@ namespace Render {
         result.extent = { width, height, depth };
         result.mipLevels = mipLevels;
         result.samples = samples;
-        result.dimension = RHI::TextureDimension::T_3D;
+        result.dimension = RHI::TextureDimension::t3D;
         result.format = format;
         result.usages = usages;
         return result;
@@ -243,7 +243,7 @@ namespace Render {
     RGTextureViewDesc RGTextureViewDesc::Create1D(RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
     {
         RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::TV_1D;
+        result.dimension = RHI::TextureViewDimension::tv1D;
         result.aspect = aspect;
         result.baseMipLevel = baseMipLevel;
         result.mipLevelNum = mipLevelNum;
@@ -255,7 +255,7 @@ namespace Render {
     RGTextureViewDesc RGTextureViewDesc::Create2D(RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
     {
         RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::TV_2D;
+        result.dimension = RHI::TextureViewDimension::tv2D;
         result.aspect = aspect;
         result.baseMipLevel = baseMipLevel;
         result.mipLevelNum = mipLevelNum;
@@ -267,7 +267,7 @@ namespace Render {
     RGTextureViewDesc RGTextureViewDesc::Create2DArray(RHI::TextureAspect aspect, uint8_t baseArrayLayer, uint8_t arrayLayerNum, uint8_t baseMipLevel, uint8_t mipLevelNum)
     {
         RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::TV_2D_ARRAY;
+        result.dimension = RHI::TextureViewDimension::tv2DArray;
         result.aspect = aspect;
         result.baseMipLevel = baseMipLevel;
         result.mipLevelNum = mipLevelNum;
@@ -279,7 +279,7 @@ namespace Render {
     RGTextureViewDesc RGTextureViewDesc::CreateCube(RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
     {
         RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::TV_CUBE;
+        result.dimension = RHI::TextureViewDimension::tvCube;
         result.aspect = aspect;
         result.baseMipLevel = baseMipLevel;
         result.mipLevelNum = mipLevelNum;
@@ -291,7 +291,7 @@ namespace Render {
     RGTextureViewDesc RGTextureViewDesc::CreateCubeArray(RHI::TextureAspect aspect, uint8_t baseCubemapIndex, uint8_t cubemapNum, uint8_t baseMipLevel, uint8_t mipLevelNum)
     {
         RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::TV_CUBE_ARRAY;
+        result.dimension = RHI::TextureViewDimension::tvCubeArray;
         result.aspect = aspect;
         result.baseMipLevel = baseMipLevel;
         result.mipLevelNum = mipLevelNum;
@@ -303,7 +303,7 @@ namespace Render {
     RGTextureViewDesc RGTextureViewDesc::Create3D(RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
     {
         RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::TV_3D;
+        result.dimension = RHI::TextureViewDimension::tv3D;
         result.aspect = aspect;
         result.baseMipLevel = baseMipLevel;
         result.mipLevelNum = mipLevelNum;
@@ -315,7 +315,7 @@ namespace Render {
     std::pair<RGTexture*, RGTextureViewDesc> RGTextureViewDesc::Create1D(RGTexture* texture, RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
     {
         RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::TV_1D;
+        result.dimension = RHI::TextureViewDimension::tv1D;
         result.aspect = aspect;
         result.baseMipLevel = baseMipLevel;
         result.mipLevelNum = mipLevelNum == UINT8_MAX ? texture->GetDesc().mipLevels : mipLevelNum;
@@ -327,7 +327,7 @@ namespace Render {
     std::pair<RGTexture*, RGTextureViewDesc> RGTextureViewDesc::Create2D(RGTexture* texture, RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
     {
         RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::TV_2D;
+        result.dimension = RHI::TextureViewDimension::tv2D;
         result.aspect = aspect;
         result.baseMipLevel = baseMipLevel;
         result.mipLevelNum = mipLevelNum == UINT8_MAX ? texture->GetDesc().mipLevels : mipLevelNum;
@@ -339,7 +339,7 @@ namespace Render {
     std::pair<RGTexture*, RGTextureViewDesc> RGTextureViewDesc::Create2DArray(RGTexture* texture, RHI::TextureAspect aspect, uint8_t baseArrayLayer, uint8_t arrayLayerNum, uint8_t baseMipLevel, uint8_t mipLevelNum)
     {
         RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::TV_2D_ARRAY;
+        result.dimension = RHI::TextureViewDimension::tv2DArray;
         result.aspect = aspect;
         result.baseMipLevel = baseMipLevel;
         result.mipLevelNum = mipLevelNum == UINT8_MAX ? texture->GetDesc().mipLevels : mipLevelNum;
@@ -351,7 +351,7 @@ namespace Render {
     std::pair<RGTexture*, RGTextureViewDesc> RGTextureViewDesc::CreateCube(RGTexture* texture, RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
     {
         RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::TV_CUBE;
+        result.dimension = RHI::TextureViewDimension::tvCube;
         result.aspect = aspect;
         result.baseMipLevel = baseMipLevel;
         result.mipLevelNum = mipLevelNum == UINT8_MAX ? texture->GetDesc().mipLevels : mipLevelNum;
@@ -363,7 +363,7 @@ namespace Render {
     std::pair<RGTexture*, RGTextureViewDesc> RGTextureViewDesc::CreateCubeArray(RGTexture* texture, RHI::TextureAspect aspect, uint8_t baseCubemapIndex, uint8_t cubemapNum, uint8_t baseMipLevel, uint8_t mipLevelNum)
     {
         RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::TV_CUBE_ARRAY;
+        result.dimension = RHI::TextureViewDimension::tvCubeArray;
         result.aspect = aspect;
         result.baseMipLevel = baseMipLevel;
         result.mipLevelNum = mipLevelNum == UINT8_MAX ? texture->GetDesc().mipLevels : mipLevelNum;
@@ -375,7 +375,7 @@ namespace Render {
     std::pair<RGTexture*, RGTextureViewDesc> RGTextureViewDesc::Create3D(RGTexture* texture, RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
     {
         RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::TV_3D;
+        result.dimension = RHI::TextureViewDimension::tv3D;
         result.aspect = aspect;
         result.baseMipLevel = mipLevelNum == UINT8_MAX ? texture->GetDesc().mipLevels : mipLevelNum;
         result.baseArrayLayer = 0;
@@ -386,7 +386,7 @@ namespace Render {
     RGBindItem RGBindItem::Sampler(RGSampler* sampler)
     {
         RGBindItem result;
-        result.type = RHI::BindingType::SAMPLER;
+        result.type = RHI::BindingType::sampler;
         result.sampler = sampler;
         return result;
     }
@@ -394,7 +394,7 @@ namespace Render {
     RGBindItem RGBindItem::Texture(RGTextureView* textureView)
     {
         RGBindItem result;
-        result.type = RHI::BindingType::TEXTURE;
+        result.type = RHI::BindingType::texture;
         result.textureView = textureView;
         return result;
     }
@@ -402,7 +402,7 @@ namespace Render {
     RGBindItem RGBindItem::StorageTexture(RGTextureView* textureView)
     {
         RGBindItem result;
-        result.type = RHI::BindingType::STORAGE_TEXTURE;
+        result.type = RHI::BindingType::storagetTexture;
         result.textureView = textureView;
         return result;
     }
@@ -410,7 +410,7 @@ namespace Render {
     RGBindItem RGBindItem::UniformBuffer(RGBufferView* bufferView)
     {
         RGBindItem result;
-        result.type = RHI::BindingType::UNIFORM_BUFFER;
+        result.type = RHI::BindingType::uniformBuffer;
         result.bufferView = bufferView;
         return result;
     }
@@ -418,7 +418,7 @@ namespace Render {
     RGBindItem RGBindItem::StorageBuffer(RGBufferView* bufferView)
     {
         RGBindItem result;
-        result.type = RHI::BindingType::UNIFORM_BUFFER;
+        result.type = RHI::BindingType::uniformBuffer;
         result.bufferView = bufferView;
         return result;
     }
@@ -426,7 +426,7 @@ namespace Render {
     std::pair<std::string, RGBindItem> RGBindItem::Sampler(std::string name, RGSampler* sampler)
     {
         RGBindItem result;
-        result.type = RHI::BindingType::SAMPLER;
+        result.type = RHI::BindingType::sampler;
         result.sampler = sampler;
         return std::make_pair(std::move(name), result);
     }
@@ -434,7 +434,7 @@ namespace Render {
     std::pair<std::string, RGBindItem> RGBindItem::Texture(std::string name, RGTextureView* textureView)
     {
         RGBindItem result;
-        result.type = RHI::BindingType::TEXTURE;
+        result.type = RHI::BindingType::texture;
         result.textureView = textureView;
         return std::make_pair(std::move(name), result);
     }
@@ -442,7 +442,7 @@ namespace Render {
     std::pair<std::string, RGBindItem> RGBindItem::StorageTexture(std::string name, RGTextureView* textureView)
     {
         RGBindItem result;
-        result.type = RHI::BindingType::STORAGE_TEXTURE;
+        result.type = RHI::BindingType::storagetTexture;
         result.textureView = textureView;
         return std::make_pair(std::move(name), result);
     }
@@ -450,7 +450,7 @@ namespace Render {
     std::pair<std::string, RGBindItem> RGBindItem::UniformBuffer(std::string name, RGBufferView* bufferView)
     {
         RGBindItem result;
-        result.type = RHI::BindingType::UNIFORM_BUFFER;
+        result.type = RHI::BindingType::uniformBuffer;
         result.bufferView = bufferView;
         return std::make_pair(std::move(name), result);
     }
@@ -458,7 +458,7 @@ namespace Render {
     std::pair<std::string, RGBindItem> RGBindItem::StorageBuffer(std::string name, RGBufferView* bufferView)
     {
         RGBindItem result;
-        result.type = RHI::BindingType::STORAGE_BUFFER;
+        result.type = RHI::BindingType::storageBuffer;
         result.bufferView = bufferView;
         return std::make_pair(std::move(name), result);
     }
@@ -516,7 +516,7 @@ namespace Render {
 
     RGResourceType RGBuffer::GetType()
     {
-        return RGResourceType::BUFFER;
+        return RGResourceType::buffer;
     }
 
     void RGBuffer::Devirtualize(RHI::Device& device)
@@ -564,7 +564,7 @@ namespace Render {
 
     RGResourceType RGTexture::GetType()
     {
-        return RGResourceType::TEXTURE;
+        return RGResourceType::texture;
     }
 
     void RGTexture::Devirtualize(RHI::Device& device)
@@ -634,7 +634,7 @@ namespace Render {
 
     RGResourceType RGBufferView::GetType()
     {
-        return RGResourceType::BUFFER_VIEW;
+        return RGResourceType::bufferView;
     }
 
     void RGBufferView::Devirtualize(RHI::Device& device)
@@ -712,7 +712,7 @@ namespace Render {
 
     RGResourceType RGTextureView::GetType()
     {
-        return RGResourceType::TEXTURE_VIEW;
+        return RGResourceType::textureView;
     }
 
     void RGTextureView::Devirtualize(RHI::Device& device)
@@ -780,7 +780,7 @@ namespace Render {
 
     RGResourceType RGBindGroup::GetType()
     {
-        return RGResourceType::BIND_GROUP;
+        return RGResourceType::bindGroup;
     }
 
     void RGBindGroup::Devirtualize(RHI::Device& device)
@@ -822,7 +822,7 @@ namespace Render {
 
     RGPassType RGCopyPass::GetType()
     {
-        return RGPassType::COPY;
+        return RGPassType::copy;
     }
 
     RGComputePass::RGComputePass(std::string inName)
@@ -834,7 +834,7 @@ namespace Render {
 
     RGPassType RGComputePass::GetType()
     {
-        return RGPassType::COMPUTE;
+        return RGPassType::compute;
     }
 
     RGRasterPass::RGRasterPass(std::string inName)
@@ -846,7 +846,7 @@ namespace Render {
 
     RGPassType RGRasterPass::GetType()
     {
-        return RGPassType::RASTER;
+        return RGPassType::raster;
     }
 
     RGFuncCopyPass::RGFuncCopyPass(std::string inName, RGCopyPassSetupFunc inSetupFunc)
@@ -952,15 +952,15 @@ namespace Render {
     void RenderGraph::Setup()
     {
         for (auto& pass : passes) {
-            if (pass->GetType() == RGPassType::COPY) {
+            if (pass->GetType() == RGPassType::copy) {
                 auto* copyPass = static_cast<RGCopyPass*>(pass.Get());
                 RGCopyPassBuilder builder(*this, *copyPass);
                 copyPass->Setup(builder);
-            } else if (pass->GetType() == RGPassType::COMPUTE) {
+            } else if (pass->GetType() == RGPassType::compute) {
                 auto* computePass = static_cast<RGComputePass*>(pass.Get());
                 RGComputePassBuilder builder(*this, *computePass);
                 computePass->Setup(builder);
-            } else if (pass->GetType() == RGPassType::RASTER) {
+            } else if (pass->GetType() == RGPassType::raster) {
                 auto* rasterPass = static_cast<RGRasterPass*>(pass.Get());
                 RGRasterPassBuilder builder(*this, *rasterPass);
                 rasterPass->Setup(builder);
@@ -1002,10 +1002,10 @@ namespace Render {
             resource->SetRHIAccess(false);
 
             auto type = resource->GetType();
-            if (type == RGResourceType::BUFFER || type == RGResourceType::TEXTURE) {
+            if (type == RGResourceType::buffer || type == RGResourceType::texture) {
                 actualResesToDevirtualize.emplace_back(resource.Get());
             }
-            if (type == RGResourceType::BUFFER_VIEW || type == RGResourceType::TEXTURE_VIEW) {
+            if (type == RGResourceType::bufferView || type == RGResourceType::textureView) {
                 actualResViewsToDevirtualize.emplace_back(resource.Get());
             }
         }
@@ -1021,10 +1021,10 @@ namespace Render {
             }
         }
 
-        Assert(device.GetQueueNum(RHI::QueueType::GRAPHICS) > 0);
-        RHI::Queue* mainQueue = device.GetQueue(RHI::QueueType::GRAPHICS, 0);
-        RHI::Queue* asyncComputeQueue = device.GetQueueNum(RHI::QueueType::COMPUTE) > 1 ? device.GetQueue(RHI::QueueType::COMPUTE, 1) : mainQueue;
-        RHI::Queue* asyncCopyQueue = device.GetQueueNum(RHI::QueueType::GRAPHICS) > 1 ? device.GetQueue(RHI::QueueType::COMPUTE, 1) : mainQueue;
+        Assert(device.GetQueueNum(RHI::QueueType::graphics) > 0);
+        RHI::Queue* mainQueue = device.GetQueue(RHI::QueueType::graphics, 0);
+        RHI::Queue* asyncComputeQueue = device.GetQueueNum(RHI::QueueType::compute) > 1 ? device.GetQueue(RHI::QueueType::compute, 1) : mainQueue;
+        RHI::Queue* asyncCopyQueue = device.GetQueueNum(RHI::QueueType::graphics) > 1 ? device.GetQueue(RHI::QueueType::compute, 1) : mainQueue;
 
         Common::UniqueRef<RHI::CommandBuffer> mainBuffer = device.CreateCommandBuffer();
         Common::UniqueRef<RHI::CommandBuffer> asyncComputeBuffer = device.CreateCommandBuffer();
@@ -1034,17 +1034,17 @@ namespace Render {
         Common::UniqueRef<RHI::CommandEncoder> asyncCopyEncoder = asyncCopyBuffer->Begin();
         {
             for (auto& pass : passes) {
-                if (pass->GetType() == RGPassType::COPY) {
+                if (pass->GetType() == RGPassType::copy) {
                     auto* copyPass = static_cast<RGCopyPass*>(pass.Get());
                     auto& commandEncoder = copyPass->isAsyncCopy ? asyncCopyEncoder : mainEncoder;
                     TransitionResources(commandEncoder.Get(), copyPass);
                     ExecuteCopyPass(commandEncoder.Get(), copyPass);
-                } else if (pass->GetType() == RGPassType::RASTER) {
+                } else if (pass->GetType() == RGPassType::raster) {
                     auto* computePass = static_cast<RGComputePass*>(pass.Get());
                     auto& commandEncoder = computePass->isAsyncCompute ? asyncComputeEncoder : mainEncoder;
                     TransitionResources(commandEncoder.Get(), computePass);
                     ExecuteComputePass(commandEncoder.Get(), computePass);
-                } else if (pass->GetType() == RGPassType::COMPUTE) {
+                } else if (pass->GetType() == RGPassType::compute) {
                     auto* rasterPass = static_cast<RGRasterPass*>(pass.Get());
                     TransitionResources(mainEncoder.Get(), rasterPass);
                     ExecuteRasterPass(mainEncoder.Get(), rasterPass);
@@ -1094,10 +1094,10 @@ namespace Render {
 
     RGBuffer* RenderGraph::GetActualBufferRes(RGResource* res)
     {
-        if (res->GetType() == RGResourceType::BUFFER) {
+        if (res->GetType() == RGResourceType::buffer) {
             return static_cast<RGBuffer*>(res);
         }
-        if (res->GetType() == RGResourceType::BUFFER_VIEW) {
+        if (res->GetType() == RGResourceType::bufferView) {
             return static_cast<RGBufferView*>(res)->GetBuffer();
         }
         Assert(false);
@@ -1106,10 +1106,10 @@ namespace Render {
 
     RGTexture* RenderGraph::GetActualTextureRes(RGResource* res)
     {
-        if (res->GetType() == RGResourceType::TEXTURE) {
+        if (res->GetType() == RGResourceType::texture) {
             return static_cast<RGTexture*>(res);
         }
-        if (res->GetType() == RGResourceType::TEXTURE_VIEW) {
+        if (res->GetType() == RGResourceType::textureView) {
             return static_cast<RGTextureView*>(res)->GetTexture();
         }
         Assert(false);
@@ -1118,61 +1118,61 @@ namespace Render {
 
     RHI::BufferState RenderGraph::ComputeBufferState(RGPassType passType, RGResourceAccessType accessType)
     {
-        if (passType == RGPassType::COPY) {
-            if (accessType == RGResourceAccessType::READ) {
-                return RHI::BufferState::COPY_SRC;
+        if (passType == RGPassType::copy) {
+            if (accessType == RGResourceAccessType::read) {
+                return RHI::BufferState::copySrc;
             }
-            if (accessType == RGResourceAccessType::WRITE) {
-                return RHI::BufferState::COPY_DST;
+            if (accessType == RGResourceAccessType::write) {
+                return RHI::BufferState::copyDst;
             }
         } else {
-            if (accessType == RGResourceAccessType::READ) {
-                return RHI::BufferState::SHADER_READ_ONLY;
+            if (accessType == RGResourceAccessType::read) {
+                return RHI::BufferState::shaderReadOnly;
             }
-            if (accessType == RGResourceAccessType::WRITE) {
-                return RHI::BufferState::STORAGE;
+            if (accessType == RGResourceAccessType::write) {
+                return RHI::BufferState::storage;
             }
         }
-        return RHI::BufferState::UNDEFINED;
+        return RHI::BufferState::undefined;
     }
 
     RHI::TextureState RenderGraph::ComputeTextureState(RGPassType passType, RGResourceAccessType accessType)
     {
-        if (passType == RGPassType::COPY) {
-            if (accessType == RGResourceAccessType::READ) {
-                return RHI::TextureState::COPY_SRC;
+        if (passType == RGPassType::copy) {
+            if (accessType == RGResourceAccessType::read) {
+                return RHI::TextureState::copySrc;
             }
-            if (accessType == RGResourceAccessType::WRITE) {
-                return RHI::TextureState::COPY_DST;
-            }
-        }
-        if (passType == RGPassType::COMPUTE) {
-            if (accessType == RGResourceAccessType::READ) {
-                return RHI::TextureState::SHADER_READ_ONLY;
-            }
-            if (accessType == RGResourceAccessType::WRITE) {
-                return RHI::TextureState::STORAGE;
+            if (accessType == RGResourceAccessType::write) {
+                return RHI::TextureState::copyDst;
             }
         }
-        if (passType == RGPassType::RASTER) {
-            if (accessType == RGResourceAccessType::READ) {
-                return RHI::TextureState::SHADER_READ_ONLY;
+        if (passType == RGPassType::compute) {
+            if (accessType == RGResourceAccessType::read) {
+                return RHI::TextureState::shaderReadOnly;
             }
-            if (accessType == RGResourceAccessType::WRITE) {
-                return RHI::TextureState::RENDER_TARGET;
+            if (accessType == RGResourceAccessType::write) {
+                return RHI::TextureState::storage;
             }
         }
-        return RHI::TextureState::UNDEFINED;
+        if (passType == RGPassType::raster) {
+            if (accessType == RGResourceAccessType::read) {
+                return RHI::TextureState::shaderReadOnly;
+            }
+            if (accessType == RGResourceAccessType::write) {
+                return RHI::TextureState::renderTarget;
+            }
+        }
+        return RHI::TextureState::undefined;
     }
 
     void RenderGraph::ComputeResBarriers()
     {
         LastResStates lastResStates;
         for (const auto& pass : passes) {
-            ComputeResTransitionsByAccessGroup<RGResourceAccessType::READ>(pass.Get(), pass->reads, lastResStates);
-            ComputeResTransitionsByAccessGroup<RGResourceAccessType::WRITE>(pass.Get(), pass->writes, lastResStates);
-            UpdateLastResStatesByAccessGroup<RGResourceAccessType::READ>(pass->GetType(), pass->reads, lastResStates);
-            UpdateLastResStatesByAccessGroup<RGResourceAccessType::WRITE>(pass->GetType(), pass->writes, lastResStates);
+            ComputeResTransitionsByAccessGroup<RGResourceAccessType::read>(pass.Get(), pass->reads, lastResStates);
+            ComputeResTransitionsByAccessGroup<RGResourceAccessType::write>(pass.Get(), pass->writes, lastResStates);
+            UpdateLastResStatesByAccessGroup<RGResourceAccessType::read>(pass->GetType(), pass->reads, lastResStates);
+            UpdateLastResStatesByAccessGroup<RGResourceAccessType::write>(pass->GetType(), pass->writes, lastResStates);
         }
     }
 
@@ -1202,7 +1202,7 @@ namespace Render {
     void RGPassBuilder::MarkAsConsumed(RGResource* res)
     {
         auto type = res->GetType();
-        Assert(type != RGResourceType::SAMPLER && type != RGResourceType::BIND_GROUP);
+        Assert(type != RGResourceType::sampler && type != RGResourceType::bindGroup);
         pass.reads.emplace(res);
     }
 
@@ -1218,13 +1218,13 @@ namespace Render {
             const auto& bind = item.second;
             auto type = bind.type;
 
-            if (type == RHI::BindingType::UNIFORM_BUFFER) {
+            if (type == RHI::BindingType::uniformBuffer) {
                 pass.reads.emplace(bind.bufferView);
-            } else if (type == RHI::BindingType::STORAGE_BUFFER) {
+            } else if (type == RHI::BindingType::storageBuffer) {
                 pass.writes.emplace(bind.bufferView);
-            } else if (type == RHI::BindingType::TEXTURE) {
+            } else if (type == RHI::BindingType::texture) {
                 pass.reads.emplace(bind.textureView);
-            } else if (type == RHI::BindingType::STORAGE_TEXTURE) {
+            } else if (type == RHI::BindingType::storagetTexture) {
                 pass.writes.emplace(bind.textureView);
             }
         }

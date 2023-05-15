@@ -64,7 +64,7 @@ namespace RHI::Vulkan {
     {
         vk::PipelineRasterizationStateCreateInfo rasterState = {};
         rasterState.setCullMode(VKEnumCast<CullMode, vk::CullModeFlagBits>(createInfo.primitiveState.cullMode))
-            .setFrontFace(createInfo.primitiveState.frontFace == FrontFace::CW ? vk::FrontFace::eClockwise : vk::FrontFace::eCounterClockwise)
+            .setFrontFace(createInfo.primitiveState.frontFace == FrontFace::cw ? vk::FrontFace::eClockwise : vk::FrontFace::eCounterClockwise)
             .setDepthBiasClamp(createInfo.depthStencilState.depthBiasClamp)
             .setDepthBiasSlopeFactor(createInfo.depthStencilState.depthBiasSlopeScale)
             .setDepthBiasEnable(createInfo.depthStencilState.depthBias == 0 ? VK_FALSE : VK_TRUE)
@@ -134,7 +134,7 @@ namespace RHI::Vulkan {
         for (uint32_t i = 0; i < createInfo.vertexState.bufferLayoutNum; ++i) {
             auto &binding = createInfo.vertexState.bufferLayouts[i];
             bindings[i].binding = i;
-            bindings[i].inputRate = binding.stepMode == VertexStepMode::PER_INSTANCE ? vk::VertexInputRate::eInstance
+            bindings[i].inputRate = binding.stepMode == VertexStepMode::perInstance ? vk::VertexInputRate::eInstance
                                                                                      : vk::VertexInputRate::eVertex;
             bindings[i].stride = binding.stride;
 

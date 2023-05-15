@@ -14,337 +14,337 @@ namespace RHI {
     using EnumType = uint32_t;
 
     enum class RHIType : EnumType {
-        DIRECTX_12,
-        VULKAN,
-        METAL,
-        DUMMY,
-        MAX
+        directX12,
+        vulkan,
+        metal,
+        dummy,
+        max
     };
 
     enum class GpuType : EnumType {
-        HARDWARE,
-        SOFTWARE,
-        MAX
+        hardware,
+        software,
+        max
     };
 
     enum class QueueType : EnumType {
-        GRAPHICS,
-        COMPUTE,
-        TRANSFER,
-        MAX
+        graphics,
+        compute,
+        transfer,
+        max
     };
 
     enum class MapMode : EnumType {
-        READ,
-        WRITE,
-        MAX
+        read,
+        write,
+        max
     };
 
     enum class PixelFormat : EnumType {
         // 8-Bits
-        R8_UNORM,
-        R8_SNORM,
-        R8_UINT,
-        R8_SINT,
+        r8Unorm,
+        r8Snorm,
+        r8Uint,
+        r8Sint,
         // 16-Bits
-        R16_UINT,
-        R16_SINT,
-        R16_FLOAT,
-        RG8_UNORM,
-        RG8_SNORM,
-        RG8_UINT,
-        RG8_SINT,
+        r16Uint,
+        r16Sint,
+        r16Float,
+        rg8Unorm,
+        rg8Snorm,
+        rg8Uint,
+        rg8Sint,
         // 32-Bits
-        R32_UINT,
-        R32_SINT,
-        R32_FLOAT,
-        RG16_UINT,
-        RG16_SINT,
-        RG16_FLOAT,
-        RGBA8_UNORM,
-        RGBA8_UNORM_SRGB,
-        RGBA8_SNORM,
-        RGBA8_UINT,
-        RGBA8_SINT,
-        BGRA8_UNORM,
-        BGRA8_UNORM_SRGB,
-        RGB9_E5_FLOAT,
-        RGB10A2_UNORM,
-        RG11B10_FLOAT,
+        r32Uint,
+        r32Sint,
+        r32Float,
+        rg16Uint,
+        rg16Sint,
+        rg16Float,
+        rgba8Unorm,
+        rgba8UnormSrgb,
+        rgba8Snorm,
+        rgba8Uint,
+        rgba8Sint,
+        bgra8Unorm,
+        bgra8UnormSrgb,
+        rgb9E5Float,
+        rgb10A2Unorm,
+        rg11B10Float,
         // 64-Bits
-        RG32_UINT,
-        RG32_SINT,
-        RG32_FLOAT,
-        RGBA16_UINT,
-        RGBA16_SINT,
-        RGBA16_FLOAT,
+        rg32Uint,
+        rg32Sint,
+        rg32Float,
+        rgba16Uint,
+        rgba16Sint,
+        rgba16Float,
         // 128-Bits
-        RGBA32_UINT,
-        RGBA32_SINT,
-        RGBA32_FLOAT,
+        rgba32Uint,
+        rgba32Sint,
+        rgba32Float,
         // Depth-Stencil
-        D16_UNORM,
-        D24_UNORM_S8_UINT,
-        D32_FLOAT,
-        D32_FLOAT_S8_UINT,
+        d16Unorm,
+        d24UnormS8Uint,
+        d32Float,
+        d32FloatS8Uint,
         // TODO features / bc / etc / astc
-        MAX
+        max
     };
 
     enum class VertexFormat : EnumType {
         // 8-Bits Channel
-        UINT8_X2,
-        UINT8_X4,
-        SINT8_X2,
-        SINT8_X4,
-        UNORM8_X2,
-        UNORM8_X4,
-        SNORM8_X2,
-        SNORM8_X4,
+        uint8X2,
+        uint8X4,
+        sint8X2,
+        sint8X4,
+        unorm8X2,
+        unorm8X4,
+        snorm8X2,
+        snorm8X4,
         // 16-Bits Channel
-        UINT16_X2,
-        UINT16_X4,
-        SINT16_X2,
-        SINT16_X4,
-        UNORM16_X2,
-        UNORM16_X4,
-        SNORM16_X2,
-        SNORM16_X4,
-        FLOAT16_X2,
-        FLOAT16_X4,
+        uint16X2,
+        uint16X4,
+        sint16X2,
+        sint16X4,
+        unorm16X2,
+        unorm16X4,
+        snorm16X2,
+        snorm16X4,
+        float16X2,
+        float16X4,
         // 32-Bits Channel
-        FLOAT32_X1,
-        FLOAT32_X2,
-        FLOAT32_X3,
-        FLOAT32_X4,
-        UINT32_X1,
-        UINT32_X2,
-        UINT32_X3,
-        UINT32_X4,
-        SINT32_X1,
-        SINT32_X2,
-        SINT32_X3,
-        SINT32_X4,
-        MAX
+        float32X1,
+        float32X2,
+        float32X3,
+        float32X4,
+        uint32X1,
+        uint32X2,
+        uint32X3,
+        uint32X4,
+        sint32X1,
+        sint32X2,
+        sint32X3,
+        sint32X4,
+        max
     };
 
     enum class TextureDimension : EnumType {
-        T_1D,
-        T_2D,
-        T_3D,
-        MAX
+        t1D,
+        t2D,
+        t3D,
+        max
     };
 
     enum class TextureViewDimension : EnumType {
-        TV_1D,
-        TV_2D,
-        TV_2D_ARRAY,
-        TV_CUBE,
-        TV_CUBE_ARRAY,
-        TV_3D,
-        MAX
+        tv1D,
+        tv2D,
+        tv2DArray,
+        tvCube,
+        tvCubeArray,
+        tv3D,
+        max
     };
 
     enum class TextureAspect : EnumType {
-        COLOR,
-        DEPTH,
-        STENCIL,
-        DEPTH_STENCIL,
-        MAX
+        color,
+        depth,
+        stencil,
+        depthStencil,
+        max
     };
 
     enum class AddressMode : EnumType {
-        CLAMP_TO_EDGE,
-        REPEAT,
-        MIRROR_REPEAT,
-        MAX
+        clampToEdge,
+        repeat,
+        mirrorRepeat,
+        max
     };
 
     enum class FilterMode : EnumType {
-        NEAREST,
-        LINEAR,
-        MAX
+        nearest,
+        linear,
+        max
     };
 
     enum class ComparisonFunc : EnumType {
-        NEVER,
-        LESS,
-        EQUAL,
-        LESS_EQUAL,
-        GREATER,
-        NOT_EQUAL,
-        GREATER_EQUAL,
-        ALWAYS,
-        MAX
+        never,
+        less,
+        equal,
+        lessEqual,
+        greater,
+        notEqual,
+        greaterEqual,
+        always,
+        max
     };
 
     enum class HlslBindingRangeType : EnumType {
-        CONSTANT_BUFFER,
-        TEXTURE,
-        SAMPLER,
-        UNORDERED_ACCESS,
-        MAX
+        constantBuffer,
+        texture,
+        sampler,
+        unorderedAccess,
+        max
     };
 
     enum class BindingType : EnumType {
-        UNIFORM_BUFFER,
-        STORAGE_BUFFER,
-        SAMPLER,
-        TEXTURE,
-        STORAGE_TEXTURE,
-        MAX
+        uniformBuffer,
+        storageBuffer,
+        sampler,
+        texture,
+        storagetTexture,
+        max
     };
 
     enum class SamplerBindingType : EnumType {
-        FILTERING,
-        NON_FILTERING,
-        COMPARISON,
-        MAX
+        filtering,
+        nonFiltering,
+        comparison,
+        max
     };
 
     enum class TextureSampleType : EnumType {
-        FLOAT,
-        NON_FILTERABLE_FLOAT,
-        DEPTH,
-        SINT,
-        UINT,
-        MAX
+        filterableFloat,
+        nonFilterableFloat,
+        depth,
+        sint,
+        uint,
+        max
     };
 
     enum class StorageTextureAccess : EnumType {
-        WRITE_ONLY,
-        MAX
+        writeOnly,
+        max
     };
 
     enum class VertexStepMode : EnumType {
-        PER_VERTEX,
-        PER_INSTANCE,
-        MAX
+        perVertex,
+        perInstance,
+        max
     };
 
     enum class PrimitiveTopologyType : EnumType {
-        POINT,
-        LINE,
-        TRIANGLE,
-        MAX
+        point,
+        line,
+        triangle,
+        max
     };
 
     enum class PrimitiveTopology : EnumType {
-        POINT_LIST,
-        LINE_LIST,
-        LINE_STRIP,
-        TRIANGLE_LIST,
-        TRIANGLE_STRIP,
-        LINE_LIST_ADJ,
-        LINE_STRIP_ADJ,
-        TRIANGLE_LIST_ADJ,
-        TRIANGLE_STRIP_ADJ,
-        MAX
+        pointList,
+        lineList,
+        lineStrip,
+        triangleList,
+        triangleStrip,
+        lineListAdj,
+        lineStripAdj,
+        triangleListAdj,
+        triangleStripAdj,
+        max
     };
 
     enum class IndexFormat : EnumType {
-        UINT16,
-        UINT32,
-        MAX
+        uint16,
+        uint32,
+        max
     };
 
     enum class FrontFace : EnumType {
-        CCW,
-        CW,
-        MAX
+        ccw,
+        cw,
+        max
     };
 
     enum class CullMode : EnumType {
-        NONE,
-        FRONT,
-        BACK,
-        MAX
+        none,
+        front,
+        back,
+        max
     };
 
     enum class StencilOp : EnumType {
-        KEEP,
-        ZERO,
-        REPLACE,
-        INVERT,
-        INCREMENT_CLAMP,
-        DECREMENT_CLAMP,
-        INCREMENT_WRAP,
-        DECREMENT_WRAP,
-        MAX
+        keep,
+        zero,
+        replace,
+        invert,
+        incrementClamp,
+        decrementClamp,
+        incrementWrap,
+        decrementWrap,
+        max
     };
 
     enum class BlendFactor : EnumType {
-        ZERO,
-        ONE,
-        SRC,
-        ONE_MINUS_SRC,
-        SRC_ALPHA,
-        ONE_MINUS_SRC_ALPHA,
-        DST,
-        ONE_MINUS_DST,
-        DST_ALPHA,
-        ONE_MINUS_DST_ALPHA,
+        zero,
+        one,
+        src,
+        oneMinusSrc,
+        srcAlpha,
+        oneMinusSrcAlpha,
+        dst,
+        oneMinusDst,
+        dstAlpha,
+        oneMinusDstAlpha,
         // TODO check spec
-        // SRC_ALPHA_SATURATED,
-        // CONSTANT,
-        // ONE_MINUS_CONSTANT,
-        MAX
+        // scrAlphaSaturated,
+        // constant,
+        // oneMinusConstant,
+        max
     };
 
     enum class BlendOp : EnumType {
-        OP_ADD,
-        OP_SUBTRACT,
-        OP_REVERSE_SUBTRACT,
-        OP_MIN,
-        OP_MAX,
-        MAX
+        opAdd,
+        opSubstract,
+        opReverseSubstract,
+        opMin,
+        opMax,
+        max
     };
 
     enum class LoadOp : EnumType {
-        LOAD,
-        CLEAR,
-        MAX
+        load,
+        clear,
+        max
     };
 
     enum class StoreOp : EnumType {
-        STORE,
-        DISCARD,
-        MAX
+        store,
+        discard,
+        max
     };
 
     enum class PresentMode : EnumType {
         // TODO check this
         // 1. DirectX SwapEffect #see https://docs.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_swap_effect
         // 2. Vulkan VkPresentModeKHR #see https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VkPresentModeKHR.html
-        IMMEDIATELY,
-        VSYNC,
-        MAX
+        immediately,
+        vsync,
+        max
     };
 
     enum class ResourceType : EnumType {
-        BUFFER,
-        TEXTURE,
-        MAX
+        buffer,
+        texture,
+        max
     };
 
     enum class BufferState : EnumType {
-        UNDEFINED,
-        COPY_SRC,
-        COPY_DST,
-        SHADER_READ_ONLY,
-        STORAGE,
-        MAX
+        undefined,
+        copySrc,
+        copyDst,
+        shaderReadOnly,
+        storage,
+        max
     };
 
     enum class TextureState : EnumType {
-        UNDEFINED,
-        COPY_SRC,
-        COPY_DST,
-        SHADER_READ_ONLY,
-        RENDER_TARGET,
-        STORAGE,
-        PRESENT,
-        MAX
+        undefined,
+        copySrc,
+        copyDst,
+        shaderReadOnly,
+        renderTarget,
+        storage,
+        present,
+        max
     };
 }
 
@@ -430,51 +430,51 @@ namespace RHI {
 
     using BufferUsageFlags = Flags<>;
     enum class BufferUsageBits : BufferUsageFlags::UnderlyingType {
-        MAP_READ      = 0x1,
-        MAP_WRITE     = 0x2,
-        COPY_SRC      = 0x4,
-        COPY_DST      = 0x8,
-        INDEX         = 0x10,
-        VERTEX        = 0x20,
-        UNIFORM       = 0x40,
-        STORAGE       = 0x80,
-        INDIRECT      = 0x100,
-        QUERY_RESOLVE = 0x200,
-        MAX
+        mapRead      = 0x1,
+        mapWrite     = 0x2,
+        copySrc      = 0x4,
+        copyDst      = 0x8,
+        index        = 0x10,
+        vertex       = 0x20,
+        uniform      = 0x40,
+        storage      = 0x80,
+        indirect     = 0x100,
+        queryResolve = 0x200,
+        max
     };
     RHI_FLAGS_DECLARE(BufferUsageFlags, BufferUsageBits)
 
     using TextureUsageFlags = Flags<>;
     enum class TextureUsageBits : TextureUsageFlags::UnderlyingType {
-        COPY_SRC                 = 0x1,
-        COPY_DST                 = 0x2,
-        TEXTURE_BINDING          = 0x4,
-        STORAGE_BINDING          = 0x8,
-        RENDER_ATTACHMENT        = 0x10,
-        DEPTH_STENCIL_ATTACHMENT = 0x20,
-        MAX
+        copySrc                 = 0x1,
+        copyDst                 = 0x2,
+        textureBinding          = 0x4,
+        storageBinding          = 0x8,
+        renderAttachment        = 0x10,
+        depthStencilAttachment  = 0x20,
+        max
     };
     RHI_FLAGS_DECLARE(TextureUsageFlags, TextureUsageBits)
 
     using ShaderStageFlags = Flags<>;
     enum class ShaderStageBits : ShaderStageFlags::UnderlyingType {
-        S_VERTEX   = 0x1,
-        S_PIXEL    = 0x2,
-        S_COMPUTE  = 0x4,
-        S_GEOMETRY = 0x8,
-        S_DOMAIN   = 0x10,
-        S_HULL     = 0x20,
-        MAX
+        sVertex   = 0x1,
+        sPixel    = 0x2,
+        sCompute  = 0x4,
+        sGeometry = 0x8,
+        sDomain   = 0x10,
+        sHull     = 0x20,
+        max
     };
     RHI_FLAGS_DECLARE(ShaderStageFlags, ShaderStageBits)
 
     using ColorWriteFlags = Flags<>;
     enum class ColorWriteBits : ColorWriteFlags::UnderlyingType {
-        RED   = 0x1,
-        GREEN = 0x2,
-        BLUE  = 0x4,
-        ALPHA = 0x8,
-        MAX
+        red   = 0x1,
+        green = 0x2,
+        blue  = 0x4,
+        alpha = 0x8,
+        max
     };
     RHI_FLAGS_DECLARE(ColorWriteFlags, ColorWriteBits)
 }

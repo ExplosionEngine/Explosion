@@ -9,15 +9,15 @@
 
 namespace RHI {
     struct SamplerCreateInfo {
-        AddressMode addressModeU = AddressMode::CLAMP_TO_EDGE;
-        AddressMode addressModeV = AddressMode::CLAMP_TO_EDGE;
-        AddressMode addressModeW = AddressMode::CLAMP_TO_EDGE;
-        FilterMode magFilter = FilterMode::NEAREST;
-        FilterMode minFilter = FilterMode::NEAREST;
-        FilterMode mipFilter = FilterMode::NEAREST;
+        AddressMode addressModeU = AddressMode::clampToEdge;
+        AddressMode addressModeV = AddressMode::clampToEdge;
+        AddressMode addressModeW = AddressMode::clampToEdge;
+        FilterMode magFilter = FilterMode::nearest;
+        FilterMode minFilter = FilterMode::nearest;
+        FilterMode mipFilter = FilterMode::nearest;
         float lodMinClamp = 0;
         float lodMaxClamp = 32;
-        ComparisonFunc comparisonFunc = ComparisonFunc::NEVER;
+        ComparisonFunc comparisonFunc = ComparisonFunc::never;
         uint8_t maxAnisotropy = 1;
     };
 

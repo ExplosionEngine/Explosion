@@ -126,7 +126,7 @@ int main()
     }
 
     std::vector<RHI::QueueInfo> queueInfos = {
-        {RHI::QueueType::GRAPHICS, 1}
+        {RHI::QueueType::graphics, 1}
     };
     RHI::DeviceCreateInfo devInfo = {
         static_cast<uint32_t>(queueInfos.size()),
@@ -135,13 +135,13 @@ int main()
     auto device = gpu->RequestDevice(&devInfo);
 
     RHI::BindGroupLayoutEntry layoutEntry = {
-        0, RHI::BindingType::SAMPLER, RHI::ShaderStageFlags(RHI::ShaderStageBits::FRAGMENT)
+        0, RHI::BindingType::sampler, RHI::ShaderStageFlags(RHI::ShaderStageBits::FRAGMENT)
     };
     RHI::BindGroupLayoutCreateInfo groupLayoutInfo = {
         0, 1, &layoutEntry
     };
     auto bindGroupLayout = device->CreateBindGroupLayout(&groupLayoutInfo);
-    RHI::PipelineConstantLayout constantLayout =  {RHI::ShaderStageFlags(RHI::ShaderStageBits::S_VERTEX), 0, 4 * sizeof(float)};
+    RHI::PipelineConstantLayout constantLayout =  {RHI::ShaderStageFlags(RHI::ShaderStageBits::sVertex), 0, 4 * sizeof(float)};
 
     RHI::PipelineLayoutCreateInfo pLayoutInfo = {
         1, &bindGroupLayout,
@@ -162,13 +162,13 @@ int main()
     RHI::ColorTargetState color = {};
 
     std::vector<RHI::VertexAttribute> attributes = {
-        {RHI::VertexFormat::FLOAT32_X2, 0, 0, "", 0},
-        {RHI::VertexFormat::FLOAT32_X2, 8, 1, "", 0},
-        {RHI::VertexFormat::FLOAT32_X4, 16, 2, "", 0}
+        {RHI::VertexFormat::float32X2, 0, 0, "", 0},
+        {RHI::VertexFormat::float32X2, 8, 1, "", 0},
+        {RHI::VertexFormat::float32X4, 16, 2, "", 0}
     };
     RHI::VertexBufferLayout layouts = {
         32,
-        RHI::VertexStepMode::PER_VERTEX,
+        RHI::VertexStepMode::perVertex,
         static_cast<uint32_t>(attributes.size()),
         attributes.data()
     };

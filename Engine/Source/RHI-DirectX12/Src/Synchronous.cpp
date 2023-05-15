@@ -17,7 +17,7 @@ namespace RHI::DirectX12 {
 
     FenceStatus DX12Fence::GetStatus()
     {
-        return signaled ? FenceStatus::SIGNALED : FenceStatus::NOT_READY;
+        return signaled ? FenceStatus::signaled : FenceStatus::notReady;
     }
 
     void DX12Fence::Reset()

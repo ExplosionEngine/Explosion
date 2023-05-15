@@ -20,7 +20,7 @@ namespace RHI::Metal {
 
     FenceStatus MTLFence::GetStatus()
     {
-        return FenceStatus::SIGNALED;
+        return FenceStatus::signaled;
     }
 
     void MTLFence::Reset()

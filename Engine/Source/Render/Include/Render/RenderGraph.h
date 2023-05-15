@@ -30,13 +30,13 @@ namespace Render {
     class RGRasterPassBuilder;
 
     enum class RGResourceType {
-        BUFFER,
-        TEXTURE,
-        BUFFER_VIEW,
-        TEXTURE_VIEW,
-        SAMPLER,
-        BIND_GROUP,
-        MAX
+        buffer,
+        texture,
+        bufferView,
+        textureView,
+        sampler,
+        bindGroup,
+        max
     };
 
     using RGTransitionResType = RHI::ResourceType;
@@ -44,16 +44,16 @@ namespace Render {
     using RGTextureState = RHI::TextureState;
 
     enum class RGPassType {
-        COPY,
-        COMPUTE,
-        RASTER,
-        MAX
+        copy,
+        compute,
+        raster,
+        max
     };
 
     enum class RGResourceAccessType {
-        READ,
-        WRITE,
-        MAX
+        read,
+        write,
+        max
     };
 
     struct RGBufferTransition {
@@ -131,18 +131,18 @@ namespace Render {
         uint8_t baseArrayLayer;
         uint8_t arrayLayerNum;
 
-        static RGTextureViewDesc Create1D(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
-        static RGTextureViewDesc Create2D(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
-        static RGTextureViewDesc Create2DArray(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseArrayLayer = 0, uint8_t arrayLayerNum = 1, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
-        static RGTextureViewDesc CreateCube(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
-        static RGTextureViewDesc CreateCubeArray(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseCubemapIndex = 0, uint8_t cubemapNum = 1, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
-        static RGTextureViewDesc Create3D(RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
-        static std::pair<RGTexture*, RGTextureViewDesc> Create1D(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
-        static std::pair<RGTexture*, RGTextureViewDesc> Create2D(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
-        static std::pair<RGTexture*, RGTextureViewDesc> Create2DArray(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseArrayLayer = 0, uint8_t arrayLayerNum = UINT8_MAX, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
-        static std::pair<RGTexture*, RGTextureViewDesc> CreateCube(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
-        static std::pair<RGTexture*, RGTextureViewDesc> CreateCubeArray(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseCubemapIndex = 0, uint8_t cubemapNum = UINT8_MAX, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
-        static std::pair<RGTexture*, RGTextureViewDesc> Create3D(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::COLOR, uint8_t baseMipLevel = UINT8_MAX, uint8_t mipLevelNum = UINT8_MAX);
+        static RGTextureViewDesc Create1D(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
+        static RGTextureViewDesc Create2D(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
+        static RGTextureViewDesc Create2DArray(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseArrayLayer = 0, uint8_t arrayLayerNum = 1, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
+        static RGTextureViewDesc CreateCube(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
+        static RGTextureViewDesc CreateCubeArray(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseCubemapIndex = 0, uint8_t cubemapNum = 1, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
+        static RGTextureViewDesc Create3D(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
+        static std::pair<RGTexture*, RGTextureViewDesc> Create1D(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
+        static std::pair<RGTexture*, RGTextureViewDesc> Create2D(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
+        static std::pair<RGTexture*, RGTextureViewDesc> Create2DArray(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseArrayLayer = 0, uint8_t arrayLayerNum = UINT8_MAX, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
+        static std::pair<RGTexture*, RGTextureViewDesc> CreateCube(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
+        static std::pair<RGTexture*, RGTextureViewDesc> CreateCubeArray(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseCubemapIndex = 0, uint8_t cubemapNum = UINT8_MAX, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
+        static std::pair<RGTexture*, RGTextureViewDesc> Create3D(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = UINT8_MAX, uint8_t mipLevelNum = UINT8_MAX);
     };
 
     struct RGBindItem {
@@ -252,8 +252,8 @@ namespace Render {
         template <typename D>
         void UploadData(const D& data)
         {
-            Assert((desc.usages & RHI::BufferUsageBits::UNIFORM) != 0 && CanAccessRHI() && sizeof(D) == desc.size);
-            void* mapResult = rhiHandle->Map(RHI::MapMode::WRITE, 0, desc.size);
+            Assert((desc.usages & RHI::BufferUsageBits::uniform) != 0 && CanAccessRHI() && sizeof(D) == desc.size);
+            void* mapResult = rhiHandle->Map(RHI::MapMode::write, 0, desc.size);
             memcpy(mapResult, &data, desc.size);
             rhiHandle->UnMap();
         }
@@ -516,19 +516,19 @@ namespace Render {
                 }
 
                 const auto resType = res->GetType();
-                const bool isActualResBuffer = resType == RGResourceType::BUFFER || resType == RGResourceType::BUFFER_VIEW;
-                const bool isActualResTexture = resType == RGResourceType::TEXTURE || resType == RGResourceType::TEXTURE_VIEW;
+                const bool isActualResBuffer = resType == RGResourceType::buffer || resType == RGResourceType::bufferView;
+                const bool isActualResTexture = resType == RGResourceType::texture || resType == RGResourceType::textureView;
 
                 auto iter = lastResStates.find(res);
                 if (isActualResBuffer) {
                     auto before = iter == lastResStates.end()
-                        ? ComputeBufferState(RGPassType::MAX, RGResourceAccessType::MAX)
+                        ? ComputeBufferState(RGPassType::max, RGResourceAccessType::max)
                         : ComputeBufferState(iter->second.first, iter->second.second);
                     auto after = ComputeBufferState(pass->GetType(), AT);
                     resTransitionMap[std::make_pair(res, pass)] = RGResTransition::Buffer(GetActualBufferRes(res), before, after);
                 } else if (isActualResTexture) {
                     auto before = iter == lastResStates.end()
-                        ? ComputeTextureState(RGPassType::MAX, RGResourceAccessType::MAX)
+                        ? ComputeTextureState(RGPassType::max, RGResourceAccessType::max)
                         : ComputeTextureState(iter->second.first, iter->second.second);
                     auto after = ComputeTextureState(pass->GetType(), AT);
                     resTransitionMap[std::make_pair(res, pass)] = RGResTransition::Texture(GetActualTextureRes(res), before, after);

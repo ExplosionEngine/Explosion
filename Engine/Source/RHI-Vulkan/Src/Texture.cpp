@@ -13,12 +13,12 @@ namespace RHI::Vulkan {
     static vk::ImageUsageFlags GetVkResourceStates(TextureUsageFlags textureUsages)
     {
         static std::unordered_map<TextureUsageBits, vk::ImageUsageFlags> rules = {
-            { TextureUsageBits::COPY_SRC,          vk::ImageUsageFlagBits::eTransferSrc },
-            { TextureUsageBits::COPY_DST,          vk::ImageUsageFlagBits::eTransferDst },
-            { TextureUsageBits::TEXTURE_BINDING,   vk::ImageUsageFlagBits::eSampled },
-            { TextureUsageBits::STORAGE_BINDING,   vk::ImageUsageFlagBits::eStorage },
-            { TextureUsageBits::RENDER_ATTACHMENT, vk::ImageUsageFlagBits::eColorAttachment },
-            { TextureUsageBits::DEPTH_STENCIL_ATTACHMENT, vk::ImageUsageFlagBits::eDepthStencilAttachment },
+            { TextureUsageBits::copySrc,          vk::ImageUsageFlagBits::eTransferSrc },
+            { TextureUsageBits::copyDst,          vk::ImageUsageFlagBits::eTransferDst },
+            { TextureUsageBits::textureBinding,   vk::ImageUsageFlagBits::eSampled },
+            { TextureUsageBits::storageBinding,   vk::ImageUsageFlagBits::eStorage },
+            { TextureUsageBits::renderAttachment, vk::ImageUsageFlagBits::eColorAttachment },
+            { TextureUsageBits::depthStencilAttachment, vk::ImageUsageFlagBits::eDepthStencilAttachment },
         };
 
         vk::ImageUsageFlags result = {};

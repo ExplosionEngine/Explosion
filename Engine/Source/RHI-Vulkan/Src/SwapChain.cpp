@@ -132,10 +132,10 @@ namespace RHI::Vulkan {
 
         TextureCreateInfo textureInfo = {};
         textureInfo.format = createInfo.format;
-        textureInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::RENDER_ATTACHMENT;
+        textureInfo.usages = TextureUsageBits::copyDst | TextureUsageBits::renderAttachment;
         textureInfo.mipLevels = 1;
         textureInfo.samples = 1;
-        textureInfo.dimension = TextureDimension::T_2D;
+        textureInfo.dimension = TextureDimension::t2D;
         textureInfo.extent.x = extent.width;
         textureInfo.extent.y = extent.height;
         textureInfo.extent.z = 1;

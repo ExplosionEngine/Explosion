@@ -14,10 +14,10 @@
 
 namespace Render {
     enum class ShaderByteCodeType {
-        DXIL,
-        SPRIV,
-        MBC,
-        MAX
+        dxil,
+        spirv,
+        mbc,
+        max
     };
 
     struct ShaderCompileInput {
@@ -27,7 +27,7 @@ namespace Render {
     };
 
     struct ShaderCompileOptions {
-        ShaderByteCodeType byteCodeType = ShaderByteCodeType::MAX;
+        ShaderByteCodeType byteCodeType = ShaderByteCodeType::max;
         bool withDebugInfo = false;
         std::vector<std::string> definitions;
         std::vector<std::string> includePaths;
