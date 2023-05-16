@@ -16,9 +16,9 @@
 
 namespace MirrorTool {
     enum class FieldAccess {
-        fPublic,
-        fProtected,
-        fPrivate,
+        pub,
+        pro,
+        pri,
         max
     };
 

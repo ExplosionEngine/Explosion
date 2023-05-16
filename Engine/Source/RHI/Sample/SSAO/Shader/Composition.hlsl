@@ -1,4 +1,4 @@
-#include "common.h"
+#include "Common.h"
 
 VK_BINDING(0, 0) Texture2D texturePosition : register(t0);
 VK_BINDING(1, 0) Texture2D textureNormal : register(t1);
@@ -16,6 +16,20 @@ VK_BINDING(6, 0) cbuffer uboParams : register(b0)
     int ssaoBlur;
 }
 
+struct VSOutput
+{
+	float4 Pos : SV_POSITION;
+    float2 UV : TEXCOORD;
+};
+
+VSOutput VSMain(float4 postion : POSITION, float2 uv : TEXCOORD)
+{
+	VSOutput output = (VSOutput)0;
+	output.UV = uv;
+	output.Pos = postion;
+
+	return output;
+}
 
 float4 FSMain(float2 inUV : TEXCOORD) : SV_TARGET
 {
