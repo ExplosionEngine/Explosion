@@ -1185,10 +1185,8 @@ private:
 
     void GenerateRenderables()
     {
-        for (auto* node : model->linearNodes) {
-            for (auto& mesh : node->meshes) {
-                renderables.emplace_back(std::make_unique<Renderable>(this, mesh));
-            }
+        for (auto& mesh : model->meshes) {
+            renderables.emplace_back(std::make_unique<Renderable>(this, mesh));
         }
     }
 };
