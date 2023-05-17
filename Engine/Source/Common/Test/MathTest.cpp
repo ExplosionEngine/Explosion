@@ -267,3 +267,9 @@ TEST(MathTest, VecCrossTest)
     ASSERT_FLOAT_EQ(v4.y, 2.0f);
     ASSERT_FLOAT_EQ(v4.z, -1.0f);
 }
+
+TEST(MathTest, VecConstsTest)
+{
+    ASSERT_TRUE(FVec2(1, 0) == FVec2Consts::unitX);
+    ASSERT_TRUE(IVec3(0, 0, 1) == IVec3Consts::unitZ);
+}
