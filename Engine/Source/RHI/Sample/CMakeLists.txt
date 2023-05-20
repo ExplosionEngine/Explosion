@@ -62,7 +62,7 @@ AddRHISample(
         SSAO/SSAOApplication.cpp
     SHADER
         SSAO/Shader/Gbuffer.hlsl
-        SSAO/Shader/Ssao.hlsl
+        SSAO/Shader/SSAO.hlsl
         SSAO/Shader/Blur.hlsl
         SSAO/Shader/Composition.hlsl
         SSAO/Shader/Common.h

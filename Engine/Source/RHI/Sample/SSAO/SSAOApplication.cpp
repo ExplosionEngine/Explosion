@@ -860,8 +860,8 @@ private:
     {
         shaderModules.gBufferVs     = GetShaderModule("SSAO/Shader/Gbuffer.hlsl", "VSMain", ShaderStageBits::sVertex);
         shaderModules.gBufferPs     = GetShaderModule("SSAO/Shader/Gbuffer.hlsl", "FSMain", ShaderStageBits::sPixel);
-        shaderModules.ssaoVs        = GetShaderModule("SSAO/Shader/Ssao.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.ssaoPs        = GetShaderModule("SSAO/Shader/Ssao.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.ssaoVs        = GetShaderModule("SSAO/Shader/SSAO.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.ssaoPs        = GetShaderModule("SSAO/Shader/SSAO.hlsl", "FSMain", ShaderStageBits::sPixel);
         shaderModules.ssaoBlurVs    = GetShaderModule("SSAO/Shader/Blur.hlsl", "VSMain", ShaderStageBits::sVertex);
         shaderModules.ssaoBlurPs    = GetShaderModule("SSAO/Shader/Blur.hlsl", "FSMain", ShaderStageBits::sPixel);
         shaderModules.compositionVs = GetShaderModule("SSAO/Shader/Composition.hlsl", "VSMain", ShaderStageBits::sVertex);
