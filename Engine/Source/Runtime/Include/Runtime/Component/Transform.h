@@ -6,7 +6,7 @@
 
 #include <functional>
 
-#include <Common/Math/Vector3.h>
+#include <Common/Math/Vector.h>
 #include <Runtime/ECS.h>
 
 namespace Runtime {
@@ -33,12 +33,12 @@ namespace Runtime {
         Entity nextBrother;
 
         EProperty(category=Transform)
-        Common::Vector3 position;
+        Common::FVec3 position;
 
         EProperty(category=Transform)
-        Common::Vector3 rotation;
+        Common::FVec3 rotation;
 
         EProperty(category=Transform)
-        Common::Vector3 scale;
+        Common::FVec3 scale;
     };
 }

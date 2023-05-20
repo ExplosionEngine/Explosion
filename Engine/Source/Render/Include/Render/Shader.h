@@ -15,10 +15,7 @@
 #include <Common/Hash.h>
 #include <Common/File.h>
 #include <Common/Path.h>
-#include <Common/Math/Vector2.h>
-#include <Common/Math/Vector3.h>
-#include <Common/Math/Vector4.h>
-#include <Common/Math/Matrix4.h>
+#include <Common/Math/Vector.h>
 #include <RHI/Common.h>
 #include <RHI/Device.h>
 #include <RHI/ShaderModule.h>
@@ -313,12 +310,12 @@ namespace Render {
     public:
         VariantSetImpl()
         {
-            std::initializer_list<int> { ([this]() -> void { std::get<Variants>(variants).Set(Variants::defaultValue); }(), 0)... };
+            (void) std::initializer_list<int> { ([this]() -> void { std::get<Variants>(variants).Set(Variants::defaultValue); }(), 0)... };
         }
 
         VariantSetImpl(const VariantSetImpl& other)
         {
-            std::initializer_list<int> { ([this, &other]() -> void { std::get<Variants>(variants).Set(std::get<Variants>(other.variants).Get()); }(), 0)... };
+            (void) std::initializer_list<int> { ([this, &other]() -> void { std::get<Variants>(variants).Set(std::get<Variants>(other.variants).Get()); }(), 0)... };
         }
 
         VariantSetImpl(VariantSetImpl&& other) noexcept : variants(std::move(other.variants)) {}
@@ -327,7 +324,7 @@ namespace Render {
         static uint32_t VariantNum()
         {
             uint32_t result = 1;
-            std::initializer_list<int> { ([&result]() -> void {
+            (void) std::initializer_list<int> { ([&result]() -> void {
                 auto valueRange = Variants::valueRange;
                 Assert(valueRange.first <= valueRange.second);
                 result *= valueRange.second - valueRange.first + 1;
@@ -342,7 +339,7 @@ namespace Render {
             variantSets.reserve(VariantNum());
             variantSets.emplace_back(VariantSetImpl<Variants...>());
 
-            std::initializer_list<int> { ([&variantSets]() -> void {
+            (void) std::initializer_list<int> { ([&variantSets]() -> void {
                 auto valueRange = Variants::valueRange;
                 auto variantSetsSize = variantSets.size();
                 for (auto i = valueRange.first; i <= valueRange.second; i++) {
@@ -380,7 +377,7 @@ namespace Render {
         {
             std::vector<std::string> result;
             result.reserve(sizeof...(Variants));
-            std::initializer_list<int> { ([&result, this]() -> void {
+            (void) std::initializer_list<int> { ([&result, this]() -> void {
                 result.emplace_back(std::string(Variants::macro) + "=" + std::to_string(std::get<Variants>(variants).GetNumberValue()));
             }(), 0)... };
             return result;

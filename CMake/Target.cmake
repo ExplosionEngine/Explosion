@@ -145,11 +145,16 @@ function(AddResourcesCopyCommand)
             OUTPUT_SRC SRC
             OUTPUT_DST DST
         )
-        add_custom_command(
-            TARGET ${PARAMS_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST}
-        )
+
+        list(APPEND COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST})
     endforeach()
+
+    set(COPY_RES_TARGET_NAME ${PARAMS_NAME}.CopyRes)
+    add_custom_target(
+        ${COPY_RES_TARGET_NAME}
+        ${COMMANDS}
+    )
+    add_dependencies(${PARAMS_NAME} ${COPY_RES_TARGET_NAME})
 endfunction()
 
 function(GetTargetIncludeDirectoriesRecurse)

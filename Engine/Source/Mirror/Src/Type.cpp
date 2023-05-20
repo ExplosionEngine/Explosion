@@ -10,7 +10,7 @@
 #include <Mirror/Type.h>
 #include <Mirror/Registry.h>
 #include <Common/Debug.h>
-#include <Common/Format.h>
+#include <Common/String.h>
 
 namespace Mirror {
     Type::Type(std::string inName) : name(std::move(inName)) {}
@@ -242,7 +242,7 @@ namespace Mirror {
     const Destructor& Class::GetDestructor() const
     {
         Assert(destructor.has_value());
-        return destructor.value();
+        return destructor.value(); // NOLINT
     }
 
     const Constructor* Class::FindConstructor(const std::string& name) const

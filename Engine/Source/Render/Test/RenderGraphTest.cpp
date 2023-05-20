@@ -100,7 +100,7 @@ TEST_F(RenderGraphTest, BasicTest)
     RenderGraph renderGraph(*device);
     renderGraph.Setup();
     renderGraph.Compile();
-    renderGraph.Execute(mainFence.Get(), nullptr);
+    renderGraph.Execute(mainFence.Get());
     mainFence->Wait();
 }
 
@@ -111,6 +111,6 @@ TEST_F(RenderGraphTest, ComputePassTest)
     RenderGraph renderGraph(*device);
     renderGraph.Setup();
     renderGraph.Compile();
-    renderGraph.Execute(mainFence.Get(), nullptr);
+    renderGraph.Execute(mainFence.Get());
     mainFence->Wait();
 }
