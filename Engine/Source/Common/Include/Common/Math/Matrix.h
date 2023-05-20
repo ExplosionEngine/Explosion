@@ -16,6 +16,10 @@ namespace Common {
 
     template <typename T, uint8_t R, uint8_t C>
     struct Matrix : public BaseMatrix<T, R, C> {
+        using Type = T;
+        static constexpr uint8_t rows = R;
+        static constexpr uint8_t cols = C;
+
         inline Matrix();
         inline Matrix(T inValue); // NOLINT
         inline Matrix(const Matrix& other);
@@ -25,8 +29,8 @@ namespace Common {
         template <typename... IT>
         inline Matrix(IT&&... inValues); // NOLINT
 
-        T* operator[](uint32_t i);
-        inline const T* operator[](uint32_t i) const;
+        T* operator[](uint32_t index);
+        inline const T* operator[](uint32_t index) const;
 
         inline bool operator==(T rhs) const;
         inline bool operator==(const Matrix& rhs) const;
@@ -40,8 +44,9 @@ namespace Common {
 
         inline Matrix operator+(const Matrix& rhs) const;
         inline Matrix operator-(const Matrix& rhs) const;
-        inline Matrix operator*(const Matrix& rhs) const;
-        inline Matrix operator/(const Matrix& rhs) const;
+
+        template <uint8_t IC>
+        inline Matrix<T, R, IC> operator*(const Matrix<T, C, IC>& rhs);
 
         inline Matrix& operator+=(T rhs);
         inline Matrix& operator-=(T rhs);
@@ -50,26 +55,17 @@ namespace Common {
 
         inline Matrix& operator+=(const Matrix& rhs);
         inline Matrix& operator-=(const Matrix& rhs);
-        inline Matrix& operator*=(const Matrix& rhs);
-        inline Matrix& operator/=(const Matrix& rhs);
 
-        template <uint8_t I>
-        inline Vector<T, C> Row() const;
+        inline Vector<T, C> Row(uint8_t index) const;
+        inline Vector<T, R> Col(uint8_t index) const;
+        inline void SetRow(uint8_t index, const Vector<T, C>& inValue);
+        inline void SetCol(uint8_t index, const Vector<T, R>& inValue);
 
-        template <uint8_t I>
-        inline Vector<T, R> Col() const;
+        template <typename... IT>
+        inline void SetRow(uint8_t index, IT&&... inValues);
 
-        template <uint8_t I>
-        inline void SetRow(const Vector<T, C>& inValue);
-
-        template <uint8_t I>
-        inline void SetCol(const Vector<T, R>& inValue);
-
-        template <uint8_t I, typename... IT>
-        inline void SetRow(IT&&... inValues);
-
-        template <uint8_t I, typename... IT>
-        inline void SetCol(IT&&... inValues);
+        template <typename... IT>
+        inline void SetCol(uint8_t index, IT&&... inValues);
 
         template <typename IT>
         Matrix<IT, R, C> CastTo() const;
@@ -164,21 +160,42 @@ namespace Common {
 }
 
 namespace Common::Internal {
-    template <typename T, uint8_t R, uint8_t C, uint8_t I, typename... VT, size_t... VI>
-    static void CopyValuesToMatrixRow(Matrix<T, R, C>& matrix, VT&&... inValue, std::index_sequence<VI...>)
+    template <typename T, uint8_t R, uint8_t C, typename... VT, size_t... VI>
+    static void CopyValuesToMatrix(Matrix<T, R, C>& matrix, VT&&... inValue, std::index_sequence<VI...>)
     {
-        static_assert(C == sizeof...(VT));
+        static_assert(R * C == sizeof...(VT) && sizeof...(VT) == sizeof...(VI));
         (void) std::initializer_list<int> { ([&]() -> void {
-            matrix.data[I * C + VI] = inValue;
+            matrix.data[VI] = inValue;
         }, 0)... };
     }
 
-    template <typename T, uint8_t R, uint8_t C, uint8_t I, typename... VT, size_t... VI>
-    static void CopyValuesToMatrixCol(Matrix<T, R, C>& matrix, VT&&... inValue, std::index_sequence<VI...>)
+    template <typename T, uint8_t R, uint8_t C, typename... VT, size_t... VI>
+    static void CopyValuesToMatrixRow(Matrix<T, R, C>& matrix, uint8_t index, VT&&... inValue, std::index_sequence<VI...>)
     {
-        static_assert(R == sizeof...(VT));
+        static_assert(C == sizeof...(VT) && sizeof...(VT) == sizeof...(VI));
         (void) std::initializer_list<int> { ([&]() -> void {
-            matrix.data[VI * C + I] = inValue;
+            matrix.data[index * C + VI] = inValue;
+        }, 0)... };
+    }
+
+    template <typename T, uint8_t R, uint8_t C, typename... VT, size_t... VI>
+    static void CopyValuesToMatrixCol(Matrix<T, R, C>& matrix, uint8_t index, VT&&... inValue, std::index_sequence<VI...>)
+    {
+        static_assert(R == sizeof...(VT) && sizeof...(VT) == sizeof...(VI));
+        (void) std::initializer_list<int> { ([&]() -> void {
+            matrix.data[VI * C + index] = inValue;
+        }, 0)... };
+    }
+
+    template <typename T, uint8_t R, uint8_t C, typename... VT, size_t... VI>
+    static void CopyRowVectorsToMatrix(Matrix<T, R, C>& matrix, uint8_t index, VT&&... inVectors, std::index_sequence<VI...>)
+    {
+        static_assert(R == sizeof...(VT) && sizeof...(VT) == sizeof...(VI));
+        (void) std::initializer_list<int> { ([&]() -> void {
+            static_assert(std::is_same_v<VT, Vector<T, C>>);
+            for (auto i = 0; i < C; i++) {
+                matrix.data[VI * C + i] = inVectors[i];
+            }
         }, 0)... };
     }
 }
@@ -229,19 +246,24 @@ namespace Common {
     template <typename... IT>
     Matrix<T, R, C>::Matrix(IT&&... inValues)
     {
-        // TODO
+        static_assert(sizeof...(IT) == R || sizeof...(IT) == R * C);
+        if constexpr (sizeof...(IT) == R * C) {
+            Internal::CopyValuesToMatrix(*this, std::forward<IT>(inValues)..., std::make_index_sequence<sizeof...(IT)> {});
+        } else {
+            Internal::CopyRowVectorsToMatrix(*this, std::forward<IT>(inValues)..., std::make_index_sequence<sizeof...(IT)> {});
+        }
     }
 
     template <typename T, uint8_t R, uint8_t C>
-    T* Matrix<T, R, C>::operator[](uint32_t i)
+    T* Matrix<T, R, C>::operator[](uint32_t index)
     {
-        return this->data + i;
+        return this->data + index;
     }
 
     template <typename T, uint8_t R, uint8_t C>
-    const T* Matrix<T, R, C>::operator[](uint32_t i) const
+    const T* Matrix<T, R, C>::operator[](uint32_t index) const
     {
-        return this->data + i;
+        return this->data + index;
     }
 
     template <typename T, uint8_t R, uint8_t C>
@@ -337,23 +359,11 @@ namespace Common {
     }
 
     template <typename T, uint8_t R, uint8_t C>
-    Matrix<T, R, C> Matrix<T, R, C>::operator*(const Matrix& rhs) const
+    template <uint8_t IC>
+    Matrix<T, R, IC> Matrix<T, R, C>::operator*(const Matrix<T, C, IC>& rhs)
     {
-        Matrix<T, R, C> result;
-        for (auto i = 0; i < R * C; i++) {
-            result.data[i] = this->data[i] * rhs.data[i];
-        }
-        return result;
-    }
-
-    template <typename T, uint8_t R, uint8_t C>
-    Matrix<T, R, C> Matrix<T, R, C>::operator/(const Matrix& rhs) const
-    {
-        Matrix<T, R, C> result;
-        for (auto i = 0; i < R * C; i++) {
-            result.data[i] = this->data[i] / rhs.data[i];
-        }
-        return result;
+        Matrix<T, R, IC> result;
+        // TODO
     }
 
     template <typename T, uint8_t R, uint8_t C>
@@ -405,73 +415,53 @@ namespace Common {
     }
 
     template <typename T, uint8_t R, uint8_t C>
-    Matrix<T, R, C>& Matrix<T, R, C>::operator*=(const Matrix& rhs)
-    {
-        for (auto i = 0; i < R * C; i++) {
-            this->data[i] *= rhs.data[i];
-        }
-    }
-
-    template <typename T, uint8_t R, uint8_t C>
-    Matrix<T, R, C>& Matrix<T, R, C>::operator/=(const Matrix& rhs)
-    {
-        for (auto i = 0; i < R * C; i++) {
-            this->data[i] /= rhs.data[i];
-        }
-    }
-
-    template <typename T, uint8_t R, uint8_t C>
-    template <uint8_t I>
-    Vector<T, C> Matrix<T, R, C>::Row() const
+    Vector<T, C> Matrix<T, R, C>::Row(uint8_t index) const
     {
         Vector<T, C> result;
         for (auto i = 0; i < C; i++) {
-            result[i] = this->data[I * C + i];
+            result[i] = this->data[index * C + i];
         }
         return result;
     }
 
     template <typename T, uint8_t R, uint8_t C>
-    template <uint8_t I>
-    Vector<T, R> Matrix<T, R, C>::Col() const
+    Vector<T, R> Matrix<T, R, C>::Col(uint8_t index) const
     {
         Vector<T, R> result;
         for (auto i = 0; i < R; i++) {
-            result[i] = this->data[i * C + R];
+            result[i] = this->data[i * C + index];
         }
         return result;
     }
 
     template <typename T, uint8_t R, uint8_t C>
-    template <uint8_t I>
-    void Matrix<T, R, C>::SetRow(const Vector<T, C>& inValue)
+    void Matrix<T, R, C>::SetRow(uint8_t index, const Vector<T, C>& inValue)
     {
         for (auto i = 0; i < C; i++) {
-            this->data[I * C + i] = inValue[i];
+            this->data[index * C + i] = inValue[i];
         }
     }
 
     template <typename T, uint8_t R, uint8_t C>
-    template <uint8_t I>
-    void Matrix<T, R, C>::SetCol(const Vector<T, R>& inValue)
+    void Matrix<T, R, C>::SetCol(uint8_t index, const Vector<T, R>& inValue)
     {
         for (auto i = 0; i < R; i++) {
-            this->data[i * C + R] = inValue[i];
+            this->data[i * C + index] = inValue[i];
         }
     }
 
     template <typename T, uint8_t R, uint8_t C>
-    template <uint8_t I, typename... IT>
-    void Matrix<T, R, C>::SetRow(IT&&... inValues)
+    template <typename... IT>
+    void Matrix<T, R, C>::SetRow(uint8_t index, IT&&... inValues)
     {
-        Internal::CopyValuesToMatrixRow<T, R, C, I, IT...>(*this, std::forward<IT>(inValues)..., std::make_index_sequence<sizeof...(IT)> {});
+        Internal::CopyValuesToMatrixRow<T, R, C, IT...>(*this, index, std::forward<IT>(inValues)..., std::make_index_sequence<sizeof...(IT)> {});
     }
 
     template <typename T, uint8_t R, uint8_t C>
-    template <uint8_t I, typename... IT>
-    void Matrix<T, R, C>::SetCol(IT&&... inValues)
+    template <typename... IT>
+    void Matrix<T, R, C>::SetCol(uint8_t index, IT&&... inValues)
     {
-        Internal::CopyValuesToMatrixCol<T, R, C, I, IT...>(*this, std::forward<IT>(inValues)..., std::make_index_sequence<sizeof...(IT)> {});
+        Internal::CopyValuesToMatrixCol<T, R, C, IT...>(*this, index, std::forward<IT>(inValues)..., std::make_index_sequence<sizeof...(IT)> {});
     }
 
     template <typename T, uint8_t R, uint8_t C>

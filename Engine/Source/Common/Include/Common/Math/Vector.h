@@ -23,6 +23,9 @@ namespace Common {
 
     template <typename T, uint8_t L>
     struct Vector : public BaseVector<T, L> {
+        using Type = T;
+        static constexpr uint8_t dims = L;
+
         inline Vector();
         inline Vector(T inValue); // NOLINT
         inline Vector(const Vector& other);
