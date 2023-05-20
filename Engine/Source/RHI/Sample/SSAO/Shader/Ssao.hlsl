@@ -1,4 +1,4 @@
-#include "common.h"
+#include "Common.h"
 
 VK_BINDING(0, 0) Texture2D texturePositionDepth : register(t0);
 VK_BINDING(1, 0) Texture2D textureNormal : register(t1);
@@ -17,11 +17,22 @@ VK_BINDING(6, 0) cbuffer UBO : register(b1)
 	float4x4 projection;
 };
 
-// const int SSAO_KERNEL_ARRAY_SIZE = 64;
-// const int SSAO_KERNEL_SIZE = 64;
-// const float SSAO_RADIUS = 0.5;
+struct VSOutput
+{
+	float4 Pos : SV_POSITION;
+    float2 UV : TEXCOORD;
+};
 
-float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
+VSOutput VSMain(float4 postion : POSITION, float2 uv : TEXCOORD)
+{
+	VSOutput output = (VSOutput)0;
+	output.UV = uv;
+	output.Pos = postion;
+
+	return output;
+}
+
+float FSMain(float2 inUV : TEXCOORD) : SV_TARGET
 {
 	// Get G-Buffer values
 	float3 fragPos = texturePositionDepth.Sample(texSampler, inUV).rgb;
@@ -45,13 +56,13 @@ float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
 	for(int i = 0; i < 64; i++)
 	{
 		float3 samplePos = mul(randomKernals[i].xyz, TBN);
-		samplePos = fragPos + samplePos * 0.5;
+		samplePos = fragPos + samplePos * 0.2; // ssao radius is 0.2
 
 		// project
 		float4 offset = float4(samplePos, 1.0f);
 		offset = mul(offset, projection);
 		offset.xyz /= offset.w;
-		offset.xyz = offset.xyz * 0.5f + 0.5f;
+		offset.xyz = offset.xyz * 0.5f + 0.2f;
 
 		float sampleDepth = -texturePositionDepth.Sample(texSampler, offset.xy).w;
 
@@ -62,4 +73,3 @@ float FSMain(float2 inUV : TEXCOORD0) : SV_TARGET
 
 	return occlusion;
 }
-

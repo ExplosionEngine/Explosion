@@ -13,9 +13,9 @@ namespace RHI::DirectX12 {
     static D3D12_RESOURCE_DIMENSION GetDX12ResourceDimension(const TextureDimension& dimension)
     {
         static std::unordered_map<TextureDimension, D3D12_RESOURCE_DIMENSION> MAP = {
-            { TextureDimension::T_1D, D3D12_RESOURCE_DIMENSION_TEXTURE1D },
-            { TextureDimension::T_2D, D3D12_RESOURCE_DIMENSION_TEXTURE2D },
-            { TextureDimension::T_3D, D3D12_RESOURCE_DIMENSION_TEXTURE3D }
+            { TextureDimension::t1D, D3D12_RESOURCE_DIMENSION_TEXTURE1D },
+            { TextureDimension::t2D, D3D12_RESOURCE_DIMENSION_TEXTURE2D },
+            { TextureDimension::t3D, D3D12_RESOURCE_DIMENSION_TEXTURE3D }
         };
         auto iter = MAP.find(dimension);
         Assert(iter != MAP.end());
@@ -25,11 +25,11 @@ namespace RHI::DirectX12 {
     static D3D12_RESOURCE_STATES GetDX12ResourceStates(TextureUsageFlags textureUsages)
     {
         static std::unordered_map<TextureUsageBits, D3D12_RESOURCE_STATES> rules = {
-            { TextureUsageBits::COPY_SRC, D3D12_RESOURCE_STATE_COPY_SOURCE },
-            { TextureUsageBits::COPY_DST, D3D12_RESOURCE_STATE_COPY_DEST },
-            { TextureUsageBits::TEXTURE_BINDING, D3D12_RESOURCE_STATE_COMMON },
-            { TextureUsageBits::STORAGE_BINDING, D3D12_RESOURCE_STATE_UNORDERED_ACCESS },
-            { TextureUsageBits::RENDER_ATTACHMENT, D3D12_RESOURCE_STATE_RENDER_TARGET },
+            { TextureUsageBits::copySrc, D3D12_RESOURCE_STATE_COPY_SOURCE },
+            { TextureUsageBits::copyDst, D3D12_RESOURCE_STATE_COPY_DEST },
+            { TextureUsageBits::textureBinding, D3D12_RESOURCE_STATE_COMMON },
+            { TextureUsageBits::storageBinding, D3D12_RESOURCE_STATE_UNORDERED_ACCESS },
+            { TextureUsageBits::renderAttachment, D3D12_RESOURCE_STATE_RENDER_TARGET },
         };
 
         D3D12_RESOURCE_STATES result = D3D12_RESOURCE_STATE_COMMON;
@@ -50,7 +50,7 @@ namespace RHI::DirectX12 {
     }
 
     DX12Texture::DX12Texture(DX12Device& device, PixelFormat inFormat, ComPtr<ID3D12Resource>&& dx12Res)
-        : Texture(), device(device), usages(static_cast<TextureUsageFlags>(TextureUsageBits::RENDER_ATTACHMENT)), dx12Resource(dx12Res), format(inFormat) {}
+        : Texture(), device(device), usages(static_cast<TextureUsageFlags>(TextureUsageBits::renderAttachment)), dx12Resource(dx12Res), format(inFormat) {}
 
     DX12Texture::~DX12Texture() = default;
 

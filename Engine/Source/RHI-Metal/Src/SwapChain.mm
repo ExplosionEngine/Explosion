@@ -33,7 +33,7 @@ namespace RHI::Metal {
 
     void MTLSwapChain::Present()
     {
-//        MTLQueue *queue = static_cast<MTLQueue*>(mtlDevice.GetQueue(QueueType::GRAPHICS, 0));
+//        MTLQueue *queue = static_cast<MTLQueue*>(mtlDevice.GetQueue(QueueType::graphics, 0));
 //        id<MTLCommandBuffer> commandBuffer = [queue->GetNativeQueue() commandBuffer];
 //        [commandBuffer encodeWaitForEvent:event value:1];
 //        [commandBuffer encodeSignalEvent:event value:0];

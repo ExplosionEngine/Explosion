@@ -62,10 +62,10 @@ struct C2 {
 };
 
 enum class E0 {
-    A,
-    B,
-    C,
-    MAX
+    a,
+    b,
+    c,
+    max
 };
 
 TEST(RegistryTest, GlobalScopeTest)
@@ -199,24 +199,24 @@ TEST(RegistryTest, EnumTest)
 {
     Mirror::Registry::Get()
         .Enum<E0>("E0")
-            .Element<E0::A>("A")
-            .Element<E0::B>("B")
-            .Element<E0::C>("C")
-            .Element<E0::MAX>("MAX");
+            .Element<E0::a>("A")
+            .Element<E0::b>("B")
+            .Element<E0::c>("C")
+            .Element<E0::max>("max");
 
     const auto& enumInfo = Mirror::Enum::Get<E0>();
     auto a = enumInfo.GetElement("A");
     auto b = enumInfo.GetElement("B");
     auto c = enumInfo.GetElement("C");
-    auto max = enumInfo.GetElement("MAX");
+    auto max = enumInfo.GetElement("max");
 
-    ASSERT_EQ(a.CastTo<E0>(), E0::A);
-    ASSERT_EQ(b.CastTo<E0>(), E0::B);
-    ASSERT_EQ(c.CastTo<E0>(), E0::C);
-    ASSERT_EQ(max.CastTo<E0>(), E0::MAX);
+    ASSERT_EQ(a.CastTo<E0>(), E0::a);
+    ASSERT_EQ(b.CastTo<E0>(), E0::b);
+    ASSERT_EQ(c.CastTo<E0>(), E0::c);
+    ASSERT_EQ(max.CastTo<E0>(), E0::max);
 
     ASSERT_EQ(enumInfo.GetElementName(&a), "A");
     ASSERT_EQ(enumInfo.GetElementName(&b), "B");
     ASSERT_EQ(enumInfo.GetElementName(&c), "C");
-    ASSERT_EQ(enumInfo.GetElementName(&max), "MAX");
+    ASSERT_EQ(enumInfo.GetElementName(&max), "max");
 }

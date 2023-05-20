@@ -27,7 +27,7 @@ namespace RHI::Metal {
 
     RHIType MTLInstance::GetRHIType()
     {
-        return RHIType::METAL;
+        return RHIType::metal;
     }
 
     uint32_t MTLInstance::GetGpuNum()

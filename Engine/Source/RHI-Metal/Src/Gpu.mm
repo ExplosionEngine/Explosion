@@ -41,9 +41,9 @@ namespace RHI::Metal {
          * External   N        Y
          */
         if (device.isRemovable) {
-            property.type = GpuType::SOFTWARE;
+            property.type = GpuType::software;
         } else {
-            property.type = GpuType::HARDWARE;
+            property.type = GpuType::hardware;
         }
     }
 

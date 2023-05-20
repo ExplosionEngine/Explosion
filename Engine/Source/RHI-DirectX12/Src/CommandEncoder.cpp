@@ -22,10 +22,10 @@ namespace RHI::DirectX12 {
     D3D12_CLEAR_FLAGS GetDX12ClearFlags(const GraphicsPassDepthStencilAttachment& depthStencilAttachment)
     {
         D3D12_CLEAR_FLAGS result;
-        if (depthStencilAttachment.depthLoadOp == LoadOp::CLEAR) {
+        if (depthStencilAttachment.depthLoadOp == LoadOp::clear) {
             result |= D3D12_CLEAR_FLAG_DEPTH;
         }
-        if (depthStencilAttachment.stencilLoadOp == LoadOp::CLEAR) {
+        if (depthStencilAttachment.stencilLoadOp == LoadOp::clear) {
             result |= D3D12_CLEAR_FLAG_STENCIL;
         }
         return result;
@@ -101,7 +101,7 @@ namespace RHI::DirectX12 {
         // clear render targets
         for (auto i = 0; i < rtvHandles.size(); i++) {
             const auto& colorAttachment = beginInfo->colorAttachments[i];
-            if (colorAttachment.loadOp != LoadOp::CLEAR) {
+            if (colorAttachment.loadOp != LoadOp::clear) {
                 continue;
             }
             const auto* clearValue = reinterpret_cast<const float*>(&colorAttachment.clearValue);
@@ -109,7 +109,7 @@ namespace RHI::DirectX12 {
         }
         if (dsvHandle.has_value()) {
             const auto& depthStencilAttachment = *beginInfo->depthStencilAttachment;
-            if (depthStencilAttachment.depthLoadOp != LoadOp::CLEAR && depthStencilAttachment.stencilLoadOp != LoadOp::CLEAR) {
+            if (depthStencilAttachment.depthLoadOp != LoadOp::clear && depthStencilAttachment.stencilLoadOp != LoadOp::clear) {
                 return;
             }
             commandBuffer.GetDX12GraphicsCommandList()->ClearDepthStencilView(dsvHandle.value(), GetDX12ClearFlags(depthStencilAttachment), depthStencilAttachment.depthClearValue, depthStencilAttachment.stencilClearValue, 0, nullptr);
@@ -255,7 +255,7 @@ namespace RHI::DirectX12 {
         ID3D12Resource* resource;
         D3D12_RESOURCE_STATES beforeState;
         D3D12_RESOURCE_STATES afterState;
-        if (barrier.type == ResourceType::BUFFER) {
+        if (barrier.type == ResourceType::buffer) {
             auto* buffer = dynamic_cast<DX12Buffer*>(barrier.buffer.pointer);
             Assert(buffer);
             resource = buffer->GetDX12Resource().Get();

@@ -12,9 +12,9 @@ namespace RHI::Vulkan {
     static vk::MemoryPropertyFlags GetVkMemoryType(BufferUsageFlags bufferUsages)
     {
         static std::unordered_map<BufferUsageFlags, vk::MemoryPropertyFlags> rules = {
-            { BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC, vk::MemoryPropertyFlagBits::eHostVisible },
-            { BufferUsageBits::MAP_READ | BufferUsageBits::COPY_DST, vk::MemoryPropertyFlagBits::eHostVisible },
-            { BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE, vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible}
+            { BufferUsageBits::mapWrite | BufferUsageBits::copySrc, vk::MemoryPropertyFlagBits::eHostVisible },
+            { BufferUsageBits::mapRead | BufferUsageBits::copyDst, vk::MemoryPropertyFlagBits::eHostVisible },
+            { BufferUsageBits::uniform | BufferUsageBits::mapWrite, vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible}
             // TODO check other conditions ?
         };
         static vk::MemoryPropertyFlags fallback = vk::MemoryPropertyFlagBits::eDeviceLocal;
@@ -31,13 +31,13 @@ namespace RHI::Vulkan {
     static vk::BufferUsageFlags GetVkResourceStates(BufferUsageFlags bufferUsages)
     {
         static std::unordered_map<BufferUsageBits, vk::BufferUsageFlags> rules = {
-            { BufferUsageBits::COPY_SRC, vk::BufferUsageFlagBits::eTransferSrc },
-            { BufferUsageBits::COPY_DST, vk::BufferUsageFlagBits::eTransferDst },
-            { BufferUsageBits::INDEX,    vk::BufferUsageFlagBits::eIndexBuffer },
-            { BufferUsageBits::VERTEX,   vk::BufferUsageFlagBits::eVertexBuffer },
-            { BufferUsageBits::UNIFORM,  vk::BufferUsageFlagBits::eUniformBuffer },
-            { BufferUsageBits::STORAGE,  vk::BufferUsageFlagBits::eStorageBuffer },
-            { BufferUsageBits::INDIRECT, vk::BufferUsageFlagBits::eIndirectBuffer },
+            { BufferUsageBits::copySrc, vk::BufferUsageFlagBits::eTransferSrc },
+            { BufferUsageBits::copyDst, vk::BufferUsageFlagBits::eTransferDst },
+            { BufferUsageBits::index,    vk::BufferUsageFlagBits::eIndexBuffer },
+            { BufferUsageBits::vertex,   vk::BufferUsageFlagBits::eVertexBuffer },
+            { BufferUsageBits::uniform,  vk::BufferUsageFlagBits::eUniformBuffer },
+            { BufferUsageBits::storage,  vk::BufferUsageFlagBits::eStorageBuffer },
+            { BufferUsageBits::indirect, vk::BufferUsageFlagBits::eIndirectBuffer },
         };
 
         vk::BufferUsageFlags result = {};

@@ -96,13 +96,13 @@ namespace RHI::Vulkan {
 
     static std::tuple<vk::ImageLayout, vk::AccessFlags, vk::PipelineStageFlags> GetBarrierInfo(TextureState status)
     {
-        if (status == TextureState::PRESENT) {
+        if (status == TextureState::present) {
             return {vk::ImageLayout::ePresentSrcKHR, vk::AccessFlagBits::eMemoryRead, vk::PipelineStageFlagBits::eBottomOfPipe};
-        } else if (status == TextureState::RENDER_TARGET) {
+        } else if (status == TextureState::renderTarget) {
             return {vk::ImageLayout::eColorAttachmentOptimal, vk::AccessFlagBits::eColorAttachmentWrite, vk::PipelineStageFlagBits::eColorAttachmentOutput};
-        } else if (status == TextureState::COPY_DST) {
+        } else if (status == TextureState::copyDst) {
             return {vk::ImageLayout::eTransferDstOptimal, vk::AccessFlagBits::eTransferWrite, vk::PipelineStageFlagBits::eTransfer};
-        } else if (status == TextureState::SHADER_READ_ONLY) {
+        } else if (status == TextureState::shaderReadOnly) {
             return {vk::ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderRead, vk::PipelineStageFlagBits::eFragmentShader};
         }
         return {vk::ImageLayout::eUndefined, vk::AccessFlags{}, vk::PipelineStageFlagBits::eTopOfPipe};
@@ -110,9 +110,9 @@ namespace RHI::Vulkan {
 
     void VKCommandEncoder::ResourceBarrier(const Barrier& barrier)
     {
-        if (barrier.type == ResourceType::TEXTURE) {
+        if (barrier.type == ResourceType::texture) {
             auto& textureBarrierInfo = barrier.texture;
-            auto oldLayout = GetBarrierInfo(textureBarrierInfo.before == TextureState::PRESENT ? TextureState::UNDEFINED : textureBarrierInfo.before);
+            auto oldLayout = GetBarrierInfo(textureBarrierInfo.before == TextureState::present ? TextureState::undefined : textureBarrierInfo.before);
             auto newLayout = GetBarrierInfo(textureBarrierInfo.after);
 
             auto vkTexture = static_cast<VKTexture*>(textureBarrierInfo.pointer);

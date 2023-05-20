@@ -42,7 +42,7 @@ namespace RHI::Vulkan {
             .setMipmapMode(VKEnumCast<FilterMode, vk::SamplerMipmapMode>(createInfo.mipFilter))
             .setMinLod(createInfo.lodMinClamp)
             .setMaxLod(createInfo.lodMaxClamp)
-            .setCompareEnable(createInfo.comparisonFunc != ComparisonFunc::NEVER)
+            .setCompareEnable(createInfo.comparisonFunc != ComparisonFunc::never)
             .setCompareOp(VKEnumCast<ComparisonFunc, vk::CompareOp>(createInfo.comparisonFunc))
             .setAnisotropyEnable(createInfo.maxAnisotropy > 1)
             .setMaxAnisotropy(createInfo.maxAnisotropy);

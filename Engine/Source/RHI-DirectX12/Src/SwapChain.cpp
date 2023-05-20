@@ -16,7 +16,7 @@
 namespace RHI::DirectX12 {
     static uint8_t GetSyncInterval(PresentMode presentMode)
     {
-        return presentMode == PresentMode::VSYNC ? 1 : 0;
+        return presentMode == PresentMode::immediately ? 1 : 0;
     }
 }
 

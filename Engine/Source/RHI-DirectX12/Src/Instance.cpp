@@ -42,7 +42,7 @@ namespace RHI::DirectX12 {
 
     RHIType DX12Instance::GetRHIType()
     {
-        return RHIType::DIRECTX_12;
+        return RHIType::directX12;
     }
 
     ComPtr<IDXGIFactory4>& DX12Instance::GetDX12Factory()

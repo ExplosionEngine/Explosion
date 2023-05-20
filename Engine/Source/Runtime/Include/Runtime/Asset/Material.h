@@ -13,12 +13,12 @@
 
 namespace Runtime {
     enum class EEnum() MaterialParameterType {
-        FLOAT,
-        FLOAT2,
-        FLOAT3,
-        FLOAT4,
-        TEXTURE,
-        MAX
+        flt,
+        flt2,
+        flt3,
+        flt4,
+        texture,
+        max
     };
 
     class EClass() MaterialParameterSet {

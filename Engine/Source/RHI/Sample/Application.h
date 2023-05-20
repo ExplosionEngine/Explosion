@@ -32,7 +32,7 @@ using namespace Common;
 class Application {
 public:
     NON_COPYABLE(Application)
-    explicit Application(std::string n) : rhiType(RHI::RHIType::VULKAN), window(nullptr), name(std::move(n)), width(1024), height(768) {}
+    explicit Application(std::string n) : rhiType(RHI::RHIType::vulkan), window(nullptr), name(std::move(n)), width(1024), height(768) {}
 
     virtual ~Application() = default;
 
@@ -49,12 +49,12 @@ public:
             return -1;
         }
         static const std::unordered_map<std::string, RHI::RHIType> RHI_MAP = {
-            { "DirectX12", RHI::RHIType::DIRECTX_12 },
-            { "Vulkan", RHI::RHIType::VULKAN },
-            { "Metal", RHI::RHIType::METAL }
+            { "DirectX12", RHI::RHIType::directX12 },
+            { "Vulkan", RHI::RHIType::vulkan },
+            { "Metal", RHI::RHIType::metal }
         };
         auto iter = RHI_MAP.find(rhiString);
-        rhiType = iter == RHI_MAP.end() ? RHI::RHIType::DIRECTX_12 : iter->second;
+        rhiType = iter == RHI_MAP.end() ? RHI::RHIType::directX12 : iter->second;
 
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -70,6 +70,7 @@ public:
         return 0;
     }
 
+protected:
     virtual void OnStart() {}
     virtual void OnCreate() {}
     virtual void OnDestroy() {}
@@ -87,7 +88,7 @@ public:
 #endif
     }
 
-    void CompileShader(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
+    void CompileShader(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage, std::vector<std::string> includePaths = {})
     {
         std::string shaderSource = Common::FileUtils::ReadTextFile(fileName);
 
@@ -96,12 +97,15 @@ public:
         info.entryPoint = entryPoint;
         info.stage = shaderStage;
         Render::ShaderCompileOptions options;
-        if (rhiType == RHI::RHIType::DIRECTX_12) {
-            options.byteCodeType = Render::ShaderByteCodeType::DXIL;
-        } else if (rhiType == RHI::RHIType::VULKAN) {
-            options.byteCodeType = Render::ShaderByteCodeType::SPRIV;
-        } else if (rhiType == RHI::RHIType::METAL) {
-            options.byteCodeType = Render::ShaderByteCodeType::MBC;
+        if (!includePaths.empty()) {
+            options.includePaths.insert(options.includePaths.end(), includePaths.begin(), includePaths.end());
+        }
+        if (rhiType == RHI::RHIType::directX12) {
+            options.byteCodeType = Render::ShaderByteCodeType::dxil;
+        } else if (rhiType == RHI::RHIType::vulkan) {
+            options.byteCodeType = Render::ShaderByteCodeType::spirv;
+        } else if (rhiType == RHI::RHIType::metal) {
+            options.byteCodeType = Render::ShaderByteCodeType::mbc;
         }
         options.withDebugInfo = false;
         auto future = Render::ShaderCompiler::Get().Compile(info, options);

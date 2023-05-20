@@ -39,7 +39,7 @@ namespace RHI::Metal {
 
     id<MTLCommandBuffer> MTLCommandBuffer::CreateNativeCommandBuffer()
     {
-        auto queue = static_cast<MTLQueue *>(device.GetQueue(QueueType::GRAPHICS, 0));
+        auto queue = static_cast<MTLQueue *>(device.GetQueue(QueueType::graphics, 0));
         commandBuffer = [queue->GetNativeQueue() commandBuffer];
         return commandBuffer;
     }

@@ -35,7 +35,7 @@ namespace RHI::Metal {
 
     MTLIndexType MTLBufferView::GetIndexType() const
     {
-        if (info.index.format == IndexFormat::UINT16) {
+        if (info.index.format == IndexFormat::uint16) {
             return MTLIndexTypeUInt16;
         } else {
             return MTLIndexTypeUInt32;

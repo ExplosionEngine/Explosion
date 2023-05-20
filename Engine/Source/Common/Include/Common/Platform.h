@@ -6,27 +6,27 @@
 
 namespace Common {
     enum class DevelopmentPlatform {
-        WINDOWS,
-        MACOS,
-        LINUX,
-        MAX
+        windows,
+        macos,
+        linux,
+        max
     };
 
     enum class TargetPlatform {
-        WINDOWS,
-        MACOS,
-        LINUX,
-        ANDROID,
-        IOS,
-        XBOX,
-        PLAY_STATION,
-        SWITCH,
-        MAX
+        windows,
+        macos,
+        linux,
+        android,
+        ios,
+        xbox,
+        playStation,
+        nintendoSwitch,
+        max
     };
 
     enum class CpuArch {
-        X86,
-        X64,
-        MAX
+        x86,
+        x64,
+        max
     };
 }

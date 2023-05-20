@@ -9,20 +9,20 @@ namespace RHI {
     static RHIType GetPlatformRHIType()
     {
 #if PLATFORM_WINDOWS
-        return RHIType::DIRECTX_12;
+        return RHIType::directX12;
 #else
-        return RHIType::VULKAN;
+        return RHIType::vulkan;
 #endif
     }
 
     static std::string GetRHILibNameByType(const RHIType& type)
     {
         switch (type) {
-            case RHIType::DIRECTX_12:
+            case RHIType::directX12:
                 return "RHI-DirectX12";
-            case RHIType::METAL:
+            case RHIType::metal:
                 return "RHI-Metal";
-            case RHIType::DUMMY:
+            case RHIType::dummy:
                 return "RHI-Dummy";
             default:
                 return "RHI-Vulkan";

@@ -53,7 +53,7 @@ protected:
     }
 
 private:
-    static const uint8_t BACK_BUFFER_COUNT = 2;
+    static const uint8_t backBufferCount = 2;
 
     void CreateInstanceAndSelectGPU()
     {
@@ -64,19 +64,19 @@ private:
 
     void RequestDeviceAndFetchQueues()
     {
-        std::vector<QueueInfo> queueCreateInfos = {{QueueType::GRAPHICS, 1}};
+        std::vector<QueueInfo> queueCreateInfos = {{QueueType::graphics, 1}};
         DeviceCreateInfo createInfo {};
         createInfo.queueCreateInfoNum = queueCreateInfos.size();
         createInfo.queueCreateInfos = queueCreateInfos.data();
         device = gpu->RequestDevice(createInfo);
-        graphicsQueue = device->GetQueue(QueueType::GRAPHICS, 0);
+        graphicsQueue = device->GetQueue(QueueType::graphics, 0);
     }
 
     void CreateSwapChain()
     {
         static std::vector<PixelFormat> swapChainFormatQualifiers = {
-            PixelFormat::RGBA8_UNORM,
-            PixelFormat::BGRA8_UNORM
+            PixelFormat::rgba8Unorm,
+            PixelFormat::bgra8Unorm
         };
 
         SurfaceCreateInfo surfaceCreateInfo {};
@@ -89,12 +89,12 @@ private:
                 break;
             }
         }
-        Assert(swapChainFormat != PixelFormat::MAX);
+        Assert(swapChainFormat != PixelFormat::max);
 
         SwapChainCreateInfo swapChainCreateInfo {};
         swapChainCreateInfo.format = swapChainFormat;
-        swapChainCreateInfo.presentMode = PresentMode::IMMEDIATELY;
-        swapChainCreateInfo.textureNum = BACK_BUFFER_COUNT;
+        swapChainCreateInfo.presentMode = PresentMode::immediately;
+        swapChainCreateInfo.textureNum = backBufferCount;
         swapChainCreateInfo.extent = {width, height};
         swapChainCreateInfo.surface = surface.Get();
         swapChainCreateInfo.presentQueue = graphicsQueue;
@@ -104,12 +104,12 @@ private:
             swapChainTextures[i] = swapChain->GetTexture(i);
 
             TextureViewCreateInfo viewCreateInfo {};
-            viewCreateInfo.dimension = TextureViewDimension::TV_2D;
+            viewCreateInfo.dimension = TextureViewDimension::tv2D;
             viewCreateInfo.baseArrayLayer = 0;
             viewCreateInfo.arrayLayerNum = 1;
             viewCreateInfo.baseMipLevel = 0;
             viewCreateInfo.mipLevelNum = 1;
-            viewCreateInfo.aspect = TextureAspect::COLOR;
+            viewCreateInfo.aspect = TextureAspect::color;
             swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(viewCreateInfo);
         }
     }
@@ -125,10 +125,10 @@ private:
 
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = vertices.size() * sizeof(Vertex);
-        bufferCreateInfo.usages = BufferUsageBits::VERTEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         vertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (vertexBuffer != nullptr) {
-            auto* data = vertexBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
+            auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, vertices.data(), bufferCreateInfo.size);
             vertexBuffer->UnMap();
         }
@@ -145,10 +145,10 @@ private:
         std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = indices.size() * sizeof(uint32_t);
-        bufferCreateInfo.usages = BufferUsageBits::INDEX | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        bufferCreateInfo.usages = BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         indexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (indexBuffer != nullptr) {
-            auto* data = indexBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
+            auto* data = indexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, indices.data(), bufferCreateInfo.size);
             indexBuffer->UnMap();
         }
@@ -156,7 +156,7 @@ private:
         BufferViewCreateInfo bufferViewCreateInfo {};
         bufferViewCreateInfo.size = indices.size() * sizeof(uint32_t);
         bufferViewCreateInfo.offset = 0;
-        bufferViewCreateInfo.index.format = IndexFormat::UINT32;
+        bufferViewCreateInfo.index.format = IndexFormat::uint32;
         indexBufferView = indexBuffer->CreateBufferView(bufferViewCreateInfo);
     }
 
@@ -164,36 +164,36 @@ private:
     {
         int texWidth, texHeight, texChannels;
         stbi_set_flip_vertically_on_load(1);
-        stbi_uc* pixels = stbi_load("TexSampling/awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        stbi_uc* pixels = stbi_load("TexSampling/Awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         Assert(pixels != nullptr);
 
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = texWidth * texHeight * 4;
-        bufferCreateInfo.usages = BufferUsageBits::UNIFORM | BufferUsageBits::MAP_WRITE | BufferUsageBits::COPY_SRC;
+        bufferCreateInfo.usages = BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
-            auto* data = pixelBuffer->Map(MapMode::WRITE, 0, bufferCreateInfo.size);
+            auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, pixels, bufferCreateInfo.size);
             pixelBuffer->UnMap();
         }
         stbi_image_free(pixels);
 
         TextureCreateInfo texCreateInfo {};
-        texCreateInfo.format = PixelFormat::RGBA8_UNORM;
+        texCreateInfo.format = PixelFormat::rgba8Unorm;
         texCreateInfo.mipLevels = 1;
         texCreateInfo.extent = {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1};
-        texCreateInfo.dimension = TextureDimension::T_2D;
+        texCreateInfo.dimension = TextureDimension::t2D;
         texCreateInfo.samples = 1;
-        texCreateInfo.usages = TextureUsageBits::COPY_DST | TextureUsageBits::TEXTURE_BINDING;
+        texCreateInfo.usages = TextureUsageBits::copyDst | TextureUsageBits::textureBinding;
         sampleTexture = device->CreateTexture(texCreateInfo);
 
         TextureViewCreateInfo viewCreateInfo {};
-        viewCreateInfo.dimension = TextureViewDimension::TV_2D;
+        viewCreateInfo.dimension = TextureViewDimension::tv2D;
         viewCreateInfo.baseArrayLayer = 0;
         viewCreateInfo.arrayLayerNum = 1;
         viewCreateInfo.baseMipLevel = 0;
         viewCreateInfo.mipLevelNum = 1;
-        viewCreateInfo.aspect = TextureAspect::COLOR;
+        viewCreateInfo.aspect = TextureAspect::color;
         sampleTextureView = sampleTexture->CreateTextureView(viewCreateInfo);
 
         // use the default attrib to create sampler
@@ -203,14 +203,14 @@ private:
         texCommandBuffer = device->CreateCommandBuffer();
         UniqueRef<CommandEncoder> commandEncoder = texCommandBuffer->Begin();
         {
-            commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::UNDEFINED, TextureState::COPY_DST));
+            commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::undefined, TextureState::copyDst));
             TextureSubResourceInfo subResourceInfo {};
             subResourceInfo.mipLevel = 0;
             subResourceInfo.arrayLayerNum = 1;
             subResourceInfo.baseArrayLayer = 0;
-            subResourceInfo.aspect = TextureAspect::COLOR;
+            subResourceInfo.aspect = TextureAspect::color;
             commandEncoder->CopyBufferToTexture(pixelBuffer.Get(), sampleTexture.Get(), &subResourceInfo, {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1});
-            commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::COPY_DST, TextureState::SHADER_READ_ONLY));
+            commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
         }
         commandEncoder->End();
         graphicsQueue->Submit(texCommandBuffer.Get(), nullptr);
@@ -219,13 +219,13 @@ private:
     void CreateBindGroupLayout()
     {
         std::vector<BindGroupLayoutEntry> entries(2);
-        entries[0].binding.type = BindingType::TEXTURE;
-        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        entries[1].binding.type = BindingType::SAMPLER;
-        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::S_PIXEL);
-        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+        entries[0].binding.type = BindingType::texture;
+        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[1].binding.type = BindingType::sampler;
+        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        if (instance->GetRHIType() == RHI::RHIType::directX12) {
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
         } else {
             entries[0].binding.platform.glsl.index = 0;
             entries[1].binding.platform.glsl.index = 1;
@@ -242,13 +242,13 @@ private:
     void CreateBindGroup()
     {
         std::vector<BindGroupEntry> entries(2);
-        entries[0].binding.type = BindingType::TEXTURE;
+        entries[0].binding.type = BindingType::texture;
         entries[0].textureView = sampleTextureView.Get();
-        entries[1].binding.type = BindingType::SAMPLER;
+        entries[1].binding.type = BindingType::sampler;
         entries[1].sampler = sampler.Get();
-        if (instance->GetRHIType() == RHI::RHIType::DIRECTX_12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::TEXTURE, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::SAMPLER, 0 };
+        if (instance->GetRHIType() == RHI::RHIType::directX12) {
+            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
         } else {
             entries[0].binding.platform.glsl.index = 0;
             entries[1].binding.platform.glsl.index = 1;
@@ -275,7 +275,7 @@ private:
     void CreatePipeline()
     {
         std::vector<uint8_t> vsByteCode;
-        CompileShader(vsByteCode, "TexSampling/TexSampling.hlsl", "VSMain", RHI::ShaderStageBits::S_VERTEX);
+        CompileShader(vsByteCode, "TexSampling/TexSampling.hlsl", "VSMain", RHI::ShaderStageBits::sVertex);
 
         ShaderModuleCreateInfo shaderModuleCreateInfo {};
         shaderModuleCreateInfo.size = vsByteCode.size();
@@ -283,31 +283,31 @@ private:
         vertexShader = device->CreateShaderModule(shaderModuleCreateInfo);
 
         std::vector<uint8_t> fsByteCode;
-        CompileShader(fsByteCode, "TexSampling/TexSampling.hlsl", "FSMain", RHI::ShaderStageBits::S_PIXEL);
+        CompileShader(fsByteCode, "TexSampling/TexSampling.hlsl", "FSMain", RHI::ShaderStageBits::sPixel);
 
         shaderModuleCreateInfo.size = fsByteCode.size();
         shaderModuleCreateInfo.byteCode = fsByteCode.data();
         fragmentShader = device->CreateShaderModule(shaderModuleCreateInfo);
 
         std::array<VertexAttribute, 2> vertexAttributes {};
-        vertexAttributes[0].format = VertexFormat::FLOAT32_X3;
+        vertexAttributes[0].format = VertexFormat::float32X3;
         vertexAttributes[0].offset = 0;
         vertexAttributes[0].semanticName = "POSITION";
         vertexAttributes[0].semanticIndex = 0;
-        vertexAttributes[1].format = VertexFormat::FLOAT32_X2;
+        vertexAttributes[1].format = VertexFormat::float32X2;
         vertexAttributes[1].offset = offsetof(Vertex, uv);
         vertexAttributes[1].semanticName = "TEXCOORD";
         vertexAttributes[1].semanticIndex = 0;
 
         VertexBufferLayout vertexBufferLayout {};
-        vertexBufferLayout.stepMode = RHI::VertexStepMode::PER_VERTEX;
+        vertexBufferLayout.stepMode = RHI::VertexStepMode::perVertex;
         vertexBufferLayout.stride = sizeof(Vertex);
         vertexBufferLayout.attributeNum = vertexAttributes.size();
         vertexBufferLayout.attributes = vertexAttributes.data();
 
         std::array<ColorTargetState, 1> colorTargetStates {};
         colorTargetStates[0].format = swapChainFormat;
-        colorTargetStates[0].writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+        colorTargetStates[0].writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
 
         GraphicsPipelineCreateInfo createInfo {};
         createInfo.vertexShader = vertexShader.Get();
@@ -318,10 +318,10 @@ private:
         createInfo.fragmentState.colorTargetNum = colorTargetStates.size();
         createInfo.fragmentState.colorTargets = colorTargetStates.data();
         createInfo.primitiveState.depthClip = false;
-        createInfo.primitiveState.frontFace = RHI::FrontFace::CCW;
-        createInfo.primitiveState.cullMode = CullMode::NONE;
-        createInfo.primitiveState.topologyType = RHI::PrimitiveTopologyType::TRIANGLE;
-        createInfo.primitiveState.stripIndexFormat = IndexFormat::UINT16;
+        createInfo.primitiveState.frontFace = RHI::FrontFace::ccw;
+        createInfo.primitiveState.cullMode = CullMode::none;
+        createInfo.primitiveState.topologyType = RHI::PrimitiveTopologyType::triangle;
+        createInfo.primitiveState.stripIndexFormat = IndexFormat::uint16;
         createInfo.depthStencilState.depthEnable = false;
         createInfo.depthStencilState.stencilEnable = false;
         createInfo.multiSampleState.count = 1;
@@ -345,8 +345,8 @@ private:
         {
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::CLEAR;
-            colorAttachments[0].storeOp = StoreOp::STORE;
+            colorAttachments[0].loadOp = LoadOp::clear;
+            colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();
             colorAttachments[0].resolve = nullptr;
 
@@ -355,20 +355,20 @@ private:
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
 
-            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::PRESENT, TextureState::RENDER_TARGET));
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
             auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
                 graphicsEncoder->SetPipeline(pipeline.Get());
                 graphicsEncoder->SetScissor(0, 0, width, height);
                 graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
-                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::TRIANGLE_LIST);
+                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
                 graphicsEncoder->SetBindGroup(0, bindGroup.Get());
                 graphicsEncoder->SetVertexBuffer(0, vertexBufferView.Get());
                 graphicsEncoder->SetIndexBuffer(indexBufferView.Get());
                 graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
             }
             graphicsEncoder->EndPass();
-            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::RENDER_TARGET, TextureState::PRESENT));
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::renderTarget, TextureState::present));
         }
         commandEncoder->SwapChainSync(swapChain.Get());
         commandEncoder->End();
@@ -381,7 +381,7 @@ private:
         swapChain->Present();
     }
 
-    PixelFormat swapChainFormat = PixelFormat::MAX;
+    PixelFormat swapChainFormat = PixelFormat::max;
     Instance* instance = nullptr;
     Gpu* gpu = nullptr;
     UniqueRef<Device> device;
@@ -399,8 +399,8 @@ private:
     UniqueRef<Sampler> sampler;
     UniqueRef<CommandBuffer> texCommandBuffer;
     UniqueRef<Buffer> pixelBuffer;
-    std::array<Texture*, BACK_BUFFER_COUNT> swapChainTextures {};
-    std::array<UniqueRef<TextureView>, BACK_BUFFER_COUNT> swapChainTextureViews;
+    std::array<Texture*, backBufferCount> swapChainTextures {};
+    std::array<UniqueRef<TextureView>, backBufferCount> swapChainTextureViews;
     UniqueRef<PipelineLayout> pipelineLayout;
     UniqueRef<GraphicsPipeline> pipeline;
     UniqueRef<ShaderModule> vertexShader;

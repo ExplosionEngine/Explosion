@@ -36,25 +36,25 @@ namespace RHI {
 
     struct PrimitiveState {
         // TODO fill mode ?
-        PrimitiveTopologyType topologyType = PrimitiveTopologyType::TRIANGLE;
-        IndexFormat stripIndexFormat = IndexFormat::UINT16;
-        FrontFace frontFace = FrontFace::CCW;
-        CullMode cullMode = CullMode::NONE;
+        PrimitiveTopologyType topologyType = PrimitiveTopologyType::triangle;
+        IndexFormat stripIndexFormat = IndexFormat::uint16;
+        FrontFace frontFace = FrontFace::ccw;
+        CullMode cullMode = CullMode::none;
         bool depthClip = false;
     };
 
     struct StencilFaceState {
-        ComparisonFunc comparisonFunc = ComparisonFunc::ALWAYS;
-        StencilOp failOp = StencilOp::KEEP;
-        StencilOp depthFailOp = StencilOp::KEEP;
-        StencilOp passOp = StencilOp::KEEP;
+        ComparisonFunc comparisonFunc = ComparisonFunc::always;
+        StencilOp failOp = StencilOp::keep;
+        StencilOp depthFailOp = StencilOp::keep;
+        StencilOp passOp = StencilOp::keep;
     };
 
     struct DepthStencilState {
         bool depthEnable = false;
         bool stencilEnable = false;
-        PixelFormat format = PixelFormat::MAX;
-        ComparisonFunc depthComparisonFunc = ComparisonFunc::ALWAYS;
+        PixelFormat format = PixelFormat::max;
+        ComparisonFunc depthComparisonFunc = ComparisonFunc::always;
         StencilFaceState stencilFront;
         StencilFaceState stencilBack;
         uint8_t stencilReadMask = 0xff;
@@ -71,9 +71,9 @@ namespace RHI {
     };
 
     struct BlendComponent {
-        BlendOp op = BlendOp::OP_ADD;
-        BlendFactor srcFactor = BlendFactor::ONE;
-        BlendFactor dstFactor = BlendFactor::ZERO;
+        BlendOp op = BlendOp::opAdd;
+        BlendFactor srcFactor = BlendFactor::one;
+        BlendFactor dstFactor = BlendFactor::zero;
     };
 
     struct BlendState {
@@ -82,9 +82,9 @@ namespace RHI {
     };
 
     struct ColorTargetState {
-        PixelFormat format = PixelFormat::BGRA8_UNORM;
+        PixelFormat format = PixelFormat::bgra8Unorm;
         BlendState blend;
-        ColorWriteFlags writeFlags = ColorWriteBits::RED | ColorWriteBits::GREEN | ColorWriteBits::BLUE | ColorWriteBits::ALPHA;
+        ColorWriteFlags writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
     };
 
     struct FragmentState {

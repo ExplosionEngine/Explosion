@@ -68,12 +68,12 @@ namespace MirrorTool {
     static FieldAccess GetFieldAccess(CX_CXXAccessSpecifier accessSpecifier)
     {
         static std::unordered_map<CX_CXXAccessSpecifier, FieldAccess> map = {
-            { CX_CXXPublic, FieldAccess::PUBLIC },
-            { CX_CXXProtected, FieldAccess::PROTECTED },
-            { CX_CXXPrivate, FieldAccess::PRIVATE }
+            { CX_CXXPublic, FieldAccess::pub },
+            { CX_CXXProtected, FieldAccess::pro },
+            { CX_CXXPrivate, FieldAccess::pri }
         };
         auto iter = map.find(accessSpecifier);
-        return iter == map.end() ? FieldAccess::MAX : iter->second;
+        return iter == map.end() ? FieldAccess::max : iter->second;
     }
 
     static void ParseMetaDatas(Node& node, const std::string& metaDataStr)
@@ -235,7 +235,7 @@ namespace MirrorTool {
             ClassInfo classInfo;
             classInfo.outerName = GetOuterName(context.outerName, context.name);
             classInfo.name = spellingStr;
-            classInfo.lastFieldAccess = kind == CXCursor_StructDecl ? FieldAccess::PUBLIC : FieldAccess::PRIVATE;
+            classInfo.lastFieldAccess = kind == CXCursor_StructDecl ? FieldAccess::pub : FieldAccess::pri;
             context.classes.emplace_back(std::move(classInfo));
             VisitChildren(ClassVisitor, ClassInfo, cursor, context.classes.back());
             ApplyMetaFilter(context.classes, "class");
@@ -284,7 +284,7 @@ namespace MirrorTool {
         } else if (kind == CXCursor_StructDecl || kind == CXCursor_ClassDecl) {
             ClassInfo classInfo;
             classInfo.name = spellingStr;
-            classInfo.lastFieldAccess = kind == CXCursor_StructDecl ? FieldAccess::PUBLIC : FieldAccess::PRIVATE;
+            classInfo.lastFieldAccess = kind == CXCursor_StructDecl ? FieldAccess::pub : FieldAccess::pri;
             context.global.classes.emplace_back(std::move(classInfo));
             VisitChildren(ClassVisitor, ClassInfo, cursor, context.global.classes.back());
             ApplyMetaFilter(context.global.classes, "class");

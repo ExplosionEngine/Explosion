@@ -56,13 +56,13 @@ namespace RHI::Metal {
         auto &usage = createInfo.usages;
         MTLResourceOptions options = 0;
 
-        if ((usage & BufferUsageBits::MAP_READ) || (usage & BufferUsageBits::COPY_SRC)) {
+        if ((usage & BufferUsageBits::mapRead) || (usage & BufferUsageBits::copySrc)) {
             options |= MTLResourceCPUCacheModeDefaultCache;
         } else {
             options |= MTLResourceCPUCacheModeWriteCombined;
         }
 
-        if ((usage & BufferUsageBits::MAP_READ) || (usage & BufferUsageBits::MAP_WRITE)) {
+        if ((usage & BufferUsageBits::mapRead) || (usage & BufferUsageBits::mapWrite)) {
             options |= MTLResourceStorageModeShared;
         } else {
             options |= MTLResourceStorageModePrivate;
