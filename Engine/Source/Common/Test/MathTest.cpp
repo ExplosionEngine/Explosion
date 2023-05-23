@@ -273,3 +273,63 @@ TEST(MathTest, VecConstsTest)
     ASSERT_TRUE(FVec2(1, 0) == FVec2Consts::unitX);
     ASSERT_TRUE(IVec3(0, 0, 1) == IVec3Consts::unitZ);
 }
+
+TEST(MathTest, IMat2x3Test)
+{
+    IMat2x3 v0(1, 2, 3, 4, 5, 6);
+    for (auto i = 0; i < 6; i++) {
+        ASSERT_EQ(v0[i], i + 1);
+        ASSERT_EQ(v0.At(i / 3, i % 3), i + 1);
+    }
+
+    IMat2x3 v1 = (v0 + 3 - 2) / 2;
+    for (auto i = 0; i < 6; i++) {
+        ASSERT_EQ(v1.At(i / 3, i % 3), (i + 2) / 2);
+    }
+}
+
+TEST(MathTest, FMat3x4Test)
+{
+    FMat3x4 v0(
+        FVec4(1, 2, 3, 4),
+        FVec4(5, 6, 7, 8),
+        FVec4(9, 10, 11, 12)
+    );
+    for (auto i = 0; i < 12; i++) {
+        ASSERT_EQ(v0.At(i / 4, i % 4), i + 1);
+    }
+
+    FMat3x4 v1 = (v0 - 3.0f) * 4.0f;
+    FMat3x4 v2;
+    v2.SetRows(
+        FVec4(-8.0f, -4.0f, 0.0f, 4.0f),
+        FVec4(8.0f, 12.0f, 16.0f, 20.0f),
+        FVec4(24.0f, 28.0f, 32.0f, 36.0f)
+    );
+    ASSERT_TRUE(v1 == v2);
+}
+
+TEST(MathTest, MatViewTest)
+{
+    FMat3x3 v0(
+        FVec3(1, 2, 3),
+        FVec3(4, 5, 6),
+        FVec3(7, 8, 9)
+    );
+    ASSERT_TRUE(v0.Row(0) == FVec3(1, 2, 3));
+    ASSERT_TRUE(v0.Row(1) == FVec3(4, 5, 6));
+    ASSERT_TRUE(v0.Row(2) == FVec3(7, 8, 9));
+    ASSERT_TRUE(v0.Col(0) == FVec3(1, 4, 7));
+    ASSERT_TRUE(v0.Col(1) == FVec3(2, 5, 8));
+    ASSERT_TRUE(v0.Col(2) == FVec3(3, 6, 9));
+}
+
+TEST(MathTest, MatSetTest)
+{
+    // TODO
+}
+
+TEST(MathTest, MatMulTest)
+{
+    // TODO
+}
