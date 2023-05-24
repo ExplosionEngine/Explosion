@@ -78,6 +78,36 @@ namespace Common {
     requires (L >= 1) && (L <= 4)
     struct VecConsts {};
 
+    template <typename T>
+    struct VecConsts<T, 1> {
+        static const Vector<T, 1> zero;
+        static const Vector<T, 1> unit;
+    };
+
+    template <typename T>
+    struct VecConsts<T, 2> {
+        static const Vector<T, 2> zero;
+        static const Vector<T, 2> unitX;
+        static const Vector<T, 2> unitY;
+    };
+
+    template <typename T>
+    struct VecConsts<T, 3> {
+        static const Vector<T, 3> zero;
+        static const Vector<T, 3> unitX;
+        static const Vector<T, 3> unitY;
+        static const Vector<T, 3> unitZ;
+    };
+
+    template <typename T>
+    struct VecConsts<T, 4> {
+        static const Vector<T, 4> zero;
+        static const Vector<T, 4> unitX;
+        static const Vector<T, 4> unitY;
+        static const Vector<T, 4> unitZ;
+        static const Vector<T, 4> unitW;
+    };
+
     using BVec1 = Vector<bool, 1>;
     using BVec2 = Vector<bool, 2>;
     using BVec3 = Vector<bool, 3>;
@@ -275,36 +305,6 @@ namespace Common {
         : x(inX), y(inY), z(inZ), w(inW)
     {
     }
-
-    template <typename T>
-    struct VecConsts<T, 1> {
-        static const Vector<T, 1> zero;
-        static const Vector<T, 1> unit;
-    };
-
-    template <typename T>
-    struct VecConsts<T, 2> {
-        static const Vector<T, 2> zero;
-        static const Vector<T, 2> unitX;
-        static const Vector<T, 2> unitY;
-    };
-
-    template <typename T>
-    struct VecConsts<T, 3> {
-        static const Vector<T, 3> zero;
-        static const Vector<T, 3> unitX;
-        static const Vector<T, 3> unitY;
-        static const Vector<T, 3> unitZ;
-    };
-
-    template <typename T>
-    struct VecConsts<T, 4> {
-        static const Vector<T, 4> zero;
-        static const Vector<T, 4> unitX;
-        static const Vector<T, 4> unitY;
-        static const Vector<T, 4> unitZ;
-        static const Vector<T, 4> unitW;
-    };
 
     template <typename T>
     const Vector<T, 1> VecConsts<T, 1>::zero = Vector<T, 1>();

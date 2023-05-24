@@ -324,6 +324,11 @@ TEST(MathTest, MatViewTest)
     ASSERT_TRUE(v0.Col(2) == FVec3(3, 6, 9));
 }
 
+TEST(MathTest, MatConstsTest)
+{
+    // TODO
+}
+
 TEST(MathTest, MatSetTest)
 {
     // TODO

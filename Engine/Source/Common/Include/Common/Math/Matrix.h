@@ -92,6 +92,19 @@ namespace Common {
         inline Matrix<T, C, R> Transpose() const;
     };
 
+    template <typename T, uint8_t R, uint8_t C>
+    requires (R >= 1) && (R <= 4) && (C >= 1) && (C <= 4)
+    struct MatConsts {
+        static const Matrix<T, R, C> zero;
+    };
+
+    template <typename T, uint8_t L>
+    requires (L >= 1) && (L <= 4)
+    struct MatConsts<T, L, L> {
+        static const Matrix<T, L, L> zero;
+        static const Matrix<T, L, L> identity;
+    };
+
     using BMat1x1 = Matrix<bool, 1, 1>;
     using BMat1x2 = Matrix<bool, 1, 2>;
     using BMat1x3 = Matrix<bool, 1, 3>;
@@ -109,22 +122,22 @@ namespace Common {
     using BMat4x3 = Matrix<bool, 4, 3>;
     using BMat4x4 = Matrix<bool, 4, 4>;
 
-    using IMat1x1 = Matrix<uint32_t, 1, 1>;
-    using IMat1x2 = Matrix<uint32_t, 1, 2>;
-    using IMat1x3 = Matrix<uint32_t, 1, 3>;
-    using IMat1x4 = Matrix<uint32_t, 1, 4>;
-    using IMat2x1 = Matrix<uint32_t, 2, 1>;
-    using IMat2x2 = Matrix<uint32_t, 2, 2>;
-    using IMat2x3 = Matrix<uint32_t, 2, 3>;
-    using IMat2x4 = Matrix<uint32_t, 2, 4>;
-    using IMat3x1 = Matrix<uint32_t, 3, 1>;
-    using IMat3x2 = Matrix<uint32_t, 3, 2>;
-    using IMat3x3 = Matrix<uint32_t, 3, 3>;
-    using IMat3x4 = Matrix<uint32_t, 3, 4>;
-    using IMat4x1 = Matrix<uint32_t, 4, 1>;
-    using IMat4x2 = Matrix<uint32_t, 4, 2>;
-    using IMat4x3 = Matrix<uint32_t, 4, 3>;
-    using IMat4x4 = Matrix<uint32_t, 4, 4>;
+    using IMat1x1 = Matrix<int32_t, 1, 1>;
+    using IMat1x2 = Matrix<int32_t, 1, 2>;
+    using IMat1x3 = Matrix<int32_t, 1, 3>;
+    using IMat1x4 = Matrix<int32_t, 1, 4>;
+    using IMat2x1 = Matrix<int32_t, 2, 1>;
+    using IMat2x2 = Matrix<int32_t, 2, 2>;
+    using IMat2x3 = Matrix<int32_t, 2, 3>;
+    using IMat2x4 = Matrix<int32_t, 2, 4>;
+    using IMat3x1 = Matrix<int32_t, 3, 1>;
+    using IMat3x2 = Matrix<int32_t, 3, 2>;
+    using IMat3x3 = Matrix<int32_t, 3, 3>;
+    using IMat3x4 = Matrix<int32_t, 3, 4>;
+    using IMat4x1 = Matrix<int32_t, 4, 1>;
+    using IMat4x2 = Matrix<int32_t, 4, 2>;
+    using IMat4x3 = Matrix<int32_t, 4, 3>;
+    using IMat4x4 = Matrix<int32_t, 4, 4>;
 
     using HMat1x1 = Matrix<HalfFloat, 1, 1>;
     using HMat1x2 = Matrix<HalfFloat, 1, 2>;
@@ -176,6 +189,91 @@ namespace Common {
     using DMat4x2 = Matrix<double, 4, 2>;
     using DMat4x3 = Matrix<double, 4, 3>;
     using DMat4x4 = Matrix<double, 4, 4>;
+
+    using BMat1x1Consts = MatConsts<bool, 1, 1>;
+    using BMat1x2Consts = MatConsts<bool, 1, 2>;
+    using BMat1x3Consts = MatConsts<bool, 1, 3>;
+    using BMat1x4Consts = MatConsts<bool, 1, 4>;
+    using BMat2x1Consts = MatConsts<bool, 2, 1>;
+    using BMat2x2Consts = MatConsts<bool, 2, 2>;
+    using BMat2x3Consts = MatConsts<bool, 2, 3>;
+    using BMat2x4Consts = MatConsts<bool, 2, 4>;
+    using BMat3x1Consts = MatConsts<bool, 3, 1>;
+    using BMat3x2Consts = MatConsts<bool, 3, 2>;
+    using BMat3x3Consts = MatConsts<bool, 3, 3>;
+    using BMat3x4Consts = MatConsts<bool, 3, 4>;
+    using BMat4x1Consts = MatConsts<bool, 4, 1>;
+    using BMat4x2Consts = MatConsts<bool, 4, 2>;
+    using BMat4x3Consts = MatConsts<bool, 4, 3>;
+    using BMat4x4Consts = MatConsts<bool, 4, 4>;
+
+    using IMat1x1Consts = MatConsts<int32_t, 1, 1>;
+    using IMat1x2Consts = MatConsts<int32_t, 1, 2>;
+    using IMat1x3Consts = MatConsts<int32_t, 1, 3>;
+    using IMat1x4Consts = MatConsts<int32_t, 1, 4>;
+    using IMat2x1Consts = MatConsts<int32_t, 2, 1>;
+    using IMat2x2Consts = MatConsts<int32_t, 2, 2>;
+    using IMat2x3Consts = MatConsts<int32_t, 2, 3>;
+    using IMat2x4Consts = MatConsts<int32_t, 2, 4>;
+    using IMat3x1Consts = MatConsts<int32_t, 3, 1>;
+    using IMat3x2Consts = MatConsts<int32_t, 3, 2>;
+    using IMat3x3Consts = MatConsts<int32_t, 3, 3>;
+    using IMat3x4Consts = MatConsts<int32_t, 3, 4>;
+    using IMat4x1Consts = MatConsts<int32_t, 4, 1>;
+    using IMat4x2Consts = MatConsts<int32_t, 4, 2>;
+    using IMat4x3Consts = MatConsts<int32_t, 4, 3>;
+    using IMat4x4Consts = MatConsts<int32_t, 4, 4>;
+
+    using HMat1x1Consts = MatConsts<HalfFloat, 1, 1>;
+    using HMat1x2Consts = MatConsts<HalfFloat, 1, 2>;
+    using HMat1x3Consts = MatConsts<HalfFloat, 1, 3>;
+    using HMat1x4Consts = MatConsts<HalfFloat, 1, 4>;
+    using HMat2x1Consts = MatConsts<HalfFloat, 2, 1>;
+    using HMat2x2Consts = MatConsts<HalfFloat, 2, 2>;
+    using HMat2x3Consts = MatConsts<HalfFloat, 2, 3>;
+    using HMat2x4Consts = MatConsts<HalfFloat, 2, 4>;
+    using HMat3x1Consts = MatConsts<HalfFloat, 3, 1>;
+    using HMat3x2Consts = MatConsts<HalfFloat, 3, 2>;
+    using HMat3x3Consts = MatConsts<HalfFloat, 3, 3>;
+    using HMat3x4Consts = MatConsts<HalfFloat, 3, 4>;
+    using HMat4x1Consts = MatConsts<HalfFloat, 4, 1>;
+    using HMat4x2Consts = MatConsts<HalfFloat, 4, 2>;
+    using HMat4x3Consts = MatConsts<HalfFloat, 4, 3>;
+    using HMat4x4Consts = MatConsts<HalfFloat, 4, 4>;
+
+    using FMat1x1Consts = MatConsts<float, 1, 1>;
+    using FMat1x2Consts = MatConsts<float, 1, 2>;
+    using FMat1x3Consts = MatConsts<float, 1, 3>;
+    using FMat1x4Consts = MatConsts<float, 1, 4>;
+    using FMat2x1Consts = MatConsts<float, 2, 1>;
+    using FMat2x2Consts = MatConsts<float, 2, 2>;
+    using FMat2x3Consts = MatConsts<float, 2, 3>;
+    using FMat2x4Consts = MatConsts<float, 2, 4>;
+    using FMat3x1Consts = MatConsts<float, 3, 1>;
+    using FMat3x2Consts = MatConsts<float, 3, 2>;
+    using FMat3x3Consts = MatConsts<float, 3, 3>;
+    using FMat3x4Consts = MatConsts<float, 3, 4>;
+    using FMat4x1Consts = MatConsts<float, 4, 1>;
+    using FMat4x2Consts = MatConsts<float, 4, 2>;
+    using FMat4x3Consts = MatConsts<float, 4, 3>;
+    using FMat4x4Consts = MatConsts<float, 4, 4>;
+
+    using DMat1x1Consts = MatConsts<double, 1, 1>;
+    using DMat1x2Consts = MatConsts<double, 1, 2>;
+    using DMat1x3Consts = MatConsts<double, 1, 3>;
+    using DMat1x4Consts = MatConsts<double, 1, 4>;
+    using DMat2x1Consts = MatConsts<double, 2, 1>;
+    using DMat2x2Consts = MatConsts<double, 2, 2>;
+    using DMat2x3Consts = MatConsts<double, 2, 3>;
+    using DMat2x4Consts = MatConsts<double, 2, 4>;
+    using DMat3x1Consts = MatConsts<double, 3, 1>;
+    using DMat3x2Consts = MatConsts<double, 3, 2>;
+    using DMat3x3Consts = MatConsts<double, 3, 3>;
+    using DMat3x4Consts = MatConsts<double, 3, 4>;
+    using DMat4x1Consts = MatConsts<double, 4, 1>;
+    using DMat4x2Consts = MatConsts<double, 4, 2>;
+    using DMat4x3Consts = MatConsts<double, 4, 3>;
+    using DMat4x4Consts = MatConsts<double, 4, 4>;
 }
 
 namespace Common::Internal {
@@ -228,6 +326,23 @@ namespace Common::Internal {
                 matrix.At(i, VI) = inVectors[i];
             }
         }(), 0)... };
+    }
+
+    template <typename T, uint8_t L, size_t... VI>
+    static void SetMatrixToIdentity(Matrix<T, L, L>& matrix, std::index_sequence<VI...>)
+    {
+        static_assert(L == sizeof...(VI));
+        (void) std::initializer_list<int> { ([&]() -> void {
+            matrix.At(VI, VI) = 1;
+        }(), 0)... };
+    }
+
+    template <typename T, uint8_t L>
+    static Matrix<T, L, L> GetIdentityMatrix()
+    {
+        Matrix<T, L, L> result;
+        SetMatrixToIdentity(result, std::make_index_sequence<L> {});
+        return result;
     }
 }
 
@@ -550,4 +665,16 @@ namespace Common {
         }
         return result;
     }
+
+    template <typename T, uint8_t R, uint8_t C>
+    requires (R >= 1) && (R <= 4) && (C >= 1) && (C <= 4)
+    const Matrix<T, R, C> MatConsts<T, R, C>::zero = Matrix<T, R, C>(0);
+
+    template <typename T, uint8_t L>
+    requires (L >= 1) && (L <= 4)
+    const Matrix<T, L, L> MatConsts<T, L, L>::zero = Matrix<T, L, L>(0);
+
+    template <typename T, uint8_t L>
+    requires (L >= 1) && (L <= 4)
+    const Matrix<T, L, L> MatConsts<T, L, L>::identity = GetIdentityMatrix<T, L>();
 }
