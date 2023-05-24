@@ -823,9 +823,8 @@ private:
         attachment->view = attachment->texture->CreateTextureView(viewCreateInfo);
     }
 
-    ShaderModule* GetShaderModule(const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
+    ShaderModule* GetShaderModule(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
     {
-        std::vector<uint8_t> byteCode {};
         std::vector<std::string> includePath { "SSAO/Shader"};
 
         CompileShader(byteCode, fileName, entryPoint, shaderStage, includePath);
@@ -858,18 +857,27 @@ private:
 
     void CreatePipeline()
     {
-        shaderModules.gBufferVs     = GetShaderModule("SSAO/Shader/Gbuffer.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.gBufferPs     = GetShaderModule("SSAO/Shader/Gbuffer.hlsl", "FSMain", ShaderStageBits::sPixel);
-        shaderModules.ssaoVs        = GetShaderModule("SSAO/Shader/SSAO.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.ssaoPs        = GetShaderModule("SSAO/Shader/SSAO.hlsl", "FSMain", ShaderStageBits::sPixel);
-        shaderModules.ssaoBlurVs    = GetShaderModule("SSAO/Shader/Blur.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.ssaoBlurPs    = GetShaderModule("SSAO/Shader/Blur.hlsl", "FSMain", ShaderStageBits::sPixel);
-        shaderModules.compositionVs = GetShaderModule("SSAO/Shader/Composition.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.compositionPs = GetShaderModule("SSAO/Shader/Composition.hlsl", "FSMain", ShaderStageBits::sPixel);
+        std::vector<uint8_t> gBufferVs;
+        std::vector<uint8_t> gBufferPs;
+        std::vector<uint8_t> ssaoVs;
+        std::vector<uint8_t> ssaoPs;
+        std::vector<uint8_t> blurVs;
+        std::vector<uint8_t> blurPs;
+        std::vector<uint8_t> compositionVs;
+        std::vector<uint8_t> compositionPs;
+
+        shaderModules.gBufferVs     = GetShaderModule(gBufferVs, "SSAO/Shader/Gbuffer.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.gBufferPs     = GetShaderModule(gBufferPs, "SSAO/Shader/Gbuffer.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.ssaoVs        = GetShaderModule(ssaoVs, "SSAO/Shader/SSAO.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.ssaoPs        = GetShaderModule(ssaoPs, "SSAO/Shader/SSAO.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.ssaoBlurVs    = GetShaderModule(blurVs, "SSAO/Shader/Blur.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.ssaoBlurPs    = GetShaderModule(blurPs, "SSAO/Shader/Blur.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.compositionVs = GetShaderModule(compositionVs, "SSAO/Shader/Composition.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.compositionPs = GetShaderModule(compositionPs, "SSAO/Shader/Composition.hlsl", "FSMain", ShaderStageBits::sPixel);
 
         // Gbuffer vertex
         std::array<VertexAttribute, 4> vertexAttributes {};
-        vertexAttributes[0].format = VertexFormat::float32X3;
+        vertexAttributes[0].format = VertexFormat::float32X4;
         vertexAttributes[0].offset = 0;
         vertexAttributes[0].semanticName = "POSITION";
         vertexAttributes[0].semanticIndex = 0;

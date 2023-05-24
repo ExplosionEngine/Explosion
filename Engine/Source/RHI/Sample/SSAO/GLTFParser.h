@@ -41,7 +41,7 @@ struct MaterialData
 };
 
 struct Vertex {
-    glm::vec3 pos;
+    glm::vec4 pos;
     glm::vec2 uv;
     glm::vec4 color;
     glm::vec3 normal;

@@ -31,13 +31,13 @@ VSOutput VSMain(float4 postion : POSITION, float2 uv : TEXCOORD)
 	return output;
 }
 
-float4 FSMain(float2 inUV : TEXCOORD) : SV_TARGET
+float4 FSMain(VSOutput input) : SV_TARGET
 {
-	float3 fragPos = texturePosition.Sample(texSampler, inUV).rgb;
-	float3 normal = normalize(textureNormal.Sample(texSampler, inUV).rgb * 2.0 - 1.0);
-	float4 albedo = textureAlbedo.Sample(texSampler, inUV);
+	float3 fragPos = texturePosition.Sample(texSampler, input.UV).rgb;
+	float3 normal = normalize(textureNormal.Sample(texSampler, input.UV).rgb * 2.0 - 1.0);
+	float4 albedo = textureAlbedo.Sample(texSampler, input.UV);
 
-	float ssao = (ssaoBlur == 1) ? textureSSAOBlur.Sample(texSampler, inUV).r : textureSSAO.Sample(texSampler, inUV).r;
+	float ssao = (ssaoBlur == 1) ? textureSSAOBlur.Sample(texSampler, input.UV).r : textureSSAO.Sample(texSampler, input.UV).r;
 
 	float3 lightPos = float3(0.0, 0.0, 0.0);
 	float3 L = normalize(lightPos - fragPos);

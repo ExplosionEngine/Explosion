@@ -40,6 +40,24 @@ namespace RHI::DirectX12 {
         }
         return result;
     }
+    static D3D12_RESOURCE_FLAGS GetDX12ResourceFlags(TextureUsageFlags textureUsages) {
+        static std::unordered_map<TextureUsageBits, D3D12_RESOURCE_FLAGS> rules = {
+            { TextureUsageBits::copySrc, D3D12_RESOURCE_FLAG_NONE },
+            { TextureUsageBits::copyDst, D3D12_RESOURCE_FLAG_NONE },
+            { TextureUsageBits::textureBinding, D3D12_RESOURCE_FLAG_NONE },
+            { TextureUsageBits::storageBinding, D3D12_RESOURCE_FLAG_NONE },
+            { TextureUsageBits::renderAttachment, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET },
+            { TextureUsageBits::depthStencilAttachment, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL },
+        };
+
+        D3D12_RESOURCE_FLAGS result = D3D12_RESOURCE_FLAG_NONE;
+        for (const auto& rule : rules) {
+            if (textureUsages & rule.first) {
+                result |= rule.second;
+            }
+        }
+        return result;
+    }
 }
 
 namespace RHI::DirectX12 {
@@ -87,7 +105,7 @@ namespace RHI::DirectX12 {
         textureDesc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.format);
         textureDesc.Width = createInfo.extent.x;
         textureDesc.Height = createInfo.extent.y;
-        textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+        textureDesc.Flags = GetDX12ResourceFlags(createInfo.usages);
         textureDesc.DepthOrArraySize = createInfo.extent.z;
         textureDesc.SampleDesc.Count = createInfo.samples;
         // TODO https://docs.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc
@@ -98,7 +116,7 @@ namespace RHI::DirectX12 {
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &textureDesc,
-            D3D12_RESOURCE_STATE_COPY_DEST,
+            D3D12_RESOURCE_STATE_COMMON,
             nullptr,
             IID_PPV_ARGS(&dx12Resource)));
         Assert(success);

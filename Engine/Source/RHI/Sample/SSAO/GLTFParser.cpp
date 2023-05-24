@@ -159,7 +159,8 @@ void Model::LoadNode(const aiScene* scene, aiNode* node, SharedRef<Node>& parent
                 vector.x = mesh->mVertices[i].x;
                 vector.y = mesh->mVertices[i].y;
                 vector.z = mesh->mVertices[i].z;
-                vert.pos = vector;
+
+                vert.pos = glm::vec4(vector, 1.0f);
 
                 // normal
                 if (mesh->HasNormals()) {
@@ -184,7 +185,7 @@ void Model::LoadNode(const aiScene* scene, aiNode* node, SharedRef<Node>& parent
                 }
 
                 // pre transform vert
-                vert.pos = glm::vec3(localMatrix * glm::vec4(vert.pos, 1.0f));
+                vert.pos = localMatrix * vert.pos;
                 vert.normal = glm::normalize(glm::mat3(localMatrix) * vert.normal);
 
                 raw_vertex_buffer.emplace_back(vert);
