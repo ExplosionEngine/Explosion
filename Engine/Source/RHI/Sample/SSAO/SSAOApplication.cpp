@@ -43,6 +43,11 @@ public:
         return graphicsQueue;
     }
 
+    Fence* GetFence()
+    {
+        return fence.Get();
+    }
+
 protected:
     void OnCreate() override
     {
@@ -51,6 +56,7 @@ protected:
         CreateInstanceAndSelectGPU();
         RequestDeviceAndFetchQueues();
         CreateSwapChain();
+        CreateFence();
         CreateVertexBuffer();
         CreateIndexBuffer();
         CreateQuadBuffer();
@@ -60,7 +66,6 @@ protected:
         CreateBindGroupLayoutAndPipelineLayout();
         CreateBindGroup();
         CreatePipeline();
-        CreateFence();
         CreateCommandBuffer();
         GenerateRenderables();
     }
@@ -124,7 +129,7 @@ private:
             BufferCreateInfo bufferCreateInfo {};
             bufferCreateInfo.size = texData->GetSize();
             bufferCreateInfo.usages = BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
-            auto* pixelBuffer = app->GetDevice()->CreateBuffer(bufferCreateInfo);
+            UniqueRef<Buffer> pixelBuffer = app->GetDevice()->CreateBuffer(bufferCreateInfo);
             if (pixelBuffer != nullptr) {
                 auto* mapData = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
                 memcpy(mapData, texData->buffer.data(), bufferCreateInfo.size);
@@ -149,19 +154,22 @@ private:
             viewCreateInfo.aspect = TextureAspect::color;
             diffuseColorMapView = diffuseColorMap->CreateTextureView(viewCreateInfo);
 
-            auto* texCommandBuffer = app->GetDevice()->CreateCommandBuffer();
-            auto* commandEncoder = texCommandBuffer->Begin();
+            UniqueRef<CommandBuffer> texCommandBuffer = app->GetDevice()->CreateCommandBuffer();
+
+            UniqueRef<CommandEncoder> commandEncoder = texCommandBuffer->Begin();
             commandEncoder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::undefined, TextureState::copyDst));
             TextureSubResourceInfo subResourceInfo {};
             subResourceInfo.mipLevel = 0;
             subResourceInfo.arrayLayerNum = 1;
             subResourceInfo.baseArrayLayer = 0;
             subResourceInfo.aspect = TextureAspect::color;
-            commandEncoder->CopyBufferToTexture(pixelBuffer, diffuseColorMap.Get(), &subResourceInfo, {texData->width, texData->height, 1});
+            commandEncoder->CopyBufferToTexture(pixelBuffer.Get(), diffuseColorMap.Get(), &subResourceInfo, {texData->width, texData->height, 1});
             commandEncoder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
             commandEncoder->End();
 
-            app->GetQueue()->Submit(texCommandBuffer, nullptr);
+            app->GetFence()->Reset();
+            app->GetQueue()->Submit(texCommandBuffer.Get(), app->GetFence());
+            app->GetFence()->Wait();
 
             // per renderable bindGroup
             std::vector<BindGroupEntry> entries(2);
@@ -755,7 +763,7 @@ private:
         bufferCreateInfo.size = ssaoNoise.size() * sizeof(glm::vec4);
         // To make this buffer has correct resource state(D3D12_RESOURCE_STATE_GENERIC_READ) in dx, add uniform usage flag
         bufferCreateInfo.usages = BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
-        auto* pixelBuffer = device->CreateBuffer(bufferCreateInfo);
+        UniqueRef<Buffer> pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, ssaoNoise.data(), bufferCreateInfo.size);
@@ -785,20 +793,22 @@ private:
         samplerCreateInfo.addressModeV = AddressMode::repeat;
         noiseSampler = device->CreateSampler(samplerCreateInfo);
 
-        auto* texCommandBuffer = device->CreateCommandBuffer();
-        auto* commandEncoder = texCommandBuffer->Begin();
-        // Dx need not to transition resource state before copy
+        UniqueRef<CommandBuffer> texCommandBuffer = device->CreateCommandBuffer();
+
+        UniqueRef<CommandEncoder> commandEncoder = texCommandBuffer->Begin();
         commandEncoder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::undefined, TextureState::copyDst));
         TextureSubResourceInfo subResourceInfo {};
         subResourceInfo.mipLevel = 0;
         subResourceInfo.arrayLayerNum = 1;
         subResourceInfo.baseArrayLayer = 0;
         subResourceInfo.aspect = TextureAspect::color;
-        commandEncoder->CopyBufferToTexture(pixelBuffer, noise.tex.Get(), &subResourceInfo, {ssaoNoiseDim, ssaoNoiseDim, 1});
+        commandEncoder->CopyBufferToTexture(pixelBuffer.Get(), noise.tex.Get(), &subResourceInfo, {ssaoNoiseDim, ssaoNoiseDim, 1});
         commandEncoder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
         commandEncoder->End();
 
-        graphicsQueue->Submit(texCommandBuffer, nullptr);
+        fence->Reset();
+        graphicsQueue->Submit(texCommandBuffer.Get(), fence.Get());
+        fence->Wait();
 
     }
 
@@ -1169,6 +1179,7 @@ private:
 
     void SubmitCommandBufferAndPresent()
     {
+        fence->Reset();
         graphicsQueue->Submit(commandBuffer.Get(), fence.Get());
         fence->Wait();
         swapChain->Present();
