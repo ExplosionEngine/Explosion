@@ -52,6 +52,11 @@ namespace RHI::Vulkan {
         if (vkImage && ownMemory) {
             device.GetVkDevice().destroyImage(vkImage, nullptr);
         }
+
+        if (vkImageView) {
+            device.GetVkDevice().destroyImageView(vkImageView, nullptr);
+        }
+
         FreeMemory();
     }
 

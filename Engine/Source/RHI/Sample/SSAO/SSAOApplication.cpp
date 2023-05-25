@@ -152,6 +152,7 @@ private:
             viewCreateInfo.baseMipLevel = 0;
             viewCreateInfo.mipLevelNum = 1;
             viewCreateInfo.aspect = TextureAspect::color;
+            viewCreateInfo.type = TextureViewType::textureBinding;
             diffuseColorMapView = diffuseColorMap->CreateTextureView(viewCreateInfo);
 
             UniqueRef<CommandBuffer> texCommandBuffer = app->GetDevice()->CreateCommandBuffer();
@@ -274,13 +275,17 @@ private:
 
     struct ColorAttachment {
         UniqueRef<Texture> texture;
-        UniqueRef<TextureView> view;
+        UniqueRef<TextureView> rtv;
+        UniqueRef<TextureView> srv;
     };
 
     ColorAttachment gBufferPos;
     ColorAttachment gBufferNormal;
     ColorAttachment gBufferAlbedo;
-    ColorAttachment gBufferDepth;
+    struct {
+        UniqueRef<Texture> texture;
+        UniqueRef<TextureView> view;
+    } gBufferDepth;
 
     ColorAttachment ssaoOutput;
     ColorAttachment ssaoBlurOutput;
@@ -344,6 +349,7 @@ private:
             viewCreateInfo.baseMipLevel = 0;
             viewCreateInfo.mipLevelNum = 1;
             viewCreateInfo.aspect = TextureAspect::color;
+            viewCreateInfo.type = TextureViewType::colorAttachment;
             swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(viewCreateInfo);
         }
     }
@@ -616,9 +622,9 @@ private:
         // ssao generation
         entries.resize(7);
         entries[0].binding.type = BindingType::texture;
-        entries[0].textureView = gBufferPos.view.Get();
+        entries[0].textureView = gBufferPos.srv.Get();
         entries[1].binding.type = BindingType::texture;
-        entries[1].textureView = gBufferNormal.view.Get();
+        entries[1].textureView = gBufferNormal.srv.Get();
         entries[2].binding.type = BindingType::texture;
         entries[2].textureView = noise.view.Get();
         entries[3].binding.type = BindingType::sampler;
@@ -654,7 +660,7 @@ private:
         // ssao blur
         entries.resize(2);
         entries[0].binding.type = BindingType::texture;
-        entries[0].textureView = ssaoOutput.view.Get();
+        entries[0].textureView = ssaoOutput.srv.Get();
         entries[1].binding.type = BindingType::sampler;
         entries[1].sampler = sampler.Get();
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
@@ -672,15 +678,15 @@ private:
         // composition
         entries.resize(7);
         entries[0].binding.type = BindingType::texture;
-        entries[0].textureView = gBufferPos.view.Get();
+        entries[0].textureView = gBufferPos.srv.Get();
         entries[1].binding.type = BindingType::texture;
-        entries[1].textureView = gBufferNormal.view.Get();
+        entries[1].textureView = gBufferNormal.srv.Get();
         entries[2].binding.type = BindingType::texture;
-        entries[2].textureView = gBufferAlbedo.view.Get();
+        entries[2].textureView = gBufferAlbedo.srv.Get();
         entries[3].binding.type = BindingType::texture;
-        entries[3].textureView = ssaoOutput.view.Get();
+        entries[3].textureView = ssaoOutput.srv.Get();
         entries[4].binding.type = BindingType::texture;
-        entries[4].textureView = ssaoBlurOutput.view.Get();
+        entries[4].textureView = ssaoBlurOutput.srv.Get();
         entries[5].binding.type = BindingType::sampler;
         entries[5].sampler = sampler.Get();
         entries[6].binding.type = BindingType::uniformBuffer;
@@ -710,14 +716,12 @@ private:
 
     void PrepareOffscreen()
     {
-        CreateAttachments(PixelFormat::rgba32Float, TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment, TextureAspect::color, &gBufferPos, width, height);
-        CreateAttachments(PixelFormat::rgba8Unorm, TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment, TextureAspect::color, &gBufferNormal, width, height);
-        CreateAttachments(PixelFormat::rgba8Unorm, TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment, TextureAspect::color, &gBufferAlbedo, width, height);
-        CreateAttachments(PixelFormat::d32FloatS8Uint, TextureUsageBits::depthStencilAttachment, TextureAspect::depthStencil, &gBufferDepth, width, height);
-
-        CreateAttachments(PixelFormat::r8Unorm, TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment, TextureAspect::color, &ssaoOutput, width, height);
-
-        CreateAttachments(PixelFormat::r8Unorm, TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment, TextureAspect::color, &ssaoBlurOutput, width, height);
+        CreateAttachments(PixelFormat::rgba32Float, gBufferPos);
+        CreateAttachments(PixelFormat::rgba8Unorm, gBufferNormal);
+        CreateAttachments(PixelFormat::rgba8Unorm, gBufferAlbedo);
+        CreateAttachments(PixelFormat::r8Unorm, ssaoOutput);
+        CreateAttachments(PixelFormat::r8Unorm, ssaoBlurOutput);
+        CreateDepthAttachment();
     }
 
     void PrepareUniformBuffers()
@@ -786,6 +790,7 @@ private:
         viewCreateInfo.baseMipLevel = 0;
         viewCreateInfo.mipLevelNum = 1;
         viewCreateInfo.aspect = TextureAspect::color;
+        viewCreateInfo.type = TextureViewType::textureBinding;
         noise.view = noise.tex->CreateTextureView(viewCreateInfo);
 
         SamplerCreateInfo samplerCreateInfo {};
@@ -812,16 +817,15 @@ private:
 
     }
 
-    void CreateAttachments(RHI::PixelFormat format, TextureUsageFlags flags, TextureAspect aspect, ColorAttachment* attachment, uint32_t width, uint32_t height)
-    {
+    void CreateDepthAttachment() {
         TextureCreateInfo texCreateInfo {};
-        texCreateInfo.format = format;
+        texCreateInfo.format = PixelFormat::d32FloatS8Uint;
         texCreateInfo.mipLevels = 1;
         texCreateInfo.extent = {width, height, 1};
         texCreateInfo.dimension = TextureDimension::t2D;
         texCreateInfo.samples = 1;
-        texCreateInfo.usages = flags;
-        attachment->texture = device->CreateTexture(texCreateInfo);
+        texCreateInfo.usages = TextureUsageBits::depthStencilAttachment;
+        gBufferDepth.texture = device->CreateTexture(texCreateInfo);
 
         TextureViewCreateInfo viewCreateInfo {};
         viewCreateInfo.dimension = TextureViewDimension::tv2D;
@@ -829,8 +833,42 @@ private:
         viewCreateInfo.arrayLayerNum = 1;
         viewCreateInfo.baseMipLevel = 0;
         viewCreateInfo.mipLevelNum = 1;
-        viewCreateInfo.aspect = aspect;
-        attachment->view = attachment->texture->CreateTextureView(viewCreateInfo);
+        viewCreateInfo.aspect = TextureAspect::depthStencil;
+        viewCreateInfo.type = TextureViewType::depthStencil;
+        gBufferDepth.view = gBufferDepth.texture->CreateTextureView(viewCreateInfo);
+    }
+
+    void CreateAttachments(RHI::PixelFormat format, ColorAttachment& attachment)
+    {
+        TextureCreateInfo texCreateInfo {};
+        texCreateInfo.format = format;
+        texCreateInfo.mipLevels = 1;
+        texCreateInfo.extent = {width, height, 1};
+        texCreateInfo.dimension = TextureDimension::t2D;
+        texCreateInfo.samples = 1;
+        texCreateInfo.usages = TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment;
+        attachment.texture = device->CreateTexture(texCreateInfo);
+
+        TextureViewCreateInfo rtvCreateInfo {};
+        rtvCreateInfo.dimension = TextureViewDimension::tv2D;
+        rtvCreateInfo.baseArrayLayer = 0;
+        rtvCreateInfo.arrayLayerNum = 1;
+        rtvCreateInfo.baseMipLevel = 0;
+        rtvCreateInfo.mipLevelNum = 1;
+        rtvCreateInfo.aspect = TextureAspect::color;
+        rtvCreateInfo.type = TextureViewType::colorAttachment;
+        attachment.rtv = attachment.texture->CreateTextureView(rtvCreateInfo);
+
+        TextureViewCreateInfo srvCreateInfo {};
+        srvCreateInfo.dimension = TextureViewDimension::tv2D;
+        srvCreateInfo.baseArrayLayer = 0;
+        srvCreateInfo.arrayLayerNum = 1;
+        srvCreateInfo.baseMipLevel = 0;
+        srvCreateInfo.mipLevelNum = 1;
+        srvCreateInfo.aspect = TextureAspect::color;
+        srvCreateInfo.type = TextureViewType::textureBinding;
+
+        attachment.srv = attachment.texture->CreateTextureView(srvCreateInfo);
     }
 
     ShaderModule* GetShaderModule(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
@@ -1029,17 +1067,17 @@ private:
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::clear;
             colorAttachments[0].storeOp = StoreOp::store;
-            colorAttachments[0].view = gBufferPos.view.Get();
+            colorAttachments[0].view = gBufferPos.rtv.Get();
             colorAttachments[0].resolve = nullptr;
             colorAttachments[1].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[1].loadOp = LoadOp::clear;
             colorAttachments[1].storeOp = StoreOp::store;
-            colorAttachments[1].view = gBufferNormal.view.Get();
+            colorAttachments[1].view = gBufferNormal.rtv.Get();
             colorAttachments[1].resolve = nullptr;
             colorAttachments[2].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[2].loadOp = LoadOp::clear;
             colorAttachments[2].storeOp = StoreOp::store;
-            colorAttachments[2].view = gBufferAlbedo.view.Get();
+            colorAttachments[2].view = gBufferAlbedo.rtv.Get();
             colorAttachments[2].resolve = nullptr;
             
             GraphicsPassDepthStencilAttachment depthAttachment {};
@@ -1085,7 +1123,7 @@ private:
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::clear;
             colorAttachments[0].storeOp = StoreOp::store;
-            colorAttachments[0].view = ssaoOutput.view.Get();
+            colorAttachments[0].view = ssaoOutput.rtv.Get();
             colorAttachments[0].resolve = nullptr;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
@@ -1116,7 +1154,7 @@ private:
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::clear;
             colorAttachments[0].storeOp = StoreOp::store;
-            colorAttachments[0].view = ssaoBlurOutput.view.Get();
+            colorAttachments[0].view = ssaoBlurOutput.rtv.Get();
             colorAttachments[0].resolve = nullptr;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};

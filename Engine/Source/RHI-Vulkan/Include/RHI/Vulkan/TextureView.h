@@ -31,7 +31,6 @@ namespace RHI::Vulkan {
         void CreateImageView(const TextureViewCreateInfo& createInfo);
         VKDevice& device;
         VKTexture& vkTexture;
-        vk::ImageView vkTextureView;
         uint8_t baseMipLevel;
         uint8_t mipLevelNum;
         uint8_t baseArrayLayer;
