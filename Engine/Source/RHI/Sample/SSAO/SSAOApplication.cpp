@@ -765,8 +765,7 @@ private:
 
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = ssaoNoise.size() * sizeof(glm::vec4);
-        // To make this buffer has correct resource state(D3D12_RESOURCE_STATE_GENERIC_READ) in dx, add uniform usage flag
-        bufferCreateInfo.usages = BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
+        bufferCreateInfo.usages = BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         UniqueRef<Buffer> pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);

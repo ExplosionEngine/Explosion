@@ -11,22 +11,22 @@
 namespace RHI::DirectX12 {
     static bool IsShaderResource(TextureViewType type)
     {
-        return (type & TextureViewType::textureBinding) != 0;
+        return (type == TextureViewType::textureBinding);
     }
 
     static bool IsUnorderedAccess(TextureViewType type)
     {
-        return (type & TextureViewType::storageBinding) != 0;
+        return (type == TextureViewType::storageBinding);
     }
 
     static bool IsRenderTarget(TextureViewType type)
     {
-        return (type & TextureViewType::renderAttachment) != 0;
+        return (type == TextureViewType::colorAttachment);
     }
 
     static bool IsDepthStencil(TextureViewType type)
     {
-        return (type & TextureViewType::depthStencil) != 0;
+        return (type == TextureViewType::depthStencil);
     }
 
     static void FillTexture1DSRV(D3D12_TEX1D_SRV& srv, const TextureViewCreateInfo& createInfo)
