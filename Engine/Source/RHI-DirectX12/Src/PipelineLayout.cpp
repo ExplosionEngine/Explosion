@@ -32,7 +32,9 @@ namespace RHI::DirectX12 {
         }
 
         auto iter2 = iter1->second.find(RootParameterKey { layoutIndex, binding });
-        Assert(iter2 != iter1->second.end());
+        if (iter2 == iter1->second.end()) {
+            return {};
+        }
         return iter2->second;
     }
 
