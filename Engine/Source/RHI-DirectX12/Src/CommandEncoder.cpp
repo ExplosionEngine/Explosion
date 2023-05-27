@@ -21,14 +21,15 @@
 namespace RHI::DirectX12 {
     D3D12_CLEAR_FLAGS GetDX12ClearFlags(const GraphicsPassDepthStencilAttachment& depthStencilAttachment)
     {
-        D3D12_CLEAR_FLAGS result;
-        if (depthStencilAttachment.depthLoadOp == LoadOp::clear) {
-            result |= D3D12_CLEAR_FLAG_DEPTH;
+        Assert(depthStencilAttachment.depthLoadOp == LoadOp::clear || depthStencilAttachment.stencilLoadOp == LoadOp::clear);
+
+        if (depthStencilAttachment.stencilLoadOp != LoadOp::clear) {
+            return D3D12_CLEAR_FLAG_DEPTH;
         }
-        if (depthStencilAttachment.stencilLoadOp == LoadOp::clear) {
-            result |= D3D12_CLEAR_FLAG_STENCIL;
+        if (depthStencilAttachment.depthLoadOp != LoadOp::clear) {
+            return D3D12_CLEAR_FLAG_STENCIL;
         }
-        return result;
+        return D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL;
     }
 }
 
