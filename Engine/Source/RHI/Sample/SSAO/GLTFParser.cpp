@@ -8,7 +8,9 @@
 
 #include "GLTFParser.h"
 
-glm::mat4 Node::LocalMatrix()
+using namespace Common;
+
+glm::mat4 Node::LocalMatrix() const
 {
     return matrix;
 }
@@ -16,19 +18,12 @@ glm::mat4 Node::LocalMatrix()
 glm::mat4 Node::GetMatrix()
 {
     glm::mat4 m = LocalMatrix();
-    Node* p = parent;
-    while (p != nullptr) {
-        m = p->LocalMatrix() * m;
-        p = p->parent;
+    auto& p = parent;
+    while (p.Lock().Get() != nullptr) {
+        m = p.Lock()->LocalMatrix() * m;
+        p = p.Lock()->parent;
     }
     return m;
-}
-
-Node::~Node()
-{
-    for (auto* child : children) {
-        delete child;
-    }
 }
 
 void Model::LoadFromFile(const std::string& path)
@@ -47,22 +42,10 @@ void Model::LoadFromFile(const std::string& path)
 
     LoadMaterials(scene);
 
-    rootNode = new Node();
+    SharedRef<Node> parentForRoot = nullptr;
+    rootNode = SharedRef<Node>(new Node(parentForRoot));
     for (unsigned int i = 0; i < scene->mRootNode->mNumChildren; i++) {
         LoadNode(scene, scene->mRootNode->mChildren[i], rootNode);
-    }
-
-    for (auto& node : linearNodes) {
-        const auto localMatrix = node->GetMatrix();
-        for (auto& mesh : node->meshes) {
-            for (uint32_t i = 0; i < mesh->vertexCount; i++) {
-                auto& vertex = raw_vertex_buffer[mesh->firstVertex + i];
-
-                // pre_transform vertices
-                vertex.pos = glm::vec3(localMatrix * glm::vec4(vertex.pos, 1.0f));
-                vertex.normal = glm::normalize(glm::mat3(localMatrix) * vertex.normal);
-            }
-        }
     }
 }
 
@@ -73,7 +56,7 @@ void Model::LoadMaterials(const aiScene* scene)
     for (unsigned int i = 0; i < scene->mNumMaterials; i++) {
         auto* material = scene->mMaterials[i];
 
-        Common::SharedRef<MaterialData> mMaterial = new MaterialData();
+        SharedRef<MaterialData> mMaterial = new MaterialData();
         mMaterial->baseColorTexture = LoadMaterialTexture(scene, material, aiTextureType_DIFFUSE, fromEmbedded);
         mMaterial->normalTexture = LoadMaterialTexture(scene, material, aiTextureType_NORMALS, fromEmbedded);
 
@@ -81,7 +64,7 @@ void Model::LoadMaterials(const aiScene* scene)
     }
 }
 
-Common::UniqueRef<TextureData> Model::LoadMaterialTexture(const aiScene* scene, const aiMaterial* mat, aiTextureType type, bool fromEmbedded)
+UniqueRef<TextureData> Model::LoadMaterialTexture(const aiScene* scene, const aiMaterial* mat, aiTextureType type, bool fromEmbedded) const
 {
     if (mat->GetTextureCount(type) == 0) {
         return nullptr;
@@ -103,7 +86,7 @@ Common::UniqueRef<TextureData> Model::LoadMaterialTexture(const aiScene* scene, 
         data = stbi_load(filePath.c_str(), &width, &height, &comp,0);
     }
 
-    Common::UniqueRef<TextureData> mTexData = new TextureData();
+    UniqueRef<TextureData> mTexData = new TextureData();
 
     // Most device don`t support RGB only on Vulkan, so convert if necessary
     if (comp == 3) {
@@ -130,16 +113,16 @@ Common::UniqueRef<TextureData> Model::LoadMaterialTexture(const aiScene* scene, 
     return mTexData;
 }
 
-void Model::LoadNode(const aiScene* scene, aiNode* node, Node* parent)
+void Model::LoadNode(const aiScene* scene, aiNode* node, SharedRef<Node>& parent)
 {
-    auto* mNode = new Node {};
-    mNode->parent = parent;
+    SharedRef<Node> mNode = new Node(parent);
     mNode->matrix = glm::transpose(glm::make_mat4x4(&node->mTransformation.a1));
 
     for (unsigned int m = 0; m < node->mNumChildren; m++) {
         LoadNode(scene, node->mChildren[m], mNode);
     }
 
+    const auto localMatrix = mNode->GetMatrix();
     for (unsigned int k = 0; k < node->mNumMeshes; k++) {
         auto* mesh = scene->mMeshes[node->mMeshes[k]];
 
@@ -176,7 +159,8 @@ void Model::LoadNode(const aiScene* scene, aiNode* node, Node* parent)
                 vector.x = mesh->mVertices[i].x;
                 vector.y = mesh->mVertices[i].y;
                 vector.z = mesh->mVertices[i].z;
-                vert.pos = vector;
+
+                vert.pos = glm::vec4(vector, 1.0f);
 
                 // normal
                 if (mesh->HasNormals()) {
@@ -200,27 +184,23 @@ void Model::LoadNode(const aiScene* scene, aiNode* node, Node* parent)
                     vert.color = glm::vec4(1.0f);
                 }
 
+                // pre transform vert
+                vert.pos = localMatrix * vert.pos;
+                vert.normal = glm::normalize(glm::mat3(localMatrix) * vert.normal);
+
                 raw_vertex_buffer.emplace_back(vert);
             }
         }
 
-        Common::UniqueRef<Mesh> mMesh = new Mesh(indexStart, indexCount, vertexStart, vertexCount, materialDatas[mesh->mMaterialIndex]);
+        UniqueRef<Mesh> mMesh = new Mesh(indexStart, indexCount, vertexStart, vertexCount, materialDatas[mesh->mMaterialIndex]);
         mMesh->SetDimensions(
                  glm::make_vec3(&mesh->mAABB.mMin.x),
                  glm::make_vec3(&mesh->mAABB.mMax.x)
                  );
 
-        mNode->meshes.emplace_back(std::move(mMesh));
+        // cache meshes in model instead of node, for the convenience of reading them
+        meshes.emplace_back(std::move(mMesh));
     }
 
-    if (parent != nullptr) {
-        parent->children.emplace_back(mNode);
-    }
-
-    linearNodes.push_back(mNode);
-}
-
-Model::~Model()
-{
-    delete rootNode;
+    parent->children.emplace_back(std::move(mNode));
 }

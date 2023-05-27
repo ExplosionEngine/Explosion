@@ -41,7 +41,7 @@ struct MaterialData
 };
 
 struct Vertex {
-    glm::vec3 pos;
+    glm::vec4 pos;
     glm::vec2 uv;
     glm::vec4 color;
     glm::vec3 normal;
@@ -85,31 +85,33 @@ struct Mesh {
     // mustn`t delele material here, for different meshes can point to the same material
 };
 
-// Can`t use shared_ptr because of shared_ptr cycle
 struct Node {
-    Node* parent;
-    std::vector<Node*> children;
+    explicit Node(Common::SharedRef<Node>& p)
+        : parent(Common::WeakRef<Node>(p)),
+        matrix(1.0f) {};
 
-    glm::mat4 matrix {1.0f };
-    std::vector<Common::UniqueRef<Mesh>> meshes;
+    Common::WeakRef<Node> parent;
+    std::vector<Common::SharedRef<Node>> children;
 
-    glm::mat4 LocalMatrix();
+    glm::mat4 matrix;
+//    std::vector<Common::UniqueRef<Mesh>> meshes;
+
+    glm::mat4 LocalMatrix() const;
     glm::mat4 GetMatrix();
-    ~Node();
 };
 
 
 class Model {
 public:
     Model() = default;
-    ~Model();
+    ~Model() = default;
 
     void LoadFromFile(const std::string& path);
-    void LoadNode(const aiScene* scene, aiNode* node, Node* parent);
+    void LoadNode(const aiScene* scene, aiNode* node, Common::SharedRef<Node>& parent);
     void LoadMaterials(const aiScene* scene);
 
 private:
-    Common::UniqueRef<TextureData> LoadMaterialTexture(const aiScene* scene, const aiMaterial* mat, aiTextureType type, bool fromEmbedded);
+    Common::UniqueRef<TextureData> LoadMaterialTexture(const aiScene* scene, const aiMaterial* mat, aiTextureType type, bool fromEmbedded) const;
 
     void CreateEmptyTexture()
     {
@@ -120,13 +122,14 @@ private:
     }
 
 public:
-    Node* rootNode;
-    std::vector<Node*> linearNodes;
+    Common::SharedRef<Node> rootNode;
 
     std::vector<Common::SharedRef<MaterialData>> materialDatas;
 
     std::vector<uint32_t> raw_index_buffer;
     std::vector<Vertex> raw_vertex_buffer;
+
+    std::vector<Common::UniqueRef<Mesh>> meshes;
 
     std::string directory;
 private:

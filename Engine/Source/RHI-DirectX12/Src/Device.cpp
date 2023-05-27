@@ -170,6 +170,11 @@ namespace RHI::DirectX12 {
         return AllocateDescriptor(samplerHeapList, 4, samplerDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     }
 
+    DescriptorAllocation DX12Device::AllocateDsvDescriptor()
+    {
+        return AllocateDescriptor(dsvHeapList, 1, dsvDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+    }
+
     DescriptorAllocation DX12Device::AllocateDescriptor(std::list<DescriptorHeapListNode>& list, uint8_t capacity, uint32_t descriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlag)
     {
         if (list.empty() || list.back().used >= capacity) {
@@ -244,6 +249,7 @@ namespace RHI::DirectX12 {
         rtvDescriptorSize = dx12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
         cbvSrvUavDescriptorSize = dx12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         samplerDescriptorSize = dx12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+        dsvDescriptorSize = dx12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
     }
 
 #if BUILD_CONFIG_DEBUG
