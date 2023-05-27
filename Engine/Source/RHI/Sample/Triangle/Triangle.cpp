@@ -213,7 +213,7 @@ private:
     void PopulateCommandBuffer()
     {
         auto backTextureIndex = swapChain->AcquireBackTexture();
-        CommandEncoder* commandEncoder = commandBuffer->Begin();
+        UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
         {
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
@@ -228,7 +228,7 @@ private:
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
 
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-            auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
                 graphicsEncoder->SetPipeline(pipeline.Get());
                 graphicsEncoder->SetScissor(0, 0, width, height);

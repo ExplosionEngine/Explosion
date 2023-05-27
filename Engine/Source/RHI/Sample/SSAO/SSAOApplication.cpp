@@ -1056,7 +1056,7 @@ private:
 
     void PopulateCommandBuffer()
     {
-        CommandEncoder* commandEncoder = commandBuffer->Begin();
+        UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
         {
             commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::undefined, TextureState::renderTarget));
             commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::undefined, TextureState::renderTarget));
@@ -1092,7 +1092,7 @@ private:
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = &depthAttachment;
 
-            auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
                 graphicsEncoder->SetPipeline(pipelines.gBuffer.Get());
                 graphicsEncoder->SetScissor(0, 0, width, height);
@@ -1130,7 +1130,7 @@ private:
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
 
-            auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
                 graphicsEncoder->SetPipeline(pipelines.ssao.Get());
                 graphicsEncoder->SetScissor(0, 0, width, height);
@@ -1161,7 +1161,7 @@ private:
             graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
 
-            auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
                 graphicsEncoder->SetPipeline(pipelines.ssaoBlur.Get());
                 graphicsEncoder->SetScissor(0, 0, width, height);
@@ -1195,7 +1195,7 @@ private:
             graphicsPassBeginInfo.depthStencilAttachment = nullptr;
 
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-            auto* graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
             {
                 graphicsEncoder->SetPipeline(pipelines.composition.Get());
                 graphicsEncoder->SetScissor(0, 0, width, height);

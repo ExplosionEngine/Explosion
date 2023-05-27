@@ -1069,7 +1069,7 @@ namespace Render {
 
     void RenderGraph::ExecuteComputePass(RHI::CommandEncoder* encoder, RGComputePass* computePass)
     {
-        RHI::ComputePassCommandEncoder* computeEncoder = encoder->BeginComputePass();
+        Common::UniqueRef<RHI::ComputePassCommandEncoder> computeEncoder = encoder->BeginComputePass();
         {
             computePass->Execute(*computeEncoder);
         }
@@ -1085,7 +1085,7 @@ namespace Render {
             colorAttachments.size(),
             colorAttachments.data(),
             depthStencilAttachment.has_value() ? &depthStencilAttachment.value() : nullptr);
-        RHI::GraphicsPassCommandEncoder* graphicsEncoder = encoder->BeginGraphicsPass(&beginInfo);
+        Common::UniqueRef<RHI::GraphicsPassCommandEncoder> graphicsEncoder = encoder->BeginGraphicsPass(&beginInfo);
         {
             rasterPass->Execute(*graphicsEncoder);
         }
