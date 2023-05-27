@@ -9,19 +9,24 @@
 #include <RHI/DirectX12/TextureView.h>
 
 namespace RHI::DirectX12 {
-    static bool IsShaderResource(TextureUsageFlags textureUsages)
+    static bool IsShaderResource(TextureViewType type)
     {
-        return (textureUsages & TextureUsageBits::textureBinding) != 0;
+        return (type == TextureViewType::textureBinding);
     }
 
-    static bool IsUnorderedAccess(TextureUsageFlags textureUsages)
+    static bool IsUnorderedAccess(TextureViewType type)
     {
-        return (textureUsages & TextureUsageBits::storageBinding) != 0;
+        return (type == TextureViewType::storageBinding);
     }
 
-    static bool IsRenderTarget(TextureUsageFlags textureUsages)
+    static bool IsRenderTarget(TextureViewType type)
     {
-        return (textureUsages & TextureUsageBits::renderAttachment) != 0;
+        return (type == TextureViewType::colorAttachment);
+    }
+
+    static bool IsDepthStencil(TextureViewType type)
+    {
+        return (type == TextureViewType::depthStencil);
     }
 
     static void FillTexture1DSRV(D3D12_TEX1D_SRV& srv, const TextureViewCreateInfo& createInfo)
@@ -165,6 +170,32 @@ namespace RHI::DirectX12 {
         rtv.FirstWSlice = createInfo.baseArrayLayer;
         rtv.WSize = createInfo.arrayLayerNum;
     }
+
+    static void FillTexture1DDSV(D3D12_TEX1D_DSV& dsv, const TextureViewCreateInfo& createInfo)
+    {
+        if (createInfo.dimension != TextureViewDimension::tv1D) {
+            return;
+        }
+        dsv.MipSlice = createInfo.baseMipLevel;
+    }
+
+    static void FillTexture2DDSV(D3D12_TEX2D_DSV& dsv, const TextureViewCreateInfo& createInfo)
+    {
+        if (createInfo.dimension != TextureViewDimension::tv2D) {
+            return;
+        }
+        dsv.MipSlice = createInfo.baseMipLevel;
+    }
+
+    static void FillTexture2DArrayDSV(D3D12_TEX2D_ARRAY_DSV& dsv, const TextureViewCreateInfo& createInfo)
+    {
+        if (createInfo.dimension != TextureViewDimension::tv2DArray) {
+            return;
+        }
+        dsv.MipSlice = createInfo.baseMipLevel;
+        dsv.FirstArraySlice = createInfo.baseArrayLayer;
+        dsv.ArraySize = createInfo.arrayLayerNum;
+    }
 }
 
 namespace RHI::DirectX12 {
@@ -198,8 +229,7 @@ namespace RHI::DirectX12 {
 
     void DX12TextureView::CreateDX12Descriptor(DX12Device& device, const TextureViewCreateInfo& createInfo)
     {
-        const auto usages = texture.GetUsages();
-        if (IsShaderResource(usages)) {
+        if (IsShaderResource(createInfo.type)) {
             D3D12_SHADER_RESOURCE_VIEW_DESC desc {};
             desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
             desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_SRV_DIMENSION>(createInfo.dimension);
@@ -216,7 +246,7 @@ namespace RHI::DirectX12 {
             dx12GpuDescriptorHandle = allocation.gpuHandle;
             dx12DescriptorHeap = allocation.descriptorHeap;
             device.GetDX12Device()->CreateShaderResourceView(texture.GetDX12Resource().Get(), &desc, dx12CpuDescriptorHandle);
-        } else if (IsUnorderedAccess(usages)) {
+        } else if (IsUnorderedAccess(createInfo.type)) {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
             desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
             desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_UAV_DIMENSION>(createInfo.dimension);
@@ -230,7 +260,7 @@ namespace RHI::DirectX12 {
             dx12GpuDescriptorHandle = allocation.gpuHandle;
             dx12DescriptorHeap = allocation.descriptorHeap;
             device.GetDX12Device()->CreateUnorderedAccessView(texture.GetDX12Resource().Get(), nullptr, &desc, dx12CpuDescriptorHandle);
-        } else if (IsRenderTarget(usages)) {
+        } else if (IsRenderTarget(createInfo.type)) {
             D3D12_RENDER_TARGET_VIEW_DESC desc {};
             desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
             desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_RTV_DIMENSION>(createInfo.dimension);
@@ -244,6 +274,19 @@ namespace RHI::DirectX12 {
             dx12GpuDescriptorHandle = allocation.gpuHandle;
             dx12DescriptorHeap = allocation.descriptorHeap;
             device.GetDX12Device()->CreateRenderTargetView(texture.GetDX12Resource().Get(), &desc, dx12CpuDescriptorHandle);
+        } else if (IsDepthStencil(createInfo.type)) {
+            D3D12_DEPTH_STENCIL_VIEW_DESC desc {};
+            desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
+            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_DSV_DIMENSION>(createInfo.dimension);
+            FillTexture1DDSV(desc.Texture1D, createInfo);
+            FillTexture2DDSV(desc.Texture2D, createInfo);
+            FillTexture2DArrayDSV(desc.Texture2DArray, createInfo);
+
+            auto allocation = device.AllocateDsvDescriptor();
+            dx12CpuDescriptorHandle = allocation.cpuHandle;
+            dx12GpuDescriptorHandle = allocation.gpuHandle;
+            dx12DescriptorHeap = allocation.descriptorHeap;
+            device.GetDX12Device()->CreateDepthStencilView(texture.GetDX12Resource().Get(), &desc, dx12CpuDescriptorHandle);
         }
     }
 }

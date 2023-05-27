@@ -18,7 +18,7 @@ VSOutput VSMain(float4 postion : POSITION, float2 uv : TEXCOORD)
 	return output;
 }
 
-float4 FSMain(float2 inUV : TEXCOORD) : SV_TARGET
+float4 FSMain(VSOutput input) : SV_TARGET
 {
 	const int blurRange = 2;
 	int n = 0;
@@ -31,7 +31,7 @@ float4 FSMain(float2 inUV : TEXCOORD) : SV_TARGET
 		for (int y = -blurRange; y < blurRange; y++)
 		{
 			float2 offset = float2(float(x), float(y)) * texelSize;
-			result += textureSSAO.Sample(samplerSSAO, inUV + offset).r;
+			result += textureSSAO.Sample(samplerSSAO, input.UV + offset).r;
 			n++;
 		}
 	}

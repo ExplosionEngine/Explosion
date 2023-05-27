@@ -41,5 +41,8 @@ namespace RHI::Vulkan {
         bool ownMemory;
         Extent<3> extent;
         PixelFormat format;
+
+        friend class VKTextureView;
+        vk::ImageView vkImageView = VK_NULL_HANDLE;
     };
 }

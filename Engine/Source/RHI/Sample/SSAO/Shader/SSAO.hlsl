@@ -32,18 +32,18 @@ VSOutput VSMain(float4 postion : POSITION, float2 uv : TEXCOORD)
 	return output;
 }
 
-float FSMain(float2 inUV : TEXCOORD) : SV_TARGET
+float FSMain(VSOutput input) : SV_TARGET
 {
 	// Get G-Buffer values
-	float3 fragPos = texturePositionDepth.Sample(texSampler, inUV).rgb;
-	float3 normal = normalize(textureNormal.Sample(texSampler, inUV).rgb * 2.0 - 1.0);
+	float3 fragPos = texturePositionDepth.Sample(texSampler, input.UV).rgb;
+	float3 normal = normalize(textureNormal.Sample(texSampler, input.UV).rgb * 2.0 - 1.0);
 
 	// Get a random vector using a noise lookup
 	int2 texDim;
 	texturePositionDepth.GetDimensions(texDim.x, texDim.y);
 	int2 noiseDim;
 	ssaoNoiseTexture.GetDimensions(noiseDim.x, noiseDim.y);
-	const float2 noiseUV = float2(float(texDim.x)/float(noiseDim.x), float(texDim.y)/(noiseDim.y)) * inUV;
+	const float2 noiseUV = float2(float(texDim.x)/float(noiseDim.x), float(texDim.y)/(noiseDim.y)) * input.UV;
 	float3 randomVec = ssaoNoiseTexture.Sample(ssaoNoiseSampler, noiseUV).xyz * 2.0 - 1.0;
 
 	// Create TBN matrix

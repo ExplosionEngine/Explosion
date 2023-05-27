@@ -34,7 +34,7 @@ namespace RHI::DirectX12 {
     static D3D12_RESOURCE_STATES GetDX12ResourceStates(BufferUsageFlags bufferUsages)
     {
         static std::unordered_map<BufferUsageBits, D3D12_RESOURCE_STATES> rules = {
-            { BufferUsageBits::copySrc, D3D12_RESOURCE_STATE_COPY_SOURCE },
+            { BufferUsageBits::copySrc, D3D12_RESOURCE_STATE_COPY_SOURCE | D3D12_RESOURCE_STATE_GENERIC_READ },
             { BufferUsageBits::copyDst, D3D12_RESOURCE_STATE_COPY_DEST },
             { BufferUsageBits::index, D3D12_RESOURCE_STATE_GENERIC_READ },
             { BufferUsageBits::vertex, D3D12_RESOURCE_STATE_GENERIC_READ },

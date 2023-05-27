@@ -58,6 +58,7 @@ namespace RHI::DirectX12 {
         DescriptorAllocation AllocateRtvDescriptor();
         DescriptorAllocation AllocateCbvSrvUavDescriptor();
         DescriptorAllocation AllocateSamplerDescriptor();
+        DescriptorAllocation AllocateDsvDescriptor();
 
     private:
         struct DescriptorHeapListNode {
@@ -80,9 +81,11 @@ namespace RHI::DirectX12 {
         uint32_t rtvDescriptorSize;
         uint32_t cbvSrvUavDescriptorSize;
         uint32_t samplerDescriptorSize;
+        uint32_t dsvDescriptorSize;
         std::list<DescriptorHeapListNode> rtvHeapList;
         std::list<DescriptorHeapListNode> cbvSrvUavHeapList;
         std::list<DescriptorHeapListNode> samplerHeapList;
+        std::list<DescriptorHeapListNode> dsvHeapList;
         ComPtr<ID3D12Device> dx12Device;
         ComPtr<ID3D12CommandAllocator> dx12CommandAllocator;
     };

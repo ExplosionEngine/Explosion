@@ -153,6 +153,14 @@ namespace RHI {
         max
     };
 
+    enum class TextureViewType : EnumType {
+        textureBinding,
+        storageBinding,
+        colorAttachment,
+        depthStencil,
+        max
+    };
+
     enum class AddressMode : EnumType {
         clampToEdge,
         repeat,

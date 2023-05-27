@@ -106,6 +106,7 @@ private:
             viewCreateInfo.baseMipLevel = 0;
             viewCreateInfo.mipLevelNum = 1;
             viewCreateInfo.aspect = TextureAspect::color;
+            viewCreateInfo.type = TextureViewType::colorAttachment;
             swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(viewCreateInfo);
         }
     }

@@ -110,6 +110,7 @@ private:
             viewCreateInfo.baseMipLevel = 0;
             viewCreateInfo.mipLevelNum = 1;
             viewCreateInfo.aspect = TextureAspect::color;
+            viewCreateInfo.type = TextureViewType::colorAttachment;
             swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(viewCreateInfo);
         }
     }
@@ -169,7 +170,7 @@ private:
 
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = texWidth * texHeight * 4;
-        bufferCreateInfo.usages = BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
+        bufferCreateInfo.usages = BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
