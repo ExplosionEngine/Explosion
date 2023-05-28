@@ -199,7 +199,7 @@ namespace RHI {
         storageBuffer,
         sampler,
         texture,
-        storagetTexture,
+        storageTexture,
         max
     };
 

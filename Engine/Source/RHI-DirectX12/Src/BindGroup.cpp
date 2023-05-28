@@ -16,7 +16,7 @@ namespace RHI::DirectX12 {
             auto* bufferView = dynamic_cast<DX12BufferView*>(entry.bufferView);
             handle = bufferView->GetDX12GpuDescriptorHandle();
             *heap = bufferView->GetDX12DescriptorHeap();
-        } else if (entry.binding.type == BindingType::texture || entry.binding.type == BindingType::storagetTexture) {
+        } else if (entry.binding.type == BindingType::texture || entry.binding.type == BindingType::storageTexture) {
             auto* textureView = dynamic_cast<DX12TextureView*>(entry.textureView);
             handle = textureView->GetDX12GpuDescriptorHandle();
             *heap = textureView->GetDX12DescriptorHeap();
