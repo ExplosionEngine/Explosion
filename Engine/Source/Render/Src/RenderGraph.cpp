@@ -96,6 +96,7 @@ namespace Render {
     static RHI::BufferViewCreateInfo GetRHIBufferViewCreateInfo(const RGBufferViewDesc& desc)
     {
         RHI::BufferViewCreateInfo createInfo;
+        createInfo.type = desc.type;
         createInfo.offset = desc.offset;
         createInfo.size = desc.size;
         createInfo.vertex.stride = desc.vertex.stride;
@@ -105,6 +106,7 @@ namespace Render {
     static RHI::TextureViewCreateInfo GetRHITextureViewCreateInfo(const RGTextureViewDesc& desc)
     {
         RHI::TextureViewCreateInfo createInfo;
+        createInfo.type = desc.type;
         createInfo.dimension = desc.dimension;
         createInfo.aspect = desc.aspect;
         createInfo.baseMipLevel = desc.baseMipLevel;

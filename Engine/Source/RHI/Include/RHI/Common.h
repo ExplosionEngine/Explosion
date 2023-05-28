@@ -161,6 +161,14 @@ namespace RHI {
         max
     };
 
+    enum class BufferViewType : EnumType {
+        vertex,
+        index,
+        uniformBinding,
+        storageBinding,
+        max
+    };
+
     enum class AddressMode : EnumType {
         clampToEdge,
         repeat,

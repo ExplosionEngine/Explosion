@@ -135,6 +135,7 @@ private:
         }
 
         BufferViewCreateInfo bufferViewCreateInfo {};
+        bufferViewCreateInfo.type = BufferViewType::vertex;
         bufferViewCreateInfo.size = vertices.size() * sizeof(Vertex);
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.vertex.stride = sizeof(Vertex);
@@ -155,6 +156,7 @@ private:
         }
 
         BufferViewCreateInfo bufferViewCreateInfo {};
+        bufferViewCreateInfo.type = BufferViewType::index;
         bufferViewCreateInfo.size = indices.size() * sizeof(uint32_t);
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.index.format = IndexFormat::uint32;

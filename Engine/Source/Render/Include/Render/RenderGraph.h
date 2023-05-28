@@ -108,6 +108,7 @@ namespace Render {
     };
 
     struct RGBufferViewDesc {
+        RHI::BufferViewType type;
         size_t offset;
         size_t size;
         union {
@@ -115,6 +116,7 @@ namespace Render {
             RGIndexBufferDesc index;
         };
 
+        // TODO add buffer view type
         static RGBufferViewDesc Create(size_t size, size_t offset = 0);
         static RGBufferViewDesc CreateVertex(size_t stride, size_t size, size_t offset = 0);
         static RGBufferViewDesc CreateIndex(RHI::IndexFormat indexFormat, size_t size, size_t offset = 0);
@@ -124,6 +126,7 @@ namespace Render {
     };
 
     struct RGTextureViewDesc {
+        RHI::TextureViewType type;
         RHI::TextureViewDimension dimension;
         RHI::TextureAspect aspect;
         uint8_t baseMipLevel;
@@ -131,6 +134,7 @@ namespace Render {
         uint8_t baseArrayLayer;
         uint8_t arrayLayerNum;
 
+        // TODO add type view type
         static RGTextureViewDesc Create1D(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
         static RGTextureViewDesc Create2D(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
         static RGTextureViewDesc Create2DArray(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseArrayLayer = 0, uint8_t arrayLayerNum = 1, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);

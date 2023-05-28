@@ -366,6 +366,7 @@ private:
         vertexBuffer->UnMap();
 
         BufferViewCreateInfo bufferViewCreateInfo {};
+        bufferViewCreateInfo.type = BufferViewType::vertex;
         bufferViewCreateInfo.size = bufferCreateInfo.size;
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.vertex.stride = sizeof(Vertex);
@@ -383,8 +384,8 @@ private:
         memcpy(data, model->raw_index_buffer.data(), bufferCreateInfo.size);
         indexBuffer->UnMap();
 
-
         BufferViewCreateInfo bufferViewCreateInfo {};
+        bufferViewCreateInfo.type = BufferViewType::index;
         bufferViewCreateInfo.size = bufferCreateInfo.size;
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.index.format = IndexFormat::uint32;
@@ -412,6 +413,7 @@ private:
         }
 
         BufferViewCreateInfo bufferViewCreateInfo {};
+        bufferViewCreateInfo.type = BufferViewType::vertex;
         bufferViewCreateInfo.size = vertices.size() * sizeof(Vertex);
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.vertex.stride = sizeof(Vertex);
@@ -428,6 +430,7 @@ private:
             quadIndexBuffer->UnMap();
         }
 
+        bufferViewCreateInfo.type = BufferViewType::index;
         bufferViewCreateInfo.size = indices.size() * sizeof(uint32_t);
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.index.format = IndexFormat::uint32;
@@ -897,6 +900,7 @@ private:
         }
 
         BufferViewCreateInfo viewCreateInfo {};
+        viewCreateInfo.type = BufferViewType::uniformBinding;
         viewCreateInfo.size = size;
         viewCreateInfo.offset = 0;
         uBuffer->bufView = uBuffer->buf->CreateBufferView(viewCreateInfo);

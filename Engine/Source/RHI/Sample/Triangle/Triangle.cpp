@@ -130,6 +130,7 @@ private:
         }
 
         BufferViewCreateInfo bufferViewCreateInfo {};
+        bufferViewCreateInfo.type = BufferViewType::vertex;
         bufferViewCreateInfo.size = vertices.size() * sizeof(Vertex);
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.vertex.stride = sizeof(Vertex);

@@ -8,24 +8,24 @@
 #include <RHI/DirectX12/Common.h>
 
 namespace RHI::DirectX12 {
-    static inline bool IsConstantBuffer(BufferUsageFlags bufferUsages)
+    static inline bool IsConstantBuffer(BufferViewType type, BufferUsageFlags bufferUsages)
     {
-        return (bufferUsages & BufferUsageBits::uniform) != 0;
+        return type == BufferViewType::uniformBinding && (bufferUsages & BufferUsageBits::uniform) != 0;
     }
 
-    static inline bool IsUnorderedAccessBuffer(BufferUsageFlags bufferUsages)
+    static inline bool IsUnorderedAccessBuffer(BufferViewType type, BufferUsageFlags bufferUsages)
     {
-        return (bufferUsages & BufferUsageBits::storage) != 0;
+        return type == BufferViewType::storageBinding && (bufferUsages & BufferUsageBits::storage) != 0;
     }
 
-    static inline bool IsVertexBuffer(BufferUsageFlags bufferUsages)
+    static inline bool IsVertexBuffer(BufferViewType type, BufferUsageFlags bufferUsages)
     {
-        return (bufferUsages & BufferUsageBits::vertex) != 0;
+        return type == BufferViewType::vertex && (bufferUsages & BufferUsageBits::vertex) != 0;
     }
 
-    static inline bool IsIndexBuffer(BufferUsageFlags bufferUsages)
+    static inline bool IsIndexBuffer(BufferViewType type, BufferUsageFlags bufferUsages)
     {
-        return (bufferUsages & BufferUsageBits::index) != 0;
+        return type == BufferViewType::index && (bufferUsages & BufferUsageBits::index) != 0;
     }
 }
 
@@ -70,7 +70,7 @@ namespace RHI::DirectX12 {
 
     void DX12BufferView::CreateDX12Descriptor(const BufferViewCreateInfo& createInfo)
     {
-        if (IsConstantBuffer(buffer.GetUsages())) {
+        if (IsConstantBuffer(createInfo.type, buffer.GetUsages())) {
             D3D12_CONSTANT_BUFFER_VIEW_DESC desc {};
             desc.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo.offset;
             desc.SizeInBytes = GetConstantBufferSize(createInfo.size);
@@ -80,7 +80,7 @@ namespace RHI::DirectX12 {
             descriptor.dx12GpuDescriptorHandle = allocation.gpuHandle;
             descriptor.dx12DescriptorHeap = allocation.descriptorHeap;
             buffer.GetDevice().GetDX12Device()->CreateConstantBufferView(&desc, descriptor.dx12CpuDescriptorHandle);
-        } else if (IsUnorderedAccessBuffer(buffer.GetUsages())) {
+        } else if (IsUnorderedAccessBuffer(createInfo.type, buffer.GetUsages())) {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
             desc.Format = DXGI_FORMAT_UNKNOWN;
             desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
@@ -92,11 +92,11 @@ namespace RHI::DirectX12 {
             descriptor.dx12GpuDescriptorHandle = allocation.gpuHandle;
             descriptor.dx12DescriptorHeap = allocation.descriptorHeap;
             buffer.GetDevice().GetDX12Device()->CreateUnorderedAccessView(buffer.GetDX12Resource().Get(), nullptr, &desc, descriptor.dx12CpuDescriptorHandle);
-        } else if (IsVertexBuffer(buffer.GetUsages())) {
+        } else if (IsVertexBuffer(createInfo.type, buffer.GetUsages())) {
             vertex.dx12VertexBufferView.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo.offset;
             vertex.dx12VertexBufferView.SizeInBytes = createInfo.size;
             vertex.dx12VertexBufferView.StrideInBytes = createInfo.vertex.stride;
-        } else if (IsIndexBuffer(buffer.GetUsages())) {
+        } else if (IsIndexBuffer(createInfo.type, buffer.GetUsages())) {
             index.dx12IndexBufferView.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo.offset;
             index.dx12IndexBufferView.SizeInBytes = createInfo.size;
             index.dx12IndexBufferView.Format = DX12EnumCast<IndexFormat, DXGI_FORMAT>(createInfo.index.format);
