@@ -48,16 +48,6 @@ namespace RHI::DirectX12 {
         return descriptor.dx12CpuDescriptorHandle;
     }
 
-    CD3DX12_GPU_DESCRIPTOR_HANDLE DX12BufferView::GetDX12GpuDescriptorHandle() const
-    {
-        return descriptor.dx12GpuDescriptorHandle;
-    }
-
-    ID3D12DescriptorHeap* DX12BufferView::GetDX12DescriptorHeap() const
-    {
-        return descriptor.dx12DescriptorHeap;
-    }
-
     const D3D12_VERTEX_BUFFER_VIEW& DX12BufferView::GetDX12VertexBufferView() const
     {
         return vertex.dx12VertexBufferView;
@@ -77,8 +67,6 @@ namespace RHI::DirectX12 {
 
             auto allocation = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
             descriptor.dx12CpuDescriptorHandle = allocation.cpuHandle;
-            descriptor.dx12GpuDescriptorHandle = allocation.gpuHandle;
-            descriptor.dx12DescriptorHeap = allocation.descriptorHeap;
             buffer.GetDevice().GetDX12Device()->CreateConstantBufferView(&desc, descriptor.dx12CpuDescriptorHandle);
         } else if (IsUnorderedAccessBuffer(createInfo.type, buffer.GetUsages())) {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
@@ -89,8 +77,6 @@ namespace RHI::DirectX12 {
 
             auto allocation = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
             descriptor.dx12CpuDescriptorHandle = allocation.cpuHandle;
-            descriptor.dx12GpuDescriptorHandle = allocation.gpuHandle;
-            descriptor.dx12DescriptorHeap = allocation.descriptorHeap;
             buffer.GetDevice().GetDX12Device()->CreateUnorderedAccessView(buffer.GetDX12Resource().Get(), nullptr, &desc, descriptor.dx12CpuDescriptorHandle);
         } else if (IsVertexBuffer(createInfo.type, buffer.GetUsages())) {
             vertex.dx12VertexBufferView.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo.offset;

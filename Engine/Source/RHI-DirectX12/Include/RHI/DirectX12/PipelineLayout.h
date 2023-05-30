@@ -49,13 +49,13 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
 
-        std::optional<BindingTypeAndRootParameterIndex> QueryRootDescriptorParameterIndex(ShaderStageBits shaderStage, uint8_t layoutIndex, const HlslBinding& binding);
+        std::optional<BindingTypeAndRootParameterIndex> QueryRootDescriptorParameterIndex(uint8_t layoutIndex, const HlslBinding& binding);
         ComPtr<ID3D12RootSignature>& GetDX12RootSignature();
 
     private:
         void CreateDX12RootSignature(DX12Device& device, const PipelineLayoutCreateInfo& createInfo);
 
         ComPtr<ID3D12RootSignature> dx12RootSignature;
-        std::unordered_map<ShaderStageBits, RootParameterIndexMap> rootDescriptorParameterIndexMaps;
+        RootParameterIndexMap rootParameterIndexMap;
     };
 }

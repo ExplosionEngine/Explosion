@@ -25,15 +25,13 @@ namespace RHI::DirectX12 {
         void Destroy() override;
 
         DX12BindGroupLayout& GetBindGroupLayout();
-        const std::vector<ID3D12DescriptorHeap*>& GetDX12DescriptorHeaps();
-        const std::vector<std::pair<HlslBinding, CD3DX12_GPU_DESCRIPTOR_HANDLE>>& GetBindings();
+        const std::vector<std::pair<HlslBinding, CD3DX12_CPU_DESCRIPTOR_HANDLE>>& GetBindings();
 
     private:
         void SaveBindGroupLayout(const BindGroupCreateInfo& createInfo);
         void CacheBindings(const BindGroupCreateInfo& createInfo);
 
         DX12BindGroupLayout* bindGroupLayout;
-        std::vector<ID3D12DescriptorHeap*> dx12DescriptorHeaps;
-        std::vector<std::pair<HlslBinding, CD3DX12_GPU_DESCRIPTOR_HANDLE>> bindings;
+        std::vector<std::pair<HlslBinding, CD3DX12_CPU_DESCRIPTOR_HANDLE>> bindings;
     };
 }

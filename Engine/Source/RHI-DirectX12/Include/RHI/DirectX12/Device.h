@@ -23,7 +23,6 @@ namespace RHI::DirectX12 {
 
     struct DescriptorAllocation {
         CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle;
-        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle;
         ID3D12DescriptorHeap* descriptorHeap;
     };
 
@@ -66,7 +65,7 @@ namespace RHI::DirectX12 {
             ComPtr<ID3D12DescriptorHeap> descriptorHeap;
         };
 
-        inline DescriptorAllocation AllocateDescriptor(std::list<DescriptorHeapListNode>& list, uint8_t capacity, uint32_t descriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlag);
+        inline DescriptorAllocation AllocateDescriptor(std::list<DescriptorHeapListNode>& list, uint8_t capacity, uint32_t descriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE heapType);
         void CreateDX12Device();
         void CreateDX12Queues(const DeviceCreateInfo& createInfo);
         void CreateDX12CommandAllocator();

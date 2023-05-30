@@ -821,7 +821,7 @@ private:
 
     void CreateDepthAttachment() {
         TextureCreateInfo texCreateInfo {};
-        texCreateInfo.format = PixelFormat::d32FloatS8Uint;
+        texCreateInfo.format = PixelFormat::d32Float;
         texCreateInfo.mipLevels = 1;
         texCreateInfo.extent = {width, height, 1};
         texCreateInfo.dimension = TextureDimension::t2D;
@@ -983,8 +983,8 @@ private:
             DepthStencilState depthStencilState {};
             depthStencilState.depthEnable = true;
             depthStencilState.depthComparisonFunc = ComparisonFunc::lessEqual;
-            depthStencilState.format = PixelFormat::d32FloatS8Uint;
-            
+            depthStencilState.format = PixelFormat::d32Float;
+
             std::array<ColorTargetState, 3> colorTargetStates {};
             colorTargetStates[0].format = PixelFormat::rgba32Float;
             colorTargetStates[0].writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
@@ -1222,8 +1222,8 @@ private:
     {
         fence->Reset();
         graphicsQueue->Submit(commandBuffer.Get(), fence.Get());
-        fence->Wait();
         swapChain->Present();
+        fence->Wait();
     }
 
     void InitCamera()
