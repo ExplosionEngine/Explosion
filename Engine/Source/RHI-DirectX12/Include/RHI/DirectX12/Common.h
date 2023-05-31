@@ -281,15 +281,25 @@ namespace RHI::DirectX12 {
     DX12_ENUM_MAP_END()
 
     DX12_ENUM_MAP_BEGIN(BufferState, D3D12_RESOURCE_STATES)
-        // TODO
+        // TODO check this
+        DX12_ENUM_MAP_ITEM(BufferState::undefined, D3D12_RESOURCE_STATE_COMMON)
+        DX12_ENUM_MAP_ITEM(BufferState::copySrc, D3D12_RESOURCE_STATE_COPY_SOURCE)
+        DX12_ENUM_MAP_ITEM(BufferState::copyDst, D3D12_RESOURCE_STATE_COPY_DEST)
+        DX12_ENUM_MAP_ITEM(BufferState::shaderReadOnly, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE)
+        DX12_ENUM_MAP_ITEM(BufferState::storage, D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
     DX12_ENUM_MAP_END()
 
     DX12_ENUM_MAP_BEGIN(TextureState, D3D12_RESOURCE_STATES)
-        DX12_ENUM_MAP_ITEM(TextureState::renderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET)
-        DX12_ENUM_MAP_ITEM(TextureState::present, D3D12_RESOURCE_STATE_PRESENT)
-        DX12_ENUM_MAP_ITEM(TextureState::undefined, D3D12_RESOURCE_STATE_COMMON) // TODO It seems this cast is not corrrect
+        // TODO check this
+        DX12_ENUM_MAP_ITEM(TextureState::undefined, D3D12_RESOURCE_STATE_COMMON)
+        DX12_ENUM_MAP_ITEM(TextureState::copySrc, D3D12_RESOURCE_STATE_COPY_SOURCE)
         DX12_ENUM_MAP_ITEM(TextureState::copyDst, D3D12_RESOURCE_STATE_COPY_DEST)
-        DX12_ENUM_MAP_ITEM(TextureState::shaderReadOnly, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
+        DX12_ENUM_MAP_ITEM(TextureState::shaderReadOnly, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE)
+        DX12_ENUM_MAP_ITEM(TextureState::renderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET)
+        DX12_ENUM_MAP_ITEM(TextureState::storage, D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+        DX12_ENUM_MAP_ITEM(TextureState::depthStencilReadonly, D3D12_RESOURCE_STATE_DEPTH_READ)
+        DX12_ENUM_MAP_ITEM(TextureState::depthStencilWrite, D3D12_RESOURCE_STATE_DEPTH_WRITE)
+        DX12_ENUM_MAP_ITEM(TextureState::present, D3D12_RESOURCE_STATE_PRESENT)
     DX12_ENUM_MAP_END()
 
     // constant buffer size must be a multiple of 256

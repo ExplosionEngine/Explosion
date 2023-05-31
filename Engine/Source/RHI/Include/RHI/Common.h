@@ -359,6 +359,8 @@ namespace RHI {
         shaderReadOnly,
         renderTarget,
         storage,
+        depthStencilReadonly,
+        depthStencilWrite,
         present,
         max
     };

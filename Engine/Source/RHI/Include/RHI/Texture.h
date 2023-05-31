@@ -19,6 +19,7 @@ namespace RHI {
         TextureDimension dimension;
         PixelFormat format;
         TextureUsageFlags usages;
+        TextureState initialState;
     };
 
     class Texture {
