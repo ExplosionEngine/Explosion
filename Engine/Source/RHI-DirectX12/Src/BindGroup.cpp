@@ -10,21 +10,22 @@
 #include <RHI/DirectX12/Common.h>
 
 namespace RHI::DirectX12 {
-    static inline void GetDescriptorHandleAndHeap(CD3DX12_GPU_DESCRIPTOR_HANDLE& handle, ID3D12DescriptorHeap** heap, const BindGroupEntry& entry)
+    static inline CD3DX12_CPU_DESCRIPTOR_HANDLE GetDescriptorCpuHandleAndHeap(const BindGroupEntry& entry)
     {
         if (entry.binding.type == BindingType::uniformBuffer || entry.binding.type == BindingType::storageBuffer) {
             auto* bufferView = dynamic_cast<DX12BufferView*>(entry.bufferView);
-            handle = bufferView->GetDX12GpuDescriptorHandle();
-            *heap = bufferView->GetDX12DescriptorHeap();
-        } else if (entry.binding.type == BindingType::texture || entry.binding.type == BindingType::storagetTexture) {
-            auto* textureView = dynamic_cast<DX12TextureView*>(entry.textureView);
-            handle = textureView->GetDX12GpuDescriptorHandle();
-            *heap = textureView->GetDX12DescriptorHeap();
-        } else if (entry.binding.type == BindingType::sampler) {
-            auto* sampler = dynamic_cast<DX12Sampler*>(entry.sampler);
-            handle = sampler->GetDX12GpuDescriptorHandle();
-            *heap = sampler->GetDX12DescriptorHeap();
+            return bufferView->GetDX12CpuDescriptorHandle();
         }
+        if (entry.binding.type == BindingType::texture || entry.binding.type == BindingType::storageTexture) {
+            auto* textureView = dynamic_cast<DX12TextureView*>(entry.textureView);
+            return textureView->GetDX12CpuDescriptorHandle();
+        }
+        if (entry.binding.type == BindingType::sampler) {
+            auto* sampler = dynamic_cast<DX12Sampler*>(entry.sampler);
+            return sampler->GetDX12CpuDescriptorHandle();
+        }
+        Assert(false);
+        return CD3DX12_CPU_DESCRIPTOR_HANDLE();
     }
 }
 
@@ -47,12 +48,7 @@ namespace RHI::DirectX12 {
         return *bindGroupLayout;
     }
 
-    const std::vector<ID3D12DescriptorHeap*>& DX12BindGroup::GetDX12DescriptorHeaps()
-    {
-        return dx12DescriptorHeaps;
-    }
-
-    const std::vector<std::pair<HlslBinding, CD3DX12_GPU_DESCRIPTOR_HANDLE>>& DX12BindGroup::GetBindings()
+    const std::vector<std::pair<HlslBinding, CD3DX12_CPU_DESCRIPTOR_HANDLE>>& DX12BindGroup::GetBindings()
     {
         return bindings;
     }
@@ -69,11 +65,7 @@ namespace RHI::DirectX12 {
         for (auto i = 0; i < createInfo.entryNum; i++) {
             const auto& entry = createInfo.entries[i];
 
-            CD3DX12_GPU_DESCRIPTOR_HANDLE handle;
-            ID3D12DescriptorHeap* heap;
-            GetDescriptorHandleAndHeap(handle, &heap, entry);
-
-            dx12DescriptorHeaps.emplace_back(heap);
+            CD3DX12_CPU_DESCRIPTOR_HANDLE handle = GetDescriptorCpuHandleAndHeap(entry);
             bindings.emplace_back( entry.binding.platform.hlsl, handle );
         }
     }

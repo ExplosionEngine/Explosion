@@ -366,6 +366,7 @@ private:
         vertexBuffer->UnMap();
 
         BufferViewCreateInfo bufferViewCreateInfo {};
+        bufferViewCreateInfo.type = BufferViewType::vertex;
         bufferViewCreateInfo.size = bufferCreateInfo.size;
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.vertex.stride = sizeof(Vertex);
@@ -383,8 +384,8 @@ private:
         memcpy(data, model->raw_index_buffer.data(), bufferCreateInfo.size);
         indexBuffer->UnMap();
 
-
         BufferViewCreateInfo bufferViewCreateInfo {};
+        bufferViewCreateInfo.type = BufferViewType::index;
         bufferViewCreateInfo.size = bufferCreateInfo.size;
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.index.format = IndexFormat::uint32;
@@ -412,6 +413,7 @@ private:
         }
 
         BufferViewCreateInfo bufferViewCreateInfo {};
+        bufferViewCreateInfo.type = BufferViewType::vertex;
         bufferViewCreateInfo.size = vertices.size() * sizeof(Vertex);
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.vertex.stride = sizeof(Vertex);
@@ -428,6 +430,7 @@ private:
             quadIndexBuffer->UnMap();
         }
 
+        bufferViewCreateInfo.type = BufferViewType::index;
         bufferViewCreateInfo.size = indices.size() * sizeof(uint32_t);
         bufferViewCreateInfo.offset = 0;
         bufferViewCreateInfo.index.format = IndexFormat::uint32;
@@ -818,12 +821,13 @@ private:
 
     void CreateDepthAttachment() {
         TextureCreateInfo texCreateInfo {};
-        texCreateInfo.format = PixelFormat::d32FloatS8Uint;
+        texCreateInfo.format = PixelFormat::d32Float;
         texCreateInfo.mipLevels = 1;
         texCreateInfo.extent = {width, height, 1};
         texCreateInfo.dimension = TextureDimension::t2D;
         texCreateInfo.samples = 1;
         texCreateInfo.usages = TextureUsageBits::depthStencilAttachment;
+        texCreateInfo.initialState = TextureState::depthStencilReadonly;
         gBufferDepth.texture = device->CreateTexture(texCreateInfo);
 
         TextureViewCreateInfo viewCreateInfo {};
@@ -846,6 +850,7 @@ private:
         texCreateInfo.dimension = TextureDimension::t2D;
         texCreateInfo.samples = 1;
         texCreateInfo.usages = TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment;
+        texCreateInfo.initialState = TextureState::shaderReadOnly;
         attachment.texture = device->CreateTexture(texCreateInfo);
 
         TextureViewCreateInfo rtvCreateInfo {};
@@ -897,6 +902,7 @@ private:
         }
 
         BufferViewCreateInfo viewCreateInfo {};
+        viewCreateInfo.type = BufferViewType::uniformBinding;
         viewCreateInfo.size = size;
         viewCreateInfo.offset = 0;
         uBuffer->bufView = uBuffer->buf->CreateBufferView(viewCreateInfo);
@@ -979,8 +985,8 @@ private:
             DepthStencilState depthStencilState {};
             depthStencilState.depthEnable = true;
             depthStencilState.depthComparisonFunc = ComparisonFunc::lessEqual;
-            depthStencilState.format = PixelFormat::d32FloatS8Uint;
-            
+            depthStencilState.format = PixelFormat::d32Float;
+
             std::array<ColorTargetState, 3> colorTargetStates {};
             colorTargetStates[0].format = PixelFormat::rgba32Float;
             colorTargetStates[0].writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
@@ -1058,9 +1064,10 @@ private:
     {
         UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
         {
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::undefined, TextureState::renderTarget));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::undefined, TextureState::renderTarget));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::undefined, TextureState::renderTarget));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilReadonly, TextureState::depthStencilWrite));
 
             std::array<GraphicsPassColorAttachment, 3> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
@@ -1112,11 +1119,12 @@ private:
             commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
             commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
             commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilWrite, TextureState::depthStencilReadonly));
         }
 
         {
             // ssao
-            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::undefined, TextureState::renderTarget));
+            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
 
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
@@ -1147,7 +1155,7 @@ private:
 
         {
             // ssaoBlur
-            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::undefined, TextureState::renderTarget));
+            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
 
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
@@ -1180,8 +1188,6 @@ private:
             auto backTextureIndex = swapChain->AcquireBackTexture();
 
             // composition
-            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
             colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::clear;
@@ -1218,8 +1224,8 @@ private:
     {
         fence->Reset();
         graphicsQueue->Submit(commandBuffer.Get(), fence.Get());
-        fence->Wait();
         swapChain->Present();
+        fence->Wait();
     }
 
     void InitCamera()
@@ -1227,10 +1233,7 @@ private:
         camera.type = Camera::CameraType::firstPerson;
         camera.position = { 2.0f, -2.4f, -4.0f };
         camera.setRotation(glm::vec3(10.0f, 30.0f, 0.0f));
-        camera.setPerspective(60.0f,
-                              static_cast<float>(width) / static_cast<float>(height),
-                              uboSceneParams.nearPlane,
-                              uboSceneParams.farPlane);
+        camera.setPerspective(60.0f, static_cast<float>(width) / static_cast<float>(height), uboSceneParams.nearPlane, uboSceneParams.farPlane);
     }
 
     void LoadGLTF()

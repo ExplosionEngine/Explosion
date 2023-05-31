@@ -9,9 +9,9 @@
 
 namespace RHI {
     struct TextureViewCreateInfo {
+        TextureViewType type;
         TextureViewDimension dimension;
         TextureAspect aspect;
-        TextureViewType type;
         uint8_t baseMipLevel;
         uint8_t mipLevelNum;
         uint8_t baseArrayLayer;

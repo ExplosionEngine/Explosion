@@ -96,6 +96,7 @@ namespace Render {
     static RHI::BufferViewCreateInfo GetRHIBufferViewCreateInfo(const RGBufferViewDesc& desc)
     {
         RHI::BufferViewCreateInfo createInfo;
+        createInfo.type = desc.type;
         createInfo.offset = desc.offset;
         createInfo.size = desc.size;
         createInfo.vertex.stride = desc.vertex.stride;
@@ -105,6 +106,7 @@ namespace Render {
     static RHI::TextureViewCreateInfo GetRHITextureViewCreateInfo(const RGTextureViewDesc& desc)
     {
         RHI::TextureViewCreateInfo createInfo;
+        createInfo.type = desc.type;
         createInfo.dimension = desc.dimension;
         createInfo.aspect = desc.aspect;
         createInfo.baseMipLevel = desc.baseMipLevel;
@@ -402,7 +404,7 @@ namespace Render {
     RGBindItem RGBindItem::StorageTexture(RGTextureView* textureView)
     {
         RGBindItem result;
-        result.type = RHI::BindingType::storagetTexture;
+        result.type = RHI::BindingType::storageTexture;
         result.textureView = textureView;
         return result;
     }
@@ -442,7 +444,7 @@ namespace Render {
     std::pair<std::string, RGBindItem> RGBindItem::StorageTexture(std::string name, RGTextureView* textureView)
     {
         RGBindItem result;
-        result.type = RHI::BindingType::storagetTexture;
+        result.type = RHI::BindingType::storageTexture;
         result.textureView = textureView;
         return std::make_pair(std::move(name), result);
     }
@@ -1224,7 +1226,7 @@ namespace Render {
                 pass.writes.emplace(bind.bufferView);
             } else if (type == RHI::BindingType::texture) {
                 pass.reads.emplace(bind.textureView);
-            } else if (type == RHI::BindingType::storagetTexture) {
+            } else if (type == RHI::BindingType::storageTexture) {
                 pass.writes.emplace(bind.textureView);
             }
         }

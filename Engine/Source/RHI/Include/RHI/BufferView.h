@@ -19,6 +19,7 @@ namespace RHI {
     };
 
     struct BufferViewCreateInfo {
+        BufferViewType type;
         size_t offset;
         size_t size;
         union {

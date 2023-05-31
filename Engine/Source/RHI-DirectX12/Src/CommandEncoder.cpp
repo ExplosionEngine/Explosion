@@ -3,6 +3,7 @@
 //
 
 #include <optional>
+#include <array>
 
 #include <RHI/DirectX12/CommandEncoder.h>
 #include <RHI/DirectX12/CommandBuffer.h>
@@ -19,7 +20,7 @@
 #include <RHI/Synchronous.h>
 
 namespace RHI::DirectX12 {
-    D3D12_CLEAR_FLAGS GetDX12ClearFlags(const GraphicsPassDepthStencilAttachment& depthStencilAttachment)
+    static D3D12_CLEAR_FLAGS GetDX12ClearFlags(const GraphicsPassDepthStencilAttachment& depthStencilAttachment)
     {
         Assert(depthStencilAttachment.depthLoadOp == LoadOp::clear || depthStencilAttachment.stencilLoadOp == LoadOp::clear);
 
@@ -58,13 +59,11 @@ namespace RHI::DirectX12 {
 
         const auto& bindings= bindGroup->GetBindings();
         for (const auto& binding : bindings) {
-            ForEachBitsType<ShaderStageBits>([this, &binding, &pipelineLayout, layoutIndex](ShaderStageBits shaderStage) -> void {
-                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first);
-                if (!t.has_value()) {
-                    return;
-                }
-                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second);
-            });
+            std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(layoutIndex, binding.first);
+            if (!t.has_value()) {
+                return;
+            }
+            commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, commandBuffer.GetRuntimeDescriptorHeaps()->NewGpuDescriptorHandle(binding.first.rangeType, binding.second));
         }
     }
 
@@ -110,7 +109,7 @@ namespace RHI::DirectX12 {
         }
         if (dsvHandle.has_value()) {
             const auto& depthStencilAttachment = *beginInfo->depthStencilAttachment;
-            if (depthStencilAttachment.depthLoadOp != LoadOp::clear && depthStencilAttachment.stencilLoadOp != LoadOp::clear) {
+            if (depthStencilAttachment.depthLoadOp != LoadOp::clear || depthStencilAttachment.stencilLoadOp != LoadOp::clear) {
                 return;
             }
             commandBuffer.GetDX12GraphicsCommandList()->ClearDepthStencilView(dsvHandle.value(), GetDX12ClearFlags(depthStencilAttachment), depthStencilAttachment.depthClearValue, depthStencilAttachment.stencilClearValue, 0, nullptr);
@@ -132,22 +131,18 @@ namespace RHI::DirectX12 {
     {
         auto* bindGroup = dynamic_cast<DX12BindGroup*>(tBindGroup);
         auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
-        Assert(layoutIndex == bindGroupLayout.GetLayoutIndex());
-
-        Assert(graphicsPipeline);
         auto& pipelineLayout = graphicsPipeline->GetPipelineLayout();
 
-        commandBuffer.GetDX12GraphicsCommandList()->SetDescriptorHeaps(bindGroup->GetDX12DescriptorHeaps().size(), bindGroup->GetDX12DescriptorHeaps().data());
+        Assert(layoutIndex == bindGroupLayout.GetLayoutIndex());
+        Assert(graphicsPipeline);
 
         const auto& bindings= bindGroup->GetBindings();
         for (const auto& binding : bindings) {
-            ForEachBitsType<ShaderStageBits>([this, &binding, &pipelineLayout, layoutIndex](ShaderStageBits shaderStage) -> void {
-                std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(shaderStage, layoutIndex, binding.first);
-                if (!t.has_value()) {
-                    return;
-                }
-                commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, binding.second);
-            });
+            std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(layoutIndex, binding.first);
+            if (!t.has_value()) {
+                return;
+            }
+            commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, commandBuffer.GetRuntimeDescriptorHeaps()->NewGpuDescriptorHandle(binding.first.rangeType, binding.second));
         }
     }
 
@@ -213,6 +208,10 @@ namespace RHI::DirectX12 {
     DX12CommandEncoder::DX12CommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : CommandEncoder(), device(device), commandBuffer(commandBuffer)
     {
         commandBuffer.GetDX12GraphicsCommandList()->Reset(device.GetDX12CommandAllocator().Get(), nullptr);
+
+        commandBuffer.GetRuntimeDescriptorHeaps()->ResetUsed();
+        auto activeHeap = commandBuffer.GetRuntimeDescriptorHeaps()->GetDX12DescriptorHeaps();
+        commandBuffer.GetDX12GraphicsCommandList()->SetDescriptorHeaps(activeHeap.size(), activeHeap.data());
     }
 
     DX12CommandEncoder::~DX12CommandEncoder() = default;

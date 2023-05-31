@@ -116,7 +116,7 @@ namespace RHI::DirectX12 {
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &textureDesc,
-            D3D12_RESOURCE_STATE_COMMON,
+            DX12EnumCast<TextureState, D3D12_RESOURCE_STATES>(createInfo.initialState),
             nullptr,
             IID_PPV_ARGS(&dx12Resource)));
         Assert(success);

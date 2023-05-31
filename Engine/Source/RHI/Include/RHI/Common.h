@@ -161,6 +161,14 @@ namespace RHI {
         max
     };
 
+    enum class BufferViewType : EnumType {
+        vertex,
+        index,
+        uniformBinding,
+        storageBinding,
+        max
+    };
+
     enum class AddressMode : EnumType {
         clampToEdge,
         repeat,
@@ -199,7 +207,7 @@ namespace RHI {
         storageBuffer,
         sampler,
         texture,
-        storagetTexture,
+        storageTexture,
         max
     };
 
@@ -351,6 +359,8 @@ namespace RHI {
         shaderReadOnly,
         renderTarget,
         storage,
+        depthStencilReadonly,
+        depthStencilWrite,
         present,
         max
     };

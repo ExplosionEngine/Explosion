@@ -157,25 +157,25 @@ namespace RHI::DirectX12 {
 
     DescriptorAllocation DX12Device::AllocateRtvDescriptor()
     {
-        return AllocateDescriptor(rtvHeapList, 4, rtvDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+        return AllocateDescriptor(rtvHeapList, 4, rtvDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     }
 
     DescriptorAllocation DX12Device::AllocateCbvSrvUavDescriptor()
     {
-        return AllocateDescriptor(cbvSrvUavHeapList, 4, cbvSrvUavDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+        return AllocateDescriptor(cbvSrvUavHeapList, 4, cbvSrvUavDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     }
 
     DescriptorAllocation DX12Device::AllocateSamplerDescriptor()
     {
-        return AllocateDescriptor(samplerHeapList, 4, samplerDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+        return AllocateDescriptor(samplerHeapList, 4, samplerDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
     }
 
     DescriptorAllocation DX12Device::AllocateDsvDescriptor()
     {
-        return AllocateDescriptor(dsvHeapList, 1, dsvDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+        return AllocateDescriptor(dsvHeapList, 1, dsvDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
     }
 
-    DescriptorAllocation DX12Device::AllocateDescriptor(std::list<DescriptorHeapListNode>& list, uint8_t capacity, uint32_t descriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlag)
+    DescriptorAllocation DX12Device::AllocateDescriptor(std::list<DescriptorHeapListNode>& list, uint8_t capacity, uint32_t descriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE heapType)
     {
         if (list.empty() || list.back().used >= capacity) {
             DescriptorHeapListNode node {};
@@ -183,7 +183,7 @@ namespace RHI::DirectX12 {
             D3D12_DESCRIPTOR_HEAP_DESC desc {};
             desc.NumDescriptors = capacity;
             desc.Type = heapType;
-            desc.Flags = heapFlag;
+            desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
             bool success = SUCCEEDED(dx12Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&node.descriptorHeap)));
             Assert(success);
             list.emplace_back(std::move(node));
@@ -192,14 +192,9 @@ namespace RHI::DirectX12 {
         auto& last = list.back();
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(last.descriptorHeap->GetCPUDescriptorHandleForHeapStart());
-        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle;
-        if (heapFlag & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE) {
-            gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(last.descriptorHeap->GetGPUDescriptorHandleForHeapStart());
-        }
         auto offset = last.used++;
         return {
             cpuHandle.Offset(offset, descriptorSize),
-            gpuHandle.Offset(offset, descriptorSize),
             last.descriptorHeap.Get()
         };
     }

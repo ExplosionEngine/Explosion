@@ -125,6 +125,14 @@ namespace RHI::DirectX12 {
         }
     }
 
+    void UpdateDX12DepthStencilTargetDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const GraphicsPipelineCreateInfo& createInfo)
+    {
+        if (!createInfo.depthStencilState.depthEnable && !createInfo.depthStencilState.stencilEnable) {
+            return;
+        }
+        desc.DSVFormat = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.depthStencilState.format);
+    }
+
     std::vector<D3D12_INPUT_ELEMENT_DESC> GetDX12InputElements(const GraphicsPipelineCreateInfo& createInfo)
     {
         std::vector<D3D12_INPUT_ELEMENT_DESC> result {};
@@ -245,6 +253,7 @@ namespace RHI::DirectX12 {
         desc.SampleDesc = GetDX12SampleDesc(createInfo);
         desc.PrimitiveTopologyType = DX12EnumCast<PrimitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY_TYPE>(createInfo.primitiveState.topologyType);
         UpdateDX12RenderTargetsDesc(desc, createInfo);
+        UpdateDX12DepthStencilTargetDesc(desc, createInfo);
         auto inputElements = GetDX12InputElements(createInfo);
         UpdateDX12InputLayoutDesc(desc, inputElements);
 
