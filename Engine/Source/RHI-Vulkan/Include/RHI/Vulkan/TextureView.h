@@ -22,9 +22,6 @@ namespace RHI::Vulkan {
 
         vk::ImageView GetVkImageView();
         VKTexture& GetTexture() const;
-        uint8_t GetBaseMipLevel() const;
-        uint8_t GetMipLevelNum() const;
-        uint8_t GetBaseArrayLayer() const;
         uint8_t GetArrayLayerNum() const;
 
     private:

@@ -37,7 +37,7 @@ namespace RHI::Vulkan {
 
     static vk::PipelineDepthStencilStateCreateInfo ConstructDepthStencil(const GraphicsPipelineCreateInfo& createInfo)
     {
-        auto& dsState = createInfo.depthStencilState;
+        const auto& dsState = createInfo.depthStencilState;
         vk::PipelineDepthStencilStateCreateInfo dsInfo = {};
         dsInfo.setDepthTestEnable(dsState.depthEnable)
             .setDepthWriteEnable(dsState.depthEnable)
@@ -104,7 +104,7 @@ namespace RHI::Vulkan {
         vk::PipelineColorBlendStateCreateInfo colorInfo = {};
         for (uint8_t i = 0; i < createInfo.fragmentState.colorTargetNum; ++i) {
             vk::PipelineColorBlendAttachmentState& blendState = blendStates[i];
-            auto& srcState = createInfo.fragmentState.colorTargets[i];
+            const auto& srcState = createInfo.fragmentState.colorTargets[i];
             blendState.setBlendEnable(true)
                 .setColorWriteMask(static_cast<vk::ColorComponentFlags>(srcState.writeFlags.Value()))
                 .setAlphaBlendOp(VKEnumCast<BlendOp, vk::BlendOp>(srcState.blend.color.op))
@@ -125,14 +125,14 @@ namespace RHI::Vulkan {
         std::vector<vk::VertexInputAttributeDescription>& attributes,
         std::vector<vk::VertexInputBindingDescription>& bindings)
     {
-        auto vs = static_cast<VKShaderModule*>(createInfo.vertexShader);
-        auto& locationTable = vs->GetLocationTable();
+        auto* vs = static_cast<VKShaderModule*>(createInfo.vertexShader);
+        const auto& locationTable = vs->GetLocationTable();
 
         vk::PipelineVertexInputStateCreateInfo vtxInput = {};
 
         bindings.resize(createInfo.vertexState.bufferLayoutNum);
         for (uint32_t i = 0; i < createInfo.vertexState.bufferLayoutNum; ++i) {
-            auto &binding = createInfo.vertexState.bufferLayouts[i];
+            const auto& binding = createInfo.vertexState.bufferLayouts[i];
             bindings[i].binding = i;
             bindings[i].inputRate = binding.stepMode == VertexStepMode::perInstance ? vk::VertexInputRate::eInstance
                                                                                      : vk::VertexInputRate::eVertex;
@@ -256,7 +256,9 @@ namespace RHI::Vulkan {
     {
         std::vector<vk::PipelineShaderStageCreateInfo> stages;
         auto setStage = [&stages](ShaderModule* module, vk::ShaderStageFlagBits stage) {
-            if (module == nullptr) return;
+            if (module == nullptr) {
+                return;
+            }
             vk::PipelineShaderStageCreateInfo stageInfo = {};
             stageInfo.setModule(static_cast<const VKShaderModule*>(module)->GetVkShaderModule())
                 .setPName(GetShaderEntry(stage))
@@ -286,19 +288,23 @@ namespace RHI::Vulkan {
         std::vector<vk::VertexInputBindingDescription> bindings;
         vk::PipelineVertexInputStateCreateInfo vtxInput = ConstructVertexInput(createInfo, attributes, bindings);
 
-        //As for dynamic rendering, we no longer need to set a render pass
-        //instead, create info to define color、depth and stencil attachment at pipeline create time
         std::vector<vk::Format> pixelFormats(createInfo.fragmentState.colorTargetNum);
         for (size_t i = 0; i < createInfo.fragmentState.colorTargetNum; i++)
         {
             auto format = createInfo.fragmentState.colorTargets[i].format;
             pixelFormats[i] = VKEnumCast<PixelFormat, vk::Format>(format);
         }
+
         vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo;
         pipelineRenderingCreateInfo.setColorAttachmentCount(createInfo.fragmentState.colorTargetNum)
-            .setPColorAttachmentFormats(pixelFormats.data())
-            .setDepthAttachmentFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo.depthStencilState.format))
-            .setStencilAttachmentFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo.depthStencilState.format));
+            .setPColorAttachmentFormats(pixelFormats.data());
+
+        if (createInfo.depthStencilState.depthEnable) {
+            pipelineRenderingCreateInfo.setDepthAttachmentFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo.depthStencilState.format));
+        }
+        if (createInfo.depthStencilState.stencilEnable) {
+            pipelineRenderingCreateInfo.setStencilAttachmentFormat(VKEnumCast<PixelFormat, vk::Format>(createInfo.depthStencilState.format));
+        }
 
         vk::GraphicsPipelineCreateInfo pipelineCreateInfo = {};
         pipelineCreateInfo.setStages(stages)

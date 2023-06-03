@@ -97,13 +97,22 @@ namespace RHI::Vulkan {
     static std::tuple<vk::ImageLayout, vk::AccessFlags, vk::PipelineStageFlags> GetBarrierInfo(TextureState status)
     {
         if (status == TextureState::present) {
-            return {vk::ImageLayout::ePresentSrcKHR, vk::AccessFlagBits::eMemoryRead, vk::PipelineStageFlagBits::eBottomOfPipe};
-        } else if (status == TextureState::renderTarget) {
-            return {vk::ImageLayout::eColorAttachmentOptimal, vk::AccessFlagBits::eColorAttachmentWrite, vk::PipelineStageFlagBits::eColorAttachmentOutput};
-        } else if (status == TextureState::copyDst) {
-            return {vk::ImageLayout::eTransferDstOptimal, vk::AccessFlagBits::eTransferWrite, vk::PipelineStageFlagBits::eTransfer};
-        } else if (status == TextureState::shaderReadOnly) {
-            return {vk::ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderRead, vk::PipelineStageFlagBits::eFragmentShader};
+            return { vk::ImageLayout::ePresentSrcKHR, vk::AccessFlagBits::eMemoryRead, vk::PipelineStageFlagBits::eBottomOfPipe };
+        }
+        if (status == TextureState::renderTarget) {
+            return { vk::ImageLayout::eColorAttachmentOptimal, vk::AccessFlagBits::eColorAttachmentWrite, vk::PipelineStageFlagBits::eColorAttachmentOutput };
+        }
+        if (status == TextureState::copyDst) {
+            return { vk::ImageLayout::eTransferDstOptimal, vk::AccessFlagBits::eTransferWrite, vk::PipelineStageFlagBits::eTransfer };
+        }
+        if (status == TextureState::shaderReadOnly) {
+            return { vk::ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderRead, vk::PipelineStageFlagBits::eFragmentShader };
+        }
+        if (status == TextureState::depthStencilReadonly) {
+            return { vk::ImageLayout::eDepthStencilReadOnlyOptimal, vk::AccessFlagBits::eShaderRead, vk::PipelineStageFlagBits::eFragmentShader };
+        }
+        if (status == TextureState::depthStencilWrite) {
+            return { vk::ImageLayout::eDepthStencilAttachmentOptimal, vk::AccessFlagBits::eDepthStencilAttachmentWrite, vk::PipelineStageFlagBits::eLateFragmentTests |  vk::PipelineStageFlagBits::eEarlyFragmentTests};
         }
         return {vk::ImageLayout::eUndefined, vk::AccessFlags{}, vk::PipelineStageFlagBits::eTopOfPipe};
     }
@@ -111,18 +120,18 @@ namespace RHI::Vulkan {
     void VKCommandEncoder::ResourceBarrier(const Barrier& barrier)
     {
         if (barrier.type == ResourceType::texture) {
-            auto& textureBarrierInfo = barrier.texture;
+            const auto& textureBarrierInfo = barrier.texture;
             auto oldLayout = GetBarrierInfo(textureBarrierInfo.before == TextureState::present ? TextureState::undefined : textureBarrierInfo.before);
             auto newLayout = GetBarrierInfo(textureBarrierInfo.after);
 
-            auto vkTexture = static_cast<VKTexture*>(textureBarrierInfo.pointer);
+            auto* vkTexture = static_cast<VKTexture*>(textureBarrierInfo.pointer);
             vk::ImageMemoryBarrier imageBarrier = {};
             imageBarrier.setImage(vkTexture->GetImage())
                 .setOldLayout(std::get<0>(oldLayout))
                 .setSrcAccessMask(std::get<1>(oldLayout))
                 .setNewLayout(std::get<0>(newLayout))
                 .setDstAccessMask(std::get<1>(newLayout))
-                .setSubresourceRange(vkTexture->GetRange(vk::ImageAspectFlagBits::eColor));
+                .setSubresourceRange(vkTexture->GetFullRange());
             commandBuffer.GetVkCommandBuffer().pipelineBarrier(std::get<2>(oldLayout), std::get<2>(newLayout), vk::DependencyFlagBits::eByRegion, 0, nullptr, 0, nullptr, 1, &imageBarrier);
         }
     }
@@ -185,20 +194,26 @@ namespace RHI::Vulkan {
         if (beginInfo->depthStencilAttachment != nullptr)
         {
             auto* depthStencilTextureView = dynamic_cast<VKTextureView*>(beginInfo->depthStencilAttachment->view);
-            //TODO
-            //A single depth stencil attachment info can be used, they can also be specified separately.
-            //Depth and stencil have their own loadOp and storeOp separately
-            vk::RenderingAttachmentInfo depthStencilAttachmentInfo;
-            depthStencilAttachmentInfo.setImageView(depthStencilTextureView->GetVkImageView())
+
+            vk::RenderingAttachmentInfo depthAttachmentInfo;
+            depthAttachmentInfo.setImageView(depthStencilTextureView->GetVkImageView())
                 .setImageLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
                 .setLoadOp(VKEnumCast<LoadOp, vk::AttachmentLoadOp>(beginInfo->depthStencilAttachment->depthLoadOp))
                 .setStoreOp(VKEnumCast<StoreOp, vk::AttachmentStoreOp>(beginInfo->depthStencilAttachment->depthStoreOp))
-                .setClearValue(vk::ClearValue({
-                    beginInfo->depthStencilAttachment->depthClearValue,
-                    beginInfo->depthStencilAttachment->stencilClearValue}));
+                .setClearValue(vk::ClearValue({ beginInfo->depthStencilAttachment->depthClearValue, beginInfo->depthStencilAttachment->stencilClearValue }));
 
-            renderingInfo.setPDepthAttachment(&depthStencilAttachmentInfo)
-                .setPStencilAttachment(&depthStencilAttachmentInfo);
+            renderingInfo.setPDepthAttachment(&depthAttachmentInfo);
+
+            if (!beginInfo->depthStencilAttachment->depthReadOnly) {
+                vk::RenderingAttachmentInfo stencilAttachmentInfo;
+                stencilAttachmentInfo.setImageView(depthStencilTextureView->GetVkImageView())
+                    .setImageLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
+                    .setLoadOp(VKEnumCast<LoadOp, vk::AttachmentLoadOp>(beginInfo->depthStencilAttachment->stencilLoadOp))
+                    .setStoreOp(VKEnumCast<StoreOp, vk::AttachmentStoreOp>(beginInfo->depthStencilAttachment->stencilStoreOp))
+                    .setClearValue(vk::ClearValue({ beginInfo->depthStencilAttachment->depthClearValue, beginInfo->depthStencilAttachment->stencilClearValue }));
+
+                renderingInfo.setPStencilAttachment(&stencilAttachmentInfo);
+            }
         }
 
         cmdHandle = cmd.GetVkCommandBuffer();

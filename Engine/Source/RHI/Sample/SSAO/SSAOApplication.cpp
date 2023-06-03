@@ -836,7 +836,7 @@ private:
         viewCreateInfo.arrayLayerNum = 1;
         viewCreateInfo.baseMipLevel = 0;
         viewCreateInfo.mipLevelNum = 1;
-        viewCreateInfo.aspect = TextureAspect::depthStencil;
+        viewCreateInfo.aspect = TextureAspect::depth;
         viewCreateInfo.type = TextureViewType::depthStencil;
         gBufferDepth.view = gBufferDepth.texture->CreateTextureView(viewCreateInfo);
     }

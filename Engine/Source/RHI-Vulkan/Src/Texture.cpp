@@ -7,7 +7,10 @@
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Gpu.h>
-#include <unordered_map>
+#include <RHI/Vulkan/Queue.h>
+#include <RHI/Vulkan/CommandBuffer.h>
+#include <RHI/Vulkan/CommandEncoder.h>
+#include <RHI/Vulkan/Synchronous.h>
 
 namespace RHI::Vulkan {
     static vk::ImageUsageFlags GetVkResourceStates(TextureUsageFlags textureUsages)
@@ -31,20 +34,16 @@ namespace RHI::Vulkan {
     }
 
     VKTexture::VKTexture(VKDevice& dev, const TextureCreateInfo& createInfo, vk::Image image)
-        : Texture(createInfo), device(dev), vkDeviceMemory(VK_NULL_HANDLE), vkImage(image), ownMemory(false)
+        : Texture(createInfo), device(dev), vkDeviceMemory(VK_NULL_HANDLE), vkImage(image), ownMemory(false), extent(createInfo.extent), format(createInfo.format), mipLevels(createInfo.mipLevels), samples(createInfo.samples)
     {
-        extent = createInfo.extent;
-        format = createInfo.format;
     }
 
     VKTexture::VKTexture(VKDevice& dev, const TextureCreateInfo& createInfo)
-        : Texture(createInfo), device(dev), vkImage(VK_NULL_HANDLE), ownMemory(true)
+        : Texture(createInfo), device(dev), vkImage(VK_NULL_HANDLE), ownMemory(true), extent(createInfo.extent), format(createInfo.format), mipLevels(createInfo.mipLevels), samples(createInfo.samples)
     {
-        extent = createInfo.extent;
-        format = createInfo.format;
-
         CreateImage(createInfo);
         AllocateMemory(createInfo);
+        TransitionToInitState(createInfo);
     }
 
     VKTexture::~VKTexture()
@@ -80,13 +79,25 @@ namespace RHI::Vulkan {
         return extent;
     }
 
-    vk::ImageSubresourceRange VKTexture::GetRange(vk::ImageAspectFlags aspect)
+    void VKTexture::GetAspect(const RHI::TextureCreateInfo& createInfo)
     {
-        return {aspect, 0, 1, 0, 1};
+        if (createInfo.usages & TextureUsageBits::depthStencilAttachment) {
+            aspect = vk::ImageAspectFlagBits::eDepth;
+            if (createInfo.format == PixelFormat::d32FloatS8Uint || createInfo.format == PixelFormat::d24UnormS8Uint) {
+                aspect |= vk::ImageAspectFlagBits::eStencil;
+            }
+        }
+    }
+
+    vk::ImageSubresourceRange VKTexture::GetFullRange()
+    {
+        return { aspect, 0, mipLevels, 0, extent.z };
     }
 
     void VKTexture::CreateImage(const TextureCreateInfo& createInfo)
     {
+        GetAspect(createInfo);
+
         vk::ImageCreateInfo imageInfo = {};
         imageInfo.setArrayLayers(1)
             .setMipLevels(createInfo.mipLevels)
@@ -123,5 +134,22 @@ namespace RHI::Vulkan {
     PixelFormat VKTexture::GetFormat() const
     {
         return format;
+    }
+
+    void VKTexture::TransitionToInitState(const TextureCreateInfo& createInfo)
+    {
+        if (createInfo.initialState > TextureState::undefined) {
+            Queue* queue = device.GetQueue(QueueType::graphics, 0);
+            Assert(queue);
+
+            Common::UniqueRef<Fence> fence = device.CreateFence();
+            Common::UniqueRef<CommandBuffer> commandBuffer = device.CreateCommandBuffer();
+            Common::UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
+            commandEncoder->ResourceBarrier(Barrier::Transition(this, TextureState::undefined, createInfo.initialState));
+            commandEncoder->End();
+
+            queue->Submit(commandBuffer.Get(), fence.Get());
+            fence->Wait();
+        }
     }
 }

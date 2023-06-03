@@ -27,20 +27,27 @@ namespace RHI::Vulkan {
         vk::Image GetImage() const;
         Extent<3> GetExtent() const;
         PixelFormat GetFormat() const;
+        vk::ImageSubresourceRange GetFullRange();
 
-        vk::ImageSubresourceRange GetRange(vk::ImageAspectFlags aspect);
     private:
         void CreateImage(const TextureCreateInfo& createInfo);
+        void GetAspect(const TextureCreateInfo& createInfo);
+        void TransitionToInitState(const TextureCreateInfo& createInfo);
 
         // TODO use memory pool.
         void AllocateMemory(const TextureCreateInfo& createInfo);
         void FreeMemory();
+
         VKDevice& device;
         vk::DeviceMemory vkDeviceMemory;
         vk::Image vkImage;
-        bool ownMemory;
+        vk::ImageAspectFlags aspect = vk::ImageAspectFlagBits::eColor;
+
         Extent<3> extent;
         PixelFormat format;
+        uint8_t mipLevels;
+        uint8_t samples;
+        bool ownMemory;
 
         friend class VKTextureView;
         vk::ImageView vkImageView = VK_NULL_HANDLE;
