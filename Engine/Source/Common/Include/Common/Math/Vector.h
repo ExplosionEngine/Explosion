@@ -118,10 +118,10 @@ namespace Common {
     using IVec3 = Vector<int32_t, 3>;
     using IVec4 = Vector<int32_t, 4>;
 
-    using HVec1 = Vector<HalfFloat, 1>;
-    using HVec2 = Vector<HalfFloat, 2>;
-    using HVec3 = Vector<HalfFloat, 3>;
-    using HVec4 = Vector<HalfFloat, 4>;
+    using HVec1 = Vector<HFloat, 1>;
+    using HVec2 = Vector<HFloat, 2>;
+    using HVec3 = Vector<HFloat, 3>;
+    using HVec4 = Vector<HFloat, 4>;
 
     using FVec1 = Vector<float, 1>;
     using FVec2 = Vector<float, 2>;
@@ -143,10 +143,10 @@ namespace Common {
     using IVec3Consts = VecConsts<int32_t, 3>;
     using IVec4Consts = VecConsts<int32_t, 4>;
 
-    using HVec1Consts = VecConsts<HalfFloat, 1>;
-    using HVec2Consts = VecConsts<HalfFloat, 2>;
-    using HVec3Consts = VecConsts<HalfFloat, 3>;
-    using HVec4Consts = VecConsts<HalfFloat, 4>;
+    using HVec1Consts = VecConsts<HFloat, 1>;
+    using HVec2Consts = VecConsts<HFloat, 2>;
+    using HVec3Consts = VecConsts<HFloat, 3>;
+    using HVec4Consts = VecConsts<HFloat, 4>;
 
     using FVec1Consts = VecConsts<float, 1>;
     using FVec2Consts = VecConsts<float, 2>;
