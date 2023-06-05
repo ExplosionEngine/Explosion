@@ -6,35 +6,36 @@
 
 #include <Common/Math/Vector.h>
 #include <Common/Math/Matrix.h>
+#include <Common/Math/Quaternion.h>
 
 using namespace Common;
 
-TEST(MathTest, HalfFloatTest)
+TEST(MathTest, HFloatTest)
 {
-    HalfFloat v0 = 1.0f;
+    HFloat v0 = 1.0f;
     ASSERT_FLOAT_EQ(v0, 1.0f);
     ASSERT_TRUE(v0 == 1.0f);
     ASSERT_TRUE(v0 != 2.0f);
 
-    HalfFloat v1 = v0 + 2.0f;
+    HFloat v1 = v0 + 2.0f;
     ASSERT_FLOAT_EQ(v1, 3.0f);
 
-    HalfFloat v2 = v1 / 2.0f;
+    HFloat v2 = v1 / 2.0f;
     ASSERT_FLOAT_EQ(v2.AsFloat(), 1.5f);
 
-    HalfFloat v3 = 1.0f;
+    HFloat v3 = 1.0f;
     v3 /= v2;
     ASSERT_TRUE(v3 == (1.0f / 1.5f));
 
-    HalfFloat v4 = 2.0f;
+    HFloat v4 = 2.0f;
     v4 -= v2;
-    ASSERT_TRUE(v4 == HalfFloat(0.5f));
+    ASSERT_TRUE(v4 == HFloat(0.5f));
 
-    HalfFloat v5 = 3.0f;
-    ASSERT_TRUE(HalfFloat(9.0f) = HalfFloat(std::pow(v5, 2.0f)));
+    HFloat v5 = 3.0f;
+    ASSERT_TRUE(HFloat(9.0f) = HFloat(std::pow(v5, 2.0f)));
 
-    HalfFloat v6 = 9.0f;
-    ASSERT_TRUE(v5 == HalfFloat(std::sqrt(v6)));
+    HFloat v6 = 9.0f;
+    ASSERT_TRUE(v5 == HFloat(std::sqrt(v6)));
 }
 
 TEST(MathTest, FVec1Test)
@@ -182,35 +183,35 @@ TEST(MathTest, HVec1Test)
 
     HVec1 v1;
     v1 += v0;
-    v1 /= HalfFloat(2.0f);
-    v1 -= HalfFloat(3.0f);
-    ASSERT_TRUE(v1.x == HalfFloat(-2.5f));
+    v1 /= HFloat(2.0f);
+    v1 -= HFloat(3.0f);
+    ASSERT_TRUE(v1.x == HFloat(-2.5f));
 }
 
 TEST(MathTest, HVec2Test)
 {
     HVec2 v0 = HVec2(1.0f, 2.0f);
-    ASSERT_TRUE(v0.x == HalfFloat(1.0f));
+    ASSERT_TRUE(v0.x == HFloat(1.0f));
     ASSERT_TRUE(v0.y == 2.0f);
 
-    HVec2 v1 = v0 + HalfFloat(2.0f) - HVec2(3.0f, 1.0f);
-    ASSERT_TRUE(v1.x == HalfFloat(0.0f));
+    HVec2 v1 = v0 + HFloat(2.0f) - HVec2(3.0f, 1.0f);
+    ASSERT_TRUE(v1.x == HFloat(0.0f));
     ASSERT_TRUE(v1.y == 3.0f);
 
-    v1 /= HalfFloat(2.0f);
+    v1 /= HFloat(2.0f);
     ASSERT_TRUE(v1.x == 0.0f);
-    ASSERT_TRUE(v1.y == HalfFloat(1.5f));
+    ASSERT_TRUE(v1.y == HFloat(1.5f));
 }
 
 TEST(MathTest, HVec3Test)
 {
-    HVec3 v0 { HalfFloat(1.0f), HalfFloat(2.0f), HalfFloat(3.0f) };
+    HVec3 v0 { HFloat(1.0f), HFloat(2.0f), HFloat(3.0f) };
     ASSERT_TRUE(v0.x == 1.0f);
-    ASSERT_TRUE(v0.y == HalfFloat(2.0f));
+    ASSERT_TRUE(v0.y == HFloat(2.0f));
     ASSERT_TRUE(v0.z == 3.0f);
     ASSERT_FALSE(v0.z == 2.0f);
 
-    HVec3 v1 = v0 + HalfFloat(3.0f) / HalfFloat(2.0f) - HalfFloat(1.0f);
+    HVec3 v1 = v0 + HFloat(3.0f) / HFloat(2.0f) - HFloat(1.0f);
     ASSERT_TRUE(v1 == HVec3(1.5f, 2.5f, 3.5f));
 }
 
@@ -326,15 +327,98 @@ TEST(MathTest, MatViewTest)
 
 TEST(MathTest, MatConstsTest)
 {
-    // TODO
+    FMat2x4 v0 = FMat2x4Consts::zero;
+    ASSERT_TRUE(v0.Row(1) == FVec4Consts::zero);
+
+    FMat3x3 v1 = FMat3x3Consts::zero;
+    ASSERT_TRUE(v1.Col(2) == FVec3Consts::zero);
+
+    FMat3x3 v2 = FMat3x3Consts::identity;
+    ASSERT_TRUE(v2.Row(0) == FVec3(1, 0, 0));
+    ASSERT_TRUE(v2.Row(1) == FVec3(0, 1, 0));
+    ASSERT_TRUE(v2.Row(2) == FVec3(0, 0, 1));
 }
 
 TEST(MathTest, MatSetTest)
 {
-    // TODO
+    FMat2x4 v0;
+    v0.SetRow(0, 1, 2, 3, 4);
+    v0.SetCol(0, FVec2(2, 3));
+    ASSERT_TRUE(v0.Row(0) == FVec4(2, 2, 3, 4));
+
+    v0.SetRows(
+        FVec4(5, 6, 7, 8),
+        FVec4(9, 10, 11, 12)
+    );
+    ASSERT_TRUE(v0.Row(0) == FVec4(5, 6, 7, 8));
+    ASSERT_TRUE(v0.Row(1) == FVec4(9, 10, 11, 12));
+
+    v0.SetCols(
+        FVec2(1, 2),
+        FVec2(3, 4),
+        FVec2(5, 6),
+        FVec2(7, 8)
+    );
+    ASSERT_TRUE(v0.Row(0) == FVec4(1, 3, 5, 7));
+    ASSERT_TRUE(v0.Row(1) == FVec4(2, 4, 6, 8));
+
+    v0.SetValues(
+        2, 3, 4, 5,
+        6, 7, 8, 9
+    );
+    ASSERT_TRUE(v0.Row(0) == FVec4(2, 3, 4, 5));
+    ASSERT_TRUE(v0.Row(1) == FVec4(6, 7, 8, 9));
 }
 
 TEST(MathTest, MatMulTest)
+{
+    FMat3x4 v0(
+        1, 2, 3, 4,
+        5, 6, 7, 8,
+        9, 10, 11, 12
+    );
+    FMat4x2 v1(
+        1, 2,
+        3, 4,
+        5, 6,
+        7, 8
+    );
+    FMat3x2 v2 = v0 * v1;
+    ASSERT_TRUE(v2.Row(0) == FVec2(50, 60));
+    ASSERT_TRUE(v2.Row(1) == FVec2(114, 140));
+    ASSERT_TRUE(v2.Row(2) == FVec2(178, 220));
+}
+
+TEST(MathTest, MathTranposeTest)
+{
+    FMat3x4 v0(
+        1, 2, 3, 4,
+        5, 6, 7, 8,
+        9, 10, 11, 12
+    );
+    FMat4x3 v1 = v0.Transpose();
+    ASSERT_TRUE(v1.Row(0) == FVec3(1, 5, 9));
+    ASSERT_TRUE(v1.Row(1) == FVec3(2, 6, 10));
+    ASSERT_TRUE(v1.Row(2) == FVec3(3, 7, 11));
+    ASSERT_TRUE(v1.Row(3) == FVec3(4, 8, 12));
+}
+
+TEST(MathTest, AngleAndRadianTest)
+{
+    // TODO
+}
+
+TEST(MathTest, EulerRotationToQuaternionTest)
+{
+    // TODO
+}
+
+TEST(MathTest, QuaternionBasicTest)
+{
+    // TODO
+}
+
+TEST(MathTest, QuaternionRotationTest)
 {
     // TODO
 }
