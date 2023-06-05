@@ -14,7 +14,6 @@ namespace RHI {
     struct BufferCreateInfo {
         size_t size;
         BufferUsageFlags usages;
-        BufferState initialState;
     };
 
     class Buffer {
