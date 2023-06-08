@@ -45,7 +45,8 @@ namespace RHI::Vulkan {
 
     void VKFence::CreateVKFence()
     {
-        VkFenceCreateInfo fenceInfo{};
+        VkFenceCreateInfo fenceInfo = {};
+        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
         Assert(vkCreateFence(device.GetVkDevice(), &fenceInfo, nullptr, &fence) == VK_SUCCESS);
     }

@@ -35,6 +35,7 @@ namespace RHI::Vulkan {
     void VKShaderModule::CreateNativeShaderModule(const ShaderModuleCreateInfo& createInfo)
     {
         VkShaderModuleCreateInfo moduleCreateInfo = {};
+        moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         moduleCreateInfo.codeSize = createInfo.size;
         moduleCreateInfo.pCode = static_cast<const uint32_t*>(createInfo.byteCode);
 

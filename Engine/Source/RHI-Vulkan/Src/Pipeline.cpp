@@ -40,6 +40,7 @@ namespace RHI::Vulkan {
     {
         const auto& dsState = createInfo.depthStencilState;
         VkPipelineDepthStencilStateCreateInfo dsInfo = {};
+        dsInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
         dsInfo.depthTestEnable = dsState.depthEnable;
         dsInfo.depthWriteEnable = dsState.depthEnable;
         dsInfo.stencilTestEnable = dsState.stencilEnable;
@@ -55,6 +56,7 @@ namespace RHI::Vulkan {
     static VkPipelineInputAssemblyStateCreateInfo ConstructInputAssembly(const GraphicsPipelineCreateInfo& createInfo)
     {
         VkPipelineInputAssemblyStateCreateInfo assemblyInfo = {};
+        assemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         assemblyInfo.topology = VKEnumCast<PrimitiveTopologyType, VkPrimitiveTopology>(createInfo.primitiveState.topologyType);
         assemblyInfo.primitiveRestartEnable = VK_FALSE;
 
@@ -64,6 +66,7 @@ namespace RHI::Vulkan {
     static VkPipelineRasterizationStateCreateInfo ConstructRasterization(const GraphicsPipelineCreateInfo& createInfo)
     {
         VkPipelineRasterizationStateCreateInfo rasterState = {};
+        rasterState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         rasterState.cullMode = VKEnumCast<CullMode, VkCullModeFlagBits>(createInfo.primitiveState.cullMode);
         rasterState.frontFace = createInfo.primitiveState.frontFace == FrontFace::cw ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
         rasterState.depthBiasClamp = createInfo.depthStencilState.depthBiasClamp;
@@ -83,6 +86,7 @@ namespace RHI::Vulkan {
     static VkPipelineMultisampleStateCreateInfo ConstructMultiSampleState(const GraphicsPipelineCreateInfo& createInfo)
     {
         VkPipelineMultisampleStateCreateInfo multiSampleInfo = {};
+        multiSampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multiSampleInfo.alphaToCoverageEnable = createInfo.multiSampleState.alphaToCoverage;
         multiSampleInfo.pSampleMask = &createInfo.multiSampleState.mask;
         multiSampleInfo.rasterizationSamples = static_cast<VkSampleCountFlagBits>(createInfo.multiSampleState.count);
@@ -92,6 +96,7 @@ namespace RHI::Vulkan {
     static VkPipelineViewportStateCreateInfo ConstructViewportInfo(const GraphicsPipelineCreateInfo&)
     {
         VkPipelineViewportStateCreateInfo viewportState = {};
+        viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         viewportState.viewportCount = 1;
         viewportState.pViewports = nullptr;
         viewportState.scissorCount = 1;
@@ -103,6 +108,7 @@ namespace RHI::Vulkan {
     {
         blendStates.resize(createInfo.fragmentState.colorTargetNum);
         VkPipelineColorBlendStateCreateInfo colorInfo = {};
+        colorInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
         for (uint8_t i = 0; i < createInfo.fragmentState.colorTargetNum; ++i) {
             VkPipelineColorBlendAttachmentState& blendState = blendStates[i];
             const auto& srcState = createInfo.fragmentState.colorTargets[i];
@@ -117,6 +123,7 @@ namespace RHI::Vulkan {
         }
 
         colorInfo.pAttachments = blendStates.data();
+        colorInfo.attachmentCount = blendStates.size();
         colorInfo.logicOpEnable = VK_FALSE;
         colorInfo.logicOp = VK_LOGIC_OP_CLEAR;
         colorInfo.blendConstants[0] = 0.0f;
@@ -134,6 +141,7 @@ namespace RHI::Vulkan {
         const auto& locationTable = vs->GetLocationTable();
 
         VkPipelineVertexInputStateCreateInfo vtxInput = {};
+        vtxInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
         bindings.resize(createInfo.vertexState.bufferLayoutNum);
         for (uint32_t i = 0; i < createInfo.vertexState.bufferLayoutNum; ++i) {
@@ -155,7 +163,9 @@ namespace RHI::Vulkan {
                 attributes.emplace_back(desc);
             }
         }
+        vtxInput.vertexAttributeDescriptionCount = attributes.size();
         vtxInput.pVertexAttributeDescriptions = attributes.data();
+        vtxInput.vertexBindingDescriptionCount = bindings.size();
         vtxInput.pVertexBindingDescriptions = bindings.data();
         return vtxInput;
     }
@@ -264,6 +274,7 @@ namespace RHI::Vulkan {
                 return;
             }
             VkPipelineShaderStageCreateInfo stageInfo = {};
+            stageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             stageInfo.module = static_cast<const VKShaderModule*>(module)->GetVkShaderModule();
             stageInfo.pName = GetShaderEntry(stage);
             stageInfo.stage = stage;
@@ -277,6 +288,7 @@ namespace RHI::Vulkan {
             VK_DYNAMIC_STATE_SCISSOR
         };
         VkPipelineDynamicStateCreateInfo dynStateInfo = {};
+        dynStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
         dynStateInfo.dynamicStateCount = dynamicStates.size();
         dynStateInfo.pDynamicStates = dynamicStates.data();
 
@@ -301,18 +313,17 @@ namespace RHI::Vulkan {
         }
 
         VkPipelineRenderingCreateInfo pipelineRenderingCreateInfo;
+        pipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
         pipelineRenderingCreateInfo.colorAttachmentCount = createInfo.fragmentState.colorTargetNum;
         pipelineRenderingCreateInfo.pColorAttachmentFormats = pixelFormats.data();
+        pipelineRenderingCreateInfo.depthAttachmentFormat = VKEnumCast<PixelFormat, VkFormat>(createInfo.depthStencilState.format);
+        pipelineRenderingCreateInfo.stencilAttachmentFormat = VKEnumCast<PixelFormat, VkFormat>(createInfo.depthStencilState.format);
 
-        if (createInfo.depthStencilState.depthEnable) {
-            pipelineRenderingCreateInfo.depthAttachmentFormat = VKEnumCast<PixelFormat, VkFormat>(createInfo.depthStencilState.format);
-        }
-        if (createInfo.depthStencilState.stencilEnable) {
-            pipelineRenderingCreateInfo.stencilAttachmentFormat = VKEnumCast<PixelFormat, VkFormat>(createInfo.depthStencilState.format);
-        }
 
         VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
+        pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
         pipelineCreateInfo.pStages = stages.data();
+        pipelineCreateInfo.stageCount = stages.size();
         pipelineCreateInfo.layout = static_cast<const VKPipelineLayout*>(createInfo.layout)->GetVkPipelineLayout();
         pipelineCreateInfo.pDynamicState = &dynStateInfo;
         pipelineCreateInfo.pMultisampleState = &multiSampleInfo;

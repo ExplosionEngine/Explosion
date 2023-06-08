@@ -34,6 +34,7 @@ namespace RHI::Vulkan {
     void VKBindGroupLayout::CreateDescriptorSetLayout(const BindGroupLayoutCreateInfo& createInfo)
     {
         VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+        layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
         std::vector<VkDescriptorSetLayoutBinding> bindings(createInfo.entryNum);
         for (size_t i = 0; i < createInfo.entryNum; ++i) {
@@ -49,6 +50,7 @@ namespace RHI::Vulkan {
         }
 
         layoutInfo.pBindings = bindings.data();
+        layoutInfo.bindingCount = bindings.size();
 
         Assert(vkCreateDescriptorSetLayout(device.GetVkDevice(), &layoutInfo, nullptr, &setLayout) == VK_SUCCESS);
     }

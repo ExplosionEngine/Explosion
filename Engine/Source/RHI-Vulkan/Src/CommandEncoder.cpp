@@ -47,7 +47,7 @@ namespace RHI::Vulkan {
 
         VkBufferImageCopy copyRegion = {};
         copyRegion.imageExtent = { size.x, size.y, size.z };
-        copyRegion.imageSubresource = { GetAspectMask(subResourceInfo->aspect), subResourceInfo->mipLevel,subResourceInfo->arrayLayerNum };
+        copyRegion.imageSubresource = { GetAspectMask(subResourceInfo->aspect), subResourceInfo->mipLevel, subResourceInfo->baseArrayLayer, subResourceInfo->arrayLayerNum };
 
         vkCmdCopyBufferToImage(commandBuffer.GetVkCommandBuffer(), buffer->GetVkBuffer(), texture->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
     }
@@ -110,6 +110,7 @@ namespace RHI::Vulkan {
 
             auto* vkTexture = static_cast<VKTexture*>(textureBarrierInfo.pointer);
             VkImageMemoryBarrier imageBarrier = {};
+            imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
             imageBarrier.image = vkTexture->GetImage();
             imageBarrier.oldLayout = std::get<0>(oldLayout);
             imageBarrier.srcAccessMask = std::get<1>(oldLayout);
@@ -157,6 +158,7 @@ namespace RHI::Vulkan {
         for (size_t i = 0; i < beginInfo->colorAttachmentNum; i++)
         {
             auto* colorTextureView = dynamic_cast<VKTextureView*>(beginInfo->colorAttachments[i].view);
+            colorAttachmentInfos[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             colorAttachmentInfos[i].imageView = colorTextureView->GetVkImageView();
             colorAttachmentInfos[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             colorAttachmentInfos[i].loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(beginInfo->colorAttachments[i].loadOp);
@@ -170,7 +172,8 @@ namespace RHI::Vulkan {
         }
 
         auto* textureView = dynamic_cast<VKTextureView*>(beginInfo->colorAttachments[0].view);
-        VkRenderingInfoKHR renderingInfo;
+        VkRenderingInfoKHR renderingInfo = {};
+        renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
         renderingInfo.colorAttachmentCount = colorAttachmentInfos.size();
         renderingInfo.pColorAttachments = colorAttachmentInfos.data();
         renderingInfo.layerCount = textureView->GetArrayLayerNum();
@@ -181,6 +184,7 @@ namespace RHI::Vulkan {
             auto* depthStencilTextureView = dynamic_cast<VKTextureView*>(beginInfo->depthStencilAttachment->view);
 
             VkRenderingAttachmentInfo depthAttachmentInfo;
+            depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             depthAttachmentInfo.imageView = depthStencilTextureView->GetVkImageView();
             depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             depthAttachmentInfo.loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(beginInfo->depthStencilAttachment->depthLoadOp);
@@ -191,6 +195,7 @@ namespace RHI::Vulkan {
 
             if (!beginInfo->depthStencilAttachment->depthReadOnly) {
                 VkRenderingAttachmentInfo stencilAttachmentInfo;
+                stencilAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
                 stencilAttachmentInfo.imageView = depthStencilTextureView->GetVkImageView();
                 stencilAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
                 stencilAttachmentInfo.loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(beginInfo->depthStencilAttachment->stencilLoadOp);

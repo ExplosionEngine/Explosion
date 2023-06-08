@@ -44,14 +44,17 @@ namespace RHI::Vulkan {
 
     uint8_t VKSwapChain::AcquireBackTexture()
     {
+        std::cout << "current index befor acquire: " << currentImage << '\n';
         currentSemaphore = imageAvailableSemaphore[currentImage];
-        Assert(vkAcquireNextImageKHR(device.GetVkDevice(), swapChain, UINT64_MAX, currentSemaphore, {}, &currentImage) == VK_SUCCESS);
+        Assert(vkAcquireNextImageKHR(device.GetVkDevice(), swapChain, UINT64_MAX, currentSemaphore, VK_NULL_HANDLE, &currentImage) == VK_SUCCESS);
+        std::cout << "current index after acquire: " << currentImage << std::endl;
         return currentImage;
     }
 
     void VKSwapChain::Present()
     {
-        VkPresentInfoKHR presetInfo{};
+        VkPresentInfoKHR presetInfo = {};
+        presetInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presetInfo.swapchainCount = 1;
         presetInfo.pSwapchains = &swapChain;
         presetInfo.pWaitSemaphores = waitSemaphores.data();
@@ -115,6 +118,7 @@ namespace RHI::Vulkan {
 
         swapChainImageCount = std::clamp(static_cast<uint32_t>(createInfo.textureNum), surfaceCap.minImageCount, surfaceCap.maxImageCount);
         VkSwapchainCreateInfoKHR swapChainInfo = {};
+        swapChainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         swapChainInfo.surface = surface;
         swapChainInfo.minImageCount = swapChainImageCount;
         swapChainInfo.imageFormat = supportedFormat;
@@ -147,9 +151,11 @@ namespace RHI::Vulkan {
         }
         swapChainImageCount = static_cast<uint32_t>(swapChainImages.size());
 
+        VkSemaphoreCreateInfo semaphoreInfo = {};
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         imageAvailableSemaphore.resize(swapChainImageCount);
         for (uint32_t i = 0; i < swapChainImageCount; ++i) {
-            Assert(vkCreateSemaphore(vkDevice, {}, nullptr, &imageAvailableSemaphore[i]) == VK_SUCCESS);
+            Assert(vkCreateSemaphore(vkDevice, &semaphoreInfo, nullptr, &imageAvailableSemaphore[i]) == VK_SUCCESS);
         }
     }
 }

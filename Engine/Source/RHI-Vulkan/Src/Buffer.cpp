@@ -86,6 +86,7 @@ namespace RHI::Vulkan {
     void VKBuffer::CreateBuffer(const BufferCreateInfo& createInfo)
     {
         VkBufferCreateInfo bufferInfo = {};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         bufferInfo.usage = GetVkResourceStates(createInfo.usages);
         bufferInfo.size = createInfo.size;
@@ -99,6 +100,7 @@ namespace RHI::Vulkan {
         vkGetBufferMemoryRequirements(device.GetVkDevice(), vkBuffer, &memoryRequirements);
 
         VkMemoryAllocateInfo memoryInfo = {};
+        memoryInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         memoryInfo.allocationSize = memoryRequirements.size;
         memoryInfo.memoryTypeIndex = device.GetGpu().FindMemoryType(memoryRequirements.memoryTypeBits, GetVkMemoryType(createInfo.usages));
 

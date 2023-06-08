@@ -21,7 +21,8 @@ namespace RHI::Vulkan {
         const VkCommandBuffer& cmdBuffer = commandBuffer->GetVkCommandBuffer();
         const VkFence& fence = fenceToSignaled == nullptr ? VK_NULL_HANDLE : fenceToSignaled->GetVkFence();
 
-        VkSubmitInfo submitInfo{};
+        VkSubmitInfo submitInfo = {};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.commandBufferCount = 1;
         submitInfo.pWaitSemaphores = commandBuffer->GetWaitSemaphores().data();
         submitInfo.pWaitDstStageMask = commandBuffer->GetWaitStages().data();

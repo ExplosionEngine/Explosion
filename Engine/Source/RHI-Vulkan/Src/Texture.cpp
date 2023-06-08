@@ -99,6 +99,7 @@ namespace RHI::Vulkan {
         GetAspect(createInfo);
 
         VkImageCreateInfo imageInfo = {};
+        imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.arrayLayers = extent.z;
         imageInfo.mipLevels = mipLevels;
         imageInfo.extent = FromRHI(createInfo.extent);
@@ -116,6 +117,7 @@ namespace RHI::Vulkan {
         vkGetImageMemoryRequirements(device.GetVkDevice(), vkImage, &memoryRequirements);
 
         VkMemoryAllocateInfo memoryInfo = {};
+        memoryInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         memoryInfo.allocationSize = memoryRequirements.size;
         memoryInfo.memoryTypeIndex = device.GetGpu().FindMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 

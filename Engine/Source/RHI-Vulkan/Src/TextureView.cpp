@@ -27,7 +27,7 @@ namespace RHI::Vulkan {
     {
         if (!vkTexture.vkImageView) {
             VkImageViewCreateInfo viewInfo = {};
-
+            viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             viewInfo.format = VKEnumCast<PixelFormat, VkFormat>(vkTexture.GetFormat());
             viewInfo.image = vkTexture.GetImage();
             viewInfo.viewType = VKEnumCast<TextureViewDimension, VkImageViewType>(createInfo.dimension);

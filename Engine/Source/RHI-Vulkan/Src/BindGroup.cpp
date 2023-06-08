@@ -48,6 +48,7 @@ namespace RHI::Vulkan {
         }
 
         VkDescriptorPoolCreateInfo poolInfo {};
+        poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         poolInfo.pPoolSizes = poolSizes.data();
         poolInfo.poolSizeCount = createInfo.entryNum;
         poolInfo.maxSets = 1;
@@ -60,6 +61,7 @@ namespace RHI::Vulkan {
         VkDescriptorSetLayout layout = dynamic_cast<VKBindGroupLayout*>(createInfo.layout)->GetVkDescriptorSetLayout();
 
         VkDescriptorSetAllocateInfo allocInfo {};
+        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocInfo.descriptorSetCount = 1;
         allocInfo.pSetLayouts = &layout;
         allocInfo.descriptorPool = descriptorPool;
@@ -86,6 +88,7 @@ namespace RHI::Vulkan {
         for (int i = 0; i < createInfo.entryNum; i++) {
             const auto& entry = createInfo.entries[i];
 
+            descriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             descriptorWrites[i].dstSet = descriptorSet;
             descriptorWrites[i].dstBinding = entry.binding.platform.glsl.index;
             descriptorWrites[i].descriptorCount = 1;

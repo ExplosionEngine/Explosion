@@ -33,7 +33,7 @@ namespace RHI::Vulkan {
     void VKSampler::CreateSampler(const SamplerCreateInfo& createInfo)
     {
         VkSamplerCreateInfo samplerInfo = {};
-
+        samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
         samplerInfo.addressModeU = VKEnumCast<AddressMode, VkSamplerAddressMode>(createInfo.addressModeU);
         samplerInfo.addressModeV = VKEnumCast<AddressMode, VkSamplerAddressMode>(createInfo.addressModeV);
         samplerInfo.addressModeW = VKEnumCast<AddressMode, VkSamplerAddressMode>(createInfo.addressModeW);

@@ -23,7 +23,11 @@ namespace RHI::Vulkan {
         [view setWantsLayer: YES];
 
         VkMacOSSurfaceCreateInfoMVK surfaceInfo = {};
-        surfaceInfo.pView = &view;
+        surfaceInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
+        surfaceInfo.pView = view;
+        surfaceInfo.pNext = nullptr;
+        surfaceInfo.flags = 0;
+
         VkSurfaceKHR surface = VK_NULL_HANDLE;
         vkCreateMacOSSurfaceMVK(instance, &surfaceInfo, nullptr, &surface);
         return surface;

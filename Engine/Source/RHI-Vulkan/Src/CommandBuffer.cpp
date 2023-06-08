@@ -38,6 +38,7 @@ namespace RHI::Vulkan {
         waitStages.clear();
 
         VkCommandBufferBeginInfo beginInfo = {};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
         vkBeginCommandBuffer(commandBuffer, &beginInfo);
@@ -72,15 +73,18 @@ namespace RHI::Vulkan {
 
     void VKCommandBuffer::CreateNativeCommandBuffer()
     {
-        VkCommandBufferAllocateInfo cmdInfo;
+        VkCommandBufferAllocateInfo cmdInfo = {};
+        cmdInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         cmdInfo.commandBufferCount = 1;
         cmdInfo.commandPool = pool;
         cmdInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
         Assert(vkAllocateCommandBuffers(device.GetVkDevice(), &cmdInfo, &commandBuffer) == VK_SUCCESS);
 
+        VkSemaphoreCreateInfo semaphoreInfo = {};
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         signalSemaphores.resize(1); // TODO
-        Assert(vkCreateSemaphore(device.GetVkDevice(), {}, nullptr, &signalSemaphores[0]) == VK_SUCCESS);
+        Assert(vkCreateSemaphore(device.GetVkDevice(), &semaphoreInfo, nullptr, &signalSemaphores[0]) == VK_SUCCESS);
     }
 
 }

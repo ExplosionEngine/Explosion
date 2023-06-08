@@ -220,6 +220,7 @@ namespace RHI::Vulkan {
             }
 
             VkDeviceQueueCreateInfo tempCreateInfo = {};
+            tempCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
             tempCreateInfo.queueFamilyIndex = queueFamilyIndex.value();
             tempCreateInfo.queueCount = queueCount;
             tempCreateInfo.pQueuePriorities = queuePriorities.data();
@@ -228,16 +229,20 @@ namespace RHI::Vulkan {
             queueFamilyMappings[iter.first] = std::make_pair(queueFamilyIndex.value(), queueCount);
         }
 
-        VkPhysicalDeviceFeatures deviceFeatures;
+        VkPhysicalDeviceFeatures deviceFeatures = {};
+        deviceFeatures.samplerAnisotropy = VK_TRUE;
+
         VkDeviceCreateInfo deviceCreateInfo = {};
+        deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         deviceCreateInfo.queueCreateInfoCount = queueCreateInfos.size();
         deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 
-        VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures;
+        VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures = {};
+        dynamicRenderingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
         dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
-        deviceCreateInfo.pNext = &dynamicRenderingFeatures;
-
+        deviceCreateInfo.pNext = static_cast<VkPhysicalDeviceDynamicRenderingFeatures*>(&dynamicRenderingFeatures);
+;
         deviceCreateInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
         deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
 
@@ -252,6 +257,7 @@ namespace RHI::Vulkan {
     void VKDevice::GetQueues()
     {
         VkCommandPoolCreateInfo poolInfo = {};
+        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
         for (auto iter : queueFamilyMappings) {

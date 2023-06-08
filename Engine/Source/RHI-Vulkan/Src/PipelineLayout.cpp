@@ -47,10 +47,13 @@ namespace RHI::Vulkan {
             pushConstants[i].size = constantInfo.size;
         }
 
-        VkPipelineLayoutCreateInfo plInfo= {};
-        plInfo.pSetLayouts = setLayouts.data();
-        plInfo.pPushConstantRanges = pushConstants.data();
-        Assert(vkCreatePipelineLayout(device.GetVkDevice(), &plInfo, nullptr, &pipelineLayout) == VK_SUCCESS);
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutInfo.setLayoutCount = setLayouts.size();
+        pipelineLayoutInfo.pSetLayouts = setLayouts.data();
+        pipelineLayoutInfo.pushConstantRangeCount = pushConstants.size();
+        pipelineLayoutInfo.pPushConstantRanges = pushConstants.data();
+        Assert(vkCreatePipelineLayout(device.GetVkDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) == VK_SUCCESS);
     }
 
 }
