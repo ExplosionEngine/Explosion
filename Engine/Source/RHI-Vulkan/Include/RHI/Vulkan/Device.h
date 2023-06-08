@@ -7,6 +7,7 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
+#include <algorithm>
 
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.h>

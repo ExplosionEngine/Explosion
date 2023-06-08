@@ -178,6 +178,7 @@ namespace RHI::Vulkan {
         renderingInfo.pColorAttachments = colorAttachmentInfos.data();
         renderingInfo.layerCount = textureView->GetArrayLayerNum();
         renderingInfo.renderArea = {{0, 0}, {static_cast<uint32_t>(textureView->GetTexture().GetExtent().x), static_cast<uint32_t>(textureView->GetTexture().GetExtent().y)}};
+        renderingInfo.viewMask = 0;
 
         if (beginInfo->depthStencilAttachment != nullptr)
         {

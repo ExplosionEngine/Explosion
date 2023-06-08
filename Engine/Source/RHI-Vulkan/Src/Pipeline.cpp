@@ -318,7 +318,8 @@ namespace RHI::Vulkan {
         pipelineRenderingCreateInfo.pColorAttachmentFormats = pixelFormats.data();
         pipelineRenderingCreateInfo.depthAttachmentFormat = VKEnumCast<PixelFormat, VkFormat>(createInfo.depthStencilState.format);
         pipelineRenderingCreateInfo.stencilAttachmentFormat = VKEnumCast<PixelFormat, VkFormat>(createInfo.depthStencilState.format);
-
+        pipelineRenderingCreateInfo.pNext = nullptr;
+        pipelineRenderingCreateInfo.viewMask = 0;
 
         VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
         pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -336,7 +337,8 @@ namespace RHI::Vulkan {
         pipelineCreateInfo.pVertexInputState = &vtxInput;
         pipelineCreateInfo.pNext = &pipelineRenderingCreateInfo;
 
-        Assert(vkCreateGraphicsPipelines(device.GetVkDevice(), VK_NULL_HANDLE,1, &pipelineCreateInfo, nullptr, &pipeline) == VK_SUCCESS);
+        auto res = vkCreateGraphicsPipelines(device.GetVkDevice(), VK_NULL_HANDLE,1, &pipelineCreateInfo, nullptr, &pipeline);
+        Assert(res == VK_SUCCESS);
     }
 
     VkPipeline VKGraphicsPipeline::GetVkPipeline()
