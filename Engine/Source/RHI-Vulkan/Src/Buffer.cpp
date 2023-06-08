@@ -9,15 +9,15 @@
 #include <RHI/Vulkan/BufferView.h>
 
 namespace RHI::Vulkan {
-    static vk::MemoryPropertyFlags GetVkMemoryType(BufferUsageFlags bufferUsages)
+    static VkMemoryPropertyFlags GetVkMemoryType(BufferUsageFlags bufferUsages)
     {
-        static std::unordered_map<BufferUsageFlags, vk::MemoryPropertyFlags> rules = {
-            { BufferUsageBits::mapWrite | BufferUsageBits::copySrc, vk::MemoryPropertyFlagBits::eHostVisible },
-            { BufferUsageBits::mapRead | BufferUsageBits::copyDst, vk::MemoryPropertyFlagBits::eHostVisible },
-            { BufferUsageBits::uniform | BufferUsageBits::mapWrite, vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible}
+        static std::unordered_map<BufferUsageFlags, VkMemoryPropertyFlags> rules = {
+            { BufferUsageBits::mapWrite | BufferUsageBits::copySrc, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT },
+            { BufferUsageBits::mapRead | BufferUsageBits::copyDst, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT },
+            { BufferUsageBits::uniform | BufferUsageBits::mapWrite, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT }
             // TODO check other conditions ?
         };
-        static vk::MemoryPropertyFlags fallback = vk::MemoryPropertyFlagBits::eDeviceLocal;
+        static VkMemoryPropertyFlags fallback = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
         for (const auto& rule : rules) {
             if (bufferUsages & rule.first) {
@@ -28,19 +28,19 @@ namespace RHI::Vulkan {
     }
 
 
-    static vk::BufferUsageFlags GetVkResourceStates(BufferUsageFlags bufferUsages)
+    static VkBufferUsageFlags GetVkResourceStates(BufferUsageFlags bufferUsages)
     {
-        static std::unordered_map<BufferUsageBits, vk::BufferUsageFlags> rules = {
-            { BufferUsageBits::copySrc, vk::BufferUsageFlagBits::eTransferSrc },
-            { BufferUsageBits::copyDst, vk::BufferUsageFlagBits::eTransferDst },
-            { BufferUsageBits::index,    vk::BufferUsageFlagBits::eIndexBuffer },
-            { BufferUsageBits::vertex,   vk::BufferUsageFlagBits::eVertexBuffer },
-            { BufferUsageBits::uniform,  vk::BufferUsageFlagBits::eUniformBuffer },
-            { BufferUsageBits::storage,  vk::BufferUsageFlagBits::eStorageBuffer },
-            { BufferUsageBits::indirect, vk::BufferUsageFlagBits::eIndirectBuffer },
+        static std::unordered_map<BufferUsageBits, VkBufferUsageFlags> rules = {
+            { BufferUsageBits::copySrc, VK_BUFFER_USAGE_TRANSFER_SRC_BIT },
+            { BufferUsageBits::copyDst, VK_BUFFER_USAGE_TRANSFER_DST_BIT },
+            { BufferUsageBits::index,    VK_BUFFER_USAGE_INDEX_BUFFER_BIT },
+            { BufferUsageBits::vertex,   VK_BUFFER_USAGE_VERTEX_BUFFER_BIT },
+            { BufferUsageBits::uniform,  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT },
+            { BufferUsageBits::storage,  VK_BUFFER_USAGE_STORAGE_BUFFER_BIT },
+            { BufferUsageBits::indirect, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT },
         };
 
-        vk::BufferUsageFlags result = {};
+        VkBufferUsageFlags result = {};
         for (const auto& rule : rules) {
             if (bufferUsages & rule.first) {
                 result |= rule.second;
@@ -64,13 +64,13 @@ namespace RHI::Vulkan {
     void* VKBuffer::Map(MapMode mapMode, size_t offset, size_t length)
     {
         void* data;
-        Assert(device.GetVkDevice().mapMemory(vkDeviceMemory, offset, length, {}, &data) == vk::Result::eSuccess);
+        Assert(vkMapMemory(device.GetVkDevice(), vkDeviceMemory, offset, length, {}, &data) == VK_SUCCESS);
         return data;
     }
 
     void VKBuffer::UnMap()
     {
-        device.GetVkDevice().unmapMemory(vkDeviceMemory);
+        vkUnmapMemory(device.GetVkDevice(), vkDeviceMemory);
     }
 
     BufferView* VKBuffer::CreateBufferView(const BufferViewCreateInfo& createInfo)
@@ -85,32 +85,32 @@ namespace RHI::Vulkan {
 
     void VKBuffer::CreateBuffer(const BufferCreateInfo& createInfo)
     {
-        vk::BufferCreateInfo bufferInfo = {};
-        bufferInfo.setSharingMode(vk::SharingMode::eExclusive)
-            .setUsage(GetVkResourceStates(createInfo.usages))
-            .setSize(createInfo.size);
+        VkBufferCreateInfo bufferInfo = {};
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        bufferInfo.usage = GetVkResourceStates(createInfo.usages);
+        bufferInfo.size = createInfo.size;
 
-        Assert(device.GetVkDevice().createBuffer(&bufferInfo, nullptr, &vkBuffer) == vk::Result::eSuccess);
+        Assert(vkCreateBuffer(device.GetVkDevice(), &bufferInfo, nullptr, &vkBuffer) == VK_SUCCESS);
     }
 
     void VKBuffer::AllocateMemory(const BufferCreateInfo& createInfo)
     {
-        vk::MemoryRequirements memoryRequirements = {};
-        device.GetVkDevice().getBufferMemoryRequirements(vkBuffer, &memoryRequirements);
+        VkMemoryRequirements memoryRequirements = {};
+        vkGetBufferMemoryRequirements(device.GetVkDevice(), vkBuffer, &memoryRequirements);
 
-        vk::MemoryAllocateInfo memoryInfo = {};
-        memoryInfo.setAllocationSize(memoryRequirements.size)
-            .setMemoryTypeIndex(device.GetGpu().FindMemoryType(memoryRequirements.memoryTypeBits,
-                                                                GetVkMemoryType(createInfo.usages)));
-        Assert(device.GetVkDevice().allocateMemory(&memoryInfo, nullptr, &vkDeviceMemory) == vk::Result::eSuccess);
+        VkMemoryAllocateInfo memoryInfo = {};
+        memoryInfo.allocationSize = memoryRequirements.size;
+        memoryInfo.memoryTypeIndex = device.GetGpu().FindMemoryType(memoryRequirements.memoryTypeBits, GetVkMemoryType(createInfo.usages));
 
-        device.GetVkDevice().bindBufferMemory(vkBuffer, vkDeviceMemory, 0);
+        Assert(vkAllocateMemory(device.GetVkDevice(), &memoryInfo, nullptr, &vkDeviceMemory) == VK_SUCCESS);
+
+        vkBindBufferMemory(device.GetVkDevice(), vkBuffer, vkDeviceMemory, 0);
     }
 
     void VKBuffer::DestroyBuffer()
     {
         if (vkBuffer) {
-            device.GetVkDevice().destroy(vkBuffer);
+            vkDestroyBuffer(device.GetVkDevice(), vkBuffer, nullptr);
             vkBuffer = nullptr;
         }
     }
@@ -118,12 +118,12 @@ namespace RHI::Vulkan {
     void VKBuffer::FreeMemory()
     {
         if (vkDeviceMemory) {
-            device.GetVkDevice().free(vkDeviceMemory);
+            vkFreeMemory(device.GetVkDevice(), vkDeviceMemory, nullptr);
             vkDeviceMemory = nullptr;
         }
     }
 
-    vk::Buffer VKBuffer::GetVkBuffer()
+    VkBuffer VKBuffer::GetVkBuffer()
     {
         return vkBuffer;
     }

@@ -22,7 +22,7 @@ namespace RHI::Vulkan {
     VKBindGroup::~VKBindGroup() noexcept
     {
         if (descriptorPool) {
-            device.GetVkDevice().destroyDescriptorPool(descriptorPool, nullptr);
+            vkDestroyDescriptorPool(device.GetVkDevice(), descriptorPool, nullptr);
         }
     }
 
@@ -31,46 +31,47 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    vk::DescriptorSet VKBindGroup::GetVkDescritorSet() const
+    VkDescriptorSet VKBindGroup::GetVkDescritorSet() const
     {
         return descriptorSet;
     }
 
     void VKBindGroup::CreateDescriptorPool(const BindGroupCreateInfo& createInfo)
     {
-        std::vector<vk::DescriptorPoolSize> poolSizes(createInfo.entryNum);
+        std::vector<VkDescriptorPoolSize> poolSizes(createInfo.entryNum);
 
         for (auto i = 0; i < createInfo.entryNum; i++) {
             const auto& entry = createInfo.entries[i];
 
-            poolSizes[i].setType(VKEnumCast<BindingType, vk::DescriptorType>(entry.binding.type))
-                .setDescriptorCount(1);
+            poolSizes[i].type = VKEnumCast<BindingType, VkDescriptorType>(entry.binding.type);
+            poolSizes[i].descriptorCount = 1;
         }
 
-        vk::DescriptorPoolCreateInfo poolInfo {};
-        poolInfo.setPPoolSizes(poolSizes.data())
-            .setPoolSizeCount(createInfo.entryNum)
-            .setMaxSets(1);
+        VkDescriptorPoolCreateInfo poolInfo {};
+        poolInfo.pPoolSizes = poolSizes.data();
+        poolInfo.poolSizeCount = createInfo.entryNum;
+        poolInfo.maxSets = 1;
 
-        Assert(device.GetVkDevice().createDescriptorPool(&poolInfo, nullptr, &descriptorPool) == vk::Result::eSuccess);
+        Assert(vkCreateDescriptorPool(device.GetVkDevice(), &poolInfo, nullptr, &descriptorPool) == VK_SUCCESS);
     }
 
     void VKBindGroup::CreateDescriptorSet(const BindGroupCreateInfo& createInfo)
     {
-        vk::DescriptorSetLayout layout = dynamic_cast<VKBindGroupLayout*>(createInfo.layout)->GetVkDescriptorSetLayout();
+        VkDescriptorSetLayout layout = dynamic_cast<VKBindGroupLayout*>(createInfo.layout)->GetVkDescriptorSetLayout();
 
-        vk::DescriptorSetAllocateInfo allocInfo {};
-        allocInfo.setDescriptorSetCount(1)
-            .setPSetLayouts(&layout)
-            .setDescriptorPool(descriptorPool);
+        VkDescriptorSetAllocateInfo allocInfo {};
+        allocInfo.descriptorSetCount = 1;
+        allocInfo.pSetLayouts = &layout;
+        allocInfo.descriptorPool = descriptorPool;
 
-        Assert(device.GetVkDevice().allocateDescriptorSets(&allocInfo, &descriptorSet) == vk::Result::eSuccess);
+        Assert(vkAllocateDescriptorSets(device.GetVkDevice(), &allocInfo, &descriptorSet) == VK_SUCCESS);
 
-        std::vector<vk::WriteDescriptorSet> descriptorWrites(createInfo.entryNum);
-        std::vector<vk::DescriptorImageInfo> imageInfos;
-        std::vector<vk::DescriptorBufferInfo> bufferInfos;
+        std::vector<VkWriteDescriptorSet> descriptorWrites(createInfo.entryNum);
+        std::vector<VkDescriptorImageInfo> imageInfos;
+        std::vector<VkDescriptorBufferInfo> bufferInfos;
         
-        int imageInfosNum = 0, bufferInfosNum = 0;
+        int imageInfosNum = 0;
+        int bufferInfosNum = 0;
         for (int i = 0; i < createInfo.entryNum; i++) {
             const auto& entry = createInfo.entries[i];
             if (entry.binding.type == BindingType::uniformBuffer) {
@@ -85,39 +86,39 @@ namespace RHI::Vulkan {
         for (int i = 0; i < createInfo.entryNum; i++) {
             const auto& entry = createInfo.entries[i];
 
-            descriptorWrites[i].setDstSet(descriptorSet)
-                .setDstBinding(entry.binding.platform.glsl.index)
-                .setDescriptorCount(1)
-                .setDescriptorType(VKEnumCast<BindingType, vk::DescriptorType>(entry.binding.type));
+            descriptorWrites[i].dstSet = descriptorSet;
+            descriptorWrites[i].dstBinding = entry.binding.platform.glsl.index;
+            descriptorWrites[i].descriptorCount = 1;
+            descriptorWrites[i].descriptorType = VKEnumCast<BindingType, VkDescriptorType>(entry.binding.type);
 
             if (entry.binding.type == BindingType::uniformBuffer) {
                 auto* bufferView = dynamic_cast<VKBufferView*>(entry.bufferView);
 
                 bufferInfos.emplace_back();
-                bufferInfos.back().setBuffer(bufferView->GetBuffer().GetVkBuffer())
-                    .setOffset(bufferView->GetOffset())
-                    .setRange(bufferView->GetBufferSize());
+                bufferInfos.back().buffer = bufferView->GetBuffer().GetVkBuffer();
+                bufferInfos.back().offset = bufferView->GetOffset();
+                bufferInfos.back().range = bufferView->GetBufferSize();
 
-                descriptorWrites[i].setPBufferInfo(&bufferInfos.back());
+                descriptorWrites[i].pBufferInfo = &bufferInfos.back();
             } else if (entry.binding.type == BindingType::sampler) {
                 auto* sampler = dynamic_cast<VKSampler*>(entry.sampler);
 
                 imageInfos.emplace_back();
-                imageInfos.back().setSampler(sampler->GetVkSampler());
+                imageInfos.back().sampler = sampler->GetVkSampler();
 
-                descriptorWrites[i].setPImageInfo(&imageInfos.back());
+                descriptorWrites[i].pImageInfo = &imageInfos.back();
             } else if (entry.binding.type == BindingType::texture) {
                 auto* textureView = dynamic_cast<VKTextureView*>(entry.textureView);
 
                 imageInfos.emplace_back();
-                imageInfos.back().setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-                    .setImageView(textureView->GetVkImageView());
+                imageInfos.back().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                imageInfos.back().imageView = textureView->GetVkImageView();
 
-                descriptorWrites[i].setPImageInfo(&imageInfos.back());
+                descriptorWrites[i].pImageInfo = &imageInfos.back();
             } else {
                 //TODO
             }
         }
-        device.GetVkDevice().updateDescriptorSets(static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+        vkUpdateDescriptorSets(device.GetVkDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
 }

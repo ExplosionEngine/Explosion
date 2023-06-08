@@ -8,7 +8,7 @@
 
 namespace RHI::Vulkan {
 #if BUILD_CONFIG_DEBUG
-    static VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugCallback(
+    static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageType,
         const VkDebugUtilsMessengerCallbackDataEXT* callbackData,
@@ -26,7 +26,7 @@ namespace RHI::Vulkan {
 #endif
         PrepareExtensions();
         CreateVKInstance();
-        PrepareDispatch();
+        PreparePFN();
 #if BUILD_CONFIG_DEBUG
         CreateDebugMessenger();
 #endif
@@ -54,9 +54,9 @@ namespace RHI::Vulkan {
         };
 
         uint32_t supportedLayerCount = 0;
-        (void)vk::enumerateInstanceLayerProperties(&supportedLayerCount, nullptr);
-        std::vector<vk::LayerProperties> supportedLayers(supportedLayerCount);
-        (void)vk::enumerateInstanceLayerProperties(&supportedLayerCount, supportedLayers.data());
+        vkEnumerateInstanceLayerProperties(&supportedLayerCount, nullptr);
+        std::vector<VkLayerProperties> supportedLayers(supportedLayerCount);
+        vkEnumerateInstanceLayerProperties(&supportedLayerCount, supportedLayers.data());
 
         for (auto&& requiredLayerName : requiredLayerNames) {
             auto iter = std::find_if(
@@ -90,9 +90,9 @@ namespace RHI::Vulkan {
         };
 
         uint32_t supportedExtensionCount = 0;
-        (void)vk::enumerateInstanceExtensionProperties(nullptr, &supportedExtensionCount, nullptr);
-        std::vector<vk::ExtensionProperties> supportedExtensions(supportedExtensionCount);
-        (void)vk::enumerateInstanceExtensionProperties(nullptr, &supportedExtensionCount, supportedExtensions.data());
+        vkEnumerateInstanceExtensionProperties(nullptr, &supportedExtensionCount, nullptr);
+        std::vector<VkExtensionProperties> supportedExtensions(supportedExtensionCount);
+        vkEnumerateInstanceExtensionProperties(nullptr, &supportedExtensionCount, supportedExtensions.data());
 
         for (auto&& requiredExtensionName : requiredExtensionNames) {
             auto iter = std::find_if(
@@ -109,14 +109,14 @@ namespace RHI::Vulkan {
 
     void VKInstance::CreateVKInstance()
     {
-        vk::ApplicationInfo applicationInfo;
+        VkApplicationInfo applicationInfo = {};
         applicationInfo.pApplicationName = "Explosion GameEngine";
         applicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
         applicationInfo.pEngineName = "Explosion GameEngine";
         applicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        applicationInfo.apiVersion = VK_API_VERSION_1_2;
+        applicationInfo.apiVersion = VK_API_VERSION_1_3;
 
-        vk::InstanceCreateInfo createInfo;
+        VkInstanceCreateInfo createInfo = {};
         createInfo.pApplicationInfo = &applicationInfo;
         createInfo.enabledExtensionCount = vkEnabledExtensionNames.size();
         createInfo.ppEnabledExtensionNames = vkEnabledExtensionNames.data();
@@ -124,32 +124,33 @@ namespace RHI::Vulkan {
         createInfo.enabledLayerCount = vkEnabledLayerNames.size();
         createInfo.ppEnabledLayerNames = vkEnabledLayerNames.data();
 
-        vk::DebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+        VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
         PopulateDebugMessengerCreateInfo(debugCreateInfo);
 
         createInfo.pNext = &debugCreateInfo;
 #endif
 #if PLATFORM_MACOS
-        createInfo.flags = vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+        createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
 
-        vk::Result result = vk::createInstance(&createInfo, nullptr, &vkInstance);
-        Assert(result == vk::Result::eSuccess);
+        auto result = vkCreateInstance(&createInfo, nullptr, &vkInstance);
+        Assert(result == VK_SUCCESS);
     }
 
     void VKInstance::DestroyVKInstance()
     {
-        vkInstance.destroy();
+        vkDestroyInstance(vkInstance, nullptr);
     }
 
-    void VKInstance::PrepareDispatch()
+    void VKInstance::PreparePFN()
     {
 #if BUILD_CONFIG_DEBUG
-        vkDispatch.vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkInstance.getProcAddr("vkCreateDebugUtilsMessengerEXT"));
-        vkDispatch.vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkInstance.getProcAddr("vkDestroyDebugUtilsMessengerEXT"));
+        vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(vkInstance, "vkCreateDebugUtilsMessengerEXT"));
+        vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(vkInstance, "vkDestroyDebugUtilsMessengerEXT"));
+        Assert(vkCreateDebugUtilsMessengerEXT != nullptr && vkDestroyDebugUtilsMessengerEXT != nullptr);
 #endif
-        vkDispatch.vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkInstance.getProcAddr("vkCmdBeginRenderingKHR"));
-        vkDispatch.vkCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkInstance.getProcAddr("vkCmdEndRenderingKHR"));
+        vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetInstanceProcAddr(vkInstance, "vkCmdBeginRenderingKHR"));
+        vkCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkGetInstanceProcAddr(vkInstance, "vkCmdEndRenderingKHR"));
     }
 
     uint32_t VKInstance::GetGpuNum()
@@ -162,22 +163,17 @@ namespace RHI::Vulkan {
         return gpus[index].Get();
     }
 
-    vk::Instance VKInstance::GetVkInstance() const
+    VkInstance VKInstance::GetVkInstance() const
     {
         return vkInstance;
-    }
-
-    vk::DispatchLoaderDynamic VKInstance::GetVkDispatch() const
-    {
-        return vkDispatch;
     }
 
     void VKInstance::EnumeratePhysicalDevices()
     {
         uint32_t count = 0;
-        (void)vkInstance.enumeratePhysicalDevices(&count, nullptr);
+        vkEnumeratePhysicalDevices(vkInstance, &count, nullptr);
         vkPhysicalDevices.resize(count);
-        (void)vkInstance.enumeratePhysicalDevices(&count, vkPhysicalDevices.data());
+        vkEnumeratePhysicalDevices(vkInstance,&count, vkPhysicalDevices.data());
 
         gpus.resize(count);
         for (uint32_t i = 0; i < count; i++) {
@@ -186,27 +182,27 @@ namespace RHI::Vulkan {
     }
 
 #if BUILD_CONFIG_DEBUG
-    void VKInstance::PopulateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo)
+    void VKInstance::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
     {
-        createInfo.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError
-                                     | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning;
-        createInfo.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral
-                                 | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
-                                 | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
+        createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+                                     | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+        createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+                                 | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+                                 | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         createInfo.pfnUserCallback = DebugCallback;
     }
 
     void VKInstance::CreateDebugMessenger()
     {
-        vk::DebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+        VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
         PopulateDebugMessengerCreateInfo(debugCreateInfo);
 
-        Assert(vkInstance.createDebugUtilsMessengerEXT(&debugCreateInfo, nullptr, &vkDebugMessenger, vkDispatch) == vk::Result::eSuccess);
+        Assert(vkCreateDebugUtilsMessengerEXT(vkInstance, &debugCreateInfo, nullptr, &vkDebugMessenger) == VK_SUCCESS);
     }
 
     void VKInstance::DestroyDebugMessenger()
     {
-        vkInstance.destroyDebugUtilsMessengerEXT(vkDebugMessenger, nullptr, vkDispatch);
+        vkDestroyDebugUtilsMessengerEXT(vkInstance, vkDebugMessenger, nullptr);
     }
 #endif
 

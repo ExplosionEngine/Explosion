@@ -18,7 +18,7 @@ namespace RHI::Vulkan {
     VKShaderModule::~VKShaderModule()
     {
         if (shaderModule) {
-            device.GetVkDevice().destroyShaderModule(shaderModule, nullptr);
+            vkDestroyShaderModule(device.GetVkDevice(), shaderModule, nullptr);
         }
     }
 
@@ -27,18 +27,18 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    vk::ShaderModule VKShaderModule::GetVkShaderModule() const
+    VkShaderModule VKShaderModule::GetVkShaderModule() const
     {
         return shaderModule;
     }
 
     void VKShaderModule::CreateNativeShaderModule(const ShaderModuleCreateInfo& createInfo)
     {
-        vk::ShaderModuleCreateInfo moduleCreateInfo = {};
-        moduleCreateInfo.setCodeSize(createInfo.size)
-            .setPCode(static_cast<const uint32_t*>(createInfo.byteCode));
+        VkShaderModuleCreateInfo moduleCreateInfo = {};
+        moduleCreateInfo.codeSize = createInfo.size;
+        moduleCreateInfo.pCode = static_cast<const uint32_t*>(createInfo.byteCode);
 
-        Assert(device.GetVkDevice().createShaderModule(&moduleCreateInfo, nullptr, &shaderModule) == vk::Result::eSuccess);
+        Assert(vkCreateShaderModule(device.GetVkDevice(), &moduleCreateInfo, nullptr, &shaderModule) == VK_SUCCESS);
         BuildReflection(createInfo);
     }
 

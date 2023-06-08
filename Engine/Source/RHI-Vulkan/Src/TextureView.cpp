@@ -26,18 +26,18 @@ namespace RHI::Vulkan {
     void VKTextureView::CreateImageView(const TextureViewCreateInfo& createInfo)
     {
         if (!vkTexture.vkImageView) {
-            vk::ImageViewCreateInfo viewInfo = {};
+            VkImageViewCreateInfo viewInfo = {};
 
-            viewInfo.setFormat(VKEnumCast<PixelFormat, vk::Format>(vkTexture.GetFormat()))
-                .setImage(vkTexture.GetImage())
-                .setViewType(VKEnumCast<TextureViewDimension, vk::ImageViewType>(createInfo.dimension))
-                .setSubresourceRange(vk::ImageSubresourceRange(GetAspectMask(createInfo.aspect), baseMipLevel, mipLevelNum, baseArrayLayer, arrayLayerNum));
+            viewInfo.format = VKEnumCast<PixelFormat, VkFormat>(vkTexture.GetFormat());
+            viewInfo.image = vkTexture.GetImage();
+            viewInfo.viewType = VKEnumCast<TextureViewDimension, VkImageViewType>(createInfo.dimension);
+            viewInfo.subresourceRange = { GetAspectMask(createInfo.aspect), baseMipLevel, mipLevelNum, baseArrayLayer, arrayLayerNum };
 
-            Assert(device.GetVkDevice().createImageView(&viewInfo, nullptr, &vkTexture.vkImageView) == vk::Result::eSuccess);
+            Assert(vkCreateImageView(device.GetVkDevice(), &viewInfo, nullptr, &vkTexture.vkImageView) == VK_SUCCESS);
         }
     }
 
-    vk::ImageView VKTextureView::GetVkImageView()
+    VkImageView VKTextureView::GetVkImageView()
     {
         return vkTexture.vkImageView;
     }

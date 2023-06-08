@@ -6,8 +6,10 @@
 
 #include <optional>
 #include <unordered_map>
+#include <vector>
 
-#include <vulkan/vulkan.hpp>
+#include <vk_mem_alloc.h>
+#include <vulkan/vulkan.h>
 
 #include <RHI/Device.h>
 
@@ -40,19 +42,21 @@ namespace RHI::Vulkan {
 
         bool CheckSwapChainFormatSupport(Surface* surface, PixelFormat format) override;
 
-        vk::Device GetVkDevice();
-
+        VkDevice GetVkDevice();
         VKGpu& GetGpu() const;
+        VmaAllocator& GetVmaAllocator();
 
     private:
-        static std::optional<uint32_t> FindQueueFamilyIndex(const std::vector<vk::QueueFamilyProperties>& properties, std::vector<uint32_t>& usedQueueFamily, QueueType queueType);
+        static std::optional<uint32_t> FindQueueFamilyIndex(const std::vector<VkQueueFamilyProperties>& properties, std::vector<uint32_t>& usedQueueFamily, QueueType queueType);
         void CreateDevice(const DeviceCreateInfo& createInfo);
         void GetQueues();
+        void CreateVmaAllocator();
 
         VKGpu& gpu;
-        vk::Device vkDevice;
+        VkDevice vkDevice;
+        VmaAllocator vmaAllocator;
         std::unordered_map<QueueType, std::pair<uint32_t, uint32_t>> queueFamilyMappings;
         std::unordered_map<QueueType, std::vector<Common::UniqueRef<VKQueue>>> queues;
-        std::unordered_map<QueueType, vk::CommandPool> pools;
+        std::unordered_map<QueueType, VkCommandPool> pools;
     };
 }

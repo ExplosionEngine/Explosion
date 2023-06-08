@@ -6,7 +6,7 @@
 #pragma once
 
 #include <memory>
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 #include <RHI/BindGroup.h>
 
 namespace RHI::Vulkan {
@@ -20,12 +20,12 @@ namespace RHI::Vulkan {
 
         void Destroy() override;
 
-        vk::DescriptorSet GetVkDescritorSet() const;
+        VkDescriptorSet GetVkDescritorSet() const;
     private:
         void CreateDescriptorPool(const BindGroupCreateInfo& createInfo);
         void CreateDescriptorSet(const BindGroupCreateInfo& createInfo);
         VKDevice& device;
-        vk::DescriptorSet descriptorSet;
-        vk::DescriptorPool descriptorPool;
+        VkDescriptorSet descriptorSet;
+        VkDescriptorPool descriptorPool;
     };
 }

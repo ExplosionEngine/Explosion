@@ -9,7 +9,7 @@
 
 namespace RHI::Vulkan {
 
-    VKCommandBuffer::VKCommandBuffer(VKDevice& dev, vk::CommandPool p)
+    VKCommandBuffer::VKCommandBuffer(VKDevice& dev, VkCommandPool p)
         : device(dev)
         , pool(p)
     {
@@ -20,10 +20,10 @@ namespace RHI::Vulkan {
     {
         auto vkDevice = device.GetVkDevice();
         if (commandBuffer) {
-            vkDevice.freeCommandBuffers(pool, 1, &commandBuffer);
+            vkFreeCommandBuffers(vkDevice, pool, 1, &commandBuffer);
         }
         for (auto& semaphore : signalSemaphores) {
-            vkDevice.destroySemaphore(semaphore);
+            vkDestroySemaphore(vkDevice, semaphore, nullptr);
         }
     }
 
@@ -37,49 +37,50 @@ namespace RHI::Vulkan {
         waitSemaphores.clear();
         waitStages.clear();
 
-        vk::CommandBufferBeginInfo beginInfo = {};
-        beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-        (void) commandBuffer.begin(&beginInfo);
+        VkCommandBufferBeginInfo beginInfo = {};
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+        vkBeginCommandBuffer(commandBuffer, &beginInfo);
         return new VKCommandEncoder(device, *this);
     }
 
-    vk::CommandBuffer VKCommandBuffer::GetVkCommandBuffer() const
+    VkCommandBuffer VKCommandBuffer::GetVkCommandBuffer() const
     {
         return commandBuffer;
     }
 
-    void VKCommandBuffer::AddWaitSemaphore(vk::Semaphore semaphore, vk::PipelineStageFlags stage)
+    void VKCommandBuffer::AddWaitSemaphore(VkSemaphore semaphore, VkPipelineStageFlags stage)
     {
         waitSemaphores.emplace_back(semaphore);
         waitStages.emplace_back(stage);
     }
 
-    const std::vector<vk::Semaphore>& VKCommandBuffer::GetWaitSemaphores() const
+    const std::vector<VkSemaphore>& VKCommandBuffer::GetWaitSemaphores() const
     {
         return waitSemaphores;
     }
 
-    const std::vector<vk::Semaphore>& VKCommandBuffer::GetSignalSemaphores() const
+    const std::vector<VkSemaphore>& VKCommandBuffer::GetSignalSemaphores() const
     {
         return signalSemaphores;
     }
 
-    const std::vector<vk::PipelineStageFlags>& VKCommandBuffer::GetWaitStages() const
+    const std::vector<VkPipelineStageFlags>& VKCommandBuffer::GetWaitStages() const
     {
         return waitStages;
     }
 
     void VKCommandBuffer::CreateNativeCommandBuffer()
     {
-        vk::CommandBufferAllocateInfo cmdInfo;
-        cmdInfo.setCommandBufferCount(1)
-            .setCommandPool(pool)
-            .setLevel(vk::CommandBufferLevel::ePrimary);
+        VkCommandBufferAllocateInfo cmdInfo;
+        cmdInfo.commandBufferCount = 1;
+        cmdInfo.commandPool = pool;
+        cmdInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
-        Assert(device.GetVkDevice().allocateCommandBuffers(&cmdInfo, &commandBuffer) == vk::Result::eSuccess);
+        Assert(vkAllocateCommandBuffers(device.GetVkDevice(), &cmdInfo, &commandBuffer) == VK_SUCCESS);
 
         signalSemaphores.resize(1); // TODO
-        signalSemaphores[0] = device.GetVkDevice().createSemaphore({}, nullptr);
+        Assert(vkCreateSemaphore(device.GetVkDevice(), {}, nullptr, &signalSemaphores[0]) == VK_SUCCESS);
     }
 
 }

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 
 #include <RHI/Queue.h>
 #include <RHI/Synchronous.h>
@@ -13,15 +13,15 @@ namespace RHI::Vulkan {
     class VKQueue : public Queue {
     public:
         NON_COPYABLE(VKQueue)
-        explicit VKQueue(vk::Queue vkQueue);
+        explicit VKQueue(VkQueue vkQueue);
         ~VKQueue() override;
 
         void Submit(CommandBuffer* commandBuffer, Fence* fenceToSignal) override;
         void Wait(Fence* fenceToSignal) override;
 
-        vk::Queue GetVkQueue();
+        VkQueue GetVkQueue();
 
     private:
-        vk::Queue vkQueue;
+        VkQueue vkQueue;
     };
 }

@@ -8,11 +8,11 @@
 #include <Common/Debug.h>
 
 #define VK_USE_PLATFORM_MACOS_MVK
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 
 namespace RHI::Vulkan {
 
-    vk::SurfaceKHR CreateNativeSurface(const vk::Instance& instance, const SurfaceCreateInfo& createInfo)
+    VkSurfaceKHR CreateNativeSurface(const VkInstance& instance, const SurfaceCreateInfo& createInfo)
     {
         auto nsWin = static_cast<NSWindow*>(createInfo.window);
 
@@ -22,10 +22,10 @@ namespace RHI::Vulkan {
         [view setLayer: layer];
         [view setWantsLayer: YES];
 
-        vk::MacOSSurfaceCreateInfoMVK surfaceInfo {};
-        surfaceInfo.setPView(view);
-        vk::SurfaceKHR surface = VK_NULL_HANDLE;
-        Assert(instance.createMacOSSurfaceMVK(&surfaceInfo, nullptr, &surface) == vk::Result::eSuccess);
+        VkMacOSSurfaceCreateInfoMVK surfaceInfo = {};
+        surfaceInfo.pView = &view;
+        VkSurfaceKHR surface = VK_NULL_HANDLE;
+        vkCreateMacOSSurfaceMVK(instance, &surfaceInfo, nullptr, &surface);
         return surface;
     }
 }

@@ -6,7 +6,7 @@
 #include <RHI/SwapChain.h>
 #include <Windows.h>
 #define VK_USE_PLATFORM_WIN32_KHR
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 #include <Common/Debug.h>
 
 namespace RHI::Vulkan {

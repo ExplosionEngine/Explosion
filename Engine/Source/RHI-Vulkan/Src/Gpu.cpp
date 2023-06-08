@@ -8,19 +8,19 @@
 #include <RHI/Vulkan/Instance.h>
 
 namespace RHI::Vulkan {
-    VKGpu::VKGpu(VKInstance& inst, vk::PhysicalDevice d) : Gpu(), instance(inst), vkPhysicalDevice(d) {}
+    VKGpu::VKGpu(VKInstance& inst, VkPhysicalDevice d) : Gpu(), instance(inst), vkPhysicalDevice(d) {}
 
     VKGpu::~VKGpu() = default;
 
     GpuProperty VKGpu::GetProperty()
     {
-        vk::PhysicalDeviceProperties vkPhysicalDeviceProperties;
-        vkPhysicalDevice.getProperties(&vkPhysicalDeviceProperties);
+        VkPhysicalDeviceProperties vkPhysicalDeviceProperties;
+        vkGetPhysicalDeviceProperties(vkPhysicalDevice, &vkPhysicalDeviceProperties);
 
         GpuProperty property {};
         property.vendorId = vkPhysicalDeviceProperties.vendorID;
         property.deviceId = vkPhysicalDeviceProperties.deviceID;
-        property.type = VKEnumCast<vk::PhysicalDeviceType, GpuType>(vkPhysicalDeviceProperties.deviceType);
+        property.type = VKEnumCast<VkPhysicalDeviceType, GpuType>(vkPhysicalDeviceProperties.deviceType);
         return property;
     }
 
@@ -29,7 +29,7 @@ namespace RHI::Vulkan {
         return new VKDevice(*this, createInfo);
     }
 
-    const vk::PhysicalDevice& VKGpu::GetVkPhysicalDevice() const
+    const VkPhysicalDevice& VKGpu::GetVkPhysicalDevice() const
     {
         return vkPhysicalDevice;
     }
@@ -39,10 +39,10 @@ namespace RHI::Vulkan {
         return instance;
     }
 
-    uint32_t VKGpu::FindMemoryType(uint32_t filter, vk::MemoryPropertyFlags propertyFlags) const
+    uint32_t VKGpu::FindMemoryType(uint32_t filter, VkMemoryPropertyFlags propertyFlags) const
     {
-        vk::PhysicalDeviceMemoryProperties memProperties;
-        vkPhysicalDevice.getMemoryProperties(&memProperties);
+        VkPhysicalDeviceMemoryProperties memProperties;
+        vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &memProperties);
 
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
             if ((filter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & propertyFlags) == propertyFlags) {

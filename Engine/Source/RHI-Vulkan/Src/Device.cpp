@@ -6,6 +6,7 @@
 #include <algorithm>
 
 #include <RHI/Vulkan/Common.h>
+#include <RHI/Vulkan/Instance.h>
 #include <RHI/Vulkan/Gpu.h>
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Queue.h>
@@ -42,14 +43,17 @@ namespace RHI::Vulkan {
     {
         CreateDevice(createInfo);
         GetQueues();
+        CreateVmaAllocator();
     }
 
     VKDevice::~VKDevice()
     {
+        vmaDestroyAllocator(vmaAllocator);
+
         for (auto& [queue, pool] : pools) {
-            vkDevice.destroyCommandPool(pool);
+            vkDestroyCommandPool(vkDevice, pool, nullptr);
         }
-        vkDevice.destroy();
+        vkDestroyDevice(vkDevice, nullptr);
     }
 
     size_t VKDevice::GetQueueNum(QueueType type)
@@ -142,20 +146,25 @@ namespace RHI::Vulkan {
     bool VKDevice::CheckSwapChainFormatSupport(Surface* surface, PixelFormat format)
     {
         auto* vkSurface = dynamic_cast<VKSurface*>(surface);
+        VkColorSpaceKHR colorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
 
-        vk::ColorSpaceKHR colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
-        auto surfaceFormats = gpu.GetVkPhysicalDevice().getSurfaceFormatsKHR(vkSurface->GetVKSurface());
-        Assert(!surfaceFormats.empty());
+        uint32_t formatCount = 0;
+        std::vector<VkSurfaceFormatKHR> surfaceFormats;
+        vkGetPhysicalDeviceSurfaceFormatsKHR(gpu.GetVkPhysicalDevice(), vkSurface->GetVKSurface(), &formatCount, nullptr);
+        Assert(formatCount != 0);
+        surfaceFormats.resize(formatCount);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(gpu.GetVkPhysicalDevice(), vkSurface->GetVKSurface(), &formatCount, surfaceFormats.data());
+
         auto iter = std::find_if(
             surfaceFormats.begin(),
             surfaceFormats.end(),
-            [format = VKEnumCast<PixelFormat, vk::Format>(format), colorSpace](vk::SurfaceFormatKHR surfaceFormat) {
+            [format = VKEnumCast<PixelFormat, VkFormat>(format), colorSpace](VkSurfaceFormatKHR surfaceFormat) {
                 return format == surfaceFormat.format && colorSpace == surfaceFormat.colorSpace;
             });
         return iter != surfaceFormats.end();
     }
 
-    vk::Device VKDevice::GetVkDevice()
+    VkDevice VKDevice::GetVkDevice()
     {
         return vkDevice;
     }
@@ -165,7 +174,7 @@ namespace RHI::Vulkan {
         return gpu;
     }
 
-    std::optional<uint32_t> VKDevice::FindQueueFamilyIndex(const std::vector<vk::QueueFamilyProperties>& properties, std::vector<uint32_t>& usedQueueFamily, QueueType queueType)
+    std::optional<uint32_t> VKDevice::FindQueueFamilyIndex(const std::vector<VkQueueFamilyProperties>& properties, std::vector<uint32_t>& usedQueueFamily, QueueType queueType)
     {
         for (uint32_t i = 0; i < properties.size(); i++) {
             auto iter = std::find(usedQueueFamily.begin(), usedQueueFamily.end(), i);
@@ -173,7 +182,7 @@ namespace RHI::Vulkan {
                 continue;
             }
 
-            if (properties[i].queueFlags & VKEnumCast<QueueType, vk::QueueFlagBits>(queueType)) {
+            if (properties[i].queueFlags & VKEnumCast<QueueType, VkQueueFlagBits>(queueType)) {
                 usedQueueFamily.emplace_back(i);
                 return i;
             }
@@ -184,9 +193,9 @@ namespace RHI::Vulkan {
     void VKDevice::CreateDevice(const DeviceCreateInfo& createInfo)
     {
         uint32_t queueFamilyPropertyCnt = 0;
-        gpu.GetVkPhysicalDevice().getQueueFamilyProperties(&queueFamilyPropertyCnt, nullptr);
-        std::vector<vk::QueueFamilyProperties> queueFamilyProperties(queueFamilyPropertyCnt);
-        gpu.GetVkPhysicalDevice().getQueueFamilyProperties(&queueFamilyPropertyCnt, queueFamilyProperties.data());
+        vkGetPhysicalDeviceQueueFamilyProperties(gpu.GetVkPhysicalDevice(), &queueFamilyPropertyCnt, nullptr);
+        std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyPropertyCnt);
+        vkGetPhysicalDeviceQueueFamilyProperties(gpu.GetVkPhysicalDevice(), &queueFamilyPropertyCnt, queueFamilyProperties.data());
 
         std::map<QueueType, uint32_t> queueNumMap;
         for (uint32_t i = 0; i < createInfo.queueCreateInfoNum; i++) {
@@ -198,7 +207,7 @@ namespace RHI::Vulkan {
             queueNumMap[queueCreateInfo.type] += queueCreateInfo.num;
         }
 
-        std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
+        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
         std::vector<uint32_t> usedQueueFamily;
         std::vector<float> queuePriorities;
         for (auto iter : queueNumMap) {
@@ -210,23 +219,23 @@ namespace RHI::Vulkan {
                 queuePriorities.resize(queueCount, 1.0f);
             }
 
-            vk::DeviceQueueCreateInfo tempCreateInfo {};
-            tempCreateInfo.setQueueFamilyIndex(queueFamilyIndex.value())
-                .setQueueCount(queueCount)
-                .setPQueuePriorities(queuePriorities.data());
+            VkDeviceQueueCreateInfo tempCreateInfo = {};
+            tempCreateInfo.queueFamilyIndex = queueFamilyIndex.value();
+            tempCreateInfo.queueCount = queueCount;
+            tempCreateInfo.pQueuePriorities = queuePriorities.data();
             queueCreateInfos.emplace_back(tempCreateInfo);
 
             queueFamilyMappings[iter.first] = std::make_pair(queueFamilyIndex.value(), queueCount);
         }
 
-        vk::PhysicalDeviceFeatures deviceFeatures;
-        vk::DeviceCreateInfo deviceCreateInfo;
+        VkPhysicalDeviceFeatures deviceFeatures;
+        VkDeviceCreateInfo deviceCreateInfo = {};
         deviceCreateInfo.queueCreateInfoCount = queueCreateInfos.size();
         deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 
-        vk::PhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures;
-        dynamicRenderingFeatures.setDynamicRendering(VK_TRUE);
+        VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures;
+        dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
         deviceCreateInfo.pNext = &dynamicRenderingFeatures;
 
         deviceCreateInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
@@ -237,13 +246,13 @@ namespace RHI::Vulkan {
         deviceCreateInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
 #endif
 
-        Assert(gpu.GetVkPhysicalDevice().createDevice(&deviceCreateInfo, nullptr, &vkDevice) == vk::Result::eSuccess);
+        Assert(vkCreateDevice(gpu.GetVkPhysicalDevice(), &deviceCreateInfo, nullptr, &vkDevice) == VK_SUCCESS);
     }
 
     void VKDevice::GetQueues()
     {
-        vk::CommandPoolCreateInfo poolInfo = {};
-        poolInfo.setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
+        VkCommandPoolCreateInfo poolInfo = {};
+        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
         for (auto iter : queueFamilyMappings) {
             auto queueType = iter.first;
@@ -252,15 +261,34 @@ namespace RHI::Vulkan {
 
             std::vector<Common::UniqueRef<VKQueue>> tempQueues(queueNum);
             for (auto i = 0; i < tempQueues.size(); i++) {
-                tempQueues[i] = Common::MakeUnique<VKQueue>(vkDevice.getQueue(queueFamilyIndex, i));
+                VkQueue queue;
+                vkGetDeviceQueue(vkDevice, queueFamilyIndex, i, &queue);
+                tempQueues[i] = Common::MakeUnique<VKQueue>(queue);
             }
             queues[queueType] = std::move(tempQueues);
 
-            poolInfo.setQueueFamilyIndex(iter.second.first);
+            poolInfo.queueFamilyIndex = iter.second.first;
 
-            vk::CommandPool pool;
-            Assert(vkDevice.createCommandPool(&poolInfo, nullptr, &pool) == vk::Result::eSuccess);
+            VkCommandPool pool;
+            Assert(vkCreateCommandPool(vkDevice, &poolInfo, nullptr, &pool) == VK_SUCCESS);
             pools.emplace(queueType, pool);
         }
+    }
+
+    void VKDevice::CreateVmaAllocator()
+    {
+        VmaAllocatorCreateInfo info = {};
+        info.vulkanApiVersion = VK_API_VERSION_1_3;
+        info.instance = gpu.GetInstance().GetVkInstance();
+        info.physicalDevice = gpu.GetVkPhysicalDevice();
+        info.device = vkDevice;
+        info.pVulkanFunctions = nullptr;
+
+        vmaCreateAllocator(&info, &vmaAllocator);
+    }
+
+    VmaAllocator& VKDevice::GetVmaAllocator()
+    {
+        return vmaAllocator;
     }
 }

@@ -195,3 +195,12 @@ Add3rdCMakeProject(
     RUNTIME_DEP
         Windows "$<INSTALL_DIR>/bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>.dll"
 )
+
+# vma
+Add3rdHeaderOnlyPackage(
+    NAME VulkanMemoryAllocator
+    PLATFORM All
+    VERSION 3.0.1
+    HASH a63a5e32c21fa9e839580d0c8727c6dead9da01730a8f0d10717cd784bc632de
+    INCLUDE $<SOURCE_DIR>/include
+)

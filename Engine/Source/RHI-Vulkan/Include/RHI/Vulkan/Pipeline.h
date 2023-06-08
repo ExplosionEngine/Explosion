@@ -4,7 +4,7 @@
 
 #pragma once
 #include <RHI/Pipeline.h>
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 
 namespace RHI::Vulkan {
 
@@ -18,8 +18,8 @@ namespace RHI::Vulkan {
         ~VKGraphicsPipeline() override;
         void Destroy() override;
 
-        vk::Pipeline GetVkPipeline();
-        vk::RenderPass GetVkRenderPass();
+        VkPipeline GetVkPipeline();
+        VkRenderPass GetVkRenderPass();
         VKPipelineLayout* GetPipelineLayout() const;
 
     private:
@@ -29,8 +29,8 @@ namespace RHI::Vulkan {
 
         VKDevice& device;
         VKPipelineLayout* pipelineLayout;
-        vk::RenderPass renderPass = VK_NULL_HANDLE;
-        vk::Pipeline pipeline = VK_NULL_HANDLE;
+        VkRenderPass renderPass = VK_NULL_HANDLE;
+        VkPipeline pipeline = VK_NULL_HANDLE;
     };
 
 }

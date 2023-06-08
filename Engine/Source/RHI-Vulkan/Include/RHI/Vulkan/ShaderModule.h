@@ -5,7 +5,7 @@
 #pragma once
 
 #include <RHI/ShaderModule.h>
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 #include <string>
 #include <unordered_map>
 
@@ -20,7 +20,7 @@ namespace RHI::Vulkan {
 
         void Destroy() override;
 
-        vk::ShaderModule GetVkShaderModule() const;
+        VkShaderModule GetVkShaderModule() const;
 
         void BuildReflection(const ShaderModuleCreateInfo& createInfo);
 
@@ -31,7 +31,7 @@ namespace RHI::Vulkan {
         void CreateNativeShaderModule(const ShaderModuleCreateInfo& createInfo);
 
         VKDevice& device;
-        vk::ShaderModule shaderModule = VK_NULL_HANDLE;
+        VkShaderModule shaderModule = VK_NULL_HANDLE;
         std::unordered_map<std::string, uint32_t> inputLocationTable;
     };
 

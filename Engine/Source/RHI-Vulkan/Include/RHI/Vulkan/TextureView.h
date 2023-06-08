@@ -6,7 +6,7 @@
 #pragma once
 
 #include <memory>
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 #include <RHI/TextureView.h>
 
 namespace RHI::Vulkan {
@@ -20,7 +20,7 @@ namespace RHI::Vulkan {
         ~VKTextureView() override;
         void Destroy() override;
 
-        vk::ImageView GetVkImageView();
+        VkImageView GetVkImageView();
         VKTexture& GetTexture() const;
         uint8_t GetArrayLayerNum() const;
 

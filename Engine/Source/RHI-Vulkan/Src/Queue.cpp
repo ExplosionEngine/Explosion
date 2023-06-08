@@ -8,7 +8,7 @@
 #include <RHI/Vulkan/Synchronous.h>
 
 namespace RHI::Vulkan {
-    VKQueue::VKQueue(vk::Queue q) : Queue(), vkQueue(q) {}
+    VKQueue::VKQueue(VkQueue q) : Queue(), vkQueue(q) {}
 
     VKQueue::~VKQueue() = default;
 
@@ -18,20 +18,20 @@ namespace RHI::Vulkan {
         auto* fenceToSignaled = dynamic_cast<VKFence*>(fts);
         Assert(commandBuffer);
 
-        const vk::CommandBuffer& vcb = commandBuffer->GetVkCommandBuffer();
-        const vk::Fence& fence = fenceToSignaled == nullptr ? VK_NULL_HANDLE : fenceToSignaled->GetVkFence();
+        const VkCommandBuffer& cmdBuffer = commandBuffer->GetVkCommandBuffer();
+        const VkFence& fence = fenceToSignaled == nullptr ? VK_NULL_HANDLE : fenceToSignaled->GetVkFence();
 
-        vk::SubmitInfo submitInfo{};
-        submitInfo.setCommandBufferCount(1)
-            .setWaitSemaphores(commandBuffer->GetWaitSemaphores())
-            .setWaitDstStageMask(commandBuffer->GetWaitStages())
-            .setSignalSemaphores(commandBuffer->GetSignalSemaphores())
-            .setPCommandBuffers(&vcb);
+        VkSubmitInfo submitInfo{};
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pWaitSemaphores = commandBuffer->GetWaitSemaphores().data();
+        submitInfo.pWaitDstStageMask = commandBuffer->GetWaitStages().data();
+        submitInfo.pSignalSemaphores = commandBuffer->GetSignalSemaphores().data();
+        submitInfo.pCommandBuffers = &cmdBuffer;
 
         if (fenceToSignaled != nullptr) {
             fenceToSignaled->Reset();
         }
-        Assert(vkQueue.submit(1, &submitInfo, fence) == vk::Result::eSuccess);
+        Assert(vkQueueSubmit(vkQueue, 1, &submitInfo, fence) == VK_SUCCESS);
     }
 
     void VKQueue::Wait(Fence* fenceToSignal)
@@ -39,7 +39,7 @@ namespace RHI::Vulkan {
         // TODO
     }
 
-    vk::Queue VKQueue::GetVkQueue()
+    VkQueue VKQueue::GetVkQueue()
     {
         return vkQueue;
     }

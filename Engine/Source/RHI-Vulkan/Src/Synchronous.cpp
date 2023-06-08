@@ -15,7 +15,7 @@ namespace RHI::Vulkan {
     VKFence::~VKFence()
     {
         if (fence) {
-            device.GetVkDevice().destroyFence(fence);
+            vkDestroyFence(device.GetVkDevice(), fence, nullptr);
         }
     }
 
@@ -26,7 +26,7 @@ namespace RHI::Vulkan {
 
     void VKFence::Reset()
     {
-        Assert(device.GetVkDevice().resetFences(1, &fence) == vk::Result::eSuccess);
+        Assert(vkResetFences(device.GetVkDevice(), 1, &fence) == VK_SUCCESS);
         signaled = false;
     }
 
@@ -35,19 +35,19 @@ namespace RHI::Vulkan {
         if (signaled) {
             return;
         }
-        Assert(device.GetVkDevice().waitForFences(1, &fence, VK_TRUE, UINT64_MAX) == vk::Result::eSuccess);
+        Assert(vkWaitForFences(device.GetVkDevice(), 1, &fence, VK_TRUE, UINT64_MAX) == VK_SUCCESS);
     }
 
-    vk::Fence VKFence::GetVkFence()
+    VkFence VKFence::GetVkFence()
     {
         return fence;
     }
 
     void VKFence::CreateVKFence()
     {
-        vk::FenceCreateInfo fenceInfo{};
+        VkFenceCreateInfo fenceInfo{};
 
-        Assert(device.GetVkDevice().createFence(&fenceInfo, nullptr, &fence) == vk::Result::eSuccess);
+        Assert(vkCreateFence(device.GetVkDevice(), &fenceInfo, nullptr, &fence) == VK_SUCCESS);
     }
 
     void VKFence::Destroy()

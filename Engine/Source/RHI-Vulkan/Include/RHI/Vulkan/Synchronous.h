@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 #include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
@@ -20,13 +20,13 @@ namespace RHI::Vulkan {
         void Wait() override;
         void Destroy() override;
 
-        vk::Fence GetVkFence();
+        VkFence GetVkFence();
 
     private:
         void CreateVKFence();
 
         VKDevice& device;
-        vk::Fence fence;
+        VkFence fence;
         bool signaled;
     };
 }
