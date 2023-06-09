@@ -30,8 +30,7 @@ namespace RHI::Vulkan {
         VkSwapchainKHR swapChain = VK_NULL_HANDLE;
         std::vector<Texture*> textures;
         VkQueue queue = VK_NULL_HANDLE;
-        VkSemaphore currentSemaphore;
-        std::vector<VkSemaphore> imageAvailableSemaphore;
+        VkSemaphore imageAvailableSemaphore;
         std::vector<VkSemaphore> waitSemaphores;
         uint32_t swapChainImageCount = 0;
         uint32_t currentImage = 0;

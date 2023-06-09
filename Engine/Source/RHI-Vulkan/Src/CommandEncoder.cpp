@@ -184,7 +184,7 @@ namespace RHI::Vulkan {
         {
             auto* depthStencilTextureView = dynamic_cast<VKTextureView*>(beginInfo->depthStencilAttachment->view);
 
-            VkRenderingAttachmentInfo depthAttachmentInfo;
+            VkRenderingAttachmentInfo depthAttachmentInfo = {};
             depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             depthAttachmentInfo.imageView = depthStencilTextureView->GetVkImageView();
             depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -195,7 +195,7 @@ namespace RHI::Vulkan {
             renderingInfo.pDepthAttachment = &depthAttachmentInfo;
 
             if (!beginInfo->depthStencilAttachment->depthReadOnly) {
-                VkRenderingAttachmentInfo stencilAttachmentInfo;
+                VkRenderingAttachmentInfo stencilAttachmentInfo = {};
                 stencilAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
                 stencilAttachmentInfo.imageView = depthStencilTextureView->GetVkImageView();
                 stencilAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -232,7 +232,7 @@ namespace RHI::Vulkan {
 
     void VKGraphicsPassCommandEncoder::SetIndexBuffer(BufferView *bufferView)
     {
-        auto mBufferView = dynamic_cast<VKBufferView*>(bufferView);
+        auto* mBufferView = dynamic_cast<VKBufferView*>(bufferView);
 
         VkBuffer indexBuffer = mBufferView->GetBuffer().GetVkBuffer();
         auto vkFormat = VKEnumCast<IndexFormat, VkIndexType>(mBufferView->GetIndexFormat());
@@ -242,7 +242,7 @@ namespace RHI::Vulkan {
 
     void VKGraphicsPassCommandEncoder::SetVertexBuffer(size_t slot, BufferView *bufferView)
     {
-        auto mBufferView = dynamic_cast<VKBufferView*>(bufferView);
+        auto* mBufferView = dynamic_cast<VKBufferView*>(bufferView);
 
         VkBuffer vertexBuffer = mBufferView->GetBuffer().GetVkBuffer();
         VkDeviceSize offset[] = { mBufferView->GetOffset() };

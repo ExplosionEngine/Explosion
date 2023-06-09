@@ -24,8 +24,10 @@ namespace RHI::Vulkan {
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.commandBufferCount = 1;
+        submitInfo.waitSemaphoreCount = commandBuffer->GetWaitSemaphores().size();
         submitInfo.pWaitSemaphores = commandBuffer->GetWaitSemaphores().data();
         submitInfo.pWaitDstStageMask = commandBuffer->GetWaitStages().data();
+        submitInfo.signalSemaphoreCount = commandBuffer->GetSignalSemaphores().size();
         submitInfo.pSignalSemaphores = commandBuffer->GetSignalSemaphores().data();
         submitInfo.pCommandBuffers = &cmdBuffer;
 

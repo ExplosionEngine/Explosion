@@ -316,8 +316,8 @@ namespace RHI::Vulkan {
         pipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
         pipelineRenderingCreateInfo.colorAttachmentCount = createInfo.fragmentState.colorTargetNum;
         pipelineRenderingCreateInfo.pColorAttachmentFormats = pixelFormats.data();
-        pipelineRenderingCreateInfo.depthAttachmentFormat = VKEnumCast<PixelFormat, VkFormat>(createInfo.depthStencilState.format);
-        pipelineRenderingCreateInfo.stencilAttachmentFormat = VKEnumCast<PixelFormat, VkFormat>(createInfo.depthStencilState.format);
+        pipelineRenderingCreateInfo.depthAttachmentFormat = createInfo.depthStencilState.depthEnable ? VKEnumCast<PixelFormat, VkFormat>(createInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
+        pipelineRenderingCreateInfo.stencilAttachmentFormat = createInfo.depthStencilState.stencilEnable ? VKEnumCast<PixelFormat, VkFormat>(createInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
         pipelineRenderingCreateInfo.pNext = nullptr;
         pipelineRenderingCreateInfo.viewMask = 0;
 

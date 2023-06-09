@@ -28,9 +28,7 @@ namespace RHI::Vulkan {
         }
         textures.clear();
 
-        for (auto &semaphore : imageAvailableSemaphore) {
-            vkDestroySemaphore(vkDevice, semaphore, nullptr);
-        }
+        vkDestroySemaphore(vkDevice, imageAvailableSemaphore, nullptr);
 
         if (swapChain) {
             vkDestroySwapchainKHR(vkDevice, swapChain, nullptr);
@@ -44,10 +42,7 @@ namespace RHI::Vulkan {
 
     uint8_t VKSwapChain::AcquireBackTexture()
     {
-        std::cout << "current index befor acquire: " << currentImage << '\n';
-        currentSemaphore = imageAvailableSemaphore[currentImage];
-        Assert(vkAcquireNextImageKHR(device.GetVkDevice(), swapChain, UINT64_MAX, currentSemaphore, VK_NULL_HANDLE, &currentImage) == VK_SUCCESS);
-        std::cout << "current index after acquire: " << currentImage << std::endl;
+        Assert(vkAcquireNextImageKHR(device.GetVkDevice(), swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &currentImage) == VK_SUCCESS);
         return currentImage;
     }
 
@@ -57,6 +52,7 @@ namespace RHI::Vulkan {
         presetInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presetInfo.swapchainCount = 1;
         presetInfo.pSwapchains = &swapChain;
+        presetInfo.waitSemaphoreCount = waitSemaphores.size();
         presetInfo.pWaitSemaphores = waitSemaphores.data();
         presetInfo.pImageIndices = &currentImage;
         Assert(vkQueuePresentKHR(queue, &presetInfo) == VK_SUCCESS);
@@ -70,7 +66,7 @@ namespace RHI::Vulkan {
 
     VkSemaphore VKSwapChain::GetImageSemaphore() const
     {
-        return currentSemaphore;
+        return imageAvailableSemaphore;
     }
 
     void VKSwapChain::AddWaitSemaphore(VkSemaphore semaphore)
@@ -153,9 +149,6 @@ namespace RHI::Vulkan {
 
         VkSemaphoreCreateInfo semaphoreInfo = {};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        imageAvailableSemaphore.resize(swapChainImageCount);
-        for (uint32_t i = 0; i < swapChainImageCount; ++i) {
-            Assert(vkCreateSemaphore(vkDevice, &semaphoreInfo, nullptr, &imageAvailableSemaphore[i]) == VK_SUCCESS);
-        }
+        Assert(vkCreateSemaphore(vkDevice, &semaphoreInfo, nullptr, &imageAvailableSemaphore) == VK_SUCCESS);
     }
 }
