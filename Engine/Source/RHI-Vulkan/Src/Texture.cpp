@@ -34,7 +34,7 @@ namespace RHI::Vulkan {
     }
 
     VKTexture::VKTexture(VKDevice& dev, const TextureCreateInfo& createInfo, VkImage image)
-        : Texture(createInfo), device(dev), vkDeviceMemory(VK_NULL_HANDLE), vkImage(image), ownMemory(false), extent(createInfo.extent), format(createInfo.format), mipLevels(createInfo.mipLevels), samples(createInfo.samples)
+        : Texture(createInfo), device(dev), vkImage(image), ownMemory(false), extent(createInfo.extent), format(createInfo.format), mipLevels(createInfo.mipLevels), samples(createInfo.samples)
     {
     }
 
@@ -42,21 +42,18 @@ namespace RHI::Vulkan {
         : Texture(createInfo), device(dev), vkImage(VK_NULL_HANDLE), ownMemory(true), extent(createInfo.extent), format(createInfo.format), mipLevels(createInfo.mipLevels), samples(createInfo.samples)
     {
         CreateImage(createInfo);
-        AllocateMemory(createInfo);
         TransitionToInitState(createInfo);
     }
 
     VKTexture::~VKTexture()
     {
         if (vkImage && ownMemory) {
-            vkDestroyImage(device.GetVkDevice(), vkImage, nullptr);
+            vmaDestroyImage(device.GetVmaAllocator(), vkImage, allocation);
         }
 
         if (vkImageView) {
             vkDestroyImageView(device.GetVkDevice(), vkImageView, nullptr);
         }
-
-        FreeMemory();
     }
 
     void VKTexture::Destroy()
@@ -108,29 +105,14 @@ namespace RHI::Vulkan {
         imageInfo.format = VKEnumCast<PixelFormat, VkFormat>(createInfo.format);
         imageInfo.usage = GetVkResourceStates(createInfo.usages);
 
-        Assert(vkCreateImage(device.GetVkDevice(), &imageInfo, nullptr, &vkImage) == VK_SUCCESS);
-    }
+        VmaAllocationCreateInfo allocInfo = {};
+        allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
 
-    void VKTexture::AllocateMemory(const TextureCreateInfo& createInfo)
-    {
-        VkMemoryRequirements memoryRequirements = {};
-        vkGetImageMemoryRequirements(device.GetVkDevice(), vkImage, &memoryRequirements);
+        Assert(vmaCreateImage(device.GetVmaAllocator(), &imageInfo, &allocInfo, &vkImage, &allocation, nullptr) == VK_SUCCESS);
 
-        VkMemoryAllocateInfo memoryInfo = {};
-        memoryInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        memoryInfo.allocationSize = memoryRequirements.size;
-        memoryInfo.memoryTypeIndex = device.GetGpu().FindMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-        Assert(vkAllocateMemory(device.GetVkDevice(), &memoryInfo, nullptr, &vkDeviceMemory) == VK_SUCCESS);
-        vkBindImageMemory(device.GetVkDevice(), vkImage, vkDeviceMemory, 0);
-    }
-
-    void VKTexture::FreeMemory()
-    {
-        if (vkDeviceMemory) {
-            vkFreeMemory(device.GetVkDevice(), vkDeviceMemory, nullptr);
-            vkDeviceMemory = nullptr;
-        }
+#if BUILD_CONFIG_DEBUG
+        vmaSetAllocationName(device.GetVmaAllocator(), allocation, createInfo.debugName.c_str());
+#endif
     }
 
     PixelFormat VKTexture::GetFormat() const

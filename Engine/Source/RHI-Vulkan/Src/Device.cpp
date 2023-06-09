@@ -283,12 +283,16 @@ namespace RHI::Vulkan {
 
     void VKDevice::CreateVmaAllocator()
     {
+        VmaVulkanFunctions vulkanFunctions = {};
+        vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
+        vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
+
         VmaAllocatorCreateInfo info = {};
         info.vulkanApiVersion = VK_API_VERSION_1_3;
         info.instance = gpu.GetInstance().GetVkInstance();
         info.physicalDevice = gpu.GetVkPhysicalDevice();
         info.device = vkDevice;
-        info.pVulkanFunctions = nullptr;
+        info.pVulkanFunctions = &vulkanFunctions;
 
         vmaCreateAllocator(&info, &vmaAllocator);
     }

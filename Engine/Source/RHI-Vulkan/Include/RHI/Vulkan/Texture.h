@@ -6,6 +6,7 @@
 #pragma once
 
 #include <memory>
+#include <vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 #include <RHI/Texture.h>
 
@@ -34,13 +35,9 @@ namespace RHI::Vulkan {
         void GetAspect(const TextureCreateInfo& createInfo);
         void TransitionToInitState(const TextureCreateInfo& createInfo);
 
-        // TODO use memory pool.
-        void AllocateMemory(const TextureCreateInfo& createInfo);
-        void FreeMemory();
-
         VKDevice& device;
-        VkDeviceMemory vkDeviceMemory;
         VkImage vkImage;
+        VmaAllocation allocation;
         VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT;
 
         Extent<3> extent;

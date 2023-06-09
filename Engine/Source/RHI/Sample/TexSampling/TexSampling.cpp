@@ -31,12 +31,12 @@ protected:
         CreateSwapChain();
         CreateVertexBuffer();
         CreateIndexBuffer();
+        CreateFence();
         CreateTextureAndSampler();
         CreateBindGroupLayout();
         CreateBindGroup();
         CreatePipelineLayout();
         CreatePipeline();
-        CreateFence();
         CreateCommandBuffer();
     }
 
@@ -127,6 +127,7 @@ private:
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = vertices.size() * sizeof(Vertex);
         bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
+        bufferCreateInfo.debugName = "quadBuffer";
         vertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (vertexBuffer != nullptr) {
             auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -216,7 +217,9 @@ private:
             commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
         }
         commandEncoder->End();
-        graphicsQueue->Submit(texCommandBuffer.Get(), nullptr);
+        fence->Reset();
+        graphicsQueue->Submit(texCommandBuffer.Get(), fence.Get());
+        fence->Wait();
     }
 
     void CreateBindGroupLayout()
@@ -379,9 +382,10 @@ private:
 
     void SubmitCommandBufferAndPresent()
     {
+        fence->Reset();
         graphicsQueue->Submit(commandBuffer.Get(), fence.Get());
-        fence->Wait();
         swapChain->Present();
+        fence->Wait();
     }
 
     PixelFormat swapChainFormat = PixelFormat::max;

@@ -27,12 +27,8 @@ namespace RHI::Vulkan {
 
     private:
         void CreateBuffer(const BufferCreateInfo& createInfo);
-        void AllocateMemory(const BufferCreateInfo& createInfo);
-        void DestroyBuffer();
-        void FreeMemory();
 
         VKDevice& device;
-        VkDeviceMemory vkDeviceMemory;
         VkBuffer vkBuffer;
         VmaAllocation allocation;
         BufferUsageFlags usages;

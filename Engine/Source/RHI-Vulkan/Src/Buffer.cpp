@@ -9,25 +9,6 @@
 #include <RHI/Vulkan/BufferView.h>
 
 namespace RHI::Vulkan {
-    static VkMemoryPropertyFlags GetVkMemoryType(BufferUsageFlags bufferUsages)
-    {
-        static std::unordered_map<BufferUsageFlags, VkMemoryPropertyFlags> rules = {
-            { BufferUsageBits::mapWrite | BufferUsageBits::copySrc, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT },
-            { BufferUsageBits::mapRead | BufferUsageBits::copyDst, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT },
-            { BufferUsageBits::uniform | BufferUsageBits::mapWrite, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT }
-            // TODO check other conditions ?
-        };
-        static VkMemoryPropertyFlags fallback = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-
-        for (const auto& rule : rules) {
-            if (bufferUsages & rule.first) {
-                return rule.second;
-            }
-        }
-        return fallback;
-    }
-
-
     static VkBufferUsageFlags GetVkResourceStates(BufferUsageFlags bufferUsages)
     {
         static std::unordered_map<BufferUsageBits, VkBufferUsageFlags> rules = {
@@ -52,25 +33,23 @@ namespace RHI::Vulkan {
     VKBuffer::VKBuffer(VKDevice& d, const BufferCreateInfo& createInfo) : Buffer(createInfo), device(d), usages(createInfo.usages)
     {
         CreateBuffer(createInfo);
-        AllocateMemory(createInfo);
     }
 
     VKBuffer::~VKBuffer()
     {
-        FreeMemory();
-        DestroyBuffer();
+        vmaDestroyBuffer(device.GetVmaAllocator(), vkBuffer, allocation);
     }
 
     void* VKBuffer::Map(MapMode mapMode, size_t offset, size_t length)
     {
         void* data;
-        Assert(vkMapMemory(device.GetVkDevice(), vkDeviceMemory, offset, length, {}, &data) == VK_SUCCESS);
+        Assert(vmaMapMemory(device.GetVmaAllocator(), allocation, &data) == VK_SUCCESS);
         return data;
     }
 
     void VKBuffer::UnMap()
     {
-        vkUnmapMemory(device.GetVkDevice(), vkDeviceMemory);
+        vmaUnmapMemory(device.GetVmaAllocator(), allocation);
     }
 
     BufferView* VKBuffer::CreateBufferView(const BufferViewCreateInfo& createInfo)
@@ -91,38 +70,17 @@ namespace RHI::Vulkan {
         bufferInfo.usage = GetVkResourceStates(createInfo.usages);
         bufferInfo.size = createInfo.size;
 
-        Assert(vkCreateBuffer(device.GetVkDevice(), &bufferInfo, nullptr, &vkBuffer) == VK_SUCCESS);
-    }
-
-    void VKBuffer::AllocateMemory(const BufferCreateInfo& createInfo)
-    {
-        VkMemoryRequirements memoryRequirements = {};
-        vkGetBufferMemoryRequirements(device.GetVkDevice(), vkBuffer, &memoryRequirements);
-
-        VkMemoryAllocateInfo memoryInfo = {};
-        memoryInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        memoryInfo.allocationSize = memoryRequirements.size;
-        memoryInfo.memoryTypeIndex = device.GetGpu().FindMemoryType(memoryRequirements.memoryTypeBits, GetVkMemoryType(createInfo.usages));
-
-        Assert(vkAllocateMemory(device.GetVkDevice(), &memoryInfo, nullptr, &vkDeviceMemory) == VK_SUCCESS);
-
-        vkBindBufferMemory(device.GetVkDevice(), vkBuffer, vkDeviceMemory, 0);
-    }
-
-    void VKBuffer::DestroyBuffer()
-    {
-        if (vkBuffer) {
-            vkDestroyBuffer(device.GetVkDevice(), vkBuffer, nullptr);
-            vkBuffer = nullptr;
+        VmaAllocationCreateInfo allocInfo = {};
+        allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+        if (createInfo.usages | BufferUsageBits::mapWrite) {
+            allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
         }
-    }
 
-    void VKBuffer::FreeMemory()
-    {
-        if (vkDeviceMemory) {
-            vkFreeMemory(device.GetVkDevice(), vkDeviceMemory, nullptr);
-            vkDeviceMemory = nullptr;
-        }
+        Assert(vmaCreateBuffer(device.GetVmaAllocator(), &bufferInfo, &allocInfo, &vkBuffer, &allocation, nullptr) == VK_SUCCESS);
+
+#if BUILD_CONFIG_DEBUG
+        vmaSetAllocationName(device.GetVmaAllocator(), allocation, createInfo.debugName.c_str());
+#endif
     }
 
     VkBuffer VKBuffer::GetVkBuffer()

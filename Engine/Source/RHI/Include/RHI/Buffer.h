@@ -6,6 +6,7 @@
 
 #include <Common/Utility.h>
 #include <RHI/Common.h>
+#include <string>
 
 namespace RHI {
     struct BufferViewCreateInfo;
@@ -14,6 +15,7 @@ namespace RHI {
     struct BufferCreateInfo {
         size_t size;
         BufferUsageFlags usages;
+        std::string debugName;
     };
 
     class Buffer {
