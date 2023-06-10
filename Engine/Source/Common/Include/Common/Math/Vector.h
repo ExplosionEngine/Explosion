@@ -64,14 +64,15 @@ namespace Common {
         inline Vector& operator/=(const Vector& rhs);
 
         template <typename IT>
-        Vector<IT, L> CastTo() const;
+        inline Vector<IT, L> CastTo() const;
 
         template <uint8_t... I>
-        Vector<T, sizeof...(I)> SubVec() const;
+        inline Vector<T, sizeof...(I)> SubVec() const;
 
-        T Length() const;
-        T Dot(const Vector& rhs) const;
-        typename Internal::VecCrossResultTraits<T, L>::Type Cross(const Vector& rhs) const;
+        inline T Model() const;
+        inline Vector Normalized() const;
+        inline T Dot(const Vector& rhs) const;
+        inline typename Internal::VecCrossResultTraits<T, L>::Type Cross(const Vector& rhs) const;
     };
 
     template <typename T, uint8_t L>
@@ -606,7 +607,7 @@ namespace Common {
     }
 
     template <typename T, uint8_t L>
-    T Vector<T, L>::Length() const
+    T Vector<T, L>::Model() const
     {
         static_assert(isFloatingPointV<T>);
         T temp = 0;
@@ -614,6 +615,12 @@ namespace Common {
             temp += this->data[i] * this->data[i];
         }
         return std::sqrt(temp);
+    }
+
+    template <typename T, uint8_t L>
+    Vector<T, L> Vector<T, L>::Normalized() const
+    {
+        return this->operator/(Model());
     }
 
     template <typename T, uint8_t L>

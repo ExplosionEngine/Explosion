@@ -235,13 +235,13 @@ TEST(MathTest, SubVecTest)
     ASSERT_TRUE(v2 == FVec2(2, 4));
 }
 
-TEST(MathTest, VecLengthTest)
+TEST(MathTest, VecModelTest)
 {
     FVec4 v0 = FVec4(1.0f, 2.0f, 3.0f, 4.0f);
-    ASSERT_FLOAT_EQ(v0.Length(), std::sqrt(30.0f));
+    ASSERT_FLOAT_EQ(v0.Model(), std::sqrt(30.0f));
 
     FVec2 v1 { 2.0f, 3.0f };
-    ASSERT_FLOAT_EQ(v1.Length(), std::sqrt(13.0f));
+    ASSERT_FLOAT_EQ(v1.Model(), std::sqrt(13.0f));
 }
 
 TEST(MathTest, VecDotTest)
