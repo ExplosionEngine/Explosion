@@ -9,6 +9,7 @@
 #include <type_traits>
 
 #include <Common/Memory.h>
+#include <Common/String.h>
 
 namespace RHI {
     using EnumType = uint32_t;

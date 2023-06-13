@@ -134,5 +134,11 @@ namespace RHI::DirectX12 {
             nullptr,
             IID_PPV_ARGS(&dx12Resource)));
         Assert(success);
+
+#if BUILD_CONFIG_DEBUG
+        if (!createInfo.debugName.empty()) {
+            dx12Resource->SetName(Common::StringUtils::ToWideString(createInfo.debugName).c_str());
+        }
+#endif
     }
 }

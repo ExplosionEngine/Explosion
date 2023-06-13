@@ -37,7 +37,9 @@ namespace RHI::Vulkan {
 
     VKBuffer::~VKBuffer()
     {
-        vmaDestroyBuffer(device.GetVmaAllocator(), vkBuffer, allocation);
+        if (vkBuffer) {
+            vmaDestroyBuffer(device.GetVmaAllocator(), vkBuffer, allocation);
+        }
     }
 
     void* VKBuffer::Map(MapMode mapMode, size_t offset, size_t length)
