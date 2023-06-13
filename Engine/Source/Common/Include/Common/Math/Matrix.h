@@ -34,6 +34,7 @@ namespace Common {
         inline Matrix& operator=(const Matrix& other);
 
         template <typename... IT>
+        requires (sizeof...(IT) > 1)
         inline Matrix(IT&&... inValues); // NOLINT
 
         inline T& At(uint8_t row, uint8_t col);
@@ -139,22 +140,22 @@ namespace Common {
     using IMat4x3 = Matrix<int32_t, 4, 3>;
     using IMat4x4 = Matrix<int32_t, 4, 4>;
 
-    using HMat1x1 = Matrix<HalfFloat, 1, 1>;
-    using HMat1x2 = Matrix<HalfFloat, 1, 2>;
-    using HMat1x3 = Matrix<HalfFloat, 1, 3>;
-    using HMat1x4 = Matrix<HalfFloat, 1, 4>;
-    using HMat2x1 = Matrix<HalfFloat, 2, 1>;
-    using HMat2x2 = Matrix<HalfFloat, 2, 2>;
-    using HMat2x3 = Matrix<HalfFloat, 2, 3>;
-    using HMat2x4 = Matrix<HalfFloat, 2, 4>;
-    using HMat3x1 = Matrix<HalfFloat, 3, 1>;
-    using HMat3x2 = Matrix<HalfFloat, 3, 2>;
-    using HMat3x3 = Matrix<HalfFloat, 3, 3>;
-    using HMat3x4 = Matrix<HalfFloat, 3, 4>;
-    using HMat4x1 = Matrix<HalfFloat, 4, 1>;
-    using HMat4x2 = Matrix<HalfFloat, 4, 2>;
-    using HMat4x3 = Matrix<HalfFloat, 4, 3>;
-    using HMat4x4 = Matrix<HalfFloat, 4, 4>;
+    using HMat1x1 = Matrix<HFloat, 1, 1>;
+    using HMat1x2 = Matrix<HFloat, 1, 2>;
+    using HMat1x3 = Matrix<HFloat, 1, 3>;
+    using HMat1x4 = Matrix<HFloat, 1, 4>;
+    using HMat2x1 = Matrix<HFloat, 2, 1>;
+    using HMat2x2 = Matrix<HFloat, 2, 2>;
+    using HMat2x3 = Matrix<HFloat, 2, 3>;
+    using HMat2x4 = Matrix<HFloat, 2, 4>;
+    using HMat3x1 = Matrix<HFloat, 3, 1>;
+    using HMat3x2 = Matrix<HFloat, 3, 2>;
+    using HMat3x3 = Matrix<HFloat, 3, 3>;
+    using HMat3x4 = Matrix<HFloat, 3, 4>;
+    using HMat4x1 = Matrix<HFloat, 4, 1>;
+    using HMat4x2 = Matrix<HFloat, 4, 2>;
+    using HMat4x3 = Matrix<HFloat, 4, 3>;
+    using HMat4x4 = Matrix<HFloat, 4, 4>;
 
     using FMat1x1 = Matrix<float, 1, 1>;
     using FMat1x2 = Matrix<float, 1, 2>;
@@ -224,22 +225,22 @@ namespace Common {
     using IMat4x3Consts = MatConsts<int32_t, 4, 3>;
     using IMat4x4Consts = MatConsts<int32_t, 4, 4>;
 
-    using HMat1x1Consts = MatConsts<HalfFloat, 1, 1>;
-    using HMat1x2Consts = MatConsts<HalfFloat, 1, 2>;
-    using HMat1x3Consts = MatConsts<HalfFloat, 1, 3>;
-    using HMat1x4Consts = MatConsts<HalfFloat, 1, 4>;
-    using HMat2x1Consts = MatConsts<HalfFloat, 2, 1>;
-    using HMat2x2Consts = MatConsts<HalfFloat, 2, 2>;
-    using HMat2x3Consts = MatConsts<HalfFloat, 2, 3>;
-    using HMat2x4Consts = MatConsts<HalfFloat, 2, 4>;
-    using HMat3x1Consts = MatConsts<HalfFloat, 3, 1>;
-    using HMat3x2Consts = MatConsts<HalfFloat, 3, 2>;
-    using HMat3x3Consts = MatConsts<HalfFloat, 3, 3>;
-    using HMat3x4Consts = MatConsts<HalfFloat, 3, 4>;
-    using HMat4x1Consts = MatConsts<HalfFloat, 4, 1>;
-    using HMat4x2Consts = MatConsts<HalfFloat, 4, 2>;
-    using HMat4x3Consts = MatConsts<HalfFloat, 4, 3>;
-    using HMat4x4Consts = MatConsts<HalfFloat, 4, 4>;
+    using HMat1x1Consts = MatConsts<HFloat, 1, 1>;
+    using HMat1x2Consts = MatConsts<HFloat, 1, 2>;
+    using HMat1x3Consts = MatConsts<HFloat, 1, 3>;
+    using HMat1x4Consts = MatConsts<HFloat, 1, 4>;
+    using HMat2x1Consts = MatConsts<HFloat, 2, 1>;
+    using HMat2x2Consts = MatConsts<HFloat, 2, 2>;
+    using HMat2x3Consts = MatConsts<HFloat, 2, 3>;
+    using HMat2x4Consts = MatConsts<HFloat, 2, 4>;
+    using HMat3x1Consts = MatConsts<HFloat, 3, 1>;
+    using HMat3x2Consts = MatConsts<HFloat, 3, 2>;
+    using HMat3x3Consts = MatConsts<HFloat, 3, 3>;
+    using HMat3x4Consts = MatConsts<HFloat, 3, 4>;
+    using HMat4x1Consts = MatConsts<HFloat, 4, 1>;
+    using HMat4x2Consts = MatConsts<HFloat, 4, 2>;
+    using HMat4x3Consts = MatConsts<HFloat, 4, 3>;
+    using HMat4x4Consts = MatConsts<HFloat, 4, 4>;
 
     using FMat1x1Consts = MatConsts<float, 1, 1>;
     using FMat1x2Consts = MatConsts<float, 1, 2>;
@@ -277,6 +278,19 @@ namespace Common {
 }
 
 namespace Common::Internal {
+    template <typename LHS, typename... RHS>
+    struct IsAllSame {};
+
+    template <typename LHS, typename RHS0, typename... RHS>
+    struct IsAllSame<LHS, RHS0, RHS...> {
+        static constexpr bool value = std::is_same_v<LHS, RHS0> && IsAllSame<LHS, RHS...>::value;
+    };
+
+    template <typename LHS, typename RHS>
+    struct IsAllSame<LHS, RHS> {
+        static constexpr bool value = std::is_same_v<LHS, RHS>;
+    };
+
     template <typename T, uint8_t R, uint8_t C, typename... VT, size_t... VI>
     static void CopyValuesToMatrix(Matrix<T, R, C>& matrix, VT&&... inValue, std::index_sequence<VI...>)
     {
@@ -304,15 +318,31 @@ namespace Common::Internal {
         }(), 0)... };
     }
 
+    template <typename T, uint8_t R, uint8_t C, size_t... VI>
+    static void CopyVectorToMatrixRow(Matrix<T, R, C>& matrix, uint8_t index, const Vector<T, C>& inVector, std::index_sequence<VI...>)
+    {
+        static_assert(C == sizeof...(VI));
+        (void) std::initializer_list<int> { ([&]() -> void {
+            matrix.At(index, VI) = inVector[VI];
+        }(), 0)... };
+    }
+
+    template <typename T, uint8_t R, uint8_t C, size_t... VI>
+    static void CopyVectorToMatrixCol(Matrix<T, R, C>& matrix, uint8_t index, const Vector<T, R>& inVector, std::index_sequence<VI...>)
+    {
+        static_assert(R == sizeof...(VI));
+        (void) std::initializer_list<int> { ([&]() -> void {
+            matrix.At(VI, index) = inVector[VI];
+        }(), 0)... };
+    }
+
     template <typename T, uint8_t R, uint8_t C, typename... VT, size_t... VI>
     static void CopyRowVectorsToMatrix(Matrix<T, R, C>& matrix, VT&&... inVectors, std::index_sequence<VI...>)
     {
         static_assert(R == sizeof...(VT) && sizeof...(VT) == sizeof...(VI));
         (void) std::initializer_list<int> { ([&]() -> void {
             static_assert(std::is_same_v<VT, Vector<T, C>>);
-            for (auto i = 0; i < C; i++) {
-                matrix.At(VI, i) = inVectors[i];
-            }
+            CopyVectorToMatrixRow(matrix, VI, inVectors, std::make_index_sequence<C> {});
         }(), 0)... };
     }
 
@@ -322,9 +352,7 @@ namespace Common::Internal {
         static_assert(C == sizeof...(VT) && sizeof...(VT) == sizeof...(VI));
         (void) std::initializer_list<int> { ([&]() -> void {
             static_assert(std::is_same_v<VT, Vector<T, R>>);
-            for (auto i = 0; i < R; i++) {
-                matrix.At(i, VI) = inVectors[i];
-            }
+            CopyVectorToMatrixCol(matrix, VI, inVectors, std::make_index_sequence<R> {});
         }(), 0)... };
     }
 
@@ -390,6 +418,7 @@ namespace Common {
 
     template <typename T, uint8_t R, uint8_t C>
     template <typename... IT>
+    requires (sizeof...(IT) > 1)
     Matrix<T, R, C>::Matrix(IT&&... inValues)
     {
         static_assert(sizeof...(IT) == R || sizeof...(IT) == R * C);
@@ -403,24 +432,28 @@ namespace Common {
     template <typename T, uint8_t R, uint8_t C>
     T& Matrix<T, R, C>::At(uint8_t row, uint8_t col)
     {
+        Assert(row < R && col < C);
         return this->data[row * C + col];
     }
 
     template <typename T, uint8_t R, uint8_t C>
     const T& Matrix<T, R, C>::At(uint8_t row, uint8_t col) const
     {
+        Assert(row < R && col < C);
         return this->data[row * C + col];
     }
 
     template <typename T, uint8_t R, uint8_t C>
     T& Matrix<T, R, C>::operator[](uint32_t index)
     {
+        Assert(index < R * C);
         return this->data[index];
     }
 
     template <typename T, uint8_t R, uint8_t C>
     const T& Matrix<T, R, C>::operator[](uint32_t index) const
     {
+        Assert(index < R * C);
         return this->data[index];
     }
 
@@ -569,12 +602,18 @@ namespace Common {
     Matrix<T, R, IC> Matrix<T, R, C>::operator*(const Matrix<T, C, IC>& rhs)
     {
         Matrix<T, R, IC> result;
-        // TODO
+        for (auto i = 0; i < R; i++) {
+            for (auto j = 0; j < IC; j++) {
+                result.At(i, j) = this->Row(i).Dot(rhs.Col(j));
+            }
+        }
+        return result;
     }
 
     template <typename T, uint8_t R, uint8_t C>
     Vector<T, C> Matrix<T, R, C>::Row(uint8_t index) const
     {
+        Assert(index < R);
         Vector<T, C> result;
         for (auto i = 0; i < C; i++) {
             result[i] = At(index, i);
@@ -585,6 +624,7 @@ namespace Common {
     template <typename T, uint8_t R, uint8_t C>
     Vector<T, R> Matrix<T, R, C>::Col(uint8_t index) const
     {
+        Assert(index < C);
         Vector<T, R> result;
         for (auto i = 0; i < R; i++) {
             result[i] = At(i, index);
@@ -595,6 +635,7 @@ namespace Common {
     template <typename T, uint8_t R, uint8_t C>
     void Matrix<T, R, C>::SetRow(uint8_t index, const Vector<T, C>& inValue)
     {
+        Assert(index < R);
         for (auto i = 0; i < C; i++) {
             At(index, i) = inValue[i];
         }
@@ -603,6 +644,7 @@ namespace Common {
     template <typename T, uint8_t R, uint8_t C>
     void Matrix<T, R, C>::SetCol(uint8_t index, const Vector<T, R>& inValue)
     {
+        Assert(index < C);
         for (auto i = 0; i < R; i++) {
             At(i, index) = inValue[i];
         }
@@ -633,14 +675,22 @@ namespace Common {
     template <typename... IT>
     void Matrix<T, R, C>::SetRow(uint8_t index, IT&&... inValues)
     {
-        Internal::CopyValuesToMatrixRow<T, R, C, IT...>(*this, index, std::forward<IT>(inValues)..., std::make_index_sequence<sizeof...(IT)> {});
+        if constexpr (sizeof...(IT) == 1 && Internal::IsAllSame<Vector<T, C>, IT...>::value) {
+            Internal::CopyVectorToMatrixRow<T, R, C>(*this, index, std::forward<IT>(inValues)..., std::make_index_sequence<C> {});
+        } else {
+            Internal::CopyValuesToMatrixRow<T, R, C, IT...>(*this, index, std::forward<IT>(inValues)..., std::make_index_sequence<sizeof...(IT)> {});
+        }
     }
 
     template <typename T, uint8_t R, uint8_t C>
     template <typename... IT>
     void Matrix<T, R, C>::SetCol(uint8_t index, IT&&... inValues)
     {
-        Internal::CopyValuesToMatrixCol<T, R, C, IT...>(*this, index, std::forward<IT>(inValues)..., std::make_index_sequence<sizeof...(IT)> {});
+        if constexpr (sizeof...(IT) == 1 && Internal::IsAllSame<Vector<T, R>, IT...>::value) {
+            Internal::CopyVectorToMatrixCol<T, R, C>(*this, index, std::forward<IT>(inValues)..., std::make_index_sequence<R> {});
+        } else {
+            Internal::CopyValuesToMatrixCol<T, R, C, IT...>(*this, index, std::forward<IT>(inValues)..., std::make_index_sequence<sizeof...(IT)> {});
+        }
     }
 
     template <typename T, uint8_t R, uint8_t C>
@@ -676,5 +726,5 @@ namespace Common {
 
     template <typename T, uint8_t L>
     requires (L >= 1) && (L <= 4)
-    const Matrix<T, L, L> MatConsts<T, L, L>::identity = GetIdentityMatrix<T, L>();
+    const Matrix<T, L, L> MatConsts<T, L, L>::identity = Internal::GetIdentityMatrix<T, L>();
 }
