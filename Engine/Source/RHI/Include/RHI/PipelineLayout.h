@@ -22,6 +22,7 @@ namespace RHI {
         const BindGroupLayout* const* bindGroupLayouts;
         uint32_t pipelineConstantLayoutNum;
         const PipelineConstantLayout* pipelineConstantLayouts;
+        std::string debugName;
     };
 
     class PipelineLayout {

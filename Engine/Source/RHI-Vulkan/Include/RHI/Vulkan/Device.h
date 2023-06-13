@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <vector>
 #include <algorithm>
+#include <string>
 
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
@@ -46,6 +47,10 @@ namespace RHI::Vulkan {
         VkDevice GetVkDevice();
         VKGpu& GetGpu() const;
         VmaAllocator& GetVmaAllocator();
+
+#if BUILD_CONFIG_DEBUG
+        void SetObjectName(VkObjectType objectType, uint64_t objectHandle, const char* objectName);
+#endif
 
     private:
         static std::optional<uint32_t> FindQueueFamilyIndex(const std::vector<VkQueueFamilyProperties>& properties, std::vector<uint32_t>& usedQueueFamily, QueueType queueType);

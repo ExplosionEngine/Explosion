@@ -68,6 +68,12 @@ namespace RHI::Vulkan {
 
         Assert(vkAllocateDescriptorSets(device.GetVkDevice(), &allocInfo, &descriptorSet) == VK_SUCCESS);
 
+#if BUILD_CONFIG_DEBUG
+        if (!createInfo.debugName.empty()) {
+            device.SetObjectName(VK_OBJECT_TYPE_DESCRIPTOR_SET, reinterpret_cast<uint64_t>(descriptorSet), createInfo.debugName.c_str());
+        }
+#endif
+
         std::vector<VkWriteDescriptorSet> descriptorWrites(createInfo.entryNum);
         std::vector<VkDescriptorImageInfo> imageInfos;
         std::vector<VkDescriptorBufferInfo> bufferInfos;

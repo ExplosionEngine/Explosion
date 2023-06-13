@@ -54,6 +54,12 @@ namespace RHI::Vulkan {
         pipelineLayoutInfo.pushConstantRangeCount = pushConstants.size();
         pipelineLayoutInfo.pPushConstantRanges = pushConstants.data();
         Assert(vkCreatePipelineLayout(device.GetVkDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) == VK_SUCCESS);
+
+#if BUILD_CONFIG_DEBUG
+        if (!createInfo.debugName.empty()) {
+            device.SetObjectName(VK_OBJECT_TYPE_PIPELINE_LAYOUT, reinterpret_cast<uint64_t>(pipelineLayout), createInfo.debugName.c_str());
+        }
+#endif
     }
 
 }

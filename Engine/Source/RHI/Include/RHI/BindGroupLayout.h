@@ -6,6 +6,7 @@
 
 #include <Common/Utility.h>
 #include <RHI/Common.h>
+#include <string>
 
 namespace RHI {
     struct HlslBinding {
@@ -34,6 +35,7 @@ namespace RHI {
         uint8_t layoutIndex;
         uint32_t entryNum;
         const BindGroupLayoutEntry* entries;
+        std::string debugName;
     };
 
     class BindGroupLayout {

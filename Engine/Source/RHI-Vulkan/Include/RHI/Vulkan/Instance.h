@@ -26,6 +26,7 @@ namespace RHI::Vulkan {
 #if BUILD_CONFIG_DEBUG
         PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT;
         PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT;
+        PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT;
 #endif
         PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR;
         PFN_vkCmdEndRenderingKHR  vkCmdEndRenderingKHR;

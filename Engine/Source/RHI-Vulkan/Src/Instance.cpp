@@ -148,10 +148,12 @@ namespace RHI::Vulkan {
 #if BUILD_CONFIG_DEBUG
         vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(vkInstance, "vkCreateDebugUtilsMessengerEXT"));
         vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(vkInstance, "vkDestroyDebugUtilsMessengerEXT"));
-        Assert(vkCreateDebugUtilsMessengerEXT != nullptr && vkDestroyDebugUtilsMessengerEXT != nullptr);
+        vkSetDebugUtilsObjectNameEXT = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(vkGetInstanceProcAddr(vkInstance, "vkSetDebugUtilsObjectNameEXT"));
+        Assert(vkCreateDebugUtilsMessengerEXT != nullptr && vkDestroyDebugUtilsMessengerEXT != nullptr && vkSetDebugUtilsObjectNameEXT != nullptr);
 #endif
         vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetInstanceProcAddr(vkInstance, "vkCmdBeginRenderingKHR"));
         vkCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkGetInstanceProcAddr(vkInstance, "vkCmdEndRenderingKHR"));
+        Assert(vkCmdBeginRenderingKHR != nullptr && vkCmdEndRenderingKHR != nullptr);
     }
 
     uint32_t VKInstance::GetGpuNum()

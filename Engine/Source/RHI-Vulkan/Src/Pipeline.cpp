@@ -337,8 +337,13 @@ namespace RHI::Vulkan {
         pipelineCreateInfo.pVertexInputState = &vtxInput;
         pipelineCreateInfo.pNext = &pipelineRenderingCreateInfo;
 
-        auto res = vkCreateGraphicsPipelines(device.GetVkDevice(), VK_NULL_HANDLE,1, &pipelineCreateInfo, nullptr, &pipeline);
-        Assert(res == VK_SUCCESS);
+        Assert(vkCreateGraphicsPipelines(device.GetVkDevice(), VK_NULL_HANDLE,1, &pipelineCreateInfo, nullptr, &pipeline) == VK_SUCCESS);
+
+#if BUILD_CONFIG_DEBUG
+        if (!createInfo.debugName.empty()) {
+            device.SetObjectName(VK_OBJECT_TYPE_PIPELINE, reinterpret_cast<uint64_t>(pipeline), createInfo.debugName.c_str());
+        }
+#endif
     }
 
     VkPipeline VKGraphicsPipeline::GetVkPipeline()

@@ -53,6 +53,12 @@ namespace RHI::Vulkan {
         layoutInfo.bindingCount = bindings.size();
 
         Assert(vkCreateDescriptorSetLayout(device.GetVkDevice(), &layoutInfo, nullptr, &setLayout) == VK_SUCCESS);
+
+#if BUILD_CONFIG_DEBUG
+        if (!createInfo.debugName.empty()) {
+            device.SetObjectName(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, reinterpret_cast<uint64_t>(setLayout), createInfo.debugName.c_str());
+        }
+#endif
     }
 
 }

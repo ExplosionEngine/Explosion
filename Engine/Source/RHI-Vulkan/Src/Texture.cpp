@@ -111,7 +111,9 @@ namespace RHI::Vulkan {
         Assert(vmaCreateImage(device.GetVmaAllocator(), &imageInfo, &allocInfo, &vkImage, &allocation, nullptr) == VK_SUCCESS);
 
 #if BUILD_CONFIG_DEBUG
-        vmaSetAllocationName(device.GetVmaAllocator(), allocation, createInfo.debugName.c_str());
+        if (!createInfo.debugName.empty()) {
+            device.SetObjectName(VK_OBJECT_TYPE_IMAGE, reinterpret_cast<uint64_t>(vkImage), createInfo.debugName.c_str());
+        }
 #endif
     }
 

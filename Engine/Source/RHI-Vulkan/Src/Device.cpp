@@ -301,4 +301,16 @@ namespace RHI::Vulkan {
     {
         return vmaAllocator;
     }
+
+#if BUILD_CONFIG_DEBUG
+    void VKDevice::SetObjectName(VkObjectType objectType, uint64_t objectHandle, const char* objectName)
+    {
+        VkDebugUtilsObjectNameInfoEXT info = { VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT };
+        info.objectType                    = objectType;
+        info.objectHandle                  = objectHandle;
+        info.pObjectName                   = objectName;
+
+        gpu.GetInstance().vkSetDebugUtilsObjectNameEXT(vkDevice, &info);
+    }
+#endif
 }

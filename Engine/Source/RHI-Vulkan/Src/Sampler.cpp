@@ -48,5 +48,11 @@ namespace RHI::Vulkan {
         samplerInfo.maxAnisotropy = createInfo.maxAnisotropy;
 
         Assert(vkCreateSampler(device.GetVkDevice(), &samplerInfo, nullptr, &vkSampler) == VK_SUCCESS);
+
+#if BUILD_CONFIG_DEBUG
+        if (!createInfo.debugName.empty()) {
+            device.SetObjectName(VK_OBJECT_TYPE_SAMPLER, reinterpret_cast<uint64_t>(vkSampler), createInfo.debugName.c_str());
+        }
+#endif
     }
 }
