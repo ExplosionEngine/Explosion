@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include <vulkan/vulkan.hpp>
+#include <vector>
+#include <vulkan/vulkan.h>
 #include <RHI/Instance.h>
 #include <RHI/Vulkan/Api.h>
 
@@ -18,31 +19,38 @@ namespace RHI::Vulkan {
         RHIType GetRHIType() override;
         uint32_t GetGpuNum() override;
         Gpu* GetGpu(uint32_t index) override;
-        vk::Instance GetVkInstance() const;
-        vk::DispatchLoaderDynamic GetVkDispatch() const;
+        VkInstance GetVkInstance() const;
         void Destroy() override;
+
+        // function pointer
+#if BUILD_CONFIG_DEBUG
+        PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT;
+        PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT;
+        PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT;
+#endif
+        PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR;
+        PFN_vkCmdEndRenderingKHR  vkCmdEndRenderingKHR;
 
     private:
         void PrepareExtensions();
         void CreateVKInstance();
         void DestroyVKInstance();
-        void PrepareDispatch();
+        void PreparePFN();
         void EnumeratePhysicalDevices();
 #if BUILD_CONFIG_DEBUG
         void PrepareLayers();
-        void PopulateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo);
+        void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
         void CreateDebugMessenger();
         void DestroyDebugMessenger();
 #endif
 
-        vk::Instance vkInstance;
-        vk::DispatchLoaderDynamic vkDispatch;
+        VkInstance vkInstance;
         std::vector<const char*> vkEnabledExtensionNames;
-        std::vector<vk::PhysicalDevice> vkPhysicalDevices;
+        std::vector<VkPhysicalDevice> vkPhysicalDevices;
         std::vector<Common::UniqueRef<Gpu>> gpus;
 #if BUILD_CONFIG_DEBUG
         std::vector<const char*> vkEnabledLayerNames;
-        vk::DebugUtilsMessengerEXT vkDebugMessenger;
+        VkDebugUtilsMessengerEXT vkDebugMessenger;
 #endif
     };
 }

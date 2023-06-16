@@ -6,6 +6,7 @@
 
 #include <Common/Utility.h>
 #include <RHI/Common.h>
+#include <string>
 
 namespace RHI {
     struct SamplerCreateInfo {
@@ -19,6 +20,7 @@ namespace RHI {
         float lodMaxClamp = 32;
         ComparisonFunc comparisonFunc = ComparisonFunc::never;
         uint8_t maxAnisotropy = 1;
+        std::string debugName;
     };
 
     class Sampler {

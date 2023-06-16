@@ -4,7 +4,7 @@
 
 #pragma once
 #include <RHI/PipelineLayout.h>
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 
 namespace RHI::Vulkan {
     class VKDevice;
@@ -17,12 +17,12 @@ namespace RHI::Vulkan {
 
         void Destroy() override;
 
-        vk::PipelineLayout GetVkPipelineLayout() const;
+        VkPipelineLayout GetVkPipelineLayout() const;
     private:
         void CreateNativePipelineLayout(const PipelineLayoutCreateInfo& createInfo);
 
         VKDevice& device;
-        vk::PipelineLayout pipelineLayout = VK_NULL_HANDLE;
+        VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
     };
 
 

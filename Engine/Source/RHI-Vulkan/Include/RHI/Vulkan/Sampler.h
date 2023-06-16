@@ -6,7 +6,7 @@
 #pragma once
 
 #include <memory>
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 #include <RHI/Sampler.h>
 
 namespace RHI::Vulkan {
@@ -19,11 +19,11 @@ namespace RHI::Vulkan {
         ~VKSampler() override;
 
         void Destroy() override;
-        vk::Sampler GetVkSampler() const;
+        VkSampler GetVkSampler() const;
 
     private:
         void CreateSampler(const SamplerCreateInfo& createInfo);
         VKDevice& device;
-        vk::Sampler vkSampler;
+        VkSampler vkSampler;
     };
 }

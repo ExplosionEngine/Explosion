@@ -70,5 +70,11 @@ namespace RHI::DirectX12 {
         Assert(success);
         success = SUCCEEDED(device.GetDX12Device()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&dx12RootSignature)));
         Assert(success);
+
+#if BUILD_CONFIG_DEBUG
+        if (!createInfo.debugName.empty()) {
+            dx12RootSignature->SetName(Common::StringUtils::ToWideString(createInfo.debugName).c_str());
+        }
+#endif
     }
 }

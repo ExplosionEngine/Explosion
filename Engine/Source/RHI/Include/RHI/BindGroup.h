@@ -28,6 +28,7 @@ namespace RHI {
         BindGroupLayout* layout;
         uint32_t entryNum;
         const BindGroupEntry* entries;
+        std::string debugName;
     };
 
     class BindGroup {

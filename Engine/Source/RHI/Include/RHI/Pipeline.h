@@ -112,6 +112,8 @@ namespace RHI {
         DepthStencilState depthStencilState;
         MultiSampleState multiSampleState;
         FragmentState fragmentState;
+
+        std::string debugName;
     };
 
     class Pipeline {

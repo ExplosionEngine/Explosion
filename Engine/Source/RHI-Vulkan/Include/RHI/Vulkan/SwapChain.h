@@ -3,7 +3,7 @@
 //
 
 #include <RHI/SwapChain.h>
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 #include <vector>
 
 namespace RHI::Vulkan {
@@ -21,18 +21,17 @@ namespace RHI::Vulkan {
         void Present() override;
         void Destroy() override;
 
-        vk::Semaphore GetImageSemaphore() const;
-        void AddWaitSemaphore(vk::Semaphore);
+        VkSemaphore GetImageSemaphore() const;
+        void AddWaitSemaphore(VkSemaphore);
 
     private:
         void CreateNativeSwapChain(const SwapChainCreateInfo& createInfo);
         VKDevice& device;
-        vk::SwapchainKHR swapChain = VK_NULL_HANDLE;
+        VkSwapchainKHR swapChain = VK_NULL_HANDLE;
         std::vector<Texture*> textures;
-        vk::Queue queue = VK_NULL_HANDLE;
-        vk::Semaphore currentSemaphore;
-        std::vector<vk::Semaphore> imageAvailableSemaphore;
-        std::vector<vk::Semaphore> waitSemaphores;
+        VkQueue queue = VK_NULL_HANDLE;
+        VkSemaphore imageAvailableSemaphore;
+        std::vector<VkSemaphore> waitSemaphores;
         uint32_t swapChainImageCount = 0;
         uint32_t currentImage = 0;
     };

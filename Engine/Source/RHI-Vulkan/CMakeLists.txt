@@ -15,5 +15,5 @@ AddLibrary(
     TYPE SHARED
     SRC ${SOURCES} ${PLATFORM_SOURCES}
     PUBLIC_INC Include
-    LIB RHI VulkanSDK spirv-cross ${PLATFORM_EXT_LIBS}
+    LIB RHI VulkanSDK spirv-cross VulkanMemoryAllocator ${PLATFORM_EXT_LIBS}
 )

@@ -6,7 +6,8 @@
 #pragma once
 
 #include <memory>
-#include <vulkan/vulkan.hpp>
+#include <vk_mem_alloc.h>
+#include <vulkan/vulkan.h>
 #include <RHI/Texture.h>
 
 namespace RHI::Vulkan {
@@ -16,7 +17,7 @@ namespace RHI::Vulkan {
     public:
         NON_COPYABLE(VKTexture)
 
-        VKTexture(VKDevice& device, const TextureCreateInfo& createInfo, vk::Image image);
+        VKTexture(VKDevice& device, const TextureCreateInfo& createInfo, VkImage image);
         VKTexture(VKDevice& device, const TextureCreateInfo& createInfo);
         ~VKTexture() override;
 
@@ -24,25 +25,28 @@ namespace RHI::Vulkan {
 
         TextureView* CreateTextureView(const TextureViewCreateInfo& createInfo) override;
 
-        vk::Image GetImage() const;
+        VkImage GetImage() const;
         Extent<3> GetExtent() const;
         PixelFormat GetFormat() const;
+        VkImageSubresourceRange GetFullRange();
 
-        vk::ImageSubresourceRange GetRange(vk::ImageAspectFlags aspect);
     private:
         void CreateImage(const TextureCreateInfo& createInfo);
+        void GetAspect(const TextureCreateInfo& createInfo);
+        void TransitionToInitState(const TextureCreateInfo& createInfo);
 
-        // TODO use memory pool.
-        void AllocateMemory(const TextureCreateInfo& createInfo);
-        void FreeMemory();
         VKDevice& device;
-        vk::DeviceMemory vkDeviceMemory;
-        vk::Image vkImage;
-        bool ownMemory;
+        VkImage vkImage;
+        VmaAllocation allocation;
+        VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+
         Extent<3> extent;
         PixelFormat format;
+        uint8_t mipLevels;
+        uint8_t samples;
+        bool ownMemory;
 
         friend class VKTextureView;
-        vk::ImageView vkImageView = VK_NULL_HANDLE;
+        VkImageView vkImageView = VK_NULL_HANDLE;
     };
 }

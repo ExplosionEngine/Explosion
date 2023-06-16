@@ -18,7 +18,7 @@ namespace RHI::Vulkan {
     VKSurface::~VKSurface()
     {
         if (vkSurface) {
-            device.GetGpu().GetInstance().GetVkInstance().destroySurfaceKHR(vkSurface);
+            vkDestroySurfaceKHR(device.GetGpu().GetInstance().GetVkInstance(), vkSurface, nullptr);
         }
     }
 
@@ -27,7 +27,7 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    vk::SurfaceKHR VKSurface::GetVKSurface() const
+    VkSurfaceKHR VKSurface::GetVKSurface() const
     {
         return vkSurface;
     }

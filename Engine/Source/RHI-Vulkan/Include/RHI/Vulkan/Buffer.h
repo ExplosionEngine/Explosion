@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include <vulkan/vulkan.hpp>
+#include <vk_mem_alloc.h>
+#include <vulkan/vulkan.h>
 
 #include <RHI/Buffer.h>
 
@@ -21,18 +22,15 @@ namespace RHI::Vulkan {
         BufferView* CreateBufferView(const BufferViewCreateInfo& createInfo) override;
         void Destroy() override;
 
-        vk::Buffer GetVkBuffer();
+        VkBuffer GetVkBuffer();
         BufferUsageFlags GetUsages();
 
     private:
         void CreateBuffer(const BufferCreateInfo& createInfo);
-        void AllocateMemory(const BufferCreateInfo& createInfo);
-        void DestroyBuffer();
-        void FreeMemory();
 
         VKDevice& device;
-        vk::DeviceMemory vkDeviceMemory;
-        vk::Buffer vkBuffer;
+        VkBuffer vkBuffer;
+        VmaAllocation allocation;
         BufferUsageFlags usages;
     };
 }

@@ -6,6 +6,7 @@
 
 #include <Common/Utility.h>
 #include <RHI/Common.h>
+#include <string>
 
 namespace RHI {
     struct TextureViewCreateInfo;
@@ -20,6 +21,7 @@ namespace RHI {
         PixelFormat format;
         TextureUsageFlags usages;
         TextureState initialState;
+        std::string debugName;
     };
 
     class Texture {

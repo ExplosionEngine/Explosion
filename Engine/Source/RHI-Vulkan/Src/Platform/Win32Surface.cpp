@@ -6,18 +6,19 @@
 #include <RHI/SwapChain.h>
 #include <Windows.h>
 #define VK_USE_PLATFORM_WIN32_KHR
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 #include <Common/Debug.h>
 
 namespace RHI::Vulkan {
 
-    vk::SurfaceKHR CreateNativeSurface(const vk::Instance& instance, const SurfaceCreateInfo& createInfo)
+    VkSurfaceKHR CreateNativeSurface(const VkInstance& instance, const SurfaceCreateInfo& createInfo)
     {
-        vk::Win32SurfaceCreateInfoKHR surfaceInfo {};
-        surfaceInfo.setHwnd((HWND)createInfo.window)
-            .setHinstance(GetModuleHandle(0));
-        vk::SurfaceKHR surface = VK_NULL_HANDLE;
-        Assert(instance.createWin32SurfaceKHR(&surfaceInfo, nullptr, &surface) == vk::Result::eSuccess);
+        VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
+        surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+        surfaceInfo.hwnd = (HWND)createInfo.window;
+        surfaceInfo.hinstance = GetModuleHandle(0);
+        VkSurfaceKHR surface = VK_NULL_HANDLE;
+        Assert(vkCreateWin32SurfaceKHR(instance, &surfaceInfo, nullptr, &surface) == VK_SUCCESS);
         return surface;
     }
 }

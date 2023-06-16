@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 #include <RHI/CommandEncoder.h>
 
 namespace RHI::Vulkan {
@@ -76,7 +76,7 @@ namespace RHI::Vulkan {
     private:
         VKDevice& device;
         VKCommandBuffer& commandBuffer;
-        vk::CommandBuffer cmdHandle;
+        VkCommandBuffer cmdHandle;
         VKGraphicsPipeline* graphicsPipeline;
     };
 

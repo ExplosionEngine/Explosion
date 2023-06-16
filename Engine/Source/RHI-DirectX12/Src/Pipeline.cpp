@@ -259,5 +259,11 @@ namespace RHI::DirectX12 {
 
         bool success = SUCCEEDED(device.GetDX12Device()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&dx12PipelineState)));
         Assert(success);
+
+#if BUILD_CONFIG_DEBUG
+        if (!createInfo.debugName.empty()) {
+            dx12PipelineState->SetName(Common::StringUtils::ToWideString(createInfo.debugName).c_str());
+        }
+#endif
     }
 }

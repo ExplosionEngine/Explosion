@@ -17,7 +17,7 @@ namespace RHI::Vulkan {
     VKBindGroupLayout::~VKBindGroupLayout()
     {
         if (setLayout) {
-            device.GetVkDevice().destroyDescriptorSetLayout(setLayout, nullptr);
+            vkDestroyDescriptorSetLayout(device.GetVkDevice(), setLayout, nullptr);
         }
     }
 
@@ -26,31 +26,39 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    vk::DescriptorSetLayout VKBindGroupLayout::GetVkDescriptorSetLayout() const
+    VkDescriptorSetLayout VKBindGroupLayout::GetVkDescriptorSetLayout() const
     {
         return setLayout;
     }
 
     void VKBindGroupLayout::CreateDescriptorSetLayout(const BindGroupLayoutCreateInfo& createInfo)
     {
-        vk::DescriptorSetLayoutCreateInfo layoutInfo = {};
+        VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+        layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
-        std::vector<vk::DescriptorSetLayoutBinding> bindings(createInfo.entryNum);
+        std::vector<VkDescriptorSetLayoutBinding> bindings(createInfo.entryNum);
         for (size_t i = 0; i < createInfo.entryNum; ++i) {
             auto& entry = createInfo.entries[i];
             auto& binding = bindings[i];
 
-            vk::ShaderStageFlags flags = FromRHI(entry.shaderVisibility);
+            VkShaderStageFlags flags = FromRHI(entry.shaderVisibility);
 
-            binding.setDescriptorType(VKEnumCast<BindingType, vk::DescriptorType>(entry.binding.type))
-                .setDescriptorCount(1)
-                .setBinding(entry.binding.platform.glsl.index)
-                .setStageFlags(flags);
+            binding.descriptorType = VKEnumCast<BindingType, VkDescriptorType>(entry.binding.type);
+            binding.descriptorCount = 1;
+            binding.binding = entry.binding.platform.glsl.index;
+            binding.stageFlags = flags;
         }
 
-        layoutInfo.setBindings(bindings);
+        layoutInfo.pBindings = bindings.data();
+        layoutInfo.bindingCount = bindings.size();
 
-        Assert(device.GetVkDevice().createDescriptorSetLayout(&layoutInfo, nullptr, &setLayout) == vk::Result::eSuccess);
+        Assert(vkCreateDescriptorSetLayout(device.GetVkDevice(), &layoutInfo, nullptr, &setLayout) == VK_SUCCESS);
+
+#if BUILD_CONFIG_DEBUG
+        if (!createInfo.debugName.empty()) {
+            device.SetObjectName(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, reinterpret_cast<uint64_t>(setLayout), createInfo.debugName.c_str());
+        }
+#endif
     }
 
 }

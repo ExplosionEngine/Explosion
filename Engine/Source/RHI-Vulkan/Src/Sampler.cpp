@@ -16,7 +16,7 @@ namespace RHI::Vulkan {
     VKSampler::~VKSampler()
     {
         if (vkSampler) {
-            device.GetVkDevice().destroySampler(vkSampler, nullptr);
+            vkDestroySampler(device.GetVkDevice(), vkSampler, nullptr);
         }
     }
 
@@ -25,28 +25,34 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    vk::Sampler VKSampler::GetVkSampler() const
+    VkSampler VKSampler::GetVkSampler() const
     {
         return vkSampler;
     }
 
     void VKSampler::CreateSampler(const SamplerCreateInfo& createInfo)
     {
-        vk::SamplerCreateInfo samplerInfo = {};
+        VkSamplerCreateInfo samplerInfo = {};
+        samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        samplerInfo.addressModeU = VKEnumCast<AddressMode, VkSamplerAddressMode>(createInfo.addressModeU);
+        samplerInfo.addressModeV = VKEnumCast<AddressMode, VkSamplerAddressMode>(createInfo.addressModeV);
+        samplerInfo.addressModeW = VKEnumCast<AddressMode, VkSamplerAddressMode>(createInfo.addressModeW);
+        samplerInfo.minFilter = VKEnumCast<FilterMode, VkFilter>(createInfo.minFilter);
+        samplerInfo.magFilter = VKEnumCast<FilterMode, VkFilter>(createInfo.magFilter);
+        samplerInfo.mipmapMode = VKEnumCast<FilterMode, VkSamplerMipmapMode>(createInfo.mipFilter);
+        samplerInfo.minLod = createInfo.lodMinClamp;
+        samplerInfo.maxLod = createInfo.lodMaxClamp;
+        samplerInfo.compareEnable = createInfo.comparisonFunc != ComparisonFunc::never;
+        samplerInfo.compareOp = VKEnumCast<ComparisonFunc, VkCompareOp>(createInfo.comparisonFunc);
+        samplerInfo.anisotropyEnable = createInfo.maxAnisotropy > 1;
+        samplerInfo.maxAnisotropy = createInfo.maxAnisotropy;
 
-        samplerInfo.setAddressModeU(VKEnumCast<AddressMode, vk::SamplerAddressMode>(createInfo.addressModeU))
-            .setAddressModeV(VKEnumCast<AddressMode, vk::SamplerAddressMode>(createInfo.addressModeV))
-            .setAddressModeW(VKEnumCast<AddressMode, vk::SamplerAddressMode>(createInfo.addressModeW))
-            .setMinFilter(VKEnumCast<FilterMode, vk::Filter>(createInfo.minFilter))
-            .setMagFilter(VKEnumCast<FilterMode, vk::Filter>(createInfo.magFilter))
-            .setMipmapMode(VKEnumCast<FilterMode, vk::SamplerMipmapMode>(createInfo.mipFilter))
-            .setMinLod(createInfo.lodMinClamp)
-            .setMaxLod(createInfo.lodMaxClamp)
-            .setCompareEnable(createInfo.comparisonFunc != ComparisonFunc::never)
-            .setCompareOp(VKEnumCast<ComparisonFunc, vk::CompareOp>(createInfo.comparisonFunc))
-            .setAnisotropyEnable(createInfo.maxAnisotropy > 1)
-            .setMaxAnisotropy(createInfo.maxAnisotropy);
+        Assert(vkCreateSampler(device.GetVkDevice(), &samplerInfo, nullptr, &vkSampler) == VK_SUCCESS);
 
-        Assert(device.GetVkDevice().createSampler(&samplerInfo, nullptr, &vkSampler) == vk::Result::eSuccess);
+#if BUILD_CONFIG_DEBUG
+        if (!createInfo.debugName.empty()) {
+            device.SetObjectName(VK_OBJECT_TYPE_SAMPLER, reinterpret_cast<uint64_t>(vkSampler), createInfo.debugName.c_str());
+        }
+#endif
     }
 }

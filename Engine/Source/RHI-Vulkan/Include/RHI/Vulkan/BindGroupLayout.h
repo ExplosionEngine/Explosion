@@ -6,7 +6,7 @@
 #pragma once
 
 #include <memory>
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 #include <RHI/BindGroupLayout.h>
 
 namespace RHI::Vulkan {
@@ -20,11 +20,11 @@ namespace RHI::Vulkan {
 
         void Destroy() override;
 
-        vk::DescriptorSetLayout GetVkDescriptorSetLayout() const;
+        VkDescriptorSetLayout GetVkDescriptorSetLayout() const;
 
     private:
         void CreateDescriptorSetLayout(const BindGroupLayoutCreateInfo& createInfo);
         VKDevice& device;
-        vk::DescriptorSetLayout setLayout;
+        VkDescriptorSetLayout setLayout;
     };
 }

@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 
 #include <RHI/Surface.h>
 
 namespace RHI::Vulkan {
     class VKDevice;
-    vk::SurfaceKHR CreateNativeSurface(const vk::Instance& instance, const SurfaceCreateInfo& createInfo);
+    VkSurfaceKHR CreateNativeSurface(const VkInstance& instance, const SurfaceCreateInfo& createInfo);
 
     class VKSurface : public Surface {
     public:
@@ -19,10 +19,10 @@ namespace RHI::Vulkan {
         ~VKSurface() override;
 
         void Destroy() override;
-        vk::SurfaceKHR GetVKSurface() const;
+        VkSurfaceKHR GetVKSurface() const;
 
     private:
         VKDevice& device;
-        vk::SurfaceKHR vkSurface;
+        VkSurfaceKHR vkSurface;
     };
 }
