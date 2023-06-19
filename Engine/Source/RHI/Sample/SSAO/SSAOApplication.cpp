@@ -394,17 +394,18 @@ private:
 
     void CreateQuadBuffer()
     {
-        // vertex buffer
+        // quad vertex buffer
         std::vector<QuadVertex> vertices {
-            {{-1.0f, -1.0f, 0.f}, {0.f, 0.f}},
-            {{1.0f, -1.0f, 0.f}, {1.f, 0.f}},
-            {{1.0f, 1.0f, 0.f}, {1.f, 1.f}},
-            {{-1.0f, 1.0f, 0.f}, {0.f, 1.f}},
+            {{-1.0f, -1.0f, .0f}, {0.f, 1.0f}},
+            {{1.0f, -1.0f, .0f}, {1.0f, 1.0f}},
+            {{1.0f, 1.0f, .0f}, {1.0f, .0f}},
+            {{-1.0f, 1.0f, .0f}, {0.f, .0f}},
         };
 
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = vertices.size() * sizeof(QuadVertex);
         bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
+        bufferCreateInfo.debugName = "quadVertexBuffer";
         quadVertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (quadVertexBuffer != nullptr) {
             auto* data = quadVertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -414,9 +415,9 @@ private:
 
         BufferViewCreateInfo bufferViewCreateInfo {};
         bufferViewCreateInfo.type = BufferViewType::vertex;
-        bufferViewCreateInfo.size = vertices.size() * sizeof(Vertex);
+        bufferViewCreateInfo.size = vertices.size() * sizeof(QuadVertex);
         bufferViewCreateInfo.offset = 0;
-        bufferViewCreateInfo.vertex.stride = sizeof(Vertex);
+        bufferViewCreateInfo.vertex.stride = sizeof(QuadVertex);
         quadVertexBufferView = quadVertexBuffer->CreateBufferView(bufferViewCreateInfo);
 
         // index buffer
