@@ -14,7 +14,7 @@ namespace Common {
         max
     };
 
-    // Matrix saved in row-major
+    // matrix stored in row-major
     template <typename T, uint8_t R, uint8_t C>
     requires (R >= 1) && (R <= 4) && (C >= 1) && (C <= 4)
     struct BaseMatrix {

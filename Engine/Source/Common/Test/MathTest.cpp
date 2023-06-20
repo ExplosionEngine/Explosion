@@ -405,20 +405,41 @@ TEST(MathTest, MathTranposeTest)
 
 TEST(MathTest, AngleAndRadianTest)
 {
-    // TODO
-}
+    FAngle v0(90.0f);
+    ASSERT_TRUE(v0.ToRadian() == pi / 2.0f);
 
-TEST(MathTest, EulerRotationToQuaternionTest)
-{
-    // TODO
+    FRadian v1(pi / 4.0f);
+    ASSERT_TRUE(v1.ToAngle() == 45.0f);
 }
 
 TEST(MathTest, QuaternionBasicTest)
 {
-    // TODO
+    FQuat v0(1, 2, 3, 4);
+    FQuat v1(2, 3, 4, 5);
+    FQuat v2(1, 1, 2, 2);
+    ASSERT_TRUE((v0 * 2 + v1 - v2) == FQuat(3, 6, 8, 11));
 }
 
 TEST(MathTest, QuaternionRotationTest)
 {
-    // TODO
+    FQuat v0(FVec3(0, 0, 1), 90);
+    FVec3 v0r0 = v0.RotateVector(FVec3(1, 0, 0));
+    ASSERT_TRUE(v0r0 == FVec3(0, -1, 0));
+    FVec3 v0r1 = v0.RotateVector(FVec3(1, 1, 1));
+    ASSERT_TRUE(v0r1 == FVec3(1, -1, 1));
+
+    FQuat v1(FVec3(1, 0, 0), 90);
+    FVec3 v1r0 = v1.RotateVector(FVec3(0, 1, 0));
+    ASSERT_TRUE(v1r0 == FVec3(0, 0, -1));
+}
+
+TEST(MathTest, EulerRotationTest)
+{
+    FQuat v0 = FQuat::FromEulerZYX(0, 0, 90);
+    FVec3 v0r0 = v0.RotateVector(FVec3(1, 0, 0));
+    ASSERT_TRUE(v0r0 == FVec3(0, -1, 0));
+
+    FQuat v1 = FQuat::FromEulerZYX(90, 0, 90);
+    FVec3 v1r0 = v1.RotateVector(FVec3(1, 0, 0));
+    ASSERT_TRUE(v1r0 == FVec3(0, 0, 1));
 }
