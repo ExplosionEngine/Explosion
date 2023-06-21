@@ -90,6 +90,7 @@ namespace Common {
         static const Vector<T, 2> zero;
         static const Vector<T, 2> unitX;
         static const Vector<T, 2> unitY;
+        static const Vector<T, 2> unit;
     };
 
     template <typename T>
@@ -98,6 +99,7 @@ namespace Common {
         static const Vector<T, 3> unitX;
         static const Vector<T, 3> unitY;
         static const Vector<T, 3> unitZ;
+        static const Vector<T, 3> unit;
     };
 
     template <typename T>
@@ -107,6 +109,7 @@ namespace Common {
         static const Vector<T, 4> unitY;
         static const Vector<T, 4> unitZ;
         static const Vector<T, 4> unitW;
+        static const Vector<T, 4> unit;
     };
 
     using BVec1 = Vector<bool, 1>;
@@ -323,6 +326,9 @@ namespace Common {
     const Vector<T, 2> VecConsts<T, 2>::unitY = Vector<T, 2>(0, 1);
 
     template <typename T>
+    const Vector<T, 2> VecConsts<T, 2>::unit = Vector<T, 2>(1, 1);
+
+    template <typename T>
     const Vector<T, 3> VecConsts<T, 3>::zero = Vector<T, 3>();
 
     template <typename T>
@@ -333,6 +339,9 @@ namespace Common {
 
     template <typename T>
     const Vector<T, 3> VecConsts<T, 3>::unitZ = Vector<T, 3>(0, 0, 1);
+
+    template <typename T>
+    const Vector<T, 3> VecConsts<T, 3>::unit = Vector<T, 3>(1, 1, 1);
 
     template <typename T>
     const Vector<T, 4> VecConsts<T, 4>::zero = Vector<T, 4>();
@@ -348,6 +357,9 @@ namespace Common {
 
     template <typename T>
     const Vector<T, 4> VecConsts<T, 4>::unitW = Vector<T, 4>(0, 0, 0, 1);
+
+    template <typename T>
+    const Vector<T, 4> VecConsts<T, 4>::unit = Vector<T, 4>(1, 1, 1, 1);
 
     template<typename T, uint8_t L>
     Vector<T, L>::Vector() : BaseVector<T, L>(0)

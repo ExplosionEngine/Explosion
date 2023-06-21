@@ -456,6 +456,22 @@ namespace Common {
     template <typename T>
     Matrix<T, 4, 4> Quaternion<T>::GetRotationMatrix() const
     {
-        // TODO
+        T xx2 = this->x * this->x * 2;
+        T yy2 = this->y * this->y * 2;
+        T zz2 = this->z * this->z * 2;
+
+        T wx2 = this->w * this->x * 2;
+        T wy2 = this->w * this->y * 2;
+        T wz2 = this->w * this->z * 2;
+        T xy2 = this->x * this->y * 2;
+        T xz2 = this->x * this->z * 2;
+        T yz2 = this->y * this->z * 2;
+
+        return Matrix<T, 4, 4>(
+            1 - yy2 - zz2, xy2 + wz2, xz2 - wy2, 0,
+            xy2 - wz2, 1 - xx2 - zz2, yz2 + wx2, 0,
+            xz2 + wy2, yz2 - wx2, 1 - xx2 - yy2, 0,
+            0, 0, 0, 1
+        );
     }
 }
