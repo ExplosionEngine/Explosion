@@ -87,22 +87,22 @@ namespace Common {
 
     template <std::endian E>
     struct HalfFloat : public HalfFloatBase<E> {
-        HalfFloat() : HalfFloatBase<E>(0) {}
-        HalfFloat(const HalfFloat& inValue) : HalfFloatBase<E>(inValue.value) {}
-        HalfFloat(HalfFloat&& inValue) noexcept : HalfFloatBase<E>(inValue.value) {}
+        inline HalfFloat() : HalfFloatBase<E>(0) {}
+        inline HalfFloat(const HalfFloat& inValue) : HalfFloatBase<E>(inValue.value) {}
+        inline HalfFloat(HalfFloat&& inValue) noexcept : HalfFloatBase<E>(inValue.value) {}
 
-        HalfFloat(float inValue) : HalfFloatBase<E>(0) // NOLINT
+        inline HalfFloat(float inValue) : HalfFloatBase<E>(0) // NOLINT
         {
             Set(inValue);
         }
 
-        HalfFloat& operator=(float inValue)
+        inline HalfFloat& operator=(float inValue)
         {
             Set(inValue);
             return *this;
         }
 
-        HalfFloat& operator=(const HalfFloat& inValue)
+        inline HalfFloat& operator=(const HalfFloat& inValue)
         {
             this->value = inValue.value;
             return *this;
@@ -176,134 +176,134 @@ namespace Common {
             return result.value;
         }
 
-        operator float() const // NOLINT
+        inline operator float() const // NOLINT
         {
             return AsFloat();
         }
 
-        bool operator==(float rhs) const
+        inline bool operator==(float rhs) const
         {
             return std::abs(AsFloat() - rhs) < halfEpsilon;
         }
 
-        bool operator!=(float rhs) const
+        inline bool operator!=(float rhs) const
         {
             return std::abs(AsFloat() - rhs) >= halfEpsilon;
         }
 
-        bool operator==(const HalfFloat& rhs) const
+        inline bool operator==(const HalfFloat& rhs) const
         {
             return std::abs(AsFloat() - rhs.AsFloat()) < halfEpsilon;
         }
 
-        bool operator!=(const HalfFloat& rhs) const
+        inline bool operator!=(const HalfFloat& rhs) const
         {
             return std::abs(AsFloat() - rhs.AsFloat()) >= halfEpsilon;
         }
 
-        bool operator>(const HalfFloat& rhs) const
+        inline bool operator>(const HalfFloat& rhs) const
         {
             return AsFloat() > rhs.AsFloat();
         }
 
-        bool operator<(const HalfFloat& rhs) const
+        inline bool operator<(const HalfFloat& rhs) const
         {
             return AsFloat() < rhs.AsFloat();
         }
 
-        bool operator>=(const HalfFloat& rhs) const
+        inline bool operator>=(const HalfFloat& rhs) const
         {
             return AsFloat() >= rhs.AsFloat();
         }
 
-        bool operator<=(const HalfFloat& rhs) const
+        inline bool operator<=(const HalfFloat& rhs) const
         {
             return AsFloat() <= rhs.AsFloat();
         }
 
-        HalfFloat operator+(float rhs) const
+        inline HalfFloat operator+(float rhs) const
         {
             return { AsFloat() + rhs };
         }
 
-        HalfFloat operator-(float rhs) const
+        inline HalfFloat operator-(float rhs) const
         {
             return { AsFloat() - rhs };
         }
 
-        HalfFloat operator*(float rhs) const
+        inline HalfFloat operator*(float rhs) const
         {
             return { AsFloat() * rhs };
         }
 
-        HalfFloat operator/(float rhs) const
+        inline HalfFloat operator/(float rhs) const
         {
             return { AsFloat() / rhs };
         }
 
-        HalfFloat operator+(const HalfFloat& rhs) const
+        inline HalfFloat operator+(const HalfFloat& rhs) const
         {
             return { AsFloat() + rhs.AsFloat() };
         }
 
-        HalfFloat operator-(const HalfFloat& rhs) const
+        inline HalfFloat operator-(const HalfFloat& rhs) const
         {
             return { AsFloat() - rhs.AsFloat() };
         }
 
-        HalfFloat operator*(const HalfFloat& rhs) const
+        inline HalfFloat operator*(const HalfFloat& rhs) const
         {
             return { AsFloat() * rhs.AsFloat() };
         }
 
-        HalfFloat operator/(const HalfFloat& rhs) const
+        inline HalfFloat operator/(const HalfFloat& rhs) const
         {
             return { AsFloat() / rhs.AsFloat() };
         }
 
-        HalfFloat& operator+=(float rhs)
+        inline HalfFloat& operator+=(float rhs)
         {
             Set(AsFloat() + rhs);
             return *this;
         }
 
-        HalfFloat& operator-=(float rhs)
+        inline HalfFloat& operator-=(float rhs)
         {
             Set(AsFloat() - rhs);
             return *this;
         }
 
-        HalfFloat& operator*=(float rhs)
+        inline HalfFloat& operator*=(float rhs)
         {
             Set(AsFloat() * rhs);
             return *this;
         }
 
-        HalfFloat& operator/=(float rhs)
+        inline HalfFloat& operator/=(float rhs)
         {
             Set(AsFloat() / rhs);
             return *this;
         }
 
-        HalfFloat& operator+=(const HalfFloat& rhs)
+        inline HalfFloat& operator+=(const HalfFloat& rhs)
         {
             Set(AsFloat() + rhs.AsFloat());
             return *this;
         }
 
-        HalfFloat& operator-=(const HalfFloat& rhs)
+        inline HalfFloat& operator-=(const HalfFloat& rhs)
         {
             Set(AsFloat() - rhs.AsFloat());
             return *this;
         }
 
-        HalfFloat& operator*=(const HalfFloat& rhs)
+        inline HalfFloat& operator*=(const HalfFloat& rhs)
         {
             Set(AsFloat() * rhs.AsFloat());
             return *this;
         }
 
-        HalfFloat& operator/=(const HalfFloat& rhs)
+        inline HalfFloat& operator/=(const HalfFloat& rhs)
         {
             Set(AsFloat() / rhs.AsFloat());
             return *this;

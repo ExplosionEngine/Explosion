@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Common/Math/Half.h>
+#include <Common/Math/Matrix.h>
 
 namespace Common {
     template <typename T> struct Angle;
@@ -24,15 +25,6 @@ namespace Common {
 
     template <typename T>
     requires isFloatingPointV<T>
-    struct EulerRotationBase {
-        // store as angle
-        T x;
-        T y;
-        T z;
-    };
-
-    template <typename T>
-    requires isFloatingPointV<T>
     struct QuaternionBase {
         T x;
         T y;
@@ -42,46 +34,68 @@ namespace Common {
 
     template <typename T>
     struct Angle : public AngleBase<T> {
-        Angle();
-        explicit Angle(T inValue);
-        explicit Angle(const Radian<T>& inValue);
-        Angle(const Angle& inValue);
-        Angle(Angle&& inValue) noexcept;
-        Angle& operator=(const Angle& inValue);
-        Angle& operator=(const Radian<T>& inValue);
-        T ToRadian() const;
+        inline Angle();
+        inline explicit Angle(T inValue);
+        inline explicit Angle(const Radian<T>& inValue);
+        inline Angle(const Angle& inValue);
+        inline Angle(Angle&& inValue) noexcept;
+        inline Angle& operator=(const Angle& inValue);
+        inline Angle& operator=(const Radian<T>& inValue);
+        inline T ToRadian() const;
     };
 
     template <typename T>
     struct Radian : public RadianBase<T> {
-        Radian();
-        explicit Radian(T inValue);
-        explicit Radian(const Angle<T>& inValue);
-        Radian(const Radian& inValue);
-        Radian(Radian&& inValue) noexcept;
-        Radian& operator=(const Radian& inValue);
-        Radian& operator=(const Angle<T>& inValue);
-        T ToAngle() const;
+        inline Radian();
+        inline explicit Radian(T inValue);
+        inline explicit Radian(const Angle<T>& inValue);
+        inline Radian(const Radian& inValue);
+        inline Radian(Radian&& inValue) noexcept;
+        inline Radian& operator=(const Radian& inValue);
+        inline Radian& operator=(const Angle<T>& inValue);
+        inline T ToAngle() const;
     };
 
-    template <typename T>
-    struct EulerRotation : public EulerRotationBase<T> {
-        EulerRotation();
-        EulerRotation(T inX, T inY, T inZ);
-        EulerRotation(const Radian<T>& inX, const Radian<T>& inY, const Radian<T>& inZ);
-        EulerRotation(const EulerRotation& inValue);
-        EulerRotation& operator=(const EulerRotation& inValue);
-    };
-
+    // left-hand coordinates system
+    // +x -> from screen outer to inner
+    // +y -> from left to right
+    // +z -> from bttom to up
     template <typename T>
     struct Quaternion : public QuaternionBase<T> {
-        static Quaternion FromEulerXYZ(const EulerRotation<T>& inEuler);
-        static Quaternion FromEulerZYX(const EulerRotation<T>& inEuler);
+        static inline Quaternion FromEulerZYX(T inAngleX, T inAngleY, T inAngleZ);
+        static inline Quaternion FromEulerZYX(const Radian<T>& inRadianX, const Radian<T>& inRadianY, const Radian<T>& inRadianZ);
 
-        Quaternion();
-        Quaternion(T inX, T inY, T inZ, T inW);
+        inline Quaternion();
+        inline Quaternion(T inW, T inX, T inY, T inZ);
+        inline Quaternion(const Vector<T, 3>& inAxis, float inAngle);
+        inline Quaternion(const Vector<T, 3>& inAxis, const Radian<T>& inRadian);
+        inline Quaternion(const Quaternion& inValue);
+        inline Quaternion(Quaternion&& inValue) noexcept;
+        inline Quaternion& operator=(const Quaternion& inValue);
 
-        // TODO
+        inline bool operator==(const Quaternion& rhs) const;
+        inline bool operator!=(const Quaternion& rhs) const;
+        inline Quaternion operator+(const Quaternion& rhs) const;
+        inline Quaternion operator-(const Quaternion& rhs) const;
+        inline Quaternion operator*(T rhs) const;
+        inline Quaternion operator*(const Quaternion& rhs) const;
+        inline Quaternion operator/(T rhs) const;
+
+        inline Quaternion& operator+=(const Quaternion& rhs);
+        inline Quaternion& operator-=(const Quaternion& rhs);
+        inline Quaternion& operator*=(T rhs) const;
+        inline Quaternion& operator*=(const Quaternion& rhs);
+        inline Quaternion& operator/=(T rhs);
+
+        inline Vector<T, 3> ImaginaryPart() const;
+        inline T Model() const;
+        inline Quaternion Negatived() const;
+        inline Quaternion Conjugated() const;
+        inline Quaternion Normalized() const;
+        inline T Dot(const Quaternion& rhs) const;
+        // when axis faced to us, ccw as positive direction
+        inline Vector<T, 3> RotateVector(const Vector<T, 3>& inVector) const;
+        inline Matrix<T, 4, 4> GetRotationMatrix() const;
     };
 
     template <typename T>
@@ -89,6 +103,14 @@ namespace Common {
         static const Quaternion<T> zero;
         static const Quaternion<T> identity;
     };
+
+    using HAngle = Angle<HFloat>;
+    using FAngle = Angle<float>;
+    using DAngle = Angle<double>;
+
+    using HRadian = Radian<HFloat>;
+    using FRadian = Radian<float>;
+    using DRadian = Radian<double>;
 
     using HQuat = Quaternion<HFloat>;
     using FQuat = Quaternion<float>;
@@ -183,45 +205,273 @@ namespace Common {
     }
 
     template <typename T>
-    EulerRotation<T>::EulerRotation()
+    const Quaternion<T> zero = Quaternion<T>();
+
+    template <typename T>
+    const Quaternion<T> identity = Quaternion<T>(1, 0, 0, 0);
+
+    template <typename T>
+    Quaternion<T> Quaternion<T>::FromEulerZYX(T inAngleX, T inAngleY, T inAngleZ)
     {
+        return Quaternion<T>(VecConsts<T, 3>::unitZ, inAngleZ)
+            * Quaternion<T>(VecConsts<T, 3>::unitY, inAngleY)
+            * Quaternion<T>(VecConsts<T, 3>::unitX, inAngleX);
+    }
+
+    template <typename T>
+    Quaternion<T> Quaternion<T>::FromEulerZYX(const Radian<T>& inRadianX, const Radian<T>& inRadianY, const Radian<T>& inRadianZ)
+    {
+        return FromEulerZYX(inRadianX.ToAngle(), inRadianY.ToAngle(), inRadianZ.ToAngle());
+    }
+
+    template <typename T>
+    Quaternion<T>::Quaternion()
+    {
+        this->w = 0;
         this->x = 0;
         this->y = 0;
         this->z = 0;
     }
 
     template <typename T>
-    EulerRotation<T>::EulerRotation(T inX, T inY, T inZ)
+    Quaternion<T>::Quaternion(T inW, T inX, T inY, T inZ)
     {
+        this->w = inW;
         this->x = inX;
         this->y = inY;
         this->z = inZ;
     }
 
     template <typename T>
-    EulerRotation<T>::EulerRotation(const Radian<T>& inX, const Radian<T>& inY, const Radian<T>& inZ)
-        : EulerRotation(inX.ToAngle(), inY.ToAngle(), inZ.ToAngle())
+    Quaternion<T>::Quaternion(const Vector<T, 3>& inAxis, float inAngle)
+    {
+        Vector<T, 3> axis = inAxis.Normalized();
+        T halfRadian = Angle<T>(inAngle).ToRadian() / 2.0f;
+        T halfRadianSin = std::sin(halfRadian);
+        T halfRadianCos = std::cos(halfRadian);
+
+        this->w = halfRadianCos;
+        this->x = axis.x * halfRadianSin;
+        this->y = axis.y * halfRadianSin;
+        this->z = axis.z * halfRadianSin;
+    }
+
+    template <typename T>
+    Quaternion<T>::Quaternion(const Vector<T, 3>& inAxis, const Radian<T>& inRadian)
+        : Quaternion(inAxis, inRadian.ToAngle())
     {
     }
 
     template <typename T>
-    EulerRotation<T>::EulerRotation(const EulerRotation& inValue)
-        : EulerRotation(inValue.x, inValue.y, inValue.z)
+    Quaternion<T>::Quaternion(const Quaternion& inValue)
+        : Quaternion(inValue.w, inValue.x, inValue.y, inValue.z)
     {
     }
 
     template <typename T>
-    EulerRotation<T>& EulerRotation<T>::operator=(const EulerRotation& inValue)
+    Quaternion<T>::Quaternion(Quaternion&& inValue) noexcept
+        : Quaternion(inValue.w, inValue.x, inValue.y, inValue.z)
     {
+    }
+
+    template <typename T>
+    Quaternion<T>& Quaternion<T>::operator=(const Quaternion& inValue)
+    {
+        this->w = inValue.w;
         this->x = inValue.x;
         this->y = inValue.y;
         this->z = inValue.z;
+    }
+
+    template <typename T>
+    bool Quaternion<T>::operator==(const Quaternion& rhs) const
+    {
+        return CompareNumber(this->w, rhs.w)
+            && CompareNumber(this->x, rhs.x)
+            && CompareNumber(this->y, rhs.y)
+            && CompareNumber(this->z, rhs.z);
+    }
+
+    template <typename T>
+    bool Quaternion<T>::operator!=(const Quaternion& rhs) const
+    {
+        return !this->operator==(rhs);
+    }
+
+    template <typename T>
+    Quaternion<T> Quaternion<T>::operator+(const Quaternion& rhs) const
+    {
+        Quaternion<T> result;
+        result.w = this->w + rhs.w;
+        result.x = this->x + rhs.x;
+        result.y = this->y + rhs.y;
+        result.z = this->z + rhs.z;
+        return result;
+    }
+
+    template <typename T>
+    Quaternion<T> Quaternion<T>::operator-(const Quaternion& rhs) const
+    {
+        Quaternion<T> result;
+        result.w = this->w - rhs.w;
+        result.x = this->x - rhs.x;
+        result.y = this->y - rhs.y;
+        result.z = this->z - rhs.z;
+        return result;
+    }
+
+    template <typename T>
+    Quaternion<T> Quaternion<T>::operator*(T rhs) const
+    {
+        Quaternion<T> result;
+        result.w = this->w * rhs;
+        result.x = this->x * rhs;
+        result.y = this->y * rhs;
+        result.z = this->z * rhs;
+        return result;
+    }
+
+    template <typename T>
+    Quaternion<T> Quaternion<T>::operator*(const Quaternion& rhs) const
+    {
+        Quaternion<T> result;
+        result.w = this->w * rhs.w - this->x * rhs.x - this->y * rhs.y - this->z * rhs.z;
+        result.x = this->w * rhs.x + this->x * rhs.w + this->y * rhs.z - this->z * rhs.y;
+        result.y = this->w * rhs.y - this->x * rhs.z + this->y * rhs.w + this->z * rhs.x;
+        result.z = this->w * rhs.z + this->x * rhs.y - this->y * rhs.x + this->z * rhs.w;
+        return result;
+    }
+
+    template <typename T>
+    Quaternion<T> Quaternion<T>::operator/(T rhs) const
+    {
+        Quaternion<T> result;
+        result.w = this->w / rhs;
+        result.x = this->x / rhs;
+        result.y = this->y / rhs;
+        result.z = this->z / rhs;
+        return result;
+    }
+
+    template <typename T>
+    Quaternion<T>& Quaternion<T>::operator+=(const Quaternion& rhs)
+    {
+        this->w += rhs.w;
+        this->x += rhs.x;
+        this->y += rhs.y;
+        this->z += rhs.z;
         return *this;
     }
 
     template <typename T>
-    const Quaternion<T> zero = Quaternion<T>();
+    Quaternion<T>& Quaternion<T>::operator-=(const Quaternion& rhs)
+    {
+        this->w -= rhs.w;
+        this->x -= rhs.x;
+        this->y -= rhs.y;
+        this->z -= rhs.z;
+        return *this;
+    }
 
     template <typename T>
-    const Quaternion<T> identity = Quaternion<T>(0, 0, 0, 1);
+    Quaternion<T>& Quaternion<T>::operator*=(T rhs) const
+    {
+        this->w *= rhs;
+        this->x *= rhs;
+        this->y *= rhs;
+        this->z *= rhs;
+        return *this;
+    }
+
+    template <typename T>
+    Quaternion<T>& Quaternion<T>::operator*=(const Quaternion& rhs)
+    {
+        *this = this * rhs;
+    }
+
+    template <typename T>
+    Quaternion<T>& Quaternion<T>::operator/=(T rhs)
+    {
+        this->w /= rhs;
+        this->x /= rhs;
+        this->y /= rhs;
+        this->z /= rhs;
+        return *this;
+    }
+
+    template <typename T>
+    Vector<T, 3> Quaternion<T>::ImaginaryPart() const
+    {
+        return Vector<T, 3>(this->x, this->y, this->z);
+    }
+
+    template <typename T>
+    T Quaternion<T>::Model() const
+    {
+        return std::sqrt(this->w * this->w + this->x * this->x + this->y * this->y + this->z * this->z);
+    }
+
+    template <typename T>
+    Quaternion<T> Quaternion<T>::Negatived() const
+    {
+        Quaternion<T> result;
+        result.w = -this->w;
+        result.x = -this->x;
+        result.y = -this->y;
+        result.z = -this->z;
+        return result;
+    }
+
+    template <typename T>
+    Quaternion<T> Quaternion<T>::Conjugated() const
+    {
+        Quaternion<T> result;
+        result.w = this->w;
+        result.x = -this->x;
+        result.y = -this->y;
+        result.z = -this->z;
+        return result;
+    }
+
+    template <typename T>
+    Quaternion<T> Quaternion<T>::Normalized() const
+    {
+        return this->operator/(Model());
+    }
+
+    template <typename T>
+    T Quaternion<T>::Dot(const Quaternion& rhs) const
+    {
+        return this->w * rhs.w * this->x * rhs.x + this->y * rhs.y + this->z * rhs.z;
+    }
+
+    template <typename T>
+    Vector<T, 3> Quaternion<T>::RotateVector(const Vector<T, 3>& inVector) const
+    {
+        Quaternion<T> v = Quaternion(0, inVector.x, inVector.y, inVector.z);
+        Quaternion<T> v2 = Conjugated() * v * (*this);
+        return Vector<T, 3>(v2.x, v2.y, v2.z);
+    }
+
+    template <typename T>
+    Matrix<T, 4, 4> Quaternion<T>::GetRotationMatrix() const
+    {
+        T xx2 = this->x * this->x * 2;
+        T yy2 = this->y * this->y * 2;
+        T zz2 = this->z * this->z * 2;
+
+        T wx2 = this->w * this->x * 2;
+        T wy2 = this->w * this->y * 2;
+        T wz2 = this->w * this->z * 2;
+        T xy2 = this->x * this->y * 2;
+        T xz2 = this->x * this->z * 2;
+        T yz2 = this->y * this->z * 2;
+
+        return Matrix<T, 4, 4>(
+            1 - yy2 - zz2, xy2 + wz2, xz2 - wy2, 0,
+            xy2 - wz2, 1 - xx2 - zz2, yz2 + wx2, 0,
+            xz2 + wy2, yz2 - wx2, 1 - xx2 - yy2, 0,
+            0, 0, 0, 1
+        );
+    }
 }
