@@ -7,6 +7,7 @@
 #include <Common/Math/Vector.h>
 #include <Common/Math/Matrix.h>
 #include <Common/Math/Quaternion.h>
+#include <Common/Math/Transform.h>
 
 using namespace Common;
 
@@ -235,13 +236,13 @@ TEST(MathTest, SubVecTest)
     ASSERT_TRUE(v2 == FVec2(2, 4));
 }
 
-TEST(MathTest, VecLengthTest)
+TEST(MathTest, VecModelTest)
 {
     FVec4 v0 = FVec4(1.0f, 2.0f, 3.0f, 4.0f);
-    ASSERT_FLOAT_EQ(v0.Length(), std::sqrt(30.0f));
+    ASSERT_FLOAT_EQ(v0.Model(), std::sqrt(30.0f));
 
     FVec2 v1 { 2.0f, 3.0f };
-    ASSERT_FLOAT_EQ(v1.Length(), std::sqrt(13.0f));
+    ASSERT_FLOAT_EQ(v1.Model(), std::sqrt(13.0f));
 }
 
 TEST(MathTest, VecDotTest)
@@ -405,20 +406,61 @@ TEST(MathTest, MathTranposeTest)
 
 TEST(MathTest, AngleAndRadianTest)
 {
-    // TODO
-}
+    FAngle v0(90.0f);
+    ASSERT_TRUE(v0.ToRadian() == pi / 2.0f);
 
-TEST(MathTest, EulerRotationToQuaternionTest)
-{
-    // TODO
+    FRadian v1(pi / 4.0f);
+    ASSERT_TRUE(v1.ToAngle() == 45.0f);
 }
 
 TEST(MathTest, QuaternionBasicTest)
 {
-    // TODO
+    FQuat v0(1, 2, 3, 4);
+    FQuat v1(2, 3, 4, 5);
+    FQuat v2(1, 1, 2, 2);
+    ASSERT_TRUE((v0 * 2 + v1 - v2) == FQuat(3, 6, 8, 11));
 }
 
 TEST(MathTest, QuaternionRotationTest)
+{
+    FQuat v0(FVec3(0, 0, 1), 90);
+    FVec3 v0r0 = v0.RotateVector(FVec3(1, 0, 0));
+    ASSERT_TRUE(v0r0 == FVec3(0, -1, 0));
+    FVec3 v0r1 = v0.RotateVector(FVec3(1, 1, 1));
+    ASSERT_TRUE(v0r1 == FVec3(1, -1, 1));
+
+    FQuat v1(FVec3(1, 0, 0), 90);
+    FVec3 v1r0 = v1.RotateVector(FVec3(0, 1, 0));
+    ASSERT_TRUE(v1r0 == FVec3(0, 0, -1));
+}
+
+TEST(MathTest, EulerRotationTest)
+{
+    FQuat v0 = FQuat::FromEulerZYX(0, 0, 90);
+    FVec3 v0r0 = v0.RotateVector(FVec3(1, 0, 0));
+    ASSERT_TRUE(v0r0 == FVec3(0, -1, 0));
+
+    FQuat v1 = FQuat::FromEulerZYX(90, 0, 90);
+    FVec3 v1r0 = v1.RotateVector(FVec3(1, 0, 0));
+    ASSERT_TRUE(v1r0 == FVec3(0, 0, 1));
+}
+
+TEST(MathTest, QuaternionToRotationMatrixTest)
+{
+    auto applyRotationMatrix = [](const FMat4x4& rotationMatrix, const FVec3& vec) -> FVec3 {
+        return (rotationMatrix * FMat4x1::FromColVecs(FVec4(vec.x, vec.y, vec.z, 0))).Col(0).SubVec<0, 1, 2>();
+    };
+
+    FMat4x4 v0 = FQuat(FVec3Consts::unitZ, 90).GetRotationMatrix();
+    FVec3 v0r0 = applyRotationMatrix(v0, FVec3(1, 0, 0));
+    ASSERT_TRUE(v0r0 == FVec3(0, -1, 0));
+
+    FMat4x4 v1 = (FQuat(FVec3Consts::unitZ, 90) * FQuat(FVec3Consts::unitY, 180)).GetRotationMatrix();
+    FVec3 v1r0 = applyRotationMatrix(v1, FVec3(0, 1, 0));
+    ASSERT_TRUE(v1r0 == FVec3(-1, 0, 0));
+}
+
+TEST(MathTest, TransformTest)
 {
     // TODO
 }

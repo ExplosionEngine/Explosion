@@ -7,6 +7,11 @@
 #include <Common/Math/Vector.h>
 #include <Common/Debug.h>
 
+namespace Common::Internal {
+    template <typename LHS, typename... RHS>
+    struct IsAllSame {};
+}
+
 namespace Common {
     enum class MatrixSetupType {
         rows,
@@ -14,7 +19,7 @@ namespace Common {
         max
     };
 
-    // Matrix saved in row-major
+    // matrix stored in row-major
     template <typename T, uint8_t R, uint8_t C>
     requires (R >= 1) && (R <= 4) && (C >= 1) && (C <= 4)
     struct BaseMatrix {
@@ -26,6 +31,14 @@ namespace Common {
         using Type = T;
         static constexpr uint8_t rows = R;
         static constexpr uint8_t cols = C;
+
+        template <typename... IT>
+        requires (Internal::IsAllSame<Vector<T, C>, IT...>::value) && (sizeof...(IT) == R)
+        static inline Matrix FromRowVecs(IT&&... inVectors);
+
+        template <typename... IT>
+        requires (Internal::IsAllSame<Vector<T, R>, IT...>::value) && (sizeof...(IT) == C)
+        static inline Matrix FromColVecs(IT&&... inVectors);
 
         inline Matrix();
         inline Matrix(T inValue); // NOLINT
@@ -65,7 +78,7 @@ namespace Common {
         inline Matrix& operator-=(const Matrix& rhs);
 
         template <uint8_t IC>
-        inline Matrix<T, R, IC> operator*(const Matrix<T, C, IC>& rhs);
+        inline Matrix<T, R, IC> operator*(const Matrix<T, C, IC>& rhs) const;
 
         inline Vector<T, C> Row(uint8_t index) const;
         inline Vector<T, R> Col(uint8_t index) const;
@@ -88,7 +101,7 @@ namespace Common {
         inline void SetCol(uint8_t index, IT&&... inValues);
 
         template <typename IT>
-        Matrix<IT, R, C> CastTo() const;
+        inline Matrix<IT, R, C> CastTo() const;
 
         inline Matrix<T, C, R> Transpose() const;
     };
@@ -278,9 +291,6 @@ namespace Common {
 }
 
 namespace Common::Internal {
-    template <typename LHS, typename... RHS>
-    struct IsAllSame {};
-
     template <typename LHS, typename RHS0, typename... RHS>
     struct IsAllSame<LHS, RHS0, RHS...> {
         static constexpr bool value = std::is_same_v<LHS, RHS0> && IsAllSame<LHS, RHS...>::value;
@@ -375,6 +385,26 @@ namespace Common::Internal {
 }
 
 namespace Common {
+    template <typename T, uint8_t R, uint8_t C>
+    template <typename... IT>
+    requires (Internal::IsAllSame<Vector<T, C>, IT...>::value) && (sizeof...(IT) == R)
+    Matrix<T, R, C> Matrix<T, R, C>::FromRowVecs(IT&&... inVectors)
+    {
+        Matrix<T, R, C> result;
+        result.SetRows(std::forward<IT>(inVectors)...);
+        return result;
+    }
+
+    template <typename T, uint8_t R, uint8_t C>
+    template <typename... IT>
+    requires (Internal::IsAllSame<Vector<T, R>, IT...>::value) && (sizeof...(IT) == C)
+    Matrix<T, R, C> Matrix<T, R, C>::FromColVecs(IT&&... inVectors)
+    {
+        Matrix<T, R, C> result;
+        result.SetCols(std::forward<IT>(inVectors)...);
+        return result;
+    }
+
     template <typename T, uint8_t R, uint8_t C>
     Matrix<T, R, C>::Matrix()
     {
@@ -599,7 +629,7 @@ namespace Common {
 
     template <typename T, uint8_t R, uint8_t C>
     template <uint8_t IC>
-    Matrix<T, R, IC> Matrix<T, R, C>::operator*(const Matrix<T, C, IC>& rhs)
+    Matrix<T, R, IC> Matrix<T, R, C>::operator*(const Matrix<T, C, IC>& rhs) const
     {
         Matrix<T, R, IC> result;
         for (auto i = 0; i < R; i++) {
