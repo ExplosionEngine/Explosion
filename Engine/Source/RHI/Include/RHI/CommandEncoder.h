@@ -28,16 +28,13 @@ namespace RHI {
         TextureAspect aspect = TextureAspect::color;
     };
 
-    struct GraphicsPassColorAttachment {
-        TextureView* view;
-        TextureView* resolve;
+    struct GraphicsPassColorAttachmentBase {
         ColorNormalized<4> clearValue;
         LoadOp loadOp;
         StoreOp storeOp;
     };
 
-    struct GraphicsPassDepthStencilAttachment {
-        TextureView* view;
+    struct GraphicsPassDepthStencilAttachmentBase {
         float depthClearValue;
         LoadOp depthLoadOp;
         StoreOp depthStoreOp;
@@ -46,6 +43,15 @@ namespace RHI {
         LoadOp stencilLoadOp;
         StoreOp stencilStoreOp;
         bool stencilReadOnly;
+    };
+
+    struct GraphicsPassColorAttachment : public GraphicsPassColorAttachmentBase {
+        TextureView* view;
+        TextureView* resolve;
+    };
+
+    struct GraphicsPassDepthStencilAttachment : public GraphicsPassDepthStencilAttachmentBase {
+        TextureView* view;
     };
 
     struct GraphicsPassBeginInfo {

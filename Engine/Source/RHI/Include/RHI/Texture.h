@@ -14,12 +14,12 @@ namespace RHI {
     class Device;
 
     struct TextureCreateInfo {
-        Extent<3> extent;
-        uint8_t mipLevels;
-        uint8_t samples;
         TextureDimension dimension;
+        Extent<3> extent;
         PixelFormat format;
         TextureUsageFlags usages;
+        uint8_t mipLevels;
+        uint8_t samples;
         TextureState initialState;
         std::string debugName;
     };

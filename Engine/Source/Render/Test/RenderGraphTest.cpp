@@ -40,10 +40,37 @@ protected:
 
         builder.SetAsyncCompute(false);
 
-        uniformBuffer = builder.CreateBuffer("TestUniformBuffer", RGBufferDesc::Create(sizeof(Parameters), RHI::BufferUsageBits::uniform));
-        outputTexture = builder.CreateTexture("TestOutputTexture", RGTextureDesc::Create2D(1024, 1024, RHI::PixelFormat::bgra8Unorm, RHI::TextureUsageBits::storageBinding));
-        auto* uniformBufferView = builder.CreateBufferView(RGBufferViewDesc::Create(uniformBuffer));
-        auto* outputTextureView = builder.CreateTextureView(RGTextureViewDesc::Create2D(outputTexture));
+        RGBufferDesc bufferDesc;
+        bufferDesc.size = sizeof(Parameters);
+        bufferDesc.usages = RHI::BufferUsageBits::uniform;
+        bufferDesc.debugName = "TestUniformBuffer";
+        uniformBuffer = builder.CreateBuffer("TestUniformBuffer", bufferDesc);
+
+        RGTextureDesc textureDesc;
+        textureDesc.dimension = RHI::TextureDimension::t2D;
+        textureDesc.extent = { 1024, 1024 };
+        textureDesc.format = RHI::PixelFormat::bgra8Unorm;
+        textureDesc.usages = RHI::TextureUsageBits::storageBinding;
+        textureDesc.mipLevels = 1;
+        textureDesc.samples = 1;
+        textureDesc.initialState = RHI::TextureState::undefined;
+        outputTexture = builder.CreateTexture("TestOutputTexture", textureDesc);
+
+        RGBufferViewDesc bufferViewDesc;
+        bufferViewDesc.type = RHI::BufferViewType::uniformBinding;
+        bufferViewDesc.size = sizeof(Parameters);
+        bufferViewDesc.offset = 0;
+        auto* uniformBufferView = builder.CreateBufferView(uniformBuffer, bufferViewDesc);
+
+        RGTextureViewDesc textureViewDesc;
+        textureViewDesc.type = RHI::TextureViewType::storageBinding;
+        textureViewDesc.dimension = RHI::TextureViewDimension::tv2D;
+        textureViewDesc.aspect = RHI::TextureAspect::color;
+        textureViewDesc.baseArrayLayer = 0;
+        textureViewDesc.arrayLayerNum = 1;
+        textureViewDesc.baseMipLevel = 0;
+        textureViewDesc.mipLevelNum = 1;
+        auto* outputTextureView = builder.CreateTextureView(outputTexture, textureViewDesc);
 
         builder.MarkAsConsumed(outputTexture);
         bindGroup = builder.AllocateBindGroup(RGBindGroupDesc::Create(

@@ -11,15 +11,16 @@
 namespace Common {
     template <typename T>
     struct TransformBase {
-        Vector<T, 3> displacement;
-        Quaternion<T> rotation;
         Vector<T, 3> scale;
+        Quaternion<T> rotation;
+        Vector<T, 3> translation;
     };
 
     template <typename T>
     struct Transform : public TransformBase<T> {
         inline Transform();
-        inline Transform(Vector<T, 3> inDisplacement, Quaternion<T> inRotation, Vector<T, 3> inScale);
+        inline Transform(Quaternion<T> inRotation, Vector<T, 3> inTranslation);
+        inline Transform(Vector<T, 3> inScale, Quaternion<T> inRotation, Vector<T, 3> inTranslation);
         inline Transform(const Transform& other);
         inline Transform(Transform&& other) noexcept;
         inline Transform& operator=(const Transform& other);
@@ -27,22 +28,25 @@ namespace Common {
         inline bool operator==(const Transform& rhs) const;
         inline bool operator!=(const Transform& rhs) const;
 
-        inline Transform operator+(const Vector<T, 3>& inDisplacement) const;
+        inline Transform operator+(const Vector<T, 3>& inTranslation) const;
         inline Transform operator|(const Quaternion<T>& inRotation) const;
         inline Transform operator*(const Vector<T, 3>& inScale) const;
 
-        inline Transform& operator+=(const Vector<T, 3>& inDisplacement);
+        inline Transform& operator+=(const Vector<T, 3>& inTranslation);
         inline Transform& operator|=(const Quaternion<T>& inRotation);
         inline Transform& operator*=(const Vector<T, 3>& inScale);
 
-        inline Transform& Displace(const Vector<T, 3>& inDisplacement);
+        inline Transform& Translate(const Vector<T, 3>& inTranslation);
         inline Transform& Rotate(const Quaternion<T>& inRotation);
         inline Transform& Scale(const Vector<T, 3>& inScale);
 
-        Matrix<T, 4, 4> GetDisplacementMatrix() const;
+        Matrix<T, 4, 4> GetTranslationMatrix() const;
         Matrix<T, 4, 4> GetRotationMatrix() const;
         Matrix<T, 4, 4> GetScaleMatrix() const;
+        // scale -> rotate -> translate
         Matrix<T, 4, 4> GetTransformMatrix() const;
+        // rotate -> translate
+        Matrix<T, 4, 4> GetTransformMatrixNoScale() const;
         Vector<T, 3> TransformPosition(const Vector<T, 3>& inPosition) const;
         Vector<T, 4> TransformPosition(const Vector<T, 4>& inPosition) const;
 
@@ -59,50 +63,58 @@ namespace Common {
     template <typename T>
     Transform<T>::Transform()
     {
-        this->displacement = VecConsts<T, 3>::zero;
-        this->rotation = QuatConsts<T>::identity;
         this->scale = VecConsts<T, 3>::unit;
+        this->rotation = QuatConsts<T>::identity;
+        this->translation = VecConsts<T, 3>::zero;
     }
 
     template <typename T>
-    Transform<T>::Transform(Vector<T, 3> inDisplacement, Quaternion<T> inRotation, Vector<T, 3> inScale) // NOLINT
+    Transform<T>::Transform(Quaternion<T> inRotation, Vector<T, 3> inTranslation)
     {
-        this->displacement = std::move(inDisplacement);
-        this->rotation = std::move(inRotation);
-        this->scale = std::move(inScale);
+        this->scale = VecConsts<T, 3>::unit;
+        this->rotation = inRotation;
+        this->translation = inTranslation;
+    }
+
+    template <typename T>
+    Transform<T>::Transform(Vector<T, 3> inScale, Quaternion<T> inRotation, Vector<T, 3> inTranslation)
+    {
+        this->scale = inScale;
+        this->rotation = inRotation;
+        this->translation = inTranslation;
     }
 
     template <typename T>
     Transform<T>::Transform(const Transform& other)
     {
-        this->displacement = other.displacement;
-        this->rotation = other.rotation;
         this->scale = other.scale;
+        this->rotation = other.rotation;
+        this->translation = other.translation;
     }
 
     template <typename T>
     Transform<T>::Transform(Transform&& other) noexcept
     {
-        this->displacement = std::move(other.displacement);
-        this->rotation = std::move(other.rotation);
         this->scale = std::move(other.scale);
+        this->rotation = std::move(other.rotation);
+        this->translation = std::move(other.translation);
     }
 
     template <typename T>
     Transform<T>& Transform<T>::operator=(const Transform& other)
     {
-        this->displacement = other.displacement;
-        this->rotation = other.rotation;
         this->scale = other.scale;
+        this->rotation = other.rotation;
+        this->translation = other.translation;
         return *this;
     }
 
     template <typename T>
     bool Transform<T>::operator==(const Transform& rhs) const
     {
-        return this->displacement == rhs.displacement
+        return this->scale == rhs.scale
             && this->rotation == rhs.rotation
-            && this->scale == rhs.scale;
+            && this->translation == rhs.translation;
     }
 
     template <typename T>
@@ -112,12 +124,12 @@ namespace Common {
     }
 
     template <typename T>
-    Transform<T> Transform<T>::operator+(const Vector<T, 3>& inDisplacement) const
+    Transform<T> Transform<T>::operator+(const Vector<T, 3>& inTranslation) const
     {
         Transform<T> result;
-        result.displacement = this->displacement + inDisplacement;
-        result.rotation = this->rotation;
         result.scale = this->scale;
+        result.rotation = this->rotation;
+        result.translation = this->translation + inTranslation;
         return result;
     }
 
@@ -125,9 +137,9 @@ namespace Common {
     Transform<T> Transform<T>::operator|(const Quaternion<T>& inRotation) const
     {
         Transform<T> result;
-        result.displacement = this->displacement;
-        result.rotation = this->rotation * inRotation;
         result.scale = this->scale;
+        result.rotation = this->rotation * inRotation;
+        result.translation = this->translation;
         return result;
     }
 
@@ -135,16 +147,16 @@ namespace Common {
     Transform<T> Transform<T>::operator*(const Vector<T, 3>& inScale) const
     {
         Transform<T> result;
-        result.displacement = this->displacement;
-        result.rotation = this->rotation;
         result.scale = this->scale * inScale;
+        result.rotation = this->rotation;
+        result.translation = this->translation;
         return result;
     }
 
     template <typename T>
-    Transform<T>& Transform<T>::operator+=(const Vector<T, 3>& inDisplacement)
+    Transform<T>& Transform<T>::operator+=(const Vector<T, 3>& inTranslation)
     {
-        return Displace(inDisplacement);
+        return Translate(inTranslation);
     }
 
     template <typename T>
@@ -160,9 +172,9 @@ namespace Common {
     }
 
     template <typename T>
-    Transform<T>& Transform<T>::Displace(const Vector<T, 3>& inDisplacement)
+    Transform<T>& Transform<T>::Translate(const Vector<T, 3>& inTranslation)
     {
-        this->displacement += inDisplacement;
+        this->translation += inTranslation;
         return *this;
     }
 
@@ -181,10 +193,10 @@ namespace Common {
     }
 
     template <typename T>
-    Matrix<T, 4, 4> Transform<T>::GetDisplacementMatrix() const
+    Matrix<T, 4, 4> Transform<T>::GetTranslationMatrix() const
     {
         Matrix<T, 4, 4> result = MatConsts<T, 4, 4>::identity;
-        result.SetCol(3, this->displacement.x, this->displacement.y, this->displacement.z, 1);
+        result.SetCol(3, this->translation.x, this->translation.y, this->translation.z, 1);
         return result;
     }
 
@@ -207,7 +219,13 @@ namespace Common {
     template <typename T>
     Matrix<T, 4, 4> Transform<T>::GetTransformMatrix() const
     {
-        return GetScaleMatrix() * GetRotationMatrix() * GetDisplacementMatrix();
+        return GetTranslationMatrix() * GetRotationMatrix() * GetScaleMatrix();
+    }
+
+    template <typename T>
+    Matrix<T, 4, 4> Transform<T>::GetTransformMatrixNoScale() const
+    {
+        return GetTranslationMatrix() * GetRotationMatrix();
     }
 
     template <typename T>
@@ -229,7 +247,7 @@ namespace Common {
     Transform<IT> Transform<T>::CastTo() const
     {
         Transform<IT> result;
-        result.displacement = this->displacement.template CastTo<IT>();
+        result.translation = this->translation.template CastTo<IT>();
         result.rotation = this->rotation.template CastTo<IT>();
         result.scale = this->scale.template CastTo<IT>();
         return result;

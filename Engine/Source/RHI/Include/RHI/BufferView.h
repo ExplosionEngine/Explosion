@@ -11,7 +11,7 @@
 
 namespace RHI {
     struct VertexBufferViewInfo {
-        size_t stride;
+        uint32_t stride;
     };
 
     struct IndexBufferViewInfo {
@@ -20,8 +20,8 @@ namespace RHI {
 
     struct BufferViewCreateInfo {
         BufferViewType type;
-        size_t offset;
-        size_t size;
+        uint32_t offset;
+        uint32_t size;
         union {
             VertexBufferViewInfo vertex;
             IndexBufferViewInfo index;
