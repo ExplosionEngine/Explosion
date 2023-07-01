@@ -39,10 +39,6 @@ namespace Render {
         max
     };
 
-    using RGTransitionResType = RHI::ResourceType;
-    using RGBufferState = RHI::BufferState;
-    using RGTextureState = RHI::TextureState;
-
     enum class RGPassType {
         copy,
         compute,
@@ -56,98 +52,29 @@ namespace Render {
         max
     };
 
-    struct RGBufferTransition {
-        RGBuffer* buffer;
-        RGBufferState before;
-        RGBufferState after;
+    struct RGBufferTransition : public RHI::BufferTransitionBase {
+        RGBuffer* pointer;
     };
 
-    struct RGTextureTransition {
-        RGTexture* texture;
-        RGTextureState before;
-        RGTextureState after;
+    struct RGTextureTransition : public RHI::TextureTransitionBase {
+        RGTexture* pointer;
     };
 
     struct RGResTransition {
-        RGTransitionResType resType;
+        RHI::ResourceType resType;
         union {
             RGBufferTransition buffer;
             RGTextureTransition texture;
         };
 
-        static RGResTransition Buffer(RGBuffer* inBuffer, RGBufferState inBeforeState, RGBufferState inAfterState);
-        static RGResTransition Texture(RGTexture* inTexture, RGTextureState inBeforeState, RGTextureState inAfterState);
+        static RGResTransition Buffer(RGBuffer* inBuffer, RHI::BufferState inBeforeState, RHI::BufferState inAfterState);
+        static RGResTransition Texture(RGTexture* inTexture, RHI::TextureState inBeforeState, RHI::TextureState inAfterState);
     };
 
-    struct RGBufferDesc {
-        size_t size;
-        RHI::BufferUsageFlags usages;
-
-        static RGBufferDesc Create(size_t size, RHI::BufferUsageFlags usages);
-    };
-
-    struct RGTextureDesc {
-        RHI::Extent<3> extent;
-        uint8_t mipLevels;
-        uint8_t samples;
-        RHI::TextureDimension dimension;
-        RHI::PixelFormat format;
-        RHI::TextureUsageFlags usages;
-
-        static RGTextureDesc Create1D(uint32_t length, RHI::PixelFormat format, RHI::TextureUsageFlags usages, uint8_t mipLevels = 1, uint8_t samples = 1);
-        static RGTextureDesc Create2D(uint32_t width, uint32_t height, RHI::PixelFormat format, RHI::TextureUsageFlags usages, uint32_t layers = 1, uint8_t mipLevels = 1, uint8_t samples = 1);
-        static RGTextureDesc Create3D(uint32_t width, uint32_t height, uint32_t depth, RHI::PixelFormat format, RHI::TextureUsageFlags usages, uint8_t mipLevels = 1, uint8_t samples = 1);
-    };
-
-    struct RGVertexBufferDesc {
-        size_t stride;
-    };
-
-    struct RGIndexBufferDesc {
-        RHI::IndexFormat format;
-    };
-
-    struct RGBufferViewDesc {
-        RHI::BufferViewType type;
-        size_t offset;
-        size_t size;
-        union {
-            RGVertexBufferDesc vertex;
-            RGIndexBufferDesc index;
-        };
-
-        // TODO add buffer view type
-        static RGBufferViewDesc Create(size_t size, size_t offset = 0);
-        static RGBufferViewDesc CreateVertex(size_t stride, size_t size, size_t offset = 0);
-        static RGBufferViewDesc CreateIndex(RHI::IndexFormat indexFormat, size_t size, size_t offset = 0);
-        static std::pair<RGBuffer*, RGBufferViewDesc> Create(RGBuffer* buffer, size_t size = UINT64_MAX, size_t offset = 0);
-        static std::pair<RGBuffer*, RGBufferViewDesc> CreateVertex(RGBuffer* buffer, size_t stride, size_t size = UINT64_MAX, size_t offset = 0);
-        static std::pair<RGBuffer*, RGBufferViewDesc> CreateIndex(RGBuffer* buffer, RHI::IndexFormat indexFormat, size_t size = UINT64_MAX, size_t offset = 0);
-    };
-
-    struct RGTextureViewDesc {
-        RHI::TextureViewType type;
-        RHI::TextureViewDimension dimension;
-        RHI::TextureAspect aspect;
-        uint8_t baseMipLevel;
-        uint8_t mipLevelNum;
-        uint8_t baseArrayLayer;
-        uint8_t arrayLayerNum;
-
-        // TODO add type view type
-        static RGTextureViewDesc Create1D(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
-        static RGTextureViewDesc Create2D(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
-        static RGTextureViewDesc Create2DArray(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseArrayLayer = 0, uint8_t arrayLayerNum = 1, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
-        static RGTextureViewDesc CreateCube(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
-        static RGTextureViewDesc CreateCubeArray(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseCubemapIndex = 0, uint8_t cubemapNum = 1, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
-        static RGTextureViewDesc Create3D(RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = 1);
-        static std::pair<RGTexture*, RGTextureViewDesc> Create1D(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
-        static std::pair<RGTexture*, RGTextureViewDesc> Create2D(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
-        static std::pair<RGTexture*, RGTextureViewDesc> Create2DArray(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseArrayLayer = 0, uint8_t arrayLayerNum = UINT8_MAX, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
-        static std::pair<RGTexture*, RGTextureViewDesc> CreateCube(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
-        static std::pair<RGTexture*, RGTextureViewDesc> CreateCubeArray(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseCubemapIndex = 0, uint8_t cubemapNum = UINT8_MAX, uint8_t baseMipLevel = 0, uint8_t mipLevelNum = UINT8_MAX);
-        static std::pair<RGTexture*, RGTextureViewDesc> Create3D(RGTexture* texture, RHI::TextureAspect aspect = RHI::TextureAspect::color, uint8_t baseMipLevel = UINT8_MAX, uint8_t mipLevelNum = UINT8_MAX);
-    };
+    struct RGBufferDesc : public RHI::BufferCreateInfo {};
+    struct RGTextureDesc : public RHI::TextureCreateInfo {};
+    struct RGBufferViewDesc : public RHI::BufferViewCreateInfo {};
+    struct RGTextureViewDesc : public RHI::TextureViewCreateInfo {};
 
     struct RGBindItem {
         RHI::BindingType type;
@@ -184,24 +111,13 @@ namespace Render {
         }
     };
 
-    struct RGColorAttachment {
+    struct RGColorAttachment : public RHI::GraphicsPassColorAttachmentBase {
         RGTextureView* view;
         RGTextureView* resolve;
-        RHI::ColorNormalized<4> clearValue;
-        RHI::LoadOp loadOp;
-        RHI::StoreOp storeOp;
     };
 
-    struct RGDepthStencilAttachment {
+    struct RGDepthStencilAttachment : public RHI::GraphicsPassDepthStencilAttachmentBase {
         RGTextureView* view;
-        float depthClearValue;
-        RHI::LoadOp depthLoadOp;
-        RHI::StoreOp depthStoreOp;
-        bool depthReadOnly;
-        uint32_t stencilClearValue;
-        RHI::LoadOp stencilLoadOp;
-        RHI::StoreOp stencilStoreOp;
-        bool stencilReadOnly;
     };
 
     struct RGRasterPassDesc {

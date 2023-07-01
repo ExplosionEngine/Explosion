@@ -5,7 +5,7 @@
 #include <Common/DynamicLibrary.h>
 
 namespace Common {
-#ifndef _WIN32
+#if !PLATFORM_WINDOWS
     void RepairLibPrefix(std::string& name)
     {
         if (name.find("lib") != std::string::npos) {
@@ -17,9 +17,9 @@ namespace Common {
 
     void RepairExtension(std::string& name)
     {
-#if defined(_WIN32)
+#if PLATFORM_WINDOWS
         static const std::string ext = "dll";
-#elif defined(__APPLE__)
+#elif PLATFORM_MACOS
         static const std::string ext = "dylib";
 #else
         static const std::string ext = "so";
@@ -33,7 +33,7 @@ namespace Common {
     std::string GetPlatformDynLibFullName(const std::string& simpleName)
     {
         std::string result = simpleName;
-#ifndef _WIN32
+#if !PLATFORM_WINDOWS
         RepairLibPrefix(result);
 #endif
         RepairExtension(result);

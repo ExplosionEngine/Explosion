@@ -281,6 +281,7 @@ namespace Common {
         this->x = inValue.x;
         this->y = inValue.y;
         this->z = inValue.z;
+        return *this;
     }
 
     template <typename T>

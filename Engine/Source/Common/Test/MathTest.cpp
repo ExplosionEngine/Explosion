@@ -8,6 +8,7 @@
 #include <Common/Math/Matrix.h>
 #include <Common/Math/Quaternion.h>
 #include <Common/Math/Transform.h>
+#include <Common/Math/Projection.h>
 
 using namespace Common;
 
@@ -462,5 +463,11 @@ TEST(MathTest, QuaternionToRotationMatrixTest)
 
 TEST(MathTest, TransformTest)
 {
-    // TODO
+    FTransform v0(FVec3(2, 2, 2), FQuat(FVec3Consts::unitZ, 90), FVec3(5, 0, 0));
+    FVec3 v0r0 = v0.TransformPosition(FVec3(1, 0, 0));
+    ASSERT_TRUE(v0r0 == FVec3(5, -2, 0));
+
+    FTransform v1(FQuat::FromEulerZYX(90, 0, 90), FVec3(3, 4, 5));
+    FVec3 v1r0 = v1.TransformPosition(FVec3(1, 0, 0));
+    ASSERT_TRUE(v1r0 == FVec3(3, 4, 6));
 }
