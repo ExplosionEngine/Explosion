@@ -63,11 +63,11 @@ namespace Render {
     {
         if (transition.resType == RHI::ResourceType::buffer) {
             const auto& bufferTransition = transition.buffer;
-            return RHI::Barrier::Transition(bufferTransition.buffer->GetRHI(), bufferTransition.before, bufferTransition.after);
+            return RHI::Barrier::Transition(bufferTransition.pointer->GetRHI(), bufferTransition.before, bufferTransition.after);
         }
         if (transition.resType == RHI::ResourceType::texture) {
             const auto& textureTransition = transition.texture;
-            return RHI::Barrier::Transition(textureTransition.texture->GetRHI(), textureTransition.before, textureTransition.after);
+            return RHI::Barrier::Transition(textureTransition.pointer->GetRHI(), textureTransition.before, textureTransition.after);
         }
         Assert(false);
         return {};
@@ -118,271 +118,24 @@ namespace Render {
 }
 
 namespace Render {
-    RGResTransition RGResTransition::Buffer(RGBuffer* inBuffer, RGBufferState inBeforeState, RGBufferState inAfterState)
+    RGResTransition RGResTransition::Buffer(RGBuffer* inBuffer, RHI::BufferState inBeforeState, RHI::BufferState inAfterState)
     {
         RGResTransition result;
-        result.resType = RGTransitionResType::buffer;
-        result.buffer.buffer = inBuffer;
+        result.resType = RHI::ResourceType::buffer;
+        result.buffer.pointer = inBuffer;
         result.buffer.before = inBeforeState;
         result.buffer.after = inAfterState;
         return result;
     }
 
-    RGResTransition RGResTransition::Texture(RGTexture* inTexture, RGTextureState inBeforeState, RGTextureState inAfterState)
+    RGResTransition RGResTransition::Texture(RGTexture* inTexture, RHI::TextureState inBeforeState, RHI::TextureState inAfterState)
     {
         RGResTransition result;
-        result.resType = RGTransitionResType::texture;
-        result.texture.texture = inTexture;
+        result.resType = RHI::ResourceType::texture;
+        result.texture.pointer = inTexture;
         result.texture.before = inBeforeState;
         result.texture.after = inAfterState;
         return result;
-    }
-
-    RGResource::RGResource(std::string inName, bool inIsExternal, RGResource* inParent)
-        : name(std::move(inName))
-        , parent(inParent)
-        , isExternal(inIsExternal)
-        , rhiAccess(false)
-    {
-    }
-
-    RGBufferDesc RGBufferDesc::Create(size_t size, RHI::BufferUsageFlags usages)
-    {
-        RGBufferDesc result;
-        result.size = size;
-        result.usages = usages;
-        return result;
-    }
-
-    RGTextureDesc RGTextureDesc::Create1D(uint32_t length, RHI::PixelFormat format, RHI::TextureUsageFlags usages, uint8_t mipLevels, uint8_t samples)
-    {
-        RGTextureDesc result;
-        result.extent = { length, 1, 1 };
-        result.mipLevels = mipLevels;
-        result.samples = samples;
-        result.dimension = RHI::TextureDimension::t1D;
-        result.format = format;
-        result.usages = usages;
-        return result;
-    }
-
-    RGTextureDesc RGTextureDesc::Create2D(uint32_t width, uint32_t height, RHI::PixelFormat format, RHI::TextureUsageFlags usages, uint32_t layers, uint8_t mipLevels, uint8_t samples)
-    {
-        RGTextureDesc result;
-        result.extent = { width, height, layers };
-        result.mipLevels = mipLevels;
-        result.samples = samples;
-        result.dimension = RHI::TextureDimension::t2D;
-        result.format = format;
-        result.usages = usages;
-        return result;
-    }
-
-    RGTextureDesc RGTextureDesc::Create3D(uint32_t width, uint32_t height, uint32_t depth, RHI::PixelFormat format, RHI::TextureUsageFlags usages, uint8_t mipLevels, uint8_t samples)
-    {
-        RGTextureDesc result;
-        result.extent = { width, height, depth };
-        result.mipLevels = mipLevels;
-        result.samples = samples;
-        result.dimension = RHI::TextureDimension::t3D;
-        result.format = format;
-        result.usages = usages;
-        return result;
-    }
-
-    RGBufferViewDesc RGBufferViewDesc::Create(size_t size, size_t offset)
-    {
-        RGBufferViewDesc result;
-        result.offset = offset;
-        result.size = size;
-        return result;
-    }
-
-    RGBufferViewDesc RGBufferViewDesc::CreateVertex(size_t stride, size_t size, size_t offset)
-    {
-        RGBufferViewDesc result;
-        result.offset = offset;
-        result.size = size;
-        result.vertex.stride = stride;
-        return result;
-    }
-
-    RGBufferViewDesc RGBufferViewDesc::CreateIndex(RHI::IndexFormat indexFormat, size_t size, size_t offset)
-    {
-        RGBufferViewDesc result;
-        result.offset = offset;
-        result.size = size;
-        result.index.format = indexFormat;
-        return result;
-    }
-
-    std::pair<RGBuffer*, RGBufferViewDesc> RGBufferViewDesc::Create(RGBuffer* buffer, size_t size, size_t offset)
-    {
-        RGBufferViewDesc result;
-        result.offset = offset;
-        result.size = size == UINT64_MAX ? buffer->GetDesc().size : size;
-        return std::make_pair(buffer, result);
-    }
-
-    std::pair<RGBuffer*, RGBufferViewDesc> RGBufferViewDesc::CreateVertex(RGBuffer* buffer, size_t stride, size_t size, size_t offset)
-    {
-        RGBufferViewDesc result;
-        result.offset = offset;
-        result.size = size == UINT64_MAX ? buffer->GetDesc().size : size;
-        result.vertex.stride = stride;
-        return std::make_pair(buffer, result);
-    }
-
-    std::pair<RGBuffer*, RGBufferViewDesc> RGBufferViewDesc::CreateIndex(RGBuffer* buffer, RHI::IndexFormat indexFormat, size_t size, size_t offset)
-    {
-        RGBufferViewDesc result;
-        result.offset = offset;
-        result.size = size == UINT64_MAX ? buffer->GetDesc().size : size;
-        result.index.format = indexFormat;
-        return std::make_pair(buffer, result);
-    }
-
-    RGTextureViewDesc RGTextureViewDesc::Create1D(RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
-    {
-        RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::tv1D;
-        result.aspect = aspect;
-        result.baseMipLevel = baseMipLevel;
-        result.mipLevelNum = mipLevelNum;
-        result.baseArrayLayer = 0;
-        result.arrayLayerNum = 1;
-        return result;
-    }
-
-    RGTextureViewDesc RGTextureViewDesc::Create2D(RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
-    {
-        RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::tv2D;
-        result.aspect = aspect;
-        result.baseMipLevel = baseMipLevel;
-        result.mipLevelNum = mipLevelNum;
-        result.baseArrayLayer = 0;
-        result.arrayLayerNum = 1;
-        return result;
-    }
-
-    RGTextureViewDesc RGTextureViewDesc::Create2DArray(RHI::TextureAspect aspect, uint8_t baseArrayLayer, uint8_t arrayLayerNum, uint8_t baseMipLevel, uint8_t mipLevelNum)
-    {
-        RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::tv2DArray;
-        result.aspect = aspect;
-        result.baseMipLevel = baseMipLevel;
-        result.mipLevelNum = mipLevelNum;
-        result.baseArrayLayer = baseArrayLayer;
-        result.arrayLayerNum = arrayLayerNum;
-        return result;
-    }
-
-    RGTextureViewDesc RGTextureViewDesc::CreateCube(RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
-    {
-        RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::tvCube;
-        result.aspect = aspect;
-        result.baseMipLevel = baseMipLevel;
-        result.mipLevelNum = mipLevelNum;
-        result.baseArrayLayer = 0;
-        result.arrayLayerNum = 6;
-        return result;
-    }
-
-    RGTextureViewDesc RGTextureViewDesc::CreateCubeArray(RHI::TextureAspect aspect, uint8_t baseCubemapIndex, uint8_t cubemapNum, uint8_t baseMipLevel, uint8_t mipLevelNum)
-    {
-        RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::tvCubeArray;
-        result.aspect = aspect;
-        result.baseMipLevel = baseMipLevel;
-        result.mipLevelNum = mipLevelNum;
-        result.baseArrayLayer = baseCubemapIndex * 6;
-        result.arrayLayerNum = cubemapNum * 6;
-        return result;
-    }
-
-    RGTextureViewDesc RGTextureViewDesc::Create3D(RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
-    {
-        RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::tv3D;
-        result.aspect = aspect;
-        result.baseMipLevel = baseMipLevel;
-        result.mipLevelNum = mipLevelNum;
-        result.baseArrayLayer = 0;
-        result.arrayLayerNum = 1;
-        return result;
-    }
-
-    std::pair<RGTexture*, RGTextureViewDesc> RGTextureViewDesc::Create1D(RGTexture* texture, RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
-    {
-        RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::tv1D;
-        result.aspect = aspect;
-        result.baseMipLevel = baseMipLevel;
-        result.mipLevelNum = mipLevelNum == UINT8_MAX ? texture->GetDesc().mipLevels : mipLevelNum;
-        result.baseArrayLayer = 0;
-        result.arrayLayerNum = 1;
-        return std::make_pair(texture, result);
-    }
-
-    std::pair<RGTexture*, RGTextureViewDesc> RGTextureViewDesc::Create2D(RGTexture* texture, RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
-    {
-        RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::tv2D;
-        result.aspect = aspect;
-        result.baseMipLevel = baseMipLevel;
-        result.mipLevelNum = mipLevelNum == UINT8_MAX ? texture->GetDesc().mipLevels : mipLevelNum;
-        result.baseArrayLayer = 0;
-        result.arrayLayerNum = 1;
-        return std::make_pair(texture, result);
-    }
-
-    std::pair<RGTexture*, RGTextureViewDesc> RGTextureViewDesc::Create2DArray(RGTexture* texture, RHI::TextureAspect aspect, uint8_t baseArrayLayer, uint8_t arrayLayerNum, uint8_t baseMipLevel, uint8_t mipLevelNum)
-    {
-        RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::tv2DArray;
-        result.aspect = aspect;
-        result.baseMipLevel = baseMipLevel;
-        result.mipLevelNum = mipLevelNum == UINT8_MAX ? texture->GetDesc().mipLevels : mipLevelNum;
-        result.baseArrayLayer = baseArrayLayer;
-        result.arrayLayerNum = arrayLayerNum == UINT8_MAX ? texture->GetDesc().extent.z : arrayLayerNum;
-        return std::make_pair(texture, result);
-    }
-
-    std::pair<RGTexture*, RGTextureViewDesc> RGTextureViewDesc::CreateCube(RGTexture* texture, RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
-    {
-        RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::tvCube;
-        result.aspect = aspect;
-        result.baseMipLevel = baseMipLevel;
-        result.mipLevelNum = mipLevelNum == UINT8_MAX ? texture->GetDesc().mipLevels : mipLevelNum;
-        result.baseArrayLayer = 0;
-        result.arrayLayerNum = 6;
-        return std::make_pair(texture, result);
-    }
-
-    std::pair<RGTexture*, RGTextureViewDesc> RGTextureViewDesc::CreateCubeArray(RGTexture* texture, RHI::TextureAspect aspect, uint8_t baseCubemapIndex, uint8_t cubemapNum, uint8_t baseMipLevel, uint8_t mipLevelNum)
-    {
-        RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::tvCubeArray;
-        result.aspect = aspect;
-        result.baseMipLevel = baseMipLevel;
-        result.mipLevelNum = mipLevelNum == UINT8_MAX ? texture->GetDesc().mipLevels : mipLevelNum;
-        result.baseArrayLayer = baseCubemapIndex * 6;
-        result.arrayLayerNum = (cubemapNum == UINT8_MAX ? (texture->GetDesc().extent.z / 6) : cubemapNum) * 6;
-        return std::make_pair(texture, result);
-    }
-
-    std::pair<RGTexture*, RGTextureViewDesc> RGTextureViewDesc::Create3D(RGTexture* texture, RHI::TextureAspect aspect, uint8_t baseMipLevel, uint8_t mipLevelNum)
-    {
-        RGTextureViewDesc result;
-        result.dimension = RHI::TextureViewDimension::tv3D;
-        result.aspect = aspect;
-        result.baseMipLevel = mipLevelNum == UINT8_MAX ? texture->GetDesc().mipLevels : mipLevelNum;
-        result.baseArrayLayer = 0;
-        result.arrayLayerNum = 1;
-        return std::make_pair(texture, result);
     }
 
     RGBindItem RGBindItem::Sampler(RGSampler* sampler)
@@ -463,6 +216,14 @@ namespace Render {
         result.type = RHI::BindingType::storageBuffer;
         result.bufferView = bufferView;
         return std::make_pair(std::move(name), result);
+    }
+
+    RGResource::RGResource(std::string inName, bool inIsExternal, RGResource* inParent)
+        : name(std::move(inName))
+        , parent(inParent)
+        , isExternal(inIsExternal)
+        , rhiAccess(false)
+    {
     }
 
     RGResource::~RGResource() = default;

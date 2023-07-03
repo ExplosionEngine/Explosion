@@ -13,7 +13,7 @@ namespace RHI {
     class BufferView;
 
     struct BufferCreateInfo {
-        size_t size;
+        uint32_t size;
         BufferUsageFlags usages;
         std::string debugName;
     };
