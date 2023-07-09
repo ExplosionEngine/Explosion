@@ -9,6 +9,11 @@
 #include <Common/Math/Quaternion.h>
 #include <Common/Math/Transform.h>
 #include <Common/Math/Projection.h>
+#include <Common/Math/View.h>
+#include <Common/Math/Color.h>
+#include <Common/Math/Rect.h>
+#include <Common/Math/Box.h>
+#include <Common/Math/Sphere.h>
 
 using namespace Common;
 
@@ -471,3 +476,7 @@ TEST(MathTest, TransformTest)
     FVec3 v1r0 = v1.TransformPosition(FVec3(1, 0, 0));
     ASSERT_TRUE(v1r0 == FVec3(3, 4, 6));
 }
+
+// TODO rect test
+// TODO box test
+// TODO sphere test
