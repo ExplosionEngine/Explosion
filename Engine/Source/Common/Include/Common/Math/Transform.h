@@ -10,6 +10,7 @@
 
 namespace Common {
     template <typename T>
+    requires isFloatingPointV<T>
     struct TransformBase {
         Vector<T, 3> scale;
         Quaternion<T> rotation;
@@ -18,6 +19,8 @@ namespace Common {
 
     template <typename T>
     struct Transform : public TransformBase<T> {
+        static inline Transform LookAt(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
+
         inline Transform();
         inline Transform(Quaternion<T> inRotation, Vector<T, 3> inTranslation);
         inline Transform(Vector<T, 3> inScale, Quaternion<T> inRotation, Vector<T, 3> inTranslation);
@@ -39,6 +42,7 @@ namespace Common {
         inline Transform& Translate(const Vector<T, 3>& inTranslation);
         inline Transform& Rotate(const Quaternion<T>& inRotation);
         inline Transform& Scale(const Vector<T, 3>& inScale);
+        inline Transform& LookTo(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
 
         Matrix<T, 4, 4> GetTranslationMatrix() const;
         Matrix<T, 4, 4> GetRotationMatrix() const;
@@ -60,6 +64,14 @@ namespace Common {
 }
 
 namespace Common {
+    template <typename T>
+    Transform<T> Transform<T>::LookAt(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection)
+    {
+        Transform<T> result;
+        result.LookTo(inPosition, inTargetPosition, inUpDirection);
+        return result;
+    }
+
     template <typename T>
     Transform<T>::Transform()
     {
@@ -189,6 +201,13 @@ namespace Common {
     Transform<T>& Transform<T>::Scale(const Vector<T, 3>& inScale)
     {
         this->scale *= inScale;
+        return *this;
+    }
+
+    template <typename T>
+    Transform<T>& Transform<T>::LookTo(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection)
+    {
+        // TODO
         return *this;
     }
 

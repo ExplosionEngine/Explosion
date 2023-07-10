@@ -104,6 +104,8 @@ namespace Common {
         inline Matrix<IT, R, C> CastTo() const;
 
         inline Matrix<T, C, R> Transpose() const;
+        inline bool CanInverse() const;
+        inline Matrix<T, C, R> Inverse() const;
     };
 
     template <typename T, uint8_t R, uint8_t C>
@@ -744,6 +746,20 @@ namespace Common {
             }
         }
         return result;
+    }
+
+    template <typename T, uint8_t R, uint8_t C>
+    bool Matrix<T, R, C>::CanInverse() const
+    {
+        // TODO
+        return false;
+    }
+
+    template <typename T, uint8_t R, uint8_t C>
+    Matrix<T, C, R> Matrix<T, R, C>::Inverse() const
+    {
+        // TODO
+        return Matrix<T, C, R>();
     }
 
     template <typename T, uint8_t R, uint8_t C>
