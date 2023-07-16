@@ -13,6 +13,7 @@
 #endif
 
 #define Assert(expression) Common::Debug::AssertImpl(expression, #expression, __FILE__, __LINE__)
+#define Unimplement() Assert(false)
 
 namespace Common {
     class Debug {

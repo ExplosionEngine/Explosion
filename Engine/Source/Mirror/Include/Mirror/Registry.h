@@ -8,7 +8,6 @@
 
 #include <Common/Debug.h>
 #include <Mirror/Api.h>
-#include <Mirror/Serialization.h>
 #include <Mirror/Type.h>
 #include <Mirror/TypeInfo.h>
 
@@ -169,22 +168,22 @@ namespace Mirror {
                 [](Any* object) -> Any {
                     return std::ref(object->CastTo<ClassType&>().*Ptr);
                 },
-                [](SerializeStream& stream, const Mirror::MemberVariable& variable, Any* object) -> void {
-                    if constexpr (TypeSerializationSupport<ValueType>::value) {
+                [](Common::SerializeStream& stream, const Mirror::MemberVariable& variable, Any* object) -> void {
+                    if constexpr (Common::Serializer<ValueType>::serializable) {
                         ValueType& value = variable.Get(object).CastTo<ValueType&>();
-                        stream << value;
+                        Common::Serializer<ValueType>::Serialize(stream, value);
                     } else {
-                        Assert(false);
+                        Unimplement();
                     }
                 },
-                [](DeserializeStream& stream, const Mirror::MemberVariable& variable, Any* object) -> void {
-                    if constexpr (TypeSerializationSupport<ValueType>::value) {
+                [](Common::DeserializeStream& stream, const Mirror::MemberVariable& variable, Any* object) -> void {
+                    if constexpr (Common::Serializer<ValueType>::serializable) {
                         ValueType value;
-                        stream >> value;
+                        Common::Serializer<ValueType>::Deserialize(stream, value);
                         Mirror::Any valueRef = std::ref(value);
                         variable.Set(object, &valueRef);
                     } else {
-                        Assert(false);
+                        Unimplement();
                     }
                 }
             )));
@@ -250,21 +249,21 @@ namespace Mirror {
                 []() -> Any {
                     return Any(std::ref(*Ptr));
                 },
-                [](SerializeStream& stream, const Mirror::Variable& variable) -> void {
-                    if constexpr (TypeSerializationSupport<ValueType>::value) {
+                [](Common::SerializeStream& stream, const Mirror::Variable& variable) -> void {
+                    if constexpr (Common::Serializer<ValueType>::serializable) {
                         ValueType& value = variable.Get().CastTo<ValueType&>();
-                        stream << value;
+                        Common::Serializer<ValueType>::Serialize(stream, value);
                     } else {
-                        Assert(false);
+                        Unimplement();
                     }
                 },
-                [](DeserializeStream& stream, const Mirror::Variable& variable) -> void {
-                    if constexpr (TypeSerializationSupport<ValueType>::value) {
+                [](Common::DeserializeStream& stream, const Mirror::Variable& variable) -> void {
+                    if constexpr (Common::Serializer<ValueType>::serializable) {
                         ValueType value;
-                        stream >> value;
+                        Common::Serializer<ValueType>::Deserialize(stream, value);
                         variable.Set(value);
                     } else {
-                        Assert(false);
+                        Unimplement();
                     }
                 }
             )));
