@@ -297,9 +297,9 @@ namespace Mirror {
     void Class::Serialize(Common::SerializeStream& stream, Mirror::Any* obj) const
     {
         std::string name = GetName();
-        size_t memberVariablesNum = memberVariables.size();
+        uint64_t memberVariablesNum = memberVariables.size();
         Common::Serializer<std::string>::Serialize(stream, name);
-        Common::Serializer<size_t>::Serialize(stream, memberVariablesNum);
+        Common::Serializer<uint64_t>::Serialize(stream, memberVariablesNum);
 
         for (const auto& memberVariable : memberVariables) {
             Common::Serializer<std::string>::Serialize(stream, memberVariable.first);
@@ -312,8 +312,8 @@ namespace Mirror {
         std::string className;
         Common::Serializer<std::string>::Deserialize(stream, className);
 
-        size_t memberVariableSize;
-        Common::Serializer<size_t>::Deserialize(stream, memberVariableSize);
+        uint64_t memberVariableSize;
+        Common::Serializer<uint64_t>::Deserialize(stream, memberVariableSize);
 
         for (auto i = 0; i < memberVariableSize; i++) {
             std::string varName;
