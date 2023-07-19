@@ -70,22 +70,14 @@ namespace Mirror {
         return getter();
     }
 
-    void Variable::Serialize(SerializeStream& stream, const CustomVariableSerializer& customSerializer) const
+    void Variable::Serialize(Common::SerializeStream& stream) const
     {
-        if (customSerializer) {
-            customSerializer(stream, *this, serializer);
-        } else {
-            serializer(stream, *this);
-        }
+        serializer(stream, *this);
     }
 
-    void Variable::Deserialize(DeserializeStream& stream, const CustomVariableDeserializer& customDeserializer) const
+    void Variable::Deserialize(Common::DeserializeStream& stream) const
     {
-        if (customDeserializer) {
-            customDeserializer(stream, *this, deserializer);
-        } else {
-            deserializer(stream, *this);
-        }
+        deserializer(stream, *this);
     }
 
     Function::Function(std::string inName, Invoker inInvoker)
@@ -149,22 +141,14 @@ namespace Mirror {
         return getter(object);
     }
 
-    void MemberVariable::Serialize(SerializeStream& stream, Any* object, const CustomMemberVariableSerializer& customSerializer) const
+    void MemberVariable::Serialize(Common::SerializeStream& stream, Any* object) const
     {
-        if (customSerializer) {
-            customSerializer(stream, *this, object, serializer);
-        } else {
-            serializer(stream, *this, object);
-        }
+        serializer(stream, *this, object);
     }
 
-    void MemberVariable::Deserialize(DeserializeStream& stream, Any* object, const CustomMemberVariableDeserializer& customDeserializer) const
+    void MemberVariable::Deserialize(Common::DeserializeStream& stream, Any* object) const
     {
-        if (customDeserializer) {
-            customDeserializer(stream, *this, object, deserializer);
-        } else {
-            deserializer(stream, *this, object);
-        }
+        deserializer(stream, *this, object);
     }
 
     MemberFunction::MemberFunction(std::string inName, Invoker inInvoker)
@@ -310,34 +294,36 @@ namespace Mirror {
         return iter->second;
     }
 
-    void Class::Serialize(SerializeStream& stream, Mirror::Any* obj, const CustomMemberVariableSerializer& customSerializer) const
+    void Class::Serialize(Common::SerializeStream& stream, Mirror::Any* obj) const
     {
-        stream << GetName();
-        stream << memberVariables.size();
+        std::string name = GetName();
+        uint64_t memberVariablesNum = memberVariables.size();
+        Common::Serializer<std::string>::Serialize(stream, name);
+        Common::Serializer<uint64_t>::Serialize(stream, memberVariablesNum);
 
         for (const auto& memberVariable : memberVariables) {
-            stream << memberVariable.first;
-            memberVariable.second.Serialize(stream, obj, customSerializer);
+            Common::Serializer<std::string>::Serialize(stream, memberVariable.first);
+            memberVariable.second.Serialize(stream, obj);
         }
     }
 
-    void Class::Deserailize(DeserializeStream& stream, Mirror::Any* obj, const CustomMemberVariableDeserializer& customDeserializer) const
+    void Class::Deserailize(Common::DeserializeStream& stream, Mirror::Any* obj) const
     {
         std::string className;
-        stream >> className;
+        Common::Serializer<std::string>::Deserialize(stream, className);
 
-        size_t memberVariableSize;
-        stream >> memberVariableSize;
+        uint64_t memberVariableSize;
+        Common::Serializer<uint64_t>::Deserialize(stream, memberVariableSize);
 
         for (auto i = 0; i < memberVariableSize; i++) {
             std::string varName;
-            stream >> varName;
+            Common::Serializer<std::string>::Deserialize(stream, varName);
 
             auto iter = memberVariables.find(varName);
             if (iter == memberVariables.end()) {
                 continue;
             }
-            iter->second.Deserialize(stream, obj, customDeserializer);
+            iter->second.Deserialize(stream, obj);
         }
     }
 

@@ -11,7 +11,6 @@
 #include <Common/Path.h>
 #include <Mirror/Registry.h>
 #include <Mirror/Type.h>
-#include <Mirror/Serialization.h>
 
 int ga;
 float gb;
@@ -57,60 +56,12 @@ struct MirrorInfoRegistry {
 };
 static MirrorInfoRegistry registry;
 
-TEST(SerializationTest, FileStreamTest)
-{
-    static std::string fileName = "TestGenerated/SerializationTest.FileStreamTest.bin";
-    Common::PathUtils::MakeDirectoriesForFile(fileName);
-    {
-        std::ofstream file(fileName, std::ios::binary);
-
-        int a = 1;
-        float b = 2.0f;
-        std::string c = "str";
-        size_t cSize = c.size();
-
-        Mirror::FileSerializeStream stream(file);
-        stream.Write(&a, sizeof(int));
-        stream.Write(&b, sizeof(float));
-        stream.Write(&cSize, sizeof(size_t));
-        stream.Write(c.data(), c.size());
-
-        file.close();
-    }
-
-    {
-        std::ifstream file(fileName, std::ios::binary);
-
-        int a;
-        float b;
-        size_t cSize;
-        std::string c;
-
-        Mirror::FileDeserializeStream stream(file);
-        stream.SeekForward(sizeof(int));
-        stream.Read(&b, sizeof(float));
-        stream.SeekBack(sizeof(int) + sizeof(float));
-        stream.Read(&a, sizeof(int));
-        stream.SeekForward(sizeof(float));
-        stream.Read(&cSize, sizeof(size_t));
-        c.resize(cSize);
-        stream.Read(c.data(), c.size());
-
-        file.close();
-
-        ASSERT_EQ(a, 1);
-        ASSERT_EQ(b, 2.0f);
-        ASSERT_EQ(c, "str");
-    }
-}
-
 TEST(SerializationTest, VariableFileSerializationTest)
 {
     static std::string fileName = "TestGenerated/SerializationTest.VariableFileSerializationTest.bin";
     Common::PathUtils::MakeDirectoriesForFile(fileName);
     {
-        std::ofstream file(fileName, std::ios::binary);
-        Mirror::FileSerializeStream stream(file);
+        Common::BinaryFileSerializeStream stream(fileName);
 
         ga = 1;
         gb = 2.0f;
@@ -120,8 +71,6 @@ TEST(SerializationTest, VariableFileSerializationTest)
         globalScope.GetVariable("ga").Serialize(stream);
         globalScope.GetVariable("gb").Serialize(stream);
         globalScope.GetVariable("gc").Serialize(stream);
-
-        file.close();
     }
 
     {
@@ -129,8 +78,7 @@ TEST(SerializationTest, VariableFileSerializationTest)
         gb = 5.0f;
         gc = "6";
 
-        std::ifstream file(fileName, std::ios::binary);
-        Mirror::FileDeserializeStream stream(file);
+        Common::BinaryFileDeserializeStream stream(fileName);
 
         const auto& globalScope = Mirror::GlobalScope::Get();
         globalScope.GetVariable("ga").Deserialize(stream);
@@ -140,8 +88,6 @@ TEST(SerializationTest, VariableFileSerializationTest)
         ASSERT_EQ(ga, 1);
         ASSERT_EQ(gb, 2.0f);
         ASSERT_EQ(gc, "3");
-
-        file.close();
     }
 }
 
@@ -150,7 +96,7 @@ TEST(SerializationTest, ClassFileSerializationTest)
     static std::string fileName = "TestGenerated/SerializationTest.ClassFileSerializationTest.bin";
     Common::PathUtils::MakeDirectoriesForFile(fileName);
     {
-        Mirror::AutoCloseFileSerializeStream stream(fileName);
+        Common::BinaryFileSerializeStream stream(fileName);
 
         SerializationTestStruct0 obj;
         obj.a = 1;
@@ -164,7 +110,7 @@ TEST(SerializationTest, ClassFileSerializationTest)
     }
 
     {
-        Mirror::AutoCloseFileDeserializeStream stream(fileName);
+        Common::BinaryFileDeserializeStream stream(fileName);
 
         const auto& clazz = Mirror::Class::Get("SerializationTestStruct0");
         Mirror::Any obj = clazz.GetConstructor(Mirror::NamePresets::defaultConstructor).ConstructOnStack();
@@ -183,7 +129,7 @@ TEST(SerializationTest, ContainerFileSerializationTest)
     Common::PathUtils::MakeDirectoriesForFile(fileName);
     const auto& clazz = Mirror::Class::Get("SerializationTestStruct1");
     {
-        Mirror::AutoCloseFileSerializeStream stream(fileName);
+        Common::BinaryFileSerializeStream stream(fileName);
 
         SerializationTestStruct1 obj;
         obj.a = { 1, 2 };
@@ -196,7 +142,7 @@ TEST(SerializationTest, ContainerFileSerializationTest)
     }
 
     {
-        Mirror::AutoCloseFileDeserializeStream stream(fileName);
+        Common::BinaryFileDeserializeStream stream(fileName);
 
         Mirror::Any ref = clazz.GetDefaultConstructor().ConstructOnStack();
         clazz.Deserailize(stream, &ref);
