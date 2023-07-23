@@ -11,10 +11,12 @@ namespace Runtime {
     class World;
 
     using Entity = entt::entity;
-    static constexpr auto ENTITY_NULL = entt::null;
+    static constexpr auto entityNull = entt::null;
 
     class EClass() Component {
     public:
+        EClassBody(Component)
+
         Component(Runtime::World* inWorld, Runtime::Entity inEntity)
             : world(inWorld)
             , entity(inEntity)

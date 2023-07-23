@@ -10,6 +10,8 @@
 namespace Runtime {
     class EClass() LightComponent : public Component {
     public:
+        EClassBody(LightComponent)
+
         EProperty(category=Light)
         Common::FVec3 color;
 

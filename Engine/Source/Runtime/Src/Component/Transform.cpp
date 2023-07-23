@@ -9,7 +9,7 @@ namespace Runtime {
     void TransformComponent::TraverseChildren(const EntityTraverseFunc& func) const
     {
         Entity cur = firstChild;
-        while (cur != ENTITY_NULL) {
+        while (cur != entityNull) {
             func(cur);
 
             auto* transform = world->GetComponent<TransformComponent>(cur);
@@ -35,7 +35,7 @@ namespace Runtime {
     void TransformComponent::TraverseBrothers(const Runtime::EntityTraverseFunc& func) const
     {
         Entity cur = nextBrother;
-        while (cur != ENTITY_NULL) {
+        while (cur != entityNull) {
             func(cur);
 
             auto* transform = world->GetComponent<TransformComponent>(cur);

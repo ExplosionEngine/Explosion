@@ -14,6 +14,8 @@ namespace Runtime {
 
     class EClass() TransformComponent : public Component {
     public:
+        EClassBody(TransformComponent)
+
         EFunc()
         void TraverseChildren(const EntityTraverseFunc& func) const;
 

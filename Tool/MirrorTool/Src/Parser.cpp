@@ -3,6 +3,7 @@
 //
 
 #include <functional>
+#include <sstream>
 
 #include <Common/String.h>
 #include <MirrorTool/Parser.h>
@@ -95,7 +96,7 @@ namespace MirrorTool {
     }
 
     template <typename T>
-    bool PopoutIfHaveNoMetaTag(std::vector<T>& container, const std::string& tag)
+    static bool PopoutIfHaveNoMetaTag(std::vector<T>& container, const std::string& tag)
     {
         const MetaDataMap& metaDatas = container.back().metaDatas;
 
@@ -113,7 +114,7 @@ namespace MirrorTool {
     }
 
     template <typename T>
-    void ClearMetaTag(T& node, const std::string& tag)
+    static void ClearMetaTag(T& node, const std::string& tag)
     {
         MetaDataMap& metaDatas = node.metaDatas;
         auto iter = metaDatas.find(tag);
@@ -124,12 +125,24 @@ namespace MirrorTool {
     }
 
     template <typename T>
-    void ApplyMetaFilter(std::vector<T>& container, const std::string& tag)
+    static void ApplyMetaFilter(std::vector<T>& container, const std::string& tag)
     {
         bool found = PopoutIfHaveNoMetaTag(container, tag);
         if (found) {
             ClearMetaTag(container.back(), tag);
         }
+    }
+
+    static void UpdateConstructorName(ClassConstructorInfo& info)
+    {
+        std::stringstream stream;
+        for (auto i = 0; i < info.parameters.size(); i++) {
+            stream << info.parameters[i].second;
+            if (i != info.parameters.size() - 1) {
+                stream << ",";
+            }
+        }
+        info.name = stream.str();
     }
 
     DeclareVisitor(GlobalVariableVisitor, VariableInfo)
@@ -156,6 +169,13 @@ namespace MirrorTool {
     DeclareVisitor(ClassFunctionVisitor, ClassFunctionInfo)
     {
         FetchCursorInfo(ClassFunctionVisitor, cursor);
+        ProcessFunction;
+        CleanUpAndContinueVisit;
+    }
+
+    DeclareVisitor(ClassConstructorVisitor, ClassConstructorInfo)
+    {
+        FetchCursorInfo(ClassConstructorVisitor, cursor);
         ProcessFunction;
         CleanUpAndContinueVisit;
     }
@@ -198,6 +218,14 @@ namespace MirrorTool {
             ApplyMetaFilter(functions, "func");
 
             clang_disposeString(retTypeSpelling);
+        } else if (kind == CXCursor_Constructor) {
+            ClassConstructorInfo constructorInfo;
+            constructorInfo.outerName = GetOuterName(context.outerName, context.name);
+            constructorInfo.fieldAccess = context.lastFieldAccess;
+            context.constructors.emplace_back(std::move(constructorInfo));
+            VisitChildren(ClassConstructorVisitor, ClassConstructorInfo, cursor, context.constructors.back());
+            UpdateConstructorName(context.constructors.back());
+            ApplyMetaFilter(context.constructors, "constructor");
         }
         CleanUpAndContinueVisit;
     }
