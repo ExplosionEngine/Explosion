@@ -43,7 +43,7 @@ namespace Common {
 
     class DynamicLibraryManager {
     public:
-        static DynamicLibraryManager& Singleton();
+        static DynamicLibraryManager& Get();
 
         NON_COPYABLE(DynamicLibraryManager)
         ~DynamicLibraryManager();

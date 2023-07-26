@@ -1,6 +1,7 @@
 add_subdirectory(Common)
 add_subdirectory(RHI)
 add_subdirectory(Mirror)
+add_subdirectory(Core)
 add_subdirectory(Render)
 add_subdirectory(Runtime)
 add_subdirectory(Rendering)
