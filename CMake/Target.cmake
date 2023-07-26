@@ -203,10 +203,10 @@ function(AddMirrorInfoSourceGenerationTarget)
                 NAME ${L}
                 OUTPUT TARGET_INCS
             )
+            foreach (I ${TARGET_INCS})
+                list(APPEND INC ${I})
+            endforeach ()
         endforeach()
-        foreach (I ${TARGET_INCS})
-            list(APPEND INC ${I})
-        endforeach ()
     endif()
     list(REMOVE_DUPLICATES INC)
 
@@ -228,7 +228,7 @@ function(AddMirrorInfoSourceGenerationTarget)
             add_custom_command(
                 OUTPUT ${OUTPUT_SOURCE}
                 COMMAND "$<TARGET_FILE:MirrorTool>" "-i" ${INPUT_HEADER_FILE} "-o" ${OUTPUT_SOURCE} ${INC_ARGS}
-                DEPENDS ${INPUT_HEADER_FILE}
+                DEPENDS MirrorTool ${INPUT_HEADER_FILE}
             )
         endforeach()
     endforeach ()

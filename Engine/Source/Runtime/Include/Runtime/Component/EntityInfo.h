@@ -12,6 +12,8 @@
 namespace Runtime {
     class EClass(editorHide) EntityInfoComponent : public Component {
     public:
+        EClassBody(EntityInfoComponent)
+
         EProperty()
         std::string name;
 

@@ -23,6 +23,8 @@ namespace Runtime {
 
     class EClass() MaterialParameterSet {
     public:
+        EClassBody(MaterialParameterSet)
+
         EProperty()
         std::unordered_map<std::string, std::pair<MaterialParameterType, size_t>> parameterTypeAndIndexMap;
 
@@ -44,6 +46,8 @@ namespace Runtime {
 
     class EClass() MaterialPermutationSet {
     public:
+        EClassBody(MaterialPermutationSet)
+
         EProperty()
         std::unordered_map<std::string, uint8_t> valueMap;
 
@@ -53,6 +57,8 @@ namespace Runtime {
 
     class EClass() Material : public Asset {
     public:
+        EClassBody(Material)
+
         EProperty()
         std::string code;
 

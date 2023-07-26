@@ -58,7 +58,7 @@ namespace Common {
 }
 
 namespace Common {
-    DynamicLibraryManager& DynamicLibraryManager::Singleton()
+    DynamicLibraryManager& DynamicLibraryManager::Get()
     {
         static DynamicLibraryManager instance;
         return instance;

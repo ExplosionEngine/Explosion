@@ -53,6 +53,8 @@ namespace Runtime {
 
     class EClass() Texture : public Asset {
     public:
+        EClassBody(Texture)
+
         EProperty()
         TextureFormat format;
 
@@ -64,12 +66,16 @@ namespace Runtime {
 
     class EClass() Texture1D : public Texture {
     public:
+        EClassBody(Texture1D)
+
         EProperty()
         size_t length;
     };
 
     class EClass() Texture2D : public Texture {
     public:
+        EClassBody(Texture2D)
+
         EProperty()
         size_t width;
 
@@ -79,6 +85,8 @@ namespace Runtime {
 
     class EClass() Texture2DArray : public Texture {
     public:
+        EClassBody(Texture2DArray)
+
         EProperty()
         size_t width;
 
@@ -91,6 +99,8 @@ namespace Runtime {
 
     class EClass() TextureCube : public Texture {
     public:
+        EClassBody(TextureCube)
+
         EProperty()
         size_t width;
 
@@ -100,6 +110,8 @@ namespace Runtime {
 
     class EClass() TextureCubeArray : public Texture {
     public:
+        EClassBody(TextureCubeArray)
+
         EProperty()
         size_t width;
 
@@ -112,6 +124,8 @@ namespace Runtime {
 
     class EClass() Texture3D : public Texture {
     public:
+        EClassBody(Texture3D)
+
         EProperty()
         size_t width;
 

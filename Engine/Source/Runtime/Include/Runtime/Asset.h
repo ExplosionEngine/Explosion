@@ -21,6 +21,8 @@ namespace Runtime {
 
     class EClass() Asset {
     public:
+        EClassBody(Asset)
+
         EProperty()
         Uri uri;
     };

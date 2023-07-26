@@ -36,7 +36,7 @@ namespace RHI {
 
     Instance* Instance::GetByType(const RHIType& type)
     {
-        auto* dynamicLibrary = Common::DynamicLibraryManager::Singleton().FindOrLoad(GetRHILibNameByType(type));
+        auto* dynamicLibrary = Common::DynamicLibraryManager::Get().FindOrLoad(GetRHILibNameByType(type));
         if (dynamicLibrary == nullptr) {
             return nullptr;
         }
