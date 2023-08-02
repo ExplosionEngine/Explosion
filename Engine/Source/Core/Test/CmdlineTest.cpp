@@ -6,9 +6,9 @@
 
 #include <Core/Cmdline.h>
 
-Core::CmdlineArg<bool> arg0("a", "-a", false, "arg0");
-Core::CmdlineArg<int32_t> arg1("b", "-b", 0, "arg1");
-Core::CmdlineArg<std::string> arg2("c", "-c", "", "arg2");
+Core::CmdlineArgValue<bool> arg0("a", "-a", false, "arg0");
+Core::CmdlineArgValue<int32_t> arg1("b", "-b", 0, "arg1");
+Core::CmdlineArgValue<std::string> arg2("c", "-c", "", "arg2");
 
 bool arg3 = false;
 uint32_t arg4 = 0;

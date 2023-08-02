@@ -25,6 +25,9 @@ public:
 RegisterGlobalShader(RenderGraphTestCS);
 
 class TestComputePass : public RGComputePass {
+public:
+    TestComputePass() : RGComputePass("TestComputePass") {}
+
 protected:
     void Setup(RGComputePassBuilder& builder) override
     {
@@ -121,17 +124,6 @@ struct RenderGraphTest : public testing::Test {
 };
 
 TEST_F(RenderGraphTest, BasicTest)
-{
-    Common::UniqueRef<RHI::Fence> mainFence = device->CreateFence();
-
-    RenderGraph renderGraph(*device);
-    renderGraph.Setup();
-    renderGraph.Compile();
-    renderGraph.Execute(mainFence.Get());
-    mainFence->Wait();
-}
-
-TEST_F(RenderGraphTest, ComputePassTest)
 {
     Common::UniqueRef<RHI::Fence> mainFence = device->CreateFence();
 

@@ -8,7 +8,7 @@
 #include <Common/Debug.h>
 
 namespace Core {
-    CmdlineArgBase::~CmdlineArgBase() = default;
+    CmdlineArg::~CmdlineArg() = default;
 
     Cli& Cli::Get()
     {

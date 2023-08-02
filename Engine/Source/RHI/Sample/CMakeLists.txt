@@ -17,17 +17,17 @@ function(AddRHISample)
     endif()
 
     foreach(S ${PARAMS_SHADER})
-        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${S}->${S}")
+        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${S}->../Test/Sample/${S}")
         list(APPEND PATHS ${path})
     endforeach()
 
     foreach(I ${PARAMS_IMAGE})
-        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${I}->${I}")
+        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${I}->../Test/Sample/${I}")
         list(APPEND PATHS ${path})
     endforeach()
 
     foreach(M ${PARAMS_MODEL})
-        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${M}->${M}")
+        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${M}->../Test/Sample/${M}")
         list(APPEND PATHS ${path})
     endforeach()
 
