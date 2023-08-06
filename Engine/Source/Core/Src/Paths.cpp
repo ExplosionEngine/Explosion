@@ -37,6 +37,11 @@ namespace Core {
         return EngineRoot() / "Binaries";
     }
 
+    std::filesystem::path Paths::EnginePluginPath()
+    {
+        return EngineRoot() / "Plugin";
+    }
+
     void Paths::SetCurrentProjectFile(std::filesystem::path inFile)
     {
         currentProjectFile = std::move(inFile);
@@ -60,5 +65,10 @@ namespace Core {
     std::filesystem::path Paths::ProjectBinariesPath()
     {
         return ProjectRoot() / "Binaries";
+    }
+
+    std::filesystem::path Paths::ProjectPluginPath()
+    {
+        return ProjectRoot() / "Plugin";
     }
 }

@@ -12,9 +12,5 @@
 #include <Rendering/Scene.h>
 
 namespace Rendering {
-    class Renderer {
-    public:
-        // TODO
-        explicit Renderer(const Render::SceneViewCluster& inViewCluster) {}
-    };
+    // TODO
 }

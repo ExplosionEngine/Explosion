@@ -5,8 +5,10 @@
 #pragma once
 
 #include <string>
+#include <optional>
 
 #include <Common/DynamicLibrary.h>
+#include <Core/Api.h>
 
 #define IMPLEMENT_MODULE(moduleClass) \
     extern "C" Core::Module* GetModule() \
@@ -16,19 +18,9 @@
     } \
 
 namespace Core {
-    enum class ModuleType {
-        engineModule,
-        gameModule,
-        enginePlugin,
-        gamePlugin,
-        max
-    };
-
-    class Module {
+    class CORE_API Module {
     public:
         virtual ~Module();
-        virtual std::string GetName() const = 0;
-        virtual ModuleType GetType() const = 0;
         virtual void OnLoad() = 0;
         virtual void OnUnload() = 0;
 
@@ -36,7 +28,9 @@ namespace Core {
         Module();
     };
 
-    class ModuleRuntimeInfo {
+    using GetModuleFunc = Module*(*)();
+
+    struct ModuleRuntimeInfo {
         Module* instance;
         Common::DynamicLibrary* dynamicLib;
     };
@@ -46,7 +40,14 @@ namespace Core {
         static ModuleManager& Get();
         ~ModuleManager();
 
+        Module* FindOrLoad(const std::string& moduleName);
+        void Unload(const std::string& moduleName);
+        void UnloadAll();
+
     private:
+        static std::optional<std::string> SearchModule(const std::string& moduleName);
+
         ModuleManager();
+        std::unordered_map<std::string, ModuleRuntimeInfo> loadedModules;
     };
 }
