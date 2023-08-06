@@ -12,13 +12,20 @@
 #include <Core/Api.h>
 
 namespace Core {
-    class CORE_API CmdlineArgBase {
+    class CORE_API CmdlineArg {
     public:
-        virtual ~CmdlineArgBase();
+        virtual ~CmdlineArg();
+
+        template <typename T>
+        T GetValue()
+        {
+            return static_cast<const T*>(Value());
+        }
 
     protected:
         friend class Cli;
 
+        virtual const void* Value() = 0;
         virtual clipp::group CreateClippParameter() = 0;
     };
 
@@ -30,19 +37,19 @@ namespace Core {
         std::pair<bool, std::string> Parse(int argc, char* argv[]);
 
     private:
-        template <typename T> friend class CmdlineArg;
+        template <typename T> friend class CmdlineArgValue;
         template <typename T> friend class CmdlineArgRef;
 
         Cli();
 
         bool parsed;
-        std::vector<CmdlineArgBase*> args;
+        std::vector<CmdlineArg*> args;
     };
 
     template <typename T>
-    class CmdlineArg : public CmdlineArgBase {
+    class CmdlineArgValue : public CmdlineArg {
     public:
-        CmdlineArg(std::string inName, std::string inOption, T inDefaultValue, std::string inDoc)
+        CmdlineArgValue(std::string inName, std::string inOption, T inDefaultValue, std::string inDoc)
             : value(inDefaultValue)
             , name(std::move(inName))
             , option(std::move(inOption))
@@ -51,11 +58,17 @@ namespace Core {
             Cli::Get().args.emplace_back(this);
         }
 
-        ~CmdlineArg() override = default;
+        ~CmdlineArgValue() override = default;
 
         T GetValue() const
         {
             return value;
+        }
+
+    protected:
+        const void* Value() override
+        {
+            return &value;
         }
 
         clipp::group CreateClippParameter() override
@@ -75,7 +88,7 @@ namespace Core {
     };
 
     template <typename T>
-    class CmdlineArgRef : public CmdlineArgBase {
+    class CmdlineArgRef : public CmdlineArg {
     public:
         CmdlineArgRef(std::string inName, std::string inOption, T& inValueRef, std::string inDoc)
             : valueRef(inValueRef)
@@ -91,6 +104,12 @@ namespace Core {
         T GetValue() const
         {
             return valueRef;
+        }
+
+    protected:
+        const void* Value() override
+        {
+            return &valueRef;
         }
 
         clipp::group CreateClippParameter() override

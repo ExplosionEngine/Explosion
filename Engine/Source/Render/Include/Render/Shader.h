@@ -14,7 +14,6 @@
 #include <Common/Debug.h>
 #include <Common/Hash.h>
 #include <Common/File.h>
-#include <Common/Path.h>
 #include <Common/Math/Vector.h>
 #include <RHI/Common.h>
 #include <RHI/Device.h>
@@ -32,7 +31,7 @@ namespace Render {
     class IShaderType {
         virtual std::string GetName() = 0;
         virtual ShaderTypeKey GetHash() = 0;
-        virtual std::string GetCode(const Common::PathMapper& pathMapper) = 0;
+        virtual std::string GetCode() = 0;
         virtual std::vector<VariantKey> GetVariants() = 0;
         virtual std::vector<std::string> GetDefinitions(VariantKey variantKey) = 0;
     };
@@ -113,9 +112,10 @@ namespace Render {
             return Common::HashUtils::CityHash(Shader::name, sizeof(Shader::name));
         }
 
-        std::string GetCode(const Common::PathMapper& pathMapper) override
+        std::string GetCode() override
         {
-            return Common::FileUtils::ReadTextFile(pathMapper.Map(Shader::sourceFile));
+            // TODO convert to absolute path
+            return Common::FileUtils::ReadTextFile(Shader::sourceFile);
         }
 
         std::vector<VariantKey> GetVariants() override
