@@ -25,6 +25,8 @@ namespace RHI::DirectX12 {
     using DebugLayerExceptionHandler = std::function<void()>;
 #endif
 
+    RHI::Instance* RHIGetInstance();
+
     class RHI_DIRECTX12_API DX12Instance : public Instance {
     public:
         NON_COPYABLE(DX12Instance)
@@ -58,8 +60,4 @@ namespace RHI::DirectX12 {
         std::unordered_map<const DX12Device*, DebugLayerExceptionHandler> debugLayerExceptionHandlers;
 #endif
     };
-}
-
-extern "C" {
-    RHI_DIRECTX12_API RHI::Instance* RHIGetInstance();
 }

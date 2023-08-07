@@ -24,6 +24,12 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
+    RHI::Instance* RHIGetInstance()
+    {
+        static RHI::DirectX12::DX12Instance singleton;
+        return &singleton;
+    }
+
     DX12Instance::DX12Instance() : Instance()
     {
         CreateDX12Factory();
@@ -124,13 +130,5 @@ namespace RHI::DirectX12 {
     void DX12Instance::Destroy()
     {
         delete this;
-    }
-}
-
-extern "C" {
-    RHI::Instance* RHIGetInstance()
-    {
-        static RHI::DirectX12::DX12Instance singleton;
-        return &singleton;
     }
 }

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Core/Module.h>
+#include <Render/Scene.h>
 #include <Rendering/Api.h>
 
 namespace Rendering {
@@ -13,9 +14,9 @@ namespace Rendering {
         RenderingModule();
         ~RenderingModule() override;
 
-        void OnLoad() override;
-        void OnUnload() override;
+        Render::SceneInterface* AllocateScene();
+        void DestroyScene(Render::SceneInterface* inScene);
     };
 }
 
-IMPLEMENT_MODULE(Rendering::RenderingModule);
+IMPLEMENT_MODULE(RENDERING_API, Rendering::RenderingModule);

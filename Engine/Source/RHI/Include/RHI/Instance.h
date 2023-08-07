@@ -28,6 +28,4 @@ namespace RHI {
     protected:
         explicit Instance();
     };
-
-    using RHIGetInstanceFunc = Instance*(*)();
 }

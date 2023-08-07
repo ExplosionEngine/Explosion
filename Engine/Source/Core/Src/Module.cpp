@@ -11,6 +11,14 @@ namespace Core {
 
     Module::~Module() = default;
 
+    void Module::OnLoad()
+    {
+    }
+
+    void Module::OnUnload()
+    {
+    }
+
     ModuleManager& ModuleManager::Get()
     {
         static ModuleManager instance;
@@ -82,20 +90,24 @@ namespace Core {
         const std::filesystem::path workingDir = Paths::WorkingDir();
 
         for (const auto& searchPath : searchPaths) {
-            for (const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator(searchPath)) {
-                if (entry.is_directory()) {
-                    continue;
-                }
+            try {
+                for (const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator(searchPath)) {
+                    if (entry.is_directory()) {
+                        continue;
+                    }
 
-                const auto& path = entry.path();
-                auto fileName = path.filename().string();
-                auto extension = path.extension().string();
+                    const auto& path = entry.path();
+                    auto fileName = path.filename().string();
+                    auto extension = path.extension().string();
 
-                if ((fileName == moduleName || fileName == fmt::format("lib{}", moduleName))
-                    && (extension == ".dll" || extension == ".so" || extension == ".dylib"))
-                {
-                    return path.string().starts_with(workingDir.string()) ? (fileName + "." + extension) : path.string();
+                    if ((extension == ".dll" || extension == ".so" || extension == ".dylib")
+                        && (fileName == fmt::format("{}{}", moduleName, extension) || fileName == fmt::format("lib{}{}", moduleName, extension)))
+                    {
+                        return path.string();
+                    }
                 }
+            } catch (const std::exception& e) {
+                continue;
             }
         }
         return {};

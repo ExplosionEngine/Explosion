@@ -3,19 +3,20 @@
 //
 
 #include <Rendering/RenderingModule.h>
+#include <Rendering/Scene.h>
 
 namespace Rendering {
     RenderingModule::RenderingModule() = default;
 
     RenderingModule::~RenderingModule() = default;
 
-    void RenderingModule::OnLoad()
+    Render::SceneInterface* RenderingModule::AllocateScene() // NOLINT
     {
-        // TODO
+        return new Scene();
     }
 
-    void RenderingModule::OnUnload()
+    void RenderingModule::DestroyScene(Render::SceneInterface* inScene) // NOLINT
     {
-        // TODO
+        delete inScene;
     }
 }
