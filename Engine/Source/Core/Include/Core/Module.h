@@ -48,6 +48,14 @@ namespace Core {
             return static_cast<T*>(FindOrLoad(moduleName));
         }
 
+        Module* Find(const std::string& moduleName);
+
+        template <typename T>
+        T* FindTyped(const std::string& moduleName)
+        {
+            return static_cast<T*>(Find(moduleName));
+        }
+
         void Unload(const std::string& moduleName);
         void UnloadAll();
 

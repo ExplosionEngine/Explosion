@@ -10,13 +10,29 @@ namespace Rendering {
 
     RenderingModule::~RenderingModule() = default;
 
-    Render::SceneInterface* RenderingModule::AllocateScene() // NOLINT
+    Render::IScene* RenderingModule::AllocateScene() // NOLINT
     {
         return new Scene();
     }
 
-    void RenderingModule::DestroyScene(Render::SceneInterface* inScene) // NOLINT
+    void RenderingModule::DestroyScene(Render::IScene* inScene) // NOLINT
     {
         delete inScene;
+    }
+
+    void RenderingModule::StartupRenderingThread()
+    {
+        renderingThread = Common::MakeUnique<Common::WorkerThread>("RenderingThread");
+    }
+
+    void RenderingModule::ShutdownRenderingThread()
+    {
+        renderingThread = nullptr;
+    }
+
+    void RenderingModule::FlushAllRenderingCommands()
+    {
+        Assert(renderingThread != nullptr);
+        renderingThread->Flush();
     }
 }

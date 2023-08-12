@@ -5,7 +5,7 @@
 #pragma once
 
 namespace Render {
-    class SceneInterface {
+    class IScene {
     public:
         // TODO
     };

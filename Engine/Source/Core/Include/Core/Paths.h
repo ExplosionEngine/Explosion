@@ -10,7 +10,7 @@
 #include <Core/Api.h>
 
 namespace Core {
-    class Paths {
+    class CORE_API Paths {
     public:
         Paths() = delete;
 

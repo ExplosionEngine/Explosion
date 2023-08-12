@@ -7,7 +7,7 @@
 #include <Render/Scene.h>
 
 namespace Rendering {
-    class Scene : public Render::SceneInterface {
+    class Scene : public Render::IScene {
 
     };
 }

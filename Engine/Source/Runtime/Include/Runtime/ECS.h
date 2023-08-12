@@ -23,6 +23,7 @@ namespace Runtime {
         {
         }
 
+    private:
         EProperty(transient, editorHide)
         World* world;
 

@@ -19,6 +19,7 @@
 #include <RHI/Device.h>
 #include <RHI/ShaderModule.h>
 #include <RHI/BindGroupLayout.h>
+#include <Core/Paths.h>
 
 namespace Render {
     class Shader {};
@@ -114,8 +115,18 @@ namespace Render {
 
         std::string GetCode() override
         {
-            // TODO convert to absolute path
-            return Common::FileUtils::ReadTextFile(Shader::sourceFile);
+            static std::unordered_map<std::string, std::string> pathMap = {
+                { "/Engine/Shader", Core::Paths::EngineShaderPath().string() }
+            };
+
+            std::string sourceFile = Shader::sourceFile;
+            for (const auto& iter : pathMap) {
+                if (sourceFile.starts_with(iter.first)) {
+                    return Common::FileUtils::ReadTextFile(Common::StringUtils::Replace(sourceFile, iter.first, iter.second));
+                }
+            }
+            Assert(false);
+            return "";
         }
 
         std::vector<VariantKey> GetVariants() override

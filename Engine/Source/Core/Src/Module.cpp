@@ -61,6 +61,15 @@ namespace Core {
         return loadedModules[moduleName].instance;
     }
 
+    Module* ModuleManager::Find(const std::string& moduleName)
+    {
+        auto iter = loadedModules.find(moduleName);
+        if (iter == loadedModules.end()) {
+            return nullptr;
+        }
+        return iter->second.instance;
+    }
+
     void ModuleManager::Unload(const std::string& moduleName)
     {
         auto iter = loadedModules.find(moduleName);
