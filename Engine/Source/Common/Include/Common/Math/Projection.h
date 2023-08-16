@@ -73,8 +73,22 @@ namespace Common {
     template <typename T>
     Matrix<T, 4, 4> ReversedZOrthogonalProjection<T>::GetProjectionMatrix() const
     {
-        // TOOD
-        return Matrix<T, 4, 4>();
+        if (this->farPlane.has_value()) {
+            return Matrix<T, 4, 4>(
+                2.0f / this->width, 0.0f, 0.0f, 0.0f,
+                0.0f, 2.0f / this->height, 0.0f, 0.0f,
+                0.0f, 0.0f, -1.0f / (this->farPlane - this->nearPlane), 1.0f + (this->nearPlane / (this->farPlane - this->nearPlane)),
+                0.0f, 0.0f, 0.0f, 1.0f
+            );
+        } else {
+            // Infinite Far Plane
+            return Matrix<T, 4, 4>(
+                2.0f / this->width, 0.0f, 0.0f, 0.0f,
+                0.0f, 2.0f / this->height, 0.0f, 0.0f,
+                0.0f, 0.0f, 0.0f, 1.0f,
+                0.0f, 0.0f, 0.0f, 1.0f
+            );
+        }
     }
 
     template <typename T>
@@ -100,7 +114,23 @@ namespace Common {
     template <typename T>
     Matrix<T, 4, 4> ReversedZPerspectiveProjection<T>::GetProjectionMatrix() const
     {
-        // TODO
-        return Matrix<T, 4, 4>();
+        T tanHalfFov = tan(this->fov / 2);
+
+        if (this->farPlane.has_value()) {
+            return Matrix<T, 4, 4>(
+                this->width / (this->height * tanHalfFov), 0.0f, 0.0f, 0.0f,
+                0.0f, 1.0f / tanHalfFov, 0.0f, 0.0f,
+                0.0f, 0.0f, this->nearPlane / (this->nearPlane - this->farPlane), this->nearPlane * this->farPlane / (this->farPlane - this->nearPlane),
+                0.0f, 0.0f, 1.0f, 0.0f
+            );
+        } else {
+            // Infinite Far Plane
+            return Matrix<T, 4, 4>(
+                this->width / (this->height * tanHalfFov), 0.0f, 0.0f, 0.0f,
+                0.0f, 1.0f / tanHalfFov, 0.0f, 0.0f,
+                0.0f, 0.0f, 0.0f, this->nearPlane,
+                0.0f, 0.0f, 1.0f, 0.0f
+            );
+        }
     }
 }

@@ -207,7 +207,70 @@ namespace Common {
     template <typename T>
     Transform<T>& Transform<T>::LookTo(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection)
     {
-        // TODO
+        Vector<T, 3> forward(inTargetPosition - inPosition);
+        Vector<T, 3> f = forward.Normalized();
+
+        Vector<T, 3> side = inUpDirection.Cross(f);
+        Vector<T, 3> s = side.Normalized();
+
+        Vector<T, 3> u = f.Cross(s);
+
+        // Matrix<T, 4, 4> lookAtMat {
+        //     s.x, s.y, s.z, -s.Dot(inPosition),
+        //     u.x, u.y, u.z, -u.Dot(inPosition),
+        //     f.x, f.y. f.z, -f.Dot(inPosition),
+        //     0, 0, 0, 1
+        // };
+        // Transform of an object(camera) is the inverse of transform represented in lookAtMatrix
+
+        // Translation is easy to get
+        this->translation = Vector<T, 3> {s.Dot(inPosition), u.Dot(inPosition), f.Dot(inPosition)};
+
+        // Rotaion matrix is orthogonal, its inverse equals to its transpose
+        // So, we get quaternion from the transposed rotation part of lookAtMatrix
+        // Algorithm: https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
+
+        Matrix<T, 3, 3> rotMat {
+            s.x, u.x, f.x,
+            s.y, u.y, f.y,
+            s.z, u.z, f.z
+        };
+
+        T trace = rotMat.At(0, 0) + rotMat.At(1, 1) + rotMat.At(2, 2);
+        if (trace > static_cast<T>(0)) {
+            T root = sqrt(trace + static_cast<T>(1.0));
+            this->rotation.w = static_cast<T>(0.5) * root;
+
+            root = static_cast<T>(0.5) / root;
+            this->rotation.x = root * (rotMat.At(2, 1) - rotMat.At(1, 2));
+            this->rotation.y = root * (rotMat.At(0, 2) - rotMat.At(2, 0));
+            this->rotation.z = root * (rotMat.At(1, 0) - rotMat.At(0, 1));
+        } else if (rotMat.At(0, 0) > rotMat.At(1, 1) && rotMat.At(0, 0) > rotMat.At(2, 2)) {
+            T root = sqrt(rotMat.At(0, 0) - rotMat.At(1, 1) - rotMat.At(2, 2) + static_cast<T>(1.0));
+            this->rotation.x = static_cast<T>(0.5) * root;
+
+            root = static_cast<T>(0.5) / root;
+            this->rotation.y = root * (rotMat.At(0, 1) + rotMat.At(1, 0));
+            this->rotation.z = root * (rotMat.At(0, 2) + rotMat.At(2, 0));
+            this->rotation.w = root * (rotMat.At(2, 1) - rotMat.At(1, 2));
+        } else if (rotMat.At(1, 1) > rotMat.At(2, 2)) {
+            T root = sqrt(rotMat.At(1, 1) - rotMat.At(0, 0) - rotMat.At(2, 2) + static_cast<T>(1.0));
+            this->rotation.y = static_cast<T>(0.5) * root;
+
+            root = static_cast<T>(0.5) / root;
+            this->rotation.x = root * (rotMat.At(0, 1) + rotMat.At(1, 0));
+            this->rotation.z = root * (rotMat.At(1, 2) + rotMat.At(2, 1));
+            this->rotation.w = root * (rotMat.At(0, 2) - rotMat.At(2, 0));
+        } else {
+            T root = sqrt(rotMat.At(2, 2) - rotMat.At(0, 0) - rotMat.At(1, 1) + static_cast<T>(1.0));
+            this->rotation.z = static_cast<T>(0.5) * root;
+
+            root = static_cast<T>(0.5) / root;
+            this->rotation.x = root * (rotMat.At(0, 2) + rotMat.At(2, 0));
+            this->rotation.y = root * (rotMat.At(1, 2) + rotMat.At(2, 1));
+            this->rotation.w = root * (rotMat.At(1, 0) - rotMat.At(0, 1));
+        }
+
         return *this;
     }
 

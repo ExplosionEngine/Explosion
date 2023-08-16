@@ -475,8 +475,44 @@ TEST(MathTest, TransformTest)
     FTransform v1(FQuat::FromEulerZYX(90, 0, 90), FVec3(3, 4, 5));
     FVec3 v1r0 = v1.TransformPosition(FVec3(1, 0, 0));
     ASSERT_TRUE(v1r0 == FVec3(3, 4, 6));
+
+    //TODO LookTo Test
 }
 
-// TODO rect test
-// TODO box test
-// TODO sphere test
+TEST(MathTest, RectTest)
+{
+    FRect rect0(0.0f, 0.0f, 2.0f, 1.0f);
+    FRect rect1(1.0f, 0.5f, 3.0f, 2.0f);
+    FRect rect2(0.0f, 2.0f, 2.0f, 3.0f);
+    FVec2 point(0.5f, 0.5f);
+
+    ASSERT_TRUE(rect0.Inside(point));
+    ASSERT_TRUE(rect0.Intersect(rect1));
+    ASSERT_TRUE(!rect0.Intersect(rect2));
+    ASSERT_TRUE(rect0.Distance(rect2) == 2.0f);
+}
+
+TEST(MathTest, BoxTest)
+{
+    FBox box0(FVec3(0.0f), FVec3(1.0f));
+    FBox box1(FVec3(0.5f), FVec3(1.5f));
+    FBox box2(FVec3(3.0f), FVec3(4.0f));
+    FVec3 point(1.0f);
+
+    ASSERT_TRUE(box1.Inside(point));
+    ASSERT_TRUE(box0.Intersect(box1));
+    ASSERT_TRUE(!box0.Intersect(box2));
+}
+
+TEST(MathTest, SphereTest)
+{
+    FSphere sphere0(FVec3(0.0f), 1.0f);
+    FSphere sphere1(FVec3(0.5f, 0.0f, 0.0f), 1.0f);
+    FSphere sphere2(FVec3(2.0f, 0.0f, 0.0f), 0.5f);
+    FVec3 point(0.1f, 0.2f, 0.3f);
+
+    ASSERT_TRUE(sphere0.Inside(point));
+    ASSERT_TRUE(sphere0.Intersect(sphere1));
+    ASSERT_TRUE(!sphere0.Intersect(sphere2));
+    ASSERT_TRUE(sphere0.Distance(sphere1) == 0.5f);
+}
