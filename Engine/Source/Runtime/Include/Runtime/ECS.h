@@ -13,23 +13,6 @@ namespace Runtime {
     using Entity = entt::entity;
     static constexpr auto entityNull = entt::null;
 
-    class EClass() Component {
-    public:
-        EClassBody(Component)
-
-        Component(Runtime::World* inWorld, Runtime::Entity inEntity)
-            : world(inWorld)
-            , entity(inEntity)
-        {
-        }
-
-        EProperty(transient, editorHide)
-        World* world;
-
-        EProperty(transient, editorHide)
-        Entity entity;
-    };
-
     template <typename... Components>
     struct ComponentSet {};
 

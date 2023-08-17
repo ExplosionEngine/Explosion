@@ -7,6 +7,12 @@
 #include <Common/Debug.h>
 
 namespace RHI::Dummy {
+    RHI::Instance* RHIGetInstance()
+    {
+        static RHI::Dummy::DummyInstance singleton;
+        return &singleton;
+    }
+
     DummyInstance::DummyInstance()
         : dummyGpu(Common::MakeUnique<DummyGpu>())
     {
@@ -33,13 +39,5 @@ namespace RHI::Dummy {
     void DummyInstance::Destroy()
     {
         delete this;
-    }
-}
-
-extern "C" {
-    RHI::Instance* RHIGetInstance()
-    {
-        static RHI::Dummy::DummyInstance singleton;
-        return &singleton;
     }
 }

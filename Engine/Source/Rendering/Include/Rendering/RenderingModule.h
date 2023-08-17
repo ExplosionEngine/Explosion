@@ -4,7 +4,11 @@
 
 #pragma once
 
+#include <Common/Memory.h>
+#include <Common/Concurrent.h>
+#include <Common/Debug.h>
 #include <Core/Module.h>
+#include <Render/Scene.h>
 #include <Rendering/Api.h>
 
 namespace Rendering {
@@ -13,9 +17,22 @@ namespace Rendering {
         RenderingModule();
         ~RenderingModule() override;
 
-        void OnLoad() override;
-        void OnUnload() override;
+        Render::IScene* AllocateScene();
+        void DestroyScene(Render::IScene* inScene);
+        void StartupRenderingThread();
+        void ShutdownRenderingThread();
+        void FlushAllRenderingCommands();
+
+        template <typename F, typename... Args>
+        auto EnqueueRenderingCommand(F&& command, Args&&... args)
+        {
+            Assert(renderingThread != nullptr);
+            return renderingThread->EmplaceTask(std::forward<F>(command), std::forward<Args>(args)...);
+        }
+
+    private:
+        Common::UniqueRef<Common::WorkerThread> renderingThread;
     };
 }
 
-IMPLEMENT_MODULE(Rendering::RenderingModule);
+IMPLEMENT_MODULE(RENDERING_API, Rendering::RenderingModule);

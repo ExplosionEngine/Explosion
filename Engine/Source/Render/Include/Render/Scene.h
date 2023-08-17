@@ -4,9 +4,15 @@
 
 #pragma once
 
+#include <Render/SceneProxy/Light.h>
+#include <Render/SceneProxy/Primitive.h>
+
 namespace Render {
-    class SceneInterface {
+    class IScene {
     public:
-        // TODO
+        virtual void AddLight(ILightSceneProxy* inProxy) = 0;
+        virtual void RemoveLight(ILightSceneProxy* inProxy) = 0;
+        virtual void AddPrimitive(IPrimitiveSceneProxy* inProxy) = 0;
+        virtual void RemovePrimitive(IPrimitiveSceneProxy* inProxy) = 0;
     };
 }

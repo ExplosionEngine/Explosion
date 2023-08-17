@@ -14,7 +14,6 @@
 #include <Common/Debug.h>
 #include <Runtime/ECS.h>
 #include <Runtime/Asset.h>
-#include <Runtime/Asset/Level.h>
 
 namespace Runtime {
     class World {
@@ -42,7 +41,7 @@ namespace Runtime {
         template <typename T, typename... Args>
         T& AddComponent(Entity entity, Args&&... args)
         {
-            return registry.emplace_or_replace<T>(entity, this, entity, std::forward<Args>(args)...);
+            return registry.emplace_or_replace<T>(entity, std::forward<Args>(args)...);
         }
 
         template <typename T>
@@ -100,23 +99,6 @@ namespace Runtime {
             auto iter = engineSystemMap.find(typeid(S).hash_code());
             return iter == engineSystemMap.end() ? nullptr : iter->second;
         }
-
-        void StreamIn(AssetRef<Level>& level)
-        {
-            // TODO
-        }
-
-        void StreamOut(AssetRef<Level>& level)
-        {
-            // TODO
-        }
-
-#if BUILD_EDITOR
-        void SaveWorld(AssetRef<Level>& mainLevel)
-        {
-            // TODO
-        }
-#endif
 
     private:
         struct SystemInfo {

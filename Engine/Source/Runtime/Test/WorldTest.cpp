@@ -5,18 +5,19 @@
 #include <gtest/gtest.h>
 
 #include <Runtime/World.h>
+#include <Runtime/Component/Component.h>
 
 struct Position : public Runtime::Component {
-    Position(Runtime::World* inWorld, Runtime::Entity inEntity) : Runtime::Component(inWorld, inEntity) {}
+    Position() : Runtime::Component() {}
 
-    Position(Runtime::World* inWorld, Runtime::Entity inEntity, float inX, float inY) : Runtime::Component(inWorld, inEntity), x(inX), y(inY) {}
+    Position(float inX, float inY) : Runtime::Component(), x(inX), y(inY) {}
 
     float x;
     float y;
 };
 
 struct Velocity : public Runtime::Component {
-    Velocity(Runtime::World* inWorld, Runtime::Entity inEntity, float inX, float inY) : Runtime::Component(inWorld, inEntity), x(inX), y(inY) {}
+    Velocity(float inX, float inY) : Runtime::Component(), x(inX), y(inY) {}
 
     float x;
     float y;

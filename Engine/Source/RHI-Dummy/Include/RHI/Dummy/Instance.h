@@ -10,6 +10,8 @@
 namespace RHI::Dummy {
     class DummyGpu;
 
+    RHI::Instance* RHIGetInstance();
+
     class DummyInstance : public Instance {
     public:
         NON_COPYABLE(DummyInstance)
@@ -23,8 +25,4 @@ namespace RHI::Dummy {
     private:
         Common::UniqueRef<DummyGpu> dummyGpu;
     };
-}
-
-extern "C" {
-    RHI_DUMMY_API RHI::Instance* RHIGetInstance();
 }

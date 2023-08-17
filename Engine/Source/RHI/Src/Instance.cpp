@@ -2,8 +2,8 @@
 // Created by johnk on 9/1/2022.
 //
 
-#include <Common/DynamicLibrary.h>
 #include <RHI/Instance.h>
+#include <RHI/RHIModule.h>
 
 namespace RHI {
     static RHIType GetPlatformRHIType()
@@ -15,7 +15,7 @@ namespace RHI {
 #endif
     }
 
-    static std::string GetRHILibNameByType(const RHIType& type)
+    static std::string GetRHIModuleNameByType(const RHIType& type)
     {
         switch (type) {
             case RHIType::directX12:
@@ -36,15 +36,11 @@ namespace RHI {
 
     Instance* Instance::GetByType(const RHIType& type)
     {
-        auto* dynamicLibrary = Common::DynamicLibraryManager::Get().FindOrLoad(GetRHILibNameByType(type));
-        if (dynamicLibrary == nullptr) {
+        auto* module = Core::ModuleManager::Get().FindOrLoadTyped<RHIModule>(GetRHIModuleNameByType(type));
+        if (module == nullptr) {
             return nullptr;
         }
-        RHIGetInstanceFunc symbol = reinterpret_cast<RHIGetInstanceFunc>(dynamicLibrary->GetSymbol("RHIGetInstance"));
-        if (symbol == nullptr) {
-            return nullptr;
-        }
-        return symbol();
+        return module->GetRHIInstance();
     }
 
     Instance::~Instance() = default;

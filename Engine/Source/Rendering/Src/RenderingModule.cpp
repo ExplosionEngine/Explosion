@@ -3,19 +3,36 @@
 //
 
 #include <Rendering/RenderingModule.h>
+#include <Rendering/Scene.h>
 
 namespace Rendering {
     RenderingModule::RenderingModule() = default;
 
     RenderingModule::~RenderingModule() = default;
 
-    void RenderingModule::OnLoad()
+    Render::IScene* RenderingModule::AllocateScene() // NOLINT
     {
-        // TODO
+        return new Scene();
     }
 
-    void RenderingModule::OnUnload()
+    void RenderingModule::DestroyScene(Render::IScene* inScene) // NOLINT
     {
-        // TODO
+        delete inScene;
+    }
+
+    void RenderingModule::StartupRenderingThread()
+    {
+        renderingThread = Common::MakeUnique<Common::WorkerThread>("RenderingThread");
+    }
+
+    void RenderingModule::ShutdownRenderingThread()
+    {
+        renderingThread = nullptr;
+    }
+
+    void RenderingModule::FlushAllRenderingCommands()
+    {
+        Assert(renderingThread != nullptr);
+        renderingThread->Flush();
     }
 }

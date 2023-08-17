@@ -11,6 +11,14 @@ namespace Core {
 
     Module::~Module() = default;
 
+    void Module::OnLoad()
+    {
+    }
+
+    void Module::OnUnload()
+    {
+    }
+
     ModuleManager& ModuleManager::Get()
     {
         static ModuleManager instance;
@@ -21,7 +29,7 @@ namespace Core {
 
     ModuleManager::~ModuleManager()
     {
-        UnloadAll();
+        // TODO
     }
 
     Module* ModuleManager::FindOrLoad(const std::string& moduleName)
@@ -53,6 +61,15 @@ namespace Core {
         return loadedModules[moduleName].instance;
     }
 
+    Module* ModuleManager::Find(const std::string& moduleName)
+    {
+        auto iter = loadedModules.find(moduleName);
+        if (iter == loadedModules.end()) {
+            return nullptr;
+        }
+        return iter->second.instance;
+    }
+
     void ModuleManager::Unload(const std::string& moduleName)
     {
         auto iter = loadedModules.find(moduleName);
@@ -66,7 +83,7 @@ namespace Core {
     void ModuleManager::UnloadAll()
     {
         for (auto& loadedModule : loadedModules) {
-            loadedModule.second.instance->OnLoad();
+            loadedModule.second.instance->OnUnload();
         }
         loadedModules.clear();
     }
@@ -82,20 +99,24 @@ namespace Core {
         const std::filesystem::path workingDir = Paths::WorkingDir();
 
         for (const auto& searchPath : searchPaths) {
-            for (const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator(searchPath)) {
-                if (entry.is_directory()) {
-                    continue;
-                }
+            try {
+                for (const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator(searchPath)) {
+                    if (entry.is_directory()) {
+                        continue;
+                    }
 
-                const auto& path = entry.path();
-                auto fileName = path.filename().string();
-                auto extension = path.extension().string();
+                    const auto& path = entry.path();
+                    auto fileName = path.filename().string();
+                    auto extension = path.extension().string();
 
-                if ((fileName == moduleName || fileName == fmt::format("lib{}", moduleName))
-                    && (extension == ".dll" || extension == ".so" || extension == ".dylib"))
-                {
-                    return path.string().starts_with(workingDir.string()) ? (fileName + "." + extension) : path.string();
+                    if ((extension == ".dll" || extension == ".so" || extension == ".dylib")
+                        && (fileName == fmt::format("{}{}", moduleName, extension) || fileName == fmt::format("lib{}{}", moduleName, extension)))
+                    {
+                        return path.string();
+                    }
                 }
+            } catch (const std::exception& e) {
+                continue;
             }
         }
         return {};

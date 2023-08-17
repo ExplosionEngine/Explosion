@@ -1,46 +1,52 @@
 //
-// Created by johnk on 2023/4/4.
+// Created by johnk on 2023/8/16.
 //
 
 #include <Runtime/Component/Transform.h>
-#include <Runtime/World.h>
 
 namespace Runtime {
-    void TransformComponent::TraverseChildren(const EntityTraverseFunc& func) const
+    TransformComponent::TransformComponent()
+        : transform()
     {
-        Entity cur = firstChild;
-        while (cur != entityNull) {
-            func(cur);
-
-            auto* transform = world->GetComponent<TransformComponent>(cur);
-            Assert(transform);
-            cur = transform->nextBrother;
-        }
     }
 
-    void TransformComponent::TraverseOffspring(const EntityTraverseFunc& func) const // NOLINT
+    const Common::FVec3& TransformComponent::GetPosition() const
     {
-        std::vector<Entity> pendings;
-        TraverseChildren([&](Entity child) -> void {
-            func(child);
-            pendings.emplace_back(child);
-        });
-        for (auto pending : pendings) {
-            auto* transform = world->GetComponent<TransformComponent>(pending);
-            Assert(transform);
-            transform->TraverseOffspring(func);
-        }
+        return transform.translation;
     }
 
-    void TransformComponent::TraverseBrothers(const Runtime::EntityTraverseFunc& func) const
+    const Common::FQuat& TransformComponent::GetRotation() const
     {
-        Entity cur = nextBrother;
-        while (cur != entityNull) {
-            func(cur);
+        return transform.rotation;
+    }
 
-            auto* transform = world->GetComponent<TransformComponent>(cur);
-            Assert(transform);
-            cur = transform->nextBrother;
-        }
+    const Common::FVec3& TransformComponent::GetScale() const
+    {
+        return transform.scale;
+    }
+
+    void TransformComponent::SetPosition(const Common::FVec3& inPosition)
+    {
+        transform.translation = inPosition;
+    }
+
+    void TransformComponent::SetRotation(const Common::FQuat& inRotation)
+    {
+        transform.rotation = inRotation;
+    }
+
+    void TransformComponent::SetScale(const Common::FVec3& inScale)
+    {
+        transform.scale = inScale;
+    }
+
+    void TransformComponent::LookTo(const Common::FVec3& inTargetPosition, const Common::FVec3& inUpDirection)
+    {
+        transform.LookTo(transform.translation, inTargetPosition, inUpDirection);
+    }
+
+    void TransformComponent::MoveAndLookAt(const Common::FVec3& inPosition, const Common::FVec3& inTargetPosition, const Common::FVec3& inUpDirection)
+    {
+        transform.LookTo(inPosition, inTargetPosition, inUpDirection);
     }
 }
