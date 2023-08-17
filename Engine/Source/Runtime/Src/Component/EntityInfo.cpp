@@ -6,6 +6,4 @@
 
 namespace Runtime {
     EntityInfoComponent::EntityInfoComponent() = default;
-
-    EntityInfoComponent::EntityInfoComponent(std::string inName) : name(std::move(inName)) {}
 }

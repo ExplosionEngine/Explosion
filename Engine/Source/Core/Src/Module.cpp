@@ -29,7 +29,7 @@ namespace Core {
 
     ModuleManager::~ModuleManager()
     {
-        UnloadAll();
+        // TODO
     }
 
     Module* ModuleManager::FindOrLoad(const std::string& moduleName)
@@ -83,7 +83,7 @@ namespace Core {
     void ModuleManager::UnloadAll()
     {
         for (auto& loadedModule : loadedModules) {
-            loadedModule.second.instance->OnLoad();
+            loadedModule.second.instance->OnUnload();
         }
         loadedModules.clear();
     }

@@ -16,9 +16,6 @@ namespace Runtime {
         ECtor()
         EntityInfoComponent();
 
-        ECtor()
-        explicit EntityInfoComponent(std::string inName);
-
     private:
         EProperty()
         std::string name;
