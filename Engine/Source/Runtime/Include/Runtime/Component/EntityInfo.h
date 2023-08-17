@@ -6,18 +6,21 @@
 
 #include <string>
 
-#include <Runtime/World.h>
-#include <Runtime/Asset/Level.h>
+#include <Runtime/ECS.h>
 
 namespace Runtime {
     class EClass(editorHide) EntityInfoComponent : public Component {
     public:
         EClassBody(EntityInfoComponent)
 
+        ECtor()
+        EntityInfoComponent();
+
+        ECtor()
+        explicit EntityInfoComponent(std::string inName);
+
+    private:
         EProperty()
         std::string name;
-
-        EProperty()
-        AssetRef<Level> ownerLevel;
     };
 }

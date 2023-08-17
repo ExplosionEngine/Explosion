@@ -3,7 +3,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(PLATFORM_LIBS VulkanSDK)
 endif()
 
-file(GLOB SOURCES Src/*.cpp)
+file(GLOB_RECURSE SOURCES Src/*.cpp)
 AddLibrary(
     NAME Render
     TYPE STATIC

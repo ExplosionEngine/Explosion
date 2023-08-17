@@ -17,18 +17,8 @@ namespace Runtime {
     public:
         EClassBody(Component)
 
-        Component(Runtime::World* inWorld, Runtime::Entity inEntity)
-            : world(inWorld)
-            , entity(inEntity)
-        {
-        }
-
-    private:
-        EProperty(transient, editorHide)
-        World* world;
-
-        EProperty(transient, editorHide)
-        Entity entity;
+        ECtor()
+        Component() = default;
     };
 
     template <typename... Components>
