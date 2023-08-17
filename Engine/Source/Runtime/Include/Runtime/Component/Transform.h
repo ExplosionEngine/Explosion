@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <Runtime/ECS.h>
+#include <Runtime/Component/Component.h>
 #include <Common/Math/Transform.h>
 
 namespace Runtime {
