@@ -106,6 +106,7 @@ namespace Common {
         inline Matrix<T, C, R> Transpose() const;
         inline bool CanInverse() const;
         inline Matrix<T, C, R> Inverse() const;
+        inline T Determinant() const;
     };
 
     template <typename T, uint8_t R, uint8_t C>
@@ -751,15 +752,128 @@ namespace Common {
     template <typename T, uint8_t R, uint8_t C>
     bool Matrix<T, R, C>::CanInverse() const
     {
-        // TODO
-        return false;
+        return this->Determinant() != static_cast<T>(0);
     }
 
     template <typename T, uint8_t R, uint8_t C>
     Matrix<T, C, R> Matrix<T, R, C>::Inverse() const
     {
-        // TODO
-        return Matrix<T, C, R>();
+        T oneOverDet = static_cast<T>(1) / this->Determinant();
+
+        Matrix<T, R, C> result;
+        if constexpr (R == 2) {
+            result.At(0, 0) = this->data[3] * oneOverDet;
+            result.At(0, 1) = -this->data[1] * oneOverDet;
+            result.At(1, 0) = -this->data[2] * oneOverDet;
+            result.At(1, 1) = this->data[0] * oneOverDet;
+        }
+
+        if constexpr (R == 3) {
+            result.At(0, 0) = (this->data[4] * this->data[8] - this->data[5] * this->data[7]) * oneOverDet;
+            result.At(0, 1) = (this->data[2] * this->data[7] - this->data[1] * this->data[8]) * oneOverDet;
+            result.At(0, 2) = (this->data[1] * this->data[5] - this->data[2] * this->data[4]) * oneOverDet;
+            result.At(1, 0) = (this->data[5] * this->data[6] - this->data[3] * this->data[8]) * oneOverDet;
+            result.At(1, 1) = (this->data[0] * this->data[8] - this->data[2] * this->data[6]) * oneOverDet;
+            result.At(1, 2) = (this->data[2] * this->data[3] - this->data[0] * this->data[5]) * oneOverDet;
+            result.At(2, 0) = (this->data[3] * this->data[7] - this->data[4] * this->data[6]) * oneOverDet;
+            result.At(2, 1) = (this->data[1] * this->data[6] - this->data[7] * this->data[0]) * oneOverDet;
+            result.At(2, 2) = (this->data[0] * this->data[4] - this->data[1] * this->data[3]) * oneOverDet;
+        }
+
+        if constexpr (R == 4) {
+            T coef00 = this->data[10] * this->data[15] - this->data[11] * this->data[14];
+            T coef02 = this->data[9] * this->data[15] - this->data[11] * this->data[13];
+            T coef03 = this->data[9] * this->data[14] - this->data[10] * this->data[13];
+
+            T coef04 = this->data[6] * this->data[15] - this->data[7] * this->data[14];
+            T coef06 = this->data[5] * this->data[15] - this->data[7] * this->data[13];
+            T coef07 = this->data[5] * this->data[14] - this->data[6] * this->data[13];
+
+            T coef08 = this->data[6] * this->data[11] - this->data[7] * this->data[10];
+            T coef10 = this->data[5] * this->data[11] - this->data[7] * this->data[9];
+            T coef11 = this->data[5] * this->data[10] - this->data[6] * this->data[9];
+
+            T coef12 = this->data[2] * this->data[15] - this->data[3] * this->data[14];
+            T coef14 = this->data[1] * this->data[15] - this->data[3] * this->data[13];
+            T coef15 = this->data[1] * this->data[14] - this->data[2] * this->data[13];
+
+            T coef16 = this->data[2] * this->data[11] - this->data[3] * this->data[10];
+            T coef18 = this->data[1] * this->data[11] - this->data[3] * this->data[9];
+            T coef19 = this->data[1] * this->data[10] - this->data[2] * this->data[9];
+
+            T coef20 = this->data[2] * this->data[7] - this->data[3] * this->data[6];
+            T coef22 = this->data[1] * this->data[7] - this->data[3] * this->data[5];
+            T coef23 = this->data[1] * this->data[6] - this->data[2] * this->data[5];
+
+            Vector<T, 4> fac0(coef00, coef00, coef02, coef03);
+            Vector<T, 4> fac1(coef04, coef04, coef06, coef07);
+            Vector<T, 4> fac2(coef08, coef08, coef10, coef11);
+            Vector<T, 4> fac3(coef12, coef12, coef14, coef15);
+            Vector<T, 4> fac4(coef16, coef16, coef18, coef19);
+            Vector<T, 4> fac5(coef20, coef20, coef22, coef23);
+
+            Vector<T, 4> vec0(this->data[1], this->data[0], this->data[0], this->data[0]);
+            Vector<T, 4> vec1(this->data[5], this->data[4], this->data[4], this->data[4]);
+            Vector<T, 4> vec2(this->data[9], this->data[8], this->data[8], this->data[8]);
+            Vector<T, 4> vec3(this->data[13], this->data[12], this->data[12], this->data[12]);
+
+            Vector<T, 4> inv0(vec1 * fac0 - vec2 * fac1 + vec3 * fac2);
+            Vector<T, 4> inv1(vec0 * fac0 - vec2 * fac3 + vec3 * fac4);
+            Vector<T, 4> inv2(vec0 * fac1 - vec1 * fac3 + vec3 * fac5);
+            Vector<T, 4> inv3(vec0 * fac2 - vec1 * fac4 + vec2 * fac5);
+
+            Vector<T, 4> signA(+1, -1, +1, -1);
+            Vector<T, 4> signB(-1, +1, -1, +1);
+
+            const Vector<T, 4> col0 = inv0 * signA;
+            const Vector<T, 4> col1 = inv1 * signB;
+            const Vector<T, 4> col2 = inv2 * signA;
+            const Vector<T, 4> col3 = inv3 * signB;
+
+            result.SetCol(0, col0);
+            result.SetCol(1, col1);
+            result.SetCol(2, col2);
+            result.SetCol(3, col3);
+
+            result = result * oneOverDet;
+        }
+
+        return result;
+    }
+
+    template <typename T, uint8_t R, uint8_t C>
+    T Matrix<T, R, C>::Determinant() const
+    {
+        static_assert( R == C && R > 1 && R < 5);
+        T result = static_cast<T>(0);
+        if constexpr (R == 2) {
+            result = this->data[0] * this->data[3] - this->data[1] * this->data[2];
+        }
+
+        if constexpr (R == 3) {
+            result =
+                this->data[0] * (this->data[4] * this->data[8] - this->data[5] * this->data[7])
+                - this->data[1] * (this->data[3] * this->data[8] - this->data[5] * this->data[6])
+                + this->data[2] * (this->data[3] * this->data[7] - this->data[4] * this->data[6]);
+        }
+
+        if constexpr (R == 4) {
+            T subFactor0 = this->data[10] * this->data[15] - this->data[11] * this->data[14];
+            T subFactor1 = this->data[6] * this->data[15] - this->data[7] * this->data[14];
+            T subFactor2 = this->data[6] * this->data[11] - this->data[7] * this->data[10];
+            T subFactor3 = this->data[2] * this->data[15] - this->data[3] * this->data[14];
+            T subFactor4 = this->data[2] * this->data[11] - this->data[3] * this->data[10];
+            T subFactor5 = this->data[2] * this->data[7] - this->data[3] * this->data[6];
+
+            T detCoef0 = this->data[5] * subFactor0 - this->data[9] * subFactor1 + this->data[13] * subFactor2;
+            T detCoef1 = this->data[9] * subFactor3 - this->data[1] * subFactor0 - this->data[13] * subFactor4;
+            T detCoef2 = this->data[1] * subFactor1 - this->data[5] * subFactor3 + this->data[13] * subFactor5;
+            T detCoef3 = this->data[5] * subFactor4 - this->data[1] * subFactor2 - this->data[9] * subFactor5;
+
+            result = this->data[0] * detCoef0 + this->data[4] * detCoef1 + this->data[8] * detCoef2 + this->data[12] * detCoef3;
+        }
+
+        return result;
     }
 
     template <typename T, uint8_t R, uint8_t C>

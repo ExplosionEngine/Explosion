@@ -42,7 +42,9 @@ namespace Common {
         inline Transform& Translate(const Vector<T, 3>& inTranslation);
         inline Transform& Rotate(const Quaternion<T>& inRotation);
         inline Transform& Scale(const Vector<T, 3>& inScale);
-        inline Transform& LookTo(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
+        inline Transform& UpdateRotation(const Vector<T, 3>& forward, const Vector<T, 3>& side, const Vector<T, 3>& up);
+        inline Transform& LookTo(const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
+        inline Transform& MoveAndLookTo(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
 
         Matrix<T, 4, 4> GetTranslationMatrix() const;
         Matrix<T, 4, 4> GetRotationMatrix() const;
@@ -68,7 +70,7 @@ namespace Common {
     Transform<T> Transform<T>::LookAt(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection)
     {
         Transform<T> result;
-        result.LookTo(inPosition, inTargetPosition, inUpDirection);
+        result.MoveAndLookTo(inPosition, inTargetPosition, inUpDirection);
         return result;
     }
 
@@ -205,35 +207,24 @@ namespace Common {
     }
 
     template <typename T>
-    Transform<T>& Transform<T>::LookTo(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection)
+    Transform<T>& Transform<T>::UpdateRotation(const Vector<T, 3>& forward, const Vector<T, 3>& side, const Vector<T, 3>& up)
     {
-        Vector<T, 3> forward(inTargetPosition - inPosition);
-        Vector<T, 3> f = forward.Normalized();
-
-        Vector<T, 3> side = inUpDirection.Cross(f);
-        Vector<T, 3> s = side.Normalized();
-
-        Vector<T, 3> u = f.Cross(s);
-
+        // Transform of an object(camera) is the inverse of transform represented in lookAtMatrix
         // Matrix<T, 4, 4> lookAtMat {
         //     s.x, s.y, s.z, -s.Dot(inPosition),
         //     u.x, u.y, u.z, -u.Dot(inPosition),
         //     f.x, f.y. f.z, -f.Dot(inPosition),
         //     0, 0, 0, 1
         // };
-        // Transform of an object(camera) is the inverse of transform represented in lookAtMatrix
-
-        // Translation is easy to get
-        this->translation = Vector<T, 3> {s.Dot(inPosition), u.Dot(inPosition), f.Dot(inPosition)};
 
         // Rotaion matrix is orthogonal, its inverse equals to its transpose
         // So, we get quaternion from the transposed rotation part of lookAtMatrix
         // Algorithm: https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
 
         Matrix<T, 3, 3> rotMat {
-            s.x, u.x, f.x,
-            s.y, u.y, f.y,
-            s.z, u.z, f.z
+            side.x, up.x, forward.x,
+            side.y, up.y, forward.y,
+            side.z, up.z, forward.z
         };
 
         T trace = rotMat.At(0, 0) + rotMat.At(1, 1) + rotMat.At(2, 2);
@@ -270,6 +261,42 @@ namespace Common {
             this->rotation.y = root * (rotMat.At(1, 2) + rotMat.At(2, 1));
             this->rotation.w = root * (rotMat.At(1, 0) - rotMat.At(0, 1));
         }
+
+        return *this;
+    }
+
+    template <typename T>
+    Transform<T>& Transform<T>::LookTo(const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection)
+    {
+        Vector<T, 3> f(inTargetPosition - this->translation);
+        f.Normalize();
+
+        Vector<T, 3> s = inUpDirection.Cross(f);
+        s.Normalize();
+
+        Vector<T, 3> u = f.Cross(s);
+
+        this->UpdateRotation(f, s, u);
+
+        return *this;
+    }
+
+    template <typename T>
+    Transform<T>& Transform<T>::MoveAndLookTo(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection)
+    {
+        // Translation of LookAtMatrix ([s.Dot(inPosition), u.Dot(inPosition), f.Dot(inPosition)]) applying to visible objects is in camera space, whose coordinate system consists of s u and f
+        // The translation we need is in world space, exactly inPosition
+        this->translation = inPosition;
+
+        Vector<T, 3> f(inTargetPosition - this->translation);
+        f.Normalize();
+
+        Vector<T, 3> s = inUpDirection.Cross(f);
+        s.Normalize();
+
+        Vector<T, 3> u = f.Cross(s);
+
+        this->UpdateRotation(f, s, u);
 
         return *this;
     }

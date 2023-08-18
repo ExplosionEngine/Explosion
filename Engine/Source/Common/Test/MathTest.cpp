@@ -276,6 +276,16 @@ TEST(MathTest, VecCrossTest)
     ASSERT_FLOAT_EQ(v4.z, -1.0f);
 }
 
+TEST(MathTest, VecNormalizeTest)
+{
+    FVec2 v0 { 3.0f, 4.0f };
+    FVec2 n0 { 0.6f, 0.8f };
+    ASSERT_TRUE(v0.Normalized() == n0);
+
+    v0.Normalize();
+    ASSERT_TRUE(v0 == n0);
+}
+
 TEST(MathTest, VecConstsTest)
 {
     ASSERT_TRUE(FVec2(1, 0) == FVec2Consts::unitX);
@@ -408,6 +418,46 @@ TEST(MathTest, MathTranposeTest)
     ASSERT_TRUE(v1.Row(1) == FVec3(2, 6, 10));
     ASSERT_TRUE(v1.Row(2) == FVec3(3, 7, 11));
     ASSERT_TRUE(v1.Row(3) == FVec3(4, 8, 12));
+}
+
+TEST(MathTest, MatrixDetInverseTest)
+{
+    FMat2x2 m0(
+        5, 7,
+        3, 4
+    );
+
+    FMat3x3 m1(
+        5, 1, 7,
+        4, 2, 6,
+        3, 5, 1
+    );
+
+    FMat4x4 m2(
+        5, 1, 7, 2,
+        4, 2, 6, 5,
+        3, 5, 1, 8,
+        1, 2, 3, 4
+    );
+
+    FMat2x2 im0 = m0.Inverse();
+    FMat3x3 im1 = m1.Inverse();
+    FMat4x4 im2 = m2.Inverse();
+
+    FMat2x2 inverse0(
+        -4, 7,
+        3, -5
+    );
+
+    FVec3 col1 { 1.f, -.5f, -.5f };
+    FVec4 col2 { 1.f / 76.f, 16.f / 19.f, 13.f / 76.f, -21.f / 38.f};
+
+    ASSERT_TRUE(m0.Determinant() == -1.0f);
+    ASSERT_TRUE(m1.Determinant() == -28.0f);
+    ASSERT_TRUE(m2.Determinant() == 76.0f);
+    ASSERT_TRUE(im0 == inverse0);
+    ASSERT_TRUE(im1.Col(0) == col1);
+    ASSERT_TRUE(im2.Col(0) == col2);
 }
 
 TEST(MathTest, AngleAndRadianTest)
