@@ -3,3 +3,7 @@
 //
 
 #include <Runtime/Component/EntityInfo.h>
+
+namespace Runtime {
+    EntityInfoComponent::EntityInfoComponent() = default;
+}

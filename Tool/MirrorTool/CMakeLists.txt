@@ -20,6 +20,6 @@ AddTest(
     INC Include
     LIB MirrorTool.Static
     RES
-        ${CMAKE_CURRENT_SOURCE_DIR}/Test/MirrorToolInput.h->TestRes/MirrorToolInput.h
-        ${CMAKE_SOURCE_DIR}/Engine/Source/Mirror/Include/Mirror/Meta.h->TestRes/Mirror/Meta.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Test/MirrorToolInput.h->../Test/Resource/MirrorToolInput.h
+        ${CMAKE_SOURCE_DIR}/Engine/Source/Mirror/Include/Mirror/Meta.h->../Test/Resource/Mirror/Meta.h
 )

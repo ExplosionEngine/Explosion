@@ -10,6 +10,8 @@
 #include <RHI/Vulkan/Api.h>
 
 namespace RHI::Vulkan {
+    RHI::Instance* RHIGetInstance();
+
     class VKInstance : public Instance {
     public:
         NON_COPYABLE(VKInstance)
@@ -53,8 +55,4 @@ namespace RHI::Vulkan {
         VkDebugUtilsMessengerEXT vkDebugMessenger;
 #endif
     };
-}
-
-extern "C" {
-    RHI_VULKAN_API RHI::Instance* RHIGetInstance();
 }

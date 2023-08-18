@@ -1,38 +1,46 @@
 //
-// Created by johnk on 2022/11/18.
+// Created by johnk on 2023/8/16.
 //
 
 #pragma once
 
-#include <functional>
-
+#include <Runtime/Component/Component.h>
 #include <Common/Math/Transform.h>
-#include <Runtime/ECS.h>
 
 namespace Runtime {
-    using EntityTraverseFunc = std::function<void(Entity)>;
-
     class EClass() TransformComponent : public Component {
     public:
-        EFunc()
-        void TraverseChildren(const EntityTraverseFunc& func) const;
+        EClassBody(TransformComponent)
+
+        ECtor()
+        TransformComponent();
 
         EFunc()
-        void TraverseOffspring(const EntityTraverseFunc& func) const;
+        const Common::FVec3& GetPosition() const;
 
         EFunc()
-        void TraverseBrothers(const EntityTraverseFunc& func) const;
+        const Common::FQuat& GetRotation() const;
 
-        EProperty(transient, editorHide)
-        Entity parent;
+        EFunc()
+        const Common::FVec3& GetScale() const;
 
-        EProperty(transient, editorHide)
-        Entity firstChild;
+        EFunc()
+        void SetPosition(const Common::FVec3& inPosition);
 
-        EProperty(transient, editorHide)
-        Entity nextBrother;
+        EFunc()
+        void SetRotation(const Common::FQuat& inRotation);
 
-        EProperty(category=Transform)
+        EFunc()
+        void SetScale(const Common::FVec3& inScale);
+
+        EFunc()
+        void LookTo(const Common::FVec3& inTargetPosition, const Common::FVec3& inUpDirection = Common::FVec3Consts::unitZ);
+
+        EFunc()
+        void MoveAndLookAt(const Common::FVec3& inPosition, const Common::FVec3& inTargetPosition, const Common::FVec3& inUpDirection = Common::FVec3Consts::unitZ);
+
+    private:
+        EProperty()
         Common::FTransform transform;
     };
 }

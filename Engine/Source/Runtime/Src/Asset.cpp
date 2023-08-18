@@ -7,9 +7,8 @@
 #include <Runtime/Asset.h>
 
 namespace Runtime {
-    AssetManager::AssetManager(const Common::PathMapper& inPathMapper)
-        : pathMapper(inPathMapper)
-        , threadPool("AssetLoadingThread", 4)
+    AssetManager::AssetManager()
+        : threadPool("AssetLoadingThread", 4)
     {
     }
 

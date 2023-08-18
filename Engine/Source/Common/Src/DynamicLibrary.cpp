@@ -30,14 +30,19 @@ namespace Common {
         name.append(".").append(ext);
     }
 
-    std::string GetPlatformDynLibFullName(const std::string& simpleName)
+    std::string GetPlatformDynLibFullPath(const std::string& simpleName, const std::string& searchDirectory)
     {
         std::string result = simpleName;
 #if !PLATFORM_WINDOWS
         RepairLibPrefix(result);
 #endif
         RepairExtension(result);
-        return result;
+
+        if (searchDirectory.empty()) {
+            return result;
+        } else {
+            return searchDirectory + "/" + result;
+        }
     }
 }
 
@@ -58,7 +63,7 @@ namespace Common {
 }
 
 namespace Common {
-    DynamicLibraryManager& DynamicLibraryManager::Singleton()
+    DynamicLibraryManager& DynamicLibraryManager::Get()
     {
         static DynamicLibraryManager instance;
         return instance;
@@ -73,18 +78,18 @@ namespace Common {
         }
     }
 
-    DynamicLibrary* DynamicLibraryManager::FindOrLoad(const std::string& name)
+    DynamicLibrary* DynamicLibraryManager::FindOrLoad(const std::string& simpleName, const std::string& searchDirectory)
     {
-        auto fullName = GetPlatformDynLibFullName(name);
-        auto iter = libs.find(fullName);
+        auto fullPath = GetPlatformDynLibFullPath(simpleName, searchDirectory);
+        auto iter = libs.find(fullPath);
         if (iter == libs.end()) {
-            DYNAMIC_LIB_HANDLE handle = DYNAMIC_LIB_LOAD(fullName.c_str(), RTLD_LOCAL | RTLD_LAZY);
+            DYNAMIC_LIB_HANDLE handle = DYNAMIC_LIB_LOAD(fullPath.c_str(), RTLD_LOCAL | RTLD_LAZY);
             if (handle == nullptr) {
                 return nullptr;
             }
-            libs[fullName] = Common::MakeUnique<DynamicLibrary>(handle);
+            libs[fullPath] = Common::MakeUnique<DynamicLibrary>(handle);
         }
-        return libs[fullName].Get();
+        return libs[fullPath].Get();
     }
 
     void DynamicLibraryManager::Unload(const std::string& name)

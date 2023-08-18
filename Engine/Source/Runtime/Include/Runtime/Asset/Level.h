@@ -9,6 +9,8 @@
 namespace Runtime {
     class EClass() Level : public Asset {
     public:
+        EClassBody(Level)
+
         // TODO
     };
 }

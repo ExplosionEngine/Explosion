@@ -12,7 +12,6 @@
 
 #include <Mirror/Meta.h>
 #include <Mirror/Type.h>
-#include <Common/Path.h>
 #include <Common/Concurrent.h>
 #include <Common/Memory.h>
 
@@ -21,6 +20,8 @@ namespace Runtime {
 
     class EClass() Asset {
     public:
+        EClassBody(Asset)
+
         EProperty()
         Uri uri;
     };
@@ -255,18 +256,13 @@ namespace Runtime {
         template <typename A>
         void WriteToFile(AssetRef<A>& ref)
         {
-            std::ofstream file(pathMapper.Map(ref->uri), std::ios::binary);
-            {
-                // TODO
-            }
-            file.close();
+            // TODO
         }
 
         friend class Engine;
 
-        explicit AssetManager(const Common::PathMapper& inPathMapper);
+        explicit AssetManager();
 
-        const Common::PathMapper& pathMapper;
         Common::ThreadPool threadPool;
         std::unordered_map<Uri, Common::WeakRef<Asset>> assets;
     };

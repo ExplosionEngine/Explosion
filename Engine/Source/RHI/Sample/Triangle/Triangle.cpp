@@ -148,7 +148,7 @@ private:
     void CreatePipeline()
     {
         std::vector<uint8_t> vsByteCode;
-        CompileShader(vsByteCode, "Triangle/Triangle.hlsl", "VSMain", RHI::ShaderStageBits::sVertex);
+        CompileShader(vsByteCode, "../Test/Sample/Triangle/Triangle.hlsl", "VSMain", RHI::ShaderStageBits::sVertex);
 
         ShaderModuleCreateInfo shaderModuleCreateInfo {};
         shaderModuleCreateInfo.size = vsByteCode.size();
@@ -156,7 +156,7 @@ private:
         vertexShader = device->CreateShaderModule(shaderModuleCreateInfo);
 
         std::vector<uint8_t> fsByteCode;
-        CompileShader(fsByteCode, "Triangle/Triangle.hlsl", "FSMain", RHI::ShaderStageBits::sPixel);
+        CompileShader(fsByteCode, "../Test/Sample/Triangle/Triangle.hlsl", "FSMain", RHI::ShaderStageBits::sPixel);
 
         shaderModuleCreateInfo.size = fsByteCode.size();
         shaderModuleCreateInfo.byteCode = fsByteCode.data();

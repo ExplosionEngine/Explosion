@@ -5,10 +5,10 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
+#include <filesystem>
 
 #include <gtest/gtest.h>
 
-#include <Common/Path.h>
 #include <Mirror/Registry.h>
 #include <Mirror/Type.h>
 
@@ -58,10 +58,10 @@ static MirrorInfoRegistry registry;
 
 TEST(SerializationTest, VariableFileSerializationTest)
 {
-    static std::string fileName = "TestGenerated/SerializationTest.VariableFileSerializationTest.bin";
-    Common::PathUtils::MakeDirectoriesForFile(fileName);
+    static std::filesystem::path fileName = "../Test/Generated/SerializationTest.VariableFileSerializationTest.bin";
+    std::filesystem::create_directories(fileName.parent_path());
     {
-        Common::BinaryFileSerializeStream stream(fileName);
+        Common::BinaryFileSerializeStream stream(fileName.string());
 
         ga = 1;
         gb = 2.0f;
@@ -78,7 +78,7 @@ TEST(SerializationTest, VariableFileSerializationTest)
         gb = 5.0f;
         gc = "6";
 
-        Common::BinaryFileDeserializeStream stream(fileName);
+        Common::BinaryFileDeserializeStream stream(fileName.string());
 
         const auto& globalScope = Mirror::GlobalScope::Get();
         globalScope.GetVariable("ga").Deserialize(stream);
@@ -93,10 +93,10 @@ TEST(SerializationTest, VariableFileSerializationTest)
 
 TEST(SerializationTest, ClassFileSerializationTest)
 {
-    static std::string fileName = "TestGenerated/SerializationTest.ClassFileSerializationTest.bin";
-    Common::PathUtils::MakeDirectoriesForFile(fileName);
+    static std::filesystem::path fileName = "../Test/Generated/SerializationTest.ClassFileSerializationTest.bin";
+    std::filesystem::create_directories(fileName.parent_path());
     {
-        Common::BinaryFileSerializeStream stream(fileName);
+        Common::BinaryFileSerializeStream stream(fileName.string());
 
         SerializationTestStruct0 obj;
         obj.a = 1;
@@ -110,7 +110,7 @@ TEST(SerializationTest, ClassFileSerializationTest)
     }
 
     {
-        Common::BinaryFileDeserializeStream stream(fileName);
+        Common::BinaryFileDeserializeStream stream(fileName.string());
 
         const auto& clazz = Mirror::Class::Get("SerializationTestStruct0");
         Mirror::Any obj = clazz.GetConstructor(Mirror::NamePresets::defaultConstructor).ConstructOnStack();
@@ -125,11 +125,11 @@ TEST(SerializationTest, ClassFileSerializationTest)
 
 TEST(SerializationTest, ContainerFileSerializationTest)
 {
-    static std::string fileName = "TestGenerated/SerializationTest.ContainerFileSerializationTest.bin";
-    Common::PathUtils::MakeDirectoriesForFile(fileName);
+    static std::filesystem::path fileName = "../Test/Generated/SerializationTest.ContainerFileSerializationTest.bin";
+    std::filesystem::create_directories(fileName.parent_path());
     const auto& clazz = Mirror::Class::Get("SerializationTestStruct1");
     {
-        Common::BinaryFileSerializeStream stream(fileName);
+        Common::BinaryFileSerializeStream stream(fileName.string());
 
         SerializationTestStruct1 obj;
         obj.a = { 1, 2 };
@@ -142,7 +142,7 @@ TEST(SerializationTest, ContainerFileSerializationTest)
     }
 
     {
-        Common::BinaryFileDeserializeStream stream(fileName);
+        Common::BinaryFileDeserializeStream stream(fileName.string());
 
         Mirror::Any ref = clazz.GetDefaultConstructor().ConstructOnStack();
         clazz.Deserailize(stream, &ref);

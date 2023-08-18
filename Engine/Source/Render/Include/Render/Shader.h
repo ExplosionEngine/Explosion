@@ -14,12 +14,12 @@
 #include <Common/Debug.h>
 #include <Common/Hash.h>
 #include <Common/File.h>
-#include <Common/Path.h>
 #include <Common/Math/Vector.h>
 #include <RHI/Common.h>
 #include <RHI/Device.h>
 #include <RHI/ShaderModule.h>
 #include <RHI/BindGroupLayout.h>
+#include <Core/Paths.h>
 
 namespace Render {
     class Shader {};
@@ -32,7 +32,7 @@ namespace Render {
     class IShaderType {
         virtual std::string GetName() = 0;
         virtual ShaderTypeKey GetHash() = 0;
-        virtual std::string GetCode(const Common::PathMapper& pathMapper) = 0;
+        virtual std::string GetCode() = 0;
         virtual std::vector<VariantKey> GetVariants() = 0;
         virtual std::vector<std::string> GetDefinitions(VariantKey variantKey) = 0;
     };
@@ -113,9 +113,20 @@ namespace Render {
             return Common::HashUtils::CityHash(Shader::name, sizeof(Shader::name));
         }
 
-        std::string GetCode(const Common::PathMapper& pathMapper) override
+        std::string GetCode() override
         {
-            return Common::FileUtils::ReadTextFile(pathMapper.Map(Shader::sourceFile));
+            static std::unordered_map<std::string, std::string> pathMap = {
+                { "/Engine/Shader", Core::Paths::EngineShaderPath().string() }
+            };
+
+            std::string sourceFile = Shader::sourceFile;
+            for (const auto& iter : pathMap) {
+                if (sourceFile.starts_with(iter.first)) {
+                    return Common::FileUtils::ReadTextFile(Common::StringUtils::Replace(sourceFile, iter.first, iter.second));
+                }
+            }
+            Assert(false);
+            return "";
         }
 
         std::vector<VariantKey> GetVariants() override

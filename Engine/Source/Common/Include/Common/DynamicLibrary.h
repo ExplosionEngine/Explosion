@@ -26,7 +26,7 @@
 #endif
 
 namespace Common {
-    std::string GetPlatformDynLibFullName(const std::string& simpleName);
+    std::string GetPlatformDynLibFullPath(const std::string& simpleName, const std::string& searchDirectory);
 
     class DynamicLibrary {
     public:
@@ -43,12 +43,12 @@ namespace Common {
 
     class DynamicLibraryManager {
     public:
-        static DynamicLibraryManager& Singleton();
+        static DynamicLibraryManager& Get();
 
         NON_COPYABLE(DynamicLibraryManager)
         ~DynamicLibraryManager();
 
-        DynamicLibrary* FindOrLoad(const std::string& name);
+        DynamicLibrary* FindOrLoad(const std::string& simpleName, const std::string& searchDirectory = "");
         void Unload(const std::string& name);
 
     private:

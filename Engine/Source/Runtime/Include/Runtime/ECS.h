@@ -11,22 +11,7 @@ namespace Runtime {
     class World;
 
     using Entity = entt::entity;
-    static constexpr auto ENTITY_NULL = entt::null;
-
-    class EClass() Component {
-    public:
-        Component(Runtime::World* inWorld, Runtime::Entity inEntity)
-            : world(inWorld)
-            , entity(inEntity)
-        {
-        }
-
-        EProperty(transient, editorHide)
-        World* world;
-
-        EProperty(transient, editorHide)
-        Entity entity;
-    };
+    static constexpr auto entityNull = entt::null;
 
     template <typename... Components>
     struct ComponentSet {};

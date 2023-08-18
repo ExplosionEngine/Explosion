@@ -110,7 +110,7 @@ void AssertNamespaceInfoEqual(const NamespaceInfo& lhs, const NamespaceInfo& rhs
 
 TEST(MirrorTest, ParserTest)
 {
-    Parser parser("TestRes/MirrorToolInput.h", { "TestRes" });
+    Parser parser("../Test/Resource/MirrorToolInput.h", { "../Test/Resource" });
     auto parseResult = parser.Parse();
     ASSERT_TRUE(parseResult.first);
 
@@ -145,11 +145,11 @@ TEST(MirrorTest, ParserTest)
 
 TEST(MirrorTest, GeneratorTest)
 {
-    Parser parser("TestRes/MirrorToolInput.h", { "TestRes" });
+    Parser parser("../Test/Resource/MirrorToolInput.h", { "../Test/Resource" });
     auto parseResult = parser.Parse();
     ASSERT_TRUE(parseResult.first);
 
-    Generator generator("./TestRes/MirrorToolInput.h", "TestGenerated/MirrorToolTest.generated.cpp", { "./" }, std::get<MetaInfo>(parseResult.second));
+    Generator generator("../Test/Resource/MirrorToolInput.h", "../Test/Generated/MirrorToolTest.generated.cpp", { "../" }, std::get<MetaInfo>(parseResult.second));
     auto generateResult = generator.Generate();
     ASSERT_EQ(generateResult.first, true);
 }

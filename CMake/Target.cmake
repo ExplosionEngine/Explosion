@@ -164,25 +164,35 @@ function(GetTargetIncludeDirectoriesRecurse)
         return()
     endif()
 
-    get_target_property(TARGET_INCS ${PARAMS_NAME} INCLUDE_DIRECTORIES)
-    if (NOT ("${TARGET_INCS}" STREQUAL "TARGET_INCS-NOTFOUND"))
-        foreach(TARGET_INC ${TARGET_INCS})
-            list(APPEND RESULT ${TARGET_INC})
-        endforeach()
-    endif()
-
-    get_target_property(TARGET_LIBS ${PARAMS_NAME} LINK_LIBRARIES)
-    if (NOT ("${TARGET_LIBS}" STREQUAL "TARGET_LIBS-NOTFOUND"))
-        foreach(TARGET_LIB ${TARGET_LIBS})
-            GetTargetIncludeDirectoriesRecurse(
-                NAME ${TARGET_LIB}
-                OUTPUT LIB_INCS
-            )
-            foreach(LIB_INC ${LIB_INCS})
-                list(APPEND RESULT ${LIB_INC})
+    get_target_property(3RD_TYPE ${PARAMS_NAME} 3RD_TYPE)
+    if ("${3RD_TYPE}" STREQUAL "3RD_TYPE-NOTFOUND")
+        get_target_property(TARGET_INCS ${PARAMS_NAME} INCLUDE_DIRECTORIES)
+        if (NOT ("${TARGET_INCS}" STREQUAL "TARGET_INCS-NOTFOUND"))
+            foreach(TARGET_INC ${TARGET_INCS})
+                list(APPEND RESULT ${TARGET_INC})
             endforeach()
-        endforeach()
-    endif()
+        endif()
+
+        get_target_property(TARGET_LIBS ${PARAMS_NAME} LINK_LIBRARIES)
+        if (NOT ("${TARGET_LIBS}" STREQUAL "TARGET_LIBS-NOTFOUND"))
+            foreach(TARGET_LIB ${TARGET_LIBS})
+                GetTargetIncludeDirectoriesRecurse(
+                    NAME ${TARGET_LIB}
+                    OUTPUT LIB_INCS
+                )
+                foreach(LIB_INC ${LIB_INCS})
+                    list(APPEND RESULT ${LIB_INC})
+                endforeach()
+            endforeach()
+        endif()
+    else ()
+        get_target_property(3RD_INCLUDE ${PARAMS_NAME} 3RD_INCLUDE)
+        if (NOT ("${3RD_INCLUDE}" STREQUAL "3RD_INCLUDE-NOTFOUND"))
+            foreach(3RD_INC ${3RD_INCLUDE})
+                list(APPEND RESULT ${3RD_INC})
+            endforeach()
+        endif ()
+    endif ()
 
     list(REMOVE_DUPLICATES RESULT)
     set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
@@ -203,10 +213,10 @@ function(AddMirrorInfoSourceGenerationTarget)
                 NAME ${L}
                 OUTPUT TARGET_INCS
             )
+            foreach (I ${TARGET_INCS})
+                list(APPEND INC ${I})
+            endforeach ()
         endforeach()
-        foreach (I ${TARGET_INCS})
-            list(APPEND INC ${I})
-        endforeach ()
     endif()
     list(REMOVE_DUPLICATES INC)
 
@@ -228,7 +238,7 @@ function(AddMirrorInfoSourceGenerationTarget)
             add_custom_command(
                 OUTPUT ${OUTPUT_SOURCE}
                 COMMAND "$<TARGET_FILE:MirrorTool>" "-i" ${INPUT_HEADER_FILE} "-o" ${OUTPUT_SOURCE} ${INC_ARGS}
-                DEPENDS ${INPUT_HEADER_FILE}
+                DEPENDS MirrorTool ${INPUT_HEADER_FILE}
             )
         endforeach()
     endforeach ()
