@@ -61,22 +61,22 @@ namespace MirrorTool {
         }
         for (const auto& staticVariable : clazz.staticVariables) {
             const std::string variableName = GetFullName(staticVariable);
-            stream << std::endl << Tab<3>() << fmt::format(R"(.StaticVariable<&{}>("{}"))", variableName, variableName);
+            stream << std::endl << Tab<3>() << fmt::format(R"(.StaticVariable<&{}>("{}"))", variableName, staticVariable.name);
             stream << GetMetaDataCode<4>(staticVariable);
         }
         for (const auto& staticFunction : clazz.staticFunctions) {
             const std::string functionName = GetFullName(staticFunction);
-            stream << std::endl << Tab<3>() << fmt::format(R"(.StaticFunction<&{}>("{}"))", functionName, functionName);
+            stream << std::endl << Tab<3>() << fmt::format(R"(.StaticFunction<&{}>("{}"))", functionName, staticFunction.name);
             stream << GetMetaDataCode<4>(staticFunction);
         }
         for (const auto& variable : clazz.variables) {
             const std::string variableName = GetFullName(variable);
-            stream << std::endl << Tab<3>() << fmt::format(R"(.MemberVariable<&{}>("{}"))", variableName, variableName);
+            stream << std::endl << Tab<3>() << fmt::format(R"(.MemberVariable<&{}>("{}"))", variableName, variable.name);
             stream << GetMetaDataCode<4>(variable);
         }
         for (const auto& function : clazz.functions) {
             const std::string functionName = GetFullName(function);
-            stream << std::endl << Tab<3>() << fmt::format(R"(.MemberFunction<&{}>("{}"))", functionName, functionName);
+            stream << std::endl << Tab<3>() << fmt::format(R"(.MemberFunction<&{}>("{}"))", functionName, function.name);
             stream << GetMetaDataCode<4>(function);
         }
         stream << ";";

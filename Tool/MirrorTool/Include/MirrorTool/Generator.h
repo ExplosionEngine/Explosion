@@ -17,7 +17,7 @@ namespace MirrorTool {
     public:
         using Result = std::pair<bool, std::string>;
 
-        NON_COPYABLE(Generator)
+        NonCopyable(Generator)
         explicit Generator(std::string inInputFile, std::string inOutputFile, std::vector<std::string> inHeaderDirs, const MetaInfo& inMetaInfo);
         ~Generator();
 

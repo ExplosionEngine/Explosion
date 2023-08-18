@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <Runtime/World.h>
-#include <Runtime/Component/Component.h>
+#include <Runtime/ECS.h>
 
 struct Position : public Runtime::Component {
     Position() : Runtime::Component() {}

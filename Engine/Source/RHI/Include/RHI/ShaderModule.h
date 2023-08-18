@@ -15,7 +15,7 @@ namespace RHI {
 
     class ShaderModule {
     public:
-        NON_COPYABLE(ShaderModule)
+        NonCopyable(ShaderModule)
         virtual ~ShaderModule();
 
         virtual void Destroy() = 0;

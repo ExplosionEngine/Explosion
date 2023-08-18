@@ -12,7 +12,7 @@
 namespace RHI::Vulkan {
     class VKQueue : public Queue {
     public:
-        NON_COPYABLE(VKQueue)
+        NonCopyable(VKQueue)
         explicit VKQueue(VkQueue vkQueue);
         ~VKQueue() override;
 

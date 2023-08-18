@@ -18,7 +18,8 @@
 namespace Runtime {
     class World {
     public:
-        NON_COPYABLE(World)
+        NonCopyable(World)
+
         explicit World(std::string inName) : setup(false), name(std::move(inName)) {}
 
         ~World()

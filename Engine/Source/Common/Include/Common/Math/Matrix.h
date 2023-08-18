@@ -295,12 +295,12 @@ namespace Common {
 namespace Common::Internal {
     template <typename LHS, typename RHS0, typename... RHS>
     struct IsAllSame<LHS, RHS0, RHS...> {
-        static constexpr bool value = std::is_same_v<LHS, RHS0> && IsAllSame<LHS, RHS...>::value;
+        static constexpr bool value = std::is_same_v<std::remove_cvref_t<LHS>, std::remove_cvref_t<RHS0>> && IsAllSame<LHS, RHS...>::value;
     };
 
     template <typename LHS, typename RHS>
     struct IsAllSame<LHS, RHS> {
-        static constexpr bool value = std::is_same_v<LHS, RHS>;
+        static constexpr bool value = std::is_same_v<std::remove_cvref_t<LHS>, std::remove_cvref_t<RHS>>;
     };
 
     template <typename T, uint8_t R, uint8_t C, typename... VT, size_t... VI>
@@ -662,24 +662,6 @@ namespace Common {
             result[i] = At(i, index);
         }
         return result;
-    }
-
-    template <typename T, uint8_t R, uint8_t C>
-    void Matrix<T, R, C>::SetRow(uint8_t index, const Vector<T, C>& inValue)
-    {
-        Assert(index < R);
-        for (auto i = 0; i < C; i++) {
-            At(index, i) = inValue[i];
-        }
-    }
-
-    template <typename T, uint8_t R, uint8_t C>
-    void Matrix<T, R, C>::SetCol(uint8_t index, const Vector<T, R>& inValue)
-    {
-        Assert(index < C);
-        for (auto i = 0; i < R; i++) {
-            At(i, index) = inValue[i];
-        }
     }
 
     template <typename T, uint8_t R, uint8_t C>

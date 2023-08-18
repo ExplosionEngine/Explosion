@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummyGpu : public Gpu {
     public:
-        NON_COPYABLE(DummyGpu)
+        NonCopyable(DummyGpu)
         DummyGpu();
         ~DummyGpu() override;
         GpuProperty GetProperty() override;

@@ -14,7 +14,7 @@ namespace RHI::Vulkan {
 
     class VKShaderModule : public ShaderModule {
     public:
-        NON_COPYABLE(VKShaderModule)
+        NonCopyable(VKShaderModule)
         VKShaderModule(VKDevice& device, const ShaderModuleCreateInfo& createInfo);
         ~VKShaderModule() override;
 

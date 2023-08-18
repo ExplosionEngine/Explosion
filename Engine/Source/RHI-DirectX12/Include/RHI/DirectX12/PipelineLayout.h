@@ -43,7 +43,7 @@ namespace RHI::DirectX12 {
 
     class DX12PipelineLayout : public PipelineLayout {
     public:
-        NON_COPYABLE(DX12PipelineLayout)
+        NonCopyable(DX12PipelineLayout)
         DX12PipelineLayout(DX12Device& device, const PipelineLayoutCreateInfo& createInfo);
         ~DX12PipelineLayout() override;
 

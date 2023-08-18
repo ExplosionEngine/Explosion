@@ -11,7 +11,7 @@ namespace RHI::Vulkan {
 
     class VKPipelineLayout : public PipelineLayout {
     public:
-        NON_COPYABLE(VKPipelineLayout)
+        NonCopyable(VKPipelineLayout)
         VKPipelineLayout(VKDevice& device, const PipelineLayoutCreateInfo& createInfo);
         ~VKPipelineLayout() override;
 

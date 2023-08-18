@@ -16,7 +16,7 @@ namespace RHI::Vulkan {
 
     class VKCommandEncoder : public CommandEncoder {
     public:
-        NON_COPYABLE(VKCommandEncoder)
+        NonCopyable(VKCommandEncoder)
         explicit VKCommandEncoder(VKDevice& device, VKCommandBuffer& commandBuffer);
         ~VKCommandEncoder() override;
 
@@ -38,7 +38,7 @@ namespace RHI::Vulkan {
 
     class VKComputePassCommandEncoder : public ComputePassCommandEncoder {
     public:
-        NON_COPYABLE(VKComputePassCommandEncoder)
+        NonCopyable(VKComputePassCommandEncoder)
         explicit VKComputePassCommandEncoder(VKDevice& device, VKCommandBuffer& commandBuffer);
         ~VKComputePassCommandEncoder() override;
 
@@ -55,7 +55,7 @@ namespace RHI::Vulkan {
 
     class VKGraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
     public:
-        NON_COPYABLE(VKGraphicsPassCommandEncoder)
+        NonCopyable(VKGraphicsPassCommandEncoder)
         explicit VKGraphicsPassCommandEncoder(VKDevice& device, VKCommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo);
         ~VKGraphicsPassCommandEncoder() override;
 

@@ -13,6 +13,14 @@ namespace Runtime {
     using Entity = entt::entity;
     static constexpr auto entityNull = entt::null;
 
+    class EClass() Component {
+    public:
+        EClassBody(Component)
+
+        ECtor()
+        Component() = default;
+    };
+
     template <typename... Components>
     struct ComponentSet {};
 

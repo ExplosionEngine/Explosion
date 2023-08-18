@@ -25,7 +25,7 @@ namespace RHI {
 
     class Sampler {
     public:
-        NON_COPYABLE(Sampler)
+        NonCopyable(Sampler)
         virtual ~Sampler();
 
         virtual void Destroy() = 0;

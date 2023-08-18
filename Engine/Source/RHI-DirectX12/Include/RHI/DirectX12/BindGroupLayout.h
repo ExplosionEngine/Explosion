@@ -21,7 +21,7 @@ namespace RHI::DirectX12 {
 
     class DX12BindGroupLayout : public BindGroupLayout {
     public:
-        NON_COPYABLE(DX12BindGroupLayout)
+        NonCopyable(DX12BindGroupLayout)
         explicit DX12BindGroupLayout(const BindGroupLayoutCreateInfo& createInfo);
         ~DX12BindGroupLayout() override;
 

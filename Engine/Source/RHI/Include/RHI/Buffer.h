@@ -20,7 +20,7 @@ namespace RHI {
 
     class Buffer {
     public:
-        NON_COPYABLE(Buffer)
+        NonCopyable(Buffer)
         virtual ~Buffer();
 
         virtual void* Map(MapMode mapMode, size_t offset, size_t length) = 0;

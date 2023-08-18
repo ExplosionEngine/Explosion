@@ -13,7 +13,7 @@ namespace RHI {
 
     class Surface {
     public:
-        NON_COPYABLE(Surface)
+        NonCopyable(Surface)
         virtual ~Surface();
 
         virtual void Destroy() = 0;

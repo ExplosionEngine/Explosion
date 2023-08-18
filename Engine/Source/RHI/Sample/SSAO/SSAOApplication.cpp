@@ -15,7 +15,7 @@ using namespace RHI;
 
 class SSAOApplication : public Application {
 public:
-    NON_COPYABLE(SSAOApplication)
+    NonCopyable(SSAOApplication)
     explicit SSAOApplication(const std::string& n) : Application(n) {}
     ~SSAOApplication() override = default;
 

@@ -13,7 +13,7 @@ namespace RHI::Vulkan {
 
     class VKGraphicsPipeline : public GraphicsPipeline {
     public:
-        NON_COPYABLE(VKGraphicsPipeline)
+        NonCopyable(VKGraphicsPipeline)
         VKGraphicsPipeline(VKDevice& device, const GraphicsPipelineCreateInfo& createInfo);
         ~VKGraphicsPipeline() override;
         void Destroy() override;

@@ -21,7 +21,7 @@ namespace RHI::Vulkan {
 
     class VKDevice : public Device {
     public:
-        NON_COPYABLE(VKDevice)
+        NonCopyable(VKDevice)
         VKDevice(VKGpu& gpu, const DeviceCreateInfo& createInfo);
         ~VKDevice() override;
 

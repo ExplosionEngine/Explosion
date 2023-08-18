@@ -4,8 +4,11 @@
 
 #pragma once
 
-#include <Runtime/Component/Component.h>
+#include <functional>
+
 #include <Common/Math/Transform.h>
+#include <Runtime/ECS.h>
+#include <Runtime/World.h>
 
 namespace Runtime {
     class EClass() TransformComponent : public Component {
@@ -40,7 +43,9 @@ namespace Runtime {
         void MoveAndLookAt(const Common::FVec3& inPosition, const Common::FVec3& inTargetPosition, const Common::FVec3& inUpDirection = Common::FVec3Consts::unitZ);
 
     private:
-        EProperty()
+        friend class EntityHierarchyDelegate;
+
+        EProperty(category=Transform)
         Common::FTransform transform;
     };
 }

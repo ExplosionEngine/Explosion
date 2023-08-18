@@ -333,7 +333,23 @@ namespace MirrorTool {
 
     Parser::Result Parser::Parse()
     {
-        std::vector<std::string> argumentStrs = { "-x", "c++" };
+        std::vector<std::string> argumentStrs = {
+            "-x", "c++",
+            "-std=c++20",
+#if BUILD_CONFIG_DEBUG
+            "-DBUILD_CONFIG_DEBUG=1",
+#endif
+#if BUILD_EDITOR
+            "-DBUILD_EDITOR=1",
+#endif
+#if PLATFORM_WINDOWS
+            "-DPLATFORM_WINDOWS=1",
+#elif PLATFORM_MACOS
+            "-DPLATFORM_MACOS=1",
+#elif DPLATFORM_LINUX
+            "-DPLATFORM_LINUX=1",
+#endif
+        };
         argumentStrs.reserve(argumentStrs.size() + headerDirs.size());
         for (const std::string& headerDir : headerDirs) {
             argumentStrs.emplace_back(std::string("-I") + headerDir);
@@ -348,6 +364,24 @@ namespace MirrorTool {
         CXTranslationUnit translationUnit = clang_parseTranslationUnit(index, sourceFile.c_str(), arguments.data(), static_cast<int>(arguments.size()), nullptr, 0, CXTranslationUnit_None);
         if (translationUnit == nullptr) {
             return CleanUpAndConstructFailResult(index, translationUnit, "failed to create translation unit from source file");
+        }
+
+        uint32_t diagnosticsNum = clang_getNumDiagnostics(translationUnit);
+        bool hasAnyError = false;
+        std::stringstream errorInfos;
+        for (auto i = 0; i < diagnosticsNum; i++) {
+            CXDiagnostic diagnostic = clang_getDiagnostic(translationUnit, i);
+            CXString diagnosticCXString = clang_formatDiagnostic(diagnostic, clang_defaultDiagnosticDisplayOptions());
+            std::string diagnosticString = std::string(clang_getCString(diagnosticCXString));
+            clang_disposeString(diagnosticCXString);
+
+            if (diagnosticString.find("error: ") != std::string::npos) {
+                hasAnyError = true;
+                errorInfos << diagnosticString << '\n';
+            }
+        }
+        if (hasAnyError) {
+            return CleanUpAndConstructFailResult(index, translationUnit, errorInfos.str());
         }
 
         MetaInfo metaInfo;

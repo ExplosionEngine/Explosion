@@ -4,7 +4,7 @@
 
 #pragma once
 
-#define NON_COPYABLE(clz) \
+#define NonCopyable(clz) \
     clz(clz&) = delete;   \
     clz& operator=(clz&) = delete; \
     clz(const clz&) = delete; \

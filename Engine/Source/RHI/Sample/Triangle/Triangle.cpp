@@ -17,7 +17,7 @@ struct Vertex {
 
 class TriangleApplication : public Application {
 public:
-    NON_COPYABLE(TriangleApplication)
+    NonCopyable(TriangleApplication)
     explicit TriangleApplication(const std::string& n) : Application(n) {}
     ~TriangleApplication() override = default;
 

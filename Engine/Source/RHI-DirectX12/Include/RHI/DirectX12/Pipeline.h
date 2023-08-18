@@ -17,7 +17,7 @@ namespace RHI::DirectX12 {
 
     class DX12ComputePipeline : public ComputePipeline {
     public:
-        NON_COPYABLE(DX12ComputePipeline)
+        NonCopyable(DX12ComputePipeline)
         DX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo& createInfo);
         ~DX12ComputePipeline() override;
 
@@ -36,7 +36,7 @@ namespace RHI::DirectX12 {
 
     class DX12GraphicsPipeline : public GraphicsPipeline {
     public:
-        NON_COPYABLE(DX12GraphicsPipeline)
+        NonCopyable(DX12GraphicsPipeline)
         DX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo& createInfo);
         ~DX12GraphicsPipeline() override;
 

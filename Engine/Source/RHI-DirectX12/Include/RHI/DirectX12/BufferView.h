@@ -16,7 +16,7 @@ namespace RHI::DirectX12 {
 
     class DX12BufferView : public BufferView {
     public:
-        NON_COPYABLE(DX12BufferView)
+        NonCopyable(DX12BufferView)
         DX12BufferView(DX12Buffer& buffer, const BufferViewCreateInfo& createInfo);
         ~DX12BufferView() override;
 

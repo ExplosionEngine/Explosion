@@ -33,7 +33,7 @@ namespace RHI {
 
     class BindGroup {
     public:
-        NON_COPYABLE(BindGroup)
+        NonCopyable(BindGroup)
         virtual ~BindGroup();
 
         virtual void Destroy() = 0;

@@ -18,7 +18,7 @@ namespace RHI::DirectX12 {
 
     class DX12TextureView : public TextureView {
     public:
-        NON_COPYABLE(DX12TextureView)
+        NonCopyable(DX12TextureView)
         explicit DX12TextureView(DX12Device& device, DX12Texture& texture, const TextureViewCreateInfo& createInfo);
         ~DX12TextureView() override;
 

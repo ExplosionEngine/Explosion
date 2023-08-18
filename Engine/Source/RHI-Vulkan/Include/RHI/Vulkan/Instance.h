@@ -14,7 +14,7 @@ namespace RHI::Vulkan {
 
     class VKInstance : public Instance {
     public:
-        NON_COPYABLE(VKInstance)
+        NonCopyable(VKInstance)
         VKInstance();
         ~VKInstance() override;
 

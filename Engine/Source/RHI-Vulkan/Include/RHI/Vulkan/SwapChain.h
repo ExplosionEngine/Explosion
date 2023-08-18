@@ -12,7 +12,7 @@ namespace RHI::Vulkan {
 
     class VKSwapChain : public SwapChain {
     public:
-        NON_COPYABLE(VKSwapChain)
+        NonCopyable(VKSwapChain)
         explicit VKSwapChain(VKDevice& dev, const SwapChainCreateInfo& createInfo);
         ~VKSwapChain() override;
 
