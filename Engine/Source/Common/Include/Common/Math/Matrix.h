@@ -82,8 +82,6 @@ namespace Common {
 
         inline Vector<T, C> Row(uint8_t index) const;
         inline Vector<T, R> Col(uint8_t index) const;
-        inline void SetRow(uint8_t index, const Vector<T, C>& inValue);
-        inline void SetCol(uint8_t index, const Vector<T, R>& inValue);
 
         template <typename... IT>
         inline void SetValues(IT&&... inValues);
@@ -105,7 +103,7 @@ namespace Common {
 
         inline Matrix<T, C, R> Transpose() const;
         inline bool CanInverse() const;
-        inline Matrix<T, C, R> Inverse() const;
+        inline Matrix<T, R, C> Inverse() const;
         inline T Determinant() const;
     };
 
@@ -296,12 +294,12 @@ namespace Common {
 namespace Common::Internal {
     template <typename LHS, typename RHS0, typename... RHS>
     struct IsAllSame<LHS, RHS0, RHS...> {
-        static constexpr bool value = std::is_same_v<LHS, RHS0> && IsAllSame<LHS, RHS...>::value;
+        static constexpr bool value = std::is_same_v<std::remove_cvref_t<LHS>, std::remove_cvref_t<RHS0>> && IsAllSame<LHS, RHS...>::value;
     };
 
     template <typename LHS, typename RHS>
     struct IsAllSame<LHS, RHS> {
-        static constexpr bool value = std::is_same_v<LHS, RHS>;
+        static constexpr bool value = std::is_same_v<std::remove_cvref_t<LHS>, std::remove_cvref_t<RHS>>;
     };
 
     template <typename T, uint8_t R, uint8_t C, typename... VT, size_t... VI>
@@ -666,24 +664,6 @@ namespace Common {
     }
 
     template <typename T, uint8_t R, uint8_t C>
-    void Matrix<T, R, C>::SetRow(uint8_t index, const Vector<T, C>& inValue)
-    {
-        Assert(index < R);
-        for (auto i = 0; i < C; i++) {
-            At(index, i) = inValue[i];
-        }
-    }
-
-    template <typename T, uint8_t R, uint8_t C>
-    void Matrix<T, R, C>::SetCol(uint8_t index, const Vector<T, R>& inValue)
-    {
-        Assert(index < C);
-        for (auto i = 0; i < R; i++) {
-            At(i, index) = inValue[i];
-        }
-    }
-
-    template <typename T, uint8_t R, uint8_t C>
     template <typename... IT>
     void Matrix<T, R, C>::SetValues(IT&&... inValues)
     {
@@ -756,8 +736,9 @@ namespace Common {
     }
 
     template <typename T, uint8_t R, uint8_t C>
-    Matrix<T, C, R> Matrix<T, R, C>::Inverse() const
+    Matrix<T, R, C> Matrix<T, R, C>::Inverse() const
     {
+        static_assert( R == C && R > 1 && R < 5);
         T oneOverDet = static_cast<T>(1) / this->Determinant();
 
         Matrix<T, R, C> result;
@@ -825,10 +806,10 @@ namespace Common {
             Vector<T, 4> signA(+1, -1, +1, -1);
             Vector<T, 4> signB(-1, +1, -1, +1);
 
-            const Vector<T, 4> col0 = inv0 * signA;
-            const Vector<T, 4> col1 = inv1 * signB;
-            const Vector<T, 4> col2 = inv2 * signA;
-            const Vector<T, 4> col3 = inv3 * signB;
+            Vector<T, 4> col0 = inv0 * signA;
+            Vector<T, 4> col1 = inv1 * signB;
+            Vector<T, 4> col2 = inv2 * signA;
+            Vector<T, 4> col3 = inv3 * signB;
 
             result.SetCol(0, col0);
             result.SetCol(1, col1);
