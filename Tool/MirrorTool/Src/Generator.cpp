@@ -42,10 +42,6 @@ namespace MirrorTool {
 
     static std::string GetClassCode(const ClassInfo& clazz)
     {
-        if (clazz.metaDatas.empty() && clazz.staticVariables.empty() && clazz.staticFunctions.empty() && clazz.variables.empty() && clazz.functions.empty()) {
-            return "";
-        }
-
         const std::string fullName = GetFullName(clazz);
 
         std::stringstream stream;
@@ -83,7 +79,7 @@ namespace MirrorTool {
         stream << std::endl;
         stream << "}" << std::endl;
         stream << std::endl;
-        stream << fmt::format("{}::_MirrorRegistry {}::_mirrorRegistry;", fullName, fullName) << std::endl;
+        stream << fmt::format("{}::_MirrorRegistry {}::_mirrorRegistry = {}::_MirrorRegistry();", fullName, fullName, fullName) << std::endl;
         stream << std::endl;
         return stream.str();
     }

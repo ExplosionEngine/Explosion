@@ -356,10 +356,10 @@ namespace Mirror {
         ClassRegistry<C> Class(const std::string& name)
         {
             auto* typeInfo = GetTypeInfo<C>();
-            Assert(typeToNameMap.find(typeInfo) == typeToNameMap.end());
-            Assert(classes.find(name) == classes.end());
+            Assert(!Class::typeToNameMap.contains(typeInfo));
+            Assert(!classes.contains(name));
 
-            typeToNameMap[typeInfo] = name;
+            Class::typeToNameMap[typeInfo] = name;
             classes.emplace(std::make_pair(name, Mirror::Class(name)));
             return ClassRegistry<C>(classes.at(name));
         }
@@ -369,10 +369,10 @@ namespace Mirror {
         EnumRegistry<T> Enum(const std::string& name)
         {
             auto* typeInfo = GetTypeInfo<T>();
-            Assert(typeToNameMap.find(typeInfo) == typeToNameMap.end());
-            Assert(enums.find(name) == enums.end());
+            Assert(!Enum::typeToNameMap.contains(typeInfo));
+            Assert(!enums.contains(name));
 
-            typeToNameMap[typeInfo] = name;
+            Enum::typeToNameMap[typeInfo] = name;
             enums.emplace(std::make_pair(name, Mirror::Enum(name)));
             return EnumRegistry<T>(enums.at(name));
         }

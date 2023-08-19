@@ -13,4 +13,6 @@ AddTest(
     NAME Runtime.Test
     SRC ${TEST_SOURCES}
     LIB Runtime
+    INC Test
+    REFLECT Test
 )

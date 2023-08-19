@@ -5,59 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <Runtime/World.h>
-#include <Runtime/ECS.h>
-
-struct Position : public Runtime::Component {
-    Position() : Runtime::Component() {}
-
-    Position(float inX, float inY) : Runtime::Component(), x(inX), y(inY) {}
-
-    float x;
-    float y;
-};
-
-struct Velocity : public Runtime::Component {
-    Velocity(float inX, float inY) : Runtime::Component(), x(inX), y(inY) {}
-
-    float x;
-    float y;
-};
-
-class VelocitySystem : public Runtime::System {
-public:
-    VelocitySystem() = default;
-    ~VelocitySystem() override = default;
-
-    void Setup() {}
-
-    void Tick(const Runtime::Query<Position, Velocity>& query) // NOLINT
-    {
-        query.ForEach([](Position& position, Velocity& velocity) -> void {
-            position.x += velocity.x;
-            position.y += velocity.y;
-        });
-    }
-};
-
-class PositionSetupSystem : public Runtime::System {
-public:
-    PositionSetupSystem(float inX, float inY) : x(inX), y(inY) {}
-    ~PositionSetupSystem() override = default;
-
-    void Setup(const Runtime::Query<Position>& query)
-    {
-        query.ForEach([this](Position& position) -> void {
-            position.x = x;
-            position.y = y;
-        });
-    }
-
-    void Tick() {}
-
-private:
-    float x;
-    float y;
-};
+#include <WorldTest.h>
 
 TEST(WorldTest, ComponentBasicTest)
 {
@@ -88,9 +36,7 @@ TEST(WorldTest, SystemBasicTest)
     world.AddComponent<Position>(entity1, 5.0f, 6.0f);
     world.AddComponent<Velocity>(entity1, 1.0f, 2.0f);
 
-    auto* system = new VelocitySystem;
-    system->Wait(world.EngineSystems());
-    world.AddSystem(system);
+    world.MountSystem<VelocitySystem>();
 
     world.Setup();
     world.Tick();
@@ -119,9 +65,7 @@ TEST(WorldTest, SystemSetupTest)
     auto entity0 = world.CreateEntity();
     world.AddComponent<Position>(entity0);
 
-    auto* system = new PositionSetupSystem(1.0f, 1.0f);
-    system->Wait(world.EngineSystems());
-    world.AddSystem(system);
+    world.MountSystem<PositionSetupSystem>(1.0f, 1.0f);
 
     world.Setup();
 

@@ -43,8 +43,6 @@ namespace Runtime {
         void MoveAndLookAt(const Common::FVec3& inPosition, const Common::FVec3& inTargetPosition, const Common::FVec3& inUpDirection = Common::FVec3Consts::unitZ);
 
     private:
-        friend class EntityHierarchyDelegate;
-
         EProperty(category=Transform)
         Common::FTransform transform;
     };
