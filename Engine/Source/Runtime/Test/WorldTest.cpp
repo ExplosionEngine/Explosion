@@ -11,6 +11,8 @@ TEST(WorldTest, ComponentBasicTest)
 {
     Runtime::World world("TestWorld");
 
+    world.RegisterComponentType<Position>();
+
     auto entity = world.CreateEntity();
     world.AddComponent<Position>(entity, 1.0f, 2.0f);
 
@@ -27,6 +29,9 @@ TEST(WorldTest, ComponentBasicTest)
 TEST(WorldTest, SystemBasicTest)
 {
     Runtime::World world("SystemBasicTestWorld");
+
+    world.RegisterComponentType<Position>();
+    world.RegisterComponentType<Velocity>();
 
     auto entity0 = world.CreateEntity();
     world.AddComponent<Position>(entity0, 1.0f, 2.0f);
@@ -61,6 +66,8 @@ TEST(WorldTest, SystemBasicTest)
 TEST(WorldTest, SystemSetupTest)
 {
     Runtime::World world("SystemSetupText");
+
+    world.RegisterComponentType<Position>();
 
     auto entity0 = world.CreateEntity();
     world.AddComponent<Position>(entity0);

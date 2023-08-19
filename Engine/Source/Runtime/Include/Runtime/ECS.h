@@ -25,7 +25,6 @@ namespace Runtime {
     protected:
         friend class World;
 
-        // TODO proxy entt lifecycle func to this
         virtual void OnConstruct() {}
         virtual void OnDestroy() {}
 

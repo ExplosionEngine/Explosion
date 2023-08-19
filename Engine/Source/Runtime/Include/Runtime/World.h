@@ -28,6 +28,14 @@ namespace Runtime {
 
         ~World() = default;
 
+        template <typename T>
+        void RegisterComponentType()
+        {
+            std::string typeName = Mirror::Class::Get<T>().GetName();
+            Assert(!componentTypes.contains(typeName));
+            componentTypes.emplace(std::make_pair(typeName, Common::UniqueRef<IComponentLifecycleCallbackProxy>(new ComponentLifecycleCallbackProxy<T>)));
+        }
+
         Entity CreateEntity()
         {
             return registry.create();
@@ -41,24 +49,28 @@ namespace Runtime {
         template <typename T, typename... Args>
         T& AddComponent(Entity entity, Args&&... args)
         {
+            VerifyComponentTypeRegistered<T>();
             return registry.emplace_or_replace<T>(entity, std::forward<Args>(args)...);
         }
 
         template <typename T>
         T* GetComponent(Entity entity)
         {
+            VerifyComponentTypeRegistered<T>();
             return registry.try_get<T>(entity);
         }
 
         template <typename T>
         void RemoveComponent(Entity entity)
         {
+            VerifyComponentTypeRegistered<T>();
             registry.remove<T>(entity);
         }
 
         template <typename... Components>
         Query<Components...> CreateQuery(ComponentSet<Components...> = {})
         {
+            VerifyComponentTypesRegistered<Components...>();
             return Query<Components...>(std::move(registry.view<Components...>()));
         }
 
@@ -98,6 +110,24 @@ namespace Runtime {
         }
 
     private:
+        struct IComponentLifecycleCallbackProxy {
+            virtual void OnConstruct(entt::registry& reg, entt::entity entity) = 0;
+            virtual void OnDestroy(entt::registry& reg, entt::entity entity) = 0;
+        };
+
+        template <typename T>
+        struct ComponentLifecycleCallbackProxy : public IComponentLifecycleCallbackProxy {
+            void OnConstruct(entt::registry& reg, entt::entity entity) override
+            {
+                reg.get<T>(entity).OnConstruct();
+            }
+
+            void OnDestroy(entt::registry &reg, entt::entity entity) override
+            {
+                reg.get<T>(entity).OnDestroy();
+            }
+        };
+
         struct SystemInstance {
             Common::UniqueRef<System> instance;
             std::function<void()> setupFunc;
@@ -117,6 +147,19 @@ namespace Runtime {
                 Assert(false);
             }
         };
+
+        template <typename T>
+        void VerifyComponentTypeRegistered()
+        {
+            std::string typeName = Mirror::Class::Get<T>().GetName();
+            Assert(componentTypes.contains(typeName));
+        }
+
+        template <typename... TS>
+        void VerifyComponentTypesRegistered()
+        {
+            (void) std::initializer_list<int> { ([this]() -> void { VerifyComponentTypeRegistered<TS>(); }(), 0)... };
+        }
 
         template <typename... Args>
         void AddCustomDependenciesForSystem(std::vector<System*>& dependencies, std::tuple<Args...>)
@@ -169,6 +212,7 @@ namespace Runtime {
         bool alreadySetup;
         std::string name;
         entt::registry registry;
+        std::unordered_map<std::string, Common::UniqueRef<IComponentLifecycleCallbackProxy>> componentTypes;
         std::unordered_map<std::string, SystemInstance> systems;
         std::unordered_map<System*, std::vector<System*>> systemDependencies;
         std::vector<System*> engineSystems;
