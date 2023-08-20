@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummyBufferView : public BufferView {
     public:
-        NON_COPYABLE(DummyBufferView)
+        NonCopyable(DummyBufferView)
         explicit DummyBufferView(const BufferViewCreateInfo& createInfo);
         ~DummyBufferView() override;
 

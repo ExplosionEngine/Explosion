@@ -64,7 +64,7 @@ namespace RHI {
 
     class ComputePassCommandEncoder {
     public:
-        NON_COPYABLE(ComputePassCommandEncoder)
+        NonCopyable(ComputePassCommandEncoder)
         virtual ~ComputePassCommandEncoder();
 
         virtual void SetPipeline(ComputePipeline* pipeline) = 0;
@@ -79,7 +79,7 @@ namespace RHI {
 
     class GraphicsPassCommandEncoder {
     public:
-        NON_COPYABLE(GraphicsPassCommandEncoder)
+        NonCopyable(GraphicsPassCommandEncoder)
         virtual ~GraphicsPassCommandEncoder();
 
         virtual void SetPipeline(GraphicsPipeline* pipeline) = 0;
@@ -108,7 +108,7 @@ namespace RHI {
 
     class CommandEncoder {
     public:
-        NON_COPYABLE(CommandEncoder)
+        NonCopyable(CommandEncoder)
         virtual ~CommandEncoder();
 
         virtual void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) = 0;

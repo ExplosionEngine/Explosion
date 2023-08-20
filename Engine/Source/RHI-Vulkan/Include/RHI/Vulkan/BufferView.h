@@ -12,7 +12,7 @@ namespace RHI::Vulkan {
 
     class VKBufferView : public BufferView {
     public:
-        NON_COPYABLE(VKBufferView)
+        NonCopyable(VKBufferView)
         VKBufferView(VKBuffer& buffer, const BufferViewCreateInfo& createInfo);
         ~VKBufferView() override;
         void Destroy() override;

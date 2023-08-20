@@ -14,7 +14,7 @@ namespace RHI::Vulkan {
 
     class VKBindGroupLayout : public BindGroupLayout {
     public:
-        NON_COPYABLE(VKBindGroupLayout)
+        NonCopyable(VKBindGroupLayout)
         VKBindGroupLayout(VKDevice& device, const BindGroupLayoutCreateInfo& createInfo);
         ~VKBindGroupLayout() override;
 

@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummyTexture : public Texture {
     public:
-        NON_COPYABLE(DummyTexture)
+        NonCopyable(DummyTexture)
         explicit DummyTexture(const TextureCreateInfo& createInfo);
         DummyTexture() = default;
         ~DummyTexture() override;

@@ -98,8 +98,8 @@ Add3rdHeaderOnlyPackage(
 Add3rdBinaryPackage(
     NAME llvm-clang
     PLATFORM Windows
-    VERSION 14.0.3
-    HASH ba82f63eb5ac4df1925f8268e2b5c54c0542e7cf51e140266e69b7c4aea43c53
+    VERSION 15.0.7
+    HASH dd13894552677b689551248266b2ec4fc12341467776b282366098597b0c3501
     INCLUDE $<SOURCE_DIR>/include
     LINK $<SOURCE_DIR>/lib
     LIB libclang
@@ -109,8 +109,8 @@ Add3rdBinaryPackage(
 Add3rdBinaryPackage(
     NAME llvm-clang
     PLATFORM Darwin
-    VERSION 14.0.3
-    HASH a35022cc58a358756e68dc10e6fcae4b7108d92c2d699c2769cc015b3013fcdf
+    VERSION 15.0.7
+    HASH 75b45dda76d52fcf7f3253aedea1f7327eb2aca37871b287d89234b55bde5504
     INCLUDE $<SOURCE_DIR>/include
     LINK $<SOURCE_DIR>/lib
     LIB clang

@@ -15,7 +15,7 @@ namespace RHI::DirectX12 {
 
     class DX12CommandEncoder : public CommandEncoder {
     public:
-        NON_COPYABLE(DX12CommandEncoder)
+        NonCopyable(DX12CommandEncoder)
         explicit DX12CommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer);
         ~DX12CommandEncoder() override;
 
@@ -37,7 +37,7 @@ namespace RHI::DirectX12 {
 
     class DX12ComputePassCommandEncoder : public ComputePassCommandEncoder {
     public:
-        NON_COPYABLE(DX12ComputePassCommandEncoder)
+        NonCopyable(DX12ComputePassCommandEncoder)
         explicit DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer);
         ~DX12ComputePassCommandEncoder() override;
 
@@ -55,7 +55,7 @@ namespace RHI::DirectX12 {
 
     class DX12GraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
     public:
-        NON_COPYABLE(DX12GraphicsPassCommandEncoder)
+        NonCopyable(DX12GraphicsPassCommandEncoder)
         explicit DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo);
         ~DX12GraphicsPassCommandEncoder() override;
 

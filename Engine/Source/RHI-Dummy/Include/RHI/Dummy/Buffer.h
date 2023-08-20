@@ -10,7 +10,7 @@
 namespace RHI::Dummy {
     class DummyBuffer : public Buffer {
     public:
-        NON_COPYABLE(DummyBuffer)
+        NonCopyable(DummyBuffer)
         explicit DummyBuffer(const BufferCreateInfo& createInfo);
         ~DummyBuffer() override;
 

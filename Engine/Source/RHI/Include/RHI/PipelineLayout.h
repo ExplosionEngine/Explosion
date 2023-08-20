@@ -27,7 +27,7 @@ namespace RHI {
 
     class PipelineLayout {
     public:
-        NON_COPYABLE(PipelineLayout)
+        NonCopyable(PipelineLayout)
         virtual ~PipelineLayout();
 
         virtual void Destroy() = 0;

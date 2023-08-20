@@ -18,7 +18,7 @@
 namespace Common {
     class SerializeStream {
     public:
-        NON_COPYABLE(SerializeStream)
+        NonCopyable(SerializeStream)
         virtual ~SerializeStream();
 
         virtual void Write(const void* data, size_t size) = 0;
@@ -29,7 +29,7 @@ namespace Common {
 
     class DeserializeStream {
     public:
-        NON_COPYABLE(DeserializeStream);
+        NonCopyable(DeserializeStream);
         virtual ~DeserializeStream();
 
         virtual void Read(void* data, size_t size) = 0;
@@ -40,7 +40,7 @@ namespace Common {
 
     class BinaryFileSerializeStream : public SerializeStream {
     public:
-        NON_COPYABLE(BinaryFileSerializeStream)
+        NonCopyable(BinaryFileSerializeStream)
         explicit BinaryFileSerializeStream(const std::string& inFileName);
         ~BinaryFileSerializeStream() override;
         void Write(const void* data, size_t size) override;
@@ -51,7 +51,7 @@ namespace Common {
 
     class BinaryFileDeserializeStream : public DeserializeStream {
     public:
-        NON_COPYABLE(BinaryFileDeserializeStream)
+        NonCopyable(BinaryFileDeserializeStream)
         explicit BinaryFileDeserializeStream(const std::string& inFileName);
         ~BinaryFileDeserializeStream() override;
         void Read(void* data, size_t size) override;

@@ -11,7 +11,7 @@ namespace RHI {
 
     class CommandBuffer {
     public:
-        NON_COPYABLE(CommandBuffer)
+        NonCopyable(CommandBuffer)
         virtual ~CommandBuffer();
 
         virtual CommandEncoder* Begin() = 0;

@@ -28,7 +28,7 @@ namespace RHI::DirectX12 {
 
     class DX12Device : public Device {
     public:
-        NON_COPYABLE(DX12Device)
+        NonCopyable(DX12Device)
         DX12Device(DX12Gpu& gpu, const DeviceCreateInfo& createInfo);
         ~DX12Device() override;
 

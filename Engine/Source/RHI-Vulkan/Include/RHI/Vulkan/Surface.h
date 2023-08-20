@@ -14,7 +14,7 @@ namespace RHI::Vulkan {
 
     class VKSurface : public Surface {
     public:
-        NON_COPYABLE(VKSurface)
+        NonCopyable(VKSurface)
         VKSurface(VKDevice& inDevice, const SurfaceCreateInfo& inCreateInfo);
         ~VKSurface() override;
 

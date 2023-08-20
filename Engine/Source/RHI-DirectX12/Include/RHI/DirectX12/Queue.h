@@ -14,7 +14,7 @@ using Microsoft::WRL::ComPtr;
 namespace RHI::DirectX12 {
     class DX12Queue : public Queue {
     public:
-        NON_COPYABLE(DX12Queue)
+        NonCopyable(DX12Queue)
         explicit DX12Queue(ComPtr<ID3D12CommandQueue>&& dx12CommandQueue);
         ~DX12Queue() override;
 

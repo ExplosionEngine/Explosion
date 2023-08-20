@@ -14,7 +14,7 @@ namespace RHI::Vulkan {
 
     class VKSampler : public Sampler {
     public:
-        NON_COPYABLE(VKSampler)
+        NonCopyable(VKSampler)
         VKSampler(VKDevice& device, const SamplerCreateInfo& createInfo);
         ~VKSampler() override;
 

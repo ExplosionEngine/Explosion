@@ -12,7 +12,7 @@ namespace Common {
     template <typename T>
     class UniqueRef {
     public:
-        NON_COPYABLE(UniqueRef)
+        NonCopyable(UniqueRef)
         UniqueRef(T* pointer) : ref(pointer) {} // NOLINT
         UniqueRef(std::unique_ptr<T>&& inRef) : ref(std::move(inRef)) {} // NOLINT
         UniqueRef(UniqueRef&& other) noexcept : ref(std::move(other.ref)) {} // NOLINT

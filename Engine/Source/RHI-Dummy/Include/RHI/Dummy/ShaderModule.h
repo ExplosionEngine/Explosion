@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummyShaderModule : public ShaderModule {
     public:
-        NON_COPYABLE(DummyShaderModule)
+        NonCopyable(DummyShaderModule)
         explicit DummyShaderModule(const ShaderModuleCreateInfo& createInfo);
         ~DummyShaderModule() override;
 

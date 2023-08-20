@@ -12,20 +12,28 @@
 
 #include <Common/Utility.h>
 #include <Common/Debug.h>
+#include <Common/Memory.h>
 #include <Runtime/ECS.h>
-#include <Runtime/Asset.h>
+#include <Mirror/Type.h>
 
 namespace Runtime {
     class World {
     public:
-        NON_COPYABLE(World)
-        explicit World(std::string inName) : setup(false), name(std::move(inName)) {}
+        NonCopyable(World)
 
-        ~World()
+        explicit World(std::string inName) : alreadySetup(false), name(std::move(inName))
         {
-            for (auto& systemInfo : systemInfos) {
-                delete systemInfo.system;
-            }
+            MountEngineSystems();
+        }
+
+        ~World() = default;
+
+        template <typename T>
+        void RegisterComponentType()
+        {
+            std::string typeName = Mirror::Class::Get<T>().GetName();
+            Assert(!componentTypes.contains(typeName));
+            componentTypes.emplace(std::make_pair(typeName, Common::UniqueRef<IComponentLifecycleCallbackProxy>(new ComponentLifecycleCallbackProxy<T>)));
         }
 
         Entity CreateEntity()
@@ -41,76 +49,132 @@ namespace Runtime {
         template <typename T, typename... Args>
         T& AddComponent(Entity entity, Args&&... args)
         {
+            VerifyComponentTypeRegistered<T>();
             return registry.emplace_or_replace<T>(entity, std::forward<Args>(args)...);
         }
 
         template <typename T>
         T* GetComponent(Entity entity)
         {
+            VerifyComponentTypeRegistered<T>();
             return registry.try_get<T>(entity);
         }
 
         template <typename T>
         void RemoveComponent(Entity entity)
         {
+            VerifyComponentTypeRegistered<T>();
             registry.remove<T>(entity);
         }
 
         template <typename... Components>
         Query<Components...> CreateQuery(ComponentSet<Components...> = {})
         {
+            VerifyComponentTypesRegistered<Components...>();
             return Query<Components...>(std::move(registry.view<Components...>()));
         }
 
-        template <typename S>
-        void AddSystem(S* system)
+        template <typename S, typename... Args>
+        void MountSystem(Args&&... args)
         {
             using SetupQueryType = typename SystemFuncTraits<decltype(&S::Setup)>::QueryTuple;
             using TickQueryType = typename SystemFuncTraits<decltype(&S::Tick)>::QueryTuple;
+            using WaitSystemType = typename S::WaitSystemTypes;
 
-            SystemInfo systemInfo;
-            systemInfo.system = system;
-            systemInfo.setupFunc = MakeSystemFuncProxy<S, SetupQueryType>(system, &S::Setup, std::make_index_sequence<std::tuple_size_v<SetupQueryType>> {});
-            systemInfo.tickFunc = MakeSystemFuncProxy<S, TickQueryType>(system, &S::Tick, std::make_index_sequence<std::tuple_size_v<TickQueryType>> {});
-            systemInfos.emplace_back(std::move(systemInfo));
+            auto systemTypeName = Mirror::Class::Get<S>().GetName();
+            Assert(!systems.contains(systemTypeName));
+
+            SystemInstance systemInstance;
+            systemInstance.instance = new S(std::forward<Args>(args)...);
+            systemInstance.setupFunc = MakeSystemFuncProxy<S, SetupQueryType>(static_cast<S*>(systemInstance.instance.Get()), &S::Setup, std::make_index_sequence<std::tuple_size_v<SetupQueryType>> {});
+            systemInstance.tickFunc = MakeSystemFuncProxy<S, TickQueryType>(static_cast<S*>(systemInstance.instance.Get()), &S::Tick, std::make_index_sequence<std::tuple_size_v<TickQueryType>> {});
+            systems.emplace(systemTypeName, std::move(systemInstance));
+
+            auto& system = systems.at(systemTypeName);
+            std::vector<System*> dependencies = engineSystems;
+            dependencies.reserve(dependencies.size() + std::tuple_size_v<WaitSystemType>);
+            AddCustomDependenciesForSystem(dependencies, WaitSystemType {});
+            systemDependencies.emplace(std::make_pair(system.instance.Get(), std::move(dependencies)));
         }
 
         void Setup()
         {
-            if (setup) {
-                return;
-            }
-            DispatchSystemTasksAndWait([](const SystemInfo& systemInfo) -> auto{ return systemInfo.setupFunc; });
+            Assert(!alreadySetup);
+            DispatchSystemTasksAndWait([](const SystemInstance& systemInstance) -> auto{ return systemInstance.setupFunc; });
+            alreadySetup = true;
         }
 
         void Tick()
         {
-            DispatchSystemTasksAndWait([](const SystemInfo& systemInfo) -> auto{ return systemInfo.tickFunc; });
-        }
-
-        [[nodiscard]] const std::vector<System*>& EngineSystems() const
-        {
-            return engineSystems;
-        }
-
-        template <typename S>
-        S* FindEngineSystem()
-        {
-            auto iter = engineSystemMap.find(typeid(S).hash_code());
-            return iter == engineSystemMap.end() ? nullptr : iter->second;
+            DispatchSystemTasksAndWait([](const SystemInstance& systemInstance) -> auto{ return systemInstance.tickFunc; });
         }
 
     private:
-        struct SystemInfo {
-            System* system;
+        struct IComponentLifecycleCallbackProxy {
+            virtual void OnConstruct(entt::registry& reg, entt::entity entity) = 0;
+            virtual void OnDestroy(entt::registry& reg, entt::entity entity) = 0;
+        };
+
+        template <typename T>
+        struct ComponentLifecycleCallbackProxy : public IComponentLifecycleCallbackProxy {
+            void OnConstruct(entt::registry& reg, entt::entity entity) override
+            {
+                reg.get<T>(entity).OnConstruct();
+            }
+
+            void OnDestroy(entt::registry &reg, entt::entity entity) override
+            {
+                reg.get<T>(entity).OnDestroy();
+            }
+        };
+
+        struct SystemInstance {
+            Common::UniqueRef<System> instance;
             std::function<void()> setupFunc;
             std::function<void()> tickFunc;
+
+            SystemInstance() = default;
+
+            SystemInstance(SystemInstance&& inOther) noexcept
+                : instance(std::move(inOther.instance))
+                , setupFunc(std::move(inOther.setupFunc))
+                , tickFunc(std::move(inOther.tickFunc))
+            {
+            }
+
+            SystemInstance(const SystemInstance& inOther)
+            {
+                Assert(false);
+            }
         };
+
+        template <typename T>
+        void VerifyComponentTypeRegistered()
+        {
+            std::string typeName = Mirror::Class::Get<T>().GetName();
+            Assert(componentTypes.contains(typeName));
+        }
+
+        template <typename... TS>
+        void VerifyComponentTypesRegistered()
+        {
+            (void) std::initializer_list<int> { ([this]() -> void { VerifyComponentTypeRegistered<TS>(); }(), 0)... };
+        }
+
+        template <typename... Args>
+        void AddCustomDependenciesForSystem(std::vector<System*>& dependencies, std::tuple<Args...>)
+        {
+            (void) std::initializer_list<int> { ([&, this]() -> void {
+                std::string typeName = Mirror::Class::Get<Args>().GetName();
+                Assert(systems.contains(typeName));
+                dependencies.emplace_back(systems.at(typeName).instance.Get());
+            }(), 0)... };
+        }
 
         template <typename S, typename QueryTuple, typename F, size_t... I>
         std::function<void()> MakeSystemFuncProxy(S* system, F func, std::index_sequence<I...> = {})
         {
-            return [system, func, this]() -> void { (system->*func)(CreateQuery(typename QueryTraits<std::tuple_element_t<I, QueryTuple>>::ComponentSet {})...); };
+            return [system, func, this]() -> void { (system->*func)(CreateQuery(typename QueryTraits<std::tuple_element_t<I, QueryTuple>>::ComponentSet {})...); }; // NOLINT
         }
 
         template <typename F>
@@ -119,13 +183,16 @@ namespace Runtime {
             std::unordered_map<System*, tf::Task> tasks;
             tf::Taskflow taskflow;
             {
-                for (const auto& systemInfo : systemInfos) {
-                    tasks[systemInfo.system] = taskflow.emplace(taskGetter(systemInfo));
+                for (const auto& pair : systems) {
+                    const auto& system = pair.second;
+                    tasks[system.instance.Get()] = taskflow.emplace(taskGetter(system));
                 }
-                for (const auto& systemInfo : systemInfos) {
-                    auto& task = tasks[systemInfo.system];
+                for (const auto& pair : systems) {
+                    const auto& system = pair.second;
+                    auto& task = tasks[system.instance.Get()];
 
-                    const auto& systemsToWait = systemInfo.system->GetSystemsToWait();
+                    Assert(systemDependencies.contains(system.instance.Get()));
+                    const auto& systemsToWait = systemDependencies.at(system.instance.Get());
                     for (auto* systemToWait : systemsToWait) {
                         auto iter = tasks.find(systemToWait);
                         Assert(iter != tasks.end());
@@ -137,11 +204,17 @@ namespace Runtime {
             executor.run(taskflow);
         }
 
-        bool setup;
+        void MountEngineSystems()
+        {
+            // TODO
+        }
+
+        bool alreadySetup;
         std::string name;
         entt::registry registry;
-        std::vector<SystemInfo> systemInfos;
+        std::unordered_map<std::string, Common::UniqueRef<IComponentLifecycleCallbackProxy>> componentTypes;
+        std::unordered_map<std::string, SystemInstance> systems;
+        std::unordered_map<System*, std::vector<System*>> systemDependencies;
         std::vector<System*> engineSystems;
-        std::unordered_map<size_t, System*> engineSystemMap;
     };
 }

@@ -16,7 +16,7 @@ namespace RHI::DirectX12 {
 
     class DX12Buffer : public Buffer {
     public:
-        NON_COPYABLE(DX12Buffer)
+        NonCopyable(DX12Buffer)
         explicit DX12Buffer(DX12Device& device, const BufferCreateInfo& createInfo);
         ~DX12Buffer() override;
 

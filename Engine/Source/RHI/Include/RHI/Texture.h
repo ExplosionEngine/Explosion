@@ -26,7 +26,7 @@ namespace RHI {
 
     class Texture {
     public:
-        NON_COPYABLE(Texture)
+        NonCopyable(Texture)
         virtual ~Texture();
 
         virtual TextureView* CreateTextureView(const TextureViewCreateInfo& createInfo) = 0;

@@ -15,7 +15,7 @@ namespace RHI::DirectX12 {
 
     class DX12Sampler : public Sampler {
     public:
-        NON_COPYABLE(DX12Sampler)
+        NonCopyable(DX12Sampler)
         explicit DX12Sampler(DX12Device& device, const SamplerCreateInfo& createInfo);
         ~DX12Sampler() override;
 
