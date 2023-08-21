@@ -199,6 +199,8 @@ namespace Mirror {
         return iter->second;
     }
 
+    std::unordered_map<TypeInfo*, std::string> Class::typeToNameMap = {};
+
     Class::Class(std::string name) : Type(std::move(name)) {}
 
     Class::~Class() = default;
@@ -360,6 +362,8 @@ namespace Mirror {
         Assert(iter != enums.end());
         return iter->second;
     }
+
+    std::unordered_map<TypeInfo*, std::string> Enum::typeToNameMap = {};
 
     Enum::Enum(std::string name)
         : Type(std::move(name))

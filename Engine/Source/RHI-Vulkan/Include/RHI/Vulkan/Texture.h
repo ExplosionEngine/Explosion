@@ -15,7 +15,7 @@ namespace RHI::Vulkan {
 
     class VKTexture : public Texture {
     public:
-        NON_COPYABLE(VKTexture)
+        NonCopyable(VKTexture)
 
         VKTexture(VKDevice& device, const TextureCreateInfo& createInfo, VkImage image);
         VKTexture(VKDevice& device, const TextureCreateInfo& createInfo);

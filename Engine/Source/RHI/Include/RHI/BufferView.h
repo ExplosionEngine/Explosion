@@ -30,7 +30,7 @@ namespace RHI {
 
     class BufferView {
     public:
-        NON_COPYABLE(BufferView)
+        NonCopyable(BufferView)
         virtual ~BufferView();
 
         virtual void Destroy() = 0;

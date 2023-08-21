@@ -21,7 +21,7 @@ namespace RHI {
 
     class Gpu {
     public:
-        NON_COPYABLE(Gpu)
+        NonCopyable(Gpu)
         virtual ~Gpu();
         virtual GpuProperty GetProperty() = 0;
         virtual Device* RequestDevice(const DeviceCreateInfo& createInfo) = 0;

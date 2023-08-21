@@ -48,7 +48,7 @@ namespace RHI {
 
     class Device {
     public:
-        NON_COPYABLE(Device)
+        NonCopyable(Device)
         virtual ~Device();
 
         virtual void Destroy() = 0;

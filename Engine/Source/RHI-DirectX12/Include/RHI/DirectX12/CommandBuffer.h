@@ -58,7 +58,7 @@ namespace RHI::DirectX12 {
 
     class DX12CommandBuffer : public CommandBuffer {
     public:
-        NON_COPYABLE(DX12CommandBuffer)
+        NonCopyable(DX12CommandBuffer)
         explicit DX12CommandBuffer(DX12Device& device);
         ~DX12CommandBuffer() override;
 

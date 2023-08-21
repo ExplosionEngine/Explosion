@@ -254,11 +254,15 @@ function(Add3rdCMakeProject)
         HASH ${PARAMS_HASH}
     )
 
+    if (NOT ${GENERATOR_IS_MULTI_CONFIG})
+        set(CMAKE_BUILD_TYPE_ARGS -DCMAKE_BUILD_TYPE=$<CONFIG>)
+    endif ()
+
     ExternalProject_Add(
         ${NAME}
         SOURCE_DIR ${SOURCE_DIR}
         BINARY_DIR ${BINARY_DIR}
-        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${PARAMS_CMAKE_ARG}
+        CMAKE_ARGS ${CMAKE_BUILD_TYPE_ARGS} -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${PARAMS_CMAKE_ARG}
         BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG>
         INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG>
     )

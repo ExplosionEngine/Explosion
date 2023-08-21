@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummySampler : public Sampler {
     public:
-        NON_COPYABLE(DummySampler)
+        NonCopyable(DummySampler)
         explicit DummySampler(const SamplerCreateInfo& createInfo);
         ~DummySampler() override;
 

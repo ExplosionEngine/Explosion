@@ -5,6 +5,7 @@
 #include <Core/Module.h>
 #include <Core/Paths.h>
 #include <Common/String.h>
+#include <Common/Debug.h>
 
 namespace Core {
     Module::Module() = default;
@@ -19,6 +20,31 @@ namespace Core {
     {
     }
 
+    ModuleRuntimeInfo::ModuleRuntimeInfo()
+        : instance(nullptr)
+        , dynamicLib()
+    {
+    }
+
+    ModuleRuntimeInfo::~ModuleRuntimeInfo() = default;
+
+    ModuleRuntimeInfo::ModuleRuntimeInfo(const ModuleRuntimeInfo& other)
+    {
+        Assert(false);
+    }
+
+    ModuleRuntimeInfo::ModuleRuntimeInfo(ModuleRuntimeInfo&& other) noexcept
+        : instance(other.instance)
+        , dynamicLib(std::move(other.dynamicLib))
+    {
+    }
+
+    ModuleRuntimeInfo& ModuleRuntimeInfo::operator=(const ModuleRuntimeInfo& other)
+    {
+        Assert(false);
+        return *this;
+    }
+
     ModuleManager& ModuleManager::Get()
     {
         static ModuleManager instance;
@@ -27,10 +53,7 @@ namespace Core {
 
     ModuleManager::ModuleManager() = default;
 
-    ModuleManager::~ModuleManager()
-    {
-        // TODO
-    }
+    ModuleManager::~ModuleManager() = default;
 
     Module* ModuleManager::FindOrLoad(const std::string& moduleName)
     {
@@ -43,10 +66,9 @@ namespace Core {
         if (!modulePath.has_value()) {
             return nullptr;
         }
-        Common::DynamicLibrary* dynamicLib = Common::DynamicLibraryManager::Get().FindOrLoad(modulePath.value());
-        if (dynamicLib == nullptr) {
-            return nullptr;
-        }
+        Common::UniqueRef<Common::DynamicLibrary> dynamicLib = Common::DynamicLibraryFinder::Find(modulePath.value());
+        dynamicLib->Load();
+
         GetModuleFunc getModuleFunc = reinterpret_cast<GetModuleFunc>(dynamicLib->GetSymbol("GetModule"));
         if (getModuleFunc == nullptr) {
             return nullptr;
@@ -54,11 +76,11 @@ namespace Core {
 
         ModuleRuntimeInfo moduleRuntimeInfo;
         moduleRuntimeInfo.instance = getModuleFunc();
-        moduleRuntimeInfo.dynamicLib = dynamicLib;
+        moduleRuntimeInfo.dynamicLib = std::move(dynamicLib);
         moduleRuntimeInfo.instance->OnLoad();
 
-        loadedModules.emplace(moduleName, moduleRuntimeInfo);
-        return loadedModules[moduleName].instance;
+        loadedModules.emplace(moduleName, std::move(moduleRuntimeInfo));
+        return loadedModules.at(moduleName).instance;
     }
 
     Module* ModuleManager::Find(const std::string& moduleName)

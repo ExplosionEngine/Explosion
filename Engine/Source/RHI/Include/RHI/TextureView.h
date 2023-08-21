@@ -20,7 +20,7 @@ namespace RHI {
 
     class TextureView {
     public:
-        NON_COPYABLE(TextureView)
+        NonCopyable(TextureView)
         virtual ~TextureView();
 
         virtual void Destroy() = 0;

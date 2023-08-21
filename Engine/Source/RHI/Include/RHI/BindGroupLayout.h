@@ -40,7 +40,7 @@ namespace RHI {
 
     class BindGroupLayout {
     public:
-        NON_COPYABLE(BindGroupLayout)
+        NonCopyable(BindGroupLayout)
         virtual ~BindGroupLayout();
 
         virtual void Destroy() = 0;

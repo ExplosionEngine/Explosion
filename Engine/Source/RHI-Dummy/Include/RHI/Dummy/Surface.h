@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummySurface : public Surface {
     public:
-        NON_COPYABLE(DummySurface)
+        NonCopyable(DummySurface)
         explicit DummySurface(const SurfaceCreateInfo& createInfo);
         ~DummySurface() override;
 

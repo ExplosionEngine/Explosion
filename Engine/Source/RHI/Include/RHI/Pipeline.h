@@ -118,7 +118,7 @@ namespace RHI {
 
     class Pipeline {
     public:
-        NON_COPYABLE(Pipeline)
+        NonCopyable(Pipeline)
         virtual ~Pipeline();
 
         virtual void Destroy() = 0;
@@ -129,7 +129,7 @@ namespace RHI {
 
     class ComputePipeline : public Pipeline {
     public:
-        NON_COPYABLE(ComputePipeline)
+        NonCopyable(ComputePipeline)
         ~ComputePipeline() override;
 
         void Destroy() override = 0;
@@ -140,7 +140,7 @@ namespace RHI {
 
     class GraphicsPipeline : public Pipeline {
     public:
-        NON_COPYABLE(GraphicsPipeline)
+        NonCopyable(GraphicsPipeline)
         ~GraphicsPipeline() override;
 
         void Destroy() override = 0;

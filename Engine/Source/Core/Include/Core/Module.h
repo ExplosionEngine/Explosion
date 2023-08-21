@@ -8,6 +8,7 @@
 #include <optional>
 
 #include <Common/DynamicLibrary.h>
+#include <Common/Memory.h>
 #include <Core/Api.h>
 
 #define IMPLEMENT_MODULE(apiName, moduleClass) \
@@ -31,8 +32,14 @@ namespace Core {
     using GetModuleFunc = Module*(*)();
 
     struct ModuleRuntimeInfo {
+        ModuleRuntimeInfo();
+        ~ModuleRuntimeInfo();
+        ModuleRuntimeInfo(const ModuleRuntimeInfo& other);
+        ModuleRuntimeInfo(ModuleRuntimeInfo&& other) noexcept;
+        ModuleRuntimeInfo& operator=(const ModuleRuntimeInfo& other);
+
         Module* instance;
-        Common::DynamicLibrary* dynamicLib;
+        Common::UniqueRef<Common::DynamicLibrary> dynamicLib;
     };
 
     class CORE_API ModuleManager {

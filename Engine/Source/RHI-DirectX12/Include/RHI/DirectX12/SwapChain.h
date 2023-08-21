@@ -17,7 +17,7 @@ namespace RHI::DirectX12 {
 
     class DX12SwapChain : public SwapChain {
     public:
-        NON_COPYABLE(DX12SwapChain)
+        NonCopyable(DX12SwapChain)
         explicit DX12SwapChain(DX12Device& device, const SwapChainCreateInfo& createInfo);
         ~DX12SwapChain() override;
 

@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummyBindGroupLayout : public BindGroupLayout {
     public:
-        NON_COPYABLE(DummyBindGroupLayout)
+        NonCopyable(DummyBindGroupLayout)
         explicit DummyBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo);
         ~DummyBindGroupLayout() override;
 

@@ -52,7 +52,7 @@ namespace RHI {
 
     class Fence {
     public:
-        NON_COPYABLE(Fence)
+        NonCopyable(Fence)
         virtual ~Fence();
 
         virtual FenceStatus GetStatus() = 0;

@@ -19,7 +19,7 @@ struct Vertex {
 
 class TexSamplingApplication : public Application {
 public:
-    NON_COPYABLE(TexSamplingApplication)
+    NonCopyable(TexSamplingApplication)
     explicit TexSamplingApplication(const std::string& n) : Application(n) {}
     ~TexSamplingApplication() override = default;
 

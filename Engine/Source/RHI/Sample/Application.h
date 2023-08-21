@@ -31,7 +31,7 @@ using namespace Common;
 
 class Application {
 public:
-    NON_COPYABLE(Application)
+    NonCopyable(Application)
     explicit Application(std::string n) : rhiType(RHI::RHIType::vulkan), window(nullptr), name(std::move(n)), width(1024), height(768) {}
 
     virtual ~Application() = default;

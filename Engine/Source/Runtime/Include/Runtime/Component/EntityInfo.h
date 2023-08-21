@@ -6,7 +6,7 @@
 
 #include <string>
 
-#include <Runtime/Component/Component.h>
+#include <Runtime/ECS.h>
 
 namespace Runtime {
     class EClass(editorHide) EntityInfoComponent : public Component {

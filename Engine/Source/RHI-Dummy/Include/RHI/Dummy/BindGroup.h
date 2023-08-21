@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummyBindGroup : public BindGroup {
     public:
-        NON_COPYABLE(DummyBindGroup)
+        NonCopyable(DummyBindGroup)
         explicit DummyBindGroup(const BindGroupCreateInfo& createInfo);
         ~DummyBindGroup() override;
 

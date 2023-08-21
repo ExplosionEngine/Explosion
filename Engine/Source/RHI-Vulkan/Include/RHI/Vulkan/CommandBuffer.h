@@ -14,7 +14,7 @@ namespace RHI::Vulkan {
 
     class VKCommandBuffer : public CommandBuffer {
     public:
-        NON_COPYABLE(VKCommandBuffer)
+        NonCopyable(VKCommandBuffer)
         VKCommandBuffer(VKDevice& device, VkCommandPool);
         ~VKCommandBuffer() override;
 

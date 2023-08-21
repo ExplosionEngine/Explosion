@@ -18,7 +18,7 @@ namespace RHI::DirectX12 {
 
     class DX12BindGroup : public BindGroup {
     public:
-        NON_COPYABLE(DX12BindGroup)
+        NonCopyable(DX12BindGroup)
         explicit DX12BindGroup(const BindGroupCreateInfo& createInfo);
         ~DX12BindGroup() override;
 

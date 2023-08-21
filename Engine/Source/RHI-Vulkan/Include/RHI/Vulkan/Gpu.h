@@ -13,7 +13,7 @@ namespace RHI::Vulkan {
 
     class VKGpu : public Gpu {
     public:
-        NON_COPYABLE(VKGpu)
+        NonCopyable(VKGpu)
         explicit VKGpu(VKInstance& instance, VkPhysicalDevice vkPhysicalDevice);
         ~VKGpu() override;
 

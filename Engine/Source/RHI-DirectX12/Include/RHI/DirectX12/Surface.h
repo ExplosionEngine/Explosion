@@ -11,7 +11,7 @@
 namespace RHI::DirectX12 {
     class DX12Surface : public Surface {
     public:
-        NON_COPYABLE(DX12Surface)
+        NonCopyable(DX12Surface)
         explicit DX12Surface(const SurfaceCreateInfo& createInfo);
         ~DX12Surface() override;
 

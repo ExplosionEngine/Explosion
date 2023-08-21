@@ -7,11 +7,30 @@
 #include <entt/entt.hpp>
 #include <Mirror/Meta.h>
 
+#define DefineWaitSystemTypes(...) using WaitSystemTypes = std::tuple<__VA_ARGS__>;
+
 namespace Runtime {
     class World;
 
     using Entity = entt::entity;
     static constexpr auto entityNull = entt::null;
+
+    class EClass() Component {
+    public:
+        EClassBody(Component)
+
+        ECtor()
+        Component() = default;
+
+    protected:
+        friend class World;
+
+        virtual void OnConstruct() {}
+        virtual void OnDestroy() {}
+
+        World* world;
+        Entity entity;
+    };
 
     template <typename... Components>
     struct ComponentSet {};
@@ -50,37 +69,15 @@ namespace Runtime {
         using ComponentSet = ComponentSet<Components...>;
     };
 
-    class System {
+    class EClass() System {
     public:
+        EClassBody(System)
+
         virtual ~System() = default;
 
-        void Wait(System* systemToWait)
-        {
-            if (systemToWait == nullptr) {
-                return;
-            }
-            systemsToWait.emplace_back(systemToWait);
-        }
-
-        void Wait(const std::vector<System*>& inSystemsToWait)
-        {
-            for (auto* systemToWait : inSystemsToWait) {
-                if (systemToWait == nullptr) {
-                    continue;
-                }
-                systemsToWait.emplace_back(systemToWait);
-            }
-        }
-
-        [[nodiscard]] const std::vector<System*>& GetSystemsToWait()
-        {
-            return systemsToWait;
-        }
-
     protected:
-        System() = default;
+        friend class World;
 
-    private:
-        std::vector<System*> systemsToWait;
+        System() = default;
     };
 }

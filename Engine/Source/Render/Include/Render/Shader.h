@@ -73,7 +73,7 @@ namespace Render {
         static ShaderByteCodeStorage& Get();
         ShaderByteCodeStorage();
         ~ShaderByteCodeStorage();
-        NON_COPYABLE(ShaderByteCodeStorage)
+        NonCopyable(ShaderByteCodeStorage)
 
         void UpdateByteCodePackage(IShaderType* shaderTypeKey, std::unordered_map<VariantKey, ShaderByteCode>&& byteCodePackage);
         const std::unordered_map<VariantKey, ShaderByteCode>& GetByteCodePackage(IShaderType* shaderTypeKey);
@@ -101,7 +101,7 @@ namespace Render {
         }
 
         ~GlobalShaderType() = default;
-        NON_COPYABLE(GlobalShaderType)
+        NonCopyable(GlobalShaderType)
 
         std::string GetName() override
         {
@@ -178,7 +178,7 @@ namespace Render {
         }
 
         ~GlobalShaderMap() = default;
-        NON_COPYABLE(GlobalShaderMap)
+        NonCopyable(GlobalShaderMap)
 
         void Invalidate()
         {
@@ -237,7 +237,7 @@ namespace Render {
 
         GlobalShaderRegistry() = default;
         ~GlobalShaderRegistry() = default;
-        NON_COPYABLE(GlobalShaderRegistry)
+        NonCopyable(GlobalShaderRegistry)
 
         template <typename Shader>
         void Register()

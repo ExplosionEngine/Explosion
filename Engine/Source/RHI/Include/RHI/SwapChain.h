@@ -23,7 +23,7 @@ namespace RHI {
 
     class SwapChain {
     public:
-        NON_COPYABLE(SwapChain)
+        NonCopyable(SwapChain)
         virtual ~SwapChain();
 
         virtual Texture* GetTexture(uint8_t index) = 0;

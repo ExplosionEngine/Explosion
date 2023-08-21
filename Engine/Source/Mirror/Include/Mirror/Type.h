@@ -22,8 +22,6 @@ namespace Mirror {
         // TODO
     };
 
-    static std::unordered_map<TypeInfo*, std::string> typeToNameMap;
-
     class Variable;
     class MemberVariable;
 
@@ -329,6 +327,8 @@ namespace Mirror {
         void Deserailize(Common::DeserializeStream& stream, Mirror::Any* obj) const;
 
     private:
+        static std::unordered_map<TypeInfo*, std::string> typeToNameMap;
+
         friend class Registry;
         template <typename T> friend class ClassRegistry;
 
@@ -393,6 +393,8 @@ namespace Mirror {
         [[nodiscard]] std::string GetElementName(Any* value) const;
 
     private:
+        static std::unordered_map<TypeInfo*, std::string> typeToNameMap;
+
         friend class Registry;
         template <typename T> friend class EnumRegistry;
 

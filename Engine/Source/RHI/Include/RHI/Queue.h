@@ -12,7 +12,7 @@ namespace RHI {
 
     class Queue {
     public:
-        NON_COPYABLE(Queue)
+        NonCopyable(Queue)
         virtual ~Queue();
 
         virtual void Submit(CommandBuffer* commandBuffer, Fence* fenceToSignal) = 0;

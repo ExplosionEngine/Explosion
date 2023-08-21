@@ -11,7 +11,7 @@ namespace RHI::Dummy {
 
     class DummyDevice : public Device {
     public:
-        NON_COPYABLE(DummyDevice)
+        NonCopyable(DummyDevice)
         explicit DummyDevice(const DeviceCreateInfo& createInfo);
         ~DummyDevice() override;
         

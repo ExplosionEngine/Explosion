@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummyComputePipeline : public ComputePipeline {
     public:
-        NON_COPYABLE(DummyComputePipeline)
+        NonCopyable(DummyComputePipeline)
         explicit DummyComputePipeline(const ComputePipelineCreateInfo& createInfo);
         ~DummyComputePipeline() override;
 
@@ -18,7 +18,7 @@ namespace RHI::Dummy {
 
     class DummyGraphicsPipeline : public GraphicsPipeline {
     public:
-        NON_COPYABLE(DummyGraphicsPipeline)
+        NonCopyable(DummyGraphicsPipeline)
         explicit DummyGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo);
         ~DummyGraphicsPipeline() override;
 

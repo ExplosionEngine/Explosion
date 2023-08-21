@@ -18,7 +18,7 @@ namespace RHI {
         static Instance* GetByPlatform();
         static Instance* GetByType(const RHIType& type);
 
-        NON_COPYABLE(Instance)
+        NonCopyable(Instance)
         virtual ~Instance();
         virtual RHIType GetRHIType() = 0;
         virtual uint32_t GetGpuNum() = 0;
