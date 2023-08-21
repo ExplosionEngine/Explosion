@@ -395,12 +395,13 @@ function(Find3rdPackage)
 
     add_custom_target(${NAME} ALL)
     set_target_properties(
-        ${PARAMS_NAME} PROPERTIES
+        ${NAME} PROPERTIES
         3RD_TYPE "Package"
-        3RD_LIB ${PARAMS_LIB}
     )
-
-    # TODO collect lib's include and link directories and set to property
+    set_target_properties(
+        ${NAME} PROPERTIES
+        3RD_LIB "${PARAMS_LIB}"
+    )
 
     if (DEFINED PARAMS_RUNTIME_DEP)
         Expand3rdPathExpression(

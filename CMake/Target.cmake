@@ -118,10 +118,21 @@ function(AddRuntimeDependenciesCopyCommand)
         OUTPUT RUNTIME_DEPS
     )
     foreach(R ${RUNTIME_DEPS})
-        add_custom_command(
-            TARGET ${PARAMS_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${R} $<TARGET_FILE_DIR:${PARAMS_NAME}>
-        )
+        string(FIND ${R} "->" LOCATION)
+        if (NOT ${LOCATION} EQUAL -1)
+            string(REPLACE "->" ";" TEMP ${R})
+            list(GET TEMP 0 SRC)
+            list(GET TEMP 1 DST)
+            add_custom_command(
+                TARGET ${PARAMS_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST}
+            )
+        else ()
+            add_custom_command(
+                TARGET ${PARAMS_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${R} $<TARGET_FILE_DIR:${PARAMS_NAME}>
+            )
+        endif ()
     endforeach()
 endfunction()
 
