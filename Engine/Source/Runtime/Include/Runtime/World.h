@@ -10,11 +10,13 @@
 #include <utility>
 #include <future>
 
-#include <Common/Utility.h>
 #include <Common/Debug.h>
 #include <Common/Memory.h>
-#include <Runtime/ECS.h>
+#include <Common/Utility.h>
 #include <Mirror/Type.h>
+#include <Runtime/Component/EntityInfo.h>
+#include <Runtime/Component/Transform.h>
+#include <Runtime/ECS.h>
 
 namespace Runtime {
     class World {
@@ -23,6 +25,7 @@ namespace Runtime {
 
         explicit World(std::string inName) : alreadySetup(false), name(std::move(inName))
         {
+            RegisterEngineComponents();
             MountEngineSystems();
         }
 
@@ -36,9 +39,13 @@ namespace Runtime {
             componentTypes.emplace(std::make_pair(typeName, Common::UniqueRef<IComponentLifecycleCallbackProxy>(new ComponentLifecycleCallbackProxy<T>)));
         }
 
-        Entity CreateEntity()
+        Entity CreateEntity(const std::string& inName = "")
         {
-            return registry.create();
+            Entity result = registry.create();
+            (void) AddComponent<TransformComponent>(result);
+            auto& entityInfo = AddComponent<EntityInfoComponent>(result);
+            entityInfo.SetName(inName);
+            return result;
         }
 
         void DestroyEntity(Entity entity)
@@ -50,7 +57,10 @@ namespace Runtime {
         T& AddComponent(Entity entity, Args&&... args)
         {
             VerifyComponentTypeRegistered<T>();
-            return registry.emplace_or_replace<T>(entity, std::forward<Args>(args)...);
+            T& result = registry.emplace_or_replace<T>(entity, std::forward<Args>(args)...);
+            result.entity = entity;
+            result.world = this;
+            return result;
         }
 
         template <typename T>
@@ -202,6 +212,12 @@ namespace Runtime {
             }
             tf::Executor executor;
             executor.run(taskflow);
+        }
+
+        void RegisterEngineComponents()
+        {
+            RegisterComponentType<EntityInfoComponent>();
+            RegisterComponentType<TransformComponent>();
         }
 
         void MountEngineSystems()

@@ -8,7 +8,6 @@
 
 #include <Common/Math/Transform.h>
 #include <Runtime/ECS.h>
-#include <Runtime/World.h>
 
 namespace Runtime {
     class EClass() TransformComponent : public Component {

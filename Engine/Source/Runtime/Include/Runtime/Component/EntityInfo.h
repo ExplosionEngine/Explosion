@@ -16,6 +16,12 @@ namespace Runtime {
         ECtor()
         EntityInfoComponent();
 
+        EFunc()
+        const std::string& GetName() const;
+
+        EFunc()
+        void SetName(std::string inName);
+
     private:
         EProperty()
         std::string name;
