@@ -15,7 +15,7 @@ FragmentInput VSMain(float4 position : POSITION, float2 uv : TEXCOORD)
     fragmentInput.position = position;
     fragmentInput.uv = uv;
 #if VULKAN
-    fragmentInput.position.y = - fragmentInput.position.y;
+    fragmentInput.uv.y = 1 - fragmentInput.uv.y;
 #endif
     return fragmentInput;
 }

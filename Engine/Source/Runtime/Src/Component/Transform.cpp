@@ -42,11 +42,11 @@ namespace Runtime {
 
     void TransformComponent::LookTo(const Common::FVec3& inTargetPosition, const Common::FVec3& inUpDirection)
     {
-        transform.LookTo(transform.translation, inTargetPosition, inUpDirection);
+        transform.LookTo(inTargetPosition, inUpDirection);
     }
 
     void TransformComponent::MoveAndLookAt(const Common::FVec3& inPosition, const Common::FVec3& inTargetPosition, const Common::FVec3& inUpDirection)
     {
-        transform.LookTo(inPosition, inTargetPosition, inUpDirection);
+        transform.MoveAndLookTo(inPosition, inTargetPosition, inUpDirection);
     }
 }

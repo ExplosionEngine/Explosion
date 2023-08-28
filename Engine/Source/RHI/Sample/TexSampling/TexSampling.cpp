@@ -118,10 +118,10 @@ private:
     void CreateVertexBuffer()
     {
         std::vector<Vertex> vertices = {
-            {{-.5f, -.5f, 0.f}, {0.f, 0.f}},
-            {{.5f, -.5f, 0.f}, {1.f, 0.f}},
-            {{.5f, .5f, 0.f}, {1.f, 1.f}},
-            {{-.5f, .5f, 0.f}, {0.f, 1.f}},
+            {{-.5f, -.5f, .0f}, {.0f, 1.0f}},
+            {{.5f, -.5f, .0f}, {1.0f, 1.0f}},
+            {{.5f, .5f, .0f}, {1.0f, .0f}},
+            {{-.5f, .5f, .0f}, {0.f, .0f}},
         };
 
         BufferCreateInfo bufferCreateInfo {};
@@ -167,7 +167,6 @@ private:
     void CreateTextureAndSampler()
     {
         int texWidth, texHeight, texChannels;
-        stbi_set_flip_vertically_on_load(1);
         stbi_uc* pixels = stbi_load("../Test/Sample/TexSampling/Awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         Assert(pixels != nullptr);
 

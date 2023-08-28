@@ -109,7 +109,7 @@ namespace RHI::DirectX12 {
         }
         if (dsvHandle.has_value()) {
             const auto& depthStencilAttachment = *beginInfo->depthStencilAttachment;
-            if (depthStencilAttachment.depthLoadOp != LoadOp::clear || depthStencilAttachment.stencilLoadOp != LoadOp::clear) {
+            if (depthStencilAttachment.depthLoadOp != LoadOp::clear && depthStencilAttachment.stencilLoadOp != LoadOp::clear) {
                 return;
             }
             commandBuffer.GetDX12GraphicsCommandList()->ClearDepthStencilView(dsvHandle.value(), GetDX12ClearFlags(depthStencilAttachment), depthStencilAttachment.depthClearValue, depthStencilAttachment.stencilClearValue, 0, nullptr);

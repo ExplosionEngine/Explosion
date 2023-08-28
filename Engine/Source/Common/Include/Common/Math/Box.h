@@ -178,8 +178,12 @@ namespace Common {
     template <typename T>
     bool Box<T>::Intersect(const Box& inOther) const
     {
-        // TODO
-        return false;
+        return this->min.x < inOther.max.x
+            && this->min.y < inOther.max.y
+            && this->min.z < inOther.max.z
+            && inOther.min.x < this->max.x
+            && inOther.min.y < this->max.y
+            && inOther.min.z < this->max.z;
     }
 
     template <typename T>

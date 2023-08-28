@@ -16,7 +16,7 @@ namespace RHI::Vulkan {
     public:
         NonCopyable(VKBindGroup)
         VKBindGroup(VKDevice& device, const BindGroupCreateInfo& createInfo);
-        ~VKBindGroup() override;
+        ~VKBindGroup() noexcept override;
 
         void Destroy() override;
 
