@@ -17,16 +17,15 @@
 #include <Runtime/Component/EntityInfo.h>
 #include <Runtime/Component/Transform.h>
 #include <Runtime/ECS.h>
+#include <Runtime/Api.h>
 
 namespace Runtime {
-    class World {
+    class RUNTIME_API World {
     public:
         NonCopyable(World)
 
         explicit World(std::string inName) : alreadySetup(false), name(std::move(inName))
         {
-            RegisterEngineComponents();
-            MountEngineSystems();
         }
 
         ~World() = default;
@@ -36,16 +35,16 @@ namespace Runtime {
         {
             std::string typeName = Mirror::Class::Get<T>().GetName();
             Assert(!componentTypes.contains(typeName));
-            componentTypes.emplace(std::make_pair(typeName, Common::UniqueRef<IComponentLifecycleCallbackProxy>(new ComponentLifecycleCallbackProxy<T>)));
+
+            Common::UniqueRef<IComponentLifecycleCallbackProxy> lifecycleProxyInstance = new ComponentLifecycleCallbackProxy<T>;
+            registry.on_construct<T>().template connect<&IComponentLifecycleCallbackProxy::OnConstruct>(lifecycleProxyInstance.Get());
+            registry.on_destroy<T>().template connect<&IComponentLifecycleCallbackProxy::OnDestroy>(lifecycleProxyInstance.Get());
+            componentTypes.emplace(std::make_pair(typeName, std::move(lifecycleProxyInstance)));
         }
 
-        Entity CreateEntity(const std::string& inName = "")
+        Entity CreateEntity()
         {
-            Entity result = registry.create();
-            (void) AddComponent<TransformComponent>(result);
-            auto& entityInfo = AddComponent<EntityInfoComponent>(result);
-            entityInfo.SetName(inName);
-            return result;
+            return registry.create();
         }
 
         void DestroyEntity(Entity entity)
@@ -117,6 +116,17 @@ namespace Runtime {
         void Tick()
         {
             DispatchSystemTasksAndWait([](const SystemInstance& systemInstance) -> auto{ return systemInstance.tickFunc; });
+        }
+
+        void RegisterEngineComponentTypes()
+        {
+            RegisterComponentType<EntityInfoComponent>();
+            RegisterComponentType<TransformComponent>();
+        }
+
+        void MountEngineSystems()
+        {
+            // TODO
         }
 
     private:
@@ -212,17 +222,6 @@ namespace Runtime {
             }
             tf::Executor executor;
             executor.run(taskflow);
-        }
-
-        void RegisterEngineComponents()
-        {
-            RegisterComponentType<EntityInfoComponent>();
-            RegisterComponentType<TransformComponent>();
-        }
-
-        void MountEngineSystems()
-        {
-            // TODO
         }
 
         bool alreadySetup;

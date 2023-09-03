@@ -7,9 +7,10 @@
 #include <string>
 
 #include <Runtime/ECS.h>
+#include <Runtime/Api.h>
 
 namespace Runtime {
-    class EClass(editorHide) EntityInfoComponent : public Component {
+    class RUNTIME_API EClass(editorHide) EntityInfoComponent : public Component {
     public:
         EClassBody(EntityInfoComponent)
 

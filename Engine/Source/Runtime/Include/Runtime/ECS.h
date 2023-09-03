@@ -6,6 +6,7 @@
 
 #include <entt/entt.hpp>
 #include <Mirror/Meta.h>
+#include <Runtime/Api.h>
 
 #define DefineWaitSystemTypes(...) using WaitSystemTypes = std::tuple<__VA_ARGS__>;
 
@@ -15,12 +16,14 @@ namespace Runtime {
     using Entity = entt::entity;
     static constexpr auto entityNull = entt::null;
 
-    class EClass() Component {
+    class RUNTIME_API EClass() Component {
     public:
         EClassBody(Component)
 
         ECtor()
         Component() = default;
+
+        virtual ~Component() = default;
 
     protected:
         friend class World;

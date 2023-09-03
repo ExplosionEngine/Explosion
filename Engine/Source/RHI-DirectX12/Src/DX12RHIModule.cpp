@@ -15,3 +15,5 @@ namespace RHI::DirectX12 {
         return RHIGetInstance();
     }
 }
+
+IMPLEMENT_MODULE(RHI_DIRECTX12_API, RHI::DirectX12::DX12RHIModule);

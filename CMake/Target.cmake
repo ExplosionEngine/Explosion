@@ -324,6 +324,10 @@ endfunction()
 function(AddLibrary)
     cmake_parse_arguments(PARAMS "META" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB;REFLECT" ${ARGN})
 
+    if ("${PARAMS_TYPE}" STREQUAL "SHARED")
+        list(APPEND PARAMS_PUBLIC_INC ${API_HEADER_DIR}/${PARAMS_NAME})
+    endif ()
+
     if (DEFINED PARAMS_REFLECT)
         AddMirrorInfoSourceGenerationTarget(
             NAME ${PARAMS_NAME}
@@ -376,10 +380,6 @@ function(AddLibrary)
             ${PARAMS_NAME}
             EXPORT_MACRO_NAME ${API_NAME}
             EXPORT_FILE_NAME ${API_HEADER_DIR}/${PARAMS_NAME}/${API_DIR}/Api.h
-        )
-        target_include_directories(
-            ${PARAMS_NAME}
-            PUBLIC ${API_HEADER_DIR}/${PARAMS_NAME}
         )
     endif()
 

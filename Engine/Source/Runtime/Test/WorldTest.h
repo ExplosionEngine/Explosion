@@ -6,24 +6,47 @@
 
 #include <Runtime/ECS.h>
 
-struct EClass() Position : public Runtime::Component {
-    EClassBody(Position)
+struct EClass() PositionComponent : public Runtime::Component {
+    EClassBody(PositionComponent)
 
-    Position() : Runtime::Component() {}
+    PositionComponent() = default;
 
-    Position(float inX, float inY) : Runtime::Component(), x(inX), y(inY) {}
+    PositionComponent(float inX, float inY) : x(inX), y(inY) {}
 
     float x;
     float y;
 };
 
-struct EClass() Velocity : public Runtime::Component {
-    EClassBody(Velocity)
+struct EClass() VelocityComponent : public Runtime::Component {
+    EClassBody(VelocityComponent)
 
-    Velocity(float inX, float inY) : Runtime::Component(), x(inX), y(inY) {}
+    VelocityComponent(float inX, float inY) : x(inX), y(inY) {}
 
     float x;
     float y;
+};
+
+struct EClass() LifecycleTestComponent : public Runtime::Component {
+    EClassBody(LifecycleTestComponent)
+
+    LifecycleTestComponent(std::function<void()> inOnConstructCall, std::function<void()> inOnDestroyCall)
+        : onConstructCall(std::move(inOnConstructCall))
+        , onDestroyCall(std::move(inOnDestroyCall))
+    {
+    }
+
+    void OnConstruct() override
+    {
+        onConstructCall();
+    }
+
+    void OnDestroy() override
+    {
+        onDestroyCall();
+    }
+
+    std::function<void()> onConstructCall;
+    std::function<void()> onDestroyCall;
 };
 
 class EClass() VelocitySystem : public Runtime::System {
@@ -36,9 +59,9 @@ public:
 
     void Setup() {}
 
-    void Tick(const Runtime::Query<Position, Velocity>& query) // NOLINT
+    void Tick(const Runtime::Query<PositionComponent, VelocityComponent>& query) // NOLINT
     {
-        query.ForEach([](Position& position, Velocity& velocity) -> void {
+        query.ForEach([](PositionComponent& position, VelocityComponent& velocity) -> void {
             position.x += velocity.x;
             position.y += velocity.y;
         });
@@ -53,9 +76,9 @@ public:
     PositionSetupSystem(float inX, float inY) : x(inX), y(inY) {}
     ~PositionSetupSystem() override = default;
 
-    void Setup(const Runtime::Query<Position>& query)
+    void Setup(const Runtime::Query<PositionComponent>& query)
     {
-        query.ForEach([this](Position& position) -> void {
+        query.ForEach([this](PositionComponent& position) -> void {
             position.x = x;
             position.y = y;
         });

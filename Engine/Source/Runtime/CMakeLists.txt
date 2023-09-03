@@ -1,11 +1,11 @@
 file(GLOB_RECURSE SOURCES Src/*.cpp)
 AddLibrary(
     NAME Runtime
-    TYPE STATIC
+    TYPE SHARED
     SRC ${SOURCES}
     PUBLIC_INC Include
     REFLECT Include
-    LIB EnTT Mirror assimp-lib
+    LIB Core EnTT Mirror assimp-lib
 )
 
 file(GLOB TEST_SOURCES Test/*.cpp)

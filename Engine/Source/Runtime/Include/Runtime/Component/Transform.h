@@ -8,9 +8,10 @@
 
 #include <Common/Math/Transform.h>
 #include <Runtime/ECS.h>
+#include <Runtime/Api.h>
 
 namespace Runtime {
-    class EClass() TransformComponent : public Component {
+    class RUNTIME_API EClass() TransformComponent : public Component {
     public:
         EClassBody(TransformComponent)
 

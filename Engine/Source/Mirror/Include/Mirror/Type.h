@@ -253,6 +253,9 @@ namespace Mirror {
         std::unordered_map<std::string, Function> functions;
     };
 
+// TODO
+#include <iostream>
+
     class MIRROR_API Class : public Type {
     public:
         ~Class() override;
@@ -261,7 +264,7 @@ namespace Mirror {
         requires std::is_class_v<C>
         [[nodiscard]] static const Class* Find()
         {
-            auto iter = typeToNameMap.find(GetTypeInfo<C>());
+            auto iter = typeToNameMap.find(GetTypeInfo<C>()->id);
             Assert(iter != typeToNameMap.end());
             return Find(iter->second);
         }
@@ -270,7 +273,7 @@ namespace Mirror {
         requires std::is_class_v<C>
         [[nodiscard]] static const Class& Get()
         {
-            auto iter = typeToNameMap.find(GetTypeInfo<C>());
+            auto iter = typeToNameMap.find(GetTypeInfo<C>()->id);
             Assert(iter != typeToNameMap.end());
             return Get(iter->second);
         }
@@ -327,7 +330,7 @@ namespace Mirror {
         void Deserailize(Common::DeserializeStream& stream, Mirror::Any* obj) const;
 
     private:
-        static std::unordered_map<TypeInfo*, std::string> typeToNameMap;
+        static std::unordered_map<TypeId, std::string> typeToNameMap;
 
         friend class Registry;
         template <typename T> friend class ClassRegistry;
@@ -370,7 +373,7 @@ namespace Mirror {
         requires std::is_enum_v<T>
         [[nodiscard]] static const Enum* Find()
         {
-            auto iter = typeToNameMap.find(GetTypeInfo<T>());
+            auto iter = typeToNameMap.find(GetTypeInfo<T>()->id);
             Assert(iter != typeToNameMap.end());
             return Find(iter->second);
         }
@@ -379,7 +382,7 @@ namespace Mirror {
         requires std::is_enum_v<T>
         [[nodiscard]] static const Enum& Get()
         {
-            auto iter = typeToNameMap.find(GetTypeInfo<T>());
+            auto iter = typeToNameMap.find(GetTypeInfo<T>()->id);
             Assert(iter != typeToNameMap.end());
             return Get(iter->second);
         }
@@ -393,7 +396,7 @@ namespace Mirror {
         [[nodiscard]] std::string GetElementName(Any* value) const;
 
     private:
-        static std::unordered_map<TypeInfo*, std::string> typeToNameMap;
+        static std::unordered_map<TypeId, std::string> typeToNameMap;
 
         friend class Registry;
         template <typename T> friend class EnumRegistry;
