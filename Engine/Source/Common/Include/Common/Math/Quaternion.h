@@ -475,4 +475,10 @@ namespace Common {
             0, 0, 0, 1
         );
     }
+
+    template <typename T>
+    const Quaternion<T> QuatConsts<T>::zero = Quaternion<T>(0, 0, 0, 0);
+
+    template <typename T>
+    const Quaternion<T> QuatConsts<T>::identity = Quaternion<T>(0, 0, 0, 1);
 }

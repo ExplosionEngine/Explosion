@@ -5,14 +5,13 @@
 #include <vector>
 #include <array>
 
-#include <glm/glm.hpp>
-
 #include <Application.h>
+#include <Common/Math/Vector.h>
 using namespace RHI;
 
 struct Vertex {
-    glm::vec3 position;
-    glm::vec3 color;
+    FVec3 position;
+    FVec3 color;
 };
 
 class TriangleApplication : public Application {

@@ -77,7 +77,7 @@ namespace Common {
             return Matrix<T, 4, 4>(
                 2.0f / this->width, 0.0f, 0.0f, 0.0f,
                 0.0f, 2.0f / this->height, 0.0f, 0.0f,
-                0.0f, 0.0f, -1.0f / (this->farPlane - this->nearPlane), 1.0f + (this->nearPlane / (this->farPlane - this->nearPlane)),
+                0.0f, 0.0f, -1.0f / (this->farPlane.value() - this->nearPlane), 1.0f + (this->nearPlane / (this->farPlane.value() - this->nearPlane)),
                 0.0f, 0.0f, 0.0f, 1.0f
             );
         } else {
@@ -120,7 +120,7 @@ namespace Common {
             return Matrix<T, 4, 4>(
                 this->width / (this->height * tanHalfFov), 0.0f, 0.0f, 0.0f,
                 0.0f, 1.0f / tanHalfFov, 0.0f, 0.0f,
-                0.0f, 0.0f, this->nearPlane / (this->nearPlane - this->farPlane), this->nearPlane * this->farPlane / (this->farPlane - this->nearPlane),
+                0.0f, 0.0f, this->nearPlane / (this->nearPlane - this->farPlane.value()), this->nearPlane * this->farPlane.value() / (this->farPlane.value() - this->nearPlane),
                 0.0f, 0.0f, 1.0f, 0.0f
             );
         } else {
