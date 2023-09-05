@@ -5,82 +5,139 @@
 #pragma once
 
 #include <entt/entt.hpp>
+
+#include <Common/Utility.h>
 #include <Mirror/Meta.h>
+#include <Mirror/Type.h>
 #include <Runtime/Api.h>
 
-#define DefineWaitSystemTypes(...) using WaitSystemTypes = std::tuple<__VA_ARGS__>;
-
 namespace Runtime {
-    class World;
-
     using Entity = entt::entity;
     static constexpr auto entityNull = entt::null;
 
-    class RUNTIME_API EClass() Component {
-    public:
+    class SystemCommands;
+
+    struct EClass() Component {
         EClassBody(Component)
-
-        ECtor()
-        Component() = default;
-
-        virtual ~Component() = default;
-
-    protected:
-        friend class World;
-
-        virtual void OnConstruct() {}
-        virtual void OnDestroy() {}
-
-        World* world;
-        Entity entity;
     };
 
-    template <typename... Components>
-    struct ComponentSet {};
+    struct EClass() GlobalComponent {
+        EClassBody(GlobalComponent)
+    };
 
-    template <typename... Components>
+    struct EClass() System {
+        EClassBody(System)
+    };
+
+    struct EClass() Event {
+        EClassBody(Event)
+    };
+
+    template <typename C>
+    struct Added : public Event {
+        Entity entity;
+        C& component;
+    };
+
+    template <typename C>
+    class Updated : public Event {
+        Entity entity;
+        C& component;
+    };
+
+    template <typename C>
+    class Destroy : public Event {
+        Entity entity;
+        C& component;
+    };
+
+    template <typename... C>
     class Query {
     public:
-        using ComponentSet = ComponentSet<Components...>;
+        // TODO
+    };
 
-        explicit Query(entt::view<entt::exclude_t<>, Components...>&& inView) : view(inView) {}
-        ~Query() = default;
+    class SystemCommands {
+    public:
+        NonCopyable(SystemCommands) explicit SystemCommands(entt::registry& inRegistry);
+        ~SystemCommands();
 
-        template <typename F>
-        void ForEach(F&& func) const
+        Entity AddEntity();
+        void DestroyEntity(Entity inEntity);
+
+        template <typename C, typename... Args>
+        void AddComponent(Entity entity, Args&&... args)
         {
-            view.each(std::forward<F>(func));
+            // TODO
+        }
+
+        template <typename C>
+        const C* GetComponent(Entity entity)
+        {
+            // TODO
+        }
+
+        template <typename C, typename F>
+        void PatchComponent(Entity entity, F&& patchFunc)
+        {
+            // TODO
+        }
+
+        template <typename C>
+        void SetComponent(Entity entity, C&& component)
+        {
+            // TODO
+        }
+
+        template <typename C>
+        void RemoveComponent(Entity entity)
+        {
+            // TODO
+        }
+
+        template <typename G, typename... Args>
+        void AddGlobalComponent(Args&&... args)
+        {
+            // TODO
+        }
+
+        template <typename G>
+        const G& GetGlobalComponent()
+        {
+            // TODO
+        }
+
+        template <typename G, typename F>
+        void PatchGlobalComponent(F&& patchFunc)
+        {
+            // TODO
+        }
+
+        template <typename G>
+        void SetGlobalComponent(G&& globalComponent)
+        {
+            // TODO
+        }
+
+        template <typename G>
+        void RemoveGlobalComponent()
+        {
+            // TODO
+        }
+
+        template <typename... C>
+        Query<C...> NewQuery()
+        {
+            // TODO
+        }
+
+        template <typename E>
+        void Broadcast(E&& event)
+        {
+            // TODO
         }
 
     private:
-        entt::view<entt::exclude_t<>, Components...> view;
-    };
-
-    template <typename T>
-    struct SystemFuncTraits {};
-
-    template <typename Class, typename... Queries>
-    struct SystemFuncTraits<void(Class::*)(const Queries&...)> {
-        using QueryTuple = std::tuple<Queries...>;
-    };
-
-    template <typename T>
-    struct QueryTraits {};
-
-    template <typename... Components>
-    struct QueryTraits<Query<Components...>> {
-        using ComponentSet = ComponentSet<Components...>;
-    };
-
-    class EClass() System {
-    public:
-        EClassBody(System)
-
-        virtual ~System() = default;
-
-    protected:
-        friend class World;
-
-        System() = default;
+        entt::registry& registry;
     };
 }

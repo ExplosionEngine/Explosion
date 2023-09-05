@@ -6,7 +6,6 @@
 
 #include <Core/Module.h>
 #include <Runtime/Api.h>
-#include <Runtime/World.h>
 
 namespace Runtime {
     class RUNTIME_API RuntimeModule : public Core::Module {
