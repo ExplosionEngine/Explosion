@@ -36,3 +36,5 @@ namespace Rendering {
         renderingThread->Flush();
     }
 }
+
+IMPLEMENT_MODULE(RENDERING_API, Rendering::RenderingModule);

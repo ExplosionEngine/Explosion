@@ -15,3 +15,5 @@ namespace RHI::Vulkan {
         return RHIGetInstance();
     }
 }
+
+IMPLEMENT_MODULE(RHI_VULKAN_API, RHI::Vulkan::VulkanRHIModule);

@@ -46,7 +46,7 @@ namespace MirrorTool {
 
         std::stringstream stream;
         stream << std::endl;
-        stream << fmt::format("{}::_MirrorRegistry::_MirrorRegistry()", fullName) << std::endl;
+        stream << fmt::format("int {}::_mirrorRegistry = []() -> int ", fullName) << std::endl;
         stream << "{" << std::endl;
         stream << Tab<1>() << "Mirror::Registry::Get()";
         stream << std::endl << Tab<2>() << fmt::format(R"(.Class<{}>("{}"))", fullName, fullName);
@@ -75,11 +75,9 @@ namespace MirrorTool {
             stream << std::endl << Tab<3>() << fmt::format(R"(.MemberFunction<&{}>("{}"))", functionName, function.name);
             stream << GetMetaDataCode<4>(function);
         }
-        stream << ";";
-        stream << std::endl;
-        stream << "}" << std::endl;
-        stream << std::endl;
-        stream << fmt::format("{}::_MirrorRegistry {}::_mirrorRegistry = {}::_MirrorRegistry();", fullName, fullName, fullName) << std::endl;
+        stream << ";" << std::endl;
+        stream << Tab<1>() << "return 0;" << std::endl;
+        stream << "}();" << std::endl;
         stream << std::endl;
         return stream.str();
     }
@@ -151,26 +149,6 @@ namespace MirrorTool {
         return stream.str();
     }
 
-    static std::string GetGlobalScopeRegistryCode(const MetaInfo& metaInfo, const std::string& outputFile)
-    {
-        size_t hash = Common::HashUtils::CityHash(outputFile.data(), outputFile.size());
-        std::string registryName = fmt::format("_GlobalScopeMirrorRegistry_{}", hash);
-
-        std::stringstream stream;
-        stream << "struct " << registryName << " {" << std::endl;
-        stream << Tab<1>() << fmt::format("{}();", registryName) << std::endl;
-        stream << "};" << std::endl;
-        stream << std::endl;
-        stream << fmt::format("{}::{}()", registryName, registryName) << std::endl;
-        stream << "{" << std::endl;
-        stream << GetGlobalScopeCode(metaInfo);
-        stream << std::endl;
-        stream << "}" << std::endl;
-        stream << std::endl;
-        stream << fmt::format("static {} _globalScopeRegistry;", registryName) << std::endl;
-        return stream.str();
-    }
-
     static std::string GetNamespaceClassesCode(const NamespaceInfo& ns)
     {
         std::stringstream stream;
@@ -227,8 +205,6 @@ namespace MirrorTool {
         file << GetHeaderNote() << std::endl;
         file << fmt::format("#include <{}>", bestMatchHeaderPath) << std::endl;
         file << "#include <Mirror/Registry.h>" << std::endl;
-        file << std::endl;
-        file << GetGlobalScopeRegistryCode(metaInfo, outputFile);
         file << GetClassesCode(metaInfo);
         return std::make_pair(true, "");
     }

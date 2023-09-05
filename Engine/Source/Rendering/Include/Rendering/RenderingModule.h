@@ -34,5 +34,3 @@ namespace Rendering {
         Common::UniqueRef<Common::WorkerThread> renderingThread;
     };
 }
-
-IMPLEMENT_MODULE(RENDERING_API, Rendering::RenderingModule);

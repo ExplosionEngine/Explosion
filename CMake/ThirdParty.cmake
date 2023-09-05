@@ -358,3 +358,64 @@ function(Add3rdAliasPackage)
         3RD_LIB "${PARAMS_LIB}"
     )
 endfunction()
+
+function(Find3rdPackage)
+    cmake_parse_arguments(PARAMS "" "NAME;PACKAGE;PLATFORM;VERSION;HASH;PREFIX" "COMPONENTS;LIB;RUNTIME_DEP" ${ARGN})
+
+    if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
+        return()
+    endif()
+
+    set(NAME "${PARAMS_NAME}")
+    set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
+    set(URL "${3RD_REPO}/${FULL_NAME}.7z")
+    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.7z")
+    set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
+
+    DownloadAndExtract3rdPackage(
+        URL ${URL}
+        SAVE_AS ${ZIP}
+        EXTRACT_TO ${SOURCE_DIR}
+        HASH ${PARAMS_HASH}
+    )
+
+    if (DEFINED PARAMS_PREFIX)
+        Expand3rdPathExpression(
+            INPUT ${PARAMS_PREFIX}
+            OUTPUT R_PREFIX
+            SOURCE_DIR ${SOURCE_DIR}
+        )
+        list(APPEND CMAKE_PREFIX_PATH ${R_PREFIX})
+    endif ()
+
+    find_package(
+        ${PARAMS_PACKAGE} REQUIRED
+        COMPONENTS ${PARAMS_COMPONENTS}
+    )
+
+    add_custom_target(${NAME} ALL)
+    set_target_properties(
+        ${NAME} PROPERTIES
+        3RD_TYPE "Package"
+    )
+    set_target_properties(
+        ${NAME} PROPERTIES
+        3RD_LIB "${PARAMS_LIB}"
+    )
+
+    if (DEFINED PARAMS_RUNTIME_DEP)
+        Expand3rdPathExpression(
+            INPUT ${PARAMS_RUNTIME_DEP}
+            OUTPUT R_RUNTIME_DEP
+            SOURCE_DIR ${SOURCE_DIR}
+        )
+        Get3rdPlatformPath(
+            INPUT ${R_RUNTIME_DEP}
+            OUTPUT P_RUNTIME_DEP
+        )
+        set_target_properties(
+            ${NAME} PROPERTIES
+            3RD_RUNTIME_DEP "${P_RUNTIME_DEP}"
+        )
+    endif()
+endfunction()
