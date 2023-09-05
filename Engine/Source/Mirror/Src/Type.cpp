@@ -2,8 +2,6 @@
 // Created by johnk on 2022/9/21.
 //
 
-#pragma once
-
 #include <utility>
 #include <sstream>
 

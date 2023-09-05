@@ -15,40 +15,70 @@ namespace Runtime {
     using Entity = entt::entity;
     static constexpr auto entityNull = entt::null;
 
-    class SystemCommands;
+    struct Component {};
+    struct GlobalComponent {};
+    struct System {};
+    struct SystemEvent {};
 
-    struct EClass() Component {
-        EClassBody(Component)
+    template <typename S>
+    struct SystemSchedule {
+        template <typename DS>
+        SystemSchedule<S> Depend()
+        {
+            dependencies.emplace_back(Mirror::GetTypeInfo<DS>()->id);
+            return *this;
+        }
+
+        std::vector<Mirror::TypeId> dependencies;
     };
 
-    struct EClass() GlobalComponent {
-        EClassBody(GlobalComponent)
-    };
+    template <typename E>
+    struct EventSlot {
+        template <typename S>
+        EventSlot<E> Connect()
+        {
+            systems.emplace_back(Mirror::GetTypeInfo<S>()->id);
+            return *this;
+        }
 
-    struct EClass() System {
-        EClassBody(System)
-    };
-
-    struct EClass() Event {
-        EClassBody(Event)
+        std::vector<Mirror::TypeId> systems;
     };
 
     template <typename C>
-    struct Added : public Event {
+    struct ComponentAdded : public SystemEvent {
         Entity entity;
-        C& component;
     };
 
     template <typename C>
-    class Updated : public Event {
+    struct ComponentUpdated : public SystemEvent {
         Entity entity;
-        C& component;
     };
 
     template <typename C>
-    class Destroy : public Event {
+    struct ComponentRemoved : public SystemEvent {
         Entity entity;
-        C& component;
+    };
+
+    template <typename G>
+    struct GlobalComponentAdded : public SystemEvent {};
+
+    template <typename G>
+    struct GlobalComponentUpdated : public SystemEvent {};
+
+    template <typename C>
+    struct GlobalComponentRemoved : public SystemEvent {};
+
+    struct ISystemEventRadio {
+    public:
+        template <typename E>
+        void Broadcast(const E& event)
+        {
+            Mirror::Any eventRef = std::ref(event);
+            BroadcastSystemEvent(Mirror::GetTypeInfo<E>()->id, event);
+        }
+
+    protected:
+        virtual void BroadcastSystemEvent(Mirror::TypeId eventTypeId, Mirror::Any eventRef) = 0;
     };
 
     template <typename... C>
@@ -59,7 +89,8 @@ namespace Runtime {
 
     class SystemCommands {
     public:
-        NonCopyable(SystemCommands) explicit SystemCommands(entt::registry& inRegistry);
+        NonCopyable(SystemCommands)
+        SystemCommands(entt::registry& inRegistry, ISystemEventRadio& inSystemEventRadio);
         ~SystemCommands();
 
         Entity AddEntity();
@@ -68,61 +99,99 @@ namespace Runtime {
         template <typename C, typename... Args>
         void AddComponent(Entity entity, Args&&... args)
         {
-            // TODO
+            C& component = registry.emplace<C>(entity, std::forward<Args>(args)...);
+            Broadcast(ComponentAdded<C> { entity });
         }
 
         template <typename C>
         const C* GetComponent(Entity entity)
         {
-            // TODO
+            return registry.try_get<C>(entity);
+        }
+
+        template <typename C>
+        bool HasComponent(Entity entity)
+        {
+            return GetComponent<C>(entity) != nullptr;
         }
 
         template <typename C, typename F>
         void PatchComponent(Entity entity, F&& patchFunc)
         {
-            // TODO
+            registry.patch<C>(entity, patchFunc);
+            Broadcast(ComponentUpdated<C> { entity });
         }
 
-        template <typename C>
-        void SetComponent(Entity entity, C&& component)
+        template <typename C, typename... Args>
+        void SetComponent(Entity entity, Args&&... args)
         {
-            // TODO
+            registry.replace<C>(entity, std::forward<Args>(args)...);
+            Broadcast(ComponentUpdated<C> { entity });
         }
 
         template <typename C>
         void RemoveComponent(Entity entity)
         {
-            // TODO
+            registry.remove<C>(entity);
+            Broadcast(ComponentRemoved<C> { entity });
         }
 
         template <typename G, typename... Args>
         void AddGlobalComponent(Args&&... args)
         {
-            // TODO
+            Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
+            auto iter = globalComponents.find(typeId);
+            Assert(iter == globalComponents.end());
+            globalComponents.emplace(std::make_pair(typeId, Mirror::Any(G(std::forward<Args>(args)...))));
+            Broadcast(GlobalComponentAdded<G> {});
         }
 
         template <typename G>
-        const G& GetGlobalComponent()
+        const G* GetGlobalComponent()
         {
-            // TODO
+            Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
+            auto iter = globalComponents.find(typeId);
+            if (iter == globalComponents.end()) {
+                return nullptr;
+            } else {
+                return &iter->second.CastTo<const G&>();
+            }
+        }
+
+        template <typename G>
+        bool HasGlobalComponent()
+        {
+            return GetGlobalComponent<G>() != nullptr;
         }
 
         template <typename G, typename F>
         void PatchGlobalComponent(F&& patchFunc)
         {
-            // TODO
+            Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
+            auto iter = globalComponents.find(typeId);
+            Assert(iter != globalComponents.end());
+            patchFunc(iter->second.CastTo<G&>());
+            Broadcast(GlobalComponentUpdated<G> {});
         }
 
-        template <typename G>
-        void SetGlobalComponent(G&& globalComponent)
+        template <typename G, typename... Args>
+        void SetGlobalComponent(Args&&... args)
         {
-            // TODO
+            Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
+            auto iter = globalComponents.find(typeId);
+            Assert(iter != globalComponents.end());
+            iter->second = G(std::forward<Args>(args)...);
+            Broadcast(GlobalComponentUpdated<G> {});
         }
 
         template <typename G>
         void RemoveGlobalComponent()
         {
-            // TODO
+            Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
+            auto iter = globalComponents.find(typeId);
+            Assert(iter != globalComponents.end());
+            globalComponents.erase(typeId);
+            Broadcast(GlobalComponentRemoved<G> {});
         }
 
         template <typename... C>
@@ -132,12 +201,14 @@ namespace Runtime {
         }
 
         template <typename E>
-        void Broadcast(E&& event)
+        void Broadcast(const E& event)
         {
-            // TODO
+            systemEventRadio.Broadcast<E>(event);
         }
 
     private:
+        ISystemEventRadio& systemEventRadio;
         entt::registry& registry;
+        std::unordered_map<Mirror::TypeId, Mirror::Any> globalComponents;
     };
 }
