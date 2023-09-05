@@ -5,8 +5,9 @@
 #include <Runtime/ECS.h>
 
 namespace Runtime {
-    SystemCommands::SystemCommands(entt::registry& inRegistry)
+    SystemCommands::SystemCommands(entt::registry& inRegistry, ISystemEventRadio& inSystemEventRadio)
         : registry(inRegistry)
+        , systemEventRadio(inSystemEventRadio)
     {
     }
 
