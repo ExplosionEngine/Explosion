@@ -7,6 +7,7 @@
 #include <optional>
 
 #include <Common/Math/Matrix.h>
+#include <Common/Math/Quaternion.h>
 
 namespace Common {
     template <typename T>
@@ -114,11 +115,12 @@ namespace Common {
     template <typename T>
     Matrix<T, 4, 4> ReversedZPerspectiveProjection<T>::GetProjectionMatrix() const
     {
-        T tanHalfFov = tan(this->fov / 2);
+        Angle<T> angle(this->fov);
+        T tanHalfFov = tan(angle.ToRadian() / static_cast<T>(2));
 
         if (this->farPlane.has_value()) {
             return Matrix<T, 4, 4>(
-                this->width / (this->height * tanHalfFov), 0.0f, 0.0f, 0.0f,
+                this->height / (this->width * tanHalfFov), 0.0f, 0.0f, 0.0f,
                 0.0f, 1.0f / tanHalfFov, 0.0f, 0.0f,
                 0.0f, 0.0f, this->nearPlane / (this->nearPlane - this->farPlane.value()), this->nearPlane * this->farPlane.value() / (this->farPlane.value() - this->nearPlane),
                 0.0f, 0.0f, 1.0f, 0.0f
@@ -126,7 +128,7 @@ namespace Common {
         } else {
             // Infinite Far Plane
             return Matrix<T, 4, 4>(
-                this->width / (this->height * tanHalfFov), 0.0f, 0.0f, 0.0f,
+                this->height / (this->width * tanHalfFov), 0.0f, 0.0f, 0.0f,
                 0.0f, 1.0f / tanHalfFov, 0.0f, 0.0f,
                 0.0f, 0.0f, 0.0f, this->nearPlane,
                 0.0f, 0.0f, 1.0f, 0.0f

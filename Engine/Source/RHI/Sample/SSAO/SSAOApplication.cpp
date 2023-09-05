@@ -739,22 +739,22 @@ private:
             0, 0, 0, 1
         };
 
-        ViewTransform<float> vt;
-//        vt.rotation = FQuat::FromEulerZYX(.0f, .0f, .0f);
-        vt.translation = FVec3(3.0f, .0f, 3.0f);
+        FViewTransform vt;
+        vt.rotation = FQuat::FromEulerZYX(.0f, 75.0f, .0f);
+        vt.translation = FVec3(7.0f, 2.5f, -2.0f);
 
-        FReversedZPerspectiveProjection rzProjection(30.f, static_cast<float>(width), static_cast<float>(height), uboSceneParams.nearPlane, uboSceneParams.farPlane);
+        FReversedZPerspectiveProjection rzProjection(60.f, static_cast<float>(width), static_cast<float>(height), uboSceneParams.nearPlane, uboSceneParams.farPlane);
+        FReversedZPerspectiveProjection infinityRzProj(60.f, static_cast<float>(width), static_cast<float>(height), uboSceneParams.nearPlane);
 
         // scene matries
-        uboSceneParams.projection = rzProjection.GetProjectionMatrix();
+        uboSceneParams.projection = infinityRzProj.GetProjectionMatrix();
         uboSceneParams.view = vt.GetViewMatrix();
-//        uboSceneParams.model = MatConsts<float, 4, 4>::identity;
         uboSceneParams.model = aixsTransMat;
 
         CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.sceneParams, sizeof(UBOSceneParams), &uboSceneParams);
 
         // ssao parameters
-        ubossaoParams.projection = rzProjection.GetProjectionMatrix();
+        ubossaoParams.projection = infinityRzProj.GetProjectionMatrix();
         CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.ssaoParams, sizeof(UBOSSAOParams), &ubossaoParams);
 
         // ssao kennel

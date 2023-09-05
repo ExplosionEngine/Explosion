@@ -191,7 +191,7 @@ Add3rdCMakeProject(
     LINK $<INSTALL_DIR>/lib
     LIB
         Windows "assimp-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>"
-        Darwin assimp
+        Darwin "assimp$<IF:$<CONFIG:Debug>,d,>"
     RUNTIME_DEP
         Windows "$<INSTALL_DIR>/bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>.dll"
 )

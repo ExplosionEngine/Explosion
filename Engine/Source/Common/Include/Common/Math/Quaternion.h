@@ -205,10 +205,10 @@ namespace Common {
     }
 
     template <typename T>
-    const Quaternion<T> zero = Quaternion<T>();
+    const Quaternion<T> QuatConsts<T>::zero = Quaternion<T>();
 
     template <typename T>
-    const Quaternion<T> identity = Quaternion<T>(1, 0, 0, 0);
+    const Quaternion<T> QuatConsts<T>::identity = Quaternion<T>(1, 0, 0, 0);
 
     template <typename T>
     Quaternion<T> Quaternion<T>::FromEulerZYX(T inAngleX, T inAngleY, T inAngleZ)
@@ -476,9 +476,4 @@ namespace Common {
         );
     }
 
-    template <typename T>
-    const Quaternion<T> QuatConsts<T>::zero = Quaternion<T>(0, 0, 0, 0);
-
-    template <typename T>
-    const Quaternion<T> QuatConsts<T>::identity = Quaternion<T>(0, 0, 0, 1);
 }
