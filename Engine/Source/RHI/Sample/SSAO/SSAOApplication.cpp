@@ -212,15 +212,15 @@ private:
     } uniformBuffers;
 
     struct UBOSceneParams {
-        glm::mat4 projection;
-        glm::mat4 model;
-        glm::mat4 view;
+        FMat4x4 projection;
+        FMat4x4 model;
+        FMat4x4 view;
         float nearPlane = 0.1f;
         float farPlane = 64.0f;
     } uboSceneParams;
 
     struct UBOSSAOParams {
-        glm::mat4 projection;
+        FMat4x4 projection;
         int32_t ssao = 1;
         int32_t ssaoOnly = 0;
         int32_t ssaoBlur = 1;
@@ -291,8 +291,8 @@ private:
     ColorAttachment ssaoBlurOutput;
 
     struct QuadVertex {
-        glm::vec3 pos;
-        glm::vec2 uv;
+        FVec3 pos;
+        FVec2 uv;
     };
 
     void CreateInstanceAndSelectGPU()
@@ -730,20 +730,37 @@ private:
 
     void PrepareUniformBuffers()
     {
+        // gltf model axis: y up, x right, z from screen inner to outer
+        // to transform gltf coords system to our local coords system: z up, y right, x from screen outer to inner
+        FMat4x4 aixsTransMat = FMat4x4 {
+            0, 0, -1, 0,
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 0, 1
+        };
+
+        ViewTransform<float> vt;
+//        vt.rotation = FQuat::FromEulerZYX(.0f, .0f, .0f);
+        vt.translation = FVec3(3.0f, .0f, 3.0f);
+
+        FReversedZPerspectiveProjection rzProjection(30.f, static_cast<float>(width), static_cast<float>(height), uboSceneParams.nearPlane, uboSceneParams.farPlane);
+
         // scene matries
-        uboSceneParams.projection = camera.perspective;
-        uboSceneParams.view = camera.view;
-        uboSceneParams.model = glm::mat4(1.0f);
+        uboSceneParams.projection = rzProjection.GetProjectionMatrix();
+        uboSceneParams.view = vt.GetViewMatrix();
+//        uboSceneParams.model = MatConsts<float, 4, 4>::identity;
+        uboSceneParams.model = aixsTransMat;
+
         CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.sceneParams, sizeof(UBOSceneParams), &uboSceneParams);
 
         // ssao parameters
-        ubossaoParams.projection = camera.perspective;
+        ubossaoParams.projection = rzProjection.GetProjectionMatrix();
         CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.ssaoParams, sizeof(UBOSSAOParams), &ubossaoParams);
 
         // ssao kennel
         std::default_random_engine rndEngine((unsigned)time(nullptr));
         std::uniform_real_distribution<float> rndDist(0.0f, 1.0f);
-        std::vector<glm::vec4> ssaoKernel(ssaoKernelSize);
+        std::vector<FVec4> ssaoKernel(ssaoKernelSize);
 
         auto lerp = [](float a, float b, float f) ->float {
             return a + f * (b - a);
@@ -751,24 +768,25 @@ private:
 
         for (uint32_t i = 0; i < ssaoKernelSize; ++i)
         {
-            glm::vec3 sample(rndDist(rndEngine) * 2.0 - 1.0, rndDist(rndEngine) * 2.0 - 1.0, rndDist(rndEngine));
-            sample = glm::normalize(sample);
+            FVec3 sample(rndDist(rndEngine) * 2.0 - 1.0, rndDist(rndEngine) * 2.0 - 1.0, rndDist(rndEngine));
+            sample.Normalize();
             sample *= rndDist(rndEngine);
             float scale = float(i) / float(ssaoKernelSize);
             scale = lerp(0.1f, 1.0f, scale * scale);
-            ssaoKernel[i] = glm::vec4(sample * scale, 0.0f);
+            sample = sample * scale;
+            ssaoKernel[i] = FVec4(sample.x, sample.y, sample.z, 0.0f);
         }
-        CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.ssaoKernel, ssaoKernel.size() * sizeof(glm::vec4), ssaoKernel.data());
+        CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.ssaoKernel, ssaoKernel.size() * sizeof(FVec4), ssaoKernel.data());
 
         // random noise
-        std::vector<glm::vec4> ssaoNoise(ssaoNoiseDim * ssaoNoiseDim);
+        std::vector<FVec4> ssaoNoise(ssaoNoiseDim * ssaoNoiseDim);
         for (auto& randomVec : ssaoNoise)
         {
-            randomVec = glm::vec4(rndDist(rndEngine) * 2.0f - 1.0f, rndDist(rndEngine) * 2.0f - 1.0f, 0.0f, 0.0f);
+            randomVec = FVec4(rndDist(rndEngine) * 2.0f - 1.0f, rndDist(rndEngine) * 2.0f - 1.0f, 0.0f, 0.0f);
         }
 
         BufferCreateInfo bufferCreateInfo {};
-        bufferCreateInfo.size = ssaoNoise.size() * sizeof(glm::vec4);
+        bufferCreateInfo.size = ssaoNoise.size() * sizeof(FVec4);
         bufferCreateInfo.usages = BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         UniqueRef<Buffer> pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
@@ -985,7 +1003,7 @@ private:
         {
             DepthStencilState depthStencilState {};
             depthStencilState.depthEnable = true;
-            depthStencilState.depthComparisonFunc = ComparisonFunc::lessEqual;
+            depthStencilState.depthComparisonFunc = ComparisonFunc::greaterEqual;
             depthStencilState.format = PixelFormat::d32Float;
 
             std::array<ColorTargetState, 3> colorTargetStates {};
@@ -1092,7 +1110,7 @@ private:
             depthAttachment.depthLoadOp = LoadOp::clear;
             depthAttachment.depthStoreOp = StoreOp::store;
             depthAttachment.depthReadOnly = true;
-            depthAttachment.depthClearValue = 1.0;
+            depthAttachment.depthClearValue = 0.0;
             depthAttachment.stencilClearValue = 0.0;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};

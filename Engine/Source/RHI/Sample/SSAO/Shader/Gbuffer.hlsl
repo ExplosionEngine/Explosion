@@ -32,12 +32,12 @@ struct VSOutput
 VSOutput VSMain(VSInput input)
 {
 	VSOutput output = (VSOutput)0;
-	output.Pos = mul(mul(mul(input.Pos, model), view), projection);
+	output.Pos = mul(projection, mul(view, mul(model, input.Pos)));
 
 	output.UV = input.UV;
 
 	// Vertex position in view space
-	output.WorldPos = mul(mul(input.Pos, model), view).xyz;
+	output.WorldPos = mul(view, mul(model, input.Pos)).xyz;
 
 	// Normal in view space
 	float3x3 normalMatrix = (float3x3)mul(model, view);
