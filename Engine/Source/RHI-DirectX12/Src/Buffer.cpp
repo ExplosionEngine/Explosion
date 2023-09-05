@@ -122,7 +122,7 @@ namespace RHI::DirectX12 {
     {
         CD3DX12_HEAP_PROPERTIES heapProperties(GetDX12HeapType(createInfo.usages));
         CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(
-            createInfo.usages | BufferUsageBits::uniform ?
+            createInfo.usages & BufferUsageBits::uniform ?
             GetConstantBufferSize(createInfo.size) :
             createInfo.size);
 

@@ -71,6 +71,7 @@ namespace Common {
 
         inline T Model() const;
         inline Vector Normalized() const;
+        inline void Normalize();
         inline T Dot(const Vector& rhs) const;
         inline typename Internal::VecCrossResultTraits<T, L>::Type Cross(const Vector& rhs) const;
     };
@@ -633,6 +634,15 @@ namespace Common {
     Vector<T, L> Vector<T, L>::Normalized() const
     {
         return this->operator/(Model());
+    }
+
+    template <typename T, uint8_t L>
+    void Vector<T, L>::Normalize()
+    {
+        T oneOverModel = static_cast<T>(1.0) / Model();
+        for (auto i = 0; i < L; i++) {
+            this->data[i] *= oneOverModel;
+        }
     }
 
     template <typename T, uint8_t L>

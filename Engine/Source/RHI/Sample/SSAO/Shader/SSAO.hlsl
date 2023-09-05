@@ -29,6 +29,10 @@ VSOutput VSMain(float4 postion : POSITION, float2 uv : TEXCOORD)
 	output.UV = uv;
 	output.Pos = postion;
 
+#if VULKAN
+    output.UV.y = 1 - output.UV.y;
+#endif
+
 	return output;
 }
 

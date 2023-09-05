@@ -64,7 +64,7 @@ namespace Common {
     Rect<T>::Rect()
     {
         this->min = VecConsts<T, 2>::zero;
-        this->maxx = VecConsts<T, 3>::zero;
+        this->max = VecConsts<T, 2>::zero;
     }
 
     template <typename T>
@@ -157,15 +157,16 @@ namespace Common {
     bool Rect<T>::Inside(const Vector<T, 2>& inPoint) const
     {
         return inPoint.x >= this->min.x && inPoint.x <= this->max.x
-            && inPoint.y >= this->min.y && inPoint.y <= this->max.y
-            && inPoint.z >= this->min.z && inPoint.z <= this->max.z;
+            && inPoint.y >= this->min.y && inPoint.y <= this->max.y;
     }
 
     template <typename T>
     bool Rect<T>::Intersect(const Rect& inOther) const
     {
-        // TODO
-        return false;
+        return this->min.x < inOther.max.x
+            && this->min.y < inOther.max.y
+            && inOther.min.x < this->max.x
+            && inOther.min.y < this->max.y;
     }
 
     template <typename T>
