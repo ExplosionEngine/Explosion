@@ -6,9 +6,10 @@
 
 #include <string>
 #include <cstdint>
-#if BUILD_CONFIG_DEBUG
 #include <cassert>
 #include <iostream>
+
+#if BUILD_CONFIG_DEBUG
 #include <debugbreak.h>
 #endif
 
