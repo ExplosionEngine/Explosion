@@ -355,11 +355,11 @@ namespace Mirror {
         requires std::is_class_v<C>
         ClassRegistry<C> Class(const std::string& name)
         {
-            auto* typeInfo = GetTypeInfo<C>();
-            Assert(!Class::typeToNameMap.contains(typeInfo));
+            TypeId typeId = GetTypeInfo<C>()->id;
+            Assert(!Class::typeToNameMap.contains(typeId));
             Assert(!classes.contains(name));
 
-            Class::typeToNameMap[typeInfo] = name;
+            Class::typeToNameMap[typeId] = name;
             classes.emplace(std::make_pair(name, Mirror::Class(name)));
             return ClassRegistry<C>(classes.at(name));
         }
@@ -368,11 +368,11 @@ namespace Mirror {
         requires std::is_enum_v<T>
         EnumRegistry<T> Enum(const std::string& name)
         {
-            auto* typeInfo = GetTypeInfo<T>();
-            Assert(!Enum::typeToNameMap.contains(typeInfo));
+            TypeId typeId = GetTypeInfo<T>()->id;
+            Assert(!Enum::typeToNameMap.contains(typeId));
             Assert(!enums.contains(name));
 
-            Enum::typeToNameMap[typeInfo] = name;
+            Enum::typeToNameMap[typeId] = name;
             enums.emplace(std::make_pair(name, Mirror::Enum(name)));
             return EnumRegistry<T>(enums.at(name));
         }

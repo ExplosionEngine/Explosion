@@ -17,5 +17,3 @@ namespace RHI::Vulkan {
         Instance* GetRHIInstance() override;
     };
 }
-
-IMPLEMENT_MODULE(RHI_VULKAN_API, RHI::Vulkan::VulkanRHIModule);

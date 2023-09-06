@@ -16,5 +16,3 @@ namespace RHI::DirectX12 {
         Instance* GetRHIInstance() override;
     };
 }
-
-IMPLEMENT_MODULE(RHI_DIRECTX12_API, RHI::DirectX12::DX12RHIModule);

@@ -19,8 +19,6 @@
 #endif
 
 #define EClassBody(className) \
+private: \
+    static int _mirrorRegistry; \
 public: \
-    struct _MirrorRegistry {  \
-        _MirrorRegistry(); \
-    }; \
-    static _MirrorRegistry _mirrorRegistry; \

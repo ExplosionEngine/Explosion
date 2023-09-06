@@ -17,5 +17,3 @@ namespace RHI::Dummy {
         Instance* GetRHIInstance() override;
     };
 }
-
-IMPLEMENT_MODULE(RHI_DUMMY_API, RHI::Dummy::DummyRHIModule);

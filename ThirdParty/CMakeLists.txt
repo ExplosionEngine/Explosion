@@ -204,3 +204,35 @@ Add3rdHeaderOnlyPackage(
     HASH a63a5e32c21fa9e839580d0c8727c6dead9da01730a8f0d10717cd784bc632de
     INCLUDE $<SOURCE_DIR>/include
 )
+
+# Qt6
+Find3rdPackage(
+    NAME Qt
+    PLATFORM Windows
+    VERSION 6.5.2
+    HASH e2a573a53b6de88c0ce768868bd5a8258d432ad71c45a407afa55243b051668f
+    PREFIX $<SOURCE_DIR>/6.5.2/msvc2019_64
+    PACKAGE Qt6
+    COMPONENTS Core Gui Widgets
+    LIB Qt::Core Qt::Gui Qt::Widgets
+    RUNTIME_DEP
+        $<SOURCE_DIR>/6.5.2/msvc2019_64/plugins/platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll
+        $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Core$<IF:$<CONFIG:Debug>,d,>.dll
+        $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Gui$<IF:$<CONFIG:Debug>,d,>.dll
+        $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Widgets$<IF:$<CONFIG:Debug>,d,>.dll
+)
+Find3rdPackage(
+    NAME Qt
+    PLATFORM Darwin
+    VERSION 6.5.2
+    HASH 4379592e8b3af8eb32f5d030608651da8dc59c30b9bfa7837b7ed17949ff3365
+    PREFIX $<SOURCE_DIR>/6.5.2/macos
+    PACKAGE Qt6
+    COMPONENTS Core Gui Widgets
+    LIB Qt::Core Qt::Gui Qt::Widgets
+)
+if (${BUILD_EDITOR})
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTORCC ON)
+    set(CMAKE_AUTOUIC ON)
+endif ()
