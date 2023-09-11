@@ -71,7 +71,7 @@ namespace RHI::Vulkan {
         return vkImage;
     }
 
-    Extent<3> VKTexture::GetExtent() const
+    Common::UVec3 VKTexture::GetExtent() const
     {
         return extent;
     }

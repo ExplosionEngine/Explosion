@@ -51,7 +51,6 @@ public:
 protected:
     void OnCreate() override
     {
-        InitCamera();
         LoadGLTF();
         CreateInstanceAndSelectGPU();
         RequestDeviceAndFetchQueues();
@@ -83,9 +82,9 @@ protected:
     }
 
 private:
-    static const uint8_t ssaoKernelSize = 64;
-    static const uint8_t ssaoNoiseDim = 16;
-    static const uint8_t backBufferCount = 2;
+    static constexpr uint8_t ssaoKernelSize = 64;
+    static constexpr uint8_t ssaoNoiseDim = 16;
+    static constexpr uint8_t backBufferCount = 2;
 
     PixelFormat swapChainFormat = PixelFormat::max;
     Instance* instance = nullptr;
@@ -1089,17 +1088,17 @@ private:
             commandEncoder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilReadonly, TextureState::depthStencilWrite));
 
             std::array<GraphicsPassColorAttachment, 3> colorAttachments {};
-            colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::clear;
             colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = gBufferPos.rtv.Get();
             colorAttachments[0].resolve = nullptr;
-            colorAttachments[1].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[1].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[1].loadOp = LoadOp::clear;
             colorAttachments[1].storeOp = StoreOp::store;
             colorAttachments[1].view = gBufferNormal.rtv.Get();
             colorAttachments[1].resolve = nullptr;
-            colorAttachments[2].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[2].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[2].loadOp = LoadOp::clear;
             colorAttachments[2].storeOp = StoreOp::store;
             colorAttachments[2].view = gBufferAlbedo.rtv.Get();
@@ -1146,7 +1145,7 @@ private:
             commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
 
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::clear;
             colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = ssaoOutput.rtv.Get();
@@ -1177,7 +1176,7 @@ private:
             commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
 
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::clear;
             colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = ssaoBlurOutput.rtv.Get();
@@ -1208,7 +1207,7 @@ private:
 
             // composition
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::clear;
             colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();
@@ -1249,10 +1248,7 @@ private:
 
     void InitCamera()
     {
-        camera.type = Camera::CameraType::firstPerson;
-        camera.position = { 2.0f, -2.4f, -4.0f };
-        camera.setRotation(glm::vec3(10.0f, 30.0f, 0.0f));
-        camera.setPerspective(60.0f, static_cast<float>(width) / static_cast<float>(height), uboSceneParams.nearPlane, uboSceneParams.farPlane);
+        //TODO
     }
 
     void LoadGLTF()

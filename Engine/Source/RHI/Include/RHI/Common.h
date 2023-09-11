@@ -10,6 +10,8 @@
 
 #include <Common/Memory.h>
 #include <Common/String.h>
+#include <Common/Math/Vector.h>
+#include <Common/Math/Color.h>
 
 namespace RHI {
     using EnumType = uint32_t;
@@ -506,57 +508,5 @@ namespace std {
         {
             return hash<T>()(flags.Value());
         }
-    };
-}
-
-namespace RHI {
-    template <uint8_t N>
-    struct Extent;
-
-    template <>
-    struct Extent<1> {
-        uint32_t x;
-    };
-
-    template <>
-    struct Extent<2> {
-        uint32_t x;
-        uint32_t y;
-    };
-
-    template <>
-    struct Extent<3> {
-        uint32_t x;
-        uint32_t y;
-        uint32_t z;
-    };
-
-    template <uint8_t N>
-    struct ColorNormalized;
-
-    template <>
-    struct ColorNormalized<1> {
-        float r;
-    };
-
-    template <>
-    struct ColorNormalized<2> {
-        float r;
-        float g;
-    };
-
-    template <>
-    struct ColorNormalized<3> {
-        float r;
-        float g;
-        float b;
-    };
-
-    template <>
-    struct ColorNormalized<4> {
-        float r;
-        float g;
-        float b;
-        float a;
     };
 }

@@ -19,13 +19,13 @@ namespace Common {
         uint8_t b;
         uint8_t a;
 
-        inline Color();
-        inline Color(uint8_t inR, uint8_t inG, uint8_t inB);
-        inline Color(uint8_t inR, uint8_t inG, uint8_t inB, uint8_t inA);
-        inline explicit Color(const LinearColor& inColor);
-        inline Color(const Color& inOther);
-        inline Color(Color&& inOther) noexcept;
-        inline Color& operator=(const Color& inOther);
+        Color();
+        Color(uint8_t inR, uint8_t inG, uint8_t inB);
+        Color(uint8_t inR, uint8_t inG, uint8_t inB, uint8_t inA);
+        explicit Color(const LinearColor& inColor);
+        Color(const Color& inOther);
+        Color(Color&& inOther) noexcept;
+        Color& operator=(const Color& inOther);
 
         inline LinearColor ToLinearColor() const;
         std::string ToHexString() const;
@@ -37,16 +37,16 @@ namespace Common {
         float b;
         float a;
 
-        inline LinearColor();
-        inline LinearColor(float inR, float inG, float inB);
-        inline LinearColor(float inR, float inG, float inB, float inA);
-        inline explicit LinearColor(const Color& inColor);
-        inline LinearColor(const LinearColor& inOther);
-        inline LinearColor(LinearColor&& inOther) noexcept;
-        inline LinearColor& operator=(const LinearColor& inOther);
+        LinearColor();
+        LinearColor(float inR, float inG, float inB);
+        LinearColor(float inR, float inG, float inB, float inA);
+        explicit LinearColor(const Color& inColor);
+        LinearColor(const LinearColor& inOther);
+        LinearColor(LinearColor&& inOther) noexcept;
+        LinearColor& operator=(const LinearColor& inOther);
 
-        inline void CheckValid() const;
-        inline Color ToColor() const;
+        void CheckValid() const;
+        Color ToColor() const;
     };
 
     struct ColorConsts {

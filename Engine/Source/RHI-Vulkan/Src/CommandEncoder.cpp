@@ -40,7 +40,7 @@ namespace RHI::Vulkan {
         vkCmdCopyBuffer(commandBuffer.GetVkCommandBuffer(), srcBuffer->GetVkBuffer(), dstBuffer->GetVkBuffer(), 1, &copyRegion);
     }
 
-    void VKCommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size)
+    void VKCommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
     {
         auto* buffer = dynamic_cast<VKBuffer*>(src);
         auto* texture = dynamic_cast<VKTexture*>(dst);
@@ -52,7 +52,7 @@ namespace RHI::Vulkan {
         vkCmdCopyBufferToImage(commandBuffer.GetVkCommandBuffer(), buffer->GetVkBuffer(), texture->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
     }
 
-    void VKCommandEncoder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size)
+    void VKCommandEncoder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
     {
         auto* buffer = dynamic_cast<VKBuffer*>(dst);
         auto* texture = dynamic_cast<VKTexture*>(src);
@@ -65,7 +65,7 @@ namespace RHI::Vulkan {
     }
 
     void VKCommandEncoder::CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo,
-        Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Extent<3>& size)
+        Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size)
     {
         auto* srcTexture = dynamic_cast<VKTexture*>(src);
         auto* dstTexture = dynamic_cast<VKTexture*>(dst);

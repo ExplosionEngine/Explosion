@@ -24,12 +24,12 @@ namespace RHI {
         uint8_t mipLevel;
         uint8_t baseArrayLayer;
         uint8_t arrayLayerNum;
-        Extent<3> origin {};
+        Common::UVec3 origin {};
         TextureAspect aspect = TextureAspect::color;
     };
 
     struct GraphicsPassColorAttachmentBase {
-        ColorNormalized<4> clearValue;
+        Common::LinearColor clearValue;
         LoadOp loadOp;
         StoreOp storeOp;
     };
@@ -112,9 +112,9 @@ namespace RHI {
         virtual ~CommandEncoder();
 
         virtual void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) = 0;
-        virtual void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size) = 0;
-        virtual void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Extent<3>& size) = 0;
-        virtual void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Extent<3>& size) = 0;
+        virtual void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) = 0;
+        virtual void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) = 0;
+        virtual void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) = 0;
         virtual void ResourceBarrier(const Barrier& barrier) = 0;
         // TODO WriteTimeStamp(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-writetimestamp
         // TODO ResolveQuerySet(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-resolvequeryset

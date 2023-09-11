@@ -262,9 +262,9 @@ namespace RHI::Vulkan {
         VK_ENUM_MAP_ITEM(PresentMode::max,         VK_PRESENT_MODE_IMMEDIATE_KHR) // TODO Set the default present mode to immediate?
     VK_ENUM_MAP_END()
 
-    inline VkExtent3D FromRHI(const RHI::Extent<3>& ext)
+    inline VkExtent3D FromRHI(const Common::UVec3& ext)
     {
-        return { static_cast<uint32_t>(ext.x), static_cast<uint32_t>(ext.y), static_cast<uint32_t>(ext.z) };
+        return { ext.x, ext.y, ext.z };
     }
 
     inline VkShaderStageFlags FromRHI(const ShaderStageFlags& src)

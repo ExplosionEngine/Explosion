@@ -15,7 +15,7 @@ namespace RHI {
 
     struct TextureCreateInfo {
         TextureDimension dimension;
-        Extent<3> extent;
+        Common::UVec3 extent;
         PixelFormat format;
         TextureUsageFlags usages;
         uint8_t mipLevels;
