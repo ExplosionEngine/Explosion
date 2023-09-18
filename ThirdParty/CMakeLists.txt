@@ -98,13 +98,13 @@ Add3rdBinaryPackage(
     NAME llvm-clang
     VERSION 15.0.7
     HASH
-        Windows-X86 dd13894552677b689551248266b2ec4fc12341467776b282366098597b0c3501
+        Windows-x64 dd13894552677b689551248266b2ec4fc12341467776b282366098597b0c3501
         Darwin-x86_64 75b45dda76d52fcf7f3253aedea1f7327eb2aca37871b287d89234b55bde5504
         Darwin-arm64 99a4884945674163374d99c2220cadbfe20a947b1217193140c6b6638a3b0627
     INCLUDE $<SOURCE_DIR>/include
     LINK $<SOURCE_DIR>/lib
     LIB
-        Windows-X86 libclang
+        Windows-x64 libclang
         Darwin-x86_64 clang
         Darwin-arm64 clang
     RUNTIME_DEP

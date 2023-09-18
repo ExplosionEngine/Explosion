@@ -66,7 +66,7 @@ function(Get3rdPlatformValue)
     cmake_parse_arguments(PARAMS "ARCH" "OUTPUT" "INPUT" ${ARGN})
 
     if (${PARAMS_ARCH})
-        set(PLATFORM_KEYWORDS "Windows-X86;Darwin-arm64;Darwin-x86_64")
+        set(PLATFORM_KEYWORDS "Windows-x64;Darwin-arm64;Darwin-x86_64")
         set(CURRENT_KEYWORDS "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
     else()
         set(PLATFORM_KEYWORDS "Windows;Darwin;Linux")
@@ -142,7 +142,6 @@ function(Add3rdHeaderOnlyPackage)
         OUTPUT HASH_VALUE
         INPUT ${PARAMS_HASH}
     )
-
     DownloadAndExtract3rdPackage(
         URL ${URL}
         SAVE_AS ${ZIP}
@@ -203,7 +202,6 @@ function(Add3rdBinaryPackage)
         OUTPUT HASH_VALUE
         INPUT ${PARAMS_HASH}
     )
-
     DownloadAndExtract3rdPackage(
         URL ${URL}
         SAVE_AS ${ZIP}
@@ -309,7 +307,6 @@ function(Add3rdCMakeProject)
         OUTPUT HASH_VALUE
         INPUT ${PARAMS_HASH}
     )
-
     DownloadAndExtract3rdPackage(
         URL ${URL}
         SAVE_AS ${ZIP}
@@ -442,7 +439,6 @@ function(Find3rdPackage)
         OUTPUT HASH_VALUE
         INPUT ${PARAMS_HASH}
     )
-
     DownloadAndExtract3rdPackage(
         URL ${URL}
         SAVE_AS ${ZIP}
