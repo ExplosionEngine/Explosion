@@ -66,7 +66,7 @@ function(Get3rdPlatformValue)
     cmake_parse_arguments(PARAMS "ARCH" "OUTPUT" "INPUT" ${ARGN})
 
     if (${PARAMS_ARCH})
-        set(PLATFORM_KEYWORDS "Windows-x64;Darwin-arm64;Darwin-x86_64")
+        set(PLATFORM_KEYWORDS "Windows-AMD64;Darwin-arm64;Darwin-x86_64")
         set(CURRENT_KEYWORDS "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
     else()
         set(PLATFORM_KEYWORDS "Windows;Darwin;Linux")
