@@ -13,35 +13,40 @@
 
 namespace Runtime {
     using Entity = entt::entity;
+    class SystemCommands;
     static constexpr auto entityNull = entt::null;
 
     struct Component {};
     struct GlobalComponent {};
-    struct System {};
     struct SystemEvent {};
-
-    template <typename S>
-    struct SystemSchedule {
-        template <typename DS>
-        SystemSchedule<S> Depend()
-        {
-            dependencies.emplace_back(Mirror::GetTypeInfo<DS>()->id);
-            return *this;
-        }
-
-        std::vector<Mirror::TypeId> dependencies;
-    };
+    struct System {};
 
     template <typename E>
-    struct EventSlot {
-        template <typename S>
-        EventSlot<E> Connect()
+    struct SystemEventDecoder {
+    public:
+        explicit SystemEventDecoder(const Mirror::Any& inEventRef)
+            : eventRef(inEventRef)
         {
-            systems.emplace_back(Mirror::GetTypeInfo<S>()->id);
-            return *this;
         }
 
-        std::vector<Mirror::TypeId> systems;
+        const E& Get()
+        {
+            return eventRef.CastTo<const E&>();
+        }
+
+    private:
+        const Mirror::Any& eventRef;
+    };
+
+    struct WorkSystem : public System {
+        virtual void Execute(SystemCommands& systemCommands) = 0;
+    };
+
+    struct SetupSystem : public WorkSystem {};
+    struct TickSystem : public WorkSystem {};
+
+    struct EventSystem : public System {
+        virtual void OnReceiveEvent(SystemCommands& systemCommands, const Mirror::Any& eventRef) = 0;
     };
 
     template <typename C>
@@ -71,21 +76,45 @@ namespace Runtime {
     struct ISystemEventRadio {
     public:
         template <typename E>
-        void Broadcast(const E& event)
+        void BroadcastSystemEvent(const E& event)
         {
             Mirror::Any eventRef = std::ref(event);
             BroadcastSystemEvent(Mirror::GetTypeInfo<E>()->id, event);
         }
 
     protected:
-        virtual void BroadcastSystemEvent(Mirror::TypeId eventTypeId, Mirror::Any eventRef) = 0;
+        virtual void BroadcastSystemEvent(Mirror::TypeId eventTypeId, const Mirror::Any& eventRef) = 0;
+    };
+
+    template <typename... Args>
+    class Query {
+    public:
+        using Iterable = typename entt::view<Args...>::iterable_view;
+
+        explicit Query(entt::view<Args...>&& inView)
+            : view(std::move(inView))
+        {
+        }
+
+        ~Query() = default;
+
+        template <typename F>
+        void Each(F&& func)
+        {
+            view.each(std::forward<F>(func));
+        }
+
+        Iterable Each()
+        {
+            return view.each();
+        }
+
+    private:
+        entt::view<Args...> view;
     };
 
     template <typename... C>
-    class Query {
-    public:
-        // TODO
-    };
+    struct Exclude {};
 
     class SystemCommands {
     public:
@@ -194,16 +223,16 @@ namespace Runtime {
             Broadcast(GlobalComponentRemoved<G> {});
         }
 
-        template <typename... C>
-        Query<C...> NewQuery()
+        template <typename... C, typename... E>
+        Query<entt::exclude_t<E...>, C...> NewQuery(Exclude<E...> = {})
         {
-            // TODO
+            return Query<entt::exclude_t<E...>, C...>(registry.view<C...>(entt::exclude_t<E...> {}));
         }
 
         template <typename E>
         void Broadcast(const E& event)
         {
-            systemEventRadio.Broadcast<E>(event);
+            systemEventRadio.BroadcastSystemEvent<E>(event);
         }
 
     private:
