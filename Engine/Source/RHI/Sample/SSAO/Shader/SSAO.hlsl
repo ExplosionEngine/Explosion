@@ -59,12 +59,12 @@ float FSMain(VSOutput input) : SV_TARGET
 	float occlusion = 0.0f;
 	for(int i = 0; i < 64; i++)
 	{
-		float3 samplePos = mul(randomKernals[i].xyz, TBN);
+		float3 samplePos = mul(TBN, randomKernals[i].xyz);
 		samplePos = fragPos + samplePos * 0.2; // ssao radius is 0.2
 
 		// project
 		float4 offset = float4(samplePos, 1.0f);
-		offset = mul(offset, projection);
+		offset = mul(projection, offset);
 		offset.xyz /= offset.w;
 		offset.xyz = offset.xyz * 0.5f + 0.2f;
 

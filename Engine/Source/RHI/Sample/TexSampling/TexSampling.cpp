@@ -5,17 +5,10 @@
 #include <vector>
 #include <array>
 
-#include <glm/glm.hpp>
-
 #include <Application.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 using namespace RHI;
-
-struct Vertex {
-    glm::vec3 position;
-    glm::vec2 uv;
-};
 
 class TexSamplingApplication : public Application {
 public:
@@ -33,11 +26,13 @@ protected:
         CreateIndexBuffer();
         CreateFence();
         CreateTextureAndSampler();
+        CreateUniformBuffer();
         CreateBindGroupLayout();
         CreateBindGroup();
         CreatePipelineLayout();
         CreatePipeline();
         CreateCommandBuffer();
+        UpdateMVP();
     }
 
     void OnDrawFrame() override
@@ -54,6 +49,13 @@ protected:
 
 private:
     static const uint8_t backBufferCount = 2;
+
+    struct Vertex {
+        FVec3 position;
+        FVec2 uv;
+    };
+
+    FMat4x4 modelMatrix;
 
     void CreateInstanceAndSelectGPU()
     {
@@ -221,19 +223,49 @@ private:
         fence->Wait();
     }
 
+    void UpdateMVP()
+    {
+        modelMatrix = MatConsts<float, 4, 4>::identity * 0.5;
+        modelMatrix.SetCol(3, 0.2f, 0.2f, 0.0f, 1.0f);
+
+        if (uniformBuffer != nullptr) {
+            auto* mapData = uniformBuffer->Map(MapMode::write, 0, sizeof(FMat4x4));
+            memcpy(mapData, &modelMatrix, sizeof(FMat4x4));
+            uniformBuffer->UnMap();
+        }
+    }
+
+    void CreateUniformBuffer()
+    {
+        BufferCreateInfo createInfo {};
+        createInfo.size = sizeof(FMat4x4);
+        createInfo.usages = BufferUsageBits::uniform | BufferUsageBits::mapWrite;
+        uniformBuffer = device->CreateBuffer(createInfo);
+
+        BufferViewCreateInfo viewCreateInfo {};
+        viewCreateInfo.type = BufferViewType::uniformBinding;
+        viewCreateInfo.size = createInfo.size;
+        viewCreateInfo.offset = 0;
+        uniformBufferView = uniformBuffer->CreateBufferView(viewCreateInfo);
+    }
+
     void CreateBindGroupLayout()
     {
-        std::vector<BindGroupLayoutEntry> entries(2);
+        std::vector<BindGroupLayoutEntry> entries(3);
         entries[0].binding.type = BindingType::texture;
         entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
         entries[1].binding.type = BindingType::sampler;
         entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
+        entries[2].binding.type = BindingType::uniformBuffer;
+        entries[2].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sVertex);
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
             entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
             entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
+            entries[2].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
         } else {
             entries[0].binding.platform.glsl.index = 0;
             entries[1].binding.platform.glsl.index = 1;
+            entries[2].binding.platform.glsl.index = 2;
         }
 
         BindGroupLayoutCreateInfo createInfo {};
@@ -246,17 +278,21 @@ private:
 
     void CreateBindGroup()
     {
-        std::vector<BindGroupEntry> entries(2);
+        std::vector<BindGroupEntry> entries(3);
         entries[0].binding.type = BindingType::texture;
         entries[0].textureView = sampleTextureView.Get();
         entries[1].binding.type = BindingType::sampler;
         entries[1].sampler = sampler.Get();
+        entries[2].binding.type = BindingType::uniformBuffer;
+        entries[2].bufferView = uniformBufferView.Get();
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
             entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
             entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
+            entries[2].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
         } else {
             entries[0].binding.platform.glsl.index = 0;
             entries[1].binding.platform.glsl.index = 1;
+            entries[2].binding.platform.glsl.index = 2;
         }
 
         BindGroupCreateInfo createInfo {};
@@ -349,7 +385,7 @@ private:
         UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
         {
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::clear;
             colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();
@@ -403,6 +439,8 @@ private:
     UniqueRef<Texture> sampleTexture;
     UniqueRef<TextureView> sampleTextureView;
     UniqueRef<Sampler> sampler;
+    UniqueRef<Buffer> uniformBuffer;
+    UniqueRef<BufferView> uniformBufferView;
     UniqueRef<CommandBuffer> texCommandBuffer;
     UniqueRef<Buffer> pixelBuffer;
     std::array<Texture*, backBufferCount> swapChainTextures {};

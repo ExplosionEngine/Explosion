@@ -25,6 +25,10 @@
 #include <Common/Debug.h>
 #include <Common/String.h>
 #include <Common/File.h>
+#include <Common/Math/Matrix.h>
+#include <Common/Math/Transform.h>
+#include <Common/Math/Projection.h>
+#include <Common/Math/View.h>
 #include <RHI/RHI.h>
 #include <Render/ShaderCompiler.h>
 using namespace Common;

@@ -26,7 +26,7 @@ namespace RHI::Vulkan {
         TextureView* CreateTextureView(const TextureViewCreateInfo& createInfo) override;
 
         VkImage GetImage() const;
-        Extent<3> GetExtent() const;
+        Common::UVec3 GetExtent() const;
         PixelFormat GetFormat() const;
         VkImageSubresourceRange GetFullRange();
 
@@ -40,7 +40,7 @@ namespace RHI::Vulkan {
         VmaAllocation allocation;
         VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT;
 
-        Extent<3> extent;
+        Common::UVec3 extent;
         PixelFormat format;
         uint8_t mipLevels;
         uint8_t samples;

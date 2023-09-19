@@ -17,7 +17,7 @@ namespace RHI {
         Surface* surface;
         uint8_t textureNum;
         PixelFormat format;
-        Extent<2> extent;
+        Common::UVec2 extent;
         PresentMode presentMode;
     };
 

@@ -5,14 +5,13 @@
 #include <vector>
 #include <array>
 
-#include <glm/glm.hpp>
-
 #include <Application.h>
+#include <Common/Math/Vector.h>
 using namespace RHI;
 
 struct Vertex {
-    glm::vec3 position;
-    glm::vec3 color;
+    FVec3 position;
+    FVec3 color;
 };
 
 class TriangleApplication : public Application {
@@ -217,7 +216,7 @@ private:
         UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
         {
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::clear;
             colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();

@@ -51,7 +51,6 @@ public:
 protected:
     void OnCreate() override
     {
-        InitCamera();
         LoadGLTF();
         CreateInstanceAndSelectGPU();
         RequestDeviceAndFetchQueues();
@@ -83,9 +82,9 @@ protected:
     }
 
 private:
-    static const uint8_t ssaoKernelSize = 64;
-    static const uint8_t ssaoNoiseDim = 16;
-    static const uint8_t backBufferCount = 2;
+    static constexpr uint8_t ssaoKernelSize = 64;
+    static constexpr uint8_t ssaoNoiseDim = 16;
+    static constexpr uint8_t backBufferCount = 2;
 
     PixelFormat swapChainFormat = PixelFormat::max;
     Instance* instance = nullptr;
@@ -212,15 +211,15 @@ private:
     } uniformBuffers;
 
     struct UBOSceneParams {
-        glm::mat4 projection;
-        glm::mat4 model;
-        glm::mat4 view;
+        FMat4x4 projection;
+        FMat4x4 model;
+        FMat4x4 view;
         float nearPlane = 0.1f;
         float farPlane = 64.0f;
     } uboSceneParams;
 
     struct UBOSSAOParams {
-        glm::mat4 projection;
+        FMat4x4 projection;
         int32_t ssao = 1;
         int32_t ssaoOnly = 0;
         int32_t ssaoBlur = 1;
@@ -291,8 +290,8 @@ private:
     ColorAttachment ssaoBlurOutput;
 
     struct QuadVertex {
-        glm::vec3 pos;
-        glm::vec2 uv;
+        FVec3 pos;
+        FVec2 uv;
     };
 
     void CreateInstanceAndSelectGPU()
@@ -730,20 +729,37 @@ private:
 
     void PrepareUniformBuffers()
     {
+        // gltf model axis: y up, x right, z from screen inner to outer
+        // to transform gltf coords system to our local coords system: z up, y right, x from screen outer to inner
+        FMat4x4 aixsTransMat = FMat4x4 {
+            0, 0, -1, 0,
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 0, 1
+        };
+
+        FViewTransform vt;
+        vt.rotation = FQuat::FromEulerZYX(.0f, 75.0f, .0f);
+        vt.translation = FVec3(7.0f, 2.5f, -2.0f);
+
+        FReversedZPerspectiveProjection rzProjection(60.f, static_cast<float>(width), static_cast<float>(height), uboSceneParams.nearPlane, uboSceneParams.farPlane);
+        FReversedZPerspectiveProjection infinityRzProj(60.f, static_cast<float>(width), static_cast<float>(height), uboSceneParams.nearPlane);
+
         // scene matries
-        uboSceneParams.projection = camera.perspective;
-        uboSceneParams.view = camera.view;
-        uboSceneParams.model = glm::mat4(1.0f);
+        uboSceneParams.projection = infinityRzProj.GetProjectionMatrix();
+        uboSceneParams.view = vt.GetViewMatrix();
+        uboSceneParams.model = aixsTransMat;
+
         CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.sceneParams, sizeof(UBOSceneParams), &uboSceneParams);
 
         // ssao parameters
-        ubossaoParams.projection = camera.perspective;
+        ubossaoParams.projection = infinityRzProj.GetProjectionMatrix();
         CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.ssaoParams, sizeof(UBOSSAOParams), &ubossaoParams);
 
         // ssao kennel
         std::default_random_engine rndEngine((unsigned)time(nullptr));
         std::uniform_real_distribution<float> rndDist(0.0f, 1.0f);
-        std::vector<glm::vec4> ssaoKernel(ssaoKernelSize);
+        std::vector<FVec4> ssaoKernel(ssaoKernelSize);
 
         auto lerp = [](float a, float b, float f) ->float {
             return a + f * (b - a);
@@ -751,24 +767,25 @@ private:
 
         for (uint32_t i = 0; i < ssaoKernelSize; ++i)
         {
-            glm::vec3 sample(rndDist(rndEngine) * 2.0 - 1.0, rndDist(rndEngine) * 2.0 - 1.0, rndDist(rndEngine));
-            sample = glm::normalize(sample);
+            FVec3 sample(rndDist(rndEngine) * 2.0 - 1.0, rndDist(rndEngine) * 2.0 - 1.0, rndDist(rndEngine));
+            sample.Normalize();
             sample *= rndDist(rndEngine);
             float scale = float(i) / float(ssaoKernelSize);
             scale = lerp(0.1f, 1.0f, scale * scale);
-            ssaoKernel[i] = glm::vec4(sample * scale, 0.0f);
+            sample = sample * scale;
+            ssaoKernel[i] = FVec4(sample.x, sample.y, sample.z, 0.0f);
         }
-        CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.ssaoKernel, ssaoKernel.size() * sizeof(glm::vec4), ssaoKernel.data());
+        CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.ssaoKernel, ssaoKernel.size() * sizeof(FVec4), ssaoKernel.data());
 
         // random noise
-        std::vector<glm::vec4> ssaoNoise(ssaoNoiseDim * ssaoNoiseDim);
+        std::vector<FVec4> ssaoNoise(ssaoNoiseDim * ssaoNoiseDim);
         for (auto& randomVec : ssaoNoise)
         {
-            randomVec = glm::vec4(rndDist(rndEngine) * 2.0f - 1.0f, rndDist(rndEngine) * 2.0f - 1.0f, 0.0f, 0.0f);
+            randomVec = FVec4(rndDist(rndEngine) * 2.0f - 1.0f, rndDist(rndEngine) * 2.0f - 1.0f, 0.0f, 0.0f);
         }
 
         BufferCreateInfo bufferCreateInfo {};
-        bufferCreateInfo.size = ssaoNoise.size() * sizeof(glm::vec4);
+        bufferCreateInfo.size = ssaoNoise.size() * sizeof(FVec4);
         bufferCreateInfo.usages = BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         UniqueRef<Buffer> pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
@@ -985,7 +1002,7 @@ private:
         {
             DepthStencilState depthStencilState {};
             depthStencilState.depthEnable = true;
-            depthStencilState.depthComparisonFunc = ComparisonFunc::lessEqual;
+            depthStencilState.depthComparisonFunc = ComparisonFunc::greaterEqual;
             depthStencilState.format = PixelFormat::d32Float;
 
             std::array<ColorTargetState, 3> colorTargetStates {};
@@ -1071,17 +1088,17 @@ private:
             commandEncoder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilReadonly, TextureState::depthStencilWrite));
 
             std::array<GraphicsPassColorAttachment, 3> colorAttachments {};
-            colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::clear;
             colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = gBufferPos.rtv.Get();
             colorAttachments[0].resolve = nullptr;
-            colorAttachments[1].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[1].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[1].loadOp = LoadOp::clear;
             colorAttachments[1].storeOp = StoreOp::store;
             colorAttachments[1].view = gBufferNormal.rtv.Get();
             colorAttachments[1].resolve = nullptr;
-            colorAttachments[2].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[2].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[2].loadOp = LoadOp::clear;
             colorAttachments[2].storeOp = StoreOp::store;
             colorAttachments[2].view = gBufferAlbedo.rtv.Get();
@@ -1092,7 +1109,7 @@ private:
             depthAttachment.depthLoadOp = LoadOp::clear;
             depthAttachment.depthStoreOp = StoreOp::store;
             depthAttachment.depthReadOnly = true;
-            depthAttachment.depthClearValue = 1.0;
+            depthAttachment.depthClearValue = 0.0;
             depthAttachment.stencilClearValue = 0.0;
 
             GraphicsPassBeginInfo graphicsPassBeginInfo {};
@@ -1128,7 +1145,7 @@ private:
             commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
 
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::clear;
             colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = ssaoOutput.rtv.Get();
@@ -1159,7 +1176,7 @@ private:
             commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
 
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::clear;
             colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = ssaoBlurOutput.rtv.Get();
@@ -1190,7 +1207,7 @@ private:
 
             // composition
             std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = ColorNormalized<4> {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
             colorAttachments[0].loadOp = LoadOp::clear;
             colorAttachments[0].storeOp = StoreOp::store;
             colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();
@@ -1231,10 +1248,7 @@ private:
 
     void InitCamera()
     {
-        camera.type = Camera::CameraType::firstPerson;
-        camera.position = { 2.0f, -2.4f, -4.0f };
-        camera.setRotation(glm::vec3(10.0f, 30.0f, 0.0f));
-        camera.setPerspective(60.0f, static_cast<float>(width) / static_cast<float>(height), uboSceneParams.nearPlane, uboSceneParams.farPlane);
+        //TODO
     }
 
     void LoadGLTF()

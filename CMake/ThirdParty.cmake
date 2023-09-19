@@ -62,10 +62,16 @@ function(Expand3rdPathExpression)
     set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
 endfunction()
 
-function(Get3rdPlatformPath)
-    cmake_parse_arguments(PARAMS "" "OUTPUT" "INPUT" ${ARGN})
+function(Get3rdPlatformValue)
+    cmake_parse_arguments(PARAMS "ARCH" "OUTPUT" "INPUT" ${ARGN})
 
-    set(PLATFORM_KEYWORDS "Windows;Darwin;Linux")
+    if (${PARAMS_ARCH})
+        set(PLATFORM_KEYWORDS "Windows-AMD64;Darwin-arm64;Darwin-x86_64")
+        set(CURRENT_KEYWORDS "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+    else()
+        set(PLATFORM_KEYWORDS "Windows;Darwin;Linux")
+        set(CURRENT_KEYWORDS "${CMAKE_SYSTEM_NAME}")
+    endif()
 
     set(HAS_KEYWORDS FALSE)
     foreach (I ${PARAMS_INPUT})
@@ -83,7 +89,7 @@ function(Get3rdPlatformPath)
 
     set(START_LOG FALSE)
     foreach (I ${PARAMS_INPUT})
-        if ((NOT ${START_LOG}) AND (${I} STREQUAL ${CMAKE_SYSTEM_NAME}))
+        if ((NOT ${START_LOG}) AND (${I} STREQUAL ${CURRENT_KEYWORDS}))
             set(START_LOG TRUE)
             continue()
         endif()
@@ -115,23 +121,32 @@ function(Get3rdPlatformPath)
 endfunction()
 
 function(Add3rdHeaderOnlyPackage)
-    cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION;HASH" "INCLUDE" ${ARGN})
-
-    if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
-        return()
-    endif()
+    cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION" "HASH;INCLUDE" ${ARGN})
 
     set(NAME "${PARAMS_NAME}")
-    set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
+
+    if (DEFINED PARAMS_PLATFORM)
+        if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
+            return()
+        endif()
+        set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
+    else()
+        set(FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${PARAMS_VERSION}")
+    endif()
+
     set(URL "${3RD_REPO}/${FULL_NAME}.7z")
     set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.7z")
     set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
 
+    Get3rdPlatformValue(
+        OUTPUT HASH_VALUE
+        INPUT ${PARAMS_HASH}
+    )
     DownloadAndExtract3rdPackage(
         URL ${URL}
         SAVE_AS ${ZIP}
         EXTRACT_TO ${SOURCE_DIR}
-        HASH ${PARAMS_HASH}
+        HASH ${HASH_VALUE}
     )
 
     add_custom_target(${NAME} ALL)
@@ -146,31 +161,52 @@ function(Add3rdHeaderOnlyPackage)
             OUTPUT R_INCLUDE
             SOURCE_DIR ${SOURCE_DIR}
         )
+        Get3rdPlatformValue(
+            OUTPUT P_INCLUDE
+            INPUT ${R_INCLUDE}
+        )
         set_target_properties(
             ${NAME} PROPERTIES
-            3RD_INCLUDE "${R_INCLUDE}"
+            3RD_INCLUDE "${P_INCLUDE}"
         )
     endif()
 endfunction()
 
 function(Add3rdBinaryPackage)
-    cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION;HASH" "INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
-
-    if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
-        return()
-    endif()
+    cmake_parse_arguments(PARAMS "ARCH" "NAME;PLATFORM;VERSION" "HASH;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
 
     set(NAME "${PARAMS_NAME}")
-    set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
+
+    if (DEFINED PARAMS_PLATFORM)
+        if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
+            return()
+        endif()
+        set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
+    else()
+        set(FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${PARAMS_VERSION}")
+    endif()
+
+    if (${PARAMS_ARCH})
+        set(COUNT_ARCH "ARCH")
+        set(FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${PARAMS_VERSION}")
+    else()
+        set(COUNT_ARCH "")
+    endif()
+
     set(URL "${3RD_REPO}/${FULL_NAME}.7z")
     set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.7z")
     set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
 
+    Get3rdPlatformValue(
+        ${COUNT_ARCH}
+        OUTPUT HASH_VALUE
+        INPUT ${PARAMS_HASH}
+    )
     DownloadAndExtract3rdPackage(
         URL ${URL}
         SAVE_AS ${ZIP}
         EXTRACT_TO ${SOURCE_DIR}
-        HASH ${PARAMS_HASH}
+        HASH ${HASH_VALUE}
     )
 
     add_custom_target(${NAME} ALL)
@@ -185,9 +221,14 @@ function(Add3rdBinaryPackage)
             OUTPUT R_INCLUDE
             SOURCE_DIR ${SOURCE_DIR}
         )
+        Get3rdPlatformValue(
+            ${COUNT_ARCH}
+            INPUT ${R_INCLUDE}
+            OUTPUT P_INCLUDE
+        )
         set_target_properties(
             ${NAME} PROPERTIES
-            3RD_INCLUDE "${R_INCLUDE}"
+            3RD_INCLUDE "${P_INCLUDE}"
         )
     endif()
 
@@ -197,9 +238,14 @@ function(Add3rdBinaryPackage)
             OUTPUT R_LINK
             SOURCE_DIR ${SOURCE_DIR}
         )
+        Get3rdPlatformValue(
+            ${COUNT_ARCH}
+            INPUT ${R_LINK}
+            OUTPUT P_LINK
+        )
         set_target_properties(
             ${NAME} PROPERTIES
-            3RD_LINK "${R_LINK}"
+            3RD_LINK "${P_LINK}"
         )
     endif()
 
@@ -209,9 +255,14 @@ function(Add3rdBinaryPackage)
             OUTPUT R_LIB
             SOURCE_DIR ${SOURCE_DIR}
         )
+        Get3rdPlatformValue(
+            ${COUNT_ARCH}
+            OUTPUT P_LIB
+            INPUT ${R_LIB}
+        )
         set_target_properties(
             ${NAME} PROPERTIES
-            3RD_LIB "${R_LIB}"
+            3RD_LIB "${P_LIB}"
         )
     endif()
 
@@ -221,7 +272,7 @@ function(Add3rdBinaryPackage)
             OUTPUT R_RUNTIME_DEP
             SOURCE_DIR ${SOURCE_DIR}
         )
-        Get3rdPlatformPath(
+        Get3rdPlatformValue(
             INPUT ${R_RUNTIME_DEP}
             OUTPUT P_RUNTIME_DEP
         )
@@ -233,25 +284,34 @@ function(Add3rdBinaryPackage)
 endfunction()
 
 function(Add3rdCMakeProject)
-    cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION;HASH" "CMAKE_ARG;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
-
-    if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
-        return()
-    endif()
+    cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION" "HASH;CMAKE_ARG;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
 
     set(NAME "${PARAMS_NAME}")
-    set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
+
+    if (DEFINED PARAMS_PLATFORM)
+        if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
+            return()
+        endif()
+        set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
+    else()
+        set(FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${PARAMS_VERSION}")
+    endif()
+
     set(URL "${3RD_REPO}/${FULL_NAME}.7z")
     set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.7z")
     set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
     set(BINARY_DIR "${3RD_BINARY_DIR}/${NAME}")
     set(INSTALL_DIR "${3RD_INSTALL_DIR}/${NAME}/$<CONFIG>")
 
+    Get3rdPlatformValue(
+        OUTPUT HASH_VALUE
+        INPUT ${PARAMS_HASH}
+    )
     DownloadAndExtract3rdPackage(
         URL ${URL}
         SAVE_AS ${ZIP}
         EXTRACT_TO ${SOURCE_DIR}
-        HASH ${PARAMS_HASH}
+        HASH ${HASH_VALUE}
     )
 
     if (NOT ${GENERATOR_IS_MULTI_CONFIG})
@@ -279,7 +339,7 @@ function(Add3rdCMakeProject)
             BINARY_DIR ${BINARY_DIR}
             INSTALL_DIR ${INSTALL_DIR}
         )
-        Get3rdPlatformPath(
+        Get3rdPlatformValue(
             INPUT ${R_INCLUDE}
             OUTPUT P_INCLUDE
         )
@@ -297,7 +357,7 @@ function(Add3rdCMakeProject)
             BINARY_DIR ${BINARY_DIR}
             INSTALL_DIR ${INSTALL_DIR}
         )
-        Get3rdPlatformPath(
+        Get3rdPlatformValue(
             INPUT ${R_LINK}
             OUTPUT P_LINK
         )
@@ -315,7 +375,7 @@ function(Add3rdCMakeProject)
             BINARY_DIR ${BINARY_DIR}
             INSTALL_DIR ${INSTALL_DIR}
         )
-        Get3rdPlatformPath(
+        Get3rdPlatformValue(
             INPUT ${R_LIB}
             OUTPUT P_LIB
         )
@@ -333,7 +393,7 @@ function(Add3rdCMakeProject)
             BINARY_DIR ${BINARY_DIR}
             INSTALL_DIR ${INSTALL_DIR}
         )
-        Get3rdPlatformPath(
+        Get3rdPlatformValue(
             INPUT ${R_RUNTIME_DEP}
             OUTPUT P_RUNTIME_DEP
         )
@@ -360,23 +420,30 @@ function(Add3rdAliasPackage)
 endfunction()
 
 function(Find3rdPackage)
-    cmake_parse_arguments(PARAMS "" "NAME;PACKAGE;PLATFORM;VERSION;HASH;PREFIX" "COMPONENTS;LIB;RUNTIME_DEP" ${ARGN})
-
-    if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
-        return()
-    endif()
+    cmake_parse_arguments(PARAMS "" "NAME;PACKAGE;PLATFORM;VERSION" "HASH;PREFIX;COMPONENTS;LIB;RUNTIME_DEP" ${ARGN})
 
     set(NAME "${PARAMS_NAME}")
-    set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
+    if (DEFINED PARAMS_PLATFORM)
+        if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
+            return()
+        endif()
+        set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
+    else()
+        set(FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${PARAMS_VERSION}")
+    endif()
     set(URL "${3RD_REPO}/${FULL_NAME}.7z")
     set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.7z")
     set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
 
+    Get3rdPlatformValue(
+        OUTPUT HASH_VALUE
+        INPUT ${PARAMS_HASH}
+    )
     DownloadAndExtract3rdPackage(
         URL ${URL}
         SAVE_AS ${ZIP}
         EXTRACT_TO ${SOURCE_DIR}
-        HASH ${PARAMS_HASH}
+        HASH ${HASH_VALUE}
     )
 
     if (DEFINED PARAMS_PREFIX)
@@ -385,7 +452,11 @@ function(Find3rdPackage)
             OUTPUT R_PREFIX
             SOURCE_DIR ${SOURCE_DIR}
         )
-        list(APPEND CMAKE_PREFIX_PATH ${R_PREFIX})
+        Get3rdPlatformValue(
+            OUTPUT P_PREFIX
+            INPUT ${R_PREFIX}
+        )
+        list(APPEND CMAKE_PREFIX_PATH ${P_PREFIX})
     endif ()
 
     find_package(
@@ -409,7 +480,7 @@ function(Find3rdPackage)
             OUTPUT R_RUNTIME_DEP
             SOURCE_DIR ${SOURCE_DIR}
         )
-        Get3rdPlatformPath(
+        Get3rdPlatformValue(
             INPUT ${R_RUNTIME_DEP}
             OUTPUT P_RUNTIME_DEP
         )

@@ -499,6 +499,8 @@ TEST(MathTest, EulerRotationTest)
     FQuat v1 = FQuat::FromEulerZYX(90, 0, 90);
     FVec3 v1r0 = v1.RotateVector(FVec3(1, 0, 0));
     ASSERT_TRUE(v1r0 == FVec3(0, 0, 1));
+
+    ASSERT_TRUE(FQuatConsts::identity == FQuat::FromEulerZYX(0, 0, 0));
 }
 
 TEST(MathTest, QuaternionToRotationMatrixTest)

@@ -51,7 +51,7 @@ protected:
 
         RGTextureDesc textureDesc;
         textureDesc.dimension = RHI::TextureDimension::t2D;
-        textureDesc.extent = { 1024, 1024 };
+        textureDesc.extent = { 1024, 1024, 0 };
         textureDesc.format = RHI::PixelFormat::bgra8Unorm;
         textureDesc.usages = RHI::TextureUsageBits::storageBinding;
         textureDesc.mipLevels = 1;

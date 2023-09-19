@@ -17,7 +17,7 @@ Add3rdHeaderOnlyPackage(
 )
 
 # DirectX 12 Headers
-Add3rdBinaryPackage(
+Add3rdHeaderOnlyPackage(
     NAME DirectXHeaders
     PLATFORM Windows
     VERSION 1.4.9
@@ -28,21 +28,19 @@ Add3rdBinaryPackage(
 # VulkanSDK
 Add3rdBinaryPackage(
     NAME VulkanSDK
-    PLATFORM Windows
     VERSION 1.3.243.0
-    HASH 23ded0e6155a8ea265da84bd62f7a45cc3fc637fb1eeba61a5b9430fa704e4b5
-    INCLUDE $<SOURCE_DIR>/Include
-    LINK $<SOURCE_DIR>/Lib
-    LIB vulkan-1
-)
-Add3rdBinaryPackage(
-    NAME VulkanSDK
-    PLATFORM Darwin
-    VERSION 1.3.243.0
-    HASH a5c63a4f29984540efa00190240d31b59539413cf4783792bd9f53207f4f7d07
-    INCLUDE $<SOURCE_DIR>/macOS/include
-    LINK $<SOURCE_DIR>/macOS/lib
-    LIB vulkan.1
+    HASH
+        Windows 23ded0e6155a8ea265da84bd62f7a45cc3fc637fb1eeba61a5b9430fa704e4b5
+        Darwin a5c63a4f29984540efa00190240d31b59539413cf4783792bd9f53207f4f7d07
+    INCLUDE
+        Windows $<SOURCE_DIR>/Include
+        Darwin $<SOURCE_DIR>/macOS/include
+    LINK
+        Windows $<SOURCE_DIR>/Lib
+        Darwin $<SOURCE_DIR>/macOS/lib
+    LIB
+        Windows vulkan-1
+        Darwin vulkan.1
 )
 
 # DXC
@@ -96,24 +94,21 @@ Add3rdHeaderOnlyPackage(
 
 # LLVM-Clang
 Add3rdBinaryPackage(
+    ARCH
     NAME llvm-clang
-    PLATFORM Windows
     VERSION 15.0.7
-    HASH dd13894552677b689551248266b2ec4fc12341467776b282366098597b0c3501
+    HASH
+        Windows-AMD64 dd13894552677b689551248266b2ec4fc12341467776b282366098597b0c3501
+        Darwin-x86_64 75b45dda76d52fcf7f3253aedea1f7327eb2aca37871b287d89234b55bde5504
+        Darwin-arm64 99a4884945674163374d99c2220cadbfe20a947b1217193140c6b6638a3b0627
     INCLUDE $<SOURCE_DIR>/include
     LINK $<SOURCE_DIR>/lib
-    LIB libclang
+    LIB
+        Windows-AMD64 libclang
+        Darwin-x86_64 clang
+        Darwin-arm64 clang
     RUNTIME_DEP
         Windows $<SOURCE_DIR>/bin/libclang.dll
-)
-Add3rdBinaryPackage(
-    NAME llvm-clang
-    PLATFORM Darwin
-    VERSION 15.0.7
-    HASH 75b45dda76d52fcf7f3253aedea1f7327eb2aca37871b287d89234b55bde5504
-    INCLUDE $<SOURCE_DIR>/include
-    LINK $<SOURCE_DIR>/lib
-    LIB clang
 )
 
 # Google Test
@@ -125,7 +120,7 @@ Add3rdCMakeProject(
     CMAKE_ARG -Dgtest_force_shared_crt=ON
     INCLUDE $<INSTALL_DIR>/include
     LINK $<INSTALL_DIR>/lib
-    LIB gtest$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,> gmock$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
+    LIB gtest$<IF:$<CONFIG:Debug>,d,> gmock$<IF:$<CONFIG:Debug>,d,>
 )
 
 # TaskFlow
@@ -176,8 +171,8 @@ Add3rdCMakeProject(
     INCLUDE $<INSTALL_DIR>/include
     LINK $<INSTALL_DIR>/lib
     LIB spirv-cross-core$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
-    spirv-cross-msl$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
-    spirv-cross-glsl$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
+        spirv-cross-msl$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
+        spirv-cross-glsl$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
 )
 
 # assimp
@@ -191,7 +186,7 @@ Add3rdCMakeProject(
     LINK $<INSTALL_DIR>/lib
     LIB
         Windows "assimp-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>"
-        Darwin assimp
+        Darwin "assimp$<IF:$<CONFIG:Debug>,d,>"
     RUNTIME_DEP
         Windows "$<INSTALL_DIR>/bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>.dll"
 )
@@ -208,28 +203,22 @@ Add3rdHeaderOnlyPackage(
 # Qt6
 Find3rdPackage(
     NAME Qt
-    PLATFORM Windows
-    VERSION 6.5.2
-    HASH e2a573a53b6de88c0ce768868bd5a8258d432ad71c45a407afa55243b051668f
-    PREFIX $<SOURCE_DIR>/6.5.2/msvc2019_64
     PACKAGE Qt6
+    VERSION 6.5.2
+    HASH
+        Windows e2a573a53b6de88c0ce768868bd5a8258d432ad71c45a407afa55243b051668f
+        Darwin 4379592e8b3af8eb32f5d030608651da8dc59c30b9bfa7837b7ed17949ff3365
+    PREFIX
+        Windows $<SOURCE_DIR>/6.5.2/msvc2019_64
+        Darwin $<SOURCE_DIR>/6.5.2/macos
     COMPONENTS Core Gui Widgets
     LIB Qt::Core Qt::Gui Qt::Widgets
     RUNTIME_DEP
-        $<SOURCE_DIR>/6.5.2/msvc2019_64/plugins/platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll
-        $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Core$<IF:$<CONFIG:Debug>,d,>.dll
-        $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Gui$<IF:$<CONFIG:Debug>,d,>.dll
-        $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Widgets$<IF:$<CONFIG:Debug>,d,>.dll
-)
-Find3rdPackage(
-    NAME Qt
-    PLATFORM Darwin
-    VERSION 6.5.2
-    HASH 4379592e8b3af8eb32f5d030608651da8dc59c30b9bfa7837b7ed17949ff3365
-    PREFIX $<SOURCE_DIR>/6.5.2/macos
-    PACKAGE Qt6
-    COMPONENTS Core Gui Widgets
-    LIB Qt::Core Qt::Gui Qt::Widgets
+        Windows
+            $<SOURCE_DIR>/6.5.2/msvc2019_64/plugins/platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll
+            $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Core$<IF:$<CONFIG:Debug>,d,>.dll
+            $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Gui$<IF:$<CONFIG:Debug>,d,>.dll
+            $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Widgets$<IF:$<CONFIG:Debug>,d,>.dll
 )
 if (${BUILD_EDITOR})
     set(CMAKE_AUTOMOC ON)
