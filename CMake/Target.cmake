@@ -8,6 +8,9 @@ set(BASIC_TEST_LIBS googletest CACHE STRING "" FORCE)
 
 if (${BUILD_TEST})
     enable_testing()
+    add_definitions(-DBUILD_TEST=1)
+else()
+    add_definitions(-DBUILD_TEST=0)
 endif()
 
 function(CombineRuntimeDependencies)

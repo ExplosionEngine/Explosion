@@ -8,11 +8,9 @@
 #include <Runtime/ECS.h>
 
 namespace Runtime {
-    using SystemTypeId = Mirror::TypeId;
-    using SystemEventTypeId = Mirror::TypeId;
     class World;
 
-    class SystemSchedule {
+    class RUNTIME_API SystemSchedule {
     public:
         SystemSchedule();
         ~SystemSchedule();
@@ -20,15 +18,21 @@ namespace Runtime {
         template <typename S>
         SystemSchedule& ScheduleAfter();
 
+        template <auto Ptr>
+        SystemSchedule& ScheduleAfter();
+
+        SystemSchedule& ScheduleAfter(const std::string& lambdaName);
+
     private:
         friend class World;
 
-        void InvokeSchedule(World& world, SystemTypeId target) const;
+        SystemSchedule& ScheduleAfterInternal(SystemSignature depend);
+        void InvokeSchedule(World& world, SystemSignature target) const;
 
-        std::vector<std::function<void(World&, SystemTypeId)>> scheduleFuncs;
+        std::vector<std::function<void(World&, SystemSignature)>> scheduleFuncs;
     };
 
-    class EventSlot {
+    class RUNTIME_API EventSlot {
     public:
         EventSlot();
         ~EventSlot();
@@ -36,15 +40,21 @@ namespace Runtime {
         template <typename S>
         EventSlot& Connect();
 
+        template <auto Ptr>
+        EventSlot& Connect();
+
+        EventSlot& Connect(const std::string& lambdaName, const SystemOnReceiveEventFunc& func);
+
+
     private:
         friend class World;
 
-        void InvokeConnect(World& world, SystemEventTypeId target) const;
+        void InvokeConnect(World& world, SystemEventSignature target) const;
 
-        std::vector<std::function<void(World&, SystemEventTypeId)>> connectFuncs;
+        std::vector<std::function<void(World&, SystemEventSignature)>> connectFuncs;
     };
 
-    class World : public ISystemEventRadio {
+    class RUNTIME_API World : public ECSHost {
     public:
         explicit World(std::string inName = "");
         ~World();
@@ -52,26 +62,51 @@ namespace Runtime {
         template <typename S>
         World& AddSetupSystem(const SystemSchedule& schedule = {})
         {
-            SystemTypeId typeId = CreateSystemGeneral<S>();
-            schedule.InvokeSchedule(*this, setupSystems.emplace_back(typeId));
+            SystemSignature signature = CreateSystem(Internal::ClassSystemSigner<S>().Sign(), new S());
+            schedule.InvokeSchedule(*this, setupSystems.emplace_back(signature));
             return *this;
         }
 
         template <typename S>
         World& AddTickSystem(const SystemSchedule& schedule = {})
         {
-            SystemTypeId typeId = CreateSystemGeneral<S>();
-            schedule.InvokeSchedule(*this, tickSystems.emplace_back(typeId));
+            SystemSignature signature = CreateSystem(Internal::ClassSystemSigner<S>().Sign(), new S());
+            schedule.InvokeSchedule(*this, tickSystems.emplace_back(signature));
             return *this;
         }
+
+        template <auto Ptr>
+        World& AddSetupSystem(const SystemSchedule& schedule = {})
+        {
+            SystemSignature signature = CreateSystem(
+                Internal::FuncSystemSigner<Ptr>().Sign(),
+                new FuncSetupSystem([](SystemCommands& systemCommands) -> void { Ptr(systemCommands); })
+            );
+            schedule.InvokeSchedule(*this, setupSystems.emplace_back(signature));
+            return *this;
+        }
+
+        template <auto Ptr>
+        World& AddTickSystem(const SystemSchedule& schedule = {})
+        {
+            SystemSignature signature = CreateSystem(
+                Internal::FuncSystemSigner<Ptr>().Sign(),
+                new FuncTickSystem([](SystemCommands& systemCommands) -> void { Ptr(systemCommands); })
+            );
+            schedule.InvokeSchedule(*this, tickSystems.emplace_back(signature));
+            return *this;
+        }
+
+        World& AddSetupSystem(const std::string& systemName, const SystemExecuteFunc& func, const SystemSchedule& schedule = {});
+        World& AddTickSystem(const std::string& systemName, const SystemExecuteFunc& func, const SystemSchedule& schedule = {});
 
         template <typename E>
         World& RegisterEvent(const EventSlot& eventSlot = {})
         {
-            SystemEventTypeId typeId = Mirror::GetTypeInfo<E>()->id;
-            Assert(!systemEventSlots.contains(typeId));
-            systemEventSlots.emplace(std::make_pair(typeId, std::vector<SystemTypeId> {}));
-            eventSlot.InvokeConnect(*this, typeId);
+            SystemEventSignature signature = Internal::SystemEventSigner<E>().Sign();
+            Assert(!systemEventSlots.contains(signature));
+            systemEventSlots.emplace(std::make_pair(signature, std::vector<SystemEventSignature> {}));
+            eventSlot.InvokeConnect(*this, signature);
             return *this;
         }
 
@@ -85,49 +120,74 @@ namespace Runtime {
     private:
         friend class SystemSchedule;
         friend class EventSlot;
+        friend class WorldTestHelper;
 
-        void ExecuteSystems(const std::vector<SystemTypeId>& targets);
-
-        template <typename S>
-        SystemTypeId CreateSystemGeneral()
-        {
-            SystemTypeId typeId = Mirror::GetTypeInfo<S>()->id;
-            Assert(!systems.contains(typeId) && !systemDependencies.contains(typeId));
-            systems.emplace(std::make_pair(typeId, Common::MakeUnique<S>()));
-            systemDependencies.emplace(std::make_pair(typeId, std::vector<SystemTypeId> {}));
-            return typeId;
-        }
+        SystemSignature CreateSystem(SystemSignature signature, System* systemInstance);
+        void ExecuteWorkSystems(const std::vector<SystemSignature>& targets);
 
         bool setuped;
         std::string name;
         entt::registry registry;
-        std::vector<SystemTypeId> setupSystems;
-        std::vector<SystemTypeId> tickSystems;
-        std::unordered_map<SystemTypeId, Common::UniqueRef<System>> systems;
-        std::unordered_map<SystemTypeId, std::vector<SystemTypeId>> systemDependencies;
-        std::unordered_map<SystemEventTypeId, std::vector<SystemTypeId>> systemEventSlots;
+        std::vector<SystemSignature> setupSystems;
+        std::vector<SystemSignature> tickSystems;
+        std::unordered_map<SystemSignature, Common::UniqueRef<System>> systems;
+        std::unordered_map<SystemSignature, std::vector<SystemSignature>> systemDependencies;
+        std::unordered_map<SystemEventSignature, std::vector<SystemSignature>> systemEventSlots;
     };
+
+    // used for test only
+#if BUILD_TEST
+    class RUNTIME_API WorldTestHelper {
+    public:
+        explicit WorldTestHelper(World& inWorld);
+        ~WorldTestHelper();
+
+        SystemCommands HackCreateSystemCommands();
+
+    private:
+        World& world;
+    };
+#endif
 }
 
 namespace Runtime {
     template <typename S>
     SystemSchedule& SystemSchedule::ScheduleAfter()
     {
-        scheduleFuncs.emplace_back([](World& world, SystemTypeId target) -> void {
-            SystemTypeId dependId = Mirror::GetTypeInfo<S>()->id;
-            Assert(world.systemDependencies.contains(target));
-            world.systemDependencies.at(target).emplace_back(dependId);
-        });
-        return *this;
+        return ScheduleAfterInternal(Internal::ClassSystemSigner<S>().Sign());
+    }
+
+    template <auto Ptr>
+    SystemSchedule& SystemSchedule::ScheduleAfter()
+    {
+        if constexpr (std::is_function_v<std::remove_reference_t<std::remove_pointer_t<decltype(Ptr)>>>) {
+            return ScheduleAfterInternal(Internal::FuncSystemSigner<Ptr>().Sign());
+        } else {
+            static_assert(false, "bad func pointer type parameter");
+        }
     }
 
     template <typename S>
     EventSlot& EventSlot::Connect()
     {
-        connectFuncs.emplace_back([](World& world, SystemEventTypeId target) -> void {
-            SystemTypeId systemId = world.CreateSystemGeneral<S>();
+        connectFuncs.emplace_back([](World& world, SystemEventSignature target) -> void {
+            SystemSignature system = world.CreateSystem(Internal::ClassSystemSigner<S>().Sign(), new S());
             Assert(world.systemEventSlots.contains(target));
-            world.systemEventSlots.at(target).emplace_back(systemId);
+            world.systemEventSlots.at(target).emplace_back(system);
+        });
+        return *this;
+    }
+
+    template <auto Ptr>
+    EventSlot& EventSlot::Connect()
+    {
+        connectFuncs.emplace_back([](World& world, SystemEventSignature target) -> void {
+            SystemSignature system = world.CreateSystem(
+                Internal::FuncSystemSigner<Ptr>().Sign(),
+                new FuncTickSystem([](SystemCommands& systemCommands, const Mirror::Any& evnetRef) -> void { Ptr(systemCommands, evnetRef); })
+            );
+            Assert(world.systemEventSlots.contains(target));
+            world.systemEventSlots.at(target).emplace_back(system);
         });
         return *this;
     }

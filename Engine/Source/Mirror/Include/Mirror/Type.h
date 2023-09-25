@@ -238,8 +238,10 @@ namespace Mirror {
             }
         }
 
+        [[nodiscard]] bool HasVariable(const std::string& name) const;
         [[nodiscard]] const Variable* FindVariable(const std::string& name) const;
         [[nodiscard]] const Variable& GetVariable(const std::string& name) const;
+        [[nodiscard]] bool HasFunction(const std::string& name) const;
         [[nodiscard]] const Function* FindFunction(const std::string& name) const;
         [[nodiscard]] const Function& GetFunction(const std::string& name) const;
 
@@ -259,6 +261,13 @@ namespace Mirror {
     class MIRROR_API Class : public Type {
     public:
         ~Class() override;
+
+        template <typename C>
+        requires std::is_class_v<C>
+        [[nodiscard]] static bool Has()
+        {
+            return typeToNameMap.contains(GetTypeInfo<C>()->id);
+        }
 
         template <typename C>
         requires std::is_class_v<C>
