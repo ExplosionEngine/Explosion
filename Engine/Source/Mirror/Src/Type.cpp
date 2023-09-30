@@ -171,6 +171,11 @@ namespace Mirror {
         return Registry::Get().globalScope;
     }
 
+    bool GlobalScope::HasVariable(const std::string& name) const
+    {
+        return variables.contains(name);
+    }
+
     const Variable* GlobalScope::FindVariable(const std::string& name) const
     {
         auto iter = variables.find(name);
@@ -182,6 +187,11 @@ namespace Mirror {
         auto iter = variables.find(name);
         Assert(iter != variables.end());
         return iter->second;
+    }
+
+    bool GlobalScope::HasFunction(const std::string& name) const
+    {
+        return functions.contains(name);
     }
 
     const Function* GlobalScope::FindFunction(const std::string& name) const

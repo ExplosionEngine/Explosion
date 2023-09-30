@@ -5,20 +5,20 @@
 #include <Runtime/ECS.h>
 
 namespace Runtime {
-    SystemCommands::SystemCommands(entt::registry& inRegistry, ISystemEventRadio& inSystemEventRadio)
+    SystemCommands::SystemCommands(entt::registry& inRegistry, ECSHost& inHost)
         : registry(inRegistry)
-        , systemEventRadio(inSystemEventRadio)
+        , host(inHost)
     {
     }
 
     SystemCommands::~SystemCommands() = default;
 
-    Entity SystemCommands::AddEntity()
+    Entity SystemCommands::Create()
     {
         return registry.create();
     }
 
-    void SystemCommands::DestroyEntity(Entity inEntity)
+    void SystemCommands::Destroy(Entity inEntity)
     {
         registry.destroy(inEntity);
     }

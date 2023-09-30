@@ -29,3 +29,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     string(REGEX REPLACE ".*MacOSX([0-9]+\\.[0-9]+).*" "\\1" MACOS_SDK_VERSION ${CMAKE_OSX_SYSROOT})
     add_definitions(-DMACOS_SDK_VERSION=${MACOS_SDK_VERSION})
 endif ()
+
+if (${MSVC})
+    add_compile_options(/bigobj)
+endif ()
