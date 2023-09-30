@@ -160,11 +160,7 @@ namespace Runtime {
     template <auto Ptr>
     SystemSchedule& SystemSchedule::ScheduleAfter()
     {
-        if constexpr (std::is_function_v<std::remove_reference_t<std::remove_pointer_t<decltype(Ptr)>>>) {
-            return ScheduleAfterInternal(Internal::FuncSystemSigner<Ptr>().Sign());
-        } else {
-            static_assert(false, "bad func pointer type parameter");
-        }
+        return ScheduleAfterInternal(Internal::FuncSystemSigner<Ptr>().Sign());
     }
 
     template <typename S>
