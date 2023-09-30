@@ -13,12 +13,12 @@ namespace Runtime {
 
     SystemCommands::~SystemCommands() = default;
 
-    Entity SystemCommands::AddEntity()
+    Entity SystemCommands::Create()
     {
         return registry.create();
     }
 
-    void SystemCommands::DestroyEntity(Entity inEntity)
+    void SystemCommands::Destroy(Entity inEntity)
     {
         registry.destroy(inEntity);
     }

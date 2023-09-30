@@ -7,7 +7,11 @@
 #include <Runtime/World.h>
 
 namespace Runtime {
-    SystemSchedule::SystemSchedule() = default;
+    SystemSchedule::SystemSchedule(World& inWorld, SystemSignature inTarget)
+        : world(inWorld)
+        , target(inTarget)
+    {
+    }
 
     SystemSchedule::~SystemSchedule() = default;
 
@@ -18,39 +22,25 @@ namespace Runtime {
 
     SystemSchedule& SystemSchedule::ScheduleAfterInternal(SystemSignature depend)
     {
-        scheduleFuncs.emplace_back([depend](World& world, SystemSignature target) -> void {
-            Assert(world.systemDependencies.contains(target));
-            world.systemDependencies.at(target).emplace_back(depend);
-        });
+        Assert(world.systemDependencies.contains(target));
+        world.systemDependencies.at(target).emplace_back(depend);
         return *this;
     }
 
-    void SystemSchedule::InvokeSchedule(World& world, SystemSignature target) const
+    EventSlot::EventSlot(World& inWorld, SystemEventSignature inTarget)
+        : world(inWorld)
+        , target(inTarget)
     {
-        for (const auto& func : scheduleFuncs) {
-            func(world, target);
-        }
     }
-
-    EventSlot::EventSlot() = default;
 
     EventSlot::~EventSlot() = default;
 
     EventSlot& EventSlot::Connect(const std::string& lambdaName, const SystemOnReceiveEventFunc& func)
     {
-        connectFuncs.emplace_back([lambdaName, func](World& world, SystemEventSignature target) -> void {
-            SystemSignature system = world.CreateSystem(Internal::LambdaSystemSigner(lambdaName).Sign(), new FuncEventSystem(func));
-            Assert(world.systemEventSlots.contains(target));
-            world.systemEventSlots.at(target).emplace_back(system);
-        });
+        SystemSignature system = world.CreateSystem(Internal::LambdaSystemSigner(lambdaName).Sign(), new FuncEventSystem(func));
+        Assert(world.systemEventSlots.contains(target));
+        world.systemEventSlots.at(target).emplace_back(system);
         return *this;
-    }
-
-    void EventSlot::InvokeConnect(World& world, SystemEventSignature target) const
-    {
-        for (const auto& func : connectFuncs) {
-            func(world, target);
-        }
     }
 
     World::World(std::string inName)
@@ -65,31 +55,30 @@ namespace Runtime {
     void World::BroadcastSystemEvent(Mirror::TypeId eventTypeId, const Mirror::Any& eventRef)
     {
         SystemEventSignature signature = eventTypeId;
-
         if (!systemEventSlots.contains(signature)) {
             return;
         }
 
-        SystemCommands systemCommands(registry, *this);
+        SystemCommands commands(registry, *this);
         for (const auto& systemId : systemEventSlots.at(signature)) {
             Assert(systems.contains(systemId));
             auto* system = systems.at(systemId).Get();
-            static_cast<EventSystem*>(system)->OnReceiveEvent(systemCommands, eventRef);
+            static_cast<EventSystem*>(system)->OnReceiveEvent(commands, eventRef);
         }
     }
 
-    World& World::AddSetupSystem(const std::string& systemName, const SystemExecuteFunc& func, const SystemSchedule& schedule)
+    SystemSchedule World::AddSetupSystem(const std::string& systemName, const SystemExecuteFunc& func)
     {
         SystemSignature signature = CreateSystem(Internal::LambdaSystemSigner(systemName).Sign(), new FuncSetupSystem(func));
-        schedule.InvokeSchedule(*this, setupSystems.emplace_back(signature));
-        return *this;
+        setupSystems.emplace_back(signature);
+        return SystemSchedule(*this, signature);
     }
 
-    World& World::AddTickSystem(const std::string& systemName, const SystemExecuteFunc& func, const SystemSchedule& schedule)
+    SystemSchedule World::AddTickSystem(const std::string& systemName, const SystemExecuteFunc& func)
     {
         SystemSignature signature = CreateSystem(Internal::LambdaSystemSigner(systemName).Sign(), new FuncTickSystem(func));
-        schedule.InvokeSchedule(*this, tickSystems.emplace_back(signature));
-        return *this;
+        tickSystems.emplace_back(signature);
+        return SystemSchedule(*this, signature);
     }
 
     void World::Setup()
@@ -127,12 +116,12 @@ namespace Runtime {
         tasks.clear();
         tasks.reserve(targets.size());
 
-        SystemCommands systemCommands(registry, *this);
+        SystemCommands commands(registry, *this);
         for (SystemSignature target : targets) {
-            tasks.emplace(std::make_pair(target, taskflow.emplace([this, &systemCommands, target]() -> void {
+            tasks.emplace(std::make_pair(target, taskflow.emplace([this, &commands, target]() -> void {
                 Assert(systems.contains(target));
                 auto* system = systems.at(target).Get();
-                static_cast<WorkSystem*>(system)->Execute(systemCommands);
+                static_cast<WorkSystem*>(system)->Execute(commands);
             })));
         }
 

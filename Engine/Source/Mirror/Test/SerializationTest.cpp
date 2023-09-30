@@ -116,7 +116,7 @@ TEST(SerializationTest, ClassFileSerializationTest)
         Mirror::Any obj = clazz.GetConstructor(Mirror::NamePresets::defaultConstructor).ConstructOnStack();
         clazz.Deserailize(stream, &obj);
 
-        const auto& ref = obj.CastTo<const SerializationTestStruct0&>();
+        const auto& ref = obj.As<const SerializationTestStruct0&>();
         ASSERT_EQ(ref.a, 1);
         ASSERT_EQ(ref.b, 2.0f);
         ASSERT_EQ(ref.c, "3");
@@ -147,7 +147,7 @@ TEST(SerializationTest, ContainerFileSerializationTest)
         Mirror::Any ref = clazz.GetDefaultConstructor().ConstructOnStack();
         clazz.Deserailize(stream, &ref);
 
-        const auto& tRef = ref.CastTo<const SerializationTestStruct1&>();
+        const auto& tRef = ref.As<const SerializationTestStruct1&>();
         ASSERT_EQ(tRef.a.size(), 2);
         ASSERT_EQ(tRef.a[0], 1);
         ASSERT_EQ(tRef.a[1], 2);

@@ -15,7 +15,7 @@ namespace Mirror::Internal {
     template <typename ArgsTuple, size_t... I>
     auto CastAnyArrayToArgsTuple(Any* args, std::index_sequence<I...>)
     {
-        return ArgsTuple { args[I].CastTo<std::tuple_element_t<I, ArgsTuple>>()... };
+        return ArgsTuple {args[I].As<std::tuple_element_t<I, ArgsTuple>>()... };
     }
 
     template <auto Ptr, typename ArgsTuple, size_t... I>
@@ -113,7 +113,7 @@ namespace Mirror {
             clazz.staticVariables.emplace(std::make_pair(inName, Mirror::Variable(
                 inName,
                 [](Any* inValue) -> void {
-                    *Ptr = inValue->CastTo<ValueType>();
+                    *Ptr = inValue->As<ValueType>();
                 },
                 []() -> Any {
                     return Any(std::ref(*Ptr));
@@ -163,14 +163,14 @@ namespace Mirror {
             clazz.memberVariables.emplace(std::make_pair(inName, Mirror::MemberVariable(
                 inName,
                 [](Any* object, Any* value) -> void {
-                    object->CastTo<ClassType&>().*Ptr = value->CastTo<ValueType>();
+                                                                         object->As<ClassType&>().*Ptr = value->As<ValueType>();
                 },
                 [](Any* object) -> Any {
-                    return std::ref(object->CastTo<ClassType&>().*Ptr);
+                    return std::ref(object->As<ClassType&>().*Ptr);
                 },
                 [](Common::SerializeStream& stream, const Mirror::MemberVariable& variable, Any* object) -> void {
                     if constexpr (Common::Serializer<ValueType>::serializable) {
-                        ValueType& value = variable.Get(object).CastTo<ValueType&>();
+                        ValueType& value = variable.Get(object).As<ValueType&>();
                         Common::Serializer<ValueType>::Serialize(stream, value);
                     } else {
                         Unimplement();
@@ -208,10 +208,10 @@ namespace Mirror {
 
                     auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
                     if constexpr (std::is_void_v<RetType>) {
-                        Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->CastTo<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {});
+                        Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->As<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {});
                         return {};
                     } else {
-                        return Any(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->CastTo<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {}));
+                        return Any(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->As<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {}));
                     }
                 }
             )));
@@ -223,7 +223,8 @@ namespace Mirror {
 
         explicit ClassRegistry(Class& inClass) : MetaDataRegistry<ClassRegistry<C>>(&inClass), clazz(inClass)
         {
-            clazz.destructor = Mirror::Destructor([](Any* object) -> void { object->CastTo<C&>().~C(); });
+            clazz.destructor = Mirror::Destructor([](Any* object) -> void {
+                object->As<C&>().~C(); });
         }
 
         Class& clazz;
@@ -244,14 +245,14 @@ namespace Mirror {
             globalScope.variables.emplace(std::make_pair(inName, Mirror::Variable(
                 inName,
                 [](Any* inValue) -> void {
-                    *Ptr = inValue->CastTo<ValueType>();
+                    *Ptr = inValue->As<ValueType>();
                 },
                 []() -> Any {
                     return Any(std::ref(*Ptr));
                 },
                 [](Common::SerializeStream& stream, const Mirror::Variable& variable) -> void {
                     if constexpr (Common::Serializer<ValueType>::serializable) {
-                        ValueType& value = variable.Get().CastTo<ValueType&>();
+                        ValueType& value = variable.Get().As<ValueType&>();
                         Common::Serializer<ValueType>::Serialize(stream, value);
                     } else {
                         Unimplement();
@@ -322,7 +323,7 @@ namespace Mirror {
                     return Any(Value);
                 },
                 [](Any* value) -> bool {
-                    return value->CastTo<T>() == Value;
+                    return value->As<T>() == Value;
                 }
             )));
             return MetaDataRegistry<EnumRegistry<T>>::SetContext(&enumInfo.elements.at(inName));

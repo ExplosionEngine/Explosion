@@ -86,10 +86,10 @@ TEST(RegistryTest, GlobalScopeTest)
         ASSERT_EQ(variable.GetMeta("TestKey"), "v0");
 
         auto value = variable.Get();
-        ASSERT_EQ(value.CastTo<int>(), 1);
-        ASSERT_EQ(value.CastTo<const int&>(), 1);
-        value.CastTo<int&>() = 2;
-        ASSERT_EQ(value.CastTo<int>(), 2);
+        ASSERT_EQ(value.As<int>(), 1);
+        ASSERT_EQ(value.As<const int&>(), 1);
+        value.As<int&>() = 2;
+        ASSERT_EQ(value.As<int>(), 2);
 
         variable.Set(3);
         ASSERT_EQ(v0, 3);
@@ -106,13 +106,13 @@ TEST(RegistryTest, GlobalScopeTest)
     {
         const auto& function = globalScope.GetFunction("F0");
         auto result = function.Invoke(1, 2);
-        ASSERT_EQ(result.CastTo<int>(), 3);
+        ASSERT_EQ(result.As<int>(), 3);
     }
 
     {
         const auto& function = globalScope.GetFunction("F1");
         auto result = function.Invoke();
-        ASSERT_EQ(result.CastTo<const int&>(), 5);
+        ASSERT_EQ(result.As<const int&>(), 5);
     }
 
     {
@@ -157,14 +157,14 @@ TEST(RegistryTest, ClassTest)
             const auto& variable = clazz.GetStaticVariable("v0");
             ASSERT_EQ(variable.GetMeta("TestKey"), "v0");
             variable.Set(1);
-            ASSERT_EQ(variable.Get().CastTo<int>(), 1);
+            ASSERT_EQ(variable.Get().As<int>(), 1);
         }
 
         {
             const auto& function = clazz.GetStaticFunction("F0");
             ASSERT_EQ(function.GetMeta("TestKey"), "F0");
             auto result = function.Invoke();
-            ASSERT_EQ(result.CastTo<int&>(), 1);
+            ASSERT_EQ(result.As<int&>(), 1);
         }
     }
 
@@ -175,9 +175,9 @@ TEST(RegistryTest, ClassTest)
         const auto& getter = clazz.GetMemberFunction("GetV0");
 
         auto object = constructor.ConstructOnStack(1);
-        ASSERT_EQ(getter.Invoke(object.CastTo<C1&>()).CastTo<int>(), 1);
-        setter.Invoke(object.CastTo<C1&>(), 2);
-        ASSERT_EQ(getter.Invoke(object.CastTo<C1&>()).CastTo<int>(), 2);
+        ASSERT_EQ(getter.Invoke(object.As<C1&>()).As<int>(), 1);
+        setter.Invoke(object.As<C1&>(), 2);
+        ASSERT_EQ(getter.Invoke(object.As<C1&>()).As<int>(), 2);
     }
 
     {
@@ -188,9 +188,9 @@ TEST(RegistryTest, ClassTest)
         const auto& b = clazz.GetMemberVariable("b");
 
         auto object = constructor.NewObject(1, 2);
-        auto objectRef = Mirror::Any(*object.CastTo<C2*>());
-        ASSERT_EQ(a.Get(&objectRef).CastTo<int>(), 1);
-        ASSERT_EQ(b.Get(&objectRef).CastTo<int>(), 2);
+        auto objectRef = Mirror::Any(*object.As<C2*>());
+        ASSERT_EQ(a.Get(&objectRef).As<int>(), 1);
+        ASSERT_EQ(b.Get(&objectRef).As<int>(), 2);
         destructor.InvokeWith(&objectRef);
     }
 }
@@ -210,10 +210,10 @@ TEST(RegistryTest, EnumTest)
     auto c = enumInfo.GetElement("C");
     auto max = enumInfo.GetElement("max");
 
-    ASSERT_EQ(a.CastTo<E0>(), E0::a);
-    ASSERT_EQ(b.CastTo<E0>(), E0::b);
-    ASSERT_EQ(c.CastTo<E0>(), E0::c);
-    ASSERT_EQ(max.CastTo<E0>(), E0::max);
+    ASSERT_EQ(a.As<E0>(), E0::a);
+    ASSERT_EQ(b.As<E0>(), E0::b);
+    ASSERT_EQ(c.As<E0>(), E0::c);
+    ASSERT_EQ(max.As<E0>(), E0::max);
 
     ASSERT_EQ(enumInfo.GetElementName(&a), "A");
     ASSERT_EQ(enumInfo.GetElementName(&b), "B");

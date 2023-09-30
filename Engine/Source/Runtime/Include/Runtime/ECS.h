@@ -93,7 +93,7 @@ namespace Runtime {
 
         const E& Get()
         {
-            return eventRef.CastTo<const E&>();
+            return eventRef.As<const E&>();
         }
 
     private:
@@ -101,14 +101,14 @@ namespace Runtime {
     };
 
     struct WorkSystem : public System {
-        virtual void Execute(SystemCommands& systemCommands) = 0;
+        virtual void Execute(SystemCommands& commands) = 0;
     };
 
     struct SetupSystem : public WorkSystem {};
     struct TickSystem : public WorkSystem {};
 
     struct EventSystem : public System {
-        virtual void OnReceiveEvent(SystemCommands& systemCommands, const Mirror::Any& eventRef) = 0;
+        virtual void OnReceiveEvent(SystemCommands& commands, const Mirror::Any& eventRef) = 0;
     };
 
     using SystemExecuteFunc = std::function<void(SystemCommands&)>;
@@ -117,9 +117,9 @@ namespace Runtime {
     struct FuncSetupSystem : public SetupSystem {
         explicit FuncSetupSystem(SystemExecuteFunc inExecuteFunc) : executeFunc(std::move(inExecuteFunc)) {}
 
-        void Execute(Runtime::SystemCommands &systemCommands) override
+        void Execute(Runtime::SystemCommands &commands) override
         {
-            return executeFunc(systemCommands);
+            return executeFunc(commands);
         }
 
         SystemExecuteFunc executeFunc;
@@ -128,9 +128,9 @@ namespace Runtime {
     struct FuncTickSystem : public TickSystem {
         explicit FuncTickSystem(SystemExecuteFunc inExecuteFunc) : executeFunc(std::move(inExecuteFunc)) {}
 
-        void Execute(Runtime::SystemCommands &systemCommands) override
+        void Execute(Runtime::SystemCommands &commands) override
         {
-            return executeFunc(systemCommands);
+            return executeFunc(commands);
         }
 
         SystemExecuteFunc executeFunc;
@@ -139,9 +139,9 @@ namespace Runtime {
     struct FuncEventSystem : public EventSystem {
         explicit FuncEventSystem(SystemOnReceiveEventFunc inOnReceiveEventFunc) : onReceiveEventFunc(std::move(inOnReceiveEventFunc)) {}
 
-        void OnReceiveEvent(Runtime::SystemCommands &systemCommands, const Mirror::Any &eventRef) override
+        void OnReceiveEvent(Runtime::SystemCommands &commands, const Mirror::Any &eventRef) override
         {
-            onReceiveEventFunc(systemCommands, eventRef);
+            onReceiveEventFunc(commands, eventRef);
         }
 
         SystemOnReceiveEventFunc onReceiveEventFunc;
@@ -186,7 +186,7 @@ namespace Runtime {
         void BroadcastSystemEvent(const E& event)
         {
             Mirror::Any eventRef = std::ref(event);
-            BroadcastSystemEvent(Mirror::GetTypeInfo<E>()->id, event);
+            BroadcastSystemEvent(Internal::SystemEventSigner<E>().Sign(), event);
         }
     };
 
@@ -226,51 +226,57 @@ namespace Runtime {
         SystemCommands(entt::registry& inRegistry, ECSHost& inHost);
         ~SystemCommands();
 
-        Entity AddEntity();
-        void DestroyEntity(Entity inEntity);
+        Entity Create();
+        void Destroy(Entity inEntity);
 
         template <typename C, typename... Args>
-        void AddComponent(Entity entity, Args&&... args)
+        void Emplace(Entity entity, Args&&... args)
         {
-            C& component = registry.emplace<C>(entity, std::forward<Args>(args)...);
+            registry.emplace<C>(entity, std::forward<Args>(args)...);
             Broadcast(ComponentAdded<C> { {}, entity });
         }
 
         template <typename C>
-        const C* GetComponent(Entity entity)
+        C* Get(Entity entity)
         {
             return registry.try_get<C>(entity);
         }
 
         template <typename C>
-        bool HasComponent(Entity entity)
+        bool Has(Entity entity)
         {
-            return GetComponent<C>(entity) != nullptr;
+            return Get<C>(entity) != nullptr;
         }
 
         template <typename C, typename F>
-        void PatchComponent(Entity entity, F&& patchFunc)
+        void Patch(Entity entity, F&& patchFunc)
         {
             registry.patch<C>(entity, patchFunc);
             Broadcast(ComponentUpdated<C> { {}, entity });
         }
 
         template <typename C, typename... Args>
-        void SetComponent(Entity entity, Args&&... args)
+        void Set(Entity entity, Args&&... args)
         {
             registry.replace<C>(entity, std::forward<Args>(args)...);
             Broadcast(ComponentUpdated<C> { {}, entity });
         }
 
         template <typename C>
-        void RemoveComponent(Entity entity)
+        void Updated(Entity entity)
+        {
+            Broadcast(ComponentUpdated<C> { {}, entity });
+        }
+
+        template <typename C>
+        void Remove(Entity entity)
         {
             registry.remove<C>(entity);
             Broadcast(ComponentRemoved<C> { {}, entity });
         }
 
         template <typename G, typename... Args>
-        void AddGlobalComponent(Args&&... args)
+        void EmplaceGlobal(Args&&... args)
         {
             Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
             auto iter = host.globalComponents.find(typeId);
@@ -280,35 +286,41 @@ namespace Runtime {
         }
 
         template <typename G>
-        const G* GetGlobalComponent()
+        G* GetGlobal()
         {
             Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
             auto iter = host.globalComponents.find(typeId);
             if (iter == host.globalComponents.end()) {
                 return nullptr;
             } else {
-                return &iter->second.CastTo<const G&>();
+                return &iter->second.As<G&>();
             }
         }
 
         template <typename G>
-        bool HasGlobalComponent()
+        bool HasGlobal()
         {
-            return GetGlobalComponent<G>() != nullptr;
+            return GetGlobal<G>() != nullptr;
         }
 
         template <typename G, typename F>
-        void PatchGlobalComponent(F&& patchFunc)
+        void PatchGlobal(F&& patchFunc)
         {
             Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
             auto iter = host.globalComponents.find(typeId);
             Assert(iter != host.globalComponents.end());
-            patchFunc(iter->second.CastTo<G&>());
+            patchFunc(iter->second.As<G&>());
+            Broadcast(GlobalComponentUpdated<G> {});
+        }
+
+        template <typename G>
+        void UpdatedGlobal()
+        {
             Broadcast(GlobalComponentUpdated<G> {});
         }
 
         template <typename G, typename... Args>
-        void SetGlobalComponent(Args&&... args)
+        void SetGlobal(Args&&... args)
         {
             Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
             auto iter = host.globalComponents.find(typeId);
@@ -318,7 +330,7 @@ namespace Runtime {
         }
 
         template <typename G>
-        void RemoveGlobalComponent()
+        void RemoveGlobal()
         {
             Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
             auto iter = host.globalComponents.find(typeId);
@@ -328,7 +340,7 @@ namespace Runtime {
         }
 
         template <typename... C, typename... E>
-        Query<entt::exclude_t<E...>, C...> NewQuery(Exclude<E...> = {})
+        Query<entt::exclude_t<E...>, C...> StartQuery(Exclude<E...> = {})
         {
             return Query<entt::exclude_t<E...>, C...>(registry.view<C...>(entt::exclude_t<E...> {}));
         }
