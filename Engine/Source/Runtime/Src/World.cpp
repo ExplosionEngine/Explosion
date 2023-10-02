@@ -67,16 +67,16 @@ namespace Runtime {
         }
     }
 
-    SystemSchedule World::AddSetupSystem(const std::string& systemName, const SystemExecuteFunc& func)
+    SystemSchedule World::AddSetupSystem(const std::string& lambdaId, const SystemExecuteFunc& func)
     {
-        SystemSignature signature = CreateSystem(Internal::LambdaSystemSigner(systemName).Sign(), new FuncSetupSystem(func));
+        SystemSignature signature = CreateSystem(Internal::LambdaSystemSigner(lambdaId).Sign(), new FuncSetupSystem(func));
         setupSystems.emplace_back(signature);
         return SystemSchedule(*this, signature);
     }
 
-    SystemSchedule World::AddTickSystem(const std::string& systemName, const SystemExecuteFunc& func)
+    SystemSchedule World::AddTickSystem(const std::string& lambdaId, const SystemExecuteFunc& func)
     {
-        SystemSignature signature = CreateSystem(Internal::LambdaSystemSigner(systemName).Sign(), new FuncTickSystem(func));
+        SystemSignature signature = CreateSystem(Internal::LambdaSystemSigner(lambdaId).Sign(), new FuncTickSystem(func));
         tickSystems.emplace_back(signature);
         return SystemSchedule(*this, signature);
     }

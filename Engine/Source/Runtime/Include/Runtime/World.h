@@ -91,8 +91,8 @@ namespace Runtime {
             return SystemSchedule(*this, signature);
         }
 
-        SystemSchedule AddSetupSystem(const std::string& systemName, const SystemExecuteFunc& func);
-        SystemSchedule AddTickSystem(const std::string& systemName, const SystemExecuteFunc& func);
+        SystemSchedule AddSetupSystem(const std::string& lambdaId, const SystemExecuteFunc& func);
+        SystemSchedule AddTickSystem(const std::string& lambdaId, const SystemExecuteFunc& func);
 
         template <typename E>
         EventSlot Event()

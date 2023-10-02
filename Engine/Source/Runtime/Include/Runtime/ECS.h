@@ -54,16 +54,19 @@ namespace Runtime::Internal {
             using InfoTuple = std::tuple<SystemType, void*>;
 
             InfoTuple infoTuple = { SystemType::func, Ptr };
-            return Common::HashUtils::CityHash(&infoTuple, sizeof(infoTuple));
+            return Common::HashUtils::CityHash(&infoTuple, sizeof(InfoTuple));
         }
     };
 
     struct LambdaSystemSigner : public SystemSigner {
-        explicit LambdaSystemSigner(std::string inName) : name(std::move(inName)) {}
+        explicit LambdaSystemSigner(std::string inLambdaId) : name(std::move(inLambdaId)) {}
 
         SystemSignature Sign() const override
         {
-            return Common::HashUtils::CityHash(name.data(), name.size() * sizeof(char));
+            using InfoTuple = std::tuple<SystemType, size_t>;
+
+            InfoTuple infoTuple = { SystemType::lambda, Common::HashUtils::CityHash(name.data(), name.size() * sizeof(char)) };
+            return Common::HashUtils::CityHash(&infoTuple, sizeof(InfoTuple));
         }
 
         std::string name;
