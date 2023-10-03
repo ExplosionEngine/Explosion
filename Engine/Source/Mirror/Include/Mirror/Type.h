@@ -274,7 +274,9 @@ namespace Mirror {
         [[nodiscard]] static const Class* Find()
         {
             auto iter = typeToNameMap.find(GetTypeInfo<C>()->id);
-            Assert(iter != typeToNameMap.end());
+            if (iter == typeToNameMap.end()) {
+                return nullptr;
+            }
             return Find(iter->second);
         }
 

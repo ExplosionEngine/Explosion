@@ -15,11 +15,6 @@ namespace Runtime {
 
     SystemSchedule::~SystemSchedule() = default;
 
-    SystemSchedule& SystemSchedule::ScheduleAfter(const std::string& lambdaName)
-    {
-        return ScheduleAfterInternal(Internal::LambdaSystemSigner(lambdaName).Sign());
-    }
-
     SystemSchedule& SystemSchedule::ScheduleAfterInternal(SystemSignature depend)
     {
         Assert(world.systemDependencies.contains(target));
@@ -35,14 +30,6 @@ namespace Runtime {
 
     EventSlot::~EventSlot() = default;
 
-    EventSlot& EventSlot::Connect(const std::string& lambdaName, const SystemOnReceiveEventFunc& func)
-    {
-        SystemSignature system = world.CreateSystem(Internal::LambdaSystemSigner(lambdaName).Sign(), new FuncEventSystem(func));
-        Assert(world.systemEventSlots.contains(target));
-        world.systemEventSlots.at(target).emplace_back(system);
-        return *this;
-    }
-
     World::World(std::string inName)
         : ECSHost()
         , name(std::move(inName))
@@ -52,33 +39,18 @@ namespace Runtime {
 
     World::~World() = default;
 
-    void World::BroadcastSystemEvent(Mirror::TypeId eventTypeId, const Mirror::Any& eventRef)
+    void World::BroadcastSystemEvent(SystemEventSignature eventSignature, const Mirror::Any& eventRef)
     {
-        SystemEventSignature signature = eventTypeId;
-        if (!systemEventSlots.contains(signature)) {
+        if (!systemEventSlots.contains(eventSignature)) {
             return;
         }
 
         SystemCommands commands(registry, *this);
-        for (const auto& systemId : systemEventSlots.at(signature)) {
+        for (const auto& systemId : systemEventSlots.at(eventSignature)) {
             Assert(systems.contains(systemId));
             auto* system = systems.at(systemId).Get();
             static_cast<EventSystem*>(system)->OnReceiveEvent(commands, eventRef);
         }
-    }
-
-    SystemSchedule World::AddSetupSystem(const std::string& lambdaId, const SystemExecuteFunc& func)
-    {
-        SystemSignature signature = CreateSystem(Internal::LambdaSystemSigner(lambdaId).Sign(), new FuncSetupSystem(func));
-        setupSystems.emplace_back(signature);
-        return SystemSchedule(*this, signature);
-    }
-
-    SystemSchedule World::AddTickSystem(const std::string& lambdaId, const SystemExecuteFunc& func)
-    {
-        SystemSignature signature = CreateSystem(Internal::LambdaSystemSigner(lambdaId).Sign(), new FuncTickSystem(func));
-        tickSystems.emplace_back(signature);
-        return SystemSchedule(*this, signature);
     }
 
     void World::Setup()

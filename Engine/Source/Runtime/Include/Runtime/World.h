@@ -18,11 +18,6 @@ namespace Runtime {
         template <typename S>
         SystemSchedule& ScheduleAfter();
 
-        template <auto Ptr>
-        SystemSchedule& ScheduleAfter();
-
-        SystemSchedule& ScheduleAfter(const std::string& lambdaName);
-
     private:
         SystemSchedule& ScheduleAfterInternal(SystemSignature depend);
 
@@ -38,11 +33,6 @@ namespace Runtime {
         template <typename S>
         EventSlot& Connect();
 
-        template <auto Ptr>
-        EventSlot& Connect();
-
-        EventSlot& Connect(const std::string& lambdaName, const SystemOnReceiveEventFunc& func);
-
     private:
         World& world;
         SystemEventSignature target;
@@ -56,7 +46,7 @@ namespace Runtime {
         template <typename S>
         SystemSchedule AddSetupSystem()
         {
-            SystemSignature signature = CreateSystem(Internal::ClassSystemSigner<S>().Sign(), new S());
+            SystemSignature signature = CreateSystem(Internal::SignForClass<S>(), new S());
             setupSystems.emplace_back(signature);
             return SystemSchedule(*this, signature);
         }
@@ -64,40 +54,15 @@ namespace Runtime {
         template <typename S>
         SystemSchedule AddTickSystem()
         {
-            SystemSignature signature = CreateSystem(Internal::ClassSystemSigner<S>().Sign(), new S());
+            SystemSignature signature = CreateSystem(Internal::SignForClass<S>(), new S());
             tickSystems.emplace_back(signature);
             return SystemSchedule(*this, signature);
         }
-
-        template <auto Ptr>
-        SystemSchedule AddSetupSystem()
-        {
-            SystemSignature signature = CreateSystem(
-                Internal::FuncSystemSigner<Ptr>().Sign(),
-                new FuncSetupSystem([](SystemCommands& commands) -> void { Ptr(commands); })
-            );
-            setupSystems.emplace_back(signature);
-            return SystemSchedule(*this, signature);
-        }
-
-        template <auto Ptr>
-        SystemSchedule AddTickSystem()
-        {
-            SystemSignature signature = CreateSystem(
-                Internal::FuncSystemSigner<Ptr>().Sign(),
-                new FuncTickSystem([](SystemCommands& commands) -> void { Ptr(commands); })
-            );
-            tickSystems.emplace_back(signature);
-            return SystemSchedule(*this, signature);
-        }
-
-        SystemSchedule AddSetupSystem(const std::string& lambdaId, const SystemExecuteFunc& func);
-        SystemSchedule AddTickSystem(const std::string& lambdaId, const SystemExecuteFunc& func);
 
         template <typename E>
         EventSlot Event()
         {
-            SystemEventSignature signature = Internal::SystemEventSigner<E>().Sign();
+            SystemEventSignature signature = Internal::SignForClass<E>();
             if (!systemEventSlots.contains(signature)) {
                 systemEventSlots.emplace(std::make_pair(signature, std::vector<SystemEventSignature> {}));
             }
@@ -109,7 +74,7 @@ namespace Runtime {
         void Tick();
 
     protected:
-        void BroadcastSystemEvent(Mirror::TypeId eventTypeId, const Mirror::Any& eventRef) override;
+        void BroadcastSystemEvent(SystemEventSignature eventSignature, const Mirror::Any& eventRef) override;
 
     private:
         friend class SystemSchedule;
@@ -148,31 +113,13 @@ namespace Runtime {
     template <typename S>
     SystemSchedule& SystemSchedule::ScheduleAfter()
     {
-        return ScheduleAfterInternal(Internal::ClassSystemSigner<S>().Sign());
-    }
-
-    template <auto Ptr>
-    SystemSchedule& SystemSchedule::ScheduleAfter()
-    {
-        return ScheduleAfterInternal(Internal::FuncSystemSigner<Ptr>().Sign());
+        return ScheduleAfterInternal(Internal::SignForClass<S>());
     }
 
     template <typename S>
     EventSlot& EventSlot::Connect()
     {
-        SystemSignature system = world.CreateSystem(Internal::ClassSystemSigner<S>().Sign(), new S());
-        Assert(world.systemEventSlots.contains(target));
-        world.systemEventSlots.at(target).emplace_back(system);
-        return *this;
-    }
-
-    template <auto Ptr>
-    EventSlot& EventSlot::Connect()
-    {
-        SystemSignature system = world.CreateSystem(
-            Internal::FuncSystemSigner<Ptr>().Sign(),
-            new FuncTickSystem([](SystemCommands& commands, const Mirror::Any& evnetRef) -> void { Ptr(commands, evnetRef); })
-        );
+        SystemSignature system = world.CreateSystem(Internal::SignForClass<S>(), new S());
         Assert(world.systemEventSlots.contains(target));
         world.systemEventSlots.at(target).emplace_back(system);
         return *this;
