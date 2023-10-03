@@ -405,7 +405,7 @@ function(AddTest)
             OUTPUT_TARGET_NAME GENERATED_TARGET
             SEARCH_DIR ${PARAMS_REFLECT}
             PRIVATE_INC ${PARAMS_INC}
-            LIB ${PARAMS_LIB}
+            LIB ${PARAMS_LIB} ${BASIC_LIBS} ${BASIC_TEST_LIBS}
         )
     endif()
 

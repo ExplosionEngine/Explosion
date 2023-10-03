@@ -13,61 +13,48 @@
 #include <Runtime/Api.h>
 
 namespace Runtime {
-    using SystemSignature = size_t;
-    using SystemEventSignature = size_t;
+    struct ClassSignature {
+        bool canReflect;
+        size_t typeId;
+        std::string name;
+
+        bool operator==(const ClassSignature& rhs) const
+        {
+            return typeId == rhs.typeId;
+        }
+    };
+
+    using ComponentSignature = ClassSignature;
+    using GlobalComponentSignature = ClassSignature;
+    using SystemSignature = ClassSignature;
+    using SystemEventSignature = ClassSignature;
+}
+
+namespace std {
+    template <>
+    struct hash<Runtime::ClassSignature> {
+        size_t operator()(const Runtime::ClassSignature& value) const
+        {
+            return std::hash<size_t>{}(value.typeId);
+        }
+    };
 }
 
 namespace Runtime::Internal {
-    template <typename E>
-    struct SystemEventSigner {
-        SystemEventSignature Sign() const
-        {
-            return Mirror::GetTypeInfo<E>()->id;
-        }
-    };
+    template <typename T>
+    SystemSignature SignForClass()
+    {
+        static SystemSignature signature = []() -> SystemSignature {
+            const Mirror::Class* clazz = Mirror::Class::Find<T>();
 
-    enum class SystemType {
-        clazz,
-        func,
-        lambda
-    };
-
-    struct SystemSigner {
-        virtual SystemSignature Sign() const = 0;
-    };
-
-    template <typename S>
-    struct ClassSystemSigner : public SystemSigner {
-        SystemSignature Sign() const override
-        {
-            using InfoTuple = std::tuple<SystemType, size_t>;
-
-            InfoTuple infoTuple = { SystemType::clazz, Mirror::GetTypeInfo<S>()->id };
-            return Common::HashUtils::CityHash(&infoTuple, sizeof(InfoTuple));
-        }
-    };
-
-    template <auto Ptr>
-    struct FuncSystemSigner : public SystemSigner {
-        SystemSignature Sign() const override
-        {
-            using InfoTuple = std::tuple<SystemType, void*>;
-
-            InfoTuple infoTuple = { SystemType::func, Ptr };
-            return Common::HashUtils::CityHash(&infoTuple, sizeof(infoTuple));
-        }
-    };
-
-    struct LambdaSystemSigner : public SystemSigner {
-        explicit LambdaSystemSigner(std::string inName) : name(std::move(inName)) {}
-
-        SystemSignature Sign() const override
-        {
-            return Common::HashUtils::CityHash(name.data(), name.size() * sizeof(char));
-        }
-
-        std::string name;
-    };
+            SystemSignature result;
+            result.canReflect = clazz != nullptr;
+            result.typeId = Mirror::GetTypeInfo<T>()->id;
+            result.name = clazz != nullptr ? clazz->GetName() : "";
+            return result;
+        }();
+        return signature;
+    }
 }
 
 namespace Runtime {
@@ -175,9 +162,9 @@ namespace Runtime {
     protected:
         ECSHost() = default;
 
-        virtual void BroadcastSystemEvent(Mirror::TypeId eventTypeId, const Mirror::Any& eventRef) = 0;
+        virtual void BroadcastSystemEvent(SystemEventSignature eventSignature, const Mirror::Any& eventRef) = 0;
 
-        std::unordered_map<Mirror::TypeId, Mirror::Any> globalComponents;
+        std::unordered_map<GlobalComponentSignature, Mirror::Any> globalComponents;
 
     private:
         friend class SystemCommands;
@@ -186,7 +173,7 @@ namespace Runtime {
         void BroadcastSystemEvent(const E& event)
         {
             Mirror::Any eventRef = std::ref(event);
-            BroadcastSystemEvent(Internal::SystemEventSigner<E>().Sign(), event);
+            BroadcastSystemEvent(Internal::SignForClass<E>(), event);
         }
     };
 
@@ -228,6 +215,7 @@ namespace Runtime {
 
         Entity Create();
         void Destroy(Entity inEntity);
+        bool Valid(Entity inEntity) const;
 
         template <typename C, typename... Args>
         void Emplace(Entity entity, Args&&... args)
@@ -278,18 +266,18 @@ namespace Runtime {
         template <typename G, typename... Args>
         void EmplaceGlobal(Args&&... args)
         {
-            Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
-            auto iter = host.globalComponents.find(typeId);
+            GlobalComponentSignature signature = Internal::SignForClass<G>();
+            auto iter = host.globalComponents.find(signature);
             Assert(iter == host.globalComponents.end());
-            host.globalComponents.emplace(std::make_pair(typeId, Mirror::Any(G(std::forward<Args>(args)...))));
+            host.globalComponents.emplace(std::make_pair(signature, Mirror::Any(G(std::forward<Args>(args)...))));
             Broadcast(GlobalComponentAdded<G> {});
         }
 
         template <typename G>
         G* GetGlobal()
         {
-            Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
-            auto iter = host.globalComponents.find(typeId);
+            GlobalComponentSignature signature = Internal::SignForClass<G>();
+            auto iter = host.globalComponents.find(signature);
             if (iter == host.globalComponents.end()) {
                 return nullptr;
             } else {
@@ -306,8 +294,8 @@ namespace Runtime {
         template <typename G, typename F>
         void PatchGlobal(F&& patchFunc)
         {
-            Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
-            auto iter = host.globalComponents.find(typeId);
+            GlobalComponentSignature signature = Internal::SignForClass<G>();
+            auto iter = host.globalComponents.find(signature);
             Assert(iter != host.globalComponents.end());
             patchFunc(iter->second.As<G&>());
             Broadcast(GlobalComponentUpdated<G> {});
@@ -322,8 +310,8 @@ namespace Runtime {
         template <typename G, typename... Args>
         void SetGlobal(Args&&... args)
         {
-            Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
-            auto iter = host.globalComponents.find(typeId);
+            GlobalComponentSignature signature = Internal::SignForClass<G>();
+            auto iter = host.globalComponents.find(signature);
             Assert(iter != host.globalComponents.end());
             iter->second = G(std::forward<Args>(args)...);
             Broadcast(GlobalComponentUpdated<G> {});
@@ -332,10 +320,10 @@ namespace Runtime {
         template <typename G>
         void RemoveGlobal()
         {
-            Mirror::TypeId typeId = Mirror::GetTypeInfo<G>()->id;
-            auto iter = host.globalComponents.find(typeId);
+            GlobalComponentSignature signature = Internal::SignForClass<G>();
+            auto iter = host.globalComponents.find(signature);
             Assert(iter != host.globalComponents.end());
-            host.globalComponents.erase(typeId);
+            host.globalComponents.erase(signature);
             Broadcast(GlobalComponentRemoved<G> {});
         }
 
