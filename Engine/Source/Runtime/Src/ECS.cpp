@@ -22,4 +22,9 @@ namespace Runtime {
     {
         registry.destroy(inEntity);
     }
+
+    bool SystemCommands::Valid(Entity inEntity) const
+    {
+        return registry.valid(inEntity);
+    }
 }

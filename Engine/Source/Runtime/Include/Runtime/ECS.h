@@ -14,6 +14,7 @@
 
 namespace Runtime {
     struct ClassSignature {
+        bool canReflect;
         size_t typeId;
         std::string name;
 
@@ -23,9 +24,10 @@ namespace Runtime {
         }
     };
 
+    using ComponentSignature = ClassSignature;
+    using GlobalComponentSignature = ClassSignature;
     using SystemSignature = ClassSignature;
     using SystemEventSignature = ClassSignature;
-    using GlobalComponentSignature = ClassSignature;
 }
 
 namespace std {
@@ -46,6 +48,7 @@ namespace Runtime::Internal {
             const Mirror::Class* clazz = Mirror::Class::Find<T>();
 
             SystemSignature result;
+            result.canReflect = clazz != nullptr;
             result.typeId = Mirror::GetTypeInfo<T>()->id;
             result.name = clazz != nullptr ? clazz->GetName() : "";
             return result;
@@ -212,6 +215,7 @@ namespace Runtime {
 
         Entity Create();
         void Destroy(Entity inEntity);
+        bool Valid(Entity inEntity) const;
 
         template <typename C, typename... Args>
         void Emplace(Entity entity, Args&&... args)
