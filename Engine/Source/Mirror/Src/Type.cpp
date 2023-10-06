@@ -213,6 +213,11 @@ namespace Mirror {
 
     Class::~Class() = default;
 
+    const Constructor* Class::FindDefaultConstructor() const
+    {
+        return FindConstructor(NamePresets::defaultConstructor);
+    }
+
     const Constructor& Class::GetDefaultConstructor() const
     {
         return GetConstructor(NamePresets::defaultConstructor);
@@ -231,6 +236,11 @@ namespace Mirror {
         auto iter = classes.find(name);
         Assert(iter != classes.end());
         return iter->second;
+    }
+
+    const Destructor* Class::FindDestructor() const
+    {
+        return destructor.has_value() ? &destructor.value() : nullptr;
     }
 
     const Destructor& Class::GetDestructor() const
