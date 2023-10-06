@@ -27,7 +27,7 @@ namespace Runtime {
 
     class RUNTIME_API EventSlot {
     public:
-        EventSlot(World& inWorld, SystemEventSignature inTarget);
+        EventSlot(World& inWorld, EventSignature inTarget);
         ~EventSlot();
 
         template <typename S>
@@ -35,7 +35,7 @@ namespace Runtime {
 
     private:
         World& world;
-        SystemEventSignature target;
+        EventSignature target;
     };
 
     class RUNTIME_API World : public ECSHost {
@@ -62,9 +62,9 @@ namespace Runtime {
         template <typename E>
         EventSlot Event()
         {
-            SystemEventSignature signature = Internal::SignForClass<E>();
-            if (!systemEventSlots.contains(signature)) {
-                systemEventSlots.emplace(std::make_pair(signature, std::vector<SystemEventSignature> {}));
+            EventSignature signature = Internal::SignForClass<E>();
+            if (!eventSlots.contains(signature)) {
+                eventSlots.emplace(std::make_pair(signature, std::vector<EventSignature> {}));
             }
             return EventSlot(*this, signature);
         }
@@ -74,7 +74,7 @@ namespace Runtime {
         void Tick();
 
     protected:
-        void BroadcastSystemEvent(SystemEventSignature eventSignature, const Mirror::Any& eventRef) override;
+        void BroadcastEvent(EventSignature eventSignature, const Mirror::Any& eventRef) override;
 
     private:
         friend class SystemSchedule;
@@ -91,7 +91,7 @@ namespace Runtime {
         std::vector<SystemSignature> tickSystems;
         std::unordered_map<SystemSignature, Common::UniqueRef<System>> systems;
         std::unordered_map<SystemSignature, std::vector<SystemSignature>> systemDependencies;
-        std::unordered_map<SystemEventSignature, std::vector<SystemSignature>> systemEventSlots;
+        std::unordered_map<EventSignature, std::vector<SystemSignature>> eventSlots;
     };
 
     // used for test only
@@ -120,8 +120,8 @@ namespace Runtime {
     EventSlot& EventSlot::Connect()
     {
         SystemSignature system = world.CreateSystem(Internal::SignForClass<S>(), new S());
-        Assert(world.systemEventSlots.contains(target));
-        world.systemEventSlots.at(target).emplace_back(system);
+        Assert(world.eventSlots.contains(target));
+        world.eventSlots.at(target).emplace_back(system);
         return *this;
     }
 }

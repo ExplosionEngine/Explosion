@@ -255,9 +255,6 @@ namespace Mirror {
         std::unordered_map<std::string, Function> functions;
     };
 
-// TODO
-#include <iostream>
-
     class MIRROR_API Class : public Type {
     public:
         ~Class() override;

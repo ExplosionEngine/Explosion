@@ -22,7 +22,7 @@ namespace Runtime {
         return *this;
     }
 
-    EventSlot::EventSlot(World& inWorld, SystemEventSignature inTarget)
+    EventSlot::EventSlot(World& inWorld, EventSignature inTarget)
         : world(inWorld)
         , target(inTarget)
     {
@@ -39,14 +39,14 @@ namespace Runtime {
 
     World::~World() = default;
 
-    void World::BroadcastSystemEvent(SystemEventSignature eventSignature, const Mirror::Any& eventRef)
+    void World::BroadcastEvent(EventSignature eventSignature, const Mirror::Any& eventRef)
     {
-        if (!systemEventSlots.contains(eventSignature)) {
+        if (!eventSlots.contains(eventSignature)) {
             return;
         }
 
         SystemCommands commands(registry, *this);
-        for (const auto& systemId : systemEventSlots.at(eventSignature)) {
+        for (const auto& systemId : eventSlots.at(eventSignature)) {
             Assert(systems.contains(systemId));
             auto* system = systems.at(systemId).Get();
             static_cast<EventSystem*>(system)->OnReceiveEvent(commands, eventRef);
@@ -89,7 +89,7 @@ namespace Runtime {
         tasks.reserve(targets.size());
 
         SystemCommands commands(registry, *this);
-        for (SystemSignature target : targets) {
+        for (const auto& target : targets) {
             tasks.emplace(std::make_pair(target, taskflow.emplace([this, &commands, target]() -> void {
                 Assert(systems.contains(target));
                 auto* system = systems.at(target).Get();
