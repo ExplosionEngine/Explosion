@@ -162,6 +162,7 @@ namespace Mirror {
 
             clazz.memberVariables.emplace(std::make_pair(inName, Mirror::MemberVariable(
                 inName,
+                sizeof(ValueType),
                 [](Any* object, Any* value) -> void {
                     object->As<ClassType&>().*Ptr = value->As<ValueType>();
                 },
@@ -223,6 +224,9 @@ namespace Mirror {
 
         explicit ClassRegistry(Class& inClass) : MetaDataRegistry<ClassRegistry<C>>(&inClass), clazz(inClass)
         {
+            if constexpr (std::is_default_constructible_v<C>) {
+                clazz.defaultObject = Mirror::Any(C());
+            }
             if constexpr (std::is_destructible_v<C>) {
                 clazz.destructor = Mirror::Destructor([](Any* object) -> void {
                     object->As<C&>().~C();

@@ -172,6 +172,7 @@ namespace Mirror {
             Set(&classRef, &valueRef);
         }
 
+        uint32_t SizeOf() const;
         void Set(Any* object, Any* value) const;
         Any Get(Any* object) const;
         void Serialize(Common::SerializeStream& stream, Any* object) const;
@@ -183,8 +184,9 @@ namespace Mirror {
         using Setter = std::function<void(Any*, Any*)>;
         using Getter = std::function<Any(Any*)>;
 
-        MemberVariable(std::string inName, Setter inSetter, Getter inGetter, MemberVariableSerializer inSerializer, MemberVariableDeserializer inDeserializer);
+        MemberVariable(std::string inName, uint32_t inMemorySize, Setter inSetter, Getter inGetter, MemberVariableSerializer inSerializer, MemberVariableDeserializer inDeserializer);
 
+        uint32_t memorySize;
         Setter setter;
         Getter getter;
         MemberVariableSerializer serializer;
@@ -345,6 +347,7 @@ namespace Mirror {
 
         explicit Class(std::string name);
 
+        std::optional<Mirror::Any> defaultObject;
         std::optional<Destructor> destructor;
         std::unordered_map<std::string, Constructor> constructors;
         std::unordered_map<std::string, Variable> staticVariables;

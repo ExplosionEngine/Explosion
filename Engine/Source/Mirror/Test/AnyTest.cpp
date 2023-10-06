@@ -310,3 +310,10 @@ TEST(AnyTest, ContainerTest)
     ASSERT_EQ((a3.As<const std::unordered_map<int, std::string>&>().find(9)->second), "10");
     ASSERT_EQ((a3.As<const std::unordered_map<int, std::string>&>().find(11)->second), "12");
 }
+
+TEST(AnyTest, EqualTest)
+{
+    Mirror::Any a0 = 1;
+    Mirror::Any a1 = 1;
+    ASSERT_TRUE(a0 == a1);
+}

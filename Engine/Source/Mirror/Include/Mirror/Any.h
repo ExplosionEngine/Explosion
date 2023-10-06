@@ -15,6 +15,7 @@ namespace Mirror::Internal {
         using DetorFunc = void(void*) noexcept;
         using CopyFunc = void(void*, const void*);
         using MoveFunc = void(void*, void*) noexcept;
+        using EqualFunc = bool(const void*, const void*);
 
         template <class T>
         static void DetorImpl(void* const object) noexcept {
@@ -31,16 +32,29 @@ namespace Mirror::Internal {
             new(object) T(std::move(*reinterpret_cast<const T*>(other)));
         }
 
+        template <class T>
+        static bool EqualImpl(const void* const object, const void* const other)
+        {
+            if constexpr (std::equality_comparable<T>) {
+                return *reinterpret_cast<const T*>(object) == *reinterpret_cast<const T*>(other);
+            } else {
+                AssertWithReason(false, "type is not comparable");
+                return false;
+            }
+        }
+
         DetorFunc* detor;
         CopyFunc* copy;
         MoveFunc* move;
+        EqualFunc* equal;
     };
 
     template <class T>
     inline constexpr AnyRtti anyRttiImpl = {
         &AnyRtti::DetorImpl<T>,
         &AnyRtti::CopyImpl<T>,
-        &AnyRtti::MoveImpl<T>
+        &AnyRtti::MoveImpl<T>,
+        &AnyRtti::EqualImpl<T>
     };
 }
 
@@ -244,6 +258,12 @@ namespace Mirror {
             } else {
                 return nullptr;
             }
+        }
+
+        bool operator==(const Any& rhs) const
+        {
+            return typeInfo == rhs.typeInfo
+                && rtti->equal(data.data(), rhs.Data());
         }
 
         void Reset()
