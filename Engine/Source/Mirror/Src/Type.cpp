@@ -118,8 +118,9 @@ namespace Mirror {
         destructor(object);
     }
 
-    MemberVariable::MemberVariable(std::string inName, Setter inSetter, Getter inGetter, MemberVariableSerializer inSerializer, MemberVariableDeserializer inDeserializer)
+    MemberVariable::MemberVariable(std::string inName, uint32_t inMemorySize, Setter inSetter, Getter inGetter, MemberVariableSerializer inSerializer, MemberVariableDeserializer inDeserializer)
         : Type(std::move(inName))
+        , memorySize(inMemorySize)
         , setter(std::move(inSetter))
         , getter(std::move(inGetter))
         , serializer(std::move(inSerializer))
@@ -128,6 +129,11 @@ namespace Mirror {
     }
 
     MemberVariable::~MemberVariable() = default;
+
+    uint32_t MemberVariable::SizeOf() const
+    {
+        return memorySize;
+    }
 
     void MemberVariable::Set(Any* object, Any* value) const
     {
@@ -213,6 +219,11 @@ namespace Mirror {
 
     Class::~Class() = default;
 
+    const Constructor* Class::FindDefaultConstructor() const
+    {
+        return FindConstructor(NamePresets::defaultConstructor);
+    }
+
     const Constructor& Class::GetDefaultConstructor() const
     {
         return GetConstructor(NamePresets::defaultConstructor);
@@ -231,6 +242,11 @@ namespace Mirror {
         auto iter = classes.find(name);
         Assert(iter != classes.end());
         return iter->second;
+    }
+
+    const Destructor* Class::FindDestructor() const
+    {
+        return destructor.has_value() ? &destructor.value() : nullptr;
     }
 
     const Destructor& Class::GetDestructor() const
@@ -306,6 +322,8 @@ namespace Mirror {
 
     void Class::Serialize(Common::SerializeStream& stream, Mirror::Any* obj) const
     {
+        Assert(defaultObject.has_value());
+
         std::string name = GetName();
         uint64_t memberVariablesNum = memberVariables.size();
         Common::Serializer<std::string>::Serialize(stream, name);
@@ -313,12 +331,24 @@ namespace Mirror {
 
         for (const auto& memberVariable : memberVariables) {
             Common::Serializer<std::string>::Serialize(stream, memberVariable.first);
-            memberVariable.second.Serialize(stream, obj);
+
+            const bool sameWithDefaultObject = memberVariable.second.Get(obj) == defaultObject.value();
+            Common::Serializer<bool>::Serialize(stream, sameWithDefaultObject);
+
+            if (sameWithDefaultObject) {
+                Common::Serializer<uint32_t>::Serialize(stream, 0);
+            } else {
+                Common::Serializer<uint32_t>::Serialize(stream, memberVariable.second.SizeOf());
+                memberVariable.second.Serialize(stream, obj);
+            }
         }
     }
 
     void Class::Deserailize(Common::DeserializeStream& stream, Mirror::Any* obj) const
     {
+        Assert(defaultObject.has_value());
+        *obj = defaultObject.value();
+
         std::string className;
         Common::Serializer<std::string>::Deserialize(stream, className);
 
@@ -333,7 +363,19 @@ namespace Mirror {
             if (iter == memberVariables.end()) {
                 continue;
             }
-            iter->second.Deserialize(stream, obj);
+
+            bool restoreAsDefaultObject = true;
+            Common::Serializer<bool>::Deserialize(stream, restoreAsDefaultObject);
+
+            uint32_t memorySize = 0;
+            Common::Serializer<uint32_t>::Deserialize(stream, memorySize);
+            if (memorySize == 0 || memorySize != iter->second.SizeOf()) {
+                restoreAsDefaultObject = true;
+            }
+
+            if (!restoreAsDefaultObject) {
+                iter->second.Deserialize(stream, obj);
+            }
         }
     }
 

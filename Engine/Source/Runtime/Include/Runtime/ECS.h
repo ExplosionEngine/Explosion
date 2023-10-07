@@ -12,6 +12,37 @@
 #include <Mirror/Type.h>
 #include <Runtime/Api.h>
 
+#define DeclareSingleCompLifecycleEvent(eventClass) \
+    struct EClass() eventClass : public Runtime::Event { \
+        EClassBody(eventClass) \
+        \
+        EProperty() \
+        Entity entity; \
+    }; \
+
+#define DeclareCompLifecycleEvents() \
+    DeclareSingleCompLifecycleEvent(Added) \
+    DeclareSingleCompLifecycleEvent(Updated) \
+    DeclareSingleCompLifecycleEvent(Removed) \
+
+#define ECompBody(compClass) \
+    EClassBody(compClass) \
+    DeclareCompLifecycleEvents() \
+
+#define DeclareSingleStateLifecycleEvent(eventClass) \
+    struct EClass() eventClass : public Runtime::Event { \
+        EClassBody(eventClass) \
+    }; \
+
+#define DeclareStateLifecycleEvents() \
+    DeclareSingleStateLifecycleEvent(Added) \
+    DeclareSingleStateLifecycleEvent(Updated) \
+    DeclareSingleStateLifecycleEvent(Removed) \
+
+#define EStateBody(compClass) \
+    EClassBody(compClass) \
+    DeclareStateLifecycleEvents() \
+
 namespace Runtime {
     struct ClassSignature {
         bool canReflect;
@@ -25,9 +56,9 @@ namespace Runtime {
     };
 
     using ComponentSignature = ClassSignature;
-    using GlobalComponentSignature = ClassSignature;
+    using StateSignature = ClassSignature;
     using SystemSignature = ClassSignature;
-    using SystemEventSignature = ClassSignature;
+    using EventSignature = ClassSignature;
 }
 
 namespace std {
@@ -55,6 +86,24 @@ namespace Runtime::Internal {
         }();
         return signature;
     }
+
+    template <typename T, typename = void>
+    struct HasAddedEvent : std::false_type {};
+
+    template <typename T>
+    struct HasAddedEvent<T, std::void_t<typename T::Added>> : std::true_type {};
+
+    template <typename T, typename = void>
+    struct HasUpdatedEvent : std::false_type {};
+
+    template <typename T>
+    struct HasUpdatedEvent<T, std::void_t<typename T::Updated>> : std::true_type {};
+
+    template <typename T, typename = void>
+    struct HasRemovedEvent : std::false_type {};
+
+    template <typename T>
+    struct HasRemovedEvent<T, std::void_t<typename T::Removed>> : std::true_type {};
 }
 
 namespace Runtime {
@@ -63,17 +112,17 @@ namespace Runtime {
     static constexpr auto entityNull = entt::null;
 
     struct Component {};
-    struct GlobalComponent {};
-    struct SystemEvent {};
+    struct State {};
+    struct Event {};
 
     struct System {
         virtual ~System() = default;
     };
 
     template <typename E>
-    struct SystemEventDecoder {
+    struct EventDecoder {
     public:
-        explicit SystemEventDecoder(const Mirror::Any& inEventRef)
+        explicit EventDecoder(const Mirror::Any& inEventRef)
             : eventRef(inEventRef)
         {
         }
@@ -98,82 +147,22 @@ namespace Runtime {
         virtual void OnReceiveEvent(SystemCommands& commands, const Mirror::Any& eventRef) = 0;
     };
 
-    using SystemExecuteFunc = std::function<void(SystemCommands&)>;
-    using SystemOnReceiveEventFunc = std::function<void(SystemCommands&, const Mirror::Any&)>;
-
-    struct FuncSetupSystem : public SetupSystem {
-        explicit FuncSetupSystem(SystemExecuteFunc inExecuteFunc) : executeFunc(std::move(inExecuteFunc)) {}
-
-        void Execute(Runtime::SystemCommands &commands) override
-        {
-            return executeFunc(commands);
-        }
-
-        SystemExecuteFunc executeFunc;
-    };
-
-    struct FuncTickSystem : public TickSystem {
-        explicit FuncTickSystem(SystemExecuteFunc inExecuteFunc) : executeFunc(std::move(inExecuteFunc)) {}
-
-        void Execute(Runtime::SystemCommands &commands) override
-        {
-            return executeFunc(commands);
-        }
-
-        SystemExecuteFunc executeFunc;
-    };
-
-    struct FuncEventSystem : public EventSystem {
-        explicit FuncEventSystem(SystemOnReceiveEventFunc inOnReceiveEventFunc) : onReceiveEventFunc(std::move(inOnReceiveEventFunc)) {}
-
-        void OnReceiveEvent(Runtime::SystemCommands &commands, const Mirror::Any &eventRef) override
-        {
-            onReceiveEventFunc(commands, eventRef);
-        }
-
-        SystemOnReceiveEventFunc onReceiveEventFunc;
-    };
-
-    template <typename C>
-    struct ComponentAdded : public SystemEvent {
-        Entity entity;
-    };
-
-    template <typename C>
-    struct ComponentUpdated : public SystemEvent {
-        Entity entity;
-    };
-
-    template <typename C>
-    struct ComponentRemoved : public SystemEvent {
-        Entity entity;
-    };
-
-    template <typename G>
-    struct GlobalComponentAdded : public SystemEvent {};
-
-    template <typename G>
-    struct GlobalComponentUpdated : public SystemEvent {};
-
-    template <typename C>
-    struct GlobalComponentRemoved : public SystemEvent {};
-
     struct ECSHost {
     protected:
         ECSHost() = default;
 
-        virtual void BroadcastSystemEvent(SystemEventSignature eventSignature, const Mirror::Any& eventRef) = 0;
+        virtual void BroadcastEvent(EventSignature eventSignature, const Mirror::Any& eventRef) = 0;
 
-        std::unordered_map<GlobalComponentSignature, Mirror::Any> globalComponents;
+        std::unordered_map<StateSignature, Mirror::Any> states;
 
     private:
         friend class SystemCommands;
 
         template <typename E>
-        void BroadcastSystemEvent(const E& event)
+        void BroadcastEvent(const E& event)
         {
             Mirror::Any eventRef = std::ref(event);
-            BroadcastSystemEvent(Internal::SignForClass<E>(), event);
+            BroadcastEvent(Internal::SignForClass<E>(), event);
         }
     };
 
@@ -207,6 +196,8 @@ namespace Runtime {
     template <typename... C>
     struct Exclude {};
 
+    class SystemCommands;
+
     class RUNTIME_API SystemCommands {
     public:
         NonCopyable(SystemCommands)
@@ -221,7 +212,9 @@ namespace Runtime {
         void Emplace(Entity entity, Args&&... args)
         {
             registry.emplace<C>(entity, std::forward<Args>(args)...);
-            Broadcast(ComponentAdded<C> { {}, entity });
+            if constexpr (Internal::HasAddedEvent<C>::value) {
+                Broadcast(typename C::Added { {}, entity });
+            }
         }
 
         template <typename C>
@@ -240,91 +233,109 @@ namespace Runtime {
         void Patch(Entity entity, F&& patchFunc)
         {
             registry.patch<C>(entity, patchFunc);
-            Broadcast(ComponentUpdated<C> { {}, entity });
+            if constexpr (Internal::HasUpdatedEvent<C>::value) {
+                Broadcast(typename C::Updated { {}, entity });
+            }
         }
 
         template <typename C, typename... Args>
         void Set(Entity entity, Args&&... args)
         {
             registry.replace<C>(entity, std::forward<Args>(args)...);
-            Broadcast(ComponentUpdated<C> { {}, entity });
+            if constexpr (Internal::HasUpdatedEvent<C>::value) {
+                Broadcast(typename C::Updated { {}, entity });
+            }
         }
 
         template <typename C>
         void Updated(Entity entity)
         {
-            Broadcast(ComponentUpdated<C> { {}, entity });
+            if constexpr (Internal::HasUpdatedEvent<C>::value) {
+                Broadcast(typename C::Updated { {}, entity });
+            }
         }
 
         template <typename C>
         void Remove(Entity entity)
         {
             registry.remove<C>(entity);
-            Broadcast(ComponentRemoved<C> { {}, entity });
-        }
-
-        template <typename G, typename... Args>
-        void EmplaceGlobal(Args&&... args)
-        {
-            GlobalComponentSignature signature = Internal::SignForClass<G>();
-            auto iter = host.globalComponents.find(signature);
-            Assert(iter == host.globalComponents.end());
-            host.globalComponents.emplace(std::make_pair(signature, Mirror::Any(G(std::forward<Args>(args)...))));
-            Broadcast(GlobalComponentAdded<G> {});
-        }
-
-        template <typename G>
-        G* GetGlobal()
-        {
-            GlobalComponentSignature signature = Internal::SignForClass<G>();
-            auto iter = host.globalComponents.find(signature);
-            if (iter == host.globalComponents.end()) {
-                return nullptr;
-            } else {
-                return &iter->second.As<G&>();
+            if constexpr (Internal::HasRemovedEvent<C>::value) {
+                Broadcast(typename C::Removed { {}, entity });
             }
         }
 
-        template <typename G>
-        bool HasGlobal()
+        template <typename S, typename... Args>
+        void EmplaceState(Args&&... args)
         {
-            return GetGlobal<G>() != nullptr;
+            StateSignature signature = Internal::SignForClass<S>();
+            auto iter = host.states.find(signature);
+            Assert(iter == host.states.end());
+            host.states.emplace(std::make_pair(signature, Mirror::Any(S(std::forward<Args>(args)...))));
+            if constexpr (Internal::HasAddedEvent<S>::value) {
+                Broadcast(typename S::Added {});
+            }
         }
 
-        template <typename G, typename F>
-        void PatchGlobal(F&& patchFunc)
+        template <typename S>
+        S* GetState()
         {
-            GlobalComponentSignature signature = Internal::SignForClass<G>();
-            auto iter = host.globalComponents.find(signature);
-            Assert(iter != host.globalComponents.end());
-            patchFunc(iter->second.As<G&>());
-            Broadcast(GlobalComponentUpdated<G> {});
+            StateSignature signature = Internal::SignForClass<S>();
+            auto iter = host.states.find(signature);
+            if (iter == host.states.end()) {
+                return nullptr;
+            } else {
+                return &iter->second.As<S&>();
+            }
         }
 
-        template <typename G>
-        void UpdatedGlobal()
+        template <typename S>
+        bool HasState()
         {
-            Broadcast(GlobalComponentUpdated<G> {});
+            return GetState<S>() != nullptr;
         }
 
-        template <typename G, typename... Args>
-        void SetGlobal(Args&&... args)
+        template <typename S, typename F>
+        void PatchState(F&& patchFunc)
         {
-            GlobalComponentSignature signature = Internal::SignForClass<G>();
-            auto iter = host.globalComponents.find(signature);
-            Assert(iter != host.globalComponents.end());
-            iter->second = G(std::forward<Args>(args)...);
-            Broadcast(GlobalComponentUpdated<G> {});
+            StateSignature signature = Internal::SignForClass<S>();
+            auto iter = host.states.find(signature);
+            Assert(iter != host.states.end());
+            patchFunc(iter->second.As<S&>());
+            if constexpr (Internal::HasUpdatedEvent<S>::value) {
+                Broadcast(typename S::Updated {});
+            }
         }
 
-        template <typename G>
-        void RemoveGlobal()
+        template <typename S, typename... Args>
+        void SetState(Args&&... args)
         {
-            GlobalComponentSignature signature = Internal::SignForClass<G>();
-            auto iter = host.globalComponents.find(signature);
-            Assert(iter != host.globalComponents.end());
-            host.globalComponents.erase(signature);
-            Broadcast(GlobalComponentRemoved<G> {});
+            StateSignature signature = Internal::SignForClass<S>();
+            auto iter = host.states.find(signature);
+            Assert(iter != host.states.end());
+            iter->second = S(std::forward<Args>(args)...);
+            if constexpr (Internal::HasUpdatedEvent<S>::value) {
+                Broadcast(typename S::Updated {});
+            }
+        }
+
+        template <typename S>
+        void UpdatedState()
+        {
+            if constexpr (Internal::HasUpdatedEvent<S>::value) {
+                Broadcast(typename S::Updated {});
+            }
+        }
+
+        template <typename S>
+        void RemoveState()
+        {
+            StateSignature signature = Internal::SignForClass<S>();
+            auto iter = host.states.find(signature);
+            Assert(iter != host.states.end());
+            host.states.erase(signature);
+            if constexpr (Internal::HasRemovedEvent<S>::value) {
+                Broadcast(typename S::Removed {});
+            }
         }
 
         template <typename... C, typename... E>
@@ -336,7 +347,7 @@ namespace Runtime {
         template <typename E>
         void Broadcast(const E& event)
         {
-            host.BroadcastSystemEvent<E>(event);
+            host.BroadcastEvent<E>(event);
         }
 
     private:

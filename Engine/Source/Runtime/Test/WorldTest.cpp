@@ -15,8 +15,8 @@ TEST(WorldTest, BasicTest)
     WorldTestHelper testHelper(world);
     SystemCommands commands = testHelper.HackCreateSystemCommands();
 
-    ASSERT_TRUE(commands.HasGlobal<BasicTest_GlobalStatus>());
-    const auto* savedEntities = commands.GetGlobal<BasicTest_GlobalStatus>();
+    ASSERT_TRUE(commands.HasState<BasicTest_GlobalStatus>());
+    const auto* savedEntities = commands.GetState<BasicTest_GlobalStatus>();
 
     const auto* testPosition0 = commands.Get<BasicTest_Position>(savedEntities->testEntity0);
     const auto* testVelocity0 = commands.Get<BasicTest_Velocity>(savedEntities->testEntity0);
@@ -43,10 +43,10 @@ TEST(WorldTest, BasicTest)
     world.Shutdown();
 }
 
-TEST(WorldTest, GlobalComponentTest)
+TEST(WorldTest, StateTest)
 {
     World world;
-    world.AddSetupSystem<GlobalComponentTest_WorldSetupSystem>();
+    world.AddSetupSystem<StateTest_WorldSetupSystem>();
     world.Setup();
     world.Shutdown();
 }
@@ -66,8 +66,8 @@ TEST(WorldTest, SystemScheduleTest)
     WorldTestHelper testHelper(world);
     SystemCommands commands = testHelper.HackCreateSystemCommands();
 
-    ASSERT_TRUE(commands.HasGlobal<SystemScheduleTest_Context>());
-    const auto* context = commands.GetGlobal<SystemScheduleTest_Context>();
+    ASSERT_TRUE(commands.HasState<SystemScheduleTest_Context>());
+    const auto* context = commands.GetState<SystemScheduleTest_Context>();
     ASSERT_TRUE(context->system1Executed);
     ASSERT_TRUE(context->system2Executed);
     ASSERT_TRUE(context->system3Executed);
@@ -75,17 +75,17 @@ TEST(WorldTest, SystemScheduleTest)
     world.Shutdown();
 }
 
-TEST(WorldTest, SystemEventTest)
+TEST(WorldTest, EventTest)
 {
     World world;
-    world.AddSetupSystem<SystemEventTest_WorldSetupSystem>();
-    world.AddTickSystem<SystemEventTest_WorldTickSystem>();
-    world.Event<GlobalComponentAdded<SystemEventTest_EmptyGlobalComponent>>().Connect<SystemEventTest_OnGlobalComponentAddedSystem>();
-    world.Event<GlobalComponentUpdated<SystemEventTest_EmptyGlobalComponent>>().Connect<SystemEventTest_OnGlobalComponentUpdatedSystem>();
-    world.Event<GlobalComponentRemoved<SystemEventTest_EmptyGlobalComponent>>().Connect<SystemEventTest_OnGlobalComponentRemoveSystem>();
-    world.Event<ComponentAdded<SystemEventTest_EmptyComponent>>().Connect<SystemEventTest_OnComponentAddedSystem>();
-    world.Event<ComponentUpdated<SystemEventTest_EmptyComponent>>().Connect<SystemEventTest_OnComponentUpdatedSystem>();
-    world.Event<ComponentRemoved<SystemEventTest_EmptyComponent>>().Connect<SystemEventTest_OnComponentRemovedSystem>();
+    world.AddSetupSystem<EventTest_WorldSetupSystem>();
+    world.AddTickSystem<EventTest_WorldTickSystem>();
+    world.Event<EventTest_EmptyState::Added>().Connect<EventTest_OnStateAddedSystem>();
+    world.Event<EventTest_EmptyState::Updated>().Connect<EventTest_OnStateUpdatedSystem>();
+    world.Event<EventTest_EmptyState::Removed>().Connect<EventTest_OnStateRemoveSystem>();
+    world.Event<EventTest_EmptyComponent::Added>().Connect<EventTest_OnComponentAddedSystem>();
+    world.Event<EventTest_EmptyComponent::Updated>().Connect<EventTest_OnComponentUpdatedSystem>();
+    world.Event<EventTest_EmptyComponent::Removed>().Connect<EventTest_OnComponentRemovedSystem>();
 
     world.Setup();
     world.Tick();
@@ -94,11 +94,11 @@ TEST(WorldTest, SystemEventTest)
     world.Shutdown();
 }
 
-TEST(WorldTest, CustomSystemEventTest)
+TEST(WorldTest, CustomEventTest)
 {
     World world;
-    world.AddSetupSystem<CustomSystemEventTest_WorldSetupSystem>();
-    world.Event<CustomSystemEventTest_CustomEvent>().Connect<CustomSystemEventTest_CustomEventSystem>();
+    world.AddSetupSystem<CustomEventTest_WorldSetupSystem>();
+    world.Event<CustomEventTest_CustomEvent>().Connect<CustomEventTest_CustomEventSystem>();
 
     world.Setup();
     world.Tick();
