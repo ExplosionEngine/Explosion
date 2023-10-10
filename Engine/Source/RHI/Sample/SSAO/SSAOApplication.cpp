@@ -9,7 +9,6 @@
 
 #include <Application.h>
 #include "GLTFParser.h"
-#include "Camera.h"
 
 using namespace RHI;
 
@@ -196,7 +195,6 @@ private:
 
     UniqueRef<Model> model = nullptr;
     std::vector<UniqueRef<Renderable>> renderables;
-    Camera camera;
 
     struct UBuffer {
         UniqueRef<Buffer> buf;
