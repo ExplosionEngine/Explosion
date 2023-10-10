@@ -15,6 +15,7 @@ namespace Mirror::Internal {
         using DetorFunc = void(void*) noexcept;
         using CopyFunc = void(void*, const void*);
         using MoveFunc = void(void*, void*) noexcept;
+        using EqualFunc = bool(const void*, const void*);
 
         template <class T>
         static void DetorImpl(void* const object) noexcept {
@@ -31,16 +32,29 @@ namespace Mirror::Internal {
             new(object) T(std::move(*reinterpret_cast<const T*>(other)));
         }
 
+        template <class T>
+        static bool EqualImpl(const void* const object, const void* const other)
+        {
+            if constexpr (std::equality_comparable<T>) {
+                return *reinterpret_cast<const T*>(object) == *reinterpret_cast<const T*>(other);
+            } else {
+                AssertWithReason(false, "type is not comparable");
+                return false;
+            }
+        }
+
         DetorFunc* detor;
         CopyFunc* copy;
         MoveFunc* move;
+        EqualFunc* equal;
     };
 
     template <class T>
     inline constexpr AnyRtti anyRttiImpl = {
         &AnyRtti::DetorImpl<T>,
         &AnyRtti::CopyImpl<T>,
-        &AnyRtti::MoveImpl<T>
+        &AnyRtti::MoveImpl<T>,
+        &AnyRtti::EqualImpl<T>
     };
 }
 
@@ -76,7 +90,6 @@ namespace Mirror {
 
         Any(const Any& inAny)
         {
-            isReference = inAny.isReference;
             typeInfo = inAny.typeInfo;
             rtti = inAny.rtti;
             data.resize(inAny.data.size());
@@ -85,7 +98,6 @@ namespace Mirror {
 
         Any(Any&& inAny) noexcept
         {
-            isReference = inAny.isReference;
             typeInfo = inAny.typeInfo;
             rtti = inAny.rtti;
             data.resize(inAny.data.size());
@@ -122,7 +134,6 @@ namespace Mirror {
                 return *this;
             }
             Reset();
-            isReference = inAny.isReference;
             typeInfo = inAny.typeInfo;
             rtti = inAny.rtti;
             rtti->copy(data.data(), inAny.data.data());
@@ -132,7 +143,6 @@ namespace Mirror {
         Any& operator=(Any&& inAny) noexcept
         {
             Reset();
-            isReference = inAny.isReference;
             typeInfo = inAny.typeInfo;
             rtti = inAny.rtti;
             rtti->move(data.data(), inAny.data.data());
@@ -151,34 +161,109 @@ namespace Mirror {
 
         [[nodiscard]] bool IsReference() const
         {
-            return isReference;
+            return typeInfo->isLValueReference;
+        }
+
+        // T -> T: true
+        // T -> const T: true
+        // T -> T&: true
+        // T -> const T&: true
+        //
+        // const T -> T: false
+        // const T -> const T: true
+        // const T -> T&: false
+        // const T -> const T&: true
+        //
+        // T& -> T: true
+        // T& -> const T: true
+        // T& -> T&: true
+        // T& -> const T&: true
+        //
+        // const T& -> T: false
+        // const T& -> const T: true
+        // const T& -> T&: false
+        // const T& -> const T&: true
+        template <typename T>
+        [[nodiscard]] bool Castable()
+        {
+            return CastableInternal<T>(typeInfo);
+        }
+
+        // T const -> T: false
+        // T const -> const T: true
+        // T const -> T&: false
+        // T const -> const T&: true
+        //
+        // const T -> T: false
+        // const T -> const T: true
+        // const T -> T&: false
+        // const T -> const T&: true
+        //
+        // T& const -> T: true
+        // T& const -> const T: true
+        // T& const -> T&: true
+        // T& const -> const T&: true
+        //
+        // const T& const -> T: false
+        // const T& const -> const T: true
+        // const T& const -> T&: false
+        // const T& const -> const T&: true
+        template <typename T>
+        [[nodiscard]] bool Castable() const
+        {
+            return CastableInternal<T>(typeInfo->addConst());
         }
 
         template <typename T>
-        [[nodiscard]] bool CanCastTo() const
+        T As()
         {
-            if (isReference) {
-                bool result = typeInfo->id == GetTypeInfo<std::remove_reference_t<T>>()->id;
-                if (!typeInfo->isConst) {
-                    result = result || GetTypeInfo<std::remove_cvref_t<T>>()->id;
-                }
-                return result;
+            Assert(Castable<T>());
+            if (IsReference()) {
+                return reinterpret_cast<std::reference_wrapper<std::remove_reference_t<T>>*>(data.data())->get();
+            } else {
+                return *reinterpret_cast<std::remove_reference_t<T>*>(data.data());
             }
-            return typeInfo->id == GetTypeInfo<std::remove_cvref_t<T>>()->id;
         }
 
         template <typename T>
-        T CastTo()
+        T As() const
         {
-            Assert(CanCastTo<T>());
-            return isReference ? reinterpret_cast<std::reference_wrapper<std::remove_reference_t<T>>*>(data.data())->get() : *reinterpret_cast<std::remove_cvref_t<T>*>(data.data());
+            Assert(Castable<T>());
+            if (IsReference()) {
+                return reinterpret_cast<std::add_const_t<std::reference_wrapper<std::remove_reference_t<T>>>*>(data.data())->get();
+            } else {
+                void* dataPtr = const_cast<uint8_t*>(data.data());
+                return *reinterpret_cast<std::remove_reference_t<T>*>(dataPtr);
+            }
         }
 
         template <typename T>
-        T* TryCastTo()
+        T* TryAs()
         {
-            Assert(!isReference);
-            return CanCastTo<T>() ? reinterpret_cast<std::remove_cvref_t<T>*>(data.data()) : nullptr;
+            Assert(!IsReference());
+            if (Castable<T>()) {
+                return reinterpret_cast<std::remove_reference_t<T>*>(data.data());
+            } else {
+                return nullptr;
+            }
+        }
+
+        template <typename T>
+        T* TryAs() const
+        {
+            Assert(!IsReference());
+            if (Castable<T>()) {
+                void* dataPtr = const_cast<uint8_t*>(data.data());
+                return *reinterpret_cast<std::remove_reference_t<T>*>(dataPtr);
+            } else {
+                return nullptr;
+            }
+        }
+
+        bool operator==(const Any& rhs) const
+        {
+            return typeInfo == rhs.typeInfo
+                && rtti->equal(data.data(), rhs.Data());
         }
 
         void Reset()
@@ -186,19 +271,37 @@ namespace Mirror {
             if (rtti != nullptr) {
                 rtti->detor(data.data());
             }
-            isReference = false;
             typeInfo = nullptr;
             rtti = nullptr;
         }
 
     private:
         template <typename T>
+        [[nodiscard]] static bool CastableInternal(TypeInfo* actualTypeInfo)
+        {
+            if (actualTypeInfo->isLValueReference) {
+                auto* removeRefType = actualTypeInfo->removeRef();
+                if (removeRefType->isConst) {
+                    return removeRefType->id == GetTypeInfo<std::remove_reference_t<T>>()->id;
+                } else {
+                    return removeRefType->id == GetTypeInfo<std::remove_cvref_t<T>>()->id;
+                }
+            } else {
+                if (actualTypeInfo->isConst) {
+                    return actualTypeInfo->id == GetTypeInfo<std::remove_reference_t<T>>()->id;
+                } else {
+                    return actualTypeInfo->id == GetTypeInfo<std::remove_cvref_t<T>>()->id;
+                }
+            }
+        }
+
+        template <typename T>
         void ConstructValue(T&& value)
         {
             using RemoveCVRefType = std::remove_cvref_t<T>;
+            using RemoveRefType = std::remove_reference_t<T>;
 
-            isReference = false;
-            typeInfo = GetTypeInfo<RemoveCVRefType>();
+            typeInfo = GetTypeInfo<RemoveRefType>();
             rtti = &Internal::anyRttiImpl<RemoveCVRefType>;
 
             data.resize(sizeof(RemoveCVRefType));
@@ -209,16 +312,15 @@ namespace Mirror {
         void ConstructRef(const std::reference_wrapper<T>& ref)
         {
             using RefWrapperType = std::reference_wrapper<T>;
+            using RefType = T&;
 
-            isReference = true;
-            typeInfo = GetTypeInfo<T>();
+            typeInfo = GetTypeInfo<RefType>();
             rtti = &Internal::anyRttiImpl<RefWrapperType>;
 
             data.resize(sizeof(RefWrapperType));
             new(data.data()) RefWrapperType(ref);
         }
 
-        bool isReference = false;
         TypeInfo* typeInfo = nullptr;
         const Internal::AnyRtti* rtti;
         std::vector<uint8_t> data;

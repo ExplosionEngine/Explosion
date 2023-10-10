@@ -16,10 +16,9 @@
 
 namespace Mirror {
     struct NamePresets {
-        static constexpr const char* globalScope = "globalScope";
-        static constexpr const char* destructor = "destructor";
-        static constexpr const char* defaultConstructor = "defaultConstructor";
-        // TODO
+        static constexpr const char* globalScope = "_globalScope";
+        static constexpr const char* destructor = "_destructor";
+        static constexpr const char* defaultConstructor = "_defaultConstructor";
     };
 
     class Variable;
@@ -173,6 +172,7 @@ namespace Mirror {
             Set(&classRef, &valueRef);
         }
 
+        uint32_t SizeOf() const;
         void Set(Any* object, Any* value) const;
         Any Get(Any* object) const;
         void Serialize(Common::SerializeStream& stream, Any* object) const;
@@ -184,8 +184,9 @@ namespace Mirror {
         using Setter = std::function<void(Any*, Any*)>;
         using Getter = std::function<Any(Any*)>;
 
-        MemberVariable(std::string inName, Setter inSetter, Getter inGetter, MemberVariableSerializer inSerializer, MemberVariableDeserializer inDeserializer);
+        MemberVariable(std::string inName, uint32_t inMemorySize, Setter inSetter, Getter inGetter, MemberVariableSerializer inSerializer, MemberVariableDeserializer inDeserializer);
 
+        uint32_t memorySize;
         Setter setter;
         Getter getter;
         MemberVariableSerializer serializer;
@@ -238,8 +239,10 @@ namespace Mirror {
             }
         }
 
+        [[nodiscard]] bool HasVariable(const std::string& name) const;
         [[nodiscard]] const Variable* FindVariable(const std::string& name) const;
         [[nodiscard]] const Variable& GetVariable(const std::string& name) const;
+        [[nodiscard]] bool HasFunction(const std::string& name) const;
         [[nodiscard]] const Function* FindFunction(const std::string& name) const;
         [[nodiscard]] const Function& GetFunction(const std::string& name) const;
 
@@ -253,19 +256,25 @@ namespace Mirror {
         std::unordered_map<std::string, Function> functions;
     };
 
-// TODO
-#include <iostream>
-
     class MIRROR_API Class : public Type {
     public:
         ~Class() override;
 
         template <typename C>
         requires std::is_class_v<C>
+        [[nodiscard]] static bool Has()
+        {
+            return typeToNameMap.contains(GetTypeInfo<C>()->id);
+        }
+
+        template <typename C>
+        requires std::is_class_v<C>
         [[nodiscard]] static const Class* Find()
         {
             auto iter = typeToNameMap.find(GetTypeInfo<C>()->id);
-            Assert(iter != typeToNameMap.end());
+            if (iter == typeToNameMap.end()) {
+                return nullptr;
+            }
             return Find(iter->second);
         }
 
@@ -313,8 +322,9 @@ namespace Mirror {
             }
         }
 
+        [[nodiscard]] const Constructor* FindDefaultConstructor() const;
         [[nodiscard]] const Constructor& GetDefaultConstructor() const;
-
+        [[nodiscard]] const Destructor* FindDestructor() const;
         [[nodiscard]] const Destructor& GetDestructor() const;
         [[nodiscard]] const Constructor* FindConstructor(const std::string& name) const;
         [[nodiscard]] const Constructor& GetConstructor(const std::string& name) const;
@@ -337,6 +347,7 @@ namespace Mirror {
 
         explicit Class(std::string name);
 
+        std::optional<Mirror::Any> defaultObject;
         std::optional<Destructor> destructor;
         std::unordered_map<std::string, Constructor> constructors;
         std::unordered_map<std::string, Variable> staticVariables;
