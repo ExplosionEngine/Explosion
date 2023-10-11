@@ -8,6 +8,7 @@
 
 #include <Common/Utility.h>
 #include <Common/Hash.h>
+#include <Common/String.h>
 #include <Mirror/Meta.h>
 #include <Mirror/Type.h>
 #include <Runtime/Api.h>
@@ -86,6 +87,8 @@ namespace Runtime::Internal {
         }();
         return signature;
     }
+
+    SystemSignature SignForClass(const Mirror::Class& clazz);
 
     template <typename T, typename = void>
     struct HasAddedEvent : std::false_type {};

@@ -79,6 +79,10 @@ namespace MirrorTool {
         stream << Tab<1>() << "return 0;" << std::endl;
         stream << "}();" << std::endl;
         stream << std::endl;
+
+        for (const auto& internalClass : clazz.classes) {
+            stream << GetClassCode(internalClass);
+        }
         return stream.str();
     }
 

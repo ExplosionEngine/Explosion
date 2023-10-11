@@ -47,16 +47,23 @@ namespace Mirror {
         return metas.find(key) != metas.end();
     }
 
-    Variable::Variable(std::string inName, Variable::Setter inSetter, Variable::Getter inGetter, VariableSerializer inSerializer, VariableDeserializer inDeserializer)
-        : Type(std::move(inName))
-        , setter(std::move(inSetter))
-        , getter(std::move(inGetter))
-        , serializer(std::move(inSerializer))
-        , deserializer(std::move(inDeserializer))
+    Variable::Variable(ConstructParams&& params)
+        : Type(std::move(params.name))
+        , memorySize(params.memorySize)
+        , typeInfo(params.typeInfo)
+        , setter(std::move(params.setter))
+        , getter(std::move(params.getter))
+        , serializer(std::move(params.serializer))
+        , deserializer(std::move(params.deserializer))
     {
     }
 
     Variable::~Variable() = default;
+
+    const TypeInfo* Variable::GetTypeInfo() const
+    {
+        return typeInfo;
+    }
 
     void Variable::Set(Any* value) const
     {
@@ -78,36 +85,81 @@ namespace Mirror {
         deserializer(stream, *this);
     }
 
-    Function::Function(std::string inName, Invoker inInvoker)
-        : Type(std::move(inName))
-        , invoker(std::move(inInvoker)) {}
+    Function::Function(ConstructParams&& params)
+        : Type(std::move(params.name))
+        , argsNum(params.argsNum)
+        , retTypeInfo(params.retTypeInfo)
+        , argTypeInfos(std::move(params.argTypeInfos))
+        , invoker(std::move(params.invoker))
+    {
+    }
 
     Function::~Function() = default;
 
-    Any Function::InvokeWith(Any* args, size_t argsSize) const
+    uint8_t Function::GetArgsNum() const
+    {
+        return argsNum;
+    }
+
+    const TypeInfo* Function::GetRetTypeInfo() const
+    {
+        return retTypeInfo;
+    }
+
+    const TypeInfo* Function::GetArgTypeInfo(uint8_t argIndex) const
+    {
+        return argTypeInfos[argIndex];
+    }
+
+    const std::vector<const TypeInfo*>& Function::GetArgTypeInfos() const
+    {
+        return argTypeInfos;
+    }
+
+    Any Function::InvokeWith(Any* args, uint8_t argsSize) const
     {
         return invoker(args, argsSize);
     }
 
-    Constructor::Constructor(std::string inName, Invoker inStackConstructor, Invoker inHeapConstructor)
-        : Type(std::move(inName))
-        , stackConstructor(std::move(inStackConstructor))
-        , heapConstructor(std::move(inHeapConstructor)) {}
+    Constructor::Constructor(ConstructParams&& params)
+        : Type(std::move(params.name))
+        , argsNum(params.argsNum)
+        , argTypeInfos(std::move(params.argTypeInfos))
+        , stackConstructor(std::move(params.stackConstructor))
+        , heapConstructor(std::move(params.heapConstructor))
+    {
+    }
 
     Constructor::~Constructor() = default;
 
-    Any Constructor::ConstructOnStackWith(Any* arguments, size_t argumentsSize) const
+    uint8_t Constructor::GetArgsNum() const
+    {
+        return argsNum;
+    }
+
+    const TypeInfo* Constructor::GetArgTypeInfo(uint8_t argIndex) const
+    {
+        return argTypeInfos[argIndex];
+    }
+
+    const std::vector<const TypeInfo*>& Constructor::GetArgTypeInfos() const
+    {
+        return argTypeInfos;
+    }
+
+    Any Constructor::ConstructOnStackWith(Any* arguments, uint8_t argumentsSize) const
     {
         return stackConstructor(arguments, argumentsSize);
     }
 
-    Any Constructor::NewObjectWith(Any* arguments, size_t argumentsSize) const
+    Any Constructor::NewObjectWith(Any* arguments, uint8_t argumentsSize) const
     {
         return heapConstructor(arguments, argumentsSize);
     }
 
-    Destructor::Destructor(Invoker inDestructor)
-        : Type(std::string(NamePresets::destructor)), destructor(std::move(inDestructor))
+    Destructor::Destructor(ConstructParams&& params)
+        : Type(std::string(NamePresets::destructor))
+        , destructor(std::move(params.destructor))
     {
     }
 
@@ -118,13 +170,14 @@ namespace Mirror {
         destructor(object);
     }
 
-    MemberVariable::MemberVariable(std::string inName, uint32_t inMemorySize, Setter inSetter, Getter inGetter, MemberVariableSerializer inSerializer, MemberVariableDeserializer inDeserializer)
-        : Type(std::move(inName))
-        , memorySize(inMemorySize)
-        , setter(std::move(inSetter))
-        , getter(std::move(inGetter))
-        , serializer(std::move(inSerializer))
-        , deserializer(std::move(inDeserializer))
+    MemberVariable::MemberVariable(ConstructParams&& params)
+        : Type(std::move(params.name))
+        , memorySize(params.memorySize)
+        , typeInfo(params.typeInfo)
+        , setter(std::move(params.setter))
+        , getter(std::move(params.getter))
+        , serializer(std::move(params.serializer))
+        , deserializer(std::move(params.deserializer))
     {
     }
 
@@ -133,6 +186,11 @@ namespace Mirror {
     uint32_t MemberVariable::SizeOf() const
     {
         return memorySize;
+    }
+
+    const TypeInfo* MemberVariable::GetTypeInfo() const
+    {
+        return typeInfo;
     }
 
     void MemberVariable::Set(Any* object, Any* value) const
@@ -155,13 +213,36 @@ namespace Mirror {
         deserializer(stream, *this, object);
     }
 
-    MemberFunction::MemberFunction(std::string inName, Invoker inInvoker)
-        : Type(std::move(inName))
-        , invoker(std::move(inInvoker))
+    MemberFunction::MemberFunction(ConstructParams&& params)
+        : Type(std::move(params.name))
+        , argsNum(params.argsNum)
+        , retTypeInfo(params.retTypeInfo)
+        , argTypeInfos(std::move(params.argTypeInfos))
+        , invoker(std::move(params.invoker))
     {
     }
 
     MemberFunction::~MemberFunction() = default;
+
+    uint8_t MemberFunction::GetArgsNum() const
+    {
+        return argsNum;
+    }
+
+    const TypeInfo* MemberFunction::GetRetTypeInfo() const
+    {
+        return retTypeInfo;
+    }
+
+    const TypeInfo* MemberFunction::GetArgTypeInfo(uint8_t argIndex) const
+    {
+        return argTypeInfos[argIndex];
+    }
+
+    const std::vector<const TypeInfo*>& MemberFunction::GetArgTypeInfos() const
+    {
+        return argTypeInfos;
+    }
 
     Any MemberFunction::InvokeWith(Any* object, Any* args, size_t argsSize) const
     {
@@ -215,18 +296,20 @@ namespace Mirror {
 
     std::unordered_map<TypeId, std::string> Class::typeToNameMap = {};
 
-    Class::Class(std::string name) : Type(std::move(name)) {}
+    Class::Class(ConstructParams&& params)
+        : Type(std::move(params.name))
+        , typeInfo(params.typeInfo)
+        , defaultObject(std::move(params.defaultObject))
+        , destructor(std::move(params.destructor))
+    {
+    }
 
     Class::~Class() = default;
 
-    const Constructor* Class::FindDefaultConstructor() const
+    bool Class::Has(const std::string& name)
     {
-        return FindConstructor(NamePresets::defaultConstructor);
-    }
-
-    const Constructor& Class::GetDefaultConstructor() const
-    {
-        return GetConstructor(NamePresets::defaultConstructor);
+        const auto& classes = Registry::Get().classes;
+        return classes.contains(name);
     }
 
     const Class* Class::Find(const std::string& name)
@@ -244,6 +327,31 @@ namespace Mirror {
         return iter->second;
     }
 
+    const TypeInfo* Class::GetTypeInfo() const
+    {
+        return typeInfo;
+    }
+
+    bool Class::HasDefaultConstructor() const
+    {
+        return HasConstructor(NamePresets::defaultConstructor);
+    }
+
+    const Constructor* Class::FindDefaultConstructor() const
+    {
+        return FindConstructor(NamePresets::defaultConstructor);
+    }
+
+    const Constructor& Class::GetDefaultConstructor() const
+    {
+        return GetConstructor(NamePresets::defaultConstructor);
+    }
+
+    bool Class::HasDestructor() const
+    {
+        return destructor.has_value();
+    }
+
     const Destructor* Class::FindDestructor() const
     {
         return destructor.has_value() ? &destructor.value() : nullptr;
@@ -253,6 +361,11 @@ namespace Mirror {
     {
         Assert(destructor.has_value());
         return destructor.value(); // NOLINT
+    }
+
+    bool Class::HasConstructor(const std::string& name) const
+    {
+        return constructors.contains(name);
     }
 
     const Constructor* Class::FindConstructor(const std::string& name) const
@@ -268,6 +381,11 @@ namespace Mirror {
         return iter->second;
     }
 
+    bool Class::HasStaticVariable(const std::string& name) const
+    {
+        return staticVariables.contains(name);
+    }
+
     const Variable* Class::FindStaticVariable(const std::string& name) const
     {
         auto iter = staticVariables.find(name);
@@ -279,6 +397,11 @@ namespace Mirror {
         auto iter = staticVariables.find(name);
         Assert(iter != staticVariables.end());
         return iter->second;
+    }
+
+    bool Class::HasStaticFunction(const std::string& name) const
+    {
+        return staticFunctions.contains(name);
     }
 
     const Function* Class::FindStaticFunction(const std::string& name) const
@@ -294,6 +417,11 @@ namespace Mirror {
         return iter->second;
     }
 
+    bool Class::HasMemberVariable(const std::string& name) const
+    {
+        return memberVariables.contains(name);
+    }
+
     const MemberVariable* Class::FindMemberVariable(const std::string& name) const
     {
         auto iter = memberVariables.find(name);
@@ -305,6 +433,11 @@ namespace Mirror {
         auto iter = memberVariables.find(name);
         Assert(iter != memberVariables.end());
         return iter->second;
+    }
+
+    bool Class::HasMemberFunction(const std::string& name) const
+    {
+        return memberFunctions.contains(name);
     }
 
     const MemberFunction* Class::FindMemberFunction(const std::string& name) const
@@ -415,12 +548,18 @@ namespace Mirror {
 
     std::unordered_map<TypeId, std::string> Enum::typeToNameMap = {};
 
-    Enum::Enum(std::string name)
-        : Type(std::move(name))
+    Enum::Enum(ConstructParams&& params)
+        : Type(std::move(params.name))
+        , typeInfo(params.typeInfo)
     {
     }
 
     Enum::~Enum() = default;
+
+    const TypeInfo* Enum::GetTypeInfo() const
+    {
+        return typeInfo;
+    }
 
     Any Enum::GetElement(const std::string& name) const
     {

@@ -4,6 +4,17 @@
 
 #include <Runtime/ECS.h>
 
+namespace Runtime::Internal {
+    SystemSignature Internal::SignForClass(const Mirror::Class& clazz)
+    {
+        SystemSignature result;
+        result.canReflect = true;
+        result.typeId = clazz.GetTypeInfo()->id;
+        result.name = clazz.GetName();
+        return result;
+    }
+}
+
 namespace Runtime {
     SystemCommands::SystemCommands(entt::registry& inRegistry, ECSHost& inHost)
         : registry(inRegistry)

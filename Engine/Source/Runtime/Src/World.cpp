@@ -9,26 +9,44 @@
 namespace Runtime {
     SystemSchedule::SystemSchedule(World& inWorld, SystemSignature inTarget)
         : world(inWorld)
-        , target(inTarget)
+        , target(std::move(inTarget))
     {
     }
 
     SystemSchedule::~SystemSchedule() = default;
 
-    SystemSchedule& SystemSchedule::ScheduleAfterInternal(SystemSignature depend)
+    SystemSchedule& SystemSchedule::ScheduleAfterInternal(const SystemSignature& depend)
     {
         Assert(world.systemDependencies.contains(target));
         world.systemDependencies.at(target).emplace_back(depend);
         return *this;
     }
 
+    SystemSchedule& SystemSchedule::ScheduleAfter(const Mirror::Class& clazz)
+    {
+        return ScheduleAfterInternal(Internal::SignForClass(clazz));
+    }
+
     EventSlot::EventSlot(World& inWorld, EventSignature inTarget)
         : world(inWorld)
-        , target(inTarget)
+        , target(std::move(inTarget))
     {
     }
 
     EventSlot::~EventSlot() = default;
+
+    EventSlot& EventSlot::Connect(const Mirror::Class& clazz)
+    {
+        return ConnectInternal(Internal::SignForClass(clazz), clazz.GetDefaultConstructor().NewObject().As<EventSystem*>());
+    }
+
+    EventSlot& EventSlot::ConnectInternal(const SystemSignature& systemSignature, EventSystem* systemInstance)
+    {
+        world.RegisterSystem(systemSignature, systemInstance);
+        Assert(world.eventSlots.contains(target));
+        world.eventSlots.at(target).emplace_back(systemSignature);
+        return *this;
+    }
 
     World::World(std::string inName)
         : ECSHost()
@@ -53,6 +71,21 @@ namespace Runtime {
         }
     }
 
+    SystemSchedule World::AddSetupSystem(const Mirror::Class& clazz)
+    {
+        return AddSetupSystemInternal(Internal::SignForClass(clazz), clazz.GetDefaultConstructor().NewObject().As<SetupSystem*>());
+    }
+
+    SystemSchedule World::AddTickSystem(const Mirror::Class& clazz)
+    {
+        return AddTickSystemInternal(Internal::SignForClass(clazz), clazz.GetDefaultConstructor().NewObject().As<TickSystem*>());
+    }
+
+    EventSlot World::Event(const Mirror::Class& clazz)
+    {
+        return EventInternal(Internal::SignForClass(clazz));
+    }
+
     void World::Setup()
     {
         Assert(!setuped);
@@ -72,12 +105,11 @@ namespace Runtime {
         ExecuteWorkSystems(tickSystems);
     }
 
-    SystemSignature World::CreateSystem(SystemSignature systemId, System* systemInstance)
+    void World::RegisterSystem(const SystemSignature& systemSignature, System* systemInstance)
     {
-        Assert(!systems.contains(systemId) && !systemDependencies.contains(systemId));
-        systems.emplace(std::make_pair(systemId, Common::UniqueRef<System>(systemInstance)));
-        systemDependencies.emplace(std::make_pair(systemId, std::vector<SystemSignature> {}));
-        return systemId;
+        Assert(!systems.contains(systemSignature) && !systemDependencies.contains(systemSignature));
+        systems.emplace(std::make_pair(systemSignature, Common::UniqueRef<System>(systemInstance)));
+        systemDependencies.emplace(std::make_pair(systemSignature, std::vector<SystemSignature> {}));
     }
 
     void World::ExecuteWorkSystems(const std::vector<SystemSignature>& targets)
@@ -108,6 +140,28 @@ namespace Runtime {
 
         tf::Executor executor;
         executor.run(taskflow).wait();
+    }
+
+    SystemSchedule World::AddSetupSystemInternal(const SystemSignature& systemSignature, SetupSystem* systemInstance)
+    {
+        RegisterSystem(systemSignature, systemInstance);
+        setupSystems.emplace_back(systemSignature);
+        return SystemSchedule(*this, systemSignature);
+    }
+
+    SystemSchedule World::AddTickSystemInternal(const SystemSignature& systemSignature, TickSystem* systemInstance)
+    {
+        RegisterSystem(systemSignature, systemInstance);
+        tickSystems.emplace_back(systemSignature);
+        return SystemSchedule(*this, systemSignature);
+    }
+
+    EventSlot World::EventInternal(const EventSignature& eventSignature)
+    {
+        if (!eventSlots.contains(eventSignature)) {
+            eventSlots.emplace(std::make_pair(eventSignature, std::vector<EventSignature> {}));
+        }
+        return EventSlot(*this, eventSignature);
     }
 
 #if BUILD_TEST

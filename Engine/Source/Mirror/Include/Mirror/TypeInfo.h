@@ -24,6 +24,8 @@
 namespace Mirror {
     using TypeId = size_t;
 
+    static constexpr size_t typeIdNull = 0u;
+
     MIRROR_API inline TypeId ComputeTypeId(std::string_view sigName)
     {
         return Common::HashUtils::CityHash(sigName.data(), sigName.size());
