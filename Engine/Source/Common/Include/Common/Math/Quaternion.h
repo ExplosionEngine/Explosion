@@ -469,9 +469,9 @@ namespace Common {
         T yz2 = this->y * this->z * 2;
 
         return Matrix<T, 4, 4>(
-            1 - yy2 - zz2, xy2 + wz2, xz2 - wy2, 0,
-            xy2 - wz2, 1 - xx2 - zz2, yz2 + wx2, 0,
-            xz2 + wy2, yz2 - wx2, 1 - xx2 - yy2, 0,
+            1 - yy2 - zz2, xy2 - wz2, xz2 + wy2, 0,
+            xy2 + wz2, 1 - xx2 - zz2, yz2 - wx2, 0,
+            xz2 - wy2, yz2 + wx2, 1 - xx2 - yy2, 0,
             0, 0, 0, 1
         );
     }

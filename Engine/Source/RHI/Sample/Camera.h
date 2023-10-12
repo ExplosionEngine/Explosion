@@ -38,7 +38,7 @@ public:
         camRotation(inRot),
         rzProjection(pParam.fov, pParam.width, pParam.height, pParam.nearPlane, pParam.farPlane)
     {
-        vt.MoveAndLookTo(camPosition, camTarget);
+        UpdateViewTransform();
     }
 
     void SetPosition(FVec3 inPosition)
@@ -95,29 +95,23 @@ public:
     void MoveCamera(float deltaTime)
     {
         if (Moving()) {
-            FVec3 camFront;
-            camFront.x = -cos(Angle2Radiance(camRotation.x)) * sin(Angle2Radiance(camRotation.y));
-            camFront.y = sin(Angle2Radiance(camRotation.x));
-            camFront.z = cos(Angle2Radiance(camRotation.x)) * cos(Angle2Radiance(camRotation.y));
-            camFront.Normalize();
-
-            FVec3 camRight = camFront.Cross(FVec3(0.0f, 1.0f, 0.0f)).Normalized();
-
-            FVec3 camUp = camFront.Cross(camRight).Normalized();
+            FVec3 forward { 0.0f, 0.0f, 1.0f };
+            FVec3 side { 1.0f, 0.0f, 0.0f };
+            FVec3 up { 0.0f, 1.0f, 0.0f };
 
             float frameMovement = moveSpeed * deltaTime;
             if (keys.front)
-                camPosition += camFront * frameMovement;
+                camPosition += forward * frameMovement;
             if (keys.back)
-                camPosition -= camFront * frameMovement;
+                camPosition -= forward * frameMovement;
             if (keys.left)
-                camPosition -= camRight * frameMovement;
+                camPosition -= side * frameMovement;
             if (keys.right)
-                camPosition += camRight * frameMovement;
+                camPosition += side * frameMovement;
             if (keys.up)
-                camPosition += camUp * frameMovement;
+                camPosition += up * frameMovement;
             if (keys.down)
-                camPosition -= camUp * frameMovement;
+                camPosition -= up * frameMovement;
 
             UpdateViewTransform();
         }
@@ -130,12 +124,6 @@ private:
     FVec3 camPosition = FVec3Consts::zero;
     FVec3 camTarget = FVec3Consts::unitZ;
     FVec3 camRotation = FVec3Consts::zero;
-
-    static float Angle2Radiance(float inAngle)
-    {
-        FAngle angle(inAngle);
-        return angle.ToRadian();
-    }
 
     void UpdateViewTransform()
     {

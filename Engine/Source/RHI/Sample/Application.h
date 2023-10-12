@@ -36,19 +36,22 @@ public:
 
     virtual ~Application() = default;
 
-    void KeyCallback(GLFWwindow* inWindow, int key, int scancode, int action, int mods)
+    static void KeyCallback(GLFWwindow* inWindow, int key, int scancode, int action, int mods)
     {
-
+        auto* pApp = reinterpret_cast<Application*>(glfwGetWindowUserPointer(inWindow));
+        pApp->KeyCallbackImpl(key, action);
     }
 
-    void CursorCallback(GLFWwindow* inWindow, double x, double y)
+    static void CursorCallback(GLFWwindow* inWindow, double x, double y)
     {
-
+        auto* pApp = reinterpret_cast<Application*>(glfwGetWindowUserPointer(inWindow));
+        pApp->CursorCallbackImpl(static_cast<float>(x), static_cast<float>(y));
     }
 
-    void MouseButtonCallback(GLFWwindow* inWindow, int button, int action, int mods)
+    static void MouseButtonCallback(GLFWwindow* inWindow, int button, int action, int mods)
     {
-
+        auto* pApp = reinterpret_cast<Application*>(glfwGetWindowUserPointer(inWindow));
+        pApp->MouseButtonCallbackImlp(button, action);
     }
 
     void KeyCallbackImpl(int key, int action)
@@ -114,15 +117,17 @@ public:
             // rotate camera with mouse's left button down (positive value represents counterclockwise rotation)
             // horizontal mouse moving(dx) causes rotation alng y axis
             // vertical mouse moving(dy) causes rotation along x axis
-            camera->Rotate(FVec3(dy * camera->rotateSpeed, -dx * camera->rotateSpeed, 0.0f));
+            camera->Rotate(FVec3(-dy * camera->rotateSpeed, -dx * camera->rotateSpeed, 0.0f));
         }
 
         if (mouseButtons.right) {
-            // translate camera with mouse's right button down
+            // zoom the view with mouse's wheels down (make camera close to or away from the target)
+            camera->Translate(FVec3(0.0f, 0.0f, dy * 0.005f));
         }
 
         if (mouseButtons.middle) {
-            // zoom the view with mouse's wheels down (make camera close to or away from the target)
+            // translate camera with mouse's right button down
+            camera->Translate(FVec3(-dx * 0.01f, -dy * 0.01f, 0.0f));
         }
 
         mousePos = { x, y };
@@ -160,6 +165,15 @@ public:
         }
     }
 
+    float GetFrameDelta()
+    {
+        auto tEnd = std::chrono::high_resolution_clock::now();
+        auto tDiff = std::chrono::duration<float, std::milli>(tEnd - tPrev).count();
+        tPrev = tEnd;
+
+        return tDiff;
+    }
+
     int Run(int argc, char* argv[])
     {
         std::string rhiString;
@@ -184,7 +198,18 @@ public:
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         window = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), name.c_str(), nullptr, nullptr);
         OnCreate();
+
+        if (camera != nullptr) {
+            glfwSetWindowUserPointer(window, this);
+            glfwSetKeyCallback(window, KeyCallback);
+            glfwSetCursorPosCallback(window, CursorCallback);
+            glfwSetMouseButtonCallback(window, MouseButtonCallback);
+        }
+
         while (!glfwWindowShouldClose(window)) {
+            if (camera != nullptr) {
+                camera->MoveCamera(GetFrameDelta());
+            }
             OnDrawFrame();
             glfwPollEvents();
         }
@@ -257,4 +282,6 @@ protected:
         bool right = false;
         bool middle = false;
     } mouseButtons;
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> tPrev;
 };

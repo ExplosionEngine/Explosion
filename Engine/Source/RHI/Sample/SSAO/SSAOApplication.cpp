@@ -50,6 +50,7 @@ public:
 protected:
     void OnCreate() override
     {
+        InitCamera();
         LoadGLTF();
         CreateInstanceAndSelectGPU();
         RequestDeviceAndFetchQueues();
@@ -70,6 +71,7 @@ protected:
 
     void OnDrawFrame() override
     {
+        UpdateUniformBuffer();
         PopulateCommandBuffer();
         SubmitCommandBufferAndPresent();
     }
@@ -725,6 +727,14 @@ private:
         CreateDepthAttachment();
     }
 
+    void UpdateUniformBuffer() {
+        uboSceneParams.view = camera->GetViewMatrix();
+
+        auto* pMap = uniformBuffers.sceneParams.buf->Map(MapMode::write, 0, sizeof(UBOSceneParams));
+        memcpy(pMap, &uboSceneParams, sizeof(UBOSceneParams));
+        uniformBuffers.sceneParams.buf->UnMap();
+    }
+
     void PrepareUniformBuffers()
     {
         // gltf model axis: y up, x right, z from screen inner to outer
@@ -736,22 +746,15 @@ private:
             0, 0, 0, 1
         };
 
-        FViewTransform vt;
-        vt.rotation = FQuat::FromEulerZYX(.0f, 75.0f, .0f);
-        vt.translation = FVec3(7.0f, 2.5f, -2.0f);
-
-        FReversedZPerspectiveProjection rzProjection(60.f, static_cast<float>(width), static_cast<float>(height), uboSceneParams.nearPlane, uboSceneParams.farPlane);
-        FReversedZPerspectiveProjection infinityRzProj(60.f, static_cast<float>(width), static_cast<float>(height), uboSceneParams.nearPlane);
-
         // scene matries
-        uboSceneParams.projection = infinityRzProj.GetProjectionMatrix();
-        uboSceneParams.view = vt.GetViewMatrix();
+        uboSceneParams.projection = camera->GetProjectionMatrix();
+        uboSceneParams.view = camera->GetViewMatrix();
         uboSceneParams.model = aixsTransMat;
 
         CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.sceneParams, sizeof(UBOSceneParams), &uboSceneParams);
 
         // ssao parameters
-        ubossaoParams.projection = infinityRzProj.GetProjectionMatrix();
+        ubossaoParams.projection = camera->GetProjectionMatrix();
         CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.ssaoParams, sizeof(UBOSSAOParams), &ubossaoParams);
 
         // ssao kennel
@@ -1246,7 +1249,20 @@ private:
 
     void InitCamera()
     {
-        //TODO
+        camera = std::make_unique<Camera>(
+            FVec3(.0f, 0.8f, -6.0f),
+            FVec3(20.0f, 100.0f, .0f),
+            Camera::ProjectParams {
+                60.0f,
+                static_cast<float>(width),
+                static_cast<float>(height),
+                0.1f,
+                64.0f
+            }
+            );
+
+        camera->moveSpeed = 0.015f;
+        camera->rotateSpeed = 0.2f;
     }
 
     void LoadGLTF()
