@@ -18,12 +18,119 @@ namespace Runtime {
     };
 
     template <typename A>
+    requires std::is_base_of_v<Asset, A>
     class AssetRef {
     public:
-        // TODO
+        template <typename A2> AssetRef(Common::SharedRef<A2>& inRef) : ref(inRef) {} // NOLINT
+        template <typename A2> AssetRef(Common::SharedRef<A2>&& inRef) noexcept : ref(std::move(inRef)) {} // NOLINT
+        AssetRef(A* pointer) : ref(pointer) {} // NOLINT
+        AssetRef(AssetRef& other) : ref(other.ref) {} // NOLINT
+        AssetRef(AssetRef&& other) noexcept : ref(std::move(other.ref)) {} // NOLINT
+        AssetRef() = default;
+        ~AssetRef() = default;
+
+        template <typename A2>
+        AssetRef& operator=(Common::SharedRef<A2>& inRef)
+        {
+            ref = inRef;
+            return *this;
+        }
+
+        template <typename A2>
+        AssetRef& operator=(Common::SharedRef<A2>&& inRef) noexcept
+        {
+            ref = inRef;
+            return *this;
+        }
+
+        AssetRef& operator=(A* pointer)
+        {
+            ref = pointer;
+            return *this;
+        }
+
+        AssetRef& operator=(AssetRef& other) // NOLINT
+        {
+            ref = other.ref;
+            return *this;
+        }
+
+        AssetRef& operator=(AssetRef&& other) noexcept
+        {
+            ref = std::move(other.ref);
+            return *this;
+        }
+
+        const Core::Uri& Uri()
+        {
+            Assert(ref != nullptr);
+            return ref->uri;
+        }
+
+        A* operator->() const noexcept
+        {
+            return ref.operator->();
+        }
+
+        A& operator*() const noexcept
+        {
+            return ref.operator*();
+        }
+
+        bool operator==(nullptr_t) const noexcept
+        {
+            return ref == nullptr;
+        }
+
+        bool operator!=(nullptr_t) const noexcept
+        {
+            return ref != nullptr;
+        }
+
+        A* Get() const
+        {
+            return ref.Get();
+        }
+
+        void Reset(A* pointer = nullptr)
+        {
+            ref.Reset(pointer);
+        }
+
+        auto RefCount() const
+        {
+            return ref.RefCount();
+        }
+
+        Common::SharedRef<A>& GetSharedRef()
+        {
+            return ref;
+        }
+
+        template <typename A2>
+        AssetRef<A2> StaticCast()
+        {
+            return ref.template StaticCast<A2>();
+        }
+
+        template <typename A2>
+        AssetRef<A2> DynamicCast()
+        {
+            return ref.template DynamicCast<A2>();
+        }
+
+        template <typename A2>
+        AssetRef<A2> ReinterpretCast()
+        {
+            return ref.template ReinterpretCast<A2>();
+        }
+
+    private:
+        Common::SharedRef<A> ref;
     };
 
     template <typename A>
+    requires std::is_base_of_v<Asset, A>
     class WeakAssetRef {
     public:
         // TODO
@@ -138,7 +245,7 @@ namespace Common {
     requires std::is_base_of_v<Runtime::Asset, A>
     struct Serializer<Runtime::AssetRef<A>> {
         static constexpr bool serializable = true;
-        static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("assetRef");
+        static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("Runtime::AssetRef");
 
         static void Serialize(SerializeStream& stream, const Runtime::AssetRef<A>& value)
         {
@@ -156,4 +263,6 @@ namespace Common {
             return true;
         }
     };
+
+    // TODO soft asset ref serialization
 }

@@ -85,5 +85,41 @@ namespace Common {
             }
             return result;
         }
+
+        static inline std::string AfterFirst(const std::string& src, const std::string& split)
+        {
+            size_t pos = src.find(split);
+            if (pos == std::string::npos) {
+                return "";
+            }
+            return src.substr(pos + split.length());
+        }
+
+        static inline std::string BeforeFirst(const std::string& src, const std::string& split)
+        {
+            size_t pos = src.find(split);
+            if (pos == std::string::npos) {
+                return "";
+            }
+            return src.substr(0, pos);
+        }
+
+        static inline std::string AfterLast(const std::string& src, const std::string& split)
+        {
+            size_t pos = src.find_last_of(split);
+            if (pos == std::string::npos) {
+                return "";
+            }
+            return src.substr(pos + split.length() - 1);
+        }
+
+        static inline std::string BeforeLast(const std::string& src, const std::string& split)
+        {
+            size_t pos = src.find_last_of(split);
+            if (pos == std::string::npos) {
+                return "";
+            }
+            return src.substr(0, pos - 1);
+        }
     };
 }

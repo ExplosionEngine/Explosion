@@ -12,7 +12,7 @@ namespace Core {
         max
     };
 
-    class Uri {
+    class CORE_API Uri {
     public:
         Uri();
         explicit Uri(std::string inValue);
@@ -25,23 +25,25 @@ namespace Core {
         bool operator==(const Uri& rhs) const;
 
         const std::string& Value() const;
-        UriProtocol GetProtocal() const;
+        UriProtocol Protocal() const;
+        std::string Content() const;
         bool Empty() const;
 
     private:
         std::string value;
     };
 
-    class AssetUriParser {
+    class CORE_API AssetUriParser {
     public:
-        AssetUriParser(const Uri& inUri);
+        explicit AssetUriParser(const Uri& inUri);
         bool IsEngineAsset() const;
-        bool IsGameAsset() const;
-        bool IsPluginAsset() const;
+        bool IsProjectAsset() const;
+        bool IsEnginePluginAsset() const;
+        bool IsProjectPluginAsset() const;
         std::filesystem::path AbsoluteFilePath() const;
 
     private:
-        const Uri& uri;
+        std::string content;
     };
 }
 

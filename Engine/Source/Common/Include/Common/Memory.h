@@ -75,7 +75,7 @@ namespace Common {
     class SharedRef {
     public:
         template <typename T2> SharedRef(std::shared_ptr<T2>& inRef) : ref(inRef) {} // NOLINT
-        template <typename T2> SharedRef(std::shared_ptr<T2>&& inRef) : ref(std::move(inRef)) {} // NOLINT
+        template <typename T2> SharedRef(std::shared_ptr<T2>&& inRef) noexcept : ref(std::move(inRef)) {} // NOLINT
         SharedRef(T* pointer) : ref(pointer) {} // NOLINT
         SharedRef(SharedRef& other) : ref(other.ref) {} // NOLINT
         SharedRef(SharedRef&& other) noexcept : ref(std::move(other.ref)) {} // NOLINT

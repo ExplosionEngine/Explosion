@@ -6,6 +6,7 @@
 
 #include <Core/Uri.h>
 #include <Common/String.h>
+#include <Common/Debug.h>
 
 namespace Core {
     Uri::Uri() = default;
@@ -55,7 +56,7 @@ namespace Core {
         return value;
     }
 
-    UriProtocol Uri::GetProtocal() const
+    UriProtocol Uri::Protocal() const
     {
         static std::unordered_map<std::string, UriProtocol> protocolMap = {
             { "asset", UriProtocol::asset }
@@ -69,8 +70,56 @@ namespace Core {
         return iter == protocolMap.end() ? UriProtocol::max : iter->second;
     }
 
+    std::string Uri::Content() const
+    {
+        return Common::StringUtils::AfterFirst(value, "://");
+    }
+
     bool Uri::Empty() const
     {
         return value.empty();
+    }
+
+    AssetUriParser::AssetUriParser(const Uri& inUri)
+        : content(inUri.Content())
+    {
+        Assert(inUri.Protocal() == UriProtocol::asset);
+    }
+
+    bool AssetUriParser::IsEngineAsset() const
+    {
+        return Common::StringUtils::RegexMatch(content, R"(Engine/.*)");
+    }
+
+    bool AssetUriParser::IsProjectAsset() const
+    {
+        return Common::StringUtils::RegexMatch(content, R"(Project/.*)");
+    }
+
+    bool AssetUriParser::IsEnginePluginAsset() const
+    {
+        return Common::StringUtils::RegexMatch(content, R"(Engine/Plugin/.*)");
+    }
+
+    bool AssetUriParser::IsProjectPluginAsset() const
+    {
+        return Common::StringUtils::RegexMatch(content, R"(Project/Plugin/.*)");
+    }
+
+    std::filesystem::path AssetUriParser::AbsoluteFilePath() const
+    {
+        if (IsEngineAsset()) {
+            return Paths::EngineAssetPath() / Common::StringUtils::AfterFirst(content, "Engine");
+        } else if (IsProjectAsset()) {
+            return Paths::ProjectAssetPath() / Common::StringUtils::AfterFirst(content, "Project");
+        } else if (IsEnginePluginAsset()) {
+            std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Engine/Plugin/");
+            return Paths::EnginePluginAssetPath(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
+        } else if (IsProjectPluginAsset()) {
+            std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Project/Plugin/");
+            return Paths::ProjectPluginAssetPath(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
+        } else {
+            return {};
+        }
     }
 }

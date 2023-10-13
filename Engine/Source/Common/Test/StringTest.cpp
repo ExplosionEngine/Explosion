@@ -5,46 +5,47 @@
 #include <gtest/gtest.h>
 
 #include <Common/String.h>
+using namespace Common;
 
 TEST(StringUtilsTest, ToUpperCaseTest)
 {
-    ASSERT_EQ(Common::StringUtils::ToUpperCase("abc"), "ABC");
-    ASSERT_EQ(Common::StringUtils::ToUpperCase("temp"), "TEMP");
-    ASSERT_EQ(Common::StringUtils::ToUpperCase("a,b,c"), "A,B,C");
+    ASSERT_EQ(StringUtils::ToUpperCase("abc"), "ABC");
+    ASSERT_EQ(StringUtils::ToUpperCase("temp"), "TEMP");
+    ASSERT_EQ(StringUtils::ToUpperCase("a,b,c"), "A,B,C");
 }
 
 TEST(StringUtilsTest, ToLowerCaseTest)
 {
-    ASSERT_EQ(Common::StringUtils::ToLowerCase("ABC"), "abc");
-    ASSERT_EQ(Common::StringUtils::ToLowerCase("TEMP"), "temp");
-    ASSERT_EQ(Common::StringUtils::ToLowerCase("A,B,C"), "a,b,c");
+    ASSERT_EQ(StringUtils::ToLowerCase("ABC"), "abc");
+    ASSERT_EQ(StringUtils::ToLowerCase("TEMP"), "temp");
+    ASSERT_EQ(StringUtils::ToLowerCase("A,B,C"), "a,b,c");
 }
 
 TEST(StringUtilsTest, SplitTest)
 {
-    auto result = Common::StringUtils::Split("hello world", " ");
+    auto result = StringUtils::Split("hello world", " ");
     ASSERT_EQ(result.size(), 2);
     ASSERT_EQ(result[0], "hello");
     ASSERT_EQ(result[1], "world");
     
-    result = Common::StringUtils::Split("a|b|c", "|");
+    result = StringUtils::Split("a|b|c", "|");
     ASSERT_EQ(result.size(), 3);
     ASSERT_EQ(result[0], "a");
     ASSERT_EQ(result[1], "b");
     ASSERT_EQ(result[2], "c");
     
-    result = Common::StringUtils::Split("abacad", "a");
+    result = StringUtils::Split("abacad", "a");
     ASSERT_EQ(result.size(), 4);
     ASSERT_EQ(result[0], "");
     ASSERT_EQ(result[1], "b");
     ASSERT_EQ(result[2], "c");
     ASSERT_EQ(result[3], "d");
 
-    result = Common::StringUtils::Split("hello", " ");
+    result = StringUtils::Split("hello", " ");
     ASSERT_EQ(result.size(), 1);
     ASSERT_EQ(result[0], "hello");
 
-    result = Common::StringUtils::Split("Test1, Test2, Test3(), Test4(A=2)", ", ");
+    result = StringUtils::Split("Test1, Test2, Test3(), Test4(A=2)", ", ");
     ASSERT_EQ(result.size(), 4);
     ASSERT_EQ(result[0], "Test1");
     ASSERT_EQ(result[1], "Test2");
@@ -54,28 +55,52 @@ TEST(StringUtilsTest, SplitTest)
 
 TEST(StringUtilsTest, ReplaceTest)
 {
-    ASSERT_EQ(Common::StringUtils::Replace("hello", "el", "a"), "halo");
-    ASSERT_EQ(Common::StringUtils::Replace("a|b|c|d|e", "|", ""), "abcde");
+    ASSERT_EQ(StringUtils::Replace("hello", "el", "a"), "halo");
+    ASSERT_EQ(StringUtils::Replace("a|b|c|d|e", "|", ""), "abcde");
 }
 
 TEST(StringUtilsTest, RegexMatchTest)
 {
-    ASSERT_TRUE(Common::StringUtils::RegexMatch("Test(a)", ".+\\(.+\\)"));
-    ASSERT_TRUE(Common::StringUtils::RegexMatch("abcd", "a.+d"));
-    ASSERT_TRUE(Common::StringUtils::RegexMatch("zzzz", "z+"));
+    ASSERT_TRUE(StringUtils::RegexMatch("Test(a)", ".+\\(.+\\)"));
+    ASSERT_TRUE(StringUtils::RegexMatch("abcd", "a.+d"));
+    ASSERT_TRUE(StringUtils::RegexMatch("zzzz", "z+"));
 }
 
 TEST(StringUtilsTest, RegexSearchFirstTest)
 {
-    ASSERT_EQ(Common::StringUtils::RegexSearchFirst("Test(a)", "\\(.+\\)"), "(a)");
-    ASSERT_EQ(Common::StringUtils::RegexSearchFirst("2022, 2023, 2024", "\\d{4}"), "2022");
+    ASSERT_EQ(StringUtils::RegexSearchFirst("Test(a)", "\\(.+\\)"), "(a)");
+    ASSERT_EQ(StringUtils::RegexSearchFirst("2022, 2023, 2024", "\\d{4}"), "2022");
 }
 
 TEST(StringUtilsTest, RegexSearchTest)
 {
-    auto result = Common::StringUtils::RegexSearch("2022, 2023, 2024", "\\d{4}");
+    auto result = StringUtils::RegexSearch("2022, 2023, 2024", "\\d{4}");
     ASSERT_EQ(result.size(), 3);
     ASSERT_EQ(result[0], "2022");
     ASSERT_EQ(result[1], "2023");
     ASSERT_EQ(result[2], "2024");
+}
+
+TEST(StringUtilsTest, AfterFirstTest)
+{
+    ASSERT_EQ(StringUtils::AfterFirst("Hello, World", ", "), "World");
+    ASSERT_EQ(StringUtils::AfterFirst("12, 34, 56", ", "), "34, 56");
+}
+
+TEST(StringUtilsTest, BeforeFirstTest)
+{
+    ASSERT_EQ(StringUtils::BeforeFirst("Hello, World", ", "), "Hello");
+    ASSERT_EQ(StringUtils::BeforeFirst("12, 34, 56", ", "), "12");
+}
+
+TEST(StringUtilsTest, AfterLastTest)
+{
+    ASSERT_EQ(StringUtils::AfterLast("Hello, World", ", "), "World");
+    ASSERT_EQ(StringUtils::AfterLast("12, 34, 56", ", "), "56");
+}
+
+TEST(StringUtilsTest, BeforeLastTest)
+{
+    ASSERT_EQ(StringUtils::BeforeLast("Hello, World", ", "), "Hello");
+    ASSERT_EQ(StringUtils::BeforeLast("12, 34, 56", ", "), "12, 34");
 }
