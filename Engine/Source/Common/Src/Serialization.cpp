@@ -50,4 +50,43 @@ namespace Common {
     {
         file.read(static_cast<char*>(data), static_cast<std::streamsize>(size));
     }
+
+    ByteSerializeStream::ByteSerializeStream(std::vector<uint8_t>& inBytes, size_t pointerBegin)
+        : pointer(pointerBegin)
+        , bytes(inBytes)
+    {
+        Assert(pointer >= 0 && pointer <= bytes.size());
+    }
+
+    ByteSerializeStream::~ByteSerializeStream() = default;
+
+    void ByteSerializeStream::Write(const void* data, size_t size)
+    {
+        auto newPointer = pointer + size;
+        if (newPointer > bytes.size()) {
+            if (newPointer > bytes.capacity()) {
+                bytes.reserve(std::ceil(static_cast<float>(newPointer) * 1.5f));
+            }
+            bytes.resize(newPointer);
+        }
+        memcpy(bytes.data() + pointer, data, size);
+        pointer = newPointer;
+    }
+
+    ByteDeserializeStream::ByteDeserializeStream(const std::vector<uint8_t>& inBytes, size_t pointerBegin)
+        : pointer(pointerBegin)
+        , bytes(inBytes)
+    {
+        Assert(pointer >= 0 && pointer <= bytes.size());
+    }
+
+    ByteDeserializeStream::~ByteDeserializeStream() = default;
+
+    void ByteDeserializeStream::Read(void* data, size_t size)
+    {
+        auto newPointer = pointer + size;
+        Assert(newPointer <= bytes.size());
+        memcpy(data, bytes.data() + pointer, size);
+        pointer = newPointer;
+    }
 }

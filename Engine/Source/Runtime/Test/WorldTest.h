@@ -104,7 +104,7 @@ public:
     }
 };
 
-struct SystemScheduleTest_System1 : public SetupSystem {
+struct SystemScheduleTest_System1 : public TickSystem {
 public:
     void Execute(Runtime::SystemCommands& commands) override
     {
@@ -121,7 +121,7 @@ public:
     }
 };
 
-struct SystemScheduleTest_System2 : public SetupSystem {
+struct SystemScheduleTest_System2 : public TickSystem {
 public:
     void Execute(Runtime::SystemCommands& commands) override
     {
@@ -138,7 +138,7 @@ public:
     }
 };
 
-struct SystemScheduleTest_System3 : public SetupSystem {
+struct SystemScheduleTest_System3 : public TickSystem {
 public:
     void Execute(Runtime::SystemCommands& commands) override
     {

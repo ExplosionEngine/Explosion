@@ -18,8 +18,10 @@ namespace Runtime {
         template <typename S>
         SystemSchedule& ScheduleAfter();
 
+        SystemSchedule& ScheduleAfter(const Mirror::Class& clazz);
+
     private:
-        SystemSchedule& ScheduleAfterInternal(SystemSignature depend);
+        SystemSchedule& ScheduleAfterInternal(const SystemSignature& depend);
 
         World& world;
         SystemSignature target;
@@ -33,7 +35,11 @@ namespace Runtime {
         template <typename S>
         EventSlot& Connect();
 
+        EventSlot& Connect(const Mirror::Class& clazz);
+
     private:
+        EventSlot& ConnectInternal(const SystemSignature& systemSignature, EventSystem* systemInstance);
+
         World& world;
         EventSignature target;
     };
@@ -46,28 +52,24 @@ namespace Runtime {
         template <typename S>
         SystemSchedule AddSetupSystem()
         {
-            SystemSignature signature = CreateSystem(Internal::SignForClass<S>(), new S());
-            setupSystems.emplace_back(signature);
-            return SystemSchedule(*this, signature);
+            return AddSetupSystemInternal(Internal::SignForClass<S>(), new S());
         }
 
         template <typename S>
         SystemSchedule AddTickSystem()
         {
-            SystemSignature signature = CreateSystem(Internal::SignForClass<S>(), new S());
-            tickSystems.emplace_back(signature);
-            return SystemSchedule(*this, signature);
+            return AddTickSystemInternal(Internal::SignForClass<S>(), new S());
         }
 
         template <typename E>
         EventSlot Event()
         {
-            EventSignature signature = Internal::SignForClass<E>();
-            if (!eventSlots.contains(signature)) {
-                eventSlots.emplace(std::make_pair(signature, std::vector<EventSignature> {}));
-            }
-            return EventSlot(*this, signature);
+            return EventInternal(Internal::SignForClass<E>());
         }
+
+        SystemSchedule AddSetupSystem(const Mirror::Class& clazz);
+        SystemSchedule AddTickSystem(const Mirror::Class& clazz);
+        EventSlot Event(const Mirror::Class& clazz);
 
         void Setup();
         void Shutdown();
@@ -81,8 +83,12 @@ namespace Runtime {
         friend class EventSlot;
         friend class WorldTestHelper;
 
-        SystemSignature CreateSystem(SystemSignature signature, System* systemInstance);
+        void RegisterSystem(const SystemSignature& systemSignature, System* systemInstance);
         void ExecuteWorkSystems(const std::vector<SystemSignature>& targets);
+
+        SystemSchedule AddSetupSystemInternal(const SystemSignature& systemSignature, SetupSystem* systemInstance);
+        SystemSchedule AddTickSystemInternal(const SystemSignature& systemSignature, TickSystem* systemInstance);
+        EventSlot EventInternal(const EventSignature& eventSignature);
 
         bool setuped;
         std::string name;
@@ -119,9 +125,6 @@ namespace Runtime {
     template <typename S>
     EventSlot& EventSlot::Connect()
     {
-        SystemSignature system = world.CreateSystem(Internal::SignForClass<S>(), new S());
-        Assert(world.eventSlots.contains(target));
-        world.eventSlots.at(target).emplace_back(system);
-        return *this;
+        return ConnectInternal(Internal::SignForClass<S>(), new S());
     }
 }

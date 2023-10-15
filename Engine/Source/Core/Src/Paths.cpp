@@ -42,6 +42,11 @@ namespace Core {
         return EngineRoot() / "Plugin";
     }
 
+    std::filesystem::path Paths::EnginePluginAssetPath(const std::string& pluginName)
+    {
+        return EnginePluginPath() / pluginName / "Asset";
+    }
+
     void Paths::SetCurrentProjectFile(std::filesystem::path inFile)
     {
         currentProjectFile = std::move(inFile);
@@ -70,5 +75,10 @@ namespace Core {
     std::filesystem::path Paths::ProjectPluginPath()
     {
         return ProjectRoot() / "Plugin";
+    }
+
+    std::filesystem::path Paths::ProjectPluginAssetPath(const std::string& pluginName)
+    {
+        return ProjectPluginPath() / pluginName / "Asset";
     }
 }

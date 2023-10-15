@@ -13,9 +13,15 @@
 
 namespace Mirror::Internal {
     template <typename ArgsTuple, size_t... I>
+    auto GetArgTypeInfosByArgsTuple(std::index_sequence<I...>)
+    {
+        return std::vector<const TypeInfo*> { GetTypeInfo<std::tuple_element_t<I, ArgsTuple>>()... };
+    }
+
+    template <typename ArgsTuple, size_t... I>
     auto CastAnyArrayToArgsTuple(Any* args, std::index_sequence<I...>)
     {
-        return ArgsTuple {args[I].As<std::tuple_element_t<I, ArgsTuple>>()... };
+        return ArgsTuple { args[I].As<std::tuple_element_t<I, ArgsTuple>>()... };
     }
 
     template <auto Ptr, typename ArgsTuple, size_t... I>
@@ -81,24 +87,27 @@ namespace Mirror {
         ClassRegistry& Constructor(const std::string& inName)
         {
             using ArgsTupleType = std::tuple<Args...>;
-            constexpr size_t tupleSize = std::tuple_size_v<ArgsTupleType>;
+            constexpr size_t argsTupleSize = std::tuple_size_v<ArgsTupleType>;
 
             auto iter = clazz.constructors.find(inName);
             Assert(iter == clazz.constructors.end());
 
-            clazz.constructors.emplace(std::make_pair(inName, Mirror::Constructor(
-                inName,
-                [](Any* args, size_t argSize) -> Any {
-                    Assert(tupleSize == argSize);
-                    auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
-                    return Any(Internal::InvokeConstructorStack<C, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
-                },
-                [](Any* args, size_t argSize) -> Any {
-                    Assert(tupleSize == argSize);
-                    auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
-                    return Any(Internal::InvokeConstructorNew<C, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
-                }
-            )));
+            Mirror::Constructor::ConstructParams params;
+            params.name = inName;
+            params.argsNum = sizeof...(Args);
+            params.argTypeInfos = std::vector<const TypeInfo*> { GetTypeInfo<Args>()... };
+            params.stackConstructor = [](Any* args, uint8_t argSize) -> Any {
+                Assert(argsTupleSize == argSize);
+                auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
+                return Any(Internal::InvokeConstructorStack<C, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {}));
+            };
+            params.heapConstructor = [](Any* args, size_t argSize) -> Any {
+                Assert(argsTupleSize == argSize);
+                auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
+                return Any(Internal::InvokeConstructorNew<C, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {}));
+            };
+
+            clazz.constructors.emplace(std::make_pair(inName, Mirror::Constructor(std::move(params))));
             return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.constructors.at(inName));
         }
 
@@ -110,17 +119,20 @@ namespace Mirror {
             auto iter = clazz.staticVariables.find(inName);
             Assert(iter == clazz.staticVariables.end());
 
-            clazz.staticVariables.emplace(std::make_pair(inName, Mirror::Variable(
-                inName,
-                [](Any* inValue) -> void {
-                    *Ptr = inValue->As<ValueType>();
-                },
-                []() -> Any {
-                    return Any(std::ref(*Ptr));
-                },
-                nullptr,
-                nullptr
-            )));
+            Variable::ConstructParams params;
+            params.name = inName;
+            params.memorySize = sizeof(ValueType);
+            params.typeInfo = GetTypeInfo<ValueType>();
+            params.setter = [](Any* inValue) -> void {
+                *Ptr = inValue->As<ValueType>();
+            };
+            params.getter = []() -> Any {
+                return Any(std::ref(*Ptr));
+            };
+            params.serializer = nullptr;
+            params.deserializer = nullptr;
+
+            clazz.staticVariables.emplace(std::make_pair(inName, Variable(std::move(params))));
             return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.staticVariables.at(inName));
         }
 
@@ -133,21 +145,26 @@ namespace Mirror {
             auto iter = clazz.staticFunctions.find(inName);
             Assert(iter == clazz.staticFunctions.end());
 
-            clazz.staticFunctions.emplace(std::make_pair(inName, Mirror::Function(
-                inName,
-                [](Any* args, size_t argSize) -> Any {
-                    constexpr size_t tupleSize = std::tuple_size_v<ArgsTupleType>;
-                    Assert(tupleSize == argSize);
+            constexpr size_t argsTupleSize = std::tuple_size_v<ArgsTupleType>;
 
-                    auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
-                    if constexpr (std::is_void_v<RetType>) {
-                        Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {});
-                        return {};
-                    } else {
-                        return Any(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
-                    }
+            Function::ConstructParams params;
+            params.name = inName;
+            params.retTypeInfo = GetTypeInfo<RetType>();
+            params.argsNum = argsTupleSize;
+            params.argTypeInfos = Internal::GetArgTypeInfosByArgsTuple<ArgsTupleType>(std::make_index_sequence<argsTupleSize> {});
+            params.invoker = [](Any* args, size_t argSize) -> Any {
+                Assert(argsTupleSize == argSize);
+
+                auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
+                if constexpr (std::is_void_v<RetType>) {
+                    Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {});
+                    return {};
+                } else {
+                    return Any(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {}));
                 }
-            )));
+            };
+
+            clazz.staticFunctions.emplace(std::make_pair(inName, Function(std::move(params))));
             return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.staticFunctions.at(inName));
         }
 
@@ -160,34 +177,36 @@ namespace Mirror {
             auto iter = clazz.memberVariables.find(inName);
             Assert(iter == clazz.memberVariables.end());
 
-            clazz.memberVariables.emplace(std::make_pair(inName, Mirror::MemberVariable(
-                inName,
-                sizeof(ValueType),
-                [](Any* object, Any* value) -> void {
-                    object->As<ClassType&>().*Ptr = value->As<ValueType>();
-                },
-                [](Any* object) -> Any {
-                    return std::ref(object->As<ClassType&>().*Ptr);
-                },
-                [](Common::SerializeStream& stream, const Mirror::MemberVariable& variable, Any* object) -> void {
-                    if constexpr (Common::Serializer<ValueType>::serializable) {
-                        ValueType& value = variable.Get(object).As<ValueType&>();
-                        Common::Serializer<ValueType>::Serialize(stream, value);
-                    } else {
-                        Unimplement();
-                    }
-                },
-                [](Common::DeserializeStream& stream, const Mirror::MemberVariable& variable, Any* object) -> void {
-                    if constexpr (Common::Serializer<ValueType>::serializable) {
-                        ValueType value;
-                        Common::Serializer<ValueType>::Deserialize(stream, value);
-                        Mirror::Any valueRef = std::ref(value);
-                        variable.Set(object, &valueRef);
-                    } else {
-                        Unimplement();
-                    }
+            Mirror::MemberVariable::ConstructParams params;
+            params.name = inName;
+            params.memorySize = sizeof(ValueType);
+            params.typeInfo = GetTypeInfo<ValueType>();
+            params.setter = [](Any* object, Any* value) -> void {
+                object->As<ClassType&>().*Ptr = value->As<ValueType>();
+            };
+            params.getter = [](Any* object) -> Any {
+                return std::ref(object->As<ClassType&>().*Ptr);
+            };
+            params.serializer = [](Common::SerializeStream& stream, const Mirror::MemberVariable& variable, Any* object) -> void {
+                if constexpr (Common::Serializer<ValueType>::serializable) {
+                    ValueType& value = variable.Get(object).As<ValueType&>();
+                    Common::Serializer<ValueType>::Serialize(stream, value);
+                } else {
+                    Unimplement();
                 }
-            )));
+            };
+            params.deserializer = [](Common::DeserializeStream& stream, const Mirror::MemberVariable& variable, Any* object) -> void {
+                if constexpr (Common::Serializer<ValueType>::serializable) {
+                    ValueType value;
+                    Common::Serializer<ValueType>::Deserialize(stream, value);
+                    Any valueRef = std::ref(value);
+                    variable.Set(object, &valueRef);
+                } else {
+                    Unimplement();
+                }
+            };
+
+            clazz.memberVariables.emplace(std::make_pair(inName, Mirror::MemberVariable(std::move(params))));
             return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.memberVariables.at(inName));
         }
 
@@ -201,21 +220,26 @@ namespace Mirror {
             auto iter = clazz.memberFunctions.find(inName);
             Assert(iter == clazz.memberFunctions.end());
 
-            clazz.memberFunctions.emplace(std::make_pair(inName, Mirror::MemberFunction(
-                inName,
-                [](Any* object, Any* args, size_t argSize) -> Any {
-                    constexpr size_t tupleSize = std::tuple_size_v<ArgsTupleType>;
-                    Assert(tupleSize == argSize);
+            constexpr size_t argsTupleSize = std::tuple_size_v<ArgsTupleType>;
 
-                    auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
-                    if constexpr (std::is_void_v<RetType>) {
-                        Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->As<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {});
-                        return {};
-                    } else {
-                        return Any(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->As<ClassType&>(), argsTuple, std::make_index_sequence<tupleSize> {}));
-                    }
+            Mirror::MemberFunction::ConstructParams params;
+            params.name = inName;
+            params.retTypeInfo = GetTypeInfo<RetType>();
+            params.argsNum = argsTupleSize;
+            params.argTypeInfos = Internal::GetArgTypeInfosByArgsTuple<ArgsTupleType>(std::make_index_sequence<argsTupleSize> {});
+            params.invoker = [](Any* object, Any* args, size_t argSize) -> Any {
+                Assert(argsTupleSize == argSize);
+
+                auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
+                if constexpr (std::is_void_v<RetType>) {
+                    Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->As<ClassType&>(), argsTuple, std::make_index_sequence<argsTupleSize> {});
+                    return {};
+                } else {
+                    return Any(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object->As<ClassType&>(), argsTuple, std::make_index_sequence<argsTupleSize> {}));
                 }
-            )));
+            };
+
+            clazz.memberFunctions.emplace(std::make_pair(inName, Mirror::MemberFunction(std::move(params))));
             return MetaDataRegistry<ClassRegistry<C>>::SetContext(&clazz.memberFunctions.at(inName));
         }
 
@@ -224,14 +248,6 @@ namespace Mirror {
 
         explicit ClassRegistry(Class& inClass) : MetaDataRegistry<ClassRegistry<C>>(&inClass), clazz(inClass)
         {
-            if constexpr (std::is_default_constructible_v<C>) {
-                clazz.defaultObject = Mirror::Any(C());
-            }
-            if constexpr (std::is_destructible_v<C>) {
-                clazz.destructor = Mirror::Destructor([](Any* object) -> void {
-                    object->As<C&>().~C();
-                });
-            }
         }
 
         Class& clazz;
@@ -249,32 +265,35 @@ namespace Mirror {
             auto iter = globalScope.variables.find(inName);
             Assert(iter == globalScope.variables.end());
 
-            globalScope.variables.emplace(std::make_pair(inName, Mirror::Variable(
-                inName,
-                [](Any* inValue) -> void {
-                    *Ptr = inValue->As<ValueType>();
-                },
-                []() -> Any {
-                    return Any(std::ref(*Ptr));
-                },
-                [](Common::SerializeStream& stream, const Mirror::Variable& variable) -> void {
-                    if constexpr (Common::Serializer<ValueType>::serializable) {
-                        ValueType& value = variable.Get().As<ValueType&>();
-                        Common::Serializer<ValueType>::Serialize(stream, value);
-                    } else {
-                        Unimplement();
-                    }
-                },
-                [](Common::DeserializeStream& stream, const Mirror::Variable& variable) -> void {
-                    if constexpr (Common::Serializer<ValueType>::serializable) {
-                        ValueType value;
-                        Common::Serializer<ValueType>::Deserialize(stream, value);
-                        variable.Set(value);
-                    } else {
-                        Unimplement();
-                    }
+            Mirror::Variable::ConstructParams params;
+            params.name = inName;
+            params.memorySize = sizeof(ValueType);
+            params.typeInfo = GetTypeInfo<ValueType>();
+            params.setter = [](Any* inValue) -> void {
+                *Ptr = inValue->As<ValueType>();
+            };
+            params.getter = []() -> Any {
+                return Any(std::ref(*Ptr));
+            };
+            params.serializer = [](Common::SerializeStream& stream, const Mirror::Variable& variable) -> void {
+                if constexpr (Common::Serializer<ValueType>::serializable) {
+                    ValueType& value = variable.Get().As<ValueType&>();
+                    Common::Serializer<ValueType>::Serialize(stream, value);
+                } else {
+                    Unimplement();
                 }
-            )));
+            };
+            params.deserializer = [](Common::DeserializeStream& stream, const Mirror::Variable& variable) -> void {
+                if constexpr (Common::Serializer<ValueType>::serializable) {
+                    ValueType value;
+                    Common::Serializer<ValueType>::Deserialize(stream, value);
+                    variable.Set(value);
+                } else {
+                    Unimplement();
+                }
+            };
+
+            globalScope.variables.emplace(std::make_pair(inName, Mirror::Variable(std::move(params))));
             return MetaDataRegistry<GlobalRegistry>::SetContext(&globalScope.variables.at(inName));
         }
 
@@ -287,21 +306,26 @@ namespace Mirror {
             auto iter = globalScope.functions.find(inName);
             Assert(iter == globalScope.functions.end());
 
-            globalScope.functions.emplace(std::make_pair(inName, Mirror::Function(
-                inName,
-                [](Any* args, size_t argSize) -> Any {
-                    constexpr size_t tupleSize = std::tuple_size_v<ArgsTupleType>;
-                    Assert(tupleSize == argSize);
+            constexpr size_t argsTupleSize = std::tuple_size_v<ArgsTupleType>;
 
-                    auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<tupleSize> {});
-                    if constexpr (std::is_void_v<RetType>) {
-                        Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {});
-                        return {};
-                    } else {
-                        return Any(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<tupleSize> {}));
-                    }
+            Mirror::Function::ConstructParams params;
+            params.name = inName;
+            params.retTypeInfo = GetTypeInfo<RetType>();
+            params.argsNum = argsTupleSize;
+            params.argTypeInfos = Internal::GetArgTypeInfosByArgsTuple<ArgsTupleType>(std::make_index_sequence<argsTupleSize> {});
+            params.invoker = [](Any* args, size_t argSize) -> Any {
+                Assert(argsTupleSize == argSize);
+
+                auto argsTuple = Internal::CastAnyArrayToArgsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
+                if constexpr (std::is_void_v<RetType>) {
+                    Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {});
+                    return {};
+                } else {
+                    return Any(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {}));
                 }
-            )));
+            };
+
+            globalScope.functions.emplace(std::make_pair(inName, Mirror::Function(std::move(params))));
             return MetaDataRegistry<GlobalRegistry>::SetContext(&globalScope.functions.at(inName));
         }
 
@@ -367,8 +391,22 @@ namespace Mirror {
             Assert(!Class::typeToNameMap.contains(typeId));
             Assert(!classes.contains(name));
 
+            Mirror::Class::ConstructParams params;
+            params.name = name;
+            params.typeInfo = GetTypeInfo<C>();
+            if constexpr (std::is_default_constructible_v<C>) {
+                params.defaultObject = Any(C());
+            }
+            if constexpr (std::is_destructible_v<C>) {
+                Destructor::ConstructParams detorParams;
+                detorParams.destructor = [](Any* object) -> void {
+                    object->As<C&>().~C();
+                };
+                params.destructor = Destructor(std::move(detorParams));
+            }
+
             Class::typeToNameMap[typeId] = name;
-            classes.emplace(std::make_pair(name, Mirror::Class(name)));
+            classes.emplace(std::make_pair(name, Mirror::Class(std::move(params))));
             return ClassRegistry<C>(classes.at(name));
         }
 
@@ -380,8 +418,11 @@ namespace Mirror {
             Assert(!Enum::typeToNameMap.contains(typeId));
             Assert(!enums.contains(name));
 
+            Mirror::Enum::ConstructParams params;
+            params.name = name;
+
             Enum::typeToNameMap[typeId] = name;
-            enums.emplace(std::make_pair(name, Mirror::Enum(name)));
+            enums.emplace(std::make_pair(name, Mirror::Enum(std::move(params))));
             return EnumRegistry<T>(enums.at(name));
         }
 
