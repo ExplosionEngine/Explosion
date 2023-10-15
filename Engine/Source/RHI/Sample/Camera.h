@@ -95,23 +95,19 @@ public:
     void MoveCamera(float deltaTime)
     {
         if (Moving()) {
-            FVec3 forward { 0.0f, 0.0f, 1.0f };
-            FVec3 side { 1.0f, 0.0f, 0.0f };
-            FVec3 up { 0.0f, 1.0f, 0.0f };
-
             float frameMovement = moveSpeed * deltaTime;
             if (keys.front)
-                camPosition += forward * frameMovement;
+                camPosition += axis.forward * frameMovement;
             if (keys.back)
-                camPosition -= forward * frameMovement;
+                camPosition -= axis.forward * frameMovement;
             if (keys.left)
-                camPosition -= side * frameMovement;
+                camPosition -= axis.side * frameMovement;
             if (keys.right)
-                camPosition += side * frameMovement;
+                camPosition += axis.side * frameMovement;
             if (keys.up)
-                camPosition += up * frameMovement;
+                camPosition += axis.up * frameMovement;
             if (keys.down)
-                camPosition -= up * frameMovement;
+                camPosition -= axis.up * frameMovement;
 
             UpdateViewTransform();
         }
@@ -121,6 +117,12 @@ private:
     FViewTransform vt;
     FReversedZPerspectiveProjection rzProjection;
 
+    struct {
+        FVec3 forward { .0f, .0f, .1f };
+        FVec3 side { 1.f, .0f, .0f };
+        FVec3 up { .0f, 1.f, .0f };
+    } axis;
+
     FVec3 camPosition = FVec3Consts::zero;
     FVec3 camTarget = FVec3Consts::unitZ;
     FVec3 camRotation = FVec3Consts::zero;
@@ -129,5 +131,9 @@ private:
     {
         vt.translation = this->camPosition;
         vt.rotation = FQuat::FromEulerZYX(this->camRotation.x, this->camRotation.y, this->camRotation.z);
+
+        axis.forward = vt.rotation.RotateVector(FVec3(0, 0, 1)).Normalized();
+        axis.side = vt.rotation.RotateVector(FVec3(1, 0, 0)).Normalized();
+        axis.up = vt.rotation.RotateVector(FVec3(0, 1, 0)).Normalized();
     }
 };

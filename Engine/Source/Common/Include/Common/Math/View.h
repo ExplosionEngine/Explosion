@@ -92,6 +92,6 @@ namespace Common {
         // we need apply the inverse transform(rotation and translation) of camera to visible objects,
         // but the order(rotate then translate) can not be changed,
         // (m1 * m2).Inverse() equals to m2.Inverse() * m1.Inverse()
-        return (this->GetRotationMatrix() * this->GetTranslationMatrix()).Inverse() * axisTransMat;
+        return this->GetTransformMatrixNoScale().Inverse() * axisTransMat;
     }
 }

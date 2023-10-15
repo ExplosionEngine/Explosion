@@ -1250,8 +1250,8 @@ private:
     void InitCamera()
     {
         camera = std::make_unique<Camera>(
-            FVec3(.0f, 0.8f, -6.0f),
-            FVec3(20.0f, 100.0f, .0f),
+            FVec3(6.f, 2.f, .0f),
+            FVec3(.0f, 90.f, .0f),
             Camera::ProjectParams {
                 60.0f,
                 static_cast<float>(width),
