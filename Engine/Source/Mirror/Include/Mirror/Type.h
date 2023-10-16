@@ -61,6 +61,7 @@ namespace Mirror {
             Set(&ref);
         }
 
+        const TypeInfo* GetTypeInfo() const;
         void Set(Any* value) const;
         Any Get() const;
         void Serialize(Common::SerializeStream& stream) const;
@@ -73,8 +74,20 @@ namespace Mirror {
         using Setter = std::function<void(Any*)>;
         using Getter = std::function<Any()>;
 
-        Variable(std::string inName, Setter inSetter, Getter inGetter, VariableSerializer inSerializer, VariableDeserializer inDeserializer);
+        struct ConstructParams {
+            std::string name;
+            size_t memorySize;
+            const TypeInfo* typeInfo;
+            Setter setter;
+            Getter getter;
+            VariableSerializer serializer;
+            VariableDeserializer deserializer;
+        };
 
+        explicit Variable(ConstructParams&& params);
+
+        size_t memorySize;
+        const TypeInfo* typeInfo;
         Setter setter;
         Getter getter;
         VariableSerializer serializer;
@@ -92,16 +105,31 @@ namespace Mirror {
             return InvokeWith(refs.data(), refs.size());
         }
 
-        Any InvokeWith(Any* arguments, size_t argumentsSize) const;
+        uint8_t GetArgsNum() const;
+        const TypeInfo* GetRetTypeInfo() const;
+        const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
+        const std::vector<const TypeInfo*>& GetArgTypeInfos() const;
+        Any InvokeWith(Any* arguments, uint8_t argumentsSize) const;
 
     private:
         friend class GlobalRegistry;
         template <typename C> friend class ClassRegistry;
 
-        using Invoker = std::function<Any(Any*, size_t)>;
+        using Invoker = std::function<Any(Any*, uint8_t)>;
 
-        Function(std::string inName, Invoker inInvoker);
+        struct ConstructParams {
+            std::string name;
+            uint8_t argsNum;
+            const TypeInfo* retTypeInfo;
+            std::vector<const TypeInfo*> argTypeInfos;
+            Invoker invoker;
+        };
 
+        explicit Function(ConstructParams&& params);
+
+        uint8_t argsNum;
+        const TypeInfo* retTypeInfo;
+        std::vector<const TypeInfo*> argTypeInfos;
         Invoker invoker;
     };
 
@@ -123,16 +151,29 @@ namespace Mirror {
             return NewObjectWith(refs.data(), refs.size());
         }
 
-        Any ConstructOnStackWith(Any* arguments, size_t argumentsSize) const;
-        Any NewObjectWith(Any* arguments, size_t argumentsSize) const;
+        uint8_t GetArgsNum() const;
+        const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
+        const std::vector<const TypeInfo*>& GetArgTypeInfos() const;
+        Any ConstructOnStackWith(Any* arguments, uint8_t argumentsSize) const;
+        Any NewObjectWith(Any* arguments, uint8_t argumentsSize) const;
 
     private:
         template <typename C> friend class ClassRegistry;
 
-        using Invoker = std::function<Any(Any*, size_t)>;
+        using Invoker = std::function<Any(Any*, uint8_t)>;
 
-        Constructor(std::string inName, Invoker inStackConstructor, Invoker inHeapConstructor);
+        struct ConstructParams {
+            std::string name;
+            uint8_t argsNum;
+            std::vector<const TypeInfo*> argTypeInfos;
+            Invoker stackConstructor;
+            Invoker heapConstructor;
+        };
 
+        explicit Constructor(ConstructParams&& params);
+
+        uint8_t argsNum;
+        std::vector<const TypeInfo*> argTypeInfos;
         Invoker stackConstructor;
         Invoker heapConstructor;
     };
@@ -151,11 +192,16 @@ namespace Mirror {
         void InvokeWith(Any* object) const;
 
     private:
+        friend class Registry;
         template <typename C> friend class ClassRegistry;
 
         using Invoker = std::function<void(Any*)>;
 
-        explicit Destructor(Invoker inDestructor);
+        struct ConstructParams {
+            Invoker destructor;
+        };
+
+        explicit Destructor(ConstructParams&& params);
 
         Invoker destructor;
     };
@@ -173,6 +219,7 @@ namespace Mirror {
         }
 
         uint32_t SizeOf() const;
+        const TypeInfo* GetTypeInfo() const;
         void Set(Any* object, Any* value) const;
         Any Get(Any* object) const;
         void Serialize(Common::SerializeStream& stream, Any* object) const;
@@ -184,9 +231,20 @@ namespace Mirror {
         using Setter = std::function<void(Any*, Any*)>;
         using Getter = std::function<Any(Any*)>;
 
-        MemberVariable(std::string inName, uint32_t inMemorySize, Setter inSetter, Getter inGetter, MemberVariableSerializer inSerializer, MemberVariableDeserializer inDeserializer);
+        struct ConstructParams {
+            std::string name;
+            uint32_t memorySize;
+            const TypeInfo* typeInfo;
+            Setter setter;
+            Getter getter;
+            MemberVariableSerializer serializer;
+            MemberVariableDeserializer deserializer;
+        };
+
+        explicit MemberVariable(ConstructParams&& params);
 
         uint32_t memorySize;
+        const TypeInfo* typeInfo;
         Setter setter;
         Getter getter;
         MemberVariableSerializer serializer;
@@ -205,6 +263,10 @@ namespace Mirror {
             return InvokeWith(&classRef, argRefs.data(), argRefs.size());
         }
 
+        uint8_t GetArgsNum() const;
+        const TypeInfo* GetRetTypeInfo() const;
+        const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
+        const std::vector<const TypeInfo*>& GetArgTypeInfos() const;
         Any InvokeWith(Any* object, Any* args, size_t argsSize) const;
 
     private:
@@ -212,8 +274,19 @@ namespace Mirror {
 
         using Invoker = std::function<Any(Any*, Any*, size_t)>;
 
-        MemberFunction(std::string inName, Invoker inInvoker);
+        struct ConstructParams {
+            std::string name;
+            uint8_t argsNum;
+            const TypeInfo* retTypeInfo;
+            std::vector<const TypeInfo*> argTypeInfos;
+            Invoker invoker;
+        };
 
+        explicit MemberFunction(ConstructParams&& params);
+
+        uint8_t argsNum;
+        const TypeInfo* retTypeInfo;
+        std::vector<const TypeInfo*> argTypeInfos;
         Invoker invoker;
     };
 
@@ -264,14 +337,14 @@ namespace Mirror {
         requires std::is_class_v<C>
         [[nodiscard]] static bool Has()
         {
-            return typeToNameMap.contains(GetTypeInfo<C>()->id);
+            return typeToNameMap.contains(Mirror::GetTypeInfo<C>()->id);
         }
 
         template <typename C>
         requires std::is_class_v<C>
         [[nodiscard]] static const Class* Find()
         {
-            auto iter = typeToNameMap.find(GetTypeInfo<C>()->id);
+            auto iter = typeToNameMap.find(Mirror::GetTypeInfo<C>()->id);
             if (iter == typeToNameMap.end()) {
                 return nullptr;
             }
@@ -282,11 +355,12 @@ namespace Mirror {
         requires std::is_class_v<C>
         [[nodiscard]] static const Class& Get()
         {
-            auto iter = typeToNameMap.find(GetTypeInfo<C>()->id);
+            auto iter = typeToNameMap.find(Mirror::GetTypeInfo<C>()->id);
             Assert(iter != typeToNameMap.end());
             return Get(iter->second);
         }
 
+        [[nodiscard]] static bool Has(const std::string& name);
         [[nodiscard]] static const Class* Find(const std::string& name);
         [[nodiscard]] static const Class& Get(const std::string& name);
 
@@ -322,18 +396,26 @@ namespace Mirror {
             }
         }
 
+        [[nodiscard]] const TypeInfo* GetTypeInfo() const;
+        [[nodiscard]] bool HasDefaultConstructor() const;
         [[nodiscard]] const Constructor* FindDefaultConstructor() const;
         [[nodiscard]] const Constructor& GetDefaultConstructor() const;
+        [[nodiscard]] bool HasDestructor() const;
         [[nodiscard]] const Destructor* FindDestructor() const;
         [[nodiscard]] const Destructor& GetDestructor() const;
+        [[nodiscard]] bool HasConstructor(const std::string& name) const;
         [[nodiscard]] const Constructor* FindConstructor(const std::string& name) const;
         [[nodiscard]] const Constructor& GetConstructor(const std::string& name) const;
+        [[nodiscard]] bool HasStaticVariable(const std::string& name) const;
         [[nodiscard]] const Variable* FindStaticVariable(const std::string& name) const;
         [[nodiscard]] const Variable& GetStaticVariable(const std::string& name) const;
+        [[nodiscard]] bool HasStaticFunction(const std::string& name) const;
         [[nodiscard]] const Function* FindStaticFunction(const std::string& name) const;
         [[nodiscard]] const Function& GetStaticFunction(const std::string& name) const;
+        [[nodiscard]] bool HasMemberVariable(const std::string& name) const;
         [[nodiscard]] const MemberVariable* FindMemberVariable(const std::string& name) const;
         [[nodiscard]] const MemberVariable& GetMemberVariable(const std::string& name) const;
+        [[nodiscard]] bool HasMemberFunction(const std::string& name) const;
         [[nodiscard]] const MemberFunction* FindMemberFunction(const std::string& name) const;
         [[nodiscard]] const MemberFunction& GetMemberFunction(const std::string& name) const;
         void Serialize(Common::SerializeStream& stream, Mirror::Any* obj) const;
@@ -345,8 +427,16 @@ namespace Mirror {
         friend class Registry;
         template <typename T> friend class ClassRegistry;
 
-        explicit Class(std::string name);
+        struct ConstructParams {
+            std::string name;
+            const TypeInfo* typeInfo;
+            std::optional<Mirror::Any> defaultObject;
+            std::optional<Destructor> destructor;
+        };
 
+        explicit Class(ConstructParams&& params);
+
+        const TypeInfo* typeInfo;
         std::optional<Mirror::Any> defaultObject;
         std::optional<Destructor> destructor;
         std::unordered_map<std::string, Constructor> constructors;
@@ -384,7 +474,7 @@ namespace Mirror {
         requires std::is_enum_v<T>
         [[nodiscard]] static const Enum* Find()
         {
-            auto iter = typeToNameMap.find(GetTypeInfo<T>()->id);
+            auto iter = typeToNameMap.find(Mirror::GetTypeInfo<T>()->id);
             Assert(iter != typeToNameMap.end());
             return Find(iter->second);
         }
@@ -393,7 +483,7 @@ namespace Mirror {
         requires std::is_enum_v<T>
         [[nodiscard]] static const Enum& Get()
         {
-            auto iter = typeToNameMap.find(GetTypeInfo<T>()->id);
+            auto iter = typeToNameMap.find(Mirror::GetTypeInfo<T>()->id);
             Assert(iter != typeToNameMap.end());
             return Get(iter->second);
         }
@@ -403,6 +493,7 @@ namespace Mirror {
 
         ~Enum() override;
 
+        [[nodiscard]] const TypeInfo* GetTypeInfo() const;
         [[nodiscard]] Any GetElement(const std::string& name) const;
         [[nodiscard]] std::string GetElementName(Any* value) const;
 
@@ -412,8 +503,14 @@ namespace Mirror {
         friend class Registry;
         template <typename T> friend class EnumRegistry;
 
-        explicit Enum(std::string name);
+        struct ConstructParams {
+            std::string name;
+            const TypeInfo* typeInfo;
+        };
 
+        explicit Enum(ConstructParams&& params);
+
+        const TypeInfo* typeInfo;
         std::unordered_map<std::string, EnumElement> elements;
     };
 }

@@ -226,6 +226,14 @@ namespace MirrorTool {
             VisitChildren(ClassConstructorVisitor, ClassConstructorInfo, cursor, context.constructors.back());
             UpdateConstructorName(context.constructors.back());
             ApplyMetaFilter(context.constructors, "constructor");
+        } else if (kind == CXCursor_StructDecl || kind == CXCursor_ClassDecl) {
+            ClassInfo classInfo;
+            classInfo.outerName = GetOuterName(context.outerName, context.name);
+            classInfo.name = spellingStr;
+            classInfo.lastFieldAccess = kind == CXCursor_StructDecl ? FieldAccess::pub : FieldAccess::pri;
+            context.classes.emplace_back(std::move(classInfo));
+            VisitChildren(ClassVisitor, ClassInfo, cursor, context.classes.back());
+            ApplyMetaFilter(context.classes, "class");
         }
         CleanUpAndContinueVisit;
     }

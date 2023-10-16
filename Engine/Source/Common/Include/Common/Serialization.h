@@ -60,6 +60,30 @@ namespace Common {
         std::ifstream file;
     };
 
+    class ByteSerializeStream : public SerializeStream {
+    public:
+        NonCopyable(ByteSerializeStream)
+        explicit ByteSerializeStream(std::vector<uint8_t>& inBytes, size_t pointerBegin = 0);
+        ~ByteSerializeStream() override;
+        void Write(const void* data, size_t size) override;
+
+    private:
+        size_t pointer;
+        std::vector<uint8_t>& bytes;
+    };
+
+    class ByteDeserializeStream : public DeserializeStream {
+    public:
+        NonCopyable(ByteDeserializeStream)
+        explicit ByteDeserializeStream(const std::vector<uint8_t>& inBytes, size_t pointerBegin = 0);
+        ~ByteDeserializeStream() override;
+        void Read(void* data, size_t size) override;
+
+    private:
+        size_t pointer;
+        const std::vector<uint8_t>& bytes;
+    };
+
     template <typename T>
     struct Serializer {
         static constexpr bool serializable = false;
