@@ -118,7 +118,7 @@ private:
     FReversedZPerspectiveProjection rzProjection;
 
     struct {
-        FVec3 forward { .0f, .0f, .1f };
+        FVec3 forward { .0f, .0f, 1.f };
         FVec3 side { 1.f, .0f, .0f };
         FVec3 up { .0f, 1.f, .0f };
     } axis;

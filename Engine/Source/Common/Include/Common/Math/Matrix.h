@@ -870,7 +870,7 @@ namespace Common {
     const Matrix<T, L, L> MatConsts<T, L, L>::identity = Internal::GetIdentityMatrix<T, L>();
 
     template <typename T, uint8_t R, uint8_t C>
-    inline Vector<T, R> operator*(Matrix<T, R, C>& mat, Vector<T, C>& vec) {
+    inline Vector<T, R> operator*(const Matrix<T, R, C>& mat, const Vector<T, C>& vec) {
         Vector<T, R> result;
         for (auto i = 0; i < R; i++) {
             result[i] = mat.Row(i).Dot(vec);
