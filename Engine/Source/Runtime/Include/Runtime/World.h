@@ -16,13 +16,14 @@ namespace Runtime {
         ~SystemSchedule();
 
         template <typename S>
-        SystemSchedule& ScheduleAfter();
+        SystemSchedule& ScheduleAfter()
+        {
+            return ScheduleAfter(S::GetClass());
+        }
 
         SystemSchedule& ScheduleAfter(const Mirror::Class& clazz);
 
     private:
-        SystemSchedule& ScheduleAfterInternal(const SystemSignature& depend);
-
         World& world;
         SystemSignature target;
     };
@@ -33,13 +34,14 @@ namespace Runtime {
         ~EventSlot();
 
         template <typename S>
-        EventSlot& Connect();
+        EventSlot& Connect()
+        {
+            return Connect(S::GetClass());
+        }
 
         EventSlot& Connect(const Mirror::Class& clazz);
 
     private:
-        EventSlot& ConnectInternal(const SystemSignature& systemSignature, EventSystem* systemInstance);
-
         World& world;
         EventSignature target;
     };
@@ -52,19 +54,19 @@ namespace Runtime {
         template <typename S>
         SystemSchedule AddSetupSystem()
         {
-            return AddSetupSystemInternal(Internal::SignForClass<S>(), new S());
+            return AddSetupSystem(S::GetClass());
         }
 
         template <typename S>
         SystemSchedule AddTickSystem()
         {
-            return AddTickSystemInternal(Internal::SignForClass<S>(), new S());
+            return AddTickSystem(S::GetClass());
         }
 
         template <typename E>
         EventSlot Event()
         {
-            return EventInternal(Internal::SignForClass<E>());
+            return Event(E::GetClass());
         }
 
         SystemSchedule AddSetupSystem(const Mirror::Class& clazz);
@@ -85,10 +87,6 @@ namespace Runtime {
 
         void RegisterSystem(const SystemSignature& systemSignature, System* systemInstance);
         void ExecuteWorkSystems(const std::vector<SystemSignature>& targets);
-
-        SystemSchedule AddSetupSystemInternal(const SystemSignature& systemSignature, SetupSystem* systemInstance);
-        SystemSchedule AddTickSystemInternal(const SystemSignature& systemSignature, TickSystem* systemInstance);
-        EventSlot EventInternal(const EventSignature& eventSignature);
 
         bool setuped;
         std::string name;
@@ -113,18 +111,4 @@ namespace Runtime {
         World& world;
     };
 #endif
-}
-
-namespace Runtime {
-    template <typename S>
-    SystemSchedule& SystemSchedule::ScheduleAfter()
-    {
-        return ScheduleAfterInternal(Internal::SignForClass<S>());
-    }
-
-    template <typename S>
-    EventSlot& EventSlot::Connect()
-    {
-        return ConnectInternal(Internal::SignForClass<S>(), new S());
-    }
 }

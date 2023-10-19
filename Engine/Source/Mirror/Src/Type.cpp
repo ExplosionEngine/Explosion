@@ -301,7 +301,11 @@ namespace Mirror {
         , typeInfo(params.typeInfo)
         , defaultObject(std::move(params.defaultObject))
         , destructor(std::move(params.destructor))
+        , constructors()
     {
+        if (params.defaultConstructor.has_value()) {
+            constructors.emplace(std::make_pair(NamePresets::defaultConstructor, std::move(params.defaultConstructor.value())));
+        }
     }
 
     Class::~Class() = default;
@@ -480,7 +484,6 @@ namespace Mirror {
     void Class::Deserailize(Common::DeserializeStream& stream, Mirror::Any* obj) const
     {
         Assert(defaultObject.has_value());
-        *obj = defaultObject.value();
 
         std::string className;
         Common::Serializer<std::string>::Deserialize(stream, className);

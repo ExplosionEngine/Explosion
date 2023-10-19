@@ -51,7 +51,7 @@ namespace Core {
         return value == rhs.value;
     }
 
-    const std::string& Uri::Value() const
+    const std::string& Uri::Str() const
     {
         return value;
     }
@@ -108,18 +108,33 @@ namespace Core {
 
     std::filesystem::path AssetUriParser::AbsoluteFilePath() const
     {
-        if (IsEngineAsset()) {
-            return Paths::EngineAssetPath() / Common::StringUtils::AfterFirst(content, "Engine");
-        } else if (IsProjectAsset()) {
-            return Paths::ProjectAssetPath() / Common::StringUtils::AfterFirst(content, "Project");
+        std::filesystem::path path;
+#if BUILD_TEST
+        if (IsEngineTestAsset()) {
+            path = Paths::EngineTestPath() / Common::StringUtils::AfterFirst(content, "Engine/Test/");
         } else if (IsEnginePluginAsset()) {
+#else
+        if (IsEnginePluginAsset()) {
+#endif
             std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Engine/Plugin/");
-            return Paths::EnginePluginAssetPath(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
+            path = Paths::EnginePluginAssetPath(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
         } else if (IsProjectPluginAsset()) {
             std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Project/Plugin/");
-            return Paths::ProjectPluginAssetPath(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
+            path = Paths::ProjectPluginAssetPath(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
+        } else if (IsEngineAsset()) {
+            path = Paths::EngineAssetPath() / Common::StringUtils::AfterFirst(content, "Engine/");
+        } else if (IsProjectAsset()) {
+            path = Paths::ProjectAssetPath() / Common::StringUtils::AfterFirst(content, "Project/");
         } else {
-            return {};
+            AssertWithReason(false, "bad asset uri");
         }
+        return path.concat(".expa");
     }
+
+#if BUILD_TEST
+    bool AssetUriParser::IsEngineTestAsset() const
+    {
+        return Common::StringUtils::RegexMatch(content, R"(Engine/Test/.*)");
+    }
+#endif
 }

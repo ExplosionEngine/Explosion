@@ -14,12 +14,12 @@ namespace MirrorTool {
     template <uint8_t N>
     struct Tab {
         template <typename S>
-        friend S& operator<<(S& file, const Tab& tab)
+        friend S& operator<<(S& stream, const Tab& tab)
         {
             for (auto i = 0; i < N * 4; i++) {
-                file << " ";
+                stream << " ";
             }
-            return file;
+            return stream;
         }
     };
 
@@ -78,6 +78,12 @@ namespace MirrorTool {
         stream << ";" << std::endl;
         stream << Tab<1>() << "return 0;" << std::endl;
         stream << "}();" << std::endl;
+        stream << std::endl;
+        stream << fmt::format("const Mirror::Class& {}::GetClass()", fullName) << std::endl;
+        stream << "{" << std::endl;
+        stream << Tab<1>() << fmt::format("static const Mirror::Class& clazz = Mirror::Class::Get<{}>();", fullName) << std::endl;
+        stream << Tab<1>() << "return clazz;" << std::endl;
+        stream << "}" << std::endl;
         stream << std::endl;
 
         for (const auto& internalClass : clazz.classes) {

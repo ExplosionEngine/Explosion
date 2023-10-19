@@ -8,7 +8,6 @@ namespace Runtime::Internal {
     SystemSignature Internal::SignForClass(const Mirror::Class& clazz)
     {
         SystemSignature result;
-        result.canReflect = true;
         result.typeId = clazz.GetTypeInfo()->id;
         result.name = clazz.GetName();
         return result;
@@ -24,9 +23,9 @@ namespace Runtime {
 
     SystemCommands::~SystemCommands() = default;
 
-    Entity SystemCommands::Create()
+    Entity SystemCommands::Create(Entity hint)
     {
-        return registry.create();
+        return registry.create(hint);
     }
 
     void SystemCommands::Destroy(Entity inEntity)

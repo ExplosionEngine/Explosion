@@ -11,10 +11,10 @@
 namespace Rendering {
     class Scene : public Render::IScene {
     public:
-        void AddLight(Render::ILightSceneProxy *inProxy) override;
-        void RemoveLight(Render::ILightSceneProxy *inProxy) override;
-        void AddPrimitive(Render::IPrimitiveSceneProxy *inProxy) override;
-        void RemovePrimitive(Render::IPrimitiveSceneProxy *inProxy) override;
+        void AddLight(Render::ILightSceneProxy* inProxy) override;
+        void RemoveLight(Render::ILightSceneProxy* inProxy) override;
+        void AddPrimitive(Render::IPrimitiveSceneProxy* inProxy) override;
+        void RemovePrimitive(Render::IPrimitiveSceneProxy* inProxy) override;
 
     private:
         std::unordered_set<Render::ILightSceneProxy*> lights;

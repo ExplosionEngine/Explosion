@@ -10,25 +10,33 @@
 using namespace Core;
 using namespace Runtime;
 
-struct BasicTest_Position : public Component {
+struct EClass() BasicTest_Position : public Component {
+    EComponentBody(BasicTest_Position)
+
     float x;
     float y;
     float z;
 };
 
-struct BasicTest_Velocity : public Component {
+struct EClass() BasicTest_Velocity : public Component {
+    EComponentBody(BasicTest_Velocity)
+
     float x;
     float y;
     float z;
 };
 
-struct BasicTest_GlobalStatus : public State {
+struct EClass() BasicTest_GlobalState : public State {
+    EStateBody(BasicTest_GlobalState)
+
     Entity testEntity0 = entityNull;
     Entity testEntity1 = entityNull;
 };
 
-struct BasicTest_MotionSystem : public TickSystem {
+struct EClass() BasicTest_MotionSystem : public TickSystem {
 public:
+    EClassBody(BasicTest_MotionSystem)
+
     void Execute(Runtime::SystemCommands& commands) override
     {
         commands.StartQuery<BasicTest_Position, BasicTest_Velocity>().Each([](BasicTest_Position& position, BasicTest_Velocity& velocity) -> void {
@@ -39,17 +47,19 @@ public:
     }
 };
 
-struct BasicTest_WorldSetupSystem : public SetupSystem {
+struct EClass() BasicTest_WorldSetupSystem : public SetupSystem {
 public:
+    EClassBody(BasicTest_WorldSetupSystem)
+
     void Execute(Runtime::SystemCommands& commands) override
     {
-        commands.EmplaceState<BasicTest_GlobalStatus>(BasicTest_GlobalStatus {
+        commands.EmplaceState<BasicTest_GlobalState>(BasicTest_GlobalState {
             {},
             commands.Create(),
             commands.Create()
         });
 
-        const auto* savedEntities = commands.GetState<BasicTest_GlobalStatus>();
+        const auto* savedEntities = commands.GetState<BasicTest_GlobalState>();
         commands.Emplace<BasicTest_Position>(savedEntities->testEntity0, BasicTest_Position {{}, 1.0f, 2.0f, 3.0f});
         commands.Emplace<BasicTest_Velocity>(savedEntities->testEntity0, BasicTest_Velocity {{}, 1.0f, 1.0f, 1.0f});
         commands.Emplace<BasicTest_Position>(savedEntities->testEntity1, BasicTest_Position {{}, 2.0f, 3.0f, 4.0f});
@@ -57,14 +67,18 @@ public:
     }
 };
 
-struct StateTest_TestState : public State {
+struct EClass() StateTest_TestState : public State {
+    EStateBody(StateTest_TestState)
+
     int32_t a;
     int32_t b;
     int32_t c;
 };
 
-struct StateTest_WorldSetupSystem : public SetupSystem {
+struct EClass() StateTest_WorldSetupSystem : public SetupSystem {
 public:
+    EClassBody(StateTest_WorldSetupSystem)
+
     void Execute(Runtime::SystemCommands& commands) override
     {
         commands.EmplaceState<StateTest_TestState>(
@@ -90,22 +104,28 @@ public:
     }
 };
 
-struct SystemScheduleTest_Context : public State {
+struct EClass() SystemScheduleTest_Context : public State {
+    EStateBody(SystemScheduleTest_Context)
+
     bool system1Executed;
     bool system2Executed;
     bool system3Executed;
 };
 
-struct SystemScheduleTest_WorldSetupSystem : public SetupSystem {
+struct EClass() SystemScheduleTest_WorldSetupSystem : public SetupSystem {
 public:
+    EClassBody(SystemScheduleTest_WorldSetupSystem)
+
     void Execute(Runtime::SystemCommands& commands) override
     {
         commands.EmplaceState<SystemScheduleTest_Context>(SystemScheduleTest_Context { {}, false, false, false });
     }
 };
 
-struct SystemScheduleTest_System1 : public TickSystem {
+struct EClass() SystemScheduleTest_System1 : public TickSystem {
 public:
+    EClassBody(SystemScheduleTest_System1)
+
     void Execute(Runtime::SystemCommands& commands) override
     {
         ASSERT_TRUE(commands.HasState<SystemScheduleTest_Context>());
@@ -121,8 +141,10 @@ public:
     }
 };
 
-struct SystemScheduleTest_System2 : public TickSystem {
+struct EClass() SystemScheduleTest_System2 : public TickSystem {
 public:
+    EClassBody(SystemScheduleTest_System2)
+
     void Execute(Runtime::SystemCommands& commands) override
     {
         ASSERT_TRUE(commands.HasState<SystemScheduleTest_Context>());
@@ -138,8 +160,10 @@ public:
     }
 };
 
-struct SystemScheduleTest_System3 : public TickSystem {
+struct EClass() SystemScheduleTest_System3 : public TickSystem {
 public:
+    EClassBody(SystemScheduleTest_System3)
+
     void Execute(Runtime::SystemCommands& commands) override
     {
         ASSERT_TRUE(commands.HasState<SystemScheduleTest_Context>());
@@ -155,7 +179,9 @@ public:
     }
 };
 
-struct EventTest_GlobalStatus : public State {
+struct EClass() EventTest_GlobalState : public State {
+    EStateBody(EventTest_GlobalState)
+
     bool stateAdded;
     bool stateUpdated;
     bool stateRemoved;
@@ -170,14 +196,16 @@ struct EClass() EventTest_EmptyState : public State {
 };
 
 struct EClass() EventTest_EmptyComponent : public Component {
-    ECompBody(EventTest_EmptyComponent)
+    EComponentBody(EventTest_EmptyComponent)
 };
 
-struct EventTest_WorldSetupSystem : public SetupSystem {
+struct EClass() EventTest_WorldSetupSystem : public SetupSystem {
+    EClassBody(EventTest_WorldSetupSystem)
+
     void Execute(Runtime::SystemCommands& commands) override
     {
         Entity testEntity = commands.Create();
-        commands.EmplaceState<EventTest_GlobalStatus>(EventTest_GlobalStatus {
+        commands.EmplaceState<EventTest_GlobalState>(EventTest_GlobalState {
             {},
             false,
             false,
@@ -192,10 +220,12 @@ struct EventTest_WorldSetupSystem : public SetupSystem {
     }
 };
 
-struct EventTest_WorldTickSystem : public TickSystem {
+struct EClass() EventTest_WorldTickSystem : public TickSystem {
+    EClassBody(EventTest_WorldTickSystem)
+
     void Execute(Runtime::SystemCommands& commands) override
     {
-        const auto* globalState = commands.GetState<EventTest_GlobalStatus>();
+        const auto* globalState = commands.GetState<EventTest_GlobalState>();
         if (globalState->stateUpdated) {
             ASSERT_TRUE(globalState->stateAdded);
         }
@@ -227,85 +257,101 @@ struct EventTest_WorldTickSystem : public TickSystem {
 };
 
 struct EClass() EventTest_OnStateAddedSystem : public EventSystem {
-    EStateBody(EventTest_OnStateAddedSystem)
+    EClassBody(EventTest_OnStateAddedSystem)
 
     void OnReceiveEvent(Runtime::SystemCommands& commands, const Mirror::Any& eventRef) override
     {
-        auto* globalStatus = commands.GetState<EventTest_GlobalStatus>();
-        globalStatus->stateAdded = true;
-        commands.UpdatedState<EventTest_GlobalStatus>();
+        auto* globalState = commands.GetState<EventTest_GlobalState>();
+        globalState->stateAdded = true;
+        commands.UpdatedState<EventTest_GlobalState>();
     }
 };
 
-struct EventTest_OnStateUpdatedSystem : public EventSystem {
+struct EClass() EventTest_OnStateUpdatedSystem : public EventSystem {
+    EClassBody(EventTest_OnStateUpdatedSystem)
+
     void OnReceiveEvent(Runtime::SystemCommands& commands, const Mirror::Any& eventRef) override
     {
-        auto* globalStatus = commands.GetState<EventTest_GlobalStatus>();
-        globalStatus->stateUpdated = true;
-        commands.UpdatedState<EventTest_GlobalStatus>();
+        auto* globalState = commands.GetState<EventTest_GlobalState>();
+        globalState->stateUpdated = true;
+        commands.UpdatedState<EventTest_GlobalState>();
     }
 };
 
-struct EventTest_OnStateRemoveSystem : public EventSystem {
+struct EClass() EventTest_OnStateRemoveSystem : public EventSystem {
+    EClassBody(EventTest_OnStateRemoveSystem)
+
     void OnReceiveEvent(Runtime::SystemCommands& commands, const Mirror::Any& eventRef) override
     {
-        auto* globalStatus = commands.GetState<EventTest_GlobalStatus>();
-        globalStatus->stateRemoved = true;
-        commands.UpdatedState<EventTest_GlobalStatus>();
+        auto* globalState = commands.GetState<EventTest_GlobalState>();
+        globalState->stateRemoved = true;
+        commands.UpdatedState<EventTest_GlobalState>();
     }
 };
 
-struct EventTest_OnComponentAddedSystem : public EventSystem {
+struct EClass() EventTest_OnComponentAddedSystem : public EventSystem {
+    EClassBody(EventTest_OnComponentAddedSystem)
+
     void OnReceiveEvent(Runtime::SystemCommands& commands, const Mirror::Any& eventRef) override
     {
         EventDecoder<EventTest_EmptyComponent::Added> decoder(eventRef);
-        Entity entity = commands.GetState<EventTest_GlobalStatus>()->testEntity;
+        Entity entity = commands.GetState<EventTest_GlobalState>()->testEntity;
         ASSERT_EQ(entity, decoder.Get().entity);
 
-        auto* globalStatus = commands.GetState<EventTest_GlobalStatus>();
-        globalStatus->componentAdded = true;
-        commands.UpdatedState<EventTest_GlobalStatus>();
+        auto* globalState = commands.GetState<EventTest_GlobalState>();
+        globalState->componentAdded = true;
+        commands.UpdatedState<EventTest_GlobalState>();
     }
 };
 
-struct EventTest_OnComponentUpdatedSystem : public EventSystem {
+struct EClass() EventTest_OnComponentUpdatedSystem : public EventSystem {
+    EClassBody(EventTest_OnComponentUpdatedSystem)
+
     void OnReceiveEvent(Runtime::SystemCommands& commands, const Mirror::Any& eventRef) override
     {
         EventDecoder<EventTest_EmptyComponent::Updated> decoder(eventRef);
-        Entity entity = commands.GetState<EventTest_GlobalStatus>()->testEntity;
+        Entity entity = commands.GetState<EventTest_GlobalState>()->testEntity;
         ASSERT_EQ(entity, decoder.Get().entity);
 
-        auto* globalStatus = commands.GetState<EventTest_GlobalStatus>();
-        globalStatus->componentUpdated = true;
-        commands.UpdatedState<EventTest_GlobalStatus>();
+        auto* globalState = commands.GetState<EventTest_GlobalState>();
+        globalState->componentUpdated = true;
+        commands.UpdatedState<EventTest_GlobalState>();
     }
 };
 
-struct EventTest_OnComponentRemovedSystem : public EventSystem {
+struct EClass() EventTest_OnComponentRemovedSystem : public EventSystem {
+    EClassBody(EventTest_OnComponentRemovedSystem)
+
     void OnReceiveEvent(Runtime::SystemCommands& commands, const Mirror::Any& eventRef) override
     {
         EventDecoder<EventTest_EmptyComponent::Removed> decoder(eventRef);
-        Entity entity = commands.GetState<EventTest_GlobalStatus>()->testEntity;
+        Entity entity = commands.GetState<EventTest_GlobalState>()->testEntity;
         ASSERT_EQ(entity, decoder.Get().entity);
 
-        auto* globalStatus = commands.GetState<EventTest_GlobalStatus>();
-        globalStatus->componentRemoved = true;
-        commands.UpdatedState<EventTest_GlobalStatus>();
+        auto* globalState = commands.GetState<EventTest_GlobalState>();
+        globalState->componentRemoved = true;
+        commands.UpdatedState<EventTest_GlobalState>();
     }
 };
 
-struct CustomEventTest_CustomEvent {
+struct EClass() CustomEventTest_CustomEvent {
+    EClassBody(CustomEventTest_CustomEvent)
+
     int value;
 };
 
-struct CustomEventTest_WorldSetupSystem : public SetupSystem {
+struct EClass() CustomEventTest_WorldSetupSystem : public SetupSystem {
+    EClassBody(CustomEventTest_WorldSetupSystem)
+
     void Execute(Runtime::SystemCommands& commands) override
     {
         commands.Broadcast(CustomEventTest_CustomEvent { 1 });
     }
 };
 
-struct CustomEventTest_CustomEventSystem : public EventSystem {
+struct EClass() CustomEventTest_CustomEventSystem : public EventSystem {
+    EClassBody(CustomEventTest_CustomEventSystem)
+
     void OnReceiveEvent(Runtime::SystemCommands& commands, const Mirror::Any& eventRef) override
     {
         EventDecoder<CustomEventTest_CustomEvent> decoder(eventRef);

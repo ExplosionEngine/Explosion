@@ -26,7 +26,7 @@
     DeclareSingleCompLifecycleEvent(Updated) \
     DeclareSingleCompLifecycleEvent(Removed) \
 
-#define ECompBody(compClass) \
+#define EComponentBody(compClass) \
     EClassBody(compClass) \
     DeclareCompLifecycleEvents() \
 
@@ -40,13 +40,12 @@
     DeclareSingleStateLifecycleEvent(Updated) \
     DeclareSingleStateLifecycleEvent(Removed) \
 
-#define EStateBody(compClass) \
-    EClassBody(compClass) \
+#define EStateBody(stateClass) \
+    EClassBody(stateClass) \
     DeclareStateLifecycleEvents() \
 
 namespace Runtime {
     struct ClassSignature {
-        bool canReflect;
         size_t typeId;
         std::string name;
 
@@ -73,22 +72,7 @@ namespace std {
 }
 
 namespace Runtime::Internal {
-    template <typename T>
-    SystemSignature SignForClass()
-    {
-        static SystemSignature signature = []() -> SystemSignature {
-            const Mirror::Class* clazz = Mirror::Class::Find<T>();
-
-            SystemSignature result;
-            result.canReflect = clazz != nullptr;
-            result.typeId = Mirror::GetTypeInfo<T>()->id;
-            result.name = clazz != nullptr ? clazz->GetName() : "";
-            return result;
-        }();
-        return signature;
-    }
-
-    SystemSignature SignForClass(const Mirror::Class& clazz);
+    RUNTIME_API SystemSignature SignForClass(const Mirror::Class& clazz);
 
     template <typename T, typename = void>
     struct HasAddedEvent : std::false_type {};
@@ -165,7 +149,12 @@ namespace Runtime {
         void BroadcastEvent(const E& event)
         {
             Mirror::Any eventRef = std::ref(event);
-            BroadcastEvent(Internal::SignForClass<E>(), event);
+            BroadcastEvent(E::GetClass(), eventRef);
+        }
+
+        void BroadcastEvent(const Mirror::Class& clazz, const Mirror::Any& eventRef)
+        {
+            BroadcastEvent(Internal::SignForClass(clazz), eventRef);
         }
     };
 
@@ -207,7 +196,7 @@ namespace Runtime {
         SystemCommands(entt::registry& inRegistry, ECSHost& inHost);
         ~SystemCommands();
 
-        Entity Create();
+        Entity Create(Entity hint = entityNull);
         void Destroy(Entity inEntity);
         bool Valid(Entity inEntity) const;
 
@@ -270,7 +259,7 @@ namespace Runtime {
         template <typename S, typename... Args>
         void EmplaceState(Args&&... args)
         {
-            StateSignature signature = Internal::SignForClass<S>();
+            StateSignature signature = Internal::SignForClass(S::GetClass());
             auto iter = host.states.find(signature);
             Assert(iter == host.states.end());
             host.states.emplace(std::make_pair(signature, Mirror::Any(S(std::forward<Args>(args)...))));
@@ -282,7 +271,7 @@ namespace Runtime {
         template <typename S>
         S* GetState()
         {
-            StateSignature signature = Internal::SignForClass<S>();
+            StateSignature signature = Internal::SignForClass(S::GetClass());
             auto iter = host.states.find(signature);
             if (iter == host.states.end()) {
                 return nullptr;
@@ -300,7 +289,7 @@ namespace Runtime {
         template <typename S, typename F>
         void PatchState(F&& patchFunc)
         {
-            StateSignature signature = Internal::SignForClass<S>();
+            StateSignature signature = Internal::SignForClass(S::GetClass());
             auto iter = host.states.find(signature);
             Assert(iter != host.states.end());
             patchFunc(iter->second.As<S&>());
@@ -312,7 +301,7 @@ namespace Runtime {
         template <typename S, typename... Args>
         void SetState(Args&&... args)
         {
-            StateSignature signature = Internal::SignForClass<S>();
+            StateSignature signature = Internal::SignForClass(S::GetClass());
             auto iter = host.states.find(signature);
             Assert(iter != host.states.end());
             iter->second = S(std::forward<Args>(args)...);
@@ -332,7 +321,7 @@ namespace Runtime {
         template <typename S>
         void RemoveState()
         {
-            StateSignature signature = Internal::SignForClass<S>();
+            StateSignature signature = Internal::SignForClass(S::GetClass());
             auto iter = host.states.find(signature);
             Assert(iter != host.states.end());
             host.states.erase(signature);

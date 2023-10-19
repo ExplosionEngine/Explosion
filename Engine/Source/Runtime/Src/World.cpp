@@ -15,16 +15,12 @@ namespace Runtime {
 
     SystemSchedule::~SystemSchedule() = default;
 
-    SystemSchedule& SystemSchedule::ScheduleAfterInternal(const SystemSignature& depend)
+    SystemSchedule& SystemSchedule::ScheduleAfter(const Mirror::Class& clazz)
     {
+        SystemSignature depend = Internal::SignForClass(clazz);
         Assert(world.systemDependencies.contains(target));
         world.systemDependencies.at(target).emplace_back(depend);
         return *this;
-    }
-
-    SystemSchedule& SystemSchedule::ScheduleAfter(const Mirror::Class& clazz)
-    {
-        return ScheduleAfterInternal(Internal::SignForClass(clazz));
     }
 
     EventSlot::EventSlot(World& inWorld, EventSignature inTarget)
@@ -37,11 +33,8 @@ namespace Runtime {
 
     EventSlot& EventSlot::Connect(const Mirror::Class& clazz)
     {
-        return ConnectInternal(Internal::SignForClass(clazz), clazz.GetDefaultConstructor().NewObject().As<EventSystem*>());
-    }
-
-    EventSlot& EventSlot::ConnectInternal(const SystemSignature& systemSignature, EventSystem* systemInstance)
-    {
+        SystemSignature systemSignature = Internal::SignForClass(clazz);
+        EventSystem* systemInstance = clazz.GetDefaultConstructor().NewObject().As<EventSystem*>();
         world.RegisterSystem(systemSignature, systemInstance);
         Assert(world.eventSlots.contains(target));
         world.eventSlots.at(target).emplace_back(systemSignature);
@@ -73,17 +66,29 @@ namespace Runtime {
 
     SystemSchedule World::AddSetupSystem(const Mirror::Class& clazz)
     {
-        return AddSetupSystemInternal(Internal::SignForClass(clazz), clazz.GetDefaultConstructor().NewObject().As<SetupSystem*>());
+        SystemSignature systemSignature = Internal::SignForClass(clazz);
+        auto* systemInstance = clazz.GetDefaultConstructor().NewObject().As<SetupSystem*>();
+        RegisterSystem(systemSignature, systemInstance);
+        setupSystems.emplace_back(systemSignature);
+        return SystemSchedule(*this, systemSignature);
     }
 
     SystemSchedule World::AddTickSystem(const Mirror::Class& clazz)
     {
-        return AddTickSystemInternal(Internal::SignForClass(clazz), clazz.GetDefaultConstructor().NewObject().As<TickSystem*>());
+        SystemSignature systemSignature = Internal::SignForClass(clazz);
+        auto* systemInstance = clazz.GetDefaultConstructor().NewObject().As<TickSystem*>();
+        RegisterSystem(systemSignature, systemInstance);
+        tickSystems.emplace_back(systemSignature);
+        return SystemSchedule(*this, systemSignature);
     }
 
     EventSlot World::Event(const Mirror::Class& clazz)
     {
-        return EventInternal(Internal::SignForClass(clazz));
+        EventSignature eventSignature = Internal::SignForClass(clazz);
+        if (!eventSlots.contains(eventSignature)) {
+            eventSlots.emplace(std::make_pair(eventSignature, std::vector<EventSignature> {}));
+        }
+        return EventSlot(*this, eventSignature);
     }
 
     void World::Setup()
@@ -140,28 +145,6 @@ namespace Runtime {
 
         tf::Executor executor;
         executor.run(taskflow).wait();
-    }
-
-    SystemSchedule World::AddSetupSystemInternal(const SystemSignature& systemSignature, SetupSystem* systemInstance)
-    {
-        RegisterSystem(systemSignature, systemInstance);
-        setupSystems.emplace_back(systemSignature);
-        return SystemSchedule(*this, systemSignature);
-    }
-
-    SystemSchedule World::AddTickSystemInternal(const SystemSignature& systemSignature, TickSystem* systemInstance)
-    {
-        RegisterSystem(systemSignature, systemInstance);
-        tickSystems.emplace_back(systemSignature);
-        return SystemSchedule(*this, systemSignature);
-    }
-
-    EventSlot World::EventInternal(const EventSignature& eventSignature)
-    {
-        if (!eventSlots.contains(eventSignature)) {
-            eventSlots.emplace(std::make_pair(eventSignature, std::vector<EventSignature> {}));
-        }
-        return EventSlot(*this, eventSignature);
     }
 
 #if BUILD_TEST

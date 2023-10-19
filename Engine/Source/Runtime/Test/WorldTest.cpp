@@ -15,8 +15,8 @@ TEST(WorldTest, BasicTest)
     WorldTestHelper testHelper(world);
     SystemCommands commands = testHelper.HackCreateSystemCommands();
 
-    ASSERT_TRUE(commands.HasState<BasicTest_GlobalStatus>());
-    const auto* savedEntities = commands.GetState<BasicTest_GlobalStatus>();
+    ASSERT_TRUE(commands.HasState<BasicTest_GlobalState>());
+    const auto* savedEntities = commands.GetState<BasicTest_GlobalState>();
 
     const auto* testPosition0 = commands.Get<BasicTest_Position>(savedEntities->testEntity0);
     const auto* testVelocity0 = commands.Get<BasicTest_Velocity>(savedEntities->testEntity0);

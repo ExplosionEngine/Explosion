@@ -158,6 +158,7 @@ namespace Mirror {
         Any NewObjectWith(Any* arguments, uint8_t argumentsSize) const;
 
     private:
+        friend class Registry;
         template <typename C> friend class ClassRegistry;
 
         using Invoker = std::function<Any(Any*, uint8_t)>;
@@ -356,7 +357,7 @@ namespace Mirror {
         [[nodiscard]] static const Class& Get()
         {
             auto iter = typeToNameMap.find(Mirror::GetTypeInfo<C>()->id);
-            Assert(iter != typeToNameMap.end());
+            AssertWithReason(iter != typeToNameMap.end(), "did you forget add EClass() annotation to class ?");
             return Get(iter->second);
         }
 
@@ -432,6 +433,7 @@ namespace Mirror {
             const TypeInfo* typeInfo;
             std::optional<Mirror::Any> defaultObject;
             std::optional<Destructor> destructor;
+            std::optional<Constructor> defaultConstructor;
         };
 
         explicit Class(ConstructParams&& params);

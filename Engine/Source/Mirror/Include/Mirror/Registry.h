@@ -404,6 +404,21 @@ namespace Mirror {
                 };
                 params.destructor = Destructor(std::move(detorParams));
             }
+            if constexpr (std::is_default_constructible_v<C>) {
+                Constructor::ConstructParams ctorParams;
+                ctorParams.name = NamePresets::defaultConstructor;
+                ctorParams.argsNum = 0;
+                ctorParams.argTypeInfos = {};
+                ctorParams.stackConstructor = [](Any* args, size_t argSize) -> Any {
+                    Assert(argSize == 0);
+                    return Any(C());
+                };
+                ctorParams.heapConstructor = [](Any* args, size_t argSize) -> Any {
+                    Assert(argSize == 0);
+                    return Any(new C());
+                };
+                params.defaultConstructor = Constructor(std::move(ctorParams));
+            }
 
             Class::typeToNameMap[typeId] = name;
             classes.emplace(std::make_pair(name, Mirror::Class(std::move(params))));

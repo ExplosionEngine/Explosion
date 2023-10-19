@@ -7,13 +7,31 @@
 #include <string>
 #include <functional>
 #include <unordered_map>
+#include <utility>
 
 #include <Common/Memory.h>
 #include <Common/Serialization.h>
+#include <Common/Concurrent.h>
 #include <Core/Uri.h>
+#include <Mirror/Meta.h>
+#include <Mirror/Type.h>
+#include <Runtime/Api.h>
 
 namespace Runtime {
-    struct Asset {
+    struct EClass() Asset {
+        EClassBody(Asset)
+
+        ECtor()
+        Asset() : uri()
+        {
+        }
+
+        ECtor()
+        explicit Asset(Core::Uri inUri) : uri(std::move(inUri))
+        {
+        }
+
+        EProperty()
         Core::Uri uri;
     };
 
@@ -61,7 +79,7 @@ namespace Runtime {
             return *this;
         }
 
-        const Core::Uri& Uri()
+        const Core::Uri& Uri() const
         {
             Assert(ref != nullptr);
             return ref->uri;
@@ -133,7 +151,46 @@ namespace Runtime {
     requires std::is_base_of_v<Asset, A>
     class WeakAssetRef {
     public:
-        // TODO
+        template <typename A2> WeakAssetRef(AssetRef<A2>& inRef) : ref(inRef.GetSharedRef()) {} // NOLINT
+        WeakAssetRef(WeakAssetRef& other) : ref(other.ref) {} // NOLINT
+        WeakAssetRef(WeakAssetRef&& other) noexcept : ref(std::move(other.ref)) {} // NOLINT
+
+        template <typename A2>
+        WeakAssetRef& operator=(AssetRef<A2>& inRef)
+        {
+            ref = inRef.GetSharedRef();
+            return *this;
+        }
+
+        WeakAssetRef& operator=(WeakAssetRef& other) // NOLINT
+        {
+            ref = other.ref;
+            return *this;
+        }
+
+        WeakAssetRef& operator=(WeakAssetRef&& other) noexcept
+        {
+            ref = std::move(other.ref);
+            return *this;
+        }
+
+        void Reset()
+        {
+            ref.Reset();
+        }
+
+        bool Expired() const
+        {
+            return ref.Expired();
+        }
+
+        AssetRef<A> Lock() const
+        {
+            return ref.Lock();
+        }
+
+    private:
+        Common::WeakRef<A> ref;
     };
 
     template <typename A>
@@ -151,6 +208,12 @@ namespace Runtime {
         {
         }
 
+        explicit SoftAssetRef(AssetRef<A>& inAsset)
+            : uri(inAsset.Uri())
+            , asset(inAsset)
+        {
+        }
+
         SoftAssetRef(const SoftAssetRef<A>& other)
             : uri(other.uri)
             , asset(other.asset)
@@ -164,6 +227,20 @@ namespace Runtime {
         }
 
         ~SoftAssetRef() = default;
+
+        SoftAssetRef& operator=(Core::Uri inUri)
+        {
+            uri = std::move(inUri);
+            asset = nullptr;
+            return *this;
+        }
+
+        SoftAssetRef& operator=(AssetRef<A>& inAsset)
+        {
+            uri = inAsset.Uri();
+            asset = inAsset;
+            return *this;
+        }
 
         SoftAssetRef& operator=(const SoftAssetRef<A>& other)
         {
@@ -199,6 +276,11 @@ namespace Runtime {
             asset = nullptr;
         }
 
+        const Core::Uri& Uri() const
+        {
+            return uri;
+        }
+
     private:
         Core::Uri uri;
         AssetRef<A> asset;
@@ -210,33 +292,121 @@ namespace Runtime {
     template <typename A>
     using OnSoftAssetLoaded = std::function<void()>;
 
-    class AssetManager {
+    class RUNTIME_API AssetManager {
     public:
         static AssetManager& Get();
         ~AssetManager();
 
         template <typename A>
-        AssetRef<A> SyncLoad(const Core::Uri& uri);
+        AssetRef<A> SyncLoad(const Core::Uri& uri)
+        {
+            auto iter = weakAssetRefs.find(uri);
+            if (iter != weakAssetRefs.end() && !iter->second.Expired()) {
+                return iter->second.Lock().StaticCast<A>();
+            }
+
+            AssetRef<A> result = LoadInternal<A>(uri);
+            AssetRef<Asset> tempRef = result.template StaticCast<Asset>();
+            if (iter == weakAssetRefs.end()) {
+                weakAssetRefs.emplace(std::make_pair(uri, WeakAssetRef<Asset>(tempRef)));
+            } else {
+                iter->second = tempRef;
+            }
+            return result;
+        }
 
         template <typename A>
-        void AsyncLoad(const Core::Uri& uri, const OnAssetLoaded<A>& onAssetLoaded);
+        void SyncLoadSoft(SoftAssetRef<A>& softAssetRef)
+        {
+            softAssetRef = SyncLoad<A>(softAssetRef.Uri());
+        }
 
         template <typename A>
-        void SyncLoadSoft(SoftAssetRef<A>& softAssetRef);
+        void AsyncLoad(const Core::Uri& uri, const OnAssetLoaded<A>& onAssetLoaded)
+        {
+            threadPool.EmplaceTask([this, uri, onAssetLoaded]() -> void {
+                AssetRef<A> result = nullptr;
+                {
+                    std::unique_lock<std::mutex> lock(mutex);
+                    auto iter = weakAssetRefs.find(uri);
+                    if (iter != weakAssetRefs.end() && !iter->second.Expired()) {
+                        result = iter->second.Lock().StaticCast<A>();
+                    }
+                }
+
+                if (result == nullptr) {
+                    result = LoadInternal<A>(uri);
+                }
+
+                AssetRef<Asset> tempRef = result.template StaticCast<Asset>();
+                {
+                    std::unique_lock<std::mutex> lock(mutex);
+                    auto iter = weakAssetRefs.find(uri);
+                    if (iter == weakAssetRefs.end()) {
+                        weakAssetRefs.emplace(std::make_pair(uri, WeakAssetRef<Asset>(tempRef)));
+                    } else {
+                        iter->second = tempRef;
+                    }
+                }
+
+                onAssetLoaded(result);
+            });
+        }
 
         template <typename A>
-        void AsyncLoadSoft(const Core::Uri& uri, const OnSoftAssetLoaded<A>& onSoftAssetLoaded);
+        void AsyncLoadSoft(SoftAssetRef<A>& softAssetRef, const OnSoftAssetLoaded<A>& onSoftAssetLoaded)
+        {
+            threadPool.EmplaceTask([this, softAssetRef, onSoftAssetLoaded]() -> void {
+                AsyncLoad(softAssetRef.Uri(), [&](AssetRef<A>& ref) -> void {
+                    softAssetRef = ref;
+                    onSoftAssetLoaded();
+                });
+            });
+        }
 
         template <typename A>
-        void Save(const AssetRef<A>& assetRef);
+        void Save(const AssetRef<A>& assetRef)
+        {
+            if (assetRef == nullptr) {
+                return;
+            }
+
+            Core::AssetUriParser parser(assetRef.Uri());
+            auto pathString = parser.AbsoluteFilePath().string();
+            Common::BinaryFileSerializeStream stream(pathString);
+
+            Mirror::Any ref = std::ref(*assetRef.Get());
+            A::GetClass().Serialize(stream, &ref);
+        }
 
         template <typename A>
-        void SaveSoft(const SoftAssetRef<A>& softAssetRef);
+        void SaveSoft(const SoftAssetRef<A>& softAssetRef)
+        {
+            Save(softAssetRef.Uri());
+        }
 
     private:
+        template <typename A>
+        AssetRef<A> LoadInternal(const Core::Uri& uri)
+        {
+            Core::AssetUriParser parser(uri);
+            auto pathString = parser.AbsoluteFilePath().string();
+            Common::BinaryFileDeserializeStream stream(pathString);
+
+            AssetRef<A> result = Common::SharedRef<A>(new A());
+            Mirror::Any ref = std::ref(*result.Get());
+            A::GetClass().Deserailize(stream, &ref);
+
+            // reset uri is useful for moved asset
+            result->uri = uri;
+            return result;
+        }
+
         AssetManager();
 
-        std::unordered_map<Core::Uri, Common::WeakRef<Asset>> weakAssetRefs;
+        std::mutex mutex;
+        std::unordered_map<Core::Uri, WeakAssetRef<Asset>> weakAssetRefs;
+        Common::ThreadPool threadPool;
     };
 }
 
@@ -250,7 +420,7 @@ namespace Common {
         static void Serialize(SerializeStream& stream, const Runtime::AssetRef<A>& value)
         {
             TypeIdSerializer<Runtime::AssetRef<A>>::Serialize(stream);
-            // TODO
+            Serializer<Core::Uri>::Serialize(stream, value);
         }
 
         static bool Deserialize(DeserializeStream& stream, Runtime::AssetRef<A>& value)
@@ -259,10 +429,35 @@ namespace Common {
                 return false;
             }
 
-            // TODO
+            Core::Uri uri;
+            Serializer<Core::Uri>::Deserialize(stream, uri);
+            value = Runtime::AssetManager::Get().SyncLoad<A>(uri, uri);
             return true;
         }
     };
 
-    // TODO soft asset ref serialization
+    template <typename A>
+    requires std::is_base_of_v<Runtime::Asset, A>
+    struct Serializer<Runtime::SoftAssetRef<A>> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("Runtime::SoftAssetRef");
+
+        static void Serialize(SerializeStream& stream, const Runtime::SoftAssetRef<A>& value)
+        {
+            TypeIdSerializer<Runtime::AssetRef<A>>::Serialize(stream);
+            Serializer<Core::Uri>::Serialize(stream, value);
+        }
+
+        static bool Deserialize(DeserializeStream& stream, Runtime::SoftAssetRef<A>& value)
+        {
+            if (!TypeIdSerializer<Runtime::AssetRef<A>>::Deserialize(stream)) {
+                return false;
+            }
+
+            Core::Uri uri;
+            Serializer<Core::Uri>::Deserialize(stream, uri);
+            value = uri;
+            return true;
+        }
+    };
 }

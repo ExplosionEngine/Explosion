@@ -40,14 +40,12 @@ struct MirrorInfoRegistry {
 
         Mirror::Registry::Get()
             .Class<SerializationTestStruct0>("SerializationTestStruct0")
-                .Constructor<>(Mirror::NamePresets::defaultConstructor)
                 .MemberVariable<&SerializationTestStruct0::a>("a")
                 .MemberVariable<&SerializationTestStruct0::b>("b")
                 .MemberVariable<&SerializationTestStruct0::c>("c");
 
         Mirror::Registry::Get()
             .Class<SerializationTestStruct1>("SerializationTestStruct1")
-                .Constructor<>(Mirror::NamePresets::defaultConstructor)
                 .MemberVariable<&SerializationTestStruct1::a>("a")
                 .MemberVariable<&SerializationTestStruct1::b>("b")
                 .MemberVariable<&SerializationTestStruct1::c>("c")
@@ -113,7 +111,7 @@ TEST(SerializationTest, ClassFileSerializationTest)
         Common::BinaryFileDeserializeStream stream(fileName.string());
 
         const auto& clazz = Mirror::Class::Get("SerializationTestStruct0");
-        Mirror::Any obj = clazz.GetConstructor(Mirror::NamePresets::defaultConstructor).ConstructOnStack();
+        Mirror::Any obj = clazz.GetDefaultConstructor().ConstructOnStack();
         clazz.Deserailize(stream, &obj);
 
         const auto& ref = obj.As<const SerializationTestStruct0&>();
