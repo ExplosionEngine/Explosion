@@ -358,6 +358,7 @@ namespace MirrorTool {
             fmt::format("-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{}.sdk/usr/include", MACOS_SDK_VERSION),
             fmt::format("-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{}.sdk/usr/include/c++/v1", MACOS_SDK_VERSION),
             fmt::format("-I/Library/Developer/CommandLineTools/usr/lib/clang/{}.{}.{}/include", __clang_major__, __clang_minor__, __clang_patchlevel__),
+            fmt::format("-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/{}.{}.{}/include", __clang_major__, __clang_minor__, __clang_patchlevel__),
 #elif DPLATFORM_LINUX
             "-DPLATFORM_LINUX=1",
 #endif
