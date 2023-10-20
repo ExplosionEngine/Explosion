@@ -14,6 +14,7 @@
 
 #include <Mirror/Api.h>
 #include <Common/Hash.h>
+#include <Common/Debug.h>
 
 #if COMPILER_MSVC
 #define functionSignature __FUNCSIG__
@@ -40,12 +41,9 @@ namespace Mirror {
         const bool isConst;
         const bool isLValueReference;
         const bool isRValueReference;
+        const bool isPointer;
         std::function<TypeInfo*()> addConst;
-        std::function<TypeInfo*()> removeConst;
-        std::function<TypeInfo*()> addLValueRef;
-        std::function<TypeInfo*()> addRValueRef;
         std::function<TypeInfo*()> removeRef;
-        std::function<TypeInfo*()> removeCVRef;
     };
 
     template <typename T>
@@ -59,12 +57,9 @@ namespace Mirror {
             std::is_const_v<T>,
             std::is_lvalue_reference_v<T>,
             std::is_rvalue_reference_v<T>,
+            std::is_pointer_v<T>,
             []() -> TypeInfo* { return GetTypeInfo<std::add_const_t<T>>(); },
-            []() -> TypeInfo* { return GetTypeInfo<std::remove_const_t<T>>(); },
-            []() -> TypeInfo* { return GetTypeInfo<std::add_lvalue_reference_t<T>>(); },
-            []() -> TypeInfo* { return GetTypeInfo<std::add_rvalue_reference_t<T>>(); },
-            []() -> TypeInfo* { return GetTypeInfo<std::remove_reference_t<T>>(); },
-            []() -> TypeInfo* { return GetTypeInfo<std::remove_cvref_t<T>>(); }
+            []() -> TypeInfo* { return GetTypeInfo<std::remove_reference_t<T>>(); }
         };
         return &typeInfo;
     }

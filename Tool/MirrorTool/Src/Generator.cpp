@@ -49,7 +49,11 @@ namespace MirrorTool {
         stream << fmt::format("int {}::_mirrorRegistry = []() -> int ", fullName) << std::endl;
         stream << "{" << std::endl;
         stream << Tab<1>() << "Mirror::Registry::Get()";
-        stream << std::endl << Tab<2>() << fmt::format(R"(.Class<{}>("{}"))", fullName, fullName);
+        if (clazz.baseClassName.empty()) {
+            stream << std::endl << Tab<2>() << fmt::format(R"(.Class<{}>("{}"))", fullName, fullName);
+        } else {
+            stream << std::endl << Tab<2>() << fmt::format(R"(.Class<{}, {}>("{}"))", fullName, clazz.baseClassName, fullName);
+        }
         stream << GetMetaDataCode<3>(clazz);
         for (const auto& constructor : clazz.constructors) {
             stream << std::endl << Tab<3>() << fmt::format(R"(.Constructor<{}>("{}"))", constructor.name, constructor.name);

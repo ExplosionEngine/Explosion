@@ -383,8 +383,8 @@ namespace Mirror {
             return GlobalRegistry(globalScope);
         }
 
-        template <typename C>
-        requires std::is_class_v<C>
+        template <typename C, typename B = void>
+        requires std::is_class_v<C> && (std::is_void_v<B> || (std::is_class_v<B> && std::is_base_of_v<B, C>))
         ClassRegistry<C> Class(const std::string& name)
         {
             TypeId typeId = GetTypeInfo<C>()->id;
@@ -394,6 +394,16 @@ namespace Mirror {
             Mirror::Class::ConstructParams params;
             params.name = name;
             params.typeInfo = GetTypeInfo<C>();
+            params.baseClassGetter = []() -> const Mirror::Class* {
+                if constexpr (std::is_void_v<B>) {
+                    return nullptr;
+                } else {
+                    return &Mirror::Class::Get<B>();
+                }
+            };
+            params.classPointerChecker = [](Mirror::Any* target) -> bool {
+                return target->IsPointer() && (target->Convertible<C*>() || target->Convertible<const C*>());
+            };
             if constexpr (std::is_default_constructible_v<C>) {
                 params.defaultObject = Any(C());
             }

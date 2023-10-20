@@ -98,11 +98,21 @@ namespace Runtime {
     class SystemCommands;
     static constexpr auto entityNull = entt::null;
 
-    struct Component {};
-    struct State {};
-    struct Event {};
+    struct EClass() Component {
+        EClassBody(Component)
+    };
 
-    struct System {
+    struct EClass() State {
+        EClassBody(State)
+    };
+
+    struct EClass() Event {
+        EClassBody(Event)
+    };
+
+    struct EClass() System {
+        EClassBody(System)
+
         virtual ~System() = default;
     };
 

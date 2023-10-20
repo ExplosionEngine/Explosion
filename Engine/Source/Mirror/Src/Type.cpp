@@ -299,6 +299,8 @@ namespace Mirror {
     Class::Class(ConstructParams&& params)
         : Type(std::move(params.name))
         , typeInfo(params.typeInfo)
+        , baseClassGetter(std::move(params.baseClassGetter))
+        , classPointerChecker(std::move(params.classPointerChecker))
         , defaultObject(std::move(params.defaultObject))
         , destructor(std::move(params.destructor))
         , constructors()
@@ -339,6 +341,11 @@ namespace Mirror {
     bool Class::HasDefaultConstructor() const
     {
         return HasConstructor(NamePresets::defaultConstructor);
+    }
+
+    const Mirror::Class* Class::GetBaseClass() const
+    {
+        return baseClassGetter();
     }
 
     const Constructor* Class::FindDefaultConstructor() const

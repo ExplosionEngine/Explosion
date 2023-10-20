@@ -34,7 +34,8 @@ namespace Runtime {
     EventSlot& EventSlot::Connect(const Mirror::Class& clazz)
     {
         SystemSignature systemSignature = Internal::SignForClass(clazz);
-        EventSystem* systemInstance = clazz.GetDefaultConstructor().NewObject().As<EventSystem*>();
+        auto object = clazz.GetDefaultConstructor().NewObject();
+        auto* systemInstance = clazz.DynamicCast<EventSystem>(&object);
         world.RegisterSystem(systemSignature, systemInstance);
         Assert(world.eventSlots.contains(target));
         world.eventSlots.at(target).emplace_back(systemSignature);
@@ -67,7 +68,8 @@ namespace Runtime {
     SystemSchedule World::AddSetupSystem(const Mirror::Class& clazz)
     {
         SystemSignature systemSignature = Internal::SignForClass(clazz);
-        auto* systemInstance = clazz.GetDefaultConstructor().NewObject().As<SetupSystem*>();
+        auto object = clazz.GetDefaultConstructor().NewObject();
+        auto* systemInstance = clazz.DynamicCast<SetupSystem>(&object);
         RegisterSystem(systemSignature, systemInstance);
         setupSystems.emplace_back(systemSignature);
         return SystemSchedule(*this, systemSignature);
@@ -76,7 +78,8 @@ namespace Runtime {
     SystemSchedule World::AddTickSystem(const Mirror::Class& clazz)
     {
         SystemSignature systemSignature = Internal::SignForClass(clazz);
-        auto* systemInstance = clazz.GetDefaultConstructor().NewObject().As<TickSystem*>();
+        auto object = clazz.GetDefaultConstructor().NewObject();
+        auto* systemInstance = clazz.DynamicCast<TickSystem>(&object);
         RegisterSystem(systemSignature, systemInstance);
         tickSystems.emplace_back(systemSignature);
         return SystemSchedule(*this, systemSignature);

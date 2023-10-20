@@ -164,6 +164,11 @@ namespace Mirror {
             return typeInfo->isLValueReference;
         }
 
+        [[nodiscard]] bool IsPointer() const
+        {
+            return typeInfo->isPointer;
+        }
+
         // T -> T: true
         // T -> const T: true
         // T -> T&: true
@@ -184,9 +189,9 @@ namespace Mirror {
         // const T& -> T&: false
         // const T& -> const T&: true
         template <typename T>
-        [[nodiscard]] bool Castable()
+        [[nodiscard]] bool Convertible()
         {
-            return CastableInternal<T>(typeInfo);
+            return ConvertibleInternal<T>(typeInfo);
         }
 
         // T const -> T: false
@@ -209,15 +214,28 @@ namespace Mirror {
         // const T& const -> T&: false
         // const T& const -> const T&: true
         template <typename T>
-        [[nodiscard]] bool Castable() const
+        [[nodiscard]] bool Convertible() const
         {
-            return CastableInternal<T>(typeInfo->addConst());
+            return ConvertibleInternal<T>(typeInfo->addConst());
         }
 
         template <typename T>
         T As()
         {
-            Assert(Castable<T>());
+            Assert(Convertible<T>());
+            return ForceAs<T>();
+        }
+
+        template <typename T>
+        T As() const
+        {
+            Assert(Convertible<T>());
+            return ForceAs<T>();
+        }
+
+        template <typename T>
+        T ForceAs()
+        {
             if (IsReference()) {
                 return reinterpret_cast<std::reference_wrapper<std::remove_reference_t<T>>*>(data.data())->get();
             } else {
@@ -226,9 +244,8 @@ namespace Mirror {
         }
 
         template <typename T>
-        T As() const
+        T ForceAs() const
         {
-            Assert(Castable<T>());
             if (IsReference()) {
                 return reinterpret_cast<std::add_const_t<std::reference_wrapper<std::remove_reference_t<T>>>*>(data.data())->get();
             } else {
@@ -241,7 +258,7 @@ namespace Mirror {
         T* TryAs()
         {
             Assert(!IsReference());
-            if (Castable<T>()) {
+            if (Convertible<T>()) {
                 return reinterpret_cast<std::remove_reference_t<T>*>(data.data());
             } else {
                 return nullptr;
@@ -252,7 +269,7 @@ namespace Mirror {
         T* TryAs() const
         {
             Assert(!IsReference());
-            if (Castable<T>()) {
+            if (Convertible<T>()) {
                 void* dataPtr = const_cast<uint8_t*>(data.data());
                 return *reinterpret_cast<std::remove_reference_t<T>*>(dataPtr);
             } else {
@@ -277,7 +294,7 @@ namespace Mirror {
 
     private:
         template <typename T>
-        [[nodiscard]] static bool CastableInternal(TypeInfo* actualTypeInfo)
+        [[nodiscard]] static bool ConvertibleInternal(TypeInfo* actualTypeInfo)
         {
             if (actualTypeInfo->isLValueReference) {
                 auto* removeRefType = actualTypeInfo->removeRef();
