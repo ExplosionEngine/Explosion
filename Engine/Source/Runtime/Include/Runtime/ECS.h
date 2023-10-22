@@ -72,25 +72,16 @@ namespace std {
 }
 
 namespace Runtime::Internal {
-    RUNTIME_API SystemSignature SignForClass(const Mirror::Class& clazz);
+    template <typename C>
+    SystemSignature SignForClass()
+    {
+        const Mirror::Class& clazz = C::GetClass();
 
-    template <typename T, typename = void>
-    struct HasAddedEvent : std::false_type {};
-
-    template <typename T>
-    struct HasAddedEvent<T, std::void_t<typename T::Added>> : std::true_type {};
-
-    template <typename T, typename = void>
-    struct HasUpdatedEvent : std::false_type {};
-
-    template <typename T>
-    struct HasUpdatedEvent<T, std::void_t<typename T::Updated>> : std::true_type {};
-
-    template <typename T, typename = void>
-    struct HasRemovedEvent : std::false_type {};
-
-    template <typename T>
-    struct HasRemovedEvent<T, std::void_t<typename T::Removed>> : std::true_type {};
+        SystemSignature result;
+        result.typeId = clazz.GetTypeInfo()->id;
+        result.name = clazz.GetName();
+        return result;
+    }
 }
 
 namespace Runtime {
@@ -112,60 +103,100 @@ namespace Runtime {
 
     struct EClass() System {
         EClassBody(System)
-
-        virtual ~System() = default;
     };
 
-    template <typename E>
-    struct EventDecoder {
-    public:
-        explicit EventDecoder(const Mirror::Any& inEventRef)
-            : eventRef(inEventRef)
-        {
-        }
-
-        const E& Get()
-        {
-            return eventRef.As<const E&>();
-        }
-
-    private:
-        const Mirror::Any& eventRef;
-    };
-
-    struct WorkSystem : public System {
-        virtual void Execute(SystemCommands& commands) = 0;
-    };
-
-    struct SetupSystem : public WorkSystem {};
-    struct TickSystem : public WorkSystem {};
-
-    struct EventSystem : public System {
-        virtual void OnReceiveEvent(SystemCommands& commands, const Mirror::Any& eventRef) = 0;
+    enum class SystemType : uint8_t {
+        setup,
+        tick,
+        event,
+        max
     };
 
     struct ECSHost {
-    protected:
-        ECSHost() = default;
+    public:
+        template <typename S>
+        void AddSetupSystem()
+        {
+            // TODO
+        }
 
-        virtual void BroadcastEvent(EventSignature eventSignature, const Mirror::Any& eventRef) = 0;
+        template <typename S>
+        void AddTickSystem()
+        {
+            // TODO
+        }
 
-        std::unordered_map<StateSignature, Mirror::Any> states;
+        template <typename E, typename S>
+        void AddEventSystem()
+        {
+            // TODO
+        }
 
-    private:
-        friend class SystemCommands;
+        template <typename S>
+        void RemoveSetupSystem()
+        {
+            // TODO
+        }
+
+        template <typename S>
+        void RemoveTickSystem()
+        {
+            // TODO
+        }
+
+        template <typename E, typename S>
+        void RemoveEventSystem()
+        {
+            // TODO
+        }
 
         template <typename E>
         void BroadcastEvent(const E& event)
         {
-            Mirror::Any eventRef = std::ref(event);
-            BroadcastEvent(E::GetClass(), eventRef);
+            // TODO
         }
 
-        void BroadcastEvent(const Mirror::Class& clazz, const Mirror::Any& eventRef)
+    protected:
+        virtual void Setup()
         {
-            BroadcastEvent(Internal::SignForClass(clazz), eventRef);
+            // TODO
         }
+
+        virtual void Tick(float timeMS)
+        {
+            // TODO
+        }
+
+        virtual void Shutdown()
+        {
+            // TODO
+        }
+
+        ECSHost() = default;
+
+        struct SystemInstance {
+            SystemType type;
+            Common::UniqueRef<System> object;
+            union {
+                std::function<void(SystemCommands&)> setupFunc;
+                std::function<void(SystemCommands&, float timeMS)> tickFunc;
+                std::function<void(SystemCommands&, Mirror::Any*)> onReceiveEventFunc;
+            };
+        };
+
+        bool setuped;
+        entt::registry registry;
+        std::unordered_map<SystemSignature, SystemInstance> systemInstances;
+        std::vector<SystemSignature> setupSystems;
+        std::vector<SystemSignature> tickSystems;
+        std::unordered_map<EventSignature, std::vector<SystemSignature>> eventSystems;
+        std::unordered_map<SystemSignature, std::vector<SystemSignature>> setupSystemDependencies;
+        std::unordered_map<SystemSignature, std::vector<SystemSignature>> tickSystemDependencies;
+        std::unordered_map<EventSignature, std::unordered_map<SystemSignature, std::vector<SystemSignature>>> eventSystemDependencies;
+        std::unordered_map<StateSignature, Mirror::Any> states;
+
+    private:
+        friend class SystemCommands;
     };
 
     template <typename... Args>
@@ -214,9 +245,7 @@ namespace Runtime {
         void Emplace(Entity entity, Args&&... args)
         {
             registry.emplace<C>(entity, std::forward<Args>(args)...);
-            if constexpr (Internal::HasAddedEvent<C>::value) {
-                Broadcast(typename C::Added { {}, entity });
-            }
+            Broadcast(typename C::Added { {}, entity });
         }
 
         template <typename C>
@@ -235,35 +264,27 @@ namespace Runtime {
         void Patch(Entity entity, F&& patchFunc)
         {
             registry.patch<C>(entity, patchFunc);
-            if constexpr (Internal::HasUpdatedEvent<C>::value) {
-                Broadcast(typename C::Updated { {}, entity });
-            }
+            Broadcast(typename C::Updated { {}, entity });
         }
 
         template <typename C, typename... Args>
         void Set(Entity entity, Args&&... args)
         {
             registry.replace<C>(entity, std::forward<Args>(args)...);
-            if constexpr (Internal::HasUpdatedEvent<C>::value) {
-                Broadcast(typename C::Updated { {}, entity });
-            }
+            Broadcast(typename C::Updated { {}, entity });
         }
 
         template <typename C>
         void Updated(Entity entity)
         {
-            if constexpr (Internal::HasUpdatedEvent<C>::value) {
-                Broadcast(typename C::Updated { {}, entity });
-            }
+            Broadcast(typename C::Updated { {}, entity });
         }
 
         template <typename C>
         void Remove(Entity entity)
         {
             registry.remove<C>(entity);
-            if constexpr (Internal::HasRemovedEvent<C>::value) {
-                Broadcast(typename C::Removed { {}, entity });
-            }
+            Broadcast(typename C::Removed { {}, entity });
         }
 
         template <typename S, typename... Args>
@@ -273,9 +294,7 @@ namespace Runtime {
             auto iter = host.states.find(signature);
             Assert(iter == host.states.end());
             host.states.emplace(std::make_pair(signature, Mirror::Any(S(std::forward<Args>(args)...))));
-            if constexpr (Internal::HasAddedEvent<S>::value) {
-                Broadcast(typename S::Added {});
-            }
+            Broadcast(typename S::Added {});
         }
 
         template <typename S>
@@ -303,9 +322,7 @@ namespace Runtime {
             auto iter = host.states.find(signature);
             Assert(iter != host.states.end());
             patchFunc(iter->second.As<S&>());
-            if constexpr (Internal::HasUpdatedEvent<S>::value) {
-                Broadcast(typename S::Updated {});
-            }
+            Broadcast(typename S::Updated {});
         }
 
         template <typename S, typename... Args>
@@ -315,17 +332,13 @@ namespace Runtime {
             auto iter = host.states.find(signature);
             Assert(iter != host.states.end());
             iter->second = S(std::forward<Args>(args)...);
-            if constexpr (Internal::HasUpdatedEvent<S>::value) {
-                Broadcast(typename S::Updated {});
-            }
+            Broadcast(typename S::Updated {});
         }
 
         template <typename S>
         void UpdatedState()
         {
-            if constexpr (Internal::HasUpdatedEvent<S>::value) {
-                Broadcast(typename S::Updated {});
-            }
+            Broadcast(typename S::Updated {});
         }
 
         template <typename S>
@@ -335,9 +348,7 @@ namespace Runtime {
             auto iter = host.states.find(signature);
             Assert(iter != host.states.end());
             host.states.erase(signature);
-            if constexpr (Internal::HasRemovedEvent<S>::value) {
-                Broadcast(typename S::Removed {});
-            }
+            Broadcast(typename S::Removed {});
         }
 
         template <typename... C, typename... E>
