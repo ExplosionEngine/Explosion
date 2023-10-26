@@ -397,20 +397,6 @@ namespace Mirror {
             }
         }
 
-        template <typename T>
-        T* DynamicCast(Any* target) const
-        {
-            bool isClassPointer = classPointerChecker(target);
-            if (isClassPointer) {
-                return target->ForceAs<T*>();
-            }
-            const Class* baseClass = GetBaseClass();
-            if (baseClass == nullptr) {
-                return nullptr;
-            }
-            return baseClass->DynamicCast<T>(target);
-        }
-
         [[nodiscard]] const TypeInfo* GetTypeInfo() const;
         [[nodiscard]] bool HasDefaultConstructor() const;
         [[nodiscard]] const Mirror::Class* GetBaseClass() const;
@@ -444,13 +430,11 @@ namespace Mirror {
         template <typename T> friend class ClassRegistry;
 
         using BaseClassGetter = std::function<const Mirror::Class*()>;
-        using ClassPointerChecker = std::function<bool(Mirror::Any*)>;
 
         struct ConstructParams {
             std::string name;
             const TypeInfo* typeInfo;
             BaseClassGetter baseClassGetter;
-            ClassPointerChecker classPointerChecker;
             std::optional<Mirror::Any> defaultObject;
             std::optional<Destructor> destructor;
             std::optional<Constructor> defaultConstructor;
@@ -460,7 +444,6 @@ namespace Mirror {
 
         const TypeInfo* typeInfo;
         BaseClassGetter baseClassGetter;
-        ClassPointerChecker classPointerChecker;
         std::optional<Mirror::Any> defaultObject;
         std::optional<Destructor> destructor;
         std::unordered_map<std::string, Constructor> constructors;

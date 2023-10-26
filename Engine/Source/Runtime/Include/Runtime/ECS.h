@@ -4,11 +4,15 @@
 
 #pragma once
 
+#include <tuple>
+
 #include <entt/entt.hpp>
+#include <taskflow/taskflow.hpp>
 
 #include <Common/Utility.h>
 #include <Common/Hash.h>
 #include <Common/String.h>
+#include <Common/Memory.h>
 #include <Mirror/Meta.h>
 #include <Mirror/Type.h>
 #include <Runtime/Api.h>
@@ -44,15 +48,21 @@
     EClassBody(stateClass) \
     DeclareStateLifecycleEvents() \
 
+#define DeclareSystemDependencies(...) \
+    using Dependencies = std::tuple<__VA_ARGS__>; \
+
 namespace Runtime {
-    struct ClassSignature {
-        size_t typeId;
+    enum class ClassSignatureType {
+        staticClass,
+        max
+    };
+
+    struct RUNTIME_API ClassSignature {
+        ClassSignatureType type;
+        size_t id;
         std::string name;
 
-        bool operator==(const ClassSignature& rhs) const
-        {
-            return typeId == rhs.typeId;
-        }
+        bool operator==(const ClassSignature& rhs) const;
     };
 
     using ComponentSignature = ClassSignature;
@@ -66,21 +76,54 @@ namespace std {
     struct hash<Runtime::ClassSignature> {
         size_t operator()(const Runtime::ClassSignature& value) const
         {
-            return std::hash<size_t>{}(value.typeId);
+            return std::hash<size_t>{}(value.id);
         }
     };
 }
 
 namespace Runtime::Internal {
     template <typename C>
-    SystemSignature SignForClass()
+    ClassSignature SignForStaticClass()
     {
-        const Mirror::Class& clazz = C::GetClass();
+        static ClassSignature signature = []() -> ClassSignature {
+            const Mirror::Class& clazz = C::GetClass();
 
-        SystemSignature result;
-        result.typeId = clazz.GetTypeInfo()->id;
-        result.name = clazz.GetName();
+            std::tuple<ClassSignatureType, Mirror::TypeId> source = { ClassSignatureType::staticClass, clazz.GetTypeInfo()->id };
+
+            ClassSignature result;
+            result.type = ClassSignatureType::staticClass;
+            result.id = clazz.GetTypeInfo()->id;
+            result.name = clazz.GetName();
+            return result;
+        }();
+        return signature;
+    }
+
+    template <typename S, typename C = void>
+    struct SystemHasDependencies : std::false_type {};
+
+    template <typename S>
+    struct SystemHasDependencies<S, std::void_t<typename S::Dependencies>> : std::true_type {};
+
+    template <typename Dependencies, size_t... I>
+    std::vector<SystemSignature> BuildDependencyListForStaticSystemInternal(std::index_sequence<I...>)
+    {
+        std::vector<SystemSignature> result(std::tuple_size_v<Dependencies>);
+        (void) std::initializer_list<int> { ([&]() -> void {
+            result[I] = Internal::SignForStaticClass<std::tuple_element_t<I, Dependencies>>();
+        }(), 0)... };
         return result;
+    }
+
+    template <typename S>
+    std::vector<SystemSignature> BuildDependencyListForStaticSystem()
+    {
+        if constexpr (SystemHasDependencies<S>::value) {
+            using Dependencies = typename S::Dependencies;
+            return BuildDependencyListForStaticSystemInternal<Dependencies>(std::make_index_sequence<std::tuple_size_v<Dependencies>> {});
+        } else {
+            return std::vector<SystemSignature> {};
+        }
     }
 }
 
@@ -112,84 +155,168 @@ namespace Runtime {
         max
     };
 
-    struct ECSHost {
+    struct RUNTIME_API ECSHost {
     public:
         template <typename S>
         void AddSetupSystem()
         {
-            // TODO
+            SystemSignature signature = Internal::SignForStaticClass<S>();
+            Assert(!systemInstances.contains(signature) && !setupSystems.contains(signature) && !setupSystemDependencies.contains(signature));
+
+            auto* object = new S();
+            SystemInstance instance;
+            instance.type = SystemType::setup;
+            instance.object = object;
+            instance.setupFunc = [object](SystemCommands& commands) -> void {
+                object->Setup(commands);
+            };
+
+            systemInstances.emplace(std::make_pair(signature, std::move(instance)));
+            setupSystems.emplace(signature);
+            setupSystemDependencies.emplace(std::make_pair(signature, Internal::BuildDependencyListForStaticSystem<S>()));
         }
 
         template <typename S>
         void AddTickSystem()
         {
-            // TODO
+            SystemSignature signature = Internal::SignForStaticClass<S>();
+            Assert(!systemInstances.contains(signature) && !tickSystems.contains(signature) && !tickSystemDependencies.contains(signature));
+
+            auto* object = new S();
+            SystemInstance instance;
+            instance.type = SystemType::tick;
+            instance.object = object;
+            instance.tickFunc = [object](SystemCommands& commands, float timeMS) -> void {
+                object->Tick(commands, timeMS);
+            };
+
+            systemInstances.emplace(std::make_pair(signature, std::move(instance)));
+            tickSystems.emplace(signature);
+            tickSystemDependencies.emplace(std::make_pair(signature, Internal::BuildDependencyListForStaticSystem<S>()));
         }
 
         template <typename E, typename S>
         void AddEventSystem()
         {
-            // TODO
+            EventSignature eventSignature = Internal::SignForStaticClass<E>();
+            if (!eventSystems.contains(eventSignature)) {
+                eventSystems.emplace(std::make_pair(eventSignature, std::unordered_set<SystemSignature> {}));
+                eventSystemDependencies.emplace(std::make_pair(eventSignature, std::unordered_map<SystemSignature, std::vector<SystemSignature>> {}));
+            }
+
+            auto& systems = eventSystems.at(eventSignature);
+            auto& systemDependencies = eventSystemDependencies.at(eventSignature);
+            SystemSignature systemSignature = Internal::SignForStaticClass<S>();
+            Assert(!systemInstances.contains(systemSignature) && !systems.contains(systemSignature) && !systemDependencies.contains(systemSignature));
+
+            auto* object = new S();
+            SystemInstance instance;
+            instance.type = SystemType::event;
+            instance.object = object;
+            instance.onReceiveFunc = [object](SystemCommands& commands, Mirror::Any* eventRef) -> void {
+                object->OnReceive(commands, eventRef->As<const E&>());
+            };
+
+            systemInstances.emplace(std::make_pair(systemSignature, std::move(instance)));
+            systems.emplace(systemSignature);
+            systemDependencies.emplace(std::make_pair(systemSignature, Internal::BuildDependencyListForStaticSystem<S>()));
         }
 
         template <typename S>
         void RemoveSetupSystem()
         {
-            // TODO
+            SystemSignature signature = Internal::SignForStaticClass<S>();
+            systemInstances.erase(signature);
+            setupSystems.erase(signature);
+            setupSystemDependencies.erase(signature);
         }
 
         template <typename S>
         void RemoveTickSystem()
         {
-            // TODO
+            SystemSignature signature = Internal::SignForStaticClass<S>();
+            systemInstances.erase(signature);
+            tickSystems.erase(signature);
+            tickSystemDependencies.erase(signature);
         }
 
         template <typename E, typename S>
         void RemoveEventSystem()
         {
-            // TODO
+            EventSignature eventSignature = Internal::SignForStaticClass<E>();
+            Assert(eventSystems.contains(eventSignature) && eventSystemDependencies.contains(eventSignature));
+
+            auto& systems = eventSystems.at(eventSignature);
+            auto& systemDependencies = eventSystemDependencies.at(eventSignature);
+
+            SystemSignature systemSignature = Internal::SignForStaticClass<S>();
+            systemInstances.erase(systemSignature);
+            systems.erase(systemSignature);
+            systemDependencies.erase(systemSignature);
         }
 
         template <typename E>
         void BroadcastEvent(const E& event)
         {
-            // TODO
+            EventSignature eventSignature = Internal::SignForStaticClass<E>();
+            if (!eventSystems.contains(eventSignature)) {
+                return;
+            }
+
+            const auto& systems = eventSystems.at(eventSignature);
+            const auto& systemDependencies = eventSystemDependencies.at(eventSignature);
+
+            tf::Taskflow taskflow;
+            std::unordered_map<SystemSignature, tf::Task> tasks;
+            tasks.reserve(systems.size());
+
+            SystemCommands systemCommands(*this);
+            Mirror::Any eventRef = std::ref(event);
+
+            for (const auto& system : systems) {
+                const auto& systemInstance = systemInstances.at(system);
+                Assert(systemInstance.type == SystemType::event);
+
+                tasks.emplace(std::make_pair(system, taskflow.emplace([&]() -> void {
+                    systemInstance.onReceiveFunc(systemCommands, &eventRef);
+                })));
+            }
+
+            for (const auto& dependencies : systemDependencies) {
+                auto& task = tasks.at(dependencies.first);
+                for (const auto& depend : dependencies.second) {
+                    task.succeed(tasks.at(depend));
+                }
+            }
         }
 
     protected:
-        virtual void Setup()
-        {
-            // TODO
-        }
-
-        virtual void Tick(float timeMS)
-        {
-            // TODO
-        }
-
-        virtual void Shutdown()
-        {
-            // TODO
-        }
+        virtual void Setup();
+        virtual void Tick(float timeMS);
+        virtual void Shutdown();
 
         ECSHost() = default;
 
-        struct SystemInstance {
+        struct RUNTIME_API SystemInstance {
             SystemType type;
             Common::UniqueRef<System> object;
             union {
                 std::function<void(SystemCommands&)> setupFunc;
                 std::function<void(SystemCommands&, float timeMS)> tickFunc;
-                std::function<void(SystemCommands&, Mirror::Any*)> onReceiveEventFunc;
+                std::function<void(SystemCommands&, Mirror::Any*)> onReceiveFunc;
             };
+
+            SystemInstance();
+            ~SystemInstance();
+            SystemInstance(SystemInstance&& other) noexcept;
         };
 
         bool setuped;
         entt::registry registry;
         std::unordered_map<SystemSignature, SystemInstance> systemInstances;
-        std::vector<SystemSignature> setupSystems;
-        std::vector<SystemSignature> tickSystems;
-        std::unordered_map<EventSignature, std::vector<SystemSignature>> eventSystems;
+        std::unordered_set<SystemSignature> setupSystems;
+        std::unordered_set<SystemSignature> tickSystems;
+        std::unordered_map<EventSignature, std::unordered_set<SystemSignature>> eventSystems;
         std::unordered_map<SystemSignature, std::vector<SystemSignature>> setupSystemDependencies;
         std::unordered_map<SystemSignature, std::vector<SystemSignature>> tickSystemDependencies;
         std::unordered_map<EventSignature, std::unordered_map<SystemSignature, std::vector<SystemSignature>>> eventSystemDependencies;
@@ -234,7 +361,7 @@ namespace Runtime {
     class RUNTIME_API SystemCommands {
     public:
         NonCopyable(SystemCommands)
-        SystemCommands(entt::registry& inRegistry, ECSHost& inHost);
+        explicit SystemCommands(ECSHost& inHost);
         ~SystemCommands();
 
         Entity Create(Entity hint = entityNull);
@@ -290,7 +417,7 @@ namespace Runtime {
         template <typename S, typename... Args>
         void EmplaceState(Args&&... args)
         {
-            StateSignature signature = Internal::SignForClass(S::GetClass());
+            StateSignature signature = Internal::SignForStaticClass<S>();
             auto iter = host.states.find(signature);
             Assert(iter == host.states.end());
             host.states.emplace(std::make_pair(signature, Mirror::Any(S(std::forward<Args>(args)...))));
@@ -300,7 +427,7 @@ namespace Runtime {
         template <typename S>
         S* GetState()
         {
-            StateSignature signature = Internal::SignForClass(S::GetClass());
+            StateSignature signature = Internal::SignForStaticClass<S>();
             auto iter = host.states.find(signature);
             if (iter == host.states.end()) {
                 return nullptr;
@@ -318,7 +445,7 @@ namespace Runtime {
         template <typename S, typename F>
         void PatchState(F&& patchFunc)
         {
-            StateSignature signature = Internal::SignForClass(S::GetClass());
+            StateSignature signature = Internal::SignForStaticClass<S>();
             auto iter = host.states.find(signature);
             Assert(iter != host.states.end());
             patchFunc(iter->second.As<S&>());
@@ -328,7 +455,7 @@ namespace Runtime {
         template <typename S, typename... Args>
         void SetState(Args&&... args)
         {
-            StateSignature signature = Internal::SignForClass(S::GetClass());
+            StateSignature signature = Internal::SignForStaticClass<S>();
             auto iter = host.states.find(signature);
             Assert(iter != host.states.end());
             iter->second = S(std::forward<Args>(args)...);
@@ -344,7 +471,7 @@ namespace Runtime {
         template <typename S>
         void RemoveState()
         {
-            StateSignature signature = Internal::SignForClass(S::GetClass());
+            StateSignature signature = Internal::SignForStaticClass<S>();
             auto iter = host.states.find(signature);
             Assert(iter != host.states.end());
             host.states.erase(signature);

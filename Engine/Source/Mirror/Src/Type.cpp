@@ -300,7 +300,6 @@ namespace Mirror {
         : Type(std::move(params.name))
         , typeInfo(params.typeInfo)
         , baseClassGetter(std::move(params.baseClassGetter))
-        , classPointerChecker(std::move(params.classPointerChecker))
         , defaultObject(std::move(params.defaultObject))
         , destructor(std::move(params.destructor))
         , constructors()
@@ -466,6 +465,11 @@ namespace Mirror {
 
     void Class::Serialize(Common::SerializeStream& stream, Mirror::Any* obj) const
     {
+        const auto* baseClass = GetBaseClass();
+        if (baseClass != nullptr) {
+            baseClass->Serialize(stream, obj);
+        }
+
         Assert(defaultObject.has_value());
 
         std::string name = GetName();
@@ -490,6 +494,11 @@ namespace Mirror {
 
     void Class::Deserailize(Common::DeserializeStream& stream, Mirror::Any* obj) const
     {
+        const auto* baseClass = GetBaseClass();
+        if (baseClass != nullptr) {
+            baseClass->Deserailize(stream, obj);
+        }
+
         Assert(defaultObject.has_value());
 
         std::string className;

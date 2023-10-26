@@ -401,9 +401,6 @@ namespace Mirror {
                     return &Mirror::Class::Get<B>();
                 }
             };
-            params.classPointerChecker = [](Mirror::Any* target) -> bool {
-                return target->IsPointer() && (target->Convertible<C*>() || target->Convertible<const C*>());
-            };
             if constexpr (std::is_default_constructible_v<C>) {
                 params.defaultObject = Any(C());
             }
