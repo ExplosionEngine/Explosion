@@ -159,14 +159,14 @@ namespace Mirror {
             return data.data();
         }
 
-        [[nodiscard]] bool IsReference() const
+        [[nodiscard]] const Mirror::TypeInfo* TypeInfo()
         {
-            return typeInfo->isLValueReference;
+            return typeInfo;
         }
 
-        [[nodiscard]] bool IsPointer() const
+        [[nodiscard]] const Mirror::TypeInfo* TypeInfo() const
         {
-            return typeInfo->isPointer;
+            return typeInfo->addConst();
         }
 
         // T -> T: true
@@ -236,7 +236,7 @@ namespace Mirror {
         template <typename T>
         T ForceAs()
         {
-            if (IsReference()) {
+            if (typeInfo->isLValueReference) {
                 return reinterpret_cast<std::reference_wrapper<std::remove_reference_t<T>>*>(data.data())->get();
             } else {
                 return *reinterpret_cast<std::remove_reference_t<T>*>(data.data());
@@ -246,7 +246,7 @@ namespace Mirror {
         template <typename T>
         T ForceAs() const
         {
-            if (IsReference()) {
+            if (typeInfo->isLValueReference) {
                 return reinterpret_cast<std::add_const_t<std::reference_wrapper<std::remove_reference_t<T>>>*>(data.data())->get();
             } else {
                 void* dataPtr = const_cast<uint8_t*>(data.data());
@@ -257,7 +257,7 @@ namespace Mirror {
         template <typename T>
         T* TryAs()
         {
-            Assert(!IsReference());
+            Assert(!typeInfo->isLValueReference);
             if (Convertible<T>()) {
                 return reinterpret_cast<std::remove_reference_t<T>*>(data.data());
             } else {
@@ -268,7 +268,7 @@ namespace Mirror {
         template <typename T>
         T* TryAs() const
         {
-            Assert(!IsReference());
+            Assert(!typeInfo->isLValueReference);
             if (Convertible<T>()) {
                 void* dataPtr = const_cast<uint8_t*>(data.data());
                 return *reinterpret_cast<std::remove_reference_t<T>*>(dataPtr);
@@ -294,21 +294,21 @@ namespace Mirror {
 
     private:
         template <typename T>
-        [[nodiscard]] static bool ConvertibleInternal(TypeInfo* actualTypeInfo)
+        [[nodiscard]] static bool ConvertibleInternal(const Mirror::TypeInfo* actualTypeInfo)
         {
+            static auto convertibleNonPolymorphism = [](const Mirror::TypeInfo* info) -> bool {
+                if (info->isConst) {
+                    return info->id == GetTypeInfo<std::remove_reference_t<T>>()->id;
+                } else {
+                    return info->id == GetTypeInfo<std::remove_cvref_t<T>>()->id;
+                }
+            };
+
             if (actualTypeInfo->isLValueReference) {
                 auto* removeRefType = actualTypeInfo->removeRef();
-                if (removeRefType->isConst) {
-                    return removeRefType->id == GetTypeInfo<std::remove_reference_t<T>>()->id;
-                } else {
-                    return removeRefType->id == GetTypeInfo<std::remove_cvref_t<T>>()->id;
-                }
+                return convertibleNonPolymorphism(removeRefType);
             } else {
-                if (actualTypeInfo->isConst) {
-                    return actualTypeInfo->id == GetTypeInfo<std::remove_reference_t<T>>()->id;
-                } else {
-                    return actualTypeInfo->id == GetTypeInfo<std::remove_cvref_t<T>>()->id;
-                }
+                return convertibleNonPolymorphism(actualTypeInfo);
             }
         }
 
@@ -338,7 +338,7 @@ namespace Mirror {
             new(data.data()) RefWrapperType(ref);
         }
 
-        TypeInfo* typeInfo = nullptr;
+        const Mirror::TypeInfo* typeInfo = nullptr;
         const Internal::AnyRtti* rtti;
         std::vector<uint8_t> data;
     };

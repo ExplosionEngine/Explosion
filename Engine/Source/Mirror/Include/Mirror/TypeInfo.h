@@ -42,8 +42,12 @@ namespace Mirror {
         const bool isLValueReference;
         const bool isRValueReference;
         const bool isPointer;
+        const bool isClass;
         std::function<TypeInfo*()> addConst;
+        std::function<TypeInfo*()> removeConst;
         std::function<TypeInfo*()> removeRef;
+        std::function<TypeInfo*()> removeCVRef;
+        std::function<TypeInfo*()> removePointer;
     };
 
     template <typename T>
@@ -58,8 +62,12 @@ namespace Mirror {
             std::is_lvalue_reference_v<T>,
             std::is_rvalue_reference_v<T>,
             std::is_pointer_v<T>,
+            std::is_class_v<T>,
             []() -> TypeInfo* { return GetTypeInfo<std::add_const_t<T>>(); },
-            []() -> TypeInfo* { return GetTypeInfo<std::remove_reference_t<T>>(); }
+            []() -> TypeInfo* { return GetTypeInfo<std::remove_const_t<T>>(); },
+            []() -> TypeInfo* { return GetTypeInfo<std::remove_reference_t<T>>(); },
+            []() -> TypeInfo* { return GetTypeInfo<std::remove_cvref_t<T>>(); },
+            []() -> TypeInfo* { return GetTypeInfo<std::remove_pointer_t<T>>(); }
         };
         return &typeInfo;
     }

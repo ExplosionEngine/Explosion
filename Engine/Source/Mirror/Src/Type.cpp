@@ -332,6 +332,30 @@ namespace Mirror {
         return iter->second;
     }
 
+    bool Class::Has(const TypeInfo* typeInfo)
+    {
+        Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
+        return typeToNameMap.contains(typeInfo->id);
+    }
+
+    const Class* Class::Find(const TypeInfo* typeInfo)
+    {
+        Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
+        auto iter = typeToNameMap.find(typeInfo->id);
+        if (iter == typeToNameMap.end()) {
+            return nullptr;
+        }
+        return Find(iter->second);
+    }
+
+    const Class& Class::Get(const TypeInfo* typeInfo)
+    {
+        Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
+        auto iter = typeToNameMap.find(typeInfo->id);
+        AssertWithReason(iter != typeToNameMap.end(), "did you forget add EClass() annotation to class ?");
+        return Get(iter->second);
+    }
+
     const TypeInfo* Class::GetTypeInfo() const
     {
         return typeInfo;
@@ -345,6 +369,23 @@ namespace Mirror {
     const Mirror::Class* Class::GetBaseClass() const
     {
         return baseClassGetter();
+    }
+
+    bool Class::IsBaseOf(const Mirror::Class* derivedClass) const
+    {
+        return derivedClass->IsDerivedFrom(this);
+    }
+
+    bool Class::IsDerivedFrom(const Mirror::Class* baseClass) const
+    {
+        const Mirror::Class* tBase = GetBaseClass();
+        while (tBase != nullptr) {
+            if (tBase == baseClass) {
+                return true;
+            }
+            tBase = tBase->GetBaseClass();
+        }
+        return false;
     }
 
     const Constructor* Class::FindDefaultConstructor() const

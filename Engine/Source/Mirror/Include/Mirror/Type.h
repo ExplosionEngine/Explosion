@@ -338,32 +338,29 @@ namespace Mirror {
         requires std::is_class_v<C>
         [[nodiscard]] static bool Has()
         {
-            return typeToNameMap.contains(Mirror::GetTypeInfo<C>()->id);
+            return Has(Mirror::GetTypeInfo<C>());
         }
 
         template <typename C>
         requires std::is_class_v<C>
         [[nodiscard]] static const Class* Find()
         {
-            auto iter = typeToNameMap.find(Mirror::GetTypeInfo<C>()->id);
-            if (iter == typeToNameMap.end()) {
-                return nullptr;
-            }
-            return Find(iter->second);
+            return Find(Mirror::GetTypeInfo<C>());
         }
 
         template <typename C>
         requires std::is_class_v<C>
         [[nodiscard]] static const Class& Get()
         {
-            auto iter = typeToNameMap.find(Mirror::GetTypeInfo<C>()->id);
-            AssertWithReason(iter != typeToNameMap.end(), "did you forget add EClass() annotation to class ?");
-            return Get(iter->second);
+            return Get(Mirror::GetTypeInfo<C>());
         }
 
         [[nodiscard]] static bool Has(const std::string& name);
         [[nodiscard]] static const Class* Find(const std::string& name);
         [[nodiscard]] static const Class& Get(const std::string& name);
+        [[nodiscard]] static bool Has(const TypeInfo* typeInfo);
+        [[nodiscard]] static const Class* Find(const TypeInfo* typeInfo);
+        [[nodiscard]] static const Class& Get(const TypeInfo* typeInfo);
 
         template <typename F>
         void ForEachStaticVariable(F&& func) const
@@ -400,6 +397,8 @@ namespace Mirror {
         [[nodiscard]] const TypeInfo* GetTypeInfo() const;
         [[nodiscard]] bool HasDefaultConstructor() const;
         [[nodiscard]] const Mirror::Class* GetBaseClass() const;
+        [[nodiscard]] bool IsBaseOf(const Mirror::Class* derivedClass) const;
+        [[nodiscard]] bool IsDerivedFrom(const Mirror::Class* baseClass) const;
         [[nodiscard]] const Constructor* FindDefaultConstructor() const;
         [[nodiscard]] const Constructor& GetDefaultConstructor() const;
         [[nodiscard]] bool HasDestructor() const;
