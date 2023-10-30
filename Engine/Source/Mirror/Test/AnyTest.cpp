@@ -9,7 +9,7 @@
 
 #include <gtest/gtest.h>
 
-#include <Mirror/Any.h>
+#include <Mirror/Mirror.h>
 
 struct AnyTestStruct0 {
     int intValue;
@@ -131,11 +131,11 @@ TEST(AnyTest, DataTest)
 TEST(AnyTest, IsReferenceTest)
 {
     Mirror::Any a0 = 1;
-    ASSERT_EQ(a0.IsReference(), false);
+    ASSERT_EQ(a0.TypeInfo()->isLValueReference, false);
 
     float v2 = 2.0f;
     a0 = std::ref(v2);
-    ASSERT_EQ(a0.IsReference(), true);
+    ASSERT_EQ(a0.TypeInfo()->isLValueReference, true);
 }
 
 TEST(AnyTest, ConvertibleTest)

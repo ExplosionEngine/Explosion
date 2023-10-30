@@ -5,12 +5,98 @@
 #include <utility>
 #include <sstream>
 
-#include <Mirror/Type.h>
+#include <Mirror/Mirror.h>
 #include <Mirror/Registry.h>
 #include <Common/Debug.h>
 #include <Common/String.h>
 
+namespace Mirror::Internal {
+    TypeId ComputeTypeId(std::string_view sigName)
+    {
+        return Common::HashUtils::CityHash(sigName.data(), sigName.size());
+    }
+}
+
 namespace Mirror {
+    Any::~Any()
+    {
+        if (rtti != nullptr) {
+            rtti->detor(data.data());
+        }
+    }
+
+    Any::Any(const Any& inAny)
+    {
+        typeInfo = inAny.typeInfo;
+        rtti = inAny.rtti;
+        data.resize(inAny.data.size());
+        rtti->copy(data.data(), inAny.data.data());
+    }
+
+    Any::Any(Any&& inAny) noexcept
+    {
+        typeInfo = inAny.typeInfo;
+        rtti = inAny.rtti;
+        data.resize(inAny.data.size());
+        rtti->move(data.data(), inAny.data.data());
+    }
+
+    Any& Any::operator=(const Any& inAny)
+    {
+        if (&inAny == this) {
+            return *this;
+        }
+        Reset();
+        typeInfo = inAny.typeInfo;
+        rtti = inAny.rtti;
+        rtti->copy(data.data(), inAny.data.data());
+        return *this;
+    }
+
+    Any& Any::operator=(Mirror::Any&& inAny) noexcept
+    {
+        Reset();
+        typeInfo = inAny.typeInfo;
+        rtti = inAny.rtti;
+        rtti->move(data.data(), inAny.data.data());
+        return *this;
+    }
+
+    size_t Any::Size() const
+    {
+        return data.size();
+    }
+
+    const void* Any::Data() const
+    {
+        return data.data();
+    }
+
+    const Mirror::TypeInfo* Any::TypeInfo()
+    {
+        return typeInfo;
+    }
+
+    const Mirror::TypeInfo* Any::TypeInfo() const
+    {
+        return typeInfo->addConst();
+    }
+
+    void Any::Reset()
+    {
+        if (rtti != nullptr) {
+            rtti->detor(data.data());
+        }
+        typeInfo = nullptr;
+        rtti = nullptr;
+    }
+
+    bool Any::operator==(const Any& rhs) const
+    {
+        return typeInfo == rhs.typeInfo
+            && rtti->equal(data.data(), rhs.Data());
+    }
+
     Type::Type(std::string inName) : name(std::move(inName)) {}
 
     Type::~Type() = default;

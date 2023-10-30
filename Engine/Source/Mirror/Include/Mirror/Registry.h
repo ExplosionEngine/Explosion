@@ -8,10 +8,21 @@
 
 #include <Common/Debug.h>
 #include <Mirror/Api.h>
-#include <Mirror/Type.h>
-#include <Mirror/TypeInfo.h>
+#include <Mirror/Mirror.h>
 
 namespace Mirror::Internal {
+    template <typename T>
+    struct VariableTraits {};
+
+    template <typename T>
+    struct FunctionTraits {};
+
+    template <typename T>
+    struct MemberVariableTraits {};
+
+    template <typename T>
+    struct MemberFunctionTraits {};
+
     template <typename ArgsTuple, size_t... I>
     auto GetArgTypeInfosByArgsTuple(std::index_sequence<I...>)
     {
@@ -114,7 +125,7 @@ namespace Mirror {
         template <auto Ptr>
         ClassRegistry& StaticVariable(const std::string& inName)
         {
-            using ValueType = typename VariableTraits<decltype(Ptr)>::ValueType;
+            using ValueType = typename Internal::VariableTraits<decltype(Ptr)>::ValueType;
 
             auto iter = clazz.staticVariables.find(inName);
             Assert(iter == clazz.staticVariables.end());
@@ -139,8 +150,8 @@ namespace Mirror {
         template <auto Ptr>
         ClassRegistry& StaticFunction(const std::string& inName)
         {
-            using ArgsTupleType = typename FunctionTraits<decltype(Ptr)>::ArgsTupleType;
-            using RetType = typename FunctionTraits<decltype(Ptr)>::RetType;
+            using ArgsTupleType = typename Internal::FunctionTraits<decltype(Ptr)>::ArgsTupleType;
+            using RetType = typename Internal::FunctionTraits<decltype(Ptr)>::RetType;
 
             auto iter = clazz.staticFunctions.find(inName);
             Assert(iter == clazz.staticFunctions.end());
@@ -171,8 +182,8 @@ namespace Mirror {
         template <auto Ptr>
         ClassRegistry& MemberVariable(const std::string& inName)
         {
-            using ClassType = typename MemberVariableTraits<decltype(Ptr)>::ClassType;
-            using ValueType = typename MemberVariableTraits<decltype(Ptr)>::ValueType;
+            using ClassType = typename Internal::MemberVariableTraits<decltype(Ptr)>::ClassType;
+            using ValueType = typename Internal::MemberVariableTraits<decltype(Ptr)>::ValueType;
 
             auto iter = clazz.memberVariables.find(inName);
             Assert(iter == clazz.memberVariables.end());
@@ -213,9 +224,9 @@ namespace Mirror {
         template <auto Ptr>
         ClassRegistry& MemberFunction(const std::string& inName)
         {
-            using ClassType = typename MemberFunctionTraits<decltype(Ptr)>::ClassType;
-            using ArgsTupleType = typename MemberFunctionTraits<decltype(Ptr)>::ArgsTupleType;
-            using RetType = typename MemberFunctionTraits<decltype(Ptr)>::RetType;
+            using ClassType = typename Internal::MemberFunctionTraits<decltype(Ptr)>::ClassType;
+            using ArgsTupleType = typename Internal::MemberFunctionTraits<decltype(Ptr)>::ArgsTupleType;
+            using RetType = typename Internal::MemberFunctionTraits<decltype(Ptr)>::RetType;
 
             auto iter = clazz.memberFunctions.find(inName);
             Assert(iter == clazz.memberFunctions.end());
@@ -260,7 +271,7 @@ namespace Mirror {
         template <auto Ptr>
         GlobalRegistry& Variable(const std::string& inName)
         {
-            using ValueType = typename VariableTraits<decltype(Ptr)>::ValueType;
+            using ValueType = typename Internal::VariableTraits<decltype(Ptr)>::ValueType;
 
             auto iter = globalScope.variables.find(inName);
             Assert(iter == globalScope.variables.end());
@@ -300,8 +311,8 @@ namespace Mirror {
         template <auto Ptr>
         GlobalRegistry& Function(const std::string& inName)
         {
-            using ArgsTupleType = typename FunctionTraits<decltype(Ptr)>::ArgsTupleType;
-            using RetType = typename FunctionTraits<decltype(Ptr)>::RetType;
+            using ArgsTupleType = typename Internal::FunctionTraits<decltype(Ptr)>::ArgsTupleType;
+            using RetType = typename Internal::FunctionTraits<decltype(Ptr)>::RetType;
 
             auto iter = globalScope.functions.find(inName);
             Assert(iter == globalScope.functions.end());
@@ -458,5 +469,44 @@ namespace Mirror {
         GlobalScope globalScope;
         std::unordered_map<std::string, Mirror::Class> classes;
         std::unordered_map<std::string, Mirror::Enum> enums;
+    };
+}
+
+namespace Mirror::Internal {
+    template <typename T>
+    struct VariableTraits<T*> {
+        using ValueType = T;
+    };
+
+    template <typename Ret, typename... Args>
+    struct FunctionTraits<Ret(*)(Args...)> {
+        using RetType = Ret;
+        using ArgsTupleType = std::tuple<Args...>;
+    };
+
+    template <typename Class, typename T>
+    struct MemberVariableTraits<T Class::*> {
+        using ClassType = Class;
+        using ValueType = T;
+    };
+
+    template <typename Class, typename T>
+    struct MemberVariableTraits<T Class::* const> {
+        using ClassType = const Class;
+        using ValueType = T;
+    };
+
+    template <typename Class, typename Ret, typename... Args>
+    struct MemberFunctionTraits<Ret(Class::*)(Args...)> {
+        using ClassType = Class;
+        using RetType = Ret;
+        using ArgsTupleType = std::tuple<Args...>;
+    };
+
+    template <typename Class, typename Ret, typename... Args>
+    struct MemberFunctionTraits<Ret(Class::*)(Args...) const> {
+        using ClassType = const Class;
+        using RetType = Ret;
+        using ArgsTupleType = std::tuple<Args...>;
     };
 }

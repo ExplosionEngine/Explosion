@@ -10,7 +10,7 @@
 #include <gtest/gtest.h>
 
 #include <Mirror/Registry.h>
-#include <Mirror/Type.h>
+#include <Mirror/Mirror.h>
 
 int ga;
 float gb;

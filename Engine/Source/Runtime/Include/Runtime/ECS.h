@@ -14,7 +14,7 @@
 #include <Common/String.h>
 #include <Common/Memory.h>
 #include <Mirror/Meta.h>
-#include <Mirror/Type.h>
+#include <Mirror/Mirror.h>
 #include <Runtime/Api.h>
 
 #define DeclareSingleCompLifecycleEvent(eventClass) \
