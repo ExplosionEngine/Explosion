@@ -802,12 +802,34 @@ namespace Mirror {
                 return info->id == GetTypeInfo<std::remove_cvref_t<T>>()->id;
             }
         };
+        static auto convertiblePolymorphism = [](const Mirror::TypeInfo* lhs, const Mirror::TypeInfo* rhs) -> bool {
+            if (lhs->isConst && !rhs->isConst) {
+                return false;
+            }
+
+            const Mirror::Class* lhsClass = Mirror::Class::Find(lhs->removeConst());
+            const Mirror::Class* rhsClass = Mirror::Class::Find(rhs->removeConst());
+            if (lhsClass == nullptr || rhsClass == nullptr) {
+                return false;
+            }
+            return lhsClass->IsDerivedFrom(rhsClass);
+        };
 
         if (actualTypeInfo->isLValueReference) {
             auto* removeRefType = actualTypeInfo->removeRef();
-            return convertibleNonPolymorphism(removeRefType);
+            if (convertibleNonPolymorphism(removeRefType)) {
+                return true;
+            }
+            return convertiblePolymorphism(removeRefType, removeRefType->isConst ? GetTypeInfo<std::remove_reference_t<T>>() : GetTypeInfo<std::remove_cvref_t<T>>());
         } else {
-            return convertibleNonPolymorphism(actualTypeInfo);
+            if (convertibleNonPolymorphism(actualTypeInfo)) {
+                return true;
+            }
+            if (!actualTypeInfo->isPointer) {
+                return false;
+            }
+            auto* removePointerType = actualTypeInfo->removePointer();
+            return convertiblePolymorphism(removePointerType, removePointerType->isConst ? GetTypeInfo<std::remove_pointer_t<T>>() : GetTypeInfo<std::remove_const_t<std::remove_pointer_t<T>>>());
         }
     }
 

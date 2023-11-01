@@ -44,14 +44,8 @@ namespace Runtime {
     ECSHost::SystemInstance::SystemInstance(ECSHost::SystemInstance&& other) noexcept
         : type(other.type)
         , object(std::move(other.object))
+        , proxy(std::move(other.proxy))
     {
-        if (other.type == SystemType::setup) {
-            setupFunc = std::move(other.setupFunc);
-        } else if (other.type == SystemType::tick) {
-            tickFunc = std::move(other.tickFunc);
-        } else if (other.type == SystemType::event) {
-            onReceiveFunc = std::move(other.onReceiveFunc);
-        }
     }
 
     void ECSHost::Setup()
@@ -68,7 +62,7 @@ namespace Runtime {
             Assert(systemInstance.type == SystemType::setup);
 
             tasks.emplace(std::make_pair(system, taskflow.emplace([&]() -> void {
-                systemInstance.setupFunc(systemCommands);
+                std::get<SetupProxyFunc>(systemInstance.proxy)(systemCommands);
             })));
         }
 
@@ -78,6 +72,9 @@ namespace Runtime {
                 task.succeed(tasks.at(depend));
             }
         }
+
+        tf::Executor executor;
+        executor.run(taskflow);
     }
 
     void ECSHost::Tick(float timeMS)
@@ -94,7 +91,7 @@ namespace Runtime {
             Assert(systemInstance.type == SystemType::tick);
 
             tasks.emplace(std::make_pair(system, taskflow.emplace([&]() -> void {
-                systemInstance.tickFunc(systemCommands, timeMS);
+                std::get<TickProxyFunc >(systemInstance.proxy)(systemCommands, timeMS);
             })));
         }
 
@@ -104,6 +101,9 @@ namespace Runtime {
                 task.succeed(tasks.at(depend));
             }
         }
+
+        tf::Executor executor;
+        executor.run(taskflow);
     }
 
     void ECSHost::Shutdown()

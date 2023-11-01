@@ -167,7 +167,7 @@ namespace Runtime {
             SystemInstance instance;
             instance.type = SystemType::setup;
             instance.object = object;
-            instance.setupFunc = [object](SystemCommands& commands) -> void {
+            instance.proxy = [object](SystemCommands& commands) -> void {
                 object->Setup(commands);
             };
 
@@ -186,7 +186,7 @@ namespace Runtime {
             SystemInstance instance;
             instance.type = SystemType::tick;
             instance.object = object;
-            instance.tickFunc = [object](SystemCommands& commands, float timeMS) -> void {
+            instance.proxy = [object](SystemCommands& commands, float timeMS) -> void {
                 object->Tick(commands, timeMS);
             };
 
@@ -213,7 +213,7 @@ namespace Runtime {
             SystemInstance instance;
             instance.type = SystemType::event;
             instance.object = object;
-            instance.onReceiveFunc = [object](SystemCommands& commands, Mirror::Any* eventRef) -> void {
+            instance.proxy = [object](SystemCommands& commands, Mirror::Any* eventRef) -> void {
                 object->OnReceive(commands, eventRef->As<const E&>());
             };
 
@@ -278,7 +278,7 @@ namespace Runtime {
                 Assert(systemInstance.type == SystemType::event);
 
                 tasks.emplace(std::make_pair(system, taskflow.emplace([&]() -> void {
-                    systemInstance.onReceiveFunc(systemCommands, &eventRef);
+                    std::get<OnReceiveProxyFunc>(systemInstance.proxy)(systemCommands, &eventRef);
                 })));
             }
 
@@ -288,6 +288,9 @@ namespace Runtime {
                     task.succeed(tasks.at(depend));
                 }
             }
+
+            tf::Executor executor;
+            executor.run(taskflow);
         }
 
     protected:
@@ -297,14 +300,14 @@ namespace Runtime {
 
         ECSHost() = default;
 
+        using SetupProxyFunc = std::function<void(SystemCommands&)>;
+        using TickProxyFunc = std::function<void(SystemCommands&, float timeMS)>;
+        using OnReceiveProxyFunc = std::function<void(SystemCommands&, Mirror::Any*)>;
+
         struct RUNTIME_API SystemInstance {
             SystemType type;
             Common::UniqueRef<System> object;
-            union {
-                std::function<void(SystemCommands&)> setupFunc;
-                std::function<void(SystemCommands&, float timeMS)> tickFunc;
-                std::function<void(SystemCommands&, Mirror::Any*)> onReceiveFunc;
-            };
+            std::variant<SetupProxyFunc, TickProxyFunc , OnReceiveProxyFunc> proxy;
 
             SystemInstance();
             ~SystemInstance();
