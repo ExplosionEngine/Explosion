@@ -128,8 +128,10 @@ namespace Runtime::Internal {
 }
 
 namespace Runtime {
-    using Entity = entt::entity;
     class SystemCommands;
+    struct ECSHost;
+
+    using Entity = entt::entity;
     static constexpr auto entityNull = entt::null;
 
     struct EClass() Component {
@@ -154,6 +156,9 @@ namespace Runtime {
         event,
         max
     };
+
+    struct ComponentType;
+    struct StateType;
 
     struct RUNTIME_API ECSHost {
     public:
@@ -316,6 +321,8 @@ namespace Runtime {
 
         bool setuped;
         entt::registry registry;
+        std::unordered_map<ComponentSignature, ComponentType*> componentTypes;
+        std::unordered_map<ComponentSignature, ComponentType*> stateTypes;
         std::unordered_map<SystemSignature, SystemInstance> systemInstances;
         std::unordered_set<SystemSignature> setupSystems;
         std::unordered_set<SystemSignature> tickSystems;
@@ -496,5 +503,105 @@ namespace Runtime {
     private:
         ECSHost& host;
         entt::registry& registry;
+    };
+
+    struct ComponentType {
+        using EmplaceProxy = void(ECSHost&, Entity, const std::vector<Mirror::Any>&);
+        using GetProxy = Mirror::Any(ECSHost&,Entity);
+        using HasProxy = bool(ECSHost&, Entity);
+        using PatchProxy = void(ECSHost&, Entity, std::function<void(const Mirror::Any&)>);
+        using SetProxy = void(ECSHost&, Entity, const std::vector<Mirror::Any>&);
+        using UpdatedProxy = void(ECSHost&, Entity);
+        using RemoveProxy = void(ECSHost&, Entity);
+
+        template <typename C>
+        static void EmplaceImpl(ECSHost& host, Entity entity, const std::vector<Mirror::Any>& args);
+
+        template <typename C>
+        static Mirror::Any GetImpl(ECSHost& host, Entity entity);
+
+        template <typename C>
+        static bool HasImpl(ECSHost& host, Entity entity);
+
+        template <typename C>
+        static void PatchImpl(ECSHost& host, Entity entity, std::function<void(const Mirror::Any&)> patchFunc);
+
+        template <typename C>
+        static void SetImpl(ECSHost& host, Entity entity, const std::vector<Mirror::Any>& args);
+
+        template <typename C>
+        static void UpdatedImpl(ECSHost& host, Entity entity);
+
+        template <typename C>
+        static void RemoveImpl(ECSHost& host, Entity entity);
+
+        EmplaceProxy* emplace;
+        GetProxy* get;
+        HasProxy* has;
+        PatchProxy* patch;
+        SetProxy* set;
+        UpdatedProxy* updated;
+        RemoveProxy* remove;
+    };
+
+    template <typename C>
+    inline constexpr ComponentType componentType = {
+        &ComponentType::EmplaceImpl<C>,
+        &ComponentType::GetImpl<C>,
+        &ComponentType::HasImpl<C>,
+        &ComponentType::PatchImpl<C>,
+        &ComponentType::SetImpl<C>,
+        &ComponentType::UpdatedImpl<C>,
+        &ComponentType::RemoveImpl<C>,
+    };
+
+    struct StateType {
+        using EmplaceProxy = void(ECSHost&, const std::vector<Mirror::Any>&);
+        using GetProxy = Mirror::Any(ECSHost&);
+        using HasProxy = bool(ECSHost&);
+        using PatchProxy = void(ECSHost&, std::function<void(const Mirror::Any&)>);
+        using SetProxy = void(ECSHost&, const std::vector<Mirror::Any>&);
+        using UpdatedProxy = void(ECSHost&);
+        using RemoveProxy = void(ECSHost&);
+
+        template <typename S>
+        static void EmplaceImpl(ECSHost& host, const std::vector<Mirror::Any>& args);
+
+        template <typename S>
+        static Mirror::Any GetImpl(ECSHost& host);
+
+        template <typename S>
+        static bool HasImpl(ECSHost& host);
+
+        template <typename S>
+        static void PatchImpl(ECSHost& host, std::function<void(const Mirror::Any&)> patchFunc);
+
+        template <typename S>
+        static void SetImpl(ECSHost& host, const std::vector<Mirror::Any>& args);
+
+        template <typename S>
+        static void UpdatedImpl(ECSHost& host);
+
+        template <typename S>
+        static void RemoveImpl(ECSHost& host);
+
+        EmplaceProxy* emplace;
+        GetProxy* get;
+        HasProxy* has;
+        PatchProxy* patch;
+        SetProxy* set;
+        UpdatedProxy* updated;
+        RemoveProxy* remove;
+    };
+
+    template <typename S>
+    inline constexpr StateType stateType = {
+        &StateType::EmplaceImpl<S>,
+        &StateType::GetImpl<S>,
+        &StateType::HasImpl<S>,
+        &StateType::PatchImpl<S>,
+        &StateType::SetImpl<S>,
+        &StateType::UpdatedImpl<S>,
+        &StateType::RemoveImpl<S>
     };
 }
