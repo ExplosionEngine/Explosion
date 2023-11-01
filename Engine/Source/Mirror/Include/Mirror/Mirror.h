@@ -277,6 +277,7 @@ namespace Mirror {
     public:
         ~Function() override;
 
+        // args must passed by std::ref()
         template <typename... Args>
         Any Invoke(Args... args) const;
 
@@ -312,9 +313,11 @@ namespace Mirror {
     public:
         ~Constructor() override;
 
+        // args must passed by std::ref()
         template <typename... Args>
         Any ConstructOnStack(Args... args) const;
 
+        // args must passed by std::ref()
         template <typename... Args>
         Any NewObject(Args... args) const;
 
@@ -416,8 +419,9 @@ namespace Mirror {
     public:
         ~MemberFunction() override;
 
+        // args must passed by std::ref()
         template <typename C, typename... Args>
-        Any Invoke(C&& object, Args&&... args) const;
+        Any Invoke(C&& object, Args... args) const;
 
         uint8_t GetArgsNum() const;
         const TypeInfo* GetRetTypeInfo() const;
@@ -863,7 +867,7 @@ namespace Mirror {
     }
 
     template <typename C, typename... Args>
-    Any MemberFunction::Invoke(C&& object, Args&& ... args) const
+    Any MemberFunction::Invoke(C&& object, Args... args) const
     {
         Any classRef = Any(std::ref(std::forward<C>(object)));
         std::array<Any, sizeof...(Args)> argRefs = { Any(std::forward<std::remove_reference_t<Args>>(args))... };
