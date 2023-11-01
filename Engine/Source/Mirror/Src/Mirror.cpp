@@ -62,6 +62,16 @@ namespace Mirror {
         return *this;
     }
 
+    bool Any::Convertible(const Mirror::TypeInfo* dstType)
+    {
+        return ConvertibleInternal(typeInfo, dstType);
+    }
+
+    bool Any::Convertible(const Mirror::TypeInfo* dstType) const
+    {
+        return ConvertibleInternal(typeInfo->addConst(), dstType);
+    }
+
     size_t Any::Size() const
     {
         return data.size();
@@ -95,6 +105,46 @@ namespace Mirror {
     {
         return typeInfo == rhs.typeInfo
             && rtti->equal(data.data(), rhs.Data());
+    }
+
+    bool Any::ConvertibleInternal(const Mirror::TypeInfo* src, const Mirror::TypeInfo* dst)
+    {
+        static auto convertibleNonPolymorphism = [](const Mirror::TypeInfo* src, const Mirror::TypeInfo* dst) -> bool {
+            if (src->isConst) {
+                return src->id == dst->removeRef()->id;
+            } else {
+                return src->id == dst->removeCVRef()->id;
+            }
+        };
+        static auto convertiblePolymorphism = [](const Mirror::TypeInfo* lhs, const Mirror::TypeInfo* rhs) -> bool {
+            if (lhs->isConst && !rhs->isConst) {
+                return false;
+            }
+
+            const Mirror::Class* lhsClass = Mirror::Class::Find(lhs->removeConst());
+            const Mirror::Class* rhsClass = Mirror::Class::Find(rhs->removeConst());
+            if (lhsClass == nullptr || rhsClass == nullptr) {
+                return false;
+            }
+            return lhsClass->IsDerivedFrom(rhsClass);
+        };
+
+        if (src->isLValueReference) {
+            auto* removeRefType = src->removeRef();
+            if (convertibleNonPolymorphism(removeRefType, dst)) {
+                return true;
+            }
+            return convertiblePolymorphism(removeRefType, removeRefType->isConst ? dst->removeRef() : dst->removeCVRef());
+        } else {
+            if (convertibleNonPolymorphism(src, dst)) {
+                return true;
+            }
+            if (!src->isPointer) {
+                return false;
+            }
+            auto* removePointerType = src->removePointer();
+            return convertiblePolymorphism(removePointerType, removePointerType->isConst ? dst->removePointer() : dst->removePointer()->removeConst());
+        }
     }
 
     Type::Type(std::string inName) : name(std::move(inName)) {}

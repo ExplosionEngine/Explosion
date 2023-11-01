@@ -127,13 +127,6 @@ namespace Mirror {
         template <typename T>
         Any& operator=(std::reference_wrapper<T>&& ref);
 
-        [[nodiscard]] size_t Size() const;
-        [[nodiscard]] const void* Data() const;
-        [[nodiscard]] const Mirror::TypeInfo* TypeInfo();
-        [[nodiscard]] const Mirror::TypeInfo* TypeInfo() const;
-        void Reset();
-        bool operator==(const Any& rhs) const;
-
         // T -> T: true
         // T -> const T: true
         // T -> T&: true
@@ -196,9 +189,17 @@ namespace Mirror {
         template <typename T>
         T* TryAs() const;
 
+        [[nodiscard]] bool Convertible(const TypeInfo* dstType);
+        [[nodiscard]] bool Convertible(const TypeInfo* dstType) const;
+        [[nodiscard]] size_t Size() const;
+        [[nodiscard]] const void* Data() const;
+        [[nodiscard]] const Mirror::TypeInfo* TypeInfo();
+        [[nodiscard]] const Mirror::TypeInfo* TypeInfo() const;
+        void Reset();
+        bool operator==(const Any& rhs) const;
+
     private:
-        template <typename T>
-        static bool ConvertibleInternal(const Mirror::TypeInfo* actualTypeInfo);
+        static bool ConvertibleInternal(const Mirror::TypeInfo* src, const Mirror::TypeInfo* dst);
 
         template <typename T>
         void ConstructValue(T&& value);
@@ -725,13 +726,13 @@ namespace Mirror {
     template <typename T>
     bool Any::Convertible()
     {
-        return ConvertibleInternal<T>(typeInfo);
+        return ConvertibleInternal(typeInfo, GetTypeInfo<T>());
     }
 
     template <typename T>
     bool Any::Convertible() const
     {
-        return ConvertibleInternal<T>(typeInfo->addConst());
+        return ConvertibleInternal(typeInfo->addConst(), GetTypeInfo<T>());
     }
 
     template <typename T>
@@ -789,47 +790,6 @@ namespace Mirror {
             return *reinterpret_cast<std::remove_reference_t<T>*>(dataPtr);
         } else {
             return nullptr;
-        }
-    }
-
-    template <typename T>
-    bool Any::ConvertibleInternal(const Mirror::TypeInfo* actualTypeInfo)
-    {
-        static auto convertibleNonPolymorphism = [](const Mirror::TypeInfo* info) -> bool {
-            if (info->isConst) {
-                return info->id == GetTypeInfo<std::remove_reference_t<T>>()->id;
-            } else {
-                return info->id == GetTypeInfo<std::remove_cvref_t<T>>()->id;
-            }
-        };
-        static auto convertiblePolymorphism = [](const Mirror::TypeInfo* lhs, const Mirror::TypeInfo* rhs) -> bool {
-            if (lhs->isConst && !rhs->isConst) {
-                return false;
-            }
-
-            const Mirror::Class* lhsClass = Mirror::Class::Find(lhs->removeConst());
-            const Mirror::Class* rhsClass = Mirror::Class::Find(rhs->removeConst());
-            if (lhsClass == nullptr || rhsClass == nullptr) {
-                return false;
-            }
-            return lhsClass->IsDerivedFrom(rhsClass);
-        };
-
-        if (actualTypeInfo->isLValueReference) {
-            auto* removeRefType = actualTypeInfo->removeRef();
-            if (convertibleNonPolymorphism(removeRefType)) {
-                return true;
-            }
-            return convertiblePolymorphism(removeRefType, removeRefType->isConst ? GetTypeInfo<std::remove_reference_t<T>>() : GetTypeInfo<std::remove_cvref_t<T>>());
-        } else {
-            if (convertibleNonPolymorphism(actualTypeInfo)) {
-                return true;
-            }
-            if (!actualTypeInfo->isPointer) {
-                return false;
-            }
-            auto* removePointerType = actualTypeInfo->removePointer();
-            return convertiblePolymorphism(removePointerType, removePointerType->isConst ? GetTypeInfo<std::remove_pointer_t<T>>() : GetTypeInfo<std::remove_const_t<std::remove_pointer_t<T>>>());
         }
     }
 
