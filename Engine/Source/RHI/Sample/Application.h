@@ -25,13 +25,9 @@
 #include <Common/Debug.h>
 #include <Common/String.h>
 #include <Common/File.h>
-#include <Common/Math/Matrix.h>
-#include <Common/Math/Transform.h>
-#include <Common/Math/Projection.h>
-#include <Common/Math/View.h>
 #include <RHI/RHI.h>
 #include <Render/ShaderCompiler.h>
-using namespace Common;
+#include <Camera.h>
 
 class Application {
 public:
@@ -39,6 +35,144 @@ public:
     explicit Application(std::string n) : rhiType(RHI::RHIType::vulkan), window(nullptr), name(std::move(n)), width(1024), height(768) {}
 
     virtual ~Application() = default;
+
+    static void KeyCallback(GLFWwindow* inWindow, int key, int scancode, int action, int mods)
+    {
+        auto* pApp = reinterpret_cast<Application*>(glfwGetWindowUserPointer(inWindow));
+        pApp->KeyCallbackImpl(key, action);
+    }
+
+    static void CursorCallback(GLFWwindow* inWindow, double x, double y)
+    {
+        auto* pApp = reinterpret_cast<Application*>(glfwGetWindowUserPointer(inWindow));
+        pApp->CursorCallbackImpl(static_cast<float>(x), static_cast<float>(y));
+    }
+
+    static void MouseButtonCallback(GLFWwindow* inWindow, int button, int action, int mods)
+    {
+        auto* pApp = reinterpret_cast<Application*>(glfwGetWindowUserPointer(inWindow));
+        pApp->MouseButtonCallbackImlp(button, action);
+    }
+
+    void KeyCallbackImpl(int key, int action)
+    {
+        switch (action) {
+            case GLFW_PRESS:
+                switch (key) {
+                    case GLFW_KEY_W:
+                        camera->keys.front = true;
+                        break;
+                    case GLFW_KEY_S:
+                        camera->keys.back = true;
+                        break;
+                    case GLFW_KEY_A:
+                        camera->keys.left = true;
+                        break;
+                    case GLFW_KEY_D:
+                        camera->keys.right = true;
+                        break;
+                    case GLFW_KEY_Q:
+                        camera->keys.up = true;
+                        break;
+                    case GLFW_KEY_E:
+                        camera->keys.down = true;
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case GLFW_RELEASE:
+                switch (key) {
+                    case GLFW_KEY_W:
+                        camera->keys.front = false;
+                        break;
+                    case GLFW_KEY_S:
+                        camera->keys.back = false;
+                        break;
+                    case GLFW_KEY_A:
+                        camera->keys.left = false;
+                        break;
+                    case GLFW_KEY_D:
+                        camera->keys.right = false;
+                        break;
+                    case GLFW_KEY_Q:
+                        camera->keys.up = false;
+                        break;
+                    case GLFW_KEY_E:
+                        camera->keys.down = false;
+                        break;
+                    default:
+                        break;
+                }
+                break;
+        }
+    }
+
+    void CursorCallbackImpl(float x, float y)
+    {
+        float dx = mousePos.x - x;
+        float dy = mousePos.y - y;
+
+        if (mouseButtons.left) {
+            // rotate camera with mouse's left button down (positive value represents counterclockwise rotation)
+            // horizontal mouse moving(dx) causes rotation alng y axis
+            // vertical mouse moving(dy) causes rotation along x axis
+            camera->Rotate(FVec3(-dy * camera->rotateSpeed, -dx * camera->rotateSpeed, 0.0f));
+        }
+
+        if (mouseButtons.right) {
+            // zoom the view with mouse's wheels down (make camera close to or away from the target)
+            camera->Translate(FVec3(0.0f, 0.0f, dy * 0.005f));
+        }
+
+        if (mouseButtons.middle) {
+            // translate camera with mouse's right button down
+            camera->Translate(FVec3(-dx * 0.01f, -dy * 0.01f, 0.0f));
+        }
+
+        mousePos = { x, y };
+    }
+
+    void MouseButtonCallbackImlp(int button, int action)
+    {
+        switch (action) {
+            case GLFW_PRESS:
+                switch (button) {
+                    case GLFW_MOUSE_BUTTON_LEFT:
+                        mouseButtons.left = true;
+                        break;
+                    case GLFW_MOUSE_BUTTON_RIGHT:
+                        mouseButtons.right = true;
+                        break;
+                    case GLFW_MOUSE_BUTTON_MIDDLE:
+                        mouseButtons.middle = true;
+                        break;
+                }
+                break;
+            case GLFW_RELEASE:
+                switch (button) {
+                    case GLFW_MOUSE_BUTTON_LEFT:
+                        mouseButtons.left = false;
+                        break;
+                    case GLFW_MOUSE_BUTTON_RIGHT:
+                        mouseButtons.right = false;
+                        break;
+                    case GLFW_MOUSE_BUTTON_MIDDLE:
+                        mouseButtons.middle = false;
+                        break;
+                }
+                break;
+        }
+    }
+
+    float GetFrameDelta()
+    {
+        auto tEnd = std::chrono::high_resolution_clock::now();
+        auto tDiff = std::chrono::duration<float, std::milli>(tEnd - tPrev).count();
+        tPrev = tEnd;
+
+        return tDiff;
+    }
 
     int Run(int argc, char* argv[])
     {
@@ -64,7 +198,18 @@ public:
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         window = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), name.c_str(), nullptr, nullptr);
         OnCreate();
+
+        if (camera != nullptr) {
+            glfwSetWindowUserPointer(window, this);
+            glfwSetKeyCallback(window, KeyCallback);
+            glfwSetCursorPosCallback(window, CursorCallback);
+            glfwSetMouseButtonCallback(window, MouseButtonCallback);
+        }
+
         while (!glfwWindowShouldClose(window)) {
+            if (camera != nullptr) {
+                camera->MoveCamera(GetFrameDelta());
+            }
             OnDrawFrame();
             glfwPollEvents();
         }
@@ -117,7 +262,7 @@ protected:
         future.wait();
         auto result = future.get();
         if (!result.success) {
-            std::cout << "failed to compiler shader (" << fileName << ", " << info.entryPoint << ")" << std::endl << result.errorInfo << std::endl;
+            std::cout << "failed to compiler shader (" << fileName << ", " << info.entryPoint << ")" << '\n' << result.errorInfo << std::endl;
         }
         Assert(result.success);
         byteCode = result.byteCode;
@@ -128,4 +273,15 @@ protected:
     std::string name;
     uint32_t width;
     uint32_t height;
+
+    UniqueRef<Camera> camera = nullptr;
+    FVec2 mousePos = { 0, 0 };
+
+    struct {
+        bool left = false;
+        bool right = false;
+        bool middle = false;
+    } mouseButtons;
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> tPrev;
 };

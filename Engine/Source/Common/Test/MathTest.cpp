@@ -389,21 +389,29 @@ TEST(MathTest, MatSetTest)
 
 TEST(MathTest, MatMulTest)
 {
-    FMat3x4 v0(
+    FMat3x4 m0(
         1, 2, 3, 4,
         5, 6, 7, 8,
         9, 10, 11, 12
     );
-    FMat4x2 v1(
+    FMat4x2 m1(
         1, 2,
         3, 4,
         5, 6,
         7, 8
     );
-    FMat3x2 v2 = v0 * v1;
-    ASSERT_TRUE(v2.Row(0) == FVec2(50, 60));
-    ASSERT_TRUE(v2.Row(1) == FVec2(114, 140));
-    ASSERT_TRUE(v2.Row(2) == FVec2(178, 220));
+    FVec4 v0(1, 2, 3, 4);
+    FVec2 v1(1, 2);
+
+    auto v2 = m0 * v0;
+    auto v3 = m1 * v1;
+    auto m2 = m0 * m1;
+
+    ASSERT_TRUE(m2.Row(0) == FVec2(50, 60));
+    ASSERT_TRUE(m2.Row(1) == FVec2(114, 140));
+    ASSERT_TRUE(m2.Row(2) == FVec2(178, 220));
+    ASSERT_TRUE(v2 == FVec3(30, 70, 110));
+    ASSERT_TRUE(v3 == FVec4(5, 11, 17, 23));
 }
 
 TEST(MathTest, MathTranposeTest)
@@ -520,15 +528,27 @@ TEST(MathTest, QuaternionToRotationMatrixTest)
 
 TEST(MathTest, TransformTest)
 {
+    FVec3 x(1, 0, 0);
+    FVec3 y(0, 1, 0);
+    FVec3 z(0, 0, 1);
+
     FTransform v0(FVec3(2, 2, 2), FQuat(FVec3Consts::unitZ, 90), FVec3(5, 0, 0));
-    FVec3 v0r0 = v0.TransformPosition(FVec3(1, 0, 0));
+    FVec3 v0r0 = v0.TransformPosition(x);
     ASSERT_TRUE(v0r0 == FVec3(5, -2, 0));
 
-    FTransform v1(FQuat::FromEulerZYX(90, 0, 90), FVec3(3, 4, 5));
-    FVec3 v1r0 = v1.TransformPosition(FVec3(1, 0, 0));
-    ASSERT_TRUE(v1r0 == FVec3(3, 4, 6));
+    FTransform v1(FQuat::FromEulerZYX(90, 0, 90), FVec3(0, 0, 0));
+    FTransform v2(FQuat::FromEulerZYX(0, 90, 90), FVec3(0, 0, 0));
+    FTransform v3(FQuat::FromEulerZYX(90, 90, 0), FVec3(0, 0, 0));
+    FVec3 v1x = v1.TransformPosition(x);
+    FVec3 v2y = v2.TransformPosition(y);
+    FVec3 v3x = v3.TransformPosition(x);
+    FVec3 v3z = v3.TransformPosition(z);
+    ASSERT_TRUE(v1x == FVec3(0, 0, 1));
+    ASSERT_TRUE(v2y == FVec3(0, 0, 1));
+    ASSERT_TRUE(v3x == FVec3(0, 1, 0));
+    ASSERT_TRUE(v3z == FVec3(-1, 0, 0));
+    // In general, quaternion from eular angle performs z-axis rotation first, then y-axis, and last z-axis
 
-    //TODO LookTo Test
 }
 
 TEST(MathTest, RectTest)
