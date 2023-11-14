@@ -171,140 +171,25 @@ namespace Runtime {
     struct RUNTIME_API ECSHost {
     public:
         template <typename S>
-        void AddSetupSystem()
-        {
-            SystemSignature signature = Internal::SignForStaticClass<S>();
-            Assert(!systemInstances.contains(signature) && !setupSystems.contains(signature) && !setupSystemDependencies.contains(signature));
-
-            auto* object = new S();
-            SystemInstance instance;
-            instance.type = SystemType::setup;
-            instance.object = object;
-            instance.proxy = [object](SystemCommands& commands) -> void {
-                object->Setup(commands);
-            };
-
-            systemInstances.emplace(std::make_pair(signature, std::move(instance)));
-            setupSystems.emplace(signature);
-            setupSystemDependencies.emplace(std::make_pair(signature, Internal::BuildDependencyListForStaticSystem<S>()));
-        }
+        void AddSetupSystem();
 
         template <typename S>
-        void AddTickSystem()
-        {
-            SystemSignature signature = Internal::SignForStaticClass<S>();
-            Assert(!systemInstances.contains(signature) && !tickSystems.contains(signature) && !tickSystemDependencies.contains(signature));
-
-            auto* object = new S();
-            SystemInstance instance;
-            instance.type = SystemType::tick;
-            instance.object = object;
-            instance.proxy = [object](SystemCommands& commands, float timeMS) -> void {
-                object->Tick(commands, timeMS);
-            };
-
-            systemInstances.emplace(std::make_pair(signature, std::move(instance)));
-            tickSystems.emplace(signature);
-            tickSystemDependencies.emplace(std::make_pair(signature, Internal::BuildDependencyListForStaticSystem<S>()));
-        }
+        void AddTickSystem();
 
         template <typename E, typename S>
-        void AddEventSystem()
-        {
-            EventSignature eventSignature = Internal::SignForStaticClass<E>();
-            if (!eventSystems.contains(eventSignature)) {
-                eventSystems.emplace(std::make_pair(eventSignature, std::unordered_set<SystemSignature> {}));
-                eventSystemDependencies.emplace(std::make_pair(eventSignature, std::unordered_map<SystemSignature, std::vector<SystemSignature>> {}));
-            }
-
-            auto& systems = eventSystems.at(eventSignature);
-            auto& systemDependencies = eventSystemDependencies.at(eventSignature);
-            SystemSignature systemSignature = Internal::SignForStaticClass<S>();
-            Assert(!systemInstances.contains(systemSignature) && !systems.contains(systemSignature) && !systemDependencies.contains(systemSignature));
-
-            auto* object = new S();
-            SystemInstance instance;
-            instance.type = SystemType::event;
-            instance.object = object;
-            instance.proxy = [object](SystemCommands& commands, Mirror::Any* eventRef) -> void {
-                object->OnReceive(commands, eventRef->As<const E&>());
-            };
-
-            systemInstances.emplace(std::make_pair(systemSignature, std::move(instance)));
-            systems.emplace(systemSignature);
-            systemDependencies.emplace(std::make_pair(systemSignature, Internal::BuildDependencyListForStaticSystem<S>()));
-        }
+        void AddEventSystem();
 
         template <typename S>
-        void RemoveSetupSystem()
-        {
-            SystemSignature signature = Internal::SignForStaticClass<S>();
-            systemInstances.erase(signature);
-            setupSystems.erase(signature);
-            setupSystemDependencies.erase(signature);
-        }
+        void RemoveSetupSystem();
 
         template <typename S>
-        void RemoveTickSystem()
-        {
-            SystemSignature signature = Internal::SignForStaticClass<S>();
-            systemInstances.erase(signature);
-            tickSystems.erase(signature);
-            tickSystemDependencies.erase(signature);
-        }
+        void RemoveTickSystem();
 
         template <typename E, typename S>
-        void RemoveEventSystem()
-        {
-            EventSignature eventSignature = Internal::SignForStaticClass<E>();
-            Assert(eventSystems.contains(eventSignature) && eventSystemDependencies.contains(eventSignature));
-
-            auto& systems = eventSystems.at(eventSignature);
-            auto& systemDependencies = eventSystemDependencies.at(eventSignature);
-
-            SystemSignature systemSignature = Internal::SignForStaticClass<S>();
-            systemInstances.erase(systemSignature);
-            systems.erase(systemSignature);
-            systemDependencies.erase(systemSignature);
-        }
+        void RemoveEventSystem();
 
         template <typename E>
-        void BroadcastEvent(const E& event)
-        {
-            EventSignature eventSignature = Internal::SignForStaticClass<E>();
-            if (!eventSystems.contains(eventSignature)) {
-                return;
-            }
-
-            const auto& systems = eventSystems.at(eventSignature);
-            const auto& systemDependencies = eventSystemDependencies.at(eventSignature);
-
-            tf::Taskflow taskflow;
-            std::unordered_map<SystemSignature, tf::Task> tasks;
-            tasks.reserve(systems.size());
-
-            SystemCommands systemCommands(*this);
-            Mirror::Any eventRef = std::ref(event);
-
-            for (const auto& system : systems) {
-                const auto& systemInstance = systemInstances.at(system);
-                Assert(systemInstance.type == SystemType::event);
-
-                tasks.emplace(std::make_pair(system, taskflow.emplace([&]() -> void {
-                    std::get<OnReceiveProxyFunc>(systemInstance.proxy)(systemCommands, &eventRef);
-                })));
-            }
-
-            for (const auto& dependencies : systemDependencies) {
-                auto& task = tasks.at(dependencies.first);
-                for (const auto& depend : dependencies.second) {
-                    task.succeed(tasks.at(depend));
-                }
-            }
-
-            tf::Executor executor;
-            executor.run(taskflow);
-        }
+        void BroadcastEvent(const E& event);
 
     protected:
         virtual void Setup();
@@ -373,8 +258,6 @@ namespace Runtime {
 
     template <typename... C>
     struct Exclude {};
-
-    class SystemCommands;
 
     class RUNTIME_API SystemCommands {
     public:
@@ -660,4 +543,142 @@ namespace Runtime::Internal {
         &StateType::UpdatedImpl<S>,
         &StateType::RemoveImpl<S>
     };
+}
+
+namespace Runtime {
+    template <typename S>
+    void ECSHost::AddSetupSystem()
+    {
+        SystemSignature signature = Internal::SignForStaticClass<S>();
+        Assert(!systemInstances.contains(signature) && !setupSystems.contains(signature) && !setupSystemDependencies.contains(signature));
+
+        auto* object = new S();
+        SystemInstance instance;
+        instance.type = SystemType::setup;
+        instance.object = object;
+        instance.proxy = [object](SystemCommands& commands) -> void {
+            object->Setup(commands);
+        };
+
+        systemInstances.emplace(std::make_pair(signature, std::move(instance)));
+        setupSystems.emplace(signature);
+        setupSystemDependencies.emplace(std::make_pair(signature, Internal::BuildDependencyListForStaticSystem<S>()));
+    }
+
+    template <typename S>
+    void ECSHost::AddTickSystem()
+    {
+        SystemSignature signature = Internal::SignForStaticClass<S>();
+        Assert(!systemInstances.contains(signature) && !tickSystems.contains(signature) && !tickSystemDependencies.contains(signature));
+
+        auto* object = new S();
+        SystemInstance instance;
+        instance.type = SystemType::tick;
+        instance.object = object;
+        instance.proxy = [object](SystemCommands& commands, float timeMS) -> void {
+            object->Tick(commands, timeMS);
+        };
+
+        systemInstances.emplace(std::make_pair(signature, std::move(instance)));
+        tickSystems.emplace(signature);
+        tickSystemDependencies.emplace(std::make_pair(signature, Internal::BuildDependencyListForStaticSystem<S>()));
+    }
+
+    template <typename E, typename S>
+    void ECSHost::AddEventSystem()
+    {
+        EventSignature eventSignature = Internal::SignForStaticClass<E>();
+        if (!eventSystems.contains(eventSignature)) {
+            eventSystems.emplace(std::make_pair(eventSignature, std::unordered_set<SystemSignature> {}));
+            eventSystemDependencies.emplace(std::make_pair(eventSignature, std::unordered_map<SystemSignature, std::vector<SystemSignature>> {}));
+        }
+
+        auto& systems = eventSystems.at(eventSignature);
+        auto& systemDependencies = eventSystemDependencies.at(eventSignature);
+        SystemSignature systemSignature = Internal::SignForStaticClass<S>();
+        Assert(!systemInstances.contains(systemSignature) && !systems.contains(systemSignature) && !systemDependencies.contains(systemSignature));
+
+        auto* object = new S();
+        SystemInstance instance;
+        instance.type = SystemType::event;
+        instance.object = object;
+        instance.proxy = [object](SystemCommands& commands, Mirror::Any* eventRef) -> void {
+            object->OnReceive(commands, eventRef->As<const E&>());
+        };
+
+        systemInstances.emplace(std::make_pair(systemSignature, std::move(instance)));
+        systems.emplace(systemSignature);
+        systemDependencies.emplace(std::make_pair(systemSignature, Internal::BuildDependencyListForStaticSystem<S>()));
+    }
+
+    template <typename S>
+    void ECSHost::RemoveSetupSystem()
+    {
+        SystemSignature signature = Internal::SignForStaticClass<S>();
+        systemInstances.erase(signature);
+        setupSystems.erase(signature);
+        setupSystemDependencies.erase(signature);
+    }
+
+    template <typename S>
+    void ECSHost::RemoveTickSystem()
+    {
+        SystemSignature signature = Internal::SignForStaticClass<S>();
+        systemInstances.erase(signature);
+        tickSystems.erase(signature);
+        tickSystemDependencies.erase(signature);
+    }
+
+    template <typename E, typename S>
+    void ECSHost::RemoveEventSystem()
+    {
+        EventSignature eventSignature = Internal::SignForStaticClass<E>();
+        Assert(eventSystems.contains(eventSignature) && eventSystemDependencies.contains(eventSignature));
+
+        auto& systems = eventSystems.at(eventSignature);
+        auto& systemDependencies = eventSystemDependencies.at(eventSignature);
+
+        SystemSignature systemSignature = Internal::SignForStaticClass<S>();
+        systemInstances.erase(systemSignature);
+        systems.erase(systemSignature);
+        systemDependencies.erase(systemSignature);
+    }
+
+    template <typename E>
+    void ECSHost::BroadcastEvent(const E& event)
+    {
+        EventSignature eventSignature = Internal::SignForStaticClass<E>();
+        if (!eventSystems.contains(eventSignature)) {
+            return;
+        }
+
+        const auto& systems = eventSystems.at(eventSignature);
+        const auto& systemDependencies = eventSystemDependencies.at(eventSignature);
+
+        tf::Taskflow taskflow;
+        std::unordered_map<SystemSignature, tf::Task> tasks;
+        tasks.reserve(systems.size());
+
+        SystemCommands systemCommands(*this);
+        Mirror::Any eventRef = std::ref(event);
+
+        for (const auto& system : systems) {
+            const auto& systemInstance = systemInstances.at(system);
+            Assert(systemInstance.type == SystemType::event);
+
+            tasks.emplace(std::make_pair(system, taskflow.emplace([&]() -> void {
+                std::get<OnReceiveProxyFunc>(systemInstance.proxy)(systemCommands, &eventRef);
+            })));
+        }
+
+        for (const auto& dependencies : systemDependencies) {
+            auto& task = tasks.at(dependencies.first);
+            for (const auto& depend : dependencies.second) {
+                task.succeed(tasks.at(depend));
+            }
+        }
+
+        tf::Executor executor;
+        executor.run(taskflow);
+    }
 }
