@@ -555,6 +555,31 @@ namespace Mirror {
         return constructors.contains(name);
     }
 
+    const Constructor* Class::FindSuitableConstructor(Mirror::Any* args, uint8_t argNum) const
+    {
+        for (const auto& constructor : constructors) {
+            const auto& argTypeInfos = constructor.second.GetArgTypeInfos();
+            if (argTypeInfos.size() != argNum) {
+                continue;
+            }
+
+            bool bSuitable = true;
+            for (auto i = 0; i < argNum; i++) {
+                if (args[i].Convertible(argTypeInfos[i])) {
+                    continue;
+                }
+
+                bSuitable = false;
+                break;
+            }
+
+            if (bSuitable) {
+                return &constructor.second;
+            }
+        }
+        return nullptr;
+    }
+
     const Constructor* Class::FindConstructor(const std::string& name) const
     {
         auto iter = constructors.find(name);

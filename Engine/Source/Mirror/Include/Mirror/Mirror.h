@@ -279,7 +279,7 @@ namespace Mirror {
 
         // args must passed by std::ref()
         template <typename... Args>
-        Any Invoke(Args... args) const;
+        Any Invoke(Args&&... args) const;
 
         uint8_t GetArgsNum() const;
         const TypeInfo* GetRetTypeInfo() const;
@@ -315,11 +315,11 @@ namespace Mirror {
 
         // args must passed by std::ref()
         template <typename... Args>
-        Any ConstructOnStack(Args... args) const;
+        Any ConstructOnStack(Args&&... args) const;
 
         // args must passed by std::ref()
         template <typename... Args>
-        Any NewObject(Args... args) const;
+        Any NewObject(Args&&... args) const;
 
         uint8_t GetArgsNum() const;
         const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
@@ -421,7 +421,7 @@ namespace Mirror {
 
         // args must passed by std::ref()
         template <typename C, typename... Args>
-        Any Invoke(C&& object, Args... args) const;
+        Any Invoke(C&& object, Args&&... args) const;
 
         uint8_t GetArgsNum() const;
         const TypeInfo* GetRetTypeInfo() const;
@@ -495,13 +495,6 @@ namespace Mirror {
         requires std::is_class_v<C>
         [[nodiscard]] static const Class& Get();
 
-        [[nodiscard]] static bool Has(const std::string& name);
-        [[nodiscard]] static const Class* Find(const std::string& name);
-        [[nodiscard]] static const Class& Get(const std::string& name);
-        [[nodiscard]] static bool Has(const TypeInfo* typeInfo);
-        [[nodiscard]] static const Class* Find(const TypeInfo* typeInfo);
-        [[nodiscard]] static const Class& Get(const TypeInfo* typeInfo);
-
         template <typename F>
         void ForEachStaticVariable(F&& func) const;
 
@@ -514,6 +507,30 @@ namespace Mirror {
         template <typename F>
         void ForEachMemberFunction(F&& func) const;
 
+        template <typename... Args>
+        [[nodiscard]] Any ConstructOnStack(Args&&... args)
+        {
+            std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
+            const auto* constructor = FindSuitableConstructor(refs);
+            Assert(constructor != nullptr);
+            return constructor->ConstructOnStack(refs);
+        }
+
+        template <typename... Args>
+        [[nodiscard]] Any NewObject(Args&&... args)
+        {
+            std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
+            const auto* constructor = FindSuitableConstructor(refs);
+            Assert(constructor != nullptr);
+            return constructor->NewObject(refs);
+        }
+
+        [[nodiscard]] static bool Has(const std::string& name);
+        [[nodiscard]] static const Class* Find(const std::string& name);
+        [[nodiscard]] static const Class& Get(const std::string& name);
+        [[nodiscard]] static bool Has(const TypeInfo* typeInfo);
+        [[nodiscard]] static const Class* Find(const TypeInfo* typeInfo);
+        [[nodiscard]] static const Class& Get(const TypeInfo* typeInfo);
         [[nodiscard]] const TypeInfo* GetTypeInfo() const;
         [[nodiscard]] bool HasDefaultConstructor() const;
         [[nodiscard]] const Mirror::Class* GetBaseClass() const;
@@ -525,6 +542,7 @@ namespace Mirror {
         [[nodiscard]] const Destructor* FindDestructor() const;
         [[nodiscard]] const Destructor& GetDestructor() const;
         [[nodiscard]] bool HasConstructor(const std::string& name) const;
+        [[nodiscard]] const Constructor* FindSuitableConstructor(Mirror::Any* args, uint8_t argNum) const;
         [[nodiscard]] const Constructor* FindConstructor(const std::string& name) const;
         [[nodiscard]] const Constructor& GetConstructor(const std::string& name) const;
         [[nodiscard]] bool HasStaticVariable(const std::string& name) const;
@@ -831,23 +849,23 @@ namespace Mirror {
     }
 
     template <typename... Args>
-    Any Function::Invoke(Args... args) const
+    Any Function::Invoke(Args&&... args) const
     {
-        std::array<Any, sizeof...(args)> refs = { Any(std::forward<std::remove_reference_t<Args>>(args))... };
+        std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
         return InvokeWith(refs.data(), refs.size());
     }
 
     template <typename... Args>
-    Any Constructor::ConstructOnStack(Args... args) const
+    Any Constructor::ConstructOnStack(Args&&... args) const
     {
-        std::array<Any, sizeof...(args)> refs = { Any(std::forward<std::remove_reference_t<Args>>(args))... };
+        std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
         return ConstructOnStackWith(refs.data(), refs.size());
     }
 
     template <typename... Args>
-    Any Constructor::NewObject(Args... args) const
+    Any Constructor::NewObject(Args&&... args) const
     {
-        std::array<Any, sizeof...(args)> refs = { Any(std::forward<std::remove_reference_t<Args>>(args))... };
+        std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
         return NewObjectWith(refs.data(), refs.size());
     }
 
@@ -867,10 +885,10 @@ namespace Mirror {
     }
 
     template <typename C, typename... Args>
-    Any MemberFunction::Invoke(C&& object, Args... args) const
+    Any MemberFunction::Invoke(C&& object, Args&&... args) const
     {
         Any classRef = Any(std::ref(std::forward<C>(object)));
-        std::array<Any, sizeof...(Args)> argRefs = { Any(std::forward<std::remove_reference_t<Args>>(args))... };
+        std::array<Any, sizeof...(args)> argRefs = { Any(std::forward<Args>(args))... };
         return InvokeWith(&classRef, argRefs.data(), argRefs.size());
     }
 

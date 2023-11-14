@@ -195,10 +195,14 @@ struct EClass() EventTest_GlobalState : public State {
 
 struct EClass() EventTest_EmptyState : public State {
     EStateBody(EventTest_EmptyState)
+
+    int placeholder;
 };
 
 struct EClass() EventTest_EmptyComponent : public Component {
     EComponentBody(EventTest_EmptyComponent)
+
+    int placeholder;
 };
 
 struct EClass() EventTest_WorldSetupSystem : public System {

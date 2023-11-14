@@ -30,9 +30,17 @@
     DeclareSingleCompLifecycleEvent(Updated) \
     DeclareSingleCompLifecycleEvent(Removed) \
 
+#define DeclareCompTypeGetter(compClass) \
+    EFunc() \
+    static const Runtime::ComponentType& GetCompType() \
+    { \
+        return Runtime::Internal::compTypeImpl<compClass>; \
+    } \
+
 #define EComponentBody(compClass) \
     EClassBody(compClass) \
     DeclareCompLifecycleEvents() \
+    DeclareCompTypeGetter(compClass) \
 
 #define DeclareSingleStateLifecycleEvent(eventClass) \
     struct EClass() eventClass : public Runtime::Event { \
@@ -506,34 +514,57 @@ namespace Runtime {
     };
 
     struct ComponentType {
-        using EmplaceProxy = void(ECSHost&, Entity, const std::vector<Mirror::Any>&);
-        using GetProxy = Mirror::Any(ECSHost&,Entity);
-        using HasProxy = bool(ECSHost&, Entity);
-        using PatchProxy = void(ECSHost&, Entity, std::function<void(const Mirror::Any&)>);
-        using SetProxy = void(ECSHost&, Entity, const std::vector<Mirror::Any>&);
-        using UpdatedProxy = void(ECSHost&, Entity);
-        using RemoveProxy = void(ECSHost&, Entity);
+        using EmplaceProxy = void(SystemCommands&, Entity, const Mirror::Any&);
+        using GetProxy = Mirror::Any(SystemCommands&, Entity);
+        using HasProxy = bool(SystemCommands&, Entity);
+        using PatchProxy = void(SystemCommands&, Entity, std::function<void(const Mirror::Any&)>);
+        using SetProxy = void(SystemCommands&, Entity, const Mirror::Any&);
+        using UpdatedProxy = void(SystemCommands&, Entity);
+        using RemoveProxy = void(SystemCommands&, Entity);
 
         template <typename C>
-        static void EmplaceImpl(ECSHost& host, Entity entity, const std::vector<Mirror::Any>& args);
+        static void EmplaceImpl(SystemCommands& commands, Entity entity, const Mirror::Any& ref)
+        {
+            commands.Emplace<C>(entity, ref.As<const C&>());
+        }
 
         template <typename C>
-        static Mirror::Any GetImpl(ECSHost& host, Entity entity);
+        static Mirror::Any GetImpl(SystemCommands& commands, Entity entity)
+        {
+            return Mirror::Any(commands.Get<C>(entity));
+        }
 
         template <typename C>
-        static bool HasImpl(ECSHost& host, Entity entity);
+        static bool HasImpl(SystemCommands& commands, Entity entity)
+        {
+            return commands.Has<C>(entity);
+        }
 
         template <typename C>
-        static void PatchImpl(ECSHost& host, Entity entity, std::function<void(const Mirror::Any&)> patchFunc);
+        static void PatchImpl(SystemCommands& commands, Entity entity, std::function<void(const Mirror::Any&)> patchFunc)
+        {
+            commands.Patch<C>(entity, [&patchFunc](C& comp) -> void {
+                patchFunc(Mirror::Any(std::ref(comp)));
+            });
+        }
 
         template <typename C>
-        static void SetImpl(ECSHost& host, Entity entity, const std::vector<Mirror::Any>& args);
+        static void SetImpl(SystemCommands& commands, Entity entity, const Mirror::Any& ref)
+        {
+            commands.Set<C>(entity, ref.As<const C&>());
+        }
 
         template <typename C>
-        static void UpdatedImpl(ECSHost& host, Entity entity);
+        static void UpdatedImpl(SystemCommands& commands, Entity entity)
+        {
+            commands.Updated<C>(entity);
+        }
 
         template <typename C>
-        static void RemoveImpl(ECSHost& host, Entity entity);
+        static void RemoveImpl(SystemCommands& commands, Entity entity)
+        {
+            commands.Remove<C>(entity);
+        }
 
         EmplaceProxy* emplace;
         GetProxy* get;
@@ -544,58 +575,83 @@ namespace Runtime {
         RemoveProxy* remove;
     };
 
+    struct StateType {
+        using EmplaceProxy = void(SystemCommands&, const Mirror::Any&);
+        using GetProxy = Mirror::Any(SystemCommands&);
+        using HasProxy = bool(SystemCommands&);
+        using PatchProxy = void(SystemCommands&, std::function<void(const Mirror::Any&)>);
+        using SetProxy = void(SystemCommands&, const Mirror::Any&);
+        using UpdatedProxy = void(SystemCommands&);
+        using RemoveProxy = void(SystemCommands&);
+
+        template <typename S>
+        static void EmplaceImpl(SystemCommands& commands, const Mirror::Any& ref)
+        {
+            commands.EmplaceState<S>(ref.As<const S&>());
+        }
+
+        template <typename S>
+        static Mirror::Any GetImpl(SystemCommands& commands)
+        {
+            return Mirror::Any(commands.GetState<S>());
+        }
+
+        template <typename S>
+        static bool HasImpl(SystemCommands& commands)
+        {
+            return commands.HasState<S>();
+        }
+
+        template <typename S>
+        static void PatchImpl(SystemCommands& commands, std::function<void(const Mirror::Any&)> patchFunc)
+        {
+            return commands.PatchState<S>(commands, [&patchFunc](S& state) -> void {
+                patchFunc(Mirror::Any(std::ref(state)));
+            });
+        }
+
+        template <typename S>
+        static void SetImpl(SystemCommands& commands, const Mirror::Any& ref)
+        {
+            commands.SetState<S>(ref.As<const S&>());
+        }
+
+        template <typename S>
+        static void UpdatedImpl(SystemCommands& commands)
+        {
+            commands.UpdatedState<S>();
+        }
+
+        template <typename S>
+        static void RemoveImpl(SystemCommands& commands)
+        {
+            commands.RemoveState<S>();
+        }
+
+        EmplaceProxy* emplace;
+        GetProxy* get;
+        HasProxy* has;
+        PatchProxy* patch;
+        SetProxy* set;
+        UpdatedProxy* updated;
+        RemoveProxy* remove;
+    };
+}
+
+namespace Runtime::Internal {
     template <typename C>
-    inline constexpr ComponentType componentType = {
+    inline constexpr ComponentType compTypeImpl = {
         &ComponentType::EmplaceImpl<C>,
         &ComponentType::GetImpl<C>,
         &ComponentType::HasImpl<C>,
         &ComponentType::PatchImpl<C>,
         &ComponentType::SetImpl<C>,
         &ComponentType::UpdatedImpl<C>,
-        &ComponentType::RemoveImpl<C>,
-    };
-
-    struct StateType {
-        using EmplaceProxy = void(ECSHost&, const std::vector<Mirror::Any>&);
-        using GetProxy = Mirror::Any(ECSHost&);
-        using HasProxy = bool(ECSHost&);
-        using PatchProxy = void(ECSHost&, std::function<void(const Mirror::Any&)>);
-        using SetProxy = void(ECSHost&, const std::vector<Mirror::Any>&);
-        using UpdatedProxy = void(ECSHost&);
-        using RemoveProxy = void(ECSHost&);
-
-        template <typename S>
-        static void EmplaceImpl(ECSHost& host, const std::vector<Mirror::Any>& args);
-
-        template <typename S>
-        static Mirror::Any GetImpl(ECSHost& host);
-
-        template <typename S>
-        static bool HasImpl(ECSHost& host);
-
-        template <typename S>
-        static void PatchImpl(ECSHost& host, std::function<void(const Mirror::Any&)> patchFunc);
-
-        template <typename S>
-        static void SetImpl(ECSHost& host, const std::vector<Mirror::Any>& args);
-
-        template <typename S>
-        static void UpdatedImpl(ECSHost& host);
-
-        template <typename S>
-        static void RemoveImpl(ECSHost& host);
-
-        EmplaceProxy* emplace;
-        GetProxy* get;
-        HasProxy* has;
-        PatchProxy* patch;
-        SetProxy* set;
-        UpdatedProxy* updated;
-        RemoveProxy* remove;
+        &ComponentType::RemoveImpl<C>
     };
 
     template <typename S>
-    inline constexpr StateType stateType = {
+    inline constexpr StateType stateTypeImpl = {
         &StateType::EmplaceImpl<S>,
         &StateType::GetImpl<S>,
         &StateType::HasImpl<S>,
