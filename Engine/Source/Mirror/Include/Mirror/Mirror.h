@@ -77,17 +77,14 @@ namespace Mirror {
         // NOTICE: this name is platform relative, so do not use it unless for debug
         std::string debugName;
 #endif
+        std::string name;
         TypeId id;
         const bool isConst;
         const bool isLValueReference;
         const bool isRValueReference;
         const bool isPointer;
         const bool isClass;
-        std::function<TypeInfo*()> addConst;
-        std::function<TypeInfo*()> removeConst;
-        std::function<TypeInfo*()> removeRef;
-        std::function<TypeInfo*()> removeCVRef;
-        std::function<TypeInfo*()> removePointer;
+        TypeId removePointerType;
     };
 
     template <typename T>
@@ -127,80 +124,26 @@ namespace Mirror {
         template <typename T>
         Any& operator=(std::reference_wrapper<T>&& ref);
 
-        // T -> T: true
-        // T -> const T: true
-        // T -> T&: true
-        // T -> const T&: true
-        //
-        // const T -> T: false
-        // const T -> const T: true
-        // const T -> T&: false
-        // const T -> const T&: true
-        //
-        // T& -> T: true
-        // T& -> const T: true
-        // T& -> T&: true
-        // T& -> const T&: true
-        //
-        // const T& -> T: false
-        // const T& -> const T: true
-        // const T& -> T&: false
-        // const T& -> const T&: true
-        template <typename T>
-        [[nodiscard]] bool Convertible();
-
-        // T const -> T: false
-        // T const -> const T: true
-        // T const -> T&: false
-        // T const -> const T&: true
-        //
-        // const T -> T: false
-        // const T -> const T: true
-        // const T -> T&: false
-        // const T -> const T&: true
-        //
-        // T& const -> T: true
-        // T& const -> const T: true
-        // T& const -> T&: true
-        // T& const -> const T&: true
-        //
-        // const T& const -> T: false
-        // const T& const -> const T: true
-        // const T& const -> T&: false
-        // const T& const -> const T&: true
         template <typename T>
         [[nodiscard]] bool Convertible() const;
-
-        template <typename T>
-        T As();
 
         template <typename T>
         T As() const;
 
         template <typename T>
-        T ForceAs();
-
-        template <typename T>
         T ForceAs() const;
-
-        template <typename T>
-        T* TryAs();
 
         template <typename T>
         T* TryAs() const;
 
-        [[nodiscard]] bool Convertible(const TypeInfo* dstType);
         [[nodiscard]] bool Convertible(const TypeInfo* dstType) const;
         [[nodiscard]] size_t Size() const;
         [[nodiscard]] const void* Data() const;
-        [[nodiscard]] const Mirror::TypeInfo* TypeInfo();
         [[nodiscard]] const Mirror::TypeInfo* TypeInfo() const;
         void Reset();
         bool operator==(const Any& rhs) const;
 
     private:
-        static bool ConvertibleInternal(const Mirror::TypeInfo* src, const Mirror::TypeInfo* dst);
-
         template <typename T>
         void ConstructValue(T&& value);
 
@@ -531,6 +474,8 @@ namespace Mirror {
         [[nodiscard]] static bool Has(const TypeInfo* typeInfo);
         [[nodiscard]] static const Class* Find(const TypeInfo* typeInfo);
         [[nodiscard]] static const Class& Get(const TypeInfo* typeInfo);
+        [[nodiscard]] static const Class* Find(TypeId typeId);
+        [[nodiscard]] static const Class& Get(TypeId typeId);
         [[nodiscard]] const TypeInfo* GetTypeInfo() const;
         [[nodiscard]] bool HasDefaultConstructor() const;
         [[nodiscard]] const Mirror::Class* GetBaseClass() const;
@@ -688,17 +633,14 @@ namespace Mirror {
 #if BUILD_CONFIG_DEBUG
             functionSignature,
 #endif
-            Internal::ComputeTypeId(functionSignature),
+            typeid(T).name(),
+            typeid(T).hash_code(),
             std::is_const_v<T>,
             std::is_lvalue_reference_v<T>,
             std::is_rvalue_reference_v<T>,
             std::is_pointer_v<T>,
             std::is_class_v<T>,
-            []() -> TypeInfo* { return GetTypeInfo<std::add_const_t<T>>(); },
-            []() -> TypeInfo* { return GetTypeInfo<std::remove_const_t<T>>(); },
-            []() -> TypeInfo* { return GetTypeInfo<std::remove_reference_t<T>>(); },
-            []() -> TypeInfo* { return GetTypeInfo<std::remove_cvref_t<T>>(); },
-            []() -> TypeInfo* { return GetTypeInfo<std::remove_pointer_t<T>>(); }
+            typeid(std::remove_pointer_t<T>).hash_code()
         };
         return &typeInfo;
     }
@@ -746,22 +688,9 @@ namespace Mirror {
     }
 
     template <typename T>
-    bool Any::Convertible()
-    {
-        return ConvertibleInternal(typeInfo, GetTypeInfo<T>());
-    }
-
-    template <typename T>
     bool Any::Convertible() const
     {
-        return ConvertibleInternal(typeInfo->addConst(), GetTypeInfo<T>());
-    }
-
-    template <typename T>
-    T Any::As()
-    {
-        Assert(Convertible<T>());
-        return ForceAs<T>();
+        return Convertible(GetTypeInfo<T>());
     }
 
     template <typename T>
@@ -769,16 +698,6 @@ namespace Mirror {
     {
         Assert(Convertible<T>());
         return ForceAs<T>();
-    }
-
-    template <typename T>
-    T Any::ForceAs()
-    {
-        if (typeInfo->isLValueReference) {
-            return reinterpret_cast<std::reference_wrapper<std::remove_reference_t<T>>*>(data.data())->get();
-        } else {
-            return *reinterpret_cast<std::remove_reference_t<T>*>(data.data());
-        }
     }
 
     template <typename T>
@@ -793,23 +712,12 @@ namespace Mirror {
     }
 
     template <typename T>
-    T* Any::TryAs()
-    {
-        Assert(!typeInfo->isLValueReference);
-        if (Convertible<T>()) {
-            return reinterpret_cast<std::remove_reference_t<T>*>(data.data());
-        } else {
-            return nullptr;
-        }
-    }
-
-    template <typename T>
     T* Any::TryAs() const
     {
         Assert(!typeInfo->isLValueReference);
         if (Convertible<T>()) {
             void* dataPtr = const_cast<uint8_t*>(data.data());
-            return *reinterpret_cast<std::remove_reference_t<T>*>(dataPtr);
+            return reinterpret_cast<std::remove_reference_t<T>*>(dataPtr);
         } else {
             return nullptr;
         }

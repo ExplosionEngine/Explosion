@@ -62,14 +62,22 @@ namespace Mirror {
         return *this;
     }
 
-    bool Any::Convertible(const Mirror::TypeInfo* dstType)
-    {
-        return ConvertibleInternal(typeInfo, dstType);
-    }
-
     bool Any::Convertible(const Mirror::TypeInfo* dstType) const
     {
-        return ConvertibleInternal(typeInfo->addConst(), dstType);
+        if (typeInfo->id == dstType->id) {
+            return true;
+        }
+
+        const Mirror::Class* srcClass;
+        const Mirror::Class* dstClass;
+        if (typeInfo->isPointer && dstType->isPointer) {
+            srcClass = Mirror::Class::Find(typeInfo->removePointerType);
+            dstClass = Mirror::Class::Find(dstType->removePointerType);
+        } else {
+            srcClass = Mirror::Class::Find(typeInfo->id);
+            dstClass = Mirror::Class::Find(dstType->id);
+        }
+        return srcClass != nullptr && dstClass != nullptr && srcClass->IsDerivedFrom(dstClass);
     }
 
     size_t Any::Size() const
@@ -82,14 +90,9 @@ namespace Mirror {
         return data.data();
     }
 
-    const Mirror::TypeInfo* Any::TypeInfo()
-    {
-        return typeInfo;
-    }
-
     const Mirror::TypeInfo* Any::TypeInfo() const
     {
-        return typeInfo->addConst();
+        return typeInfo;
     }
 
     void Any::Reset()
@@ -105,46 +108,6 @@ namespace Mirror {
     {
         return typeInfo == rhs.typeInfo
             && rtti->equal(data.data(), rhs.Data());
-    }
-
-    bool Any::ConvertibleInternal(const Mirror::TypeInfo* src, const Mirror::TypeInfo* dst)
-    {
-        static auto convertibleNonPolymorphism = [](const Mirror::TypeInfo* src, const Mirror::TypeInfo* dst) -> bool {
-            if (src->isConst) {
-                return src->id == dst->removeRef()->id;
-            } else {
-                return src->id == dst->removeCVRef()->id;
-            }
-        };
-        static auto convertiblePolymorphism = [](const Mirror::TypeInfo* lhs, const Mirror::TypeInfo* rhs) -> bool {
-            if (lhs->isConst && !rhs->isConst) {
-                return false;
-            }
-
-            const Mirror::Class* lhsClass = Mirror::Class::Find(lhs->removeConst());
-            const Mirror::Class* rhsClass = Mirror::Class::Find(rhs->removeConst());
-            if (lhsClass == nullptr || rhsClass == nullptr) {
-                return false;
-            }
-            return lhsClass->IsDerivedFrom(rhsClass);
-        };
-
-        if (src->isLValueReference) {
-            auto* removeRefType = src->removeRef();
-            if (convertibleNonPolymorphism(removeRefType, dst)) {
-                return true;
-            }
-            return convertiblePolymorphism(removeRefType, removeRefType->isConst ? dst->removeRef() : dst->removeCVRef());
-        } else {
-            if (convertibleNonPolymorphism(src, dst)) {
-                return true;
-            }
-            if (!src->isPointer) {
-                return false;
-            }
-            auto* removePointerType = src->removePointer();
-            return convertiblePolymorphism(removePointerType, removePointerType->isConst ? dst->removePointer() : dst->removePointer()->removeConst());
-        }
     }
 
     Type::Type(std::string inName) : name(std::move(inName)) {}
@@ -477,17 +440,27 @@ namespace Mirror {
     const Class* Class::Find(const TypeInfo* typeInfo)
     {
         Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
-        auto iter = typeToNameMap.find(typeInfo->id);
+        return Find(typeInfo->id);
+    }
+
+    const Class& Class::Get(const TypeInfo* typeInfo)
+    {
+        Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
+        return Get(typeInfo->id);
+    }
+
+    const Class* Class::Find(TypeId typeId)
+    {
+        auto iter = typeToNameMap.find(typeId);
         if (iter == typeToNameMap.end()) {
             return nullptr;
         }
         return Find(iter->second);
     }
 
-    const Class& Class::Get(const TypeInfo* typeInfo)
+    const Class& Class::Get(TypeId typeId)
     {
-        Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
-        auto iter = typeToNameMap.find(typeInfo->id);
+        auto iter = typeToNameMap.find(typeId);
         AssertWithReason(iter != typeToNameMap.end(), "did you forget add EClass() annotation to class ?");
         return Get(iter->second);
     }
