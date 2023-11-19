@@ -173,24 +173,32 @@ function(Add3rdHeaderOnlyPackage)
 endfunction()
 
 function(Add3rdBinaryPackage)
-    cmake_parse_arguments(PARAMS "ARCH" "NAME;PLATFORM;VERSION" "HASH;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
+    cmake_parse_arguments(PARAMS "ARCH" "NAME;PLATFORM" "VERSION;HASH;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
 
     set(NAME "${PARAMS_NAME}")
+    if (${PARAMS_ARCH})
+        set(COUNT_ARCH "ARCH")
+    else()
+        set(COUNT_ARCH "")
+    endif()
+
+    Get3rdPlatformValue(
+        ${COUNT_ARCH}
+        OUTPUT VERSION_VALUE
+        INPUT ${PARAMS_VERSION}
+    )
 
     if (DEFINED PARAMS_PLATFORM)
         if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
             return()
         endif()
-        set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
+        set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${VERSION_VALUE}")
     else()
-        set(FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${PARAMS_VERSION}")
+        set(FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${VERSION_VALUE}")
     endif()
 
     if (${PARAMS_ARCH})
-        set(COUNT_ARCH "ARCH")
-        set(FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${PARAMS_VERSION}")
-    else()
-        set(COUNT_ARCH "")
+        set(FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${VERSION_VALUE}")
     endif()
 
     set(URL "${3RD_REPO}/${FULL_NAME}.7z")
