@@ -5,12 +5,111 @@
 #include <utility>
 #include <sstream>
 
-#include <Mirror/Type.h>
+#include <Mirror/Mirror.h>
 #include <Mirror/Registry.h>
 #include <Common/Debug.h>
 #include <Common/String.h>
 
+namespace Mirror::Internal {
+    TypeId ComputeTypeId(std::string_view sigName)
+    {
+        return Common::HashUtils::CityHash(sigName.data(), sigName.size());
+    }
+}
+
 namespace Mirror {
+    Any::~Any()
+    {
+        if (rtti != nullptr) {
+            rtti->detor(data.data());
+        }
+    }
+
+    Any::Any(const Any& inAny)
+    {
+        typeInfo = inAny.typeInfo;
+        rtti = inAny.rtti;
+        data.resize(inAny.data.size());
+        rtti->copy(data.data(), inAny.data.data());
+    }
+
+    Any::Any(Any&& inAny) noexcept
+    {
+        typeInfo = inAny.typeInfo;
+        rtti = inAny.rtti;
+        data.resize(inAny.data.size());
+        rtti->move(data.data(), inAny.data.data());
+    }
+
+    Any& Any::operator=(const Any& inAny)
+    {
+        if (&inAny == this) {
+            return *this;
+        }
+        Reset();
+        typeInfo = inAny.typeInfo;
+        rtti = inAny.rtti;
+        rtti->copy(data.data(), inAny.data.data());
+        return *this;
+    }
+
+    Any& Any::operator=(Mirror::Any&& inAny) noexcept
+    {
+        Reset();
+        typeInfo = inAny.typeInfo;
+        rtti = inAny.rtti;
+        rtti->move(data.data(), inAny.data.data());
+        return *this;
+    }
+
+    bool Any::Convertible(const Mirror::TypeInfo* dstType) const
+    {
+        if (typeInfo->id == dstType->id) {
+            return true;
+        }
+
+        const Mirror::Class* srcClass;
+        const Mirror::Class* dstClass;
+        if (typeInfo->isPointer && dstType->isPointer) {
+            srcClass = Mirror::Class::Find(typeInfo->removePointerType);
+            dstClass = Mirror::Class::Find(dstType->removePointerType);
+        } else {
+            srcClass = Mirror::Class::Find(typeInfo->id);
+            dstClass = Mirror::Class::Find(dstType->id);
+        }
+        return srcClass != nullptr && dstClass != nullptr && srcClass->IsDerivedFrom(dstClass);
+    }
+
+    size_t Any::Size() const
+    {
+        return data.size();
+    }
+
+    const void* Any::Data() const
+    {
+        return data.data();
+    }
+
+    const Mirror::TypeInfo* Any::TypeInfo() const
+    {
+        return typeInfo;
+    }
+
+    void Any::Reset()
+    {
+        if (rtti != nullptr) {
+            rtti->detor(data.data());
+        }
+        typeInfo = nullptr;
+        rtti = nullptr;
+    }
+
+    bool Any::operator==(const Any& rhs) const
+    {
+        return typeInfo == rhs.typeInfo
+            && rtti->equal(data.data(), rhs.Data());
+    }
+
     Type::Type(std::string inName) : name(std::move(inName)) {}
 
     Type::~Type() = default;
@@ -299,9 +398,14 @@ namespace Mirror {
     Class::Class(ConstructParams&& params)
         : Type(std::move(params.name))
         , typeInfo(params.typeInfo)
+        , baseClassGetter(std::move(params.baseClassGetter))
         , defaultObject(std::move(params.defaultObject))
         , destructor(std::move(params.destructor))
+        , constructors()
     {
+        if (params.defaultConstructor.has_value()) {
+            constructors.emplace(std::make_pair(NamePresets::defaultConstructor, std::move(params.defaultConstructor.value())));
+        }
     }
 
     Class::~Class() = default;
@@ -327,6 +431,40 @@ namespace Mirror {
         return iter->second;
     }
 
+    bool Class::Has(const TypeInfo* typeInfo)
+    {
+        Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
+        return typeToNameMap.contains(typeInfo->id);
+    }
+
+    const Class* Class::Find(const TypeInfo* typeInfo)
+    {
+        Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
+        return Find(typeInfo->id);
+    }
+
+    const Class& Class::Get(const TypeInfo* typeInfo)
+    {
+        Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
+        return Get(typeInfo->id);
+    }
+
+    const Class* Class::Find(TypeId typeId)
+    {
+        auto iter = typeToNameMap.find(typeId);
+        if (iter == typeToNameMap.end()) {
+            return nullptr;
+        }
+        return Find(iter->second);
+    }
+
+    const Class& Class::Get(TypeId typeId)
+    {
+        auto iter = typeToNameMap.find(typeId);
+        AssertWithReason(iter != typeToNameMap.end(), "did you forget add EClass() annotation to class ?");
+        return Get(iter->second);
+    }
+
     const TypeInfo* Class::GetTypeInfo() const
     {
         return typeInfo;
@@ -335,6 +473,28 @@ namespace Mirror {
     bool Class::HasDefaultConstructor() const
     {
         return HasConstructor(NamePresets::defaultConstructor);
+    }
+
+    const Mirror::Class* Class::GetBaseClass() const
+    {
+        return baseClassGetter();
+    }
+
+    bool Class::IsBaseOf(const Mirror::Class* derivedClass) const
+    {
+        return derivedClass->IsDerivedFrom(this);
+    }
+
+    bool Class::IsDerivedFrom(const Mirror::Class* baseClass) const
+    {
+        const Mirror::Class* tBase = GetBaseClass();
+        while (tBase != nullptr) {
+            if (tBase == baseClass) {
+                return true;
+            }
+            tBase = tBase->GetBaseClass();
+        }
+        return false;
     }
 
     const Constructor* Class::FindDefaultConstructor() const
@@ -366,6 +526,31 @@ namespace Mirror {
     bool Class::HasConstructor(const std::string& name) const
     {
         return constructors.contains(name);
+    }
+
+    const Constructor* Class::FindSuitableConstructor(Mirror::Any* args, uint8_t argNum) const
+    {
+        for (const auto& constructor : constructors) {
+            const auto& argTypeInfos = constructor.second.GetArgTypeInfos();
+            if (argTypeInfos.size() != argNum) {
+                continue;
+            }
+
+            bool bSuitable = true;
+            for (auto i = 0; i < argNum; i++) {
+                if (args[i].Convertible(argTypeInfos[i])) {
+                    continue;
+                }
+
+                bSuitable = false;
+                break;
+            }
+
+            if (bSuitable) {
+                return &constructor.second;
+            }
+        }
+        return nullptr;
     }
 
     const Constructor* Class::FindConstructor(const std::string& name) const
@@ -455,6 +640,11 @@ namespace Mirror {
 
     void Class::Serialize(Common::SerializeStream& stream, Mirror::Any* obj) const
     {
+        const auto* baseClass = GetBaseClass();
+        if (baseClass != nullptr) {
+            baseClass->Serialize(stream, obj);
+        }
+
         Assert(defaultObject.has_value());
 
         std::string name = GetName();
@@ -479,8 +669,12 @@ namespace Mirror {
 
     void Class::Deserailize(Common::DeserializeStream& stream, Mirror::Any* obj) const
     {
+        const auto* baseClass = GetBaseClass();
+        if (baseClass != nullptr) {
+            baseClass->Deserailize(stream, obj);
+        }
+
         Assert(defaultObject.has_value());
-        *obj = defaultObject.value();
 
         std::string className;
         Common::Serializer<std::string>::Deserialize(stream, className);

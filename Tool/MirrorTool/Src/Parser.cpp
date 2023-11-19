@@ -77,6 +77,12 @@ namespace MirrorTool {
         return iter == map.end() ? FieldAccess::max : iter->second;
     }
 
+    static std::string GetPureBaseClassName(const std::string& str)
+    {
+        auto result = Common::StringUtils::Replace(str, "class ", "");
+        return Common::StringUtils::Replace(result, "struct", "");
+    }
+
     static void ParseMetaDatas(Node& node, const std::string& metaDataStr)
     {
         auto metaDatas = Common::StringUtils::Split(metaDataStr, ";");
@@ -187,6 +193,8 @@ namespace MirrorTool {
             ParseMetaDatas(context, spellingStr);
         } else if (kind == CXCursor_CXXAccessSpecifier) {
             context.lastFieldAccess = GetFieldAccess(clang_getCXXAccessSpecifier(cursor));
+        } else if (kind == CXCursor_CXXBaseSpecifier) {
+            context.baseClassName = GetPureBaseClassName(spellingStr);
         } else if (kind == CXCursor_VarDecl || kind == CXCursor_FieldDecl) {
             CXType type = clang_getCursorType(cursor);
             CXString typeSpelling = clang_getTypeSpelling(type);

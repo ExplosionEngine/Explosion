@@ -22,3 +22,4 @@
 private: \
     static int _mirrorRegistry; \
 public: \
+    static const Mirror::Class& GetClass(); \

@@ -10,13 +10,12 @@ TEST(WorldTest, BasicTest)
     world.AddTickSystem<BasicTest_MotionSystem>();
     world.AddSetupSystem<BasicTest_WorldSetupSystem>();
     world.Setup();
-    world.Tick();
+    world.Tick(0.01f);
 
-    WorldTestHelper testHelper(world);
-    SystemCommands commands = testHelper.HackCreateSystemCommands();
+    SystemCommands commands(world);
 
-    ASSERT_TRUE(commands.HasState<BasicTest_GlobalStatus>());
-    const auto* savedEntities = commands.GetState<BasicTest_GlobalStatus>();
+    ASSERT_TRUE(commands.HasState<BasicTest_GlobalState>());
+    const auto* savedEntities = commands.GetState<BasicTest_GlobalState>();
 
     const auto* testPosition0 = commands.Get<BasicTest_Position>(savedEntities->testEntity0);
     const auto* testVelocity0 = commands.Get<BasicTest_Velocity>(savedEntities->testEntity0);
@@ -56,15 +55,12 @@ TEST(WorldTest, SystemScheduleTest)
     World world;
     world.AddSetupSystem<SystemScheduleTest_WorldSetupSystem>();
     world.AddTickSystem<SystemScheduleTest_System1>();
-    world.AddTickSystem<SystemScheduleTest_System2>()
-        .ScheduleAfter<SystemScheduleTest_System1>();
-    world.AddTickSystem<SystemScheduleTest_System3>()
-        .ScheduleAfter<SystemScheduleTest_System2>();
+    world.AddTickSystem<SystemScheduleTest_System2>();
+    world.AddTickSystem<SystemScheduleTest_System3>();
     world.Setup();
-    world.Tick();
+    world.Tick(0.01f);
 
-    WorldTestHelper testHelper(world);
-    SystemCommands commands = testHelper.HackCreateSystemCommands();
+    SystemCommands commands(world);
 
     ASSERT_TRUE(commands.HasState<SystemScheduleTest_Context>());
     const auto* context = commands.GetState<SystemScheduleTest_Context>();
@@ -80,17 +76,17 @@ TEST(WorldTest, EventTest)
     World world;
     world.AddSetupSystem<EventTest_WorldSetupSystem>();
     world.AddTickSystem<EventTest_WorldTickSystem>();
-    world.Event<EventTest_EmptyState::Added>().Connect<EventTest_OnStateAddedSystem>();
-    world.Event<EventTest_EmptyState::Updated>().Connect<EventTest_OnStateUpdatedSystem>();
-    world.Event<EventTest_EmptyState::Removed>().Connect<EventTest_OnStateRemoveSystem>();
-    world.Event<EventTest_EmptyComponent::Added>().Connect<EventTest_OnComponentAddedSystem>();
-    world.Event<EventTest_EmptyComponent::Updated>().Connect<EventTest_OnComponentUpdatedSystem>();
-    world.Event<EventTest_EmptyComponent::Removed>().Connect<EventTest_OnComponentRemovedSystem>();
+    world.AddEventSystem<EventTest_EmptyState::Added, EventTest_OnStateAddedSystem>();
+    world.AddEventSystem<EventTest_EmptyState::Updated, EventTest_OnStateUpdatedSystem>();
+    world.AddEventSystem<EventTest_EmptyState::Removed, EventTest_OnStateRemoveSystem>();
+    world.AddEventSystem<EventTest_EmptyComponent::Added, EventTest_OnComponentAddedSystem>();
+    world.AddEventSystem<EventTest_EmptyComponent::Updated, EventTest_OnComponentUpdatedSystem>();
+    world.AddEventSystem<EventTest_EmptyComponent::Removed, EventTest_OnComponentRemovedSystem>();
 
     world.Setup();
-    world.Tick();
-    world.Tick();
-    world.Tick();
+    world.Tick(0.01f);
+    world.Tick(0.01f);
+    world.Tick(0.01f);
     world.Shutdown();
 }
 
@@ -98,10 +94,10 @@ TEST(WorldTest, CustomEventTest)
 {
     World world;
     world.AddSetupSystem<CustomEventTest_WorldSetupSystem>();
-    world.Event<CustomEventTest_CustomEvent>().Connect<CustomEventTest_CustomEventSystem>();
+    world.AddEventSystem<CustomEventTest_CustomEvent, CustomEventTest_CustomEventSystem>();
 
     world.Setup();
-    world.Tick();
+    world.Tick(0.01f);
     world.Shutdown();
 }
 

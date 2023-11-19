@@ -29,6 +29,10 @@ namespace Core {
         static std::filesystem::path ProjectPluginPath();
         static std::filesystem::path ProjectPluginAssetPath(const std::string& pluginName);
 
+#if BUILD_TEST
+        static std::filesystem::path EngineTestPath();
+#endif
+
     private:
         static std::filesystem::path workdingDir;
         static std::filesystem::path currentProjectFile;

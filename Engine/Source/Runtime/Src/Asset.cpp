@@ -11,7 +11,11 @@ namespace Runtime {
         return instance;
     }
 
-    AssetManager::AssetManager() = default;
+    AssetManager::AssetManager()
+        : weakAssetRefs()
+        , threadPool("AssetThreadPool", 4)
+    {
+    }
 
     AssetManager::~AssetManager() = default;
 }

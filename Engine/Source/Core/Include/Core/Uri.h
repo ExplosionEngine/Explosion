@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Core/Paths.h>
+#include <Common/Serialization.h>
 
 namespace Core {
     enum class UriProtocol {
@@ -24,7 +25,7 @@ namespace Core {
         Uri& operator=(Uri&& other) noexcept;
         bool operator==(const Uri& rhs) const;
 
-        const std::string& Value() const;
+        const std::string& Str() const;
         UriProtocol Protocal() const;
         std::string Content() const;
         bool Empty() const;
@@ -42,6 +43,10 @@ namespace Core {
         bool IsProjectPluginAsset() const;
         std::filesystem::path AbsoluteFilePath() const;
 
+#if BUILD_TEST
+        bool IsEngineTestAsset() const;
+#endif
+
     private:
         std::string content;
     };
@@ -52,7 +57,34 @@ namespace std {
     struct hash<Core::Uri> {
         size_t operator()(const Core::Uri& uri) const
         {
-            return hash<std::string>{}(uri.Value());
+            return hash<std::string>{}(uri.Str());
+        }
+    };
+}
+
+namespace Common {
+    template <>
+    struct Serializer<Core::Uri> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("Core::Uri");
+
+        static void Serialize(SerializeStream& stream, const Core::Uri& value)
+        {
+            TypeIdSerializer<std::string>::Serialize(stream);
+
+            Serializer<std::string>::Serialize(stream, value.Str());
+        }
+
+        static bool Deserialize(DeserializeStream& stream, Core::Uri& value)
+        {
+            if (!TypeIdSerializer<std::string>::Deserialize(stream)) {
+                return false;
+            }
+
+            std::string str;
+            Serializer<std::string>::Deserialize(stream, str);
+            value = str;
+            return true;
         }
     };
 }

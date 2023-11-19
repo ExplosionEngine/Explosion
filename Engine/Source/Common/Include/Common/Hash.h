@@ -55,13 +55,19 @@ namespace Common::Internal {
         0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
     };
 
-    template<size_t Index>
-    constexpr uint32_t StrCrc32Internal(const char* str)
+    template <size_t Index>
+    constexpr uint32_t CombineCrc32(const char* str, uint32_t part)
     {
-        return (StrCrc32Internal<Index - 1>(str) >> 8) ^ crcTable[(StrCrc32Internal<Index - 1>(str) ^ str[Index]) & 0x000000ff];
+        return (part >> 8) ^ crcTable[(part ^ str[Index]) & 0x000000ff];
     }
 
-    template<>
+    template <size_t Index>
+    constexpr uint32_t StrCrc32Internal(const char* str)
+    {
+        return CombineCrc32<Index>(str, StrCrc32Internal<Index - 1>(str));
+    }
+
+    template <>
     constexpr uint32_t StrCrc32Internal<size_t(-1)>(const char* str)
     {
         return 0xffffffff;

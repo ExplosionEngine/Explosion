@@ -68,6 +68,12 @@ enum class E0 {
     max
 };
 
+struct C3 : public C2 {
+    C3(int inA, int inB, int inC) : C2(inA, inB), c(inC) {}
+
+    int c;
+};
+
 TEST(RegistryTest, GlobalScopeTest)
 {
     Mirror::Registry::Get()
@@ -150,6 +156,11 @@ TEST(RegistryTest, ClassTest)
             .MemberVariable<&C2::a>("a")
             .MemberVariable<&C2::b>("b");
 
+    Mirror::Registry::Get()
+        .Class<C3, C2>("C3")
+            .Constructor<int, int, int>("Constructor0")
+            .MemberVariable<&C3::c>("c");
+
     {
         const auto& clazz = Mirror::Class::Get("C0");
         ASSERT_EQ(clazz.GetMeta("TestKey"), "C0");
@@ -192,6 +203,15 @@ TEST(RegistryTest, ClassTest)
         ASSERT_EQ(a.Get(&objectRef).As<int>(), 1);
         ASSERT_EQ(b.Get(&objectRef).As<int>(), 2);
         destructor.InvokeWith(&objectRef);
+    }
+
+    {
+        const auto& clazz = Mirror::Class::Get<C3>();
+        auto object = clazz.GetConstructor("Constructor0").NewObject(1, 2, 3);
+        C2* c2Obj = object.As<C2*>();
+
+        ASSERT_EQ(c2Obj->a, 1);
+        ASSERT_EQ(c2Obj->b, 2);
     }
 }
 

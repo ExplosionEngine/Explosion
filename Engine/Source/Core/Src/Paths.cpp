@@ -81,4 +81,11 @@ namespace Core {
     {
         return ProjectPluginPath() / pluginName / "Asset";
     }
+
+#if BUILD_TEST
+    std::filesystem::path Paths::EngineTestPath()
+    {
+        return EngineRoot() / "Test";
+    }
+#endif
 }

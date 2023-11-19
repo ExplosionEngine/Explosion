@@ -9,7 +9,7 @@
 
 #include <gtest/gtest.h>
 
-#include <Mirror/Any.h>
+#include <Mirror/Mirror.h>
 
 struct AnyTestStruct0 {
     int intValue;
@@ -22,6 +22,10 @@ struct AnyTestStruct1 {
     AnyTestStruct1(AnyTestStruct1&& inOther) noexcept : values(std::move(inOther.values)) {}
 
     std::vector<int> values;
+};
+
+struct AnyTestStruct2 : public AnyTestStruct0 {
+    char charValue;
 };
 
 TEST(AnyTest, ValueAssignTest)
@@ -127,71 +131,71 @@ TEST(AnyTest, DataTest)
 TEST(AnyTest, IsReferenceTest)
 {
     Mirror::Any a0 = 1;
-    ASSERT_EQ(a0.IsReference(), false);
+    ASSERT_EQ(a0.TypeInfo()->isLValueReference, false);
 
     float v2 = 2.0f;
     a0 = std::ref(v2);
-    ASSERT_EQ(a0.IsReference(), true);
+    ASSERT_EQ(a0.TypeInfo()->isLValueReference, true);
 }
 
-TEST(AnyTest, CastableTest)
+TEST(AnyTest, ConvertibleTest)
 {
     Mirror::Any a0 = 1;
-    ASSERT_EQ(a0.Castable<int>(), true);
-    ASSERT_EQ(a0.Castable<const int>(), true);
-    ASSERT_EQ(a0.Castable<int&>(), true);
-    ASSERT_EQ(a0.Castable<const int&>(), true);
+    ASSERT_EQ(a0.Convertible<int>(), true);
+    ASSERT_EQ(a0.Convertible<const int>(), true);
+    ASSERT_EQ(a0.Convertible<int&>(), true);
+    ASSERT_EQ(a0.Convertible<const int&>(), true);
 
     const int v0 = 2;
     a0 = v0;
-    ASSERT_EQ(a0.Castable<int>(), false);
-    ASSERT_EQ(a0.Castable<const int>(), true);
-    ASSERT_EQ(a0.Castable<int&>(), false);
-    ASSERT_EQ(a0.Castable<const int&>(), true);
+    ASSERT_EQ(a0.Convertible<int>(), true);
+    ASSERT_EQ(a0.Convertible<const int>(), true);
+    ASSERT_EQ(a0.Convertible<int&>(), true);
+    ASSERT_EQ(a0.Convertible<const int&>(), true);
 
     int v1 = 3;
     a0 = std::ref(v1);
-    ASSERT_EQ(a0.Castable<int>(), true);
-    ASSERT_EQ(a0.Castable<const int>(), true);
-    ASSERT_EQ(a0.Castable<int&>(), true);
-    ASSERT_EQ(a0.Castable<const int&>(), true);
+    ASSERT_EQ(a0.Convertible<int>(), true);
+    ASSERT_EQ(a0.Convertible<const int>(), true);
+    ASSERT_EQ(a0.Convertible<int&>(), true);
+    ASSERT_EQ(a0.Convertible<const int&>(), true);
 
     const int v2 = 4;
     a0 = std::ref(v2);
-    ASSERT_EQ(a0.Castable<int>(), false);
-    ASSERT_EQ(a0.Castable<const int>(), true);
-    ASSERT_EQ(a0.Castable<int&>(), false);
-    ASSERT_EQ(a0.Castable<const int&>(), true);
+    ASSERT_EQ(a0.Convertible<int>(), true);
+    ASSERT_EQ(a0.Convertible<const int>(), true);
+    ASSERT_EQ(a0.Convertible<int&>(), true);
+    ASSERT_EQ(a0.Convertible<const int&>(), true);
 }
 
-TEST(AnyTest, ConstCastable)
+TEST(AnyTest, ConstConvertible)
 {
     const Mirror::Any a0 = 1;
-    ASSERT_EQ(a0.Castable<int>(), false);
-    ASSERT_EQ(a0.Castable<const int>(), true);
-    ASSERT_EQ(a0.Castable<int&>(), false);
-    ASSERT_EQ(a0.Castable<const int&>(), true);
+    ASSERT_EQ(a0.Convertible<int>(), true);
+    ASSERT_EQ(a0.Convertible<const int>(), true);
+    ASSERT_EQ(a0.Convertible<int&>(), true);
+    ASSERT_EQ(a0.Convertible<const int&>(), true);
 
     const int v0 = 2;
     const Mirror::Any a1 = v0;
-    ASSERT_EQ(a1.Castable<int>(), false);
-    ASSERT_EQ(a1.Castable<const int>(), true);
-    ASSERT_EQ(a1.Castable<int&>(), false);
-    ASSERT_EQ(a1.Castable<const int&>(), true);
+    ASSERT_EQ(a1.Convertible<int>(), true);
+    ASSERT_EQ(a1.Convertible<const int>(), true);
+    ASSERT_EQ(a1.Convertible<int&>(), true);
+    ASSERT_EQ(a1.Convertible<const int&>(), true);
 
     int v1 = 3;
     const Mirror::Any a2 = std::ref(v1);
-    ASSERT_EQ(a2.Castable<int>(), true);
-    ASSERT_EQ(a2.Castable<const int>(), true);
-    ASSERT_EQ(a2.Castable<int&>(), true);
-    ASSERT_EQ(a2.Castable<const int&>(), true);
+    ASSERT_EQ(a2.Convertible<int>(), true);
+    ASSERT_EQ(a2.Convertible<const int>(), true);
+    ASSERT_EQ(a2.Convertible<int&>(), true);
+    ASSERT_EQ(a2.Convertible<const int&>(), true);
 
     const int v2 = 4;
     const Mirror::Any a3 = std::ref(v2);
-    ASSERT_EQ(a3.Castable<int>(), false);
-    ASSERT_EQ(a3.Castable<const int>(), true);
-    ASSERT_EQ(a3.Castable<int&>(), false);
-    ASSERT_EQ(a3.Castable<const int&>(), true);
+    ASSERT_EQ(a3.Convertible<int>(), true);
+    ASSERT_EQ(a3.Convertible<const int>(), true);
+    ASSERT_EQ(a3.Convertible<int&>(), true);
+    ASSERT_EQ(a3.Convertible<const int&>(), true);
 }
 
 TEST(AnyTest, AsTest)
@@ -244,6 +248,14 @@ TEST(AnyTest, ConstAsTest)
     ASSERT_EQ(a3.As<const int&>(), 4);
 }
 
+TEST(AnyTest, ForceAsTest)
+{
+    const Mirror::Any a0 = AnyTestStruct2 { 1, 2.0f, '3' };
+    const auto& v0 = a0.ForceAs<const AnyTestStruct0&>();
+    ASSERT_EQ(v0.intValue, 1);
+    ASSERT_EQ(v0.floatValue, 2.0f);
+}
+
 TEST(AnyTest, TryAsTest)
 {
     Mirror::Any a0 = 1;
@@ -256,7 +268,7 @@ TEST(AnyTest, ConstTryAsTest)
 {
     const int v0 = 2;
     Mirror::Any a0 = v0;
-    ASSERT_EQ(a0.TryAs<int>(), nullptr);
+    ASSERT_EQ(*a0.TryAs<int>(), 2);
     ASSERT_EQ(*a0.TryAs<const int>(), 2);
     ASSERT_EQ(a0.TryAs<float>(), nullptr);
 }
@@ -264,9 +276,9 @@ TEST(AnyTest, ConstTryAsTest)
 TEST(AnyTest, StringTypeTest)
 {
     Mirror::Any a0(std::string("hello"));
-    ASSERT_EQ(a0.Castable<std::string>(), true);
-    ASSERT_EQ(a0.Castable<std::string&>(), true);
-    ASSERT_EQ(a0.Castable<const std::string&>(), true);
+    ASSERT_EQ(a0.Convertible<std::string>(), true);
+    ASSERT_EQ(a0.Convertible<std::string&>(), true);
+    ASSERT_EQ(a0.Convertible<const std::string&>(), true);
     ASSERT_EQ(a0.As<const std::string&>(), "hello");
 
     Mirror::Any a1 = std::string("world");
