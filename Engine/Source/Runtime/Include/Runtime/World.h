@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <Common/Memory.h>
 #include <Runtime/ECS.h>
+#include <Runtime/Asset/Level.h>
 
 namespace Runtime {
     class World;
@@ -18,6 +18,10 @@ namespace Runtime {
         void Setup() override;
         void Tick(float timeMS) override;
         void Shutdown() override;
+        bool Setuped() override;
+
+        void LoadFromLevel(const Level& level);
+        void SaveToLevel(Level& level);
 
     private:
         std::string name;

@@ -1,5 +1,5 @@
 //
-// Created by johnk on 2023/10/17.
+// Created by johnk on 2023/11/24.
 //
 
 #pragma once
@@ -7,14 +7,17 @@
 #include <Runtime/Asset.h>
 
 namespace Runtime {
-    class EClass() Level : public Asset {
+    class EClass() Level : public Runtime::Asset {
     public:
         EClassBody(Level)
 
-    private:
         EProperty()
-        uint32_t entityNum;
+        std::vector<std::string> setupSystems;
 
-        // TODO
+        EProperty()
+        std::vector<std::string> tickSystems;
+
+        EProperty()
+        std::unordered_map<std::string, std::vector<std::string>> eventSystems;
     };
 }

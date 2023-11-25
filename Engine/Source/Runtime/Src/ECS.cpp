@@ -34,7 +34,7 @@ namespace Runtime {
     }
 
     ECSHost::SystemInstance::SystemInstance()
-        : type(SystemType::max)
+        : type(SystemRole::max)
         , object(nullptr)
     {
     }
@@ -59,7 +59,7 @@ namespace Runtime {
         SystemCommands systemCommands(*this);
         for (const auto& system : setupSystems) {
             const auto& systemInstance = systemInstances.at(system);
-            Assert(systemInstance.type == SystemType::setup);
+            Assert(systemInstance.type == SystemRole::setup);
 
             tasks.emplace(std::make_pair(system, taskflow.emplace([&]() -> void {
                 std::get<SetupProxyFunc>(systemInstance.proxy)(systemCommands);
@@ -88,7 +88,7 @@ namespace Runtime {
         SystemCommands systemCommands(*this);
         for (const auto& system : tickSystems) {
             const auto& systemInstance = systemInstances.at(system);
-            Assert(systemInstance.type == SystemType::tick);
+            Assert(systemInstance.type == SystemRole::tick);
 
             tasks.emplace(std::make_pair(system, taskflow.emplace([&]() -> void {
                 std::get<TickProxyFunc >(systemInstance.proxy)(systemCommands, timeMS);
@@ -110,5 +110,43 @@ namespace Runtime {
     {
         Assert(setuped);
         setuped = false;
+    }
+
+    bool ECSHost::Setuped()
+    {
+        return setuped;
+    }
+
+    const ComponentType& CompTypeFinder::FromCompClass(const Mirror::Class& compClass)
+    {
+        const Mirror::Function& getCompTypeFunc = compClass.GetStaticFunction("GetCompType");
+        return getCompTypeFunc.Invoke().As<const ComponentType&>();
+    }
+
+    const ComponentType& CompTypeFinder::FromCompClassName(const std::string& compClassName)
+    {
+        return FromCompClass(Mirror::Class::Get(compClassName));
+    }
+
+    const StateType& StateTypeFinder::FromStateClass(const Mirror::Class& stateClass)
+    {
+        const Mirror::Function& getStateTypeFunc = stateClass.GetStaticFunction("GetStateType");
+        return getStateTypeFunc.Invoke().As<const StateType&>();
+    }
+
+    const StateType& StateTypeFinder::FromStateClassName(const std::string& stateClassName)
+    {
+        return FromStateClass(Mirror::Class::Get(stateClassName));
+    }
+
+    const SystemType& SystemTypeFinder::FromSystemClass(const Mirror::Class& systemClass)
+    {
+        const Mirror::Function& getSystemTypeFunc = systemClass.GetStaticFunction("GetSystemType");
+        return getSystemTypeFunc.Invoke().As<const SystemType&>();
+    }
+
+    const SystemType& SystemTypeFinder::FromSystemClassName(const std::string& systemClassName)
+    {
+        return FromSystemClass(Mirror::Class::Get(systemClassName));
     }
 }

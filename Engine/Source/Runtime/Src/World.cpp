@@ -29,4 +29,20 @@ namespace Runtime {
     {
         ECSHost::Shutdown();
     }
+
+    bool World::Setuped()
+    {
+        return ECSHost::Setuped();
+    }
+
+    void World::LoadFromLevel(const Level& level)
+    {
+        Assert(!Setuped());
+        // TODO
+    }
+
+    void World::SaveToLevel(Level& level)
+    {
+        // TODO
+    }
 }
