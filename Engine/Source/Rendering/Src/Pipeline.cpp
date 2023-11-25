@@ -2,11 +2,11 @@
 // Created by johnk on 2023/3/11.
 //
 
-#include <Render/Pipeline.h>
+#include <Rendering/Pipeline.h>
 
 #include <utility>
 
-namespace Render {
+namespace Rendering {
     class PipelineLayoutCache {
     public:
         static PipelineLayoutCache& Get(RHI::Device& device);
@@ -57,7 +57,7 @@ namespace Render {
     }
 }
 
-namespace Render {
+namespace Rendering {
     size_t ComputePipelineShaderSet::Hash() const
     {
         std::vector<size_t> values = {

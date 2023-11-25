@@ -5,11 +5,12 @@
 #include <gtest/gtest.h>
 
 #include <RHI/RHI.h>
-#include <Render/RenderGraph.h>
-#include <Render/Pipeline.h>
+#include <Rendering/RenderGraph.h>
+#include <Rendering/Pipeline.h>
 #include <Render/Shader.h>
 
 using namespace Render;
+using namespace Rendering;
 
 class RenderGraphTestCS : public GlobalShader {
 public:

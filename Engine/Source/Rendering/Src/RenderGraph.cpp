@@ -6,9 +6,9 @@
 #include <unordered_set>
 #include <optional>
 
-#include <Render/RenderGraph.h>
+#include <Rendering/RenderGraph.h>
 
-namespace Render {
+namespace Rendering {
     static std::vector<RHI::GraphicsPassColorAttachment> GetRHIColorAttachments(const RGRasterPassDesc& desc)
     {
         std::vector<RHI::GraphicsPassColorAttachment> result(desc.colorAttachments.size());
@@ -117,7 +117,7 @@ namespace Render {
     }
 }
 
-namespace Render {
+namespace Rendering {
     RGResTransition RGResTransition::Buffer(RGBuffer* inBuffer, RHI::BufferState inBeforeState, RHI::BufferState inAfterState)
     {
         RGResTransition result;

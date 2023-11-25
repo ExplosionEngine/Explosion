@@ -9,7 +9,7 @@
 #include <RHI/RHI.h>
 #include <Render/Shader.h>
 
-namespace Render {
+namespace Rendering {
     class PipelineLayout;
     class ComputePipelineState;
     class RasterPipelineState;
@@ -28,17 +28,17 @@ namespace Render {
     };
 
     struct ComputePipelineShaderSet {
-        ShaderInstance computeShader;
+        Render::ShaderInstance computeShader;
 
         size_t Hash() const;
     };
 
     struct RasterPipelineShaderSet {
-        ShaderInstance vertexShader;
-        ShaderInstance pixelShader;
-        ShaderInstance geometryShader;
-        ShaderInstance domainShader;
-        ShaderInstance hullShader;
+        Render::ShaderInstance vertexShader;
+        Render::ShaderInstance pixelShader;
+        Render::ShaderInstance geometryShader;
+        Render::ShaderInstance domainShader;
+        Render::ShaderInstance hullShader;
 
         size_t Hash() const;
     };
@@ -113,7 +113,7 @@ namespace Render {
     private:
         struct ShaderInstancePack {
             RHI::ShaderStageBits stage;
-            const ShaderInstance* instance;
+            const Render::ShaderInstance* instance;
         };
 
         friend class PipelineLayoutCache;

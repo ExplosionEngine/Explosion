@@ -14,9 +14,10 @@
 #include <Common/Hash.h>
 #include <Common/Debug.h>
 #include <RHI/RHI.h>
-#include <Render/Pipeline.h>
+#include <Rendering/Pipeline.h>
+#include <Rendering/Api.h>
 
-namespace Render {
+namespace Rendering {
     class RGResource;
     class RGBuffer;
     class RGTexture;
@@ -387,8 +388,9 @@ namespace Render {
         RGRasterPassExecuteFunc executeFunc;
     };
 
-    class RenderGraph {
+    class RENDERING_API RenderGraph {
     public:
+        NonCopyable(RenderGraph)
         explicit RenderGraph(RHI::Device& inDevice);
         ~RenderGraph();
 
