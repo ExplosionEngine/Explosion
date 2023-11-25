@@ -35,7 +35,7 @@ struct EClass() BasicTest_GlobalState : public State {
 
 struct EClass() BasicTest_MotionSystem : public System {
 public:
-    EClassBody(BasicTest_MotionSystem)
+    ETickSystemBody(BasicTest_MotionSystem)
 
     void Tick(SystemCommands& commands, float timeMS)
     {
@@ -49,7 +49,7 @@ public:
 
 struct EClass() BasicTest_WorldSetupSystem : public System {
 public:
-    EClassBody(BasicTest_WorldSetupSystem)
+    ESetupSystemBody(BasicTest_WorldSetupSystem)
 
     void Setup(SystemCommands& commands)
     {
@@ -77,7 +77,7 @@ struct EClass() StateTest_TestState : public State {
 
 struct EClass() StateTest_WorldSetupSystem : public System {
 public:
-    EClassBody(StateTest_WorldSetupSystem)
+    ESetupSystemBody(StateTest_WorldSetupSystem)
 
     void Setup(SystemCommands& commands)
     {
@@ -114,7 +114,7 @@ struct EClass() SystemScheduleTest_Context : public State {
 
 struct EClass() SystemScheduleTest_WorldSetupSystem : public System {
 public:
-    EClassBody(SystemScheduleTest_WorldSetupSystem)
+    ESetupSystemBody(SystemScheduleTest_WorldSetupSystem)
 
     void Setup(SystemCommands& commands)
     {
@@ -124,7 +124,7 @@ public:
 
 struct EClass() SystemScheduleTest_System1 : public System {
 public:
-    EClassBody(SystemScheduleTest_System1)
+    ETickSystemBody(SystemScheduleTest_System1)
 
     void Tick(SystemCommands& commands, float timeMS)
     {
@@ -143,7 +143,7 @@ public:
 
 struct EClass() SystemScheduleTest_System2 : public System {
 public:
-    EClassBody(SystemScheduleTest_System2)
+    ETickSystemBody(SystemScheduleTest_System2)
     DeclareSystemDependencies(SystemScheduleTest_System1)
 
     void Tick(SystemCommands& commands, float timeMS)
@@ -163,7 +163,7 @@ public:
 
 struct EClass() SystemScheduleTest_System3 : public System {
 public:
-    EClassBody(SystemScheduleTest_System3)
+    ETickSystemBody(SystemScheduleTest_System3)
     DeclareSystemDependencies(SystemScheduleTest_System2)
 
     void Tick(SystemCommands& commands, float timeMS)
@@ -206,7 +206,7 @@ struct EClass() EventTest_EmptyComponent : public Component {
 };
 
 struct EClass() EventTest_WorldSetupSystem : public System {
-    EClassBody(EventTest_WorldSetupSystem)
+    ESetupSystemBody(EventTest_WorldSetupSystem)
 
     void Setup(SystemCommands& commands)
     {
@@ -227,7 +227,7 @@ struct EClass() EventTest_WorldSetupSystem : public System {
 };
 
 struct EClass() EventTest_WorldTickSystem : public System {
-    EClassBody(EventTest_WorldTickSystem)
+    ETickSystemBody(EventTest_WorldTickSystem)
 
     void Tick(SystemCommands& commands, float timeMS)
     {
@@ -263,7 +263,7 @@ struct EClass() EventTest_WorldTickSystem : public System {
 };
 
 struct EClass() EventTest_OnStateAddedSystem : public System {
-    EClassBody(EventTest_OnStateAddedSystem)
+    EEventSystemBody(EventTest_OnStateAddedSystem, EventTest_EmptyState::Added)
 
     void OnReceive(SystemCommands& commands, const EventTest_EmptyState::Added& event)
     {
@@ -274,7 +274,7 @@ struct EClass() EventTest_OnStateAddedSystem : public System {
 };
 
 struct EClass() EventTest_OnStateUpdatedSystem : public System {
-    EClassBody(EventTest_OnStateUpdatedSystem)
+    EEventSystemBody(EventTest_OnStateUpdatedSystem, EventTest_EmptyState::Updated)
 
     void OnReceive(SystemCommands& commands, const EventTest_EmptyState::Updated& event)
     {
@@ -285,7 +285,7 @@ struct EClass() EventTest_OnStateUpdatedSystem : public System {
 };
 
 struct EClass() EventTest_OnStateRemoveSystem : public System {
-    EClassBody(EventTest_OnStateRemoveSystem)
+    EEventSystemBody(EventTest_OnStateRemoveSystem, EventTest_EmptyState::Removed)
 
     void OnReceive(SystemCommands& commands, const EventTest_EmptyState::Removed& event)
     {
@@ -296,7 +296,7 @@ struct EClass() EventTest_OnStateRemoveSystem : public System {
 };
 
 struct EClass() EventTest_OnComponentAddedSystem : public System {
-    EClassBody(EventTest_OnComponentAddedSystem)
+    EEventSystemBody(EventTest_OnComponentAddedSystem, EventTest_EmptyComponent::Added)
 
     void OnReceive(SystemCommands& commands, const EventTest_EmptyComponent::Added& event)
     {
@@ -310,7 +310,7 @@ struct EClass() EventTest_OnComponentAddedSystem : public System {
 };
 
 struct EClass() EventTest_OnComponentUpdatedSystem : public System {
-    EClassBody(EventTest_OnComponentUpdatedSystem)
+    EEventSystemBody(EventTest_OnComponentUpdatedSystem, EventTest_EmptyComponent::Updated)
 
     void OnReceive(SystemCommands& commands, const EventTest_EmptyComponent::Updated& event)
     {
@@ -324,7 +324,7 @@ struct EClass() EventTest_OnComponentUpdatedSystem : public System {
 };
 
 struct EClass() EventTest_OnComponentRemovedSystem : public System {
-    EClassBody(EventTest_OnComponentRemovedSystem)
+    EEventSystemBody(EventTest_OnComponentRemovedSystem, EventTest_EmptyComponent::Removed)
 
     void OnReceive(SystemCommands& commands, const EventTest_EmptyComponent::Removed& event)
     {
@@ -344,7 +344,7 @@ struct EClass() CustomEventTest_CustomEvent {
 };
 
 struct EClass() CustomEventTest_WorldSetupSystem : public System {
-    EClassBody(CustomEventTest_WorldSetupSystem)
+    ESetupSystemBody(CustomEventTest_WorldSetupSystem)
 
     void Setup(SystemCommands& commands)
     {
@@ -353,7 +353,7 @@ struct EClass() CustomEventTest_WorldSetupSystem : public System {
 };
 
 struct EClass() CustomEventTest_CustomEventSystem : public System {
-    EClassBody(CustomEventTest_CustomEventSystem)
+    EEventSystemBody(CustomEventTest_CustomEventSystem, CustomEventTest_CustomEvent)
 
     void OnReceive(SystemCommands& commands, const CustomEventTest_CustomEvent& event)
     {
