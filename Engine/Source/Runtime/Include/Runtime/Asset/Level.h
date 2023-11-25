@@ -12,12 +12,6 @@ namespace Runtime {
         EClassBody(Level)
 
         EProperty()
-        std::vector<std::string> setupSystems;
-
-        EProperty()
-        std::vector<std::string> tickSystems;
-
-        EProperty()
-        std::unordered_map<std::string, std::vector<std::string>> eventSystems;
+        std::unordered_set<std::string> systems;
     };
 }

@@ -35,14 +35,39 @@ namespace Runtime {
         return ECSHost::Setuped();
     }
 
-    void World::LoadFromLevel(const Level& level)
+    void World::Reset()
     {
-        Assert(!Setuped());
-        // TODO
+        ECSHost::Reset();
     }
 
-    void World::SaveToLevel(Level& level)
+    void World::LoadFromLevel(const AssetRef<Level>& level)
     {
-        // TODO
+        Assert(!Setuped());
+        for (const auto& systemClassName : level->systems) {
+            const auto* systemType = SystemTypeFinder::FromSystemClassName(systemClassName);
+            systemType->add(*this);
+        }
+    }
+
+    void World::SaveToLevel(AssetRef<Level>& level)
+    {
+        auto addSystem = [&](SystemSignature signature) -> void {
+            Assert(signature.type == ClassSignatureType::staticClass);
+            Assert(!level->systems.contains(signature.name));
+            level->systems.emplace(signature.name);
+        };
+
+        level->systems.clear();
+        for (const auto& system : setupSystems) {
+            addSystem(system);
+        }
+        for (const auto& system : tickSystems) {
+            addSystem(system);
+        }
+        for (const auto& pair : eventSystems) {
+            for (const auto& system : pair.second) {
+                addSystem(system);
+            }
+        }
     }
 }

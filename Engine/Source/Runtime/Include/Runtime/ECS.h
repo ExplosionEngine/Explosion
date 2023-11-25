@@ -168,6 +168,29 @@ namespace Runtime {
         EClassBody(System)
     };
 
+    template <typename... S>
+    struct SetupSystemPackage {
+        using SystemTuple = std::tuple<S...>;
+    };
+
+    template <typename... S>
+    struct TickSystemPackage {
+        using SystemTuple = std::tuple<S...>;
+    };
+
+    template <typename E, typename... S>
+    struct EventSystemPackage {
+        using Event = E;
+        using SystemTuple = std::tuple<S...>;
+    };
+
+    template <typename SP = SetupSystemPackage<>, typename TP = TickSystemPackage<>, typename... ESP>
+    struct SystemPackage {
+        using Setup = SP;
+        using Tick = TP;
+        using EventSystemPackageTuple = std::tuple<ESP...>;
+    };
+
     enum class SystemRole : uint8_t {
         setup,
         tick,
@@ -201,7 +224,14 @@ namespace Runtime {
         template <typename E>
         void BroadcastEvent(const E& event);
 
+        template <typename P>
+        void AddSystemPackage();
+
+        template <typename P>
+        void RemoveSystemPackage();
+
     protected:
+        virtual void Reset();
         virtual void Setup();
         virtual void Tick(float timeMS);
         virtual void Shutdown();
@@ -431,18 +461,18 @@ namespace Runtime {
     };
 
     struct RUNTIME_API CompTypeFinder {
-        static const ComponentType& FromCompClass(const Mirror::Class& compClass);
-        static const ComponentType& FromCompClassName(const std::string& compClassName);
+        static const ComponentType* FromCompClass(const Mirror::Class& compClass);
+        static const ComponentType* FromCompClassName(const std::string& compClassName);
     };
 
     struct RUNTIME_API StateTypeFinder {
-        static const StateType& FromStateClass(const Mirror::Class& stateClass);
-        static const StateType& FromStateClassName(const std::string& stateClassName);
+        static const StateType* FromStateClass(const Mirror::Class& stateClass);
+        static const StateType* FromStateClassName(const std::string& stateClassName);
     };
 
     struct RUNTIME_API SystemTypeFinder {
-        static const SystemType& FromSystemClass(const Mirror::Class& systemClass);
-        static const SystemType& FromSystemClassName(const std::string& systemClassName);
+        static const SystemType* FromSystemClass(const Mirror::Class& systemClass);
+        static const SystemType* FromSystemClassName(const std::string& systemClassName);
     };
 }
 
@@ -483,6 +513,64 @@ namespace Runtime::Internal {
         } else {
             return std::vector<SystemSignature> {};
         }
+    }
+
+    template <typename SystemTuple, size_t... I>
+    void AddSetupSystemPackage(ECSHost& host, std::index_sequence<I...>)
+    {
+        std::initializer_list<int> { (0, [&]() -> void { host.AddSetupSystem<std::tuple_element_t<I, SystemTuple>>(); })... };
+    }
+
+    template <typename SystemTuple, size_t... I>
+    void AddTickSystemPackage(ECSHost& host, std::index_sequence<I...>)
+    {
+        std::initializer_list<int> { (0, [&]() -> void { host.AddTickSystem<std::tuple_element_t<I, SystemTuple>>(); })... };
+    }
+
+    template <typename Event, typename SystemTuple, size_t... I>
+    void AddEventSystemPackage(ECSHost& host, std::index_sequence<I...>)
+    {
+        std::initializer_list<int> { (0, [&]() -> void { host.AddEventSystem<Event, std::tuple_element_t<I, SystemTuple>>(); })... };
+    }
+
+    template <typename ESPTuple, size_t... I>
+    void AddEventSystemPackageTuple(ECSHost& host, std::index_sequence<I...>)
+    {
+        std::initializer_list<int> { (0, [&]() -> void {
+            using ESP = std::tuple_element_t<I, ESPTuple>;
+            using Event = typename ESP::Event;
+            using SystemTuple = typename ESP::SystemTuple;
+            AddEventSystemPackage<Event, SystemTuple>(std::make_index_sequence<std::tuple_size_v<SystemTuple>> {});
+        })... };
+    }
+
+    template <typename SystemTuple, size_t... I>
+    void RemoveSetupSystemPackage(ECSHost& host, std::index_sequence<I...>)
+    {
+        std::initializer_list<int> { (0, [&]() -> void { host.RemoveSetupSystem<std::tuple_element_t<I, SystemTuple>>(); })... };
+    }
+
+    template <typename SystemTuple, size_t... I>
+    void RemoveTickSystemPackage(ECSHost& host, std::index_sequence<I...>)
+    {
+        std::initializer_list<int> { (0, [&]() -> void { host.RemoveTickSystem<std::tuple_element_t<I, SystemTuple>>(); })... };
+    }
+
+    template <typename Event, typename SystemTuple, size_t... I>
+    void RemoveEventSystemPackage(ECSHost& host, std::index_sequence<I...>)
+    {
+        std::initializer_list<int> { (0, [&]() -> void { host.RemoveEventSystem<Event, std::tuple_element_t<I, SystemTuple>>(); })... };
+    }
+
+    template <typename ESPTuple, size_t... I>
+    void RemoveEventSystemPackageTuple(ECSHost& host, std::index_sequence<I...>)
+    {
+        std::initializer_list<int> { (0, [&]() -> void {
+            using ESP = std::tuple_element_t<I, ESPTuple>;
+            using Event = typename ESP::Event;
+            using SystemTuple = typename ESP::SystemTuple;
+            RemoveEventSystemPackage<Event, SystemTuple>(std::make_index_sequence<std::tuple_size_v<SystemTuple>> {});
+        })... };
     }
 
     template <typename C>
@@ -663,6 +751,32 @@ namespace Runtime {
         executor.run(taskflow);
     }
 
+    template <typename P>
+    void ECSHost::AddSystemPackage()
+    {
+        using SetupSystemTuple = typename P::Setup::SystemTuple;
+        Internal::AddSetupSystemPackage<SetupSystemTuple>(std::make_index_sequence<std::tuple_size_v<SetupSystemTuple>> {});
+
+        using TickSystemTuple = typename P::Tick::SystemTuple;
+        Internal::AddTickSystemPackage<TickSystemTuple>(std::make_index_sequence<std::tuple_size_v<TickSystemTuple>> {});
+
+        using ESPTuple = typename P::EventSystemPackageTuple;
+        Internal::AddEventSystemPackageTuple<ESPTuple>(std::make_index_sequence<std::tuple_size_v<ESPTuple>> {});
+    }
+
+    template <typename P>
+    void ECSHost::RemoveSystemPackage()
+    {
+        using SetupSystemTuple = typename P::Setup::SystemTuple;
+        Internal::RemoveSetupSystemPackage<SetupSystemTuple>(std::make_index_sequence<std::tuple_size_v<SetupSystemTuple>> {});
+
+        using TickSystemTuple = typename P::Tick::SystemTuple;
+        Internal::RemoveTickSystemPackage<TickSystemTuple>(std::make_index_sequence<std::tuple_size_v<TickSystemTuple>> {});
+
+        using ESPTuple = typename P::EventSystemPackageTuple;
+        Internal::RemoveEventSystemPackageTuple<ESPTuple>(std::make_index_sequence<std::tuple_size_v<ESPTuple>> {});
+    }
+
     template <typename... Args>
     Query<Args...>::Query(entt::view<Args...>&& inView)
         : view(std::move(inView))
@@ -696,7 +810,9 @@ namespace Runtime {
     {
         if (const ComponentSignature signature = Internal::SignForStaticClass<C>();
             !host.componentTypes.contains(signature)) {
-            host.componentTypes.emplace(std::make_pair(signature, &CompTypeFinder::FromCompClassName(signature.name)));
+            auto* systemType = CompTypeFinder::FromCompClassName(signature.name);
+            Assert(systemType != nullptr);
+            host.componentTypes.emplace(std::make_pair(signature, systemType));
         }
         registry.emplace<C>(entity, std::forward<Args>(args)...);
         Broadcast(typename C::Added { {}, entity });

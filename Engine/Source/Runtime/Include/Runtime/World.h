@@ -19,9 +19,10 @@ namespace Runtime {
         void Tick(float timeMS) override;
         void Shutdown() override;
         bool Setuped() override;
+        void Reset() override;
 
-        void LoadFromLevel(const Level& level);
-        void SaveToLevel(Level& level);
+        void LoadFromLevel(const AssetRef<Level>& level);
+        void SaveToLevel(AssetRef<Level>& level);
 
     private:
         std::string name;
