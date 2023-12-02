@@ -16,6 +16,12 @@ namespace RHI {
         uint32_t size;
         BufferUsageFlags usages;
         std::string debugName;
+
+        bool operator==(const BufferCreateInfo& rhs) const
+        {
+            return size == rhs.size
+                && usages == rhs.usages;
+        }
     };
 
     class Buffer {

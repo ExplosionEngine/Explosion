@@ -22,6 +22,17 @@ namespace RHI {
         uint8_t samples;
         TextureState initialState;
         std::string debugName;
+
+        bool operator==(const TextureCreateInfo& rhs) const
+        {
+            return dimension == rhs.dimension
+                && extent == rhs.extent
+                && format == rhs.format
+                && usages == rhs.usages
+                && mipLevels == rhs.mipLevels
+                && samples == rhs.samples
+                && initialState == rhs.initialState;
+        }
     };
 
     class Texture {
