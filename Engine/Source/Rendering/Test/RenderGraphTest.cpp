@@ -5,8 +5,11 @@
 #include <gtest/gtest.h>
 
 #include <Rendering/RenderGraph.h>
-#include <Rendering/Pipeline.h>
+#include <Rendering/RenderingCache.h>
 #include <Render/Shader.h>
+
+using namespace Render;
+using namespace Rendering;
 
 struct RenderGraphTest : public testing::Test {
     void SetUp() override

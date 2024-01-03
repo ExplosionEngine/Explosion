@@ -170,7 +170,7 @@ namespace Rendering {
         static SamplerCache& Get(RHI::Device& device);
         ~SamplerCache();
 
-        Sampler* FindOrCreateSampler(const SamplerDesc& desc);
+        Sampler* GetOrCreate(const SamplerDesc& desc);
 
     private:
         explicit SamplerCache(RHI::Device& inDevice);
@@ -186,8 +186,8 @@ namespace Rendering {
 
         // TODO offline pipeline cache
         void Invalidate();
-        ComputePipelineState* GetPipeline(const ComputePipelineStateDesc& desc);
-        RasterPipelineState* GetPipeline(const RasterPipelineStateDesc& desc);
+        ComputePipelineState* GetOrCreate(const ComputePipelineStateDesc& desc);
+        RasterPipelineState* GetOrCreate(const RasterPipelineStateDesc& desc);
 
     private:
         explicit PipelineCache(RHI::Device& inDevice);
@@ -195,5 +195,24 @@ namespace Rendering {
         RHI::Device& device;
         std::unordered_map<size_t, Common::UniqueRef<ComputePipelineState>> computePipelines;
         std::unordered_map<size_t, Common::UniqueRef<RasterPipelineState>> rasterPipelines;
+    };
+
+    class ResourceViewCache {
+    public:
+        static ResourceViewCache& Get(RHI::Device& device);
+        ~ResourceViewCache();
+
+        void Invalidate();
+        void Invalidate(RHI::Buffer* buffer);
+        void Invalidate(RHI::Texture* texture);
+        RHI::BufferView* GetOrCreate(RHI::Buffer* buffer, const RHI::BufferViewCreateInfo& inDesc);
+        RHI::TextureView* GetOrCreate(RHI::Texture* texture, const RHI::TextureViewCreateInfo& inDesc);
+
+    private:
+        explicit ResourceViewCache(RHI::Device& inDevice);
+
+        RHI::Device& device;
+        std::unordered_map<RHI::Buffer*, std::unordered_map<size_t, Common::UniqueRef<RHI::BufferView>>> bufferViews;
+        std::unordered_map<RHI::Texture*, std::unordered_map<size_t, Common::UniqueRef<RHI::TextureView>>> textureViews;
     };
 }

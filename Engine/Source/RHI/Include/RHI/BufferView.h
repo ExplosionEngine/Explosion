@@ -7,6 +7,7 @@
 #include <cstddef>
 
 #include <Common/Utility.h>
+#include <Common/Hash.h>
 #include <RHI/Common.h>
 
 namespace RHI {
@@ -26,6 +27,11 @@ namespace RHI {
             VertexBufferViewInfo vertex;
             IndexBufferViewInfo index;
         };
+
+        size_t Hash() const
+        {
+            return Common::HashUtils::CityHash(this, sizeof(BufferViewCreateInfo));
+        }
     };
 
     class BufferView {

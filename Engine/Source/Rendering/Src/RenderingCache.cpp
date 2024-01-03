@@ -2,7 +2,7 @@
 // Created by johnk on 2023/3/11.
 //
 
-#include <Rendering/Pipeline.h>
+#include <Rendering/RenderingCache.h>
 
 #include <utility>
 
@@ -359,7 +359,7 @@ namespace Rendering {
 
     SamplerCache::~SamplerCache() = default;
 
-    Sampler* SamplerCache::FindOrCreateSampler(const SamplerDesc& desc)
+    Sampler* SamplerCache::GetOrCreate(const SamplerDesc& desc)
     {
         size_t hash = Common::HashUtils::CityHash(&desc, sizeof(SamplerDesc));
         auto iter = samplers.find(hash);
@@ -393,7 +393,7 @@ namespace Rendering {
         rasterPipelines.clear();
     }
 
-    ComputePipelineState* PipelineCache::GetPipeline(const ComputePipelineStateDesc& desc)
+    ComputePipelineState* PipelineCache::GetOrCreate(const ComputePipelineStateDesc& desc)
     {
         auto hash = desc.Hash();
         auto iter = computePipelines.find(hash);
@@ -403,7 +403,7 @@ namespace Rendering {
         return computePipelines[hash].Get();
     }
 
-    RasterPipelineState* PipelineCache::GetPipeline(const RasterPipelineStateDesc& desc)
+    RasterPipelineState* PipelineCache::GetOrCreate(const RasterPipelineStateDesc& desc)
     {
         auto hash = desc.Hash();
         auto iter = rasterPipelines.find(hash);
@@ -411,5 +411,69 @@ namespace Rendering {
             rasterPipelines[hash] = Common::UniqueRef<RasterPipelineState>(new RasterPipelineState(device, desc, hash));
         }
         return rasterPipelines[hash].Get();
+    }
+
+    ResourceViewCache& ResourceViewCache::Get(RHI::Device& device)
+    {
+        static std::unordered_map<RHI::Device*, Common::UniqueRef<ResourceViewCache>> map;
+
+        auto iter = map.find(&device);
+        if (iter == map.end()) {
+            map.emplace(std::make_pair(&device, Common::UniqueRef<ResourceViewCache>(new ResourceViewCache(device))));
+        }
+        return *iter->second;
+    }
+
+    ResourceViewCache::ResourceViewCache(RHI::Device& inDevice)
+        : device(inDevice)
+    {
+    }
+
+    ResourceViewCache::~ResourceViewCache() = default;
+
+    void ResourceViewCache::Invalidate()
+    {
+        bufferViews.clear();
+        textureViews.clear();
+    }
+
+    void ResourceViewCache::Invalidate(RHI::Buffer* buffer)
+    {
+        auto iter = bufferViews.find(buffer);
+        if (iter != bufferViews.end()) {
+            iter->second.clear();
+        }
+    }
+
+    void ResourceViewCache::Invalidate(RHI::Texture* texture)
+    {
+        auto iter = textureViews.find(texture);
+        if (iter != textureViews.end()) {
+            iter->second.clear();
+        }
+    }
+
+    RHI::BufferView* ResourceViewCache::GetOrCreate(RHI::Buffer* buffer, const RHI::BufferViewCreateInfo& inDesc)
+    {
+        auto& views = bufferViews[buffer];
+
+        auto hash = inDesc.Hash();
+        auto iter = views.find(hash);
+        if (iter == views.end()) {
+            views.emplace(std::make_pair(hash, Common::UniqueRef<RHI::BufferView>(buffer->CreateBufferView(inDesc))));
+        }
+        return views.at(hash).Get();
+    }
+
+    RHI::TextureView* ResourceViewCache::GetOrCreate(RHI::Texture* texture, const RHI::TextureViewCreateInfo& inDesc)
+    {
+        auto& views = textureViews[texture];
+
+        auto hash = inDesc.Hash();
+        auto iter = views.find(hash);
+        if (iter == views.end()) {
+            views.emplace(std::make_pair(hash, Common::UniqueRef<RHI::TextureView>(texture->CreateTextureView(inDesc))));
+        }
+        return views.at(hash).Get();
     }
 }

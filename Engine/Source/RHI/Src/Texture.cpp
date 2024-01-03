@@ -7,7 +7,15 @@
 namespace RHI {
     Texture::Texture() = default;
 
-    Texture::Texture(const TextureCreateInfo& createInfo) {}
+    Texture::Texture(const TextureCreateInfo& inCreateInfo)
+        : createInfo(inCreateInfo)
+    {
+    }
 
     Texture::~Texture() = default;
+
+    const TextureCreateInfo& Texture::GetCreateInfo() const
+    {
+        return createInfo;
+    }
 }
