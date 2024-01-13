@@ -41,11 +41,15 @@ namespace Rendering {
         virtual ~RGResourceBase();
 
         RGResType Type() const;
+        void MaskAsUsed();
 
     protected:
+        friend class RGBuilder;
+
         explicit RGResourceBase(RGResType inType);
 
         RGResType type;
+        bool forceUsed;
     };
 
     template <typename RHIResource>
@@ -242,6 +246,16 @@ namespace Rendering {
     template <typename R>
     struct RGResOrViewTraits {};
 
+    struct RGFencePack {
+        RHI::Fence* mainFence;
+        RHI::Fence* asyncComputeFence;
+        RHI::Fence* asyncCopyFence;
+
+        RGFencePack();
+        ~RGFencePack();
+        RGFencePack(RHI::Fence* inMainFence, RHI::Fence* inAsyncComputeFence = nullptr, RHI::Fence* inAsyncCopyFence = nullptr);
+    };
+
     class RGBuilder {
     public:
         NonCopyable(RGBuilder);
@@ -250,17 +264,7 @@ namespace Rendering {
 
         template <typename ResOrView, typename... Args>
         requires std::derived_from<ResOrView, RGResourceBase> || std::derived_from<ResOrView, RGResourceViewBase>
-        typename RGResOrViewTraits<ResOrView>::RefType Create(Args&&... args)
-        {
-            typename RGResOrViewTraits<ResOrView>::RefType ref = new ResOrView(std::forward<Args>(args)...);
-            if constexpr (std::derived_from<ResOrView, RGResourceBase>) {
-                resources.emplace_back(Common::UniqueRef<RGResourceBase>(ref));
-                return resources.back().Get();
-            } else {
-                views.emplace_back(Common::UniqueRef<RGResourceViewBase>(ref));
-                return views.back().Get();
-            }
-        }
+        typename RGResOrViewTraits<ResOrView>::RefType Create(Args&&... args);
 
         template <typename Res>
         requires std::derived_from<Res, RGResourceBase>
@@ -284,12 +288,13 @@ namespace Rendering {
             passes.emplace_back(Common::UniqueRef<RGPass>(new P(std::forward<Args>(args)...)));
         }
 
-        void Execute(RHI::Fence* mainFence, RHI::Fence* asyncComputeFence = nullptr, RHI::Fence* asyncCopyFence = nullptr);
+        void Execute(const RGFencePack& inFencePack);
 
     private:
         void Compile();
         void CompilePasses();
         void DevirtualizeResources();
+        void ExecuteInternal(const RGFencePack& inFencePack);
 
         RHI::Device& device;
         std::vector<Common::UniqueRef<RGResourceBase>> resources;
@@ -407,5 +412,19 @@ namespace Rendering {
     RGResourceRef RGResourceView<RHIResourceView>::GetResourceBase()
     {
         return resource;
+    }
+
+    template <typename ResOrView, typename... Args>
+    requires std::derived_from<ResOrView, RGResourceBase> || std::derived_from<ResOrView, RGResourceViewBase>
+    typename RGResOrViewTraits<ResOrView>::RefType RGBuilder::Create(Args&& ...args)
+    {
+        typename RGResOrViewTraits<ResOrView>::RefType ref = new ResOrView(std::forward<Args>(args)...);
+        if constexpr (std::derived_from<ResOrView, RGResourceBase>) {
+            resources.emplace_back(Common::UniqueRef<RGResourceBase>(ref));
+            return resources.back().Get();
+        } else {
+            views.emplace_back(Common::UniqueRef<RGResourceViewBase>(ref));
+            return views.back().Get();
+        }
     }
 }
