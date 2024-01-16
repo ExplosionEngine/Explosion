@@ -35,9 +35,20 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12ComputePassCommandEncoder::DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : ComputePassCommandEncoder(), device(device), commandBuffer(commandBuffer) {}
+    DX12ComputePassCommandEncoder::DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer)
+        : ComputePassCommandEncoder()
+        , device(device)
+        , commandEncoder(commandEncoder)
+        , commandBuffer(commandBuffer)
+    {
+    }
 
     DX12ComputePassCommandEncoder::~DX12ComputePassCommandEncoder() = default;
+
+    void DX12ComputePassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+        commandEncoder.ResourceBarrier(barrier);
+    }
 
     void DX12ComputePassCommandEncoder::SetPipeline(ComputePipeline* pipeline)
     {
@@ -81,7 +92,12 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo) : GraphicsPassCommandEncoder(), device(device), commandBuffer(commandBuffer), graphicsPipeline(nullptr)
+    DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo)
+        : GraphicsPassCommandEncoder()
+        , device(device)
+        , commandEncoder(commandEncoder)
+        , commandBuffer(commandBuffer)
+        , graphicsPipeline(nullptr)
     {
         // set render targets
         std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rtvHandles(beginInfo->colorAttachmentNum);
@@ -117,6 +133,11 @@ namespace RHI::DirectX12 {
     }
 
     DX12GraphicsPassCommandEncoder::~DX12GraphicsPassCommandEncoder() = default;
+
+    void DX12GraphicsPassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+        commandEncoder.ResourceBarrier(barrier);
+    }
 
     void DX12GraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
     {
@@ -275,12 +296,12 @@ namespace RHI::DirectX12 {
 
     ComputePassCommandEncoder* DX12CommandEncoder::BeginComputePass()
     {
-        return new DX12ComputePassCommandEncoder(device, commandBuffer);
+        return new DX12ComputePassCommandEncoder(device, *this, commandBuffer);
     }
 
     GraphicsPassCommandEncoder* DX12CommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo)
     {
-        return new DX12GraphicsPassCommandEncoder(device, commandBuffer, beginInfo);
+        return new DX12GraphicsPassCommandEncoder(device, *this, commandBuffer, beginInfo);
     }
 
     void DX12CommandEncoder::SwapChainSync(SwapChain* swapChain)

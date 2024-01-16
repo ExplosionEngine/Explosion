@@ -38,9 +38,13 @@ namespace RHI::DirectX12 {
     class DX12ComputePassCommandEncoder : public ComputePassCommandEncoder {
     public:
         NonCopyable(DX12ComputePassCommandEncoder)
-        explicit DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer);
+        explicit DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer);
         ~DX12ComputePassCommandEncoder() override;
 
+        // CommandCommandEncoder
+        void ResourceBarrier(const Barrier& barrier) override;
+
+        // ComputePassCommandEncoder
         void SetPipeline(ComputePipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override;
@@ -49,6 +53,7 @@ namespace RHI::DirectX12 {
 
     private:
         DX12Device& device;
+        DX12CommandEncoder& commandEncoder;
         DX12ComputePipeline* computePipeline;
         DX12CommandBuffer& commandBuffer;
     };
@@ -56,9 +61,13 @@ namespace RHI::DirectX12 {
     class DX12GraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
     public:
         NonCopyable(DX12GraphicsPassCommandEncoder)
-        explicit DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo);
+        explicit DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo);
         ~DX12GraphicsPassCommandEncoder() override;
 
+        // CommandCommandEncoder
+        void ResourceBarrier(const Barrier& barrier) override;
+
+        // GraphicsPassCommandEncoder
         void SetPipeline(GraphicsPipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void SetIndexBuffer(BufferView *bufferView) override;
@@ -75,6 +84,7 @@ namespace RHI::DirectX12 {
 
     private:
         DX12Device& device;
+        DX12CommandEncoder& commandEncoder;
         DX12GraphicsPipeline* graphicsPipeline;
         DX12CommandBuffer& commandBuffer;
     };

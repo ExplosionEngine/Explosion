@@ -39,26 +39,35 @@ namespace RHI::Vulkan {
     class VKComputePassCommandEncoder : public ComputePassCommandEncoder {
     public:
         NonCopyable(VKComputePassCommandEncoder)
-        explicit VKComputePassCommandEncoder(VKDevice& device, VKCommandBuffer& commandBuffer);
+        explicit VKComputePassCommandEncoder(VKDevice& device, VKCommandEncoder& commandEncoder, VKCommandBuffer& commandBuffer);
         ~VKComputePassCommandEncoder() override;
 
-        void SetPipeline(ComputePipeline* pipeline) override {}
-        void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override {}
-        void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override {}
-        void EndPass() override {}
-        void Destroy() override {}
+        // CommandCommandEncoder
+        void ResourceBarrier(const RHI::Barrier& barrier) override;
+
+        // ComputePassCommandEncoder
+        void SetPipeline(ComputePipeline* pipeline) override;
+        void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
+        void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override;
+        void EndPass() override;
+        void Destroy() override;
 
     private:
         VKDevice& device;
+        VKCommandEncoder& commandEncoder;
         VKCommandBuffer& commandBuffer;
     };
 
     class VKGraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
     public:
         NonCopyable(VKGraphicsPassCommandEncoder)
-        explicit VKGraphicsPassCommandEncoder(VKDevice& device, VKCommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo);
+        explicit VKGraphicsPassCommandEncoder(VKDevice& device, VKCommandEncoder& commandEncoder, VKCommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo);
         ~VKGraphicsPassCommandEncoder() override;
 
+        // CommandCommandEncoder
+        void ResourceBarrier(const RHI::Barrier& barrier) override;
+
+        // GraphicsPassCommandEncoder
         void SetPipeline(GraphicsPipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void SetIndexBuffer(BufferView *bufferView) override;
@@ -75,6 +84,7 @@ namespace RHI::Vulkan {
 
     private:
         VKDevice& device;
+        VKCommandEncoder& commandEncoder;
         VKCommandBuffer& commandBuffer;
         VkCommandBuffer cmdHandle;
         VKGraphicsPipeline* graphicsPipeline;

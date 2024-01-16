@@ -62,7 +62,12 @@ namespace RHI {
         // TODO timestampWrites #see https://gpuweb.github.io/gpuweb/#render-pass-encoder-creation
     };
 
-    class ComputePassCommandEncoder {
+    class CommandCommandEncoder {
+    public:
+        virtual void ResourceBarrier(const Barrier& barrier) = 0;
+    };
+
+    class ComputePassCommandEncoder : CommandCommandEncoder {
     public:
         NonCopyable(ComputePassCommandEncoder)
         virtual ~ComputePassCommandEncoder();
@@ -77,7 +82,7 @@ namespace RHI {
         ComputePassCommandEncoder();
     };
 
-    class GraphicsPassCommandEncoder {
+    class GraphicsPassCommandEncoder : CommandCommandEncoder {
     public:
         NonCopyable(GraphicsPassCommandEncoder)
         virtual ~GraphicsPassCommandEncoder();
@@ -106,7 +111,7 @@ namespace RHI {
         GraphicsPassCommandEncoder();
     };
 
-    class CommandEncoder {
+    class CommandEncoder : CommandCommandEncoder {
     public:
         NonCopyable(CommandEncoder)
         virtual ~CommandEncoder();
@@ -115,10 +120,8 @@ namespace RHI {
         virtual void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) = 0;
         virtual void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) = 0;
         virtual void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) = 0;
-        virtual void ResourceBarrier(const Barrier& barrier) = 0;
         // TODO WriteTimeStamp(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-writetimestamp
         // TODO ResolveQuerySet(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-resolvequeryset
-
         virtual ComputePassCommandEncoder* BeginComputePass() = 0;
         virtual GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) = 0;
         virtual void SwapChainSync(SwapChain* swapChain) = 0;

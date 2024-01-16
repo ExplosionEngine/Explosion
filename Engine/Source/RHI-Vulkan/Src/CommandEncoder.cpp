@@ -124,13 +124,12 @@ namespace RHI::Vulkan {
 
     ComputePassCommandEncoder* VKCommandEncoder::BeginComputePass()
     {
-        // TODO
-        return nullptr;
+        return new VKComputePassCommandEncoder(device, *this, commandBuffer);
     }
 
     GraphicsPassCommandEncoder* VKCommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo)
     {
-        return new VKGraphicsPassCommandEncoder(device, commandBuffer, beginInfo);
+        return new VKGraphicsPassCommandEncoder(device, *this, commandBuffer, beginInfo);
     }
 
     void VKCommandEncoder::SwapChainSync(SwapChain* swapChain)
@@ -151,8 +150,49 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandBuffer& cmd,
-        const GraphicsPassBeginInfo* beginInfo) : device(dev), commandBuffer(cmd)
+    VKComputePassCommandEncoder::VKComputePassCommandEncoder(VKDevice& device, VKCommandEncoder& commandEncoder, VKCommandBuffer& commandBuffer)
+        : device(device)
+        , commandEncoder(commandEncoder)
+        , commandBuffer(commandBuffer)
+    {
+    }
+
+    VKComputePassCommandEncoder::~VKComputePassCommandEncoder() = default;
+
+    void VKComputePassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+        commandEncoder.ResourceBarrier(barrier);
+    }
+
+    void VKComputePassCommandEncoder::SetPipeline(ComputePipeline* pipeline)
+    {
+        // TODO
+    }
+
+    void VKComputePassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
+    {
+        // TODO
+    }
+
+    void VKComputePassCommandEncoder::Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ)
+    {
+        // TODO
+    }
+
+    void VKComputePassCommandEncoder::EndPass()
+    {
+        // TODO
+    }
+
+    void VKComputePassCommandEncoder::Destroy()
+    {
+        delete this;
+    }
+
+    VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandEncoder& commandEncoder, VKCommandBuffer& cmd,const GraphicsPassBeginInfo* beginInfo)
+        : device(dev)
+        , commandEncoder(commandEncoder)
+        , commandBuffer(cmd)
     {
         std::vector<VkRenderingAttachmentInfo> colorAttachmentInfos(beginInfo->colorAttachmentNum);
         for (size_t i = 0; i < beginInfo->colorAttachmentNum; i++)
@@ -212,6 +252,11 @@ namespace RHI::Vulkan {
     }
 
     VKGraphicsPassCommandEncoder::~VKGraphicsPassCommandEncoder() = default;
+
+    void VKGraphicsPassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+        commandEncoder.ResourceBarrier(barrier);
+    }
 
     void VKGraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
     {

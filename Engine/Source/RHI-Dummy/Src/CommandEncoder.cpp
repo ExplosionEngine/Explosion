@@ -11,6 +11,10 @@ namespace RHI::Dummy {
 
     DummyComputePassCommandEncoder::~DummyComputePassCommandEncoder() = default;
 
+    void DummyComputePassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+    }
+
     void DummyComputePassCommandEncoder::SetPipeline(ComputePipeline* pipeline)
     {
     }
@@ -37,6 +41,10 @@ namespace RHI::Dummy {
     }
 
     DummyGraphicsPassCommandEncoder::~DummyGraphicsPassCommandEncoder() = default;
+
+    void DummyGraphicsPassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+    }
 
     void DummyGraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
     {

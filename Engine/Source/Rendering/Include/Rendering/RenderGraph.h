@@ -8,10 +8,12 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
+#include <variant>
 
 #include <Common/Memory.h>
 #include <Common/Debug.h>
 #include <RHI/RHI.h>
+#include <Rendering/ResourcePool.h>
 
 namespace Rendering {
     enum class RGResType {
@@ -50,6 +52,7 @@ namespace Rendering {
 
         RGResType type;
         bool forceUsed;
+        bool imported;
     };
 
     template <typename RHIResource>
@@ -186,7 +189,6 @@ namespace Rendering {
 
         RGPass(std::string inName, RGPassType inType);
 
-        RGPassType Type() const;
         virtual void Compile() = 0;
 
         std::string name;
@@ -206,9 +208,10 @@ namespace Rendering {
     private:
         friend class RGBuilder;
 
-        RGCopyPass(std::string inName, RGCopyPassDesc inPassDesc, RGCopyPassExecuteFunc inFunc);
+        RGCopyPass(std::string inName, RGCopyPassDesc inPassDesc, RGCopyPassExecuteFunc inFunc, bool inAsyncCopy = false);
         void Compile() override;
 
+        bool asyncCopy;
         RGCopyPassDesc passDesc;
         RGCopyPassExecuteFunc func;
     };
@@ -268,39 +271,35 @@ namespace Rendering {
 
         template <typename Res>
         requires std::derived_from<Res, RGResourceBase>
-        typename RGResOrViewTraits<Res>::RefType Import(typename RGResOrViewTraits<Res>::RHIType* rhiHandle)
-        {
-            typename RGResOrViewTraits<Res>::RefType ref = new Res(rhiHandle->GetCreateInfo());
-            ref->rhiHandle = rhiHandle;
-            resources.emplace_back(Common::UniqueRef<RGResourceBase>(ref));
-            return resources.back().Get();
-        }
-
-        RGBindGroupRef AllocateBindGroup(const RGBindGroupDesc& inDesc)
-        {
-            bindGroups.emplace_back(Common::UniqueRef<RGBindGroup>(new RGBindGroup(inDesc)));
-            return bindGroups.back().Get();
-        }
+        typename RGResOrViewTraits<Res>::RefType Import(typename RGResOrViewTraits<Res>::RHIType* rhiHandle);
 
         template <typename P, typename... Args>
-        void Add(Args&&... args)
-        {
-            passes.emplace_back(Common::UniqueRef<RGPass>(new P(std::forward<Args>(args)...)));
-        }
+        void Add(Args&&... args);
 
+        RGBindGroupRef AllocateBindGroup(const RGBindGroupDesc& inDesc);
         void Execute(const RGFencePack& inFencePack);
 
     private:
+        using PooledResourceAndRefCount = std::pair<std::variant<PooledBufferRef, PooledTextureRef>, uint32_t>;
+
+        void ResetCompiledState();
         void Compile();
         void CompilePasses();
         void DevirtualizeResources();
         void ExecuteInternal(const RGFencePack& inFencePack);
+        void FinalizeResource(RGResourceRef resource);
+        void FinalizeResources();
 
         RHI::Device& device;
         std::vector<Common::UniqueRef<RGResourceBase>> resources;
         std::vector<Common::UniqueRef<RGResourceViewBase>> views;
         std::vector<Common::UniqueRef<RGBindGroup>> bindGroups;
         std::vector<Common::UniqueRef<RGPass>> passes;
+
+        // compiled state
+        bool hasAsyncCopy;
+        bool hasAsyncCompute;
+        std::unordered_map<RGResourceRef, PooledResourceAndRefCount> devirtualizedResources;
     };
 }
 
@@ -426,5 +425,22 @@ namespace Rendering {
             views.emplace_back(Common::UniqueRef<RGResourceViewBase>(ref));
             return views.back().Get();
         }
+    }
+
+    template <typename Res>
+    requires std::derived_from<Res, RGResourceBase>
+    typename RGResOrViewTraits<Res>::RefType RGBuilder::Import(typename RGResOrViewTraits<Res>::RHIType* rhiHandle)
+    {
+        typename RGResOrViewTraits<Res>::RefType ref = new Res(rhiHandle->GetCreateInfo());
+        ref->rhiHandle = rhiHandle;
+        ref->imported = true;
+        resources.emplace_back(Common::UniqueRef<RGResourceBase>(ref));
+        return resources.back().Get();
+    }
+
+    template <typename P, typename... Args>
+    void RGBuilder::Add(Args&&... args)
+    {
+        passes.emplace_back(Common::UniqueRef<RGPass>(new P(std::forward<Args>(args)...)));
     }
 }

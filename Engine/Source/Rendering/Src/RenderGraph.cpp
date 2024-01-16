@@ -40,6 +40,7 @@ namespace Rendering {
     RGResourceBase::RGResourceBase(RGResType inType)
         : type(inType)
         , forceUsed(false)
+        , imported(true)
     {
     }
 
@@ -156,15 +157,11 @@ namespace Rendering {
 
     RGPass::~RGPass() = default;
 
-    RGPassType RGPass::Type() const
-    {
-        return type;
-    }
-
-    RGCopyPass::RGCopyPass(std::string inName, RGCopyPassDesc inPassDesc, RGCopyPassExecuteFunc inFunc)
+    RGCopyPass::RGCopyPass(std::string inName, RGCopyPassDesc inPassDesc, RGCopyPassExecuteFunc inFunc, bool inAsyncCopy)
         : RGPass(std::move(inName), RGPassType::copy)
-          , passDesc(std::move(inPassDesc))
-          , func(std::move(inFunc))
+        , passDesc(std::move(inPassDesc))
+        , func(std::move(inFunc))
+        , asyncCopy(inAsyncCopy)
     {
     }
 
@@ -183,12 +180,11 @@ namespace Rendering {
         Assert(Common::SetUtils::GetIntersection(reads, writes).size() == 0);
     }
 
-    RGComputePass::RGComputePass(std::string inName, std::vector<RGBindGroupRef> inBindGroups
-                                 , RGComputePassExecuteFunc inFunc, bool inAsyncCompute)
+    RGComputePass::RGComputePass(std::string inName, std::vector<RGBindGroupRef> inBindGroups, RGComputePassExecuteFunc inFunc, bool inAsyncCompute)
         : RGPass(std::move(inName), RGPassType::compute)
-          , asyncCompute(inAsyncCompute)
-          , bindGroups(std::move(inBindGroups))
-          , func(std::move(inFunc))
+        , asyncCompute(inAsyncCompute)
+        , bindGroups(std::move(inBindGroups))
+        , func(std::move(inFunc))
     {
     }
 
@@ -199,12 +195,11 @@ namespace Rendering {
         Internal::CompilePassForBindGroups(reads, writes, bindGroups);
     }
 
-    RGRasterPass::RGRasterPass(std::string inName, RGRasterPassDesc inPassDesc
-                               , std::vector<RGBindGroupRef> inBindGroupds, RGRasterPassExecuteFunc inFunc)
+    RGRasterPass::RGRasterPass(std::string inName, RGRasterPassDesc inPassDesc, std::vector<RGBindGroupRef> inBindGroupds, RGRasterPassExecuteFunc inFunc)
         : RGPass(std::move(inName), RGPassType::raster)
-          , passDesc(std::move(inPassDesc))
-          , bindGroups(std::move(inBindGroupds))
-          , func(std::move(inFunc))
+        , passDesc(std::move(inPassDesc))
+        , bindGroups(std::move(inBindGroupds))
+        , func(std::move(inFunc))
     {
     }
 
@@ -241,19 +236,36 @@ namespace Rendering {
 
     RGBuilder::RGBuilder(RHI::Device& inDevice)
         : device(inDevice)
+        , hasAsyncCopy(false)
+        , hasAsyncCompute(false)
     {
     }
 
     RGBuilder::~RGBuilder() = default;
 
+    RGBindGroupRef RGBuilder::AllocateBindGroup(const RGBindGroupDesc& inDesc)
+    {
+        bindGroups.emplace_back(Common::UniqueRef<RGBindGroup>(new RGBindGroup(inDesc)));
+        return bindGroups.back().Get();
+    }
+
     void RGBuilder::Execute(const RGFencePack& inFencePack)
     {
         Compile();
-        // TODO
+        ExecuteInternal(inFencePack);
+        FinalizeResources();
+    }
+
+    void RGBuilder::ResetCompiledState()
+    {
+        hasAsyncCopy = false;
+        hasAsyncCompute = false;
+        FinalizeResources();
     }
 
     void RGBuilder::Compile()
     {
+        ResetCompiledState();
         CompilePasses();
         DevirtualizeResources();
     }
@@ -263,15 +275,111 @@ namespace Rendering {
         for (auto& pass : passes) {
             pass->Compile();
         }
+
+        for (auto& pass : passes) {
+            if (pass->type == RGPassType::copy) {
+                hasAsyncCopy = hasAsyncCopy || static_cast<RGCopyPass*>(pass.Get())->asyncCopy;
+            } else if (pass->type == RGPassType::compute) {
+                hasAsyncCompute = hasAsyncCompute || static_cast<RGComputePass*>(pass.Get())->asyncCompute;
+            }
+        }
     }
 
     void RGBuilder::DevirtualizeResources()
     {
-        // TODO
+        auto allocateResourcesOrUpdateRefCount = [this](RGResourceRef resource) -> void {
+            if (resource->imported) {
+                return;
+            }
+
+            auto iter = devirtualizedResources.find(resource);
+            if (iter == devirtualizedResources.end()) {
+                if (resource->type == RGResType::buffer) {
+                    auto* bufferRef = static_cast<RGBufferRef>(resource);
+                    devirtualizedResources.emplace(std::make_pair(
+                        resource,
+                        std::make_pair(std::variant<PooledBufferRef, PooledTextureRef>(BufferPool::Get(device).Allocate(bufferRef->desc)), 1)
+                    ));
+                    bufferRef->rhiHandle = std::get<PooledBufferRef>(devirtualizedResources.at(resource).first)->GetRHI();
+                } else if (resource->type == RGResType::texture) {
+                    auto* textureRef = static_cast<RGTextureRef>(resource);
+                    devirtualizedResources.emplace(std::make_pair(
+                        resource,
+                        std::make_pair(std::variant<PooledBufferRef, PooledTextureRef>(TexturePool ::Get(device).Allocate(textureRef->desc)), 1)
+                    ));
+                    textureRef->rhiHandle = std::get<PooledTextureRef>(devirtualizedResources.at(resource).first)->GetRHI();
+                } else {
+                    Unimplement();
+                }
+            } else {
+                iter->second.second++;
+            }
+        };
+
+        devirtualizedResources.clear();
+        for (const auto& resource : resources) {
+            if (resource->forceUsed) {
+                allocateResourcesOrUpdateRefCount(resource.Get());
+            }
+        }
+        for (const auto& pass : passes) {
+            for (auto* read : pass->reads) {
+                allocateResourcesOrUpdateRefCount(read);
+            }
+        }
     }
 
     void RGBuilder::ExecuteInternal(const Rendering::RGFencePack& inFencePack)
     {
-        // TODO
+        const bool allowAsyncCopy = device.GetQueueNum(RHI::QueueType::transfer) > 1;
+        const bool allowAsyncCompute = device.GetQueueNum(RHI::QueueType::compute) > 1;
+
+        Common::UniqueRef<RHI::CommandBuffer> mainCmdBuffer = device.CreateCommandBuffer();
+        Common::UniqueRef<RHI::CommandBuffer> asyncCopyCmdBuffer = hasAsyncCopy && allowAsyncCopy ? device.CreateCommandBuffer() : nullptr;
+        Common::UniqueRef<RHI::CommandBuffer> asyncComputeCmdBuffer = hasAsyncCompute && allowAsyncCompute ? device.CreateCommandBuffer() : nullptr;
+        {
+            // TODO
+        }
+        device.GetQueue(RHI::QueueType::graphics, 0)->Submit(mainCmdBuffer.Get(), inFencePack.mainFence);
+        if (asyncCopyCmdBuffer != nullptr) {
+            device.GetQueue(RHI::QueueType::transfer, 1)->Submit(asyncCopyCmdBuffer.Get(), inFencePack.asyncCopyFence);
+        }
+        if (asyncComputeCmdBuffer != nullptr) {
+            device.GetQueue(RHI::QueueType::compute, 1)->Submit(asyncComputeCmdBuffer.Get(), inFencePack.asyncComputeFence);
+        }
+    }
+
+    void RGBuilder::FinalizeResource(RGResourceRef resource)
+    {
+        auto& pooledResourcesAndRefCount = devirtualizedResources.at(resource);
+        Assert(pooledResourcesAndRefCount.second == 0);
+
+        if (resource->type == RGResType::buffer) {
+            auto* bufferRef = static_cast<RGBufferRef>(resource);
+            bufferRef->rhiHandle = nullptr;
+        } else if (resource->type == RGResType::texture) {
+            auto* textureRef = static_cast<RGTextureRef>(resource);
+            textureRef = nullptr;
+        } else {
+            Unimplement();
+        }
+        devirtualizedResources.erase(resource);
+    }
+
+    void RGBuilder::FinalizeResources()
+    {
+        for (auto& iter : devirtualizedResources) {
+            auto* resource = iter.first;
+            if (resource->type == RGResType::buffer) {
+                auto* bufferRef = static_cast<RGBufferRef>(resource);
+                bufferRef->rhiHandle = nullptr;
+            } else if (resource->type == RGResType::texture) {
+                auto* textureRef = static_cast<RGTextureRef>(resource);
+                textureRef = nullptr;
+            } else {
+                Unimplement();
+            }
+        }
+        devirtualizedResources.clear();
     }
 }
