@@ -27,6 +27,7 @@ namespace RHI::Vulkan {
 
     private:
         void CreateBuffer(const BufferCreateInfo& createInfo);
+        void TransitionToInitState(const BufferCreateInfo& createInfo);
 
         VKDevice& device;
         VkBuffer vkBuffer;

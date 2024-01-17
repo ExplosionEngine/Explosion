@@ -20,11 +20,8 @@ namespace RHI::Vulkan {
         explicit VKCommandEncoder(VKDevice& device, VKCommandBuffer& commandBuffer);
         ~VKCommandEncoder() override;
 
-        void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
-        void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
-        void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
-        void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) override;
         void ResourceBarrier(const Barrier& barrier) override;
+        CopyPassCommandEncoder* BeginCopyPass() override;
         ComputePassCommandEncoder* BeginComputePass() override;
         GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
         void SwapChainSync(SwapChain* swapChain) override;
@@ -33,6 +30,29 @@ namespace RHI::Vulkan {
 
     private:
         VKDevice& device;
+        VKCommandBuffer& commandBuffer;
+    };
+
+    class VKCopyPassCommandEncoder : public CopyPassCommandEncoder {
+    public:
+        NonCopyable(VKCopyPassCommandEncoder)
+        explicit VKCopyPassCommandEncoder(VKDevice& device, VKCommandEncoder& commandEncoder, VKCommandBuffer& commandBuffer);
+        ~VKCopyPassCommandEncoder() override;
+
+        // CommandCommandEncoder
+        void ResourceBarrier(const RHI::Barrier& barrier) override;
+
+        // CopyPassCommandEncoder
+        void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
+        void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
+        void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
+        void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) override;
+        void EndPass() override;
+        void Destroy() override;
+
+    private:
+        VKDevice& device;
+        VKCommandEncoder& commandEncoder;
         VKCommandBuffer& commandBuffer;
     };
 

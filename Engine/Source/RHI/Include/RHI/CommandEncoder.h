@@ -58,8 +58,6 @@ namespace RHI {
         uint32_t colorAttachmentNum;
         const GraphicsPassColorAttachment* colorAttachments;
         const GraphicsPassDepthStencilAttachment* depthStencilAttachment;
-        // TODO occlusionQuerySet #see https://gpuweb.github.io/gpuweb/#render-pass-encoder-creation
-        // TODO timestampWrites #see https://gpuweb.github.io/gpuweb/#render-pass-encoder-creation
     };
 
     class CommandCommandEncoder {
@@ -67,7 +65,23 @@ namespace RHI {
         virtual void ResourceBarrier(const Barrier& barrier) = 0;
     };
 
-    class ComputePassCommandEncoder : CommandCommandEncoder {
+    class CopyPassCommandEncoder : public CommandCommandEncoder {
+    public:
+        NonCopyable(CopyPassCommandEncoder)
+        virtual ~CopyPassCommandEncoder();
+
+        virtual void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) = 0;
+        virtual void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) = 0;
+        virtual void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) = 0;
+        virtual void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) = 0;
+        virtual void EndPass() = 0;
+        virtual void Destroy() = 0;
+
+    protected:
+        CopyPassCommandEncoder();
+    };
+
+    class ComputePassCommandEncoder : public CommandCommandEncoder {
     public:
         NonCopyable(ComputePassCommandEncoder)
         virtual ~ComputePassCommandEncoder();
@@ -82,7 +96,7 @@ namespace RHI {
         ComputePassCommandEncoder();
     };
 
-    class GraphicsPassCommandEncoder : CommandCommandEncoder {
+    class GraphicsPassCommandEncoder : public CommandCommandEncoder {
     public:
         NonCopyable(GraphicsPassCommandEncoder)
         virtual ~GraphicsPassCommandEncoder();
@@ -101,9 +115,6 @@ namespace RHI {
         // TODO DrawIndirect(...)
         // TODO DrawIndexedIndirect(...)
         // TODO MultiIndirectDraw(...)
-        // TODO BeginOcclusionQuery(...)
-        // TODO EndOcclusionQuery(...)
-        // TODO ExecuteBundles(...)
         virtual void EndPass() = 0;
         virtual void Destroy() = 0;
 
@@ -111,17 +122,12 @@ namespace RHI {
         GraphicsPassCommandEncoder();
     };
 
-    class CommandEncoder : CommandCommandEncoder {
+    class CommandEncoder : public CommandCommandEncoder {
     public:
         NonCopyable(CommandEncoder)
         virtual ~CommandEncoder();
 
-        virtual void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) = 0;
-        virtual void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) = 0;
-        virtual void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) = 0;
-        virtual void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) = 0;
-        // TODO WriteTimeStamp(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-writetimestamp
-        // TODO ResolveQuerySet(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-resolvequeryset
+        virtual CopyPassCommandEncoder* BeginCopyPass() = 0;
         virtual ComputePassCommandEncoder* BeginComputePass() = 0;
         virtual GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) = 0;
         virtual void SwapChainSync(SwapChain* swapChain) = 0;

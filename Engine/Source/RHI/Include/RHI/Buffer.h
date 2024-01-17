@@ -15,6 +15,7 @@ namespace RHI {
     struct BufferCreateInfo {
         uint32_t size;
         BufferUsageFlags usages;
+        BufferState initialState;
         std::string debugName;
 
         bool operator==(const BufferCreateInfo& rhs) const

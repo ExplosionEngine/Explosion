@@ -35,6 +35,63 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
+    DX12CopyPassCommandEncoder::DX12CopyPassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer)
+        : device(device)
+        , commandEncoder(commandEncoder)
+        , commandBuffer(commandBuffer)
+    {
+    }
+
+    DX12CopyPassCommandEncoder::~DX12CopyPassCommandEncoder() = default;
+
+    void DX12CopyPassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+        commandEncoder.ResourceBarrier(barrier);
+    }
+
+    void DX12CopyPassCommandEncoder::CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size)
+    {
+        // TODO
+    }
+
+    void DX12CopyPassCommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
+    {
+        auto* buffer = dynamic_cast<DX12Buffer*>(src);
+        auto* texture = dynamic_cast<DX12Texture*>(dst);
+        auto origin = subResourceInfo->origin;
+
+        D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
+        layout.Offset = 0;
+        layout.Footprint.Depth = size.z;
+        layout.Footprint.Width = size.x;
+        layout.Footprint.Height = size.y;
+        layout.Footprint.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture->GetFormat());
+        layout.Footprint.RowPitch = size.x * GetBytesPerPixel(texture->GetFormat()); // row pitch must be a multiple of 256, let dx checks if the texture is valid
+
+        CD3DX12_TEXTURE_COPY_LOCATION dest(texture->GetDX12Resource().Get(), 0);
+        CD3DX12_TEXTURE_COPY_LOCATION source(buffer->GetDX12Resource().Get(), layout);
+        commandBuffer.GetDX12GraphicsCommandList()->CopyTextureRegion(&dest, origin.x, origin.y, origin.z, &source, nullptr);
+    }
+
+    void DX12CopyPassCommandEncoder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
+    {
+        // TODO
+    }
+
+    void DX12CopyPassCommandEncoder::CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo , const Common::UVec3& size)
+    {
+        // TODO
+    }
+
+    void DX12CopyPassCommandEncoder::EndPass()
+    {
+    }
+
+    void DX12CopyPassCommandEncoder::Destroy()
+    {
+        delete this;
+    }
+
     DX12ComputePassCommandEncoder::DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer)
         : ComputePassCommandEncoder()
         , device(device)
@@ -237,40 +294,6 @@ namespace RHI::DirectX12 {
 
     DX12CommandEncoder::~DX12CommandEncoder() = default;
 
-    void DX12CommandEncoder::CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size)
-    {
-        // TODO
-    }
-
-    void DX12CommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
-    {
-        auto* buffer = dynamic_cast<DX12Buffer*>(src);
-        auto* texture = dynamic_cast<DX12Texture*>(dst);
-        auto origin = subResourceInfo->origin;
-
-        D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
-        layout.Offset = 0;
-        layout.Footprint.Depth = size.z;
-        layout.Footprint.Width = size.x;
-        layout.Footprint.Height = size.y;
-        layout.Footprint.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture->GetFormat());
-        layout.Footprint.RowPitch = size.x * GetBytesPerPixel(texture->GetFormat()); // row pitch must be a multiple of 256, let dx checks if the texture is valid
-
-        CD3DX12_TEXTURE_COPY_LOCATION dest(texture->GetDX12Resource().Get(), 0);
-        CD3DX12_TEXTURE_COPY_LOCATION source(buffer->GetDX12Resource().Get(), layout);
-        commandBuffer.GetDX12GraphicsCommandList()->CopyTextureRegion(&dest, origin.x, origin.y, origin.z, &source, nullptr);
-    }
-
-    void DX12CommandEncoder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
-    {
-        // TODO
-    }
-
-    void DX12CommandEncoder::CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo , const Common::UVec3& size)
-    {
-        // TODO
-    }
-
     void DX12CommandEncoder::ResourceBarrier(const Barrier& barrier)
     {
         ID3D12Resource* resource;
@@ -292,6 +315,11 @@ namespace RHI::DirectX12 {
 
         CD3DX12_RESOURCE_BARRIER resourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(resource, beforeState, afterState);
         commandBuffer.GetDX12GraphicsCommandList()->ResourceBarrier(1, &resourceBarrier);
+    }
+
+    CopyPassCommandEncoder* DX12CommandEncoder::BeginCopyPass()
+    {
+        return new DX12CopyPassCommandEncoder(device, *this, commandBuffer);
     }
 
     ComputePassCommandEncoder* DX12CommandEncoder::BeginComputePass()

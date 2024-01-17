@@ -7,6 +7,10 @@
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Gpu.h>
 #include <RHI/Vulkan/BufferView.h>
+#include <RHI/Queue.h>
+#include <RHI/CommandBuffer.h>
+#include <RHI/CommandEncoder.h>
+#include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
     static VkBufferUsageFlags GetVkResourceStates(BufferUsageFlags bufferUsages)
@@ -33,6 +37,7 @@ namespace RHI::Vulkan {
     VKBuffer::VKBuffer(VKDevice& d, const BufferCreateInfo& createInfo) : Buffer(createInfo), device(d), usages(createInfo.usages)
     {
         CreateBuffer(createInfo);
+        TransitionToInitState(createInfo);
     }
 
     VKBuffer::~VKBuffer()
@@ -85,6 +90,23 @@ namespace RHI::Vulkan {
             device.SetObjectName(VK_OBJECT_TYPE_BUFFER, reinterpret_cast<uint64_t>(vkBuffer), createInfo.debugName.c_str());
         }
 #endif
+    }
+
+    void VKBuffer::TransitionToInitState(const BufferCreateInfo& createInfo)
+    {
+        if (createInfo.initialState > BufferState::undefined) {
+            Queue* queue = device.GetQueue(QueueType::graphics, 0);
+            Assert(queue);
+
+            Common::UniqueRef<Fence> fence = device.CreateFence();
+            Common::UniqueRef<CommandBuffer> commandBuffer = device.CreateCommandBuffer();
+            Common::UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
+            commandEncoder->ResourceBarrier(Barrier::Transition(this, BufferState::undefined, createInfo.initialState));
+            commandEncoder->End();
+
+            queue->Submit(commandBuffer.Get(), fence.Get());
+            fence->Wait();
+        }
     }
 
     VkBuffer VKBuffer::GetVkBuffer()

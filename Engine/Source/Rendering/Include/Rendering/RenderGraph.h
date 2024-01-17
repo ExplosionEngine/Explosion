@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <functional>
 #include <variant>
+#include <optional>
 
 #include <Common/Memory.h>
 #include <Common/Debug.h>
@@ -131,9 +132,18 @@ namespace Rendering {
     using RGBufferViewRef = RGBufferView*;
     using RGTextureViewRef = RGTextureView*;
 
+    struct RGColorAttachment : public RHI::GraphicsPassColorAttachmentBase {
+        RGTextureViewRef view;
+        // TODO TextureView* resolve;
+    };
+
+    struct RGDepthStencilAttachment : public RHI::GraphicsPassDepthStencilAttachmentBase {
+        RGTextureViewRef view;
+    };
+
     struct RGRasterPassDesc {
-        std::vector<RGTextureViewRef> colorAttachments;
-        RGTextureViewRef depthStencilAttachment;
+        std::vector<RGColorAttachment> colorAttachments;
+        std::optional<RGDepthStencilAttachment> depthStencilAttachment;
     };
 
     struct RGCopyPassDesc {
@@ -197,7 +207,7 @@ namespace Rendering {
         std::unordered_set<RGResourceRef> writes;
     };
 
-    using RGCopyPassExecuteFunc = std::function<void(RHI::CommandEncoder&)>;
+    using RGCopyPassExecuteFunc = std::function<void(RHI::CopyPassCommandEncoder&)>;
     using RGComputePassExecuteFunc = std::function<void(RHI::ComputePassCommandEncoder&)>;
     using RGRasterPassExecuteFunc = std::function<void(RHI::GraphicsPassCommandEncoder&)>;
 
@@ -281,25 +291,35 @@ namespace Rendering {
 
     private:
         using PooledResourceAndRefCount = std::pair<std::variant<PooledBufferRef, PooledTextureRef>, uint32_t>;
+        using ResourceState = std::variant<RHI::BufferState, RHI::TextureState>;
 
-        void ResetCompiledState();
-        void Compile();
-        void CompilePasses();
-        void DevirtualizeResources();
-        void ExecuteInternal(const RGFencePack& inFencePack);
-        void FinalizeResource(RGResourceRef resource);
-        void FinalizeResources();
+        struct ExecuteContext {
+            bool hasAsyncCopy;
+            bool hasAsyncCompute;
+            std::unordered_map<RGResourceRef, PooledResourceAndRefCount> devirtualizedResources;
+            std::unordered_map<RGResourceRef, ResourceState> resourceStates;
+        };
 
+        ExecuteContext Compile();
+        void CompilePasses(ExecuteContext& context);
+        void DevirtualizeResources(ExecuteContext& context);
+        void ExecuteInternal(ExecuteContext& context, const RGFencePack& inFencePack);
+        void DecRefCountAndFinalizeResourceIfNeeded(ExecuteContext& context, RGResourceRef resource);
+        void FinalizeResource(ExecuteContext& context, RGResourceRef resource);
+        void FinalizeResources(ExecuteContext& context);
+
+        template <typename Encoder, typename Pass>
+        void ExecutePass(ExecuteContext& context, Encoder* encoder, Pass& pass);
+
+        template <typename Encoder>
+        void TransitionResourceAndUpdateStateIfNeeded(ExecuteContext& context, Encoder* encoder, RGResourceRef resource, bool isRead);
+
+        bool executed;
         RHI::Device& device;
         std::vector<Common::UniqueRef<RGResourceBase>> resources;
         std::vector<Common::UniqueRef<RGResourceViewBase>> views;
         std::vector<Common::UniqueRef<RGBindGroup>> bindGroups;
         std::vector<Common::UniqueRef<RGPass>> passes;
-
-        // compiled state
-        bool hasAsyncCopy;
-        bool hasAsyncCompute;
-        std::unordered_map<RGResourceRef, PooledResourceAndRefCount> devirtualizedResources;
     };
 }
 

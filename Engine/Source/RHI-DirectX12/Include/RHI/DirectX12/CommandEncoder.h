@@ -19,11 +19,8 @@ namespace RHI::DirectX12 {
         explicit DX12CommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer);
         ~DX12CommandEncoder() override;
 
-        void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
-        void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
-        void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
-        void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) override;
         void ResourceBarrier(const Barrier& barrier) override;
+        CopyPassCommandEncoder* BeginCopyPass() override;
         ComputePassCommandEncoder* BeginComputePass() override;
         GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
         void SwapChainSync(SwapChain *swapChain) override;
@@ -32,6 +29,29 @@ namespace RHI::DirectX12 {
 
     private:
         DX12Device& device;
+        DX12CommandBuffer& commandBuffer;
+    };
+
+    class DX12CopyPassCommandEncoder : public CopyPassCommandEncoder {
+    public:
+        NonCopyable(DX12CopyPassCommandEncoder)
+        explicit DX12CopyPassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer);
+        ~DX12CopyPassCommandEncoder() override;
+
+        // CommandCommandEncoder
+        void ResourceBarrier(const Barrier& barrier) override;
+
+        // CopyPassCommandEncoder
+        void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
+        void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
+        void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
+        void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) override;
+        void EndPass() override;
+        void Destroy() override;
+
+    private:
+        DX12Device& device;
+        DX12CommandEncoder& commandEncoder;
         DX12CommandBuffer& commandBuffer;
     };
 

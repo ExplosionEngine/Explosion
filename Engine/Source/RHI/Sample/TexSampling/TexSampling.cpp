@@ -208,14 +208,18 @@ private:
         texCommandBuffer = device->CreateCommandBuffer();
         UniqueRef<CommandEncoder> commandEncoder = texCommandBuffer->Begin();
         {
-            commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::undefined, TextureState::copyDst));
-            TextureSubResourceInfo subResourceInfo {};
-            subResourceInfo.mipLevel = 0;
-            subResourceInfo.arrayLayerNum = 1;
-            subResourceInfo.baseArrayLayer = 0;
-            subResourceInfo.aspect = TextureAspect::color;
-            commandEncoder->CopyBufferToTexture(pixelBuffer.Get(), sampleTexture.Get(), &subResourceInfo, {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1});
-            commandEncoder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
+            UniqueRef<CopyPassCommandEncoder> copyPassEncoder = commandEncoder->BeginCopyPass();
+            {
+                copyPassEncoder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::undefined, TextureState::copyDst));
+                TextureSubResourceInfo subResourceInfo {};
+                subResourceInfo.mipLevel = 0;
+                subResourceInfo.arrayLayerNum = 1;
+                subResourceInfo.baseArrayLayer = 0;
+                subResourceInfo.aspect = TextureAspect::color;
+                copyPassEncoder->CopyBufferToTexture(pixelBuffer.Get(), sampleTexture.Get(), &subResourceInfo, {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1});
+                copyPassEncoder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
+            }
+            copyPassEncoder->EndPass();
         }
         commandEncoder->End();
         fence->Reset();
