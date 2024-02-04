@@ -232,7 +232,7 @@ protected:
 #elif PLATFORM_MACOS
         return glfwGetCocoaWindow(window);
 #else
-        Assert(false);
+        QuickFail();
         return nullptr;
 #endif
     }

@@ -16,6 +16,7 @@
 #define Assert(expression) Common::Debug::AssertImpl(expression, #expression, __FILE__, __LINE__)
 #define AssertWithReason(expression, reason) Common::Debug::AssertImpl(expression, #expression, __FILE__, __LINE__, reason)
 #define Unimplement() Assert(false)
+#define QuickFail() Assert(false)
 
 namespace Common {
     class Debug {

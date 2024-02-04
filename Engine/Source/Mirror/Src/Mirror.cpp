@@ -769,7 +769,7 @@ namespace Mirror {
                 return element.first;
             }
         }
-        Assert(false);
+        QuickFail();
         return "";
     }
 }

@@ -125,7 +125,7 @@ namespace Render {
                     return Common::FileUtils::ReadTextFile(Common::StringUtils::Replace(sourceFile, iter.first, iter.second));
                 }
             }
-            Assert(false);
+            QuickFail();
             return "";
         }
 

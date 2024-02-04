@@ -23,7 +23,7 @@ namespace Common {
         try {
             file.close();
         } catch (const std::exception& e) {
-            Assert(false);
+            QuickFail();
         }
     }
 
@@ -42,7 +42,7 @@ namespace Common {
         try {
             file.close();
         } catch (const std::exception& e) {
-            Assert(false);
+            QuickFail();
         }
     }
 

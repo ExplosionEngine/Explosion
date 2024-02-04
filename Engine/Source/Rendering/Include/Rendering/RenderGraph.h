@@ -17,6 +17,34 @@
 #include <Rendering/ResourcePool.h>
 
 namespace Rendering {
+    class RGAsyncInfo;
+    class RGFencePack;
+}
+
+namespace Rendering::Internal {
+    class CommandBuffersGuard {
+    public:
+        struct Context {
+            RHI::CommandBuffer* mainCmdBuffer;
+            RHI::CommandBuffer* asyncCopyCmdBuffer;
+            RHI::CommandBuffer* asyncComputeCmdBuffer;
+        };
+
+        CommandBuffersGuard(RHI::Device& inDevice, const RGAsyncInfo& inAsyncInfo, const RGFencePack& inFencePack, std::function<void(const Context&)>&& inAction);
+        ~CommandBuffersGuard();
+
+    private:
+        RHI::Device& device;
+        const RGFencePack& fencePack;
+        bool useAsyncCopy;
+        bool useAsyncCompute;
+        Common::UniqueRef<RHI::CommandBuffer> mainCmdBuffer;
+        Common::UniqueRef<RHI::CommandBuffer> asyncCopyCmdBuffer;
+        Common::UniqueRef<RHI::CommandBuffer> asyncComputeCmdBuffer;
+    };
+}
+
+namespace Rendering {
     enum class RGResType {
         buffer,
         texture,
@@ -39,96 +67,140 @@ namespace Rendering {
     using RGBufferDesc = RHI::BufferCreateInfo;
     using RGTextureDesc = RHI::TextureCreateInfo;
 
-    class RGResourceBase {
+    class RGResource {
     public:
-        virtual ~RGResourceBase();
+        virtual ~RGResource();
 
         RGResType Type() const;
         void MaskAsUsed();
 
     protected:
         friend class RGBuilder;
+        friend class RGPass;
 
-        explicit RGResourceBase(RGResType inType);
+        explicit RGResource(RGResType inType);
+        bool IsForceUsed() const;
+        void IncRefCountAndUpdateResource(RHI::Device& device);
+        void DecRefAndUpdateResource();
+
+        virtual void Devirtualize(RHI::Device& device) = 0;
+        virtual void UndoDevirtualize() = 0;
 
         RGResType type;
         bool forceUsed;
         bool imported;
+        bool devirtualized;
+        uint32_t refCount;
     };
 
-    template <typename RHIResource>
-    struct RHIResourceTraits {};
-
-    template <typename RHIResource>
-    class RGResource : public RGResourceBase {
+    class RGBuffer : public RGResource {
     public:
-        using Desc = typename RHIResourceTraits<RHIResource>::DescType;
+        ~RGBuffer() override;
 
-        ~RGResource() override;
-
-        const Desc& GetDesc() const;
-        RHIResource* GetRHI() const;
+        const RGBufferDesc& GetDesc() const;
+        RHI::Buffer* GetRHI() const;
 
     private:
         friend class RGBuilder;
+        friend class RGPass;
 
-        explicit RGResource(Desc inDesc);
+        explicit RGBuffer(RGBufferDesc inDesc);
+        explicit RGBuffer(RHI::Buffer* inImportedBuffer);
+        void Transition(RHI::CommandCommandEncoder& commandEncoder, RHI::BufferState transitionTo);
 
-        Desc desc;
-        RHIResource* rhiHandle;
+        void Devirtualize(RHI::Device& device) override;
+        void UndoDevirtualize() override;
+
+        RGBufferDesc desc;
+        RHI::Buffer* rhiHandle;
+        PooledBufferRef pooledBuffer;
+        RHI::BufferState currentState;
     };
 
-    using RGBuffer = RGResource<RHI::Buffer>;
-    using RGTexture = RGResource<RHI::Texture>;
-    using RGResourceRef = RGResourceBase*;
+    class RGTexture : public RGResource {
+    public:
+        ~RGTexture() override;
+
+        const RGTextureDesc& GetDesc() const;
+        RHI::Texture* GetRHI() const;
+
+    private:
+        friend class RGBuilder;
+        friend class RGPass;
+
+        explicit RGTexture(RGTextureDesc inDesc);
+        explicit RGTexture(RHI::Texture* inImportedTexture);
+        void Transition(RHI::CommandCommandEncoder& commandEncoder, RHI::TextureState transitionTo);
+
+        void Devirtualize(RHI::Device& device) override;
+        void UndoDevirtualize() override;
+
+        RGTextureDesc desc;
+        RHI::Texture* rhiHandle;
+        PooledTextureRef pooledTexture;
+        RHI::TextureState currentState;
+    };
+
+    using RGResourceRef = RGResource*;
     using RGBufferRef = RGBuffer*;
     using RGTextureRef = RGTexture*;
 
     using RGBufferViewDesc = RHI::BufferViewCreateInfo;
     using RGTextureViewDesc = RHI::TextureViewCreateInfo;
 
-    class RGResourceViewBase {
+    class RGResourceView {
     public:
-        virtual ~RGResourceViewBase();
+        virtual ~RGResourceView();
 
         RGResViewType Type() const;
-        virtual RGResourceRef GetResourceBase() = 0;
+        virtual RGResourceRef GetResource() = 0;
 
     protected:
-        explicit RGResourceViewBase(RGResViewType inType);
+        explicit RGResourceView(RGResViewType inType);
 
         RGResViewType type;
+        bool devirtualized;
     };
 
-    template <typename RHIResourceView>
-    struct RHIResourceViewTraits {};
-
-    template <typename RHIResourceView>
-    class RGResourceView : public RGResourceViewBase {
+    class RGBufferView : public RGResourceView {
     public:
-        using ResourceRef = typename RHIResourceViewTraits<RHIResourceView>::ResourceRefType;
-        using Desc = typename RHIResourceViewTraits<RHIResourceView>::DescType;
+        ~RGBufferView() override;
 
-        ~RGResourceView() override;
-
-        const Desc& GetDesc() const;
-        ResourceRef GetResource() const;
-        RHIResourceView* GetRHI() const;
-        RGResourceRef GetResourceBase() override;
+        const RGBufferViewDesc& GetDesc() const;
+        RGBufferRef GetBuffer() const;
+        RHI::BufferView* GetRHI() const;
+        RGResourceRef GetResource() override;
 
     private:
         friend class RGBuilder;
 
-        RGResourceView(ResourceRef inResource, Desc inDesc);
+        RGBufferView(RGBufferRef inBuffer, RGBufferViewDesc inDesc);
 
-        ResourceRef resource;
-        Desc desc;
-        RHIResourceView* rhiHandle;
+        RGBufferRef buffer;
+        RGBufferViewDesc desc;
+        RHI::BufferView* rhiHandle;
     };
 
-    using RGBufferView = RGResourceView<RHI::BufferView>;
-    using RGTextureView = RGResourceView<RHI::TextureView>;
-    using RGResourceViewRef = RGResourceViewBase*;
+    class RGTextureView : public RGResourceView {
+    public:
+        ~RGTextureView() override;
+
+        const RGTextureViewDesc& GetDesc() const;
+        RGTextureRef GetTexture() const;
+        RHI::TextureView* GetRHI() const;
+        RGResourceRef GetResource() override;
+
+    private:
+        friend class RGBuilder;
+
+        RGTextureView(RGTextureRef inTexture, RGTextureViewDesc inDesc);
+
+        RGTextureRef texture;
+        RGTextureViewDesc desc;
+        RHI::TextureView* rhiHandle;
+    };
+
+    using RGResourceViewRef = RGResourceView*;
     using RGBufferViewRef = RGBufferView*;
     using RGTextureViewRef = RGTextureView*;
 
@@ -190,6 +262,18 @@ namespace Rendering {
 
     using RGBindGroupRef = RGBindGroup*;
 
+    struct RGAsyncInfo {
+        bool hasAsyncCopy;
+        bool hasAsyncCompute;
+
+        RGAsyncInfo();
+    };
+
+    struct RGResourcesStates {
+        std::unordered_map<RGBufferRef, RHI::BufferState> buffer;
+        std::unordered_map<RGTextureRef, RHI::TextureState> texture;
+    };
+
     class RGPass {
     public:
         virtual ~RGPass();
@@ -198,13 +282,20 @@ namespace Rendering {
         friend class RGBuilder;
 
         RGPass(std::string inName, RGPassType inType);
+        void SaveBufferTransitionInfo(RGBufferRef buffer, RHI::BufferState state);
+        void SaveTextureTransitionInfo(RGTextureRef texture, RHI::TextureState state);
+        void CompileForBindGroups(const std::vector<RGBindGroupRef>& bindGroups);
+        void DevirtualizeResources(RHI::Device& device);
+        void TransitionResources(RHI::CommandCommandEncoder* commandEncoder);
+        void FinalizeResources();
 
-        virtual void Compile() = 0;
+        virtual void Compile(RGAsyncInfo& outAsyncInfo) = 0;
+        virtual void Execute(RHI::Device& device, const Internal::CommandBuffersGuard::Context& cmdBuffers) = 0;
 
         std::string name;
         RGPassType type;
         std::unordered_set<RGResourceRef> reads;
-        std::unordered_set<RGResourceRef> writes;
+        RGResourcesStates transitionInfos;
     };
 
     using RGCopyPassExecuteFunc = std::function<void(RHI::CopyPassCommandEncoder&)>;
@@ -219,7 +310,9 @@ namespace Rendering {
         friend class RGBuilder;
 
         RGCopyPass(std::string inName, RGCopyPassDesc inPassDesc, RGCopyPassExecuteFunc inFunc, bool inAsyncCopy = false);
-        void Compile() override;
+        void CompileForCopyPassDesc();
+        void Compile(RGAsyncInfo& outAsyncInfo) override;
+        void Execute(RHI::Device& device, const Internal::CommandBuffersGuard::Context& cmdBuffers) override;
 
         bool asyncCopy;
         RGCopyPassDesc passDesc;
@@ -234,7 +327,8 @@ namespace Rendering {
         friend class RGBuilder;
 
         RGComputePass(std::string inName, std::vector<RGBindGroupRef> inBindGroups, RGComputePassExecuteFunc inFunc, bool inAsyncCompute = false);
-        void Compile() override;
+        void Compile(RGAsyncInfo& outAsyncInfo) override;
+        void Execute(RHI::Device& device, const Internal::CommandBuffersGuard::Context& cmdBuffers) override;
 
         bool asyncCompute;
         RGComputePassExecuteFunc func;
@@ -249,15 +343,14 @@ namespace Rendering {
         friend class RGBuilder;
 
         RGRasterPass(std::string inName, RGRasterPassDesc inPassDesc, std::vector<RGBindGroupRef> inBindGroupds, RGRasterPassExecuteFunc inFunc);
-        void Compile() override;
+        void CompileForRasterPassDesc();
+        void Compile(RGAsyncInfo& outAsyncInfo) override;
+        void Execute(RHI::Device& device, const Internal::CommandBuffersGuard::Context& cmdBuffers) override;
 
         RGRasterPassDesc passDesc;
         RGRasterPassExecuteFunc func;
         std::vector<RGBindGroupRef> bindGroups;
     };
-
-    template <typename R>
-    struct RGResOrViewTraits {};
 
     struct RGFencePack {
         RHI::Fence* mainFence;
@@ -275,192 +368,30 @@ namespace Rendering {
         explicit RGBuilder(RHI::Device& inDevice);
         ~RGBuilder();
 
-        template <typename ResOrView, typename... Args>
-        requires std::derived_from<ResOrView, RGResourceBase> || std::derived_from<ResOrView, RGResourceViewBase>
-        typename RGResOrViewTraits<ResOrView>::RefType Create(Args&&... args);
-
-        template <typename Res>
-        requires std::derived_from<Res, RGResourceBase>
-        typename RGResOrViewTraits<Res>::RefType Import(typename RGResOrViewTraits<Res>::RHIType* rhiHandle);
-
-        template <typename P, typename... Args>
-        void Add(Args&&... args);
-
+        RGBufferRef CreateBuffer(const RGBufferDesc& inDesc);
+        RGTextureRef CreateTexture(const RGTextureDesc& inDesc);
+        RGBufferViewRef CreateBufferView(RGBufferRef inBuffer, const RGBufferViewDesc& inDesc);
+        RGTextureViewRef CreateTextureView(RGTextureRef inTexture, const RGTextureViewDesc& inDesc);
+        RGBufferRef ImportBuffer(RHI::Buffer* inBuffer);
+        RGTextureRef ImportTexture(RHI::Texture* inTexture);
         RGBindGroupRef AllocateBindGroup(const RGBindGroupDesc& inDesc);
+        void AddCopyPass(const std::string& inName, const RGCopyPassDesc& inPassDesc, const RGCopyPassExecuteFunc& inFunc, bool inAsyncCopy = false);
+        void AddComputePass(const std::string& inName, const std::vector<RGBindGroupRef>& inBindGroups, const RGComputePassExecuteFunc& inFunc, bool inAsyncCompute = false);
+        void AddRasterPass(const std::string& inName, const RGRasterPassDesc& inPassDesc, const std::vector<RGBindGroupRef>& inBindGroupds, const RGRasterPassExecuteFunc& inFunc);
         void Execute(const RGFencePack& inFencePack);
 
     private:
-        using PooledResourceAndRefCount = std::pair<std::variant<PooledBufferRef, PooledTextureRef>, uint32_t>;
-        using ResourceState = std::variant<RHI::BufferState, RHI::TextureState>;
-
-        struct ExecuteContext {
-            bool hasAsyncCopy;
-            bool hasAsyncCompute;
-            std::unordered_map<RGResourceRef, PooledResourceAndRefCount> devirtualizedResources;
-            std::unordered_map<RGResourceRef, ResourceState> resourceStates;
-        };
-
-        ExecuteContext Compile();
-        void CompilePasses(ExecuteContext& context);
-        void DevirtualizeResources(ExecuteContext& context);
-        void ExecuteInternal(ExecuteContext& context, const RGFencePack& inFencePack);
-        void DecRefCountAndFinalizeResourceIfNeeded(ExecuteContext& context, RGResourceRef resource);
-        void FinalizeResource(ExecuteContext& context, RGResourceRef resource);
-        void FinalizeResources(ExecuteContext& context);
-
-        template <typename Encoder, typename Pass>
-        void ExecutePass(ExecuteContext& context, Encoder* encoder, Pass& pass);
-
-        template <typename Encoder>
-        void TransitionResourceAndUpdateStateIfNeeded(ExecuteContext& context, Encoder* encoder, RGResourceRef resource, bool isRead);
+        void Compile();
+        void ExecuteInternal(const RGFencePack& inFencePack);
 
         bool executed;
         RHI::Device& device;
-        std::vector<Common::UniqueRef<RGResourceBase>> resources;
-        std::vector<Common::UniqueRef<RGResourceViewBase>> views;
+        std::vector<Common::UniqueRef<RGResource>> resources;
+        std::vector<Common::UniqueRef<RGResourceView>> views;
         std::vector<Common::UniqueRef<RGBindGroup>> bindGroups;
         std::vector<Common::UniqueRef<RGPass>> passes;
+
+        // execute context
+        RGAsyncInfo asyncInfo;
     };
-}
-
-namespace Rendering {
-    template <>
-    struct RHIResourceTraits<RHI::Buffer> {
-        using DescType = RGBufferDesc;
-        static constexpr RGResType type = RGResType::buffer;
-    };
-
-    template <>
-    struct RHIResourceTraits<RHI::Texture> {
-        using DescType = RGTextureDesc;
-        static constexpr RGResType type = RGResType::texture;
-    };
-
-    template <>
-    struct RHIResourceViewTraits<RHI::BufferView> {
-        using ResourceRefType = RGBufferRef;
-        using DescType = RGBufferViewDesc;
-        static constexpr RGResViewType type = RGResViewType::bufferView;
-    };
-
-    template <>
-    struct RHIResourceViewTraits<RHI::TextureView> {
-        using ResourceRefType = RGTextureRef;
-        using DescType = RGTextureViewDesc;
-        static constexpr RGResViewType type = RGResViewType::textureView;
-    };
-
-    template <>
-    struct RGResOrViewTraits<RGBuffer> {
-        using RefType = RGBufferRef;
-        using RHIType = RHI::Buffer;
-        using DescType = RGBufferDesc;
-    };
-
-    template <>
-    struct RGResOrViewTraits<RGTexture> {
-        using RefType = RGTextureRef;
-        using RHIType = RHI::Texture;
-        using DescType = RGTextureDesc;
-    };
-
-    template <>
-    struct RGResOrViewTraits<RGBufferView> {
-        using RefType = RGBufferViewRef;
-        using RHIType = RHI::BufferView;
-        using DescType = RGBufferViewDesc;
-    };
-
-    template <>
-    struct RGResOrViewTraits<RGTextureView> {
-        using RefType = RGTextureViewRef;
-        using RHIType = RHI::TextureView;
-        using DescType = RGTextureViewDesc;
-    };
-
-    template <typename RHIResource>
-    RGResource<RHIResource>::RGResource(Desc inDesc)
-        : desc(std::move(inDesc))
-    {
-    }
-
-    template <typename RHIResource>
-    RGResource<RHIResource>::~RGResource() = default;
-
-    template <typename RHIResource>
-    const typename RGResource<RHIResource>::Desc& RGResource<RHIResource>::GetDesc() const
-    {
-        return desc;
-    }
-
-    template <typename RHIResource>
-    RHIResource* RGResource<RHIResource>::GetRHI() const
-    {
-        return rhiHandle;
-    }
-
-    template <typename RHIResourceView>
-    RGResourceView<RHIResourceView>::RGResourceView(ResourceRef inResource, RGResourceView::Desc inDesc)
-        : resource(inResource)
-        , desc(std::move(inDesc))
-    {
-    }
-
-    template <typename RHIResourceView>
-    RGResourceView<RHIResourceView>::~RGResourceView() = default;
-
-    template <typename RHIResourceView>
-    const typename RGResourceView<RHIResourceView>::Desc& RGResourceView<RHIResourceView>::GetDesc() const
-    {
-        return desc;
-    }
-
-    template <typename RHIResourceView>
-    RGResourceView<RHIResourceView>::ResourceRef RGResourceView<RHIResourceView>::GetResource() const
-    {
-        return resource;
-    }
-
-    template <typename RHIResourceView>
-    RHIResourceView* RGResourceView<RHIResourceView>::GetRHI() const
-    {
-        return rhiHandle;
-    }
-
-    template <typename RHIResourceView>
-    RGResourceRef RGResourceView<RHIResourceView>::GetResourceBase()
-    {
-        return resource;
-    }
-
-    template <typename ResOrView, typename... Args>
-    requires std::derived_from<ResOrView, RGResourceBase> || std::derived_from<ResOrView, RGResourceViewBase>
-    typename RGResOrViewTraits<ResOrView>::RefType RGBuilder::Create(Args&& ...args)
-    {
-        typename RGResOrViewTraits<ResOrView>::RefType ref = new ResOrView(std::forward<Args>(args)...);
-        if constexpr (std::derived_from<ResOrView, RGResourceBase>) {
-            resources.emplace_back(Common::UniqueRef<RGResourceBase>(ref));
-            return resources.back().Get();
-        } else {
-            views.emplace_back(Common::UniqueRef<RGResourceViewBase>(ref));
-            return views.back().Get();
-        }
-    }
-
-    template <typename Res>
-    requires std::derived_from<Res, RGResourceBase>
-    typename RGResOrViewTraits<Res>::RefType RGBuilder::Import(typename RGResOrViewTraits<Res>::RHIType* rhiHandle)
-    {
-        typename RGResOrViewTraits<Res>::RefType ref = new Res(rhiHandle->GetCreateInfo());
-        ref->rhiHandle = rhiHandle;
-        ref->imported = true;
-        resources.emplace_back(Common::UniqueRef<RGResourceBase>(ref));
-        return resources.back().Get();
-    }
-
-    template <typename P, typename... Args>
-    void RGBuilder::Add(Args&&... args)
-    {
-        passes.emplace_back(Common::UniqueRef<RGPass>(new P(std::forward<Args>(args)...)));
-    }
 }
