@@ -149,7 +149,7 @@ namespace Rendering {
     }
 
     template <typename PooledResource>
-    RGResourcePool<PooledResource>::ResRefType RGResourcePool<PooledResource>::Allocate(const RGResourcePool<PooledResource>::DescType& desc)
+    typename RGResourcePool<PooledResource>::ResRefType RGResourcePool<PooledResource>::Allocate(const RGResourcePool<PooledResource>::DescType& desc)
     {
         for (const auto& pooledResource : pooledResources) {
             if (pooledResource.RefCount() == 1 && desc == pooledResource->GetDesc()) {

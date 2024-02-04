@@ -482,7 +482,8 @@ namespace Rendering {
             const auto& bindItems = bindGroupDesc.items;
 
             // writes first
-            for (const auto& itemDesc : bindItems | std::views::values) {
+            for (const auto& bindItem : bindItems) {
+                const auto& itemDesc = bindItem.second;
                 if (itemDesc.type == RHI::BindingType::storageBuffer) {
                     SaveBufferTransitionInfo(itemDesc.bufferView->GetBuffer(), RHI::BufferState::storage);
                 } else if (itemDesc.type == RHI::BindingType::storageTexture) {
@@ -491,7 +492,8 @@ namespace Rendering {
             }
 
             // reads
-            for (const auto& itemDesc : bindItems | std::views::values) {
+            for (const auto& bindItem : bindItems) {
+                const auto& itemDesc = bindItem.second;
                 if (itemDesc.type == RHI::BindingType::uniformBuffer) {
                     SaveBufferTransitionInfo(itemDesc.bufferView->GetBuffer(), RHI::BufferState::shaderReadOnly);
                 } else if (itemDesc.type == RHI::BindingType::texture) {
