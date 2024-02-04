@@ -112,6 +112,88 @@ namespace Rendering::Internal {
 }
 
 namespace Rendering {
+    RGBufferDesc RGBufferDesc::Create()
+    {
+        return RGBufferDesc {};
+    }
+
+    RGBufferDesc& RGBufferDesc::Size(uint32_t inSize)
+    {
+        size = inSize;
+        return *this;
+    }
+
+    RGBufferDesc& RGBufferDesc::Usages(RHI::BufferUsageFlags inUsages)
+    {
+        usages = inUsages;
+        return *this;
+    }
+
+    RGBufferDesc& RGBufferDesc::InitialState(RHI::BufferState inState)
+    {
+        initialState = inState;
+        return *this;
+    }
+
+    RGBufferDesc& RGBufferDesc::DebugName(const std::string& inName)
+    {
+        debugName = inName;
+        return *this;
+    }
+
+    RGTextureDesc RGTextureDesc::Create()
+    {
+        return RGTextureDesc {};
+    }
+
+    RGTextureDesc& RGTextureDesc::Dimension(RHI::TextureDimension inDimension)
+    {
+        dimension = inDimension;
+        return *this;
+    }
+
+    RGTextureDesc& RGTextureDesc::Extent(const Common::UVec3& inExtent)
+    {
+        extent = inExtent;
+        return *this;
+    }
+
+    RGTextureDesc& RGTextureDesc::Format(RHI::PixelFormat inFormat)
+    {
+        format = inFormat;
+        return *this;
+    }
+
+    RGTextureDesc& RGTextureDesc::Usages(RHI::TextureUsageFlags inUsages)
+    {
+        usages = inUsages;
+        return *this;
+    }
+
+    RGTextureDesc& RGTextureDesc::MipLevels(uint8_t inMipLevels)
+    {
+        mipLevels = inMipLevels;
+        return *this;
+    }
+
+    RGTextureDesc& RGTextureDesc::Samples(uint8_t inSamples)
+    {
+        samples = inSamples;
+        return *this;
+    }
+
+    RGTextureDesc& RGTextureDesc::InitialState(RHI::TextureState inState)
+    {
+        initialState = inState;
+        return *this;
+    }
+
+    RGTextureDesc& RGTextureDesc::DebugName(const std::string& inName)
+    {
+        debugName = inName;
+        return *this;
+    }
+
     RGResource::RGResource(RGResType inType)
         : type(inType)
         , forceUsed(false)
@@ -340,6 +422,13 @@ namespace Rendering {
     RGResourceRef RGTextureView::GetResource()
     {
         return texture;
+    }
+
+    RGBindGroupDesc RGBindGroupDesc::Create(Rendering::BindGroupLayout* inLayout)
+    {
+        RGBindGroupDesc result;
+        result.layout = inLayout->GetRHI();
+        return result;
     }
 
     RGBindGroupDesc RGBindGroupDesc::Create(RHI::BindGroupLayout* inLayout)
