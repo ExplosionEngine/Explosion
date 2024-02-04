@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Common/Utility.h>
+#include <Common/Hash.h>
 #include <RHI/Common.h>
 
 namespace RHI {
@@ -16,6 +17,11 @@ namespace RHI {
         uint8_t mipLevelNum;
         uint8_t baseArrayLayer;
         uint8_t arrayLayerNum;
+
+        size_t Hash() const
+        {
+            return Common::HashUtils::CityHash(this, sizeof(TextureViewCreateInfo));
+        }
     };
 
     class TextureView {

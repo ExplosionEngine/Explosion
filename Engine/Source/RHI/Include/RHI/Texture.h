@@ -22,6 +22,17 @@ namespace RHI {
         uint8_t samples;
         TextureState initialState;
         std::string debugName;
+
+        bool operator==(const TextureCreateInfo& rhs) const
+        {
+            return dimension == rhs.dimension
+                && extent == rhs.extent
+                && format == rhs.format
+                && usages == rhs.usages
+                && mipLevels == rhs.mipLevels
+                && samples == rhs.samples
+                && initialState == rhs.initialState;
+        }
     };
 
     class Texture {
@@ -29,11 +40,14 @@ namespace RHI {
         NonCopyable(Texture)
         virtual ~Texture();
 
+        const TextureCreateInfo& GetCreateInfo() const;
         virtual TextureView* CreateTextureView(const TextureViewCreateInfo& createInfo) = 0;
         virtual void Destroy() = 0;
 
     protected:
         Texture();
-        explicit Texture(const TextureCreateInfo& createInfo);
+        explicit Texture(const TextureCreateInfo& inCreateInfo);
+
+        TextureCreateInfo createInfo;
     };
 }

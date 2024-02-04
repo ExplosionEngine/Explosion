@@ -5,7 +5,15 @@
 #include <RHI/Buffer.h>
 
 namespace RHI {
-    Buffer::Buffer(const BufferCreateInfo& createInfo) {}
+    Buffer::Buffer(const BufferCreateInfo& inCreateInfo)
+        : createInfo(inCreateInfo)
+    {
+    }
 
     Buffer::~Buffer() = default;
+
+    const BufferCreateInfo& Buffer::GetCreateInfo() const
+    {
+        return createInfo;
+    }
 }

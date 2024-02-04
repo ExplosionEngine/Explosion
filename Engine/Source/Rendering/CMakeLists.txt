@@ -6,3 +6,10 @@ AddLibrary(
     PUBLIC_INC Include
     LIB Render Core
 )
+
+file(GLOB TEST_SOURCES Test/*.cpp)
+AddTest(
+    NAME Rendering.Test
+    SRC ${TEST_SOURCES}
+    LIB RHI Rendering
+)

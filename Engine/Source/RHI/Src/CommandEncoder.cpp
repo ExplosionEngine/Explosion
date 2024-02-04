@@ -9,6 +9,10 @@ namespace RHI {
 
     CommandEncoder::~CommandEncoder() = default;
 
+    CopyPassCommandEncoder::CopyPassCommandEncoder() = default;
+
+    CopyPassCommandEncoder::~CopyPassCommandEncoder() = default;
+
     ComputePassCommandEncoder::ComputePassCommandEncoder() = default;
 
     ComputePassCommandEncoder::~ComputePassCommandEncoder() = default;

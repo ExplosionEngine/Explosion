@@ -15,7 +15,14 @@ namespace RHI {
     struct BufferCreateInfo {
         uint32_t size;
         BufferUsageFlags usages;
+        BufferState initialState;
         std::string debugName;
+
+        bool operator==(const BufferCreateInfo& rhs) const
+        {
+            return size == rhs.size
+                && usages == rhs.usages;
+        }
     };
 
     class Buffer {
@@ -23,12 +30,15 @@ namespace RHI {
         NonCopyable(Buffer)
         virtual ~Buffer();
 
+        const BufferCreateInfo& GetCreateInfo() const;
         virtual void* Map(MapMode mapMode, size_t offset, size_t length) = 0;
         virtual void UnMap() = 0;
         virtual BufferView* CreateBufferView(const BufferViewCreateInfo& createInfo) = 0;
         virtual void Destroy() = 0;
 
     protected:
-        explicit Buffer(const BufferCreateInfo& createInfo);
+        explicit Buffer(const BufferCreateInfo& inCreateInfo);
+
+        BufferCreateInfo createInfo;
     };
 }

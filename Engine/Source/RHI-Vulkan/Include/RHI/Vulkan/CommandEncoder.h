@@ -20,11 +20,8 @@ namespace RHI::Vulkan {
         explicit VKCommandEncoder(VKDevice& device, VKCommandBuffer& commandBuffer);
         ~VKCommandEncoder() override;
 
-        void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
-        void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
-        void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
-        void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) override;
         void ResourceBarrier(const Barrier& barrier) override;
+        CopyPassCommandEncoder* BeginCopyPass() override;
         ComputePassCommandEncoder* BeginComputePass() override;
         GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
         void SwapChainSync(SwapChain* swapChain) override;
@@ -36,29 +33,61 @@ namespace RHI::Vulkan {
         VKCommandBuffer& commandBuffer;
     };
 
-    class VKComputePassCommandEncoder : public ComputePassCommandEncoder {
+    class VKCopyPassCommandEncoder : public CopyPassCommandEncoder {
     public:
-        NonCopyable(VKComputePassCommandEncoder)
-        explicit VKComputePassCommandEncoder(VKDevice& device, VKCommandBuffer& commandBuffer);
-        ~VKComputePassCommandEncoder() override;
+        NonCopyable(VKCopyPassCommandEncoder)
+        explicit VKCopyPassCommandEncoder(VKDevice& device, VKCommandEncoder& commandEncoder, VKCommandBuffer& commandBuffer);
+        ~VKCopyPassCommandEncoder() override;
 
-        void SetPipeline(ComputePipeline* pipeline) override {}
-        void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override {}
-        void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override {}
-        void EndPass() override {}
-        void Destroy() override {}
+        // CommandCommandEncoder
+        void ResourceBarrier(const RHI::Barrier& barrier) override;
+
+        // CopyPassCommandEncoder
+        void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
+        void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
+        void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
+        void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) override;
+        void EndPass() override;
+        void Destroy() override;
 
     private:
         VKDevice& device;
+        VKCommandEncoder& commandEncoder;
+        VKCommandBuffer& commandBuffer;
+    };
+
+    class VKComputePassCommandEncoder : public ComputePassCommandEncoder {
+    public:
+        NonCopyable(VKComputePassCommandEncoder)
+        explicit VKComputePassCommandEncoder(VKDevice& device, VKCommandEncoder& commandEncoder, VKCommandBuffer& commandBuffer);
+        ~VKComputePassCommandEncoder() override;
+
+        // CommandCommandEncoder
+        void ResourceBarrier(const RHI::Barrier& barrier) override;
+
+        // ComputePassCommandEncoder
+        void SetPipeline(ComputePipeline* pipeline) override;
+        void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
+        void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override;
+        void EndPass() override;
+        void Destroy() override;
+
+    private:
+        VKDevice& device;
+        VKCommandEncoder& commandEncoder;
         VKCommandBuffer& commandBuffer;
     };
 
     class VKGraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
     public:
         NonCopyable(VKGraphicsPassCommandEncoder)
-        explicit VKGraphicsPassCommandEncoder(VKDevice& device, VKCommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo);
+        explicit VKGraphicsPassCommandEncoder(VKDevice& device, VKCommandEncoder& commandEncoder, VKCommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo);
         ~VKGraphicsPassCommandEncoder() override;
 
+        // CommandCommandEncoder
+        void ResourceBarrier(const RHI::Barrier& barrier) override;
+
+        // GraphicsPassCommandEncoder
         void SetPipeline(GraphicsPipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void SetIndexBuffer(BufferView *bufferView) override;
@@ -75,6 +104,7 @@ namespace RHI::Vulkan {
 
     private:
         VKDevice& device;
+        VKCommandEncoder& commandEncoder;
         VKCommandBuffer& commandBuffer;
         VkCommandBuffer cmdHandle;
         VKGraphicsPipeline* graphicsPipeline;

@@ -9,12 +9,52 @@
 namespace RHI::Dummy {
     class DummyCommandBuffer;
 
-    class DummyComputePassCommandEncoder : public RHI::ComputePassCommandEncoder {
+    class DummyCommandEncoder : public CommandEncoder {
+    public:
+        NonCopyable(DummyCommandEncoder)
+        explicit DummyCommandEncoder(const DummyCommandBuffer& inDummyCommandBuffer);
+        ~DummyCommandEncoder() override;
+
+        void ResourceBarrier(const Barrier& barrier) override;
+        CopyPassCommandEncoder* BeginCopyPass() override;
+        ComputePassCommandEncoder* BeginComputePass() override;
+        GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
+        void SwapChainSync(SwapChain *swapChain) override;
+        void End() override;
+        void Destroy() override;
+
+    private:
+        const DummyCommandBuffer& dummyCommandBuffer;
+    };
+
+    class DummyCopyPassCommandEncoder : public CopyPassCommandEncoder {
+    public:
+        NonCopyable(DummyCopyPassCommandEncoder)
+        explicit DummyCopyPassCommandEncoder(const DummyCommandBuffer& dummyCommandBuffer);
+        ~DummyCopyPassCommandEncoder();
+
+        // CommandCommandEncoder
+        void ResourceBarrier(const RHI::Barrier& barrier) override;
+
+        // CopyPassCommandEncoder
+        void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
+        void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
+        void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
+        void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) override;
+        void EndPass() override;
+        void Destroy() override;
+    };
+
+    class DummyComputePassCommandEncoder : public ComputePassCommandEncoder {
     public:
         NonCopyable(DummyComputePassCommandEncoder)
         explicit DummyComputePassCommandEncoder(const DummyCommandBuffer& dummyCommandBuffer);
         ~DummyComputePassCommandEncoder() override;
 
+        // CommandCommandEncoder
+        void ResourceBarrier(const RHI::Barrier& barrier) override;
+
+        // ComputePassCommandEncoder
         void SetPipeline(ComputePipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup *bindGroup) override;
         void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override;
@@ -22,12 +62,16 @@ namespace RHI::Dummy {
         void Destroy() override;
     };
     
-    class DummyGraphicsPassCommandEncoder : public RHI::GraphicsPassCommandEncoder {
+    class DummyGraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
     public:
         NonCopyable(DummyGraphicsPassCommandEncoder)
         explicit DummyGraphicsPassCommandEncoder(const DummyCommandBuffer& dummyCommandBuffer);
         ~DummyGraphicsPassCommandEncoder() override;
 
+        // CommandCommandEncoder
+        void ResourceBarrier(const RHI::Barrier& barrier) override;
+
+        // GraphicsPassCommandEncoder
         void SetPipeline(GraphicsPipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void SetIndexBuffer(BufferView* bufferView) override;
@@ -41,28 +85,5 @@ namespace RHI::Dummy {
         void SetStencilReference(uint32_t reference) override;
         void EndPass() override;
         void Destroy() override;
-    };
-    
-    class DummyCommandEncoder : public CommandEncoder {
-    public:
-        NonCopyable(DummyCommandEncoder)
-        explicit DummyCommandEncoder(const DummyCommandBuffer& inDummyCommandBuffer);
-        ~DummyCommandEncoder() override;
-        
-        void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
-        void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
-        void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
-        void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) override;
-        void ResourceBarrier(const Barrier& barrier) override;
-        // TODO WriteTimeStamp(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-writetimestamp
-        // TODO ResolveQuerySet(...), #see https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-resolvequeryset
-        ComputePassCommandEncoder* BeginComputePass() override;
-        GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
-        void SwapChainSync(SwapChain *swapChain) override;
-        void End() override;
-        void Destroy() override;
-
-    private:
-        const DummyCommandBuffer& dummyCommandBuffer;
     };
 }

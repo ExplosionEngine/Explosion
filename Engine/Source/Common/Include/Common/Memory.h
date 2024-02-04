@@ -5,6 +5,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 
 #include <Common/Utility.h>
 
@@ -77,7 +78,7 @@ namespace Common {
         template <typename T2> SharedRef(std::shared_ptr<T2>& inRef) : ref(inRef) {} // NOLINT
         template <typename T2> SharedRef(std::shared_ptr<T2>&& inRef) noexcept : ref(std::move(inRef)) {} // NOLINT
         SharedRef(T* pointer) : ref(pointer) {} // NOLINT
-        SharedRef(SharedRef& other) : ref(other.ref) {} // NOLINT
+        SharedRef(const SharedRef& other) : ref(other.ref) {} // NOLINT
         SharedRef(SharedRef&& other) noexcept : ref(std::move(other.ref)) {} // NOLINT
         SharedRef() = default;
         ~SharedRef() = default;
@@ -182,6 +183,7 @@ namespace Common {
         template <typename T2> WeakRef(SharedRef<T2>& inRef) : ref(inRef.GetStd()) {} // NOLINT
         WeakRef(WeakRef& other) : ref(other.ref) {} // NOLINT
         WeakRef(WeakRef&& other) noexcept : ref(std::move(other.ref)) {} // NOLINT
+        ~WeakRef() = default;
 
         template <typename T2>
         WeakRef& operator=(SharedRef<T2>& inRef)

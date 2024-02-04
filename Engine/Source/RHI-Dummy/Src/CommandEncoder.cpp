@@ -5,11 +5,52 @@
 #include <RHI/Dummy/CommandEncoder.h>
 
 namespace RHI::Dummy {
+    DummyCopyPassCommandEncoder::DummyCopyPassCommandEncoder(const DummyCommandBuffer& dummyCommandBuffer)
+    {
+    }
+
+    DummyCopyPassCommandEncoder::~DummyCopyPassCommandEncoder()
+    {
+    }
+
+    void DummyCopyPassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+    }
+
+    void DummyCopyPassCommandEncoder::CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size)
+    {
+    }
+
+    void DummyCopyPassCommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
+    {
+    }
+
+    void DummyCopyPassCommandEncoder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
+    {
+    }
+
+    void DummyCopyPassCommandEncoder::CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size)
+    {
+    }
+
+    void DummyCopyPassCommandEncoder::EndPass()
+    {
+    }
+
+    void DummyCopyPassCommandEncoder::Destroy()
+    {
+        delete this;
+    }
+
     DummyComputePassCommandEncoder::DummyComputePassCommandEncoder(const DummyCommandBuffer& dummyCommandBuffer)
     {
     }
 
     DummyComputePassCommandEncoder::~DummyComputePassCommandEncoder() = default;
+
+    void DummyComputePassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+    }
 
     void DummyComputePassCommandEncoder::SetPipeline(ComputePipeline* pipeline)
     {
@@ -37,6 +78,10 @@ namespace RHI::Dummy {
     }
 
     DummyGraphicsPassCommandEncoder::~DummyGraphicsPassCommandEncoder() = default;
+
+    void DummyGraphicsPassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+    }
 
     void DummyGraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
     {
@@ -98,24 +143,13 @@ namespace RHI::Dummy {
 
     DummyCommandEncoder::~DummyCommandEncoder() = default;
 
-    void DummyCommandEncoder::CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size)
-    {
-    }
-
-    void DummyCommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
-    {
-    }
-
-    void DummyCommandEncoder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
-    {
-    }
-
-    void DummyCommandEncoder::CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size)
-    {
-    }
-
     void DummyCommandEncoder::ResourceBarrier(const Barrier& barrier)
     {
+    }
+
+    CopyPassCommandEncoder* DummyCommandEncoder::BeginCopyPass()
+    {
+        return new DummyCopyPassCommandEncoder(dummyCommandBuffer);
     }
 
     ComputePassCommandEncoder* DummyCommandEncoder::BeginComputePass()

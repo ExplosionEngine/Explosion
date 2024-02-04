@@ -19,11 +19,8 @@ namespace RHI::DirectX12 {
         explicit DX12CommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer);
         ~DX12CommandEncoder() override;
 
-        void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
-        void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
-        void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
-        void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) override;
         void ResourceBarrier(const Barrier& barrier) override;
+        CopyPassCommandEncoder* BeginCopyPass() override;
         ComputePassCommandEncoder* BeginComputePass() override;
         GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
         void SwapChainSync(SwapChain *swapChain) override;
@@ -35,12 +32,39 @@ namespace RHI::DirectX12 {
         DX12CommandBuffer& commandBuffer;
     };
 
+    class DX12CopyPassCommandEncoder : public CopyPassCommandEncoder {
+    public:
+        NonCopyable(DX12CopyPassCommandEncoder)
+        explicit DX12CopyPassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer);
+        ~DX12CopyPassCommandEncoder() override;
+
+        // CommandCommandEncoder
+        void ResourceBarrier(const Barrier& barrier) override;
+
+        // CopyPassCommandEncoder
+        void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
+        void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
+        void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
+        void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) override;
+        void EndPass() override;
+        void Destroy() override;
+
+    private:
+        DX12Device& device;
+        DX12CommandEncoder& commandEncoder;
+        DX12CommandBuffer& commandBuffer;
+    };
+
     class DX12ComputePassCommandEncoder : public ComputePassCommandEncoder {
     public:
         NonCopyable(DX12ComputePassCommandEncoder)
-        explicit DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer);
+        explicit DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer);
         ~DX12ComputePassCommandEncoder() override;
 
+        // CommandCommandEncoder
+        void ResourceBarrier(const Barrier& barrier) override;
+
+        // ComputePassCommandEncoder
         void SetPipeline(ComputePipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override;
@@ -49,6 +73,7 @@ namespace RHI::DirectX12 {
 
     private:
         DX12Device& device;
+        DX12CommandEncoder& commandEncoder;
         DX12ComputePipeline* computePipeline;
         DX12CommandBuffer& commandBuffer;
     };
@@ -56,9 +81,13 @@ namespace RHI::DirectX12 {
     class DX12GraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
     public:
         NonCopyable(DX12GraphicsPassCommandEncoder)
-        explicit DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo);
+        explicit DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo);
         ~DX12GraphicsPassCommandEncoder() override;
 
+        // CommandCommandEncoder
+        void ResourceBarrier(const Barrier& barrier) override;
+
+        // GraphicsPassCommandEncoder
         void SetPipeline(GraphicsPipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void SetIndexBuffer(BufferView *bufferView) override;
@@ -75,6 +104,7 @@ namespace RHI::DirectX12 {
 
     private:
         DX12Device& device;
+        DX12CommandEncoder& commandEncoder;
         DX12GraphicsPipeline* graphicsPipeline;
         DX12CommandBuffer& commandBuffer;
     };

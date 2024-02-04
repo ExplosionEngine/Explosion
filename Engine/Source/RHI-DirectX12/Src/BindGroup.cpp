@@ -24,7 +24,7 @@ namespace RHI::DirectX12 {
             auto* sampler = dynamic_cast<DX12Sampler*>(entry.sampler);
             return sampler->GetDX12CpuDescriptorHandle();
         }
-        Assert(false);
+        QuickFail();
         return CD3DX12_CPU_DESCRIPTOR_HANDLE();
     }
 }

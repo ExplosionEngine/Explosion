@@ -30,7 +30,7 @@ namespace Core {
 
     ModuleRuntimeInfo::ModuleRuntimeInfo(const ModuleRuntimeInfo& other)
     {
-        Assert(false);
+        QuickFail();
     }
 
     ModuleRuntimeInfo::ModuleRuntimeInfo(ModuleRuntimeInfo&& other) noexcept
@@ -41,7 +41,7 @@ namespace Core {
 
     ModuleRuntimeInfo& ModuleRuntimeInfo::operator=(const ModuleRuntimeInfo& other)
     {
-        Assert(false);
+        QuickFail();
         return *this;
     }
 

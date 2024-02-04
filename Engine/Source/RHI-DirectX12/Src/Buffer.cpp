@@ -31,28 +31,6 @@ namespace RHI::DirectX12 {
         return fallback;
     }
 
-    static D3D12_RESOURCE_STATES GetDX12ResourceStates(BufferUsageFlags bufferUsages)
-    {
-        static std::unordered_map<BufferUsageBits, D3D12_RESOURCE_STATES> rules = {
-            { BufferUsageBits::copySrc, D3D12_RESOURCE_STATE_COPY_SOURCE | D3D12_RESOURCE_STATE_GENERIC_READ },
-            { BufferUsageBits::copyDst, D3D12_RESOURCE_STATE_COPY_DEST },
-            { BufferUsageBits::index, D3D12_RESOURCE_STATE_GENERIC_READ },
-            { BufferUsageBits::vertex, D3D12_RESOURCE_STATE_GENERIC_READ },
-            { BufferUsageBits::uniform, D3D12_RESOURCE_STATE_GENERIC_READ },
-            { BufferUsageBits::storage, D3D12_RESOURCE_STATE_UNORDERED_ACCESS },
-            { BufferUsageBits::indirect, D3D12_RESOURCE_STATE_GENERIC_READ },
-            // TODO check other conditions ?
-        };
-
-        D3D12_RESOURCE_STATES result = D3D12_RESOURCE_STATE_COMMON;
-        for (const auto& rule : rules) {
-            if (bufferUsages & rule.first) {
-                result |= rule.second;
-            }
-        }
-        return result;
-    }
-
     static MapMode GetMapMode(BufferUsageFlags bufferUsages)
     {
         static std::unordered_map<BufferUsageBits, MapMode> rules = {
@@ -130,7 +108,7 @@ namespace RHI::DirectX12 {
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &resourceDesc,
-            GetDX12ResourceStates(createInfo.usages),
+            DX12EnumCast<BufferState, D3D12_RESOURCE_STATES>(createInfo.initialState),
             nullptr,
             IID_PPV_ARGS(&dx12Resource)));
         Assert(success);

@@ -28,56 +28,6 @@ namespace RHI::Vulkan {
     {
     }
 
-    void VKCommandEncoder::CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size)
-    {
-        auto* srcBuffer = dynamic_cast<VKBuffer*>(src);
-        auto* dstBuffer = dynamic_cast<VKBuffer*>(dst);
-
-        VkBufferCopy copyRegion {};
-        copyRegion.srcOffset = srcOffset;
-        copyRegion.dstOffset = dstOffset;
-        copyRegion.srcOffset = size;
-        vkCmdCopyBuffer(commandBuffer.GetVkCommandBuffer(), srcBuffer->GetVkBuffer(), dstBuffer->GetVkBuffer(), 1, &copyRegion);
-    }
-
-    void VKCommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
-    {
-        auto* buffer = dynamic_cast<VKBuffer*>(src);
-        auto* texture = dynamic_cast<VKTexture*>(dst);
-
-        VkBufferImageCopy copyRegion = {};
-        copyRegion.imageExtent = { size.x, size.y, size.z };
-        copyRegion.imageSubresource = { GetAspectMask(subResourceInfo->aspect), subResourceInfo->mipLevel, subResourceInfo->baseArrayLayer, subResourceInfo->arrayLayerNum };
-
-        vkCmdCopyBufferToImage(commandBuffer.GetVkCommandBuffer(), buffer->GetVkBuffer(), texture->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
-    }
-
-    void VKCommandEncoder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
-    {
-        auto* buffer = dynamic_cast<VKBuffer*>(dst);
-        auto* texture = dynamic_cast<VKTexture*>(src);
-
-        VkBufferImageCopy copyRegion = {};
-        copyRegion.imageExtent = { size.x, size.y, size.z };
-        copyRegion.imageSubresource = { GetAspectMask(subResourceInfo->aspect), subResourceInfo->mipLevel, subResourceInfo->baseArrayLayer, subResourceInfo->arrayLayerNum };
-
-        vkCmdCopyImageToBuffer(commandBuffer.GetVkCommandBuffer(), texture->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer->GetVkBuffer(), 1, &copyRegion);
-    }
-
-    void VKCommandEncoder::CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo,
-        Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size)
-    {
-        auto* srcTexture = dynamic_cast<VKTexture*>(src);
-        auto* dstTexture = dynamic_cast<VKTexture*>(dst);
-
-        VkImageCopy copyRegion = {};
-        copyRegion.extent = {size.x, size.y, size.z };
-        copyRegion.srcSubresource = { GetAspectMask(srcSubResourceInfo->aspect), srcSubResourceInfo->mipLevel, srcSubResourceInfo->baseArrayLayer, srcSubResourceInfo->arrayLayerNum };
-        copyRegion.dstSubresource = { GetAspectMask(dstSubResourceInfo->aspect), dstSubResourceInfo->mipLevel, dstSubResourceInfo->baseArrayLayer, dstSubResourceInfo->arrayLayerNum };
-
-        vkCmdCopyImage(commandBuffer.GetVkCommandBuffer(), srcTexture->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstTexture->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
-    }
-
     static std::tuple<VkImageLayout, VkAccessFlags, VkPipelineStageFlags> GetBarrierInfo(TextureState status)
     {
         if (status == TextureState::present) {
@@ -122,15 +72,19 @@ namespace RHI::Vulkan {
         }
     }
 
+    CopyPassCommandEncoder* VKCommandEncoder::BeginCopyPass()
+    {
+        return new VKCopyPassCommandEncoder(device, *this, commandBuffer);
+    }
+
     ComputePassCommandEncoder* VKCommandEncoder::BeginComputePass()
     {
-        // TODO
-        return nullptr;
+        return new VKComputePassCommandEncoder(device, *this, commandBuffer);
     }
 
     GraphicsPassCommandEncoder* VKCommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo)
     {
-        return new VKGraphicsPassCommandEncoder(device, commandBuffer, beginInfo);
+        return new VKGraphicsPassCommandEncoder(device, *this, commandBuffer, beginInfo);
     }
 
     void VKCommandEncoder::SwapChainSync(SwapChain* swapChain)
@@ -151,8 +105,122 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandBuffer& cmd,
-        const GraphicsPassBeginInfo* beginInfo) : device(dev), commandBuffer(cmd)
+    VKCopyPassCommandEncoder::VKCopyPassCommandEncoder(VKDevice& device, VKCommandEncoder& commandEncoder, VKCommandBuffer& commandBuffer)
+        : device(device)
+        , commandEncoder(commandEncoder)
+        , commandBuffer(commandBuffer)
+    {
+    }
+
+    VKCopyPassCommandEncoder::~VKCopyPassCommandEncoder() = default;
+
+    void VKCopyPassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+        commandEncoder.ResourceBarrier(barrier);
+    }
+
+    void VKCopyPassCommandEncoder::CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size)
+    {
+        auto* srcBuffer = dynamic_cast<VKBuffer*>(src);
+        auto* dstBuffer = dynamic_cast<VKBuffer*>(dst);
+
+        VkBufferCopy copyRegion {};
+        copyRegion.srcOffset = srcOffset;
+        copyRegion.dstOffset = dstOffset;
+        copyRegion.srcOffset = size;
+        vkCmdCopyBuffer(commandBuffer.GetVkCommandBuffer(), srcBuffer->GetVkBuffer(), dstBuffer->GetVkBuffer(), 1, &copyRegion);
+    }
+
+    void VKCopyPassCommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
+    {
+        auto* buffer = dynamic_cast<VKBuffer*>(src);
+        auto* texture = dynamic_cast<VKTexture*>(dst);
+
+        VkBufferImageCopy copyRegion = {};
+        copyRegion.imageExtent = { size.x, size.y, size.z };
+        copyRegion.imageSubresource = { GetAspectMask(subResourceInfo->aspect), subResourceInfo->mipLevel, subResourceInfo->baseArrayLayer, subResourceInfo->arrayLayerNum };
+
+        vkCmdCopyBufferToImage(commandBuffer.GetVkCommandBuffer(), buffer->GetVkBuffer(), texture->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+    }
+
+    void VKCopyPassCommandEncoder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
+    {
+        auto* buffer = dynamic_cast<VKBuffer*>(dst);
+        auto* texture = dynamic_cast<VKTexture*>(src);
+
+        VkBufferImageCopy copyRegion = {};
+        copyRegion.imageExtent = { size.x, size.y, size.z };
+        copyRegion.imageSubresource = { GetAspectMask(subResourceInfo->aspect), subResourceInfo->mipLevel, subResourceInfo->baseArrayLayer, subResourceInfo->arrayLayerNum };
+
+        vkCmdCopyImageToBuffer(commandBuffer.GetVkCommandBuffer(), texture->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer->GetVkBuffer(), 1, &copyRegion);
+    }
+
+    void VKCopyPassCommandEncoder::CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo,
+        Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size)
+    {
+        auto* srcTexture = dynamic_cast<VKTexture*>(src);
+        auto* dstTexture = dynamic_cast<VKTexture*>(dst);
+
+        VkImageCopy copyRegion = {};
+        copyRegion.extent = {size.x, size.y, size.z };
+        copyRegion.srcSubresource = { GetAspectMask(srcSubResourceInfo->aspect), srcSubResourceInfo->mipLevel, srcSubResourceInfo->baseArrayLayer, srcSubResourceInfo->arrayLayerNum };
+        copyRegion.dstSubresource = { GetAspectMask(dstSubResourceInfo->aspect), dstSubResourceInfo->mipLevel, dstSubResourceInfo->baseArrayLayer, dstSubResourceInfo->arrayLayerNum };
+
+        vkCmdCopyImage(commandBuffer.GetVkCommandBuffer(), srcTexture->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstTexture->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+    }
+
+    void VKCopyPassCommandEncoder::EndPass()
+    {
+    }
+
+    void VKCopyPassCommandEncoder::Destroy()
+    {
+        delete this;
+    }
+
+    VKComputePassCommandEncoder::VKComputePassCommandEncoder(VKDevice& device, VKCommandEncoder& commandEncoder, VKCommandBuffer& commandBuffer)
+        : device(device)
+        , commandEncoder(commandEncoder)
+        , commandBuffer(commandBuffer)
+    {
+    }
+
+    VKComputePassCommandEncoder::~VKComputePassCommandEncoder() = default;
+
+    void VKComputePassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+        commandEncoder.ResourceBarrier(barrier);
+    }
+
+    void VKComputePassCommandEncoder::SetPipeline(ComputePipeline* pipeline)
+    {
+        // TODO
+    }
+
+    void VKComputePassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
+    {
+        // TODO
+    }
+
+    void VKComputePassCommandEncoder::Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ)
+    {
+        // TODO
+    }
+
+    void VKComputePassCommandEncoder::EndPass()
+    {
+        // TODO
+    }
+
+    void VKComputePassCommandEncoder::Destroy()
+    {
+        delete this;
+    }
+
+    VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandEncoder& commandEncoder, VKCommandBuffer& cmd,const GraphicsPassBeginInfo* beginInfo)
+        : device(dev)
+        , commandEncoder(commandEncoder)
+        , commandBuffer(cmd)
     {
         std::vector<VkRenderingAttachmentInfo> colorAttachmentInfos(beginInfo->colorAttachmentNum);
         for (size_t i = 0; i < beginInfo->colorAttachmentNum; i++)
@@ -212,6 +280,11 @@ namespace RHI::Vulkan {
     }
 
     VKGraphicsPassCommandEncoder::~VKGraphicsPassCommandEncoder() = default;
+
+    void VKGraphicsPassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    {
+        commandEncoder.ResourceBarrier(barrier);
+    }
 
     void VKGraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
     {
