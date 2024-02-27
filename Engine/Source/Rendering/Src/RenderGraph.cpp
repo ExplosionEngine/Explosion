@@ -352,6 +352,96 @@ namespace Rendering {
         pooledTexture = nullptr;
     }
 
+    RGBufferViewDesc RGBufferViewDesc::CreateForUniform()
+    {
+        RGBufferViewDesc result {};
+        result.type = RHI::BufferViewType::uniformBinding;
+        return result;
+    }
+
+    RGBufferViewDesc RGBufferViewDesc::CreateForStorage()
+    {
+        RGBufferViewDesc result {};
+        result.type = RHI::BufferViewType::storageBinding;
+        return result;
+    }
+
+    RGBufferViewDesc& RGBufferViewDesc::Offset(uint32_t inOffset)
+    {
+        offset = inOffset;
+        return *this;
+    }
+
+    RGBufferViewDesc& RGBufferViewDesc::Size(uint32_t inSize)
+    {
+        size = inSize;
+        return *this;
+    }
+
+    RGTextureViewDesc RGTextureViewDesc::CreateForTexture()
+    {
+        RGTextureViewDesc result {};
+        result.type = RHI::TextureViewType::textureBinding;
+        return result;
+    }
+
+    RGTextureViewDesc RGTextureViewDesc::CreateForStorageTexture()
+    {
+        RGTextureViewDesc result {};
+        result.type = RHI::TextureViewType::storageBinding;
+        return result;
+    }
+
+    RGTextureViewDesc RGTextureViewDesc::CreateForColorAttachment()
+    {
+        RGTextureViewDesc result {};
+        result.type = RHI::TextureViewType::colorAttachment;
+        return result;
+    }
+
+    RGTextureViewDesc RGTextureViewDesc::CreateForDepthStencilAttachment()
+    {
+        RGTextureViewDesc result {};
+        result.type = RHI::TextureViewType::depthStencil;
+        return result;
+    }
+
+    RGTextureViewDesc& RGTextureViewDesc::Dimension(RHI::TextureViewDimension inDimension)
+    {
+        dimension = inDimension;
+        return *this;
+    }
+
+    RGTextureViewDesc& RGTextureViewDesc::Aspect(RHI::TextureAspect inAspect)
+    {
+        aspect = inAspect;
+        return *this;
+    }
+
+    RGTextureViewDesc& RGTextureViewDesc::BaseMipLevel(uint8_t inBaseMipLevel)
+    {
+        baseMipLevel = inBaseMipLevel;
+        return *this;
+    }
+
+    RGTextureViewDesc& RGTextureViewDesc::MipLevelNum(uint8_t inMipLevelNum)
+    {
+        mipLevelNum = inMipLevelNum;
+        return *this;
+    }
+
+    RGTextureViewDesc& RGTextureViewDesc::BaseArrayLayer(uint8_t inBaseArrayLayer)
+    {
+        baseArrayLayer = inBaseArrayLayer;
+        return *this;
+    }
+
+    RGTextureViewDesc& RGTextureViewDesc::ArrayLayerNum(uint8_t inArrayLayerNum)
+    {
+        arrayLayerNum = inArrayLayerNum;
+        return *this;
+    }
+
     RGResourceView::RGResourceView(RGResViewType inType)
         : type(inType)
         , devirtualized(false)
@@ -427,13 +517,6 @@ namespace Rendering {
     RGBindGroupDesc RGBindGroupDesc::Create(Rendering::BindGroupLayout* inLayout)
     {
         RGBindGroupDesc result;
-        result.layout = inLayout->GetRHI();
-        return result;
-    }
-
-    RGBindGroupDesc RGBindGroupDesc::Create(RHI::BindGroupLayout* inLayout)
-    {
-        RGBindGroupDesc result;
         result.layout = inLayout;
         return result;
     }
@@ -496,6 +579,44 @@ namespace Rendering {
     RGBindGroup::RGBindGroup(Rendering::RGBindGroupDesc inDesc)
         : desc(std::move(inDesc))
     {
+    }
+
+    void RGBindGroup::Devirtualize(RHI::Device& inDevice)
+    {
+        std::vector<RHI::BindGroupEntry> entries;
+        entries.reserve(desc.items.size());
+        for (const auto& item : desc.items) {
+            RHI::BindGroupEntry entry;
+            const auto* binding = desc.layout->GetBinding(item.first);
+            // TODO maybe use operator= ?
+            entry.binding.type = binding->type;
+            entry.binding.platformBinding = binding->platformBinding;
+
+            const RGBindItemDesc& itemDesc = item.second;
+            Assert(entry.binding.type == itemDesc.type);
+
+            if (itemDesc.type == RHI::BindingType::uniformBuffer || itemDesc.type == RHI::BindingType::storageBuffer) {
+                entry.bufferView = itemDesc.bufferView->GetRHI();
+            } else if (itemDesc.type == RHI::BindingType::texture || itemDesc.type == RHI::BindingType::storageTexture) {
+                entry.textureView = itemDesc.textureView->GetRHI();
+            } else if (itemDesc.type == RHI::BindingType::sampler) {
+                entry.sampler = itemDesc.sampler;
+            } else {
+                Unimplement();
+            }
+        }
+
+        RHI::BindGroupCreateInfo createInfo;
+        createInfo.layout = desc.layout->GetRHI();
+        createInfo.entryNum = entries.size();
+        createInfo.entries = entries.data();
+
+        rhiHandle = inDevice.CreateBindGroup(createInfo);
+    }
+
+    void RGBindGroup::UndoDevirtualize()
+    {
+        rhiHandle->Destroy();
     }
 
     RGBindGroup::~RGBindGroup() = default;
@@ -857,6 +978,10 @@ namespace Rendering {
             pass->DevirtualizeResources(device);
         }
 
+        for (auto& bindGroup : bindGroups) {
+            bindGroup->Devirtualize(device);
+        }
+
         for (auto& resource : resources) {
             if (resource->IsForceUsed()) {
                 resource->IncRefCountAndUpdateResource(device);
@@ -872,5 +997,9 @@ namespace Rendering {
                 pass->FinalizeResources();
             }
         });
+
+        for (auto& bindGroup : bindGroups) {
+            bindGroup->UndoDevirtualize();
+        }
     }
 }

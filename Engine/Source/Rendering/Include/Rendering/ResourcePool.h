@@ -142,9 +142,6 @@ namespace Rendering {
     template <typename PooledResource>
     RGResourcePool<PooledResource>::~RGResourcePool()
     {
-        for (auto& pooledResource : pooledResources) {
-            Assert(pooledResource.RefCount() == 1);
-        }
         pooledResources.clear();
     }
 

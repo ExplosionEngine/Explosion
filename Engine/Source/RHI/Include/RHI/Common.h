@@ -352,6 +352,9 @@ namespace RHI {
         copyDst,
         shaderReadOnly,
         storage,
+        vertex,
+        index,
+        indirectArguments,
         max
     };
 

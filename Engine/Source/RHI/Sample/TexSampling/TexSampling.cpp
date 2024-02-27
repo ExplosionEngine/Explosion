@@ -263,13 +263,13 @@ private:
         entries[2].binding.type = BindingType::uniformBuffer;
         entries[2].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sVertex);
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
-            entries[2].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
+            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
+            entries[2].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
         } else {
-            entries[0].binding.platform.glsl.index = 0;
-            entries[1].binding.platform.glsl.index = 1;
-            entries[2].binding.platform.glsl.index = 2;
+            entries[0].binding.platformBinding = GlslBinding { 0 };
+            entries[1].binding.platformBinding = GlslBinding { 1 };
+            entries[2].binding.platformBinding = GlslBinding { 2 };
         }
 
         BindGroupLayoutCreateInfo createInfo {};
@@ -290,13 +290,13 @@ private:
         entries[2].binding.type = BindingType::uniformBuffer;
         entries[2].bufferView = uniformBufferView.Get();
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
-            entries[2].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
+            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
+            entries[2].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
         } else {
-            entries[0].binding.platform.glsl.index = 0;
-            entries[1].binding.platform.glsl.index = 1;
-            entries[2].binding.platform.glsl.index = 2;
+            entries[0].binding.platformBinding = GlslBinding { 0 };
+            entries[1].binding.platformBinding = GlslBinding { 1 };
+            entries[2].binding.platformBinding = GlslBinding { 2 };
         }
 
         BindGroupCreateInfo createInfo {};

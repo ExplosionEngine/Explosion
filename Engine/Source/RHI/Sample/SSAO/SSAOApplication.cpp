@@ -185,11 +185,11 @@ private:
             entries[1].binding.type = BindingType::sampler;
             entries[1].sampler = app->GetSampler();
             if (app->GetInstance()->GetRHIType() == RHI::RHIType::directX12) {
-                entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
-                entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
+                entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
+                entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
             } else {
-                entries[0].binding.platform.glsl.index = 0;
-                entries[1].binding.platform.glsl.index = 1;
+                entries[0].binding.platformBinding = GlslBinding { 0 };
+                entries[1].binding.platformBinding = GlslBinding { 1 };
             }
 
             BindGroupCreateInfo createInfo {};
@@ -470,9 +470,9 @@ private:
         entries[0].binding.type = BindingType::uniformBuffer;
         entries[0].shaderVisibility = ShaderStageBits::sVertex | ShaderStageBits::sPixel;
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
+            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
         } else {
-            entries[0].binding.platform.glsl.index = 0;
+            entries[0].binding.platformBinding = GlslBinding { 0 };
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
@@ -486,11 +486,11 @@ private:
         entries[1].binding.type = BindingType::sampler;
         entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
+            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
         } else {
-            entries[0].binding.platform.glsl.index = 0;
-            entries[1].binding.platform.glsl.index = 1;
+            entries[0].binding.platformBinding = GlslBinding { 0 };
+            entries[1].binding.platformBinding = GlslBinding { 1 };
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
@@ -519,21 +519,21 @@ private:
         entries[6].binding.type = BindingType::uniformBuffer;
         entries[6].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::texture, 1 };
-            entries[2].binding.platform.hlsl = { HlslBindingRangeType::texture, 2 };
-            entries[3].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
-            entries[4].binding.platform.hlsl = { HlslBindingRangeType::sampler, 1 };
-            entries[5].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
-            entries[6].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 1 };
+            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 1 };
+            entries[2].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 2 };
+            entries[3].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
+            entries[4].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 1 };
+            entries[5].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
+            entries[6].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 1 };
         } else {
-            entries[0].binding.platform.glsl.index = 0;
-            entries[1].binding.platform.glsl.index = 1;
-            entries[2].binding.platform.glsl.index = 2;
-            entries[3].binding.platform.glsl.index = 3;
-            entries[4].binding.platform.glsl.index = 4;
-            entries[5].binding.platform.glsl.index = 5;
-            entries[6].binding.platform.glsl.index = 6;
+            entries[0].binding.platformBinding = GlslBinding { 0 };
+            entries[1].binding.platformBinding = GlslBinding { 1 };
+            entries[2].binding.platformBinding = GlslBinding { 2 };
+            entries[3].binding.platformBinding = GlslBinding { 3 };
+            entries[4].binding.platformBinding = GlslBinding { 4 };
+            entries[5].binding.platformBinding = GlslBinding { 5 };
+            entries[6].binding.platformBinding = GlslBinding { 6 };
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
@@ -552,11 +552,11 @@ private:
         entries[1].binding.type = BindingType::sampler;
         entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
+            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
         } else {
-            entries[0].binding.platform.glsl.index = 0;
-            entries[1].binding.platform.glsl.index = 1;
+            entries[0].binding.platformBinding = GlslBinding { 0 };
+            entries[1].binding.platformBinding = GlslBinding { 1 };
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
@@ -584,21 +584,21 @@ private:
         entries[6].binding.type = BindingType::uniformBuffer;
         entries[6].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::texture, 1 };
-            entries[2].binding.platform.hlsl = { HlslBindingRangeType::texture, 2 };
-            entries[3].binding.platform.hlsl = { HlslBindingRangeType::texture, 3 };
-            entries[4].binding.platform.hlsl = { HlslBindingRangeType::texture, 4 };
-            entries[5].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
-            entries[6].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
+            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 1 };
+            entries[2].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 2 };
+            entries[3].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 3 };
+            entries[4].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 4 };
+            entries[5].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
+            entries[6].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
         } else {
-            entries[0].binding.platform.glsl.index = 0;
-            entries[1].binding.platform.glsl.index = 1;
-            entries[2].binding.platform.glsl.index = 2;
-            entries[3].binding.platform.glsl.index = 3;
-            entries[4].binding.platform.glsl.index = 4;
-            entries[5].binding.platform.glsl.index = 5;
-            entries[6].binding.platform.glsl.index = 6;
+            entries[0].binding.platformBinding = GlslBinding { 0 };
+            entries[1].binding.platformBinding = GlslBinding { 1 };
+            entries[2].binding.platformBinding = GlslBinding { 2 };
+            entries[3].binding.platformBinding = GlslBinding { 3 };
+            entries[4].binding.platformBinding = GlslBinding { 4 };
+            entries[5].binding.platformBinding = GlslBinding { 5 };
+            entries[6].binding.platformBinding = GlslBinding { 6 };
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
@@ -619,9 +619,9 @@ private:
         entries[0].binding.type = BindingType::uniformBuffer;
         entries[0].bufferView = uniformBuffers.sceneParams.bufView.Get();
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
+            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
         } else {
-            entries[0].binding.platform.glsl.index = 0;
+            entries[0].binding.platformBinding = GlslBinding { 0 };
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
@@ -645,21 +645,21 @@ private:
         entries[6].binding.type = BindingType::uniformBuffer;
         entries[6].bufferView = uniformBuffers.ssaoParams.bufView.Get();
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::texture, 1 };
-            entries[2].binding.platform.hlsl = { HlslBindingRangeType::texture, 2 };
-            entries[3].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
-            entries[4].binding.platform.hlsl = { HlslBindingRangeType::sampler, 1 };
-            entries[5].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
-            entries[6].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 1 };
+            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 1 };
+            entries[2].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 2 };
+            entries[3].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
+            entries[4].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 1 };
+            entries[5].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
+            entries[6].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 1 };
         } else {
-            entries[0].binding.platform.glsl.index = 0;
-            entries[1].binding.platform.glsl.index = 1;
-            entries[2].binding.platform.glsl.index = 2;
-            entries[3].binding.platform.glsl.index = 3;
-            entries[4].binding.platform.glsl.index = 4;
-            entries[5].binding.platform.glsl.index = 5;
-            entries[6].binding.platform.glsl.index = 6;
+            entries[0].binding.platformBinding = GlslBinding { 0 };
+            entries[1].binding.platformBinding = GlslBinding { 1 };
+            entries[2].binding.platformBinding = GlslBinding { 2 };
+            entries[3].binding.platformBinding = GlslBinding { 3 };
+            entries[4].binding.platformBinding = GlslBinding { 4 };
+            entries[5].binding.platformBinding = GlslBinding { 5 };
+            entries[6].binding.platformBinding = GlslBinding { 6 };
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
@@ -673,11 +673,11 @@ private:
         entries[1].binding.type = BindingType::sampler;
         entries[1].sampler = sampler.Get();
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
+            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
         } else {
-            entries[0].binding.platform.glsl.index = 0;
-            entries[1].binding.platform.glsl.index = 1;
+            entries[0].binding.platformBinding = GlslBinding { 0 };
+            entries[1].binding.platformBinding = GlslBinding { 1 };
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());
@@ -701,21 +701,21 @@ private:
         entries[6].binding.type = BindingType::uniformBuffer;
         entries[6].bufferView = uniformBuffers.ssaoParams.bufView.Get();
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::texture, 1 };
-            entries[2].binding.platform.hlsl = { HlslBindingRangeType::texture, 2 };
-            entries[3].binding.platform.hlsl = { HlslBindingRangeType::texture, 3 };
-            entries[4].binding.platform.hlsl = { HlslBindingRangeType::texture, 4 };
-            entries[5].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
-            entries[6].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
+            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 1 };
+            entries[2].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 2 };
+            entries[3].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 3 };
+            entries[4].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 4 };
+            entries[5].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
+            entries[6].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
         } else {
-            entries[0].binding.platform.glsl.index = 0;
-            entries[1].binding.platform.glsl.index = 1;
-            entries[2].binding.platform.glsl.index = 2;
-            entries[3].binding.platform.glsl.index = 3;
-            entries[4].binding.platform.glsl.index = 4;
-            entries[5].binding.platform.glsl.index = 5;
-            entries[6].binding.platform.glsl.index = 6;
+            entries[0].binding.platformBinding = GlslBinding { 0 };
+            entries[1].binding.platformBinding = GlslBinding { 1 };
+            entries[2].binding.platformBinding = GlslBinding { 2 };
+            entries[3].binding.platformBinding = GlslBinding { 3 };
+            entries[4].binding.platformBinding = GlslBinding { 4 };
+            entries[5].binding.platformBinding = GlslBinding { 5 };
+            entries[6].binding.platformBinding = GlslBinding { 6 };
         }
         createInfo.entries = entries.data();
         createInfo.entryNum = static_cast<uint32_t>(entries.size());

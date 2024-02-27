@@ -58,7 +58,8 @@ namespace RHI::DirectX12 {
             dx12RootParameters.emplace_back();
             dx12DescriptorRanges.emplace_back();
 
-            dx12DescriptorRanges.back().Init(DX12EnumCast<HlslBindingRangeType, D3D12_DESCRIPTOR_RANGE_TYPE>(entry.binding.platform.hlsl.rangeType), 1, entry.binding.platform.hlsl.index, createInfo.layoutIndex);
+            const auto& hlslBinding = std::get<HlslBinding>(entry.binding.platformBinding);
+            dx12DescriptorRanges.back().Init(DX12EnumCast<HlslBindingRangeType, D3D12_DESCRIPTOR_RANGE_TYPE>(hlslBinding.rangeType), 1, hlslBinding.index, createInfo.layoutIndex);
             dx12RootParameters.back().InitAsDescriptorTable(1, &dx12DescriptorRanges.back(), GetShaderVisibility(entry.shaderVisibility));
 
             rootParameterKeyInfos.emplace_back();
@@ -66,7 +67,7 @@ namespace RHI::DirectX12 {
                 auto& keyInfo = rootParameterKeyInfos.back();
                 keyInfo.bindingType = entry.binding.type;
                 keyInfo.layoutIndex = createInfo.layoutIndex;
-                keyInfo.binding = entry.binding.platform.hlsl;
+                keyInfo.binding = hlslBinding;
             }
         }
     }

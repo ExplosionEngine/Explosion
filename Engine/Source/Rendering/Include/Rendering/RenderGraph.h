@@ -166,8 +166,6 @@ namespace Rendering {
     struct RGBufferViewDesc : public RHI::BufferViewCreateInfo {
         static RGBufferViewDesc CreateForUniform();
         static RGBufferViewDesc CreateForStorage();
-        static RGBufferViewDesc CreateForIndex();
-        static RGBufferViewDesc CreateForVertex();
         RGBufferViewDesc& Offset(uint32_t inOffset);
         RGBufferViewDesc& Size(uint32_t inSize);
     };
@@ -270,11 +268,10 @@ namespace Rendering {
     };
 
     struct RGBindGroupDesc {
-        RHI::BindGroupLayout* layout;
+        Rendering::BindGroupLayout* layout;
         std::unordered_map<std::string, RGBindItemDesc> items;
 
         static RGBindGroupDesc Create(Rendering::BindGroupLayout* inLayout);
-        static RGBindGroupDesc Create(RHI::BindGroupLayout* inLayout);
         RGBindGroupDesc& Sampler(std::string inName, RHI::Sampler* inSampler);
         RGBindGroupDesc& UniformBuffer(std::string inName, RGBufferViewRef bufferView);
         RGBindGroupDesc& StorageBuffer(std::string inName, RGBufferViewRef bufferView);
@@ -293,6 +290,8 @@ namespace Rendering {
         friend class RGBuilder;
 
         explicit RGBindGroup(RGBindGroupDesc inDesc);
+        void Devirtualize(RHI::Device& inDevice);
+        void UndoDevirtualize();
 
         RGBindGroupDesc desc;
         RHI::BindGroup* rhiHandle;

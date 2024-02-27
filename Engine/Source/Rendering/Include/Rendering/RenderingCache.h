@@ -90,6 +90,7 @@ namespace Rendering {
     public:
         ~BindGroupLayout();
 
+        const RHI::ResourceBinding* GetBinding(const std::string& name);
         const RHI::ResourceBinding* GetBinding(const std::string& name, RHI::ShaderStageBits shaderStage) const;
         RHI::BindGroupLayout* GetRHI() const;
 
