@@ -19,7 +19,7 @@ public:
 protected:
     void OnCreate() override
     {
-        CreateInstanceAndSelectGPU();
+        SelectGPU();
         RequestDeviceAndFetchQueues();
         CreateSwapChain();
         CreateVertexBuffer();
@@ -57,10 +57,8 @@ private:
 
     FMat4x4 modelMatrix;
 
-    void CreateInstanceAndSelectGPU()
+    void SelectGPU()
     {
-        instance = Instance::GetByType(rhiType);
-
         gpu = instance->GetGpu(0);
     }
 
@@ -428,7 +426,6 @@ private:
     }
 
     PixelFormat swapChainFormat = PixelFormat::max;
-    Instance* instance = nullptr;
     Gpu* gpu = nullptr;
     UniqueRef<Device> device;
     Queue* graphicsQueue = nullptr;

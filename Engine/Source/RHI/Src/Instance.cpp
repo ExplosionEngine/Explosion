@@ -43,6 +43,19 @@ namespace RHI {
         return module->GetRHIInstance();
     }
 
+    void Instance::UnloadByType(const RHIType& type)
+    {
+        Core::ModuleManager::Get().Unload(GetRHIModuleNameByType(type));
+    }
+
+    void Instance::UnloadAllInstances()
+    {
+        for (uint32_t i = static_cast<uint32_t>(RHIType::directX12); i < static_cast<uint32_t>(RHIType::max); i++) {
+            RHIType rhiType = static_cast<RHIType>(i);
+            Core::ModuleManager::Get().Unload(GetRHIModuleNameByType(rhiType));
+        }
+    }
+
     Instance::~Instance() = default;
 
     Instance::Instance() = default;

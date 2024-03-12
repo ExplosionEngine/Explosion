@@ -52,7 +52,7 @@ protected:
     {
         InitCamera();
         LoadGLTF();
-        CreateInstanceAndSelectGPU();
+        SelectGPU();
         RequestDeviceAndFetchQueues();
         CreateSwapChain();
         CreateFence();
@@ -88,7 +88,6 @@ private:
     static constexpr uint8_t backBufferCount = 2;
 
     PixelFormat swapChainFormat = PixelFormat::max;
-    Instance* instance = nullptr;
     Gpu* gpu = nullptr;
     UniqueRef<Device> device = nullptr;
     Queue* graphicsQueue = nullptr;
@@ -300,9 +299,8 @@ private:
         FVec2 uv;
     };
 
-    void CreateInstanceAndSelectGPU()
+    void SelectGPU()
     {
-        instance = Instance::GetByType(rhiType);
         gpu = instance->GetGpu(0);
     }
 

@@ -10,7 +10,7 @@
 #include <RHI/Vulkan/Api.h>
 
 namespace RHI::Vulkan {
-    RHI::Instance* RHIGetInstance();
+    extern RHI::Instance* gInstance;
 
     class VKInstance : public Instance {
     public:

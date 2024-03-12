@@ -10,7 +10,7 @@
 namespace RHI::Dummy {
     class DummyGpu;
 
-    RHI::Instance* RHIGetInstance();
+    extern RHI::Instance* gInstance;
 
     class DummyInstance : public Instance {
     public:

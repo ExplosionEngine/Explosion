@@ -14,6 +14,8 @@ namespace RHI::Dummy {
         DummyRHIModule();
         ~DummyRHIModule() override;
 
+        void OnLoad() override;
+        void OnUnload() override;
         Instance* GetRHIInstance() override;
     };
 }

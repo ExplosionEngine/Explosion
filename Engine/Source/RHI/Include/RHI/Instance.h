@@ -17,6 +17,8 @@ namespace RHI {
     public:
         static Instance* GetByPlatform();
         static Instance* GetByType(const RHIType& type);
+        static void UnloadByType(const RHIType& type);
+        static void UnloadAllInstances();
 
         NonCopyable(Instance)
         virtual ~Instance();

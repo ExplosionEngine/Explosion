@@ -7,11 +7,7 @@
 #include <Common/Debug.h>
 
 namespace RHI::Dummy {
-    RHI::Instance* RHIGetInstance()
-    {
-        static RHI::Dummy::DummyInstance singleton;
-        return &singleton;
-    }
+    RHI::Instance* gInstance = nullptr;
 
     DummyInstance::DummyInstance()
         : dummyGpu(Common::MakeUnique<DummyGpu>())
