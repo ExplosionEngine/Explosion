@@ -128,6 +128,7 @@ private:
         bufferCreateInfo.size = vertices.size() * sizeof(Vertex);
         bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         bufferCreateInfo.debugName = "quadBuffer";
+        bufferCreateInfo.initialState = RHI::BufferState::staging;
         vertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (vertexBuffer != nullptr) {
             auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -149,6 +150,7 @@ private:
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = indices.size() * sizeof(uint32_t);
         bufferCreateInfo.usages = BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
+        bufferCreateInfo.initialState = RHI::BufferState::staging;
         indexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (indexBuffer != nullptr) {
             auto* data = indexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -173,6 +175,7 @@ private:
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = texWidth * texHeight * 4;
         bufferCreateInfo.usages = BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
+        bufferCreateInfo.initialState = RHI::BufferState::staging;
         pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -242,6 +245,7 @@ private:
         BufferCreateInfo createInfo {};
         createInfo.size = sizeof(FMat4x4);
         createInfo.usages = BufferUsageBits::uniform | BufferUsageBits::mapWrite;
+        createInfo.initialState = RHI::BufferState::staging;
         uniformBuffer = device->CreateBuffer(createInfo);
 
         BufferViewCreateInfo viewCreateInfo {};

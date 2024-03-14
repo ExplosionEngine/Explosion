@@ -128,6 +128,7 @@ private:
             BufferCreateInfo bufferCreateInfo {};
             bufferCreateInfo.size = texData->GetSize();
             bufferCreateInfo.usages = BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
+            bufferCreateInfo.initialState = RHI::BufferState::staging;
             UniqueRef<Buffer> pixelBuffer = app->GetDevice()->CreateBuffer(bufferCreateInfo);
             if (pixelBuffer != nullptr) {
                 auto* mapData = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -362,6 +363,7 @@ private:
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = model->raw_vertex_buffer.size() * sizeof(Vertex);
         bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
+        bufferCreateInfo.initialState = RHI::BufferState::staging;
         vertexBuffer = device->CreateBuffer(bufferCreateInfo);
         assert(vertexBuffer != nullptr);
         auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -381,6 +383,7 @@ private:
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = model->raw_index_buffer.size() * sizeof(uint32_t);
         bufferCreateInfo.usages = BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
+        bufferCreateInfo.initialState = RHI::BufferState::staging;
         indexBuffer = device->CreateBuffer(bufferCreateInfo);
         assert(indexBuffer != nullptr);
         auto* data = indexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -409,6 +412,7 @@ private:
         bufferCreateInfo.size = vertices.size() * sizeof(QuadVertex);
         bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         bufferCreateInfo.debugName = "quadVertexBuffer";
+        bufferCreateInfo.initialState = RHI::BufferState::staging;
         quadVertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (quadVertexBuffer != nullptr) {
             auto* data = quadVertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -427,6 +431,7 @@ private:
         std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
         bufferCreateInfo.size = indices.size() * sizeof(uint32_t);
         bufferCreateInfo.usages = BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
+        bufferCreateInfo.initialState = RHI::BufferState::staging;
         quadIndexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (quadIndexBuffer != nullptr) {
             auto* data = quadIndexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -792,6 +797,7 @@ private:
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = ssaoNoise.size() * sizeof(FVec4);
         bufferCreateInfo.usages = BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
+        bufferCreateInfo.initialState = RHI::BufferState::staging;
         UniqueRef<Buffer> pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -922,6 +928,7 @@ private:
         BufferCreateInfo createInfo {};
         createInfo.size = size;
         createInfo.usages = flags;
+        createInfo.initialState = RHI::BufferState::staging;
 
         uBuffer->buf = device->CreateBuffer(createInfo);
         if (uBuffer->buf != nullptr && data != nullptr) {

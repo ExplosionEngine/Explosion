@@ -293,6 +293,7 @@ namespace Rendering {
         void Devirtualize(RHI::Device& inDevice);
         void UndoDevirtualize();
 
+        bool devirtualized;
         RGBindGroupDesc desc;
         RHI::BindGroup* rhiHandle;
     };

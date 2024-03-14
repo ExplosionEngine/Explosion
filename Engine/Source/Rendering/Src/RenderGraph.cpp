@@ -577,12 +577,22 @@ namespace Rendering {
     }
 
     RGBindGroup::RGBindGroup(Rendering::RGBindGroupDesc inDesc)
-        : desc(std::move(inDesc))
+        : devirtualized(false)
+        , desc(std::move(inDesc))
+        , rhiHandle(nullptr)
     {
     }
 
+    RGBindGroup::~RGBindGroup() = default;
+
     void RGBindGroup::Devirtualize(RHI::Device& inDevice)
     {
+        Assert(!devirtualized);
+        if (desc.layout == nullptr) {
+            devirtualized = true;
+            return;
+        }
+
         std::vector<RHI::BindGroupEntry> entries;
         entries.reserve(desc.items.size());
         for (const auto& item : desc.items) {
@@ -611,15 +621,18 @@ namespace Rendering {
         createInfo.entryNum = entries.size();
         createInfo.entries = entries.data();
 
+        devirtualized = true;
         rhiHandle = inDevice.CreateBindGroup(createInfo);
     }
 
     void RGBindGroup::UndoDevirtualize()
     {
+        Assert(devirtualized);
+        if (rhiHandle == nullptr) {
+            return;
+        }
         rhiHandle->Destroy();
     }
-
-    RGBindGroup::~RGBindGroup() = default;
 
     const RGBindGroupDesc& RGBindGroup::GetDesc() const
     {

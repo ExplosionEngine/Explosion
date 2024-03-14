@@ -348,13 +348,11 @@ namespace RHI {
 
     enum class BufferState : EnumType {
         undefined,
+        staging,
         copySrc,
         copyDst,
         shaderReadOnly,
         storage,
-        vertex,
-        index,
-        indirectArguments,
         max
     };
 
