@@ -14,6 +14,7 @@
 
 #include <RHI/DirectX12/Api.h>
 #include <RHI/Instance.h>
+#include <Common/Memory.h>
 
 using Microsoft::WRL::ComPtr;
 
@@ -25,7 +26,7 @@ namespace RHI::DirectX12 {
     using DebugLayerExceptionHandler = std::function<void()>;
 #endif
 
-    RHI::Instance* RHIGetInstance();
+    extern RHI::Instance* gInstance;
 
     class RHI_DIRECTX12_API DX12Instance : public Instance {
     public:

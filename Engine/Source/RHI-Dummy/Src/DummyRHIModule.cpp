@@ -10,9 +10,19 @@ namespace RHI::Dummy {
 
     DummyRHIModule::~DummyRHIModule() = default;
 
+    void DummyRHIModule::OnLoad()
+    {
+        gInstance = new DummyInstance();
+    }
+
+    void DummyRHIModule::OnUnload()
+    {
+        delete gInstance;
+    }
+
     Instance* DummyRHIModule::GetRHIInstance() // NOLINT
     {
-        return RHIGetInstance();
+        return gInstance;
     }
 }
 

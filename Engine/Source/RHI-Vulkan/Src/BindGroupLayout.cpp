@@ -45,7 +45,7 @@ namespace RHI::Vulkan {
 
             binding.descriptorType = VKEnumCast<BindingType, VkDescriptorType>(entry.binding.type);
             binding.descriptorCount = 1;
-            binding.binding = entry.binding.platform.glsl.index;
+            binding.binding = std::get<GlslBinding>(entry.binding.platformBinding).index;
             binding.stageFlags = flags;
         }
 

@@ -23,7 +23,7 @@ public:
 protected:
     void OnCreate() override
     {
-        CreateInstanceAndSelectGPU();
+        SelectGPU();
         RequestDeviceAndFetchQueues();
         CreateSwapChain();
 
@@ -50,10 +50,8 @@ protected:
 private:
     static const uint8_t backBufferCount = 2;
 
-    void CreateInstanceAndSelectGPU()
+    void SelectGPU()
     {
-        instance = Instance::GetByType(rhiType);
-
         gpu = instance->GetGpu(0);
     }
 
@@ -121,6 +119,7 @@ private:
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = vertices.size() * sizeof(Vertex);
         bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
+        bufferCreateInfo.initialState = BufferState::staging;
         vertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (vertexBuffer != nullptr) {
             auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -253,7 +252,6 @@ private:
     }
 
     PixelFormat swapChainFormat = PixelFormat::max;
-    Instance* instance = nullptr;
     Gpu* gpu = nullptr;
     UniqueRef<Device> device;
     Queue* graphicsQueue = nullptr;

@@ -17,18 +17,14 @@ namespace RHI::DirectX12 {
             return EXCEPTION_CONTINUE_SEARCH;
         }
 
-        dynamic_cast<DX12Instance*>(RHIGetInstance())->BroadcastDebugLayerExceptions();
+        dynamic_cast<DX12Instance*>(gInstance)->BroadcastDebugLayerExceptions();
         return EXCEPTION_CONTINUE_EXECUTION;
     }
 #endif
 }
 
 namespace RHI::DirectX12 {
-    RHI::Instance* RHIGetInstance()
-    {
-        static RHI::DirectX12::DX12Instance singleton;
-        return &singleton;
-    }
+    RHI::Instance* gInstance = nullptr;
 
     DX12Instance::DX12Instance() : Instance()
     {

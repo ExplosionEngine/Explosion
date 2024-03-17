@@ -180,6 +180,15 @@ namespace Rendering {
         return bindingPair.first & shaderStage ? &bindingPair.second : nullptr;
     }
 
+    const RHI::ResourceBinding* BindGroupLayout::GetBinding(const std::string& name)
+    {
+        auto iter = bindings.find(name);
+        if (iter == bindings.end()) {
+            return nullptr;
+        }
+        return &iter->second.second;
+    }
+
     RHI::BindGroupLayout* BindGroupLayout::GetRHI() const
     {
         return rhiHandle.Get();

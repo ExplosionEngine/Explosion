@@ -96,7 +96,7 @@ namespace RHI::Vulkan {
 
             descriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             descriptorWrites[i].dstSet = descriptorSet;
-            descriptorWrites[i].dstBinding = entry.binding.platform.glsl.index;
+            descriptorWrites[i].dstBinding = std::get<GlslBinding>(entry.binding.platformBinding).index;
             descriptorWrites[i].descriptorCount = 1;
             descriptorWrites[i].descriptorType = VKEnumCast<BindingType, VkDescriptorType>(entry.binding.type);
 

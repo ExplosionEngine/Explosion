@@ -10,9 +10,19 @@ namespace RHI::Vulkan {
 
     VulkanRHIModule::~VulkanRHIModule() = default;
 
+    void VulkanRHIModule::OnLoad()
+    {
+        gInstance = new VKInstance();
+    }
+
+    void VulkanRHIModule::OnUnload()
+    {
+        delete gInstance;
+    }
+
     Instance* VulkanRHIModule::GetRHIInstance() // NOLINT
     {
-        return RHIGetInstance();
+        return gInstance;
     }
 }
 

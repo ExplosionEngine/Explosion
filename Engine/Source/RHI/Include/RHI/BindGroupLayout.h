@@ -4,9 +4,11 @@
 
 #pragma once
 
+#include <variant>
+#include <string>
+
 #include <Common/Utility.h>
 #include <RHI/Common.h>
-#include <string>
 
 namespace RHI {
     struct HlslBinding {
@@ -20,10 +22,7 @@ namespace RHI {
 
     struct ResourceBinding {
         BindingType type;
-        union {
-            HlslBinding hlsl;
-            GlslBinding glsl;
-        } platform;
+        std::variant<HlslBinding, GlslBinding> platformBinding;
     };
 
     struct BindGroupLayoutEntry {

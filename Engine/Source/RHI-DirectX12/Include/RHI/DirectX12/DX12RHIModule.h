@@ -13,6 +13,8 @@ namespace RHI::DirectX12 {
         DX12RHIModule();
         ~DX12RHIModule() override;
 
+        void OnLoad() override;
+        void OnUnload() override;
         Instance* GetRHIInstance() override;
     };
 }

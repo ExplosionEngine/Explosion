@@ -15,6 +15,7 @@
 #include <Common/Debug.h>
 #include <RHI/RHI.h>
 #include <Rendering/ResourcePool.h>
+#include <Rendering/RenderingCache.h>
 
 namespace Rendering {
     class RGAsyncInfo;
@@ -64,8 +65,27 @@ namespace Rendering {
         max
     };
 
-    using RGBufferDesc = RHI::BufferCreateInfo;
-    using RGTextureDesc = RHI::TextureCreateInfo;
+    struct RGBufferDesc : public RHI::BufferCreateInfo {
+        static RGBufferDesc Create();
+        static RGBufferDesc Create(const RHI::BufferCreateInfo& rhiDesc);
+        RGBufferDesc& Size(uint32_t inSize);
+        RGBufferDesc& Usages(RHI::BufferUsageFlags inUsages);
+        RGBufferDesc& InitialState(RHI::BufferState inState);
+        RGBufferDesc& DebugName(const std::string& inName);
+    };
+
+    struct RGTextureDesc  : public RHI::TextureCreateInfo {
+        static RGTextureDesc Create();
+        static RGTextureDesc Create(const RHI::TextureCreateInfo& rhiDesc);
+        RGTextureDesc& Dimension(RHI::TextureDimension inDimension);
+        RGTextureDesc& Extent(const Common::UVec3& inExtent);
+        RGTextureDesc& Format(RHI::PixelFormat inFormat);
+        RGTextureDesc& Usages(RHI::TextureUsageFlags inUsages);
+        RGTextureDesc& MipLevels(uint8_t inMipLevels);
+        RGTextureDesc& Samples(uint8_t inSamples);
+        RGTextureDesc& InitialState(RHI::TextureState inState);
+        RGTextureDesc& DebugName(const std::string& inName);
+    };
 
     class RGResource {
     public:
@@ -145,8 +165,27 @@ namespace Rendering {
     using RGBufferRef = RGBuffer*;
     using RGTextureRef = RGTexture*;
 
-    using RGBufferViewDesc = RHI::BufferViewCreateInfo;
-    using RGTextureViewDesc = RHI::TextureViewCreateInfo;
+    struct RGBufferViewDesc : public RHI::BufferViewCreateInfo {
+        static RGBufferViewDesc CreateForUniform();
+        static RGBufferViewDesc CreateForStorage();
+        static RGBufferViewDesc Create(const RHI::BufferViewCreateInfo& rhiDesc);
+        RGBufferViewDesc& Offset(uint32_t inOffset);
+        RGBufferViewDesc& Size(uint32_t inSize);
+    };
+
+    struct RGTextureViewDesc  : public RHI::TextureViewCreateInfo {
+        static RGTextureViewDesc CreateForTexture();
+        static RGTextureViewDesc CreateForStorageTexture();
+        static RGTextureViewDesc CreateForColorAttachment();
+        static RGTextureViewDesc CreateForDepthStencilAttachment();
+        static RGTextureViewDesc Create(const RHI::TextureViewCreateInfo& rhiDesc);
+        RGTextureViewDesc& Dimension(RHI::TextureViewDimension inDimension);
+        RGTextureViewDesc& Aspect(RHI::TextureAspect inAspect);
+        RGTextureViewDesc& BaseMipLevel(uint8_t inBaseMipLevel);
+        RGTextureViewDesc& MipLevelNum(uint8_t inMipLevelNum);
+        RGTextureViewDesc& BaseArrayLayer(uint8_t inBaseArrayLayer);
+        RGTextureViewDesc& ArrayLayerNum(uint8_t inArrayLayerNum);
+    };
 
     class RGResourceView {
     public:
@@ -174,7 +213,7 @@ namespace Rendering {
     private:
         friend class RGBuilder;
 
-        RGBufferView(RGBufferRef inBuffer, RGBufferViewDesc inDesc);
+        RGBufferView(RGBufferRef inBuffer, const RGBufferViewDesc& inDesc);
 
         RGBufferRef buffer;
         RGBufferViewDesc desc;
@@ -193,7 +232,7 @@ namespace Rendering {
     private:
         friend class RGBuilder;
 
-        RGTextureView(RGTextureRef inTexture, RGTextureViewDesc inDesc);
+        RGTextureView(RGTextureRef inTexture, const RGTextureViewDesc& inDesc);
 
         RGTextureRef texture;
         RGTextureViewDesc desc;
@@ -233,10 +272,10 @@ namespace Rendering {
     };
 
     struct RGBindGroupDesc {
-        RHI::BindGroupLayout* layout;
+        Rendering::BindGroupLayout* layout;
         std::unordered_map<std::string, RGBindItemDesc> items;
 
-        static RGBindGroupDesc Create(RHI::BindGroupLayout* inLayout);
+        static RGBindGroupDesc Create(Rendering::BindGroupLayout* inLayout);
         RGBindGroupDesc& Sampler(std::string inName, RHI::Sampler* inSampler);
         RGBindGroupDesc& UniformBuffer(std::string inName, RGBufferViewRef bufferView);
         RGBindGroupDesc& StorageBuffer(std::string inName, RGBufferViewRef bufferView);
@@ -255,7 +294,10 @@ namespace Rendering {
         friend class RGBuilder;
 
         explicit RGBindGroup(RGBindGroupDesc inDesc);
+        void Devirtualize(RHI::Device& inDevice);
+        void UndoDevirtualize();
 
+        bool devirtualized;
         RGBindGroupDesc desc;
         RHI::BindGroup* rhiHandle;
     };

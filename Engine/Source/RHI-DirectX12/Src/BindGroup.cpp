@@ -66,7 +66,7 @@ namespace RHI::DirectX12 {
             const auto& entry = createInfo.entries[i];
 
             CD3DX12_CPU_DESCRIPTOR_HANDLE handle = GetDescriptorCpuHandleAndHeap(entry);
-            bindings.emplace_back( entry.binding.platform.hlsl, handle );
+            bindings.emplace_back(std::get<HlslBinding>(entry.binding.platformBinding), handle);
         }
     }
 }

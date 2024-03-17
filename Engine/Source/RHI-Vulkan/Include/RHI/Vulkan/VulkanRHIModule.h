@@ -14,6 +14,8 @@ namespace RHI::Vulkan {
         VulkanRHIModule();
         ~VulkanRHIModule() override;
 
+        void OnLoad() override;
+        void OnUnload() override;
         Instance* GetRHIInstance() override;
     };
 }

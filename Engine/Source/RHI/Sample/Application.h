@@ -32,9 +32,21 @@
 class Application {
 public:
     NonCopyable(Application)
-    explicit Application(std::string n) : rhiType(RHI::RHIType::vulkan), window(nullptr), name(std::move(n)), width(1024), height(768) {}
+    explicit Application(std::string n)
+        : rhiType(RHI::RHIType::vulkan)
+        , window(nullptr)
+        , name(std::move(n))
+        , width(1024)
+        , height(768)
+        , instance(nullptr)
+    {
+    }
 
-    virtual ~Application() = default;
+    virtual ~Application()
+    {
+        instance = nullptr;
+        RHI::Instance::UnloadAllInstances();
+    }
 
     static void KeyCallback(GLFWwindow* inWindow, int key, int scancode, int action, int mods)
     {
@@ -193,6 +205,7 @@ public:
         };
         auto iter = RHI_MAP.find(rhiString);
         rhiType = iter == RHI_MAP.end() ? RHI::RHIType::directX12 : iter->second;
+        instance = RHI::Instance::GetByType(rhiType);
 
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -268,6 +281,7 @@ protected:
         byteCode = result.byteCode;
     }
 
+    RHI::Instance* instance = nullptr;
     RHI::RHIType rhiType;
     GLFWwindow* window;
     std::string name;

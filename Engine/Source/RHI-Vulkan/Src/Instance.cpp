@@ -7,11 +7,7 @@
 #include <RHI/Vulkan/Gpu.h>
 
 namespace RHI::Vulkan {
-    RHI::Instance* RHIGetInstance()
-    {
-        static RHI::Vulkan::VKInstance instance;
-        return &instance;
-    }
+    RHI::Instance* gInstance = nullptr;
 
 #if BUILD_CONFIG_DEBUG
     static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(

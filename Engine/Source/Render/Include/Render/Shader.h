@@ -75,6 +75,7 @@ namespace Render {
         ~ShaderByteCodeStorage();
         NonCopyable(ShaderByteCodeStorage)
 
+        // TODO fill byte codes after compiling using this interface
         void UpdateByteCodePackage(IShaderType* shaderTypeKey, std::unordered_map<VariantKey, ShaderByteCode>&& byteCodePackage);
         const std::unordered_map<VariantKey, ShaderByteCode>& GetByteCodePackage(IShaderType* shaderTypeKey);
 

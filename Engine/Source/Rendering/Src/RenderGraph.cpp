@@ -112,6 +112,112 @@ namespace Rendering::Internal {
 }
 
 namespace Rendering {
+    RGBufferDesc RGBufferDesc::Create()
+    {
+        return RGBufferDesc {};
+    }
+
+    RGBufferDesc RGBufferDesc::Create(const RHI::BufferCreateInfo& rhiDesc)
+    {
+        RGBufferDesc result {};
+        result.size = rhiDesc.size;
+        result.usages = rhiDesc.usages;
+        result.initialState = rhiDesc.initialState;
+        result.debugName = rhiDesc.debugName;
+        return result;
+    }
+
+    RGBufferDesc& RGBufferDesc::Size(uint32_t inSize)
+    {
+        size = inSize;
+        return *this;
+    }
+
+    RGBufferDesc& RGBufferDesc::Usages(RHI::BufferUsageFlags inUsages)
+    {
+        usages = inUsages;
+        return *this;
+    }
+
+    RGBufferDesc& RGBufferDesc::InitialState(RHI::BufferState inState)
+    {
+        initialState = inState;
+        return *this;
+    }
+
+    RGBufferDesc& RGBufferDesc::DebugName(const std::string& inName)
+    {
+        debugName = inName;
+        return *this;
+    }
+
+    RGTextureDesc RGTextureDesc::Create()
+    {
+        return RGTextureDesc {};
+    }
+
+    RGTextureDesc RGTextureDesc::Create(const RHI::TextureCreateInfo& rhiDesc)
+    {
+        RGTextureDesc result {};
+        result.dimension = rhiDesc.dimension;
+        result.extent = rhiDesc.extent;
+        result.format = rhiDesc.format;
+        result.usages = rhiDesc.usages;
+        result.mipLevels = rhiDesc.mipLevels;
+        result.samples = rhiDesc.samples;
+        result.initialState = rhiDesc.initialState;
+        result.debugName = rhiDesc.debugName;
+        return result;
+    }
+
+    RGTextureDesc& RGTextureDesc::Dimension(RHI::TextureDimension inDimension)
+    {
+        dimension = inDimension;
+        return *this;
+    }
+
+    RGTextureDesc& RGTextureDesc::Extent(const Common::UVec3& inExtent)
+    {
+        extent = inExtent;
+        return *this;
+    }
+
+    RGTextureDesc& RGTextureDesc::Format(RHI::PixelFormat inFormat)
+    {
+        format = inFormat;
+        return *this;
+    }
+
+    RGTextureDesc& RGTextureDesc::Usages(RHI::TextureUsageFlags inUsages)
+    {
+        usages = inUsages;
+        return *this;
+    }
+
+    RGTextureDesc& RGTextureDesc::MipLevels(uint8_t inMipLevels)
+    {
+        mipLevels = inMipLevels;
+        return *this;
+    }
+
+    RGTextureDesc& RGTextureDesc::Samples(uint8_t inSamples)
+    {
+        samples = inSamples;
+        return *this;
+    }
+
+    RGTextureDesc& RGTextureDesc::InitialState(RHI::TextureState inState)
+    {
+        initialState = inState;
+        return *this;
+    }
+
+    RGTextureDesc& RGTextureDesc::DebugName(const std::string& inName)
+    {
+        debugName = inName;
+        return *this;
+    }
+
     RGResource::RGResource(RGResType inType)
         : type(inType)
         , forceUsed(false)
@@ -165,7 +271,7 @@ namespace Rendering {
 
     RGBuffer::RGBuffer(RHI::Buffer* inImportedBuffer)
         : RGResource(RGResType::buffer)
-        , desc(inImportedBuffer->GetCreateInfo())
+        , desc(RGBufferDesc::Create(inImportedBuffer->GetCreateInfo()))
         , rhiHandle(inImportedBuffer)
         , pooledBuffer()
         , currentState(desc.initialState)
@@ -223,7 +329,7 @@ namespace Rendering {
 
     RGTexture::RGTexture(RHI::Texture* inImportedTexture)
         : RGResource(RGResType::texture)
-        , desc(inImportedTexture->GetCreateInfo())
+        , desc(RGTextureDesc::Create(inImportedTexture->GetCreateInfo()))
         , rhiHandle(inImportedTexture)
         , pooledTexture()
         , currentState(desc.initialState)
@@ -270,6 +376,123 @@ namespace Rendering {
         pooledTexture = nullptr;
     }
 
+    RGBufferViewDesc RGBufferViewDesc::CreateForUniform()
+    {
+        RGBufferViewDesc result {};
+        result.type = RHI::BufferViewType::uniformBinding;
+        return result;
+    }
+
+    RGBufferViewDesc RGBufferViewDesc::CreateForStorage()
+    {
+        RGBufferViewDesc result {};
+        result.type = RHI::BufferViewType::storageBinding;
+        return result;
+    }
+
+    RGBufferViewDesc RGBufferViewDesc::Create(const RHI::BufferViewCreateInfo& rhiDesc)
+    {
+        RGBufferViewDesc result {};
+        result.type = rhiDesc.type;
+        result.offset = rhiDesc.offset;
+        result.size = rhiDesc.size;
+        if (result.type == RHI::BufferViewType::index) {
+            result.index = rhiDesc.index;
+        } else if (result.type == RHI::BufferViewType::vertex) {
+            result.vertex = rhiDesc.vertex;
+        }
+        return result;
+    }
+
+    RGBufferViewDesc& RGBufferViewDesc::Offset(uint32_t inOffset)
+    {
+        offset = inOffset;
+        return *this;
+    }
+
+    RGBufferViewDesc& RGBufferViewDesc::Size(uint32_t inSize)
+    {
+        size = inSize;
+        return *this;
+    }
+
+    RGTextureViewDesc RGTextureViewDesc::CreateForTexture()
+    {
+        RGTextureViewDesc result {};
+        result.type = RHI::TextureViewType::textureBinding;
+        return result;
+    }
+
+    RGTextureViewDesc RGTextureViewDesc::CreateForStorageTexture()
+    {
+        RGTextureViewDesc result {};
+        result.type = RHI::TextureViewType::storageBinding;
+        return result;
+    }
+
+    RGTextureViewDesc RGTextureViewDesc::CreateForColorAttachment()
+    {
+        RGTextureViewDesc result {};
+        result.type = RHI::TextureViewType::colorAttachment;
+        return result;
+    }
+
+    RGTextureViewDesc RGTextureViewDesc::CreateForDepthStencilAttachment()
+    {
+        RGTextureViewDesc result {};
+        result.type = RHI::TextureViewType::depthStencil;
+        return result;
+    }
+
+    RGTextureViewDesc RGTextureViewDesc::Create(const RHI::TextureViewCreateInfo& rhiDesc)
+    {
+        RGTextureViewDesc result {};
+        result.type = rhiDesc.type;
+        result.dimension = rhiDesc.dimension;
+        result.aspect = rhiDesc.aspect;
+        result.baseMipLevel = rhiDesc.baseMipLevel;
+        result.mipLevelNum = rhiDesc.mipLevelNum;
+        result.baseArrayLayer = rhiDesc.baseArrayLayer;
+        result.arrayLayerNum = rhiDesc.arrayLayerNum;
+        return result;
+    }
+
+    RGTextureViewDesc& RGTextureViewDesc::Dimension(RHI::TextureViewDimension inDimension)
+    {
+        dimension = inDimension;
+        return *this;
+    }
+
+    RGTextureViewDesc& RGTextureViewDesc::Aspect(RHI::TextureAspect inAspect)
+    {
+        aspect = inAspect;
+        return *this;
+    }
+
+    RGTextureViewDesc& RGTextureViewDesc::BaseMipLevel(uint8_t inBaseMipLevel)
+    {
+        baseMipLevel = inBaseMipLevel;
+        return *this;
+    }
+
+    RGTextureViewDesc& RGTextureViewDesc::MipLevelNum(uint8_t inMipLevelNum)
+    {
+        mipLevelNum = inMipLevelNum;
+        return *this;
+    }
+
+    RGTextureViewDesc& RGTextureViewDesc::BaseArrayLayer(uint8_t inBaseArrayLayer)
+    {
+        baseArrayLayer = inBaseArrayLayer;
+        return *this;
+    }
+
+    RGTextureViewDesc& RGTextureViewDesc::ArrayLayerNum(uint8_t inArrayLayerNum)
+    {
+        arrayLayerNum = inArrayLayerNum;
+        return *this;
+    }
+
     RGResourceView::RGResourceView(RGResViewType inType)
         : type(inType)
         , devirtualized(false)
@@ -283,10 +506,10 @@ namespace Rendering {
         return type;
     }
 
-    RGBufferView::RGBufferView(RGBufferRef inBuffer, RGBufferViewDesc inDesc)
+    RGBufferView::RGBufferView(RGBufferRef inBuffer, const RGBufferViewDesc& inDesc)
         : RGResourceView(RGResViewType::bufferView)
         , buffer(inBuffer)
-        , desc(std::move(inDesc))
+        , desc(RGBufferViewDesc::Create(inDesc))
         , rhiHandle(nullptr)
     {
     }
@@ -313,9 +536,9 @@ namespace Rendering {
         return buffer;
     }
 
-    RGTextureView::RGTextureView(RGTextureRef inTexture, RGTextureViewDesc inDesc)
+    RGTextureView::RGTextureView(RGTextureRef inTexture, const RGTextureViewDesc& inDesc)
         : RGResourceView(RGResViewType::textureView)
-        , desc(std::move(inDesc))
+        , desc(RGTextureViewDesc::Create(inDesc))
         , rhiHandle(nullptr)
     {
     }
@@ -342,7 +565,7 @@ namespace Rendering {
         return texture;
     }
 
-    RGBindGroupDesc RGBindGroupDesc::Create(RHI::BindGroupLayout* inLayout)
+    RGBindGroupDesc RGBindGroupDesc::Create(Rendering::BindGroupLayout* inLayout)
     {
         RGBindGroupDesc result;
         result.layout = inLayout;
@@ -405,11 +628,62 @@ namespace Rendering {
     }
 
     RGBindGroup::RGBindGroup(Rendering::RGBindGroupDesc inDesc)
-        : desc(std::move(inDesc))
+        : devirtualized(false)
+        , desc(std::move(inDesc))
+        , rhiHandle(nullptr)
     {
     }
 
     RGBindGroup::~RGBindGroup() = default;
+
+    void RGBindGroup::Devirtualize(RHI::Device& inDevice)
+    {
+        Assert(!devirtualized);
+        if (desc.layout == nullptr) {
+            devirtualized = true;
+            return;
+        }
+
+        std::vector<RHI::BindGroupEntry> entries;
+        entries.reserve(desc.items.size());
+        for (const auto& item : desc.items) {
+            RHI::BindGroupEntry entry;
+            const auto* binding = desc.layout->GetBinding(item.first);
+            // TODO maybe use operator= ?
+            entry.binding.type = binding->type;
+            entry.binding.platformBinding = binding->platformBinding;
+
+            const RGBindItemDesc& itemDesc = item.second;
+            Assert(entry.binding.type == itemDesc.type);
+
+            if (itemDesc.type == RHI::BindingType::uniformBuffer || itemDesc.type == RHI::BindingType::storageBuffer) {
+                entry.bufferView = itemDesc.bufferView->GetRHI();
+            } else if (itemDesc.type == RHI::BindingType::texture || itemDesc.type == RHI::BindingType::storageTexture) {
+                entry.textureView = itemDesc.textureView->GetRHI();
+            } else if (itemDesc.type == RHI::BindingType::sampler) {
+                entry.sampler = itemDesc.sampler;
+            } else {
+                Unimplement();
+            }
+        }
+
+        RHI::BindGroupCreateInfo createInfo;
+        createInfo.layout = desc.layout->GetRHI();
+        createInfo.entryNum = entries.size();
+        createInfo.entries = entries.data();
+
+        devirtualized = true;
+        rhiHandle = inDevice.CreateBindGroup(createInfo);
+    }
+
+    void RGBindGroup::UndoDevirtualize()
+    {
+        Assert(devirtualized);
+        if (rhiHandle == nullptr) {
+            return;
+        }
+        rhiHandle->Destroy();
+    }
 
     const RGBindGroupDesc& RGBindGroup::GetDesc() const
     {
@@ -768,6 +1042,10 @@ namespace Rendering {
             pass->DevirtualizeResources(device);
         }
 
+        for (auto& bindGroup : bindGroups) {
+            bindGroup->Devirtualize(device);
+        }
+
         for (auto& resource : resources) {
             if (resource->IsForceUsed()) {
                 resource->IncRefCountAndUpdateResource(device);
@@ -783,5 +1061,9 @@ namespace Rendering {
                 pass->FinalizeResources();
             }
         });
+
+        for (auto& bindGroup : bindGroups) {
+            bindGroup->UndoDevirtualize();
+        }
     }
 }

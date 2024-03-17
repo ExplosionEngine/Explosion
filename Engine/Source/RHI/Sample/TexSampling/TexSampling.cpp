@@ -19,7 +19,7 @@ public:
 protected:
     void OnCreate() override
     {
-        CreateInstanceAndSelectGPU();
+        SelectGPU();
         RequestDeviceAndFetchQueues();
         CreateSwapChain();
         CreateVertexBuffer();
@@ -57,10 +57,8 @@ private:
 
     FMat4x4 modelMatrix;
 
-    void CreateInstanceAndSelectGPU()
+    void SelectGPU()
     {
-        instance = Instance::GetByType(rhiType);
-
         gpu = instance->GetGpu(0);
     }
 
@@ -130,6 +128,7 @@ private:
         bufferCreateInfo.size = vertices.size() * sizeof(Vertex);
         bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         bufferCreateInfo.debugName = "quadBuffer";
+        bufferCreateInfo.initialState = RHI::BufferState::staging;
         vertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (vertexBuffer != nullptr) {
             auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -151,6 +150,7 @@ private:
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = indices.size() * sizeof(uint32_t);
         bufferCreateInfo.usages = BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
+        bufferCreateInfo.initialState = RHI::BufferState::staging;
         indexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (indexBuffer != nullptr) {
             auto* data = indexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -175,6 +175,7 @@ private:
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = texWidth * texHeight * 4;
         bufferCreateInfo.usages = BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
+        bufferCreateInfo.initialState = RHI::BufferState::staging;
         pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -244,6 +245,7 @@ private:
         BufferCreateInfo createInfo {};
         createInfo.size = sizeof(FMat4x4);
         createInfo.usages = BufferUsageBits::uniform | BufferUsageBits::mapWrite;
+        createInfo.initialState = RHI::BufferState::staging;
         uniformBuffer = device->CreateBuffer(createInfo);
 
         BufferViewCreateInfo viewCreateInfo {};
@@ -263,13 +265,13 @@ private:
         entries[2].binding.type = BindingType::uniformBuffer;
         entries[2].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sVertex);
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
-            entries[2].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
+            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
+            entries[2].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
         } else {
-            entries[0].binding.platform.glsl.index = 0;
-            entries[1].binding.platform.glsl.index = 1;
-            entries[2].binding.platform.glsl.index = 2;
+            entries[0].binding.platformBinding = GlslBinding { 0 };
+            entries[1].binding.platformBinding = GlslBinding { 1 };
+            entries[2].binding.platformBinding = GlslBinding { 2 };
         }
 
         BindGroupLayoutCreateInfo createInfo {};
@@ -290,13 +292,13 @@ private:
         entries[2].binding.type = BindingType::uniformBuffer;
         entries[2].bufferView = uniformBufferView.Get();
         if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platform.hlsl = { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platform.hlsl = { HlslBindingRangeType::sampler, 0 };
-            entries[2].binding.platform.hlsl = { HlslBindingRangeType::constantBuffer, 0 };
+            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
+            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
+            entries[2].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
         } else {
-            entries[0].binding.platform.glsl.index = 0;
-            entries[1].binding.platform.glsl.index = 1;
-            entries[2].binding.platform.glsl.index = 2;
+            entries[0].binding.platformBinding = GlslBinding { 0 };
+            entries[1].binding.platformBinding = GlslBinding { 1 };
+            entries[2].binding.platformBinding = GlslBinding { 2 };
         }
 
         BindGroupCreateInfo createInfo {};
@@ -428,7 +430,6 @@ private:
     }
 
     PixelFormat swapChainFormat = PixelFormat::max;
-    Instance* instance = nullptr;
     Gpu* gpu = nullptr;
     UniqueRef<Device> device;
     Queue* graphicsQueue = nullptr;
