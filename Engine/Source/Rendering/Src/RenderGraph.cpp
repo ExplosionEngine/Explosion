@@ -117,6 +117,16 @@ namespace Rendering {
         return RGBufferDesc {};
     }
 
+    RGBufferDesc RGBufferDesc::Create(const RHI::BufferCreateInfo& rhiDesc)
+    {
+        RGBufferDesc result {};
+        result.size = rhiDesc.size;
+        result.usages = rhiDesc.usages;
+        result.initialState = rhiDesc.initialState;
+        result.debugName = rhiDesc.debugName;
+        return result;
+    }
+
     RGBufferDesc& RGBufferDesc::Size(uint32_t inSize)
     {
         size = inSize;
@@ -144,6 +154,20 @@ namespace Rendering {
     RGTextureDesc RGTextureDesc::Create()
     {
         return RGTextureDesc {};
+    }
+
+    RGTextureDesc RGTextureDesc::Create(const RHI::TextureCreateInfo& rhiDesc)
+    {
+        RGTextureDesc result {};
+        result.dimension = rhiDesc.dimension;
+        result.extent = rhiDesc.extent;
+        result.format = rhiDesc.format;
+        result.usages = rhiDesc.usages;
+        result.mipLevels = rhiDesc.mipLevels;
+        result.samples = rhiDesc.samples;
+        result.initialState = rhiDesc.initialState;
+        result.debugName = rhiDesc.debugName;
+        return result;
     }
 
     RGTextureDesc& RGTextureDesc::Dimension(RHI::TextureDimension inDimension)
@@ -247,7 +271,7 @@ namespace Rendering {
 
     RGBuffer::RGBuffer(RHI::Buffer* inImportedBuffer)
         : RGResource(RGResType::buffer)
-        , desc(inImportedBuffer->GetCreateInfo())
+        , desc(RGBufferDesc::Create(inImportedBuffer->GetCreateInfo()))
         , rhiHandle(inImportedBuffer)
         , pooledBuffer()
         , currentState(desc.initialState)
@@ -305,7 +329,7 @@ namespace Rendering {
 
     RGTexture::RGTexture(RHI::Texture* inImportedTexture)
         : RGResource(RGResType::texture)
-        , desc(inImportedTexture->GetCreateInfo())
+        , desc(RGTextureDesc::Create(inImportedTexture->GetCreateInfo()))
         , rhiHandle(inImportedTexture)
         , pooledTexture()
         , currentState(desc.initialState)
@@ -366,6 +390,20 @@ namespace Rendering {
         return result;
     }
 
+    RGBufferViewDesc RGBufferViewDesc::Create(const RHI::BufferViewCreateInfo& rhiDesc)
+    {
+        RGBufferViewDesc result {};
+        result.type = rhiDesc.type;
+        result.offset = rhiDesc.offset;
+        result.size = rhiDesc.size;
+        if (result.type == RHI::BufferViewType::index) {
+            result.index = rhiDesc.index;
+        } else if (result.type == RHI::BufferViewType::vertex) {
+            result.vertex = rhiDesc.vertex;
+        }
+        return result;
+    }
+
     RGBufferViewDesc& RGBufferViewDesc::Offset(uint32_t inOffset)
     {
         offset = inOffset;
@@ -403,6 +441,19 @@ namespace Rendering {
     {
         RGTextureViewDesc result {};
         result.type = RHI::TextureViewType::depthStencil;
+        return result;
+    }
+
+    RGTextureViewDesc RGTextureViewDesc::Create(const RHI::TextureViewCreateInfo& rhiDesc)
+    {
+        RGTextureViewDesc result {};
+        result.type = rhiDesc.type;
+        result.dimension = rhiDesc.dimension;
+        result.aspect = rhiDesc.aspect;
+        result.baseMipLevel = rhiDesc.baseMipLevel;
+        result.mipLevelNum = rhiDesc.mipLevelNum;
+        result.baseArrayLayer = rhiDesc.baseArrayLayer;
+        result.arrayLayerNum = rhiDesc.arrayLayerNum;
         return result;
     }
 
@@ -455,10 +506,10 @@ namespace Rendering {
         return type;
     }
 
-    RGBufferView::RGBufferView(RGBufferRef inBuffer, RGBufferViewDesc inDesc)
+    RGBufferView::RGBufferView(RGBufferRef inBuffer, const RGBufferViewDesc& inDesc)
         : RGResourceView(RGResViewType::bufferView)
         , buffer(inBuffer)
-        , desc(std::move(inDesc))
+        , desc(RGBufferViewDesc::Create(inDesc))
         , rhiHandle(nullptr)
     {
     }
@@ -485,9 +536,9 @@ namespace Rendering {
         return buffer;
     }
 
-    RGTextureView::RGTextureView(RGTextureRef inTexture, RGTextureViewDesc inDesc)
+    RGTextureView::RGTextureView(RGTextureRef inTexture, const RGTextureViewDesc& inDesc)
         : RGResourceView(RGResViewType::textureView)
-        , desc(std::move(inDesc))
+        , desc(RGTextureViewDesc::Create(inDesc))
         , rhiHandle(nullptr)
     {
     }

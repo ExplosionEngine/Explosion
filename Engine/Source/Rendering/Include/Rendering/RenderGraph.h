@@ -67,6 +67,7 @@ namespace Rendering {
 
     struct RGBufferDesc : public RHI::BufferCreateInfo {
         static RGBufferDesc Create();
+        static RGBufferDesc Create(const RHI::BufferCreateInfo& rhiDesc);
         RGBufferDesc& Size(uint32_t inSize);
         RGBufferDesc& Usages(RHI::BufferUsageFlags inUsages);
         RGBufferDesc& InitialState(RHI::BufferState inState);
@@ -75,6 +76,7 @@ namespace Rendering {
 
     struct RGTextureDesc  : public RHI::TextureCreateInfo {
         static RGTextureDesc Create();
+        static RGTextureDesc Create(const RHI::TextureCreateInfo& rhiDesc);
         RGTextureDesc& Dimension(RHI::TextureDimension inDimension);
         RGTextureDesc& Extent(const Common::UVec3& inExtent);
         RGTextureDesc& Format(RHI::PixelFormat inFormat);
@@ -166,6 +168,7 @@ namespace Rendering {
     struct RGBufferViewDesc : public RHI::BufferViewCreateInfo {
         static RGBufferViewDesc CreateForUniform();
         static RGBufferViewDesc CreateForStorage();
+        static RGBufferViewDesc Create(const RHI::BufferViewCreateInfo& rhiDesc);
         RGBufferViewDesc& Offset(uint32_t inOffset);
         RGBufferViewDesc& Size(uint32_t inSize);
     };
@@ -175,6 +178,7 @@ namespace Rendering {
         static RGTextureViewDesc CreateForStorageTexture();
         static RGTextureViewDesc CreateForColorAttachment();
         static RGTextureViewDesc CreateForDepthStencilAttachment();
+        static RGTextureViewDesc Create(const RHI::TextureViewCreateInfo& rhiDesc);
         RGTextureViewDesc& Dimension(RHI::TextureViewDimension inDimension);
         RGTextureViewDesc& Aspect(RHI::TextureAspect inAspect);
         RGTextureViewDesc& BaseMipLevel(uint8_t inBaseMipLevel);
@@ -209,7 +213,7 @@ namespace Rendering {
     private:
         friend class RGBuilder;
 
-        RGBufferView(RGBufferRef inBuffer, RGBufferViewDesc inDesc);
+        RGBufferView(RGBufferRef inBuffer, const RGBufferViewDesc& inDesc);
 
         RGBufferRef buffer;
         RGBufferViewDesc desc;
@@ -228,7 +232,7 @@ namespace Rendering {
     private:
         friend class RGBuilder;
 
-        RGTextureView(RGTextureRef inTexture, RGTextureViewDesc inDesc);
+        RGTextureView(RGTextureRef inTexture, const RGTextureViewDesc& inDesc);
 
         RGTextureRef texture;
         RGTextureViewDesc desc;
