@@ -42,7 +42,7 @@ namespace RHI::Vulkan {
         std::vector<VkPushConstantRange> pushConstants(createInfo.pipelineConstantLayoutNum);
         for (uint32_t i = 0; i < createInfo.pipelineConstantLayoutNum; ++i) {
             const auto& constantInfo = createInfo.pipelineConstantLayouts[i];
-            pushConstants[i].stageFlags = FromRHI(constantInfo.stageFlags);
+            pushConstants[i].stageFlags = VKFlagsCast<ShaderStageFlags, VkShaderStageFlags>(constantInfo.stageFlags);
             pushConstants[i].offset = constantInfo.offset;
             pushConstants[i].size = constantInfo.size;
         }

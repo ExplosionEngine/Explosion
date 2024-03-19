@@ -484,8 +484,8 @@ namespace RHI {
         sPixel    = 0x2,
         sCompute  = 0x4,
         sGeometry = 0x8,
-        sDomain   = 0x10,
-        sHull     = 0x20,
+        sHull     = 0x10,
+        sDomain   = 0x20,
         max
     };
     RHI_FLAGS_DECLARE(ShaderStageFlags, ShaderStageBits)

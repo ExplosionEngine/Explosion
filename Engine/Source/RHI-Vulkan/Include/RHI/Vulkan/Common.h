@@ -15,13 +15,17 @@
 #define VK_ECIMPL_ITEM(A, B) if (value == A) { return B; }
 #define VK_ECIMPL_END(B) Unimplement(); return (B) 0; };
 
+#define VK_FCIMPL_BEGIN(A, B) template <> inline B VKFlagsCast<A, B>(const A& flags) { B result = (B) 0;
+#define VK_FCIMPL_ITEM(A, B) if (flags & A) { result |= B; }
+#define VK_FCIMPL_END(B) return result; };
+
 // duplicated code because static variable and namespace
 namespace RHI::Vulkan {
     template <typename A, typename B>
-    static const std::unordered_map<A, B> VK_ENUM_MAP;
+    inline B VKEnumCast(const A& value);
 
     template <typename A, typename B>
-    inline B VKEnumCast(const A& value);
+    inline B VKFlagsCast(const A& flags);
 }
 
 // enum map definitions
@@ -107,10 +111,22 @@ namespace RHI::Vulkan {
     VK_ECIMPL_END(VkImageViewType)
 
     VK_ECIMPL_BEGIN(ShaderStageBits, VkShaderStageFlagBits)
-        VK_ECIMPL_ITEM(ShaderStageBits::sVertex,  VK_SHADER_STAGE_VERTEX_BIT)
-        VK_ECIMPL_ITEM(ShaderStageBits::sPixel,   VK_SHADER_STAGE_FRAGMENT_BIT)
-        VK_ECIMPL_ITEM(ShaderStageBits::sCompute, VK_SHADER_STAGE_COMPUTE_BIT)
+        VK_ECIMPL_ITEM(ShaderStageBits::sVertex,   VK_SHADER_STAGE_VERTEX_BIT)
+        VK_ECIMPL_ITEM(ShaderStageBits::sPixel,    VK_SHADER_STAGE_FRAGMENT_BIT)
+        VK_ECIMPL_ITEM(ShaderStageBits::sCompute,  VK_SHADER_STAGE_COMPUTE_BIT)
+        VK_ECIMPL_ITEM(ShaderStageBits::sGeometry, VK_SHADER_STAGE_GEOMETRY_BIT)
+        VK_ECIMPL_ITEM(ShaderStageBits::sHull,     VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)
+        VK_ECIMPL_ITEM(ShaderStageBits::sDomain,   VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
     VK_ECIMPL_END(VkShaderStageFlagBits)
+
+    VK_FCIMPL_BEGIN(ShaderStageFlags, VkShaderStageFlags)
+        VK_FCIMPL_ITEM(ShaderStageBits::sVertex,   VK_SHADER_STAGE_VERTEX_BIT)
+        VK_FCIMPL_ITEM(ShaderStageBits::sPixel,    VK_SHADER_STAGE_FRAGMENT_BIT)
+        VK_FCIMPL_ITEM(ShaderStageBits::sCompute,  VK_SHADER_STAGE_COMPUTE_BIT)
+        VK_FCIMPL_ITEM(ShaderStageBits::sGeometry, VK_SHADER_STAGE_GEOMETRY_BIT)
+        VK_FCIMPL_ITEM(ShaderStageBits::sHull,     VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)
+        VK_FCIMPL_ITEM(ShaderStageBits::sDomain,   VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
+    VK_FCIMPL_END(VkShaderStageFlagBits)
 
     VK_ECIMPL_BEGIN(PrimitiveTopologyType, VkPrimitiveTopology)
         VK_ECIMPL_ITEM(PrimitiveTopologyType::point,    VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
@@ -258,17 +274,6 @@ namespace RHI::Vulkan {
     inline VkExtent3D FromRHI(const Common::UVec3& ext)
     {
         return { ext.x, ext.y, ext.z };
-    }
-
-    inline VkShaderStageFlags FromRHI(const ShaderStageFlags& src)
-    {
-        VkShaderStageFlags flags = {};
-        for (auto& pair : VK_ENUM_MAP<ShaderStageBits, VkShaderStageFlagBits>) {
-            if (src & pair.first) {
-                flags |= pair.second;
-            }
-        }
-        return flags;
     }
 
     inline VkImageAspectFlags GetAspectMask(TextureAspect aspect)
