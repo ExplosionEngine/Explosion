@@ -1,6 +1,7 @@
 set(CMAKE_CXX_STANDARD 23)
 
 option(BUILD_EDITOR "Build Explosion editor" ON)
+option(CI "Build in CI" OFF)
 
 get_cmake_property(GENERATOR_IS_MULTI_CONFIG GENERATOR_IS_MULTI_CONFIG)
 if (${GENERATOR_IS_MULTI_CONFIG})
