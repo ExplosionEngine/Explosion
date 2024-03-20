@@ -10,10 +10,12 @@
 #include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
+    class VKDevice;
+
     class VKQueue : public Queue {
     public:
         NonCopyable(VKQueue)
-        explicit VKQueue(VkQueue vkQueue);
+        explicit VKQueue(VKDevice& inDevice, VkQueue vkQueue);
         ~VKQueue() override;
 
         void Submit(CommandBuffer* commandBuffer, const QueueSubmitInfo& submitInfo) override;

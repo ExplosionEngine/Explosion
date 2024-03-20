@@ -19,12 +19,12 @@ namespace RHI::Vulkan {
         void Wait(uint32_t value) override;
         void Destroy() override;
 
-        VkFence GetVkFence();
+        VkSemaphore GetTimelineSemaphore() const;
 
     private:
-        void CreateVKFence();
-
         VKDevice& device;
-        VkFence fence;
+        VkSemaphore vkTimelineSemaphore;
+        PFN_vkWaitSemaphoresKHR vkWaitSemaphoresKhrFunc;
+        PFN_vkSignalSemaphoreKHR vkSignalSemaphoreKhrFunc;
     };
 }

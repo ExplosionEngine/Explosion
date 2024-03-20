@@ -29,6 +29,7 @@ namespace RHI::Vulkan {
         "VK_KHR_dynamic_rendering",
         "VK_KHR_depth_stencil_resolve",
         "VK_KHR_create_renderpass2",
+        "VK_KHR_timeline_semaphore",
 #if PLATFORM_MACOS
         "VK_KHR_portability_subset"
 #endif
@@ -238,11 +239,16 @@ namespace RHI::Vulkan {
         deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 
+        VkPhysicalDeviceVulkan12Features deviceVulkan12Features = {};
+        deviceVulkan12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+        deviceVulkan12Features.timelineSemaphore = VK_TRUE;
+        deviceCreateInfo.pNext = &deviceVulkan12Features;
+
         VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures = {};
         dynamicRenderingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
         dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
-        deviceCreateInfo.pNext = static_cast<VkPhysicalDeviceDynamicRenderingFeatures*>(&dynamicRenderingFeatures);
-;
+        deviceVulkan12Features.pNext = &dynamicRenderingFeatures;
+
         deviceCreateInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
         deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
 
@@ -269,7 +275,7 @@ namespace RHI::Vulkan {
             for (auto i = 0; i < tempQueues.size(); i++) {
                 VkQueue queue;
                 vkGetDeviceQueue(vkDevice, queueFamilyIndex, i, &queue);
-                tempQueues[i] = Common::MakeUnique<VKQueue>(queue);
+                tempQueues[i] = Common::MakeUnique<VKQueue>(*this, queue);
             }
             queues[queueType] = std::move(tempQueues);
 
