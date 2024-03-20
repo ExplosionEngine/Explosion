@@ -41,7 +41,7 @@ namespace RHI::Vulkan {
             auto& entry = createInfo.entries[i];
             auto& binding = bindings[i];
 
-            VkShaderStageFlags flags = FromRHI(entry.shaderVisibility);
+            VkShaderStageFlags flags = VKFlagsCast<ShaderStageFlags, VkShaderStageFlags>(entry.shaderVisibility);
 
             binding.descriptorType = VKEnumCast<BindingType, VkDescriptorType>(entry.binding.type);
             binding.descriptorCount = 1;
