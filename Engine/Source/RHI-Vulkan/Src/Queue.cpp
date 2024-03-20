@@ -12,32 +12,29 @@ namespace RHI::Vulkan {
 
     VKQueue::~VKQueue() = default;
 
-    void VKQueue::Submit(CommandBuffer* cb, Fence* fts)
+    void VKQueue::Submit(CommandBuffer* cb, const QueueSubmitInfo& submitInfo)
     {
-        auto* commandBuffer = dynamic_cast<VKCommandBuffer*>(cb);
-        auto* fenceToSignaled = dynamic_cast<VKFence*>(fts);
+        auto* commandBuffer = static_cast<VKCommandBuffer*>(cb);
+        auto* fenceToSignaled = static_cast<VKFence*>(submitInfo.signalFence);
         Assert(commandBuffer);
 
         const VkCommandBuffer& cmdBuffer = commandBuffer->GetVkCommandBuffer();
         const VkFence& fence = fenceToSignaled == nullptr ? VK_NULL_HANDLE : fenceToSignaled->GetVkFence();
 
-        VkSubmitInfo submitInfo = {};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.waitSemaphoreCount = commandBuffer->GetWaitSemaphores().size();
-        submitInfo.pWaitSemaphores = commandBuffer->GetWaitSemaphores().data();
-        submitInfo.pWaitDstStageMask = commandBuffer->GetWaitStages().data();
-        submitInfo.signalSemaphoreCount = commandBuffer->GetSignalSemaphores().size();
-        submitInfo.pSignalSemaphores = commandBuffer->GetSignalSemaphores().data();
-        submitInfo.pCommandBuffers = &cmdBuffer;
+        VkSubmitInfo vkSubmitInfo = {};
+        vkSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        vkSubmitInfo.commandBufferCount = 1;
+        vkSubmitInfo.waitSemaphoreCount = 0;
+        vkSubmitInfo.pWaitSemaphores = nullptr;
+        vkSubmitInfo.pWaitDstStageMask = nullptr;
+        vkSubmitInfo.signalSemaphoreCount = 0;
+        vkSubmitInfo.pSignalSemaphores = nullptr;
+        vkSubmitInfo.pCommandBuffers = &cmdBuffer;
 
-        if (fenceToSignaled != nullptr) {
-            fenceToSignaled->Reset();
-        }
-        Assert(vkQueueSubmit(vkQueue, 1, &submitInfo, fence) == VK_SUCCESS);
+        Assert(vkQueueSubmit(vkQueue, 1, &vkSubmitInfo, fence) == VK_SUCCESS);
     }
 
-    void VKQueue::Wait(Fence* fenceToSignal)
+    void VKQueue::Flush(const QueueFlushInfo& flushInfo)
     {
         // TODO
     }

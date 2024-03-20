@@ -34,8 +34,11 @@ namespace RHI::DirectX12 {
         return textures[index].Get();
     }
 
-    uint8_t DX12SwapChain::AcquireBackTexture()
+    uint8_t DX12SwapChain::AcquireBackTexture(Fence* fence, uint32_t waitFenceValue)
     {
+        if (fence != nullptr) {
+            fence->Wait(waitFenceValue);
+        }
         return static_cast<uint8_t>(dx12SwapChain->GetCurrentBackBufferIndex());
     }
 
@@ -52,9 +55,9 @@ namespace RHI::DirectX12 {
     void DX12SwapChain::CreateDX12SwapChain(const SwapChainCreateInfo& createInfo)
     {
         auto& instance = device.GetGpu().GetInstance();
-        auto* dx12Queue = dynamic_cast<DX12Queue*>(createInfo.presentQueue);
+        auto* dx12Queue = static_cast<DX12Queue*>(createInfo.presentQueue);
         Assert(dx12Queue != nullptr);
-        auto* dx12Surface = dynamic_cast<DX12Surface*>(createInfo.surface);
+        auto* dx12Surface = static_cast<DX12Surface*>(createInfo.surface);
         Assert(dx12Surface != nullptr);
 
         DXGI_SWAP_CHAIN_DESC1 desc {};

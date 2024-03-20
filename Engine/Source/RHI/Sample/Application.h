@@ -129,7 +129,7 @@ public:
             // rotate camera with mouse's left button down (positive value represents counterclockwise rotation)
             // horizontal mouse moving(dx) causes rotation alng y axis
             // vertical mouse moving(dy) causes rotation along x axis
-            camera->Rotate(FVec3(-dy * camera->rotateSpeed, -dx * camera->rotateSpeed, 0.0f));
+            camera->Rotate(FVec3(0, -dx * camera->rotateSpeed, -dy * camera->rotateSpeed));
         }
 
         if (mouseButtons.right) {

@@ -7,30 +7,25 @@
 #include <RHI/DirectX12/Device.h>
 
 namespace RHI::DirectX12 {
-    DX12Fence::DX12Fence(DX12Device& device) : Fence(device), dx12FenceEvent(nullptr), signaled(false)
+    DX12Fence::DX12Fence(DX12Device& device) : Fence(device), dx12FenceEvent(nullptr)
     {
         CreateDX12Fence(device);
         CreateDX12FenceEvent();
     }
 
-    DX12Fence::~DX12Fence() = default;
-
-    FenceStatus DX12Fence::GetStatus()
+    DX12Fence::~DX12Fence()
     {
-        return signaled ? FenceStatus::signaled : FenceStatus::notReady;
+        CloseHandle(dx12FenceEvent);
     }
 
-    void DX12Fence::Reset()
+    void DX12Fence::Signal(uint32_t value)
     {
-        dx12Fence->Signal(0);
+        dx12Fence->Signal(value);
     }
 
-    void DX12Fence::Wait()
+    void DX12Fence::Wait(uint32_t value)
     {
-        if (signaled) {
-            return;
-        }
-        Assert(SUCCEEDED(dx12Fence->SetEventOnCompletion(1, dx12FenceEvent)));
+        Assert(SUCCEEDED(dx12Fence->SetEventOnCompletion(value, dx12FenceEvent)));
         WaitForSingleObject(dx12FenceEvent, INFINITE);
     }
 

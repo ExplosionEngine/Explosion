@@ -28,8 +28,6 @@ namespace RHI::Vulkan {
         }
         textures.clear();
 
-        vkDestroySemaphore(vkDevice, imageAvailableSemaphore, nullptr);
-
         if (swapChain) {
             vkDestroySwapchainKHR(vkDevice, swapChain, nullptr);
         }
@@ -40,9 +38,11 @@ namespace RHI::Vulkan {
         return textures[index];
     }
 
-    uint8_t VKSwapChain::AcquireBackTexture()
+    uint8_t VKSwapChain::AcquireBackTexture(Fence* fence, uint32_t waitFenceValue)
     {
-        Assert(vkAcquireNextImageKHR(device.GetVkDevice(), swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &currentImage) == VK_SUCCESS);
+        // TODO wait fence
+
+        Assert(vkAcquireNextImageKHR(device.GetVkDevice(), swapChain, UINT64_MAX, VK_NULL_HANDLE, VK_NULL_HANDLE, &currentImage) == VK_SUCCESS);
         return currentImage;
     }
 
@@ -52,11 +52,10 @@ namespace RHI::Vulkan {
         presetInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presetInfo.swapchainCount = 1;
         presetInfo.pSwapchains = &swapChain;
-        presetInfo.waitSemaphoreCount = waitSemaphores.size();
-        presetInfo.pWaitSemaphores = waitSemaphores.data();
+        presetInfo.waitSemaphoreCount = 0;
+        presetInfo.pWaitSemaphores = nullptr;
         presetInfo.pImageIndices = &currentImage;
         Assert(vkQueuePresentKHR(queue, &presetInfo) == VK_SUCCESS);
-        waitSemaphores.clear();
     }
 
     void VKSwapChain::Destroy()
@@ -64,22 +63,12 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    VkSemaphore VKSwapChain::GetImageSemaphore() const
-    {
-        return imageAvailableSemaphore;
-    }
-
-    void VKSwapChain::AddWaitSemaphore(VkSemaphore semaphore)
-    {
-        waitSemaphores.emplace_back(semaphore);
-    }
-
     void VKSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo& createInfo)
     {
         auto vkDevice = device.GetVkDevice();
-        auto* mQueue = dynamic_cast<VKQueue*>(createInfo.presentQueue);
+        auto* mQueue = static_cast<VKQueue*>(createInfo.presentQueue);
         Assert(mQueue);
-        auto* vkSurface = dynamic_cast<VKSurface*>(createInfo.surface);
+        auto* vkSurface = static_cast<VKSurface*>(createInfo.surface);
         Assert(vkSurface);
         queue = mQueue->GetVkQueue();
         auto surface = vkSurface->GetVKSurface();
@@ -146,9 +135,5 @@ namespace RHI::Vulkan {
             textures.emplace_back(new VKTexture(device, textureInfo, image));
         }
         swapChainImageCount = static_cast<uint32_t>(swapChainImages.size());
-
-        VkSemaphoreCreateInfo semaphoreInfo = {};
-        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        Assert(vkCreateSemaphore(vkDevice, &semaphoreInfo, nullptr, &imageAvailableSemaphore) == VK_SUCCESS);
     }
 }

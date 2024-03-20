@@ -13,11 +13,10 @@ namespace RHI::Vulkan {
     class VKFence : public Fence {
     public:
         explicit VKFence(VKDevice& device);
-        ~VKFence();
+        ~VKFence() override;
 
-        FenceStatus GetStatus() override;
-        void Reset() override;
-        void Wait() override;
+        void Signal(uint32_t value) override;
+        void Wait(uint32_t value) override;
         void Destroy() override;
 
         VkFence GetVkFence();
@@ -27,6 +26,5 @@ namespace RHI::Vulkan {
 
         VKDevice& device;
         VkFence fence;
-        bool signaled;
     };
 }

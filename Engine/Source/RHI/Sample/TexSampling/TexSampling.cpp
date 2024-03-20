@@ -37,14 +37,59 @@ protected:
 
     void OnDrawFrame() override
     {
-        PopulateCommandBuffer();
-        SubmitCommandBufferAndPresent();
+        auto backTextureIndex = swapChain->AcquireBackTexture(inflightFences[nextFrameIndex].Get(), 1);
+        inflightFences[nextFrameIndex]->Signal(0);
+
+        UniqueRef<CommandEncoder> commandEncoder = commandBuffers[nextFrameIndex]->Begin();
+        {
+            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].loadOp = LoadOp::clear;
+            colorAttachments[0].storeOp = StoreOp::store;
+            colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();
+            colorAttachments[0].resolve = nullptr;
+
+            GraphicsPassBeginInfo graphicsPassBeginInfo {};
+            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
+            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
+            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
+
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            {
+                graphicsEncoder->SetPipeline(pipeline.Get());
+                graphicsEncoder->SetScissor(0, 0, width, height);
+                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
+                graphicsEncoder->SetBindGroup(0, bindGroup.Get());
+                graphicsEncoder->SetVertexBuffer(0, vertexBufferView.Get());
+                graphicsEncoder->SetIndexBuffer(indexBufferView.Get());
+                graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
+            }
+            graphicsEncoder->EndPass();
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::renderTarget, TextureState::present));
+        }
+        commandEncoder->End();
+
+        QueueSubmitInfo submitInfo {};
+        submitInfo.signalFence = inflightFences[nextFrameIndex].Get();
+        submitInfo.signalFenceValue = 1;
+        graphicsQueue->Submit(commandBuffers[nextFrameIndex].Get(), submitInfo);
+
+        swapChain->Present();
+        nextFrameIndex = (nextFrameIndex + 1) % backBufferCount;
     }
 
     void OnDestroy() override
     {
-        graphicsQueue->Wait(fence.Get());
-        fence->Wait();
+        Common::UniqueRef<Fence> fence = device->CreateFence();
+
+        fence->Signal(0);
+        QueueFlushInfo flushInfo {};
+        flushInfo.signalFence = fence.Get();
+        flushInfo.signalFenceValue = 1;
+        graphicsQueue->Flush(flushInfo);
+        fence->Wait(1);
     }
 
 private:
@@ -223,9 +268,14 @@ private:
             copyPassEncoder->EndPass();
         }
         commandEncoder->End();
-        fence->Reset();
-        graphicsQueue->Submit(texCommandBuffer.Get(), fence.Get());
-        fence->Wait();
+
+        UniqueRef<Fence> fence = device->CreateFence();
+        fence->Signal(0);
+        QueueSubmitInfo submitInfo {};
+        submitInfo.signalFence = fence.Get();
+        submitInfo.signalFenceValue = 1;
+        graphicsQueue->Submit(texCommandBuffer.Get(), submitInfo);
+        fence->Wait(1);
     }
 
     void UpdateMVP()
@@ -377,56 +427,17 @@ private:
 
     void CreateFence()
     {
-        fence = device->CreateFence();
+        for (auto i = 0; i < backBufferCount; i++) {
+            inflightFences[i] = device->CreateFence();
+            inflightFences[i]->Signal(1);
+        }
     }
 
     void CreateCommandBuffer()
     {
-        commandBuffer = device->CreateCommandBuffer();
-    }
-
-    void PopulateCommandBuffer()
-    {
-        auto backTextureIndex = swapChain->AcquireBackTexture();
-        UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
-        {
-            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::clear;
-            colorAttachments[0].storeOp = StoreOp::store;
-            colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();
-            colorAttachments[0].resolve = nullptr;
-
-            GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
-            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
-            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
-
-            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
-            {
-                graphicsEncoder->SetPipeline(pipeline.Get());
-                graphicsEncoder->SetScissor(0, 0, width, height);
-                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
-                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
-                graphicsEncoder->SetBindGroup(0, bindGroup.Get());
-                graphicsEncoder->SetVertexBuffer(0, vertexBufferView.Get());
-                graphicsEncoder->SetIndexBuffer(indexBufferView.Get());
-                graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
-            }
-            graphicsEncoder->EndPass();
-            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::renderTarget, TextureState::present));
+        for (auto i = 0; i < backBufferCount; i++) {
+            commandBuffers[i] = device->CreateCommandBuffer();
         }
-        commandEncoder->SwapChainSync(swapChain.Get());
-        commandEncoder->End();
-    }
-
-    void SubmitCommandBufferAndPresent()
-    {
-        fence->Reset();
-        graphicsQueue->Submit(commandBuffer.Get(), fence.Get());
-        swapChain->Present();
-        fence->Wait();
     }
 
     PixelFormat swapChainFormat = PixelFormat::max;
@@ -454,8 +465,9 @@ private:
     UniqueRef<GraphicsPipeline> pipeline;
     UniqueRef<ShaderModule> vertexShader;
     UniqueRef<ShaderModule> fragmentShader;
-    UniqueRef<CommandBuffer> commandBuffer;
-    UniqueRef<Fence> fence;
+    std::array<UniqueRef<CommandBuffer>, backBufferCount> commandBuffers;
+    std::array<UniqueRef<Fence>, backBufferCount> inflightFences;
+    uint8_t nextFrameIndex = 0;
 };
 
 int main(int argc, char* argv[])

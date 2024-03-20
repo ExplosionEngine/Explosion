@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 #include <Common/Utility.h>
 #include <RHI/Common.h>
 #include <RHI/Surface.h>
@@ -11,6 +13,7 @@
 namespace RHI {
     class Texture;
     class Queue;
+    class Fence;
 
     struct SwapChainCreateInfo {
         Queue* presentQueue;
@@ -27,7 +30,7 @@ namespace RHI {
         virtual ~SwapChain();
 
         virtual Texture* GetTexture(uint8_t index) = 0;
-        virtual uint8_t AcquireBackTexture() = 0;
+        virtual uint8_t AcquireBackTexture(Fence* fence, uint32_t waitFenceValue) = 0;
         virtual void Present() = 0;
         virtual void Destroy() = 0;
 

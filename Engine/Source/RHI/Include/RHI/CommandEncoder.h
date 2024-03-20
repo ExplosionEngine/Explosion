@@ -130,7 +130,6 @@ namespace RHI {
         virtual CopyPassCommandEncoder* BeginCopyPass() = 0;
         virtual ComputePassCommandEncoder* BeginComputePass() = 0;
         virtual GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) = 0;
-        virtual void SwapChainSync(SwapChain* swapChain) = 0;
         virtual void End() = 0;
         virtual void Destroy() = 0;
 

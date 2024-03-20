@@ -17,7 +17,7 @@ namespace RHI::DirectX12 {
             return EXCEPTION_CONTINUE_SEARCH;
         }
 
-        dynamic_cast<DX12Instance*>(gInstance)->BroadcastDebugLayerExceptions();
+        static_cast<DX12Instance*>(gInstance)->BroadcastDebugLayerExceptions();
         return EXCEPTION_CONTINUE_EXECUTION;
     }
 #endif

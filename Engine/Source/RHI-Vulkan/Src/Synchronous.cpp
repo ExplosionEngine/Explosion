@@ -7,7 +7,7 @@
 #include <RHI/Vulkan/Device.h>
 
 namespace RHI::Vulkan {
-    VKFence::VKFence(VKDevice& device_) : Fence(device_), device(device_), signaled(false)
+    VKFence::VKFence(VKDevice& device_) : Fence(device_), device(device_)
     {
         CreateVKFence();
     }
@@ -19,22 +19,13 @@ namespace RHI::Vulkan {
         }
     }
 
-    FenceStatus VKFence::GetStatus()
+    void VKFence::Signal(uint32_t value)
     {
-        return signaled ? FenceStatus::signaled : FenceStatus::notReady;
+        // TODO
     }
 
-    void VKFence::Reset()
+    void VKFence::Wait(uint32_t value)
     {
-        Assert(vkResetFences(device.GetVkDevice(), 1, &fence) == VK_SUCCESS);
-        signaled = false;
-    }
-
-    void VKFence::Wait()
-    {
-        if (signaled) {
-            return;
-        }
         Assert(vkWaitForFences(device.GetVkDevice(), 1, &fence, VK_TRUE, UINT64_MAX) == VK_SUCCESS);
     }
 

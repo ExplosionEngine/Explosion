@@ -261,7 +261,7 @@ namespace RHI::Vulkan {
 
     void VKGraphicsPipeline::SavePipelineLayout(const GraphicsPipelineCreateInfo& createInfo)
     {
-        auto* layout = dynamic_cast<VKPipelineLayout*>(createInfo.layout);
+        auto* layout = static_cast<VKPipelineLayout*>(createInfo.layout);
         Assert(layout);
         pipelineLayout = layout;
     }

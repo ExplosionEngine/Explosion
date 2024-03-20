@@ -19,11 +19,10 @@ namespace RHI::DirectX12 {
     class DX12Fence : public Fence {
     public:
         explicit DX12Fence(DX12Device& device);
-        ~DX12Fence();
+        ~DX12Fence() override;
 
-        FenceStatus GetStatus() override;
-        void Reset() override;
-        void Wait() override;
+        void Signal(uint32_t value) override;
+        void Wait(uint32_t value) override;
         void Destroy() override;
 
         ComPtr<ID3D12Fence>& GetDX12Fence();
@@ -34,6 +33,5 @@ namespace RHI::DirectX12 {
 
         ComPtr<ID3D12Fence> dx12Fence;
         HANDLE dx12FenceEvent;
-        bool signaled;
     };
 }

@@ -104,8 +104,14 @@ namespace RHI::Vulkan {
             commandEncoder->ResourceBarrier(Barrier::Transition(this, BufferState::undefined, createInfo.initialState));
             commandEncoder->End();
 
-            queue->Submit(commandBuffer.Get(), fence.Get());
-            fence->Wait();
+            fence->Signal(0);
+
+            QueueSubmitInfo submitInfo {};
+            submitInfo.signalFence = fence.Get();
+            submitInfo.signalFenceValue = 1;
+
+            queue->Submit(commandBuffer.Get(), submitInfo);
+            fence->Wait(1);
         }
     }
 

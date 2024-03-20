@@ -13,15 +13,15 @@ namespace RHI::DirectX12 {
     static inline CD3DX12_CPU_DESCRIPTOR_HANDLE GetDescriptorCpuHandleAndHeap(const BindGroupEntry& entry)
     {
         if (entry.binding.type == BindingType::uniformBuffer || entry.binding.type == BindingType::storageBuffer) {
-            auto* bufferView = dynamic_cast<DX12BufferView*>(entry.bufferView);
+            auto* bufferView = static_cast<DX12BufferView*>(entry.bufferView);
             return bufferView->GetDX12CpuDescriptorHandle();
         }
         if (entry.binding.type == BindingType::texture || entry.binding.type == BindingType::storageTexture) {
-            auto* textureView = dynamic_cast<DX12TextureView*>(entry.textureView);
+            auto* textureView = static_cast<DX12TextureView*>(entry.textureView);
             return textureView->GetDX12CpuDescriptorHandle();
         }
         if (entry.binding.type == BindingType::sampler) {
-            auto* sampler = dynamic_cast<DX12Sampler*>(entry.sampler);
+            auto* sampler = static_cast<DX12Sampler*>(entry.sampler);
             return sampler->GetDX12CpuDescriptorHandle();
         }
         QuickFail();
@@ -55,7 +55,7 @@ namespace RHI::DirectX12 {
 
     void DX12BindGroup::SaveBindGroupLayout(const BindGroupCreateInfo& createInfo)
     {
-        auto* tBindGroupLayout = dynamic_cast<DX12BindGroupLayout*>(createInfo.layout);
+        auto* tBindGroupLayout = static_cast<DX12BindGroupLayout*>(createInfo.layout);
         Assert(tBindGroupLayout);
         bindGroupLayout = tBindGroupLayout;
     }

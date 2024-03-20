@@ -13,7 +13,7 @@ namespace RHI::Dummy {
         DummyQueue();
         ~DummyQueue() override;
 
-        void Submit(CommandBuffer* commandBuffer, Fence* fenceToSignal) override;
-        void Wait(Fence* fenceToSignal) override;
+        void Submit(CommandBuffer* commandBuffer, const QueueSubmitInfo& submitInfo) override;
+        void Flush(const RHI::QueueFlushInfo& flushInfo) override;
     };
 }

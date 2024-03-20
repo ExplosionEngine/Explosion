@@ -44,20 +44,13 @@ namespace RHI {
         };
     };
 
-    enum class FenceStatus {
-        signaled,
-        notReady,
-        max
-    };
-
     class Fence {
     public:
         NonCopyable(Fence)
         virtual ~Fence();
 
-        virtual FenceStatus GetStatus() = 0;
-        virtual void Reset() = 0;
-        virtual void Wait() = 0;
+        virtual void Signal(uint32_t value) = 0;
+        virtual void Wait(uint32_t value) = 0;
         virtual void Destroy() = 0;
 
     protected:

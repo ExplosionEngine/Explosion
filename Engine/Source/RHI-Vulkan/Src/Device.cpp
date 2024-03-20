@@ -145,7 +145,7 @@ namespace RHI::Vulkan {
 
     bool VKDevice::CheckSwapChainFormatSupport(Surface* surface, PixelFormat format)
     {
-        auto* vkSurface = dynamic_cast<VKSurface*>(surface);
+        auto* vkSurface = static_cast<VKSurface*>(surface);
         VkColorSpaceKHR colorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
 
         uint32_t formatCount = 0;
