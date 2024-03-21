@@ -67,7 +67,7 @@ namespace RHI::Vulkan {
                 [&requiredLayerName](const auto& elem) -> bool { return std::string(requiredLayerName) == elem.layerName; }
             );
             if (iter == supportedLayers.end()) {
-                continue;
+                QuickFailWithReason("not found required vulkan layers");
             }
             vkEnabledLayerNames.emplace_back(requiredLayerName);
         }

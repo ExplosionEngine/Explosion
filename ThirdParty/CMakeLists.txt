@@ -26,9 +26,10 @@ Add3rdHeaderOnlyPackage(
 )
 
 # VulkanSDK
+set(VULKAN_SDK_VERSION 1.3.243.0)
 Add3rdBinaryPackage(
     NAME VulkanSDK
-    VERSION 1.3.243.0
+    VERSION ${VULKAN_SDK_VERSION}
     HASH
         Windows 23ded0e6155a8ea265da84bd62f7a45cc3fc637fb1eeba61a5b9430fa704e4b5
         Darwin a5c63a4f29984540efa00190240d31b59539413cf4783792bd9f53207f4f7d07
@@ -42,6 +43,24 @@ Add3rdBinaryPackage(
         Windows vulkan-1
         Darwin vulkan.1
 )
+if (NOT ${CI})
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+        execute_process(COMMAND reg query "HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\ExplicitLayers" OUTPUT_VARIABLE LAYERS)
+        string(REGEX MATCH "VkLayer_khronos_validation\.json" MATCH_RESULT ${LAYERS})
+        list(LENGTH MATCH_RESULT MATCH_RESULT_LENGTH)
+
+        if (${MATCH_RESULT_LENGTH} GREATER 0)
+            message("Used registered validation layer in HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\ExplicitLayers")
+        else ()
+            set(VALIDATION_LAYER_JSON ${3RD_SOURCE_DIR}/VulkanSDK-Windows-${VULKAN_SDK_VERSION}/Bin/VkLayer_khronos_validation.json)
+            message("Found no registered validation layer, will register ${VALIDATION_LAYER_JSON} to reg HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\ExplicitLayers")
+            string(REPLACE "/" "\\" VALIDATION_LAYER_JSON ${VALIDATION_LAYER_JSON})
+            execute_process(COMMAND PowerShell -Command "Start-Process reg -ArgumentList 'add HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\ExplicitLayers /v ${VALIDATION_LAYER_JSON} /t REG_DWORD /d 0' -Verb RunAs")
+        endif ()
+    else ()
+        # TODO check macOS
+    endif ()
+endif ()
 
 # DXC
 # Windows uses standalone package, macOS uses lib in VulkanSDK
