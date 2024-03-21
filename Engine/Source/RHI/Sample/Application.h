@@ -122,14 +122,20 @@ public:
 
     void CursorCallbackImpl(float x, float y)
     {
-        float dx = mousePos.x - x;
-        float dy = mousePos.y - y;
+        float dx = x - mousePos.x;
+        float dy = y - mousePos.y;
 
+        // screen space of glfw:
+        // origin in left-top, x from left to rignt, y from top to bottom
         if (mouseButtons.left) {
             // rotate camera with mouse's left button down (positive value represents counterclockwise rotation)
-            // horizontal mouse moving(dx) causes rotation alng y axis
-            // vertical mouse moving(dy) causes rotation along x axis
-            camera->Rotate(FVec3(-dy * camera->rotateSpeed, -dx * camera->rotateSpeed, 0.0f));
+            // before apply axisTransMat
+            //     x+ -> from screen outer to inner
+            //     y+ -> from left to right
+            //     z+ -> from bottom to top
+            // horizontal mouse moving(dx) causes rotation alng z axis
+            // vertical mouse moving(dy) causes rotation along y axis
+            camera->Rotate(FVec3(0.0, -dy * camera->rotateSpeed, -dx * camera->rotateSpeed));
         }
 
         if (mouseButtons.right) {
