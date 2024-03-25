@@ -128,20 +128,14 @@ namespace RHI::Vulkan {
             Queue* queue = device.GetQueue(QueueType::graphics, 0);
             Assert(queue);
 
-            Common::UniqueRef<Fence> fence = device.CreateFence();
+            Common::UniqueRef<Fence> fence = device.CreateFence(false);
             Common::UniqueRef<CommandBuffer> commandBuffer = device.CreateCommandBuffer();
             Common::UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
             commandEncoder->ResourceBarrier(Barrier::Transition(this, TextureState::undefined, createInfo.initialState));
             commandEncoder->End();
 
-            fence->Signal(0);
-
-            QueueSubmitInfo submitInfo {};
-            submitInfo.signalFence = fence.Get();
-            submitInfo.signalFenceValue = 1;
-
-            queue->Submit(commandBuffer.Get(), submitInfo);
-            fence->Wait(1);
+            queue->Submit(commandBuffer.Get(), fence.Get());
+            fence->Wait();
         }
     }
 }

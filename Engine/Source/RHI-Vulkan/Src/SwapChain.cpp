@@ -10,6 +10,7 @@
 #include <RHI/Vulkan/Texture.h>
 #include <RHI/Vulkan/Queue.h>
 #include <RHI/Vulkan/Surface.h>
+#include <RHI/Vulkan/Synchronous.h>
 
 namespace RHI::Vulkan {
     VKSwapChain::VKSwapChain(VKDevice& dev, const SwapChainCreateInfo& createInfo)
@@ -38,10 +39,9 @@ namespace RHI::Vulkan {
         return textures[index];
     }
 
-    uint8_t VKSwapChain::AcquireBackTexture(Fence* fence, uint32_t waitFenceValue)
+    uint8_t VKSwapChain::AcquireBackTexture()
     {
         // TODO wait fence
-
         Assert(vkAcquireNextImageKHR(device.GetVkDevice(), swapChain, UINT64_MAX, VK_NULL_HANDLE, VK_NULL_HANDLE, &currentImage) == VK_SUCCESS);
         return currentImage;
     }

@@ -66,7 +66,7 @@ namespace RHI {
         virtual ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) = 0;
         virtual GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) = 0;
         virtual CommandBuffer* CreateCommandBuffer() = 0;
-        virtual Fence* CreateFence() = 0;
+        virtual Fence* CreateFence(bool bInitAsSignaled) = 0;
 
         virtual bool CheckSwapChainFormatSupport(Surface* surface, PixelFormat format) = 0;
 

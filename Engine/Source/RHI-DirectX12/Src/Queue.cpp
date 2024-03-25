@@ -14,33 +14,22 @@ namespace RHI::DirectX12 {
 
     DX12Queue::~DX12Queue() = default;
 
-    void DX12Queue::Submit(CommandBuffer* inCommandBuffer, const QueueSubmitInfo& submitInfo)
+    void DX12Queue::Submit(CommandBuffer* inCommandBuffer, Fence* fenceToSignal)
     {
         auto* commandBuffer = static_cast<DX12CommandBuffer*>(inCommandBuffer);
-        auto* waitFence = static_cast<DX12Fence*>(submitInfo.waitFence);
-        auto* signalFence = static_cast<DX12Fence*>(submitInfo.signalFence);
         Assert(commandBuffer);
-
-        if (waitFence != nullptr) {
-            dx12CommandQueue->Wait(waitFence->GetDX12Fence().Get(), 1);
-        }
 
         std::array<ID3D12CommandList*, 1> cmdListsToExecute = { commandBuffer->GetDX12GraphicsCommandList().Get() };
         dx12CommandQueue->ExecuteCommandLists(cmdListsToExecute.size(), cmdListsToExecute.data());
-
-        QueueFlushInfo flushInfo {};
-        flushInfo.signalFence = signalFence;
-        flushInfo.signalFenceValue = submitInfo.signalFenceValue;
-
-        Flush(flushInfo);
+        Flush(fenceToSignal);
     }
 
-    void DX12Queue::Flush(const QueueFlushInfo& flushInfo)
+    void DX12Queue::Flush(Fence* fenceToSignal)
     {
-        auto* signalFence = static_cast<DX12Fence*>(flushInfo.signalFence);
+        auto* dx12Fence = static_cast<DX12Fence*>(fenceToSignal);
 
-        if (signalFence != nullptr) {
-            dx12CommandQueue->Signal(signalFence->GetDX12Fence().Get(), flushInfo.signalFenceValue);
+        if (dx12Fence != nullptr) {
+            dx12CommandQueue->Signal(dx12Fence->GetDX12Fence().Get(), 1);
         }
     }
 

@@ -18,32 +18,13 @@ namespace RHI::Vulkan {
 
     VKQueue::~VKQueue() = default;
 
-    void VKQueue::Submit(CommandBuffer* cb, const QueueSubmitInfo& submitInfo)
+    void VKQueue::Submit(CommandBuffer* cb, Fence* fenceToSignal)
     {
         auto* commandBuffer = static_cast<VKCommandBuffer*>(cb);
-        auto* fenceToWait = static_cast<VKFence*>(submitInfo.waitFence);
-        auto* fenceToSignal = static_cast<VKFence*>(submitInfo.signalFence);
+        auto* vkFence = static_cast<VKFence*>(fenceToSignal);
 
         Assert(commandBuffer);
         const VkCommandBuffer& cmdBuffer = commandBuffer->GetVkCommandBuffer();
-
-        const bool hasFenceToWait = fenceToWait != nullptr;
-        const bool hasFenceToSignal = fenceToSignal != nullptr;
-        const bool hasAnyFence = hasFenceToWait || hasFenceToSignal;
-
-        std::vector<VkSemaphore> waitTimelineSemaphores;
-        std::vector<VkSemaphore> signalTimelineSemaphores;
-        std::vector<uint64_t> waitValues;
-        std::vector<uint64_t> signalValues;
-
-        if (hasFenceToWait) {
-            waitTimelineSemaphores.emplace_back(fenceToWait->GetTimelineSemaphore());
-            waitValues.emplace_back(submitInfo.waitFenceValue);
-        }
-        if (hasFenceToSignal) {
-            signalTimelineSemaphores.emplace_back(fenceToSignal->GetTimelineSemaphore());
-            signalValues.emplace_back(submitInfo.signalFenceValue);
-        }
 
         VkSubmitInfo vkSubmitInfo = {};
         vkSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -54,29 +35,10 @@ namespace RHI::Vulkan {
         vkSubmitInfo.commandBufferCount = 1;
         vkSubmitInfo.pCommandBuffers = &cmdBuffer;
 
-        VkTimelineSemaphoreSubmitInfoKHR timelineSemaphoreSubmitInfo {};
-        timelineSemaphoreSubmitInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO_KHR;
-
-        if (hasFenceToWait) {
-            vkSubmitInfo.waitSemaphoreCount = waitTimelineSemaphores.size();
-            vkSubmitInfo.pWaitSemaphores = waitTimelineSemaphores.data();
-            timelineSemaphoreSubmitInfo.waitSemaphoreValueCount = waitValues.size();
-            timelineSemaphoreSubmitInfo.pWaitSemaphoreValues = waitValues.data();
-        }
-        if (hasFenceToSignal) {
-            vkSubmitInfo.signalSemaphoreCount = signalTimelineSemaphores.size();
-            vkSubmitInfo.pSignalSemaphores = signalTimelineSemaphores.data();
-            timelineSemaphoreSubmitInfo.signalSemaphoreValueCount = signalValues.size();
-            timelineSemaphoreSubmitInfo.pSignalSemaphoreValues = signalValues.data();
-        }
-        if (hasAnyFence) {
-            vkSubmitInfo.pNext = &timelineSemaphoreSubmitInfo;
-        }
-
-        Assert(vkQueueSubmit(vkQueue, 1, &vkSubmitInfo, VK_NULL_HANDLE) == VK_SUCCESS);
+        Assert(vkQueueSubmit(vkQueue, 1, &vkSubmitInfo, vkFence->GetNative()) == VK_SUCCESS);
     }
 
-    void VKQueue::Flush(const QueueFlushInfo& flushInfo)
+    void VKQueue::Flush(Fence* fenceToSignal)
     {
         // TODO
     }

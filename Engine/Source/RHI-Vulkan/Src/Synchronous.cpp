@@ -9,50 +9,38 @@
 #include <RHI/Vulkan/Instance.h>
 
 namespace RHI::Vulkan {
-    VKFence::VKFence(VKDevice& device_)
-        : Fence(device_)
-        , device(device_)
-        , vkWaitSemaphoresKhrFunc(reinterpret_cast<PFN_vkWaitSemaphoresKHR>(vkGetInstanceProcAddr(device_.GetGpu().GetInstance().GetVkInstance(), "vkWaitSemaphoresKHR")))
-        , vkSignalSemaphoreKhrFunc(reinterpret_cast<PFN_vkSignalSemaphoreKHR>(vkGetInstanceProcAddr(device_.GetGpu().GetInstance().GetVkInstance(), "vkSignalSemaphoreKHR")))
+    VKFence::VKFence(VKDevice& inDevice, bool initAsSignaled)
+        : Fence(inDevice, initAsSignaled)
+        , device(inDevice)
+        , vkFence(VK_NULL_HANDLE)
     {
-        VkSemaphoreTypeCreateInfo typeCreateInfo {};
-        typeCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
-        typeCreateInfo.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
-        typeCreateInfo.initialValue = 0;
+        VkFenceCreateInfo fenceCreateInfo {};
+        fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceCreateInfo.flags = initAsSignaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
 
-        VkSemaphoreCreateInfo createInfo {};
-        createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        createInfo.pNext = &typeCreateInfo;
-
-        Assert(vkCreateSemaphore(device.GetVkDevice(), &createInfo, nullptr, &vkTimelineSemaphore) == VK_SUCCESS);
+        Assert(vkCreateFence(device.GetVkDevice(), &fenceCreateInfo, nullptr, &vkFence) == VK_SUCCESS);
     }
 
     VKFence::~VKFence()
     {
-        vkDestroySemaphore(device.GetVkDevice(), vkTimelineSemaphore, nullptr);
+        vkDestroyFence(device.GetVkDevice(), vkFence, nullptr);
     }
 
-    void VKFence::Signal(uint32_t value)
+    bool VKFence::IsSignaled()
     {
-        VkSemaphoreSignalInfoKHR signalInfo {};
-        signalInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO_KHR;
-        signalInfo.semaphore = vkTimelineSemaphore;
-        signalInfo.value = value;
-
-        Assert(vkSignalSemaphoreKhrFunc(device.GetVkDevice(), &signalInfo) == VK_SUCCESS);
+        return vkGetFenceStatus(device.GetVkDevice(), vkFence) == VK_SUCCESS;
     }
 
-    void VKFence::Wait(uint32_t value)
+    void VKFence::Reset()
     {
-        std::vector<uint64_t> values = { value };
+        std::vector<VkFence> fences = { vkFence };
+        Assert(vkResetFences(device.GetVkDevice(), fences.size(), fences.data()) == VK_SUCCESS);
+    }
 
-        VkSemaphoreWaitInfo waitInfo {};
-        waitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO_KHR;
-        waitInfo.pSemaphores = &vkTimelineSemaphore;
-        waitInfo.semaphoreCount = 1;
-        waitInfo.pValues = values.data();
-
-        Assert(vkWaitSemaphoresKhrFunc(device.GetVkDevice(), &waitInfo, UINT64_MAX) == VK_SUCCESS);
+    void VKFence::Wait()
+    {
+        std::vector<VkFence> fences = { vkFence };
+        Assert(vkWaitForFences(device.GetVkDevice(), fences.size(), fences.data(), VK_TRUE, UINT64_MAX) == VK_SUCCESS);
     }
 
     void VKFence::Destroy()
@@ -60,8 +48,8 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    VkSemaphore VKFence::GetTimelineSemaphore() const
+    VkFence VKFence::GetNative() const
     {
-        return vkTimelineSemaphore;
+        return vkFence;
     }
 }

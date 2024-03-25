@@ -26,7 +26,7 @@ namespace RHI {
         return barrier;
     }
 
-    Fence::Fence(Device& device) {}
+    Fence::Fence(Device& device, bool initAsSignaled) {}
 
     Fence::~Fence() = default;
 }

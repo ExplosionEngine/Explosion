@@ -40,7 +40,7 @@ namespace RHI::Vulkan {
         ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) override;
         GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
-        Fence* CreateFence() override;
+        Fence* CreateFence(bool initAsSignaled) override;
 
         bool CheckSwapChainFormatSupport(Surface* surface, PixelFormat format) override;
 

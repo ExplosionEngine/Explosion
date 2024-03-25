@@ -12,19 +12,18 @@ namespace RHI::Vulkan {
 
     class VKFence : public Fence {
     public:
-        explicit VKFence(VKDevice& device);
+        explicit VKFence(VKDevice& inDevice, bool initAsSignaled);
         ~VKFence() override;
 
-        void Signal(uint32_t value) override;
-        void Wait(uint32_t value) override;
+        bool IsSignaled() override;
+        void Reset() override;
+        void Wait() override;
         void Destroy() override;
 
-        VkSemaphore GetTimelineSemaphore() const;
+        VkFence GetNative() const;
 
     private:
         VKDevice& device;
-        VkSemaphore vkTimelineSemaphore;
-        PFN_vkWaitSemaphoresKHR vkWaitSemaphoresKhrFunc;
-        PFN_vkSignalSemaphoreKHR vkSignalSemaphoreKhrFunc;
+        VkFence vkFence;
     };
 }

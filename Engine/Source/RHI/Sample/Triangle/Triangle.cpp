@@ -37,8 +37,9 @@ protected:
 
     void OnDrawFrame() override
     {
-        auto backTextureIndex = swapChain->AcquireBackTexture(inflightFences[nextFrameIndex].Get(), 1);
-        inflightFences[nextFrameIndex]->Signal(0);
+        inflightFences[nextFrameIndex]->Wait();
+        auto backTextureIndex = swapChain->AcquireBackTexture();
+        inflightFences[nextFrameIndex]->Reset();
 
         UniqueRef<CommandEncoder> commandEncoder = commandBuffers[nextFrameIndex]->Begin();
         {
@@ -69,10 +70,7 @@ protected:
         }
         commandEncoder->End();
 
-        QueueSubmitInfo submitInfo {};
-        submitInfo.signalFence = inflightFences[nextFrameIndex].Get();
-        submitInfo.signalFenceValue = 1;
-        graphicsQueue->Submit(commandBuffers[nextFrameIndex].Get(), submitInfo);
+        graphicsQueue->Submit(commandBuffers[nextFrameIndex].Get(), inflightFences[nextFrameIndex].Get());
 
         swapChain->Present();
         nextFrameIndex = (nextFrameIndex + 1) % backBufferCount;
@@ -80,14 +78,9 @@ protected:
 
     void OnDestroy() override
     {
-        Common::UniqueRef<Fence> fence = device->CreateFence();
-
-        fence->Signal(0);
-        QueueFlushInfo flushInfo {};
-        flushInfo.signalFence = fence.Get();
-        flushInfo.signalFenceValue = 1;
-        graphicsQueue->Flush(flushInfo);
-        fence->Wait(1);
+        Common::UniqueRef<Fence> fence = device->CreateFence(false);
+        graphicsQueue->Flush(fence.Get());
+        fence->Wait();
     }
 
 private:
@@ -245,8 +238,7 @@ private:
     void CreateFence()
     {
         for (auto i = 0; i < backBufferCount; i++) {
-            inflightFences[i] = device->CreateFence();
-            inflightFences[i]->Signal(1);
+            inflightFences[i] = device->CreateFence(true);
         }
     }
 

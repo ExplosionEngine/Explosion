@@ -34,11 +34,8 @@ namespace RHI::DirectX12 {
         return textures[index].Get();
     }
 
-    uint8_t DX12SwapChain::AcquireBackTexture(Fence* fence, uint32_t waitFenceValue)
+    uint8_t DX12SwapChain::AcquireBackTexture()
     {
-        if (fence != nullptr) {
-            fence->Wait(waitFenceValue);
-        }
         return static_cast<uint8_t>(dx12SwapChain->GetCurrentBackBufferIndex());
     }
 

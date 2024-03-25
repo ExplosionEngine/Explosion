@@ -49,11 +49,12 @@ namespace RHI {
         NonCopyable(Fence)
         virtual ~Fence();
 
-        virtual void Signal(uint32_t value) = 0;
-        virtual void Wait(uint32_t value) = 0;
+        virtual bool IsSignaled() = 0;
+        virtual void Reset() = 0;
+        virtual void Wait() = 0;
         virtual void Destroy() = 0;
 
     protected:
-        explicit Fence(Device& device);
+        explicit Fence(Device& device, bool initAsSignaled);
     };
 }

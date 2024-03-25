@@ -7,9 +7,9 @@
 #include <RHI/DirectX12/Device.h>
 
 namespace RHI::DirectX12 {
-    DX12Fence::DX12Fence(DX12Device& device) : Fence(device), dx12FenceEvent(nullptr)
+    DX12Fence::DX12Fence(DX12Device& device, bool initAsSignaled) : Fence(device, initAsSignaled), dx12FenceEvent(nullptr)
     {
-        CreateDX12Fence(device);
+        CreateDX12Fence(device, initAsSignaled);
         CreateDX12FenceEvent();
     }
 
@@ -18,14 +18,19 @@ namespace RHI::DirectX12 {
         CloseHandle(dx12FenceEvent);
     }
 
-    void DX12Fence::Signal(uint32_t value)
+    bool DX12Fence::IsSignaled()
     {
-        dx12Fence->Signal(value);
+        return dx12Fence->GetCompletedValue() == 1;
     }
 
-    void DX12Fence::Wait(uint32_t value)
+    void DX12Fence::Reset()
     {
-        Assert(SUCCEEDED(dx12Fence->SetEventOnCompletion(value, dx12FenceEvent)));
+        dx12Fence->Signal(0);
+    }
+
+    void DX12Fence::Wait()
+    {
+        Assert(SUCCEEDED(dx12Fence->SetEventOnCompletion(1, dx12FenceEvent)));
         WaitForSingleObject(dx12FenceEvent, INFINITE);
     }
 
@@ -34,9 +39,9 @@ namespace RHI::DirectX12 {
         return dx12Fence;
     }
 
-    void DX12Fence::CreateDX12Fence(DX12Device& device)
+    void DX12Fence::CreateDX12Fence(DX12Device& device, bool initAsSignaled)
     {
-        Assert(SUCCEEDED(device.GetDX12Device()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dx12Fence))));
+        Assert(SUCCEEDED(device.GetDX12Device()->CreateFence(initAsSignaled ? 1 : 0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dx12Fence))));
     }
 
     void DX12Fence::CreateDX12FenceEvent()
