@@ -1280,8 +1280,8 @@ private:
     void InitCamera()
     {
         camera = std::make_unique<Camera>(
-            FVec3(1.0f, 3.0f, -5.0f),
-            FVec3(-15.0f, 10.0f, .0f),
+            FVec3(.0f, -5.0f, 2.0f),
+            FVec3(.0f, .0f, -90.0f),
             Camera::ProjectParams {
                 60.0f,
                 static_cast<float>(width),
@@ -1291,8 +1291,8 @@ private:
             }
             );
 
-        camera->moveSpeed = 0.015f;
-        camera->rotateSpeed = 0.2f;
+        camera->moveSpeed = 0.0015f;
+        camera->rotateSpeed = 0.1f;
     }
 
     void LoadGLTF()

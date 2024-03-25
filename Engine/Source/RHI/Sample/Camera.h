@@ -33,53 +33,55 @@ public:
         float farPlane;
     };
 
+    // view space means the local space of camera
+    // all the calculation applies to camera is in world space
+    // transform is the operations make camera from local to world
+    // the inverse of transform is the operations make objects in world from world to view(the local of camera)
     Camera(FVec3 inPos, FVec3 inRot, ProjectParams pParam)
-        : camPosition(inPos),
-        camRotation(inRot),
+        : viewTransform(FQuat::FromEulerZYX(inRot.x, inRot.y, inRot.z), inPos),
         rzProjection(pParam.fov, pParam.width, pParam.height, pParam.nearPlane, pParam.farPlane)
     {
-        UpdateViewTransform();
     }
 
     void SetPosition(FVec3 inPosition)
     {
-        this->camPosition = inPosition;
-        UpdateViewTransform();
-    }
-
-    void Translate(FVec3 inTranslation)
-    {
-        this->camPosition += inTranslation;
-        UpdateViewTransform();
+        viewTransform.translation = inPosition;
     }
 
     void SetRotation(FVec3 inRotation)
     {
-        this->camRotation = inRotation;
-        UpdateViewTransform();
-    }
-
-    void Rotate(FVec3 inRotation)
-    {
-        this->camRotation += inRotation;
-        UpdateViewTransform();
+        viewTransform.rotation = FQuat::FromEulerZYX(inRotation.x, inRotation.y, inRotation.z);
     }
 
     void SetTarget(FVec3 inTarget)
     {
         this->camTarget = inTarget;
-        vt.LookTo(camTarget);
+        viewTransform.LookTo(camTarget);
     }
 
-    void SetTranslation(const FVec3 inDelta)
+    void SetTranslation(const FVec3 inTranslation)
     {
-        this->camPosition += inDelta;
-        UpdateViewTransform();
+        viewTransform.translation = inTranslation;
+    }
+
+    void Translate(FVec3 inTransDelta)
+    {
+        // inTransDelta is in camera's local, needs to be changed to world
+        inTransDelta = viewTransform.rotation.RotateVector(inTransDelta);
+
+        viewTransform.translation += inTransDelta;
+    }
+
+    void Rotate(FVec3 inRotDelta)
+    {
+        // inRotDelta is also in camera's local, but we need't to change it to world, because previous rotation will be applied first, making the coords in camera local
+        // imagine putting a new camera from wolrd's origin to the position of old camera using old transform
+        viewTransform.rotation = FQuat::FromEulerZYX(inRotDelta.x, inRotDelta.y, inRotDelta.z) * viewTransform.rotation;
     }
 
     FMat4x4 GetViewMatrix()
     {
-        return vt.GetViewMatrix();
+        return viewTransform.GetViewMatrix();
     }
 
     FMat4x4 GetProjectionMatrix()
@@ -96,44 +98,29 @@ public:
     {
         if (Moving()) {
             float frameMovement = moveSpeed * deltaTime;
+            FVec3 posDelta = FVec3Consts::zero;
             if (keys.front)
-                camPosition += axis.forward * frameMovement;
+                posDelta += FVec3(1.0f, .0f, .0f) * frameMovement;
             if (keys.back)
-                camPosition -= axis.forward * frameMovement;
+                posDelta -= FVec3(1.0f, .0f, .0f) * frameMovement;
             if (keys.left)
-                camPosition -= axis.side * frameMovement;
+                posDelta -= FVec3(.0f, 1.0f, .0f) * frameMovement;
             if (keys.right)
-                camPosition += axis.side * frameMovement;
+                posDelta += FVec3(.0f, 1.0f, .0f) * frameMovement;
             if (keys.up)
-                camPosition += axis.up * frameMovement;
+                posDelta += FVec3(.0f, .0f, 1.0f) * frameMovement;
             if (keys.down)
-                camPosition -= axis.up * frameMovement;
+                posDelta -= FVec3(.0f, .0f, 1.0f) * frameMovement;
 
-            UpdateViewTransform();
+            Translate(posDelta);
         }
     }
 
 private:
-    FViewTransform vt;
+    // vt makes camera from local to world
+    FViewTransform viewTransform;
     FReversedZPerspectiveProjection rzProjection;
 
-    struct {
-        FVec3 forward { .0f, .0f, 1.f };
-        FVec3 side { 1.f, .0f, .0f };
-        FVec3 up { .0f, 1.f, .0f };
-    } axis;
 
-    FVec3 camPosition = FVec3Consts::zero;
     FVec3 camTarget = FVec3Consts::unitZ;
-    FVec3 camRotation = FVec3Consts::zero;
-
-    void UpdateViewTransform()
-    {
-        vt.translation = this->camPosition;
-        vt.rotation = FQuat::FromEulerZYX(this->camRotation.x, this->camRotation.y, this->camRotation.z);
-
-        axis.forward = vt.rotation.RotateVector(FVec3(0, 0, 1)).Normalized();
-        axis.side = vt.rotation.RotateVector(FVec3(1, 0, 0)).Normalized();
-        axis.up = vt.rotation.RotateVector(FVec3(0, 1, 0)).Normalized();
-    }
 };

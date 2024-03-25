@@ -87,6 +87,6 @@ namespace Common {
             1, 0, 0, 0,
             0, 0, 0, 1
         );
-        return this->GetTransformMatrixNoScale().Inverse() * axisTransMat;
+        return axisTransMat * this->GetTransformMatrixNoScale().Inverse();
     }
 }
