@@ -24,13 +24,13 @@ namespace RHI::Dummy {
         return dummyTextures[index].Get();
     }
 
-    uint8_t DummySwapChain::AcquireBackTexture()
+    uint8_t DummySwapChain::AcquireBackTexture(RHI::Semaphore* signalSemaphore)
     {
         pingPong = !pingPong;
         return pingPong ? 0 : 1;
     }
 
-    void DummySwapChain::Present()
+    void DummySwapChain::Present(RHI::Semaphore* waitSemaphore)
     {
     }
 
