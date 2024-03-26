@@ -19,7 +19,6 @@ namespace RHI::Dummy {
         CopyPassCommandEncoder* BeginCopyPass() override;
         ComputePassCommandEncoder* BeginComputePass() override;
         GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
-        void SwapChainSync(SwapChain *swapChain) override;
         void End() override;
         void Destroy() override;
 

@@ -58,7 +58,7 @@ namespace RHI::Vulkan {
 
     void VKBindGroup::CreateDescriptorSet(const BindGroupCreateInfo& createInfo)
     {
-        VkDescriptorSetLayout layout = dynamic_cast<VKBindGroupLayout*>(createInfo.layout)->GetVkDescriptorSetLayout();
+        VkDescriptorSetLayout layout = static_cast<VKBindGroupLayout*>(createInfo.layout)->GetVkDescriptorSetLayout();
 
         VkDescriptorSetAllocateInfo allocInfo {};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -101,7 +101,7 @@ namespace RHI::Vulkan {
             descriptorWrites[i].descriptorType = VKEnumCast<BindingType, VkDescriptorType>(entry.binding.type);
 
             if (entry.binding.type == BindingType::uniformBuffer) {
-                auto* bufferView = dynamic_cast<VKBufferView*>(entry.bufferView);
+                auto* bufferView = static_cast<VKBufferView*>(entry.bufferView);
 
                 bufferInfos.emplace_back();
                 bufferInfos.back().buffer = bufferView->GetBuffer().GetVkBuffer();
@@ -110,14 +110,14 @@ namespace RHI::Vulkan {
 
                 descriptorWrites[i].pBufferInfo = &bufferInfos.back();
             } else if (entry.binding.type == BindingType::sampler) {
-                auto* sampler = dynamic_cast<VKSampler*>(entry.sampler);
+                auto* sampler = static_cast<VKSampler*>(entry.sampler);
 
                 imageInfos.emplace_back();
                 imageInfos.back().sampler = sampler->GetVkSampler();
 
                 descriptorWrites[i].pImageInfo = &imageInfos.back();
             } else if (entry.binding.type == BindingType::texture) {
-                auto* textureView = dynamic_cast<VKTextureView*>(entry.textureView);
+                auto* textureView = static_cast<VKTextureView*>(entry.textureView);
 
                 imageInfos.emplace_back();
                 imageInfos.back().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;

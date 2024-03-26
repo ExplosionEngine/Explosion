@@ -44,23 +44,28 @@ namespace RHI {
         };
     };
 
-    enum class FenceStatus {
-        signaled,
-        notReady,
-        max
-    };
-
     class Fence {
     public:
         NonCopyable(Fence)
         virtual ~Fence();
 
-        virtual FenceStatus GetStatus() = 0;
+        virtual bool IsSignaled() = 0;
         virtual void Reset() = 0;
         virtual void Wait() = 0;
         virtual void Destroy() = 0;
 
     protected:
-        explicit Fence(Device& device);
+        explicit Fence(Device& device, bool initAsSignaled);
+    };
+
+    class Semaphore {
+    public:
+        NonCopyable(Semaphore)
+        virtual ~Semaphore();
+
+        virtual void Destroy() = 0;
+
+    protected:
+        explicit Semaphore(Device& device);
     };
 }

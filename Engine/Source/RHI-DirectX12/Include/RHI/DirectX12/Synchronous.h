@@ -18,10 +18,10 @@ namespace RHI::DirectX12 {
 
     class DX12Fence : public Fence {
     public:
-        explicit DX12Fence(DX12Device& device);
-        ~DX12Fence();
+        explicit DX12Fence(DX12Device& device, bool initAsSignaled);
+        ~DX12Fence() override;
 
-        FenceStatus GetStatus() override;
+        bool IsSignaled() override;
         void Reset() override;
         void Wait() override;
         void Destroy() override;
@@ -29,11 +29,24 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12Fence>& GetDX12Fence();
 
     private:
-        void CreateDX12Fence(DX12Device& device);
+        void CreateDX12Fence(DX12Device& device, bool initAsSignaled);
         void CreateDX12FenceEvent();
 
         ComPtr<ID3D12Fence> dx12Fence;
         HANDLE dx12FenceEvent;
-        bool signaled;
+    };
+
+    class DX12Semaphore : public Semaphore {
+    public:
+        explicit DX12Semaphore(DX12Device& device);
+
+        ComPtr<ID3D12Fence>& GetDX12Fence();
+
+        void Destroy() override;
+
+    private:
+        void CreateDX12Fence(DX12Device& device);
+
+        ComPtr<ID3D12Fence> dx12Fence;
     };
 }

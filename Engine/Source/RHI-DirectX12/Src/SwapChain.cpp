@@ -12,6 +12,7 @@
 #include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Texture.h>
 #include <RHI/DirectX12/Surface.h>
+#include <RHI/DirectX12/Synchronous.h>
 
 namespace RHI::DirectX12 {
     static uint8_t GetSyncInterval(PresentMode presentMode)
@@ -21,7 +22,12 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12SwapChain::DX12SwapChain(DX12Device& device, const SwapChainCreateInfo& createInfo) : SwapChain(createInfo), device(device), presentMode(createInfo.presentMode), textureNum(createInfo.textureNum)
+    DX12SwapChain::DX12SwapChain(DX12Device& device, const SwapChainCreateInfo& createInfo)
+        : SwapChain(createInfo)
+        , device(device)
+        , queue(static_cast<DX12Queue&>(*createInfo.presentQueue))
+        , presentMode(createInfo.presentMode)
+        , textureNum(createInfo.textureNum)
     {
         CreateDX12SwapChain(createInfo);
         FetchTextures(createInfo.format);
@@ -34,14 +40,22 @@ namespace RHI::DirectX12 {
         return textures[index].Get();
     }
 
-    uint8_t DX12SwapChain::AcquireBackTexture()
+    uint8_t DX12SwapChain::AcquireBackTexture(Semaphore* signalSemaphore)
     {
-        return static_cast<uint8_t>(dx12SwapChain->GetCurrentBackBufferIndex());
+        auto& dx12SignalSemaphore = static_cast<DX12Semaphore&>(*signalSemaphore);
+        auto result = static_cast<uint8_t>(dx12SwapChain->GetCurrentBackBufferIndex());
+        auto& fence = dx12SignalSemaphore.GetDX12Fence();
+        fence->Signal(0);
+        fence->Signal(1);
+        return result;
     }
 
-    void DX12SwapChain::Present()
+    void DX12SwapChain::Present(Semaphore* waitSemaphore)
     {
+        auto& dx12WaitSemaphore = static_cast<DX12Semaphore&>(*waitSemaphore);
+        auto& fence = dx12WaitSemaphore.GetDX12Fence();
         dx12SwapChain->Present(GetSyncInterval(presentMode), false);
+        queue.GetDX12CommandQueue()->Wait(fence.Get(), 1);
     }
 
     void DX12SwapChain::Destroy()
@@ -52,9 +66,9 @@ namespace RHI::DirectX12 {
     void DX12SwapChain::CreateDX12SwapChain(const SwapChainCreateInfo& createInfo)
     {
         auto& instance = device.GetGpu().GetInstance();
-        auto* dx12Queue = dynamic_cast<DX12Queue*>(createInfo.presentQueue);
+        auto* dx12Queue = static_cast<DX12Queue*>(createInfo.presentQueue);
         Assert(dx12Queue != nullptr);
-        auto* dx12Surface = dynamic_cast<DX12Surface*>(createInfo.surface);
+        auto* dx12Surface = static_cast<DX12Surface*>(createInfo.surface);
         Assert(dx12Surface != nullptr);
 
         DXGI_SWAP_CHAIN_DESC1 desc {};

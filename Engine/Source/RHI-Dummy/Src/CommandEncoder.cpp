@@ -162,10 +162,6 @@ namespace RHI::Dummy {
         return new DummyGraphicsPassCommandEncoder(dummyCommandBuffer);
     }
 
-    void DummyCommandEncoder::SwapChainSync(SwapChain* swapChain)
-    {
-    }
-
     void DummyCommandEncoder::End()
     {
     }

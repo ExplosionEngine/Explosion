@@ -87,14 +87,6 @@ namespace RHI::Vulkan {
         return new VKGraphicsPassCommandEncoder(device, *this, commandBuffer, beginInfo);
     }
 
-    void VKCommandEncoder::SwapChainSync(SwapChain* swapChain)
-    {
-        auto vkSwapChain = static_cast<VKSwapChain*>(swapChain);
-        auto signal = vkSwapChain->GetImageSemaphore();
-        commandBuffer.AddWaitSemaphore(signal, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-        vkSwapChain->AddWaitSemaphore(commandBuffer.GetSignalSemaphores()[0]);
-    }
-
     void VKCommandEncoder::End()
     {
         vkEndCommandBuffer(commandBuffer.GetVkCommandBuffer());
@@ -121,8 +113,8 @@ namespace RHI::Vulkan {
 
     void VKCopyPassCommandEncoder::CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size)
     {
-        auto* srcBuffer = dynamic_cast<VKBuffer*>(src);
-        auto* dstBuffer = dynamic_cast<VKBuffer*>(dst);
+        auto* srcBuffer = static_cast<VKBuffer*>(src);
+        auto* dstBuffer = static_cast<VKBuffer*>(dst);
 
         VkBufferCopy copyRegion {};
         copyRegion.srcOffset = srcOffset;
@@ -133,8 +125,8 @@ namespace RHI::Vulkan {
 
     void VKCopyPassCommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
     {
-        auto* buffer = dynamic_cast<VKBuffer*>(src);
-        auto* texture = dynamic_cast<VKTexture*>(dst);
+        auto* buffer = static_cast<VKBuffer*>(src);
+        auto* texture = static_cast<VKTexture*>(dst);
 
         VkBufferImageCopy copyRegion = {};
         copyRegion.imageExtent = { size.x, size.y, size.z };
@@ -145,8 +137,8 @@ namespace RHI::Vulkan {
 
     void VKCopyPassCommandEncoder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
     {
-        auto* buffer = dynamic_cast<VKBuffer*>(dst);
-        auto* texture = dynamic_cast<VKTexture*>(src);
+        auto* buffer = static_cast<VKBuffer*>(dst);
+        auto* texture = static_cast<VKTexture*>(src);
 
         VkBufferImageCopy copyRegion = {};
         copyRegion.imageExtent = { size.x, size.y, size.z };
@@ -158,8 +150,8 @@ namespace RHI::Vulkan {
     void VKCopyPassCommandEncoder::CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo,
         Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size)
     {
-        auto* srcTexture = dynamic_cast<VKTexture*>(src);
-        auto* dstTexture = dynamic_cast<VKTexture*>(dst);
+        auto* srcTexture = static_cast<VKTexture*>(src);
+        auto* dstTexture = static_cast<VKTexture*>(dst);
 
         VkImageCopy copyRegion = {};
         copyRegion.extent = {size.x, size.y, size.z };
@@ -225,7 +217,7 @@ namespace RHI::Vulkan {
         std::vector<VkRenderingAttachmentInfo> colorAttachmentInfos(beginInfo->colorAttachmentNum);
         for (size_t i = 0; i < beginInfo->colorAttachmentNum; i++)
         {
-            auto* colorTextureView = dynamic_cast<VKTextureView*>(beginInfo->colorAttachments[i].view);
+            auto* colorTextureView = static_cast<VKTextureView*>(beginInfo->colorAttachments[i].view);
             colorAttachmentInfos[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             colorAttachmentInfos[i].imageView = colorTextureView->GetVkImageView();
             colorAttachmentInfos[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -239,7 +231,7 @@ namespace RHI::Vulkan {
                     };
         }
 
-        auto* textureView = dynamic_cast<VKTextureView*>(beginInfo->colorAttachments[0].view);
+        auto* textureView = static_cast<VKTextureView*>(beginInfo->colorAttachments[0].view);
         VkRenderingInfoKHR renderingInfo = {};
         renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
         renderingInfo.colorAttachmentCount = colorAttachmentInfos.size();
@@ -250,7 +242,7 @@ namespace RHI::Vulkan {
 
         if (beginInfo->depthStencilAttachment != nullptr)
         {
-            auto* depthStencilTextureView = dynamic_cast<VKTextureView*>(beginInfo->depthStencilAttachment->view);
+            auto* depthStencilTextureView = static_cast<VKTextureView*>(beginInfo->depthStencilAttachment->view);
 
             VkRenderingAttachmentInfo depthAttachmentInfo = {};
             depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
@@ -288,7 +280,7 @@ namespace RHI::Vulkan {
 
     void VKGraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
     {
-        graphicsPipeline = dynamic_cast<VKGraphicsPipeline*>(pipeline);
+        graphicsPipeline = static_cast<VKGraphicsPipeline*>(pipeline);
         Assert(graphicsPipeline);
 
        vkCmdBindPipeline(cmdHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->GetVkPipeline());
@@ -296,7 +288,7 @@ namespace RHI::Vulkan {
 
     void VKGraphicsPassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
     {
-        auto* vBindGroup = dynamic_cast<VKBindGroup*>(bindGroup);
+        auto* vBindGroup = static_cast<VKBindGroup*>(bindGroup);
         VkDescriptorSet descriptorSet = vBindGroup->GetVkDescritorSet();
         VkPipelineLayout layout = graphicsPipeline->GetPipelineLayout()->GetVkPipelineLayout();
 
@@ -305,7 +297,7 @@ namespace RHI::Vulkan {
 
     void VKGraphicsPassCommandEncoder::SetIndexBuffer(BufferView *bufferView)
     {
-        auto* mBufferView = dynamic_cast<VKBufferView*>(bufferView);
+        auto* mBufferView = static_cast<VKBufferView*>(bufferView);
 
         VkBuffer indexBuffer = mBufferView->GetBuffer().GetVkBuffer();
         auto vkFormat = VKEnumCast<IndexFormat, VkIndexType>(mBufferView->GetIndexFormat());
@@ -315,7 +307,7 @@ namespace RHI::Vulkan {
 
     void VKGraphicsPassCommandEncoder::SetVertexBuffer(size_t slot, BufferView *bufferView)
     {
-        auto* mBufferView = dynamic_cast<VKBufferView*>(bufferView);
+        auto* mBufferView = static_cast<VKBufferView*>(bufferView);
 
         VkBuffer vertexBuffer = mBufferView->GetBuffer().GetVkBuffer();
         VkDeviceSize offset[] = { mBufferView->GetOffset() };

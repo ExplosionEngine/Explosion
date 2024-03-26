@@ -2,44 +2,71 @@
 // Created by johnk on 16/1/2022.
 //
 
+#include <vector>
+
 #include <Common/Debug.h>
 #include <RHI/Vulkan/Queue.h>
 #include <RHI/Vulkan/CommandBuffer.h>
 #include <RHI/Vulkan/Synchronous.h>
 
 namespace RHI::Vulkan {
-    VKQueue::VKQueue(VkQueue q) : Queue(), vkQueue(q) {}
+    VKQueue::VKQueue(VKDevice& inDevice, VkQueue q)
+        : Queue()
+        , vkQueue(q)
+    {
+    }
 
     VKQueue::~VKQueue() = default;
 
-    void VKQueue::Submit(CommandBuffer* cb, Fence* fts)
+    void VKQueue::Submit(CommandBuffer* cb, const QueueSubmitInfo& submitInfo)
     {
-        auto* commandBuffer = dynamic_cast<VKCommandBuffer*>(cb);
-        auto* fenceToSignaled = dynamic_cast<VKFence*>(fts);
+        auto* commandBuffer = static_cast<VKCommandBuffer*>(cb);
+        auto* vkFence = static_cast<VKFence*>(submitInfo.signalFence);
+
         Assert(commandBuffer);
-
         const VkCommandBuffer& cmdBuffer = commandBuffer->GetVkCommandBuffer();
-        const VkFence& fence = fenceToSignaled == nullptr ? VK_NULL_HANDLE : fenceToSignaled->GetVkFence();
 
-        VkSubmitInfo submitInfo = {};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.waitSemaphoreCount = commandBuffer->GetWaitSemaphores().size();
-        submitInfo.pWaitSemaphores = commandBuffer->GetWaitSemaphores().data();
-        submitInfo.pWaitDstStageMask = commandBuffer->GetWaitStages().data();
-        submitInfo.signalSemaphoreCount = commandBuffer->GetSignalSemaphores().size();
-        submitInfo.pSignalSemaphores = commandBuffer->GetSignalSemaphores().data();
-        submitInfo.pCommandBuffers = &cmdBuffer;
-
-        if (fenceToSignaled != nullptr) {
-            fenceToSignaled->Reset();
+        std::vector<VkSemaphore> waitSemaphores;
+        std::vector<VkPipelineStageFlags> waitStageFlags;
+        waitSemaphores.resize(submitInfo.waitSemaphoreNum);
+        waitStageFlags.resize(submitInfo.waitSemaphoreNum);
+        for (auto i = 0; i < submitInfo.waitSemaphoreNum; i++) {
+            auto& vkSemaphore = static_cast<VKSemaphore&>(submitInfo.waitSemaphores[i]);
+            waitSemaphores[i] = vkSemaphore.GetNative();
+            waitStageFlags[i] = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         }
-        Assert(vkQueueSubmit(vkQueue, 1, &submitInfo, fence) == VK_SUCCESS);
+
+        std::vector<VkSemaphore> signalSemaphores;
+        signalSemaphores.resize(submitInfo.signalSemaphoreNum);
+        for (auto i = 0; i < submitInfo.signalSemaphoreNum; i++) {
+            auto& vkSemaphore = static_cast<VKSemaphore&>(submitInfo.signalSemaphores[i]);
+            signalSemaphores[i] = vkSemaphore.GetNative();
+        }
+
+        VkSubmitInfo vkSubmitInfo = {};
+        vkSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        vkSubmitInfo.waitSemaphoreCount = waitSemaphores.size();
+        vkSubmitInfo.pWaitSemaphores = waitSemaphores.data();
+        // TODO maybe we need expose this, but dx12 have no this param
+        vkSubmitInfo.pWaitDstStageMask = waitStageFlags.data();
+        vkSubmitInfo.signalSemaphoreCount = signalSemaphores.size();
+        vkSubmitInfo.pSignalSemaphores = signalSemaphores.data();
+        vkSubmitInfo.commandBufferCount = 1;
+        vkSubmitInfo.pCommandBuffers = &cmdBuffer;
+
+        Assert(vkQueueSubmit(vkQueue, 1, &vkSubmitInfo, vkFence->GetNative()) == VK_SUCCESS);
     }
 
-    void VKQueue::Wait(Fence* fenceToSignal)
+    void VKQueue::Flush(Fence* fenceToSignal)
     {
-        // TODO
+        auto* vkFence = static_cast<VKFence*>(fenceToSignal);
+
+        VkSubmitInfo vkSubmitInfo = {};
+        vkSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        vkSubmitInfo.commandBufferCount = 0;
+        vkSubmitInfo.pCommandBuffers = nullptr;
+
+        Assert(vkQueueSubmit(vkQueue, 1, &vkSubmitInfo, vkFence->GetNative()) == VK_SUCCESS);
     }
 
     VkQueue VKQueue::GetVkQueue()

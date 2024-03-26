@@ -6,15 +6,16 @@
 #include <RHI/Dummy/Device.h>
 
 namespace RHI::Dummy {
-    DummyFence::DummyFence(DummyDevice& device) : Fence(device)
+    DummyFence::DummyFence(DummyDevice& device, bool bInitAsSignal)
+        : Fence(device, bInitAsSignal)
     {
     }
 
     DummyFence::~DummyFence() = default;
 
-    FenceStatus DummyFence::GetStatus()
+    bool DummyFence::IsSignaled()
     {
-        return FenceStatus::signaled;
+        return false;
     }
 
     void DummyFence::Reset()
@@ -26,6 +27,18 @@ namespace RHI::Dummy {
     }
 
     void DummyFence::Destroy()
+    {
+        delete this;
+    }
+
+    DummySemaphore::DummySemaphore(DummyDevice& device)
+        : Semaphore(device)
+    {
+    }
+
+    DummySemaphore::~DummySemaphore() = default;
+
+    void DummySemaphore::Destroy()
     {
         delete this;
     }

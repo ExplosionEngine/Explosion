@@ -22,8 +22,8 @@ namespace RHI::DirectX12 {
         ~DX12SwapChain() override;
 
         Texture* GetTexture(uint8_t index) override;
-        uint8_t AcquireBackTexture() override;
-        void Present() override;
+        uint8_t AcquireBackTexture(RHI::Semaphore* signalSemaphore) override;
+        void Present(RHI::Semaphore* waitSemaphore) override;
         void Destroy() override;
 
     private:
@@ -31,6 +31,7 @@ namespace RHI::DirectX12 {
         void FetchTextures(PixelFormat format);
 
         DX12Device& device;
+        DX12Queue& queue;
         uint8_t textureNum;
         PresentMode presentMode;
         ComPtr<IDXGISwapChain3> dx12SwapChain;

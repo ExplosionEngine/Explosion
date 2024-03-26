@@ -12,21 +12,32 @@ namespace RHI::Vulkan {
 
     class VKFence : public Fence {
     public:
-        explicit VKFence(VKDevice& device);
-        ~VKFence();
+        explicit VKFence(VKDevice& inDevice, bool initAsSignaled);
+        ~VKFence() override;
 
-        FenceStatus GetStatus() override;
+        bool IsSignaled() override;
         void Reset() override;
         void Wait() override;
         void Destroy() override;
 
-        VkFence GetVkFence();
+        VkFence GetNative() const;
 
     private:
-        void CreateVKFence();
-
         VKDevice& device;
-        VkFence fence;
-        bool signaled;
+        VkFence vkFence;
+    };
+
+    class VKSemaphore : public Semaphore {
+    public:
+        explicit VKSemaphore(VKDevice& inDevice);
+        ~VKSemaphore() override;
+
+        void Destroy() override;
+
+        VkSemaphore GetNative() const;
+
+    private:
+        VKDevice& device;
+        VkSemaphore vkSemaphore;
     };
 }

@@ -130,9 +130,14 @@ namespace RHI::DirectX12 {
         return new DX12CommandBuffer(*this);
     }
 
-    Fence* DX12Device::CreateFence()
+    Fence* DX12Device::CreateFence(bool initAsSignaled)
     {
-        return new DX12Fence(*this);
+        return new DX12Fence(*this, initAsSignaled);
+    }
+
+    Semaphore* DX12Device::CreateSemaphore()
+    {
+        return new DX12Semaphore(*this);
     }
 
     bool DX12Device::CheckSwapChainFormatSupport(RHI::Surface* surface, PixelFormat format)

@@ -12,12 +12,21 @@ namespace RHI::Dummy {
     class DummyFence : public Fence {
     public:
         NonCopyable(DummyFence)
-        explicit DummyFence(DummyDevice& device);
+        explicit DummyFence(DummyDevice& device, bool bInitAsSignal);
         ~DummyFence() override;
 
-        FenceStatus GetStatus() override;
+        bool IsSignaled() override;
         void Reset() override;
         void Wait() override;
+        void Destroy() override;
+    };
+
+    class DummySemaphore : public Semaphore {
+    public:
+        NonCopyable(DummySemaphore)
+        explicit DummySemaphore(DummyDevice& device);
+        ~DummySemaphore() override;
+
         void Destroy() override;
     };
 }

@@ -190,14 +190,14 @@ namespace RHI::DirectX12 {
 
     void DX12ComputePipeline::SavePipelineLayout(const ComputePipelineCreateInfo& createInfo)
     {
-        auto* pl = dynamic_cast<DX12PipelineLayout*>(createInfo.layout);
+        auto* pl = static_cast<DX12PipelineLayout*>(createInfo.layout);
         Assert(pl);
         pipelineLayout = pl;
     }
 
     void DX12ComputePipeline::CreateDX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo& createInfo)
     {
-        auto* computeShader = dynamic_cast<DX12ShaderModule*>(createInfo.computeShader);
+        auto* computeShader = static_cast<DX12ShaderModule*>(createInfo.computeShader);
 
         D3D12_COMPUTE_PIPELINE_STATE_DESC desc {};
         desc.pRootSignature = pipelineLayout->GetDX12RootSignature().Get();
@@ -232,15 +232,15 @@ namespace RHI::DirectX12 {
 
     void DX12GraphicsPipeline::SavePipelineLayout(const GraphicsPipelineCreateInfo& createInfo)
     {
-        auto* pl = dynamic_cast<DX12PipelineLayout*>(createInfo.layout);
+        auto* pl = static_cast<DX12PipelineLayout*>(createInfo.layout);
         Assert(pl);
         pipelineLayout = pl;
     }
 
     void DX12GraphicsPipeline::CreateDX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo& createInfo)
     {
-        auto* vertexShader = dynamic_cast<DX12ShaderModule*>(createInfo.vertexShader);
-        auto* fragmentShader = dynamic_cast<DX12ShaderModule*>(createInfo.pixelShader);
+        auto* vertexShader = static_cast<DX12ShaderModule*>(createInfo.vertexShader);
+        auto* fragmentShader = static_cast<DX12ShaderModule*>(createInfo.pixelShader);
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc {};
         desc.pRootSignature = pipelineLayout->GetDX12RootSignature().Get();

@@ -42,9 +42,9 @@ public:
         return graphicsQueue;
     }
 
-    Fence* GetFence()
+    Fence* GetInflightFences(uint8_t index)
     {
-        return fence.Get();
+        return inflightFences[index].Get();
     }
 
 protected:
@@ -55,7 +55,7 @@ protected:
         SelectGPU();
         RequestDeviceAndFetchQueues();
         CreateSwapChain();
-        CreateFence();
+        CreateSyncObjects();
         CreateVertexBuffer();
         CreateIndexBuffer();
         CreateQuadBuffer();
@@ -71,14 +71,186 @@ protected:
 
     void OnDrawFrame() override
     {
-        UpdateUniformBuffer();
-        PopulateCommandBuffer();
-        SubmitCommandBufferAndPresent();
+        uboSceneParams.view = camera->GetViewMatrix();
+
+        auto* pMap = uniformBuffers.sceneParams.buf->Map(MapMode::write, 0, sizeof(UBOSceneParams));
+        memcpy(pMap, &uboSceneParams, sizeof(UBOSceneParams));
+        uniformBuffers.sceneParams.buf->UnMap();
+
+        inflightFences[nextFrameIndex]->Wait();
+        auto backTextureIndex = swapChain->AcquireBackTexture(backBufferReadySemaphores[nextFrameIndex].Get());
+        inflightFences[nextFrameIndex]->Reset();
+
+        UniqueRef<CommandEncoder> commandEncoder = commandBuffers[nextFrameIndex]->Begin();
+        {
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilReadonly, TextureState::depthStencilWrite));
+
+            std::array<GraphicsPassColorAttachment, 3> colorAttachments {};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].loadOp = LoadOp::clear;
+            colorAttachments[0].storeOp = StoreOp::store;
+            colorAttachments[0].view = gBufferPos.rtv.Get();
+            colorAttachments[0].resolve = nullptr;
+            colorAttachments[1].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[1].loadOp = LoadOp::clear;
+            colorAttachments[1].storeOp = StoreOp::store;
+            colorAttachments[1].view = gBufferNormal.rtv.Get();
+            colorAttachments[1].resolve = nullptr;
+            colorAttachments[2].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[2].loadOp = LoadOp::clear;
+            colorAttachments[2].storeOp = StoreOp::store;
+            colorAttachments[2].view = gBufferAlbedo.rtv.Get();
+            colorAttachments[2].resolve = nullptr;
+
+            GraphicsPassDepthStencilAttachment depthAttachment {};
+            depthAttachment.view = gBufferDepth.view.Get();
+            depthAttachment.depthLoadOp = LoadOp::clear;
+            depthAttachment.depthStoreOp = StoreOp::store;
+            depthAttachment.depthReadOnly = true;
+            depthAttachment.depthClearValue = 0.0;
+            depthAttachment.stencilClearValue = 0.0;
+
+            GraphicsPassBeginInfo graphicsPassBeginInfo {};
+            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
+            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
+            graphicsPassBeginInfo.depthStencilAttachment = &depthAttachment;
+
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            {
+                graphicsEncoder->SetPipeline(pipelines.gBuffer.Get());
+                graphicsEncoder->SetScissor(0, 0, width, height);
+                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
+                graphicsEncoder->SetBindGroup(0, bindGroups.scene.Get());
+                graphicsEncoder->SetVertexBuffer(0, vertexBufferView.Get());
+                graphicsEncoder->SetIndexBuffer(indexBufferView.Get());
+
+                for (auto& renderable : renderables) {
+                    graphicsEncoder->SetBindGroup(1, renderable->bindGroup.Get());
+                    graphicsEncoder->DrawIndexed(renderable->indexCount, 1, renderable->firstIndex, 0, 0);
+                }
+            }
+            graphicsEncoder->EndPass();
+
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
+            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilWrite, TextureState::depthStencilReadonly));
+        }
+
+        {
+            // ssao
+            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
+
+            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].loadOp = LoadOp::clear;
+            colorAttachments[0].storeOp = StoreOp::store;
+            colorAttachments[0].view = ssaoOutput.rtv.Get();
+            colorAttachments[0].resolve = nullptr;
+
+            GraphicsPassBeginInfo graphicsPassBeginInfo {};
+            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
+            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
+            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
+
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            {
+                graphicsEncoder->SetPipeline(pipelines.ssao.Get());
+                graphicsEncoder->SetScissor(0, 0, width, height);
+                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
+                graphicsEncoder->SetBindGroup(0, bindGroups.ssao.Get());
+                graphicsEncoder->SetVertexBuffer(0, quadVertexBufferView.Get());
+                graphicsEncoder->SetIndexBuffer(quadIndexBufferView.Get());
+                graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
+            }
+            graphicsEncoder->EndPass();
+            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
+        }
+
+        {
+            // ssaoBlur
+            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
+
+            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].loadOp = LoadOp::clear;
+            colorAttachments[0].storeOp = StoreOp::store;
+            colorAttachments[0].view = ssaoBlurOutput.rtv.Get();
+            colorAttachments[0].resolve = nullptr;
+
+            GraphicsPassBeginInfo graphicsPassBeginInfo {};
+            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
+            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
+            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
+
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            {
+                graphicsEncoder->SetPipeline(pipelines.ssaoBlur.Get());
+                graphicsEncoder->SetScissor(0, 0, width, height);
+                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
+                graphicsEncoder->SetBindGroup(0, bindGroups.ssaoBlur.Get());
+                graphicsEncoder->SetVertexBuffer(0, quadVertexBufferView.Get());
+                graphicsEncoder->SetIndexBuffer(quadIndexBufferView.Get());
+                graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
+            }
+            graphicsEncoder->EndPass();
+            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
+        }
+
+        {
+            // composition
+            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
+            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
+            colorAttachments[0].loadOp = LoadOp::clear;
+            colorAttachments[0].storeOp = StoreOp::store;
+            colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();
+            colorAttachments[0].resolve = nullptr;
+
+            GraphicsPassBeginInfo graphicsPassBeginInfo {};
+            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
+            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
+            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
+
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            {
+                graphicsEncoder->SetPipeline(pipelines.composition.Get());
+                graphicsEncoder->SetScissor(0, 0, width, height);
+                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
+                graphicsEncoder->SetBindGroup(0, bindGroups.composition.Get());
+                graphicsEncoder->SetVertexBuffer(0, quadVertexBufferView.Get());
+                graphicsEncoder->SetIndexBuffer(quadIndexBufferView.Get());
+                graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
+            }
+            graphicsEncoder->EndPass();
+            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::renderTarget, TextureState::present));
+        }
+
+        commandEncoder->End();
+
+        QueueSubmitInfo submitInfo {};
+        submitInfo.waitSemaphoreNum = 1;
+        submitInfo.waitSemaphores = backBufferReadySemaphores[nextFrameIndex].Get();
+        submitInfo.signalSemaphoreNum = 1;
+        submitInfo.signalSemaphores = renderFinishedSemaphores[nextFrameIndex].Get();
+        submitInfo.signalFence = inflightFences[nextFrameIndex].Get();
+        graphicsQueue->Submit(commandBuffers[nextFrameIndex].Get(), submitInfo);
+
+        swapChain->Present(renderFinishedSemaphores[nextFrameIndex].Get());
+        nextFrameIndex = (nextFrameIndex + 1) % backBufferCount;
     }
 
     void OnDestroy() override
     {
-        graphicsQueue->Wait(fence.Get());
+        Common::UniqueRef<Fence> fence = device->CreateFence(false);
+        graphicsQueue->Flush(fence.Get());
         fence->Wait();
     }
 
@@ -105,8 +277,12 @@ private:
     UniqueRef<Buffer> quadIndexBuffer = nullptr;
     UniqueRef<BufferView> quadIndexBufferView = nullptr;
 
-    UniqueRef<CommandBuffer> commandBuffer = nullptr;
-    UniqueRef<Fence> fence = nullptr;
+    std::array<UniqueRef<CommandBuffer>, backBufferCount> commandBuffers {};
+    std::array<UniqueRef<Semaphore>, backBufferCount> backBufferReadySemaphores {};
+    std::array<UniqueRef<Semaphore>, backBufferCount> renderFinishedSemaphores {};
+    std::array<UniqueRef<Fence>, backBufferCount> inflightFences {};
+    uint8_t nextFrameIndex = 0;
+
     UniqueRef<Sampler> sampler = nullptr;
     UniqueRef<Sampler> noiseSampler = nullptr;
 
@@ -118,7 +294,7 @@ private:
         UniqueRef<Texture> diffuseColorMap;
         UniqueRef<TextureView> diffuseColorMapView;
 
-        Renderable(SSAOApplication* app, UniqueRef<Mesh>& mesh) {
+        Renderable(SSAOApplication* app, Device& device, UniqueRef<Mesh>& mesh) {
             indexCount =mesh->indexCount;
             firstIndex =mesh->firstIndex;
 
@@ -174,9 +350,11 @@ private:
             }
             commandEncoder->End();
 
-            app->GetFence()->Reset();
-            app->GetQueue()->Submit(texCommandBuffer.Get(), app->GetFence());
-            app->GetFence()->Wait();
+            Common::UniqueRef<Fence> fence = device.CreateFence(false);
+            QueueSubmitInfo submitInfo {};
+            submitInfo.signalFence = fence.Get();
+            app->GetQueue()->Submit(texCommandBuffer.Get(), submitInfo);
+            fence->Wait();
 
             // per renderable bindGroup
             std::vector<BindGroupEntry> entries(2);
@@ -454,12 +632,18 @@ private:
 
     void CreateCommandBuffer()
     {
-        commandBuffer = device->CreateCommandBuffer();
+        for (auto i = 0; i < backBufferCount; i++) {
+            commandBuffers[i] = device->CreateCommandBuffer();
+        }
     }
 
-    void CreateFence()
+    void CreateSyncObjects()
     {
-        fence = device->CreateFence();
+        for (auto i = 0; i < backBufferCount; i++) {
+            backBufferReadySemaphores[i] = device->CreateSemaphore();
+            renderFinishedSemaphores[i] = device->CreateSemaphore();
+            inflightFences[i] = device->CreateFence(true);
+        }
     }
 
     void CreateBindGroupLayoutAndPipelineLayout()
@@ -736,14 +920,6 @@ private:
         CreateDepthAttachment();
     }
 
-    void UpdateUniformBuffer() {
-        uboSceneParams.view = camera->GetViewMatrix();
-
-        auto* pMap = uniformBuffers.sceneParams.buf->Map(MapMode::write, 0, sizeof(UBOSceneParams));
-        memcpy(pMap, &uboSceneParams, sizeof(UBOSceneParams));
-        uniformBuffers.sceneParams.buf->UnMap();
-    }
-
     void PrepareUniformBuffers()
     {
         // gltf model axis: y up, x right, z from screen inner to outer
@@ -848,10 +1024,11 @@ private:
         }
         commandEncoder->End();
 
-        fence->Reset();
-        graphicsQueue->Submit(texCommandBuffer.Get(), fence.Get());
+        Common::UniqueRef<Fence> fence = device->CreateFence(false);
+        QueueSubmitInfo submitInfo {};
+        submitInfo.signalFence = fence.Get();
+        graphicsQueue->Submit(texCommandBuffer.Get(), submitInfo);
         fence->Wait();
-
     }
 
     void CreateDepthAttachment() {
@@ -1096,174 +1273,6 @@ private:
         }
     }
 
-    void PopulateCommandBuffer()
-    {
-        UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
-        {
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilReadonly, TextureState::depthStencilWrite));
-
-            std::array<GraphicsPassColorAttachment, 3> colorAttachments {};
-            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::clear;
-            colorAttachments[0].storeOp = StoreOp::store;
-            colorAttachments[0].view = gBufferPos.rtv.Get();
-            colorAttachments[0].resolve = nullptr;
-            colorAttachments[1].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[1].loadOp = LoadOp::clear;
-            colorAttachments[1].storeOp = StoreOp::store;
-            colorAttachments[1].view = gBufferNormal.rtv.Get();
-            colorAttachments[1].resolve = nullptr;
-            colorAttachments[2].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[2].loadOp = LoadOp::clear;
-            colorAttachments[2].storeOp = StoreOp::store;
-            colorAttachments[2].view = gBufferAlbedo.rtv.Get();
-            colorAttachments[2].resolve = nullptr;
-            
-            GraphicsPassDepthStencilAttachment depthAttachment {};
-            depthAttachment.view = gBufferDepth.view.Get();
-            depthAttachment.depthLoadOp = LoadOp::clear;
-            depthAttachment.depthStoreOp = StoreOp::store;
-            depthAttachment.depthReadOnly = true;
-            depthAttachment.depthClearValue = 0.0;
-            depthAttachment.stencilClearValue = 0.0;
-
-            GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
-            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
-            graphicsPassBeginInfo.depthStencilAttachment = &depthAttachment;
-
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
-            {
-                graphicsEncoder->SetPipeline(pipelines.gBuffer.Get());
-                graphicsEncoder->SetScissor(0, 0, width, height);
-                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
-                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
-                graphicsEncoder->SetBindGroup(0, bindGroups.scene.Get());
-                graphicsEncoder->SetVertexBuffer(0, vertexBufferView.Get());
-                graphicsEncoder->SetIndexBuffer(indexBufferView.Get());
-
-                for (auto& renderable : renderables) {
-                    graphicsEncoder->SetBindGroup(1, renderable->bindGroup.Get());
-                    graphicsEncoder->DrawIndexed(renderable->indexCount, 1, renderable->firstIndex, 0, 0);
-                }
-            }
-            graphicsEncoder->EndPass();
-
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilWrite, TextureState::depthStencilReadonly));
-        }
-
-        {
-            // ssao
-            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
-
-            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::clear;
-            colorAttachments[0].storeOp = StoreOp::store;
-            colorAttachments[0].view = ssaoOutput.rtv.Get();
-            colorAttachments[0].resolve = nullptr;
-
-            GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
-            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
-            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
-
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
-            {
-                graphicsEncoder->SetPipeline(pipelines.ssao.Get());
-                graphicsEncoder->SetScissor(0, 0, width, height);
-                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
-                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
-                graphicsEncoder->SetBindGroup(0, bindGroups.ssao.Get());
-                graphicsEncoder->SetVertexBuffer(0, quadVertexBufferView.Get());
-                graphicsEncoder->SetIndexBuffer(quadIndexBufferView.Get());
-                graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
-            }
-            graphicsEncoder->EndPass();
-            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
-        }
-
-        {
-            // ssaoBlur
-            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
-
-            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::clear;
-            colorAttachments[0].storeOp = StoreOp::store;
-            colorAttachments[0].view = ssaoBlurOutput.rtv.Get();
-            colorAttachments[0].resolve = nullptr;
-
-            GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
-            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
-            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
-
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
-            {
-                graphicsEncoder->SetPipeline(pipelines.ssaoBlur.Get());
-                graphicsEncoder->SetScissor(0, 0, width, height);
-                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
-                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
-                graphicsEncoder->SetBindGroup(0, bindGroups.ssaoBlur.Get());
-                graphicsEncoder->SetVertexBuffer(0, quadVertexBufferView.Get());
-                graphicsEncoder->SetIndexBuffer(quadIndexBufferView.Get());
-                graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
-            }
-            graphicsEncoder->EndPass();
-            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
-        }
-
-        {
-            auto backTextureIndex = swapChain->AcquireBackTexture();
-
-            // composition
-            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::clear;
-            colorAttachments[0].storeOp = StoreOp::store;
-            colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();
-            colorAttachments[0].resolve = nullptr;
-
-            GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
-            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
-            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
-
-            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
-            {
-                graphicsEncoder->SetPipeline(pipelines.composition.Get());
-                graphicsEncoder->SetScissor(0, 0, width, height);
-                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
-                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
-                graphicsEncoder->SetBindGroup(0, bindGroups.composition.Get());
-                graphicsEncoder->SetVertexBuffer(0, quadVertexBufferView.Get());
-                graphicsEncoder->SetIndexBuffer(quadIndexBufferView.Get());
-                graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
-            }
-            graphicsEncoder->EndPass();
-            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::renderTarget, TextureState::present));
-        }
-
-        commandEncoder->SwapChainSync(swapChain.Get());
-        commandEncoder->End();
-    }
-
-    void SubmitCommandBufferAndPresent()
-    {
-        fence->Reset();
-        graphicsQueue->Submit(commandBuffer.Get(), fence.Get());
-        swapChain->Present();
-        fence->Wait();
-    }
-
     void InitCamera()
     {
         camera = std::make_unique<Camera>(
@@ -1291,7 +1300,7 @@ private:
     void GenerateRenderables()
     {
         for (auto& mesh : model->meshes) {
-            renderables.emplace_back(std::make_unique<Renderable>(this, mesh));
+            renderables.emplace_back(std::make_unique<Renderable>(this, *device, mesh));
         }
     }
 };

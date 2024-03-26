@@ -138,14 +138,19 @@ namespace RHI::Vulkan {
         return new VKCommandBuffer(*this, pools[QueueType::graphics]);
     }
 
-    Fence* VKDevice::CreateFence()
+    Fence* VKDevice::CreateFence(bool initAsSignaled)
     {
-        return new VKFence(*this);
+        return new VKFence(*this, initAsSignaled);
+    }
+
+    Semaphore* VKDevice::CreateSemaphore()
+    {
+        return new VKSemaphore(*this);
     }
 
     bool VKDevice::CheckSwapChainFormatSupport(Surface* surface, PixelFormat format)
     {
-        auto* vkSurface = dynamic_cast<VKSurface*>(surface);
+        auto* vkSurface = static_cast<VKSurface*>(surface);
         VkColorSpaceKHR colorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
 
         uint32_t formatCount = 0;
@@ -241,8 +246,8 @@ namespace RHI::Vulkan {
         VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures = {};
         dynamicRenderingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
         dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
-        deviceCreateInfo.pNext = static_cast<VkPhysicalDeviceDynamicRenderingFeatures*>(&dynamicRenderingFeatures);
-;
+        deviceCreateInfo.pNext = &dynamicRenderingFeatures;
+
         deviceCreateInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
         deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
 
@@ -269,7 +274,7 @@ namespace RHI::Vulkan {
             for (auto i = 0; i < tempQueues.size(); i++) {
                 VkQueue queue;
                 vkGetDeviceQueue(vkDevice, queueFamilyIndex, i, &queue);
-                tempQueues[i] = Common::MakeUnique<VKQueue>(queue);
+                tempQueues[i] = Common::MakeUnique<VKQueue>(*this, queue);
             }
             queues[queueType] = std::move(tempQueues);
 

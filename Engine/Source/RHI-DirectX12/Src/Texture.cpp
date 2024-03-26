@@ -74,7 +74,7 @@ namespace RHI::DirectX12 {
 
     TextureView* DX12Texture::CreateTextureView(const TextureViewCreateInfo& createInfo)
     {
-        return new DX12TextureView(dynamic_cast<DX12Device&>(device), *this, createInfo);
+        return new DX12TextureView(static_cast<DX12Device&>(device), *this, createInfo);
     }
 
     void DX12Texture::Destroy()

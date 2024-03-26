@@ -30,7 +30,8 @@ namespace RHI::Dummy {
         ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) override;
         GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
-        Fence* CreateFence() override;
+        Fence* CreateFence(bool bInitAsSignaled) override;
+        Semaphore* CreateSemaphore() override;
 
         bool CheckSwapChainFormatSupport(Surface *surface, PixelFormat format) override;
 

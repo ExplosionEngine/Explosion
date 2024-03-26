@@ -101,12 +101,20 @@ namespace Rendering::Internal {
             fencePack.asyncComputeFence->Reset();
         }
 
-        device.GetQueue(RHI::QueueType::graphics, 0)->Submit(mainCmdBuffer.Get(), fencePack.mainFence);
+        {
+            RHI::QueueSubmitInfo submitInfo {};
+            submitInfo.signalFence = fencePack.mainFence;
+            device.GetQueue(RHI::QueueType::graphics, 0)->Submit(mainCmdBuffer.Get(), submitInfo);
+        }
         if (useAsyncCopy) {
-            device.GetQueue(RHI::QueueType::transfer, 1)->Submit(asyncCopyCmdBuffer.Get(), fencePack.asyncCopyFence);
+            RHI::QueueSubmitInfo submitInfo {};
+            submitInfo.signalFence = fencePack.asyncCopyFence;
+            device.GetQueue(RHI::QueueType::transfer, 1)->Submit(asyncCopyCmdBuffer.Get(), submitInfo);
         }
         if (useAsyncCompute) {
-            device.GetQueue(RHI::QueueType::compute, 1)->Submit(asyncComputeCmdBuffer.Get(), fencePack.asyncComputeFence);
+            RHI::QueueSubmitInfo submitInfo {};
+            submitInfo.signalFence = fencePack.asyncComputeFence;
+            device.GetQueue(RHI::QueueType::compute, 1)->Submit(asyncComputeCmdBuffer.Get(), submitInfo);
         }
     }
 }

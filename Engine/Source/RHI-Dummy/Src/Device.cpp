@@ -103,9 +103,14 @@ namespace RHI::Dummy {
         return new DummyCommandBuffer();
     }
 
-    Fence* DummyDevice::CreateFence()
+    Fence* DummyDevice::CreateFence(bool bInitAsSignaled)
     {
-        return new DummyFence(*this);
+        return new DummyFence(*this, bInitAsSignaled);
+    }
+
+    Semaphore* DummyDevice::CreateSemaphore()
+    {
+        return new DummySemaphore(*this);
     }
 
     bool DummyDevice::CheckSwapChainFormatSupport(Surface* surface, PixelFormat format)

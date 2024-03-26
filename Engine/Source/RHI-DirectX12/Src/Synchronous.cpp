@@ -7,17 +7,20 @@
 #include <RHI/DirectX12/Device.h>
 
 namespace RHI::DirectX12 {
-    DX12Fence::DX12Fence(DX12Device& device) : Fence(device), dx12FenceEvent(nullptr), signaled(false)
+    DX12Fence::DX12Fence(DX12Device& device, bool initAsSignaled) : Fence(device, initAsSignaled), dx12FenceEvent(nullptr)
     {
-        CreateDX12Fence(device);
+        CreateDX12Fence(device, initAsSignaled);
         CreateDX12FenceEvent();
     }
 
-    DX12Fence::~DX12Fence() = default;
-
-    FenceStatus DX12Fence::GetStatus()
+    DX12Fence::~DX12Fence()
     {
-        return signaled ? FenceStatus::signaled : FenceStatus::notReady;
+        CloseHandle(dx12FenceEvent);
+    }
+
+    bool DX12Fence::IsSignaled()
+    {
+        return dx12Fence->GetCompletedValue() == 1;
     }
 
     void DX12Fence::Reset()
@@ -27,9 +30,6 @@ namespace RHI::DirectX12 {
 
     void DX12Fence::Wait()
     {
-        if (signaled) {
-            return;
-        }
         Assert(SUCCEEDED(dx12Fence->SetEventOnCompletion(1, dx12FenceEvent)));
         WaitForSingleObject(dx12FenceEvent, INFINITE);
     }
@@ -39,9 +39,9 @@ namespace RHI::DirectX12 {
         return dx12Fence;
     }
 
-    void DX12Fence::CreateDX12Fence(DX12Device& device)
+    void DX12Fence::CreateDX12Fence(DX12Device& device, bool initAsSignaled)
     {
-        Assert(SUCCEEDED(device.GetDX12Device()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dx12Fence))));
+        Assert(SUCCEEDED(device.GetDX12Device()->CreateFence(initAsSignaled ? 1 : 0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dx12Fence))));
     }
 
     void DX12Fence::CreateDX12FenceEvent()
@@ -53,5 +53,26 @@ namespace RHI::DirectX12 {
     void DX12Fence::Destroy()
     {
         delete this;
+    }
+
+    DX12Semaphore::DX12Semaphore(DX12Device& device)
+        : Semaphore(device)
+    {
+        CreateDX12Fence(device);
+    }
+
+    ComPtr<ID3D12Fence>& DX12Semaphore::GetDX12Fence()
+    {
+        return dx12Fence;
+    }
+
+    void DX12Semaphore::Destroy()
+    {
+        delete this;
+    }
+
+    void DX12Semaphore::CreateDX12Fence(DX12Device& device)
+    {
+        Assert(SUCCEEDED(device.GetDX12Device()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dx12Fence))));
     }
 }

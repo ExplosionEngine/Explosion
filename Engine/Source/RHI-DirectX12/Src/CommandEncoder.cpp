@@ -56,8 +56,8 @@ namespace RHI::DirectX12 {
 
     void DX12CopyPassCommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
     {
-        auto* buffer = dynamic_cast<DX12Buffer*>(src);
-        auto* texture = dynamic_cast<DX12Texture*>(dst);
+        auto* buffer = static_cast<DX12Buffer*>(src);
+        auto* texture = static_cast<DX12Texture*>(dst);
         auto origin = subResourceInfo->origin;
 
         D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
@@ -109,7 +109,7 @@ namespace RHI::DirectX12 {
 
     void DX12ComputePassCommandEncoder::SetPipeline(ComputePipeline* pipeline)
     {
-        computePipeline = dynamic_cast<DX12ComputePipeline*>(pipeline);
+        computePipeline = static_cast<DX12ComputePipeline*>(pipeline);
         Assert(computePipeline);
 
         commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(computePipeline->GetDX12PipelineState().Get());
@@ -118,7 +118,7 @@ namespace RHI::DirectX12 {
 
     void DX12ComputePassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* tBindGroup)
     {
-        auto* bindGroup = dynamic_cast<DX12BindGroup*>(tBindGroup);
+        auto* bindGroup = static_cast<DX12BindGroup*>(tBindGroup);
         auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
         auto& pipelineLayout = computePipeline->GetPipelineLayout();
 
@@ -159,13 +159,13 @@ namespace RHI::DirectX12 {
         // set render targets
         std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rtvHandles(beginInfo->colorAttachmentNum);
         for (auto i = 0; i < rtvHandles.size(); i++) {
-            auto* view = dynamic_cast<DX12TextureView*>(beginInfo->colorAttachments[i].view);
+            auto* view = static_cast<DX12TextureView*>(beginInfo->colorAttachments[i].view);
             Assert(view);
             rtvHandles[i] = view->GetDX12CpuDescriptorHandle();
         }
         std::optional<CD3DX12_CPU_DESCRIPTOR_HANDLE> dsvHandle;
         if (beginInfo->depthStencilAttachment != nullptr) {
-            auto* view = dynamic_cast<DX12TextureView*>(beginInfo->depthStencilAttachment->view);
+            auto* view = static_cast<DX12TextureView*>(beginInfo->depthStencilAttachment->view);
             Assert(view);
             dsvHandle = view->GetDX12CpuDescriptorHandle();
         }
@@ -198,7 +198,7 @@ namespace RHI::DirectX12 {
 
     void DX12GraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
     {
-        graphicsPipeline = dynamic_cast<DX12GraphicsPipeline*>(pipeline);
+        graphicsPipeline = static_cast<DX12GraphicsPipeline*>(pipeline);
         Assert(graphicsPipeline);
 
         commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(graphicsPipeline->GetDX12PipelineState().Get());
@@ -207,7 +207,7 @@ namespace RHI::DirectX12 {
 
     void DX12GraphicsPassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* tBindGroup)
     {
-        auto* bindGroup = dynamic_cast<DX12BindGroup*>(tBindGroup);
+        auto* bindGroup = static_cast<DX12BindGroup*>(tBindGroup);
         auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
         auto& pipelineLayout = graphicsPipeline->GetPipelineLayout();
 
@@ -226,13 +226,13 @@ namespace RHI::DirectX12 {
 
     void DX12GraphicsPassCommandEncoder::SetIndexBuffer(BufferView* tBufferView)
     {
-        auto* bufferView = dynamic_cast<DX12BufferView*>(tBufferView);
+        auto* bufferView = static_cast<DX12BufferView*>(tBufferView);
         commandBuffer.GetDX12GraphicsCommandList()->IASetIndexBuffer(&bufferView->GetDX12IndexBufferView());
     }
 
     void DX12GraphicsPassCommandEncoder::SetVertexBuffer(size_t slot, BufferView* tBufferView)
     {
-        auto* bufferView = dynamic_cast<DX12BufferView*>(tBufferView);
+        auto* bufferView = static_cast<DX12BufferView*>(tBufferView);
         commandBuffer.GetDX12GraphicsCommandList()->IASetVertexBuffers(slot, 1, &bufferView->GetDX12VertexBufferView());
     }
 
@@ -300,13 +300,13 @@ namespace RHI::DirectX12 {
         D3D12_RESOURCE_STATES beforeState;
         D3D12_RESOURCE_STATES afterState;
         if (barrier.type == ResourceType::buffer) {
-            auto* buffer = dynamic_cast<DX12Buffer*>(barrier.buffer.pointer);
+            auto* buffer = static_cast<DX12Buffer*>(barrier.buffer.pointer);
             Assert(buffer);
             resource = buffer->GetDX12Resource().Get();
             beforeState = DX12EnumCast<BufferState, D3D12_RESOURCE_STATES>(barrier.buffer.before);
             afterState = DX12EnumCast<BufferState, D3D12_RESOURCE_STATES>(barrier.buffer.after);
         } else {
-            auto* texture = dynamic_cast<DX12Texture*>(barrier.texture.pointer);
+            auto* texture = static_cast<DX12Texture*>(barrier.texture.pointer);
             Assert(texture);
             resource = texture->GetDX12Resource().Get();
             beforeState = DX12EnumCast<TextureState, D3D12_RESOURCE_STATES>(barrier.texture.before);
@@ -330,10 +330,6 @@ namespace RHI::DirectX12 {
     GraphicsPassCommandEncoder* DX12CommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo)
     {
         return new DX12GraphicsPassCommandEncoder(device, *this, commandBuffer, beginInfo);
-    }
-
-    void DX12CommandEncoder::SwapChainSync(SwapChain* swapChain)
-    {
     }
 
     void DX12CommandEncoder::End()

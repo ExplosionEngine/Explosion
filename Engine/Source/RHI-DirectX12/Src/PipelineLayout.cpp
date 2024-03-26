@@ -45,7 +45,7 @@ namespace RHI::DirectX12 {
 
         std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
         for (auto i = 0; i < createInfo.bindGroupLayoutNum; i++) {
-            const auto* bindGroupLayout = dynamic_cast<const DX12BindGroupLayout*>(createInfo.bindGroupLayouts[i]);
+            const auto* bindGroupLayout = static_cast<const DX12BindGroupLayout*>(createInfo.bindGroupLayouts[i]);
             const auto baseIndex = static_cast<uint32_t>(rootParameters.size());
 
             const auto& pendingRootParameters = bindGroupLayout->GetDX12RootParameters();

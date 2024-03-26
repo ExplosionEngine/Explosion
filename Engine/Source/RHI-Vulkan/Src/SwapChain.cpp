@@ -10,6 +10,7 @@
 #include <RHI/Vulkan/Texture.h>
 #include <RHI/Vulkan/Queue.h>
 #include <RHI/Vulkan/Surface.h>
+#include <RHI/Vulkan/Synchronous.h>
 
 namespace RHI::Vulkan {
     VKSwapChain::VKSwapChain(VKDevice& dev, const SwapChainCreateInfo& createInfo)
@@ -28,8 +29,6 @@ namespace RHI::Vulkan {
         }
         textures.clear();
 
-        vkDestroySemaphore(vkDevice, imageAvailableSemaphore, nullptr);
-
         if (swapChain) {
             vkDestroySwapchainKHR(vkDevice, swapChain, nullptr);
         }
@@ -40,14 +39,18 @@ namespace RHI::Vulkan {
         return textures[index];
     }
 
-    uint8_t VKSwapChain::AcquireBackTexture()
+    uint8_t VKSwapChain::AcquireBackTexture(Semaphore* signalSemaphore)
     {
-        Assert(vkAcquireNextImageKHR(device.GetVkDevice(), swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &currentImage) == VK_SUCCESS);
+        auto& vulkanSignalSemaphore = static_cast<VKSemaphore&>(*signalSemaphore);
+        Assert(vkAcquireNextImageKHR(device.GetVkDevice(), swapChain, UINT64_MAX, vulkanSignalSemaphore.GetNative(), VK_NULL_HANDLE, &currentImage) == VK_SUCCESS);
         return currentImage;
     }
 
-    void VKSwapChain::Present()
+    void VKSwapChain::Present(RHI::Semaphore* waitSemaphore)
     {
+        auto& vulkanWaitSemaphore = static_cast<VKSemaphore&>(*waitSemaphore);
+        std::vector<VkSemaphore> waitSemaphores { vulkanWaitSemaphore.GetNative() };
+
         VkPresentInfoKHR presetInfo = {};
         presetInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presetInfo.swapchainCount = 1;
@@ -56,7 +59,6 @@ namespace RHI::Vulkan {
         presetInfo.pWaitSemaphores = waitSemaphores.data();
         presetInfo.pImageIndices = &currentImage;
         Assert(vkQueuePresentKHR(queue, &presetInfo) == VK_SUCCESS);
-        waitSemaphores.clear();
     }
 
     void VKSwapChain::Destroy()
@@ -64,22 +66,12 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    VkSemaphore VKSwapChain::GetImageSemaphore() const
-    {
-        return imageAvailableSemaphore;
-    }
-
-    void VKSwapChain::AddWaitSemaphore(VkSemaphore semaphore)
-    {
-        waitSemaphores.emplace_back(semaphore);
-    }
-
     void VKSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo& createInfo)
     {
         auto vkDevice = device.GetVkDevice();
-        auto* mQueue = dynamic_cast<VKQueue*>(createInfo.presentQueue);
+        auto* mQueue = static_cast<VKQueue*>(createInfo.presentQueue);
         Assert(mQueue);
-        auto* vkSurface = dynamic_cast<VKSurface*>(createInfo.surface);
+        auto* vkSurface = static_cast<VKSurface*>(createInfo.surface);
         Assert(vkSurface);
         queue = mQueue->GetVkQueue();
         auto surface = vkSurface->GetVKSurface();
@@ -146,9 +138,5 @@ namespace RHI::Vulkan {
             textures.emplace_back(new VKTexture(device, textureInfo, image));
         }
         swapChainImageCount = static_cast<uint32_t>(swapChainImages.size());
-
-        VkSemaphoreCreateInfo semaphoreInfo = {};
-        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        Assert(vkCreateSemaphore(vkDevice, &semaphoreInfo, nullptr, &imageAvailableSemaphore) == VK_SUCCESS);
     }
 }
