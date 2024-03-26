@@ -9,6 +9,10 @@
 #include <Common/Utility.h>
 #include <RHI/Common.h>
 
+#if PLATFORM_WINDOWS
+#undef CreateSemaphore
+#endif
+
 namespace RHI {
     struct BufferCreateInfo;
     struct TextureCreateInfo;
@@ -35,6 +39,7 @@ namespace RHI {
     class SwapChain;
     class Fence;
     class Surface;
+    class Semaphore;
 
     struct QueueInfo {
         QueueType type;
@@ -67,6 +72,7 @@ namespace RHI {
         virtual GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) = 0;
         virtual CommandBuffer* CreateCommandBuffer() = 0;
         virtual Fence* CreateFence(bool bInitAsSignaled) = 0;
+        virtual Semaphore* CreateSemaphore() = 0;
 
         virtual bool CheckSwapChainFormatSupport(Surface* surface, PixelFormat format) = 0;
 

@@ -52,4 +52,30 @@ namespace RHI::Vulkan {
     {
         return vkFence;
     }
+
+    VKSemaphore::VKSemaphore(VKDevice& inDevice)
+        : Semaphore(inDevice)
+        , device(inDevice)
+        , vkSemaphore(VK_NULL_HANDLE)
+    {
+        VkSemaphoreCreateInfo createInfo {};
+        createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+        Assert(vkCreateSemaphore(device.GetVkDevice(), &createInfo, nullptr, &vkSemaphore) == VK_SUCCESS);
+    }
+
+    VKSemaphore::~VKSemaphore()
+    {
+        vkDestroySemaphore(device.GetVkDevice(), vkSemaphore, nullptr);
+    }
+
+    void VKSemaphore::Destroy()
+    {
+        delete this;
+    }
+
+    VkSemaphore VKSemaphore::GetNative() const
+    {
+        return vkSemaphore;
+    }
 }

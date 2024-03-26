@@ -9,11 +9,11 @@ namespace RHI::Dummy {
 
     DummyQueue::~DummyQueue() = default;
 
-    void DummyQueue::Submit(CommandBuffer* commandBuffer, const QueueSubmitInfo& submitInfo)
+    void DummyQueue::Submit(RHI::CommandBuffer* commandBuffer, RHI::Fence* fenceToSignal)
     {
     }
 
-    void DummyQueue::Flush(const QueueFlushInfo& flushInfo)
+    void DummyQueue::Flush(RHI::Fence* fenceToSignal)
     {
     }
 }

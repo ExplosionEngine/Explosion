@@ -57,4 +57,15 @@ namespace RHI {
     protected:
         explicit Fence(Device& device, bool initAsSignaled);
     };
+
+    class Semaphore {
+    public:
+        NonCopyable(Semaphore)
+        virtual ~Semaphore();
+
+        virtual void Destroy() = 0;
+
+    protected:
+        explicit Semaphore(Device& device);
+    };
 }

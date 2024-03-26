@@ -26,4 +26,18 @@ namespace RHI::Vulkan {
         VKDevice& device;
         VkFence vkFence;
     };
+
+    class VKSemaphore : public Semaphore {
+    public:
+        explicit VKSemaphore(VKDevice& inDevice);
+        ~VKSemaphore() override;
+
+        void Destroy() override;
+
+        VkSemaphore GetNative() const;
+
+    private:
+        VKDevice& device;
+        VkSemaphore vkSemaphore;
+    };
 }

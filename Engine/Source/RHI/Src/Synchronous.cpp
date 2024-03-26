@@ -29,4 +29,8 @@ namespace RHI {
     Fence::Fence(Device& device, bool initAsSignaled) {}
 
     Fence::~Fence() = default;
+
+    Semaphore::Semaphore(Device& device) {}
+
+    Semaphore::~Semaphore() = default;
 }

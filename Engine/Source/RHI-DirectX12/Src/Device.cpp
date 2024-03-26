@@ -135,6 +135,11 @@ namespace RHI::DirectX12 {
         return new DX12Fence(*this, initAsSignaled);
     }
 
+    Semaphore* DX12Device::CreateSemaphore()
+    {
+        return new DX12Semaphore(*this);
+    }
+
     bool DX12Device::CheckSwapChainFormatSupport(RHI::Surface* surface, PixelFormat format)
     {
         static std::unordered_set<PixelFormat> supportedFormats = {

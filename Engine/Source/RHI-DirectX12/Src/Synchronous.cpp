@@ -54,4 +54,25 @@ namespace RHI::DirectX12 {
     {
         delete this;
     }
+
+    DX12Semaphore::DX12Semaphore(DX12Device& device)
+        : Semaphore(device)
+    {
+        CreateDX12Fence(device);
+    }
+
+    ComPtr<ID3D12Fence>& DX12Semaphore::GetDX12Fence()
+    {
+        return dx12Fence;
+    }
+
+    void DX12Semaphore::Destroy()
+    {
+        delete this;
+    }
+
+    void DX12Semaphore::CreateDX12Fence(DX12Device& device)
+    {
+        Assert(SUCCEEDED(device.GetDX12Device()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dx12Fence))));
+    }
 }

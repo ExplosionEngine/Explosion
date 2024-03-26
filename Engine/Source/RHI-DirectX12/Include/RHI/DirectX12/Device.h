@@ -48,6 +48,7 @@ namespace RHI::DirectX12 {
         GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
         Fence* CreateFence(bool initAsSignaled) override;
+        Semaphore* CreateSemaphore() override;
 
         bool CheckSwapChainFormatSupport(RHI::Surface* surface, PixelFormat format) override;
 

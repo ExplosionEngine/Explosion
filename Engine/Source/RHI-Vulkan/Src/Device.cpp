@@ -143,6 +143,11 @@ namespace RHI::Vulkan {
         return new VKFence(*this, initAsSignaled);
     }
 
+    Semaphore* VKDevice::CreateSemaphore()
+    {
+        return new VKSemaphore(*this);
+    }
+
     bool VKDevice::CheckSwapChainFormatSupport(Surface* surface, PixelFormat format)
     {
         auto* vkSurface = static_cast<VKSurface*>(surface);

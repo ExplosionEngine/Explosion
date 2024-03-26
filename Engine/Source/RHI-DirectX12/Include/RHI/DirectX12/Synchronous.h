@@ -35,4 +35,18 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12Fence> dx12Fence;
         HANDLE dx12FenceEvent;
     };
+
+    class DX12Semaphore : public Semaphore {
+    public:
+        explicit DX12Semaphore(DX12Device& device);
+
+        ComPtr<ID3D12Fence>& GetDX12Fence();
+
+        void Destroy() override;
+
+    private:
+        void CreateDX12Fence(DX12Device& device);
+
+        ComPtr<ID3D12Fence> dx12Fence;
+    };
 }
