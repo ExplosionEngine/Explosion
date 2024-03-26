@@ -18,7 +18,7 @@ namespace RHI::Vulkan {
         explicit VKQueue(VKDevice& inDevice, VkQueue vkQueue);
         ~VKQueue() override;
 
-        void Submit(CommandBuffer* commandBuffer, Fence* fenceToSignal) override;
+        void Submit(CommandBuffer* commandBuffer, const QueueSubmitInfo& submitInfo) override;
         void Flush(Fence* fenceToSignal) override;
 
         VkQueue GetVkQueue();

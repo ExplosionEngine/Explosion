@@ -18,20 +18,39 @@ namespace RHI::Vulkan {
 
     VKQueue::~VKQueue() = default;
 
-    void VKQueue::Submit(CommandBuffer* cb, Fence* fenceToSignal)
+    void VKQueue::Submit(CommandBuffer* cb, const QueueSubmitInfo& submitInfo)
     {
         auto* commandBuffer = static_cast<VKCommandBuffer*>(cb);
-        auto* vkFence = static_cast<VKFence*>(fenceToSignal);
+        auto* vkFence = static_cast<VKFence*>(submitInfo.signalFence);
 
         Assert(commandBuffer);
         const VkCommandBuffer& cmdBuffer = commandBuffer->GetVkCommandBuffer();
 
+        std::vector<VkSemaphore> waitSemaphores;
+        std::vector<VkPipelineStageFlags> waitStageFlags;
+        waitSemaphores.resize(submitInfo.waitSemaphoreNum);
+        waitStageFlags.resize(submitInfo.waitSemaphoreNum);
+        for (auto i = 0; i < submitInfo.waitSemaphoreNum; i++) {
+            auto& vkSemaphore = static_cast<VKSemaphore&>(submitInfo.waitSemaphores[i]);
+            waitSemaphores[i] = vkSemaphore.GetNative();
+            waitStageFlags[i] = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        }
+
+        std::vector<VkSemaphore> signalSemaphores;
+        signalSemaphores.resize(submitInfo.signalSemaphoreNum);
+        for (auto i = 0; i < submitInfo.signalSemaphoreNum; i++) {
+            auto& vkSemaphore = static_cast<VKSemaphore&>(submitInfo.signalSemaphores[i]);
+            signalSemaphores[i] = vkSemaphore.GetNative();
+        }
+
         VkSubmitInfo vkSubmitInfo = {};
         vkSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        vkSubmitInfo.waitSemaphoreCount = 0;
-        vkSubmitInfo.pWaitSemaphores = nullptr;
-        vkSubmitInfo.signalSemaphoreCount = 0;
-        vkSubmitInfo.pSignalSemaphores = nullptr;
+        vkSubmitInfo.waitSemaphoreCount = waitSemaphores.size();
+        vkSubmitInfo.pWaitSemaphores = waitSemaphores.data();
+        // TODO maybe we need expose this, but dx12 have no this param
+        vkSubmitInfo.pWaitDstStageMask = waitStageFlags.data();
+        vkSubmitInfo.signalSemaphoreCount = signalSemaphores.size();
+        vkSubmitInfo.pSignalSemaphores = signalSemaphores.data();
         vkSubmitInfo.commandBufferCount = 1;
         vkSubmitInfo.pCommandBuffers = &cmdBuffer;
 
@@ -40,7 +59,14 @@ namespace RHI::Vulkan {
 
     void VKQueue::Flush(Fence* fenceToSignal)
     {
-        // TODO
+        auto* vkFence = static_cast<VKFence*>(fenceToSignal);
+
+        VkSubmitInfo vkSubmitInfo = {};
+        vkSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        vkSubmitInfo.commandBufferCount = 0;
+        vkSubmitInfo.pCommandBuffers = nullptr;
+
+        Assert(vkQueueSubmit(vkQueue, 1, &vkSubmitInfo, vkFence->GetNative()) == VK_SUCCESS);
     }
 
     VkQueue VKQueue::GetVkQueue()

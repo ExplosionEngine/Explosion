@@ -2,9 +2,11 @@
 // Created by Zach Lee on 2022/4/4.
 //
 
-#include <RHI/SwapChain.h>
-#include <vulkan/vulkan.h>
 #include <vector>
+
+#include <vulkan/vulkan.h>
+
+#include <RHI/SwapChain.h>
 
 namespace RHI::Vulkan {
     class VKDevice;
@@ -17,8 +19,8 @@ namespace RHI::Vulkan {
         ~VKSwapChain() override;
 
         Texture* GetTexture(uint8_t index) override;
-        uint8_t AcquireBackTexture() override;
-        void Present() override;
+        uint8_t AcquireBackTexture(Semaphore* signalSemaphore) override;
+        void Present(RHI::Semaphore *waitSemaphore) override;
         void Destroy() override;
 
     private:

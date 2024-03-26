@@ -39,21 +39,24 @@ namespace RHI::Vulkan {
         return textures[index];
     }
 
-    uint8_t VKSwapChain::AcquireBackTexture()
+    uint8_t VKSwapChain::AcquireBackTexture(Semaphore* signalSemaphore)
     {
-        // TODO wait fence
-        Assert(vkAcquireNextImageKHR(device.GetVkDevice(), swapChain, UINT64_MAX, VK_NULL_HANDLE, VK_NULL_HANDLE, &currentImage) == VK_SUCCESS);
+        auto& vulkanSignalSemaphore = static_cast<VKSemaphore&>(*signalSemaphore);
+        Assert(vkAcquireNextImageKHR(device.GetVkDevice(), swapChain, UINT64_MAX, vulkanSignalSemaphore.GetNative(), VK_NULL_HANDLE, &currentImage) == VK_SUCCESS);
         return currentImage;
     }
 
-    void VKSwapChain::Present()
+    void VKSwapChain::Present(RHI::Semaphore* waitSemaphore)
     {
+        auto& vulkanWaitSemaphore = static_cast<VKSemaphore&>(*waitSemaphore);
+        std::vector<VkSemaphore> waitSemaphores { vulkanWaitSemaphore.GetNative() };
+
         VkPresentInfoKHR presetInfo = {};
         presetInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presetInfo.swapchainCount = 1;
         presetInfo.pSwapchains = &swapChain;
-        presetInfo.waitSemaphoreCount = 0;
-        presetInfo.pWaitSemaphores = nullptr;
+        presetInfo.waitSemaphoreCount = waitSemaphores.size();
+        presetInfo.pWaitSemaphores = waitSemaphores.data();
         presetInfo.pImageIndices = &currentImage;
         Assert(vkQueuePresentKHR(queue, &presetInfo) == VK_SUCCESS);
     }

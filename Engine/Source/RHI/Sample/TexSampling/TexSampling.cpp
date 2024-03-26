@@ -24,7 +24,7 @@ protected:
         CreateSwapChain();
         CreateVertexBuffer();
         CreateIndexBuffer();
-        CreateFence();
+        CreateSyncObjects();
         CreateTextureAndSampler();
         CreateUniformBuffer();
         CreateBindGroupLayout();
@@ -38,7 +38,7 @@ protected:
     void OnDrawFrame() override
     {
         inflightFences[nextFrameIndex]->Wait();
-        auto backTextureIndex = swapChain->AcquireBackTexture();
+        auto backTextureIndex = swapChain->AcquireBackTexture(backBufferReadySemaphores[nextFrameIndex].Get());
         inflightFences[nextFrameIndex]->Reset();
 
         UniqueRef<CommandEncoder> commandEncoder = commandBuffers[nextFrameIndex]->Begin();
@@ -72,9 +72,15 @@ protected:
         }
         commandEncoder->End();
 
-        graphicsQueue->Submit(commandBuffers[nextFrameIndex].Get(), inflightFences[nextFrameIndex].Get());
+        QueueSubmitInfo submitInfo {};
+        submitInfo.waitSemaphoreNum = 1;
+        submitInfo.waitSemaphores = backBufferReadySemaphores[nextFrameIndex].Get();
+        submitInfo.signalSemaphoreNum = 1;
+        submitInfo.signalSemaphores = renderFinishedSemaphores[nextFrameIndex].Get();
+        submitInfo.signalFence = inflightFences[nextFrameIndex].Get();
+        graphicsQueue->Submit(commandBuffers[nextFrameIndex].Get(), submitInfo);
 
-        swapChain->Present();
+        swapChain->Present(renderFinishedSemaphores[nextFrameIndex].Get());
         nextFrameIndex = (nextFrameIndex + 1) % backBufferCount;
     }
 
@@ -263,7 +269,9 @@ private:
         commandEncoder->End();
 
         UniqueRef<Fence> fence = device->CreateFence(false);
-        graphicsQueue->Submit(texCommandBuffer.Get(), fence.Get());
+        QueueSubmitInfo submitInfo {};
+        submitInfo.signalFence = fence.Get();
+        graphicsQueue->Submit(texCommandBuffer.Get(), submitInfo);
         fence->Wait();
     }
 
@@ -414,9 +422,11 @@ private:
         pipeline = device->CreateGraphicsPipeline(createInfo);
     }
 
-    void CreateFence()
+    void CreateSyncObjects()
     {
         for (auto i = 0; i < backBufferCount; i++) {
+            backBufferReadySemaphores[i] = device->CreateSemaphore();
+            renderFinishedSemaphores[i] = device->CreateSemaphore();
             inflightFences[i] = device->CreateFence(true);
         }
     }
@@ -454,6 +464,8 @@ private:
     UniqueRef<ShaderModule> vertexShader;
     UniqueRef<ShaderModule> fragmentShader;
     std::array<UniqueRef<CommandBuffer>, backBufferCount> commandBuffers;
+    std::array<UniqueRef<Semaphore>, backBufferCount> backBufferReadySemaphores;
+    std::array<UniqueRef<Semaphore>, backBufferCount> renderFinishedSemaphores;
     std::array<UniqueRef<Fence>, backBufferCount> inflightFences;
     uint8_t nextFrameIndex = 0;
 };
