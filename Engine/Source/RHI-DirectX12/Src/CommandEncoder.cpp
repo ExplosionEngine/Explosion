@@ -149,7 +149,7 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo)
+    DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo& beginInfo)
         : GraphicsPassCommandEncoder()
         , device(device)
         , commandEncoder(commandEncoder)
@@ -157,15 +157,15 @@ namespace RHI::DirectX12 {
         , graphicsPipeline(nullptr)
     {
         // set render targets
-        std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rtvHandles(beginInfo->colorAttachmentNum);
+        std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rtvHandles(beginInfo.colorAttachments.size());
         for (auto i = 0; i < rtvHandles.size(); i++) {
-            auto* view = static_cast<DX12TextureView*>(beginInfo->colorAttachments[i].view);
+            auto* view = static_cast<DX12TextureView*>(beginInfo.colorAttachments[i].view);
             Assert(view);
             rtvHandles[i] = view->GetDX12CpuDescriptorHandle();
         }
         std::optional<CD3DX12_CPU_DESCRIPTOR_HANDLE> dsvHandle;
-        if (beginInfo->depthStencilAttachment != nullptr) {
-            auto* view = static_cast<DX12TextureView*>(beginInfo->depthStencilAttachment->view);
+        if (beginInfo.depthStencilAttachment.has_value()) {
+            auto* view = static_cast<DX12TextureView*>(beginInfo.depthStencilAttachment->view);
             Assert(view);
             dsvHandle = view->GetDX12CpuDescriptorHandle();
         }
@@ -173,7 +173,7 @@ namespace RHI::DirectX12 {
 
         // clear render targets
         for (auto i = 0; i < rtvHandles.size(); i++) {
-            const auto& colorAttachment = beginInfo->colorAttachments[i];
+            const auto& colorAttachment = beginInfo.colorAttachments[i];
             if (colorAttachment.loadOp != LoadOp::clear) {
                 continue;
             }
@@ -181,7 +181,7 @@ namespace RHI::DirectX12 {
             commandBuffer.GetDX12GraphicsCommandList()->ClearRenderTargetView(rtvHandles[i], clearValue, 0, nullptr);
         }
         if (dsvHandle.has_value()) {
-            const auto& depthStencilAttachment = *beginInfo->depthStencilAttachment;
+            const auto& depthStencilAttachment = *beginInfo.depthStencilAttachment;
             if (depthStencilAttachment.depthLoadOp != LoadOp::clear && depthStencilAttachment.stencilLoadOp != LoadOp::clear) {
                 return;
             }
@@ -327,7 +327,7 @@ namespace RHI::DirectX12 {
         return new DX12ComputePassCommandEncoder(device, *this, commandBuffer);
     }
 
-    GraphicsPassCommandEncoder* DX12CommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo)
+    GraphicsPassCommandEncoder* DX12CommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo& beginInfo)
     {
         return new DX12GraphicsPassCommandEncoder(device, *this, commandBuffer, beginInfo);
     }

@@ -22,7 +22,7 @@ namespace RHI::DirectX12 {
         void ResourceBarrier(const Barrier& barrier) override;
         CopyPassCommandEncoder* BeginCopyPass() override;
         ComputePassCommandEncoder* BeginComputePass() override;
-        GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
+        GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo& beginInfo) override;
         void End() override;
         void Destroy() override;
 
@@ -80,7 +80,7 @@ namespace RHI::DirectX12 {
     class DX12GraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
     public:
         NonCopyable(DX12GraphicsPassCommandEncoder)
-        explicit DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo);
+        explicit DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo& beginInfo);
         ~DX12GraphicsPassCommandEncoder() override;
 
         // CommandCommandEncoder

@@ -157,7 +157,7 @@ namespace RHI::Dummy {
         return new DummyComputePassCommandEncoder(dummyCommandBuffer);
     }
 
-    GraphicsPassCommandEncoder* DummyCommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo)
+    GraphicsPassCommandEncoder* DummyCommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo& beginInfo)
     {
         return new DummyGraphicsPassCommandEncoder(dummyCommandBuffer);
     }

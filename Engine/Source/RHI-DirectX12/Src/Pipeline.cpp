@@ -70,8 +70,8 @@ namespace RHI::DirectX12 {
         desc.AlphaToCoverageEnable = createInfo.multiSampleState.alphaToCoverage;
         desc.IndependentBlendEnable = true;
 
-        Assert(createInfo.fragmentState.colorTargetNum <= 8);
-        for (auto i = 0; i < createInfo.fragmentState.colorTargetNum; i++) {
+        Assert(createInfo.fragmentState.colorTargets.size() <= 8);
+        for (auto i = 0; i < createInfo.fragmentState.colorTargets.size(); i++) {
             desc.RenderTarget[i] = GetDX12RenderTargetBlendDesc(createInfo.fragmentState.colorTargets[i]);
         }
         return desc;
@@ -119,8 +119,8 @@ namespace RHI::DirectX12 {
     void UpdateDX12RenderTargetsDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const GraphicsPipelineCreateInfo& createInfo)
     {
         // have been checked num in function #GetDX12BlendDesc()
-        desc.NumRenderTargets = createInfo.fragmentState.colorTargetNum;
-        for (auto i = 0; i < createInfo.fragmentState.colorTargetNum; i++) {
+        desc.NumRenderTargets = createInfo.fragmentState.colorTargets.size();
+        for (auto i = 0; i < createInfo.fragmentState.colorTargets.size(); i++) {
             desc.RTVFormats[i] = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.fragmentState.colorTargets[i].format);
         }
     }
@@ -138,10 +138,10 @@ namespace RHI::DirectX12 {
         std::vector<D3D12_INPUT_ELEMENT_DESC> result {};
         const auto& vertexState = createInfo.vertexState;
 
-        for (auto i = 0; i < vertexState.bufferLayoutNum; i++) {
+        for (auto i = 0; i < vertexState.bufferLayouts.size(); i++) {
             const auto& layout = vertexState.bufferLayouts[i];
 
-            for (auto j = 0; j < layout.attributeNum; j++) {
+            for (auto j = 0; j < layout.attributes.size(); j++) {
                 const auto& attribute = layout.attributes[j];
 
                 D3D12_INPUT_ELEMENT_DESC desc {};
@@ -149,7 +149,7 @@ namespace RHI::DirectX12 {
                 desc.InputSlot = i;
                 desc.InputSlotClass = DX12EnumCast<VertexStepMode, D3D12_INPUT_CLASSIFICATION>(layout.stepMode);
                 desc.AlignedByteOffset = attribute.offset;
-                desc.SemanticName = attribute.semanticName;
+                desc.SemanticName = attribute.semanticName.c_str();
                 desc.SemanticIndex = attribute.semanticIndex;
                 result.emplace_back(desc);
             }

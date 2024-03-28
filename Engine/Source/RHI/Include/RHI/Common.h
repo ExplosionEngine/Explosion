@@ -380,6 +380,8 @@ namespace RHI {
     template <typename T = uint32_t>
     class Flags {
     public:
+        static Flags null;
+
         using UnderlyingType = T;
 
         Flags() = default;
@@ -437,6 +439,9 @@ namespace RHI {
     private:
         T value;
     };
+
+    template <typename T>
+    Flags<T> Flags<T>::null = Flags<T>(0);
 
     template <typename T>
     Flags<T> operator&(Flags<T> a, Flags<T> b)

@@ -23,7 +23,7 @@ namespace RHI::Vulkan {
         void ResourceBarrier(const Barrier& barrier) override;
         CopyPassCommandEncoder* BeginCopyPass() override;
         ComputePassCommandEncoder* BeginComputePass() override;
-        GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
+        GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo& beginInfo) override;
         void End() override;
         void Destroy() override;
 
@@ -80,7 +80,7 @@ namespace RHI::Vulkan {
     class VKGraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
     public:
         NonCopyable(VKGraphicsPassCommandEncoder)
-        explicit VKGraphicsPassCommandEncoder(VKDevice& device, VKCommandEncoder& commandEncoder, VKCommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo);
+        explicit VKGraphicsPassCommandEncoder(VKDevice& device, VKCommandEncoder& commandEncoder, VKCommandBuffer& commandBuffer, const GraphicsPassBeginInfo& beginInfo);
         ~VKGraphicsPassCommandEncoder() override;
 
         // CommandCommandEncoder

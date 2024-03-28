@@ -24,16 +24,29 @@ namespace RHI {
         uint8_t mipLevel;
         uint8_t baseArrayLayer;
         uint8_t arrayLayerNum;
-        Common::UVec3 origin {};
-        TextureAspect aspect = TextureAspect::color;
+        Common::UVec3 origin;
+        TextureAspect aspect;
+
+        TextureSubResourceInfo();
+        TextureSubResourceInfo& MipLevel(uint8_t inMipLevel);
+        TextureSubResourceInfo& Array(uint8_t inBaseArrayLevel, uint8_t inArrayLayerNum);
+        TextureSubResourceInfo& Origin(const Common::UVec3& inOrigin);
+        TextureSubResourceInfo& Aspect(TextureAspect inAspect);
     };
 
+    template <typename Derived>
     struct GraphicsPassColorAttachmentBase {
         Common::LinearColor clearValue;
         LoadOp loadOp;
         StoreOp storeOp;
+
+        GraphicsPassColorAttachmentBase();
+        Derived& ClearValue(const Common::LinearColor& inClearValue);
+        Derived& LoadOp(LoadOp inLoadOp);
+        Derived& StoreOp(StoreOp inStoreOp);
     };
 
+    template <typename Derived>
     struct GraphicsPassDepthStencilAttachmentBase {
         float depthClearValue;
         LoadOp depthLoadOp;
@@ -43,21 +56,41 @@ namespace RHI {
         LoadOp stencilLoadOp;
         StoreOp stencilStoreOp;
         bool stencilReadOnly;
+
+        GraphicsPassDepthStencilAttachmentBase();
+        Derived& DepthClearValue(float inDepthClearValue);
+        Derived& DepthLoadOp(LoadOp inLoadOp);
+        Derived& DepthStoreOp(StoreOp inStoreOp);
+        Derived& DepthReadOnly(bool inDepthReadOnly);
+        Derived& StencilClearValue(uint32_t inStencilClearValue);
+        Derived& StencilLoadOp(LoadOp inLoadOp);
+        Derived& StencilStoreOp(StoreOp inStoreOp);
+        Derived& StencilReadOnly(bool inStencilReadOnly);
     };
 
-    struct GraphicsPassColorAttachment : public GraphicsPassColorAttachmentBase {
+    struct GraphicsPassColorAttachment : public GraphicsPassColorAttachmentBase<GraphicsPassColorAttachment> {
         TextureView* view;
-        TextureView* resolve;
+        TextureView* resolveView;
+
+        GraphicsPassColorAttachment();
+        GraphicsPassColorAttachment& View(TextureView* inView);
+        GraphicsPassColorAttachment& ResolveView(TextureView* inResolveView);
     };
 
-    struct GraphicsPassDepthStencilAttachment : public GraphicsPassDepthStencilAttachmentBase {
+    struct GraphicsPassDepthStencilAttachment : public GraphicsPassDepthStencilAttachmentBase<GraphicsPassDepthStencilAttachment> {
         TextureView* view;
+
+        GraphicsPassDepthStencilAttachment();
+        GraphicsPassDepthStencilAttachment& View(TextureView* inView);
     };
 
     struct GraphicsPassBeginInfo {
-        uint32_t colorAttachmentNum;
-        const GraphicsPassColorAttachment* colorAttachments;
-        const GraphicsPassDepthStencilAttachment* depthStencilAttachment;
+        std::optional<GraphicsPassDepthStencilAttachment> depthStencilAttachment;
+        std::vector<GraphicsPassColorAttachment> colorAttachments;
+
+        GraphicsPassBeginInfo();
+        GraphicsPassBeginInfo& DepthStencilAttachment(const GraphicsPassDepthStencilAttachment& inDepthStencilAttachment);
+        GraphicsPassBeginInfo& ColorAttachment(const GraphicsPassColorAttachment& inColorAttachment);
     };
 
     class CommandCommandEncoder {
@@ -129,11 +162,111 @@ namespace RHI {
 
         virtual CopyPassCommandEncoder* BeginCopyPass() = 0;
         virtual ComputePassCommandEncoder* BeginComputePass() = 0;
-        virtual GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) = 0;
+        virtual GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo& beginInfo) = 0;
         virtual void End() = 0;
         virtual void Destroy() = 0;
 
     protected:
         CommandEncoder();
     };
+}
+
+namespace RHI {
+    template <typename Derived>
+    GraphicsPassColorAttachmentBase<Derived>::GraphicsPassColorAttachmentBase()
+        : clearValue(Common::ColorConsts::black.ToLinearColor())
+        , loadOp(LoadOp::load)
+        , storeOp(StoreOp::discard)
+    {
+    }
+
+    template <typename Derived>
+    Derived& GraphicsPassColorAttachmentBase<Derived>::ClearValue(const Common::LinearColor& inClearValue)
+    {
+        clearValue = inClearValue;
+        return *static_cast<Derived*>(this);
+    }
+
+    template <typename Derived>
+    Derived& GraphicsPassColorAttachmentBase<Derived>::LoadOp(enum LoadOp inLoadOp)
+    {
+        loadOp = inLoadOp;
+        return *static_cast<Derived*>(this);
+    }
+
+    template <typename Derived>
+    Derived& GraphicsPassColorAttachmentBase<Derived>::StoreOp(enum StoreOp inStoreOp)
+    {
+        storeOp = inStoreOp;
+        return *static_cast<Derived*>(this);
+    }
+
+    template <typename Derived>
+    GraphicsPassDepthStencilAttachmentBase<Derived>::GraphicsPassDepthStencilAttachmentBase()
+        : depthClearValue(1.0f)
+        , depthLoadOp(LoadOp::load)
+        , depthStoreOp(StoreOp::discard)
+        , depthReadOnly(true)
+        , stencilClearValue(0)
+        , stencilLoadOp(LoadOp::load)
+        , stencilStoreOp(StoreOp::discard)
+        , stencilReadOnly(true)
+    {
+    }
+
+    template <typename Derived>
+    Derived& GraphicsPassDepthStencilAttachmentBase<Derived>::DepthClearValue(float inDepthClearValue)
+    {
+        depthClearValue = inDepthClearValue;
+        return *static_cast<Derived*>(this);
+    }
+
+    template <typename Derived>
+    Derived& GraphicsPassDepthStencilAttachmentBase<Derived>::DepthLoadOp(LoadOp inLoadOp)
+    {
+        depthLoadOp = inLoadOp;
+        return *static_cast<Derived*>(this);
+    }
+
+    template <typename Derived>
+    Derived& GraphicsPassDepthStencilAttachmentBase<Derived>::DepthStoreOp(StoreOp inStoreOp)
+    {
+        depthStoreOp = inStoreOp;
+        return *static_cast<Derived*>(this);
+    }
+
+    template <typename Derived>
+    Derived& GraphicsPassDepthStencilAttachmentBase<Derived>::DepthReadOnly(bool inDepthReadOnly)
+    {
+        depthReadOnly = inDepthReadOnly;
+        return *static_cast<Derived*>(this);
+    }
+
+    template <typename Derived>
+    Derived& GraphicsPassDepthStencilAttachmentBase<Derived>::StencilClearValue(uint32_t inStencilClearValue)
+    {
+        stencilClearValue = inStencilClearValue;
+        return *static_cast<Derived*>(this);
+    }
+
+    template <typename Derived>
+    Derived& GraphicsPassDepthStencilAttachmentBase<Derived>::StencilLoadOp(LoadOp inLoadOp)
+    {
+        stencilLoadOp = inLoadOp;
+        return *static_cast<Derived*>(this);
+    }
+
+    template <typename Derived>
+    Derived& GraphicsPassDepthStencilAttachmentBase<Derived>::StencilStoreOp(StoreOp inStoreOp)
+    {
+        stencilStoreOp = inStoreOp;
+        return *static_cast<Derived*>(this);
+    }
+
+    template <typename Derived>
+    Derived& GraphicsPassDepthStencilAttachmentBase<Derived>::StencilReadOnly(bool inStencilReadOnly)
+    {
+        stencilReadOnly = inStencilReadOnly;
+        return *static_cast<Derived*>(this);
+    }
 }

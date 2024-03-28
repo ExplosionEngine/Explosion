@@ -165,12 +165,10 @@ namespace Rendering {
     using RGBufferRef = RGBuffer*;
     using RGTextureRef = RGTexture*;
 
-    struct RGBufferViewDesc : public RHI::BufferViewCreateInfo {
+    struct RGBufferViewDesc : public RHI::BufferViewCreateInfoBase<RGBufferViewDesc> {
         static RGBufferViewDesc CreateForUniform();
         static RGBufferViewDesc CreateForStorage();
         static RGBufferViewDesc Create(const RHI::BufferViewCreateInfo& rhiDesc);
-        RGBufferViewDesc& Offset(uint32_t inOffset);
-        RGBufferViewDesc& Size(uint32_t inSize);
     };
 
     struct RGTextureViewDesc  : public RHI::TextureViewCreateInfo {
@@ -243,12 +241,12 @@ namespace Rendering {
     using RGBufferViewRef = RGBufferView*;
     using RGTextureViewRef = RGTextureView*;
 
-    struct RGColorAttachment : public RHI::GraphicsPassColorAttachmentBase {
+    struct RGColorAttachment : public RHI::GraphicsPassColorAttachmentBase<RGColorAttachment> {
         RGTextureViewRef view;
         // TODO TextureView* resolve;
     };
 
-    struct RGDepthStencilAttachment : public RHI::GraphicsPassDepthStencilAttachmentBase {
+    struct RGDepthStencilAttachment : public RHI::GraphicsPassDepthStencilAttachmentBase<RGDepthStencilAttachment> {
         RGTextureViewRef view;
     };
 

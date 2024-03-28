@@ -2,6 +2,8 @@
 // Created by swtpotato on 2022/8/2.
 //
 
+#include <utility>
+
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Buffer.h>
 #include <RHI/Vulkan/BufferView.h>
@@ -37,7 +39,7 @@ namespace RHI::Vulkan {
         offset = createInfo.offset;
         size = createInfo.size;
         if (IsIndexBuffer(buffer.GetUsages())) {
-            format = createInfo.index.format;
+            format = std::get<IndexBufferViewInfo>(createInfo.extend).format;
         } else {
             // TODO
             // Uniform buffer

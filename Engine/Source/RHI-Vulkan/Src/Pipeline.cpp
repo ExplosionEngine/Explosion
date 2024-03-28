@@ -11,7 +11,6 @@
 #include <unordered_map>
 
 namespace RHI::Vulkan {
-
     static const char* GetShaderEntry(VkShaderStageFlagBits stage)
     {
         static std::unordered_map<VkShaderStageFlagBits, const char*> ENTRY_MAP = {
@@ -106,10 +105,10 @@ namespace RHI::Vulkan {
 
     static VkPipelineColorBlendStateCreateInfo ConstructAttachmentInfo(const GraphicsPipelineCreateInfo& createInfo, std::vector<VkPipelineColorBlendAttachmentState>& blendStates)
     {
-        blendStates.resize(createInfo.fragmentState.colorTargetNum);
+        blendStates.resize(createInfo.fragmentState.colorTargets.size());
         VkPipelineColorBlendStateCreateInfo colorInfo = {};
         colorInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-        for (uint8_t i = 0; i < createInfo.fragmentState.colorTargetNum; ++i) {
+        for (uint8_t i = 0; i < createInfo.fragmentState.colorTargets.size(); ++i) {
             VkPipelineColorBlendAttachmentState& blendState = blendStates[i];
             const auto& srcState = createInfo.fragmentState.colorTargets[i];
             blendState.blendEnable = true;
@@ -143,14 +142,14 @@ namespace RHI::Vulkan {
         VkPipelineVertexInputStateCreateInfo vtxInput = {};
         vtxInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-        bindings.resize(createInfo.vertexState.bufferLayoutNum);
-        for (uint32_t i = 0; i < createInfo.vertexState.bufferLayoutNum; ++i) {
+        bindings.resize(createInfo.vertexState.bufferLayouts.size());
+        for (uint32_t i = 0; i < createInfo.vertexState.bufferLayouts.size(); ++i) {
             const auto& binding = createInfo.vertexState.bufferLayouts[i];
             bindings[i].binding = i;
             bindings[i].inputRate = binding.stepMode == VertexStepMode::perInstance ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
             bindings[i].stride = binding.stride;
 
-            for (uint32_t j = 0; j < binding.attributeNum; ++j) {
+            for (uint32_t j = 0; j < binding.attributes.size(); ++j) {
                 VkVertexInputAttributeDescription desc = {};
                 auto inputName = std::string("in.var.") + std::string(binding.attributes[j].semanticName);
                 auto iter = locationTable.find(inputName);
@@ -305,8 +304,8 @@ namespace RHI::Vulkan {
         std::vector<VkVertexInputBindingDescription> bindings;
         VkPipelineVertexInputStateCreateInfo vtxInput = ConstructVertexInput(createInfo, attributes, bindings);
 
-        std::vector<VkFormat> pixelFormats(createInfo.fragmentState.colorTargetNum);
-        for (size_t i = 0; i < createInfo.fragmentState.colorTargetNum; i++)
+        std::vector<VkFormat> pixelFormats(createInfo.fragmentState.colorTargets.size());
+        for (size_t i = 0; i < createInfo.fragmentState.colorTargets.size(); i++)
         {
             auto format = createInfo.fragmentState.colorTargets[i].format;
             pixelFormats[i] = VKEnumCast<PixelFormat, VkFormat>(format);
@@ -314,7 +313,7 @@ namespace RHI::Vulkan {
 
         VkPipelineRenderingCreateInfo pipelineRenderingCreateInfo;
         pipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
-        pipelineRenderingCreateInfo.colorAttachmentCount = createInfo.fragmentState.colorTargetNum;
+        pipelineRenderingCreateInfo.colorAttachmentCount = createInfo.fragmentState.colorTargets.size();
         pipelineRenderingCreateInfo.pColorAttachmentFormats = pixelFormats.data();
         pipelineRenderingCreateInfo.depthAttachmentFormat = createInfo.depthStencilState.depthEnable ? VKEnumCast<PixelFormat, VkFormat>(createInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
         pipelineRenderingCreateInfo.stencilAttachmentFormat = createInfo.depthStencilState.stencilEnable ? VKEnumCast<PixelFormat, VkFormat>(createInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;

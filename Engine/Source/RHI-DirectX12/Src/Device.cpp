@@ -213,8 +213,8 @@ namespace RHI::DirectX12 {
     void DX12Device::CreateDX12Queues(const DeviceCreateInfo& createInfo)
     {
         std::unordered_map<QueueType, size_t> queueNumMap;
-        for (size_t i = 0; i < createInfo.queueCreateInfoNum; i++) {
-            const auto& queueCreateInfo = createInfo.queueCreateInfos[i];
+        for (size_t i = 0; i < createInfo.queueRequests.size(); i++) {
+            const auto& queueCreateInfo = createInfo.queueRequests[i];
             auto iter = queueNumMap.find(queueCreateInfo.type);
             if (iter == queueNumMap.end()) {
                 queueNumMap[queueCreateInfo.type] = 0;

@@ -2,6 +2,8 @@
 // Created by johnk on 20/3/2022.
 //
 
+#include <utility>
+
 #include <RHI/DirectX12/Device.h>
 #include <RHI/DirectX12/Buffer.h>
 #include <RHI/DirectX12/BufferView.h>
@@ -81,11 +83,11 @@ namespace RHI::DirectX12 {
         } else if (IsVertexBuffer(createInfo.type, buffer.GetUsages())) {
             vertex.dx12VertexBufferView.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo.offset;
             vertex.dx12VertexBufferView.SizeInBytes = createInfo.size;
-            vertex.dx12VertexBufferView.StrideInBytes = createInfo.vertex.stride;
+            vertex.dx12VertexBufferView.StrideInBytes = std::get<VertexBufferViewInfo>(createInfo.extend).stride;
         } else if (IsIndexBuffer(createInfo.type, buffer.GetUsages())) {
             index.dx12IndexBufferView.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo.offset;
             index.dx12IndexBufferView.SizeInBytes = createInfo.size;
-            index.dx12IndexBufferView.Format = DX12EnumCast<IndexFormat, DXGI_FORMAT>(createInfo.index.format);
+            index.dx12IndexBufferView.Format = DX12EnumCast<IndexFormat, DXGI_FORMAT>(std::get<IndexBufferViewInfo>(createInfo.extend).format);
         }
     }
 }

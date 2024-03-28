@@ -43,20 +43,15 @@ protected:
 
         UniqueRef<CommandEncoder> commandEncoder = commandBuffers[nextFrameIndex]->Begin();
         {
-            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::clear;
-            colorAttachments[0].storeOp = StoreOp::store;
-            colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();
-            colorAttachments[0].resolve = nullptr;
-
-            GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
-            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
-            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
-
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(
+                GraphicsPassBeginInfo()
+                    .ColorAttachment(
+                        GraphicsPassColorAttachment()
+                            .ClearValue(Common::ColorConsts::black.ToLinearColor())
+                            .LoadOp(LoadOp::clear)
+                            .StoreOp(StoreOp::store)
+                            .View(swapChainTextureViews[backTextureIndex].Get())));
             {
                 graphicsEncoder->SetPipeline(pipeline.Get());
                 graphicsEncoder->SetScissor(0, 0, width, height);
@@ -99,11 +94,9 @@ private:
 
     void RequestDeviceAndFetchQueues()
     {
-        std::vector<QueueInfo> queueCreateInfos = {{QueueType::graphics, 1}};
-        DeviceCreateInfo createInfo {};
-        createInfo.queueCreateInfoNum = queueCreateInfos.size();
-        createInfo.queueCreateInfos = queueCreateInfos.data();
-        device = gpu->RequestDevice(createInfo);
+        device = gpu->RequestDevice(
+            DeviceCreateInfo()
+                .Queue(QueueRequestInfo(QueueType::graphics, 1)));
         graphicsQueue = device->GetQueue(QueueType::graphics, 0);
     }
 
@@ -158,10 +151,12 @@ private:
             {{0.f, .5f, 0.f}, {0.f, 0.f, 1.f}},
         };
 
-        BufferCreateInfo bufferCreateInfo {};
-        bufferCreateInfo.size = vertices.size() * sizeof(Vertex);
-        bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
-        bufferCreateInfo.initialState = BufferState::staging;
+        BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+            .Size(vertices.size() * sizeof(Vertex))
+            .Usages(BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+            .InitialState(BufferState::staging)
+            .DebugName("vertexBuffer");
+
         vertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (vertexBuffer != nullptr) {
             auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -169,11 +164,11 @@ private:
             vertexBuffer->UnMap();
         }
 
-        BufferViewCreateInfo bufferViewCreateInfo {};
-        bufferViewCreateInfo.type = BufferViewType::vertex;
-        bufferViewCreateInfo.size = vertices.size() * sizeof(Vertex);
-        bufferViewCreateInfo.offset = 0;
-        bufferViewCreateInfo.vertex.stride = sizeof(Vertex);
+        BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
+            .Type(BufferViewType::vertex)
+            .Size(vertices.size() * sizeof(Vertex))
+            .Offset(0)
+            .ExtendVertex(sizeof(Vertex));
         vertexBufferView = vertexBuffer->CreateBufferView(bufferViewCreateInfo);
     }
 
@@ -202,42 +197,49 @@ private:
         shaderModuleCreateInfo.byteCode = fsByteCode.data();
         fragmentShader = device->CreateShaderModule(shaderModuleCreateInfo);
 
-        std::array<VertexAttribute, 2> vertexAttributes {};
-        vertexAttributes[0].format = VertexFormat::float32X3;
-        vertexAttributes[0].offset = 0;
-        vertexAttributes[0].semanticName = "POSITION";
-        vertexAttributes[0].semanticIndex = 0;
-        vertexAttributes[1].format = VertexFormat::float32X3;
-        vertexAttributes[1].offset = offsetof(Vertex, color);
-        vertexAttributes[1].semanticName = "COLOR";
-        vertexAttributes[1].semanticIndex = 0;
-
-        VertexBufferLayout vertexBufferLayout {};
-        vertexBufferLayout.stepMode = RHI::VertexStepMode::perVertex;
-        vertexBufferLayout.stride = sizeof(Vertex);
-        vertexBufferLayout.attributeNum = vertexAttributes.size();
-        vertexBufferLayout.attributes = vertexAttributes.data();
-
-        std::array<ColorTargetState, 1> colorTargetStates {};
-        colorTargetStates[0].format = swapChainFormat;
-        colorTargetStates[0].writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
-
-        GraphicsPipelineCreateInfo createInfo {};
-        createInfo.vertexShader = vertexShader.Get();
-        createInfo.pixelShader = fragmentShader.Get();
-        createInfo.layout = pipelineLayout.Get();
-        createInfo.vertexState.bufferLayoutNum = 1;
-        createInfo.vertexState.bufferLayouts = &vertexBufferLayout;
-        createInfo.fragmentState.colorTargetNum = colorTargetStates.size();
-        createInfo.fragmentState.colorTargets = colorTargetStates.data();
-        createInfo.primitiveState.depthClip = false;
-        createInfo.primitiveState.frontFace = RHI::FrontFace::ccw;
-        createInfo.primitiveState.cullMode = CullMode::none;
-        createInfo.primitiveState.topologyType = RHI::PrimitiveTopologyType::triangle;
-        createInfo.primitiveState.stripIndexFormat = IndexFormat::uint16;
-        createInfo.depthStencilState.depthEnable = false;
-        createInfo.depthStencilState.stencilEnable = false;
-        createInfo.multiSampleState.count = 1;
+        GraphicsPipelineCreateInfo createInfo = GraphicsPipelineCreateInfo()
+            .Layout(pipelineLayout.Get())
+            .VertexShader(vertexShader.Get())
+            .PixelShader(fragmentShader.Get())
+            .VertexState(
+                VertexState()
+                    .VertexBufferLayout(
+                        VertexBufferLayout()
+                            .StepMode(VertexStepMode::perVertex)
+                            .Stride(sizeof(Vertex))
+                            .Attribute(
+                                VertexAttribute()
+                                    .Format(RHI::VertexFormat::float32X3)
+                                    .Offset(0)
+                                    .SemanticName("POSITION")
+                                    .SemanticIndex(0))
+                            .Attribute(
+                                VertexAttribute()
+                                    .Format(RHI::VertexFormat::float32X3)
+                                    .Offset(offsetof(Vertex, color))
+                                    .SemanticName("COLOR")
+                                    .SemanticIndex(0))))
+            .FragmentState(
+                FragmentState()
+                    .ColorTarget(
+                        ColorTargetState()
+                            .Format(swapChainFormat)
+                            .WriteFlags(ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha)))
+            .PrimitiveState(
+                PrimitiveState()
+                    .DepthClip(false)
+                    .FrontFace(FrontFace::ccw)
+                    .CullMode(CullMode::none)
+                    .TopologyType(PrimitiveTopologyType::triangle)
+                    .StripIndexFormat(IndexFormat::uint16))
+            .DepthStencilState(
+                DepthStencilState()
+                    .DepthEnabled(false)
+                    .StencilEnabled(false))
+            .MultiSampleState(
+                MultiSampleState()
+                    .Count(1));
+        
         pipeline = device->CreateGraphicsPipeline(createInfo);
     }
 

@@ -203,8 +203,8 @@ namespace RHI::Vulkan {
         vkGetPhysicalDeviceQueueFamilyProperties(gpu.GetVkPhysicalDevice(), &queueFamilyPropertyCnt, queueFamilyProperties.data());
 
         std::map<QueueType, uint32_t> queueNumMap;
-        for (uint32_t i = 0; i < createInfo.queueCreateInfoNum; i++) {
-            const auto& queueCreateInfo = createInfo.queueCreateInfos[i];
+        for (uint32_t i = 0; i < createInfo.queueRequests.size(); i++) {
+            const auto& queueCreateInfo = createInfo.queueRequests[i];
             auto iter = queueNumMap.find(queueCreateInfo.type);
             if (iter == queueNumMap.end()) {
                 queueNumMap[queueCreateInfo.type] = 0;

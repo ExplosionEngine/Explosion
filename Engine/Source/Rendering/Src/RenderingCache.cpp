@@ -99,31 +99,31 @@ namespace Rendering {
             std::vector<size_t> values = {
                 Common::HashUtils::CityHash(&attribute.format, sizeof(attribute.format)),
                 Common::HashUtils::CityHash(&attribute.offset, sizeof(attribute.offset)),
-                Common::HashUtils::CityHash(attribute.semanticName, sizeof(attribute.semanticName)),
+                Common::HashUtils::CityHash(attribute.semanticName.data(), attribute.semanticName.size()),
                 Common::HashUtils::CityHash(&attribute.semanticIndex, sizeof(attribute.semanticIndex))
             };
             return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
         };
         auto computeVertexBufferLayoutHash = [computeVertexAttributeHash](const RHI::VertexBufferLayout& bufferLayout) -> size_t {
             std::vector<size_t> values;
-            values.reserve(bufferLayout.attributeNum + 2);
+            values.reserve(bufferLayout.attributes.size() + 2);
             values.emplace_back(Common::HashUtils::CityHash(&bufferLayout.stride, sizeof(bufferLayout.stride)));
             values.emplace_back(Common::HashUtils::CityHash(&bufferLayout.stepMode, sizeof(bufferLayout.stepMode)));
-            for (auto i = 0; i < bufferLayout.attributeNum; i++) {
+            for (auto i = 0; i < bufferLayout.attributes.size(); i++) {
                 values.emplace_back(computeVertexAttributeHash(bufferLayout.attributes[i]));
             }
             return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
         };
         auto computeVertexStateHash = [computeVertexBufferLayoutHash](const VertexState& state) -> size_t {
             std::vector<size_t> values;
-            values.reserve(state.bufferLayoutNum);
-            for (auto i = 0; i < state.bufferLayoutNum; i++) {
+            values.reserve(state.bufferLayouts.size());
+            for (auto i = 0; i < state.bufferLayouts.size(); i++) {
                 values.emplace_back(computeVertexBufferLayoutHash(state.bufferLayouts[i]));
             }
             return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
         };
         auto computeFragmentStateHash = [](const FragmentState& state) -> size_t {
-            return Common::HashUtils::CityHash(state.colorTargets, state.colorTargetNum * sizeof(RHI::ColorTargetState));
+            return Common::HashUtils::CityHash(state.colorTargets.data(), state.colorTargets.size() * sizeof(RHI::ColorTargetState));
         };
 
         std::vector<size_t> values = {

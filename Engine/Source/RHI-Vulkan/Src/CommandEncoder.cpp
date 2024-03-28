@@ -82,7 +82,7 @@ namespace RHI::Vulkan {
         return new VKComputePassCommandEncoder(device, *this, commandBuffer);
     }
 
-    GraphicsPassCommandEncoder* VKCommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo)
+    GraphicsPassCommandEncoder* VKCommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo& beginInfo)
     {
         return new VKGraphicsPassCommandEncoder(device, *this, commandBuffer, beginInfo);
     }
@@ -209,29 +209,29 @@ namespace RHI::Vulkan {
         delete this;
     }
 
-    VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandEncoder& commandEncoder, VKCommandBuffer& cmd,const GraphicsPassBeginInfo* beginInfo)
+    VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandEncoder& commandEncoder, VKCommandBuffer& cmd,const GraphicsPassBeginInfo& beginInfo)
         : device(dev)
         , commandEncoder(commandEncoder)
         , commandBuffer(cmd)
     {
-        std::vector<VkRenderingAttachmentInfo> colorAttachmentInfos(beginInfo->colorAttachmentNum);
-        for (size_t i = 0; i < beginInfo->colorAttachmentNum; i++)
+        std::vector<VkRenderingAttachmentInfo> colorAttachmentInfos(beginInfo.colorAttachments.size());
+        for (size_t i = 0; i < beginInfo.colorAttachments.size(); i++)
         {
-            auto* colorTextureView = static_cast<VKTextureView*>(beginInfo->colorAttachments[i].view);
+            auto* colorTextureView = static_cast<VKTextureView*>(beginInfo.colorAttachments[i].view);
             colorAttachmentInfos[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             colorAttachmentInfos[i].imageView = colorTextureView->GetVkImageView();
             colorAttachmentInfos[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            colorAttachmentInfos[i].loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(beginInfo->colorAttachments[i].loadOp);
-            colorAttachmentInfos[i].storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(beginInfo->colorAttachments[i].storeOp);
+            colorAttachmentInfos[i].loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(beginInfo.colorAttachments[i].loadOp);
+            colorAttachmentInfos[i].storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(beginInfo.colorAttachments[i].storeOp);
             colorAttachmentInfos[i].clearValue.color = {
-                    beginInfo->colorAttachments[i].clearValue.r,
-                    beginInfo->colorAttachments[i].clearValue.g,
-                    beginInfo->colorAttachments[i].clearValue.b,
-                    beginInfo->colorAttachments[i].clearValue.a
+                    beginInfo.colorAttachments[i].clearValue.r,
+                    beginInfo.colorAttachments[i].clearValue.g,
+                    beginInfo.colorAttachments[i].clearValue.b,
+                    beginInfo.colorAttachments[i].clearValue.a
                     };
         }
 
-        auto* textureView = static_cast<VKTextureView*>(beginInfo->colorAttachments[0].view);
+        auto* textureView = static_cast<VKTextureView*>(beginInfo.colorAttachments[0].view);
         VkRenderingInfoKHR renderingInfo = {};
         renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
         renderingInfo.colorAttachmentCount = colorAttachmentInfos.size();
@@ -240,28 +240,28 @@ namespace RHI::Vulkan {
         renderingInfo.renderArea = {{0, 0}, {static_cast<uint32_t>(textureView->GetTexture().GetExtent().x), static_cast<uint32_t>(textureView->GetTexture().GetExtent().y)}};
         renderingInfo.viewMask = 0;
 
-        if (beginInfo->depthStencilAttachment != nullptr)
+        if (beginInfo.depthStencilAttachment.has_value())
         {
-            auto* depthStencilTextureView = static_cast<VKTextureView*>(beginInfo->depthStencilAttachment->view);
+            auto* depthStencilTextureView = static_cast<VKTextureView*>(beginInfo.depthStencilAttachment->view);
 
             VkRenderingAttachmentInfo depthAttachmentInfo = {};
             depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             depthAttachmentInfo.imageView = depthStencilTextureView->GetVkImageView();
             depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            depthAttachmentInfo.loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(beginInfo->depthStencilAttachment->depthLoadOp);
-            depthAttachmentInfo.storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(beginInfo->depthStencilAttachment->depthStoreOp);
-            depthAttachmentInfo.clearValue.depthStencil = { beginInfo->depthStencilAttachment->depthClearValue, beginInfo->depthStencilAttachment->stencilClearValue };
+            depthAttachmentInfo.loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(beginInfo.depthStencilAttachment->depthLoadOp);
+            depthAttachmentInfo.storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(beginInfo.depthStencilAttachment->depthStoreOp);
+            depthAttachmentInfo.clearValue.depthStencil = { beginInfo.depthStencilAttachment->depthClearValue, beginInfo.depthStencilAttachment->stencilClearValue };
 
             renderingInfo.pDepthAttachment = &depthAttachmentInfo;
 
-            if (!beginInfo->depthStencilAttachment->depthReadOnly) {
+            if (!beginInfo.depthStencilAttachment->depthReadOnly) {
                 VkRenderingAttachmentInfo stencilAttachmentInfo = {};
                 stencilAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
                 stencilAttachmentInfo.imageView = depthStencilTextureView->GetVkImageView();
                 stencilAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-                stencilAttachmentInfo.loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(beginInfo->depthStencilAttachment->stencilLoadOp);
-                stencilAttachmentInfo.storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(beginInfo->depthStencilAttachment->stencilStoreOp);
-                stencilAttachmentInfo.clearValue.depthStencil = { beginInfo->depthStencilAttachment->depthClearValue, beginInfo->depthStencilAttachment->stencilClearValue };
+                stencilAttachmentInfo.loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(beginInfo.depthStencilAttachment->stencilLoadOp);
+                stencilAttachmentInfo.storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(beginInfo.depthStencilAttachment->stencilStoreOp);
+                stencilAttachmentInfo.clearValue.depthStencil = { beginInfo.depthStencilAttachment->depthClearValue, beginInfo.depthStencilAttachment->stencilClearValue };
 
                 renderingInfo.pStencilAttachment = &stencilAttachmentInfo;
             }

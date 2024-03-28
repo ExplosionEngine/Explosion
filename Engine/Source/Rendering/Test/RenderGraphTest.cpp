@@ -32,13 +32,9 @@ struct RenderGraphTest : public testing::Test {
     {
         instance = RHI::Instance::GetByType(RHI::RHIType::dummy);
 
-        RHI::QueueInfo queueInfo {};
-        queueInfo.type = RHI::QueueType::graphics;
-        queueInfo.num = 1;
-        RHI::DeviceCreateInfo deviceCreateInfo {};
-        deviceCreateInfo.queueCreateInfoNum = 1;
-        deviceCreateInfo.queueCreateInfos = &queueInfo;
-        device = instance->GetGpu(0)->RequestDevice(deviceCreateInfo);
+        device = instance->GetGpu(0)->RequestDevice(
+            RHI::DeviceCreateInfo()
+                .Queue(RHI::QueueRequestInfo(RHI::QueueType::graphics, 1)));
     }
 
     void TearDown() override {}

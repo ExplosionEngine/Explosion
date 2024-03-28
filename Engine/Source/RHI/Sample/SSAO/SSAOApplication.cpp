@@ -88,37 +88,34 @@ protected:
             commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
             commandEncoder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilReadonly, TextureState::depthStencilWrite));
 
-            std::array<GraphicsPassColorAttachment, 3> colorAttachments {};
-            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::clear;
-            colorAttachments[0].storeOp = StoreOp::store;
-            colorAttachments[0].view = gBufferPos.rtv.Get();
-            colorAttachments[0].resolve = nullptr;
-            colorAttachments[1].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[1].loadOp = LoadOp::clear;
-            colorAttachments[1].storeOp = StoreOp::store;
-            colorAttachments[1].view = gBufferNormal.rtv.Get();
-            colorAttachments[1].resolve = nullptr;
-            colorAttachments[2].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[2].loadOp = LoadOp::clear;
-            colorAttachments[2].storeOp = StoreOp::store;
-            colorAttachments[2].view = gBufferAlbedo.rtv.Get();
-            colorAttachments[2].resolve = nullptr;
-
-            GraphicsPassDepthStencilAttachment depthAttachment {};
-            depthAttachment.view = gBufferDepth.view.Get();
-            depthAttachment.depthLoadOp = LoadOp::clear;
-            depthAttachment.depthStoreOp = StoreOp::store;
-            depthAttachment.depthReadOnly = true;
-            depthAttachment.depthClearValue = 0.0;
-            depthAttachment.stencilClearValue = 0.0;
-
-            GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
-            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
-            graphicsPassBeginInfo.depthStencilAttachment = &depthAttachment;
-
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(
+                GraphicsPassBeginInfo()
+                    .ColorAttachment(
+                        GraphicsPassColorAttachment()
+                            .ClearValue(Common::ColorConsts::black.ToLinearColor())
+                            .LoadOp(LoadOp::clear)
+                            .StoreOp(StoreOp::store)
+                            .View(gBufferPos.rtv.Get()))
+                    .ColorAttachment(
+                        GraphicsPassColorAttachment()
+                            .ClearValue(Common::ColorConsts::black.ToLinearColor())
+                            .LoadOp(LoadOp::clear)
+                            .StoreOp(StoreOp::store)
+                            .View(gBufferNormal.rtv.Get()))
+                    .ColorAttachment(
+                        GraphicsPassColorAttachment()
+                            .ClearValue(Common::ColorConsts::black.ToLinearColor())
+                            .LoadOp(LoadOp::clear)
+                            .StoreOp(StoreOp::store)
+                            .View(gBufferAlbedo.rtv.Get()))
+                    .DepthStencilAttachment(
+                        GraphicsPassDepthStencilAttachment()
+                            .DepthClearValue(0.0f)
+                            .DepthLoadOp(LoadOp::clear)
+                            .DepthStoreOp(StoreOp::store)
+                            .DepthReadOnly(true)
+                            .StencilClearValue(0.0f)
+                            .View(gBufferDepth.view.Get())));
             {
                 graphicsEncoder->SetPipeline(pipelines.gBuffer.Get());
                 graphicsEncoder->SetScissor(0, 0, width, height);
@@ -145,19 +142,14 @@ protected:
             // ssao
             commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
 
-            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::clear;
-            colorAttachments[0].storeOp = StoreOp::store;
-            colorAttachments[0].view = ssaoOutput.rtv.Get();
-            colorAttachments[0].resolve = nullptr;
-
-            GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
-            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
-            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
-
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(
+                GraphicsPassBeginInfo()
+                    .ColorAttachment(
+                        GraphicsPassColorAttachment()
+                            .ClearValue(Common::ColorConsts::black.ToLinearColor())
+                            .LoadOp(LoadOp::clear)
+                            .StoreOp(StoreOp::store)
+                            .View(ssaoOutput.rtv.Get())));
             {
                 graphicsEncoder->SetPipeline(pipelines.ssao.Get());
                 graphicsEncoder->SetScissor(0, 0, width, height);
@@ -176,19 +168,14 @@ protected:
             // ssaoBlur
             commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
 
-            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::clear;
-            colorAttachments[0].storeOp = StoreOp::store;
-            colorAttachments[0].view = ssaoBlurOutput.rtv.Get();
-            colorAttachments[0].resolve = nullptr;
-
-            GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
-            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
-            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
-
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(
+                GraphicsPassBeginInfo()
+                    .ColorAttachment(
+                        GraphicsPassColorAttachment()
+                            .ClearValue(Common::ColorConsts::black.ToLinearColor())
+                            .LoadOp(LoadOp::clear)
+                            .StoreOp(StoreOp::store)
+                            .View(ssaoBlurOutput.rtv.Get())));
             {
                 graphicsEncoder->SetPipeline(pipelines.ssaoBlur.Get());
                 graphicsEncoder->SetScissor(0, 0, width, height);
@@ -205,20 +192,15 @@ protected:
 
         {
             // composition
-            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::clear;
-            colorAttachments[0].storeOp = StoreOp::store;
-            colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();
-            colorAttachments[0].resolve = nullptr;
-
-            GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
-            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
-            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
-
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(
+                GraphicsPassBeginInfo()
+                    .ColorAttachment(
+                        GraphicsPassColorAttachment()
+                            .ClearValue(Common::ColorConsts::black.ToLinearColor())
+                            .LoadOp(LoadOp::clear)
+                            .StoreOp(StoreOp::store)
+                            .View(swapChainTextureViews[backTextureIndex].Get())));
             {
                 graphicsEncoder->SetPipeline(pipelines.composition.Get());
                 graphicsEncoder->SetScissor(0, 0, width, height);
@@ -301,10 +283,11 @@ private:
             // upload diffuseColorMap
             auto& texData =mesh->materialData->baseColorTexture;
 
-            BufferCreateInfo bufferCreateInfo {};
-            bufferCreateInfo.size = texData->GetSize();
-            bufferCreateInfo.usages = BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
-            bufferCreateInfo.initialState = RHI::BufferState::staging;
+            BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+                .Size(texData->GetSize())
+                .Usages(BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+                .InitialState(RHI::BufferState::staging);
+
             UniqueRef<Buffer> pixelBuffer = app->GetDevice()->CreateBuffer(bufferCreateInfo);
             if (pixelBuffer != nullptr) {
                 auto* mapData = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -476,11 +459,9 @@ private:
 
     void RequestDeviceAndFetchQueues()
     {
-        std::vector<QueueInfo> queueCreateInfos = { {QueueType::graphics, 1} };
-        DeviceCreateInfo createInfo {};
-        createInfo.queueCreateInfoNum = static_cast<uint32_t>(queueCreateInfos.size());
-        createInfo.queueCreateInfos = queueCreateInfos.data();
-        device = gpu->RequestDevice(createInfo);
+        device = gpu->RequestDevice(
+            DeviceCreateInfo()
+                .Queue(QueueRequestInfo(QueueType::graphics, 1)));
         graphicsQueue = device->GetQueue(QueueType::graphics, 0);
     }
 
@@ -529,41 +510,43 @@ private:
 
     void CreateVertexBuffer()
     {
-        BufferCreateInfo bufferCreateInfo {};
-        bufferCreateInfo.size = model->raw_vertex_buffer.size() * sizeof(Vertex);
-        bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
-        bufferCreateInfo.initialState = RHI::BufferState::staging;
+        BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+            .Size(model->raw_vertex_buffer.size() * sizeof(Vertex))
+            .Usages(BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+            .InitialState(RHI::BufferState::staging);
+
         vertexBuffer = device->CreateBuffer(bufferCreateInfo);
         assert(vertexBuffer != nullptr);
         auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
         memcpy(data, model->raw_vertex_buffer.data(), bufferCreateInfo.size);
         vertexBuffer->UnMap();
 
-        BufferViewCreateInfo bufferViewCreateInfo {};
-        bufferViewCreateInfo.type = BufferViewType::vertex;
-        bufferViewCreateInfo.size = bufferCreateInfo.size;
-        bufferViewCreateInfo.offset = 0;
-        bufferViewCreateInfo.vertex.stride = sizeof(Vertex);
+        BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
+            .Type(BufferViewType::vertex)
+            .Size(bufferCreateInfo.size)
+            .Offset(0)
+            .ExtendVertex(sizeof(Vertex));
         vertexBufferView = vertexBuffer->CreateBufferView(bufferViewCreateInfo);
     }
 
     void CreateIndexBuffer()
     {
-        BufferCreateInfo bufferCreateInfo {};
-        bufferCreateInfo.size = model->raw_index_buffer.size() * sizeof(uint32_t);
-        bufferCreateInfo.usages = BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
-        bufferCreateInfo.initialState = RHI::BufferState::staging;
+        BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+            .Size(model->raw_index_buffer.size() * sizeof(uint32_t))
+            .Usages(BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+            .InitialState(RHI::BufferState::staging);
+
         indexBuffer = device->CreateBuffer(bufferCreateInfo);
         assert(indexBuffer != nullptr);
         auto* data = indexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
         memcpy(data, model->raw_index_buffer.data(), bufferCreateInfo.size);
         indexBuffer->UnMap();
 
-        BufferViewCreateInfo bufferViewCreateInfo {};
-        bufferViewCreateInfo.type = BufferViewType::index;
-        bufferViewCreateInfo.size = bufferCreateInfo.size;
-        bufferViewCreateInfo.offset = 0;
-        bufferViewCreateInfo.index.format = IndexFormat::uint32;
+        BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
+            .Type(BufferViewType::index)
+            .Size(bufferCreateInfo.size)
+            .Offset(0)
+            .ExtendIndex(IndexFormat::uint32);
         indexBufferView = indexBuffer->CreateBufferView(bufferViewCreateInfo);
     }
 
@@ -577,11 +560,11 @@ private:
             {{-1.0f, 1.0f, .0f}, {0.f, .0f}},
         };
 
-        BufferCreateInfo bufferCreateInfo {};
-        bufferCreateInfo.size = vertices.size() * sizeof(QuadVertex);
-        bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
-        bufferCreateInfo.debugName = "quadVertexBuffer";
-        bufferCreateInfo.initialState = RHI::BufferState::staging;
+        BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+            .Size(vertices.size() * sizeof(QuadVertex))
+            .Usages(BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+            .InitialState(RHI::BufferState::staging);
+
         quadVertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (quadVertexBuffer != nullptr) {
             auto* data = quadVertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -589,18 +572,20 @@ private:
             quadVertexBuffer->UnMap();
         }
 
-        BufferViewCreateInfo bufferViewCreateInfo {};
-        bufferViewCreateInfo.type = BufferViewType::vertex;
-        bufferViewCreateInfo.size = vertices.size() * sizeof(QuadVertex);
-        bufferViewCreateInfo.offset = 0;
-        bufferViewCreateInfo.vertex.stride = sizeof(QuadVertex);
+        BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
+            .Type(BufferViewType::vertex)
+            .Size(vertices.size() * sizeof(QuadVertex))
+            .Offset(0)
+            .ExtendVertex(sizeof(QuadVertex));
         quadVertexBufferView = quadVertexBuffer->CreateBufferView(bufferViewCreateInfo);
 
         // index buffer
         std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
-        bufferCreateInfo.size = indices.size() * sizeof(uint32_t);
-        bufferCreateInfo.usages = BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
-        bufferCreateInfo.initialState = RHI::BufferState::staging;
+        bufferCreateInfo = BufferCreateInfo()
+            .Size(indices.size() * sizeof(uint32_t))
+            .Usages(BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+            .InitialState(RHI::BufferState::staging);
+
         quadIndexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (quadIndexBuffer != nullptr) {
             auto* data = quadIndexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -608,10 +593,11 @@ private:
             quadIndexBuffer->UnMap();
         }
 
-        bufferViewCreateInfo.type = BufferViewType::index;
-        bufferViewCreateInfo.size = indices.size() * sizeof(uint32_t);
-        bufferViewCreateInfo.offset = 0;
-        bufferViewCreateInfo.index.format = IndexFormat::uint32;
+        bufferViewCreateInfo = BufferViewCreateInfo()
+            .Type(BufferViewType::index)
+            .Size(indices.size() * sizeof(uint32_t))
+            .Offset(0)
+            .ExtendIndex(IndexFormat::uint32);
         quadIndexBufferView = quadIndexBuffer->CreateBufferView(bufferViewCreateInfo);
     }
 
@@ -876,10 +862,11 @@ private:
             randomVec = FVec4(rndDist(rndEngine) * 2.0f - 1.0f, rndDist(rndEngine) * 2.0f - 1.0f, 0.0f, 0.0f);
         }
 
-        BufferCreateInfo bufferCreateInfo {};
-        bufferCreateInfo.size = ssaoNoise.size() * sizeof(FVec4);
-        bufferCreateInfo.usages = BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
-        bufferCreateInfo.initialState = RHI::BufferState::staging;
+        BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+            .Size(ssaoNoise.size() * sizeof(FVec4))
+            .Usages(BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+            .InitialState(RHI::BufferState::staging);
+
         UniqueRef<Buffer> pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -1008,10 +995,10 @@ private:
 
     void CreateUniformBuffer(RHI::BufferUsageFlags flags, UBuffer* uBuffer, size_t size, void* data)
     {
-        BufferCreateInfo createInfo {};
-        createInfo.size = size;
-        createInfo.usages = flags;
-        createInfo.initialState = RHI::BufferState::staging;
+        BufferCreateInfo createInfo = BufferCreateInfo()
+            .Size(size)
+            .Usages(flags)
+            .InitialState(RHI::BufferState::staging);
 
         uBuffer->buf = device->CreateBuffer(createInfo);
         if (uBuffer->buf != nullptr && data != nullptr) {
@@ -1020,10 +1007,10 @@ private:
             uBuffer->buf->UnMap();
         }
 
-        BufferViewCreateInfo viewCreateInfo {};
-        viewCreateInfo.type = BufferViewType::uniformBinding;
-        viewCreateInfo.size = size;
-        viewCreateInfo.offset = 0;
+        BufferViewCreateInfo viewCreateInfo = BufferViewCreateInfo()
+            .Type(BufferViewType::uniformBinding)
+            .Size(size)
+            .Offset(0);
         uBuffer->bufView = uBuffer->buf->CreateBufferView(viewCreateInfo);
     }
 
@@ -1048,29 +1035,33 @@ private:
         shaderModules.compositionPs = GetShaderModule(compositionPs, "../Test/Sample/SSAO/Shader/Composition.hlsl", "FSMain", ShaderStageBits::sPixel);
 
         // Gbuffer vertex
-        std::array<VertexAttribute, 4> vertexAttributes {};
-        vertexAttributes[0].format = VertexFormat::float32X4;
-        vertexAttributes[0].offset = 0;
-        vertexAttributes[0].semanticName = "POSITION";
-        vertexAttributes[0].semanticIndex = 0;
-        vertexAttributes[1].format = VertexFormat::float32X2;
-        vertexAttributes[1].offset = offsetof(Vertex, uv);
-        vertexAttributes[1].semanticName = "TEXCOORD";
-        vertexAttributes[1].semanticIndex = 0;
-        vertexAttributes[2].format = VertexFormat::float32X4;
-        vertexAttributes[2].offset = offsetof(Vertex, color);
-        vertexAttributes[2].semanticName = "COLOR";
-        vertexAttributes[2].semanticIndex = 0;
-        vertexAttributes[3].format = VertexFormat::float32X3;
-        vertexAttributes[3].offset = offsetof(Vertex, normal);
-        vertexAttributes[3].semanticName = "NORMAL";
-        vertexAttributes[3].semanticIndex = 0;
-
-        VertexBufferLayout vertexBufferLayout {};
-        vertexBufferLayout.stepMode = RHI::VertexStepMode::perVertex;
-        vertexBufferLayout.stride = sizeof(Vertex);
-        vertexBufferLayout.attributeNum = vertexAttributes.size();
-        vertexBufferLayout.attributes = vertexAttributes.data();
+        VertexBufferLayout vertexBufferLayout = VertexBufferLayout()
+            .StepMode(VertexStepMode::perVertex)
+            .Stride(sizeof(Vertex))
+            .Attribute(
+                VertexAttribute()
+                    .Format(VertexFormat::float32X4)
+                    .Offset(0)
+                    .SemanticName("POSITION")
+                    .SemanticIndex(0))
+            .Attribute(
+                VertexAttribute()
+                    .Format(VertexFormat::float32X2)
+                    .Offset(offsetof(Vertex, uv))
+                    .SemanticName("TEXCOORD")
+                    .SemanticIndex(0))
+            .Attribute(
+                VertexAttribute()
+                    .Format(VertexFormat::float32X4)
+                    .Offset(offsetof(Vertex, color))
+                    .SemanticName("COLOR")
+                    .SemanticIndex(0))
+            .Attribute(
+                VertexAttribute()
+                    .Format(VertexFormat::float32X3)
+                    .Offset(offsetof(Vertex, normal))
+                    .SemanticName("NORMAL")
+                    .SemanticIndex(0));
 
         // quad buffer vertex
         std::array<VertexAttribute, 2> quadVertexAttributes {};
@@ -1083,7 +1074,6 @@ private:
         quadVertexAttributes[1].semanticName = "TEXCOORD";
         quadVertexAttributes[1].semanticIndex = 0;
 
-        VertexBufferLayout quadVertexBufferLayout {};
         quadVertexBufferLayout.stepMode = RHI::VertexStepMode::perVertex;
         quadVertexBufferLayout.stride = sizeof(QuadVertex);
         quadVertexBufferLayout.attributeNum = quadVertexAttributes.size();
