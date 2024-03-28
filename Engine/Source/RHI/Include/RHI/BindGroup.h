@@ -5,6 +5,8 @@
 #pragma once
 
 #include <cstddef>
+#include <variant>
+#include <utility>
 
 #include <Common/Utility.h>
 #include <RHI/Common.h>
@@ -17,18 +19,18 @@ namespace RHI {
 
     struct BindGroupEntry {
         ResourceBinding binding;
-        union {
-            Sampler* sampler;
-            TextureView* textureView;
-            BufferView* bufferView;
-        };
+        std::variant<Sampler*, BufferView*, TextureView*> entity;
+
+        BindGroupEntry(const ResourceBinding& inBinding, const std::variant<Sampler*, BufferView*, TextureView*>& inEntity);
     };
 
     struct BindGroupCreateInfo {
         BindGroupLayout* layout;
-        uint32_t entryNum;
-        const BindGroupEntry* entries;
+        std::vector<BindGroupEntry> entries;
         std::string debugName;
+
+        explicit BindGroupCreateInfo(BindGroupLayout* inLayout, std::string inDebugName = "");
+        BindGroupCreateInfo& Entry(const BindGroupEntry& inEntry);
     };
 
     class BindGroup {

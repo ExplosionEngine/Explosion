@@ -357,23 +357,14 @@ private:
             fence->Wait();
 
             // per renderable bindGroup
-            std::vector<BindGroupEntry> entries(2);
-            entries[0].binding.type = BindingType::texture;
-            entries[0].textureView = diffuseColorMapView.Get();
-            entries[1].binding.type = BindingType::sampler;
-            entries[1].sampler = app->GetSampler();
+            BindGroupCreateInfo createInfo(app->GetLayout());
             if (app->GetInstance()->GetRHIType() == RHI::RHIType::directX12) {
-                entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
-                entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), diffuseColorMapView.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), app->GetSampler()));
             } else {
-                entries[0].binding.platformBinding = GlslBinding { 0 };
-                entries[1].binding.platformBinding = GlslBinding { 1 };
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), diffuseColorMapView.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), app->GetSampler()));
             }
-
-            BindGroupCreateInfo createInfo {};
-            createInfo.entries = entries.data();
-            createInfo.entryNum = static_cast<uint32_t>(entries.size());
-            createInfo.layout = app->GetLayout();
 
             bindGroup = app->GetDevice()->CreateBindGroup(createInfo);
         }
@@ -648,41 +639,31 @@ private:
 
     void CreateBindGroupLayoutAndPipelineLayout()
     {
-        std::vector<BindGroupLayoutEntry> entries;
-        BindGroupLayoutCreateInfo createInfo {};
         PipelineLayoutCreateInfo pipelineLayoutCreateInfo {};
 
         //gBuffer
-        entries.resize(1);
-        entries[0].binding.type = BindingType::uniformBuffer;
-        entries[0].shaderVisibility = ShaderStageBits::sVertex | ShaderStageBits::sPixel;
-        if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
-        } else {
-            entries[0].binding.platformBinding = GlslBinding { 0 };
+        {
+            BindGroupLayoutCreateInfo createInfo(0);
+            if (instance->GetRHIType() == RHI::RHIType::directX12) {
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), ShaderStageBits::sVertex | ShaderStageBits::sPixel));
+            } else {
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(0)), ShaderStageBits::sVertex | ShaderStageBits::sPixel));
+            }
+            bindGroupLayouts.gBuffer = device->CreateBindGroupLayout(createInfo);
         }
-        createInfo.entries = entries.data();
-        createInfo.entryNum = static_cast<uint32_t>(entries.size());
-        createInfo.layoutIndex = 0;
-        bindGroupLayouts.gBuffer = device->CreateBindGroupLayout(createInfo);
 
         // renderable layout
-        entries.resize(2);
-        entries[0].binding.type = BindingType::texture;
-        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[1].binding.type = BindingType::sampler;
-        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
-        } else {
-            entries[0].binding.platformBinding = GlslBinding { 0 };
-            entries[1].binding.platformBinding = GlslBinding { 1 };
+        {
+            BindGroupLayoutCreateInfo createInfo(1);
+            if (instance->GetRHIType() == RHI::RHIType::directX12) {
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
+            } else {
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), ShaderStageBits::sPixel));
+            }
+            renderableLayout = device->CreateBindGroupLayout(createInfo);
         }
-        createInfo.entries = entries.data();
-        createInfo.entryNum = static_cast<uint32_t>(entries.size());
-        createInfo.layoutIndex = 1;
-        renderableLayout = device->CreateBindGroupLayout(createInfo);
 
         std::vector<BindGroupLayout*> gBufferLayouts { bindGroupLayouts.gBuffer.Get(), renderableLayout.Get() };
         pipelineLayoutCreateInfo.bindGroupLayoutNum = 2;
@@ -690,42 +671,27 @@ private:
         pipelineLayouts.gBuffer = device->CreatePipelineLayout(pipelineLayoutCreateInfo);
 
         //ssao
-        entries.resize(7);
-        entries[0].binding.type = BindingType::texture;
-        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[1].binding.type = BindingType::texture;
-        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[2].binding.type = BindingType::texture;
-        entries[2].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[3].binding.type = BindingType::sampler;
-        entries[3].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[4].binding.type = BindingType::sampler;
-        entries[4].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[5].binding.type = BindingType::uniformBuffer;
-        entries[5].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[6].binding.type = BindingType::uniformBuffer;
-        entries[6].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 1 };
-            entries[2].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 2 };
-            entries[3].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
-            entries[4].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 1 };
-            entries[5].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
-            entries[6].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 1 };
-        } else {
-            entries[0].binding.platformBinding = GlslBinding { 0 };
-            entries[1].binding.platformBinding = GlslBinding { 1 };
-            entries[2].binding.platformBinding = GlslBinding { 2 };
-            entries[3].binding.platformBinding = GlslBinding { 3 };
-            entries[4].binding.platformBinding = GlslBinding { 4 };
-            entries[5].binding.platformBinding = GlslBinding { 5 };
-            entries[6].binding.platformBinding = GlslBinding { 6 };
+        {
+            BindGroupLayoutCreateInfo createInfo(0);
+            if (instance->GetRHIType() == RHI::RHIType::directX12) {
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 1)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 1)), ShaderStageBits::sPixel));
+            } else {
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(3)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(4)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(5)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6)), ShaderStageBits::sPixel));
+            }
+            bindGroupLayouts.ssao = device->CreateBindGroupLayout(createInfo);
         }
-        createInfo.entries = entries.data();
-        createInfo.entryNum = static_cast<uint32_t>(entries.size());
-        createInfo.layoutIndex = 0;
-        bindGroupLayouts.ssao = device->CreateBindGroupLayout(createInfo);
 
         std::vector<BindGroupLayout*> ssaoLayouts { bindGroupLayouts.ssao.Get() };
         pipelineLayoutCreateInfo.bindGroupLayoutNum = 1;
@@ -733,64 +699,44 @@ private:
         pipelineLayouts.ssao = device->CreatePipelineLayout(pipelineLayoutCreateInfo);
 
         // ssaoBlur
-        entries.resize(2);
-        entries[0].binding.type = BindingType::texture;
-        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[1].binding.type = BindingType::sampler;
-        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
-        } else {
-            entries[0].binding.platformBinding = GlslBinding { 0 };
-            entries[1].binding.platformBinding = GlslBinding { 1 };
+        {
+            BindGroupLayoutCreateInfo createInfo(0);
+            if (instance->GetRHIType() == RHI::RHIType::directX12) {
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
+            } else {
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), ShaderStageBits::sPixel));
+            }
+            bindGroupLayouts.ssaoBlur = device->CreateBindGroupLayout(createInfo);
         }
-        createInfo.entries = entries.data();
-        createInfo.entryNum = static_cast<uint32_t>(entries.size());
-        createInfo.layoutIndex = 0;
-        bindGroupLayouts.ssaoBlur = device->CreateBindGroupLayout(createInfo);
 
         std::vector<BindGroupLayout*> blurLayouts { bindGroupLayouts.ssaoBlur.Get() };
         pipelineLayoutCreateInfo.bindGroupLayouts = blurLayouts.data();
         pipelineLayouts.ssaoBlur = device->CreatePipelineLayout(pipelineLayoutCreateInfo);
 
         // composition
-        entries.resize(7);
-        entries[0].binding.type = BindingType::texture;
-        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[1].binding.type = BindingType::texture;
-        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[2].binding.type = BindingType::texture;
-        entries[2].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[3].binding.type = BindingType::texture;
-        entries[3].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[4].binding.type = BindingType::texture;
-        entries[4].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[5].binding.type = BindingType::sampler;
-        entries[5].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[6].binding.type = BindingType::uniformBuffer;
-        entries[6].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 1 };
-            entries[2].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 2 };
-            entries[3].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 3 };
-            entries[4].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 4 };
-            entries[5].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
-            entries[6].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
-        } else {
-            entries[0].binding.platformBinding = GlslBinding { 0 };
-            entries[1].binding.platformBinding = GlslBinding { 1 };
-            entries[2].binding.platformBinding = GlslBinding { 2 };
-            entries[3].binding.platformBinding = GlslBinding { 3 };
-            entries[4].binding.platformBinding = GlslBinding { 4 };
-            entries[5].binding.platformBinding = GlslBinding { 5 };
-            entries[6].binding.platformBinding = GlslBinding { 6 };
+        {
+            BindGroupLayoutCreateInfo createInfo(0);
+            if (instance->GetRHIType() == RHI::RHIType::directX12) {
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 3)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 4)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), ShaderStageBits::sPixel));
+            } else {
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(3)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(4)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(5)), ShaderStageBits::sPixel));
+                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6)), ShaderStageBits::sPixel));
+            }
+            bindGroupLayouts.composition = device->CreateBindGroupLayout(createInfo);
         }
-        createInfo.entries = entries.data();
-        createInfo.entryNum = static_cast<uint32_t>(entries.size());
-        createInfo.layoutIndex = 0;
-        bindGroupLayouts.composition = device->CreateBindGroupLayout(createInfo);
 
         std::vector<BindGroupLayout*> comLayouts { bindGroupLayouts.composition.Get() };
         pipelineLayoutCreateInfo.bindGroupLayouts = comLayouts.data();
@@ -799,115 +745,75 @@ private:
 
     void CreateBindGroup()
     {
-        BindGroupCreateInfo createInfo {};
-        std::vector<BindGroupEntry> entries(1);
-
         // GBuffer scene
-        entries[0].binding.type = BindingType::uniformBuffer;
-        entries[0].bufferView = uniformBuffers.sceneParams.bufView.Get();
-        if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
-        } else {
-            entries[0].binding.platformBinding = GlslBinding { 0 };
+        {
+            BindGroupCreateInfo createInfo(bindGroupLayouts.gBuffer.Get());
+            if (instance->GetRHIType() == RHI::RHIType::directX12) {
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), uniformBuffers.sceneParams.bufView.Get()));
+            } else {
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(0)), uniformBuffers.sceneParams.bufView.Get()));
+            }
+            bindGroups.scene = device->CreateBindGroup(createInfo);
         }
-        createInfo.entries = entries.data();
-        createInfo.entryNum = static_cast<uint32_t>(entries.size());
-        createInfo.layout = bindGroupLayouts.gBuffer.Get();
-        bindGroups.scene = device->CreateBindGroup(createInfo);
 
         // ssao generation
-        entries.resize(7);
-        entries[0].binding.type = BindingType::texture;
-        entries[0].textureView = gBufferPos.srv.Get();
-        entries[1].binding.type = BindingType::texture;
-        entries[1].textureView = gBufferNormal.srv.Get();
-        entries[2].binding.type = BindingType::texture;
-        entries[2].textureView = noise.view.Get();
-        entries[3].binding.type = BindingType::sampler;
-        entries[3].sampler = sampler.Get();
-        entries[4].binding.type = BindingType::sampler;
-        entries[4].sampler = noiseSampler.Get();
-        entries[5].binding.type = BindingType::uniformBuffer;
-        entries[5].bufferView = uniformBuffers.ssaoKernel.bufView.Get();
-        entries[6].binding.type = BindingType::uniformBuffer;
-        entries[6].bufferView = uniformBuffers.ssaoParams.bufView.Get();
-        if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 1 };
-            entries[2].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 2 };
-            entries[3].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
-            entries[4].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 1 };
-            entries[5].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
-            entries[6].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 1 };
-        } else {
-            entries[0].binding.platformBinding = GlslBinding { 0 };
-            entries[1].binding.platformBinding = GlslBinding { 1 };
-            entries[2].binding.platformBinding = GlslBinding { 2 };
-            entries[3].binding.platformBinding = GlslBinding { 3 };
-            entries[4].binding.platformBinding = GlslBinding { 4 };
-            entries[5].binding.platformBinding = GlslBinding { 5 };
-            entries[6].binding.platformBinding = GlslBinding { 6 };
+        {
+            BindGroupCreateInfo createInfo(bindGroupLayouts.ssao.Get());
+            if (instance->GetRHIType() == RHI::RHIType::directX12) {
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), gBufferPos.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1)), gBufferNormal.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2)), noise.view.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), sampler.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 1)), noiseSampler.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), uniformBuffers.ssaoKernel.bufView.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 1)), uniformBuffers.ssaoParams.bufView.Get()));
+            } else {
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), gBufferPos.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), gBufferNormal.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), noise.view.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(3)), sampler.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(4)), noiseSampler.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(5)), uniformBuffers.ssaoKernel.bufView.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6)), uniformBuffers.ssaoParams.bufView.Get()));
+            }
+            bindGroups.ssao = device->CreateBindGroup(createInfo);
         }
-        createInfo.entries = entries.data();
-        createInfo.entryNum = static_cast<uint32_t>(entries.size());
-        createInfo.layout = bindGroupLayouts.ssao.Get();
-        bindGroups.ssao = device->CreateBindGroup(createInfo);
 
         // ssao blur
-        entries.resize(2);
-        entries[0].binding.type = BindingType::texture;
-        entries[0].textureView = ssaoOutput.srv.Get();
-        entries[1].binding.type = BindingType::sampler;
-        entries[1].sampler = sampler.Get();
-        if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
-        } else {
-            entries[0].binding.platformBinding = GlslBinding { 0 };
-            entries[1].binding.platformBinding = GlslBinding { 1 };
+        {
+            BindGroupCreateInfo createInfo(bindGroupLayouts.ssaoBlur.Get());
+            if (instance->GetRHIType() == RHI::RHIType::directX12) {
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ssaoOutput.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), sampler.Get()));
+            } else {
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ssaoOutput.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), sampler.Get()));
+            }
+            bindGroups.ssaoBlur = device->CreateBindGroup(createInfo);
         }
-        createInfo.entries = entries.data();
-        createInfo.entryNum = static_cast<uint32_t>(entries.size());
-        createInfo.layout = bindGroupLayouts.ssaoBlur.Get();
-        bindGroups.ssaoBlur = device->CreateBindGroup(createInfo);
 
         // composition
-        entries.resize(7);
-        entries[0].binding.type = BindingType::texture;
-        entries[0].textureView = gBufferPos.srv.Get();
-        entries[1].binding.type = BindingType::texture;
-        entries[1].textureView = gBufferNormal.srv.Get();
-        entries[2].binding.type = BindingType::texture;
-        entries[2].textureView = gBufferAlbedo.srv.Get();
-        entries[3].binding.type = BindingType::texture;
-        entries[3].textureView = ssaoOutput.srv.Get();
-        entries[4].binding.type = BindingType::texture;
-        entries[4].textureView = ssaoBlurOutput.srv.Get();
-        entries[5].binding.type = BindingType::sampler;
-        entries[5].sampler = sampler.Get();
-        entries[6].binding.type = BindingType::uniformBuffer;
-        entries[6].bufferView = uniformBuffers.ssaoParams.bufView.Get();
-        if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 1 };
-            entries[2].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 2 };
-            entries[3].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 3 };
-            entries[4].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 4 };
-            entries[5].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
-            entries[6].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
-        } else {
-            entries[0].binding.platformBinding = GlslBinding { 0 };
-            entries[1].binding.platformBinding = GlslBinding { 1 };
-            entries[2].binding.platformBinding = GlslBinding { 2 };
-            entries[3].binding.platformBinding = GlslBinding { 3 };
-            entries[4].binding.platformBinding = GlslBinding { 4 };
-            entries[5].binding.platformBinding = GlslBinding { 5 };
-            entries[6].binding.platformBinding = GlslBinding { 6 };
+        {
+            BindGroupCreateInfo createInfo(bindGroupLayouts.composition.Get());
+            if (instance->GetRHIType() == RHI::RHIType::directX12) {
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), gBufferPos.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1)), gBufferNormal.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2)), gBufferAlbedo.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 3)), ssaoOutput.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 4)), ssaoBlurOutput.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), sampler.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), uniformBuffers.ssaoParams.bufView.Get()));
+            } else {
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), gBufferPos.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), gBufferNormal.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), gBufferAlbedo.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(3)), ssaoOutput.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(4)), ssaoBlurOutput.srv.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(5)), sampler.Get()));
+                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6)), uniformBuffers.ssaoParams.bufView.Get()));
+            }
+            bindGroups.composition = device->CreateBindGroup(createInfo);
         }
-        createInfo.entries = entries.data();
-        createInfo.entryNum = static_cast<uint32_t>(entries.size());
-        createInfo.layout = bindGroupLayouts.composition.Get();
-        bindGroups.composition = device->CreateBindGroup(createInfo);
     }
 
     void PrepareOffscreen()

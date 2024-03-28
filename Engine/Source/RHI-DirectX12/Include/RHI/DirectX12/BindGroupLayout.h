@@ -17,6 +17,8 @@ namespace RHI::DirectX12 {
         BindingType bindingType;
         uint8_t layoutIndex;
         HlslBinding binding;
+
+        RootParameterKeyInfo(BindingType inBindingType, uint8_t inLayoutIndex, HlslBinding inBinding);
     };
 
     class DX12BindGroupLayout : public BindGroupLayout {

@@ -38,9 +38,10 @@ namespace RHI::Vulkan {
 
     void VKBindGroup::CreateDescriptorPool(const BindGroupCreateInfo& createInfo)
     {
-        std::vector<VkDescriptorPoolSize> poolSizes(createInfo.entryNum);
+        const auto entryCount = createInfo.entries.size();
 
-        for (auto i = 0; i < createInfo.entryNum; i++) {
+        std::vector<VkDescriptorPoolSize> poolSizes(entryCount);
+        for (auto i = 0; i < entryCount; i++) {
             const auto& entry = createInfo.entries[i];
 
             poolSizes[i].type = VKEnumCast<BindingType, VkDescriptorType>(entry.binding.type);
@@ -50,7 +51,7 @@ namespace RHI::Vulkan {
         VkDescriptorPoolCreateInfo poolInfo {};
         poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         poolInfo.pPoolSizes = poolSizes.data();
-        poolInfo.poolSizeCount = createInfo.entryNum;
+        poolInfo.poolSizeCount = poolSizes.size();
         poolInfo.maxSets = 1;
 
         Assert(vkCreateDescriptorPool(device.GetVkDevice(), &poolInfo, nullptr, &descriptorPool) == VK_SUCCESS);
@@ -74,13 +75,15 @@ namespace RHI::Vulkan {
         }
 #endif
 
-        std::vector<VkWriteDescriptorSet> descriptorWrites(createInfo.entryNum);
+        const auto entryCount = createInfo.entries.size();
+
+        std::vector<VkWriteDescriptorSet> descriptorWrites(entryCount);
         std::vector<VkDescriptorImageInfo> imageInfos;
         std::vector<VkDescriptorBufferInfo> bufferInfos;
         
         int imageInfosNum = 0;
         int bufferInfosNum = 0;
-        for (int i = 0; i < createInfo.entryNum; i++) {
+        for (int i = 0; i < entryCount; i++) {
             const auto& entry = createInfo.entries[i];
             if (entry.binding.type == BindingType::uniformBuffer) {
                 bufferInfosNum++;
@@ -91,7 +94,7 @@ namespace RHI::Vulkan {
         imageInfos.reserve(imageInfosNum);
         bufferInfos.reserve(bufferInfosNum);
         
-        for (int i = 0; i < createInfo.entryNum; i++) {
+        for (int i = 0; i < entryCount; i++) {
             const auto& entry = createInfo.entries[i];
 
             descriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -101,7 +104,7 @@ namespace RHI::Vulkan {
             descriptorWrites[i].descriptorType = VKEnumCast<BindingType, VkDescriptorType>(entry.binding.type);
 
             if (entry.binding.type == BindingType::uniformBuffer) {
-                auto* bufferView = static_cast<VKBufferView*>(entry.bufferView);
+                auto* bufferView = static_cast<VKBufferView*>(std::get<BufferView*>(entry.entity));
 
                 bufferInfos.emplace_back();
                 bufferInfos.back().buffer = bufferView->GetBuffer().GetVkBuffer();
@@ -110,14 +113,14 @@ namespace RHI::Vulkan {
 
                 descriptorWrites[i].pBufferInfo = &bufferInfos.back();
             } else if (entry.binding.type == BindingType::sampler) {
-                auto* sampler = static_cast<VKSampler*>(entry.sampler);
+                auto* sampler = static_cast<VKSampler*>(std::get<Sampler*>(entry.entity));
 
                 imageInfos.emplace_back();
                 imageInfos.back().sampler = sampler->GetVkSampler();
 
                 descriptorWrites[i].pImageInfo = &imageInfos.back();
             } else if (entry.binding.type == BindingType::texture) {
-                auto* textureView = static_cast<VKTextureView*>(entry.textureView);
+                auto* textureView = static_cast<VKTextureView*>(std::get<TextureView*>(entry.entity));
 
                 imageInfos.emplace_back();
                 imageInfos.back().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;

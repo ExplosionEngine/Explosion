@@ -36,9 +36,9 @@ namespace RHI::Vulkan {
         VkDescriptorSetLayoutCreateInfo layoutInfo = {};
         layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
-        std::vector<VkDescriptorSetLayoutBinding> bindings(createInfo.entryNum);
-        for (size_t i = 0; i < createInfo.entryNum; ++i) {
-            auto& entry = createInfo.entries[i];
+        std::vector<VkDescriptorSetLayoutBinding> bindings(createInfo.entries.size());
+        for (size_t i = 0; i < bindings.size(); ++i) {
+            const auto& entry = createInfo.entries[i];
             auto& binding = bindings[i];
 
             VkShaderStageFlags flags = VKFlagsCast<ShaderStageFlags, VkShaderStageFlags>(entry.shaderVisibility);

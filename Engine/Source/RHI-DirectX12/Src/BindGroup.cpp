@@ -13,15 +13,15 @@ namespace RHI::DirectX12 {
     static inline CD3DX12_CPU_DESCRIPTOR_HANDLE GetDescriptorCpuHandleAndHeap(const BindGroupEntry& entry)
     {
         if (entry.binding.type == BindingType::uniformBuffer || entry.binding.type == BindingType::storageBuffer) {
-            auto* bufferView = static_cast<DX12BufferView*>(entry.bufferView);
+            auto* bufferView = static_cast<DX12BufferView*>(std::get<BufferView*>(entry.entity));
             return bufferView->GetDX12CpuDescriptorHandle();
         }
         if (entry.binding.type == BindingType::texture || entry.binding.type == BindingType::storageTexture) {
-            auto* textureView = static_cast<DX12TextureView*>(entry.textureView);
+            auto* textureView = static_cast<DX12TextureView*>(std::get<TextureView*>(entry.entity));
             return textureView->GetDX12CpuDescriptorHandle();
         }
         if (entry.binding.type == BindingType::sampler) {
-            auto* sampler = static_cast<DX12Sampler*>(entry.sampler);
+            auto* sampler = static_cast<DX12Sampler*>(std::get<Sampler*>(entry.entity));
             return sampler->GetDX12CpuDescriptorHandle();
         }
         QuickFail();
@@ -62,7 +62,7 @@ namespace RHI::DirectX12 {
 
     void DX12BindGroup::CacheBindings(const BindGroupCreateInfo& createInfo)
     {
-        for (auto i = 0; i < createInfo.entryNum; i++) {
+        for (auto i = 0; i < createInfo.entries.size(); i++) {
             const auto& entry = createInfo.entries[i];
 
             CD3DX12_CPU_DESCRIPTOR_HANDLE handle = GetDescriptorCpuHandleAndHeap(entry);

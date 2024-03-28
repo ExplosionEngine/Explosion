@@ -172,7 +172,7 @@ private:
         bufferCreateInfo.size = vertices.size() * sizeof(Vertex);
         bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
         bufferCreateInfo.debugName = "quadBuffer";
-        bufferCreateInfo.initialState = RHI::BufferState::staging;
+        bufferCreateInfo.initialState = BufferState::staging;
         vertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (vertexBuffer != nullptr) {
             auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -194,7 +194,7 @@ private:
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = indices.size() * sizeof(uint32_t);
         bufferCreateInfo.usages = BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
-        bufferCreateInfo.initialState = RHI::BufferState::staging;
+        bufferCreateInfo.initialState = BufferState::staging;
         indexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (indexBuffer != nullptr) {
             auto* data = indexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -219,7 +219,7 @@ private:
         BufferCreateInfo bufferCreateInfo {};
         bufferCreateInfo.size = texWidth * texHeight * 4;
         bufferCreateInfo.usages = BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
-        bufferCreateInfo.initialState = RHI::BufferState::staging;
+        bufferCreateInfo.initialState = BufferState::staging;
         pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -292,7 +292,7 @@ private:
         BufferCreateInfo createInfo {};
         createInfo.size = sizeof(FMat4x4);
         createInfo.usages = BufferUsageBits::uniform | BufferUsageBits::mapWrite;
-        createInfo.initialState = RHI::BufferState::staging;
+        createInfo.initialState = BufferState::staging;
         uniformBuffer = device->CreateBuffer(createInfo);
 
         BufferViewCreateInfo viewCreateInfo {};
@@ -304,54 +304,32 @@ private:
 
     void CreateBindGroupLayout()
     {
-        std::vector<BindGroupLayoutEntry> entries(3);
-        entries[0].binding.type = BindingType::texture;
-        entries[0].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[1].binding.type = BindingType::sampler;
-        entries[1].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sPixel);
-        entries[2].binding.type = BindingType::uniformBuffer;
-        entries[2].shaderVisibility = static_cast<ShaderStageFlags>(ShaderStageBits::sVertex);
-        if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
-            entries[2].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
+        BindGroupLayoutCreateInfo createInfo(0);
+        if (instance->GetRHIType() == RHIType::directX12) {
+            createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
+            createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
+            createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), ShaderStageBits::sVertex));
         } else {
-            entries[0].binding.platformBinding = GlslBinding { 0 };
-            entries[1].binding.platformBinding = GlslBinding { 1 };
-            entries[2].binding.platformBinding = GlslBinding { 2 };
+            createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
+            createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), ShaderStageBits::sPixel));
+            createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(2)), ShaderStageBits::sVertex));
         }
-
-        BindGroupLayoutCreateInfo createInfo {};
-        createInfo.entries = entries.data();
-        createInfo.entryNum = static_cast<uint32_t>(entries.size());
-        createInfo.layoutIndex = 0;
 
         bindGroupLayout = device->CreateBindGroupLayout(createInfo);
     }
 
     void CreateBindGroup()
     {
-        std::vector<BindGroupEntry> entries(3);
-        entries[0].binding.type = BindingType::texture;
-        entries[0].textureView = sampleTextureView.Get();
-        entries[1].binding.type = BindingType::sampler;
-        entries[1].sampler = sampler.Get();
-        entries[2].binding.type = BindingType::uniformBuffer;
-        entries[2].bufferView = uniformBufferView.Get();
-        if (instance->GetRHIType() == RHI::RHIType::directX12) {
-            entries[0].binding.platformBinding = HlslBinding { HlslBindingRangeType::texture, 0 };
-            entries[1].binding.platformBinding = HlslBinding { HlslBindingRangeType::sampler, 0 };
-            entries[2].binding.platformBinding = HlslBinding { HlslBindingRangeType::constantBuffer, 0 };
+        BindGroupCreateInfo createInfo(bindGroupLayout.Get());
+        if (instance->GetRHIType() == RHIType::directX12) {
+            createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), sampleTextureView.Get()));
+            createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), sampler.Get()));
+            createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), uniformBufferView.Get()));
         } else {
-            entries[0].binding.platformBinding = GlslBinding { 0 };
-            entries[1].binding.platformBinding = GlslBinding { 1 };
-            entries[2].binding.platformBinding = GlslBinding { 2 };
+            createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), sampleTextureView.Get()));
+            createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), sampler.Get()));
+            createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(2)), uniformBufferView.Get()));
         }
-
-        BindGroupCreateInfo createInfo {};
-        createInfo.entries = entries.data();
-        createInfo.entryNum = static_cast<uint32_t>(entries.size());
-        createInfo.layout = bindGroupLayout.Get();
 
         bindGroup = device->CreateBindGroup(createInfo);
     }
@@ -369,7 +347,7 @@ private:
     void CreatePipeline()
     {
         std::vector<uint8_t> vsByteCode;
-        CompileShader(vsByteCode, "../Test/Sample/TexSampling/TexSampling.hlsl", "VSMain", RHI::ShaderStageBits::sVertex);
+        CompileShader(vsByteCode, "../Test/Sample/TexSampling/TexSampling.hlsl", "VSMain", ShaderStageBits::sVertex);
 
         ShaderModuleCreateInfo shaderModuleCreateInfo {};
         shaderModuleCreateInfo.size = vsByteCode.size();
@@ -377,7 +355,7 @@ private:
         vertexShader = device->CreateShaderModule(shaderModuleCreateInfo);
 
         std::vector<uint8_t> fsByteCode;
-        CompileShader(fsByteCode, "../Test/Sample/TexSampling/TexSampling.hlsl", "FSMain", RHI::ShaderStageBits::sPixel);
+        CompileShader(fsByteCode, "../Test/Sample/TexSampling/TexSampling.hlsl", "FSMain", ShaderStageBits::sPixel);
 
         shaderModuleCreateInfo.size = fsByteCode.size();
         shaderModuleCreateInfo.byteCode = fsByteCode.data();
@@ -394,7 +372,7 @@ private:
         vertexAttributes[1].semanticIndex = 0;
 
         VertexBufferLayout vertexBufferLayout {};
-        vertexBufferLayout.stepMode = RHI::VertexStepMode::perVertex;
+        vertexBufferLayout.stepMode = VertexStepMode::perVertex;
         vertexBufferLayout.stride = sizeof(Vertex);
         vertexBufferLayout.attributeNum = vertexAttributes.size();
         vertexBufferLayout.attributes = vertexAttributes.data();
@@ -412,9 +390,9 @@ private:
         createInfo.fragmentState.colorTargetNum = colorTargetStates.size();
         createInfo.fragmentState.colorTargets = colorTargetStates.data();
         createInfo.primitiveState.depthClip = false;
-        createInfo.primitiveState.frontFace = RHI::FrontFace::ccw;
+        createInfo.primitiveState.frontFace = FrontFace::ccw;
         createInfo.primitiveState.cullMode = CullMode::none;
-        createInfo.primitiveState.topologyType = RHI::PrimitiveTopologyType::triangle;
+        createInfo.primitiveState.topologyType = PrimitiveTopologyType::triangle;
         createInfo.primitiveState.stripIndexFormat = IndexFormat::uint16;
         createInfo.depthStencilState.depthEnable = false;
         createInfo.depthStencilState.stencilEnable = false;

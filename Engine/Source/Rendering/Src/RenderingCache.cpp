@@ -152,19 +152,14 @@ namespace Rendering {
     BindGroupLayout::BindGroupLayout(RHI::Device& inDevice, const BindGroupLayoutDesc& inDesc)
         : bindings(inDesc.binding)
     {
-        std::vector<RHI::BindGroupLayoutEntry> layoutEntries;
-        layoutEntries.reserve(bindings.size());
-        for (const auto& binding : bindings) {
-            RHI::BindGroupLayoutEntry entry;
-            entry.binding = binding.second.second;
-            entry.shaderVisibility = binding.second.first;
-            layoutEntries.emplace_back(entry);
-        }
 
-        RHI::BindGroupLayoutCreateInfo createInfo;
+
+        RHI::BindGroupLayoutCreateInfo createInfo(inDesc.layoutIndex);
         createInfo.layoutIndex = inDesc.layoutIndex;
-        createInfo.entries = layoutEntries.data();
-        createInfo.entryNum = layoutEntries.size();
+        createInfo.entries.reserve(bindings.size());
+        for (const auto& binding : bindings) {
+            createInfo.entries.emplace_back(binding.second.second, binding.second.first);
+        }
         rhiHandle = inDevice.CreateBindGroupLayout(createInfo);
     }
 
@@ -232,7 +227,7 @@ namespace Rendering {
                     layoutBindingMaps[layoutIndex] = {};
                 }
                 auto& layoutBindingMap = layoutBindingMaps[layoutIndex];
-                layoutBindingMap[name] = std::make_pair(pack.stage, binding);
+                layoutBindingMap.emplace(std::make_pair(name, std::make_pair(pack.stage, binding)));
             }
         }
 

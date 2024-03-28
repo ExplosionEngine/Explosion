@@ -652,33 +652,23 @@ namespace Rendering {
             return;
         }
 
-        std::vector<RHI::BindGroupEntry> entries;
-        entries.reserve(desc.items.size());
-        for (const auto& item : desc.items) {
-            RHI::BindGroupEntry entry;
-            const auto* binding = desc.layout->GetBinding(item.first);
-            // TODO maybe use operator= ?
-            entry.binding.type = binding->type;
-            entry.binding.platformBinding = binding->platformBinding;
+        RHI::BindGroupCreateInfo createInfo(desc.layout->GetRHI());
+        createInfo.entries.reserve(desc.items.size());
 
+        for (const auto& item : desc.items) {
+            const auto* binding = desc.layout->GetBinding(item.first);
             const RGBindItemDesc& itemDesc = item.second;
-            Assert(entry.binding.type == itemDesc.type);
 
             if (itemDesc.type == RHI::BindingType::uniformBuffer || itemDesc.type == RHI::BindingType::storageBuffer) {
-                entry.bufferView = itemDesc.bufferView->GetRHI();
+                createInfo.Entry(RHI::BindGroupEntry(*binding, itemDesc.bufferView->GetRHI()));
             } else if (itemDesc.type == RHI::BindingType::texture || itemDesc.type == RHI::BindingType::storageTexture) {
-                entry.textureView = itemDesc.textureView->GetRHI();
+                createInfo.Entry(RHI::BindGroupEntry(*binding, itemDesc.textureView->GetRHI()));
             } else if (itemDesc.type == RHI::BindingType::sampler) {
-                entry.sampler = itemDesc.sampler;
+                createInfo.Entry(RHI::BindGroupEntry(*binding, itemDesc.sampler));
             } else {
                 Unimplement();
             }
         }
-
-        RHI::BindGroupCreateInfo createInfo;
-        createInfo.layout = desc.layout->GetRHI();
-        createInfo.entryNum = entries.size();
-        createInfo.entries = entries.data();
 
         devirtualized = true;
         rhiHandle = inDevice.CreateBindGroup(createInfo);

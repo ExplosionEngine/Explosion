@@ -21,6 +21,13 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
+    RootParameterKeyInfo::RootParameterKeyInfo(BindingType inBindingType, uint8_t inLayoutIndex, HlslBinding inBinding)
+        : bindingType(inBindingType)
+        , layoutIndex(inLayoutIndex)
+        , binding(inBinding)
+    {
+    }
+
     DX12BindGroupLayout::DX12BindGroupLayout(const BindGroupLayoutCreateInfo& createInfo)
         : BindGroupLayout(createInfo), dx12RootParameters({}), layoutIndex(createInfo.layoutIndex)
     {
@@ -51,8 +58,9 @@ namespace RHI::DirectX12 {
 
     void DX12BindGroupLayout::CreateDX12RootParameters(const BindGroupLayoutCreateInfo& createInfo)
     {
-        dx12DescriptorRanges.reserve(createInfo.entryNum);
-        for (auto i = 0; i < createInfo.entryNum; i++) {
+        const auto entryCount = createInfo.entries.size();
+        dx12DescriptorRanges.reserve(entryCount);
+        for (auto i = 0; i < entryCount; i++) {
             const auto& entry = createInfo.entries[i];
 
             dx12RootParameters.emplace_back();
@@ -62,13 +70,7 @@ namespace RHI::DirectX12 {
             dx12DescriptorRanges.back().Init(DX12EnumCast<HlslBindingRangeType, D3D12_DESCRIPTOR_RANGE_TYPE>(hlslBinding.rangeType), 1, hlslBinding.index, createInfo.layoutIndex);
             dx12RootParameters.back().InitAsDescriptorTable(1, &dx12DescriptorRanges.back(), GetShaderVisibility(entry.shaderVisibility));
 
-            rootParameterKeyInfos.emplace_back();
-            {
-                auto& keyInfo = rootParameterKeyInfos.back();
-                keyInfo.bindingType = entry.binding.type;
-                keyInfo.layoutIndex = createInfo.layoutIndex;
-                keyInfo.binding = hlslBinding;
-            }
+            rootParameterKeyInfos.emplace_back(entry.binding.type, createInfo.layoutIndex, hlslBinding);
         }
     }
 }
