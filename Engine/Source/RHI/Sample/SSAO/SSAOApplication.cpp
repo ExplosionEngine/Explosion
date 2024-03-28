@@ -1275,7 +1275,7 @@ private:
 
     void InitCamera()
     {
-        camera = std::make_unique<Camera>(
+        camera = Common::MakeUnique<Camera>(
             FVec3(.0f, -5.0f, 2.0f),
             FVec3(.0f, .0f, -90.0f),
             Camera::ProjectParams {
@@ -1285,22 +1285,22 @@ private:
                 0.1f,
                 64.0f
             }
-            );
+        );
 
-        camera->moveSpeed = 0.0015f;
+        camera->moveSpeed = 0.005f;
         camera->rotateSpeed = 0.1f;
     }
 
     void LoadGLTF()
     {
-        model = std::make_unique<Model>();
+        model = Common::MakeUnique<Model>();
         model->LoadFromFile("../Test/Sample/SSAO/Model/Voyager.gltf");
     }
 
     void GenerateRenderables()
     {
         for (auto& mesh : model->meshes) {
-            renderables.emplace_back(std::make_unique<Renderable>(this, *device, mesh));
+            renderables.emplace_back(Common::MakeUnique<Renderable>(this, *device, mesh));
         }
     }
 };

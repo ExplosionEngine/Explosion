@@ -54,8 +54,8 @@ namespace RHI::DirectX12 {
     {
         auto& dx12WaitSemaphore = static_cast<DX12Semaphore&>(*waitSemaphore);
         auto& fence = dx12WaitSemaphore.GetDX12Fence();
-        dx12SwapChain->Present(GetSyncInterval(presentMode), false);
         queue.GetDX12CommandQueue()->Wait(fence.Get(), 1);
+        dx12SwapChain->Present(GetSyncInterval(presentMode), false);
     }
 
     void DX12SwapChain::Destroy()
