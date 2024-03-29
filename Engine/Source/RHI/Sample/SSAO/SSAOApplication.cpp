@@ -1064,107 +1064,124 @@ private:
                     .SemanticIndex(0));
 
         // quad buffer vertex
-        std::array<VertexAttribute, 2> quadVertexAttributes {};
-        quadVertexAttributes[0].format = VertexFormat::float32X3;
-        quadVertexAttributes[0].offset = 0;
-        quadVertexAttributes[0].semanticName = "POSITION";
-        quadVertexAttributes[0].semanticIndex = 0;
-        quadVertexAttributes[1].format = VertexFormat::float32X2;
-        quadVertexAttributes[1].offset = offsetof(QuadVertex, uv);
-        quadVertexAttributes[1].semanticName = "TEXCOORD";
-        quadVertexAttributes[1].semanticIndex = 0;
-
-        quadVertexBufferLayout.stepMode = RHI::VertexStepMode::perVertex;
-        quadVertexBufferLayout.stride = sizeof(QuadVertex);
-        quadVertexBufferLayout.attributeNum = quadVertexAttributes.size();
-        quadVertexBufferLayout.attributes = quadVertexAttributes.data();
+        VertexBufferLayout quadVertexBufferLayout = VertexBufferLayout()
+            .StepMode(VertexStepMode::perVertex)
+            .Stride(sizeof(QuadVertex))
+            .Attribute(
+                VertexAttribute()
+                    .Format(VertexFormat::float32X3)
+                    .Offset(0)
+                    .SemanticName("POSITION")
+                    .SemanticIndex(0))
+            .Attribute(
+                VertexAttribute()
+                    .Format(VertexFormat::float32X2)
+                    .Offset(offsetof(QuadVertex, uv))
+                    .SemanticName("TEXCOORD")
+                    .SemanticIndex(0));
 
         // General pipeline infos
-        GraphicsPipelineCreateInfo createInfo {};
-        createInfo.vertexState.bufferLayoutNum = 1;
-        createInfo.primitiveState.depthClip = false;
-        createInfo.primitiveState.frontFace = RHI::FrontFace::ccw;
-        createInfo.primitiveState.cullMode = CullMode::none;
-        createInfo.primitiveState.topologyType = RHI::PrimitiveTopologyType::triangle;
-        createInfo.primitiveState.stripIndexFormat = IndexFormat::uint32;
-        createInfo.multiSampleState.count = 1;
+        GraphicsPipelineCreateInfo createInfo = GraphicsPipelineCreateInfo()
+            .PrimitiveState(
+                PrimitiveState()
+                    .DepthClip(false)
+                    .FrontFace(FrontFace::ccw)
+                    .CullMode(CullMode::none)
+                    .TopologyType(PrimitiveTopologyType::triangle)
+                    .StripIndexFormat(IndexFormat::uint32))
+            .MultiSampleState(
+                MultiSampleState()
+                    .Count(1));
 
         // Gbuffer
         {
-            DepthStencilState depthStencilState {};
-            depthStencilState.depthEnable = true;
-            depthStencilState.depthComparisonFunc = ComparisonFunc::greaterEqual;
-            depthStencilState.format = PixelFormat::d32Float;
+            createInfo
+                .DepthStencilState(
+                    DepthStencilState()
+                        .DepthEnabled(true)
+                        .DepthComparisonFunc(ComparisonFunc::greaterEqual)
+                        .Format(PixelFormat::d32Float))
+                .VertexState(
+                    VertexState()
+                        .VertexBufferLayout(vertexBufferLayout))
+                .FragmentState(
+                    FragmentState()
+                        .ColorTarget(
+                            ColorTargetState()
+                                .Format(PixelFormat::rgba32Float)
+                                .WriteFlags(ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha))
+                        .ColorTarget(
+                            ColorTargetState()
+                                .Format(PixelFormat::rgba8Unorm)
+                                .WriteFlags(ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha))
+                        .ColorTarget(
+                            ColorTargetState()
+                                .Format(PixelFormat::rgba8Unorm)
+                                .WriteFlags(ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha)))
+                .VertexShader(shaderModules.gBufferVs.Get())
+                .PixelShader(shaderModules.gBufferPs.Get())
+                .Layout(pipelineLayouts.gBuffer.Get());
 
-            std::array<ColorTargetState, 3> colorTargetStates {};
-            colorTargetStates[0].format = PixelFormat::rgba32Float;
-            colorTargetStates[0].writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
-            colorTargetStates[1].format = PixelFormat::rgba8Unorm;
-            colorTargetStates[1].writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
-            colorTargetStates[2].format = PixelFormat::rgba8Unorm;
-            colorTargetStates[2].writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
-
-            createInfo.depthStencilState = depthStencilState;
-            createInfo.vertexState.bufferLayouts = &vertexBufferLayout;
-            createInfo.fragmentState.colorTargetNum = colorTargetStates.size();
-            createInfo.fragmentState.colorTargets = colorTargetStates.data();
-            createInfo.vertexShader = shaderModules.gBufferVs.Get();
-            createInfo.pixelShader = shaderModules.gBufferPs.Get();
-            createInfo.layout = pipelineLayouts.gBuffer.Get();
             pipelines.gBuffer = device->CreateGraphicsPipeline(createInfo);
         }
 
         // ssao
         {
-            ColorTargetState colorTargetState {};
-            colorTargetState.format = PixelFormat::r8Unorm;
-            colorTargetState.writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
-            
-            DepthStencilState depthStencilState {};
+            createInfo
+                .DepthStencilState(DepthStencilState())
+                .VertexState(
+                    VertexState()
+                        .VertexBufferLayout(quadVertexBufferLayout))
+                .FragmentState(
+                    FragmentState()
+                        .ColorTarget(
+                            ColorTargetState()
+                                .Format(PixelFormat::r8Unorm)
+                                .WriteFlags(ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha)))
+                .VertexShader(shaderModules.ssaoVs.Get())
+                .PixelShader(shaderModules.ssaoPs.Get())
+                .Layout(pipelineLayouts.ssao.Get());
 
-            createInfo.depthStencilState = depthStencilState;
-            createInfo.vertexState.bufferLayouts = &quadVertexBufferLayout;
-            createInfo.fragmentState.colorTargetNum = 1;
-            createInfo.fragmentState.colorTargets = &colorTargetState;
-            createInfo.vertexShader = shaderModules.ssaoVs.Get();
-            createInfo.pixelShader = shaderModules.ssaoPs.Get();
-            createInfo.layout = pipelineLayouts.ssao.Get();
             pipelines.ssao = device->CreateGraphicsPipeline(createInfo);
         }
 
         // ssaoBlur
         {
-            ColorTargetState colorTargetState {};
-            colorTargetState.format = PixelFormat::r8Unorm;
-            colorTargetState.writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
+            createInfo
+                .DepthStencilState(DepthStencilState())
+                .VertexState(
+                    VertexState()
+                        .VertexBufferLayout(quadVertexBufferLayout))
+                .FragmentState(
+                    FragmentState()
+                        .ColorTarget(
+                            ColorTargetState()
+                                .Format(PixelFormat::r8Unorm)
+                                .WriteFlags(ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha)))
+                .VertexShader(shaderModules.ssaoBlurVs.Get())
+                .PixelShader(shaderModules.ssaoBlurPs.Get())
+                .Layout(pipelineLayouts.ssaoBlur.Get());
 
-            DepthStencilState depthStencilState {};
-
-            createInfo.depthStencilState = depthStencilState;
-            createInfo.vertexState.bufferLayouts = &quadVertexBufferLayout;
-            createInfo.fragmentState.colorTargetNum = 1;
-            createInfo.fragmentState.colorTargets = &colorTargetState;
-            createInfo.vertexShader = shaderModules.ssaoBlurVs.Get();
-            createInfo.pixelShader = shaderModules.ssaoBlurPs.Get();
-            createInfo.layout = pipelineLayouts.ssaoBlur.Get();
             pipelines.ssaoBlur = device->CreateGraphicsPipeline(createInfo);
         }
 
         // composition
         {
-            ColorTargetState colorTargetState {};
-            colorTargetState.format = swapChainFormat;
-            colorTargetState.writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
-            
-            DepthStencilState depthStencilState {};
-            
-            createInfo.depthStencilState = depthStencilState;
-            createInfo.vertexState.bufferLayouts = &quadVertexBufferLayout;
-            createInfo.fragmentState.colorTargetNum = 1;
-            createInfo.fragmentState.colorTargets = &colorTargetState;
-            createInfo.vertexShader = shaderModules.compositionVs.Get();
-            createInfo.pixelShader = shaderModules.compositionPs.Get();
-            createInfo.layout = pipelineLayouts.composition.Get();
+            createInfo
+                .DepthStencilState(DepthStencilState())
+                .VertexState(
+                    VertexState()
+                        .VertexBufferLayout(quadVertexBufferLayout))
+                .FragmentState(
+                    FragmentState()
+                        .ColorTarget(
+                            ColorTargetState()
+                                .Format(swapChainFormat)
+                                .WriteFlags(ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha)))
+                .VertexShader(shaderModules.compositionVs.Get())
+                .PixelShader(shaderModules.compositionPs.Get())
+                .Layout(pipelineLayouts.composition.Get());
+
             pipelines.composition = device->CreateGraphicsPipeline(createInfo);
         }
     }
