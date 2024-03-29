@@ -67,13 +67,12 @@ protected:
         }
         commandEncoder->End();
 
-        QueueSubmitInfo submitInfo {};
-        submitInfo.waitSemaphoreNum = 1;
-        submitInfo.waitSemaphores = backBufferReadySemaphores[nextFrameIndex].Get();
-        submitInfo.signalSemaphoreNum = 1;
-        submitInfo.signalSemaphores = renderFinishedSemaphores[nextFrameIndex].Get();
-        submitInfo.signalFence = inflightFences[nextFrameIndex].Get();
-        graphicsQueue->Submit(commandBuffers[nextFrameIndex].Get(), submitInfo);
+        graphicsQueue->Submit(
+            commandBuffers[nextFrameIndex].Get(),
+            QueueSubmitInfo()
+                .WaitSemaphore(backBufferReadySemaphores[nextFrameIndex].Get())
+                .SignalSemaphore(renderFinishedSemaphores[nextFrameIndex].Get())
+                .SignalFence(inflightFences[nextFrameIndex].Get()));
 
         swapChain->Present(renderFinishedSemaphores[nextFrameIndex].Get());
         nextFrameIndex = (nextFrameIndex + 1) % backBufferCount;

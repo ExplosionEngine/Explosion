@@ -28,19 +28,19 @@ namespace RHI::Vulkan {
 
         std::vector<VkSemaphore> waitSemaphores;
         std::vector<VkPipelineStageFlags> waitStageFlags;
-        waitSemaphores.resize(submitInfo.waitSemaphoreNum);
-        waitStageFlags.resize(submitInfo.waitSemaphoreNum);
-        for (auto i = 0; i < submitInfo.waitSemaphoreNum; i++) {
-            auto& vkSemaphore = static_cast<VKSemaphore&>(submitInfo.waitSemaphores[i]);
-            waitSemaphores[i] = vkSemaphore.GetNative();
+        waitSemaphores.resize(submitInfo.waitSemaphores.size());
+        waitStageFlags.resize(submitInfo.waitSemaphores.size());
+        for (auto i = 0; i < submitInfo.waitSemaphores.size(); i++) {
+            auto* vkSemaphore = static_cast<VKSemaphore*>(submitInfo.waitSemaphores[i]);
+            waitSemaphores[i] = vkSemaphore->GetNative();
             waitStageFlags[i] = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         }
 
         std::vector<VkSemaphore> signalSemaphores;
-        signalSemaphores.resize(submitInfo.signalSemaphoreNum);
-        for (auto i = 0; i < submitInfo.signalSemaphoreNum; i++) {
-            auto& vkSemaphore = static_cast<VKSemaphore&>(submitInfo.signalSemaphores[i]);
-            signalSemaphores[i] = vkSemaphore.GetNative();
+        signalSemaphores.resize(submitInfo.signalSemaphores.size());
+        for (auto i = 0; i < submitInfo.signalSemaphores.size(); i++) {
+            auto* vkSemaphore = static_cast<VKSemaphore*>(submitInfo.signalSemaphores[i]);
+            signalSemaphores[i] = vkSemaphore->GetNative();
         }
 
         VkSubmitInfo vkSubmitInfo = {};
