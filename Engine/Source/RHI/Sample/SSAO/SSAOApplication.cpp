@@ -471,9 +471,9 @@ private:
             PixelFormat::bgra8Unorm
         };
 
-        SurfaceCreateInfo surfaceCreateInfo {};
-        surfaceCreateInfo.window = GetPlatformWindow();
-        surface = device->CreateSurface(surfaceCreateInfo);
+        surface = device->CreateSurface(
+            SurfaceCreateInfo()
+                .Window(GetPlatformWindow()));
 
         for (auto format : swapChainFormatQualifiers) {
             if (device->CheckSwapChainFormatSupport(surface.Get(), format)) {
@@ -602,8 +602,7 @@ private:
 
     void CreateSampler()
     {
-        SamplerCreateInfo samplerCreateInfo {};
-        sampler = device->CreateSampler(samplerCreateInfo);
+        sampler = device->CreateSampler(SamplerCreateInfo());
     }
 
     void CreateCommandBuffer()
@@ -889,10 +888,10 @@ private:
         viewCreateInfo.type = TextureViewType::textureBinding;
         noise.view = noise.tex->CreateTextureView(viewCreateInfo);
 
-        SamplerCreateInfo samplerCreateInfo {};
-        samplerCreateInfo.addressModeU = AddressMode::repeat;
-        samplerCreateInfo.addressModeV = AddressMode::repeat;
-        noiseSampler = device->CreateSampler(samplerCreateInfo);
+        noiseSampler = device->CreateSampler(
+            SamplerCreateInfo()
+                .AddressModeU(AddressMode::repeat)
+                .AddressModeV(AddressMode::repeat));
 
         UniqueRef<CommandBuffer> texCommandBuffer = device->CreateCommandBuffer();
 

@@ -115,9 +115,9 @@ private:
             PixelFormat::bgra8Unorm
         };
 
-        SurfaceCreateInfo surfaceCreateInfo {};
-        surfaceCreateInfo.window = GetPlatformWindow();
-        surface = device->CreateSurface(surfaceCreateInfo);
+        surface = device->CreateSurface(
+            SurfaceCreateInfo()
+                .Window(GetPlatformWindow()));
 
         for (auto format : swapChainFormatQualifiers) {
             if (device->CheckSwapChainFormatSupport(surface.Get(), format)) {
@@ -245,8 +245,7 @@ private:
         sampleTextureView = sampleTexture->CreateTextureView(viewCreateInfo);
 
         // use the default attrib to create sampler
-        SamplerCreateInfo samplerCreateInfo {};
-        sampler = device->CreateSampler(samplerCreateInfo);
+        sampler = device->CreateSampler(SamplerCreateInfo());
 
         texCommandBuffer = device->CreateCommandBuffer();
         UniqueRef<CommandEncoder> commandEncoder = texCommandBuffer->Begin();
