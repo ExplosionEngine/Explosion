@@ -44,7 +44,7 @@ namespace RHI::DirectX12 {
         featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
 
         std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
-        for (auto i = 0; i < createInfo.bindGroupLayoutNum; i++) {
+        for (auto i = 0; i < createInfo.bindGroupLayouts.size(); i++) {
             const auto* bindGroupLayout = static_cast<const DX12BindGroupLayout*>(createInfo.bindGroupLayouts[i]);
             const auto baseIndex = static_cast<uint32_t>(rootParameters.size());
 

@@ -625,8 +625,6 @@ private:
 
     void CreateBindGroupLayoutAndPipelineLayout()
     {
-        PipelineLayoutCreateInfo pipelineLayoutCreateInfo {};
-
         //gBuffer
         {
             BindGroupLayoutCreateInfo createInfo(0);
@@ -651,10 +649,10 @@ private:
             renderableLayout = device->CreateBindGroupLayout(createInfo);
         }
 
-        std::vector<BindGroupLayout*> gBufferLayouts { bindGroupLayouts.gBuffer.Get(), renderableLayout.Get() };
-        pipelineLayoutCreateInfo.bindGroupLayoutNum = 2;
-        pipelineLayoutCreateInfo.bindGroupLayouts = gBufferLayouts.data();
-        pipelineLayouts.gBuffer = device->CreatePipelineLayout(pipelineLayoutCreateInfo);
+        pipelineLayouts.gBuffer = device->CreatePipelineLayout(
+            PipelineLayoutCreateInfo()
+                .BindGroupLayout(bindGroupLayouts.gBuffer.Get())
+                .BindGroupLayout(renderableLayout.Get()));
 
         //ssao
         {
@@ -679,10 +677,9 @@ private:
             bindGroupLayouts.ssao = device->CreateBindGroupLayout(createInfo);
         }
 
-        std::vector<BindGroupLayout*> ssaoLayouts { bindGroupLayouts.ssao.Get() };
-        pipelineLayoutCreateInfo.bindGroupLayoutNum = 1;
-        pipelineLayoutCreateInfo.bindGroupLayouts = ssaoLayouts.data();
-        pipelineLayouts.ssao = device->CreatePipelineLayout(pipelineLayoutCreateInfo);
+        pipelineLayouts.ssao = device->CreatePipelineLayout(
+            PipelineLayoutCreateInfo()
+                .BindGroupLayout(bindGroupLayouts.ssao.Get()));
 
         // ssaoBlur
         {
@@ -697,9 +694,9 @@ private:
             bindGroupLayouts.ssaoBlur = device->CreateBindGroupLayout(createInfo);
         }
 
-        std::vector<BindGroupLayout*> blurLayouts { bindGroupLayouts.ssaoBlur.Get() };
-        pipelineLayoutCreateInfo.bindGroupLayouts = blurLayouts.data();
-        pipelineLayouts.ssaoBlur = device->CreatePipelineLayout(pipelineLayoutCreateInfo);
+        pipelineLayouts.ssaoBlur = device->CreatePipelineLayout(
+            PipelineLayoutCreateInfo()
+                .BindGroupLayout(bindGroupLayouts.ssaoBlur.Get()));
 
         // composition
         {
@@ -724,9 +721,9 @@ private:
             bindGroupLayouts.composition = device->CreateBindGroupLayout(createInfo);
         }
 
-        std::vector<BindGroupLayout*> comLayouts { bindGroupLayouts.composition.Get() };
-        pipelineLayoutCreateInfo.bindGroupLayouts = comLayouts.data();
-        pipelineLayouts.composition = device->CreatePipelineLayout(pipelineLayoutCreateInfo);
+        pipelineLayouts.composition = device->CreatePipelineLayout(
+            PipelineLayoutCreateInfo()
+                .BindGroupLayout(bindGroupLayouts.composition.Get()));
     }
 
     void CreateBindGroup()

@@ -241,17 +241,14 @@ namespace Rendering {
 
     void PipelineLayout::CreateRHIPipelineLayout(RHI::Device& device)
     {
-        std::vector<BindGroupLayout*> tBindGroupLayouts;
+        std::vector<const RHI::BindGroupLayout*> tBindGroupLayouts;
         tBindGroupLayouts.reserve(bindGroupLayouts.size());
         for (const auto& iter : bindGroupLayouts) {
-            tBindGroupLayouts.emplace_back(iter.second.Get());
+            tBindGroupLayouts.emplace_back(iter.second.Get()->GetRHI());
         }
 
         RHI::PipelineLayoutCreateInfo createInfo;
-        createInfo.bindGroupLayoutNum = tBindGroupLayouts.size();
-        createInfo.bindGroupLayouts = reinterpret_cast<const RHI::BindGroupLayout* const*>(tBindGroupLayouts.data());
-        createInfo.pipelineConstantLayoutNum = 0;
-        createInfo.pipelineConstantLayouts = nullptr;
+        createInfo.bindGroupLayouts = tBindGroupLayouts;
         rhiHandle = device.CreatePipelineLayout(createInfo);
     }
 

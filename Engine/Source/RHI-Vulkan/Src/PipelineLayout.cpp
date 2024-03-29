@@ -33,14 +33,14 @@ namespace RHI::Vulkan {
 
     void VKPipelineLayout::CreateNativePipelineLayout(const PipelineLayoutCreateInfo& createInfo)
     {
-        std::vector<VkDescriptorSetLayout> setLayouts(createInfo.bindGroupLayoutNum);
-        for (uint32_t i = 0; i < createInfo.bindGroupLayoutNum; ++i) {
+        std::vector<VkDescriptorSetLayout> setLayouts(createInfo.bindGroupLayouts.size());
+        for (uint32_t i = 0; i < createInfo.bindGroupLayouts.size(); ++i) {
             const auto* vulkanBindGroup = static_cast<const VKBindGroupLayout*>(createInfo.bindGroupLayouts[i]);
             setLayouts[i] = vulkanBindGroup->GetVkDescriptorSetLayout();
         }
 
-        std::vector<VkPushConstantRange> pushConstants(createInfo.pipelineConstantLayoutNum);
-        for (uint32_t i = 0; i < createInfo.pipelineConstantLayoutNum; ++i) {
+        std::vector<VkPushConstantRange> pushConstants(createInfo.pipelineConstantLayouts.size());
+        for (uint32_t i = 0; i < createInfo.pipelineConstantLayouts.size(); ++i) {
             const auto& constantInfo = createInfo.pipelineConstantLayouts[i];
             pushConstants[i].stageFlags = VKFlagsCast<ShaderStageFlags, VkShaderStageFlags>(constantInfo.stageFlags);
             pushConstants[i].offset = constantInfo.offset;

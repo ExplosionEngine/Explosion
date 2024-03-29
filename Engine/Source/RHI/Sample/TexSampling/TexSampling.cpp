@@ -337,12 +337,9 @@ private:
 
     void CreatePipelineLayout()
     {
-        std::vector<BindGroupLayout*> bindGroupLayouts = { bindGroupLayout.Get() };
-
-        PipelineLayoutCreateInfo createInfo {};
-        createInfo.bindGroupLayoutNum = bindGroupLayouts.size();
-        createInfo.bindGroupLayouts = bindGroupLayouts.data();
-        pipelineLayout = device->CreatePipelineLayout(createInfo);
+        pipelineLayout = device->CreatePipelineLayout(
+            PipelineLayoutCreateInfo()
+                .BindGroupLayout(bindGroupLayout.Get()));
     }
 
     void CreatePipeline()

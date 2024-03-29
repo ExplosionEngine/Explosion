@@ -174,10 +174,7 @@ private:
 
     void CreatePipelineLayout()
     {
-        PipelineLayoutCreateInfo createInfo {};
-        createInfo.bindGroupLayoutNum = 0;
-        createInfo.bindGroupLayouts = nullptr;
-        pipelineLayout = device->CreatePipelineLayout(createInfo);
+        pipelineLayout = device->CreatePipelineLayout(PipelineLayoutCreateInfo());
     }
 
     void CreatePipeline()
@@ -239,7 +236,7 @@ private:
             .MultiSampleState(
                 MultiSampleState()
                     .Count(1));
-        
+
         pipeline = device->CreateGraphicsPipeline(createInfo);
     }
 
