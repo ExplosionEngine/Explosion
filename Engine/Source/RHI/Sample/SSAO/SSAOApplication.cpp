@@ -294,14 +294,15 @@ private:
                 pixelBuffer->UnMap();
             }
 
-            TextureCreateInfo texCreateInfo {};
-            texCreateInfo.format = PixelFormat::rgba8Unorm;
-            texCreateInfo.dimension = TextureDimension::t2D;
-            texCreateInfo.mipLevels = 1;
-            texCreateInfo.extent = { texData->width, texData->height, 1};
-            texCreateInfo.samples = 1;
-            texCreateInfo.usages = TextureUsageBits::copyDst | TextureUsageBits::textureBinding;
-            diffuseColorMap = app->GetDevice()->CreateTexture(texCreateInfo);
+            diffuseColorMap = app->GetDevice()->CreateTexture(
+                TextureCreateInfo()
+                    .Format(PixelFormat::rgba8Unorm)
+                    .Dimension(TextureDimension::t2D)
+                    .MipLevels(1)
+                    .Extent({ texData->width, texData->height, 1 })
+                    .Samples(1)
+                    .Usages(TextureUsageBits::copyDst | TextureUsageBits::textureBinding)
+                    .InitialState(TextureState::undefined));
 
             TextureViewCreateInfo viewCreateInfo {};
             viewCreateInfo.dimension = TextureViewDimension::tv2D;
@@ -869,14 +870,15 @@ private:
             pixelBuffer->UnMap();
         }
 
-        TextureCreateInfo texCreateInfo {};
-        texCreateInfo.format = PixelFormat::rgba32Float;
-        texCreateInfo.mipLevels = 1;
-        texCreateInfo.extent = {ssaoNoiseDim, ssaoNoiseDim, 1};
-        texCreateInfo.dimension = TextureDimension::t2D;
-        texCreateInfo.samples = 1;
-        texCreateInfo.usages = TextureUsageBits::copyDst | TextureUsageBits::textureBinding;
-        noise.tex = device->CreateTexture(texCreateInfo);
+        noise.tex = device->CreateTexture(
+            TextureCreateInfo()
+                .Format(PixelFormat::rgba32Float)
+                .MipLevels(1)
+                .Extent({ ssaoNoiseDim, ssaoNoiseDim, 1 })
+                .Dimension(TextureDimension::t2D)
+                .Samples(1)
+                .Usages(TextureUsageBits::copyDst | TextureUsageBits::textureBinding)
+                .InitialState(TextureState::undefined));
 
         TextureViewCreateInfo viewCreateInfo {};
         viewCreateInfo.dimension = TextureViewDimension::tv2D;
@@ -920,15 +922,15 @@ private:
     }
 
     void CreateDepthAttachment() {
-        TextureCreateInfo texCreateInfo {};
-        texCreateInfo.format = PixelFormat::d32Float;
-        texCreateInfo.mipLevels = 1;
-        texCreateInfo.extent = {width, height, 1};
-        texCreateInfo.dimension = TextureDimension::t2D;
-        texCreateInfo.samples = 1;
-        texCreateInfo.usages = TextureUsageBits::depthStencilAttachment;
-        texCreateInfo.initialState = TextureState::depthStencilReadonly;
-        gBufferDepth.texture = device->CreateTexture(texCreateInfo);
+        gBufferDepth.texture = device->CreateTexture(
+            TextureCreateInfo()
+                .Format(PixelFormat::d32Float)
+                .MipLevels(1)
+                .Extent({ width, height, 1 })
+                .Dimension(TextureDimension::t2D)
+                .Samples(1)
+                .Usages(TextureUsageBits::depthStencilAttachment)
+                .InitialState(TextureState::depthStencilReadonly));
 
         TextureViewCreateInfo viewCreateInfo {};
         viewCreateInfo.dimension = TextureViewDimension::tv2D;
@@ -943,15 +945,15 @@ private:
 
     void CreateAttachments(RHI::PixelFormat format, ColorAttachment& attachment)
     {
-        TextureCreateInfo texCreateInfo {};
-        texCreateInfo.format = format;
-        texCreateInfo.mipLevels = 1;
-        texCreateInfo.extent = {width, height, 1};
-        texCreateInfo.dimension = TextureDimension::t2D;
-        texCreateInfo.samples = 1;
-        texCreateInfo.usages = TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment;
-        texCreateInfo.initialState = TextureState::shaderReadOnly;
-        attachment.texture = device->CreateTexture(texCreateInfo);
+        attachment.texture = device->CreateTexture(
+            TextureCreateInfo()
+                .Format(format)
+                .MipLevels(1)
+                .Extent({ width, height, 1 })
+                .Dimension(TextureDimension::t2D)
+                .Samples(1)
+                .Usages(TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment)
+                .InitialState(TextureState::shaderReadOnly));
 
         TextureViewCreateInfo rtvCreateInfo {};
         rtvCreateInfo.dimension = TextureViewDimension::tv2D;

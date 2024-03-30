@@ -226,14 +226,15 @@ private:
         }
         stbi_image_free(pixels);
 
-        TextureCreateInfo texCreateInfo {};
-        texCreateInfo.format = PixelFormat::rgba8Unorm;
-        texCreateInfo.mipLevels = 1;
-        texCreateInfo.extent = {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1};
-        texCreateInfo.dimension = TextureDimension::t2D;
-        texCreateInfo.samples = 1;
-        texCreateInfo.usages = TextureUsageBits::copyDst | TextureUsageBits::textureBinding;
-        sampleTexture = device->CreateTexture(texCreateInfo);
+        sampleTexture = device->CreateTexture(
+            TextureCreateInfo()
+                .Format(PixelFormat::rgba8Unorm)
+                .MipLevels(1)
+                .Extent({ static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1 })
+                .Dimension(TextureDimension::t2D)
+                .Samples(1)
+                .Usages(TextureUsageBits::copyDst | TextureUsageBits::textureBinding)
+                .InitialState(TextureState::undefined));
 
         TextureViewCreateInfo viewCreateInfo {};
         viewCreateInfo.dimension = TextureViewDimension::tv2D;
