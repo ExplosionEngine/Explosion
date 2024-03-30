@@ -5,54 +5,57 @@
 #pragma once
 
 #include <vector>
+
 #include <vulkan/vulkan.h>
+
 #include <RHI/Instance.h>
 #include <RHI/Vulkan/Api.h>
 
 namespace RHI::Vulkan {
-    extern RHI::Instance* gInstance;
+    extern Instance* gInstance;
 
-    class VKInstance : public Instance {
+    class VulkanInstance : public Instance {
     public:
-        NonCopyable(VKInstance)
-        VKInstance();
-        ~VKInstance() override;
+        NonCopyable(VulkanInstance)
+        VulkanInstance();
+        ~VulkanInstance() override;
 
         RHIType GetRHIType() override;
         uint32_t GetGpuNum() override;
-        Gpu* GetGpu(uint32_t index) override;
-        VkInstance GetVkInstance() const;
+        Gpu* GetGpu(uint32_t inIndex) override;
         void Destroy() override;
+
+        VkInstance GetNative() const;
 
         // function pointer
 #if BUILD_CONFIG_DEBUG
-        PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT;
-        PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT;
-        PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT;
+        PFN_vkCreateDebugUtilsMessengerEXT pfnVkCreateDebugUtilsMessengerEXT;
+        PFN_vkDestroyDebugUtilsMessengerEXT pfnVkDestroyDebugUtilsMessengerEXT;
+        PFN_vkSetDebugUtilsObjectNameEXT pfnVkSetDebugUtilsObjectNameEXT;
 #endif
-        PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR;
-        PFN_vkCmdEndRenderingKHR  vkCmdEndRenderingKHR;
+        PFN_vkCmdBeginRenderingKHR pfnVkCmdBeginRenderingKHR;
+        PFN_vkCmdEndRenderingKHR  pfnVkCmdEndRenderingKHR;
 
     private:
         void PrepareExtensions();
-        void CreateVKInstance();
-        void DestroyVKInstance();
-        void PreparePFN();
+        void CreateNativeInstance();
+        void DestroyNativeInstance();
+        void PrepareDynamicFuncPointers();
         void EnumeratePhysicalDevices();
 #if BUILD_CONFIG_DEBUG
         void PrepareLayers();
-        void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+        void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& inCreateInfo);
         void CreateDebugMessenger();
         void DestroyDebugMessenger();
 #endif
 
-        VkInstance vkInstance;
-        std::vector<const char*> vkEnabledExtensionNames;
-        std::vector<VkPhysicalDevice> vkPhysicalDevices;
-        std::vector<Common::UniqueRef<Gpu>> gpus;
 #if BUILD_CONFIG_DEBUG
-        std::vector<const char*> vkEnabledLayerNames;
-        VkDebugUtilsMessengerEXT vkDebugMessenger;
+        VkDebugUtilsMessengerEXT nativeDebugMessenger;
 #endif
+        VkInstance nativeInstance;
+        std::vector<VkPhysicalDevice> nativePhysicalDevices;
+        std::vector<const char*> vkEnabledExtensionNames;
+        std::vector<const char*> vkEnabledLayerNames;
+        std::vector<Common::UniqueRef<Gpu>> gpus;
     };
 }

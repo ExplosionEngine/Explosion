@@ -20,11 +20,11 @@
 
 namespace RHI::Vulkan {
 
-    VKCommandEncoder::VKCommandEncoder(VKDevice& dev, VKCommandBuffer& cmd)
-        : device(dev), commandBuffer(cmd)
+    VulkanCommandEncoder::VulkanCommandEncoder(VulkanDevice& inDevice, VulkanCommandBuffer& inCmdBuffer)
+        : device(inDevice), commandBuffer(inCmdBuffer)
     {
     }
-    VKCommandEncoder::~VKCommandEncoder()
+    VulkanCommandEncoder::~VulkanCommandEncoder()
     {
     }
 
@@ -51,187 +51,189 @@ namespace RHI::Vulkan {
         return {VK_IMAGE_LAYOUT_UNDEFINED, VkAccessFlags {}, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
     }
 
-    void VKCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    void VulkanCommandEncoder::ResourceBarrier(const Barrier& inBarrier)
     {
-        if (barrier.type == ResourceType::texture) {
-            const auto& textureBarrierInfo = barrier.texture;
+        if (inBarrier.type == ResourceType::texture) {
+            const auto& textureBarrierInfo = inBarrier.texture;
             auto oldLayout = GetBarrierInfo(textureBarrierInfo.before == TextureState::present ? TextureState::undefined : textureBarrierInfo.before);
             auto newLayout = GetBarrierInfo(textureBarrierInfo.after);
 
-            auto* vkTexture = static_cast<VKTexture*>(textureBarrierInfo.pointer);
+            auto* vkTexture = static_cast<VulkanTexture*>(textureBarrierInfo.pointer);
             VkImageMemoryBarrier imageBarrier = {};
             imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-            imageBarrier.image = vkTexture->GetImage();
+            imageBarrier.image = vkTexture->GetNative();
             imageBarrier.oldLayout = std::get<0>(oldLayout);
             imageBarrier.srcAccessMask = std::get<1>(oldLayout);
             imageBarrier.newLayout = std::get<0>(newLayout);
             imageBarrier.dstAccessMask = std::get<1>(newLayout);
-            imageBarrier.subresourceRange = vkTexture->GetFullRange();
+            imageBarrier.subresourceRange = vkTexture->GetNativeSubResourceFullRange();
 
-            vkCmdPipelineBarrier(commandBuffer.GetVkCommandBuffer(), std::get<2>(oldLayout), std::get<2>(newLayout), VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+            vkCmdPipelineBarrier(commandBuffer.GetNativeCommandBuffer(), std::get<2>(oldLayout), std::get<2>(newLayout), VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 1, &imageBarrier);
         }
     }
 
-    CopyPassCommandEncoder* VKCommandEncoder::BeginCopyPass()
+    CopyPassCommandEncoder* VulkanCommandEncoder::BeginCopyPass()
     {
-        return new VKCopyPassCommandEncoder(device, *this, commandBuffer);
+        return new VulkanCopyPassCommandEncoder(device, *this, commandBuffer);
     }
 
-    ComputePassCommandEncoder* VKCommandEncoder::BeginComputePass()
+    ComputePassCommandEncoder* VulkanCommandEncoder::BeginComputePass()
     {
-        return new VKComputePassCommandEncoder(device, *this, commandBuffer);
+        return new VulkanComputePassCommandEncoder(device, *this, commandBuffer);
     }
 
-    GraphicsPassCommandEncoder* VKCommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo& beginInfo)
+    GraphicsPassCommandEncoder* VulkanCommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo& inBeginInfo)
     {
-        return new VKGraphicsPassCommandEncoder(device, *this, commandBuffer, beginInfo);
+        return new VulkanGraphicsPassCommandEncoder(device, *this, commandBuffer, inBeginInfo);
     }
 
-    void VKCommandEncoder::End()
+    void VulkanCommandEncoder::End()
     {
-        vkEndCommandBuffer(commandBuffer.GetVkCommandBuffer());
+        vkEndCommandBuffer(commandBuffer.GetNativeCommandBuffer());
     }
 
-    void VKCommandEncoder::Destroy()
+    void VulkanCommandEncoder::Destroy()
     {
         delete this;
     }
 
-    VKCopyPassCommandEncoder::VKCopyPassCommandEncoder(VKDevice& device, VKCommandEncoder& commandEncoder, VKCommandBuffer& commandBuffer)
-        : device(device)
-        , commandEncoder(commandEncoder)
-        , commandBuffer(commandBuffer)
+    VulkanCopyPassCommandEncoder::VulkanCopyPassCommandEncoder(VulkanDevice& inDevice, VulkanCommandEncoder& inCmdEncoder, VulkanCommandBuffer& inCmdBuffer)
+        : device(inDevice)
+        , commandEncoder(inCmdEncoder)
+        , commandBuffer(inCmdBuffer)
     {
     }
 
-    VKCopyPassCommandEncoder::~VKCopyPassCommandEncoder() = default;
+    VulkanCopyPassCommandEncoder::~VulkanCopyPassCommandEncoder() = default;
 
-    void VKCopyPassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    void VulkanCopyPassCommandEncoder::ResourceBarrier(const Barrier& inBarrier)
     {
-        commandEncoder.ResourceBarrier(barrier);
+        commandEncoder.ResourceBarrier(inBarrier);
     }
 
-    void VKCopyPassCommandEncoder::CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size)
+    void VulkanCopyPassCommandEncoder::CopyBufferToBuffer(Buffer* inSrcBuffer, size_t inSrcOffset, Buffer* inDestBuffer, size_t inDestOffset, size_t inSize)
     {
-        auto* srcBuffer = static_cast<VKBuffer*>(src);
-        auto* dstBuffer = static_cast<VKBuffer*>(dst);
+        auto* srcBuffer = static_cast<VulkanBuffer*>(inSrcBuffer);
+        auto* dstBuffer = static_cast<VulkanBuffer*>(inDestBuffer);
 
         VkBufferCopy copyRegion {};
-        copyRegion.srcOffset = srcOffset;
-        copyRegion.dstOffset = dstOffset;
-        copyRegion.srcOffset = size;
-        vkCmdCopyBuffer(commandBuffer.GetVkCommandBuffer(), srcBuffer->GetVkBuffer(), dstBuffer->GetVkBuffer(), 1, &copyRegion);
+        copyRegion.srcOffset = inSrcOffset;
+        copyRegion.dstOffset = inDestOffset;
+        copyRegion.srcOffset = inSize;
+        vkCmdCopyBuffer(commandBuffer.GetNativeCommandBuffer(), srcBuffer->GetNative(), dstBuffer->GetNative(), 1, &copyRegion);
     }
 
-    void VKCopyPassCommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
+    void VulkanCopyPassCommandEncoder::CopyBufferToTexture(Buffer* inSrcBuffer, Texture* inDestTexture, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize)
     {
-        auto* buffer = static_cast<VKBuffer*>(src);
-        auto* texture = static_cast<VKTexture*>(dst);
+        auto* buffer = static_cast<VulkanBuffer*>(inSrcBuffer);
+        auto* texture = static_cast<VulkanTexture*>(inDestTexture);
 
         VkBufferImageCopy copyRegion = {};
-        copyRegion.imageExtent = { size.x, size.y, size.z };
-        copyRegion.imageSubresource = { GetAspectMask(subResourceInfo->aspect), subResourceInfo->mipLevel, subResourceInfo->baseArrayLayer, subResourceInfo->arrayLayerNum };
+        copyRegion.imageExtent = {inSize.x, inSize.y, inSize.z };
+        copyRegion.imageSubresource = {GetAspectMask(inSubResourceInfo->aspect), inSubResourceInfo->mipLevel, inSubResourceInfo->baseArrayLayer, inSubResourceInfo->arrayLayerNum };
 
-        vkCmdCopyBufferToImage(commandBuffer.GetVkCommandBuffer(), buffer->GetVkBuffer(), texture->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+        vkCmdCopyBufferToImage(commandBuffer.GetNativeCommandBuffer(), buffer->GetNative(), texture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
     }
 
-    void VKCopyPassCommandEncoder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
+    void VulkanCopyPassCommandEncoder::CopyTextureToBuffer(Texture* inSrcTexture, Buffer* inDestBuffer, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize)
     {
-        auto* buffer = static_cast<VKBuffer*>(dst);
-        auto* texture = static_cast<VKTexture*>(src);
+        auto* buffer = static_cast<VulkanBuffer*>(inDestBuffer);
+        auto* texture = static_cast<VulkanTexture*>(inSrcTexture);
 
         VkBufferImageCopy copyRegion = {};
-        copyRegion.imageExtent = { size.x, size.y, size.z };
-        copyRegion.imageSubresource = { GetAspectMask(subResourceInfo->aspect), subResourceInfo->mipLevel, subResourceInfo->baseArrayLayer, subResourceInfo->arrayLayerNum };
+        copyRegion.imageExtent = {inSize.x, inSize.y, inSize.z };
+        copyRegion.imageSubresource = {GetAspectMask(inSubResourceInfo->aspect), inSubResourceInfo->mipLevel, inSubResourceInfo->baseArrayLayer, inSubResourceInfo->arrayLayerNum };
 
-        vkCmdCopyImageToBuffer(commandBuffer.GetVkCommandBuffer(), texture->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer->GetVkBuffer(), 1, &copyRegion);
+        vkCmdCopyImageToBuffer(commandBuffer.GetNativeCommandBuffer(), texture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                               buffer->GetNative(), 1, &copyRegion);
     }
 
-    void VKCopyPassCommandEncoder::CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo,
-        Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size)
+    void VulkanCopyPassCommandEncoder::CopyTextureToTexture(Texture* inSrcTexture, const TextureSubResourceInfo* inSrcSubResourceInfo,
+                                                            Texture* inDestTexture, const TextureSubResourceInfo* inDestSubResourceInfo, const Common::UVec3& inSize)
     {
-        auto* srcTexture = static_cast<VKTexture*>(src);
-        auto* dstTexture = static_cast<VKTexture*>(dst);
+        auto* srcTexture = static_cast<VulkanTexture*>(inSrcTexture);
+        auto* dstTexture = static_cast<VulkanTexture*>(inDestTexture);
 
         VkImageCopy copyRegion = {};
-        copyRegion.extent = {size.x, size.y, size.z };
-        copyRegion.srcSubresource = { GetAspectMask(srcSubResourceInfo->aspect), srcSubResourceInfo->mipLevel, srcSubResourceInfo->baseArrayLayer, srcSubResourceInfo->arrayLayerNum };
-        copyRegion.dstSubresource = { GetAspectMask(dstSubResourceInfo->aspect), dstSubResourceInfo->mipLevel, dstSubResourceInfo->baseArrayLayer, dstSubResourceInfo->arrayLayerNum };
+        copyRegion.extent = {inSize.x, inSize.y, inSize.z };
+        copyRegion.srcSubresource = {GetAspectMask(inSrcSubResourceInfo->aspect), inSrcSubResourceInfo->mipLevel, inSrcSubResourceInfo->baseArrayLayer, inSrcSubResourceInfo->arrayLayerNum };
+        copyRegion.dstSubresource = {GetAspectMask(inDestSubResourceInfo->aspect), inDestSubResourceInfo->mipLevel, inDestSubResourceInfo->baseArrayLayer, inDestSubResourceInfo->arrayLayerNum };
 
-        vkCmdCopyImage(commandBuffer.GetVkCommandBuffer(), srcTexture->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstTexture->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+        vkCmdCopyImage(commandBuffer.GetNativeCommandBuffer(), srcTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                       dstTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
     }
 
-    void VKCopyPassCommandEncoder::EndPass()
+    void VulkanCopyPassCommandEncoder::EndPass()
     {
     }
 
-    void VKCopyPassCommandEncoder::Destroy()
-    {
-        delete this;
-    }
-
-    VKComputePassCommandEncoder::VKComputePassCommandEncoder(VKDevice& device, VKCommandEncoder& commandEncoder, VKCommandBuffer& commandBuffer)
-        : device(device)
-        , commandEncoder(commandEncoder)
-        , commandBuffer(commandBuffer)
-    {
-    }
-
-    VKComputePassCommandEncoder::~VKComputePassCommandEncoder() = default;
-
-    void VKComputePassCommandEncoder::ResourceBarrier(const Barrier& barrier)
-    {
-        commandEncoder.ResourceBarrier(barrier);
-    }
-
-    void VKComputePassCommandEncoder::SetPipeline(ComputePipeline* pipeline)
-    {
-        // TODO
-    }
-
-    void VKComputePassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
-    {
-        // TODO
-    }
-
-    void VKComputePassCommandEncoder::Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ)
-    {
-        // TODO
-    }
-
-    void VKComputePassCommandEncoder::EndPass()
-    {
-        // TODO
-    }
-
-    void VKComputePassCommandEncoder::Destroy()
+    void VulkanCopyPassCommandEncoder::Destroy()
     {
         delete this;
     }
 
-    VKGraphicsPassCommandEncoder::VKGraphicsPassCommandEncoder(VKDevice& dev, VKCommandEncoder& commandEncoder, VKCommandBuffer& cmd,const GraphicsPassBeginInfo& beginInfo)
-        : device(dev)
-        , commandEncoder(commandEncoder)
-        , commandBuffer(cmd)
+    VulkanComputePassCommandEncoder::VulkanComputePassCommandEncoder(VulkanDevice& inDevice, VulkanCommandEncoder& inCmdEncoder, VulkanCommandBuffer& inCmdBuffer)
+        : device(inDevice)
+        , commandEncoder(inCmdEncoder)
+        , commandBuffer(inCmdBuffer)
     {
-        std::vector<VkRenderingAttachmentInfo> colorAttachmentInfos(beginInfo.colorAttachments.size());
-        for (size_t i = 0; i < beginInfo.colorAttachments.size(); i++)
+    }
+
+    VulkanComputePassCommandEncoder::~VulkanComputePassCommandEncoder() = default;
+
+    void VulkanComputePassCommandEncoder::ResourceBarrier(const Barrier& inBarrier)
+    {
+        commandEncoder.ResourceBarrier(inBarrier);
+    }
+
+    void VulkanComputePassCommandEncoder::SetPipeline(ComputePipeline* inPipeline)
+    {
+        // TODO
+    }
+
+    void VulkanComputePassCommandEncoder::SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup)
+    {
+        // TODO
+    }
+
+    void VulkanComputePassCommandEncoder::Dispatch(size_t inGroupCountX, size_t inGroupCountY, size_t inGroupCountZ)
+    {
+        // TODO
+    }
+
+    void VulkanComputePassCommandEncoder::EndPass()
+    {
+        // TODO
+    }
+
+    void VulkanComputePassCommandEncoder::Destroy()
+    {
+        delete this;
+    }
+
+    VulkanGraphicsPassCommandEncoder::VulkanGraphicsPassCommandEncoder(VulkanDevice& inDevice, VulkanCommandEncoder& inCmdEncoder, VulkanCommandBuffer& inCmdBuffer, const GraphicsPassBeginInfo& inBeginInfo)
+        : device(inDevice)
+        , commandEncoder(inCmdEncoder)
+        , commandBuffer(inCmdBuffer)
+    {
+        std::vector<VkRenderingAttachmentInfo> colorAttachmentInfos(inBeginInfo.colorAttachments.size());
+        for (size_t i = 0; i < inBeginInfo.colorAttachments.size(); i++)
         {
-            auto* colorTextureView = static_cast<VKTextureView*>(beginInfo.colorAttachments[i].view);
+            auto* colorTextureView = static_cast<VulkanTextureView*>(inBeginInfo.colorAttachments[i].view);
             colorAttachmentInfos[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-            colorAttachmentInfos[i].imageView = colorTextureView->GetVkImageView();
+            colorAttachmentInfos[i].imageView = colorTextureView->GetNative();
             colorAttachmentInfos[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            colorAttachmentInfos[i].loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(beginInfo.colorAttachments[i].loadOp);
-            colorAttachmentInfos[i].storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(beginInfo.colorAttachments[i].storeOp);
+            colorAttachmentInfos[i].loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(inBeginInfo.colorAttachments[i].loadOp);
+            colorAttachmentInfos[i].storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(inBeginInfo.colorAttachments[i].storeOp);
             colorAttachmentInfos[i].clearValue.color = {
-                    beginInfo.colorAttachments[i].clearValue.r,
-                    beginInfo.colorAttachments[i].clearValue.g,
-                    beginInfo.colorAttachments[i].clearValue.b,
-                    beginInfo.colorAttachments[i].clearValue.a
+                inBeginInfo.colorAttachments[i].clearValue.r,
+                inBeginInfo.colorAttachments[i].clearValue.g,
+                inBeginInfo.colorAttachments[i].clearValue.b,
+                inBeginInfo.colorAttachments[i].clearValue.a
                     };
         }
 
-        auto* textureView = static_cast<VKTextureView*>(beginInfo.colorAttachments[0].view);
+        auto* textureView = static_cast<VulkanTextureView*>(inBeginInfo.colorAttachments[0].view);
         VkRenderingInfoKHR renderingInfo = {};
         renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
         renderingInfo.colorAttachmentCount = colorAttachmentInfos.size();
@@ -240,133 +242,133 @@ namespace RHI::Vulkan {
         renderingInfo.renderArea = {{0, 0}, {static_cast<uint32_t>(textureView->GetTexture().GetExtent().x), static_cast<uint32_t>(textureView->GetTexture().GetExtent().y)}};
         renderingInfo.viewMask = 0;
 
-        if (beginInfo.depthStencilAttachment.has_value())
+        if (inBeginInfo.depthStencilAttachment.has_value())
         {
-            auto* depthStencilTextureView = static_cast<VKTextureView*>(beginInfo.depthStencilAttachment->view);
+            auto* depthStencilTextureView = static_cast<VulkanTextureView*>(inBeginInfo.depthStencilAttachment->view);
 
             VkRenderingAttachmentInfo depthAttachmentInfo = {};
             depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-            depthAttachmentInfo.imageView = depthStencilTextureView->GetVkImageView();
+            depthAttachmentInfo.imageView = depthStencilTextureView->GetNative();
             depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            depthAttachmentInfo.loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(beginInfo.depthStencilAttachment->depthLoadOp);
-            depthAttachmentInfo.storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(beginInfo.depthStencilAttachment->depthStoreOp);
-            depthAttachmentInfo.clearValue.depthStencil = { beginInfo.depthStencilAttachment->depthClearValue, beginInfo.depthStencilAttachment->stencilClearValue };
+            depthAttachmentInfo.loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(inBeginInfo.depthStencilAttachment->depthLoadOp);
+            depthAttachmentInfo.storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(inBeginInfo.depthStencilAttachment->depthStoreOp);
+            depthAttachmentInfo.clearValue.depthStencil = {inBeginInfo.depthStencilAttachment->depthClearValue, inBeginInfo.depthStencilAttachment->stencilClearValue };
 
             renderingInfo.pDepthAttachment = &depthAttachmentInfo;
 
-            if (!beginInfo.depthStencilAttachment->depthReadOnly) {
+            if (!inBeginInfo.depthStencilAttachment->depthReadOnly) {
                 VkRenderingAttachmentInfo stencilAttachmentInfo = {};
                 stencilAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-                stencilAttachmentInfo.imageView = depthStencilTextureView->GetVkImageView();
+                stencilAttachmentInfo.imageView = depthStencilTextureView->GetNative();
                 stencilAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-                stencilAttachmentInfo.loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(beginInfo.depthStencilAttachment->stencilLoadOp);
-                stencilAttachmentInfo.storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(beginInfo.depthStencilAttachment->stencilStoreOp);
-                stencilAttachmentInfo.clearValue.depthStencil = { beginInfo.depthStencilAttachment->depthClearValue, beginInfo.depthStencilAttachment->stencilClearValue };
+                stencilAttachmentInfo.loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(inBeginInfo.depthStencilAttachment->stencilLoadOp);
+                stencilAttachmentInfo.storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(inBeginInfo.depthStencilAttachment->stencilStoreOp);
+                stencilAttachmentInfo.clearValue.depthStencil = {inBeginInfo.depthStencilAttachment->depthClearValue, inBeginInfo.depthStencilAttachment->stencilClearValue };
 
                 renderingInfo.pStencilAttachment = &stencilAttachmentInfo;
             }
         }
 
-        cmdHandle = cmd.GetVkCommandBuffer();
-        device.GetGpu().GetInstance().vkCmdBeginRenderingKHR(cmdHandle, &renderingInfo);
+        nativeCmdBuffer = inCmdBuffer.GetNativeCommandBuffer();
+        device.GetGpu().GetInstance().pfnVkCmdBeginRenderingKHR(nativeCmdBuffer, &renderingInfo);
     }
 
-    VKGraphicsPassCommandEncoder::~VKGraphicsPassCommandEncoder() = default;
+    VulkanGraphicsPassCommandEncoder::~VulkanGraphicsPassCommandEncoder() = default;
 
-    void VKGraphicsPassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    void VulkanGraphicsPassCommandEncoder::ResourceBarrier(const Barrier& inBarrier)
     {
-        commandEncoder.ResourceBarrier(barrier);
+        commandEncoder.ResourceBarrier(inBarrier);
     }
 
-    void VKGraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
+    void VulkanGraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* inPipeline)
     {
-        graphicsPipeline = static_cast<VKGraphicsPipeline*>(pipeline);
+        graphicsPipeline = static_cast<VulkanGraphicsPipeline*>(inPipeline);
         Assert(graphicsPipeline);
 
-       vkCmdBindPipeline(cmdHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->GetVkPipeline());
+       vkCmdBindPipeline(nativeCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->GetNative());
     }
 
-    void VKGraphicsPassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup)
+    void VulkanGraphicsPassCommandEncoder::SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup)
     {
-        auto* vBindGroup = static_cast<VKBindGroup*>(bindGroup);
-        VkDescriptorSet descriptorSet = vBindGroup->GetVkDescritorSet();
-        VkPipelineLayout layout = graphicsPipeline->GetPipelineLayout()->GetVkPipelineLayout();
+        auto* vBindGroup = static_cast<VulkanBindGroup*>(inBindGroup);
+        VkDescriptorSet descriptorSet = vBindGroup->GetNative();
+        VkPipelineLayout layout = graphicsPipeline->GetPipelineLayout()->GetNative();
 
-        vkCmdBindDescriptorSets(cmdHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, layoutIndex, 1, &descriptorSet, 0, nullptr);
+        vkCmdBindDescriptorSets(nativeCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, inLayoutIndex, 1, &descriptorSet, 0, nullptr);
     }
 
-    void VKGraphicsPassCommandEncoder::SetIndexBuffer(BufferView *bufferView)
+    void VulkanGraphicsPassCommandEncoder::SetIndexBuffer(BufferView *inBufferView)
     {
-        auto* mBufferView = static_cast<VKBufferView*>(bufferView);
+        auto* mBufferView = static_cast<VulkanBufferView*>(inBufferView);
 
-        VkBuffer indexBuffer = mBufferView->GetBuffer().GetVkBuffer();
+        VkBuffer indexBuffer = mBufferView->GetBuffer().GetNative();
         auto vkFormat = VKEnumCast<IndexFormat, VkIndexType>(mBufferView->GetIndexFormat());
 
-        vkCmdBindIndexBuffer(cmdHandle, indexBuffer, 0, vkFormat);
+        vkCmdBindIndexBuffer(nativeCmdBuffer, indexBuffer, 0, vkFormat);
     }
 
-    void VKGraphicsPassCommandEncoder::SetVertexBuffer(size_t slot, BufferView *bufferView)
+    void VulkanGraphicsPassCommandEncoder::SetVertexBuffer(size_t inSlot, BufferView *inBufferView)
     {
-        auto* mBufferView = static_cast<VKBufferView*>(bufferView);
+        auto* mBufferView = static_cast<VulkanBufferView*>(inBufferView);
 
-        VkBuffer vertexBuffer = mBufferView->GetBuffer().GetVkBuffer();
+        VkBuffer vertexBuffer = mBufferView->GetBuffer().GetNative();
         VkDeviceSize offset[] = { mBufferView->GetOffset() };
-        vkCmdBindVertexBuffers(cmdHandle,slot, 1, &vertexBuffer, offset);
+        vkCmdBindVertexBuffers(nativeCmdBuffer, inSlot, 1, &vertexBuffer, offset);
     }
 
-    void VKGraphicsPassCommandEncoder::Draw(size_t vertexCount, size_t instanceCount, size_t firstVertex, size_t firstInstance)
+    void VulkanGraphicsPassCommandEncoder::Draw(size_t inVertexCount, size_t inInstanceCount, size_t inFirstVertex, size_t inFirstInstance)
     {
-        vkCmdDraw(cmdHandle, vertexCount, instanceCount, firstVertex, firstInstance);
+        vkCmdDraw(nativeCmdBuffer, inVertexCount, inInstanceCount, inFirstVertex, inFirstInstance);
     }
 
-    void VKGraphicsPassCommandEncoder::DrawIndexed(size_t indexCount, size_t instanceCount, size_t firstIndex, size_t baseVertex, size_t firstInstance)
+    void VulkanGraphicsPassCommandEncoder::DrawIndexed(size_t inIndexCount, size_t inInstanceCount, size_t inFirstIndex, size_t inBaseVertex, size_t inFirstInstance)
     {
-        vkCmdDrawIndexed(cmdHandle, indexCount, instanceCount, firstIndex, baseVertex, firstInstance);
+        vkCmdDrawIndexed(nativeCmdBuffer, inIndexCount, inInstanceCount, inFirstIndex, inBaseVertex, inFirstInstance);
     }
 
-    void VKGraphicsPassCommandEncoder::SetViewport(float x, float y, float width, float height, float minDepth, float maxDepth)
+    void VulkanGraphicsPassCommandEncoder::SetViewport(float inX, float inY, float inWidth, float inHeight, float inMinDepth, float inMaxDepth)
     {
         VkViewport viewport{};
-        viewport.x = x;
-        viewport.y = y;
-        viewport.width = width;
-        viewport.height = height;
-        viewport.minDepth = minDepth;
-        viewport.maxDepth = maxDepth;
-        vkCmdSetViewport(cmdHandle, 0, 1, &viewport);
+        viewport.x = inX;
+        viewport.y = inY;
+        viewport.width = inWidth;
+        viewport.height = inHeight;
+        viewport.minDepth = inMinDepth;
+        viewport.maxDepth = inMaxDepth;
+        vkCmdSetViewport(nativeCmdBuffer, 0, 1, &viewport);
     }
 
-    void VKGraphicsPassCommandEncoder::SetScissor(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom)
+    void VulkanGraphicsPassCommandEncoder::SetScissor(uint32_t inLeft, uint32_t inTop, uint32_t inRight, uint32_t inBottom)
     {
         VkRect2D rect;
-        rect.offset = { static_cast<int32_t>(left), static_cast<int32_t>(top) };
-        rect.extent = { right - left, bottom - top };
-        vkCmdSetScissor(cmdHandle, 0, 1, &rect);
+        rect.offset = {static_cast<int32_t>(inLeft), static_cast<int32_t>(inTop) };
+        rect.extent = {inRight - inLeft, inBottom - inTop };
+        vkCmdSetScissor(nativeCmdBuffer, 0, 1, &rect);
     }
 
-    void VKGraphicsPassCommandEncoder::SetPrimitiveTopology(PrimitiveTopology primitiveTopology)
+    void VulkanGraphicsPassCommandEncoder::SetPrimitiveTopology(PrimitiveTopology inPrimitiveTopology)
     {
         // check extension
 //        cmdHandle.setPrimitiveTopologyEXT(VKEnumCast<PrimitiveTopologyType, vk::PrimitiveTopology>(primitiveTopology)
     }
 
-    void VKGraphicsPassCommandEncoder::SetBlendConstant(const float *constants)
+    void VulkanGraphicsPassCommandEncoder::SetBlendConstant(const float *inConstants)
     {
-        vkCmdSetBlendConstants(cmdHandle, constants);
+        vkCmdSetBlendConstants(nativeCmdBuffer, inConstants);
     }
 
-    void VKGraphicsPassCommandEncoder::SetStencilReference(uint32_t reference)
+    void VulkanGraphicsPassCommandEncoder::SetStencilReference(uint32_t inReference)
     {
         // TODO stencil face;
-        vkCmdSetStencilReference(cmdHandle, VK_STENCIL_FACE_FRONT_AND_BACK, reference);
+        vkCmdSetStencilReference(nativeCmdBuffer, VK_STENCIL_FACE_FRONT_AND_BACK, inReference);
     }
 
-    void VKGraphicsPassCommandEncoder::EndPass()
+    void VulkanGraphicsPassCommandEncoder::EndPass()
     {
-        device.GetGpu().GetInstance().vkCmdEndRenderingKHR(cmdHandle);
+        device.GetGpu().GetInstance().pfnVkCmdEndRenderingKHR(nativeCmdBuffer);
     }
 
-    void VKGraphicsPassCommandEncoder::Destroy()
+    void VulkanGraphicsPassCommandEncoder::Destroy()
     {
         delete this;
     }

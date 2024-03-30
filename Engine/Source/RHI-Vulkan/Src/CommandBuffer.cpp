@@ -8,44 +8,43 @@
 #include <Common/Debug.h>
 
 namespace RHI::Vulkan {
-
-    VKCommandBuffer::VKCommandBuffer(VKDevice& dev, VkCommandPool p)
-        : device(dev)
-        , pool(p)
+    VulkanCommandBuffer::VulkanCommandBuffer(VulkanDevice& inDevice, VkCommandPool inNativeCmdPool)
+        : device(inDevice)
+        , pool(inNativeCmdPool)
     {
         CreateNativeCommandBuffer();
     }
 
-    VKCommandBuffer::~VKCommandBuffer()
+    VulkanCommandBuffer::~VulkanCommandBuffer()
     {
-        auto vkDevice = device.GetVkDevice();
-        if (commandBuffer) {
-            vkFreeCommandBuffers(vkDevice, pool, 1, &commandBuffer);
+        auto vkDevice = device.GetNative();
+        if (nativeCmdBuffer) {
+            vkFreeCommandBuffers(vkDevice, pool, 1, &nativeCmdBuffer);
         }
     }
 
-    void VKCommandBuffer::Destroy()
+    void VulkanCommandBuffer::Destroy()
     {
         delete this;
     }
 
-    CommandEncoder* VKCommandBuffer::Begin()
+    CommandEncoder* VulkanCommandBuffer::Begin()
     {
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         // TODO maybe expose this to create info ?
         beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-        vkBeginCommandBuffer(commandBuffer, &beginInfo);
-        return new VKCommandEncoder(device, *this);
+        vkBeginCommandBuffer(nativeCmdBuffer, &beginInfo);
+        return new VulkanCommandEncoder(device, *this);
     }
 
-    VkCommandBuffer VKCommandBuffer::GetVkCommandBuffer() const
+    VkCommandBuffer VulkanCommandBuffer::GetNativeCommandBuffer() const
     {
-        return commandBuffer;
+        return nativeCmdBuffer;
     }
 
-    void VKCommandBuffer::CreateNativeCommandBuffer()
+    void VulkanCommandBuffer::CreateNativeCommandBuffer()
     {
         VkCommandBufferAllocateInfo cmdInfo = {};
         cmdInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -53,6 +52,6 @@ namespace RHI::Vulkan {
         cmdInfo.commandPool = pool;
         cmdInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
-        Assert(vkAllocateCommandBuffers(device.GetVkDevice(), &cmdInfo, &commandBuffer) == VK_SUCCESS);
+        Assert(vkAllocateCommandBuffers(device.GetNative(), &cmdInfo, &nativeCmdBuffer) == VK_SUCCESS);
     }
 }

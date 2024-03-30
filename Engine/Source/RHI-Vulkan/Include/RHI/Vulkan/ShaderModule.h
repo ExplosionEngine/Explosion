@@ -10,28 +10,28 @@
 #include <unordered_map>
 
 namespace RHI::Vulkan {
-    class VKDevice;
+    class VulkanDevice;
 
-    class VKShaderModule : public ShaderModule {
+    class VulkanShaderModule : public ShaderModule {
     public:
-        NonCopyable(VKShaderModule)
-        VKShaderModule(VKDevice& device, const ShaderModuleCreateInfo& createInfo);
-        ~VKShaderModule() override;
+        using ShaderInputLocationTable = std::unordered_map<std::string, uint32_t>;
+
+        NonCopyable(VulkanShaderModule)
+        VulkanShaderModule(VulkanDevice& inDevice, const ShaderModuleCreateInfo& inCreateInfo);
+        ~VulkanShaderModule() override;
 
         void Destroy() override;
 
-        VkShaderModule GetVkShaderModule() const;
+        VkShaderModule GetNative() const;
 
         void BuildReflection(const ShaderModuleCreateInfo& createInfo);
-
-        using ShaderInputLocationTable = std::unordered_map<std::string, uint32_t>;
         const ShaderInputLocationTable& GetLocationTable() const;
 
     private:
         void CreateNativeShaderModule(const ShaderModuleCreateInfo& createInfo);
 
-        VKDevice& device;
-        VkShaderModule shaderModule = VK_NULL_HANDLE;
+        VulkanDevice& device;
+        VkShaderModule nativeShaderModule;
         std::unordered_map<std::string, uint32_t> inputLocationTable;
     };
 

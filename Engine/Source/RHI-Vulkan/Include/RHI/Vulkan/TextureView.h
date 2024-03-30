@@ -6,28 +6,30 @@
 #pragma once
 
 #include <memory>
+
 #include <vulkan/vulkan.h>
+
 #include <RHI/TextureView.h>
 
 namespace RHI::Vulkan {
-    class VKTexture;
-    class VKDevice;
+    class VulkanTexture;
+    class VulkanDevice;
 
-    class VKTextureView : public TextureView {
+    class VulkanTextureView : public TextureView {
     public:
-        NonCopyable(VKTextureView)
-        VKTextureView(VKTexture& tex, VKDevice& device, const TextureViewCreateInfo& createInfo);
-        ~VKTextureView() override;
+        NonCopyable(VulkanTextureView)
+        VulkanTextureView(VulkanTexture& inTexture, VulkanDevice& nDevice, const TextureViewCreateInfo& inCreateInfo);
+        ~VulkanTextureView() override;
         void Destroy() override;
 
-        VkImageView GetVkImageView();
-        VKTexture& GetTexture() const;
+        VkImageView GetNative();
+        VulkanTexture& GetTexture() const;
         uint8_t GetArrayLayerNum() const;
 
     private:
-        void CreateImageView(const TextureViewCreateInfo& createInfo);
-        VKDevice& device;
-        VKTexture& vkTexture;
+        void CreateImageView(const TextureViewCreateInfo& inCreateInfo);
+        VulkanDevice& device;
+        VulkanTexture& texture;
         uint8_t baseMipLevel;
         uint8_t mipLevelNum;
         uint8_t baseArrayLayer;

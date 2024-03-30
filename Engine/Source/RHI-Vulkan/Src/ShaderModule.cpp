@@ -2,48 +2,51 @@
 // Created by Zach Lee on 2022/4/2.
 //
 
+#include <spirv_cross/spirv_cross.hpp>
+
 #include <RHI/Vulkan/ShaderModule.h>
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Common.h>
-#include <spirv_cross/spirv_cross.hpp>
 
 namespace RHI::Vulkan {
 
-    VKShaderModule::VKShaderModule(VKDevice& dev, const ShaderModuleCreateInfo& createInfo)
-        : device(dev), ShaderModule(createInfo)
+    VulkanShaderModule::VulkanShaderModule(VulkanDevice& inDevice, const ShaderModuleCreateInfo& inCreateInfo)
+        : ShaderModule(inCreateInfo)
+        , device(inDevice)
+        , nativeShaderModule(VK_NULL_HANDLE)
     {
-        CreateNativeShaderModule(createInfo);
+        CreateNativeShaderModule(inCreateInfo);
     }
 
-    VKShaderModule::~VKShaderModule()
+    VulkanShaderModule::~VulkanShaderModule()
     {
-        if (shaderModule) {
-            vkDestroyShaderModule(device.GetVkDevice(), shaderModule, nullptr);
+        if (nativeShaderModule) {
+            vkDestroyShaderModule(device.GetNative(), nativeShaderModule, nullptr);
         }
     }
 
-    void VKShaderModule::Destroy()
+    void VulkanShaderModule::Destroy()
     {
         delete this;
     }
 
-    VkShaderModule VKShaderModule::GetVkShaderModule() const
+    VkShaderModule VulkanShaderModule::GetNative() const
     {
-        return shaderModule;
+        return nativeShaderModule;
     }
 
-    void VKShaderModule::CreateNativeShaderModule(const ShaderModuleCreateInfo& createInfo)
+    void VulkanShaderModule::CreateNativeShaderModule(const ShaderModuleCreateInfo& createInfo)
     {
         VkShaderModuleCreateInfo moduleCreateInfo = {};
         moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         moduleCreateInfo.codeSize = createInfo.size;
         moduleCreateInfo.pCode = static_cast<const uint32_t*>(createInfo.byteCode);
 
-        Assert(vkCreateShaderModule(device.GetVkDevice(), &moduleCreateInfo, nullptr, &shaderModule) == VK_SUCCESS);
+        Assert(vkCreateShaderModule(device.GetNative(), &moduleCreateInfo, nullptr, &nativeShaderModule) == VK_SUCCESS);
         BuildReflection(createInfo);
     }
 
-    void VKShaderModule::BuildReflection(const ShaderModuleCreateInfo& createInfo)
+    void VulkanShaderModule::BuildReflection(const ShaderModuleCreateInfo& createInfo)
     {
         // TODO move to render module
         spirv_cross::Compiler compiler(static_cast<const uint32_t*>(createInfo.byteCode),
@@ -55,7 +58,7 @@ namespace RHI::Vulkan {
         }
     }
 
-    const VKShaderModule::ShaderInputLocationTable& VKShaderModule::GetLocationTable() const
+    const VulkanShaderModule::ShaderInputLocationTable& VulkanShaderModule::GetLocationTable() const
     {
         return inputLocationTable;
     }

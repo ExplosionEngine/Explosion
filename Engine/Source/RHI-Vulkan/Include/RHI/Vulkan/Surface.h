@@ -9,20 +9,21 @@
 #include <RHI/Surface.h>
 
 namespace RHI::Vulkan {
-    class VKDevice;
+    class VulkanDevice;
+
     VkSurfaceKHR CreateNativeSurface(const VkInstance& instance, const SurfaceCreateInfo& createInfo);
 
-    class VKSurface : public Surface {
+    class VulkanSurface : public Surface {
     public:
-        NonCopyable(VKSurface)
-        VKSurface(VKDevice& inDevice, const SurfaceCreateInfo& inCreateInfo);
-        ~VKSurface() override;
+        NonCopyable(VulkanSurface)
+        VulkanSurface(VulkanDevice& inDevice, const SurfaceCreateInfo& inCreateInfo);
+        ~VulkanSurface() override;
 
         void Destroy() override;
-        VkSurfaceKHR GetVKSurface() const;
+        VkSurfaceKHR GetNative() const;
 
     private:
-        VKDevice& device;
-        VkSurfaceKHR vkSurface;
+        VulkanDevice& device;
+        VkSurfaceKHR nativeSurface;
     };
 }

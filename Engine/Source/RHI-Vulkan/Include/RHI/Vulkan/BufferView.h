@@ -7,27 +7,27 @@
 #include <RHI/BufferView.h>
 
 namespace RHI::Vulkan {
-    class VKBuffer;
-    class VKDevice;
+    class VulkanBuffer;
+    class VulkanDevice;
 
-    class VKBufferView : public BufferView {
+    class VulkanBufferView : public BufferView {
     public:
-        NonCopyable(VKBufferView)
-        VKBufferView(VKBuffer& buffer, const BufferViewCreateInfo& createInfo);
-        ~VKBufferView() override;
+        NonCopyable(VulkanBufferView)
+        VulkanBufferView(VulkanBuffer& inBuffer, const BufferViewCreateInfo& inCreateInfo);
+        ~VulkanBufferView() override;
         void Destroy() override;
 
         size_t GetOffset() const;
         size_t GetBufferSize() const;
         IndexFormat GetIndexFormat() const;
-        VKBuffer& GetBuffer();
+        VulkanBuffer& GetBuffer();
 
     private:
-        VKBuffer& buffer;
+        VulkanBuffer& buffer;
         size_t size;
         size_t offset;
         IndexFormat format;
 
-        void InitializeBufferAttrib(const BufferViewCreateInfo& createInfo);
+        void InitializeBufferAttrib(const BufferViewCreateInfo& inCreateInfo);
     };
 }

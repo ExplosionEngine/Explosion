@@ -8,37 +8,37 @@
 #include <vector>
 
 namespace RHI::Vulkan {
-    VKBindGroupLayout::VKBindGroupLayout(VKDevice& dev, const BindGroupLayoutCreateInfo& createInfo)
-        : BindGroupLayout(createInfo), device(dev)
+    VulkanBindGroupLayout::VulkanBindGroupLayout(VulkanDevice& inDevice, const BindGroupLayoutCreateInfo& inCreateInfo)
+        : BindGroupLayout(inCreateInfo), device(inDevice)
     {
-        CreateDescriptorSetLayout(createInfo);
+        CreateNativeDescriptorSetLayout(inCreateInfo);
     }
 
-    VKBindGroupLayout::~VKBindGroupLayout()
+    VulkanBindGroupLayout::~VulkanBindGroupLayout()
     {
-        if (setLayout) {
-            vkDestroyDescriptorSetLayout(device.GetVkDevice(), setLayout, nullptr);
+        if (nativeDescriptorSetLayout) {
+            vkDestroyDescriptorSetLayout(device.GetNative(), nativeDescriptorSetLayout, nullptr);
         }
     }
 
-    void VKBindGroupLayout::Destroy()
+    void VulkanBindGroupLayout::Destroy()
     {
         delete this;
     }
 
-    VkDescriptorSetLayout VKBindGroupLayout::GetVkDescriptorSetLayout() const
+    VkDescriptorSetLayout VulkanBindGroupLayout::GetNative() const
     {
-        return setLayout;
+        return nativeDescriptorSetLayout;
     }
 
-    void VKBindGroupLayout::CreateDescriptorSetLayout(const BindGroupLayoutCreateInfo& createInfo)
+    void VulkanBindGroupLayout::CreateNativeDescriptorSetLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
     {
         VkDescriptorSetLayoutCreateInfo layoutInfo = {};
         layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
-        std::vector<VkDescriptorSetLayoutBinding> bindings(createInfo.entries.size());
+        std::vector<VkDescriptorSetLayoutBinding> bindings(inCreateInfo.entries.size());
         for (size_t i = 0; i < bindings.size(); ++i) {
-            const auto& entry = createInfo.entries[i];
+            const auto& entry = inCreateInfo.entries[i];
             auto& binding = bindings[i];
 
             VkShaderStageFlags flags = VKFlagsCast<ShaderStageFlags, VkShaderStageFlags>(entry.shaderVisibility);
@@ -52,11 +52,11 @@ namespace RHI::Vulkan {
         layoutInfo.pBindings = bindings.data();
         layoutInfo.bindingCount = bindings.size();
 
-        Assert(vkCreateDescriptorSetLayout(device.GetVkDevice(), &layoutInfo, nullptr, &setLayout) == VK_SUCCESS);
+        Assert(vkCreateDescriptorSetLayout(device.GetNative(), &layoutInfo, nullptr, &nativeDescriptorSetLayout) == VK_SUCCESS);
 
 #if BUILD_CONFIG_DEBUG
-        if (!createInfo.debugName.empty()) {
-            device.SetObjectName(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, reinterpret_cast<uint64_t>(setLayout), createInfo.debugName.c_str());
+        if (!inCreateInfo.debugName.empty()) {
+            device.SetObjectName(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, reinterpret_cast<uint64_t>(nativeDescriptorSetLayout), inCreateInfo.debugName.c_str());
         }
 #endif
     }

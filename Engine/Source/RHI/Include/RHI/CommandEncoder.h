@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 
 #include <Common/Utility.h>
 #include <RHI/Common.h>

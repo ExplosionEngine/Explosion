@@ -9,26 +9,25 @@
 #include <RHI/CommandBuffer.h>
 
 namespace RHI::Vulkan {
+    class VulkanDevice;
 
-    class VKDevice;
-
-    class VKCommandBuffer : public CommandBuffer {
+    class VulkanCommandBuffer : public CommandBuffer {
     public:
-        NonCopyable(VKCommandBuffer)
-        VKCommandBuffer(VKDevice& device, VkCommandPool);
-        ~VKCommandBuffer() override;
+        NonCopyable(VulkanCommandBuffer)
+        VulkanCommandBuffer(VulkanDevice& inDevice, VkCommandPool inNativeCmdPool);
+        ~VulkanCommandBuffer() override;
 
         void Destroy() override;
         CommandEncoder* Begin() override;
 
-        VkCommandBuffer GetVkCommandBuffer() const;
+        VkCommandBuffer GetNativeCommandBuffer() const;
 
     private:
         void CreateNativeCommandBuffer();
 
-        VKDevice& device;
+        VulkanDevice& device;
         VkCommandPool pool;
-        VkCommandBuffer commandBuffer;
+        VkCommandBuffer nativeCmdBuffer;
     };
 
 }

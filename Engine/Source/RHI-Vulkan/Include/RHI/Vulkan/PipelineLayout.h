@@ -3,27 +3,28 @@
 //
 
 #pragma once
-#include <RHI/PipelineLayout.h>
+
 #include <vulkan/vulkan.h>
 
-namespace RHI::Vulkan {
-    class VKDevice;
+#include <RHI/PipelineLayout.h>
 
-    class VKPipelineLayout : public PipelineLayout {
+namespace RHI::Vulkan {
+    class VulkanDevice;
+
+    class VulkanPipelineLayout : public PipelineLayout {
     public:
-        NonCopyable(VKPipelineLayout)
-        VKPipelineLayout(VKDevice& device, const PipelineLayoutCreateInfo& createInfo);
-        ~VKPipelineLayout() override;
+        NonCopyable(VulkanPipelineLayout)
+        VulkanPipelineLayout(VulkanDevice& inDevice, const PipelineLayoutCreateInfo& inCreateInfo);
+        ~VulkanPipelineLayout() override;
 
         void Destroy() override;
 
-        VkPipelineLayout GetVkPipelineLayout() const;
+        VkPipelineLayout GetNative() const;
+
     private:
-        void CreateNativePipelineLayout(const PipelineLayoutCreateInfo& createInfo);
+        void CreateNativePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo);
 
-        VKDevice& device;
-        VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+        VulkanDevice& device;
+        VkPipelineLayout nativePipelineLayout;
     };
-
-
 }

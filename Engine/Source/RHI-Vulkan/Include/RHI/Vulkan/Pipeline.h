@@ -3,34 +3,32 @@
 //
 
 #pragma once
-#include <RHI/Pipeline.h>
+
 #include <vulkan/vulkan.h>
 
+#include <RHI/Pipeline.h>
+
 namespace RHI::Vulkan {
+    class VulkanDevice;
+    class VulkanPipelineLayout;
 
-    class VKDevice;
-    class VKPipelineLayout;
-
-    class VKGraphicsPipeline : public GraphicsPipeline {
+    class VulkanGraphicsPipeline : public GraphicsPipeline {
     public:
-        NonCopyable(VKGraphicsPipeline)
-        VKGraphicsPipeline(VKDevice& device, const GraphicsPipelineCreateInfo& createInfo);
-        ~VKGraphicsPipeline() override;
+        NonCopyable(VulkanGraphicsPipeline)
+        VulkanGraphicsPipeline(VulkanDevice& inDevice, const GraphicsPipelineCreateInfo& inCreateInfo);
+        ~VulkanGraphicsPipeline() override;
         void Destroy() override;
 
-        VkPipeline GetVkPipeline();
-        VkRenderPass GetVkRenderPass();
-        VKPipelineLayout* GetPipelineLayout() const;
+        VulkanPipelineLayout* GetPipelineLayout() const;
+        VkPipeline GetNative();
 
     private:
-        void SavePipelineLayout(const GraphicsPipelineCreateInfo& createInfo);
-        void CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo);
-        void CreateNativeRenderPass(const GraphicsPipelineCreateInfo& createInfo);
+        void SavePipelineLayout(const GraphicsPipelineCreateInfo& inCreateInfo);
+        void CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo& inCreateInfo);
 
-        VKDevice& device;
-        VKPipelineLayout* pipelineLayout;
-        VkRenderPass renderPass = VK_NULL_HANDLE;
-        VkPipeline pipeline = VK_NULL_HANDLE;
+        VulkanDevice& device;
+        VulkanPipelineLayout* pipelineLayout;
+        VkPipeline nativePipeline = VK_NULL_HANDLE;
     };
 
 }
