@@ -483,16 +483,16 @@ private:
         }
         Assert(swapChainFormat != PixelFormat::max);
 
-        SwapChainCreateInfo swapChainCreateInfo {};
-        swapChainCreateInfo.format = swapChainFormat;
-        swapChainCreateInfo.presentMode = PresentMode::immediately;
-        swapChainCreateInfo.textureNum = backBufferCount;
-        swapChainCreateInfo.extent = {width, height};
-        swapChainCreateInfo.surface = surface.Get();
-        swapChainCreateInfo.presentQueue = graphicsQueue;
-        swapChain = device->CreateSwapChain(swapChainCreateInfo);
+        swapChain = device->CreateSwapChain(
+            SwapChainCreateInfo()
+                .Format(swapChainFormat)
+                .PresentMode(PresentMode::immediately)
+                .TextureNum(backBufferCount)
+                .Extent({ width, height })
+                .Surface(surface.Get())
+                .PresentQueue(graphicsQueue));
 
-        for (auto i = 0; i < swapChainCreateInfo.textureNum; i++) {
+        for (auto i = 0; i < backBufferCount; i++) {
             swapChainTextures[i] = swapChain->GetTexture(i);
 
             TextureViewCreateInfo viewCreateInfo {};
