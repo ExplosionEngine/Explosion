@@ -9,6 +9,7 @@
 #include <bit>
 
 #include <Common/Math/Common.h>
+#include <Common/Serialization.h>
 
 namespace Common::Internal {
     template <std::endian E>
@@ -317,4 +318,52 @@ namespace Common {
 
     template <typename T>
     constexpr bool isFloatingPointV = std::is_floating_point_v<T> || isHalfFloatingPointV<T>;
+}
+
+namespace Common {
+    template <std::endian E>
+    struct Serializer<Internal::FullFloat<E>> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId
+            = Common::HashUtils::StrCrc32("Common::Internal::FullFloat");
+
+        static void Serialize(SerializeStream& stream, const Internal::FullFloat<E>& value)
+        {
+            TypeIdSerializer<Internal::FullFloat<E>>::Serialize(stream);
+
+            Serializer<float>::Serialize(stream, value.value);
+        }
+
+        static bool Deserialize(DeserializeStream& stream, Internal::FullFloat<E>& value)
+        {
+            if (!TypeIdSerializer<Internal::FullFloat<E>>::Deserialize(stream)) {
+                return false;
+            }
+
+            Serializer<float>::Deserialize(stream, value.value);
+        }
+    };
+
+    template <std::endian E>
+    struct Serializer<HalfFloat<E>> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId
+            = Common::HashUtils::StrCrc32("Common::Internal::HalfFloat");
+
+        static void Serialize(SerializeStream& stream, const HalfFloat<E>& value)
+        {
+            TypeIdSerializer<HalfFloat<E>>::Serialize(stream);
+
+            Serializer<uint16_t>::Serialize(stream, value.value);
+        }
+
+        static bool Deserialize(DeserializeStream& stream, HalfFloat<E>& value)
+        {
+            if (!TypeIdSerializer<HalfFloat<E>>::Deserialize(stream)) {
+                return false;
+            }
+
+            Serializer<uint16_t>::Deserialize(stream, value.value);
+        }
+    };
 }

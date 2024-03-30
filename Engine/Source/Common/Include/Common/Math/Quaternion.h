@@ -6,6 +6,7 @@
 
 #include <Common/Math/Half.h>
 #include <Common/Math/Matrix.h>
+#include <Common/Serialization.h>
 
 namespace Common {
     template <typename T> struct Angle;
@@ -119,6 +120,86 @@ namespace Common {
     using HQuatConsts = QuatConsts<HFloat>;
     using FQuatConsts = QuatConsts<float>;
     using DQuatConsts = QuatConsts<double>;
+}
+
+namespace Common {
+    template <typename T>
+    struct Serializer<Angle<T>> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId
+            = Common::HashUtils::StrCrc32("Common::Angle")
+              + Serializer<T>::typeId;
+
+        static void Serialize(SerializeStream& stream, const Angle<T>& value)
+        {
+            TypeIdSerializer<Angle<T>>::Serialize(stream);
+
+            Serializer<T>::Serialize(stream, value.value);
+        }
+
+        static bool Deserialize(DeserializeStream& stream, Angle<T>& value)
+        {
+            if (!TypeIdSerializer<Angle<T>>::Deserialize(stream)) {
+                return false;
+            }
+
+            Serializer<T>::Deserialize(stream, value.value);
+        }
+    };
+
+    template <typename T>
+    struct Serializer<Radian<T>> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId
+            = Common::HashUtils::StrCrc32("Common::Radian")
+              + Serializer<T>::typeId;
+
+        static void Serialize(SerializeStream& stream, const Radian<T>& value)
+        {
+            TypeIdSerializer<Radian<T>>::Serialize(stream);
+
+            Serializer<T>::Serialize(stream, value.value);
+        }
+
+        static bool Deserialize(DeserializeStream& stream, Radian<T>& value)
+        {
+            if (!TypeIdSerializer<Radian<T>>::Deserialize(stream)) {
+                return false;
+            }
+
+            Serializer<T>::Deserialize(stream, value.value);
+        }
+    };
+
+    template <typename T>
+    struct Serializer<Quaternion<T>> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId
+            = Common::HashUtils::StrCrc32("Common::Quaternion")
+              + Serializer<T>::typeId;
+
+        static void Serialize(SerializeStream& stream, const Quaternion<T>& value)
+        {
+            TypeIdSerializer<Quaternion<T>>::Serialize(stream);
+
+            Serializer<T>::Serialize(stream, value.x);
+            Serializer<T>::Serialize(stream, value.y);
+            Serializer<T>::Serialize(stream, value.z);
+            Serializer<T>::Serialize(stream, value.w);
+        }
+
+        static bool Deserialize(DeserializeStream& stream, Quaternion<T>& value)
+        {
+            if (!TypeIdSerializer<Quaternion<T>>::Deserialize(stream)) {
+                return false;
+            }
+
+            Serializer<T>::Deserialize(stream, value.x);
+            Serializer<T>::Deserialize(stream, value.y);
+            Serializer<T>::Deserialize(stream, value.z);
+            Serializer<T>::Deserialize(stream, value.w);
+        }
+    };
 }
 
 namespace Common {

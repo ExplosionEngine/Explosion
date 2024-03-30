@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Common/Math/Transform.h>
+#include <Common/Serialization.h>
 
 namespace Common {
     template <typename T>
@@ -24,6 +25,32 @@ namespace Common {
     using HViewTransform = ViewTransform<HFloat>;
     using FViewTransform = ViewTransform<float>;
     using DViewTransform = ViewTransform<double>;
+}
+
+namespace Common {
+    template <typename T>
+    struct Serializer<ViewTransform<T>> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId
+            = Common::HashUtils::StrCrc32("Common::ViewTransform")
+              + Serializer<T>::typeId;
+
+        static void Serialize(SerializeStream& stream, const ViewTransform<T>& value)
+        {
+            TypeIdSerializer<ViewTransform<T>>::Serialize(stream);
+
+            Serializer<Transform<T>>::Serialize(stream, value);
+        }
+
+        static bool Deserialize(DeserializeStream& stream, ViewTransform<T>& value)
+        {
+            if (!TypeIdSerializer<ViewTransform<T>>::Deserialize(stream)) {
+                return false;
+            }
+
+            Serializer<Transform<T>>::Deserialize(stream, value);
+        }
+    };
 }
 
 namespace Common {

@@ -8,6 +8,7 @@
 #include <utility>
 
 #include <Common/Math/Half.h>
+#include <Common/Serialization.h>
 
 namespace Common::Internal {
     template <typename T, uint8_t L>
@@ -190,6 +191,37 @@ namespace Common::Internal {
     template <typename T>
     struct VecCrossResultTraits<T, 3> {
         using Type = Vector<T, 3>;
+    };
+}
+
+namespace Common {
+    template <typename T, uint8_t L>
+    struct Serializer<Vector<T, L>> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId
+            = Common::HashUtils::StrCrc32("Common::Vector")
+            + Serializer<T>::typeId
+            + L;
+
+        static void Serialize(SerializeStream& stream, const Vector<T, L>& value)
+        {
+            TypeIdSerializer<Vector<T, L>>::Serialize(stream);
+
+            for (auto i = 0; i < L; i++) {
+                Serializer<T>::Serialize(stream, value.data[i]);
+            }
+        }
+
+        static bool Deserialize(DeserializeStream& stream, Vector<T, L>& value)
+        {
+            if (!TypeIdSerializer<Vector<T, L>>::Deserialize(stream)) {
+                return false;
+            }
+
+            for (auto i = 0; i < L; i++) {
+                Serializer<T>::Deserialize(stream, value.data[i]);
+            }
+        }
     };
 }
 

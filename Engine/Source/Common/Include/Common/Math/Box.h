@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Common/Math/Vector.h>
+#include <Common/Serialization.h>
 
 namespace Common {
     template <typename T>
@@ -47,6 +48,34 @@ namespace Common {
     using HBox = Box<HFloat>;
     using FBox = Box<float>;
     using DBox = Box<double>;
+}
+
+namespace Common {
+    template <typename T>
+    struct Serializer<Box<T>> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId
+            = Common::HashUtils::StrCrc32("Common::Box")
+            + Serializer<T>::typeId;
+
+        static void Serialize(SerializeStream& stream, const Common::Box<T>& value)
+        {
+            TypeIdSerializer<Common::Box<T>>::Serialize(stream);
+
+            Serializer<Vector<T, 3>>::Serialize(stream, value.min);
+            Serializer<Vector<T, 3>>::Serialize(stream, value.max);
+        }
+
+        static bool Deserialize(DeserializeStream& stream, Common::Box<T>& value)
+        {
+            if (!TypeIdSerializer<Common::Box<T>>::Deserialize(stream)) {
+                return false;
+            }
+
+            Serializer<Vector<T, 3>>::Deserialize(stream, value.min);
+            Serializer<Vector<T, 3>>::Deserialize(stream, value.max);
+        }
+    };
 }
 
 namespace Common {
