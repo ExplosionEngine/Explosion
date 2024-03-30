@@ -139,15 +139,13 @@ private:
         for (auto i = 0; i < backBufferCount; i++) {
             swapChainTextures[i] = swapChain->GetTexture(i);
 
-            TextureViewCreateInfo viewCreateInfo {};
-            viewCreateInfo.dimension = TextureViewDimension::tv2D;
-            viewCreateInfo.baseArrayLayer = 0;
-            viewCreateInfo.arrayLayerNum = 1;
-            viewCreateInfo.baseMipLevel = 0;
-            viewCreateInfo.mipLevelNum = 1;
-            viewCreateInfo.aspect = TextureAspect::color;
-            viewCreateInfo.type = TextureViewType::colorAttachment;
-            swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(viewCreateInfo);
+            swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(
+                TextureViewCreateInfo()
+                    .Dimension(TextureViewDimension::tv2D)
+                    .MipLevels(0, 1)
+                    .ArrayLayers(0, 1)
+                    .Aspect(TextureAspect::color)
+                    .Type(TextureViewType::colorAttachment));
         }
     }
 
@@ -236,14 +234,13 @@ private:
                 .Usages(TextureUsageBits::copyDst | TextureUsageBits::textureBinding)
                 .InitialState(TextureState::undefined));
 
-        TextureViewCreateInfo viewCreateInfo {};
-        viewCreateInfo.dimension = TextureViewDimension::tv2D;
-        viewCreateInfo.baseArrayLayer = 0;
-        viewCreateInfo.arrayLayerNum = 1;
-        viewCreateInfo.baseMipLevel = 0;
-        viewCreateInfo.mipLevelNum = 1;
-        viewCreateInfo.aspect = TextureAspect::color;
-        sampleTextureView = sampleTexture->CreateTextureView(viewCreateInfo);
+        sampleTextureView = sampleTexture->CreateTextureView(
+            TextureViewCreateInfo()
+                .Dimension(TextureViewDimension::tv2D)
+                .MipLevels(0, 1)
+                .ArrayLayers(0, 1)
+                .Aspect(TextureAspect::color)
+                .Type(TextureViewType::textureBinding));
 
         // use the default attrib to create sampler
         sampler = device->CreateSampler(SamplerCreateInfo());

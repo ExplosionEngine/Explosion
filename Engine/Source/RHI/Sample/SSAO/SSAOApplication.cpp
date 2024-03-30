@@ -304,15 +304,13 @@ private:
                     .Usages(TextureUsageBits::copyDst | TextureUsageBits::textureBinding)
                     .InitialState(TextureState::undefined));
 
-            TextureViewCreateInfo viewCreateInfo {};
-            viewCreateInfo.dimension = TextureViewDimension::tv2D;
-            viewCreateInfo.baseArrayLayer = 0;
-            viewCreateInfo.arrayLayerNum = 1;
-            viewCreateInfo.baseMipLevel = 0;
-            viewCreateInfo.mipLevelNum = 1;
-            viewCreateInfo.aspect = TextureAspect::color;
-            viewCreateInfo.type = TextureViewType::textureBinding;
-            diffuseColorMapView = diffuseColorMap->CreateTextureView(viewCreateInfo);
+            diffuseColorMapView = diffuseColorMap->CreateTextureView(
+                TextureViewCreateInfo()
+                    .Dimension(TextureViewDimension::tv2D)
+                    .MipLevels(0, 1)
+                    .ArrayLayers(0, 1)
+                    .Aspect(TextureAspect::color)
+                    .Type(TextureViewType::textureBinding));
 
             UniqueRef<CommandBuffer> texCommandBuffer = app->GetDevice()->CreateCommandBuffer();
 
@@ -496,15 +494,13 @@ private:
         for (auto i = 0; i < backBufferCount; i++) {
             swapChainTextures[i] = swapChain->GetTexture(i);
 
-            TextureViewCreateInfo viewCreateInfo {};
-            viewCreateInfo.dimension = TextureViewDimension::tv2D;
-            viewCreateInfo.baseArrayLayer = 0;
-            viewCreateInfo.arrayLayerNum = 1;
-            viewCreateInfo.baseMipLevel = 0;
-            viewCreateInfo.mipLevelNum = 1;
-            viewCreateInfo.aspect = TextureAspect::color;
-            viewCreateInfo.type = TextureViewType::colorAttachment;
-            swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(viewCreateInfo);
+            swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(
+                TextureViewCreateInfo()
+                    .Dimension(TextureViewDimension::tv2D)
+                    .MipLevels(0, 1)
+                    .ArrayLayers(0, 1)
+                    .Aspect(TextureAspect::color)
+                    .Type(TextureViewType::colorAttachment));
         }
     }
 
@@ -880,15 +876,13 @@ private:
                 .Usages(TextureUsageBits::copyDst | TextureUsageBits::textureBinding)
                 .InitialState(TextureState::undefined));
 
-        TextureViewCreateInfo viewCreateInfo {};
-        viewCreateInfo.dimension = TextureViewDimension::tv2D;
-        viewCreateInfo.baseArrayLayer = 0;
-        viewCreateInfo.arrayLayerNum = 1;
-        viewCreateInfo.baseMipLevel = 0;
-        viewCreateInfo.mipLevelNum = 1;
-        viewCreateInfo.aspect = TextureAspect::color;
-        viewCreateInfo.type = TextureViewType::textureBinding;
-        noise.view = noise.tex->CreateTextureView(viewCreateInfo);
+        noise.view = noise.tex->CreateTextureView(
+            TextureViewCreateInfo()
+                .Dimension(TextureViewDimension::tv2D)
+                .MipLevels(0, 1)
+                .ArrayLayers(0, 1)
+                .Aspect(TextureAspect::color)
+                .Type(TextureViewType::textureBinding));
 
         noiseSampler = device->CreateSampler(
             SamplerCreateInfo()
@@ -932,15 +926,13 @@ private:
                 .Usages(TextureUsageBits::depthStencilAttachment)
                 .InitialState(TextureState::depthStencilReadonly));
 
-        TextureViewCreateInfo viewCreateInfo {};
-        viewCreateInfo.dimension = TextureViewDimension::tv2D;
-        viewCreateInfo.baseArrayLayer = 0;
-        viewCreateInfo.arrayLayerNum = 1;
-        viewCreateInfo.baseMipLevel = 0;
-        viewCreateInfo.mipLevelNum = 1;
-        viewCreateInfo.aspect = TextureAspect::depth;
-        viewCreateInfo.type = TextureViewType::depthStencil;
-        gBufferDepth.view = gBufferDepth.texture->CreateTextureView(viewCreateInfo);
+        gBufferDepth.view = gBufferDepth.texture->CreateTextureView(
+            TextureViewCreateInfo()
+                .Dimension(TextureViewDimension::tv2D)
+                .MipLevels(0, 1)
+                .ArrayLayers(0, 1)
+                .Aspect(TextureAspect::depth)
+                .Type(TextureViewType::depthStencil));
     }
 
     void CreateAttachments(RHI::PixelFormat format, ColorAttachment& attachment)
@@ -955,26 +947,21 @@ private:
                 .Usages(TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment)
                 .InitialState(TextureState::shaderReadOnly));
 
-        TextureViewCreateInfo rtvCreateInfo {};
-        rtvCreateInfo.dimension = TextureViewDimension::tv2D;
-        rtvCreateInfo.baseArrayLayer = 0;
-        rtvCreateInfo.arrayLayerNum = 1;
-        rtvCreateInfo.baseMipLevel = 0;
-        rtvCreateInfo.mipLevelNum = 1;
-        rtvCreateInfo.aspect = TextureAspect::color;
-        rtvCreateInfo.type = TextureViewType::colorAttachment;
-        attachment.rtv = attachment.texture->CreateTextureView(rtvCreateInfo);
+        attachment.rtv = attachment.texture->CreateTextureView(
+            TextureViewCreateInfo()
+                .Dimension(TextureViewDimension::tv2D)
+                .MipLevels(0, 1)
+                .ArrayLayers(0, 1)
+                .Aspect(TextureAspect::color)
+                .Type(TextureViewType::colorAttachment));
 
-        TextureViewCreateInfo srvCreateInfo {};
-        srvCreateInfo.dimension = TextureViewDimension::tv2D;
-        srvCreateInfo.baseArrayLayer = 0;
-        srvCreateInfo.arrayLayerNum = 1;
-        srvCreateInfo.baseMipLevel = 0;
-        srvCreateInfo.mipLevelNum = 1;
-        srvCreateInfo.aspect = TextureAspect::color;
-        srvCreateInfo.type = TextureViewType::textureBinding;
-
-        attachment.srv = attachment.texture->CreateTextureView(srvCreateInfo);
+        attachment.srv = attachment.texture->CreateTextureView(
+            TextureViewCreateInfo()
+                .Dimension(TextureViewDimension::tv2D)
+                .MipLevels(0, 1)
+                .ArrayLayers(0, 1)
+                .Aspect(TextureAspect::color)
+                .Type(TextureViewType::textureBinding));
     }
 
     ShaderModule* GetShaderModule(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
