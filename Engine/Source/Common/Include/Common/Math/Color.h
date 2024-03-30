@@ -27,7 +27,7 @@ namespace Common {
         Color(Color&& inOther) noexcept;
         Color& operator=(const Color& inOther);
 
-        inline LinearColor ToLinearColor() const;
+        LinearColor ToLinearColor() const;
         std::string ToHexString() const;
     };
 

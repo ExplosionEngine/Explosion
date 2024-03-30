@@ -175,7 +175,7 @@ namespace RHI {
 namespace RHI {
     template <typename Derived>
     GraphicsPassColorAttachmentBase<Derived>::GraphicsPassColorAttachmentBase()
-        : clearValue(Common::ColorConsts::black.ToLinearColor())
+        : clearValue(Common::ColorConsts::black)
         , loadOp(LoadOp::load)
         , storeOp(StoreOp::discard)
     {
