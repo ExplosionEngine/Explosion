@@ -12,9 +12,21 @@
 #include <RHI/DirectX12/BindGroupLayout.h>
 
 namespace RHI::DirectX12 {
-    DX12PipelineLayout::DX12PipelineLayout(DX12Device& device, const PipelineLayoutCreateInfo& createInfo) : PipelineLayout(createInfo)
+    bool RootParameterKey::operator==(const RootParameterKey& inOther) const
     {
-        CreateDX12RootSignature(device, createInfo);
+        return layoutIndex == inOther.layoutIndex
+            && binding.rangeType == inOther.binding.rangeType
+            && binding.index == inOther.binding.index;
+    }
+
+    size_t RootParameterKeyHashProvider::operator()(const RootParameterKey& inKey) const
+    {
+        return Common::HashUtils::CityHash(&inKey, sizeof(RootParameterKey));
+    }
+
+    DX12PipelineLayout::DX12PipelineLayout(DX12Device& inDevice, const PipelineLayoutCreateInfo& inCreateInfo) : PipelineLayout(inCreateInfo)
+    {
+        CreateNativeRootSignature(inDevice, inCreateInfo);
     }
 
     DX12PipelineLayout::~DX12PipelineLayout() = default;
@@ -24,31 +36,31 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    std::optional<BindingTypeAndRootParameterIndex> DX12PipelineLayout::QueryRootDescriptorParameterIndex(uint8_t layoutIndex, const HlslBinding& binding)
+    std::optional<BindingTypeAndRootParameterIndex> DX12PipelineLayout::QueryRootDescriptorParameterIndex(uint8_t inLayoutIndex, const HlslBinding& inBinding)
     {
-        auto iter = rootParameterIndexMap.find(RootParameterKey { layoutIndex, binding });
+        auto iter = rootParameterIndexMap.find(RootParameterKey {inLayoutIndex, inBinding });
         if (iter == rootParameterIndexMap.end()) {
             return {};
         }
         return iter->second;
     }
 
-    ComPtr<ID3D12RootSignature>& DX12PipelineLayout::GetDX12RootSignature()
+    ID3D12RootSignature* DX12PipelineLayout::GetNative()
     {
-        return dx12RootSignature;
+        return nativeRootSignature.Get();
     }
 
-    void DX12PipelineLayout::CreateDX12RootSignature(DX12Device& device, const PipelineLayoutCreateInfo& createInfo)
+    void DX12PipelineLayout::CreateNativeRootSignature(DX12Device& inDevice, const PipelineLayoutCreateInfo& inCreateInfo)
     {
         D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
         featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
 
         std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
-        for (auto i = 0; i < createInfo.bindGroupLayouts.size(); i++) {
-            const auto* bindGroupLayout = static_cast<const DX12BindGroupLayout*>(createInfo.bindGroupLayouts[i]);
+        for (auto i = 0; i < inCreateInfo.bindGroupLayouts.size(); i++) {
+            const auto* bindGroupLayout = static_cast<const DX12BindGroupLayout*>(inCreateInfo.bindGroupLayouts[i]);
             const auto baseIndex = static_cast<uint32_t>(rootParameters.size());
 
-            const auto& pendingRootParameters = bindGroupLayout->GetDX12RootParameters();
+            const auto& pendingRootParameters = bindGroupLayout->GetNativeRootParameters();
             const auto& keyInfos = bindGroupLayout->GetRootParameterKeyInfos();
             for (auto j = 0; j < pendingRootParameters.size(); j++) {
                 const auto index = static_cast<uint32_t>(baseIndex + j);
@@ -68,12 +80,12 @@ namespace RHI::DirectX12 {
         ComPtr<ID3DBlob> error;
         bool success = SUCCEEDED(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
         Assert(success);
-        success = SUCCEEDED(device.GetDX12Device()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&dx12RootSignature)));
+        success = SUCCEEDED(inDevice.GetNative()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&nativeRootSignature)));
         Assert(success);
 
 #if BUILD_CONFIG_DEBUG
-        if (!createInfo.debugName.empty()) {
-            dx12RootSignature->SetName(Common::StringUtils::ToWideString(createInfo.debugName).c_str());
+        if (!inCreateInfo.debugName.empty()) {
+            nativeRootSignature->SetName(Common::StringUtils::ToWideString(inCreateInfo.debugName).c_str());
         }
 #endif
     }

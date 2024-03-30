@@ -22,40 +22,39 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12SwapChain::DX12SwapChain(DX12Device& device, const SwapChainCreateInfo& createInfo)
-        : SwapChain(createInfo)
-        , device(device)
-        , queue(static_cast<DX12Queue&>(*createInfo.presentQueue))
-        , presentMode(createInfo.presentMode)
-        , textureNum(createInfo.textureNum)
+    DX12SwapChain::DX12SwapChain(DX12Device& inDevice, const SwapChainCreateInfo& inCreateInfo)
+        : SwapChain(inCreateInfo)
+        , device(inDevice)
+        , queue(static_cast<DX12Queue&>(*inCreateInfo.presentQueue))
+        , presentMode(inCreateInfo.presentMode)
+        , textureNum(inCreateInfo.textureNum)
     {
-        CreateDX12SwapChain(createInfo);
-        FetchTextures(createInfo.format);
+        CreateDX12SwapChain(inCreateInfo);
+        FetchTextures(inCreateInfo.format);
     }
 
     DX12SwapChain::~DX12SwapChain() = default;
 
-    Texture* DX12SwapChain::GetTexture(uint8_t index)
+    Texture* DX12SwapChain::GetTexture(uint8_t inIndex)
     {
-        return textures[index].Get();
+        return textures[inIndex].Get();
     }
 
-    uint8_t DX12SwapChain::AcquireBackTexture(Semaphore* signalSemaphore)
+    uint8_t DX12SwapChain::AcquireBackTexture(Semaphore* inSignalSemaphore)
     {
-        auto& dx12SignalSemaphore = static_cast<DX12Semaphore&>(*signalSemaphore);
-        auto result = static_cast<uint8_t>(dx12SwapChain->GetCurrentBackBufferIndex());
-        auto& fence = dx12SignalSemaphore.GetDX12Fence();
+        auto& dx12SignalSemaphore = static_cast<DX12Semaphore&>(*inSignalSemaphore);
+        auto result = static_cast<uint8_t>(nativeSwapChain->GetCurrentBackBufferIndex());
+        auto* fence = dx12SignalSemaphore.GetNative();
         fence->Signal(0);
         fence->Signal(1);
         return result;
     }
 
-    void DX12SwapChain::Present(Semaphore* waitSemaphore)
+    void DX12SwapChain::Present(Semaphore* inWaitSemaphore)
     {
-        auto& dx12WaitSemaphore = static_cast<DX12Semaphore&>(*waitSemaphore);
-        auto& fence = dx12WaitSemaphore.GetDX12Fence();
-        queue.GetDX12CommandQueue()->Wait(fence.Get(), 1);
-        dx12SwapChain->Present(GetSyncInterval(presentMode), false);
+        auto& dx12WaitSemaphore = static_cast<DX12Semaphore&>(*inWaitSemaphore);
+        queue.GetNative()->Wait(dx12WaitSemaphore.GetNative(), 1);
+        nativeSwapChain->Present(GetSyncInterval(presentMode), false);
     }
 
     void DX12SwapChain::Destroy()
@@ -63,45 +62,45 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    void DX12SwapChain::CreateDX12SwapChain(const SwapChainCreateInfo& createInfo)
+    void DX12SwapChain::CreateDX12SwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
         auto& instance = device.GetGpu().GetInstance();
-        auto* dx12Queue = static_cast<DX12Queue*>(createInfo.presentQueue);
+        auto* dx12Queue = static_cast<DX12Queue*>(inCreateInfo.presentQueue);
         Assert(dx12Queue != nullptr);
-        auto* dx12Surface = static_cast<DX12Surface*>(createInfo.surface);
+        auto* dx12Surface = static_cast<DX12Surface*>(inCreateInfo.surface);
         Assert(dx12Surface != nullptr);
 
         DXGI_SWAP_CHAIN_DESC1 desc {};
-        desc.BufferCount = createInfo.textureNum;
-        desc.Width = createInfo.extent.x;
-        desc.Height = createInfo.extent.y;
-        desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.format);
+        desc.BufferCount = inCreateInfo.textureNum;
+        desc.Width = inCreateInfo.extent.x;
+        desc.Height = inCreateInfo.extent.y;
+        desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(inCreateInfo.format);
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        desc.SwapEffect = DX12EnumCast<PresentMode, DXGI_SWAP_EFFECT>(createInfo.presentMode);
+        desc.SwapEffect = DX12EnumCast<PresentMode, DXGI_SWAP_EFFECT>(inCreateInfo.presentMode);
         desc.SampleDesc.Count = 1;
 
         ComPtr<IDXGISwapChain1> dx12SwapChain1;
-        bool success = SUCCEEDED(instance.GetDX12Factory()->CreateSwapChainForHwnd(
-            dx12Queue->GetDX12CommandQueue().Get(),
-            dx12Surface->GetWin32WindowHandle(),
+        bool success = SUCCEEDED(instance.GetNative()->CreateSwapChainForHwnd(
+            dx12Queue->GetNative(),
+            dx12Surface->GetNative(),
             &desc,
             /* TODO fullscreen */ nullptr,
             nullptr,
             &dx12SwapChain1));
         Assert(success);
 
-        success = SUCCEEDED(dx12SwapChain1.As(&dx12SwapChain));
+        success = SUCCEEDED(dx12SwapChain1.As(&nativeSwapChain));
         Assert(success);
     }
 
-    void DX12SwapChain::FetchTextures(PixelFormat format)
+    void DX12SwapChain::FetchTextures(PixelFormat inFormat)
     {
         textures.resize(textureNum);
         for (auto i = 0; i < textureNum; i++) {
             ComPtr<ID3D12Resource> dx12Resource;
-            bool success = SUCCEEDED(dx12SwapChain->GetBuffer(i, IID_PPV_ARGS(&dx12Resource)));
+            bool success = SUCCEEDED(nativeSwapChain->GetBuffer(i, IID_PPV_ARGS(&dx12Resource)));
             Assert(success);
-            textures[i] = new DX12Texture(device, format, std::move(dx12Resource));
+            textures[i] = new DX12Texture(device, inFormat, std::move(dx12Resource));
         }
     }
 }

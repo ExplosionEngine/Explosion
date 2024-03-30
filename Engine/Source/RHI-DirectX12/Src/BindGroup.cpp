@@ -14,15 +14,15 @@ namespace RHI::DirectX12 {
     {
         if (entry.binding.type == BindingType::uniformBuffer || entry.binding.type == BindingType::storageBuffer) {
             auto* bufferView = static_cast<DX12BufferView*>(std::get<BufferView*>(entry.entity));
-            return bufferView->GetDX12CpuDescriptorHandle();
+            return bufferView->GetNativeCpuDescriptorHandle();
         }
         if (entry.binding.type == BindingType::texture || entry.binding.type == BindingType::storageTexture) {
             auto* textureView = static_cast<DX12TextureView*>(std::get<TextureView*>(entry.entity));
-            return textureView->GetDX12CpuDescriptorHandle();
+            return textureView->GetNativeCpuDescriptorHandle();
         }
         if (entry.binding.type == BindingType::sampler) {
             auto* sampler = static_cast<DX12Sampler*>(std::get<Sampler*>(entry.entity));
-            return sampler->GetDX12CpuDescriptorHandle();
+            return sampler->GetNativeCpuDescriptorHandle();
         }
         QuickFail();
         return CD3DX12_CPU_DESCRIPTOR_HANDLE();
@@ -30,10 +30,10 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12BindGroup::DX12BindGroup(const BindGroupCreateInfo& createInfo) : BindGroup(createInfo), bindGroupLayout(nullptr)
+    DX12BindGroup::DX12BindGroup(const BindGroupCreateInfo& inCreateInfo) : BindGroup(inCreateInfo), bindGroupLayout(nullptr)
     {
-        SaveBindGroupLayout(createInfo);
-        CacheBindings(createInfo);
+        SaveBindGroupLayout(inCreateInfo);
+        CacheBindings(inCreateInfo);
     }
 
     DX12BindGroup::~DX12BindGroup() = default;
@@ -48,25 +48,25 @@ namespace RHI::DirectX12 {
         return *bindGroupLayout;
     }
 
-    const std::vector<std::pair<HlslBinding, CD3DX12_CPU_DESCRIPTOR_HANDLE>>& DX12BindGroup::GetBindings()
+    const std::vector<std::pair<HlslBinding, CD3DX12_CPU_DESCRIPTOR_HANDLE>>& DX12BindGroup::GetNativeBindings()
     {
-        return bindings;
+        return nativeBindings;
     }
 
-    void DX12BindGroup::SaveBindGroupLayout(const BindGroupCreateInfo& createInfo)
+    void DX12BindGroup::SaveBindGroupLayout(const BindGroupCreateInfo& inCreateInfo)
     {
-        auto* tBindGroupLayout = static_cast<DX12BindGroupLayout*>(createInfo.layout);
+        auto* tBindGroupLayout = static_cast<DX12BindGroupLayout*>(inCreateInfo.layout);
         Assert(tBindGroupLayout);
         bindGroupLayout = tBindGroupLayout;
     }
 
-    void DX12BindGroup::CacheBindings(const BindGroupCreateInfo& createInfo)
+    void DX12BindGroup::CacheBindings(const BindGroupCreateInfo& inCreateInfo)
     {
-        for (auto i = 0; i < createInfo.entries.size(); i++) {
-            const auto& entry = createInfo.entries[i];
+        for (auto i = 0; i < inCreateInfo.entries.size(); i++) {
+            const auto& entry = inCreateInfo.entries[i];
 
             CD3DX12_CPU_DESCRIPTOR_HANDLE handle = GetDescriptorCpuHandleAndHeap(entry);
-            bindings.emplace_back(std::get<HlslBinding>(entry.binding.platformBinding), handle);
+            nativeBindings.emplace_back(std::get<HlslBinding>(entry.binding.platformBinding), handle);
         }
     }
 }

@@ -16,16 +16,16 @@ namespace RHI::DirectX12 {
     class DX12Sampler : public Sampler {
     public:
         NonCopyable(DX12Sampler)
-        explicit DX12Sampler(DX12Device& device, const SamplerCreateInfo& createInfo);
+        explicit DX12Sampler(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo);
         ~DX12Sampler() override;
 
         void Destroy() override;
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE GetDX12CpuDescriptorHandle();
+        CD3DX12_CPU_DESCRIPTOR_HANDLE GetNativeCpuDescriptorHandle();
 
     private:
-        void CreateDX12Descriptor(DX12Device& device, const SamplerCreateInfo& createInfo);
+        void CreateDX12Descriptor(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo);
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE dx12CpuDescriptorHandle;
+        CD3DX12_CPU_DESCRIPTOR_HANDLE nativeCpuDescriptorHandle;
     };
 }

@@ -28,7 +28,7 @@ namespace RHI::DirectX12 {
 
     DX12Instance::DX12Instance() : Instance()
     {
-        CreateDX12Factory();
+        CreateNativeFactory();
         EnumerateAdapters();
 #if BUILD_CONFIG_DEBUG
         RegisterDX12ExceptionHandler();
@@ -47,46 +47,46 @@ namespace RHI::DirectX12 {
         return RHIType::directX12;
     }
 
-    ComPtr<IDXGIFactory4>& DX12Instance::GetDX12Factory()
+    IDXGIFactory4* DX12Instance::GetNative()
     {
-        return dx12Factory;
+        return nativeFactory.Get();
     }
 
 #if BUILD_CONFIG_DEBUG
     void DX12Instance::RegisterDX12ExceptionHandler()
     {
-        dx12ExceptionHandler = AddVectoredExceptionHandler(1, DX12VectoredExceptionHandler);
+        nativeExceptionHandler = AddVectoredExceptionHandler(1, DX12VectoredExceptionHandler);
     }
 
     void DX12Instance::UnregisterDX12ExceptionHandler()
     {
-        RemoveVectoredExceptionHandler(dx12ExceptionHandler);
+        RemoveVectoredExceptionHandler(nativeExceptionHandler);
     }
 
-    void DX12Instance::AddDebugLayerExceptionHandler(const DX12Device* device, DebugLayerExceptionHandler handler)
+    void DX12Instance::AddDebugLayerExceptionHandler(const DX12Device* inDevice, NativeDebugLayerExceptionHandler inHandler)
     {
-        auto iter = debugLayerExceptionHandlers.find(device);
-        Assert(iter == debugLayerExceptionHandlers.end());
-        debugLayerExceptionHandlers[device] = std::move(handler);
+        auto iter = nativeDebugLayerExceptionHandlers.find(inDevice);
+        Assert(iter == nativeDebugLayerExceptionHandlers.end());
+        nativeDebugLayerExceptionHandlers[inDevice] = std::move(inHandler);
     }
 
-    void DX12Instance::RemoveDebugLayerExceptionHandler(const DX12Device* device)
+    void DX12Instance::RemoveDebugLayerExceptionHandler(const DX12Device* inDevice)
     {
-        auto iter = debugLayerExceptionHandlers.find(device);
-        Assert(iter != debugLayerExceptionHandlers.end());
-        debugLayerExceptionHandlers.erase(iter);
+        auto iter = nativeDebugLayerExceptionHandlers.find(inDevice);
+        Assert(iter != nativeDebugLayerExceptionHandlers.end());
+        nativeDebugLayerExceptionHandlers.erase(iter);
     }
 
     void DX12Instance::BroadcastDebugLayerExceptions()
     {
-        for (const auto& handler : debugLayerExceptionHandlers)
+        for (const auto& handler : nativeDebugLayerExceptionHandlers)
         {
             handler.second();
         }
     }
 #endif
 
-    void DX12Instance::CreateDX12Factory()
+    void DX12Instance::CreateNativeFactory()
     {
         UINT factoryFlags = 0;
 
@@ -100,14 +100,14 @@ namespace RHI::DirectX12 {
         }
 #endif
 
-        bool success = SUCCEEDED(CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&dx12Factory)));
+        bool success = SUCCEEDED(CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&nativeFactory)));
         Assert(success);
     }
 
     void DX12Instance::EnumerateAdapters()
     {
         ComPtr<IDXGIAdapter1> tempAdapter;
-        for (uint32_t i = 0; SUCCEEDED(dx12Factory->EnumAdapters1(i, &tempAdapter)); i++) {
+        for (uint32_t i = 0; SUCCEEDED(nativeFactory->EnumAdapters1(i, &tempAdapter)); i++) {
             gpus.emplace_back(Common::MakeUnique<DX12Gpu>(*this, std::move(tempAdapter)));
             tempAdapter = nullptr;
         }

@@ -12,13 +12,15 @@
 using namespace Microsoft::WRL;
 
 #include <RHI/Synchronous.h>
+#include <Common/Utility.h>
 
 namespace RHI::DirectX12 {
     class DX12Device;
 
     class DX12Fence : public Fence {
     public:
-        explicit DX12Fence(DX12Device& device, bool initAsSignaled);
+        NonCopyable(DX12Fence)
+        explicit DX12Fence(DX12Device& inDevice, bool inInitAsSignaled);
         ~DX12Fence() override;
 
         bool IsSignaled() override;
@@ -26,26 +28,27 @@ namespace RHI::DirectX12 {
         void Wait() override;
         void Destroy() override;
 
-        ComPtr<ID3D12Fence>& GetDX12Fence();
+        ID3D12Fence* GetNative();
 
     private:
-        void CreateDX12Fence(DX12Device& device, bool initAsSignaled);
-        void CreateDX12FenceEvent();
+        void CreateNativeFence(DX12Device& inDevice, bool inInitAsSignaled);
+        void CreateNativeFenceEvent();
 
-        ComPtr<ID3D12Fence> dx12Fence;
-        HANDLE dx12FenceEvent;
+        ComPtr<ID3D12Fence> nativeFence;
+        HANDLE nativeFenceEvent;
     };
 
     class DX12Semaphore : public Semaphore {
     public:
-        explicit DX12Semaphore(DX12Device& device);
+        NonCopyable(DX12Semaphore)
+        explicit DX12Semaphore(DX12Device& inDevice);
 
-        ComPtr<ID3D12Fence>& GetDX12Fence();
+        ID3D12Fence* GetNative();
 
         void Destroy() override;
 
     private:
-        void CreateDX12Fence(DX12Device& device);
+        void CreateNativeFence(DX12Device& inDevice);
 
         ComPtr<ID3D12Fence> dx12Fence;
     };

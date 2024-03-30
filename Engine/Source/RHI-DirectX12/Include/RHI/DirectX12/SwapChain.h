@@ -18,23 +18,23 @@ namespace RHI::DirectX12 {
     class DX12SwapChain : public SwapChain {
     public:
         NonCopyable(DX12SwapChain)
-        explicit DX12SwapChain(DX12Device& device, const SwapChainCreateInfo& createInfo);
+        explicit DX12SwapChain(DX12Device& inDevice, const SwapChainCreateInfo& inCreateInfo);
         ~DX12SwapChain() override;
 
-        Texture* GetTexture(uint8_t index) override;
-        uint8_t AcquireBackTexture(RHI::Semaphore* signalSemaphore) override;
-        void Present(RHI::Semaphore* waitSemaphore) override;
+        Texture* GetTexture(uint8_t inIndex) override;
+        uint8_t AcquireBackTexture(RHI::Semaphore* inSignalSemaphore) override;
+        void Present(RHI::Semaphore* inWaitSemaphore) override;
         void Destroy() override;
 
     private:
-        void CreateDX12SwapChain(const SwapChainCreateInfo& createInfo) ;
-        void FetchTextures(PixelFormat format);
+        void CreateDX12SwapChain(const SwapChainCreateInfo& inCreateInfo) ;
+        void FetchTextures(PixelFormat inFormat);
 
         DX12Device& device;
         DX12Queue& queue;
         uint8_t textureNum;
         PresentMode presentMode;
-        ComPtr<IDXGISwapChain3> dx12SwapChain;
+        ComPtr<IDXGISwapChain3> nativeSwapChain;
         std::vector<Common::UniqueRef<Texture>> textures;
     };
 }

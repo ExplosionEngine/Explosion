@@ -32,10 +32,10 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12BufferView::DX12BufferView(DX12Buffer& buffer, const BufferViewCreateInfo& createInfo)
-        : BufferView(createInfo), buffer(buffer)
+    DX12BufferView::DX12BufferView(DX12Buffer& inBuffer, const BufferViewCreateInfo& inCreateInfo)
+        : BufferView(inCreateInfo), buffer(inBuffer)
     {
-        CreateDX12Descriptor(createInfo);
+        CreateNativeView(inCreateInfo);
     }
 
     DX12BufferView::~DX12BufferView() = default;
@@ -45,49 +45,53 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12BufferView::GetDX12CpuDescriptorHandle() const
+    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12BufferView::GetNativeCpuDescriptorHandle() const
     {
-        return descriptor.dx12CpuDescriptorHandle;
+        return std::get<CD3DX12_CPU_DESCRIPTOR_HANDLE>(nativeView);
     }
 
-    const D3D12_VERTEX_BUFFER_VIEW& DX12BufferView::GetDX12VertexBufferView() const
+    const D3D12_VERTEX_BUFFER_VIEW& DX12BufferView::GetNativeVertexBufferView() const
     {
-        return vertex.dx12VertexBufferView;
+        return std::get<D3D12_VERTEX_BUFFER_VIEW>(nativeView);
     }
 
-    const D3D12_INDEX_BUFFER_VIEW& DX12BufferView::GetDX12IndexBufferView() const
+    const D3D12_INDEX_BUFFER_VIEW& DX12BufferView::GetNativeIndexBufferView() const
     {
-        return index.dx12IndexBufferView;
+        return std::get<D3D12_INDEX_BUFFER_VIEW>(nativeView);
     }
 
-    void DX12BufferView::CreateDX12Descriptor(const BufferViewCreateInfo& createInfo)
+    void DX12BufferView::CreateNativeView(const BufferViewCreateInfo& inCreateInfo)
     {
-        if (IsConstantBuffer(createInfo.type, buffer.GetUsages())) {
+        if (IsConstantBuffer(inCreateInfo.type, buffer.GetUsages())) {
             D3D12_CONSTANT_BUFFER_VIEW_DESC desc {};
-            desc.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo.offset;
-            desc.SizeInBytes = GetConstantBufferSize(createInfo.size);
+            desc.BufferLocation = buffer.GetNative()->GetGPUVirtualAddress() + inCreateInfo.offset;
+            desc.SizeInBytes = GetConstantBufferSize(inCreateInfo.size);
 
-            auto allocation = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
-            descriptor.dx12CpuDescriptorHandle = allocation.cpuHandle;
-            buffer.GetDevice().GetDX12Device()->CreateConstantBufferView(&desc, descriptor.dx12CpuDescriptorHandle);
-        } else if (IsUnorderedAccessBuffer(createInfo.type, buffer.GetUsages())) {
+            auto allocation = buffer.GetDevice().AllocateNativeCbvSrvUavDescriptor();
+            nativeView = allocation.cpuHandle;
+            buffer.GetDevice().GetNative()->CreateConstantBufferView(&desc, std::get<CD3DX12_CPU_DESCRIPTOR_HANDLE>(nativeView));
+        } else if (IsUnorderedAccessBuffer(inCreateInfo.type, buffer.GetUsages())) {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
             desc.Format = DXGI_FORMAT_UNKNOWN;
             desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-            desc.Buffer.FirstElement = createInfo.offset;
-            desc.Buffer.NumElements = createInfo.size;
+            desc.Buffer.FirstElement = inCreateInfo.offset;
+            desc.Buffer.NumElements = inCreateInfo.size;
 
-            auto allocation = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
-            descriptor.dx12CpuDescriptorHandle = allocation.cpuHandle;
-            buffer.GetDevice().GetDX12Device()->CreateUnorderedAccessView(buffer.GetDX12Resource().Get(), nullptr, &desc, descriptor.dx12CpuDescriptorHandle);
-        } else if (IsVertexBuffer(createInfo.type, buffer.GetUsages())) {
-            vertex.dx12VertexBufferView.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo.offset;
-            vertex.dx12VertexBufferView.SizeInBytes = createInfo.size;
-            vertex.dx12VertexBufferView.StrideInBytes = std::get<VertexBufferViewInfo>(createInfo.extend).stride;
-        } else if (IsIndexBuffer(createInfo.type, buffer.GetUsages())) {
-            index.dx12IndexBufferView.BufferLocation = buffer.GetDX12Resource()->GetGPUVirtualAddress() + createInfo.offset;
-            index.dx12IndexBufferView.SizeInBytes = createInfo.size;
-            index.dx12IndexBufferView.Format = DX12EnumCast<IndexFormat, DXGI_FORMAT>(std::get<IndexBufferViewInfo>(createInfo.extend).format);
+            auto allocation = buffer.GetDevice().AllocateNativeCbvSrvUavDescriptor();
+            nativeView = allocation.cpuHandle;
+            buffer.GetDevice().GetNative()->CreateUnorderedAccessView(buffer.GetNative(), nullptr, &desc, std::get<CD3DX12_CPU_DESCRIPTOR_HANDLE>(nativeView));
+        } else if (IsVertexBuffer(inCreateInfo.type, buffer.GetUsages())) {
+            nativeView = D3D12_VERTEX_BUFFER_VIEW();
+            D3D12_VERTEX_BUFFER_VIEW& vertexBufferView = std::get<D3D12_VERTEX_BUFFER_VIEW>(nativeView);
+            vertexBufferView.BufferLocation = buffer.GetNative()->GetGPUVirtualAddress() + inCreateInfo.offset;
+            vertexBufferView.SizeInBytes = inCreateInfo.size;
+            vertexBufferView.StrideInBytes = std::get<VertexBufferViewInfo>(inCreateInfo.extend).stride;
+        } else if (IsIndexBuffer(inCreateInfo.type, buffer.GetUsages())) {
+            nativeView = D3D12_INDEX_BUFFER_VIEW();
+            D3D12_INDEX_BUFFER_VIEW& indexBufferView = std::get<D3D12_INDEX_BUFFER_VIEW>(nativeView);
+            indexBufferView.BufferLocation = buffer.GetNative()->GetGPUVirtualAddress() + inCreateInfo.offset;
+            indexBufferView.SizeInBytes = inCreateInfo.size;
+            indexBufferView.Format = DX12EnumCast<IndexFormat, DXGI_FORMAT>(std::get<IndexBufferViewInfo>(inCreateInfo.extend).format);
         }
     }
 }

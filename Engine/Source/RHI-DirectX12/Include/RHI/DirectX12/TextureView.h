@@ -19,17 +19,17 @@ namespace RHI::DirectX12 {
     class DX12TextureView : public TextureView {
     public:
         NonCopyable(DX12TextureView)
-        explicit DX12TextureView(DX12Device& device, DX12Texture& texture, const TextureViewCreateInfo& createInfo);
+        explicit DX12TextureView(DX12Device& inDevice, DX12Texture& inTexture, const TextureViewCreateInfo& inCreateInfo);
         ~DX12TextureView() override;
 
         void Destroy() override;
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE GetDX12CpuDescriptorHandle();
+        CD3DX12_CPU_DESCRIPTOR_HANDLE GetNativeCpuDescriptorHandle();
 
     private:
-        void CreateDX12Descriptor(DX12Device& device, const TextureViewCreateInfo& createInfo);
+        void CreateNativeDescriptor(DX12Device& inDevice, const TextureViewCreateInfo& inCreateInfo);
 
         DX12Texture& texture;
-        CD3DX12_CPU_DESCRIPTOR_HANDLE dx12CpuDescriptorHandle;
+        CD3DX12_CPU_DESCRIPTOR_HANDLE nativeCpuDescriptorHandle;
     };
 }

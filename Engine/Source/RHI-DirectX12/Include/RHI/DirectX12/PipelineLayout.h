@@ -22,40 +22,32 @@ namespace RHI::DirectX12 {
         uint8_t layoutIndex;
         HlslBinding binding;
 
-        bool operator==(const RootParameterKey& other) const
-        {
-            return layoutIndex == other.layoutIndex
-                && binding.rangeType == other.binding.rangeType
-                && binding.index == other.binding.index;
-        }
+        bool operator==(const RootParameterKey& inOther) const;
     };
 
-    struct RootParameterKeyHasher {
-        size_t operator()(const RootParameterKey& key) const
-        {
-            return Common::HashUtils::CityHash(&key, sizeof(RootParameterKey));
-        }
+    struct RootParameterKeyHashProvider {
+        size_t operator()(const RootParameterKey& inKey) const;
     };
 
     using RootParameterIndex = uint32_t;
     using BindingTypeAndRootParameterIndex = std::pair<BindingType, uint32_t>;
-    using RootParameterIndexMap = std::unordered_map<RootParameterKey, BindingTypeAndRootParameterIndex, RootParameterKeyHasher>;
+    using RootParameterIndexMap = std::unordered_map<RootParameterKey, BindingTypeAndRootParameterIndex, RootParameterKeyHashProvider>;
 
     class DX12PipelineLayout : public PipelineLayout {
     public:
         NonCopyable(DX12PipelineLayout)
-        DX12PipelineLayout(DX12Device& device, const PipelineLayoutCreateInfo& createInfo);
+        DX12PipelineLayout(DX12Device& inDevice, const PipelineLayoutCreateInfo& inCreateInfo);
         ~DX12PipelineLayout() override;
 
         void Destroy() override;
 
-        std::optional<BindingTypeAndRootParameterIndex> QueryRootDescriptorParameterIndex(uint8_t layoutIndex, const HlslBinding& binding);
-        ComPtr<ID3D12RootSignature>& GetDX12RootSignature();
+        std::optional<BindingTypeAndRootParameterIndex> QueryRootDescriptorParameterIndex(uint8_t inLayoutIndex, const HlslBinding& inBinding);
+        ID3D12RootSignature* GetNative();
 
     private:
-        void CreateDX12RootSignature(DX12Device& device, const PipelineLayoutCreateInfo& createInfo);
+        void CreateNativeRootSignature(DX12Device& inDevice, const PipelineLayoutCreateInfo& inCreateInfo);
 
-        ComPtr<ID3D12RootSignature> dx12RootSignature;
+        ComPtr<ID3D12RootSignature> nativeRootSignature;
         RootParameterIndexMap rootParameterIndexMap;
     };
 }

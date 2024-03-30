@@ -28,10 +28,10 @@ namespace RHI::DirectX12 {
     {
     }
 
-    DX12BindGroupLayout::DX12BindGroupLayout(const BindGroupLayoutCreateInfo& createInfo)
-        : BindGroupLayout(createInfo), dx12RootParameters({}), layoutIndex(createInfo.layoutIndex)
+    DX12BindGroupLayout::DX12BindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
+        : BindGroupLayout(inCreateInfo), nativeRootParameters({}), layoutIndex(inCreateInfo.layoutIndex)
     {
-        CreateDX12RootParameters(createInfo);
+        CreateNativeRootParameters(inCreateInfo);
     }
 
     DX12BindGroupLayout::~DX12BindGroupLayout() = default;
@@ -51,26 +51,26 @@ namespace RHI::DirectX12 {
         return rootParameterKeyInfos;
     }
 
-    const std::vector<CD3DX12_ROOT_PARAMETER1>& DX12BindGroupLayout::GetDX12RootParameters() const
+    const std::vector<CD3DX12_ROOT_PARAMETER1>& DX12BindGroupLayout::GetNativeRootParameters() const
     {
-        return dx12RootParameters;
+        return nativeRootParameters;
     }
 
-    void DX12BindGroupLayout::CreateDX12RootParameters(const BindGroupLayoutCreateInfo& createInfo)
+    void DX12BindGroupLayout::CreateNativeRootParameters(const BindGroupLayoutCreateInfo& inCreateInfo)
     {
-        const auto entryCount = createInfo.entries.size();
-        dx12DescriptorRanges.reserve(entryCount);
+        const auto entryCount = inCreateInfo.entries.size();
+        nativeDescriptorRanges.reserve(entryCount);
         for (auto i = 0; i < entryCount; i++) {
-            const auto& entry = createInfo.entries[i];
+            const auto& entry = inCreateInfo.entries[i];
 
-            dx12RootParameters.emplace_back();
-            dx12DescriptorRanges.emplace_back();
+            nativeRootParameters.emplace_back();
+            nativeDescriptorRanges.emplace_back();
 
             const auto& hlslBinding = std::get<HlslBinding>(entry.binding.platformBinding);
-            dx12DescriptorRanges.back().Init(DX12EnumCast<HlslBindingRangeType, D3D12_DESCRIPTOR_RANGE_TYPE>(hlslBinding.rangeType), 1, hlslBinding.index, createInfo.layoutIndex);
-            dx12RootParameters.back().InitAsDescriptorTable(1, &dx12DescriptorRanges.back(), GetShaderVisibility(entry.shaderVisibility));
+            nativeDescriptorRanges.back().Init(DX12EnumCast<HlslBindingRangeType, D3D12_DESCRIPTOR_RANGE_TYPE>(hlslBinding.rangeType), 1, hlslBinding.index, inCreateInfo.layoutIndex);
+            nativeRootParameters.back().InitAsDescriptorTable(1, &nativeDescriptorRanges.back(), GetShaderVisibility(entry.shaderVisibility));
 
-            rootParameterKeyInfos.emplace_back(entry.binding.type, createInfo.layoutIndex, hlslBinding);
+            rootParameterKeyInfos.emplace_back(entry.binding.type, inCreateInfo.layoutIndex, hlslBinding);
         }
     }
 }

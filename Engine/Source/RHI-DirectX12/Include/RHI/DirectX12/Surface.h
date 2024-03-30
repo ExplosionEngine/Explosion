@@ -12,11 +12,11 @@ namespace RHI::DirectX12 {
     class DX12Surface : public Surface {
     public:
         NonCopyable(DX12Surface)
-        explicit DX12Surface(const SurfaceCreateInfo& createInfo);
+        explicit DX12Surface(const SurfaceCreateInfo& inCreateInfo);
         ~DX12Surface() override;
 
         void Destroy() override;
-        HWND GetWin32WindowHandle() const;
+        HWND GetNative() const;
 
     private:
         HWND hWnd;

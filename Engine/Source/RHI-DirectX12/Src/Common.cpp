@@ -5,8 +5,5 @@
 #include <RHI/DirectX12/Common.h>
 
 namespace RHI::DirectX12 {
-    GpuType GetGpuTypeByAdapterFlag(UINT flag)
-    {
-        return flag & DXGI_ADAPTER_FLAG_SOFTWARE ? GpuType::software : GpuType::hardware;
-    }
+
 }

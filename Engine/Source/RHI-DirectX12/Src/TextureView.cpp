@@ -199,10 +199,10 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12TextureView::DX12TextureView(DX12Device& device, DX12Texture& texture, const TextureViewCreateInfo& createInfo)
-        : TextureView(createInfo), texture(texture), dx12CpuDescriptorHandle()
+    DX12TextureView::DX12TextureView(DX12Device& inDevice, DX12Texture& inTexture, const TextureViewCreateInfo& inCreateInfo)
+        : TextureView(inCreateInfo), texture(inTexture), nativeCpuDescriptorHandle()
     {
-        CreateDX12Descriptor(device, createInfo);
+        CreateNativeDescriptor(inDevice, inCreateInfo);
     }
 
     DX12TextureView::~DX12TextureView() = default;
@@ -212,63 +212,63 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12TextureView::GetDX12CpuDescriptorHandle()
+    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12TextureView::GetNativeCpuDescriptorHandle()
     {
-        return dx12CpuDescriptorHandle;
+        return nativeCpuDescriptorHandle;
     }
 
-    void DX12TextureView::CreateDX12Descriptor(DX12Device& device, const TextureViewCreateInfo& createInfo)
+    void DX12TextureView::CreateNativeDescriptor(DX12Device& inDevice, const TextureViewCreateInfo& inCreateInfo)
     {
-        if (IsShaderResource(createInfo.type)) {
+        if (IsShaderResource(inCreateInfo.type)) {
             D3D12_SHADER_RESOURCE_VIEW_DESC desc {};
             desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
-            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_SRV_DIMENSION>(createInfo.dimension);
+            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_SRV_DIMENSION>(inCreateInfo.dimension);
             desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-            FillTexture1DSRV(desc.Texture1D, createInfo);
-            FillTexture2DSRV(desc.Texture2D, createInfo);
-            FillTexture2DArraySRV(desc.Texture2DArray, createInfo);
-            FillTextureCubeSRV(desc.TextureCube, createInfo);
-            FillTextureCubeArraySRV(desc.TextureCubeArray, createInfo);
-            FillTexture3DSRV(desc.Texture3D, createInfo);
+            FillTexture1DSRV(desc.Texture1D, inCreateInfo);
+            FillTexture2DSRV(desc.Texture2D, inCreateInfo);
+            FillTexture2DArraySRV(desc.Texture2DArray, inCreateInfo);
+            FillTextureCubeSRV(desc.TextureCube, inCreateInfo);
+            FillTextureCubeArraySRV(desc.TextureCubeArray, inCreateInfo);
+            FillTexture3DSRV(desc.Texture3D, inCreateInfo);
 
-            auto allocation = device.AllocateCbvSrvUavDescriptor();
-            dx12CpuDescriptorHandle = allocation.cpuHandle;
-            device.GetDX12Device()->CreateShaderResourceView(texture.GetDX12Resource().Get(), &desc, dx12CpuDescriptorHandle);
-        } else if (IsUnorderedAccess(createInfo.type)) {
+            auto allocation = inDevice.AllocateNativeCbvSrvUavDescriptor();
+            nativeCpuDescriptorHandle = allocation.cpuHandle;
+            inDevice.GetNative()->CreateShaderResourceView(texture.GetNative(), &desc, nativeCpuDescriptorHandle);
+        } else if (IsUnorderedAccess(inCreateInfo.type)) {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
             desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
-            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_UAV_DIMENSION>(createInfo.dimension);
-            FillTexture1DUAV(desc.Texture1D, createInfo);
-            FillTexture2DUAV(desc.Texture2D, createInfo);
-            FillTexture2DArrayUAV(desc.Texture2DArray, createInfo);
-            FillTexture3DUAV(desc.Texture3D, createInfo);
+            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_UAV_DIMENSION>(inCreateInfo.dimension);
+            FillTexture1DUAV(desc.Texture1D, inCreateInfo);
+            FillTexture2DUAV(desc.Texture2D, inCreateInfo);
+            FillTexture2DArrayUAV(desc.Texture2DArray, inCreateInfo);
+            FillTexture3DUAV(desc.Texture3D, inCreateInfo);
 
-            auto allocation = device.AllocateCbvSrvUavDescriptor();
-            dx12CpuDescriptorHandle = allocation.cpuHandle;
-            device.GetDX12Device()->CreateUnorderedAccessView(texture.GetDX12Resource().Get(), nullptr, &desc, dx12CpuDescriptorHandle);
-        } else if (IsRenderTarget(createInfo.type)) {
+            auto allocation = inDevice.AllocateNativeCbvSrvUavDescriptor();
+            nativeCpuDescriptorHandle = allocation.cpuHandle;
+            inDevice.GetNative()->CreateUnorderedAccessView(texture.GetNative(), nullptr, &desc, nativeCpuDescriptorHandle);
+        } else if (IsRenderTarget(inCreateInfo.type)) {
             D3D12_RENDER_TARGET_VIEW_DESC desc {};
             desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
-            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_RTV_DIMENSION>(createInfo.dimension);
-            FillTexture1DRTV(desc.Texture1D, createInfo);
-            FillTexture2DRTV(desc.Texture2D, createInfo);
-            FillTexture2DArrayRTV(desc.Texture2DArray, createInfo);
-            FillTexture3DRTV(desc.Texture3D, createInfo);
+            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_RTV_DIMENSION>(inCreateInfo.dimension);
+            FillTexture1DRTV(desc.Texture1D, inCreateInfo);
+            FillTexture2DRTV(desc.Texture2D, inCreateInfo);
+            FillTexture2DArrayRTV(desc.Texture2DArray, inCreateInfo);
+            FillTexture3DRTV(desc.Texture3D, inCreateInfo);
 
-            auto allocation = device.AllocateRtvDescriptor();
-            dx12CpuDescriptorHandle = allocation.cpuHandle;
-            device.GetDX12Device()->CreateRenderTargetView(texture.GetDX12Resource().Get(), &desc, dx12CpuDescriptorHandle);
-        } else if (IsDepthStencil(createInfo.type)) {
+            auto allocation = inDevice.AllocateNativeRtvDescriptor();
+            nativeCpuDescriptorHandle = allocation.cpuHandle;
+            inDevice.GetNative()->CreateRenderTargetView(texture.GetNative(), &desc, nativeCpuDescriptorHandle);
+        } else if (IsDepthStencil(inCreateInfo.type)) {
             D3D12_DEPTH_STENCIL_VIEW_DESC desc {};
             desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
-            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_DSV_DIMENSION>(createInfo.dimension);
-            FillTexture1DDSV(desc.Texture1D, createInfo);
-            FillTexture2DDSV(desc.Texture2D, createInfo);
-            FillTexture2DArrayDSV(desc.Texture2DArray, createInfo);
+            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_DSV_DIMENSION>(inCreateInfo.dimension);
+            FillTexture1DDSV(desc.Texture1D, inCreateInfo);
+            FillTexture2DDSV(desc.Texture2D, inCreateInfo);
+            FillTexture2DArrayDSV(desc.Texture2DArray, inCreateInfo);
 
-            auto allocation = device.AllocateDsvDescriptor();
-            dx12CpuDescriptorHandle = allocation.cpuHandle;
-            device.GetDX12Device()->CreateDepthStencilView(texture.GetDX12Resource().Get(), &desc, dx12CpuDescriptorHandle);
+            auto allocation = inDevice.AllocateNativeDsvDescriptor();
+            nativeCpuDescriptorHandle = allocation.cpuHandle;
+            inDevice.GetNative()->CreateDepthStencilView(texture.GetNative(), &desc, nativeCpuDescriptorHandle);
         }
     }
 }

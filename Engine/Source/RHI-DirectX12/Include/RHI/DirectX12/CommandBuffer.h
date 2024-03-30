@@ -26,29 +26,29 @@ namespace RHI::DirectX12 {
         ~RuntimeDescriptorHeap();
 
         void ResetUsed();
-        ID3D12DescriptorHeap* GetDX12DescriptorHeap();
-        CD3DX12_GPU_DESCRIPTOR_HANDLE NewGpuDescriptorHandle(CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle);
+        CD3DX12_GPU_DESCRIPTOR_HANDLE NewGpuDescriptorHandle(CD3DX12_CPU_DESCRIPTOR_HANDLE inCpuHandle);
+        ID3D12DescriptorHeap* GetNative();
 
     private:
         DX12Device& device;
         uint32_t capacity;
         uint32_t used;
         uint32_t descriptorIncrementSize;
-        D3D12_DESCRIPTOR_HEAP_TYPE dx12HeapType;
-        ComPtr<ID3D12DescriptorHeap> dx12DescriptorHeap;
+        D3D12_DESCRIPTOR_HEAP_TYPE nativeHeapType;
+        ComPtr<ID3D12DescriptorHeap> nativeDescriptorHeap;
     };
 
-    class RuntimeDescriptorHeaps {
+    class RuntimeDescriptorCompact {
     public:
-        RuntimeDescriptorHeaps(DX12Device& inDevice);
+        explicit RuntimeDescriptorCompact(DX12Device& inDevice);
 
         void ResetUsed();
-        std::vector<ID3D12DescriptorHeap*> GetDX12DescriptorHeaps();
-        CD3DX12_GPU_DESCRIPTOR_HANDLE NewGpuDescriptorHandle(HlslBindingRangeType rangeType, CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle);
+        CD3DX12_GPU_DESCRIPTOR_HANDLE NewGpuDescriptorHandle(HlslBindingRangeType inRangeType, CD3DX12_CPU_DESCRIPTOR_HANDLE inCpuHandle);
+        std::vector<ID3D12DescriptorHeap*> GetNative();
 
     private:
         // TODO check this
-        static constexpr uint32_t sampelrHeapCapacity = 1024;
+        static constexpr uint32_t samplerHeapCapacity = 1024;
         static constexpr uint32_t cbvSrvUavHeapCapacity = 10240;
 
         DX12Device& device;
@@ -59,20 +59,20 @@ namespace RHI::DirectX12 {
     class DX12CommandBuffer : public CommandBuffer {
     public:
         NonCopyable(DX12CommandBuffer)
-        explicit DX12CommandBuffer(DX12Device& device);
+        explicit DX12CommandBuffer(DX12Device& inDevice);
         ~DX12CommandBuffer() override;
 
         CommandEncoder* Begin() override;
         void Destroy() override;
 
-        ComPtr<ID3D12GraphicsCommandList>& GetDX12GraphicsCommandList();
-        RuntimeDescriptorHeaps* GetRuntimeDescriptorHeaps();
+        ID3D12GraphicsCommandList* GetNative();
+        RuntimeDescriptorCompact* GetRuntimeDescriptorHeaps();
 
     private:
-        void AllocateDX12CommandList(DX12Device& device);
+        void AllocateDX12CommandList(DX12Device& inDevice);
 
         DX12Device& device;
         ComPtr<ID3D12GraphicsCommandList> dx12GraphicsCommandList;
-        Common::UniqueRef<RuntimeDescriptorHeaps> runtimeDescriptorHeaps;
+        Common::UniqueRef<RuntimeDescriptorCompact> runtimeDescriptorHeaps;
     };
 }

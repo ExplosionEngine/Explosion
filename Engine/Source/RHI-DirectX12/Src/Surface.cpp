@@ -5,9 +5,9 @@
 #include <RHI/DirectX12/Surface.h>
 
 namespace RHI::DirectX12 {
-    DX12Surface::DX12Surface(const RHI::SurfaceCreateInfo& createInfo)
-        : Surface(createInfo)
-        , hWnd(static_cast<HWND>(createInfo.window))
+    DX12Surface::DX12Surface(const RHI::SurfaceCreateInfo& inCreateInfo)
+        : Surface(inCreateInfo)
+        , hWnd(static_cast<HWND>(inCreateInfo.window))
     {
     }
 
@@ -18,7 +18,7 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    HWND DX12Surface::GetWin32WindowHandle() const
+    HWND DX12Surface::GetNative() const
     {
         return hWnd;
     }

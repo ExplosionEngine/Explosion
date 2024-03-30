@@ -16,13 +16,13 @@ namespace RHI::DirectX12 {
     class DX12CommandEncoder : public CommandEncoder {
     public:
         NonCopyable(DX12CommandEncoder)
-        explicit DX12CommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer);
+        explicit DX12CommandEncoder(DX12Device& inDevice, DX12CommandBuffer& inCmdBuffer);
         ~DX12CommandEncoder() override;
 
-        void ResourceBarrier(const Barrier& barrier) override;
+        void ResourceBarrier(const Barrier& inBarrier) override;
         CopyPassCommandEncoder* BeginCopyPass() override;
         ComputePassCommandEncoder* BeginComputePass() override;
-        GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo& beginInfo) override;
+        GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo& inBeginInfo) override;
         void End() override;
         void Destroy() override;
 
@@ -34,17 +34,17 @@ namespace RHI::DirectX12 {
     class DX12CopyPassCommandEncoder : public CopyPassCommandEncoder {
     public:
         NonCopyable(DX12CopyPassCommandEncoder)
-        explicit DX12CopyPassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer);
+        explicit DX12CopyPassCommandEncoder(DX12Device& inDevice, DX12CommandEncoder& inCmdEncoder, DX12CommandBuffer& inCmdBuffer);
         ~DX12CopyPassCommandEncoder() override;
 
         // CommandCommandEncoder
-        void ResourceBarrier(const Barrier& barrier) override;
+        void ResourceBarrier(const Barrier& inBarrier) override;
 
         // CopyPassCommandEncoder
-        void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
-        void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
-        void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
-        void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) override;
+        void CopyBufferToBuffer(Buffer* inSrcBuffer, size_t inSrcOffset, Buffer* inDestBuffer, size_t inDestOffset, size_t inSize) override;
+        void CopyBufferToTexture(Buffer* inSrcBuffer, Texture* inDestTexture, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize) override;
+        void CopyTextureToBuffer(Texture* inSrcTexture, Buffer* inDestBuffer, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize) override;
+        void CopyTextureToTexture(Texture* inSrcTexture, const TextureSubResourceInfo* inSrcSubResourceInfo, Texture* inDestTexture, const TextureSubResourceInfo* inDestSubResourceInfo, const Common::UVec3& inSize) override;
         void EndPass() override;
         void Destroy() override;
 
@@ -57,16 +57,16 @@ namespace RHI::DirectX12 {
     class DX12ComputePassCommandEncoder : public ComputePassCommandEncoder {
     public:
         NonCopyable(DX12ComputePassCommandEncoder)
-        explicit DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer);
+        explicit DX12ComputePassCommandEncoder(DX12Device& inDevice, DX12CommandEncoder& inCmdEncoder, DX12CommandBuffer& inCmdBuffer);
         ~DX12ComputePassCommandEncoder() override;
 
         // CommandCommandEncoder
-        void ResourceBarrier(const Barrier& barrier) override;
+        void ResourceBarrier(const Barrier& inBarrier) override;
 
         // ComputePassCommandEncoder
-        void SetPipeline(ComputePipeline* pipeline) override;
-        void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
-        void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override;
+        void SetPipeline(ComputePipeline* inPipeline) override;
+        void SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup) override;
+        void Dispatch(size_t inGroupCountX, size_t inGroupCountY, size_t inGroupCountZ) override;
         void EndPass() override;
         void Destroy() override;
 
@@ -80,24 +80,24 @@ namespace RHI::DirectX12 {
     class DX12GraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
     public:
         NonCopyable(DX12GraphicsPassCommandEncoder)
-        explicit DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo& beginInfo);
+        explicit DX12GraphicsPassCommandEncoder(DX12Device& inDevice, DX12CommandEncoder& inCmdEncoder, DX12CommandBuffer& inCmdBuffer, const GraphicsPassBeginInfo& inBeginInfo);
         ~DX12GraphicsPassCommandEncoder() override;
 
         // CommandCommandEncoder
-        void ResourceBarrier(const Barrier& barrier) override;
+        void ResourceBarrier(const Barrier& inBarrier) override;
 
         // GraphicsPassCommandEncoder
-        void SetPipeline(GraphicsPipeline* pipeline) override;
-        void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
-        void SetIndexBuffer(BufferView *bufferView) override;
-        void SetVertexBuffer(size_t slot, BufferView *bufferView) override;
-        void Draw(size_t vertexCount, size_t instanceCount, size_t firstVertex, size_t firstInstance) override;
-        void DrawIndexed(size_t indexCount, size_t instanceCount, size_t firstIndex, size_t baseVertex, size_t firstInstance) override;
-        void SetViewport(float x, float y, float width, float height, float minDepth, float maxDepth) override;
-        void SetScissor(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom) override;
-        void SetPrimitiveTopology(PrimitiveTopology primitiveTopology) override;
-        void SetBlendConstant(const float *constants) override;
-        void SetStencilReference(uint32_t reference) override;
+        void SetPipeline(GraphicsPipeline* inPipeline) override;
+        void SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup) override;
+        void SetIndexBuffer(BufferView* inBufferView) override;
+        void SetVertexBuffer(size_t inSlot, BufferView* inBufferView) override;
+        void Draw(size_t inVertexCount, size_t inInstanceCount, size_t inFirstVertex, size_t inFirstInstance) override;
+        void DrawIndexed(size_t inIndexCount, size_t inInstanceCount, size_t inFirstIndex, size_t inBaseVertex, size_t inFirstInstance) override;
+        void SetViewport(float inX, float inY, float inWidth, float inHeight, float inMinDepth, float inMaxDepth) override;
+        void SetScissor(uint32_t inLeft, uint32_t inTop, uint32_t inRight, uint32_t inBottom) override;
+        void SetPrimitiveTopology(PrimitiveTopology inPrimitiveTopology) override;
+        void SetBlendConstant(const float* inConstants) override;
+        void SetStencilReference(uint32_t inReference) override;
         void EndPass() override;
         void Destroy() override;
 

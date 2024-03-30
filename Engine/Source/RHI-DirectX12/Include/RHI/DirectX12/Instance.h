@@ -23,7 +23,7 @@ namespace RHI::DirectX12 {
     class DX12Device;
 
 #if BUILD_CONFIG_DEBUG
-    using DebugLayerExceptionHandler = std::function<void()>;
+    using NativeDebugLayerExceptionHandler = std::function<void()>;
 #endif
 
     extern RHI::Instance* gInstance;
@@ -39,26 +39,26 @@ namespace RHI::DirectX12 {
         Gpu* GetGpu(uint32_t index) override;
         void Destroy() override;
 
-        ComPtr<IDXGIFactory4>& GetDX12Factory();
+        IDXGIFactory4* GetNative();
 #if BUILD_CONFIG_DEBUG
-        void AddDebugLayerExceptionHandler(const DX12Device* device, DebugLayerExceptionHandler handler);
-        void RemoveDebugLayerExceptionHandler(const DX12Device* device);
+        void AddDebugLayerExceptionHandler(const DX12Device* inDevice, NativeDebugLayerExceptionHandler inHandler);
+        void RemoveDebugLayerExceptionHandler(const DX12Device* inDevice);
         void BroadcastDebugLayerExceptions();
 #endif
 
     private:
-        void CreateDX12Factory();
+        void CreateNativeFactory();
         void EnumerateAdapters();
 #if BUILD_CONFIG_DEBUG
         void RegisterDX12ExceptionHandler();
         void UnregisterDX12ExceptionHandler();
 #endif
 
-        ComPtr<IDXGIFactory4> dx12Factory;
+        ComPtr<IDXGIFactory4> nativeFactory;
         std::vector<Common::UniqueRef<DX12Gpu>> gpus;
 #if BUILD_CONFIG_DEBUG
-        void* dx12ExceptionHandler;
-        std::unordered_map<const DX12Device*, DebugLayerExceptionHandler> debugLayerExceptionHandlers;
+        void* nativeExceptionHandler;
+        std::unordered_map<const DX12Device*, NativeDebugLayerExceptionHandler> nativeDebugLayerExceptionHandlers;
 #endif
     };
 }

@@ -17,35 +17,19 @@ namespace RHI::DirectX12 {
     class DX12BufferView : public BufferView {
     public:
         NonCopyable(DX12BufferView)
-        DX12BufferView(DX12Buffer& buffer, const BufferViewCreateInfo& createInfo);
+        DX12BufferView(DX12Buffer& inBuffer, const BufferViewCreateInfo& inCreateInfo);
         ~DX12BufferView() override;
 
         void Destroy() override;
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE GetDX12CpuDescriptorHandle() const;
-        [[nodiscard]] const D3D12_VERTEX_BUFFER_VIEW& GetDX12VertexBufferView() const;
-        [[nodiscard]] const D3D12_INDEX_BUFFER_VIEW& GetDX12IndexBufferView() const;
+        CD3DX12_CPU_DESCRIPTOR_HANDLE GetNativeCpuDescriptorHandle() const;
+        [[nodiscard]] const D3D12_VERTEX_BUFFER_VIEW& GetNativeVertexBufferView() const;
+        [[nodiscard]] const D3D12_INDEX_BUFFER_VIEW& GetNativeIndexBufferView() const;
 
     private:
-        struct DescriptorBufferInfo {
-            CD3DX12_CPU_DESCRIPTOR_HANDLE dx12CpuDescriptorHandle;
-        };
-
-        struct VertexBufferInfo {
-            D3D12_VERTEX_BUFFER_VIEW dx12VertexBufferView;
-        };
-
-        struct IndexBufferInfo {
-            D3D12_INDEX_BUFFER_VIEW dx12IndexBufferView;
-        };
-
-        void CreateDX12Descriptor(const BufferViewCreateInfo& createInfo);
+        void CreateNativeView(const BufferViewCreateInfo& inCreateInfo);
 
         DX12Buffer& buffer;
-        union {
-            DescriptorBufferInfo descriptor;
-            VertexBufferInfo vertex;
-            IndexBufferInfo index;
-        };
+        std::variant<CD3DX12_CPU_DESCRIPTOR_HANDLE, D3D12_VERTEX_BUFFER_VIEW, D3D12_INDEX_BUFFER_VIEW> nativeView;
     };
 }

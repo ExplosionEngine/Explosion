@@ -15,15 +15,15 @@ namespace RHI::DirectX12 {
     class DX12Queue : public Queue {
     public:
         NonCopyable(DX12Queue)
-        explicit DX12Queue(ComPtr<ID3D12CommandQueue>&& dx12CommandQueue);
+        explicit DX12Queue(ComPtr<ID3D12CommandQueue>&& inNativeCmdQueue);
         ~DX12Queue() override;
 
-        void Submit(CommandBuffer* commandBuffer, const QueueSubmitInfo& submitInfo) override;
-        void Flush(Fence* fenceToSignal) override;
+        void Submit(CommandBuffer* inCmdBuffer, const QueueSubmitInfo& inSubmitInfo) override;
+        void Flush(Fence* inFenceToSignal) override;
 
-        ComPtr<ID3D12CommandQueue>& GetDX12CommandQueue();
+        ID3D12CommandQueue* GetNative();
 
     private:
-        ComPtr<ID3D12CommandQueue> dx12CommandQueue;
+        ComPtr<ID3D12CommandQueue> nativeCmdQueue;
     };
 }

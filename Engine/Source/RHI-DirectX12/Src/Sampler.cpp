@@ -25,10 +25,10 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12Sampler::DX12Sampler(DX12Device& device, const SamplerCreateInfo& createInfo)
-        : Sampler(createInfo), dx12CpuDescriptorHandle()
+    DX12Sampler::DX12Sampler(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo)
+        : Sampler(inCreateInfo), nativeCpuDescriptorHandle()
     {
-        CreateDX12Descriptor(device, createInfo);
+        CreateDX12Descriptor(inDevice, inCreateInfo);
     }
 
     DX12Sampler::~DX12Sampler() = default;
@@ -38,25 +38,25 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Sampler::GetDX12CpuDescriptorHandle()
+    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Sampler::GetNativeCpuDescriptorHandle()
     {
-        return dx12CpuDescriptorHandle;
+        return nativeCpuDescriptorHandle;
     }
 
-    void DX12Sampler::CreateDX12Descriptor(DX12Device& device, const SamplerCreateInfo& createInfo)
+    void DX12Sampler::CreateDX12Descriptor(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo)
     {
         D3D12_SAMPLER_DESC desc {};
-        desc.AddressU = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo.addressModeU);
-        desc.AddressV = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo.addressModeV);
-        desc.AddressW = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(createInfo.addressModeW);
-        desc.Filter = GetDX12Filter(createInfo);
-        desc.MinLOD = createInfo.lodMinClamp;
-        desc.MaxLOD = createInfo.lodMaxClamp;
-        desc.ComparisonFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(createInfo.comparisonFunc);
-        desc.MaxAnisotropy = createInfo.maxAnisotropy;
+        desc.AddressU = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeU);
+        desc.AddressV = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeV);
+        desc.AddressW = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeW);
+        desc.Filter = GetDX12Filter(inCreateInfo);
+        desc.MinLOD = inCreateInfo.lodMinClamp;
+        desc.MaxLOD = inCreateInfo.lodMaxClamp;
+        desc.ComparisonFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(inCreateInfo.comparisonFunc);
+        desc.MaxAnisotropy = inCreateInfo.maxAnisotropy;
 
-        auto allocation = device.AllocateSamplerDescriptor();
-        dx12CpuDescriptorHandle = allocation.cpuHandle;
-        device.GetDX12Device()->CreateSampler(&desc, dx12CpuDescriptorHandle);
+        auto allocation = inDevice.AllocateNativeSamplerDescriptor();
+        nativeCpuDescriptorHandle = allocation.cpuHandle;
+        inDevice.GetNative()->CreateSampler(&desc, nativeCpuDescriptorHandle);
     }
 }
