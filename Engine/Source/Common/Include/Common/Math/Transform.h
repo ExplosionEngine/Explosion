@@ -7,6 +7,7 @@
 #include <Common/Math/Vector.h>
 #include <Common/Math/Matrix.h>
 #include <Common/Math/Quaternion.h>
+#include <Common/Serialization.h>
 
 namespace Common {
     template <typename T>
@@ -63,6 +64,36 @@ namespace Common {
     using HTransform = Transform<HFloat>;
     using FTransform = Transform<float>;
     using DTransform = Transform<double>;
+}
+
+namespace Common {
+    template <typename T>
+    struct Serializer<Transform<T>> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId
+            = Common::HashUtils::StrCrc32("Common::Transform")
+              + Serializer<T>::typeId;
+
+        static void Serialize(SerializeStream& stream, const Transform<T>& value)
+        {
+            TypeIdSerializer<Transform<T>>::Serialize(stream);
+
+            Serializer<Vector<T, 3>>::Serialize(stream, value.scale);
+            Serializer<Quaternion<T>>::Serialize(stream, value.rotation);
+            Serializer<Vector<T, 3>>::Serialize(stream, value.translation);
+        }
+
+        static bool Deserialize(DeserializeStream& stream, Transform<T>& value)
+        {
+            if (!TypeIdSerializer<Transform<T>>::Deserialize(stream)) {
+                return false;
+            }
+
+            Serializer<Vector<T, 3>>::Deserialize(stream, value.scale);
+            Serializer<Quaternion<T>>::Deserialize(stream, value.rotation);
+            Serializer<Vector<T, 3>>::Deserialize(stream, value.translation);
+        }
+    };
 }
 
 namespace Common {

@@ -34,74 +34,74 @@ namespace RHI::Vulkan {
         return result;
     }
 
-    VKBuffer::VKBuffer(VKDevice& d, const BufferCreateInfo& createInfo) : Buffer(createInfo), device(d), usages(createInfo.usages)
+    VulkanBuffer::VulkanBuffer(VulkanDevice& inDevice, const BufferCreateInfo& inCreateInfo) : Buffer(inCreateInfo), device(inDevice), usages(inCreateInfo.usages)
     {
-        CreateBuffer(createInfo);
-        TransitionToInitState(createInfo);
+        CreateNativeBuffer(inCreateInfo);
+        TransitionToInitState(inCreateInfo);
     }
 
-    VKBuffer::~VKBuffer()
+    VulkanBuffer::~VulkanBuffer()
     {
-        if (vkBuffer) {
-            vmaDestroyBuffer(device.GetVmaAllocator(), vkBuffer, allocation);
+        if (nativeBuffer) {
+            vmaDestroyBuffer(device.GetNativeAllocator(), nativeBuffer, nativeAllocation);
         }
     }
 
-    void* VKBuffer::Map(MapMode mapMode, size_t offset, size_t length)
+    void* VulkanBuffer::Map(MapMode inMapMode, size_t inOffset, size_t inLength)
     {
         void* data;
-        Assert(vmaMapMemory(device.GetVmaAllocator(), allocation, &data) == VK_SUCCESS);
+        Assert(vmaMapMemory(device.GetNativeAllocator(), nativeAllocation, &data) == VK_SUCCESS);
         return data;
     }
 
-    void VKBuffer::UnMap()
+    void VulkanBuffer::UnMap()
     {
-        vmaUnmapMemory(device.GetVmaAllocator(), allocation);
+        vmaUnmapMemory(device.GetNativeAllocator(), nativeAllocation);
     }
 
-    BufferView* VKBuffer::CreateBufferView(const BufferViewCreateInfo& createInfo)
+    BufferView* VulkanBuffer::CreateBufferView(const BufferViewCreateInfo& inCreateInfo)
     {
-        return new VKBufferView(*this, createInfo);
+        return new VulkanBufferView(*this, inCreateInfo);
     }
 
-    void VKBuffer::Destroy()
+    void VulkanBuffer::Destroy()
     {
         delete this;
     }
 
-    void VKBuffer::CreateBuffer(const BufferCreateInfo& createInfo)
+    void VulkanBuffer::CreateNativeBuffer(const BufferCreateInfo& inCreateInfo)
     {
         VkBufferCreateInfo bufferInfo = {};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        bufferInfo.usage = GetVkResourceStates(createInfo.usages);
-        bufferInfo.size = createInfo.size;
+        bufferInfo.usage = GetVkResourceStates(inCreateInfo.usages);
+        bufferInfo.size = inCreateInfo.size;
 
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
-        if (createInfo.usages | BufferUsageBits::mapWrite) {
+        if (inCreateInfo.usages | BufferUsageBits::mapWrite) {
             allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
         }
 
-        Assert(vmaCreateBuffer(device.GetVmaAllocator(), &bufferInfo, &allocInfo, &vkBuffer, &allocation, nullptr) == VK_SUCCESS);
+        Assert(vmaCreateBuffer(device.GetNativeAllocator(), &bufferInfo, &allocInfo, &nativeBuffer, &nativeAllocation, nullptr) == VK_SUCCESS);
 
 #if BUILD_CONFIG_DEBUG
-        if (!createInfo.debugName.empty()) {
-            device.SetObjectName(VK_OBJECT_TYPE_BUFFER, reinterpret_cast<uint64_t>(vkBuffer), createInfo.debugName.c_str());
+        if (!inCreateInfo.debugName.empty()) {
+            device.SetObjectName(VK_OBJECT_TYPE_BUFFER, reinterpret_cast<uint64_t>(nativeBuffer), inCreateInfo.debugName.c_str());
         }
 #endif
     }
 
-    void VKBuffer::TransitionToInitState(const BufferCreateInfo& createInfo)
+    void VulkanBuffer::TransitionToInitState(const BufferCreateInfo& inCreateInfo)
     {
-        if (createInfo.initialState > BufferState::undefined) {
+        if (inCreateInfo.initialState > BufferState::undefined) {
             Queue* queue = device.GetQueue(QueueType::graphics, 0);
             Assert(queue);
 
             Common::UniqueRef<Fence> fence = device.CreateFence(false);
             Common::UniqueRef<CommandBuffer> commandBuffer = device.CreateCommandBuffer();
             Common::UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
-            commandEncoder->ResourceBarrier(Barrier::Transition(this, BufferState::undefined, createInfo.initialState));
+            commandEncoder->ResourceBarrier(Barrier::Transition(this, BufferState::undefined, inCreateInfo.initialState));
             commandEncoder->End();
 
             QueueSubmitInfo submitInfo {};
@@ -111,12 +111,12 @@ namespace RHI::Vulkan {
         }
     }
 
-    VkBuffer VKBuffer::GetVkBuffer()
+    VkBuffer VulkanBuffer::GetNative()
     {
-        return vkBuffer;
+        return nativeBuffer;
     }
 
-    BufferUsageFlags VKBuffer::GetUsages()
+    BufferUsageFlags VulkanBuffer::GetUsages()
     {
         return usages;
     }

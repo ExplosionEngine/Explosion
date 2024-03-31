@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Common/Math/Vector.h>
+#include <Common/Serialization.h>
 
 namespace Common {
     template <typename T>
@@ -34,6 +35,34 @@ namespace Common {
     using HSphere = Sphere<HFloat>;
     using FSphere = Sphere<float>;
     using DSphere = Sphere<double>;
+}
+
+namespace Common {
+    template <typename T>
+    struct Serializer<Sphere<T>> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId
+            = Common::HashUtils::StrCrc32("Common::Sphere")
+              + Serializer<T>::typeId;
+
+        static void Serialize(SerializeStream& stream, const Sphere<T>& value)
+        {
+            TypeIdSerializer<Sphere<T>>::Serialize(stream);
+
+            Serializer<Vector<T, 3>>::Serialize(stream, value.center);
+            Serializer<T>::Serialize(stream, value.radius);
+        }
+
+        static bool Deserialize(DeserializeStream& stream, Sphere<T>& value)
+        {
+            if (!TypeIdSerializer<Sphere<T>>::Deserialize(stream)) {
+                return false;
+            }
+
+            Serializer<Vector<T, 3>>::Deserialize(stream, value.center);
+            Serializer<T>::Deserialize(stream, value.radius);
+        }
+    };
 }
 
 namespace Common {

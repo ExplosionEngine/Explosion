@@ -18,10 +18,14 @@ namespace RHI {
         uint8_t baseArrayLayer;
         uint8_t arrayLayerNum;
 
-        size_t Hash() const
-        {
-            return Common::HashUtils::CityHash(this, sizeof(TextureViewCreateInfo));
-        }
+        TextureViewCreateInfo();
+        TextureViewCreateInfo& Type(TextureViewType inType);
+        TextureViewCreateInfo& Dimension(TextureViewDimension inDimension);
+        TextureViewCreateInfo& Aspect(TextureAspect inAspect);
+        TextureViewCreateInfo& MipLevels(uint8_t inBaseMipLevel, uint8_t inMipLevelNum);
+        TextureViewCreateInfo& ArrayLayers(uint8_t inBaseArrayLayer, uint8_t inArrayLayerNum);
+
+        size_t Hash() const;
     };
 
     class TextureView {

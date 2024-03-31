@@ -11,34 +11,34 @@
 #include <RHI/Texture.h>
 
 namespace RHI::Vulkan {
-    class VKDevice;
+    class VulkanDevice;
 
-    class VKTexture : public Texture {
+    class VulkanTexture : public Texture {
     public:
-        NonCopyable(VKTexture)
+        NonCopyable(VulkanTexture)
 
-        VKTexture(VKDevice& device, const TextureCreateInfo& createInfo, VkImage image);
-        VKTexture(VKDevice& device, const TextureCreateInfo& createInfo);
-        ~VKTexture() override;
+        VulkanTexture(VulkanDevice& inDevice, const TextureCreateInfo& inCreateInfo, VkImage inNativeImage);
+        VulkanTexture(VulkanDevice& inDevice, const TextureCreateInfo& inCreateInfo);
+        ~VulkanTexture() override;
 
         void Destroy() override;
 
-        TextureView* CreateTextureView(const TextureViewCreateInfo& createInfo) override;
+        TextureView* CreateTextureView(const TextureViewCreateInfo& inCreateInfo) override;
 
-        VkImage GetImage() const;
+        VkImage GetNative() const;
         Common::UVec3 GetExtent() const;
         PixelFormat GetFormat() const;
-        VkImageSubresourceRange GetFullRange();
+        VkImageSubresourceRange GetNativeSubResourceFullRange();
 
     private:
-        void CreateImage(const TextureCreateInfo& createInfo);
-        void GetAspect(const TextureCreateInfo& createInfo);
-        void TransitionToInitState(const TextureCreateInfo& createInfo);
+        void CreateNativeImage(const TextureCreateInfo& inCreateInfo);
+        void GetAspect(const TextureCreateInfo& inCreateInfo);
+        void TransitionToInitState(const TextureCreateInfo& inCreateInfo);
 
-        VKDevice& device;
-        VkImage vkImage;
-        VmaAllocation allocation;
-        VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+        VulkanDevice& device;
+        VkImage nativeImage;
+        VmaAllocation nativeAllocation;
+        VkImageAspectFlags nativeAspect = VK_IMAGE_ASPECT_COLOR_BIT;
 
         Common::UVec3 extent;
         PixelFormat format;
@@ -46,7 +46,7 @@ namespace RHI::Vulkan {
         uint8_t samples;
         bool ownMemory;
 
-        friend class VKTextureView;
-        VkImageView vkImageView = VK_NULL_HANDLE;
+        friend class VulkanTextureView;
+        VkImageView nativeImageView = VK_NULL_HANDLE;
     };
 }

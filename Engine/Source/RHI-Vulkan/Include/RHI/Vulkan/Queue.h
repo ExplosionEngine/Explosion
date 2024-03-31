@@ -10,20 +10,20 @@
 #include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
-    class VKDevice;
+    class VulkanDevice;
 
-    class VKQueue : public Queue {
+    class VulkanQueue : public Queue {
     public:
-        NonCopyable(VKQueue)
-        explicit VKQueue(VKDevice& inDevice, VkQueue vkQueue);
-        ~VKQueue() override;
+        NonCopyable(VulkanQueue)
+        explicit VulkanQueue(VulkanDevice& inDevice, VkQueue inNativeQueue);
+        ~VulkanQueue() override;
 
-        void Submit(CommandBuffer* commandBuffer, const QueueSubmitInfo& submitInfo) override;
-        void Flush(Fence* fenceToSignal) override;
+        void Submit(CommandBuffer* inCmdBuffer, const QueueSubmitInfo& inSubmitInfo) override;
+        void Flush(Fence* inFenceToSignal) override;
 
-        VkQueue GetVkQueue();
+        VkQueue GetNative();
 
     private:
-        VkQueue vkQueue;
+        VkQueue nativeQueue;
     };
 }

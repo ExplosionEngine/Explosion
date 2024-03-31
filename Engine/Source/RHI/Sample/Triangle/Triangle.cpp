@@ -43,20 +43,15 @@ protected:
 
         UniqueRef<CommandEncoder> commandEncoder = commandBuffers[nextFrameIndex]->Begin();
         {
-            std::array<GraphicsPassColorAttachment, 1> colorAttachments {};
-            colorAttachments[0].clearValue = Common::LinearColor {0.0f, 0.0f, 0.0f, 1.0f};
-            colorAttachments[0].loadOp = LoadOp::clear;
-            colorAttachments[0].storeOp = StoreOp::store;
-            colorAttachments[0].view = swapChainTextureViews[backTextureIndex].Get();
-            colorAttachments[0].resolve = nullptr;
-
-            GraphicsPassBeginInfo graphicsPassBeginInfo {};
-            graphicsPassBeginInfo.colorAttachmentNum = colorAttachments.size();
-            graphicsPassBeginInfo.colorAttachments = colorAttachments.data();
-            graphicsPassBeginInfo.depthStencilAttachment = nullptr;
-
             commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(&graphicsPassBeginInfo);
+            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(
+                GraphicsPassBeginInfo()
+                    .ColorAttachment(
+                        GraphicsPassColorAttachment()
+                            .ClearValue(Common::ColorConsts::black.ToLinearColor())
+                            .LoadOp(LoadOp::clear)
+                            .StoreOp(StoreOp::store)
+                            .View(swapChainTextureViews[backTextureIndex].Get())));
             {
                 graphicsEncoder->SetPipeline(pipeline.Get());
                 graphicsEncoder->SetScissor(0, 0, width, height);
@@ -70,13 +65,12 @@ protected:
         }
         commandEncoder->End();
 
-        QueueSubmitInfo submitInfo {};
-        submitInfo.waitSemaphoreNum = 1;
-        submitInfo.waitSemaphores = backBufferReadySemaphores[nextFrameIndex].Get();
-        submitInfo.signalSemaphoreNum = 1;
-        submitInfo.signalSemaphores = renderFinishedSemaphores[nextFrameIndex].Get();
-        submitInfo.signalFence = inflightFences[nextFrameIndex].Get();
-        graphicsQueue->Submit(commandBuffers[nextFrameIndex].Get(), submitInfo);
+        graphicsQueue->Submit(
+            commandBuffers[nextFrameIndex].Get(),
+            QueueSubmitInfo()
+                .WaitSemaphore(backBufferReadySemaphores[nextFrameIndex].Get())
+                .SignalSemaphore(renderFinishedSemaphores[nextFrameIndex].Get())
+                .SignalFence(inflightFences[nextFrameIndex].Get()));
 
         swapChain->Present(renderFinishedSemaphores[nextFrameIndex].Get());
         nextFrameIndex = (nextFrameIndex + 1) % backBufferCount;
@@ -99,11 +93,9 @@ private:
 
     void RequestDeviceAndFetchQueues()
     {
-        std::vector<QueueInfo> queueCreateInfos = {{QueueType::graphics, 1}};
-        DeviceCreateInfo createInfo {};
-        createInfo.queueCreateInfoNum = queueCreateInfos.size();
-        createInfo.queueCreateInfos = queueCreateInfos.data();
-        device = gpu->RequestDevice(createInfo);
+        device = gpu->RequestDevice(
+            DeviceCreateInfo()
+                .Queue(QueueRequestInfo(QueueType::graphics, 1)));
         graphicsQueue = device->GetQueue(QueueType::graphics, 0);
     }
 
@@ -114,9 +106,9 @@ private:
             PixelFormat::bgra8Unorm
         };
 
-        SurfaceCreateInfo surfaceCreateInfo {};
-        surfaceCreateInfo.window = GetPlatformWindow();
-        surface = device->CreateSurface(surfaceCreateInfo);
+        surface = device->CreateSurface(
+            SurfaceCreateInfo()
+                .Window(GetPlatformWindow()));
 
         for (auto format : swapChainFormatQualifiers) {
             if (device->CheckSwapChainFormatSupport(surface.Get(), format)) {
@@ -126,27 +118,25 @@ private:
         }
         Assert(swapChainFormat != PixelFormat::max);
 
-        SwapChainCreateInfo swapChainCreateInfo {};
-        swapChainCreateInfo.format = swapChainFormat;
-        swapChainCreateInfo.presentMode = PresentMode::immediately;
-        swapChainCreateInfo.textureNum = backBufferCount;
-        swapChainCreateInfo.extent = {width, height};
-        swapChainCreateInfo.surface = surface.Get();
-        swapChainCreateInfo.presentQueue = graphicsQueue;
-        swapChain = device->CreateSwapChain(swapChainCreateInfo);
+        swapChain = device->CreateSwapChain(
+            SwapChainCreateInfo()
+                .Format(swapChainFormat)
+                .PresentMode(PresentMode::immediately)
+                .TextureNum(backBufferCount)
+                .Extent({ width, height })
+                .Surface(surface.Get())
+                .PresentQueue(graphicsQueue));
 
-        for (auto i = 0; i < swapChainCreateInfo.textureNum; i++) {
+        for (auto i = 0; i < backBufferCount; i++) {
             swapChainTextures[i] = swapChain->GetTexture(i);
 
-            TextureViewCreateInfo viewCreateInfo {};
-            viewCreateInfo.dimension = TextureViewDimension::tv2D;
-            viewCreateInfo.baseArrayLayer = 0;
-            viewCreateInfo.arrayLayerNum = 1;
-            viewCreateInfo.baseMipLevel = 0;
-            viewCreateInfo.mipLevelNum = 1;
-            viewCreateInfo.aspect = TextureAspect::color;
-            viewCreateInfo.type = TextureViewType::colorAttachment;
-            swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(viewCreateInfo);
+            swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(
+                TextureViewCreateInfo()
+                    .Dimension(TextureViewDimension::tv2D)
+                    .MipLevels(0, 1)
+                    .ArrayLayers(0, 1)
+                    .Aspect(TextureAspect::color)
+                    .Type(TextureViewType::colorAttachment));
         }
     }
 
@@ -158,10 +148,12 @@ private:
             {{0.f, .5f, 0.f}, {0.f, 0.f, 1.f}},
         };
 
-        BufferCreateInfo bufferCreateInfo {};
-        bufferCreateInfo.size = vertices.size() * sizeof(Vertex);
-        bufferCreateInfo.usages = BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc;
-        bufferCreateInfo.initialState = BufferState::staging;
+        BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+            .Size(vertices.size() * sizeof(Vertex))
+            .Usages(BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+            .InitialState(BufferState::staging)
+            .DebugName("vertexBuffer");
+
         vertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (vertexBuffer != nullptr) {
             auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
@@ -169,20 +161,17 @@ private:
             vertexBuffer->UnMap();
         }
 
-        BufferViewCreateInfo bufferViewCreateInfo {};
-        bufferViewCreateInfo.type = BufferViewType::vertex;
-        bufferViewCreateInfo.size = vertices.size() * sizeof(Vertex);
-        bufferViewCreateInfo.offset = 0;
-        bufferViewCreateInfo.vertex.stride = sizeof(Vertex);
+        BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
+            .Type(BufferViewType::vertex)
+            .Size(vertices.size() * sizeof(Vertex))
+            .Offset(0)
+            .ExtendVertex(sizeof(Vertex));
         vertexBufferView = vertexBuffer->CreateBufferView(bufferViewCreateInfo);
     }
 
     void CreatePipelineLayout()
     {
-        PipelineLayoutCreateInfo createInfo {};
-        createInfo.bindGroupLayoutNum = 0;
-        createInfo.bindGroupLayouts = nullptr;
-        pipelineLayout = device->CreatePipelineLayout(createInfo);
+        pipelineLayout = device->CreatePipelineLayout(PipelineLayoutCreateInfo());
     }
 
     void CreatePipeline()
@@ -202,42 +191,49 @@ private:
         shaderModuleCreateInfo.byteCode = fsByteCode.data();
         fragmentShader = device->CreateShaderModule(shaderModuleCreateInfo);
 
-        std::array<VertexAttribute, 2> vertexAttributes {};
-        vertexAttributes[0].format = VertexFormat::float32X3;
-        vertexAttributes[0].offset = 0;
-        vertexAttributes[0].semanticName = "POSITION";
-        vertexAttributes[0].semanticIndex = 0;
-        vertexAttributes[1].format = VertexFormat::float32X3;
-        vertexAttributes[1].offset = offsetof(Vertex, color);
-        vertexAttributes[1].semanticName = "COLOR";
-        vertexAttributes[1].semanticIndex = 0;
+        GraphicsPipelineCreateInfo createInfo = GraphicsPipelineCreateInfo()
+            .Layout(pipelineLayout.Get())
+            .VertexShader(vertexShader.Get())
+            .PixelShader(fragmentShader.Get())
+            .VertexState(
+                VertexState()
+                    .VertexBufferLayout(
+                        VertexBufferLayout()
+                            .StepMode(VertexStepMode::perVertex)
+                            .Stride(sizeof(Vertex))
+                            .Attribute(
+                                VertexAttribute()
+                                    .Format(RHI::VertexFormat::float32X3)
+                                    .Offset(0)
+                                    .SemanticName("POSITION")
+                                    .SemanticIndex(0))
+                            .Attribute(
+                                VertexAttribute()
+                                    .Format(RHI::VertexFormat::float32X3)
+                                    .Offset(offsetof(Vertex, color))
+                                    .SemanticName("COLOR")
+                                    .SemanticIndex(0))))
+            .FragmentState(
+                FragmentState()
+                    .ColorTarget(
+                        ColorTargetState()
+                            .Format(swapChainFormat)
+                            .WriteFlags(ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha)))
+            .PrimitiveState(
+                PrimitiveState()
+                    .DepthClip(false)
+                    .FrontFace(FrontFace::ccw)
+                    .CullMode(CullMode::none)
+                    .TopologyType(PrimitiveTopologyType::triangle)
+                    .StripIndexFormat(IndexFormat::uint16))
+            .DepthStencilState(
+                DepthStencilState()
+                    .DepthEnabled(false)
+                    .StencilEnabled(false))
+            .MultiSampleState(
+                MultiSampleState()
+                    .Count(1));
 
-        VertexBufferLayout vertexBufferLayout {};
-        vertexBufferLayout.stepMode = RHI::VertexStepMode::perVertex;
-        vertexBufferLayout.stride = sizeof(Vertex);
-        vertexBufferLayout.attributeNum = vertexAttributes.size();
-        vertexBufferLayout.attributes = vertexAttributes.data();
-
-        std::array<ColorTargetState, 1> colorTargetStates {};
-        colorTargetStates[0].format = swapChainFormat;
-        colorTargetStates[0].writeFlags = ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha;
-
-        GraphicsPipelineCreateInfo createInfo {};
-        createInfo.vertexShader = vertexShader.Get();
-        createInfo.pixelShader = fragmentShader.Get();
-        createInfo.layout = pipelineLayout.Get();
-        createInfo.vertexState.bufferLayoutNum = 1;
-        createInfo.vertexState.bufferLayouts = &vertexBufferLayout;
-        createInfo.fragmentState.colorTargetNum = colorTargetStates.size();
-        createInfo.fragmentState.colorTargets = colorTargetStates.data();
-        createInfo.primitiveState.depthClip = false;
-        createInfo.primitiveState.frontFace = RHI::FrontFace::ccw;
-        createInfo.primitiveState.cullMode = CullMode::none;
-        createInfo.primitiveState.topologyType = RHI::PrimitiveTopologyType::triangle;
-        createInfo.primitiveState.stripIndexFormat = IndexFormat::uint16;
-        createInfo.depthStencilState.depthEnable = false;
-        createInfo.depthStencilState.stencilEnable = false;
-        createInfo.multiSampleState.count = 1;
         pipeline = device->CreateGraphicsPipeline(createInfo);
     }
 

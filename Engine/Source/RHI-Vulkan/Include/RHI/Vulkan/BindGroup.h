@@ -10,22 +10,24 @@
 #include <RHI/BindGroup.h>
 
 namespace RHI::Vulkan {
-    class VKDevice;
+    class VulkanDevice;
 
-    class VKBindGroup : public BindGroup {
+    class VulkanBindGroup : public BindGroup {
     public:
-        NonCopyable(VKBindGroup)
-        VKBindGroup(VKDevice& device, const BindGroupCreateInfo& createInfo);
-        ~VKBindGroup() noexcept override;
+        NonCopyable(VulkanBindGroup)
+        VulkanBindGroup(VulkanDevice& inDevice, const BindGroupCreateInfo& inCreateInfo);
+        ~VulkanBindGroup() noexcept override;
 
         void Destroy() override;
 
-        VkDescriptorSet GetVkDescritorSet() const;
+        VkDescriptorSet GetNative() const;
+
     private:
-        void CreateDescriptorPool(const BindGroupCreateInfo& createInfo);
-        void CreateDescriptorSet(const BindGroupCreateInfo& createInfo);
-        VKDevice& device;
-        VkDescriptorSet descriptorSet;
-        VkDescriptorPool descriptorPool;
+        void CreateNativeDescriptorPool(const BindGroupCreateInfo& inCreateInfo);
+        void CreateNativeDescriptorSet(const BindGroupCreateInfo& inCreateInfo);
+
+        VulkanDevice& device;
+        VkDescriptorSet nativeDescriptorSet;
+        VkDescriptorPool nativeDescriptorPool;
     };
 }

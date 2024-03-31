@@ -99,31 +99,31 @@ namespace Rendering {
             std::vector<size_t> values = {
                 Common::HashUtils::CityHash(&attribute.format, sizeof(attribute.format)),
                 Common::HashUtils::CityHash(&attribute.offset, sizeof(attribute.offset)),
-                Common::HashUtils::CityHash(attribute.semanticName, sizeof(attribute.semanticName)),
+                Common::HashUtils::CityHash(attribute.semanticName.data(), attribute.semanticName.size()),
                 Common::HashUtils::CityHash(&attribute.semanticIndex, sizeof(attribute.semanticIndex))
             };
             return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
         };
         auto computeVertexBufferLayoutHash = [computeVertexAttributeHash](const RHI::VertexBufferLayout& bufferLayout) -> size_t {
             std::vector<size_t> values;
-            values.reserve(bufferLayout.attributeNum + 2);
+            values.reserve(bufferLayout.attributes.size() + 2);
             values.emplace_back(Common::HashUtils::CityHash(&bufferLayout.stride, sizeof(bufferLayout.stride)));
             values.emplace_back(Common::HashUtils::CityHash(&bufferLayout.stepMode, sizeof(bufferLayout.stepMode)));
-            for (auto i = 0; i < bufferLayout.attributeNum; i++) {
+            for (auto i = 0; i < bufferLayout.attributes.size(); i++) {
                 values.emplace_back(computeVertexAttributeHash(bufferLayout.attributes[i]));
             }
             return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
         };
         auto computeVertexStateHash = [computeVertexBufferLayoutHash](const VertexState& state) -> size_t {
             std::vector<size_t> values;
-            values.reserve(state.bufferLayoutNum);
-            for (auto i = 0; i < state.bufferLayoutNum; i++) {
+            values.reserve(state.bufferLayouts.size());
+            for (auto i = 0; i < state.bufferLayouts.size(); i++) {
                 values.emplace_back(computeVertexBufferLayoutHash(state.bufferLayouts[i]));
             }
             return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
         };
         auto computeFragmentStateHash = [](const FragmentState& state) -> size_t {
-            return Common::HashUtils::CityHash(state.colorTargets, state.colorTargetNum * sizeof(RHI::ColorTargetState));
+            return Common::HashUtils::CityHash(state.colorTargets.data(), state.colorTargets.size() * sizeof(RHI::ColorTargetState));
         };
 
         std::vector<size_t> values = {
@@ -152,19 +152,14 @@ namespace Rendering {
     BindGroupLayout::BindGroupLayout(RHI::Device& inDevice, const BindGroupLayoutDesc& inDesc)
         : bindings(inDesc.binding)
     {
-        std::vector<RHI::BindGroupLayoutEntry> layoutEntries;
-        layoutEntries.reserve(bindings.size());
-        for (const auto& binding : bindings) {
-            RHI::BindGroupLayoutEntry entry;
-            entry.binding = binding.second.second;
-            entry.shaderVisibility = binding.second.first;
-            layoutEntries.emplace_back(entry);
-        }
 
-        RHI::BindGroupLayoutCreateInfo createInfo;
+
+        RHI::BindGroupLayoutCreateInfo createInfo(inDesc.layoutIndex);
         createInfo.layoutIndex = inDesc.layoutIndex;
-        createInfo.entries = layoutEntries.data();
-        createInfo.entryNum = layoutEntries.size();
+        createInfo.entries.reserve(bindings.size());
+        for (const auto& binding : bindings) {
+            createInfo.entries.emplace_back(binding.second.second, binding.second.first);
+        }
         rhiHandle = inDevice.CreateBindGroupLayout(createInfo);
     }
 
@@ -232,7 +227,7 @@ namespace Rendering {
                     layoutBindingMaps[layoutIndex] = {};
                 }
                 auto& layoutBindingMap = layoutBindingMaps[layoutIndex];
-                layoutBindingMap[name] = std::make_pair(pack.stage, binding);
+                layoutBindingMap.emplace(std::make_pair(name, std::make_pair(pack.stage, binding)));
             }
         }
 
@@ -246,17 +241,14 @@ namespace Rendering {
 
     void PipelineLayout::CreateRHIPipelineLayout(RHI::Device& device)
     {
-        std::vector<BindGroupLayout*> tBindGroupLayouts;
+        std::vector<const RHI::BindGroupLayout*> tBindGroupLayouts;
         tBindGroupLayouts.reserve(bindGroupLayouts.size());
         for (const auto& iter : bindGroupLayouts) {
-            tBindGroupLayouts.emplace_back(iter.second.Get());
+            tBindGroupLayouts.emplace_back(iter.second.Get()->GetRHI());
         }
 
         RHI::PipelineLayoutCreateInfo createInfo;
-        createInfo.bindGroupLayoutNum = tBindGroupLayouts.size();
-        createInfo.bindGroupLayouts = reinterpret_cast<const RHI::BindGroupLayout* const*>(tBindGroupLayouts.data());
-        createInfo.pipelineConstantLayoutNum = 0;
-        createInfo.pipelineConstantLayouts = nullptr;
+        createInfo.bindGroupLayouts = tBindGroupLayouts;
         rhiHandle = device.CreatePipelineLayout(createInfo);
     }
 

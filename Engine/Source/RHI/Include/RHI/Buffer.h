@@ -18,11 +18,15 @@ namespace RHI {
         BufferState initialState;
         std::string debugName;
 
-        bool operator==(const BufferCreateInfo& rhs) const
-        {
-            return size == rhs.size
-                && usages == rhs.usages;
-        }
+        BufferCreateInfo();
+        BufferCreateInfo(uint32_t inSize, BufferUsageFlags inUsages, BufferState inInitialState, std::string inDebugName = "");
+
+        BufferCreateInfo& Size(uint32_t inSize);
+        BufferCreateInfo& Usages(BufferUsageFlags inUsages);
+        BufferCreateInfo& InitialState(BufferState inState);
+        BufferCreateInfo& DebugName(std::string inDebugName);
+
+        bool operator==(const BufferCreateInfo& rhs) const;
     };
 
     class Buffer {

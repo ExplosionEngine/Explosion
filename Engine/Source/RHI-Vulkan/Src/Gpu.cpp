@@ -8,14 +8,14 @@
 #include <RHI/Vulkan/Instance.h>
 
 namespace RHI::Vulkan {
-    VKGpu::VKGpu(VKInstance& inst, VkPhysicalDevice d) : Gpu(), instance(inst), vkPhysicalDevice(d) {}
+    VulkanGpu::VulkanGpu(VulkanInstance& inInstance, VkPhysicalDevice inNativePhysicalDevice) : Gpu(), instance(inInstance), nativePhysicalDevice(inNativePhysicalDevice) {}
 
-    VKGpu::~VKGpu() = default;
+    VulkanGpu::~VulkanGpu() = default;
 
-    GpuProperty VKGpu::GetProperty()
+    GpuProperty VulkanGpu::GetProperty()
     {
         VkPhysicalDeviceProperties vkPhysicalDeviceProperties;
-        vkGetPhysicalDeviceProperties(vkPhysicalDevice, &vkPhysicalDeviceProperties);
+        vkGetPhysicalDeviceProperties(nativePhysicalDevice, &vkPhysicalDeviceProperties);
 
         GpuProperty property {};
         property.vendorId = vkPhysicalDeviceProperties.vendorID;
@@ -24,28 +24,28 @@ namespace RHI::Vulkan {
         return property;
     }
 
-    Device* VKGpu::RequestDevice(const DeviceCreateInfo& createInfo)
+    Device* VulkanGpu::RequestDevice(const DeviceCreateInfo& inCreateInfo)
     {
-        return new VKDevice(*this, createInfo);
+        return new VulkanDevice(*this, inCreateInfo);
     }
 
-    const VkPhysicalDevice& VKGpu::GetVkPhysicalDevice() const
+    VkPhysicalDevice VulkanGpu::GetNative() const
     {
-        return vkPhysicalDevice;
+        return nativePhysicalDevice;
     }
 
-    VKInstance& VKGpu::GetInstance() const
+    VulkanInstance& VulkanGpu::GetInstance() const
     {
         return instance;
     }
 
-    uint32_t VKGpu::FindMemoryType(uint32_t filter, VkMemoryPropertyFlags propertyFlags) const
+    uint32_t VulkanGpu::FindMemoryType(uint32_t inFilter, VkMemoryPropertyFlags inPropertyFlag) const
     {
         VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &memProperties);
+        vkGetPhysicalDeviceMemoryProperties(nativePhysicalDevice, &memProperties);
 
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-            if ((filter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & propertyFlags) == propertyFlags) {
+            if ((inFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & inPropertyFlag) == inPropertyFlag) {
                 return i;
             }
         }

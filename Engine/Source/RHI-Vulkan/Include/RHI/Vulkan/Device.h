@@ -16,54 +16,54 @@
 #include <RHI/Device.h>
 
 namespace RHI::Vulkan {
-    class VKGpu;
-    class VKQueue;
+    class VulkanGpu;
+    class VulkanQueue;
 
-    class VKDevice : public Device {
+    class VulkanDevice : public Device {
     public:
-        NonCopyable(VKDevice)
-        VKDevice(VKGpu& gpu, const DeviceCreateInfo& createInfo);
-        ~VKDevice() override;
+        NonCopyable(VulkanDevice)
+        VulkanDevice(VulkanGpu& inGpu, const DeviceCreateInfo& inCreateInfo);
+        ~VulkanDevice() override;
 
-        size_t GetQueueNum(QueueType type) override;
-        Queue* GetQueue(QueueType type, size_t index) override;
-        Surface* CreateSurface(const RHI::SurfaceCreateInfo &createInfo) override;
-        SwapChain* CreateSwapChain(const SwapChainCreateInfo& createInfo) override;
         void Destroy() override;
-        Buffer* CreateBuffer(const BufferCreateInfo& createInfo) override;
-        Texture* CreateTexture(const TextureCreateInfo& createInfo) override;
-        Sampler* CreateSampler(const SamplerCreateInfo& createInfo) override;
-        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo) override;
-        BindGroup* CreateBindGroup(const BindGroupCreateInfo& createInfo) override;
-        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo) override;
-        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo& createInfo) override;
-        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) override;
-        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) override;
+        size_t GetQueueNum(QueueType inType) override;
+        Queue* GetQueue(QueueType inType, size_t inIndex) override;
+        Surface* CreateSurface(const SurfaceCreateInfo& inCreateInfo) override;
+        SwapChain* CreateSwapChain(const SwapChainCreateInfo& inCreateInfo) override;
+        Buffer* CreateBuffer(const BufferCreateInfo& inCreateInfo) override;
+        Texture* CreateTexture(const TextureCreateInfo& inCreateInfo) override;
+        Sampler* CreateSampler(const SamplerCreateInfo& inCreateInfo) override;
+        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo) override;
+        BindGroup* CreateBindGroup(const BindGroupCreateInfo& inCreateInfo) override;
+        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo) override;
+        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo) override;
+        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo) override;
+        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& inCreateInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
         Fence* CreateFence(bool initAsSignaled) override;
         Semaphore* CreateSemaphore() override;
 
-        bool CheckSwapChainFormatSupport(Surface* surface, PixelFormat format) override;
+        bool CheckSwapChainFormatSupport(Surface* inSurface, PixelFormat inFormat) override;
 
-        VkDevice GetVkDevice();
-        VKGpu& GetGpu() const;
-        VmaAllocator& GetVmaAllocator();
+        VkDevice GetNative();
+        VmaAllocator& GetNativeAllocator();
+        VulkanGpu& GetGpu() const;
 
 #if BUILD_CONFIG_DEBUG
-        void SetObjectName(VkObjectType objectType, uint64_t objectHandle, const char* objectName);
+        void SetObjectName(VkObjectType inObjectType, uint64_t inObjectHandle, const char* inObjectName);
 #endif
 
     private:
-        static std::optional<uint32_t> FindQueueFamilyIndex(const std::vector<VkQueueFamilyProperties>& properties, std::vector<uint32_t>& usedQueueFamily, QueueType queueType);
-        void CreateDevice(const DeviceCreateInfo& createInfo);
+        static std::optional<uint32_t> FindQueueFamilyIndex(const std::vector<VkQueueFamilyProperties>& inProperties, std::vector<uint32_t>& inUsedQueueFamily, QueueType inQueueType);
+        void CreateNativeDevice(const DeviceCreateInfo& inCreateInfo);
         void GetQueues();
-        void CreateVmaAllocator();
+        void CreateNativeVmaAllocator();
 
-        VKGpu& gpu;
-        VkDevice vkDevice;
-        VmaAllocator vmaAllocator;
+        VulkanGpu& gpu;
+        VkDevice nativeDevice;
+        VmaAllocator nativeAllocator;
         std::unordered_map<QueueType, std::pair<uint32_t, uint32_t>> queueFamilyMappings;
-        std::unordered_map<QueueType, std::vector<Common::UniqueRef<VKQueue>>> queues;
-        std::unordered_map<QueueType, VkCommandPool> pools;
+        std::unordered_map<QueueType, std::vector<Common::UniqueRef<VulkanQueue>>> queues;
+        std::unordered_map<QueueType, VkCommandPool> nativeCmdPools;
     };
 }

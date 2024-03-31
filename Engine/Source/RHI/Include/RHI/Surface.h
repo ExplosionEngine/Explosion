@@ -9,6 +9,9 @@
 namespace RHI {
     struct SurfaceCreateInfo {
         void* window;
+
+        SurfaceCreateInfo();
+        SurfaceCreateInfo& Window(void* inWindow);
     };
 
     class Surface {

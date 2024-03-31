@@ -13,15 +13,18 @@
 #include <RHI/Vulkan/Synchronous.h>
 
 namespace RHI::Vulkan {
-    VKSwapChain::VKSwapChain(VKDevice& dev, const SwapChainCreateInfo& createInfo)
-        : device(dev), SwapChain(createInfo)
+    VulkanSwapChain::VulkanSwapChain(VulkanDevice& inDevice, const SwapChainCreateInfo& inCreateInfo)
+        : SwapChain(inCreateInfo)
+        , device(inDevice)
+        , nativeSwapChain(VK_NULL_HANDLE)
+        , nativeQueue(VK_NULL_HANDLE)
     {
-        CreateNativeSwapChain(createInfo);
+        CreateNativeSwapChain(inCreateInfo);
     }
 
-    VKSwapChain::~VKSwapChain()
+    VulkanSwapChain::~VulkanSwapChain()
     {
-        auto vkDevice = device.GetVkDevice();
+        auto vkDevice = device.GetNative();
         vkDeviceWaitIdle(vkDevice);
 
         for (auto& tex : textures) {
@@ -29,72 +32,72 @@ namespace RHI::Vulkan {
         }
         textures.clear();
 
-        if (swapChain) {
-            vkDestroySwapchainKHR(vkDevice, swapChain, nullptr);
+        if (nativeSwapChain) {
+            vkDestroySwapchainKHR(vkDevice, nativeSwapChain, nullptr);
         }
     }
 
-    Texture* VKSwapChain::GetTexture(uint8_t index)
+    Texture* VulkanSwapChain::GetTexture(uint8_t inIndex)
     {
-        return textures[index];
+        return textures[inIndex];
     }
 
-    uint8_t VKSwapChain::AcquireBackTexture(Semaphore* signalSemaphore)
+    uint8_t VulkanSwapChain::AcquireBackTexture(Semaphore* inSignalSemaphore)
     {
-        auto& vulkanSignalSemaphore = static_cast<VKSemaphore&>(*signalSemaphore);
-        Assert(vkAcquireNextImageKHR(device.GetVkDevice(), swapChain, UINT64_MAX, vulkanSignalSemaphore.GetNative(), VK_NULL_HANDLE, &currentImage) == VK_SUCCESS);
+        auto& vulkanSignalSemaphore = static_cast<VulkanSemaphore&>(*inSignalSemaphore);
+        Assert(vkAcquireNextImageKHR(device.GetNative(), nativeSwapChain, UINT64_MAX, vulkanSignalSemaphore.GetNative(), VK_NULL_HANDLE, &currentImage) == VK_SUCCESS);
         return currentImage;
     }
 
-    void VKSwapChain::Present(RHI::Semaphore* waitSemaphore)
+    void VulkanSwapChain::Present(RHI::Semaphore* inWaitSemaphore)
     {
-        auto& vulkanWaitSemaphore = static_cast<VKSemaphore&>(*waitSemaphore);
+        auto& vulkanWaitSemaphore = static_cast<VulkanSemaphore&>(*inWaitSemaphore);
         std::vector<VkSemaphore> waitSemaphores { vulkanWaitSemaphore.GetNative() };
 
         VkPresentInfoKHR presetInfo = {};
         presetInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presetInfo.swapchainCount = 1;
-        presetInfo.pSwapchains = &swapChain;
+        presetInfo.pSwapchains = &nativeSwapChain;
         presetInfo.waitSemaphoreCount = waitSemaphores.size();
         presetInfo.pWaitSemaphores = waitSemaphores.data();
         presetInfo.pImageIndices = &currentImage;
-        Assert(vkQueuePresentKHR(queue, &presetInfo) == VK_SUCCESS);
+        Assert(vkQueuePresentKHR(nativeQueue, &presetInfo) == VK_SUCCESS);
     }
 
-    void VKSwapChain::Destroy()
+    void VulkanSwapChain::Destroy()
     {
         delete this;
     }
 
-    void VKSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo& createInfo)
+    void VulkanSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
-        auto vkDevice = device.GetVkDevice();
-        auto* mQueue = static_cast<VKQueue*>(createInfo.presentQueue);
+        auto vkDevice = device.GetNative();
+        auto* mQueue = static_cast<VulkanQueue*>(inCreateInfo.presentQueue);
         Assert(mQueue);
-        auto* vkSurface = static_cast<VKSurface*>(createInfo.surface);
+        auto* vkSurface = static_cast<VulkanSurface*>(inCreateInfo.surface);
         Assert(vkSurface);
-        queue = mQueue->GetVkQueue();
-        auto surface = vkSurface->GetVKSurface();
+        nativeQueue = mQueue->GetNative();
+        auto surface = vkSurface->GetNative();
 
         VkSurfaceCapabilitiesKHR surfaceCap;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.GetGpu().GetVkPhysicalDevice(), surface, &surfaceCap);
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.GetGpu().GetNative(), surface, &surfaceCap);
 
-        VkExtent2D extent = {static_cast<uint32_t>(createInfo.extent.x), static_cast<uint32_t>(createInfo.extent.y)};
+        VkExtent2D extent = {static_cast<uint32_t>(inCreateInfo.extent.x), static_cast<uint32_t>(inCreateInfo.extent.y)};
         extent.width = std::clamp(extent.width, surfaceCap.minImageExtent.width, surfaceCap.maxImageExtent.width);
         extent.height = std::clamp(extent.height, surfaceCap.minImageExtent.height, surfaceCap.maxImageExtent.height);
 
-        Assert(device.CheckSwapChainFormatSupport(vkSurface, createInfo.format));
-        auto supportedFormat = VKEnumCast<PixelFormat, VkFormat>(createInfo.format);
+        Assert(device.CheckSwapChainFormatSupport(vkSurface, inCreateInfo.format));
+        auto supportedFormat = VKEnumCast<PixelFormat, VkFormat>(inCreateInfo.format);
         auto colorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
 
         uint32_t presentModeCount = 0;
         std::vector<VkPresentModeKHR> presentModes;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device.GetGpu().GetVkPhysicalDevice(), surface, &presentModeCount, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device.GetGpu().GetNative(), surface, &presentModeCount, nullptr);
         Assert(presentModeCount != 0);
         presentModes.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device.GetGpu().GetVkPhysicalDevice(), surface, &presentModeCount, presentModes.data());
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device.GetGpu().GetNative(), surface, &presentModeCount, presentModes.data());
 
-        VkPresentModeKHR supportedMode = VKEnumCast<PresentMode, VkPresentModeKHR>(createInfo.presentMode);
+        VkPresentModeKHR supportedMode = VKEnumCast<PresentMode, VkPresentModeKHR>(inCreateInfo.presentMode);
         {
             Assert(!presentModes.empty());
             auto iter = std::find_if(presentModes.begin(), presentModes.end(),
@@ -104,7 +107,7 @@ namespace RHI::Vulkan {
             Assert(iter != presentModes.end());
         }
 
-        swapChainImageCount = std::clamp(static_cast<uint32_t>(createInfo.textureNum), surfaceCap.minImageCount, surfaceCap.maxImageCount);
+        swapChainImageCount = std::clamp(static_cast<uint32_t>(inCreateInfo.textureNum), surfaceCap.minImageCount, surfaceCap.maxImageCount);
         VkSwapchainCreateInfoKHR swapChainInfo = {};
         swapChainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         swapChainInfo.surface = surface;
@@ -119,10 +122,10 @@ namespace RHI::Vulkan {
         swapChainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         swapChainInfo.imageArrayLayers = 1;
         swapChainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        Assert(vkCreateSwapchainKHR(vkDevice, &swapChainInfo, nullptr, &swapChain) == VK_SUCCESS);
+        Assert(vkCreateSwapchainKHR(vkDevice, &swapChainInfo, nullptr, &nativeSwapChain) == VK_SUCCESS);
 
         TextureCreateInfo textureInfo = {};
-        textureInfo.format = createInfo.format;
+        textureInfo.format = inCreateInfo.format;
         textureInfo.usages = TextureUsageBits::copyDst | TextureUsageBits::renderAttachment;
         textureInfo.mipLevels = 1;
         textureInfo.samples = 1;
@@ -131,11 +134,11 @@ namespace RHI::Vulkan {
         textureInfo.extent.y = extent.height;
         textureInfo.extent.z = 1;
 
-        vkGetSwapchainImagesKHR(device.GetVkDevice(), swapChain, &swapChainImageCount, nullptr);
+        vkGetSwapchainImagesKHR(device.GetNative(), nativeSwapChain, &swapChainImageCount, nullptr);
         std::vector<VkImage> swapChainImages(swapChainImageCount);
-        vkGetSwapchainImagesKHR(device.GetVkDevice(), swapChain, &swapChainImageCount, swapChainImages.data());
+        vkGetSwapchainImagesKHR(device.GetNative(), nativeSwapChain, &swapChainImageCount, swapChainImages.data());
         for (auto& image : swapChainImages) {
-            textures.emplace_back(new VKTexture(device, textureInfo, image));
+            textures.emplace_back(new VulkanTexture(device, textureInfo, image));
         }
         swapChainImageCount = static_cast<uint32_t>(swapChainImages.size());
     }

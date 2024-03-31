@@ -9,28 +9,28 @@
 #include <RHI/SwapChain.h>
 
 namespace RHI::Vulkan {
-    class VKDevice;
-    class VKQueue;
+    class VulkanDevice;
+    class VulkanQueue;
 
-    class VKSwapChain : public SwapChain {
+    class VulkanSwapChain : public SwapChain {
     public:
-        NonCopyable(VKSwapChain)
-        explicit VKSwapChain(VKDevice& dev, const SwapChainCreateInfo& createInfo);
-        ~VKSwapChain() override;
+        NonCopyable(VulkanSwapChain)
+        explicit VulkanSwapChain(VulkanDevice& inDevice, const SwapChainCreateInfo& inCreateInfo);
+        ~VulkanSwapChain() override;
 
-        Texture* GetTexture(uint8_t index) override;
-        uint8_t AcquireBackTexture(Semaphore* signalSemaphore) override;
-        void Present(RHI::Semaphore *waitSemaphore) override;
+        Texture* GetTexture(uint8_t inIndex) override;
+        uint8_t AcquireBackTexture(Semaphore* inSignalSemaphore) override;
+        void Present(Semaphore* inWaitSemaphore) override;
         void Destroy() override;
 
     private:
-        void CreateNativeSwapChain(const SwapChainCreateInfo& createInfo);
-        VKDevice& device;
-        VkSwapchainKHR swapChain = VK_NULL_HANDLE;
+        void CreateNativeSwapChain(const SwapChainCreateInfo& inCreateInfo);
+
+        VulkanDevice& device;
         std::vector<Texture*> textures;
-        VkQueue queue = VK_NULL_HANDLE;
+        VkSwapchainKHR nativeSwapChain;
+        VkQueue nativeQueue;
         uint32_t swapChainImageCount = 0;
         uint32_t currentImage = 0;
     };
-
 }

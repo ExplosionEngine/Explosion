@@ -13,14 +13,14 @@ namespace RHI::DirectX12 {
     class DX12ShaderModule : public ShaderModule {
     public:
         NonCopyable(DX12ShaderModule)
-        explicit DX12ShaderModule(const ShaderModuleCreateInfo& createInfo);
+        explicit DX12ShaderModule(const ShaderModuleCreateInfo& inCreateInfo);
         ~DX12ShaderModule() override;
 
         void Destroy() override;
 
-        const D3D12_SHADER_BYTECODE& GetDX12ShaderBytecode() const;
+        const D3D12_SHADER_BYTECODE& GetNative() const;
 
     private:
-        CD3DX12_SHADER_BYTECODE dx12ShaderBytecode;
+        CD3DX12_SHADER_BYTECODE nativeShaderBytecode;
     };
 }

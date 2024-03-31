@@ -18,7 +18,7 @@ namespace RHI::Dummy {
         void ResourceBarrier(const Barrier& barrier) override;
         CopyPassCommandEncoder* BeginCopyPass() override;
         ComputePassCommandEncoder* BeginComputePass() override;
-        GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo) override;
+        GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo& beginInfo) override;
         void End() override;
         void Destroy() override;
 

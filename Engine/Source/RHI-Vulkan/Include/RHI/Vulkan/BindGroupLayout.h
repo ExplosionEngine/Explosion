@@ -10,21 +10,22 @@
 #include <RHI/BindGroupLayout.h>
 
 namespace RHI::Vulkan {
-    class VKDevice;
+    class VulkanDevice;
 
-    class VKBindGroupLayout : public BindGroupLayout {
+    class VulkanBindGroupLayout : public BindGroupLayout {
     public:
-        NonCopyable(VKBindGroupLayout)
-        VKBindGroupLayout(VKDevice& device, const BindGroupLayoutCreateInfo& createInfo);
-        ~VKBindGroupLayout() override;
+        NonCopyable(VulkanBindGroupLayout)
+        VulkanBindGroupLayout(VulkanDevice& inDevice, const BindGroupLayoutCreateInfo& inCreateInfo);
+        ~VulkanBindGroupLayout() override;
 
         void Destroy() override;
 
-        VkDescriptorSetLayout GetVkDescriptorSetLayout() const;
+        VkDescriptorSetLayout GetNative() const;
 
     private:
-        void CreateDescriptorSetLayout(const BindGroupLayoutCreateInfo& createInfo);
-        VKDevice& device;
-        VkDescriptorSetLayout setLayout;
+        void CreateNativeDescriptorSetLayout(const BindGroupLayoutCreateInfo& inCreateInfo);
+
+        VulkanDevice& device;
+        VkDescriptorSetLayout nativeDescriptorSetLayout;
     };
 }

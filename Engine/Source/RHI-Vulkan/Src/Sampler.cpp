@@ -7,51 +7,51 @@
 #include <RHI/Vulkan/Common.h>
 
 namespace RHI::Vulkan {
-    VKSampler::VKSampler(VKDevice& dev, const SamplerCreateInfo& createInfo)
-        : Sampler(createInfo), device(dev), vkSampler(VK_NULL_HANDLE)
+    VulkanSampler::VulkanSampler(VulkanDevice& inDevice, const SamplerCreateInfo& inCreateInfo)
+        : Sampler(inCreateInfo), device(inDevice), nativeSampler(VK_NULL_HANDLE)
     {
-        CreateSampler(createInfo);
+        CreateSampler(inCreateInfo);
     }
 
-    VKSampler::~VKSampler()
+    VulkanSampler::~VulkanSampler()
     {
-        if (vkSampler) {
-            vkDestroySampler(device.GetVkDevice(), vkSampler, nullptr);
+        if (nativeSampler) {
+            vkDestroySampler(device.GetNative(), nativeSampler, nullptr);
         }
     }
 
-    void VKSampler::Destroy()
+    void VulkanSampler::Destroy()
     {
         delete this;
     }
 
-    VkSampler VKSampler::GetVkSampler() const
+    VkSampler VulkanSampler::GetNative() const
     {
-        return vkSampler;
+        return nativeSampler;
     }
 
-    void VKSampler::CreateSampler(const SamplerCreateInfo& createInfo)
+    void VulkanSampler::CreateSampler(const SamplerCreateInfo& inCreateInfo)
     {
         VkSamplerCreateInfo samplerInfo = {};
         samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        samplerInfo.addressModeU = VKEnumCast<AddressMode, VkSamplerAddressMode>(createInfo.addressModeU);
-        samplerInfo.addressModeV = VKEnumCast<AddressMode, VkSamplerAddressMode>(createInfo.addressModeV);
-        samplerInfo.addressModeW = VKEnumCast<AddressMode, VkSamplerAddressMode>(createInfo.addressModeW);
-        samplerInfo.minFilter = VKEnumCast<FilterMode, VkFilter>(createInfo.minFilter);
-        samplerInfo.magFilter = VKEnumCast<FilterMode, VkFilter>(createInfo.magFilter);
-        samplerInfo.mipmapMode = VKEnumCast<FilterMode, VkSamplerMipmapMode>(createInfo.mipFilter);
-        samplerInfo.minLod = createInfo.lodMinClamp;
-        samplerInfo.maxLod = createInfo.lodMaxClamp;
-        samplerInfo.compareEnable = createInfo.comparisonFunc != ComparisonFunc::never;
-        samplerInfo.compareOp = VKEnumCast<ComparisonFunc, VkCompareOp>(createInfo.comparisonFunc);
-        samplerInfo.anisotropyEnable = createInfo.maxAnisotropy > 1;
-        samplerInfo.maxAnisotropy = createInfo.maxAnisotropy;
+        samplerInfo.addressModeU = VKEnumCast<AddressMode, VkSamplerAddressMode>(inCreateInfo.addressModeU);
+        samplerInfo.addressModeV = VKEnumCast<AddressMode, VkSamplerAddressMode>(inCreateInfo.addressModeV);
+        samplerInfo.addressModeW = VKEnumCast<AddressMode, VkSamplerAddressMode>(inCreateInfo.addressModeW);
+        samplerInfo.minFilter = VKEnumCast<FilterMode, VkFilter>(inCreateInfo.minFilter);
+        samplerInfo.magFilter = VKEnumCast<FilterMode, VkFilter>(inCreateInfo.magFilter);
+        samplerInfo.mipmapMode = VKEnumCast<FilterMode, VkSamplerMipmapMode>(inCreateInfo.mipFilter);
+        samplerInfo.minLod = inCreateInfo.lodMinClamp;
+        samplerInfo.maxLod = inCreateInfo.lodMaxClamp;
+        samplerInfo.compareEnable = inCreateInfo.comparisonFunc != ComparisonFunc::never;
+        samplerInfo.compareOp = VKEnumCast<ComparisonFunc, VkCompareOp>(inCreateInfo.comparisonFunc);
+        samplerInfo.anisotropyEnable = inCreateInfo.maxAnisotropy > 1;
+        samplerInfo.maxAnisotropy = inCreateInfo.maxAnisotropy;
 
-        Assert(vkCreateSampler(device.GetVkDevice(), &samplerInfo, nullptr, &vkSampler) == VK_SUCCESS);
+        Assert(vkCreateSampler(device.GetNative(), &samplerInfo, nullptr, &nativeSampler) == VK_SUCCESS);
 
 #if BUILD_CONFIG_DEBUG
-        if (!createInfo.debugName.empty()) {
-            device.SetObjectName(VK_OBJECT_TYPE_SAMPLER, reinterpret_cast<uint64_t>(vkSampler), createInfo.debugName.c_str());
+        if (!inCreateInfo.debugName.empty()) {
+            device.SetObjectName(VK_OBJECT_TYPE_SAMPLER, reinterpret_cast<uint64_t>(nativeSampler), inCreateInfo.debugName.c_str());
         }
 #endif
     }

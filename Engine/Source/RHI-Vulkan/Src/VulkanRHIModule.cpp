@@ -12,7 +12,7 @@ namespace RHI::Vulkan {
 
     void VulkanRHIModule::OnLoad()
     {
-        gInstance = new VKInstance();
+        gInstance = new VulkanInstance();
     }
 
     void VulkanRHIModule::OnUnload()

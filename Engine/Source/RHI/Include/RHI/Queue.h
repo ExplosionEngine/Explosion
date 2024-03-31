@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 #include <Common/Utility.h>
 
@@ -14,11 +15,14 @@ namespace RHI {
     class Semaphore;
 
     struct QueueSubmitInfo {
-        uint8_t waitSemaphoreNum;
-        Semaphore* waitSemaphores;
-        uint8_t signalSemaphoreNum;
-        Semaphore* signalSemaphores;
+        std::vector<Semaphore*> waitSemaphores;
+        std::vector<Semaphore*> signalSemaphores;
         Fence* signalFence;
+
+        QueueSubmitInfo();
+        QueueSubmitInfo& WaitSemaphore(Semaphore* inSemaphore);
+        QueueSubmitInfo& SignalSemaphore(Semaphore* inSemaphore);
+        QueueSubmitInfo& SignalFence(Fence* inSignalFence);
     };
 
     class Queue {

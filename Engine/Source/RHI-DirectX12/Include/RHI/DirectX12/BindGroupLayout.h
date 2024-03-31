@@ -17,26 +17,28 @@ namespace RHI::DirectX12 {
         BindingType bindingType;
         uint8_t layoutIndex;
         HlslBinding binding;
+
+        RootParameterKeyInfo(BindingType inBindingType, uint8_t inLayoutIndex, HlslBinding inBinding);
     };
 
     class DX12BindGroupLayout : public BindGroupLayout {
     public:
         NonCopyable(DX12BindGroupLayout)
-        explicit DX12BindGroupLayout(const BindGroupLayoutCreateInfo& createInfo);
+        explicit DX12BindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo);
         ~DX12BindGroupLayout() override;
 
         void Destroy() override;
 
         uint8_t GetLayoutIndex() const;
         [[nodiscard]] const std::vector<RootParameterKeyInfo>& GetRootParameterKeyInfos() const;
-        [[nodiscard]] const std::vector<CD3DX12_ROOT_PARAMETER1>& GetDX12RootParameters() const;
+        [[nodiscard]] const std::vector<CD3DX12_ROOT_PARAMETER1>& GetNativeRootParameters() const;
 
     private:
-        void CreateDX12RootParameters(const BindGroupLayoutCreateInfo& createInfo);
+        void CreateNativeRootParameters(const BindGroupLayoutCreateInfo& inCreateInfo);
 
         uint8_t layoutIndex;
         std::vector<RootParameterKeyInfo> rootParameterKeyInfos;
-        std::vector<CD3DX12_ROOT_PARAMETER1> dx12RootParameters;
-        std::vector<CD3DX12_DESCRIPTOR_RANGE1> dx12DescriptorRanges;
+        std::vector<CD3DX12_ROOT_PARAMETER1> nativeRootParameters;
+        std::vector<CD3DX12_DESCRIPTOR_RANGE1> nativeDescriptorRanges;
     };
 }

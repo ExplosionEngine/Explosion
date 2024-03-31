@@ -70,8 +70,8 @@ namespace RHI::DirectX12 {
         desc.AlphaToCoverageEnable = createInfo.multiSampleState.alphaToCoverage;
         desc.IndependentBlendEnable = true;
 
-        Assert(createInfo.fragmentState.colorTargetNum <= 8);
-        for (auto i = 0; i < createInfo.fragmentState.colorTargetNum; i++) {
+        Assert(createInfo.fragmentState.colorTargets.size() <= 8);
+        for (auto i = 0; i < createInfo.fragmentState.colorTargets.size(); i++) {
             desc.RenderTarget[i] = GetDX12RenderTargetBlendDesc(createInfo.fragmentState.colorTargets[i]);
         }
         return desc;
@@ -119,8 +119,8 @@ namespace RHI::DirectX12 {
     void UpdateDX12RenderTargetsDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const GraphicsPipelineCreateInfo& createInfo)
     {
         // have been checked num in function #GetDX12BlendDesc()
-        desc.NumRenderTargets = createInfo.fragmentState.colorTargetNum;
-        for (auto i = 0; i < createInfo.fragmentState.colorTargetNum; i++) {
+        desc.NumRenderTargets = createInfo.fragmentState.colorTargets.size();
+        for (auto i = 0; i < createInfo.fragmentState.colorTargets.size(); i++) {
             desc.RTVFormats[i] = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.fragmentState.colorTargets[i].format);
         }
     }
@@ -138,10 +138,10 @@ namespace RHI::DirectX12 {
         std::vector<D3D12_INPUT_ELEMENT_DESC> result {};
         const auto& vertexState = createInfo.vertexState;
 
-        for (auto i = 0; i < vertexState.bufferLayoutNum; i++) {
+        for (auto i = 0; i < vertexState.bufferLayouts.size(); i++) {
             const auto& layout = vertexState.bufferLayouts[i];
 
-            for (auto j = 0; j < layout.attributeNum; j++) {
+            for (auto j = 0; j < layout.attributes.size(); j++) {
                 const auto& attribute = layout.attributes[j];
 
                 D3D12_INPUT_ELEMENT_DESC desc {};
@@ -149,7 +149,7 @@ namespace RHI::DirectX12 {
                 desc.InputSlot = i;
                 desc.InputSlotClass = DX12EnumCast<VertexStepMode, D3D12_INPUT_CLASSIFICATION>(layout.stepMode);
                 desc.AlignedByteOffset = attribute.offset;
-                desc.SemanticName = attribute.semanticName;
+                desc.SemanticName = attribute.semanticName.c_str();
                 desc.SemanticIndex = attribute.semanticIndex;
                 result.emplace_back(desc);
             }
@@ -165,10 +165,10 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12ComputePipeline::DX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo& createInfo) : ComputePipeline(createInfo), pipelineLayout(nullptr)
+    DX12ComputePipeline::DX12ComputePipeline(DX12Device& inDevice, const ComputePipelineCreateInfo& inCreateInfo) : ComputePipeline(inCreateInfo), pipelineLayout(nullptr)
     {
-        SavePipelineLayout(createInfo);
-        CreateDX12ComputePipeline(device, createInfo);
+        SavePipelineLayout(inCreateInfo);
+        CreateNativeComputePipeline(inDevice, inCreateInfo);
     }
 
     DX12ComputePipeline::~DX12ComputePipeline() = default;
@@ -183,9 +183,9 @@ namespace RHI::DirectX12 {
         return *pipelineLayout;
     }
 
-    ComPtr<ID3D12PipelineState>& DX12ComputePipeline::GetDX12PipelineState()
+    ID3D12PipelineState* DX12ComputePipeline::GetNative()
     {
-        return dx12PipelineState;
+        return nativePipelineState.Get();
     }
 
     void DX12ComputePipeline::SavePipelineLayout(const ComputePipelineCreateInfo& createInfo)
@@ -195,22 +195,22 @@ namespace RHI::DirectX12 {
         pipelineLayout = pl;
     }
 
-    void DX12ComputePipeline::CreateDX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo& createInfo)
+    void DX12ComputePipeline::CreateNativeComputePipeline(DX12Device& inDevice, const ComputePipelineCreateInfo& inCreateInfo)
     {
-        auto* computeShader = static_cast<DX12ShaderModule*>(createInfo.computeShader);
+        auto* computeShader = static_cast<DX12ShaderModule*>(inCreateInfo.computeShader);
 
         D3D12_COMPUTE_PIPELINE_STATE_DESC desc {};
-        desc.pRootSignature = pipelineLayout->GetDX12RootSignature().Get();
-        desc.CS = computeShader->GetDX12ShaderBytecode();
+        desc.pRootSignature = pipelineLayout->GetNative();
+        desc.CS = computeShader->GetNative();
 
-        bool success = SUCCEEDED(device.GetDX12Device()->CreateComputePipelineState(&desc, IID_PPV_ARGS(&dx12PipelineState)));
+        bool success = SUCCEEDED(inDevice.GetNative()->CreateComputePipelineState(&desc, IID_PPV_ARGS(&nativePipelineState)));
         Assert(success);
     }
 
-    DX12GraphicsPipeline::DX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo& createInfo) : GraphicsPipeline(createInfo), pipelineLayout(nullptr)
+    DX12GraphicsPipeline::DX12GraphicsPipeline(DX12Device& inDevice, const GraphicsPipelineCreateInfo& inCreateInfo) : GraphicsPipeline(inCreateInfo), pipelineLayout(nullptr)
     {
-        SavePipelineLayout(createInfo);
-        CreateDX12GraphicsPipeline(device, createInfo);
+        SavePipelineLayout(inCreateInfo);
+        CreateNativeGraphicsPipeline(inDevice, inCreateInfo);
     }
 
     DX12GraphicsPipeline::~DX12GraphicsPipeline() = default;
@@ -225,44 +225,44 @@ namespace RHI::DirectX12 {
         return *pipelineLayout;
     }
 
-    ComPtr<ID3D12PipelineState>& DX12GraphicsPipeline::GetDX12PipelineState()
+    ID3D12PipelineState* DX12GraphicsPipeline::GetNative()
     {
-        return dx12PipelineState;
+        return nativePipelineState.Get();
     }
 
-    void DX12GraphicsPipeline::SavePipelineLayout(const GraphicsPipelineCreateInfo& createInfo)
+    void DX12GraphicsPipeline::SavePipelineLayout(const GraphicsPipelineCreateInfo& inCreateInfo)
     {
-        auto* pl = static_cast<DX12PipelineLayout*>(createInfo.layout);
+        auto* pl = static_cast<DX12PipelineLayout*>(inCreateInfo.layout);
         Assert(pl);
         pipelineLayout = pl;
     }
 
-    void DX12GraphicsPipeline::CreateDX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo& createInfo)
+    void DX12GraphicsPipeline::CreateNativeGraphicsPipeline(DX12Device& inDevice, const GraphicsPipelineCreateInfo& inCreateInfo)
     {
-        auto* vertexShader = static_cast<DX12ShaderModule*>(createInfo.vertexShader);
-        auto* fragmentShader = static_cast<DX12ShaderModule*>(createInfo.pixelShader);
+        auto* vertexShader = static_cast<DX12ShaderModule*>(inCreateInfo.vertexShader);
+        auto* fragmentShader = static_cast<DX12ShaderModule*>(inCreateInfo.pixelShader);
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc {};
-        desc.pRootSignature = pipelineLayout->GetDX12RootSignature().Get();
-        desc.VS = vertexShader->GetDX12ShaderBytecode();
-        desc.PS = fragmentShader->GetDX12ShaderBytecode();
-        desc.RasterizerState = GetDX12RasterizerDesc(createInfo);
-        desc.BlendState = GetDX12BlendDesc(createInfo);
-        desc.DepthStencilState = GetDX12DepthStencilDesc(createInfo);
-        desc.SampleMask = GetDX12SampleMask(createInfo);
-        desc.SampleDesc = GetDX12SampleDesc(createInfo);
-        desc.PrimitiveTopologyType = DX12EnumCast<PrimitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY_TYPE>(createInfo.primitiveState.topologyType);
-        UpdateDX12RenderTargetsDesc(desc, createInfo);
-        UpdateDX12DepthStencilTargetDesc(desc, createInfo);
-        auto inputElements = GetDX12InputElements(createInfo);
+        desc.pRootSignature = pipelineLayout->GetNative();
+        desc.VS = vertexShader->GetNative();
+        desc.PS = fragmentShader->GetNative();
+        desc.RasterizerState = GetDX12RasterizerDesc(inCreateInfo);
+        desc.BlendState = GetDX12BlendDesc(inCreateInfo);
+        desc.DepthStencilState = GetDX12DepthStencilDesc(inCreateInfo);
+        desc.SampleMask = GetDX12SampleMask(inCreateInfo);
+        desc.SampleDesc = GetDX12SampleDesc(inCreateInfo);
+        desc.PrimitiveTopologyType = DX12EnumCast<PrimitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY_TYPE>(inCreateInfo.primitiveState.topologyType);
+        UpdateDX12RenderTargetsDesc(desc, inCreateInfo);
+        UpdateDX12DepthStencilTargetDesc(desc, inCreateInfo);
+        auto inputElements = GetDX12InputElements(inCreateInfo);
         UpdateDX12InputLayoutDesc(desc, inputElements);
 
-        bool success = SUCCEEDED(device.GetDX12Device()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&dx12PipelineState)));
+        bool success = SUCCEEDED(inDevice.GetNative()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&nativePipelineState)));
         Assert(success);
 
 #if BUILD_CONFIG_DEBUG
-        if (!createInfo.debugName.empty()) {
-            dx12PipelineState->SetName(Common::StringUtils::ToWideString(createInfo.debugName).c_str());
+        if (!inCreateInfo.debugName.empty()) {
+            nativePipelineState->SetName(Common::StringUtils::ToWideString(inCreateInfo.debugName).c_str());
         }
 #endif
     }

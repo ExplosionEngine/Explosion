@@ -8,27 +8,27 @@
 #include <RHI/Vulkan/Device.h>
 
 namespace RHI::Vulkan {
-    VKSurface::VKSurface(VKDevice& inDevice, const RHI::SurfaceCreateInfo& inCreateInfo)
+    VulkanSurface::VulkanSurface(VulkanDevice& inDevice, const RHI::SurfaceCreateInfo& inCreateInfo)
         : Surface(inCreateInfo)
         , device(inDevice)
     {
-        vkSurface = CreateNativeSurface(device.GetGpu().GetInstance().GetVkInstance(), inCreateInfo);
+        nativeSurface = CreateNativeSurface(device.GetGpu().GetInstance().GetNative(), inCreateInfo);
     }
 
-    VKSurface::~VKSurface()
+    VulkanSurface::~VulkanSurface()
     {
-        if (vkSurface) {
-            vkDestroySurfaceKHR(device.GetGpu().GetInstance().GetVkInstance(), vkSurface, nullptr);
+        if (nativeSurface) {
+            vkDestroySurfaceKHR(device.GetGpu().GetInstance().GetNative(), nativeSurface, nullptr);
         }
     }
 
-    void VKSurface::Destroy()
+    void VulkanSurface::Destroy()
     {
         delete this;
     }
 
-    VkSurfaceKHR VKSurface::GetVKSurface() const
+    VkSurfaceKHR VulkanSurface::GetNative() const
     {
-        return vkSurface;
+        return nativeSurface;
     }
 }

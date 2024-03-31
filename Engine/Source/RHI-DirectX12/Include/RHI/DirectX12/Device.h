@@ -21,7 +21,7 @@ namespace RHI::DirectX12 {
     class DX12Gpu;
     class DX12Queue;
 
-    struct DescriptorAllocation {
+    struct NativeDescriptorAllocation {
         CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle;
         ID3D12DescriptorHeap* descriptorHeap;
     };
@@ -29,64 +29,64 @@ namespace RHI::DirectX12 {
     class DX12Device : public Device {
     public:
         NonCopyable(DX12Device)
-        DX12Device(DX12Gpu& gpu, const DeviceCreateInfo& createInfo);
+        DX12Device(DX12Gpu& inGpu, const DeviceCreateInfo& inCreateInfo);
         ~DX12Device() override;
 
         void Destroy() override;
-        size_t GetQueueNum(QueueType type) override;
-        Queue* GetQueue(QueueType type, size_t index) override;
-        Surface* CreateSurface(const RHI::SurfaceCreateInfo &createInfo) override;
-        SwapChain* CreateSwapChain(const SwapChainCreateInfo& createInfo) override;
-        Buffer* CreateBuffer(const BufferCreateInfo& createInfo) override;
-        Texture* CreateTexture(const TextureCreateInfo& createInfo) override;
-        Sampler* CreateSampler(const SamplerCreateInfo& createInfo) override;
-        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo) override;
-        BindGroup* CreateBindGroup(const BindGroupCreateInfo& createInfo) override;
-        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo) override;
-        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo& createInfo) override;
-        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) override;
-        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) override;
+        size_t GetQueueNum(QueueType inType) override;
+        Queue* GetQueue(QueueType inType, size_t inIndex) override;
+        Surface* CreateSurface(const SurfaceCreateInfo& inCreateInfo) override;
+        SwapChain* CreateSwapChain(const SwapChainCreateInfo& inCreateInfo) override;
+        Buffer* CreateBuffer(const BufferCreateInfo& inCreateInfo) override;
+        Texture* CreateTexture(const TextureCreateInfo& inCreateInfo) override;
+        Sampler* CreateSampler(const SamplerCreateInfo& inCreateInfo) override;
+        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo) override;
+        BindGroup* CreateBindGroup(const BindGroupCreateInfo& inCreateInfo) override;
+        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo) override;
+        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo) override;
+        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo) override;
+        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& inCreateInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
-        Fence* CreateFence(bool initAsSignaled) override;
+        Fence* CreateFence(bool inInitAsSignaled) override;
         Semaphore* CreateSemaphore() override;
 
-        bool CheckSwapChainFormatSupport(RHI::Surface* surface, PixelFormat format) override;
+        bool CheckSwapChainFormatSupport(RHI::Surface* inSurface, PixelFormat inFormat) override;
 
         DX12Gpu& GetGpu();
-        ComPtr<ID3D12Device>& GetDX12Device();
-        ComPtr<ID3D12CommandAllocator>& GetDX12CommandAllocator();
-        DescriptorAllocation AllocateRtvDescriptor();
-        DescriptorAllocation AllocateCbvSrvUavDescriptor();
-        DescriptorAllocation AllocateSamplerDescriptor();
-        DescriptorAllocation AllocateDsvDescriptor();
+        ID3D12Device* GetNative();
+        ID3D12CommandAllocator* GetNativeCmdAllocator();
+        NativeDescriptorAllocation AllocateNativeRtvDescriptor();
+        NativeDescriptorAllocation AllocateNativeCbvSrvUavDescriptor();
+        NativeDescriptorAllocation AllocateNativeSamplerDescriptor();
+        NativeDescriptorAllocation AllocateNativeDsvDescriptor();
 
     private:
-        struct DescriptorHeapListNode {
+        struct NativeDescriptorHeapListNode {
             uint8_t used;
             ComPtr<ID3D12DescriptorHeap> descriptorHeap;
         };
 
-        inline DescriptorAllocation AllocateDescriptor(std::list<DescriptorHeapListNode>& list, uint8_t capacity, uint32_t descriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE heapType);
-        void CreateDX12Device();
-        void CreateDX12Queues(const DeviceCreateInfo& createInfo);
-        void CreateDX12CommandAllocator();
-        void GetDX12DescriptorSize();
+        inline NativeDescriptorAllocation AllocateNativeDescriptor(std::list<NativeDescriptorHeapListNode>& inList, uint8_t inCapacity, uint32_t inDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE inHeapType);
+        void CreateNativeDevice();
+        void CreateNativeQueues(const DeviceCreateInfo& inCreateInfo);
+        void CreateNativeCmdAllocator();
+        void QueryNativeDescriptorSize();
 #if BUILD_CONFIG_DEBUG
-        void RegisterDebugLayerExceptionHandler();
-        void UnregisterDebugLayerExceptionHandler();
+        void RegisterNativeDebugLayerExceptionHandler();
+        void UnregisterNativeDebugLayerExceptionHandler();
 #endif
 
         DX12Gpu& gpu;
         std::unordered_map<QueueType, std::vector<Common::UniqueRef<DX12Queue>>> queues;
-        uint32_t rtvDescriptorSize;
-        uint32_t cbvSrvUavDescriptorSize;
-        uint32_t samplerDescriptorSize;
-        uint32_t dsvDescriptorSize;
-        std::list<DescriptorHeapListNode> rtvHeapList;
-        std::list<DescriptorHeapListNode> cbvSrvUavHeapList;
-        std::list<DescriptorHeapListNode> samplerHeapList;
-        std::list<DescriptorHeapListNode> dsvHeapList;
-        ComPtr<ID3D12Device> dx12Device;
-        ComPtr<ID3D12CommandAllocator> dx12CommandAllocator;
+        uint32_t nativeRtvDescriptorSize;
+        uint32_t nativeCbvSrvUavDescriptorSize;
+        uint32_t nativeSamplerDescriptorSize;
+        uint32_t nativeDsvDescriptorSize;
+        std::list<NativeDescriptorHeapListNode> nativeRtvHeapList;
+        std::list<NativeDescriptorHeapListNode> nativeCbvSrvUavHeapList;
+        std::list<NativeDescriptorHeapListNode> nativeSamplerHeapList;
+        std::list<NativeDescriptorHeapListNode> nativeDsvHeapList;
+        ComPtr<ID3D12Device> nativeDevice;
+        ComPtr<ID3D12CommandAllocator> nativeCmdAllocator;
     };
 }

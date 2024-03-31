@@ -61,20 +61,20 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12Texture::DX12Texture(DX12Device& device, const TextureCreateInfo& createInfo)
-        : Texture(createInfo), device(device), usages(createInfo.usages), format(createInfo.format)
+    DX12Texture::DX12Texture(DX12Device& inDevice, const TextureCreateInfo& inCreateInfo)
+        : Texture(inCreateInfo), device(inDevice), usages(inCreateInfo.usages), format(inCreateInfo.format)
     {
-        CreateDX12Texture(createInfo);
+        CreateNativeTexture(inCreateInfo);
     }
 
-    DX12Texture::DX12Texture(DX12Device& device, PixelFormat inFormat, ComPtr<ID3D12Resource>&& dx12Res)
-        : Texture(), device(device), usages(static_cast<TextureUsageFlags>(TextureUsageBits::renderAttachment)), dx12Resource(dx12Res), format(inFormat) {}
+    DX12Texture::DX12Texture(DX12Device& inDevice, PixelFormat inFormat, ComPtr<ID3D12Resource>&& nativeResource)
+        : Texture(), device(inDevice), usages(static_cast<TextureUsageFlags>(TextureUsageBits::renderAttachment)), nativeResource(nativeResource), format(inFormat) {}
 
     DX12Texture::~DX12Texture() = default;
 
-    TextureView* DX12Texture::CreateTextureView(const TextureViewCreateInfo& createInfo)
+    TextureView* DX12Texture::CreateTextureView(const TextureViewCreateInfo& inCreateInfo)
     {
-        return new DX12TextureView(static_cast<DX12Device&>(device), *this, createInfo);
+        return new DX12TextureView(static_cast<DX12Device&>(device), *this, inCreateInfo);
     }
 
     void DX12Texture::Destroy()
@@ -92,38 +92,38 @@ namespace RHI::DirectX12 {
         return format;
     }
 
-    ComPtr<ID3D12Resource>& DX12Texture::GetDX12Resource()
+    ID3D12Resource* DX12Texture::GetNative()
     {
-        return dx12Resource;
+        return nativeResource.Get();
     }
 
-    void DX12Texture::CreateDX12Texture(const TextureCreateInfo& createInfo)
+    void DX12Texture::CreateNativeTexture(const TextureCreateInfo& inCreateInfo)
     {
         CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_DEFAULT);
         D3D12_RESOURCE_DESC textureDesc = {};
-        textureDesc.MipLevels = createInfo.mipLevels;
-        textureDesc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.format);
-        textureDesc.Width = createInfo.extent.x;
-        textureDesc.Height = createInfo.extent.y;
-        textureDesc.Flags = GetDX12ResourceFlags(createInfo.usages);
-        textureDesc.DepthOrArraySize = createInfo.extent.z;
-        textureDesc.SampleDesc.Count = createInfo.samples;
+        textureDesc.MipLevels = inCreateInfo.mipLevels;
+        textureDesc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(inCreateInfo.format);
+        textureDesc.Width = inCreateInfo.extent.x;
+        textureDesc.Height = inCreateInfo.extent.y;
+        textureDesc.Flags = GetDX12ResourceFlags(inCreateInfo.usages);
+        textureDesc.DepthOrArraySize = inCreateInfo.extent.z;
+        textureDesc.SampleDesc.Count = inCreateInfo.samples;
         // TODO https://docs.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc
         textureDesc.SampleDesc.Quality = 0;
-        textureDesc.Dimension = GetDX12ResourceDimension(createInfo.dimension);
+        textureDesc.Dimension = GetDX12ResourceDimension(inCreateInfo.dimension);
 
-        bool success = SUCCEEDED(device.GetDX12Device()->CreateCommittedResource(
+        bool success = SUCCEEDED(device.GetNative()->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &textureDesc,
-            DX12EnumCast<TextureState, D3D12_RESOURCE_STATES>(createInfo.initialState),
+            DX12EnumCast<TextureState, D3D12_RESOURCE_STATES>(inCreateInfo.initialState),
             nullptr,
-            IID_PPV_ARGS(&dx12Resource)));
+            IID_PPV_ARGS(&nativeResource)));
         Assert(success);
 
 #if BUILD_CONFIG_DEBUG
-        if (!createInfo.debugName.empty()) {
-            dx12Resource->SetName(Common::StringUtils::ToWideString(createInfo.debugName).c_str());
+        if (!inCreateInfo.debugName.empty()) {
+            nativeResource->SetName(Common::StringUtils::ToWideString(inCreateInfo.debugName).c_str());
         }
 #endif
     }

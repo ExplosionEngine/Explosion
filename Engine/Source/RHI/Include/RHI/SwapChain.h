@@ -23,6 +23,14 @@ namespace RHI {
         PixelFormat format;
         Common::UVec2 extent;
         PresentMode presentMode;
+
+        SwapChainCreateInfo();
+        SwapChainCreateInfo& PresentQueue(Queue* inPresentQueue);
+        SwapChainCreateInfo& Surface(Surface* inSurface);
+        SwapChainCreateInfo& TextureNum(uint8_t inTextureNum);
+        SwapChainCreateInfo& Format(PixelFormat inFormat);
+        SwapChainCreateInfo& Extent(const Common::UVec2& inExtent);
+        SwapChainCreateInfo& PresentMode(PresentMode inMode);
     };
 
     class SwapChain {

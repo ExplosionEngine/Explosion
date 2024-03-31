@@ -17,17 +17,17 @@ namespace RHI::DirectX12 {
     class DX12Gpu : public Gpu {
     public:
         NonCopyable(DX12Gpu)
-        DX12Gpu(DX12Instance& instance, ComPtr<IDXGIAdapter1>&& adapter);
+        DX12Gpu(DX12Instance& inInstance, ComPtr<IDXGIAdapter1>&& inNativeAdapter);
         ~DX12Gpu() override;
 
         GpuProperty GetProperty() override;
-        Device* RequestDevice(const DeviceCreateInfo& createInfo) override;
+        Device* RequestDevice(const DeviceCreateInfo& inCreateInfo) override;
 
         DX12Instance& GetInstance();
-        ComPtr<IDXGIAdapter1>& GetDX12Adapter();
+        IDXGIAdapter1* GetNative();
 
     private:
         DX12Instance& instance;
-        ComPtr<IDXGIAdapter1> dx12Adapter;
+        ComPtr<IDXGIAdapter1> nativeAdapter;
     };
 }

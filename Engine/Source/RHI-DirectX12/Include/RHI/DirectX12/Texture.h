@@ -4,11 +4,12 @@
 
 #pragma once
 
-#include <RHI/Texture.h>
 #include <d3d12.h>
 #include <wrl/client.h>
 
 using Microsoft::WRL::ComPtr;
+
+#include <RHI/Texture.h>
 
 namespace RHI::DirectX12 {
     class DX12Device;
@@ -16,23 +17,23 @@ namespace RHI::DirectX12 {
     class DX12Texture : public Texture {
     public:
         NonCopyable(DX12Texture)
-        explicit DX12Texture(DX12Device& device, const TextureCreateInfo& createInfo);
-        explicit DX12Texture(DX12Device& device, PixelFormat format, ComPtr<ID3D12Resource>&& dx12Res);
+        explicit DX12Texture(DX12Device& inDevice, const TextureCreateInfo& inCreateInfo);
+        explicit DX12Texture(DX12Device& inDevice, PixelFormat inFormat, ComPtr<ID3D12Resource>&& nativeResource);
         ~DX12Texture() override;
 
-        TextureView* CreateTextureView(const TextureViewCreateInfo& createInfo) override;
+        TextureView* CreateTextureView(const TextureViewCreateInfo& inCreateInfo) override;
         void Destroy() override;
 
         TextureUsageFlags GetUsages() const;
         PixelFormat GetFormat() const;
-        ComPtr<ID3D12Resource>& GetDX12Resource();
+        ID3D12Resource* GetNative();
 
     private:
-        void CreateDX12Texture(const TextureCreateInfo& createInfo);
+        void CreateNativeTexture(const TextureCreateInfo& inCreateInfo);
 
         DX12Device& device;
         TextureUsageFlags usages;
         PixelFormat format;
-        ComPtr<ID3D12Resource> dx12Resource;
+        ComPtr<ID3D12Resource> nativeResource;
     };
 }

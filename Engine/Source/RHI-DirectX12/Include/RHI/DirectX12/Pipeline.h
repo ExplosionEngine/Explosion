@@ -18,38 +18,38 @@ namespace RHI::DirectX12 {
     class DX12ComputePipeline : public ComputePipeline {
     public:
         NonCopyable(DX12ComputePipeline)
-        DX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo& createInfo);
+        DX12ComputePipeline(DX12Device& inDevice, const ComputePipelineCreateInfo& inCreateInfo);
         ~DX12ComputePipeline() override;
 
         void Destroy() override;
 
         DX12PipelineLayout& GetPipelineLayout();
-        ComPtr<ID3D12PipelineState>& GetDX12PipelineState();
+        ID3D12PipelineState* GetNative();
 
     private:
         void SavePipelineLayout(const ComputePipelineCreateInfo& createInfo);
-        void CreateDX12ComputePipeline(DX12Device& device, const ComputePipelineCreateInfo& createInfo);
+        void CreateNativeComputePipeline(DX12Device& inDevice, const ComputePipelineCreateInfo& inCreateInfo);
 
         DX12PipelineLayout* pipelineLayout;
-        ComPtr<ID3D12PipelineState> dx12PipelineState;
+        ComPtr<ID3D12PipelineState> nativePipelineState;
     };
 
     class DX12GraphicsPipeline : public GraphicsPipeline {
     public:
         NonCopyable(DX12GraphicsPipeline)
-        DX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo& createInfo);
+        DX12GraphicsPipeline(DX12Device& inDevice, const GraphicsPipelineCreateInfo& inCreateInfo);
         ~DX12GraphicsPipeline() override;
 
         void Destroy() override;
 
         DX12PipelineLayout& GetPipelineLayout();
-        ComPtr<ID3D12PipelineState>& GetDX12PipelineState();
+        ID3D12PipelineState* GetNative();
 
     private:
-        void SavePipelineLayout(const GraphicsPipelineCreateInfo& createInfo);
-        void CreateDX12GraphicsPipeline(DX12Device& device, const GraphicsPipelineCreateInfo& createInfo);
+        void SavePipelineLayout(const GraphicsPipelineCreateInfo& inCreateInfo);
+        void CreateNativeGraphicsPipeline(DX12Device& inDevice, const GraphicsPipelineCreateInfo& inCreateInfo);
 
         DX12PipelineLayout* pipelineLayout;
-        ComPtr<ID3D12PipelineState> dx12PipelineState;
+        ComPtr<ID3D12PipelineState> nativePipelineState;
     };
 }

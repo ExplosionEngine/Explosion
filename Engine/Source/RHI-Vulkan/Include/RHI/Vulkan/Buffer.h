@@ -8,30 +8,32 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/Buffer.h>
+#include <Common/Utility.h>
 
 namespace RHI::Vulkan {
-    class VKDevice;
+    class VulkanDevice;
 
-    class VKBuffer : public Buffer {
+    class VulkanBuffer : public Buffer {
     public:
-        VKBuffer(VKDevice& device, const BufferCreateInfo& createInfo);
-        ~VKBuffer();
+        NonCopyable(VulkanBuffer)
+        VulkanBuffer(VulkanDevice& inDevice, const BufferCreateInfo& inCreateInfo);
+        ~VulkanBuffer() override;
 
-        void* Map(MapMode mapMode, size_t offset, size_t length) override;
+        void* Map(MapMode inMapMode, size_t inOffset, size_t inLength) override;
         void UnMap() override;
-        BufferView* CreateBufferView(const BufferViewCreateInfo& createInfo) override;
+        BufferView* CreateBufferView(const BufferViewCreateInfo& inCreateInfo) override;
         void Destroy() override;
 
-        VkBuffer GetVkBuffer();
+        VkBuffer GetNative();
         BufferUsageFlags GetUsages();
 
     private:
-        void CreateBuffer(const BufferCreateInfo& createInfo);
-        void TransitionToInitState(const BufferCreateInfo& createInfo);
+        void CreateNativeBuffer(const BufferCreateInfo& inCreateInfo);
+        void TransitionToInitState(const BufferCreateInfo& inCreateInfo);
 
-        VKDevice& device;
-        VkBuffer vkBuffer;
-        VmaAllocation allocation;
+        VulkanDevice& device;
+        VkBuffer nativeBuffer;
+        VmaAllocation nativeAllocation;
         BufferUsageFlags usages;
     };
 }

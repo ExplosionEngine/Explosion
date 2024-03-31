@@ -10,37 +10,37 @@
 #include <RHI/Vulkan/Synchronous.h>
 
 namespace RHI::Vulkan {
-    VKQueue::VKQueue(VKDevice& inDevice, VkQueue q)
+    VulkanQueue::VulkanQueue(VulkanDevice& inDevice, VkQueue inNativeQueue)
         : Queue()
-        , vkQueue(q)
+        , nativeQueue(inNativeQueue)
     {
     }
 
-    VKQueue::~VKQueue() = default;
+    VulkanQueue::~VulkanQueue() = default;
 
-    void VKQueue::Submit(CommandBuffer* cb, const QueueSubmitInfo& submitInfo)
+    void VulkanQueue::Submit(CommandBuffer* inCmdBuffer, const QueueSubmitInfo& inSubmitInfo)
     {
-        auto* commandBuffer = static_cast<VKCommandBuffer*>(cb);
-        auto* vkFence = static_cast<VKFence*>(submitInfo.signalFence);
+        auto* commandBuffer = static_cast<VulkanCommandBuffer*>(inCmdBuffer);
+        auto* vkFence = static_cast<VulkanFence*>(inSubmitInfo.signalFence);
 
         Assert(commandBuffer);
-        const VkCommandBuffer& cmdBuffer = commandBuffer->GetVkCommandBuffer();
+        const VkCommandBuffer& cmdBuffer = commandBuffer->GetNativeCommandBuffer();
 
         std::vector<VkSemaphore> waitSemaphores;
         std::vector<VkPipelineStageFlags> waitStageFlags;
-        waitSemaphores.resize(submitInfo.waitSemaphoreNum);
-        waitStageFlags.resize(submitInfo.waitSemaphoreNum);
-        for (auto i = 0; i < submitInfo.waitSemaphoreNum; i++) {
-            auto& vkSemaphore = static_cast<VKSemaphore&>(submitInfo.waitSemaphores[i]);
-            waitSemaphores[i] = vkSemaphore.GetNative();
+        waitSemaphores.resize(inSubmitInfo.waitSemaphores.size());
+        waitStageFlags.resize(inSubmitInfo.waitSemaphores.size());
+        for (auto i = 0; i < inSubmitInfo.waitSemaphores.size(); i++) {
+            auto* vkSemaphore = static_cast<VulkanSemaphore*>(inSubmitInfo.waitSemaphores[i]);
+            waitSemaphores[i] = vkSemaphore->GetNative();
             waitStageFlags[i] = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         }
 
         std::vector<VkSemaphore> signalSemaphores;
-        signalSemaphores.resize(submitInfo.signalSemaphoreNum);
-        for (auto i = 0; i < submitInfo.signalSemaphoreNum; i++) {
-            auto& vkSemaphore = static_cast<VKSemaphore&>(submitInfo.signalSemaphores[i]);
-            signalSemaphores[i] = vkSemaphore.GetNative();
+        signalSemaphores.resize(inSubmitInfo.signalSemaphores.size());
+        for (auto i = 0; i < inSubmitInfo.signalSemaphores.size(); i++) {
+            auto* vkSemaphore = static_cast<VulkanSemaphore*>(inSubmitInfo.signalSemaphores[i]);
+            signalSemaphores[i] = vkSemaphore->GetNative();
         }
 
         VkSubmitInfo vkSubmitInfo = {};
@@ -54,23 +54,23 @@ namespace RHI::Vulkan {
         vkSubmitInfo.commandBufferCount = 1;
         vkSubmitInfo.pCommandBuffers = &cmdBuffer;
 
-        Assert(vkQueueSubmit(vkQueue, 1, &vkSubmitInfo, vkFence->GetNative()) == VK_SUCCESS);
+        Assert(vkQueueSubmit(nativeQueue, 1, &vkSubmitInfo, vkFence->GetNative()) == VK_SUCCESS);
     }
 
-    void VKQueue::Flush(Fence* fenceToSignal)
+    void VulkanQueue::Flush(Fence* inFenceToSignal)
     {
-        auto* vkFence = static_cast<VKFence*>(fenceToSignal);
+        auto* vkFence = static_cast<VulkanFence*>(inFenceToSignal);
 
         VkSubmitInfo vkSubmitInfo = {};
         vkSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         vkSubmitInfo.commandBufferCount = 0;
         vkSubmitInfo.pCommandBuffers = nullptr;
 
-        Assert(vkQueueSubmit(vkQueue, 1, &vkSubmitInfo, vkFence->GetNative()) == VK_SUCCESS);
+        Assert(vkQueueSubmit(nativeQueue, 1, &vkSubmitInfo, vkFence->GetNative()) == VK_SUCCESS);
     }
 
-    VkQueue VKQueue::GetVkQueue()
+    VkQueue VulkanQueue::GetNative()
     {
-        return vkQueue;
+        return nativeQueue;
     }
 }

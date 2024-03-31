@@ -33,105 +33,105 @@ namespace RHI::Vulkan {
         return result;
     }
 
-    VKTexture::VKTexture(VKDevice& dev, const TextureCreateInfo& createInfo, VkImage image)
-        : Texture(createInfo), device(dev), vkImage(image), ownMemory(false), extent(createInfo.extent), format(createInfo.format), mipLevels(createInfo.mipLevels), samples(createInfo.samples)
+    VulkanTexture::VulkanTexture(VulkanDevice& inDevice, const TextureCreateInfo& inCreateInfo, VkImage inNativeImage)
+        : Texture(inCreateInfo), device(inDevice), nativeImage(inNativeImage), ownMemory(false), extent(inCreateInfo.extent), format(inCreateInfo.format), mipLevels(inCreateInfo.mipLevels), samples(inCreateInfo.samples)
     {
     }
 
-    VKTexture::VKTexture(VKDevice& dev, const TextureCreateInfo& createInfo)
-        : Texture(createInfo), device(dev), vkImage(VK_NULL_HANDLE), ownMemory(true), extent(createInfo.extent), format(createInfo.format), mipLevels(createInfo.mipLevels), samples(createInfo.samples)
+    VulkanTexture::VulkanTexture(VulkanDevice& inDevice, const TextureCreateInfo& inCreateInfo)
+        : Texture(inCreateInfo), device(inDevice), nativeImage(VK_NULL_HANDLE), ownMemory(true), extent(inCreateInfo.extent), format(inCreateInfo.format), mipLevels(inCreateInfo.mipLevels), samples(inCreateInfo.samples)
     {
-        CreateImage(createInfo);
-        TransitionToInitState(createInfo);
+        CreateNativeImage(inCreateInfo);
+        TransitionToInitState(inCreateInfo);
     }
 
-    VKTexture::~VKTexture()
+    VulkanTexture::~VulkanTexture()
     {
-        if (vkImage && ownMemory) {
-            vmaDestroyImage(device.GetVmaAllocator(), vkImage, allocation);
+        if (nativeImage && ownMemory) {
+            vmaDestroyImage(device.GetNativeAllocator(), nativeImage, nativeAllocation);
         }
 
-        if (vkImageView) {
-            vkDestroyImageView(device.GetVkDevice(), vkImageView, nullptr);
+        if (nativeImageView) {
+            vkDestroyImageView(device.GetNative(), nativeImageView, nullptr);
         }
     }
 
-    void VKTexture::Destroy()
+    void VulkanTexture::Destroy()
     {
         delete this;
     }
 
-    TextureView* VKTexture::CreateTextureView(const TextureViewCreateInfo& createInfo)
+    TextureView* VulkanTexture::CreateTextureView(const TextureViewCreateInfo& inCreateInfo)
     {
-        return new VKTextureView(*this, device, createInfo);
+        return new VulkanTextureView(*this, device, inCreateInfo);
     }
 
-    VkImage VKTexture::GetImage() const
+    VkImage VulkanTexture::GetNative() const
     {
-        return vkImage;
+        return nativeImage;
     }
 
-    Common::UVec3 VKTexture::GetExtent() const
+    Common::UVec3 VulkanTexture::GetExtent() const
     {
         return extent;
     }
 
-    void VKTexture::GetAspect(const RHI::TextureCreateInfo& createInfo)
+    void VulkanTexture::GetAspect(const RHI::TextureCreateInfo& inCreateInfo)
     {
-        if (createInfo.usages & TextureUsageBits::depthStencilAttachment) {
-            aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
-            if (createInfo.format == PixelFormat::d32FloatS8Uint || createInfo.format == PixelFormat::d24UnormS8Uint) {
-                aspect |= VK_IMAGE_ASPECT_STENCIL_BIT;
+        if (inCreateInfo.usages & TextureUsageBits::depthStencilAttachment) {
+            nativeAspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+            if (inCreateInfo.format == PixelFormat::d32FloatS8Uint || inCreateInfo.format == PixelFormat::d24UnormS8Uint) {
+                nativeAspect |= VK_IMAGE_ASPECT_STENCIL_BIT;
             }
         }
     }
 
-    VkImageSubresourceRange VKTexture::GetFullRange()
+    VkImageSubresourceRange VulkanTexture::GetNativeSubResourceFullRange()
     {
-        return { aspect, 0, mipLevels, 0, extent.z };
+        return {nativeAspect, 0, mipLevels, 0, extent.z };
     }
 
-    void VKTexture::CreateImage(const TextureCreateInfo& createInfo)
+    void VulkanTexture::CreateNativeImage(const TextureCreateInfo& inCreateInfo)
     {
-        GetAspect(createInfo);
+        GetAspect(inCreateInfo);
 
         VkImageCreateInfo imageInfo = {};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.arrayLayers = extent.z;
         imageInfo.mipLevels = mipLevels;
-        imageInfo.extent = FromRHI(createInfo.extent);
-        imageInfo.samples = static_cast<VkSampleCountFlagBits>(createInfo.samples);
-        imageInfo.imageType = VKEnumCast<TextureDimension, VkImageType>(createInfo.dimension);
-        imageInfo.format = VKEnumCast<PixelFormat, VkFormat>(createInfo.format);
-        imageInfo.usage = GetVkResourceStates(createInfo.usages);
+        imageInfo.extent = FromRHI(inCreateInfo.extent);
+        imageInfo.samples = static_cast<VkSampleCountFlagBits>(inCreateInfo.samples);
+        imageInfo.imageType = VKEnumCast<TextureDimension, VkImageType>(inCreateInfo.dimension);
+        imageInfo.format = VKEnumCast<PixelFormat, VkFormat>(inCreateInfo.format);
+        imageInfo.usage = GetVkResourceStates(inCreateInfo.usages);
 
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
 
-        Assert(vmaCreateImage(device.GetVmaAllocator(), &imageInfo, &allocInfo, &vkImage, &allocation, nullptr) == VK_SUCCESS);
+        Assert(vmaCreateImage(device.GetNativeAllocator(), &imageInfo, &allocInfo, &nativeImage, &nativeAllocation, nullptr) == VK_SUCCESS);
 
 #if BUILD_CONFIG_DEBUG
-        if (!createInfo.debugName.empty()) {
-            device.SetObjectName(VK_OBJECT_TYPE_IMAGE, reinterpret_cast<uint64_t>(vkImage), createInfo.debugName.c_str());
+        if (!inCreateInfo.debugName.empty()) {
+            device.SetObjectName(VK_OBJECT_TYPE_IMAGE, reinterpret_cast<uint64_t>(nativeImage), inCreateInfo.debugName.c_str());
         }
 #endif
     }
 
-    PixelFormat VKTexture::GetFormat() const
+    PixelFormat VulkanTexture::GetFormat() const
     {
         return format;
     }
 
-    void VKTexture::TransitionToInitState(const TextureCreateInfo& createInfo)
+    void VulkanTexture::TransitionToInitState(const TextureCreateInfo& inCreateInfo)
     {
-        if (createInfo.initialState > TextureState::undefined) {
+        if (inCreateInfo.initialState > TextureState::undefined) {
             Queue* queue = device.GetQueue(QueueType::graphics, 0);
             Assert(queue);
 
             Common::UniqueRef<Fence> fence = device.CreateFence(false);
             Common::UniqueRef<CommandBuffer> commandBuffer = device.CreateCommandBuffer();
             Common::UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
-            commandEncoder->ResourceBarrier(Barrier::Transition(this, TextureState::undefined, createInfo.initialState));
+            commandEncoder->ResourceBarrier(Barrier::Transition(this, TextureState::undefined, inCreateInfo.initialState));
             commandEncoder->End();
 
             QueueSubmitInfo submitInfo {};

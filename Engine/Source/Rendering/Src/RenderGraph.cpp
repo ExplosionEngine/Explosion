@@ -38,12 +38,12 @@ namespace Rendering::Internal {
 
     static std::optional<RHI::GraphicsPassDepthStencilAttachment> GetRasterPassDepthStencilAttachment(const RGRasterPassDesc& desc)
     {
-        static_assert(std::is_base_of_v<RHI::GraphicsPassDepthStencilAttachmentBase, RGDepthStencilAttachment>);
+        static_assert(std::is_base_of_v<RHI::GraphicsPassDepthStencilAttachmentBase<RGDepthStencilAttachment>, RGDepthStencilAttachment>);
 
         std::optional<RHI::GraphicsPassDepthStencilAttachment> result;
         if (desc.depthStencilAttachment.has_value()) {
             result = RHI::GraphicsPassDepthStencilAttachment {};
-            memcpy(&result.value(), &desc.depthStencilAttachment.value(), sizeof(RHI::GraphicsPassDepthStencilAttachmentBase));
+            memcpy(&result.value(), &desc.depthStencilAttachment.value(), sizeof(RHI::GraphicsPassDepthStencilAttachmentBase<RGDepthStencilAttachment>));
             result->view = desc.depthStencilAttachment->view->GetRHI();
         }
         return result;
@@ -51,14 +51,14 @@ namespace Rendering::Internal {
 
     static std::vector<RHI::GraphicsPassColorAttachment> GetRasterPassColorAttachments(const RGRasterPassDesc& desc)
     {
-        static_assert(std::is_base_of_v<RHI::GraphicsPassColorAttachmentBase, RGColorAttachment>);
+        static_assert(std::is_base_of_v<RHI::GraphicsPassColorAttachmentBase<RGColorAttachment>, RGColorAttachment>);
 
         std::vector<RHI::GraphicsPassColorAttachment> result;
         result.reserve(desc.colorAttachments.size());
 
         for (const auto& colorAttachment : desc.colorAttachments) {
             RHI::GraphicsPassColorAttachment back;
-            memcpy(&back, &colorAttachment, sizeof(RHI::GraphicsPassColorAttachmentBase));
+            memcpy(&back, &colorAttachment, sizeof(RHI::GraphicsPassColorAttachmentBase<RGColorAttachment>));
             back.view = colorAttachment.view->GetRHI();
             result.emplace_back(std::move(back));
         }
@@ -404,24 +404,8 @@ namespace Rendering {
         result.type = rhiDesc.type;
         result.offset = rhiDesc.offset;
         result.size = rhiDesc.size;
-        if (result.type == RHI::BufferViewType::index) {
-            result.index = rhiDesc.index;
-        } else if (result.type == RHI::BufferViewType::vertex) {
-            result.vertex = rhiDesc.vertex;
-        }
+        result.extend = rhiDesc.extend;
         return result;
-    }
-
-    RGBufferViewDesc& RGBufferViewDesc::Offset(uint32_t inOffset)
-    {
-        offset = inOffset;
-        return *this;
-    }
-
-    RGBufferViewDesc& RGBufferViewDesc::Size(uint32_t inSize)
-    {
-        size = inSize;
-        return *this;
     }
 
     RGTextureViewDesc RGTextureViewDesc::CreateForTexture()
@@ -517,7 +501,7 @@ namespace Rendering {
     RGBufferView::RGBufferView(RGBufferRef inBuffer, const RGBufferViewDesc& inDesc)
         : RGResourceView(RGResViewType::bufferView)
         , buffer(inBuffer)
-        , desc(RGBufferViewDesc::Create(inDesc))
+        , desc(inDesc)
         , rhiHandle(nullptr)
     {
     }
@@ -652,33 +636,23 @@ namespace Rendering {
             return;
         }
 
-        std::vector<RHI::BindGroupEntry> entries;
-        entries.reserve(desc.items.size());
-        for (const auto& item : desc.items) {
-            RHI::BindGroupEntry entry;
-            const auto* binding = desc.layout->GetBinding(item.first);
-            // TODO maybe use operator= ?
-            entry.binding.type = binding->type;
-            entry.binding.platformBinding = binding->platformBinding;
+        RHI::BindGroupCreateInfo createInfo(desc.layout->GetRHI());
+        createInfo.entries.reserve(desc.items.size());
 
+        for (const auto& item : desc.items) {
+            const auto* binding = desc.layout->GetBinding(item.first);
             const RGBindItemDesc& itemDesc = item.second;
-            Assert(entry.binding.type == itemDesc.type);
 
             if (itemDesc.type == RHI::BindingType::uniformBuffer || itemDesc.type == RHI::BindingType::storageBuffer) {
-                entry.bufferView = itemDesc.bufferView->GetRHI();
+                createInfo.Entry(RHI::BindGroupEntry(*binding, itemDesc.bufferView->GetRHI()));
             } else if (itemDesc.type == RHI::BindingType::texture || itemDesc.type == RHI::BindingType::storageTexture) {
-                entry.textureView = itemDesc.textureView->GetRHI();
+                createInfo.Entry(RHI::BindGroupEntry(*binding, itemDesc.textureView->GetRHI()));
             } else if (itemDesc.type == RHI::BindingType::sampler) {
-                entry.sampler = itemDesc.sampler;
+                createInfo.Entry(RHI::BindGroupEntry(*binding, itemDesc.sampler));
             } else {
                 Unimplement();
             }
         }
-
-        RHI::BindGroupCreateInfo createInfo;
-        createInfo.layout = desc.layout->GetRHI();
-        createInfo.entryNum = entries.size();
-        createInfo.entries = entries.data();
 
         devirtualized = true;
         rhiHandle = inDevice.CreateBindGroup(createInfo);
@@ -925,15 +899,13 @@ namespace Rendering {
         RHI::CommandBuffer* cmdBuffer = cmdBuffers.mainCmdBuffer;
         Common::UniqueRef<RHI::CommandEncoder> cmdEncoder = cmdBuffer->Begin();
         {
-            std::vector<RHI::GraphicsPassColorAttachment> colorAttachments = Internal::GetRasterPassColorAttachments(passDesc);
             std::optional<RHI::GraphicsPassDepthStencilAttachment> depthStencilAttachment = Internal::GetRasterPassDepthStencilAttachment(passDesc);
 
             RHI::GraphicsPassBeginInfo passBeginInfo;
-            passBeginInfo.colorAttachmentNum = colorAttachments.size();
-            passBeginInfo.colorAttachments = colorAttachments.data();
-            passBeginInfo.depthStencilAttachment = depthStencilAttachment.has_value() ? &depthStencilAttachment.value() : nullptr;
+            passBeginInfo.colorAttachments = Internal::GetRasterPassColorAttachments(passDesc);
+            passBeginInfo.depthStencilAttachment = depthStencilAttachment;
 
-            Common::UniqueRef<RHI::GraphicsPassCommandEncoder> rasterCmdEncoder = cmdEncoder->BeginGraphicsPass(&passBeginInfo);
+            Common::UniqueRef<RHI::GraphicsPassCommandEncoder> rasterCmdEncoder = cmdEncoder->BeginGraphicsPass(passBeginInfo);
             {
                 TransitionResources(rasterCmdEncoder.Get());
                 func(*rasterCmdEncoder);

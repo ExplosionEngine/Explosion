@@ -10,17 +10,29 @@
 
 namespace RHI {
     struct SamplerCreateInfo {
-        AddressMode addressModeU = AddressMode::clampToEdge;
-        AddressMode addressModeV = AddressMode::clampToEdge;
-        AddressMode addressModeW = AddressMode::clampToEdge;
-        FilterMode magFilter = FilterMode::nearest;
-        FilterMode minFilter = FilterMode::nearest;
-        FilterMode mipFilter = FilterMode::nearest;
-        float lodMinClamp = 0;
-        float lodMaxClamp = 32;
-        ComparisonFunc comparisonFunc = ComparisonFunc::never;
-        uint8_t maxAnisotropy = 1;
+        AddressMode addressModeU;
+        AddressMode addressModeV;
+        AddressMode addressModeW;
+        FilterMode magFilter;
+        FilterMode minFilter;
+        FilterMode mipFilter;
+        float lodMinClamp;
+        float lodMaxClamp;
+        ComparisonFunc comparisonFunc;
+        uint8_t maxAnisotropy;
         std::string debugName;
+
+        SamplerCreateInfo();
+        SamplerCreateInfo& AddressModeU(AddressMode inMode);
+        SamplerCreateInfo& AddressModeV(AddressMode inMode);
+        SamplerCreateInfo& AddressModeW(AddressMode inMode);
+        SamplerCreateInfo& MagFilter(FilterMode inMode);
+        SamplerCreateInfo& MinFilter(FilterMode inMode);
+        SamplerCreateInfo& LodMinClamp(float inValue);
+        SamplerCreateInfo& LodMaxClamp(float inValue);
+        SamplerCreateInfo& ComparisonFunc(ComparisonFunc inFunc);
+        SamplerCreateInfo& MaxAnisotropy(uint8_t inValue);
+        SamplerCreateInfo& DebugName(std::string inName);
     };
 
     class Sampler {

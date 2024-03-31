@@ -8,12 +8,13 @@
 #include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
-    class VKDevice;
+    class VulkanDevice;
 
-    class VKFence : public Fence {
+    class VulkanFence : public Fence {
     public:
-        explicit VKFence(VKDevice& inDevice, bool initAsSignaled);
-        ~VKFence() override;
+        NonCopyable(VulkanFence)
+        explicit VulkanFence(VulkanDevice& inDevice, bool inInitAsSignaled);
+        ~VulkanFence() override;
 
         bool IsSignaled() override;
         void Reset() override;
@@ -23,21 +24,22 @@ namespace RHI::Vulkan {
         VkFence GetNative() const;
 
     private:
-        VKDevice& device;
-        VkFence vkFence;
+        VulkanDevice& device;
+        VkFence nativeFence;
     };
 
-    class VKSemaphore : public Semaphore {
+    class VulkanSemaphore : public Semaphore {
     public:
-        explicit VKSemaphore(VKDevice& inDevice);
-        ~VKSemaphore() override;
+        NonCopyable(VulkanSemaphore)
+        explicit VulkanSemaphore(VulkanDevice& inDevice);
+        ~VulkanSemaphore() override;
 
         void Destroy() override;
 
         VkSemaphore GetNative() const;
 
     private:
-        VKDevice& device;
-        VkSemaphore vkSemaphore;
+        VulkanDevice& device;
+        VkSemaphore nativeSemaphore;
     };
 }

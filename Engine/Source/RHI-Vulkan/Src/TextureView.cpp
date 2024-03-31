@@ -8,46 +8,46 @@
 #include <RHI/Vulkan/Common.h>
 
 namespace RHI::Vulkan {
-    VKTextureView::VKTextureView(VKTexture& tex, VKDevice& dev, const TextureViewCreateInfo& createInfo)
-        : TextureView(createInfo), device(dev), vkTexture(tex), baseMipLevel(createInfo.baseMipLevel), mipLevelNum(createInfo.mipLevelNum), baseArrayLayer(createInfo.baseArrayLayer), arrayLayerNum(createInfo.arrayLayerNum)
+    VulkanTextureView::VulkanTextureView(VulkanTexture& inTexture, VulkanDevice& nDevice, const TextureViewCreateInfo& inCreateInfo)
+        : TextureView(inCreateInfo), device(nDevice), texture(inTexture), baseMipLevel(inCreateInfo.baseMipLevel), mipLevelNum(inCreateInfo.mipLevelNum), baseArrayLayer(inCreateInfo.baseArrayLayer), arrayLayerNum(inCreateInfo.arrayLayerNum)
     {
-        CreateImageView(createInfo);
+        CreateImageView(inCreateInfo);
     }
 
-    VKTextureView::~VKTextureView()
+    VulkanTextureView::~VulkanTextureView()
     {
     }
 
-    void VKTextureView::Destroy()
+    void VulkanTextureView::Destroy()
     {
         delete this;
     }
 
-    void VKTextureView::CreateImageView(const TextureViewCreateInfo& createInfo)
+    void VulkanTextureView::CreateImageView(const TextureViewCreateInfo& inCreateInfo)
     {
-        if (!vkTexture.vkImageView) {
+        if (!texture.nativeImageView) {
             VkImageViewCreateInfo viewInfo = {};
             viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            viewInfo.format = VKEnumCast<PixelFormat, VkFormat>(vkTexture.GetFormat());
-            viewInfo.image = vkTexture.GetImage();
-            viewInfo.viewType = VKEnumCast<TextureViewDimension, VkImageViewType>(createInfo.dimension);
-            viewInfo.subresourceRange = { GetAspectMask(createInfo.aspect), baseMipLevel, mipLevelNum, baseArrayLayer, arrayLayerNum };
+            viewInfo.format = VKEnumCast<PixelFormat, VkFormat>(texture.GetFormat());
+            viewInfo.image = texture.GetNative();
+            viewInfo.viewType = VKEnumCast<TextureViewDimension, VkImageViewType>(inCreateInfo.dimension);
+            viewInfo.subresourceRange = {GetAspectMask(inCreateInfo.aspect), baseMipLevel, mipLevelNum, baseArrayLayer, arrayLayerNum };
 
-            Assert(vkCreateImageView(device.GetVkDevice(), &viewInfo, nullptr, &vkTexture.vkImageView) == VK_SUCCESS);
+            Assert(vkCreateImageView(device.GetNative(), &viewInfo, nullptr, &texture.nativeImageView) == VK_SUCCESS);
         }
     }
 
-    VkImageView VKTextureView::GetVkImageView()
+    VkImageView VulkanTextureView::GetNative()
     {
-        return vkTexture.vkImageView;
+        return texture.nativeImageView;
     }
 
-    VKTexture& VKTextureView::GetTexture() const
+    VulkanTexture& VulkanTextureView::GetTexture() const
     {
-        return vkTexture;
+        return texture;
     }
 
-    uint8_t VKTextureView::GetArrayLayerNum() const
+    uint8_t VulkanTextureView::GetArrayLayerNum() const
     {
         return arrayLayerNum;
     }

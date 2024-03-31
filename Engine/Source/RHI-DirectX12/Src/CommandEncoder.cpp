@@ -35,50 +35,50 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12CopyPassCommandEncoder::DX12CopyPassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer)
-        : device(device)
-        , commandEncoder(commandEncoder)
-        , commandBuffer(commandBuffer)
+    DX12CopyPassCommandEncoder::DX12CopyPassCommandEncoder(DX12Device& inDevice, DX12CommandEncoder& inCmdEncoder, DX12CommandBuffer& inCmdBuffer)
+        : device(inDevice)
+        , commandEncoder(inCmdEncoder)
+        , commandBuffer(inCmdBuffer)
     {
     }
 
     DX12CopyPassCommandEncoder::~DX12CopyPassCommandEncoder() = default;
 
-    void DX12CopyPassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    void DX12CopyPassCommandEncoder::ResourceBarrier(const Barrier& inBarrier)
     {
-        commandEncoder.ResourceBarrier(barrier);
+        commandEncoder.ResourceBarrier(inBarrier);
     }
 
-    void DX12CopyPassCommandEncoder::CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size)
+    void DX12CopyPassCommandEncoder::CopyBufferToBuffer(Buffer* inSrcBuffer, size_t inSrcOffset, Buffer* inDestBuffer, size_t inDestOffset, size_t inSize)
     {
         // TODO
     }
 
-    void DX12CopyPassCommandEncoder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
+    void DX12CopyPassCommandEncoder::CopyBufferToTexture(Buffer* inSrcBuffer, Texture* inDestTexture, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize)
     {
-        auto* buffer = static_cast<DX12Buffer*>(src);
-        auto* texture = static_cast<DX12Texture*>(dst);
-        auto origin = subResourceInfo->origin;
+        auto* buffer = static_cast<DX12Buffer*>(inSrcBuffer);
+        auto* texture = static_cast<DX12Texture*>(inDestTexture);
+        auto origin = inSubResourceInfo->origin;
 
         D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
         layout.Offset = 0;
-        layout.Footprint.Depth = size.z;
-        layout.Footprint.Width = size.x;
-        layout.Footprint.Height = size.y;
+        layout.Footprint.Depth = inSize.z;
+        layout.Footprint.Width = inSize.x;
+        layout.Footprint.Height = inSize.y;
         layout.Footprint.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture->GetFormat());
-        layout.Footprint.RowPitch = size.x * GetBytesPerPixel(texture->GetFormat()); // row pitch must be a multiple of 256, let dx checks if the texture is valid
+        layout.Footprint.RowPitch = inSize.x * GetBytesPerPixel(texture->GetFormat()); // row pitch must be a multiple of 256, let dx checks if the texture is valid
 
-        CD3DX12_TEXTURE_COPY_LOCATION dest(texture->GetDX12Resource().Get(), 0);
-        CD3DX12_TEXTURE_COPY_LOCATION source(buffer->GetDX12Resource().Get(), layout);
-        commandBuffer.GetDX12GraphicsCommandList()->CopyTextureRegion(&dest, origin.x, origin.y, origin.z, &source, nullptr);
+        CD3DX12_TEXTURE_COPY_LOCATION dest(texture->GetNative(), 0);
+        CD3DX12_TEXTURE_COPY_LOCATION source(buffer->GetNative(), layout);
+        commandBuffer.GetNative()->CopyTextureRegion(&dest, origin.x, origin.y, origin.z, &source, nullptr);
     }
 
-    void DX12CopyPassCommandEncoder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
+    void DX12CopyPassCommandEncoder::CopyTextureToBuffer(Texture* inSrcTexture, Buffer* inDestBuffer, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize)
     {
         // TODO
     }
 
-    void DX12CopyPassCommandEncoder::CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo , const Common::UVec3& size)
+    void DX12CopyPassCommandEncoder::CopyTextureToTexture(Texture* inSrcTexture, const TextureSubResourceInfo* inSrcSubResourceInfo, Texture* inDestTexture, const TextureSubResourceInfo* inDestSubResourceInfo , const Common::UVec3& inSize)
     {
         // TODO
     }
@@ -92,52 +92,52 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    DX12ComputePassCommandEncoder::DX12ComputePassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer)
+    DX12ComputePassCommandEncoder::DX12ComputePassCommandEncoder(DX12Device& inDevice, DX12CommandEncoder& inCmdEncoder, DX12CommandBuffer& inCmdBuffer)
         : ComputePassCommandEncoder()
-        , device(device)
-        , commandEncoder(commandEncoder)
-        , commandBuffer(commandBuffer)
+        , device(inDevice)
+        , commandEncoder(inCmdEncoder)
+        , commandBuffer(inCmdBuffer)
     {
     }
 
     DX12ComputePassCommandEncoder::~DX12ComputePassCommandEncoder() = default;
 
-    void DX12ComputePassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    void DX12ComputePassCommandEncoder::ResourceBarrier(const Barrier& inBarrier)
     {
-        commandEncoder.ResourceBarrier(barrier);
+        commandEncoder.ResourceBarrier(inBarrier);
     }
 
-    void DX12ComputePassCommandEncoder::SetPipeline(ComputePipeline* pipeline)
+    void DX12ComputePassCommandEncoder::SetPipeline(ComputePipeline* inPipeline)
     {
-        computePipeline = static_cast<DX12ComputePipeline*>(pipeline);
+        computePipeline = static_cast<DX12ComputePipeline*>(inPipeline);
         Assert(computePipeline);
 
-        commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(computePipeline->GetDX12PipelineState().Get());
-        commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(computePipeline->GetPipelineLayout().GetDX12RootSignature().Get());
+        commandBuffer.GetNative()->SetPipelineState(computePipeline->GetNative());
+        commandBuffer.GetNative()->SetGraphicsRootSignature(computePipeline->GetPipelineLayout().GetNative());
     }
 
-    void DX12ComputePassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* tBindGroup)
+    void DX12ComputePassCommandEncoder::SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup)
     {
-        auto* bindGroup = static_cast<DX12BindGroup*>(tBindGroup);
+        auto* bindGroup = static_cast<DX12BindGroup*>(inBindGroup);
         auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
         auto& pipelineLayout = computePipeline->GetPipelineLayout();
 
-        Assert(layoutIndex == bindGroupLayout.GetLayoutIndex());
+        Assert(inLayoutIndex == bindGroupLayout.GetLayoutIndex());
         Assert(computePipeline);
 
-        const auto& bindings= bindGroup->GetBindings();
+        const auto& bindings= bindGroup->GetNativeBindings();
         for (const auto& binding : bindings) {
-            std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(layoutIndex, binding.first);
+            std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(inLayoutIndex, binding.first);
             if (!t.has_value()) {
                 return;
             }
-            commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, commandBuffer.GetRuntimeDescriptorHeaps()->NewGpuDescriptorHandle(binding.first.rangeType, binding.second));
+            commandBuffer.GetNative()->SetGraphicsRootDescriptorTable(t.value().second, commandBuffer.GetRuntimeDescriptorHeaps()->NewGpuDescriptorHandle(binding.first.rangeType, binding.second));
         }
     }
 
-    void DX12ComputePassCommandEncoder::Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ)
+    void DX12ComputePassCommandEncoder::Dispatch(size_t inGroupCountX, size_t inGroupCountY, size_t inGroupCountZ)
     {
-        commandBuffer.GetDX12GraphicsCommandList()->Dispatch(groupCountX, groupCountY, groupCountZ);
+        commandBuffer.GetNative()->Dispatch(inGroupCountX, inGroupCountY, inGroupCountZ);
     }
 
     void DX12ComputePassCommandEncoder::EndPass()
@@ -149,129 +149,129 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& device, DX12CommandEncoder& commandEncoder, DX12CommandBuffer& commandBuffer, const GraphicsPassBeginInfo* beginInfo)
+    DX12GraphicsPassCommandEncoder::DX12GraphicsPassCommandEncoder(DX12Device& inDevice, DX12CommandEncoder& inCmdEncoder, DX12CommandBuffer& inCmdBuffer, const GraphicsPassBeginInfo& inBeginInfo)
         : GraphicsPassCommandEncoder()
-        , device(device)
-        , commandEncoder(commandEncoder)
-        , commandBuffer(commandBuffer)
+        , device(inDevice)
+        , commandEncoder(inCmdEncoder)
+        , commandBuffer(inCmdBuffer)
         , graphicsPipeline(nullptr)
     {
         // set render targets
-        std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rtvHandles(beginInfo->colorAttachmentNum);
+        std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rtvHandles(inBeginInfo.colorAttachments.size());
         for (auto i = 0; i < rtvHandles.size(); i++) {
-            auto* view = static_cast<DX12TextureView*>(beginInfo->colorAttachments[i].view);
+            auto* view = static_cast<DX12TextureView*>(inBeginInfo.colorAttachments[i].view);
             Assert(view);
-            rtvHandles[i] = view->GetDX12CpuDescriptorHandle();
+            rtvHandles[i] = view->GetNativeCpuDescriptorHandle();
         }
         std::optional<CD3DX12_CPU_DESCRIPTOR_HANDLE> dsvHandle;
-        if (beginInfo->depthStencilAttachment != nullptr) {
-            auto* view = static_cast<DX12TextureView*>(beginInfo->depthStencilAttachment->view);
+        if (inBeginInfo.depthStencilAttachment.has_value()) {
+            auto* view = static_cast<DX12TextureView*>(inBeginInfo.depthStencilAttachment->view);
             Assert(view);
-            dsvHandle = view->GetDX12CpuDescriptorHandle();
+            dsvHandle = view->GetNativeCpuDescriptorHandle();
         }
-        commandBuffer.GetDX12GraphicsCommandList()->OMSetRenderTargets(rtvHandles.size(), rtvHandles.data(), false, dsvHandle.has_value() ? &dsvHandle.value() : nullptr);
+        inCmdBuffer.GetNative()->OMSetRenderTargets(rtvHandles.size(), rtvHandles.data(), false, dsvHandle.has_value() ? &dsvHandle.value() : nullptr);
 
         // clear render targets
         for (auto i = 0; i < rtvHandles.size(); i++) {
-            const auto& colorAttachment = beginInfo->colorAttachments[i];
+            const auto& colorAttachment = inBeginInfo.colorAttachments[i];
             if (colorAttachment.loadOp != LoadOp::clear) {
                 continue;
             }
             const auto* clearValue = reinterpret_cast<const float*>(&colorAttachment.clearValue);
-            commandBuffer.GetDX12GraphicsCommandList()->ClearRenderTargetView(rtvHandles[i], clearValue, 0, nullptr);
+            inCmdBuffer.GetNative()->ClearRenderTargetView(rtvHandles[i], clearValue, 0, nullptr);
         }
         if (dsvHandle.has_value()) {
-            const auto& depthStencilAttachment = *beginInfo->depthStencilAttachment;
+            const auto& depthStencilAttachment = *inBeginInfo.depthStencilAttachment;
             if (depthStencilAttachment.depthLoadOp != LoadOp::clear && depthStencilAttachment.stencilLoadOp != LoadOp::clear) {
                 return;
             }
-            commandBuffer.GetDX12GraphicsCommandList()->ClearDepthStencilView(dsvHandle.value(), GetDX12ClearFlags(depthStencilAttachment), depthStencilAttachment.depthClearValue, depthStencilAttachment.stencilClearValue, 0, nullptr);
+            inCmdBuffer.GetNative()->ClearDepthStencilView(dsvHandle.value(), GetDX12ClearFlags(depthStencilAttachment), depthStencilAttachment.depthClearValue, depthStencilAttachment.stencilClearValue, 0, nullptr);
         }
     }
 
     DX12GraphicsPassCommandEncoder::~DX12GraphicsPassCommandEncoder() = default;
 
-    void DX12GraphicsPassCommandEncoder::ResourceBarrier(const Barrier& barrier)
+    void DX12GraphicsPassCommandEncoder::ResourceBarrier(const Barrier& inBarrier)
     {
-        commandEncoder.ResourceBarrier(barrier);
+        commandEncoder.ResourceBarrier(inBarrier);
     }
 
-    void DX12GraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* pipeline)
+    void DX12GraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* inPipeline)
     {
-        graphicsPipeline = static_cast<DX12GraphicsPipeline*>(pipeline);
+        graphicsPipeline = static_cast<DX12GraphicsPipeline*>(inPipeline);
         Assert(graphicsPipeline);
 
-        commandBuffer.GetDX12GraphicsCommandList()->SetPipelineState(graphicsPipeline->GetDX12PipelineState().Get());
-        commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootSignature(graphicsPipeline->GetPipelineLayout().GetDX12RootSignature().Get());
+        commandBuffer.GetNative()->SetPipelineState(graphicsPipeline->GetNative());
+        commandBuffer.GetNative()->SetGraphicsRootSignature(graphicsPipeline->GetPipelineLayout().GetNative());
     }
 
-    void DX12GraphicsPassCommandEncoder::SetBindGroup(uint8_t layoutIndex, BindGroup* tBindGroup)
+    void DX12GraphicsPassCommandEncoder::SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup)
     {
-        auto* bindGroup = static_cast<DX12BindGroup*>(tBindGroup);
+        auto* bindGroup = static_cast<DX12BindGroup*>(inBindGroup);
         auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
         auto& pipelineLayout = graphicsPipeline->GetPipelineLayout();
 
-        Assert(layoutIndex == bindGroupLayout.GetLayoutIndex());
+        Assert(inLayoutIndex == bindGroupLayout.GetLayoutIndex());
         Assert(graphicsPipeline);
 
-        const auto& bindings= bindGroup->GetBindings();
+        const auto& bindings= bindGroup->GetNativeBindings();
         for (const auto& binding : bindings) {
-            std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(layoutIndex, binding.first);
+            std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(inLayoutIndex, binding.first);
             if (!t.has_value()) {
                 return;
             }
-            commandBuffer.GetDX12GraphicsCommandList()->SetGraphicsRootDescriptorTable(t.value().second, commandBuffer.GetRuntimeDescriptorHeaps()->NewGpuDescriptorHandle(binding.first.rangeType, binding.second));
+            commandBuffer.GetNative()->SetGraphicsRootDescriptorTable(t.value().second, commandBuffer.GetRuntimeDescriptorHeaps()->NewGpuDescriptorHandle(binding.first.rangeType, binding.second));
         }
     }
 
-    void DX12GraphicsPassCommandEncoder::SetIndexBuffer(BufferView* tBufferView)
+    void DX12GraphicsPassCommandEncoder::SetIndexBuffer(BufferView* inBufferView)
     {
-        auto* bufferView = static_cast<DX12BufferView*>(tBufferView);
-        commandBuffer.GetDX12GraphicsCommandList()->IASetIndexBuffer(&bufferView->GetDX12IndexBufferView());
+        auto* bufferView = static_cast<DX12BufferView*>(inBufferView);
+        commandBuffer.GetNative()->IASetIndexBuffer(&bufferView->GetNativeIndexBufferView());
     }
 
-    void DX12GraphicsPassCommandEncoder::SetVertexBuffer(size_t slot, BufferView* tBufferView)
+    void DX12GraphicsPassCommandEncoder::SetVertexBuffer(size_t inSlot, BufferView* inBufferView)
     {
-        auto* bufferView = static_cast<DX12BufferView*>(tBufferView);
-        commandBuffer.GetDX12GraphicsCommandList()->IASetVertexBuffers(slot, 1, &bufferView->GetDX12VertexBufferView());
+        auto* bufferView = static_cast<DX12BufferView*>(inBufferView);
+        commandBuffer.GetNative()->IASetVertexBuffers(inSlot, 1, &bufferView->GetNativeVertexBufferView());
     }
 
-    void DX12GraphicsPassCommandEncoder::Draw(size_t vertexCount, size_t instanceCount, size_t firstVertex, size_t firstInstance)
+    void DX12GraphicsPassCommandEncoder::Draw(size_t inVertexCount, size_t inInstanceCount, size_t inFirstVertex, size_t inFirstInstance)
     {
-        commandBuffer.GetDX12GraphicsCommandList()->DrawInstanced(vertexCount, instanceCount, firstVertex, firstInstance);
+        commandBuffer.GetNative()->DrawInstanced(inVertexCount, inInstanceCount, inFirstVertex, inFirstInstance);
     }
 
-    void DX12GraphicsPassCommandEncoder::DrawIndexed(size_t indexCount, size_t instanceCount, size_t firstIndex, size_t baseVertex, size_t firstInstance)
+    void DX12GraphicsPassCommandEncoder::DrawIndexed(size_t inIndexCount, size_t inInstanceCount, size_t inFirstIndex, size_t inBaseVertex, size_t inFirstInstance)
     {
-        commandBuffer.GetDX12GraphicsCommandList()->DrawIndexedInstanced(indexCount, instanceCount, firstIndex, baseVertex, firstInstance);
+        commandBuffer.GetNative()->DrawIndexedInstanced(inIndexCount, inInstanceCount, inFirstIndex, inBaseVertex, inFirstInstance);
     }
 
-    void DX12GraphicsPassCommandEncoder::SetViewport(float x, float y, float width, float height, float minDepth, float maxDepth)
+    void DX12GraphicsPassCommandEncoder::SetViewport(float inX, float inY, float inWidth, float inHeight, float inMinDepth, float inMaxDepth)
     {
         // (x, y) = topLeft
-        CD3DX12_VIEWPORT viewport = CD3DX12_VIEWPORT(x, y, width, height, minDepth, maxDepth);
-        commandBuffer.GetDX12GraphicsCommandList()->RSSetViewports(1, &viewport);
+        CD3DX12_VIEWPORT viewport = CD3DX12_VIEWPORT(inX, inY, inWidth, inHeight, inMinDepth, inMaxDepth);
+        commandBuffer.GetNative()->RSSetViewports(1, &viewport);
     }
 
-    void DX12GraphicsPassCommandEncoder::SetScissor(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom)
+    void DX12GraphicsPassCommandEncoder::SetScissor(uint32_t inLeft, uint32_t inTop, uint32_t inRight, uint32_t inBottom)
     {
-        CD3DX12_RECT scissor = CD3DX12_RECT(left, top, right, bottom);
-        commandBuffer.GetDX12GraphicsCommandList()->RSSetScissorRects(1, &scissor);
+        CD3DX12_RECT scissor = CD3DX12_RECT(inLeft, inTop, inRight, inBottom);
+        commandBuffer.GetNative()->RSSetScissorRects(1, &scissor);
     }
 
-    void DX12GraphicsPassCommandEncoder::SetBlendConstant(const float* constants)
+    void DX12GraphicsPassCommandEncoder::SetBlendConstant(const float* inConstants)
     {
-        commandBuffer.GetDX12GraphicsCommandList()->OMSetBlendFactor(constants);
+        commandBuffer.GetNative()->OMSetBlendFactor(inConstants);
     }
 
-    void DX12GraphicsPassCommandEncoder::SetPrimitiveTopology(PrimitiveTopology primitiveTopology)
+    void DX12GraphicsPassCommandEncoder::SetPrimitiveTopology(PrimitiveTopology inPrimitiveTopology)
     {
-        commandBuffer.GetDX12GraphicsCommandList()->IASetPrimitiveTopology(DX12EnumCast<PrimitiveTopology, D3D_PRIMITIVE_TOPOLOGY>(primitiveTopology));
+        commandBuffer.GetNative()->IASetPrimitiveTopology(DX12EnumCast<PrimitiveTopology, D3D_PRIMITIVE_TOPOLOGY>(inPrimitiveTopology));
     }
 
-    void DX12GraphicsPassCommandEncoder::SetStencilReference(uint32_t reference)
+    void DX12GraphicsPassCommandEncoder::SetStencilReference(uint32_t inReference)
     {
-        commandBuffer.GetDX12GraphicsCommandList()->OMSetStencilRef(reference);
+        commandBuffer.GetNative()->OMSetStencilRef(inReference);
     }
 
     void DX12GraphicsPassCommandEncoder::EndPass()
@@ -283,38 +283,38 @@ namespace RHI::DirectX12 {
         delete this;
     }
 
-    DX12CommandEncoder::DX12CommandEncoder(DX12Device& device, DX12CommandBuffer& commandBuffer) : CommandEncoder(), device(device), commandBuffer(commandBuffer)
+    DX12CommandEncoder::DX12CommandEncoder(DX12Device& inDevice, DX12CommandBuffer& inCmdBuffer) : CommandEncoder(), device(inDevice), commandBuffer(inCmdBuffer)
     {
-        commandBuffer.GetDX12GraphicsCommandList()->Reset(device.GetDX12CommandAllocator().Get(), nullptr);
+        inCmdBuffer.GetNative()->Reset(inDevice.GetNativeCmdAllocator(), nullptr);
 
-        commandBuffer.GetRuntimeDescriptorHeaps()->ResetUsed();
-        auto activeHeap = commandBuffer.GetRuntimeDescriptorHeaps()->GetDX12DescriptorHeaps();
-        commandBuffer.GetDX12GraphicsCommandList()->SetDescriptorHeaps(activeHeap.size(), activeHeap.data());
+        inCmdBuffer.GetRuntimeDescriptorHeaps()->ResetUsed();
+        auto activeHeap = inCmdBuffer.GetRuntimeDescriptorHeaps()->GetNative();
+        inCmdBuffer.GetNative()->SetDescriptorHeaps(activeHeap.size(), activeHeap.data());
     }
 
     DX12CommandEncoder::~DX12CommandEncoder() = default;
 
-    void DX12CommandEncoder::ResourceBarrier(const Barrier& barrier)
+    void DX12CommandEncoder::ResourceBarrier(const Barrier& inBarrier)
     {
         ID3D12Resource* resource;
         D3D12_RESOURCE_STATES beforeState;
         D3D12_RESOURCE_STATES afterState;
-        if (barrier.type == ResourceType::buffer) {
-            auto* buffer = static_cast<DX12Buffer*>(barrier.buffer.pointer);
+        if (inBarrier.type == ResourceType::buffer) {
+            auto* buffer = static_cast<DX12Buffer*>(inBarrier.buffer.pointer);
             Assert(buffer);
-            resource = buffer->GetDX12Resource().Get();
-            beforeState = DX12EnumCast<BufferState, D3D12_RESOURCE_STATES>(barrier.buffer.before);
-            afterState = DX12EnumCast<BufferState, D3D12_RESOURCE_STATES>(barrier.buffer.after);
+            resource = buffer->GetNative();
+            beforeState = DX12EnumCast<BufferState, D3D12_RESOURCE_STATES>(inBarrier.buffer.before);
+            afterState = DX12EnumCast<BufferState, D3D12_RESOURCE_STATES>(inBarrier.buffer.after);
         } else {
-            auto* texture = static_cast<DX12Texture*>(barrier.texture.pointer);
+            auto* texture = static_cast<DX12Texture*>(inBarrier.texture.pointer);
             Assert(texture);
-            resource = texture->GetDX12Resource().Get();
-            beforeState = DX12EnumCast<TextureState, D3D12_RESOURCE_STATES>(barrier.texture.before);
-            afterState = DX12EnumCast<TextureState, D3D12_RESOURCE_STATES>(barrier.texture.after);
+            resource = texture->GetNative();
+            beforeState = DX12EnumCast<TextureState, D3D12_RESOURCE_STATES>(inBarrier.texture.before);
+            afterState = DX12EnumCast<TextureState, D3D12_RESOURCE_STATES>(inBarrier.texture.after);
         }
 
         CD3DX12_RESOURCE_BARRIER resourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(resource, beforeState, afterState);
-        commandBuffer.GetDX12GraphicsCommandList()->ResourceBarrier(1, &resourceBarrier);
+        commandBuffer.GetNative()->ResourceBarrier(1, &resourceBarrier);
     }
 
     CopyPassCommandEncoder* DX12CommandEncoder::BeginCopyPass()
@@ -327,14 +327,14 @@ namespace RHI::DirectX12 {
         return new DX12ComputePassCommandEncoder(device, *this, commandBuffer);
     }
 
-    GraphicsPassCommandEncoder* DX12CommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo* beginInfo)
+    GraphicsPassCommandEncoder* DX12CommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo& inBeginInfo)
     {
-        return new DX12GraphicsPassCommandEncoder(device, *this, commandBuffer, beginInfo);
+        return new DX12GraphicsPassCommandEncoder(device, *this, commandBuffer, inBeginInfo);
     }
 
     void DX12CommandEncoder::End()
     {
-        commandBuffer.GetDX12GraphicsCommandList()->Close();
+        commandBuffer.GetNative()->Close();
     }
 
     void DX12CommandEncoder::Destroy()

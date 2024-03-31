@@ -15,14 +15,22 @@ namespace RHI {
         ShaderStageFlags stageFlags;
         uint32_t offset;
         uint32_t size;
+
+        PipelineConstantLayout();
+        PipelineConstantLayout(ShaderStageFlags inStageFlags, uint32_t inOffset, uint32_t inSize);
+        PipelineConstantLayout& StageFlags(ShaderStageFlags inStageFlags);
+        PipelineConstantLayout& Offset(uint32_t inOffset);
+        PipelineConstantLayout& Size(uint32_t inSize);
     };
 
     struct PipelineLayoutCreateInfo {
-        uint32_t bindGroupLayoutNum;
-        const BindGroupLayout* const* bindGroupLayouts;
-        uint32_t pipelineConstantLayoutNum;
-        const PipelineConstantLayout* pipelineConstantLayouts;
+        std::vector<const BindGroupLayout*> bindGroupLayouts;
+        std::vector<PipelineConstantLayout> pipelineConstantLayouts;
         std::string debugName;
+
+        PipelineLayoutCreateInfo();
+        PipelineLayoutCreateInfo& BindGroupLayout(const BindGroupLayout* inLayout);
+        PipelineLayoutCreateInfo& PipelineConstantLayout(const PipelineConstantLayout& inLayout);
     };
 
     class PipelineLayout {

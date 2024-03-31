@@ -2,6 +2,8 @@
 // Created by swtpotato on 2022/8/2.
 //
 
+#include <utility>
+
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Buffer.h>
 #include <RHI/Vulkan/BufferView.h>
@@ -19,47 +21,47 @@ namespace RHI::Vulkan {
 }
 
 namespace RHI::Vulkan {
-    VKBufferView::VKBufferView(VKBuffer& buffer, const BufferViewCreateInfo& createInfo)
-        :BufferView(createInfo), buffer(buffer)
+    VulkanBufferView::VulkanBufferView(VulkanBuffer& inBuffer, const BufferViewCreateInfo& inCreateInfo)
+        : BufferView(inCreateInfo), buffer(inBuffer)
     {
-        InitializeBufferAttrib(createInfo);
+        InitializeBufferAttrib(inCreateInfo);
     }
 
-    VKBufferView::~VKBufferView()=default;
+    VulkanBufferView::~VulkanBufferView()=default;
 
-    void VKBufferView::Destroy()
+    void VulkanBufferView::Destroy()
     {
         delete this;
     }
 
-    void VKBufferView::InitializeBufferAttrib(const BufferViewCreateInfo& createInfo)
+    void VulkanBufferView::InitializeBufferAttrib(const BufferViewCreateInfo& inCreateInfo)
     {
-        offset = createInfo.offset;
-        size = createInfo.size;
+        offset = inCreateInfo.offset;
+        size = inCreateInfo.size;
         if (IsIndexBuffer(buffer.GetUsages())) {
-            format = createInfo.index.format;
+            format = std::get<IndexBufferViewInfo>(inCreateInfo.extend).format;
         } else {
             // TODO
             // Uniform buffer
         }
     }
 
-    size_t VKBufferView::GetBufferSize() const
+    size_t VulkanBufferView::GetBufferSize() const
     {
         return size;
     }
 
-    size_t VKBufferView::GetOffset() const
+    size_t VulkanBufferView::GetOffset() const
     {
         return offset;
     }
 
-    IndexFormat VKBufferView::GetIndexFormat() const
+    IndexFormat VulkanBufferView::GetIndexFormat() const
     {
         return format;
     }
 
-    VKBuffer& VKBufferView::GetBuffer()
+    VulkanBuffer& VulkanBufferView::GetBuffer()
     {
         return buffer;
     }

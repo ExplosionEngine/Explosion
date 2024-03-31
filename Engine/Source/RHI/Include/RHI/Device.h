@@ -41,14 +41,18 @@ namespace RHI {
     class Surface;
     class Semaphore;
 
-    struct QueueInfo {
+    struct QueueRequestInfo {
         QueueType type;
         uint8_t num;
+
+        QueueRequestInfo(QueueType inType, uint8_t inNum);
     };
 
     struct DeviceCreateInfo {
-        uint32_t queueCreateInfoNum;
-        const QueueInfo* queueCreateInfos;
+        std::vector<QueueRequestInfo> queueRequests;
+
+        DeviceCreateInfo();
+        DeviceCreateInfo& Queue(const QueueRequestInfo& inQueue);
     };
 
     class Device {

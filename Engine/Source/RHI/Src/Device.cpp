@@ -5,6 +5,20 @@
 #include <RHI/Device.h>
 
 namespace RHI {
+    QueueRequestInfo::QueueRequestInfo(QueueType inType, uint8_t inNum)
+        : type(inType)
+        , num(inNum)
+    {
+    }
+
+    DeviceCreateInfo::DeviceCreateInfo() = default;
+
+    DeviceCreateInfo& DeviceCreateInfo::Queue(const QueueRequestInfo& inQueue)
+    {
+        queueRequests.emplace_back(inQueue);
+        return *this;
+    }
+
     Device::Device(const DeviceCreateInfo& createInfo) {}
 
     Device::~Device() = default;

@@ -10,20 +10,21 @@
 #include <RHI/Sampler.h>
 
 namespace RHI::Vulkan {
-    class VKDevice;
+    class VulkanDevice;
 
-    class VKSampler : public Sampler {
+    class VulkanSampler : public Sampler {
     public:
-        NonCopyable(VKSampler)
-        VKSampler(VKDevice& device, const SamplerCreateInfo& createInfo);
-        ~VKSampler() override;
+        NonCopyable(VulkanSampler)
+        VulkanSampler(VulkanDevice& inDevice, const SamplerCreateInfo& inCreateInfo);
+        ~VulkanSampler() override;
 
         void Destroy() override;
-        VkSampler GetVkSampler() const;
+        VkSampler GetNative() const;
 
     private:
-        void CreateSampler(const SamplerCreateInfo& createInfo);
-        VKDevice& device;
-        VkSampler vkSampler;
+        void CreateSampler(const SamplerCreateInfo& inCreateInfo);
+
+        VulkanDevice& device;
+        VkSampler nativeSampler;
     };
 }

@@ -21,35 +21,35 @@ namespace RHI::Vulkan {
     }
 #endif
 
-    VKInstance::VKInstance() : Instance()
+    VulkanInstance::VulkanInstance() : Instance()
     {
 #if BUILD_CONFIG_DEBUG
         PrepareLayers();
 #endif
         PrepareExtensions();
-        CreateVKInstance();
-        PreparePFN();
+        CreateNativeInstance();
+        PrepareDynamicFuncPointers();
 #if BUILD_CONFIG_DEBUG
         CreateDebugMessenger();
 #endif
         EnumeratePhysicalDevices();
     }
 
-    VKInstance::~VKInstance()
+    VulkanInstance::~VulkanInstance()
     {
 #if BUILD_CONFIG_DEBUG
         DestroyDebugMessenger();
 #endif
-        DestroyVKInstance();
+        DestroyNativeInstance();
     }
 
-    RHIType VKInstance::GetRHIType()
+    RHIType VulkanInstance::GetRHIType()
     {
         return RHIType::vulkan;
     }
 
 #if BUILD_CONFIG_DEBUG
-    void VKInstance::PrepareLayers()
+    void VulkanInstance::PrepareLayers()
     {
         static std::vector<const char*> requiredLayerNames = {
             VK_KHRONOS_VALIDATION_LAYER_NAME
@@ -74,7 +74,7 @@ namespace RHI::Vulkan {
     }
 #endif
 
-    void VKInstance::PrepareExtensions()
+    void VulkanInstance::PrepareExtensions()
     {
         static std::vector<const char*> requiredExtensionNames = {
             VK_KHR_SURFACE_EXTENSION_NAME,
@@ -109,7 +109,7 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VKInstance::CreateVKInstance()
+    void VulkanInstance::CreateNativeInstance()
     {
         VkApplicationInfo applicationInfo = {};
         applicationInfo.pApplicationName = "Explosion GameEngine";
@@ -136,82 +136,82 @@ namespace RHI::Vulkan {
         createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
 
-        auto result = vkCreateInstance(&createInfo, nullptr, &vkInstance);
+        auto result = vkCreateInstance(&createInfo, nullptr, &nativeInstance);
         Assert(result == VK_SUCCESS);
     }
 
-    void VKInstance::DestroyVKInstance()
+    void VulkanInstance::DestroyNativeInstance()
     {
-        vkDestroyInstance(vkInstance, nullptr);
+        vkDestroyInstance(nativeInstance, nullptr);
     }
 
-    void VKInstance::PreparePFN()
+    void VulkanInstance::PrepareDynamicFuncPointers()
     {
 #if BUILD_CONFIG_DEBUG
-        vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(vkInstance, "vkCreateDebugUtilsMessengerEXT"));
-        vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(vkInstance, "vkDestroyDebugUtilsMessengerEXT"));
-        vkSetDebugUtilsObjectNameEXT = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(vkGetInstanceProcAddr(vkInstance, "vkSetDebugUtilsObjectNameEXT"));
-        Assert(vkCreateDebugUtilsMessengerEXT != nullptr && vkDestroyDebugUtilsMessengerEXT != nullptr && vkSetDebugUtilsObjectNameEXT != nullptr);
+        pfnVkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(nativeInstance, "vkCreateDebugUtilsMessengerEXT"));
+        pfnVkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(nativeInstance, "vkDestroyDebugUtilsMessengerEXT"));
+        pfnVkSetDebugUtilsObjectNameEXT = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(vkGetInstanceProcAddr(nativeInstance, "vkSetDebugUtilsObjectNameEXT"));
+        Assert(pfnVkCreateDebugUtilsMessengerEXT != nullptr && pfnVkDestroyDebugUtilsMessengerEXT != nullptr && pfnVkSetDebugUtilsObjectNameEXT != nullptr);
 #endif
-        vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetInstanceProcAddr(vkInstance, "vkCmdBeginRenderingKHR"));
-        vkCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkGetInstanceProcAddr(vkInstance, "vkCmdEndRenderingKHR"));
-        Assert(vkCmdBeginRenderingKHR != nullptr && vkCmdEndRenderingKHR != nullptr);
+        pfnVkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetInstanceProcAddr(nativeInstance, "vkCmdBeginRenderingKHR"));
+        pfnVkCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkGetInstanceProcAddr(nativeInstance, "vkCmdEndRenderingKHR"));
+        Assert(pfnVkCmdBeginRenderingKHR != nullptr && pfnVkCmdEndRenderingKHR != nullptr);
     }
 
-    uint32_t VKInstance::GetGpuNum()
+    uint32_t VulkanInstance::GetGpuNum()
     {
         return gpus.size();
     }
 
-    Gpu* VKInstance::GetGpu(uint32_t index)
+    Gpu* VulkanInstance::GetGpu(uint32_t inIndex)
     {
-        return gpus[index].Get();
+        return gpus[inIndex].Get();
     }
 
-    VkInstance VKInstance::GetVkInstance() const
+    VkInstance VulkanInstance::GetNative() const
     {
-        return vkInstance;
+        return nativeInstance;
     }
 
-    void VKInstance::EnumeratePhysicalDevices()
+    void VulkanInstance::EnumeratePhysicalDevices()
     {
         uint32_t count = 0;
-        vkEnumeratePhysicalDevices(vkInstance, &count, nullptr);
-        vkPhysicalDevices.resize(count);
-        vkEnumeratePhysicalDevices(vkInstance,&count, vkPhysicalDevices.data());
+        vkEnumeratePhysicalDevices(nativeInstance, &count, nullptr);
+        nativePhysicalDevices.resize(count);
+        vkEnumeratePhysicalDevices(nativeInstance, &count, nativePhysicalDevices.data());
 
         gpus.resize(count);
         for (uint32_t i = 0; i < count; i++) {
-            gpus[i] = new VKGpu(*this, vkPhysicalDevices[i]);
+            gpus[i] = new VulkanGpu(*this, nativePhysicalDevices[i]);
         }
     }
 
 #if BUILD_CONFIG_DEBUG
-    void VKInstance::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
+    void VulkanInstance::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& inCreateInfo)
     {
-        createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-        createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        createInfo.pfnUserCallback = DebugCallback;
-        createInfo.pNext = nullptr;
-        createInfo.flags = 0;
+        inCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        inCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+        inCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        inCreateInfo.pfnUserCallback = DebugCallback;
+        inCreateInfo.pNext = nullptr;
+        inCreateInfo.flags = 0;
     }
 
-    void VKInstance::CreateDebugMessenger()
+    void VulkanInstance::CreateDebugMessenger()
     {
         VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
         PopulateDebugMessengerCreateInfo(debugCreateInfo);
 
-        Assert(vkCreateDebugUtilsMessengerEXT(vkInstance, &debugCreateInfo, nullptr, &vkDebugMessenger) == VK_SUCCESS);
+        Assert(pfnVkCreateDebugUtilsMessengerEXT(nativeInstance, &debugCreateInfo, nullptr, &nativeDebugMessenger) == VK_SUCCESS);
     }
 
-    void VKInstance::DestroyDebugMessenger()
+    void VulkanInstance::DestroyDebugMessenger()
     {
-        vkDestroyDebugUtilsMessengerEXT(vkInstance, vkDebugMessenger, nullptr);
+        pfnVkDestroyDebugUtilsMessengerEXT(nativeInstance, nativeDebugMessenger, nullptr);
     }
 #endif
 
-    void VKInstance::Destroy()
+    void VulkanInstance::Destroy()
     {
         delete this;
     }

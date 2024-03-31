@@ -6,6 +6,7 @@
 
 #include <Common/Math/Vector.h>
 #include <Common/Debug.h>
+#include <Common/Serialization.h>
 
 namespace Common::Internal {
     template <typename LHS, typename... RHS>
@@ -289,6 +290,36 @@ namespace Common {
     using DMat4x2Consts = MatConsts<double, 4, 2>;
     using DMat4x3Consts = MatConsts<double, 4, 3>;
     using DMat4x4Consts = MatConsts<double, 4, 4>;
+}
+
+namespace Common {
+    template <typename T, uint8_t R, uint8_t C>
+    struct Serializer<Matrix<T, R, C>> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId
+            = Common::HashUtils::StrCrc32("Common::Matrix")
+              + Serializer<T>::typeId + (R << 8) + C;
+
+        static void Serialize(SerializeStream& stream, const Matrix<T, R, C>& value)
+        {
+            TypeIdSerializer<Matrix<T, R, C>>::Serialize(stream);
+
+            for (auto i = 0; i < R * C; i++) {
+                Serializer<T>::Serialize(stream, value.data[i]);
+            }
+        }
+
+        static bool Deserialize(DeserializeStream& stream, Matrix<T, R, C>& value)
+        {
+            if (!TypeIdSerializer<Matrix<T, R, C>>::Deserialize(stream)) {
+                return false;
+            }
+
+            for (auto i = 0; i < R * C; i++) {
+                Serializer<T>::Deserialize(stream, value.data[i]);
+            }
+        }
+    };
 }
 
 namespace Common::Internal {

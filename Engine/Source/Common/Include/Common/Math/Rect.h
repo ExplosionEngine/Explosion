@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Common/Math/Vector.h>
+#include <Common/Serialization.h>
 
 namespace Common {
     template <typename T>
@@ -45,6 +46,34 @@ namespace Common {
     using HRect = Rect<HFloat>;
     using FRect = Rect<float>;
     using DRect = Rect<double>;
+}
+
+namespace Common {
+    template <typename T>
+    struct Serializer<Rect<T>> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId
+            = Common::HashUtils::StrCrc32("Common::Rect")
+              + Serializer<T>::typeId;
+
+        static void Serialize(SerializeStream& stream, const Rect<T>& value)
+        {
+            TypeIdSerializer<Rect<T>>::Serialize(stream);
+
+            Serializer<Vector<T, 2>>::Serialize(stream, value.min);
+            Serializer<Vector<T, 2>>::Serialize(stream, value.max);
+        }
+
+        static bool Deserialize(DeserializeStream& stream, Rect<T>& value)
+        {
+            if (!TypeIdSerializer<Rect<T>>::Deserialize(stream)) {
+                return false;
+            }
+
+            Serializer<Vector<T, 2>>::Deserialize(stream, value.min);
+            Serializer<Vector<T, 2>>::Deserialize(stream, value.max);
+        }
+    };
 }
 
 namespace Common {

@@ -14,27 +14,37 @@ namespace RHI {
     struct HlslBinding {
         HlslBindingRangeType rangeType;
         uint8_t index;
+
+        HlslBinding(HlslBindingRangeType inRangeType, uint8_t inIndex);
     };
 
     struct GlslBinding {
         uint8_t index;
+
+        explicit GlslBinding(uint8_t inIndex);
     };
 
     struct ResourceBinding {
         BindingType type;
         std::variant<HlslBinding, GlslBinding> platformBinding;
+
+        ResourceBinding(BindingType inType, const std::variant<HlslBinding, GlslBinding>& inPlatformBinding);
     };
 
     struct BindGroupLayoutEntry {
         ResourceBinding binding;
         ShaderStageFlags shaderVisibility;
+
+        BindGroupLayoutEntry(const ResourceBinding& inBinding, ShaderStageFlags inShaderVisibility);
     };
 
     struct BindGroupLayoutCreateInfo {
         uint8_t layoutIndex;
-        uint32_t entryNum;
-        const BindGroupLayoutEntry* entries;
+        std::vector<BindGroupLayoutEntry> entries;
         std::string debugName;
+
+        explicit BindGroupLayoutCreateInfo(uint8_t inLayoutIndex, std::string inDebugName = "");
+        BindGroupLayoutCreateInfo& Entry(const BindGroupLayoutEntry& inEntry);
     };
 
     class BindGroupLayout {
