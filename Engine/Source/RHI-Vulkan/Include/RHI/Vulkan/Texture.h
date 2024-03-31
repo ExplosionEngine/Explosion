@@ -23,7 +23,7 @@ namespace RHI::Vulkan {
 
         void Destroy() override;
 
-        TextureView* CreateTextureView(const TextureViewCreateInfo& inCreateInfo) override;
+        Holder<TextureView> CreateTextureView(const TextureViewCreateInfo& inCreateInfo) override;
 
         VkImage GetNative() const;
         Common::UVec3 GetExtent() const;

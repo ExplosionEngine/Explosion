@@ -59,9 +59,9 @@ namespace RHI::Vulkan {
         vmaUnmapMemory(device.GetNativeAllocator(), nativeAllocation);
     }
 
-    BufferView* VulkanBuffer::CreateBufferView(const BufferViewCreateInfo& inCreateInfo)
+    Holder<BufferView> VulkanBuffer::CreateBufferView(const BufferViewCreateInfo& inCreateInfo)
     {
-        return new VulkanBufferView(*this, inCreateInfo);
+        return Common::UniqueRef<BufferView>(new VulkanBufferView(*this, inCreateInfo));
     }
 
     void VulkanBuffer::Destroy()

@@ -14,6 +14,14 @@
 #include <Common/Math/Color.h>
 
 namespace RHI {
+    template <typename T>
+    using Handle = T*;
+
+    template <typename T>
+    using Holder = Common::UniqueRef<T>;
+}
+
+namespace RHI {
     using EnumType = uint32_t;
 
     enum class RHIType : EnumType {
