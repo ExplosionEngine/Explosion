@@ -470,7 +470,12 @@ function(Find3rdPackage)
     find_package(
         ${PARAMS_PACKAGE} REQUIRED
         COMPONENTS ${PARAMS_COMPONENTS}
+        GLOBAL
     )
+
+    if (NOT ${${PARAMS_PACKAGE}_FOUND})
+        message(FATAL_ERROR "Found no package named ${PARAMS_PACKAGE}")
+    endif()
 
     add_custom_target(${NAME} ALL)
     set_target_properties(
