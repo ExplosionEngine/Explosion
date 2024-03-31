@@ -6,7 +6,7 @@
 #include <RHI/RHIModule.h>
 
 namespace RHI {
-    static RHIType GetPlatformRHIType()
+    RHIType GetPlatformRHIType()
     {
 #if PLATFORM_WINDOWS
         return RHIType::directX12;
@@ -15,7 +15,28 @@ namespace RHI {
 #endif
     }
 
-    static std::string GetRHIModuleNameByType(const RHIType& type)
+    std::string GetPlatformDefaultRHIAbbrString()
+    {
+#if PLATFORM_WINDOWS
+        return "dx12";
+#else
+        return "vulkan"
+#endif
+    }
+
+    RHIType RHIAbbrStringToRHIType(const std::string& abbrString)
+    {
+        if (abbrString == "dx12") {
+            return RHIType::directX12;
+        } else if (abbrString == "vulkan") {
+            return RHIType::vulkan;
+        } else {
+            Unimplement();
+            return RHIType::max;
+        }
+    }
+
+    std::string GetRHIModuleNameByType(const RHIType& type)
     {
         switch (type) {
             case RHIType::directX12:
