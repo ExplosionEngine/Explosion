@@ -13,9 +13,9 @@ namespace RHI::Dummy {
 
     DummyTexture::~DummyTexture() = default;
 
-    Holder<TextureView> DummyTexture::CreateTextureView(const TextureViewCreateInfo& createInfo)
+    TextureView* DummyTexture::CreateTextureView(const TextureViewCreateInfo& createInfo)
     {
-        return Common::UniqueRef<TextureView>(new DummyTextureView(createInfo));
+        return new DummyTextureView(createInfo);
     }
 
     void DummyTexture::Destroy()

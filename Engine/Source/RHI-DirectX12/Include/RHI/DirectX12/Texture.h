@@ -21,7 +21,7 @@ namespace RHI::DirectX12 {
         explicit DX12Texture(DX12Device& inDevice, PixelFormat inFormat, ComPtr<ID3D12Resource>&& nativeResource);
         ~DX12Texture() override;
 
-        Holder<TextureView> CreateTextureView(const TextureViewCreateInfo& inCreateInfo) override;
+        TextureView* CreateTextureView(const TextureViewCreateInfo& inCreateInfo) override;
         void Destroy() override;
 
         TextureUsageFlags GetUsages() const;

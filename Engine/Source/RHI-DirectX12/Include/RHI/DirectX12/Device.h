@@ -34,23 +34,23 @@ namespace RHI::DirectX12 {
 
         void Destroy() override;
         size_t GetQueueNum(QueueType inType) override;
-        Handle<Queue> GetQueue(QueueType inType, size_t inIndex) override;
-        Holder<Surface> CreateSurface(const SurfaceCreateInfo& inCreateInfo) override;
-        Holder<SwapChain> CreateSwapChain(const SwapChainCreateInfo& inCreateInfo) override;
-        Holder<Buffer> CreateBuffer(const BufferCreateInfo& inCreateInfo) override;
-        Holder<Texture> CreateTexture(const TextureCreateInfo& inCreateInfo) override;
-        Holder<Sampler> CreateSampler(const SamplerCreateInfo& inCreateInfo) override;
-        Holder<BindGroupLayout> CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo) override;
-        Holder<BindGroup> CreateBindGroup(const BindGroupCreateInfo& inCreateInfo) override;
-        Holder<PipelineLayout> CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo) override;
-        Holder<ShaderModule> CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo) override;
-        Holder<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo) override;
-        Holder<GraphicsPipeline> CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& inCreateInfo) override;
-        Holder<CommandBuffer> CreateCommandBuffer() override;
-        Holder<Fence> CreateFence(bool inInitAsSignaled) override;
-        Holder<Semaphore> CreateSemaphore() override;
+        Queue* GetQueue(QueueType inType, size_t inIndex) override;
+        Surface* CreateSurface(const SurfaceCreateInfo& inCreateInfo) override;
+        SwapChain* CreateSwapChain(const SwapChainCreateInfo& inCreateInfo) override;
+        Buffer* CreateBuffer(const BufferCreateInfo& inCreateInfo) override;
+        Texture* CreateTexture(const TextureCreateInfo& inCreateInfo) override;
+        Sampler* CreateSampler(const SamplerCreateInfo& inCreateInfo) override;
+        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo) override;
+        BindGroup* CreateBindGroup(const BindGroupCreateInfo& inCreateInfo) override;
+        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo) override;
+        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo) override;
+        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo) override;
+        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& inCreateInfo) override;
+        CommandBuffer* CreateCommandBuffer() override;
+        Fence* CreateFence(bool inInitAsSignaled) override;
+        Semaphore* CreateSemaphore() override;
 
-        bool CheckSwapChainFormatSupport(Handle<Surface> inSurface, PixelFormat inFormat) override;
+        bool CheckSwapChainFormatSupport(RHI::Surface* inSurface, PixelFormat inFormat) override;
 
         DX12Gpu& GetGpu();
         ID3D12Device* GetNative();

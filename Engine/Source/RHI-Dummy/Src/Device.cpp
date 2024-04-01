@@ -37,83 +37,83 @@ namespace RHI::Dummy {
         return type == QueueType::graphics ? 1 : 0;
     }
 
-    Handle<Queue> DummyDevice::GetQueue(QueueType type, size_t index)
+    Queue* DummyDevice::GetQueue(QueueType type, size_t index)
     {
         Assert(type == QueueType::graphics && index == 0);
         return dummyQueue.Get();
     }
 
-    Holder<Surface> DummyDevice::CreateSurface(const SurfaceCreateInfo& createInfo)
+    Surface* DummyDevice::CreateSurface(const SurfaceCreateInfo& createInfo)
     {
-        return Common::UniqueRef<Surface>(new DummySurface(createInfo));
+        return new DummySurface(createInfo);
     }
 
-    Holder<SwapChain> DummyDevice::CreateSwapChain(const SwapChainCreateInfo& createInfo)
+    SwapChain* DummyDevice::CreateSwapChain(const SwapChainCreateInfo& createInfo)
     {
-        return Common::UniqueRef<SwapChain>(new DummySwapChain(createInfo));
+        return new DummySwapChain(createInfo);
     }
 
-    Holder<Buffer> DummyDevice::CreateBuffer(const BufferCreateInfo& createInfo)
+    Buffer* DummyDevice::CreateBuffer(const BufferCreateInfo& createInfo)
     {
-        return Common::UniqueRef<Buffer>(new DummyBuffer(createInfo));
+        return new DummyBuffer(createInfo);
     }
 
-    Holder<Texture> DummyDevice::CreateTexture(const TextureCreateInfo& createInfo)
+    Texture* DummyDevice::CreateTexture(const TextureCreateInfo& createInfo)
     {
-        return Common::UniqueRef<Texture>(new DummyTexture(createInfo));
+        return new DummyTexture(createInfo);
     }
 
-    Holder<Sampler> DummyDevice::CreateSampler(const SamplerCreateInfo& createInfo)
+    Sampler* DummyDevice::CreateSampler(const SamplerCreateInfo& createInfo)
     {
-        return Common::UniqueRef<Sampler>(new DummySampler(createInfo));
+        return new DummySampler(createInfo);
     }
 
-    Holder<BindGroupLayout> DummyDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo)
+    BindGroupLayout* DummyDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo)
     {
-        return Common::UniqueRef<BindGroupLayout>(new DummyBindGroupLayout(createInfo));
+        return new DummyBindGroupLayout(createInfo);
     }
 
-    Holder<BindGroup> DummyDevice::CreateBindGroup(const BindGroupCreateInfo& createInfo)
+    BindGroup* DummyDevice::CreateBindGroup(const BindGroupCreateInfo& createInfo)
     {
-        return Common::UniqueRef<BindGroup>(new DummyBindGroup(createInfo));
+        return new DummyBindGroup(createInfo);
     }
 
-    Holder<PipelineLayout> DummyDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo)
+    PipelineLayout* DummyDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo)
     {
-        return Common::UniqueRef<PipelineLayout>(new DummyPipelineLayout(createInfo));
+        return new DummyPipelineLayout(createInfo);
     }
 
-    Holder<ShaderModule> DummyDevice::CreateShaderModule(const ShaderModuleCreateInfo& createInfo)
+    ShaderModule* DummyDevice::CreateShaderModule(const ShaderModuleCreateInfo& createInfo)
     {
-        return Common::UniqueRef<ShaderModule>(new DummyShaderModule(createInfo));
+        return new DummyShaderModule(createInfo);
     }
 
-    Holder<ComputePipeline> DummyDevice::CreateComputePipeline(const ComputePipelineCreateInfo& createInfo)
+    ComputePipeline* DummyDevice::CreateComputePipeline(const ComputePipelineCreateInfo& createInfo)
     {
-        return Common::UniqueRef<ComputePipeline>(new DummyComputePipeline(createInfo));
+        return new DummyComputePipeline(createInfo);
     }
 
-    Holder<GraphicsPipeline> DummyDevice::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo)
+    GraphicsPipeline* DummyDevice::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo)
     {
-        return Common::UniqueRef<GraphicsPipeline>(new DummyGraphicsPipeline(createInfo));
+        return new DummyGraphicsPipeline(createInfo);
     }
 
-    Holder<CommandBuffer> DummyDevice::CreateCommandBuffer()
+    CommandBuffer* DummyDevice::CreateCommandBuffer()
     {
-        return Common::UniqueRef<CommandBuffer>(new DummyCommandBuffer());
+        return new DummyCommandBuffer();
     }
 
-    Holder<Fence> DummyDevice::CreateFence(bool bInitAsSignaled)
+    Fence* DummyDevice::CreateFence(bool bInitAsSignaled)
     {
-        return Common::UniqueRef<Fence>(new DummyFence(*this, bInitAsSignaled));
+        return new DummyFence(*this, bInitAsSignaled);
     }
 
-    Holder<Semaphore> DummyDevice::CreateSemaphore()
+    Semaphore* DummyDevice::CreateSemaphore()
     {
-        return Common::UniqueRef<Semaphore>(new DummySemaphore(*this));
+        return new DummySemaphore(*this);
     }
 
-    bool DummyDevice::CheckSwapChainFormatSupport(Handle<Surface> surface, PixelFormat format)
+    bool DummyDevice::CheckSwapChainFormatSupport(Surface* surface, PixelFormat format)
     {
         return true;
     }

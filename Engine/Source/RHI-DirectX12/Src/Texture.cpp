@@ -72,9 +72,9 @@ namespace RHI::DirectX12 {
 
     DX12Texture::~DX12Texture() = default;
 
-    Holder<TextureView> DX12Texture::CreateTextureView(const TextureViewCreateInfo& inCreateInfo)
+    TextureView* DX12Texture::CreateTextureView(const TextureViewCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<TextureView>(new DX12TextureView(static_cast<DX12Device&>(device), *this, inCreateInfo));
+        return new DX12TextureView(static_cast<DX12Device&>(device), *this, inCreateInfo);
     }
 
     void DX12Texture::Destroy()

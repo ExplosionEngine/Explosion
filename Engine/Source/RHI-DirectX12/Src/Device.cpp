@@ -56,7 +56,7 @@ namespace RHI::DirectX12 {
         return iter->second.size();
     }
 
-    Handle<Queue> DX12Device::GetQueue(QueueType inType, size_t inIndex)
+    Queue* DX12Device::GetQueue(QueueType inType, size_t inIndex)
     {
         auto iter = queues.find(inType);
         Assert(iter != queues.end());
@@ -65,14 +65,14 @@ namespace RHI::DirectX12 {
         return queueArray[inIndex].Get();
     }
 
-    Holder<Surface> DX12Device::CreateSurface(const SurfaceCreateInfo& inCreateInfo)
+    Surface* DX12Device::CreateSurface(const SurfaceCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<Surface>(new DX12Surface(inCreateInfo));
+        return new DX12Surface(inCreateInfo);
     }
 
-    Holder<SwapChain> DX12Device::CreateSwapChain(const SwapChainCreateInfo& inCreateInfo)
+    SwapChain* DX12Device::CreateSwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<SwapChain>(new DX12SwapChain(*this, inCreateInfo));
+        return new DX12SwapChain(*this, inCreateInfo);
     }
 
     ID3D12CommandAllocator* DX12Device::GetNativeCmdAllocator()
@@ -80,67 +80,67 @@ namespace RHI::DirectX12 {
         return nativeCmdAllocator.Get();
     }
 
-    Holder<Buffer> DX12Device::CreateBuffer(const BufferCreateInfo& inCreateInfo)
+    Buffer* DX12Device::CreateBuffer(const BufferCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<Buffer>(new DX12Buffer(*this, inCreateInfo));
+        return new DX12Buffer(*this, inCreateInfo);
     }
 
-    Holder<Texture> DX12Device::CreateTexture(const TextureCreateInfo& inCreateInfo)
+    Texture* DX12Device::CreateTexture(const TextureCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<Texture>(new DX12Texture(*this, inCreateInfo));
+        return new DX12Texture(*this, inCreateInfo);
     }
 
-    Holder<Sampler> DX12Device::CreateSampler(const SamplerCreateInfo& inCreateInfo)
+    Sampler* DX12Device::CreateSampler(const SamplerCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<Sampler>(new DX12Sampler(*this, inCreateInfo));
+        return new DX12Sampler(*this, inCreateInfo);
     }
 
-    Holder<BindGroupLayout> DX12Device::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
+    BindGroupLayout* DX12Device::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<BindGroupLayout>(new DX12BindGroupLayout(inCreateInfo));
+        return new DX12BindGroupLayout(inCreateInfo);
     }
 
-    Holder<BindGroup> DX12Device::CreateBindGroup(const BindGroupCreateInfo& inCreateInfo)
+    BindGroup* DX12Device::CreateBindGroup(const BindGroupCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<BindGroup>(new DX12BindGroup(inCreateInfo));
+        return new DX12BindGroup(inCreateInfo);
     }
 
-    Holder<PipelineLayout> DX12Device::CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo)
+    PipelineLayout* DX12Device::CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<PipelineLayout>(new DX12PipelineLayout(*this, inCreateInfo));
+        return new DX12PipelineLayout(*this, inCreateInfo);
     }
 
-    Holder<ShaderModule> DX12Device::CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo)
+    ShaderModule* DX12Device::CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<ShaderModule>(new DX12ShaderModule(inCreateInfo));
+        return new DX12ShaderModule(inCreateInfo);
     }
 
-    Holder<ComputePipeline> DX12Device::CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo)
+    ComputePipeline* DX12Device::CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<ComputePipeline>(new DX12ComputePipeline(*this, inCreateInfo));
+        return new DX12ComputePipeline(*this, inCreateInfo);
     }
 
-    Holder<GraphicsPipeline> DX12Device::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& inCreateInfo)
+    GraphicsPipeline* DX12Device::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<GraphicsPipeline>(new DX12GraphicsPipeline(*this, inCreateInfo));
+        return new DX12GraphicsPipeline(*this, inCreateInfo);
     }
 
-    Holder<CommandBuffer> DX12Device::CreateCommandBuffer()
+    CommandBuffer* DX12Device::CreateCommandBuffer()
     {
-        return Common::UniqueRef<CommandBuffer>(new DX12CommandBuffer(*this));
+        return new DX12CommandBuffer(*this);
     }
 
-    Holder<Fence> DX12Device::CreateFence(bool inInitAsSignaled)
+    Fence* DX12Device::CreateFence(bool inInitAsSignaled)
     {
-        return Common::UniqueRef<Fence>(new DX12Fence(*this, inInitAsSignaled));
+        return new DX12Fence(*this, inInitAsSignaled);
     }
 
-    Holder<Semaphore> DX12Device::CreateSemaphore()
+    Semaphore* DX12Device::CreateSemaphore()
     {
-        return Common::UniqueRef<Semaphore>(new DX12Semaphore(*this));
+        return new DX12Semaphore(*this);
     }
 
-    bool DX12Device::CheckSwapChainFormatSupport(Handle<Surface> inSurface, PixelFormat inFormat)
+    bool DX12Device::CheckSwapChainFormatSupport(RHI::Surface* inSurface, PixelFormat inFormat)
     {
         static std::unordered_set<PixelFormat> supportedFormats = {
             PixelFormat::rgba8Unorm,
