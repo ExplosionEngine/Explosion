@@ -13,6 +13,6 @@ namespace RHI::Dummy {
         DummyGpu();
         ~DummyGpu() override;
         GpuProperty GetProperty() override;
-        Device * RequestDevice(const DeviceCreateInfo& createInfo) override;
+        Common::UniqueRef<Device> RequestDevice(const DeviceCreateInfo& createInfo) override;
     };
 }

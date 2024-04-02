@@ -10,16 +10,25 @@
 #include <Core/Module.h>
 #include <Render/Scene.h>
 #include <Rendering/Api.h>
+#include <RHI/RHI.h>
 
 namespace Rendering {
+    struct RenderingModuleInitParams {
+        RHI::RHIType rhiType;
+    };
+
     class RENDERING_API RenderingModule : public Core::Module {
     public:
         RenderingModule();
         ~RenderingModule() override;
 
+        void OnLoad() override;
+        void OnUnload() override;
+
+        void Initialize(const RenderingModuleInitParams& inParams);
+        RHI::Device* GetDevice();
         Render::IScene* AllocateScene();
         void DestroyScene(Render::IScene* inScene);
-        void StartupRenderingThread();
         void ShutdownRenderingThread();
         void FlushAllRenderingCommands();
 
@@ -31,6 +40,9 @@ namespace Rendering {
         }
 
     private:
+        bool initialized;
         Common::UniqueRef<Common::WorkerThread> renderingThread;
+        RHI::Instance* rhiInstance;
+        Common::UniqueRef<RHI::Device> rhiDevice;
     };
 }

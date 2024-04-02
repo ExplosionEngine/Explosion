@@ -3,5 +3,5 @@ AddExecutable(
     NAME Editor
     SRC ${SOURCES}
     INC Include
-    LIB Qt Core RHI
+    LIB Qt Core RHI Rendering
 )

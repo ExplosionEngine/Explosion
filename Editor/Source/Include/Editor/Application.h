@@ -16,7 +16,7 @@ namespace Editor {
 
     private:
         void SetupCli(int argc, char* argv[]);
-        void SetupRHI();
         void SetupProject();
+        void SetupRendering();
     };
 }

@@ -5,6 +5,7 @@
 #include <Editor/Application.h>
 #include <Core/Cmdline.h>
 #include <RHI/RHI.h>
+#include <Rendering/RenderingModule.h>
 
 namespace Editor {
     static Core::CmdlineArgValue<std::string> caRhiType(
@@ -34,6 +35,8 @@ namespace Editor {
     void Application::SetUp(int argc, char* argv[])
     {
         SetupCli(argc, argv);
+        SetupProject();
+        SetupRendering();
     }
 
     void Application::SetupCli(int argc, char* argv[])
@@ -41,16 +44,18 @@ namespace Editor {
         Core::Cli::Get().Parse(argc, argv);
     }
 
-    void Application::SetupRHI()
-    {
-        auto rhiAbbrString = caRhiType.GetValue();
-        RHI::RHIType rhiType = RHI::RHIAbbrStringToRHIType(rhiAbbrString);
-
-        // TODO
-    }
-
     void Application::SetupProject()
     {
         // TODO setup project
+    }
+
+    void Application::SetupRendering()
+    {
+        Rendering::RenderingModule* renderingModule = Core::ModuleManager::Get().FindOrLoadTyped<Rendering::RenderingModule>("Rendering");
+        Assert(renderingModule != nullptr);
+
+        Rendering::RenderingModuleInitParams initParams {};
+        initParams.rhiType = RHI::RHIAbbrStringToRHIType(caRhiType.GetValue());
+        renderingModule->Initialize(initParams);
     }
 }

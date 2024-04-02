@@ -6,9 +6,46 @@
 #include <Rendering/Scene.h>
 
 namespace Rendering {
-    RenderingModule::RenderingModule() = default;
+    RenderingModule::RenderingModule()
+        : initialized(false)
+        , renderingThread()
+        , rhiInstance(nullptr)
+        , rhiDevice()
+    {
+    }
 
     RenderingModule::~RenderingModule() = default;
+
+    void RenderingModule::OnLoad()
+    {
+        Module::OnLoad();
+    }
+
+    void RenderingModule::OnUnload()
+    {
+        Module::OnUnload();
+    }
+
+    void RenderingModule::Initialize(const RenderingModuleInitParams& inParams)
+    {
+        Assert(!initialized);
+
+        renderingThread = Common::MakeUnique<Common::WorkerThread>("RenderingThread");
+
+        rhiInstance = RHI::Instance::GetByType(inParams.rhiType);
+        rhiDevice = rhiInstance->GetGpu(0)->RequestDevice(
+            RHI::DeviceCreateInfo()
+                .Queue(RHI::QueueRequestInfo(RHI::QueueType::graphics, 1))
+                .Queue(RHI::QueueRequestInfo(RHI::QueueType::compute, 1))
+                .Queue(RHI::QueueRequestInfo(RHI::QueueType::transfer, 1)));
+
+        initialized = true;
+    }
+
+    RHI::Device* RenderingModule::GetDevice()
+    {
+        return rhiDevice.Get();
+    }
 
     Render::IScene* RenderingModule::AllocateScene() // NOLINT
     {
@@ -18,11 +55,6 @@ namespace Rendering {
     void RenderingModule::DestroyScene(Render::IScene* inScene) // NOLINT
     {
         delete inScene;
-    }
-
-    void RenderingModule::StartupRenderingThread()
-    {
-        renderingThread = Common::MakeUnique<Common::WorkerThread>("RenderingThread");
     }
 
     void RenderingModule::ShutdownRenderingThread()
