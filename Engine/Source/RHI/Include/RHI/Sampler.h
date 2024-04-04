@@ -23,16 +23,17 @@ namespace RHI {
         std::string debugName;
 
         SamplerCreateInfo();
-        SamplerCreateInfo& AddressModeU(AddressMode inMode);
-        SamplerCreateInfo& AddressModeV(AddressMode inMode);
-        SamplerCreateInfo& AddressModeW(AddressMode inMode);
-        SamplerCreateInfo& MagFilter(FilterMode inMode);
-        SamplerCreateInfo& MinFilter(FilterMode inMode);
-        SamplerCreateInfo& LodMinClamp(float inValue);
-        SamplerCreateInfo& LodMaxClamp(float inValue);
-        SamplerCreateInfo& ComparisonFunc(ComparisonFunc inFunc);
-        SamplerCreateInfo& MaxAnisotropy(uint8_t inValue);
-        SamplerCreateInfo& DebugName(std::string inName);
+        SamplerCreateInfo& SetAddressModeU(AddressMode inMode);
+        SamplerCreateInfo& SetAddressModeV(AddressMode inMode);
+        SamplerCreateInfo& SetAddressModeW(AddressMode inMode);
+        SamplerCreateInfo& SetMagFilter(FilterMode inMode);
+        SamplerCreateInfo& SetMinFilter(FilterMode inMode);
+        SamplerCreateInfo& SetMipFilter(FilterMode inMode);
+        SamplerCreateInfo& SetLodMinClamp(float inValue);
+        SamplerCreateInfo& SetLodMaxClamp(float inValue);
+        SamplerCreateInfo& SetComparisonFunc(ComparisonFunc inFunc);
+        SamplerCreateInfo& SetMaxAnisotropy(uint8_t inValue);
+        SamplerCreateInfo& SetDebugName(std::string inName);
     };
 
     class Sampler {

@@ -18,9 +18,9 @@ namespace RHI {
 
         PipelineConstantLayout();
         PipelineConstantLayout(ShaderStageFlags inStageFlags, uint32_t inOffset, uint32_t inSize);
-        PipelineConstantLayout& StageFlags(ShaderStageFlags inStageFlags);
-        PipelineConstantLayout& Offset(uint32_t inOffset);
-        PipelineConstantLayout& Size(uint32_t inSize);
+        PipelineConstantLayout& SetStageFlags(ShaderStageFlags inStageFlags);
+        PipelineConstantLayout& SetOffset(uint32_t inOffset);
+        PipelineConstantLayout& SetSize(uint32_t inSize);
     };
 
     struct PipelineLayoutCreateInfo {
@@ -29,8 +29,8 @@ namespace RHI {
         std::string debugName;
 
         PipelineLayoutCreateInfo();
-        PipelineLayoutCreateInfo& BindGroupLayout(const BindGroupLayout* inLayout);
-        PipelineLayoutCreateInfo& PipelineConstantLayout(const PipelineConstantLayout& inLayout);
+        PipelineLayoutCreateInfo& AddBindGroupLayout(const BindGroupLayout* inLayout);
+        PipelineLayoutCreateInfo& AddPipelineConstantLayout(const PipelineConstantLayout& inLayout);
     };
 
     class PipelineLayout {

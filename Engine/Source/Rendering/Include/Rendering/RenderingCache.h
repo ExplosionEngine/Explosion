@@ -153,7 +153,7 @@ namespace Rendering {
         ~RasterPipelineState();
 
         PipelineLayout* GetPipelineLayout() const;
-        RHI::GraphicsPipeline* GetRHI() const;
+        RHI::RasterPipeline* GetRHI() const;
         size_t GetHash() const;
 
     private:
@@ -163,7 +163,7 @@ namespace Rendering {
 
         size_t hash;
         PipelineLayout* pipelineLayout;
-        Common::UniqueRef<RHI::GraphicsPipeline> rhiHandle;
+        Common::UniqueRef<RHI::RasterPipeline> rhiHandle;
     };
 
     class SamplerCache {

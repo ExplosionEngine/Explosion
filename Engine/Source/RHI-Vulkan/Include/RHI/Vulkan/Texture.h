@@ -45,8 +45,5 @@ namespace RHI::Vulkan {
         uint8_t mipLevels;
         uint8_t samples;
         bool ownMemory;
-
-        friend class VulkanTextureView;
-        VkImageView nativeImageView = VK_NULL_HANDLE;
     };
 }

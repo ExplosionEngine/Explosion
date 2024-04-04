@@ -44,7 +44,7 @@ namespace RHI {
         std::string debugName;
 
         explicit BindGroupLayoutCreateInfo(uint8_t inLayoutIndex, std::string inDebugName = "");
-        BindGroupLayoutCreateInfo& Entry(const BindGroupLayoutEntry& inEntry);
+        BindGroupLayoutCreateInfo& AddEntry(const BindGroupLayoutEntry& inEntry);
     };
 
     class BindGroupLayout {

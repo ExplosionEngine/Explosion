@@ -93,9 +93,9 @@ namespace RHI::Dummy {
         return new DummyComputePipeline(createInfo);
     }
 
-    GraphicsPipeline* DummyDevice::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo)
+    RasterPipeline* DummyDevice::CreateRasterPipeline(const RasterPipelineCreateInfo& createInfo)
     {
-        return new DummyGraphicsPipeline(createInfo);
+        return new DummyRasterPipeline(createInfo);
     }
 
     CommandBuffer* DummyDevice::CreateCommandBuffer()

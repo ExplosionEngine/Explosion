@@ -19,7 +19,7 @@ namespace RHI {
     {
     }
 
-    BindGroupCreateInfo& BindGroupCreateInfo::Entry(const BindGroupEntry& inEntry)
+    BindGroupCreateInfo& BindGroupCreateInfo::AddEntry(const BindGroupEntry& inEntry)
     {
         entries.emplace_back(inEntry);
         return *this;

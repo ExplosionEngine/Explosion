@@ -16,32 +16,32 @@ namespace RHI {
     {
     }
 
-    TextureViewCreateInfo& TextureViewCreateInfo::Type(TextureViewType inType)
+    TextureViewCreateInfo& TextureViewCreateInfo::SetType(TextureViewType inType)
     {
         type = inType;
         return *this;
     }
 
-    TextureViewCreateInfo& TextureViewCreateInfo::Dimension(TextureViewDimension inDimension)
+    TextureViewCreateInfo& TextureViewCreateInfo::SetDimension(TextureViewDimension inDimension)
     {
         dimension = inDimension;
         return *this;
     }
 
-    TextureViewCreateInfo& TextureViewCreateInfo::Aspect(TextureAspect inAspect)
+    TextureViewCreateInfo& TextureViewCreateInfo::SetAspect(TextureAspect inAspect)
     {
         aspect = inAspect;
         return *this;
     }
 
-    TextureViewCreateInfo& TextureViewCreateInfo::MipLevels(uint8_t inBaseMipLevel, uint8_t inMipLevelNum)
+    TextureViewCreateInfo& TextureViewCreateInfo::SetMipLevels(uint8_t inBaseMipLevel, uint8_t inMipLevelNum)
     {
         baseMipLevel = inBaseMipLevel;
         mipLevelNum = inMipLevelNum;
         return *this;
     }
 
-    TextureViewCreateInfo& TextureViewCreateInfo::ArrayLayers(uint8_t inBaseArrayLayer, uint8_t inArrayLayerNum)
+    TextureViewCreateInfo& TextureViewCreateInfo::SetArrayLayers(uint8_t inBaseArrayLayer, uint8_t inArrayLayerNum)
     {
         baseArrayLayer = inBaseArrayLayer;
         arrayLayerNum = inArrayLayerNum;

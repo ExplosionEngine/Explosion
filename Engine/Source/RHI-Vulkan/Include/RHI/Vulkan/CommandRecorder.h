@@ -1,46 +1,47 @@
 //
-// Created by johnk on 2022/3/23.
+// Created by Zach Lee on 2022/6/4.
 //
 
 #pragma once
 
-#include <RHI/CommandEncoder.h>
+#include <vulkan/vulkan.h>
 
-namespace RHI::DirectX12 {
-    class DX12Device;
-    class DX12CommandBuffer;
-    class DX12ComputePipeline;
-    class DX12GraphicsPipeline;
-    class DX12PipelineLayout;
+#include <RHI/CommandRecorder.h>
 
-    class DX12CommandEncoder : public CommandEncoder {
+namespace RHI::Vulkan {
+    class VulkanGpu;
+    class VulkanDevice;
+    class VulkanCommandBuffer;
+    class VulkanRasterPipeline;
+
+    class VulkanCommandRecorder : public CommandRecorder {
     public:
-        NonCopyable(DX12CommandEncoder)
-        explicit DX12CommandEncoder(DX12Device& inDevice, DX12CommandBuffer& inCmdBuffer);
-        ~DX12CommandEncoder() override;
+        NonCopyable(VulkanCommandRecorder)
+        explicit VulkanCommandRecorder(VulkanDevice& inDevice, VulkanCommandBuffer& inCmdBuffer);
+        ~VulkanCommandRecorder() override;
 
         void ResourceBarrier(const Barrier& inBarrier) override;
-        CopyPassCommandEncoder* BeginCopyPass() override;
-        ComputePassCommandEncoder* BeginComputePass() override;
-        GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo& inBeginInfo) override;
+        CopyPassCommandRecorder* BeginCopyPass() override;
+        ComputePassCommandRecorder* BeginComputePass() override;
+        RasterPassCommandRecorder* BeginRasterPass(const RasterPassBeginInfo& inBeginInfo) override;
         void End() override;
         void Destroy() override;
 
     private:
-        DX12Device& device;
-        DX12CommandBuffer& commandBuffer;
+        VulkanDevice& device;
+        VulkanCommandBuffer& commandBuffer;
     };
 
-    class DX12CopyPassCommandEncoder : public CopyPassCommandEncoder {
+    class VulkanCopyPassCommandRecorder : public CopyPassCommandRecorder {
     public:
-        NonCopyable(DX12CopyPassCommandEncoder)
-        explicit DX12CopyPassCommandEncoder(DX12Device& inDevice, DX12CommandEncoder& inCmdEncoder, DX12CommandBuffer& inCmdBuffer);
-        ~DX12CopyPassCommandEncoder() override;
+        NonCopyable(VulkanCopyPassCommandRecorder)
+        explicit VulkanCopyPassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer);
+        ~VulkanCopyPassCommandRecorder() override;
 
-        // CommandCommandEncoder
+        // CommandCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
 
-        // CopyPassCommandEncoder
+        // CopyPassCommandRecorder
         void CopyBufferToBuffer(Buffer* inSrcBuffer, size_t inSrcOffset, Buffer* inDestBuffer, size_t inDestOffset, size_t inSize) override;
         void CopyBufferToTexture(Buffer* inSrcBuffer, Texture* inDestTexture, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize) override;
         void CopyTextureToBuffer(Texture* inSrcTexture, Buffer* inDestBuffer, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize) override;
@@ -49,21 +50,21 @@ namespace RHI::DirectX12 {
         void Destroy() override;
 
     private:
-        DX12Device& device;
-        DX12CommandEncoder& commandEncoder;
-        DX12CommandBuffer& commandBuffer;
+        VulkanDevice& device;
+        VulkanCommandRecorder& commandRecorder;
+        VulkanCommandBuffer& commandBuffer;
     };
 
-    class DX12ComputePassCommandEncoder : public ComputePassCommandEncoder {
+    class VulkanComputePassCommandRecorder : public ComputePassCommandRecorder {
     public:
-        NonCopyable(DX12ComputePassCommandEncoder)
-        explicit DX12ComputePassCommandEncoder(DX12Device& inDevice, DX12CommandEncoder& inCmdEncoder, DX12CommandBuffer& inCmdBuffer);
-        ~DX12ComputePassCommandEncoder() override;
+        NonCopyable(VulkanComputePassCommandRecorder)
+        explicit VulkanComputePassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer);
+        ~VulkanComputePassCommandRecorder() override;
 
-        // CommandCommandEncoder
+        // CommandCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
 
-        // ComputePassCommandEncoder
+        // ComputePassCommandRecorder
         void SetPipeline(ComputePipeline* inPipeline) override;
         void SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup) override;
         void Dispatch(size_t inGroupCountX, size_t inGroupCountY, size_t inGroupCountZ) override;
@@ -71,23 +72,22 @@ namespace RHI::DirectX12 {
         void Destroy() override;
 
     private:
-        DX12Device& device;
-        DX12CommandEncoder& commandEncoder;
-        DX12ComputePipeline* computePipeline;
-        DX12CommandBuffer& commandBuffer;
+        VulkanDevice& device;
+        VulkanCommandRecorder& commandRecorder;
+        VulkanCommandBuffer& commandBuffer;
     };
 
-    class DX12GraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
+    class VulkanRasterPassCommandRecorder : public RasterPassCommandRecorder {
     public:
-        NonCopyable(DX12GraphicsPassCommandEncoder)
-        explicit DX12GraphicsPassCommandEncoder(DX12Device& inDevice, DX12CommandEncoder& inCmdEncoder, DX12CommandBuffer& inCmdBuffer, const GraphicsPassBeginInfo& inBeginInfo);
-        ~DX12GraphicsPassCommandEncoder() override;
+        NonCopyable(VulkanRasterPassCommandRecorder)
+        explicit VulkanRasterPassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer, const RasterPassBeginInfo& inBeginInfo);
+        ~VulkanRasterPassCommandRecorder() override;
 
-        // CommandCommandEncoder
+        // CommandCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
 
-        // GraphicsPassCommandEncoder
-        void SetPipeline(GraphicsPipeline* inPipeline) override;
+        // RasterPassCommandRecorder
+        void SetPipeline(RasterPipeline* inPipeline) override;
         void SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup) override;
         void SetIndexBuffer(BufferView* inBufferView) override;
         void SetVertexBuffer(size_t inSlot, BufferView* inBufferView) override;
@@ -102,9 +102,11 @@ namespace RHI::DirectX12 {
         void Destroy() override;
 
     private:
-        DX12Device& device;
-        DX12CommandEncoder& commandEncoder;
-        DX12GraphicsPipeline* graphicsPipeline;
-        DX12CommandBuffer& commandBuffer;
+        VulkanDevice& device;
+        VulkanCommandRecorder& commandRecorder;
+        VulkanCommandBuffer& commandBuffer;
+        VkCommandBuffer nativeCmdBuffer;
+        VulkanRasterPipeline* rasterPipeline;
     };
+
 }

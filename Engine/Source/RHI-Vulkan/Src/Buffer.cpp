@@ -9,7 +9,7 @@
 #include <RHI/Vulkan/BufferView.h>
 #include <RHI/Queue.h>
 #include <RHI/CommandBuffer.h>
-#include <RHI/CommandEncoder.h>
+#include <RHI/CommandRecorder.h>
 #include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
@@ -34,7 +34,10 @@ namespace RHI::Vulkan {
         return result;
     }
 
-    VulkanBuffer::VulkanBuffer(VulkanDevice& inDevice, const BufferCreateInfo& inCreateInfo) : Buffer(inCreateInfo), device(inDevice), usages(inCreateInfo.usages)
+    VulkanBuffer::VulkanBuffer(VulkanDevice& inDevice, const BufferCreateInfo& inCreateInfo)
+        : Buffer(inCreateInfo)
+        , device(inDevice)
+        , usages(inCreateInfo.usages)
     {
         CreateNativeBuffer(inCreateInfo);
         TransitionToInitState(inCreateInfo);
@@ -42,7 +45,7 @@ namespace RHI::Vulkan {
 
     VulkanBuffer::~VulkanBuffer()
     {
-        if (nativeBuffer) {
+        if (nativeBuffer != VK_NULL_HANDLE) {
             vmaDestroyBuffer(device.GetNativeAllocator(), nativeBuffer, nativeAllocation);
         }
     }
@@ -100,9 +103,9 @@ namespace RHI::Vulkan {
 
             Common::UniqueRef<Fence> fence = device.CreateFence(false);
             Common::UniqueRef<CommandBuffer> commandBuffer = device.CreateCommandBuffer();
-            Common::UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
-            commandEncoder->ResourceBarrier(Barrier::Transition(this, BufferState::undefined, inCreateInfo.initialState));
-            commandEncoder->End();
+            Common::UniqueRef<CommandRecorder> commandRecorder = commandBuffer->Begin();
+            commandRecorder->ResourceBarrier(Barrier::Transition(this, BufferState::undefined, inCreateInfo.initialState));
+            commandRecorder->End();
 
             QueueSubmitInfo submitInfo {};
             submitInfo.signalFence = fence.Get();

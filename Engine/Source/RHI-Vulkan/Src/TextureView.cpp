@@ -16,6 +16,7 @@ namespace RHI::Vulkan {
 
     VulkanTextureView::~VulkanTextureView()
     {
+        DestroyImageView();
     }
 
     void VulkanTextureView::Destroy()
@@ -25,21 +26,26 @@ namespace RHI::Vulkan {
 
     void VulkanTextureView::CreateImageView(const TextureViewCreateInfo& inCreateInfo)
     {
-        if (!texture.nativeImageView) {
-            VkImageViewCreateInfo viewInfo = {};
-            viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            viewInfo.format = VKEnumCast<PixelFormat, VkFormat>(texture.GetFormat());
-            viewInfo.image = texture.GetNative();
-            viewInfo.viewType = VKEnumCast<TextureViewDimension, VkImageViewType>(inCreateInfo.dimension);
-            viewInfo.subresourceRange = {GetAspectMask(inCreateInfo.aspect), baseMipLevel, mipLevelNum, baseArrayLayer, arrayLayerNum };
+        VkImageViewCreateInfo viewInfo = {};
+        viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        viewInfo.format = VKEnumCast<PixelFormat, VkFormat>(texture.GetFormat());
+        viewInfo.image = texture.GetNative();
+        viewInfo.viewType = VKEnumCast<TextureViewDimension, VkImageViewType>(inCreateInfo.dimension);
+        viewInfo.subresourceRange = {GetAspectMask(inCreateInfo.aspect), baseMipLevel, mipLevelNum, baseArrayLayer, arrayLayerNum };
 
-            Assert(vkCreateImageView(device.GetNative(), &viewInfo, nullptr, &texture.nativeImageView) == VK_SUCCESS);
+        Assert(vkCreateImageView(device.GetNative(), &viewInfo, nullptr, &nativeImageView) == VK_SUCCESS);
+    }
+
+    void VulkanTextureView::DestroyImageView()
+    {
+        if (nativeImageView != VK_NULL_HANDLE) {
+            vkDestroyImageView(device.GetNative(), nativeImageView, nullptr);
         }
     }
 
     VkImageView VulkanTextureView::GetNative()
     {
-        return texture.nativeImageView;
+        return nativeImageView;
     }
 
     VulkanTexture& VulkanTextureView::GetTexture() const

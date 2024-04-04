@@ -5,12 +5,12 @@
 #include <RHI/Surface.h>
 
 namespace RHI {
-    SurfaceCreateInfo::SurfaceCreateInfo()
-        : window(nullptr)
+    SurfaceCreateInfo::SurfaceCreateInfo(void* inWindow)
+        : window(inWindow)
     {
     }
 
-    SurfaceCreateInfo& SurfaceCreateInfo::Window(void* inWindow)
+    SurfaceCreateInfo& SurfaceCreateInfo::SetWindow(void* inWindow)
     {
         window = inWindow;
         return *this;

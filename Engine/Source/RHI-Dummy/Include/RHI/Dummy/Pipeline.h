@@ -16,11 +16,11 @@ namespace RHI::Dummy {
         void Destroy() override;
     };
 
-    class DummyGraphicsPipeline : public GraphicsPipeline {
+    class DummyRasterPipeline : public RasterPipeline {
     public:
-        NonCopyable(DummyGraphicsPipeline)
-        explicit DummyGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo);
-        ~DummyGraphicsPipeline() override;
+        NonCopyable(DummyRasterPipeline)
+        explicit DummyRasterPipeline(const RasterPipelineCreateInfo& createInfo);
+        ~DummyRasterPipeline() override;
 
         void Destroy() override;
     };

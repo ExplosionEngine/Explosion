@@ -34,7 +34,7 @@ struct RenderGraphTest : public testing::Test {
 
         device = instance->GetGpu(0)->RequestDevice(
             RHI::DeviceCreateInfo()
-                .Queue(RHI::QueueRequestInfo(RHI::QueueType::graphics, 1)));
+                .AddQueueRequest(RHI::QueueRequestInfo(RHI::QueueType::graphics, 1)));
     }
 
     void TearDown() override {}
@@ -69,10 +69,14 @@ TEST_F(RenderGraphTest, BasicTest)
     outputBuffer->MaskAsUsed();
 
     RGBindGroupRef mainBindGroup = builder.AllocateBindGroup(RGBindGroupDesc::Create(pso->GetBindGroupLayout(0))
-        .UniformBuffer("uniformBuffer", builder.CreateBufferView(uniformBuffer, RGBufferViewDesc::CreateForUniform().Size(1024).Offset(0)))
-        .StorageBuffer("outputBuffer", builder.CreateBufferView(outputBuffer, RGBufferViewDesc::CreateForUniform().Size(1024).Offset(0))));
+        .UniformBuffer("uniformBuffer", builder.CreateBufferView(uniformBuffer,
+                                                                 RGBufferViewDesc::CreateForUniform().SetSize(
+                                                                     1024).SetOffset(0)))
+        .StorageBuffer("outputBuffer", builder.CreateBufferView(outputBuffer,
+                                                                RGBufferViewDesc::CreateForUniform().SetSize(
+                                                                    1024).SetOffset(0))));
 
-    builder.AddComputePass("TestComputePass", { mainBindGroup }, [pso, mainBindGroup](RHI::ComputePassCommandEncoder& encoder) -> void {
+    builder.AddComputePass("TestComputePass", { mainBindGroup }, [pso, mainBindGroup](RHI::ComputePassCommandRecorder& encoder) -> void {
         encoder.SetPipeline(pso->GetRHI());
         encoder.SetBindGroup(0, mainBindGroup->GetRHI());
         encoder.Dispatch(1920 / 8, 1080 / 8, 1);

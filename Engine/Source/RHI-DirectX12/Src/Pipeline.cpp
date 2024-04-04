@@ -45,7 +45,7 @@ namespace RHI::DirectX12 {
         return desc;
     }
 
-    CD3DX12_RASTERIZER_DESC GetDX12RasterizerDesc(const GraphicsPipelineCreateInfo& createInfo)
+    CD3DX12_RASTERIZER_DESC GetDX12RasterizerDesc(const RasterPipelineCreateInfo& createInfo)
     {
         CD3DX12_RASTERIZER_DESC desc(D3D12_DEFAULT);
         // TODO expose to RHI interface?
@@ -64,7 +64,7 @@ namespace RHI::DirectX12 {
         return desc;
     }
 
-    CD3DX12_BLEND_DESC GetDX12BlendDesc(const GraphicsPipelineCreateInfo& createInfo)
+    CD3DX12_BLEND_DESC GetDX12BlendDesc(const RasterPipelineCreateInfo& createInfo)
     {
         CD3DX12_BLEND_DESC desc(D3D12_DEFAULT);
         desc.AlphaToCoverageEnable = createInfo.multiSampleState.alphaToCoverage;
@@ -87,7 +87,7 @@ namespace RHI::DirectX12 {
         return desc;
     }
 
-    CD3DX12_DEPTH_STENCIL_DESC GetDX12DepthStencilDesc(const GraphicsPipelineCreateInfo& createInfo)
+    CD3DX12_DEPTH_STENCIL_DESC GetDX12DepthStencilDesc(const RasterPipelineCreateInfo& createInfo)
     {
         CD3DX12_DEPTH_STENCIL_DESC desc(D3D12_DEFAULT);
         // TODO check this
@@ -102,7 +102,7 @@ namespace RHI::DirectX12 {
         return desc;
     }
 
-    DXGI_SAMPLE_DESC GetDX12SampleDesc(const GraphicsPipelineCreateInfo& createInfo)
+    DXGI_SAMPLE_DESC GetDX12SampleDesc(const RasterPipelineCreateInfo& createInfo)
     {
         DXGI_SAMPLE_DESC desc {};
         desc.Count = createInfo.multiSampleState.count;
@@ -111,12 +111,12 @@ namespace RHI::DirectX12 {
         return desc;
     }
 
-    UINT GetDX12SampleMask(const GraphicsPipelineCreateInfo& createInfo)
+    UINT GetDX12SampleMask(const RasterPipelineCreateInfo& createInfo)
     {
         return createInfo.multiSampleState.mask;
     }
 
-    void UpdateDX12RenderTargetsDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const GraphicsPipelineCreateInfo& createInfo)
+    void UpdateDX12RenderTargetsDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const RasterPipelineCreateInfo& createInfo)
     {
         // have been checked num in function #GetDX12BlendDesc()
         desc.NumRenderTargets = createInfo.fragmentState.colorTargets.size();
@@ -125,7 +125,7 @@ namespace RHI::DirectX12 {
         }
     }
 
-    void UpdateDX12DepthStencilTargetDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const GraphicsPipelineCreateInfo& createInfo)
+    void UpdateDX12DepthStencilTargetDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const RasterPipelineCreateInfo& createInfo)
     {
         if (!createInfo.depthStencilState.depthEnable && !createInfo.depthStencilState.stencilEnable) {
             return;
@@ -133,7 +133,7 @@ namespace RHI::DirectX12 {
         desc.DSVFormat = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.depthStencilState.format);
     }
 
-    std::vector<D3D12_INPUT_ELEMENT_DESC> GetDX12InputElements(const GraphicsPipelineCreateInfo& createInfo)
+    std::vector<D3D12_INPUT_ELEMENT_DESC> GetDX12InputElements(const RasterPipelineCreateInfo& createInfo)
     {
         std::vector<D3D12_INPUT_ELEMENT_DESC> result {};
         const auto& vertexState = createInfo.vertexState;
@@ -207,37 +207,37 @@ namespace RHI::DirectX12 {
         Assert(success);
     }
 
-    DX12GraphicsPipeline::DX12GraphicsPipeline(DX12Device& inDevice, const GraphicsPipelineCreateInfo& inCreateInfo) : GraphicsPipeline(inCreateInfo), pipelineLayout(nullptr)
+    DX12RasterPipeline::DX12RasterPipeline(DX12Device& inDevice, const RasterPipelineCreateInfo& inCreateInfo) : RasterPipeline(inCreateInfo), pipelineLayout(nullptr)
     {
         SavePipelineLayout(inCreateInfo);
         CreateNativeGraphicsPipeline(inDevice, inCreateInfo);
     }
 
-    DX12GraphicsPipeline::~DX12GraphicsPipeline() = default;
+    DX12RasterPipeline::~DX12RasterPipeline() = default;
 
-    void DX12GraphicsPipeline::Destroy()
+    void DX12RasterPipeline::Destroy()
     {
         delete this;
     }
 
-    DX12PipelineLayout& DX12GraphicsPipeline::GetPipelineLayout()
+    DX12PipelineLayout& DX12RasterPipeline::GetPipelineLayout()
     {
         return *pipelineLayout;
     }
 
-    ID3D12PipelineState* DX12GraphicsPipeline::GetNative()
+    ID3D12PipelineState* DX12RasterPipeline::GetNative()
     {
         return nativePipelineState.Get();
     }
 
-    void DX12GraphicsPipeline::SavePipelineLayout(const GraphicsPipelineCreateInfo& inCreateInfo)
+    void DX12RasterPipeline::SavePipelineLayout(const RasterPipelineCreateInfo& inCreateInfo)
     {
         auto* pl = static_cast<DX12PipelineLayout*>(inCreateInfo.layout);
         Assert(pl);
         pipelineLayout = pl;
     }
 
-    void DX12GraphicsPipeline::CreateNativeGraphicsPipeline(DX12Device& inDevice, const GraphicsPipelineCreateInfo& inCreateInfo)
+    void DX12RasterPipeline::CreateNativeGraphicsPipeline(DX12Device& inDevice, const RasterPipelineCreateInfo& inCreateInfo)
     {
         auto* vertexShader = static_cast<DX12ShaderModule*>(inCreateInfo.vertexShader);
         auto* fragmentShader = static_cast<DX12ShaderModule*>(inCreateInfo.pixelShader);

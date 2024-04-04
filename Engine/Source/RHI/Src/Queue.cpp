@@ -12,19 +12,19 @@ namespace RHI {
     {
     }
 
-    QueueSubmitInfo& QueueSubmitInfo::WaitSemaphore(Semaphore* inSemaphore)
+    QueueSubmitInfo& QueueSubmitInfo::AddWaitSemaphore(Semaphore* inSemaphore)
     {
         waitSemaphores.emplace_back(inSemaphore);
         return *this;
     }
 
-    QueueSubmitInfo& QueueSubmitInfo::SignalSemaphore(Semaphore* inSemaphore)
+    QueueSubmitInfo& QueueSubmitInfo::AddSignalSemaphore(Semaphore* inSemaphore)
     {
         signalSemaphores.emplace_back(inSemaphore);
         return *this;
     }
 
-    QueueSubmitInfo& QueueSubmitInfo::SignalFence(Fence* inSignalFence)
+    QueueSubmitInfo& QueueSubmitInfo::SetSignalFence(Fence* inSignalFence)
     {
         signalFence = inSignalFence;
         return *this;

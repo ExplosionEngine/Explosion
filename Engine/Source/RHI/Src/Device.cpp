@@ -13,7 +13,7 @@ namespace RHI {
 
     DeviceCreateInfo::DeviceCreateInfo() = default;
 
-    DeviceCreateInfo& DeviceCreateInfo::Queue(const QueueRequestInfo& inQueue)
+    DeviceCreateInfo& DeviceCreateInfo::AddQueueRequest(const QueueRequestInfo& inQueue)
     {
         queueRequests.emplace_back(inQueue);
         return *this;

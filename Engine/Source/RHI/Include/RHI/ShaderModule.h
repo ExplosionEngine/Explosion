@@ -4,13 +4,21 @@
 
 #pragma once
 
-#include <Common/Utility.h>
 #include <string>
+#include <vector>
+
+#include <Common/Utility.h>
 
 namespace RHI {
     struct ShaderModuleCreateInfo {
         const void* byteCode;
         size_t size;
+
+        ShaderModuleCreateInfo(const void* inByteCode = nullptr, size_t inSize = 0);
+        explicit ShaderModuleCreateInfo(const std::vector<uint8_t>& inByteCode);
+
+        ShaderModuleCreateInfo& SetByteCode(const void* inByteCode);
+        ShaderModuleCreateInfo& SetSize(size_t inSize);
     };
 
     class ShaderModule {

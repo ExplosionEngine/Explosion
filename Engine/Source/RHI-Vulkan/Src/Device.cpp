@@ -37,9 +37,12 @@ namespace RHI::Vulkan {
     const std::vector<const char*> VALIDATION_LAYERS = {
         "VK_LAYER_KHRONOS_validation"
     };
+}
 
-
-    VulkanDevice::VulkanDevice(VulkanGpu& inGpu, const DeviceCreateInfo& inCreateInfo) : Device(inCreateInfo), gpu(inGpu)
+namespace RHI::Vulkan {
+    VulkanDevice::VulkanDevice(VulkanGpu& inGpu, const DeviceCreateInfo& inCreateInfo)
+        : Device(inCreateInfo)
+        , gpu(inGpu)
     {
         CreateNativeDevice(inCreateInfo);
         GetQueues();
@@ -128,9 +131,9 @@ namespace RHI::Vulkan {
         return nullptr;
     }
 
-    GraphicsPipeline* VulkanDevice::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& inCreateInfo)
+    RasterPipeline* VulkanDevice::CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo)
     {
-        return new VulkanGraphicsPipeline(*this, inCreateInfo);
+        return new VulkanRasterPipeline(*this, inCreateInfo);
     }
 
     CommandBuffer* VulkanDevice::CreateCommandBuffer()

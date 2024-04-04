@@ -8,7 +8,12 @@
 #include <RHI/Vulkan/Instance.h>
 
 namespace RHI::Vulkan {
-    VulkanGpu::VulkanGpu(VulkanInstance& inInstance, VkPhysicalDevice inNativePhysicalDevice) : Gpu(), instance(inInstance), nativePhysicalDevice(inNativePhysicalDevice) {}
+    VulkanGpu::VulkanGpu(VulkanInstance& inInstance, VkPhysicalDevice inNativePhysicalDevice)
+        : Gpu()
+        , instance(inInstance)
+        , nativePhysicalDevice(inNativePhysicalDevice)
+    {
+    }
 
     VulkanGpu::~VulkanGpu() = default;
 

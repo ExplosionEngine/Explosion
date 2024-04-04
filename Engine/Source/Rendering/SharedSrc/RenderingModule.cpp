@@ -35,9 +35,9 @@ namespace Rendering {
         rhiInstance = RHI::Instance::GetByType(inParams.rhiType);
         rhiDevice = rhiInstance->GetGpu(0)->RequestDevice(
             RHI::DeviceCreateInfo()
-                .Queue(RHI::QueueRequestInfo(RHI::QueueType::graphics, 1))
-                .Queue(RHI::QueueRequestInfo(RHI::QueueType::compute, 1))
-                .Queue(RHI::QueueRequestInfo(RHI::QueueType::transfer, 1)));
+                .AddQueueRequest(RHI::QueueRequestInfo(RHI::QueueType::graphics, 1))
+                .AddQueueRequest(RHI::QueueRequestInfo(RHI::QueueType::compute, 1))
+                .AddQueueRequest(RHI::QueueRequestInfo(RHI::QueueType::transfer, 1)));
 
         initialized = true;
     }

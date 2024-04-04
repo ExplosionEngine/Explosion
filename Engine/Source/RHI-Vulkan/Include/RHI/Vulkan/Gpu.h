@@ -21,9 +21,7 @@ namespace RHI::Vulkan {
         Common::UniqueRef<Device> RequestDevice(const DeviceCreateInfo& inCreateInfo) override;
 
         VkPhysicalDevice GetNative() const;
-
         VulkanInstance& GetInstance() const;
-
         uint32_t FindMemoryType(uint32_t inFilter, VkMemoryPropertyFlags inPropertyFlag) const;
 
     private:

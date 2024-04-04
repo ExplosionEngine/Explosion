@@ -32,7 +32,7 @@ namespace RHI::Vulkan {
         }
         textures.clear();
 
-        if (nativeSwapChain) {
+        if (nativeSwapChain != VK_NULL_HANDLE) {
             vkDestroySwapchainKHR(vkDevice, nativeSwapChain, nullptr);
         }
     }

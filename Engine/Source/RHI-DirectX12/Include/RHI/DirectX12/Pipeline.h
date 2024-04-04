@@ -34,11 +34,11 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12PipelineState> nativePipelineState;
     };
 
-    class DX12GraphicsPipeline : public GraphicsPipeline {
+    class DX12RasterPipeline : public RasterPipeline {
     public:
-        NonCopyable(DX12GraphicsPipeline)
-        DX12GraphicsPipeline(DX12Device& inDevice, const GraphicsPipelineCreateInfo& inCreateInfo);
-        ~DX12GraphicsPipeline() override;
+        NonCopyable(DX12RasterPipeline)
+        DX12RasterPipeline(DX12Device& inDevice, const RasterPipelineCreateInfo& inCreateInfo);
+        ~DX12RasterPipeline() override;
 
         void Destroy() override;
 
@@ -46,8 +46,8 @@ namespace RHI::DirectX12 {
         ID3D12PipelineState* GetNative();
 
     private:
-        void SavePipelineLayout(const GraphicsPipelineCreateInfo& inCreateInfo);
-        void CreateNativeGraphicsPipeline(DX12Device& inDevice, const GraphicsPipelineCreateInfo& inCreateInfo);
+        void SavePipelineLayout(const RasterPipelineCreateInfo& inCreateInfo);
+        void CreateNativeGraphicsPipeline(DX12Device& inDevice, const RasterPipelineCreateInfo& inCreateInfo);
 
         DX12PipelineLayout* pipelineLayout;
         ComPtr<ID3D12PipelineState> nativePipelineState;

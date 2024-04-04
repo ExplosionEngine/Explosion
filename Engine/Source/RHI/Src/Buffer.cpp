@@ -15,23 +15,23 @@ namespace RHI {
     {
     }
 
-    BufferCreateInfo& BufferCreateInfo::Size(uint32_t inSize)
+    BufferCreateInfo& BufferCreateInfo::SetSize(uint32_t inSize)
     {
         size = inSize;
         return *this;
     }
-    BufferCreateInfo& BufferCreateInfo::Usages(BufferUsageFlags inUsages)
+    BufferCreateInfo& BufferCreateInfo::SetUsages(BufferUsageFlags inUsages)
     {
         usages = inUsages;
         return *this;
     }
-    BufferCreateInfo& BufferCreateInfo::InitialState(BufferState inState)
+    BufferCreateInfo& BufferCreateInfo::SetInitialState(BufferState inState)
     {
         initialState = inState;
         return *this;
     }
 
-    BufferCreateInfo& BufferCreateInfo::DebugName(std::string inDebugName)
+    BufferCreateInfo& BufferCreateInfo::SetDebugName(std::string inDebugName)
     {
         debugName = std::move(inDebugName);
         return *this;

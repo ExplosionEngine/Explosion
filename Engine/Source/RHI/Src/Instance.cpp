@@ -20,7 +20,7 @@ namespace RHI {
 #if PLATFORM_WINDOWS
         return "dx12";
 #else
-        return "vulkan"
+        return "vulkan";
 #endif
     }
 

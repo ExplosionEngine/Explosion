@@ -28,7 +28,7 @@ namespace RHI::Dummy {
         PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo) override;
         ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo& createInfo) override;
         ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) override;
-        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) override;
+        RasterPipeline* CreateRasterPipeline(const RasterPipelineCreateInfo& createInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
         Fence* CreateFence(bool bInitAsSignaled) override;
         Semaphore* CreateSemaphore() override;

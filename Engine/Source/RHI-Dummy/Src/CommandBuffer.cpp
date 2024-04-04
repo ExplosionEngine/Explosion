@@ -3,14 +3,14 @@
 //
 
 #include <RHI/Dummy/CommandBuffer.h>
-#include <RHI/Dummy/CommandEncoder.h>
+#include <RHI/Dummy/CommandRecorder.h>
 
 namespace RHI::Dummy {
     DummyCommandBuffer::DummyCommandBuffer() = default;
 
-    CommandEncoder* DummyCommandBuffer::Begin()
+    CommandRecorder* DummyCommandBuffer::Begin()
     {
-        return new DummyCommandEncoder(*this);
+        return new DummyCommandRecorder(*this);
     }
 
     void DummyCommandBuffer::Destroy()

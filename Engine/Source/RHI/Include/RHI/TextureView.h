@@ -19,11 +19,11 @@ namespace RHI {
         uint8_t arrayLayerNum;
 
         TextureViewCreateInfo();
-        TextureViewCreateInfo& Type(TextureViewType inType);
-        TextureViewCreateInfo& Dimension(TextureViewDimension inDimension);
-        TextureViewCreateInfo& Aspect(TextureAspect inAspect);
-        TextureViewCreateInfo& MipLevels(uint8_t inBaseMipLevel, uint8_t inMipLevelNum);
-        TextureViewCreateInfo& ArrayLayers(uint8_t inBaseArrayLayer, uint8_t inArrayLayerNum);
+        TextureViewCreateInfo& SetType(TextureViewType inType);
+        TextureViewCreateInfo& SetDimension(TextureViewDimension inDimension);
+        TextureViewCreateInfo& SetAspect(TextureAspect inAspect);
+        TextureViewCreateInfo& SetMipLevels(uint8_t inBaseMipLevel, uint8_t inMipLevelNum);
+        TextureViewCreateInfo& SetArrayLayers(uint8_t inBaseArrayLayer, uint8_t inArrayLayerNum);
 
         size_t Hash() const;
     };

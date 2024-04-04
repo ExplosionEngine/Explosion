@@ -19,19 +19,19 @@ namespace RHI {
     {
     }
 
-    PipelineConstantLayout& PipelineConstantLayout::StageFlags(ShaderStageFlags inStageFlags)
+    PipelineConstantLayout& PipelineConstantLayout::SetStageFlags(ShaderStageFlags inStageFlags)
     {
         stageFlags = inStageFlags;
         return *this;
     }
 
-    PipelineConstantLayout& PipelineConstantLayout::Offset(uint32_t inOffset)
+    PipelineConstantLayout& PipelineConstantLayout::SetOffset(uint32_t inOffset)
     {
         offset = inOffset;
         return *this;
     }
 
-    PipelineConstantLayout& PipelineConstantLayout::Size(uint32_t inSize)
+    PipelineConstantLayout& PipelineConstantLayout::SetSize(uint32_t inSize)
     {
         size = inSize;
         return *this;
@@ -43,13 +43,13 @@ namespace RHI {
     {
     }
 
-    PipelineLayoutCreateInfo& PipelineLayoutCreateInfo::BindGroupLayout(const class BindGroupLayout* inLayout)
+    PipelineLayoutCreateInfo& PipelineLayoutCreateInfo::AddBindGroupLayout(const BindGroupLayout* inLayout)
     {
         bindGroupLayouts.emplace_back(inLayout);
         return *this;
     }
 
-    PipelineLayoutCreateInfo& PipelineLayoutCreateInfo::PipelineConstantLayout(const struct PipelineConstantLayout& inLayout)
+    PipelineLayoutCreateInfo& PipelineLayoutCreateInfo::AddPipelineConstantLayout(const PipelineConstantLayout& inLayout)
     {
         pipelineConstantLayouts.emplace_back(inLayout);
         return *this;

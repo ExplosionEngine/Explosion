@@ -23,11 +23,11 @@ namespace RHI::Vulkan {
         VulkanBuffer& GetBuffer();
 
     private:
+        void InitializeBufferAttrib(const BufferViewCreateInfo& inCreateInfo);
+
         VulkanBuffer& buffer;
         size_t size;
         size_t offset;
         IndexFormat format;
-
-        void InitializeBufferAttrib(const BufferViewCreateInfo& inCreateInfo);
     };
 }

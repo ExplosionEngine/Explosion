@@ -24,14 +24,14 @@ namespace RHI {
         std::string debugName;
 
         TextureCreateInfo();
-        TextureCreateInfo& Dimension(TextureDimension inDimension);
-        TextureCreateInfo& Extent(const Common::UVec3& inExtent);
-        TextureCreateInfo& Format(PixelFormat inFormat);
-        TextureCreateInfo& Usages(TextureUsageFlags inUsages);
-        TextureCreateInfo& MipLevels(uint8_t inMipLevels);
-        TextureCreateInfo& Samples(uint8_t inSamples);
-        TextureCreateInfo& InitialState(TextureState inState);
-        TextureCreateInfo& DebugName(std::string inDebugName);
+        TextureCreateInfo& SetDimension(TextureDimension inDimension);
+        TextureCreateInfo& SetExtent(const Common::UVec3& inExtent);
+        TextureCreateInfo& SetFormat(PixelFormat inFormat);
+        TextureCreateInfo& SetUsages(TextureUsageFlags inUsages);
+        TextureCreateInfo& SetMipLevels(uint8_t inMipLevels);
+        TextureCreateInfo& SetSamples(uint8_t inSamples);
+        TextureCreateInfo& SetInitialState(TextureState inState);
+        TextureCreateInfo& SetDebugName(std::string inDebugName);
 
         bool operator==(const TextureCreateInfo& rhs) const;
     };

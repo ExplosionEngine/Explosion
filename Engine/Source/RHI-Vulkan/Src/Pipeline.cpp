@@ -35,7 +35,7 @@ namespace RHI::Vulkan {
         return state;
     }
 
-    static VkPipelineDepthStencilStateCreateInfo ConstructDepthStencil(const GraphicsPipelineCreateInfo& createInfo)
+    static VkPipelineDepthStencilStateCreateInfo ConstructDepthStencil(const RasterPipelineCreateInfo& createInfo)
     {
         const auto& dsState = createInfo.depthStencilState;
         VkPipelineDepthStencilStateCreateInfo dsInfo = {};
@@ -52,7 +52,7 @@ namespace RHI::Vulkan {
         return dsInfo;
     }
 
-    static VkPipelineInputAssemblyStateCreateInfo ConstructInputAssembly(const GraphicsPipelineCreateInfo& createInfo)
+    static VkPipelineInputAssemblyStateCreateInfo ConstructInputAssembly(const RasterPipelineCreateInfo& createInfo)
     {
         VkPipelineInputAssemblyStateCreateInfo assemblyInfo = {};
         assemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -62,7 +62,7 @@ namespace RHI::Vulkan {
         return assemblyInfo;
     }
 
-    static VkPipelineRasterizationStateCreateInfo ConstructRasterization(const GraphicsPipelineCreateInfo& createInfo)
+    static VkPipelineRasterizationStateCreateInfo ConstructRasterization(const RasterPipelineCreateInfo& createInfo)
     {
         VkPipelineRasterizationStateCreateInfo rasterState = {};
         rasterState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -82,7 +82,7 @@ namespace RHI::Vulkan {
         return rasterState;
     }
 
-    static VkPipelineMultisampleStateCreateInfo ConstructMultiSampleState(const GraphicsPipelineCreateInfo& createInfo)
+    static VkPipelineMultisampleStateCreateInfo ConstructMultiSampleState(const RasterPipelineCreateInfo& createInfo)
     {
         VkPipelineMultisampleStateCreateInfo multiSampleInfo = {};
         multiSampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -92,7 +92,7 @@ namespace RHI::Vulkan {
         return multiSampleInfo;
     }
 
-    static VkPipelineViewportStateCreateInfo ConstructViewportInfo(const GraphicsPipelineCreateInfo&)
+    static VkPipelineViewportStateCreateInfo ConstructViewportInfo(const RasterPipelineCreateInfo&)
     {
         VkPipelineViewportStateCreateInfo viewportState = {};
         viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -103,7 +103,7 @@ namespace RHI::Vulkan {
         return viewportState;
     }
 
-    static VkPipelineColorBlendStateCreateInfo ConstructAttachmentInfo(const GraphicsPipelineCreateInfo& createInfo, std::vector<VkPipelineColorBlendAttachmentState>& blendStates)
+    static VkPipelineColorBlendStateCreateInfo ConstructAttachmentInfo(const RasterPipelineCreateInfo& createInfo, std::vector<VkPipelineColorBlendAttachmentState>& blendStates)
     {
         blendStates.resize(createInfo.fragmentState.colorTargets.size());
         VkPipelineColorBlendStateCreateInfo colorInfo = {};
@@ -132,7 +132,7 @@ namespace RHI::Vulkan {
         return colorInfo;
     }
 
-    static VkPipelineVertexInputStateCreateInfo ConstructVertexInput(const GraphicsPipelineCreateInfo& createInfo,
+    static VkPipelineVertexInputStateCreateInfo ConstructVertexInput(const RasterPipelineCreateInfo& createInfo,
         std::vector<VkVertexInputAttributeDescription>& attributes,
         std::vector<VkVertexInputBindingDescription>& bindings)
     {
@@ -169,8 +169,8 @@ namespace RHI::Vulkan {
         return vtxInput;
     }
 
-    VulkanGraphicsPipeline::VulkanGraphicsPipeline(VulkanDevice& inDevice, const GraphicsPipelineCreateInfo& inCreateInfo)
-        : GraphicsPipeline(inCreateInfo)
+    VulkanRasterPipeline::VulkanRasterPipeline(VulkanDevice& inDevice, const RasterPipelineCreateInfo& inCreateInfo)
+        : RasterPipeline(inCreateInfo)
         , device(inDevice)
         , nativePipeline(VK_NULL_HANDLE)
     {
@@ -178,31 +178,31 @@ namespace RHI::Vulkan {
         CreateNativeGraphicsPipeline(inCreateInfo);
     }
 
-    VulkanGraphicsPipeline::~VulkanGraphicsPipeline()
+    VulkanRasterPipeline::~VulkanRasterPipeline()
     {
         if (nativePipeline) {
             vkDestroyPipeline(device.GetNative(), nativePipeline, nullptr);
         }
     }
 
-    void VulkanGraphicsPipeline::Destroy()
+    void VulkanRasterPipeline::Destroy()
     {
         delete this;
     }
 
-    VulkanPipelineLayout* VulkanGraphicsPipeline::GetPipelineLayout() const
+    VulkanPipelineLayout* VulkanRasterPipeline::GetPipelineLayout() const
     {
         return pipelineLayout;
     }
 
-    void VulkanGraphicsPipeline::SavePipelineLayout(const GraphicsPipelineCreateInfo& inCreateInfo)
+    void VulkanRasterPipeline::SavePipelineLayout(const RasterPipelineCreateInfo& inCreateInfo)
     {
         auto* layout = static_cast<VulkanPipelineLayout*>(inCreateInfo.layout);
         Assert(layout);
         pipelineLayout = layout;
     }
 
-    void VulkanGraphicsPipeline::CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo& inCreateInfo)
+    void VulkanRasterPipeline::CreateNativeGraphicsPipeline(const RasterPipelineCreateInfo& inCreateInfo)
     {
         std::vector<VkPipelineShaderStageCreateInfo> stages;
         auto setStage = [&stages](ShaderModule* module, VkShaderStageFlagBits stage) {
@@ -282,7 +282,7 @@ namespace RHI::Vulkan {
 #endif
     }
 
-    VkPipeline VulkanGraphicsPipeline::GetNative()
+    VkPipeline VulkanRasterPipeline::GetNative()
     {
         return nativePipeline;
     }

@@ -122,4 +122,10 @@ namespace Common {
     const Color ColorConsts::red = Color(1, 0, 0, 1);
     const Color ColorConsts::green = Color(0, 1, 0, 1);
     const Color ColorConsts::blue = Color(0, 0, 1, 1);
+
+    const LinearColor LinearColorConsts::white = LinearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    const LinearColor LinearColorConsts::black = LinearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    const LinearColor LinearColorConsts::red = LinearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    const LinearColor LinearColorConsts::green = LinearColor(0.0f, 1.0f, 0.0f, 1.0f);
+    const LinearColor LinearColorConsts::blue = LinearColor(0.0f, 0.0f, 1.0f, 1.0f);
 }

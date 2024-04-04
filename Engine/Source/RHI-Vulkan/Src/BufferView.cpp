@@ -22,12 +22,13 @@ namespace RHI::Vulkan {
 
 namespace RHI::Vulkan {
     VulkanBufferView::VulkanBufferView(VulkanBuffer& inBuffer, const BufferViewCreateInfo& inCreateInfo)
-        : BufferView(inCreateInfo), buffer(inBuffer)
+        : BufferView(inCreateInfo)
+        , buffer(inBuffer)
     {
         InitializeBufferAttrib(inCreateInfo);
     }
 
-    VulkanBufferView::~VulkanBufferView()=default;
+    VulkanBufferView::~VulkanBufferView() = default;
 
     void VulkanBufferView::Destroy()
     {

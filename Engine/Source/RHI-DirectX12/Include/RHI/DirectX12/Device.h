@@ -45,7 +45,7 @@ namespace RHI::DirectX12 {
         PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo) override;
         ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo) override;
         ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo) override;
-        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& inCreateInfo) override;
+        RasterPipeline* CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
         Fence* CreateFence(bool inInitAsSignaled) override;
         Semaphore* CreateSemaphore() override;

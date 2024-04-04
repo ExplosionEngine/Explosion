@@ -4,21 +4,21 @@
 
 #pragma once
 
-#include <RHI/CommandEncoder.h>
+#include <RHI/CommandRecorder.h>
 
 namespace RHI::Dummy {
     class DummyCommandBuffer;
 
-    class DummyCommandEncoder : public CommandEncoder {
+    class DummyCommandRecorder : public CommandRecorder {
     public:
-        NonCopyable(DummyCommandEncoder)
-        explicit DummyCommandEncoder(const DummyCommandBuffer& inDummyCommandBuffer);
-        ~DummyCommandEncoder() override;
+        NonCopyable(DummyCommandRecorder)
+        explicit DummyCommandRecorder(const DummyCommandBuffer& inDummyCommandBuffer);
+        ~DummyCommandRecorder() override;
 
         void ResourceBarrier(const Barrier& barrier) override;
-        CopyPassCommandEncoder* BeginCopyPass() override;
-        ComputePassCommandEncoder* BeginComputePass() override;
-        GraphicsPassCommandEncoder* BeginGraphicsPass(const GraphicsPassBeginInfo& beginInfo) override;
+        CopyPassCommandRecorder* BeginCopyPass() override;
+        ComputePassCommandRecorder* BeginComputePass() override;
+        RasterPassCommandRecorder* BeginRasterPass(const RasterPassBeginInfo& beginInfo) override;
         void End() override;
         void Destroy() override;
 
@@ -26,16 +26,16 @@ namespace RHI::Dummy {
         const DummyCommandBuffer& dummyCommandBuffer;
     };
 
-    class DummyCopyPassCommandEncoder : public CopyPassCommandEncoder {
+    class DummyCopyPassCommandRecorder : public CopyPassCommandRecorder {
     public:
-        NonCopyable(DummyCopyPassCommandEncoder)
-        explicit DummyCopyPassCommandEncoder(const DummyCommandBuffer& dummyCommandBuffer);
-        ~DummyCopyPassCommandEncoder();
+        NonCopyable(DummyCopyPassCommandRecorder)
+        explicit DummyCopyPassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer);
+        ~DummyCopyPassCommandRecorder();
 
-        // CommandCommandEncoder
+        // CommandCommandRecorder
         void ResourceBarrier(const RHI::Barrier& barrier) override;
 
-        // CopyPassCommandEncoder
+        // CopyPassCommandRecorder
         void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
         void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
         void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
@@ -44,16 +44,16 @@ namespace RHI::Dummy {
         void Destroy() override;
     };
 
-    class DummyComputePassCommandEncoder : public ComputePassCommandEncoder {
+    class DummyComputePassCommandRecorder : public ComputePassCommandRecorder {
     public:
-        NonCopyable(DummyComputePassCommandEncoder)
-        explicit DummyComputePassCommandEncoder(const DummyCommandBuffer& dummyCommandBuffer);
-        ~DummyComputePassCommandEncoder() override;
+        NonCopyable(DummyComputePassCommandRecorder)
+        explicit DummyComputePassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer);
+        ~DummyComputePassCommandRecorder() override;
 
-        // CommandCommandEncoder
+        // CommandCommandRecorder
         void ResourceBarrier(const RHI::Barrier& barrier) override;
 
-        // ComputePassCommandEncoder
+        // ComputePassCommandRecorder
         void SetPipeline(ComputePipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup *bindGroup) override;
         void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override;
@@ -61,17 +61,17 @@ namespace RHI::Dummy {
         void Destroy() override;
     };
     
-    class DummyGraphicsPassCommandEncoder : public GraphicsPassCommandEncoder {
+    class DummyRasterPassCommandRecorder : public RasterPassCommandRecorder {
     public:
-        NonCopyable(DummyGraphicsPassCommandEncoder)
-        explicit DummyGraphicsPassCommandEncoder(const DummyCommandBuffer& dummyCommandBuffer);
-        ~DummyGraphicsPassCommandEncoder() override;
+        NonCopyable(DummyRasterPassCommandRecorder)
+        explicit DummyRasterPassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer);
+        ~DummyRasterPassCommandRecorder() override;
 
-        // CommandCommandEncoder
+        // CommandCommandRecorder
         void ResourceBarrier(const RHI::Barrier& barrier) override;
 
-        // GraphicsPassCommandEncoder
-        void SetPipeline(GraphicsPipeline* pipeline) override;
+        // RasterPassCommandRecorder
+        void SetPipeline(RasterPipeline* pipeline) override;
         void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) override;
         void SetIndexBuffer(BufferView* bufferView) override;
         void SetVertexBuffer(size_t slot, BufferView* bufferView) override;

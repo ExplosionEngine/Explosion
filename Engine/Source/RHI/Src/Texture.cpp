@@ -17,49 +17,49 @@ namespace RHI {
     {
     }
 
-    TextureCreateInfo& TextureCreateInfo::Dimension(TextureDimension inDimension)
+    TextureCreateInfo& TextureCreateInfo::SetDimension(TextureDimension inDimension)
     {
         dimension = inDimension;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::Extent(const Common::UVec3& inExtent)
+    TextureCreateInfo& TextureCreateInfo::SetExtent(const Common::UVec3& inExtent)
     {
         extent = inExtent;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::Format(PixelFormat inFormat)
+    TextureCreateInfo& TextureCreateInfo::SetFormat(PixelFormat inFormat)
     {
         format = inFormat;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::Usages(TextureUsageFlags inUsages)
+    TextureCreateInfo& TextureCreateInfo::SetUsages(TextureUsageFlags inUsages)
     {
         usages = inUsages;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::MipLevels(uint8_t inMipLevels)
+    TextureCreateInfo& TextureCreateInfo::SetMipLevels(uint8_t inMipLevels)
     {
         mipLevels = inMipLevels;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::Samples(uint8_t inSamples)
+    TextureCreateInfo& TextureCreateInfo::SetSamples(uint8_t inSamples)
     {
         samples = inSamples;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::InitialState(TextureState inState)
+    TextureCreateInfo& TextureCreateInfo::SetInitialState(TextureState inState)
     {
         initialState = inState;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::DebugName(std::string inDebugName)
+    TextureCreateInfo& TextureCreateInfo::SetDebugName(std::string inDebugName)
     {
         debugName = std::move(inDebugName);
         return *this;

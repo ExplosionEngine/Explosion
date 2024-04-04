@@ -12,19 +12,19 @@ namespace RHI::Vulkan {
     class VulkanDevice;
     class VulkanPipelineLayout;
 
-    class VulkanGraphicsPipeline : public GraphicsPipeline {
+    class VulkanRasterPipeline : public RasterPipeline {
     public:
-        NonCopyable(VulkanGraphicsPipeline)
-        VulkanGraphicsPipeline(VulkanDevice& inDevice, const GraphicsPipelineCreateInfo& inCreateInfo);
-        ~VulkanGraphicsPipeline() override;
+        NonCopyable(VulkanRasterPipeline)
+        VulkanRasterPipeline(VulkanDevice& inDevice, const RasterPipelineCreateInfo& inCreateInfo);
+        ~VulkanRasterPipeline() override;
         void Destroy() override;
 
         VulkanPipelineLayout* GetPipelineLayout() const;
         VkPipeline GetNative();
 
     private:
-        void SavePipelineLayout(const GraphicsPipelineCreateInfo& inCreateInfo);
-        void CreateNativeGraphicsPipeline(const GraphicsPipelineCreateInfo& inCreateInfo);
+        void SavePipelineLayout(const RasterPipelineCreateInfo& inCreateInfo);
+        void CreateNativeGraphicsPipeline(const RasterPipelineCreateInfo& inCreateInfo);
 
         VulkanDevice& device;
         VulkanPipelineLayout* pipelineLayout;

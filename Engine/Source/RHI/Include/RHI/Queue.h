@@ -20,9 +20,9 @@ namespace RHI {
         Fence* signalFence;
 
         QueueSubmitInfo();
-        QueueSubmitInfo& WaitSemaphore(Semaphore* inSemaphore);
-        QueueSubmitInfo& SignalSemaphore(Semaphore* inSemaphore);
-        QueueSubmitInfo& SignalFence(Fence* inSignalFence);
+        QueueSubmitInfo& AddWaitSemaphore(Semaphore* inSemaphore);
+        QueueSubmitInfo& AddSignalSemaphore(Semaphore* inSemaphore);
+        QueueSubmitInfo& SetSignalFence(Fence* inSignalFence);
     };
 
     class Queue {
