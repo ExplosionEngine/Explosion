@@ -22,7 +22,7 @@ namespace RHI {
     struct PipelineLayoutCreateInfo;
     struct ShaderModuleCreateInfo;
     struct ComputePipelineCreateInfo;
-    struct GraphicsPipelineCreateInfo;
+    struct RasterPipelineCreateInfo;
     struct SwapChainCreateInfo;
     struct SurfaceCreateInfo;
     class Queue;
@@ -34,7 +34,7 @@ namespace RHI {
     class PipelineLayout;
     class ShaderModule;
     class ComputePipeline;
-    class GraphicsPipeline;
+    class RasterPipeline;
     class CommandBuffer;
     class SwapChain;
     class Fence;
@@ -52,7 +52,7 @@ namespace RHI {
         std::vector<QueueRequestInfo> queueRequests;
 
         DeviceCreateInfo();
-        DeviceCreateInfo& Queue(const QueueRequestInfo& inQueue);
+        DeviceCreateInfo& AddQueueRequest(const QueueRequestInfo& inQueue);
     };
 
     class Device {
@@ -73,7 +73,7 @@ namespace RHI {
         virtual PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo) = 0;
         virtual ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo& createInfo) = 0;
         virtual ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) = 0;
-        virtual GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) = 0;
+        virtual RasterPipeline* CreateRasterPipeline(const RasterPipelineCreateInfo& createInfo) = 0;
         virtual CommandBuffer* CreateCommandBuffer() = 0;
         virtual Fence* CreateFence(bool bInitAsSignaled) = 0;
         virtual Semaphore* CreateSemaphore() = 0;

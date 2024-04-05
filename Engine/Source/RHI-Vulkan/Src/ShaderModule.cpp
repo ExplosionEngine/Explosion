@@ -20,7 +20,7 @@ namespace RHI::Vulkan {
 
     VulkanShaderModule::~VulkanShaderModule()
     {
-        if (nativeShaderModule) {
+        if (nativeShaderModule != VK_NULL_HANDLE) {
             vkDestroyShaderModule(device.GetNative(), nativeShaderModule, nullptr);
         }
     }

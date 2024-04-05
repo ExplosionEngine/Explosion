@@ -126,7 +126,7 @@ namespace Rendering {
 
         explicit RGBuffer(RGBufferDesc inDesc);
         explicit RGBuffer(RHI::Buffer* inImportedBuffer);
-        void Transition(RHI::CommandCommandEncoder& commandEncoder, RHI::BufferState transitionTo);
+        void Transition(RHI::CommandCommandRecorder& commandRecorder, RHI::BufferState transitionTo);
 
         void Devirtualize(RHI::Device& device) override;
         void UndoDevirtualize() override;
@@ -150,7 +150,7 @@ namespace Rendering {
 
         explicit RGTexture(RGTextureDesc inDesc);
         explicit RGTexture(RHI::Texture* inImportedTexture);
-        void Transition(RHI::CommandCommandEncoder& commandEncoder, RHI::TextureState transitionTo);
+        void Transition(RHI::CommandCommandRecorder& commandRecorder, RHI::TextureState transitionTo);
 
         void Devirtualize(RHI::Device& device) override;
         void UndoDevirtualize() override;
@@ -241,12 +241,12 @@ namespace Rendering {
     using RGBufferViewRef = RGBufferView*;
     using RGTextureViewRef = RGTextureView*;
 
-    struct RGColorAttachment : public RHI::GraphicsPassColorAttachmentBase<RGColorAttachment> {
+    struct RGColorAttachment : public RHI::ColorAttachmentBase<RGColorAttachment> {
         RGTextureViewRef view;
         // TODO TextureView* resolve;
     };
 
-    struct RGDepthStencilAttachment : public RHI::GraphicsPassDepthStencilAttachmentBase<RGDepthStencilAttachment> {
+    struct RGDepthStencilAttachment : public RHI::DepthStencilAttachmentBase<RGDepthStencilAttachment> {
         RGTextureViewRef view;
     };
 
@@ -326,7 +326,7 @@ namespace Rendering {
         void SaveTextureTransitionInfo(RGTextureRef texture, RHI::TextureState state);
         void CompileForBindGroups(const std::vector<RGBindGroupRef>& bindGroups);
         void DevirtualizeResources(RHI::Device& device);
-        void TransitionResources(RHI::CommandCommandEncoder* commandEncoder);
+        void TransitionResources(RHI::CommandCommandRecorder* commandRecorder);
         void FinalizeResources();
 
         virtual void Compile(RGAsyncInfo& outAsyncInfo) = 0;
@@ -338,9 +338,9 @@ namespace Rendering {
         RGResourcesStates transitionInfos;
     };
 
-    using RGCopyPassExecuteFunc = std::function<void(RHI::CopyPassCommandEncoder&)>;
-    using RGComputePassExecuteFunc = std::function<void(RHI::ComputePassCommandEncoder&)>;
-    using RGRasterPassExecuteFunc = std::function<void(RHI::GraphicsPassCommandEncoder&)>;
+    using RGCopyPassExecuteFunc = std::function<void(RHI::CopyPassCommandRecorder&)>;
+    using RGComputePassExecuteFunc = std::function<void(RHI::ComputePassCommandRecorder&)>;
+    using RGRasterPassExecuteFunc = std::function<void(RHI::RasterPassCommandRecorder&)>;
 
     class RGCopyPass : public RGPass {
     public:

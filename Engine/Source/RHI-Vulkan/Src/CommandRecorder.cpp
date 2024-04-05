@@ -2,7 +2,7 @@
 // Created by Zach Lee on 2022/6/4.
 //
 
-#include <RHI/Vulkan/CommandEncoder.h>
+#include <RHI/Vulkan/CommandRecorder.h>
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Gpu.h>
 #include <RHI/Vulkan/Pipeline.h>
@@ -19,15 +19,6 @@
 #include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
-
-    VulkanCommandEncoder::VulkanCommandEncoder(VulkanDevice& inDevice, VulkanCommandBuffer& inCmdBuffer)
-        : device(inDevice), commandBuffer(inCmdBuffer)
-    {
-    }
-    VulkanCommandEncoder::~VulkanCommandEncoder()
-    {
-    }
-
     static std::tuple<VkImageLayout, VkAccessFlags, VkPipelineStageFlags> GetBarrierInfo(TextureState status)
     {
         if (status == TextureState::present) {
@@ -50,8 +41,18 @@ namespace RHI::Vulkan {
         }
         return {VK_IMAGE_LAYOUT_UNDEFINED, VkAccessFlags {}, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
     }
+}
 
-    void VulkanCommandEncoder::ResourceBarrier(const Barrier& inBarrier)
+namespace RHI::Vulkan {
+    VulkanCommandRecorder::VulkanCommandRecorder(VulkanDevice& inDevice, VulkanCommandBuffer& inCmdBuffer)
+        : device(inDevice)
+        , commandBuffer(inCmdBuffer)
+    {
+    }
+
+    VulkanCommandRecorder::~VulkanCommandRecorder() = default;
+
+    void VulkanCommandRecorder::ResourceBarrier(const Barrier& inBarrier)
     {
         if (inBarrier.type == ResourceType::texture) {
             const auto& textureBarrierInfo = inBarrier.texture;
@@ -72,46 +73,46 @@ namespace RHI::Vulkan {
         }
     }
 
-    CopyPassCommandEncoder* VulkanCommandEncoder::BeginCopyPass()
+    CopyPassCommandRecorder* VulkanCommandRecorder::BeginCopyPass()
     {
-        return new VulkanCopyPassCommandEncoder(device, *this, commandBuffer);
+        return new VulkanCopyPassCommandRecorder(device, *this, commandBuffer);
     }
 
-    ComputePassCommandEncoder* VulkanCommandEncoder::BeginComputePass()
+    ComputePassCommandRecorder* VulkanCommandRecorder::BeginComputePass()
     {
-        return new VulkanComputePassCommandEncoder(device, *this, commandBuffer);
+        return new VulkanComputePassCommandRecorder(device, *this, commandBuffer);
     }
 
-    GraphicsPassCommandEncoder* VulkanCommandEncoder::BeginGraphicsPass(const GraphicsPassBeginInfo& inBeginInfo)
+    RasterPassCommandRecorder* VulkanCommandRecorder::BeginRasterPass(const RasterPassBeginInfo& inBeginInfo)
     {
-        return new VulkanGraphicsPassCommandEncoder(device, *this, commandBuffer, inBeginInfo);
+        return new VulkanRasterPassCommandRecorder(device, *this, commandBuffer, inBeginInfo);
     }
 
-    void VulkanCommandEncoder::End()
+    void VulkanCommandRecorder::End()
     {
         vkEndCommandBuffer(commandBuffer.GetNativeCommandBuffer());
     }
 
-    void VulkanCommandEncoder::Destroy()
+    void VulkanCommandRecorder::Destroy()
     {
         delete this;
     }
 
-    VulkanCopyPassCommandEncoder::VulkanCopyPassCommandEncoder(VulkanDevice& inDevice, VulkanCommandEncoder& inCmdEncoder, VulkanCommandBuffer& inCmdBuffer)
+    VulkanCopyPassCommandRecorder::VulkanCopyPassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer)
         : device(inDevice)
-        , commandEncoder(inCmdEncoder)
+        , commandRecorder(inCmdRecorder)
         , commandBuffer(inCmdBuffer)
     {
     }
 
-    VulkanCopyPassCommandEncoder::~VulkanCopyPassCommandEncoder() = default;
+    VulkanCopyPassCommandRecorder::~VulkanCopyPassCommandRecorder() = default;
 
-    void VulkanCopyPassCommandEncoder::ResourceBarrier(const Barrier& inBarrier)
+    void VulkanCopyPassCommandRecorder::ResourceBarrier(const Barrier& inBarrier)
     {
-        commandEncoder.ResourceBarrier(inBarrier);
+        commandRecorder.ResourceBarrier(inBarrier);
     }
 
-    void VulkanCopyPassCommandEncoder::CopyBufferToBuffer(Buffer* inSrcBuffer, size_t inSrcOffset, Buffer* inDestBuffer, size_t inDestOffset, size_t inSize)
+    void VulkanCopyPassCommandRecorder::CopyBufferToBuffer(Buffer* inSrcBuffer, size_t inSrcOffset, Buffer* inDestBuffer, size_t inDestOffset, size_t inSize)
     {
         auto* srcBuffer = static_cast<VulkanBuffer*>(inSrcBuffer);
         auto* dstBuffer = static_cast<VulkanBuffer*>(inDestBuffer);
@@ -123,7 +124,7 @@ namespace RHI::Vulkan {
         vkCmdCopyBuffer(commandBuffer.GetNativeCommandBuffer(), srcBuffer->GetNative(), dstBuffer->GetNative(), 1, &copyRegion);
     }
 
-    void VulkanCopyPassCommandEncoder::CopyBufferToTexture(Buffer* inSrcBuffer, Texture* inDestTexture, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize)
+    void VulkanCopyPassCommandRecorder::CopyBufferToTexture(Buffer* inSrcBuffer, Texture* inDestTexture, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize)
     {
         auto* buffer = static_cast<VulkanBuffer*>(inSrcBuffer);
         auto* texture = static_cast<VulkanTexture*>(inDestTexture);
@@ -135,7 +136,7 @@ namespace RHI::Vulkan {
         vkCmdCopyBufferToImage(commandBuffer.GetNativeCommandBuffer(), buffer->GetNative(), texture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
     }
 
-    void VulkanCopyPassCommandEncoder::CopyTextureToBuffer(Texture* inSrcTexture, Buffer* inDestBuffer, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize)
+    void VulkanCopyPassCommandRecorder::CopyTextureToBuffer(Texture* inSrcTexture, Buffer* inDestBuffer, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize)
     {
         auto* buffer = static_cast<VulkanBuffer*>(inDestBuffer);
         auto* texture = static_cast<VulkanTexture*>(inSrcTexture);
@@ -148,8 +149,7 @@ namespace RHI::Vulkan {
                                buffer->GetNative(), 1, &copyRegion);
     }
 
-    void VulkanCopyPassCommandEncoder::CopyTextureToTexture(Texture* inSrcTexture, const TextureSubResourceInfo* inSrcSubResourceInfo,
-                                                            Texture* inDestTexture, const TextureSubResourceInfo* inDestSubResourceInfo, const Common::UVec3& inSize)
+    void VulkanCopyPassCommandRecorder::CopyTextureToTexture(Texture* inSrcTexture, const TextureSubResourceInfo* inSrcSubResourceInfo, Texture* inDestTexture, const TextureSubResourceInfo* inDestSubResourceInfo, const Common::UVec3& inSize)
     {
         auto* srcTexture = static_cast<VulkanTexture*>(inSrcTexture);
         auto* dstTexture = static_cast<VulkanTexture*>(inDestTexture);
@@ -159,61 +159,60 @@ namespace RHI::Vulkan {
         copyRegion.srcSubresource = {GetAspectMask(inSrcSubResourceInfo->aspect), inSrcSubResourceInfo->mipLevel, inSrcSubResourceInfo->baseArrayLayer, inSrcSubResourceInfo->arrayLayerNum };
         copyRegion.dstSubresource = {GetAspectMask(inDestSubResourceInfo->aspect), inDestSubResourceInfo->mipLevel, inDestSubResourceInfo->baseArrayLayer, inDestSubResourceInfo->arrayLayerNum };
 
-        vkCmdCopyImage(commandBuffer.GetNativeCommandBuffer(), srcTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                       dstTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+        vkCmdCopyImage(commandBuffer.GetNativeCommandBuffer(), srcTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
     }
 
-    void VulkanCopyPassCommandEncoder::EndPass()
+    void VulkanCopyPassCommandRecorder::EndPass()
     {
     }
 
-    void VulkanCopyPassCommandEncoder::Destroy()
+    void VulkanCopyPassCommandRecorder::Destroy()
     {
         delete this;
     }
 
-    VulkanComputePassCommandEncoder::VulkanComputePassCommandEncoder(VulkanDevice& inDevice, VulkanCommandEncoder& inCmdEncoder, VulkanCommandBuffer& inCmdBuffer)
+    VulkanComputePassCommandRecorder::VulkanComputePassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer)
         : device(inDevice)
-        , commandEncoder(inCmdEncoder)
+        , commandRecorder(inCmdRecorder)
         , commandBuffer(inCmdBuffer)
     {
     }
 
-    VulkanComputePassCommandEncoder::~VulkanComputePassCommandEncoder() = default;
+    VulkanComputePassCommandRecorder::~VulkanComputePassCommandRecorder() = default;
 
-    void VulkanComputePassCommandEncoder::ResourceBarrier(const Barrier& inBarrier)
+    void VulkanComputePassCommandRecorder::ResourceBarrier(const Barrier& inBarrier)
     {
-        commandEncoder.ResourceBarrier(inBarrier);
+        commandRecorder.ResourceBarrier(inBarrier);
     }
 
-    void VulkanComputePassCommandEncoder::SetPipeline(ComputePipeline* inPipeline)
-    {
-        // TODO
-    }
-
-    void VulkanComputePassCommandEncoder::SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup)
+    void VulkanComputePassCommandRecorder::SetPipeline(ComputePipeline* inPipeline)
     {
         // TODO
     }
 
-    void VulkanComputePassCommandEncoder::Dispatch(size_t inGroupCountX, size_t inGroupCountY, size_t inGroupCountZ)
+    void VulkanComputePassCommandRecorder::SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup)
     {
         // TODO
     }
 
-    void VulkanComputePassCommandEncoder::EndPass()
+    void VulkanComputePassCommandRecorder::Dispatch(size_t inGroupCountX, size_t inGroupCountY, size_t inGroupCountZ)
     {
         // TODO
     }
 
-    void VulkanComputePassCommandEncoder::Destroy()
+    void VulkanComputePassCommandRecorder::EndPass()
+    {
+        // TODO
+    }
+
+    void VulkanComputePassCommandRecorder::Destroy()
     {
         delete this;
     }
 
-    VulkanGraphicsPassCommandEncoder::VulkanGraphicsPassCommandEncoder(VulkanDevice& inDevice, VulkanCommandEncoder& inCmdEncoder, VulkanCommandBuffer& inCmdBuffer, const GraphicsPassBeginInfo& inBeginInfo)
+    VulkanRasterPassCommandRecorder::VulkanRasterPassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer, const RasterPassBeginInfo& inBeginInfo)
         : device(inDevice)
-        , commandEncoder(inCmdEncoder)
+        , commandRecorder(inCmdRecorder)
         , commandBuffer(inCmdBuffer)
     {
         std::vector<VkRenderingAttachmentInfo> colorAttachmentInfos(inBeginInfo.colorAttachments.size());
@@ -273,31 +272,31 @@ namespace RHI::Vulkan {
         device.GetGpu().GetInstance().pfnVkCmdBeginRenderingKHR(nativeCmdBuffer, &renderingInfo);
     }
 
-    VulkanGraphicsPassCommandEncoder::~VulkanGraphicsPassCommandEncoder() = default;
+    VulkanRasterPassCommandRecorder::~VulkanRasterPassCommandRecorder() = default;
 
-    void VulkanGraphicsPassCommandEncoder::ResourceBarrier(const Barrier& inBarrier)
+    void VulkanRasterPassCommandRecorder::ResourceBarrier(const Barrier& inBarrier)
     {
-        commandEncoder.ResourceBarrier(inBarrier);
+        commandRecorder.ResourceBarrier(inBarrier);
     }
 
-    void VulkanGraphicsPassCommandEncoder::SetPipeline(GraphicsPipeline* inPipeline)
+    void VulkanRasterPassCommandRecorder::SetPipeline(RasterPipeline* inPipeline)
     {
-        graphicsPipeline = static_cast<VulkanGraphicsPipeline*>(inPipeline);
-        Assert(graphicsPipeline);
+        rasterPipeline = static_cast<VulkanRasterPipeline*>(inPipeline);
+        Assert(rasterPipeline);
 
-       vkCmdBindPipeline(nativeCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->GetNative());
+       vkCmdBindPipeline(nativeCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rasterPipeline->GetNative());
     }
 
-    void VulkanGraphicsPassCommandEncoder::SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup)
+    void VulkanRasterPassCommandRecorder::SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup)
     {
         auto* vBindGroup = static_cast<VulkanBindGroup*>(inBindGroup);
         VkDescriptorSet descriptorSet = vBindGroup->GetNative();
-        VkPipelineLayout layout = graphicsPipeline->GetPipelineLayout()->GetNative();
+        VkPipelineLayout layout = rasterPipeline->GetPipelineLayout()->GetNative();
 
         vkCmdBindDescriptorSets(nativeCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, inLayoutIndex, 1, &descriptorSet, 0, nullptr);
     }
 
-    void VulkanGraphicsPassCommandEncoder::SetIndexBuffer(BufferView *inBufferView)
+    void VulkanRasterPassCommandRecorder::SetIndexBuffer(BufferView *inBufferView)
     {
         auto* mBufferView = static_cast<VulkanBufferView*>(inBufferView);
 
@@ -307,7 +306,7 @@ namespace RHI::Vulkan {
         vkCmdBindIndexBuffer(nativeCmdBuffer, indexBuffer, 0, vkFormat);
     }
 
-    void VulkanGraphicsPassCommandEncoder::SetVertexBuffer(size_t inSlot, BufferView *inBufferView)
+    void VulkanRasterPassCommandRecorder::SetVertexBuffer(size_t inSlot, BufferView *inBufferView)
     {
         auto* mBufferView = static_cast<VulkanBufferView*>(inBufferView);
 
@@ -316,17 +315,17 @@ namespace RHI::Vulkan {
         vkCmdBindVertexBuffers(nativeCmdBuffer, inSlot, 1, &vertexBuffer, offset);
     }
 
-    void VulkanGraphicsPassCommandEncoder::Draw(size_t inVertexCount, size_t inInstanceCount, size_t inFirstVertex, size_t inFirstInstance)
+    void VulkanRasterPassCommandRecorder::Draw(size_t inVertexCount, size_t inInstanceCount, size_t inFirstVertex, size_t inFirstInstance)
     {
         vkCmdDraw(nativeCmdBuffer, inVertexCount, inInstanceCount, inFirstVertex, inFirstInstance);
     }
 
-    void VulkanGraphicsPassCommandEncoder::DrawIndexed(size_t inIndexCount, size_t inInstanceCount, size_t inFirstIndex, size_t inBaseVertex, size_t inFirstInstance)
+    void VulkanRasterPassCommandRecorder::DrawIndexed(size_t inIndexCount, size_t inInstanceCount, size_t inFirstIndex, size_t inBaseVertex, size_t inFirstInstance)
     {
         vkCmdDrawIndexed(nativeCmdBuffer, inIndexCount, inInstanceCount, inFirstIndex, inBaseVertex, inFirstInstance);
     }
 
-    void VulkanGraphicsPassCommandEncoder::SetViewport(float inX, float inY, float inWidth, float inHeight, float inMinDepth, float inMaxDepth)
+    void VulkanRasterPassCommandRecorder::SetViewport(float inX, float inY, float inWidth, float inHeight, float inMinDepth, float inMaxDepth)
     {
         VkViewport viewport{};
         viewport.x = inX;
@@ -338,7 +337,7 @@ namespace RHI::Vulkan {
         vkCmdSetViewport(nativeCmdBuffer, 0, 1, &viewport);
     }
 
-    void VulkanGraphicsPassCommandEncoder::SetScissor(uint32_t inLeft, uint32_t inTop, uint32_t inRight, uint32_t inBottom)
+    void VulkanRasterPassCommandRecorder::SetScissor(uint32_t inLeft, uint32_t inTop, uint32_t inRight, uint32_t inBottom)
     {
         VkRect2D rect;
         rect.offset = {static_cast<int32_t>(inLeft), static_cast<int32_t>(inTop) };
@@ -346,29 +345,29 @@ namespace RHI::Vulkan {
         vkCmdSetScissor(nativeCmdBuffer, 0, 1, &rect);
     }
 
-    void VulkanGraphicsPassCommandEncoder::SetPrimitiveTopology(PrimitiveTopology inPrimitiveTopology)
+    void VulkanRasterPassCommandRecorder::SetPrimitiveTopology(PrimitiveTopology inPrimitiveTopology)
     {
         // check extension
 //        cmdHandle.setPrimitiveTopologyEXT(VKEnumCast<PrimitiveTopologyType, vk::PrimitiveTopology>(primitiveTopology)
     }
 
-    void VulkanGraphicsPassCommandEncoder::SetBlendConstant(const float *inConstants)
+    void VulkanRasterPassCommandRecorder::SetBlendConstant(const float *inConstants)
     {
         vkCmdSetBlendConstants(nativeCmdBuffer, inConstants);
     }
 
-    void VulkanGraphicsPassCommandEncoder::SetStencilReference(uint32_t inReference)
+    void VulkanRasterPassCommandRecorder::SetStencilReference(uint32_t inReference)
     {
         // TODO stencil face;
         vkCmdSetStencilReference(nativeCmdBuffer, VK_STENCIL_FACE_FRONT_AND_BACK, inReference);
     }
 
-    void VulkanGraphicsPassCommandEncoder::EndPass()
+    void VulkanRasterPassCommandRecorder::EndPass()
     {
         device.GetGpu().GetInstance().pfnVkCmdEndRenderingKHR(nativeCmdBuffer);
     }
 
-    void VulkanGraphicsPassCommandEncoder::Destroy()
+    void VulkanRasterPassCommandRecorder::Destroy()
     {
         delete this;
     }

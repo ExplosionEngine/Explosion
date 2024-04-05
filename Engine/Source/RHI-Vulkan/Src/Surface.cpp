@@ -17,7 +17,7 @@ namespace RHI::Vulkan {
 
     VulkanSurface::~VulkanSurface()
     {
-        if (nativeSurface) {
+        if (nativeSurface != VK_NULL_HANDLE) {
             vkDestroySurfaceKHR(device.GetGpu().GetInstance().GetNative(), nativeSurface, nullptr);
         }
     }

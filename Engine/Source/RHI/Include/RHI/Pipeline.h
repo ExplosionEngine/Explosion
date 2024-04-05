@@ -15,17 +15,22 @@ namespace RHI {
     class ShaderModule;
 
     struct VertexAttribute {
-        VertexFormat format;
-        size_t offset;
         // DirectX 12 using SemanticName and SemanticIndex to specific vertex layout, Vulkan using SPRI-V Reflection to get location
         std::string semanticName;
         uint8_t semanticIndex;
+        VertexFormat format;
+        size_t offset;
 
-        VertexAttribute();
-        VertexAttribute& Format(VertexFormat inFormat);
-        VertexAttribute& Offset(size_t inOffset);
-        VertexAttribute& SemanticName(std::string inSemanticName);
-        VertexAttribute& SemanticIndex(uint8_t inSemanticIndex);
+        VertexAttribute(
+            std::string inSemanticName = "",
+            uint8_t inSemanticIndex = 0,
+            VertexFormat inFormat = VertexFormat::max,
+            size_t inOffset = 0);
+
+        VertexAttribute& SetSemanticName(std::string inSemanticName);
+        VertexAttribute& SetSemanticIndex(uint8_t inSemanticIndex);
+        VertexAttribute& SetFormat(VertexFormat inFormat);
+        VertexAttribute& SetOffset(size_t inOffset);
     };
 
     struct VertexBufferLayout {
@@ -34,16 +39,16 @@ namespace RHI {
         std::vector<VertexAttribute> attributes;
 
         VertexBufferLayout();
-        VertexBufferLayout& Stride(size_t inStride);
-        VertexBufferLayout& StepMode(VertexStepMode inStepMode);
-        VertexBufferLayout& Attribute(const VertexAttribute& inAttribute);
+        VertexBufferLayout& SetStride(size_t inStride);
+        VertexBufferLayout& SetStepMode(VertexStepMode inStepMode);
+        VertexBufferLayout& AddAttribute(const VertexAttribute& inAttribute);
     };
 
     struct VertexState {
         std::vector<VertexBufferLayout> bufferLayouts;
 
         VertexState();
-        VertexState& VertexBufferLayout(const VertexBufferLayout& inLayout);
+        VertexState& AddVertexBufferLayout(const VertexBufferLayout& inLayout);
     };
 
     struct PrimitiveState {
@@ -55,11 +60,11 @@ namespace RHI {
         bool depthClip = false;
 
         PrimitiveState();
-        PrimitiveState& TopologyType(PrimitiveTopologyType inTopologyType);
-        PrimitiveState& StripIndexFormat(IndexFormat inFormat);
-        PrimitiveState& FrontFace(FrontFace inFrontFace);
-        PrimitiveState& CullMode(CullMode inCullMode);
-        PrimitiveState& DepthClip(bool inDepthClip);
+        PrimitiveState& SetTopologyType(PrimitiveTopologyType inTopologyType);
+        PrimitiveState& SetStripIndexFormat(IndexFormat inFormat);
+        PrimitiveState& SetFrontFace(FrontFace inFrontFace);
+        PrimitiveState& SetCullMode(CullMode inCullMode);
+        PrimitiveState& SetDepthClip(bool inDepthClip);
     };
 
     struct StencilFaceState {
@@ -69,10 +74,10 @@ namespace RHI {
         StencilOp passOp;
 
         StencilFaceState();
-        StencilFaceState& ComparisonFunc(ComparisonFunc inFunc);
-        StencilFaceState& FailOp(StencilOp inFailOp);
-        StencilFaceState& DepthFailOp(StencilOp inDepthFailOp);
-        StencilFaceState& PassOp(StencilOp inPassOp);
+        StencilFaceState& SetComparisonFunc(ComparisonFunc inFunc);
+        StencilFaceState& SetFailOp(StencilOp inFailOp);
+        StencilFaceState& SetDepthFailOp(StencilOp inDepthFailOp);
+        StencilFaceState& SetPassOp(StencilOp inPassOp);
     };
 
     struct DepthStencilState {
@@ -89,17 +94,17 @@ namespace RHI {
         float depthBiasClamp;
 
         DepthStencilState();
-        DepthStencilState& DepthEnabled(bool inDepthEnabled);
-        DepthStencilState& StencilEnabled(bool inStencilEnabled);
-        DepthStencilState& Format(PixelFormat inFormat);
-        DepthStencilState& DepthComparisonFunc(ComparisonFunc inFunc);
-        DepthStencilState& StencilFront(StencilFaceState inState);
-        DepthStencilState& StencilBack(StencilFaceState inState);
-        DepthStencilState& StencilReadMask(uint8_t inStencilReadMask);
-        DepthStencilState& StencilWriteMask(uint8_t inStencilWriteMask);
-        DepthStencilState& DepthBias(int32_t inDepthBias);
-        DepthStencilState& DepthBiasSlopeScale(float inDepthBiasSlopeScale);
-        DepthStencilState& DepthBiasClamp(float inDepthBiasClamp);
+        DepthStencilState& SetDepthEnabled(bool inDepthEnabled);
+        DepthStencilState& SetStencilEnabled(bool inStencilEnabled);
+        DepthStencilState& SetFormat(PixelFormat inFormat);
+        DepthStencilState& SetDepthComparisonFunc(ComparisonFunc inFunc);
+        DepthStencilState& SetStencilFront(StencilFaceState inState);
+        DepthStencilState& SetStencilBack(StencilFaceState inState);
+        DepthStencilState& SetStencilReadMask(uint8_t inStencilReadMask);
+        DepthStencilState& SetStencilWriteMask(uint8_t inStencilWriteMask);
+        DepthStencilState& SetDepthBias(int32_t inDepthBias);
+        DepthStencilState& SetDepthBiasSlopeScale(float inDepthBiasSlopeScale);
+        DepthStencilState& SetDepthBiasClamp(float inDepthBiasClamp);
     };
 
     struct MultiSampleState {
@@ -107,10 +112,14 @@ namespace RHI {
         uint32_t mask;
         bool alphaToCoverage = false;
 
-        MultiSampleState();
-        MultiSampleState& Count(uint8_t inCount);
-        MultiSampleState& Mask(uint32_t inMask);
-        MultiSampleState& AlphaToCoverage(bool inAlphaToCoverage);
+        MultiSampleState(
+            uint8_t inCount = 1,
+            uint32_t inMask = 0xffffffff,
+            bool inAlphaToCoverage = false);
+
+        MultiSampleState& SetCount(uint8_t inCount);
+        MultiSampleState& SetMask(uint32_t inMask);
+        MultiSampleState& SetAlphaToCoverage(bool inAlphaToCoverage);
     };
 
     struct BlendComponent {
@@ -119,9 +128,9 @@ namespace RHI {
         BlendFactor dstFactor;
 
         BlendComponent();
-        BlendComponent& Op(BlendOp inOp);
-        BlendComponent& SrcFactor(BlendFactor inSrcFactor);
-        BlendComponent& DstFactor(BlendFactor inDstFactor);
+        BlendComponent& SetOp(BlendOp inOp);
+        BlendComponent& SetSrcFactor(BlendFactor inSrcFactor);
+        BlendComponent& SetDstFactor(BlendFactor inDstFactor);
     };
 
     struct BlendState {
@@ -129,8 +138,8 @@ namespace RHI {
         BlendComponent alpha;
 
         BlendState();
-        BlendState& Color(BlendComponent inColor);
-        BlendState& Alpha(BlendComponent inAlpha);
+        BlendState& SetColor(BlendComponent inColor);
+        BlendState& SetAlpha(BlendComponent inAlpha);
     };
 
     struct ColorTargetState {
@@ -139,16 +148,16 @@ namespace RHI {
         ColorWriteFlags writeFlags;
 
         ColorTargetState();
-        ColorTargetState& Format(PixelFormat inFormat);
-        ColorTargetState& Blend(BlendState inBlend);
-        ColorTargetState& WriteFlags(ColorWriteFlags inFlags);
+        ColorTargetState& SetFormat(PixelFormat inFormat);
+        ColorTargetState& SetBlend(BlendState inBlend);
+        ColorTargetState& SetWriteFlags(ColorWriteFlags inFlags);
     };
 
     struct FragmentState {
         std::vector<ColorTargetState> colorTargets;
 
         FragmentState();
-        FragmentState& ColorTarget(const ColorTargetState& inState);
+        FragmentState& AddColorTarget(const ColorTargetState& inState);
     };
 
     struct ComputePipelineCreateInfo {
@@ -156,11 +165,11 @@ namespace RHI {
         ShaderModule* computeShader;
 
         ComputePipelineCreateInfo();
-        ComputePipelineCreateInfo& Layout(PipelineLayout* inLayout);
-        ComputePipelineCreateInfo& ComputeShader(ShaderModule* inComputeShader);
+        ComputePipelineCreateInfo& SetLayout(PipelineLayout* inLayout);
+        ComputePipelineCreateInfo& SetComputeShader(ShaderModule* inComputeShader);
     };
 
-    struct GraphicsPipelineCreateInfo {
+    struct RasterPipelineCreateInfo {
         PipelineLayout* layout;
 
         ShaderModule* vertexShader;
@@ -177,19 +186,19 @@ namespace RHI {
 
         std::string debugName;
 
-        GraphicsPipelineCreateInfo();
-        GraphicsPipelineCreateInfo& Layout(PipelineLayout* inLayout);
-        GraphicsPipelineCreateInfo& VertexShader(ShaderModule* inVertexShader);
-        GraphicsPipelineCreateInfo& PixelShader(ShaderModule* inPixelShader);
-        GraphicsPipelineCreateInfo& GeometryShader(ShaderModule* inGeometryShader);
-        GraphicsPipelineCreateInfo& DomainShader(ShaderModule* inDomainShader);
-        GraphicsPipelineCreateInfo& HullShader(ShaderModule* inHullShader);
-        GraphicsPipelineCreateInfo& VertexState(const VertexState& inVertexState);
-        GraphicsPipelineCreateInfo& PrimitiveState(const PrimitiveState& inPrimitiveState);
-        GraphicsPipelineCreateInfo& DepthStencilState(const DepthStencilState& inDepthStencilState);
-        GraphicsPipelineCreateInfo& MultiSampleState(const MultiSampleState& inMultiSampleState);
-        GraphicsPipelineCreateInfo& FragmentState(const FragmentState& inFragmentState);
-        GraphicsPipelineCreateInfo& DebugName(std::string inDebugName);
+        RasterPipelineCreateInfo();
+        RasterPipelineCreateInfo& SetLayout(PipelineLayout* inLayout);
+        RasterPipelineCreateInfo& SetVertexShader(ShaderModule* inVertexShader);
+        RasterPipelineCreateInfo& SetPixelShader(ShaderModule* inPixelShader);
+        RasterPipelineCreateInfo& SetGeometryShader(ShaderModule* inGeometryShader);
+        RasterPipelineCreateInfo& SetDomainShader(ShaderModule* inDomainShader);
+        RasterPipelineCreateInfo& SetHullShader(ShaderModule* inHullShader);
+        RasterPipelineCreateInfo& SetVertexState(const VertexState& inVertexState);
+        RasterPipelineCreateInfo& SetPrimitiveState(const PrimitiveState& inPrimitiveState);
+        RasterPipelineCreateInfo& SetDepthStencilState(const DepthStencilState& inDepthStencilState);
+        RasterPipelineCreateInfo& SetMultiSampleState(const MultiSampleState& inMultiSampleState);
+        RasterPipelineCreateInfo& SetFragmentState(const FragmentState& inFragmentState);
+        RasterPipelineCreateInfo& SetDebugName(std::string inDebugName);
     };
 
     class Pipeline {
@@ -214,14 +223,14 @@ namespace RHI {
         explicit ComputePipeline(const ComputePipelineCreateInfo& createInfo);
     };
 
-    class GraphicsPipeline : public Pipeline {
+    class RasterPipeline : public Pipeline {
     public:
-        NonCopyable(GraphicsPipeline)
-        ~GraphicsPipeline() override;
+        NonCopyable(RasterPipeline)
+        ~RasterPipeline() override;
 
         void Destroy() override = 0;
 
     protected:
-        explicit GraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo);
+        explicit RasterPipeline(const RasterPipelineCreateInfo& createInfo);
     };
 }

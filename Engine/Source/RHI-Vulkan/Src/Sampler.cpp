@@ -15,7 +15,7 @@ namespace RHI::Vulkan {
 
     VulkanSampler::~VulkanSampler()
     {
-        if (nativeSampler) {
+        if (nativeSampler != VK_NULL_HANDLE) {
             vkDestroySampler(device.GetNative(), nativeSampler, nullptr);
         }
     }

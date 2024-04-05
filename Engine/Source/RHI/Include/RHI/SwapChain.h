@@ -25,12 +25,12 @@ namespace RHI {
         PresentMode presentMode;
 
         SwapChainCreateInfo();
-        SwapChainCreateInfo& PresentQueue(Queue* inPresentQueue);
-        SwapChainCreateInfo& Surface(Surface* inSurface);
-        SwapChainCreateInfo& TextureNum(uint8_t inTextureNum);
-        SwapChainCreateInfo& Format(PixelFormat inFormat);
-        SwapChainCreateInfo& Extent(const Common::UVec2& inExtent);
-        SwapChainCreateInfo& PresentMode(PresentMode inMode);
+        SwapChainCreateInfo& SetPresentQueue(Queue* inPresentQueue);
+        SwapChainCreateInfo& SetSurface(Surface* inSurface);
+        SwapChainCreateInfo& SetTextureNum(uint8_t inTextureNum);
+        SwapChainCreateInfo& SetFormat(PixelFormat inFormat);
+        SwapChainCreateInfo& SetExtent(const Common::UVec2& inExtent);
+        SwapChainCreateInfo& SetPresentMode(PresentMode inMode);
     };
 
     class SwapChain {

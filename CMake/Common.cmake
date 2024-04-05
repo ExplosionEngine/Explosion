@@ -33,8 +33,5 @@ endif ()
 
 if (${MSVC})
     add_compile_options(/bigobj)
-endif ()
-
-if (${MSVC})
-    add_compile_options(/bigobj)
+    add_definitions(-D_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS=1)
 endif ()

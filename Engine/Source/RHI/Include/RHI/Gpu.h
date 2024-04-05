@@ -24,7 +24,7 @@ namespace RHI {
         NonCopyable(Gpu)
         virtual ~Gpu();
         virtual GpuProperty GetProperty() = 0;
-        virtual Device* RequestDevice(const DeviceCreateInfo& createInfo) = 0;
+        virtual Common::UniqueRef<Device> RequestDevice(const DeviceCreateInfo& createInfo) = 0;
 
     protected:
         Gpu();

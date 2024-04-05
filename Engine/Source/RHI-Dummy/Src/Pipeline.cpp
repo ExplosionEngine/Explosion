@@ -17,14 +17,14 @@ namespace RHI::Dummy {
         delete this;
     }
 
-    DummyGraphicsPipeline::DummyGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo)
-        : GraphicsPipeline(createInfo)
+    DummyRasterPipeline::DummyRasterPipeline(const RasterPipelineCreateInfo& createInfo)
+        : RasterPipeline(createInfo)
     {
     }
 
-    DummyGraphicsPipeline::~DummyGraphicsPipeline() = default;
+    DummyRasterPipeline::~DummyRasterPipeline() = default;
 
-    void DummyGraphicsPipeline::Destroy()
+    void DummyRasterPipeline::Destroy()
     {
         delete this;
     }

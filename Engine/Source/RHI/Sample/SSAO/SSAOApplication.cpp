@@ -81,148 +81,110 @@ protected:
         auto backTextureIndex = swapChain->AcquireBackTexture(backBufferReadySemaphores[nextFrameIndex].Get());
         inflightFences[nextFrameIndex]->Reset();
 
-        UniqueRef<CommandEncoder> commandEncoder = commandBuffers[nextFrameIndex]->Begin();
+        UniqueRef<CommandRecorder> commandRecorder = commandBuffers[nextFrameIndex]->Begin();
         {
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilReadonly, TextureState::depthStencilWrite));
+            commandRecorder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
+            commandRecorder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
+            commandRecorder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
+            commandRecorder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilReadonly, TextureState::depthStencilWrite));
 
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(
-                GraphicsPassBeginInfo()
-                    .ColorAttachment(
-                        GraphicsPassColorAttachment()
-                            .ClearValue(Common::ColorConsts::black.ToLinearColor())
-                            .LoadOp(LoadOp::clear)
-                            .StoreOp(StoreOp::store)
-                            .View(gBufferPos.rtv.Get()))
-                    .ColorAttachment(
-                        GraphicsPassColorAttachment()
-                            .ClearValue(Common::ColorConsts::black.ToLinearColor())
-                            .LoadOp(LoadOp::clear)
-                            .StoreOp(StoreOp::store)
-                            .View(gBufferNormal.rtv.Get()))
-                    .ColorAttachment(
-                        GraphicsPassColorAttachment()
-                            .ClearValue(Common::ColorConsts::black.ToLinearColor())
-                            .LoadOp(LoadOp::clear)
-                            .StoreOp(StoreOp::store)
-                            .View(gBufferAlbedo.rtv.Get()))
-                    .DepthStencilAttachment(
-                        GraphicsPassDepthStencilAttachment()
-                            .DepthClearValue(0.0f)
-                            .DepthLoadOp(LoadOp::clear)
-                            .DepthStoreOp(StoreOp::store)
-                            .DepthReadOnly(true)
-                            .StencilClearValue(0.0f)
-                            .View(gBufferDepth.view.Get())));
+            UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+                RasterPassBeginInfo()
+                    .AddColorAttachment(RHI::ColorAttachment(gBufferPos.rtv.Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black))
+                    .AddColorAttachment(RHI::ColorAttachment(gBufferNormal.rtv.Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black))
+                    .AddColorAttachment(RHI::ColorAttachment(gBufferAlbedo.rtv.Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black))
+                    .SetDepthStencilAttachment(DepthStencilAttachment(gBufferDepth.view.Get(), true, LoadOp::clear, StoreOp::store, 0.0f)));
             {
-                graphicsEncoder->SetPipeline(pipelines.gBuffer.Get());
-                graphicsEncoder->SetScissor(0, 0, width, height);
-                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
-                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
-                graphicsEncoder->SetBindGroup(0, bindGroups.scene.Get());
-                graphicsEncoder->SetVertexBuffer(0, vertexBufferView.Get());
-                graphicsEncoder->SetIndexBuffer(indexBufferView.Get());
+                rasterRecorder->SetPipeline(pipelines.gBuffer.Get());
+                rasterRecorder->SetScissor(0, 0, width, height);
+                rasterRecorder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                rasterRecorder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
+                rasterRecorder->SetBindGroup(0, bindGroups.scene.Get());
+                rasterRecorder->SetVertexBuffer(0, vertexBufferView.Get());
+                rasterRecorder->SetIndexBuffer(indexBufferView.Get());
 
                 for (auto& renderable : renderables) {
-                    graphicsEncoder->SetBindGroup(1, renderable->bindGroup.Get());
-                    graphicsEncoder->DrawIndexed(renderable->indexCount, 1, renderable->firstIndex, 0, 0);
+                    rasterRecorder->SetBindGroup(1, renderable->bindGroup.Get());
+                    rasterRecorder->DrawIndexed(renderable->indexCount, 1, renderable->firstIndex, 0, 0);
                 }
             }
-            graphicsEncoder->EndPass();
+            rasterRecorder->EndPass();
 
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
-            commandEncoder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilWrite, TextureState::depthStencilReadonly));
+            commandRecorder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
+            commandRecorder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
+            commandRecorder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
+            commandRecorder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilWrite, TextureState::depthStencilReadonly));
         }
 
         {
             // ssao
-            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
+            commandRecorder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
 
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(
-                GraphicsPassBeginInfo()
-                    .ColorAttachment(
-                        GraphicsPassColorAttachment()
-                            .ClearValue(Common::ColorConsts::black.ToLinearColor())
-                            .LoadOp(LoadOp::clear)
-                            .StoreOp(StoreOp::store)
-                            .View(ssaoOutput.rtv.Get())));
+            UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+                RasterPassBeginInfo()
+                    .AddColorAttachment(RHI::ColorAttachment(ssaoOutput.rtv.Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black)));
             {
-                graphicsEncoder->SetPipeline(pipelines.ssao.Get());
-                graphicsEncoder->SetScissor(0, 0, width, height);
-                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
-                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
-                graphicsEncoder->SetBindGroup(0, bindGroups.ssao.Get());
-                graphicsEncoder->SetVertexBuffer(0, quadVertexBufferView.Get());
-                graphicsEncoder->SetIndexBuffer(quadIndexBufferView.Get());
-                graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
+                rasterRecorder->SetPipeline(pipelines.ssao.Get());
+                rasterRecorder->SetScissor(0, 0, width, height);
+                rasterRecorder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                rasterRecorder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
+                rasterRecorder->SetBindGroup(0, bindGroups.ssao.Get());
+                rasterRecorder->SetVertexBuffer(0, quadVertexBufferView.Get());
+                rasterRecorder->SetIndexBuffer(quadIndexBufferView.Get());
+                rasterRecorder->DrawIndexed(6, 1, 0, 0, 0);
             }
-            graphicsEncoder->EndPass();
-            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
+            rasterRecorder->EndPass();
+            commandRecorder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
         }
 
         {
             // ssaoBlur
-            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
+            commandRecorder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
 
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(
-                GraphicsPassBeginInfo()
-                    .ColorAttachment(
-                        GraphicsPassColorAttachment()
-                            .ClearValue(Common::ColorConsts::black.ToLinearColor())
-                            .LoadOp(LoadOp::clear)
-                            .StoreOp(StoreOp::store)
-                            .View(ssaoBlurOutput.rtv.Get())));
+            UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+                RasterPassBeginInfo()
+                    .AddColorAttachment(RHI::ColorAttachment(ssaoBlurOutput.rtv.Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black)));
             {
-                graphicsEncoder->SetPipeline(pipelines.ssaoBlur.Get());
-                graphicsEncoder->SetScissor(0, 0, width, height);
-                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
-                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
-                graphicsEncoder->SetBindGroup(0, bindGroups.ssaoBlur.Get());
-                graphicsEncoder->SetVertexBuffer(0, quadVertexBufferView.Get());
-                graphicsEncoder->SetIndexBuffer(quadIndexBufferView.Get());
-                graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
+                rasterRecorder->SetPipeline(pipelines.ssaoBlur.Get());
+                rasterRecorder->SetScissor(0, 0, width, height);
+                rasterRecorder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                rasterRecorder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
+                rasterRecorder->SetBindGroup(0, bindGroups.ssaoBlur.Get());
+                rasterRecorder->SetVertexBuffer(0, quadVertexBufferView.Get());
+                rasterRecorder->SetIndexBuffer(quadIndexBufferView.Get());
+                rasterRecorder->DrawIndexed(6, 1, 0, 0, 0);
             }
-            graphicsEncoder->EndPass();
-            commandEncoder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
+            rasterRecorder->EndPass();
+            commandRecorder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::renderTarget, TextureState::shaderReadOnly));
         }
 
         {
             // composition
-            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-            UniqueRef<GraphicsPassCommandEncoder> graphicsEncoder = commandEncoder->BeginGraphicsPass(
-                GraphicsPassBeginInfo()
-                    .ColorAttachment(
-                        GraphicsPassColorAttachment()
-                            .ClearValue(Common::ColorConsts::black.ToLinearColor())
-                            .LoadOp(LoadOp::clear)
-                            .StoreOp(StoreOp::store)
-                            .View(swapChainTextureViews[backTextureIndex].Get())));
+            commandRecorder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
+            UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+                RasterPassBeginInfo()
+                    .AddColorAttachment(RHI::ColorAttachment(swapChainTextureViews[backTextureIndex].Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black)));
             {
-                graphicsEncoder->SetPipeline(pipelines.composition.Get());
-                graphicsEncoder->SetScissor(0, 0, width, height);
-                graphicsEncoder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
-                graphicsEncoder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
-                graphicsEncoder->SetBindGroup(0, bindGroups.composition.Get());
-                graphicsEncoder->SetVertexBuffer(0, quadVertexBufferView.Get());
-                graphicsEncoder->SetIndexBuffer(quadIndexBufferView.Get());
-                graphicsEncoder->DrawIndexed(6, 1, 0, 0, 0);
+                rasterRecorder->SetPipeline(pipelines.composition.Get());
+                rasterRecorder->SetScissor(0, 0, width, height);
+                rasterRecorder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                rasterRecorder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
+                rasterRecorder->SetBindGroup(0, bindGroups.composition.Get());
+                rasterRecorder->SetVertexBuffer(0, quadVertexBufferView.Get());
+                rasterRecorder->SetIndexBuffer(quadIndexBufferView.Get());
+                rasterRecorder->DrawIndexed(6, 1, 0, 0, 0);
             }
-            graphicsEncoder->EndPass();
-            commandEncoder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::renderTarget, TextureState::present));
+            rasterRecorder->EndPass();
+            commandRecorder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::renderTarget, TextureState::present));
         }
 
-        commandEncoder->End();
+        commandRecorder->End();
 
         graphicsQueue->Submit(
-            commandBuffers[nextFrameIndex].Get(),
-            QueueSubmitInfo()
-                .WaitSemaphore(backBufferReadySemaphores[nextFrameIndex].Get())
-                .SignalSemaphore(renderFinishedSemaphores[nextFrameIndex].Get())
-                .SignalFence(inflightFences[nextFrameIndex].Get()));
+            commandBuffers[nextFrameIndex].Get(), QueueSubmitInfo()
+                .AddWaitSemaphore(backBufferReadySemaphores[nextFrameIndex].Get())
+                .AddSignalSemaphore(renderFinishedSemaphores[nextFrameIndex].Get())
+                .SetSignalFence(inflightFences[nextFrameIndex].Get()));
 
         swapChain->Present(renderFinishedSemaphores[nextFrameIndex].Get());
         nextFrameIndex = (nextFrameIndex + 1) % backBufferCount;
@@ -283,9 +245,9 @@ private:
             auto& texData =mesh->materialData->baseColorTexture;
 
             BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
-                .Size(texData->GetSize())
-                .Usages(BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
-                .InitialState(RHI::BufferState::staging);
+                .SetSize(texData->GetSize())
+                .SetUsages(BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+                .SetInitialState(RHI::BufferState::staging);
 
             UniqueRef<Buffer> pixelBuffer = app->GetDevice()->CreateBuffer(bufferCreateInfo);
             if (pixelBuffer != nullptr) {
@@ -296,40 +258,40 @@ private:
 
             diffuseColorMap = app->GetDevice()->CreateTexture(
                 TextureCreateInfo()
-                    .Format(PixelFormat::rgba8Unorm)
-                    .Dimension(TextureDimension::t2D)
-                    .MipLevels(1)
-                    .Extent({ texData->width, texData->height, 1 })
-                    .Samples(1)
-                    .Usages(TextureUsageBits::copyDst | TextureUsageBits::textureBinding)
-                    .InitialState(TextureState::undefined));
+                    .SetFormat(PixelFormat::rgba8Unorm)
+                    .SetDimension(TextureDimension::t2D)
+                    .SetMipLevels(1)
+                    .SetExtent({texData->width, texData->height, 1})
+                    .SetSamples(1)
+                    .SetUsages(TextureUsageBits::copyDst | TextureUsageBits::textureBinding)
+                    .SetInitialState(TextureState::undefined));
 
             diffuseColorMapView = diffuseColorMap->CreateTextureView(
                 TextureViewCreateInfo()
-                    .Dimension(TextureViewDimension::tv2D)
-                    .MipLevels(0, 1)
-                    .ArrayLayers(0, 1)
-                    .Aspect(TextureAspect::color)
-                    .Type(TextureViewType::textureBinding));
+                    .SetDimension(TextureViewDimension::tv2D)
+                    .SetMipLevels(0, 1)
+                    .SetArrayLayers(0, 1)
+                    .SetAspect(TextureAspect::color)
+                    .SetType(TextureViewType::textureBinding));
 
             UniqueRef<CommandBuffer> texCommandBuffer = app->GetDevice()->CreateCommandBuffer();
 
-            UniqueRef<CommandEncoder> commandEncoder = texCommandBuffer->Begin();
+            UniqueRef<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
             {
-                UniqueRef<CopyPassCommandEncoder> copyPassEncoder = commandEncoder->BeginCopyPass();
+                UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
                 {
-                    copyPassEncoder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::undefined, TextureState::copyDst));
+                    copyRecorder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::undefined, TextureState::copyDst));
                     TextureSubResourceInfo subResourceInfo {};
                     subResourceInfo.mipLevel = 0;
                     subResourceInfo.arrayLayerNum = 1;
                     subResourceInfo.baseArrayLayer = 0;
                     subResourceInfo.aspect = TextureAspect::color;
-                    copyPassEncoder->CopyBufferToTexture(pixelBuffer.Get(), diffuseColorMap.Get(), &subResourceInfo, {texData->width, texData->height, 1});
-                    copyPassEncoder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
+                    copyRecorder->CopyBufferToTexture(pixelBuffer.Get(), diffuseColorMap.Get(), &subResourceInfo, {texData->width, texData->height, 1});
+                    copyRecorder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
                 }
-                copyPassEncoder->EndPass();
+                copyRecorder->EndPass();
             }
-            commandEncoder->End();
+            commandRecorder->End();
 
             Common::UniqueRef<Fence> fence = device.CreateFence(false);
             QueueSubmitInfo submitInfo {};
@@ -340,11 +302,17 @@ private:
             // per renderable bindGroup
             BindGroupCreateInfo createInfo(app->GetLayout());
             if (app->GetInstance()->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), diffuseColorMapView.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), app->GetSampler()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
+                                   , diffuseColorMapView.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
+                                   , app->GetSampler()));
             } else {
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), diffuseColorMapView.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), app->GetSampler()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), diffuseColorMapView.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), app->GetSampler()));
             }
 
             bindGroup = app->GetDevice()->CreateBindGroup(createInfo);
@@ -399,10 +367,10 @@ private:
     } shaderModules;
 
     struct Pipelines {
-        UniqueRef<GraphicsPipeline> gBuffer;
-        UniqueRef<GraphicsPipeline> ssao;
-        UniqueRef<GraphicsPipeline> ssaoBlur;
-        UniqueRef<GraphicsPipeline> composition;
+        UniqueRef<RasterPipeline> gBuffer;
+        UniqueRef<RasterPipeline> ssao;
+        UniqueRef<RasterPipeline> ssaoBlur;
+        UniqueRef<RasterPipeline> composition;
     } pipelines;
 
     struct PipelineLayouts {
@@ -459,7 +427,7 @@ private:
     {
         device = gpu->RequestDevice(
             DeviceCreateInfo()
-                .Queue(QueueRequestInfo(QueueType::graphics, 1)));
+                .AddQueueRequest(QueueRequestInfo(QueueType::graphics, 1)));
         graphicsQueue = device->GetQueue(QueueType::graphics, 0);
     }
 
@@ -470,9 +438,7 @@ private:
             PixelFormat::bgra8Unorm
         };
 
-        surface = device->CreateSurface(
-            SurfaceCreateInfo()
-                .Window(GetPlatformWindow()));
+        surface = device->CreateSurface(SurfaceCreateInfo(GetPlatformWindow()));
 
         for (auto format : swapChainFormatQualifiers) {
             if (device->CheckSwapChainFormatSupport(surface.Get(), format)) {
@@ -484,32 +450,32 @@ private:
 
         swapChain = device->CreateSwapChain(
             SwapChainCreateInfo()
-                .Format(swapChainFormat)
-                .PresentMode(PresentMode::immediately)
-                .TextureNum(backBufferCount)
-                .Extent({ width, height })
-                .Surface(surface.Get())
-                .PresentQueue(graphicsQueue));
+                .SetFormat(swapChainFormat)
+                .SetPresentMode(PresentMode::immediately)
+                .SetTextureNum(backBufferCount)
+                .SetExtent({width, height})
+                .SetSurface(surface.Get())
+                .SetPresentQueue(graphicsQueue));
 
         for (auto i = 0; i < backBufferCount; i++) {
             swapChainTextures[i] = swapChain->GetTexture(i);
 
             swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(
                 TextureViewCreateInfo()
-                    .Dimension(TextureViewDimension::tv2D)
-                    .MipLevels(0, 1)
-                    .ArrayLayers(0, 1)
-                    .Aspect(TextureAspect::color)
-                    .Type(TextureViewType::colorAttachment));
+                    .SetDimension(TextureViewDimension::tv2D)
+                    .SetMipLevels(0, 1)
+                    .SetArrayLayers(0, 1)
+                    .SetAspect(TextureAspect::color)
+                    .SetType(TextureViewType::colorAttachment));
         }
     }
 
     void CreateVertexBuffer()
     {
         BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
-            .Size(model->raw_vertex_buffer.size() * sizeof(Vertex))
-            .Usages(BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
-            .InitialState(RHI::BufferState::staging);
+            .SetSize(model->raw_vertex_buffer.size() * sizeof(Vertex))
+            .SetUsages(BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+            .SetInitialState(RHI::BufferState::staging);
 
         vertexBuffer = device->CreateBuffer(bufferCreateInfo);
         assert(vertexBuffer != nullptr);
@@ -518,19 +484,19 @@ private:
         vertexBuffer->UnMap();
 
         BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
-            .Type(BufferViewType::vertex)
-            .Size(bufferCreateInfo.size)
-            .Offset(0)
-            .ExtendVertex(sizeof(Vertex));
+            .SetType(BufferViewType::vertex)
+            .SetSize(bufferCreateInfo.size)
+            .SetOffset(0)
+            .SetExtendVertex(sizeof(Vertex));
         vertexBufferView = vertexBuffer->CreateBufferView(bufferViewCreateInfo);
     }
 
     void CreateIndexBuffer()
     {
         BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
-            .Size(model->raw_index_buffer.size() * sizeof(uint32_t))
-            .Usages(BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
-            .InitialState(RHI::BufferState::staging);
+            .SetSize(model->raw_index_buffer.size() * sizeof(uint32_t))
+            .SetUsages(BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+            .SetInitialState(RHI::BufferState::staging);
 
         indexBuffer = device->CreateBuffer(bufferCreateInfo);
         assert(indexBuffer != nullptr);
@@ -539,10 +505,10 @@ private:
         indexBuffer->UnMap();
 
         BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
-            .Type(BufferViewType::index)
-            .Size(bufferCreateInfo.size)
-            .Offset(0)
-            .ExtendIndex(IndexFormat::uint32);
+            .SetType(BufferViewType::index)
+            .SetSize(bufferCreateInfo.size)
+            .SetOffset(0)
+            .SetExtendIndex(IndexFormat::uint32);
         indexBufferView = indexBuffer->CreateBufferView(bufferViewCreateInfo);
     }
 
@@ -557,9 +523,9 @@ private:
         };
 
         BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
-            .Size(vertices.size() * sizeof(QuadVertex))
-            .Usages(BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
-            .InitialState(RHI::BufferState::staging);
+            .SetSize(vertices.size() * sizeof(QuadVertex))
+            .SetUsages(BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+            .SetInitialState(RHI::BufferState::staging);
 
         quadVertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (quadVertexBuffer != nullptr) {
@@ -569,18 +535,18 @@ private:
         }
 
         BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
-            .Type(BufferViewType::vertex)
-            .Size(vertices.size() * sizeof(QuadVertex))
-            .Offset(0)
-            .ExtendVertex(sizeof(QuadVertex));
+            .SetType(BufferViewType::vertex)
+            .SetSize(vertices.size() * sizeof(QuadVertex))
+            .SetOffset(0)
+            .SetExtendVertex(sizeof(QuadVertex));
         quadVertexBufferView = quadVertexBuffer->CreateBufferView(bufferViewCreateInfo);
 
         // index buffer
         std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
         bufferCreateInfo = BufferCreateInfo()
-            .Size(indices.size() * sizeof(uint32_t))
-            .Usages(BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
-            .InitialState(RHI::BufferState::staging);
+            .SetSize(indices.size() * sizeof(uint32_t))
+            .SetUsages(BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+            .SetInitialState(RHI::BufferState::staging);
 
         quadIndexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (quadIndexBuffer != nullptr) {
@@ -590,10 +556,10 @@ private:
         }
 
         bufferViewCreateInfo = BufferViewCreateInfo()
-            .Type(BufferViewType::index)
-            .Size(indices.size() * sizeof(uint32_t))
-            .Offset(0)
-            .ExtendIndex(IndexFormat::uint32);
+            .SetType(BufferViewType::index)
+            .SetSize(indices.size() * sizeof(uint32_t))
+            .SetOffset(0)
+            .SetExtendIndex(IndexFormat::uint32);
         quadIndexBufferView = quadIndexBuffer->CreateBufferView(bufferViewCreateInfo);
     }
 
@@ -624,9 +590,12 @@ private:
         {
             BindGroupLayoutCreateInfo createInfo(0);
             if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), ShaderStageBits::sVertex | ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)),
+                    ShaderStageBits::sVertex | ShaderStageBits::sPixel));
             } else {
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(0)), ShaderStageBits::sVertex | ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(0)),
+                    ShaderStageBits::sVertex | ShaderStageBits::sPixel));
             }
             bindGroupLayouts.gBuffer = device->CreateBindGroupLayout(createInfo);
         }
@@ -635,90 +604,144 @@ private:
         {
             BindGroupLayoutCreateInfo createInfo(1);
             if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
+                    , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
+                    , ShaderStageBits::sPixel));
             } else {
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0))
+                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(1))
+                                                         , ShaderStageBits::sPixel));
             }
             renderableLayout = device->CreateBindGroupLayout(createInfo);
         }
 
         pipelineLayouts.gBuffer = device->CreatePipelineLayout(
             PipelineLayoutCreateInfo()
-                .BindGroupLayout(bindGroupLayouts.gBuffer.Get())
-                .BindGroupLayout(renderableLayout.Get()));
+                .AddBindGroupLayout(bindGroupLayouts.gBuffer.Get())
+                .AddBindGroupLayout(renderableLayout.Get()));
 
         //ssao
         {
             BindGroupLayoutCreateInfo createInfo(0);
             if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 1)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 1)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
+                    , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1))
+                    , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2))
+                    , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
+                    , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 1))
+                    , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0))
+                    , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 1))
+                    , ShaderStageBits::sPixel));
             } else {
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(3)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(4)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(5)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0))
+                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(1))
+                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(2))
+                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(3))
+                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(4))
+                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(5))
+                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6))
+                                                         , ShaderStageBits::sPixel));
             }
             bindGroupLayouts.ssao = device->CreateBindGroupLayout(createInfo);
         }
 
         pipelineLayouts.ssao = device->CreatePipelineLayout(
             PipelineLayoutCreateInfo()
-                .BindGroupLayout(bindGroupLayouts.ssao.Get()));
+                .AddBindGroupLayout(bindGroupLayouts.ssao.Get()));
 
         // ssaoBlur
         {
             BindGroupLayoutCreateInfo createInfo(0);
             if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
+                    , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
+                    , ShaderStageBits::sPixel));
             } else {
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0))
+                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(1))
+                                                         , ShaderStageBits::sPixel));
             }
             bindGroupLayouts.ssaoBlur = device->CreateBindGroupLayout(createInfo);
         }
 
         pipelineLayouts.ssaoBlur = device->CreatePipelineLayout(
             PipelineLayoutCreateInfo()
-                .BindGroupLayout(bindGroupLayouts.ssaoBlur.Get()));
+                .AddBindGroupLayout(bindGroupLayouts.ssaoBlur.Get()));
 
         // composition
         {
             BindGroupLayoutCreateInfo createInfo(0);
             if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 3)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 4)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
+                    , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1))
+                    , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2))
+                    , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 3))
+                    , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 4))
+                    , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
+                    , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(
+                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0))
+                    , ShaderStageBits::sPixel));
             } else {
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(3)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(4)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(5)), ShaderStageBits::sPixel));
-                createInfo.Entry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0))
+                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(1))
+                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(2))
+                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(3))
+                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(4))
+                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(5))
+                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6))
+                                                         , ShaderStageBits::sPixel));
             }
             bindGroupLayouts.composition = device->CreateBindGroupLayout(createInfo);
         }
 
         pipelineLayouts.composition = device->CreatePipelineLayout(
             PipelineLayoutCreateInfo()
-                .BindGroupLayout(bindGroupLayouts.composition.Get()));
+                .AddBindGroupLayout(bindGroupLayouts.composition.Get()));
     }
 
     void CreateBindGroup()
@@ -727,9 +750,12 @@ private:
         {
             BindGroupCreateInfo createInfo(bindGroupLayouts.gBuffer.Get());
             if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), uniformBuffers.sceneParams.bufView.Get()));
+                createInfo.AddEntry(BindGroupEntry(
+                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0))
+                    , uniformBuffers.sceneParams.bufView.Get()));
             } else {
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(0)), uniformBuffers.sceneParams.bufView.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(0))
+                                                   , uniformBuffers.sceneParams.bufView.Get()));
             }
             bindGroups.scene = device->CreateBindGroup(createInfo);
         }
@@ -738,21 +764,42 @@ private:
         {
             BindGroupCreateInfo createInfo(bindGroupLayouts.ssao.Get());
             if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), gBufferPos.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1)), gBufferNormal.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2)), noise.view.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), sampler.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 1)), noiseSampler.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), uniformBuffers.ssaoKernel.bufView.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 1)), uniformBuffers.ssaoParams.bufView.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
+                                   , gBufferPos.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1))
+                                   , gBufferNormal.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2))
+                                   , noise.view.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
+                                   , sampler.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 1))
+                                   , noiseSampler.Get()));
+                createInfo.AddEntry(BindGroupEntry(
+                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0))
+                    , uniformBuffers.ssaoKernel.bufView.Get()));
+                createInfo.AddEntry(BindGroupEntry(
+                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 1))
+                    , uniformBuffers.ssaoParams.bufView.Get()));
             } else {
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), gBufferPos.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), gBufferNormal.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), noise.view.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(3)), sampler.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(4)), noiseSampler.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(5)), uniformBuffers.ssaoKernel.bufView.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6)), uniformBuffers.ssaoParams.bufView.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), gBufferPos.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), gBufferNormal.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), noise.view.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(3)), sampler.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(4)), noiseSampler.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(5))
+                                                   , uniformBuffers.ssaoKernel.bufView.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6))
+                                                   , uniformBuffers.ssaoParams.bufView.Get()));
             }
             bindGroups.ssao = device->CreateBindGroup(createInfo);
         }
@@ -761,11 +808,17 @@ private:
         {
             BindGroupCreateInfo createInfo(bindGroupLayouts.ssaoBlur.Get());
             if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ssaoOutput.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), sampler.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
+                                   , ssaoOutput.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
+                                   , sampler.Get()));
             } else {
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ssaoOutput.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), sampler.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ssaoOutput.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), sampler.Get()));
             }
             bindGroups.ssaoBlur = device->CreateBindGroup(createInfo);
         }
@@ -774,21 +827,42 @@ private:
         {
             BindGroupCreateInfo createInfo(bindGroupLayouts.composition.Get());
             if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), gBufferPos.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1)), gBufferNormal.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2)), gBufferAlbedo.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 3)), ssaoOutput.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 4)), ssaoBlurOutput.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), sampler.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), uniformBuffers.ssaoParams.bufView.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
+                                   , gBufferPos.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1))
+                                   , gBufferNormal.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2))
+                                   , gBufferAlbedo.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 3))
+                                   , ssaoOutput.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 4))
+                                   , ssaoBlurOutput.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
+                                   , sampler.Get()));
+                createInfo.AddEntry(BindGroupEntry(
+                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0))
+                    , uniformBuffers.ssaoParams.bufView.Get()));
             } else {
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), gBufferPos.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), gBufferNormal.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), gBufferAlbedo.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(3)), ssaoOutput.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(4)), ssaoBlurOutput.srv.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(5)), sampler.Get()));
-                createInfo.Entry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6)), uniformBuffers.ssaoParams.bufView.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), gBufferPos.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), gBufferNormal.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), gBufferAlbedo.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(3)), ssaoOutput.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(4)), ssaoBlurOutput.srv.Get()));
+                createInfo.AddEntry(
+                    BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(5)), sampler.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6))
+                                                   , uniformBuffers.ssaoParams.bufView.Get()));
             }
             bindGroups.composition = device->CreateBindGroup(createInfo);
         }
@@ -855,9 +929,9 @@ private:
         }
 
         BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
-            .Size(ssaoNoise.size() * sizeof(FVec4))
-            .Usages(BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
-            .InitialState(RHI::BufferState::staging);
+            .SetSize(ssaoNoise.size() * sizeof(FVec4))
+            .SetUsages(BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+            .SetInitialState(RHI::BufferState::staging);
 
         UniqueRef<Buffer> pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
@@ -868,45 +942,45 @@ private:
 
         noise.tex = device->CreateTexture(
             TextureCreateInfo()
-                .Format(PixelFormat::rgba32Float)
-                .MipLevels(1)
-                .Extent({ ssaoNoiseDim, ssaoNoiseDim, 1 })
-                .Dimension(TextureDimension::t2D)
-                .Samples(1)
-                .Usages(TextureUsageBits::copyDst | TextureUsageBits::textureBinding)
-                .InitialState(TextureState::undefined));
+                .SetFormat(PixelFormat::rgba32Float)
+                .SetMipLevels(1)
+                .SetExtent({ssaoNoiseDim, ssaoNoiseDim, 1})
+                .SetDimension(TextureDimension::t2D)
+                .SetSamples(1)
+                .SetUsages(TextureUsageBits::copyDst | TextureUsageBits::textureBinding)
+                .SetInitialState(TextureState::undefined));
 
         noise.view = noise.tex->CreateTextureView(
             TextureViewCreateInfo()
-                .Dimension(TextureViewDimension::tv2D)
-                .MipLevels(0, 1)
-                .ArrayLayers(0, 1)
-                .Aspect(TextureAspect::color)
-                .Type(TextureViewType::textureBinding));
+                .SetDimension(TextureViewDimension::tv2D)
+                .SetMipLevels(0, 1)
+                .SetArrayLayers(0, 1)
+                .SetAspect(TextureAspect::color)
+                .SetType(TextureViewType::textureBinding));
 
         noiseSampler = device->CreateSampler(
             SamplerCreateInfo()
-                .AddressModeU(AddressMode::repeat)
-                .AddressModeV(AddressMode::repeat));
+                .SetAddressModeU(AddressMode::repeat)
+                .SetAddressModeV(AddressMode::repeat));
 
         UniqueRef<CommandBuffer> texCommandBuffer = device->CreateCommandBuffer();
 
-        UniqueRef<CommandEncoder> commandEncoder = texCommandBuffer->Begin();
+        UniqueRef<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
         {
-            UniqueRef<CopyPassCommandEncoder> copyPassEncoder = commandEncoder->BeginCopyPass();
+            UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
             {
-                copyPassEncoder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::undefined, TextureState::copyDst));
+                copyRecorder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::undefined, TextureState::copyDst));
                 TextureSubResourceInfo subResourceInfo {};
                 subResourceInfo.mipLevel = 0;
                 subResourceInfo.arrayLayerNum = 1;
                 subResourceInfo.baseArrayLayer = 0;
                 subResourceInfo.aspect = TextureAspect::color;
-                copyPassEncoder->CopyBufferToTexture(pixelBuffer.Get(), noise.tex.Get(), &subResourceInfo, {ssaoNoiseDim, ssaoNoiseDim, 1});
-                copyPassEncoder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
+                copyRecorder->CopyBufferToTexture(pixelBuffer.Get(), noise.tex.Get(), &subResourceInfo, {ssaoNoiseDim, ssaoNoiseDim, 1});
+                copyRecorder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
             }
-            copyPassEncoder->EndPass();
+            copyRecorder->EndPass();
         }
-        commandEncoder->End();
+        commandRecorder->End();
 
         Common::UniqueRef<Fence> fence = device->CreateFence(false);
         QueueSubmitInfo submitInfo {};
@@ -918,71 +992,65 @@ private:
     void CreateDepthAttachment() {
         gBufferDepth.texture = device->CreateTexture(
             TextureCreateInfo()
-                .Format(PixelFormat::d32Float)
-                .MipLevels(1)
-                .Extent({ width, height, 1 })
-                .Dimension(TextureDimension::t2D)
-                .Samples(1)
-                .Usages(TextureUsageBits::depthStencilAttachment)
-                .InitialState(TextureState::depthStencilReadonly));
+                .SetFormat(PixelFormat::d32Float)
+                .SetMipLevels(1)
+                .SetExtent({width, height, 1})
+                .SetDimension(TextureDimension::t2D)
+                .SetSamples(1)
+                .SetUsages(TextureUsageBits::depthStencilAttachment)
+                .SetInitialState(TextureState::depthStencilReadonly));
 
         gBufferDepth.view = gBufferDepth.texture->CreateTextureView(
             TextureViewCreateInfo()
-                .Dimension(TextureViewDimension::tv2D)
-                .MipLevels(0, 1)
-                .ArrayLayers(0, 1)
-                .Aspect(TextureAspect::depth)
-                .Type(TextureViewType::depthStencil));
+                .SetDimension(TextureViewDimension::tv2D)
+                .SetMipLevels(0, 1)
+                .SetArrayLayers(0, 1)
+                .SetAspect(TextureAspect::depth)
+                .SetType(TextureViewType::depthStencil));
     }
 
     void CreateAttachments(RHI::PixelFormat format, ColorAttachment& attachment)
     {
         attachment.texture = device->CreateTexture(
             TextureCreateInfo()
-                .Format(format)
-                .MipLevels(1)
-                .Extent({ width, height, 1 })
-                .Dimension(TextureDimension::t2D)
-                .Samples(1)
-                .Usages(TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment)
-                .InitialState(TextureState::shaderReadOnly));
+                .SetFormat(format)
+                .SetMipLevels(1)
+                .SetExtent({width, height, 1})
+                .SetDimension(TextureDimension::t2D)
+                .SetSamples(1)
+                .SetUsages(TextureUsageBits::textureBinding | TextureUsageBits::renderAttachment)
+                .SetInitialState(TextureState::shaderReadOnly));
 
         attachment.rtv = attachment.texture->CreateTextureView(
             TextureViewCreateInfo()
-                .Dimension(TextureViewDimension::tv2D)
-                .MipLevels(0, 1)
-                .ArrayLayers(0, 1)
-                .Aspect(TextureAspect::color)
-                .Type(TextureViewType::colorAttachment));
+                .SetDimension(TextureViewDimension::tv2D)
+                .SetMipLevels(0, 1)
+                .SetArrayLayers(0, 1)
+                .SetAspect(TextureAspect::color)
+                .SetType(TextureViewType::colorAttachment));
 
         attachment.srv = attachment.texture->CreateTextureView(
             TextureViewCreateInfo()
-                .Dimension(TextureViewDimension::tv2D)
-                .MipLevels(0, 1)
-                .ArrayLayers(0, 1)
-                .Aspect(TextureAspect::color)
-                .Type(TextureViewType::textureBinding));
+                .SetDimension(TextureViewDimension::tv2D)
+                .SetMipLevels(0, 1)
+                .SetArrayLayers(0, 1)
+                .SetAspect(TextureAspect::color)
+                .SetType(TextureViewType::textureBinding));
     }
 
     ShaderModule* GetShaderModule(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
     {
         std::vector<std::string> includePath { "../Test/Sample/SSAO/Shader"};
-
         CompileShader(byteCode, fileName, entryPoint, shaderStage, includePath);
-
-        ShaderModuleCreateInfo createInfo {};
-        createInfo.size = byteCode.size();
-        createInfo.byteCode = byteCode.data();
-
-        return device->CreateShaderModule(createInfo);
+        return device->CreateShaderModule(ShaderModuleCreateInfo(byteCode));
     }
 
     void CreateUniformBuffer(RHI::BufferUsageFlags flags, UBuffer* uBuffer, size_t size, void* data)
     {
         BufferCreateInfo createInfo = BufferCreateInfo()
-            .Size(size)
-            .Usages(flags)
-            .InitialState(RHI::BufferState::staging);
+            .SetSize(size)
+            .SetUsages(flags)
+            .SetInitialState(RHI::BufferState::staging);
 
         uBuffer->buf = device->CreateBuffer(createInfo);
         if (uBuffer->buf != nullptr && data != nullptr) {
@@ -992,9 +1060,9 @@ private:
         }
 
         BufferViewCreateInfo viewCreateInfo = BufferViewCreateInfo()
-            .Type(BufferViewType::uniformBinding)
-            .Size(size)
-            .Offset(0);
+            .SetType(BufferViewType::uniformBinding)
+            .SetSize(size)
+            .SetOffset(0);
         uBuffer->bufView = uBuffer->buf->CreateBufferView(viewCreateInfo);
     }
 
@@ -1020,153 +1088,120 @@ private:
 
         // Gbuffer vertex
         VertexBufferLayout vertexBufferLayout = VertexBufferLayout()
-            .StepMode(VertexStepMode::perVertex)
-            .Stride(sizeof(Vertex))
-            .Attribute(
-                VertexAttribute()
-                    .Format(VertexFormat::float32X4)
-                    .Offset(0)
-                    .SemanticName("POSITION")
-                    .SemanticIndex(0))
-            .Attribute(
-                VertexAttribute()
-                    .Format(VertexFormat::float32X2)
-                    .Offset(offsetof(Vertex, uv))
-                    .SemanticName("TEXCOORD")
-                    .SemanticIndex(0))
-            .Attribute(
-                VertexAttribute()
-                    .Format(VertexFormat::float32X4)
-                    .Offset(offsetof(Vertex, color))
-                    .SemanticName("COLOR")
-                    .SemanticIndex(0))
-            .Attribute(
-                VertexAttribute()
-                    .Format(VertexFormat::float32X3)
-                    .Offset(offsetof(Vertex, normal))
-                    .SemanticName("NORMAL")
-                    .SemanticIndex(0));
+            .SetStepMode(VertexStepMode::perVertex)
+            .SetStride(sizeof(Vertex))
+            .AddAttribute(VertexAttribute("POSITION", 0, VertexFormat::float32X4, 0))
+            .AddAttribute(VertexAttribute("TEXCOORD", 0, VertexFormat::float32X2, offsetof(Vertex, uv)))
+            .AddAttribute(VertexAttribute("COLOR", 0, VertexFormat::float32X4, offsetof(Vertex, color)))
+            .AddAttribute(VertexAttribute("NORMAL", 0, VertexFormat::float32X3, offsetof(Vertex, normal)));
 
         // quad buffer vertex
         VertexBufferLayout quadVertexBufferLayout = VertexBufferLayout()
-            .StepMode(VertexStepMode::perVertex)
-            .Stride(sizeof(QuadVertex))
-            .Attribute(
-                VertexAttribute()
-                    .Format(VertexFormat::float32X3)
-                    .Offset(0)
-                    .SemanticName("POSITION")
-                    .SemanticIndex(0))
-            .Attribute(
-                VertexAttribute()
-                    .Format(VertexFormat::float32X2)
-                    .Offset(offsetof(QuadVertex, uv))
-                    .SemanticName("TEXCOORD")
-                    .SemanticIndex(0));
+            .SetStepMode(VertexStepMode::perVertex)
+            .SetStride(sizeof(QuadVertex))
+            .AddAttribute(VertexAttribute("POSITION", 0, VertexFormat::float32X3, 0))
+            .AddAttribute(VertexAttribute("TEXCOORD", 0, VertexFormat::float32X2, offsetof(QuadVertex, uv)));
 
         // General pipeline infos
-        GraphicsPipelineCreateInfo createInfo = GraphicsPipelineCreateInfo()
-            .PrimitiveState(
+        RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo()
+            .SetPrimitiveState(
                 PrimitiveState()
-                    .DepthClip(false)
-                    .FrontFace(FrontFace::ccw)
-                    .CullMode(CullMode::none)
-                    .TopologyType(PrimitiveTopologyType::triangle)
-                    .StripIndexFormat(IndexFormat::uint32))
-            .MultiSampleState(
-                MultiSampleState()
-                    .Count(1));
+                    .SetDepthClip(false)
+                    .SetFrontFace(FrontFace::ccw)
+                    .SetCullMode(CullMode::none)
+                    .SetTopologyType(PrimitiveTopologyType::triangle)
+                    .SetStripIndexFormat(IndexFormat::uint32));
 
         // Gbuffer
         {
             createInfo
-                .DepthStencilState(
+                .SetDepthStencilState(
                     DepthStencilState()
-                        .DepthEnabled(true)
-                        .DepthComparisonFunc(ComparisonFunc::greaterEqual)
-                        .Format(PixelFormat::d32Float))
-                .VertexState(
+                        .SetDepthEnabled(true)
+                        .SetDepthComparisonFunc(ComparisonFunc::greaterEqual)
+                        .SetFormat(PixelFormat::d32Float))
+                .SetVertexState(
                     VertexState()
-                        .VertexBufferLayout(vertexBufferLayout))
-                .FragmentState(
+                        .AddVertexBufferLayout(vertexBufferLayout))
+                .SetFragmentState(
                     FragmentState()
-                        .ColorTarget(
+                        .AddColorTarget(
                             ColorTargetState()
-                                .Format(PixelFormat::rgba32Float)
-                                .WriteFlags(ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha))
-                        .ColorTarget(
+                                .SetFormat(PixelFormat::rgba32Float)
+                                .SetWriteFlags(ColorWriteBits::all))
+                        .AddColorTarget(
                             ColorTargetState()
-                                .Format(PixelFormat::rgba8Unorm)
-                                .WriteFlags(ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha))
-                        .ColorTarget(
+                                .SetFormat(PixelFormat::rgba8Unorm)
+                                .SetWriteFlags(ColorWriteBits::all))
+                        .AddColorTarget(
                             ColorTargetState()
-                                .Format(PixelFormat::rgba8Unorm)
-                                .WriteFlags(ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha)))
-                .VertexShader(shaderModules.gBufferVs.Get())
-                .PixelShader(shaderModules.gBufferPs.Get())
-                .Layout(pipelineLayouts.gBuffer.Get());
+                                .SetFormat(PixelFormat::rgba8Unorm)
+                                .SetWriteFlags(ColorWriteBits::all)))
+                .SetVertexShader(shaderModules.gBufferVs.Get())
+                .SetPixelShader(shaderModules.gBufferPs.Get())
+                .SetLayout(pipelineLayouts.gBuffer.Get());
 
-            pipelines.gBuffer = device->CreateGraphicsPipeline(createInfo);
+            pipelines.gBuffer = device->CreateRasterPipeline(createInfo);
         }
 
         // ssao
         {
             createInfo
-                .DepthStencilState(DepthStencilState())
-                .VertexState(
+                .SetDepthStencilState(DepthStencilState())
+                .SetVertexState(
                     VertexState()
-                        .VertexBufferLayout(quadVertexBufferLayout))
-                .FragmentState(
+                        .AddVertexBufferLayout(quadVertexBufferLayout))
+                .SetFragmentState(
                     FragmentState()
-                        .ColorTarget(
+                        .AddColorTarget(
                             ColorTargetState()
-                                .Format(PixelFormat::r8Unorm)
-                                .WriteFlags(ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha)))
-                .VertexShader(shaderModules.ssaoVs.Get())
-                .PixelShader(shaderModules.ssaoPs.Get())
-                .Layout(pipelineLayouts.ssao.Get());
+                                .SetFormat(PixelFormat::r8Unorm)
+                                .SetWriteFlags(ColorWriteBits::all)))
+                .SetVertexShader(shaderModules.ssaoVs.Get())
+                .SetPixelShader(shaderModules.ssaoPs.Get())
+                .SetLayout(pipelineLayouts.ssao.Get());
 
-            pipelines.ssao = device->CreateGraphicsPipeline(createInfo);
+            pipelines.ssao = device->CreateRasterPipeline(createInfo);
         }
 
         // ssaoBlur
         {
             createInfo
-                .DepthStencilState(DepthStencilState())
-                .VertexState(
+                .SetDepthStencilState(DepthStencilState())
+                .SetVertexState(
                     VertexState()
-                        .VertexBufferLayout(quadVertexBufferLayout))
-                .FragmentState(
+                        .AddVertexBufferLayout(quadVertexBufferLayout))
+                .SetFragmentState(
                     FragmentState()
-                        .ColorTarget(
+                        .AddColorTarget(
                             ColorTargetState()
-                                .Format(PixelFormat::r8Unorm)
-                                .WriteFlags(ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha)))
-                .VertexShader(shaderModules.ssaoBlurVs.Get())
-                .PixelShader(shaderModules.ssaoBlurPs.Get())
-                .Layout(pipelineLayouts.ssaoBlur.Get());
+                                .SetFormat(PixelFormat::r8Unorm)
+                                .SetWriteFlags(ColorWriteBits::all)))
+                .SetVertexShader(shaderModules.ssaoBlurVs.Get())
+                .SetPixelShader(shaderModules.ssaoBlurPs.Get())
+                .SetLayout(pipelineLayouts.ssaoBlur.Get());
 
-            pipelines.ssaoBlur = device->CreateGraphicsPipeline(createInfo);
+            pipelines.ssaoBlur = device->CreateRasterPipeline(createInfo);
         }
 
         // composition
         {
             createInfo
-                .DepthStencilState(DepthStencilState())
-                .VertexState(
+                .SetDepthStencilState(DepthStencilState())
+                .SetVertexState(
                     VertexState()
-                        .VertexBufferLayout(quadVertexBufferLayout))
-                .FragmentState(
+                        .AddVertexBufferLayout(quadVertexBufferLayout))
+                .SetFragmentState(
                     FragmentState()
-                        .ColorTarget(
+                        .AddColorTarget(
                             ColorTargetState()
-                                .Format(swapChainFormat)
-                                .WriteFlags(ColorWriteBits::red | ColorWriteBits::green | ColorWriteBits::blue | ColorWriteBits::alpha)))
-                .VertexShader(shaderModules.compositionVs.Get())
-                .PixelShader(shaderModules.compositionPs.Get())
-                .Layout(pipelineLayouts.composition.Get());
+                                .SetFormat(swapChainFormat)
+                                .SetWriteFlags(ColorWriteBits::all)))
+                .SetVertexShader(shaderModules.compositionVs.Get())
+                .SetPixelShader(shaderModules.compositionPs.Get())
+                .SetLayout(pipelineLayouts.composition.Get());
 
-            pipelines.composition = device->CreateGraphicsPipeline(createInfo);
+            pipelines.composition = device->CreateRasterPipeline(createInfo);
         }
     }
 

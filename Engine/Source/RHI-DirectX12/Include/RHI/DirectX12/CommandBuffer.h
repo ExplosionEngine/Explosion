@@ -62,7 +62,7 @@ namespace RHI::DirectX12 {
         explicit DX12CommandBuffer(DX12Device& inDevice);
         ~DX12CommandBuffer() override;
 
-        CommandEncoder* Begin() override;
+        CommandRecorder* Begin() override;
         void Destroy() override;
 
         ID3D12GraphicsCommandList* GetNative();

@@ -38,11 +38,10 @@ namespace RHI::Vulkan {
         PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo) override;
         ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo) override;
         ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo) override;
-        GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& inCreateInfo) override;
+        RasterPipeline* CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo) override;
         CommandBuffer* CreateCommandBuffer() override;
         Fence* CreateFence(bool initAsSignaled) override;
         Semaphore* CreateSemaphore() override;
-
         bool CheckSwapChainFormatSupport(Surface* inSurface, PixelFormat inFormat) override;
 
         VkDevice GetNative();

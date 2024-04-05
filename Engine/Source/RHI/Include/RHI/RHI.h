@@ -17,7 +17,7 @@
 #include <RHI/Surface.h>
 #include <RHI/SwapChain.h>
 #include <RHI/CommandBuffer.h>
-#include <RHI/CommandEncoder.h>
+#include <RHI/CommandRecorder.h>
 #include <RHI/ShaderModule.h>
 #include <RHI/Pipeline.h>
 #include <RHI/PipelineLayout.h>

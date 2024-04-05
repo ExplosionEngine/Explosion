@@ -13,7 +13,8 @@
 
 namespace RHI::Vulkan {
     VulkanBindGroup::VulkanBindGroup(VulkanDevice& inDevice, const BindGroupCreateInfo& inCreateInfo)
-        : BindGroup(inCreateInfo), device(inDevice)
+        : BindGroup(inCreateInfo)
+        , device(inDevice)
     {
         CreateNativeDescriptorPool(inCreateInfo);
         CreateNativeDescriptorSet(inCreateInfo);
@@ -21,7 +22,7 @@ namespace RHI::Vulkan {
 
     VulkanBindGroup::~VulkanBindGroup() noexcept
     {
-        if (nativeDescriptorPool) {
+        if (nativeDescriptorPool != VK_NULL_HANDLE) {
             vkDestroyDescriptorPool(device.GetNative(), nativeDescriptorPool, nullptr);
         }
     }

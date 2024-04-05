@@ -18,7 +18,7 @@ namespace RHI::Vulkan {
         ~VulkanCommandBuffer() override;
 
         void Destroy() override;
-        CommandEncoder* Begin() override;
+        CommandRecorder* Begin() override;
 
         VkCommandBuffer GetNativeCommandBuffer() const;
 

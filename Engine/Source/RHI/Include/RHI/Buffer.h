@@ -21,10 +21,10 @@ namespace RHI {
         BufferCreateInfo();
         BufferCreateInfo(uint32_t inSize, BufferUsageFlags inUsages, BufferState inInitialState, std::string inDebugName = "");
 
-        BufferCreateInfo& Size(uint32_t inSize);
-        BufferCreateInfo& Usages(BufferUsageFlags inUsages);
-        BufferCreateInfo& InitialState(BufferState inState);
-        BufferCreateInfo& DebugName(std::string inDebugName);
+        BufferCreateInfo& SetSize(uint32_t inSize);
+        BufferCreateInfo& SetUsages(BufferUsageFlags inUsages);
+        BufferCreateInfo& SetInitialState(BufferState inState);
+        BufferCreateInfo& SetDebugName(std::string inDebugName);
 
         bool operator==(const BufferCreateInfo& rhs) const;
     };

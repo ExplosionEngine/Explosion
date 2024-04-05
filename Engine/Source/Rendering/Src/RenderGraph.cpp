@@ -36,29 +36,29 @@ namespace Rendering::Internal {
             || state == RHI::TextureState::depthStencilWrite;
     }
 
-    static std::optional<RHI::GraphicsPassDepthStencilAttachment> GetRasterPassDepthStencilAttachment(const RGRasterPassDesc& desc)
+    static std::optional<RHI::DepthStencilAttachment> GetRasterPassDepthStencilAttachment(const RGRasterPassDesc& desc)
     {
-        static_assert(std::is_base_of_v<RHI::GraphicsPassDepthStencilAttachmentBase<RGDepthStencilAttachment>, RGDepthStencilAttachment>);
+        static_assert(std::is_base_of_v<RHI::DepthStencilAttachmentBase<RGDepthStencilAttachment>, RGDepthStencilAttachment>);
 
-        std::optional<RHI::GraphicsPassDepthStencilAttachment> result;
+        std::optional<RHI::DepthStencilAttachment> result;
         if (desc.depthStencilAttachment.has_value()) {
-            result = RHI::GraphicsPassDepthStencilAttachment {};
-            memcpy(&result.value(), &desc.depthStencilAttachment.value(), sizeof(RHI::GraphicsPassDepthStencilAttachmentBase<RGDepthStencilAttachment>));
+            result = RHI::DepthStencilAttachment {};
+            memcpy(&result.value(), &desc.depthStencilAttachment.value(), sizeof(RHI::DepthStencilAttachmentBase<RGDepthStencilAttachment>));
             result->view = desc.depthStencilAttachment->view->GetRHI();
         }
         return result;
     }
 
-    static std::vector<RHI::GraphicsPassColorAttachment> GetRasterPassColorAttachments(const RGRasterPassDesc& desc)
+    static std::vector<RHI::ColorAttachment> GetRasterPassColorAttachments(const RGRasterPassDesc& desc)
     {
-        static_assert(std::is_base_of_v<RHI::GraphicsPassColorAttachmentBase<RGColorAttachment>, RGColorAttachment>);
+        static_assert(std::is_base_of_v<RHI::ColorAttachmentBase<RGColorAttachment>, RGColorAttachment>);
 
-        std::vector<RHI::GraphicsPassColorAttachment> result;
+        std::vector<RHI::ColorAttachment> result;
         result.reserve(desc.colorAttachments.size());
 
         for (const auto& colorAttachment : desc.colorAttachments) {
-            RHI::GraphicsPassColorAttachment back;
-            memcpy(&back, &colorAttachment, sizeof(RHI::GraphicsPassColorAttachmentBase<RGColorAttachment>));
+            RHI::ColorAttachment back;
+            memcpy(&back, &colorAttachment, sizeof(RHI::ColorAttachmentBase<RGColorAttachment>));
             back.view = colorAttachment.view->GetRHI();
             result.emplace_back(std::move(back));
         }
@@ -289,9 +289,9 @@ namespace Rendering {
 
     RGBuffer::~RGBuffer() = default;
 
-    void RGBuffer::Transition(RHI::CommandCommandEncoder& commandEncoder, RHI::BufferState transitionTo)
+    void RGBuffer::Transition(RHI::CommandCommandRecorder& commandRecorder, RHI::BufferState transitionTo)
     {
-        commandEncoder.ResourceBarrier(RHI::Barrier::Transition(GetRHI(), currentState, transitionTo));
+        commandRecorder.ResourceBarrier(RHI::Barrier::Transition(GetRHI(), currentState, transitionTo));
         currentState = transitionTo;
     }
 
@@ -347,9 +347,9 @@ namespace Rendering {
 
     RGTexture::~RGTexture() = default;
 
-    void RGTexture::Transition(RHI::CommandCommandEncoder& commandEncoder, RHI::TextureState transitionTo)
+    void RGTexture::Transition(RHI::CommandCommandRecorder& commandRecorder, RHI::TextureState transitionTo)
     {
-        commandEncoder.ResourceBarrier(RHI::Barrier::Transition(GetRHI(), currentState, transitionTo));
+        commandRecorder.ResourceBarrier(RHI::Barrier::Transition(GetRHI(), currentState, transitionTo));
         currentState = transitionTo;
     }
 
@@ -644,11 +644,11 @@ namespace Rendering {
             const RGBindItemDesc& itemDesc = item.second;
 
             if (itemDesc.type == RHI::BindingType::uniformBuffer || itemDesc.type == RHI::BindingType::storageBuffer) {
-                createInfo.Entry(RHI::BindGroupEntry(*binding, itemDesc.bufferView->GetRHI()));
+                createInfo.AddEntry(RHI::BindGroupEntry(*binding, itemDesc.bufferView->GetRHI()));
             } else if (itemDesc.type == RHI::BindingType::texture || itemDesc.type == RHI::BindingType::storageTexture) {
-                createInfo.Entry(RHI::BindGroupEntry(*binding, itemDesc.textureView->GetRHI()));
+                createInfo.AddEntry(RHI::BindGroupEntry(*binding, itemDesc.textureView->GetRHI()));
             } else if (itemDesc.type == RHI::BindingType::sampler) {
-                createInfo.Entry(RHI::BindGroupEntry(*binding, itemDesc.sampler));
+                createInfo.AddEntry(RHI::BindGroupEntry(*binding, itemDesc.sampler));
             } else {
                 Unimplement();
             }
@@ -766,13 +766,13 @@ namespace Rendering {
         }
     }
 
-    void RGPass::TransitionResources(RHI::CommandCommandEncoder* commandEncoder)
+    void RGPass::TransitionResources(RHI::CommandCommandRecorder* commandRecorder)
     {
         for (const auto& bufferTransition : transitionInfos.buffer) {
-            bufferTransition.first->Transition(*commandEncoder, bufferTransition.second);
+            bufferTransition.first->Transition(*commandRecorder, bufferTransition.second);
         }
         for (const auto& textureTransition : transitionInfos.texture) {
-            textureTransition.first->Transition(*commandEncoder, textureTransition.second);
+            textureTransition.first->Transition(*commandRecorder, textureTransition.second);
         }
     }
 
@@ -824,9 +824,9 @@ namespace Rendering {
     void RGCopyPass::Execute(RHI::Device& device, const Internal::CommandBuffersGuard::Context& cmdBuffers)
     {
         RHI::CommandBuffer* cmdBuffer = asyncCopy ? cmdBuffers.asyncCopyCmdBuffer : cmdBuffers.mainCmdBuffer;
-        Common::UniqueRef<RHI::CommandEncoder> cmdEncoder = cmdBuffer->Begin();
+        Common::UniqueRef<RHI::CommandRecorder> cmdEncoder = cmdBuffer->Begin();
         {
-            Common::UniqueRef<RHI::CopyPassCommandEncoder> copyCmdEncoder = cmdEncoder->BeginCopyPass();
+            Common::UniqueRef<RHI::CopyPassCommandRecorder> copyCmdEncoder = cmdEncoder->BeginCopyPass();
             {
                 TransitionResources(copyCmdEncoder.Get());
                 func(*copyCmdEncoder);
@@ -855,9 +855,9 @@ namespace Rendering {
     void RGComputePass::Execute(RHI::Device& device, const Internal::CommandBuffersGuard::Context& cmdBuffers)
     {
         RHI::CommandBuffer* cmdBuffer = asyncCompute ? cmdBuffers.asyncComputeCmdBuffer : cmdBuffers.mainCmdBuffer;
-        Common::UniqueRef<RHI::CommandEncoder> cmdEncoder = cmdBuffer->Begin();
+        Common::UniqueRef<RHI::CommandRecorder> cmdEncoder = cmdBuffer->Begin();
         {
-            Common::UniqueRef<RHI::ComputePassCommandEncoder> computeCmdEncoder = cmdEncoder->BeginComputePass();
+            Common::UniqueRef<RHI::ComputePassCommandRecorder> computeCmdEncoder = cmdEncoder->BeginComputePass();
             {
                 TransitionResources(computeCmdEncoder.Get());
                 func(*computeCmdEncoder);
@@ -897,15 +897,16 @@ namespace Rendering {
     void RGRasterPass::Execute(RHI::Device& device, const Internal::CommandBuffersGuard::Context& cmdBuffers)
     {
         RHI::CommandBuffer* cmdBuffer = cmdBuffers.mainCmdBuffer;
-        Common::UniqueRef<RHI::CommandEncoder> cmdEncoder = cmdBuffer->Begin();
+        Common::UniqueRef<RHI::CommandRecorder> cmdEncoder = cmdBuffer->Begin();
         {
-            std::optional<RHI::GraphicsPassDepthStencilAttachment> depthStencilAttachment = Internal::GetRasterPassDepthStencilAttachment(passDesc);
+            std::optional<RHI::DepthStencilAttachment> depthStencilAttachment = Internal::GetRasterPassDepthStencilAttachment(passDesc);
 
-            RHI::GraphicsPassBeginInfo passBeginInfo;
+            RHI::RasterPassBeginInfo passBeginInfo;
             passBeginInfo.colorAttachments = Internal::GetRasterPassColorAttachments(passDesc);
             passBeginInfo.depthStencilAttachment = depthStencilAttachment;
 
-            Common::UniqueRef<RHI::GraphicsPassCommandEncoder> rasterCmdEncoder = cmdEncoder->BeginGraphicsPass(passBeginInfo);
+            Common::UniqueRef<RHI::RasterPassCommandRecorder> rasterCmdEncoder = cmdEncoder->BeginRasterPass(
+                passBeginInfo);
             {
                 TransitionResources(rasterCmdEncoder.Get());
                 func(*rasterCmdEncoder);

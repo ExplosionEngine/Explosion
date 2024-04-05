@@ -5,7 +5,7 @@
 #include <RHI/DirectX12/CommandBuffer.h>
 #include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/Device.h>
-#include <RHI/DirectX12/CommandEncoder.h>
+#include <RHI/DirectX12/CommandRecorder.h>
 #include <RHI/DirectX12/BindGroup.h>
 
 namespace RHI::DirectX12 {
@@ -88,9 +88,9 @@ namespace RHI::DirectX12 {
 
     DX12CommandBuffer::~DX12CommandBuffer() = default;
 
-    CommandEncoder* DX12CommandBuffer::Begin()
+    CommandRecorder* DX12CommandBuffer::Begin()
     {
-        return new DX12CommandEncoder(device, *this);
+        return new DX12CommandRecorder(device, *this);
     }
 
     void DX12CommandBuffer::Destroy()

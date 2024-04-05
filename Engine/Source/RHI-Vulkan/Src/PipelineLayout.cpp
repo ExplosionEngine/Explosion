@@ -18,7 +18,7 @@ namespace RHI::Vulkan {
 
     VulkanPipelineLayout::~VulkanPipelineLayout()
     {
-        if (nativePipelineLayout) {
+        if (nativePipelineLayout != VK_NULL_HANDLE) {
             vkDestroyPipelineLayout(device.GetNative(), nativePipelineLayout, nullptr);
         }
     }

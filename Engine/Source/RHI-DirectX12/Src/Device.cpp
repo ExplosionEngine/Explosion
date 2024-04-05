@@ -120,9 +120,9 @@ namespace RHI::DirectX12 {
         return new DX12ComputePipeline(*this, inCreateInfo);
     }
 
-    GraphicsPipeline* DX12Device::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& inCreateInfo)
+    RasterPipeline* DX12Device::CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo)
     {
-        return new DX12GraphicsPipeline(*this, inCreateInfo);
+        return new DX12RasterPipeline(*this, inCreateInfo);
     }
 
     CommandBuffer* DX12Device::CreateCommandBuffer()

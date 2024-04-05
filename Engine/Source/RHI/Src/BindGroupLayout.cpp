@@ -34,7 +34,7 @@ namespace RHI {
     {
     }
 
-    BindGroupLayoutCreateInfo& BindGroupLayoutCreateInfo::Entry(const BindGroupLayoutEntry& inEntry)
+    BindGroupLayoutCreateInfo& BindGroupLayoutCreateInfo::AddEntry(const BindGroupLayoutEntry& inEntry)
     {
         entries.emplace_back(inEntry);
         return *this;

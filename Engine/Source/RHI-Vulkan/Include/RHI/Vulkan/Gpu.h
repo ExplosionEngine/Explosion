@@ -18,12 +18,10 @@ namespace RHI::Vulkan {
         ~VulkanGpu() override;
 
         GpuProperty GetProperty() override;
-        Device* RequestDevice(const DeviceCreateInfo& inCreateInfo) override;
+        Common::UniqueRef<Device> RequestDevice(const DeviceCreateInfo& inCreateInfo) override;
 
         VkPhysicalDevice GetNative() const;
-
         VulkanInstance& GetInstance() const;
-
         uint32_t FindMemoryType(uint32_t inFilter, VkMemoryPropertyFlags inPropertyFlag) const;
 
     private:

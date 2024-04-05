@@ -7,8 +7,6 @@
 #include <RHI/Vulkan/Gpu.h>
 
 namespace RHI::Vulkan {
-    RHI::Instance* gInstance = nullptr;
-
 #if BUILD_CONFIG_DEBUG
     static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -20,8 +18,13 @@ namespace RHI::Vulkan {
         return VK_FALSE;
     }
 #endif
+}
 
-    VulkanInstance::VulkanInstance() : Instance()
+namespace RHI::Vulkan {
+    RHI::Instance* gInstance = nullptr;
+
+    VulkanInstance::VulkanInstance()
+        : Instance()
     {
 #if BUILD_CONFIG_DEBUG
         PrepareLayers();

@@ -12,7 +12,7 @@ namespace RHI::Dummy {
         NonCopyable(DummyCommandBuffer)
         DummyCommandBuffer();
 
-        CommandEncoder* Begin() override;
+        CommandRecorder* Begin() override;
         void Destroy() override;
     };
 }

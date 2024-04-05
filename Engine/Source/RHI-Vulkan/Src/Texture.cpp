@@ -9,7 +9,7 @@
 #include <RHI/Vulkan/Gpu.h>
 #include <RHI/Vulkan/Queue.h>
 #include <RHI/Vulkan/CommandBuffer.h>
-#include <RHI/Vulkan/CommandEncoder.h>
+#include <RHI/Vulkan/CommandRecorder.h>
 #include <RHI/Vulkan/Synchronous.h>
 
 namespace RHI::Vulkan {
@@ -32,14 +32,30 @@ namespace RHI::Vulkan {
         }
         return result;
     }
+}
 
+namespace RHI::Vulkan {
     VulkanTexture::VulkanTexture(VulkanDevice& inDevice, const TextureCreateInfo& inCreateInfo, VkImage inNativeImage)
-        : Texture(inCreateInfo), device(inDevice), nativeImage(inNativeImage), ownMemory(false), extent(inCreateInfo.extent), format(inCreateInfo.format), mipLevels(inCreateInfo.mipLevels), samples(inCreateInfo.samples)
+        : Texture(inCreateInfo)
+        , device(inDevice)
+        , nativeImage(inNativeImage)
+        , ownMemory(false)
+        , extent(inCreateInfo.extent)
+        , format(inCreateInfo.format)
+        , mipLevels(inCreateInfo.mipLevels)
+        , samples(inCreateInfo.samples)
     {
     }
 
     VulkanTexture::VulkanTexture(VulkanDevice& inDevice, const TextureCreateInfo& inCreateInfo)
-        : Texture(inCreateInfo), device(inDevice), nativeImage(VK_NULL_HANDLE), ownMemory(true), extent(inCreateInfo.extent), format(inCreateInfo.format), mipLevels(inCreateInfo.mipLevels), samples(inCreateInfo.samples)
+        : Texture(inCreateInfo)
+        , device(inDevice)
+        , nativeImage(VK_NULL_HANDLE)
+        , ownMemory(true)
+        , extent(inCreateInfo.extent)
+        , format(inCreateInfo.format)
+        , mipLevels(inCreateInfo.mipLevels)
+        , samples(inCreateInfo.samples)
     {
         CreateNativeImage(inCreateInfo);
         TransitionToInitState(inCreateInfo);
@@ -47,12 +63,8 @@ namespace RHI::Vulkan {
 
     VulkanTexture::~VulkanTexture()
     {
-        if (nativeImage && ownMemory) {
+        if (nativeImage != VK_NULL_HANDLE && ownMemory) {
             vmaDestroyImage(device.GetNativeAllocator(), nativeImage, nativeAllocation);
-        }
-
-        if (nativeImageView) {
-            vkDestroyImageView(device.GetNative(), nativeImageView, nullptr);
         }
     }
 
@@ -130,9 +142,9 @@ namespace RHI::Vulkan {
 
             Common::UniqueRef<Fence> fence = device.CreateFence(false);
             Common::UniqueRef<CommandBuffer> commandBuffer = device.CreateCommandBuffer();
-            Common::UniqueRef<CommandEncoder> commandEncoder = commandBuffer->Begin();
-            commandEncoder->ResourceBarrier(Barrier::Transition(this, TextureState::undefined, inCreateInfo.initialState));
-            commandEncoder->End();
+            Common::UniqueRef<CommandRecorder> commandRecorder = commandBuffer->Begin();
+            commandRecorder->ResourceBarrier(Barrier::Transition(this, TextureState::undefined, inCreateInfo.initialState));
+            commandRecorder->End();
 
             QueueSubmitInfo submitInfo {};
             submitInfo.signalFence = fence.Get();

@@ -15,7 +15,7 @@ struct ResourcePoolTest : public testing::Test {
 
         device = instance->GetGpu(0)->RequestDevice(
             RHI::DeviceCreateInfo()
-                .Queue(RHI::QueueRequestInfo(RHI::QueueType::graphics, 1)));
+                .AddQueueRequest(RHI::QueueRequestInfo(RHI::QueueType::graphics, 1)));
     }
 
     void TearDown() override {}

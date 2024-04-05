@@ -501,7 +501,9 @@ namespace RHI {
         green = 0x2,
         blue  = 0x4,
         alpha = 0x8,
-        max
+        max,
+        rgb   = red | green | blue,
+        all   = red | green | blue | alpha
     };
     RHI_FLAGS_DECLARE(ColorWriteFlags, ColorWriteBits)
 }

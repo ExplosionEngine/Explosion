@@ -28,11 +28,14 @@ namespace RHI::Vulkan {
 
     private:
         void CreateImageView(const TextureViewCreateInfo& inCreateInfo);
+        void DestroyImageView();
+
         VulkanDevice& device;
         VulkanTexture& texture;
         uint8_t baseMipLevel;
         uint8_t mipLevelNum;
         uint8_t baseArrayLayer;
         uint8_t arrayLayerNum;
+        VkImageView nativeImageView;
     };
 }

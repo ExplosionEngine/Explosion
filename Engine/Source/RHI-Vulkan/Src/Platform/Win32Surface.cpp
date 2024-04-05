@@ -5,12 +5,12 @@
 #if PLATFORM_WINDOWS
 #include <RHI/SwapChain.h>
 #include <Windows.h>
+
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 #include <Common/Debug.h>
 
 namespace RHI::Vulkan {
-
     VkSurfaceKHR CreateNativeSurface(const VkInstance& instance, const SurfaceCreateInfo& createInfo)
     {
         VkWin32SurfaceCreateInfoKHR surfaceInfo = {};

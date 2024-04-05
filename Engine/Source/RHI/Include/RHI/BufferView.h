@@ -28,11 +28,12 @@ namespace RHI {
         std::variant<VertexBufferViewInfo, IndexBufferViewInfo> extend;
 
         BufferViewCreateInfoBase();
-        Derived& Type(BufferViewType inType);
-        Derived& Offset(uint32_t inOffset);
-        Derived& Size(uint32_t inSize);
-        Derived& ExtendVertex(uint32_t inStride);
-        Derived& ExtendIndex(IndexFormat inFormat);
+
+        Derived& SetType(BufferViewType inType);
+        Derived& SetOffset(uint32_t inOffset);
+        Derived& SetSize(uint32_t inSize);
+        Derived& SetExtendVertex(uint32_t inStride);
+        Derived& SetExtendIndex(IndexFormat inFormat);
 
         size_t Hash() const;
     };
@@ -58,35 +59,35 @@ namespace RHI {
     BufferViewCreateInfoBase<Derived>::BufferViewCreateInfoBase() = default;
 
     template<typename Derived>
-    Derived& BufferViewCreateInfoBase<Derived>::Type(BufferViewType inType)
+    Derived& BufferViewCreateInfoBase<Derived>::SetType(BufferViewType inType)
     {
         type = inType;
         return *static_cast<Derived*>(this);
     }
 
     template<typename Derived>
-    Derived& BufferViewCreateInfoBase<Derived>::Offset(uint32_t inOffset)
+    Derived& BufferViewCreateInfoBase<Derived>::SetOffset(uint32_t inOffset)
     {
         offset = inOffset;
         return *static_cast<Derived*>(this);
     }
 
     template<typename Derived>
-    Derived& BufferViewCreateInfoBase<Derived>::Size(uint32_t inSize)
+    Derived& BufferViewCreateInfoBase<Derived>::SetSize(uint32_t inSize)
     {
         size = inSize;
         return *static_cast<Derived*>(this);
     }
 
     template<typename Derived>
-    Derived& BufferViewCreateInfoBase<Derived>::ExtendVertex(uint32_t inStride)
+    Derived& BufferViewCreateInfoBase<Derived>::SetExtendVertex(uint32_t inStride)
     {
         extend = VertexBufferViewInfo { inStride };
         return *static_cast<Derived*>(this);
     }
 
     template<typename Derived>
-    Derived& BufferViewCreateInfoBase<Derived>::ExtendIndex(IndexFormat inFormat)
+    Derived& BufferViewCreateInfoBase<Derived>::SetExtendIndex(IndexFormat inFormat)
     {
         extend = IndexBufferViewInfo { inFormat };
         return *static_cast<Derived*>(this);

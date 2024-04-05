@@ -7,14 +7,14 @@
 #include <Common/Utility.h>
 
 namespace RHI {
-    class CommandEncoder;
+    class CommandRecorder;
 
     class CommandBuffer {
     public:
         NonCopyable(CommandBuffer)
         virtual ~CommandBuffer();
 
-        virtual CommandEncoder* Begin() = 0;
+        virtual CommandRecorder* Begin() = 0;
         virtual void Destroy() = 0;
 
     protected:

@@ -310,7 +310,7 @@ namespace Rendering {
         RasterPipelineLayoutDesc desc = { inDesc.shaders };
         pipelineLayout = PipelineLayoutCache::Get(inDevice).GetLayout(desc);
 
-        RHI::GraphicsPipelineCreateInfo createInfo;
+        RHI::RasterPipelineCreateInfo createInfo;
         createInfo.layout = pipelineLayout->GetRHI();
         createInfo.vertexShader = inDesc.shaders.vertexShader.rhiHandle;
         createInfo.pixelShader = inDesc.shaders.pixelShader.rhiHandle;
@@ -322,7 +322,7 @@ namespace Rendering {
         createInfo.depthStencilState = inDesc.depthStencilState;
         createInfo.multiSampleState = inDesc.multiSampleState;
         createInfo.fragmentState = inDesc.fragmentState;
-        rhiHandle = inDevice.CreateGraphicsPipeline(createInfo);
+        rhiHandle = inDevice.CreateRasterPipeline(createInfo);
     }
 
     RasterPipelineState::~RasterPipelineState() = default;
@@ -332,7 +332,7 @@ namespace Rendering {
         return pipelineLayout;
     }
 
-    RHI::GraphicsPipeline* RasterPipelineState::GetRHI() const
+    RHI::RasterPipeline* RasterPipelineState::GetRHI() const
     {
         return rhiHandle.Get();
     }

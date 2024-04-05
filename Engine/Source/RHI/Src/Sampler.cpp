@@ -20,61 +20,67 @@ namespace RHI {
     {
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::AddressModeU(AddressMode inMode)
+    SamplerCreateInfo& SamplerCreateInfo::SetAddressModeU(AddressMode inMode)
     {
         addressModeU = inMode;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::AddressModeV(AddressMode inMode)
+    SamplerCreateInfo& SamplerCreateInfo::SetAddressModeV(AddressMode inMode)
     {
         addressModeV = inMode;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::AddressModeW(AddressMode inMode)
+    SamplerCreateInfo& SamplerCreateInfo::SetAddressModeW(AddressMode inMode)
     {
         addressModeW = inMode;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::MagFilter(FilterMode inMode)
+    SamplerCreateInfo& SamplerCreateInfo::SetMagFilter(FilterMode inMode)
     {
         magFilter = inMode;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::MinFilter(FilterMode inMode)
+    SamplerCreateInfo& SamplerCreateInfo::SetMinFilter(FilterMode inMode)
     {
         minFilter = inMode;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::LodMinClamp(float inValue)
+    SamplerCreateInfo& SamplerCreateInfo::SetMipFilter(FilterMode inMode)
+    {
+        mipFilter = inMode;
+        return *this;
+    }
+
+    SamplerCreateInfo& SamplerCreateInfo::SetLodMinClamp(float inValue)
     {
         lodMinClamp = inValue;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::LodMaxClamp(float inValue)
+    SamplerCreateInfo& SamplerCreateInfo::SetLodMaxClamp(float inValue)
     {
         lodMaxClamp = inValue;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::ComparisonFunc(enum ComparisonFunc inFunc)
+    SamplerCreateInfo& SamplerCreateInfo::SetComparisonFunc(enum ComparisonFunc inFunc)
     {
         comparisonFunc = inFunc;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::MaxAnisotropy(uint8_t inValue)
+    SamplerCreateInfo& SamplerCreateInfo::SetMaxAnisotropy(uint8_t inValue)
     {
         maxAnisotropy = inValue;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::DebugName(std::string inName)
+    SamplerCreateInfo& SamplerCreateInfo::SetDebugName(std::string inName)
     {
         debugName = std::move(inName);
         return *this;

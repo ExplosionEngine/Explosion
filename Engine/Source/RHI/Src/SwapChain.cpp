@@ -15,37 +15,37 @@ namespace RHI {
     {
     }
 
-    SwapChainCreateInfo& SwapChainCreateInfo::PresentQueue(Queue* inPresentQueue)
+    SwapChainCreateInfo& SwapChainCreateInfo::SetPresentQueue(Queue* inPresentQueue)
     {
         presentQueue = inPresentQueue;
         return *this;
     }
 
-    SwapChainCreateInfo& SwapChainCreateInfo::Surface(class Surface* inSurface)
+    SwapChainCreateInfo& SwapChainCreateInfo::SetSurface(class Surface* inSurface)
     {
         surface = inSurface;
         return *this;
     }
 
-    SwapChainCreateInfo& SwapChainCreateInfo::TextureNum(uint8_t inTextureNum)
+    SwapChainCreateInfo& SwapChainCreateInfo::SetTextureNum(uint8_t inTextureNum)
     {
         textureNum = inTextureNum;
         return *this;
     }
 
-    SwapChainCreateInfo& SwapChainCreateInfo::Format(PixelFormat inFormat)
+    SwapChainCreateInfo& SwapChainCreateInfo::SetFormat(PixelFormat inFormat)
     {
         format = inFormat;
         return *this;
     }
 
-    SwapChainCreateInfo& SwapChainCreateInfo::Extent(const Common::UVec2& inExtent)
+    SwapChainCreateInfo& SwapChainCreateInfo::SetExtent(const Common::UVec2& inExtent)
     {
         extent = inExtent;
         return *this;
     }
 
-    SwapChainCreateInfo& SwapChainCreateInfo::PresentMode(enum PresentMode inMode)
+    SwapChainCreateInfo& SwapChainCreateInfo::SetPresentMode(enum PresentMode inMode)
     {
         presentMode = inMode;
         return *this;

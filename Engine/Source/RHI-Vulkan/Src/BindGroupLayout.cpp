@@ -9,14 +9,15 @@
 
 namespace RHI::Vulkan {
     VulkanBindGroupLayout::VulkanBindGroupLayout(VulkanDevice& inDevice, const BindGroupLayoutCreateInfo& inCreateInfo)
-        : BindGroupLayout(inCreateInfo), device(inDevice)
+        : BindGroupLayout(inCreateInfo)
+        , device(inDevice)
     {
         CreateNativeDescriptorSetLayout(inCreateInfo);
     }
 
     VulkanBindGroupLayout::~VulkanBindGroupLayout()
     {
-        if (nativeDescriptorSetLayout) {
+        if (nativeDescriptorSetLayout != VK_NULL_HANDLE) {
             vkDestroyDescriptorSetLayout(device.GetNative(), nativeDescriptorSetLayout, nullptr);
         }
     }
@@ -60,5 +61,4 @@ namespace RHI::Vulkan {
         }
 #endif
     }
-
 }

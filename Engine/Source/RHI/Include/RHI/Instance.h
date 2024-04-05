@@ -13,6 +13,11 @@
 namespace RHI {
     class Gpu;
 
+    RHIType GetPlatformRHIType();
+    std::string GetPlatformDefaultRHIAbbrString();
+    RHIType RHIAbbrStringToRHIType(const std::string& abbrString);
+    std::string GetRHIModuleNameByType(const RHIType& type);
+
     class Instance {
     public:
         static Instance* GetByPlatform();

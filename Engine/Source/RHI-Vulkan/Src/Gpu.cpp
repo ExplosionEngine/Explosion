@@ -8,7 +8,12 @@
 #include <RHI/Vulkan/Instance.h>
 
 namespace RHI::Vulkan {
-    VulkanGpu::VulkanGpu(VulkanInstance& inInstance, VkPhysicalDevice inNativePhysicalDevice) : Gpu(), instance(inInstance), nativePhysicalDevice(inNativePhysicalDevice) {}
+    VulkanGpu::VulkanGpu(VulkanInstance& inInstance, VkPhysicalDevice inNativePhysicalDevice)
+        : Gpu()
+        , instance(inInstance)
+        , nativePhysicalDevice(inNativePhysicalDevice)
+    {
+    }
 
     VulkanGpu::~VulkanGpu() = default;
 
@@ -24,9 +29,9 @@ namespace RHI::Vulkan {
         return property;
     }
 
-    Device* VulkanGpu::RequestDevice(const DeviceCreateInfo& inCreateInfo)
+    Common::UniqueRef<Device> VulkanGpu::RequestDevice(const DeviceCreateInfo& inCreateInfo)
     {
-        return new VulkanDevice(*this, inCreateInfo);
+        return Common::UniqueRef<Device>(new VulkanDevice(*this, inCreateInfo));
     }
 
     VkPhysicalDevice VulkanGpu::GetNative() const

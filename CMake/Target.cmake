@@ -110,6 +110,7 @@ function(GetTargetRuntimeDependenciesRecurse)
         endforeach()
     endif()
 
+    list(REMOVE_DUPLICATES RESULT)
     set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
 endfunction()
 
@@ -264,6 +265,10 @@ function(AddMirrorInfoSourceGenerationTarget)
     )
     set(${PARAMS_OUTPUT_SRC} ${OUTPUT_SOURCES} PARENT_SCOPE)
     set(${PARAMS_OUTPUT_TARGET_NAME} ${CUSTOM_TARGET_NAME} PARENT_SCOPE)
+
+    if (DEFINED PARAMS_LIB)
+        add_dependencies(${CUSTOM_TARGET_NAME} ${PARAMS_LIB})
+    endif()
 endfunction()
 
 function(AddExecutable)
