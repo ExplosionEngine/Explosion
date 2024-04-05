@@ -21,7 +21,7 @@ namespace RHI {
         VertexFormat format;
         size_t offset;
 
-        VertexAttribute(
+        explicit VertexAttribute(
             std::string inSemanticName = "",
             uint8_t inSemanticIndex = 0,
             VertexFormat inFormat = VertexFormat::max,
@@ -34,11 +34,14 @@ namespace RHI {
     };
 
     struct VertexBufferLayout {
-        size_t stride;
         VertexStepMode stepMode;
+        size_t stride;
         std::vector<VertexAttribute> attributes;
 
-        VertexBufferLayout();
+        explicit VertexBufferLayout(
+            VertexStepMode inStepMode = VertexStepMode::perVertex,
+            size_t inStride = 0);
+
         VertexBufferLayout& SetStride(size_t inStride);
         VertexBufferLayout& SetStepMode(VertexStepMode inStepMode);
         VertexBufferLayout& AddAttribute(const VertexAttribute& inAttribute);
@@ -59,7 +62,13 @@ namespace RHI {
         CullMode cullMode;
         bool depthClip = false;
 
-        PrimitiveState();
+        explicit PrimitiveState(
+            PrimitiveTopologyType inTopologyType = PrimitiveTopologyType::triangle,
+            IndexFormat inStripIndexFormat = IndexFormat::uint16,
+            FrontFace inFrontFace = FrontFace::ccw,
+            CullMode inCullMode = CullMode::back,
+            bool inDepthClip = false);
+
         PrimitiveState& SetTopologyType(PrimitiveTopologyType inTopologyType);
         PrimitiveState& SetStripIndexFormat(IndexFormat inFormat);
         PrimitiveState& SetFrontFace(FrontFace inFrontFace);
@@ -68,36 +77,48 @@ namespace RHI {
     };
 
     struct StencilFaceState {
-        ComparisonFunc comparisonFunc;
+        CompareFunc compareFunc;
         StencilOp failOp;
         StencilOp depthFailOp;
         StencilOp passOp;
 
-        StencilFaceState();
-        StencilFaceState& SetComparisonFunc(ComparisonFunc inFunc);
-        StencilFaceState& SetFailOp(StencilOp inFailOp);
-        StencilFaceState& SetDepthFailOp(StencilOp inDepthFailOp);
-        StencilFaceState& SetPassOp(StencilOp inPassOp);
+        explicit StencilFaceState(
+            CompareFunc inCompareFunc = CompareFunc::always,
+            StencilOp inFailOp = StencilOp::keep,
+            StencilOp inDepthFailOp = StencilOp::keep,
+            StencilOp inPassOp = StencilOp::keep);
     };
 
     struct DepthStencilState {
-        bool depthEnable;
-        bool stencilEnable;
+        bool depthEnabled;
+        bool stencilEnabled;
         PixelFormat format;
-        ComparisonFunc depthComparisonFunc;
+        CompareFunc depthCompareFunc;
+        int32_t depthBias;
+        float depthBiasSlopeScale;
+        float depthBiasClamp;
         StencilFaceState stencilFront;
         StencilFaceState stencilBack;
         uint8_t stencilReadMask;
         uint8_t stencilWriteMask;
-        int32_t depthBias;
-        float depthBiasSlopeScale;
-        float depthBiasClamp;
 
-        DepthStencilState();
+        explicit DepthStencilState(
+            bool inDepthEnabled = false,
+            bool inStencilEnabled = false,
+            PixelFormat inFormat = PixelFormat::max,
+            CompareFunc inDepthCompareFunc = CompareFunc::always,
+            int32_t inDepthBias = 0,
+            float inDepthBiasSlopeScale = 0.0f,
+            float inDepthBiasClamp = 0.0f,
+            const StencilFaceState& inStencilFront = StencilFaceState(),
+            const StencilFaceState& inStencilBack = StencilFaceState(),
+            uint8_t inStencilReadMask = 0,
+            uint8_t inStencilWriteMask = 0);
+
         DepthStencilState& SetDepthEnabled(bool inDepthEnabled);
         DepthStencilState& SetStencilEnabled(bool inStencilEnabled);
         DepthStencilState& SetFormat(PixelFormat inFormat);
-        DepthStencilState& SetDepthComparisonFunc(ComparisonFunc inFunc);
+        DepthStencilState& SetDepthCompareFunc(CompareFunc inFunc);
         DepthStencilState& SetStencilFront(StencilFaceState inState);
         DepthStencilState& SetStencilBack(StencilFaceState inState);
         DepthStencilState& SetStencilReadMask(uint8_t inStencilReadMask);
@@ -112,7 +133,7 @@ namespace RHI {
         uint32_t mask;
         bool alphaToCoverage = false;
 
-        MultiSampleState(
+        explicit MultiSampleState(
             uint8_t inCount = 1,
             uint32_t inMask = 0xffffffff,
             bool inAlphaToCoverage = false);
@@ -127,30 +148,29 @@ namespace RHI {
         BlendFactor srcFactor;
         BlendFactor dstFactor;
 
-        BlendComponent();
-        BlendComponent& SetOp(BlendOp inOp);
-        BlendComponent& SetSrcFactor(BlendFactor inSrcFactor);
-        BlendComponent& SetDstFactor(BlendFactor inDstFactor);
-    };
-
-    struct BlendState {
-        BlendComponent color;
-        BlendComponent alpha;
-
-        BlendState();
-        BlendState& SetColor(BlendComponent inColor);
-        BlendState& SetAlpha(BlendComponent inAlpha);
+        explicit BlendComponent(
+            BlendOp inOp = BlendOp::opAdd,
+            BlendFactor inSrcFactor = BlendFactor::one,
+            BlendFactor inDstFactor = BlendFactor::zero);
     };
 
     struct ColorTargetState {
+        // TODO blend enabled ?
         PixelFormat format;
-        BlendState blend;
         ColorWriteFlags writeFlags;
+        BlendComponent colorBlend;
+        BlendComponent alphaBlend;
 
-        ColorTargetState();
+        explicit ColorTargetState(
+            PixelFormat inFormat = PixelFormat::max,
+            ColorWriteFlags inWriteFlags = ColorWriteFlags::null,
+            const BlendComponent& inColorBlend = BlendComponent(),
+            const BlendComponent& inAlphaBlend = BlendComponent());
+
         ColorTargetState& SetFormat(PixelFormat inFormat);
-        ColorTargetState& SetBlend(BlendState inBlend);
         ColorTargetState& SetWriteFlags(ColorWriteFlags inFlags);
+        ColorTargetState& SetColorBlend(const BlendComponent& inColorBlend);
+        ColorTargetState& SetAlphaBlend(const BlendComponent& inAlphaBlend);
     };
 
     struct FragmentState {
@@ -186,7 +206,7 @@ namespace RHI {
 
         std::string debugName;
 
-        RasterPipelineCreateInfo();
+        RasterPipelineCreateInfo(PipelineLayout* inLayout = nullptr);
         RasterPipelineCreateInfo& SetLayout(PipelineLayout* inLayout);
         RasterPipelineCreateInfo& SetVertexShader(ShaderModule* inVertexShader);
         RasterPipelineCreateInfo& SetPixelShader(ShaderModule* inPixelShader);

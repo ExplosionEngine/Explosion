@@ -1087,59 +1087,36 @@ private:
         shaderModules.compositionPs = GetShaderModule(compositionPs, "../Test/Sample/SSAO/Shader/Composition.hlsl", "FSMain", ShaderStageBits::sPixel);
 
         // Gbuffer vertex
-        VertexBufferLayout vertexBufferLayout = VertexBufferLayout()
-            .SetStepMode(VertexStepMode::perVertex)
-            .SetStride(sizeof(Vertex))
+        VertexBufferLayout vertexBufferLayout = VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
             .AddAttribute(VertexAttribute("POSITION", 0, VertexFormat::float32X4, 0))
             .AddAttribute(VertexAttribute("TEXCOORD", 0, VertexFormat::float32X2, offsetof(Vertex, uv)))
             .AddAttribute(VertexAttribute("COLOR", 0, VertexFormat::float32X4, offsetof(Vertex, color)))
             .AddAttribute(VertexAttribute("NORMAL", 0, VertexFormat::float32X3, offsetof(Vertex, normal)));
 
         // quad buffer vertex
-        VertexBufferLayout quadVertexBufferLayout = VertexBufferLayout()
-            .SetStepMode(VertexStepMode::perVertex)
-            .SetStride(sizeof(QuadVertex))
+        VertexBufferLayout quadVertexBufferLayout = VertexBufferLayout(VertexStepMode::perVertex, sizeof(QuadVertex))
             .AddAttribute(VertexAttribute("POSITION", 0, VertexFormat::float32X3, 0))
             .AddAttribute(VertexAttribute("TEXCOORD", 0, VertexFormat::float32X2, offsetof(QuadVertex, uv)));
 
         // General pipeline infos
         RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo()
-            .SetPrimitiveState(
-                PrimitiveState()
-                    .SetDepthClip(false)
-                    .SetFrontFace(FrontFace::ccw)
-                    .SetCullMode(CullMode::none)
-                    .SetTopologyType(PrimitiveTopologyType::triangle)
-                    .SetStripIndexFormat(IndexFormat::uint32));
+            .SetPrimitiveState(PrimitiveState(PrimitiveTopologyType::triangle, IndexFormat::uint32, FrontFace::ccw, CullMode::none, false));
 
         // Gbuffer
         {
             createInfo
-                .SetDepthStencilState(
-                    DepthStencilState()
-                        .SetDepthEnabled(true)
-                        .SetDepthComparisonFunc(ComparisonFunc::greaterEqual)
-                        .SetFormat(PixelFormat::d32Float))
+                .SetLayout(pipelineLayouts.gBuffer.Get())
+                .SetVertexShader(shaderModules.gBufferVs.Get())
+                .SetPixelShader(shaderModules.gBufferPs.Get())
+                .SetDepthStencilState(DepthStencilState(true, false, PixelFormat::d32Float, CompareFunc::greaterEqual))
                 .SetVertexState(
                     VertexState()
                         .AddVertexBufferLayout(vertexBufferLayout))
                 .SetFragmentState(
                     FragmentState()
-                        .AddColorTarget(
-                            ColorTargetState()
-                                .SetFormat(PixelFormat::rgba32Float)
-                                .SetWriteFlags(ColorWriteBits::all))
-                        .AddColorTarget(
-                            ColorTargetState()
-                                .SetFormat(PixelFormat::rgba8Unorm)
-                                .SetWriteFlags(ColorWriteBits::all))
-                        .AddColorTarget(
-                            ColorTargetState()
-                                .SetFormat(PixelFormat::rgba8Unorm)
-                                .SetWriteFlags(ColorWriteBits::all)))
-                .SetVertexShader(shaderModules.gBufferVs.Get())
-                .SetPixelShader(shaderModules.gBufferPs.Get())
-                .SetLayout(pipelineLayouts.gBuffer.Get());
+                        .AddColorTarget(ColorTargetState(PixelFormat::rgba32Float, ColorWriteBits::all))
+                        .AddColorTarget(ColorTargetState(PixelFormat::rgba8Unorm, ColorWriteBits::all))
+                        .AddColorTarget(ColorTargetState(PixelFormat::rgba8Unorm, ColorWriteBits::all)));
 
             pipelines.gBuffer = device->CreateRasterPipeline(createInfo);
         }
@@ -1147,19 +1124,16 @@ private:
         // ssao
         {
             createInfo
+                .SetLayout(pipelineLayouts.ssao.Get())
+                .SetVertexShader(shaderModules.ssaoVs.Get())
+                .SetPixelShader(shaderModules.ssaoPs.Get())
                 .SetDepthStencilState(DepthStencilState())
                 .SetVertexState(
                     VertexState()
                         .AddVertexBufferLayout(quadVertexBufferLayout))
                 .SetFragmentState(
                     FragmentState()
-                        .AddColorTarget(
-                            ColorTargetState()
-                                .SetFormat(PixelFormat::r8Unorm)
-                                .SetWriteFlags(ColorWriteBits::all)))
-                .SetVertexShader(shaderModules.ssaoVs.Get())
-                .SetPixelShader(shaderModules.ssaoPs.Get())
-                .SetLayout(pipelineLayouts.ssao.Get());
+                        .AddColorTarget(ColorTargetState(PixelFormat::r8Unorm, ColorWriteBits::all)));
 
             pipelines.ssao = device->CreateRasterPipeline(createInfo);
         }
@@ -1167,19 +1141,16 @@ private:
         // ssaoBlur
         {
             createInfo
+                .SetLayout(pipelineLayouts.ssaoBlur.Get())
+                .SetVertexShader(shaderModules.ssaoBlurVs.Get())
+                .SetPixelShader(shaderModules.ssaoBlurPs.Get())
                 .SetDepthStencilState(DepthStencilState())
                 .SetVertexState(
                     VertexState()
                         .AddVertexBufferLayout(quadVertexBufferLayout))
                 .SetFragmentState(
                     FragmentState()
-                        .AddColorTarget(
-                            ColorTargetState()
-                                .SetFormat(PixelFormat::r8Unorm)
-                                .SetWriteFlags(ColorWriteBits::all)))
-                .SetVertexShader(shaderModules.ssaoBlurVs.Get())
-                .SetPixelShader(shaderModules.ssaoBlurPs.Get())
-                .SetLayout(pipelineLayouts.ssaoBlur.Get());
+                        .AddColorTarget(ColorTargetState(PixelFormat::r8Unorm, ColorWriteBits::all)));
 
             pipelines.ssaoBlur = device->CreateRasterPipeline(createInfo);
         }
@@ -1187,19 +1158,16 @@ private:
         // composition
         {
             createInfo
+                .SetLayout(pipelineLayouts.composition.Get())
+                .SetVertexShader(shaderModules.compositionVs.Get())
+                .SetPixelShader(shaderModules.compositionPs.Get())
                 .SetDepthStencilState(DepthStencilState())
                 .SetVertexState(
                     VertexState()
                         .AddVertexBufferLayout(quadVertexBufferLayout))
                 .SetFragmentState(
                     FragmentState()
-                        .AddColorTarget(
-                            ColorTargetState()
-                                .SetFormat(swapChainFormat)
-                                .SetWriteFlags(ColorWriteBits::all)))
-                .SetVertexShader(shaderModules.compositionVs.Get())
-                .SetPixelShader(shaderModules.compositionPs.Get())
-                .SetLayout(pipelineLayouts.composition.Get());
+                        .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all)));
 
             pipelines.composition = device->CreateRasterPipeline(createInfo);
         }

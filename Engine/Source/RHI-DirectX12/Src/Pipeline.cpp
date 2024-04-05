@@ -36,12 +36,12 @@ namespace RHI::DirectX12 {
         desc.BlendEnable = true;
         desc.LogicOpEnable = false;
         desc.RenderTargetWriteMask = GetDX12RenderTargetWriteMasks(colorTargetState.writeFlags);
-        desc.BlendOp = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.blend.color.op);
-        desc.SrcBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.blend.color.srcFactor);
-        desc.DestBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.blend.color.dstFactor);
-        desc.BlendOpAlpha = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.blend.alpha.op);
-        desc.SrcBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.blend.alpha.srcFactor);
-        desc.DestBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.blend.alpha.dstFactor);
+        desc.BlendOp = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.colorBlend.op);
+        desc.SrcBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.colorBlend.srcFactor);
+        desc.DestBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.colorBlend.dstFactor);
+        desc.BlendOpAlpha = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.alphaBlend.op);
+        desc.SrcBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.alphaBlend.srcFactor);
+        desc.DestBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.alphaBlend.dstFactor);
         return desc;
     }
 
@@ -83,7 +83,7 @@ namespace RHI::DirectX12 {
         desc.StencilFailOp = DX12EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.failOp);
         desc.StencilDepthFailOp = DX12EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.depthFailOp);
         desc.StencilPassOp = DX12EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.passOp);
-        desc.StencilFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(stencilFaceState.comparisonFunc);
+        desc.StencilFunc = DX12EnumCast<CompareFunc, D3D12_COMPARISON_FUNC>(stencilFaceState.compareFunc);
         return desc;
     }
 
@@ -91,10 +91,10 @@ namespace RHI::DirectX12 {
     {
         CD3DX12_DEPTH_STENCIL_DESC desc(D3D12_DEFAULT);
         // TODO check this
-        desc.DepthEnable = createInfo.depthStencilState.depthEnable;
+        desc.DepthEnable = createInfo.depthStencilState.depthEnabled;
         desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-        desc.DepthFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(createInfo.depthStencilState.depthComparisonFunc);
-        desc.StencilEnable = createInfo.depthStencilState.stencilEnable;
+        desc.DepthFunc = DX12EnumCast<CompareFunc, D3D12_COMPARISON_FUNC>(createInfo.depthStencilState.depthCompareFunc);
+        desc.StencilEnable = createInfo.depthStencilState.stencilEnabled;
         desc.StencilReadMask = createInfo.depthStencilState.stencilReadMask;
         desc.StencilWriteMask = createInfo.depthStencilState.stencilWriteMask;
         desc.FrontFace = GetDX12DepthStencilOpDesc(createInfo.depthStencilState.stencilFront);
@@ -127,7 +127,7 @@ namespace RHI::DirectX12 {
 
     void UpdateDX12DepthStencilTargetDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const RasterPipelineCreateInfo& createInfo)
     {
-        if (!createInfo.depthStencilState.depthEnable && !createInfo.depthStencilState.stencilEnable) {
+        if (!createInfo.depthStencilState.depthEnabled && !createInfo.depthStencilState.stencilEnabled) {
             return;
         }
         desc.DSVFormat = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.depthStencilState.format);

@@ -25,7 +25,7 @@ namespace RHI::Vulkan {
     static VkStencilOpState ConvertStencilOp(const StencilFaceState& stencilOp, uint32_t readMask, uint32_t writeMask)
     {
         VkStencilOpState state = {};
-        state.compareOp = VKEnumCast<ComparisonFunc, VkCompareOp>(stencilOp.comparisonFunc);
+        state.compareOp = VKEnumCast<CompareFunc, VkCompareOp>(stencilOp.compareFunc);
         state.depthFailOp = VKEnumCast<StencilOp, VkStencilOp>(stencilOp.depthFailOp);
         state.failOp = VKEnumCast<StencilOp, VkStencilOp>(stencilOp.failOp);
         state.passOp = VKEnumCast<StencilOp, VkStencilOp>(stencilOp.passOp);
@@ -40,15 +40,15 @@ namespace RHI::Vulkan {
         const auto& dsState = createInfo.depthStencilState;
         VkPipelineDepthStencilStateCreateInfo dsInfo = {};
         dsInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-        dsInfo.depthTestEnable = dsState.depthEnable;
-        dsInfo.depthWriteEnable = dsState.depthEnable;
-        dsInfo.stencilTestEnable = dsState.stencilEnable;
+        dsInfo.depthTestEnable = dsState.depthEnabled;
+        dsInfo.depthWriteEnable = dsState.depthEnabled;
+        dsInfo.stencilTestEnable = dsState.stencilEnabled;
         dsInfo.front = ConvertStencilOp(dsState.stencilFront, dsState.stencilReadMask, dsState.stencilWriteMask);
         dsInfo.back = ConvertStencilOp(dsState.stencilBack, dsState.stencilReadMask, dsState.stencilWriteMask);
         dsInfo.minDepthBounds = -1.f;
         dsInfo.maxDepthBounds = 1.f;
         dsInfo.depthBoundsTestEnable = VK_FALSE;
-        dsInfo.depthCompareOp = VKEnumCast<ComparisonFunc, VkCompareOp>(dsState.depthComparisonFunc);
+        dsInfo.depthCompareOp = VKEnumCast<CompareFunc, VkCompareOp>(dsState.depthCompareFunc);
         return dsInfo;
     }
 
@@ -113,12 +113,12 @@ namespace RHI::Vulkan {
             const auto& srcState = createInfo.fragmentState.colorTargets[i];
             blendState.blendEnable = true;
             blendState.colorWriteMask = static_cast<VkColorComponentFlags>(srcState.writeFlags.Value());
-            blendState.alphaBlendOp = VKEnumCast<BlendOp, VkBlendOp>(srcState.blend.color.op);
-            blendState.alphaBlendOp = VKEnumCast<BlendOp, VkBlendOp>(srcState.blend.alpha.op);
-            blendState.srcColorBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.blend.color.srcFactor);
-            blendState.srcAlphaBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.blend.alpha.srcFactor);
-            blendState.dstColorBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.blend.color.dstFactor);
-            blendState.dstAlphaBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.blend.alpha.dstFactor);
+            blendState.alphaBlendOp = VKEnumCast<BlendOp, VkBlendOp>(srcState.colorBlend.op);
+            blendState.alphaBlendOp = VKEnumCast<BlendOp, VkBlendOp>(srcState.alphaBlend.op);
+            blendState.srcColorBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.colorBlend.srcFactor);
+            blendState.srcAlphaBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.alphaBlend.srcFactor);
+            blendState.dstColorBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.colorBlend.dstFactor);
+            blendState.dstAlphaBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.alphaBlend.dstFactor);
         }
 
         colorInfo.pAttachments = blendStates.data();
@@ -252,8 +252,8 @@ namespace RHI::Vulkan {
         pipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
         pipelineRenderingCreateInfo.colorAttachmentCount = inCreateInfo.fragmentState.colorTargets.size();
         pipelineRenderingCreateInfo.pColorAttachmentFormats = pixelFormats.data();
-        pipelineRenderingCreateInfo.depthAttachmentFormat = inCreateInfo.depthStencilState.depthEnable ? VKEnumCast<PixelFormat, VkFormat>(inCreateInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
-        pipelineRenderingCreateInfo.stencilAttachmentFormat = inCreateInfo.depthStencilState.stencilEnable ? VKEnumCast<PixelFormat, VkFormat>(inCreateInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
+        pipelineRenderingCreateInfo.depthAttachmentFormat = inCreateInfo.depthStencilState.depthEnabled ? VKEnumCast<PixelFormat, VkFormat>(inCreateInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
+        pipelineRenderingCreateInfo.stencilAttachmentFormat = inCreateInfo.depthStencilState.stencilEnabled ? VKEnumCast<PixelFormat, VkFormat>(inCreateInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
         pipelineRenderingCreateInfo.pNext = nullptr;
         pipelineRenderingCreateInfo.viewMask = 0;
 

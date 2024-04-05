@@ -357,35 +357,19 @@ private:
         CompileShader(fsByteCode, "../Test/Sample/TexSampling/TexSampling.hlsl", "FSMain", ShaderStageBits::sPixel);
         fragmentShader = device->CreateShaderModule(ShaderModuleCreateInfo(fsByteCode));
 
-        RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo()
-            .SetLayout(pipelineLayout.Get())
+        RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo(pipelineLayout.Get())
             .SetVertexShader(vertexShader.Get())
             .SetPixelShader(fragmentShader.Get())
             .SetVertexState(
                 VertexState()
                     .AddVertexBufferLayout(
-                        VertexBufferLayout()
-                            .SetStepMode(VertexStepMode::perVertex)
-                            .SetStride(sizeof(Vertex))
+                        VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
                             .AddAttribute(VertexAttribute("POSITION", 0, VertexFormat::float32X3, 0))
                             .AddAttribute(VertexAttribute("TEXCOORD", 0, VertexFormat::float32X2, offsetof(Vertex, uv)))))
             .SetFragmentState(
                 FragmentState()
-                    .AddColorTarget(
-                        ColorTargetState()
-                            .SetFormat(swapChainFormat)
-                            .SetWriteFlags(ColorWriteBits::all)))
-            .SetPrimitiveState(
-                PrimitiveState()
-                    .SetDepthClip(false)
-                    .SetFrontFace(FrontFace::ccw)
-                    .SetCullMode(CullMode::none)
-                    .SetTopologyType(PrimitiveTopologyType::triangle)
-                    .SetStripIndexFormat(IndexFormat::uint16))
-            .SetDepthStencilState(
-                DepthStencilState()
-                    .SetDepthEnabled(false)
-                    .SetStencilEnabled(false));
+                    .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all)))
+            .SetPrimitiveState(PrimitiveState(PrimitiveTopologyType::triangle, IndexFormat::uint16, FrontFace::ccw, CullMode::none));
 
         pipeline = device->CreateRasterPipeline(createInfo);
     }
