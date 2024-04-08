@@ -167,8 +167,7 @@ namespace RHI::DirectX12 {
 
     NativeDescriptorAllocation DX12Device::AllocateNativeCbvSrvUavDescriptor()
     {
-        return AllocateNativeDescriptor(nativeCbvSrvUavHeapList, 4, nativeCbvSrvUavDescriptorSize,
-                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        return AllocateNativeDescriptor(nativeCbvSrvUavHeapList, 4, nativeCbvSrvUavDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     }
 
     NativeDescriptorAllocation DX12Device::AllocateNativeSamplerDescriptor()

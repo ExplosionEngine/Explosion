@@ -303,10 +303,6 @@ namespace RHI {
         oneMinusDst,
         dstAlpha,
         oneMinusDstAlpha,
-        // TODO check spec
-        // scrAlphaSaturated,
-        // constant,
-        // oneMinusConstant,
         max
     };
 

@@ -19,7 +19,6 @@ namespace RHI::DirectX12 {
         static std::unordered_map<BufferUsageFlags, D3D12_HEAP_TYPE> rules = {
             { BufferUsageBits::mapWrite | BufferUsageBits::copySrc, D3D12_HEAP_TYPE_UPLOAD },
             { BufferUsageBits::mapRead | BufferUsageBits::copyDst, D3D12_HEAP_TYPE_READBACK }
-            // TODO check other conditions ?
         };
         static D3D12_HEAP_TYPE fallback = D3D12_HEAP_TYPE_DEFAULT;
 

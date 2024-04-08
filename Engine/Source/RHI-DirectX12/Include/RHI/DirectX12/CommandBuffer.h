@@ -47,7 +47,6 @@ namespace RHI::DirectX12 {
         std::vector<ID3D12DescriptorHeap*> GetNative();
 
     private:
-        // TODO check this
         static constexpr uint32_t samplerHeapCapacity = 1024;
         static constexpr uint32_t cbvSrvUavHeapCapacity = 10240;
 

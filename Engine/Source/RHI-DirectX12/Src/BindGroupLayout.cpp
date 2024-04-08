@@ -29,7 +29,9 @@ namespace RHI::DirectX12 {
     }
 
     DX12BindGroupLayout::DX12BindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
-        : BindGroupLayout(inCreateInfo), nativeRootParameters({}), layoutIndex(inCreateInfo.layoutIndex)
+        : BindGroupLayout(inCreateInfo)
+        , nativeRootParameters()
+        , layoutIndex(inCreateInfo.layoutIndex)
     {
         CreateNativeRootParameters(inCreateInfo);
     }

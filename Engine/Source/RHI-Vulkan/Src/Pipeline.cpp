@@ -65,6 +65,7 @@ namespace RHI::Vulkan {
     static VkPipelineRasterizationStateCreateInfo ConstructRasterization(const RasterPipelineCreateInfo& createInfo)
     {
         VkPipelineRasterizationStateCreateInfo rasterState = {};
+        // TODO polygon mode
         rasterState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         rasterState.cullMode = VKEnumCast<CullMode, VkCullModeFlagBits>(createInfo.primitiveState.cullMode);
         rasterState.frontFace = createInfo.primitiveState.frontFace == FrontFace::cw ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
