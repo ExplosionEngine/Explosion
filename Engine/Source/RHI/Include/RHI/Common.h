@@ -90,7 +90,6 @@ namespace RHI {
         d24UnormS8Uint,
         d32Float,
         d32FloatS8Uint,
-        // TODO features / bc / etc / astc
         max
     };
 
@@ -270,6 +269,12 @@ namespace RHI {
     enum class FrontFace : EnumType {
         ccw,
         cw,
+        max
+    };
+
+    enum class FillMode : EnumType {
+        wireframe,
+        solid,
         max
     };
 

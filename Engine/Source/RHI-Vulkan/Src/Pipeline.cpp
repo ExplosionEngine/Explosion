@@ -3,25 +3,16 @@
 //
 
 #include <array>
+#include <unordered_map>
+#include <utility>
+
 #include <RHI/Vulkan/Pipeline.h>
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/ShaderModule.h>
 #include <RHI/Vulkan/PipelineLayout.h>
 #include <RHI/Vulkan/Common.h>
-#include <unordered_map>
 
 namespace RHI::Vulkan {
-    static const char* GetShaderEntry(VkShaderStageFlagBits stage)
-    {
-        static std::unordered_map<VkShaderStageFlagBits, const char*> ENTRY_MAP = {
-            {VK_SHADER_STAGE_VERTEX_BIT, "VSMain"},
-            {VK_SHADER_STAGE_FRAGMENT_BIT, "FSMain"}
-        };
-        auto iter = ENTRY_MAP.find(stage);
-        Assert(iter != ENTRY_MAP.end() && "invalid shader stage");
-        return iter->second;
-    }
-
     static VkStencilOpState ConvertStencilOp(const StencilFaceState& stencilOp, uint32_t readMask, uint32_t writeMask)
     {
         VkStencilOpState state = {};
@@ -65,7 +56,7 @@ namespace RHI::Vulkan {
     static VkPipelineRasterizationStateCreateInfo ConstructRasterization(const RasterPipelineCreateInfo& createInfo)
     {
         VkPipelineRasterizationStateCreateInfo rasterState = {};
-        // TODO polygon mode
+        rasterState.polygonMode = VKEnumCast<FillMode, VkPolygonMode>(createInfo.primitiveState.fillMode);
         rasterState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         rasterState.cullMode = VKEnumCast<CullMode, VkCullModeFlagBits>(createInfo.primitiveState.cullMode);
         rasterState.frontFace = createInfo.primitiveState.frontFace == FrontFace::cw ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
@@ -85,6 +76,7 @@ namespace RHI::Vulkan {
 
     static VkPipelineMultisampleStateCreateInfo ConstructMultiSampleState(const RasterPipelineCreateInfo& createInfo)
     {
+        // TODO check this
         VkPipelineMultisampleStateCreateInfo multiSampleInfo = {};
         multiSampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multiSampleInfo.alphaToCoverageEnable = createInfo.multiSampleState.alphaToCoverage;
@@ -95,6 +87,7 @@ namespace RHI::Vulkan {
 
     static VkPipelineViewportStateCreateInfo ConstructViewportInfo(const RasterPipelineCreateInfo&)
     {
+        // TODO check this
         VkPipelineViewportStateCreateInfo viewportState = {};
         viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         viewportState.viewportCount = 1;
@@ -112,7 +105,7 @@ namespace RHI::Vulkan {
         for (uint8_t i = 0; i < createInfo.fragmentState.colorTargets.size(); ++i) {
             VkPipelineColorBlendAttachmentState& blendState = blendStates[i];
             const auto& srcState = createInfo.fragmentState.colorTargets[i];
-            blendState.blendEnable = true;
+            blendState.blendEnable = srcState.blendEnabled;
             blendState.colorWriteMask = static_cast<VkColorComponentFlags>(srcState.writeFlags.Value());
             blendState.alphaBlendOp = VKEnumCast<BlendOp, VkBlendOp>(srcState.colorBlend.op);
             blendState.alphaBlendOp = VKEnumCast<BlendOp, VkBlendOp>(srcState.alphaBlend.op);
@@ -137,9 +130,6 @@ namespace RHI::Vulkan {
         std::vector<VkVertexInputAttributeDescription>& attributes,
         std::vector<VkVertexInputBindingDescription>& bindings)
     {
-        auto* vs = static_cast<VulkanShaderModule*>(createInfo.vertexShader);
-        const auto& locationTable = vs->GetLocationTable();
-
         VkPipelineVertexInputStateCreateInfo vtxInput = {};
         vtxInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
@@ -152,12 +142,8 @@ namespace RHI::Vulkan {
 
             for (uint32_t j = 0; j < binding.attributes.size(); ++j) {
                 VkVertexInputAttributeDescription desc = {};
-                auto inputName = std::string("in.var.") + std::string(binding.attributes[j].semanticName);
-                auto iter = locationTable.find(inputName);
-                Assert(iter != locationTable.end());
-
                 desc.binding = i;
-                desc.location = iter->second;
+                desc.location = std::get<GlslVertexBinding>(binding.attributes[j].platformBinding).location;
                 desc.offset = binding.attributes[j].offset;
                 desc.format = VKEnumCast<VertexFormat, VkFormat>(binding.attributes[j].format);
                 attributes.emplace_back(desc);
@@ -213,7 +199,7 @@ namespace RHI::Vulkan {
             VkPipelineShaderStageCreateInfo stageInfo = {};
             stageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             stageInfo.module = static_cast<const VulkanShaderModule*>(module)->GetNative();
-            stageInfo.pName = GetShaderEntry(stage);
+            stageInfo.pName = module->GetEntryPoint().c_str();
             stageInfo.stage = stage;
             stages.emplace_back(std::move(stageInfo));
         };

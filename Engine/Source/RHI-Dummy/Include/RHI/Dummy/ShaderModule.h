@@ -13,6 +13,7 @@ namespace RHI::Dummy {
         explicit DummyShaderModule(const ShaderModuleCreateInfo& createInfo);
         ~DummyShaderModule() override;
 
+        const std::string & GetEntryPoint() override;
         void Destroy() override;
     };
 }

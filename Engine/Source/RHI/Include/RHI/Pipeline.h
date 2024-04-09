@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <variant>
 
 #include <Common/Utility.h>
 #include <RHI/Common.h>
@@ -14,21 +15,32 @@ namespace RHI {
     class PipelineLayout;
     class ShaderModule;
 
-    struct VertexAttribute {
-        // DirectX 12 using SemanticName and SemanticIndex to specific vertex layout, Vulkan using SPRI-V Reflection to get location
+    struct HlslVertexBinding {
         std::string semanticName;
         uint8_t semanticIndex;
+
+        HlslVertexBinding();
+        HlslVertexBinding(std::string inSemanticName, uint8_t inSemanticIndex);
+    };
+
+    struct GlslVertexBinding {
+        uint8_t location;
+
+        GlslVertexBinding();
+        GlslVertexBinding(uint8_t inLocation);
+    };
+
+    struct VertexAttribute {
+        std::variant<HlslVertexBinding, GlslVertexBinding> platformBinding;
         VertexFormat format;
         size_t offset;
 
         explicit VertexAttribute(
-            std::string inSemanticName = "",
-            uint8_t inSemanticIndex = 0,
+            const std::variant<HlslVertexBinding, GlslVertexBinding>& inPlatformBinding = {},
             VertexFormat inFormat = VertexFormat::max,
             size_t inOffset = 0);
 
-        VertexAttribute& SetSemanticName(std::string inSemanticName);
-        VertexAttribute& SetSemanticIndex(uint8_t inSemanticIndex);
+        VertexAttribute& SetPlatformBinding(std::variant<HlslVertexBinding, GlslVertexBinding> inPlatformBinding);
         VertexAttribute& SetFormat(VertexFormat inFormat);
         VertexAttribute& SetOffset(size_t inOffset);
     };
@@ -55,8 +67,8 @@ namespace RHI {
     };
 
     struct PrimitiveState {
-        // TODO fill mode ?
         PrimitiveTopologyType topologyType;
+        FillMode fillMode;
         IndexFormat stripIndexFormat;
         FrontFace frontFace;
         CullMode cullMode;
@@ -64,12 +76,14 @@ namespace RHI {
 
         explicit PrimitiveState(
             PrimitiveTopologyType inTopologyType = PrimitiveTopologyType::triangle,
+            FillMode inFillMode = FillMode::solid,
             IndexFormat inStripIndexFormat = IndexFormat::uint16,
             FrontFace inFrontFace = FrontFace::ccw,
             CullMode inCullMode = CullMode::back,
             bool inDepthClip = false);
 
         PrimitiveState& SetTopologyType(PrimitiveTopologyType inTopologyType);
+        PrimitiveState& SetFillMode(FillMode inFillMode);
         PrimitiveState& SetStripIndexFormat(IndexFormat inFormat);
         PrimitiveState& SetFrontFace(FrontFace inFrontFace);
         PrimitiveState& SetCullMode(CullMode inCullMode);
@@ -155,20 +169,22 @@ namespace RHI {
     };
 
     struct ColorTargetState {
-        // TODO blend enabled ?
         PixelFormat format;
         ColorWriteFlags writeFlags;
+        bool blendEnabled;
         BlendComponent colorBlend;
         BlendComponent alphaBlend;
 
         explicit ColorTargetState(
             PixelFormat inFormat = PixelFormat::max,
             ColorWriteFlags inWriteFlags = ColorWriteFlags::null,
+            bool inBlendEnabled = false,
             const BlendComponent& inColorBlend = BlendComponent(),
             const BlendComponent& inAlphaBlend = BlendComponent());
 
         ColorTargetState& SetFormat(PixelFormat inFormat);
         ColorTargetState& SetWriteFlags(ColorWriteFlags inFlags);
+        ColorTargetState& SetBlendEnabled(bool inBlendEnabled);
         ColorTargetState& SetColorBlend(const BlendComponent& inColorBlend);
         ColorTargetState& SetAlphaBlend(const BlendComponent& inAlphaBlend);
     };

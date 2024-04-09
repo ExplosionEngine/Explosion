@@ -1042,7 +1042,7 @@ private:
     {
         std::vector<std::string> includePath { "../Test/Sample/SSAO/Shader"};
         CompileShader(byteCode, fileName, entryPoint, shaderStage, includePath);
-        return device->CreateShaderModule(ShaderModuleCreateInfo(byteCode));
+        return device->CreateShaderModule(ShaderModuleCreateInfo(entryPoint, byteCode));
     }
 
     void CreateUniformBuffer(RHI::BufferUsageFlags flags, UBuffer* uBuffer, size_t size, void* data)
@@ -1087,20 +1087,36 @@ private:
         shaderModules.compositionPs = GetShaderModule(compositionPs, "../Test/Sample/SSAO/Shader/Composition.hlsl", "FSMain", ShaderStageBits::sPixel);
 
         // Gbuffer vertex
-        VertexBufferLayout vertexBufferLayout = VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
-            .AddAttribute(VertexAttribute("POSITION", 0, VertexFormat::float32X4, 0))
-            .AddAttribute(VertexAttribute("TEXCOORD", 0, VertexFormat::float32X2, offsetof(Vertex, uv)))
-            .AddAttribute(VertexAttribute("COLOR", 0, VertexFormat::float32X4, offsetof(Vertex, color)))
-            .AddAttribute(VertexAttribute("NORMAL", 0, VertexFormat::float32X3, offsetof(Vertex, normal)));
+        VertexBufferLayout vertexBufferLayout = VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex));
+        if (rhiType == RHIType::directX12) {
+            vertexBufferLayout
+                .AddAttribute(VertexAttribute(HlslVertexBinding("POSITION", 0), VertexFormat::float32X4, 0))
+                .AddAttribute(VertexAttribute(HlslVertexBinding("TEXCOORD", 0), VertexFormat::float32X2, offsetof(Vertex, uv)))
+                .AddAttribute(VertexAttribute(HlslVertexBinding("COLOR", 0), VertexFormat::float32X4, offsetof(Vertex, color)))
+                .AddAttribute(VertexAttribute(HlslVertexBinding("NORMAL", 0), VertexFormat::float32X3, offsetof(Vertex, normal)));
+        } else {
+            vertexBufferLayout
+                .AddAttribute(VertexAttribute(GlslVertexBinding(0), VertexFormat::float32X4, 0))
+                .AddAttribute(VertexAttribute(GlslVertexBinding(1), VertexFormat::float32X2, offsetof(Vertex, uv)))
+                .AddAttribute(VertexAttribute(GlslVertexBinding(2), VertexFormat::float32X4, offsetof(Vertex, color)))
+                .AddAttribute(VertexAttribute(GlslVertexBinding(3), VertexFormat::float32X3, offsetof(Vertex, normal)));
+        }
 
         // quad buffer vertex
-        VertexBufferLayout quadVertexBufferLayout = VertexBufferLayout(VertexStepMode::perVertex, sizeof(QuadVertex))
-            .AddAttribute(VertexAttribute("POSITION", 0, VertexFormat::float32X3, 0))
-            .AddAttribute(VertexAttribute("TEXCOORD", 0, VertexFormat::float32X2, offsetof(QuadVertex, uv)));
+        VertexBufferLayout quadVertexBufferLayout = VertexBufferLayout(VertexStepMode::perVertex, sizeof(QuadVertex));
+        if (rhiType == RHIType::directX12) {
+            quadVertexBufferLayout
+                .AddAttribute(VertexAttribute(HlslVertexBinding("POSITION", 0), VertexFormat::float32X3, 0))
+                .AddAttribute(VertexAttribute(HlslVertexBinding("TEXCOORD", 0), VertexFormat::float32X2, offsetof(QuadVertex, uv)));
+        } else {
+            quadVertexBufferLayout
+                .AddAttribute(VertexAttribute(GlslVertexBinding(0), VertexFormat::float32X3, 0))
+                .AddAttribute(VertexAttribute(GlslVertexBinding(1), VertexFormat::float32X2, offsetof(QuadVertex, uv)));
+        }
 
         // General pipeline infos
         RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo()
-            .SetPrimitiveState(PrimitiveState(PrimitiveTopologyType::triangle, IndexFormat::uint32, FrontFace::ccw, CullMode::none, false));
+            .SetPrimitiveState(PrimitiveState(PrimitiveTopologyType::triangle, FillMode::solid, IndexFormat::uint32, FrontFace::ccw, CullMode::none, false));
 
         // Gbuffer
         {

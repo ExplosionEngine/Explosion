@@ -30,6 +30,7 @@ namespace Rendering {
     struct ComputePipelineShaderSet {
         Render::ShaderInstance computeShader;
 
+        // TODO check this
         size_t Hash() const;
     };
 
@@ -40,24 +41,28 @@ namespace Rendering {
         Render::ShaderInstance domainShader;
         Render::ShaderInstance hullShader;
 
+        // TODO check this
         size_t Hash() const;
     };
 
     struct ComputePipelineLayoutDesc {
         ComputePipelineShaderSet shaders;
 
+        // TODO check this
         size_t Hash() const;
     };
 
     struct RasterPipelineLayoutDesc {
         RasterPipelineShaderSet shaders;
 
+        // TODO check this
         size_t Hash() const;
     };
 
     struct ComputePipelineStateDesc {
         ComputePipelineShaderSet shaders;
 
+        // TODO check this
         size_t Hash() const;
     };
 
@@ -69,6 +74,7 @@ namespace Rendering {
         MultiSampleState multiSampleState;
         FragmentState fragmentState;
 
+        // TODO check this
         size_t Hash() const;
     };
 

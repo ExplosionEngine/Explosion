@@ -33,7 +33,7 @@ namespace RHI::DirectX12 {
     D3D12_RENDER_TARGET_BLEND_DESC GetDX12RenderTargetBlendDesc(const ColorTargetState& colorTargetState)
     {
         D3D12_RENDER_TARGET_BLEND_DESC desc {};
-        desc.BlendEnable = true;
+        desc.BlendEnable = colorTargetState.blendEnabled;
         desc.LogicOpEnable = false;
         desc.RenderTargetWriteMask = GetDX12RenderTargetWriteMasks(colorTargetState.writeFlags);
         desc.BlendOp = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.colorBlend.op);
@@ -48,15 +48,13 @@ namespace RHI::DirectX12 {
     CD3DX12_RASTERIZER_DESC GetDX12RasterizerDesc(const RasterPipelineCreateInfo& createInfo)
     {
         CD3DX12_RASTERIZER_DESC desc(D3D12_DEFAULT);
-        // TODO expose to RHI interface?
-        desc.FillMode = D3D12_FILL_MODE_SOLID;
+        desc.FillMode = DX12EnumCast<FillMode, D3D12_FILL_MODE>(createInfo.primitiveState.fillMode);
         desc.CullMode = DX12EnumCast<CullMode, D3D12_CULL_MODE>(createInfo.primitiveState.cullMode);
         desc.FrontCounterClockwise = createInfo.primitiveState.frontFace == FrontFace::ccw;
         desc.DepthBias = createInfo.depthStencilState.depthBias;
         desc.DepthBiasClamp = createInfo.depthStencilState.depthBiasClamp;
         desc.SlopeScaledDepthBias = createInfo.depthStencilState.depthBiasSlopeScale;
         desc.DepthClipEnable = createInfo.primitiveState.depthClip;
-        // TODO check this
         desc.MultisampleEnable = createInfo.multiSampleState.count > 1;
         desc.AntialiasedLineEnable = false;
         desc.ForcedSampleCount = 0;
@@ -143,14 +141,15 @@ namespace RHI::DirectX12 {
 
             for (auto j = 0; j < layout.attributes.size(); j++) {
                 const auto& attribute = layout.attributes[j];
+                const auto& vertexBinding = std::get<HlslVertexBinding>(attribute.platformBinding);
 
                 D3D12_INPUT_ELEMENT_DESC desc {};
                 desc.Format = DX12EnumCast<VertexFormat, DXGI_FORMAT>(attribute.format);
                 desc.InputSlot = i;
                 desc.InputSlotClass = DX12EnumCast<VertexStepMode, D3D12_INPUT_CLASSIFICATION>(layout.stepMode);
                 desc.AlignedByteOffset = attribute.offset;
-                desc.SemanticName = attribute.semanticName.c_str();
-                desc.SemanticIndex = attribute.semanticIndex;
+                desc.SemanticName = vertexBinding.semanticName.c_str();
+                desc.SemanticIndex = vertexBinding.semanticIndex;
                 result.emplace_back(desc);
             }
         }

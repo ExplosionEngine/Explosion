@@ -5,25 +5,38 @@
 #include <RHI/Pipeline.h>
 
 namespace RHI {
-    VertexAttribute::VertexAttribute(
-        std::string inSemanticName, uint8_t inSemanticIndex, VertexFormat inFormat, size_t inOffset)
+    HlslVertexBinding::HlslVertexBinding()
+        : semanticName()
+        , semanticIndex(0)
+    {
+    }
+
+    HlslVertexBinding::HlslVertexBinding(std::string inSemanticName, uint8_t inSemanticIndex)
         : semanticName(std::move(inSemanticName))
         , semanticIndex(inSemanticIndex)
+    {
+    }
+
+    GlslVertexBinding::GlslVertexBinding()
+        : location(0)
+    {
+    }
+
+    GlslVertexBinding::GlslVertexBinding(uint8_t inLocation)
+        : location(inLocation)
+    {
+    }
+
+    VertexAttribute::VertexAttribute(const std::variant<HlslVertexBinding, GlslVertexBinding>& inPlatformBinding, VertexFormat inFormat, size_t inOffset)
+        : platformBinding(inPlatformBinding)
         , format(inFormat)
         , offset(inOffset)
     {
-
     }
 
-    VertexAttribute& VertexAttribute::SetSemanticName(std::string inSemanticName)
+    VertexAttribute& VertexAttribute::SetPlatformBinding(std::variant<HlslVertexBinding, GlslVertexBinding> inPlatformBinding)
     {
-        semanticName = std::move(inSemanticName);
-        return *this;
-    }
-
-    VertexAttribute& VertexAttribute::SetSemanticIndex(uint8_t inSemanticIndex)
-    {
-        semanticIndex = inSemanticIndex;
+        platformBinding = inPlatformBinding;
         return *this;
     }
 
@@ -76,8 +89,9 @@ namespace RHI {
     }
 
     PrimitiveState::PrimitiveState(
-        PrimitiveTopologyType inTopologyType, IndexFormat inStripIndexFormat, FrontFace inFrontFace, CullMode inCullMode, bool inDepthClip)
+        PrimitiveTopologyType inTopologyType, FillMode inFillMode, IndexFormat inStripIndexFormat, FrontFace inFrontFace, CullMode inCullMode, bool inDepthClip)
         : topologyType(inTopologyType)
+        , fillMode(inFillMode)
         , stripIndexFormat(inStripIndexFormat)
         , frontFace(inFrontFace)
         , cullMode(inCullMode)
@@ -88,6 +102,12 @@ namespace RHI {
     PrimitiveState& PrimitiveState::SetTopologyType(PrimitiveTopologyType inTopologyType)
     {
         topologyType = inTopologyType;
+        return *this;
+    }
+
+    PrimitiveState& PrimitiveState::SetFillMode(FillMode inFillMode)
+    {
+        fillMode = inFillMode;
         return *this;
     }
 
@@ -249,9 +269,10 @@ namespace RHI {
     }
 
     ColorTargetState::ColorTargetState(
-        PixelFormat inFormat, ColorWriteFlags inWriteFlags, const BlendComponent& inColorBlend, const BlendComponent& inAlphaBlend)
+        PixelFormat inFormat, ColorWriteFlags inWriteFlags, bool inBlendEnabled, const BlendComponent& inColorBlend, const BlendComponent& inAlphaBlend)
         : format(inFormat)
         , writeFlags(inWriteFlags)
+        , blendEnabled(inBlendEnabled)
         , colorBlend(inColorBlend)
         , alphaBlend(inAlphaBlend)
     {
@@ -266,6 +287,12 @@ namespace RHI {
     ColorTargetState& ColorTargetState::SetWriteFlags(ColorWriteFlags inFlags)
     {
         writeFlags = inFlags;
+        return *this;
+    }
+
+    ColorTargetState& ColorTargetState::SetBlendEnabled(bool inBlendEnabled)
+    {
+        blendEnabled = inBlendEnabled;
         return *this;
     }
 

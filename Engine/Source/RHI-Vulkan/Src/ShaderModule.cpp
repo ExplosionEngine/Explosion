@@ -9,11 +9,11 @@
 #include <RHI/Vulkan/Common.h>
 
 namespace RHI::Vulkan {
-
     VulkanShaderModule::VulkanShaderModule(VulkanDevice& inDevice, const ShaderModuleCreateInfo& inCreateInfo)
         : ShaderModule(inCreateInfo)
         , device(inDevice)
         , nativeShaderModule(VK_NULL_HANDLE)
+        , entryPoint(inCreateInfo.entryPoint)
     {
         CreateNativeShaderModule(inCreateInfo);
     }
@@ -23,6 +23,11 @@ namespace RHI::Vulkan {
         if (nativeShaderModule != VK_NULL_HANDLE) {
             vkDestroyShaderModule(device.GetNative(), nativeShaderModule, nullptr);
         }
+    }
+
+    const std::string& VulkanShaderModule::GetEntryPoint()
+    {
+        return entryPoint;
     }
 
     void VulkanShaderModule::Destroy()
@@ -43,23 +48,5 @@ namespace RHI::Vulkan {
         moduleCreateInfo.pCode = static_cast<const uint32_t*>(createInfo.byteCode);
 
         Assert(vkCreateShaderModule(device.GetNative(), &moduleCreateInfo, nullptr, &nativeShaderModule) == VK_SUCCESS);
-        BuildReflection(createInfo);
-    }
-
-    void VulkanShaderModule::BuildReflection(const ShaderModuleCreateInfo& createInfo)
-    {
-        // TODO move to render module
-        spirv_cross::Compiler compiler(static_cast<const uint32_t*>(createInfo.byteCode),
-                                       createInfo.size / sizeof(uint32_t));
-        auto resources = compiler.get_shader_resources();
-        for (auto& input : resources.stage_inputs) {
-            auto location = compiler.get_decoration(input.id, spv::DecorationLocation);
-            inputLocationTable.emplace(input.name, location);
-        }
-    }
-
-    const VulkanShaderModule::ShaderInputLocationTable& VulkanShaderModule::GetLocationTable() const
-    {
-        return inputLocationTable;
     }
 }

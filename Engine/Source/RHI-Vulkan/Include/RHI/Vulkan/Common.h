@@ -134,6 +134,11 @@ namespace RHI::Vulkan {
         VK_ECIMPL_ITEM(PrimitiveTopologyType::triangle, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
     VK_ECIMPL_END(VkPrimitiveTopology)
 
+    VK_ECIMPL_BEGIN(FillMode, VkPolygonMode)
+        VK_ECIMPL_ITEM(FillMode::wireframe,    VK_POLYGON_MODE_LINE)
+        VK_ECIMPL_ITEM(FillMode::solid,        VK_POLYGON_MODE_FILL)
+    VK_ECIMPL_END(VkPolygonMode)
+
     VK_ECIMPL_BEGIN(CullMode, VkCullModeFlagBits)
         VK_ECIMPL_ITEM(CullMode::none,  VK_CULL_MODE_NONE)
         VK_ECIMPL_ITEM(CullMode::front, VK_CULL_MODE_FRONT_BIT)

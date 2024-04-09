@@ -99,8 +99,7 @@ namespace Rendering {
             std::vector<size_t> values = {
                 Common::HashUtils::CityHash(&attribute.format, sizeof(attribute.format)),
                 Common::HashUtils::CityHash(&attribute.offset, sizeof(attribute.offset)),
-                Common::HashUtils::CityHash(attribute.semanticName.data(), attribute.semanticName.size()),
-                Common::HashUtils::CityHash(&attribute.semanticIndex, sizeof(attribute.semanticIndex))
+                Common::HashUtils::CityHash(&attribute.platformBinding, sizeof(attribute.platformBinding))
             };
             return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
         };

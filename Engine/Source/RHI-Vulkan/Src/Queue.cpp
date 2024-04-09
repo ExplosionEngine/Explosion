@@ -54,7 +54,8 @@ namespace RHI::Vulkan {
         vkSubmitInfo.commandBufferCount = 1;
         vkSubmitInfo.pCommandBuffers = &cmdBuffer;
 
-        Assert(vkQueueSubmit(nativeQueue, 1, &vkSubmitInfo, vkFence->GetNative()) == VK_SUCCESS);
+        VkFence nativeFence = vkFence == nullptr ? VK_NULL_HANDLE : vkFence->GetNative();
+        Assert(vkQueueSubmit(nativeQueue, 1, &vkSubmitInfo, nativeFence) == VK_SUCCESS);
     }
 
     void VulkanQueue::Flush(Fence* inFenceToSignal)

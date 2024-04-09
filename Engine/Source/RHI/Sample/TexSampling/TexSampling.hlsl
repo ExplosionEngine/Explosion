@@ -1,7 +1,9 @@
 #if VULKAN
 #define VK_BINDING(x, y) [[vk::binding(x, y)]]
+#define VK_LOCATION(x)   [[vk::location(x)]]
 #else
 #define VK_BINDING(x, y)
+#define VK_LOCATION(x)
 #endif
 
 VK_BINDING(0, 0) Texture2D       textureColor : register(t0);
@@ -17,7 +19,9 @@ struct FragmentInput {
     float2 uv       : TEXCOORD;
 };
 
-FragmentInput VSMain(float4 position : POSITION, float2 uv : TEXCOORD)
+FragmentInput VSMain(
+    VK_LOCATION(0) float4 position : POSITION,
+    VK_LOCATION(1) float2 uv : TEXCOORD)
 {
     FragmentInput fragmentInput;
     fragmentInput.position = mul(model, position);

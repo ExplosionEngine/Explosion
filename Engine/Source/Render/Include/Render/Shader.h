@@ -194,10 +194,7 @@ namespace Render {
             auto iter = shaderModules.find(variantKey);
             if (iter != shaderModules.end()) {
                 const auto& shaderByteCode = GetByteCode(variantSet);
-                RHI::ShaderModuleCreateInfo createInfo;
-                createInfo.size = shaderByteCode.size();
-                createInfo.byteCode = shaderByteCode.data();
-                shaderModules[variantKey] = device.CreateShaderModule(createInfo);
+                shaderModules[variantKey] = device.CreateShaderModule(RHI::ShaderModuleCreateInfo(T::name, shaderByteCode));
             }
 
             ShaderInstance result;
