@@ -58,6 +58,58 @@ namespace Rendering {
 }
 
 namespace Rendering {
+    VertexBinding::VertexBinding()
+        : semanticName()
+        , semanticIndex(0)
+    {
+    }
+
+    VertexBinding::VertexBinding(std::string inSemanticName, uint8_t inSemanticIndex)
+        : semanticName(std::move(inSemanticName))
+        , semanticIndex(inSemanticIndex)
+    {
+    }
+
+    std::string VertexBinding::FinalSemantic() const
+    {
+        if (semanticIndex == 0) {
+            return semanticName;
+        } else {
+            return semanticName + std::to_string(semanticIndex);
+        }
+    }
+
+    VertexAttribute::VertexAttribute(const VertexBinding& inBinding, RHI::VertexFormat inFormat, size_t inOffset)
+        : RHI::VertexAttributeBase<VertexAttribute>(inFormat, inOffset)
+        , binding(inBinding)
+    {
+    }
+
+    VertexAttribute& VertexAttribute::SetBinding(const VertexBinding& inBinding)
+    {
+        binding = inBinding;
+        return *this;
+    }
+
+    VertexBufferLayout::VertexBufferLayout(RHI::VertexStepMode inStepMode, size_t inStride)
+        : RHI::VertexBufferLayoutBase<VertexBufferLayout>(inStepMode, inStride)
+    {
+    }
+
+    VertexBufferLayout& VertexBufferLayout::AddAttribute(const VertexAttribute& inAttribute)
+    {
+        attributes.emplace_back(inAttribute);
+        return *this;
+    }
+
+    VertexState::VertexState() = default;
+
+    VertexState& VertexState::AddVertexBufferLayout(const VertexBufferLayout& inLayout)
+    {
+        bufferLayouts.emplace_back(inLayout);
+        return *this;
+    }
+
     size_t ComputePipelineShaderSet::Hash() const
     {
         std::vector<size_t> values = {
@@ -216,7 +268,9 @@ namespace Rendering {
     {
         std::unordered_map<uint8_t, BindingMap> layoutBindingMaps;
         for (const auto& pack : shaderInstancePack) {
-            const auto& resourceBindings = pack.instance->reflectionData.resourceBindings;
+            Assert(pack.instance->reflectionData != nullptr);
+
+            const auto& resourceBindings = pack.instance->reflectionData->resourceBindings;
             for (const auto& resourceBinding : resourceBindings) {
                 auto layoutIndex = resourceBinding.second.first;
                 const auto& name = resourceBinding.first;

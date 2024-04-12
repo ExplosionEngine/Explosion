@@ -30,10 +30,21 @@ namespace RHI {
         GlslVertexBinding(uint8_t inLocation);
     };
 
-    struct VertexAttribute {
-        std::variant<HlslVertexBinding, GlslVertexBinding> platformBinding;
+    template <typename Derived>
+    struct VertexAttributeBase {
         VertexFormat format;
         size_t offset;
+
+        explicit VertexAttributeBase(
+            VertexFormat inFormat = VertexFormat::max,
+            size_t inOffset = 0);
+
+        Derived& SetFormat(VertexFormat inFormat);
+        Derived& SetOffset(size_t inOffset);
+    };
+
+    struct VertexAttribute : public VertexAttributeBase<VertexAttribute> {
+        std::variant<HlslVertexBinding, GlslVertexBinding> platformBinding;
 
         explicit VertexAttribute(
             const std::variant<HlslVertexBinding, GlslVertexBinding>& inPlatformBinding = {},
@@ -41,21 +52,28 @@ namespace RHI {
             size_t inOffset = 0);
 
         VertexAttribute& SetPlatformBinding(std::variant<HlslVertexBinding, GlslVertexBinding> inPlatformBinding);
-        VertexAttribute& SetFormat(VertexFormat inFormat);
-        VertexAttribute& SetOffset(size_t inOffset);
     };
 
-    struct VertexBufferLayout {
+    template <typename Derived>
+    struct VertexBufferLayoutBase {
         VertexStepMode stepMode;
         size_t stride;
+
+        explicit VertexBufferLayoutBase(
+            VertexStepMode inStepMode = VertexStepMode::perVertex,
+            size_t inStride = 0);
+
+        Derived& SetStride(size_t inStride);
+        Derived& SetStepMode(VertexStepMode inStepMode);
+    };
+
+    struct VertexBufferLayout : public VertexBufferLayoutBase<VertexBufferLayout> {
         std::vector<VertexAttribute> attributes;
 
         explicit VertexBufferLayout(
             VertexStepMode inStepMode = VertexStepMode::perVertex,
             size_t inStride = 0);
 
-        VertexBufferLayout& SetStride(size_t inStride);
-        VertexBufferLayout& SetStepMode(VertexStepMode inStepMode);
         VertexBufferLayout& AddAttribute(const VertexAttribute& inAttribute);
     };
 
@@ -269,4 +287,48 @@ namespace RHI {
     protected:
         explicit RasterPipeline(const RasterPipelineCreateInfo& createInfo);
     };
+}
+
+namespace RHI {
+    template <typename Derived>
+    VertexAttributeBase<Derived>::VertexAttributeBase(VertexFormat inFormat, size_t inOffset)
+        : format(inFormat)
+        , offset(inOffset)
+    {
+    }
+
+    template <typename Derived>
+    Derived& VertexAttributeBase<Derived>::SetFormat(VertexFormat inFormat)
+    {
+        format = inFormat;
+        return static_cast<Derived&>(*this);
+    }
+
+    template <typename Derived>
+    Derived& VertexAttributeBase<Derived>::SetOffset(size_t inOffset)
+    {
+        offset = inOffset;
+        return static_cast<Derived&>(*this);
+    }
+
+    template <typename Derived>
+    VertexBufferLayoutBase<Derived>::VertexBufferLayoutBase(VertexStepMode inStepMode, size_t inStride)
+        : stepMode(inStepMode)
+        , stride(inStride)
+    {
+    }
+
+    template <typename Derived>
+    Derived& VertexBufferLayoutBase<Derived>::SetStride(size_t inStride)
+    {
+        stride = inStride;
+        return static_cast<Derived&>(*this);
+    }
+
+    template <typename Derived>
+    Derived& VertexBufferLayoutBase<Derived>::SetStepMode(VertexStepMode inStepMode)
+    {
+        stepMode = inStepMode;
+        return static_cast<Derived&>(*this);
+    }
 }

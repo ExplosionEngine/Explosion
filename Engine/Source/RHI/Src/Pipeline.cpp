@@ -28,9 +28,8 @@ namespace RHI {
     }
 
     VertexAttribute::VertexAttribute(const std::variant<HlslVertexBinding, GlslVertexBinding>& inPlatformBinding, VertexFormat inFormat, size_t inOffset)
-        : platformBinding(inPlatformBinding)
-        , format(inFormat)
-        , offset(inOffset)
+        : VertexAttributeBase<VertexAttribute>(inFormat, inOffset)
+        , platformBinding(inPlatformBinding)
     {
     }
 
@@ -40,35 +39,10 @@ namespace RHI {
         return *this;
     }
 
-    VertexAttribute& VertexAttribute::SetFormat(VertexFormat inFormat)
-    {
-        format = inFormat;
-        return *this;
-    }
-
-    VertexAttribute& VertexAttribute::SetOffset(size_t inOffset)
-    {
-        offset = inOffset;
-        return *this;
-    }
-
     VertexBufferLayout::VertexBufferLayout(VertexStepMode inStepMode, size_t inStride)
-        : stepMode(inStepMode)
-        , stride(inStride)
+        : VertexBufferLayoutBase<VertexBufferLayout>(inStepMode, inStride)
         , attributes()
     {
-    }
-
-    VertexBufferLayout& VertexBufferLayout::SetStride(size_t inStride)
-    {
-        stride = inStride;
-        return *this;
-    }
-
-    VertexBufferLayout& VertexBufferLayout::SetStepMode(VertexStepMode inStepMode)
-    {
-        stepMode = inStepMode;
-        return *this;
     }
 
     VertexBufferLayout& VertexBufferLayout::AddAttribute(const VertexAttribute& inAttribute)

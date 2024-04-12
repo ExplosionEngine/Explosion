@@ -12,7 +12,7 @@
 #include <Common/Memory.h>
 
 #if PLATFORM_WINDOWS
-#include <Windows.h>
+#include <windows.h>
 #define DynamicLibHandle               HINSTANCE
 #define DynamicLibLoad(lib, tag)       LoadLibraryEx(lib, nullptr, 0)
 #define DynamicLibGetSymbol(lib, sym)  GetProcAddress(lib, sym)

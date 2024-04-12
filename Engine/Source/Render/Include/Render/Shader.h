@@ -26,8 +26,23 @@ namespace Render {
 
     using ShaderTypeKey = uint64_t;
     using VariantKey = uint64_t;
-    using ShaderByteCode = std::vector<uint8_t>;
     using ShaderStage = RHI::ShaderStageBits;
+
+    struct ShaderReflectionData {
+        using LayoutIndex = uint8_t;
+
+        ShaderReflectionData();
+        explicit ShaderReflectionData(ShaderReflectionData&& inOther);
+
+        std::unordered_map<std::string, std::pair<LayoutIndex, RHI::ResourceBinding>> resourceBindings;
+    };
+
+    struct ShaderArchive {
+        std::vector<uint8_t> byteCode;
+        ShaderReflectionData reflectionData;
+    };
+
+    using ShaderArchivePackage = std::unordered_map<VariantKey, ShaderArchive>;
 
     class IShaderType {
         virtual std::string GetName() = 0;
@@ -37,17 +52,11 @@ namespace Render {
         virtual std::vector<std::string> GetDefinitions(VariantKey variantKey) = 0;
     };
 
-    struct ShaderReflectionData {
-        using LayoutIndex = uint8_t;
-
-        std::unordered_map<std::string, std::pair<LayoutIndex, RHI::ResourceBinding>> resourceBindings;
-    };
-
     struct ShaderInstance {
         RHI::ShaderModule* rhiHandle = nullptr;
         ShaderTypeKey typeKey = 0;
         VariantKey variantKey = 0;
-        ShaderReflectionData reflectionData;
+        ShaderReflectionData* reflectionData;
 
         bool IsValid() const
         {
@@ -68,19 +77,21 @@ namespace Render {
         }
     };
 
-    class ShaderByteCodeStorage {
+    class ShaderArchiveStorage {
     public:
-        static ShaderByteCodeStorage& Get();
-        ShaderByteCodeStorage();
-        ~ShaderByteCodeStorage();
-        NonCopyable(ShaderByteCodeStorage)
+        static ShaderArchiveStorage& Get();
+        ShaderArchiveStorage();
+        ~ShaderArchiveStorage();
+        NonCopyable(ShaderArchiveStorage)
 
         // TODO fill byte codes after compiling using this interface
-        void UpdateByteCodePackage(IShaderType* shaderTypeKey, std::unordered_map<VariantKey, ShaderByteCode>&& byteCodePackage);
-        const std::unordered_map<VariantKey, ShaderByteCode>& GetByteCodePackage(IShaderType* shaderTypeKey);
+        void UpdateShaderArchivePackage(IShaderType* shaderTypeKey, ShaderArchivePackage&& shaderArchivePackage);
+        const ShaderArchivePackage& GetShaderArchivePackage(IShaderType* shaderTypeKey);
+        void InvalidateAll();
+        void Invalidate(IShaderType* shaderTypeKey);
 
     private:
-        std::unordered_map<IShaderType*, std::unordered_map<VariantKey, ShaderByteCode>> byteCodePackages;
+        std::unordered_map<IShaderType*, ShaderArchivePackage> shaderArchivePackages;
     };
 }
 
@@ -191,16 +202,18 @@ namespace Render {
         ShaderInstance GetShaderInstance(const typename T::VariantSet& variantSet)
         {
             auto variantKey = variantSet.Hash();
+            const auto& archive = GetArchive(variantSet);
+
             auto iter = shaderModules.find(variantKey);
             if (iter != shaderModules.end()) {
-                const auto& shaderByteCode = GetByteCode(variantSet);
-                shaderModules[variantKey] = device.CreateShaderModule(RHI::ShaderModuleCreateInfo(T::name, shaderByteCode));
+                shaderModules[variantKey] = device.CreateShaderModule(RHI::ShaderModuleCreateInfo(T::entryPoint, archive.byteCode));
             }
 
             ShaderInstance result;
             result.rhiHandle = shaderModules[variantKey].Get();
             result.typeKey = GlobalShaderType<T>::Get().GetHash();
             result.variantKey = variantKey;
+            result.reflectionData = &archive.reflectionData;
             return result;
         }
 
@@ -212,12 +225,12 @@ namespace Render {
             shaderModules.reserve(variantNum);
         }
 
-        [[nodiscard]] const ShaderByteCode& GetByteCode(const typename T::VariantSet& variantSet) const
+        [[nodiscard]] const ShaderArchive& GetArchive(const typename T::VariantSet& variantSet) const
         {
-            const auto& byteCodePackage = ShaderByteCodeStorage::Get().GetByteCodePackage(&GlobalShaderType<T>::Get());
+            const auto& package = ShaderArchiveStorage::Get().GetShaderArchivePackage(&GlobalShaderType<T>::Get());
 
-            auto iter = byteCodePackage.find(variantSet.Hash());
-            Assert(iter != byteCodePackage.end());
+            auto iter = package.find(variantSet.Hash());
+            Assert(iter != package.end());
             return iter->second;
         }
 

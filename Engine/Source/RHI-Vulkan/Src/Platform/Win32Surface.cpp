@@ -3,7 +3,7 @@
 //
 
 #if PLATFORM_WINDOWS
-#include <Windows.h>
+#include <windows.h>
 
 #include <RHI/Surface.h>
 

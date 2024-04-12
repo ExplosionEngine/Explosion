@@ -16,11 +16,49 @@ namespace Rendering {
 
     using BindingMap = std::unordered_map<std::string, std::pair<RHI::ShaderStageFlags, RHI::ResourceBinding>>;
     using SamplerDesc = RHI::SamplerCreateInfo;
-    using VertexState = RHI::VertexState;
     using PrimitiveState = RHI::PrimitiveState;
     using DepthStencilState = RHI::DepthStencilState;
     using MultiSampleState = RHI::MultiSampleState;
     using FragmentState = RHI::FragmentState;
+
+    struct VertexBinding {
+        std::string semanticName;
+        uint8_t semanticIndex;
+
+        VertexBinding();
+        VertexBinding(std::string inSemanticName, uint8_t inSemanticIndex);
+
+        std::string FinalSemantic() const;
+    };
+
+    struct VertexAttribute : public RHI::VertexAttributeBase<VertexAttribute> {
+        VertexBinding binding;
+
+        explicit VertexAttribute(
+            const VertexBinding& inBinding = VertexBinding(),
+            RHI::VertexFormat inFormat = RHI::VertexFormat::max,
+            size_t inOffset = 0);
+
+        VertexAttribute& SetBinding(const VertexBinding& inBinding);
+    };
+
+    struct VertexBufferLayout : public RHI::VertexBufferLayoutBase<VertexBufferLayout> {
+        std::vector<VertexAttribute> attributes;
+
+        explicit VertexBufferLayout(
+            RHI::VertexStepMode inStepMode = RHI::VertexStepMode::perVertex,
+            size_t inStride = 0);
+
+        VertexBufferLayout& AddAttribute(const VertexAttribute& inAttribute);
+    };
+
+    struct VertexState {
+        std::vector<VertexBufferLayout> bufferLayouts;
+
+        VertexState();
+
+        VertexState& AddVertexBufferLayout(const VertexBufferLayout& inLayout);
+    };
 
     struct BindGroupLayoutDesc {
         uint8_t layoutIndex;

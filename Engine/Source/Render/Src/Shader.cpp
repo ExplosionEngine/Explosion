@@ -5,25 +5,43 @@
 #include <Render/Shader.h>
 
 namespace Render {
-    ShaderByteCodeStorage& ShaderByteCodeStorage::Get()
+    ShaderReflectionData::ShaderReflectionData() = default;
+
+    ShaderReflectionData::ShaderReflectionData(ShaderReflectionData&& inOther)
+        : resourceBindings(std::move(inOther.resourceBindings))
     {
-        static ShaderByteCodeStorage instance;
+    }
+
+    ShaderArchiveStorage& ShaderArchiveStorage::Get()
+    {
+        static ShaderArchiveStorage instance;
         return instance;
     }
 
-    ShaderByteCodeStorage::ShaderByteCodeStorage() = default;
+    ShaderArchiveStorage::ShaderArchiveStorage() = default;
 
-    ShaderByteCodeStorage::~ShaderByteCodeStorage() = default;
+    ShaderArchiveStorage::~ShaderArchiveStorage() = default;
 
-    void ShaderByteCodeStorage::UpdateByteCodePackage(IShaderType* shaderTypeKey, std::unordered_map<VariantKey, ShaderByteCode>&& byteCodePackage)
+    void ShaderArchiveStorage::UpdateShaderArchivePackage(IShaderType* shaderTypeKey, ShaderArchivePackage&& shaderArchivePackage)
     {
-        byteCodePackages[shaderTypeKey] = byteCodePackage;
+        Assert(!shaderArchivePackages.contains(shaderTypeKey));
+        shaderArchivePackages.emplace(std::make_pair(shaderTypeKey, std::move(shaderArchivePackage)));
     }
 
-    const std::unordered_map<VariantKey, ShaderByteCode>& ShaderByteCodeStorage::GetByteCodePackage(IShaderType* shaderTypeKey)
+    const ShaderArchivePackage& ShaderArchiveStorage::GetShaderArchivePackage(IShaderType* shaderTypeKey)
     {
-        auto iter = byteCodePackages.find(shaderTypeKey);
-        Assert(iter != byteCodePackages.end());
+        auto iter = shaderArchivePackages.find(shaderTypeKey);
+        Assert(iter != shaderArchivePackages.end());
         return iter->second;
+    }
+
+    void ShaderArchiveStorage::InvalidateAll()
+    {
+        shaderArchivePackages.clear();
+    }
+
+    void ShaderArchiveStorage::Invalidate(IShaderType* shaderTypeKey)
+    {
+        shaderArchivePackages.erase(shaderTypeKey);
     }
 }

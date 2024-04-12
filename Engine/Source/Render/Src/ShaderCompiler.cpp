@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 #if PLATFORM_WINDOWS
-#include <Windows.h>
+#include <windows.h>
 #include <dxc/d3d12shader.h>
 #undef min
 #undef max
