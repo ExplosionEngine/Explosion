@@ -55,45 +55,45 @@ namespace RHI {
 }
 
 namespace RHI {
-    template<typename Derived>
+    template <typename Derived>
     BufferViewCreateInfoBase<Derived>::BufferViewCreateInfoBase() = default;
 
-    template<typename Derived>
+    template <typename Derived>
     Derived& BufferViewCreateInfoBase<Derived>::SetType(BufferViewType inType)
     {
         type = inType;
         return *static_cast<Derived*>(this);
     }
 
-    template<typename Derived>
+    template <typename Derived>
     Derived& BufferViewCreateInfoBase<Derived>::SetOffset(uint32_t inOffset)
     {
         offset = inOffset;
         return *static_cast<Derived*>(this);
     }
 
-    template<typename Derived>
+    template <typename Derived>
     Derived& BufferViewCreateInfoBase<Derived>::SetSize(uint32_t inSize)
     {
         size = inSize;
         return *static_cast<Derived*>(this);
     }
 
-    template<typename Derived>
+    template <typename Derived>
     Derived& BufferViewCreateInfoBase<Derived>::SetExtendVertex(uint32_t inStride)
     {
         extend = VertexBufferViewInfo { inStride };
         return *static_cast<Derived*>(this);
     }
 
-    template<typename Derived>
+    template <typename Derived>
     Derived& BufferViewCreateInfoBase<Derived>::SetExtendIndex(IndexFormat inFormat)
     {
         extend = IndexBufferViewInfo { inFormat };
         return *static_cast<Derived*>(this);
     }
 
-    template<typename Derived>
+    template <typename Derived>
     size_t BufferViewCreateInfoBase<Derived>::Hash() const
     {
         return Common::HashUtils::CityHash(this, sizeof(BufferViewCreateInfo));

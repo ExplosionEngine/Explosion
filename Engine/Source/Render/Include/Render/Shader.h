@@ -253,35 +253,35 @@ namespace Render {
 }
 
 namespace Render {
-    template<typename Shader>
+    template <typename Shader>
     GlobalShaderType<Shader>& GlobalShaderType<Shader>::Get()
     {
         static GlobalShaderType instance;
         return instance;
     }
 
-    template<typename Shader>
+    template <typename Shader>
     GlobalShaderType<Shader>::GlobalShaderType()
     {
         ComputeVariantDefinitions();
     }
 
-    template<typename Shader>
+    template <typename Shader>
     GlobalShaderType<Shader>::~GlobalShaderType() = default;
 
-    template<typename Shader>
+    template <typename Shader>
     std::string GlobalShaderType<Shader>::GetName()
     {
         return Shader::name;
     }
 
-    template<typename Shader>
+    template <typename Shader>
     ShaderTypeKey GlobalShaderType<Shader>::GetHash()
     {
         return Common::HashUtils::CityHash(Shader::name, sizeof(Shader::name));
     }
 
-    template<typename Shader>
+    template <typename Shader>
     std::string GlobalShaderType<Shader>::GetCode()
     {
         static std::unordered_map<std::string, std::string> pathMap = {
@@ -298,7 +298,7 @@ namespace Render {
         return "";
     }
 
-    template<typename Shader>
+    template <typename Shader>
     std::vector<VariantKey> GlobalShaderType<Shader>::GetVariants()
     {
         std::vector<VariantKey> result;
@@ -311,7 +311,7 @@ namespace Render {
         return result;
     }
 
-    template<typename Shader>
+    template <typename Shader>
     std::vector<std::string> GlobalShaderType<Shader>::GetDefinitions(VariantKey variantKey)
     {
         auto iter = variantDefinitions.find(variantKey);
@@ -319,7 +319,7 @@ namespace Render {
         return iter->second;
     }
 
-    template<typename Shader>
+    template <typename Shader>
     void GlobalShaderType<Shader>::ComputeVariantDefinitions()
     {
         variantDefinitions.reserve(Shader::VariantSet::VariantNum());
@@ -332,7 +332,7 @@ namespace Render {
         });
     }
 
-    template<typename T>
+    template <typename T>
     GlobalShaderMap<T>& GlobalShaderMap<T>::Get(RHI::Device& device)
     {
         static std::unordered_map<RHI::Device*, Common::UniqueRef<GlobalShaderMap<T>>> map;
@@ -343,10 +343,10 @@ namespace Render {
         return *map[&device];
     }
 
-    template<typename T>
+    template <typename T>
     GlobalShaderMap<T>::~GlobalShaderMap() = default;
 
-    template<typename T>
+    template <typename T>
     void GlobalShaderMap<T>::Invalidate()
     {
         auto variantNum = T::VariantSet::VariantNum();
@@ -354,7 +354,7 @@ namespace Render {
         shaderModules.reserve(variantNum);
     }
 
-    template<typename T>
+    template <typename T>
     ShaderInstance GlobalShaderMap<T>::GetShaderInstance(const typename T::VariantSet& variantSet)
     {
         auto variantKey = variantSet.Hash();
@@ -373,7 +373,7 @@ namespace Render {
         return result;
     }
 
-    template<typename T>
+    template <typename T>
     GlobalShaderMap<T>::GlobalShaderMap(RHI::Device& inDevice)
         : device(inDevice)
     {

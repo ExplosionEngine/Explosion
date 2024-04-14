@@ -8,6 +8,8 @@
 
 #include <city.h>
 
+#include <Common/Utility.h>
+
 namespace Common::Internal {
     static constexpr uint32_t crcTable[256] = {
         0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -77,15 +79,17 @@ namespace Common::Internal {
 namespace Common {
     class HashUtils {
     public:
-        static uint64_t CityHash(const void* buffer, size_t length)
-        {
-            return CityHash64(static_cast<const char*>(buffer), length);
-        }
+        static uint64_t CityHash(const void* buffer, size_t length);
 
         template <size_t N>
-        static constexpr uint32_t StrCrc32(const char (&str)[N])
-        {
-            return Internal::StrCrc32Internal<sizeof(str) - 2>(str) ^ 0xffffffff;
-        }
+        static constexpr uint32_t StrCrc32(const char (&str)[N]);
     };
+}
+
+namespace Common {
+    template<size_t N>
+    constexpr uint32_t HashUtils::StrCrc32(const char (& str)[N])
+    {
+        return Internal::StrCrc32Internal<sizeof(str) - 2>(str) ^ 0xffffffff;
+    }
 }

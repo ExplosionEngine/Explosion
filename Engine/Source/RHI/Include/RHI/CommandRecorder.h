@@ -202,7 +202,7 @@ namespace RHI {
 }
 
 namespace RHI {
-    template<typename Derived>
+    template <typename Derived>
     ColorAttachmentBase<Derived>::ColorAttachmentBase(
         LoadOp inLoadOp, StoreOp inStoreOp, const Common::LinearColor& inClearValue)
         : loadOp(inLoadOp)
@@ -232,7 +232,7 @@ namespace RHI {
         return *static_cast<Derived*>(this);
     }
 
-    template<typename Derived>
+    template <typename Derived>
     DepthStencilAttachmentBase<Derived>::DepthStencilAttachmentBase(
         bool inDepthReadOnly,
         LoadOp inDepthLoadOp,
