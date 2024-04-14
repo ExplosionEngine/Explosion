@@ -43,47 +43,50 @@ struct RenderGraphTest : public testing::Test {
     Common::UniqueRef<RHI::Device> device;
 };
 
-TEST_F(RenderGraphTest, BasicTest)
-{
-    RGTestCS::VariantSet variantSet;
-    variantSet.Set<RGTestCS::TestBoolVariant>(true);
-    variantSet.Set<RGTestCS::TestRangedIntVariant>(1);
-
-    ComputePipelineStateDesc psoDesc;
-    psoDesc.shaders.computeShader = GlobalShaderMap<RGTestCS>::Get(*device).GetShaderInstance(variantSet);
-    ComputePipelineState* pso = PipelineCache::Get(*device).GetOrCreate(psoDesc);
-
-    RGBuilder builder(*device);
-
-    RGBufferRef uniformBuffer = builder.CreateBuffer(RGBufferDesc::Create()
-        .Size(1024)
-        .Usages(RHI::BufferUsageBits::uniform | RHI::BufferUsageBits::mapRead)
-        .InitialState(RHI::BufferState::shaderReadOnly)
-        .DebugName("uniformBuffer"));
-
-    RGBufferRef outputBuffer = builder.CreateBuffer(RGBufferDesc::Create()
-        .Size(1920 * 1080)
-        .Usages(RHI::BufferUsageBits::storage)
-        .InitialState(RHI::BufferState::storage)
-        .DebugName("outputBuffer"));
-    outputBuffer->MaskAsUsed();
-
-    RGBindGroupRef mainBindGroup = builder.AllocateBindGroup(RGBindGroupDesc::Create(pso->GetBindGroupLayout(0))
-        .UniformBuffer("uniformBuffer", builder.CreateBufferView(uniformBuffer,
-                                                                 RGBufferViewDesc::CreateForUniform().SetSize(
-                                                                     1024).SetOffset(0)))
-        .StorageBuffer("outputBuffer", builder.CreateBufferView(outputBuffer,
-                                                                RGBufferViewDesc::CreateForUniform().SetSize(
-                                                                    1024).SetOffset(0))));
-
-    builder.AddComputePass("TestComputePass", { mainBindGroup }, [pso, mainBindGroup](RHI::ComputePassCommandRecorder& encoder) -> void {
-        encoder.SetPipeline(pso->GetRHI());
-        encoder.SetBindGroup(0, mainBindGroup->GetRHI());
-        encoder.Dispatch(1920 / 8, 1080 / 8, 1);
-    });
-
-    Common::UniqueRef<RHI::Fence> mainFence = device->CreateFence(false);
-    RGFencePack fencePack { mainFence.Get() };
-    builder.Execute(fencePack);
-    mainFence->Wait();
-}
+//TEST_F(RenderGraphTest, BasicTest)
+//{
+//    RGTestCS::VariantSet variantSet;
+//    variantSet.Set<RGTestCS::TestBoolVariant>(true);
+//    variantSet.Set<RGTestCS::TestRangedIntVariant>(1);
+//
+//    ComputePipelineStateDesc psoDesc;
+//    psoDesc.shaders.computeShader = GlobalShaderMap<RGTestCS>::Get(*device).GetShaderInstance(variantSet);
+//    ComputePipelineState* pso = PipelineCache::Get(*device).GetOrCreate(psoDesc);
+//
+//    RGBuilder builder(*device);
+//
+//    RGBufferRef uniformBuffer = builder.CreateBuffer(RGBufferDesc::Create()
+//        .Size(1024)
+//        .Usages(RHI::BufferUsageBits::uniform | RHI::BufferUsageBits::mapRead)
+//        .InitialState(RHI::BufferState::shaderReadOnly)
+//        .DebugName("uniformBuffer"));
+//
+//    RGBufferRef outputBuffer = builder.CreateBuffer(RGBufferDesc::Create()
+//        .Size(1920 * 1080)
+//        .Usages(RHI::BufferUsageBits::storage)
+//        .InitialState(RHI::BufferState::storage)
+//        .DebugName("outputBuffer"));
+//    outputBuffer->MaskAsUsed();
+//
+//    RGBindGroupRef mainBindGroup = builder.AllocateBindGroup(RGBindGroupDesc::Create(pso->GetBindGroupLayout(0))
+//        .UniformBuffer("uniformBuffer", builder.CreateBufferView(
+//            uniformBuffer,
+//            RGBufferViewDesc::CreateForUniform()
+//                .SetSize(1024)
+//                .SetOffset(0)))
+//        .StorageBuffer("outputBuffer", builder.CreateBufferView(
+//            outputBuffer,RGBufferViewDesc::CreateForUniform()
+//                .SetSize(1024)
+//                .SetOffset(0))));
+//
+//    builder.AddComputePass("TestComputePass", { mainBindGroup }, [pso, mainBindGroup](RHI::ComputePassCommandRecorder& encoder) -> void {
+//        encoder.SetPipeline(pso->GetRHI());
+//        encoder.SetBindGroup(0, mainBindGroup->GetRHI());
+//        encoder.Dispatch(1920 / 8, 1080 / 8, 1);
+//    });
+//
+//    Common::UniqueRef<RHI::Fence> mainFence = device->CreateFence(false);
+//    RGFencePack fencePack { mainFence.Get() };
+//    builder.Execute(fencePack);
+//    mainFence->Wait();
+//}

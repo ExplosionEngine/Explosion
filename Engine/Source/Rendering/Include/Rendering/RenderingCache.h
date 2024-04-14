@@ -29,6 +29,7 @@ namespace Rendering {
         VertexBinding(std::string inSemanticName, uint8_t inSemanticIndex);
 
         std::string FinalSemantic() const;
+        RHI::PlatformVertexBinding GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
     };
 
     struct VertexAttribute : public RHI::VertexAttributeBase<VertexAttribute> {
@@ -39,6 +40,7 @@ namespace Rendering {
             RHI::VertexFormat inFormat = RHI::VertexFormat::max,
             size_t inOffset = 0);
 
+        RHI::VertexAttribute GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
         VertexAttribute& SetBinding(const VertexBinding& inBinding);
     };
 
@@ -49,6 +51,7 @@ namespace Rendering {
             RHI::VertexStepMode inStepMode = RHI::VertexStepMode::perVertex,
             size_t inStride = 0);
 
+        RHI::VertexBufferLayout GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
         VertexBufferLayout& AddAttribute(const VertexAttribute& inAttribute);
     };
 
@@ -57,6 +60,7 @@ namespace Rendering {
 
         VertexState();
 
+        RHI::VertexState GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
         VertexState& AddVertexBufferLayout(const VertexBufferLayout& inLayout);
     };
 

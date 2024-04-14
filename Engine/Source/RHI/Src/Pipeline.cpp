@@ -27,13 +27,13 @@ namespace RHI {
     {
     }
 
-    VertexAttribute::VertexAttribute(const std::variant<HlslVertexBinding, GlslVertexBinding>& inPlatformBinding, VertexFormat inFormat, size_t inOffset)
+    VertexAttribute::VertexAttribute(const PlatformVertexBinding& inPlatformBinding, VertexFormat inFormat, size_t inOffset)
         : VertexAttributeBase<VertexAttribute>(inFormat, inOffset)
         , platformBinding(inPlatformBinding)
     {
     }
 
-    VertexAttribute& VertexAttribute::SetPlatformBinding(std::variant<HlslVertexBinding, GlslVertexBinding> inPlatformBinding)
+    VertexAttribute& VertexAttribute::SetPlatformBinding(PlatformVertexBinding inPlatformBinding)
     {
         platformBinding = inPlatformBinding;
         return *this;

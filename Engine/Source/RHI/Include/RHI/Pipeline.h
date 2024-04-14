@@ -27,8 +27,10 @@ namespace RHI {
         uint8_t location;
 
         GlslVertexBinding();
-        GlslVertexBinding(uint8_t inLocation);
+        explicit GlslVertexBinding(uint8_t inLocation);
     };
+
+    using PlatformVertexBinding = std::variant<HlslVertexBinding, GlslVertexBinding>;
 
     template <typename Derived>
     struct VertexAttributeBase {
@@ -44,14 +46,14 @@ namespace RHI {
     };
 
     struct VertexAttribute : public VertexAttributeBase<VertexAttribute> {
-        std::variant<HlslVertexBinding, GlslVertexBinding> platformBinding;
+        PlatformVertexBinding platformBinding;
 
         explicit VertexAttribute(
-            const std::variant<HlslVertexBinding, GlslVertexBinding>& inPlatformBinding = {},
+            const PlatformVertexBinding& inPlatformBinding = {},
             VertexFormat inFormat = VertexFormat::max,
             size_t inOffset = 0);
 
-        VertexAttribute& SetPlatformBinding(std::variant<HlslVertexBinding, GlslVertexBinding> inPlatformBinding);
+        VertexAttribute& SetPlatformBinding(PlatformVertexBinding inPlatformBinding);
     };
 
     template <typename Derived>
