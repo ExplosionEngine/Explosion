@@ -22,8 +22,6 @@ namespace RHI::DirectX12 {
         explicit DX12BindGroup(const BindGroupCreateInfo& inCreateInfo);
         ~DX12BindGroup() override;
 
-        void Destroy() override;
-
         DX12BindGroupLayout& GetBindGroupLayout();
         const std::vector<std::pair<HlslBinding, CD3DX12_CPU_DESCRIPTOR_HANDLE>>& GetNativeBindings();
 

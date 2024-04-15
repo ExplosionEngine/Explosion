@@ -172,11 +172,6 @@ namespace RHI::DirectX12 {
 
     DX12ComputePipeline::~DX12ComputePipeline() = default;
 
-    void DX12ComputePipeline::Destroy()
-    {
-        delete this;
-    }
-
     DX12PipelineLayout& DX12ComputePipeline::GetPipelineLayout()
     {
         return *pipelineLayout;
@@ -213,11 +208,6 @@ namespace RHI::DirectX12 {
     }
 
     DX12RasterPipeline::~DX12RasterPipeline() = default;
-
-    void DX12RasterPipeline::Destroy()
-    {
-        delete this;
-    }
 
     DX12PipelineLayout& DX12RasterPipeline::GetPipelineLayout()
     {

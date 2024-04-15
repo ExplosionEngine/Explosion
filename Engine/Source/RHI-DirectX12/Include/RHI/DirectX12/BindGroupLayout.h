@@ -27,8 +27,6 @@ namespace RHI::DirectX12 {
         explicit DX12BindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo);
         ~DX12BindGroupLayout() override;
 
-        void Destroy() override;
-
         uint8_t GetLayoutIndex() const;
         [[nodiscard]] const std::vector<RootParameterKeyInfo>& GetRootParameterKeyInfos() const;
         [[nodiscard]] const std::vector<CD3DX12_ROOT_PARAMETER1>& GetNativeRootParameters() const;

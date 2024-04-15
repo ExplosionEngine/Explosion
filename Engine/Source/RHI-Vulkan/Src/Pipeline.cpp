@@ -172,11 +172,6 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VulkanRasterPipeline::Destroy()
-    {
-        delete this;
-    }
-
     VulkanPipelineLayout* VulkanRasterPipeline::GetPipelineLayout() const
     {
         return pipelineLayout;

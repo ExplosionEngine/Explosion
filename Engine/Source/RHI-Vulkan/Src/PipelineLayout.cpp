@@ -23,11 +23,6 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VulkanPipelineLayout::Destroy()
-    {
-        delete this;
-    }
-
     VkPipelineLayout VulkanPipelineLayout::GetNative() const
     {
         return nativePipelineLayout;

@@ -38,11 +38,6 @@ namespace RHI::DirectX12 {
 
     DX12BindGroupLayout::~DX12BindGroupLayout() = default;
 
-    void DX12BindGroupLayout::Destroy()
-    {
-        delete this;
-    }
-
     uint8_t DX12BindGroupLayout::GetLayoutIndex() const
     {
         return layoutIndex;

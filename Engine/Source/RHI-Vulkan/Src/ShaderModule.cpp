@@ -30,11 +30,6 @@ namespace RHI::Vulkan {
         return entryPoint;
     }
 
-    void VulkanShaderModule::Destroy()
-    {
-        delete this;
-    }
-
     VkShaderModule VulkanShaderModule::GetNative() const
     {
         return nativeShaderModule;

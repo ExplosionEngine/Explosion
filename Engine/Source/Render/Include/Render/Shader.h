@@ -420,7 +420,7 @@ namespace Render {
     }
 
     template<uint32_t From, uint32_t To>
-    RangedIntShaderVariantFieldImpl<From, To>::ValueType RangedIntShaderVariantFieldImpl<From, To>::Get() const
+    typename RangedIntShaderVariantFieldImpl<From, To>::ValueType RangedIntShaderVariantFieldImpl<From, To>::Get() const
     {
         return value;
     }

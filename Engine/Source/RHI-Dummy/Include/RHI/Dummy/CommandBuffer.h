@@ -12,7 +12,6 @@ namespace RHI::Dummy {
         NonCopyable(DummyCommandBuffer)
         DummyCommandBuffer();
 
-        CommandRecorder* Begin() override;
-        void Destroy() override;
+        Common::UniqueRef<CommandRecorder> Begin() override;
     };
 }

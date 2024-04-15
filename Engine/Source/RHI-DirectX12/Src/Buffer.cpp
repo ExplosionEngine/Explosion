@@ -70,14 +70,9 @@ namespace RHI::DirectX12 {
         nativeResource->Unmap(0, nullptr);
     }
 
-    BufferView* DX12Buffer::CreateBufferView(const BufferViewCreateInfo& inCreateInfo)
+    Common::UniqueRef<BufferView> DX12Buffer::CreateBufferView(const BufferViewCreateInfo& inCreateInfo)
     {
-        return new DX12BufferView(*this, inCreateInfo);
-    }
-
-    void DX12Buffer::Destroy()
-    {
-        delete this;
+        return Common::UniqueRef<BufferView>(new DX12BufferView(*this, inCreateInfo));
     }
 
     ID3D12Resource* DX12Buffer::GetNative()

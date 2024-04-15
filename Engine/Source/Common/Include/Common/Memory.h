@@ -39,8 +39,18 @@ namespace Common {
     template <typename T>
     class SharedRef {
     public:
-        template <typename T2> SharedRef(std::shared_ptr<T2>& inRef); // NOLINT
-        template <typename T2> SharedRef(std::shared_ptr<T2>&& inRef) noexcept; // NOLINT
+        template <typename T2>
+        SharedRef(std::shared_ptr<T2>& inRef); // NOLINT
+
+        template <typename T2>
+        SharedRef(std::shared_ptr<T2>&& inRef) noexcept; // NOLINT
+
+        template <typename T2>
+        SharedRef(std::unique_ptr<T2>&& inRef) noexcept; // NOLINT
+
+        template <typename T2>
+        SharedRef(UniqueRef<T2>&& inRef) noexcept; // NOLINT
+
         SharedRef(T* pointer); // NOLINT
         SharedRef(const SharedRef& other); // NOLINT
         SharedRef(SharedRef&& other) noexcept; // NOLINT
@@ -52,6 +62,12 @@ namespace Common {
 
         template <typename T2>
         SharedRef& operator=(std::shared_ptr<T2>&& inRef);
+
+        template <typename T2>
+        SharedRef& operator=(std::unique_ptr<T2>&& inRef) noexcept;
+
+        template <typename T2>
+        SharedRef& operator=(UniqueRef<T2>&& inRef) noexcept;
 
         SharedRef& operator=(T* pointer);
         SharedRef& operator=(SharedRef& other); // NOLINT
@@ -82,7 +98,9 @@ namespace Common {
     template <typename T>
     class WeakRef {
     public:
-        template <typename T2> WeakRef(SharedRef<T2>& inRef); // NOLINT
+        template <typename T2>
+        WeakRef(SharedRef<T2>& inRef); // NOLINT
+
         WeakRef(WeakRef& other); // NOLINT
         WeakRef(WeakRef&& other) noexcept; // NOLINT
         ~WeakRef();
@@ -205,6 +223,20 @@ namespace Common {
     }
 
     template <typename T>
+    template <typename T2>
+    SharedRef<T>::SharedRef(std::unique_ptr<T2>&& inRef) noexcept
+        : ref(std::move(inRef))
+    {
+    }
+
+    template <typename T>
+    template <typename T2>
+    SharedRef<T>::SharedRef(UniqueRef<T2>&& inRef) noexcept
+        : ref(std::move(inRef.Get()))
+    {
+    }
+
+    template <typename T>
     SharedRef<T>::SharedRef(T* pointer)
         : ref(pointer)
     {
@@ -241,6 +273,22 @@ namespace Common {
     SharedRef<T> & SharedRef<T>::operator=(std::shared_ptr<T2> && inRef)
     {
         ref = std::move(inRef);
+        return *this;
+    }
+
+    template <typename T>
+    template <typename T2>
+    SharedRef<T>& SharedRef<T>::operator=(std::unique_ptr<T2>&& inRef) noexcept
+    {
+        ref = std::move(inRef);
+        return *this;
+    }
+
+    template <typename T>
+    template <typename T2>
+    SharedRef<T>& SharedRef<T>::operator=(UniqueRef<T2>&& inRef) noexcept
+    {
+        ref = std::move(inRef.Get());
         return *this;
     }
 

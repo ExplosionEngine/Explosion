@@ -16,9 +16,7 @@ namespace RHI::Dummy {
 
         void* Map(MapMode mapMode, size_t offset, size_t length) override;
         void UnMap() override;
-        BufferView* CreateBufferView(const BufferViewCreateInfo& createInfo) override;
-        void Destroy() override;
-
+        Common::UniqueRef<BufferView> CreateBufferView(const BufferViewCreateInfo& createInfo) override;
     private:
         std::vector<uint8_t> dummyData;
     };

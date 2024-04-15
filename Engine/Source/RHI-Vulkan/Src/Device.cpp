@@ -75,80 +75,75 @@ namespace RHI::Vulkan {
         return queueArray[inIndex].Get();
     }
 
-    Surface* VulkanDevice::CreateSurface(const SurfaceCreateInfo& inCreateInfo)
+    Common::UniqueRef<Surface> VulkanDevice::CreateSurface(const SurfaceCreateInfo& inCreateInfo)
     {
-        return new VulkanSurface(*this, inCreateInfo);
+        return Common::UniqueRef<Surface>(new VulkanSurface(*this, inCreateInfo));
     }
 
-    SwapChain* VulkanDevice::CreateSwapChain(const SwapChainCreateInfo& inCreateInfo)
+    Common::UniqueRef<SwapChain> VulkanDevice::CreateSwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
-        return new VulkanSwapChain(*this, inCreateInfo);
+        return Common::UniqueRef<SwapChain>(new VulkanSwapChain(*this, inCreateInfo));
     }
 
-    void VulkanDevice::Destroy()
+    Common::UniqueRef<Buffer> VulkanDevice::CreateBuffer(const BufferCreateInfo& inCreateInfo)
     {
-        delete this;
+        return Common::UniqueRef<Buffer>(new VulkanBuffer(*this, inCreateInfo));
     }
 
-    Buffer* VulkanDevice::CreateBuffer(const BufferCreateInfo& inCreateInfo)
+    Common::UniqueRef<Texture> VulkanDevice::CreateTexture(const TextureCreateInfo& inCreateInfo)
     {
-        return new VulkanBuffer(*this, inCreateInfo);
+        return Common::UniqueRef<Texture>(new VulkanTexture(*this, inCreateInfo));
     }
 
-    Texture* VulkanDevice::CreateTexture(const TextureCreateInfo& inCreateInfo)
+    Common::UniqueRef<Sampler> VulkanDevice::CreateSampler(const SamplerCreateInfo& inCreateInfo)
     {
-        return new VulkanTexture(*this, inCreateInfo);
+        return Common::UniqueRef<Sampler>(new VulkanSampler(*this, inCreateInfo));
     }
 
-    Sampler* VulkanDevice::CreateSampler(const SamplerCreateInfo& inCreateInfo)
+    Common::UniqueRef<BindGroupLayout> VulkanDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
     {
-        return new VulkanSampler(*this, inCreateInfo);
+        return Common::UniqueRef<BindGroupLayout>(new VulkanBindGroupLayout(*this, inCreateInfo));
     }
 
-    BindGroupLayout* VulkanDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
+    Common::UniqueRef<BindGroup> VulkanDevice::CreateBindGroup(const BindGroupCreateInfo& inCreateInfo)
     {
-        return new VulkanBindGroupLayout(*this, inCreateInfo);
+        return Common::UniqueRef<BindGroup>(new VulkanBindGroup(*this, inCreateInfo));
     }
 
-    BindGroup* VulkanDevice::CreateBindGroup(const BindGroupCreateInfo& inCreateInfo)
+    Common::UniqueRef<PipelineLayout> VulkanDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo)
     {
-        return new VulkanBindGroup(*this, inCreateInfo);
+        return Common::UniqueRef<PipelineLayout>(new VulkanPipelineLayout(*this, inCreateInfo));
     }
 
-    PipelineLayout* VulkanDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo)
+    Common::UniqueRef<ShaderModule> VulkanDevice::CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo)
     {
-        return new VulkanPipelineLayout(*this, inCreateInfo);
+        return Common::UniqueRef<ShaderModule>(new VulkanShaderModule(*this, inCreateInfo));
     }
 
-    ShaderModule* VulkanDevice::CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo)
-    {
-        return new VulkanShaderModule(*this, inCreateInfo);
-    }
-
-    ComputePipeline* VulkanDevice::CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo)
+    Common::UniqueRef<ComputePipeline> VulkanDevice::CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo)
     {
         // TODO
         return nullptr;
     }
 
-    RasterPipeline* VulkanDevice::CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo)
+    Common::UniqueRef<RasterPipeline> VulkanDevice::CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo)
     {
-        return new VulkanRasterPipeline(*this, inCreateInfo);
+        return Common::UniqueRef<RasterPipeline>(new VulkanRasterPipeline(*this, inCreateInfo));
     }
 
-    CommandBuffer* VulkanDevice::CreateCommandBuffer()
+    Common::UniqueRef<CommandBuffer> VulkanDevice::CreateCommandBuffer()
     {
-        return new VulkanCommandBuffer(*this, nativeCmdPools[QueueType::graphics]);
+        return Common::UniqueRef<CommandBuffer>(new VulkanCommandBuffer(*this, nativeCmdPools[QueueType::graphics]));
     }
 
-    Fence* VulkanDevice::CreateFence(bool initAsSignaled)
+    Common::UniqueRef<Fence> VulkanDevice::CreateFence(bool initAsSignaled)
     {
-        return new VulkanFence(*this, initAsSignaled);
+        return Common::UniqueRef<Fence>(new VulkanFence(*this, initAsSignaled));
     }
 
-    Semaphore* VulkanDevice::CreateSemaphore()
+    Common::UniqueRef<Semaphore> VulkanDevice::CreateSemaphore()
     {
-        return new VulkanSemaphore(*this);
+        return Common::UniqueRef<Semaphore>(new VulkanSemaphore(*this));
     }
 
     bool VulkanDevice::CheckSwapChainFormatSupport(Surface* inSurface, PixelFormat inFormat)

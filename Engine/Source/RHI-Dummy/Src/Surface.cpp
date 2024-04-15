@@ -11,9 +11,4 @@ namespace RHI::Dummy {
     }
 
     DummySurface::~DummySurface() = default;
-
-    void DummySurface::Destroy()
-    {
-        delete this;
-    }
 }

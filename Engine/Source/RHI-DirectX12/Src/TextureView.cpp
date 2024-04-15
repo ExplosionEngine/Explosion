@@ -207,11 +207,6 @@ namespace RHI::DirectX12 {
 
     DX12TextureView::~DX12TextureView() = default;
 
-    void DX12TextureView::Destroy()
-    {
-        delete this;
-    }
-
     CD3DX12_CPU_DESCRIPTOR_HANDLE DX12TextureView::GetNativeCpuDescriptorHandle()
     {
         return nativeCpuDescriptorHandle;

@@ -47,8 +47,6 @@ namespace RHI {
         NonCopyable(BufferView)
         virtual ~BufferView();
 
-        virtual void Destroy() = 0;
-
     protected:
         explicit BufferView(const BufferViewCreateInfo& createInfo);
     };

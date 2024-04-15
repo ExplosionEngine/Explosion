@@ -19,7 +19,6 @@ namespace RHI::Vulkan {
         ~VulkanShaderModule() override;
 
         const std::string& GetEntryPoint() override;
-        void Destroy() override;
 
         VkShaderModule GetNative() const;
 

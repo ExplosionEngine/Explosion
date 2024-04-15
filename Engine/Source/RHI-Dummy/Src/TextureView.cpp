@@ -11,9 +11,4 @@ namespace RHI::Dummy {
     }
 
     DummyTextureView::~DummyTextureView() = default;
-
-    void DummyTextureView::Destroy()
-    {
-        delete this;
-    }
 }

@@ -22,11 +22,6 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VulkanBindGroupLayout::Destroy()
-    {
-        delete this;
-    }
-
     VkDescriptorSetLayout VulkanBindGroupLayout::GetNative() const
     {
         return nativeDescriptorSetLayout;

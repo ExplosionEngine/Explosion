@@ -21,7 +21,6 @@ namespace RHI::Vulkan {
         Texture* GetTexture(uint8_t inIndex) override;
         uint8_t AcquireBackTexture(Semaphore* inSignalSemaphore) override;
         void Present(Semaphore* inWaitSemaphore) override;
-        void Destroy() override;
 
     private:
         void CreateNativeSwapChain(const SwapChainCreateInfo& inCreateInfo);

@@ -14,6 +14,8 @@ namespace RHI::Dummy {
         ~DummyShaderModule() override;
 
         const std::string & GetEntryPoint() override;
-        void Destroy() override;
+
+    private:
+        std::string entryPoint;
     };
 }

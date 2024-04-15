@@ -33,11 +33,6 @@ namespace RHI::DirectX12 {
 
     DX12Sampler::~DX12Sampler() = default;
 
-    void DX12Sampler::Destroy()
-    {
-        delete this;
-    }
-
     CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Sampler::GetNativeCpuDescriptorHandle()
     {
         return nativeCpuDescriptorHandle;

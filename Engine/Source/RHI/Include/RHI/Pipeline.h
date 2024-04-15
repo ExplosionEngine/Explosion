@@ -262,8 +262,6 @@ namespace RHI {
         NonCopyable(Pipeline)
         virtual ~Pipeline();
 
-        virtual void Destroy() = 0;
-
     protected:
         Pipeline();
     };
@@ -273,8 +271,6 @@ namespace RHI {
         NonCopyable(ComputePipeline)
         ~ComputePipeline() override;
 
-        void Destroy() override = 0;
-
     protected:
         explicit ComputePipeline(const ComputePipelineCreateInfo& createInfo);
     };
@@ -283,8 +279,6 @@ namespace RHI {
     public:
         NonCopyable(RasterPipeline)
         ~RasterPipeline() override;
-
-        void Destroy() override = 0;
 
     protected:
         explicit RasterPipeline(const RasterPipelineCreateInfo& createInfo);

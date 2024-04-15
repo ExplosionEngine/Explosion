@@ -19,11 +19,6 @@ namespace RHI::DirectX12 {
         return entryPoint;
     }
 
-    void DX12ShaderModule::Destroy()
-    {
-        delete this;
-    }
-
     const D3D12_SHADER_BYTECODE& DX12ShaderModule::GetNative() const
     {
         return nativeShaderBytecode;

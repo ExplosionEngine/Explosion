@@ -39,8 +39,6 @@ namespace RHI::DirectX12 {
         DX12PipelineLayout(DX12Device& inDevice, const PipelineLayoutCreateInfo& inCreateInfo);
         ~DX12PipelineLayout() override;
 
-        void Destroy() override;
-
         std::optional<BindingTypeAndRootParameterIndex> QueryRootDescriptorParameterIndex(uint8_t inLayoutIndex, const HlslBinding& inBinding);
         ID3D12RootSignature* GetNative();
 

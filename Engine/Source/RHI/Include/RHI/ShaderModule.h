@@ -28,7 +28,6 @@ namespace RHI {
         virtual ~ShaderModule();
 
         virtual const std::string& GetEntryPoint() = 0;
-        virtual void Destroy() = 0;
 
     protected:
         explicit ShaderModule(const ShaderModuleCreateInfo& createInfo);

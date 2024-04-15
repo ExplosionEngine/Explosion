@@ -61,8 +61,7 @@ namespace RHI::DirectX12 {
         explicit DX12CommandBuffer(DX12Device& inDevice);
         ~DX12CommandBuffer() override;
 
-        CommandRecorder* Begin() override;
-        void Destroy() override;
+        Common::UniqueRef<CommandRecorder> Begin() override;
 
         ID3D12GraphicsCommandList* GetNative();
         RuntimeDescriptorCompact* GetRuntimeDescriptorHeaps();

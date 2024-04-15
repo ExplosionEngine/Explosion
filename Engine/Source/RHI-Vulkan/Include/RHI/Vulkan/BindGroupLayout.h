@@ -18,8 +18,6 @@ namespace RHI::Vulkan {
         VulkanBindGroupLayout(VulkanDevice& inDevice, const BindGroupLayoutCreateInfo& inCreateInfo);
         ~VulkanBindGroupLayout() override;
 
-        void Destroy() override;
-
         VkDescriptorSetLayout GetNative() const;
 
     private:

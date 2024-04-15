@@ -38,11 +38,6 @@ namespace RHI::DirectX12 {
 
     DX12BindGroup::~DX12BindGroup() = default;
 
-    void DX12BindGroup::Destroy()
-    {
-        delete this;
-    }
-
     DX12BindGroupLayout& DX12BindGroup::GetBindGroupLayout()
     {
         return *bindGroupLayout;

@@ -12,8 +12,6 @@ namespace RHI::Dummy {
         NonCopyable(DummyComputePipeline)
         explicit DummyComputePipeline(const ComputePipelineCreateInfo& createInfo);
         ~DummyComputePipeline() override;
-
-        void Destroy() override;
     };
 
     class DummyRasterPipeline : public RasterPipeline {
@@ -21,7 +19,5 @@ namespace RHI::Dummy {
         NonCopyable(DummyRasterPipeline)
         explicit DummyRasterPipeline(const RasterPipelineCreateInfo& createInfo);
         ~DummyRasterPipeline() override;
-
-        void Destroy() override;
     };
 }

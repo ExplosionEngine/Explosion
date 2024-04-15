@@ -18,8 +18,6 @@ namespace RHI::Vulkan {
         VulkanBindGroup(VulkanDevice& inDevice, const BindGroupCreateInfo& inCreateInfo);
         ~VulkanBindGroup() noexcept override;
 
-        void Destroy() override;
-
         VkDescriptorSet GetNative() const;
 
     private:

@@ -21,9 +21,7 @@ namespace RHI::Vulkan {
         VulkanTexture(VulkanDevice& inDevice, const TextureCreateInfo& inCreateInfo);
         ~VulkanTexture() override;
 
-        void Destroy() override;
-
-        TextureView* CreateTextureView(const TextureViewCreateInfo& inCreateInfo) override;
+        Common::UniqueRef<TextureView> CreateTextureView(const TextureViewCreateInfo& inCreateInfo) override;
 
         VkImage GetNative() const;
         Common::UVec3 GetExtent() const;

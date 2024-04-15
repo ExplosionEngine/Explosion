@@ -50,11 +50,6 @@ namespace RHI::DirectX12 {
         Assert(nativeFenceEvent);
     }
 
-    void DX12Fence::Destroy()
-    {
-        delete this;
-    }
-
     DX12Semaphore::DX12Semaphore(DX12Device& inDevice)
         : Semaphore(inDevice)
     {
@@ -64,11 +59,6 @@ namespace RHI::DirectX12 {
     ID3D12Fence* DX12Semaphore::GetNative()
     {
         return dx12Fence.Get();
-    }
-
-    void DX12Semaphore::Destroy()
-    {
-        delete this;
     }
 
     void DX12Semaphore::CreateNativeFence(DX12Device& inDevice)

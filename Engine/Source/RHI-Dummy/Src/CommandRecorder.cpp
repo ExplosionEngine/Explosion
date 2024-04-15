@@ -37,11 +37,6 @@ namespace RHI::Dummy {
     {
     }
 
-    void DummyCopyPassCommandRecorder::Destroy()
-    {
-        delete this;
-    }
-
     DummyComputePassCommandRecorder::DummyComputePassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer)
     {
     }
@@ -66,11 +61,6 @@ namespace RHI::Dummy {
 
     void DummyComputePassCommandRecorder::EndPass()
     {
-    }
-
-    void DummyComputePassCommandRecorder::Destroy()
-    {
-        delete this;
     }
 
     DummyRasterPassCommandRecorder::DummyRasterPassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer)
@@ -131,11 +121,6 @@ namespace RHI::Dummy {
     {
     }
 
-    void DummyRasterPassCommandRecorder::Destroy()
-    {
-        delete this;
-    }
-
     DummyCommandRecorder::DummyCommandRecorder(const DummyCommandBuffer& inDummyCommandBuffer)
         : dummyCommandBuffer(inDummyCommandBuffer)
     {
@@ -147,27 +132,22 @@ namespace RHI::Dummy {
     {
     }
 
-    CopyPassCommandRecorder* DummyCommandRecorder::BeginCopyPass()
+    Common::UniqueRef<CopyPassCommandRecorder> DummyCommandRecorder::BeginCopyPass()
     {
-        return new DummyCopyPassCommandRecorder(dummyCommandBuffer);
+        return Common::UniqueRef<CopyPassCommandRecorder>(new DummyCopyPassCommandRecorder(dummyCommandBuffer));
     }
 
-    ComputePassCommandRecorder* DummyCommandRecorder::BeginComputePass()
+    Common::UniqueRef<ComputePassCommandRecorder> DummyCommandRecorder::BeginComputePass()
     {
-        return new DummyComputePassCommandRecorder(dummyCommandBuffer);
+        return Common::UniqueRef<ComputePassCommandRecorder>(new DummyComputePassCommandRecorder(dummyCommandBuffer));
     }
 
-    RasterPassCommandRecorder* DummyCommandRecorder::BeginRasterPass(const RasterPassBeginInfo& beginInfo)
+    Common::UniqueRef<RasterPassCommandRecorder> DummyCommandRecorder::BeginRasterPass(const RasterPassBeginInfo& beginInfo)
     {
-        return new DummyRasterPassCommandRecorder(dummyCommandBuffer);
+        return Common::UniqueRef<RasterPassCommandRecorder>(new DummyRasterPassCommandRecorder(dummyCommandBuffer));
     }
 
     void DummyCommandRecorder::End()
     {
-    }
-
-    void DummyCommandRecorder::Destroy()
-    {
-        delete this;
     }
 }

@@ -68,14 +68,9 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VulkanTexture::Destroy()
+    Common::UniqueRef<TextureView> VulkanTexture::CreateTextureView(const TextureViewCreateInfo& inCreateInfo)
     {
-        delete this;
-    }
-
-    TextureView* VulkanTexture::CreateTextureView(const TextureViewCreateInfo& inCreateInfo)
-    {
-        return new VulkanTextureView(*this, device, inCreateInfo);
+        return Common::UniqueRef<TextureView>(new VulkanTextureView(*this, device, inCreateInfo));
     }
 
     VkImage VulkanTexture::GetNative() const

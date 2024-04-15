@@ -57,11 +57,6 @@ namespace RHI::DirectX12 {
         nativeSwapChain->Present(GetSyncInterval(presentMode), false);
     }
 
-    void DX12SwapChain::Destroy()
-    {
-        delete this;
-    }
-
     void DX12SwapChain::CreateDX12SwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
         auto& instance = device.GetGpu().GetInstance();

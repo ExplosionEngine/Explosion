@@ -20,7 +20,6 @@ namespace RHI::Vulkan {
         NonCopyable(VulkanTextureView)
         VulkanTextureView(VulkanTexture& inTexture, VulkanDevice& nDevice, const TextureViewCreateInfo& inCreateInfo);
         ~VulkanTextureView() override;
-        void Destroy() override;
 
         VkImageView GetNative();
         VulkanTexture& GetTexture() const;

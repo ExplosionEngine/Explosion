@@ -18,7 +18,6 @@ namespace RHI::Vulkan {
         VulkanSampler(VulkanDevice& inDevice, const SamplerCreateInfo& inCreateInfo);
         ~VulkanSampler() override;
 
-        void Destroy() override;
         VkSampler GetNative() const;
 
     private:

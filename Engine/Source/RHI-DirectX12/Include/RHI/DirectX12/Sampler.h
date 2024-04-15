@@ -19,8 +19,6 @@ namespace RHI::DirectX12 {
         explicit DX12Sampler(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo);
         ~DX12Sampler() override;
 
-        void Destroy() override;
-
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetNativeCpuDescriptorHandle();
 
     private:

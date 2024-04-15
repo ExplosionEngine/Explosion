@@ -38,8 +38,6 @@ namespace RHI {
         NonCopyable(PipelineLayout)
         virtual ~PipelineLayout();
 
-        virtual void Destroy() = 0;
-
     protected:
         explicit PipelineLayout(const PipelineLayoutCreateInfo& createInfo);
     };

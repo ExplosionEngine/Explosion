@@ -52,8 +52,6 @@ namespace RHI {
         NonCopyable(BindGroupLayout)
         virtual ~BindGroupLayout();
 
-        virtual void Destroy() = 0;
-
     protected:
         explicit BindGroupLayout(const BindGroupLayoutCreateInfo& createInfo);
     };

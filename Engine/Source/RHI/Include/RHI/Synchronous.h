@@ -52,7 +52,6 @@ namespace RHI {
         virtual bool IsSignaled() = 0;
         virtual void Reset() = 0;
         virtual void Wait() = 0;
-        virtual void Destroy() = 0;
 
     protected:
         explicit Fence(Device& device, bool initAsSignaled);
@@ -62,8 +61,6 @@ namespace RHI {
     public:
         NonCopyable(Semaphore)
         virtual ~Semaphore();
-
-        virtual void Destroy() = 0;
 
     protected:
         explicit Semaphore(Device& device);

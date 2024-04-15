@@ -20,8 +20,6 @@ namespace RHI::DirectX12 {
         DX12BufferView(DX12Buffer& inBuffer, const BufferViewCreateInfo& inCreateInfo);
         ~DX12BufferView() override;
 
-        void Destroy() override;
-
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetNativeCpuDescriptorHandle() const;
         [[nodiscard]] const D3D12_VERTEX_BUFFER_VIEW& GetNativeVertexBufferView() const;
         [[nodiscard]] const D3D12_INDEX_BUFFER_VIEW& GetNativeIndexBufferView() const;

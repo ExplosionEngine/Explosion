@@ -1038,7 +1038,7 @@ private:
                 .SetType(TextureViewType::textureBinding));
     }
 
-    ShaderModule* GetShaderModule(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
+    Common::UniqueRef<ShaderModule> GetShaderModule(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
     {
         std::vector<std::string> includePath { "../Test/Sample/SSAO/Shader"};
         CompileShader(byteCode, fileName, entryPoint, shaderStage, includePath);

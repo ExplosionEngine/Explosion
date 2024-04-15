@@ -20,11 +20,6 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VulkanSampler::Destroy()
-    {
-        delete this;
-    }
-
     VkSampler VulkanSampler::GetNative() const
     {
         return nativeSampler;

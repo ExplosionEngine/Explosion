@@ -22,11 +22,6 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VulkanSurface::Destroy()
-    {
-        delete this;
-    }
-
     VkSurfaceKHR VulkanSurface::GetNative() const
     {
         return nativeSurface;
