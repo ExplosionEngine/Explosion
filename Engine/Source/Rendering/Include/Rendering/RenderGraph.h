@@ -297,7 +297,7 @@ namespace Rendering {
 
         bool devirtualized;
         RGBindGroupDesc desc;
-        RHI::BindGroup* rhiHandle;
+        Common::UniqueRef<RHI::BindGroup> rhiHandle;
     };
 
     using RGBindGroupRef = RGBindGroup*;

@@ -27,7 +27,7 @@ namespace Rendering {
         const DescType& GetDesc() const;
 
     private:
-        RHIRes* rhiHandle;
+        Common::UniqueRef<RHIRes> rhiHandle;
         DescType desc;
     };
 
@@ -77,15 +77,12 @@ namespace Rendering {
     template <typename RHIResource>
     PooledResource<RHIResource>::PooledResource(RHIResource* inRhiHandle, DescType inDesc)
         : rhiHandle(inRhiHandle)
-          , desc(std::move(inDesc))
+        , desc(std::move(inDesc))
     {
     }
 
     template <typename RHIResource>
-    PooledResource<RHIResource>::~PooledResource()
-    {
-        rhiHandle->Destroy();
-    }
+    PooledResource<RHIResource>::~PooledResource() = default;
 
     template <typename RHIResource>
     RHIResource* PooledResource<RHIResource>::GetRHI() const
@@ -107,7 +104,7 @@ namespace Rendering {
 
         static RefType CreateResource(RHI::Device& device, const DescType& desc)
         {
-            return Common::MakeShared<ResType>(device.CreateBuffer(desc), desc);
+            return Common::SharedRef<ResType>(new ResType(device.CreateBuffer(desc).Get(), desc));
         }
     };
 
@@ -119,7 +116,7 @@ namespace Rendering {
 
         static RefType CreateResource(RHI::Device& device, const DescType& desc)
         {
-            return Common::MakeShared<ResType>(device.CreateTexture(desc), desc);
+            return Common::SharedRef<ResType>(new ResType(device.CreateTexture(desc).Get(), desc));
         }
     };
 
@@ -140,10 +137,7 @@ namespace Rendering {
     }
 
     template <typename PooledResource>
-    RGResourcePool<PooledResource>::~RGResourcePool()
-    {
-        pooledResources.clear();
-    }
+    RGResourcePool<PooledResource>::~RGResourcePool() = default;
 
     template <typename PooledResource>
     typename RGResourcePool<PooledResource>::ResRefType RGResourcePool<PooledResource>::Allocate(const RGResourcePool<PooledResource>::DescType& desc)

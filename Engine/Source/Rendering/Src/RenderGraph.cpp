@@ -664,7 +664,7 @@ namespace Rendering {
         if (rhiHandle == nullptr) {
             return;
         }
-        rhiHandle->Destroy();
+        rhiHandle.Reset();
     }
 
     const RGBindGroupDesc& RGBindGroup::GetDesc() const
@@ -674,7 +674,7 @@ namespace Rendering {
 
     RHI::BindGroup* RGBindGroup::GetRHI() const
     {
-        return rhiHandle;
+        return rhiHandle.Get();
     }
 
     RGPass::RGPass(std::string inName, RGPassType inType)
