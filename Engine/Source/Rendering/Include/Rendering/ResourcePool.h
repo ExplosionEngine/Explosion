@@ -20,7 +20,7 @@ namespace Rendering {
     public:
         using DescType = typename RHIResTraits<RHIRes>::DescType;
 
-        explicit PooledResource(RHIRes* inRhiHandle, DescType inDesc);
+        explicit PooledResource(Common::UniqueRef<RHIRes>&& inRhiHandle, DescType inDesc);
         ~PooledResource();
 
         RHIRes* GetRHI() const;
@@ -75,8 +75,8 @@ namespace Rendering {
     };
 
     template <typename RHIResource>
-    PooledResource<RHIResource>::PooledResource(RHIResource* inRhiHandle, DescType inDesc)
-        : rhiHandle(inRhiHandle)
+    PooledResource<RHIResource>::PooledResource(Common::UniqueRef<RHIResource>&& inRhiHandle, DescType inDesc)
+        : rhiHandle(std::move(inRhiHandle))
         , desc(std::move(inDesc))
     {
     }
@@ -104,7 +104,7 @@ namespace Rendering {
 
         static RefType CreateResource(RHI::Device& device, const DescType& desc)
         {
-            return Common::SharedRef<ResType>(new ResType(device.CreateBuffer(desc).Get(), desc));
+            return Common::SharedRef<ResType>(new ResType(device.CreateBuffer(desc), desc));
         }
     };
 
@@ -116,7 +116,7 @@ namespace Rendering {
 
         static RefType CreateResource(RHI::Device& device, const DescType& desc)
         {
-            return Common::SharedRef<ResType>(new ResType(device.CreateTexture(desc).Get(), desc));
+            return Common::SharedRef<ResType>(new ResType(device.CreateTexture(desc), desc));
         }
     };
 
