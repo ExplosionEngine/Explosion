@@ -30,6 +30,7 @@ namespace Rendering {
 
         std::string FinalSemantic() const;
         RHI::PlatformVertexBinding GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
+        size_t Hash() const;
     };
 
     struct VertexAttribute : public RHI::VertexAttributeBase<VertexAttribute> {
@@ -42,6 +43,7 @@ namespace Rendering {
 
         RHI::VertexAttribute GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
         VertexAttribute& SetBinding(const VertexBinding& inBinding);
+        size_t Hash() const;
     };
 
     struct VertexBufferLayout : public RHI::VertexBufferLayoutBase<VertexBufferLayout> {
@@ -53,6 +55,7 @@ namespace Rendering {
 
         RHI::VertexBufferLayout GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
         VertexBufferLayout& AddAttribute(const VertexAttribute& inAttribute);
+        size_t Hash() const;
     };
 
     struct VertexState {
@@ -62,6 +65,7 @@ namespace Rendering {
 
         RHI::VertexState GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
         VertexState& AddVertexBufferLayout(const VertexBufferLayout& inLayout);
+        size_t Hash() const;
     };
 
     struct BindGroupLayoutDesc {
@@ -72,7 +76,6 @@ namespace Rendering {
     struct ComputePipelineShaderSet {
         Render::ShaderInstance computeShader;
 
-        // TODO check this
         size_t Hash() const;
     };
 
@@ -83,28 +86,24 @@ namespace Rendering {
         Render::ShaderInstance domainShader;
         Render::ShaderInstance hullShader;
 
-        // TODO check this
         size_t Hash() const;
     };
 
     struct ComputePipelineLayoutDesc {
         ComputePipelineShaderSet shaders;
 
-        // TODO check this
         size_t Hash() const;
     };
 
     struct RasterPipelineLayoutDesc {
         RasterPipelineShaderSet shaders;
 
-        // TODO check this
         size_t Hash() const;
     };
 
     struct ComputePipelineStateDesc {
         ComputePipelineShaderSet shaders;
 
-        // TODO check this
         size_t Hash() const;
     };
 
@@ -116,7 +115,6 @@ namespace Rendering {
         MultiSampleState multiSampleState;
         FragmentState fragmentState;
 
-        // TODO check this
         size_t Hash() const;
     };
 

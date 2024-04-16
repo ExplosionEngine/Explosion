@@ -83,6 +83,11 @@ namespace Rendering {
         return inReflectionData.QueryVertexBindingChecked(FinalSemantic());
     }
 
+    size_t VertexBinding::Hash() const
+    {
+        return Common::HashUtils::CityHash(this, sizeof(VertexBinding));
+    }
+
     VertexAttribute::VertexAttribute(const VertexBinding& inBinding, RHI::VertexFormat inFormat, size_t inOffset)
         : RHI::VertexAttributeBase<VertexAttribute>(inFormat, inOffset)
         , binding(inBinding)
@@ -93,6 +98,11 @@ namespace Rendering {
     {
         binding = inBinding;
         return *this;
+    }
+
+    size_t VertexAttribute::Hash() const
+    {
+        return Common::HashUtils::CityHash(this, sizeof(VertexAttribute));
     }
 
     RHI::VertexAttribute VertexAttribute::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
@@ -121,6 +131,17 @@ namespace Rendering {
         return *this;
     }
 
+    size_t VertexBufferLayout::Hash() const
+    {
+        std::vector<size_t> values;
+        values.reserve(attributes.size());
+
+        for (const auto& attribute : attributes) {
+            values.emplace_back(attribute.Hash());
+        }
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+    }
+
     VertexState::VertexState() = default;
 
     RHI::VertexState VertexState::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
@@ -139,12 +160,20 @@ namespace Rendering {
         return *this;
     }
 
+    size_t VertexState::Hash() const
+    {
+        std::vector<size_t> values;
+        values.reserve(bufferLayouts.size());
+
+        for (const auto& layout : bufferLayouts) {
+            values.emplace_back(layout.Hash());
+        }
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t ));
+    }
+
     size_t ComputePipelineShaderSet::Hash() const
     {
-        std::vector<size_t> values = {
-            computeShader.Hash()
-        };
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return computeShader.Hash();
     }
 
     size_t RasterPipelineShaderSet::Hash() const
@@ -176,43 +205,13 @@ namespace Rendering {
 
     size_t RasterPipelineStateDesc::Hash() const
     {
-        auto computeVertexAttributeHash = [](const VertexAttribute& attribute) -> size_t {
-            std::vector<size_t> values = {
-                Common::HashUtils::CityHash(&attribute.format, sizeof(attribute.format)),
-                Common::HashUtils::CityHash(&attribute.offset, sizeof(attribute.offset)),
-                Common::HashUtils::CityHash(&attribute.binding, sizeof(attribute.binding))
-            };
-            return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
-        };
-        auto computeVertexBufferLayoutHash = [computeVertexAttributeHash](const VertexBufferLayout& bufferLayout) -> size_t {
-            std::vector<size_t> values;
-            values.reserve(bufferLayout.attributes.size() + 2);
-            values.emplace_back(Common::HashUtils::CityHash(&bufferLayout.stride, sizeof(bufferLayout.stride)));
-            values.emplace_back(Common::HashUtils::CityHash(&bufferLayout.stepMode, sizeof(bufferLayout.stepMode)));
-            for (auto i = 0; i < bufferLayout.attributes.size(); i++) {
-                values.emplace_back(computeVertexAttributeHash(bufferLayout.attributes[i]));
-            }
-            return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
-        };
-        auto computeVertexStateHash = [computeVertexBufferLayoutHash](const VertexState& state) -> size_t {
-            std::vector<size_t> values;
-            values.reserve(state.bufferLayouts.size());
-            for (auto i = 0; i < state.bufferLayouts.size(); i++) {
-                values.emplace_back(computeVertexBufferLayoutHash(state.bufferLayouts[i]));
-            }
-            return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
-        };
-        auto computeFragmentStateHash = [](const FragmentState& state) -> size_t {
-            return Common::HashUtils::CityHash(state.colorTargets.data(), state.colorTargets.size() * sizeof(RHI::ColorTargetState));
-        };
-
         std::vector<size_t> values = {
             shaders.Hash(),
-            computeVertexStateHash(vertexState),
-            Common::HashUtils::CityHash(&primitiveState, sizeof(PrimitiveState)),
-            Common::HashUtils::CityHash(&depthStencilState, sizeof(DepthStencilState)),
-            Common::HashUtils::CityHash(&multiSampleState, sizeof(MultiSampleState)),
-            computeFragmentStateHash(fragmentState)
+            vertexState.Hash(),
+            primitiveState.Hash(),
+            depthStencilState.Hash(),
+            multiSampleState.Hash(),
+            fragmentState.Hash()
         };
         return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
     }

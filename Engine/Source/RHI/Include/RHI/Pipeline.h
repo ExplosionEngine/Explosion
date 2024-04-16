@@ -108,6 +108,7 @@ namespace RHI {
         PrimitiveState& SetFrontFace(FrontFace inFrontFace);
         PrimitiveState& SetCullMode(CullMode inCullMode);
         PrimitiveState& SetDepthClip(bool inDepthClip);
+        size_t Hash() const;
     };
 
     struct StencilFaceState {
@@ -160,6 +161,7 @@ namespace RHI {
         DepthStencilState& SetDepthBias(int32_t inDepthBias);
         DepthStencilState& SetDepthBiasSlopeScale(float inDepthBiasSlopeScale);
         DepthStencilState& SetDepthBiasClamp(float inDepthBiasClamp);
+        size_t Hash() const;
     };
 
     struct MultiSampleState {
@@ -175,6 +177,7 @@ namespace RHI {
         MultiSampleState& SetCount(uint8_t inCount);
         MultiSampleState& SetMask(uint32_t inMask);
         MultiSampleState& SetAlphaToCoverage(bool inAlphaToCoverage);
+        size_t Hash() const;
     };
 
     struct BlendComponent {
@@ -207,6 +210,7 @@ namespace RHI {
         ColorTargetState& SetBlendEnabled(bool inBlendEnabled);
         ColorTargetState& SetColorBlend(const BlendComponent& inColorBlend);
         ColorTargetState& SetAlphaBlend(const BlendComponent& inAlphaBlend);
+        size_t Hash() const;
     };
 
     struct FragmentState {
@@ -214,6 +218,7 @@ namespace RHI {
 
         FragmentState();
         FragmentState& AddColorTarget(const ColorTargetState& inState);
+        size_t Hash() const;
     };
 
     struct ComputePipelineCreateInfo {
