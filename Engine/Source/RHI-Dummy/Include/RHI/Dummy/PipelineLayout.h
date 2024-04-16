@@ -12,7 +12,5 @@ namespace RHI::Dummy {
         NonCopyable(DummyPipelineLayout)
         explicit DummyPipelineLayout(const PipelineLayoutCreateInfo& createInfo);
         ~DummyPipelineLayout() override;
-
-        void Destroy() override;
     };
 }

@@ -14,7 +14,7 @@ namespace RHI {
         , mipFilter(FilterMode::nearest)
         , lodMinClamp(0.0f)
         , lodMaxClamp(32.0f)
-        , comparisonFunc(ComparisonFunc::never)
+        , comparisonFunc(CompareFunc::never)
         , maxAnisotropy(1)
         , debugName()
     {
@@ -68,7 +68,7 @@ namespace RHI {
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::SetComparisonFunc(enum ComparisonFunc inFunc)
+    SamplerCreateInfo& SamplerCreateInfo::SetComparisonFunc(enum CompareFunc inFunc)
     {
         comparisonFunc = inFunc;
         return *this;

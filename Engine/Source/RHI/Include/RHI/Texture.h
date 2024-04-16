@@ -42,8 +42,7 @@ namespace RHI {
         virtual ~Texture();
 
         const TextureCreateInfo& GetCreateInfo() const;
-        virtual TextureView* CreateTextureView(const TextureViewCreateInfo& createInfo) = 0;
-        virtual void Destroy() = 0;
+        virtual Common::UniqueRef<TextureView> CreateTextureView(const TextureViewCreateInfo& createInfo) = 0;
 
     protected:
         Texture();

@@ -11,9 +11,4 @@ namespace RHI::Dummy {
     }
 
     DummySampler::~DummySampler() = default;
-
-    void DummySampler::Destroy()
-    {
-        delete this;
-    }
 }

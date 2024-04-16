@@ -22,23 +22,11 @@
 namespace Common {
     class Debug {
     public:
-        static void AssertImpl(bool expression, const std::string& name, const std::string& file, uint32_t line, const std::string& reason = "")
-        {
-            if (expression) {
-                return;
-            }
-            std::cerr << "Assert failed: " << name << ", " << file << ", " << line << std::endl;
-            std::cerr << "Reason: " << reason << std::endl;
+        static void AssertImpl(bool expression, const std::string& name, const std::string& file, uint32_t line, const std::string& reason = "");
 
-#if BUILD_CONFIG_DEBUG
-            debug_break();
-#endif
-        }
-
-        ~Debug() = default;
+        ~Debug();
 
     private:
-
-        Debug() = default;
+        Debug();
     };
 }

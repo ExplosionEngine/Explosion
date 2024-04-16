@@ -12,20 +12,10 @@ namespace RHI::Dummy {
 
     DummyComputePipeline::~DummyComputePipeline() = default;
 
-    void DummyComputePipeline::Destroy()
-    {
-        delete this;
-    }
-
     DummyRasterPipeline::DummyRasterPipeline(const RasterPipelineCreateInfo& createInfo)
         : RasterPipeline(createInfo)
     {
     }
 
     DummyRasterPipeline::~DummyRasterPipeline() = default;
-
-    void DummyRasterPipeline::Destroy()
-    {
-        delete this;
-    }
 }

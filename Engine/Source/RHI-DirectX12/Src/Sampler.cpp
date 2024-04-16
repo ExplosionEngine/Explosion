@@ -33,11 +33,6 @@ namespace RHI::DirectX12 {
 
     DX12Sampler::~DX12Sampler() = default;
 
-    void DX12Sampler::Destroy()
-    {
-        delete this;
-    }
-
     CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Sampler::GetNativeCpuDescriptorHandle()
     {
         return nativeCpuDescriptorHandle;
@@ -52,7 +47,7 @@ namespace RHI::DirectX12 {
         desc.Filter = GetDX12Filter(inCreateInfo);
         desc.MinLOD = inCreateInfo.lodMinClamp;
         desc.MaxLOD = inCreateInfo.lodMaxClamp;
-        desc.ComparisonFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(inCreateInfo.comparisonFunc);
+        desc.ComparisonFunc = DX12EnumCast<CompareFunc, D3D12_COMPARISON_FUNC>(inCreateInfo.comparisonFunc);
         desc.MaxAnisotropy = inCreateInfo.maxAnisotropy;
 
         auto allocation = inDevice.AllocateNativeSamplerDescriptor();

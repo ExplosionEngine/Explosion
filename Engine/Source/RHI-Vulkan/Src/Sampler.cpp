@@ -20,11 +20,6 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VulkanSampler::Destroy()
-    {
-        delete this;
-    }
-
     VkSampler VulkanSampler::GetNative() const
     {
         return nativeSampler;
@@ -42,8 +37,8 @@ namespace RHI::Vulkan {
         samplerInfo.mipmapMode = VKEnumCast<FilterMode, VkSamplerMipmapMode>(inCreateInfo.mipFilter);
         samplerInfo.minLod = inCreateInfo.lodMinClamp;
         samplerInfo.maxLod = inCreateInfo.lodMaxClamp;
-        samplerInfo.compareEnable = inCreateInfo.comparisonFunc != ComparisonFunc::never;
-        samplerInfo.compareOp = VKEnumCast<ComparisonFunc, VkCompareOp>(inCreateInfo.comparisonFunc);
+        samplerInfo.compareEnable = inCreateInfo.comparisonFunc != CompareFunc::never;
+        samplerInfo.compareOp = VKEnumCast<CompareFunc, VkCompareOp>(inCreateInfo.comparisonFunc);
         samplerInfo.anisotropyEnable = inCreateInfo.maxAnisotropy > 1;
         samplerInfo.maxAnisotropy = inCreateInfo.maxAnisotropy;
 

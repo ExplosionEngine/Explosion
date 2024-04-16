@@ -171,41 +171,36 @@ private:
     {
         std::vector<uint8_t> vsByteCode;
         CompileShader(vsByteCode, "../Test/Sample/Triangle/Triangle.hlsl", "VSMain", RHI::ShaderStageBits::sVertex);
-        vertexShader = device->CreateShaderModule(ShaderModuleCreateInfo(vsByteCode));
+        vertexShader = device->CreateShaderModule(ShaderModuleCreateInfo("VSMain", vsByteCode));
 
         std::vector<uint8_t> fsByteCode;
         CompileShader(fsByteCode, "../Test/Sample/Triangle/Triangle.hlsl", "FSMain", RHI::ShaderStageBits::sPixel);
-        fragmentShader = device->CreateShaderModule(ShaderModuleCreateInfo(fsByteCode));
+        fragmentShader = device->CreateShaderModule(ShaderModuleCreateInfo("FSMain", fsByteCode));
 
-        RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo()
-            .SetLayout(pipelineLayout.Get())
+        RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo(pipelineLayout.Get())
             .SetVertexShader(vertexShader.Get())
             .SetPixelShader(fragmentShader.Get())
-            .SetVertexState(
-                VertexState()
-                    .AddVertexBufferLayout(
-                        VertexBufferLayout()
-                            .SetStepMode(VertexStepMode::perVertex)
-                            .SetStride(sizeof(Vertex))
-                            .AddAttribute(VertexAttribute("POSITION", 0, VertexFormat::float32X3, 0))
-                            .AddAttribute(VertexAttribute("COLOR", 0, VertexFormat::float32X3, offsetof(Vertex, color)))))
             .SetFragmentState(
                 FragmentState()
-                    .AddColorTarget(
-                        ColorTargetState()
-                            .SetFormat(swapChainFormat)
-                            .SetWriteFlags(ColorWriteBits::all)))
-            .SetPrimitiveState(
-                PrimitiveState()
-                    .SetDepthClip(false)
-                    .SetFrontFace(FrontFace::ccw)
-                    .SetCullMode(CullMode::none)
-                    .SetTopologyType(PrimitiveTopologyType::triangle)
-                    .SetStripIndexFormat(IndexFormat::uint16))
-            .SetDepthStencilState(
-                DepthStencilState()
-                    .SetDepthEnabled(false)
-                    .SetStencilEnabled(false));
+                    .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all)))
+            .SetPrimitiveState(PrimitiveState(PrimitiveTopologyType::triangle, FillMode::solid, IndexFormat::uint16, FrontFace::ccw, CullMode::none));
+
+        // TODO use reflection
+        if (rhiType == RHIType::directX12) {
+            createInfo.SetVertexState(
+                VertexState()
+                    .AddVertexBufferLayout(
+                        VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
+                            .AddAttribute(VertexAttribute(HlslVertexBinding("POSITION", 0), VertexFormat::float32X3, 0))
+                            .AddAttribute(VertexAttribute(HlslVertexBinding("COLOR", 0), VertexFormat::float32X3, offsetof(Vertex, color)))));
+        } else {
+            createInfo.SetVertexState(
+                VertexState()
+                    .AddVertexBufferLayout(
+                        VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
+                            .AddAttribute(VertexAttribute(GlslVertexBinding(0), VertexFormat::float32X3, 0))
+                            .AddAttribute(VertexAttribute(GlslVertexBinding(1), VertexFormat::float32X3, offsetof(Vertex, color)))));
+        }
 
         pipeline = device->CreateRasterPipeline(createInfo);
     }

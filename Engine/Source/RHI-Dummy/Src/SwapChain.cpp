@@ -33,9 +33,4 @@ namespace RHI::Dummy {
     void DummySwapChain::Present(RHI::Semaphore* waitSemaphore)
     {
     }
-
-    void DummySwapChain::Destroy()
-    {
-        delete this;
-    }
 }

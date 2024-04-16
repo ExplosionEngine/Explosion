@@ -25,23 +25,22 @@ namespace RHI::Vulkan {
         VulkanDevice(VulkanGpu& inGpu, const DeviceCreateInfo& inCreateInfo);
         ~VulkanDevice() override;
 
-        void Destroy() override;
         size_t GetQueueNum(QueueType inType) override;
         Queue* GetQueue(QueueType inType, size_t inIndex) override;
-        Surface* CreateSurface(const SurfaceCreateInfo& inCreateInfo) override;
-        SwapChain* CreateSwapChain(const SwapChainCreateInfo& inCreateInfo) override;
-        Buffer* CreateBuffer(const BufferCreateInfo& inCreateInfo) override;
-        Texture* CreateTexture(const TextureCreateInfo& inCreateInfo) override;
-        Sampler* CreateSampler(const SamplerCreateInfo& inCreateInfo) override;
-        BindGroupLayout* CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo) override;
-        BindGroup* CreateBindGroup(const BindGroupCreateInfo& inCreateInfo) override;
-        PipelineLayout* CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo) override;
-        ShaderModule* CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo) override;
-        ComputePipeline* CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo) override;
-        RasterPipeline* CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo) override;
-        CommandBuffer* CreateCommandBuffer() override;
-        Fence* CreateFence(bool initAsSignaled) override;
-        Semaphore* CreateSemaphore() override;
+        Common::UniqueRef<Surface> CreateSurface(const SurfaceCreateInfo& inCreateInfo) override;
+        Common::UniqueRef<SwapChain> CreateSwapChain(const SwapChainCreateInfo& inCreateInfo) override;
+        Common::UniqueRef<Buffer> CreateBuffer(const BufferCreateInfo& inCreateInfo) override;
+        Common::UniqueRef<Texture> CreateTexture(const TextureCreateInfo& inCreateInfo) override;
+        Common::UniqueRef<Sampler> CreateSampler(const SamplerCreateInfo& inCreateInfo) override;
+        Common::UniqueRef<BindGroupLayout> CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo) override;
+        Common::UniqueRef<BindGroup> CreateBindGroup(const BindGroupCreateInfo& inCreateInfo) override;
+        Common::UniqueRef<PipelineLayout> CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo) override;
+        Common::UniqueRef<ShaderModule> CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo) override;
+        Common::UniqueRef<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo) override;
+        Common::UniqueRef<RasterPipeline> CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo) override;
+        Common::UniqueRef<CommandBuffer> CreateCommandBuffer() override;
+        Common::UniqueRef<Fence> CreateFence(bool initAsSignaled) override;
+        Common::UniqueRef<Semaphore> CreateSemaphore() override;
         bool CheckSwapChainFormatSupport(Surface* inSurface, PixelFormat inFormat) override;
 
         VkDevice GetNative();

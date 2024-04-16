@@ -12,7 +12,5 @@ namespace RHI::Dummy {
         NonCopyable(DummyBindGroupLayout)
         explicit DummyBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo);
         ~DummyBindGroupLayout() override;
-
-        void Destroy() override;
     };
 }

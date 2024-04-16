@@ -2,7 +2,7 @@
 // Created by johnk on 28/3/2022.
 //
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <RHI/DirectX12/Instance.h>
 #include <RHI/DirectX12/Device.h>
@@ -17,7 +17,7 @@
 namespace RHI::DirectX12 {
     static uint8_t GetSyncInterval(PresentMode presentMode)
     {
-        return presentMode == PresentMode::immediately ? 1 : 0;
+        return presentMode == PresentMode::immediately ? 0 : 1;
     }
 }
 
@@ -57,11 +57,6 @@ namespace RHI::DirectX12 {
         nativeSwapChain->Present(GetSyncInterval(presentMode), false);
     }
 
-    void DX12SwapChain::Destroy()
-    {
-        delete this;
-    }
-
     void DX12SwapChain::CreateDX12SwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
         auto& instance = device.GetGpu().GetInstance();
@@ -76,7 +71,7 @@ namespace RHI::DirectX12 {
         desc.Height = inCreateInfo.extent.y;
         desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(inCreateInfo.format);
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        desc.SwapEffect = DX12EnumCast<PresentMode, DXGI_SWAP_EFFECT>(inCreateInfo.presentMode);
+        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
         desc.SampleDesc.Count = 1;
 
         ComPtr<IDXGISwapChain1> dx12SwapChain1;

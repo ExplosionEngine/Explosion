@@ -7,13 +7,14 @@
 namespace RHI::Dummy {
     DummyShaderModule::DummyShaderModule(const ShaderModuleCreateInfo& createInfo)
         : ShaderModule(createInfo)
+        , entryPoint()
     {
     }
 
     DummyShaderModule::~DummyShaderModule() = default;
 
-    void DummyShaderModule::Destroy()
+    const std::string& DummyShaderModule::GetEntryPoint()
     {
-        delete this;
+        return entryPoint;
     }
 }

@@ -33,8 +33,6 @@ namespace RHI {
         NonCopyable(TextureView)
         virtual ~TextureView();
 
-        virtual void Destroy() = 0;
-
     protected:
         explicit TextureView(const TextureViewCreateInfo& createInfo);
     };

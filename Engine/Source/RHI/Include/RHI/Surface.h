@@ -19,8 +19,6 @@ namespace RHI {
         NonCopyable(Surface)
         virtual ~Surface();
 
-        virtual void Destroy() = 0;
-
     protected:
         explicit Surface(const SurfaceCreateInfo& createInfo);
     };

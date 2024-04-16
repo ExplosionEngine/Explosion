@@ -90,7 +90,6 @@ namespace RHI {
         d24UnormS8Uint,
         d32Float,
         d32FloatS8Uint,
-        // TODO features / bc / etc / astc
         max
     };
 
@@ -185,7 +184,7 @@ namespace RHI {
         max
     };
 
-    enum class ComparisonFunc : EnumType {
+    enum class CompareFunc : EnumType {
         never,
         less,
         equal,
@@ -273,6 +272,12 @@ namespace RHI {
         max
     };
 
+    enum class FillMode : EnumType {
+        wireframe,
+        solid,
+        max
+    };
+
     enum class CullMode : EnumType {
         none,
         front,
@@ -303,10 +308,6 @@ namespace RHI {
         oneMinusDst,
         dstAlpha,
         oneMinusDstAlpha,
-        // TODO check spec
-        // scrAlphaSaturated,
-        // constant,
-        // oneMinusConstant,
         max
     };
 

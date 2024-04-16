@@ -40,11 +40,6 @@ namespace RHI::DirectX12 {
 
     DX12BufferView::~DX12BufferView() = default;
 
-    void DX12BufferView::Destroy()
-    {
-        delete this;
-    }
-
     CD3DX12_CPU_DESCRIPTOR_HANDLE DX12BufferView::GetNativeCpuDescriptorHandle() const
     {
         return std::get<CD3DX12_CPU_DESCRIPTOR_HANDLE>(nativeView);

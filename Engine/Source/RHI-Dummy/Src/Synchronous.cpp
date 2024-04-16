@@ -26,20 +26,10 @@ namespace RHI::Dummy {
     {
     }
 
-    void DummyFence::Destroy()
-    {
-        delete this;
-    }
-
     DummySemaphore::DummySemaphore(DummyDevice& device)
         : Semaphore(device)
     {
     }
 
     DummySemaphore::~DummySemaphore() = default;
-
-    void DummySemaphore::Destroy()
-    {
-        delete this;
-    }
 }

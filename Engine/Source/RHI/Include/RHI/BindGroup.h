@@ -38,8 +38,6 @@ namespace RHI {
         NonCopyable(BindGroup)
         virtual ~BindGroup();
 
-        virtual void Destroy() = 0;
-
     protected:
         explicit BindGroup(const BindGroupCreateInfo& createInfo);
     };

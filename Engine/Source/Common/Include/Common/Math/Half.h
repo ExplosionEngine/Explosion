@@ -138,7 +138,6 @@ namespace Common {
             }
             else
             {
-                // TODO static_cast
                 this->exponent = static_cast<uint16_t>(static_cast<int32_t>(full.exponent) - 127 + 15);
                 this->mantissa = static_cast<uint16_t>(full.mantissa >> 13);
             }

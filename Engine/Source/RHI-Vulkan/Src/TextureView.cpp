@@ -19,11 +19,6 @@ namespace RHI::Vulkan {
         DestroyImageView();
     }
 
-    void VulkanTextureView::Destroy()
-    {
-        delete this;
-    }
-
     void VulkanTextureView::CreateImageView(const TextureViewCreateInfo& inCreateInfo)
     {
         VkImageViewCreateInfo viewInfo = {};

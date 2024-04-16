@@ -64,11 +64,6 @@ namespace RHI::Vulkan {
         Assert(vkQueuePresentKHR(nativeQueue, &presetInfo) == VK_SUCCESS);
     }
 
-    void VulkanSwapChain::Destroy()
-    {
-        delete this;
-    }
-
     void VulkanSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
         auto vkDevice = device.GetNative();

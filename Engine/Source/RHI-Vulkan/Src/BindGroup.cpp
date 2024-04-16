@@ -27,11 +27,6 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VulkanBindGroup::Destroy()
-    {
-        delete this;
-    }
-
     VkDescriptorSet VulkanBindGroup::GetNative() const
     {
         return nativeDescriptorSet;

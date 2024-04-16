@@ -47,7 +47,6 @@ namespace RHI::DirectX12 {
         std::vector<ID3D12DescriptorHeap*> GetNative();
 
     private:
-        // TODO check this
         static constexpr uint32_t samplerHeapCapacity = 1024;
         static constexpr uint32_t cbvSrvUavHeapCapacity = 10240;
 
@@ -62,8 +61,7 @@ namespace RHI::DirectX12 {
         explicit DX12CommandBuffer(DX12Device& inDevice);
         ~DX12CommandBuffer() override;
 
-        CommandRecorder* Begin() override;
-        void Destroy() override;
+        Common::UniqueRef<CommandRecorder> Begin() override;
 
         ID3D12GraphicsCommandList* GetNative();
         RuntimeDescriptorCompact* GetRuntimeDescriptorHeaps();

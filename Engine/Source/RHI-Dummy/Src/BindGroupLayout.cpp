@@ -11,9 +11,4 @@ namespace RHI::Dummy {
     }
 
     DummyBindGroupLayout::~DummyBindGroupLayout() = default;
-
-    void DummyBindGroupLayout::Destroy()
-    {
-        delete this;
-    }
 }

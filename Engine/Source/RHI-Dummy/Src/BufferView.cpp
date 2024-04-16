@@ -11,9 +11,4 @@ namespace RHI::Dummy {
     }
 
     DummyBufferView::~DummyBufferView() = default;
-
-    void DummyBufferView::Destroy()
-    {
-        delete this;
-    }
 }

@@ -12,7 +12,5 @@ namespace RHI::Dummy {
         NonCopyable(DummyBufferView)
         explicit DummyBufferView(const BufferViewCreateInfo& createInfo);
         ~DummyBufferView() override;
-
-        void Destroy() override;
     };
 }

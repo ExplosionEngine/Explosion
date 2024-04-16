@@ -11,9 +11,4 @@ namespace RHI::Dummy {
     }
 
     DummyPipelineLayout::~DummyPipelineLayout() = default;
-
-    void DummyPipelineLayout::Destroy()
-    {
-        delete this;
-    }
 }

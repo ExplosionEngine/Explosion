@@ -294,6 +294,7 @@ private:
     void CreateBindGroupLayout()
     {
         BindGroupLayoutCreateInfo createInfo(0);
+        // TODO use reflection
         if (instance->GetRHIType() == RHIType::directX12) {
             createInfo.AddEntry(BindGroupLayoutEntry(
                 ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
@@ -319,6 +320,7 @@ private:
     void CreateBindGroup()
     {
         BindGroupCreateInfo createInfo(bindGroupLayout.Get());
+        // TODO use reflection
         if (instance->GetRHIType() == RHIType::directX12) {
             createInfo.AddEntry(
                 BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
@@ -351,41 +353,36 @@ private:
     {
         std::vector<uint8_t> vsByteCode;
         CompileShader(vsByteCode, "../Test/Sample/TexSampling/TexSampling.hlsl", "VSMain", ShaderStageBits::sVertex);
-        vertexShader = device->CreateShaderModule(ShaderModuleCreateInfo(vsByteCode));
+        vertexShader = device->CreateShaderModule(ShaderModuleCreateInfo("VSMain", vsByteCode));
 
         std::vector<uint8_t> fsByteCode;
         CompileShader(fsByteCode, "../Test/Sample/TexSampling/TexSampling.hlsl", "FSMain", ShaderStageBits::sPixel);
-        fragmentShader = device->CreateShaderModule(ShaderModuleCreateInfo(fsByteCode));
+        fragmentShader = device->CreateShaderModule(ShaderModuleCreateInfo("FSMain", fsByteCode));
 
-        RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo()
-            .SetLayout(pipelineLayout.Get())
+        RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo(pipelineLayout.Get())
             .SetVertexShader(vertexShader.Get())
             .SetPixelShader(fragmentShader.Get())
-            .SetVertexState(
-                VertexState()
-                    .AddVertexBufferLayout(
-                        VertexBufferLayout()
-                            .SetStepMode(VertexStepMode::perVertex)
-                            .SetStride(sizeof(Vertex))
-                            .AddAttribute(VertexAttribute("POSITION", 0, VertexFormat::float32X3, 0))
-                            .AddAttribute(VertexAttribute("TEXCOORD", 0, VertexFormat::float32X2, offsetof(Vertex, uv)))))
             .SetFragmentState(
                 FragmentState()
-                    .AddColorTarget(
-                        ColorTargetState()
-                            .SetFormat(swapChainFormat)
-                            .SetWriteFlags(ColorWriteBits::all)))
-            .SetPrimitiveState(
-                PrimitiveState()
-                    .SetDepthClip(false)
-                    .SetFrontFace(FrontFace::ccw)
-                    .SetCullMode(CullMode::none)
-                    .SetTopologyType(PrimitiveTopologyType::triangle)
-                    .SetStripIndexFormat(IndexFormat::uint16))
-            .SetDepthStencilState(
-                DepthStencilState()
-                    .SetDepthEnabled(false)
-                    .SetStencilEnabled(false));
+                    .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all)))
+            .SetPrimitiveState(PrimitiveState(PrimitiveTopologyType::triangle, FillMode::solid, IndexFormat::uint16, FrontFace::ccw, CullMode::none));
+
+        // TODO use reflection
+        if (rhiType == RHIType::directX12) {
+            createInfo.SetVertexState(
+                VertexState()
+                    .AddVertexBufferLayout(
+                        VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
+                            .AddAttribute(VertexAttribute(HlslVertexBinding("POSITION", 0), VertexFormat::float32X3, 0))
+                            .AddAttribute(VertexAttribute(HlslVertexBinding("TEXCOORD", 0), VertexFormat::float32X2, offsetof(Vertex, uv)))));
+        } else {
+            createInfo.SetVertexState(
+                VertexState()
+                    .AddVertexBufferLayout(
+                        VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
+                            .AddAttribute(VertexAttribute(GlslVertexBinding(0), VertexFormat::float32X3, 0))
+                            .AddAttribute(VertexAttribute(GlslVertexBinding(1), VertexFormat::float32X2, offsetof(Vertex, uv)))));
+        }
 
         pipeline = device->CreateRasterPipeline(createInfo);
     }

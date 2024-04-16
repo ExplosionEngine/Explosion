@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <RHI/Surface.h>
 
@@ -15,7 +15,6 @@ namespace RHI::DirectX12 {
         explicit DX12Surface(const SurfaceCreateInfo& inCreateInfo);
         ~DX12Surface() override;
 
-        void Destroy() override;
         HWND GetNative() const;
 
     private:

@@ -14,7 +14,6 @@ namespace RHI::Dummy {
         DummyTexture() = default;
         ~DummyTexture() override;
 
-        TextureView* CreateTextureView(const TextureViewCreateInfo& createInfo) override;
-        void Destroy() override;
+        Common::UniqueRef<TextureView> CreateTextureView(const TextureViewCreateInfo& createInfo) override;
     };
 }

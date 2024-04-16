@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-#include <Windows.h>
+#include <windows.h>
 #include <wrl/client.h>
 #include <d3d12.h>
 using namespace Microsoft::WRL;
@@ -26,7 +26,6 @@ namespace RHI::DirectX12 {
         bool IsSignaled() override;
         void Reset() override;
         void Wait() override;
-        void Destroy() override;
 
         ID3D12Fence* GetNative();
 
@@ -44,8 +43,6 @@ namespace RHI::DirectX12 {
         explicit DX12Semaphore(DX12Device& inDevice);
 
         ID3D12Fence* GetNative();
-
-        void Destroy() override;
 
     private:
         void CreateNativeFence(DX12Device& inDevice);

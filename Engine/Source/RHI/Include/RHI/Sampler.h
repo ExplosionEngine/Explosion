@@ -18,7 +18,7 @@ namespace RHI {
         FilterMode mipFilter;
         float lodMinClamp;
         float lodMaxClamp;
-        ComparisonFunc comparisonFunc;
+        CompareFunc comparisonFunc;
         uint8_t maxAnisotropy;
         std::string debugName;
 
@@ -31,7 +31,7 @@ namespace RHI {
         SamplerCreateInfo& SetMipFilter(FilterMode inMode);
         SamplerCreateInfo& SetLodMinClamp(float inValue);
         SamplerCreateInfo& SetLodMaxClamp(float inValue);
-        SamplerCreateInfo& SetComparisonFunc(ComparisonFunc inFunc);
+        SamplerCreateInfo& SetComparisonFunc(CompareFunc inFunc);
         SamplerCreateInfo& SetMaxAnisotropy(uint8_t inValue);
         SamplerCreateInfo& SetDebugName(std::string inName);
     };
@@ -40,8 +40,6 @@ namespace RHI {
     public:
         NonCopyable(Sampler)
         virtual ~Sampler();
-
-        virtual void Destroy() = 0;
 
     protected:
         explicit Sampler(const SamplerCreateInfo& createInfo);

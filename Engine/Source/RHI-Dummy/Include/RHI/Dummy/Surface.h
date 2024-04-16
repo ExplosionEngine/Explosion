@@ -12,7 +12,5 @@ namespace RHI::Dummy {
         NonCopyable(DummySurface)
         explicit DummySurface(const SurfaceCreateInfo& createInfo);
         ~DummySurface() override;
-
-        void Destroy() override;
     };
 }

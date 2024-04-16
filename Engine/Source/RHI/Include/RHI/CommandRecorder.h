@@ -138,7 +138,6 @@ namespace RHI {
         virtual void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) = 0;
         virtual void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) = 0;
         virtual void EndPass() = 0;
-        virtual void Destroy() = 0;
 
     protected:
         CopyPassCommandRecorder();
@@ -153,7 +152,6 @@ namespace RHI {
         virtual void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) = 0;
         virtual void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) = 0;
         virtual void EndPass() = 0;
-        virtual void Destroy() = 0;
 
     protected:
         ComputePassCommandRecorder();
@@ -179,7 +177,6 @@ namespace RHI {
         // TODO DrawIndexedIndirect(...)
         // TODO MultiIndirectDraw(...)
         virtual void EndPass() = 0;
-        virtual void Destroy() = 0;
 
     protected:
         RasterPassCommandRecorder();
@@ -190,11 +187,10 @@ namespace RHI {
         NonCopyable(CommandRecorder)
         virtual ~CommandRecorder();
 
-        virtual CopyPassCommandRecorder* BeginCopyPass() = 0;
-        virtual ComputePassCommandRecorder* BeginComputePass() = 0;
-        virtual RasterPassCommandRecorder* BeginRasterPass(const RasterPassBeginInfo& beginInfo) = 0;
+        virtual Common::UniqueRef<CopyPassCommandRecorder> BeginCopyPass() = 0;
+        virtual Common::UniqueRef<ComputePassCommandRecorder> BeginComputePass() = 0;
+        virtual Common::UniqueRef<RasterPassCommandRecorder> BeginRasterPass(const RasterPassBeginInfo& beginInfo) = 0;
         virtual void End() = 0;
-        virtual void Destroy() = 0;
 
     protected:
         CommandRecorder();
@@ -202,7 +198,7 @@ namespace RHI {
 }
 
 namespace RHI {
-    template<typename Derived>
+    template <typename Derived>
     ColorAttachmentBase<Derived>::ColorAttachmentBase(
         LoadOp inLoadOp, StoreOp inStoreOp, const Common::LinearColor& inClearValue)
         : loadOp(inLoadOp)
@@ -232,7 +228,7 @@ namespace RHI {
         return *static_cast<Derived*>(this);
     }
 
-    template<typename Derived>
+    template <typename Derived>
     DepthStencilAttachmentBase<Derived>::DepthStencilAttachmentBase(
         bool inDepthReadOnly,
         LoadOp inDepthLoadOp,

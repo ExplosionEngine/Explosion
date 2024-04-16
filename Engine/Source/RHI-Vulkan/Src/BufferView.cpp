@@ -30,11 +30,6 @@ namespace RHI::Vulkan {
 
     VulkanBufferView::~VulkanBufferView() = default;
 
-    void VulkanBufferView::Destroy()
-    {
-        delete this;
-    }
-
     void VulkanBufferView::InitializeBufferAttrib(const BufferViewCreateInfo& inCreateInfo)
     {
         offset = inCreateInfo.offset;

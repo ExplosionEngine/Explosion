@@ -33,30 +33,28 @@ namespace RHI::DirectX12 {
     D3D12_RENDER_TARGET_BLEND_DESC GetDX12RenderTargetBlendDesc(const ColorTargetState& colorTargetState)
     {
         D3D12_RENDER_TARGET_BLEND_DESC desc {};
-        desc.BlendEnable = true;
+        desc.BlendEnable = colorTargetState.blendEnabled;
         desc.LogicOpEnable = false;
         desc.RenderTargetWriteMask = GetDX12RenderTargetWriteMasks(colorTargetState.writeFlags);
-        desc.BlendOp = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.blend.color.op);
-        desc.SrcBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.blend.color.srcFactor);
-        desc.DestBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.blend.color.dstFactor);
-        desc.BlendOpAlpha = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.blend.alpha.op);
-        desc.SrcBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.blend.alpha.srcFactor);
-        desc.DestBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.blend.alpha.dstFactor);
+        desc.BlendOp = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.colorBlend.op);
+        desc.SrcBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.colorBlend.srcFactor);
+        desc.DestBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.colorBlend.dstFactor);
+        desc.BlendOpAlpha = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.alphaBlend.op);
+        desc.SrcBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.alphaBlend.srcFactor);
+        desc.DestBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.alphaBlend.dstFactor);
         return desc;
     }
 
     CD3DX12_RASTERIZER_DESC GetDX12RasterizerDesc(const RasterPipelineCreateInfo& createInfo)
     {
         CD3DX12_RASTERIZER_DESC desc(D3D12_DEFAULT);
-        // TODO expose to RHI interface?
-        desc.FillMode = D3D12_FILL_MODE_SOLID;
+        desc.FillMode = DX12EnumCast<FillMode, D3D12_FILL_MODE>(createInfo.primitiveState.fillMode);
         desc.CullMode = DX12EnumCast<CullMode, D3D12_CULL_MODE>(createInfo.primitiveState.cullMode);
         desc.FrontCounterClockwise = createInfo.primitiveState.frontFace == FrontFace::ccw;
         desc.DepthBias = createInfo.depthStencilState.depthBias;
         desc.DepthBiasClamp = createInfo.depthStencilState.depthBiasClamp;
         desc.SlopeScaledDepthBias = createInfo.depthStencilState.depthBiasSlopeScale;
         desc.DepthClipEnable = createInfo.primitiveState.depthClip;
-        // TODO check this
         desc.MultisampleEnable = createInfo.multiSampleState.count > 1;
         desc.AntialiasedLineEnable = false;
         desc.ForcedSampleCount = 0;
@@ -83,7 +81,7 @@ namespace RHI::DirectX12 {
         desc.StencilFailOp = DX12EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.failOp);
         desc.StencilDepthFailOp = DX12EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.depthFailOp);
         desc.StencilPassOp = DX12EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.passOp);
-        desc.StencilFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(stencilFaceState.comparisonFunc);
+        desc.StencilFunc = DX12EnumCast<CompareFunc, D3D12_COMPARISON_FUNC>(stencilFaceState.compareFunc);
         return desc;
     }
 
@@ -91,10 +89,10 @@ namespace RHI::DirectX12 {
     {
         CD3DX12_DEPTH_STENCIL_DESC desc(D3D12_DEFAULT);
         // TODO check this
-        desc.DepthEnable = createInfo.depthStencilState.depthEnable;
+        desc.DepthEnable = createInfo.depthStencilState.depthEnabled;
         desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-        desc.DepthFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(createInfo.depthStencilState.depthComparisonFunc);
-        desc.StencilEnable = createInfo.depthStencilState.stencilEnable;
+        desc.DepthFunc = DX12EnumCast<CompareFunc, D3D12_COMPARISON_FUNC>(createInfo.depthStencilState.depthCompareFunc);
+        desc.StencilEnable = createInfo.depthStencilState.stencilEnabled;
         desc.StencilReadMask = createInfo.depthStencilState.stencilReadMask;
         desc.StencilWriteMask = createInfo.depthStencilState.stencilWriteMask;
         desc.FrontFace = GetDX12DepthStencilOpDesc(createInfo.depthStencilState.stencilFront);
@@ -127,7 +125,7 @@ namespace RHI::DirectX12 {
 
     void UpdateDX12DepthStencilTargetDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const RasterPipelineCreateInfo& createInfo)
     {
-        if (!createInfo.depthStencilState.depthEnable && !createInfo.depthStencilState.stencilEnable) {
+        if (!createInfo.depthStencilState.depthEnabled && !createInfo.depthStencilState.stencilEnabled) {
             return;
         }
         desc.DSVFormat = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.depthStencilState.format);
@@ -143,14 +141,15 @@ namespace RHI::DirectX12 {
 
             for (auto j = 0; j < layout.attributes.size(); j++) {
                 const auto& attribute = layout.attributes[j];
+                const auto& vertexBinding = std::get<HlslVertexBinding>(attribute.platformBinding);
 
                 D3D12_INPUT_ELEMENT_DESC desc {};
                 desc.Format = DX12EnumCast<VertexFormat, DXGI_FORMAT>(attribute.format);
                 desc.InputSlot = i;
                 desc.InputSlotClass = DX12EnumCast<VertexStepMode, D3D12_INPUT_CLASSIFICATION>(layout.stepMode);
                 desc.AlignedByteOffset = attribute.offset;
-                desc.SemanticName = attribute.semanticName.c_str();
-                desc.SemanticIndex = attribute.semanticIndex;
+                desc.SemanticName = vertexBinding.semanticName.c_str();
+                desc.SemanticIndex = vertexBinding.semanticIndex;
                 result.emplace_back(desc);
             }
         }
@@ -172,11 +171,6 @@ namespace RHI::DirectX12 {
     }
 
     DX12ComputePipeline::~DX12ComputePipeline() = default;
-
-    void DX12ComputePipeline::Destroy()
-    {
-        delete this;
-    }
 
     DX12PipelineLayout& DX12ComputePipeline::GetPipelineLayout()
     {
@@ -214,11 +208,6 @@ namespace RHI::DirectX12 {
     }
 
     DX12RasterPipeline::~DX12RasterPipeline() = default;
-
-    void DX12RasterPipeline::Destroy()
-    {
-        delete this;
-    }
 
     DX12PipelineLayout& DX12RasterPipeline::GetPipelineLayout()
     {

@@ -22,8 +22,6 @@ namespace RHI::DirectX12 {
         explicit DX12TextureView(DX12Device& inDevice, DX12Texture& inTexture, const TextureViewCreateInfo& inCreateInfo);
         ~DX12TextureView() override;
 
-        void Destroy() override;
-
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetNativeCpuDescriptorHandle();
 
     private:

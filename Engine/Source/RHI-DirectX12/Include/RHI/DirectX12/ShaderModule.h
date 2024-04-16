@@ -16,11 +16,12 @@ namespace RHI::DirectX12 {
         explicit DX12ShaderModule(const ShaderModuleCreateInfo& inCreateInfo);
         ~DX12ShaderModule() override;
 
-        void Destroy() override;
+        const std::string& GetEntryPoint() override;
 
         const D3D12_SHADER_BYTECODE& GetNative() const;
 
     private:
         CD3DX12_SHADER_BYTECODE nativeShaderBytecode;
+        std::string entryPoint;
     };
 }

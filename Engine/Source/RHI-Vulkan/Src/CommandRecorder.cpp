@@ -73,29 +73,24 @@ namespace RHI::Vulkan {
         }
     }
 
-    CopyPassCommandRecorder* VulkanCommandRecorder::BeginCopyPass()
+    Common::UniqueRef<CopyPassCommandRecorder> VulkanCommandRecorder::BeginCopyPass()
     {
-        return new VulkanCopyPassCommandRecorder(device, *this, commandBuffer);
+        return Common::UniqueRef<CopyPassCommandRecorder>(new VulkanCopyPassCommandRecorder(device, *this, commandBuffer));
     }
 
-    ComputePassCommandRecorder* VulkanCommandRecorder::BeginComputePass()
+    Common::UniqueRef<ComputePassCommandRecorder> VulkanCommandRecorder::BeginComputePass()
     {
-        return new VulkanComputePassCommandRecorder(device, *this, commandBuffer);
+        return Common::UniqueRef<ComputePassCommandRecorder>(new VulkanComputePassCommandRecorder(device, *this, commandBuffer));
     }
 
-    RasterPassCommandRecorder* VulkanCommandRecorder::BeginRasterPass(const RasterPassBeginInfo& inBeginInfo)
+    Common::UniqueRef<RasterPassCommandRecorder> VulkanCommandRecorder::BeginRasterPass(const RasterPassBeginInfo& inBeginInfo)
     {
-        return new VulkanRasterPassCommandRecorder(device, *this, commandBuffer, inBeginInfo);
+        return Common::UniqueRef<RasterPassCommandRecorder>(new VulkanRasterPassCommandRecorder(device, *this, commandBuffer, inBeginInfo));
     }
 
     void VulkanCommandRecorder::End()
     {
         vkEndCommandBuffer(commandBuffer.GetNativeCommandBuffer());
-    }
-
-    void VulkanCommandRecorder::Destroy()
-    {
-        delete this;
     }
 
     VulkanCopyPassCommandRecorder::VulkanCopyPassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer)
@@ -166,11 +161,6 @@ namespace RHI::Vulkan {
     {
     }
 
-    void VulkanCopyPassCommandRecorder::Destroy()
-    {
-        delete this;
-    }
-
     VulkanComputePassCommandRecorder::VulkanComputePassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer)
         : device(inDevice)
         , commandRecorder(inCmdRecorder)
@@ -203,11 +193,6 @@ namespace RHI::Vulkan {
     void VulkanComputePassCommandRecorder::EndPass()
     {
         // TODO
-    }
-
-    void VulkanComputePassCommandRecorder::Destroy()
-    {
-        delete this;
     }
 
     VulkanRasterPassCommandRecorder::VulkanRasterPassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer, const RasterPassBeginInfo& inBeginInfo)
@@ -365,10 +350,5 @@ namespace RHI::Vulkan {
     void VulkanRasterPassCommandRecorder::EndPass()
     {
         device.GetGpu().GetInstance().pfnVkCmdEndRenderingKHR(nativeCmdBuffer);
-    }
-
-    void VulkanRasterPassCommandRecorder::Destroy()
-    {
-        delete this;
     }
 }

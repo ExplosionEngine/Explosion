@@ -58,12 +58,122 @@ namespace Rendering {
 }
 
 namespace Rendering {
+    VertexBinding::VertexBinding()
+        : semanticName()
+        , semanticIndex(0)
+    {
+    }
+
+    VertexBinding::VertexBinding(std::string inSemanticName, uint8_t inSemanticIndex)
+        : semanticName(std::move(inSemanticName))
+        , semanticIndex(inSemanticIndex)
+    {
+    }
+
+    std::string VertexBinding::FinalSemantic() const
+    {
+        if (semanticIndex == 0) {
+            return semanticName;
+        }
+        return semanticName + std::to_string(semanticIndex);
+    }
+
+    RHI::PlatformVertexBinding VertexBinding::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
+    {
+        return inReflectionData.QueryVertexBindingChecked(FinalSemantic());
+    }
+
+    size_t VertexBinding::Hash() const
+    {
+        return Common::HashUtils::CityHash(this, sizeof(VertexBinding));
+    }
+
+    VertexAttribute::VertexAttribute(const VertexBinding& inBinding, RHI::VertexFormat inFormat, size_t inOffset)
+        : RHI::VertexAttributeBase<VertexAttribute>(inFormat, inOffset)
+        , binding(inBinding)
+    {
+    }
+
+    VertexAttribute& VertexAttribute::SetBinding(const VertexBinding& inBinding)
+    {
+        binding = inBinding;
+        return *this;
+    }
+
+    size_t VertexAttribute::Hash() const
+    {
+        return Common::HashUtils::CityHash(this, sizeof(VertexAttribute));
+    }
+
+    RHI::VertexAttribute VertexAttribute::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
+    {
+        return RHI::VertexAttribute(binding.GetRHI(inReflectionData), format, offset);
+    }
+
+    VertexBufferLayout::VertexBufferLayout(RHI::VertexStepMode inStepMode, size_t inStride)
+        : RHI::VertexBufferLayoutBase<VertexBufferLayout>(inStepMode, inStride)
+    {
+    }
+
+    RHI::VertexBufferLayout VertexBufferLayout::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
+    {
+        RHI::VertexBufferLayout result(stepMode, stride);
+        result.attributes.reserve(attributes.size());
+        for (const auto& attribute : attributes) {
+            result.AddAttribute(attribute.GetRHI(inReflectionData));
+        }
+        return result;
+    }
+
+    VertexBufferLayout& VertexBufferLayout::AddAttribute(const VertexAttribute& inAttribute)
+    {
+        attributes.emplace_back(inAttribute);
+        return *this;
+    }
+
+    size_t VertexBufferLayout::Hash() const
+    {
+        std::vector<size_t> values;
+        values.reserve(attributes.size());
+
+        for (const auto& attribute : attributes) {
+            values.emplace_back(attribute.Hash());
+        }
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+    }
+
+    VertexState::VertexState() = default;
+
+    RHI::VertexState VertexState::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
+    {
+        RHI::VertexState result;
+        result.bufferLayouts.reserve(bufferLayouts.size());
+        for (const auto& bufferLayout : bufferLayouts) {
+            result.AddVertexBufferLayout(bufferLayout.GetRHI(inReflectionData));
+        }
+        return result;
+    }
+
+    VertexState& VertexState::AddVertexBufferLayout(const VertexBufferLayout& inLayout)
+    {
+        bufferLayouts.emplace_back(inLayout);
+        return *this;
+    }
+
+    size_t VertexState::Hash() const
+    {
+        std::vector<size_t> values;
+        values.reserve(bufferLayouts.size());
+
+        for (const auto& layout : bufferLayouts) {
+            values.emplace_back(layout.Hash());
+        }
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t ));
+    }
+
     size_t ComputePipelineShaderSet::Hash() const
     {
-        std::vector<size_t> values = {
-            computeShader.Hash()
-        };
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return computeShader.Hash();
     }
 
     size_t RasterPipelineShaderSet::Hash() const
@@ -95,44 +205,13 @@ namespace Rendering {
 
     size_t RasterPipelineStateDesc::Hash() const
     {
-        auto computeVertexAttributeHash = [](const RHI::VertexAttribute& attribute) -> size_t {
-            std::vector<size_t> values = {
-                Common::HashUtils::CityHash(&attribute.format, sizeof(attribute.format)),
-                Common::HashUtils::CityHash(&attribute.offset, sizeof(attribute.offset)),
-                Common::HashUtils::CityHash(attribute.semanticName.data(), attribute.semanticName.size()),
-                Common::HashUtils::CityHash(&attribute.semanticIndex, sizeof(attribute.semanticIndex))
-            };
-            return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
-        };
-        auto computeVertexBufferLayoutHash = [computeVertexAttributeHash](const RHI::VertexBufferLayout& bufferLayout) -> size_t {
-            std::vector<size_t> values;
-            values.reserve(bufferLayout.attributes.size() + 2);
-            values.emplace_back(Common::HashUtils::CityHash(&bufferLayout.stride, sizeof(bufferLayout.stride)));
-            values.emplace_back(Common::HashUtils::CityHash(&bufferLayout.stepMode, sizeof(bufferLayout.stepMode)));
-            for (auto i = 0; i < bufferLayout.attributes.size(); i++) {
-                values.emplace_back(computeVertexAttributeHash(bufferLayout.attributes[i]));
-            }
-            return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
-        };
-        auto computeVertexStateHash = [computeVertexBufferLayoutHash](const VertexState& state) -> size_t {
-            std::vector<size_t> values;
-            values.reserve(state.bufferLayouts.size());
-            for (auto i = 0; i < state.bufferLayouts.size(); i++) {
-                values.emplace_back(computeVertexBufferLayoutHash(state.bufferLayouts[i]));
-            }
-            return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
-        };
-        auto computeFragmentStateHash = [](const FragmentState& state) -> size_t {
-            return Common::HashUtils::CityHash(state.colorTargets.data(), state.colorTargets.size() * sizeof(RHI::ColorTargetState));
-        };
-
         std::vector<size_t> values = {
             shaders.Hash(),
-            computeVertexStateHash(vertexState),
-            Common::HashUtils::CityHash(&primitiveState, sizeof(PrimitiveState)),
-            Common::HashUtils::CityHash(&depthStencilState, sizeof(DepthStencilState)),
-            Common::HashUtils::CityHash(&multiSampleState, sizeof(MultiSampleState)),
-            computeFragmentStateHash(fragmentState)
+            vertexState.Hash(),
+            primitiveState.Hash(),
+            depthStencilState.Hash(),
+            multiSampleState.Hash(),
+            fragmentState.Hash()
         };
         return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
     }
@@ -217,7 +296,9 @@ namespace Rendering {
     {
         std::unordered_map<uint8_t, BindingMap> layoutBindingMaps;
         for (const auto& pack : shaderInstancePack) {
-            const auto& resourceBindings = pack.instance->reflectionData.resourceBindings;
+            Assert(pack.instance->reflectionData != nullptr);
+
+            const auto& resourceBindings = pack.instance->reflectionData->resourceBindings;
             for (const auto& resourceBinding : resourceBindings) {
                 auto layoutIndex = resourceBinding.second.first;
                 const auto& name = resourceBinding.first;
@@ -310,6 +391,8 @@ namespace Rendering {
         RasterPipelineLayoutDesc desc = { inDesc.shaders };
         pipelineLayout = PipelineLayoutCache::Get(inDevice).GetLayout(desc);
 
+        Assert(inDesc.shaders.vertexShader.reflectionData);
+
         RHI::RasterPipelineCreateInfo createInfo;
         createInfo.layout = pipelineLayout->GetRHI();
         createInfo.vertexShader = inDesc.shaders.vertexShader.rhiHandle;
@@ -317,7 +400,7 @@ namespace Rendering {
         createInfo.geometryShader = inDesc.shaders.geometryShader.rhiHandle;
         createInfo.domainShader = inDesc.shaders.domainShader.rhiHandle;
         createInfo.hullShader = inDesc.shaders.hullShader.rhiHandle;
-        createInfo.vertexState = inDesc.vertexState;
+        createInfo.vertexState = inDesc.vertexState.GetRHI(*inDesc.shaders.vertexShader.reflectionData);
         createInfo.primitiveState = inDesc.primitiveState;
         createInfo.depthStencilState = inDesc.depthStencilState;
         createInfo.multiSampleState = inDesc.multiSampleState;

@@ -24,7 +24,6 @@ namespace RHI::DirectX12 {
         Texture* GetTexture(uint8_t inIndex) override;
         uint8_t AcquireBackTexture(RHI::Semaphore* inSignalSemaphore) override;
         void Present(RHI::Semaphore* inWaitSemaphore) override;
-        void Destroy() override;
 
     private:
         void CreateDX12SwapChain(const SwapChainCreateInfo& inCreateInfo) ;

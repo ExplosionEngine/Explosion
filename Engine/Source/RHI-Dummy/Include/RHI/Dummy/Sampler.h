@@ -12,7 +12,5 @@ namespace RHI::Dummy {
         NonCopyable(DummySampler)
         explicit DummySampler(const SamplerCreateInfo& createInfo);
         ~DummySampler() override;
-
-        void Destroy() override;
     };
 }

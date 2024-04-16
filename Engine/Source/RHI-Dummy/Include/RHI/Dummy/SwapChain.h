@@ -20,7 +20,6 @@ namespace RHI::Dummy {
         Texture* GetTexture(uint8_t index) override;
         uint8_t AcquireBackTexture(RHI::Semaphore* signalSemaphore) override;
         void Present(RHI::Semaphore* waitSemaphore) override;
-        void Destroy() override;
 
     private:
         bool pingPong;

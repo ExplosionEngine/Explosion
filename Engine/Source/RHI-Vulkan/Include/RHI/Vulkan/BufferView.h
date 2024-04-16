@@ -15,7 +15,6 @@ namespace RHI::Vulkan {
         NonCopyable(VulkanBufferView)
         VulkanBufferView(VulkanBuffer& inBuffer, const BufferViewCreateInfo& inCreateInfo);
         ~VulkanBufferView() override;
-        void Destroy() override;
 
         size_t GetOffset() const;
         size_t GetBufferSize() const;

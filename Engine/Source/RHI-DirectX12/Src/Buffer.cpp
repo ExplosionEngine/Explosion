@@ -19,7 +19,6 @@ namespace RHI::DirectX12 {
         static std::unordered_map<BufferUsageFlags, D3D12_HEAP_TYPE> rules = {
             { BufferUsageBits::mapWrite | BufferUsageBits::copySrc, D3D12_HEAP_TYPE_UPLOAD },
             { BufferUsageBits::mapRead | BufferUsageBits::copyDst, D3D12_HEAP_TYPE_READBACK }
-            // TODO check other conditions ?
         };
         static D3D12_HEAP_TYPE fallback = D3D12_HEAP_TYPE_DEFAULT;
 
@@ -71,14 +70,9 @@ namespace RHI::DirectX12 {
         nativeResource->Unmap(0, nullptr);
     }
 
-    BufferView* DX12Buffer::CreateBufferView(const BufferViewCreateInfo& inCreateInfo)
+    Common::UniqueRef<BufferView> DX12Buffer::CreateBufferView(const BufferViewCreateInfo& inCreateInfo)
     {
-        return new DX12BufferView(*this, inCreateInfo);
-    }
-
-    void DX12Buffer::Destroy()
-    {
-        delete this;
+        return Common::UniqueRef<BufferView>(new DX12BufferView(*this, inCreateInfo));
     }
 
     ID3D12Resource* DX12Buffer::GetNative()

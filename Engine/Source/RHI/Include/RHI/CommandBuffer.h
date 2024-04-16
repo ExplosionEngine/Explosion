@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Common/Utility.h>
+#include <RHI/Common.h>
 
 namespace RHI {
     class CommandRecorder;
@@ -14,8 +15,7 @@ namespace RHI {
         NonCopyable(CommandBuffer)
         virtual ~CommandBuffer();
 
-        virtual CommandRecorder* Begin() = 0;
-        virtual void Destroy() = 0;
+        virtual Common::UniqueRef<CommandRecorder> Begin() = 0;
 
     protected:
         CommandBuffer();

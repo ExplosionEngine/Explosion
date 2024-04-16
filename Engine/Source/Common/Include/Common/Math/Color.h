@@ -56,7 +56,6 @@ namespace Common {
         static const Color red;
         static const Color blue;
         static const Color green;
-        // TODO more color here
     };
 
     struct LinearColorConsts {
@@ -65,7 +64,6 @@ namespace Common {
         static const LinearColor red;
         static const LinearColor blue;
         static const LinearColor green;
-        // TODO more color here
     };
 }
 

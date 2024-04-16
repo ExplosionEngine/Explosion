@@ -23,12 +23,7 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VulkanCommandBuffer::Destroy()
-    {
-        delete this;
-    }
-
-    CommandRecorder* VulkanCommandBuffer::Begin()
+    Common::UniqueRef<CommandRecorder> VulkanCommandBuffer::Begin()
     {
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -36,7 +31,7 @@ namespace RHI::Vulkan {
         beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
         vkBeginCommandBuffer(nativeCmdBuffer, &beginInfo);
-        return new VulkanCommandRecorder(device, *this);
+        return Common::UniqueRef<CommandRecorder>(new VulkanCommandRecorder(device, *this));
     }
 
     VkCommandBuffer VulkanCommandBuffer::GetNativeCommandBuffer() const

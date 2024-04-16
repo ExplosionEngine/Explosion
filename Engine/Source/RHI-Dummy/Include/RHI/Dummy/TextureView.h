@@ -12,7 +12,5 @@ namespace RHI::Dummy {
         NonCopyable(DummyTextureView)
         explicit DummyTextureView(const TextureViewCreateInfo& createInfo);
         ~DummyTextureView() override;
-
-        void Destroy() override;
     };
 }

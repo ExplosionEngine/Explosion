@@ -18,7 +18,6 @@ namespace RHI::Dummy {
         bool IsSignaled() override;
         void Reset() override;
         void Wait() override;
-        void Destroy() override;
     };
 
     class DummySemaphore : public Semaphore {
@@ -26,7 +25,5 @@ namespace RHI::Dummy {
         NonCopyable(DummySemaphore)
         explicit DummySemaphore(DummyDevice& device);
         ~DummySemaphore() override;
-
-        void Destroy() override;
     };
 }

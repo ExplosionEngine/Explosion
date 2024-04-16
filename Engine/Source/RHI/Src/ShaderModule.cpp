@@ -5,14 +5,16 @@
 #include <RHI/ShaderModule.h>
 
 namespace RHI {
-    ShaderModuleCreateInfo::ShaderModuleCreateInfo(const void* inByteCode, size_t inSize)
-        : byteCode(inByteCode)
+    ShaderModuleCreateInfo::ShaderModuleCreateInfo(const std::string& inEntryPoint, const void* inByteCode, size_t inSize)
+        : entryPoint(inEntryPoint)
+        , byteCode(inByteCode)
         , size(inSize)
     {
     }
 
-    ShaderModuleCreateInfo::ShaderModuleCreateInfo(const std::vector<uint8_t>& inByteCode)
-        : byteCode(inByteCode.data())
+    ShaderModuleCreateInfo::ShaderModuleCreateInfo(const std::string& inEntryPoint, const std::vector<uint8_t>& inByteCode)
+        : entryPoint(inEntryPoint)
+        , byteCode(inByteCode.data())
         , size(inByteCode.size())
     {
     }

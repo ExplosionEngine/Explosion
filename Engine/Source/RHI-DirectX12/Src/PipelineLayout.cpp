@@ -31,11 +31,6 @@ namespace RHI::DirectX12 {
 
     DX12PipelineLayout::~DX12PipelineLayout() = default;
 
-    void DX12PipelineLayout::Destroy()
-    {
-        delete this;
-    }
-
     std::optional<BindingTypeAndRootParameterIndex> DX12PipelineLayout::QueryRootDescriptorParameterIndex(uint8_t inLayoutIndex, const HlslBinding& inBinding)
     {
         auto iter = rootParameterIndexMap.find(RootParameterKey {inLayoutIndex, inBinding });

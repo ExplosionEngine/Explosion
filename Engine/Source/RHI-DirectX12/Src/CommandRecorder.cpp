@@ -87,11 +87,6 @@ namespace RHI::DirectX12 {
     {
     }
 
-    void DX12CopyPassCommandRecorder::Destroy()
-    {
-        delete this;
-    }
-
     DX12ComputePassCommandRecorder::DX12ComputePassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer)
         : ComputePassCommandRecorder()
         , device(inDevice)
@@ -142,11 +137,6 @@ namespace RHI::DirectX12 {
 
     void DX12ComputePassCommandRecorder::EndPass()
     {
-    }
-
-    void DX12ComputePassCommandRecorder::Destroy()
-    {
-        delete this;
     }
 
     DX12RasterPassCommandRecorder::DX12RasterPassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer, const RasterPassBeginInfo& inBeginInfo)
@@ -278,11 +268,6 @@ namespace RHI::DirectX12 {
     {
     }
 
-    void DX12RasterPassCommandRecorder::Destroy()
-    {
-        delete this;
-    }
-
     DX12CommandRecorder::DX12CommandRecorder(DX12Device& inDevice, DX12CommandBuffer& inCmdBuffer) : CommandRecorder(), device(inDevice), commandBuffer(inCmdBuffer)
     {
         inCmdBuffer.GetNative()->Reset(inDevice.GetNativeCmdAllocator(), nullptr);
@@ -317,28 +302,23 @@ namespace RHI::DirectX12 {
         commandBuffer.GetNative()->ResourceBarrier(1, &resourceBarrier);
     }
 
-    CopyPassCommandRecorder* DX12CommandRecorder::BeginCopyPass()
+    Common::UniqueRef<CopyPassCommandRecorder> DX12CommandRecorder::BeginCopyPass()
     {
-        return new DX12CopyPassCommandRecorder(device, *this, commandBuffer);
+        return Common::UniqueRef<CopyPassCommandRecorder>(new DX12CopyPassCommandRecorder(device, *this, commandBuffer));
     }
 
-    ComputePassCommandRecorder* DX12CommandRecorder::BeginComputePass()
+    Common::UniqueRef<ComputePassCommandRecorder> DX12CommandRecorder::BeginComputePass()
     {
-        return new DX12ComputePassCommandRecorder(device, *this, commandBuffer);
+        return Common::UniqueRef<ComputePassCommandRecorder>(new DX12ComputePassCommandRecorder(device, *this, commandBuffer));
     }
 
-    RasterPassCommandRecorder* DX12CommandRecorder::BeginRasterPass(const RasterPassBeginInfo& inBeginInfo)
+    Common::UniqueRef<RasterPassCommandRecorder> DX12CommandRecorder::BeginRasterPass(const RasterPassBeginInfo& inBeginInfo)
     {
-        return new DX12RasterPassCommandRecorder(device, *this, commandBuffer, inBeginInfo);
+        return Common::UniqueRef<RasterPassCommandRecorder>(new DX12RasterPassCommandRecorder(device, *this, commandBuffer, inBeginInfo));
     }
 
     void DX12CommandRecorder::End()
     {
         commandBuffer.GetNative()->Close();
-    }
-
-    void DX12CommandRecorder::Destroy()
-    {
-        delete this;
     }
 }

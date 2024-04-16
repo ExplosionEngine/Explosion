@@ -19,7 +19,6 @@ namespace RHI::Vulkan {
         bool IsSignaled() override;
         void Reset() override;
         void Wait() override;
-        void Destroy() override;
 
         VkFence GetNative() const;
 
@@ -33,8 +32,6 @@ namespace RHI::Vulkan {
         NonCopyable(VulkanSemaphore)
         explicit VulkanSemaphore(VulkanDevice& inDevice);
         ~VulkanSemaphore() override;
-
-        void Destroy() override;
 
         VkSemaphore GetNative() const;
 

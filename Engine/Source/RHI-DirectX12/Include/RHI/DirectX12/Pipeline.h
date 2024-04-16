@@ -21,8 +21,6 @@ namespace RHI::DirectX12 {
         DX12ComputePipeline(DX12Device& inDevice, const ComputePipelineCreateInfo& inCreateInfo);
         ~DX12ComputePipeline() override;
 
-        void Destroy() override;
-
         DX12PipelineLayout& GetPipelineLayout();
         ID3D12PipelineState* GetNative();
 
@@ -39,8 +37,6 @@ namespace RHI::DirectX12 {
         NonCopyable(DX12RasterPipeline)
         DX12RasterPipeline(DX12Device& inDevice, const RasterPipelineCreateInfo& inCreateInfo);
         ~DX12RasterPipeline() override;
-
-        void Destroy() override;
 
         DX12PipelineLayout& GetPipelineLayout();
         ID3D12PipelineState* GetNative();

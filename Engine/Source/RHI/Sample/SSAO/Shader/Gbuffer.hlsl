@@ -14,10 +14,10 @@ VK_BINDING(1, 1) SamplerState samplerColorMap : register(s0, space1);
 
 struct VSInput
 {
-    float4 Pos : POSITION;
-    float2 UV : TEXCOORD;
-    float3 Color : COLOR;
-    float3 Normal : NORMAL;
+    VK_LOCATION(0) float4 Pos : POSITION;
+    VK_LOCATION(1) float2 UV : TEXCOORD;
+    VK_LOCATION(2) float3 Color : COLOR;
+    VK_LOCATION(3) float3 Normal : NORMAL;
 };
 
 struct VSOutput

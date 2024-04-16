@@ -13,11 +13,6 @@ namespace RHI::DirectX12 {
 
     DX12Surface::~DX12Surface() = default;
 
-    void DX12Surface::Destroy()
-    {
-        delete this;
-    }
-
     HWND DX12Surface::GetNative() const
     {
         return hWnd;
