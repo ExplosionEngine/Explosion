@@ -161,7 +161,7 @@ namespace RHI::Vulkan {
         auto iter = std::find_if(
             surfaceFormats.begin(),
             surfaceFormats.end(),
-            [format = VKEnumCast<PixelFormat, VkFormat>(inFormat), colorSpace](VkSurfaceFormatKHR surfaceFormat) {
+            [format = EnumCast<PixelFormat, VkFormat>(inFormat), colorSpace](VkSurfaceFormatKHR surfaceFormat) {
                 return format == surfaceFormat.format && colorSpace == surfaceFormat.colorSpace;
             });
         return iter != surfaceFormats.end();
@@ -185,7 +185,7 @@ namespace RHI::Vulkan {
                 continue;
             }
 
-            if (inProperties[i].queueFlags & VKEnumCast<QueueType, VkQueueFlagBits>(inQueueType)) {
+            if (inProperties[i].queueFlags & EnumCast<QueueType, VkQueueFlagBits>(inQueueType)) {
                 inUsedQueueFamily.emplace_back(i);
                 return i;
             }

@@ -97,7 +97,7 @@ namespace RHI::DirectX12 {
         CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_DEFAULT);
         D3D12_RESOURCE_DESC textureDesc = {};
         textureDesc.MipLevels = inCreateInfo.mipLevels;
-        textureDesc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(inCreateInfo.format);
+        textureDesc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(inCreateInfo.format);
         textureDesc.Width = inCreateInfo.extent.x;
         textureDesc.Height = inCreateInfo.extent.y;
         textureDesc.Flags = GetDX12ResourceFlags(inCreateInfo.usages);
@@ -111,7 +111,7 @@ namespace RHI::DirectX12 {
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &textureDesc,
-            DX12EnumCast<TextureState, D3D12_RESOURCE_STATES>(inCreateInfo.initialState),
+            EnumCast<TextureState, D3D12_RESOURCE_STATES>(inCreateInfo.initialState),
             nullptr,
             IID_PPV_ARGS(&nativeResource)));
         Assert(success);

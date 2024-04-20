@@ -102,7 +102,7 @@ namespace RHI::DirectX12 {
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &resourceDesc,
-            DX12EnumCast<BufferState, D3D12_RESOURCE_STATES>(inCreateInfo.initialState),
+            EnumCast<BufferState, D3D12_RESOURCE_STATES>(inCreateInfo.initialState),
             nullptr,
             IID_PPV_ARGS(&nativeResource)));
         Assert(success);

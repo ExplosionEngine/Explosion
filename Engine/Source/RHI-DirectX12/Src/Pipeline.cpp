@@ -36,20 +36,20 @@ namespace RHI::DirectX12 {
         desc.BlendEnable = colorTargetState.blendEnabled;
         desc.LogicOpEnable = false;
         desc.RenderTargetWriteMask = GetDX12RenderTargetWriteMasks(colorTargetState.writeFlags);
-        desc.BlendOp = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.colorBlend.op);
-        desc.SrcBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.colorBlend.srcFactor);
-        desc.DestBlend = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.colorBlend.dstFactor);
-        desc.BlendOpAlpha = DX12EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.alphaBlend.op);
-        desc.SrcBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.alphaBlend.srcFactor);
-        desc.DestBlendAlpha = DX12EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.alphaBlend.dstFactor);
+        desc.BlendOp = EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.colorBlend.op);
+        desc.SrcBlend = EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.colorBlend.srcFactor);
+        desc.DestBlend = EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.colorBlend.dstFactor);
+        desc.BlendOpAlpha = EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.alphaBlend.op);
+        desc.SrcBlendAlpha = EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.alphaBlend.srcFactor);
+        desc.DestBlendAlpha = EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.alphaBlend.dstFactor);
         return desc;
     }
 
     CD3DX12_RASTERIZER_DESC GetDX12RasterizerDesc(const RasterPipelineCreateInfo& createInfo)
     {
         CD3DX12_RASTERIZER_DESC desc(D3D12_DEFAULT);
-        desc.FillMode = DX12EnumCast<FillMode, D3D12_FILL_MODE>(createInfo.primitiveState.fillMode);
-        desc.CullMode = DX12EnumCast<CullMode, D3D12_CULL_MODE>(createInfo.primitiveState.cullMode);
+        desc.FillMode = EnumCast<FillMode, D3D12_FILL_MODE>(createInfo.primitiveState.fillMode);
+        desc.CullMode = EnumCast<CullMode, D3D12_CULL_MODE>(createInfo.primitiveState.cullMode);
         desc.FrontCounterClockwise = createInfo.primitiveState.frontFace == FrontFace::ccw;
         desc.DepthBias = createInfo.depthStencilState.depthBias;
         desc.DepthBiasClamp = createInfo.depthStencilState.depthBiasClamp;
@@ -78,10 +78,10 @@ namespace RHI::DirectX12 {
     D3D12_DEPTH_STENCILOP_DESC GetDX12DepthStencilOpDesc(const StencilFaceState& stencilFaceState)
     {
         D3D12_DEPTH_STENCILOP_DESC desc {};
-        desc.StencilFailOp = DX12EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.failOp);
-        desc.StencilDepthFailOp = DX12EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.depthFailOp);
-        desc.StencilPassOp = DX12EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.passOp);
-        desc.StencilFunc = DX12EnumCast<CompareFunc, D3D12_COMPARISON_FUNC>(stencilFaceState.compareFunc);
+        desc.StencilFailOp = EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.failOp);
+        desc.StencilDepthFailOp = EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.depthFailOp);
+        desc.StencilPassOp = EnumCast<StencilOp, D3D12_STENCIL_OP>(stencilFaceState.passOp);
+        desc.StencilFunc = EnumCast<CompareFunc, D3D12_COMPARISON_FUNC>(stencilFaceState.compareFunc);
         return desc;
     }
 
@@ -91,7 +91,7 @@ namespace RHI::DirectX12 {
         // TODO check this
         desc.DepthEnable = createInfo.depthStencilState.depthEnabled;
         desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-        desc.DepthFunc = DX12EnumCast<CompareFunc, D3D12_COMPARISON_FUNC>(createInfo.depthStencilState.depthCompareFunc);
+        desc.DepthFunc = EnumCast<CompareFunc, D3D12_COMPARISON_FUNC>(createInfo.depthStencilState.depthCompareFunc);
         desc.StencilEnable = createInfo.depthStencilState.stencilEnabled;
         desc.StencilReadMask = createInfo.depthStencilState.stencilReadMask;
         desc.StencilWriteMask = createInfo.depthStencilState.stencilWriteMask;
@@ -119,7 +119,7 @@ namespace RHI::DirectX12 {
         // have been checked num in function #GetDX12BlendDesc()
         desc.NumRenderTargets = createInfo.fragmentState.colorTargets.size();
         for (auto i = 0; i < createInfo.fragmentState.colorTargets.size(); i++) {
-            desc.RTVFormats[i] = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.fragmentState.colorTargets[i].format);
+            desc.RTVFormats[i] = EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.fragmentState.colorTargets[i].format);
         }
     }
 
@@ -128,7 +128,7 @@ namespace RHI::DirectX12 {
         if (!createInfo.depthStencilState.depthEnabled && !createInfo.depthStencilState.stencilEnabled) {
             return;
         }
-        desc.DSVFormat = DX12EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.depthStencilState.format);
+        desc.DSVFormat = EnumCast<PixelFormat, DXGI_FORMAT>(createInfo.depthStencilState.format);
     }
 
     std::vector<D3D12_INPUT_ELEMENT_DESC> GetDX12InputElements(const RasterPipelineCreateInfo& createInfo)
@@ -144,9 +144,9 @@ namespace RHI::DirectX12 {
                 const auto& vertexBinding = std::get<HlslVertexBinding>(attribute.platformBinding);
 
                 D3D12_INPUT_ELEMENT_DESC desc {};
-                desc.Format = DX12EnumCast<VertexFormat, DXGI_FORMAT>(attribute.format);
+                desc.Format = EnumCast<VertexFormat, DXGI_FORMAT>(attribute.format);
                 desc.InputSlot = i;
-                desc.InputSlotClass = DX12EnumCast<VertexStepMode, D3D12_INPUT_CLASSIFICATION>(layout.stepMode);
+                desc.InputSlotClass = EnumCast<VertexStepMode, D3D12_INPUT_CLASSIFICATION>(layout.stepMode);
                 desc.AlignedByteOffset = attribute.offset;
                 desc.SemanticName = vertexBinding.semanticName.c_str();
                 desc.SemanticIndex = vertexBinding.semanticIndex;
@@ -240,7 +240,7 @@ namespace RHI::DirectX12 {
         desc.DepthStencilState = GetDX12DepthStencilDesc(inCreateInfo);
         desc.SampleMask = GetDX12SampleMask(inCreateInfo);
         desc.SampleDesc = GetDX12SampleDesc(inCreateInfo);
-        desc.PrimitiveTopologyType = DX12EnumCast<PrimitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY_TYPE>(inCreateInfo.primitiveState.topologyType);
+        desc.PrimitiveTopologyType = EnumCast<PrimitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY_TYPE>(inCreateInfo.primitiveState.topologyType);
         UpdateDX12RenderTargetsDesc(desc, inCreateInfo);
         UpdateDX12DepthStencilTargetDesc(desc, inCreateInfo);
         auto inputElements = GetDX12InputElements(inCreateInfo);

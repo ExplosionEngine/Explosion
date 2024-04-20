@@ -108,8 +108,8 @@ namespace RHI::Vulkan {
         imageInfo.mipLevels = mipLevels;
         imageInfo.extent = FromRHI(inCreateInfo.extent);
         imageInfo.samples = static_cast<VkSampleCountFlagBits>(inCreateInfo.samples);
-        imageInfo.imageType = VKEnumCast<TextureDimension, VkImageType>(inCreateInfo.dimension);
-        imageInfo.format = VKEnumCast<PixelFormat, VkFormat>(inCreateInfo.format);
+        imageInfo.imageType = EnumCast<TextureDimension, VkImageType>(inCreateInfo.dimension);
+        imageInfo.format = EnumCast<PixelFormat, VkFormat>(inCreateInfo.format);
         imageInfo.usage = GetVkResourceStates(inCreateInfo.usages);
 
         VmaAllocationCreateInfo allocInfo = {};

@@ -40,7 +40,7 @@ namespace RHI::Vulkan {
         for (auto i = 0; i < entryCount; i++) {
             const auto& entry = inCreateInfo.entries[i];
 
-            poolSizes[i].type = VKEnumCast<BindingType, VkDescriptorType>(entry.binding.type);
+            poolSizes[i].type = EnumCast<BindingType, VkDescriptorType>(entry.binding.type);
             poolSizes[i].descriptorCount = 1;
         }
 
@@ -97,7 +97,7 @@ namespace RHI::Vulkan {
             descriptorWrites[i].dstSet = nativeDescriptorSet;
             descriptorWrites[i].dstBinding = std::get<GlslBinding>(entry.binding.platformBinding).index;
             descriptorWrites[i].descriptorCount = 1;
-            descriptorWrites[i].descriptorType = VKEnumCast<BindingType, VkDescriptorType>(entry.binding.type);
+            descriptorWrites[i].descriptorType = EnumCast<BindingType, VkDescriptorType>(entry.binding.type);
 
             if (entry.binding.type == BindingType::uniformBuffer) {
                 auto* bufferView = static_cast<VulkanBufferView*>(std::get<BufferView*>(entry.entity));

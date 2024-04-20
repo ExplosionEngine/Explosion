@@ -7,11 +7,36 @@
 #include <memory>
 #include <cstdint>
 #include <type_traits>
+#include <functional>
 
 #include <Common/Memory.h>
 #include <Common/String.h>
 #include <Common/Math/Vector.h>
 #include <Common/Math/Color.h>
+
+#define DECLARE_EC_FUNC() template <typename A, typename B> inline B EnumCast(const A& value);
+#define ECIMPL_BEGIN(A, B) template <> inline B EnumCast<A, B>(const A& value) {
+#define ECIMPL_ITEM(A, B) if (value == A) { return B; }
+#define ECIMPL_END(B) Unimplement(); return (B) 0; };
+
+#define DECLARE_FC_FUNC() template <typename A, typename B> inline B FlagsCast(const A& flags);
+#define FCIMPL_BEGIN(A, B) template <> inline B FlagsCast<A, B>(const A& flags) { B result = (B) 0;
+#define FCIMPL_ITEM(A, B) if (flags & A) { result |= B; }
+#define FCIMPL_END(B) return result; };
+
+namespace RHI {
+    template <typename E>
+    using BitsTypeForEachFunc = std::function<void(E e)>;
+
+    template <typename E>
+    void ForEachBitsType(BitsTypeForEachFunc<E>&& func)
+    {
+        using UBitsType = std::underlying_type_t<E>;
+        for (UBitsType i = 0x1; i < static_cast<UBitsType>(E::max); i = i << 1) {
+            func(static_cast<E>(i));
+        }
+    }
+}
 
 namespace RHI {
     using EnumType = uint32_t;

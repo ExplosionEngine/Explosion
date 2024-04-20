@@ -86,7 +86,7 @@ namespace RHI::DirectX12 {
             D3D12_INDEX_BUFFER_VIEW& indexBufferView = std::get<D3D12_INDEX_BUFFER_VIEW>(nativeView);
             indexBufferView.BufferLocation = buffer.GetNative()->GetGPUVirtualAddress() + inCreateInfo.offset;
             indexBufferView.SizeInBytes = inCreateInfo.size;
-            indexBufferView.Format = DX12EnumCast<IndexFormat, DXGI_FORMAT>(std::get<IndexBufferViewInfo>(inCreateInfo.extend).format);
+            indexBufferView.Format = EnumCast<IndexFormat, DXGI_FORMAT>(std::get<IndexBufferViewInfo>(inCreateInfo.extend).format);
         }
     }
 }

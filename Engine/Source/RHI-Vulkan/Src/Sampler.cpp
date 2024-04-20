@@ -29,16 +29,16 @@ namespace RHI::Vulkan {
     {
         VkSamplerCreateInfo samplerInfo = {};
         samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        samplerInfo.addressModeU = VKEnumCast<AddressMode, VkSamplerAddressMode>(inCreateInfo.addressModeU);
-        samplerInfo.addressModeV = VKEnumCast<AddressMode, VkSamplerAddressMode>(inCreateInfo.addressModeV);
-        samplerInfo.addressModeW = VKEnumCast<AddressMode, VkSamplerAddressMode>(inCreateInfo.addressModeW);
-        samplerInfo.minFilter = VKEnumCast<FilterMode, VkFilter>(inCreateInfo.minFilter);
-        samplerInfo.magFilter = VKEnumCast<FilterMode, VkFilter>(inCreateInfo.magFilter);
-        samplerInfo.mipmapMode = VKEnumCast<FilterMode, VkSamplerMipmapMode>(inCreateInfo.mipFilter);
+        samplerInfo.addressModeU = EnumCast<AddressMode, VkSamplerAddressMode>(inCreateInfo.addressModeU);
+        samplerInfo.addressModeV = EnumCast<AddressMode, VkSamplerAddressMode>(inCreateInfo.addressModeV);
+        samplerInfo.addressModeW = EnumCast<AddressMode, VkSamplerAddressMode>(inCreateInfo.addressModeW);
+        samplerInfo.minFilter = EnumCast<FilterMode, VkFilter>(inCreateInfo.minFilter);
+        samplerInfo.magFilter = EnumCast<FilterMode, VkFilter>(inCreateInfo.magFilter);
+        samplerInfo.mipmapMode = EnumCast<FilterMode, VkSamplerMipmapMode>(inCreateInfo.mipFilter);
         samplerInfo.minLod = inCreateInfo.lodMinClamp;
         samplerInfo.maxLod = inCreateInfo.lodMaxClamp;
         samplerInfo.compareEnable = inCreateInfo.comparisonFunc != CompareFunc::never;
-        samplerInfo.compareOp = VKEnumCast<CompareFunc, VkCompareOp>(inCreateInfo.comparisonFunc);
+        samplerInfo.compareOp = EnumCast<CompareFunc, VkCompareOp>(inCreateInfo.comparisonFunc);
         samplerInfo.anisotropyEnable = inCreateInfo.maxAnisotropy > 1;
         samplerInfo.maxAnisotropy = inCreateInfo.maxAnisotropy;
 

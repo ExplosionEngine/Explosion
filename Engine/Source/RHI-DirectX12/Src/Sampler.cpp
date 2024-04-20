@@ -41,13 +41,13 @@ namespace RHI::DirectX12 {
     void DX12Sampler::CreateDX12Descriptor(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo)
     {
         D3D12_SAMPLER_DESC desc {};
-        desc.AddressU = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeU);
-        desc.AddressV = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeV);
-        desc.AddressW = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeW);
+        desc.AddressU = EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeU);
+        desc.AddressV = EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeV);
+        desc.AddressW = EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeW);
         desc.Filter = GetDX12Filter(inCreateInfo);
         desc.MinLOD = inCreateInfo.lodMinClamp;
         desc.MaxLOD = inCreateInfo.lodMaxClamp;
-        desc.ComparisonFunc = DX12EnumCast<CompareFunc, D3D12_COMPARISON_FUNC>(inCreateInfo.comparisonFunc);
+        desc.ComparisonFunc = EnumCast<CompareFunc, D3D12_COMPARISON_FUNC>(inCreateInfo.comparisonFunc);
         desc.MaxAnisotropy = inCreateInfo.maxAnisotropy;
 
         auto allocation = inDevice.AllocateNativeSamplerDescriptor();

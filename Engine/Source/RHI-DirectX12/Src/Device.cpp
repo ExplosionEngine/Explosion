@@ -222,7 +222,7 @@ namespace RHI::DirectX12 {
 
             D3D12_COMMAND_QUEUE_DESC queueDesc {};
             queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-            queueDesc.Type = DX12EnumCast<QueueType, D3D12_COMMAND_LIST_TYPE>(iter.first);
+            queueDesc.Type = EnumCast<QueueType, D3D12_COMMAND_LIST_TYPE>(iter.first);
             for (auto& j : tempQueues) {
                 ComPtr<ID3D12CommandQueue> commandQueue;
                 nativeDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue));

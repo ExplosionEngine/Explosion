@@ -82,7 +82,7 @@ namespace RHI::Vulkan {
         extent.height = std::clamp(extent.height, surfaceCap.minImageExtent.height, surfaceCap.maxImageExtent.height);
 
         Assert(device.CheckSwapChainFormatSupport(vkSurface, inCreateInfo.format));
-        auto supportedFormat = VKEnumCast<PixelFormat, VkFormat>(inCreateInfo.format);
+        auto supportedFormat = EnumCast<PixelFormat, VkFormat>(inCreateInfo.format);
         auto colorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
 
         uint32_t presentModeCount = 0;
@@ -92,7 +92,7 @@ namespace RHI::Vulkan {
         presentModes.resize(presentModeCount);
         vkGetPhysicalDeviceSurfacePresentModesKHR(device.GetGpu().GetNative(), surface, &presentModeCount, presentModes.data());
 
-        VkPresentModeKHR supportedMode = VKEnumCast<PresentMode, VkPresentModeKHR>(inCreateInfo.presentMode);
+        VkPresentModeKHR supportedMode = EnumCast<PresentMode, VkPresentModeKHR>(inCreateInfo.presentMode);
         {
             Assert(!presentModes.empty());
             auto iter = std::find_if(presentModes.begin(), presentModes.end(),

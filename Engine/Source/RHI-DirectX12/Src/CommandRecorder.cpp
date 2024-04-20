@@ -65,7 +65,7 @@ namespace RHI::DirectX12 {
         layout.Footprint.Depth = inSize.z;
         layout.Footprint.Width = inSize.x;
         layout.Footprint.Height = inSize.y;
-        layout.Footprint.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture->GetFormat());
+        layout.Footprint.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture->GetFormat());
         layout.Footprint.RowPitch = inSize.x * GetBytesPerPixel(texture->GetFormat()); // row pitch must be a multiple of 256, let dx checks if the texture is valid
 
         CD3DX12_TEXTURE_COPY_LOCATION dest(texture->GetNative(), 0);
@@ -256,7 +256,7 @@ namespace RHI::DirectX12 {
 
     void DX12RasterPassCommandRecorder::SetPrimitiveTopology(PrimitiveTopology inPrimitiveTopology)
     {
-        commandBuffer.GetNative()->IASetPrimitiveTopology(DX12EnumCast<PrimitiveTopology, D3D_PRIMITIVE_TOPOLOGY>(inPrimitiveTopology));
+        commandBuffer.GetNative()->IASetPrimitiveTopology(EnumCast<PrimitiveTopology, D3D_PRIMITIVE_TOPOLOGY>(inPrimitiveTopology));
     }
 
     void DX12RasterPassCommandRecorder::SetStencilReference(uint32_t inReference)
@@ -288,14 +288,14 @@ namespace RHI::DirectX12 {
             auto* buffer = static_cast<DX12Buffer*>(inBarrier.buffer.pointer);
             Assert(buffer);
             resource = buffer->GetNative();
-            beforeState = DX12EnumCast<BufferState, D3D12_RESOURCE_STATES>(inBarrier.buffer.before);
-            afterState = DX12EnumCast<BufferState, D3D12_RESOURCE_STATES>(inBarrier.buffer.after);
+            beforeState = EnumCast<BufferState, D3D12_RESOURCE_STATES>(inBarrier.buffer.before);
+            afterState = EnumCast<BufferState, D3D12_RESOURCE_STATES>(inBarrier.buffer.after);
         } else {
             auto* texture = static_cast<DX12Texture*>(inBarrier.texture.pointer);
             Assert(texture);
             resource = texture->GetNative();
-            beforeState = DX12EnumCast<TextureState, D3D12_RESOURCE_STATES>(inBarrier.texture.before);
-            afterState = DX12EnumCast<TextureState, D3D12_RESOURCE_STATES>(inBarrier.texture.after);
+            beforeState = EnumCast<TextureState, D3D12_RESOURCE_STATES>(inBarrier.texture.before);
+            afterState = EnumCast<TextureState, D3D12_RESOURCE_STATES>(inBarrier.texture.after);
         }
 
         CD3DX12_RESOURCE_BARRIER resourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(resource, beforeState, afterState);

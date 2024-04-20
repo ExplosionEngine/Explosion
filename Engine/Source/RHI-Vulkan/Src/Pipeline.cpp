@@ -16,10 +16,10 @@ namespace RHI::Vulkan {
     static VkStencilOpState ConvertStencilOp(const StencilFaceState& stencilOp, uint32_t readMask, uint32_t writeMask)
     {
         VkStencilOpState state = {};
-        state.compareOp = VKEnumCast<CompareFunc, VkCompareOp>(stencilOp.compareFunc);
-        state.depthFailOp = VKEnumCast<StencilOp, VkStencilOp>(stencilOp.depthFailOp);
-        state.failOp = VKEnumCast<StencilOp, VkStencilOp>(stencilOp.failOp);
-        state.passOp = VKEnumCast<StencilOp, VkStencilOp>(stencilOp.passOp);
+        state.compareOp = EnumCast<CompareFunc, VkCompareOp>(stencilOp.compareFunc);
+        state.depthFailOp = EnumCast<StencilOp, VkStencilOp>(stencilOp.depthFailOp);
+        state.failOp = EnumCast<StencilOp, VkStencilOp>(stencilOp.failOp);
+        state.passOp = EnumCast<StencilOp, VkStencilOp>(stencilOp.passOp);
         state.compareMask = readMask;
         state.writeMask = writeMask;
         state.reference = 0;
@@ -39,7 +39,7 @@ namespace RHI::Vulkan {
         dsInfo.minDepthBounds = -1.f;
         dsInfo.maxDepthBounds = 1.f;
         dsInfo.depthBoundsTestEnable = VK_FALSE;
-        dsInfo.depthCompareOp = VKEnumCast<CompareFunc, VkCompareOp>(dsState.depthCompareFunc);
+        dsInfo.depthCompareOp = EnumCast<CompareFunc, VkCompareOp>(dsState.depthCompareFunc);
         return dsInfo;
     }
 
@@ -47,7 +47,7 @@ namespace RHI::Vulkan {
     {
         VkPipelineInputAssemblyStateCreateInfo assemblyInfo = {};
         assemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-        assemblyInfo.topology = VKEnumCast<PrimitiveTopologyType, VkPrimitiveTopology>(createInfo.primitiveState.topologyType);
+        assemblyInfo.topology = EnumCast<PrimitiveTopologyType, VkPrimitiveTopology>(createInfo.primitiveState.topologyType);
         assemblyInfo.primitiveRestartEnable = VK_FALSE;
 
         return assemblyInfo;
@@ -56,9 +56,9 @@ namespace RHI::Vulkan {
     static VkPipelineRasterizationStateCreateInfo ConstructRasterization(const RasterPipelineCreateInfo& createInfo)
     {
         VkPipelineRasterizationStateCreateInfo rasterState = {};
-        rasterState.polygonMode = VKEnumCast<FillMode, VkPolygonMode>(createInfo.primitiveState.fillMode);
+        rasterState.polygonMode = EnumCast<FillMode, VkPolygonMode>(createInfo.primitiveState.fillMode);
         rasterState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-        rasterState.cullMode = VKEnumCast<CullMode, VkCullModeFlagBits>(createInfo.primitiveState.cullMode);
+        rasterState.cullMode = EnumCast<CullMode, VkCullModeFlagBits>(createInfo.primitiveState.cullMode);
         rasterState.frontFace = createInfo.primitiveState.frontFace == FrontFace::cw ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
         rasterState.depthBiasClamp = createInfo.depthStencilState.depthBiasClamp;
         rasterState.depthBiasSlopeFactor = createInfo.depthStencilState.depthBiasSlopeScale;
@@ -107,12 +107,12 @@ namespace RHI::Vulkan {
             const auto& srcState = createInfo.fragmentState.colorTargets[i];
             blendState.blendEnable = srcState.blendEnabled;
             blendState.colorWriteMask = static_cast<VkColorComponentFlags>(srcState.writeFlags.Value());
-            blendState.alphaBlendOp = VKEnumCast<BlendOp, VkBlendOp>(srcState.colorBlend.op);
-            blendState.alphaBlendOp = VKEnumCast<BlendOp, VkBlendOp>(srcState.alphaBlend.op);
-            blendState.srcColorBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.colorBlend.srcFactor);
-            blendState.srcAlphaBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.alphaBlend.srcFactor);
-            blendState.dstColorBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.colorBlend.dstFactor);
-            blendState.dstAlphaBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.alphaBlend.dstFactor);
+            blendState.alphaBlendOp = EnumCast<BlendOp, VkBlendOp>(srcState.colorBlend.op);
+            blendState.alphaBlendOp = EnumCast<BlendOp, VkBlendOp>(srcState.alphaBlend.op);
+            blendState.srcColorBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.colorBlend.srcFactor);
+            blendState.srcAlphaBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.alphaBlend.srcFactor);
+            blendState.dstColorBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.colorBlend.dstFactor);
+            blendState.dstAlphaBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.alphaBlend.dstFactor);
         }
 
         colorInfo.pAttachments = blendStates.data();
@@ -145,7 +145,7 @@ namespace RHI::Vulkan {
                 desc.binding = i;
                 desc.location = std::get<GlslVertexBinding>(binding.attributes[j].platformBinding).location;
                 desc.offset = binding.attributes[j].offset;
-                desc.format = VKEnumCast<VertexFormat, VkFormat>(binding.attributes[j].format);
+                desc.format = EnumCast<VertexFormat, VkFormat>(binding.attributes[j].format);
                 attributes.emplace_back(desc);
             }
         }
@@ -227,15 +227,15 @@ namespace RHI::Vulkan {
         for (size_t i = 0; i < inCreateInfo.fragmentState.colorTargets.size(); i++)
         {
             auto format = inCreateInfo.fragmentState.colorTargets[i].format;
-            pixelFormats[i] = VKEnumCast<PixelFormat, VkFormat>(format);
+            pixelFormats[i] = EnumCast<PixelFormat, VkFormat>(format);
         }
 
         VkPipelineRenderingCreateInfo pipelineRenderingCreateInfo;
         pipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
         pipelineRenderingCreateInfo.colorAttachmentCount = inCreateInfo.fragmentState.colorTargets.size();
         pipelineRenderingCreateInfo.pColorAttachmentFormats = pixelFormats.data();
-        pipelineRenderingCreateInfo.depthAttachmentFormat = inCreateInfo.depthStencilState.depthEnabled ? VKEnumCast<PixelFormat, VkFormat>(inCreateInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
-        pipelineRenderingCreateInfo.stencilAttachmentFormat = inCreateInfo.depthStencilState.stencilEnabled ? VKEnumCast<PixelFormat, VkFormat>(inCreateInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
+        pipelineRenderingCreateInfo.depthAttachmentFormat = inCreateInfo.depthStencilState.depthEnabled ? EnumCast<PixelFormat, VkFormat>(inCreateInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
+        pipelineRenderingCreateInfo.stencilAttachmentFormat = inCreateInfo.depthStencilState.stencilEnabled ? EnumCast<PixelFormat, VkFormat>(inCreateInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
         pipelineRenderingCreateInfo.pNext = nullptr;
         pipelineRenderingCreateInfo.viewMask = 0;
 
