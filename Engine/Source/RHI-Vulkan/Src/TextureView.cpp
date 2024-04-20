@@ -26,7 +26,7 @@ namespace RHI::Vulkan {
         viewInfo.format = EnumCast<PixelFormat, VkFormat>(texture.GetFormat());
         viewInfo.image = texture.GetNative();
         viewInfo.viewType = EnumCast<TextureViewDimension, VkImageViewType>(inCreateInfo.dimension);
-        viewInfo.subresourceRange = {GetAspectMask(inCreateInfo.aspect), baseMipLevel, mipLevelNum, baseArrayLayer, arrayLayerNum };
+        viewInfo.subresourceRange = { EnumCast<TextureAspect, VkImageAspectFlags>(inCreateInfo.aspect), baseMipLevel, mipLevelNum, baseArrayLayer, arrayLayerNum };
 
         Assert(vkCreateImageView(device.GetNative(), &viewInfo, nullptr, &nativeImageView) == VK_SUCCESS);
     }

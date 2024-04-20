@@ -104,9 +104,10 @@ namespace RHI::Vulkan {
 
         VkImageCreateInfo imageInfo = {};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        imageInfo.arrayLayers = extent.z;
         imageInfo.mipLevels = mipLevels;
-        imageInfo.extent = FromRHI(inCreateInfo.extent);
+        // TODO check this when create texture array
+        imageInfo.arrayLayers = extent.z;
+        imageInfo.extent = { extent.x, extent.y, extent.z };
         imageInfo.samples = static_cast<VkSampleCountFlagBits>(inCreateInfo.samples);
         imageInfo.imageType = EnumCast<TextureDimension, VkImageType>(inCreateInfo.dimension);
         imageInfo.format = EnumCast<PixelFormat, VkFormat>(inCreateInfo.format);

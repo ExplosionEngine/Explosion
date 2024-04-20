@@ -105,15 +105,6 @@ namespace RHI::Vulkan {
         ECIMPL_ITEM(ShaderStageBits::sDomain,   VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
     ECIMPL_END(VkShaderStageFlagBits)
 
-    FCIMPL_BEGIN(ShaderStageFlags, VkShaderStageFlags)
-        FCIMPL_ITEM(ShaderStageBits::sVertex,   VK_SHADER_STAGE_VERTEX_BIT)
-        FCIMPL_ITEM(ShaderStageBits::sPixel,    VK_SHADER_STAGE_FRAGMENT_BIT)
-        FCIMPL_ITEM(ShaderStageBits::sCompute,  VK_SHADER_STAGE_COMPUTE_BIT)
-        FCIMPL_ITEM(ShaderStageBits::sGeometry, VK_SHADER_STAGE_GEOMETRY_BIT)
-        FCIMPL_ITEM(ShaderStageBits::sHull,     VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)
-        FCIMPL_ITEM(ShaderStageBits::sDomain,   VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
-    FCIMPL_END(VkShaderStageFlagBits)
-
     ECIMPL_BEGIN(PrimitiveTopologyType, VkPrimitiveTopology)
         ECIMPL_ITEM(PrimitiveTopologyType::point,    VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
         ECIMPL_ITEM(PrimitiveTopologyType::line,     VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
@@ -262,26 +253,19 @@ namespace RHI::Vulkan {
         ECIMPL_ITEM(PresentMode::max,         VK_PRESENT_MODE_IMMEDIATE_KHR) // TODO Set the default present mode to immediate?
     ECIMPL_END(VkPresentModeKHR)
 
-    inline VkExtent3D FromRHI(const Common::UVec3& ext)
-    {
-        return { ext.x, ext.y, ext.z };
-    }
+    ECIMPL_BEGIN(TextureAspect, VkImageAspectFlags)
+        ECIMPL_ITEM(TextureAspect::color,   VK_IMAGE_ASPECT_COLOR_BIT)
+        ECIMPL_ITEM(TextureAspect::depth,   VK_IMAGE_ASPECT_DEPTH_BIT)
+        ECIMPL_ITEM(TextureAspect::stencil, VK_IMAGE_ASPECT_STENCIL_BIT)
+        ECIMPL_ITEM(TextureAspect::depthStencil, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
+    ECIMPL_END(VkImageAspectFlags)
 
-    inline VkImageAspectFlags GetAspectMask(TextureAspect aspect)
-    {
-        static std::unordered_map<TextureAspect, VkImageAspectFlags> rules = {
-            { TextureAspect::color, VK_IMAGE_ASPECT_COLOR_BIT },
-            { TextureAspect::depth, VK_IMAGE_ASPECT_DEPTH_BIT },
-            { TextureAspect::stencil, VK_IMAGE_ASPECT_STENCIL_BIT },
-            { TextureAspect::depthStencil, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT }
-        };
-
-        VkImageAspectFlags result = {};
-        for (const auto& rule : rules) {
-            if (aspect == rule.first) {
-                result = rule.second;
-            }
-        }
-        return result;
-    }
+    FCIMPL_BEGIN(ShaderStageFlags, VkShaderStageFlags)
+        FCIMPL_ITEM(ShaderStageBits::sVertex,   VK_SHADER_STAGE_VERTEX_BIT)
+        FCIMPL_ITEM(ShaderStageBits::sPixel,    VK_SHADER_STAGE_FRAGMENT_BIT)
+        FCIMPL_ITEM(ShaderStageBits::sCompute,  VK_SHADER_STAGE_COMPUTE_BIT)
+        FCIMPL_ITEM(ShaderStageBits::sGeometry, VK_SHADER_STAGE_GEOMETRY_BIT)
+        FCIMPL_ITEM(ShaderStageBits::sHull,     VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)
+        FCIMPL_ITEM(ShaderStageBits::sDomain,   VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
+    FCIMPL_END(VkShaderStageFlagBits)
 }

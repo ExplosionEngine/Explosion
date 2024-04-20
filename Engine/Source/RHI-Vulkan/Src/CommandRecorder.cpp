@@ -126,7 +126,7 @@ namespace RHI::Vulkan {
 
         VkBufferImageCopy copyRegion = {};
         copyRegion.imageExtent = {inSize.x, inSize.y, inSize.z };
-        copyRegion.imageSubresource = {GetAspectMask(inSubResourceInfo->aspect), inSubResourceInfo->mipLevel, inSubResourceInfo->baseArrayLayer, inSubResourceInfo->arrayLayerNum };
+        copyRegion.imageSubresource = { EnumCast<TextureAspect, VkImageAspectFlags>(inSubResourceInfo->aspect), inSubResourceInfo->mipLevel, inSubResourceInfo->baseArrayLayer, inSubResourceInfo->arrayLayerNum };
 
         vkCmdCopyBufferToImage(commandBuffer.GetNativeCommandBuffer(), buffer->GetNative(), texture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
     }
@@ -138,7 +138,7 @@ namespace RHI::Vulkan {
 
         VkBufferImageCopy copyRegion = {};
         copyRegion.imageExtent = {inSize.x, inSize.y, inSize.z };
-        copyRegion.imageSubresource = {GetAspectMask(inSubResourceInfo->aspect), inSubResourceInfo->mipLevel, inSubResourceInfo->baseArrayLayer, inSubResourceInfo->arrayLayerNum };
+        copyRegion.imageSubresource = { EnumCast<TextureAspect, VkImageAspectFlags>(inSubResourceInfo->aspect), inSubResourceInfo->mipLevel, inSubResourceInfo->baseArrayLayer, inSubResourceInfo->arrayLayerNum };
 
         vkCmdCopyImageToBuffer(commandBuffer.GetNativeCommandBuffer(), texture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                buffer->GetNative(), 1, &copyRegion);
@@ -151,8 +151,8 @@ namespace RHI::Vulkan {
 
         VkImageCopy copyRegion = {};
         copyRegion.extent = {inSize.x, inSize.y, inSize.z };
-        copyRegion.srcSubresource = {GetAspectMask(inSrcSubResourceInfo->aspect), inSrcSubResourceInfo->mipLevel, inSrcSubResourceInfo->baseArrayLayer, inSrcSubResourceInfo->arrayLayerNum };
-        copyRegion.dstSubresource = {GetAspectMask(inDestSubResourceInfo->aspect), inDestSubResourceInfo->mipLevel, inDestSubResourceInfo->baseArrayLayer, inDestSubResourceInfo->arrayLayerNum };
+        copyRegion.srcSubresource = { EnumCast<TextureAspect, VkImageAspectFlags>(inSrcSubResourceInfo->aspect), inSrcSubResourceInfo->mipLevel, inSrcSubResourceInfo->baseArrayLayer, inSrcSubResourceInfo->arrayLayerNum };
+        copyRegion.dstSubresource = { EnumCast<TextureAspect, VkImageAspectFlags>(inDestSubResourceInfo->aspect), inDestSubResourceInfo->mipLevel, inDestSubResourceInfo->baseArrayLayer, inDestSubResourceInfo->arrayLayerNum };
 
         vkCmdCopyImage(commandBuffer.GetNativeCommandBuffer(), srcTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
     }
