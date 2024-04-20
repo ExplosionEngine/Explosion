@@ -13,27 +13,6 @@
 #include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
-    static VkBufferUsageFlags GetVkResourceStates(BufferUsageFlags bufferUsages)
-    {
-        static std::unordered_map<BufferUsageBits, VkBufferUsageFlags> rules = {
-            { BufferUsageBits::copySrc, VK_BUFFER_USAGE_TRANSFER_SRC_BIT },
-            { BufferUsageBits::copyDst, VK_BUFFER_USAGE_TRANSFER_DST_BIT },
-            { BufferUsageBits::index,    VK_BUFFER_USAGE_INDEX_BUFFER_BIT },
-            { BufferUsageBits::vertex,   VK_BUFFER_USAGE_VERTEX_BUFFER_BIT },
-            { BufferUsageBits::uniform,  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT },
-            { BufferUsageBits::storage,  VK_BUFFER_USAGE_STORAGE_BUFFER_BIT },
-            { BufferUsageBits::indirect, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT },
-        };
-
-        VkBufferUsageFlags result = {};
-        for (const auto& rule : rules) {
-            if (bufferUsages & rule.first) {
-                result |= rule.second;
-            }
-        }
-        return result;
-    }
-
     VulkanBuffer::VulkanBuffer(VulkanDevice& inDevice, const BufferCreateInfo& inCreateInfo)
         : Buffer(inCreateInfo)
         , device(inDevice)
@@ -72,7 +51,7 @@ namespace RHI::Vulkan {
         VkBufferCreateInfo bufferInfo = {};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        bufferInfo.usage = GetVkResourceStates(inCreateInfo.usages);
+        bufferInfo.usage = FlagsCast<BufferUsageFlags, VkBufferUsageFlags>(inCreateInfo.usages);
         bufferInfo.size = inCreateInfo.size;
 
         VmaAllocationCreateInfo allocInfo = {};

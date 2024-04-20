@@ -10,57 +10,6 @@
 #include <RHI/DirectX12/TextureView.h>
 
 namespace RHI::DirectX12 {
-    static D3D12_RESOURCE_DIMENSION GetDX12ResourceDimension(const TextureDimension& dimension)
-    {
-        static std::unordered_map<TextureDimension, D3D12_RESOURCE_DIMENSION> MAP = {
-            { TextureDimension::t1D, D3D12_RESOURCE_DIMENSION_TEXTURE1D },
-            { TextureDimension::t2D, D3D12_RESOURCE_DIMENSION_TEXTURE2D },
-            { TextureDimension::t3D, D3D12_RESOURCE_DIMENSION_TEXTURE3D }
-        };
-        auto iter = MAP.find(dimension);
-        Assert(iter != MAP.end());
-        return iter->second;
-    }
-
-    static D3D12_RESOURCE_STATES GetDX12ResourceStates(TextureUsageFlags textureUsages)
-    {
-        static std::unordered_map<TextureUsageBits, D3D12_RESOURCE_STATES> rules = {
-            { TextureUsageBits::copySrc, D3D12_RESOURCE_STATE_COPY_SOURCE },
-            { TextureUsageBits::copyDst, D3D12_RESOURCE_STATE_COPY_DEST },
-            { TextureUsageBits::textureBinding, D3D12_RESOURCE_STATE_COMMON },
-            { TextureUsageBits::storageBinding, D3D12_RESOURCE_STATE_UNORDERED_ACCESS },
-            { TextureUsageBits::renderAttachment, D3D12_RESOURCE_STATE_RENDER_TARGET },
-        };
-
-        D3D12_RESOURCE_STATES result = D3D12_RESOURCE_STATE_COMMON;
-        for (const auto& rule : rules) {
-            if (textureUsages & rule.first) {
-                result |= rule.second;
-            }
-        }
-        return result;
-    }
-    static D3D12_RESOURCE_FLAGS GetDX12ResourceFlags(TextureUsageFlags textureUsages) {
-        static std::unordered_map<TextureUsageBits, D3D12_RESOURCE_FLAGS> rules = {
-            { TextureUsageBits::copySrc, D3D12_RESOURCE_FLAG_NONE },
-            { TextureUsageBits::copyDst, D3D12_RESOURCE_FLAG_NONE },
-            { TextureUsageBits::textureBinding, D3D12_RESOURCE_FLAG_NONE },
-            { TextureUsageBits::storageBinding, D3D12_RESOURCE_FLAG_NONE },
-            { TextureUsageBits::renderAttachment, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET },
-            { TextureUsageBits::depthStencilAttachment, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL },
-        };
-
-        D3D12_RESOURCE_FLAGS result = D3D12_RESOURCE_FLAG_NONE;
-        for (const auto& rule : rules) {
-            if (textureUsages & rule.first) {
-                result |= rule.second;
-            }
-        }
-        return result;
-    }
-}
-
-namespace RHI::DirectX12 {
     DX12Texture::DX12Texture(DX12Device& inDevice, const TextureCreateInfo& inCreateInfo)
         : Texture(inCreateInfo), device(inDevice), usages(inCreateInfo.usages), format(inCreateInfo.format)
     {
@@ -100,12 +49,12 @@ namespace RHI::DirectX12 {
         textureDesc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(inCreateInfo.format);
         textureDesc.Width = inCreateInfo.extent.x;
         textureDesc.Height = inCreateInfo.extent.y;
-        textureDesc.Flags = GetDX12ResourceFlags(inCreateInfo.usages);
+        textureDesc.Flags = FlagsCast<TextureUsageFlags, D3D12_RESOURCE_FLAGS>(inCreateInfo.usages);
         textureDesc.DepthOrArraySize = inCreateInfo.extent.z;
         textureDesc.SampleDesc.Count = inCreateInfo.samples;
         // TODO https://docs.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc
         textureDesc.SampleDesc.Quality = 0;
-        textureDesc.Dimension = GetDX12ResourceDimension(inCreateInfo.dimension);
+        textureDesc.Dimension = EnumCast<TextureDimension, D3D12_RESOURCE_DIMENSION>(inCreateInfo.dimension);
 
         bool success = SUCCEEDED(device.GetNative()->CreateCommittedResource(
             &heapProperties,

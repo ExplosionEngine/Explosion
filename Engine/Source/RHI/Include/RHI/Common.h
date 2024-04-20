@@ -403,22 +403,21 @@ namespace RHI {
     FlagsType operator|(FlagsType a, BitsType b); \
 
 namespace RHI {
-    template <typename T = uint32_t>
+    using FlagBitsType = uint32_t;
+
+    template <typename E>
     class Flags {
     public:
         static Flags null;
 
-        using UnderlyingType = T;
+        using UnderlyingType = std::underlying_type_t<E>;
 
         Flags() = default;
         ~Flags() = default;
-        Flags(T inValue) : value(inValue) {} // NOLINT
+        Flags(UnderlyingType inValue) : value(inValue) {} // NOLINT
+        Flags(E e) : value(static_cast<UnderlyingType>(e)) {} // NOLINT
 
-        template <typename E>
-        requires std::is_same_v<T, std::underlying_type_t<E>>
-        Flags(E e) : value(static_cast<T>(e)) {} // NOLINT
-
-        T Value() const
+        UnderlyingType Value() const
         {
             return value;
         }
@@ -438,51 +437,46 @@ namespace RHI {
             return value != other.value;
         }
 
-        bool operator==(T inValue) const
+        bool operator==(UnderlyingType inValue) const
         {
             return value == inValue;
         }
 
-        bool operator!=(T inValue) const
+        bool operator!=(UnderlyingType inValue) const
         {
             return value != inValue;
         }
 
-        template <typename E>
-        requires std::is_same_v<T, std::underlying_type_t<E>>
         bool operator==(E e) const
         {
-            return value == static_cast<T>(e);
+            return value == static_cast<UnderlyingType>(e);
         }
 
-        template <typename E>
-        requires std::is_same_v<T, std::underlying_type_t<E>>
         bool operator!=(E e) const
         {
-            return value != static_cast<T>(e);
+            return value != static_cast<UnderlyingType>(e);
         }
 
     private:
-        T value;
+        UnderlyingType value;
     };
 
-    template <typename T>
-    Flags<T> Flags<T>::null = Flags<T>(0);
+    template <typename E>
+    Flags<E> Flags<E>::null = Flags<E>(0);
 
-    template <typename T>
-    Flags<T> operator&(Flags<T> a, Flags<T> b)
+    template <typename E>
+    Flags<E> operator&(Flags<E> a, Flags<E> b)
     {
-        return Flags<T>(a.Value() & b.Value());
+        return Flags<E>(a.Value() & b.Value());
     }
 
-    template <typename T>
-    Flags<T> operator|(Flags<T> a, Flags<T> b)
+    template <typename E>
+    Flags<E> operator|(Flags<E> a, Flags<E> b)
     {
-        return Flags<T>(a.Value() | b.Value());
+        return Flags<E>(a.Value() | b.Value());
     }
 
-    using BufferUsageFlags = Flags<>;
-    enum class BufferUsageBits : BufferUsageFlags::UnderlyingType {
+    enum class BufferUsageBits : FlagBitsType {
         mapRead      = 0x1,
         mapWrite     = 0x2,
         copySrc      = 0x4,
@@ -495,10 +489,10 @@ namespace RHI {
         queryResolve = 0x200,
         max
     };
+    using BufferUsageFlags = Flags<BufferUsageBits>;
     RHI_FLAGS_DECLARE(BufferUsageFlags, BufferUsageBits)
 
-    using TextureUsageFlags = Flags<>;
-    enum class TextureUsageBits : TextureUsageFlags::UnderlyingType {
+    enum class TextureUsageBits : FlagBitsType {
         copySrc                 = 0x1,
         copyDst                 = 0x2,
         textureBinding          = 0x4,
@@ -507,10 +501,10 @@ namespace RHI {
         depthStencilAttachment  = 0x20,
         max
     };
+    using TextureUsageFlags = Flags<TextureUsageBits>;
     RHI_FLAGS_DECLARE(TextureUsageFlags, TextureUsageBits)
 
-    using ShaderStageFlags = Flags<>;
-    enum class ShaderStageBits : ShaderStageFlags::UnderlyingType {
+    enum class ShaderStageBits : FlagBitsType {
         sVertex   = 0x1,
         sPixel    = 0x2,
         sCompute  = 0x4,
@@ -519,10 +513,10 @@ namespace RHI {
         sDomain   = 0x20,
         max
     };
+    using ShaderStageFlags = Flags<ShaderStageBits>;
     RHI_FLAGS_DECLARE(ShaderStageFlags, ShaderStageBits)
 
-    using ColorWriteFlags = Flags<>;
-    enum class ColorWriteBits : ColorWriteFlags::UnderlyingType {
+    enum class ColorWriteBits : FlagBitsType {
         red   = 0x1,
         green = 0x2,
         blue  = 0x4,
@@ -531,16 +525,17 @@ namespace RHI {
         rgb   = red | green | blue,
         all   = red | green | blue | alpha
     };
+    using ColorWriteFlags = Flags<ColorWriteBits>;
     RHI_FLAGS_DECLARE(ColorWriteFlags, ColorWriteBits)
 }
 
 namespace std {
-    template <typename T>
-    struct hash<RHI::Flags<T>>
+    template <typename E>
+    struct hash<RHI::Flags<E>>
     {
-        size_t operator()(RHI::Flags<T> flags) const
+        size_t operator()(RHI::Flags<E> flags) const
         {
-            return hash<T>()(flags.Value());
+            return hash<typename RHI::Flags<E>::UnderlyingType>()(flags.Value());
         }
     };
 }

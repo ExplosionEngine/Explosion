@@ -12,30 +12,12 @@
 #include <RHI/DirectX12/Pipeline.h>
 
 namespace RHI::DirectX12 {
-    uint8_t GetDX12RenderTargetWriteMasks(ColorWriteFlags writeFlags)
-    {
-        static std::unordered_map<ColorWriteBits, uint8_t> MAP = {
-            { ColorWriteBits::red, D3D12_COLOR_WRITE_ENABLE_RED },
-            { ColorWriteBits::green, D3D12_COLOR_WRITE_ENABLE_GREEN },
-            { ColorWriteBits::blue, D3D12_COLOR_WRITE_ENABLE_BLUE },
-            { ColorWriteBits::alpha, D3D12_COLOR_WRITE_ENABLE_ALPHA }
-        };
-
-        uint8_t result = 0;
-        for (auto iter : MAP) {
-            if (writeFlags & iter.first) {
-                result |= iter.second;
-            }
-        }
-        return result;
-    }
-
     D3D12_RENDER_TARGET_BLEND_DESC GetDX12RenderTargetBlendDesc(const ColorTargetState& colorTargetState)
     {
         D3D12_RENDER_TARGET_BLEND_DESC desc {};
         desc.BlendEnable = colorTargetState.blendEnabled;
         desc.LogicOpEnable = false;
-        desc.RenderTargetWriteMask = GetDX12RenderTargetWriteMasks(colorTargetState.writeFlags);
+        desc.RenderTargetWriteMask = FlagsCast<ColorWriteFlags, uint8_t>(colorTargetState.writeFlags);
         desc.BlendOp = EnumCast<BlendOp, D3D12_BLEND_OP>(colorTargetState.colorBlend.op);
         desc.SrcBlend = EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.colorBlend.srcFactor);
         desc.DestBlend = EnumCast<BlendFactor, D3D12_BLEND>(colorTargetState.colorBlend.dstFactor);

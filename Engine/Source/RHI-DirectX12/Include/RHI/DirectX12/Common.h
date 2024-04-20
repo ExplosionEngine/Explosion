@@ -18,6 +18,7 @@
 
 namespace RHI::DirectX12 {
     DECLARE_EC_FUNC()
+    DECLARE_FC_FUNC()
 
     ECIMPL_BEGIN(QueueType, D3D12_COMMAND_LIST_TYPE)
         ECIMPL_ITEM(QueueType::graphics, D3D12_COMMAND_LIST_TYPE_DIRECT)
@@ -254,6 +255,12 @@ namespace RHI::DirectX12 {
         ECIMPL_ITEM(BufferState::storage, D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
     ECIMPL_END(D3D12_RESOURCE_STATES)
 
+    ECIMPL_BEGIN(TextureDimension, D3D12_RESOURCE_DIMENSION)
+        ECIMPL_ITEM(TextureDimension::t1D, D3D12_RESOURCE_DIMENSION_TEXTURE1D)
+        ECIMPL_ITEM(TextureDimension::t2D, D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+        ECIMPL_ITEM(TextureDimension::t3D, D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+    ECIMPL_END(D3D12_RESOURCE_DIMENSION)
+
     ECIMPL_BEGIN(TextureState, D3D12_RESOURCE_STATES)
         ECIMPL_ITEM(TextureState::undefined, D3D12_RESOURCE_STATE_COMMON)
         ECIMPL_ITEM(TextureState::copySrc, D3D12_RESOURCE_STATE_COPY_SOURCE)
@@ -265,6 +272,22 @@ namespace RHI::DirectX12 {
         ECIMPL_ITEM(TextureState::depthStencilWrite, D3D12_RESOURCE_STATE_DEPTH_WRITE)
         ECIMPL_ITEM(TextureState::present, D3D12_RESOURCE_STATE_PRESENT)
     ECIMPL_END(D3D12_RESOURCE_STATES)
+
+    FCIMPL_BEGIN(ColorWriteFlags, uint8_t)
+        FCIMPL_ITEM(ColorWriteBits::red,   D3D12_COLOR_WRITE_ENABLE_RED)
+        FCIMPL_ITEM(ColorWriteBits::green, D3D12_COLOR_WRITE_ENABLE_GREEN)
+        FCIMPL_ITEM(ColorWriteBits::blue,  D3D12_COLOR_WRITE_ENABLE_BLUE)
+        FCIMPL_ITEM(ColorWriteBits::alpha, D3D12_COLOR_WRITE_ENABLE_ALPHA)
+    FCIMPL_END(D3D12_COLOR_WRITE_ENABLE)
+
+    FCIMPL_BEGIN(TextureUsageFlags, D3D12_RESOURCE_FLAGS)
+        FCIMPL_ITEM(TextureUsageBits::copySrc,                D3D12_RESOURCE_FLAG_NONE)
+        FCIMPL_ITEM(TextureUsageBits::copyDst,                D3D12_RESOURCE_FLAG_NONE)
+        FCIMPL_ITEM(TextureUsageBits::textureBinding,         D3D12_RESOURCE_FLAG_NONE)
+        FCIMPL_ITEM(TextureUsageBits::storageBinding,         D3D12_RESOURCE_FLAG_NONE)
+        FCIMPL_ITEM(TextureUsageBits::renderAttachment,       D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET)
+        FCIMPL_ITEM(TextureUsageBits::depthStencilAttachment, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
+    FCIMPL_END(D3D12_RESOURCE_FLAGS)
 
     // constant buffer size must be a multiple of 256
     inline size_t GetConstantBufferSize(size_t size) {

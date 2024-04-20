@@ -268,4 +268,23 @@ namespace RHI::Vulkan {
         FCIMPL_ITEM(ShaderStageBits::sHull,     VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)
         FCIMPL_ITEM(ShaderStageBits::sDomain,   VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
     FCIMPL_END(VkShaderStageFlagBits)
+
+    FCIMPL_BEGIN(BufferUsageFlags, VkBufferUsageFlags)
+        FCIMPL_ITEM(BufferUsageBits::copySrc,  VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
+        FCIMPL_ITEM(BufferUsageBits::copyDst,  VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+        FCIMPL_ITEM(BufferUsageBits::index,    VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
+        FCIMPL_ITEM(BufferUsageBits::vertex,   VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+        FCIMPL_ITEM(BufferUsageBits::uniform,  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+        FCIMPL_ITEM(BufferUsageBits::storage,  VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+        FCIMPL_ITEM(BufferUsageBits::indirect, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
+    FCIMPL_END(VkBufferUsageFlagBits)
+
+    FCIMPL_BEGIN(TextureUsageFlags, VkImageUsageFlags)
+        FCIMPL_ITEM(TextureUsageBits::copySrc,                VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
+        FCIMPL_ITEM(TextureUsageBits::copyDst,                VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+        FCIMPL_ITEM(TextureUsageBits::textureBinding,         VK_IMAGE_USAGE_SAMPLED_BIT)
+        FCIMPL_ITEM(TextureUsageBits::storageBinding,         VK_IMAGE_USAGE_STORAGE_BIT)
+        FCIMPL_ITEM(TextureUsageBits::renderAttachment,       VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+        FCIMPL_ITEM(TextureUsageBits::depthStencilAttachment, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+    FCIMPL_END(VkImageUsageFlagBits)
 }

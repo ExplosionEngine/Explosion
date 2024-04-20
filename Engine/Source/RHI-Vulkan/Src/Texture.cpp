@@ -13,28 +13,6 @@
 #include <RHI/Vulkan/Synchronous.h>
 
 namespace RHI::Vulkan {
-    static VkImageUsageFlags GetVkResourceStates(TextureUsageFlags textureUsages)
-    {
-        static std::unordered_map<TextureUsageBits, VkImageUsageFlags> rules = {
-            { TextureUsageBits::copySrc,          VK_IMAGE_USAGE_TRANSFER_SRC_BIT },
-            { TextureUsageBits::copyDst,          VK_IMAGE_USAGE_TRANSFER_DST_BIT },
-            { TextureUsageBits::textureBinding,   VK_IMAGE_USAGE_SAMPLED_BIT },
-            { TextureUsageBits::storageBinding,   VK_IMAGE_USAGE_STORAGE_BIT },
-            { TextureUsageBits::renderAttachment, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT },
-            { TextureUsageBits::depthStencilAttachment, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT },
-        };
-
-        VkImageUsageFlags result = {};
-        for (const auto& rule : rules) {
-            if (textureUsages & rule.first) {
-                result |= rule.second;
-            }
-        }
-        return result;
-    }
-}
-
-namespace RHI::Vulkan {
     VulkanTexture::VulkanTexture(VulkanDevice& inDevice, const TextureCreateInfo& inCreateInfo, VkImage inNativeImage)
         : Texture(inCreateInfo)
         , device(inDevice)
@@ -111,7 +89,7 @@ namespace RHI::Vulkan {
         imageInfo.samples = static_cast<VkSampleCountFlagBits>(inCreateInfo.samples);
         imageInfo.imageType = EnumCast<TextureDimension, VkImageType>(inCreateInfo.dimension);
         imageInfo.format = EnumCast<PixelFormat, VkFormat>(inCreateInfo.format);
-        imageInfo.usage = GetVkResourceStates(inCreateInfo.usages);
+        imageInfo.usage = FlagsCast<TextureUsageFlags, VkImageUsageFlags>(inCreateInfo.usages);
 
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
