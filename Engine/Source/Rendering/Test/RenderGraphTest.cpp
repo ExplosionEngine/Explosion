@@ -11,21 +11,21 @@
 using namespace Render;
 using namespace Rendering;
 
-class RGTestCS : public Render::GlobalShader {
-public:
-    ShaderInfo(
-        "RGTestCS",
-        "/Engine/Shader/Test/RGTest.esl",
-        "CSMain",
-        Render::ShaderStage::sCompute);
-
-    BoolShaderVariantField(TestBoolVariant, "TEST_BOOL");
-    RangedIntShaderVariantField(TestRangedIntVariant, "TEST_RANGED_INT", 0, 3);
-    VariantSet(TestBoolVariant, TestRangedIntVariant);
-
-    DefaultVariantFilter
-};
-RegisterGlobalShader(RGTestCS)
+//class RGTestCS : public Render::GlobalShader {
+//public:
+//    ShaderInfo(
+//        "RGTestCS",
+//        "/Engine/Shader/Test/RGTest.esl",
+//        "CSMain",
+//        Render::ShaderStage::sCompute);
+//
+//    BoolShaderVariantField(TestBoolVariant, "TEST_BOOL");
+//    RangedIntShaderVariantField(TestRangedIntVariant, "TEST_RANGED_INT", 0, 3);
+//    VariantSet(TestBoolVariant, TestRangedIntVariant);
+//
+//    DefaultVariantFilter
+//};
+//RegisterGlobalShader(RGTestCS)
 
 struct RenderGraphTest : public testing::Test {
     void SetUp() override

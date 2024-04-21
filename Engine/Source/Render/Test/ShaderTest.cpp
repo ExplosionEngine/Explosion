@@ -20,7 +20,7 @@ public:
 
     DefaultVariantFilter
 };
-RegisterGlobalShader(TestGlobalShaderVS);
+//RegisterGlobalShader(TestGlobalShaderVS);
 
 TEST(ShaderTest, StaticVariantSetTest)
 {
