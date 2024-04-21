@@ -160,7 +160,7 @@ namespace Render {
         template <typename Shader>
         void Register();
 
-        std::vector<IShaderType*>&& GetShaderTypes();
+        const std::vector<IShaderType*>& GetShaderTypes();
 
     private:
         std::vector<IShaderType*> shaderTypes;

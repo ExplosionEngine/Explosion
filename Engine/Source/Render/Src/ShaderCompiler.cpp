@@ -257,4 +257,28 @@ namespace Render {
             return output;
         }, inInput, inOptions);
     }
+
+    ShaderTypeCompiler& ShaderTypeCompiler::Get()
+    {
+        static ShaderTypeCompiler instance;
+        return instance;
+    }
+
+    ShaderTypeCompiler::ShaderTypeCompiler()
+        : threadPool("ShaderTypeCompiler", 4)
+    {
+    }
+
+    ShaderTypeCompiler::~ShaderTypeCompiler() = default;
+
+    std::future<ShaderTypeCompileResult> ShaderTypeCompiler::Compile(const std::vector<IShaderType*> & shaderTypes)
+    {
+        // TODO
+        return std::future<ShaderTypeCompileResult>();
+    }
+
+    std::future<ShaderTypeCompileResult> ShaderTypeCompiler::CompileGlobalShaderTypes()
+    {
+        return Compile(GlobalShaderRegistry::Get().GetShaderTypes());
+    }
 }

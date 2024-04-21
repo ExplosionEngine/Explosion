@@ -101,9 +101,9 @@ namespace Render {
 
     GlobalShaderRegistry::~GlobalShaderRegistry() = default;
 
-    std::vector<IShaderType*>&& GlobalShaderRegistry::GetShaderTypes()
+    const std::vector<IShaderType*>& GlobalShaderRegistry::GetShaderTypes()
     {
-        return std::move(shaderTypes);
+        return shaderTypes;
     }
 
     BoolShaderVariantFieldImpl::BoolShaderVariantFieldImpl()

@@ -40,6 +40,11 @@ namespace Render {
         std::string errorInfo;
     };
 
+    struct ShaderTypeCompileResult {
+        bool success;
+        std::unordered_map<std::pair<ShaderTypeKey, VariantKey>, std::string> errorInfos;
+    };
+
     class ShaderCompiler {
     public:
         static ShaderCompiler& Get();
@@ -48,6 +53,20 @@ namespace Render {
 
     private:
         ShaderCompiler();
+
+        Common::ThreadPool threadPool;
+    };
+
+    class ShaderTypeCompiler {
+    public:
+        static ShaderTypeCompiler& Get();
+        ~ShaderTypeCompiler();
+
+        std::future<ShaderTypeCompileResult> Compile(const std::vector<IShaderType*>& shaderTypes);
+        std::future<ShaderTypeCompileResult> CompileGlobalShaderTypes();
+
+    private:
+        ShaderTypeCompiler();
 
         Common::ThreadPool threadPool;
     };
