@@ -16,7 +16,7 @@ namespace RHI::DirectX12 {
                 count++;
             }
         });
-        return count == 1 ? DX12EnumCast<ShaderStageBits, D3D12_SHADER_VISIBILITY>(static_cast<ShaderStageBits>(shaderStageFlags.Value())) : D3D12_SHADER_VISIBILITY_ALL;
+        return count == 1 ? EnumCast<ShaderStageBits, D3D12_SHADER_VISIBILITY>(static_cast<ShaderStageBits>(shaderStageFlags.Value())) : D3D12_SHADER_VISIBILITY_ALL;
     }
 }
 
@@ -64,7 +64,7 @@ namespace RHI::DirectX12 {
             nativeDescriptorRanges.emplace_back();
 
             const auto& hlslBinding = std::get<HlslBinding>(entry.binding.platformBinding);
-            nativeDescriptorRanges.back().Init(DX12EnumCast<HlslBindingRangeType, D3D12_DESCRIPTOR_RANGE_TYPE>(hlslBinding.rangeType), 1, hlslBinding.index, inCreateInfo.layoutIndex);
+            nativeDescriptorRanges.back().Init(EnumCast<HlslBindingRangeType, D3D12_DESCRIPTOR_RANGE_TYPE>(hlslBinding.rangeType), 1, hlslBinding.index, inCreateInfo.layoutIndex);
             nativeRootParameters.back().InitAsDescriptorTable(1, &nativeDescriptorRanges.back(), GetShaderVisibility(entry.shaderVisibility));
 
             rootParameterKeyInfos.emplace_back(entry.binding.type, inCreateInfo.layoutIndex, hlslBinding);

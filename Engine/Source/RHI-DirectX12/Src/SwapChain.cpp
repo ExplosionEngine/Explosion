@@ -69,7 +69,7 @@ namespace RHI::DirectX12 {
         desc.BufferCount = inCreateInfo.textureNum;
         desc.Width = inCreateInfo.extent.x;
         desc.Height = inCreateInfo.extent.y;
-        desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(inCreateInfo.format);
+        desc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(inCreateInfo.format);
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
         desc.SampleDesc.Count = 1;

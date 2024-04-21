@@ -25,7 +25,7 @@ namespace RHI::Vulkan {
         GpuProperty property {};
         property.vendorId = vkPhysicalDeviceProperties.vendorID;
         property.deviceId = vkPhysicalDeviceProperties.deviceID;
-        property.type = VKEnumCast<VkPhysicalDeviceType, GpuType>(vkPhysicalDeviceProperties.deviceType);
+        property.type = EnumCast<VkPhysicalDeviceType, GpuType>(vkPhysicalDeviceProperties.deviceType);
         return property;
     }
 

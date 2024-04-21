@@ -126,7 +126,7 @@ namespace RHI::Vulkan {
 
         VkBufferImageCopy copyRegion = {};
         copyRegion.imageExtent = {inSize.x, inSize.y, inSize.z };
-        copyRegion.imageSubresource = {GetAspectMask(inSubResourceInfo->aspect), inSubResourceInfo->mipLevel, inSubResourceInfo->baseArrayLayer, inSubResourceInfo->arrayLayerNum };
+        copyRegion.imageSubresource = { EnumCast<TextureAspect, VkImageAspectFlags>(inSubResourceInfo->aspect), inSubResourceInfo->mipLevel, inSubResourceInfo->baseArrayLayer, inSubResourceInfo->arrayLayerNum };
 
         vkCmdCopyBufferToImage(commandBuffer.GetNativeCommandBuffer(), buffer->GetNative(), texture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
     }
@@ -138,7 +138,7 @@ namespace RHI::Vulkan {
 
         VkBufferImageCopy copyRegion = {};
         copyRegion.imageExtent = {inSize.x, inSize.y, inSize.z };
-        copyRegion.imageSubresource = {GetAspectMask(inSubResourceInfo->aspect), inSubResourceInfo->mipLevel, inSubResourceInfo->baseArrayLayer, inSubResourceInfo->arrayLayerNum };
+        copyRegion.imageSubresource = { EnumCast<TextureAspect, VkImageAspectFlags>(inSubResourceInfo->aspect), inSubResourceInfo->mipLevel, inSubResourceInfo->baseArrayLayer, inSubResourceInfo->arrayLayerNum };
 
         vkCmdCopyImageToBuffer(commandBuffer.GetNativeCommandBuffer(), texture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                buffer->GetNative(), 1, &copyRegion);
@@ -151,8 +151,8 @@ namespace RHI::Vulkan {
 
         VkImageCopy copyRegion = {};
         copyRegion.extent = {inSize.x, inSize.y, inSize.z };
-        copyRegion.srcSubresource = {GetAspectMask(inSrcSubResourceInfo->aspect), inSrcSubResourceInfo->mipLevel, inSrcSubResourceInfo->baseArrayLayer, inSrcSubResourceInfo->arrayLayerNum };
-        copyRegion.dstSubresource = {GetAspectMask(inDestSubResourceInfo->aspect), inDestSubResourceInfo->mipLevel, inDestSubResourceInfo->baseArrayLayer, inDestSubResourceInfo->arrayLayerNum };
+        copyRegion.srcSubresource = { EnumCast<TextureAspect, VkImageAspectFlags>(inSrcSubResourceInfo->aspect), inSrcSubResourceInfo->mipLevel, inSrcSubResourceInfo->baseArrayLayer, inSrcSubResourceInfo->arrayLayerNum };
+        copyRegion.dstSubresource = { EnumCast<TextureAspect, VkImageAspectFlags>(inDestSubResourceInfo->aspect), inDestSubResourceInfo->mipLevel, inDestSubResourceInfo->baseArrayLayer, inDestSubResourceInfo->arrayLayerNum };
 
         vkCmdCopyImage(commandBuffer.GetNativeCommandBuffer(), srcTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
     }
@@ -207,8 +207,8 @@ namespace RHI::Vulkan {
             colorAttachmentInfos[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             colorAttachmentInfos[i].imageView = colorTextureView->GetNative();
             colorAttachmentInfos[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            colorAttachmentInfos[i].loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(inBeginInfo.colorAttachments[i].loadOp);
-            colorAttachmentInfos[i].storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(inBeginInfo.colorAttachments[i].storeOp);
+            colorAttachmentInfos[i].loadOp = EnumCast<LoadOp, VkAttachmentLoadOp>(inBeginInfo.colorAttachments[i].loadOp);
+            colorAttachmentInfos[i].storeOp = EnumCast<StoreOp, VkAttachmentStoreOp>(inBeginInfo.colorAttachments[i].storeOp);
             colorAttachmentInfos[i].clearValue.color = {
                 inBeginInfo.colorAttachments[i].clearValue.r,
                 inBeginInfo.colorAttachments[i].clearValue.g,
@@ -234,8 +234,8 @@ namespace RHI::Vulkan {
             depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             depthAttachmentInfo.imageView = depthStencilTextureView->GetNative();
             depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            depthAttachmentInfo.loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(inBeginInfo.depthStencilAttachment->depthLoadOp);
-            depthAttachmentInfo.storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(inBeginInfo.depthStencilAttachment->depthStoreOp);
+            depthAttachmentInfo.loadOp = EnumCast<LoadOp, VkAttachmentLoadOp>(inBeginInfo.depthStencilAttachment->depthLoadOp);
+            depthAttachmentInfo.storeOp = EnumCast<StoreOp, VkAttachmentStoreOp>(inBeginInfo.depthStencilAttachment->depthStoreOp);
             depthAttachmentInfo.clearValue.depthStencil = {inBeginInfo.depthStencilAttachment->depthClearValue, inBeginInfo.depthStencilAttachment->stencilClearValue };
 
             renderingInfo.pDepthAttachment = &depthAttachmentInfo;
@@ -245,8 +245,8 @@ namespace RHI::Vulkan {
                 stencilAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
                 stencilAttachmentInfo.imageView = depthStencilTextureView->GetNative();
                 stencilAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-                stencilAttachmentInfo.loadOp = VKEnumCast<LoadOp, VkAttachmentLoadOp>(inBeginInfo.depthStencilAttachment->stencilLoadOp);
-                stencilAttachmentInfo.storeOp = VKEnumCast<StoreOp, VkAttachmentStoreOp>(inBeginInfo.depthStencilAttachment->stencilStoreOp);
+                stencilAttachmentInfo.loadOp = EnumCast<LoadOp, VkAttachmentLoadOp>(inBeginInfo.depthStencilAttachment->stencilLoadOp);
+                stencilAttachmentInfo.storeOp = EnumCast<StoreOp, VkAttachmentStoreOp>(inBeginInfo.depthStencilAttachment->stencilStoreOp);
                 stencilAttachmentInfo.clearValue.depthStencil = {inBeginInfo.depthStencilAttachment->depthClearValue, inBeginInfo.depthStencilAttachment->stencilClearValue };
 
                 renderingInfo.pStencilAttachment = &stencilAttachmentInfo;
@@ -286,7 +286,7 @@ namespace RHI::Vulkan {
         auto* mBufferView = static_cast<VulkanBufferView*>(inBufferView);
 
         VkBuffer indexBuffer = mBufferView->GetBuffer().GetNative();
-        auto vkFormat = VKEnumCast<IndexFormat, VkIndexType>(mBufferView->GetIndexFormat());
+        auto vkFormat = EnumCast<IndexFormat, VkIndexType>(mBufferView->GetIndexFormat());
 
         vkCmdBindIndexBuffer(nativeCmdBuffer, indexBuffer, 0, vkFormat);
     }
@@ -333,7 +333,7 @@ namespace RHI::Vulkan {
     void VulkanRasterPassCommandRecorder::SetPrimitiveTopology(PrimitiveTopology inPrimitiveTopology)
     {
         // check extension
-//        cmdHandle.setPrimitiveTopologyEXT(VKEnumCast<PrimitiveTopologyType, vk::PrimitiveTopology>(primitiveTopology)
+//        cmdHandle.setPrimitiveTopologyEXT(EnumCast<PrimitiveTopologyType, vk::PrimitiveTopology>(primitiveTopology)
     }
 
     void VulkanRasterPassCommandRecorder::SetBlendConstant(const float *inConstants)
