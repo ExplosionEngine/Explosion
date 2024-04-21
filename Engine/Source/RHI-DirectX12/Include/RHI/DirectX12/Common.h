@@ -294,7 +294,7 @@ namespace RHI::DirectX12 {
         return (size + (D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1)) & ~(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1);
     }
 
-    // TODO maybe use dx12 interfaces to do this ?
+    // TODO use DirectXTex ComputePitch ?
     inline size_t GetBytesPerPixel(PixelFormat format) {
         if (format >= PixelFormat::r8Unorm && format <= PixelFormat::r8Sint) {
             return 1;
