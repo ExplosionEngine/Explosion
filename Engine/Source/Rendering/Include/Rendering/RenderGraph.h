@@ -65,27 +65,8 @@ namespace Rendering {
         max
     };
 
-    struct RGBufferDesc : public RHI::BufferCreateInfo {
-        static RGBufferDesc Create();
-        static RGBufferDesc Create(const RHI::BufferCreateInfo& rhiDesc);
-        RGBufferDesc& Size(uint32_t inSize);
-        RGBufferDesc& Usages(RHI::BufferUsageFlags inUsages);
-        RGBufferDesc& InitialState(RHI::BufferState inState);
-        RGBufferDesc& DebugName(const std::string& inName);
-    };
-
-    struct RGTextureDesc  : public RHI::TextureCreateInfo {
-        static RGTextureDesc Create();
-        static RGTextureDesc Create(const RHI::TextureCreateInfo& rhiDesc);
-        RGTextureDesc& Dimension(RHI::TextureDimension inDimension);
-        RGTextureDesc& Extent(const Common::UVec3& inExtent);
-        RGTextureDesc& Format(RHI::PixelFormat inFormat);
-        RGTextureDesc& Usages(RHI::TextureUsageFlags inUsages);
-        RGTextureDesc& MipLevels(uint8_t inMipLevels);
-        RGTextureDesc& Samples(uint8_t inSamples);
-        RGTextureDesc& InitialState(RHI::TextureState inState);
-        RGTextureDesc& DebugName(const std::string& inName);
-    };
+    using RGBufferDesc = RHI::BufferCreateInfo;
+    using RGTextureDesc = RHI::TextureCreateInfo;
 
     class RGResource {
     public:
@@ -165,25 +146,8 @@ namespace Rendering {
     using RGBufferRef = RGBuffer*;
     using RGTextureRef = RGTexture*;
 
-    struct RGBufferViewDesc : public RHI::BufferViewCreateInfoBase<RGBufferViewDesc> {
-        static RGBufferViewDesc CreateForUniform();
-        static RGBufferViewDesc CreateForStorage();
-        static RGBufferViewDesc Create(const RHI::BufferViewCreateInfo& rhiDesc);
-    };
-
-    struct RGTextureViewDesc  : public RHI::TextureViewCreateInfo {
-        static RGTextureViewDesc CreateForTexture();
-        static RGTextureViewDesc CreateForStorageTexture();
-        static RGTextureViewDesc CreateForColorAttachment();
-        static RGTextureViewDesc CreateForDepthStencilAttachment();
-        static RGTextureViewDesc Create(const RHI::TextureViewCreateInfo& rhiDesc);
-        RGTextureViewDesc& Dimension(RHI::TextureViewDimension inDimension);
-        RGTextureViewDesc& Aspect(RHI::TextureAspect inAspect);
-        RGTextureViewDesc& BaseMipLevel(uint8_t inBaseMipLevel);
-        RGTextureViewDesc& MipLevelNum(uint8_t inMipLevelNum);
-        RGTextureViewDesc& BaseArrayLayer(uint8_t inBaseArrayLayer);
-        RGTextureViewDesc& ArrayLayerNum(uint8_t inArrayLayerNum);
-    };
+    using RGBufferViewDesc = RHI::BufferViewCreateInfo;
+    using RGTextureViewDesc = RHI::TextureViewCreateInfo;
 
     class RGResourceView {
     public:

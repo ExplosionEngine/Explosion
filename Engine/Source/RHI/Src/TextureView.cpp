@@ -5,14 +5,15 @@
 #include <RHI/TextureView.h>
 
 namespace RHI {
-    TextureViewCreateInfo::TextureViewCreateInfo()
-        : type(TextureViewType::max)
-        , dimension(TextureViewDimension::max)
-        , aspect(TextureAspect::max)
-        , baseMipLevel(0)
-        , mipLevelNum(0)
-        , baseArrayLayer(0)
-        , arrayLayerNum(0)
+    TextureViewCreateInfo::TextureViewCreateInfo(
+        TextureViewType inType, TextureViewDimension inDimension, TextureAspect inAspect, uint8_t inBaseMipLevel, uint8_t inMipLevelNum, uint8_t inBaseArrayLayer, uint8_t inArrayLayerNum)
+        : type(inType)
+        , dimension(inDimension)
+        , aspect(inAspect)
+        , baseMipLevel(inBaseMipLevel)
+        , mipLevelNum(inMipLevelNum)
+        , baseArrayLayer(inBaseArrayLayer)
+        , arrayLayerNum(inArrayLayerNum)
     {
     }
 

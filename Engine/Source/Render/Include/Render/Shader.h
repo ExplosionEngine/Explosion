@@ -27,7 +27,6 @@ namespace Render {
 
     using ShaderTypeKey = uint64_t;
     using VariantKey = uint64_t;
-    using ShaderStage = RHI::ShaderStageBits;
 
     struct ShaderReflectionData {
         using VertexSemantic = std::string;
@@ -55,8 +54,10 @@ namespace Render {
     using ShaderArchivePackage = std::unordered_map<VariantKey, ShaderArchive>;
 
     class IShaderType {
+    public:
         virtual const std::string& GetName() = 0;
         virtual ShaderTypeKey GetKey() = 0;
+        virtual RHI::ShaderStageBits GetStage() = 0;
         virtual const std::string& GetEntryPoint() = 0;
         virtual const std::string& GetCode() = 0;
         virtual uint32_t GetVariantNum() = 0;
@@ -108,6 +109,7 @@ namespace Render {
 
         const std::string& GetName() override;
         ShaderTypeKey GetKey() override;
+        RHI::ShaderStageBits GetStage() override;
         const std::string& GetEntryPoint() override;
         const std::string& GetCode() override;
         uint32_t GetVariantNum() override;
@@ -123,6 +125,7 @@ namespace Render {
 
         std::string name;
         ShaderTypeKey key;
+        RHI::ShaderStageBits stage;
         std::string entryPoint;
         std::string code;
         std::vector<VariantKey> variants;
@@ -236,7 +239,7 @@ namespace Render {
     static constexpr const char* name = inName; \
     static constexpr const char* sourceFile = inSourceFile; \
     static constexpr const char* entryPoint = inEntryPoint; \
-    static constexpr Render::ShaderStage stage = inStage; \
+    static constexpr RHI::ShaderStageBits stage = inStage; \
 
 #define DefaultVariantFilter \
     static bool VariantFilter(const VariantSet& variantSet) { return true; } \
@@ -257,7 +260,7 @@ namespace Render {
     class VariantSet : public Render::VariantSetImpl<__VA_ARGS__> {};
 
 #define RegisterGlobalShader(inClass) \
-    static uint8_t _globalShaderRegister_inClass = []() -> uint8_t { \
+    static uint8_t _globalShaderRegister_##inClass = []() -> uint8_t { \
         Render::GlobalShaderRegistry::Get().Register<inClass>(); \
         return 0; \
     }(); \
@@ -293,6 +296,12 @@ namespace Render {
     ShaderTypeKey GlobalShaderType<Shader>::GetKey()
     {
         return key;
+    }
+
+    template <typename Shader>
+    RHI::ShaderStageBits GlobalShaderType<Shader>::GetStage()
+    {
+        return stage;
     }
 
     template <typename Shader>
@@ -336,6 +345,7 @@ namespace Render {
     {
         name = Shader::name;
         key = Common::HashUtils::CityHash(name.data(), name.size());
+        stage = Shader::stage;
         entryPoint = Shader::entryPoint;
 
         ReadCode();

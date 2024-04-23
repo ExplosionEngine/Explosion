@@ -3,6 +3,8 @@
 //
 
 #include <unordered_map>
+#include <tuple>
+#include <utility>
 
 #if PLATFORM_WINDOWS
 #include <windows.h>
@@ -88,23 +90,24 @@ namespace Render {
         return result;
     }
 
-    static std::vector<std::wstring> GetInternalPredefinition(const ShaderCompileOptions& options)
+    static std::vector<std::wstring> GetInternalPredefinition(const ShaderCompileInput& input, const ShaderCompileOptions& options)
     {
         std::vector<std::wstring> result { L"-D" };
         auto def = options.byteCodeType == Render::ShaderByteCodeType::spirv ? std::wstring{L"VULKAN=1"} : std::wstring{L"VULKAN=0"};
         result.emplace_back(def);
 
+        // TODO shader stage definitions
         return result;
     }
 
-    static std::vector<std::wstring> GetDefinitionArguments(const ShaderCompileOptions& options)
+    static std::vector<std::wstring> GetDefinitionArguments(const ShaderCompileInput& input, const ShaderCompileOptions& options)
     {
         std::vector<std::wstring> result;
 
-        auto preDef = GetInternalPredefinition(options);
+        auto preDef = GetInternalPredefinition(input, options);
         result.insert(result.end(), preDef.begin(), preDef.end());
 
-        for (const auto& definition : options.definitions) {
+        for (const auto& definition : input.definitions) {
             result.emplace_back(L"-D");
             result.emplace_back(Common::StringUtils::ToWideString(definition));
         }
@@ -158,7 +161,7 @@ namespace Render {
         auto entryPointArgs = GetEntryPointArguments(input);
         auto targetProfileArgs = GetTargetProfileArguments(input);
         auto includePathArgs = GetIncludePathArguments(options);
-        auto definitionArgs = GetDefinitionArguments(options);
+        auto definitionArgs = GetDefinitionArguments(input, options);
         FillArguments(arguments, entryPointArgs);
         FillArguments(arguments, targetProfileArgs);
         FillArguments(arguments, includePathArgs);
@@ -233,6 +236,11 @@ namespace Render {
 }
 
 namespace Render {
+    size_t ShaderTypeAndVariantHashProvider::operator()(const std::pair<ShaderTypeKey, VariantKey>& value) const
+    {
+        return Common::HashUtils::CityHash(&value, sizeof(std::pair<ShaderTypeKey, VariantKey>));
+    }
+
     ShaderCompiler& ShaderCompiler::Get()
     {
         static ShaderCompiler instance;
@@ -247,7 +255,7 @@ namespace Render {
 
     std::future<ShaderCompileOutput> ShaderCompiler::Compile(const ShaderCompileInput& inInput, const ShaderCompileOptions& inOptions)
     {
-        return threadPool.EmplaceTask([](const ShaderCompileInput& input, const ShaderCompileOptions& options) -> ShaderCompileOutput {
+        return threadPool.EmplaceTask([](ShaderCompileInput input, ShaderCompileOptions options) -> ShaderCompileOutput {
             ShaderCompileOutput output;
             CompileDxilOrSpriv(input, options, output);
             if (!output.success || options.byteCodeType != ShaderByteCodeType::mbc) {
@@ -271,14 +279,43 @@ namespace Render {
 
     ShaderTypeCompiler::~ShaderTypeCompiler() = default;
 
-    std::future<ShaderTypeCompileResult> ShaderTypeCompiler::Compile(const std::vector<IShaderType*> & shaderTypes)
+    std::future<ShaderTypeCompileResult> ShaderTypeCompiler::Compile(const std::vector<IShaderType*>& inShaderTypes, const ShaderCompileOptions& inOptions)
     {
-        // TODO
-        return std::future<ShaderTypeCompileResult>();
+        return threadPool.EmplaceTask([](std::vector<IShaderType*> shaderTypes, ShaderCompileOptions options) -> ShaderTypeCompileResult {
+            std::vector<std::tuple<ShaderTypeKey, VariantKey, std::future<ShaderCompileOutput>>> compileOutputs;
+            for (auto* shaderType : shaderTypes) {
+                auto typeKey = shaderType->GetKey();
+                auto stage = shaderType->GetStage();
+                const auto& entryPoint = shaderType->GetEntryPoint();
+                const auto& code = shaderType->GetCode();
+
+                const auto& variants = shaderType->GetVariants();
+                for (const auto variantKey : variants) {
+                    ShaderCompileInput input {};
+                    input.source = code;
+                    input.entryPoint = entryPoint;
+                    input.stage = stage;
+                    input.definitions = shaderType->GetDefinitions(variantKey);
+
+                    compileOutputs.emplace_back(std::make_tuple(typeKey, variantKey, ShaderCompiler::Get().Compile(input, options)));
+                }
+            }
+
+            ShaderTypeCompileResult result;
+            for (auto& compileOutput : compileOutputs) {
+                auto output = std::get<2>(compileOutput).get();
+                if (output.success) {
+                    // TODO
+                } else {
+                    // TODO
+                }
+            }
+            return result;
+        }, inShaderTypes, inOptions);
     }
 
-    std::future<ShaderTypeCompileResult> ShaderTypeCompiler::CompileGlobalShaderTypes()
+    std::future<ShaderTypeCompileResult> ShaderTypeCompiler::CompileGlobalShaderTypes(const ShaderCompileOptions& inOptions)
     {
-        return Compile(GlobalShaderRegistry::Get().GetShaderTypes());
+        return Compile(GlobalShaderRegistry::Get().GetShaderTypes(), inOptions);
     }
 }

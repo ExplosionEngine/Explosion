@@ -12,7 +12,7 @@ public:
         "TestGlobalShader",
         "/Engine/Shader/Test/TestGlobalShader.esl",
         "VSMain",
-        Render::ShaderStage::sVertex);
+        RHI::ShaderStageBits::sVertex);
 
     BoolShaderVariantField(TestBoolVariant, "TEST_BOOL");
     RangedIntShaderVariantField(TestRangedIntVariant, "TEST_RANGED_INT", 0, 3);

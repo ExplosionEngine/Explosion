@@ -17,7 +17,7 @@ using namespace Rendering;
 //        "RGTestCS",
 //        "/Engine/Shader/Test/RGTest.esl",
 //        "CSMain",
-//        Render::ShaderStage::sCompute);
+//        RHI::ShaderStageBits::sCompute);
 //
 //    BoolShaderVariantField(TestBoolVariant, "TEST_BOOL");
 //    RangedIntShaderVariantField(TestRangedIntVariant, "TEST_RANGED_INT", 0, 3);

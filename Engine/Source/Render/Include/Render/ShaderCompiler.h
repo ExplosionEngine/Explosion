@@ -24,12 +24,12 @@ namespace Render {
         std::string source;
         std::string entryPoint;
         RHI::ShaderStageBits stage;
+        std::vector<std::string> definitions;
     };
 
     struct ShaderCompileOptions {
         ShaderByteCodeType byteCodeType = ShaderByteCodeType::max;
         bool withDebugInfo = false;
-        std::vector<std::string> definitions;
         std::vector<std::string> includePaths;
     };
 
@@ -40,9 +40,13 @@ namespace Render {
         std::string errorInfo;
     };
 
+    struct ShaderTypeAndVariantHashProvider {
+        size_t operator()(const std::pair<ShaderTypeKey, VariantKey>& value) const;
+    };
+
     struct ShaderTypeCompileResult {
         bool success;
-        std::unordered_map<std::pair<ShaderTypeKey, VariantKey>, std::string> errorInfos;
+        std::unordered_map<std::pair<ShaderTypeKey, VariantKey>, std::string, ShaderTypeAndVariantHashProvider> errorInfos;
     };
 
     class ShaderCompiler {
@@ -62,8 +66,8 @@ namespace Render {
         static ShaderTypeCompiler& Get();
         ~ShaderTypeCompiler();
 
-        std::future<ShaderTypeCompileResult> Compile(const std::vector<IShaderType*>& shaderTypes);
-        std::future<ShaderTypeCompileResult> CompileGlobalShaderTypes();
+        std::future<ShaderTypeCompileResult> Compile(const std::vector<IShaderType*>& inShaderTypes, const ShaderCompileOptions& inOptions);
+        std::future<ShaderTypeCompileResult> CompileGlobalShaderTypes(const ShaderCompileOptions& inOptions);
 
     private:
         ShaderTypeCompiler();
