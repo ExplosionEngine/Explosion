@@ -282,34 +282,32 @@ namespace Render {
     std::future<ShaderTypeCompileResult> ShaderTypeCompiler::Compile(const std::vector<IShaderType*>& inShaderTypes, const ShaderCompileOptions& inOptions)
     {
         return threadPool.EmplaceTask([](std::vector<IShaderType*> shaderTypes, ShaderCompileOptions options) -> ShaderTypeCompileResult {
-            std::vector<std::tuple<ShaderTypeKey, VariantKey, std::future<ShaderCompileOutput>>> compileOutputs;
+            std::unordered_map<ShaderTypeKey, std::unordered_map<VariantKey, std::future<ShaderCompileOutput>>> compileOutputs;
+            compileOutputs.reserve(shaderTypes.size());
             for (auto* shaderType : shaderTypes) {
                 auto typeKey = shaderType->GetKey();
                 auto stage = shaderType->GetStage();
                 const auto& entryPoint = shaderType->GetEntryPoint();
                 const auto& code = shaderType->GetCode();
 
+                Assert(!compileOutputs.contains(typeKey));
+                compileOutputs.emplace(std::make_pair(typeKey, std::unordered_map<VariantKey, std::future<ShaderCompileOutput>> {}));
+                auto& variantCompileOutputs = compileOutputs.at(typeKey);
+
                 const auto& variants = shaderType->GetVariants();
-                for (const auto variantKey : variants) {
+                for (const auto& variantKey : variants) {
                     ShaderCompileInput input {};
                     input.source = code;
                     input.entryPoint = entryPoint;
                     input.stage = stage;
                     input.definitions = shaderType->GetDefinitions(variantKey);
 
-                    compileOutputs.emplace_back(std::make_tuple(typeKey, variantKey, ShaderCompiler::Get().Compile(input, options)));
+                    variantCompileOutputs.emplace(std::make_pair(variantKey, ShaderCompiler::Get().Compile(input, options)));
                 }
             }
 
             ShaderTypeCompileResult result;
-            for (auto& compileOutput : compileOutputs) {
-                auto output = std::get<2>(compileOutput).get();
-                if (output.success) {
-                    // TODO
-                } else {
-                    // TODO
-                }
-            }
+            // TODO
             return result;
         }, inShaderTypes, inOptions);
     }
