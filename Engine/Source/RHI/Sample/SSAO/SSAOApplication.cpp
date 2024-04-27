@@ -1040,7 +1040,7 @@ private:
 
     Common::UniqueRef<ShaderModule> GetShaderModule(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
     {
-        std::vector<std::string> includePath { "../Test/Sample/SSAO/Shader"};
+        std::vector<std::string> includePath { "../Test/Sample/RHI/SSAO/Shader"};
         CompileShader(byteCode, fileName, entryPoint, shaderStage, includePath);
         return device->CreateShaderModule(ShaderModuleCreateInfo(entryPoint, byteCode));
     }
@@ -1077,14 +1077,14 @@ private:
         std::vector<uint8_t> compositionVs;
         std::vector<uint8_t> compositionPs;
 
-        shaderModules.gBufferVs     = GetShaderModule(gBufferVs, "../Test/Sample/SSAO/Shader/Gbuffer.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.gBufferPs     = GetShaderModule(gBufferPs, "../Test/Sample/SSAO/Shader/Gbuffer.hlsl", "FSMain", ShaderStageBits::sPixel);
-        shaderModules.ssaoVs        = GetShaderModule(ssaoVs, "../Test/Sample/SSAO/Shader/SSAO.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.ssaoPs        = GetShaderModule(ssaoPs, "../Test/Sample/SSAO/Shader/SSAO.hlsl", "FSMain", ShaderStageBits::sPixel);
-        shaderModules.ssaoBlurVs    = GetShaderModule(blurVs, "../Test/Sample/SSAO/Shader/Blur.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.ssaoBlurPs    = GetShaderModule(blurPs, "../Test/Sample/SSAO/Shader/Blur.hlsl", "FSMain", ShaderStageBits::sPixel);
-        shaderModules.compositionVs = GetShaderModule(compositionVs, "../Test/Sample/SSAO/Shader/Composition.hlsl", "VSMain", ShaderStageBits::sVertex);
-        shaderModules.compositionPs = GetShaderModule(compositionPs, "../Test/Sample/SSAO/Shader/Composition.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.gBufferVs     = GetShaderModule(gBufferVs, "../Test/Sample/RHI/SSAO/Shader/Gbuffer.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.gBufferPs     = GetShaderModule(gBufferPs, "../Test/Sample/RHI/SSAO/Shader/Gbuffer.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.ssaoVs        = GetShaderModule(ssaoVs, "../Test/Sample/RHI/SSAO/Shader/SSAO.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.ssaoPs        = GetShaderModule(ssaoPs, "../Test/Sample/RHI/SSAO/Shader/SSAO.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.ssaoBlurVs    = GetShaderModule(blurVs, "../Test/Sample/RHI/SSAO/Shader/Blur.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.ssaoBlurPs    = GetShaderModule(blurPs, "../Test/Sample/RHI/SSAO/Shader/Blur.hlsl", "FSMain", ShaderStageBits::sPixel);
+        shaderModules.compositionVs = GetShaderModule(compositionVs, "../Test/Sample/RHI/SSAO/Shader/Composition.hlsl", "VSMain", ShaderStageBits::sVertex);
+        shaderModules.compositionPs = GetShaderModule(compositionPs, "../Test/Sample/RHI/SSAO/Shader/Composition.hlsl", "FSMain", ShaderStageBits::sPixel);
 
         // Gbuffer vertex
         VertexBufferLayout vertexBufferLayout = VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex));
@@ -1210,7 +1210,7 @@ private:
     void LoadGLTF()
     {
         model = Common::MakeUnique<Model>();
-        model->LoadFromFile("../Test/Sample/SSAO/Model/Voyager.gltf");
+        model->LoadFromFile("../Test/Sample/RHI/SSAO/Model/Voyager.gltf");
     }
 
     void GenerateRenderables()

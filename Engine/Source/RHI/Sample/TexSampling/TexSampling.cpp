@@ -199,7 +199,7 @@ private:
     void CreateTextureAndSampler()
     {
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load("../Test/Sample/TexSampling/Awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        stbi_uc* pixels = stbi_load("../Test/Sample/RHI/TexSampling/Awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         Assert(pixels != nullptr);
 
         BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
@@ -352,11 +352,11 @@ private:
     void CreatePipeline()
     {
         std::vector<uint8_t> vsByteCode;
-        CompileShader(vsByteCode, "../Test/Sample/TexSampling/TexSampling.hlsl", "VSMain", ShaderStageBits::sVertex);
+        CompileShader(vsByteCode, "../Test/Sample/RHI/TexSampling/TexSampling.hlsl", "VSMain", ShaderStageBits::sVertex);
         vertexShader = device->CreateShaderModule(ShaderModuleCreateInfo("VSMain", vsByteCode));
 
         std::vector<uint8_t> fsByteCode;
-        CompileShader(fsByteCode, "../Test/Sample/TexSampling/TexSampling.hlsl", "FSMain", ShaderStageBits::sPixel);
+        CompileShader(fsByteCode, "../Test/Sample/RHI/TexSampling/TexSampling.hlsl", "FSMain", ShaderStageBits::sPixel);
         fragmentShader = device->CreateShaderModule(ShaderModuleCreateInfo("FSMain", fsByteCode));
 
         RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo(pipelineLayout.Get())

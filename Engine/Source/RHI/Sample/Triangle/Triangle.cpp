@@ -170,11 +170,11 @@ private:
     void CreatePipeline()
     {
         std::vector<uint8_t> vsByteCode;
-        CompileShader(vsByteCode, "../Test/Sample/Triangle/Triangle.hlsl", "VSMain", RHI::ShaderStageBits::sVertex);
+        CompileShader(vsByteCode, "../Test/Sample/RHI/Triangle/Triangle.hlsl", "VSMain", RHI::ShaderStageBits::sVertex);
         vertexShader = device->CreateShaderModule(ShaderModuleCreateInfo("VSMain", vsByteCode));
 
         std::vector<uint8_t> fsByteCode;
-        CompileShader(fsByteCode, "../Test/Sample/Triangle/Triangle.hlsl", "FSMain", RHI::ShaderStageBits::sPixel);
+        CompileShader(fsByteCode, "../Test/Sample/RHI/Triangle/Triangle.hlsl", "FSMain", RHI::ShaderStageBits::sPixel);
         fragmentShader = device->CreateShaderModule(ShaderModuleCreateInfo("FSMain", fsByteCode));
 
         RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo(pipelineLayout.Get())
