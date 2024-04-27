@@ -16,7 +16,6 @@ namespace Render {
     enum class ShaderByteCodeType {
         dxil,
         spirv,
-        mbc,
         max
     };
 

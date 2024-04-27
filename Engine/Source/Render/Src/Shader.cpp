@@ -50,13 +50,13 @@ namespace Render {
 
     ShaderArchiveStorage::~ShaderArchiveStorage() = default;
 
-    void ShaderArchiveStorage::UpdateShaderArchivePackage(IShaderType* shaderTypeKey, ShaderArchivePackage&& shaderArchivePackage)
+    void ShaderArchiveStorage::UpdateShaderArchivePackage(ShaderTypeKey shaderTypeKey, ShaderArchivePackage&& shaderArchivePackage)
     {
         Assert(!shaderArchivePackages.contains(shaderTypeKey));
         shaderArchivePackages.emplace(std::make_pair(shaderTypeKey, std::move(shaderArchivePackage)));
     }
 
-    const ShaderArchivePackage& ShaderArchiveStorage::GetShaderArchivePackage(IShaderType* shaderTypeKey)
+    const ShaderArchivePackage& ShaderArchiveStorage::GetShaderArchivePackage(ShaderTypeKey shaderTypeKey)
     {
         auto iter = shaderArchivePackages.find(shaderTypeKey);
         Assert(iter != shaderArchivePackages.end());
@@ -68,7 +68,7 @@ namespace Render {
         shaderArchivePackages.clear();
     }
 
-    void ShaderArchiveStorage::Invalidate(IShaderType* shaderTypeKey)
+    void ShaderArchiveStorage::Invalidate(ShaderTypeKey shaderTypeKey)
     {
         shaderArchivePackages.erase(shaderTypeKey);
     }

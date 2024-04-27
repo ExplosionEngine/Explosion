@@ -270,10 +270,8 @@ protected:
         }
         if (rhiType == RHI::RHIType::directX12) {
             options.byteCodeType = Render::ShaderByteCodeType::dxil;
-        } else if (rhiType == RHI::RHIType::vulkan) {
+        } else {
             options.byteCodeType = Render::ShaderByteCodeType::spirv;
-        } else if (rhiType == RHI::RHIType::metal) {
-            options.byteCodeType = Render::ShaderByteCodeType::mbc;
         }
         options.withDebugInfo = false;
         auto future = Render::ShaderCompiler::Get().Compile(info, options);

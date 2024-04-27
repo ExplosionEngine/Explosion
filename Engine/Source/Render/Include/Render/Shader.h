@@ -84,13 +84,13 @@ namespace Render {
         NonCopyable(ShaderArchiveStorage)
 
         // TODO fill byte codes after compiling using this interface
-        void UpdateShaderArchivePackage(IShaderType* shaderTypeKey, ShaderArchivePackage&& shaderArchivePackage);
-        const ShaderArchivePackage& GetShaderArchivePackage(IShaderType* shaderTypeKey);
+        void UpdateShaderArchivePackage(ShaderTypeKey shaderTypeKey, ShaderArchivePackage&& shaderArchivePackage);
+        const ShaderArchivePackage& GetShaderArchivePackage(ShaderTypeKey shaderTypeKey);
         void InvalidateAll();
-        void Invalidate(IShaderType* shaderTypeKey);
+        void Invalidate(ShaderTypeKey shaderTypeKey);
 
     private:
-        std::unordered_map<IShaderType*, ShaderArchivePackage> shaderArchivePackages;
+        std::unordered_map<ShaderTypeKey, ShaderArchivePackage> shaderArchivePackages;
     };
 }
 
@@ -344,7 +344,8 @@ namespace Render {
     void GlobalShaderType<Shader>::ReloadInternal()
     {
         name = Shader::name;
-        key = Common::HashUtils::CityHash(name.data(), name.size());
+        std::string keySource = std::string("Global-") + name;
+        key = Common::HashUtils::CityHash(keySource.data(), keySource.size());
         stage = Shader::stage;
         entryPoint = Shader::entryPoint;
 

@@ -217,22 +217,6 @@ namespace Render {
             BuildGlslReflectionData(sprivCrossCompiler, output.reflectionData);
         }
     }
-
-    static void ConvertSprivToMetalByteCode(
-        const ShaderCompileOptions& options,
-        ShaderCompileOutput& output)
-    {
-        spirv_cross::CompilerMSL compiler(reinterpret_cast<const uint32_t*>(output.byteCode.data()), output.byteCode.size() / sizeof(uint32_t));
-        spirv_cross::CompilerMSL::Options mslOptions;
-        mslOptions.platform = spirv_cross::CompilerMSL::Options::Platform::macOS;
-        mslOptions.enable_decoration_binding = true;
-        mslOptions.pad_fragment_output_components = true;
-        compiler.set_msl_options(mslOptions);
-
-        std::string source = compiler.compile();
-        output.byteCode.resize(source.length() + 1, 0);
-        memcpy(output.byteCode.data(), source.c_str(), source.length());
-    }
 }
 
 namespace Render {
@@ -258,10 +242,6 @@ namespace Render {
         return threadPool.EmplaceTask([](ShaderCompileInput input, ShaderCompileOptions options) -> ShaderCompileOutput {
             ShaderCompileOutput output;
             CompileDxilOrSpriv(input, options, output);
-            if (!output.success || options.byteCodeType != ShaderByteCodeType::mbc) {
-                return output;
-            }
-            ConvertSprivToMetalByteCode(options, output);
             return output;
         }, inInput, inOptions);
     }
@@ -307,7 +287,29 @@ namespace Render {
             }
 
             ShaderTypeCompileResult result;
-            // TODO
+            for (auto& compileOutput : compileOutputs) {
+                auto typeKey = compileOutput.first;
+                auto& variantCompileOutputs = compileOutput.second;
+
+                ShaderArchivePackage archivePackage;
+                for (auto& variantCompileOutput : variantCompileOutputs) {
+                    auto variantKey = variantCompileOutput.first;
+                    auto& compileFuture = variantCompileOutput.second;
+
+                    ShaderCompileOutput output = compileFuture.get();
+                    if (output.success) {
+                        ShaderArchive archive;
+                        archive.byteCode = std::move(output.byteCode);
+                        archive.reflectionData = std::move(output.reflectionData);
+
+                        archivePackage.emplace(std::make_pair(variantKey, std::move(archive)));
+                    } else {
+                        result.errorInfos.emplace(std::make_pair(std::make_pair(typeKey, variantKey), output.errorInfo));
+                    }
+                }
+                ShaderArchiveStorage::Get().UpdateShaderArchivePackage(typeKey, std::move(archivePackage));
+            }
+            result.success = result.errorInfos.size() == 0;
             return result;
         }, inShaderTypes, inOptions);
     }
