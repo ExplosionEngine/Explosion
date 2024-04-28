@@ -128,7 +128,7 @@ namespace Core {
         } else {
             AssertWithReason(false, "bad asset uri");
         }
-        return path.concat(".expa");
+        return std::filesystem::absolute(path.concat(".expa"));
     }
 
 #if BUILD_TEST

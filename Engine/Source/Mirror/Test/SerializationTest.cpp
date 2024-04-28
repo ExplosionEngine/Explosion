@@ -56,7 +56,7 @@ static MirrorInfoRegistry registry;
 
 TEST(SerializationTest, VariableFileSerializationTest)
 {
-    static std::filesystem::path fileName = "../Test/Generated/SerializationTest.VariableFileSerializationTest.bin";
+    static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.VariableFileSerializationTest.bin";
     std::filesystem::create_directories(fileName.parent_path());
     {
         Common::BinaryFileSerializeStream stream(fileName.string());
@@ -91,7 +91,7 @@ TEST(SerializationTest, VariableFileSerializationTest)
 
 TEST(SerializationTest, ClassFileSerializationTest)
 {
-    static std::filesystem::path fileName = "../Test/Generated/SerializationTest.ClassFileSerializationTest.bin";
+    static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.ClassFileSerializationTest.bin";
     std::filesystem::create_directories(fileName.parent_path());
     {
         Common::BinaryFileSerializeStream stream(fileName.string());
@@ -123,7 +123,7 @@ TEST(SerializationTest, ClassFileSerializationTest)
 
 TEST(SerializationTest, ContainerFileSerializationTest)
 {
-    static std::filesystem::path fileName = "../Test/Generated/SerializationTest.ContainerFileSerializationTest.bin";
+    static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.ContainerFileSerializationTest.bin";
     std::filesystem::create_directories(fileName.parent_path());
     const auto& clazz = Mirror::Class::Get("SerializationTestStruct1");
     {

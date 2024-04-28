@@ -2,6 +2,8 @@
 // Created by johnk on 2023/7/13.
 //
 
+#include <filesystem>
+
 #include <Common/Serialization.h>
 
 namespace Common {
@@ -14,8 +16,12 @@ namespace Common {
     DeserializeStream::~DeserializeStream() = default;
 
     BinaryFileSerializeStream::BinaryFileSerializeStream(const std::string& inFileName)
-        : file(inFileName, std::ios::binary)
     {
+        auto parent_path = std::filesystem::path(inFileName).parent_path();
+        if (!std::filesystem::exists(parent_path)) {
+            std::filesystem::create_directories(parent_path);
+        }
+        file = std::ofstream(inFileName, std::ios::binary);
     }
 
     BinaryFileSerializeStream::~BinaryFileSerializeStream()
