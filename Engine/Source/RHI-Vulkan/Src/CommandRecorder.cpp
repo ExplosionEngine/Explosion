@@ -19,29 +19,6 @@
 #include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
-    static std::tuple<VkImageLayout, VkAccessFlags, VkPipelineStageFlags> GetBarrierInfo(TextureState status)
-    {
-        if (status == TextureState::present) {
-            return { VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ACCESS_MEMORY_READ_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT };
-        }
-        if (status == TextureState::renderTarget) {
-            return { VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-        }
-        if (status == TextureState::copyDst) {
-            return { VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT };
-        }
-        if (status == TextureState::shaderReadOnly) {
-            return { VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT };
-        }
-        if (status == TextureState::depthStencilReadonly) {
-            return { VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT };
-        }
-        if (status == TextureState::depthStencilWrite) {
-            return { VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT |  VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT };
-        }
-        return {VK_IMAGE_LAYOUT_UNDEFINED, VkAccessFlags {}, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
-    }
-
     static VkAccessFlags GetBufferMemoryBarrierAccessFlags(BufferState inState)
     {
         static std::unordered_map<BufferState, VkAccessFlags> map = {
@@ -62,8 +39,8 @@ namespace RHI::Vulkan {
             { BufferState::staging, VK_PIPELINE_STAGE_HOST_BIT },
             { BufferState::copySrc, VK_PIPELINE_STAGE_TRANSFER_BIT },
             { BufferState::copyDst, VK_PIPELINE_STAGE_TRANSFER_BIT },
-            { BufferState::shaderReadOnly, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
-            { BufferState::storage, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT }
+            { BufferState::shaderReadOnly, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
+            { BufferState::storage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT }
         };
         return map.at(inState);
     }
@@ -75,8 +52,72 @@ namespace RHI::Vulkan {
             { BufferState::staging, VK_PIPELINE_STAGE_HOST_BIT },
             { BufferState::copySrc, VK_PIPELINE_STAGE_TRANSFER_BIT },
             { BufferState::copyDst, VK_PIPELINE_STAGE_TRANSFER_BIT },
-            { BufferState::shaderReadOnly, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
-            { BufferState::storage, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT }
+            { BufferState::shaderReadOnly, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
+            { BufferState::storage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT }
+        };
+        return map.at(inState);
+    }
+
+    static VkAccessFlags GetTextureMemoryBarrierAccessFlags(TextureState inState)
+    {
+        static std::unordered_map<TextureState, VkAccessFlags> map = {
+            { TextureState::undefined, VK_ACCESS_NONE },
+            { TextureState::copySrc, VK_ACCESS_TRANSFER_READ_BIT },
+            { TextureState::copyDst, VK_ACCESS_TRANSFER_WRITE_BIT },
+            { TextureState::shaderReadOnly, VK_ACCESS_SHADER_READ_BIT },
+            { TextureState::renderTarget, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT },
+            { TextureState::storage, VK_ACCESS_SHADER_WRITE_BIT },
+            { TextureState::depthStencilReadonly, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT },
+            { TextureState::depthStencilWrite, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT },
+            { TextureState::present, VK_ACCESS_MEMORY_READ_BIT }
+        };
+        return map.at(inState);
+    }
+
+    static VkPipelineStageFlags GetTexturePipelineBarrierSrcStage(TextureState inState)
+    {
+        static std::unordered_map<TextureState, VkPipelineStageFlags> map = {
+            { TextureState::undefined, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT },
+            { TextureState::copySrc, VK_PIPELINE_STAGE_TRANSFER_BIT },
+            { TextureState::copyDst, VK_PIPELINE_STAGE_TRANSFER_BIT },
+            { TextureState::shaderReadOnly, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
+            { TextureState::renderTarget, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT },
+            { TextureState::storage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
+            { TextureState::depthStencilReadonly, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT },
+            { TextureState::depthStencilWrite, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT },
+            { TextureState::present, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT }
+        };
+        return map.at(inState);
+    }
+
+    static VkPipelineStageFlags GetTexturePipelineBarrierDstStage(TextureState inState)
+    {
+        static std::unordered_map<TextureState, VkPipelineStageFlags> map = {
+            { TextureState::undefined, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT },
+            { TextureState::copySrc, VK_PIPELINE_STAGE_TRANSFER_BIT },
+            { TextureState::copyDst, VK_PIPELINE_STAGE_TRANSFER_BIT },
+            { TextureState::shaderReadOnly, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
+            { TextureState::renderTarget, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT },
+            { TextureState::storage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
+            { TextureState::depthStencilReadonly, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT },
+            { TextureState::depthStencilWrite, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT },
+            { TextureState::present, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT }
+        };
+        return map.at(inState);
+    }
+
+    static VkImageLayout GetTextureLayout(TextureState inState)
+    {
+        std::unordered_map<TextureState, VkImageLayout> map = {
+            { TextureState::undefined, VK_IMAGE_LAYOUT_UNDEFINED },
+            { TextureState::copySrc, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL },
+            { TextureState::copyDst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL },
+            { TextureState::shaderReadOnly, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+            { TextureState::renderTarget, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
+            { TextureState::storage, VK_IMAGE_LAYOUT_GENERAL },
+            { TextureState::depthStencilReadonly, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL },
+            { TextureState::depthStencilWrite, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL },
+            { TextureState::present, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR }
         };
         return map.at(inState);
     }
@@ -114,22 +155,20 @@ namespace RHI::Vulkan {
                 0, nullptr);
         } else if (inBarrier.type == ResourceType::texture) {
             const auto& textureBarrierInfo = inBarrier.texture;
-            auto oldLayout = GetBarrierInfo(textureBarrierInfo.before == TextureState::present ? TextureState::undefined : textureBarrierInfo.before);
-            auto newLayout = GetBarrierInfo(textureBarrierInfo.after);
 
             auto* nativeTexture = static_cast<VulkanTexture*>(textureBarrierInfo.pointer);
             VkImageMemoryBarrier imageBarrier {};
             imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
             imageBarrier.image = nativeTexture->GetNative();
-            imageBarrier.oldLayout = std::get<0>(oldLayout);
-            imageBarrier.srcAccessMask = std::get<1>(oldLayout);
-            imageBarrier.newLayout = std::get<0>(newLayout);
-            imageBarrier.dstAccessMask = std::get<1>(newLayout);
+            imageBarrier.oldLayout = GetTextureLayout(textureBarrierInfo.before);
+            imageBarrier.srcAccessMask = GetTextureMemoryBarrierAccessFlags(textureBarrierInfo.before);
+            imageBarrier.newLayout = GetTextureLayout(textureBarrierInfo.after);
+            imageBarrier.dstAccessMask = GetTextureMemoryBarrierAccessFlags(textureBarrierInfo.after);
             imageBarrier.subresourceRange = nativeTexture->GetNativeSubResourceFullRange();
 
             vkCmdPipelineBarrier(
                 commandBuffer.GetNativeCommandBuffer(),
-                std::get<2>(oldLayout), std::get<2>(newLayout),
+                GetTexturePipelineBarrierSrcStage(textureBarrierInfo.before), GetTexturePipelineBarrierDstStage(textureBarrierInfo.after),
                 VK_DEPENDENCY_BY_REGION_BIT,
                 0, nullptr,
                 0, nullptr,
