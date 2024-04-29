@@ -41,6 +41,45 @@ namespace RHI::Vulkan {
         }
         return {VK_IMAGE_LAYOUT_UNDEFINED, VkAccessFlags {}, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
     }
+
+    static VkAccessFlags GetBufferMemoryBarrierAccessFlags(BufferState inState)
+    {
+        static std::unordered_map<BufferState, VkAccessFlags> map = {
+            { BufferState::undefined, VK_ACCESS_NONE },
+            { BufferState::staging, VK_ACCESS_HOST_WRITE_BIT },
+            { BufferState::copySrc, VK_ACCESS_TRANSFER_READ_BIT },
+            { BufferState::copyDst, VK_ACCESS_TRANSFER_WRITE_BIT },
+            { BufferState::shaderReadOnly, VK_ACCESS_SHADER_READ_BIT },
+            { BufferState::storage, VK_ACCESS_SHADER_WRITE_BIT }
+        };
+        return map.at(inState);
+    }
+
+    static VkPipelineStageFlags GetBufferPipelineBarrierSrcStage(BufferState inState)
+    {
+        static std::unordered_map<BufferState, VkPipelineStageFlags> map = {
+            { BufferState::undefined, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT },
+            { BufferState::staging, VK_PIPELINE_STAGE_HOST_BIT },
+            { BufferState::copySrc, VK_PIPELINE_STAGE_TRANSFER_BIT },
+            { BufferState::copyDst, VK_PIPELINE_STAGE_TRANSFER_BIT },
+            { BufferState::shaderReadOnly, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
+            { BufferState::storage, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT }
+        };
+        return map.at(inState);
+    }
+
+    static VkPipelineStageFlags GetBufferPipelineBarrierDstStage(BufferState inState)
+    {
+        static std::unordered_map<BufferState, VkPipelineStageFlags> map = {
+            { BufferState::undefined, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT },
+            { BufferState::staging, VK_PIPELINE_STAGE_HOST_BIT },
+            { BufferState::copySrc, VK_PIPELINE_STAGE_TRANSFER_BIT },
+            { BufferState::copyDst, VK_PIPELINE_STAGE_TRANSFER_BIT },
+            { BufferState::shaderReadOnly, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
+            { BufferState::storage, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT }
+        };
+        return map.at(inState);
+    }
 }
 
 namespace RHI::Vulkan {
@@ -54,22 +93,49 @@ namespace RHI::Vulkan {
 
     void VulkanCommandRecorder::ResourceBarrier(const Barrier& inBarrier)
     {
-        if (inBarrier.type == ResourceType::texture) {
+        if (inBarrier.type == ResourceType::buffer) {
+            const auto& bufferBarrierInfo = inBarrier.buffer;
+            auto* nativeBuffer = static_cast<VulkanBuffer*>(bufferBarrierInfo.pointer);
+
+            VkBufferMemoryBarrier bufferBarrier {};
+            bufferBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+            bufferBarrier.buffer = nativeBuffer->GetNative();
+            bufferBarrier.size = nativeBuffer->GetCreateInfo().size;
+            bufferBarrier.offset = 0;
+            bufferBarrier.srcAccessMask = GetBufferMemoryBarrierAccessFlags(bufferBarrierInfo.before);
+            bufferBarrier.dstAccessMask = GetBufferMemoryBarrierAccessFlags(bufferBarrierInfo.after);
+
+            vkCmdPipelineBarrier(
+                commandBuffer.GetNativeCommandBuffer(),
+                GetBufferPipelineBarrierSrcStage(bufferBarrierInfo.before), GetBufferPipelineBarrierDstStage(bufferBarrierInfo.after),
+                VK_DEPENDENCY_BY_REGION_BIT,
+                0, nullptr,
+                1, &bufferBarrier,
+                0, nullptr);
+        } else if (inBarrier.type == ResourceType::texture) {
             const auto& textureBarrierInfo = inBarrier.texture;
             auto oldLayout = GetBarrierInfo(textureBarrierInfo.before == TextureState::present ? TextureState::undefined : textureBarrierInfo.before);
             auto newLayout = GetBarrierInfo(textureBarrierInfo.after);
 
-            auto* vkTexture = static_cast<VulkanTexture*>(textureBarrierInfo.pointer);
-            VkImageMemoryBarrier imageBarrier = {};
+            auto* nativeTexture = static_cast<VulkanTexture*>(textureBarrierInfo.pointer);
+            VkImageMemoryBarrier imageBarrier {};
             imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-            imageBarrier.image = vkTexture->GetNative();
+            imageBarrier.image = nativeTexture->GetNative();
             imageBarrier.oldLayout = std::get<0>(oldLayout);
             imageBarrier.srcAccessMask = std::get<1>(oldLayout);
             imageBarrier.newLayout = std::get<0>(newLayout);
             imageBarrier.dstAccessMask = std::get<1>(newLayout);
-            imageBarrier.subresourceRange = vkTexture->GetNativeSubResourceFullRange();
+            imageBarrier.subresourceRange = nativeTexture->GetNativeSubResourceFullRange();
 
-            vkCmdPipelineBarrier(commandBuffer.GetNativeCommandBuffer(), std::get<2>(oldLayout), std::get<2>(newLayout), VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+            vkCmdPipelineBarrier(
+                commandBuffer.GetNativeCommandBuffer(),
+                std::get<2>(oldLayout), std::get<2>(newLayout),
+                VK_DEPENDENCY_BY_REGION_BIT,
+                0, nullptr,
+                0, nullptr,
+                1, &imageBarrier);
+        } else {
+            Unimplement();
         }
     }
 
