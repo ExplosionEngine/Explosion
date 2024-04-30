@@ -23,6 +23,7 @@ namespace RHI::Vulkan {
         , mipLevels(inCreateInfo.mipLevels)
         , samples(inCreateInfo.samples)
     {
+        TransitionToInitState(inCreateInfo);
     }
 
     VulkanTexture::VulkanTexture(VulkanDevice& inDevice, const TextureCreateInfo& inCreateInfo)

@@ -116,7 +116,7 @@ namespace RHI::Vulkan {
         swapChainInfo.clipped = VK_TRUE;
         swapChainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         swapChainInfo.imageArrayLayers = 1;
-        swapChainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        swapChainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         Assert(vkCreateSwapchainKHR(vkDevice, &swapChainInfo, nullptr, &nativeSwapChain) == VK_SUCCESS);
 
         TextureCreateInfo textureInfo = {};
@@ -128,6 +128,7 @@ namespace RHI::Vulkan {
         textureInfo.extent.x = extent.width;
         textureInfo.extent.y = extent.height;
         textureInfo.extent.z = 1;
+        textureInfo.initialState = TextureState::present;
 
         vkGetSwapchainImagesKHR(device.GetNative(), nativeSwapChain, &swapChainImageCount, nullptr);
         std::vector<VkImage> swapChainImages(swapChainImageCount);

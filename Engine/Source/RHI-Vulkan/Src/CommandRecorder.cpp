@@ -13,7 +13,6 @@
 #include <RHI/Vulkan/Texture.h>
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Instance.h>
-#include <RHI/Vulkan/SwapChain.h>
 #include <RHI/Vulkan/BindGroup.h>
 #include <RHI/Vulkan/PipelineLayout.h>
 #include <RHI/Synchronous.h>
@@ -83,8 +82,8 @@ namespace RHI::Vulkan {
             { TextureState::shaderReadOnly, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
             { TextureState::renderTarget, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT },
             { TextureState::storage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
-            { TextureState::depthStencilReadonly, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT },
-            { TextureState::depthStencilWrite, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT },
+            { TextureState::depthStencilReadonly, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT },
+            { TextureState::depthStencilWrite, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT },
             { TextureState::present, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT }
         };
         return map.at(inState);
@@ -99,8 +98,8 @@ namespace RHI::Vulkan {
             { TextureState::shaderReadOnly, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
             { TextureState::renderTarget, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT },
             { TextureState::storage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
-            { TextureState::depthStencilReadonly, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT },
-            { TextureState::depthStencilWrite, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT },
+            { TextureState::depthStencilReadonly, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT },
+            { TextureState::depthStencilWrite, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT },
             { TextureState::present, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT }
         };
         return map.at(inState);
@@ -108,7 +107,7 @@ namespace RHI::Vulkan {
 
     static VkImageLayout GetTextureLayout(TextureState inState)
     {
-        std::unordered_map<TextureState, VkImageLayout> map = {
+        static std::unordered_map<TextureState, VkImageLayout> map = {
             { TextureState::undefined, VK_IMAGE_LAYOUT_UNDEFINED },
             { TextureState::copySrc, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL },
             { TextureState::copyDst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL },
