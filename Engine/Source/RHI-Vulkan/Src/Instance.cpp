@@ -31,7 +31,6 @@ namespace RHI::Vulkan {
 #endif
         PrepareExtensions();
         CreateNativeInstance();
-        PrepareDynamicFuncPointers();
 #if BUILD_CONFIG_DEBUG
         CreateDebugMessenger();
 #endif
@@ -148,19 +147,6 @@ namespace RHI::Vulkan {
         vkDestroyInstance(nativeInstance, nullptr);
     }
 
-    void VulkanInstance::PrepareDynamicFuncPointers()
-    {
-#if BUILD_CONFIG_DEBUG
-        pfnVkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(nativeInstance, "vkCreateDebugUtilsMessengerEXT"));
-        pfnVkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(nativeInstance, "vkDestroyDebugUtilsMessengerEXT"));
-        pfnVkSetDebugUtilsObjectNameEXT = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(vkGetInstanceProcAddr(nativeInstance, "vkSetDebugUtilsObjectNameEXT"));
-        Assert(pfnVkCreateDebugUtilsMessengerEXT != nullptr && pfnVkDestroyDebugUtilsMessengerEXT != nullptr && pfnVkSetDebugUtilsObjectNameEXT != nullptr);
-#endif
-        pfnVkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetInstanceProcAddr(nativeInstance, "vkCmdBeginRenderingKHR"));
-        pfnVkCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkGetInstanceProcAddr(nativeInstance, "vkCmdEndRenderingKHR"));
-        Assert(pfnVkCmdBeginRenderingKHR != nullptr && pfnVkCmdEndRenderingKHR != nullptr);
-    }
-
     uint32_t VulkanInstance::GetGpuNum()
     {
         return gpus.size();
@@ -205,12 +191,14 @@ namespace RHI::Vulkan {
         VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
         PopulateDebugMessengerCreateInfo(debugCreateInfo);
 
-        Assert(pfnVkCreateDebugUtilsMessengerEXT(nativeInstance, &debugCreateInfo, nullptr, &nativeDebugMessenger) == VK_SUCCESS);
+        auto* pfn = FindOrGetTypedDynamicFuncPointer<PFN_vkCreateDebugUtilsMessengerEXT>("vkCreateDebugUtilsMessengerEXT");
+        Assert(pfn(nativeInstance, &debugCreateInfo, nullptr, &nativeDebugMessenger) == VK_SUCCESS);
     }
 
     void VulkanInstance::DestroyDebugMessenger()
     {
-        pfnVkDestroyDebugUtilsMessengerEXT(nativeInstance, nativeDebugMessenger, nullptr);
+        auto* pfn = FindOrGetTypedDynamicFuncPointer<PFN_vkDestroyDebugUtilsMessengerEXT>("vkDestroyDebugUtilsMessengerEXT");
+        pfn(nativeInstance, nativeDebugMessenger, nullptr);
     }
 #endif
 

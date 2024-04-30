@@ -358,7 +358,9 @@ namespace RHI::Vulkan {
         }
 
         nativeCmdBuffer = inCmdBuffer.GetNativeCommandBuffer();
-        device.GetGpu().GetInstance().pfnVkCmdBeginRenderingKHR(nativeCmdBuffer, &renderingInfo);
+
+        auto* pfn = device.GetGpu().GetInstance().FindOrGetTypedDynamicFuncPointer<PFN_vkCmdBeginRenderingKHR>("vkCmdBeginRenderingKHR");
+        pfn(nativeCmdBuffer, &renderingInfo);
     }
 
     VulkanRasterPassCommandRecorder::~VulkanRasterPassCommandRecorder() = default;
@@ -453,6 +455,7 @@ namespace RHI::Vulkan {
 
     void VulkanRasterPassCommandRecorder::EndPass()
     {
-        device.GetGpu().GetInstance().pfnVkCmdEndRenderingKHR(nativeCmdBuffer);
+        auto* pfn = device.GetGpu().GetInstance().FindOrGetTypedDynamicFuncPointer<PFN_vkCmdEndRenderingKHR>("vkCmdEndRenderingKHR");
+        pfn(nativeCmdBuffer);
     }
 }

@@ -313,7 +313,8 @@ namespace RHI::Vulkan {
         info.objectHandle                  = inObjectHandle;
         info.pObjectName                   = inObjectName;
 
-        gpu.GetInstance().pfnVkSetDebugUtilsObjectNameEXT(nativeDevice, &info);
+        auto* pfn = gpu.GetInstance().FindOrGetTypedDynamicFuncPointer<PFN_vkSetDebugUtilsObjectNameEXT>("vkSetDebugUtilsObjectNameEXT");
+        pfn(nativeDevice, &info);
     }
 #endif
 }
