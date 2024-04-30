@@ -28,6 +28,6 @@ namespace RHI::DirectX12 {
         void CreateNativeDescriptor(DX12Device& inDevice, const TextureViewCreateInfo& inCreateInfo);
 
         DX12Texture& texture;
-        CD3DX12_CPU_DESCRIPTOR_HANDLE nativeCpuDescriptorHandle;
+        Common::UniqueRef<DescriptorAllocation> descriptorAllocation;
     };
 }

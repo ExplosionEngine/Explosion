@@ -42,7 +42,7 @@ namespace RHI::DirectX12 {
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE DX12BufferView::GetNativeCpuDescriptorHandle() const
     {
-        return std::get<CD3DX12_CPU_DESCRIPTOR_HANDLE>(nativeView);
+        return std::get<Common::UniqueRef<DescriptorAllocation>>(nativeView)->GetCpuHandle();
     }
 
     const D3D12_VERTEX_BUFFER_VIEW& DX12BufferView::GetNativeVertexBufferView() const
@@ -62,9 +62,8 @@ namespace RHI::DirectX12 {
             desc.BufferLocation = buffer.GetNative()->GetGPUVirtualAddress() + inCreateInfo.offset;
             desc.SizeInBytes = GetConstantBufferSize(inCreateInfo.size);
 
-            auto allocation = buffer.GetDevice().AllocateNativeCbvSrvUavDescriptor();
-            nativeView = allocation.cpuHandle;
-            buffer.GetDevice().GetNative()->CreateConstantBufferView(&desc, std::get<CD3DX12_CPU_DESCRIPTOR_HANDLE>(nativeView));
+            nativeView = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
+            buffer.GetDevice().GetNative()->CreateConstantBufferView(&desc, std::get<Common::UniqueRef<DescriptorAllocation>>(nativeView)->GetCpuHandle());
         } else if (IsUnorderedAccessBuffer(inCreateInfo.type, buffer.GetUsages())) {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
             desc.Format = DXGI_FORMAT_UNKNOWN;
@@ -72,9 +71,8 @@ namespace RHI::DirectX12 {
             desc.Buffer.FirstElement = inCreateInfo.offset;
             desc.Buffer.NumElements = inCreateInfo.size;
 
-            auto allocation = buffer.GetDevice().AllocateNativeCbvSrvUavDescriptor();
-            nativeView = allocation.cpuHandle;
-            buffer.GetDevice().GetNative()->CreateUnorderedAccessView(buffer.GetNative(), nullptr, &desc, std::get<CD3DX12_CPU_DESCRIPTOR_HANDLE>(nativeView));
+            nativeView = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
+            buffer.GetDevice().GetNative()->CreateUnorderedAccessView(buffer.GetNative(), nullptr, &desc, std::get<Common::UniqueRef<DescriptorAllocation>>(nativeView)->GetCpuHandle());
         } else if (IsVertexBuffer(inCreateInfo.type, buffer.GetUsages())) {
             nativeView = D3D12_VERTEX_BUFFER_VIEW();
             D3D12_VERTEX_BUFFER_VIEW& vertexBufferView = std::get<D3D12_VERTEX_BUFFER_VIEW>(nativeView);

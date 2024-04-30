@@ -20,10 +20,52 @@ using Microsoft::WRL::ComPtr;
 namespace RHI::DirectX12 {
     class DX12Gpu;
     class DX12Queue;
+    class DX12Device;
 
-    struct NativeDescriptorAllocation {
+    class DescriptorHeapNode;
+
+    class DescriptorAllocation {
+    public:
+        DescriptorAllocation(DescriptorHeapNode* inNode, uint32_t inSlot, const CD3DX12_CPU_DESCRIPTOR_HANDLE& inHandle, ID3D12DescriptorHeap* inHeap);
+        ~DescriptorAllocation();
+
+        const CD3DX12_CPU_DESCRIPTOR_HANDLE& GetCpuHandle() const;
+        ID3D12DescriptorHeap* GetNativeDescriptorHeap() const;
+
+    private:
+        DescriptorHeapNode* node;
+        uint32_t slot;
         CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle;
-        ID3D12DescriptorHeap* descriptorHeap;
+        ID3D12DescriptorHeap* nativeDescriptorHeap;
+    };
+
+    class DescriptorHeapNode {
+    public:
+        DescriptorHeapNode(ComPtr<ID3D12DescriptorHeap>&& inHeap, uint32_t inDescriptorSize, uint32_t inCapacity);
+
+        bool HasFreeSlot() const;
+        Common::UniqueRef<DescriptorAllocation> Allocate();
+        void Free(uint32_t slot);
+
+    private:
+        ComPtr<ID3D12DescriptorHeap> nativeDescriptorHeap;
+        uint32_t descriptorSize;
+        uint32_t capacity;
+        uint32_t free;
+        std::vector<uint8_t> usedBitMasks;
+    };
+
+    class DescriptorPool {
+    public:
+        DescriptorPool(DX12Device& inDevice, D3D12_DESCRIPTOR_HEAP_TYPE inNativeHeapType, uint32_t inDescriptorSize, uint32_t inCapacity);
+        Common::UniqueRef<DescriptorAllocation> Allocate();
+
+    private:
+        DX12Device& device;
+        D3D12_DESCRIPTOR_HEAP_TYPE nativeHeapType;
+        uint32_t descriptorSize;
+        uint32_t capacity;
+        std::list<DescriptorHeapNode> heapNodes;
     };
 
     class DX12Device : public Device {
@@ -54,22 +96,17 @@ namespace RHI::DirectX12 {
         DX12Gpu& GetGpu();
         ID3D12Device* GetNative();
         ID3D12CommandAllocator* GetNativeCmdAllocator();
-        NativeDescriptorAllocation AllocateNativeRtvDescriptor();
-        NativeDescriptorAllocation AllocateNativeCbvSrvUavDescriptor();
-        NativeDescriptorAllocation AllocateNativeSamplerDescriptor();
-        NativeDescriptorAllocation AllocateNativeDsvDescriptor();
+        Common::UniqueRef<DescriptorAllocation> AllocateRtvDescriptor();
+        Common::UniqueRef<DescriptorAllocation> AllocateCbvSrvUavDescriptor();
+        Common::UniqueRef<DescriptorAllocation> AllocateSamplerDescriptor();
+        Common::UniqueRef<DescriptorAllocation> AllocateDsvDescriptor();
 
     private:
-        struct NativeDescriptorHeapListNode {
-            uint8_t used;
-            ComPtr<ID3D12DescriptorHeap> descriptorHeap;
-        };
-
-        inline NativeDescriptorAllocation AllocateNativeDescriptor(std::list<NativeDescriptorHeapListNode>& inList, uint8_t inCapacity, uint32_t inDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE inHeapType);
         void CreateNativeDevice();
         void CreateNativeQueues(const DeviceCreateInfo& inCreateInfo);
         void CreateNativeCmdAllocator();
         void QueryNativeDescriptorSize();
+        void CreateDescriptorPools();
 #if BUILD_CONFIG_DEBUG
         void RegisterNativeDebugLayerExceptionHandler();
         void UnregisterNativeDebugLayerExceptionHandler();
@@ -81,10 +118,10 @@ namespace RHI::DirectX12 {
         uint32_t nativeCbvSrvUavDescriptorSize;
         uint32_t nativeSamplerDescriptorSize;
         uint32_t nativeDsvDescriptorSize;
-        std::list<NativeDescriptorHeapListNode> nativeRtvHeapList;
-        std::list<NativeDescriptorHeapListNode> nativeCbvSrvUavHeapList;
-        std::list<NativeDescriptorHeapListNode> nativeSamplerHeapList;
-        std::list<NativeDescriptorHeapListNode> nativeDsvHeapList;
+        Common::UniqueRef<DescriptorPool> rtvDescriptorPool;
+        Common::UniqueRef<DescriptorPool> cbvSrvUavDescriptorPool;
+        Common::UniqueRef<DescriptorPool> samplerDescriptorPool;
+        Common::UniqueRef<DescriptorPool> dsvDescriptorPool;
         ComPtr<ID3D12Device> nativeDevice;
         ComPtr<ID3D12CommandAllocator> nativeCmdAllocator;
     };
