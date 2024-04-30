@@ -438,8 +438,7 @@ namespace RHI::Vulkan {
 
     void VulkanRasterPassCommandRecorder::SetPrimitiveTopology(PrimitiveTopology inPrimitiveTopology)
     {
-        // check extension
-//        cmdHandle.setPrimitiveTopologyEXT(EnumCast<PrimitiveTopologyType, vk::PrimitiveTopology>(primitiveTopology)
+        vkCmdSetPrimitiveTopology(nativeCmdBuffer, EnumCast<PrimitiveTopology, VkPrimitiveTopology>(inPrimitiveTopology));
     }
 
     void VulkanRasterPassCommandRecorder::SetBlendConstant(const float *inConstants)

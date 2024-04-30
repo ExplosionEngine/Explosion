@@ -175,6 +175,7 @@ namespace RHI::DirectX12 {
         return AllocateNativeDescriptor(nativeDsvHeapList, 1, nativeDsvDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
     }
 
+    // TODO update this
     NativeDescriptorAllocation DX12Device::AllocateNativeDescriptor(std::list<NativeDescriptorHeapListNode>& inList, uint8_t inCapacity, uint32_t inDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE inHeapType)
     {
         if (inList.empty() || inList.back().used >= inCapacity) {
