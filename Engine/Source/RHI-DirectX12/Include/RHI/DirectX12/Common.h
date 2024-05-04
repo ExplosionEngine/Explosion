@@ -289,11 +289,6 @@ namespace RHI::DirectX12 {
         FCIMPL_ITEM(TextureUsageBits::depthStencilAttachment, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
     FCIMPL_END(D3D12_RESOURCE_FLAGS)
 
-    // constant buffer size must be a multiple of 256
-    inline size_t GetConstantBufferSize(size_t size) {
-        return (size + (D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1)) & ~(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1);
-    }
-
     // TODO use DirectXTex ComputePitch ?
     inline size_t GetBytesPerPixel(PixelFormat format) {
         if (format >= PixelFormat::r8Unorm && format <= PixelFormat::r8Sint) {

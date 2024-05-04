@@ -60,7 +60,7 @@ namespace RHI::DirectX12 {
         if (IsConstantBuffer(inCreateInfo.type, buffer.GetUsages())) {
             D3D12_CONSTANT_BUFFER_VIEW_DESC desc {};
             desc.BufferLocation = buffer.GetNative()->GetGPUVirtualAddress() + inCreateInfo.offset;
-            desc.SizeInBytes = GetConstantBufferSize(inCreateInfo.size);
+            desc.SizeInBytes = Common::AlignUp<D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(inCreateInfo.size);
 
             nativeView = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
             buffer.GetDevice().GetNative()->CreateConstantBufferView(&desc, std::get<Common::UniqueRef<DescriptorAllocation>>(nativeView)->GetCpuHandle());

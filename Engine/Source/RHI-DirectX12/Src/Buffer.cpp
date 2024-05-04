@@ -95,7 +95,7 @@ namespace RHI::DirectX12 {
         CD3DX12_HEAP_PROPERTIES heapProperties(GetDX12HeapType(inCreateInfo.usages));
         CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(
             inCreateInfo.usages & BufferUsageBits::uniform ?
-            GetConstantBufferSize(inCreateInfo.size) :
+            Common::AlignUp<D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(inCreateInfo.size) :
             inCreateInfo.size);
 
         bool success = SUCCEEDED(inDevice.GetNative()->CreateCommittedResource(
