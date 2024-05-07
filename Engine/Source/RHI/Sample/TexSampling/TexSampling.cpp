@@ -124,7 +124,8 @@ private:
                 .SetFormat(swapChainFormat)
                 .SetPresentMode(PresentMode::immediately)
                 .SetTextureNum(backBufferCount)
-                .SetExtent({width, height})
+                .SetWidth(width)
+                .SetHeight(height)
                 .SetSurface(surface.Get())
                 .SetPresentQueue(graphicsQueue));
 
@@ -220,7 +221,9 @@ private:
             TextureCreateInfo()
                 .SetFormat(PixelFormat::rgba8Unorm)
                 .SetMipLevels(1)
-                .SetExtent({static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1})
+                .SetWidth(static_cast<uint32_t>(texWidth))
+                .SetHeight(static_cast<uint32_t>(texHeight))
+                .SetDepthOrArraySize(1)
                 .SetDimension(TextureDimension::t2D)
                 .SetSamples(1)
                 .SetUsages(TextureUsageBits::copyDst | TextureUsageBits::textureBinding)

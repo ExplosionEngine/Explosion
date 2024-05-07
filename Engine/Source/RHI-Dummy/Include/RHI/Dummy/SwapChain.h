@@ -18,8 +18,8 @@ namespace RHI::Dummy {
         ~DummySwapChain() override;
 
         Texture* GetTexture(uint8_t index) override;
-        uint8_t AcquireBackTexture(RHI::Semaphore* signalSemaphore) override;
-        void Present(RHI::Semaphore* waitSemaphore) override;
+        uint8_t AcquireBackTexture(Semaphore* signalSemaphore) override;
+        void Present(Semaphore* waitSemaphore) override;
 
     private:
         bool pingPong;

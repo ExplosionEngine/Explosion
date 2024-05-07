@@ -43,6 +43,7 @@ namespace Common {
     };
 
     using IRect = Rect<int32_t>;
+    using URect = Rect<uint32_t>;
     using HRect = Rect<HFloat>;
     using FRect = Rect<float>;
     using DRect = Rect<double>;

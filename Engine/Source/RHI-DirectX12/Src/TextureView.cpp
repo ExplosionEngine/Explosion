@@ -218,7 +218,7 @@ namespace RHI::DirectX12 {
     {
         if (IsShaderResource(inCreateInfo.type)) {
             D3D12_SHADER_RESOURCE_VIEW_DESC desc {};
-            desc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
+            desc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetCreateInfo().format);
             desc.ViewDimension = EnumCast<TextureViewDimension, D3D12_SRV_DIMENSION>(inCreateInfo.dimension);
             desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
             FillTexture1DSRV(desc.Texture1D, inCreateInfo);
@@ -232,7 +232,7 @@ namespace RHI::DirectX12 {
             inDevice.GetNative()->CreateShaderResourceView(texture.GetNative(), &desc, descriptorAllocation->GetCpuHandle());
         } else if (IsUnorderedAccess(inCreateInfo.type)) {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
-            desc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
+            desc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetCreateInfo().format);
             desc.ViewDimension = EnumCast<TextureViewDimension, D3D12_UAV_DIMENSION>(inCreateInfo.dimension);
             FillTexture1DUAV(desc.Texture1D, inCreateInfo);
             FillTexture2DUAV(desc.Texture2D, inCreateInfo);
@@ -243,7 +243,7 @@ namespace RHI::DirectX12 {
             inDevice.GetNative()->CreateUnorderedAccessView(texture.GetNative(), nullptr, &desc, descriptorAllocation->GetCpuHandle());
         } else if (IsRenderTarget(inCreateInfo.type)) {
             D3D12_RENDER_TARGET_VIEW_DESC desc {};
-            desc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
+            desc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetCreateInfo().format);
             desc.ViewDimension = EnumCast<TextureViewDimension, D3D12_RTV_DIMENSION>(inCreateInfo.dimension);
             FillTexture1DRTV(desc.Texture1D, inCreateInfo);
             FillTexture2DRTV(desc.Texture2D, inCreateInfo);
@@ -254,7 +254,7 @@ namespace RHI::DirectX12 {
             inDevice.GetNative()->CreateRenderTargetView(texture.GetNative(), &desc, descriptorAllocation->GetCpuHandle());
         } else if (IsDepthStencil(inCreateInfo.type)) {
             D3D12_DEPTH_STENCIL_VIEW_DESC desc {};
-            desc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
+            desc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetCreateInfo().format);
             desc.ViewDimension = EnumCast<TextureViewDimension, D3D12_DSV_DIMENSION>(inCreateInfo.dimension);
             FillTexture1DDSV(desc.Texture1D, inCreateInfo);
             FillTexture2DDSV(desc.Texture2D, inCreateInfo);

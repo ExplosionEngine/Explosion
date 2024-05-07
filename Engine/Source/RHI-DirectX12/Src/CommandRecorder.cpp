@@ -65,12 +65,14 @@ namespace RHI::DirectX12 {
         layout.Footprint.Depth = inSize.z;
         layout.Footprint.Width = inSize.x;
         layout.Footprint.Height = inSize.y;
-        layout.Footprint.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture->GetFormat());
-        layout.Footprint.RowPitch = inSize.x * GetBytesPerPixel(texture->GetFormat()); // row pitch must be a multiple of 256, let dx checks if the texture is valid
+        layout.Footprint.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture->GetCreateInfo().format);
+        layout.Footprint.RowPitch = inSize.x * GetBytesPerPixel(texture->GetCreateInfo().format); // row pitch must be a multiple of 256, let dx checks if the texture is valid
 
         CD3DX12_TEXTURE_COPY_LOCATION dest(texture->GetNative(), 0);
         CD3DX12_TEXTURE_COPY_LOCATION source(buffer->GetNative(), layout);
         commandBuffer.GetNative()->CopyTextureRegion(&dest, origin.x, origin.y, origin.z, &source, nullptr);
+
+        // TODO
     }
 
     void DX12CopyPassCommandRecorder::CopyTextureToBuffer(Texture* inSrcTexture, Buffer* inDestBuffer, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize)

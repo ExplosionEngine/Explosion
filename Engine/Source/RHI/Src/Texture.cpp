@@ -7,7 +7,9 @@
 namespace RHI {
     TextureCreateInfo::TextureCreateInfo()
         : dimension(TextureDimension::max)
-        , extent(Common::UVec3Consts::zero)
+        , width(0)
+        , height(0)
+        , depthOrArraySize(0)
         , format(PixelFormat::max)
         , usages(TextureUsageFlags::null)
         , mipLevels(0)
@@ -23,9 +25,21 @@ namespace RHI {
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::SetExtent(const Common::UVec3& inExtent)
+    TextureCreateInfo& TextureCreateInfo::SetWidth(uint32_t inWidth)
     {
-        extent = inExtent;
+        width = inWidth;
+        return *this;
+    }
+
+    TextureCreateInfo& TextureCreateInfo::SetHeight(uint32_t inHeight)
+    {
+        height = inHeight;
+        return *this;
+    }
+
+    TextureCreateInfo& TextureCreateInfo::SetDepthOrArraySize(uint32_t inDepthOrArraySize)
+    {
+        depthOrArraySize = inDepthOrArraySize;
         return *this;
     }
 
@@ -68,15 +82,15 @@ namespace RHI {
     bool TextureCreateInfo::operator==(const TextureCreateInfo& rhs) const
     {
         return dimension == rhs.dimension
-            && extent == rhs.extent
+            && width == rhs.width
+            && height == rhs.height
+            && depthOrArraySize == rhs.depthOrArraySize
             && format == rhs.format
             && usages == rhs.usages
             && mipLevels == rhs.mipLevels
             && samples == rhs.samples
             && initialState == rhs.initialState;
     }
-
-    Texture::Texture() = default;
 
     Texture::Texture(const TextureCreateInfo& inCreateInfo)
         : createInfo(inCreateInfo)

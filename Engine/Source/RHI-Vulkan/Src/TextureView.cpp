@@ -23,7 +23,7 @@ namespace RHI::Vulkan {
     {
         VkImageViewCreateInfo viewInfo = {};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        viewInfo.format = EnumCast<PixelFormat, VkFormat>(texture.GetFormat());
+        viewInfo.format = EnumCast<PixelFormat, VkFormat>(texture.GetCreateInfo().format);
         viewInfo.image = texture.GetNative();
         viewInfo.viewType = EnumCast<TextureViewDimension, VkImageViewType>(inCreateInfo.dimension);
         viewInfo.subresourceRange = { EnumCast<TextureAspect, VkImageAspectFlags>(inCreateInfo.aspect), baseMipLevel, mipLevelNum, baseArrayLayer, arrayLayerNum };
@@ -31,14 +31,14 @@ namespace RHI::Vulkan {
         Assert(vkCreateImageView(device.GetNative(), &viewInfo, nullptr, &nativeImageView) == VK_SUCCESS);
     }
 
-    void VulkanTextureView::DestroyImageView()
+    void VulkanTextureView::DestroyImageView() const
     {
         if (nativeImageView != VK_NULL_HANDLE) {
             vkDestroyImageView(device.GetNative(), nativeImageView, nullptr);
         }
     }
 
-    VkImageView VulkanTextureView::GetNative()
+    VkImageView VulkanTextureView::GetNative() const
     {
         return nativeImageView;
     }

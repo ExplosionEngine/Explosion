@@ -116,7 +116,8 @@ private:
                 .SetFormat(swapChainFormat)
                 .SetPresentMode(PresentMode::immediately)
                 .SetTextureNum(backBufferCount)
-                .SetExtent({width, height})
+                .SetWidth(width)
+                .SetHeight(height)
                 .SetSurface(surface.Get())
                 .SetPresentQueue(graphicsQueue));
 

@@ -44,7 +44,8 @@ namespace Common {
         inline Box<IT> CastTo() const;
     };
 
-    using IBox = Box<uint32_t>;
+    using IBox = Box<int32_t>;
+    using UBox = Box<uint32_t>;
     using HBox = Box<HFloat>;
     using FBox = Box<float>;
     using DBox = Box<double>;

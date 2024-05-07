@@ -30,7 +30,7 @@ namespace RHI::DirectX12 {
         , textureNum(inCreateInfo.textureNum)
     {
         CreateDX12SwapChain(inCreateInfo);
-        FetchTextures(inCreateInfo.format);
+        FetchTextures(inCreateInfo);
     }
 
     DX12SwapChain::~DX12SwapChain() = default;
@@ -67,8 +67,8 @@ namespace RHI::DirectX12 {
 
         DXGI_SWAP_CHAIN_DESC1 desc {};
         desc.BufferCount = inCreateInfo.textureNum;
-        desc.Width = inCreateInfo.extent.x;
-        desc.Height = inCreateInfo.extent.y;
+        desc.Width = inCreateInfo.width;
+        desc.Height = inCreateInfo.height;
         desc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(inCreateInfo.format);
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
@@ -88,14 +88,26 @@ namespace RHI::DirectX12 {
         Assert(success);
     }
 
-    void DX12SwapChain::FetchTextures(PixelFormat inFormat)
+    void DX12SwapChain::FetchTextures(const SwapChainCreateInfo& inCreateInfo)
     {
         textures.resize(textureNum);
         for (auto i = 0; i < textureNum; i++) {
             ComPtr<ID3D12Resource> dx12Resource;
             bool success = SUCCEEDED(nativeSwapChain->GetBuffer(i, IID_PPV_ARGS(&dx12Resource)));
             Assert(success);
-            textures[i] = new DX12Texture(device, inFormat, std::move(dx12Resource));
+
+            TextureCreateInfo textureCreateInfo = TextureCreateInfo()
+                .SetDimension(TextureDimension::t2D)
+                .SetWidth(inCreateInfo.width)
+                .SetHeight(inCreateInfo.height)
+                .SetDepthOrArraySize(1)
+                .SetFormat(inCreateInfo.format)
+                .SetUsages(TextureUsageBits::renderAttachment)
+                .SetMipLevels(1)
+                .SetSamples(1)
+                .SetInitialState(TextureState::present)
+                .SetDebugName(std::string("BackBuffer-") + std::to_string(i));
+            textures[i] = new DX12Texture(device, textureCreateInfo, std::move(dx12Resource));
         }
     }
 }

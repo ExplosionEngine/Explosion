@@ -8,6 +8,7 @@
 #include <optional>
 
 #include <Common/Utility.h>
+#include <Common/Math/Rect.h>
 #include <RHI/Common.h>
 
 namespace RHI {
@@ -23,16 +24,35 @@ namespace RHI {
 
     struct TextureSubResourceInfo {
         uint8_t mipLevel;
-        uint8_t baseArrayLayer;
-        uint8_t arrayLayerNum;
-        Common::UVec3 origin;
+        uint8_t arrayLayer;
         TextureAspect aspect;
 
         TextureSubResourceInfo();
         TextureSubResourceInfo& SetMipLevel(uint8_t inMipLevel);
-        TextureSubResourceInfo& SetArray(uint8_t inBaseArrayLevel, uint8_t inArrayLayerNum);
+        TextureSubResourceInfo& SetArrayLayer(uint8_t inArrayLayer);
         TextureSubResourceInfo& SetOrigin(const Common::UVec3& inOrigin);
         TextureSubResourceInfo& SetAspect(TextureAspect inAspect);
+    };
+
+    struct BufferCopyInfo {
+        size_t srcOffset;
+        size_t dstOffset;
+        size_t copySize;
+    };
+
+    struct TextureCopyInfo {
+        TextureSubResourceInfo srcSubResource;
+        Common::UVec2 srcOrigin;
+        TextureSubResourceInfo dstSubResource;
+        Common::UVec2 dstOrigin;
+        Common::UVec2 copyRegion;
+    };
+
+    struct BufferTextureCopyInfo {
+        TextureSubResourceInfo textureSubResource;
+        Common::UVec2 textureOrigin;
+        size_t bufferOffset;
+        size_t copyRegion;
     };
 
     template <typename Derived>
@@ -133,10 +153,10 @@ namespace RHI {
         NonCopyable(CopyPassCommandRecorder)
         virtual ~CopyPassCommandRecorder();
 
-        virtual void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) = 0;
-        virtual void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) = 0;
-        virtual void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) = 0;
-        virtual void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) = 0;
+        virtual void CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo) = 0;
+        virtual void CopyBufferToTexture(Buffer* src, Texture* dst, const BufferTextureCopyInfo& copyInfo) = 0;
+        virtual void CopyTextureToBuffer(Texture* src, Buffer* dst, const BufferTextureCopyInfo& copyInfo) = 0;
+        virtual void CopyTextureToTexture(Texture* src, Texture* dst, const TextureCopyInfo& copyInfo) = 0;
         virtual void EndPass() = 0;
 
     protected:

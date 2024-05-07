@@ -322,12 +322,14 @@ namespace RHI::Vulkan {
         }
 
         auto* textureView = static_cast<VulkanTextureView*>(inBeginInfo.colorAttachments[0].view);
+        const auto& textureCreateInfo = textureView->GetTexture().GetCreateInfo();
+
         VkRenderingInfoKHR renderingInfo = {};
         renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
         renderingInfo.colorAttachmentCount = colorAttachmentInfos.size();
         renderingInfo.pColorAttachments = colorAttachmentInfos.data();
         renderingInfo.layerCount = textureView->GetArrayLayerNum();
-        renderingInfo.renderArea = {{0, 0}, {static_cast<uint32_t>(textureView->GetTexture().GetExtent().x), static_cast<uint32_t>(textureView->GetTexture().GetExtent().y)}};
+        renderingInfo.renderArea = {{0, 0}, {static_cast<uint32_t>(textureCreateInfo.width), static_cast<uint32_t>(textureCreateInfo.height)}};
         renderingInfo.viewMask = 0;
 
         if (inBeginInfo.depthStencilAttachment.has_value())

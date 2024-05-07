@@ -15,7 +15,9 @@ namespace RHI {
 
     struct TextureCreateInfo {
         TextureDimension dimension;
-        Common::UVec3 extent;
+        uint32_t width;
+        uint32_t height;
+        uint32_t depthOrArraySize;
         PixelFormat format;
         TextureUsageFlags usages;
         uint8_t mipLevels;
@@ -25,7 +27,9 @@ namespace RHI {
 
         TextureCreateInfo();
         TextureCreateInfo& SetDimension(TextureDimension inDimension);
-        TextureCreateInfo& SetExtent(const Common::UVec3& inExtent);
+        TextureCreateInfo& SetWidth(uint32_t inWidth);
+        TextureCreateInfo& SetHeight(uint32_t inHeight);
+        TextureCreateInfo& SetDepthOrArraySize(uint32_t inDepthOrArraySize);
         TextureCreateInfo& SetFormat(PixelFormat inFormat);
         TextureCreateInfo& SetUsages(TextureUsageFlags inUsages);
         TextureCreateInfo& SetMipLevels(uint8_t inMipLevels);
@@ -45,7 +49,6 @@ namespace RHI {
         virtual Common::UniqueRef<TextureView> CreateTextureView(const TextureViewCreateInfo& createInfo) = 0;
 
     protected:
-        Texture();
         explicit Texture(const TextureCreateInfo& inCreateInfo);
 
         TextureCreateInfo createInfo;

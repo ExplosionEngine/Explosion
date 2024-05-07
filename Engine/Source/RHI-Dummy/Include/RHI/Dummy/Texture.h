@@ -11,7 +11,6 @@ namespace RHI::Dummy {
     public:
         NonCopyable(DummyTexture)
         explicit DummyTexture(const TextureCreateInfo& createInfo);
-        DummyTexture() = default;
         ~DummyTexture() override;
 
         Common::UniqueRef<TextureView> CreateTextureView(const TextureViewCreateInfo& createInfo) override;
