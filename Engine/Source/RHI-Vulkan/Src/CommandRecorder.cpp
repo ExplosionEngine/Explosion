@@ -120,6 +120,28 @@ namespace RHI::Vulkan {
         };
         return map.at(inState);
     }
+
+    static VkImageSubresourceLayers GetNativeImageSubResourceLayers(const TextureSubResourceInfo& subResourceInfo)
+    {
+        VkImageSubresourceLayers result {};
+        result.mipLevel = subResourceInfo.mipLevel;
+        result.baseArrayLayer = subResourceInfo.arrayLayer;
+        result.layerCount = 1;
+        result.aspectMask = EnumCast<TextureAspect, VkImageAspectFlags>(subResourceInfo.aspect);
+        return result;
+    }
+
+    static VkBufferImageCopy GetNativeBufferImageCopy(const BufferTextureCopyInfo& copyInfo)
+    {
+        VkBufferImageCopy result {};
+        result.bufferOffset = copyInfo.bufferOffset;
+        result.bufferRowLength = 0;
+        result.bufferImageHeight = 0;
+        result.imageOffset = { static_cast<int32_t>(copyInfo.textureOrigin.x), static_cast<int32_t>(copyInfo.textureOrigin.y), static_cast<int32_t>(copyInfo.textureOrigin.z) };
+        result.imageExtent = { copyInfo.copyRegion.x, copyInfo.copyRegion.y, copyInfo.copyRegion.z };
+        result.imageSubresource = GetNativeImageSubResourceLayers(copyInfo.textureSubResource);
+        return result;
+    }
 }
 
 namespace RHI::Vulkan {
@@ -211,54 +233,50 @@ namespace RHI::Vulkan {
         commandRecorder.ResourceBarrier(inBarrier);
     }
 
-    void VulkanCopyPassCommandRecorder::CopyBufferToBuffer(Buffer* inSrcBuffer, size_t inSrcOffset, Buffer* inDestBuffer, size_t inDestOffset, size_t inSize)
+    void VulkanCopyPassCommandRecorder::CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo)
     {
-        auto* srcBuffer = static_cast<VulkanBuffer*>(inSrcBuffer);
-        auto* dstBuffer = static_cast<VulkanBuffer*>(inDestBuffer);
+        auto* srcBuffer = static_cast<VulkanBuffer*>(src);
+        auto* dstBuffer = static_cast<VulkanBuffer*>(dst);
 
-        VkBufferCopy copyRegion {};
-        copyRegion.srcOffset = inSrcOffset;
-        copyRegion.dstOffset = inDestOffset;
-        copyRegion.srcOffset = inSize;
-        vkCmdCopyBuffer(commandBuffer.GetNativeCommandBuffer(), srcBuffer->GetNative(), dstBuffer->GetNative(), 1, &copyRegion);
+        VkBufferCopy nativeBufferCopy {};
+        nativeBufferCopy.srcOffset = copyInfo.srcOffset;
+        nativeBufferCopy.dstOffset = copyInfo.dstOffset;
+        nativeBufferCopy.size = copyInfo.copySize;
+
+        vkCmdCopyBuffer(commandBuffer.GetNativeCommandBuffer(), srcBuffer->GetNative(), dstBuffer->GetNative(), 1, &nativeBufferCopy);
     }
 
-    void VulkanCopyPassCommandRecorder::CopyBufferToTexture(Buffer* inSrcBuffer, Texture* inDestTexture, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize)
+    void VulkanCopyPassCommandRecorder::CopyBufferToTexture(Buffer* src, Texture* dst, const BufferTextureCopyInfo& copyInfo)
     {
-        auto* buffer = static_cast<VulkanBuffer*>(inSrcBuffer);
-        auto* texture = static_cast<VulkanTexture*>(inDestTexture);
+        auto* srcBuffer = static_cast<VulkanBuffer*>(src);
+        auto* dstTexture = static_cast<VulkanTexture*>(dst);
 
-        VkBufferImageCopy copyRegion = {};
-        copyRegion.imageExtent = {inSize.x, inSize.y, inSize.z };
-        copyRegion.imageSubresource = { EnumCast<TextureAspect, VkImageAspectFlags>(inSubResourceInfo->aspect), inSubResourceInfo->mipLevel, inSubResourceInfo->baseArrayLayer, inSubResourceInfo->arrayLayerNum };
-
-        vkCmdCopyBufferToImage(commandBuffer.GetNativeCommandBuffer(), buffer->GetNative(), texture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+        const VkBufferImageCopy nativeBufferImageCopy = GetNativeBufferImageCopy(copyInfo);
+        vkCmdCopyBufferToImage(commandBuffer.GetNativeCommandBuffer(), srcBuffer->GetNative(), dstTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &nativeBufferImageCopy);
     }
 
-    void VulkanCopyPassCommandRecorder::CopyTextureToBuffer(Texture* inSrcTexture, Buffer* inDestBuffer, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize)
+    void VulkanCopyPassCommandRecorder::CopyTextureToBuffer(Texture* src, Buffer* dst, const BufferTextureCopyInfo& copyInfo)
     {
-        auto* buffer = static_cast<VulkanBuffer*>(inDestBuffer);
-        auto* texture = static_cast<VulkanTexture*>(inSrcTexture);
+        auto* srcTexture = static_cast<VulkanTexture*>(src);
+        auto* dstBuffer = static_cast<VulkanBuffer*>(dst);
 
-        VkBufferImageCopy copyRegion = {};
-        copyRegion.imageExtent = {inSize.x, inSize.y, inSize.z };
-        copyRegion.imageSubresource = { EnumCast<TextureAspect, VkImageAspectFlags>(inSubResourceInfo->aspect), inSubResourceInfo->mipLevel, inSubResourceInfo->baseArrayLayer, inSubResourceInfo->arrayLayerNum };
-
-        vkCmdCopyImageToBuffer(commandBuffer.GetNativeCommandBuffer(), texture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                               buffer->GetNative(), 1, &copyRegion);
+        const VkBufferImageCopy nativeBufferImageCopy = GetNativeBufferImageCopy(copyInfo);
+        vkCmdCopyImageToBuffer(commandBuffer.GetNativeCommandBuffer(), srcTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstBuffer->GetNative(), 1, &nativeBufferImageCopy);
     }
 
-    void VulkanCopyPassCommandRecorder::CopyTextureToTexture(Texture* inSrcTexture, const TextureSubResourceInfo* inSrcSubResourceInfo, Texture* inDestTexture, const TextureSubResourceInfo* inDestSubResourceInfo, const Common::UVec3& inSize)
+    void VulkanCopyPassCommandRecorder::CopyTextureToTexture(Texture* src, Texture* dst, const TextureCopyInfo& copyInfo)
     {
-        auto* srcTexture = static_cast<VulkanTexture*>(inSrcTexture);
-        auto* dstTexture = static_cast<VulkanTexture*>(inDestTexture);
+        auto* srcTexture = static_cast<VulkanTexture*>(src);
+        auto* dstTexture = static_cast<VulkanTexture*>(dst);
 
-        VkImageCopy copyRegion = {};
-        copyRegion.extent = {inSize.x, inSize.y, inSize.z };
-        copyRegion.srcSubresource = { EnumCast<TextureAspect, VkImageAspectFlags>(inSrcSubResourceInfo->aspect), inSrcSubResourceInfo->mipLevel, inSrcSubResourceInfo->baseArrayLayer, inSrcSubResourceInfo->arrayLayerNum };
-        copyRegion.dstSubresource = { EnumCast<TextureAspect, VkImageAspectFlags>(inDestSubResourceInfo->aspect), inDestSubResourceInfo->mipLevel, inDestSubResourceInfo->baseArrayLayer, inDestSubResourceInfo->arrayLayerNum };
+        VkImageCopy nativeImageCopy {};
+        nativeImageCopy.srcSubresource = GetNativeImageSubResourceLayers(copyInfo.srcSubResource);
+        nativeImageCopy.srcOffset = { static_cast<int32_t>(copyInfo.srcOrigin.x), static_cast<int32_t>(copyInfo.srcOrigin.y), static_cast<int32_t>(copyInfo.srcOrigin.z) };
+        nativeImageCopy.dstSubresource = GetNativeImageSubResourceLayers(copyInfo.dstSubResource);
+        nativeImageCopy.dstOffset = { static_cast<int32_t>(copyInfo.dstOrigin.x), static_cast<int32_t>(copyInfo.dstOrigin.y), static_cast<int32_t>(copyInfo.dstOrigin.z) };
+        nativeImageCopy.extent = { copyInfo.copyRegion.x, copyInfo.copyRegion.y, copyInfo.copyRegion.z };
 
-        vkCmdCopyImage(commandBuffer.GetNativeCommandBuffer(), srcTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+        vkCmdCopyImage(commandBuffer.GetNativeCommandBuffer(), srcTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &nativeImageCopy);
     }
 
     void VulkanCopyPassCommandRecorder::EndPass()

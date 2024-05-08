@@ -283,12 +283,10 @@ private:
                 UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
                 {
                     copyRecorder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::undefined, TextureState::copyDst));
-                    TextureSubResourceInfo subResourceInfo {};
-                    subResourceInfo.mipLevel = 0;
-                    subResourceInfo.arrayLayerNum = 1;
-                    subResourceInfo.baseArrayLayer = 0;
-                    subResourceInfo.aspect = TextureAspect::color;
-                    copyRecorder->CopyBufferToTexture(pixelBuffer.Get(), diffuseColorMap.Get(), &subResourceInfo, {texData->width, texData->height, 1});
+                    copyRecorder->CopyBufferToTexture(
+                        pixelBuffer.Get(),
+                        diffuseColorMap.Get(),
+                        BufferTextureCopyInfo(0, TextureSubResourceInfo(), UVec3Consts::zero, UVec3(texData->width, texData->height, 1)));
                     copyRecorder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
                 }
                 copyRecorder->EndPass();
@@ -975,12 +973,10 @@ private:
             UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
             {
                 copyRecorder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::undefined, TextureState::copyDst));
-                TextureSubResourceInfo subResourceInfo {};
-                subResourceInfo.mipLevel = 0;
-                subResourceInfo.arrayLayerNum = 1;
-                subResourceInfo.baseArrayLayer = 0;
-                subResourceInfo.aspect = TextureAspect::color;
-                copyRecorder->CopyBufferToTexture(pixelBuffer.Get(), noise.tex.Get(), &subResourceInfo, {ssaoNoiseDim, ssaoNoiseDim, 1});
+                copyRecorder->CopyBufferToTexture(
+                    pixelBuffer.Get(),
+                    noise.tex.Get(),
+                    BufferTextureCopyInfo(0, TextureSubResourceInfo(), UVec3Consts::zero, UVec3(ssaoNoiseDim, ssaoNoiseDim, 1)));
                 copyRecorder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
             }
             copyRecorder->EndPass();

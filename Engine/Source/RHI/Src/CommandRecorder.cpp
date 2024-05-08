@@ -5,12 +5,10 @@
 #include <RHI/CommandRecorder.h>
 
 namespace RHI {
-    TextureSubResourceInfo::TextureSubResourceInfo()
-        : mipLevel(0)
-        , baseArrayLayer(0)
-        , arrayLayerNum(0)
-        , origin()
-        , aspect(TextureAspect::color)
+    TextureSubResourceInfo::TextureSubResourceInfo(uint8_t inMipLevel, uint8_t inArrayLayer, TextureAspect inAspect)
+        : mipLevel(inMipLevel)
+        , arrayLayer(inArrayLayer)
+        , aspect(inAspect)
     {
     }
 
@@ -20,22 +18,111 @@ namespace RHI {
         return *this;
     }
 
-    TextureSubResourceInfo& TextureSubResourceInfo::SetArray(uint8_t inBaseArrayLevel, uint8_t inArrayLayerNum)
+    TextureSubResourceInfo& TextureSubResourceInfo::SetArrayLayer(uint8_t inArrayLayer)
     {
-        baseArrayLayer = inBaseArrayLevel;
-        arrayLayerNum = inArrayLayerNum;
-        return *this;
-    }
-
-    TextureSubResourceInfo& TextureSubResourceInfo::SetOrigin(const Common::UVec3& inOrigin)
-    {
-        origin = inOrigin;
+        arrayLayer = inArrayLayer;
         return *this;
     }
 
     TextureSubResourceInfo& TextureSubResourceInfo::SetAspect(TextureAspect inAspect)
     {
         aspect = inAspect;
+        return *this;
+    }
+
+    BufferCopyInfo::BufferCopyInfo(size_t inSrcOffset, size_t inDstOffset, size_t inCopySize)
+        : srcOffset(inSrcOffset)
+        , dstOffset(inDstOffset)
+        , copySize(inCopySize)
+    {
+    }
+
+    BufferCopyInfo& BufferCopyInfo::SetSrcOffset(size_t inSrcOffset)
+    {
+        srcOffset = inSrcOffset;
+        return *this;
+    }
+
+    BufferCopyInfo& BufferCopyInfo::SetDstOffset(size_t inDstOffset)
+    {
+        dstOffset = inDstOffset;
+        return *this;
+    }
+
+    BufferCopyInfo& BufferCopyInfo::SetCopySize(size_t inCopySize)
+    {
+        copySize = inCopySize;
+        return *this;
+    }
+
+    TextureCopyInfo::TextureCopyInfo(const TextureSubResourceInfo& inSrcSubResource, const Common::UVec3& inSrcOrigin, const TextureSubResourceInfo& inDstSubResource, const Common::UVec3& inDstOrigin, const Common::UVec3& inCopyRegion)
+        : srcSubResource(inSrcSubResource)
+        , srcOrigin(inSrcOrigin)
+        , dstSubResource(inDstSubResource)
+        , dstOrigin(inDstOrigin)
+        , copyRegion(inCopyRegion)
+    {
+    }
+
+    TextureCopyInfo& TextureCopyInfo::SetSrcSubResource(const TextureSubResourceInfo& inSrcSubResource)
+    {
+        srcSubResource = inSrcSubResource;
+        return *this;
+    }
+
+    TextureCopyInfo& TextureCopyInfo::SetSrcOrigin(const Common::UVec3& inSrcOrigin)
+    {
+        srcOrigin = inSrcOrigin;
+        return *this;
+    }
+
+    TextureCopyInfo& TextureCopyInfo::SetDstSubResource(const TextureSubResourceInfo& inDstSubResource)
+    {
+        dstSubResource = inDstSubResource;
+        return *this;
+    }
+
+    TextureCopyInfo& TextureCopyInfo::SetDstOrigin(const Common::UVec3& inDstOrigin)
+    {
+        dstOrigin = inDstOrigin;
+        return *this;
+    }
+
+    TextureCopyInfo& TextureCopyInfo::SetCopyRegion(const Common::UVec3& inCopyRegion)
+    {
+        copyRegion = inCopyRegion;
+        return *this;
+    }
+
+    BufferTextureCopyInfo::BufferTextureCopyInfo(size_t inBufferOffset, const TextureSubResourceInfo& inTextureSubResource, const Common::UVec3& inTextureOrigin, const Common::UVec3& inCopyRegion)
+        : bufferOffset(inBufferOffset)
+        , textureSubResource(inTextureSubResource)
+        , textureOrigin(inTextureOrigin)
+        , copyRegion(inCopyRegion)
+    {
+    }
+
+    BufferTextureCopyInfo& BufferTextureCopyInfo::SetBufferOffset(size_t inBufferOffset)
+    {
+        bufferOffset = inBufferOffset;
+        return *this;
+    }
+
+    BufferTextureCopyInfo& BufferTextureCopyInfo::SetTextureSubResource(const TextureSubResourceInfo& inTextureSubResource)
+    {
+        textureSubResource = inTextureSubResource;
+        return *this;
+    }
+
+    BufferTextureCopyInfo& BufferTextureCopyInfo::SetTextureOrigin(const Common::UVec3& inTextureOrigin)
+    {
+        textureOrigin = inTextureOrigin;
+        return *this;
+    }
+
+    BufferTextureCopyInfo& BufferTextureCopyInfo::SetCopyRegion(const Common::UVec3& inCopyRegion)
+    {
+        copyRegion = inCopyRegion;
         return *this;
     }
 

@@ -246,12 +246,10 @@ private:
             UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
             {
                 copyRecorder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::undefined, TextureState::copyDst));
-                TextureSubResourceInfo subResourceInfo {};
-                subResourceInfo.mipLevel = 0;
-                subResourceInfo.arrayLayerNum = 1;
-                subResourceInfo.baseArrayLayer = 0;
-                subResourceInfo.aspect = TextureAspect::color;
-                copyRecorder->CopyBufferToTexture(pixelBuffer.Get(), sampleTexture.Get(), &subResourceInfo, {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1});
+                copyRecorder->CopyBufferToTexture(
+                    pixelBuffer.Get(),
+                    sampleTexture.Get(),
+                    BufferTextureCopyInfo(0, TextureSubResourceInfo(), UVec3Consts::zero, UVec3(static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1)));
                 copyRecorder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
             }
             copyRecorder->EndPass();
