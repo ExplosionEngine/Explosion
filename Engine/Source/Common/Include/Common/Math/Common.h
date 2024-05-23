@@ -6,8 +6,6 @@
 
 #include <cmath>
 
-#include <Common/Math/Half.h>
-
 namespace Common {
     static constexpr float epsilon = 0.000001f;
     static constexpr float halfEpsilon = 0.001f;

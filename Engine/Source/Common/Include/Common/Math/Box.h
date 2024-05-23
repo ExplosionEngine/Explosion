@@ -15,33 +15,33 @@ namespace Common {
     };
 
     template <typename T>
-    struct Box : public BoxBase<T> {
-        static inline Box FromMinExtent(T inMinX, T inMinY, T inMinZ, T inExtentX, T inExtentY, T inExtentZ);
-        static inline Box FromMinExtent(Vector<T, 3> inMin, Vector<T, 3> inExtent);
+    struct Box : BoxBase<T> {
+        static Box FromMinExtent(T inMinX, T inMinY, T inMinZ, T inExtentX, T inExtentY, T inExtentZ);
+        static Box FromMinExtent(Vector<T, 3> inMin, Vector<T, 3> inExtent);
 
-        inline Box();
-        inline Box(T inMinX, T inMinY, T inMinZ, T inMaxX, T inMaxY, T inMaxZ);
-        inline Box(Vector<T, 3> inMin, Vector<T, 3> inMax);
-        inline Box(const Box& inOther);
-        inline Box(Box&& inOther) noexcept;
-        inline Box& operator=(const Box& inOther);
+        Box();
+        Box(T inMinX, T inMinY, T inMinZ, T inMaxX, T inMaxY, T inMaxZ);
+        Box(Vector<T, 3> inMin, Vector<T, 3> inMax);
+        Box(const Box& inOther);
+        Box(Box&& inOther) noexcept;
+        Box& operator=(const Box& inOther);
 
-        inline Vector<T, 3> Extent() const;
-        inline T ExtentX() const;
-        inline T ExtentY() const;
-        inline T ExtentZ() const;
-        inline Vector<T, 3> Center() const;
-        inline T CenterX() const;
-        inline T CenterY() const;
-        inline T CenterZ() const;
-        inline T Distance(const Box& inOther) const;
+        Vector<T, 3> Extent() const;
+        T ExtentX() const;
+        T ExtentY() const;
+        T ExtentZ() const;
+        Vector<T, 3> Center() const;
+        T CenterX() const;
+        T CenterY() const;
+        T CenterZ() const;
+        T Distance(const Box& inOther) const;
         // half of diagonal
-        inline T Size() const;
-        inline bool Inside(const Vector<T, 3>& inPoint) const;
-        inline bool Intersect(const Box& inOther) const;
+        T Size() const;
+        bool Inside(const Vector<T, 3>& inPoint) const;
+        bool Intersect(const Box& inOther) const;
 
         template <typename IT>
-        inline Box<IT> CastTo() const;
+        Box<IT> CastTo() const;
     };
 
     using IBox = Box<int32_t>;
@@ -56,7 +56,7 @@ namespace Common {
     struct Serializer<Box<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("Common::Box")
+            = HashUtils::StrCrc32("Common::Box")
             + Serializer<T>::typeId;
 
         static void Serialize(SerializeStream& stream, const Common::Box<T>& value)
@@ -75,6 +75,7 @@ namespace Common {
 
             Serializer<Vector<T, 3>>::Deserialize(stream, value.min);
             Serializer<Vector<T, 3>>::Deserialize(stream, value.max);
+            return true;
         }
     };
 }
@@ -83,13 +84,13 @@ namespace Common {
     template <typename T>
     Box<T> Box<T>::FromMinExtent(T inMinX, T inMinY, T inMinZ, T inExtentX, T inExtentY, T inExtentZ)
     {
-        return Box<T>(inMinX, inMinY, inMinZ, inMinX + inExtentX, inMinY + inExtentY, inMinZ + inExtentZ);
+        return Box(inMinX, inMinY, inMinZ, inMinX + inExtentX, inMinY + inExtentY, inMinZ + inExtentZ);
     }
 
     template <typename T>
     Box<T> Box<T>::FromMinExtent(Vector<T, 3> inMin, Vector<T, 3> inExtent)
     {
-        return Box<T>(inMin, inMin + inExtent);
+        return Box(inMin, inMin + inExtent);
     }
 
     template <typename T>
@@ -114,21 +115,21 @@ namespace Common {
     }
 
     template <typename T>
-    Box<T>::Box(const Box<T>& inOther)
+    Box<T>::Box(const Box& inOther)
     {
         this->min = inOther.min;
         this->max = inOther.max;
     }
 
     template <typename T>
-    Box<T>::Box(Box<T>&& inOther) noexcept
+    Box<T>::Box(Box&& inOther) noexcept
     {
         this->min = std::move(inOther.min);
         this->max = std::move(inOther.max);
     }
 
     template <typename T>
-    Box<T>& Box<T>::operator=(const Box<T>& inOther)
+    Box<T>& Box<T>::operator=(const Box& inOther)
     {
         this->min = inOther.min;
         this->max = inOther.max;

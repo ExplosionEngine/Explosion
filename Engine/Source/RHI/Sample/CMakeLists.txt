@@ -1,17 +1,8 @@
 function(AddRHISample)
-    cmake_parse_arguments(PARAMS "" "NAME" "SRC;SHADER;IMAGE;MODEL" ${ARGN})
-
-    if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-        set(PLATFORM_EXT_LIBS
-                "-framework Cocoa"
-                "-framework IOKit"
-                "-framework CoreFoundation")
-    endif()
+    cmake_parse_arguments(PARAMS "" "NAME" "SRC;INC;SHADER;IMAGE;MODEL" ${ARGN})
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         set(PLATFORM_DEP_TARGET RHI-DirectX12 RHI-Vulkan)
-        #    elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-        #        set(PLATFORM_DEP_TARGET RHI-Metal RHI-Vulkan)
     else()
         set(PLATFORM_DEP_TARGET RHI-Vulkan)
     endif()
@@ -34,32 +25,51 @@ function(AddRHISample)
     AddExecutable(
         SAMPLE
         NAME ${PARAMS_NAME}
-        SRC ${CMAKE_CURRENT_SOURCE_DIR}/${PARAMS_SRC}
-        INC ${CMAKE_CURRENT_SOURCE_DIR}
-        LIB RHI glfw GLM clipp ${PLATFORM_EXT_LIBS} Render stb assimp-lib
+        SRC ${PARAMS_SRC}
+        INC ${PARAMS_INC}
+        LIB RHISample-Base
         DEP_TARGET ${PLATFORM_DEP_TARGET}
         RES ${PATHS}
     )
 endfunction()
 
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    set(PLATFORM_EXT_LIBS
+        "-framework Cocoa"
+        "-framework IOKit"
+        "-framework CoreFoundation")
+endif()
+
+file(GLOB SOURCES Base/*.cpp)
+Addlibrary(
+    NAME RHISample-Base
+    SRC ${SOURCES}
+    PUBLIC_INC Base
+    LIB RHI glfw GLM clipp ${PLATFORM_EXT_LIBS} Render stb assimp-lib
+)
+
+file(GLOB SOURCES Triangle/*.cpp)
 AddRHISample(
-    NAME RHI-Triangle
-    SRC Triangle/Triangle.cpp
+    NAME RHISample-Triangle
+    SRC ${SOURCES}
+    INC Triangle
     SHADER Triangle/Triangle.hlsl
 )
 
+file(GLOB SOURCES TexSampling/*.cpp)
 AddRHISample(
-    NAME RHI-TexSampling
-    SRC TexSampling/TexSampling.cpp
+    NAME RHISample-TexSampling
+    SRC ${SOURCES}
+    INC TexSampling
     SHADER TexSampling/TexSampling.hlsl
     IMAGE TexSampling/Awesomeface.png
 )
 
+file(GLOB SOURCES SSAO/*.cpp)
 AddRHISample(
-    NAME RHI-SSAO
-    SRC
-        SSAO/GLTFParser.cpp
-        SSAO/SSAOApplication.cpp
+    NAME RHISample-SSAO
+    SRC ${SOURCES}
+    INC SSAO
     SHADER
         SSAO/Shader/Gbuffer.hlsl
         SSAO/Shader/SSAO.hlsl

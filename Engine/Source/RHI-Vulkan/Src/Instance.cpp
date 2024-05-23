@@ -2,6 +2,8 @@
 // Created by johnk on 11/1/2022.
 //
 
+#include <iostream>
+
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Instance.h>
 #include <RHI/Vulkan/Gpu.h>

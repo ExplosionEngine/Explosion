@@ -28,84 +28,84 @@ namespace Common {
     };
 
     template <typename T, uint8_t R, uint8_t C>
-    struct Matrix : public BaseMatrix<T, R, C> {
+    struct Matrix : BaseMatrix<T, R, C> {
         using Type = T;
         static constexpr uint8_t rows = R;
         static constexpr uint8_t cols = C;
 
         template <typename... IT>
         requires (Internal::IsAllSame<Vector<T, C>, IT...>::value) && (sizeof...(IT) == R)
-        static inline Matrix FromRowVecs(IT&&... inVectors);
+        static Matrix FromRowVecs(IT&&... inVectors);
 
         template <typename... IT>
         requires (Internal::IsAllSame<Vector<T, R>, IT...>::value) && (sizeof...(IT) == C)
-        static inline Matrix FromColVecs(IT&&... inVectors);
+        static Matrix FromColVecs(IT&&... inVectors);
 
-        inline Matrix();
-        inline Matrix(T inValue); // NOLINT
-        inline Matrix(const Matrix& other);
-        inline Matrix(Matrix&& other) noexcept;
-        inline Matrix& operator=(const Matrix& other);
+        Matrix();
+        Matrix(T inValue); // NOLINT
+        Matrix(const Matrix& other);
+        Matrix(Matrix&& other) noexcept;
+        Matrix& operator=(const Matrix& other);
 
         template <typename... IT>
         requires (sizeof...(IT) > 1)
-        inline Matrix(IT&&... inValues); // NOLINT
+        Matrix(IT&&... inValues); // NOLINT
 
-        inline T& At(uint8_t row, uint8_t col);
-        inline const T& At(uint8_t row, uint8_t col) const;
+        T& At(uint8_t row, uint8_t col);
+        const T& At(uint8_t row, uint8_t col) const;
 
-        inline T& operator[](uint32_t index);
-        inline const T& operator[](uint32_t index) const;
+        T& operator[](uint32_t index);
+        const T& operator[](uint32_t index) const;
 
-        inline bool operator==(T rhs) const;
-        inline bool operator==(const Matrix& rhs) const;
-        inline bool operator!=(T rhs) const;
-        inline bool operator!=(const Matrix& rhs) const;
+        bool operator==(T rhs) const;
+        bool operator==(const Matrix& rhs) const;
+        bool operator!=(T rhs) const;
+        bool operator!=(const Matrix& rhs) const;
 
-        inline Matrix operator+(T rhs) const;
-        inline Matrix operator-(T rhs) const;
-        inline Matrix operator*(T rhs) const;
-        inline Matrix operator/(T rhs) const;
+        Matrix operator+(T rhs) const;
+        Matrix operator-(T rhs) const;
+        Matrix operator*(T rhs) const;
+        Matrix operator/(T rhs) const;
 
-        inline Matrix operator+(const Matrix& rhs) const;
-        inline Matrix operator-(const Matrix& rhs) const;
+        Matrix operator+(const Matrix& rhs) const;
+        Matrix operator-(const Matrix& rhs) const;
 
-        inline Matrix& operator+=(T rhs);
-        inline Matrix& operator-=(T rhs);
-        inline Matrix& operator*=(T rhs);
-        inline Matrix& operator/=(T rhs);
+        Matrix& operator+=(T rhs);
+        Matrix& operator-=(T rhs);
+        Matrix& operator*=(T rhs);
+        Matrix& operator/=(T rhs);
 
-        inline Matrix& operator+=(const Matrix& rhs);
-        inline Matrix& operator-=(const Matrix& rhs);
+        Matrix& operator+=(const Matrix& rhs);
+        Matrix& operator-=(const Matrix& rhs);
 
         template <uint8_t IC>
-        inline Matrix<T, R, IC> operator*(const Matrix<T, C, IC>& rhs) const;
+        Matrix<T, R, IC> operator*(const Matrix<T, C, IC>& rhs) const;
 
-        inline Vector<T, C> Row(uint8_t index) const;
-        inline Vector<T, R> Col(uint8_t index) const;
-
-        template <typename... IT>
-        inline void SetValues(IT&&... inValues);
+        Vector<T, C> Row(uint8_t index) const;
+        Vector<T, R> Col(uint8_t index) const;
 
         template <typename... IT>
-        inline void SetRows(IT&&... inVectors);
+        void SetValues(IT&&... inValues);
 
         template <typename... IT>
-        inline void SetCols(IT&&... inVectors);
+        void SetRows(IT&&... inVectors);
 
         template <typename... IT>
-        inline void SetRow(uint8_t index, IT&&... inValues);
+        void SetCols(IT&&... inVectors);
 
         template <typename... IT>
-        inline void SetCol(uint8_t index, IT&&... inValues);
+        void SetRow(uint8_t index, IT&&... inValues);
+
+        template <typename... IT>
+        void SetCol(uint8_t index, IT&&... inValues);
 
         template <typename IT>
-        inline Matrix<IT, R, C> CastTo() const;
+        Matrix<IT, R, C> CastTo() const;
 
-        inline Matrix<T, C, R> Transpose() const;
-        inline bool CanInverse() const;
-        inline Matrix<T, R, C> Inverse() const;
-        inline T Determinant() const;
+        Matrix<T, C, R> Transpose() const;
+        bool CanInverse() const;
+        Matrix Inverse() const;
+        T Determinant() const;
     };
 
     template <typename T, uint8_t R, uint8_t C>
@@ -297,8 +297,8 @@ namespace Common {
     struct Serializer<Matrix<T, R, C>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("Common::Matrix")
-              + Serializer<T>::typeId + (R << 8) + C;
+            = HashUtils::StrCrc32("Common::Matrix")
+            + Serializer<T>::typeId + (R << 8) + C;
 
         static void Serialize(SerializeStream& stream, const Matrix<T, R, C>& value)
         {
@@ -318,6 +318,7 @@ namespace Common {
             for (auto i = 0; i < R * C; i++) {
                 Serializer<T>::Deserialize(stream, value.data[i]);
             }
+            return true;
         }
     };
 }
@@ -617,6 +618,7 @@ namespace Common {
         for (auto i = 0; i < R * C; i++) {
             this->data[i] += rhs;
         }
+        return *this;
     }
 
     template <typename T, uint8_t R, uint8_t C>
@@ -625,6 +627,7 @@ namespace Common {
         for (auto i = 0; i < R * C; i++) {
             this->data[i] -= rhs;
         }
+        return *this;
     }
 
     template <typename T, uint8_t R, uint8_t C>
@@ -633,6 +636,7 @@ namespace Common {
         for (auto i = 0; i < R * C; i++) {
             this->data[i] *= rhs;
         }
+        return *this;
     }
 
     template <typename T, uint8_t R, uint8_t C>
@@ -641,6 +645,7 @@ namespace Common {
         for (auto i = 0; i < R * C; i++) {
             this->data[i] /= rhs;
         }
+        return *this;
     }
 
     template <typename T, uint8_t R, uint8_t C>
@@ -649,6 +654,7 @@ namespace Common {
         for (auto i = 0; i < R * C; i++) {
             this->data[i] += rhs.data[i];
         }
+        return *this;
     }
 
     template <typename T, uint8_t R, uint8_t C>
@@ -657,6 +663,7 @@ namespace Common {
         for (auto i = 0; i < R * C; i++) {
             this->data[i] -= rhs.data[i];
         }
+        return *this;
     }
 
     template <typename T, uint8_t R, uint8_t C>
@@ -901,7 +908,7 @@ namespace Common {
     const Matrix<T, L, L> MatConsts<T, L, L>::identity = Internal::GetIdentityMatrix<T, L>();
 
     template <typename T, uint8_t R, uint8_t C>
-    inline Vector<T, R> operator*(const Matrix<T, R, C>& mat, const Vector<T, C>& vec) {
+    Vector<T, R> operator*(const Matrix<T, R, C>& mat, const Vector<T, C>& vec) {
         Vector<T, R> result;
         for (auto i = 0; i < R; i++) {
             result[i] = mat.Row(i).Dot(vec);

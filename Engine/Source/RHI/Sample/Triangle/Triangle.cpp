@@ -14,7 +14,7 @@ struct Vertex {
     FVec3 color;
 };
 
-class TriangleApplication : public Application {
+class TriangleApplication final : public Application {
 public:
     NonCopyable(TriangleApplication)
     explicit TriangleApplication(const std::string& n) : Application(n) {}
@@ -38,19 +38,19 @@ protected:
     void OnDrawFrame() override
     {
         inflightFences[nextFrameIndex]->Wait();
-        auto backTextureIndex = swapChain->AcquireBackTexture(backBufferReadySemaphores[nextFrameIndex].Get());
+        const auto backTextureIndex = swapChain->AcquireBackTexture(backBufferReadySemaphores[nextFrameIndex].Get());
         inflightFences[nextFrameIndex]->Reset();
 
-        UniqueRef<CommandRecorder> commandRecorder = commandBuffers[nextFrameIndex]->Begin();
+        const UniqueRef<CommandRecorder> commandRecorder = commandBuffers[nextFrameIndex]->Begin();
         {
             commandRecorder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-            UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+            const UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
                 RasterPassBeginInfo()
                     .AddColorAttachment(ColorAttachment(swapChainTextureViews[backTextureIndex].Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black)));
             {
                 rasterRecorder->SetPipeline(pipeline.Get());
-                rasterRecorder->SetScissor(0, 0, width, height);
-                rasterRecorder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                rasterRecorder->SetScissor(0, 0, GetWindowWidth(), GetWindowHeight());
+                rasterRecorder->SetViewport(0, 0, static_cast<float>(GetWindowWidth()), static_cast<float>(GetWindowHeight()), 0, 1);
                 rasterRecorder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
                 rasterRecorder->SetVertexBuffer(0, vertexBufferView.Get());
                 rasterRecorder->Draw(3, 1, 0, 0);
@@ -73,7 +73,7 @@ protected:
 
     void OnDestroy() override
     {
-        Common::UniqueRef<Fence> fence = device->CreateFence(false);
+        const UniqueRef<Fence> fence = device->CreateFence(false);
         graphicsQueue->Flush(fence.Get());
         fence->Wait();
     }
@@ -83,7 +83,7 @@ private:
 
     void SelectGPU()
     {
-        gpu = instance->GetGpu(0);
+        gpu = GetRHIInstance()->GetGpu(0);
     }
 
     void RequestDeviceAndFetchQueues()
@@ -103,7 +103,7 @@ private:
 
         surface = device->CreateSurface(SurfaceCreateInfo(GetPlatformWindow()));
 
-        for (auto format : swapChainFormatQualifiers) {
+        for (const auto format : swapChainFormatQualifiers) {
             if (device->CheckSwapChainFormatSupport(surface.Get(), format)) {
                 swapChainFormat = format;
                 break;
@@ -116,8 +116,8 @@ private:
                 .SetFormat(swapChainFormat)
                 .SetPresentMode(PresentMode::immediately)
                 .SetTextureNum(backBufferCount)
-                .SetWidth(width)
-                .SetHeight(height)
+                .SetWidth(GetWindowWidth())
+                .SetHeight(GetWindowHeight())
                 .SetSurface(surface.Get())
                 .SetPresentQueue(graphicsQueue));
 
@@ -136,13 +136,13 @@ private:
 
     void CreateVertexBuffer()
     {
-        std::vector<Vertex> vertices = {
+        const std::vector<Vertex> vertices = {
             {{-.5f, -.5f, 0.f}, {1.f, 0.f, 0.f}},
             {{.5f, -.5f, 0.f}, {0.f, 1.f, 0.f}},
             {{0.f, .5f, 0.f}, {0.f, 0.f, 1.f}},
         };
 
-        BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+        const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
             .SetSize(vertices.size() * sizeof(Vertex))
             .SetUsages(BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
             .SetInitialState(BufferState::staging)
@@ -155,7 +155,7 @@ private:
             vertexBuffer->UnMap();
         }
 
-        BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
+        const BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
             .SetType(BufferViewType::vertex)
             .SetSize(vertices.size() * sizeof(Vertex))
             .SetOffset(0)
@@ -187,7 +187,7 @@ private:
             .SetPrimitiveState(PrimitiveState(PrimitiveTopologyType::triangle, FillMode::solid, IndexFormat::uint16, FrontFace::ccw, CullMode::none));
 
         // TODO use reflection
-        if (rhiType == RHIType::directX12) {
+        if (GetRHIType() == RHIType::directX12) {
             createInfo.SetVertexState(
                 VertexState()
                     .AddVertexBufferLayout(

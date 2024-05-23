@@ -15,31 +15,31 @@ namespace Common {
     };
 
     template <typename T>
-    struct Rect : public RectBase<T> {
-        static inline Rect FromMinExtent(T inMinX, T inMinY, T inExtentX, T inExtentY);
-        static inline Rect FromMinExtent(Vector<T, 2> inMin, Vector<T, 2> inExtent);
+    struct Rect : RectBase<T> {
+        static Rect FromMinExtent(T inMinX, T inMinY, T inExtentX, T inExtentY);
+        static Rect FromMinExtent(Vector<T, 2> inMin, Vector<T, 2> inExtent);
 
-        inline Rect();
-        inline Rect(T inMinX, T inMinY, T inMaxX, T inMaxY);
-        inline Rect(Vector<T, 2> inMin, Vector<T, 2> inMax);
-        inline Rect(const Rect& inOther);
-        inline Rect(Rect&& inOther) noexcept;
-        inline Rect& operator=(const Rect& inOther);
+        Rect();
+        Rect(T inMinX, T inMinY, T inMaxX, T inMaxY);
+        Rect(Vector<T, 2> inMin, Vector<T, 2> inMax);
+        Rect(const Rect& inOther);
+        Rect(Rect&& inOther) noexcept;
+        Rect& operator=(const Rect& inOther);
 
-        inline Vector<T, 2> Extent() const;
-        inline T ExtentX() const;
-        inline T ExtentY() const;
-        inline Vector<T, 2> Center() const;
-        inline T CenterX() const;
-        inline T CenterY() const;
-        inline T Distance(const Rect& inOther) const;
+        Vector<T, 2> Extent() const;
+        T ExtentX() const;
+        T ExtentY() const;
+        Vector<T, 2> Center() const;
+        T CenterX() const;
+        T CenterY() const;
+        T Distance(const Rect& inOther) const;
         // half of diagonal
-        inline T Size() const;
-        inline bool Inside(const Vector<T, 2>& inPoint) const;
-        inline bool Intersect(const Rect& inOther) const;
+        T Size() const;
+        bool Inside(const Vector<T, 2>& inPoint) const;
+        bool Intersect(const Rect& inOther) const;
 
         template <typename IT>
-        inline Rect<IT> CastTo() const;
+        Rect<IT> CastTo() const;
     };
 
     using IRect = Rect<int32_t>;
@@ -54,8 +54,8 @@ namespace Common {
     struct Serializer<Rect<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("Common::Rect")
-              + Serializer<T>::typeId;
+            = HashUtils::StrCrc32("Common::Rect")
+            + Serializer<T>::typeId;
 
         static void Serialize(SerializeStream& stream, const Rect<T>& value)
         {
@@ -73,6 +73,7 @@ namespace Common {
 
             Serializer<Vector<T, 2>>::Deserialize(stream, value.min);
             Serializer<Vector<T, 2>>::Deserialize(stream, value.max);
+            return true;
         }
     };
 }
@@ -81,13 +82,13 @@ namespace Common {
     template <typename T>
     Rect<T> Rect<T>::FromMinExtent(T inMinX, T inMinY, T inExtentX, T inExtentY)
     {
-        return Rect<T>(inMinX, inMinY, inMinX + inExtentX, inMinY + inExtentY);
+        return Rect(inMinX, inMinY, inMinX + inExtentX, inMinY + inExtentY);
     }
 
     template <typename T>
     Rect<T> Rect<T>::FromMinExtent(Vector<T, 2> inMin, Vector<T, 2> inExtent)
     {
-        return Rect<T>(inMin, inMin + inExtent);
+        return Rect(inMin, inMin + inExtent);
     }
 
     template <typename T>
@@ -112,21 +113,21 @@ namespace Common {
     }
 
     template <typename T>
-    Rect<T>::Rect(const Rect<T>& inOther)
+    Rect<T>::Rect(const Rect& inOther)
     {
         this->min = inOther.min;
         this->max = inOther.max;
     }
 
     template <typename T>
-    Rect<T>::Rect(Rect<T>&& inOther) noexcept
+    Rect<T>::Rect(Rect&& inOther) noexcept
     {
         this->min = std::move(inOther.min);
         this->max = std::move(inOther.max);
     }
 
     template <typename T>
-    Rect<T>& Rect<T>::operator=(const Rect<T>& inOther)
+    Rect<T>& Rect<T>::operator=(const Rect& inOther)
     {
         this->min = inOther.min;
         this->max = inOther.max;

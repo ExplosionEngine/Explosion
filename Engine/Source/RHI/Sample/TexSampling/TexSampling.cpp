@@ -10,7 +10,7 @@
 #include <stb_image.h>
 using namespace RHI;
 
-class TexSamplingApplication : public Application {
+class TexSamplingApplication final : public Application {
 public:
     NonCopyable(TexSamplingApplication)
     explicit TexSamplingApplication(const std::string& n) : Application(n) {}
@@ -38,19 +38,19 @@ protected:
     void OnDrawFrame() override
     {
         inflightFences[nextFrameIndex]->Wait();
-        auto backTextureIndex = swapChain->AcquireBackTexture(backBufferReadySemaphores[nextFrameIndex].Get());
+        const auto backTextureIndex = swapChain->AcquireBackTexture(backBufferReadySemaphores[nextFrameIndex].Get());
         inflightFences[nextFrameIndex]->Reset();
 
-        UniqueRef<CommandRecorder> commandRecorder = commandBuffers[nextFrameIndex]->Begin();
+        const UniqueRef<CommandRecorder> commandRecorder = commandBuffers[nextFrameIndex]->Begin();
         {
             commandRecorder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-            UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+            const UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
                 RasterPassBeginInfo()
                     .AddColorAttachment(ColorAttachment(swapChainTextureViews[backTextureIndex].Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black)));
             {
                 rasterRecorder->SetPipeline(pipeline.Get());
-                rasterRecorder->SetScissor(0, 0, width, height);
-                rasterRecorder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                rasterRecorder->SetScissor(0, 0, GetWindowWidth(), GetWindowHeight());
+                rasterRecorder->SetViewport(0, 0, static_cast<float>(GetWindowWidth()), static_cast<float>(GetWindowHeight()), 0, 1);
                 rasterRecorder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
                 rasterRecorder->SetBindGroup(0, bindGroup.Get());
                 rasterRecorder->SetVertexBuffer(0, vertexBufferView.Get());
@@ -74,13 +74,13 @@ protected:
 
     void OnDestroy() override
     {
-        Common::UniqueRef<Fence> fence = device->CreateFence(false);
+        const UniqueRef<Fence> fence = device->CreateFence(false);
         graphicsQueue->Flush(fence.Get());
         fence->Wait();
     }
 
 private:
-    static const uint8_t backBufferCount = 2;
+    static constexpr uint8_t backBufferCount = 2;
 
     struct Vertex {
         FVec3 position;
@@ -91,7 +91,7 @@ private:
 
     void SelectGPU()
     {
-        gpu = instance->GetGpu(0);
+        gpu = GetRHIInstance()->GetGpu(0);
     }
 
     void RequestDeviceAndFetchQueues()
@@ -111,7 +111,7 @@ private:
 
         surface = device->CreateSurface(SurfaceCreateInfo(GetPlatformWindow()));
 
-        for (auto format : swapChainFormatQualifiers) {
+        for (const auto format : swapChainFormatQualifiers) {
             if (device->CheckSwapChainFormatSupport(surface.Get(), format)) {
                 swapChainFormat = format;
                 break;
@@ -124,8 +124,8 @@ private:
                 .SetFormat(swapChainFormat)
                 .SetPresentMode(PresentMode::immediately)
                 .SetTextureNum(backBufferCount)
-                .SetWidth(width)
-                .SetHeight(height)
+                .SetWidth(GetWindowWidth())
+                .SetHeight(GetWindowHeight())
                 .SetSurface(surface.Get())
                 .SetPresentQueue(graphicsQueue));
 
@@ -144,14 +144,14 @@ private:
 
     void CreateVertexBuffer()
     {
-        std::vector<Vertex> vertices = {
+        const std::vector<Vertex> vertices = {
             {{-.5f, -.5f, .0f}, {.0f, 1.0f}},
             {{.5f, -.5f, .0f}, {1.0f, 1.0f}},
             {{.5f, .5f, .0f}, {1.0f, .0f}},
             {{-.5f, .5f, .0f}, {0.f, .0f}},
         };
 
-        BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+        const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
             .SetSize(vertices.size() * sizeof(Vertex))
             .SetUsages(BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
             .SetInitialState(BufferState::staging)
@@ -164,7 +164,7 @@ private:
             vertexBuffer->UnMap();
         }
 
-        BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
+        const BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
             .SetType(BufferViewType::vertex)
             .SetSize(vertices.size() * sizeof(Vertex))
             .SetOffset(0)
@@ -174,9 +174,9 @@ private:
 
     void CreateIndexBuffer()
     {
-        std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
+        const std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
 
-        BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+        const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
             .SetSize(indices.size() * sizeof(uint32_t))
             .SetUsages(BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
             .SetInitialState(BufferState::staging)
@@ -189,7 +189,7 @@ private:
             indexBuffer->UnMap();
         }
 
-        BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
+        const BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
             .SetType(BufferViewType::index)
             .SetSize(indices.size() * sizeof(uint32_t))
             .SetOffset(0)
@@ -203,7 +203,7 @@ private:
         stbi_uc* pixels = stbi_load("../Test/Sample/RHI/TexSampling/Awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         Assert(pixels != nullptr);
 
-        BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+        const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
             .SetSize(texWidth * texHeight * 4)
             .SetUsages(BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
             .SetInitialState(BufferState::staging)
@@ -241,9 +241,9 @@ private:
         sampler = device->CreateSampler(SamplerCreateInfo());
 
         texCommandBuffer = device->CreateCommandBuffer();
-        UniqueRef<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
+        const UniqueRef<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
         {
-            UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
+            const UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
             {
                 copyRecorder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::undefined, TextureState::copyDst));
                 copyRecorder->CopyBufferToTexture(
@@ -256,7 +256,7 @@ private:
         }
         commandRecorder->End();
 
-        UniqueRef<Fence> fence = device->CreateFence(false);
+        const UniqueRef<Fence> fence = device->CreateFence(false);
         QueueSubmitInfo submitInfo {};
         submitInfo.signalFence = fence.Get();
         graphicsQueue->Submit(texCommandBuffer.Get(), submitInfo);
@@ -277,7 +277,7 @@ private:
 
     void CreateUniformBuffer()
     {
-        BufferCreateInfo createInfo = BufferCreateInfo()
+        const BufferCreateInfo createInfo = BufferCreateInfo()
             .SetSize(sizeof(FMat4x4))
             .SetUsages(BufferUsageBits::uniform | BufferUsageBits::mapWrite)
             .SetInitialState(BufferState::staging)
@@ -285,7 +285,7 @@ private:
 
         uniformBuffer = device->CreateBuffer(createInfo);
 
-        BufferViewCreateInfo viewCreateInfo = BufferViewCreateInfo()
+        const BufferViewCreateInfo viewCreateInfo = BufferViewCreateInfo()
             .SetType(BufferViewType::uniformBinding)
             .SetSize(createInfo.size)
             .SetOffset(0);
@@ -296,23 +296,14 @@ private:
     {
         BindGroupLayoutCreateInfo createInfo(0);
         // TODO use reflection
-        if (instance->GetRHIType() == RHIType::directX12) {
-            createInfo.AddEntry(BindGroupLayoutEntry(
-                ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
-                , ShaderStageBits::sPixel));
-            createInfo.AddEntry(BindGroupLayoutEntry(
-                ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
-                , ShaderStageBits::sPixel));
-            createInfo.AddEntry(BindGroupLayoutEntry(
-                ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0))
-                , ShaderStageBits::sVertex));
+        if (GetRHIInstance()->GetRHIType() == RHIType::directX12) {
+            createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
+            createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
+            createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), ShaderStageBits::sVertex));
         } else {
-            createInfo.AddEntry(
-                BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
-            createInfo.AddEntry(
-                BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), ShaderStageBits::sPixel));
-            createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(2))
-                                                     , ShaderStageBits::sVertex));
+            createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
+            createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), ShaderStageBits::sPixel));
+            createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(2)), ShaderStageBits::sVertex));
         }
 
         bindGroupLayout = device->CreateBindGroupLayout(createInfo);
@@ -322,22 +313,14 @@ private:
     {
         BindGroupCreateInfo createInfo(bindGroupLayout.Get());
         // TODO use reflection
-        if (instance->GetRHIType() == RHIType::directX12) {
-            createInfo.AddEntry(
-                BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
-                               , sampleTextureView.Get()));
-            createInfo.AddEntry(
-                BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
-                               , sampler.Get()));
-            createInfo.AddEntry(BindGroupEntry(
-                ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0))
-                , uniformBufferView.Get()));
+        if (GetRHIInstance()->GetRHIType() == RHIType::directX12) {
+            createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), sampleTextureView.Get()));
+            createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), sampler.Get()));
+            createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), uniformBufferView.Get()));
         } else {
-            createInfo.AddEntry(
-                BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), sampleTextureView.Get()));
+            createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), sampleTextureView.Get()));
             createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), sampler.Get()));
-            createInfo.AddEntry(
-                BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(2)), uniformBufferView.Get()));
+            createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(2)), uniformBufferView.Get()));
         }
 
         bindGroup = device->CreateBindGroup(createInfo);
@@ -369,7 +352,7 @@ private:
             .SetPrimitiveState(PrimitiveState(PrimitiveTopologyType::triangle, FillMode::solid, IndexFormat::uint16, FrontFace::ccw, CullMode::none));
 
         // TODO use reflection
-        if (rhiType == RHIType::directX12) {
+        if (GetRHIType() == RHIType::directX12) {
             createInfo.SetVertexState(
                 VertexState()
                     .AddVertexBufferLayout(

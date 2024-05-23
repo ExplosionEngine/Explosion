@@ -9,17 +9,17 @@
 
 namespace Common {
     template <typename T>
-    struct ViewTransform : public Transform<T> {
-        inline static ViewTransform LookAt(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
+    struct ViewTransform : Transform<T> {
+        static ViewTransform LookAt(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
 
-        inline ViewTransform();
-        inline ViewTransform(Quaternion<T> inRotation, Vector<T, 3> inTranslation);
-        inline explicit ViewTransform(const Transform<T>& inTransform);
-        inline ViewTransform(const ViewTransform& inOther);
-        inline ViewTransform(ViewTransform&& inOther) noexcept;
-        inline ViewTransform& operator=(const ViewTransform& inOther);
+        ViewTransform();
+        ViewTransform(Quaternion<T> inRotation, Vector<T, 3> inTranslation);
+        explicit ViewTransform(const Transform<T>& inTransform);
+        ViewTransform(const ViewTransform& inOther);
+        ViewTransform(ViewTransform&& inOther) noexcept;
+        ViewTransform& operator=(const ViewTransform& inOther);
 
-        inline Matrix<T, 4, 4> GetViewMatrix();
+        Matrix<T, 4, 4> GetViewMatrix() const;
     };
 
     using HViewTransform = ViewTransform<HFloat>;
@@ -32,8 +32,8 @@ namespace Common {
     struct Serializer<ViewTransform<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("Common::ViewTransform")
-              + Serializer<T>::typeId;
+            = HashUtils::StrCrc32("Common::ViewTransform")
+            + Serializer<T>::typeId;
 
         static void Serialize(SerializeStream& stream, const ViewTransform<T>& value)
         {
@@ -49,6 +49,7 @@ namespace Common {
             }
 
             Serializer<Transform<T>>::Deserialize(stream, value);
+            return true;
         }
     };
 }
@@ -98,7 +99,7 @@ namespace Common {
     }
 
     template <typename T>
-    Matrix<T, 4, 4> ViewTransform<T>::GetViewMatrix()
+    Matrix<T, 4, 4> ViewTransform<T>::GetViewMatrix() const
     {
         // before apply axis transform matrix:
         //     x+ -> from screen outer to inner

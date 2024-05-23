@@ -31,17 +31,17 @@ namespace Common {
     };
 
     template <typename T>
-    struct ReversedZOrthogonalProjection : public ReversedZOrthogonalProjectionBase<T> {
-        inline ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane);
-        inline ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane, T inFarPlane);
-        inline Matrix<T, 4, 4> GetProjectionMatrix() const;
+    struct ReversedZOrthogonalProjection : ReversedZOrthogonalProjectionBase<T> {
+        ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane);
+        ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane, T inFarPlane);
+        Matrix<T, 4, 4> GetProjectionMatrix() const;
     };
 
     template <typename T>
-    struct ReversedZPerspectiveProjection : public ReversedZPerspectiveProjectionBase<T> {
-        inline ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane);
-        inline ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane, T inFarPlane);
-        inline Matrix<T, 4, 4> GetProjectionMatrix() const;
+    struct ReversedZPerspectiveProjection : ReversedZPerspectiveProjectionBase<T> {
+        ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane);
+        ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane, T inFarPlane);
+        Matrix<T, 4, 4> GetProjectionMatrix() const;
     };
 
     using HReversedZOrthoProjection = ReversedZOrthogonalProjection<HFloat>;
@@ -58,7 +58,7 @@ namespace Common {
     struct Serializer<ReversedZOrthogonalProjection<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("Common::ReversedZOrthogonalProjection")
+            = HashUtils::StrCrc32("Common::ReversedZOrthogonalProjection")
             + Serializer<T>::typeId;
 
         static void Serialize(SerializeStream& stream, const ReversedZOrthogonalProjection<T>& value)
@@ -81,6 +81,7 @@ namespace Common {
             Serializer<T>::Deserialize(stream, value.height);
             Serializer<T>::Deserialize(stream, value.nearPlane);
             Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
+            return true;
         }
     };
 
@@ -88,8 +89,8 @@ namespace Common {
     struct Serializer<ReversedZPerspectiveProjection<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("Common::ReversedZPerspectiveProjection")
-              + Serializer<T>::typeId;
+            = HashUtils::StrCrc32("Common::ReversedZPerspectiveProjection")
+            + Serializer<T>::typeId;
 
         static void Serialize(SerializeStream& stream, const ReversedZPerspectiveProjection<T>& value)
         {
@@ -113,6 +114,7 @@ namespace Common {
             Serializer<T>::Deserialize(stream, value.height);
             Serializer<T>::Deserialize(stream, value.nearPlane);
             Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
+            return true;
         }
     };
 }

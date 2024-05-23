@@ -12,40 +12,11 @@
 
 using namespace RHI;
 
-class SSAOApplication : public Application {
+class SSAOApplication final : public Application {
 public:
     NonCopyable(SSAOApplication)
     explicit SSAOApplication(const std::string& n) : Application(n) {}
     ~SSAOApplication() override = default;
-
-    Instance* GetInstance() {
-        return instance;
-    }
-
-    Device* GetDevice()
-    {
-        return device.Get();
-    }
-
-    BindGroupLayout* GetLayout()
-    {
-        return renderableLayout.Get();
-    }
-
-    Sampler* GetSampler()
-    {
-        return sampler.Get();
-    }
-
-    Queue* GetQueue()
-    {
-        return graphicsQueue;
-    }
-
-    Fence* GetInflightFences(uint8_t index)
-    {
-        return inflightFences[index].Get();
-    }
 
 protected:
     void OnCreate() override
@@ -71,24 +42,24 @@ protected:
 
     void OnDrawFrame() override
     {
-        uboSceneParams.view = camera->GetViewMatrix();
+        uboSceneParams.view = GetCamera().GetViewMatrix();
 
         auto* pMap = uniformBuffers.sceneParams.buf->Map(MapMode::write, 0, sizeof(UBOSceneParams));
         memcpy(pMap, &uboSceneParams, sizeof(UBOSceneParams));
         uniformBuffers.sceneParams.buf->UnMap();
 
         inflightFences[nextFrameIndex]->Wait();
-        auto backTextureIndex = swapChain->AcquireBackTexture(backBufferReadySemaphores[nextFrameIndex].Get());
+        const auto backTextureIndex = swapChain->AcquireBackTexture(backBufferReadySemaphores[nextFrameIndex].Get());
         inflightFences[nextFrameIndex]->Reset();
 
-        UniqueRef<CommandRecorder> commandRecorder = commandBuffers[nextFrameIndex]->Begin();
+        const UniqueRef<CommandRecorder> commandRecorder = commandBuffers[nextFrameIndex]->Begin();
         {
             commandRecorder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
             commandRecorder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
             commandRecorder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
             commandRecorder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilReadonly, TextureState::depthStencilWrite));
 
-            UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+            const UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
                 RasterPassBeginInfo()
                     .AddColorAttachment(RHI::ColorAttachment(gBufferPos.rtv.Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black))
                     .AddColorAttachment(RHI::ColorAttachment(gBufferNormal.rtv.Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black))
@@ -96,14 +67,14 @@ protected:
                     .SetDepthStencilAttachment(DepthStencilAttachment(gBufferDepth.view.Get(), true, LoadOp::clear, StoreOp::store, 0.0f)));
             {
                 rasterRecorder->SetPipeline(pipelines.gBuffer.Get());
-                rasterRecorder->SetScissor(0, 0, width, height);
-                rasterRecorder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                rasterRecorder->SetScissor(0, 0, GetWindowWidth(), GetWindowHeight());
+                rasterRecorder->SetViewport(0, 0, static_cast<float>(GetWindowWidth()), static_cast<float>(GetWindowHeight()), 0, 1);
                 rasterRecorder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
                 rasterRecorder->SetBindGroup(0, bindGroups.scene.Get());
                 rasterRecorder->SetVertexBuffer(0, vertexBufferView.Get());
                 rasterRecorder->SetIndexBuffer(indexBufferView.Get());
 
-                for (auto& renderable : renderables) {
+                for (const auto& renderable : renderables) {
                     rasterRecorder->SetBindGroup(1, renderable->bindGroup.Get());
                     rasterRecorder->DrawIndexed(renderable->indexCount, 1, renderable->firstIndex, 0, 0);
                 }
@@ -120,13 +91,13 @@ protected:
             // ssao
             commandRecorder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
 
-            UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+            const UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
                 RasterPassBeginInfo()
                     .AddColorAttachment(RHI::ColorAttachment(ssaoOutput.rtv.Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black)));
             {
                 rasterRecorder->SetPipeline(pipelines.ssao.Get());
-                rasterRecorder->SetScissor(0, 0, width, height);
-                rasterRecorder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                rasterRecorder->SetScissor(0, 0, GetWindowWidth(), GetWindowHeight());
+                rasterRecorder->SetViewport(0, 0, static_cast<float>(GetWindowWidth()), static_cast<float>(GetWindowHeight()), 0, 1);
                 rasterRecorder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
                 rasterRecorder->SetBindGroup(0, bindGroups.ssao.Get());
                 rasterRecorder->SetVertexBuffer(0, quadVertexBufferView.Get());
@@ -141,13 +112,13 @@ protected:
             // ssaoBlur
             commandRecorder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
 
-            UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+            const UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
                 RasterPassBeginInfo()
                     .AddColorAttachment(RHI::ColorAttachment(ssaoBlurOutput.rtv.Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black)));
             {
                 rasterRecorder->SetPipeline(pipelines.ssaoBlur.Get());
-                rasterRecorder->SetScissor(0, 0, width, height);
-                rasterRecorder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                rasterRecorder->SetScissor(0, 0, GetWindowWidth(), GetWindowHeight());
+                rasterRecorder->SetViewport(0, 0, static_cast<float>(GetWindowWidth()), static_cast<float>(GetWindowHeight()), 0, 1);
                 rasterRecorder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
                 rasterRecorder->SetBindGroup(0, bindGroups.ssaoBlur.Get());
                 rasterRecorder->SetVertexBuffer(0, quadVertexBufferView.Get());
@@ -161,13 +132,13 @@ protected:
         {
             // composition
             commandRecorder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-            UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+            const UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
                 RasterPassBeginInfo()
                     .AddColorAttachment(RHI::ColorAttachment(swapChainTextureViews[backTextureIndex].Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black)));
             {
                 rasterRecorder->SetPipeline(pipelines.composition.Get());
-                rasterRecorder->SetScissor(0, 0, width, height);
-                rasterRecorder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                rasterRecorder->SetScissor(0, 0, GetWindowWidth(), GetWindowHeight());
+                rasterRecorder->SetViewport(0, 0, static_cast<float>(GetWindowWidth()), static_cast<float>(GetWindowHeight()), 0, 1);
                 rasterRecorder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
                 rasterRecorder->SetBindGroup(0, bindGroups.composition.Get());
                 rasterRecorder->SetVertexBuffer(0, quadVertexBufferView.Get());
@@ -192,7 +163,7 @@ protected:
 
     void OnDestroy() override
     {
-        Common::UniqueRef<Fence> fence = device->CreateFence(false);
+        const UniqueRef<Fence> fence = device->CreateFence(false);
         graphicsQueue->Flush(fence.Get());
         fence->Wait();
     }
@@ -213,7 +184,7 @@ private:
     UniqueRef<Buffer> indexBuffer = nullptr;
     UniqueRef<BufferView> indexBufferView = nullptr;
     std::array<Texture*, backBufferCount> swapChainTextures {};
-    std::array<Common::UniqueRef<TextureView>, backBufferCount> swapChainTextureViews {};
+    std::array<UniqueRef<TextureView>, backBufferCount> swapChainTextureViews {};
 
     UniqueRef<Buffer> quadVertexBuffer = nullptr;
     UniqueRef<BufferView> quadVertexBufferView = nullptr;
@@ -237,26 +208,26 @@ private:
         UniqueRef<Texture> diffuseColorMap;
         UniqueRef<TextureView> diffuseColorMapView;
 
-        Renderable(SSAOApplication* app, Device& device, UniqueRef<Mesh>& mesh) {
-            indexCount =mesh->indexCount;
-            firstIndex =mesh->firstIndex;
+        Renderable(Instance& instance, Device& device, BindGroupLayout& bindGroupLayout, Sampler& sampler, const Mesh& mesh) {
+            indexCount = mesh.indexCount;
+            firstIndex = mesh.firstIndex;
 
             // upload diffuseColorMap
-            auto& texData =mesh->materialData->baseColorTexture;
+            const auto& texData = mesh.materialData->baseColorTexture;
 
-            BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+            const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
                 .SetSize(texData->GetSize())
                 .SetUsages(BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
-                .SetInitialState(RHI::BufferState::staging);
+                .SetInitialState(BufferState::staging);
 
-            UniqueRef<Buffer> pixelBuffer = app->GetDevice()->CreateBuffer(bufferCreateInfo);
+            const UniqueRef<Buffer> pixelBuffer = device.CreateBuffer(bufferCreateInfo);
             if (pixelBuffer != nullptr) {
                 auto* mapData = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
                 memcpy(mapData, texData->buffer.data(), bufferCreateInfo.size);
                 pixelBuffer->UnMap();
             }
 
-            diffuseColorMap = app->GetDevice()->CreateTexture(
+            diffuseColorMap = device.CreateTexture(
                 TextureCreateInfo()
                     .SetFormat(PixelFormat::rgba8Unorm)
                     .SetDimension(TextureDimension::t2D)
@@ -276,11 +247,11 @@ private:
                     .SetAspect(TextureAspect::color)
                     .SetType(TextureViewType::textureBinding));
 
-            UniqueRef<CommandBuffer> texCommandBuffer = app->GetDevice()->CreateCommandBuffer();
+            const UniqueRef<CommandBuffer> texCommandBuffer = device.CreateCommandBuffer();
 
-            UniqueRef<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
+            const UniqueRef<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
             {
-                UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
+                const UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
                 {
                     copyRecorder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::undefined, TextureState::copyDst));
                     copyRecorder->CopyBufferToTexture(
@@ -293,29 +264,24 @@ private:
             }
             commandRecorder->End();
 
-            Common::UniqueRef<Fence> fence = device.CreateFence(false);
+            const UniqueRef<Fence> fence = device.CreateFence(false);
             QueueSubmitInfo submitInfo {};
             submitInfo.signalFence = fence.Get();
-            app->GetQueue()->Submit(texCommandBuffer.Get(), submitInfo);
+            device.GetQueue(QueueType::graphics, 0)->Submit(texCommandBuffer.Get(), submitInfo);
             fence->Wait();
 
             // per renderable bindGroup
-            BindGroupCreateInfo createInfo(app->GetLayout());
-            if (app->GetInstance()->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
-                                   , diffuseColorMapView.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
-                                   , app->GetSampler()));
+            // TODO use reflection
+            BindGroupCreateInfo createInfo(&bindGroupLayout);
+            if (instance.GetRHIType() == RHIType::directX12) {
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), diffuseColorMapView.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), &sampler));
             } else {
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), diffuseColorMapView.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), app->GetSampler()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), diffuseColorMapView.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), &sampler));
             }
 
-            bindGroup = app->GetDevice()->CreateBindGroup(createInfo);
+            bindGroup = device.CreateBindGroup(createInfo);
         }
     };
 
@@ -420,7 +386,7 @@ private:
 
     void SelectGPU()
     {
-        gpu = instance->GetGpu(0);
+        gpu = GetRHIInstance()->GetGpu(0);
     }
 
     void RequestDeviceAndFetchQueues()
@@ -440,7 +406,7 @@ private:
 
         surface = device->CreateSurface(SurfaceCreateInfo(GetPlatformWindow()));
 
-        for (auto format : swapChainFormatQualifiers) {
+        for (const auto format : swapChainFormatQualifiers) {
             if (device->CheckSwapChainFormatSupport(surface.Get(), format)) {
                 swapChainFormat = format;
                 break;
@@ -453,8 +419,8 @@ private:
                 .SetFormat(swapChainFormat)
                 .SetPresentMode(PresentMode::immediately)
                 .SetTextureNum(backBufferCount)
-                .SetWidth(width)
-                .SetHeight(height)
+                .SetWidth(GetWindowWidth())
+                .SetHeight(GetWindowHeight())
                 .SetSurface(surface.Get())
                 .SetPresentQueue(graphicsQueue));
 
@@ -473,10 +439,10 @@ private:
 
     void CreateVertexBuffer()
     {
-        BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+        const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
             .SetSize(model->raw_vertex_buffer.size() * sizeof(Vertex))
             .SetUsages(BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
-            .SetInitialState(RHI::BufferState::staging);
+            .SetInitialState(BufferState::staging);
 
         vertexBuffer = device->CreateBuffer(bufferCreateInfo);
         assert(vertexBuffer != nullptr);
@@ -484,7 +450,7 @@ private:
         memcpy(data, model->raw_vertex_buffer.data(), bufferCreateInfo.size);
         vertexBuffer->UnMap();
 
-        BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
+        const BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
             .SetType(BufferViewType::vertex)
             .SetSize(bufferCreateInfo.size)
             .SetOffset(0)
@@ -494,10 +460,10 @@ private:
 
     void CreateIndexBuffer()
     {
-        BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+        const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
             .SetSize(model->raw_index_buffer.size() * sizeof(uint32_t))
             .SetUsages(BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
-            .SetInitialState(RHI::BufferState::staging);
+            .SetInitialState(BufferState::staging);
 
         indexBuffer = device->CreateBuffer(bufferCreateInfo);
         assert(indexBuffer != nullptr);
@@ -505,7 +471,7 @@ private:
         memcpy(data, model->raw_index_buffer.data(), bufferCreateInfo.size);
         indexBuffer->UnMap();
 
-        BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
+        const BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
             .SetType(BufferViewType::index)
             .SetSize(bufferCreateInfo.size)
             .SetOffset(0)
@@ -516,7 +482,7 @@ private:
     void CreateQuadBuffer()
     {
         // quad vertex buffer
-        std::vector<QuadVertex> vertices {
+        const std::vector<QuadVertex> vertices {
             {{-1.0f, -1.0f, .0f}, {0.f, 1.0f}},
             {{1.0f, -1.0f, .0f}, {1.0f, 1.0f}},
             {{1.0f, 1.0f, .0f}, {1.0f, .0f}},
@@ -526,7 +492,7 @@ private:
         BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
             .SetSize(vertices.size() * sizeof(QuadVertex))
             .SetUsages(BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
-            .SetInitialState(RHI::BufferState::staging);
+            .SetInitialState(BufferState::staging);
 
         quadVertexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (quadVertexBuffer != nullptr) {
@@ -543,11 +509,11 @@ private:
         quadVertexBufferView = quadVertexBuffer->CreateBufferView(bufferViewCreateInfo);
 
         // index buffer
-        std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
+        const std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
         bufferCreateInfo = BufferCreateInfo()
             .SetSize(indices.size() * sizeof(uint32_t))
             .SetUsages(BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
-            .SetInitialState(RHI::BufferState::staging);
+            .SetInitialState(BufferState::staging);
 
         quadIndexBuffer = device->CreateBuffer(bufferCreateInfo);
         if (quadIndexBuffer != nullptr) {
@@ -587,16 +553,14 @@ private:
 
     void CreateBindGroupLayoutAndPipelineLayout()
     {
+        // TODO replace with reflection
         //gBuffer
         {
             BindGroupLayoutCreateInfo createInfo(0);
-            if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)),
-                    ShaderStageBits::sVertex | ShaderStageBits::sPixel));
+            if (GetRHIType() == RHIType::directX12) {
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), ShaderStageBits::sVertex | ShaderStageBits::sPixel));
             } else {
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(0)),
-                    ShaderStageBits::sVertex | ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(0)), ShaderStageBits::sVertex | ShaderStageBits::sPixel));
             }
             bindGroupLayouts.gBuffer = device->CreateBindGroupLayout(createInfo);
         }
@@ -604,18 +568,12 @@ private:
         // renderable layout
         {
             BindGroupLayoutCreateInfo createInfo(1);
-            if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
-                    , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
-                    , ShaderStageBits::sPixel));
+            if (GetRHIType() == RHIType::directX12) {
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
             } else {
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0))
-                                                         , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(1))
-                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), ShaderStageBits::sPixel));
             }
             renderableLayout = device->CreateBindGroupLayout(createInfo);
         }
@@ -628,43 +586,22 @@ private:
         //ssao
         {
             BindGroupLayoutCreateInfo createInfo(0);
-            if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
-                    , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1))
-                    , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2))
-                    , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
-                    , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 1))
-                    , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0))
-                    , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 1))
-                    , ShaderStageBits::sPixel));
+            if (GetRHIType() == RHIType::directX12) {
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 1)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 1)), ShaderStageBits::sPixel));
             } else {
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0))
-                                                         , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(1))
-                                                         , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(2))
-                                                         , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(3))
-                                                         , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(4))
-                                                         , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(5))
-                                                         , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6))
-                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(3)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(4)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(5)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6)), ShaderStageBits::sPixel));
             }
             bindGroupLayouts.ssao = device->CreateBindGroupLayout(createInfo);
         }
@@ -676,18 +613,12 @@ private:
         // ssaoBlur
         {
             BindGroupLayoutCreateInfo createInfo(0);
-            if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
-                    , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
-                    , ShaderStageBits::sPixel));
+            if (GetRHIType() == RHIType::directX12) {
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
             } else {
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0))
-                                                         , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(1))
-                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), ShaderStageBits::sPixel));
             }
             bindGroupLayouts.ssaoBlur = device->CreateBindGroupLayout(createInfo);
         }
@@ -699,43 +630,22 @@ private:
         // composition
         {
             BindGroupLayoutCreateInfo createInfo(0);
-            if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
-                    , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1))
-                    , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2))
-                    , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 3))
-                    , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 4))
-                    , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
-                    , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(
-                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0))
-                    , ShaderStageBits::sPixel));
+            if (GetRHIType() == RHIType::directX12) {
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 3)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 4)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), ShaderStageBits::sPixel));
             } else {
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0))
-                                                         , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(1))
-                                                         , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(2))
-                                                         , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(3))
-                                                         , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(4))
-                                                         , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(5))
-                                                         , ShaderStageBits::sPixel));
-                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6))
-                                                         , ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(3)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(4)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(5)), ShaderStageBits::sPixel));
+                createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6)), ShaderStageBits::sPixel));
             }
             bindGroupLayouts.composition = device->CreateBindGroupLayout(createInfo);
         }
@@ -750,13 +660,10 @@ private:
         // GBuffer scene
         {
             BindGroupCreateInfo createInfo(bindGroupLayouts.gBuffer.Get());
-            if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.AddEntry(BindGroupEntry(
-                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0))
-                    , uniformBuffers.sceneParams.bufView.Get()));
+            if (GetRHIType() == RHIType::directX12) {
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), uniformBuffers.sceneParams.bufView.Get()));
             } else {
-                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(0))
-                                                   , uniformBuffers.sceneParams.bufView.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(0)), uniformBuffers.sceneParams.bufView.Get()));
             }
             bindGroups.scene = device->CreateBindGroup(createInfo);
         }
@@ -764,43 +671,22 @@ private:
         // ssao generation
         {
             BindGroupCreateInfo createInfo(bindGroupLayouts.ssao.Get());
-            if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
-                                   , gBufferPos.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1))
-                                   , gBufferNormal.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2))
-                                   , noise.view.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
-                                   , sampler.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 1))
-                                   , noiseSampler.Get()));
-                createInfo.AddEntry(BindGroupEntry(
-                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0))
-                    , uniformBuffers.ssaoKernel.bufView.Get()));
-                createInfo.AddEntry(BindGroupEntry(
-                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 1))
-                    , uniformBuffers.ssaoParams.bufView.Get()));
+            if (GetRHIType() == RHIType::directX12) {
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), gBufferPos.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1)), gBufferNormal.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2)), noise.view.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), sampler.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 1)), noiseSampler.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), uniformBuffers.ssaoKernel.bufView.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 1)), uniformBuffers.ssaoParams.bufView.Get()));
             } else {
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), gBufferPos.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), gBufferNormal.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), noise.view.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(3)), sampler.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(4)), noiseSampler.Get()));
-                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(5))
-                                                   , uniformBuffers.ssaoKernel.bufView.Get()));
-                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6))
-                                                   , uniformBuffers.ssaoParams.bufView.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), gBufferPos.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), gBufferNormal.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), noise.view.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(3)), sampler.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(4)), noiseSampler.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(5)), uniformBuffers.ssaoKernel.bufView.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6)), uniformBuffers.ssaoParams.bufView.Get()));
             }
             bindGroups.ssao = device->CreateBindGroup(createInfo);
         }
@@ -808,18 +694,12 @@ private:
         // ssao blur
         {
             BindGroupCreateInfo createInfo(bindGroupLayouts.ssaoBlur.Get());
-            if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
-                                   , ssaoOutput.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
-                                   , sampler.Get()));
+            if (GetRHIType() == RHIType::directX12) {
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ssaoOutput.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), sampler.Get()));
             } else {
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ssaoOutput.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), sampler.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ssaoOutput.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), sampler.Get()));
             }
             bindGroups.ssaoBlur = device->CreateBindGroup(createInfo);
         }
@@ -827,43 +707,22 @@ private:
         // composition
         {
             BindGroupCreateInfo createInfo(bindGroupLayouts.composition.Get());
-            if (instance->GetRHIType() == RHI::RHIType::directX12) {
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0))
-                                   , gBufferPos.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1))
-                                   , gBufferNormal.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2))
-                                   , gBufferAlbedo.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 3))
-                                   , ssaoOutput.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 4))
-                                   , ssaoBlurOutput.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0))
-                                   , sampler.Get()));
-                createInfo.AddEntry(BindGroupEntry(
-                    ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0))
-                    , uniformBuffers.ssaoParams.bufView.Get()));
+            if (GetRHIType() == RHIType::directX12) {
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), gBufferPos.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 1)), gBufferNormal.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 2)), gBufferAlbedo.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 3)), ssaoOutput.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 4)), ssaoBlurOutput.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), sampler.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), uniformBuffers.ssaoParams.bufView.Get()));
             } else {
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), gBufferPos.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), gBufferNormal.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), gBufferAlbedo.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(3)), ssaoOutput.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(4)), ssaoBlurOutput.srv.Get()));
-                createInfo.AddEntry(
-                    BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(5)), sampler.Get()));
-                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6))
-                                                   , uniformBuffers.ssaoParams.bufView.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), gBufferPos.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(1)), gBufferNormal.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(2)), gBufferAlbedo.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(3)), ssaoOutput.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(4)), ssaoBlurOutput.srv.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(5)), sampler.Get()));
+                createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(6)), uniformBuffers.ssaoParams.bufView.Get()));
             }
             bindGroups.composition = device->CreateBindGroup(createInfo);
         }
@@ -883,7 +742,7 @@ private:
     {
         // gltf model axis: y up, x right, z from screen inner to outer
         // to transform gltf coords system to our local coords system: z up, y right, x from screen outer to inner
-        FMat4x4 aixsTransMat = FMat4x4 {
+        const auto aixsTransMat = FMat4x4 {
             0, 0, -1, 0,
             1, 0, 0, 0,
             0, 1, 0, 0,
@@ -891,18 +750,18 @@ private:
         };
 
         // scene matries
-        uboSceneParams.projection = camera->GetProjectionMatrix();
-        uboSceneParams.view = camera->GetViewMatrix();
+        uboSceneParams.projection = GetCamera().GetProjectionMatrix();
+        uboSceneParams.view = GetCamera().GetViewMatrix();
         uboSceneParams.model = aixsTransMat;
 
         CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.sceneParams, sizeof(UBOSceneParams), &uboSceneParams);
 
         // ssao parameters
-        ubossaoParams.projection = camera->GetProjectionMatrix();
+        ubossaoParams.projection = GetCamera().GetProjectionMatrix();
         CreateUniformBuffer(BufferUsageBits::uniform | BufferUsageBits::mapWrite, &uniformBuffers.ssaoParams, sizeof(UBOSSAOParams), &ubossaoParams);
 
         // ssao kennel
-        std::default_random_engine rndEngine((unsigned)time(nullptr));
+        std::default_random_engine rndEngine(static_cast<unsigned>(time(nullptr)));
         std::uniform_real_distribution<float> rndDist(0.0f, 1.0f);
         std::vector<FVec4> ssaoKernel(ssaoKernelSize);
 
@@ -915,7 +774,7 @@ private:
             FVec3 sample(rndDist(rndEngine) * 2.0 - 1.0, rndDist(rndEngine) * 2.0 - 1.0, rndDist(rndEngine));
             sample.Normalize();
             sample *= rndDist(rndEngine);
-            float scale = float(i) / float(ssaoKernelSize);
+            float scale = static_cast<float>(i) / static_cast<float>(ssaoKernelSize);
             scale = lerp(0.1f, 1.0f, scale * scale);
             sample = sample * scale;
             ssaoKernel[i] = FVec4(sample.x, sample.y, sample.z, 0.0f);
@@ -929,12 +788,12 @@ private:
             randomVec = FVec4(rndDist(rndEngine) * 2.0f - 1.0f, rndDist(rndEngine) * 2.0f - 1.0f, 0.0f, 0.0f);
         }
 
-        BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+        const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
             .SetSize(ssaoNoise.size() * sizeof(FVec4))
             .SetUsages(BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
-            .SetInitialState(RHI::BufferState::staging);
+            .SetInitialState(BufferState::staging);
 
-        UniqueRef<Buffer> pixelBuffer = device->CreateBuffer(bufferCreateInfo);
+        const UniqueRef<Buffer> pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, ssaoNoise.data(), bufferCreateInfo.size);
@@ -966,11 +825,11 @@ private:
                 .SetAddressModeU(AddressMode::repeat)
                 .SetAddressModeV(AddressMode::repeat));
 
-        UniqueRef<CommandBuffer> texCommandBuffer = device->CreateCommandBuffer();
+        const UniqueRef<CommandBuffer> texCommandBuffer = device->CreateCommandBuffer();
 
-        UniqueRef<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
+        const UniqueRef<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
         {
-            UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
+            const UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
             {
                 copyRecorder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::undefined, TextureState::copyDst));
                 copyRecorder->CopyBufferToTexture(
@@ -983,7 +842,7 @@ private:
         }
         commandRecorder->End();
 
-        Common::UniqueRef<Fence> fence = device->CreateFence(false);
+        const UniqueRef<Fence> fence = device->CreateFence(false);
         QueueSubmitInfo submitInfo {};
         submitInfo.signalFence = fence.Get();
         graphicsQueue->Submit(texCommandBuffer.Get(), submitInfo);
@@ -995,8 +854,8 @@ private:
             TextureCreateInfo()
                 .SetFormat(PixelFormat::d32Float)
                 .SetMipLevels(1)
-                .SetWidth(width)
-                .SetHeight(height)
+                .SetWidth(GetWindowWidth())
+                .SetHeight(GetWindowHeight())
                 .SetDepthOrArraySize(1)
                 .SetDimension(TextureDimension::t2D)
                 .SetSamples(1)
@@ -1012,14 +871,14 @@ private:
                 .SetType(TextureViewType::depthStencil));
     }
 
-    void CreateAttachments(RHI::PixelFormat format, ColorAttachment& attachment)
+    void CreateAttachments(PixelFormat format, ColorAttachment& attachment)
     {
         attachment.texture = device->CreateTexture(
             TextureCreateInfo()
                 .SetFormat(format)
                 .SetMipLevels(1)
-                .SetWidth(width)
-                .SetHeight(height)
+                .SetWidth(GetWindowWidth())
+                .SetHeight(GetWindowHeight())
                 .SetDepthOrArraySize(1)
                 .SetDimension(TextureDimension::t2D)
                 .SetSamples(1)
@@ -1043,19 +902,19 @@ private:
                 .SetType(TextureViewType::textureBinding));
     }
 
-    Common::UniqueRef<ShaderModule> GetShaderModule(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage)
+    UniqueRef<ShaderModule> GetShaderModule(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, ShaderStageBits shaderStage) const
     {
         std::vector<std::string> includePath { "../Test/Sample/RHI/SSAO/Shader"};
         CompileShader(byteCode, fileName, entryPoint, shaderStage, includePath);
         return device->CreateShaderModule(ShaderModuleCreateInfo(entryPoint, byteCode));
     }
 
-    void CreateUniformBuffer(RHI::BufferUsageFlags flags, UBuffer* uBuffer, size_t size, void* data)
+    void CreateUniformBuffer(BufferUsageFlags flags, UBuffer* uBuffer, size_t size, const void* data) const
     {
-        BufferCreateInfo createInfo = BufferCreateInfo()
+        const BufferCreateInfo createInfo = BufferCreateInfo()
             .SetSize(size)
             .SetUsages(flags)
-            .SetInitialState(RHI::BufferState::staging);
+            .SetInitialState(BufferState::staging);
 
         uBuffer->buf = device->CreateBuffer(createInfo);
         if (uBuffer->buf != nullptr && data != nullptr) {
@@ -1064,7 +923,7 @@ private:
             uBuffer->buf->UnMap();
         }
 
-        BufferViewCreateInfo viewCreateInfo = BufferViewCreateInfo()
+        const BufferViewCreateInfo viewCreateInfo = BufferViewCreateInfo()
             .SetType(BufferViewType::uniformBinding)
             .SetSize(size)
             .SetOffset(0);
@@ -1092,8 +951,8 @@ private:
         shaderModules.compositionPs = GetShaderModule(compositionPs, "../Test/Sample/RHI/SSAO/Shader/Composition.hlsl", "FSMain", ShaderStageBits::sPixel);
 
         // Gbuffer vertex
-        VertexBufferLayout vertexBufferLayout = VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex));
-        if (rhiType == RHIType::directX12) {
+        auto vertexBufferLayout = VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex));
+        if (GetRHIType() == RHIType::directX12) {
             vertexBufferLayout
                 .AddAttribute(VertexAttribute(HlslVertexBinding("POSITION", 0), VertexFormat::float32X4, 0))
                 .AddAttribute(VertexAttribute(HlslVertexBinding("TEXCOORD", 0), VertexFormat::float32X2, offsetof(Vertex, uv)))
@@ -1108,8 +967,8 @@ private:
         }
 
         // quad buffer vertex
-        VertexBufferLayout quadVertexBufferLayout = VertexBufferLayout(VertexStepMode::perVertex, sizeof(QuadVertex));
-        if (rhiType == RHIType::directX12) {
+        auto quadVertexBufferLayout = VertexBufferLayout(VertexStepMode::perVertex, sizeof(QuadVertex));
+        if (GetRHIType() == RHIType::directX12) {
             quadVertexBufferLayout
                 .AddAttribute(VertexAttribute(HlslVertexBinding("POSITION", 0), VertexFormat::float32X3, 0))
                 .AddAttribute(VertexAttribute(HlslVertexBinding("TEXCOORD", 0), VertexFormat::float32X2, offsetof(QuadVertex, uv)));
@@ -1196,32 +1055,32 @@ private:
 
     void InitCamera()
     {
-        camera = Common::MakeUnique<Camera>(
+        auto* camera = new Camera(
             FVec3(.0f, -5.0f, 2.0f),
             FVec3(.0f, .0f, -90.0f),
-            Camera::ProjectParams {
+            Camera::ProjectionParams {
                 60.0f,
-                static_cast<float>(width),
-                static_cast<float>(height),
+                static_cast<float>(GetWindowWidth()),
+                static_cast<float>(GetWindowHeight()),
                 0.1f,
                 64.0f
-            }
-        );
+            });
 
-        camera->moveSpeed = 0.005f;
-        camera->rotateSpeed = 0.1f;
+        camera->SetMoveSpeed(0.005f);
+        camera->SetRotateSpeed(0.1f);
+        SetCamera(camera);
     }
 
     void LoadGLTF()
     {
-        model = Common::MakeUnique<Model>();
+        model = MakeUnique<Model>();
         model->LoadFromFile("../Test/Sample/RHI/SSAO/Model/Voyager.gltf");
     }
 
     void GenerateRenderables()
     {
         for (auto& mesh : model->meshes) {
-            renderables.emplace_back(Common::MakeUnique<Renderable>(this, *device, mesh));
+            renderables.emplace_back(MakeUnique<Renderable>(*GetRHIInstance(), *device, *renderableLayout, *sampler, *mesh));
         }
     }
 };

@@ -6,12 +6,6 @@
 
 #include <string>
 #include <cstdint>
-#include <cassert>
-#include <iostream>
-
-#if BUILD_CONFIG_DEBUG
-#include <debugbreak.h>
-#endif
 
 #define Assert(expression) Common::Debug::AssertImpl(expression, #expression, __FILE__, __LINE__)
 #define AssertWithReason(expression, reason) Common::Debug::AssertImpl(expression, #expression, __FILE__, __LINE__, reason)

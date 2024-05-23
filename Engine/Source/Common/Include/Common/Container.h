@@ -12,19 +12,19 @@ namespace Common {
     class VectorUtils {
     public:
         template <typename T>
-        static inline typename std::vector<T>::iterator SwapWithLastAndDelete(std::vector<T>& vector, const typename std::vector<T>::iterator& iterator);
+        static typename std::vector<T>::iterator SwapWithLastAndDelete(std::vector<T>& vector, const typename std::vector<T>::iterator& iterator);
 
         template <typename T>
-        static inline size_t SwapWithLastAndDelete(std::vector<T>& vector, size_t index);
+        static size_t SwapWithLastAndDelete(std::vector<T>& vector, size_t index);
 
         template <typename T>
-        static inline std::vector<T> GetIntersection(const std::vector<T>& lhs, const std::vector<T>& rhs);
+        static std::vector<T> GetIntersection(const std::vector<T>& lhs, const std::vector<T>& rhs);
     };
 
     class SetUtils {
     public:
         template <typename T>
-        static inline std::unordered_set<T> GetIntersection(const std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs);
+        static std::unordered_set<T> GetIntersection(const std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs);
     };
 }
 

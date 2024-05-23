@@ -17,7 +17,7 @@ namespace Common {
 
     BinaryFileSerializeStream::BinaryFileSerializeStream(const std::string& inFileName)
     {
-        auto parent_path = std::filesystem::path(inFileName).parent_path();
+        const auto parent_path = std::filesystem::path(inFileName).parent_path();
         if (!std::filesystem::exists(parent_path)) {
             std::filesystem::create_directories(parent_path);
         }
@@ -61,7 +61,7 @@ namespace Common {
         : pointer(pointerBegin)
         , bytes(inBytes)
     {
-        Assert(pointer >= 0 && pointer <= bytes.size());
+        Assert(pointer <= bytes.size());
     }
 
     ByteSerializeStream::~ByteSerializeStream() = default;
@@ -83,14 +83,14 @@ namespace Common {
         : pointer(pointerBegin)
         , bytes(inBytes)
     {
-        Assert(pointer >= 0 && pointer <= bytes.size());
+        Assert(pointer <= bytes.size());
     }
 
     ByteDeserializeStream::~ByteDeserializeStream() = default;
 
     void ByteDeserializeStream::Read(void* data, size_t size)
     {
-        auto newPointer = pointer + size;
+        const auto newPointer = pointer + size;
         Assert(newPointer <= bytes.size());
         memcpy(data, bytes.data() + pointer, size);
         pointer = newPointer;

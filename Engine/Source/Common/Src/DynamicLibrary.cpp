@@ -9,6 +9,7 @@ namespace Common {
     DynamicLibrary::DynamicLibrary(std::string inFullPath)
         : active(false)
         , fullPath(std::move(inFullPath))
+        , handle(nullptr)
     {
     }
 
@@ -34,13 +35,13 @@ namespace Common {
         active = false;
     }
 
-    void* DynamicLibrary::GetSymbol(const std::string& name)
+    void* DynamicLibrary::GetSymbol(const std::string& name) const
     {
         Assert(active);
         return static_cast<void*>(DynamicLibGetSymbol(handle, name.c_str()));
     }
 
-    DynamicLibHandle DynamicLibrary::GetHandle()
+    DynamicLibHandle DynamicLibrary::GetHandle() const
     {
         return handle;
     }

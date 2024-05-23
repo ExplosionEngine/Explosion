@@ -11,21 +11,21 @@
 namespace Common {
     std::wstring StringUtils::ToWideString(const std::string & src)
     {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> converter; // NOLINT
         return converter.from_bytes(src);
     }
 
     std::string StringUtils::ToUpperCase(const std::string & src)
     {
         std::string result = src;
-        std::transform(src.begin(), src.end(), result.begin(), [](const auto& c) { return std::toupper(c); });
+        std::ranges::transform(src.begin(), src.end(), result.begin(), [](const auto& c) { return std::toupper(c); });
         return result;
     }
 
     std::string StringUtils::ToLowerCase(const std::string & src)
     {
         std::string result = src;
-        std::transform(src.begin(), src.end(), result.begin(), [](const auto& c) { return std::tolower(c); });
+        std::ranges::transform(src.begin(), src.end(), result.begin(), [](const auto& c) { return std::tolower(c); });
         return result;
     }
 
@@ -56,13 +56,13 @@ namespace Common {
 
     bool StringUtils::RegexMatch(const std::string & src, const std::string & regex)
     {
-        std::regex expression(regex);
+        const std::regex expression(regex);
         return std::regex_match(src.begin(), src.end(), expression);
     }
 
     std::string StringUtils::RegexSearchFirst(const std::string & src, const std::string & regex)
     {
-        std::regex expression(regex);
+        const std::regex expression(regex);
         std::smatch match;
         return std::regex_search(src.begin(), src.end(), match, expression) ? match[0].str() : "";
     }
@@ -70,7 +70,7 @@ namespace Common {
     std::vector<std::string> StringUtils::RegexSearch(const std::string & src, const std::string & regex)
     {
         std::vector<std::string> result;
-        std::regex expression(regex);
+        const std::regex expression(regex);
         std::smatch match;
         auto searchStart = src.begin();
         while (std::regex_search(searchStart, src.end(), match, expression)) {
@@ -82,7 +82,7 @@ namespace Common {
 
     std::string StringUtils::AfterFirst(const std::string & src, const std::string & split)
     {
-        size_t pos = src.find(split);
+        const size_t pos = src.find(split);
         if (pos == std::string::npos) {
             return "";
         }
@@ -91,7 +91,7 @@ namespace Common {
 
     std::string StringUtils::BeforeFirst(const std::string & src, const std::string & split)
     {
-        size_t pos = src.find(split);
+        const size_t pos = src.find(split);
         if (pos == std::string::npos) {
             return "";
         }
@@ -100,7 +100,7 @@ namespace Common {
 
     std::string StringUtils::AfterLast(const std::string & src, const std::string & split)
     {
-        size_t pos = src.find_last_of(split);
+        const size_t pos = src.find_last_of(split);
         if (pos == std::string::npos) {
             return "";
         }
@@ -109,7 +109,7 @@ namespace Common {
 
     std::string StringUtils::BeforeLast(const std::string & src, const std::string & split)
     {
-        size_t pos = src.find_last_of(split);
+        const size_t pos = src.find_last_of(split);
         if (pos == std::string::npos) {
             return "";
         }

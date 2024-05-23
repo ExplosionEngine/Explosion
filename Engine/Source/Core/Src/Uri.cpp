@@ -56,17 +56,17 @@ namespace Core {
         return value;
     }
 
-    UriProtocol Uri::Protocal() const
+    UriProtocol Uri::Protocal() const // NOLINT
     {
         static std::unordered_map<std::string, UriProtocol> protocolMap = {
             { "asset", UriProtocol::asset }
         };
 
-        auto splits = Common::StringUtils::Split(value, "://");
+        const auto splits = Common::StringUtils::Split(value, "://");
         if (splits.size() != 2) {
             return UriProtocol::max;
         }
-        auto iter = protocolMap.find(splits[0]);
+        const auto iter = protocolMap.find(splits[0]);
         return iter == protocolMap.end() ? UriProtocol::max : iter->second;
     }
 
@@ -116,10 +116,10 @@ namespace Core {
 #else
         if (IsEnginePluginAsset()) {
 #endif
-            std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Engine/Plugin/");
+            const std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Engine/Plugin/");
             path = Paths::EnginePluginAssetPath(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
         } else if (IsProjectPluginAsset()) {
-            std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Project/Plugin/");
+            const std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Project/Plugin/");
             path = Paths::ProjectPluginAssetPath(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
         } else if (IsEngineAsset()) {
             path = Paths::EngineAssetPath() / Common::StringUtils::AfterFirst(content, "Engine/");
