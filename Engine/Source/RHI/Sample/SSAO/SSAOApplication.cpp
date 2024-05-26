@@ -556,6 +556,7 @@ private:
         // TODO replace with reflection
         //gBuffer
         {
+            fixme
             BindGroupLayoutCreateInfo createInfo(0);
             if (GetRHIType() == RHIType::directX12) {
                 createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), ShaderStageBits::sVertex | ShaderStageBits::sPixel));

@@ -176,7 +176,45 @@ namespace Render {
 
     static void BuildGlslReflectionData(const spirv_cross::Compiler& compiler, ShaderReflectionData& result)
     {
-        // TODO
+        const spirv_cross::ShaderResources& shaderResources = compiler.get_shader_resources();
+
+        for (const spirv_cross::Resource& stageInput : shaderResources.stage_inputs) {
+            const std::string name = Common::StringUtils::Replace(stageInput.name, "in.var.", "");
+            const uint32_t location = compiler.get_decoration(stageInput.id, spv::DecorationLocation);
+
+            Assert(!result.vertexBindings.contains(name));
+            result.vertexBindings.emplace(std::make_pair(name, RHI::GlslVertexBinding(location)));
+        }
+
+        std::vector<std::pair<const spirv_cross::Resource*, RHI::BindingType>> resourceBindings;
+        for (const spirv_cross::Resource& uniformBuffer : shaderResources.uniform_buffers) {
+            resourceBindings.emplace_back(std::make_pair(&uniformBuffer, RHI::BindingType::uniformBuffer));
+        }
+        for (const spirv_cross::Resource& image : shaderResources.separate_images) {
+            resourceBindings.emplace_back(std::make_pair(&image, RHI::BindingType::texture));
+        }
+        for (const spirv_cross::Resource& sampler : shaderResources.separate_samplers) {
+            resourceBindings.emplace_back(std::make_pair(&sampler, RHI::BindingType::sampler));
+        }
+        for (const spirv_cross::Resource& buffer : shaderResources.storage_buffers) {
+            resourceBindings.emplace_back(std::make_pair(&buffer, RHI::BindingType::storageBuffer));
+        }
+        for (const spirv_cross::Resource& image : shaderResources.storage_images) {
+            resourceBindings.emplace_back(std::make_pair(&image, RHI::BindingType::storageTexture));
+        }
+
+        for (const auto& iter : resourceBindings) {
+            const spirv_cross::Resource* resourceBinding = iter.first;
+
+            const std::string& name = Common::StringUtils::Replace(resourceBinding->name, "type.", "");
+            const uint32_t binding = compiler.get_decoration(resourceBinding->id, spv::DecorationBinding);
+            const uint32_t descriptorSet = compiler.get_decoration(resourceBinding->id, spv::DecorationDescriptorSet);
+
+            Assert(!result.resourceBindings.contains(name));
+            const RHI::ResourceBinding rhiResourceBinding(iter.second, RHI::GlslBinding(binding));
+            const ShaderReflectionData::LayoutAndResourceBinding layoutAndResourceBinding = std::make_pair(descriptorSet, rhiResourceBinding);
+            result.resourceBindings.emplace(std::make_pair(name, layoutAndResourceBinding));
+        }
     }
 
     static void CompileDxilOrSpriv(
