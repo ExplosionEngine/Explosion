@@ -8,7 +8,6 @@
 #include <string>
 
 #include <RHI/Common.h>
-#include <RHI/BindGroupLayout.h>
 #include <Render/Shader.h>
 #include <Common/Concurrent.h>
 

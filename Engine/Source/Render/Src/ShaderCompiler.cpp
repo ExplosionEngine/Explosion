@@ -34,6 +34,32 @@ using namespace Microsoft::WRL;
 #include <Common/String.h>
 
 namespace Render {
+    static RHI::BindingType GetRHIBindingType(const D3D_SHADER_INPUT_TYPE type)
+    {
+        static const std::unordered_map<D3D_SHADER_INPUT_TYPE, RHI::BindingType> map = {
+            { D3D_SIT_CBUFFER, RHI::BindingType::uniformBuffer },
+            { D3D_SIT_TEXTURE, RHI::BindingType::texture },
+            { D3D_SIT_SAMPLER, RHI::BindingType::sampler },
+            { D3D_SIT_UAV_RWTYPED, RHI::BindingType::storageTexture },
+            { D3D_SIT_STRUCTURED, RHI::BindingType::storageBuffer },
+            { D3D_SIT_UAV_RWSTRUCTURED, RHI::BindingType::storageBuffer }
+        };
+        return map.at(type);
+    }
+
+    static RHI::HlslBindingRangeType GetRHIHlslBindingRangeType(const D3D_SHADER_INPUT_TYPE type)
+    {
+        static const std::unordered_map<D3D_SHADER_INPUT_TYPE, RHI::HlslBindingRangeType> map = {
+            { D3D_SIT_CBUFFER, RHI::HlslBindingRangeType::constantBuffer },
+            { D3D_SIT_TEXTURE, RHI::HlslBindingRangeType::texture },
+            { D3D_SIT_SAMPLER, RHI::HlslBindingRangeType::sampler },
+            { D3D_SIT_UAV_RWTYPED, RHI::HlslBindingRangeType::unorderedAccess },
+            { D3D_SIT_STRUCTURED, RHI::HlslBindingRangeType::unorderedAccess },
+            { D3D_SIT_UAV_RWSTRUCTURED, RHI::HlslBindingRangeType::unorderedAccess }
+        };
+        return map.at(type);
+    }
+
     static std::wstring GetDXCTargetProfile(RHI::ShaderStageBits stage)
     {
         static const std::unordered_map<RHI::ShaderStageBits, std::wstring> map = {
@@ -121,14 +147,30 @@ namespace Render {
         }
     }
 
-// TODO someday macos can build this too
 #if PLATFORM_WINDOWS
-    static void BuildHlslReflectionData(ComPtr<ID3D12ShaderReflection>& shaderReflection, ShaderReflectionData& result)
+    static void BuildHlslReflectionData(const ComPtr<ID3D12ShaderReflection>& shaderReflection, ShaderReflectionData& result)
     {
         D3D12_SHADER_DESC shaderDesc;
-        shaderReflection->GetDesc(&shaderDesc);
+        Assert(SUCCEEDED(shaderReflection->GetDesc(&shaderDesc)));
 
-        // TODO
+        for (auto i = 0; i < shaderDesc.InputParameters; i++) {
+            D3D12_SIGNATURE_PARAMETER_DESC desc;
+            Assert(SUCCEEDED(shaderReflection->GetInputParameterDesc(i, &desc)));
+
+            std::string finalSemantic = desc.SemanticIndex == 0 ? desc.SemanticName : std::string(desc.SemanticName) + std::to_string(desc.SemanticIndex);
+            Assert(!result.vertexBindings.contains(finalSemantic));
+            result.vertexBindings.emplace(std::make_pair(finalSemantic, RHI::HlslVertexBinding(desc.SemanticName, desc.SemanticIndex)));
+        }
+
+        for (auto i = 0; i < shaderDesc.BoundResources; i++) {
+            D3D12_SHADER_INPUT_BIND_DESC desc;
+            Assert(SUCCEEDED(shaderReflection->GetResourceBindingDesc(i, &desc)));
+
+            Assert(!result.resourceBindings.contains(desc.Name) && desc.BindCount == 1);
+            const RHI::ResourceBinding resourceBinding(GetRHIBindingType(desc.Type), RHI::HlslBinding(GetRHIHlslBindingRangeType(desc.Type), desc.BindPoint));
+            const ShaderReflectionData::LayoutAndResourceBinding layoutAndResourceBinding = std::make_pair(desc.Space, resourceBinding);
+            result.resourceBindings.emplace(std::make_pair(std::string(desc.Name), layoutAndResourceBinding));
+        }
     }
 #endif
 
