@@ -65,7 +65,7 @@ float linearDepth(float depth)
 	return (2.0f * nearPlane * farPlane) / (farPlane + nearPlane - z * (farPlane - nearPlane));
 }
 
-FSOutput FSMain(VSOutput input)
+FSOutput PSMain(VSOutput input)
 {
 	FSOutput output = (FSOutput)0;
 	output.Position = float4(input.WorldPos, linearDepth(input.Pos.z));

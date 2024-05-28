@@ -37,7 +37,7 @@ VSOutput VSMain(
 	return output;
 }
 
-float4 FSMain(VSOutput input) : SV_TARGET
+float4 PSMain(VSOutput input) : SV_TARGET
 {
 	float3 fragPos = texturePosition.Sample(texSampler, input.UV).rgb;
 	float3 normal = normalize(textureNormal.Sample(texSampler, input.UV).rgb * 2.0 - 1.0);

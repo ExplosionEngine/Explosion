@@ -27,6 +27,7 @@ protected:
         CreateSyncObjects();
         CreateTextureAndSampler();
         CreateUniformBuffer();
+        CreateShaderModules();
         CreateBindGroupLayout();
         CreateBindGroup();
         CreatePipelineLayout();
@@ -292,38 +293,37 @@ private:
         uniformBufferView = uniformBuffer->CreateBufferView(viewCreateInfo);
     }
 
+    void CreateShaderModules()
+    {
+        vsCompileOutput = CompileShader("../Test/Sample/RHI/TexSampling/TexSampling.hlsl", "VSMain", ShaderStageBits::sVertex);
+        vertexShader = device->CreateShaderModule(ShaderModuleCreateInfo("VSMain", vsCompileOutput.byteCode));
+
+        psCompileOutput = CompileShader("../Test/Sample/RHI/TexSampling/TexSampling.hlsl", "PSMain", ShaderStageBits::sPixel);
+        pixelShader = device->CreateShaderModule(ShaderModuleCreateInfo("PSMain", psCompileOutput.byteCode));
+    }
+
     void CreateBindGroupLayout()
     {
-        BindGroupLayoutCreateInfo createInfo(0);
-        // TODO use reflection
-        if (GetRHIInstance()->GetRHIType() == RHIType::directX12) {
-            createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), ShaderStageBits::sPixel));
-            createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), ShaderStageBits::sPixel));
-            createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), ShaderStageBits::sVertex));
-        } else {
-            createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), ShaderStageBits::sPixel));
-            createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), ShaderStageBits::sPixel));
-            createInfo.AddEntry(BindGroupLayoutEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(2)), ShaderStageBits::sVertex));
-        }
+        const auto& vsReflectionData = vsCompileOutput.reflectionData;
+        const auto& psReflectionData = psCompileOutput.reflectionData;
 
-        bindGroupLayout = device->CreateBindGroupLayout(createInfo);
+        bindGroupLayout = device->CreateBindGroupLayout(
+            BindGroupLayoutCreateInfo(0)
+                .AddEntry(BindGroupLayoutEntry(psReflectionData.QueryResourceBindingChecked("textureColor").second, ShaderStageBits::sPixel))
+                .AddEntry(BindGroupLayoutEntry(psReflectionData.QueryResourceBindingChecked("samplerColor").second, ShaderStageBits::sPixel))
+                .AddEntry(BindGroupLayoutEntry(vsReflectionData.QueryResourceBindingChecked("UBO").second, ShaderStageBits::sVertex)));
     }
 
     void CreateBindGroup()
     {
-        BindGroupCreateInfo createInfo(bindGroupLayout.Get());
-        // TODO use reflection
-        if (GetRHIInstance()->GetRHIType() == RHIType::directX12) {
-            createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, HlslBinding(HlslBindingRangeType::texture, 0)), sampleTextureView.Get()));
-            createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::sampler, HlslBinding(HlslBindingRangeType::sampler, 0)), sampler.Get()));
-            createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, HlslBinding(HlslBindingRangeType::constantBuffer, 0)), uniformBufferView.Get()));
-        } else {
-            createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::texture, GlslBinding(0)), sampleTextureView.Get()));
-            createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::sampler, GlslBinding(1)), sampler.Get()));
-            createInfo.AddEntry(BindGroupEntry(ResourceBinding(BindingType::uniformBuffer, GlslBinding(2)), uniformBufferView.Get()));
-        }
+        const auto& vsReflectionData = vsCompileOutput.reflectionData;
+        const auto& psReflectionData = psCompileOutput.reflectionData;
 
-        bindGroup = device->CreateBindGroup(createInfo);
+        bindGroup = device->CreateBindGroup(
+            BindGroupCreateInfo(bindGroupLayout.Get())
+                .AddEntry(BindGroupEntry(psReflectionData.QueryResourceBindingChecked("textureColor").second, sampleTextureView.Get()))
+                .AddEntry(BindGroupEntry(psReflectionData.QueryResourceBindingChecked("samplerColor").second, sampler.Get()))
+                .AddEntry(BindGroupEntry(vsReflectionData.QueryResourceBindingChecked("UBO").second, uniformBufferView.Get())));
     }
 
     void CreatePipelineLayout()
@@ -335,38 +335,22 @@ private:
 
     void CreatePipeline()
     {
-        std::vector<uint8_t> vsByteCode;
-        CompileShader(vsByteCode, "../Test/Sample/RHI/TexSampling/TexSampling.hlsl", "VSMain", ShaderStageBits::sVertex);
-        vertexShader = device->CreateShaderModule(ShaderModuleCreateInfo("VSMain", vsByteCode));
-
-        std::vector<uint8_t> fsByteCode;
-        CompileShader(fsByteCode, "../Test/Sample/RHI/TexSampling/TexSampling.hlsl", "FSMain", ShaderStageBits::sPixel);
-        fragmentShader = device->CreateShaderModule(ShaderModuleCreateInfo("FSMain", fsByteCode));
+        const auto& vsReflectionData = vsCompileOutput.reflectionData;
 
         RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo(pipelineLayout.Get())
             .SetVertexShader(vertexShader.Get())
-            .SetPixelShader(fragmentShader.Get())
+            .SetPixelShader(pixelShader.Get())
             .SetFragmentState(
                 FragmentState()
                     .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all)))
             .SetPrimitiveState(PrimitiveState(PrimitiveTopologyType::triangle, FillMode::solid, IndexFormat::uint16, FrontFace::ccw, CullMode::none));
 
-        // TODO use reflection
-        if (GetRHIType() == RHIType::directX12) {
-            createInfo.SetVertexState(
-                VertexState()
-                    .AddVertexBufferLayout(
-                        VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
-                            .AddAttribute(VertexAttribute(HlslVertexBinding("POSITION", 0), VertexFormat::float32X3, 0))
-                            .AddAttribute(VertexAttribute(HlslVertexBinding("TEXCOORD", 0), VertexFormat::float32X2, offsetof(Vertex, uv)))));
-        } else {
-            createInfo.SetVertexState(
-                VertexState()
-                    .AddVertexBufferLayout(
-                        VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
-                            .AddAttribute(VertexAttribute(GlslVertexBinding(0), VertexFormat::float32X3, 0))
-                            .AddAttribute(VertexAttribute(GlslVertexBinding(1), VertexFormat::float32X2, offsetof(Vertex, uv)))));
-        }
+        createInfo.SetVertexState(
+            VertexState()
+                .AddVertexBufferLayout(
+                    VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
+                        .AddAttribute(VertexAttribute(vsReflectionData.QueryVertexBindingChecked("POSITION"), VertexFormat::float32X3, 0))
+                        .AddAttribute(VertexAttribute(vsReflectionData.QueryVertexBindingChecked("TEXCOORD"), VertexFormat::float32X2, offsetof(Vertex, uv)))));
 
         pipeline = device->CreateRasterPipeline(createInfo);
     }
@@ -411,7 +395,9 @@ private:
     UniqueRef<PipelineLayout> pipelineLayout;
     UniqueRef<RasterPipeline> pipeline;
     UniqueRef<ShaderModule> vertexShader;
-    UniqueRef<ShaderModule> fragmentShader;
+    ShaderCompileOutput vsCompileOutput;
+    UniqueRef<ShaderModule> pixelShader;
+    ShaderCompileOutput psCompileOutput;
     std::array<UniqueRef<CommandBuffer>, backBufferCount> commandBuffers;
     std::array<UniqueRef<Semaphore>, backBufferCount> backBufferReadySemaphores;
     std::array<UniqueRef<Semaphore>, backBufferCount> renderFinishedSemaphores;

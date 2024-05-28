@@ -22,7 +22,7 @@ FragmentInput VSMain(
     return fragmentInput;
 }
 
-float4 FSMain(FragmentInput input) : SV_TARGET
+float4 PSMain(FragmentInput input) : SV_TARGET
 {
     return input.color;
 }

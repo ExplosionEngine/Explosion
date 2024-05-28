@@ -38,7 +38,7 @@ VSOutput VSMain(
 	return output;
 }
 
-float FSMain(VSOutput input) : SV_TARGET
+float PSMain(VSOutput input) : SV_TARGET
 {
 	// Get G-Buffer values
 	float3 fragPos = texturePositionDepth.Sample(texSampler, input.UV).rgb;

@@ -170,38 +170,27 @@ private:
 
     void CreatePipeline()
     {
-        std::vector<uint8_t> vsByteCode;
-        CompileShader(vsByteCode, "../Test/Sample/RHI/Triangle/Triangle.hlsl", "VSMain", RHI::ShaderStageBits::sVertex);
-        vertexShader = device->CreateShaderModule(ShaderModuleCreateInfo("VSMain", vsByteCode));
+        vsCompileOutput = CompileShader("../Test/Sample/RHI/Triangle/Triangle.hlsl", "VSMain", RHI::ShaderStageBits::sVertex);
+        vertexShader = device->CreateShaderModule(ShaderModuleCreateInfo("VSMain", vsCompileOutput.byteCode));
 
-        std::vector<uint8_t> fsByteCode;
-        CompileShader(fsByteCode, "../Test/Sample/RHI/Triangle/Triangle.hlsl", "FSMain", RHI::ShaderStageBits::sPixel);
-        fragmentShader = device->CreateShaderModule(ShaderModuleCreateInfo("FSMain", fsByteCode));
+        psCompileOutput = CompileShader("../Test/Sample/RHI/Triangle/Triangle.hlsl", "PSMain", RHI::ShaderStageBits::sPixel);
+        pixelShader = device->CreateShaderModule(ShaderModuleCreateInfo("PSMain", psCompileOutput.byteCode));
 
         RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo(pipelineLayout.Get())
             .SetVertexShader(vertexShader.Get())
-            .SetPixelShader(fragmentShader.Get())
+            .SetPixelShader(pixelShader.Get())
             .SetFragmentState(
                 FragmentState()
                     .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all)))
             .SetPrimitiveState(PrimitiveState(PrimitiveTopologyType::triangle, FillMode::solid, IndexFormat::uint16, FrontFace::ccw, CullMode::none));
 
-        // TODO use reflection
-        if (GetRHIType() == RHIType::directX12) {
-            createInfo.SetVertexState(
-                VertexState()
-                    .AddVertexBufferLayout(
-                        VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
-                            .AddAttribute(VertexAttribute(HlslVertexBinding("POSITION", 0), VertexFormat::float32X3, 0))
-                            .AddAttribute(VertexAttribute(HlslVertexBinding("COLOR", 0), VertexFormat::float32X3, offsetof(Vertex, color)))));
-        } else {
-            createInfo.SetVertexState(
-                VertexState()
-                    .AddVertexBufferLayout(
-                        VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
-                            .AddAttribute(VertexAttribute(GlslVertexBinding(0), VertexFormat::float32X3, 0))
-                            .AddAttribute(VertexAttribute(GlslVertexBinding(1), VertexFormat::float32X3, offsetof(Vertex, color)))));
-        }
+        const auto& vsReflectionData = vsCompileOutput.reflectionData;
+        createInfo.SetVertexState(
+            VertexState()
+                .AddVertexBufferLayout(
+                    VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
+                        .AddAttribute(VertexAttribute(vsReflectionData.QueryVertexBindingChecked("POSITION"), VertexFormat::float32X3, 0))
+                        .AddAttribute(VertexAttribute(vsReflectionData.QueryVertexBindingChecked("COLOR"), VertexFormat::float32X3, offsetof(Vertex, color)))));
 
         pipeline = device->CreateRasterPipeline(createInfo);
     }
@@ -235,7 +224,9 @@ private:
     UniqueRef<PipelineLayout> pipelineLayout;
     UniqueRef<RasterPipeline> pipeline;
     UniqueRef<ShaderModule> vertexShader;
-    UniqueRef<ShaderModule> fragmentShader;
+    ShaderCompileOutput vsCompileOutput;
+    UniqueRef<ShaderModule> pixelShader;
+    ShaderCompileOutput psCompileOutput;
     std::array<UniqueRef<CommandBuffer>, backBufferCount> commandBuffers;
     std::array<UniqueRef<Semaphore>, backBufferCount> backBufferReadySemaphores;
     std::array<UniqueRef<Semaphore>, backBufferCount> renderFinishedSemaphores;

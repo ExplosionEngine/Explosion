@@ -29,6 +29,11 @@ public:
         max
     };
 
+    struct ShaderCompileOutput {
+        std::vector<uint8_t> byteCode;
+        Render::ShaderReflectionData reflectionData;
+    };
+
     NonCopyable(Application)
     explicit Application(std::string n);
     virtual ~Application();
@@ -53,7 +58,7 @@ protected:
     RHI::RHIType GetRHIType() const;
     RHI::Instance* GetRHIInstance() const;
     Camera& GetCamera() const;
-    void CompileShader(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage, std::vector<std::string> includePaths = {}) const;
+    ShaderCompileOutput CompileShader(const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage, std::vector<std::string> includePaths = {}) const;
 
 private:
     std::string name;

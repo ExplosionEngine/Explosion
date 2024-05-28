@@ -231,7 +231,7 @@ Camera& Application::GetCamera() const
     return *camera;
 }
 
-void Application::CompileShader(std::vector<uint8_t>& byteCode, const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage, std::vector<std::string> includePaths) const
+Application::ShaderCompileOutput Application::CompileShader(const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage, std::vector<std::string> includePaths) const
 {
     std::string shaderSource = FileUtils::ReadTextFile(fileName);
 
@@ -252,10 +252,14 @@ void Application::CompileShader(std::vector<uint8_t>& byteCode, const std::strin
     auto future = Render::ShaderCompiler::Get().Compile(info, options);
 
     future.wait();
-    auto result = future.get();
-    if (!result.success) {
-        std::cout << "failed to compiler shader (" << fileName << ", " << info.entryPoint << ")" << '\n' << result.errorInfo << std::endl;
+    auto compileOutput = future.get();
+    if (!compileOutput.success) {
+        std::cout << "failed to compiler shader (" << fileName << ", " << info.entryPoint << ")" << '\n' << compileOutput.errorInfo << std::endl;
     }
-    Assert(result.success);
-    byteCode = result.byteCode;
+    Assert(compileOutput.success);
+
+    ShaderCompileOutput result;
+    result.byteCode = std::move(compileOutput.byteCode);
+    result.reflectionData = std::move(compileOutput.reflectionData);
+    return result;
 }

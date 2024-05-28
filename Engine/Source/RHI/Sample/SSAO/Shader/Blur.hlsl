@@ -24,7 +24,7 @@ VSOutput VSMain(
 	return output;
 }
 
-float4 FSMain(VSOutput input) : SV_TARGET
+float4 PSMain(VSOutput input) : SV_TARGET
 {
 	const int blurRange = 2;
 	int n = 0;
