@@ -1,3 +1,7 @@
+if (${BUILD_TEST})
+    add_subdirectory(TestMain)
+endif()
+
 add_subdirectory(Common)
 add_subdirectory(RHI)
 add_subdirectory(Mirror)
