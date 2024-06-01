@@ -1,8 +1,4 @@
-#if VULKAN
-#define VK_LOCATION(x) [[vk::location(x)]]
-#else
-#define VK_LOCATION(x)
-#endif
+#include <Platform.h>
 
 struct FragmentInput {
     float4 position : SV_POSITION;
@@ -10,8 +6,8 @@ struct FragmentInput {
 };
 
 FragmentInput VSMain(
-    VK_LOCATION(0) float4 position : POSITION,
-    VK_LOCATION(1) float4 color : COLOR)
+    VkLocation(0) float4 position : POSITION,
+    VkLocation(1) float4 color : COLOR)
 {
     FragmentInput fragmentInput;
     fragmentInput.position = position;

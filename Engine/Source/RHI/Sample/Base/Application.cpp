@@ -239,10 +239,11 @@ Application::ShaderCompileOutput Application::CompileShader(const std::string& f
     info.source = shaderSource;
     info.entryPoint = entryPoint;
     info.stage = shaderStage;
+
     Render::ShaderCompileOptions options;
-    if (!includePaths.empty()) {
-        options.includePaths.insert(options.includePaths.end(), includePaths.begin(), includePaths.end());
-    }
+    options.includePaths.emplace_back("../Test/Sample/RHI/ShaderInclude");
+    options.includePaths.insert(options.includePaths.end(), includePaths.begin(), includePaths.end());
+
     if (rhiType == RHI::RHIType::directX12) {
         options.byteCodeType = Render::ShaderByteCodeType::dxil;
     } else {

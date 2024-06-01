@@ -309,9 +309,9 @@ private:
 
         bindGroupLayout = device->CreateBindGroupLayout(
             BindGroupLayoutCreateInfo(0)
-                .AddEntry(BindGroupLayoutEntry(psReflectionData.QueryResourceBindingChecked("textureColor").second, ShaderStageBits::sPixel))
-                .AddEntry(BindGroupLayoutEntry(psReflectionData.QueryResourceBindingChecked("samplerColor").second, ShaderStageBits::sPixel))
-                .AddEntry(BindGroupLayoutEntry(vsReflectionData.QueryResourceBindingChecked("UBO").second, ShaderStageBits::sVertex)));
+                .AddEntry(BindGroupLayoutEntry(psReflectionData.QueryResourceBindingChecked("colorTex").second, ShaderStageBits::sPixel))
+                .AddEntry(BindGroupLayoutEntry(psReflectionData.QueryResourceBindingChecked("colorSampler").second, ShaderStageBits::sPixel))
+                .AddEntry(BindGroupLayoutEntry(vsReflectionData.QueryResourceBindingChecked("passParams").second, ShaderStageBits::sVertex)));
     }
 
     void CreateBindGroup()
@@ -321,9 +321,9 @@ private:
 
         bindGroup = device->CreateBindGroup(
             BindGroupCreateInfo(bindGroupLayout.Get())
-                .AddEntry(BindGroupEntry(psReflectionData.QueryResourceBindingChecked("textureColor").second, sampleTextureView.Get()))
-                .AddEntry(BindGroupEntry(psReflectionData.QueryResourceBindingChecked("samplerColor").second, sampler.Get()))
-                .AddEntry(BindGroupEntry(vsReflectionData.QueryResourceBindingChecked("UBO").second, uniformBufferView.Get())));
+                .AddEntry(BindGroupEntry(psReflectionData.QueryResourceBindingChecked("colorTex").second, sampleTextureView.Get()))
+                .AddEntry(BindGroupEntry(psReflectionData.QueryResourceBindingChecked("colorSampler").second, sampler.Get()))
+                .AddEntry(BindGroupEntry(vsReflectionData.QueryResourceBindingChecked("passParams").second, uniformBufferView.Get())));
     }
 
     void CreatePipelineLayout()

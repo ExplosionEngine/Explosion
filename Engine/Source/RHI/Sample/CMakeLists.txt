@@ -22,6 +22,8 @@ function(AddRHISample)
         list(APPEND PATHS ${path})
     endforeach()
 
+    list(APPEND PATHS "${CMAKE_SOURCE_DIR}/Engine/Shader/Platform.h->../Test/Sample/RHI/ShaderInclude/Platform.h")
+
     AddExecutable(
         SAMPLE
         NAME ${PARAMS_NAME}
@@ -75,6 +77,5 @@ AddRHISample(
         SSAO/Shader/SSAO.hlsl
         SSAO/Shader/Blur.hlsl
         SSAO/Shader/Composition.hlsl
-        SSAO/Shader/Common.h
     MODEL SSAO/Model/Voyager.gltf
 )
