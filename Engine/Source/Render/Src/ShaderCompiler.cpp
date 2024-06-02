@@ -34,6 +34,7 @@ using namespace Microsoft::WRL;
 #include <Common/String.h>
 
 namespace Render {
+#if PLATFORM_WINDOWS
     static RHI::BindingType GetRHIBindingType(const D3D_SHADER_INPUT_TYPE type)
     {
         static const std::unordered_map<D3D_SHADER_INPUT_TYPE, RHI::BindingType> map = {
@@ -59,6 +60,7 @@ namespace Render {
         };
         return map.at(type);
     }
+#endif
 
     static std::wstring GetDXCTargetProfile(RHI::ShaderStageBits stage)
     {

@@ -30,12 +30,12 @@ namespace RHI::Vulkan {
         template <typename T>
         T FindOrGetTypedDynamicFuncPointer(const std::string& inName)
         {
-            auto iter = dynamicFuncPointers.find(inName);
-            if (iter != dynamicFuncPointers.end()) {
-                return static_cast<T>(iter->second);
+            if (const auto iter = dynamicFuncPointers.find(inName);
+                iter != dynamicFuncPointers.end()) {
+                return reinterpret_cast<T>(iter->second);
             }
             dynamicFuncPointers.emplace(std::make_pair(inName, vkGetInstanceProcAddr(nativeInstance, inName.c_str())));
-            return static_cast<T>(dynamicFuncPointers.at(inName));
+            return reinterpret_cast<T>(dynamicFuncPointers.at(inName));
         }
 
     private:
@@ -58,6 +58,6 @@ namespace RHI::Vulkan {
         std::vector<const char*> vkEnabledExtensionNames;
         std::vector<const char*> vkEnabledLayerNames;
         std::vector<Common::UniqueRef<Gpu>> gpus;
-        std::unordered_map<std::string, void*> dynamicFuncPointers;
+        std::unordered_map<std::string, PFN_vkVoidFunction> dynamicFuncPointers;
     };
 }
