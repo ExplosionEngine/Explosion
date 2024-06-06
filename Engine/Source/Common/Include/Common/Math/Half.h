@@ -16,40 +16,12 @@ namespace Common::Internal {
     requires (E == std::endian::little) || (E == std::endian::big)
     struct FullFloatBase {};
 
-    template <>
-    struct FullFloatBase<std::endian::little> {
-        union {
-            float value;
-            struct {
-                uint32_t mantissa : 23;
-                uint32_t exponent : 8;
-                uint32_t sign : 1;
-            };
-        };
-
-        explicit FullFloatBase(float inValue) : value(inValue) {}
-    };
-
-    template <>
-    struct FullFloatBase<std::endian::big> {
-        union {
-            float value;
-            struct {
-                uint32_t sign : 1;
-                uint32_t exponent : 8;
-                uint32_t mantissa : 23;
-            };
-        };
-
-        explicit FullFloatBase(float inValue) : value(inValue) {}
-    };
-
     template <std::endian E>
-    struct FullFloat : public FullFloatBase<E> {
-        FullFloat() : FullFloatBase<E>(0) {}
-        FullFloat(float inValue) : FullFloatBase<E>(inValue) {} // NOLINT
-        FullFloat(const FullFloat& inValue) : FullFloatBase<E>(inValue.value) {}
-        FullFloat(FullFloat&& inValue) noexcept : FullFloatBase<E>(inValue.value) {}
+    struct FullFloat : FullFloatBase<E> {
+        FullFloat();
+        FullFloat(float inValue); // NOLINT
+        FullFloat(const FullFloat& inValue);
+        FullFloat(FullFloat&& inValue) noexcept;
     };
 }
 
@@ -58,256 +30,44 @@ namespace Common {
     requires (E == std::endian::little) || (E == std::endian::big)
     struct HalfFloatBase {};
 
-    template <>
-    struct HalfFloatBase<std::endian::little> {
-        union {
-            uint16_t value;
-            struct {
-                uint16_t mantissa : 10;
-                uint16_t exponent : 5;
-                uint16_t sign : 1;
-            };
-        };
-
-        explicit HalfFloatBase(uint16_t inValue) : value(inValue) {}
-    };
-
-    template <>
-    struct HalfFloatBase<std::endian::big> {
-        union {
-            uint16_t value;
-            struct {
-                uint16_t sign : 1;
-                uint16_t exponent : 5;
-                uint16_t mantissa : 10;
-            };
-        };
-
-        explicit HalfFloatBase(uint16_t inValue) : value(inValue) {}
-    };
-
     template <std::endian E>
     struct HalfFloat : HalfFloatBase<E> {
-        HalfFloat() : HalfFloatBase<E>(0) {}
-        HalfFloat(const HalfFloat& inValue) : HalfFloatBase<E>(inValue.value) {}
-        HalfFloat(HalfFloat&& inValue) noexcept : HalfFloatBase<E>(inValue.value) {}
+        HalfFloat();
+        HalfFloat(const HalfFloat& inValue);
+        HalfFloat(HalfFloat&& inValue) noexcept;
+        HalfFloat(float inValue); // NOLINT
 
-        HalfFloat(float inValue) : HalfFloatBase<E>(0) // NOLINT
-        {
-            Set(inValue);
-        }
+        HalfFloat& operator=(float inValue);
+        HalfFloat& operator=(const HalfFloat& inValue);
 
-        HalfFloat& operator=(float inValue)
-        {
-            Set(inValue);
-            return *this;
-        }
+        void Set(float inValue);
+        float AsFloat() const;
+        operator float() const; // NOLINT
 
-        HalfFloat& operator=(const HalfFloat& inValue)
-        {
-            this->value = inValue.value;
-            return *this;
-        }
-
-        void Set(float inValue)
-        {
-            Internal::FullFloat<E> full(inValue);
-
-            this->sign = full.sign;
-            if (full.exponent <= 112)
-            {
-                this->exponent = 0;
-                this->mantissa = 0;
-
-                const int32_t newExp = full.exponent - 127 + 15;
-
-                if ((14 - newExp) <= 24)
-                {
-                    const uint32_t tMantissa = full.mantissa | 0x800000;
-                    this->mantissa = static_cast<uint16_t>(tMantissa >> (14 - newExp));
-                    if (((this->mantissa >> (13 - newExp)) & 1) != 0u)
-                    {
-                        this->value++;
-                    }
-                }
-            }
-            else if (full.exponent >= 143)
-            {
-                this->exponent = 30;
-                this->mantissa = 1023;
-            }
-            else
-            {
-                this->exponent = static_cast<uint16_t>(static_cast<int32_t>(full.exponent) - 127 + 15);
-                this->mantissa = static_cast<uint16_t>(full.mantissa >> 13);
-            }
-        }
-
-        float AsFloat() const
-        {
-            Internal::FullFloat<E> result;
-
-            result.sign = this->sign;
-            if (this->exponent == 0)
-            {
-                uint32_t tMantissa = this->mantissa;
-                if(tMantissa == 0)
-                {
-                    result.exponent = 0;
-                    result.mantissa = 0;
-                }
-                else
-                {
-                    uint32_t mantissaShift = 10 - static_cast<uint32_t>(std::trunc(std::log2(static_cast<float>(tMantissa))));
-                    result.exponent = 127 - (15 - 1) - mantissaShift;
-                    result.mantissa = tMantissa << (mantissaShift + 23 - 10);
-                }
-            }
-            else if (this->exponent == 31)
-            {
-                result.exponent = 142;
-                result.mantissa = 8380416;
-            }
-            else
-            {
-                result.exponent = static_cast<int32_t>(this->exponent) - 15 + 127;
-                result.mantissa = static_cast<uint32_t>(this->mantissa) << 13;
-            }
-            return result.value;
-        }
-
-        operator float() const // NOLINT
-        {
-            return AsFloat();
-        }
-
-        bool operator==(float rhs) const
-        {
-            return std::abs(AsFloat() - rhs) < halfEpsilon;
-        }
-
-        bool operator!=(float rhs) const
-        {
-            return std::abs(AsFloat() - rhs) >= halfEpsilon;
-        }
-
-        bool operator==(const HalfFloat& rhs) const
-        {
-            return std::abs(AsFloat() - rhs.AsFloat()) < halfEpsilon;
-        }
-
-        bool operator!=(const HalfFloat& rhs) const
-        {
-            return std::abs(AsFloat() - rhs.AsFloat()) >= halfEpsilon;
-        }
-
-        bool operator>(const HalfFloat& rhs) const
-        {
-            return AsFloat() > rhs.AsFloat();
-        }
-
-        bool operator<(const HalfFloat& rhs) const
-        {
-            return AsFloat() < rhs.AsFloat();
-        }
-
-        bool operator>=(const HalfFloat& rhs) const
-        {
-            return AsFloat() >= rhs.AsFloat();
-        }
-
-        bool operator<=(const HalfFloat& rhs) const
-        {
-            return AsFloat() <= rhs.AsFloat();
-        }
-
-        HalfFloat operator+(float rhs) const
-        {
-            return { AsFloat() + rhs };
-        }
-
-        HalfFloat operator-(float rhs) const
-        {
-            return { AsFloat() - rhs };
-        }
-
-        HalfFloat operator*(float rhs) const
-        {
-            return { AsFloat() * rhs };
-        }
-
-        HalfFloat operator/(float rhs) const
-        {
-            return { AsFloat() / rhs };
-        }
-
-        HalfFloat operator+(const HalfFloat& rhs) const
-        {
-            return { AsFloat() + rhs.AsFloat() };
-        }
-
-        HalfFloat operator-(const HalfFloat& rhs) const
-        {
-            return { AsFloat() - rhs.AsFloat() };
-        }
-
-        HalfFloat operator*(const HalfFloat& rhs) const
-        {
-            return { AsFloat() * rhs.AsFloat() };
-        }
-
-        HalfFloat operator/(const HalfFloat& rhs) const
-        {
-            return { AsFloat() / rhs.AsFloat() };
-        }
-
-        HalfFloat& operator+=(float rhs)
-        {
-            Set(AsFloat() + rhs);
-            return *this;
-        }
-
-        HalfFloat& operator-=(float rhs)
-        {
-            Set(AsFloat() - rhs);
-            return *this;
-        }
-
-        HalfFloat& operator*=(float rhs)
-        {
-            Set(AsFloat() * rhs);
-            return *this;
-        }
-
-        HalfFloat& operator/=(float rhs)
-        {
-            Set(AsFloat() / rhs);
-            return *this;
-        }
-
-        HalfFloat& operator+=(const HalfFloat& rhs)
-        {
-            Set(AsFloat() + rhs.AsFloat());
-            return *this;
-        }
-
-        HalfFloat& operator-=(const HalfFloat& rhs)
-        {
-            Set(AsFloat() - rhs.AsFloat());
-            return *this;
-        }
-
-        HalfFloat& operator*=(const HalfFloat& rhs)
-        {
-            Set(AsFloat() * rhs.AsFloat());
-            return *this;
-        }
-
-        HalfFloat& operator/=(const HalfFloat& rhs)
-        {
-            Set(AsFloat() / rhs.AsFloat());
-            return *this;
-        }
+        bool operator==(float rhs) const;
+        bool operator!=(float rhs) const;
+        bool operator==(const HalfFloat& rhs) const;
+        bool operator!=(const HalfFloat& rhs) const;
+        bool operator>(const HalfFloat& rhs) const;
+        bool operator<(const HalfFloat& rhs) const;
+        bool operator>=(const HalfFloat& rhs) const;
+        bool operator<=(const HalfFloat& rhs) const;
+        HalfFloat operator+(float rhs) const;
+        HalfFloat operator-(float rhs) const;
+        HalfFloat operator*(float rhs) const;
+        HalfFloat operator/(float rhs) const;
+        HalfFloat operator+(const HalfFloat& rhs) const;
+        HalfFloat operator-(const HalfFloat& rhs) const;
+        HalfFloat operator*(const HalfFloat& rhs) const;
+        HalfFloat operator/(const HalfFloat& rhs) const;
+        HalfFloat& operator+=(float rhs);
+        HalfFloat& operator-=(float rhs);
+        HalfFloat& operator*=(float rhs);
+        HalfFloat& operator/=(float rhs);
+        HalfFloat& operator+=(const HalfFloat& rhs);
+        HalfFloat& operator-=(const HalfFloat& rhs);
+        HalfFloat& operator*=(const HalfFloat& rhs);
+        HalfFloat& operator/=(const HalfFloat& rhs);
     };
 
     using HFloat = HalfFloat<std::endian::native>;
@@ -365,4 +125,373 @@ namespace Common {
             return true;
         }
     };
+}
+
+namespace Common::Internal {
+    template <>
+    struct FullFloatBase<std::endian::little> {
+        union {
+            float value;
+            struct {
+                uint32_t mantissa : 23;
+                uint32_t exponent : 8;
+                uint32_t sign : 1;
+            };
+        };
+
+        inline explicit FullFloatBase(float inValue);
+    };
+
+    template <>
+    struct FullFloatBase<std::endian::big> {
+        union {
+            float value;
+            struct {
+                uint32_t sign : 1;
+                uint32_t exponent : 8;
+                uint32_t mantissa : 23;
+            };
+        };
+
+        inline explicit FullFloatBase(float inValue);
+    };
+
+    FullFloatBase<std::endian::little>::FullFloatBase(const float inValue)
+        : value(inValue)
+    {
+    }
+
+    FullFloatBase<std::endian::big>::FullFloatBase(const float inValue)
+        : value(inValue)
+    {
+    }
+
+    template <std::endian E>
+    FullFloat<E>::FullFloat()
+        : FullFloatBase<E>(0)
+    {
+    }
+
+    template <std::endian E>
+    FullFloat<E>::FullFloat(float inValue)
+        : FullFloatBase<E>(inValue)
+    {
+    }
+
+    template <std::endian E>
+    FullFloat<E>::FullFloat(const FullFloat& inValue)
+        : FullFloatBase<E>(inValue.value)
+    {
+    }
+
+    template <std::endian E>
+    FullFloat<E>::FullFloat(FullFloat&& inValue) noexcept
+        : FullFloatBase<E>(inValue.value)
+    {
+    }
+}
+
+namespace Common {
+    template <>
+    struct HalfFloatBase<std::endian::little> {
+        union {
+            uint16_t value;
+            struct {
+                uint16_t mantissa : 10;
+                uint16_t exponent : 5;
+                uint16_t sign : 1;
+            };
+        };
+
+        inline explicit HalfFloatBase(uint16_t inValue);
+    };
+
+    template <>
+    struct HalfFloatBase<std::endian::big> {
+        union {
+            uint16_t value;
+            struct {
+                uint16_t sign : 1;
+                uint16_t exponent : 5;
+                uint16_t mantissa : 10;
+            };
+        };
+
+        inline explicit HalfFloatBase(uint16_t inValue);
+    };
+
+    HalfFloatBase<std::endian::little>::HalfFloatBase(const uint16_t inValue)
+        : value(inValue)
+    {
+    }
+
+    HalfFloatBase<std::endian::big>::HalfFloatBase(const uint16_t inValue)
+        : value(inValue)
+    {
+    }
+
+    template <std::endian E>
+    HalfFloat<E>::HalfFloat()
+        : HalfFloatBase<E>(0)
+    {
+    }
+
+    template <std::endian E>
+    HalfFloat<E>::HalfFloat(const HalfFloat& inValue)
+        : HalfFloatBase<E>(inValue.value)
+    {
+    }
+
+    template <std::endian E>
+    HalfFloat<E>::HalfFloat(HalfFloat&& inValue) noexcept
+        : HalfFloatBase<E>(inValue.value)
+    {
+    }
+
+    template <std::endian E>
+    HalfFloat<E>::HalfFloat(const float inValue)
+        : HalfFloatBase<E>(0)
+    {
+        Set(inValue);
+    }
+
+    template <std::endian E>
+    HalfFloat<E>& HalfFloat<E>::operator=(const float inValue)
+    {
+        Set(inValue);
+        return *this;
+    }
+
+    template <std::endian E>
+    HalfFloat<E>& HalfFloat<E>::operator=(const HalfFloat& inValue)
+    {
+        this->value = inValue.value;
+        return *this;
+    }
+
+    template <std::endian E>
+    void HalfFloat<E>::Set(float inValue)
+    {
+        Internal::FullFloat<E> full(inValue);
+
+        this->sign = full.sign;
+        if (full.exponent <= 112)
+        {
+            this->exponent = 0;
+            this->mantissa = 0;
+
+            if (const int32_t newExp = full.exponent - 127 + 15;
+                14 - newExp <= 24)
+            {
+                const uint32_t tMantissa = full.mantissa | 0x800000;
+                this->mantissa = static_cast<uint16_t>(tMantissa >> (14 - newExp));
+                if (((this->mantissa >> (13 - newExp)) & 1) != 0u)
+                {
+                    ++this->value;
+                }
+            }
+        }
+        else if (full.exponent >= 143)
+        {
+            this->exponent = 30;
+            this->mantissa = 1023;
+        }
+        else
+        {
+            this->exponent = static_cast<uint16_t>(static_cast<int32_t>(full.exponent) - 127 + 15);
+            this->mantissa = static_cast<uint16_t>(full.mantissa >> 13);
+        }
+    }
+
+    template <std::endian E>
+    float HalfFloat<E>::AsFloat() const
+    {
+        Internal::FullFloat<E> result;
+
+        result.sign = this->sign;
+        if (this->exponent == 0)
+        {
+            if (const uint32_t tMantissa = this->mantissa;
+                tMantissa == 0)
+            {
+                result.exponent = 0;
+                result.mantissa = 0;
+            }
+            else
+            {
+                const uint32_t mantissaShift = 10 - static_cast<uint32_t>(std::trunc(std::log2(static_cast<float>(tMantissa))));
+                result.exponent = 127 - (15 - 1) - mantissaShift;
+                result.mantissa = tMantissa << (mantissaShift + 23 - 10);
+            }
+        }
+        else if (this->exponent == 31)
+        {
+            result.exponent = 142;
+            result.mantissa = 8380416;
+        }
+        else
+        {
+            result.exponent = static_cast<int32_t>(this->exponent) - 15 + 127;
+            result.mantissa = static_cast<uint32_t>(this->mantissa) << 13;
+        }
+        return result.value;
+    }
+
+    template <std::endian E>
+    HalfFloat<E>::operator float() const
+    {
+        return AsFloat();
+    }
+
+    template <std::endian E>
+    bool HalfFloat<E>::operator==(const float rhs) const
+    {
+        return std::abs(AsFloat() - rhs) < halfEpsilon;
+    }
+
+    template <std::endian E>
+    bool HalfFloat<E>::operator!=(const float rhs) const
+    {
+        return std::abs(AsFloat() - rhs) >= halfEpsilon;
+    }
+
+    template <std::endian E>
+    bool HalfFloat<E>::operator==(const HalfFloat& rhs) const
+    {
+        return std::abs(AsFloat() - rhs.AsFloat()) < halfEpsilon;
+    }
+
+    template <std::endian E>
+    bool HalfFloat<E>::operator!=(const HalfFloat& rhs) const
+    {
+        return std::abs(AsFloat() - rhs.AsFloat()) >= halfEpsilon;
+    }
+
+    template <std::endian E>
+    bool HalfFloat<E>::operator>(const HalfFloat& rhs) const
+    {
+        return AsFloat() > rhs.AsFloat();
+    }
+
+    template <std::endian E>
+    bool HalfFloat<E>::operator<(const HalfFloat& rhs) const
+    {
+        return AsFloat() < rhs.AsFloat();
+    }
+
+    template <std::endian E>
+    bool HalfFloat<E>::operator>=(const HalfFloat& rhs) const
+    {
+        return AsFloat() >= rhs.AsFloat();
+    }
+
+    template <std::endian E>
+    bool HalfFloat<E>::operator<=(const HalfFloat& rhs) const
+    {
+        return AsFloat() <= rhs.AsFloat();
+    }
+
+    template <std::endian E>
+    HalfFloat<E> HalfFloat<E>::operator+(const float rhs) const
+    {
+        return { AsFloat() + rhs };
+    }
+
+    template <std::endian E>
+    HalfFloat<E> HalfFloat<E>::operator-(const float rhs) const
+    {
+        return { AsFloat() - rhs };
+    }
+
+    template <std::endian E>
+    HalfFloat<E> HalfFloat<E>::operator*(const float rhs) const
+    {
+        return { AsFloat() * rhs };
+    }
+
+    template <std::endian E>
+    HalfFloat<E> HalfFloat<E>::operator/(const float rhs) const
+    {
+        return { AsFloat() / rhs };
+    }
+
+    template <std::endian E>
+    HalfFloat<E> HalfFloat<E>::operator+(const HalfFloat& rhs) const
+    {
+        return { AsFloat() + rhs.AsFloat() };
+    }
+
+    template <std::endian E>
+    HalfFloat<E> HalfFloat<E>::operator-(const HalfFloat& rhs) const
+    {
+        return { AsFloat() - rhs.AsFloat() };
+    }
+
+    template <std::endian E>
+    HalfFloat<E> HalfFloat<E>::operator*(const HalfFloat& rhs) const
+    {
+        return { AsFloat() * rhs.AsFloat() };
+    }
+
+    template <std::endian E>
+    HalfFloat<E> HalfFloat<E>::operator/(const HalfFloat& rhs) const
+    {
+        return { AsFloat() / rhs.AsFloat() };
+    }
+
+    template <std::endian E>
+    HalfFloat<E>& HalfFloat<E>::operator+=(const float rhs)
+    {
+        Set(AsFloat() + rhs);
+        return *this;
+    }
+
+    template <std::endian E>
+    HalfFloat<E>& HalfFloat<E>::operator-=(const float rhs)
+    {
+        Set(AsFloat() - rhs);
+        return *this;
+    }
+
+    template <std::endian E>
+    HalfFloat<E>& HalfFloat<E>::operator*=(const float rhs)
+    {
+        Set(AsFloat() * rhs);
+        return *this;
+    }
+
+    template <std::endian E>
+    HalfFloat<E>& HalfFloat<E>::operator/=(const float rhs)
+    {
+        Set(AsFloat() / rhs);
+        return *this;
+    }
+
+    template <std::endian E>
+    HalfFloat<E>& HalfFloat<E>::operator+=(const HalfFloat& rhs)
+    {
+        Set(AsFloat() + rhs.AsFloat());
+        return *this;
+    }
+
+    template <std::endian E>
+    HalfFloat<E>& HalfFloat<E>::operator-=(const HalfFloat& rhs)
+    {
+        Set(AsFloat() - rhs.AsFloat());
+        return *this;
+    }
+
+    template <std::endian E>
+    HalfFloat<E>& HalfFloat<E>::operator*=(const HalfFloat& rhs)
+    {
+        Set(AsFloat() * rhs.AsFloat());
+        return *this;
+    }
+
+    template <std::endian E>
+    HalfFloat<E>& HalfFloat<E>::operator/=(const HalfFloat& rhs)
+    {
+        Set(AsFloat() / rhs.AsFloat());
+        return *this;
+    }
 }

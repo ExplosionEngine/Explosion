@@ -2,6 +2,12 @@
 // Created by johnk on 2024/4/14.
 //
 
+#if PLATFORM_WINDOWS
+#include <windows.h>
+#else
+#include <pthread.h>
+#endif
+
 #include <Common/Concurrent.h>
 
 namespace Common {
@@ -28,7 +34,7 @@ namespace Common {
     void NamedThread::SetThreadName(const std::string& name)
     {
 #if PLATFORM_WINDOWS
-        SetThreadDescription(thread.native_handle(), Common::StringUtils::ToWideString(name).c_str());
+        Assert(SUCCEEDED(SetThreadDescription(thread.native_handle(), Common::StringUtils::ToWideString(name).c_str())));
 #elif PLATFORM_MACOS
         pthread_setname_np(name.c_str());
 #else
@@ -42,7 +48,7 @@ namespace Common {
         threads.reserve(threadNum);
         for (auto i = 0; i < threadNum; i++) {
             std::string fullName = name + "-" + std::to_string(i);
-            threads.emplace_back(NamedThread(fullName, [this]() -> void {
+            threads.emplace_back(fullName, [this]() -> void {
                 while (true) {
                     std::function<void()> task;
                     {
@@ -56,7 +62,7 @@ namespace Common {
                     }
                     task();
                 }
-            }));
+            });
         }
     }
 

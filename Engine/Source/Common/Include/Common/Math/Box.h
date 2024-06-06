@@ -51,7 +51,7 @@ namespace Common {
     using DBox = Box<double>;
 }
 
-namespace Common {
+namespace Common { // NOLINT
     template <typename T>
     struct Serializer<Box<T>> {
         static constexpr bool serializable = true;

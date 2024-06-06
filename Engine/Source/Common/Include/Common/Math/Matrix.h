@@ -14,7 +14,7 @@ namespace Common::Internal {
 }
 
 namespace Common {
-    enum class MatrixSetupType {
+    enum class MatrixSetupType : uint8_t {
         rows,
         cols,
         max
@@ -292,7 +292,7 @@ namespace Common {
     using DMat4x4Consts = MatConsts<double, 4, 4>;
 }
 
-namespace Common {
+namespace Common { // NOLINT
     template <typename T, uint8_t R, uint8_t C>
     struct Serializer<Matrix<T, R, C>> {
         static constexpr bool serializable = true;

@@ -66,7 +66,7 @@ namespace Common {
     using DTransform = Transform<double>;
 }
 
-namespace Common {
+namespace Common { // NOLINT
     template <typename T>
     struct Serializer<Transform<T>> {
         static constexpr bool serializable = true;

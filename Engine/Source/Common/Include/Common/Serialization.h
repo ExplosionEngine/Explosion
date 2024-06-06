@@ -88,12 +88,12 @@ namespace Common {
     struct Serializer {
         static constexpr bool serializable = false;
 
-        static void Serialize(SerializeStream& stream, const T& value)
+        static void Serialize(SerializeStream&, const T&)
         {
             Unimplement();
         }
 
-        static bool Deserialize(DeserializeStream& stream, T& value)
+        static bool Deserialize(DeserializeStream&, T&)
         {
             Unimplement();
             return false;

@@ -37,7 +37,7 @@ namespace Common {
     using DSphere = Sphere<double>;
 }
 
-namespace Common {
+namespace Common { // NOLINT
     template <typename T>
     struct Serializer<Sphere<T>> {
         static constexpr bool serializable = true;
