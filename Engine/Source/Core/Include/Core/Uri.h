@@ -55,7 +55,7 @@ namespace Core {
 namespace std {
     template <>
     struct hash<Core::Uri> {
-        size_t operator()(const Core::Uri& uri) const
+        size_t operator()(const Core::Uri& uri) const noexcept
         {
             return hash<std::string>{}(uri.Str());
         }
@@ -66,7 +66,7 @@ namespace Common {
     template <>
     struct Serializer<Core::Uri> {
         static constexpr bool serializable = true;
-        static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("Core::Uri");
+        static constexpr uint32_t typeId = HashUtils::StrCrc32("Core::Uri");
 
         static void Serialize(SerializeStream& stream, const Core::Uri& value)
         {

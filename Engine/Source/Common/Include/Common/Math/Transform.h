@@ -19,33 +19,33 @@ namespace Common {
     };
 
     template <typename T>
-    struct Transform : public TransformBase<T> {
-        static inline Transform LookAt(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
+    struct Transform : TransformBase<T> {
+        static Transform LookAt(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
 
-        inline Transform();
-        inline Transform(Quaternion<T> inRotation, Vector<T, 3> inTranslation);
-        inline Transform(Vector<T, 3> inScale, Quaternion<T> inRotation, Vector<T, 3> inTranslation);
-        inline Transform(const Transform& other);
-        inline Transform(Transform&& other) noexcept;
-        inline Transform& operator=(const Transform& other);
+        Transform();
+        Transform(Quaternion<T> inRotation, Vector<T, 3> inTranslation);
+        Transform(Vector<T, 3> inScale, Quaternion<T> inRotation, Vector<T, 3> inTranslation);
+        Transform(const Transform& other);
+        Transform(Transform&& other) noexcept;
+        Transform& operator=(const Transform& other);
 
-        inline bool operator==(const Transform& rhs) const;
-        inline bool operator!=(const Transform& rhs) const;
+        bool operator==(const Transform& rhs) const;
+        bool operator!=(const Transform& rhs) const;
 
-        inline Transform operator+(const Vector<T, 3>& inTranslation) const;
-        inline Transform operator|(const Quaternion<T>& inRotation) const;
-        inline Transform operator*(const Vector<T, 3>& inScale) const;
+        Transform operator+(const Vector<T, 3>& inTranslation) const;
+        Transform operator|(const Quaternion<T>& inRotation) const;
+        Transform operator*(const Vector<T, 3>& inScale) const;
 
-        inline Transform& operator+=(const Vector<T, 3>& inTranslation);
-        inline Transform& operator|=(const Quaternion<T>& inRotation);
-        inline Transform& operator*=(const Vector<T, 3>& inScale);
+        Transform& operator+=(const Vector<T, 3>& inTranslation);
+        Transform& operator|=(const Quaternion<T>& inRotation);
+        Transform& operator*=(const Vector<T, 3>& inScale);
 
-        inline Transform& Translate(const Vector<T, 3>& inTranslation);
-        inline Transform& Rotate(const Quaternion<T>& inRotation);
-        inline Transform& Scale(const Vector<T, 3>& inScale);
-        inline Transform& UpdateRotation(const Vector<T, 3>& forward, const Vector<T, 3>& side, const Vector<T, 3>& up);
-        inline Transform& LookTo(const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
-        inline Transform& MoveAndLookTo(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
+        Transform& Translate(const Vector<T, 3>& inTranslation);
+        Transform& Rotate(const Quaternion<T>& inRotation);
+        Transform& Scale(const Vector<T, 3>& inScale);
+        Transform& UpdateRotation(const Vector<T, 3>& forward, const Vector<T, 3>& side, const Vector<T, 3>& up);
+        Transform& LookTo(const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
+        Transform& MoveAndLookTo(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
 
         Matrix<T, 4, 4> GetTranslationMatrix() const;
         Matrix<T, 4, 4> GetRotationMatrix() const;
@@ -71,8 +71,8 @@ namespace Common {
     struct Serializer<Transform<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("Common::Transform")
-              + Serializer<T>::typeId;
+            = HashUtils::StrCrc32("Common::Transform")
+            + Serializer<T>::typeId;
 
         static void Serialize(SerializeStream& stream, const Transform<T>& value)
         {
@@ -92,6 +92,7 @@ namespace Common {
             Serializer<Vector<T, 3>>::Deserialize(stream, value.scale);
             Serializer<Quaternion<T>>::Deserialize(stream, value.rotation);
             Serializer<Vector<T, 3>>::Deserialize(stream, value.translation);
+            return true;
         }
     };
 }
@@ -100,7 +101,7 @@ namespace Common {
     template <typename T>
     Transform<T> Transform<T>::LookAt(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection)
     {
-        Transform<T> result;
+        Transform result;
         result.MoveAndLookTo(inPosition, inTargetPosition, inUpDirection);
         return result;
     }
@@ -171,7 +172,7 @@ namespace Common {
     template <typename T>
     Transform<T> Transform<T>::operator+(const Vector<T, 3>& inTranslation) const
     {
-        Transform<T> result;
+        Transform result;
         result.scale = this->scale;
         result.rotation = this->rotation;
         result.translation = this->translation + inTranslation;
@@ -181,7 +182,7 @@ namespace Common {
     template <typename T>
     Transform<T> Transform<T>::operator|(const Quaternion<T>& inRotation) const
     {
-        Transform<T> result;
+        Transform result;
         result.scale = this->scale;
         result.rotation = this->rotation * inRotation;
         result.translation = this->translation;
@@ -191,7 +192,7 @@ namespace Common {
     template <typename T>
     Transform<T> Transform<T>::operator*(const Vector<T, 3>& inScale) const
     {
-        Transform<T> result;
+        Transform result;
         result.scale = this->scale * inScale;
         result.rotation = this->rotation;
         result.translation = this->translation;

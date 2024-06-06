@@ -34,27 +34,27 @@ namespace Common {
     };
 
     template <typename T>
-    struct Angle : public AngleBase<T> {
-        inline Angle();
-        inline explicit Angle(T inValue);
-        inline explicit Angle(const Radian<T>& inValue);
-        inline Angle(const Angle& inValue);
-        inline Angle(Angle&& inValue) noexcept;
-        inline Angle& operator=(const Angle& inValue);
-        inline Angle& operator=(const Radian<T>& inValue);
-        inline T ToRadian() const;
+    struct Angle : AngleBase<T> {
+        Angle();
+        explicit Angle(T inValue);
+        explicit Angle(const Radian<T>& inValue);
+        Angle(const Angle& inValue);
+        Angle(Angle&& inValue) noexcept;
+        Angle& operator=(const Angle& inValue);
+        Angle& operator=(const Radian<T>& inValue);
+        T ToRadian() const;
     };
 
     template <typename T>
-    struct Radian : public RadianBase<T> {
-        inline Radian();
-        inline explicit Radian(T inValue);
-        inline explicit Radian(const Angle<T>& inValue);
-        inline Radian(const Radian& inValue);
-        inline Radian(Radian&& inValue) noexcept;
-        inline Radian& operator=(const Radian& inValue);
-        inline Radian& operator=(const Angle<T>& inValue);
-        inline T ToAngle() const;
+    struct Radian : RadianBase<T> {
+        Radian();
+        explicit Radian(T inValue);
+        explicit Radian(const Angle<T>& inValue);
+        Radian(const Radian& inValue);
+        Radian(Radian&& inValue) noexcept;
+        Radian& operator=(const Radian& inValue);
+        Radian& operator=(const Angle<T>& inValue);
+        T ToAngle() const;
     };
 
     // left-hand coordinates system
@@ -62,41 +62,41 @@ namespace Common {
     // +y -> from left to right
     // +z -> from bttom to up
     template <typename T>
-    struct Quaternion : public QuaternionBase<T> {
-        static inline Quaternion FromEulerZYX(T inAngleX, T inAngleY, T inAngleZ);
-        static inline Quaternion FromEulerZYX(const Radian<T>& inRadianX, const Radian<T>& inRadianY, const Radian<T>& inRadianZ);
+    struct Quaternion : QuaternionBase<T> {
+        static Quaternion FromEulerZYX(T inAngleX, T inAngleY, T inAngleZ);
+        static Quaternion FromEulerZYX(const Radian<T>& inRadianX, const Radian<T>& inRadianY, const Radian<T>& inRadianZ);
 
-        inline Quaternion();
-        inline Quaternion(T inW, T inX, T inY, T inZ);
-        inline Quaternion(const Vector<T, 3>& inAxis, float inAngle);
-        inline Quaternion(const Vector<T, 3>& inAxis, const Radian<T>& inRadian);
-        inline Quaternion(const Quaternion& inValue);
-        inline Quaternion(Quaternion&& inValue) noexcept;
-        inline Quaternion& operator=(const Quaternion& inValue);
+        Quaternion();
+        Quaternion(T inW, T inX, T inY, T inZ);
+        Quaternion(const Vector<T, 3>& inAxis, float inAngle);
+        Quaternion(const Vector<T, 3>& inAxis, const Radian<T>& inRadian);
+        Quaternion(const Quaternion& inValue);
+        Quaternion(Quaternion&& inValue) noexcept;
+        Quaternion& operator=(const Quaternion& inValue);
 
-        inline bool operator==(const Quaternion& rhs) const;
-        inline bool operator!=(const Quaternion& rhs) const;
-        inline Quaternion operator+(const Quaternion& rhs) const;
-        inline Quaternion operator-(const Quaternion& rhs) const;
-        inline Quaternion operator*(T rhs) const;
-        inline Quaternion operator*(const Quaternion& rhs) const;
-        inline Quaternion operator/(T rhs) const;
+        bool operator==(const Quaternion& rhs) const;
+        bool operator!=(const Quaternion& rhs) const;
+        Quaternion operator+(const Quaternion& rhs) const;
+        Quaternion operator-(const Quaternion& rhs) const;
+        Quaternion operator*(T rhs) const;
+        Quaternion operator*(const Quaternion& rhs) const;
+        Quaternion operator/(T rhs) const;
 
-        inline Quaternion& operator+=(const Quaternion& rhs);
-        inline Quaternion& operator-=(const Quaternion& rhs);
-        inline Quaternion& operator*=(T rhs) const;
-        inline Quaternion& operator*=(const Quaternion& rhs);
-        inline Quaternion& operator/=(T rhs);
+        Quaternion& operator+=(const Quaternion& rhs);
+        Quaternion& operator-=(const Quaternion& rhs);
+        Quaternion& operator*=(T rhs) const;
+        Quaternion& operator*=(const Quaternion& rhs);
+        Quaternion& operator/=(T rhs);
 
-        inline Vector<T, 3> ImaginaryPart() const;
-        inline T Model() const;
-        inline Quaternion Negatived() const;
-        inline Quaternion Conjugated() const;
-        inline Quaternion Normalized() const;
-        inline T Dot(const Quaternion& rhs) const;
+        Vector<T, 3> ImaginaryPart() const;
+        T Model() const;
+        Quaternion Negatived() const;
+        Quaternion Conjugated() const;
+        Quaternion Normalized() const;
+        T Dot(const Quaternion& rhs) const;
         // when axis faced to us, ccw as positive direction
-        inline Vector<T, 3> RotateVector(const Vector<T, 3>& inVector) const;
-        inline Matrix<T, 4, 4> GetRotationMatrix() const;
+        Vector<T, 3> RotateVector(const Vector<T, 3>& inVector) const;
+        Matrix<T, 4, 4> GetRotationMatrix() const;
     };
 
     template <typename T>
@@ -127,8 +127,8 @@ namespace Common {
     struct Serializer<Angle<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("Common::Angle")
-              + Serializer<T>::typeId;
+            = HashUtils::StrCrc32("Common::Angle")
+            + Serializer<T>::typeId;
 
         static void Serialize(SerializeStream& stream, const Angle<T>& value)
         {
@@ -144,6 +144,7 @@ namespace Common {
             }
 
             Serializer<T>::Deserialize(stream, value.value);
+            return true;
         }
     };
 
@@ -151,8 +152,8 @@ namespace Common {
     struct Serializer<Radian<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("Common::Radian")
-              + Serializer<T>::typeId;
+            = HashUtils::StrCrc32("Common::Radian")
+            + Serializer<T>::typeId;
 
         static void Serialize(SerializeStream& stream, const Radian<T>& value)
         {
@@ -168,6 +169,7 @@ namespace Common {
             }
 
             Serializer<T>::Deserialize(stream, value.value);
+            return true;
         }
     };
 
@@ -175,8 +177,8 @@ namespace Common {
     struct Serializer<Quaternion<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("Common::Quaternion")
-              + Serializer<T>::typeId;
+            = HashUtils::StrCrc32("Common::Quaternion")
+            + Serializer<T>::typeId;
 
         static void Serialize(SerializeStream& stream, const Quaternion<T>& value)
         {
@@ -198,6 +200,7 @@ namespace Common {
             Serializer<T>::Deserialize(stream, value.y);
             Serializer<T>::Deserialize(stream, value.z);
             Serializer<T>::Deserialize(stream, value.w);
+            return true;
         }
     };
 }
@@ -216,13 +219,13 @@ namespace Common {
     }
 
     template <typename T>
-    Angle<T>::Angle(const Radian<T>& inValue) : Angle<T>(inValue.ToAngle()) {}
+    Angle<T>::Angle(const Radian<T>& inValue) : Angle(inValue.ToAngle()) {}
 
     template <typename T>
-    Angle<T>::Angle(const Angle& inValue) : Angle<T>(inValue.value) {}
+    Angle<T>::Angle(const Angle& inValue) : Angle(inValue.value) {}
 
     template <typename T>
-    Angle<T>::Angle(Angle&& inValue) noexcept : Angle<T>(inValue.value) {}
+    Angle<T>::Angle(Angle&& inValue) noexcept : Angle(inValue.value) {}
 
     template <typename T>
     Angle<T>& Angle<T>::operator=(const Angle& inValue)
@@ -257,7 +260,7 @@ namespace Common {
     }
 
     template <typename T>
-    Radian<T>::Radian(const Angle<T>& inValue) : Radian<T>(inValue.ToRadian()) {}
+    Radian<T>::Radian(const Angle<T>& inValue) : Radian(inValue.ToRadian()) {}
 
     template <typename T>
     Radian<T>::Radian(const Radian& inValue) : Radian(inValue.value) {}
@@ -294,9 +297,9 @@ namespace Common {
     template <typename T>
     Quaternion<T> Quaternion<T>::FromEulerZYX(T inAngleX, T inAngleY, T inAngleZ)
     {
-        return Quaternion<T>(VecConsts<T, 3>::unitZ, inAngleZ)
-            * Quaternion<T>(VecConsts<T, 3>::unitY, inAngleY)
-            * Quaternion<T>(VecConsts<T, 3>::unitX, inAngleX);
+        return Quaternion(VecConsts<T, 3>::unitZ, inAngleZ)
+            * Quaternion(VecConsts<T, 3>::unitY, inAngleY)
+            * Quaternion(VecConsts<T, 3>::unitX, inAngleX);
     }
 
     template <typename T>
@@ -383,7 +386,7 @@ namespace Common {
     template <typename T>
     Quaternion<T> Quaternion<T>::operator+(const Quaternion& rhs) const
     {
-        Quaternion<T> result;
+        Quaternion result;
         result.w = this->w + rhs.w;
         result.x = this->x + rhs.x;
         result.y = this->y + rhs.y;
@@ -394,7 +397,7 @@ namespace Common {
     template <typename T>
     Quaternion<T> Quaternion<T>::operator-(const Quaternion& rhs) const
     {
-        Quaternion<T> result;
+        Quaternion result;
         result.w = this->w - rhs.w;
         result.x = this->x - rhs.x;
         result.y = this->y - rhs.y;
@@ -405,7 +408,7 @@ namespace Common {
     template <typename T>
     Quaternion<T> Quaternion<T>::operator*(T rhs) const
     {
-        Quaternion<T> result;
+        Quaternion result;
         result.w = this->w * rhs;
         result.x = this->x * rhs;
         result.y = this->y * rhs;
@@ -416,7 +419,7 @@ namespace Common {
     template <typename T>
     Quaternion<T> Quaternion<T>::operator*(const Quaternion& rhs) const
     {
-        Quaternion<T> result;
+        Quaternion result;
         result.w = this->w * rhs.w - this->x * rhs.x - this->y * rhs.y - this->z * rhs.z;
         result.x = this->w * rhs.x + this->x * rhs.w + this->y * rhs.z - this->z * rhs.y;
         result.y = this->w * rhs.y - this->x * rhs.z + this->y * rhs.w + this->z * rhs.x;
@@ -427,7 +430,7 @@ namespace Common {
     template <typename T>
     Quaternion<T> Quaternion<T>::operator/(T rhs) const
     {
-        Quaternion<T> result;
+        Quaternion result;
         result.w = this->w / rhs;
         result.x = this->x / rhs;
         result.y = this->y / rhs;
@@ -469,6 +472,7 @@ namespace Common {
     Quaternion<T>& Quaternion<T>::operator*=(const Quaternion& rhs)
     {
         *this = this * rhs;
+        return *this;
     }
 
     template <typename T>
@@ -530,8 +534,8 @@ namespace Common {
     template <typename T>
     Vector<T, 3> Quaternion<T>::RotateVector(const Vector<T, 3>& inVector) const
     {
-        Quaternion<T> v = Quaternion(0, inVector.x, inVector.y, inVector.z);
-        Quaternion<T> v2 = Conjugated() * v * (*this);
+        Quaternion v = Quaternion(0, inVector.x, inVector.y, inVector.z);
+        Quaternion v2 = Conjugated() * v * (*this);
         return Vector<T, 3>(v2.x, v2.y, v2.z);
     }
 

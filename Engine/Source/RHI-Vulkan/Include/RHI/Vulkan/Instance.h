@@ -5,11 +5,11 @@
 #pragma once
 
 #include <vector>
+#include <unordered_map>
 
 #include <vulkan/vulkan.h>
 
 #include <RHI/Instance.h>
-#include <RHI/Vulkan/Api.h>
 
 namespace RHI::Vulkan {
     extern Instance* gInstance;
@@ -27,20 +27,21 @@ namespace RHI::Vulkan {
 
         VkInstance GetNative() const;
 
-        // function pointer
-#if BUILD_CONFIG_DEBUG
-        PFN_vkCreateDebugUtilsMessengerEXT pfnVkCreateDebugUtilsMessengerEXT;
-        PFN_vkDestroyDebugUtilsMessengerEXT pfnVkDestroyDebugUtilsMessengerEXT;
-        PFN_vkSetDebugUtilsObjectNameEXT pfnVkSetDebugUtilsObjectNameEXT;
-#endif
-        PFN_vkCmdBeginRenderingKHR pfnVkCmdBeginRenderingKHR;
-        PFN_vkCmdEndRenderingKHR  pfnVkCmdEndRenderingKHR;
+        template <typename T>
+        T FindOrGetTypedDynamicFuncPointer(const std::string& inName)
+        {
+            if (const auto iter = dynamicFuncPointers.find(inName);
+                iter != dynamicFuncPointers.end()) {
+                return reinterpret_cast<T>(iter->second);
+            }
+            dynamicFuncPointers.emplace(std::make_pair(inName, vkGetInstanceProcAddr(nativeInstance, inName.c_str())));
+            return reinterpret_cast<T>(dynamicFuncPointers.at(inName));
+        }
 
     private:
         void PrepareExtensions();
         void CreateNativeInstance();
         void DestroyNativeInstance();
-        void PrepareDynamicFuncPointers();
         void EnumeratePhysicalDevices();
 #if BUILD_CONFIG_DEBUG
         void PrepareLayers();
@@ -57,5 +58,6 @@ namespace RHI::Vulkan {
         std::vector<const char*> vkEnabledExtensionNames;
         std::vector<const char*> vkEnabledLayerNames;
         std::vector<Common::UniqueRef<Gpu>> gpus;
+        std::unordered_map<std::string, PFN_vkVoidFunction> dynamicFuncPointers;
     };
 }

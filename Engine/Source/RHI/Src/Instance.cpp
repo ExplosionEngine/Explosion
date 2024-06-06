@@ -36,7 +36,7 @@ namespace RHI {
         }
     }
 
-    std::string GetRHIModuleNameByType(const RHIType& type)
+    std::string GetRHIModuleNameByType(RHIType type)
     {
         switch (type) {
             case RHIType::directX12:

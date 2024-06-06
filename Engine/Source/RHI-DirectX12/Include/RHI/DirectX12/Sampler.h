@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <memory>
 
 #include <directx/d3dx12.h>
 
 #include <RHI/Sampler.h>
+#include <RHI/DirectX12/Device.h>
 
 namespace RHI::DirectX12 {
     class DX12Device;
@@ -24,6 +24,6 @@ namespace RHI::DirectX12 {
     private:
         void CreateDX12Descriptor(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo);
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE nativeCpuDescriptorHandle;
+        Common::UniqueRef<DescriptorAllocation> descriptorAllocation;
     };
 }

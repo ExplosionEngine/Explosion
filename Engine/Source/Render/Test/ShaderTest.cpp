@@ -12,7 +12,7 @@ public:
         "TestGlobalShader",
         "/Engine/Shader/Test/TestGlobalShader.esl",
         "VSMain",
-        Render::ShaderStage::sVertex);
+        RHI::ShaderStageBits::sVertex);
 
     BoolShaderVariantField(TestBoolVariant, "TEST_BOOL");
     RangedIntShaderVariantField(TestRangedIntVariant, "TEST_RANGED_INT", 0, 3);
@@ -20,7 +20,7 @@ public:
 
     DefaultVariantFilter
 };
-RegisterGlobalShader(TestGlobalShaderVS);
+//RegisterGlobalShader(TestGlobalShaderVS);
 
 TEST(ShaderTest, StaticVariantSetTest)
 {

@@ -2,6 +2,12 @@
 // Created by johnk on 2024/4/14.
 //
 
+#include <iostream>
+
+#if BUILD_CONFIG_DEBUG
+#include <debugbreak.h>
+#endif
+
 #include <Common/Debug.h>
 
 namespace Common {

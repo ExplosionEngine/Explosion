@@ -42,7 +42,7 @@ TEST(AssetTest, AssetRefTest1)
 
 TEST(AssetTest, SaveLoadTest)
 {
-    static Core::Uri uri("asset://Engine/Test/Generated/AssetTest.SaveLoadTest");
+    static Core::Uri uri("asset://Engine/Test/Generated/Runtime/AssetTest.SaveLoadTest");
 
     AssetRef<TestAsset> asset = MakeShared<TestAsset>(uri, 1, "hello");
     AssetManager::Get().Save(asset);
@@ -55,7 +55,7 @@ TEST(AssetTest, SaveLoadTest)
 
 TEST(AssetTest, AsyncLoadTest)
 {
-    static Core::Uri uri("asset://Engine/Test/Generated/AssetTest.SaveLoadTest");
+    static Core::Uri uri("asset://Engine/Test/Generated/Runtime/AssetTest.SaveLoadTest");
 
     AssetRef<TestAsset> asset = MakeShared<TestAsset>(uri, 1, "hello");
     AssetManager::Get().Save(asset);

@@ -27,7 +27,6 @@ namespace Render {
 
     using ShaderTypeKey = uint64_t;
     using VariantKey = uint64_t;
-    using ShaderStage = RHI::ShaderStageBits;
 
     struct ShaderReflectionData {
         using VertexSemantic = std::string;
@@ -55,11 +54,16 @@ namespace Render {
     using ShaderArchivePackage = std::unordered_map<VariantKey, ShaderArchive>;
 
     class IShaderType {
-        virtual std::string GetName() = 0;
-        virtual ShaderTypeKey GetHash() = 0;
-        virtual std::string GetCode() = 0;
-        virtual std::vector<VariantKey> GetVariants() = 0;
-        virtual std::vector<std::string> GetDefinitions(VariantKey variantKey) = 0;
+    public:
+        virtual const std::string& GetName() = 0;
+        virtual ShaderTypeKey GetKey() = 0;
+        virtual RHI::ShaderStageBits GetStage() = 0;
+        virtual const std::string& GetEntryPoint() = 0;
+        virtual const std::string& GetCode() = 0;
+        virtual uint32_t GetVariantNum() = 0;
+        virtual const std::vector<VariantKey>& GetVariants() = 0;
+        virtual const std::vector<std::string>& GetDefinitions(VariantKey variantKey) = 0;
+        virtual void Reload() = 0;
     };
 
     struct ShaderInstance {
@@ -80,13 +84,13 @@ namespace Render {
         NonCopyable(ShaderArchiveStorage)
 
         // TODO fill byte codes after compiling using this interface
-        void UpdateShaderArchivePackage(IShaderType* shaderTypeKey, ShaderArchivePackage&& shaderArchivePackage);
-        const ShaderArchivePackage& GetShaderArchivePackage(IShaderType* shaderTypeKey);
+        void UpdateShaderArchivePackage(ShaderTypeKey shaderTypeKey, ShaderArchivePackage&& shaderArchivePackage);
+        const ShaderArchivePackage& GetShaderArchivePackage(ShaderTypeKey shaderTypeKey);
         void InvalidateAll();
-        void Invalidate(IShaderType* shaderTypeKey);
+        void Invalidate(ShaderTypeKey shaderTypeKey);
 
     private:
-        std::unordered_map<IShaderType*, ShaderArchivePackage> shaderArchivePackages;
+        std::unordered_map<ShaderTypeKey, ShaderArchivePackage> shaderArchivePackages;
     };
 }
 
@@ -103,15 +107,28 @@ namespace Render {
         ~GlobalShaderType();
         NonCopyable(GlobalShaderType)
 
-        std::string GetName() override;
-        ShaderTypeKey GetHash() override;
-        std::string GetCode() override;
-        std::vector<VariantKey> GetVariants() override;
-        std::vector<std::string> GetDefinitions(VariantKey variantKey) override;
+        const std::string& GetName() override;
+        ShaderTypeKey GetKey() override;
+        RHI::ShaderStageBits GetStage() override;
+        const std::string& GetEntryPoint() override;
+        const std::string& GetCode() override;
+        uint32_t GetVariantNum() override;
+        const std::vector<VariantKey>& GetVariants() override;
+        const std::vector<std::string>& GetDefinitions(Render::VariantKey variantKey) override;
+        void Reload() override;
 
     private:
+        void ReloadInternal();
+        void ReadCode();
+        void ComputeVariants();
         void ComputeVariantDefinitions();
 
+        std::string name;
+        ShaderTypeKey key;
+        RHI::ShaderStageBits stage;
+        std::string entryPoint;
+        std::string code;
+        std::vector<VariantKey> variants;
         std::unordered_map<VariantKey, std::vector<std::string>> variantDefinitions;
     };
 
@@ -146,7 +163,7 @@ namespace Render {
         template <typename Shader>
         void Register();
 
-        std::vector<IShaderType*>&& GetShaderTypes();
+        const std::vector<IShaderType*>& GetShaderTypes();
 
     private:
         std::vector<IShaderType*> shaderTypes;
@@ -222,7 +239,7 @@ namespace Render {
     static constexpr const char* name = inName; \
     static constexpr const char* sourceFile = inSourceFile; \
     static constexpr const char* entryPoint = inEntryPoint; \
-    static constexpr Render::ShaderStage stage = inStage; \
+    static constexpr RHI::ShaderStageBits stage = inStage; \
 
 #define DefaultVariantFilter \
     static bool VariantFilter(const VariantSet& variantSet) { return true; } \
@@ -243,7 +260,7 @@ namespace Render {
     class VariantSet : public Render::VariantSetImpl<__VA_ARGS__> {};
 
 #define RegisterGlobalShader(inClass) \
-    static uint8_t _globalShaderRegister_inClass = []() -> uint8_t { \
+    static uint8_t _globalShaderRegister_##inClass = []() -> uint8_t { \
         Render::GlobalShaderRegistry::Get().Register<inClass>(); \
         return 0; \
     }(); \
@@ -263,26 +280,82 @@ namespace Render {
     template <typename Shader>
     GlobalShaderType<Shader>::GlobalShaderType()
     {
-        ComputeVariantDefinitions();
+        ReloadInternal();
     }
 
     template <typename Shader>
     GlobalShaderType<Shader>::~GlobalShaderType() = default;
 
     template <typename Shader>
-    std::string GlobalShaderType<Shader>::GetName()
+    const std::string& GlobalShaderType<Shader>::GetName()
     {
-        return Shader::name;
+        return name;
     }
 
     template <typename Shader>
-    ShaderTypeKey GlobalShaderType<Shader>::GetHash()
+    ShaderTypeKey GlobalShaderType<Shader>::GetKey()
     {
-        return Common::HashUtils::CityHash(Shader::name, sizeof(Shader::name));
+        return key;
     }
 
     template <typename Shader>
-    std::string GlobalShaderType<Shader>::GetCode()
+    RHI::ShaderStageBits GlobalShaderType<Shader>::GetStage()
+    {
+        return stage;
+    }
+
+    template <typename Shader>
+    const std::string& GlobalShaderType<Shader>::GetEntryPoint()
+    {
+        return entryPoint;
+    }
+
+    template <typename Shader>
+    const std::string& GlobalShaderType<Shader>::GetCode()
+    {
+        return code;
+    }
+
+    template <typename Shader>
+    uint32_t GlobalShaderType<Shader>::GetVariantNum()
+    {
+        return variants.size();
+    }
+
+    template <typename Shader>
+    const std::vector<VariantKey> & GlobalShaderType<Shader>::GetVariants()
+    {
+        return variants;
+    }
+
+    template <typename Shader>
+    const std::vector<std::string>& GlobalShaderType<Shader>::GetDefinitions(Render::VariantKey variantKey)
+    {
+        return variantDefinitions.at(variantKey);
+    }
+
+    template <typename Shader>
+    void GlobalShaderType<Shader>::Reload()
+    {
+        ReloadInternal();
+    }
+
+    template <typename Shader>
+    void GlobalShaderType<Shader>::ReloadInternal()
+    {
+        name = Shader::name;
+        std::string keySource = std::string("Global-") + name;
+        key = Common::HashUtils::CityHash(keySource.data(), keySource.size());
+        stage = Shader::stage;
+        entryPoint = Shader::entryPoint;
+
+        ReadCode();
+        ComputeVariants();
+        ComputeVariantDefinitions();
+    }
+
+    template <typename Shader>
+    void GlobalShaderType<Shader>::ReadCode()
     {
         static std::unordered_map<std::string, std::string> pathMap = {
             { "/Engine/Shader", Core::Paths::EngineShaderPath().string() }
@@ -291,32 +364,24 @@ namespace Render {
         std::string sourceFile = Shader::sourceFile;
         for (const auto& iter : pathMap) {
             if (sourceFile.starts_with(iter.first)) {
-                return Common::FileUtils::ReadTextFile(Common::StringUtils::Replace(sourceFile, iter.first, iter.second));
+                code = Common::FileUtils::ReadTextFile(Common::StringUtils::Replace(sourceFile, iter.first, iter.second));
+                return;
             }
         }
         QuickFail();
-        return "";
     }
 
     template <typename Shader>
-    std::vector<VariantKey> GlobalShaderType<Shader>::GetVariants()
+    void GlobalShaderType<Shader>::ComputeVariants()
     {
-        std::vector<VariantKey> result;
-        {
-            result.reserve(variantDefinitions.size());
-            for (const auto& iter : variantDefinitions) {
-                result.emplace_back(iter.first);
+        variants.reserve(Shader::VariantSet::VariantNum());
+        Shader::VariantSet::TraverseAll([this](auto&& variantSetImpl) -> void {
+            const auto* variantSet = static_cast<typename Shader::VariantSet*>(&variantSetImpl);
+            if (!Shader::VariantFilter(*variantSet)) {
+                return;
             }
-        }
-        return result;
-    }
-
-    template <typename Shader>
-    std::vector<std::string> GlobalShaderType<Shader>::GetDefinitions(VariantKey variantKey)
-    {
-        auto iter = variantDefinitions.find(variantKey);
-        Assert(iter != variantDefinitions.end());
-        return iter->second;
+            variants.emplace_back(variantSet->Hash());
+        });
     }
 
     template <typename Shader>

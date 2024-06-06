@@ -26,7 +26,8 @@ namespace RHI::DirectX12 {
 
 namespace RHI::DirectX12 {
     DX12Sampler::DX12Sampler(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo)
-        : Sampler(inCreateInfo), nativeCpuDescriptorHandle()
+        : Sampler(inCreateInfo)
+        , descriptorAllocation()
     {
         CreateDX12Descriptor(inDevice, inCreateInfo);
     }
@@ -35,7 +36,7 @@ namespace RHI::DirectX12 {
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Sampler::GetNativeCpuDescriptorHandle()
     {
-        return nativeCpuDescriptorHandle;
+        return descriptorAllocation->GetCpuHandle();
     }
 
     void DX12Sampler::CreateDX12Descriptor(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo)
@@ -50,8 +51,7 @@ namespace RHI::DirectX12 {
         desc.ComparisonFunc = EnumCast<CompareFunc, D3D12_COMPARISON_FUNC>(inCreateInfo.comparisonFunc);
         desc.MaxAnisotropy = inCreateInfo.maxAnisotropy;
 
-        auto allocation = inDevice.AllocateNativeSamplerDescriptor();
-        nativeCpuDescriptorHandle = allocation.cpuHandle;
-        inDevice.GetNative()->CreateSampler(&desc, nativeCpuDescriptorHandle);
+        descriptorAllocation = inDevice.AllocateSamplerDescriptor();
+        inDevice.GetNative()->CreateSampler(&desc, descriptorAllocation->GetCpuHandle());
     }
 }

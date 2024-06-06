@@ -5,7 +5,6 @@
 #pragma once
 
 #include <string>
-#include <utility>
 #include <unordered_map>
 
 #include <Common/Utility.h>
@@ -34,8 +33,8 @@ namespace Common {
 
         void Load();
         void Unload();
-        void* GetSymbol(const std::string& name);
-        DynamicLibHandle GetHandle();
+        void* GetSymbol(const std::string& name) const;
+        DynamicLibHandle GetHandle() const;
 
     private:
         bool active;
@@ -45,7 +44,7 @@ namespace Common {
 
     class DynamicLibraryFinder {
     public:
-        static Common::UniqueRef<DynamicLibrary> Find(const std::string& simpleName, const std::string& searchDirectory = "");
+        static UniqueRef<DynamicLibrary> Find(const std::string& simpleName, const std::string& searchDirectory = "");
 
     private:
         static std::string GetPlatformDynLibFullPath(const std::string& simpleName, const std::string& searchDirectory);

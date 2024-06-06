@@ -46,7 +46,7 @@ namespace Common {
                 while (true) {
                     std::function<void()> task;
                     {
-                        std::unique_lock<std::mutex> lock(mutex);
+                        std::unique_lock lock(mutex);
                         condition.wait(lock, [this]() -> bool { return stop || !tasks.empty(); });
                         if (stop && tasks.empty()) {
                             return;
@@ -63,7 +63,7 @@ namespace Common {
     ThreadPool::~ThreadPool()
     {
         {
-            std::unique_lock<std::mutex> lock(mutex);
+            std::unique_lock lock(mutex);
             stop = true;
         }
         condition.notify_all();
@@ -80,7 +80,7 @@ namespace Common {
                 bool needNotifyMainThread = false;
                 std::vector<std::function<void()>> tasksToExecute;
                 {
-                    std::unique_lock<std::mutex> lock(mutex);
+                    std::unique_lock lock(mutex);
                     taskCondition.wait(lock, [this]() -> bool { return stop || flush || !tasks.empty(); });
                     if (stop && tasks.empty()) {
                         return;
@@ -111,7 +111,7 @@ namespace Common {
     WorkerThread::~WorkerThread()
     {
         {
-            std::unique_lock<std::mutex> lock(mutex);
+            std::unique_lock lock(mutex);
             stop = true;
         }
         taskCondition.notify_all();
@@ -121,12 +121,12 @@ namespace Common {
     void WorkerThread::Flush()
     {
         {
-            std::unique_lock<std::mutex> lock(mutex);
+            std::unique_lock lock(mutex);
             flush = true;
         }
         taskCondition.notify_one();
         {
-            std::unique_lock<std::mutex> lock(mutex);
+            std::unique_lock lock(mutex);
             flushCondition.wait(lock);
         }
     }

@@ -10,7 +10,8 @@ namespace RHI {
         , surface(nullptr)
         , textureNum(0)
         , format(PixelFormat::max)
-        , extent(Common::UVec2Consts::zero)
+        , width(0)
+        , height(0)
         , presentMode(PresentMode::max)
     {
     }
@@ -39,9 +40,15 @@ namespace RHI {
         return *this;
     }
 
-    SwapChainCreateInfo& SwapChainCreateInfo::SetExtent(const Common::UVec2& inExtent)
+    SwapChainCreateInfo& SwapChainCreateInfo::SetWidth(uint32_t inWidth)
     {
-        extent = inExtent;
+        width = inWidth;
+        return *this;
+    }
+
+    SwapChainCreateInfo& SwapChainCreateInfo::SetHeight(uint32_t inHeight)
+    {
+        height = inHeight;
         return *this;
     }
 

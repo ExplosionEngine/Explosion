@@ -15,20 +15,20 @@ namespace Common {
     };
 
     template <typename T>
-    struct Sphere : public SphereBase<T> {
-        inline Sphere();
-        inline Sphere(T inX, T inY, T inZ, T inRadius);
-        inline Sphere(Vector<T, 3> inCenter, T inRadius);
-        inline Sphere(const Sphere& inOther);
-        inline Sphere(Sphere&& inOther) noexcept;
-        inline Sphere& operator=(const Sphere& inOther);
+    struct Sphere : SphereBase<T> {
+        Sphere();
+        Sphere(T inX, T inY, T inZ, T inRadius);
+        Sphere(Vector<T, 3> inCenter, T inRadius);
+        Sphere(const Sphere& inOther);
+        Sphere(Sphere&& inOther) noexcept;
+        Sphere& operator=(const Sphere& inOther);
 
-        inline T Distance(const Sphere& inOther) const;
-        inline bool Inside(const Vector<T, 3>& inPoint) const;
-        inline bool Intersect(const Sphere& inOther) const;
+        T Distance(const Sphere& inOther) const;
+        bool Inside(const Vector<T, 3>& inPoint) const;
+        bool Intersect(const Sphere& inOther) const;
 
         template <typename IT>
-        inline Sphere<IT> CastTo() const;
+        Sphere<IT> CastTo() const;
     };
 
     using ISphere = Sphere<int32_t>;
@@ -42,8 +42,8 @@ namespace Common {
     struct Serializer<Sphere<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("Common::Sphere")
-              + Serializer<T>::typeId;
+            = HashUtils::StrCrc32("Common::Sphere")
+            + Serializer<T>::typeId;
 
         static void Serialize(SerializeStream& stream, const Sphere<T>& value)
         {
@@ -61,6 +61,7 @@ namespace Common {
 
             Serializer<Vector<T, 3>>::Deserialize(stream, value.center);
             Serializer<T>::Deserialize(stream, value.radius);
+            return true;
         }
     };
 }

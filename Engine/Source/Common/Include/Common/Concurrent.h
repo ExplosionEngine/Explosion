@@ -95,7 +95,7 @@ namespace Common {
         auto packagedTask = std::make_shared<std::packaged_task<RetType()>>(std::bind(std::forward<F>(task), std::forward<Args>(args)...));
         auto result = packagedTask->get_future();
         {
-            std::unique_lock<std::mutex> lock(mutex);
+            std::unique_lock lock(mutex);
             Assert(!stop);
             tasks.emplace([packagedTask]() -> void { (*packagedTask)(); });
         }
@@ -110,7 +110,7 @@ namespace Common {
         auto packagedTask = std::make_shared<std::packaged_task<RetType()>>(std::bind(std::forward<F>(task), std::forward<Args>(args)...));
         auto result = packagedTask->get_future();
         {
-            std::unique_lock<std::mutex> lock(mutex);
+            std::unique_lock lock(mutex);
             Assert(!stop);
             tasks.emplace([packagedTask]() -> void { (*packagedTask)(); });
         }

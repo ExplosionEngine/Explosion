@@ -3,6 +3,7 @@
 //
 
 #include <cmath>
+#include <sstream>
 
 #include <Common/Math/Color.h>
 

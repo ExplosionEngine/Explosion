@@ -5,11 +5,8 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 
 #include <city.h>
-
-#include <Common/Utility.h>
 
 namespace Common::Internal {
     static constexpr uint32_t crcTable[256] = {
@@ -71,7 +68,7 @@ namespace Common::Internal {
     }
 
     template <>
-    constexpr uint32_t StrCrc32Internal<size_t(-1)>(const char* str)
+    constexpr uint32_t StrCrc32Internal<static_cast<size_t>(-1)>(const char*)
     {
         return 0xffffffff;
     }

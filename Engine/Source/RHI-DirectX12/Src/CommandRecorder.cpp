@@ -32,6 +32,26 @@ namespace RHI::DirectX12 {
         }
         return D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL;
     }
+
+    size_t GetNativeSubResourceIndex(const DX12Texture& texture, const TextureSubResourceInfo& subResource)
+    {
+        const auto& createInfo = texture.GetCreateInfo();
+        return D3D12CalcSubresource(subResource.mipLevel, subResource.arrayLayer, 0, createInfo.mipLevels, createInfo.dimension == TextureDimension::t3D ? 1 : createInfo.depthOrArraySize);
+    }
+
+    CD3DX12_TEXTURE_COPY_LOCATION GetNativeTextureCopyLocation(const DX12Texture& texture, const TextureSubResourceInfo& subResource)
+    {
+        return CD3DX12_TEXTURE_COPY_LOCATION(texture.GetNative(), GetNativeSubResourceIndex(texture, subResource));
+    }
+
+    size_t GetNativeBytesPerPixel(DX12Device& device, const DX12Texture& texture, const TextureSubResourceInfo& subResource)
+    {
+        const auto nativeResourceDesc = texture.GetNative()->GetDesc();
+
+        D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint;
+        device.GetNative()->GetCopyableFootprints(&nativeResourceDesc, GetNativeSubResourceIndex(texture, subResource), 1, 0, &footprint, nullptr, nullptr, nullptr);
+        return footprint.Footprint.RowPitch / footprint.Footprint.Width;
+    }
 }
 
 namespace RHI::DirectX12 {
@@ -49,38 +69,78 @@ namespace RHI::DirectX12 {
         commandRecorder.ResourceBarrier(inBarrier);
     }
 
-    void DX12CopyPassCommandRecorder::CopyBufferToBuffer(Buffer* inSrcBuffer, size_t inSrcOffset, Buffer* inDestBuffer, size_t inDestOffset, size_t inSize)
+    void DX12CopyPassCommandRecorder::CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo)
+    {
+        auto* srcBuffer = static_cast<DX12Buffer*>(src);
+        auto* dstBuffer = static_cast<DX12Buffer*>(dst);
+
+        commandBuffer.GetNative()->CopyBufferRegion(
+            dstBuffer->GetNative(), copyInfo.dstOffset,
+            srcBuffer->GetNative(), copyInfo.srcOffset,
+            copyInfo.copySize);
+    }
+
+    void DX12CopyPassCommandRecorder::CopyBufferToTexture(Buffer* src, Texture* dst, const BufferTextureCopyInfo& copyInfo)
+    {
+        auto* srcBuffer = static_cast<DX12Buffer*>(src);
+        auto* dstTexture = static_cast<DX12Texture*>(dst);
+
+        D3D12_PLACED_SUBRESOURCE_FOOTPRINT srcLayout;
+        srcLayout.Offset = copyInfo.bufferOffset;
+        srcLayout.Footprint.Format = dstTexture->GetNative()->GetDesc().Format;
+        srcLayout.Footprint.Width = copyInfo.copyRegion.x;
+        srcLayout.Footprint.Height = copyInfo.copyRegion.y;
+        srcLayout.Footprint.Depth = copyInfo.copyRegion.z;
+        srcLayout.Footprint.RowPitch = srcLayout.Footprint.Width * GetNativeBytesPerPixel(device, *dstTexture, copyInfo.textureSubResource);
+
+        const CD3DX12_TEXTURE_COPY_LOCATION srcCopyRegion(srcBuffer->GetNative(), srcLayout);
+        const CD3DX12_TEXTURE_COPY_LOCATION dstCopyRegion = GetNativeTextureCopyLocation(*dstTexture, copyInfo.textureSubResource);
+
+        D3D12_BOX srcBox;
+        srcBox.left = 0;
+        srcBox.right = copyInfo.copyRegion.x;
+        srcBox.top = 0;
+        srcBox.bottom = copyInfo.copyRegion.y;
+        srcBox.front = 0;
+        srcBox.back = copyInfo.copyRegion.z;
+
+        commandBuffer.GetNative()->CopyTextureRegion(
+            &dstCopyRegion,
+            copyInfo.textureOrigin.x,
+            copyInfo.textureOrigin.y,
+            copyInfo.textureOrigin.z,
+            &srcCopyRegion,
+            &srcBox);
+    }
+
+    void DX12CopyPassCommandRecorder::CopyTextureToBuffer(Texture* src, Buffer* dst, const BufferTextureCopyInfo& copyInfo)
     {
         // TODO
     }
 
-    void DX12CopyPassCommandRecorder::CopyBufferToTexture(Buffer* inSrcBuffer, Texture* inDestTexture, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize)
+    void DX12CopyPassCommandRecorder::CopyTextureToTexture(Texture* src, Texture* dst, const TextureCopyInfo& copyInfo)
     {
-        auto* buffer = static_cast<DX12Buffer*>(inSrcBuffer);
-        auto* texture = static_cast<DX12Texture*>(inDestTexture);
-        auto origin = inSubResourceInfo->origin;
+        auto* srcTexture = static_cast<DX12Texture*>(src);
+        auto* dstTexture = static_cast<DX12Texture*>(dst);
 
-        D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
-        layout.Offset = 0;
-        layout.Footprint.Depth = inSize.z;
-        layout.Footprint.Width = inSize.x;
-        layout.Footprint.Height = inSize.y;
-        layout.Footprint.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture->GetFormat());
-        layout.Footprint.RowPitch = inSize.x * GetBytesPerPixel(texture->GetFormat()); // row pitch must be a multiple of 256, let dx checks if the texture is valid
+        D3D12_BOX srcBox;
+        srcBox.left = copyInfo.srcOrigin.x;
+        srcBox.right = copyInfo.srcOrigin.x + copyInfo.copyRegion.x;
+        srcBox.top = copyInfo.srcOrigin.y;
+        srcBox.bottom = copyInfo.srcOrigin.y + copyInfo.copyRegion.y;
+        srcBox.front = copyInfo.srcOrigin.z;
+        srcBox.back = copyInfo.srcOrigin.z + copyInfo.copyRegion.z;
 
-        CD3DX12_TEXTURE_COPY_LOCATION dest(texture->GetNative(), 0);
-        CD3DX12_TEXTURE_COPY_LOCATION source(buffer->GetNative(), layout);
-        commandBuffer.GetNative()->CopyTextureRegion(&dest, origin.x, origin.y, origin.z, &source, nullptr);
-    }
+        CD3DX12_TEXTURE_COPY_LOCATION srcCopyRegion = GetNativeTextureCopyLocation(*srcTexture, copyInfo.srcSubResource);
+        CD3DX12_TEXTURE_COPY_LOCATION dstCopyRegion = GetNativeTextureCopyLocation(*dstTexture, copyInfo.dstSubResource);
 
-    void DX12CopyPassCommandRecorder::CopyTextureToBuffer(Texture* inSrcTexture, Buffer* inDestBuffer, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize)
-    {
-        // TODO
-    }
-
-    void DX12CopyPassCommandRecorder::CopyTextureToTexture(Texture* inSrcTexture, const TextureSubResourceInfo* inSrcSubResourceInfo, Texture* inDestTexture, const TextureSubResourceInfo* inDestSubResourceInfo , const Common::UVec3& inSize)
-    {
-        // TODO
+        commandBuffer.GetNative()->CopyTextureRegion(
+            &dstCopyRegion,
+            copyInfo.dstOrigin.x,
+            copyInfo.dstOrigin.y,
+            copyInfo.dstOrigin.z,
+            &srcCopyRegion,
+            &srcBox);
     }
 
     void DX12CopyPassCommandRecorder::EndPass()

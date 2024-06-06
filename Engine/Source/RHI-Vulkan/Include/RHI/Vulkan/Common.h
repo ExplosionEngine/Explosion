@@ -116,6 +116,18 @@ namespace RHI::Vulkan {
         ECIMPL_ITEM(FillMode::solid,        VK_POLYGON_MODE_FILL)
     ECIMPL_END(VkPolygonMode)
 
+    ECIMPL_BEGIN(PrimitiveTopology, VkPrimitiveTopology)
+        ECIMPL_ITEM(PrimitiveTopology::pointList,          VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
+        ECIMPL_ITEM(PrimitiveTopology::lineList,           VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
+        ECIMPL_ITEM(PrimitiveTopology::lineStrip,          VK_PRIMITIVE_TOPOLOGY_LINE_STRIP)
+        ECIMPL_ITEM(PrimitiveTopology::triangleList,       VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+        ECIMPL_ITEM(PrimitiveTopology::triangleStrip,      VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP)
+        ECIMPL_ITEM(PrimitiveTopology::lineListAdj,        VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY)
+        ECIMPL_ITEM(PrimitiveTopology::lineStripAdj,       VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY)
+        ECIMPL_ITEM(PrimitiveTopology::triangleListAdj,    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY)
+        ECIMPL_ITEM(PrimitiveTopology::triangleStripAdj,   VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY)
+    ECIMPL_END(VkPrimitiveTopology)
+
     ECIMPL_BEGIN(CullMode, VkCullModeFlagBits)
         ECIMPL_ITEM(CullMode::none,  VK_CULL_MODE_NONE)
         ECIMPL_ITEM(CullMode::front, VK_CULL_MODE_FRONT_BIT)

@@ -26,12 +26,131 @@
 #include <RHI/DirectX12/Surface.h>
 
 namespace RHI::DirectX12 {
-    DX12Device::DX12Device(DX12Gpu& inGpu, const DeviceCreateInfo& inCreateInfo) : Device(inCreateInfo), gpu(inGpu), nativeRtvDescriptorSize(0), nativeCbvSrvUavDescriptorSize(0)
+    DescriptorAllocation::DescriptorAllocation(DescriptorHeapNode* inNode, uint32_t inSlot, const CD3DX12_CPU_DESCRIPTOR_HANDLE& inHandle, ID3D12DescriptorHeap* inHeap)
+        : node(inNode)
+        , slot(inSlot)
+        , cpuHandle(inHandle)
+        , nativeDescriptorHeap(inHeap)
+    {
+    }
+
+    DescriptorAllocation::~DescriptorAllocation()
+    {
+        node->Free(slot);
+    }
+
+    const CD3DX12_CPU_DESCRIPTOR_HANDLE& DescriptorAllocation::GetCpuHandle() const
+    {
+        return cpuHandle;
+    }
+
+    ID3D12DescriptorHeap* DescriptorAllocation::GetNativeDescriptorHeap() const
+    {
+        return nativeDescriptorHeap;
+    }
+
+    DescriptorHeapNode::DescriptorHeapNode(ComPtr<ID3D12DescriptorHeap>&& inHeap, uint32_t inDescriptorSize, uint32_t inCapacity)
+        : nativeDescriptorHeap(std::move(inHeap))
+        , descriptorSize(inDescriptorSize)
+        , capacity(inCapacity)
+        , free(inCapacity)
+        , usedBitMasks()
+    {
+        usedBitMasks.resize(capacity / 8, 0);
+    }
+
+    bool DescriptorHeapNode::HasFreeSlot() const
+    {
+        return free > 0;
+    }
+
+    Common::UniqueRef<DescriptorAllocation> DescriptorHeapNode::Allocate()
+    {
+        Assert(HasFreeSlot());
+
+        std::optional<uint32_t> selectedSlot;
+        for (auto slot = 0; slot < capacity; slot++) {
+            const auto groupIndex = slot / 8;
+            auto& bitMask = usedBitMasks[groupIndex];
+
+            const auto indexInGroup = slot % 8;
+            const auto slotMask = 1 << indexInGroup;
+            const auto slotIsFree = (bitMask & slotMask) == 0;
+
+            if (!slotIsFree) {
+                continue;
+            }
+
+            bitMask = bitMask | slotMask;
+            selectedSlot = slot;
+            break;
+        }
+
+        Assert(selectedSlot.has_value());
+        free--;
+        Assert(free <= capacity);
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE baseCpuHandle(nativeDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+        return Common::MakeUnique<DescriptorAllocation>(this, selectedSlot.value(), baseCpuHandle.Offset(selectedSlot.value(), descriptorSize), nativeDescriptorHeap.Get());
+    }
+
+    void DescriptorHeapNode::Free(uint32_t slot)
+    {
+        const auto groupIndex = slot / 8;
+        auto& bitMask = usedBitMasks[groupIndex];
+
+        const auto indexInGroup = slot % 8;
+        const auto slotMask = 1 << indexInGroup;
+        const auto slotIsUsed = (bitMask & slotMask) == slotMask;
+        bitMask = bitMask & ~slotMask;
+
+        Assert(slotIsUsed);
+        free++;
+        Assert(free <= capacity);
+    }
+
+    DescriptorPool::DescriptorPool(DX12Device& inDevice, D3D12_DESCRIPTOR_HEAP_TYPE inNativeHeapType, uint32_t inDescriptorSize, uint32_t inCapacity)
+        : device(inDevice)
+        , nativeHeapType(inNativeHeapType)
+        , descriptorSize(inDescriptorSize)
+        , capacity(inCapacity)
+        , heapNodes()
+    {
+    }
+
+    Common::UniqueRef<DescriptorAllocation> DescriptorPool::Allocate()
+    {
+        for (auto& node : heapNodes) {
+            if (node.HasFreeSlot()) {
+                return node.Allocate();
+            }
+        }
+
+        ComPtr<ID3D12DescriptorHeap> nativeDescriptorHeap;
+
+        D3D12_DESCRIPTOR_HEAP_DESC desc {};
+        desc.NumDescriptors = capacity;
+        desc.Type = nativeHeapType;
+        desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+        Assert(SUCCEEDED(device.GetNative()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&nativeDescriptorHeap))));
+
+        heapNodes.emplace_back(std::move(nativeDescriptorHeap), descriptorSize, capacity);
+        return heapNodes.back().Allocate();
+    }
+
+    DX12Device::DX12Device(DX12Gpu& inGpu, const DeviceCreateInfo& inCreateInfo)
+        : Device(inCreateInfo)
+        , gpu(inGpu)
+        , nativeRtvDescriptorSize(0)
+        , nativeCbvSrvUavDescriptorSize(0)
+        , nativeSamplerDescriptorSize(0)
+        , nativeDsvDescriptorSize(0)
     {
         CreateNativeDevice();
         CreateNativeQueues(inCreateInfo);
         CreateNativeCmdAllocator();
         QueryNativeDescriptorSize();
+        CreateDescriptorPools();
 #if BUILD_CONFIG_DEBUG
         RegisterNativeDebugLayerExceptionHandler();
 #endif
@@ -155,48 +274,24 @@ namespace RHI::DirectX12 {
         return nativeDevice.Get();
     }
 
-    NativeDescriptorAllocation DX12Device::AllocateNativeRtvDescriptor()
+    Common::UniqueRef<DescriptorAllocation> DX12Device::AllocateRtvDescriptor()
     {
-        return AllocateNativeDescriptor(nativeRtvHeapList, 4, nativeRtvDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        return rtvDescriptorPool->Allocate();
     }
 
-    NativeDescriptorAllocation DX12Device::AllocateNativeCbvSrvUavDescriptor()
+    Common::UniqueRef<DescriptorAllocation> DX12Device::AllocateCbvSrvUavDescriptor()
     {
-        return AllocateNativeDescriptor(nativeCbvSrvUavHeapList, 4, nativeCbvSrvUavDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        return cbvSrvUavDescriptorPool->Allocate();
     }
 
-    NativeDescriptorAllocation DX12Device::AllocateNativeSamplerDescriptor()
+    Common::UniqueRef<DescriptorAllocation> DX12Device::AllocateSamplerDescriptor()
     {
-        return AllocateNativeDescriptor(nativeSamplerHeapList, 4, nativeSamplerDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+        return samplerDescriptorPool->Allocate();
     }
 
-    NativeDescriptorAllocation DX12Device::AllocateNativeDsvDescriptor()
+    Common::UniqueRef<DescriptorAllocation> DX12Device::AllocateDsvDescriptor()
     {
-        return AllocateNativeDescriptor(nativeDsvHeapList, 1, nativeDsvDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    }
-
-    NativeDescriptorAllocation DX12Device::AllocateNativeDescriptor(std::list<NativeDescriptorHeapListNode>& inList, uint8_t inCapacity, uint32_t inDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE inHeapType)
-    {
-        if (inList.empty() || inList.back().used >= inCapacity) {
-            NativeDescriptorHeapListNode node {};
-
-            D3D12_DESCRIPTOR_HEAP_DESC desc {};
-            desc.NumDescriptors = inCapacity;
-            desc.Type = inHeapType;
-            desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-            bool success = SUCCEEDED(nativeDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&node.descriptorHeap)));
-            Assert(success);
-            inList.emplace_back(std::move(node));
-        }
-
-        auto& last = inList.back();
-
-        CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(last.descriptorHeap->GetCPUDescriptorHandleForHeapStart());
-        auto offset = last.used++;
-        return {
-            cpuHandle.Offset(offset, inDescriptorSize),
-            last.descriptorHeap.Get()
-        };
+        return dsvDescriptorPool->Allocate();
     }
 
     void DX12Device::CreateNativeDevice()
@@ -245,6 +340,14 @@ namespace RHI::DirectX12 {
         nativeCbvSrvUavDescriptorSize = nativeDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         nativeSamplerDescriptorSize = nativeDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
         nativeDsvDescriptorSize = nativeDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    }
+
+    void DX12Device::CreateDescriptorPools()
+    {
+        rtvDescriptorPool = Common::MakeUnique<DescriptorPool>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, nativeRtvDescriptorSize, 16);
+        cbvSrvUavDescriptorPool = Common::MakeUnique<DescriptorPool>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, nativeCbvSrvUavDescriptorSize, 16);
+        samplerDescriptorPool = Common::MakeUnique<DescriptorPool>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, nativeSamplerDescriptorSize, 16);
+        dsvDescriptorPool = Common::MakeUnique<DescriptorPool>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, nativeDsvDescriptorSize, 16);
     }
 
 #if BUILD_CONFIG_DEBUG

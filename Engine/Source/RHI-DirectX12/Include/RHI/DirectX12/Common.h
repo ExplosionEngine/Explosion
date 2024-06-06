@@ -288,32 +288,4 @@ namespace RHI::DirectX12 {
         FCIMPL_ITEM(TextureUsageBits::renderAttachment,       D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET)
         FCIMPL_ITEM(TextureUsageBits::depthStencilAttachment, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
     FCIMPL_END(D3D12_RESOURCE_FLAGS)
-
-    // constant buffer size must be a multiple of 256
-    inline size_t GetConstantBufferSize(size_t size) {
-        return (size + (D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1)) & ~(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1);
-    }
-
-    // TODO maybe use dx12 interfaces to do this ?
-    inline size_t GetBytesPerPixel(PixelFormat format) {
-        if (format >= PixelFormat::r8Unorm && format <= PixelFormat::r8Sint) {
-            return 1;
-        }
-        if (format >= PixelFormat::r16Uint && format <= PixelFormat::rg8Sint) {
-            return 2;
-        }
-        if (format >= PixelFormat::r32Uint && format <= PixelFormat::rg11B10Float) {
-            return 4;
-        }
-        if (format >= PixelFormat::rg32Uint && format <= PixelFormat::rgba16Float) {
-            return 8;
-        }
-        if (format >= PixelFormat::rgba32Uint && format <= PixelFormat::rgba32Float) {
-            return 16;
-        }
-
-        // TODO depth stencil texture format
-
-        return 0;
-    }
 }

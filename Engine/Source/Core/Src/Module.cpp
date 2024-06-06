@@ -22,13 +22,13 @@ namespace Core {
 
     ModuleRuntimeInfo::ModuleRuntimeInfo()
         : instance(nullptr)
-        , dynamicLib()
     {
     }
 
     ModuleRuntimeInfo::~ModuleRuntimeInfo() = default;
 
     ModuleRuntimeInfo::ModuleRuntimeInfo(const ModuleRuntimeInfo& other)
+        : instance(nullptr)
     {
         QuickFail();
     }
@@ -69,7 +69,7 @@ namespace Core {
         Common::UniqueRef<Common::DynamicLibrary> dynamicLib = Common::DynamicLibraryFinder::Find(modulePath.value());
         dynamicLib->Load();
 
-        GetModuleFunc getModuleFunc = reinterpret_cast<GetModuleFunc>(dynamicLib->GetSymbol("GetModule"));
+        const auto getModuleFunc = reinterpret_cast<GetModuleFunc>(dynamicLib->GetSymbol("GetModule"));
         if (getModuleFunc == nullptr) {
             return nullptr;
         }
@@ -85,7 +85,7 @@ namespace Core {
 
     Module* ModuleManager::Find(const std::string& moduleName)
     {
-        auto iter = loadedModules.find(moduleName);
+        const auto iter = loadedModules.find(moduleName);
         if (iter == loadedModules.end()) {
             return nullptr;
         }
@@ -94,7 +94,7 @@ namespace Core {
 
     void ModuleManager::Unload(const std::string& moduleName)
     {
-        auto iter = loadedModules.find(moduleName);
+        const auto iter = loadedModules.find(moduleName);
         if (iter == loadedModules.end()) {
             return;
         }
@@ -104,7 +104,7 @@ namespace Core {
 
     void ModuleManager::UnloadAll()
     {
-        for (auto& loadedModule : loadedModules) {
+        for (const auto& loadedModule : loadedModules) {
             loadedModule.second.instance->OnUnload();
         }
         loadedModules.clear();
@@ -112,7 +112,7 @@ namespace Core {
 
     std::optional<std::string> ModuleManager::SearchModule(const std::string& moduleName)
     {
-        const std::vector<std::filesystem::path> searchPaths = {
+        const std::vector searchPaths = {
             Paths::EngineBinariesPath(),
             Paths::ProjectBinariesPath(),
             Paths::EnginePluginPath(),

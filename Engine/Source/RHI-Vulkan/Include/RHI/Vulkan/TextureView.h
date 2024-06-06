@@ -21,13 +21,13 @@ namespace RHI::Vulkan {
         VulkanTextureView(VulkanTexture& inTexture, VulkanDevice& nDevice, const TextureViewCreateInfo& inCreateInfo);
         ~VulkanTextureView() override;
 
-        VkImageView GetNative();
+        VkImageView GetNative() const;
         VulkanTexture& GetTexture() const;
         uint8_t GetArrayLayerNum() const;
 
     private:
         void CreateImageView(const TextureViewCreateInfo& inCreateInfo);
-        void DestroyImageView();
+        void DestroyImageView() const;
 
         VulkanDevice& device;
         VulkanTexture& texture;

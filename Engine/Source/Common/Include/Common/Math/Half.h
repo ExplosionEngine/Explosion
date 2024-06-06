@@ -87,23 +87,23 @@ namespace Common {
     };
 
     template <std::endian E>
-    struct HalfFloat : public HalfFloatBase<E> {
-        inline HalfFloat() : HalfFloatBase<E>(0) {}
-        inline HalfFloat(const HalfFloat& inValue) : HalfFloatBase<E>(inValue.value) {}
-        inline HalfFloat(HalfFloat&& inValue) noexcept : HalfFloatBase<E>(inValue.value) {}
+    struct HalfFloat : HalfFloatBase<E> {
+        HalfFloat() : HalfFloatBase<E>(0) {}
+        HalfFloat(const HalfFloat& inValue) : HalfFloatBase<E>(inValue.value) {}
+        HalfFloat(HalfFloat&& inValue) noexcept : HalfFloatBase<E>(inValue.value) {}
 
-        inline HalfFloat(float inValue) : HalfFloatBase<E>(0) // NOLINT
+        HalfFloat(float inValue) : HalfFloatBase<E>(0) // NOLINT
         {
             Set(inValue);
         }
 
-        inline HalfFloat& operator=(float inValue)
+        HalfFloat& operator=(float inValue)
         {
             Set(inValue);
             return *this;
         }
 
-        inline HalfFloat& operator=(const HalfFloat& inValue)
+        HalfFloat& operator=(const HalfFloat& inValue)
         {
             this->value = inValue.value;
             return *this;
@@ -176,134 +176,134 @@ namespace Common {
             return result.value;
         }
 
-        inline operator float() const // NOLINT
+        operator float() const // NOLINT
         {
             return AsFloat();
         }
 
-        inline bool operator==(float rhs) const
+        bool operator==(float rhs) const
         {
             return std::abs(AsFloat() - rhs) < halfEpsilon;
         }
 
-        inline bool operator!=(float rhs) const
+        bool operator!=(float rhs) const
         {
             return std::abs(AsFloat() - rhs) >= halfEpsilon;
         }
 
-        inline bool operator==(const HalfFloat& rhs) const
+        bool operator==(const HalfFloat& rhs) const
         {
             return std::abs(AsFloat() - rhs.AsFloat()) < halfEpsilon;
         }
 
-        inline bool operator!=(const HalfFloat& rhs) const
+        bool operator!=(const HalfFloat& rhs) const
         {
             return std::abs(AsFloat() - rhs.AsFloat()) >= halfEpsilon;
         }
 
-        inline bool operator>(const HalfFloat& rhs) const
+        bool operator>(const HalfFloat& rhs) const
         {
             return AsFloat() > rhs.AsFloat();
         }
 
-        inline bool operator<(const HalfFloat& rhs) const
+        bool operator<(const HalfFloat& rhs) const
         {
             return AsFloat() < rhs.AsFloat();
         }
 
-        inline bool operator>=(const HalfFloat& rhs) const
+        bool operator>=(const HalfFloat& rhs) const
         {
             return AsFloat() >= rhs.AsFloat();
         }
 
-        inline bool operator<=(const HalfFloat& rhs) const
+        bool operator<=(const HalfFloat& rhs) const
         {
             return AsFloat() <= rhs.AsFloat();
         }
 
-        inline HalfFloat operator+(float rhs) const
+        HalfFloat operator+(float rhs) const
         {
             return { AsFloat() + rhs };
         }
 
-        inline HalfFloat operator-(float rhs) const
+        HalfFloat operator-(float rhs) const
         {
             return { AsFloat() - rhs };
         }
 
-        inline HalfFloat operator*(float rhs) const
+        HalfFloat operator*(float rhs) const
         {
             return { AsFloat() * rhs };
         }
 
-        inline HalfFloat operator/(float rhs) const
+        HalfFloat operator/(float rhs) const
         {
             return { AsFloat() / rhs };
         }
 
-        inline HalfFloat operator+(const HalfFloat& rhs) const
+        HalfFloat operator+(const HalfFloat& rhs) const
         {
             return { AsFloat() + rhs.AsFloat() };
         }
 
-        inline HalfFloat operator-(const HalfFloat& rhs) const
+        HalfFloat operator-(const HalfFloat& rhs) const
         {
             return { AsFloat() - rhs.AsFloat() };
         }
 
-        inline HalfFloat operator*(const HalfFloat& rhs) const
+        HalfFloat operator*(const HalfFloat& rhs) const
         {
             return { AsFloat() * rhs.AsFloat() };
         }
 
-        inline HalfFloat operator/(const HalfFloat& rhs) const
+        HalfFloat operator/(const HalfFloat& rhs) const
         {
             return { AsFloat() / rhs.AsFloat() };
         }
 
-        inline HalfFloat& operator+=(float rhs)
+        HalfFloat& operator+=(float rhs)
         {
             Set(AsFloat() + rhs);
             return *this;
         }
 
-        inline HalfFloat& operator-=(float rhs)
+        HalfFloat& operator-=(float rhs)
         {
             Set(AsFloat() - rhs);
             return *this;
         }
 
-        inline HalfFloat& operator*=(float rhs)
+        HalfFloat& operator*=(float rhs)
         {
             Set(AsFloat() * rhs);
             return *this;
         }
 
-        inline HalfFloat& operator/=(float rhs)
+        HalfFloat& operator/=(float rhs)
         {
             Set(AsFloat() / rhs);
             return *this;
         }
 
-        inline HalfFloat& operator+=(const HalfFloat& rhs)
+        HalfFloat& operator+=(const HalfFloat& rhs)
         {
             Set(AsFloat() + rhs.AsFloat());
             return *this;
         }
 
-        inline HalfFloat& operator-=(const HalfFloat& rhs)
+        HalfFloat& operator-=(const HalfFloat& rhs)
         {
             Set(AsFloat() - rhs.AsFloat());
             return *this;
         }
 
-        inline HalfFloat& operator*=(const HalfFloat& rhs)
+        HalfFloat& operator*=(const HalfFloat& rhs)
         {
             Set(AsFloat() * rhs.AsFloat());
             return *this;
         }
 
-        inline HalfFloat& operator/=(const HalfFloat& rhs)
+        HalfFloat& operator/=(const HalfFloat& rhs)
         {
             Set(AsFloat() / rhs.AsFloat());
             return *this;
@@ -323,8 +323,7 @@ namespace Common {
     template <std::endian E>
     struct Serializer<Internal::FullFloat<E>> {
         static constexpr bool serializable = true;
-        static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("Common::Internal::FullFloat");
+        static constexpr uint32_t typeId = HashUtils::StrCrc32("Common::Internal::FullFloat");
 
         static void Serialize(SerializeStream& stream, const Internal::FullFloat<E>& value)
         {
@@ -340,14 +339,14 @@ namespace Common {
             }
 
             Serializer<float>::Deserialize(stream, value.value);
+            return true;
         }
     };
 
     template <std::endian E>
     struct Serializer<HalfFloat<E>> {
         static constexpr bool serializable = true;
-        static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("Common::Internal::HalfFloat");
+        static constexpr uint32_t typeId = HashUtils::StrCrc32("Common::Internal::HalfFloat");
 
         static void Serialize(SerializeStream& stream, const HalfFloat<E>& value)
         {
@@ -363,6 +362,7 @@ namespace Common {
             }
 
             Serializer<uint16_t>::Deserialize(stream, value.value);
+            return true;
         }
     };
 }

@@ -4,7 +4,7 @@ option(BUILD_SAMPLE "Build sample" ON)
 set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Generated/Api CACHE PATH "" FORCE)
 set(META_HEADER_DIR ${CMAKE_BINARY_DIR}/Generated/Meta CACHE PATH "" FORCE)
 set(BASIC_LIBS Common CACHE STRING "" FORCE)
-set(BASIC_TEST_LIBS googletest CACHE STRING "" FORCE)
+set(BASIC_TEST_LIBS TestMain CACHE STRING "" FORCE)
 
 if (${BUILD_TEST})
     enable_testing()

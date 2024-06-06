@@ -29,7 +29,9 @@ TEST_F(ResourcePoolTest, BasicTest)
     auto& texturePool = TexturePool::Get(*device);
     PooledTextureDesc textureDesc {};
     textureDesc.dimension = RHI::TextureDimension::t2D;
-    textureDesc.extent = Common::UVec3(1920, 1080, 0);
+    textureDesc.width = 1920;
+    textureDesc.height = 1080;
+    textureDesc.depthOrArraySize = 1;
     textureDesc.format = RHI::PixelFormat::rgba8Unorm;
     textureDesc.usages = RHI::TextureUsageBits::renderAttachment | RHI::TextureUsageBits::storageBinding;
     textureDesc.mipLevels = 1;
@@ -37,10 +39,14 @@ TEST_F(ResourcePoolTest, BasicTest)
     textureDesc.initialState = RHI::TextureState::undefined;
     PooledTextureRef t1 = texturePool.Allocate(textureDesc);
 
-    textureDesc.extent = Common::UVec3(1024, 1024, 0);
+    textureDesc.width = 1024;
+    textureDesc.height = 1024;
+    textureDesc.depthOrArraySize = 1;
     PooledTextureRef t2 = texturePool.Allocate(textureDesc);
 
-    textureDesc.extent = Common::UVec3(1920, 1080, 0);
+    textureDesc.width = 1920;
+    textureDesc.height = 1080;
+    textureDesc.depthOrArraySize = 1;
     PooledTextureRef t3 = texturePool.Allocate(textureDesc);
     ASSERT_NE(t1.Get(), t3.Get());
 

@@ -27,7 +27,7 @@ namespace RHI::DirectX12 {
 
     private:
         void CreateDX12SwapChain(const SwapChainCreateInfo& inCreateInfo) ;
-        void FetchTextures(PixelFormat inFormat);
+        void FetchTextures(const SwapChainCreateInfo& inCreateInfo);
 
         DX12Device& device;
         DX12Queue& queue;
