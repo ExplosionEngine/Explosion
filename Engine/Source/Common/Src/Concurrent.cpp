@@ -31,10 +31,10 @@ namespace Common {
         thread.join();
     }
 
-    void NamedThread::SetThreadName(const std::string& name)
+    void NamedThread::SetThreadName(const std::string& name) // NOLINT
     {
 #if PLATFORM_WINDOWS
-        Assert(SUCCEEDED(SetThreadDescription(thread.native_handle(), Common::StringUtils::ToWideString(name).c_str())));
+        Assert(SUCCEEDED(SetThreadDescription(GetCurrentThread(), Common::StringUtils::ToWideString(name).c_str())));
 #elif PLATFORM_MACOS
         pthread_setname_np(name.c_str());
 #else

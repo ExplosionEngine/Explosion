@@ -29,6 +29,13 @@ namespace Common {
         ScopedCoutFlusher();
         ~ScopedCoutFlusher();
     };
+
+    class ScopedCerrFlusher {
+    public:
+        ScopedCerrFlusher();
+        ~ScopedCerrFlusher();
+    };
 }
 
 #define AutoCoutFlush Common::ScopedCoutFlusher _scopedCoutFlusher;
+#define AutoCerrFlush Common::ScopedCerrFlusher _scopedCerrFlusher;

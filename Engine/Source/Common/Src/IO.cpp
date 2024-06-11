@@ -11,4 +11,11 @@ namespace Common {
     {
         std::cout << std::flush;
     }
+
+    ScopedCerrFlusher::ScopedCerrFlusher() = default;
+
+    ScopedCerrFlusher::~ScopedCerrFlusher()
+    {
+        std::cerr << std::flush;
+    }
 }

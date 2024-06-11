@@ -11,7 +11,7 @@ struct TestStruct {
     uint32_t value;
     bool& live;
 
-    TestStruct(uint32_t inValue, bool& inLive) : value(inValue), live(inLive)
+    TestStruct(const uint32_t inValue, bool& inLive) : value(inValue), live(inLive)
     {
         live = true;
     }
@@ -22,10 +22,10 @@ struct TestStruct {
     }
 };
 
-struct ChildTestStruct : public TestStruct {
+struct ChildTestStruct : TestStruct {
     uint32_t cValue;
 
-    ChildTestStruct(uint32_t inValue, uint32_t inCValue, bool& inLive) : TestStruct(inValue, inLive), cValue(inCValue)
+    ChildTestStruct(const uint32_t inValue, const uint32_t inCValue, bool& inLive) : TestStruct(inValue, inLive), cValue(inCValue)
     {
     }
 };
@@ -34,14 +34,14 @@ TEST(MemoryTest, UniqueRefTest)
 {
     bool live;
     {
-        UniqueRef<TestStruct> ref = new TestStruct(1, live);
+        const UniqueRef ref = new TestStruct(1, live);
         ASSERT_EQ(live, true);
         ASSERT_EQ(ref->value, 1);
     }
     ASSERT_EQ(live, false);
 
     {
-        UniqueRef<TestStruct> ref = new TestStruct(1, live);
+        UniqueRef ref = new TestStruct(1, live);
         ASSERT_EQ(live, true);
         ASSERT_EQ(ref->value, 1);
 
@@ -55,7 +55,7 @@ TEST(MemoryTest, SharedRefTest)
 {
     bool live;
     {
-        SharedRef<TestStruct> ref1 = new TestStruct(1, live);
+        const SharedRef ref1 = new TestStruct(1, live);
         ASSERT_EQ(live, true);
         ASSERT_EQ(ref1->value, 1);
         ASSERT_EQ(ref1.RefCount(), 1);
@@ -65,7 +65,7 @@ TEST(MemoryTest, SharedRefTest)
         ASSERT_EQ(ref2->value, 1);
         ASSERT_EQ(ref2.RefCount(), 2);
 
-        SharedRef<TestStruct> ref3 = std::move(ref2);
+        const SharedRef<TestStruct> ref3 = std::move(ref2);
         ASSERT_EQ(live, true);
         ASSERT_EQ(ref3->value, 1);
         ASSERT_EQ(ref1.RefCount(), 2);
@@ -77,18 +77,18 @@ TEST(MemoryTest, SharedRefTest)
 TEST(MemoryTest, WeakRefTest)
 {
     bool live;
-    SharedRef<TestStruct> ref = new TestStruct(1, live);
+    SharedRef ref = new TestStruct(1, live);
     ASSERT_EQ(live, true);
     ASSERT_EQ(ref->value, 1);
     ASSERT_EQ(ref.RefCount(), 1);
 
-    WeakRef<TestStruct> weakRef = ref;
+    const WeakRef<TestStruct> weakRef = ref;
     ASSERT_EQ(live, true);
     ASSERT_EQ(weakRef.Expired(), false);
     ASSERT_EQ(ref.RefCount(), 1);
 
     {
-        auto lockRef = weakRef.Lock();
+        const auto lockRef = weakRef.Lock();
         ASSERT_EQ(live, true);
         ASSERT_EQ(lockRef->value, 1);
         ASSERT_EQ(lockRef.RefCount(), 2);
@@ -100,7 +100,7 @@ TEST(MemoryTest, WeakRefTest)
     ASSERT_EQ(weakRef.Expired(), true);
 
     {
-        auto lockRef = weakRef.Lock();
+        const auto lockRef = weakRef.Lock();
         ASSERT_EQ(lockRef, nullptr);
     }
 }
