@@ -18,7 +18,7 @@ namespace RHI {
         uint8_t baseArrayLayer;
         uint8_t arrayLayerNum;
 
-        TextureViewCreateInfo(
+        explicit TextureViewCreateInfo(
             TextureViewType inType = TextureViewType::max,
             TextureViewDimension inDimension = TextureViewDimension::max,
             TextureAspect inAspect = TextureAspect::color,

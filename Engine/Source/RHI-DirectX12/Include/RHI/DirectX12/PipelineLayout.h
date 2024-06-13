@@ -8,10 +8,8 @@
 #include <optional>
 
 #include <wrl/client.h>
-#include <d3d12.h>
 
 #include <RHI/PipelineLayout.h>
-#include <Common/Hash.h>
 
 using Microsoft::WRL::ComPtr;
 
@@ -33,14 +31,14 @@ namespace RHI::DirectX12 {
     using BindingTypeAndRootParameterIndex = std::pair<BindingType, uint32_t>;
     using RootParameterIndexMap = std::unordered_map<RootParameterKey, BindingTypeAndRootParameterIndex, RootParameterKeyHashProvider>;
 
-    class DX12PipelineLayout : public PipelineLayout {
+    class DX12PipelineLayout final : public PipelineLayout {
     public:
         NonCopyable(DX12PipelineLayout)
         DX12PipelineLayout(DX12Device& inDevice, const PipelineLayoutCreateInfo& inCreateInfo);
         ~DX12PipelineLayout() override;
 
         std::optional<BindingTypeAndRootParameterIndex> QueryRootDescriptorParameterIndex(uint8_t inLayoutIndex, const HlslBinding& inBinding);
-        ID3D12RootSignature* GetNative();
+        ID3D12RootSignature* GetNative() const;
 
     private:
         void CreateNativeRootSignature(DX12Device& inDevice, const PipelineLayoutCreateInfo& inCreateInfo);

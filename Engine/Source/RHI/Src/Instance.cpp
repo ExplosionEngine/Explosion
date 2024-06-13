@@ -26,28 +26,22 @@ namespace RHI {
 
     RHIType RHIAbbrStringToRHIType(const std::string& abbrString)
     {
-        if (abbrString == "dx12") {
-            return RHIType::directX12;
-        }
-        if (abbrString == "vulkan") {
-            return RHIType::vulkan;
-        }
-        Unimplement();
-        return RHIType::max;
+        static std::unordered_map<std::string, RHIType> map = {
+            { "dx12", RHIType::directX12 },
+            { "vulkan", RHIType::vulkan },
+            { "dummy", RHIType::dummy }
+        };
+        return map.at(abbrString);
     }
 
     std::string GetRHIModuleNameByType(const RHIType type)
     {
-        switch (type) {
-            case RHIType::directX12:
-                return "RHI-DirectX12";
-            case RHIType::metal:
-                return "RHI-Metal";
-            case RHIType::dummy:
-                return "RHI-Dummy";
-            default:
-                return "RHI-Vulkan";
-        }
+        static std::unordered_map<RHIType, std::string> map = {
+            { RHIType::directX12, "RHI-DirectX12" },
+            { RHIType::vulkan, "RHI-Vulkan" },
+            { RHIType::dummy, "RHI-Dummy" }
+        };
+        return map.at(type);
     }
 
     Instance* Instance::GetByPlatform()

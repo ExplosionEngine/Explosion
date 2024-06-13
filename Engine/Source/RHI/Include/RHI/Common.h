@@ -12,7 +12,6 @@
 #include <Common/Memory.h>
 #include <Common/String.h>
 #include <Common/Math/Vector.h>
-#include <Common/Math/Color.h>
 
 #define DECLARE_EC_FUNC() template <typename A, typename B> inline B EnumCast(const A& value);
 #define ECIMPL_BEGIN(A, B) template <> inline B EnumCast<A, B>(const A& value) {
@@ -39,36 +38,38 @@ namespace RHI {
 }
 
 namespace RHI {
-    using EnumType = uint32_t;
+    using EnumUint8T = uint8_t;
+    using EnumUint16T = uint16_t;
+    using EnumUint32T = uint32_t;
+    using EnumUint64T = uint64_t;
 
-    enum class RHIType : EnumType {
+    enum class RHIType : EnumUint8T {
         directX12,
         vulkan,
-        metal,
         dummy,
         max
     };
 
-    enum class GpuType : EnumType {
+    enum class GpuType : EnumUint8T {
         hardware,
         software,
         max
     };
 
-    enum class QueueType : EnumType {
+    enum class QueueType : EnumUint8T {
         graphics,
         compute,
         transfer,
         max
     };
 
-    enum class MapMode : EnumType {
+    enum class MapMode : EnumUint8T {
         read,
         write,
         max
     };
 
-    enum class PixelFormat : EnumType {
+    enum class PixelFormat : EnumUint8T {
         // 8-Bits
         r8Unorm,
         r8Snorm,
@@ -118,7 +119,7 @@ namespace RHI {
         max
     };
 
-    enum class VertexFormat : EnumType {
+    enum class VertexFormat : EnumUint8T {
         // 8-Bits Channel
         uint8X2,
         uint8X4,
@@ -155,14 +156,14 @@ namespace RHI {
         max
     };
 
-    enum class TextureDimension : EnumType {
+    enum class TextureDimension : EnumUint8T {
         t1D,
         t2D,
         t3D,
         max
     };
 
-    enum class TextureViewDimension : EnumType {
+    enum class TextureViewDimension : EnumUint8T {
         tv1D,
         tv2D,
         tv2DArray,
@@ -172,7 +173,7 @@ namespace RHI {
         max
     };
 
-    enum class TextureAspect : EnumType {
+    enum class TextureAspect : EnumUint8T {
         color,
         depth,
         stencil,
@@ -180,7 +181,7 @@ namespace RHI {
         max
     };
 
-    enum class TextureViewType : EnumType {
+    enum class TextureViewType : EnumUint8T {
         textureBinding,
         storageBinding,
         colorAttachment,
@@ -188,7 +189,7 @@ namespace RHI {
         max
     };
 
-    enum class BufferViewType : EnumType {
+    enum class BufferViewType : EnumUint8T {
         vertex,
         index,
         uniformBinding,
@@ -196,20 +197,20 @@ namespace RHI {
         max
     };
 
-    enum class AddressMode : EnumType {
+    enum class AddressMode : EnumUint8T {
         clampToEdge,
         repeat,
         mirrorRepeat,
         max
     };
 
-    enum class FilterMode : EnumType {
+    enum class FilterMode : EnumUint8T {
         nearest,
         linear,
         max
     };
 
-    enum class CompareFunc : EnumType {
+    enum class CompareFunc : EnumUint8T {
         never,
         less,
         equal,
@@ -221,7 +222,7 @@ namespace RHI {
         max
     };
 
-    enum class HlslBindingRangeType : EnumType {
+    enum class HlslBindingRangeType : EnumUint8T {
         constantBuffer,
         texture,
         sampler,
@@ -229,7 +230,7 @@ namespace RHI {
         max
     };
 
-    enum class BindingType : EnumType {
+    enum class BindingType : EnumUint8T {
         uniformBuffer,
         storageBuffer,
         sampler,
@@ -238,14 +239,14 @@ namespace RHI {
         max
     };
 
-    enum class SamplerBindingType : EnumType {
+    enum class SamplerBindingType : EnumUint8T {
         filtering,
         nonFiltering,
         comparison,
         max
     };
 
-    enum class TextureSampleType : EnumType {
+    enum class TextureSampleType : EnumUint8T {
         filterableFloat,
         nonFilterableFloat,
         depth,
@@ -254,25 +255,25 @@ namespace RHI {
         max
     };
 
-    enum class StorageTextureAccess : EnumType {
+    enum class StorageTextureAccess : EnumUint8T {
         writeOnly,
         max
     };
 
-    enum class VertexStepMode : EnumType {
+    enum class VertexStepMode : EnumUint8T {
         perVertex,
         perInstance,
         max
     };
 
-    enum class PrimitiveTopologyType : EnumType {
+    enum class PrimitiveTopologyType : EnumUint8T {
         point,
         line,
         triangle,
         max
     };
 
-    enum class PrimitiveTopology : EnumType {
+    enum class PrimitiveTopology : EnumUint8T {
         pointList,
         lineList,
         lineStrip,
@@ -285,32 +286,32 @@ namespace RHI {
         max
     };
 
-    enum class IndexFormat : EnumType {
+    enum class IndexFormat : EnumUint8T {
         uint16,
         uint32,
         max
     };
 
-    enum class FrontFace : EnumType {
+    enum class FrontFace : EnumUint8T {
         ccw,
         cw,
         max
     };
 
-    enum class FillMode : EnumType {
+    enum class FillMode : EnumUint8T {
         wireframe,
         solid,
         max
     };
 
-    enum class CullMode : EnumType {
+    enum class CullMode : EnumUint8T {
         none,
         front,
         back,
         max
     };
 
-    enum class StencilOp : EnumType {
+    enum class StencilOp : EnumUint8T {
         keep,
         zero,
         replace,
@@ -322,7 +323,7 @@ namespace RHI {
         max
     };
 
-    enum class BlendFactor : EnumType {
+    enum class BlendFactor : EnumUint8T {
         zero,
         one,
         src,
@@ -336,7 +337,7 @@ namespace RHI {
         max
     };
 
-    enum class BlendOp : EnumType {
+    enum class BlendOp : EnumUint8T {
         opAdd,
         opSubstract,
         opReverseSubstract,
@@ -345,19 +346,19 @@ namespace RHI {
         max
     };
 
-    enum class LoadOp : EnumType {
+    enum class LoadOp : EnumUint8T {
         load,
         clear,
         max
     };
 
-    enum class StoreOp : EnumType {
+    enum class StoreOp : EnumUint8T {
         store,
         discard,
         max
     };
 
-    enum class PresentMode : EnumType {
+    enum class PresentMode : EnumUint8T {
         // TODO check this
         // 1. DirectX SwapEffect #see https://docs.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_swap_effect
         // 2. Vulkan VkPresentModeKHR #see https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VkPresentModeKHR.html
@@ -366,13 +367,13 @@ namespace RHI {
         max
     };
 
-    enum class ResourceType : EnumType {
+    enum class ResourceType : EnumUint8T {
         buffer,
         texture,
         max
     };
 
-    enum class BufferState : EnumType {
+    enum class BufferState : EnumUint8T {
         undefined,
         staging,
         copySrc,
@@ -382,7 +383,7 @@ namespace RHI {
         max
     };
 
-    enum class TextureState : EnumType {
+    enum class TextureState : EnumUint8T {
         undefined,
         copySrc,
         copyDst,
@@ -403,7 +404,10 @@ namespace RHI {
     FlagsType operator|(FlagsType a, BitsType b); \
 
 namespace RHI {
-    using FlagBitsType = uint32_t;
+    using FlagBitsUint8T = uint8_t;
+    using FlagBitsUint16T = uint16_t;
+    using FlagBitsUint32T = uint32_t;
+    using FlagBitsUint64T = uint64_t;
 
     template <typename E>
     class Flags {
@@ -476,7 +480,7 @@ namespace RHI {
         return Flags<E>(a.Value() | b.Value());
     }
 
-    enum class BufferUsageBits : FlagBitsType {
+    enum class BufferUsageBits : FlagBitsUint16T {
         mapRead      = 0x1,
         mapWrite     = 0x2,
         copySrc      = 0x4,
@@ -492,7 +496,7 @@ namespace RHI {
     using BufferUsageFlags = Flags<BufferUsageBits>;
     RHI_FLAGS_DECLARE(BufferUsageFlags, BufferUsageBits)
 
-    enum class TextureUsageBits : FlagBitsType {
+    enum class TextureUsageBits : FlagBitsUint8T {
         copySrc                 = 0x1,
         copyDst                 = 0x2,
         textureBinding          = 0x4,
@@ -504,7 +508,7 @@ namespace RHI {
     using TextureUsageFlags = Flags<TextureUsageBits>;
     RHI_FLAGS_DECLARE(TextureUsageFlags, TextureUsageBits)
 
-    enum class ShaderStageBits : FlagBitsType {
+    enum class ShaderStageBits : FlagBitsUint8T {
         sVertex   = 0x1,
         sPixel    = 0x2,
         sCompute  = 0x4,
@@ -516,7 +520,7 @@ namespace RHI {
     using ShaderStageFlags = Flags<ShaderStageBits>;
     RHI_FLAGS_DECLARE(ShaderStageFlags, ShaderStageBits)
 
-    enum class ColorWriteBits : FlagBitsType {
+    enum class ColorWriteBits : FlagBitsUint8T {
         red   = 0x1,
         green = 0x2,
         blue  = 0x4,
@@ -529,7 +533,7 @@ namespace RHI {
     RHI_FLAGS_DECLARE(ColorWriteFlags, ColorWriteBits)
 }
 
-namespace std {
+namespace std { // NOLINT
     template <typename E>
     struct hash<RHI::Flags<E>>
     {

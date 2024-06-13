@@ -17,6 +17,6 @@ namespace RHI::Dummy {
 
     Common::UniqueRef<Device> DummyGpu::RequestDevice(const DeviceCreateInfo& createInfo)
     {
-        return Common::UniqueRef<Device>(new DummyDevice(createInfo));
+        return { new DummyDevice(createInfo) };
     }
 }

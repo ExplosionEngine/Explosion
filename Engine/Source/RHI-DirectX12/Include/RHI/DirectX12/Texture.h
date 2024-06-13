@@ -12,7 +12,7 @@ using Microsoft::WRL::ComPtr;
 namespace RHI::DirectX12 {
     class DX12Device;
 
-    class DX12Texture : public Texture {
+    class DX12Texture final : public Texture {
     public:
         NonCopyable(DX12Texture)
         DX12Texture(DX12Device& inDevice, const TextureCreateInfo& inCreateInfo);

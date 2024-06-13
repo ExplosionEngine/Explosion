@@ -7,14 +7,14 @@
 #include <RHI/Pipeline.h>
 
 namespace RHI::Dummy {
-    class DummyComputePipeline : public ComputePipeline {
+    class DummyComputePipeline final : public ComputePipeline {
     public:
         NonCopyable(DummyComputePipeline)
         explicit DummyComputePipeline(const ComputePipelineCreateInfo& createInfo);
         ~DummyComputePipeline() override;
     };
 
-    class DummyRasterPipeline : public RasterPipeline {
+    class DummyRasterPipeline final : public RasterPipeline {
     public:
         NonCopyable(DummyRasterPipeline)
         explicit DummyRasterPipeline(const RasterPipelineCreateInfo& createInfo);

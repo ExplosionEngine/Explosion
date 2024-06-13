@@ -5,30 +5,30 @@
 #include <RHI/BindGroupLayout.h>
 
 namespace RHI {
-    HlslBinding::HlslBinding(HlslBindingRangeType inRangeType, uint8_t inIndex)
+    HlslBinding::HlslBinding(const HlslBindingRangeType inRangeType, const uint8_t inIndex)
         : rangeType(inRangeType)
         , index(inIndex)
     {
     }
 
-    GlslBinding::GlslBinding(uint8_t inIndex)
+    GlslBinding::GlslBinding(const uint8_t inIndex)
         : index(inIndex)
     {
     }
 
-    ResourceBinding::ResourceBinding(BindingType inType, const std::variant<HlslBinding, GlslBinding>& inPlatformBinding)
+    ResourceBinding::ResourceBinding(const BindingType inType, const std::variant<HlslBinding, GlslBinding>& inPlatformBinding)
         : type(inType)
         , platformBinding(inPlatformBinding)
     {
     }
 
-    BindGroupLayoutEntry::BindGroupLayoutEntry(const ResourceBinding& inBinding, ShaderStageFlags inShaderVisibility)
+    BindGroupLayoutEntry::BindGroupLayoutEntry(const ResourceBinding& inBinding, const ShaderStageFlags inShaderVisibility)
         : binding(inBinding)
         , shaderVisibility(inShaderVisibility)
     {
     }
 
-    BindGroupLayoutCreateInfo::BindGroupLayoutCreateInfo(uint8_t inLayoutIndex, std::string inDebugName)
+    BindGroupLayoutCreateInfo::BindGroupLayoutCreateInfo(const uint8_t inLayoutIndex, std::string inDebugName)
         : layoutIndex(inLayoutIndex)
         , debugName(std::move(inDebugName))
     {
@@ -40,7 +40,7 @@ namespace RHI {
         return *this;
     }
 
-    BindGroupLayout::BindGroupLayout(const BindGroupLayoutCreateInfo& createInfo) {}
+    BindGroupLayout::BindGroupLayout(const BindGroupLayoutCreateInfo&) {}
 
     BindGroupLayout::~BindGroupLayout() = default;
 }

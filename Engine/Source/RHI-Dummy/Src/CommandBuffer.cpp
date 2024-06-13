@@ -10,6 +10,6 @@ namespace RHI::Dummy {
 
     Common::UniqueRef<CommandRecorder> DummyCommandBuffer::Begin()
     {
-        return Common::UniqueRef<CommandRecorder>(new DummyCommandRecorder(*this));
+        return { new DummyCommandRecorder(*this) };
     }
 }

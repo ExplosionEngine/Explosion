@@ -7,7 +7,7 @@
 #include <RHI/Surface.h>
 
 namespace RHI::Dummy {
-    class DummySurface : public Surface {
+    class DummySurface final : public Surface {
     public:
         NonCopyable(DummySurface)
         explicit DummySurface(const SurfaceCreateInfo& createInfo);

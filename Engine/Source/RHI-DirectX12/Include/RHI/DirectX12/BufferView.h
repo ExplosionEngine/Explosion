@@ -15,7 +15,7 @@ namespace RHI::DirectX12 {
     class DX12Buffer;
     class DX12Device;
 
-    class DX12BufferView : public BufferView {
+    class DX12BufferView final : public BufferView {
     public:
         NonCopyable(DX12BufferView)
         DX12BufferView(DX12Buffer& inBuffer, const BufferViewCreateInfo& inCreateInfo);

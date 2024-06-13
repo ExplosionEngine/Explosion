@@ -9,22 +9,22 @@
 #include <RHI/DirectX12/TextureView.h>
 
 namespace RHI::DirectX12 {
-    static bool IsShaderResource(TextureViewType type)
+    static bool IsShaderResource(const TextureViewType type)
     {
         return (type == TextureViewType::textureBinding);
     }
 
-    static bool IsUnorderedAccess(TextureViewType type)
+    static bool IsUnorderedAccess(const TextureViewType type)
     {
         return (type == TextureViewType::storageBinding);
     }
 
-    static bool IsRenderTarget(TextureViewType type)
+    static bool IsRenderTarget(const TextureViewType type)
     {
         return (type == TextureViewType::colorAttachment);
     }
 
-    static bool IsDepthStencil(TextureViewType type)
+    static bool IsDepthStencil(const TextureViewType type)
     {
         return (type == TextureViewType::depthStencil);
     }
@@ -209,7 +209,7 @@ namespace RHI::DirectX12 {
 
     DX12TextureView::~DX12TextureView() = default;
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12TextureView::GetNativeCpuDescriptorHandle()
+    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12TextureView::GetNativeCpuDescriptorHandle() const
     {
         return descriptorAllocation->GetCpuHandle();
     }

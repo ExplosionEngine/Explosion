@@ -26,9 +26,9 @@ namespace RHI::DirectX12 {
     using NativeDebugLayerExceptionHandler = std::function<void()>;
 #endif
 
-    extern RHI::Instance* gInstance;
+    extern Instance* gInstance;
 
-    class RHI_DIRECTX12_API DX12Instance : public Instance {
+    class RHI_DIRECTX12_API DX12Instance final : public Instance {
     public:
         NonCopyable(DX12Instance)
         DX12Instance();
@@ -39,11 +39,11 @@ namespace RHI::DirectX12 {
         Gpu* GetGpu(uint32_t index) override;
         void Destroy() override;
 
-        IDXGIFactory4* GetNative();
+        IDXGIFactory4* GetNative() const;
 #if BUILD_CONFIG_DEBUG
         void AddDebugLayerExceptionHandler(const DX12Device* inDevice, NativeDebugLayerExceptionHandler inHandler);
         void RemoveDebugLayerExceptionHandler(const DX12Device* inDevice);
-        void BroadcastDebugLayerExceptions();
+        void BroadcastDebugLayerExceptions() const;
 #endif
 
     private:
@@ -51,7 +51,7 @@ namespace RHI::DirectX12 {
         void EnumerateAdapters();
 #if BUILD_CONFIG_DEBUG
         void RegisterDX12ExceptionHandler();
-        void UnregisterDX12ExceptionHandler();
+        void UnregisterDX12ExceptionHandler() const;
 #endif
 
         ComPtr<IDXGIFactory4> nativeFactory;

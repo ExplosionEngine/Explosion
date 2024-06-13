@@ -33,7 +33,7 @@ namespace RHI {
     {
     }
 
-    VertexAttribute& VertexAttribute::SetPlatformBinding(const PlatformVertexBinding inPlatformBinding)
+    VertexAttribute& VertexAttribute::SetPlatformBinding(const PlatformVertexBinding& inPlatformBinding)
     {
         platformBinding = inPlatformBinding;
         return *this;

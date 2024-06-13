@@ -2,13 +2,11 @@
 // Created by johnk on 6/3/2022.
 //
 
-#include <unordered_map>
-
 #include <RHI/DirectX12/Common.h>
 #include <RHI/DirectX12/BindGroupLayout.h>
 
 namespace RHI::DirectX12 {
-    D3D12_SHADER_VISIBILITY GetShaderVisibility(ShaderStageFlags shaderStageFlags)
+    D3D12_SHADER_VISIBILITY GetShaderVisibility(const ShaderStageFlags shaderStageFlags)
     {
         uint8_t count = 0;
         ForEachBitsType<ShaderStageBits>([&](ShaderStageBits shaderStage) -> void {
@@ -21,7 +19,7 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    RootParameterKeyInfo::RootParameterKeyInfo(BindingType inBindingType, uint8_t inLayoutIndex, HlslBinding inBinding)
+    RootParameterKeyInfo::RootParameterKeyInfo(const BindingType inBindingType, const uint8_t inLayoutIndex, const HlslBinding inBinding)
         : bindingType(inBindingType)
         , layoutIndex(inLayoutIndex)
         , binding(inBinding)
@@ -30,7 +28,6 @@ namespace RHI::DirectX12 {
 
     DX12BindGroupLayout::DX12BindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
         : BindGroupLayout(inCreateInfo)
-        , nativeRootParameters()
         , layoutIndex(inCreateInfo.layoutIndex)
     {
         CreateNativeRootParameters(inCreateInfo);

@@ -7,7 +7,7 @@
 #include <RHI/BindGroupLayout.h>
 
 namespace RHI::Dummy {
-    class DummyBindGroupLayout : public BindGroupLayout {
+    class DummyBindGroupLayout final : public BindGroupLayout {
     public:
         NonCopyable(DummyBindGroupLayout)
         explicit DummyBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo);

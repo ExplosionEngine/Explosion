@@ -7,7 +7,7 @@
 #include <RHI/Sampler.h>
 
 namespace RHI::Dummy {
-    class DummySampler : public Sampler {
+    class DummySampler final : public Sampler {
     public:
         NonCopyable(DummySampler)
         explicit DummySampler(const SamplerCreateInfo& createInfo);

@@ -7,7 +7,7 @@
 #include <Common/Debug.h>
 
 namespace RHI::Dummy {
-    RHI::Instance* gInstance = nullptr;
+    Instance* gInstance = nullptr;
 
     DummyInstance::DummyInstance()
         : dummyGpu(Common::MakeUnique<DummyGpu>())
@@ -26,7 +26,7 @@ namespace RHI::Dummy {
         return 1;
     }
 
-    Gpu* DummyInstance::GetGpu(uint32_t index)
+    Gpu* DummyInstance::GetGpu(const uint32_t index)
     {
         Assert(index == 0);
         return dummyGpu.Get();

@@ -13,7 +13,7 @@ namespace RHI::DirectX12 {
     class DX12RasterPipeline;
     class DX12PipelineLayout;
 
-    class DX12CommandRecorder : public CommandRecorder {
+    class DX12CommandRecorder final : public CommandRecorder {
     public:
         NonCopyable(DX12CommandRecorder)
         explicit DX12CommandRecorder(DX12Device& inDevice, DX12CommandBuffer& inCmdBuffer);
@@ -30,7 +30,7 @@ namespace RHI::DirectX12 {
         DX12CommandBuffer& commandBuffer;
     };
 
-    class DX12CopyPassCommandRecorder : public CopyPassCommandRecorder {
+    class DX12CopyPassCommandRecorder final : public CopyPassCommandRecorder {
     public:
         NonCopyable(DX12CopyPassCommandRecorder)
         explicit DX12CopyPassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer);
@@ -52,7 +52,7 @@ namespace RHI::DirectX12 {
         DX12CommandBuffer& commandBuffer;
     };
 
-    class DX12ComputePassCommandRecorder : public ComputePassCommandRecorder {
+    class DX12ComputePassCommandRecorder final : public ComputePassCommandRecorder {
     public:
         NonCopyable(DX12ComputePassCommandRecorder)
         explicit DX12ComputePassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer);
@@ -74,7 +74,7 @@ namespace RHI::DirectX12 {
         DX12CommandBuffer& commandBuffer;
     };
 
-    class DX12RasterPassCommandRecorder : public RasterPassCommandRecorder {
+    class DX12RasterPassCommandRecorder final : public RasterPassCommandRecorder {
     public:
         NonCopyable(DX12RasterPassCommandRecorder)
         explicit DX12RasterPassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer, const RasterPassBeginInfo& inBeginInfo);

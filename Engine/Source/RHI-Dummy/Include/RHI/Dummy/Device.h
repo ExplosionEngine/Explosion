@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummyQueue;
 
-    class DummyDevice : public Device {
+    class DummyDevice final : public Device {
     public:
         NonCopyable(DummyDevice)
         explicit DummyDevice(const DeviceCreateInfo& createInfo);

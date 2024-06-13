@@ -5,14 +5,13 @@
 #pragma once
 
 #include <RHI/Instance.h>
-#include <RHI/Dummy/Api.h>
 
 namespace RHI::Dummy {
     class DummyGpu;
 
-    extern RHI::Instance* gInstance;
+    extern Instance* gInstance;
 
-    class DummyInstance : public Instance {
+    class DummyInstance final : public Instance {
     public:
         NonCopyable(DummyInstance)
         DummyInstance();

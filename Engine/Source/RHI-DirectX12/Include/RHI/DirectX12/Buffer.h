@@ -14,7 +14,7 @@ using Microsoft::WRL::ComPtr;
 namespace RHI::DirectX12 {
     class DX12Device;
 
-    class DX12Buffer : public Buffer {
+    class DX12Buffer final : public Buffer {
     public:
         NonCopyable(DX12Buffer)
         explicit DX12Buffer(DX12Device& device, const BufferCreateInfo& inCreateInfo);
@@ -24,9 +24,9 @@ namespace RHI::DirectX12 {
         void UnMap() override;
         Common::UniqueRef<BufferView> CreateBufferView(const BufferViewCreateInfo& inCreateInfo) override;
 
-        ID3D12Resource* GetNative();
-        DX12Device& GetDevice();
-        BufferUsageFlags GetUsages();
+        ID3D12Resource* GetNative() const;
+        DX12Device& GetDevice() const;
+        BufferUsageFlags GetUsages() const;
 
     private:
         void CreateNativeBuffer(DX12Device& inDevice, const BufferCreateInfo& inCreateInfo);

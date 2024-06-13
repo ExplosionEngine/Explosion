@@ -22,7 +22,7 @@
 
 class Application {
 public:
-    enum class MouseButton {
+    enum class MouseButton : uint8_t {
         left,
         right,
         middle,

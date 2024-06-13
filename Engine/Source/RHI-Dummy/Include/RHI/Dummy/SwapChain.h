@@ -11,7 +11,7 @@
 namespace RHI::Dummy {
     class DummyTexture;
 
-    class DummySwapChain : public SwapChain {
+    class DummySwapChain final : public SwapChain {
     public:
         NonCopyable(DummySwapChain)
         explicit DummySwapChain(const SwapChainCreateInfo& createInfo);

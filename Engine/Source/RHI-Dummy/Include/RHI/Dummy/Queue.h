@@ -7,7 +7,7 @@
 #include <RHI/Queue.h>
 
 namespace RHI::Dummy {
-    class DummyQueue : public Queue {
+    class DummyQueue final : public Queue {
     public:
         NonCopyable(DummyQueue)
         DummyQueue();

@@ -7,7 +7,7 @@
 #include <RHI/ShaderModule.h>
 
 namespace RHI::Dummy {
-    class DummyShaderModule : public ShaderModule {
+    class DummyShaderModule final : public ShaderModule {
     public:
         NonCopyable(DummyShaderModule)
         explicit DummyShaderModule(const ShaderModuleCreateInfo& createInfo);

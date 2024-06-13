@@ -17,7 +17,7 @@ using namespace Microsoft::WRL;
 namespace RHI::DirectX12 {
     class DX12Device;
 
-    class DX12Fence : public Fence {
+    class DX12Fence final : public Fence {
     public:
         NonCopyable(DX12Fence)
         explicit DX12Fence(DX12Device& inDevice, bool inInitAsSignaled);
@@ -27,7 +27,7 @@ namespace RHI::DirectX12 {
         void Reset() override;
         void Wait() override;
 
-        ID3D12Fence* GetNative();
+        ID3D12Fence* GetNative() const;
 
     private:
         void CreateNativeFence(DX12Device& inDevice, bool inInitAsSignaled);
@@ -37,12 +37,12 @@ namespace RHI::DirectX12 {
         HANDLE nativeFenceEvent;
     };
 
-    class DX12Semaphore : public Semaphore {
+    class DX12Semaphore final : public Semaphore {
     public:
         NonCopyable(DX12Semaphore)
         explicit DX12Semaphore(DX12Device& inDevice);
 
-        ID3D12Fence* GetNative();
+        ID3D12Fence* GetNative() const;
 
     private:
         void CreateNativeFence(DX12Device& inDevice);

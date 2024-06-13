@@ -6,7 +6,7 @@
 #include <RHI/Dummy/Device.h>
 
 namespace RHI::Dummy {
-    DummyFence::DummyFence(DummyDevice& device, bool bInitAsSignal)
+    DummyFence::DummyFence(DummyDevice& device, const bool bInitAsSignal)
         : Fence(device, bInitAsSignal)
     {
     }
