@@ -4,12 +4,11 @@
 
 #pragma once
 
-#include <Core/Module.h>
 #include <RHI/RHIModule.h>
 #include <RHI/Dummy/Api.h>
 
 namespace RHI::Dummy {
-    class RHI_DUMMY_API DummyRHIModule : public RHIModule {
+    class RHI_DUMMY_API DummyRHIModule final : public RHIModule {
     public:
         DummyRHIModule();
         ~DummyRHIModule() override;

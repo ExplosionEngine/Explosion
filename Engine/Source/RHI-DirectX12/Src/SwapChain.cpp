@@ -43,26 +43,26 @@ namespace RHI::DirectX12 {
     uint8_t DX12SwapChain::AcquireBackTexture(Semaphore* inSignalSemaphore)
     {
         auto& dx12SignalSemaphore = static_cast<DX12Semaphore&>(*inSignalSemaphore);
-        auto result = static_cast<uint8_t>(nativeSwapChain->GetCurrentBackBufferIndex());
+        const auto result = static_cast<uint8_t>(nativeSwapChain->GetCurrentBackBufferIndex());
         auto* fence = dx12SignalSemaphore.GetNative();
-        fence->Signal(0);
-        fence->Signal(1);
+        Assert(SUCCEEDED(fence->Signal(0)));
+        Assert(SUCCEEDED(fence->Signal(1)));
         return result;
     }
 
     void DX12SwapChain::Present(Semaphore* inWaitSemaphore)
     {
         auto& dx12WaitSemaphore = static_cast<DX12Semaphore&>(*inWaitSemaphore);
-        queue.GetNative()->Wait(dx12WaitSemaphore.GetNative(), 1);
-        nativeSwapChain->Present(GetSyncInterval(presentMode), false);
+        Assert(SUCCEEDED(queue.GetNative()->Wait(dx12WaitSemaphore.GetNative(), 1)));
+        Assert(SUCCEEDED(nativeSwapChain->Present(GetSyncInterval(presentMode), false)));
     }
 
     void DX12SwapChain::CreateDX12SwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
-        auto& instance = device.GetGpu().GetInstance();
-        auto* dx12Queue = static_cast<DX12Queue*>(inCreateInfo.presentQueue);
+        const auto& instance = device.GetGpu().GetInstance();
+        const auto* dx12Queue = static_cast<DX12Queue*>(inCreateInfo.presentQueue);
         Assert(dx12Queue != nullptr);
-        auto* dx12Surface = static_cast<DX12Surface*>(inCreateInfo.surface);
+        const auto* dx12Surface = static_cast<DX12Surface*>(inCreateInfo.surface);
         Assert(dx12Surface != nullptr);
 
         DXGI_SWAP_CHAIN_DESC1 desc {};
@@ -93,8 +93,7 @@ namespace RHI::DirectX12 {
         textures.resize(textureNum);
         for (auto i = 0; i < textureNum; i++) {
             ComPtr<ID3D12Resource> dx12Resource;
-            bool success = SUCCEEDED(nativeSwapChain->GetBuffer(i, IID_PPV_ARGS(&dx12Resource)));
-            Assert(success);
+            Assert(SUCCEEDED(nativeSwapChain->GetBuffer(i, IID_PPV_ARGS(&dx12Resource))));
 
             TextureCreateInfo textureCreateInfo = TextureCreateInfo()
                 .SetDimension(TextureDimension::t2D)

@@ -10,7 +10,7 @@
 
 namespace RHI::DirectX12 {
 #if BUILD_CONFIG_DEBUG
-    static LONG __stdcall DX12VectoredExceptionHandler(EXCEPTION_POINTERS* info)
+    static LONG __stdcall DX12VectoredExceptionHandler(EXCEPTION_POINTERS* info) // NOLINT
     {
         if (info->ExceptionRecord->ExceptionCode != _FACDXGI)
         {
@@ -47,7 +47,7 @@ namespace RHI::DirectX12 {
         return RHIType::directX12;
     }
 
-    IDXGIFactory4* DX12Instance::GetNative()
+    IDXGIFactory4* DX12Instance::GetNative() const
     {
         return nativeFactory.Get();
     }
@@ -58,26 +58,26 @@ namespace RHI::DirectX12 {
         nativeExceptionHandler = AddVectoredExceptionHandler(1, DX12VectoredExceptionHandler);
     }
 
-    void DX12Instance::UnregisterDX12ExceptionHandler()
+    void DX12Instance::UnregisterDX12ExceptionHandler() const
     {
         RemoveVectoredExceptionHandler(nativeExceptionHandler);
     }
 
     void DX12Instance::AddDebugLayerExceptionHandler(const DX12Device* inDevice, NativeDebugLayerExceptionHandler inHandler)
     {
-        auto iter = nativeDebugLayerExceptionHandlers.find(inDevice);
+        const auto iter = nativeDebugLayerExceptionHandlers.find(inDevice);
         Assert(iter == nativeDebugLayerExceptionHandlers.end());
         nativeDebugLayerExceptionHandlers[inDevice] = std::move(inHandler);
     }
 
     void DX12Instance::RemoveDebugLayerExceptionHandler(const DX12Device* inDevice)
     {
-        auto iter = nativeDebugLayerExceptionHandlers.find(inDevice);
+        const auto iter = nativeDebugLayerExceptionHandlers.find(inDevice);
         Assert(iter != nativeDebugLayerExceptionHandlers.end());
         nativeDebugLayerExceptionHandlers.erase(iter);
     }
 
-    void DX12Instance::BroadcastDebugLayerExceptions()
+    void DX12Instance::BroadcastDebugLayerExceptions() const
     {
         for (const auto& handler : nativeDebugLayerExceptionHandlers)
         {
@@ -100,8 +100,7 @@ namespace RHI::DirectX12 {
         }
 #endif
 
-        bool success = SUCCEEDED(CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&nativeFactory)));
-        Assert(success);
+        Assert(SUCCEEDED(CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&nativeFactory))));
     }
 
     void DX12Instance::EnumerateAdapters()
@@ -118,7 +117,7 @@ namespace RHI::DirectX12 {
         return gpus.size();
     }
 
-    Gpu* DX12Instance::GetGpu(uint32_t index)
+    Gpu* DX12Instance::GetGpu(const uint32_t index)
     {
         return gpus[index].Get();
     }

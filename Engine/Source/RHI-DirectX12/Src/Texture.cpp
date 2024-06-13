@@ -62,7 +62,7 @@ namespace RHI::DirectX12 {
 
 #if BUILD_CONFIG_DEBUG
         if (!inCreateInfo.debugName.empty()) {
-            nativeResource->SetName(Common::StringUtils::ToWideString(inCreateInfo.debugName).c_str());
+            Assert(SUCCEEDED(nativeResource->SetName(Common::StringUtils::ToWideString(inCreateInfo.debugName).c_str())));
         }
 #endif
     }

@@ -7,7 +7,7 @@
 #include <RHI/Texture.h>
 
 namespace RHI::Dummy {
-    class DummyTexture : public Texture {
+    class DummyTexture final : public Texture {
     public:
         NonCopyable(DummyTexture)
         explicit DummyTexture(const TextureCreateInfo& createInfo);

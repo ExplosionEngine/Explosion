@@ -27,19 +27,18 @@ namespace RHI::DirectX12 {
 namespace RHI::DirectX12 {
     DX12Sampler::DX12Sampler(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo)
         : Sampler(inCreateInfo)
-        , descriptorAllocation()
     {
         CreateDX12Descriptor(inDevice, inCreateInfo);
     }
 
     DX12Sampler::~DX12Sampler() = default;
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Sampler::GetNativeCpuDescriptorHandle()
+    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Sampler::GetNativeCpuDescriptorHandle() const
     {
         return descriptorAllocation->GetCpuHandle();
     }
 
-    void DX12Sampler::CreateDX12Descriptor(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo)
+    void DX12Sampler::CreateDX12Descriptor(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo) // NOLINT
     {
         D3D12_SAMPLER_DESC desc {};
         desc.AddressU = EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeU);

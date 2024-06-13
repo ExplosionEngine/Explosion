@@ -15,59 +15,58 @@ namespace RHI {
         , mipLevels(0)
         , samples(1)
         , initialState(TextureState::max)
-        , debugName()
     {
     }
 
-    TextureCreateInfo& TextureCreateInfo::SetDimension(TextureDimension inDimension)
+    TextureCreateInfo& TextureCreateInfo::SetDimension(const TextureDimension inDimension)
     {
         dimension = inDimension;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::SetWidth(uint32_t inWidth)
+    TextureCreateInfo& TextureCreateInfo::SetWidth(const uint32_t inWidth)
     {
         width = inWidth;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::SetHeight(uint32_t inHeight)
+    TextureCreateInfo& TextureCreateInfo::SetHeight(const uint32_t inHeight)
     {
         height = inHeight;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::SetDepthOrArraySize(uint32_t inDepthOrArraySize)
+    TextureCreateInfo& TextureCreateInfo::SetDepthOrArraySize(const uint32_t inDepthOrArraySize)
     {
         depthOrArraySize = inDepthOrArraySize;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::SetFormat(PixelFormat inFormat)
+    TextureCreateInfo& TextureCreateInfo::SetFormat(const PixelFormat inFormat)
     {
         format = inFormat;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::SetUsages(TextureUsageFlags inUsages)
+    TextureCreateInfo& TextureCreateInfo::SetUsages(const TextureUsageFlags inUsages)
     {
         usages = inUsages;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::SetMipLevels(uint8_t inMipLevels)
+    TextureCreateInfo& TextureCreateInfo::SetMipLevels(const uint8_t inMipLevels)
     {
         mipLevels = inMipLevels;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::SetSamples(uint8_t inSamples)
+    TextureCreateInfo& TextureCreateInfo::SetSamples(const uint8_t inSamples)
     {
         samples = inSamples;
         return *this;
     }
 
-    TextureCreateInfo& TextureCreateInfo::SetInitialState(TextureState inState)
+    TextureCreateInfo& TextureCreateInfo::SetInitialState(const TextureState inState)
     {
         initialState = inState;
         return *this;

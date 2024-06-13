@@ -10,7 +10,7 @@
 #include <RHI/ShaderModule.h>
 
 namespace RHI::DirectX12 {
-    class DX12ShaderModule : public ShaderModule {
+    class DX12ShaderModule final : public ShaderModule {
     public:
         NonCopyable(DX12ShaderModule)
         explicit DX12ShaderModule(const ShaderModuleCreateInfo& inCreateInfo);

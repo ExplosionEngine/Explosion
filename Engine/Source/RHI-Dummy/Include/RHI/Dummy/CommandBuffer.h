@@ -7,7 +7,7 @@
 #include <RHI/CommandBuffer.h>
 
 namespace RHI::Dummy {
-    class DummyCommandBuffer : public CommandBuffer {
+    class DummyCommandBuffer final : public CommandBuffer {
     public:
         NonCopyable(DummyCommandBuffer)
         DummyCommandBuffer();

@@ -10,7 +10,7 @@
 namespace RHI {
     class RHIModule : public Core::Module {
     public:
-        virtual ~RHIModule() override;
+        ~RHIModule() override;
         virtual Instance* GetRHIInstance() = 0;
 
     protected:

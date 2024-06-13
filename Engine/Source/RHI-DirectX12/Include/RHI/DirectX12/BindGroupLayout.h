@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <memory>
-
 #include <directx/d3dx12.h>
 
 #include <RHI/BindGroupLayout.h>
@@ -21,7 +19,7 @@ namespace RHI::DirectX12 {
         RootParameterKeyInfo(BindingType inBindingType, uint8_t inLayoutIndex, HlslBinding inBinding);
     };
 
-    class DX12BindGroupLayout : public BindGroupLayout {
+    class DX12BindGroupLayout final : public BindGroupLayout {
     public:
         NonCopyable(DX12BindGroupLayout)
         explicit DX12BindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo);

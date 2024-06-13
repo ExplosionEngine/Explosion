@@ -22,11 +22,11 @@ namespace RHI {
         TextureState after;
     };
 
-    struct BufferTransition : public BufferTransitionBase {
+    struct BufferTransition : BufferTransitionBase {
         Buffer* pointer;
     };
 
-    struct TextureTransition : public TextureTransitionBase {
+    struct TextureTransition : TextureTransitionBase {
         Texture* pointer;
     };
 

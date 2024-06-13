@@ -9,7 +9,7 @@
 #include <RHI/Surface.h>
 
 namespace RHI::DirectX12 {
-    class DX12Surface : public Surface {
+    class DX12Surface final : public Surface {
     public:
         NonCopyable(DX12Surface)
         explicit DX12Surface(const SurfaceCreateInfo& inCreateInfo);

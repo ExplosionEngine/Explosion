@@ -8,8 +8,7 @@
 
 namespace RHI::DirectX12 {
     DX12Gpu::DX12Gpu(DX12Instance& inInstance, ComPtr<IDXGIAdapter1>&& inNativeAdapter)
-        : Gpu()
-        , instance(inInstance)
+        : instance(inInstance)
         , nativeAdapter(inNativeAdapter)
     {
     }
@@ -19,7 +18,7 @@ namespace RHI::DirectX12 {
     GpuProperty DX12Gpu::GetProperty()
     {
         DXGI_ADAPTER_DESC1 desc;
-        nativeAdapter->GetDesc1(&desc);
+        Assert(SUCCEEDED(nativeAdapter->GetDesc1(&desc)));
 
         GpuProperty property {};
         property.vendorId = desc.VendorId;
@@ -28,12 +27,12 @@ namespace RHI::DirectX12 {
         return property;
     }
 
-    DX12Instance& DX12Gpu::GetInstance()
+    DX12Instance& DX12Gpu::GetInstance() const
     {
         return instance;
     }
 
-    IDXGIAdapter1* DX12Gpu::GetNative()
+    IDXGIAdapter1* DX12Gpu::GetNative() const
     {
         return nativeAdapter.Get();
     }

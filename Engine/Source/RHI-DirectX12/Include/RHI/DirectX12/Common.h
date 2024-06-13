@@ -8,9 +8,7 @@
 #include <utility>
 #include <unordered_map>
 #include <format>
-#include <functional>
 
-#include <dxgi1_4.h>
 #include <d3d12.h>
 
 #include <Common/Debug.h>

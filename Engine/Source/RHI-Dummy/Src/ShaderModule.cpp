@@ -7,7 +7,6 @@
 namespace RHI::Dummy {
     DummyShaderModule::DummyShaderModule(const ShaderModuleCreateInfo& createInfo)
         : ShaderModule(createInfo)
-        , entryPoint()
     {
     }
 

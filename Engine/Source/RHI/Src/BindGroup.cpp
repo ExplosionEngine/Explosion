@@ -25,7 +25,7 @@ namespace RHI {
         return *this;
     }
 
-    BindGroup::BindGroup(const BindGroupCreateInfo& createInfo) {}
+    BindGroup::BindGroup(const BindGroupCreateInfo&) {}
 
     BindGroup::~BindGroup() = default;
 }

@@ -5,51 +5,54 @@
 #include <RHI/CommandRecorder.h>
 
 namespace RHI {
-    TextureSubResourceInfo::TextureSubResourceInfo(uint8_t inMipLevel, uint8_t inArrayLayer, TextureAspect inAspect)
+    TextureSubResourceInfo::TextureSubResourceInfo(
+        const uint8_t inMipLevel,
+        const uint8_t inArrayLayer,
+        const TextureAspect inAspect)
         : mipLevel(inMipLevel)
         , arrayLayer(inArrayLayer)
         , aspect(inAspect)
     {
     }
 
-    TextureSubResourceInfo& TextureSubResourceInfo::SetMipLevel(uint8_t inMipLevel)
+    TextureSubResourceInfo& TextureSubResourceInfo::SetMipLevel(const uint8_t inMipLevel)
     {
         mipLevel = inMipLevel;
         return *this;
     }
 
-    TextureSubResourceInfo& TextureSubResourceInfo::SetArrayLayer(uint8_t inArrayLayer)
+    TextureSubResourceInfo& TextureSubResourceInfo::SetArrayLayer(const uint8_t inArrayLayer)
     {
         arrayLayer = inArrayLayer;
         return *this;
     }
 
-    TextureSubResourceInfo& TextureSubResourceInfo::SetAspect(TextureAspect inAspect)
+    TextureSubResourceInfo& TextureSubResourceInfo::SetAspect(const TextureAspect inAspect)
     {
         aspect = inAspect;
         return *this;
     }
 
-    BufferCopyInfo::BufferCopyInfo(size_t inSrcOffset, size_t inDstOffset, size_t inCopySize)
+    BufferCopyInfo::BufferCopyInfo(const size_t inSrcOffset, const size_t inDstOffset, const size_t inCopySize)
         : srcOffset(inSrcOffset)
         , dstOffset(inDstOffset)
         , copySize(inCopySize)
     {
     }
 
-    BufferCopyInfo& BufferCopyInfo::SetSrcOffset(size_t inSrcOffset)
+    BufferCopyInfo& BufferCopyInfo::SetSrcOffset(const size_t inSrcOffset)
     {
         srcOffset = inSrcOffset;
         return *this;
     }
 
-    BufferCopyInfo& BufferCopyInfo::SetDstOffset(size_t inDstOffset)
+    BufferCopyInfo& BufferCopyInfo::SetDstOffset(const size_t inDstOffset)
     {
         dstOffset = inDstOffset;
         return *this;
     }
 
-    BufferCopyInfo& BufferCopyInfo::SetCopySize(size_t inCopySize)
+    BufferCopyInfo& BufferCopyInfo::SetCopySize(const size_t inCopySize)
     {
         copySize = inCopySize;
         return *this;
@@ -94,7 +97,7 @@ namespace RHI {
         return *this;
     }
 
-    BufferTextureCopyInfo::BufferTextureCopyInfo(size_t inBufferOffset, const TextureSubResourceInfo& inTextureSubResource, const Common::UVec3& inTextureOrigin, const Common::UVec3& inCopyRegion)
+    BufferTextureCopyInfo::BufferTextureCopyInfo(const size_t inBufferOffset, const TextureSubResourceInfo& inTextureSubResource, const Common::UVec3& inTextureOrigin, const Common::UVec3& inCopyRegion)
         : bufferOffset(inBufferOffset)
         , textureSubResource(inTextureSubResource)
         , textureOrigin(inTextureOrigin)
@@ -102,7 +105,7 @@ namespace RHI {
     {
     }
 
-    BufferTextureCopyInfo& BufferTextureCopyInfo::SetBufferOffset(size_t inBufferOffset)
+    BufferTextureCopyInfo& BufferTextureCopyInfo::SetBufferOffset(const size_t inBufferOffset)
     {
         bufferOffset = inBufferOffset;
         return *this;
@@ -127,8 +130,12 @@ namespace RHI {
     }
 
     ColorAttachment::ColorAttachment(
-        TextureView* inView, LoadOp inLoadOp, StoreOp inStoreOp, const Common::LinearColor& inClearValue, TextureView* inResolveView)
-        : ColorAttachmentBase<ColorAttachment>(inLoadOp, inStoreOp, inClearValue)
+        TextureView* inView,
+        const LoadOp inLoadOp,
+        const StoreOp inStoreOp,
+        const Common::LinearColor& inClearValue,
+        TextureView* inResolveView)
+        : ColorAttachmentBase(inLoadOp, inStoreOp, inClearValue)
         , view(inView)
         , resolveView(inResolveView)
     {
@@ -148,15 +155,15 @@ namespace RHI {
 
     DepthStencilAttachment::DepthStencilAttachment(
         TextureView* inView,
-        bool inDepthReadOnly,
-        LoadOp inDepthLoadOp,
-        StoreOp inDepthStoreOp,
-        float inDepthClearValue,
-        bool inStencilReadOnly,
-        LoadOp inStencilLoadOp,
-        StoreOp inStencilStoreOp,
-        uint32_t inStencilClearValue)
-        : DepthStencilAttachmentBase<DepthStencilAttachment>(
+        const bool inDepthReadOnly,
+        const LoadOp inDepthLoadOp,
+        const StoreOp inDepthStoreOp,
+        const float inDepthClearValue,
+        const bool inStencilReadOnly,
+        const LoadOp inStencilLoadOp,
+        const StoreOp inStencilStoreOp,
+        const uint32_t inStencilClearValue)
+        : DepthStencilAttachmentBase(
             inDepthReadOnly, inDepthLoadOp, inDepthStoreOp, inDepthClearValue,
             inStencilReadOnly, inStencilLoadOp, inStencilStoreOp, inStencilClearValue)
         , view(inView)
@@ -186,6 +193,8 @@ namespace RHI {
     CommandRecorder::CommandRecorder() = default;
 
     CommandRecorder::~CommandRecorder() = default;
+
+    CommandCommandRecorder::~CommandCommandRecorder() = default;
 
     CopyPassCommandRecorder::CopyPassCommandRecorder() = default;
 

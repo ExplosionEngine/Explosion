@@ -7,7 +7,7 @@
 #include <RHI/Gpu.h>
 
 namespace RHI::Dummy {
-    class DummyGpu : public Gpu {
+    class DummyGpu final : public Gpu {
     public:
         NonCopyable(DummyGpu)
         DummyGpu();

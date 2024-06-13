@@ -10,10 +10,10 @@
 #include <RHI/DirectX12/Common.h>
 
 namespace RHI::DirectX12 {
-    static inline CD3DX12_CPU_DESCRIPTOR_HANDLE GetDescriptorCpuHandle(const BindGroupEntry& entry)
+    static CD3DX12_CPU_DESCRIPTOR_HANDLE GetDescriptorCpuHandle(const BindGroupEntry& entry)
     {
         if (entry.binding.type == BindingType::uniformBuffer || entry.binding.type == BindingType::storageBuffer) {
-            auto* bufferView = static_cast<DX12BufferView*>(std::get<BufferView*>(entry.entity));
+            const auto* bufferView = static_cast<DX12BufferView*>(std::get<BufferView*>(entry.entity));
             return bufferView->GetNativeCpuDescriptorHandle();
         }
         if (entry.binding.type == BindingType::texture || entry.binding.type == BindingType::storageTexture) {
@@ -38,7 +38,7 @@ namespace RHI::DirectX12 {
 
     DX12BindGroup::~DX12BindGroup() = default;
 
-    DX12BindGroupLayout& DX12BindGroup::GetBindGroupLayout()
+    DX12BindGroupLayout& DX12BindGroup::GetBindGroupLayout() const
     {
         return *bindGroupLayout;
     }

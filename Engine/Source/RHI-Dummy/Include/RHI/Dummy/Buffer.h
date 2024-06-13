@@ -8,7 +8,7 @@
 #include <RHI/Buffer.h>
 
 namespace RHI::Dummy {
-    class DummyBuffer : public Buffer {
+    class DummyBuffer final : public Buffer {
     public:
         NonCopyable(DummyBuffer)
         explicit DummyBuffer(const BufferCreateInfo& createInfo);

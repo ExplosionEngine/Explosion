@@ -41,7 +41,7 @@ namespace RHI::DirectX12 {
 
     CD3DX12_TEXTURE_COPY_LOCATION GetNativeTextureCopyLocation(const DX12Texture& texture, const TextureSubResourceInfo& subResource)
     {
-        return CD3DX12_TEXTURE_COPY_LOCATION(texture.GetNative(), GetNativeSubResourceIndex(texture, subResource));
+        return { texture.GetNative(), static_cast<UINT>(GetNativeSubResourceIndex(texture, subResource)) };
     }
 
     size_t GetNativeBytesPerPixel(DX12Device& device, const DX12Texture& texture, const TextureSubResourceInfo& subResource)
@@ -71,8 +71,8 @@ namespace RHI::DirectX12 {
 
     void DX12CopyPassCommandRecorder::CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo)
     {
-        auto* srcBuffer = static_cast<DX12Buffer*>(src);
-        auto* dstBuffer = static_cast<DX12Buffer*>(dst);
+        const auto* srcBuffer = static_cast<DX12Buffer*>(src);
+        const auto* dstBuffer = static_cast<DX12Buffer*>(dst);
 
         commandBuffer.GetNative()->CopyBufferRegion(
             dstBuffer->GetNative(), copyInfo.dstOffset,
@@ -82,8 +82,8 @@ namespace RHI::DirectX12 {
 
     void DX12CopyPassCommandRecorder::CopyBufferToTexture(Buffer* src, Texture* dst, const BufferTextureCopyInfo& copyInfo)
     {
-        auto* srcBuffer = static_cast<DX12Buffer*>(src);
-        auto* dstTexture = static_cast<DX12Texture*>(dst);
+        const auto* srcBuffer = static_cast<DX12Buffer*>(src);
+        const auto* dstTexture = static_cast<DX12Texture*>(dst);
 
         D3D12_PLACED_SUBRESOURCE_FOOTPRINT srcLayout;
         srcLayout.Offset = copyInfo.bufferOffset;
@@ -120,8 +120,8 @@ namespace RHI::DirectX12 {
 
     void DX12CopyPassCommandRecorder::CopyTextureToTexture(Texture* src, Texture* dst, const TextureCopyInfo& copyInfo)
     {
-        auto* srcTexture = static_cast<DX12Texture*>(src);
-        auto* dstTexture = static_cast<DX12Texture*>(dst);
+        const auto* srcTexture = static_cast<DX12Texture*>(src);
+        const auto* dstTexture = static_cast<DX12Texture*>(dst);
 
         D3D12_BOX srcBox;
         srcBox.left = copyInfo.srcOrigin.x;
@@ -131,8 +131,8 @@ namespace RHI::DirectX12 {
         srcBox.front = copyInfo.srcOrigin.z;
         srcBox.back = copyInfo.srcOrigin.z + copyInfo.copyRegion.z;
 
-        CD3DX12_TEXTURE_COPY_LOCATION srcCopyRegion = GetNativeTextureCopyLocation(*srcTexture, copyInfo.srcSubResource);
-        CD3DX12_TEXTURE_COPY_LOCATION dstCopyRegion = GetNativeTextureCopyLocation(*dstTexture, copyInfo.dstSubResource);
+        const CD3DX12_TEXTURE_COPY_LOCATION srcCopyRegion = GetNativeTextureCopyLocation(*srcTexture, copyInfo.srcSubResource);
+       const  CD3DX12_TEXTURE_COPY_LOCATION dstCopyRegion = GetNativeTextureCopyLocation(*dstTexture, copyInfo.dstSubResource);
 
         commandBuffer.GetNative()->CopyTextureRegion(
             &dstCopyRegion,
@@ -148,9 +148,9 @@ namespace RHI::DirectX12 {
     }
 
     DX12ComputePassCommandRecorder::DX12ComputePassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer)
-        : ComputePassCommandRecorder()
-        , device(inDevice)
+        : device(inDevice)
         , commandRecorder(inCmdRecorder)
+        , computePipeline(nullptr)
         , commandBuffer(inCmdBuffer)
     {
     }
@@ -171,26 +171,26 @@ namespace RHI::DirectX12 {
         commandBuffer.GetNative()->SetGraphicsRootSignature(computePipeline->GetPipelineLayout().GetNative());
     }
 
-    void DX12ComputePassCommandRecorder::SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup)
+    void DX12ComputePassCommandRecorder::SetBindGroup(const uint8_t inLayoutIndex, BindGroup* inBindGroup)
     {
         auto* bindGroup = static_cast<DX12BindGroup*>(inBindGroup);
-        auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
+        const auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
         auto& pipelineLayout = computePipeline->GetPipelineLayout();
 
         Assert(inLayoutIndex == bindGroupLayout.GetLayoutIndex());
         Assert(computePipeline);
 
-        const auto& bindings= bindGroup->GetNativeBindings();
-        for (const auto& binding : bindings) {
-            std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(inLayoutIndex, binding.first);
+        for (const auto& bindings= bindGroup->GetNativeBindings();
+            const auto& [hlslBinding, cpuDescriptorHandle] : bindings) {
+            std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(inLayoutIndex, hlslBinding);
             if (!t.has_value()) {
                 return;
             }
-            commandBuffer.GetNative()->SetGraphicsRootDescriptorTable(t.value().second, commandBuffer.GetRuntimeDescriptorHeaps()->NewGpuDescriptorHandle(binding.first.rangeType, binding.second));
+            commandBuffer.GetNative()->SetGraphicsRootDescriptorTable(t.value().second, commandBuffer.GetRuntimeDescriptorHeaps()->NewGpuDescriptorHandle(hlslBinding.rangeType, cpuDescriptorHandle));
         }
     }
 
-    void DX12ComputePassCommandRecorder::Dispatch(size_t inGroupCountX, size_t inGroupCountY, size_t inGroupCountZ)
+    void DX12ComputePassCommandRecorder::Dispatch(const size_t inGroupCountX, const size_t inGroupCountY, const size_t inGroupCountZ)
     {
         commandBuffer.GetNative()->Dispatch(inGroupCountX, inGroupCountY, inGroupCountZ);
     }
@@ -200,11 +200,10 @@ namespace RHI::DirectX12 {
     }
 
     DX12RasterPassCommandRecorder::DX12RasterPassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer, const RasterPassBeginInfo& inBeginInfo)
-        : RasterPassCommandRecorder()
-        , device(inDevice)
+        : device(inDevice)
         , commandRecorder(inCmdRecorder)
-        , commandBuffer(inCmdBuffer)
         , rasterPipeline(nullptr)
+        , commandBuffer(inCmdBuffer)
     {
         // set render targets
         std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rtvHandles(inBeginInfo.colorAttachments.size());
@@ -255,57 +254,57 @@ namespace RHI::DirectX12 {
         commandBuffer.GetNative()->SetGraphicsRootSignature(rasterPipeline->GetPipelineLayout().GetNative());
     }
 
-    void DX12RasterPassCommandRecorder::SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup)
+    void DX12RasterPassCommandRecorder::SetBindGroup(const uint8_t inLayoutIndex, BindGroup* inBindGroup)
     {
         auto* bindGroup = static_cast<DX12BindGroup*>(inBindGroup);
-        auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
+        const auto& bindGroupLayout = bindGroup->GetBindGroupLayout();
         auto& pipelineLayout = rasterPipeline->GetPipelineLayout();
 
         Assert(inLayoutIndex == bindGroupLayout.GetLayoutIndex());
         Assert(rasterPipeline);
 
-        const auto& bindings= bindGroup->GetNativeBindings();
-        for (const auto& binding : bindings) {
-            std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(inLayoutIndex, binding.first);
+        for (const auto& bindings= bindGroup->GetNativeBindings();
+            const auto& [hlslBinding, cpuDescriptorHandle] : bindings) {
+            std::optional<BindingTypeAndRootParameterIndex> t = pipelineLayout.QueryRootDescriptorParameterIndex(inLayoutIndex, hlslBinding);
             if (!t.has_value()) {
                 return;
             }
-            commandBuffer.GetNative()->SetGraphicsRootDescriptorTable(t.value().second, commandBuffer.GetRuntimeDescriptorHeaps()->NewGpuDescriptorHandle(binding.first.rangeType, binding.second));
+            commandBuffer.GetNative()->SetGraphicsRootDescriptorTable(t.value().second, commandBuffer.GetRuntimeDescriptorHeaps()->NewGpuDescriptorHandle(hlslBinding.rangeType, cpuDescriptorHandle));
         }
     }
 
     void DX12RasterPassCommandRecorder::SetIndexBuffer(BufferView* inBufferView)
     {
-        auto* bufferView = static_cast<DX12BufferView*>(inBufferView);
+        const auto* bufferView = static_cast<DX12BufferView*>(inBufferView);
         commandBuffer.GetNative()->IASetIndexBuffer(&bufferView->GetNativeIndexBufferView());
     }
 
-    void DX12RasterPassCommandRecorder::SetVertexBuffer(size_t inSlot, BufferView* inBufferView)
+    void DX12RasterPassCommandRecorder::SetVertexBuffer(const size_t inSlot, BufferView* inBufferView)
     {
-        auto* bufferView = static_cast<DX12BufferView*>(inBufferView);
+        const auto* bufferView = static_cast<DX12BufferView*>(inBufferView);
         commandBuffer.GetNative()->IASetVertexBuffers(inSlot, 1, &bufferView->GetNativeVertexBufferView());
     }
 
-    void DX12RasterPassCommandRecorder::Draw(size_t inVertexCount, size_t inInstanceCount, size_t inFirstVertex, size_t inFirstInstance)
+    void DX12RasterPassCommandRecorder::Draw(const size_t inVertexCount, const size_t inInstanceCount, const size_t inFirstVertex, const size_t inFirstInstance)
     {
         commandBuffer.GetNative()->DrawInstanced(inVertexCount, inInstanceCount, inFirstVertex, inFirstInstance);
     }
 
-    void DX12RasterPassCommandRecorder::DrawIndexed(size_t inIndexCount, size_t inInstanceCount, size_t inFirstIndex, size_t inBaseVertex, size_t inFirstInstance)
+    void DX12RasterPassCommandRecorder::DrawIndexed(const size_t inIndexCount, const size_t inInstanceCount, const size_t inFirstIndex, const size_t inBaseVertex, const size_t inFirstInstance)
     {
         commandBuffer.GetNative()->DrawIndexedInstanced(inIndexCount, inInstanceCount, inFirstIndex, inBaseVertex, inFirstInstance);
     }
 
-    void DX12RasterPassCommandRecorder::SetViewport(float inX, float inY, float inWidth, float inHeight, float inMinDepth, float inMaxDepth)
+    void DX12RasterPassCommandRecorder::SetViewport(const float inX, const float inY, const float inWidth, const float inHeight, const float inMinDepth, const float inMaxDepth)
     {
         // (x, y) = topLeft
-        CD3DX12_VIEWPORT viewport = CD3DX12_VIEWPORT(inX, inY, inWidth, inHeight, inMinDepth, inMaxDepth);
+        const CD3DX12_VIEWPORT viewport(inX, inY, inWidth, inHeight, inMinDepth, inMaxDepth);
         commandBuffer.GetNative()->RSSetViewports(1, &viewport);
     }
 
     void DX12RasterPassCommandRecorder::SetScissor(uint32_t inLeft, uint32_t inTop, uint32_t inRight, uint32_t inBottom)
     {
-        CD3DX12_RECT scissor = CD3DX12_RECT(inLeft, inTop, inRight, inBottom);
+        const CD3DX12_RECT scissor(inLeft, inTop, inRight, inBottom);
         commandBuffer.GetNative()->RSSetScissorRects(1, &scissor);
     }
 
@@ -328,12 +327,14 @@ namespace RHI::DirectX12 {
     {
     }
 
-    DX12CommandRecorder::DX12CommandRecorder(DX12Device& inDevice, DX12CommandBuffer& inCmdBuffer) : CommandRecorder(), device(inDevice), commandBuffer(inCmdBuffer)
+    DX12CommandRecorder::DX12CommandRecorder(DX12Device& inDevice, DX12CommandBuffer& inCmdBuffer)
+        : device(inDevice)
+        , commandBuffer(inCmdBuffer)
     {
-        inCmdBuffer.GetNative()->Reset(inDevice.GetNativeCmdAllocator(), nullptr);
+        Assert(SUCCEEDED(inCmdBuffer.GetNative()->Reset(inDevice.GetNativeCmdAllocator(), nullptr)));
 
         inCmdBuffer.GetRuntimeDescriptorHeaps()->ResetUsed();
-        auto activeHeap = inCmdBuffer.GetRuntimeDescriptorHeaps()->GetNative();
+        const auto activeHeap = inCmdBuffer.GetRuntimeDescriptorHeaps()->GetNative();
         inCmdBuffer.GetNative()->SetDescriptorHeaps(activeHeap.size(), activeHeap.data());
     }
 
@@ -345,20 +346,20 @@ namespace RHI::DirectX12 {
         D3D12_RESOURCE_STATES beforeState;
         D3D12_RESOURCE_STATES afterState;
         if (inBarrier.type == ResourceType::buffer) {
-            auto* buffer = static_cast<DX12Buffer*>(inBarrier.buffer.pointer);
+            const auto* buffer = static_cast<DX12Buffer*>(inBarrier.buffer.pointer);
             Assert(buffer);
             resource = buffer->GetNative();
             beforeState = EnumCast<BufferState, D3D12_RESOURCE_STATES>(inBarrier.buffer.before);
             afterState = EnumCast<BufferState, D3D12_RESOURCE_STATES>(inBarrier.buffer.after);
         } else {
-            auto* texture = static_cast<DX12Texture*>(inBarrier.texture.pointer);
+            const auto* texture = static_cast<DX12Texture*>(inBarrier.texture.pointer);
             Assert(texture);
             resource = texture->GetNative();
             beforeState = EnumCast<TextureState, D3D12_RESOURCE_STATES>(inBarrier.texture.before);
             afterState = EnumCast<TextureState, D3D12_RESOURCE_STATES>(inBarrier.texture.after);
         }
 
-        CD3DX12_RESOURCE_BARRIER resourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(resource, beforeState, afterState);
+        const CD3DX12_RESOURCE_BARRIER resourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(resource, beforeState, afterState);
         commandBuffer.GetNative()->ResourceBarrier(1, &resourceBarrier);
     }
 
@@ -379,6 +380,6 @@ namespace RHI::DirectX12 {
 
     void DX12CommandRecorder::End()
     {
-        commandBuffer.GetNative()->Close();
+        Assert(SUCCEEDED(commandBuffer.GetNative()->Close()));
     }
 }

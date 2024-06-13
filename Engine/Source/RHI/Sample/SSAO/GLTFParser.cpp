@@ -5,8 +5,9 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include <assimp/postprocess.h>
 
-#include "GLTFParser.h"
+#include <GLTFParser.h>
 
 using namespace Common;
 
@@ -51,12 +52,12 @@ void Model::LoadFromFile(const std::string& path)
 
 void Model::LoadMaterials(const aiScene* scene)
 {
-    bool fromEmbedded = scene->HasTextures();
+    const bool fromEmbedded = scene->HasTextures();
 
     for (unsigned int i = 0; i < scene->mNumMaterials; i++) {
-        auto* material = scene->mMaterials[i];
+        const auto* material = scene->mMaterials[i];
 
-        SharedRef<MaterialData> mMaterial = new MaterialData();
+        SharedRef mMaterial = new MaterialData();
         mMaterial->baseColorTexture = LoadMaterialTexture(scene, material, aiTextureType_DIFFUSE, fromEmbedded);
         mMaterial->normalTexture = LoadMaterialTexture(scene, material, aiTextureType_NORMALS, fromEmbedded);
 
@@ -86,7 +87,7 @@ UniqueRef<TextureData> Model::LoadMaterialTexture(const aiScene* scene, const ai
         data = stbi_load(filePath.c_str(), &width, &height, &comp,0);
     }
 
-    UniqueRef<TextureData> mTexData = new TextureData();
+    UniqueRef mTexData = new TextureData();
 
     // Most device don`t support RGB only on Vulkan, so convert if necessary
     if (comp == 3) {
@@ -101,7 +102,7 @@ UniqueRef<TextureData> Model::LoadMaterialTexture(const aiScene* scene, const ai
             rgb += 3;
         }
     } else {
-        mTexData->buffer = std::vector<unsigned char> (static_cast<unsigned char*>(data), static_cast<unsigned char*>(data) + (width * height * comp));
+        mTexData->buffer = std::vector(static_cast<unsigned char*>(data), static_cast<unsigned char*>(data) + (width * height * comp));
     }
 
     mTexData->width = width;
@@ -115,7 +116,7 @@ UniqueRef<TextureData> Model::LoadMaterialTexture(const aiScene* scene, const ai
 
 void Model::LoadNode(const aiScene* scene, aiNode* node, SharedRef<Node>& parent)
 {
-    SharedRef<Node> mNode = new Node(parent);
+    SharedRef mNode = new Node(parent);
     mNode->matrix = glm::transpose(glm::make_mat4x4(&node->mTransformation.a1));
 
     for (unsigned int m = 0; m < node->mNumChildren; m++) {
@@ -130,9 +131,6 @@ void Model::LoadNode(const aiScene* scene, aiNode* node, SharedRef<Node>& parent
         auto vertexStart = static_cast<uint32_t>(raw_vertex_buffer.size());
         uint32_t indexCount = 0;
         uint32_t vertexCount = 0;
-
-        glm::vec3 posMin {};
-        glm::vec3 posMax {};
 
         // node indices
         {
@@ -149,7 +147,7 @@ void Model::LoadNode(const aiScene* scene, aiNode* node, SharedRef<Node>& parent
 
         // node vertices
         {
-            vertexCount = static_cast<uint32_t>(mesh->mNumVertices);
+            vertexCount = mesh->mNumVertices;
 
             for (uint32_t i = 0; i < vertexCount; i++) {
                 Vertex vert {};
@@ -194,9 +192,9 @@ void Model::LoadNode(const aiScene* scene, aiNode* node, SharedRef<Node>& parent
 
         UniqueRef<Mesh> mMesh = new Mesh(indexStart, indexCount, vertexStart, vertexCount, materialDatas[mesh->mMaterialIndex]);
         mMesh->SetDimensions(
-                 glm::make_vec3(&mesh->mAABB.mMin.x),
-                 glm::make_vec3(&mesh->mAABB.mMax.x)
-                 );
+            glm::make_vec3(&mesh->mAABB.mMin.x),
+            glm::make_vec3(&mesh->mAABB.mMax.x)
+        );
 
         // cache meshes in model instead of node, for the convenience of reading them
         meshes.emplace_back(std::move(mMesh));

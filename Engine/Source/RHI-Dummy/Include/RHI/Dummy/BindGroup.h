@@ -7,7 +7,7 @@
 #include <RHI/BindGroup.h>
 
 namespace RHI::Dummy {
-    class DummyBindGroup : public BindGroup {
+    class DummyBindGroup final : public BindGroup {
     public:
         NonCopyable(DummyBindGroup)
         explicit DummyBindGroup(const BindGroupCreateInfo& createInfo);

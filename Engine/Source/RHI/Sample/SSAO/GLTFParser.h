@@ -18,20 +18,15 @@
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
-#include <assimp/postprocess.h>
 
 struct TextureData {
-public:
-    uint32_t width { 0 };
-    uint32_t height { 0 };
-    uint8_t  component { 0 };
-    std::vector<unsigned char> buffer {};
+    uint32_t width = 0;
+    uint32_t height = 0;
+    uint8_t  component = 0;
+    std::vector<unsigned char> buffer;
 
     bool IsValid() const { return buffer.size() == (width * height * component); }
-
-    uint32_t GetSize() {
-        return buffer.size();
-    }
+    uint32_t GetSize() const { return buffer.size(); }
 };
 
 struct MaterialData
@@ -61,12 +56,12 @@ struct Mesh {
     struct Dimensions {
         glm::vec3 min = glm::vec3(FLT_MAX);
         glm::vec3 max = glm::vec3(-FLT_MAX);
-        glm::vec3 size;
-        glm::vec3 center;
-        float radius;
+        glm::vec3 size {};
+        glm::vec3 center {};
+        float radius = 0.0f;
     } dimensions;
 
-    void SetDimensions(glm::vec3 min, glm::vec3 max) {
+    void SetDimensions(const glm::vec3 min, const glm::vec3 max) {
         dimensions.min = min;
         dimensions.max = max;
         dimensions.size = max - min;
@@ -75,26 +70,28 @@ struct Mesh {
     }
 
     Mesh(uint32_t firstIndex, uint32_t indexCount, uint32_t firstVertex, uint32_t vertexCount, Common::SharedRef<MaterialData>& material)
-        : firstIndex(firstIndex),
-        indexCount(indexCount),
-        firstVertex(firstVertex),
-        vertexCount(vertexCount),
-        materialData(material)
-            {};
+        : firstIndex(firstIndex)
+        , indexCount(indexCount)
+        , firstVertex(firstVertex)
+        , vertexCount(vertexCount)
+        , materialData(material)
+    {
+    }
 
     // mustn`t delele material here, for different meshes can point to the same material
 };
 
 struct Node {
     explicit Node(Common::SharedRef<Node>& p)
-        : parent(Common::WeakRef<Node>(p)),
-        matrix(1.0f) {};
+        : parent(Common::WeakRef<Node>(p))
+        , matrix(1.0f)
+    {
+    }
 
     Common::WeakRef<Node> parent;
     std::vector<Common::SharedRef<Node>> children;
 
     glm::mat4 matrix;
-//    std::vector<Common::UniqueRef<Mesh>> meshes;
 
     glm::mat4 LocalMatrix() const;
     glm::mat4 GetMatrix();
@@ -113,7 +110,7 @@ public:
 private:
     Common::UniqueRef<TextureData> LoadMaterialTexture(const aiScene* scene, const aiMaterial* mat, aiTextureType type, bool fromEmbedded) const;
 
-    void CreateEmptyTexture()
+    void CreateEmptyTexture() const
     {
         emptyTexture->width = 1;
         emptyTexture->height = 1;
@@ -123,17 +120,12 @@ private:
 
 public:
     Common::SharedRef<Node> rootNode;
-
     std::vector<Common::SharedRef<MaterialData>> materialDatas;
-
     std::vector<uint32_t> raw_index_buffer;
     std::vector<Vertex> raw_vertex_buffer;
-
     std::vector<Common::UniqueRef<Mesh>> meshes;
-
     std::string directory;
+
 private:
-
     Common::UniqueRef<TextureData> emptyTexture = nullptr;
-
 };

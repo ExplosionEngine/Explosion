@@ -154,12 +154,12 @@ namespace RHI::DirectX12 {
 
     DX12ComputePipeline::~DX12ComputePipeline() = default;
 
-    DX12PipelineLayout& DX12ComputePipeline::GetPipelineLayout()
+    DX12PipelineLayout& DX12ComputePipeline::GetPipelineLayout() const
     {
         return *pipelineLayout;
     }
 
-    ID3D12PipelineState* DX12ComputePipeline::GetNative()
+    ID3D12PipelineState* DX12ComputePipeline::GetNative() const
     {
         return nativePipelineState.Get();
     }
@@ -173,14 +173,12 @@ namespace RHI::DirectX12 {
 
     void DX12ComputePipeline::CreateNativeComputePipeline(DX12Device& inDevice, const ComputePipelineCreateInfo& inCreateInfo)
     {
-        auto* computeShader = static_cast<DX12ShaderModule*>(inCreateInfo.computeShader);
+        const auto* computeShader = static_cast<DX12ShaderModule*>(inCreateInfo.computeShader);
 
         D3D12_COMPUTE_PIPELINE_STATE_DESC desc {};
         desc.pRootSignature = pipelineLayout->GetNative();
         desc.CS = computeShader->GetNative();
-
-        bool success = SUCCEEDED(inDevice.GetNative()->CreateComputePipelineState(&desc, IID_PPV_ARGS(&nativePipelineState)));
-        Assert(success);
+        Assert(SUCCEEDED(inDevice.GetNative()->CreateComputePipelineState(&desc, IID_PPV_ARGS(&nativePipelineState))));
     }
 
     DX12RasterPipeline::DX12RasterPipeline(DX12Device& inDevice, const RasterPipelineCreateInfo& inCreateInfo) : RasterPipeline(inCreateInfo), pipelineLayout(nullptr)
@@ -191,12 +189,12 @@ namespace RHI::DirectX12 {
 
     DX12RasterPipeline::~DX12RasterPipeline() = default;
 
-    DX12PipelineLayout& DX12RasterPipeline::GetPipelineLayout()
+    DX12PipelineLayout& DX12RasterPipeline::GetPipelineLayout() const
     {
         return *pipelineLayout;
     }
 
-    ID3D12PipelineState* DX12RasterPipeline::GetNative()
+    ID3D12PipelineState* DX12RasterPipeline::GetNative() const
     {
         return nativePipelineState.Get();
     }
@@ -233,7 +231,7 @@ namespace RHI::DirectX12 {
 
 #if BUILD_CONFIG_DEBUG
         if (!inCreateInfo.debugName.empty()) {
-            nativePipelineState->SetName(Common::StringUtils::ToWideString(inCreateInfo.debugName).c_str());
+            Assert(SUCCEEDED(nativePipelineState->SetName(Common::StringUtils::ToWideString(inCreateInfo.debugName).c_str())));
         }
 #endif
     }

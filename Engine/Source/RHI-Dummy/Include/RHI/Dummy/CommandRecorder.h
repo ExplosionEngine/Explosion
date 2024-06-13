@@ -9,7 +9,7 @@
 namespace RHI::Dummy {
     class DummyCommandBuffer;
 
-    class DummyCommandRecorder : public CommandRecorder {
+    class DummyCommandRecorder final : public CommandRecorder {
     public:
         NonCopyable(DummyCommandRecorder)
         explicit DummyCommandRecorder(const DummyCommandBuffer& inDummyCommandBuffer);
@@ -25,11 +25,11 @@ namespace RHI::Dummy {
         const DummyCommandBuffer& dummyCommandBuffer;
     };
 
-    class DummyCopyPassCommandRecorder : public CopyPassCommandRecorder {
+    class DummyCopyPassCommandRecorder final: public CopyPassCommandRecorder {
     public:
         NonCopyable(DummyCopyPassCommandRecorder)
         explicit DummyCopyPassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer);
-        ~DummyCopyPassCommandRecorder();
+        ~DummyCopyPassCommandRecorder() override;
 
         // CommandCommandRecorder
         void ResourceBarrier(const RHI::Barrier& barrier) override;
@@ -42,7 +42,7 @@ namespace RHI::Dummy {
         void EndPass() override;
     };
 
-    class DummyComputePassCommandRecorder : public ComputePassCommandRecorder {
+    class DummyComputePassCommandRecorder final : public ComputePassCommandRecorder {
     public:
         NonCopyable(DummyComputePassCommandRecorder)
         explicit DummyComputePassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer);
@@ -58,7 +58,7 @@ namespace RHI::Dummy {
         void EndPass() override;
     };
     
-    class DummyRasterPassCommandRecorder : public RasterPassCommandRecorder {
+    class DummyRasterPassCommandRecorder final : public RasterPassCommandRecorder {
     public:
         NonCopyable(DummyRasterPassCommandRecorder)
         explicit DummyRasterPassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer);

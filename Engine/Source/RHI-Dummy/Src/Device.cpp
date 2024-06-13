@@ -27,12 +27,12 @@ namespace RHI::Dummy {
 
     DummyDevice::~DummyDevice() = default;
 
-    size_t DummyDevice::GetQueueNum(QueueType type)
+    size_t DummyDevice::GetQueueNum(const QueueType type)
     {
         return type == QueueType::graphics ? 1 : 0;
     }
 
-    Queue* DummyDevice::GetQueue(QueueType type, size_t index)
+    Queue* DummyDevice::GetQueue(const QueueType type, const size_t index)
     {
         Assert(type == QueueType::graphics && index == 0);
         return dummyQueue.Get();
@@ -40,72 +40,72 @@ namespace RHI::Dummy {
 
     Common::UniqueRef<Surface> DummyDevice::CreateSurface(const SurfaceCreateInfo& createInfo)
     {
-        return Common::UniqueRef<Surface>(new DummySurface(createInfo));
+        return { new DummySurface(createInfo) };
     }
 
     Common::UniqueRef<SwapChain> DummyDevice::CreateSwapChain(const SwapChainCreateInfo& createInfo)
     {
-        return Common::UniqueRef<SwapChain>(new DummySwapChain(createInfo));
+        return { new DummySwapChain(createInfo) };
     }
 
     Common::UniqueRef<Buffer> DummyDevice::CreateBuffer(const BufferCreateInfo& createInfo)
     {
-        return Common::UniqueRef<Buffer>(new DummyBuffer(createInfo));
+        return { new DummyBuffer(createInfo) };
     }
 
     Common::UniqueRef<Texture> DummyDevice::CreateTexture(const TextureCreateInfo& createInfo)
     {
-        return Common::UniqueRef<Texture>(new DummyTexture(createInfo));
+        return { new DummyTexture(createInfo) };
     }
 
     Common::UniqueRef<Sampler> DummyDevice::CreateSampler(const SamplerCreateInfo& createInfo)
     {
-        return Common::UniqueRef<Sampler>(new DummySampler(createInfo));
+        return { new DummySampler(createInfo) };
     }
 
     Common::UniqueRef<BindGroupLayout> DummyDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo)
     {
-        return Common::UniqueRef<BindGroupLayout>(new DummyBindGroupLayout(createInfo));
+        return { new DummyBindGroupLayout(createInfo) };
     }
 
     Common::UniqueRef<BindGroup> DummyDevice::CreateBindGroup(const BindGroupCreateInfo& createInfo)
     {
-        return Common::UniqueRef<BindGroup>(new DummyBindGroup(createInfo));
+        return { new DummyBindGroup(createInfo) };
     }
 
     Common::UniqueRef<PipelineLayout> DummyDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo)
     {
-        return Common::UniqueRef<PipelineLayout>(new DummyPipelineLayout(createInfo));
+        return { new DummyPipelineLayout(createInfo) };
     }
 
     Common::UniqueRef<ShaderModule> DummyDevice::CreateShaderModule(const ShaderModuleCreateInfo& createInfo)
     {
-        return Common::UniqueRef<ShaderModule>(new DummyShaderModule(createInfo));
+        return { new DummyShaderModule(createInfo) };
     }
 
     Common::UniqueRef<ComputePipeline> DummyDevice::CreateComputePipeline(const ComputePipelineCreateInfo& createInfo)
     {
-        return Common::UniqueRef<ComputePipeline>(new DummyComputePipeline(createInfo));
+        return { new DummyComputePipeline(createInfo) };
     }
 
     Common::UniqueRef<RasterPipeline> DummyDevice::CreateRasterPipeline(const RasterPipelineCreateInfo& createInfo)
     {
-        return Common::UniqueRef<RasterPipeline>(new DummyRasterPipeline(createInfo));
+        return { new DummyRasterPipeline(createInfo) };
     }
 
     Common::UniqueRef<CommandBuffer> DummyDevice::CreateCommandBuffer()
     {
-        return Common::UniqueRef<CommandBuffer>(new DummyCommandBuffer());
+        return { new DummyCommandBuffer() };
     }
 
-    Common::UniqueRef<Fence> DummyDevice::CreateFence(bool bInitAsSignaled)
+    Common::UniqueRef<Fence> DummyDevice::CreateFence(const bool bInitAsSignaled)
     {
-        return Common::UniqueRef<Fence>(new DummyFence(*this, bInitAsSignaled));
+        return { new DummyFence(*this, bInitAsSignaled) };
     }
 
     Common::UniqueRef<Semaphore> DummyDevice::CreateSemaphore()
     {
-        return Common::UniqueRef<Semaphore>(new DummySemaphore(*this));
+        return { new DummySemaphore(*this) };
     }
 
     bool DummyDevice::CheckSwapChainFormatSupport(Surface* surface, PixelFormat format)

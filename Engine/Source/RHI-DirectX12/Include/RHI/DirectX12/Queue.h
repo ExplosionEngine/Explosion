@@ -12,7 +12,7 @@
 using Microsoft::WRL::ComPtr;
 
 namespace RHI::DirectX12 {
-    class DX12Queue : public Queue {
+    class DX12Queue final : public Queue {
     public:
         NonCopyable(DX12Queue)
         explicit DX12Queue(ComPtr<ID3D12CommandQueue>&& inNativeCmdQueue);
@@ -21,7 +21,7 @@ namespace RHI::DirectX12 {
         void Submit(CommandBuffer* inCmdBuffer, const QueueSubmitInfo& inSubmitInfo) override;
         void Flush(Fence* inFenceToSignal) override;
 
-        ID3D12CommandQueue* GetNative();
+        ID3D12CommandQueue* GetNative() const;
 
     private:
         ComPtr<ID3D12CommandQueue> nativeCmdQueue;

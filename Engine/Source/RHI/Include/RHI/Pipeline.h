@@ -45,7 +45,7 @@ namespace RHI {
         Derived& SetOffset(size_t inOffset);
     };
 
-    struct VertexAttribute : public VertexAttributeBase<VertexAttribute> {
+    struct VertexAttribute : VertexAttributeBase<VertexAttribute> {
         PlatformVertexBinding platformBinding;
 
         explicit VertexAttribute(
@@ -53,7 +53,7 @@ namespace RHI {
             VertexFormat inFormat = VertexFormat::max,
             size_t inOffset = 0);
 
-        VertexAttribute& SetPlatformBinding(PlatformVertexBinding inPlatformBinding);
+        VertexAttribute& SetPlatformBinding(const PlatformVertexBinding& inPlatformBinding);
     };
 
     template <typename Derived>
@@ -69,7 +69,7 @@ namespace RHI {
         Derived& SetStepMode(VertexStepMode inStepMode);
     };
 
-    struct VertexBufferLayout : public VertexBufferLayoutBase<VertexBufferLayout> {
+    struct VertexBufferLayout : VertexBufferLayoutBase<VertexBufferLayout> {
         std::vector<VertexAttribute> attributes;
 
         explicit VertexBufferLayout(
@@ -247,7 +247,7 @@ namespace RHI {
 
         std::string debugName;
 
-        RasterPipelineCreateInfo(PipelineLayout* inLayout = nullptr);
+        explicit RasterPipelineCreateInfo(PipelineLayout* inLayout = nullptr);
         RasterPipelineCreateInfo& SetLayout(PipelineLayout* inLayout);
         RasterPipelineCreateInfo& SetVertexShader(ShaderModule* inVertexShader);
         RasterPipelineCreateInfo& SetPixelShader(ShaderModule* inPixelShader);
@@ -292,42 +292,42 @@ namespace RHI {
 
 namespace RHI {
     template <typename Derived>
-    VertexAttributeBase<Derived>::VertexAttributeBase(VertexFormat inFormat, size_t inOffset)
+    VertexAttributeBase<Derived>::VertexAttributeBase(const VertexFormat inFormat, const size_t inOffset)
         : format(inFormat)
         , offset(inOffset)
     {
     }
 
     template <typename Derived>
-    Derived& VertexAttributeBase<Derived>::SetFormat(VertexFormat inFormat)
+    Derived& VertexAttributeBase<Derived>::SetFormat(const VertexFormat inFormat)
     {
         format = inFormat;
         return static_cast<Derived&>(*this);
     }
 
     template <typename Derived>
-    Derived& VertexAttributeBase<Derived>::SetOffset(size_t inOffset)
+    Derived& VertexAttributeBase<Derived>::SetOffset(const size_t inOffset)
     {
         offset = inOffset;
         return static_cast<Derived&>(*this);
     }
 
     template <typename Derived>
-    VertexBufferLayoutBase<Derived>::VertexBufferLayoutBase(VertexStepMode inStepMode, size_t inStride)
+    VertexBufferLayoutBase<Derived>::VertexBufferLayoutBase(const VertexStepMode inStepMode, const size_t inStride)
         : stepMode(inStepMode)
         , stride(inStride)
     {
     }
 
     template <typename Derived>
-    Derived& VertexBufferLayoutBase<Derived>::SetStride(size_t inStride)
+    Derived& VertexBufferLayoutBase<Derived>::SetStride(const size_t inStride)
     {
         stride = inStride;
         return static_cast<Derived&>(*this);
     }
 
     template <typename Derived>
-    Derived& VertexBufferLayoutBase<Derived>::SetStepMode(VertexStepMode inStepMode)
+    Derived& VertexBufferLayoutBase<Derived>::SetStepMode(const VertexStepMode inStepMode)
     {
         stepMode = inStepMode;
         return static_cast<Derived&>(*this);

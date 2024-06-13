@@ -8,7 +8,6 @@
 #include <unordered_map>
 
 #include <wrl/client.h>
-#include <d3d12.h>
 #include <directx/d3dx12.h>
 
 #include <RHI/Synchronous.h>
@@ -68,7 +67,7 @@ namespace RHI::DirectX12 {
         std::list<DescriptorHeapNode> heapNodes;
     };
 
-    class DX12Device : public Device {
+    class DX12Device final : public Device {
     public:
         NonCopyable(DX12Device)
         DX12Device(DX12Gpu& inGpu, const DeviceCreateInfo& inCreateInfo);
@@ -91,15 +90,15 @@ namespace RHI::DirectX12 {
         Common::UniqueRef<Fence> CreateFence(bool inInitAsSignaled) override;
         Common::UniqueRef<Semaphore> CreateSemaphore() override;
 
-        bool CheckSwapChainFormatSupport(RHI::Surface* inSurface, PixelFormat inFormat) override;
+        bool CheckSwapChainFormatSupport(Surface* inSurface, PixelFormat inFormat) override;
 
-        DX12Gpu& GetGpu();
-        ID3D12Device* GetNative();
-        ID3D12CommandAllocator* GetNativeCmdAllocator();
-        Common::UniqueRef<DescriptorAllocation> AllocateRtvDescriptor();
-        Common::UniqueRef<DescriptorAllocation> AllocateCbvSrvUavDescriptor();
-        Common::UniqueRef<DescriptorAllocation> AllocateSamplerDescriptor();
-        Common::UniqueRef<DescriptorAllocation> AllocateDsvDescriptor();
+        DX12Gpu& GetGpu() const;
+        ID3D12Device* GetNative() const;
+        ID3D12CommandAllocator* GetNativeCmdAllocator() const;
+        Common::UniqueRef<DescriptorAllocation> AllocateRtvDescriptor() const;
+        Common::UniqueRef<DescriptorAllocation> AllocateCbvSrvUavDescriptor() const;
+        Common::UniqueRef<DescriptorAllocation> AllocateSamplerDescriptor() const;
+        Common::UniqueRef<DescriptorAllocation> AllocateDsvDescriptor() const;
 
     private:
         void CreateNativeDevice();
@@ -108,8 +107,8 @@ namespace RHI::DirectX12 {
         void QueryNativeDescriptorSize();
         void CreateDescriptorPools();
 #if BUILD_CONFIG_DEBUG
-        void RegisterNativeDebugLayerExceptionHandler();
-        void UnregisterNativeDebugLayerExceptionHandler();
+        void RegisterNativeDebugLayerExceptionHandler() const;
+        void UnregisterNativeDebugLayerExceptionHandler() const;
 #endif
 
         DX12Gpu& gpu;
