@@ -8,9 +8,7 @@
 namespace Rendering {
     RenderingModule::RenderingModule()
         : initialized(false)
-        , renderingThread()
         , rhiInstance(nullptr)
-        , rhiDevice()
     {
     }
 
@@ -42,7 +40,7 @@ namespace Rendering {
         initialized = true;
     }
 
-    RHI::Device* RenderingModule::GetDevice()
+    RHI::Device* RenderingModule::GetDevice() const
     {
         return rhiDevice.Get();
     }
@@ -62,7 +60,7 @@ namespace Rendering {
         renderingThread = nullptr;
     }
 
-    void RenderingModule::FlushAllRenderingCommands()
+    void RenderingModule::FlushAllRenderingCommands() const
     {
         Assert(renderingThread != nullptr);
         renderingThread->Flush();

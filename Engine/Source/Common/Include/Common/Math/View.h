@@ -27,7 +27,7 @@ namespace Common {
     using DViewTransform = ViewTransform<double>;
 }
 
-namespace Common {
+namespace Common { // NOLINT
     template <typename T>
     struct Serializer<ViewTransform<T>> {
         static constexpr bool serializable = true;

@@ -52,7 +52,7 @@ namespace Core {
     };
 }
 
-namespace std {
+namespace std { // NOLINT
     template <>
     struct hash<Core::Uri> {
         size_t operator()(const Core::Uri& uri) const noexcept
@@ -62,7 +62,7 @@ namespace std {
     };
 }
 
-namespace Common {
+namespace Common { // NOLINT
     template <>
     struct Serializer<Core::Uri> {
         static constexpr bool serializable = true;

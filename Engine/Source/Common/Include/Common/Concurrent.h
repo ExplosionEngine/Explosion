@@ -13,12 +13,6 @@
 #include <functional>
 #include <type_traits>
 
-#if PLATFORM_WINDOWS
-#include <windows.h>
-#else
-#include <pthread.h>
-#endif
-
 #include <Common/String.h>
 #include <Common/Debug.h>
 

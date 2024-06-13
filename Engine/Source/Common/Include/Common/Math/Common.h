@@ -5,11 +5,12 @@
 #pragma once
 
 #include <cmath>
+#include <numbers>
 
 namespace Common {
     static constexpr float epsilon = 0.000001f;
     static constexpr float halfEpsilon = 0.001f;
-    static constexpr float pi = 3.1415926f;
+    static constexpr float pi = std::numbers::pi_v<float>;
 }
 
 namespace Common {

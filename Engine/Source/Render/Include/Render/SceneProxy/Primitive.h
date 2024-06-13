@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <vector>
-
 namespace Render {
     class IPrimitiveSceneProxy {
     public:

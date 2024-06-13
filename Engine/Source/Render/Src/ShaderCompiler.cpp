@@ -67,11 +67,12 @@ namespace Render {
         static const std::unordered_map<RHI::ShaderStageBits, std::wstring> map = {
             { RHI::ShaderStageBits::sVertex, L"vs" },
             { RHI::ShaderStageBits::sPixel, L"ps" },
-            // TODO
+            { RHI::ShaderStageBits::sCompute, L"cs" },
+            { RHI::ShaderStageBits::sGeometry, L"gs" },
+            { RHI::ShaderStageBits::sHull, L"hs" },
+            { RHI::ShaderStageBits::sDomain, L"ds" }
         };
-        auto iter = map.find(stage);
-        Assert(iter != map.end());
-        return iter->second + L"_6_2";
+        return map.at(stage) + L"_6_2";
     }
 
     static std::vector<LPCWSTR> GetDXCBaseArguments(const ShaderCompileOptions& options)
@@ -120,11 +121,23 @@ namespace Render {
 
     static std::vector<std::wstring> GetInternalPredefinition(const ShaderCompileInput& input, const ShaderCompileOptions& options)
     {
-        std::vector<std::wstring> result { L"-D" };
-        auto def = options.byteCodeType == Render::ShaderByteCodeType::spirv ? std::wstring{L"VULKAN=1"} : std::wstring{L"VULKAN=0"};
-        result.emplace_back(def);
+        static const std::unordered_map<RHI::ShaderStageBits, std::wstring> stageMacroMap = {
+            { RHI::ShaderStageBits::sVertex, L"VERTEX_SHADER=1" },
+            { RHI::ShaderStageBits::sPixel, L"PIXEL_SHADER=1" },
+            { RHI::ShaderStageBits::sCompute, L"COMPUTE_SHADER=1" },
+            { RHI::ShaderStageBits::sGeometry, L"GEOMETRY_SHADER=1" },
+            { RHI::ShaderStageBits::sHull, L"HULL_SHADER=1" },
+            { RHI::ShaderStageBits::sDomain, L"DOMAIN_SHADER=1" }
+        };
 
-        // TODO shader stage definitions
+        // vulkan
+        std::vector<std::wstring> result;
+        result.emplace_back(L"-D");
+        result.emplace_back(options.byteCodeType == ShaderByteCodeType::spirv ? L"VULKAN=1" : L"VULKAN=0");
+
+        // shader stage
+        result.emplace_back(L"-D");
+        result.emplace_back(stageMacroMap.at(input.stage));
         return result;
     }
 
@@ -178,9 +191,9 @@ namespace Render {
 
     static void BuildGlslReflectionData(const spirv_cross::Compiler& compiler, ShaderReflectionData& result)
     {
-        const spirv_cross::ShaderResources& shaderResources = compiler.get_shader_resources();
+        const spirv_cross::ShaderResources& shaderResources = compiler.get_shader_resources(); // NOLINT
 
-        for (const spirv_cross::Resource& stageInput : shaderResources.stage_inputs) {
+        for (const spirv_cross::Resource& stageInput : shaderResources.stage_inputs) { // NOLINT
             const std::string name = Common::StringUtils::Replace(stageInput.name, "in.var.", "");
             const uint32_t location = compiler.get_decoration(stageInput.id, spv::DecorationLocation);
 
@@ -205,7 +218,7 @@ namespace Render {
             resourceBindings.emplace_back(std::make_pair(&image, RHI::BindingType::storageTexture));
         }
 
-        for (const auto& iter : resourceBindings) {
+        for (const auto& iter : resourceBindings) { // NOLINT
             const spirv_cross::Resource* resourceBinding = iter.first;
 
             const std::string& name = Common::StringUtils::Replace(resourceBinding->name, "type.", "");
@@ -237,13 +250,13 @@ namespace Render {
         Assert(SUCCEEDED(utils->CreateDefaultIncludeHandler(&includeHandler)));
 
         ComPtr<IDxcBlobEncoding> source;
-        utils->CreateBlobFromPinned(input.source.c_str(), std::strlen(input.source.c_str()), CP_UTF8, &source);
+        Assert(SUCCEEDED(utils->CreateBlobFromPinned(input.source.c_str(), std::strlen(input.source.c_str()), CP_UTF8, &source)));
 
         std::vector<LPCWSTR> arguments = GetDXCBaseArguments(options);
-        auto entryPointArgs = GetEntryPointArguments(input);
-        auto targetProfileArgs = GetTargetProfileArguments(input);
-        auto includePathArgs = GetIncludePathArguments(options);
-        auto definitionArgs = GetDefinitionArguments(input, options);
+        const auto entryPointArgs = GetEntryPointArguments(input);
+        const auto targetProfileArgs = GetTargetProfileArguments(input);
+        const auto includePathArgs = GetIncludePathArguments(options);
+        const auto definitionArgs = GetDefinitionArguments(input, options);
         FillArguments(arguments, entryPointArgs);
         FillArguments(arguments, targetProfileArgs);
         FillArguments(arguments, includePathArgs);
@@ -278,7 +291,7 @@ namespace Render {
         output.success = true;
         const auto* codeStart = static_cast<const uint8_t*>(codeBlob->GetBufferPointer());
         const auto* codeEnd = codeStart + codeBlob->GetBufferSize();
-        output.byteCode = std::vector<uint8_t>(codeStart, codeEnd);
+        output.byteCode = std::vector(codeStart, codeEnd);
 
         if (options.byteCodeType == ShaderByteCodeType::dxil) {
 #if PLATFORM_WINDOWS
@@ -291,11 +304,11 @@ namespace Render {
             reflectionBuffer.Encoding = 0u;
 
             ComPtr<ID3D12ShaderReflection> shaderReflection;
-            utils->CreateReflection(&reflectionBuffer, IID_PPV_ARGS(&shaderReflection));
+            Assert(SUCCEEDED(utils->CreateReflection(&reflectionBuffer, IID_PPV_ARGS(&shaderReflection))));
             BuildHlslReflectionData(shaderReflection, output.reflectionData);
 #endif
         } else {
-            spirv_cross::Compiler sprivCrossCompiler(reinterpret_cast<const uint32_t*>(output.byteCode.data()), output.byteCode.size() * sizeof(uint8_t) / sizeof(uint32_t));
+            const spirv_cross::Compiler sprivCrossCompiler(reinterpret_cast<const uint32_t*>(output.byteCode.data()), output.byteCode.size() * sizeof(uint8_t) / sizeof(uint32_t));
             BuildGlslReflectionData(sprivCrossCompiler, output.reflectionData);
         }
     }
@@ -321,7 +334,7 @@ namespace Render {
 
     std::future<ShaderCompileOutput> ShaderCompiler::Compile(const ShaderCompileInput& inInput, const ShaderCompileOptions& inOptions)
     {
-        return threadPool.EmplaceTask([](ShaderCompileInput input, ShaderCompileOptions options) -> ShaderCompileOutput {
+        return threadPool.EmplaceTask([](const ShaderCompileInput& input, const ShaderCompileOptions& options) -> ShaderCompileOutput {
             ShaderCompileOutput output;
             CompileDxilOrSpriv(input, options, output);
             return output;
@@ -343,7 +356,7 @@ namespace Render {
 
     std::future<ShaderTypeCompileResult> ShaderTypeCompiler::Compile(const std::vector<IShaderType*>& inShaderTypes, const ShaderCompileOptions& inOptions)
     {
-        return threadPool.EmplaceTask([](std::vector<IShaderType*> shaderTypes, ShaderCompileOptions options) -> ShaderTypeCompileResult {
+        return threadPool.EmplaceTask([](const std::vector<IShaderType*>& shaderTypes, const ShaderCompileOptions& options) -> ShaderTypeCompileResult {
             std::unordered_map<ShaderTypeKey, std::unordered_map<VariantKey, std::future<ShaderCompileOutput>>> compileOutputs;
             compileOutputs.reserve(shaderTypes.size());
             for (auto* shaderType : shaderTypes) {
@@ -356,8 +369,8 @@ namespace Render {
                 compileOutputs.emplace(std::make_pair(typeKey, std::unordered_map<VariantKey, std::future<ShaderCompileOutput>> {}));
                 auto& variantCompileOutputs = compileOutputs.at(typeKey);
 
-                const auto& variants = shaderType->GetVariants();
-                for (const auto& variantKey : variants) {
+                for ( const auto& variants = shaderType->GetVariants();
+                    const auto& variantKey : variants) {
                     ShaderCompileInput input {};
                     input.source = code;
                     input.entryPoint = entryPoint;
@@ -369,16 +382,11 @@ namespace Render {
             }
 
             ShaderTypeCompileResult result;
-            for (auto& compileOutput : compileOutputs) {
-                auto typeKey = compileOutput.first;
-                auto& variantCompileOutputs = compileOutput.second;
-
+            for (auto& [typeKey, variantCompileOutputs] : compileOutputs) {
                 ShaderArchivePackage archivePackage;
-                for (auto& variantCompileOutput : variantCompileOutputs) {
-                    auto variantKey = variantCompileOutput.first;
-                    auto& compileFuture = variantCompileOutput.second;
 
-                    ShaderCompileOutput output = compileFuture.get();
+                for (auto& [variantKey, compileFuture] : variantCompileOutputs) {
+                    ShaderCompileOutput output = compileFuture.get(); // NOLINT
                     if (output.success) {
                         ShaderArchive archive;
                         archive.byteCode = std::move(output.byteCode);
@@ -391,7 +399,7 @@ namespace Render {
                 }
                 ShaderArchiveStorage::Get().UpdateShaderArchivePackage(typeKey, std::move(archivePackage));
             }
-            result.success = result.errorInfos.size() == 0;
+            result.success = result.errorInfos.empty();
             return result;
         }, inShaderTypes, inOptions);
     }

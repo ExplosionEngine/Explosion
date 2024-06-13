@@ -2,7 +2,6 @@
 // Created by johnk on 2022/11/21.
 //
 
-#include <functional>
 #include <sstream>
 
 #include <Common/String.h>
@@ -73,22 +72,21 @@ namespace MirrorTool {
             { CX_CXXProtected, FieldAccess::pro },
             { CX_CXXPrivate, FieldAccess::pri }
         };
-        auto iter = map.find(accessSpecifier);
-        return iter == map.end() ? FieldAccess::max : iter->second;
+        return map.at(accessSpecifier);
     }
 
     static std::string GetPureBaseClassName(const std::string& str)
     {
-        auto result = Common::StringUtils::Replace(str, "class ", "");
+        const auto result = Common::StringUtils::Replace(str, "class ", "");
         return Common::StringUtils::Replace(result, "struct", "");
     }
 
     static void ParseMetaDatas(Node& node, const std::string& metaDataStr)
     {
-        auto metaDatas = Common::StringUtils::Split(metaDataStr, ";");
-        for (const auto& metaData : metaDatas) {
-            auto keyValue = Common::StringUtils::Split(metaData, "=");
-            if (keyValue.size() == 1) {
+        for (const auto metaDatas = Common::StringUtils::Split(metaDataStr, ";");
+            const auto& metaData : metaDatas) {
+            if (auto keyValue = Common::StringUtils::Split(metaData, "=");
+                keyValue.size() == 1) {
                 node.metaDatas.emplace(std::make_pair(keyValue[0], "true"));
             } else if (keyValue.size() == 2) {
                 node.metaDatas.emplace(std::make_pair(keyValue[0], keyValue[1]));
@@ -98,7 +96,7 @@ namespace MirrorTool {
 
     static std::string GetOuterName(const std::string& basic, const std::string& name)
     {
-        return basic.length() == 0 ? name : (basic + "::" + name);
+        return basic.empty() ? name : (basic + "::" + name);
     }
 
     template <typename T>
@@ -107,8 +105,8 @@ namespace MirrorTool {
         const MetaDataMap& metaDatas = container.back().metaDatas;
 
         bool found = false;
-        for (const auto& metaData : metaDatas) {
-            if (metaData.first == tag && metaData.second == "true") {
+        for (const auto& [key, value] : metaDatas) {
+            if (key == tag && value == "true") {
                 found = true;
                 break;
             }
@@ -123,7 +121,7 @@ namespace MirrorTool {
     static void ClearMetaTag(T& node, const std::string& tag)
     {
         MetaDataMap& metaDatas = node.metaDatas;
-        auto iter = metaDatas.find(tag);
+        const auto iter = metaDatas.find(tag);
         if (iter == metaDatas.end()) {
             return;
         }
@@ -133,8 +131,7 @@ namespace MirrorTool {
     template <typename T>
     static void ApplyMetaFilter(std::vector<T>& container, const std::string& tag)
     {
-        bool found = PopoutIfHaveNoMetaTag(container, tag);
-        if (found) {
+        if (PopoutIfHaveNoMetaTag(container, tag)) {
             ClearMetaTag(container.back(), tag);
         }
     }
@@ -343,11 +340,13 @@ namespace MirrorTool {
 }
 
 namespace MirrorTool {
-    Parser::Parser(std::string inSourceFile, std::vector<std::string> inHeaderDirs) : sourceFile(std::move(inSourceFile)), headerDirs(std::move(inHeaderDirs)) {}
+    Parser::Parser(std::string inSourceFile, std::vector<std::string> inHeaderDirs) : sourceFile(std::move(inSourceFile)), headerDirs(std::move(inHeaderDirs))
+    {
+    }
 
     Parser::~Parser() = default;
 
-    Parser::Result Parser::Parse()
+    Parser::Result Parser::Parse() const
     {
         std::vector<std::string> argumentStrs = {
             "-x", "c++",

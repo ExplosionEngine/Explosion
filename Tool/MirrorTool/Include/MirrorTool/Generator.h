@@ -21,10 +21,10 @@ namespace MirrorTool {
         explicit Generator(std::string inInputFile, std::string inOutputFile, std::vector<std::string> inHeaderDirs, const MetaInfo& inMetaInfo);
         ~Generator();
 
-        Result Generate();
+        Result Generate() const;
 
     private:
-        Result GenerateCode(std::ofstream& file);
+        Result GenerateCode(std::ofstream& file) const;
 
         const MetaInfo& metaInfo;
         std::string inputFile;

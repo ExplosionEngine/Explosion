@@ -47,11 +47,11 @@ TEST_F(ResourcePoolTest, BasicTest)
     textureDesc.width = 1920;
     textureDesc.height = 1080;
     textureDesc.depthOrArraySize = 1;
-    PooledTextureRef t3 = texturePool.Allocate(textureDesc);
+    const PooledTextureRef t3 = texturePool.Allocate(textureDesc);
     ASSERT_NE(t1.Get(), t3.Get());
 
     auto* texturePtr = t1.Get();
     t1.Reset();
-    PooledTextureRef t4 = texturePool.Allocate(textureDesc);
+    const PooledTextureRef t4 = texturePool.Allocate(textureDesc);
     ASSERT_EQ(texturePtr, t4.Get());
 }

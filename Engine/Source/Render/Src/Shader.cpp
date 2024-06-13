@@ -7,35 +7,35 @@
 namespace Render {
     ShaderReflectionData::ShaderReflectionData() = default;
 
-    ShaderReflectionData::ShaderReflectionData(const ShaderReflectionData& inOther)
+    ShaderReflectionData::ShaderReflectionData(const ShaderReflectionData& inOther) // NOLINT
         : vertexBindings(inOther.vertexBindings)
         , resourceBindings(inOther.resourceBindings)
     {
     }
 
-    ShaderReflectionData::ShaderReflectionData(ShaderReflectionData&& inOther) noexcept
+    ShaderReflectionData::ShaderReflectionData(ShaderReflectionData&& inOther) noexcept // NOLINT
         : vertexBindings(std::move(inOther.vertexBindings))
         , resourceBindings(std::move(inOther.resourceBindings))
     {
     }
 
-    ShaderReflectionData& ShaderReflectionData::operator=(const ShaderReflectionData& inOther)
+    ShaderReflectionData& ShaderReflectionData::operator=(const ShaderReflectionData& inOther) // NOLINT
     {
         vertexBindings = inOther.vertexBindings;
         resourceBindings = inOther.resourceBindings;
         return *this;
     }
 
-    const RHI::PlatformVertexBinding& ShaderReflectionData::QueryVertexBindingChecked(const ShaderReflectionData::VertexSemantic& inSemantic) const
+    const RHI::PlatformVertexBinding& ShaderReflectionData::QueryVertexBindingChecked(const VertexSemantic& inSemantic) const
     {
-        auto iter = vertexBindings.find(inSemantic);
+        const auto iter = vertexBindings.find(inSemantic);
         Assert(iter != vertexBindings.end());
         return iter->second;
     }
 
-    const ShaderReflectionData::LayoutAndResourceBinding& ShaderReflectionData::QueryResourceBindingChecked(const ShaderReflectionData::ResourceBindingName& inName) const
+    const ShaderReflectionData::LayoutAndResourceBinding& ShaderReflectionData::QueryResourceBindingChecked(const ResourceBindingName& inName) const
     {
-        auto iter = resourceBindings.find(inName);
+        const auto iter = resourceBindings.find(inName);
         Assert(iter != resourceBindings.end());
         return iter->second;
     }
@@ -45,6 +45,8 @@ namespace Render {
         static ShaderArchiveStorage instance;
         return instance;
     }
+
+    IShaderType::~IShaderType() {}
 
     ShaderArchiveStorage::ShaderArchiveStorage() = default;
 
@@ -58,7 +60,7 @@ namespace Render {
 
     const ShaderArchivePackage& ShaderArchiveStorage::GetShaderArchivePackage(ShaderTypeKey shaderTypeKey)
     {
-        auto iter = shaderArchivePackages.find(shaderTypeKey);
+        const auto iter = shaderArchivePackages.find(shaderTypeKey);
         Assert(iter != shaderArchivePackages.end());
         return iter->second;
     }
@@ -84,7 +86,7 @@ namespace Render {
             return 0;
         }
 
-        std::vector<size_t> values = {
+        const std::vector values = {
             typeKey,
             variantKey
         };
@@ -118,7 +120,7 @@ namespace Render {
 
     BoolShaderVariantFieldImpl::~BoolShaderVariantFieldImpl() = default;
 
-    void BoolShaderVariantFieldImpl::Set(BoolShaderVariantFieldImpl::ValueType inValue)
+    void BoolShaderVariantFieldImpl::Set(const ValueType inValue)
     {
         value = inValue ? 1 : 0;
     }

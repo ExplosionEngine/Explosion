@@ -33,7 +33,7 @@ namespace Rendering {
         size_t Hash() const;
     };
 
-    struct VertexAttribute : public RHI::VertexAttributeBase<VertexAttribute> {
+    struct VertexAttribute : RHI::VertexAttributeBase<VertexAttribute> {
         VertexBinding binding;
 
         explicit VertexAttribute(
@@ -46,7 +46,7 @@ namespace Rendering {
         size_t Hash() const;
     };
 
-    struct VertexBufferLayout : public RHI::VertexBufferLayoutBase<VertexBufferLayout> {
+    struct VertexBufferLayout : RHI::VertexBufferLayoutBase<VertexBufferLayout> {
         std::vector<VertexAttribute> attributes;
 
         explicit VertexBufferLayout(

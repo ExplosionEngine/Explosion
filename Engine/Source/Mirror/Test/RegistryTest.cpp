@@ -8,7 +8,7 @@
 
 int v0 = 1;
 
-int F0(int a, int b)
+int F0(const int a, const int b)
 {
     return a + b;
 }
@@ -38,14 +38,14 @@ int& C0::F0()
 
 class C1 {
 public:
-    explicit C1(int inV0) : v0(inV0) {}
+    explicit C1(const int inV0) : v0(inV0) {}
 
     int GetV0() const
     {
         return v0;
     }
 
-    void SetV0(int inV0)
+    void SetV0(const int inV0)
     {
         v0 = inV0;
     }
@@ -55,7 +55,7 @@ private:
 };
 
 struct C2 {
-    C2(int inA, int inB) : a(inA), b(inB) {}
+    C2(const int inA, const int inB) : a(inA), b(inB) {}
 
     int a;
     int b;
@@ -68,8 +68,8 @@ enum class E0 {
     max
 };
 
-struct C3 : public C2 {
-    C3(int inA, int inB, int inC) : C2(inA, inB), c(inC) {}
+struct C3 : C2 {
+    C3(const int inA, const int inB, const int inC) : C2(inA, inB), c(inC) {}
 
     int c;
 };
@@ -208,7 +208,7 @@ TEST(RegistryTest, ClassTest)
     {
         const auto& clazz = Mirror::Class::Get<C3>();
         auto object = clazz.GetConstructor("Constructor0").NewObject(1, 2, 3);
-        C2* c2Obj = object.As<C2*>();
+        auto* c2Obj = object.As<C2*>();
 
         ASSERT_EQ(c2Obj->a, 1);
         ASSERT_EQ(c2Obj->b, 2);

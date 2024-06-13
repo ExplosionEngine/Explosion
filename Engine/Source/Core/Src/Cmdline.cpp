@@ -23,7 +23,7 @@ namespace Core {
 
     Cli::~Cli() = default;
 
-    std::pair<bool, std::string> Cli::Parse(int argc, char* argv[])
+    std::pair<bool, std::string> Cli::Parse(const int argc, char* argv[])
     {
         Assert(!parsed);
         parsed = true;

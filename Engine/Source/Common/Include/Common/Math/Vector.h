@@ -207,7 +207,7 @@ namespace Common::Internal {
     };
 }
 
-namespace Common {
+namespace Common { // NOLINT
     template <typename T, uint8_t L>
     struct Serializer<Vector<T, L>> {
         static constexpr bool serializable = true;

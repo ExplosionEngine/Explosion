@@ -2,11 +2,10 @@
 // Created by johnk on 30/3/2022.
 //
 
-#include "RHI/Synchronous.h"
 #include <RHI/Synchronous.h>
 
 namespace RHI {
-    Barrier Barrier::Transition(Buffer* buffer, BufferState before, BufferState after)
+    Barrier Barrier::Transition(Buffer* buffer, const BufferState before, const BufferState after)
     {
         Barrier barrier {};
         barrier.type = ResourceType::buffer;
@@ -16,7 +15,7 @@ namespace RHI {
         return barrier;
     }
 
-    Barrier Barrier::Transition(Texture* texture, TextureState before, TextureState after)
+    Barrier Barrier::Transition(Texture* texture, const TextureState before, const TextureState after)
     {
         Barrier barrier {};
         barrier.type = ResourceType::texture;
@@ -26,11 +25,11 @@ namespace RHI {
         return barrier;
     }
 
-    Fence::Fence(Device& device, bool initAsSignaled) {}
+    Fence::Fence(Device&, bool) {}
 
     Fence::~Fence() = default;
 
-    Semaphore::Semaphore(Device& device) {}
+    Semaphore::Semaphore(Device&) {}
 
     Semaphore::~Semaphore() = default;
 }
