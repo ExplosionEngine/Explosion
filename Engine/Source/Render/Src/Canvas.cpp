@@ -5,7 +5,7 @@
 #include <Render/Canvas.h>
 
 namespace Render {
-    void Canvas::Destroy()
+    void Canvas::Destroy() const
     {
         delete this;
     }

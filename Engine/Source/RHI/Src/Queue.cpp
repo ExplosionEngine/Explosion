@@ -6,9 +6,7 @@
 
 namespace RHI {
     QueueSubmitInfo::QueueSubmitInfo()
-        : waitSemaphores()
-        , signalSemaphores()
-        , signalFence(nullptr)
+        : signalFence(nullptr)
     {
     }
 

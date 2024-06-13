@@ -11,7 +11,7 @@
 #include <Common/String.h>
 
 namespace Mirror::Internal {
-    TypeId ComputeTypeId(std::string_view sigName)
+    TypeId ComputeTypeId(const std::string_view sigName)
     {
         return Common::HashUtils::CityHash(sigName.data(), sigName.size());
     }
@@ -33,7 +33,7 @@ namespace Mirror {
         rtti->copy(data.data(), inAny.data.data());
     }
 
-    Any::Any(Any&& inAny) noexcept
+    Any::Any(Any&& inAny) noexcept // NOLINT
     {
         typeInfo = inAny.typeInfo;
         rtti = inAny.rtti;
@@ -53,7 +53,7 @@ namespace Mirror {
         return *this;
     }
 
-    Any& Any::operator=(Mirror::Any&& inAny) noexcept
+    Any& Any::operator=(Any&& inAny) noexcept
     {
         Reset();
         typeInfo = inAny.typeInfo;
@@ -68,14 +68,14 @@ namespace Mirror {
             return true;
         }
 
-        const Mirror::Class* srcClass;
-        const Mirror::Class* dstClass;
+        const Class* srcClass;
+        const Class* dstClass;
         if (typeInfo->isPointer && dstType->isPointer) {
-            srcClass = Mirror::Class::Find(typeInfo->removePointerType);
-            dstClass = Mirror::Class::Find(dstType->removePointerType);
+            srcClass = Class::Find(typeInfo->removePointerType);
+            dstClass = Class::Find(dstType->removePointerType);
         } else {
-            srcClass = Mirror::Class::Find(typeInfo->id);
-            dstClass = Mirror::Class::Find(dstType->id);
+            srcClass = Class::Find(typeInfo->id);
+            dstClass = Class::Find(dstType->id);
         }
         return srcClass != nullptr && dstClass != nullptr && srcClass->IsDerivedFrom(dstClass);
     }
@@ -90,7 +90,7 @@ namespace Mirror {
         return data.data();
     }
 
-    const Mirror::TypeInfo* Any::TypeInfo() const
+    const TypeInfo* Any::TypeInfo() const
     {
         return typeInfo;
     }
@@ -121,7 +121,7 @@ namespace Mirror {
 
     const std::string& Type::GetMeta(const std::string& key) const
     {
-        auto iter = metas.find(key);
+        const auto iter = metas.find(key);
         Assert(iter != metas.end());
         return iter->second;
     }
@@ -130,8 +130,8 @@ namespace Mirror {
     {
         std::stringstream stream;
         uint32_t count = 0;
-        for (const auto& iter : metas) {
-            stream << fmt::format("{}={}", iter.first, iter.second);
+        for (const auto& [key, value] : metas) {
+            stream << fmt::format("{}={}", key, value);
 
             count++;
             if (count != metas.size()) {
@@ -143,7 +143,7 @@ namespace Mirror {
 
     bool Type::HasMeta(const std::string& key) const
     {
-        return metas.find(key) != metas.end();
+        return metas.contains(key);
     }
 
     Variable::Variable(ConstructParams&& params)
@@ -205,7 +205,7 @@ namespace Mirror {
         return retTypeInfo;
     }
 
-    const TypeInfo* Function::GetArgTypeInfo(uint8_t argIndex) const
+    const TypeInfo* Function::GetArgTypeInfo(const uint8_t argIndex) const
     {
         return argTypeInfos[argIndex];
     }
@@ -215,9 +215,9 @@ namespace Mirror {
         return argTypeInfos;
     }
 
-    Any Function::InvokeWith(Any* args, uint8_t argsSize) const
+    Any Function::InvokeWith(Any* arguments, const uint8_t argumentsSize) const
     {
-        return invoker(args, argsSize);
+        return invoker(arguments, argumentsSize);
     }
 
     Constructor::Constructor(ConstructParams&& params)
@@ -236,7 +236,7 @@ namespace Mirror {
         return argsNum;
     }
 
-    const TypeInfo* Constructor::GetArgTypeInfo(uint8_t argIndex) const
+    const TypeInfo* Constructor::GetArgTypeInfo(const uint8_t argIndex) const
     {
         return argTypeInfos[argIndex];
     }
@@ -246,12 +246,12 @@ namespace Mirror {
         return argTypeInfos;
     }
 
-    Any Constructor::ConstructOnStackWith(Any* arguments, uint8_t argumentsSize) const
+    Any Constructor::ConstructOnStackWith(Any* arguments, const uint8_t argumentsSize) const
     {
         return stackConstructor(arguments, argumentsSize);
     }
 
-    Any Constructor::NewObjectWith(Any* arguments, uint8_t argumentsSize) const
+    Any Constructor::NewObjectWith(Any* arguments, const uint8_t argumentsSize) const
     {
         return heapConstructor(arguments, argumentsSize);
     }
@@ -333,7 +333,7 @@ namespace Mirror {
         return retTypeInfo;
     }
 
-    const TypeInfo* MemberFunction::GetArgTypeInfo(uint8_t argIndex) const
+    const TypeInfo* MemberFunction::GetArgTypeInfo(const uint8_t argIndex) const
     {
         return argTypeInfos[argIndex];
     }
@@ -343,7 +343,7 @@ namespace Mirror {
         return argTypeInfos;
     }
 
-    Any MemberFunction::InvokeWith(Any* object, Any* args, size_t argsSize) const
+    Any MemberFunction::InvokeWith(Any* object, Any* args, const size_t argsSize) const
     {
         return invoker(object, args, argsSize);
     }
@@ -364,13 +364,13 @@ namespace Mirror {
 
     const Variable* GlobalScope::FindVariable(const std::string& name) const
     {
-        auto iter = variables.find(name);
+        const auto iter = variables.find(name);
         return iter == variables.end() ? nullptr : &iter->second;
     }
 
     const Variable& GlobalScope::GetVariable(const std::string& name) const
     {
-        auto iter = variables.find(name);
+        const auto iter = variables.find(name);
         Assert(iter != variables.end());
         return iter->second;
     }
@@ -382,13 +382,13 @@ namespace Mirror {
 
     const Function* GlobalScope::FindFunction(const std::string& name) const
     {
-        auto iter = functions.find(name);
+        const auto iter = functions.find(name);
         return iter == functions.end() ? nullptr : &iter->second;
     }
 
     const Function& GlobalScope::GetFunction(const std::string& name) const
     {
-        auto iter = functions.find(name);
+        const auto iter = functions.find(name);
         Assert(iter != functions.end());
         return iter->second;
     }
@@ -401,7 +401,6 @@ namespace Mirror {
         , baseClassGetter(std::move(params.baseClassGetter))
         , defaultObject(std::move(params.defaultObject))
         , destructor(std::move(params.destructor))
-        , constructors()
     {
         if (params.defaultConstructor.has_value()) {
             constructors.emplace(std::make_pair(NamePresets::defaultConstructor, std::move(params.defaultConstructor.value())));
@@ -419,14 +418,14 @@ namespace Mirror {
     const Class* Class::Find(const std::string& name)
     {
         const auto& classes = Registry::Get().classes;
-        auto iter = classes.find(name);
+        const auto iter = classes.find(name);
         return iter == classes.end() ? nullptr : &iter->second;
     }
 
     const Class& Class::Get(const std::string& name)
     {
         const auto& classes = Registry::Get().classes;
-        auto iter = classes.find(name);
+        const auto iter = classes.find(name);
         Assert(iter != classes.end());
         return iter->second;
     }
@@ -434,24 +433,24 @@ namespace Mirror {
     bool Class::Has(const TypeInfo* typeInfo)
     {
         Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
-        return typeToNameMap.contains(typeInfo->id);
+        return typeToNameMap.contains(typeInfo->id); // NOLINT
     }
 
     const Class* Class::Find(const TypeInfo* typeInfo)
     {
         Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
-        return Find(typeInfo->id);
+        return Find(typeInfo->id); // NOLINT
     }
 
     const Class& Class::Get(const TypeInfo* typeInfo)
     {
         Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
-        return Get(typeInfo->id);
+        return Get(typeInfo->id); // NOLINT
     }
 
-    const Class* Class::Find(TypeId typeId)
+    const Class* Class::Find(const TypeId typeId)
     {
-        auto iter = typeToNameMap.find(typeId);
+        const auto iter = typeToNameMap.find(typeId);
         if (iter == typeToNameMap.end()) {
             return nullptr;
         }
@@ -460,7 +459,7 @@ namespace Mirror {
 
     const Class& Class::Get(TypeId typeId)
     {
-        auto iter = typeToNameMap.find(typeId);
+        const auto iter = typeToNameMap.find(typeId);
         AssertWithReason(iter != typeToNameMap.end(), "did you forget add EClass() annotation to class ?");
         return Get(iter->second);
     }
@@ -475,19 +474,19 @@ namespace Mirror {
         return HasConstructor(NamePresets::defaultConstructor);
     }
 
-    const Mirror::Class* Class::GetBaseClass() const
+    const Class* Class::GetBaseClass() const
     {
         return baseClassGetter();
     }
 
-    bool Class::IsBaseOf(const Mirror::Class* derivedClass) const
+    bool Class::IsBaseOf(const Class* derivedClass) const
     {
         return derivedClass->IsDerivedFrom(this);
     }
 
-    bool Class::IsDerivedFrom(const Mirror::Class* baseClass) const
+    bool Class::IsDerivedFrom(const Class* baseClass) const
     {
-        const Mirror::Class* tBase = GetBaseClass();
+        const Class* tBase = GetBaseClass();
         while (tBase != nullptr) {
             if (tBase == baseClass) {
                 return true;
@@ -528,10 +527,10 @@ namespace Mirror {
         return constructors.contains(name);
     }
 
-    const Constructor* Class::FindSuitableConstructor(Mirror::Any* args, uint8_t argNum) const
+    const Constructor* Class::FindSuitableConstructor(const Any* args, const uint8_t argNum) const
     {
-        for (const auto& constructor : constructors) {
-            const auto& argTypeInfos = constructor.second.GetArgTypeInfos();
+        for (const auto& [constructorName, constructor] : constructors) {
+            const auto& argTypeInfos = constructor.GetArgTypeInfos();
             if (argTypeInfos.size() != argNum) {
                 continue;
             }
@@ -547,7 +546,7 @@ namespace Mirror {
             }
 
             if (bSuitable) {
-                return &constructor.second;
+                return &constructor;
             }
         }
         return nullptr;
@@ -555,13 +554,13 @@ namespace Mirror {
 
     const Constructor* Class::FindConstructor(const std::string& name) const
     {
-        auto iter = constructors.find(name);
+        const auto iter = constructors.find(name);
         return iter == constructors.end() ? nullptr : &iter->second;
     }
 
     const Constructor& Class::GetConstructor(const std::string& name) const
     {
-        auto iter = constructors.find(name);
+        const auto iter = constructors.find(name);
         Assert(iter != constructors.end());
         return iter->second;
     }
@@ -573,13 +572,13 @@ namespace Mirror {
 
     const Variable* Class::FindStaticVariable(const std::string& name) const
     {
-        auto iter = staticVariables.find(name);
+        const auto iter = staticVariables.find(name);
         return iter == staticVariables.end() ? nullptr : &iter->second;
     }
 
     const Variable& Class::GetStaticVariable(const std::string& name) const
     {
-        auto iter = staticVariables.find(name);
+        const auto iter = staticVariables.find(name);
         Assert(iter != staticVariables.end());
         return iter->second;
     }
@@ -591,13 +590,13 @@ namespace Mirror {
 
     const Function* Class::FindStaticFunction(const std::string& name) const
     {
-        auto iter = staticFunctions.find(name);
+        const auto iter = staticFunctions.find(name);
         return iter == staticFunctions.end() ? nullptr : &iter->second;
     }
 
     const Function& Class::GetStaticFunction(const std::string& name) const
     {
-        auto iter = staticFunctions.find(name);
+        const auto iter = staticFunctions.find(name);
         Assert(iter != staticFunctions.end());
         return iter->second;
     }
@@ -609,13 +608,13 @@ namespace Mirror {
 
     const MemberVariable* Class::FindMemberVariable(const std::string& name) const
     {
-        auto iter = memberVariables.find(name);
+        const auto iter = memberVariables.find(name);
         return iter == memberVariables.end() ? nullptr : &iter->second;
     }
 
     const MemberVariable& Class::GetMemberVariable(const std::string& name) const
     {
-        auto iter = memberVariables.find(name);
+        const auto iter = memberVariables.find(name);
         Assert(iter != memberVariables.end());
         return iter->second;
     }
@@ -627,50 +626,50 @@ namespace Mirror {
 
     const MemberFunction* Class::FindMemberFunction(const std::string& name) const
     {
-        auto iter = memberFunctions.find(name);
+        const auto iter = memberFunctions.find(name);
         return iter == memberFunctions.end() ? nullptr : &iter->second;
     }
 
     const MemberFunction& Class::GetMemberFunction(const std::string& name) const
     {
-        auto iter = memberFunctions.find(name);
+        const auto iter = memberFunctions.find(name);
         Assert(iter != memberFunctions.end());
         return iter->second;
     }
 
-    void Class::Serialize(Common::SerializeStream& stream, Mirror::Any* obj) const
+    void Class::Serialize(Common::SerializeStream& stream, Any* obj) const // NOLINT
     {
-        const auto* baseClass = GetBaseClass();
-        if (baseClass != nullptr) {
+        if (const auto* baseClass = GetBaseClass();
+            baseClass != nullptr) {
             baseClass->Serialize(stream, obj);
         }
 
         Assert(defaultObject.has_value());
 
-        std::string name = GetName();
-        uint64_t memberVariablesNum = memberVariables.size();
+        const auto& name = GetName();
+        const auto memberVariablesNum = memberVariables.size();
         Common::Serializer<std::string>::Serialize(stream, name);
         Common::Serializer<uint64_t>::Serialize(stream, memberVariablesNum);
 
-        for (const auto& memberVariable : memberVariables) {
-            Common::Serializer<std::string>::Serialize(stream, memberVariable.first);
+        for (const auto& [name, memberVariable] : memberVariables) {
+            Common::Serializer<std::string>::Serialize(stream, name);
 
-            const bool sameWithDefaultObject = memberVariable.second.Get(obj) == defaultObject.value();
+            const bool sameWithDefaultObject = memberVariable.Get(obj) == defaultObject.value();
             Common::Serializer<bool>::Serialize(stream, sameWithDefaultObject);
 
             if (sameWithDefaultObject) {
                 Common::Serializer<uint32_t>::Serialize(stream, 0);
             } else {
-                Common::Serializer<uint32_t>::Serialize(stream, memberVariable.second.SizeOf());
-                memberVariable.second.Serialize(stream, obj);
+                Common::Serializer<uint32_t>::Serialize(stream, memberVariable.SizeOf());
+                memberVariable.Serialize(stream, obj);
             }
         }
     }
 
-    void Class::Deserailize(Common::DeserializeStream& stream, Mirror::Any* obj) const
+    void Class::Deserailize(Common::DeserializeStream& stream, Any* obj) const // NOLINT
     {
-        const auto* baseClass = GetBaseClass();
-        if (baseClass != nullptr) {
+        if (const auto* baseClass = GetBaseClass();
+            baseClass != nullptr) {
             baseClass->Deserailize(stream, obj);
         }
 
@@ -706,7 +705,7 @@ namespace Mirror {
         }
     }
 
-    EnumElement::EnumElement(std::string inName, EnumElement::Getter inGetter, EnumElement::Comparer inComparer)
+    EnumElement::EnumElement(std::string inName, Getter inGetter, Comparer inComparer)
         : Type(std::move(inName))
         , getter(std::move(inGetter))
         , comparer(std::move(inComparer))
@@ -728,14 +727,14 @@ namespace Mirror {
     const Enum* Enum::Find(const std::string& name)
     {
         const auto& enums = Registry::Get().enums;
-        auto iter = enums.find(name);
+        const auto iter = enums.find(name);
         return iter == enums.end() ? nullptr : &iter->second;
     }
 
     const Enum& Enum::Get(const std::string& name)
     {
         const auto& enums = Registry::Get().enums;
-        auto iter = enums.find(name);
+        const auto iter = enums.find(name);
         Assert(iter != enums.end());
         return iter->second;
     }
@@ -757,16 +756,16 @@ namespace Mirror {
 
     Any Enum::GetElement(const std::string& name) const
     {
-        auto iter = elements.find(name);
+        const auto iter = elements.find(name);
         Assert(iter != elements.end());
         return iter->second.Get();
     }
 
     std::string Enum::GetElementName(Any* value) const
     {
-        for (const auto& element : elements) {
-            if (element.second.Compare(value)) {
-                return element.first;
+        for (const auto& [name, element] : elements) {
+            if (element.Compare(value)) {
+                return name;
             }
         }
         QuickFail();

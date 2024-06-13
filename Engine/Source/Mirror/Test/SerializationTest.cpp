@@ -114,10 +114,10 @@ TEST(SerializationTest, ClassFileSerializationTest)
         Mirror::Any obj = clazz.GetDefaultConstructor().ConstructOnStack();
         clazz.Deserailize(stream, &obj);
 
-        const auto& ref = obj.As<const SerializationTestStruct0&>();
-        ASSERT_EQ(ref.a, 1);
-        ASSERT_EQ(ref.b, 2.0f);
-        ASSERT_EQ(ref.c, "3");
+        const auto& [a, b, c] = obj.As<const SerializationTestStruct0&>();
+        ASSERT_EQ(a, 1);
+        ASSERT_EQ(b, 2.0f);
+        ASSERT_EQ(c, "3");
     }
 }
 
@@ -145,22 +145,22 @@ TEST(SerializationTest, ContainerFileSerializationTest)
         Mirror::Any ref = clazz.GetDefaultConstructor().ConstructOnStack();
         clazz.Deserailize(stream, &ref);
 
-        const auto& tRef = ref.As<const SerializationTestStruct1&>();
-        ASSERT_EQ(tRef.a.size(), 2);
-        ASSERT_EQ(tRef.a[0], 1);
-        ASSERT_EQ(tRef.a[1], 2);
-        ASSERT_EQ(tRef.b.size(), 2);
-        ASSERT_EQ(tRef.b.contains("3"), true);
-        ASSERT_EQ(tRef.b.contains("4"), true);
-        ASSERT_EQ(tRef.c.size(), 2);
-        ASSERT_EQ(tRef.c.at(5), "6");
-        ASSERT_EQ(tRef.c.at(7), "8");
-        ASSERT_EQ(tRef.d.size(), 2);
-        ASSERT_EQ(tRef.d[0].size(), 2);
-        ASSERT_EQ(tRef.d[0][0], false);
-        ASSERT_EQ(tRef.d[0][1], true);
-        ASSERT_EQ(tRef.d[1].size(), 2);
-        ASSERT_EQ(tRef.d[1][0], true);
-        ASSERT_EQ(tRef.d[1][1], false);
+        const auto& [a, b, c, d] = ref.As<const SerializationTestStruct1&>();
+        ASSERT_EQ(a.size(), 2);
+        ASSERT_EQ(a[0], 1);
+        ASSERT_EQ(a[1], 2);
+        ASSERT_EQ(b.size(), 2);
+        ASSERT_EQ(b.contains("3"), true);
+        ASSERT_EQ(b.contains("4"), true);
+        ASSERT_EQ(c.size(), 2);
+        ASSERT_EQ(c.at(5), "6");
+        ASSERT_EQ(c.at(7), "8");
+        ASSERT_EQ(d.size(), 2);
+        ASSERT_EQ(d[0].size(), 2);
+        ASSERT_EQ(d[0][0], false);
+        ASSERT_EQ(d[0][1], true);
+        ASSERT_EQ(d[1].size(), 2);
+        ASSERT_EQ(d[1][0], true);
+        ASSERT_EQ(d[1][1], false);
     }
 }

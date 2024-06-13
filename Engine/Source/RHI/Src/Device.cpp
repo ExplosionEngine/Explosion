@@ -5,7 +5,7 @@
 #include <RHI/Device.h>
 
 namespace RHI {
-    QueueRequestInfo::QueueRequestInfo(QueueType inType, uint8_t inNum)
+    QueueRequestInfo::QueueRequestInfo(const QueueType inType, const uint8_t inNum)
         : type(inType)
         , num(inNum)
     {
@@ -19,7 +19,7 @@ namespace RHI {
         return *this;
     }
 
-    Device::Device(const DeviceCreateInfo& createInfo) {}
+    Device::Device(const DeviceCreateInfo&) {}
 
     Device::~Device() = default;
 }

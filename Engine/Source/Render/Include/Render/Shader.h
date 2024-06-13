@@ -8,7 +8,6 @@
 #include <unordered_map>
 #include <utility>
 #include <tuple>
-#include <functional>
 
 #include <Common/Utility.h>
 #include <Common/Debug.h>
@@ -55,6 +54,7 @@ namespace Render {
 
     class IShaderType {
     public:
+        virtual ~IShaderType();
         virtual const std::string& GetName() = 0;
         virtual ShaderTypeKey GetKey() = 0;
         virtual RHI::ShaderStageBits GetStage() = 0;
@@ -70,7 +70,7 @@ namespace Render {
         RHI::ShaderModule* rhiHandle = nullptr;
         ShaderTypeKey typeKey = 0;
         VariantKey variantKey = 0;
-        const ShaderReflectionData* reflectionData;
+        const ShaderReflectionData* reflectionData = nullptr;
 
         bool IsValid() const;
         size_t Hash() const;
@@ -98,13 +98,13 @@ namespace Render {
     class GlobalShader : public Shader {};
 
     template <typename Shader>
-    class GlobalShaderType : public IShaderType {
+    class GlobalShaderType final : public IShaderType {
     public:
         static GlobalShaderType& Get();
 
         GlobalShaderType();
 
-        ~GlobalShaderType();
+        ~GlobalShaderType() override;
         NonCopyable(GlobalShaderType)
 
         const std::string& GetName() override;
@@ -114,7 +114,7 @@ namespace Render {
         const std::string& GetCode() override;
         uint32_t GetVariantNum() override;
         const std::vector<VariantKey>& GetVariants() override;
-        const std::vector<std::string>& GetDefinitions(Render::VariantKey variantKey) override;
+        const std::vector<std::string>& GetDefinitions(VariantKey variantKey) override;
         void Reload() override;
 
     private:
@@ -344,7 +344,7 @@ namespace Render {
     void GlobalShaderType<Shader>::ReloadInternal()
     {
         name = Shader::name;
-        std::string keySource = std::string("Global-") + name;
+        const std::string keySource = std::string("Global-") + name;
         key = Common::HashUtils::CityHash(keySource.data(), keySource.size());
         stage = Shader::stage;
         entryPoint = Shader::entryPoint;
@@ -361,10 +361,10 @@ namespace Render {
             { "/Engine/Shader", Core::Paths::EngineShaderPath().string() }
         };
 
-        std::string sourceFile = Shader::sourceFile;
-        for (const auto& iter : pathMap) {
-            if (sourceFile.starts_with(iter.first)) {
-                code = Common::FileUtils::ReadTextFile(Common::StringUtils::Replace(sourceFile, iter.first, iter.second));
+        const std::string sourceFile = Shader::sourceFile;
+        for (const auto& [mapFrom, mapTo] : pathMap) {
+            if (sourceFile.starts_with(mapFrom)) {
+                code = Common::FileUtils::ReadTextFile(Common::StringUtils::Replace(sourceFile, mapFrom, mapTo));
                 return;
             }
         }
@@ -478,7 +478,7 @@ namespace Render {
     RangedIntShaderVariantFieldImpl<From, To>::~RangedIntShaderVariantFieldImpl() = default;
 
     template<uint32_t From, uint32_t To>
-    void RangedIntShaderVariantFieldImpl<From, To>::Set(RangedIntShaderVariantFieldImpl::ValueType inValue)
+    void RangedIntShaderVariantFieldImpl<From, To>::Set(const ValueType inValue)
     {
         Assert(From <= value && value <= To);
         value = inValue;
@@ -533,14 +533,14 @@ namespace Render {
     template<typename F>
     void VariantSetImpl<Variants...>::TraverseAll(F&& func)
     {
-        std::vector<VariantSetImpl<Variants...>> variantSets;
+        std::vector<VariantSetImpl> variantSets;
         variantSets.reserve(VariantNum());
-        variantSets.emplace_back(VariantSetImpl<Variants...>());
+        variantSets.emplace_back(VariantSetImpl());
 
         (void) std::initializer_list<int> { ([&variantSets]() -> void {
             auto valueRange = Variants::valueRange;
             auto variantSetsSize = variantSets.size();
-            for (auto i = valueRange.first; i <= valueRange.second; i++) {
+            for (auto i = valueRange.first; i <= valueRange.second; ++i) {
                 if (i == valueRange.first) {
                     for (auto j = 0; j < variantSetsSize; j++) {
                         variantSets[j].template Set<Variants>(static_cast<typename Variants::ValueType>(i));

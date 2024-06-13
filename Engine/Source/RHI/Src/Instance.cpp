@@ -28,15 +28,15 @@ namespace RHI {
     {
         if (abbrString == "dx12") {
             return RHIType::directX12;
-        } else if (abbrString == "vulkan") {
-            return RHIType::vulkan;
-        } else {
-            Unimplement();
-            return RHIType::max;
         }
+        if (abbrString == "vulkan") {
+            return RHIType::vulkan;
+        }
+        Unimplement();
+        return RHIType::max;
     }
 
-    std::string GetRHIModuleNameByType(RHIType type)
+    std::string GetRHIModuleNameByType(const RHIType type)
     {
         switch (type) {
             case RHIType::directX12:
@@ -72,7 +72,7 @@ namespace RHI {
     void Instance::UnloadAllInstances()
     {
         for (uint32_t i = static_cast<uint32_t>(RHIType::directX12); i < static_cast<uint32_t>(RHIType::max); i++) {
-            RHIType rhiType = static_cast<RHIType>(i);
+            const auto rhiType = static_cast<RHIType>(i);
             Core::ModuleManager::Get().Unload(GetRHIModuleNameByType(rhiType));
         }
     }

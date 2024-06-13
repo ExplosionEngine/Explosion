@@ -26,7 +26,7 @@ namespace RHI {
         uint32_t offset;
         std::variant<VertexBufferViewInfo, IndexBufferViewInfo> extend;
 
-        BufferViewCreateInfo(
+        explicit BufferViewCreateInfo(
             BufferViewType inType = BufferViewType::max,
             uint32_t inSize = 0,
             uint32_t inOffset = 0,

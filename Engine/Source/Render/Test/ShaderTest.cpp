@@ -26,7 +26,7 @@ TEST(ShaderTest, StaticVariantSetTest)
 {
     ASSERT_EQ(TestGlobalShaderVS::VariantSet::VariantNum(), 8);
 
-    std::set<std::pair<bool, uint8_t>> expectVariants = {
+    const std::set<std::pair<bool, uint8_t>> expectVariants = {
         { false, 0 },
         { false, 1 },
         { false, 2 },

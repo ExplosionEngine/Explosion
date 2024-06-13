@@ -10,6 +10,7 @@
 namespace Render {
     class IScene {
     public:
+        virtual ~IScene() = default;
         virtual void AddLight(ILightSceneProxy* inProxy) = 0;
         virtual void RemoveLight(ILightSceneProxy* inProxy) = 0;
         virtual void AddPrimitive(IPrimitiveSceneProxy* inProxy) = 0;

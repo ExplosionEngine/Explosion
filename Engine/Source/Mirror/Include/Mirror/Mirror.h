@@ -40,16 +40,16 @@ namespace Mirror::Internal {
         using EqualFunc = bool(const void*, const void*);
 
         template <typename T>
-        static void DetorImpl(void* const object) noexcept;
+        static void DetorImpl(void* object) noexcept;
 
         template <typename T>
-        static void CopyImpl(void* const object, const void* const other);
+        static void CopyImpl(void* object, const void* other);
 
         template <typename T>
-        static void MoveImpl(void* const object, void* const other) noexcept;
+        static void MoveImpl(void* object, void* other) noexcept;
 
         template <typename T>
-        static bool EqualImpl(const void* const object, const void* const other);
+        static bool EqualImpl(const void* object, const void* other);
 
         DetorFunc* detor;
         CopyFunc* copy;
@@ -91,9 +91,9 @@ namespace Mirror {
     TypeInfo* GetTypeInfo();
 
     struct NamePresets {
-        static constexpr const char* globalScope = "_globalScope";
-        static constexpr const char* destructor = "_destructor";
-        static constexpr const char* defaultConstructor = "_defaultConstructor";
+        static constexpr auto globalScope = "_globalScope";
+        static constexpr auto destructor = "_destructor";
+        static constexpr auto defaultConstructor = "_defaultConstructor";
     };
 
     class MIRROR_API Any {
@@ -139,7 +139,7 @@ namespace Mirror {
         [[nodiscard]] bool Convertible(const TypeInfo* dstType) const;
         [[nodiscard]] size_t Size() const;
         [[nodiscard]] const void* Data() const;
-        [[nodiscard]] const Mirror::TypeInfo* TypeInfo() const;
+        [[nodiscard]] const TypeInfo* TypeInfo() const;
         void Reset();
         bool operator==(const Any& rhs) const;
 
@@ -174,7 +174,7 @@ namespace Mirror {
         std::unordered_map<std::string, std::string> metas;
     };
 
-    class MIRROR_API Variable : public Type {
+    class MIRROR_API Variable final : public Type {
     public:
         ~Variable() override;
 
@@ -216,7 +216,7 @@ namespace Mirror {
         VariableDeserializer deserializer;
     };
 
-    class MIRROR_API Function : public Type {
+    class MIRROR_API Function final : public Type {
     public:
         ~Function() override;
 
@@ -252,7 +252,7 @@ namespace Mirror {
         Invoker invoker;
     };
 
-    class MIRROR_API Constructor : public Type {
+    class MIRROR_API Constructor final : public Type {
     public:
         ~Constructor() override;
 
@@ -292,7 +292,7 @@ namespace Mirror {
         Invoker heapConstructor;
     };
 
-    class MIRROR_API Destructor : public Type {
+    class MIRROR_API Destructor final : public Type {
     public:
         ~Destructor() override;
 
@@ -316,7 +316,7 @@ namespace Mirror {
         Invoker destructor;
     };
 
-    class MIRROR_API MemberVariable : public Type {
+    class MIRROR_API MemberVariable final : public Type {
     public:
         ~MemberVariable() override;
 
@@ -358,7 +358,7 @@ namespace Mirror {
         MemberVariableDeserializer deserializer;
     };
 
-    class MIRROR_API MemberFunction : public Type {
+    class MIRROR_API MemberFunction final : public Type {
     public:
         ~MemberFunction() override;
 
@@ -393,7 +393,7 @@ namespace Mirror {
         Invoker invoker;
     };
 
-    class MIRROR_API GlobalScope : public Type {
+    class MIRROR_API GlobalScope final : public Type {
     public:
         ~GlobalScope() override;
 
@@ -422,7 +422,7 @@ namespace Mirror {
         std::unordered_map<std::string, Function> functions;
     };
 
-    class MIRROR_API Class : public Type {
+    class MIRROR_API Class final : public Type {
     public:
         ~Class() override;
 
@@ -478,16 +478,16 @@ namespace Mirror {
         [[nodiscard]] static const Class& Get(TypeId typeId);
         [[nodiscard]] const TypeInfo* GetTypeInfo() const;
         [[nodiscard]] bool HasDefaultConstructor() const;
-        [[nodiscard]] const Mirror::Class* GetBaseClass() const;
-        [[nodiscard]] bool IsBaseOf(const Mirror::Class* derivedClass) const;
-        [[nodiscard]] bool IsDerivedFrom(const Mirror::Class* baseClass) const;
+        [[nodiscard]] const Class* GetBaseClass() const;
+        [[nodiscard]] bool IsBaseOf(const Class* derivedClass) const;
+        [[nodiscard]] bool IsDerivedFrom(const Class* baseClass) const;
         [[nodiscard]] const Constructor* FindDefaultConstructor() const;
         [[nodiscard]] const Constructor& GetDefaultConstructor() const;
         [[nodiscard]] bool HasDestructor() const;
         [[nodiscard]] const Destructor* FindDestructor() const;
         [[nodiscard]] const Destructor& GetDestructor() const;
         [[nodiscard]] bool HasConstructor(const std::string& name) const;
-        [[nodiscard]] const Constructor* FindSuitableConstructor(Mirror::Any* args, uint8_t argNum) const;
+        [[nodiscard]] const Constructor* FindSuitableConstructor(const Any* args, uint8_t argNum) const;
         [[nodiscard]] const Constructor* FindConstructor(const std::string& name) const;
         [[nodiscard]] const Constructor& GetConstructor(const std::string& name) const;
         [[nodiscard]] bool HasStaticVariable(const std::string& name) const;
@@ -502,8 +502,8 @@ namespace Mirror {
         [[nodiscard]] bool HasMemberFunction(const std::string& name) const;
         [[nodiscard]] const MemberFunction* FindMemberFunction(const std::string& name) const;
         [[nodiscard]] const MemberFunction& GetMemberFunction(const std::string& name) const;
-        void Serialize(Common::SerializeStream& stream, Mirror::Any* obj) const;
-        void Deserailize(Common::DeserializeStream& stream, Mirror::Any* obj) const;
+        void Serialize(Common::SerializeStream& stream, Any* obj) const;
+        void Deserailize(Common::DeserializeStream& stream, Any* obj) const;
 
     private:
         static std::unordered_map<TypeId, std::string> typeToNameMap;
@@ -511,13 +511,13 @@ namespace Mirror {
         friend class Registry;
         template <typename T> friend class ClassRegistry;
 
-        using BaseClassGetter = std::function<const Mirror::Class*()>;
+        using BaseClassGetter = std::function<const Class*()>;
 
         struct ConstructParams {
             std::string name;
             const TypeInfo* typeInfo;
             BaseClassGetter baseClassGetter;
-            std::optional<Mirror::Any> defaultObject;
+            std::optional<Any> defaultObject;
             std::optional<Destructor> destructor;
             std::optional<Constructor> defaultConstructor;
         };
@@ -526,7 +526,7 @@ namespace Mirror {
 
         const TypeInfo* typeInfo;
         BaseClassGetter baseClassGetter;
-        std::optional<Mirror::Any> defaultObject;
+        std::optional<Any> defaultObject;
         std::optional<Destructor> destructor;
         std::unordered_map<std::string, Constructor> constructors;
         std::unordered_map<std::string, Variable> staticVariables;
@@ -535,7 +535,7 @@ namespace Mirror {
         std::unordered_map<std::string, MemberFunction> memberFunctions;
     };
 
-    class MIRROR_API EnumElement : public Type {
+    class MIRROR_API EnumElement final : public Type {
     public:
         ~EnumElement() override;
 
@@ -557,7 +557,7 @@ namespace Mirror {
         Comparer comparer;
     };
 
-    class MIRROR_API Enum : public Type {
+    class MIRROR_API Enum final : public Type {
     public:
         template <typename T>
         requires std::is_enum_v<T>
@@ -598,26 +598,26 @@ namespace Mirror::Internal {
     template <typename T>
     void AnyRtti::DetorImpl(void* const object) noexcept
     {
-        reinterpret_cast<T*>(object)->~T();
+        static_cast<T*>(object)->~T();
     }
 
     template <typename T>
     void AnyRtti::CopyImpl(void* const object, const void* const other)
     {
-        new(object) T(*reinterpret_cast<const T*>(other));
+        new(object) T(*static_cast<const T*>(other));
     }
 
     template <typename T>
     void AnyRtti::MoveImpl(void* const object, void* const other) noexcept
     {
-        new(object) T(std::move(*reinterpret_cast<const T*>(other)));
+        new(object) T(std::move(*static_cast<const T*>(other)));
     }
 
     template <typename T>
     bool AnyRtti::EqualImpl(const void* const object, const void* const other)
     {
         if constexpr (std::equality_comparable<T>) {
-            return *reinterpret_cast<const T*>(object) == *reinterpret_cast<const T*>(other);
+            return *static_cast<const T*>(object) == *static_cast<const T*>(other);
         } else {
             AssertWithReason(false, "type is not comparable");
             return false;
@@ -707,7 +707,7 @@ namespace Mirror {
             return reinterpret_cast<std::add_const_t<std::reference_wrapper<std::remove_reference_t<T>>>*>(data.data())->get();
         } else {
             void* dataPtr = const_cast<uint8_t*>(data.data());
-            return *reinterpret_cast<std::remove_reference_t<T>*>(dataPtr);
+            return *static_cast<std::remove_reference_t<T>*>(dataPtr);
         }
     }
 
@@ -717,7 +717,7 @@ namespace Mirror {
         Assert(!typeInfo->isLValueReference);
         if (Convertible<T>()) {
             void* dataPtr = const_cast<uint8_t*>(data.data());
-            return reinterpret_cast<std::remove_reference_t<T>*>(dataPtr);
+            return static_cast<std::remove_reference_t<T>*>(dataPtr);
         } else {
             return nullptr;
         }
@@ -752,7 +752,7 @@ namespace Mirror {
     template <typename T>
     void Variable::Set(T value) const
     {
-        Any ref = Any(std::forward<std::remove_reference_t<T>>(value));
+        auto ref = Any(std::forward<std::remove_reference_t<T>>(value));
         Set(&ref);
     }
 
@@ -780,22 +780,22 @@ namespace Mirror {
     template <typename C>
     void Destructor::Invoke(C&& object) const
     {
-        Any classRef = Any(std::ref(std::forward<C>(object)));
+        auto classRef = Any(std::ref(std::forward<C>(object)));
         InvokeWith(&classRef);
     }
 
     template <typename C, typename T>
     void MemberVariable::Set(C&& object, T value) const
     {
-        Any classRef = Any(std::ref(std::forward<C>(object)));
-        Any valueRef = Any(std::forward<std::remove_reference_t<T>>(value));
+        auto classRef = Any(std::ref(std::forward<C>(object)));
+        auto valueRef = Any(std::forward<std::remove_reference_t<T>>(value));
         Set(&classRef, &valueRef);
     }
 
     template <typename C, typename... Args>
     Any MemberFunction::Invoke(C&& object, Args&&... args) const
     {
-        Any classRef = Any(std::ref(std::forward<C>(object)));
+        auto classRef = Any(std::ref(std::forward<C>(object)));
         std::array<Any, sizeof...(args)> argRefs = { Any(std::forward<Args>(args))... };
         return InvokeWith(&classRef, argRefs.data(), argRefs.size());
     }
@@ -803,16 +803,16 @@ namespace Mirror {
     template <typename F>
     void GlobalScope::ForEachVariable(F&& func) const
     {
-        for (const auto& iter : variables) {
-            func(iter.second);
+        for (const auto& [name, variable] : variables) {
+            func(variable);
         }
     }
 
     template <typename F>
     void GlobalScope::ForEachFunction(F&& func) const
     {
-        for (const auto& iter : functions) {
-            func(iter.second);
+        for (const auto& [name, function] : functions) {
+            func(function);
         }
     }
 
@@ -840,32 +840,32 @@ namespace Mirror {
     template <typename F>
     void Class::ForEachStaticVariable(F&& func) const
     {
-        for (const auto& iter : staticVariables) {
-            func(iter.second);
+        for (const auto& [name, staticVariable] : staticVariables) {
+            func(staticVariable);
         }
     }
 
     template <typename F>
     void Class::ForEachStaticFunction(F&& func) const
     {
-        for (const auto& iter : staticFunctions) {
-            func(iter.second);
+        for (const auto& [name, staticFunction] : staticFunctions) {
+            func(staticFunction);
         }
     }
 
     template <typename F>
     void Class::ForEachMemberVariable(F&& func) const
     {
-        for (const auto& iter : memberVariables) {
-            func(iter.second);
+        for (const auto& [name, variable] : memberVariables) {
+            func(variable);
         }
     }
 
     template <typename F>
     void Class::ForEachMemberFunction(F&& func) const
     {
-        for (const auto& iter : memberFunctions) {
-            func(iter.second);
+        for (const auto& [name, function] : memberFunctions) {
+            func(function);
         }
     }
 

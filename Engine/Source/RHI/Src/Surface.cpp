@@ -16,7 +16,7 @@ namespace RHI {
         return *this;
     }
 
-    Surface::Surface(const SurfaceCreateInfo& createInfo) {}
+    Surface::Surface(const SurfaceCreateInfo&) {}
 
     Surface::~Surface() = default;
 }

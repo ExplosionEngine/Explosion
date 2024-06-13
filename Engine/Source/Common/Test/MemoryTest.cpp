@@ -30,7 +30,7 @@ struct ChildTestStruct : TestStruct {
     }
 };
 
-TEST(MemoryTest, UniqueRefTest)
+TEST(MemoryTest, UniqueRefTest) // NOLINT
 {
     bool live;
     {
@@ -51,7 +51,7 @@ TEST(MemoryTest, UniqueRefTest)
     ASSERT_EQ(live, false);
 }
 
-TEST(MemoryTest, SharedRefTest)
+TEST(MemoryTest, SharedRefTest) // NOLINT
 {
     bool live;
     {
@@ -74,7 +74,7 @@ TEST(MemoryTest, SharedRefTest)
     ASSERT_EQ(live, false);
 }
 
-TEST(MemoryTest, WeakRefTest)
+TEST(MemoryTest, WeakRefTest) // NOLINT
 {
     bool live;
     SharedRef ref = new TestStruct(1, live);
@@ -105,22 +105,22 @@ TEST(MemoryTest, WeakRefTest)
     }
 }
 
-TEST(MemoryTest, WeakRefDeriveTest)
+TEST(MemoryTest, WeakRefDeriveTest) // NOLINT
 {
     bool live;
-    SharedRef<ChildTestStruct> ref = new ChildTestStruct(1, 2, live);
+    SharedRef ref = new ChildTestStruct(1, 2, live);
     ASSERT_EQ(live, true);
     ASSERT_EQ(ref->value, 1);
     ASSERT_EQ(ref->cValue, 2);
     ASSERT_EQ(ref.RefCount(), 1);
 
-    WeakRef<TestStruct> weakRef = ref;
+    const WeakRef<TestStruct> weakRef = ref;
     ASSERT_EQ(live, true);
     ASSERT_EQ(weakRef.Expired(), false);
     ASSERT_EQ(ref.RefCount(), 1);
 
     {
-        SharedRef<ChildTestStruct> lockRef = weakRef.Lock().StaticCast<ChildTestStruct>();
+        const SharedRef<ChildTestStruct> lockRef = weakRef.Lock().StaticCast<ChildTestStruct>();
         ASSERT_EQ(lockRef != nullptr, true);
         ASSERT_EQ(live, true);
         ASSERT_EQ(lockRef->value, 1);

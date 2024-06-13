@@ -8,7 +8,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
-#include <variant>
 #include <optional>
 
 #include <Common/Memory.h>
@@ -205,12 +204,12 @@ namespace Rendering {
     using RGBufferViewRef = RGBufferView*;
     using RGTextureViewRef = RGTextureView*;
 
-    struct RGColorAttachment : public RHI::ColorAttachmentBase<RGColorAttachment> {
+    struct RGColorAttachment : RHI::ColorAttachmentBase<RGColorAttachment> {
         RGTextureViewRef view;
         // TODO TextureView* resolve;
     };
 
-    struct RGDepthStencilAttachment : public RHI::DepthStencilAttachmentBase<RGDepthStencilAttachment> {
+    struct RGDepthStencilAttachment : RHI::DepthStencilAttachmentBase<RGDepthStencilAttachment> {
         RGTextureViewRef view;
     };
 
@@ -234,10 +233,10 @@ namespace Rendering {
     };
 
     struct RGBindGroupDesc {
-        Rendering::BindGroupLayout* layout;
+        BindGroupLayout* layout;
         std::unordered_map<std::string, RGBindItemDesc> items;
 
-        static RGBindGroupDesc Create(Rendering::BindGroupLayout* inLayout);
+        static RGBindGroupDesc Create(BindGroupLayout* inLayout);
         RGBindGroupDesc& Sampler(std::string inName, RHI::Sampler* inSampler);
         RGBindGroupDesc& UniformBuffer(std::string inName, RGBufferViewRef bufferView);
         RGBindGroupDesc& StorageBuffer(std::string inName, RGBufferViewRef bufferView);

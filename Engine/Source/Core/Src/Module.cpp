@@ -57,12 +57,12 @@ namespace Core {
 
     Module* ModuleManager::FindOrLoad(const std::string& moduleName)
     {
-        auto iter = loadedModules.find(moduleName);
-        if (iter != loadedModules.end()) {
+        if (const auto iter = loadedModules.find(moduleName);
+            iter != loadedModules.end()) {
             return iter->second.instance;
         }
 
-        std::optional<std::string> modulePath = SearchModule(moduleName);
+        const std::optional<std::string> modulePath = SearchModule(moduleName);
         if (!modulePath.has_value()) {
             return nullptr;
         }
@@ -104,8 +104,8 @@ namespace Core {
 
     void ModuleManager::UnloadAll()
     {
-        for (const auto& loadedModule : loadedModules) {
-            loadedModule.second.instance->OnUnload();
+        for (const auto& [moduleName, moduleRuntimeInfo] : loadedModules) {
+            moduleRuntimeInfo.instance->OnUnload();
         }
         loadedModules.clear();
     }
@@ -129,16 +129,16 @@ namespace Core {
 
                     const auto& path = entry.path();
                     auto fileName = path.filename().string();
-                    auto extension = path.extension().string();
 
-                    if ((extension == ".dll" || extension == ".so" || extension == ".dylib")
+                    if (auto extension = path.extension().string();
+                        (extension == ".dll" || extension == ".so" || extension == ".dylib")
                         && (fileName == fmt::format("{}{}", moduleName, extension) || fileName == fmt::format("lib{}{}", moduleName, extension)))
                     {
                         return path.string();
                     }
                 }
-            } catch (const std::exception& e) {
-                continue;
+            } catch (const std::exception&) {
+                // TODO maybe output log here
             }
         }
         return {};
