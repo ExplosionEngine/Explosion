@@ -24,10 +24,10 @@ namespace RHI::Vulkan {
 
     VulkanSwapChain::~VulkanSwapChain()
     {
-        auto vkDevice = device.GetNative();
+        const auto vkDevice = device.GetNative();
         vkDeviceWaitIdle(vkDevice);
 
-        for (auto& tex : textures) {
+        for (const auto& tex : textures) {
             delete tex;
         }
         textures.clear();
@@ -37,22 +37,22 @@ namespace RHI::Vulkan {
         }
     }
 
-    Texture* VulkanSwapChain::GetTexture(uint8_t inIndex)
+    Texture* VulkanSwapChain::GetTexture(const uint8_t inIndex)
     {
         return textures[inIndex];
     }
 
     uint8_t VulkanSwapChain::AcquireBackTexture(Semaphore* inSignalSemaphore)
     {
-        auto& vulkanSignalSemaphore = static_cast<VulkanSemaphore&>(*inSignalSemaphore);
+        const auto& vulkanSignalSemaphore = static_cast<VulkanSemaphore&>(*inSignalSemaphore);
         Assert(vkAcquireNextImageKHR(device.GetNative(), nativeSwapChain, UINT64_MAX, vulkanSignalSemaphore.GetNative(), VK_NULL_HANDLE, &currentImage) == VK_SUCCESS);
         return currentImage;
     }
 
     void VulkanSwapChain::Present(RHI::Semaphore* inWaitSemaphore)
     {
-        auto& vulkanWaitSemaphore = static_cast<VulkanSemaphore&>(*inWaitSemaphore);
-        std::vector<VkSemaphore> waitSemaphores { vulkanWaitSemaphore.GetNative() };
+        const auto& vulkanWaitSemaphore = static_cast<VulkanSemaphore&>(*inWaitSemaphore);
+        const std::vector waitSemaphores { vulkanWaitSemaphore.GetNative() };
 
         VkPresentInfoKHR presetInfo = {};
         presetInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -66,13 +66,13 @@ namespace RHI::Vulkan {
 
     void VulkanSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
-        auto vkDevice = device.GetNative();
-        auto* mQueue = static_cast<VulkanQueue*>(inCreateInfo.presentQueue);
+        const auto vkDevice = device.GetNative();
+        const auto* mQueue = static_cast<VulkanQueue*>(inCreateInfo.presentQueue);
         Assert(mQueue);
         auto* vkSurface = static_cast<VulkanSurface*>(inCreateInfo.surface);
         Assert(vkSurface);
         nativeQueue = mQueue->GetNative();
-        auto surface = vkSurface->GetNative();
+        const auto surface = vkSurface->GetNative();
 
         VkSurfaceCapabilitiesKHR surfaceCap;
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.GetGpu().GetNative(), surface, &surfaceCap);
@@ -95,9 +95,9 @@ namespace RHI::Vulkan {
         VkPresentModeKHR supportedMode = EnumCast<PresentMode, VkPresentModeKHR>(inCreateInfo.presentMode);
         {
             Assert(!presentModes.empty());
-            auto iter = std::find_if(
-                presentModes.begin(), presentModes.end(),
-                [supportedMode](VkPresentModeKHR mode) { return mode == supportedMode; });
+            const auto iter = std::ranges::find_if(
+                presentModes,
+                [supportedMode](const VkPresentModeKHR mode) { return mode == supportedMode; });
             Assert(iter != presentModes.end());
         }
 
@@ -132,7 +132,7 @@ namespace RHI::Vulkan {
         vkGetSwapchainImagesKHR(device.GetNative(), nativeSwapChain, &swapChainImageCount, nullptr);
         std::vector<VkImage> swapChainImages(swapChainImageCount);
         vkGetSwapchainImagesKHR(device.GetNative(), nativeSwapChain, &swapChainImageCount, swapChainImages.data());
-        for (auto& image : swapChainImages) {
+        for (const auto& image : swapChainImages) {
             textures.emplace_back(new VulkanTexture(device, textureInfo, image));
         }
         swapChainImageCount = static_cast<uint32_t>(swapChainImages.size());

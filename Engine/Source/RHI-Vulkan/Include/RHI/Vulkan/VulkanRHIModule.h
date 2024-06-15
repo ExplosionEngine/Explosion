@@ -4,12 +4,11 @@
 
 #pragma once
 
-#include <Core/Module.h>
 #include <RHI/RHIModule.h>
 #include <RHI/Vulkan/Api.h>
 
 namespace RHI::Vulkan {
-    class RHI_VULKAN_API VulkanRHIModule : public RHIModule {
+    class RHI_VULKAN_API VulkanRHIModule final : public RHIModule {
     public:
         VulkanRHIModule();
         ~VulkanRHIModule() override;

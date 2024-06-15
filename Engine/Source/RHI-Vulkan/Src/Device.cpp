@@ -24,7 +24,7 @@
 #include <RHI/Vulkan/Surface.h>
 
 namespace RHI::Vulkan {
-    const std::vector<const char*> DEVICE_EXTENSIONS = {
+    const std::vector DEVICE_EXTENSIONS = {
         "VK_KHR_swapchain",
         "VK_KHR_dynamic_rendering",
         "VK_KHR_depth_stencil_resolve",
@@ -34,7 +34,7 @@ namespace RHI::Vulkan {
 #endif
     };
 
-    const std::vector<const char*> VALIDATION_LAYERS = {
+    const std::vector VALIDATION_LAYERS = {
         "VK_LAYER_KHRONOS_validation"
     };
 }
@@ -59,65 +59,61 @@ namespace RHI::Vulkan {
         vkDestroyDevice(nativeDevice, nullptr);
     }
 
-    size_t VulkanDevice::GetQueueNum(QueueType inType)
+    size_t VulkanDevice::GetQueueNum(const QueueType inType)
     {
-        auto iter = queues.find(inType);
-        Assert(iter != queues.end());
-        return iter->second.size();
+        return queues.at(inType).size();
     }
 
     Queue* VulkanDevice::GetQueue(QueueType inType, size_t inIndex)
     {
-        auto iter = queues.find(inType);
-        Assert(iter != queues.end());
-        auto& queueArray = iter->second;
+        const auto& queueArray = queues.at(inType);
         Assert(inIndex < queueArray.size());
         return queueArray[inIndex].Get();
     }
 
     Common::UniqueRef<Surface> VulkanDevice::CreateSurface(const SurfaceCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<Surface>(new VulkanSurface(*this, inCreateInfo));
+        return { new VulkanSurface(*this, inCreateInfo) };
     }
 
     Common::UniqueRef<SwapChain> VulkanDevice::CreateSwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<SwapChain>(new VulkanSwapChain(*this, inCreateInfo));
+        return { new VulkanSwapChain(*this, inCreateInfo) };
     }
 
     Common::UniqueRef<Buffer> VulkanDevice::CreateBuffer(const BufferCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<Buffer>(new VulkanBuffer(*this, inCreateInfo));
+        return { new VulkanBuffer(*this, inCreateInfo) };
     }
 
     Common::UniqueRef<Texture> VulkanDevice::CreateTexture(const TextureCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<Texture>(new VulkanTexture(*this, inCreateInfo));
+        return { new VulkanTexture(*this, inCreateInfo) };
     }
 
     Common::UniqueRef<Sampler> VulkanDevice::CreateSampler(const SamplerCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<Sampler>(new VulkanSampler(*this, inCreateInfo));
+        return { new VulkanSampler(*this, inCreateInfo) };
     }
 
     Common::UniqueRef<BindGroupLayout> VulkanDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<BindGroupLayout>(new VulkanBindGroupLayout(*this, inCreateInfo));
+        return { new VulkanBindGroupLayout(*this, inCreateInfo) };
     }
 
     Common::UniqueRef<BindGroup> VulkanDevice::CreateBindGroup(const BindGroupCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<BindGroup>(new VulkanBindGroup(*this, inCreateInfo));
+        return { new VulkanBindGroup(*this, inCreateInfo) };
     }
 
     Common::UniqueRef<PipelineLayout> VulkanDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<PipelineLayout>(new VulkanPipelineLayout(*this, inCreateInfo));
+        return { new VulkanPipelineLayout(*this, inCreateInfo) };
     }
 
     Common::UniqueRef<ShaderModule> VulkanDevice::CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<ShaderModule>(new VulkanShaderModule(*this, inCreateInfo));
+        return { new VulkanShaderModule(*this, inCreateInfo) };
     }
 
     Common::UniqueRef<ComputePipeline> VulkanDevice::CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo)
@@ -128,27 +124,27 @@ namespace RHI::Vulkan {
 
     Common::UniqueRef<RasterPipeline> VulkanDevice::CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<RasterPipeline>(new VulkanRasterPipeline(*this, inCreateInfo));
+        return { new VulkanRasterPipeline(*this, inCreateInfo) };
     }
 
     Common::UniqueRef<CommandBuffer> VulkanDevice::CreateCommandBuffer()
     {
-        return Common::UniqueRef<CommandBuffer>(new VulkanCommandBuffer(*this, nativeCmdPools[QueueType::graphics]));
+        return { new VulkanCommandBuffer(*this, nativeCmdPools[QueueType::graphics]) };
     }
 
-    Common::UniqueRef<Fence> VulkanDevice::CreateFence(bool initAsSignaled)
+    Common::UniqueRef<Fence> VulkanDevice::CreateFence(const bool initAsSignaled)
     {
-        return Common::UniqueRef<Fence>(new VulkanFence(*this, initAsSignaled));
+        return { new VulkanFence(*this, initAsSignaled) };
     }
 
     Common::UniqueRef<Semaphore> VulkanDevice::CreateSemaphore()
     {
-        return Common::UniqueRef<Semaphore>(new VulkanSemaphore(*this));
+        return { new VulkanSemaphore(*this) };
     }
 
-    bool VulkanDevice::CheckSwapChainFormatSupport(Surface* inSurface, PixelFormat inFormat)
+    bool VulkanDevice::CheckSwapChainFormatSupport(Surface* inSurface, const PixelFormat inFormat)
     {
-        auto* vkSurface = static_cast<VulkanSurface*>(inSurface);
+        const auto* vkSurface = static_cast<VulkanSurface*>(inSurface);
         VkColorSpaceKHR colorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
 
         uint32_t formatCount = 0;
@@ -158,16 +154,15 @@ namespace RHI::Vulkan {
         surfaceFormats.resize(formatCount);
         vkGetPhysicalDeviceSurfaceFormatsKHR(gpu.GetNative(), vkSurface->GetNative(), &formatCount, surfaceFormats.data());
 
-        auto iter = std::find_if(
-            surfaceFormats.begin(),
-            surfaceFormats.end(),
-            [format = EnumCast<PixelFormat, VkFormat>(inFormat), colorSpace](VkSurfaceFormatKHR surfaceFormat) {
+        const auto iter = std::ranges::find_if(
+            surfaceFormats,
+            [format = EnumCast<PixelFormat, VkFormat>(inFormat), colorSpace](const VkSurfaceFormatKHR surfaceFormat) {
                 return format == surfaceFormat.format && colorSpace == surfaceFormat.colorSpace;
             });
         return iter != surfaceFormats.end();
     }
 
-    VkDevice VulkanDevice::GetNative()
+    VkDevice VulkanDevice::GetNative() const
     {
         return nativeDevice;
     }
@@ -180,8 +175,8 @@ namespace RHI::Vulkan {
     std::optional<uint32_t> VulkanDevice::FindQueueFamilyIndex(const std::vector<VkQueueFamilyProperties>& inProperties, std::vector<uint32_t>& inUsedQueueFamily, QueueType inQueueType)
     {
         for (uint32_t i = 0; i < inProperties.size(); i++) {
-            auto iter = std::find(inUsedQueueFamily.begin(), inUsedQueueFamily.end(), i);
-            if (iter != inUsedQueueFamily.end()) {
+            if (const auto iter = std::ranges::find(inUsedQueueFamily, i);
+                iter != inUsedQueueFamily.end()) {
                 continue;
             }
 
@@ -203,8 +198,8 @@ namespace RHI::Vulkan {
         std::map<QueueType, uint32_t> queueNumMap;
         for (uint32_t i = 0; i < inCreateInfo.queueRequests.size(); i++) {
             const auto& queueCreateInfo = inCreateInfo.queueRequests[i];
-            auto iter = queueNumMap.find(queueCreateInfo.type);
-            if (iter == queueNumMap.end()) {
+            if (auto iter = queueNumMap.find(queueCreateInfo.type);
+                iter == queueNumMap.end()) {
                 queueNumMap[queueCreateInfo.type] = 0;
             }
             queueNumMap[queueCreateInfo.type] += queueCreateInfo.num;
@@ -213,10 +208,10 @@ namespace RHI::Vulkan {
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
         std::vector<uint32_t> usedQueueFamily;
         std::vector<float> queuePriorities;
-        for (auto iter : queueNumMap) {
-            auto queueFamilyIndex = FindQueueFamilyIndex(queueFamilyProperties, usedQueueFamily, iter.first);
+        for (auto [queueType, queueNum] : queueNumMap) {
+            auto queueFamilyIndex = FindQueueFamilyIndex(queueFamilyProperties, usedQueueFamily, queueType);
             Assert(queueFamilyIndex.has_value());
-            auto queueCount = std::min(queueFamilyProperties[queueFamilyIndex.value()].queueCount, iter.second);
+            auto queueCount = std::min(queueFamilyProperties[queueFamilyIndex.value()].queueCount, queueNum);
 
             if (queueCount > queuePriorities.size()) {
                 queuePriorities.resize(queueCount, 1.0f);
@@ -229,7 +224,7 @@ namespace RHI::Vulkan {
             tempCreateInfo.pQueuePriorities = queuePriorities.data();
             queueCreateInfos.emplace_back(tempCreateInfo);
 
-            queueFamilyMappings[iter.first] = std::make_pair(queueFamilyIndex.value(), queueCount);
+            queueFamilyMappings[queueType] = std::make_pair(queueFamilyIndex.value(), queueCount);
         }
 
         VkPhysicalDeviceFeatures deviceFeatures = {};
@@ -263,10 +258,8 @@ namespace RHI::Vulkan {
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-        for (auto iter : queueFamilyMappings) {
-            auto queueType = iter.first;
-            auto queueFamilyIndex = iter.second.first;
-            auto queueNum = iter.second.second;
+        for (auto [queueType, queueFamilyInfo] : queueFamilyMappings) {
+            auto [queueFamilyIndex, queueNum] = queueFamilyInfo;
 
             std::vector<Common::UniqueRef<VulkanQueue>> tempQueues(queueNum);
             for (auto i = 0; i < tempQueues.size(); i++) {
@@ -276,7 +269,7 @@ namespace RHI::Vulkan {
             }
             queues[queueType] = std::move(tempQueues);
 
-            poolInfo.queueFamilyIndex = iter.second.first;
+            poolInfo.queueFamilyIndex = queueFamilyIndex;
 
             VkCommandPool pool;
             Assert(vkCreateCommandPool(nativeDevice, &poolInfo, nullptr, &pool) == VK_SUCCESS);
@@ -306,7 +299,7 @@ namespace RHI::Vulkan {
     }
 
 #if BUILD_CONFIG_DEBUG
-    void VulkanDevice::SetObjectName(VkObjectType inObjectType, uint64_t inObjectHandle, const char* inObjectName)
+    void VulkanDevice::SetObjectName(const VkObjectType inObjectType, const uint64_t inObjectHandle, const char* inObjectName) const
     {
         VkDebugUtilsObjectNameInfoEXT info = { VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT };
         info.objectType                    = inObjectType;

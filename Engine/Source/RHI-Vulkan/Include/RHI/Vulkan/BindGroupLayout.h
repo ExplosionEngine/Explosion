@@ -5,14 +5,14 @@
 
 #pragma once
 
-#include <memory>
 #include <vulkan/vulkan.h>
+
 #include <RHI/BindGroupLayout.h>
 
 namespace RHI::Vulkan {
     class VulkanDevice;
 
-    class VulkanBindGroupLayout : public BindGroupLayout {
+    class VulkanBindGroupLayout final : public BindGroupLayout {
     public:
         NonCopyable(VulkanBindGroupLayout)
         VulkanBindGroupLayout(VulkanDevice& inDevice, const BindGroupLayoutCreateInfo& inCreateInfo);

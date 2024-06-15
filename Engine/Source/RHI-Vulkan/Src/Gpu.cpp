@@ -5,12 +5,10 @@
 #include <RHI/Vulkan/Gpu.h>
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Device.h>
-#include <RHI/Vulkan/Instance.h>
 
 namespace RHI::Vulkan {
     VulkanGpu::VulkanGpu(VulkanInstance& inInstance, VkPhysicalDevice inNativePhysicalDevice)
-        : Gpu()
-        , instance(inInstance)
+        : instance(inInstance)
         , nativePhysicalDevice(inNativePhysicalDevice)
     {
     }
@@ -31,7 +29,7 @@ namespace RHI::Vulkan {
 
     Common::UniqueRef<Device> VulkanGpu::RequestDevice(const DeviceCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<Device>(new VulkanDevice(*this, inCreateInfo));
+        return { new VulkanDevice(*this, inCreateInfo) };
     }
 
     VkPhysicalDevice VulkanGpu::GetNative() const
@@ -50,7 +48,7 @@ namespace RHI::Vulkan {
         vkGetPhysicalDeviceMemoryProperties(nativePhysicalDevice, &memProperties);
 
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-            if ((inFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & inPropertyFlag) == inPropertyFlag) {
+            if ((inFilter & 1 << i) != 0u && (memProperties.memoryTypes[i].propertyFlags & inPropertyFlag) == inPropertyFlag) {
                 return i;
             }
         }

@@ -4,17 +4,11 @@
 
 #include <utility>
 
-#include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Buffer.h>
 #include <RHI/Vulkan/BufferView.h>
 
 namespace RHI::Vulkan {
-    static inline bool IsVertexBuffer(BufferUsageFlags bufferUsages)
-    {
-        return (bufferUsages & BufferUsageBits::vertex) != 0;
-    }
-
-    static inline bool IsIndexBuffer(BufferUsageFlags bufferUsages)
+    static bool IsIndexBuffer(const BufferUsageFlags bufferUsages)
     {
         return (bufferUsages & BufferUsageBits::index) != 0;
     }
@@ -35,10 +29,7 @@ namespace RHI::Vulkan {
         offset = inCreateInfo.offset;
         size = inCreateInfo.size;
         if (IsIndexBuffer(buffer.GetUsages())) {
-            format = std::get<IndexBufferViewInfo>(inCreateInfo.extend).format;
-        } else {
-            // TODO
-            // Uniform buffer
+            indexFormat = std::get<IndexBufferViewInfo>(inCreateInfo.extend).format;
         }
     }
 
@@ -54,10 +45,10 @@ namespace RHI::Vulkan {
 
     IndexFormat VulkanBufferView::GetIndexFormat() const
     {
-        return format;
+        return indexFormat;
     }
 
-    VulkanBuffer& VulkanBufferView::GetBuffer()
+    VulkanBuffer& VulkanBufferView::GetBuffer() const
     {
         return buffer;
     }

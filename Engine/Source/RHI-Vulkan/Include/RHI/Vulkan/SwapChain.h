@@ -2,6 +2,8 @@
 // Created by Zach Lee on 2022/4/4.
 //
 
+#pragma once
+
 #include <vector>
 
 #include <vulkan/vulkan.h>
@@ -12,7 +14,7 @@ namespace RHI::Vulkan {
     class VulkanDevice;
     class VulkanQueue;
 
-    class VulkanSwapChain : public SwapChain {
+    class VulkanSwapChain final : public SwapChain {
     public:
         NonCopyable(VulkanSwapChain)
         explicit VulkanSwapChain(VulkanDevice& inDevice, const SwapChainCreateInfo& inCreateInfo);

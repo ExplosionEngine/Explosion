@@ -14,7 +14,7 @@ namespace RHI::Vulkan {
     class VulkanCommandBuffer;
     class VulkanRasterPipeline;
 
-    class VulkanCommandRecorder : public CommandRecorder {
+    class VulkanCommandRecorder final : public CommandRecorder {
     public:
         NonCopyable(VulkanCommandRecorder)
         explicit VulkanCommandRecorder(VulkanDevice& inDevice, VulkanCommandBuffer& inCmdBuffer);
@@ -31,7 +31,7 @@ namespace RHI::Vulkan {
         VulkanCommandBuffer& commandBuffer;
     };
 
-    class VulkanCopyPassCommandRecorder : public CopyPassCommandRecorder {
+    class VulkanCopyPassCommandRecorder final : public CopyPassCommandRecorder {
     public:
         NonCopyable(VulkanCopyPassCommandRecorder)
         explicit VulkanCopyPassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer);
@@ -53,7 +53,7 @@ namespace RHI::Vulkan {
         VulkanCommandBuffer& commandBuffer;
     };
 
-    class VulkanComputePassCommandRecorder : public ComputePassCommandRecorder {
+    class VulkanComputePassCommandRecorder final : public ComputePassCommandRecorder {
     public:
         NonCopyable(VulkanComputePassCommandRecorder)
         explicit VulkanComputePassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer);
@@ -74,7 +74,7 @@ namespace RHI::Vulkan {
         VulkanCommandBuffer& commandBuffer;
     };
 
-    class VulkanRasterPassCommandRecorder : public RasterPassCommandRecorder {
+    class VulkanRasterPassCommandRecorder final : public RasterPassCommandRecorder {
     public:
         NonCopyable(VulkanRasterPassCommandRecorder)
         explicit VulkanRasterPassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer, const RasterPassBeginInfo& inBeginInfo);

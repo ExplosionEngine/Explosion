@@ -15,7 +15,7 @@ namespace RHI::Vulkan {
     class VulkanTexture;
     class VulkanDevice;
 
-    class VulkanTextureView : public TextureView {
+    class VulkanTextureView final : public TextureView {
     public:
         NonCopyable(VulkanTextureView)
         VulkanTextureView(VulkanTexture& inTexture, VulkanDevice& nDevice, const TextureViewCreateInfo& inCreateInfo);

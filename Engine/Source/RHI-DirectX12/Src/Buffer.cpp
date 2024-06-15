@@ -14,7 +14,7 @@
 #include <RHI/DirectX12/Device.h>
 
 namespace RHI::DirectX12 {
-    static D3D12_HEAP_TYPE GetDX12HeapType(BufferUsageFlags bufferUsages)
+    static D3D12_HEAP_TYPE GetDX12HeapType(const BufferUsageFlags bufferUsages)
     {
         static std::unordered_map<BufferUsageFlags, D3D12_HEAP_TYPE> rules = {
             { BufferUsageBits::mapWrite | BufferUsageBits::copySrc, D3D12_HEAP_TYPE_UPLOAD },
@@ -22,24 +22,24 @@ namespace RHI::DirectX12 {
         };
         static D3D12_HEAP_TYPE fallback = D3D12_HEAP_TYPE_DEFAULT;
 
-        for (const auto& rule : rules) {
-            if (bufferUsages & rule.first) {
-                return rule.second;
+        for (const auto& [key, value] : rules) {
+            if (bufferUsages & key) {
+                return value;
             }
         }
         return fallback;
     }
 
-    static MapMode GetMapMode(BufferUsageFlags bufferUsages)
+    static MapMode GetMapMode(const BufferUsageFlags bufferUsages)
     {
         static std::unordered_map<BufferUsageBits, MapMode> rules = {
             { BufferUsageBits::mapRead, MapMode::read },
             { BufferUsageBits::mapWrite, MapMode::write }
         };
 
-        for (const auto& rule : rules) {
-            if (bufferUsages & rule.first) {
-                return rule.second;
+        for (const auto& [key, value] : rules) {
+            if (bufferUsages & key) {
+                return value;
             }
         }
         return MapMode::read;

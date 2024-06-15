@@ -12,7 +12,7 @@
 namespace RHI::Vulkan {
     class VulkanDevice;
 
-    class VulkanSampler : public Sampler {
+    class VulkanSampler final : public Sampler {
     public:
         NonCopyable(VulkanSampler)
         VulkanSampler(VulkanDevice& inDevice, const SamplerCreateInfo& inCreateInfo);

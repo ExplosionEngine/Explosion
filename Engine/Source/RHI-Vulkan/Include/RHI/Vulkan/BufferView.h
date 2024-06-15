@@ -10,7 +10,7 @@ namespace RHI::Vulkan {
     class VulkanBuffer;
     class VulkanDevice;
 
-    class VulkanBufferView : public BufferView {
+    class VulkanBufferView final : public BufferView {
     public:
         NonCopyable(VulkanBufferView)
         VulkanBufferView(VulkanBuffer& inBuffer, const BufferViewCreateInfo& inCreateInfo);
@@ -19,7 +19,7 @@ namespace RHI::Vulkan {
         size_t GetOffset() const;
         size_t GetBufferSize() const;
         IndexFormat GetIndexFormat() const;
-        VulkanBuffer& GetBuffer();
+        VulkanBuffer& GetBuffer() const;
 
     private:
         void InitializeBufferAttrib(const BufferViewCreateInfo& inCreateInfo);
@@ -27,6 +27,6 @@ namespace RHI::Vulkan {
         VulkanBuffer& buffer;
         size_t size;
         size_t offset;
-        IndexFormat format;
+        IndexFormat indexFormat;
     };
 }
