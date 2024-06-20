@@ -72,7 +72,7 @@ namespace Rendering {
         friend class RGPass;
 
         explicit RGBuffer(RGBufferDesc inDesc);
-        explicit RGBuffer(RHI::Buffer* inImportedBuffer);
+        explicit RGBuffer(RHI::Buffer* inImportedBuffer, RHI::BufferState inInitialState);
 
         RGBufferDesc desc;
         RHI::Buffer* rhiHandleImported;
@@ -89,7 +89,7 @@ namespace Rendering {
         friend class RGPass;
 
         explicit RGTexture(RGTextureDesc inDesc);
-        explicit RGTexture(RHI::Texture* inImportedTexture);
+        explicit RGTexture(RHI::Texture* inImportedTexture, RHI::TextureState inInitialState);
 
         RGTextureDesc desc;
         RHI::Texture* rhiHandleImported;
@@ -157,16 +157,40 @@ namespace Rendering {
 
     struct RGColorAttachment : RHI::ColorAttachmentBase<RGColorAttachment> {
         RGTextureViewRef view;
-        // TODO TextureView* resolve;
+        // TODO TextureView* resolve
+
+        explicit RGColorAttachment(
+            RGTextureViewRef inView = nullptr,
+            RHI::LoadOp inLoadOp = RHI::LoadOp::load,
+            RHI::StoreOp inStoreOp = RHI::StoreOp::discard,
+            const Common::LinearColor& inClearValue = Common::LinearColorConsts::black);
+
+        RGColorAttachment& SetView(RGTextureViewRef inView);
     };
 
     struct RGDepthStencilAttachment : RHI::DepthStencilAttachmentBase<RGDepthStencilAttachment> {
         RGTextureViewRef view;
+
+        explicit RGDepthStencilAttachment(
+            RGTextureViewRef inView = nullptr,
+            bool inDepthReadOnly = true,
+            RHI::LoadOp inDepthLoadOp = RHI::LoadOp::load,
+            RHI::StoreOp inDepthStoreOp = RHI::StoreOp::discard,
+            float inDepthClearValue = 0.0f,
+            bool inStencilReadOnly = true,
+            RHI::LoadOp inStencilLoadOp = RHI::LoadOp::load,
+            RHI::StoreOp inStencilStoreOp = RHI::StoreOp::discard,
+            uint32_t inStencilClearValue = 0);
+
+        RGDepthStencilAttachment& SetView(RGTextureViewRef inView);
     };
 
     struct RGRasterPassDesc {
         std::vector<RGColorAttachment> colorAttachments;
         std::optional<RGDepthStencilAttachment> depthStencilAttachment;
+
+        RGRasterPassDesc& AddColorAttachment(const RGColorAttachment& inAttachment);
+        RGRasterPassDesc& SetDepthStencilAttachment(const RGDepthStencilAttachment& inAttachment);
     };
 
     struct RGCopyPassDesc {
@@ -266,6 +290,12 @@ namespace Rendering {
         std::vector<RGBindGroupRef> bindGroups;
     };
 
+    struct RGExecuteInfo {
+        std::vector<RHI::Semaphore*> semaphoresToWait;
+        std::vector<RHI::Semaphore*> semaphoresToSignal;
+        RHI::Fence* inFenceToSignal = nullptr;
+    };
+
     class RGBuilder {
     public:
         NonCopyable(RGBuilder);
@@ -277,14 +307,14 @@ namespace Rendering {
         RGTextureRef CreateTexture(const RGTextureDesc& inDesc);
         RGBufferViewRef CreateBufferView(RGBufferRef inBuffer, const RGBufferViewDesc& inDesc);
         RGTextureViewRef CreateTextureView(RGTextureRef inTexture, const RGTextureViewDesc& inDesc);
-        RGBufferRef ImportBuffer(RHI::Buffer* inBuffer);
-        RGTextureRef ImportTexture(RHI::Texture* inTexture);
+        RGBufferRef ImportBuffer(RHI::Buffer* inBuffer, RHI::BufferState inInitialState);
+        RGTextureRef ImportTexture(RHI::Texture* inTexture, RHI::TextureState inInitialState);
         RGBindGroupRef AllocateBindGroup(const RGBindGroupDesc& inDesc);
-        void AddCopyPass(const std::string& inName, const RGCopyPassDesc& inPassDesc, const RGCopyPassExecuteFunc& inFunc);
-        void AddComputePass(const std::string& inName, const std::vector<RGBindGroupRef>& inBindGroups, const RGComputePassExecuteFunc& inFunc);
+        void AddCopyPass(const std::string& inName, const RGCopyPassDesc& inPassDesc, const RGCopyPassExecuteFunc& inFunc, bool inAsyncCopy = false);
+        void AddComputePass(const std::string& inName, const std::vector<RGBindGroupRef>& inBindGroups, const RGComputePassExecuteFunc& inFunc, bool inAsyncCompute = false);
         void AddRasterPass(const std::string& inName, const RGRasterPassDesc& inPassDesc, const std::vector<RGBindGroupRef>& inBindGroupds, const RGRasterPassExecuteFunc& inFunc);
         void AddSyncPoint();
-        void Execute(const RHI::Fence& inFence);
+        void Execute(const RGExecuteInfo& inExecuteInfo);
 
         // execute
         RHI::Buffer* GetRHI(RGBufferRef inBuffer) const;
@@ -294,14 +324,36 @@ namespace Rendering {
         RHI::BindGroup* GetRHI(RGBindGroupRef inBindGroup) const;
 
     private:
+        struct AsyncTimelineExecuteContext {
+            std::vector<Common::UniqueRef<RHI::CommandBuffer>> cmdBuffers;
+            std::vector<Common::UniqueRef<RHI::Semaphore>> semaphores;
+            std::unordered_map<RGQueueType, RHI::CommandBuffer*> queueCmdBufferMap;
+            std::unordered_map<RGQueueType, RHI::Semaphore*> queueSemaphoreToSignalMap;
+
+            AsyncTimelineExecuteContext();
+            AsyncTimelineExecuteContext(AsyncTimelineExecuteContext&& inOther) noexcept;
+        };
+
         void Compile();
-        void ExecuteInternal(const RHI::Fence& inFence);
+        void ExecuteInternal(const RGExecuteInfo& inExecuteInfo);
 
         void CompilePassReadWrites();
-        void PerformSyncCheck();
+        void PerformSyncCheck() const;
         void PerformCull();
-        void DevirtualizeResources();
-        void DevirtualizeBindGroups();
+        // TODO resource states check inside pass (e.g. read/write a resource whin a pass)
+        void ComputeResourcesInitialState();
+        void ExecuteCopyPass(RHI::CommandRecorder& inRecoder, RGCopyPass* inCopyPass);
+        void ExecuteComputePass(RHI::CommandRecorder& inRecoder, RGComputePass* inComputePass);
+        void ExecuteRasterPass(RHI::CommandRecorder& inRecoder, RGRasterPass* inRasterPass);
+        void DevirtualizeResources(const std::unordered_set<RGResourceRef>& inResources);
+        void DevirtualizeBindGroupsAndViews(const std::vector<RGBindGroupRef>& inBindGroups);
+        void FinalizePassResources(const std::unordered_set<RGResourceRef>& inResources);
+        void FinalizePassBindGroups(const std::vector<RGBindGroupRef>& inBindGroups);
+        void TransitionResourcesForCopyPassDesc(RHI::CommandCommandRecorder& inRecoder, const RGCopyPassDesc& inDesc);
+        void TransitionResourcesForRasterPassDesc(RHI::CommandCommandRecorder& inRecoder, const RGRasterPassDesc& inDesc);
+        void TransitionResourcesForBindGroups(RHI::CommandCommandRecorder& inRecoder, const std::vector<RGBindGroupRef>& inBindGroups);
+        void TransitionBuffer(RHI::CommandCommandRecorder& inRecoder, RGBufferRef inBuffer, RHI::BufferState inState);
+        void TransitionTexture(RHI::CommandCommandRecorder& inRecoder, RGTextureRef inTexture, RHI::TextureState inState);
 
         bool executed;
         RHI::Device& device;
@@ -309,8 +361,8 @@ namespace Rendering {
         std::vector<Common::UniqueRef<RGResourceView>> views;
         std::vector<Common::UniqueRef<RGBindGroup>> bindGroups;
         std::vector<Common::UniqueRef<RGPass>> passes;
-        std::unordered_map<RGQueueType, std::vector<RGPassRef>> queuePassesTemp;
-        std::vector<std::unordered_map<RGQueueType, std::vector<RGPassRef>>> queuePassesVec;
+        std::unordered_map<RGQueueType, std::vector<RGPassRef>> recordingAsyncTimeline;
+        std::vector<std::unordered_map<RGQueueType, std::vector<RGPassRef>>> asyncTimelines;
 
         // execute context
         std::unordered_map<RGResourceRef, uint32_t> resourceReadCounts;
@@ -318,6 +370,8 @@ namespace Rendering {
         std::unordered_map<RGPassRef, std::unordered_set<RGResourceRef>> passWritesMap;
         std::unordered_set<RGResourceRef> culledResources;
         std::unordered_set<RGPassRef> culledPasses;
+        std::unordered_map<RGResourceRef, std::variant<RHI::BufferState, RHI::TextureState>> resourceStates;
+        std::vector<AsyncTimelineExecuteContext> asyncTimelineExecuteContexts;
         std::unordered_map<RGResourceRef, std::variant<PooledBufferRef, PooledTextureRef>> devirtualizedResources;
         std::unordered_map<RGResourceViewRef, std::variant<RHI::BufferView*, RHI::TextureView*>> devirtualizedResourceViews;
         std::unordered_map<RGBindGroupRef, Common::UniqueRef<RHI::BindGroup>> devirtualizedBindGroups;
