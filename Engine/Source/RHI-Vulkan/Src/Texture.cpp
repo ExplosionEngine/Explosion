@@ -13,49 +13,22 @@
 #include <RHI/Vulkan/Synchronous.h>
 
 namespace RHI::Vulkan {
-    static VkImageUsageFlags GetVkResourceStates(TextureUsageFlags textureUsages)
-    {
-        static std::unordered_map<TextureUsageBits, VkImageUsageFlags> rules = {
-            { TextureUsageBits::copySrc,          VK_IMAGE_USAGE_TRANSFER_SRC_BIT },
-            { TextureUsageBits::copyDst,          VK_IMAGE_USAGE_TRANSFER_DST_BIT },
-            { TextureUsageBits::textureBinding,   VK_IMAGE_USAGE_SAMPLED_BIT },
-            { TextureUsageBits::storageBinding,   VK_IMAGE_USAGE_STORAGE_BIT },
-            { TextureUsageBits::renderAttachment, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT },
-            { TextureUsageBits::depthStencilAttachment, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT },
-        };
-
-        VkImageUsageFlags result = {};
-        for (const auto& rule : rules) {
-            if (textureUsages & rule.first) {
-                result |= rule.second;
-            }
-        }
-        return result;
-    }
-}
-
-namespace RHI::Vulkan {
     VulkanTexture::VulkanTexture(VulkanDevice& inDevice, const TextureCreateInfo& inCreateInfo, VkImage inNativeImage)
         : Texture(inCreateInfo)
         , device(inDevice)
         , nativeImage(inNativeImage)
+        , nativeAspect(VK_IMAGE_ASPECT_COLOR_BIT)
         , ownMemory(false)
-        , extent(inCreateInfo.extent)
-        , format(inCreateInfo.format)
-        , mipLevels(inCreateInfo.mipLevels)
-        , samples(inCreateInfo.samples)
     {
+        TransitionToInitState(inCreateInfo);
     }
 
     VulkanTexture::VulkanTexture(VulkanDevice& inDevice, const TextureCreateInfo& inCreateInfo)
         : Texture(inCreateInfo)
         , device(inDevice)
         , nativeImage(VK_NULL_HANDLE)
+        , nativeAspect(VK_IMAGE_ASPECT_COLOR_BIT)
         , ownMemory(true)
-        , extent(inCreateInfo.extent)
-        , format(inCreateInfo.format)
-        , mipLevels(inCreateInfo.mipLevels)
-        , samples(inCreateInfo.samples)
     {
         CreateNativeImage(inCreateInfo);
         TransitionToInitState(inCreateInfo);
@@ -68,24 +41,14 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VulkanTexture::Destroy()
+    Common::UniqueRef<TextureView> VulkanTexture::CreateTextureView(const TextureViewCreateInfo& inCreateInfo)
     {
-        delete this;
-    }
-
-    TextureView* VulkanTexture::CreateTextureView(const TextureViewCreateInfo& inCreateInfo)
-    {
-        return new VulkanTextureView(*this, device, inCreateInfo);
+        return Common::UniqueRef<TextureView>(new VulkanTextureView(*this, device, inCreateInfo));
     }
 
     VkImage VulkanTexture::GetNative() const
     {
         return nativeImage;
-    }
-
-    Common::UVec3 VulkanTexture::GetExtent() const
-    {
-        return extent;
     }
 
     void VulkanTexture::GetAspect(const RHI::TextureCreateInfo& inCreateInfo)
@@ -98,9 +61,13 @@ namespace RHI::Vulkan {
         }
     }
 
-    VkImageSubresourceRange VulkanTexture::GetNativeSubResourceFullRange()
+    VkImageSubresourceRange VulkanTexture::GetNativeSubResourceFullRange() const
     {
-        return {nativeAspect, 0, mipLevels, 0, extent.z };
+        if (createInfo.dimension == TextureDimension::t3D) {
+            return { nativeAspect, 0, createInfo.mipLevels, 0, 1 };
+        } else {
+            return { nativeAspect, 0, createInfo.mipLevels, 0, createInfo.depthOrArraySize };
+        }
     }
 
     void VulkanTexture::CreateNativeImage(const TextureCreateInfo& inCreateInfo)
@@ -109,13 +76,18 @@ namespace RHI::Vulkan {
 
         VkImageCreateInfo imageInfo = {};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        imageInfo.arrayLayers = extent.z;
-        imageInfo.mipLevels = mipLevels;
-        imageInfo.extent = FromRHI(inCreateInfo.extent);
+        imageInfo.mipLevels = inCreateInfo.mipLevels;
+        if (inCreateInfo.dimension == TextureDimension::t3D) {
+            imageInfo.extent = { inCreateInfo.width, inCreateInfo.height, inCreateInfo.depthOrArraySize };
+            imageInfo.arrayLayers = 1;
+        } else {
+            imageInfo.extent = { inCreateInfo.width, inCreateInfo.height, 1 };
+            imageInfo.arrayLayers = inCreateInfo.depthOrArraySize;
+        }
         imageInfo.samples = static_cast<VkSampleCountFlagBits>(inCreateInfo.samples);
-        imageInfo.imageType = VKEnumCast<TextureDimension, VkImageType>(inCreateInfo.dimension);
-        imageInfo.format = VKEnumCast<PixelFormat, VkFormat>(inCreateInfo.format);
-        imageInfo.usage = GetVkResourceStates(inCreateInfo.usages);
+        imageInfo.imageType = EnumCast<TextureDimension, VkImageType>(inCreateInfo.dimension);
+        imageInfo.format = EnumCast<PixelFormat, VkFormat>(inCreateInfo.format);
+        imageInfo.usage = FlagsCast<TextureUsageFlags, VkImageUsageFlags>(inCreateInfo.usages);
 
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
@@ -127,11 +99,6 @@ namespace RHI::Vulkan {
             device.SetObjectName(VK_OBJECT_TYPE_IMAGE, reinterpret_cast<uint64_t>(nativeImage), inCreateInfo.debugName.c_str());
         }
 #endif
-    }
-
-    PixelFormat VulkanTexture::GetFormat() const
-    {
-        return format;
     }
 
     void VulkanTexture::TransitionToInitState(const TextureCreateInfo& inCreateInfo)

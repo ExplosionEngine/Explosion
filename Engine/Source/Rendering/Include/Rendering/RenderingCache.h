@@ -16,11 +16,57 @@ namespace Rendering {
 
     using BindingMap = std::unordered_map<std::string, std::pair<RHI::ShaderStageFlags, RHI::ResourceBinding>>;
     using SamplerDesc = RHI::SamplerCreateInfo;
-    using VertexState = RHI::VertexState;
     using PrimitiveState = RHI::PrimitiveState;
     using DepthStencilState = RHI::DepthStencilState;
     using MultiSampleState = RHI::MultiSampleState;
     using FragmentState = RHI::FragmentState;
+
+    struct VertexBinding {
+        std::string semanticName;
+        uint8_t semanticIndex;
+
+        VertexBinding();
+        VertexBinding(std::string inSemanticName, uint8_t inSemanticIndex);
+
+        std::string FinalSemantic() const;
+        RHI::PlatformVertexBinding GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
+        size_t Hash() const;
+    };
+
+    struct VertexAttribute : RHI::VertexAttributeBase<VertexAttribute> {
+        VertexBinding binding;
+
+        explicit VertexAttribute(
+            const VertexBinding& inBinding = VertexBinding(),
+            RHI::VertexFormat inFormat = RHI::VertexFormat::max,
+            size_t inOffset = 0);
+
+        RHI::VertexAttribute GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
+        VertexAttribute& SetBinding(const VertexBinding& inBinding);
+        size_t Hash() const;
+    };
+
+    struct VertexBufferLayout : RHI::VertexBufferLayoutBase<VertexBufferLayout> {
+        std::vector<VertexAttribute> attributes;
+
+        explicit VertexBufferLayout(
+            RHI::VertexStepMode inStepMode = RHI::VertexStepMode::perVertex,
+            size_t inStride = 0);
+
+        RHI::VertexBufferLayout GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
+        VertexBufferLayout& AddAttribute(const VertexAttribute& inAttribute);
+        size_t Hash() const;
+    };
+
+    struct VertexState {
+        std::vector<VertexBufferLayout> bufferLayouts;
+
+        VertexState();
+
+        RHI::VertexState GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
+        VertexState& AddVertexBufferLayout(const VertexBufferLayout& inLayout);
+        size_t Hash() const;
+    };
 
     struct BindGroupLayoutDesc {
         uint8_t layoutIndex;

@@ -9,22 +9,22 @@
 #include <RHI/DirectX12/TextureView.h>
 
 namespace RHI::DirectX12 {
-    static bool IsShaderResource(TextureViewType type)
+    static bool IsShaderResource(const TextureViewType type)
     {
         return (type == TextureViewType::textureBinding);
     }
 
-    static bool IsUnorderedAccess(TextureViewType type)
+    static bool IsUnorderedAccess(const TextureViewType type)
     {
         return (type == TextureViewType::storageBinding);
     }
 
-    static bool IsRenderTarget(TextureViewType type)
+    static bool IsRenderTarget(const TextureViewType type)
     {
         return (type == TextureViewType::colorAttachment);
     }
 
-    static bool IsDepthStencil(TextureViewType type)
+    static bool IsDepthStencil(const TextureViewType type)
     {
         return (type == TextureViewType::depthStencil);
     }
@@ -200,29 +200,26 @@ namespace RHI::DirectX12 {
 
 namespace RHI::DirectX12 {
     DX12TextureView::DX12TextureView(DX12Device& inDevice, DX12Texture& inTexture, const TextureViewCreateInfo& inCreateInfo)
-        : TextureView(inCreateInfo), texture(inTexture), nativeCpuDescriptorHandle()
+        : TextureView(inCreateInfo)
+        , texture(inTexture)
+        , descriptorAllocation()
     {
         CreateNativeDescriptor(inDevice, inCreateInfo);
     }
 
     DX12TextureView::~DX12TextureView() = default;
 
-    void DX12TextureView::Destroy()
+    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12TextureView::GetNativeCpuDescriptorHandle() const
     {
-        delete this;
-    }
-
-    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12TextureView::GetNativeCpuDescriptorHandle()
-    {
-        return nativeCpuDescriptorHandle;
+        return descriptorAllocation->GetCpuHandle();
     }
 
     void DX12TextureView::CreateNativeDescriptor(DX12Device& inDevice, const TextureViewCreateInfo& inCreateInfo)
     {
         if (IsShaderResource(inCreateInfo.type)) {
             D3D12_SHADER_RESOURCE_VIEW_DESC desc {};
-            desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
-            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_SRV_DIMENSION>(inCreateInfo.dimension);
+            desc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetCreateInfo().format);
+            desc.ViewDimension = EnumCast<TextureViewDimension, D3D12_SRV_DIMENSION>(inCreateInfo.dimension);
             desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
             FillTexture1DSRV(desc.Texture1D, inCreateInfo);
             FillTexture2DSRV(desc.Texture2D, inCreateInfo);
@@ -231,44 +228,40 @@ namespace RHI::DirectX12 {
             FillTextureCubeArraySRV(desc.TextureCubeArray, inCreateInfo);
             FillTexture3DSRV(desc.Texture3D, inCreateInfo);
 
-            auto allocation = inDevice.AllocateNativeCbvSrvUavDescriptor();
-            nativeCpuDescriptorHandle = allocation.cpuHandle;
-            inDevice.GetNative()->CreateShaderResourceView(texture.GetNative(), &desc, nativeCpuDescriptorHandle);
+            descriptorAllocation = inDevice.AllocateCbvSrvUavDescriptor();
+            inDevice.GetNative()->CreateShaderResourceView(texture.GetNative(), &desc, descriptorAllocation->GetCpuHandle());
         } else if (IsUnorderedAccess(inCreateInfo.type)) {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
-            desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
-            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_UAV_DIMENSION>(inCreateInfo.dimension);
+            desc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetCreateInfo().format);
+            desc.ViewDimension = EnumCast<TextureViewDimension, D3D12_UAV_DIMENSION>(inCreateInfo.dimension);
             FillTexture1DUAV(desc.Texture1D, inCreateInfo);
             FillTexture2DUAV(desc.Texture2D, inCreateInfo);
             FillTexture2DArrayUAV(desc.Texture2DArray, inCreateInfo);
             FillTexture3DUAV(desc.Texture3D, inCreateInfo);
 
-            auto allocation = inDevice.AllocateNativeCbvSrvUavDescriptor();
-            nativeCpuDescriptorHandle = allocation.cpuHandle;
-            inDevice.GetNative()->CreateUnorderedAccessView(texture.GetNative(), nullptr, &desc, nativeCpuDescriptorHandle);
+            descriptorAllocation = inDevice.AllocateCbvSrvUavDescriptor();
+            inDevice.GetNative()->CreateUnorderedAccessView(texture.GetNative(), nullptr, &desc, descriptorAllocation->GetCpuHandle());
         } else if (IsRenderTarget(inCreateInfo.type)) {
             D3D12_RENDER_TARGET_VIEW_DESC desc {};
-            desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
-            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_RTV_DIMENSION>(inCreateInfo.dimension);
+            desc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetCreateInfo().format);
+            desc.ViewDimension = EnumCast<TextureViewDimension, D3D12_RTV_DIMENSION>(inCreateInfo.dimension);
             FillTexture1DRTV(desc.Texture1D, inCreateInfo);
             FillTexture2DRTV(desc.Texture2D, inCreateInfo);
             FillTexture2DArrayRTV(desc.Texture2DArray, inCreateInfo);
             FillTexture3DRTV(desc.Texture3D, inCreateInfo);
 
-            auto allocation = inDevice.AllocateNativeRtvDescriptor();
-            nativeCpuDescriptorHandle = allocation.cpuHandle;
-            inDevice.GetNative()->CreateRenderTargetView(texture.GetNative(), &desc, nativeCpuDescriptorHandle);
+            descriptorAllocation = inDevice.AllocateRtvDescriptor();
+            inDevice.GetNative()->CreateRenderTargetView(texture.GetNative(), &desc, descriptorAllocation->GetCpuHandle());
         } else if (IsDepthStencil(inCreateInfo.type)) {
             D3D12_DEPTH_STENCIL_VIEW_DESC desc {};
-            desc.Format = DX12EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetFormat());
-            desc.ViewDimension = DX12EnumCast<TextureViewDimension, D3D12_DSV_DIMENSION>(inCreateInfo.dimension);
+            desc.Format = EnumCast<PixelFormat, DXGI_FORMAT>(texture.GetCreateInfo().format);
+            desc.ViewDimension = EnumCast<TextureViewDimension, D3D12_DSV_DIMENSION>(inCreateInfo.dimension);
             FillTexture1DDSV(desc.Texture1D, inCreateInfo);
             FillTexture2DDSV(desc.Texture2D, inCreateInfo);
             FillTexture2DArrayDSV(desc.Texture2DArray, inCreateInfo);
 
-            auto allocation = inDevice.AllocateNativeDsvDescriptor();
-            nativeCpuDescriptorHandle = allocation.cpuHandle;
-            inDevice.GetNative()->CreateDepthStencilView(texture.GetNative(), &desc, nativeCpuDescriptorHandle);
+            descriptorAllocation = inDevice.AllocateDsvDescriptor();
+            inDevice.GetNative()->CreateDepthStencilView(texture.GetNative(), &desc, descriptorAllocation->GetCpuHandle());
         }
     }
 }

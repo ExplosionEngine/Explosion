@@ -5,15 +5,10 @@
 #include <RHI/Dummy/Surface.h>
 
 namespace RHI::Dummy {
-    DummySurface::DummySurface(const RHI::SurfaceCreateInfo& createInfo)
+    DummySurface::DummySurface(const SurfaceCreateInfo& createInfo)
         : Surface(createInfo)
     {
     }
 
     DummySurface::~DummySurface() = default;
-
-    void DummySurface::Destroy()
-    {
-        delete this;
-    }
 }

@@ -9,18 +9,17 @@
 using Microsoft::WRL::ComPtr;
 
 #include <RHI/BufferView.h>
+#include <RHI/DirectX12/Device.h>
 
 namespace RHI::DirectX12 {
     class DX12Buffer;
     class DX12Device;
 
-    class DX12BufferView : public BufferView {
+    class DX12BufferView final : public BufferView {
     public:
         NonCopyable(DX12BufferView)
         DX12BufferView(DX12Buffer& inBuffer, const BufferViewCreateInfo& inCreateInfo);
         ~DX12BufferView() override;
-
-        void Destroy() override;
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetNativeCpuDescriptorHandle() const;
         [[nodiscard]] const D3D12_VERTEX_BUFFER_VIEW& GetNativeVertexBufferView() const;
@@ -30,6 +29,6 @@ namespace RHI::DirectX12 {
         void CreateNativeView(const BufferViewCreateInfo& inCreateInfo);
 
         DX12Buffer& buffer;
-        std::variant<CD3DX12_CPU_DESCRIPTOR_HANDLE, D3D12_VERTEX_BUFFER_VIEW, D3D12_INDEX_BUFFER_VIEW> nativeView;
+        std::variant<Common::UniqueRef<DescriptorAllocation>, D3D12_VERTEX_BUFFER_VIEW, D3D12_INDEX_BUFFER_VIEW> nativeView;
     };
 }

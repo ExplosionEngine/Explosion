@@ -3,59 +3,45 @@
 //
 
 #include <RHI/Pipeline.h>
+#include <Common/Hash.h>
 
 namespace RHI {
-    VertexAttribute::VertexAttribute(
-        std::string inSemanticName, uint8_t inSemanticIndex, VertexFormat inFormat, size_t inOffset)
+    HlslVertexBinding::HlslVertexBinding()
+        : semanticIndex(0)
+    {
+    }
+
+    HlslVertexBinding::HlslVertexBinding(std::string inSemanticName, const uint8_t inSemanticIndex)
         : semanticName(std::move(inSemanticName))
         , semanticIndex(inSemanticIndex)
-        , format(inFormat)
-        , offset(inOffset)
     {
-
     }
 
-    VertexAttribute& VertexAttribute::SetSemanticName(std::string inSemanticName)
+    GlslVertexBinding::GlslVertexBinding()
+        : location(0)
     {
-        semanticName = std::move(inSemanticName);
+    }
+
+    GlslVertexBinding::GlslVertexBinding(const uint8_t inLocation)
+        : location(inLocation)
+    {
+    }
+
+    VertexAttribute::VertexAttribute(const PlatformVertexBinding& inPlatformBinding, const VertexFormat inFormat, const size_t inOffset)
+        : VertexAttributeBase(inFormat, inOffset)
+        , platformBinding(inPlatformBinding)
+    {
+    }
+
+    VertexAttribute& VertexAttribute::SetPlatformBinding(const PlatformVertexBinding& inPlatformBinding)
+    {
+        platformBinding = inPlatformBinding;
         return *this;
     }
 
-    VertexAttribute& VertexAttribute::SetSemanticIndex(uint8_t inSemanticIndex)
+    VertexBufferLayout::VertexBufferLayout(const VertexStepMode inStepMode, const size_t inStride)
+        : VertexBufferLayoutBase(inStepMode, inStride)
     {
-        semanticIndex = inSemanticIndex;
-        return *this;
-    }
-
-    VertexAttribute& VertexAttribute::SetFormat(VertexFormat inFormat)
-    {
-        format = inFormat;
-        return *this;
-    }
-
-    VertexAttribute& VertexAttribute::SetOffset(size_t inOffset)
-    {
-        offset = inOffset;
-        return *this;
-    }
-
-    VertexBufferLayout::VertexBufferLayout()
-        : stride(0)
-        , stepMode(VertexStepMode::max)
-        , attributes()
-    {
-    }
-
-    VertexBufferLayout& VertexBufferLayout::SetStride(size_t inStride)
-    {
-        stride = inStride;
-        return *this;
-    }
-
-    VertexBufferLayout& VertexBufferLayout::SetStepMode(VertexStepMode inStepMode)
-    {
-        stepMode = inStepMode;
-        return *this;
     }
 
     VertexBufferLayout& VertexBufferLayout::AddAttribute(const VertexAttribute& inAttribute)
@@ -65,7 +51,6 @@ namespace RHI {
     }
 
     VertexState::VertexState()
-        : bufferLayouts()
     {
     }
 
@@ -75,253 +60,259 @@ namespace RHI {
         return *this;
     }
 
-    PrimitiveState::PrimitiveState()
-        : topologyType(PrimitiveTopologyType::triangle)
-        , stripIndexFormat(IndexFormat::uint16)
-        , frontFace(FrontFace::ccw)
-        , cullMode(CullMode::none)
-        , depthClip(false)
+    PrimitiveState::PrimitiveState(
+        const PrimitiveTopologyType inTopologyType,
+        const FillMode inFillMode,
+        const IndexFormat inStripIndexFormat,
+        const FrontFace inFrontFace,
+        const CullMode inCullMode,
+        const bool inDepthClip)
+        : topologyType(inTopologyType)
+        , fillMode(inFillMode)
+        , stripIndexFormat(inStripIndexFormat)
+        , frontFace(inFrontFace)
+        , cullMode(inCullMode)
+        , depthClip(inDepthClip)
     {
     }
 
-    PrimitiveState& PrimitiveState::SetTopologyType(PrimitiveTopologyType inTopologyType)
+    PrimitiveState& PrimitiveState::SetTopologyType(const PrimitiveTopologyType inTopologyType)
     {
         topologyType = inTopologyType;
         return *this;
     }
 
-    PrimitiveState& PrimitiveState::SetStripIndexFormat(IndexFormat inFormat)
+    PrimitiveState& PrimitiveState::SetFillMode(const FillMode inFillMode)
+    {
+        fillMode = inFillMode;
+        return *this;
+    }
+
+    PrimitiveState& PrimitiveState::SetStripIndexFormat(const IndexFormat inFormat)
     {
         stripIndexFormat = inFormat;
         return *this;
     }
 
-    PrimitiveState& PrimitiveState::SetFrontFace(enum FrontFace inFrontFace)
+    PrimitiveState& PrimitiveState::SetFrontFace(const FrontFace inFrontFace)
     {
         frontFace = inFrontFace;
         return *this;
     }
 
-    PrimitiveState& PrimitiveState::SetCullMode(enum CullMode inCullMode)
+    PrimitiveState& PrimitiveState::SetCullMode(const CullMode inCullMode)
     {
         cullMode = inCullMode;
         return *this;
     }
 
-    PrimitiveState& PrimitiveState::SetDepthClip(bool inDepthClip)
+    PrimitiveState& PrimitiveState::SetDepthClip(const bool inDepthClip)
     {
         depthClip = inDepthClip;
         return *this;
     }
 
-    StencilFaceState::StencilFaceState()
-        : comparisonFunc(ComparisonFunc::always)
-        , failOp(StencilOp::keep)
-        , depthFailOp(StencilOp::keep)
-        , passOp(StencilOp::keep)
+    size_t PrimitiveState::Hash() const
+    {
+        return Common::HashUtils::CityHash(this, sizeof(PrimitiveState));
+    }
+
+    StencilFaceState::StencilFaceState(
+        const CompareFunc inCompareFunc,
+        const StencilOp inFailOp,
+        const StencilOp inDepthFailOp,
+        const StencilOp inPassOp)
+        : compareFunc(inCompareFunc)
+        , failOp(inFailOp)
+        , depthFailOp(inDepthFailOp)
+        , passOp(inPassOp)
     {
     }
 
-    StencilFaceState& StencilFaceState::SetComparisonFunc(enum ComparisonFunc inFunc)
+    DepthStencilState::DepthStencilState(
+        const bool inDepthEnabled,
+        const bool inStencilEnabled,
+        const PixelFormat inFormat,
+        const CompareFunc inDepthCompareFunc,
+        const int32_t inDepthBias,
+        const float inDepthBiasSlopeScale,
+        const float inDepthBiasClamp,
+        const StencilFaceState& inStencilFront,
+        const StencilFaceState& inStencilBack,
+        const uint8_t inStencilReadMask,
+        const uint8_t inStencilWriteMask)
+        : depthEnabled(inDepthEnabled)
+        , stencilEnabled(inStencilEnabled)
+        , format(inFormat)
+        , depthCompareFunc(inDepthCompareFunc)
+        , depthBias(inDepthBias)
+        , depthBiasSlopeScale(inDepthBiasSlopeScale)
+        , depthBiasClamp(inDepthBiasClamp)
+        , stencilFront(inStencilFront)
+        , stencilBack(inStencilBack)
+        , stencilReadMask(inStencilReadMask)
+        , stencilWriteMask(inStencilWriteMask)
     {
-        comparisonFunc = inFunc;
+    }
+
+    DepthStencilState& DepthStencilState::SetDepthEnabled(const bool inDepthEnabled)
+    {
+        depthEnabled = inDepthEnabled;
         return *this;
     }
 
-    StencilFaceState& StencilFaceState::SetFailOp(StencilOp inFailOp)
+    DepthStencilState& DepthStencilState::SetStencilEnabled(const bool inStencilEnabled)
     {
-        failOp = inFailOp;
+        stencilEnabled = inStencilEnabled;
         return *this;
     }
 
-    StencilFaceState& StencilFaceState::SetDepthFailOp(StencilOp inDepthFailOp)
-    {
-        depthFailOp = inDepthFailOp;
-        return *this;
-    }
-
-    StencilFaceState& StencilFaceState::SetPassOp(StencilOp inPassOp)
-    {
-        passOp = inPassOp;
-        return *this;
-    }
-
-    DepthStencilState::DepthStencilState()
-        : depthEnable(false)
-        , stencilEnable(false)
-        , format(PixelFormat::max)
-        , depthComparisonFunc(ComparisonFunc::always)
-        , stencilFront()
-        , stencilBack()
-        , stencilReadMask()
-        , stencilWriteMask()
-        , depthBias(0)
-        , depthBiasSlopeScale(0)
-        , depthBiasClamp(0)
-    {
-    }
-
-    DepthStencilState& DepthStencilState::SetDepthEnabled(bool inDepthEnabled)
-    {
-        depthEnable = inDepthEnabled;
-        return *this;
-    }
-
-    DepthStencilState& DepthStencilState::SetStencilEnabled(bool inStencilEnabled)
-    {
-        stencilEnable = inStencilEnabled;
-        return *this;
-    }
-
-    DepthStencilState& DepthStencilState::SetFormat(PixelFormat inFormat)
+    DepthStencilState& DepthStencilState::SetFormat(const PixelFormat inFormat)
     {
         format = inFormat;
         return *this;
     }
 
-    DepthStencilState& DepthStencilState::SetDepthComparisonFunc(ComparisonFunc inFunc)
+    DepthStencilState& DepthStencilState::SetDepthCompareFunc(const CompareFunc inFunc)
     {
-        depthComparisonFunc = inFunc;
+        depthCompareFunc = inFunc;
         return *this;
     }
 
-    DepthStencilState& DepthStencilState::SetStencilFront(StencilFaceState inState)
+    DepthStencilState& DepthStencilState::SetStencilFront(const StencilFaceState inState)
     {
         stencilFront = inState;
         return *this;
     }
 
-    DepthStencilState& DepthStencilState::SetStencilBack(StencilFaceState inState)
+    DepthStencilState& DepthStencilState::SetStencilBack(const StencilFaceState inState)
     {
         stencilBack = inState;
         return *this;
     }
 
-    DepthStencilState& DepthStencilState::SetStencilReadMask(uint8_t inStencilReadMask)
+    DepthStencilState& DepthStencilState::SetStencilReadMask(const uint8_t inStencilReadMask)
     {
         stencilReadMask = inStencilReadMask;
         return *this;
     }
 
-    DepthStencilState& DepthStencilState::SetStencilWriteMask(uint8_t inStencilWriteMask)
+    DepthStencilState& DepthStencilState::SetStencilWriteMask(const uint8_t inStencilWriteMask)
     {
         stencilWriteMask = inStencilWriteMask;
         return *this;
     }
 
-    DepthStencilState& DepthStencilState::SetDepthBias(int32_t inDepthBias)
+    DepthStencilState& DepthStencilState::SetDepthBias(const int32_t inDepthBias)
     {
         depthBias = inDepthBias;
         return *this;
     }
 
-    DepthStencilState& DepthStencilState::SetDepthBiasSlopeScale(float inDepthBiasSlopeScale)
+    DepthStencilState& DepthStencilState::SetDepthBiasSlopeScale(const float inDepthBiasSlopeScale)
     {
         depthBiasSlopeScale = inDepthBiasSlopeScale;
         return *this;
     }
 
-    DepthStencilState& DepthStencilState::SetDepthBiasClamp(float inDepthBiasClamp)
+    DepthStencilState& DepthStencilState::SetDepthBiasClamp(const float inDepthBiasClamp)
     {
         depthBiasClamp = inDepthBiasClamp;
         return *this;
     }
 
-    MultiSampleState::MultiSampleState(uint8_t inCount, uint32_t inMask, bool inAlphaToCoverage)
+    size_t DepthStencilState::Hash() const
+    {
+        return Common::HashUtils::CityHash(this, sizeof(DepthStencilState));
+    }
+
+    MultiSampleState::MultiSampleState(const uint8_t inCount, const uint32_t inMask, const bool inAlphaToCoverage)
         : count(inCount)
         , mask(inMask)
         , alphaToCoverage(inAlphaToCoverage)
     {
     }
 
-    MultiSampleState& MultiSampleState::SetCount(uint8_t inCount)
+    MultiSampleState& MultiSampleState::SetCount(const uint8_t inCount)
     {
         count = inCount;
         return *this;
     }
 
-    MultiSampleState& MultiSampleState::SetMask(uint32_t inMask)
+    MultiSampleState& MultiSampleState::SetMask(const uint32_t inMask)
     {
         mask = inMask;
         return *this;
     }
 
-    MultiSampleState& MultiSampleState::SetAlphaToCoverage(bool inAlphaToCoverage)
+    MultiSampleState& MultiSampleState::SetAlphaToCoverage(const bool inAlphaToCoverage)
     {
         alphaToCoverage = inAlphaToCoverage;
         return *this;
     }
 
-    BlendComponent::BlendComponent()
-        : op(BlendOp::opAdd)
-        , srcFactor(BlendFactor::one)
-        , dstFactor(BlendFactor::zero)
+    size_t MultiSampleState::Hash() const
+    {
+        return Common::HashUtils::CityHash(this, sizeof(MultiSampleState));
+    }
+
+    BlendComponent::BlendComponent(const BlendOp inOp, const BlendFactor inSrcFactor, const BlendFactor inDstFactor)
+        : op(inOp)
+        , srcFactor(inSrcFactor)
+        , dstFactor(inDstFactor)
     {
     }
 
-    BlendComponent& BlendComponent::SetOp(BlendOp inOp)
-    {
-        op = inOp;
-        return *this;
-    }
-
-    BlendComponent& BlendComponent::SetSrcFactor(BlendFactor inSrcFactor)
-    {
-        srcFactor = inSrcFactor;
-        return *this;
-    }
-
-    BlendComponent& BlendComponent::SetDstFactor(BlendFactor inDstFactor)
-    {
-        dstFactor = inDstFactor;
-        return *this;
-    }
-
-    BlendState::BlendState()
-        : color()
-        , alpha()
+    ColorTargetState::ColorTargetState(
+        const PixelFormat inFormat,
+        const ColorWriteFlags inWriteFlags,
+        const bool inBlendEnabled,
+        const BlendComponent& inColorBlend,
+        const BlendComponent& inAlphaBlend)
+        : format(inFormat)
+        , writeFlags(inWriteFlags)
+        , blendEnabled(inBlendEnabled)
+        , colorBlend(inColorBlend)
+        , alphaBlend(inAlphaBlend)
     {
     }
 
-    BlendState& BlendState::SetColor(BlendComponent inColor)
-    {
-        color = inColor;
-        return *this;
-    }
-
-    BlendState& BlendState::SetAlpha(BlendComponent inAlpha)
-    {
-        alpha = inAlpha;
-        return *this;
-    }
-
-    ColorTargetState::ColorTargetState()
-        : format(PixelFormat::max)
-        , blend()
-        , writeFlags(ColorWriteBits::all)
-    {
-    }
-
-    ColorTargetState& ColorTargetState::SetFormat(PixelFormat inFormat)
+    ColorTargetState& ColorTargetState::SetFormat(const PixelFormat inFormat)
     {
         format = inFormat;
         return *this;
     }
 
-    ColorTargetState& ColorTargetState::SetBlend(BlendState inBlend)
-    {
-        blend = inBlend;
-        return *this;
-    }
-
-    ColorTargetState& ColorTargetState::SetWriteFlags(ColorWriteFlags inFlags)
+    ColorTargetState& ColorTargetState::SetWriteFlags(const ColorWriteFlags inFlags)
     {
         writeFlags = inFlags;
         return *this;
     }
 
+    ColorTargetState& ColorTargetState::SetBlendEnabled(const bool inBlendEnabled)
+    {
+        blendEnabled = inBlendEnabled;
+        return *this;
+    }
+
+    ColorTargetState& ColorTargetState::SetColorBlend(const BlendComponent& inColorBlend)
+    {
+        colorBlend = inColorBlend;
+        return *this;
+    }
+
+    ColorTargetState& ColorTargetState::SetAlphaBlend(const BlendComponent& inAlphaBlend)
+    {
+        alphaBlend = inAlphaBlend;
+        return *this;
+    }
+
+    size_t ColorTargetState::Hash() const
+    {
+        return Common::HashUtils::CityHash(this, sizeof(ColorTargetState));
+    }
+
     FragmentState::FragmentState()
-        : colorTargets()
     {
     }
 
@@ -329,6 +320,17 @@ namespace RHI {
     {
         colorTargets.emplace_back(inState);
         return *this;
+    }
+
+    size_t FragmentState::Hash() const
+    {
+        std::vector<size_t> values;
+        values.reserve(colorTargets.size());
+
+        for (const auto& colorTarget : colorTargets) {
+            values.emplace_back(colorTarget.Hash());
+        }
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
     }
 
     ComputePipelineCreateInfo::ComputePipelineCreateInfo()
@@ -349,19 +351,13 @@ namespace RHI {
         return *this;
     }
 
-    RasterPipelineCreateInfo::RasterPipelineCreateInfo()
-        : layout(nullptr)
+    RasterPipelineCreateInfo::RasterPipelineCreateInfo(PipelineLayout* inLayout)
+        : layout(inLayout)
         , vertexShader(nullptr)
         , pixelShader(nullptr)
         , geometryShader(nullptr)
         , domainShader(nullptr)
         , hullShader(nullptr)
-        , vertexState()
-        , primitiveState()
-        , depthStencilState()
-        , multiSampleState()
-        , fragmentState()
-        , debugName()
     {
     }
 
@@ -443,11 +439,11 @@ namespace RHI {
 
     Pipeline::~Pipeline() = default;
 
-    ComputePipeline::ComputePipeline(const ComputePipelineCreateInfo& createInfo) {}
+    ComputePipeline::ComputePipeline(const ComputePipelineCreateInfo&) {}
 
     ComputePipeline::~ComputePipeline() = default;
 
-    RasterPipeline::RasterPipeline(const RasterPipelineCreateInfo& createInfo) {}
+    RasterPipeline::RasterPipeline(const RasterPipelineCreateInfo&) {}
 
     RasterPipeline::~RasterPipeline() = default;
 }

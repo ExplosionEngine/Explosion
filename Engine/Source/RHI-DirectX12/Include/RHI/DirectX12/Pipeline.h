@@ -5,7 +5,6 @@
 #pragma once
 
 #include <wrl/client.h>
-#include <d3d12.h>
 
 #include <RHI/Pipeline.h>
 
@@ -15,16 +14,14 @@ namespace RHI::DirectX12 {
     class DX12Device;
     class DX12PipelineLayout;
 
-    class DX12ComputePipeline : public ComputePipeline {
+    class DX12ComputePipeline final : public ComputePipeline {
     public:
         NonCopyable(DX12ComputePipeline)
         DX12ComputePipeline(DX12Device& inDevice, const ComputePipelineCreateInfo& inCreateInfo);
         ~DX12ComputePipeline() override;
 
-        void Destroy() override;
-
-        DX12PipelineLayout& GetPipelineLayout();
-        ID3D12PipelineState* GetNative();
+        DX12PipelineLayout& GetPipelineLayout() const;
+        ID3D12PipelineState* GetNative() const;
 
     private:
         void SavePipelineLayout(const ComputePipelineCreateInfo& createInfo);
@@ -34,16 +31,14 @@ namespace RHI::DirectX12 {
         ComPtr<ID3D12PipelineState> nativePipelineState;
     };
 
-    class DX12RasterPipeline : public RasterPipeline {
+    class DX12RasterPipeline final : public RasterPipeline {
     public:
         NonCopyable(DX12RasterPipeline)
         DX12RasterPipeline(DX12Device& inDevice, const RasterPipelineCreateInfo& inCreateInfo);
         ~DX12RasterPipeline() override;
 
-        void Destroy() override;
-
-        DX12PipelineLayout& GetPipelineLayout();
-        ID3D12PipelineState* GetNative();
+        DX12PipelineLayout& GetPipelineLayout() const;
+        ID3D12PipelineState* GetNative() const;
 
     private:
         void SavePipelineLayout(const RasterPipelineCreateInfo& inCreateInfo);

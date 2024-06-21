@@ -8,7 +8,7 @@
 
 #include <Mirror/Registry.h>
 
-int Add(int a, int b)
+int Add(const int a, const int b)
 {
     return a + b;
 }
@@ -16,7 +16,7 @@ int Add(int a, int b)
 struct TestClass {
     int a;
 
-    int Add(int b) const
+    int Add(const int b) const
     {
         return a + b;
     }

@@ -12,10 +12,10 @@ using namespace MirrorTool;
 void AssertMetaDatasEqual(const MetaDataMap& lhs, const MetaDataMap& rhs)
 {
     ASSERT_EQ(lhs.size(), rhs.size());
-    for (const auto& iter : lhs) {
-        auto rhsIter = rhs.find(iter.first);
+    for (const auto& [key, value] : lhs) {
+        auto rhsIter = rhs.find(key);
         ASSERT_NE(rhsIter, rhs.end());
-        ASSERT_EQ(iter.second, rhsIter->second);
+        ASSERT_EQ(value, rhsIter->second);
     }
 }
 
@@ -110,14 +110,13 @@ void AssertNamespaceInfoEqual(const NamespaceInfo& lhs, const NamespaceInfo& rhs
 
 TEST(MirrorTest, ParserTest)
 {
-    Parser parser("../Test/Resource/MirrorToolInput.h", { "../Test/Resource" });
-    auto parseResult = parser.Parse();
-    ASSERT_TRUE(parseResult.first);
+    const Parser parser("../Test/Resource/Mirror/MirrorToolInput.h", { "../Test/Resource/Mirror" });
+    auto [parseSuccess, parseResultOrError] = parser.Parse();
+    ASSERT_TRUE(parseSuccess);
 
-    const MetaInfo& metaInfo = std::get<MetaInfo>(parseResult.second);
-    ASSERT_EQ(metaInfo.namespaces.size(), 0);
+    const auto& [namespaces, global] = std::get<MetaInfo>(parseResultOrError);
+    ASSERT_EQ(namespaces.size(), 0);
 
-    const NamespaceInfo& globalNamespace = metaInfo.global;
     NamespaceInfo predicatedGlobalNamespace = { "", "", {} };
     predicatedGlobalNamespace.variables = {
         { "", "gv0", {}, "int" },
@@ -140,18 +139,18 @@ TEST(MirrorTest, ParserTest)
     predicatedGlobalNamespace.classes[0].functions = {
         { "C0", "f0", {}, "int", {}, FieldAccess::pub }
     };
-    AssertNamespaceInfoEqual(globalNamespace, predicatedGlobalNamespace);
+    AssertNamespaceInfoEqual(global, predicatedGlobalNamespace);
 }
 
 TEST(MirrorTest, GeneratorTest)
 {
-    Parser parser("../Test/Resource/MirrorToolInput.h", { "../Test/Resource" });
-    auto parseResult = parser.Parse();
-    ASSERT_TRUE(parseResult.first);
+    const Parser parser("../Test/Resource/Mirror/MirrorToolInput.h", { "../Test/Resource/Mirror" });
+    auto [parseSuccess, parseResultOrError] = parser.Parse();
+    ASSERT_TRUE(parseSuccess);
 
-    Generator generator("../Test/Resource/MirrorToolInput.h", "../Test/Generated/MirrorToolTest.generated.cpp", { "../" }, std::get<MetaInfo>(parseResult.second));
-    auto generateResult = generator.Generate();
-    ASSERT_EQ(generateResult.first, true);
+    const Generator generator("../Test/Resource/Mirror/MirrorToolInput.h", "../Test/Generated/Mirror/MirrorToolTest.generated.cpp", { "../" }, std::get<MetaInfo>(parseResultOrError));
+    auto [generateSuccess, generateResultOrError] = generator.Generate();
+    ASSERT_EQ(generateSuccess, true);
 }
 
 int main(int argc, char* argv[])

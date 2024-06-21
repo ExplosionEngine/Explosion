@@ -26,37 +26,31 @@ namespace RHI::DirectX12 {
 
 namespace RHI::DirectX12 {
     DX12Sampler::DX12Sampler(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo)
-        : Sampler(inCreateInfo), nativeCpuDescriptorHandle()
+        : Sampler(inCreateInfo)
     {
         CreateDX12Descriptor(inDevice, inCreateInfo);
     }
 
     DX12Sampler::~DX12Sampler() = default;
 
-    void DX12Sampler::Destroy()
+    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Sampler::GetNativeCpuDescriptorHandle() const
     {
-        delete this;
+        return descriptorAllocation->GetCpuHandle();
     }
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE DX12Sampler::GetNativeCpuDescriptorHandle()
-    {
-        return nativeCpuDescriptorHandle;
-    }
-
-    void DX12Sampler::CreateDX12Descriptor(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo)
+    void DX12Sampler::CreateDX12Descriptor(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo) // NOLINT
     {
         D3D12_SAMPLER_DESC desc {};
-        desc.AddressU = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeU);
-        desc.AddressV = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeV);
-        desc.AddressW = DX12EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeW);
+        desc.AddressU = EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeU);
+        desc.AddressV = EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeV);
+        desc.AddressW = EnumCast<AddressMode, D3D12_TEXTURE_ADDRESS_MODE>(inCreateInfo.addressModeW);
         desc.Filter = GetDX12Filter(inCreateInfo);
         desc.MinLOD = inCreateInfo.lodMinClamp;
         desc.MaxLOD = inCreateInfo.lodMaxClamp;
-        desc.ComparisonFunc = DX12EnumCast<ComparisonFunc, D3D12_COMPARISON_FUNC>(inCreateInfo.comparisonFunc);
+        desc.ComparisonFunc = EnumCast<CompareFunc, D3D12_COMPARISON_FUNC>(inCreateInfo.comparisonFunc);
         desc.MaxAnisotropy = inCreateInfo.maxAnisotropy;
 
-        auto allocation = inDevice.AllocateNativeSamplerDescriptor();
-        nativeCpuDescriptorHandle = allocation.cpuHandle;
-        inDevice.GetNative()->CreateSampler(&desc, nativeCpuDescriptorHandle);
+        descriptorAllocation = inDevice.AllocateSamplerDescriptor();
+        inDevice.GetNative()->CreateSampler(&desc, descriptorAllocation->GetCpuHandle());
     }
 }

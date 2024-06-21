@@ -17,8 +17,6 @@ namespace RHI::Vulkan {
         VulkanPipelineLayout(VulkanDevice& inDevice, const PipelineLayoutCreateInfo& inCreateInfo);
         ~VulkanPipelineLayout() override;
 
-        void Destroy() override;
-
         VkPipelineLayout GetNative() const;
 
     private:

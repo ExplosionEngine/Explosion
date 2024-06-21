@@ -14,67 +14,66 @@ namespace RHI {
         , mipFilter(FilterMode::nearest)
         , lodMinClamp(0.0f)
         , lodMaxClamp(32.0f)
-        , comparisonFunc(ComparisonFunc::never)
+        , comparisonFunc(CompareFunc::never)
         , maxAnisotropy(1)
-        , debugName()
     {
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::SetAddressModeU(AddressMode inMode)
+    SamplerCreateInfo& SamplerCreateInfo::SetAddressModeU(const AddressMode inMode)
     {
         addressModeU = inMode;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::SetAddressModeV(AddressMode inMode)
+    SamplerCreateInfo& SamplerCreateInfo::SetAddressModeV(const AddressMode inMode)
     {
         addressModeV = inMode;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::SetAddressModeW(AddressMode inMode)
+    SamplerCreateInfo& SamplerCreateInfo::SetAddressModeW(const AddressMode inMode)
     {
         addressModeW = inMode;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::SetMagFilter(FilterMode inMode)
+    SamplerCreateInfo& SamplerCreateInfo::SetMagFilter(const FilterMode inMode)
     {
         magFilter = inMode;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::SetMinFilter(FilterMode inMode)
+    SamplerCreateInfo& SamplerCreateInfo::SetMinFilter(const FilterMode inMode)
     {
         minFilter = inMode;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::SetMipFilter(FilterMode inMode)
+    SamplerCreateInfo& SamplerCreateInfo::SetMipFilter(const FilterMode inMode)
     {
         mipFilter = inMode;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::SetLodMinClamp(float inValue)
+    SamplerCreateInfo& SamplerCreateInfo::SetLodMinClamp(const float inValue)
     {
         lodMinClamp = inValue;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::SetLodMaxClamp(float inValue)
+    SamplerCreateInfo& SamplerCreateInfo::SetLodMaxClamp(const float inValue)
     {
         lodMaxClamp = inValue;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::SetComparisonFunc(enum ComparisonFunc inFunc)
+    SamplerCreateInfo& SamplerCreateInfo::SetComparisonFunc(const CompareFunc inFunc)
     {
         comparisonFunc = inFunc;
         return *this;
     }
 
-    SamplerCreateInfo& SamplerCreateInfo::SetMaxAnisotropy(uint8_t inValue)
+    SamplerCreateInfo& SamplerCreateInfo::SetMaxAnisotropy(const uint8_t inValue)
     {
         maxAnisotropy = inValue;
         return *this;
@@ -86,7 +85,7 @@ namespace RHI {
         return *this;
     }
 
-    Sampler::Sampler(const SamplerCreateInfo& createInfo) {}
+    Sampler::Sampler(const SamplerCreateInfo&) {}
 
     Sampler::~Sampler() = default;
 }

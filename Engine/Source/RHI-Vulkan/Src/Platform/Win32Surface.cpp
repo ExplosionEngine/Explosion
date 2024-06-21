@@ -3,8 +3,9 @@
 //
 
 #if PLATFORM_WINDOWS
-#include <RHI/SwapChain.h>
-#include <Windows.h>
+#include <windows.h>
+
+#include <RHI/Surface.h>
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>

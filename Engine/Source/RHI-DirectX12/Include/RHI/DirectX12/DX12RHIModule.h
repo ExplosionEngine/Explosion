@@ -8,7 +8,7 @@
 #include <RHI/DirectX12/Api.h>
 
 namespace RHI::DirectX12 {
-    class RHI_DIRECTX12_API DX12RHIModule : public RHIModule {
+    class RHI_DIRECTX12_API DX12RHIModule final : public RHIModule {
     public:
         DX12RHIModule();
         ~DX12RHIModule() override;

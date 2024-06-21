@@ -14,7 +14,7 @@ struct Vertex {
     FVec3 color;
 };
 
-class TriangleApplication : public Application {
+class TriangleApplication final : public Application {
 public:
     NonCopyable(TriangleApplication)
     explicit TriangleApplication(const std::string& n) : Application(n) {}
@@ -38,19 +38,19 @@ protected:
     void OnDrawFrame() override
     {
         inflightFences[nextFrameIndex]->Wait();
-        auto backTextureIndex = swapChain->AcquireBackTexture(backBufferReadySemaphores[nextFrameIndex].Get());
+        const auto backTextureIndex = swapChain->AcquireBackTexture(backBufferReadySemaphores[nextFrameIndex].Get());
         inflightFences[nextFrameIndex]->Reset();
 
-        UniqueRef<CommandRecorder> commandRecorder = commandBuffers[nextFrameIndex]->Begin();
+        const UniqueRef<CommandRecorder> commandRecorder = commandBuffers[nextFrameIndex]->Begin();
         {
             commandRecorder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-            UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+            const UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
                 RasterPassBeginInfo()
                     .AddColorAttachment(ColorAttachment(swapChainTextureViews[backTextureIndex].Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black)));
             {
                 rasterRecorder->SetPipeline(pipeline.Get());
-                rasterRecorder->SetScissor(0, 0, width, height);
-                rasterRecorder->SetViewport(0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1);
+                rasterRecorder->SetScissor(0, 0, GetWindowWidth(), GetWindowHeight());
+                rasterRecorder->SetViewport(0, 0, static_cast<float>(GetWindowWidth()), static_cast<float>(GetWindowHeight()), 0, 1);
                 rasterRecorder->SetPrimitiveTopology(PrimitiveTopology::triangleList);
                 rasterRecorder->SetVertexBuffer(0, vertexBufferView.Get());
                 rasterRecorder->Draw(3, 1, 0, 0);
@@ -73,7 +73,7 @@ protected:
 
     void OnDestroy() override
     {
-        Common::UniqueRef<Fence> fence = device->CreateFence(false);
+        const UniqueRef<Fence> fence = device->CreateFence(false);
         graphicsQueue->Flush(fence.Get());
         fence->Wait();
     }
@@ -83,7 +83,7 @@ private:
 
     void SelectGPU()
     {
-        gpu = instance->GetGpu(0);
+        gpu = GetRHIInstance()->GetGpu(0);
     }
 
     void RequestDeviceAndFetchQueues()
@@ -103,7 +103,7 @@ private:
 
         surface = device->CreateSurface(SurfaceCreateInfo(GetPlatformWindow()));
 
-        for (auto format : swapChainFormatQualifiers) {
+        for (const auto format : swapChainFormatQualifiers) {
             if (device->CheckSwapChainFormatSupport(surface.Get(), format)) {
                 swapChainFormat = format;
                 break;
@@ -116,7 +116,8 @@ private:
                 .SetFormat(swapChainFormat)
                 .SetPresentMode(PresentMode::immediately)
                 .SetTextureNum(backBufferCount)
-                .SetExtent({width, height})
+                .SetWidth(GetWindowWidth())
+                .SetHeight(GetWindowHeight())
                 .SetSurface(surface.Get())
                 .SetPresentQueue(graphicsQueue));
 
@@ -135,13 +136,13 @@ private:
 
     void CreateVertexBuffer()
     {
-        std::vector<Vertex> vertices = {
+        const std::vector<Vertex> vertices = {
             {{-.5f, -.5f, 0.f}, {1.f, 0.f, 0.f}},
             {{.5f, -.5f, 0.f}, {0.f, 1.f, 0.f}},
             {{0.f, .5f, 0.f}, {0.f, 0.f, 1.f}},
         };
 
-        BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+        const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
             .SetSize(vertices.size() * sizeof(Vertex))
             .SetUsages(BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
             .SetInitialState(BufferState::staging)
@@ -154,7 +155,7 @@ private:
             vertexBuffer->UnMap();
         }
 
-        BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
+        const BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
             .SetType(BufferViewType::vertex)
             .SetSize(vertices.size() * sizeof(Vertex))
             .SetOffset(0)
@@ -169,43 +170,27 @@ private:
 
     void CreatePipeline()
     {
-        std::vector<uint8_t> vsByteCode;
-        CompileShader(vsByteCode, "../Test/Sample/Triangle/Triangle.hlsl", "VSMain", RHI::ShaderStageBits::sVertex);
-        vertexShader = device->CreateShaderModule(ShaderModuleCreateInfo(vsByteCode));
+        vsCompileOutput = CompileShader("../Test/Sample/RHI/Triangle/Triangle.hlsl", "VSMain", RHI::ShaderStageBits::sVertex);
+        vertexShader = device->CreateShaderModule(ShaderModuleCreateInfo("VSMain", vsCompileOutput.byteCode));
 
-        std::vector<uint8_t> fsByteCode;
-        CompileShader(fsByteCode, "../Test/Sample/Triangle/Triangle.hlsl", "FSMain", RHI::ShaderStageBits::sPixel);
-        fragmentShader = device->CreateShaderModule(ShaderModuleCreateInfo(fsByteCode));
+        psCompileOutput = CompileShader("../Test/Sample/RHI/Triangle/Triangle.hlsl", "PSMain", RHI::ShaderStageBits::sPixel);
+        pixelShader = device->CreateShaderModule(ShaderModuleCreateInfo("PSMain", psCompileOutput.byteCode));
 
-        RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo()
-            .SetLayout(pipelineLayout.Get())
+        RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo(pipelineLayout.Get())
             .SetVertexShader(vertexShader.Get())
-            .SetPixelShader(fragmentShader.Get())
-            .SetVertexState(
-                VertexState()
-                    .AddVertexBufferLayout(
-                        VertexBufferLayout()
-                            .SetStepMode(VertexStepMode::perVertex)
-                            .SetStride(sizeof(Vertex))
-                            .AddAttribute(VertexAttribute("POSITION", 0, VertexFormat::float32X3, 0))
-                            .AddAttribute(VertexAttribute("COLOR", 0, VertexFormat::float32X3, offsetof(Vertex, color)))))
+            .SetPixelShader(pixelShader.Get())
             .SetFragmentState(
                 FragmentState()
-                    .AddColorTarget(
-                        ColorTargetState()
-                            .SetFormat(swapChainFormat)
-                            .SetWriteFlags(ColorWriteBits::all)))
-            .SetPrimitiveState(
-                PrimitiveState()
-                    .SetDepthClip(false)
-                    .SetFrontFace(FrontFace::ccw)
-                    .SetCullMode(CullMode::none)
-                    .SetTopologyType(PrimitiveTopologyType::triangle)
-                    .SetStripIndexFormat(IndexFormat::uint16))
-            .SetDepthStencilState(
-                DepthStencilState()
-                    .SetDepthEnabled(false)
-                    .SetStencilEnabled(false));
+                    .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all)))
+            .SetPrimitiveState(PrimitiveState(PrimitiveTopologyType::triangle, FillMode::solid, IndexFormat::uint16, FrontFace::ccw, CullMode::none));
+
+        const auto& vsReflectionData = vsCompileOutput.reflectionData;
+        createInfo.SetVertexState(
+            VertexState()
+                .AddVertexBufferLayout(
+                    VertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
+                        .AddAttribute(VertexAttribute(vsReflectionData.QueryVertexBindingChecked("POSITION"), VertexFormat::float32X3, 0))
+                        .AddAttribute(VertexAttribute(vsReflectionData.QueryVertexBindingChecked("COLOR"), VertexFormat::float32X3, offsetof(Vertex, color)))));
 
         pipeline = device->CreateRasterPipeline(createInfo);
     }
@@ -239,7 +224,9 @@ private:
     UniqueRef<PipelineLayout> pipelineLayout;
     UniqueRef<RasterPipeline> pipeline;
     UniqueRef<ShaderModule> vertexShader;
-    UniqueRef<ShaderModule> fragmentShader;
+    ShaderCompileOutput vsCompileOutput;
+    UniqueRef<ShaderModule> pixelShader;
+    ShaderCompileOutput psCompileOutput;
     std::array<UniqueRef<CommandBuffer>, backBufferCount> commandBuffers;
     std::array<UniqueRef<Semaphore>, backBufferCount> backBufferReadySemaphores;
     std::array<UniqueRef<Semaphore>, backBufferCount> renderFinishedSemaphores;

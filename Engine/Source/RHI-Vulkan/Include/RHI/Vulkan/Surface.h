@@ -19,7 +19,6 @@ namespace RHI::Vulkan {
         VulkanSurface(VulkanDevice& inDevice, const SurfaceCreateInfo& inCreateInfo);
         ~VulkanSurface() override;
 
-        void Destroy() override;
         VkSurfaceKHR GetNative() const;
 
     private:

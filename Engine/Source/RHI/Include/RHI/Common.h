@@ -7,43 +7,69 @@
 #include <memory>
 #include <cstdint>
 #include <type_traits>
+#include <functional>
 
 #include <Common/Memory.h>
 #include <Common/String.h>
 #include <Common/Math/Vector.h>
-#include <Common/Math/Color.h>
+
+#define DECLARE_EC_FUNC() template <typename A, typename B> inline B EnumCast(const A& value);
+#define ECIMPL_BEGIN(A, B) template <> inline B EnumCast<A, B>(const A& value) {
+#define ECIMPL_ITEM(A, B) if (value == A) { return B; }
+#define ECIMPL_END(B) Unimplement(); return (B) 0; };
+
+#define DECLARE_FC_FUNC() template <typename A, typename B> inline B FlagsCast(const A& flags);
+#define FCIMPL_BEGIN(A, B) template <> inline B FlagsCast<A, B>(const A& flags) { B result = (B) 0;
+#define FCIMPL_ITEM(A, B) if (flags & A) { result |= B; }
+#define FCIMPL_END(B) return result; };
 
 namespace RHI {
-    using EnumType = uint32_t;
+    template <typename E>
+    using BitsTypeForEachFunc = std::function<void(E e)>;
 
-    enum class RHIType : EnumType {
+    template <typename E>
+    void ForEachBitsType(BitsTypeForEachFunc<E>&& func)
+    {
+        using UBitsType = std::underlying_type_t<E>;
+        for (UBitsType i = 0x1; i < static_cast<UBitsType>(E::max); i = i << 1) {
+            func(static_cast<E>(i));
+        }
+    }
+}
+
+namespace RHI {
+    using EnumUint8T = uint8_t;
+    using EnumUint16T = uint16_t;
+    using EnumUint32T = uint32_t;
+    using EnumUint64T = uint64_t;
+
+    enum class RHIType : EnumUint8T {
         directX12,
         vulkan,
-        metal,
         dummy,
         max
     };
 
-    enum class GpuType : EnumType {
+    enum class GpuType : EnumUint8T {
         hardware,
         software,
         max
     };
 
-    enum class QueueType : EnumType {
+    enum class QueueType : EnumUint8T {
         graphics,
         compute,
         transfer,
         max
     };
 
-    enum class MapMode : EnumType {
+    enum class MapMode : EnumUint8T {
         read,
         write,
         max
     };
 
-    enum class PixelFormat : EnumType {
+    enum class PixelFormat : EnumUint8T {
         // 8-Bits
         r8Unorm,
         r8Snorm,
@@ -90,11 +116,10 @@ namespace RHI {
         d24UnormS8Uint,
         d32Float,
         d32FloatS8Uint,
-        // TODO features / bc / etc / astc
         max
     };
 
-    enum class VertexFormat : EnumType {
+    enum class VertexFormat : EnumUint8T {
         // 8-Bits Channel
         uint8X2,
         uint8X4,
@@ -131,14 +156,14 @@ namespace RHI {
         max
     };
 
-    enum class TextureDimension : EnumType {
+    enum class TextureDimension : EnumUint8T {
         t1D,
         t2D,
         t3D,
         max
     };
 
-    enum class TextureViewDimension : EnumType {
+    enum class TextureViewDimension : EnumUint8T {
         tv1D,
         tv2D,
         tv2DArray,
@@ -148,7 +173,7 @@ namespace RHI {
         max
     };
 
-    enum class TextureAspect : EnumType {
+    enum class TextureAspect : EnumUint8T {
         color,
         depth,
         stencil,
@@ -156,7 +181,7 @@ namespace RHI {
         max
     };
 
-    enum class TextureViewType : EnumType {
+    enum class TextureViewType : EnumUint8T {
         textureBinding,
         storageBinding,
         colorAttachment,
@@ -164,7 +189,7 @@ namespace RHI {
         max
     };
 
-    enum class BufferViewType : EnumType {
+    enum class BufferViewType : EnumUint8T {
         vertex,
         index,
         uniformBinding,
@@ -172,20 +197,20 @@ namespace RHI {
         max
     };
 
-    enum class AddressMode : EnumType {
+    enum class AddressMode : EnumUint8T {
         clampToEdge,
         repeat,
         mirrorRepeat,
         max
     };
 
-    enum class FilterMode : EnumType {
+    enum class FilterMode : EnumUint8T {
         nearest,
         linear,
         max
     };
 
-    enum class ComparisonFunc : EnumType {
+    enum class CompareFunc : EnumUint8T {
         never,
         less,
         equal,
@@ -197,7 +222,7 @@ namespace RHI {
         max
     };
 
-    enum class HlslBindingRangeType : EnumType {
+    enum class HlslBindingRangeType : EnumUint8T {
         constantBuffer,
         texture,
         sampler,
@@ -205,7 +230,7 @@ namespace RHI {
         max
     };
 
-    enum class BindingType : EnumType {
+    enum class BindingType : EnumUint8T {
         uniformBuffer,
         storageBuffer,
         sampler,
@@ -214,14 +239,14 @@ namespace RHI {
         max
     };
 
-    enum class SamplerBindingType : EnumType {
+    enum class SamplerBindingType : EnumUint8T {
         filtering,
         nonFiltering,
         comparison,
         max
     };
 
-    enum class TextureSampleType : EnumType {
+    enum class TextureSampleType : EnumUint8T {
         filterableFloat,
         nonFilterableFloat,
         depth,
@@ -230,25 +255,25 @@ namespace RHI {
         max
     };
 
-    enum class StorageTextureAccess : EnumType {
+    enum class StorageTextureAccess : EnumUint8T {
         writeOnly,
         max
     };
 
-    enum class VertexStepMode : EnumType {
+    enum class VertexStepMode : EnumUint8T {
         perVertex,
         perInstance,
         max
     };
 
-    enum class PrimitiveTopologyType : EnumType {
+    enum class PrimitiveTopologyType : EnumUint8T {
         point,
         line,
         triangle,
         max
     };
 
-    enum class PrimitiveTopology : EnumType {
+    enum class PrimitiveTopology : EnumUint8T {
         pointList,
         lineList,
         lineStrip,
@@ -261,26 +286,32 @@ namespace RHI {
         max
     };
 
-    enum class IndexFormat : EnumType {
+    enum class IndexFormat : EnumUint8T {
         uint16,
         uint32,
         max
     };
 
-    enum class FrontFace : EnumType {
+    enum class FrontFace : EnumUint8T {
         ccw,
         cw,
         max
     };
 
-    enum class CullMode : EnumType {
+    enum class FillMode : EnumUint8T {
+        wireframe,
+        solid,
+        max
+    };
+
+    enum class CullMode : EnumUint8T {
         none,
         front,
         back,
         max
     };
 
-    enum class StencilOp : EnumType {
+    enum class StencilOp : EnumUint8T {
         keep,
         zero,
         replace,
@@ -292,7 +323,7 @@ namespace RHI {
         max
     };
 
-    enum class BlendFactor : EnumType {
+    enum class BlendFactor : EnumUint8T {
         zero,
         one,
         src,
@@ -303,14 +334,10 @@ namespace RHI {
         oneMinusDst,
         dstAlpha,
         oneMinusDstAlpha,
-        // TODO check spec
-        // scrAlphaSaturated,
-        // constant,
-        // oneMinusConstant,
         max
     };
 
-    enum class BlendOp : EnumType {
+    enum class BlendOp : EnumUint8T {
         opAdd,
         opSubstract,
         opReverseSubstract,
@@ -319,19 +346,19 @@ namespace RHI {
         max
     };
 
-    enum class LoadOp : EnumType {
+    enum class LoadOp : EnumUint8T {
         load,
         clear,
         max
     };
 
-    enum class StoreOp : EnumType {
+    enum class StoreOp : EnumUint8T {
         store,
         discard,
         max
     };
 
-    enum class PresentMode : EnumType {
+    enum class PresentMode : EnumUint8T {
         // TODO check this
         // 1. DirectX SwapEffect #see https://docs.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_swap_effect
         // 2. Vulkan VkPresentModeKHR #see https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VkPresentModeKHR.html
@@ -340,13 +367,13 @@ namespace RHI {
         max
     };
 
-    enum class ResourceType : EnumType {
+    enum class ResourceType : EnumUint8T {
         buffer,
         texture,
         max
     };
 
-    enum class BufferState : EnumType {
+    enum class BufferState : EnumUint8T {
         undefined,
         staging,
         copySrc,
@@ -356,7 +383,7 @@ namespace RHI {
         max
     };
 
-    enum class TextureState : EnumType {
+    enum class TextureState : EnumUint8T {
         undefined,
         copySrc,
         copyDst,
@@ -377,22 +404,24 @@ namespace RHI {
     FlagsType operator|(FlagsType a, BitsType b); \
 
 namespace RHI {
-    template <typename T = uint32_t>
+    using FlagBitsUint8T = uint8_t;
+    using FlagBitsUint16T = uint16_t;
+    using FlagBitsUint32T = uint32_t;
+    using FlagBitsUint64T = uint64_t;
+
+    template <typename E>
     class Flags {
     public:
         static Flags null;
 
-        using UnderlyingType = T;
+        using UnderlyingType = std::underlying_type_t<E>;
 
         Flags() = default;
         ~Flags() = default;
-        Flags(T inValue) : value(inValue) {} // NOLINT
+        Flags(UnderlyingType inValue) : value(inValue) {} // NOLINT
+        Flags(E e) : value(static_cast<UnderlyingType>(e)) {} // NOLINT
 
-        template <typename E>
-        requires std::is_same_v<T, std::underlying_type_t<E>>
-        Flags(E e) : value(static_cast<T>(e)) {} // NOLINT
-
-        T Value() const
+        UnderlyingType Value() const
         {
             return value;
         }
@@ -412,51 +441,46 @@ namespace RHI {
             return value != other.value;
         }
 
-        bool operator==(T inValue) const
+        bool operator==(UnderlyingType inValue) const
         {
             return value == inValue;
         }
 
-        bool operator!=(T inValue) const
+        bool operator!=(UnderlyingType inValue) const
         {
             return value != inValue;
         }
 
-        template <typename E>
-        requires std::is_same_v<T, std::underlying_type_t<E>>
         bool operator==(E e) const
         {
-            return value == static_cast<T>(e);
+            return value == static_cast<UnderlyingType>(e);
         }
 
-        template <typename E>
-        requires std::is_same_v<T, std::underlying_type_t<E>>
         bool operator!=(E e) const
         {
-            return value != static_cast<T>(e);
+            return value != static_cast<UnderlyingType>(e);
         }
 
     private:
-        T value;
+        UnderlyingType value;
     };
 
-    template <typename T>
-    Flags<T> Flags<T>::null = Flags<T>(0);
+    template <typename E>
+    Flags<E> Flags<E>::null = Flags<E>(0);
 
-    template <typename T>
-    Flags<T> operator&(Flags<T> a, Flags<T> b)
+    template <typename E>
+    Flags<E> operator&(Flags<E> a, Flags<E> b)
     {
-        return Flags<T>(a.Value() & b.Value());
+        return Flags<E>(a.Value() & b.Value());
     }
 
-    template <typename T>
-    Flags<T> operator|(Flags<T> a, Flags<T> b)
+    template <typename E>
+    Flags<E> operator|(Flags<E> a, Flags<E> b)
     {
-        return Flags<T>(a.Value() | b.Value());
+        return Flags<E>(a.Value() | b.Value());
     }
 
-    using BufferUsageFlags = Flags<>;
-    enum class BufferUsageBits : BufferUsageFlags::UnderlyingType {
+    enum class BufferUsageBits : FlagBitsUint16T {
         mapRead      = 0x1,
         mapWrite     = 0x2,
         copySrc      = 0x4,
@@ -469,10 +493,10 @@ namespace RHI {
         queryResolve = 0x200,
         max
     };
+    using BufferUsageFlags = Flags<BufferUsageBits>;
     RHI_FLAGS_DECLARE(BufferUsageFlags, BufferUsageBits)
 
-    using TextureUsageFlags = Flags<>;
-    enum class TextureUsageBits : TextureUsageFlags::UnderlyingType {
+    enum class TextureUsageBits : FlagBitsUint8T {
         copySrc                 = 0x1,
         copyDst                 = 0x2,
         textureBinding          = 0x4,
@@ -481,10 +505,10 @@ namespace RHI {
         depthStencilAttachment  = 0x20,
         max
     };
+    using TextureUsageFlags = Flags<TextureUsageBits>;
     RHI_FLAGS_DECLARE(TextureUsageFlags, TextureUsageBits)
 
-    using ShaderStageFlags = Flags<>;
-    enum class ShaderStageBits : ShaderStageFlags::UnderlyingType {
+    enum class ShaderStageBits : FlagBitsUint8T {
         sVertex   = 0x1,
         sPixel    = 0x2,
         sCompute  = 0x4,
@@ -493,10 +517,10 @@ namespace RHI {
         sDomain   = 0x20,
         max
     };
+    using ShaderStageFlags = Flags<ShaderStageBits>;
     RHI_FLAGS_DECLARE(ShaderStageFlags, ShaderStageBits)
 
-    using ColorWriteFlags = Flags<>;
-    enum class ColorWriteBits : ColorWriteFlags::UnderlyingType {
+    enum class ColorWriteBits : FlagBitsUint8T {
         red   = 0x1,
         green = 0x2,
         blue  = 0x4,
@@ -505,16 +529,17 @@ namespace RHI {
         rgb   = red | green | blue,
         all   = red | green | blue | alpha
     };
+    using ColorWriteFlags = Flags<ColorWriteBits>;
     RHI_FLAGS_DECLARE(ColorWriteFlags, ColorWriteBits)
 }
 
-namespace std {
-    template <typename T>
-    struct hash<RHI::Flags<T>>
+namespace std { // NOLINT
+    template <typename E>
+    struct hash<RHI::Flags<E>>
     {
-        size_t operator()(RHI::Flags<T> flags) const
+        size_t operator()(RHI::Flags<E> flags) const
         {
-            return hash<T>()(flags.Value());
+            return hash<typename RHI::Flags<E>::UnderlyingType>()(flags.Value());
         }
     };
 }

@@ -6,6 +6,8 @@
 #include <Rendering/Scene.h>
 
 namespace Rendering {
+    Scene::~Scene() = default;
+
     void Scene::AddLight(Render::ILightSceneProxy* inProxy)
     {
         Assert(!lights.contains(inProxy));

@@ -13,25 +13,24 @@ namespace RHI::DirectX12 {
     class DX12RasterPipeline;
     class DX12PipelineLayout;
 
-    class DX12CommandRecorder : public CommandRecorder {
+    class DX12CommandRecorder final : public CommandRecorder {
     public:
         NonCopyable(DX12CommandRecorder)
         explicit DX12CommandRecorder(DX12Device& inDevice, DX12CommandBuffer& inCmdBuffer);
         ~DX12CommandRecorder() override;
 
         void ResourceBarrier(const Barrier& inBarrier) override;
-        CopyPassCommandRecorder* BeginCopyPass() override;
-        ComputePassCommandRecorder* BeginComputePass() override;
-        RasterPassCommandRecorder* BeginRasterPass(const RasterPassBeginInfo& inBeginInfo) override;
+        Common::UniqueRef<CopyPassCommandRecorder> BeginCopyPass() override;
+        Common::UniqueRef<ComputePassCommandRecorder> BeginComputePass() override;
+        Common::UniqueRef<RasterPassCommandRecorder> BeginRasterPass(const RasterPassBeginInfo& inBeginInfo) override;
         void End() override;
-        void Destroy() override;
 
     private:
         DX12Device& device;
         DX12CommandBuffer& commandBuffer;
     };
 
-    class DX12CopyPassCommandRecorder : public CopyPassCommandRecorder {
+    class DX12CopyPassCommandRecorder final : public CopyPassCommandRecorder {
     public:
         NonCopyable(DX12CopyPassCommandRecorder)
         explicit DX12CopyPassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer);
@@ -41,12 +40,11 @@ namespace RHI::DirectX12 {
         void ResourceBarrier(const Barrier& inBarrier) override;
 
         // CopyPassCommandRecorder
-        void CopyBufferToBuffer(Buffer* inSrcBuffer, size_t inSrcOffset, Buffer* inDestBuffer, size_t inDestOffset, size_t inSize) override;
-        void CopyBufferToTexture(Buffer* inSrcBuffer, Texture* inDestTexture, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize) override;
-        void CopyTextureToBuffer(Texture* inSrcTexture, Buffer* inDestBuffer, const TextureSubResourceInfo* inSubResourceInfo, const Common::UVec3& inSize) override;
-        void CopyTextureToTexture(Texture* inSrcTexture, const TextureSubResourceInfo* inSrcSubResourceInfo, Texture* inDestTexture, const TextureSubResourceInfo* inDestSubResourceInfo, const Common::UVec3& inSize) override;
+        void CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo) override;
+        void CopyBufferToTexture(Buffer* src, Texture* dst, const BufferTextureCopyInfo& copyInfo) override;
+        void CopyTextureToBuffer(Texture* src, Buffer* dst, const BufferTextureCopyInfo& copyInfo) override;
+        void CopyTextureToTexture(Texture* src, Texture* dst, const TextureCopyInfo& copyInfo) override;
         void EndPass() override;
-        void Destroy() override;
 
     private:
         DX12Device& device;
@@ -54,7 +52,7 @@ namespace RHI::DirectX12 {
         DX12CommandBuffer& commandBuffer;
     };
 
-    class DX12ComputePassCommandRecorder : public ComputePassCommandRecorder {
+    class DX12ComputePassCommandRecorder final : public ComputePassCommandRecorder {
     public:
         NonCopyable(DX12ComputePassCommandRecorder)
         explicit DX12ComputePassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer);
@@ -68,7 +66,6 @@ namespace RHI::DirectX12 {
         void SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup) override;
         void Dispatch(size_t inGroupCountX, size_t inGroupCountY, size_t inGroupCountZ) override;
         void EndPass() override;
-        void Destroy() override;
 
     private:
         DX12Device& device;
@@ -77,7 +74,7 @@ namespace RHI::DirectX12 {
         DX12CommandBuffer& commandBuffer;
     };
 
-    class DX12RasterPassCommandRecorder : public RasterPassCommandRecorder {
+    class DX12RasterPassCommandRecorder final : public RasterPassCommandRecorder {
     public:
         NonCopyable(DX12RasterPassCommandRecorder)
         explicit DX12RasterPassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer, const RasterPassBeginInfo& inBeginInfo);
@@ -99,7 +96,6 @@ namespace RHI::DirectX12 {
         void SetBlendConstant(const float* inConstants) override;
         void SetStencilReference(uint32_t inReference) override;
         void EndPass() override;
-        void Destroy() override;
 
     private:
         DX12Device& device;

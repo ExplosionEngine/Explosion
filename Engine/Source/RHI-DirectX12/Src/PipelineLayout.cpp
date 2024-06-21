@@ -31,26 +31,21 @@ namespace RHI::DirectX12 {
 
     DX12PipelineLayout::~DX12PipelineLayout() = default;
 
-    void DX12PipelineLayout::Destroy()
-    {
-        delete this;
-    }
-
     std::optional<BindingTypeAndRootParameterIndex> DX12PipelineLayout::QueryRootDescriptorParameterIndex(uint8_t inLayoutIndex, const HlslBinding& inBinding)
     {
-        auto iter = rootParameterIndexMap.find(RootParameterKey {inLayoutIndex, inBinding });
+        const auto iter = rootParameterIndexMap.find(RootParameterKey {inLayoutIndex, inBinding });
         if (iter == rootParameterIndexMap.end()) {
             return {};
         }
         return iter->second;
     }
 
-    ID3D12RootSignature* DX12PipelineLayout::GetNative()
+    ID3D12RootSignature* DX12PipelineLayout::GetNative() const
     {
         return nativeRootSignature.Get();
     }
 
-    void DX12PipelineLayout::CreateNativeRootSignature(DX12Device& inDevice, const PipelineLayoutCreateInfo& inCreateInfo)
+    void DX12PipelineLayout::CreateNativeRootSignature(DX12Device& inDevice, const PipelineLayoutCreateInfo& inCreateInfo) // NOLINT
     {
         D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
         featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
@@ -63,7 +58,7 @@ namespace RHI::DirectX12 {
             const auto& pendingRootParameters = bindGroupLayout->GetNativeRootParameters();
             const auto& keyInfos = bindGroupLayout->GetRootParameterKeyInfos();
             for (auto j = 0; j < pendingRootParameters.size(); j++) {
-                const auto index = static_cast<uint32_t>(baseIndex + j);
+                const auto index = baseIndex + j;
                 rootParameters.emplace_back(pendingRootParameters[j]);
 
                 const auto& keyInfo = keyInfos[j];
@@ -85,7 +80,7 @@ namespace RHI::DirectX12 {
 
 #if BUILD_CONFIG_DEBUG
         if (!inCreateInfo.debugName.empty()) {
-            nativeRootSignature->SetName(Common::StringUtils::ToWideString(inCreateInfo.debugName).c_str());
+            Assert(SUCCEEDED(nativeRootSignature->SetName(Common::StringUtils::ToWideString(inCreateInfo.debugName).c_str())));
         }
 #endif
     }

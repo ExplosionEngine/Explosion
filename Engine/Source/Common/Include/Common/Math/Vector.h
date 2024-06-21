@@ -23,58 +23,58 @@ namespace Common {
     struct BaseVector {};
 
     template <typename T, uint8_t L>
-    struct Vector : public BaseVector<T, L> {
+    struct Vector : BaseVector<T, L> {
         using Type = T;
         static constexpr uint8_t dims = L;
 
-        inline Vector();
-        inline Vector(T inValue); // NOLINT
-        inline Vector(const Vector& other);
-        inline Vector(Vector&& other) noexcept;
-        inline Vector& operator=(const Vector& other);
+        Vector();
+        Vector(T inValue); // NOLINT
+        Vector(const Vector& other);
+        Vector(Vector&& other) noexcept;
+        Vector& operator=(const Vector& other);
 
         template <typename... IT>
-        inline Vector(IT&&... inValues); // NOLINT
+        Vector(IT&&... inValues); // NOLINT
 
-        inline T& operator[](uint32_t i);
-        inline T operator[](uint32_t i) const;
+        T& operator[](uint32_t i);
+        T operator[](uint32_t i) const;
 
-        inline bool operator==(T rhs) const;
-        inline bool operator==(const Vector& rhs) const;
-        inline bool operator!=(T rhs) const;
-        inline bool operator!=(const Vector& rhs) const;
+        bool operator==(T rhs) const;
+        bool operator==(const Vector& rhs) const;
+        bool operator!=(T rhs) const;
+        bool operator!=(const Vector& rhs) const;
 
-        inline Vector operator+(T rhs) const;
-        inline Vector operator-(T rhs) const;
-        inline Vector operator*(T rhs) const;
-        inline Vector operator/(T rhs) const;
+        Vector operator+(T rhs) const;
+        Vector operator-(T rhs) const;
+        Vector operator*(T rhs) const;
+        Vector operator/(T rhs) const;
 
-        inline Vector operator+(const Vector& rhs) const;
-        inline Vector operator-(const Vector& rhs) const;
-        inline Vector operator*(const Vector& rhs) const;
-        inline Vector operator/(const Vector& rhs) const;
+        Vector operator+(const Vector& rhs) const;
+        Vector operator-(const Vector& rhs) const;
+        Vector operator*(const Vector& rhs) const;
+        Vector operator/(const Vector& rhs) const;
 
-        inline Vector& operator+=(T rhs);
-        inline Vector& operator-=(T rhs);
-        inline Vector& operator*=(T rhs);
-        inline Vector& operator/=(T rhs);
+        Vector& operator+=(T rhs);
+        Vector& operator-=(T rhs);
+        Vector& operator*=(T rhs);
+        Vector& operator/=(T rhs);
 
-        inline Vector& operator+=(const Vector& rhs);
-        inline Vector& operator-=(const Vector& rhs);
-        inline Vector& operator*=(const Vector& rhs);
-        inline Vector& operator/=(const Vector& rhs);
+        Vector& operator+=(const Vector& rhs);
+        Vector& operator-=(const Vector& rhs);
+        Vector& operator*=(const Vector& rhs);
+        Vector& operator/=(const Vector& rhs);
 
         template <typename IT>
-        inline Vector<IT, L> CastTo() const;
+        Vector<IT, L> CastTo() const;
 
         template <uint8_t... I>
-        inline Vector<T, sizeof...(I)> SubVec() const;
+        Vector<T, sizeof...(I)> SubVec() const;
 
-        inline T Model() const;
-        inline Vector Normalized() const;
-        inline void Normalize();
-        inline T Dot(const Vector& rhs) const;
-        inline typename Internal::VecCrossResultTraits<T, L>::Type Cross(const Vector& rhs) const;
+        T Model() const;
+        Vector Normalized() const;
+        void Normalize();
+        T Dot(const Vector& rhs) const;
+        typename Internal::VecCrossResultTraits<T, L>::Type Cross(const Vector& rhs) const;
     };
 
     template <typename T, uint8_t L>
@@ -85,6 +85,7 @@ namespace Common {
     struct VecConsts<T, 1> {
         static const Vector<T, 1> zero;
         static const Vector<T, 1> unit;
+        static const Vector<T, 1> negaUnit;
     };
 
     template <typename T>
@@ -93,6 +94,9 @@ namespace Common {
         static const Vector<T, 2> unitX;
         static const Vector<T, 2> unitY;
         static const Vector<T, 2> unit;
+        static const Vector<T, 2> negaUnitX;
+        static const Vector<T, 2> negaUnitY;
+        static const Vector<T, 2> negaUnit;
     };
 
     template <typename T>
@@ -102,6 +106,10 @@ namespace Common {
         static const Vector<T, 3> unitY;
         static const Vector<T, 3> unitZ;
         static const Vector<T, 3> unit;
+        static const Vector<T, 3> negaUnitX;
+        static const Vector<T, 3> negaUnitY;
+        static const Vector<T, 3> negaUnitZ;
+        static const Vector<T, 3> negaUnit;
     };
 
     template <typename T>
@@ -112,6 +120,11 @@ namespace Common {
         static const Vector<T, 4> unitZ;
         static const Vector<T, 4> unitW;
         static const Vector<T, 4> unit;
+        static const Vector<T, 4> negaUnitX;
+        static const Vector<T, 4> negaUnitY;
+        static const Vector<T, 4> negaUintZ;
+        static const Vector<T, 4> negaUnitW;
+        static const Vector<T, 4> negaUnit;
     };
 
     using BVec1 = Vector<bool, 1>;
@@ -194,7 +207,7 @@ namespace Common::Internal {
     };
 }
 
-namespace Common {
+namespace Common { // NOLINT
     template <typename T, uint8_t L>
     struct Serializer<Vector<T, L>> {
         static constexpr bool serializable = true;
@@ -221,6 +234,7 @@ namespace Common {
             for (auto i = 0; i < L; i++) {
                 Serializer<T>::Deserialize(stream, value.data[i]);
             }
+            return true;
         }
     };
 }
@@ -228,8 +242,8 @@ namespace Common {
 namespace Common {
     template <typename T>
     struct BaseVector<T, 1> {
-        inline BaseVector();
-        inline BaseVector(T inX); // NOLINT
+        BaseVector();
+        BaseVector(T inX); // NOLINT
 
         union {
             T data[1];
@@ -241,9 +255,9 @@ namespace Common {
 
     template <typename T>
     struct BaseVector<T, 2> {
-        inline BaseVector();
-        inline BaseVector(T inValue); // NOLINT
-        inline BaseVector(T inX, T inY);
+        BaseVector();
+        BaseVector(T inValue); // NOLINT
+        BaseVector(T inX, T inY);
 
         union {
             T data[2];
@@ -256,9 +270,9 @@ namespace Common {
 
     template <typename T>
     struct BaseVector<T, 3> {
-        inline BaseVector();
-        inline BaseVector(T inValue); // NOLINT
-        inline BaseVector(T inX, T inY, T inZ);
+        BaseVector();
+        BaseVector(T inValue); // NOLINT
+        BaseVector(T inX, T inY, T inZ);
 
         union {
             T data[3];
@@ -272,9 +286,9 @@ namespace Common {
 
     template <typename T>
     struct BaseVector<T, 4> {
-        inline BaseVector();
-        inline BaseVector(T inValue); // NOLINT
-        inline BaseVector(T inX, T inY, T inZ, T inW);
+        BaseVector();
+        BaseVector(T inValue); // NOLINT
+        BaseVector(T inX, T inY, T inZ, T inW);
 
         union {
             T data[4];
@@ -287,67 +301,67 @@ namespace Common {
         };
     };
 
-    template<typename T>
+    template <typename T>
     BaseVector<T, 1>::BaseVector()
         : x(0)
     {
     }
 
-    template<typename T>
+    template <typename T>
     BaseVector<T, 1>::BaseVector(T inX)
         : x(inX)
     {
     }
 
-    template<typename T>
+    template <typename T>
     BaseVector<T, 2>::BaseVector()
         : x(0)
     {
     }
 
-    template<typename T>
+    template <typename T>
     BaseVector<T, 2>::BaseVector(T inValue)
         : x(inValue), y(inValue)
     {
     }
 
-    template<typename T>
+    template <typename T>
     BaseVector<T, 2>::BaseVector(T inX, T inY)
         : x(inX), y(inY)
     {
     }
 
-    template<typename T>
+    template <typename T>
     BaseVector<T, 3>::BaseVector()
         : x(0)
     {
     }
 
-    template<typename T>
+    template <typename T>
     BaseVector<T, 3>::BaseVector(T inValue)
         : x(inValue), y(inValue), z(inValue)
     {
     }
 
-    template<typename T>
+    template <typename T>
     BaseVector<T, 3>::BaseVector(T inX, T inY, T inZ)
         : x(inX), y(inY), z(inZ)
     {
     }
 
-    template<typename T>
+    template <typename T>
     BaseVector<T, 4>::BaseVector()
         : x(0)
     {
     }
 
-    template<typename T>
+    template <typename T>
     BaseVector<T, 4>::BaseVector(T inValue)
         : x(inValue), y(inValue), z(inValue), w(inValue)
     {
     }
 
-    template<typename T>
+    template <typename T>
     BaseVector<T, 4>::BaseVector(T inX, T inY, T inZ, T inW)
         : x(inX), y(inY), z(inZ), w(inW)
     {
@@ -360,6 +374,9 @@ namespace Common {
     const Vector<T, 1> VecConsts<T, 1>::unit = Vector<T, 1>(1);
 
     template <typename T>
+    const Vector<T, 1> VecConsts<T, 1>::negaUnit = Vector<T, 1>(-1);
+
+    template <typename T>
     const Vector<T, 2> VecConsts<T, 2>::zero = Vector<T, 2>();
 
     template <typename T>
@@ -370,6 +387,15 @@ namespace Common {
 
     template <typename T>
     const Vector<T, 2> VecConsts<T, 2>::unit = Vector<T, 2>(1, 1);
+
+    template <typename T>
+    const Vector<T, 2> VecConsts<T, 2>::negaUnitX = Vector<T, 2>(-1, 0);
+
+    template <typename T>
+    const Vector<T, 2> VecConsts<T, 2>::negaUnitY = Vector<T, 2>(0, -1);
+
+    template <typename T>
+    const Vector<T, 2> VecConsts<T, 2>::negaUnit = Vector<T, 2>(-1, -1);
 
     template <typename T>
     const Vector<T, 3> VecConsts<T, 3>::zero = Vector<T, 3>();
@@ -385,6 +411,18 @@ namespace Common {
 
     template <typename T>
     const Vector<T, 3> VecConsts<T, 3>::unit = Vector<T, 3>(1, 1, 1);
+
+    template <typename T>
+    const Vector<T, 3> VecConsts<T, 3>::negaUnitX = Vector<T, 3>(-1, 0, 0);
+
+    template <typename T>
+    const Vector<T, 3> VecConsts<T, 3>::negaUnitY = Vector<T, 3>(0, -1, 0);
+
+    template <typename T>
+    const Vector<T, 3> VecConsts<T, 3>::negaUnitZ = Vector<T, 3>(0, 0, -1);
+
+    template <typename T>
+    const Vector<T, 3> VecConsts<T, 3>::negaUnit = Vector<T, 3>(-1, -1, -1);
 
     template <typename T>
     const Vector<T, 4> VecConsts<T, 4>::zero = Vector<T, 4>();
@@ -403,6 +441,21 @@ namespace Common {
 
     template <typename T>
     const Vector<T, 4> VecConsts<T, 4>::unit = Vector<T, 4>(1, 1, 1, 1);
+
+    template <typename T>
+    const Vector<T, 4> VecConsts<T, 4>::negaUnitX = Vector<T, 4>(-1, 0, 0, 0);
+
+    template <typename T>
+    const Vector<T, 4> VecConsts<T, 4>::negaUnitY = Vector<T, 4>(0, -1, 0, 0);
+
+    template <typename T>
+    const Vector<T, 4> VecConsts<T, 4>::negaUintZ = Vector<T, 4>(0, 0, -1, 0);
+
+    template <typename T>
+    const Vector<T, 4> VecConsts<T, 4>::negaUnitW = Vector<T, 4>(0, 0, 0, -1);
+
+    template <typename T>
+    const Vector<T, 4> VecConsts<T, 4>::negaUnit = Vector<T, 4>(-1, -1, -1, -1);
 
     template<typename T, uint8_t L>
     Vector<T, L>::Vector() : BaseVector<T, L>(0)

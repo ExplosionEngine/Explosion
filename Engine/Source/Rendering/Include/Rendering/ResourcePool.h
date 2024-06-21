@@ -20,14 +20,14 @@ namespace Rendering {
     public:
         using DescType = typename RHIResTraits<RHIRes>::DescType;
 
-        explicit PooledResource(RHIRes* inRhiHandle, DescType inDesc);
+        explicit PooledResource(Common::UniqueRef<RHIRes>&& inRhiHandle, DescType inDesc);
         ~PooledResource();
 
         RHIRes* GetRHI() const;
         const DescType& GetDesc() const;
 
     private:
-        RHIRes* rhiHandle;
+        Common::UniqueRef<RHIRes> rhiHandle;
         DescType desc;
     };
 
@@ -75,17 +75,14 @@ namespace Rendering {
     };
 
     template <typename RHIResource>
-    PooledResource<RHIResource>::PooledResource(RHIResource* inRhiHandle, DescType inDesc)
-        : rhiHandle(inRhiHandle)
-          , desc(std::move(inDesc))
+    PooledResource<RHIResource>::PooledResource(Common::UniqueRef<RHIResource>&& inRhiHandle, DescType inDesc)
+        : rhiHandle(std::move(inRhiHandle))
+        , desc(std::move(inDesc))
     {
     }
 
     template <typename RHIResource>
-    PooledResource<RHIResource>::~PooledResource()
-    {
-        rhiHandle->Destroy();
-    }
+    PooledResource<RHIResource>::~PooledResource() = default;
 
     template <typename RHIResource>
     RHIResource* PooledResource<RHIResource>::GetRHI() const
@@ -103,11 +100,11 @@ namespace Rendering {
     struct PooledResTraits<PooledBuffer> {
         using ResType = PooledBuffer;
         using RefType = PooledBufferRef;
-        using DescType = typename PooledBuffer::DescType;
+        using DescType = PooledBuffer::DescType;
 
         static RefType CreateResource(RHI::Device& device, const DescType& desc)
         {
-            return Common::MakeShared<ResType>(device.CreateBuffer(desc), desc);
+            return { new ResType(device.CreateBuffer(desc), desc) };
         }
     };
 
@@ -115,20 +112,20 @@ namespace Rendering {
     struct PooledResTraits<PooledTexture> {
         using ResType = PooledTexture;
         using RefType = PooledTextureRef;
-        using DescType = typename PooledTexture::DescType;
+        using DescType = PooledTexture::DescType;
 
         static RefType CreateResource(RHI::Device& device, const DescType& desc)
         {
-            return Common::MakeShared<ResType>(device.CreateTexture(desc), desc);
+            return { new ResType(device.CreateTexture(desc), desc) };
         }
     };
 
     template <typename PooledResource>
     RGResourcePool<PooledResource>& RGResourcePool<PooledResource>::Get(RHI::Device& device)
     {
-        static std::unordered_map<RHI::Device*, Common::UniqueRef<RGResourcePool<PooledResource>>> deviceMap;
+        static std::unordered_map<RHI::Device*, Common::UniqueRef<RGResourcePool>> deviceMap;
         if (!deviceMap.contains(&device)) {
-            deviceMap.emplace(std::make_pair(&device, Common::UniqueRef<RGResourcePool<PooledResource>>(new RGResourcePool<PooledResource>(device))));
+            deviceMap.emplace(std::make_pair(&device, Common::UniqueRef<RGResourcePool>(new RGResourcePool(device))));
         }
         return *deviceMap.at(&device);
     }
@@ -140,13 +137,10 @@ namespace Rendering {
     }
 
     template <typename PooledResource>
-    RGResourcePool<PooledResource>::~RGResourcePool()
-    {
-        pooledResources.clear();
-    }
+    RGResourcePool<PooledResource>::~RGResourcePool() = default;
 
     template <typename PooledResource>
-    typename RGResourcePool<PooledResource>::ResRefType RGResourcePool<PooledResource>::Allocate(const RGResourcePool<PooledResource>::DescType& desc)
+    typename RGResourcePool<PooledResource>::ResRefType RGResourcePool<PooledResource>::Allocate(const DescType& desc)
     {
         for (const auto& pooledResource : pooledResources) {
             if (pooledResource.RefCount() == 1 && desc == pooledResource->GetDesc()) {

@@ -22,11 +22,6 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VulkanBindGroupLayout::Destroy()
-    {
-        delete this;
-    }
-
     VkDescriptorSetLayout VulkanBindGroupLayout::GetNative() const
     {
         return nativeDescriptorSetLayout;
@@ -42,9 +37,9 @@ namespace RHI::Vulkan {
             const auto& entry = inCreateInfo.entries[i];
             auto& binding = bindings[i];
 
-            VkShaderStageFlags flags = VKFlagsCast<ShaderStageFlags, VkShaderStageFlags>(entry.shaderVisibility);
+            VkShaderStageFlags flags = FlagsCast<ShaderStageFlags, VkShaderStageFlags>(entry.shaderVisibility);
 
-            binding.descriptorType = VKEnumCast<BindingType, VkDescriptorType>(entry.binding.type);
+            binding.descriptorType = EnumCast<BindingType, VkDescriptorType>(entry.binding.type);
             binding.descriptorCount = 1;
             binding.binding = std::get<GlslBinding>(entry.binding.platformBinding).index;
             binding.stageFlags = flags;

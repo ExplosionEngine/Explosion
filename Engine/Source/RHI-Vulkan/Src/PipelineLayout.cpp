@@ -23,11 +23,6 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VulkanPipelineLayout::Destroy()
-    {
-        delete this;
-    }
-
     VkPipelineLayout VulkanPipelineLayout::GetNative() const
     {
         return nativePipelineLayout;
@@ -44,7 +39,7 @@ namespace RHI::Vulkan {
         std::vector<VkPushConstantRange> pushConstants(inCreateInfo.pipelineConstantLayouts.size());
         for (uint32_t i = 0; i < inCreateInfo.pipelineConstantLayouts.size(); ++i) {
             const auto& constantInfo = inCreateInfo.pipelineConstantLayouts[i];
-            pushConstants[i].stageFlags = VKFlagsCast<ShaderStageFlags, VkShaderStageFlags>(constantInfo.stageFlags);
+            pushConstants[i].stageFlags = FlagsCast<ShaderStageFlags, VkShaderStageFlags>(constantInfo.stageFlags);
             pushConstants[i].offset = constantInfo.offset;
             pushConstants[i].size = constantInfo.size;
         }

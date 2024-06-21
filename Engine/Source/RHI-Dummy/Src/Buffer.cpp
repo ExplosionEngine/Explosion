@@ -23,13 +23,8 @@ namespace RHI::Dummy {
     {
     }
 
-    BufferView* DummyBuffer::CreateBufferView(const BufferViewCreateInfo& createInfo)
+    Common::UniqueRef<BufferView> DummyBuffer::CreateBufferView(const BufferViewCreateInfo& createInfo)
     {
-        return new DummyBufferView(createInfo);
-    }
-
-    void DummyBuffer::Destroy()
-    {
-        delete this;
+        return Common::UniqueRef<BufferView>(new DummyBufferView(createInfo));
     }
 }

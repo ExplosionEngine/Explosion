@@ -17,7 +17,6 @@ namespace RHI::Vulkan {
         NonCopyable(VulkanRasterPipeline)
         VulkanRasterPipeline(VulkanDevice& inDevice, const RasterPipelineCreateInfo& inCreateInfo);
         ~VulkanRasterPipeline() override;
-        void Destroy() override;
 
         VulkanPipelineLayout* GetPipelineLayout() const;
         VkPipeline GetNative();

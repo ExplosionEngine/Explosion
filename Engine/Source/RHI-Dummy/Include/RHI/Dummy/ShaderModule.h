@@ -7,12 +7,15 @@
 #include <RHI/ShaderModule.h>
 
 namespace RHI::Dummy {
-    class DummyShaderModule : public ShaderModule {
+    class DummyShaderModule final : public ShaderModule {
     public:
         NonCopyable(DummyShaderModule)
         explicit DummyShaderModule(const ShaderModuleCreateInfo& createInfo);
         ~DummyShaderModule() override;
 
-        void Destroy() override;
+        const std::string & GetEntryPoint() override;
+
+    private:
+        std::string entryPoint;
     };
 }

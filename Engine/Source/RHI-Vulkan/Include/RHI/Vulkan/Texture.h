@@ -21,14 +21,10 @@ namespace RHI::Vulkan {
         VulkanTexture(VulkanDevice& inDevice, const TextureCreateInfo& inCreateInfo);
         ~VulkanTexture() override;
 
-        void Destroy() override;
-
-        TextureView* CreateTextureView(const TextureViewCreateInfo& inCreateInfo) override;
+        Common::UniqueRef<TextureView> CreateTextureView(const TextureViewCreateInfo& inCreateInfo) override;
 
         VkImage GetNative() const;
-        Common::UVec3 GetExtent() const;
-        PixelFormat GetFormat() const;
-        VkImageSubresourceRange GetNativeSubResourceFullRange();
+        VkImageSubresourceRange GetNativeSubResourceFullRange() const;
 
     private:
         void CreateNativeImage(const TextureCreateInfo& inCreateInfo);
@@ -38,12 +34,7 @@ namespace RHI::Vulkan {
         VulkanDevice& device;
         VkImage nativeImage;
         VmaAllocation nativeAllocation;
-        VkImageAspectFlags nativeAspect = VK_IMAGE_ASPECT_COLOR_BIT;
-
-        Common::UVec3 extent;
-        PixelFormat format;
-        uint8_t mipLevels;
-        uint8_t samples;
+        VkImageAspectFlags nativeAspect;
         bool ownMemory;
     };
 }

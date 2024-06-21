@@ -17,7 +17,7 @@ namespace Rendering {
         RHI::RHIType rhiType;
     };
 
-    class RENDERING_API RenderingModule : public Core::Module {
+    class RENDERING_API RenderingModule final : public Core::Module {
     public:
         RenderingModule();
         ~RenderingModule() override;
@@ -26,11 +26,11 @@ namespace Rendering {
         void OnUnload() override;
 
         void Initialize(const RenderingModuleInitParams& inParams);
-        RHI::Device* GetDevice();
+        RHI::Device* GetDevice() const;
         Render::IScene* AllocateScene();
         void DestroyScene(Render::IScene* inScene);
         void ShutdownRenderingThread();
-        void FlushAllRenderingCommands();
+        void FlushAllRenderingCommands() const;
 
         template <typename F, typename... Args>
         auto EnqueueRenderingCommand(F&& command, Args&&... args)

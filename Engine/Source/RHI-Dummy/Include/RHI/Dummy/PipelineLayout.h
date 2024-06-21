@@ -7,12 +7,10 @@
 #include <RHI/PipelineLayout.h>
 
 namespace RHI::Dummy {
-    class DummyPipelineLayout : public PipelineLayout {
+    class DummyPipelineLayout final : public PipelineLayout {
     public:
         NonCopyable(DummyPipelineLayout)
         explicit DummyPipelineLayout(const PipelineLayoutCreateInfo& createInfo);
         ~DummyPipelineLayout() override;
-
-        void Destroy() override;
     };
 }

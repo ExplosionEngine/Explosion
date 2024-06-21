@@ -3,15 +3,15 @@
 //
 
 #if PLATFORM_MACOS
-#include <RHI/SwapChain.h>
 #include <Cocoa/Cocoa.h>
+
+#include <RHI/Surface.h>
 #include <Common/Debug.h>
 
 #define VK_USE_PLATFORM_MACOS_MVK
 #include <vulkan/vulkan.h>
 
 namespace RHI::Vulkan {
-
     VkSurfaceKHR CreateNativeSurface(const VkInstance& instance, const SurfaceCreateInfo& createInfo)
     {
         auto nsWin = static_cast<NSWindow*>(createInfo.window);

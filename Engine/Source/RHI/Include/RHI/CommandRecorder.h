@@ -8,6 +8,8 @@
 #include <optional>
 
 #include <Common/Utility.h>
+#include <Common/Math/Rect.h>
+#include <Common/Math/Color.h>
 #include <RHI/Common.h>
 
 namespace RHI {
@@ -23,16 +25,63 @@ namespace RHI {
 
     struct TextureSubResourceInfo {
         uint8_t mipLevel;
-        uint8_t baseArrayLayer;
-        uint8_t arrayLayerNum;
-        Common::UVec3 origin;
+        uint8_t arrayLayer;
         TextureAspect aspect;
 
-        TextureSubResourceInfo();
+        explicit TextureSubResourceInfo(uint8_t inMipLevel = 0, uint8_t inArrayLayer = 0, TextureAspect inAspect = TextureAspect::color);
         TextureSubResourceInfo& SetMipLevel(uint8_t inMipLevel);
-        TextureSubResourceInfo& SetArray(uint8_t inBaseArrayLevel, uint8_t inArrayLayerNum);
-        TextureSubResourceInfo& SetOrigin(const Common::UVec3& inOrigin);
+        TextureSubResourceInfo& SetArrayLayer(uint8_t inArrayLayer);
         TextureSubResourceInfo& SetAspect(TextureAspect inAspect);
+    };
+
+    struct BufferCopyInfo {
+        size_t srcOffset;
+        size_t dstOffset;
+        size_t copySize;
+
+        explicit BufferCopyInfo(size_t inSrcOffset = 0, size_t inDstOffset = 0, size_t inCopySize = 0);
+        BufferCopyInfo& SetSrcOffset(size_t inSrcOffset);
+        BufferCopyInfo& SetDstOffset(size_t inDstOffset);
+        BufferCopyInfo& SetCopySize(size_t inCopySize);
+    };
+
+    struct TextureCopyInfo {
+        TextureSubResourceInfo srcSubResource;
+        Common::UVec3 srcOrigin;
+        TextureSubResourceInfo dstSubResource;
+        Common::UVec3 dstOrigin;
+        Common::UVec3 copyRegion;
+
+        explicit TextureCopyInfo(
+            const TextureSubResourceInfo& inSrcSubResource = TextureSubResourceInfo(),
+            const Common::UVec3& inSrcOrigin = Common::UVec3Consts::zero,
+            const TextureSubResourceInfo& inDstSubResource = TextureSubResourceInfo(),
+            const Common::UVec3& inDstOrigin = Common::UVec3Consts::zero,
+            const Common::UVec3& inCopyRegion = Common::UVec3Consts::zero);
+
+        TextureCopyInfo& SetSrcSubResource(const TextureSubResourceInfo& inSrcSubResource);
+        TextureCopyInfo& SetSrcOrigin(const Common::UVec3& inSrcOrigin);
+        TextureCopyInfo& SetDstSubResource(const TextureSubResourceInfo& inDstSubResource);
+        TextureCopyInfo& SetDstOrigin(const Common::UVec3& inDstOrigin);
+        TextureCopyInfo& SetCopyRegion(const Common::UVec3& inCopyRegion);
+    };
+
+    struct BufferTextureCopyInfo {
+        size_t bufferOffset;
+        TextureSubResourceInfo textureSubResource;
+        Common::UVec3 textureOrigin;
+        Common::UVec3 copyRegion;
+
+        explicit BufferTextureCopyInfo(
+            size_t inBufferOffset = 0,
+            const TextureSubResourceInfo& inTextureSubResource = TextureSubResourceInfo(),
+            const Common::UVec3& inTextureOrigin = Common::UVec3Consts::zero,
+            const Common::UVec3& inCopyRegion = Common::UVec3Consts::zero);
+
+        BufferTextureCopyInfo& SetBufferOffset(size_t inBufferOffset);
+        BufferTextureCopyInfo& SetTextureSubResource(const TextureSubResourceInfo& inTextureSubResource);
+        BufferTextureCopyInfo& SetTextureOrigin(const Common::UVec3& inTextureOrigin);
+        BufferTextureCopyInfo& SetCopyRegion(const Common::UVec3& inCopyRegion);
     };
 
     template <typename Derived>
@@ -82,7 +131,7 @@ namespace RHI {
         Derived& SetStencilReadOnly(bool inStencilReadOnly);
     };
 
-    struct ColorAttachment : public ColorAttachmentBase<ColorAttachment> {
+    struct ColorAttachment : ColorAttachmentBase<ColorAttachment> {
         TextureView* view;
         TextureView* resolveView;
 
@@ -97,7 +146,7 @@ namespace RHI {
         ColorAttachment& SetResolveView(TextureView* inResolveView);
     };
 
-    struct DepthStencilAttachment : public DepthStencilAttachmentBase<DepthStencilAttachment> {
+    struct DepthStencilAttachment : DepthStencilAttachmentBase<DepthStencilAttachment> {
         TextureView* view;
 
         explicit DepthStencilAttachment(
@@ -125,20 +174,21 @@ namespace RHI {
 
     class CommandCommandRecorder {
     public:
+        virtual ~CommandCommandRecorder();
         virtual void ResourceBarrier(const Barrier& barrier) = 0;
     };
 
     class CopyPassCommandRecorder : public CommandCommandRecorder {
     public:
         NonCopyable(CopyPassCommandRecorder)
-        virtual ~CopyPassCommandRecorder();
+        ~CopyPassCommandRecorder() override;
 
-        virtual void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) = 0;
-        virtual void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) = 0;
-        virtual void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) = 0;
-        virtual void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) = 0;
+        virtual void CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo) = 0;
+        // NOTICE: CopyBufferToTexture/CopyTextureToBuffer treat buffer contains copy region (sub-image) data from offset
+        virtual void CopyBufferToTexture(Buffer* src, Texture* dst, const BufferTextureCopyInfo& copyInfo) = 0;
+        virtual void CopyTextureToBuffer(Texture* src, Buffer* dst, const BufferTextureCopyInfo& copyInfo) = 0;
+        virtual void CopyTextureToTexture(Texture* src, Texture* dst, const TextureCopyInfo& copyInfo) = 0;
         virtual void EndPass() = 0;
-        virtual void Destroy() = 0;
 
     protected:
         CopyPassCommandRecorder();
@@ -147,13 +197,12 @@ namespace RHI {
     class ComputePassCommandRecorder : public CommandCommandRecorder {
     public:
         NonCopyable(ComputePassCommandRecorder)
-        virtual ~ComputePassCommandRecorder();
+        ~ComputePassCommandRecorder() override;
 
         virtual void SetPipeline(ComputePipeline* pipeline) = 0;
         virtual void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) = 0;
         virtual void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) = 0;
         virtual void EndPass() = 0;
-        virtual void Destroy() = 0;
 
     protected:
         ComputePassCommandRecorder();
@@ -162,7 +211,7 @@ namespace RHI {
     class RasterPassCommandRecorder : public CommandCommandRecorder {
     public:
         NonCopyable(RasterPassCommandRecorder)
-        virtual ~RasterPassCommandRecorder();
+        ~RasterPassCommandRecorder() override;
 
         virtual void SetPipeline(RasterPipeline* pipeline) = 0;
         virtual void SetBindGroup(uint8_t layoutIndex, BindGroup* bindGroup) = 0;
@@ -179,7 +228,6 @@ namespace RHI {
         // TODO DrawIndexedIndirect(...)
         // TODO MultiIndirectDraw(...)
         virtual void EndPass() = 0;
-        virtual void Destroy() = 0;
 
     protected:
         RasterPassCommandRecorder();
@@ -188,13 +236,12 @@ namespace RHI {
     class CommandRecorder : public CommandCommandRecorder {
     public:
         NonCopyable(CommandRecorder)
-        virtual ~CommandRecorder();
+        ~CommandRecorder() override;
 
-        virtual CopyPassCommandRecorder* BeginCopyPass() = 0;
-        virtual ComputePassCommandRecorder* BeginComputePass() = 0;
-        virtual RasterPassCommandRecorder* BeginRasterPass(const RasterPassBeginInfo& beginInfo) = 0;
+        virtual Common::UniqueRef<CopyPassCommandRecorder> BeginCopyPass() = 0;
+        virtual Common::UniqueRef<ComputePassCommandRecorder> BeginComputePass() = 0;
+        virtual Common::UniqueRef<RasterPassCommandRecorder> BeginRasterPass(const RasterPassBeginInfo& beginInfo) = 0;
         virtual void End() = 0;
-        virtual void Destroy() = 0;
 
     protected:
         CommandRecorder();
@@ -202,9 +249,11 @@ namespace RHI {
 }
 
 namespace RHI {
-    template<typename Derived>
+    template <typename Derived>
     ColorAttachmentBase<Derived>::ColorAttachmentBase(
-        LoadOp inLoadOp, StoreOp inStoreOp, const Common::LinearColor& inClearValue)
+        const LoadOp inLoadOp,
+        const StoreOp inStoreOp,
+        const Common::LinearColor& inClearValue)
         : loadOp(inLoadOp)
         , storeOp(inStoreOp)
         , clearValue(inClearValue)
@@ -219,29 +268,29 @@ namespace RHI {
     }
 
     template <typename Derived>
-    Derived& ColorAttachmentBase<Derived>::SetLoadOp(enum LoadOp inLoadOp)
+    Derived& ColorAttachmentBase<Derived>::SetLoadOp(const LoadOp inLoadOp)
     {
         loadOp = inLoadOp;
         return *static_cast<Derived*>(this);
     }
 
     template <typename Derived>
-    Derived& ColorAttachmentBase<Derived>::SetStoreOp(enum StoreOp inStoreOp)
+    Derived& ColorAttachmentBase<Derived>::SetStoreOp(const StoreOp inStoreOp)
     {
         storeOp = inStoreOp;
         return *static_cast<Derived*>(this);
     }
 
-    template<typename Derived>
+    template <typename Derived>
     DepthStencilAttachmentBase<Derived>::DepthStencilAttachmentBase(
-        bool inDepthReadOnly,
-        LoadOp inDepthLoadOp,
-        StoreOp inDepthStoreOp,
-        float inDepthClearValue,
-        bool inStencilReadOnly,
-        LoadOp inStencilLoadOp,
-        StoreOp inStencilStoreOp,
-        uint32_t inStencilClearValue)
+        const bool inDepthReadOnly,
+        const LoadOp inDepthLoadOp,
+        const StoreOp inDepthStoreOp,
+        const float inDepthClearValue,
+        const bool inStencilReadOnly,
+        const LoadOp inStencilLoadOp,
+        const StoreOp inStencilStoreOp,
+        const uint32_t inStencilClearValue)
         : depthReadOnly(inDepthReadOnly)
         , depthLoadOp(inDepthLoadOp)
         , depthStoreOp(inDepthStoreOp)
@@ -254,56 +303,56 @@ namespace RHI {
     }
 
     template <typename Derived>
-    Derived& DepthStencilAttachmentBase<Derived>::SetDepthClearValue(float inDepthClearValue)
+    Derived& DepthStencilAttachmentBase<Derived>::SetDepthClearValue(const float inDepthClearValue)
     {
         depthClearValue = inDepthClearValue;
         return *static_cast<Derived*>(this);
     }
 
     template <typename Derived>
-    Derived& DepthStencilAttachmentBase<Derived>::SetDepthLoadOp(LoadOp inLoadOp)
+    Derived& DepthStencilAttachmentBase<Derived>::SetDepthLoadOp(const LoadOp inLoadOp)
     {
         depthLoadOp = inLoadOp;
         return *static_cast<Derived*>(this);
     }
 
     template <typename Derived>
-    Derived& DepthStencilAttachmentBase<Derived>::SetDepthStoreOp(StoreOp inStoreOp)
+    Derived& DepthStencilAttachmentBase<Derived>::SetDepthStoreOp(const StoreOp inStoreOp)
     {
         depthStoreOp = inStoreOp;
         return *static_cast<Derived*>(this);
     }
 
     template <typename Derived>
-    Derived& DepthStencilAttachmentBase<Derived>::SetDepthReadOnly(bool inDepthReadOnly)
+    Derived& DepthStencilAttachmentBase<Derived>::SetDepthReadOnly(const bool inDepthReadOnly)
     {
         depthReadOnly = inDepthReadOnly;
         return *static_cast<Derived*>(this);
     }
 
     template <typename Derived>
-    Derived& DepthStencilAttachmentBase<Derived>::SetStencilClearValue(uint32_t inStencilClearValue)
+    Derived& DepthStencilAttachmentBase<Derived>::SetStencilClearValue(const uint32_t inStencilClearValue)
     {
         stencilClearValue = inStencilClearValue;
         return *static_cast<Derived*>(this);
     }
 
     template <typename Derived>
-    Derived& DepthStencilAttachmentBase<Derived>::SetStencilLoadOp(LoadOp inLoadOp)
+    Derived& DepthStencilAttachmentBase<Derived>::SetStencilLoadOp(const LoadOp inLoadOp)
     {
         stencilLoadOp = inLoadOp;
         return *static_cast<Derived*>(this);
     }
 
     template <typename Derived>
-    Derived& DepthStencilAttachmentBase<Derived>::SetStencilStoreOp(StoreOp inStoreOp)
+    Derived& DepthStencilAttachmentBase<Derived>::SetStencilStoreOp(const StoreOp inStoreOp)
     {
         stencilStoreOp = inStoreOp;
         return *static_cast<Derived*>(this);
     }
 
     template <typename Derived>
-    Derived& DepthStencilAttachmentBase<Derived>::SetStencilReadOnly(bool inStencilReadOnly)
+    Derived& DepthStencilAttachmentBase<Derived>::SetStencilReadOnly(const bool inStencilReadOnly)
     {
         stencilReadOnly = inStencilReadOnly;
         return *static_cast<Derived*>(this);

@@ -5,13 +5,18 @@
 #include <RHI/DirectX12/ShaderModule.h>
 
 namespace RHI::DirectX12 {
-    DX12ShaderModule::DX12ShaderModule(const ShaderModuleCreateInfo& inCreateInfo) : ShaderModule(inCreateInfo), nativeShaderBytecode(inCreateInfo.byteCode, inCreateInfo.size) {}
+    DX12ShaderModule::DX12ShaderModule(const ShaderModuleCreateInfo& inCreateInfo)
+        : ShaderModule(inCreateInfo)
+        , nativeShaderBytecode(inCreateInfo.byteCode, inCreateInfo.size)
+        , entryPoint(inCreateInfo.entryPoint)
+    {
+    }
 
     DX12ShaderModule::~DX12ShaderModule() = default;
 
-    void DX12ShaderModule::Destroy()
+    const std::string& DX12ShaderModule::GetEntryPoint()
     {
-        delete this;
+        return entryPoint;
     }
 
     const D3D12_SHADER_BYTECODE& DX12ShaderModule::GetNative() const

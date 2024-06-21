@@ -17,10 +17,7 @@ namespace Core {
         virtual ~CmdlineArg();
 
         template <typename T>
-        T GetValue()
-        {
-            return static_cast<const T*>(Value());
-        }
+        T GetValue();
 
     protected:
         friend class Cli;
@@ -47,38 +44,16 @@ namespace Core {
     };
 
     template <typename T>
-    class CmdlineArgValue : public CmdlineArg {
+    class CmdlineArgValue final : public CmdlineArg {
     public:
-        CmdlineArgValue(std::string inName, std::string inOption, T inDefaultValue, std::string inDoc)
-            : value(inDefaultValue)
-            , name(std::move(inName))
-            , option(std::move(inOption))
-            , doc(std::move(inDoc))
-        {
-            Cli::Get().args.emplace_back(this);
-        }
+        CmdlineArgValue(std::string inName, std::string inOption, T inDefaultValue, std::string inDoc);
+        ~CmdlineArgValue() override;
 
-        ~CmdlineArgValue() override = default;
-
-        T GetValue() const
-        {
-            return value;
-        }
+        T GetValue() const;
 
     protected:
-        const void* Value() override
-        {
-            return &value;
-        }
-
-        clipp::group CreateClippParameter() override
-        {
-            if constexpr (std::is_same_v<T, bool>) {
-                return clipp::group(clipp::option(option).set(value).doc(doc));
-            } else {
-                return clipp::option(option).doc(doc) & clipp::value(name, value);
-            }
-        }
+        const void* Value() override;
+        clipp::group CreateClippParameter() override;
 
     private:
         T value;
@@ -88,38 +63,16 @@ namespace Core {
     };
 
     template <typename T>
-    class CmdlineArgRef : public CmdlineArg {
+    class CmdlineArgRef final : public CmdlineArg {
     public:
-        CmdlineArgRef(std::string inName, std::string inOption, T& inValueRef, std::string inDoc)
-            : valueRef(inValueRef)
-            , name(std::move(inName))
-            , option(std::move(inOption))
-            , doc(std::move(inDoc))
-        {
-            Cli::Get().args.emplace_back(this);
-        }
+        CmdlineArgRef(std::string inName, std::string inOption, T& inValueRef, std::string inDoc);
+        ~CmdlineArgRef() override;
 
-        ~CmdlineArgRef() override = default;
-
-        T GetValue() const
-        {
-            return valueRef;
-        }
+        T GetValue() const;
 
     protected:
-        const void* Value() override
-        {
-            return &valueRef;
-        }
-
-        clipp::group CreateClippParameter() override
-        {
-            if constexpr (std::is_same_v<T, bool>) {
-                return clipp::group(clipp::option(option).set(valueRef).doc(doc));
-            } else {
-                return clipp::option(option).doc(doc) & clipp::value(name, valueRef);
-            }
-        }
+        const void* Value() override;
+        clipp::group CreateClippParameter() override;
 
     private:
         T& valueRef;
@@ -127,4 +80,82 @@ namespace Core {
         std::string option;
         std::string doc;
     };
+}
+
+namespace Core {
+    template <typename T>
+    T CmdlineArg::GetValue()
+    {
+        return static_cast<const T*>(Value());
+    }
+
+    template <typename T>
+    CmdlineArgValue<T>::CmdlineArgValue(std::string inName, std::string inOption, T inDefaultValue, std::string inDoc)
+        : value(inDefaultValue)
+        , name(std::move(inName))
+        , option(std::move(inOption))
+        , doc(std::move(inDoc))
+    {
+        Cli::Get().args.emplace_back(this);
+    }
+
+    template <typename T>
+    CmdlineArgValue<T>::~CmdlineArgValue() = default;
+
+    template <typename T>
+    T CmdlineArgValue<T>::GetValue() const
+    {
+        return value;
+    }
+
+    template <typename T>
+    const void* CmdlineArgValue<T>::Value()
+    {
+        return &value;
+    }
+
+    template <typename T>
+    clipp::group CmdlineArgValue<T>::CreateClippParameter()
+    {
+        if constexpr (std::is_same_v<T, bool>) {
+            return clipp::group(clipp::option(option).set(value).doc(doc));
+        } else {
+            return clipp::option(option).doc(doc) & clipp::value(name, value);
+        }
+    }
+
+    template <typename T>
+    CmdlineArgRef<T>::CmdlineArgRef(std::string inName, std::string inOption, T& inValueRef, std::string inDoc)
+        : valueRef(inValueRef)
+        , name(std::move(inName))
+        , option(std::move(inOption))
+        , doc(std::move(inDoc))
+    {
+        Cli::Get().args.emplace_back(this);
+    }
+
+    template <typename T>
+    CmdlineArgRef<T>::~CmdlineArgRef() = default;
+
+    template <typename T>
+    T CmdlineArgRef<T>::GetValue() const
+    {
+        return valueRef;
+    }
+
+    template <typename T>
+    const void* CmdlineArgRef<T>::Value()
+    {
+        return &valueRef;
+    }
+
+    template <typename T>
+    clipp::group CmdlineArgRef<T>::CreateClippParameter()
+    {
+        if constexpr (std::is_same_v<T, bool>) {
+            return clipp::group(clipp::option(option).set(valueRef).doc(doc));
+        } else {
+            return clipp::option(option).doc(doc) & clipp::value(name, valueRef);
+        }
+    }
 }

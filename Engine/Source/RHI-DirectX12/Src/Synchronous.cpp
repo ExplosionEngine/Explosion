@@ -7,7 +7,9 @@
 #include <RHI/DirectX12/Device.h>
 
 namespace RHI::DirectX12 {
-    DX12Fence::DX12Fence(DX12Device& inDevice, bool inInitAsSignaled) : Fence(inDevice, inInitAsSignaled), nativeFenceEvent(nullptr)
+    DX12Fence::DX12Fence(DX12Device& inDevice, const bool inInitAsSignaled)
+        : Fence(inDevice, inInitAsSignaled)
+        , nativeFenceEvent(nullptr)
     {
         CreateNativeFence(inDevice, inInitAsSignaled);
         CreateNativeFenceEvent();
@@ -34,12 +36,12 @@ namespace RHI::DirectX12 {
         WaitForSingleObject(nativeFenceEvent, INFINITE);
     }
 
-    ID3D12Fence* DX12Fence::GetNative()
+    ID3D12Fence* DX12Fence::GetNative() const
     {
         return nativeFence.Get();
     }
 
-    void DX12Fence::CreateNativeFence(DX12Device& inDevice, bool inInitAsSignaled)
+    void DX12Fence::CreateNativeFence(DX12Device& inDevice, const bool inInitAsSignaled) // NOLINT
     {
         Assert(SUCCEEDED(inDevice.GetNative()->CreateFence(inInitAsSignaled ? 1 : 0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&nativeFence))));
     }
@@ -50,28 +52,18 @@ namespace RHI::DirectX12 {
         Assert(nativeFenceEvent);
     }
 
-    void DX12Fence::Destroy()
-    {
-        delete this;
-    }
-
     DX12Semaphore::DX12Semaphore(DX12Device& inDevice)
         : Semaphore(inDevice)
     {
         CreateNativeFence(inDevice);
     }
 
-    ID3D12Fence* DX12Semaphore::GetNative()
+    ID3D12Fence* DX12Semaphore::GetNative() const
     {
         return dx12Fence.Get();
     }
 
-    void DX12Semaphore::Destroy()
-    {
-        delete this;
-    }
-
-    void DX12Semaphore::CreateNativeFence(DX12Device& inDevice)
+    void DX12Semaphore::CreateNativeFence(DX12Device& inDevice) // NOLINT
     {
         Assert(SUCCEEDED(inDevice.GetNative()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dx12Fence))));
     }

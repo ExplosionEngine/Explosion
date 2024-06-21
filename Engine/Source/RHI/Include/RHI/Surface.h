@@ -10,7 +10,7 @@ namespace RHI {
     struct SurfaceCreateInfo {
         void* window;
 
-        SurfaceCreateInfo(void* inWindow = nullptr);
+        explicit SurfaceCreateInfo(void* inWindow = nullptr);
         SurfaceCreateInfo& SetWindow(void* inWindow);
     };
 
@@ -18,8 +18,6 @@ namespace RHI {
     public:
         NonCopyable(Surface)
         virtual ~Surface();
-
-        virtual void Destroy() = 0;
 
     protected:
         explicit Surface(const SurfaceCreateInfo& createInfo);

@@ -2,6 +2,8 @@
 // Created by johnk on 2023/7/13.
 //
 
+#include <filesystem>
+
 #include <Common/Serialization.h>
 
 namespace Common {
@@ -14,20 +16,24 @@ namespace Common {
     DeserializeStream::~DeserializeStream() = default;
 
     BinaryFileSerializeStream::BinaryFileSerializeStream(const std::string& inFileName)
-        : file(inFileName, std::ios::binary)
     {
+        if (const auto parent_path = std::filesystem::path(inFileName).parent_path();
+            !std::filesystem::exists(parent_path)) {
+            std::filesystem::create_directories(parent_path);
+        }
+        file = std::ofstream(inFileName, std::ios::binary);
     }
 
     BinaryFileSerializeStream::~BinaryFileSerializeStream()
     {
         try {
             file.close();
-        } catch (const std::exception& e) {
+        } catch (const std::exception&) {
             QuickFail();
         }
     }
 
-    void BinaryFileSerializeStream::Write(const void* data, size_t size)
+    void BinaryFileSerializeStream::Write(const void* data, const size_t size)
     {
         file.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
     }
@@ -41,28 +47,28 @@ namespace Common {
     {
         try {
             file.close();
-        } catch (const std::exception& e) {
+        } catch (const std::exception&) {
             QuickFail();
         }
     }
 
-    void BinaryFileDeserializeStream::Read(void* data, size_t size)
+    void BinaryFileDeserializeStream::Read(void* data, const size_t size)
     {
         file.read(static_cast<char*>(data), static_cast<std::streamsize>(size));
     }
 
-    ByteSerializeStream::ByteSerializeStream(std::vector<uint8_t>& inBytes, size_t pointerBegin)
+    ByteSerializeStream::ByteSerializeStream(std::vector<uint8_t>& inBytes, const size_t pointerBegin)
         : pointer(pointerBegin)
         , bytes(inBytes)
     {
-        Assert(pointer >= 0 && pointer <= bytes.size());
+        Assert(pointer <= bytes.size());
     }
 
     ByteSerializeStream::~ByteSerializeStream() = default;
 
-    void ByteSerializeStream::Write(const void* data, size_t size)
+    void ByteSerializeStream::Write(const void* data, const size_t size)
     {
-        auto newPointer = pointer + size;
+        const auto newPointer = pointer + size;
         if (newPointer > bytes.size()) {
             if (newPointer > bytes.capacity()) {
                 bytes.reserve(std::ceil(static_cast<float>(newPointer) * 1.5f));
@@ -73,18 +79,18 @@ namespace Common {
         pointer = newPointer;
     }
 
-    ByteDeserializeStream::ByteDeserializeStream(const std::vector<uint8_t>& inBytes, size_t pointerBegin)
+    ByteDeserializeStream::ByteDeserializeStream(const std::vector<uint8_t>& inBytes, const size_t pointerBegin)
         : pointer(pointerBegin)
         , bytes(inBytes)
     {
-        Assert(pointer >= 0 && pointer <= bytes.size());
+        Assert(pointer <= bytes.size());
     }
 
     ByteDeserializeStream::~ByteDeserializeStream() = default;
 
-    void ByteDeserializeStream::Read(void* data, size_t size)
+    void ByteDeserializeStream::Read(void* data, const size_t size)
     {
-        auto newPointer = pointer + size;
+        const auto newPointer = pointer + size;
         Assert(newPointer <= bytes.size());
         memcpy(data, bytes.data() + pointer, size);
         pointer = newPointer;

@@ -6,7 +6,8 @@
 
 namespace Mirror {
     GlobalRegistry::GlobalRegistry(GlobalScope& inGlobalScope)
-        : MetaDataRegistry<GlobalRegistry>(&inGlobalScope), globalScope(inGlobalScope)
+        : MetaDataRegistry(&inGlobalScope)
+        , globalScope(inGlobalScope)
     {
     }
 

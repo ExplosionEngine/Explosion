@@ -5,9 +5,7 @@
 #pragma once
 
 #include <cstdint>
-#include <sstream>
 
-#include <Common/Debug.h>
 #include <Common/Serialization.h>
 
 namespace Common {
@@ -56,7 +54,6 @@ namespace Common {
         static const Color red;
         static const Color blue;
         static const Color green;
-        // TODO more color here
     };
 
     struct LinearColorConsts {
@@ -65,7 +62,6 @@ namespace Common {
         static const LinearColor red;
         static const LinearColor blue;
         static const LinearColor green;
-        // TODO more color here
     };
 }
 
@@ -73,7 +69,7 @@ namespace Common {
     template <>
     struct Serializer<Color> {
         static constexpr bool serializable = true;
-        static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("Common::Color");
+        static constexpr uint32_t typeId = HashUtils::StrCrc32("Common::Color");
 
         static void Serialize(SerializeStream& stream, const Color& value)
         {
@@ -95,13 +91,14 @@ namespace Common {
             Serializer<uint8_t>::Deserialize(stream, value.g);
             Serializer<uint8_t>::Deserialize(stream, value.b);
             Serializer<uint8_t>::Deserialize(stream, value.a);
+            return true;
         }
     };
 
     template <>
     struct Serializer<LinearColor> {
         static constexpr bool serializable = true;
-        static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("Common::LinearColor");
+        static constexpr uint32_t typeId = HashUtils::StrCrc32("Common::LinearColor");
 
         static void Serialize(SerializeStream& stream, const LinearColor& value)
         {
@@ -123,6 +120,7 @@ namespace Common {
             Serializer<float>::Deserialize(stream, value.g);
             Serializer<float>::Deserialize(stream, value.b);
             Serializer<float>::Deserialize(stream, value.a);
+            return true;
         }
     };
 }

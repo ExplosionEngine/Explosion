@@ -7,7 +7,7 @@
 namespace Render {
     class Canvas {
     public:
-        void Destroy();
+        void Destroy() const;
         // TODO
     };
 }

@@ -7,12 +7,10 @@
 #include <RHI/BufferView.h>
 
 namespace RHI::Dummy {
-    class DummyBufferView : public BufferView {
+    class DummyBufferView final : public BufferView {
     public:
         NonCopyable(DummyBufferView)
         explicit DummyBufferView(const BufferViewCreateInfo& createInfo);
         ~DummyBufferView() override;
-
-        void Destroy() override;
     };
 }

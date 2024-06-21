@@ -7,7 +7,7 @@
 namespace RHI {
     BufferCreateInfo::BufferCreateInfo() = default;
 
-    BufferCreateInfo::BufferCreateInfo(uint32_t inSize, BufferUsageFlags inUsages, BufferState inInitialState, std::string inDebugName)
+    BufferCreateInfo::BufferCreateInfo(const uint32_t inSize, const BufferUsageFlags inUsages, const BufferState inInitialState, std::string inDebugName)
         : size(inSize)
         , usages(inUsages)
         , initialState(inInitialState)
@@ -15,17 +15,17 @@ namespace RHI {
     {
     }
 
-    BufferCreateInfo& BufferCreateInfo::SetSize(uint32_t inSize)
+    BufferCreateInfo& BufferCreateInfo::SetSize(const uint32_t inSize)
     {
         size = inSize;
         return *this;
     }
-    BufferCreateInfo& BufferCreateInfo::SetUsages(BufferUsageFlags inUsages)
+    BufferCreateInfo& BufferCreateInfo::SetUsages(const BufferUsageFlags inUsages)
     {
         usages = inUsages;
         return *this;
     }
-    BufferCreateInfo& BufferCreateInfo::SetInitialState(BufferState inState)
+    BufferCreateInfo& BufferCreateInfo::SetInitialState(const BufferState inState)
     {
         initialState = inState;
         return *this;

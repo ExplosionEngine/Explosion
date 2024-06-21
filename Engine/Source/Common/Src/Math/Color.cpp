@@ -3,6 +3,7 @@
 //
 
 #include <cmath>
+#include <sstream>
 
 #include <Common/Math/Color.h>
 
@@ -12,12 +13,12 @@ namespace Common {
     {
     }
 
-    Color::Color(uint8_t inR, uint8_t inG, uint8_t inB)
+    Color::Color(const uint8_t inR, const uint8_t inG, const uint8_t inB)
         : r(inR), g(inG), b(inB), a(255)
     {
     }
 
-    Color::Color(uint8_t inR, uint8_t inG, uint8_t inB, uint8_t inA)
+    Color::Color(const uint8_t inR, const uint8_t inG, const uint8_t inB, const uint8_t inA)
         : r(inR), g(inG), b(inB), a(inA)
     {
     }

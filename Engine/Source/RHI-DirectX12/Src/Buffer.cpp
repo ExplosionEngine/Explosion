@@ -19,7 +19,6 @@ namespace RHI::DirectX12 {
         static std::unordered_map<BufferUsageFlags, D3D12_HEAP_TYPE> rules = {
             { BufferUsageBits::mapWrite | BufferUsageBits::copySrc, D3D12_HEAP_TYPE_UPLOAD },
             { BufferUsageBits::mapRead | BufferUsageBits::copyDst, D3D12_HEAP_TYPE_READBACK }
-            // TODO check other conditions ?
         };
         static D3D12_HEAP_TYPE fallback = D3D12_HEAP_TYPE_DEFAULT;
 
@@ -48,21 +47,24 @@ namespace RHI::DirectX12 {
 }
 
 namespace RHI::DirectX12 {
-    DX12Buffer::DX12Buffer(DX12Device& device, const BufferCreateInfo& inCreateInfo) : Buffer(inCreateInfo), mapMode(GetMapMode(inCreateInfo.usages)), usages(inCreateInfo.usages), device(device)
+    DX12Buffer::DX12Buffer(DX12Device& device, const BufferCreateInfo& inCreateInfo)
+        : Buffer(inCreateInfo)
+        , device(device)
+        , mapMode(GetMapMode(inCreateInfo.usages))
+        , usages(inCreateInfo.usages)
     {
         CreateNativeBuffer(device, inCreateInfo);
     }
 
     DX12Buffer::~DX12Buffer() = default;
 
-    void* DX12Buffer::Map(MapMode inMapMode, size_t inOffset, size_t inLength)
+    void* DX12Buffer::Map(const MapMode inMapMode, const size_t inOffset, const size_t inLength)
     {
         Assert(mapMode == inMapMode);
 
         void* data;
-        CD3DX12_RANGE range(inOffset, inOffset + inLength);
-        bool success = SUCCEEDED(nativeResource->Map(0, &range, &data));
-        Assert(success);
+        const CD3DX12_RANGE range(inOffset, inOffset + inLength);
+        Assert(SUCCEEDED(nativeResource->Map(0, &range, &data)));
         return data;
     }
 
@@ -71,51 +73,46 @@ namespace RHI::DirectX12 {
         nativeResource->Unmap(0, nullptr);
     }
 
-    BufferView* DX12Buffer::CreateBufferView(const BufferViewCreateInfo& inCreateInfo)
+    Common::UniqueRef<BufferView> DX12Buffer::CreateBufferView(const BufferViewCreateInfo& inCreateInfo)
     {
-        return new DX12BufferView(*this, inCreateInfo);
+        return Common::UniqueRef<BufferView>(new DX12BufferView(*this, inCreateInfo));
     }
 
-    void DX12Buffer::Destroy()
-    {
-        delete this;
-    }
-
-    ID3D12Resource* DX12Buffer::GetNative()
+    ID3D12Resource* DX12Buffer::GetNative() const
     {
         return nativeResource.Get();
     }
 
-    BufferUsageFlags DX12Buffer::GetUsages()
+    BufferUsageFlags DX12Buffer::GetUsages() const
     {
         return usages;
     }
 
-    DX12Device& DX12Buffer::GetDevice()
+    DX12Device& DX12Buffer::GetDevice() const
     {
         return device;
     }
 
     void DX12Buffer::CreateNativeBuffer(DX12Device& inDevice, const BufferCreateInfo& inCreateInfo)
     {
-        CD3DX12_HEAP_PROPERTIES heapProperties(GetDX12HeapType(inCreateInfo.usages));
-        CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(
+        const CD3DX12_HEAP_PROPERTIES heapProperties(GetDX12HeapType(inCreateInfo.usages));
+        const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(
             inCreateInfo.usages & BufferUsageBits::uniform ?
-            GetConstantBufferSize(inCreateInfo.size) :
+            Common::AlignUp<D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(inCreateInfo.size) :
             inCreateInfo.size);
 
-        bool success = SUCCEEDED(inDevice.GetNative()->CreateCommittedResource(
+        const bool success = SUCCEEDED(inDevice.GetNative()->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &resourceDesc,
-            DX12EnumCast<BufferState, D3D12_RESOURCE_STATES>(inCreateInfo.initialState),
+            EnumCast<BufferState, D3D12_RESOURCE_STATES>(inCreateInfo.initialState),
             nullptr,
             IID_PPV_ARGS(&nativeResource)));
         Assert(success);
 
 #if BUILD_CONFIG_DEBUG
         if (!inCreateInfo.debugName.empty()) {
-            nativeResource->SetName(Common::StringUtils::ToWideString(inCreateInfo.debugName).c_str());
+            Assert(SUCCEEDED(nativeResource->SetName(Common::StringUtils::ToWideString(inCreateInfo.debugName).c_str())));
         }
 #endif
     }

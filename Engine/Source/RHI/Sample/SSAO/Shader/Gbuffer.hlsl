@@ -1,6 +1,6 @@
-#include "Common.h"
+#include <Platform.h>
 
-VK_BINDING(0, 0) cbuffer UBO : register(b0)
+VkBinding(0, 0) cbuffer passParams : register(b0)
 {
 	float4x4 projection;
 	float4x4 model;
@@ -9,53 +9,53 @@ VK_BINDING(0, 0) cbuffer UBO : register(b0)
 	float farPlane;
 };
 
-VK_BINDING(0, 1) Texture2D textureColorMap : register(t0, space1);
-VK_BINDING(1, 1) SamplerState samplerColorMap : register(s0, space1);
+VkBinding(0, 1) Texture2D colorTex : register(t0, space1);
+VkBinding(1, 1) SamplerState colorSampler : register(s0, space1);
 
 struct VSInput
 {
-    float4 Pos : POSITION;
-    float2 UV : TEXCOORD;
-    float3 Color : COLOR;
-    float3 Normal : NORMAL;
+    VkLocation(0) float4 position : POSITION;
+    VkLocation(1) float2 uv : TEXCOORD;
+    VkLocation(2) float3 color : COLOR;
+    VkLocation(3) float3 normal : NORMAL;
 };
 
 struct VSOutput
 {
-	float4 Pos : SV_POSITION;
-    float3 Normal : NORMAL;
-    float2 UV : TEXCOORD;
-    float3 Color : COLOR;
-    float3 WorldPos : POSITION;
+	float4 position : SV_POSITION;
+    float3 normal : NORMAL;
+    float2 uv : TEXCOORD;
+    float3 color : COLOR;
+    float3 Worldposition : POSITION;
 };
 
 VSOutput VSMain(VSInput input)
 {
 	VSOutput output = (VSOutput)0;
-	output.Pos = mul(projection, mul(view, mul(model, input.Pos)));
+	output.position = mul(projection, mul(view, mul(model, input.position)));
 
-	output.UV = input.UV;
+	output.uv = input.uv;
 
 	// Vertex position in view space
-	output.WorldPos = mul(view, mul(model, input.Pos)).xyz;
+	output.Worldposition = mul(view, mul(model, input.position)).xyz;
 
-	// Normal in view space
+	// normal in view space
 	float3x3 normalMatrix = (float3x3)mul(model, view);
-	output.Normal = mul(input.Normal, normalMatrix);
+	output.normal = mul(input.normal, normalMatrix);
 
 #if VULKAN
-    output.Pos.y = -output.Pos.y;
-    output.Normal.y = -output.Normal.y;
+    output.position.y = -output.position.y;
+    output.normal.y = -output.normal.y;
 #endif
 
-	output.Color = input.Color;
+	output.color = input.color;
 	return output;
 }
 
 struct FSOutput
 {
-	float4 Position : SV_TARGET0;
-	float4 Normal : SV_TARGET1;
+	float4 positionition : SV_TARGET0;
+	float4 normal : SV_TARGET1;
 	float4 Albedo : SV_TARGET2;
 };
 
@@ -65,11 +65,11 @@ float linearDepth(float depth)
 	return (2.0f * nearPlane * farPlane) / (farPlane + nearPlane - z * (farPlane - nearPlane));
 }
 
-FSOutput FSMain(VSOutput input)
+FSOutput PSMain(VSOutput input)
 {
 	FSOutput output = (FSOutput)0;
-	output.Position = float4(input.WorldPos, linearDepth(input.Pos.z));
-	output.Normal = float4(normalize(input.Normal) * 0.5 + 0.5, 1.0);
-	output.Albedo = textureColorMap.Sample(samplerColorMap, input.UV) * float4(input.Color, 1.0);
+	output.positionition = float4(input.Worldposition, linearDepth(input.position.z));
+	output.normal = float4(normalize(input.normal) * 0.5 + 0.5, 1.0);
+	output.Albedo = colorTex.Sample(colorSampler, input.uv) * float4(input.color, 1.0);
 	return output;
 }

@@ -12,7 +12,7 @@ namespace RHI::Dummy {
     {
         dummyTextures.reserve(2);
         for (auto i = 0; i < 2; i++) {
-            dummyTextures.emplace_back(Common::MakeUnique<DummyTexture>());
+            dummyTextures.emplace_back(Common::MakeUnique<DummyTexture>(TextureCreateInfo {}));
         }
     }
 
@@ -32,10 +32,5 @@ namespace RHI::Dummy {
 
     void DummySwapChain::Present(RHI::Semaphore* waitSemaphore)
     {
-    }
-
-    void DummySwapChain::Destroy()
-    {
-        delete this;
     }
 }

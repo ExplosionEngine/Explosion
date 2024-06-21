@@ -64,11 +64,6 @@ namespace RHI::Vulkan {
         Assert(vkQueuePresentKHR(nativeQueue, &presetInfo) == VK_SUCCESS);
     }
 
-    void VulkanSwapChain::Destroy()
-    {
-        delete this;
-    }
-
     void VulkanSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
         auto vkDevice = device.GetNative();
@@ -82,12 +77,12 @@ namespace RHI::Vulkan {
         VkSurfaceCapabilitiesKHR surfaceCap;
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.GetGpu().GetNative(), surface, &surfaceCap);
 
-        VkExtent2D extent = {static_cast<uint32_t>(inCreateInfo.extent.x), static_cast<uint32_t>(inCreateInfo.extent.y)};
+        VkExtent2D extent = {static_cast<uint32_t>(inCreateInfo.width), static_cast<uint32_t>(inCreateInfo.height)};
         extent.width = std::clamp(extent.width, surfaceCap.minImageExtent.width, surfaceCap.maxImageExtent.width);
         extent.height = std::clamp(extent.height, surfaceCap.minImageExtent.height, surfaceCap.maxImageExtent.height);
 
         Assert(device.CheckSwapChainFormatSupport(vkSurface, inCreateInfo.format));
-        auto supportedFormat = VKEnumCast<PixelFormat, VkFormat>(inCreateInfo.format);
+        auto supportedFormat = EnumCast<PixelFormat, VkFormat>(inCreateInfo.format);
         auto colorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
 
         uint32_t presentModeCount = 0;
@@ -97,13 +92,12 @@ namespace RHI::Vulkan {
         presentModes.resize(presentModeCount);
         vkGetPhysicalDeviceSurfacePresentModesKHR(device.GetGpu().GetNative(), surface, &presentModeCount, presentModes.data());
 
-        VkPresentModeKHR supportedMode = VKEnumCast<PresentMode, VkPresentModeKHR>(inCreateInfo.presentMode);
+        VkPresentModeKHR supportedMode = EnumCast<PresentMode, VkPresentModeKHR>(inCreateInfo.presentMode);
         {
             Assert(!presentModes.empty());
-            auto iter = std::find_if(presentModes.begin(), presentModes.end(),
-                                     [supportedMode](VkPresentModeKHR mode) {
-                                         return mode == supportedMode;
-                                     });
+            auto iter = std::find_if(
+                presentModes.begin(), presentModes.end(),
+                [supportedMode](VkPresentModeKHR mode) { return mode == supportedMode; });
             Assert(iter != presentModes.end());
         }
 
@@ -121,18 +115,19 @@ namespace RHI::Vulkan {
         swapChainInfo.clipped = VK_TRUE;
         swapChainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         swapChainInfo.imageArrayLayers = 1;
-        swapChainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        swapChainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         Assert(vkCreateSwapchainKHR(vkDevice, &swapChainInfo, nullptr, &nativeSwapChain) == VK_SUCCESS);
 
         TextureCreateInfo textureInfo = {};
         textureInfo.format = inCreateInfo.format;
-        textureInfo.usages = TextureUsageBits::copyDst | TextureUsageBits::renderAttachment;
+        textureInfo.usages = TextureUsageBits::renderAttachment;
         textureInfo.mipLevels = 1;
         textureInfo.samples = 1;
         textureInfo.dimension = TextureDimension::t2D;
-        textureInfo.extent.x = extent.width;
-        textureInfo.extent.y = extent.height;
-        textureInfo.extent.z = 1;
+        textureInfo.width = extent.width;
+        textureInfo.height = extent.height;
+        textureInfo.depthOrArraySize = 1;
+        textureInfo.initialState = TextureState::present;
 
         vkGetSwapchainImagesKHR(device.GetNative(), nativeSwapChain, &swapChainImageCount, nullptr);
         std::vector<VkImage> swapChainImages(swapChainImageCount);

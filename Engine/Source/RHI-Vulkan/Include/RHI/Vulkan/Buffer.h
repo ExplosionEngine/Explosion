@@ -21,8 +21,7 @@ namespace RHI::Vulkan {
 
         void* Map(MapMode inMapMode, size_t inOffset, size_t inLength) override;
         void UnMap() override;
-        BufferView* CreateBufferView(const BufferViewCreateInfo& inCreateInfo) override;
-        void Destroy() override;
+        Common::UniqueRef<BufferView> CreateBufferView(const BufferViewCreateInfo& inCreateInfo) override;
 
         VkBuffer GetNative();
         BufferUsageFlags GetUsages();

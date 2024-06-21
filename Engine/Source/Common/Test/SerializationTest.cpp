@@ -12,10 +12,10 @@ using namespace Common;
 
 TEST(SerializationTest, FileStreamTest)
 {
-    static std::filesystem::path fileName = "../Test/Generated/SerializationTest.FileStreamTest.bin";
+    static std::filesystem::path fileName = "../Test/Generated/Common/SerializationTest.FileStreamTest.bin";
     std::filesystem::create_directories(fileName.parent_path());
     {
-        uint32_t value = 5;
+        const uint32_t value = 5; // NOLINT
 
         BinaryFileSerializeStream stream(fileName.string());
         stream.Write(&value, sizeof(uint32_t));

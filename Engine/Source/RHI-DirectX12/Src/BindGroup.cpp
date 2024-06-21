@@ -10,10 +10,10 @@
 #include <RHI/DirectX12/Common.h>
 
 namespace RHI::DirectX12 {
-    static inline CD3DX12_CPU_DESCRIPTOR_HANDLE GetDescriptorCpuHandleAndHeap(const BindGroupEntry& entry)
+    static CD3DX12_CPU_DESCRIPTOR_HANDLE GetDescriptorCpuHandle(const BindGroupEntry& entry)
     {
         if (entry.binding.type == BindingType::uniformBuffer || entry.binding.type == BindingType::storageBuffer) {
-            auto* bufferView = static_cast<DX12BufferView*>(std::get<BufferView*>(entry.entity));
+            const auto* bufferView = static_cast<DX12BufferView*>(std::get<BufferView*>(entry.entity));
             return bufferView->GetNativeCpuDescriptorHandle();
         }
         if (entry.binding.type == BindingType::texture || entry.binding.type == BindingType::storageTexture) {
@@ -38,12 +38,7 @@ namespace RHI::DirectX12 {
 
     DX12BindGroup::~DX12BindGroup() = default;
 
-    void DX12BindGroup::Destroy()
-    {
-        delete this;
-    }
-
-    DX12BindGroupLayout& DX12BindGroup::GetBindGroupLayout()
+    DX12BindGroupLayout& DX12BindGroup::GetBindGroupLayout() const
     {
         return *bindGroupLayout;
     }
@@ -56,7 +51,7 @@ namespace RHI::DirectX12 {
     void DX12BindGroup::SaveBindGroupLayout(const BindGroupCreateInfo& inCreateInfo)
     {
         auto* tBindGroupLayout = static_cast<DX12BindGroupLayout*>(inCreateInfo.layout);
-        Assert(tBindGroupLayout);
+        Assert(tBindGroupLayout != nullptr);
         bindGroupLayout = tBindGroupLayout;
     }
 
@@ -65,7 +60,7 @@ namespace RHI::DirectX12 {
         for (auto i = 0; i < inCreateInfo.entries.size(); i++) {
             const auto& entry = inCreateInfo.entries[i];
 
-            CD3DX12_CPU_DESCRIPTOR_HANDLE handle = GetDescriptorCpuHandleAndHeap(entry);
+            CD3DX12_CPU_DESCRIPTOR_HANDLE handle = GetDescriptorCpuHandle(entry);
             nativeBindings.emplace_back(std::get<HlslBinding>(entry.binding.platformBinding), handle);
         }
     }

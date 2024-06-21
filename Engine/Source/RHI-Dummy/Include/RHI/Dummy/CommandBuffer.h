@@ -7,12 +7,11 @@
 #include <RHI/CommandBuffer.h>
 
 namespace RHI::Dummy {
-    class DummyCommandBuffer : public CommandBuffer {
+    class DummyCommandBuffer final : public CommandBuffer {
     public:
         NonCopyable(DummyCommandBuffer)
         DummyCommandBuffer();
 
-        CommandRecorder* Begin() override;
-        void Destroy() override;
+        Common::UniqueRef<CommandRecorder> Begin() override;
     };
 }

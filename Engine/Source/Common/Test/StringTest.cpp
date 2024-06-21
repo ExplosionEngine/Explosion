@@ -74,7 +74,7 @@ TEST(StringUtilsTest, RegexSearchFirstTest)
 
 TEST(StringUtilsTest, RegexSearchTest)
 {
-    auto result = StringUtils::RegexSearch("2022, 2023, 2024", "\\d{4}");
+    const auto result = StringUtils::RegexSearch("2022, 2023, 2024", "\\d{4}");
     ASSERT_EQ(result.size(), 3);
     ASSERT_EQ(result[0], "2022");
     ASSERT_EQ(result[1], "2023");

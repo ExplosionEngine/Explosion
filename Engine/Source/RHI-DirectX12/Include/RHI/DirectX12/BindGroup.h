@@ -6,25 +6,21 @@
 
 #include <utility>
 #include <vector>
-#include <unordered_set>
 
 #include <directx/d3dx12.h>
 
 #include <RHI/BindGroup.h>
-#include <Common/Hash.h>
 
 namespace RHI::DirectX12 {
     class DX12BindGroupLayout;
 
-    class DX12BindGroup : public BindGroup {
+    class DX12BindGroup final : public BindGroup {
     public:
         NonCopyable(DX12BindGroup)
         explicit DX12BindGroup(const BindGroupCreateInfo& inCreateInfo);
         ~DX12BindGroup() override;
 
-        void Destroy() override;
-
-        DX12BindGroupLayout& GetBindGroupLayout();
+        DX12BindGroupLayout& GetBindGroupLayout() const;
         const std::vector<std::pair<HlslBinding, CD3DX12_CPU_DESCRIPTOR_HANDLE>>& GetNativeBindings();
 
     private:

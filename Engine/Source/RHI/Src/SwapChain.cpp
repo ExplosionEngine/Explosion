@@ -10,7 +10,8 @@ namespace RHI {
         , surface(nullptr)
         , textureNum(0)
         , format(PixelFormat::max)
-        , extent(Common::UVec2Consts::zero)
+        , width(0)
+        , height(0)
         , presentMode(PresentMode::max)
     {
     }
@@ -21,37 +22,43 @@ namespace RHI {
         return *this;
     }
 
-    SwapChainCreateInfo& SwapChainCreateInfo::SetSurface(class Surface* inSurface)
+    SwapChainCreateInfo& SwapChainCreateInfo::SetSurface(Surface* inSurface)
     {
         surface = inSurface;
         return *this;
     }
 
-    SwapChainCreateInfo& SwapChainCreateInfo::SetTextureNum(uint8_t inTextureNum)
+    SwapChainCreateInfo& SwapChainCreateInfo::SetTextureNum(const uint8_t inTextureNum)
     {
         textureNum = inTextureNum;
         return *this;
     }
 
-    SwapChainCreateInfo& SwapChainCreateInfo::SetFormat(PixelFormat inFormat)
+    SwapChainCreateInfo& SwapChainCreateInfo::SetFormat(const PixelFormat inFormat)
     {
         format = inFormat;
         return *this;
     }
 
-    SwapChainCreateInfo& SwapChainCreateInfo::SetExtent(const Common::UVec2& inExtent)
+    SwapChainCreateInfo& SwapChainCreateInfo::SetWidth(const uint32_t inWidth)
     {
-        extent = inExtent;
+        width = inWidth;
         return *this;
     }
 
-    SwapChainCreateInfo& SwapChainCreateInfo::SetPresentMode(enum PresentMode inMode)
+    SwapChainCreateInfo& SwapChainCreateInfo::SetHeight(const uint32_t inHeight)
+    {
+        height = inHeight;
+        return *this;
+    }
+
+    SwapChainCreateInfo& SwapChainCreateInfo::SetPresentMode(const PresentMode inMode)
     {
         presentMode = inMode;
         return *this;
     }
 
-    SwapChain::SwapChain(const SwapChainCreateInfo& createInfo) {}
+    SwapChain::SwapChain(const SwapChainCreateInfo&) {}
 
     SwapChain::~SwapChain() = default;
 }

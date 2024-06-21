@@ -9,8 +9,9 @@
 #include <Render/Scene.h>
 
 namespace Rendering {
-    class Scene : public Render::IScene {
+    class Scene final : public Render::IScene {
     public:
+        ~Scene() override;
         void AddLight(Render::ILightSceneProxy* inProxy) override;
         void RemoveLight(Render::ILightSceneProxy* inProxy) override;
         void AddPrimitive(Render::IPrimitiveSceneProxy* inProxy) override;

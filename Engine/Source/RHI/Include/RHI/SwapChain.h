@@ -21,7 +21,8 @@ namespace RHI {
         Surface* surface;
         uint8_t textureNum;
         PixelFormat format;
-        Common::UVec2 extent;
+        uint32_t width;
+        uint32_t height;
         PresentMode presentMode;
 
         SwapChainCreateInfo();
@@ -29,7 +30,8 @@ namespace RHI {
         SwapChainCreateInfo& SetSurface(Surface* inSurface);
         SwapChainCreateInfo& SetTextureNum(uint8_t inTextureNum);
         SwapChainCreateInfo& SetFormat(PixelFormat inFormat);
-        SwapChainCreateInfo& SetExtent(const Common::UVec2& inExtent);
+        SwapChainCreateInfo& SetWidth(uint32_t inWidth);
+        SwapChainCreateInfo& SetHeight(uint32_t inHeight);
         SwapChainCreateInfo& SetPresentMode(PresentMode inMode);
     };
 
@@ -41,7 +43,6 @@ namespace RHI {
         virtual Texture* GetTexture(uint8_t index) = 0;
         virtual uint8_t AcquireBackTexture(Semaphore* signalSemaphore) = 0;
         virtual void Present(Semaphore* waitSemaphore) = 0;
-        virtual void Destroy() = 0;
 
     protected:
         explicit SwapChain(const SwapChainCreateInfo& createInfo);

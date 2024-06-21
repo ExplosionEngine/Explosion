@@ -10,7 +10,7 @@
 
 TEST(HashTest, CityHashTest)
 {
-    std::string_view testString = "Hello, World";
+    constexpr std::string_view testString = "Hello, World";
     ASSERT_EQ(4508847345234768385, Common::HashUtils::CityHash(testString.data(), testString.size()));
 }
 

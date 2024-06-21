@@ -12,7 +12,7 @@ public:
         "TestGlobalShader",
         "/Engine/Shader/Test/TestGlobalShader.esl",
         "VSMain",
-        Render::ShaderStage::sVertex);
+        RHI::ShaderStageBits::sVertex);
 
     BoolShaderVariantField(TestBoolVariant, "TEST_BOOL");
     RangedIntShaderVariantField(TestRangedIntVariant, "TEST_RANGED_INT", 0, 3);
@@ -20,13 +20,13 @@ public:
 
     DefaultVariantFilter
 };
-RegisterGlobalShader(TestGlobalShaderVS);
+//RegisterGlobalShader(TestGlobalShaderVS);
 
 TEST(ShaderTest, StaticVariantSetTest)
 {
     ASSERT_EQ(TestGlobalShaderVS::VariantSet::VariantNum(), 8);
 
-    std::set<std::pair<bool, uint8_t>> expectVariants = {
+    const std::set<std::pair<bool, uint8_t>> expectVariants = {
         { false, 0 },
         { false, 1 },
         { false, 2 },

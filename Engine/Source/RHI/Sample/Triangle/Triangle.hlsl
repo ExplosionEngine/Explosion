@@ -1,9 +1,13 @@
+#include <Platform.h>
+
 struct FragmentInput {
     float4 position : SV_POSITION;
     float4 color : COLOR;
 };
 
-FragmentInput VSMain(float4 position : POSITION, float4 color : COLOR)
+FragmentInput VSMain(
+    VkLocation(0) float4 position : POSITION,
+    VkLocation(1) float4 color : COLOR)
 {
     FragmentInput fragmentInput;
     fragmentInput.position = position;
@@ -14,7 +18,7 @@ FragmentInput VSMain(float4 position : POSITION, float4 color : COLOR)
     return fragmentInput;
 }
 
-float4 FSMain(FragmentInput input) : SV_TARGET
+float4 PSMain(FragmentInput input) : SV_TARGET
 {
     return input.color;
 }

@@ -43,11 +43,6 @@ namespace RHI::Vulkan {
         Assert(vkWaitForFences(device.GetNative(), fences.size(), fences.data(), VK_TRUE, UINT64_MAX) == VK_SUCCESS);
     }
 
-    void VulkanFence::Destroy()
-    {
-        delete this;
-    }
-
     VkFence VulkanFence::GetNative() const
     {
         return nativeFence;
@@ -67,11 +62,6 @@ namespace RHI::Vulkan {
     VulkanSemaphore::~VulkanSemaphore()
     {
         vkDestroySemaphore(device.GetNative(), nativeSemaphore, nullptr);
-    }
-
-    void VulkanSemaphore::Destroy()
-    {
-        delete this;
     }
 
     VkSemaphore VulkanSemaphore::GetNative() const

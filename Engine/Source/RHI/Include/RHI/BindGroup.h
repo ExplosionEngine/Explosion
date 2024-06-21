@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <cstddef>
 #include <variant>
 #include <utility>
 
@@ -37,8 +36,6 @@ namespace RHI {
     public:
         NonCopyable(BindGroup)
         virtual ~BindGroup();
-
-        virtual void Destroy() = 0;
 
     protected:
         explicit BindGroup(const BindGroupCreateInfo& createInfo);

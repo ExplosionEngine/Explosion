@@ -12,8 +12,8 @@ namespace RHI::Dummy {
 
     DummyShaderModule::~DummyShaderModule() = default;
 
-    void DummyShaderModule::Destroy()
+    const std::string& DummyShaderModule::GetEntryPoint()
     {
-        delete this;
+        return entryPoint;
     }
 }

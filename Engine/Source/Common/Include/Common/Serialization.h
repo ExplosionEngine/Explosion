@@ -38,7 +38,7 @@ namespace Common {
         DeserializeStream();
     };
 
-    class BinaryFileSerializeStream : public SerializeStream {
+    class BinaryFileSerializeStream final : public SerializeStream {
     public:
         NonCopyable(BinaryFileSerializeStream)
         explicit BinaryFileSerializeStream(const std::string& inFileName);
@@ -49,7 +49,7 @@ namespace Common {
         std::ofstream file;
     };
 
-    class BinaryFileDeserializeStream : public DeserializeStream {
+    class BinaryFileDeserializeStream final : public DeserializeStream {
     public:
         NonCopyable(BinaryFileDeserializeStream)
         explicit BinaryFileDeserializeStream(const std::string& inFileName);
@@ -60,7 +60,7 @@ namespace Common {
         std::ifstream file;
     };
 
-    class ByteSerializeStream : public SerializeStream {
+    class ByteSerializeStream final : public SerializeStream {
     public:
         NonCopyable(ByteSerializeStream)
         explicit ByteSerializeStream(std::vector<uint8_t>& inBytes, size_t pointerBegin = 0);
@@ -72,7 +72,7 @@ namespace Common {
         std::vector<uint8_t>& bytes;
     };
 
-    class ByteDeserializeStream : public DeserializeStream {
+    class ByteDeserializeStream final : public DeserializeStream {
     public:
         NonCopyable(ByteDeserializeStream)
         explicit ByteDeserializeStream(const std::vector<uint8_t>& inBytes, size_t pointerBegin = 0);
@@ -88,12 +88,12 @@ namespace Common {
     struct Serializer {
         static constexpr bool serializable = false;
 
-        static void Serialize(SerializeStream& stream, const T& value)
+        static void Serialize(SerializeStream&, const T&)
         {
             Unimplement();
         }
 
-        static bool Deserialize(DeserializeStream& stream, T& value)
+        static bool Deserialize(DeserializeStream&, T&)
         {
             Unimplement();
             return false;
@@ -105,7 +105,7 @@ namespace Common {
     struct TypeIdSerializer {
         static void Serialize(SerializeStream& stream)
         {
-            uint32_t typeId = Serializer<T>::typeId;
+            const uint32_t typeId = Serializer<T>::typeId;
             stream.Write(&typeId, sizeof(uint32_t));
         }
 
@@ -162,7 +162,7 @@ namespace Common {
         {
             TypeIdSerializer<std::string>::Serialize(stream);
 
-            uint64_t size = value.size();
+            const uint64_t size = value.size();
             Serializer<uint64_t>::Serialize(stream, size);
             stream.Write(value.data(), value.size());
         }
@@ -186,14 +186,14 @@ namespace Common {
     struct Serializer<std::optional<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("std::optional")
+            = HashUtils::StrCrc32("std::optional")
             + Serializer<T>::typeId;
 
         static void Serialize(SerializeStream& stream, const std::optional<T>& value)
         {
             TypeIdSerializer<std::optional<T>>::Serialize(stream);
 
-            bool hasValue = value.has_value();
+            const bool hasValue = value.has_value();
             Serializer<bool>::Serialize(stream, hasValue);
 
             if (hasValue) {
@@ -225,7 +225,7 @@ namespace Common {
     struct Serializer<std::pair<K, V>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("std::pair")
+            = HashUtils::StrCrc32("std::pair")
             + Serializer<K>::typeId
             + Serializer<V>::typeId;
 
@@ -254,14 +254,14 @@ namespace Common {
     struct Serializer<std::vector<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("std::vector")
+            = HashUtils::StrCrc32("std::vector")
             + Serializer<T>::typeId;
 
         static void Serialize(SerializeStream& stream, const std::vector<T>& value)
         {
             TypeIdSerializer<std::vector<T>>::Serialize(stream);
 
-            uint64_t size = value.size();
+            const uint64_t size = value.size();
             Serializer<uint64_t>::Serialize(stream, size);
 
             for (auto i = 0; i < size; i++) {
@@ -295,14 +295,14 @@ namespace Common {
     struct Serializer<std::unordered_set<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("std::unordered_set")
+            = HashUtils::StrCrc32("std::unordered_set")
             + Serializer<T>::typeId;
 
         static void Serialize(SerializeStream& stream, const std::unordered_set<T>& value)
         {
             TypeIdSerializer<T>::Serialize(stream);
 
-            uint64_t size = value.size();
+            const uint64_t size = value.size();
             Serializer<uint64_t>::Serialize(stream, size);
 
             for (const auto& element : value) {
@@ -344,7 +344,7 @@ namespace Common {
         {
             TypeIdSerializer<std::unordered_map<K, V>>::Serialize(stream);
 
-            uint64_t size = value.size();
+            const uint64_t size = value.size();
             Serializer<uint64_t>::Serialize(stream, size);
 
             for (const auto& pair : value) {

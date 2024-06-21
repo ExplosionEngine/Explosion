@@ -11,11 +11,12 @@
 
 namespace RHI {
     struct ShaderModuleCreateInfo {
+        std::string entryPoint;
         const void* byteCode;
         size_t size;
 
-        ShaderModuleCreateInfo(const void* inByteCode = nullptr, size_t inSize = 0);
-        explicit ShaderModuleCreateInfo(const std::vector<uint8_t>& inByteCode);
+        explicit ShaderModuleCreateInfo(const std::string& inEntryPoint = "", const void* inByteCode = nullptr, size_t inSize = 0);
+        explicit ShaderModuleCreateInfo(const std::string& inEntryPoint = "", const std::vector<uint8_t>& inByteCode = {});
 
         ShaderModuleCreateInfo& SetByteCode(const void* inByteCode);
         ShaderModuleCreateInfo& SetSize(size_t inSize);
@@ -26,7 +27,7 @@ namespace RHI {
         NonCopyable(ShaderModule)
         virtual ~ShaderModule();
 
-        virtual void Destroy() = 0;
+        virtual const std::string& GetEntryPoint() = 0;
 
     protected:
         explicit ShaderModule(const ShaderModuleCreateInfo& createInfo);

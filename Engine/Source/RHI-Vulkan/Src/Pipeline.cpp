@@ -3,33 +3,23 @@
 //
 
 #include <array>
+#include <unordered_map>
+#include <utility>
+
 #include <RHI/Vulkan/Pipeline.h>
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/ShaderModule.h>
 #include <RHI/Vulkan/PipelineLayout.h>
 #include <RHI/Vulkan/Common.h>
-#include <unordered_map>
 
 namespace RHI::Vulkan {
-    static const char* GetShaderEntry(VkShaderStageFlagBits stage)
-    {
-        static std::unordered_map<VkShaderStageFlagBits, const char*> ENTRY_MAP = {
-            {VK_SHADER_STAGE_VERTEX_BIT, "VSMain"},
-            {VK_SHADER_STAGE_FRAGMENT_BIT, "FSMain"},
-            {VK_SHADER_STAGE_COMPUTE_BIT, "CSMain"}
-        };
-        auto iter = ENTRY_MAP.find(stage);
-        Assert(iter != ENTRY_MAP.end() && "invalid shader stage");
-        return iter->second;
-    }
-
     static VkStencilOpState ConvertStencilOp(const StencilFaceState& stencilOp, uint32_t readMask, uint32_t writeMask)
     {
         VkStencilOpState state = {};
-        state.compareOp = VKEnumCast<ComparisonFunc, VkCompareOp>(stencilOp.comparisonFunc);
-        state.depthFailOp = VKEnumCast<StencilOp, VkStencilOp>(stencilOp.depthFailOp);
-        state.failOp = VKEnumCast<StencilOp, VkStencilOp>(stencilOp.failOp);
-        state.passOp = VKEnumCast<StencilOp, VkStencilOp>(stencilOp.passOp);
+        state.compareOp = EnumCast<CompareFunc, VkCompareOp>(stencilOp.compareFunc);
+        state.depthFailOp = EnumCast<StencilOp, VkStencilOp>(stencilOp.depthFailOp);
+        state.failOp = EnumCast<StencilOp, VkStencilOp>(stencilOp.failOp);
+        state.passOp = EnumCast<StencilOp, VkStencilOp>(stencilOp.passOp);
         state.compareMask = readMask;
         state.writeMask = writeMask;
         state.reference = 0;
@@ -41,15 +31,15 @@ namespace RHI::Vulkan {
         const auto& dsState = createInfo.depthStencilState;
         VkPipelineDepthStencilStateCreateInfo dsInfo = {};
         dsInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-        dsInfo.depthTestEnable = dsState.depthEnable;
-        dsInfo.depthWriteEnable = dsState.depthEnable;
-        dsInfo.stencilTestEnable = dsState.stencilEnable;
+        dsInfo.depthTestEnable = dsState.depthEnabled;
+        dsInfo.depthWriteEnable = dsState.depthEnabled;
+        dsInfo.stencilTestEnable = dsState.stencilEnabled;
         dsInfo.front = ConvertStencilOp(dsState.stencilFront, dsState.stencilReadMask, dsState.stencilWriteMask);
         dsInfo.back = ConvertStencilOp(dsState.stencilBack, dsState.stencilReadMask, dsState.stencilWriteMask);
         dsInfo.minDepthBounds = -1.f;
         dsInfo.maxDepthBounds = 1.f;
         dsInfo.depthBoundsTestEnable = VK_FALSE;
-        dsInfo.depthCompareOp = VKEnumCast<ComparisonFunc, VkCompareOp>(dsState.depthComparisonFunc);
+        dsInfo.depthCompareOp = EnumCast<CompareFunc, VkCompareOp>(dsState.depthCompareFunc);
         return dsInfo;
     }
 
@@ -57,7 +47,7 @@ namespace RHI::Vulkan {
     {
         VkPipelineInputAssemblyStateCreateInfo assemblyInfo = {};
         assemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-        assemblyInfo.topology = VKEnumCast<PrimitiveTopologyType, VkPrimitiveTopology>(createInfo.primitiveState.topologyType);
+        assemblyInfo.topology = EnumCast<PrimitiveTopologyType, VkPrimitiveTopology>(createInfo.primitiveState.topologyType);
         assemblyInfo.primitiveRestartEnable = VK_FALSE;
 
         return assemblyInfo;
@@ -66,8 +56,9 @@ namespace RHI::Vulkan {
     static VkPipelineRasterizationStateCreateInfo ConstructRasterization(const RasterPipelineCreateInfo& createInfo)
     {
         VkPipelineRasterizationStateCreateInfo rasterState = {};
+        rasterState.polygonMode = EnumCast<FillMode, VkPolygonMode>(createInfo.primitiveState.fillMode);
         rasterState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-        rasterState.cullMode = VKEnumCast<CullMode, VkCullModeFlagBits>(createInfo.primitiveState.cullMode);
+        rasterState.cullMode = EnumCast<CullMode, VkCullModeFlagBits>(createInfo.primitiveState.cullMode);
         rasterState.frontFace = createInfo.primitiveState.frontFace == FrontFace::cw ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
         rasterState.depthBiasClamp = createInfo.depthStencilState.depthBiasClamp;
         rasterState.depthBiasSlopeFactor = createInfo.depthStencilState.depthBiasSlopeScale;
@@ -85,6 +76,7 @@ namespace RHI::Vulkan {
 
     static VkPipelineMultisampleStateCreateInfo ConstructMultiSampleState(const RasterPipelineCreateInfo& createInfo)
     {
+        // TODO check this
         VkPipelineMultisampleStateCreateInfo multiSampleInfo = {};
         multiSampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multiSampleInfo.alphaToCoverageEnable = createInfo.multiSampleState.alphaToCoverage;
@@ -95,6 +87,7 @@ namespace RHI::Vulkan {
 
     static VkPipelineViewportStateCreateInfo ConstructViewportInfo(const RasterPipelineCreateInfo&)
     {
+        // TODO check this
         VkPipelineViewportStateCreateInfo viewportState = {};
         viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         viewportState.viewportCount = 1;
@@ -112,14 +105,14 @@ namespace RHI::Vulkan {
         for (uint8_t i = 0; i < createInfo.fragmentState.colorTargets.size(); ++i) {
             VkPipelineColorBlendAttachmentState& blendState = blendStates[i];
             const auto& srcState = createInfo.fragmentState.colorTargets[i];
-            blendState.blendEnable = true;
+            blendState.blendEnable = srcState.blendEnabled;
             blendState.colorWriteMask = static_cast<VkColorComponentFlags>(srcState.writeFlags.Value());
-            blendState.alphaBlendOp = VKEnumCast<BlendOp, VkBlendOp>(srcState.blend.color.op);
-            blendState.alphaBlendOp = VKEnumCast<BlendOp, VkBlendOp>(srcState.blend.alpha.op);
-            blendState.srcColorBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.blend.color.srcFactor);
-            blendState.srcAlphaBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.blend.alpha.srcFactor);
-            blendState.dstColorBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.blend.color.dstFactor);
-            blendState.dstAlphaBlendFactor = VKEnumCast<BlendFactor, VkBlendFactor>(srcState.blend.alpha.dstFactor);
+            blendState.alphaBlendOp = EnumCast<BlendOp, VkBlendOp>(srcState.colorBlend.op);
+            blendState.alphaBlendOp = EnumCast<BlendOp, VkBlendOp>(srcState.alphaBlend.op);
+            blendState.srcColorBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.colorBlend.srcFactor);
+            blendState.srcAlphaBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.alphaBlend.srcFactor);
+            blendState.dstColorBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.colorBlend.dstFactor);
+            blendState.dstAlphaBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.alphaBlend.dstFactor);
         }
 
         colorInfo.pAttachments = blendStates.data();
@@ -137,9 +130,6 @@ namespace RHI::Vulkan {
         std::vector<VkVertexInputAttributeDescription>& attributes,
         std::vector<VkVertexInputBindingDescription>& bindings)
     {
-        auto* vs = static_cast<VulkanShaderModule*>(createInfo.vertexShader);
-        const auto& locationTable = vs->GetLocationTable();
-
         VkPipelineVertexInputStateCreateInfo vtxInput = {};
         vtxInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
@@ -152,14 +142,10 @@ namespace RHI::Vulkan {
 
             for (uint32_t j = 0; j < binding.attributes.size(); ++j) {
                 VkVertexInputAttributeDescription desc = {};
-                auto inputName = std::string("in.var.") + std::string(binding.attributes[j].semanticName);
-                auto iter = locationTable.find(inputName);
-                Assert(iter != locationTable.end());
-
                 desc.binding = i;
-                desc.location = iter->second;
+                desc.location = std::get<GlslVertexBinding>(binding.attributes[j].platformBinding).location;
                 desc.offset = binding.attributes[j].offset;
-                desc.format = VKEnumCast<VertexFormat, VkFormat>(binding.attributes[j].format);
+                desc.format = EnumCast<VertexFormat, VkFormat>(binding.attributes[j].format);
                 attributes.emplace_back(desc);
             }
         }
@@ -186,11 +172,6 @@ namespace RHI::Vulkan {
         }
     }
 
-    void VulkanRasterPipeline::Destroy()
-    {
-        delete this;
-    }
-
     VulkanPipelineLayout* VulkanRasterPipeline::GetPipelineLayout() const
     {
         return pipelineLayout;
@@ -213,16 +194,17 @@ namespace RHI::Vulkan {
             VkPipelineShaderStageCreateInfo stageInfo = {};
             stageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             stageInfo.module = static_cast<const VulkanShaderModule*>(module)->GetNative();
-            stageInfo.pName = GetShaderEntry(stage);
+            stageInfo.pName = module->GetEntryPoint().c_str();
             stageInfo.stage = stage;
-            stages.emplace_back(stageInfo);
+            stages.emplace_back(std::move(stageInfo));
         };
         setStage(inCreateInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT);
         setStage(inCreateInfo.pixelShader, VK_SHADER_STAGE_FRAGMENT_BIT);
 
         std::vector<VkDynamicState> dynamicStates = {
             VK_DYNAMIC_STATE_VIEWPORT,
-            VK_DYNAMIC_STATE_SCISSOR
+            VK_DYNAMIC_STATE_SCISSOR,
+            VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY
         };
         VkPipelineDynamicStateCreateInfo dynStateInfo = {};
         dynStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -246,15 +228,15 @@ namespace RHI::Vulkan {
         for (size_t i = 0; i < inCreateInfo.fragmentState.colorTargets.size(); i++)
         {
             auto format = inCreateInfo.fragmentState.colorTargets[i].format;
-            pixelFormats[i] = VKEnumCast<PixelFormat, VkFormat>(format);
+            pixelFormats[i] = EnumCast<PixelFormat, VkFormat>(format);
         }
 
         VkPipelineRenderingCreateInfo pipelineRenderingCreateInfo;
         pipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
         pipelineRenderingCreateInfo.colorAttachmentCount = inCreateInfo.fragmentState.colorTargets.size();
         pipelineRenderingCreateInfo.pColorAttachmentFormats = pixelFormats.data();
-        pipelineRenderingCreateInfo.depthAttachmentFormat = inCreateInfo.depthStencilState.depthEnable ? VKEnumCast<PixelFormat, VkFormat>(inCreateInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
-        pipelineRenderingCreateInfo.stencilAttachmentFormat = inCreateInfo.depthStencilState.stencilEnable ? VKEnumCast<PixelFormat, VkFormat>(inCreateInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
+        pipelineRenderingCreateInfo.depthAttachmentFormat = inCreateInfo.depthStencilState.depthEnabled ? EnumCast<PixelFormat, VkFormat>(inCreateInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
+        pipelineRenderingCreateInfo.stencilAttachmentFormat = inCreateInfo.depthStencilState.stencilEnabled ? EnumCast<PixelFormat, VkFormat>(inCreateInfo.depthStencilState.format) : VK_FORMAT_UNDEFINED;
         pipelineRenderingCreateInfo.pNext = nullptr;
         pipelineRenderingCreateInfo.viewMask = 0;
 
@@ -284,61 +266,6 @@ namespace RHI::Vulkan {
     }
 
     VkPipeline VulkanRasterPipeline::GetNative()
-    {
-        return nativePipeline;
-    }
-
-     VulkanComputePipeline::VulkanComputePipeline(VulkanDevice& inDevice, const ComputePipelineCreateInfo& inCreateInfo)
-         :ComputePipeline(inCreateInfo)
-         ,device(inDevice)
-         ,nativePipeline(VK_NULL_HANDLE)
-    {
-        SavePipelineLayout(inCreateInfo);
-        CreateNativeComputePipeline(inCreateInfo);
-    }
-
-     VulkanComputePipeline::~VulkanComputePipeline()
-    {
-        if (nativePipeline) {
-            vkDestroyPipeline(device.GetNative(), nativePipeline, nullptr);
-        }
-    }
-
-    void VulkanComputePipeline::Destroy()
-    {
-        delete this;
-    }
-
-    void VulkanComputePipeline::SavePipelineLayout(const ComputePipelineCreateInfo& inCreateInfo)
-    {
-        auto* layout = static_cast<VulkanPipelineLayout*>(inCreateInfo.layout);
-        Assert(layout);
-
-        pipelineLayout = layout;
-    }
-
-    void VulkanComputePipeline::CreateNativeComputePipeline(const ComputePipelineCreateInfo& inCreateInfo)
-    {
-        VkPipelineShaderStageCreateInfo stageInfo = {};
-        stageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        stageInfo.module = static_cast<const VulkanShaderModule*>(inCreateInfo.computeShader)->GetNative();
-        stageInfo.pName = GetShaderEntry(VK_SHADER_STAGE_COMPUTE_BIT);
-        stageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-
-        VkComputePipelineCreateInfo pipelineInfo = {};
-        pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-        pipelineInfo.layout = pipelineLayout->GetNative();
-        pipelineInfo.stage = stageInfo;
-
-        Assert(vkCreateComputePipelines(device.GetNative(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &nativePipeline) == VK_SUCCESS);
-    }
-
-    VulkanPipelineLayout* VulkanComputePipeline::GetPipelineLayout() const
-    {
-        return pipelineLayout;
-    }
-
-    VkPipeline VulkanComputePipeline::GetNative() const
     {
         return nativePipeline;
     }

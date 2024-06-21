@@ -22,13 +22,13 @@ namespace Core {
 
     ModuleRuntimeInfo::ModuleRuntimeInfo()
         : instance(nullptr)
-        , dynamicLib()
     {
     }
 
     ModuleRuntimeInfo::~ModuleRuntimeInfo() = default;
 
     ModuleRuntimeInfo::ModuleRuntimeInfo(const ModuleRuntimeInfo& other)
+        : instance(nullptr)
     {
         QuickFail();
     }
@@ -57,19 +57,19 @@ namespace Core {
 
     Module* ModuleManager::FindOrLoad(const std::string& moduleName)
     {
-        auto iter = loadedModules.find(moduleName);
-        if (iter != loadedModules.end()) {
+        if (const auto iter = loadedModules.find(moduleName);
+            iter != loadedModules.end()) {
             return iter->second.instance;
         }
 
-        std::optional<std::string> modulePath = SearchModule(moduleName);
+        const std::optional<std::string> modulePath = SearchModule(moduleName);
         if (!modulePath.has_value()) {
             return nullptr;
         }
         Common::UniqueRef<Common::DynamicLibrary> dynamicLib = Common::DynamicLibraryFinder::Find(modulePath.value());
         dynamicLib->Load();
 
-        GetModuleFunc getModuleFunc = reinterpret_cast<GetModuleFunc>(dynamicLib->GetSymbol("GetModule"));
+        const auto getModuleFunc = reinterpret_cast<GetModuleFunc>(dynamicLib->GetSymbol("GetModule"));
         if (getModuleFunc == nullptr) {
             return nullptr;
         }
@@ -85,7 +85,7 @@ namespace Core {
 
     Module* ModuleManager::Find(const std::string& moduleName)
     {
-        auto iter = loadedModules.find(moduleName);
+        const auto iter = loadedModules.find(moduleName);
         if (iter == loadedModules.end()) {
             return nullptr;
         }
@@ -94,7 +94,7 @@ namespace Core {
 
     void ModuleManager::Unload(const std::string& moduleName)
     {
-        auto iter = loadedModules.find(moduleName);
+        const auto iter = loadedModules.find(moduleName);
         if (iter == loadedModules.end()) {
             return;
         }
@@ -104,15 +104,15 @@ namespace Core {
 
     void ModuleManager::UnloadAll()
     {
-        for (auto& loadedModule : loadedModules) {
-            loadedModule.second.instance->OnUnload();
+        for (const auto& [moduleName, moduleRuntimeInfo] : loadedModules) {
+            moduleRuntimeInfo.instance->OnUnload();
         }
         loadedModules.clear();
     }
 
     std::optional<std::string> ModuleManager::SearchModule(const std::string& moduleName)
     {
-        const std::vector<std::filesystem::path> searchPaths = {
+        const std::vector searchPaths = {
             Paths::EngineBinariesPath(),
             Paths::ProjectBinariesPath(),
             Paths::EnginePluginPath(),
@@ -129,16 +129,16 @@ namespace Core {
 
                     const auto& path = entry.path();
                     auto fileName = path.filename().string();
-                    auto extension = path.extension().string();
 
-                    if ((extension == ".dll" || extension == ".so" || extension == ".dylib")
+                    if (auto extension = path.extension().string();
+                        (extension == ".dll" || extension == ".so" || extension == ".dylib")
                         && (fileName == fmt::format("{}{}", moduleName, extension) || fileName == fmt::format("lib{}{}", moduleName, extension)))
                     {
                         return path.string();
                     }
                 }
-            } catch (const std::exception& e) {
-                continue;
+            } catch (const std::exception&) {
+                // TODO maybe output log here
             }
         }
         return {};

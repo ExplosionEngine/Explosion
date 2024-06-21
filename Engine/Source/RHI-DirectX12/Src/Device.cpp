@@ -24,14 +24,132 @@
 #include <RHI/DirectX12/SwapChain.h>
 #include <RHI/DirectX12/Synchronous.h>
 #include <RHI/DirectX12/Surface.h>
+#include <Common/IO.h>
 
 namespace RHI::DirectX12 {
-    DX12Device::DX12Device(DX12Gpu& inGpu, const DeviceCreateInfo& inCreateInfo) : Device(inCreateInfo), gpu(inGpu), nativeRtvDescriptorSize(0), nativeCbvSrvUavDescriptorSize(0)
+    DescriptorAllocation::DescriptorAllocation(DescriptorHeapNode* inNode, const uint32_t inSlot, const CD3DX12_CPU_DESCRIPTOR_HANDLE& inHandle, ID3D12DescriptorHeap* inHeap)
+        : node(inNode)
+        , slot(inSlot)
+        , cpuHandle(inHandle)
+        , nativeDescriptorHeap(inHeap)
+    {
+    }
+
+    DescriptorAllocation::~DescriptorAllocation()
+    {
+        node->Free(slot);
+    }
+
+    const CD3DX12_CPU_DESCRIPTOR_HANDLE& DescriptorAllocation::GetCpuHandle() const
+    {
+        return cpuHandle;
+    }
+
+    ID3D12DescriptorHeap* DescriptorAllocation::GetNativeDescriptorHeap() const
+    {
+        return nativeDescriptorHeap;
+    }
+
+    DescriptorHeapNode::DescriptorHeapNode(ComPtr<ID3D12DescriptorHeap>&& inHeap, uint32_t inDescriptorSize, uint32_t inCapacity)
+        : nativeDescriptorHeap(std::move(inHeap))
+        , descriptorSize(inDescriptorSize)
+        , capacity(inCapacity)
+        , free(inCapacity)
+    {
+        usedBitMasks.resize(capacity / 8, 0);
+    }
+
+    bool DescriptorHeapNode::HasFreeSlot() const
+    {
+        return free > 0;
+    }
+
+    Common::UniqueRef<DescriptorAllocation> DescriptorHeapNode::Allocate()
+    {
+        Assert(HasFreeSlot());
+
+        std::optional<uint32_t> selectedSlot;
+        for (auto slot = 0; slot < capacity; slot++) {
+            const auto groupIndex = slot / 8;
+            auto& bitMask = usedBitMasks[groupIndex];
+
+            const auto indexInGroup = slot % 8;
+            const auto slotMask = 1 << indexInGroup;
+
+            if ((bitMask & slotMask) != 0) {
+                continue;
+            }
+
+            bitMask = bitMask | slotMask;
+            selectedSlot = slot;
+            break;
+        }
+
+        Assert(selectedSlot.has_value());
+        free--;
+        Assert(free <= capacity);
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE baseCpuHandle(nativeDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+        return Common::MakeUnique<DescriptorAllocation>(this, selectedSlot.value(), baseCpuHandle.Offset(selectedSlot.value(), descriptorSize), nativeDescriptorHeap.Get());
+    }
+
+    void DescriptorHeapNode::Free(uint32_t slot)
+    {
+        const auto groupIndex = slot / 8;
+        auto& bitMask = usedBitMasks[groupIndex];
+
+        const auto indexInGroup = slot % 8;
+        const auto slotMask = 1 << indexInGroup;
+        const auto slotIsUsed = (bitMask & slotMask) == slotMask;
+        bitMask = bitMask & ~slotMask;
+
+        Assert(slotIsUsed);
+        free++;
+        Assert(free <= capacity);
+    }
+
+    DescriptorPool::DescriptorPool(DX12Device& inDevice, D3D12_DESCRIPTOR_HEAP_TYPE inNativeHeapType, uint32_t inDescriptorSize, uint32_t inCapacity)
+        : device(inDevice)
+        , nativeHeapType(inNativeHeapType)
+        , descriptorSize(inDescriptorSize)
+        , capacity(inCapacity)
+        , heapNodes()
+    {
+    }
+
+    Common::UniqueRef<DescriptorAllocation> DescriptorPool::Allocate()
+    {
+        for (auto& node : heapNodes) {
+            if (node.HasFreeSlot()) {
+                return node.Allocate();
+            }
+        }
+
+        ComPtr<ID3D12DescriptorHeap> nativeDescriptorHeap;
+
+        D3D12_DESCRIPTOR_HEAP_DESC desc {};
+        desc.NumDescriptors = capacity;
+        desc.Type = nativeHeapType;
+        desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+        Assert(SUCCEEDED(device.GetNative()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&nativeDescriptorHeap))));
+
+        heapNodes.emplace_back(std::move(nativeDescriptorHeap), descriptorSize, capacity);
+        return heapNodes.back().Allocate();
+    }
+
+    DX12Device::DX12Device(DX12Gpu& inGpu, const DeviceCreateInfo& inCreateInfo)
+        : Device(inCreateInfo)
+        , gpu(inGpu)
+        , nativeRtvDescriptorSize(0)
+        , nativeCbvSrvUavDescriptorSize(0)
+        , nativeSamplerDescriptorSize(0)
+        , nativeDsvDescriptorSize(0)
     {
         CreateNativeDevice();
         CreateNativeQueues(inCreateInfo);
         CreateNativeCmdAllocator();
         QueryNativeDescriptorSize();
+        CreateDescriptorPools();
 #if BUILD_CONFIG_DEBUG
         RegisterNativeDebugLayerExceptionHandler();
 #endif
@@ -44,105 +162,96 @@ namespace RHI::DirectX12 {
 #endif
     }
 
-    void DX12Device::Destroy()
-    {
-        delete this;
-    }
-
     size_t DX12Device::GetQueueNum(QueueType inType)
     {
-        auto iter = queues.find(inType);
-        Assert(iter != queues.end());
-        return iter->second.size();
+        return queues.at(inType).size();
     }
 
-    Queue* DX12Device::GetQueue(QueueType inType, size_t inIndex)
+    Queue* DX12Device::GetQueue(const QueueType inType, const size_t inIndex)
     {
-        auto iter = queues.find(inType);
-        Assert(iter != queues.end());
-        auto& queueArray = iter->second;
-        Assert(inIndex >= 0 && inIndex < queueArray.size());
+        const auto& queueArray = queues.at(inType);
+        Assert(inIndex < queueArray.size());
         return queueArray[inIndex].Get();
     }
 
-    Surface* DX12Device::CreateSurface(const SurfaceCreateInfo& inCreateInfo)
+    Common::UniqueRef<Surface> DX12Device::CreateSurface(const SurfaceCreateInfo& inCreateInfo)
     {
-        return new DX12Surface(inCreateInfo);
+        return { new DX12Surface(inCreateInfo) };
     }
 
-    SwapChain* DX12Device::CreateSwapChain(const SwapChainCreateInfo& inCreateInfo)
+    Common::UniqueRef<SwapChain> DX12Device::CreateSwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
-        return new DX12SwapChain(*this, inCreateInfo);
+        return { new DX12SwapChain(*this, inCreateInfo) };
     }
 
-    ID3D12CommandAllocator* DX12Device::GetNativeCmdAllocator()
+    ID3D12CommandAllocator* DX12Device::GetNativeCmdAllocator() const
     {
         return nativeCmdAllocator.Get();
     }
 
-    Buffer* DX12Device::CreateBuffer(const BufferCreateInfo& inCreateInfo)
+    Common::UniqueRef<Buffer> DX12Device::CreateBuffer(const BufferCreateInfo& inCreateInfo)
     {
-        return new DX12Buffer(*this, inCreateInfo);
+        return { new DX12Buffer(*this, inCreateInfo) };
     }
 
-    Texture* DX12Device::CreateTexture(const TextureCreateInfo& inCreateInfo)
+    Common::UniqueRef<Texture> DX12Device::CreateTexture(const TextureCreateInfo& inCreateInfo)
     {
-        return new DX12Texture(*this, inCreateInfo);
+        return { new DX12Texture(*this, inCreateInfo) };
     }
 
-    Sampler* DX12Device::CreateSampler(const SamplerCreateInfo& inCreateInfo)
+    Common::UniqueRef<Sampler> DX12Device::CreateSampler(const SamplerCreateInfo& inCreateInfo)
     {
-        return new DX12Sampler(*this, inCreateInfo);
+        return { new DX12Sampler(*this, inCreateInfo) };
     }
 
-    BindGroupLayout* DX12Device::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
+    Common::UniqueRef<BindGroupLayout> DX12Device::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
     {
-        return new DX12BindGroupLayout(inCreateInfo);
+        return { new DX12BindGroupLayout(inCreateInfo) };
     }
 
-    BindGroup* DX12Device::CreateBindGroup(const BindGroupCreateInfo& inCreateInfo)
+    Common::UniqueRef<BindGroup> DX12Device::CreateBindGroup(const BindGroupCreateInfo& inCreateInfo)
     {
-        return new DX12BindGroup(inCreateInfo);
+        return { new DX12BindGroup(inCreateInfo) };
     }
 
-    PipelineLayout* DX12Device::CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo)
+    Common::UniqueRef<PipelineLayout> DX12Device::CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo)
     {
-        return new DX12PipelineLayout(*this, inCreateInfo);
+        return { new DX12PipelineLayout(*this, inCreateInfo) };
     }
 
-    ShaderModule* DX12Device::CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo)
+    Common::UniqueRef<ShaderModule> DX12Device::CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo)
     {
-        return new DX12ShaderModule(inCreateInfo);
+        return { new DX12ShaderModule(inCreateInfo) };
     }
 
-    ComputePipeline* DX12Device::CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo)
+    Common::UniqueRef<ComputePipeline> DX12Device::CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo)
     {
-        return new DX12ComputePipeline(*this, inCreateInfo);
+        return { new DX12ComputePipeline(*this, inCreateInfo) };
     }
 
-    RasterPipeline* DX12Device::CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo)
+    Common::UniqueRef<RasterPipeline> DX12Device::CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo)
     {
-        return new DX12RasterPipeline(*this, inCreateInfo);
+        return { new DX12RasterPipeline(*this, inCreateInfo) };
     }
 
-    CommandBuffer* DX12Device::CreateCommandBuffer()
+    Common::UniqueRef<CommandBuffer> DX12Device::CreateCommandBuffer()
     {
-        return new DX12CommandBuffer(*this);
+        return { new DX12CommandBuffer(*this) };
     }
 
-    Fence* DX12Device::CreateFence(bool inInitAsSignaled)
+    Common::UniqueRef<Fence> DX12Device::CreateFence(const bool inInitAsSignaled)
     {
-        return new DX12Fence(*this, inInitAsSignaled);
+        return { new DX12Fence(*this, inInitAsSignaled) };
     }
 
-    Semaphore* DX12Device::CreateSemaphore()
+    Common::UniqueRef<Semaphore> DX12Device::CreateSemaphore()
     {
-        return new DX12Semaphore(*this);
+        return { new DX12Semaphore(*this) };
     }
 
-    bool DX12Device::CheckSwapChainFormatSupport(RHI::Surface* inSurface, PixelFormat inFormat)
+    bool DX12Device::CheckSwapChainFormatSupport(Surface* inSurface, PixelFormat inFormat)
     {
-        static std::unordered_set<PixelFormat> supportedFormats = {
+        static std::unordered_set supportedFormats = {
             PixelFormat::rgba8Unorm,
             PixelFormat::bgra8Unorm,
             // TODO HDR
@@ -150,65 +259,39 @@ namespace RHI::DirectX12 {
         return supportedFormats.contains(inFormat);
     }
 
-    DX12Gpu& DX12Device::GetGpu()
+    DX12Gpu& DX12Device::GetGpu() const
     {
         return gpu;
     }
 
-    ID3D12Device* DX12Device::GetNative()
+    ID3D12Device* DX12Device::GetNative() const
     {
         return nativeDevice.Get();
     }
 
-    NativeDescriptorAllocation DX12Device::AllocateNativeRtvDescriptor()
+    Common::UniqueRef<DescriptorAllocation> DX12Device::AllocateRtvDescriptor() const
     {
-        return AllocateNativeDescriptor(nativeRtvHeapList, 4, nativeRtvDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        return rtvDescriptorPool->Allocate();
     }
 
-    NativeDescriptorAllocation DX12Device::AllocateNativeCbvSrvUavDescriptor()
+    Common::UniqueRef<DescriptorAllocation> DX12Device::AllocateCbvSrvUavDescriptor() const
     {
-        return AllocateNativeDescriptor(nativeCbvSrvUavHeapList, 4, nativeCbvSrvUavDescriptorSize,
-                                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        return cbvSrvUavDescriptorPool->Allocate();
     }
 
-    NativeDescriptorAllocation DX12Device::AllocateNativeSamplerDescriptor()
+    Common::UniqueRef<DescriptorAllocation> DX12Device::AllocateSamplerDescriptor() const
     {
-        return AllocateNativeDescriptor(nativeSamplerHeapList, 4, nativeSamplerDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+        return samplerDescriptorPool->Allocate();
     }
 
-    NativeDescriptorAllocation DX12Device::AllocateNativeDsvDescriptor()
+    Common::UniqueRef<DescriptorAllocation> DX12Device::AllocateDsvDescriptor() const
     {
-        return AllocateNativeDescriptor(nativeDsvHeapList, 1, nativeDsvDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    }
-
-    NativeDescriptorAllocation DX12Device::AllocateNativeDescriptor(std::list<NativeDescriptorHeapListNode>& inList, uint8_t inCapacity, uint32_t inDescriptorSize, D3D12_DESCRIPTOR_HEAP_TYPE inHeapType)
-    {
-        if (inList.empty() || inList.back().used >= inCapacity) {
-            NativeDescriptorHeapListNode node {};
-
-            D3D12_DESCRIPTOR_HEAP_DESC desc {};
-            desc.NumDescriptors = inCapacity;
-            desc.Type = inHeapType;
-            desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-            bool success = SUCCEEDED(nativeDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&node.descriptorHeap)));
-            Assert(success);
-            inList.emplace_back(std::move(node));
-        }
-
-        auto& last = inList.back();
-
-        CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(last.descriptorHeap->GetCPUDescriptorHandleForHeapStart());
-        auto offset = last.used++;
-        return {
-            cpuHandle.Offset(offset, inDescriptorSize),
-            last.descriptorHeap.Get()
-        };
+        return dsvDescriptorPool->Allocate();
     }
 
     void DX12Device::CreateNativeDevice()
     {
-        bool success = SUCCEEDED(D3D12CreateDevice(gpu.GetNative(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&nativeDevice)));
-        Assert(success);
+        Assert(SUCCEEDED(D3D12CreateDevice(gpu.GetNative(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&nativeDevice))));
     }
 
     void DX12Device::CreateNativeQueues(const DeviceCreateInfo& inCreateInfo)
@@ -216,8 +299,8 @@ namespace RHI::DirectX12 {
         std::unordered_map<QueueType, size_t> queueNumMap;
         for (size_t i = 0; i < inCreateInfo.queueRequests.size(); i++) {
             const auto& queueCreateInfo = inCreateInfo.queueRequests[i];
-            auto iter = queueNumMap.find(queueCreateInfo.type);
-            if (iter == queueNumMap.end()) {
+            if (const auto iter = queueNumMap.find(queueCreateInfo.type);
+                iter == queueNumMap.end()) {
                 queueNumMap[queueCreateInfo.type] = 0;
             }
             queueNumMap[queueCreateInfo.type] += queueCreateInfo.num;
@@ -228,11 +311,10 @@ namespace RHI::DirectX12 {
 
             D3D12_COMMAND_QUEUE_DESC queueDesc {};
             queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-            queueDesc.Type = DX12EnumCast<QueueType, D3D12_COMMAND_LIST_TYPE>(iter.first);
+            queueDesc.Type = EnumCast<QueueType, D3D12_COMMAND_LIST_TYPE>(iter.first);
             for (auto& j : tempQueues) {
                 ComPtr<ID3D12CommandQueue> commandQueue;
-                nativeDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue));
-                Assert(commandQueue);
+                Assert(SUCCEEDED(nativeDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue))));
                 j = Common::MakeUnique<DX12Queue>(std::move(commandQueue));
             }
 
@@ -253,36 +335,45 @@ namespace RHI::DirectX12 {
         nativeDsvDescriptorSize = nativeDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
     }
 
+    void DX12Device::CreateDescriptorPools()
+    {
+        rtvDescriptorPool = Common::MakeUnique<DescriptorPool>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, nativeRtvDescriptorSize, 16);
+        cbvSrvUavDescriptorPool = Common::MakeUnique<DescriptorPool>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, nativeCbvSrvUavDescriptorSize, 16);
+        samplerDescriptorPool = Common::MakeUnique<DescriptorPool>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, nativeSamplerDescriptorSize, 16);
+        dsvDescriptorPool = Common::MakeUnique<DescriptorPool>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, nativeDsvDescriptorSize, 16);
+    }
+
 #if BUILD_CONFIG_DEBUG
-    void DX12Device::RegisterNativeDebugLayerExceptionHandler()
+    void DX12Device::RegisterNativeDebugLayerExceptionHandler() const
     {
         ComPtr<ID3D12InfoQueue> dx12InfoQueue;
         Assert(SUCCEEDED(nativeDevice->QueryInterface(IID_PPV_ARGS(&dx12InfoQueue))));
-        dx12InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+        Assert(SUCCEEDED(dx12InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true)));
 
         gpu.GetInstance().AddDebugLayerExceptionHandler(this, [this]() -> void {
             ComPtr<ID3D12Debug> dx12Debug;
             Assert(SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&dx12Debug))));
 
-            ComPtr<ID3D12InfoQueue> dx12InfoQueue;
-            Assert(SUCCEEDED(nativeDevice->QueryInterface(IID_PPV_ARGS(&dx12InfoQueue))));
+            ComPtr<ID3D12InfoQueue> dx12InfoQueueLocal;
+            Assert(SUCCEEDED(nativeDevice->QueryInterface(IID_PPV_ARGS(&dx12InfoQueueLocal))));
 
-            auto messageCount = dx12InfoQueue->GetNumStoredMessagesAllowedByRetrievalFilter();
+            const auto messageCount = dx12InfoQueueLocal->GetNumStoredMessagesAllowedByRetrievalFilter();
             for (auto i = 0; i < messageCount; i++) {
                 std::pair<D3D12_MESSAGE*, size_t> message;
-                Assert(SUCCEEDED(dx12InfoQueue->GetMessageA(i, nullptr, &message.second)));
+                Assert(SUCCEEDED(dx12InfoQueueLocal->GetMessageA(i, nullptr, &message.second)));
                 message.first = static_cast<D3D12_MESSAGE*>(malloc(message.second));
-                Assert(SUCCEEDED(dx12InfoQueue->GetMessageA(i, message.first, &message.second)));
+                Assert(SUCCEEDED(dx12InfoQueueLocal->GetMessageA(i, message.first, &message.second)));
 
                 if (message.first->Severity == D3D12_MESSAGE_SEVERITY_ERROR) {
-                    std::cout << message.first->pDescription << std::endl;
+                    AutoCoutFlush;
+                    std::cout << message.first->pDescription << Common::newline;
                 }
                 free(message.first);
             }
         });
     }
 
-    void DX12Device::UnregisterNativeDebugLayerExceptionHandler()
+    void DX12Device::UnregisterNativeDebugLayerExceptionHandler() const
     {
         gpu.GetInstance().RemoveDebugLayerExceptionHandler(this);
     }

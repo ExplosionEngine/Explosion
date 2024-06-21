@@ -17,29 +17,24 @@ namespace RHI::Dummy {
     {
     }
 
-    void DummyCopyPassCommandRecorder::CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size)
+    void DummyCopyPassCommandRecorder::CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo)
     {
     }
 
-    void DummyCopyPassCommandRecorder::CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
+    void DummyCopyPassCommandRecorder::CopyBufferToTexture(Buffer* src, Texture* dst, const BufferTextureCopyInfo& copyInfo)
     {
     }
 
-    void DummyCopyPassCommandRecorder::CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size)
+    void DummyCopyPassCommandRecorder::CopyTextureToBuffer(Texture* src, Buffer* dst, const BufferTextureCopyInfo& copyInfo)
     {
     }
 
-    void DummyCopyPassCommandRecorder::CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size)
+    void DummyCopyPassCommandRecorder::CopyTextureToTexture(Texture* src, Texture* dst, const TextureCopyInfo& copyInfo)
     {
     }
 
     void DummyCopyPassCommandRecorder::EndPass()
     {
-    }
-
-    void DummyCopyPassCommandRecorder::Destroy()
-    {
-        delete this;
     }
 
     DummyComputePassCommandRecorder::DummyComputePassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer)
@@ -66,11 +61,6 @@ namespace RHI::Dummy {
 
     void DummyComputePassCommandRecorder::EndPass()
     {
-    }
-
-    void DummyComputePassCommandRecorder::Destroy()
-    {
-        delete this;
     }
 
     DummyRasterPassCommandRecorder::DummyRasterPassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer)
@@ -131,11 +121,6 @@ namespace RHI::Dummy {
     {
     }
 
-    void DummyRasterPassCommandRecorder::Destroy()
-    {
-        delete this;
-    }
-
     DummyCommandRecorder::DummyCommandRecorder(const DummyCommandBuffer& inDummyCommandBuffer)
         : dummyCommandBuffer(inDummyCommandBuffer)
     {
@@ -147,27 +132,22 @@ namespace RHI::Dummy {
     {
     }
 
-    CopyPassCommandRecorder* DummyCommandRecorder::BeginCopyPass()
+    Common::UniqueRef<CopyPassCommandRecorder> DummyCommandRecorder::BeginCopyPass()
     {
-        return new DummyCopyPassCommandRecorder(dummyCommandBuffer);
+        return Common::UniqueRef<CopyPassCommandRecorder>(new DummyCopyPassCommandRecorder(dummyCommandBuffer));
     }
 
-    ComputePassCommandRecorder* DummyCommandRecorder::BeginComputePass()
+    Common::UniqueRef<ComputePassCommandRecorder> DummyCommandRecorder::BeginComputePass()
     {
-        return new DummyComputePassCommandRecorder(dummyCommandBuffer);
+        return Common::UniqueRef<ComputePassCommandRecorder>(new DummyComputePassCommandRecorder(dummyCommandBuffer));
     }
 
-    RasterPassCommandRecorder* DummyCommandRecorder::BeginRasterPass(const RasterPassBeginInfo& beginInfo)
+    Common::UniqueRef<RasterPassCommandRecorder> DummyCommandRecorder::BeginRasterPass(const RasterPassBeginInfo& beginInfo)
     {
-        return new DummyRasterPassCommandRecorder(dummyCommandBuffer);
+        return Common::UniqueRef<RasterPassCommandRecorder>(new DummyRasterPassCommandRecorder(dummyCommandBuffer));
     }
 
     void DummyCommandRecorder::End()
     {
-    }
-
-    void DummyCommandRecorder::Destroy()
-    {
-        delete this;
     }
 }

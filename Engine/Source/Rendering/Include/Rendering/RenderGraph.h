@@ -8,7 +8,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
-#include <variant>
 #include <optional>
 
 #include <Common/Memory.h>
@@ -65,27 +64,8 @@ namespace Rendering {
         max
     };
 
-    struct RGBufferDesc : public RHI::BufferCreateInfo {
-        static RGBufferDesc Create();
-        static RGBufferDesc Create(const RHI::BufferCreateInfo& rhiDesc);
-        RGBufferDesc& Size(uint32_t inSize);
-        RGBufferDesc& Usages(RHI::BufferUsageFlags inUsages);
-        RGBufferDesc& InitialState(RHI::BufferState inState);
-        RGBufferDesc& DebugName(const std::string& inName);
-    };
-
-    struct RGTextureDesc  : public RHI::TextureCreateInfo {
-        static RGTextureDesc Create();
-        static RGTextureDesc Create(const RHI::TextureCreateInfo& rhiDesc);
-        RGTextureDesc& Dimension(RHI::TextureDimension inDimension);
-        RGTextureDesc& Extent(const Common::UVec3& inExtent);
-        RGTextureDesc& Format(RHI::PixelFormat inFormat);
-        RGTextureDesc& Usages(RHI::TextureUsageFlags inUsages);
-        RGTextureDesc& MipLevels(uint8_t inMipLevels);
-        RGTextureDesc& Samples(uint8_t inSamples);
-        RGTextureDesc& InitialState(RHI::TextureState inState);
-        RGTextureDesc& DebugName(const std::string& inName);
-    };
+    using RGBufferDesc = RHI::BufferCreateInfo;
+    using RGTextureDesc = RHI::TextureCreateInfo;
 
     class RGResource {
     public:
@@ -165,25 +145,8 @@ namespace Rendering {
     using RGBufferRef = RGBuffer*;
     using RGTextureRef = RGTexture*;
 
-    struct RGBufferViewDesc : public RHI::BufferViewCreateInfoBase<RGBufferViewDesc> {
-        static RGBufferViewDesc CreateForUniform();
-        static RGBufferViewDesc CreateForStorage();
-        static RGBufferViewDesc Create(const RHI::BufferViewCreateInfo& rhiDesc);
-    };
-
-    struct RGTextureViewDesc  : public RHI::TextureViewCreateInfo {
-        static RGTextureViewDesc CreateForTexture();
-        static RGTextureViewDesc CreateForStorageTexture();
-        static RGTextureViewDesc CreateForColorAttachment();
-        static RGTextureViewDesc CreateForDepthStencilAttachment();
-        static RGTextureViewDesc Create(const RHI::TextureViewCreateInfo& rhiDesc);
-        RGTextureViewDesc& Dimension(RHI::TextureViewDimension inDimension);
-        RGTextureViewDesc& Aspect(RHI::TextureAspect inAspect);
-        RGTextureViewDesc& BaseMipLevel(uint8_t inBaseMipLevel);
-        RGTextureViewDesc& MipLevelNum(uint8_t inMipLevelNum);
-        RGTextureViewDesc& BaseArrayLayer(uint8_t inBaseArrayLayer);
-        RGTextureViewDesc& ArrayLayerNum(uint8_t inArrayLayerNum);
-    };
+    using RGBufferViewDesc = RHI::BufferViewCreateInfo;
+    using RGTextureViewDesc = RHI::TextureViewCreateInfo;
 
     class RGResourceView {
     public:
@@ -241,12 +204,12 @@ namespace Rendering {
     using RGBufferViewRef = RGBufferView*;
     using RGTextureViewRef = RGTextureView*;
 
-    struct RGColorAttachment : public RHI::ColorAttachmentBase<RGColorAttachment> {
+    struct RGColorAttachment : RHI::ColorAttachmentBase<RGColorAttachment> {
         RGTextureViewRef view;
         // TODO TextureView* resolve;
     };
 
-    struct RGDepthStencilAttachment : public RHI::DepthStencilAttachmentBase<RGDepthStencilAttachment> {
+    struct RGDepthStencilAttachment : RHI::DepthStencilAttachmentBase<RGDepthStencilAttachment> {
         RGTextureViewRef view;
     };
 
@@ -270,10 +233,10 @@ namespace Rendering {
     };
 
     struct RGBindGroupDesc {
-        Rendering::BindGroupLayout* layout;
+        BindGroupLayout* layout;
         std::unordered_map<std::string, RGBindItemDesc> items;
 
-        static RGBindGroupDesc Create(Rendering::BindGroupLayout* inLayout);
+        static RGBindGroupDesc Create(BindGroupLayout* inLayout);
         RGBindGroupDesc& Sampler(std::string inName, RHI::Sampler* inSampler);
         RGBindGroupDesc& UniformBuffer(std::string inName, RGBufferViewRef bufferView);
         RGBindGroupDesc& StorageBuffer(std::string inName, RGBufferViewRef bufferView);
@@ -297,7 +260,7 @@ namespace Rendering {
 
         bool devirtualized;
         RGBindGroupDesc desc;
-        RHI::BindGroup* rhiHandle;
+        Common::UniqueRef<RHI::BindGroup> rhiHandle;
     };
 
     using RGBindGroupRef = RGBindGroup*;

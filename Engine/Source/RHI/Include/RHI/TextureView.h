@@ -18,7 +18,15 @@ namespace RHI {
         uint8_t baseArrayLayer;
         uint8_t arrayLayerNum;
 
-        TextureViewCreateInfo();
+        explicit TextureViewCreateInfo(
+            TextureViewType inType = TextureViewType::max,
+            TextureViewDimension inDimension = TextureViewDimension::max,
+            TextureAspect inAspect = TextureAspect::color,
+            uint8_t inBaseMipLevel = 0,
+            uint8_t inMipLevelNum = 1,
+            uint8_t inBaseArrayLayer = 0,
+            uint8_t inArrayLayerNum = 1);
+
         TextureViewCreateInfo& SetType(TextureViewType inType);
         TextureViewCreateInfo& SetDimension(TextureViewDimension inDimension);
         TextureViewCreateInfo& SetAspect(TextureAspect inAspect);
@@ -32,8 +40,6 @@ namespace RHI {
     public:
         NonCopyable(TextureView)
         virtual ~TextureView();
-
-        virtual void Destroy() = 0;
 
     protected:
         explicit TextureView(const TextureViewCreateInfo& createInfo);

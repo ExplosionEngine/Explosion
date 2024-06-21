@@ -9,42 +9,40 @@
 namespace RHI::Dummy {
     class DummyCommandBuffer;
 
-    class DummyCommandRecorder : public CommandRecorder {
+    class DummyCommandRecorder final : public CommandRecorder {
     public:
         NonCopyable(DummyCommandRecorder)
         explicit DummyCommandRecorder(const DummyCommandBuffer& inDummyCommandBuffer);
         ~DummyCommandRecorder() override;
 
         void ResourceBarrier(const Barrier& barrier) override;
-        CopyPassCommandRecorder* BeginCopyPass() override;
-        ComputePassCommandRecorder* BeginComputePass() override;
-        RasterPassCommandRecorder* BeginRasterPass(const RasterPassBeginInfo& beginInfo) override;
+        Common::UniqueRef<CopyPassCommandRecorder> BeginCopyPass() override;
+        Common::UniqueRef<ComputePassCommandRecorder> BeginComputePass() override;
+        Common::UniqueRef<RasterPassCommandRecorder> BeginRasterPass(const RasterPassBeginInfo& beginInfo) override;
         void End() override;
-        void Destroy() override;
 
     private:
         const DummyCommandBuffer& dummyCommandBuffer;
     };
 
-    class DummyCopyPassCommandRecorder : public CopyPassCommandRecorder {
+    class DummyCopyPassCommandRecorder final: public CopyPassCommandRecorder {
     public:
         NonCopyable(DummyCopyPassCommandRecorder)
         explicit DummyCopyPassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer);
-        ~DummyCopyPassCommandRecorder();
+        ~DummyCopyPassCommandRecorder() override;
 
         // CommandCommandRecorder
         void ResourceBarrier(const RHI::Barrier& barrier) override;
 
         // CopyPassCommandRecorder
-        void CopyBufferToBuffer(Buffer* src, size_t srcOffset, Buffer* dst, size_t dstOffset, size_t size) override;
-        void CopyBufferToTexture(Buffer* src, Texture* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
-        void CopyTextureToBuffer(Texture* src, Buffer* dst, const TextureSubResourceInfo* subResourceInfo, const Common::UVec3& size) override;
-        void CopyTextureToTexture(Texture* src, const TextureSubResourceInfo* srcSubResourceInfo, Texture* dst, const TextureSubResourceInfo* dstSubResourceInfo, const Common::UVec3& size) override;
+        void CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo) override;
+        void CopyBufferToTexture(Buffer* src, Texture* dst, const BufferTextureCopyInfo& copyInfo) override;
+        void CopyTextureToBuffer(Texture* src, Buffer* dst, const BufferTextureCopyInfo& copyInfo) override;
+        void CopyTextureToTexture(Texture* src, Texture* dst, const TextureCopyInfo& copyInfo) override;
         void EndPass() override;
-        void Destroy() override;
     };
 
-    class DummyComputePassCommandRecorder : public ComputePassCommandRecorder {
+    class DummyComputePassCommandRecorder final : public ComputePassCommandRecorder {
     public:
         NonCopyable(DummyComputePassCommandRecorder)
         explicit DummyComputePassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer);
@@ -58,10 +56,9 @@ namespace RHI::Dummy {
         void SetBindGroup(uint8_t layoutIndex, BindGroup *bindGroup) override;
         void Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ) override;
         void EndPass() override;
-        void Destroy() override;
     };
     
-    class DummyRasterPassCommandRecorder : public RasterPassCommandRecorder {
+    class DummyRasterPassCommandRecorder final : public RasterPassCommandRecorder {
     public:
         NonCopyable(DummyRasterPassCommandRecorder)
         explicit DummyRasterPassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer);
@@ -83,6 +80,5 @@ namespace RHI::Dummy {
         void SetBlendConstant(const float*/*[4]*/ constants) override;
         void SetStencilReference(uint32_t reference) override;
         void EndPass() override;
-        void Destroy() override;
     };
 }

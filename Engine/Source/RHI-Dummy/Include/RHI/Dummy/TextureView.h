@@ -7,12 +7,10 @@
 #include <RHI/TextureView.h>
 
 namespace RHI::Dummy {
-    class DummyTextureView : public TextureView {
+    class DummyTextureView final : public TextureView {
     public:
         NonCopyable(DummyTextureView)
         explicit DummyTextureView(const TextureViewCreateInfo& createInfo);
         ~DummyTextureView() override;
-
-        void Destroy() override;
     };
 }

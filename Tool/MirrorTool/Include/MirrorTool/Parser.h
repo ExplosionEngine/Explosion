@@ -6,7 +6,6 @@
 
 #include <vector>
 #include <string>
-#include <memory>
 #include <variant>
 #include <unordered_map>
 
@@ -15,7 +14,7 @@
 #include <Common/Utility.h>
 
 namespace MirrorTool {
-    enum class FieldAccess {
+    enum class FieldAccess : uint8_t {
         pub,
         pro,
         pri,
@@ -31,29 +30,29 @@ namespace MirrorTool {
         std::unordered_map<std::string, std::string> metaDatas;
     };
 
-    struct VariableInfo : public Node {
+    struct VariableInfo : Node {
         std::string type;
     };
 
-    struct FunctionInfo : public Node {
+    struct FunctionInfo : Node {
         std::string retType;
         std::vector<ParamNameAndType> parameters;
     };
 
-    struct ClassVariableInfo : public VariableInfo {
+    struct ClassVariableInfo : VariableInfo {
         FieldAccess fieldAccess;
     };
 
-    struct ClassFunctionInfo : public FunctionInfo {
+    struct ClassFunctionInfo : FunctionInfo {
         FieldAccess fieldAccess;
     };
 
-    struct ClassConstructorInfo : public Node {
+    struct ClassConstructorInfo : Node {
         std::vector<ParamNameAndType> parameters;
         FieldAccess fieldAccess;
     };
 
-    struct ClassInfo : public Node {
+    struct ClassInfo : Node {
         FieldAccess lastFieldAccess;
         std::string baseClassName;
         std::vector<ClassInfo> classes;
@@ -64,7 +63,7 @@ namespace MirrorTool {
         std::vector<ClassFunctionInfo> functions;
     };
 
-    struct NamespaceInfo : public Node {
+    struct NamespaceInfo : Node {
         std::vector<VariableInfo> variables;
         std::vector<FunctionInfo> functions;
         std::vector<ClassInfo> classes;
@@ -84,7 +83,7 @@ namespace MirrorTool {
         explicit Parser(std::string inSourceFile, std::vector<std::string> inHeaderDirs);
         ~Parser();
 
-        Result Parse();
+        Result Parse() const;
 
     private:
         static void Cleanup(CXIndex index, CXTranslationUnit translationUnit);
