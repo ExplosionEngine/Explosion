@@ -82,11 +82,11 @@ AddSample(
         RHI-SSAO/Model/Voyager.gltf
 )
 
-file(GLOB SOURCES Rendering-PostProcess/*.cpp)
+file(GLOB SOURCES Rendering-Triangle/*.cpp)
 AddSample(
-    NAME RenderingSample-PostProcess
+    NAME RenderingSample-Triangle
     SRC ${SOURCES}
-    INC Rendering-PostProcess
+    INC Rendering-Triangle
     SHADER
-        Rendering-PostProcess/Triangle.esl
+        Rendering-Triangle/Triangle.esl
 )

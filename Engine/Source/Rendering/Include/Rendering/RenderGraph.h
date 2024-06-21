@@ -14,6 +14,8 @@
 #include <Rendering/RenderingCache.h>
 
 namespace Rendering {
+    class RGBuilder;
+
     enum class RGResType : uint8_t {
         buffer,
         texture,
@@ -345,8 +347,10 @@ namespace Rendering {
         void ExecuteCopyPass(RHI::CommandRecorder& inRecoder, RGCopyPass* inCopyPass);
         void ExecuteComputePass(RHI::CommandRecorder& inRecoder, RGComputePass* inComputePass);
         void ExecuteRasterPass(RHI::CommandRecorder& inRecoder, RGRasterPass* inRasterPass);
+        void DevirtualizeViewsCreatedOnImportedResources();
         void DevirtualizeResources(const std::unordered_set<RGResourceRef>& inResources);
         void DevirtualizeBindGroupsAndViews(const std::vector<RGBindGroupRef>& inBindGroups);
+        void DevirtualizeAttachmentViews(const RGRasterPassDesc& inDesc);
         void FinalizePassResources(const std::unordered_set<RGResourceRef>& inResources);
         void FinalizePassBindGroups(const std::vector<RGBindGroupRef>& inBindGroups);
         void TransitionResourcesForCopyPassDesc(RHI::CommandCommandRecorder& inRecoder, const RGCopyPassDesc& inDesc);
