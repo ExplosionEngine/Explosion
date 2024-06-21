@@ -28,7 +28,26 @@ namespace RHI::Vulkan {
 
         VulkanDevice& device;
         VulkanPipelineLayout* pipelineLayout;
-        VkPipeline nativePipeline = VK_NULL_HANDLE;
+        VkPipeline nativePipeline;
+    };
+
+    class VulkanComputePipeline : public ComputePipeline {
+    public:
+        NonCopyable(VulkanComputePipeline)
+        VulkanComputePipeline(VulkanDevice& inDevice, const ComputePipelineCreateInfo& inCreateInfo);
+        ~VulkanComputePipeline() override;
+        void Destroy() override;
+
+        VulkanPipelineLayout* GetPipelineLayout() const;
+        VkPipeline GetNative() const;
+
+    private:
+        void SavePipelineLayout(const ComputePipelineCreateInfo& inCreateInfo);
+        void CreateNativeComputePipeline(const ComputePipelineCreateInfo& inCreateInfo);
+
+        VulkanDevice& device;
+        VulkanPipelineLayout* pipelineLayout;
+        VkPipeline nativePipeline;
     };
 
 }

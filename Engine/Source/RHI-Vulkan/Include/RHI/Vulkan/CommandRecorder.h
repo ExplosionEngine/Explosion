@@ -13,6 +13,7 @@ namespace RHI::Vulkan {
     class VulkanDevice;
     class VulkanCommandBuffer;
     class VulkanRasterPipeline;
+    class VulkanComputePipeline;
 
     class VulkanCommandRecorder : public CommandRecorder {
     public:
@@ -75,6 +76,7 @@ namespace RHI::Vulkan {
         VulkanDevice& device;
         VulkanCommandRecorder& commandRecorder;
         VulkanCommandBuffer& commandBuffer;
+        VulkanComputePipeline* computePipeline = nullptr;
     };
 
     class VulkanRasterPassCommandRecorder : public RasterPassCommandRecorder {
@@ -106,7 +108,7 @@ namespace RHI::Vulkan {
         VulkanCommandRecorder& commandRecorder;
         VulkanCommandBuffer& commandBuffer;
         VkCommandBuffer nativeCmdBuffer;
-        VulkanRasterPipeline* rasterPipeline;
+        VulkanRasterPipeline* rasterPipeline = nullptr;
     };
 
 }

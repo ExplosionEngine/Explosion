@@ -24,7 +24,7 @@ namespace RHI::Vulkan {
         auto* vkFence = static_cast<VulkanFence*>(inSubmitInfo.signalFence);
 
         Assert(commandBuffer);
-        const VkCommandBuffer& cmdBuffer = commandBuffer->GetNativeCommandBuffer();
+        const VkCommandBuffer& cmdBuffer = commandBuffer->GetNative();
 
         std::vector<VkSemaphore> waitSemaphores;
         std::vector<VkPipelineStageFlags> waitStageFlags;

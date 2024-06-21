@@ -39,7 +39,7 @@ namespace RHI::Vulkan {
         return new VulkanCommandRecorder(device, *this);
     }
 
-    VkCommandBuffer VulkanCommandBuffer::GetNativeCommandBuffer() const
+    VkCommandBuffer VulkanCommandBuffer::GetNative() const
     {
         return nativeCmdBuffer;
     }
