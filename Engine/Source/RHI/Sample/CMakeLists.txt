@@ -68,3 +68,9 @@ AddRHISample(
         SSAO/Shader/Common.h
     MODEL SSAO/Model/Voyager.gltf
 )
+
+AddRHISample(
+    NAME RHI-ParallelCompute
+    SRC ParallelCompute/ParallelCompute.cpp
+    SHADER ParallelCompute/Compute.hlsl
+)
