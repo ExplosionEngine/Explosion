@@ -103,7 +103,6 @@ namespace RHI::Vulkan {
         VulkanDevice& device;
         VulkanCommandRecorder& commandRecorder;
         VulkanCommandBuffer& commandBuffer;
-        VkCommandBuffer nativeCmdBuffer;
         VulkanRasterPipeline* rasterPipeline = nullptr;
     };
 

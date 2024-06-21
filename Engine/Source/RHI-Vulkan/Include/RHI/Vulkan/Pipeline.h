@@ -35,7 +35,6 @@ namespace RHI::Vulkan {
         NonCopyable(VulkanComputePipeline)
         VulkanComputePipeline(VulkanDevice& inDevice, const ComputePipelineCreateInfo& inCreateInfo);
         ~VulkanComputePipeline() override;
-        void Destroy() override;
 
         VulkanPipelineLayout* GetPipelineLayout() const;
         VkPipeline GetNative() const;
