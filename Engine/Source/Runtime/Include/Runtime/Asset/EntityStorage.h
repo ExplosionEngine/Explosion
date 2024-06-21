@@ -13,5 +13,9 @@ namespace Runtime {
 
         EProperty()
         std::unordered_map<std::string, std::vector<uint8>> components;
+
+        // TODO use to serialize and deserialize from level
+        EProperty()
+        size_t levelScopeId;
     };
 }

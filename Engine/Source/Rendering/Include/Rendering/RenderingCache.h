@@ -14,63 +14,63 @@ namespace Rendering {
     class ComputePipelineState;
     class RasterPipelineState;
 
-    using BindingMap = std::unordered_map<std::string, std::pair<RHI::ShaderStageFlags, RHI::ResourceBinding>>;
-    using SamplerDesc = RHI::SamplerCreateInfo;
-    using PrimitiveState = RHI::PrimitiveState;
-    using DepthStencilState = RHI::DepthStencilState;
-    using MultiSampleState = RHI::MultiSampleState;
-    using FragmentState = RHI::FragmentState;
+    using RBindingMap = std::unordered_map<std::string, std::pair<RHI::ShaderStageFlags, RHI::ResourceBinding>>;
+    using RSamplerDesc = RHI::SamplerCreateInfo;
+    using RPrimitiveState = RHI::PrimitiveState;
+    using RDepthStencilState = RHI::DepthStencilState;
+    using RMultiSampleState = RHI::MultiSampleState;
+    using RFragmentState = RHI::FragmentState;
 
-    struct VertexBinding {
+    struct RVertexBinding {
         std::string semanticName;
         uint8_t semanticIndex;
 
-        VertexBinding();
-        VertexBinding(std::string inSemanticName, uint8_t inSemanticIndex);
+        RVertexBinding();
+        RVertexBinding(std::string inSemanticName, uint8_t inSemanticIndex);
 
         std::string FinalSemantic() const;
         RHI::PlatformVertexBinding GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
         size_t Hash() const;
     };
 
-    struct VertexAttribute : RHI::VertexAttributeBase<VertexAttribute> {
-        VertexBinding binding;
+    struct RVertexAttribute : RHI::VertexAttributeBase<RVertexAttribute> {
+        RVertexBinding binding;
 
-        explicit VertexAttribute(
-            const VertexBinding& inBinding = VertexBinding(),
+        explicit RVertexAttribute(
+            const RVertexBinding& inBinding = RVertexBinding(),
             RHI::VertexFormat inFormat = RHI::VertexFormat::max,
             size_t inOffset = 0);
 
         RHI::VertexAttribute GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
-        VertexAttribute& SetBinding(const VertexBinding& inBinding);
+        RVertexAttribute& SetBinding(const RVertexBinding& inBinding);
         size_t Hash() const;
     };
 
-    struct VertexBufferLayout : RHI::VertexBufferLayoutBase<VertexBufferLayout> {
-        std::vector<VertexAttribute> attributes;
+    struct RVertexBufferLayout : RHI::VertexBufferLayoutBase<RVertexBufferLayout> {
+        std::vector<RVertexAttribute> attributes;
 
-        explicit VertexBufferLayout(
+        explicit RVertexBufferLayout(
             RHI::VertexStepMode inStepMode = RHI::VertexStepMode::perVertex,
             size_t inStride = 0);
 
         RHI::VertexBufferLayout GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
-        VertexBufferLayout& AddAttribute(const VertexAttribute& inAttribute);
+        RVertexBufferLayout& AddAttribute(const RVertexAttribute& inAttribute);
         size_t Hash() const;
     };
 
-    struct VertexState {
-        std::vector<VertexBufferLayout> bufferLayouts;
+    struct RVertexState {
+        std::vector<RVertexBufferLayout> bufferLayouts;
 
-        VertexState();
+        RVertexState();
 
         RHI::VertexState GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
-        VertexState& AddVertexBufferLayout(const VertexBufferLayout& inLayout);
+        RVertexState& AddVertexBufferLayout(const RVertexBufferLayout& inLayout);
         size_t Hash() const;
     };
 
     struct BindGroupLayoutDesc {
         uint8_t layoutIndex;
-        BindingMap binding;
+        RBindingMap binding;
     };
 
     struct ComputePipelineShaderSet {
@@ -109,12 +109,23 @@ namespace Rendering {
 
     struct RasterPipelineStateDesc {
         RasterPipelineShaderSet shaders;
-        VertexState vertexState;
-        PrimitiveState primitiveState;
-        DepthStencilState depthStencilState;
-        MultiSampleState multiSampleState;
-        FragmentState fragmentState;
+        RVertexState vertexState;
+        RPrimitiveState primitiveState;
+        RDepthStencilState depthStencilState;
+        RMultiSampleState multiSampleState;
+        RFragmentState fragmentState;
 
+        RasterPipelineStateDesc();
+        RasterPipelineStateDesc& SetVertexShader(const Render::ShaderInstance& inShader);
+        RasterPipelineStateDesc& SetPixelShader(const Render::ShaderInstance& inShader);
+        RasterPipelineStateDesc& SetGeometryShader(const Render::ShaderInstance& inShader);
+        RasterPipelineStateDesc& SetDomainShader(const Render::ShaderInstance& inShader);
+        RasterPipelineStateDesc& SetHullShader(const Render::ShaderInstance& inShader);
+        RasterPipelineStateDesc& SetVertexState(const RVertexState& inVertexState);
+        RasterPipelineStateDesc& SetPrimitiveState(const RPrimitiveState& inPrimtiveState);
+        RasterPipelineStateDesc& SetDepthStencilState(const RDepthStencilState& inDepthStencilState);
+        RasterPipelineStateDesc& SetMultiSampleState(const RMultiSampleState& inMultiSampleState);
+        RasterPipelineStateDesc& SetFragmentState(const RFragmentState& inFragmentState);
         size_t Hash() const;
     };
 
@@ -127,7 +138,7 @@ namespace Rendering {
     private:
         friend class SamplerCache;
 
-        Sampler(RHI::Device& inDevice, const SamplerDesc& inDesc);
+        Sampler(RHI::Device& inDevice, const RSamplerDesc& inDesc);
 
         Common::UniqueRef<RHI::Sampler> rhiHandle;
     };
@@ -145,7 +156,7 @@ namespace Rendering {
 
         BindGroupLayout(RHI::Device& inDevice, const BindGroupLayoutDesc& inDesc);
 
-        BindingMap bindings;
+        RBindingMap bindings;
         Common::UniqueRef<RHI::BindGroupLayout> rhiHandle;
     };
 
@@ -217,7 +228,7 @@ namespace Rendering {
         static SamplerCache& Get(RHI::Device& device);
         ~SamplerCache();
 
-        Sampler* GetOrCreate(const SamplerDesc& desc);
+        Sampler* GetOrCreate(const RSamplerDesc& desc);
 
     private:
         explicit SamplerCache(RHI::Device& inDevice);

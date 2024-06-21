@@ -42,6 +42,8 @@ namespace Runtime {
 
     void World::LoadFromLevel(const AssetRef<Level>& level)
     {
+        // TODO deserialize entity and components
+
         Assert(!Setuped());
         for (const auto& systemClassName : level->systems) {
             const auto* systemType = SystemTypeFinder::FromSystemClassName(systemClassName);
@@ -49,8 +51,10 @@ namespace Runtime {
         }
     }
 
-    void World::SaveToLevel(AssetRef<Level>& level)
+    void World::SaveToLevel(AssetRef<Level>& level) const
     {
+        // TODO serialize entity and components
+
         auto addSystem = [&](SystemSignature signature) -> void {
             Assert(signature.type == ClassSignatureType::staticClass);
             Assert(!level->systems.contains(signature.name));

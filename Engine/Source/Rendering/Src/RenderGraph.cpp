@@ -431,6 +431,9 @@ namespace Rendering {
     void RGBuilder::AddSyncPoint()
     {
         Assert(!executed);
+        if (recordingAsyncTimeline.empty()) {
+            return;
+        }
         asyncTimelines.emplace_back(recordingAsyncTimeline);
         recordingAsyncTimeline.clear();
     }
@@ -438,6 +441,7 @@ namespace Rendering {
     void RGBuilder::Execute(const RGExecuteInfo& inExecuteInfo)
     {
         Assert(!executed);
+        AddSyncPoint();
         executed = true;
         Compile();
         ExecuteInternal(inExecuteInfo);
@@ -465,16 +469,18 @@ namespace Rendering {
 
     RHI::BufferView* RGBuilder::GetRHI(RGBufferViewRef inBufferView) const
     {
-        AssertWithReason(!culledResources.contains(inBufferView->GetResource()), "resource has been culled");
-        AssertWithReason(devirtualizedResources.contains(inBufferView->GetResource()), "resource was not devirtualized or has been released");
+        auto* resource = inBufferView->GetResource();
+        AssertWithReason(!culledResources.contains(resource), "resource has been culled");
+        AssertWithReason(resource->imported || devirtualizedResources.contains(resource), "resource was not devirtualized or has been released");
         AssertWithReason(devirtualizedResourceViews.contains(inBufferView), "resource view was not devirtualized or has been released");
         return std::get<RHI::BufferView*>(devirtualizedResourceViews.at(inBufferView));
     }
 
     RHI::TextureView* RGBuilder::GetRHI(RGTextureViewRef inTextureView) const
     {
-        AssertWithReason(!culledResources.contains(inTextureView->GetResource()), "resource has been culled");
-        AssertWithReason(devirtualizedResources.contains(inTextureView->GetResource()), "resource was not devirtualized or has been released");
+        auto* resource = inTextureView->GetResource();
+        AssertWithReason(!culledResources.contains(resource), "resource has been culled");
+        AssertWithReason(resource->imported || devirtualizedResources.contains(resource), "resource was not devirtualized or has been released");
         AssertWithReason(devirtualizedResourceViews.contains(inTextureView), "resource view was not devirtualized or has been released");
         return std::get<RHI::TextureView*>(devirtualizedResourceViews.at(inTextureView));
     }
@@ -499,10 +505,13 @@ namespace Rendering {
     {
         CompilePassReadWrites();
         PerformCull();
+        ComputeResourcesInitialState();
     }
 
     void RGBuilder::ExecuteInternal(const RGExecuteInfo& inExecuteInfo) // NOLINT
     {
+        DevirtualizeViewsCreatedOnImportedResources();
+
         const auto asyncTimelineNum = asyncTimelines.size();
         asyncTimelineExecuteContexts.reserve(asyncTimelineNum);
 
@@ -544,6 +553,10 @@ namespace Rendering {
                 {
                     auto commandRecorder = commandBufferToRecord->Begin();
                     for (auto* pass : passes) {
+                        if (culledPasses.contains(pass)) {
+                            continue;
+                        }
+
                         if (pass->type == RGPassType::copy) {
                             ExecuteCopyPass(*commandRecorder, static_cast<RGCopyPass*>(pass));
                         } else if (pass->type == RGPassType::compute) {
@@ -624,7 +637,7 @@ namespace Rendering {
         }
 
         for (const auto& resource : resources) {
-            resourceReadCounts[resource.Get()] = resource->forceUsed ? 1 : 0;
+            resourceReadCounts[resource.Get()] = resource->forceUsed || resource->imported ? 1 : 0;
         }
         for (const auto& pass : passes) {
             for (auto* read : passReadsMap.at(pass.Get())) {
@@ -743,6 +756,7 @@ namespace Rendering {
     void RGBuilder::ExecuteComputePass(RHI::CommandRecorder& inRecoder, RGComputePass* inComputePass)
     {
         DevirtualizeResources(passWritesMap.at(inComputePass));
+        DevirtualizeBindGroupsAndViews(inComputePass->bindGroups);
         {
             const auto computePassRecoder = inRecoder.BeginComputePass();
             {
@@ -758,6 +772,8 @@ namespace Rendering {
     void RGBuilder::ExecuteRasterPass(RHI::CommandRecorder& inRecoder, RGRasterPass* inRasterPass)
     {
         DevirtualizeResources(passWritesMap.at(inRasterPass));
+        DevirtualizeAttachmentViews(inRasterPass->passDesc);
+        DevirtualizeBindGroupsAndViews(inRasterPass->bindGroups);
         {
             const auto rasterPassRecoder = inRecoder.BeginRasterPass(Internal::GetRHIRasterPassBeginInfo(*this, inRasterPass->passDesc));
             {
@@ -771,10 +787,33 @@ namespace Rendering {
         FinalizePassBindGroups(inRasterPass->bindGroups);
     }
 
+    void RGBuilder::DevirtualizeViewsCreatedOnImportedResources()
+    {
+        for (const auto& view : views) {
+            if (!view->GetResource()->imported) {
+                continue;
+            }
+
+            if (auto* viewRef = view.Get();
+                viewRef->Type() == RGResViewType::bufferView) {
+                const auto* bufferView = static_cast<RGBufferViewRef>(viewRef);
+                auto* buffer = bufferView->GetBuffer();
+                devirtualizedResourceViews.emplace(std::make_pair(viewRef, ResourceViewCache::Get(device).GetOrCreate(GetRHI(buffer), bufferView->desc)));
+            } else if (viewRef->Type() == RGResViewType::textureView) {
+                const auto* textureView = static_cast<RGTextureViewRef>(viewRef);
+                auto* texture = textureView->GetTexture();
+                devirtualizedResourceViews.emplace(std::make_pair(viewRef, ResourceViewCache::Get(device).GetOrCreate(GetRHI(texture), textureView->desc)));
+            } else {
+                Unimplement();
+            }
+        }
+    }
+
     void RGBuilder::DevirtualizeResources(const std::unordered_set<RGResourceRef>& inResources)
     {
         for (auto* resource : inResources) {
-            if (culledResources.contains(resource)
+            if (resource->imported
+                || culledResources.contains(resource)
                 || devirtualizedResources.contains(resource)) {
                 continue;
             }
@@ -818,6 +857,22 @@ namespace Rendering {
                 }
             }
             devirtualizedBindGroups.emplace(std::make_pair(bindGroup, device.CreateBindGroup(createInfo)));
+        }
+    }
+
+    void RGBuilder::DevirtualizeAttachmentViews(const RGRasterPassDesc& inDesc)
+    {
+        if (inDesc.depthStencilAttachment.has_value()) {
+            if (auto* view = inDesc.depthStencilAttachment->view;
+                !devirtualizedResourceViews.contains(view)) {
+                devirtualizedResourceViews.emplace(std::make_pair(view, ResourceViewCache::Get(device).GetOrCreate(GetRHI(view->GetTexture()), view->desc)));
+            }
+        }
+        for (const auto& colorAttachment : inDesc.colorAttachments) {
+            if (auto* view = colorAttachment.view;
+                !devirtualizedResourceViews.contains(view)) {
+                devirtualizedResourceViews.emplace(std::make_pair(view, ResourceViewCache::Get(device).GetOrCreate(GetRHI(view->GetTexture()), view->desc)));
+            }
         }
     }
 

@@ -22,7 +22,7 @@ namespace Runtime {
         void Reset() override;
 
         void LoadFromLevel(const AssetRef<Level>& level);
-        void SaveToLevel(AssetRef<Level>& level);
+        void SaveToLevel(AssetRef<Level>& level) const;
 
     private:
         std::string name;

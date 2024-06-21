@@ -6,6 +6,8 @@
 
 #include <utility>
 
+#include <Common/IO.h>
+
 namespace Rendering {
     class PipelineLayoutCache {
     public:
@@ -58,19 +60,19 @@ namespace Rendering {
 }
 
 namespace Rendering {
-    VertexBinding::VertexBinding()
+    RVertexBinding::RVertexBinding()
         : semanticName()
         , semanticIndex(0)
     {
     }
 
-    VertexBinding::VertexBinding(std::string inSemanticName, uint8_t inSemanticIndex)
+    RVertexBinding::RVertexBinding(std::string inSemanticName, uint8_t inSemanticIndex)
         : semanticName(std::move(inSemanticName))
         , semanticIndex(inSemanticIndex)
     {
     }
 
-    std::string VertexBinding::FinalSemantic() const
+    std::string RVertexBinding::FinalSemantic() const
     {
         if (semanticIndex == 0) {
             return semanticName;
@@ -78,44 +80,54 @@ namespace Rendering {
         return semanticName + std::to_string(semanticIndex);
     }
 
-    RHI::PlatformVertexBinding VertexBinding::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
+    RHI::PlatformVertexBinding RVertexBinding::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
     {
         return inReflectionData.QueryVertexBindingChecked(FinalSemantic());
     }
 
-    size_t VertexBinding::Hash() const
+    size_t RVertexBinding::Hash() const
     {
-        return Common::HashUtils::CityHash(this, sizeof(VertexBinding));
+        // NOTICE: string can not use city hash for this ptr, cause can be change every time allocated
+        const std::vector values = {
+            Common::HashUtils::CityHash(semanticName.data(), semanticName.size()),
+            static_cast<size_t>(semanticIndex)
+        };
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
     }
 
-    VertexAttribute::VertexAttribute(const VertexBinding& inBinding, RHI::VertexFormat inFormat, size_t inOffset)
-        : RHI::VertexAttributeBase<VertexAttribute>(inFormat, inOffset)
+    RVertexAttribute::RVertexAttribute(const RVertexBinding& inBinding, RHI::VertexFormat inFormat, size_t inOffset)
+        : RHI::VertexAttributeBase<RVertexAttribute>(inFormat, inOffset)
         , binding(inBinding)
     {
     }
 
-    VertexAttribute& VertexAttribute::SetBinding(const VertexBinding& inBinding)
+    RVertexAttribute& RVertexAttribute::SetBinding(const RVertexBinding& inBinding)
     {
         binding = inBinding;
         return *this;
     }
 
-    size_t VertexAttribute::Hash() const
+    size_t RVertexAttribute::Hash() const
     {
-        return Common::HashUtils::CityHash(this, sizeof(VertexAttribute));
+        const std::vector values = {
+            binding.Hash(),
+            static_cast<size_t>(format),
+            offset
+        };
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
     }
 
-    RHI::VertexAttribute VertexAttribute::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
+    RHI::VertexAttribute RVertexAttribute::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
     {
         return RHI::VertexAttribute(binding.GetRHI(inReflectionData), format, offset);
     }
 
-    VertexBufferLayout::VertexBufferLayout(RHI::VertexStepMode inStepMode, size_t inStride)
-        : RHI::VertexBufferLayoutBase<VertexBufferLayout>(inStepMode, inStride)
+    RVertexBufferLayout::RVertexBufferLayout(RHI::VertexStepMode inStepMode, size_t inStride)
+        : RHI::VertexBufferLayoutBase<RVertexBufferLayout>(inStepMode, inStride)
     {
     }
 
-    RHI::VertexBufferLayout VertexBufferLayout::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
+    RHI::VertexBufferLayout RVertexBufferLayout::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
     {
         RHI::VertexBufferLayout result(stepMode, stride);
         result.attributes.reserve(attributes.size());
@@ -125,13 +137,13 @@ namespace Rendering {
         return result;
     }
 
-    VertexBufferLayout& VertexBufferLayout::AddAttribute(const VertexAttribute& inAttribute)
+    RVertexBufferLayout& RVertexBufferLayout::AddAttribute(const RVertexAttribute& inAttribute)
     {
         attributes.emplace_back(inAttribute);
         return *this;
     }
 
-    size_t VertexBufferLayout::Hash() const
+    size_t RVertexBufferLayout::Hash() const
     {
         std::vector<size_t> values;
         values.reserve(attributes.size());
@@ -142,10 +154,11 @@ namespace Rendering {
         return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
     }
 
-    VertexState::VertexState() = default;
+    RVertexState::RVertexState() = default;
 
-    RHI::VertexState VertexState::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
+    RHI::VertexState RVertexState::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
     {
+        // TODO check hash
         RHI::VertexState result;
         result.bufferLayouts.reserve(bufferLayouts.size());
         for (const auto& bufferLayout : bufferLayouts) {
@@ -154,13 +167,13 @@ namespace Rendering {
         return result;
     }
 
-    VertexState& VertexState::AddVertexBufferLayout(const VertexBufferLayout& inLayout)
+    RVertexState& RVertexState::AddVertexBufferLayout(const RVertexBufferLayout& inLayout)
     {
         bufferLayouts.emplace_back(inLayout);
         return *this;
     }
 
-    size_t VertexState::Hash() const
+    size_t RVertexState::Hash() const
     {
         std::vector<size_t> values;
         values.reserve(bufferLayouts.size());
@@ -168,7 +181,7 @@ namespace Rendering {
         for (const auto& layout : bufferLayouts) {
             values.emplace_back(layout.Hash());
         }
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t ));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
     }
 
     size_t ComputePipelineShaderSet::Hash() const
@@ -203,6 +216,68 @@ namespace Rendering {
         return shaders.Hash();
     }
 
+    RasterPipelineStateDesc::RasterPipelineStateDesc() = default;
+
+    RasterPipelineStateDesc& RasterPipelineStateDesc::SetVertexShader(const Render::ShaderInstance& inShader)
+    {
+        shaders.vertexShader = inShader;
+        return *this;
+    }
+
+    RasterPipelineStateDesc& RasterPipelineStateDesc::SetPixelShader(const Render::ShaderInstance& inShader)
+    {
+        shaders.pixelShader = inShader;
+        return *this;
+    }
+
+    RasterPipelineStateDesc& RasterPipelineStateDesc::SetGeometryShader(const Render::ShaderInstance& inShader)
+    {
+        shaders.geometryShader = inShader;
+        return *this;
+    }
+
+    RasterPipelineStateDesc& RasterPipelineStateDesc::SetDomainShader(const Render::ShaderInstance& inShader)
+    {
+        shaders.domainShader = inShader;
+        return *this;
+    }
+
+    RasterPipelineStateDesc& RasterPipelineStateDesc::SetHullShader(const Render::ShaderInstance& inShader)
+    {
+        shaders.hullShader = inShader;
+        return *this;
+    }
+
+    RasterPipelineStateDesc& RasterPipelineStateDesc::SetVertexState(const RVertexState& inVertexState)
+    {
+        vertexState = inVertexState;
+        return *this;
+    }
+
+    RasterPipelineStateDesc& RasterPipelineStateDesc::SetPrimitiveState(const RPrimitiveState& inPrimtiveState)
+    {
+        primitiveState = inPrimtiveState;
+        return *this;
+    }
+
+    RasterPipelineStateDesc& RasterPipelineStateDesc::SetDepthStencilState(const RDepthStencilState& inDepthStencilState)
+    {
+        depthStencilState = inDepthStencilState;
+        return *this;
+    }
+
+    RasterPipelineStateDesc& RasterPipelineStateDesc::SetMultiSampleState(const RMultiSampleState& inMultiSampleState)
+    {
+        multiSampleState = inMultiSampleState;
+        return *this;
+    }
+
+    RasterPipelineStateDesc& RasterPipelineStateDesc::SetFragmentState(const RFragmentState& inFragmentState)
+    {
+        fragmentState = inFragmentState;
+        return *this;
+    }
+
     size_t RasterPipelineStateDesc::Hash() const
     {
         const std::vector values = {
@@ -216,7 +291,7 @@ namespace Rendering {
         return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
     }
 
-    Sampler::Sampler(RHI::Device& inDevice, const SamplerDesc& inDesc)
+    Sampler::Sampler(RHI::Device& inDevice, const RSamplerDesc& inDesc)
     {
         rhiHandle = inDevice.CreateSampler(inDesc);
     }
@@ -293,8 +368,11 @@ namespace Rendering {
 
     void PipelineLayout::CreateBindGroupLayout(RHI::Device& device, const std::vector<ShaderInstancePack>& shaderInstancePack)
     {
-        std::unordered_map<uint8_t, BindingMap> layoutBindingMaps;
+        std::unordered_map<uint8_t, RBindingMap> layoutBindingMaps;
         for (const auto& [stage, instance] : shaderInstancePack) {
+            if (!instance->IsValid()) {
+                continue;
+            }
             Assert(instance->reflectionData != nullptr);
 
             for (const auto& resourceBindings = instance->reflectionData->resourceBindings;
@@ -440,9 +518,9 @@ namespace Rendering {
 
     SamplerCache::~SamplerCache() = default;
 
-    Sampler* SamplerCache::GetOrCreate(const SamplerDesc& desc)
+    Sampler* SamplerCache::GetOrCreate(const RSamplerDesc& desc)
     {
-        const size_t hash = Common::HashUtils::CityHash(&desc, sizeof(SamplerDesc));
+        const size_t hash = Common::HashUtils::CityHash(&desc, sizeof(RSamplerDesc));
         if (const auto iter = samplers.find(hash);
             iter == samplers.end()) {
             samplers[hash] = Common::UniqueRef(new Sampler(device, desc));
@@ -472,6 +550,7 @@ namespace Rendering {
     {
         computePipelines.clear();
         rasterPipelines.clear();
+        PipelineLayoutCache::Get(device).Invalidate();
     }
 
     ComputePipelineState* PipelineCache::GetOrCreate(const ComputePipelineStateDesc& desc)
@@ -498,11 +577,10 @@ namespace Rendering {
     {
         static std::unordered_map<RHI::Device*, Common::UniqueRef<ResourceViewCache>> map;
 
-        const auto iter = map.find(&device);
-        if (iter == map.end()) {
+        if (!map.contains(&device)) {
             map.emplace(std::make_pair(&device, Common::UniqueRef(new ResourceViewCache(device))));
         }
-        return *iter->second;
+        return *map.at(&device);
     }
 
     ResourceViewCache::ResourceViewCache(RHI::Device& inDevice)
