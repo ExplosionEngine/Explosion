@@ -15,13 +15,13 @@ namespace Runtime {
         bool isEditor;
     };
 
-    class RUNTIME_API RuntimeModule : public Core::Module {
+    class RUNTIME_API RuntimeModule final : public Core::Module {
     public:
         RuntimeModule();
         ~RuntimeModule() override;
 
         void Initialize(const RuntimeModuleInitParams& inParams);
-        Engine* GetEngine();
+        Engine* GetEngine() const;
         World* CreateWorld(const std::string& inName = "") const;
         void DestroyWorld(World* inWorld) const;
 

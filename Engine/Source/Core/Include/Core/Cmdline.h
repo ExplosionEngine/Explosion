@@ -7,7 +7,6 @@
 #include <clipp.h>
 
 #include <string>
-#include <unordered_map>
 
 #include <Core/Api.h>
 
