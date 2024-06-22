@@ -5,13 +5,9 @@
 #pragma once
 
 #include <Common/Math/Vector.h>
-#include <Common/Debug.h>
 #include <Common/Serialization.h>
-
-namespace Common::Internal {
-    template <typename LHS, typename... RHS>
-    struct IsAllSame {};
-}
+#include <Common/Debug.h>
+#include <Common/Utility.h>
 
 namespace Common {
     enum class MatrixSetupType : uint8_t {
@@ -34,11 +30,11 @@ namespace Common {
         static constexpr uint8_t cols = C;
 
         template <typename... IT>
-        requires (Internal::IsAllSame<Vector<T, C>, IT...>::value) && (sizeof...(IT) == R)
+        requires (IsAllSame<Vector<T, C>, IT...>::value) && (sizeof...(IT) == R)
         static Matrix FromRowVecs(IT&&... inVectors);
 
         template <typename... IT>
-        requires (Internal::IsAllSame<Vector<T, R>, IT...>::value) && (sizeof...(IT) == C)
+        requires (IsAllSame<Vector<T, R>, IT...>::value) && (sizeof...(IT) == C)
         static Matrix FromColVecs(IT&&... inVectors);
 
         Matrix();
@@ -324,16 +320,6 @@ namespace Common { // NOLINT
 }
 
 namespace Common::Internal {
-    template <typename LHS, typename RHS0, typename... RHS>
-    struct IsAllSame<LHS, RHS0, RHS...> {
-        static constexpr bool value = std::is_same_v<std::remove_cvref_t<LHS>, std::remove_cvref_t<RHS0>> && IsAllSame<LHS, RHS...>::value;
-    };
-
-    template <typename LHS, typename RHS>
-    struct IsAllSame<LHS, RHS> {
-        static constexpr bool value = std::is_same_v<std::remove_cvref_t<LHS>, std::remove_cvref_t<RHS>>;
-    };
-
     template <typename T, uint8_t R, uint8_t C, typename... VT, size_t... VI>
     static void CopyValuesToMatrix(Matrix<T, R, C>& matrix, VT&&... inValue, std::index_sequence<VI...>)
     {
@@ -420,7 +406,7 @@ namespace Common::Internal {
 namespace Common {
     template <typename T, uint8_t R, uint8_t C>
     template <typename... IT>
-    requires (Internal::IsAllSame<Vector<T, C>, IT...>::value) && (sizeof...(IT) == R)
+    requires (IsAllSame<Vector<T, C>, IT...>::value) && (sizeof...(IT) == R)
     Matrix<T, R, C> Matrix<T, R, C>::FromRowVecs(IT&&... inVectors)
     {
         Matrix<T, R, C> result;
@@ -430,7 +416,7 @@ namespace Common {
 
     template <typename T, uint8_t R, uint8_t C>
     template <typename... IT>
-    requires (Internal::IsAllSame<Vector<T, R>, IT...>::value) && (sizeof...(IT) == C)
+    requires (IsAllSame<Vector<T, R>, IT...>::value) && (sizeof...(IT) == C)
     Matrix<T, R, C> Matrix<T, R, C>::FromColVecs(IT&&... inVectors)
     {
         Matrix<T, R, C> result;
@@ -726,7 +712,7 @@ namespace Common {
     template <typename... IT>
     void Matrix<T, R, C>::SetRow(uint8_t index, IT&&... inValues)
     {
-        if constexpr (sizeof...(IT) == 1 && Internal::IsAllSame<Vector<T, C>, IT...>::value) {
+        if constexpr (sizeof...(IT) == 1 && IsAllSame<Vector<T, C>, IT...>::value) {
             Internal::CopyVectorToMatrixRow<T, R, C>(*this, index, std::forward<IT>(inValues)..., std::make_index_sequence<C> {});
         } else {
             Internal::CopyValuesToMatrixRow<T, R, C, IT...>(*this, index, std::forward<IT>(inValues)..., std::make_index_sequence<sizeof...(IT)> {});
@@ -737,7 +723,7 @@ namespace Common {
     template <typename... IT>
     void Matrix<T, R, C>::SetCol(uint8_t index, IT&&... inValues)
     {
-        if constexpr (sizeof...(IT) == 1 && Internal::IsAllSame<Vector<T, R>, IT...>::value) {
+        if constexpr (sizeof...(IT) == 1 && IsAllSame<Vector<T, R>, IT...>::value) {
             Internal::CopyVectorToMatrixCol<T, R, C>(*this, index, std::forward<IT>(inValues)..., std::make_index_sequence<R> {});
         } else {
             Internal::CopyValuesToMatrixCol<T, R, C, IT...>(*this, index, std::forward<IT>(inValues)..., std::make_index_sequence<sizeof...(IT)> {});

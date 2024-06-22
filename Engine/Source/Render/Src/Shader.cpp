@@ -40,13 +40,13 @@ namespace Render {
         return iter->second;
     }
 
+    IShaderType::~IShaderType() {}
+
     ShaderArchiveStorage& ShaderArchiveStorage::Get()
     {
         static ShaderArchiveStorage instance;
         return instance;
     }
-
-    IShaderType::~IShaderType() {}
 
     ShaderArchiveStorage::ShaderArchiveStorage() = default;
 
@@ -103,9 +103,25 @@ namespace Render {
 
     GlobalShaderRegistry::~GlobalShaderRegistry() = default;
 
-    const std::vector<IShaderType*>& GlobalShaderRegistry::GetShaderTypes()
+    const std::vector<IShaderType*>& GlobalShaderRegistry::GetShaderTypes() const
     {
         return shaderTypes;
+    }
+
+    void GlobalShaderRegistry::InvalidateAll() const // NOLINT
+    {
+        ShaderArchiveStorage::Get().InvalidateAll();
+        for (auto* shaderType : shaderTypes) {
+            shaderType->Invalidate();
+        }
+    }
+
+    void GlobalShaderRegistry::ReloadAll() const
+    {
+        InvalidateAll();
+        for (auto* shaderType : shaderTypes) {
+            shaderType->Reload();
+        }
     }
 
     BoolShaderVariantFieldImpl::BoolShaderVariantFieldImpl()

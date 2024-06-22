@@ -2,11 +2,10 @@
 // Created by swtpotato on 2022/8/2.
 //
 
-#include <Common/Debug.h>
 #include <RHI/Vulkan/Synchronous.h>
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Gpu.h>
-#include <RHI/Vulkan/Instance.h>
+#include <Common/Debug.h>
 
 namespace RHI::Vulkan {
     VulkanFence::VulkanFence(VulkanDevice& inDevice, bool inInitAsSignaled)
@@ -33,13 +32,13 @@ namespace RHI::Vulkan {
 
     void VulkanFence::Reset()
     {
-        std::vector<VkFence> fences = {nativeFence };
+        const std::vector fences = { nativeFence };
         Assert(vkResetFences(device.GetNative(), fences.size(), fences.data()) == VK_SUCCESS);
     }
 
     void VulkanFence::Wait()
     {
-        std::vector<VkFence> fences = {nativeFence };
+        const std::vector fences = { nativeFence };
         Assert(vkWaitForFences(device.GetNative(), fences.size(), fences.data(), VK_TRUE, UINT64_MAX) == VK_SUCCESS);
     }
 

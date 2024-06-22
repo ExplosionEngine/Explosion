@@ -13,7 +13,6 @@
 #include <Common/Debug.h>
 #include <Common/Hash.h>
 #include <Common/File.h>
-#include <Common/Math/Vector.h>
 #include <RHI/Common.h>
 #include <RHI/Device.h>
 #include <RHI/ShaderModule.h>
@@ -50,8 +49,6 @@ namespace Render {
         ShaderReflectionData reflectionData;
     };
 
-    using ShaderArchivePackage = std::unordered_map<VariantKey, ShaderArchive>;
-
     class IShaderType {
     public:
         virtual ~IShaderType();
@@ -64,6 +61,7 @@ namespace Render {
         virtual const std::vector<VariantKey>& GetVariants() = 0;
         virtual const std::vector<std::string>& GetDefinitions(VariantKey variantKey) = 0;
         virtual void Reload() = 0;
+        virtual void Invalidate() = 0;
     };
 
     struct ShaderInstance {
@@ -76,6 +74,8 @@ namespace Render {
         size_t Hash() const;
     };
 
+    using ShaderArchivePackage = std::unordered_map<VariantKey, ShaderArchive>;
+
     class ShaderArchiveStorage {
     public:
         static ShaderArchiveStorage& Get();
@@ -83,7 +83,6 @@ namespace Render {
         ~ShaderArchiveStorage();
         NonCopyable(ShaderArchiveStorage)
 
-        // TODO fill byte codes after compiling using this interface
         void UpdateShaderArchivePackage(ShaderTypeKey shaderTypeKey, ShaderArchivePackage&& shaderArchivePackage);
         const ShaderArchivePackage& GetShaderArchivePackage(ShaderTypeKey shaderTypeKey);
         void InvalidateAll();
@@ -116,6 +115,7 @@ namespace Render {
         const std::vector<VariantKey>& GetVariants() override;
         const std::vector<std::string>& GetDefinitions(VariantKey variantKey) override;
         void Reload() override;
+        void Invalidate() override;
 
     private:
         void ReloadInternal();
@@ -135,21 +135,20 @@ namespace Render {
     template <typename T>
     class GlobalShaderMap {
     public:
-        static GlobalShaderMap& Get(RHI::Device& device);
+        static GlobalShaderMap& Get();
 
         ~GlobalShaderMap();
         NonCopyable(GlobalShaderMap)
 
         void Invalidate();
-        ShaderInstance GetShaderInstance(const typename T::VariantSet& variantSet);
+        ShaderInstance GetShaderInstance(RHI::Device& device, const typename T::VariantSet& variantSet);
 
     private:
-        explicit GlobalShaderMap(RHI::Device& inDevice);
+        GlobalShaderMap();
 
         [[nodiscard]] const ShaderArchive& GetArchive(const typename T::VariantSet& variantSet) const;
 
-        RHI::Device& device;
-        std::unordered_map<VariantKey, Common::UniqueRef<RHI::ShaderModule>> shaderModules;
+        std::unordered_map<RHI::Device*, std::unordered_map<VariantKey, Common::UniqueRef<RHI::ShaderModule>>> shaderModules;
     };
 
     class GlobalShaderRegistry {
@@ -163,7 +162,11 @@ namespace Render {
         template <typename Shader>
         void Register();
 
-        const std::vector<IShaderType*>& GetShaderTypes();
+        const std::vector<IShaderType*>& GetShaderTypes() const;
+        // call this func before device release
+        void InvalidateAll() const;
+        // call this func after shader reloaded
+        void ReloadAll() const;
 
     private:
         std::vector<IShaderType*> shaderTypes;
@@ -198,7 +201,7 @@ namespace Render {
 
         RangedIntShaderVariantFieldImpl();
         RangedIntShaderVariantFieldImpl(RangedIntShaderVariantFieldImpl&& other) noexcept;
-        ~RangedIntShaderVariantFieldImpl();
+        ~RangedIntShaderVariantFieldImpl(); // NOLINT
 
         void Set(ValueType inValue);
         [[nodiscard]] ValueType Get() const;
@@ -258,6 +261,10 @@ namespace Render {
 
 #define VariantSet(...) \
     class VariantSet : public Render::VariantSetImpl<__VA_ARGS__> {};
+
+#define NonVariant \
+    RangedIntShaderVariantField(_PlaceholderVariantField, "__PLACEHOLDER_VARIANT", 0, 0); \
+    VariantSet(_PlaceholderVariantField);
 
 #define RegisterGlobalShader(inClass) \
     static uint8_t _globalShaderRegister_##inClass = []() -> uint8_t { \
@@ -329,7 +336,7 @@ namespace Render {
     }
 
     template <typename Shader>
-    const std::vector<std::string>& GlobalShaderType<Shader>::GetDefinitions(Render::VariantKey variantKey)
+    const std::vector<std::string>& GlobalShaderType<Shader>::GetDefinitions(VariantKey variantKey)
     {
         return variantDefinitions.at(variantKey);
     }
@@ -337,7 +344,14 @@ namespace Render {
     template <typename Shader>
     void GlobalShaderType<Shader>::Reload()
     {
+        Invalidate();
         ReloadInternal();
+    }
+
+    template <typename Shader>
+    void GlobalShaderType<Shader>::Invalidate()
+    {
+        GlobalShaderMap<Shader>::Get().Invalidate();
     }
 
     template <typename Shader>
@@ -368,7 +382,7 @@ namespace Render {
                 return;
             }
         }
-        QuickFail();
+        code = Common::FileUtils::ReadTextFile(sourceFile);
     }
 
     template <typename Shader>
@@ -398,14 +412,10 @@ namespace Render {
     }
 
     template <typename T>
-    GlobalShaderMap<T>& GlobalShaderMap<T>::Get(RHI::Device& device)
+    GlobalShaderMap<T>& GlobalShaderMap<T>::Get()
     {
-        static std::unordered_map<RHI::Device*, Common::UniqueRef<GlobalShaderMap<T>>> map;
-        auto iter = map.find(&device);
-        if (iter == map.end()) {
-            map[&device] = Common::UniqueRef<GlobalShaderMap<T>>(new GlobalShaderMap<T>(device));
-        }
-        return *map[&device];
+        static GlobalShaderMap instance;
+        return instance;
     }
 
     template <typename T>
@@ -414,42 +424,36 @@ namespace Render {
     template <typename T>
     void GlobalShaderMap<T>::Invalidate()
     {
-        auto variantNum = T::VariantSet::VariantNum();
         shaderModules.clear();
-        shaderModules.reserve(variantNum);
     }
 
     template <typename T>
-    ShaderInstance GlobalShaderMap<T>::GetShaderInstance(const typename T::VariantSet& variantSet)
+    ShaderInstance GlobalShaderMap<T>::GetShaderInstance(RHI::Device& device, const typename T::VariantSet& variantSet)
     {
         auto variantKey = variantSet.Hash();
         const auto& archive = GetArchive(variantSet);
+        auto& deviceShaderModules = shaderModules[&device];
 
-        auto iter = shaderModules.find(variantKey);
-        if (iter != shaderModules.end()) {
-            shaderModules[variantKey] = device.CreateShaderModule(RHI::ShaderModuleCreateInfo(T::entryPoint, archive.byteCode));
+        auto iter = deviceShaderModules.find(variantKey);
+        if (iter == deviceShaderModules.end()) {
+            deviceShaderModules[variantKey] = device.CreateShaderModule(RHI::ShaderModuleCreateInfo(T::entryPoint, archive.byteCode));
         }
 
         ShaderInstance result;
-        result.rhiHandle = shaderModules[variantKey].Get();
-        result.typeKey = GlobalShaderType<T>::Get().GetHash();
+        result.rhiHandle = deviceShaderModules.at(variantKey).Get();
+        result.typeKey = GlobalShaderType<T>::Get().GetKey();
         result.variantKey = variantKey;
         result.reflectionData = &archive.reflectionData;
         return result;
     }
 
     template <typename T>
-    GlobalShaderMap<T>::GlobalShaderMap(RHI::Device& inDevice)
-        : device(inDevice)
-    {
-        auto variantNum = T::VariantSet::VariantNum();
-        shaderModules.reserve(variantNum);
-    }
+    GlobalShaderMap<T>::GlobalShaderMap() = default;
 
     template<typename T>
     const ShaderArchive& GlobalShaderMap<T>::GetArchive(const typename T::VariantSet& variantSet) const
     {
-        const auto& package = ShaderArchiveStorage::Get().GetShaderArchivePackage(&GlobalShaderType<T>::Get());
+        const auto& package = ShaderArchiveStorage::Get().GetShaderArchivePackage(GlobalShaderType<T>::Get().GetKey());
 
         auto iter = package.find(variantSet.Hash());
         Assert(iter != package.end());

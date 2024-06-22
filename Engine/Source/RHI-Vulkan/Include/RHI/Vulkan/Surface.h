@@ -13,7 +13,7 @@ namespace RHI::Vulkan {
 
     VkSurfaceKHR CreateNativeSurface(const VkInstance& instance, const SurfaceCreateInfo& createInfo);
 
-    class VulkanSurface : public Surface {
+    class VulkanSurface final : public Surface {
     public:
         NonCopyable(VulkanSurface)
         VulkanSurface(VulkanDevice& inDevice, const SurfaceCreateInfo& inCreateInfo);

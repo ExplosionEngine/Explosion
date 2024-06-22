@@ -5,12 +5,13 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+
 #include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
     class VulkanDevice;
 
-    class VulkanFence : public Fence {
+    class VulkanFence final : public Fence {
     public:
         NonCopyable(VulkanFence)
         explicit VulkanFence(VulkanDevice& inDevice, bool inInitAsSignaled);
@@ -27,7 +28,7 @@ namespace RHI::Vulkan {
         VkFence nativeFence;
     };
 
-    class VulkanSemaphore : public Semaphore {
+    class VulkanSemaphore final : public Semaphore {
     public:
         NonCopyable(VulkanSemaphore)
         explicit VulkanSemaphore(VulkanDevice& inDevice);

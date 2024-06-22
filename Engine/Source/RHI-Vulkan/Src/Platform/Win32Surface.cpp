@@ -16,8 +16,8 @@ namespace RHI::Vulkan {
     {
         VkWin32SurfaceCreateInfoKHR surfaceInfo = {};
         surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-        surfaceInfo.hwnd = (HWND)createInfo.window;
-        surfaceInfo.hinstance = GetModuleHandle(0);
+        surfaceInfo.hwnd = static_cast<HWND>(createInfo.window);
+        surfaceInfo.hinstance = GetModuleHandle(nullptr);
         VkSurfaceKHR surface = VK_NULL_HANDLE;
         Assert(vkCreateWin32SurfaceKHR(instance, &surfaceInfo, nullptr, &surface) == VK_SUCCESS);
         return surface;

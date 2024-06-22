@@ -55,7 +55,7 @@ namespace RHI::Vulkan {
 
     void VulkanBindGroup::CreateNativeDescriptorSet(const BindGroupCreateInfo& inCreateInfo)
     {
-        VkDescriptorSetLayout layout = static_cast<VulkanBindGroupLayout*>(inCreateInfo.layout)->GetNative();
+        const VkDescriptorSetLayout layout = static_cast<VulkanBindGroupLayout*>(inCreateInfo.layout)->GetNative();
 
         VkDescriptorSetAllocateInfo allocInfo {};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -80,8 +80,8 @@ namespace RHI::Vulkan {
         int imageInfosNum = 0;
         int bufferInfosNum = 0;
         for (int i = 0; i < entryCount; i++) {
-            const auto& entry = inCreateInfo.entries[i];
-            if (entry.binding.type == BindingType::uniformBuffer) {
+            if (const auto& entry = inCreateInfo.entries[i];
+                entry.binding.type == BindingType::uniformBuffer) {
                 bufferInfosNum++;
             } else if (entry.binding.type == BindingType::sampler || entry.binding.type == BindingType::texture) {
                 imageInfosNum++;
@@ -109,14 +109,14 @@ namespace RHI::Vulkan {
 
                 descriptorWrites[i].pBufferInfo = &bufferInfos.back();
             } else if (entry.binding.type == BindingType::sampler) {
-                auto* sampler = static_cast<VulkanSampler*>(std::get<Sampler*>(entry.entity));
+                const auto* sampler = static_cast<VulkanSampler*>(std::get<Sampler*>(entry.entity));
 
                 imageInfos.emplace_back();
                 imageInfos.back().sampler = sampler->GetNative();
 
                 descriptorWrites[i].pImageInfo = &imageInfos.back();
             } else if (entry.binding.type == BindingType::texture) {
-                auto* textureView = static_cast<VulkanTextureView*>(std::get<TextureView*>(entry.entity));
+                const auto* textureView = static_cast<VulkanTextureView*>(std::get<TextureView*>(entry.entity));
 
                 imageInfos.emplace_back();
                 imageInfos.back().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -125,6 +125,7 @@ namespace RHI::Vulkan {
                 descriptorWrites[i].pImageInfo = &imageInfos.back();
             } else {
                 //TODO
+                Unimplement();
             }
         }
         vkUpdateDescriptorSets(device.GetNative(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);

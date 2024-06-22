@@ -6,5 +6,3 @@ AddLibrary(
     PUBLIC_INC Include
     LIB Core
 )
-
-add_subdirectory(Sample)

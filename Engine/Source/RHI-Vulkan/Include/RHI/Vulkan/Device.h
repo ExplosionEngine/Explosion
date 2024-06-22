@@ -7,8 +7,6 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
-#include <algorithm>
-#include <string>
 
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
@@ -19,7 +17,7 @@ namespace RHI::Vulkan {
     class VulkanGpu;
     class VulkanQueue;
 
-    class VulkanDevice : public Device {
+    class VulkanDevice final : public Device {
     public:
         NonCopyable(VulkanDevice)
         VulkanDevice(VulkanGpu& inGpu, const DeviceCreateInfo& inCreateInfo);
@@ -43,12 +41,12 @@ namespace RHI::Vulkan {
         Common::UniqueRef<Semaphore> CreateSemaphore() override;
         bool CheckSwapChainFormatSupport(Surface* inSurface, PixelFormat inFormat) override;
 
-        VkDevice GetNative();
+        VkDevice GetNative() const;
         VmaAllocator& GetNativeAllocator();
         VulkanGpu& GetGpu() const;
 
 #if BUILD_CONFIG_DEBUG
-        void SetObjectName(VkObjectType inObjectType, uint64_t inObjectHandle, const char* inObjectName);
+        void SetObjectName(VkObjectType inObjectType, uint64_t inObjectHandle, const char* inObjectName) const;
 #endif
 
     private:

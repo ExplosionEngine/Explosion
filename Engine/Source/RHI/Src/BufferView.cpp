@@ -5,6 +5,16 @@
 #include <RHI/BufferView.h>
 
 namespace RHI {
+    VertexBufferViewInfo::VertexBufferViewInfo(uint32_t inStride)
+        : stride(inStride)
+    {
+    }
+
+    IndexBufferViewInfo::IndexBufferViewInfo(IndexFormat inFormat)
+        : format(inFormat)
+    {
+    }
+
     BufferViewCreateInfo::BufferViewCreateInfo(
         const BufferViewType inType,
         const uint32_t inSize,

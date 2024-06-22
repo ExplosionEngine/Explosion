@@ -96,7 +96,7 @@ private:
 
     void CreateSwapChain()
     {
-        static std::vector<PixelFormat> swapChainFormatQualifiers = {
+        static std::vector swapChainFormatQualifiers = {
             PixelFormat::rgba8Unorm,
             PixelFormat::bgra8Unorm
         };
@@ -170,10 +170,10 @@ private:
 
     void CreatePipeline()
     {
-        vsCompileOutput = CompileShader("../Test/Sample/RHI/Triangle/Triangle.hlsl", "VSMain", RHI::ShaderStageBits::sVertex);
+        vsCompileOutput = CompileShader("../Test/Sample/RHI-Triangle/Triangle.hlsl", "VSMain", RHI::ShaderStageBits::sVertex);
         vertexShader = device->CreateShaderModule(ShaderModuleCreateInfo("VSMain", vsCompileOutput.byteCode));
 
-        psCompileOutput = CompileShader("../Test/Sample/RHI/Triangle/Triangle.hlsl", "PSMain", RHI::ShaderStageBits::sPixel);
+        psCompileOutput = CompileShader("../Test/Sample/RHI-Triangle/Triangle.hlsl", "PSMain", RHI::ShaderStageBits::sPixel);
         pixelShader = device->CreateShaderModule(ShaderModuleCreateInfo("PSMain", psCompileOutput.byteCode));
 
         RasterPipelineCreateInfo createInfo = RasterPipelineCreateInfo(pipelineLayout.Get())

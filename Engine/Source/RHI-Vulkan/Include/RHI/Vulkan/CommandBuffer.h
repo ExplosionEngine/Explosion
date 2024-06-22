@@ -5,13 +5,15 @@
 #pragma once
 
 #include <vector>
+
 #include <vulkan/vulkan.h>
+
 #include <RHI/CommandBuffer.h>
 
 namespace RHI::Vulkan {
     class VulkanDevice;
 
-    class VulkanCommandBuffer : public CommandBuffer {
+    class VulkanCommandBuffer final : public CommandBuffer {
     public:
         NonCopyable(VulkanCommandBuffer)
         VulkanCommandBuffer(VulkanDevice& inDevice, VkCommandPool inNativeCmdPool);

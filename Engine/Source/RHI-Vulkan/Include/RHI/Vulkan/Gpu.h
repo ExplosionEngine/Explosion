@@ -11,7 +11,7 @@
 namespace RHI::Vulkan {
     class VulkanInstance;
 
-    class VulkanGpu : public Gpu {
+    class VulkanGpu final : public Gpu {
     public:
         NonCopyable(VulkanGpu)
         explicit VulkanGpu(VulkanInstance& inInstance, VkPhysicalDevice inNativePhysicalDevice);

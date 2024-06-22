@@ -8,7 +8,9 @@
 
 namespace RHI::Vulkan {
     VulkanSampler::VulkanSampler(VulkanDevice& inDevice, const SamplerCreateInfo& inCreateInfo)
-        : Sampler(inCreateInfo), device(inDevice), nativeSampler(VK_NULL_HANDLE)
+        : Sampler(inCreateInfo)
+        , device(inDevice)
+        , nativeSampler(VK_NULL_HANDLE)
     {
         CreateSampler(inCreateInfo);
     }

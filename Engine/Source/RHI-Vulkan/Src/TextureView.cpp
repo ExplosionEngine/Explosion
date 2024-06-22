@@ -9,7 +9,13 @@
 
 namespace RHI::Vulkan {
     VulkanTextureView::VulkanTextureView(VulkanTexture& inTexture, VulkanDevice& nDevice, const TextureViewCreateInfo& inCreateInfo)
-        : TextureView(inCreateInfo), device(nDevice), texture(inTexture), baseMipLevel(inCreateInfo.baseMipLevel), mipLevelNum(inCreateInfo.mipLevelNum), baseArrayLayer(inCreateInfo.baseArrayLayer), arrayLayerNum(inCreateInfo.arrayLayerNum)
+        : TextureView(inCreateInfo)
+        , device(nDevice)
+        , texture(inTexture)
+        , baseMipLevel(inCreateInfo.baseMipLevel)
+        , mipLevelNum(inCreateInfo.mipLevelNum)
+        , baseArrayLayer(inCreateInfo.baseArrayLayer)
+        , arrayLayerNum(inCreateInfo.arrayLayerNum)
     {
         CreateImageView(inCreateInfo);
     }

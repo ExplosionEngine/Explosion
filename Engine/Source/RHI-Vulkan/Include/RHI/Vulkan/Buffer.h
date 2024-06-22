@@ -13,7 +13,7 @@
 namespace RHI::Vulkan {
     class VulkanDevice;
 
-    class VulkanBuffer : public Buffer {
+    class VulkanBuffer final : public Buffer {
     public:
         NonCopyable(VulkanBuffer)
         VulkanBuffer(VulkanDevice& inDevice, const BufferCreateInfo& inCreateInfo);
@@ -23,8 +23,8 @@ namespace RHI::Vulkan {
         void UnMap() override;
         Common::UniqueRef<BufferView> CreateBufferView(const BufferViewCreateInfo& inCreateInfo) override;
 
-        VkBuffer GetNative();
-        BufferUsageFlags GetUsages();
+        VkBuffer GetNative() const;
+        BufferUsageFlags GetUsages() const;
 
     private:
         void CreateNativeBuffer(const BufferCreateInfo& inCreateInfo);

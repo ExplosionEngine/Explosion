@@ -8,7 +8,7 @@
 #include <RHI/Vulkan/Device.h>
 
 namespace RHI::Vulkan {
-    VulkanSurface::VulkanSurface(VulkanDevice& inDevice, const RHI::SurfaceCreateInfo& inCreateInfo)
+    VulkanSurface::VulkanSurface(VulkanDevice& inDevice, const SurfaceCreateInfo& inCreateInfo)
         : Surface(inCreateInfo)
         , device(inDevice)
     {

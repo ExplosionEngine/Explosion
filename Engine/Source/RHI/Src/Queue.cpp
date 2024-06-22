@@ -28,6 +28,18 @@ namespace RHI {
         return *this;
     }
 
+    QueueSubmitInfo& QueueSubmitInfo::SetWaitSemaphores(const std::vector<Semaphore*>& inSemaphores)
+    {
+        waitSemaphores = inSemaphores;
+        return *this;
+    }
+
+    QueueSubmitInfo& QueueSubmitInfo::SetSignalSemaphores(const std::vector<Semaphore*>& inSemaphores)
+    {
+        signalSemaphores = inSemaphores;
+        return *this;
+    }
+
     Queue::Queue() = default;
 
     Queue::~Queue() = default;

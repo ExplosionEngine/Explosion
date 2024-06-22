@@ -35,14 +35,11 @@ namespace RHI::Vulkan {
         std::vector<VkDescriptorSetLayoutBinding> bindings(inCreateInfo.entries.size());
         for (size_t i = 0; i < bindings.size(); ++i) {
             const auto& entry = inCreateInfo.entries[i];
-            auto& binding = bindings[i];
 
-            VkShaderStageFlags flags = FlagsCast<ShaderStageFlags, VkShaderStageFlags>(entry.shaderVisibility);
-
-            binding.descriptorType = EnumCast<BindingType, VkDescriptorType>(entry.binding.type);
-            binding.descriptorCount = 1;
-            binding.binding = std::get<GlslBinding>(entry.binding.platformBinding).index;
-            binding.stageFlags = flags;
+            bindings[i].descriptorType = EnumCast<BindingType, VkDescriptorType>(entry.binding.type);
+            bindings[i].descriptorCount = 1;
+            bindings[i].binding = std::get<GlslBinding>(entry.binding.platformBinding).index;
+            bindings[i].stageFlags = FlagsCast<ShaderStageFlags, VkShaderStageFlags>(entry.shaderVisibility);
         }
 
         layoutInfo.pBindings = bindings.data();
