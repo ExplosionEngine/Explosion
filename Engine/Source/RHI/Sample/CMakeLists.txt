@@ -81,7 +81,7 @@ AddRHISample(
 )
 
 AddRHISample(
-    NAME RHI-ParallelCompute
+    NAME RHISample-ParallelCompute
     SRC ParallelCompute/ParallelCompute.cpp
     SHADER ParallelCompute/Compute.hlsl
 )

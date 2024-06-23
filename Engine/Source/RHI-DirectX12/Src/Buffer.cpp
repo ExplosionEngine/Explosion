@@ -17,13 +17,28 @@ namespace RHI::DirectX12 {
     static D3D12_HEAP_TYPE GetDX12HeapType(BufferUsageFlags bufferUsages)
     {
         static std::unordered_map<BufferUsageFlags, D3D12_HEAP_TYPE> rules = {
-            { BufferUsageBits::mapWrite | BufferUsageBits::copySrc, D3D12_HEAP_TYPE_UPLOAD },
-            { BufferUsageBits::mapRead | BufferUsageBits::copyDst, D3D12_HEAP_TYPE_READBACK }
+            { BufferUsageBits::mapWrite, D3D12_HEAP_TYPE_UPLOAD },
+            { BufferUsageBits::mapRead, D3D12_HEAP_TYPE_READBACK }
         };
         static D3D12_HEAP_TYPE fallback = D3D12_HEAP_TYPE_DEFAULT;
 
         for (const auto& rule : rules) {
             if (bufferUsages & rule.first) {
+                return rule.second;
+            }
+        }
+        return fallback;
+    }
+
+    static D3D12_RESOURCE_FLAGS GetDX12ResourceFlag(BufferUsageFlags flag)
+    {
+        static std::unordered_map<BufferUsageFlags, D3D12_RESOURCE_FLAGS> rules = {
+            { BufferUsageBits::storage, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS },
+        };
+        static D3D12_RESOURCE_FLAGS fallback = D3D12_RESOURCE_FLAG_NONE;
+
+        for (const auto& rule : rules) {
+            if (flag & rule.first) {
                 return rule.second;
             }
         }
@@ -97,9 +112,9 @@ namespace RHI::DirectX12 {
     {
         const CD3DX12_HEAP_PROPERTIES heapProperties(GetDX12HeapType(inCreateInfo.usages));
         const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(
-            inCreateInfo.usages & BufferUsageBits::uniform ?
-            Common::AlignUp<D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(inCreateInfo.size) :
-            inCreateInfo.size);
+            inCreateInfo.usages & BufferUsageBits::uniform ? Common::AlignUp<D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(inCreateInfo.size) : inCreateInfo.size,
+            GetDX12ResourceFlag(inCreateInfo.usages)
+            );
 
         const bool success = SUCCEEDED(inDevice.GetNative()->CreateCommittedResource(
             &heapProperties,

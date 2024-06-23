@@ -237,5 +237,8 @@ private:
 int main(int argc, char* argv[])
 {
     TriangleApplication application("RHI-Triangle");
-    return application.Run(argc, argv);
+    if (!application.Initialize(argc, argv)) {
+        return -1;
+    }
+    return application.RunLoop();
 }

@@ -1019,6 +1019,9 @@ private:
 int main(int argc, char* argv[])
 {
     SSAOApplication application("SSAO");
-    return application.Run(argc, argv);
+    if (!application.Initialize(argc, argv)) {
+        return -1;
+    }
+    return application.RunLoop();
 }
 

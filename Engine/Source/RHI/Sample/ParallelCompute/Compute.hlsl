@@ -4,17 +4,15 @@
 #define VK_BINDING(x, y)
 #endif
 
-struct Data {
-    float3 v1;
-    float2 v2;
-}
+VK_BINDING(0, 0) cbuffer input : register(b0)
+{
+    float4 v[16];
+};
 
-VK_BINDING(0, 0) StructuredBuffer<Data> input : register(t0)
-VK_BINDING(2, 0) RWStructuredBuffer<Data> output : register(u0)
+VK_BINDING(1, 0) RWStructuredBuffer<float4> output : register(u0);
 
-[numthreads(64, 1, 1)]
+[numthreads(16, 1, 1)]
 void CSMain(int id : SV_DispatchThreadID) {
-    output[id.x].v1 = input[id.x].v1 * input[id.x].v1;
-    output[id.x].v2 = input[id.x].v2 * input[id.x].v2;
+    output[id.x] = v[id.x] * v[id.x];
 }
 

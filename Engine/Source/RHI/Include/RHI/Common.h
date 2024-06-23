@@ -292,6 +292,14 @@ namespace RHI {
         max
     };
 
+    // TODO: Support more format
+    enum class StorageFormat: EnumUint8T {
+        float32,
+        uint32,
+        sint32,
+        max
+    };
+
     enum class FrontFace : EnumUint8T {
         ccw,
         cw,
@@ -375,7 +383,7 @@ namespace RHI {
 
     enum class BufferState : EnumUint8T {
         undefined,
-        staging,
+        staging,  // TODO: the sementics of staging is intermediate / temporary, change to `coherent` maybe, used for host upload and readback
         copySrc,
         copyDst,
         shaderReadOnly,

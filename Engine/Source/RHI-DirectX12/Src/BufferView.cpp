@@ -48,12 +48,14 @@ namespace RHI::DirectX12 {
             buffer.GetDevice().GetNative()->CreateConstantBufferView(&desc, std::get<Common::UniqueRef<DescriptorAllocation>>(nativeView)->GetCpuHandle());
         } else if (inCreateInfo.type == BufferViewType::storageBinding) {
             Assert((bufferUsages & BufferUsageBits::storage) != 0);
+            auto storageViewInfo = std::get<StorageBufferViewInfo>(inCreateInfo.extend);
 
+            // TODO: check the uav typed load
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
-            desc.Format = DXGI_FORMAT_UNKNOWN;
+            desc.Format = EnumCast<StorageFormat, DXGI_FORMAT>(storageViewInfo.format);
             desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
             desc.Buffer.FirstElement = inCreateInfo.offset;
-            desc.Buffer.NumElements = inCreateInfo.size;
+            desc.Buffer.NumElements = inCreateInfo.size / storageViewInfo.stride;
 
             nativeView = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
             buffer.GetDevice().GetNative()->CreateUnorderedAccessView(buffer.GetNative(), nullptr, &desc, std::get<Common::UniqueRef<DescriptorAllocation>>(nativeView)->GetCpuHandle());

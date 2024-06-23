@@ -15,25 +15,13 @@ public:
     {}
     ~ParallelCompute() override = default;
 
-    void Initialize(int argc, char* argv[])
+    void Setup()
     {
-       //  std::string rhiString;
-       //  if (const auto cli = (
-       //          clipp::option("-w").doc("window width, 1024 by default") & clipp::value("width", windowExtent.x),
-       //          clipp::option("-h").doc("window height, 768 by default") & clipp::value("height", windowExtent.y),
-       //          clipp::required("-rhi").doc("RHI type, can be 'dx12' or 'vulkan'") & clipp::value("RHI type", rhiString));
-       //      !clipp::parse(argc, argv, cli)) {
-       //      std::cout << clipp::make_man_page(cli, argv[0]);
-       //      return -1;
-       // }
-       //
-       //  rhiType = RHI::RHIAbbrStringToRHIType(rhiString);
-       //  instance = RHI::Instance::GetByType(rhiType);
-
         SelectGPU();
         RequestDeviceAndFetchQueues();
         PrepareDataAndCreateGPURes();
         DealWithPipelineBindingOBjs();
+        CreatePipeline();
         CreateCmdBuffAndSyncObj();
     }
 
@@ -41,6 +29,18 @@ public:
     {
         BuildCmdBufferAndSubmit();
 
+        // Map the data so we can read it on CPU.
+        const auto* mappedData = static_cast<FVec4*>(readbackBuffer->Map(MapMode::read, 0, dataNum * sizeof(FVec4)));
+
+        std::ofstream fout("results.txt");
+
+        for(int i = 0; i < dataNum; ++i)
+        {
+            std::cout << "(" << mappedData[i].x << ", " << mappedData[i].y << ", " <<
+                 ", " << mappedData[i].z << ", " << mappedData[i].w << ")" << '\n';
+        }
+
+        readbackBuffer->UnMap();
     }
 private:
     void SelectGPU()
@@ -50,94 +50,90 @@ private:
 
     void RequestDeviceAndFetchQueues()
     {
-        device = gpu->RequestDevice(DeviceCreateInfo().AddQueueRequest(QueueRequestInfo(QueueType::compute, 1)));
-        computeQueue = device->GetQueue(QueueType::compute, 0);
+        // Generally, there is a queue in GPU doing both graphics and compute work
+        // TODO: Is it necessary to make a distinction between the composite-use-queue and the single-use-queue?
+        device = gpu->RequestDevice(DeviceCreateInfo().AddQueueRequest(QueueRequestInfo(QueueType::graphics, 1)));
+        queue = device->GetQueue(QueueType::graphics, 0);
     }
 
     void PrepareDataAndCreateGPURes()
     {
-        std::vector<Data> data(dataDim * dataDim);
-        for(int i = 0; i < dataDim * dataDim; ++i)
+        std::vector<FVec4> data(dataNum);
+        for(int i = 0; i < dataNum; ++i)
         {
-            data[i].v1 = FVec3(i + 1, i - 1, i);
-            data[i].v2 = FVec2(i, i + 1);
+            data[i] = FVec4(i - 2, i - 1, i, i + 1);
         }
 
         const auto bufInfo = BufferCreateInfo()
-            .SetSize(data.size() * sizeof(Data))
+            .SetSize(data.size() * sizeof(FVec4))
             .SetUsages(BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
             .SetInitialState(BufferState::staging);
 
-        const UniqueRef<Buffer> immediateBuf = device->CreateBuffer(bufInfo);
-        if (immediateBuf != nullptr) {
-            auto* mapPointer = immediateBuf->Map(MapMode::write, 0, bufInfo.size);
+        const UniqueRef<Buffer> stagingBuf = device->CreateBuffer(bufInfo);
+        if (stagingBuf != nullptr) {
+            auto* mapPointer = stagingBuf->Map(MapMode::write, 0, bufInfo.size);
             memcpy(mapPointer, data.data(), bufInfo.size);
-            immediateBuf->UnMap();
+            stagingBuf->UnMap();
         }
 
-        const auto texInfo = TextureCreateInfo()
-            .SetFormat(PixelFormat::rgba32Float)
-            .SetMipLevels(1)
-            .SetWidth(dataDim)
-            .SetHeight(dataDim)
-            .SetDepthOrArraySize(1)
-            .SetDimension(TextureDimension::t2D)
-            .SetSamples(1)
-            .SetUsages(TextureUsageBits::copyDst | TextureUsageBits::textureBinding)
-            .SetInitialState(TextureState::undefined);
-        inputBuffer = device->CreateTexture(texInfo);
+        const auto inputBufInfo = BufferCreateInfo()
+            .SetSize(data.size() * sizeof(FVec4))
+            .SetUsages(BufferUsageBits::copyDst | BufferUsageBits::uniform)
+            .SetInitialState(BufferState::undefined);
+        inputBuffer = device->CreateBuffer(inputBufInfo);
 
-        const auto texViewInfo = TextureViewCreateInfo()
-            .SetDimension(TextureViewDimension::tv2D)
-            .SetMipLevels(0, 1)
-            .SetArrayLayers(0, 1)
-            .SetAspect(TextureAspect::color)
-            .SetType(TextureViewType::textureBinding);
-        inputBufferView = inputBuffer->CreateTextureView(texViewInfo);
+        const auto inputBufViewInfo = BufferViewCreateInfo()
+        .SetType(BufferViewType::uniformBinding)
+        .SetSize(data.size() * sizeof(FVec4))
+        .SetOffset(0);
+        inputBufferView = inputBuffer->CreateBufferView(inputBufViewInfo);
 
         const UniqueRef<CommandBuffer> copyCmd = device->CreateCommandBuffer();
         const UniqueRef<CommandRecorder> recorder = copyCmd->Begin();
         {
             const UniqueRef<CopyPassCommandRecorder> copyRecorder = recorder->BeginCopyPass();
-            copyRecorder->ResourceBarrier(Barrier::Transition(inputBuffer.Get(), TextureState::undefined, TextureState::copyDst));
-            copyRecorder->CopyBufferToTexture(
-                immediateBuf.Get(),
+            copyRecorder->ResourceBarrier(Barrier::Transition(inputBuffer.Get(), BufferState::undefined, BufferState::copyDst));
+            copyRecorder->CopyBufferToBuffer(
+                stagingBuf.Get(),
                 inputBuffer.Get(),
-                BufferTextureCopyInfo(0, TextureSubResourceInfo(), UVec3Consts::zero, UVec3(dataDim, dataDim, 1)));
-            copyRecorder->ResourceBarrier(Barrier::Transition(inputBuffer.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
+                BufferCopyInfo(0, 0, data.size() * sizeof(FVec4)));
+            copyRecorder->ResourceBarrier(Barrier::Transition(inputBuffer.Get(), BufferState::copyDst, BufferState::shaderReadOnly));
             copyRecorder->EndPass();
         }
         recorder->End();
 
-        const UniqueRef<Fence> immediateFence = device->CreateFence(false);
+        const UniqueRef<Fence> mFence = device->CreateFence(false);
         QueueSubmitInfo submitInfo {};
-        submitInfo.signalFence = immediateFence.Get();
-        computeQueue->Submit(copyCmd.Get(), submitInfo);
-        immediateFence->Wait();
+        submitInfo.signalFence = mFence.Get();
+        queue->Submit(copyCmd.Get(), submitInfo);
+        mFence->Wait();
 
         const auto outputBufferInfo = BufferCreateInfo()
-            .SetSize(data.size() * sizeof(Data))
+            .SetSize(data.size() * sizeof(FVec4))
             .SetUsages(BufferUsageBits::storage | BufferUsageBits::copySrc)
-            .SetInitialState(BufferState::undefined);
+            .SetInitialState(BufferState::storage);
         outputBuffer = device->CreateBuffer(outputBufferInfo);
 
         const auto outputBufferViewInfo = BufferViewCreateInfo()
             .SetType(BufferViewType::storageBinding)
-            .SetSize(data.size() * sizeof(Data))
-            .SetOffset(0);
+            .SetSize(data.size() * sizeof(FVec4))
+            .SetOffset(0)
+            .SetExtendStorage(sizeof(float), StorageFormat::float32);
         outputBufferView = outputBuffer->CreateBufferView(outputBufferViewInfo);
 
         const auto readbackBufferInfo = BufferCreateInfo()
-            .SetSize(data.size() * sizeof(Data))
+            .SetSize(data.size() * sizeof(FVec4))
             .SetUsages(BufferUsageBits::mapRead | BufferUsageBits::copyDst)
-            .SetInitialState(BufferState::undefined);
+            .SetInitialState(BufferState::copyDst);
         readbackBuffer = device->CreateBuffer(readbackBufferInfo);
     }
 
     void DealWithPipelineBindingOBjs()
     {
         csOutPut = CompileShader("../Test/Sample/RHI/ParallelCompute/Compute.hlsl", "CSMain", ShaderStageBits::sCompute);
-        csShaderModule = device->CreateShaderModule(ShaderModuleCreateInfo('CSMain', csOutPut.byteCode));
+
+        auto shaderModuleCreateInfo = ShaderModuleCreateInfo("CSMain", csOutPut.byteCode);
+        csShaderModule = device->CreateShaderModule(shaderModuleCreateInfo);
 
         const auto layoutCreateInfo = BindGroupLayoutCreateInfo(0)
             .AddEntry(BindGroupLayoutEntry(csOutPut.reflectionData.QueryResourceBindingChecked("input").second, ShaderStageBits::sCompute))
@@ -152,7 +148,7 @@ private:
         pipelineLayout = device->CreatePipelineLayout(PipelineLayoutCreateInfo().AddBindGroupLayout(bindGroupLayout.Get()));
     }
 
-    void createPipeline()
+    void CreatePipeline()
     {
         const auto pipelineInfo = ComputePipelineCreateInfo()
             .SetLayout(pipelineLayout.Get())
@@ -180,37 +176,31 @@ private:
 
         // read back to host buffer
         UniqueRef<CopyPassCommandRecorder> copyRecorder = recorder->BeginCopyPass();
-        copyRecorder->ResourceBarrier(Barrier::Transition(outputBuffer.Get(), BufferState::undefined, BufferState::copySrc));
+        copyRecorder->ResourceBarrier(Barrier::Transition(outputBuffer.Get(), BufferState::storage, BufferState::copySrc));
         copyRecorder->CopyBufferToBuffer(
             outputBuffer.Get(),
             readbackBuffer.Get(),
-            BufferCopyInfo(0, 0, dataDim * dataDim * sizeof(Data)));
-        copyRecorder->ResourceBarrier(Barrier::Transition(inputBuffer.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
+            BufferCopyInfo(0, 0, dataNum * sizeof(FVec4)));
         copyRecorder->EndPass();
 
         recorder->End();
 
         QueueSubmitInfo submitInfo {};
         submitInfo.signalFence = fence.Get();
-        computeQueue->Submit(commandBuffer.Get(), submitInfo);
+        queue->Submit(commandBuffer.Get(), submitInfo);
         fence->Wait();
     }
 
-    struct Data {
-        FVec3 v1;
-        FVec2 v2;
-    };
-    const int dataDim = 64;
+    const int dataNum = 16;
 
     Gpu* gpu = nullptr;
     UniqueRef<Device> device;
-    Queue* computeQueue = nullptr;
-    UniqueRef<Texture> inputBuffer;
-    UniqueRef<TextureView> inputBufferView;
+    Queue* queue = nullptr;
+    UniqueRef<Buffer> inputBuffer;
+    UniqueRef<BufferView> inputBufferView;
     UniqueRef<Buffer> outputBuffer;
     UniqueRef<BufferView> outputBufferView;
     UniqueRef<Buffer> readbackBuffer;
-    UniqueRef<BufferView> readbackBufferView;
     UniqueRef<BindGroupLayout> bindGroupLayout;
     UniqueRef<BindGroup> bindGroup;
     UniqueRef<Sampler> sampler;
@@ -228,9 +218,12 @@ private:
 
 int main(int argc, char* argv[])
 {
-    ParallelCompute app("RHI-ParallelCompute");
-    app.Initialize();
-    app.ComputeAndShow();
+    ParallelCompute application("RHI-ParallelCompute");
+    if (!application.Initialize(argc, argv)) {
+        return -1;
+    }
+    application.Setup();
+    application.ComputeAndShow();
 
     return 0;
 }

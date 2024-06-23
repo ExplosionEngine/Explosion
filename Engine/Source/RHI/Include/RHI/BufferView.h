@@ -20,23 +20,29 @@ namespace RHI {
         IndexFormat format;
     };
 
+    struct StorageBufferViewInfo {
+        uint32_t stride;
+        StorageFormat format;
+    };
+
     struct BufferViewCreateInfo {
         BufferViewType type;
         uint32_t size;
         uint32_t offset;
-        std::variant<VertexBufferViewInfo, IndexBufferViewInfo> extend;
+        std::variant<VertexBufferViewInfo, IndexBufferViewInfo, StorageBufferViewInfo> extend;
 
         explicit BufferViewCreateInfo(
             BufferViewType inType = BufferViewType::max,
             uint32_t inSize = 0,
             uint32_t inOffset = 0,
-            const std::variant<VertexBufferViewInfo, IndexBufferViewInfo>& inExtent = {});
+            const std::variant<VertexBufferViewInfo, IndexBufferViewInfo, StorageBufferViewInfo>& inExtent = {});
 
         BufferViewCreateInfo& SetType(BufferViewType inType);
         BufferViewCreateInfo& SetOffset(uint32_t inOffset);
         BufferViewCreateInfo& SetSize(uint32_t inSize);
         BufferViewCreateInfo& SetExtendVertex(uint32_t inStride);
         BufferViewCreateInfo& SetExtendIndex(IndexFormat inFormat);
+        BufferViewCreateInfo& SetExtendStorage(uint32_t stride, StorageFormat inFormat);
 
         size_t Hash() const;
     };
