@@ -16,6 +16,5 @@ namespace Editor {
         ~QProjectSelector() override;
 
     private:
-        QVBoxLayout* layout;
     };
 }

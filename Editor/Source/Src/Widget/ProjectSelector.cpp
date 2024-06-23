@@ -3,12 +3,12 @@
 //
 
 #include <Editor/Widget/ProjectSelector.h>
+#include <Editor/Widget/moc_ProjectSelector.cpp> // NOLINT
 
 namespace Editor {
     QProjectSelector::QProjectSelector()
     {
-        resize(1024, 768);
-        layout = new QVBoxLayout(this);
+        resize(1280, 720);
     }
 
     QProjectSelector::~QProjectSelector() = default;

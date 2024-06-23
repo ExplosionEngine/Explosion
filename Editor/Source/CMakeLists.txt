@@ -5,3 +5,9 @@ AddExecutable(
     INC Include
     LIB Qt Core RHI Rendering Runtime
 )
+set_target_properties(
+    Editor PROPERTIES
+    AUTOMOC ON
+    AUTORCC ON
+    AUTOUIC ON
+)

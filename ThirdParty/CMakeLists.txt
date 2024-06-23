@@ -242,8 +242,3 @@ Find3rdPackage(
             $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Gui$<IF:$<CONFIG:Debug>,d,>.dll
             $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Widgets$<IF:$<CONFIG:Debug>,d,>.dll
 )
-if (${BUILD_EDITOR})
-    set(CMAKE_AUTOMOC ON)
-    set(CMAKE_AUTORCC ON)
-    set(CMAKE_AUTOUIC ON)
-endif ()

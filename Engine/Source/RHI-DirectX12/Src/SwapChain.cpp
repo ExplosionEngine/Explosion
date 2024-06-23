@@ -2,7 +2,6 @@
 // Created by johnk on 28/3/2022.
 //
 
-#define NOMINMAX
 #include <windows.h>
 
 #include <RHI/DirectX12/Instance.h>

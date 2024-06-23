@@ -7,7 +7,6 @@
 #include <utility>
 
 #if PLATFORM_WINDOWS
-#define NOMINMAX
 #include <windows.h>
 #include <dxc/d3d12shader.h>
 #else

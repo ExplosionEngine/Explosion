@@ -18,6 +18,7 @@ int main(int argc, char* argv[])
     } else {
         // TODO editor main
     }
+    mainWindow->show();
     const int execRes = QApplication::exec();
 
     mainWindow = nullptr;
