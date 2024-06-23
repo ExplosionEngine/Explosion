@@ -6,6 +6,7 @@
 
 #include <cstdint>
 
+#define NOMINMAX
 #include <windows.h>
 #include <wrl/client.h>
 #include <d3d12.h>

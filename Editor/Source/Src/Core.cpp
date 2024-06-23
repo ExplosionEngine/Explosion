@@ -10,6 +10,10 @@ Core::CmdlineArgValue<std::string> caRhiType(
     "rhiType", "-rhi", RHI::GetPlatformDefaultRHIAbbrString(),
     "rhi abbr string, can be 'dx12' or 'vulkan'");
 
+Core::CmdlineArgValue<std::string> caProjectRoot(
+    "projectRoot", "-project", "",
+    "project root path");
+
 namespace Editor {
     Core& Core::Get()
     {
@@ -42,6 +46,11 @@ namespace Editor {
     Runtime::EditorEngine* Core::GetEngine() const
     {
         return engine;
+    }
+
+    bool Core::ProjectRooHasSet() const // NOLINT
+    {
+        return !caProjectRoot.GetValue().empty();
     }
 
     Runtime::RuntimeModule* Core::GetRuntimeModule() const

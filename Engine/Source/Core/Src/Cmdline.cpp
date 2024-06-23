@@ -29,7 +29,7 @@ namespace Core {
         parsed = true;
 
         clipp::group cli;
-        for (auto* arg : args) {
+        for (const auto& [name, arg] : args) {
             cli.push_back(arg->CreateClippParameter());
         }
 
@@ -39,5 +39,18 @@ namespace Core {
             return std::make_pair(false, stream.str());
         }
         return std::make_pair(true, "");
+    }
+
+    CmdlineArg* Cli::FindArg(const std::string& name) const
+    {
+        const auto iter = args.find(name);
+        return iter == args.end() ? nullptr : iter->second;
+    }
+
+    CmdlineArg& Cli::FindArgChecked(const std::string& name) const
+    {
+        auto* result = FindArg(name);
+        Assert(result != nullptr);
+        return *result;
     }
 }

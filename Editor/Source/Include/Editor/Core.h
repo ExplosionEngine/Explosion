@@ -16,6 +16,7 @@ namespace Editor {
 
         void Initialize(int argc, char** argv);
         void Cleanup();
+        bool ProjectRooHasSet() const;
         Runtime::RuntimeModule* GetRuntimeModule() const;
         Rendering::RenderingModule* GetRenderingModule() const;
         Runtime::EditorEngine* GetEngine() const;
