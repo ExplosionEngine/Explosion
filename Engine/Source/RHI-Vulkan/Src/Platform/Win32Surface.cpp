@@ -3,6 +3,7 @@
 //
 
 #if PLATFORM_WINDOWS
+#define NOMINMAX
 #include <windows.h>
 
 #include <RHI/Surface.h>

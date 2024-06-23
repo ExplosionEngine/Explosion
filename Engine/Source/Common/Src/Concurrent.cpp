@@ -3,6 +3,7 @@
 //
 
 #if PLATFORM_WINDOWS
+#define NOMINMAX
 #include <windows.h>
 #else
 #include <pthread.h>

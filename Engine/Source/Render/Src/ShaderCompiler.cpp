@@ -7,10 +7,9 @@
 #include <utility>
 
 #if PLATFORM_WINDOWS
+#define NOMINMAX
 #include <windows.h>
 #include <dxc/d3d12shader.h>
-#undef min
-#undef max
 #else
 #define __EMULATE_UUID 1
 #endif

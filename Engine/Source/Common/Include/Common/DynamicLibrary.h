@@ -11,6 +11,7 @@
 #include <Common/Memory.h>
 
 #if PLATFORM_WINDOWS
+#define NOMINMAX
 #include <windows.h>
 #define DynamicLibHandle               HINSTANCE
 #define DynamicLibLoad(lib, tag)       LoadLibraryEx(lib, nullptr, 0)

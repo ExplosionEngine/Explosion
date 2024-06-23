@@ -4,6 +4,7 @@
 
 #pragma once
 
+#define NOMINMAX
 #include <windows.h>
 
 #include <RHI/Surface.h>
