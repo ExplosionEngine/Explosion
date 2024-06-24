@@ -204,8 +204,6 @@ private:
     UniqueRef<BindGroupLayout> bindGroupLayout;
     UniqueRef<BindGroup> bindGroup;
     UniqueRef<Sampler> sampler;
-    UniqueRef<Buffer> uniformBuffer;
-    UniqueRef<BufferView> uniformBufferView;
     UniqueRef<CommandBuffer> cmdBuffer;
     UniqueRef<PipelineLayout> pipelineLayout;
     UniqueRef<ComputePipeline> pipeline;
