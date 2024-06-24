@@ -5,7 +5,6 @@
 #include <RHI/Vulkan/Buffer.h>
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Device.h>
-#include <RHI/Vulkan/Gpu.h>
 #include <RHI/Vulkan/BufferView.h>
 #include <RHI/Queue.h>
 #include <RHI/CommandBuffer.h>
@@ -75,9 +74,9 @@ namespace RHI::Vulkan {
             Queue* queue = device.GetQueue(QueueType::graphics, 0);
             Assert(queue);
 
-            Common::UniqueRef<Fence> fence = device.CreateFence(false);
-            Common::UniqueRef<CommandBuffer> commandBuffer = device.CreateCommandBuffer();
-            Common::UniqueRef<CommandRecorder> commandRecorder = commandBuffer->Begin();
+            const auto fence = device.CreateFence(false);
+            const auto commandBuffer = device.CreateCommandBuffer();
+            const auto commandRecorder = commandBuffer->Begin();
             commandRecorder->ResourceBarrier(Barrier::Transition(this, BufferState::undefined, inCreateInfo.initialState));
             commandRecorder->End();
 
@@ -88,12 +87,12 @@ namespace RHI::Vulkan {
         }
     }
 
-    VkBuffer VulkanBuffer::GetNative()
+    VkBuffer VulkanBuffer::GetNative() const
     {
         return nativeBuffer;
     }
 
-    BufferUsageFlags VulkanBuffer::GetUsages()
+    BufferUsageFlags VulkanBuffer::GetUsages() const
     {
         return usages;
     }

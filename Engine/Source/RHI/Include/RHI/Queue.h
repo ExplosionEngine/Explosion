@@ -23,6 +23,8 @@ namespace RHI {
         QueueSubmitInfo& AddWaitSemaphore(Semaphore* inSemaphore);
         QueueSubmitInfo& AddSignalSemaphore(Semaphore* inSemaphore);
         QueueSubmitInfo& SetSignalFence(Fence* inSignalFence);
+        QueueSubmitInfo& SetWaitSemaphores(const std::vector<Semaphore*>& inSemaphores);
+        QueueSubmitInfo& SetSignalSemaphores(const std::vector<Semaphore*>& inSemaphores);
     };
 
     class Queue {

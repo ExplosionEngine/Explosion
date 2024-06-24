@@ -12,7 +12,7 @@
 namespace RHI::Vulkan {
     class VulkanDevice;
 
-    class VulkanQueue : public Queue {
+    class VulkanQueue final : public Queue {
     public:
         NonCopyable(VulkanQueue)
         explicit VulkanQueue(VulkanDevice& inDevice, VkQueue inNativeQueue);
@@ -21,7 +21,7 @@ namespace RHI::Vulkan {
         void Submit(CommandBuffer* inCmdBuffer, const QueueSubmitInfo& inSubmitInfo) override;
         void Flush(Fence* inFenceToSignal) override;
 
-        VkQueue GetNative();
+        VkQueue GetNative() const;
 
     private:
         VkQueue nativeQueue;

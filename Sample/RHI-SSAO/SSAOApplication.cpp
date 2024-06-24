@@ -532,14 +532,14 @@ private:
 
     void CreateShaderModules()
     {
-        CompileShaderAndCreateShaderModule(shaderObjects.gBufferVs, shaderObjects.gBufferVsCompileOutput, "../Test/Sample/RHI/SSAO/Shader/Gbuffer.hlsl", "VSMain", ShaderStageBits::sVertex);
-        CompileShaderAndCreateShaderModule(shaderObjects.gBufferPs, shaderObjects.gBufferPsCompileOutput, "../Test/Sample/RHI/SSAO/Shader/Gbuffer.hlsl", "PSMain", ShaderStageBits::sPixel);
-        CompileShaderAndCreateShaderModule(shaderObjects.ssaoVs, shaderObjects.ssaoVsCompileOutput, "../Test/Sample/RHI/SSAO/Shader/SSAO.hlsl", "VSMain", ShaderStageBits::sVertex);
-        CompileShaderAndCreateShaderModule(shaderObjects.ssaoPs, shaderObjects.ssaoPsCompileOutput, "../Test/Sample/RHI/SSAO/Shader/SSAO.hlsl", "PSMain", ShaderStageBits::sPixel);
-        CompileShaderAndCreateShaderModule(shaderObjects.ssaoBlurVs, shaderObjects.ssaoBlurVsCompileOutput, "../Test/Sample/RHI/SSAO/Shader/Blur.hlsl", "VSMain", ShaderStageBits::sVertex);
-        CompileShaderAndCreateShaderModule(shaderObjects.ssaoBlurPs, shaderObjects.ssaoBlurPsCompileOutput, "../Test/Sample/RHI/SSAO/Shader/Blur.hlsl", "PSMain", ShaderStageBits::sPixel);
-        CompileShaderAndCreateShaderModule(shaderObjects.compositionVs, shaderObjects.compositionVsCompileOutput, "../Test/Sample/RHI/SSAO/Shader/Composition.hlsl", "VSMain", ShaderStageBits::sVertex);
-        CompileShaderAndCreateShaderModule(shaderObjects.compositionPs, shaderObjects.compositionPsCompileOutput, "../Test/Sample/RHI/SSAO/Shader/Composition.hlsl", "PSMain", ShaderStageBits::sPixel);
+        CompileShaderAndCreateShaderModule(shaderObjects.gBufferVs, shaderObjects.gBufferVsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Gbuffer.hlsl", "VSMain", ShaderStageBits::sVertex);
+        CompileShaderAndCreateShaderModule(shaderObjects.gBufferPs, shaderObjects.gBufferPsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Gbuffer.hlsl", "PSMain", ShaderStageBits::sPixel);
+        CompileShaderAndCreateShaderModule(shaderObjects.ssaoVs, shaderObjects.ssaoVsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/SSAO.hlsl", "VSMain", ShaderStageBits::sVertex);
+        CompileShaderAndCreateShaderModule(shaderObjects.ssaoPs, shaderObjects.ssaoPsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/SSAO.hlsl", "PSMain", ShaderStageBits::sPixel);
+        CompileShaderAndCreateShaderModule(shaderObjects.ssaoBlurVs, shaderObjects.ssaoBlurVsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Blur.hlsl", "VSMain", ShaderStageBits::sVertex);
+        CompileShaderAndCreateShaderModule(shaderObjects.ssaoBlurPs, shaderObjects.ssaoBlurPsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Blur.hlsl", "PSMain", ShaderStageBits::sPixel);
+        CompileShaderAndCreateShaderModule(shaderObjects.compositionVs, shaderObjects.compositionVsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Composition.hlsl", "VSMain", ShaderStageBits::sVertex);
+        CompileShaderAndCreateShaderModule(shaderObjects.compositionPs, shaderObjects.compositionPsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Composition.hlsl", "PSMain", ShaderStageBits::sPixel);
     }
 
     void CreateSampler()
@@ -862,7 +862,7 @@ private:
 
     void CompileShaderAndCreateShaderModule(UniqueRef<ShaderModule>& outShaderModule, ShaderCompileOutput& outCompileOutput, const std::string& fileName, const std::string& entryPoint, ShaderStageBits shaderStage) const
     {
-        const std::vector<std::string> includePath { "../Test/Sample/RHI/SSAO/Shader"};
+        const std::vector<std::string> includePath { "../Test/Sample/RHI-SSAO/Shader"};
         outCompileOutput = CompileShader(fileName, entryPoint, shaderStage, includePath);
         outShaderModule = device->CreateShaderModule(ShaderModuleCreateInfo(entryPoint, outCompileOutput.byteCode));
     }
@@ -1005,7 +1005,7 @@ private:
     void LoadGLTF()
     {
         model = MakeUnique<Model>();
-        model->LoadFromFile("../Test/Sample/RHI/SSAO/Model/Voyager.gltf");
+        model->LoadFromFile("../Test/Sample/RHI-SSAO/Model/Voyager.gltf");
     }
 
     void GenerateRenderables()

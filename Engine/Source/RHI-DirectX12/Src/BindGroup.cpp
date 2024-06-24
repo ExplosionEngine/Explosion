@@ -17,15 +17,15 @@ namespace RHI::DirectX12 {
             return bufferView->GetNativeCpuDescriptorHandle();
         }
         if (entry.binding.type == BindingType::texture || entry.binding.type == BindingType::storageTexture) {
-            auto* textureView = static_cast<DX12TextureView*>(std::get<TextureView*>(entry.entity));
+            const auto* textureView = static_cast<DX12TextureView*>(std::get<TextureView*>(entry.entity));
             return textureView->GetNativeCpuDescriptorHandle();
         }
         if (entry.binding.type == BindingType::sampler) {
-            auto* sampler = static_cast<DX12Sampler*>(std::get<Sampler*>(entry.entity));
+            const auto* sampler = static_cast<DX12Sampler*>(std::get<Sampler*>(entry.entity));
             return sampler->GetNativeCpuDescriptorHandle();
         }
         QuickFail();
-        return CD3DX12_CPU_DESCRIPTOR_HANDLE();
+        return {};
     }
 }
 

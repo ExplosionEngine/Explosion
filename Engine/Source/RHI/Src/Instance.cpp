@@ -65,7 +65,7 @@ namespace RHI {
 
     void Instance::UnloadAllInstances()
     {
-        for (uint32_t i = static_cast<uint32_t>(RHIType::directX12); i < static_cast<uint32_t>(RHIType::max); i++) {
+        for (auto i = static_cast<uint32_t>(RHIType::directX12); i < static_cast<uint32_t>(RHIType::max); i++) {
             const auto rhiType = static_cast<RHIType>(i);
             Core::ModuleManager::Get().Unload(GetRHIModuleNameByType(rhiType));
         }

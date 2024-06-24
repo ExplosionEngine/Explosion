@@ -8,7 +8,7 @@
 #include <Common/Debug.h>
 
 namespace RHI::Vulkan {
-    VulkanCommandBuffer::VulkanCommandBuffer(VulkanDevice& inDevice, VkCommandPool inNativeCmdPool)
+    VulkanCommandBuffer::VulkanCommandBuffer(VulkanDevice& inDevice, VkCommandPool inNativeCmdPool) // NOLINT
         : device(inDevice)
         , pool(inNativeCmdPool)
     {
@@ -17,7 +17,7 @@ namespace RHI::Vulkan {
 
     VulkanCommandBuffer::~VulkanCommandBuffer()
     {
-        auto vkDevice = device.GetNative();
+        auto* const vkDevice = device.GetNative();
         if (nativeCmdBuffer != VK_NULL_HANDLE) {
             vkFreeCommandBuffers(vkDevice, pool, 1, &nativeCmdBuffer);
         }
@@ -31,7 +31,7 @@ namespace RHI::Vulkan {
         beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
         vkBeginCommandBuffer(nativeCmdBuffer, &beginInfo);
-        return Common::UniqueRef<CommandRecorder>(new VulkanCommandRecorder(device, *this));
+        return { new VulkanCommandRecorder(device, *this) };
     }
 
     VkCommandBuffer VulkanCommandBuffer::GetNative() const

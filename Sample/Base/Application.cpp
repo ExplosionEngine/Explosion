@@ -247,7 +247,7 @@ Application::ShaderCompileOutput Application::CompileShader(const std::string& f
     info.stage = shaderStage;
 
     Render::ShaderCompileOptions options;
-    options.includePaths.emplace_back("../Test/Sample/RHI/ShaderInclude");
+    options.includePaths.emplace_back("../Test/Sample/ShaderInclude");
     options.includePaths.insert(options.includePaths.end(), includePaths.begin(), includePaths.end());
 
     if (rhiType == RHI::RHIType::directX12) {

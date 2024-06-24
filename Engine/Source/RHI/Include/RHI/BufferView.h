@@ -14,10 +14,14 @@
 namespace RHI {
     struct VertexBufferViewInfo {
         uint32_t stride;
+
+        explicit VertexBufferViewInfo(uint32_t inStride = 0);
     };
 
     struct IndexBufferViewInfo {
         IndexFormat format;
+
+        explicit IndexBufferViewInfo(IndexFormat inFormat = IndexFormat::max);
     };
 
     struct StorageBufferViewInfo {

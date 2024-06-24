@@ -6,7 +6,6 @@
 #include <RHI/Vulkan/TextureView.h>
 #include <RHI/Vulkan/Device.h>
 #include <RHI/Vulkan/Common.h>
-#include <RHI/Vulkan/Gpu.h>
 #include <RHI/Vulkan/Queue.h>
 #include <RHI/Vulkan/CommandBuffer.h>
 #include <RHI/Vulkan/CommandRecorder.h>
@@ -107,9 +106,9 @@ namespace RHI::Vulkan {
             Queue* queue = device.GetQueue(QueueType::graphics, 0);
             Assert(queue);
 
-            Common::UniqueRef<Fence> fence = device.CreateFence(false);
-            Common::UniqueRef<CommandBuffer> commandBuffer = device.CreateCommandBuffer();
-            Common::UniqueRef<CommandRecorder> commandRecorder = commandBuffer->Begin();
+            const auto fence = device.CreateFence(false);
+            const auto commandBuffer = device.CreateCommandBuffer();
+            const auto commandRecorder = commandBuffer->Begin();
             commandRecorder->ResourceBarrier(Barrier::Transition(this, TextureState::undefined, inCreateInfo.initialState));
             commandRecorder->End();
 

@@ -11,7 +11,7 @@
 namespace RHI::Vulkan {
     class VulkanDevice;
 
-    class VulkanPipelineLayout : public PipelineLayout {
+    class VulkanPipelineLayout final : public PipelineLayout {
     public:
         NonCopyable(VulkanPipelineLayout)
         VulkanPipelineLayout(VulkanDevice& inDevice, const PipelineLayoutCreateInfo& inCreateInfo);

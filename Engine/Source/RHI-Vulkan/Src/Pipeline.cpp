@@ -3,7 +3,6 @@
 //
 
 #include <array>
-#include <unordered_map>
 #include <utility>
 
 #include <RHI/Vulkan/Pipeline.h>
@@ -13,7 +12,7 @@
 #include <RHI/Vulkan/Common.h>
 
 namespace RHI::Vulkan {
-    static VkStencilOpState ConvertStencilOp(const StencilFaceState& stencilOp, uint32_t readMask, uint32_t writeMask)
+    static VkStencilOpState ConvertStencilOp(const StencilFaceState& stencilOp, const uint32_t readMask, const uint32_t writeMask)
     {
         VkStencilOpState state = {};
         state.compareOp = EnumCast<CompareFunc, VkCompareOp>(stencilOp.compareFunc);
@@ -29,11 +28,12 @@ namespace RHI::Vulkan {
     static VkPipelineDepthStencilStateCreateInfo ConstructDepthStencil(const RasterPipelineCreateInfo& createInfo)
     {
         const auto& dsState = createInfo.depthStencilState;
+
         VkPipelineDepthStencilStateCreateInfo dsInfo = {};
         dsInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-        dsInfo.depthTestEnable = dsState.depthEnabled;
-        dsInfo.depthWriteEnable = dsState.depthEnabled;
-        dsInfo.stencilTestEnable = dsState.stencilEnabled;
+        dsInfo.depthTestEnable = dsState.depthEnabled ? VK_TRUE : VK_FALSE;
+        dsInfo.depthWriteEnable = dsState.depthEnabled ? VK_TRUE : VK_FALSE;
+        dsInfo.stencilTestEnable = dsState.stencilEnabled ? VK_TRUE : VK_FALSE;
         dsInfo.front = ConvertStencilOp(dsState.stencilFront, dsState.stencilReadMask, dsState.stencilWriteMask);
         dsInfo.back = ConvertStencilOp(dsState.stencilBack, dsState.stencilReadMask, dsState.stencilWriteMask);
         dsInfo.minDepthBounds = -1.f;
@@ -79,7 +79,7 @@ namespace RHI::Vulkan {
         // TODO check this
         VkPipelineMultisampleStateCreateInfo multiSampleInfo = {};
         multiSampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-        multiSampleInfo.alphaToCoverageEnable = createInfo.multiSampleState.alphaToCoverage;
+        multiSampleInfo.alphaToCoverageEnable = createInfo.multiSampleState.alphaToCoverage ? VK_TRUE : VK_FALSE;
         multiSampleInfo.pSampleMask = &createInfo.multiSampleState.mask;
         multiSampleInfo.rasterizationSamples = static_cast<VkSampleCountFlagBits>(createInfo.multiSampleState.count);
         return multiSampleInfo;
@@ -100,19 +100,19 @@ namespace RHI::Vulkan {
     static VkPipelineColorBlendStateCreateInfo ConstructAttachmentInfo(const RasterPipelineCreateInfo& createInfo, std::vector<VkPipelineColorBlendAttachmentState>& blendStates)
     {
         blendStates.resize(createInfo.fragmentState.colorTargets.size());
+
         VkPipelineColorBlendStateCreateInfo colorInfo = {};
         colorInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-        for (uint8_t i = 0; i < createInfo.fragmentState.colorTargets.size(); ++i) {
-            VkPipelineColorBlendAttachmentState& blendState = blendStates[i];
+        for (auto i = 0; i < createInfo.fragmentState.colorTargets.size(); ++i) {
             const auto& srcState = createInfo.fragmentState.colorTargets[i];
-            blendState.blendEnable = srcState.blendEnabled;
-            blendState.colorWriteMask = static_cast<VkColorComponentFlags>(srcState.writeFlags.Value());
-            blendState.alphaBlendOp = EnumCast<BlendOp, VkBlendOp>(srcState.colorBlend.op);
-            blendState.alphaBlendOp = EnumCast<BlendOp, VkBlendOp>(srcState.alphaBlend.op);
-            blendState.srcColorBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.colorBlend.srcFactor);
-            blendState.srcAlphaBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.alphaBlend.srcFactor);
-            blendState.dstColorBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.colorBlend.dstFactor);
-            blendState.dstAlphaBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.alphaBlend.dstFactor);
+            blendStates[i].blendEnable = srcState.blendEnabled ? VK_TRUE : VK_FALSE;
+            blendStates[i].colorWriteMask = srcState.writeFlags.Value();
+            blendStates[i].alphaBlendOp = EnumCast<BlendOp, VkBlendOp>(srcState.colorBlend.op);
+            blendStates[i].alphaBlendOp = EnumCast<BlendOp, VkBlendOp>(srcState.alphaBlend.op);
+            blendStates[i].srcColorBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.colorBlend.srcFactor);
+            blendStates[i].srcAlphaBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.alphaBlend.srcFactor);
+            blendStates[i].dstColorBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.colorBlend.dstFactor);
+            blendStates[i].dstAlphaBlendFactor = EnumCast<BlendFactor, VkBlendFactor>(srcState.alphaBlend.dstFactor);
         }
 
         colorInfo.pAttachments = blendStates.data();
@@ -159,7 +159,6 @@ namespace RHI::Vulkan {
     VulkanRasterPipeline::VulkanRasterPipeline(VulkanDevice& inDevice, const RasterPipelineCreateInfo& inCreateInfo)
         : RasterPipeline(inCreateInfo)
         , device(inDevice)
-        , nativePipeline(VK_NULL_HANDLE)
     {
         SavePipelineLayout(inCreateInfo);
         CreateNativeGraphicsPipeline(inCreateInfo);
@@ -187,7 +186,7 @@ namespace RHI::Vulkan {
     void VulkanRasterPipeline::CreateNativeGraphicsPipeline(const RasterPipelineCreateInfo& inCreateInfo)
     {
         std::vector<VkPipelineShaderStageCreateInfo> stages;
-        auto setStage = [&stages](ShaderModule* module, VkShaderStageFlagBits stage) {
+        auto setStage = [&stages](ShaderModule* module, const VkShaderStageFlagBits stage) {
             if (module == nullptr) {
                 return;
             }
@@ -265,7 +264,7 @@ namespace RHI::Vulkan {
 #endif
     }
 
-    VkPipeline VulkanRasterPipeline::GetNative()
+    VkPipeline VulkanRasterPipeline::GetNative() const
     {
         return nativePipeline;
     }

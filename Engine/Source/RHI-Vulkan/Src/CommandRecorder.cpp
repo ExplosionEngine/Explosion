@@ -18,7 +18,7 @@
 #include <RHI/Synchronous.h>
 
 namespace RHI::Vulkan {
-    static VkAccessFlags GetBufferMemoryBarrierAccessFlags(BufferState inState)
+    static VkAccessFlags GetBufferMemoryBarrierAccessFlags(const BufferState inState)
     {
         static std::unordered_map<BufferState, VkAccessFlags> map = {
             { BufferState::undefined, VK_ACCESS_NONE },
@@ -31,7 +31,7 @@ namespace RHI::Vulkan {
         return map.at(inState);
     }
 
-    static VkPipelineStageFlags GetBufferPipelineBarrierSrcStage(BufferState inState)
+    static VkPipelineStageFlags GetBufferPipelineBarrierSrcStage(const BufferState inState)
     {
         static std::unordered_map<BufferState, VkPipelineStageFlags> map = {
             { BufferState::undefined, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT },
@@ -44,7 +44,7 @@ namespace RHI::Vulkan {
         return map.at(inState);
     }
 
-    static VkPipelineStageFlags GetBufferPipelineBarrierDstStage(BufferState inState)
+    static VkPipelineStageFlags GetBufferPipelineBarrierDstStage(const BufferState inState)
     {
         static std::unordered_map<BufferState, VkPipelineStageFlags> map = {
             { BufferState::undefined, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT },
@@ -57,7 +57,7 @@ namespace RHI::Vulkan {
         return map.at(inState);
     }
 
-    static VkAccessFlags GetTextureMemoryBarrierAccessFlags(TextureState inState)
+    static VkAccessFlags GetTextureMemoryBarrierAccessFlags(const TextureState inState)
     {
         static std::unordered_map<TextureState, VkAccessFlags> map = {
             { TextureState::undefined, VK_ACCESS_NONE },
@@ -73,7 +73,7 @@ namespace RHI::Vulkan {
         return map.at(inState);
     }
 
-    static VkPipelineStageFlags GetTexturePipelineBarrierSrcStage(TextureState inState)
+    static VkPipelineStageFlags GetTexturePipelineBarrierSrcStage(const TextureState inState)
     {
         static std::unordered_map<TextureState, VkPipelineStageFlags> map = {
             { TextureState::undefined, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT },
@@ -89,7 +89,7 @@ namespace RHI::Vulkan {
         return map.at(inState);
     }
 
-    static VkPipelineStageFlags GetTexturePipelineBarrierDstStage(TextureState inState)
+    static VkPipelineStageFlags GetTexturePipelineBarrierDstStage(const TextureState inState)
     {
         static std::unordered_map<TextureState, VkPipelineStageFlags> map = {
             { TextureState::undefined, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT },
@@ -105,7 +105,7 @@ namespace RHI::Vulkan {
         return map.at(inState);
     }
 
-    static VkImageLayout GetTextureLayout(TextureState inState)
+    static VkImageLayout GetTextureLayout(const TextureState inState)
     {
         static std::unordered_map<TextureState, VkImageLayout> map = {
             { TextureState::undefined, VK_IMAGE_LAYOUT_UNDEFINED },
@@ -157,7 +157,7 @@ namespace RHI::Vulkan {
     {
         if (inBarrier.type == ResourceType::buffer) {
             const auto& bufferBarrierInfo = inBarrier.buffer;
-            auto* nativeBuffer = static_cast<VulkanBuffer*>(bufferBarrierInfo.pointer);
+            const auto* nativeBuffer = static_cast<VulkanBuffer*>(bufferBarrierInfo.pointer);
 
             VkBufferMemoryBarrier bufferBarrier {};
             bufferBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
@@ -177,7 +177,7 @@ namespace RHI::Vulkan {
         } else if (inBarrier.type == ResourceType::texture) {
             const auto& textureBarrierInfo = inBarrier.texture;
 
-            auto* nativeTexture = static_cast<VulkanTexture*>(textureBarrierInfo.pointer);
+            const auto* nativeTexture = static_cast<VulkanTexture*>(textureBarrierInfo.pointer);
             VkImageMemoryBarrier imageBarrier {};
             imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
             imageBarrier.image = nativeTexture->GetNative();
@@ -235,8 +235,8 @@ namespace RHI::Vulkan {
 
     void VulkanCopyPassCommandRecorder::CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo)
     {
-        auto* srcBuffer = static_cast<VulkanBuffer*>(src);
-        auto* dstBuffer = static_cast<VulkanBuffer*>(dst);
+        const auto* srcBuffer = static_cast<VulkanBuffer*>(src);
+        const auto* dstBuffer = static_cast<VulkanBuffer*>(dst);
 
         VkBufferCopy nativeBufferCopy {};
         nativeBufferCopy.srcOffset = copyInfo.srcOffset;
@@ -248,8 +248,8 @@ namespace RHI::Vulkan {
 
     void VulkanCopyPassCommandRecorder::CopyBufferToTexture(Buffer* src, Texture* dst, const BufferTextureCopyInfo& copyInfo)
     {
-        auto* srcBuffer = static_cast<VulkanBuffer*>(src);
-        auto* dstTexture = static_cast<VulkanTexture*>(dst);
+        const auto* srcBuffer = static_cast<VulkanBuffer*>(src);
+        const auto* dstTexture = static_cast<VulkanTexture*>(dst);
 
         const VkBufferImageCopy nativeBufferImageCopy = GetNativeBufferImageCopy(copyInfo);
         vkCmdCopyBufferToImage(commandBuffer.GetNative(), srcBuffer->GetNative(), dstTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &nativeBufferImageCopy);
@@ -257,8 +257,8 @@ namespace RHI::Vulkan {
 
     void VulkanCopyPassCommandRecorder::CopyTextureToBuffer(Texture* src, Buffer* dst, const BufferTextureCopyInfo& copyInfo)
     {
-        auto* srcTexture = static_cast<VulkanTexture*>(src);
-        auto* dstBuffer = static_cast<VulkanBuffer*>(dst);
+        const auto* srcTexture = static_cast<VulkanTexture*>(src);
+        const auto* dstBuffer = static_cast<VulkanBuffer*>(dst);
 
         const VkBufferImageCopy nativeBufferImageCopy = GetNativeBufferImageCopy(copyInfo);
         vkCmdCopyImageToBuffer(commandBuffer.GetNative(), srcTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstBuffer->GetNative(), 1, &nativeBufferImageCopy);
@@ -266,8 +266,8 @@ namespace RHI::Vulkan {
 
     void VulkanCopyPassCommandRecorder::CopyTextureToTexture(Texture* src, Texture* dst, const TextureCopyInfo& copyInfo)
     {
-        auto* srcTexture = static_cast<VulkanTexture*>(src);
-        auto* dstTexture = static_cast<VulkanTexture*>(dst);
+        const auto* srcTexture = static_cast<VulkanTexture*>(src);
+        const auto* dstTexture = static_cast<VulkanTexture*>(dst);
 
         VkImageCopy nativeImageCopy {};
         nativeImageCopy.srcSubresource = GetNativeImageSubResourceLayers(copyInfo.srcSubResource);
@@ -405,43 +405,43 @@ namespace RHI::Vulkan {
 
     void VulkanRasterPassCommandRecorder::SetBindGroup(uint8_t inLayoutIndex, BindGroup* inBindGroup)
     {
-        auto* vBindGroup = static_cast<VulkanBindGroup*>(inBindGroup);
-        VkDescriptorSet descriptorSet = vBindGroup->GetNative();
-        VkPipelineLayout layout = rasterPipeline->GetPipelineLayout()->GetNative();
+        const auto* vBindGroup = static_cast<VulkanBindGroup*>(inBindGroup);
+        const VkDescriptorSet descriptorSet = vBindGroup->GetNative();
+        const VkPipelineLayout layout = rasterPipeline->GetPipelineLayout()->GetNative();
 
         vkCmdBindDescriptorSets(commandBuffer.GetNative(), VK_PIPELINE_BIND_POINT_GRAPHICS, layout, inLayoutIndex, 1, &descriptorSet, 0, nullptr);
     }
 
     void VulkanRasterPassCommandRecorder::SetIndexBuffer(BufferView *inBufferView)
     {
-        auto* mBufferView = static_cast<VulkanBufferView*>(inBufferView);
+        const auto* mBufferView = static_cast<VulkanBufferView*>(inBufferView);
 
-        VkBuffer indexBuffer = mBufferView->GetBuffer().GetNative();
-        auto vkFormat = EnumCast<IndexFormat, VkIndexType>(mBufferView->GetIndexFormat());
+        const VkBuffer indexBuffer = mBufferView->GetBuffer().GetNative();
+        const auto vkFormat = EnumCast<IndexFormat, VkIndexType>(mBufferView->GetIndexFormat());
 
         vkCmdBindIndexBuffer(commandBuffer.GetNative(), indexBuffer, 0, vkFormat);
     }
 
     void VulkanRasterPassCommandRecorder::SetVertexBuffer(size_t inSlot, BufferView *inBufferView)
     {
-        auto* mBufferView = static_cast<VulkanBufferView*>(inBufferView);
+        const auto* mBufferView = static_cast<VulkanBufferView*>(inBufferView);
 
-        VkBuffer vertexBuffer = mBufferView->GetBuffer().GetNative();
-        VkDeviceSize offset[] = { mBufferView->GetOffset() };
+        const VkBuffer vertexBuffer = mBufferView->GetBuffer().GetNative();
+        const VkDeviceSize offset[] = { mBufferView->GetOffset() };
         vkCmdBindVertexBuffers(commandBuffer.GetNative(), inSlot, 1, &vertexBuffer, offset);
     }
 
-    void VulkanRasterPassCommandRecorder::Draw(size_t inVertexCount, size_t inInstanceCount, size_t inFirstVertex, size_t inFirstInstance)
+    void VulkanRasterPassCommandRecorder::Draw(const size_t inVertexCount, const size_t inInstanceCount, const size_t inFirstVertex, const size_t inFirstInstance)
     {
         vkCmdDraw(commandBuffer.GetNative(), inVertexCount, inInstanceCount, inFirstVertex, inFirstInstance);
     }
 
-    void VulkanRasterPassCommandRecorder::DrawIndexed(size_t inIndexCount, size_t inInstanceCount, size_t inFirstIndex, size_t inBaseVertex, size_t inFirstInstance)
+    void VulkanRasterPassCommandRecorder::DrawIndexed(const size_t inIndexCount, const size_t inInstanceCount, const size_t inFirstIndex, const size_t inBaseVertex, const size_t inFirstInstance)
     {
         vkCmdDrawIndexed(commandBuffer.GetNative(), inIndexCount, inInstanceCount, inFirstIndex, inBaseVertex, inFirstInstance);
     }
 
-    void VulkanRasterPassCommandRecorder::SetViewport(float inX, float inY, float inWidth, float inHeight, float inMinDepth, float inMaxDepth)
+    void VulkanRasterPassCommandRecorder::SetViewport(const float inX, const float inY, const float inWidth, const float inHeight, const float inMinDepth, const float inMaxDepth)
     {
         VkViewport viewport{};
         viewport.x = inX;
@@ -453,7 +453,7 @@ namespace RHI::Vulkan {
         vkCmdSetViewport(commandBuffer.GetNative(), 0, 1, &viewport);
     }
 
-    void VulkanRasterPassCommandRecorder::SetScissor(uint32_t inLeft, uint32_t inTop, uint32_t inRight, uint32_t inBottom)
+    void VulkanRasterPassCommandRecorder::SetScissor(const uint32_t inLeft, const uint32_t inTop, const uint32_t inRight, const uint32_t inBottom)
     {
         VkRect2D rect;
         rect.offset = {static_cast<int32_t>(inLeft), static_cast<int32_t>(inTop) };
@@ -471,7 +471,7 @@ namespace RHI::Vulkan {
         vkCmdSetBlendConstants(commandBuffer.GetNative(), inConstants);
     }
 
-    void VulkanRasterPassCommandRecorder::SetStencilReference(uint32_t inReference)
+    void VulkanRasterPassCommandRecorder::SetStencilReference(const uint32_t inReference)
     {
         // TODO stencil face;
         vkCmdSetStencilReference(commandBuffer.GetNative(), VK_STENCIL_FACE_FRONT_AND_BACK, inReference);

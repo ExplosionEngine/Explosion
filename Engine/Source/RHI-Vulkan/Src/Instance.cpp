@@ -7,6 +7,7 @@
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Instance.h>
 #include <RHI/Vulkan/Gpu.h>
+#include <Common/IO.h>
 
 namespace RHI::Vulkan {
 #if BUILD_CONFIG_DEBUG
@@ -16,8 +17,19 @@ namespace RHI::Vulkan {
         const VkDebugUtilsMessengerCallbackDataEXT* callbackData,
         void* userData)
     {
-        std::cerr << callbackData->pMessage << std::endl;
+        AutoCoutFlush;
+        std::cerr << callbackData->pMessage << Common::newline;
         return VK_FALSE;
+    }
+
+    void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& inCreateInfo)
+    {
+        inCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        inCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+        inCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        inCreateInfo.pfnUserCallback = DebugCallback;
+        inCreateInfo.pNext = nullptr;
+        inCreateInfo.flags = 0;
     }
 #endif
 }
@@ -26,7 +38,6 @@ namespace RHI::Vulkan {
     RHI::Instance* gInstance = nullptr;
 
     VulkanInstance::VulkanInstance()
-        : Instance()
     {
 #if BUILD_CONFIG_DEBUG
         PrepareLayers();
@@ -39,7 +50,7 @@ namespace RHI::Vulkan {
         EnumeratePhysicalDevices();
     }
 
-    VulkanInstance::~VulkanInstance()
+    VulkanInstance::~VulkanInstance() // NOLINT
     {
 #if BUILD_CONFIG_DEBUG
         DestroyDebugMessenger();
@@ -55,8 +66,8 @@ namespace RHI::Vulkan {
 #if BUILD_CONFIG_DEBUG
     void VulkanInstance::PrepareLayers()
     {
-        static std::vector<const char*> requiredLayerNames = {
-            VK_KHRONOS_VALIDATION_LAYER_NAME
+        static std::vector requiredLayerNames = {
+            "VK_LAYER_KHRONOS_validation"
         };
 
         uint32_t supportedLayerCount = 0;
@@ -65,12 +76,11 @@ namespace RHI::Vulkan {
         vkEnumerateInstanceLayerProperties(&supportedLayerCount, supportedLayers.data());
 
         for (auto&& requiredLayerName : requiredLayerNames) {
-            auto iter = std::find_if(
-                supportedLayers.begin(),
-                supportedLayers.end(),
-                [&requiredLayerName](const auto& elem) -> bool { return std::string(requiredLayerName) == elem.layerName; }
-            );
-            if (iter == supportedLayers.end()) {
+            if (const auto iter = std::ranges::find_if(
+                    supportedLayers,
+                    [&requiredLayerName](const auto& elem) -> bool { return std::string(requiredLayerName) == elem.layerName; }
+                );
+                iter == supportedLayers.end()) {
                 QuickFailWithReason("not found required vulkan layers");
             }
             vkEnabledLayerNames.emplace_back(requiredLayerName);
@@ -101,12 +111,11 @@ namespace RHI::Vulkan {
         vkEnumerateInstanceExtensionProperties(nullptr, &supportedExtensionCount, supportedExtensions.data());
 
         for (auto&& requiredExtensionName : requiredExtensionNames) {
-            auto iter = std::find_if(
-                supportedExtensions.begin(),
-                supportedExtensions.end(),
-                [&requiredExtensionName](const auto& elem) -> bool { return std::string(requiredExtensionName) == elem.extensionName; }
-            );
-            if (iter == supportedExtensions.end()) {
+            if (const auto iter = std::ranges::find_if(
+                    supportedExtensions,
+                    [&requiredExtensionName](const auto& elem) -> bool { return std::string(requiredExtensionName) == elem.extensionName; }
+                );
+                iter == supportedExtensions.end()) {
                 continue;
             }
             vkEnabledExtensionNames.emplace_back(requiredExtensionName);
@@ -140,11 +149,10 @@ namespace RHI::Vulkan {
         createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
 
-        auto result = vkCreateInstance(&createInfo, nullptr, &nativeInstance);
-        Assert(result == VK_SUCCESS);
+        Assert(vkCreateInstance(&createInfo, nullptr, &nativeInstance) == VK_SUCCESS);
     }
 
-    void VulkanInstance::DestroyNativeInstance()
+    void VulkanInstance::DestroyNativeInstance() const
     {
         vkDestroyInstance(nativeInstance, nullptr);
     }
@@ -154,7 +162,7 @@ namespace RHI::Vulkan {
         return gpus.size();
     }
 
-    Gpu* VulkanInstance::GetGpu(uint32_t inIndex)
+    Gpu* VulkanInstance::GetGpu(const uint32_t inIndex)
     {
         return gpus[inIndex].Get();
     }
@@ -178,16 +186,6 @@ namespace RHI::Vulkan {
     }
 
 #if BUILD_CONFIG_DEBUG
-    void VulkanInstance::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& inCreateInfo)
-    {
-        inCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        inCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-        inCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        inCreateInfo.pfnUserCallback = DebugCallback;
-        inCreateInfo.pNext = nullptr;
-        inCreateInfo.flags = 0;
-    }
-
     void VulkanInstance::CreateDebugMessenger()
     {
         VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;

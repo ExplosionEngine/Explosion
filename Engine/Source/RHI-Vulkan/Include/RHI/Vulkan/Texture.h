@@ -6,14 +6,16 @@
 #pragma once
 
 #include <memory>
+
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
+
 #include <RHI/Texture.h>
 
 namespace RHI::Vulkan {
     class VulkanDevice;
 
-    class VulkanTexture : public Texture {
+    class VulkanTexture final : public Texture {
     public:
         NonCopyable(VulkanTexture)
 

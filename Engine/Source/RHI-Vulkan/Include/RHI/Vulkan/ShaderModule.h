@@ -4,15 +4,16 @@
 
 #pragma once
 
-#include <RHI/ShaderModule.h>
-#include <vulkan/vulkan.h>
 #include <string>
-#include <unordered_map>
+
+#include <vulkan/vulkan.h>
+
+#include <RHI/ShaderModule.h>
 
 namespace RHI::Vulkan {
     class VulkanDevice;
 
-    class VulkanShaderModule : public ShaderModule {
+    class VulkanShaderModule final : public ShaderModule {
     public:
         NonCopyable(VulkanShaderModule)
         VulkanShaderModule(VulkanDevice& inDevice, const ShaderModuleCreateInfo& inCreateInfo);

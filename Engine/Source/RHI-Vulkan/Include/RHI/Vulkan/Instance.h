@@ -14,7 +14,7 @@
 namespace RHI::Vulkan {
     extern Instance* gInstance;
 
-    class VulkanInstance : public Instance {
+    class VulkanInstance final : public Instance {
     public:
         NonCopyable(VulkanInstance)
         VulkanInstance();
@@ -41,11 +41,10 @@ namespace RHI::Vulkan {
     private:
         void PrepareExtensions();
         void CreateNativeInstance();
-        void DestroyNativeInstance();
+        void DestroyNativeInstance() const;
         void EnumeratePhysicalDevices();
 #if BUILD_CONFIG_DEBUG
         void PrepareLayers();
-        void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& inCreateInfo);
         void CreateDebugMessenger();
         void DestroyDebugMessenger();
 #endif

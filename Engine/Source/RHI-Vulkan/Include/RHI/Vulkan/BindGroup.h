@@ -5,14 +5,14 @@
 
 #pragma once
 
-#include <memory>
 #include <vulkan/vulkan.h>
+
 #include <RHI/BindGroup.h>
 
 namespace RHI::Vulkan {
     class VulkanDevice;
 
-    class VulkanBindGroup : public BindGroup {
+    class VulkanBindGroup final : public BindGroup {
     public:
         NonCopyable(VulkanBindGroup)
         VulkanBindGroup(VulkanDevice& inDevice, const BindGroupCreateInfo& inCreateInfo);

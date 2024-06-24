@@ -201,7 +201,7 @@ private:
     void CreateTextureAndSampler()
     {
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load("../Test/Sample/RHI/TexSampling/Awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        stbi_uc* pixels = stbi_load("../Test/Sample/RHI-TexSampling/Awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         Assert(pixels != nullptr);
 
         const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
@@ -294,10 +294,10 @@ private:
 
     void CreateShaderModules()
     {
-        vsCompileOutput = CompileShader("../Test/Sample/RHI/TexSampling/TexSampling.hlsl", "VSMain", ShaderStageBits::sVertex);
+        vsCompileOutput = CompileShader("../Test/Sample/RHI-TexSampling/TexSampling.hlsl", "VSMain", ShaderStageBits::sVertex);
         vertexShader = device->CreateShaderModule(ShaderModuleCreateInfo("VSMain", vsCompileOutput.byteCode));
 
-        psCompileOutput = CompileShader("../Test/Sample/RHI/TexSampling/TexSampling.hlsl", "PSMain", ShaderStageBits::sPixel);
+        psCompileOutput = CompileShader("../Test/Sample/RHI-TexSampling/TexSampling.hlsl", "PSMain", ShaderStageBits::sPixel);
         pixelShader = device->CreateShaderModule(ShaderModuleCreateInfo("PSMain", psCompileOutput.byteCode));
     }
 

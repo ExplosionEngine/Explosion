@@ -87,7 +87,7 @@ namespace Rendering {
     template <typename RHIResource>
     RHIResource* PooledResource<RHIResource>::GetRHI() const
     {
-        return rhiHandle;
+        return rhiHandle.Get();
     }
 
     template <typename RHIResource>

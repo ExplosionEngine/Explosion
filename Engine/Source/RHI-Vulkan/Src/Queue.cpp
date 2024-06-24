@@ -10,9 +10,8 @@
 #include <RHI/Vulkan/Synchronous.h>
 
 namespace RHI::Vulkan {
-    VulkanQueue::VulkanQueue(VulkanDevice& inDevice, VkQueue inNativeQueue)
-        : Queue()
-        , nativeQueue(inNativeQueue)
+    VulkanQueue::VulkanQueue(VulkanDevice&, const VkQueue inNativeQueue)
+        : nativeQueue(inNativeQueue)
     {
     }
 
@@ -20,8 +19,8 @@ namespace RHI::Vulkan {
 
     void VulkanQueue::Submit(CommandBuffer* inCmdBuffer, const QueueSubmitInfo& inSubmitInfo)
     {
-        auto* commandBuffer = static_cast<VulkanCommandBuffer*>(inCmdBuffer);
-        auto* vkFence = static_cast<VulkanFence*>(inSubmitInfo.signalFence);
+        const auto* commandBuffer = static_cast<VulkanCommandBuffer*>(inCmdBuffer);
+        const auto* vkFence = static_cast<VulkanFence*>(inSubmitInfo.signalFence);
 
         Assert(commandBuffer);
         const VkCommandBuffer& cmdBuffer = commandBuffer->GetNative();
@@ -31,7 +30,7 @@ namespace RHI::Vulkan {
         waitSemaphores.resize(inSubmitInfo.waitSemaphores.size());
         waitStageFlags.resize(inSubmitInfo.waitSemaphores.size());
         for (auto i = 0; i < inSubmitInfo.waitSemaphores.size(); i++) {
-            auto* vkSemaphore = static_cast<VulkanSemaphore*>(inSubmitInfo.waitSemaphores[i]);
+            const auto* vkSemaphore = static_cast<VulkanSemaphore*>(inSubmitInfo.waitSemaphores[i]);
             waitSemaphores[i] = vkSemaphore->GetNative();
             waitStageFlags[i] = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         }
@@ -39,7 +38,7 @@ namespace RHI::Vulkan {
         std::vector<VkSemaphore> signalSemaphores;
         signalSemaphores.resize(inSubmitInfo.signalSemaphores.size());
         for (auto i = 0; i < inSubmitInfo.signalSemaphores.size(); i++) {
-            auto* vkSemaphore = static_cast<VulkanSemaphore*>(inSubmitInfo.signalSemaphores[i]);
+            const auto* vkSemaphore = static_cast<VulkanSemaphore*>(inSubmitInfo.signalSemaphores[i]);
             signalSemaphores[i] = vkSemaphore->GetNative();
         }
 
@@ -54,13 +53,13 @@ namespace RHI::Vulkan {
         vkSubmitInfo.commandBufferCount = 1;
         vkSubmitInfo.pCommandBuffers = &cmdBuffer;
 
-        VkFence nativeFence = vkFence == nullptr ? VK_NULL_HANDLE : vkFence->GetNative();
+        const VkFence nativeFence = vkFence == nullptr ? VK_NULL_HANDLE : vkFence->GetNative();
         Assert(vkQueueSubmit(nativeQueue, 1, &vkSubmitInfo, nativeFence) == VK_SUCCESS);
     }
 
     void VulkanQueue::Flush(Fence* inFenceToSignal)
     {
-        auto* vkFence = static_cast<VulkanFence*>(inFenceToSignal);
+        const auto* vkFence = static_cast<VulkanFence*>(inFenceToSignal);
 
         VkSubmitInfo vkSubmitInfo = {};
         vkSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -70,7 +69,7 @@ namespace RHI::Vulkan {
         Assert(vkQueueSubmit(nativeQueue, 1, &vkSubmitInfo, vkFence->GetNative()) == VK_SUCCESS);
     }
 
-    VkQueue VulkanQueue::GetNative()
+    VkQueue VulkanQueue::GetNative() const
     {
         return nativeQueue;
     }

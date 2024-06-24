@@ -55,7 +55,7 @@ namespace RHI::Vulkan {
 
     void VulkanBindGroup::CreateNativeDescriptorSet(const BindGroupCreateInfo& inCreateInfo)
     {
-        VkDescriptorSetLayout layout = static_cast<VulkanBindGroupLayout*>(inCreateInfo.layout)->GetNative();
+        const VkDescriptorSetLayout layout = static_cast<VulkanBindGroupLayout*>(inCreateInfo.layout)->GetNative();
 
         VkDescriptorSetAllocateInfo allocInfo {};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -109,14 +109,14 @@ namespace RHI::Vulkan {
 
                 descriptorWrites[i].pBufferInfo = &bufferInfos.back();
             } else if (entry.binding.type == BindingType::sampler) {
-                auto* sampler = static_cast<VulkanSampler*>(std::get<Sampler*>(entry.entity));
+                const auto* sampler = static_cast<VulkanSampler*>(std::get<Sampler*>(entry.entity));
 
                 imageInfos.emplace_back();
                 imageInfos.back().sampler = sampler->GetNative();
 
                 descriptorWrites[i].pImageInfo = &imageInfos.back();
             } else if (entry.binding.type == BindingType::texture || entry.binding.type == BindingType::storageTexture) {
-                auto* textureView = static_cast<VulkanTextureView*>(std::get<TextureView*>(entry.entity));
+                const auto* textureView = static_cast<VulkanTextureView*>(std::get<TextureView*>(entry.entity));
 
                 imageInfos.emplace_back();
                 imageInfos.back().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
