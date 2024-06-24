@@ -1,8 +1,6 @@
 //
 // Created by Junkang on 2023/3/9.
 //
-#define NOMINMAX
-
 #include <iostream>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
