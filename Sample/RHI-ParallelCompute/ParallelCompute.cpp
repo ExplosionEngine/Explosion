@@ -130,7 +130,7 @@ private:
 
     void DealWithPipelineBindingOBjs()
     {
-        csOutPut = CompileShader("../Test/Sample/RHI/ParallelCompute/Compute.hlsl", "CSMain", ShaderStageBits::sCompute);
+        csOutPut = CompileShader("../Test/Sample/RHI-ParallelCompute/Compute.hlsl", "CSMain", ShaderStageBits::sCompute);
 
         auto shaderModuleCreateInfo = ShaderModuleCreateInfo("CSMain", csOutPut.byteCode);
         csShaderModule = device->CreateShaderModule(shaderModuleCreateInfo);
