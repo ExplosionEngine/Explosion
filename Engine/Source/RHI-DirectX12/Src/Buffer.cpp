@@ -30,17 +30,16 @@ namespace RHI::DirectX12 {
         return fallback;
     }
 
-    static MapMode GetMapMode(const BufferUsageFlags bufferUsages)
-    static D3D12_RESOURCE_FLAGS GetDX12ResourceFlag(BufferUsageFlags flag)
+    static D3D12_RESOURCE_FLAGS GetDX12ResourceFlag(const BufferUsageFlags flag)
     {
         static std::unordered_map<BufferUsageFlags, D3D12_RESOURCE_FLAGS> rules = {
             { BufferUsageBits::storage, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS },
         };
         static D3D12_RESOURCE_FLAGS fallback = D3D12_RESOURCE_FLAG_NONE;
 
-        for (const auto& rule : rules) {
-            if (flag & rule.first) {
-                return rule.second;
+        for (const auto& [key, value] : rules) {
+            if (flag & key) {
+                return value;
             }
         }
         return fallback;

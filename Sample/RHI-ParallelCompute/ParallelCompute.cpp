@@ -83,9 +83,9 @@ private:
         inputBuffer = device->CreateBuffer(inputBufInfo);
 
         const auto inputBufViewInfo = BufferViewCreateInfo()
-        .SetType(BufferViewType::uniformBinding)
-        .SetSize(data.size() * sizeof(FVec4))
-        .SetOffset(0);
+            .SetType(BufferViewType::uniformBinding)
+            .SetSize(data.size() * sizeof(FVec4))
+            .SetOffset(0);
         inputBufferView = inputBuffer->CreateBufferView(inputBufViewInfo);
 
         const UniqueRef<CommandBuffer> copyCmd = device->CreateCommandBuffer();

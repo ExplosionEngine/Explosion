@@ -4,20 +4,14 @@
 
 #pragma once
 
-#include <iostream>
 #include <string>
-#include <fstream>
 #include <vector>
-#include <Common/Memory.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
+
+#include <Common/Memory.h>
+#include <Common/Math/Vector.h>
+#include <Common/Math/Matrix.h>
 
 struct TextureData {
     uint32_t width = 0;
@@ -36,10 +30,10 @@ struct MaterialData
 };
 
 struct Vertex {
-    glm::vec4 pos;
-    glm::vec2 uv;
-    glm::vec4 color;
-    glm::vec3 normal;
+    Common::FVec4 pos;
+    Common::FVec2 uv;
+    Common::FVec4 color;
+    Common::FVec3 normal;
 };
 
 // In assimp, a mesh represents a geometry or model with a single material.
@@ -52,22 +46,6 @@ struct Mesh {
     uint32_t vertexCount;
 
     Common::SharedRef<MaterialData> materialData;
-
-    struct Dimensions {
-        glm::vec3 min = glm::vec3(FLT_MAX);
-        glm::vec3 max = glm::vec3(-FLT_MAX);
-        glm::vec3 size {};
-        glm::vec3 center {};
-        float radius = 0.0f;
-    } dimensions;
-
-    void SetDimensions(const glm::vec3 min, const glm::vec3 max) {
-        dimensions.min = min;
-        dimensions.max = max;
-        dimensions.size = max - min;
-        dimensions.center = (min + max) / 2.0f;
-        dimensions.radius = glm::distance(min, max) / 2.0f;
-    }
 
     Mesh(uint32_t firstIndex, uint32_t indexCount, uint32_t firstVertex, uint32_t vertexCount, Common::SharedRef<MaterialData>& material)
         : firstIndex(firstIndex)
@@ -84,17 +62,17 @@ struct Mesh {
 struct Node {
     explicit Node(Common::SharedRef<Node>& p)
         : parent(Common::WeakRef<Node>(p))
-        , matrix(1.0f)
+        , matrix(Common::FMat4x4Consts::identity)
     {
     }
 
     Common::WeakRef<Node> parent;
     std::vector<Common::SharedRef<Node>> children;
 
-    glm::mat4 matrix;
+    Common::FMat4x4 matrix;
 
-    glm::mat4 LocalMatrix() const;
-    glm::mat4 GetMatrix();
+    Common::FMat4x4 LocalMatrix() const;
+    Common::FMat4x4 GetMatrix();
 };
 
 
@@ -121,8 +99,8 @@ private:
 public:
     Common::SharedRef<Node> rootNode;
     std::vector<Common::SharedRef<MaterialData>> materialDatas;
-    std::vector<uint32_t> raw_index_buffer;
-    std::vector<Vertex> raw_vertex_buffer;
+    std::vector<uint32_t> rawIndBuffer;
+    std::vector<Vertex> rawVertBuffer;
     std::vector<Common::UniqueRef<Mesh>> meshes;
     std::string directory;
 

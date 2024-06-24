@@ -82,6 +82,13 @@ AddSample(
         RHI-SSAO/Model/Voyager.gltf
 )
 
+file(GLOB SOURCES RHI-ParallelCompute/*.cpp)
+AddSample(
+    NAME RHISample-ParallelCompute
+    SRC ${SOURCES}
+    SHADER RHI-ParallelCompute/Compute.hlsl
+)
+
 file(GLOB SOURCES Rendering-Triangle/*.cpp)
 AddSample(
     NAME RenderingSample-Triangle
@@ -89,10 +96,4 @@ AddSample(
     INC Rendering-Triangle
     SHADER
         Rendering-Triangle/Triangle.esl
-)
-
-AddRHISample(
-    NAME RHISample-ParallelCompute
-    SRC ParallelCompute/ParallelCompute.cpp
-    SHADER ParallelCompute/Compute.hlsl
 )
