@@ -287,6 +287,7 @@ namespace RHI::Vulkan {
         : device(inDevice)
         , commandRecorder(inCmdRecorder)
         , commandBuffer(inCmdBuffer)
+        , computePipeline(nullptr)
     {
     }
 
@@ -328,6 +329,7 @@ namespace RHI::Vulkan {
         : device(inDevice)
         , commandRecorder(inCmdRecorder)
         , commandBuffer(inCmdBuffer)
+        , rasterPipeline(nullptr)
     {
         std::vector<VkRenderingAttachmentInfo> colorAttachmentInfos(inBeginInfo.colorAttachments.size());
         for (size_t i = 0; i < inBeginInfo.colorAttachments.size(); i++)

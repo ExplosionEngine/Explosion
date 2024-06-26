@@ -10,6 +10,19 @@
 #include <RHI/DirectX12/Common.h>
 
 namespace RHI::DirectX12 {
+    static uint32_t GetStrideOfStorageBuffer(StorageFormat format)
+    {
+        if (format == StorageFormat::float32 ||
+            format == StorageFormat::sint32 ||
+            format == StorageFormat::uint32) {
+            return 4;
+        }
+
+        return -1;
+    }
+}
+
+namespace RHI::DirectX12 {
     DX12BufferView::DX12BufferView(DX12Buffer& inBuffer, const BufferViewCreateInfo& inCreateInfo)
         : BufferView(inCreateInfo), buffer(inBuffer)
     {
@@ -55,7 +68,7 @@ namespace RHI::DirectX12 {
             desc.Format = EnumCast<StorageFormat, DXGI_FORMAT>(storageViewInfo.format);
             desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
             desc.Buffer.FirstElement = inCreateInfo.offset;
-            desc.Buffer.NumElements = inCreateInfo.size / storageViewInfo.stride;
+            desc.Buffer.NumElements = inCreateInfo.size / GetStrideOfStorageBuffer(storageViewInfo.format);
 
             nativeView = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
             buffer.GetDevice().GetNative()->CreateUnorderedAccessView(buffer.GetNative(), nullptr, &desc, std::get<Common::UniqueRef<DescriptorAllocation>>(nativeView)->GetCpuHandle());

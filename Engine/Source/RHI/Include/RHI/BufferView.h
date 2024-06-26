@@ -25,7 +25,6 @@ namespace RHI {
     };
 
     struct StorageBufferViewInfo {
-        uint32_t stride;
         StorageFormat format;
     };
 
@@ -46,7 +45,7 @@ namespace RHI {
         BufferViewCreateInfo& SetSize(uint32_t inSize);
         BufferViewCreateInfo& SetExtendVertex(uint32_t inStride);
         BufferViewCreateInfo& SetExtendIndex(IndexFormat inFormat);
-        BufferViewCreateInfo& SetExtendStorage(uint32_t stride, StorageFormat inFormat);
+        BufferViewCreateInfo& SetExtendStorage(StorageFormat inFormat);
 
         size_t Hash() const;
     };

@@ -31,11 +31,7 @@ void Model::LoadFromFile(const std::string& path)
     Assimp::Importer importer;
     const auto* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
-    const bool success = scene || !(scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE);
-    if (!success) {
-        std::cout << "failed to load gltf file: " << path << '\n';
-    }
-    Assert(success);
+    Assert(scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE);
 
     directory = path.substr(0, path.find_last_of('/'));
 

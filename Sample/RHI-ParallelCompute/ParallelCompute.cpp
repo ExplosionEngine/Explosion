@@ -25,7 +25,7 @@ public:
         CreateCmdBuffAndSyncObj();
     }
 
-    void ComputeAndShow()
+    void ComputeAndSaveResult()
     {
         BuildCmdBufferAndSubmit();
 
@@ -33,10 +33,11 @@ public:
         const auto* mappedData = static_cast<FVec4*>(readbackBuffer->Map(MapMode::read, 0, dataNum * sizeof(FVec4)));
 
         std::ofstream fout("results.txt");
+        Assert(fout.is_open());
 
         for(int i = 0; i < dataNum; ++i)
         {
-            std::cout << "(" << mappedData[i].x << ", " << mappedData[i].y << ", " <<
+            fout << "(" << mappedData[i].x << ", " << mappedData[i].y << ", " <<
                  ", " << mappedData[i].z << ", " << mappedData[i].w << ")" << '\n';
         }
 
@@ -50,8 +51,6 @@ private:
 
     void RequestDeviceAndFetchQueues()
     {
-        // Generally, there is a queue in GPU doing both graphics and compute work
-        // TODO: Is it necessary to make a distinction between the composite-use-queue and the single-use-queue?
         device = gpu->RequestDevice(DeviceCreateInfo().AddQueueRequest(QueueRequestInfo(QueueType::graphics, 1)));
         queue = device->GetQueue(QueueType::graphics, 0);
     }
@@ -118,7 +117,7 @@ private:
             .SetType(BufferViewType::storageBinding)
             .SetSize(data.size() * sizeof(FVec4))
             .SetOffset(0)
-            .SetExtendStorage(sizeof(float), StorageFormat::float32);
+            .SetExtendStorage(StorageFormat::float32);
         outputBufferView = outputBuffer->CreateBufferView(outputBufferViewInfo);
 
         const auto readbackBufferInfo = BufferCreateInfo()
@@ -221,7 +220,7 @@ int main(int argc, char* argv[])
         return -1;
     }
     application.Setup();
-    application.ComputeAndShow();
+    application.ComputeAndSaveResult();
 
     return 0;
 }

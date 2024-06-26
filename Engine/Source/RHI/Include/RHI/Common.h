@@ -381,7 +381,7 @@ namespace RHI {
 
     enum class BufferState : EnumType {
         undefined,
-        staging,  // TODO: the sementics of staging is intermediate / temporary, change to `coherent` maybe, used for host upload and readback
+        staging,
         copySrc,
         copyDst,
         shaderReadOnly,

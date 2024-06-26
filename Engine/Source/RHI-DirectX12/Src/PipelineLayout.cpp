@@ -2,7 +2,6 @@
 // Created by johnk on 11/3/2022.
 //
 
-#include <iostream>
 #include <vector>
 
 #include <directx/d3dx12.h>
@@ -75,12 +74,6 @@ namespace RHI::DirectX12 {
         ComPtr<ID3DBlob> signature;
         ComPtr<ID3DBlob> error;
         bool success = SUCCEEDED(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
-#if BUILD_CONFIG_DEBUG
-        if (!success) {
-            auto info = std::string(static_cast<char*>(error->GetBufferPointer()), error->GetBufferSize());
-            std::cout << "failed to serialize rootSignature: " << info << '\n';
-        }
-#endif
         Assert(success);
         success = SUCCEEDED(inDevice.GetNative()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&nativeRootSignature)));
         Assert(success);

@@ -102,7 +102,7 @@ namespace Common {
 
         template<uint8_t DR, uint8_t DC>
         requires (DR < R) && (DC < C)
-        Matrix<T, DR, DC> DownCast() const;
+        Matrix<T, DR, DC> SubMatrix() const;
 
         bool CanInverse() const;
         Matrix Inverse() const;
@@ -761,7 +761,7 @@ namespace Common {
     template <typename T, uint8_t R, uint8_t C>
     template <uint8_t DR, uint8_t DC>
     requires(DR < R) && (DC < C)
-    Matrix<T, DR, DC> Matrix<T, R, C>::DownCast() const
+    Matrix<T, DR, DC> Matrix<T, R, C>::SubMatrix() const
     {
         Matrix<T, DR, DC> result;
         for (auto i = 0; i < DR; i++) {
