@@ -324,7 +324,7 @@ TEST(MathTest, FMat3x4Test)
     ASSERT_TRUE(v1 == v2);
 }
 
-TEST(MathTest, MatDowncastTest)
+TEST(MathTest, SubMatrixTest)
 {
     const FMat4x4 m0(
         FVec4(1, 2, 3, 4),
@@ -333,7 +333,7 @@ TEST(MathTest, MatDowncastTest)
         FVec4(12, 11, 9, 10)
     );
 
-    const auto m1 = m0.DownCast<3, 3>();
+    const auto m1 = m0.SubMatrix<3, 3>();
     ASSERT_TRUE(m1.Row(0) == FVec3(1, 2, 3));
     ASSERT_TRUE(m1.Row(1) == FVec3(4, 5, 6));
     ASSERT_TRUE(m1.Row(2) == FVec3(7, 8, 9));

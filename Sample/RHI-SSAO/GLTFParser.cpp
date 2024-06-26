@@ -31,7 +31,8 @@ void Model::LoadFromFile(const std::string& path)
     Assimp::Importer importer;
     const auto* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
-    Assert(scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE);
+    const bool success = scene || !(scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE);
+    Assert(success);
 
     directory = path.substr(0, path.find_last_of('/'));
 
@@ -177,7 +178,7 @@ void Model::LoadNode(const aiScene* scene, aiNode* node, SharedRef<Node>& parent
 
                 // pre transform vert
                 vert.pos = localMatrix * vert.pos;
-                vert.normal = (localMatrix.DownCast<3, 3>() * vert.normal).Normalized();
+                vert.normal = (localMatrix.SubMatrix<3, 3>() * vert.normal).Normalized();
 
                 rawVertBuffer.emplace_back(vert);
             }
