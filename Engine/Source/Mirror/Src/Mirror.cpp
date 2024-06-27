@@ -9,15 +9,14 @@
 #include <Mirror/Registry.h>
 #include <Common/Debug.h>
 #include <Common/String.h>
-
-namespace Mirror::Internal {
-    TypeId ComputeTypeId(const std::string_view sigName)
-    {
-        return Common::HashUtils::CityHash(sigName.data(), sigName.size());
-    }
-}
+#include <Common/Hash.h>
 
 namespace Mirror {
+    TypeId GetTypeIdByName(const std::string& name)
+    {
+        return Common::HashUtils::CityHash(name.data(), name.size());
+    }
+
     Any::~Any()
     {
         if (rtti != nullptr) {

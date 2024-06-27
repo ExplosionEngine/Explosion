@@ -16,7 +16,6 @@
 #include <tuple>
 
 #include <Common/Serialization.h>
-#include <Common/Hash.h>
 #include <Common/Debug.h>
 #include <Mirror/Api.h>
 
@@ -31,8 +30,6 @@ namespace Mirror {
 }
 
 namespace Mirror::Internal {
-    MIRROR_API TypeId ComputeTypeId(std::string_view sigName);
-
     struct AnyRtti {
         using DetorFunc = void(void*) noexcept;
         using CopyFunc = void(void*, const void*);

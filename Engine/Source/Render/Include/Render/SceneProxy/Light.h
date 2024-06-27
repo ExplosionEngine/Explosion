@@ -8,7 +8,7 @@
 #include <Common/Math/Color.h>
 
 namespace Render {
-    enum class LightType {
+    enum class LightType : uint8_t {
         directional,
         point,
         spot,
@@ -19,7 +19,7 @@ namespace Render {
     public:
         ILightSceneProxy();
         virtual ~ILightSceneProxy();
-        virtual Common::FMat4x4 RGetWorldMatrix() const;
+        virtual Common::FMat4x4 RGetLocalToWorld() const;
         virtual LightType RGetLightType() const;
         virtual Common::Color RGetColor() const;
         virtual float RGetIntensity() const;

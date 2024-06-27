@@ -7,7 +7,6 @@
 #include <Common/Memory.h>
 #include <Core/Module.h>
 #include <Runtime/Api.h>
-#include <Runtime/World.h>
 #include <Runtime/Engine.h>
 
 namespace Runtime {
@@ -22,8 +21,7 @@ namespace Runtime {
 
         void Initialize(const RuntimeModuleInitParams& inParams);
         Engine* GetEngine() const;
-        World* CreateWorld(const std::string& inName = "") const;
-        void DestroyWorld(World* inWorld) const;
+        // TODO world
 
     private:
         void CreateEngine();

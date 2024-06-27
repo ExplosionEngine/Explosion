@@ -3,6 +3,7 @@
 //
 
 #include <Runtime/RuntimeModule.h>
+#include <Common/Debug.h>
 
 namespace Runtime {
     RuntimeModule::RuntimeModule()
@@ -22,16 +23,6 @@ namespace Runtime {
     Engine* RuntimeModule::GetEngine() const // NOLINT
     {
         return engine.Get();
-    }
-
-    World* RuntimeModule::CreateWorld(const std::string& inName) const // NOLINT
-    {
-        return new World(inName);
-    }
-
-    void RuntimeModule::DestroyWorld(World* inWorld) const // NOLINT
-    {
-        delete inWorld;
     }
 
     void RuntimeModule::CreateEngine()
