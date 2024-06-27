@@ -1,8 +1,7 @@
 //
 // Created by Junkang on 2023/3/9.
 //
-
-
+#include <iostream>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <assimp/postprocess.h>
@@ -11,14 +10,14 @@
 
 using namespace Common;
 
-glm::mat4 Node::LocalMatrix() const
+FMat4x4 Node::LocalMatrix() const
 {
     return matrix;
 }
 
-glm::mat4 Node::GetMatrix()
+FMat4x4 Node::GetMatrix()
 {
-    glm::mat4 m = LocalMatrix();
+    FMat4x4 m = LocalMatrix();
     auto& p = parent;
     while (p.Lock().Get() != nullptr) {
         m = p.Lock()->LocalMatrix() * m;
@@ -32,14 +31,12 @@ void Model::LoadFromFile(const std::string& path)
     Assimp::Importer importer;
     const auto* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        std::cerr << "failed to load gltf file: " << path << std::endl;
-        exit(-1);
-    }
+    const bool success = scene || !(scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE);
+    Assert(success);
 
     directory = path.substr(0, path.find_last_of('/'));
 
-    assert(scene->HasMaterials() && scene->HasMeshes());
+    Assert(scene->HasMaterials() && scene->HasMeshes());
 
     LoadMaterials(scene);
 
@@ -117,7 +114,9 @@ UniqueRef<TextureData> Model::LoadMaterialTexture(const aiScene* scene, const ai
 void Model::LoadNode(const aiScene* scene, aiNode* node, SharedRef<Node>& parent)
 {
     SharedRef mNode = new Node(parent);
-    mNode->matrix = glm::transpose(glm::make_mat4x4(&node->mTransformation.a1));
+
+    // the layout of matrix in assimp math lib is row major, which is equal to expolsion math lib
+    memcpy(mNode->matrix.data, &node->mTransformation.a1, sizeof(Common::FMat4x4));
 
     for (unsigned int m = 0; m < node->mNumChildren; m++) {
         LoadNode(scene, node->mChildren[m], mNode);
@@ -127,19 +126,19 @@ void Model::LoadNode(const aiScene* scene, aiNode* node, SharedRef<Node>& parent
     for (unsigned int k = 0; k < node->mNumMeshes; k++) {
         auto* mesh = scene->mMeshes[node->mMeshes[k]];
 
-        auto indexStart = static_cast<uint32_t>(raw_index_buffer.size());
-        auto vertexStart = static_cast<uint32_t>(raw_vertex_buffer.size());
+        auto indexStart = static_cast<uint32_t>(rawIndBuffer.size());
+        auto vertexStart = static_cast<uint32_t>(rawVertBuffer.size());
         uint32_t indexCount = 0;
         uint32_t vertexCount = 0;
 
         // node indices
         {
-            auto indexOffset = static_cast<uint32_t>(raw_vertex_buffer.size());
+            auto vertexOffset = static_cast<uint32_t>(rawVertBuffer.size());
 
             for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
                 const auto& face = mesh->mFaces[i];
                 for (unsigned int j = 0; j < face.mNumIndices; j++) {
-                    raw_index_buffer.emplace_back(face.mIndices[j] + indexOffset);
+                    rawIndBuffer.emplace_back(face.mIndices[j] + vertexOffset);
                     indexCount++;
                 }
             }
@@ -151,21 +150,16 @@ void Model::LoadNode(const aiScene* scene, aiNode* node, SharedRef<Node>& parent
 
             for (uint32_t i = 0; i < vertexCount; i++) {
                 Vertex vert {};
-                glm::vec3 vector;
 
-                // pos
-                vector.x = mesh->mVertices[i].x;
-                vector.y = mesh->mVertices[i].y;
-                vector.z = mesh->mVertices[i].z;
+                vert.pos.x = mesh->mVertices[i].x;
+                vert.pos.y = mesh->mVertices[i].y;
+                vert.pos.z = mesh->mVertices[i].z;
+                vert.pos.w = 1.0f;
 
-                vert.pos = glm::vec4(vector, 1.0f);
-
-                // normal
                 if (mesh->HasNormals()) {
-                    vector.x = mesh->mNormals[i].x;
-                    vector.y = mesh->mNormals[i].y;
-                    vector.z = mesh->mNormals[i].z;
-                    vert.normal = vector;
+                    vert.normal.x = mesh->mNormals[i].x;
+                    vert.normal.y = mesh->mNormals[i].y;
+                    vert.normal.z = mesh->mNormals[i].z;
                 }
 
                 if (mesh->mTextureCoords[0]) {
@@ -174,27 +168,23 @@ void Model::LoadNode(const aiScene* scene, aiNode* node, SharedRef<Node>& parent
                 }
 
                 if (mesh->HasVertexColors(0)) {
-                    vert.color.r = mesh->mColors[0][i].r;
-                    vert.color.g = mesh->mColors[0][i].g;
-                    vert.color.b = mesh->mColors[0][i].b;
-                    vert.color.a = mesh->mColors[0][i].a;
+                    vert.color.x = mesh->mColors[0][i].r;
+                    vert.color.y = mesh->mColors[0][i].g;
+                    vert.color.z = mesh->mColors[0][i].b;
+                    vert.color.w = mesh->mColors[0][i].a;
                 } else {
-                    vert.color = glm::vec4(1.0f);
+                    vert.color = Common::FVec4(1.0f);
                 }
 
                 // pre transform vert
                 vert.pos = localMatrix * vert.pos;
-                vert.normal = glm::normalize(glm::mat3(localMatrix) * vert.normal);
+                vert.normal = (localMatrix.SubMatrix<3, 3>() * vert.normal).Normalized();
 
-                raw_vertex_buffer.emplace_back(vert);
+                rawVertBuffer.emplace_back(vert);
             }
         }
 
         UniqueRef<Mesh> mMesh = new Mesh(indexStart, indexCount, vertexStart, vertexCount, materialDatas[mesh->mMaterialIndex]);
-        mMesh->SetDimensions(
-            glm::make_vec3(&mesh->mAABB.mMin.x),
-            glm::make_vec3(&mesh->mAABB.mMax.x)
-        );
 
         // cache meshes in model instead of node, for the convenience of reading them
         meshes.emplace_back(std::move(mMesh));

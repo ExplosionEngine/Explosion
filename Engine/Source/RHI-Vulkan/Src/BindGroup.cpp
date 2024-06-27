@@ -80,10 +80,10 @@ namespace RHI::Vulkan {
         int imageInfosNum = 0;
         int bufferInfosNum = 0;
         for (int i = 0; i < entryCount; i++) {
-            if (const auto& entry = inCreateInfo.entries[i];
-                entry.binding.type == BindingType::uniformBuffer) {
+            const auto& entry = inCreateInfo.entries[i];
+            if (entry.binding.type == BindingType::uniformBuffer || entry.binding.type == BindingType::storageBuffer) {
                 bufferInfosNum++;
-            } else if (entry.binding.type == BindingType::sampler || entry.binding.type == BindingType::texture) {
+            } else if (entry.binding.type == BindingType::sampler || entry.binding.type == BindingType::texture ||entry.binding.type == BindingType::storageTexture) {
                 imageInfosNum++;
             }
         }
@@ -99,7 +99,7 @@ namespace RHI::Vulkan {
             descriptorWrites[i].descriptorCount = 1;
             descriptorWrites[i].descriptorType = EnumCast<BindingType, VkDescriptorType>(entry.binding.type);
 
-            if (entry.binding.type == BindingType::uniformBuffer) {
+            if (entry.binding.type == BindingType::uniformBuffer || entry.binding.type == BindingType::storageBuffer) {
                 auto* bufferView = static_cast<VulkanBufferView*>(std::get<BufferView*>(entry.entity));
 
                 bufferInfos.emplace_back();
@@ -115,7 +115,7 @@ namespace RHI::Vulkan {
                 imageInfos.back().sampler = sampler->GetNative();
 
                 descriptorWrites[i].pImageInfo = &imageInfos.back();
-            } else if (entry.binding.type == BindingType::texture) {
+            } else if (entry.binding.type == BindingType::texture || entry.binding.type == BindingType::storageTexture) {
                 const auto* textureView = static_cast<VulkanTextureView*>(std::get<TextureView*>(entry.entity));
 
                 imageInfos.emplace_back();
@@ -123,9 +123,6 @@ namespace RHI::Vulkan {
                 imageInfos.back().imageView = textureView->GetNative();
 
                 descriptorWrites[i].pImageInfo = &imageInfos.back();
-            } else {
-                //TODO
-                Unimplement();
             }
         }
         vkUpdateDescriptorSets(device.GetNative(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);

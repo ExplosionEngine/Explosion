@@ -48,7 +48,7 @@ Addlibrary(
     NAME Sample-Base
     SRC ${SOURCES}
     PUBLIC_INC Base
-    LIB RHI glfw GLM clipp ${PLATFORM_EXT_LIBS} Render stb assimp-lib Rendering.Static
+    LIB RHI glfw clipp ${PLATFORM_EXT_LIBS} Render stb assimp-lib Rendering.Static
 )
 
 file(GLOB SOURCES RHI-Triangle/*.cpp)
@@ -80,6 +80,13 @@ AddSample(
         RHI-SSAO/Shader/Composition.hlsl
     MODEL
         RHI-SSAO/Model/Voyager.gltf
+)
+
+file(GLOB SOURCES RHI-ParallelCompute/*.cpp)
+AddSample(
+    NAME RHISample-ParallelCompute
+    SRC ${SOURCES}
+    SHADER RHI-ParallelCompute/Compute.hlsl
 )
 
 file(GLOB SOURCES Rendering-Triangle/*.cpp)

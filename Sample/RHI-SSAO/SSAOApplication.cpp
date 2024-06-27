@@ -440,14 +440,14 @@ private:
     void CreateVertexBuffer()
     {
         const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
-            .SetSize(model->raw_vertex_buffer.size() * sizeof(Vertex))
+            .SetSize(model->rawVertBuffer.size() * sizeof(Vertex))
             .SetUsages(BufferUsageBits::vertex | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
             .SetInitialState(BufferState::staging);
 
         vertexBuffer = device->CreateBuffer(bufferCreateInfo);
-        assert(vertexBuffer != nullptr);
+        Assert(vertexBuffer != nullptr);
         auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
-        memcpy(data, model->raw_vertex_buffer.data(), bufferCreateInfo.size);
+        memcpy(data, model->rawVertBuffer.data(), bufferCreateInfo.size);
         vertexBuffer->UnMap();
 
         const BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
@@ -461,14 +461,14 @@ private:
     void CreateIndexBuffer()
     {
         const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
-            .SetSize(model->raw_index_buffer.size() * sizeof(uint32_t))
+            .SetSize(model->rawIndBuffer.size() * sizeof(uint32_t))
             .SetUsages(BufferUsageBits::index | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
             .SetInitialState(BufferState::staging);
 
         indexBuffer = device->CreateBuffer(bufferCreateInfo);
-        assert(indexBuffer != nullptr);
+        Assert(indexBuffer != nullptr);
         auto* data = indexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
-        memcpy(data, model->raw_index_buffer.data(), bufferCreateInfo.size);
+        memcpy(data, model->rawIndBuffer.data(), bufferCreateInfo.size);
         indexBuffer->UnMap();
 
         const BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
@@ -1019,6 +1019,9 @@ private:
 int main(int argc, char* argv[])
 {
     SSAOApplication application("SSAO");
-    return application.Run(argc, argv);
+    if (!application.Initialize(argc, argv)) {
+        return -1;
+    }
+    return application.RunLoop();
 }
 

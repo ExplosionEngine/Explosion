@@ -195,7 +195,7 @@ namespace RHI::Vulkan {
             stageInfo.module = static_cast<const VulkanShaderModule*>(module)->GetNative();
             stageInfo.pName = module->GetEntryPoint().c_str();
             stageInfo.stage = stage;
-            stages.emplace_back(std::move(stageInfo));
+            stages.emplace_back(stageInfo);
         };
         setStage(inCreateInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT);
         setStage(inCreateInfo.pixelShader, VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -268,4 +268,54 @@ namespace RHI::Vulkan {
     {
         return nativePipeline;
     }
+
+    VulkanComputePipeline::VulkanComputePipeline(VulkanDevice& inDevice, const ComputePipelineCreateInfo& inCreateInfo)
+        : ComputePipeline(inCreateInfo)
+        , device(inDevice)
+        , nativePipeline(VK_NULL_HANDLE)
+    {
+        SavePipelineLayout(inCreateInfo);
+        CreateNativeComputePipeline(inCreateInfo);
+    }
+
+    VulkanComputePipeline::~VulkanComputePipeline()
+    {
+        if (nativePipeline) {
+            vkDestroyPipeline(device.GetNative(), nativePipeline, nullptr);
+        }
+    }
+
+    VulkanPipelineLayout* VulkanComputePipeline::GetPipelineLayout() const
+    {
+        return pipelineLayout;
+    }
+
+    void VulkanComputePipeline::SavePipelineLayout(const ComputePipelineCreateInfo& inCreateInfo)
+    {
+        auto* layout = static_cast<VulkanPipelineLayout*>(inCreateInfo.layout);
+        Assert(layout);
+        pipelineLayout = layout;
+    }
+
+    void VulkanComputePipeline::CreateNativeComputePipeline(const ComputePipelineCreateInfo& inCreateInfo)
+    {
+        VkPipelineShaderStageCreateInfo stageInfo = {};
+        stageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        stageInfo.module = static_cast<const VulkanShaderModule*>(inCreateInfo.computeShader)->GetNative();
+        stageInfo.pName = inCreateInfo.computeShader->GetEntryPoint().c_str();
+        stageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+
+        VkComputePipelineCreateInfo pipelineInfo = {};
+        pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+        pipelineInfo.layout = pipelineLayout->GetNative();
+        pipelineInfo.stage = stageInfo;
+
+        Assert(vkCreateComputePipelines(device.GetNative(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &nativePipeline) == VK_SUCCESS);
+    }
+
+    VkPipeline VulkanComputePipeline::GetNative() const
+    {
+        return nativePipeline;
+    }
+
 }

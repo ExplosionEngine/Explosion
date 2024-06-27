@@ -34,21 +34,27 @@ Application::~Application()
     RHI::Instance::UnloadAllInstances();
 }
 
-int Application::Run(int argc, char* argv[])
+bool Application::Initialize(int argc, char* argv[])
 {
     std::string rhiString;
     if (const auto cli = (
             clipp::option("-w").doc("window width, 1024 by default") & clipp::value("width", windowExtent.x),
             clipp::option("-h").doc("window height, 768 by default") & clipp::value("height", windowExtent.y),
-            clipp::required("-rhi").doc("RHI type, can be 'dx12' or 'vulkan'") & clipp::value("RHI type", rhiString));
+            clipp::required("-rhi").doc("RHI type, can be 'dx12' or 'vulkan'") & clipp::value("RHI type", rhiString)
+            );
         !clipp::parse(argc, argv, cli)) {
         std::cout << clipp::make_man_page(cli, argv[0]);
-        return -1;
+        return false;
     }
 
     rhiType = RHI::RHIAbbrStringToRHIType(rhiString);
     instance = RHI::Instance::GetByType(rhiType);
 
+    return true;
+}
+
+int Application::RunLoop()
+{
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     window = glfwCreateWindow(static_cast<int>(windowExtent.x), static_cast<int>(windowExtent.y), name.c_str(), nullptr, nullptr);
