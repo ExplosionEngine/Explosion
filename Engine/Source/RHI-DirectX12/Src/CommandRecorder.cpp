@@ -168,7 +168,7 @@ namespace RHI::DirectX12 {
         Assert(computePipeline);
 
         commandBuffer.GetNative()->SetPipelineState(computePipeline->GetNative());
-        commandBuffer.GetNative()->SetGraphicsRootSignature(computePipeline->GetPipelineLayout().GetNative());
+        commandBuffer.GetNative()->SetComputeRootSignature(computePipeline->GetPipelineLayout().GetNative());
     }
 
     void DX12ComputePassCommandRecorder::SetBindGroup(const uint8_t inLayoutIndex, BindGroup* inBindGroup)
@@ -186,7 +186,7 @@ namespace RHI::DirectX12 {
             if (!t.has_value()) {
                 return;
             }
-            commandBuffer.GetNative()->SetGraphicsRootDescriptorTable(t.value().second, commandBuffer.GetRuntimeDescriptorHeaps()->NewGpuDescriptorHandle(hlslBinding.rangeType, cpuDescriptorHandle));
+            commandBuffer.GetNative()->SetComputeRootDescriptorTable(t.value().second, commandBuffer.GetRuntimeDescriptorHeaps()->NewGpuDescriptorHandle(hlslBinding.rangeType, cpuDescriptorHandle));
         }
     }
 

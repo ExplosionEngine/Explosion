@@ -38,7 +38,8 @@ public:
     explicit Application(std::string n);
     virtual ~Application();
 
-    int Run(int argc, char* argv[]);
+    bool Initialize(int argc, char* argv[]);
+    int RunLoop();
 
 protected:
     virtual void OnStart();

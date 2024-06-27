@@ -267,7 +267,6 @@ private:
     void UpdateMVP()
     {
         modelMatrix = MatConsts<float, 4, 4>::identity * 0.5;
-        modelMatrix.SetCol(3, 0.2f, 0.2f, 0.0f, 1.0f);
 
         if (uniformBuffer != nullptr) {
             auto* mapData = uniformBuffer->Map(MapMode::write, 0, sizeof(FMat4x4));
@@ -408,5 +407,8 @@ private:
 int main(int argc, char* argv[])
 {
     TexSamplingApplication application("RHI-TexSampling");
-    return application.Run(argc, argv);
+    if (!application.Initialize(argc, argv)) {
+        return -1;
+    }
+    return application.RunLoop();
 }

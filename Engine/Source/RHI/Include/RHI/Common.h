@@ -290,6 +290,14 @@ namespace RHI {
         max
     };
 
+    // TODO: Support more format
+    enum class StorageFormat: EnumType {
+        float32,
+        uint32,
+        sint32,
+        max
+    };
+
     enum class FrontFace : EnumType {
         ccw,
         cw,

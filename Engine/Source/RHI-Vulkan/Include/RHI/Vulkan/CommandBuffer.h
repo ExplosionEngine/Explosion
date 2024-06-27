@@ -21,7 +21,7 @@ namespace RHI::Vulkan {
 
         Common::UniqueRef<CommandRecorder> Begin() override;
 
-        VkCommandBuffer GetNativeCommandBuffer() const;
+        VkCommandBuffer GetNative() const;
 
     private:
         void CreateNativeCommandBuffer();

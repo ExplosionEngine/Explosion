@@ -7,15 +7,6 @@ Add3rdHeaderOnlyPackage(
     INCLUDE $<SOURCE_DIR>/single_include
 )
 
-# GLM
-Add3rdHeaderOnlyPackage(
-    NAME GLM
-    PLATFORM All
-    VERSION 0.9.9.8
-    HASH f78f0cf73e5601536203e0098c4e611d1c37d3df60b3209e70a10e3abd3bbe58
-    INCLUDE $<SOURCE_DIR>
-)
-
 # DirectX 12 Headers
 Add3rdHeaderOnlyPackage(
     NAME DirectXHeaders

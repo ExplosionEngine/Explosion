@@ -118,8 +118,7 @@ namespace RHI::Vulkan {
 
     Common::UniqueRef<ComputePipeline> VulkanDevice::CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo)
     {
-        // TODO
-        return nullptr;
+        return { new VulkanComputePipeline(*this, inCreateInfo) };
     }
 
     Common::UniqueRef<RasterPipeline> VulkanDevice::CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo)

@@ -19,7 +19,7 @@ namespace RHI {
         const BufferViewType inType,
         const uint32_t inSize,
         const uint32_t inOffset,
-        const std::variant<VertexBufferViewInfo, IndexBufferViewInfo>& inExtent)
+        const std::variant<VertexBufferViewInfo, IndexBufferViewInfo, StorageBufferViewInfo>& inExtent)
         : type(inType)
         , size(inSize)
         , offset(inOffset)
@@ -56,6 +56,13 @@ namespace RHI {
         extend = IndexBufferViewInfo { inFormat };
         return *this;
     }
+
+    BufferViewCreateInfo& BufferViewCreateInfo::SetExtendStorage(StorageFormat inFormat)
+    {
+        extend = StorageBufferViewInfo { inFormat };
+        return *this;
+    }
+
 
     size_t BufferViewCreateInfo::Hash() const
     {

@@ -99,6 +99,11 @@ namespace Common {
         Matrix<IT, R, C> CastTo() const;
 
         Matrix<T, C, R> Transpose() const;
+
+        template<uint8_t DR, uint8_t DC>
+        requires (DR < R) && (DC < C)
+        Matrix<T, DR, DC> SubMatrix() const;
+
         bool CanInverse() const;
         Matrix Inverse() const;
         T Determinant() const;
@@ -752,6 +757,21 @@ namespace Common {
         }
         return result;
     }
+
+    template <typename T, uint8_t R, uint8_t C>
+    template <uint8_t DR, uint8_t DC>
+    requires(DR < R) && (DC < C)
+    Matrix<T, DR, DC> Matrix<T, R, C>::SubMatrix() const
+    {
+        Matrix<T, DR, DC> result;
+        for (auto i = 0; i < DR; i++) {
+            for (auto j = 0; j < DC; j++) {
+                result.At(i, j) = At(i, j);
+            }
+        }
+        return result;
+    }
+
 
     template <typename T, uint8_t R, uint8_t C>
     bool Matrix<T, R, C>::CanInverse() const
