@@ -329,6 +329,7 @@ namespace Mirror {
         Any Get(Any* object) const;
         void Serialize(Common::SerializeStream& stream, Any* object) const;
         void Deserialize(Common::DeserializeStream& stream, Any* object) const;
+        bool IsTransient() const;
 
     private:
         template <typename C> friend class ClassRegistry;
@@ -488,6 +489,8 @@ namespace Mirror {
         const Destructor& GetDestructor() const;
         bool HasConstructor(const std::string& name) const;
         const Constructor* FindSuitableConstructor(const Any* args, uint8_t argNum) const;
+        Any ConstructOnStackSuitable(Any* args, uint8_t argNum) const;
+        Any NewObjectSuitable(Any* args, uint8_t argNum) const;
         const Constructor* FindConstructor(const std::string& name) const;
         const Constructor& GetConstructor(const std::string& name) const;
         bool HasStaticVariable(const std::string& name) const;

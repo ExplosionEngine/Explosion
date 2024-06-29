@@ -3,7 +3,3 @@
 //
 
 #include <Runtime/GameObject.h>
-
-namespace Runtime {
-    // TODO
-}

@@ -338,6 +338,11 @@ namespace Mirror {
         deserializer(stream, *this, object);
     }
 
+    bool MemberVariable::IsTransient() const
+    {
+        return HasMeta("transient") && GetMetaBool("transient");
+    }
+
     MemberFunction::MemberFunction(ConstructParams&& params)
         : Type(std::move(params.name))
         , argsNum(params.argsNum)
@@ -578,6 +583,20 @@ namespace Mirror {
         return nullptr;
     }
 
+    Any Class::ConstructOnStackSuitable(Any* args, uint8_t argNum) const
+    {
+        const auto* constructor = FindSuitableConstructor(args, argNum);
+        Assert(constructor != nullptr);
+        return constructor->ConstructOnStackWith(args, argNum);
+    }
+
+    Any Class::NewObjectSuitable(Any* args, uint8_t argNum) const
+    {
+        const auto* constructor = FindSuitableConstructor(args, argNum);
+        Assert(constructor != nullptr);
+        return constructor->NewObjectWith(args, argNum);
+    }
+
     const Constructor* Class::FindConstructor(const std::string& name) const
     {
         const auto iter = constructors.find(name);
@@ -678,6 +697,10 @@ namespace Mirror {
         Common::Serializer<uint64_t>::Serialize(stream, memberVariablesNum);
 
         for (const auto& [name, memberVariable] : memberVariables) {
+            if (memberVariable.IsTransient()) {
+                continue;
+            }
+
             Common::Serializer<std::string>::Serialize(stream, name);
 
             const bool sameWithDefaultObject = memberVariable.Get(obj) == defaultObject.value();
@@ -716,17 +739,22 @@ namespace Mirror {
                 continue;
             }
 
+            const auto& memberVariable = iter->second;
+            if (memberVariable.IsTransient()) {
+                continue;
+            }
+
             bool restoreAsDefaultObject = true;
             Common::Serializer<bool>::Deserialize(stream, restoreAsDefaultObject);
 
             uint32_t memorySize = 0;
             Common::Serializer<uint32_t>::Deserialize(stream, memorySize);
-            if (memorySize == 0 || memorySize != iter->second.SizeOf()) {
+            if (memorySize == 0 || memorySize != memberVariable.SizeOf()) {
                 restoreAsDefaultObject = true;
             }
 
             if (!restoreAsDefaultObject) {
-                iter->second.Deserialize(stream, obj);
+                memberVariable.Deserialize(stream, obj);
             }
         }
     }
