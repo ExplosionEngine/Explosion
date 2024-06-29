@@ -13,7 +13,6 @@
 #include <type_traits>
 #include <typeinfo>
 #include <functional>
-#include <tuple>
 
 #include <Common/Serialization.h>
 #include <Common/Debug.h>
@@ -122,7 +121,7 @@ namespace Mirror {
         Any& operator=(std::reference_wrapper<T>&& ref);
 
         template <typename T>
-        [[nodiscard]] bool Convertible() const;
+        bool Convertible() const;
 
         template <typename T>
         T As() const;
@@ -133,10 +132,10 @@ namespace Mirror {
         template <typename T>
         T* TryAs() const;
 
-        [[nodiscard]] bool Convertible(const TypeInfo* dstType) const;
-        [[nodiscard]] size_t Size() const;
-        [[nodiscard]] const void* Data() const;
-        [[nodiscard]] const TypeInfo* TypeInfo() const;
+        bool Convertible(const TypeInfo* dstType) const;
+        size_t Size() const;
+        const void* Data() const;
+        const TypeInfo* TypeInfo() const;
         void Reset();
         bool operator==(const Any& rhs) const;
 
@@ -156,10 +155,14 @@ namespace Mirror {
     public:
         virtual ~Type();
 
-        [[nodiscard]] const std::string& GetName() const;
-        [[nodiscard]] const std::string& GetMeta(const std::string& key) const;
-        [[nodiscard]] std::string GetAllMeta() const;
+        const std::string& GetName() const;
+        const std::string& GetMeta(const std::string& key) const;
+        std::string GetAllMeta() const;
         bool HasMeta(const std::string& key) const;
+        bool GetMetaBool(const std::string& key) const;
+        int32_t GetMetaInt32(const std::string& key) const;
+        int64_t GetMetaInt64(const std::string& key) const;
+        float GetMetaFloat(const std::string& key) const;
 
     protected:
         explicit Type(std::string inName);
@@ -402,12 +405,12 @@ namespace Mirror {
         template <typename F>
         void ForEachFunction(F&& func) const;
 
-        [[nodiscard]] bool HasVariable(const std::string& name) const;
-        [[nodiscard]] const Variable* FindVariable(const std::string& name) const;
-        [[nodiscard]] const Variable& GetVariable(const std::string& name) const;
-        [[nodiscard]] bool HasFunction(const std::string& name) const;
-        [[nodiscard]] const Function* FindFunction(const std::string& name) const;
-        [[nodiscard]] const Function& GetFunction(const std::string& name) const;
+        bool HasVariable(const std::string& name) const;
+        const Variable* FindVariable(const std::string& name) const;
+        const Variable& GetVariable(const std::string& name) const;
+        bool HasFunction(const std::string& name) const;
+        const Function* FindFunction(const std::string& name) const;
+        const Function& GetFunction(const std::string& name) const;
 
     private:
         friend class Registry;
@@ -425,15 +428,15 @@ namespace Mirror {
 
         template <typename C>
         requires std::is_class_v<C>
-        [[nodiscard]] static bool Has();
+        static bool Has();
 
         template <typename C>
         requires std::is_class_v<C>
-        [[nodiscard]] static const Class* Find();
+        static const Class* Find();
 
         template <typename C>
         requires std::is_class_v<C>
-        [[nodiscard]] static const Class& Get();
+        static const Class& Get();
 
         template <typename F>
         void ForEachStaticVariable(F&& func) const;
@@ -448,7 +451,7 @@ namespace Mirror {
         void ForEachMemberFunction(F&& func) const;
 
         template <typename... Args>
-        [[nodiscard]] Any ConstructOnStack(Args&&... args)
+        Any ConstructOnStack(Args&&... args)
         {
             std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
             const auto* constructor = FindSuitableConstructor(refs);
@@ -457,7 +460,7 @@ namespace Mirror {
         }
 
         template <typename... Args>
-        [[nodiscard]] Any NewObject(Args&&... args)
+        Any NewObject(Args&&... args)
         {
             std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
             const auto* constructor = FindSuitableConstructor(refs);
@@ -465,40 +468,40 @@ namespace Mirror {
             return constructor->NewObject(refs);
         }
 
-        [[nodiscard]] static bool Has(const std::string& name);
-        [[nodiscard]] static const Class* Find(const std::string& name);
-        [[nodiscard]] static const Class& Get(const std::string& name);
-        [[nodiscard]] static bool Has(const TypeInfo* typeInfo);
-        [[nodiscard]] static const Class* Find(const TypeInfo* typeInfo);
-        [[nodiscard]] static const Class& Get(const TypeInfo* typeInfo);
-        [[nodiscard]] static const Class* Find(TypeId typeId);
-        [[nodiscard]] static const Class& Get(TypeId typeId);
-        [[nodiscard]] const TypeInfo* GetTypeInfo() const;
-        [[nodiscard]] bool HasDefaultConstructor() const;
-        [[nodiscard]] const Class* GetBaseClass() const;
-        [[nodiscard]] bool IsBaseOf(const Class* derivedClass) const;
-        [[nodiscard]] bool IsDerivedFrom(const Class* baseClass) const;
-        [[nodiscard]] const Constructor* FindDefaultConstructor() const;
-        [[nodiscard]] const Constructor& GetDefaultConstructor() const;
-        [[nodiscard]] bool HasDestructor() const;
-        [[nodiscard]] const Destructor* FindDestructor() const;
-        [[nodiscard]] const Destructor& GetDestructor() const;
-        [[nodiscard]] bool HasConstructor(const std::string& name) const;
-        [[nodiscard]] const Constructor* FindSuitableConstructor(const Any* args, uint8_t argNum) const;
-        [[nodiscard]] const Constructor* FindConstructor(const std::string& name) const;
-        [[nodiscard]] const Constructor& GetConstructor(const std::string& name) const;
-        [[nodiscard]] bool HasStaticVariable(const std::string& name) const;
-        [[nodiscard]] const Variable* FindStaticVariable(const std::string& name) const;
-        [[nodiscard]] const Variable& GetStaticVariable(const std::string& name) const;
-        [[nodiscard]] bool HasStaticFunction(const std::string& name) const;
-        [[nodiscard]] const Function* FindStaticFunction(const std::string& name) const;
-        [[nodiscard]] const Function& GetStaticFunction(const std::string& name) const;
-        [[nodiscard]] bool HasMemberVariable(const std::string& name) const;
-        [[nodiscard]] const MemberVariable* FindMemberVariable(const std::string& name) const;
-        [[nodiscard]] const MemberVariable& GetMemberVariable(const std::string& name) const;
-        [[nodiscard]] bool HasMemberFunction(const std::string& name) const;
-        [[nodiscard]] const MemberFunction* FindMemberFunction(const std::string& name) const;
-        [[nodiscard]] const MemberFunction& GetMemberFunction(const std::string& name) const;
+        static bool Has(const std::string& name);
+        static const Class* Find(const std::string& name);
+        static const Class& Get(const std::string& name);
+        static bool Has(const TypeInfo* typeInfo);
+        static const Class* Find(const TypeInfo* typeInfo);
+        static const Class& Get(const TypeInfo* typeInfo);
+        static const Class* Find(TypeId typeId);
+        static const Class& Get(TypeId typeId);
+        const TypeInfo* GetTypeInfo() const;
+        bool HasDefaultConstructor() const;
+        const Class* GetBaseClass() const;
+        bool IsBaseOf(const Class* derivedClass) const;
+        bool IsDerivedFrom(const Class* baseClass) const;
+        const Constructor* FindDefaultConstructor() const;
+        const Constructor& GetDefaultConstructor() const;
+        bool HasDestructor() const;
+        const Destructor* FindDestructor() const;
+        const Destructor& GetDestructor() const;
+        bool HasConstructor(const std::string& name) const;
+        const Constructor* FindSuitableConstructor(const Any* args, uint8_t argNum) const;
+        const Constructor* FindConstructor(const std::string& name) const;
+        const Constructor& GetConstructor(const std::string& name) const;
+        bool HasStaticVariable(const std::string& name) const;
+        const Variable* FindStaticVariable(const std::string& name) const;
+        const Variable& GetStaticVariable(const std::string& name) const;
+        bool HasStaticFunction(const std::string& name) const;
+        const Function* FindStaticFunction(const std::string& name) const;
+        const Function& GetStaticFunction(const std::string& name) const;
+        bool HasMemberVariable(const std::string& name) const;
+        const MemberVariable* FindMemberVariable(const std::string& name) const;
+        const MemberVariable& GetMemberVariable(const std::string& name) const;
+        bool HasMemberFunction(const std::string& name) const;
+        const MemberFunction* FindMemberFunction(const std::string& name) const;
+        const MemberFunction& GetMemberFunction(const std::string& name) const;
         void Serialize(Common::SerializeStream& stream, Any* obj) const;
         void Deserailize(Common::DeserializeStream& stream, Any* obj) const;
 
@@ -542,8 +545,8 @@ namespace Mirror {
 
         friend class Enum;
 
-        [[nodiscard]] Any Get() const;
-        [[nodiscard]] bool Compare(Any* value) const;
+        Any Get() const;
+        bool Compare(Any* value) const;
 
         using Getter = std::function<Any()>;
         using Comparer = std::function<bool(Any*)>;
@@ -558,20 +561,20 @@ namespace Mirror {
     public:
         template <typename T>
         requires std::is_enum_v<T>
-        [[nodiscard]] static const Enum* Find();
+        static const Enum* Find();
 
         template <typename T>
         requires std::is_enum_v<T>
-        [[nodiscard]] static const Enum& Get();
+        static const Enum& Get();
 
-        [[nodiscard]] static const Enum* Find(const std::string& name);
-        [[nodiscard]] static const Enum& Get(const std::string& name);
+        static const Enum* Find(const std::string& name);
+        static const Enum& Get(const std::string& name);
 
         ~Enum() override;
 
-        [[nodiscard]] const TypeInfo* GetTypeInfo() const;
-        [[nodiscard]] Any GetElement(const std::string& name) const;
-        [[nodiscard]] std::string GetElementName(Any* value) const;
+        const TypeInfo* GetTypeInfo() const;
+        Any GetElement(const std::string& name) const;
+        std::string GetElementName(Any* value) const;
 
     private:
         static std::unordered_map<TypeId, std::string> typeToNameMap;

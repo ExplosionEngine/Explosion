@@ -145,6 +145,33 @@ namespace Mirror {
         return metas.contains(key);
     }
 
+    bool Type::GetMetaBool(const std::string& key) const
+    {
+        const auto& value = GetMeta(key);
+        if (value == "true") {
+            return true;
+        }
+        if (value == "false") {
+            return false;
+        }
+        return Assert(false), false;
+    }
+
+    int32_t Type::GetMetaInt32(const std::string& key) const
+    {
+        return std::atoi(GetMeta(key).c_str());
+    }
+
+    int64_t Type::GetMetaInt64(const std::string& key) const
+    {
+        return std::atoll(GetMeta(key).c_str());
+    }
+
+    float Type::GetMetaFloat(const std::string& key) const
+    {
+        return std::atof(GetMeta(key).c_str());
+    }
+
     Variable::Variable(ConstructParams&& params)
         : Type(std::move(params.name))
         , memorySize(params.memorySize)
