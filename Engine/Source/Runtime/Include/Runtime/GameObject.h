@@ -2,12 +2,20 @@
 // Created by johnk on 2024/6/27.
 //
 
+// BEGIN_META_FORWARD_IMPL_HEADERS
+// Runtime/World.h
+// END_META_FORWARD_IMPL_HEADERS
+
 #pragma once
 
 #include <Runtime/Component.h>
+#include <Common/Memory.h>
+#include <Common/Serialization.h>
 
 namespace Runtime {
-    class EClass() GameObject {
+    class World;
+
+    class EClass() GameObject { // NOLINT
         EClassBody(GameObject)
 
         template <typename C, typename... Args>
@@ -22,10 +30,31 @@ namespace Runtime {
         template <typename C>
         void Remove();
 
+        ECtor() GameObject();
+        ECtor() GameObject(World* inWorld, std::string inName);
+        virtual ~GameObject();
+
+        EFunc() World* GetWorld() const;
+
+    protected:
+        virtual void OnCreated();
+        virtual void OnLoaded();
+        virtual void OnDestroy();
+        virtual void OnStart();
+        virtual void OnTick(float frameTimeMs);
+        virtual void OnStop();
+
     private:
-        EProperty()
-        std::unordered_map<std::string, ComponentStorage> components;
+        friend class World;
+
+        void SetWorld(World* inWorld);
+
+        EProperty(transient) World* world;
+        EProperty() std::string name;
+        EProperty() std::unordered_map<std::string, ComponentStorage> components;
     };
+
+    using GameObjectRef = Common::SharedRef<GameObject>;
 }
 
 namespace Runtime {
@@ -40,7 +69,7 @@ namespace Runtime {
         storage.clazz = &clazz;
         storage.storage = C(std::forward<Args>(args)...);
         components.emplace(className, std::move(storage));
-        return Get<C>;
+        return *Get<C>();
     }
 
     template <typename C>
@@ -56,7 +85,7 @@ namespace Runtime {
     {
         const Mirror::Class& clazz = Mirror::Class::Get<C>();
         const auto& className = clazz.GetName();
-        return Has<C>() ? nullptr : &components.at(className).storage.As<C&>();
+        return Has<C>() ? &components.at(className).storage.As<C&>() : nullptr;
     }
 
     template <typename C>
@@ -68,22 +97,86 @@ namespace Runtime {
     }
 }
 
+namespace Common { // NOLINT
+    template <>
+    struct Serializer<Runtime::GameObjectRef> {
+        static constexpr bool serializable = true;
+        static constexpr uint32_t typeId = HashUtils::StrCrc32("Runtime::GameObjectRef");
+
+        static void Serialize(SerializeStream& stream, const Runtime::GameObjectRef& value)
+        {
+            TypeIdSerializer<Runtime::GameObjectRef>::Serialize(stream);
+
+            Mirror::Any objectRef = std::ref(*value);
+            Mirror::Class::Get<Runtime::GameObject>().Serialize(stream, &objectRef);
+        }
+
+        static bool Deserialize(DeserializeStream& stream, Runtime::GameObjectRef& value)
+        {
+            if (!TypeIdSerializer<Runtime::GameObjectRef>::Deserialize(stream)) {
+                return false;
+            }
+
+            value = new Runtime::GameObject();
+            Mirror::Any objectRef = std::ref(*value);
+            Mirror::Class::Get<Runtime::GameObject>().Deserailize(stream, &objectRef);
+            return true;
+        }
+    };
+}
+
+namespace Runtime {
+    inline GameObject::GameObject() = default;
+
+    inline GameObject::GameObject(World* inWorld, std::string inName)
+        : world(inWorld)
+        , name(std::move(inName))
+    {
+    }
+
+    inline GameObject::~GameObject() = default;
+
+    inline World* GameObject::GetWorld() const
+    {
+        return world;
+    }
+
+    inline void GameObject::SetWorld(World* inWorld)
+    {
+        world = inWorld;
+    }
+
+    inline void GameObject::OnCreated() {}
+
+    inline void GameObject::OnLoaded() {}
+
+    inline void GameObject::OnDestroy() {}
+
+    inline void GameObject::OnStart() {}
+
+    inline void GameObject::OnTick(float frameTimeMs) {}
+
+    inline void GameObject::OnStop() {}
+}
+
 #define DeclareGameObjectComponentScripts(componentName) \
     class EClass(scriptDelegate=GameObject) GameObjectComponentScripts_##componentName { \
     public: \
         explicit GameObjectComponentScripts_##componentName(GameObject& inObject); \
     \
-        Mirror::Any Emplace(std::vector<Mirror::Any>& args) const \
+        EFunc() \
+        componentName& Emplace(componentName&& comp) const \
         { \
-            const auto object = Mirror::Class::Get<componentName>().ConstructOnStackSuitable(args.data(), args.size()); \
-            return gameObject.Emplace<componentName>(object.As<const componentName&>()); \
+            return gameObject.Emplace<componentName>(std::move(comp)); \
         } \
     \
-        Mirror::Any Has() const \
+        EFunc() \
+        bool Has() const \
         { \
             return gameObject.Has<componentName>(); \
         } \
     \
+        EFunc() \
         void Remove() const \
         { \
             gameObject.Remove<componentName>(); \

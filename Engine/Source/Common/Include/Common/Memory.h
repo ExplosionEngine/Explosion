@@ -120,10 +120,10 @@ namespace Common {
     };
 
     template <typename T, typename... Args>
-    Common::UniqueRef<T> MakeUnique(Args&&... args);
+    UniqueRef<T> MakeUnique(Args&&... args);
 
     template <typename T, typename... Args>
-    Common::SharedRef<T> MakeShared(Args&&... args);
+    SharedRef<T> MakeShared(Args&&... args);
 }
 
 namespace Common {

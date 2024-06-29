@@ -80,6 +80,10 @@ namespace Mirror {
         const bool isRValueReference;
         const bool isPointer;
         const bool isClass;
+        const bool copyConstructible;
+        const bool copyAssignable;
+        const bool moveConstructible;
+        const bool moveAssignable;
         TypeId removePointerType;
     };
 
@@ -189,6 +193,8 @@ namespace Mirror {
 
     private:
         friend class GlobalRegistry;
+        friend class GlobalScope;
+        friend class Class;
         template <typename C> friend class ClassRegistry;
 
         using Setter = std::function<void(Any*)>;
@@ -232,6 +238,8 @@ namespace Mirror {
 
     private:
         friend class GlobalRegistry;
+        friend class GlobalScope;
+        friend class Class;
         template <typename C> friend class ClassRegistry;
 
         using Invoker = std::function<Any(Any*, uint8_t)>;
@@ -272,6 +280,7 @@ namespace Mirror {
 
     private:
         friend class Registry;
+        friend class Class;
         template <typename C> friend class ClassRegistry;
 
         using Invoker = std::function<Any(Any*, uint8_t)>;
@@ -303,6 +312,7 @@ namespace Mirror {
 
     private:
         friend class Registry;
+        friend class Class;
         template <typename C> friend class ClassRegistry;
 
         using Invoker = std::function<void(Any*)>;
@@ -332,6 +342,7 @@ namespace Mirror {
         bool IsTransient() const;
 
     private:
+        friend class Class;
         template <typename C> friend class ClassRegistry;
 
         using Setter = std::function<void(Any*, Any*)>;
@@ -374,6 +385,7 @@ namespace Mirror {
         Any InvokeWith(Any* object, Any* args, size_t argsSize) const;
 
     private:
+        friend class Class;
         template <typename C> friend class ClassRegistry;
 
         using Invoker = std::function<Any(Any*, Any*, size_t)>;
@@ -416,6 +428,9 @@ namespace Mirror {
     private:
         friend class Registry;
         friend class GlobalRegistry;
+
+        Variable& EmplaceVariable(const std::string& inName, Variable::ConstructParams&& inParams);
+        Function& EmplaceFunction(const std::string& inName, Function::ConstructParams&& inParams);
 
         GlobalScope();
 
@@ -520,12 +535,20 @@ namespace Mirror {
             std::string name;
             const TypeInfo* typeInfo;
             BaseClassGetter baseClassGetter;
-            std::optional<Any> defaultObject;
-            std::optional<Destructor> destructor;
-            std::optional<Constructor> defaultConstructor;
+            std::optional<std::function<Any()>> defaultObjectCreator;
+            std::optional<Destructor::ConstructParams> destructorParams;
+            std::optional<Constructor::ConstructParams> defaultConstructorParams;
         };
 
         explicit Class(ConstructParams&& params);
+
+        void CreateDefaultObject(const std::function<Any()>& inCreator);
+        Destructor& EmplaceDestructor(Destructor::ConstructParams&& inParams);
+        Constructor& EmplaceConstructor(const std::string& inName, Constructor::ConstructParams&& inParams);
+        Variable& EmplaceStaticVariable(const std::string& inName, Variable::ConstructParams&& inParams);
+        Function& EmplaceStaticFunction(const std::string& inName, Function::ConstructParams&& inParams);
+        MemberVariable& EmplaceMemberVariable(const std::string& inName, MemberVariable::ConstructParams&& inParams);
+        MemberFunction& EmplaceMemberFunction(const std::string& inName, MemberFunction::ConstructParams&& inParams);
 
         const TypeInfo* typeInfo;
         BaseClassGetter baseClassGetter;
@@ -544,6 +567,7 @@ namespace Mirror {
 
     private:
         friend class Registry;
+        friend class Enum;
         template <typename T> friend class EnumRegistry;
 
         friend class Enum;
@@ -554,7 +578,13 @@ namespace Mirror {
         using Getter = std::function<Any()>;
         using Comparer = std::function<bool(Any*)>;
 
-        EnumElement(std::string inName, Getter inGetter, Comparer inComparer);
+        struct ConstructParams {
+            std::string name;
+            Getter getter;
+            Comparer comparer;
+        };
+
+        explicit EnumElement(ConstructParams&& inParams);
 
         Getter getter;
         Comparer comparer;
@@ -592,6 +622,8 @@ namespace Mirror {
 
         explicit Enum(ConstructParams&& params);
 
+        EnumElement& EmplaceElement(const std::string& inName, EnumElement::ConstructParams&& inParams);
+
         const TypeInfo* typeInfo;
         std::unordered_map<std::string, EnumElement> elements;
     };
@@ -607,13 +639,21 @@ namespace Mirror::Internal {
     template <typename T>
     void AnyRtti::CopyImpl(void* const object, const void* const other)
     {
-        new(object) T(*static_cast<const T*>(other));
+        if constexpr (std::is_copy_constructible_v<T>) {
+            new(object) T(*static_cast<const T*>(other));
+        } else if constexpr (std::is_copy_assignable_v<T>) {
+            *static_cast<T*>(object) = *static_cast<const T*>(other);
+        }
     }
 
     template <typename T>
     void AnyRtti::MoveImpl(void* const object, void* const other) noexcept
     {
-        new(object) T(std::move(*static_cast<const T*>(other)));
+        if constexpr (std::is_move_constructible_v<T>) {
+            new(object) T(std::move(*static_cast<const T*>(other)));
+        } else if constexpr (std::is_move_assignable_v<T>) {
+            *static_cast<T*>(object) = std::move(*static_cast<const T*>(other));
+        }
     }
 
     template <typename T>
@@ -643,6 +683,10 @@ namespace Mirror {
             std::is_rvalue_reference_v<T>,
             std::is_pointer_v<T>,
             std::is_class_v<T>,
+            std::is_copy_constructible_v<T>,
+            std::is_copy_assignable_v<T>,
+            std::is_move_constructible_v<T>,
+            std::is_move_assignable_v<T>,
             typeid(std::remove_pointer_t<T>).hash_code()
         };
         return &typeInfo;

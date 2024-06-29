@@ -33,7 +33,7 @@ namespace Common { // NOLINT
 
         static void Serialize(SerializeStream& stream, const Runtime::ComponentStorage& value)
         {
-            TypeIdSerializer<std::string>::Serialize(stream);
+            TypeIdSerializer<Runtime::ComponentStorage>::Serialize(stream);
 
             Serializer<std::string>::Serialize(stream, value.clazz->GetName());
             value.clazz->Serialize(stream, const_cast<Mirror::Any*>(&value.storage));
@@ -41,15 +41,32 @@ namespace Common { // NOLINT
 
         static bool Deserialize(DeserializeStream& stream, Runtime::ComponentStorage& value)
         {
-            if (!TypeIdSerializer<std::string>::Deserialize(stream)) {
+            if (!TypeIdSerializer<Runtime::ComponentStorage>::Deserialize(stream)) {
                 return false;
             }
 
             std::string className;
             Serializer<std::string>::Deserialize(stream, className);
             value.clazz = Mirror::Class::Find(className);
+            value.storage = value.clazz->GetDefaultConstructor().ConstructOnStack();
             value.clazz->Deserailize(stream, &value.storage);
             return true;
         }
     };
+}
+
+namespace Runtime {
+    inline ComponentStorage::ComponentStorage() = default;
+
+    inline ComponentStorage::~ComponentStorage() = default;
+
+    inline ComponentStorage::ComponentStorage(ComponentStorage&& inOther) noexcept
+        : clazz(inOther.clazz)
+        , storage(std::move(inOther.storage))
+    {
+    }
+
+    inline ComponentStorage::ComponentStorage(const ComponentStorage& inOther) = default;
+
+    inline ComponentStorage& ComponentStorage::operator=(const ComponentStorage& inOther) = default;
 }

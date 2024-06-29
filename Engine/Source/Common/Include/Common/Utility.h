@@ -8,7 +8,7 @@
 #include <type_traits>
 
 #define NonCopyable(clz) \
-    clz(clz&) = delete;   \
+    clz(clz&) = delete; \
     clz& operator=(clz&) = delete; \
     clz(const clz&) = delete; \
     clz& operator=(const clz&) = delete; \
