@@ -5,7 +5,7 @@
 #include <Runtime/Engine.h>
 
 namespace Runtime {
-    Engine::Engine(const Runtime::EngineInitParams& inParams)
+    Engine::Engine(const EngineInitParams& inParams)
     {
     }
 
@@ -17,5 +17,13 @@ namespace Runtime {
     }
 
     GameEngine::~GameEngine() = default;
-    
+
+#if BUILD_EDITOR
+    EditorEngine::EditorEngine(const EngineInitParams& inParams)
+        : Engine(inParams)
+    {
+    }
+
+    EditorEngine::~EditorEngine() = default;
+#endif
 }

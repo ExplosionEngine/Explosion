@@ -1,73 +1,94 @@
 //
-// Created by johnk on 2023/9/5.
+// Created by johnk on 2024/6/29.
 //
-
-#include <taskflow/taskflow.hpp>
 
 #include <Runtime/World.h>
 
+#include <utility>
+
 namespace Runtime {
+    World::World()
+        : status(WorldStatus::stoped)
+    {
+    }
+
     World::World(std::string inName)
-        : ECSHost()
-        , name(std::move(inName))
+        : name(std::move(inName))
+        , status(WorldStatus::stoped)
     {
     }
 
-    World::~World() = default;
-
-    void World::Setup()
+    const std::string& World::GetName() const
     {
-        ECSHost::Setup();
+        return name;
     }
 
-    void World::Tick(float timeMS)
+    GameObject& World::CreateObject(const std::string& inName)
     {
-        ECSHost::Tick(timeMS);
+        Assert(!gameObjects.contains(inName));
+        gameObjects.emplace(inName, new GameObject(this, inName));
+        auto& result = *gameObjects.at(inName);
+        result.OnCreated();
+        return result;
     }
 
-    void World::Shutdown()
+    GameObject& World::GetObject(const std::string& inName) const
     {
-        ECSHost::Shutdown();
+        Assert(gameObjects.contains(inName));
+        return *gameObjects.at(inName);
     }
 
-    bool World::Setuped()
+    void World::DestroyObject(const std::string& inName)
     {
-        return ECSHost::Setuped();
+        Assert(gameObjects.contains(inName));
+        gameObjects.at(inName)->OnDestroy();
+        gameObjects.erase(inName);
     }
 
-    void World::Reset()
+    void World::BroadcastGameObjects(const std::function<void(GameObject&)>& func)
     {
-        ECSHost::Reset();
-    }
-
-    void World::LoadFromLevel(const AssetRef<Level>& level)
-    {
-        Assert(!Setuped());
-        for (const auto& systemClassName : level->systems) {
-            const auto* systemType = SystemTypeFinder::FromSystemClassName(systemClassName);
-            systemType->add(*this);
+        for (const auto& [name, gameObject] : gameObjects) {
+            func(*gameObject);
         }
     }
 
-    void World::SaveToLevel(AssetRef<Level>& level)
+    void World::OnDeserialize()
     {
-        auto addSystem = [&](SystemSignature signature) -> void {
-            Assert(signature.type == ClassSignatureType::staticClass);
-            Assert(!level->systems.contains(signature.name));
-            level->systems.emplace(signature.name);
-        };
+        BroadcastGameObjects([this](GameObject& gameObject) -> void {
+            gameObject.SetWorld(this);
+            gameObject.OnLoaded();
+        });
+    }
 
-        level->systems.clear();
-        for (const auto& system : setupSystems) {
-            addSystem(system);
-        }
-        for (const auto& system : tickSystems) {
-            addSystem(system);
-        }
-        for (const auto& pair : eventSystems) {
-            for (const auto& system : pair.second) {
-                addSystem(system);
-            }
-        }
+    void World::Play()
+    {
+        Assert(status == WorldStatus::stoped);
+        status = WorldStatus::playing;
+        BroadcastGameObjects([](GameObject& gameObject) -> void { gameObject.OnStart(); });
+    }
+
+    void World::Tick(float frameTimeMs)
+    {
+        Assert(status == WorldStatus::playing);
+        BroadcastGameObjects([&](GameObject& gameObject) -> void { gameObject.OnTick(frameTimeMs); });
+    }
+
+    void World::Pause()
+    {
+        Assert(status == WorldStatus::playing);
+        status = WorldStatus::paused;
+    }
+
+    void World::Continue()
+    {
+        Assert(status == WorldStatus::paused);
+        status = WorldStatus::playing;
+    }
+
+    void World::Stop()
+    {
+        Assert(status == WorldStatus::playing);
+        status = WorldStatus::stoped;
+        BroadcastGameObjects([](GameObject& gameObject) -> void { gameObject.OnStop(); });
     }
 }

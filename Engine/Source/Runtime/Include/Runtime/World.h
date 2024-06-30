@@ -1,30 +1,50 @@
 //
-// Created by johnk on 2023/9/5.
+// Created by johnk on 2024/6/29.
 //
 
 #pragma once
 
-#include <Runtime/ECS.h>
-#include <Runtime/Asset/Level.h>
+#include <unordered_map>
+
+#include <Mirror/Meta.h>
+#include <Runtime/GameObject.h>
 
 namespace Runtime {
-    class World;
+    enum class WorldStatus : uint8_t {
+        playing,
+        paused,
+        stoped,
+        max
+    };
 
-    class RUNTIME_API World : public ECSHost {
-    public:
-        explicit World(std::string inName = "");
-        ~World();
+    class EClass() World {
+        EClassBody(World)
 
-        void Setup() override;
-        void Tick(float timeMS) override;
-        void Shutdown() override;
-        bool Setuped() override;
-        void Reset() override;
+        ECtor() World();
+        ECtor() explicit World(std::string inName);
 
-        void LoadFromLevel(const AssetRef<Level>& level);
-        void SaveToLevel(AssetRef<Level>& level);
+        EFunc() const std::string& GetName() const;
+        EFunc() GameObject& CreateObject(const std::string& inName);
+        EFunc() GameObject& GetObject(const std::string& inName) const;
+        EFunc() void DestroyObject(const std::string& inName);
+
+        EFunc() void Play();
+        EFunc() void Tick(float frameTimeMs);
+        EFunc() void Pause();
+        EFunc() void Continue();
+        EFunc() void Stop();
+
+        // TODO load level
+        // TODO unload level
+        // TODO save level
 
     private:
-        std::string name;
+        void BroadcastGameObjects(const std::function<void(GameObject&)>& func);
+
+        EFunc() void OnDeserialize();
+
+        EProperty(transient) WorldStatus status;
+        EProperty() std::string name;
+        EProperty() std::unordered_map<std::string, GameObjectRef> gameObjects;
     };
 }

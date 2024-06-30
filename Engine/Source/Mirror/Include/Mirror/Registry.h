@@ -144,6 +144,9 @@ namespace Mirror {
 
         Registry() noexcept;
 
+        Mirror::Class& EmplaceClass(const std::string& inName, Class::ConstructParams&& inParams);
+        Mirror::Enum& EmplaceEnum(const std::string& inName, Enum::ConstructParams&& inParams);
+
         GlobalScope globalScope;
         std::unordered_map<std::string, Mirror::Class> classes;
         std::unordered_map<std::string, Mirror::Enum> enums;
@@ -285,8 +288,7 @@ namespace Mirror {
             return Any(Internal::InvokeConstructorNew<C, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {}));
         };
 
-        clazz.constructors.emplace(std::make_pair(inName, Mirror::Constructor(std::move(params))));
-        return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.constructors.at(inName));
+        return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceConstructor(inName, std::move(params)));
     }
 
     template <typename C>
@@ -311,8 +313,7 @@ namespace Mirror {
         params.serializer = nullptr;
         params.deserializer = nullptr;
 
-        clazz.staticVariables.emplace(std::make_pair(inName, Variable(std::move(params))));
-        return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.staticVariables.at(inName));
+        return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceStaticVariable(inName, std::move(params)));
     }
 
     template <typename C>
@@ -344,8 +345,7 @@ namespace Mirror {
             }
         };
 
-        clazz.staticFunctions.emplace(std::make_pair(inName, Function(std::move(params))));
-        return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.staticFunctions.at(inName));
+        return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceStaticFunction(inName, std::move(params)));
     }
 
     template <typename C>
@@ -387,8 +387,7 @@ namespace Mirror {
             }
         };
 
-        clazz.memberVariables.emplace(std::make_pair(inName, Mirror::MemberVariable(std::move(params))));
-        return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.memberVariables.at(inName));
+        return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceMemberVariable(inName, std::move(params)));
     }
 
     template <typename C>
@@ -421,8 +420,7 @@ namespace Mirror {
             }
         };
 
-        clazz.memberFunctions.emplace(std::make_pair(inName, Mirror::MemberFunction(std::move(params))));
-        return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.memberFunctions.at(inName));
+        return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceMemberFunction(inName, std::move(params)));
     }
 
     template <auto Ptr>
@@ -461,8 +459,7 @@ namespace Mirror {
             }
         };
 
-        globalScope.variables.emplace(std::make_pair(inName, Mirror::Variable(std::move(params))));
-        return SetContext(&globalScope.variables.at(inName));
+        return SetContext(&globalScope.EmplaceVariable(inName, std::move(params)));
     }
 
     template <auto Ptr>
@@ -493,8 +490,7 @@ namespace Mirror {
             }
         };
 
-        globalScope.functions.emplace(std::make_pair(inName, Mirror::Function(std::move(params))));
-        return SetContext(&globalScope.functions.at(inName));
+        return SetContext(&globalScope.EmplaceFunction(inName, std::move(params)));
     }
 
     template <typename T>
@@ -513,16 +509,16 @@ namespace Mirror {
         const auto iter = enumInfo.elements.find(inName);
         Assert(iter == enumInfo.elements.end());
 
-        enumInfo.elements.emplace(std::make_pair(inName, EnumElement(
-            inName,
-            []() -> Any {
-                return Any(Value);
-            },
-            [](const Any* value) -> bool {
-                return value->As<T>() == Value;
-            }
-        )));
-        return MetaDataRegistry<EnumRegistry<T>>::SetContext(&enumInfo.elements.at(inName));
+        EnumElement::ConstructParams params;
+        params.name = inName;
+        params.getter = []() -> Any {
+            return Any(Value);
+        };
+        params.comparer = [](const Any* value) -> bool {
+            return value->As<T>() == Value;
+        };
+
+        return MetaDataRegistry<EnumRegistry<T>>::SetContext(&enumInfo.EmplaceElement(inName, std::move(params)));
     }
 
     template <typename C, typename B>
@@ -533,7 +529,7 @@ namespace Mirror {
         Assert(!Class::typeToNameMap.contains(typeId));
         Assert(!classes.contains(name));
 
-        Mirror::Class::ConstructParams params;
+        Class::ConstructParams params;
         params.name = name;
         params.typeInfo = GetTypeInfo<C>();
         params.baseClassGetter = []() -> const Mirror::Class* {
@@ -544,14 +540,16 @@ namespace Mirror {
             }
         };
         if constexpr (std::is_default_constructible_v<C>) {
-            params.defaultObject = Any(C());
+            params.defaultObjectCreator = []() -> Any {
+                return Any(C());
+            };
         }
         if constexpr (std::is_destructible_v<C>) {
             Destructor::ConstructParams detorParams;
             detorParams.destructor = [](const Any* object) -> void {
                 object->As<C&>().~C();
             };
-            params.destructor = Destructor(std::move(detorParams));
+            params.destructorParams = detorParams;
         }
         if constexpr (std::is_default_constructible_v<C>) {
             Constructor::ConstructParams ctorParams;
@@ -566,12 +564,11 @@ namespace Mirror {
                 Assert(argSize == 0);
                 return Any(new C());
             };
-            params.defaultConstructor = Constructor(std::move(ctorParams));
+            params.defaultConstructorParams = ctorParams;
         }
 
         Class::typeToNameMap[typeId] = name;
-        classes.emplace(std::make_pair(name, Mirror::Class(std::move(params))));
-        return ClassRegistry<C>(classes.at(name));
+        return ClassRegistry<C>(EmplaceClass(name, std::move(params)));
     }
 
     template <typename T>
@@ -586,7 +583,6 @@ namespace Mirror {
         params.name = name;
 
         Enum::typeToNameMap[typeId] = name;
-        enums.emplace(std::make_pair(name, Mirror::Enum(std::move(params))));
-        return EnumRegistry<T>(enums.at(name));
+        return EnumRegistry<T>(EmplaceEnum(name, std::move(params)));
     }
 }

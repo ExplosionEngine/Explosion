@@ -161,6 +161,29 @@ namespace MirrorTool {
         }
         return stream.str();
     }
+
+    static std::vector<std::string> ReadForwardImplHeaders(std::ifstream& inFile)
+    {
+        std::vector<std::string> result;
+        char buffer[2048];
+        bool begined = false;
+        while (inFile.getline(buffer, 2048)) {
+            auto str = std::string(buffer);
+
+            if (Common::StringUtils::RegexMatch(str, ".*END_META_FORWARD_IMPL_HEADERS.*")) {
+                break;
+            }
+            if (begined) {
+                str = Common::StringUtils::Replace(str, "//", "");
+                str = Common::StringUtils::Replace(str, " ", "");
+                result.emplace_back(str);
+            }
+            if (Common::StringUtils::RegexMatch(str, ".*BEGIN_META_FORWARD_IMPL_HEADERS.*")) {
+                begined = true;
+            }
+        }
+        return result;
+    }
 }
 
 namespace MirrorTool {
@@ -181,27 +204,35 @@ namespace MirrorTool {
             std::filesystem::create_directories(parentPath);
         }
 
-        std::ofstream file(outputFile);
-        if (file.fail()) {
+        std::ifstream inFile(inputFile);
+        if (inFile.fail()) {
+            return std::make_pair(false, "failed to open input file");
+        }
+
+        std::ofstream outFile(outputFile);
+        if (outFile.fail()) {
             return std::make_pair(false, "failed to open output file");
         }
 
-        auto result = GenerateCode(file);
-        file.close();
+        auto result = GenerateCode(inFile, outFile);
+        outFile.close();
         return result;
     }
 
-    Generator::Result Generator::GenerateCode(std::ofstream& file) const
+    Generator::Result Generator::GenerateCode(std::ifstream& inFile, std::ofstream& outFile) const
     {
         std::string bestMatchHeaderPath = GetBestMatchHeaderPath(inputFile, headerDirs);
         if (bestMatchHeaderPath.empty()) {
             return std::make_pair(false, "failed to compute best match header path");
         }
 
-        file << GetHeaderNote() << Common::newline;
-        file << fmt::format("#include <{}>", bestMatchHeaderPath) << Common::newline;
-        file << "#include <Mirror/Registry.h>" << Common::newline;
-        file << GetClassesCode(metaInfo);
+        outFile << GetHeaderNote() << Common::newline;
+        outFile << fmt::format("#include <{}>", bestMatchHeaderPath) << Common::newline;
+        for (const auto& forwadImplHeader : ReadForwardImplHeaders(inFile)) {
+            outFile << fmt::format("#include <{}>", forwadImplHeader) << Common::newline;
+        }
+        outFile << "#include <Mirror/Registry.h>" << Common::newline;
+        outFile << GetClassesCode(metaInfo);
         return std::make_pair(true, "");
     }
 }

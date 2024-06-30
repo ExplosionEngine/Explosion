@@ -9,15 +9,14 @@
 #include <Mirror/Registry.h>
 #include <Common/Debug.h>
 #include <Common/String.h>
-
-namespace Mirror::Internal {
-    TypeId ComputeTypeId(const std::string_view sigName)
-    {
-        return Common::HashUtils::CityHash(sigName.data(), sigName.size());
-    }
-}
+#include <Common/Hash.h>
 
 namespace Mirror {
+    TypeId GetTypeIdByName(const std::string& name)
+    {
+        return Common::HashUtils::CityHash(name.data(), name.size());
+    }
+
     Any::~Any()
     {
         if (rtti != nullptr) {
@@ -30,6 +29,7 @@ namespace Mirror {
         typeInfo = inAny.typeInfo;
         rtti = inAny.rtti;
         data.resize(inAny.data.size());
+        Assert(typeInfo->copyConstructible || typeInfo->copyAssignable);
         rtti->copy(data.data(), inAny.data.data());
     }
 
@@ -38,6 +38,7 @@ namespace Mirror {
         typeInfo = inAny.typeInfo;
         rtti = inAny.rtti;
         data.resize(inAny.data.size());
+        Assert(typeInfo->moveConstructible || typeInfo->moveAssignable);
         rtti->move(data.data(), inAny.data.data());
     }
 
@@ -49,6 +50,8 @@ namespace Mirror {
         Reset();
         typeInfo = inAny.typeInfo;
         rtti = inAny.rtti;
+        data.resize(inAny.data.size());
+        Assert(typeInfo->copyConstructible || typeInfo->copyAssignable);
         rtti->copy(data.data(), inAny.data.data());
         return *this;
     }
@@ -58,6 +61,8 @@ namespace Mirror {
         Reset();
         typeInfo = inAny.typeInfo;
         rtti = inAny.rtti;
+        data.resize(inAny.data.size());
+        Assert(typeInfo->moveConstructible || typeInfo->moveAssignable);
         rtti->move(data.data(), inAny.data.data());
         return *this;
     }
@@ -97,7 +102,7 @@ namespace Mirror {
 
     void Any::Reset()
     {
-        if (rtti != nullptr) {
+        if (typeInfo != nullptr && rtti != nullptr) {
             rtti->detor(data.data());
         }
         typeInfo = nullptr;
@@ -144,6 +149,33 @@ namespace Mirror {
     bool Type::HasMeta(const std::string& key) const
     {
         return metas.contains(key);
+    }
+
+    bool Type::GetMetaBool(const std::string& key) const
+    {
+        const auto& value = GetMeta(key);
+        if (value == "true") {
+            return true;
+        }
+        if (value == "false") {
+            return false;
+        }
+        return Assert(false), false;
+    }
+
+    int32_t Type::GetMetaInt32(const std::string& key) const
+    {
+        return std::atoi(GetMeta(key).c_str());
+    }
+
+    int64_t Type::GetMetaInt64(const std::string& key) const
+    {
+        return std::atoll(GetMeta(key).c_str());
+    }
+
+    float Type::GetMetaFloat(const std::string& key) const
+    {
+        return std::atof(GetMeta(key).c_str());
     }
 
     Variable::Variable(ConstructParams&& params)
@@ -312,6 +344,11 @@ namespace Mirror {
         deserializer(stream, *this, object);
     }
 
+    bool MemberVariable::IsTransient() const
+    {
+        return HasMeta("transient") && GetMetaBool("transient");
+    }
+
     MemberFunction::MemberFunction(ConstructParams&& params)
         : Type(std::move(params.name))
         , argsNum(params.argsNum)
@@ -351,6 +388,20 @@ namespace Mirror {
     GlobalScope::GlobalScope() : Type(std::string(NamePresets::globalScope)) {}
 
     GlobalScope::~GlobalScope() = default;
+
+    Variable& GlobalScope::EmplaceVariable(const std::string& inName, Variable::ConstructParams&& inParams)
+    {
+        Assert(!variables.contains(inName));
+        variables.emplace(inName, Variable(std::move(inParams)));
+        return variables.at(inName);
+    }
+
+    Function& GlobalScope::EmplaceFunction(const std::string& inName, Function::ConstructParams&& inParams)
+    {
+        Assert(!functions.contains(inName));
+        functions.emplace(inName, Function(std::move(inParams)));
+        return functions.at(inName);
+    }
 
     const GlobalScope& GlobalScope::Get()
     {
@@ -399,15 +450,66 @@ namespace Mirror {
         : Type(std::move(params.name))
         , typeInfo(params.typeInfo)
         , baseClassGetter(std::move(params.baseClassGetter))
-        , defaultObject(std::move(params.defaultObject))
-        , destructor(std::move(params.destructor))
     {
-        if (params.defaultConstructor.has_value()) {
-            constructors.emplace(std::make_pair(NamePresets::defaultConstructor, std::move(params.defaultConstructor.value())));
+        if (params.defaultObjectCreator.has_value()) {
+            CreateDefaultObject(params.defaultObjectCreator.value());
+        }
+        if (params.destructorParams.has_value()) {
+            destructor = Destructor(std::move(params.destructorParams.value()));
+        }
+        if (params.defaultConstructorParams.has_value()) {
+            EmplaceConstructor(NamePresets::defaultConstructor, std::move(params.defaultConstructorParams.value()));
         }
     }
 
     Class::~Class() = default;
+
+    void Class::CreateDefaultObject(const std::function<Any()>& inCreator)
+    {
+        defaultObject = inCreator();
+    }
+
+    Destructor& Class::EmplaceDestructor(Destructor::ConstructParams&& inParams)
+    {
+        Assert(!destructor.has_value());
+        destructor = Destructor(std::move(inParams));
+        return destructor.value();
+    }
+
+    Constructor& Class::EmplaceConstructor(const std::string& inName, Constructor::ConstructParams&& inParams)
+    {
+        Assert(!constructors.contains(inName));
+        constructors.emplace(inName, Constructor(std::move(inParams)));
+        return constructors.at(inName);
+    }
+
+    Variable& Class::EmplaceStaticVariable(const std::string& inName, Variable::ConstructParams&& inParams)
+    {
+        Assert(!staticVariables.contains(inName));
+        staticVariables.emplace(inName, Variable(std::move(inParams)));
+        return staticVariables.at(inName);
+    }
+
+    Function& Class::EmplaceStaticFunction(const std::string& inName, Function::ConstructParams&& inParams)
+    {
+        Assert(!staticFunctions.contains(inName));
+        staticFunctions.emplace(inName, Function(std::move(inParams)));
+        return staticFunctions.at(inName);
+    }
+
+    MemberVariable& Class::EmplaceMemberVariable(const std::string& inName, MemberVariable::ConstructParams&& inParams)
+    {
+        Assert(!memberVariables.contains(inName));
+        memberVariables.emplace(inName, MemberVariable(std::move(inParams)));
+        return memberVariables.at(inName);
+    }
+
+    MemberFunction& Class::EmplaceMemberFunction(const std::string& inName, MemberFunction::ConstructParams&& inParams)
+    {
+        Assert(!memberFunctions.contains(inName));
+        memberFunctions.emplace(inName, MemberFunction(std::move(inParams)));
+        return memberFunctions.at(inName);
+    }
 
     bool Class::Has(const std::string& name)
     {
@@ -552,6 +654,20 @@ namespace Mirror {
         return nullptr;
     }
 
+    Any Class::ConstructOnStackSuitable(Any* args, uint8_t argNum) const
+    {
+        const auto* constructor = FindSuitableConstructor(args, argNum);
+        Assert(constructor != nullptr);
+        return constructor->ConstructOnStackWith(args, argNum);
+    }
+
+    Any Class::NewObjectSuitable(Any* args, uint8_t argNum) const
+    {
+        const auto* constructor = FindSuitableConstructor(args, argNum);
+        Assert(constructor != nullptr);
+        return constructor->NewObjectWith(args, argNum);
+    }
+
     const Constructor* Class::FindConstructor(const std::string& name) const
     {
         const auto iter = constructors.find(name);
@@ -644,7 +760,7 @@ namespace Mirror {
             baseClass->Serialize(stream, obj);
         }
 
-        Assert(defaultObject.has_value());
+        AssertWithReason(defaultObject.has_value(), "do you forget add default constructor to EClass() which you want to serialize");
 
         const auto& name = GetName();
         const auto memberVariablesNum = memberVariables.size();
@@ -652,6 +768,10 @@ namespace Mirror {
         Common::Serializer<uint64_t>::Serialize(stream, memberVariablesNum);
 
         for (const auto& [name, memberVariable] : memberVariables) {
+            if (memberVariable.IsTransient()) {
+                continue;
+            }
+
             Common::Serializer<std::string>::Serialize(stream, name);
 
             const bool sameWithDefaultObject = memberVariable.Get(obj) == defaultObject.value();
@@ -663,6 +783,10 @@ namespace Mirror {
                 Common::Serializer<uint32_t>::Serialize(stream, memberVariable.SizeOf());
                 memberVariable.Serialize(stream, obj);
             }
+        }
+
+        if (HasMemberFunction("OnSerialized")) {
+            GetMemberFunction("OnSerialized").InvokeWith(obj, nullptr, 0);
         }
     }
 
@@ -690,25 +814,34 @@ namespace Mirror {
                 continue;
             }
 
+            const auto& memberVariable = iter->second;
+            if (memberVariable.IsTransient()) {
+                continue;
+            }
+
             bool restoreAsDefaultObject = true;
             Common::Serializer<bool>::Deserialize(stream, restoreAsDefaultObject);
 
             uint32_t memorySize = 0;
             Common::Serializer<uint32_t>::Deserialize(stream, memorySize);
-            if (memorySize == 0 || memorySize != iter->second.SizeOf()) {
+            if (memorySize == 0 || memorySize != memberVariable.SizeOf()) {
                 restoreAsDefaultObject = true;
             }
 
             if (!restoreAsDefaultObject) {
-                iter->second.Deserialize(stream, obj);
+                memberVariable.Deserialize(stream, obj);
             }
+        }
+
+        if (HasMemberFunction("OnDeserialize")) {
+            GetMemberFunction("OnDeserialize").InvokeWith(obj, nullptr, 0);
         }
     }
 
-    EnumElement::EnumElement(std::string inName, Getter inGetter, Comparer inComparer)
-        : Type(std::move(inName))
-        , getter(std::move(inGetter))
-        , comparer(std::move(inComparer))
+    EnumElement::EnumElement(ConstructParams&& inParams)
+        : Type(std::move(inParams.name))
+        , getter(std::move(inParams.getter))
+        , comparer(std::move(inParams.comparer))
     {
     }
 
@@ -770,5 +903,12 @@ namespace Mirror {
         }
         QuickFail();
         return "";
+    }
+
+    EnumElement& Enum::EmplaceElement(const std::string& inName, EnumElement::ConstructParams&& inParams)
+    {
+        Assert(!elements.contains(inName));
+        elements.emplace(inName, EnumElement(std::move(inParams)));
+        return elements.at(inName);
     }
 }
