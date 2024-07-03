@@ -13,19 +13,6 @@
 namespace Common {
     NamedThread::NamedThread() = default;
 
-    NamedThread::NamedThread(NamedThread&& other) noexcept
-        : thread(std::move(other.thread))
-    {
-    }
-
-    NamedThread::~NamedThread() = default;
-
-    NamedThread& NamedThread::operator=(NamedThread&& other) noexcept
-    {
-        thread = std::move(other.thread);
-        return *this;
-    }
-
     void NamedThread::Join()
     {
         thread.join();
@@ -79,7 +66,8 @@ namespace Common {
     }
 
     WorkerThread::WorkerThread(const std::string& name)
-        : stop(false), flush(false)
+        : stop(false)
+        , flush(false)
     {
         thread = NamedThread(name, [this]() -> void {
             while (true) {

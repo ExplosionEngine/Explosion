@@ -7,11 +7,37 @@
 #include <cstdint>
 #include <type_traits>
 
-#define NonCopyable(clz) \
+#define DefaultCopyCtor(clz) \
+    clz(clz&) = default; \
+    clz(const clz&) = default; \
+
+#define DefaultCopyAssignOp(clz) \
+    clz& operator=(clz&) = default; \
+    clz& operator=(const clz&) = default; \
+
+#define NonCopyCtor(clz) \
     clz(clz&) = delete; \
-    clz& operator=(clz&) = delete; \
     clz(const clz&) = delete; \
+
+#define NonCopyAssignOp(clz) \
+    clz& operator=(clz&) = delete; \
     clz& operator=(const clz&) = delete; \
+
+#define DefaultMovable(clz) \
+    clz(clz&&) noexcept = default; \
+    clz& operator=(clz&&) noexcept = default; \
+
+#define NonMovable(clz) \
+    clz(clz&&) = delete; \
+    clz& operator=(clz&&) = delete; \
+
+#define DefaultCopyable(clz) \
+    DefaultCopyCtor(clz) \
+    DefaultCopyAssignOp(clz) \
+
+#define NonCopyable(clz) \
+    NonCopyCtor(clz) \
+    NonCopyAssignOp(clz) \
 
 namespace Common {
     template <uint32_t A, typename T>

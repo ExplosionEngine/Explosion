@@ -53,7 +53,7 @@ namespace Mirror::Internal {
         EqualFunc* equal;
     };
 
-    template <class T>
+    template <typename T>
     inline constexpr AnyRtti anyRttiImpl = {
         &AnyRtti::DetorImpl<T>,
         &AnyRtti::CopyImpl<T>,
@@ -96,6 +96,7 @@ namespace Mirror {
         static constexpr auto defaultConstructor = "_defaultConstructor";
     };
 
+    // TODO add a memory Strategy, include local memory and heap memory
     class MIRROR_API Any {
     public:
         Any() = default;
@@ -650,9 +651,9 @@ namespace Mirror::Internal {
     void AnyRtti::MoveImpl(void* const object, void* const other) noexcept
     {
         if constexpr (std::is_move_constructible_v<T>) {
-            new(object) T(std::move(*static_cast<const T*>(other)));
+            new(object) T(std::move(*static_cast<T*>(other)));
         } else if constexpr (std::is_move_assignable_v<T>) {
-            *static_cast<T*>(object) = std::move(*static_cast<const T*>(other));
+            *static_cast<T*>(object) = std::move(*static_cast<T*>(other));
         }
     }
 

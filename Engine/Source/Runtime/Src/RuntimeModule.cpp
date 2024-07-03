@@ -25,11 +25,6 @@ namespace Runtime {
         return engine.Get();
     }
 
-    Common::UniqueRef<World> RuntimeModule::CreateWorld(const std::string& inName) const // NOLINT
-    {
-        return new World(inName);
-    }
-
     void RuntimeModule::CreateEngine()
     {
 #if BUILD_EDITOR

@@ -8,7 +8,6 @@
 #include <Core/Module.h>
 #include <Runtime/Api.h>
 #include <Runtime/Engine.h>
-#include <Runtime/World.h>
 
 namespace Runtime {
     struct RuntimeModuleInitParams {
@@ -22,7 +21,6 @@ namespace Runtime {
 
         void Initialize(const RuntimeModuleInitParams& inParams);
         Engine* GetEngine() const;
-        Common::UniqueRef<World> CreateWorld(const std::string& inName) const;
 
     private:
         void CreateEngine();

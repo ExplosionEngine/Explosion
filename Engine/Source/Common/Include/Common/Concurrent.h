@@ -15,17 +15,17 @@
 
 #include <Common/String.h>
 #include <Common/Debug.h>
+#include <Common/Utility.h>
 
 namespace Common {
     class NamedThread {
     public:
-        template <typename F, typename... Args>
-        explicit NamedThread(const std::string& name, F&& task, Args&&... args);
+        DefaultMovable(NamedThread)
 
         NamedThread();
-        NamedThread(NamedThread&& other) noexcept;
-        ~NamedThread();
-        NamedThread& operator=(NamedThread&& other) noexcept;
+
+        template <typename F, typename... Args>
+        explicit NamedThread(const std::string& name, F&& task, Args&&... args);
 
         void Join();
 
