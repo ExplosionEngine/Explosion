@@ -6,6 +6,7 @@
 
 #include <Runtime/Engine.h>
 #include <Rendering/RenderingModule.h>
+#include <Runtime/RuntimeModule.h>
 
 namespace Editor {
     class Core {

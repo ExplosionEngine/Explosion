@@ -17,10 +17,17 @@ namespace Mirror {
         return Common::HashUtils::CityHash(name.data(), name.size());
     }
 
+    Any::Any()
+        : typeInfo(nullptr)
+        , rtti(nullptr)
+    {
+        ResizeMemory(0);
+    }
+
     Any::~Any()
     {
         if (rtti != nullptr) {
-            rtti->detor(data.data());
+            rtti->detor(GetMemory());
         }
     }
 
@@ -28,18 +35,18 @@ namespace Mirror {
     {
         typeInfo = inAny.typeInfo;
         rtti = inAny.rtti;
-        data.resize(inAny.data.size());
+        ResizeMemory(inAny.memorySize);
         Assert(typeInfo->copyConstructible || typeInfo->copyAssignable);
-        rtti->copy(data.data(), inAny.data.data());
+        rtti->copy(GetMemory(), inAny.GetMemory());
     }
 
     Any::Any(Any&& inAny) noexcept // NOLINT
     {
         typeInfo = inAny.typeInfo;
         rtti = inAny.rtti;
-        data.resize(inAny.data.size());
+        ResizeMemory(inAny.memorySize);
         Assert(typeInfo->moveConstructible || typeInfo->moveAssignable);
-        rtti->move(data.data(), inAny.data.data());
+        rtti->move(GetMemory(), inAny.GetMemory());
     }
 
     Any& Any::operator=(const Any& inAny)
@@ -50,9 +57,9 @@ namespace Mirror {
         Reset();
         typeInfo = inAny.typeInfo;
         rtti = inAny.rtti;
-        data.resize(inAny.data.size());
+        ResizeMemory(inAny.memorySize);
         Assert(typeInfo->copyConstructible || typeInfo->copyAssignable);
-        rtti->copy(data.data(), inAny.data.data());
+        rtti->copy(GetMemory(), inAny.GetMemory());
         return *this;
     }
 
@@ -61,9 +68,9 @@ namespace Mirror {
         Reset();
         typeInfo = inAny.typeInfo;
         rtti = inAny.rtti;
-        data.resize(inAny.data.size());
+        ResizeMemory(inAny.memorySize);
         Assert(typeInfo->moveConstructible || typeInfo->moveAssignable);
-        rtti->move(data.data(), inAny.data.data());
+        rtti->move(GetMemory(), inAny.GetMemory());
         return *this;
     }
 
@@ -87,12 +94,12 @@ namespace Mirror {
 
     size_t Any::Size() const
     {
-        return data.size();
+        return memorySize;
     }
 
     const void* Any::Data() const
     {
-        return data.data();
+        return GetMemory();
     }
 
     const TypeInfo* Any::TypeInfo() const
@@ -103,7 +110,7 @@ namespace Mirror {
     void Any::Reset()
     {
         if (typeInfo != nullptr && rtti != nullptr) {
-            rtti->detor(data.data());
+            rtti->detor(GetMemory());
         }
         typeInfo = nullptr;
         rtti = nullptr;
@@ -112,7 +119,29 @@ namespace Mirror {
     bool Any::operator==(const Any& rhs) const
     {
         return typeInfo == rhs.typeInfo
-            && rtti->equal(data.data(), rhs.Data());
+            && rtti->equal(GetMemory(), rhs.Data());
+    }
+
+    void Any::ResizeMemory(size_t size)
+    {
+        memorySize = size;
+        if (size <= MaxStackMemorySize) {
+            memory = StackMemory {};
+        } else {
+            memory = HeapMemory {};
+            std::get<HeapMemory>(memory).resize(memorySize);
+        }
+    }
+
+    void* Any::GetMemory() const
+    {
+        if (memory.index() == 0) {
+            return const_cast<uint8_t*>(std::get<StackMemory>(memory).data());
+        }
+        if (memory.index() == 1) {
+            return const_cast<uint8_t*>(std::get<HeapMemory>(memory).data());
+        }
+        return Assert(false), nullptr;
     }
 
     Type::Type(std::string inName) : name(std::move(inName)) {}

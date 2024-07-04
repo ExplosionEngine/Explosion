@@ -13,6 +13,7 @@
 #include <type_traits>
 #include <typeinfo>
 #include <functional>
+#include <variant>
 
 #include <Common/Serialization.h>
 #include <Common/Debug.h>
@@ -96,10 +97,9 @@ namespace Mirror {
         static constexpr auto defaultConstructor = "_defaultConstructor";
     };
 
-    // TODO add a memory Strategy, include local memory and heap memory
     class MIRROR_API Any {
     public:
-        Any() = default;
+        Any();
         ~Any();
         Any(const Any& inAny);
         Any(Any&& inAny) noexcept;
@@ -145,15 +145,23 @@ namespace Mirror {
         bool operator==(const Any& rhs) const;
 
     private:
+        static constexpr size_t MaxStackMemorySize = sizeof(std::vector<uint8_t>);
+        using StackMemory = std::array<uint8_t, MaxStackMemorySize>;
+        using HeapMemory = std::vector<uint8_t>;
+
+        void ResizeMemory(size_t size);
+        void* GetMemory() const;
+
         template <typename T>
         void ConstructValue(T&& value);
 
         template <typename T>
         void ConstructRef(const std::reference_wrapper<T>& ref);
 
-        const Mirror::TypeInfo* typeInfo = nullptr;
+        const Mirror::TypeInfo* typeInfo;
         const Internal::AnyRtti* rtti;
-        std::vector<uint8_t> data;
+        std::variant<StackMemory, HeapMemory> memory;
+        size_t memorySize;
     };
 
     class MIRROR_API Type {
@@ -752,10 +760,9 @@ namespace Mirror {
     T Any::ForceAs() const
     {
         if (typeInfo->isLValueReference) {
-            return reinterpret_cast<std::add_const_t<std::reference_wrapper<std::remove_reference_t<T>>>*>(data.data())->get();
+            return static_cast<std::add_const_t<std::reference_wrapper<std::remove_reference_t<T>>>*>(GetMemory())->get();
         } else {
-            void* dataPtr = const_cast<uint8_t*>(data.data());
-            return *static_cast<std::remove_reference_t<T>*>(dataPtr);
+            return *static_cast<std::remove_reference_t<T>*>(GetMemory());
         }
     }
 
@@ -764,8 +771,7 @@ namespace Mirror {
     {
         Assert(!typeInfo->isLValueReference);
         if (Convertible<T>()) {
-            void* dataPtr = const_cast<uint8_t*>(data.data());
-            return static_cast<std::remove_reference_t<T>*>(dataPtr);
+            return static_cast<std::remove_reference_t<T>*>(GetMemory());
         } else {
             return nullptr;
         }
@@ -780,8 +786,8 @@ namespace Mirror {
         typeInfo = GetTypeInfo<RemoveRefType>();
         rtti = &Internal::anyRttiImpl<RemoveCVRefType>;
 
-        data.resize(sizeof(RemoveCVRefType));
-        new(data.data()) RemoveCVRefType(std::forward<T>(value));
+        ResizeMemory(sizeof(RemoveCVRefType));
+        new(GetMemory()) RemoveCVRefType(std::forward<T>(value));
     }
 
     template <typename T>
@@ -793,8 +799,8 @@ namespace Mirror {
         typeInfo = GetTypeInfo<RefType>();
         rtti = &Internal::anyRttiImpl<RefWrapperType>;
 
-        data.resize(sizeof(RefWrapperType));
-        new(data.data()) RefWrapperType(ref);
+        ResizeMemory(sizeof(RefWrapperType));
+        new(GetMemory()) RefWrapperType(ref);
     }
 
     template <typename T>

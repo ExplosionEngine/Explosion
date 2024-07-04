@@ -301,6 +301,7 @@ namespace Rendering {
     class RGBuilder {
     public:
         NonCopyable(RGBuilder);
+        NonMovable(RGBuilder);
         explicit RGBuilder(RHI::Device& inDevice);
         ~RGBuilder();
 
@@ -327,10 +328,8 @@ namespace Rendering {
 
     private:
         struct AsyncTimelineExecuteContext {
-            std::vector<Common::UniqueRef<RHI::CommandBuffer>> cmdBuffers;
-            std::vector<Common::UniqueRef<RHI::Semaphore>> semaphores;
-            std::unordered_map<RGQueueType, RHI::CommandBuffer*> queueCmdBufferMap;
-            std::unordered_map<RGQueueType, RHI::Semaphore*> queueSemaphoreToSignalMap;
+            std::unordered_map<RGQueueType, Common::UniqueRef<RHI::CommandBuffer>> queueCmdBufferMap;
+            std::unordered_map<RGQueueType, Common::UniqueRef<RHI::Semaphore>> queueSemaphoreToSignalMap;
 
             AsyncTimelineExecuteContext();
             AsyncTimelineExecuteContext(AsyncTimelineExecuteContext&& inOther) noexcept;

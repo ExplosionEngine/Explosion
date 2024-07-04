@@ -3,7 +3,6 @@
 //
 
 #include <Editor/Core.h>
-#include <Runtime/RuntimeModule.h>
 #include <Core/Cmdline.h>
 
 Core::CmdlineArgValue<std::string> caRhiType(
