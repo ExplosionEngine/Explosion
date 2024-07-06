@@ -3,6 +3,7 @@
 //
 
 #include <Runtime/RuntimeModule.h>
+#include <Common/Debug.h>
 
 namespace Runtime {
     RuntimeModule::RuntimeModule()
@@ -19,25 +20,19 @@ namespace Runtime {
         initialized = true;
     }
 
-    Engine* RuntimeModule::GetEngine()
+    Engine* RuntimeModule::GetEngine() const // NOLINT
     {
         return engine.Get();
     }
 
-    World* RuntimeModule::CreateWorld(const std::string& inName) const
-    {
-        return new World(inName);
-    }
-
-    void RuntimeModule::DestroyWorld(World* inWorld) const
-    {
-        delete inWorld;
-    }
-
     void RuntimeModule::CreateEngine()
     {
-        // TODO load game/editor's main dynamic module to create custom engine
+#if BUILD_EDITOR
+        engine = Common::UniqueRef<Engine>(new EditorEngine({}));
+#else
+        // TODO load game's main dynamic module to create custom engine
         engine = Common::UniqueRef<Engine>(new GameEngine({}));
+#endif
     }
 }
 

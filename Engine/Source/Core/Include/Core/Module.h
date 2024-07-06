@@ -6,9 +6,9 @@
 
 #include <string>
 #include <optional>
+#include <unordered_map>
 
 #include <Common/DynamicLibrary.h>
-#include <Common/Memory.h>
 #include <Core/Api.h>
 
 #define IMPLEMENT_MODULE(apiName, moduleClass) \
@@ -32,20 +32,19 @@ namespace Core {
     using GetModuleFunc = Module*(*)();
 
     struct ModuleRuntimeInfo {
+        NonCopyable(ModuleRuntimeInfo)
+        DefaultMovable(ModuleRuntimeInfo)
         ModuleRuntimeInfo();
-        ~ModuleRuntimeInfo();
-        ModuleRuntimeInfo(const ModuleRuntimeInfo& other);
-        ModuleRuntimeInfo(ModuleRuntimeInfo&& other) noexcept;
-        ModuleRuntimeInfo& operator=(const ModuleRuntimeInfo& other);
 
         Module* instance;
-        Common::UniqueRef<Common::DynamicLibrary> dynamicLib;
+        Common::DynamicLibrary dynamicLib;
     };
 
     class CORE_API ModuleManager {
     public:
         static ModuleManager& Get();
-        ~ModuleManager();
+
+        NonCopyable(ModuleManager)
 
         Module* FindOrLoad(const std::string& moduleName);
 

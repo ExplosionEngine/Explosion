@@ -5,7 +5,6 @@
 #include <Core/Module.h>
 #include <Core/Paths.h>
 #include <Common/String.h>
-#include <Common/Debug.h>
 
 namespace Core {
     Module::Module() = default;
@@ -25,26 +24,6 @@ namespace Core {
     {
     }
 
-    ModuleRuntimeInfo::~ModuleRuntimeInfo() = default;
-
-    ModuleRuntimeInfo::ModuleRuntimeInfo(const ModuleRuntimeInfo& other)
-        : instance(nullptr)
-    {
-        QuickFail();
-    }
-
-    ModuleRuntimeInfo::ModuleRuntimeInfo(ModuleRuntimeInfo&& other) noexcept
-        : instance(other.instance)
-        , dynamicLib(std::move(other.dynamicLib))
-    {
-    }
-
-    ModuleRuntimeInfo& ModuleRuntimeInfo::operator=(const ModuleRuntimeInfo& other)
-    {
-        QuickFail();
-        return *this;
-    }
-
     ModuleManager& ModuleManager::Get()
     {
         static ModuleManager instance;
@@ -52,8 +31,6 @@ namespace Core {
     }
 
     ModuleManager::ModuleManager() = default;
-
-    ModuleManager::~ModuleManager() = default;
 
     Module* ModuleManager::FindOrLoad(const std::string& moduleName)
     {
@@ -66,10 +43,14 @@ namespace Core {
         if (!modulePath.has_value()) {
             return nullptr;
         }
-        Common::UniqueRef<Common::DynamicLibrary> dynamicLib = Common::DynamicLibraryFinder::Find(modulePath.value());
-        dynamicLib->Load();
 
-        const auto getModuleFunc = reinterpret_cast<GetModuleFunc>(dynamicLib->GetSymbol("GetModule"));
+        Common::DynamicLibrary dynamicLib = Common::DynamicLibraryFinder::Find(modulePath.value());
+        if (!dynamicLib.IsValid()) {
+            return nullptr;
+        }
+        dynamicLib.Load();
+
+        const auto getModuleFunc = reinterpret_cast<GetModuleFunc>(dynamicLib.GetSymbol("GetModule"));
         if (getModuleFunc == nullptr) {
             return nullptr;
         }
@@ -137,7 +118,7 @@ namespace Core {
                         return path.string();
                     }
                 }
-            } catch (const std::exception&) {
+            } catch (const std::exception&) { // NOLINT
                 // TODO maybe output log here
             }
         }

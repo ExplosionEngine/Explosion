@@ -5,46 +5,42 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
 
-#include <Common/Utility.h>
 #include <Common/Memory.h>
 
 #if PLATFORM_WINDOWS
 #include <windows.h>
-#define DynamicLibHandle               HINSTANCE
-#define DynamicLibLoad(lib, tag)       LoadLibraryEx(lib, nullptr, 0)
-#define DynamicLibGetSymbol(lib, sym)  GetProcAddress(lib, sym)
-#define DynamicLibUnload(lib)          FreeLibrary(lib)
+#define DynamicLibHandle HINSTANCE
 #else
-#include <dlfcn.h>
-#define DynamicLibHandle               void*
-#define DynamicLibLoad(lib, tag)       dlopen(lib, tag)
-#define DynamicLibGetSymbol(lib, sym)  dlsym(lib, sym)
-#define DynamicLibUnload(lib)          dlclose(lib)
+#define DynamicLibHandle void*
 #endif
 
 namespace Common {
     class DynamicLibrary {
     public:
-        NonCopyable(DynamicLibrary)
+        DynamicLibrary();
         explicit DynamicLibrary(std::string inFullPath);
         ~DynamicLibrary();
 
+        DynamicLibrary(DynamicLibrary&& inOther) noexcept;
+        DynamicLibrary& operator=(DynamicLibrary&& inOther) noexcept;
+
+        bool IsValid() const;
+        bool IsLoaded() const;
         void Load();
         void Unload();
         void* GetSymbol(const std::string& name) const;
         DynamicLibHandle GetHandle() const;
 
     private:
-        bool active;
+        bool loaded;
         std::string fullPath;
         DynamicLibHandle handle;
     };
 
     class DynamicLibraryFinder {
     public:
-        static UniqueRef<DynamicLibrary> Find(const std::string& simpleName, const std::string& searchDirectory = "");
+        static DynamicLibrary Find(const std::string& simpleName, const std::string& searchDirectory = "");
 
     private:
         static std::string GetPlatformDynLibFullPath(const std::string& simpleName, const std::string& searchDirectory);

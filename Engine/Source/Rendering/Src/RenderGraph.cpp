@@ -493,10 +493,8 @@ namespace Rendering {
 
     RGBuilder::AsyncTimelineExecuteContext::AsyncTimelineExecuteContext() = default;
 
-    RGBuilder::AsyncTimelineExecuteContext::AsyncTimelineExecuteContext(AsyncTimelineExecuteContext&& inOther) noexcept
-        : cmdBuffers(std::move(inOther.cmdBuffers))
-        , semaphores(std::move(inOther.semaphores))
-        , queueCmdBufferMap(std::move(inOther.queueCmdBufferMap))
+    RGBuilder::AsyncTimelineExecuteContext::AsyncTimelineExecuteContext(AsyncTimelineExecuteContext&& inOther) noexcept // NOLINT
+        : queueCmdBufferMap(std::move(inOther.queueCmdBufferMap))
         , queueSemaphoreToSignalMap(std::move(inOther.queueSemaphoreToSignalMap))
     {
     }
@@ -528,27 +526,23 @@ namespace Rendering {
             } else {
                 // wait all cmd buffers in last async timeline executed
                 for (const AsyncTimelineExecuteContext& lastContext = asyncTimelineExecuteContexts.back();
-                    const auto& semaphore : lastContext.semaphores) {
+                    const auto& [queue, semaphore] : lastContext.queueSemaphoreToSignalMap) {
                     semaphoresToWait.emplace_back(semaphore.Get());
                 }
             }
 
-            auto& [commandBuffers, semaphores, commandBufferMap, semaphoreMap] = asyncTimelineExecuteContexts.emplace_back();
+            auto& [commandBufferMap, semaphoreMap] = asyncTimelineExecuteContexts.emplace_back();
 
             const auto queueNumInAsyncTimeline = queuePasses.size();
-            commandBuffers.reserve(queueNumInAsyncTimeline);
-            semaphores.reserve(queueNumInAsyncTimeline);
             commandBufferMap.reserve(queueNumInAsyncTimeline);
             semaphoreMap.reserve(queueNumInAsyncTimeline);
 
             for (const auto& [queueType, passes] : queuePasses) {
-                auto& commandBuffer = commandBuffers.emplace_back(device.CreateCommandBuffer());
-                auto& semaphore = semaphores.emplace_back(isLastAsyncTimeline ? nullptr : device.CreateSemaphore());
-                commandBufferMap.emplace(std::make_pair(queueType, commandBuffer.Get()));
-                semaphoreMap.emplace(std::make_pair(queueType, isLastAsyncTimeline ? nullptr : semaphore.Get()));
+                commandBufferMap.emplace(queueType, device.CreateCommandBuffer());
+                semaphoreMap.emplace(queueType, isLastAsyncTimeline ? nullptr : device.CreateSemaphore());
 
-                auto* commandBufferToRecord = commandBufferMap.at(queueType);
-                auto* semaphoreToSignal = semaphoreMap.at(queueType);
+                auto& commandBufferToRecord = commandBufferMap.at(queueType);
+                auto& semaphoreToSignal = semaphoreMap.at(queueType);
 
                 {
                     auto commandRecorder = commandBufferToRecord->Begin();
@@ -580,7 +574,7 @@ namespace Rendering {
                     }
                 } else {
                     // if within the builder, just wait last async timeline commands executed
-                    submitInfo.AddSignalSemaphore(semaphoreToSignal);
+                    submitInfo.AddSignalSemaphore(semaphoreToSignal.Get());
                 }
                 if (queueType == RGQueueType::main && isLastAsyncTimeline && inExecuteInfo.inFenceToSignal != nullptr) {
                     // if is last async timeline, also need signal fence to notify CPU if needed
@@ -589,7 +583,7 @@ namespace Rendering {
 
                 device
                     .GetQueue(rhiQueueType, rhiQueueIndex)
-                    ->Submit(commandBufferToRecord, submitInfo);
+                    ->Submit(commandBufferToRecord.Get(), submitInfo);
             }
         }
     }

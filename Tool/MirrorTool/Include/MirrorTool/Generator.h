@@ -24,7 +24,7 @@ namespace MirrorTool {
         Result Generate() const;
 
     private:
-        Result GenerateCode(std::ofstream& file) const;
+        Result GenerateCode(std::ifstream& inFile, std::ofstream& outFile) const;
 
         const MetaInfo& metaInfo;
         std::string inputFile;

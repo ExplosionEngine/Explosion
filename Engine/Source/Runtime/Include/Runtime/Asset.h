@@ -22,7 +22,7 @@ namespace Runtime {
         EClassBody(Asset)
 
         ECtor()
-        Asset() : uri()
+        Asset()
         {
         }
 

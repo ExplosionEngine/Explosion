@@ -3,6 +3,7 @@
 //
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
@@ -28,6 +29,35 @@ struct AnyTestStruct2 : AnyTestStruct0 {
     char charValue;
 };
 
+struct AnyTestStruct3 {
+    std::string value;
+    bool heapObjectAllocated;
+    int* heapObject;
+
+    AnyTestStruct3(std::string inValue, int inHeapObjValue)
+        : value(std::move(inValue))
+        , heapObjectAllocated(true)
+        , heapObject(new int(inHeapObjValue))
+    {
+    }
+
+    ~AnyTestStruct3()
+    {
+        if (heapObjectAllocated) {
+            delete heapObject;
+        }
+    }
+
+    AnyTestStruct3(AnyTestStruct3&& inOther) noexcept
+        : value(std::move(inOther.value))
+        , heapObjectAllocated(inOther.heapObjectAllocated)
+        , heapObject(inOther.heapObject)
+    {
+        inOther.heapObjectAllocated = false;
+        inOther.heapObject = nullptr;
+    }
+};
+
 TEST(AnyTest, ValueAssignTest)
 {
     const Mirror::Any a0 = 1;
@@ -51,6 +81,11 @@ TEST(AnyTest, ValueAssignTest)
     const auto& r3 = a3.As<const AnyTestStruct1&>();
     ASSERT_EQ(r3.values[0], 1);
     ASSERT_EQ(r3.values[1], 2);
+
+    const Mirror::Any a4 = AnyTestStruct3("hello", 4);
+    const auto& r4 = a4.As<const AnyTestStruct3&>();
+    ASSERT_EQ(r4.value, "hello");
+    ASSERT_EQ(*r4.heapObject, 4);
 }
 
 TEST(AnyTest, ValueConstructTest)
@@ -61,6 +96,11 @@ TEST(AnyTest, ValueConstructTest)
     constexpr int v1 = 2;
     const Mirror::Any a1(v1);
     ASSERT_EQ(a1.As<const int>(), 2);
+
+    const Mirror::Any a2(AnyTestStruct3("hello", 4));
+    const auto& r2 = a2.As<const AnyTestStruct3&>();
+    ASSERT_EQ(r2.value, "hello");
+    ASSERT_EQ(*r2.heapObject, 4);
 }
 
 TEST(AnyTest, ValueReAssignTest)
