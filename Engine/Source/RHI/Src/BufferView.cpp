@@ -15,6 +15,11 @@ namespace RHI {
     {
     }
 
+    StorageBufferViewInfo::StorageBufferViewInfo(uint32_t inStride)
+        : stride(inStride)
+    {
+    }
+
     BufferViewCreateInfo::BufferViewCreateInfo(
         const BufferViewType inType,
         const uint32_t inSize,
@@ -57,9 +62,9 @@ namespace RHI {
         return *this;
     }
 
-    BufferViewCreateInfo& BufferViewCreateInfo::SetExtendStorage(StorageFormat inFormat)
+    BufferViewCreateInfo& BufferViewCreateInfo::SetExtendStorage(uint32_t inStride)
     {
-        extend = StorageBufferViewInfo { inFormat };
+        extend = StorageBufferViewInfo { inStride };
         return *this;
     }
 

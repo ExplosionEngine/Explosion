@@ -189,6 +189,7 @@ namespace RHI::Vulkan {
     ECIMPL_BEGIN(BindingType, VkDescriptorType)
         ECIMPL_ITEM(BindingType::uniformBuffer,  VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
         ECIMPL_ITEM(BindingType::storageBuffer,  VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
+        ECIMPL_ITEM(BindingType::rwStorageBuffer,  VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
         ECIMPL_ITEM(BindingType::sampler,        VK_DESCRIPTOR_TYPE_SAMPLER)
         ECIMPL_ITEM(BindingType::texture,        VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE)
         ECIMPL_ITEM(BindingType::storageTexture, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
@@ -286,6 +287,7 @@ namespace RHI::Vulkan {
         FCIMPL_ITEM(BufferUsageBits::vertex,   VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
         FCIMPL_ITEM(BufferUsageBits::uniform,  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
         FCIMPL_ITEM(BufferUsageBits::storage,  VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+        FCIMPL_ITEM(BufferUsageBits::rwStorage,  VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
         FCIMPL_ITEM(BufferUsageBits::indirect, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
     FCIMPL_END(VkBufferUsageFlagBits)
 

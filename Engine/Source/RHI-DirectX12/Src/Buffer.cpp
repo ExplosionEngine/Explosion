@@ -33,7 +33,7 @@ namespace RHI::DirectX12 {
     static D3D12_RESOURCE_FLAGS GetDX12ResourceFlag(const BufferUsageFlags flag)
     {
         static std::unordered_map<BufferUsageFlags, D3D12_RESOURCE_FLAGS> rules = {
-            { BufferUsageBits::storage, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS },
+            { BufferUsageBits::rwStorage, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS },
         };
         static D3D12_RESOURCE_FLAGS fallback = D3D12_RESOURCE_FLAG_NONE;
 

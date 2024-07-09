@@ -10,19 +10,6 @@
 #include <RHI/DirectX12/Common.h>
 
 namespace RHI::DirectX12 {
-    static uint32_t GetStrideOfStorageBuffer(StorageFormat format)
-    {
-        if (format == StorageFormat::float32 ||
-            format == StorageFormat::sint32 ||
-            format == StorageFormat::uint32) {
-            return 4;
-        }
-
-        return -1;
-    }
-}
-
-namespace RHI::DirectX12 {
     DX12BufferView::DX12BufferView(DX12Buffer& inBuffer, const BufferViewCreateInfo& inCreateInfo)
         : BufferView(inCreateInfo), buffer(inBuffer)
     {
@@ -63,12 +50,27 @@ namespace RHI::DirectX12 {
             Assert((bufferUsages & BufferUsageBits::storage) != 0);
             auto storageViewInfo = std::get<StorageBufferViewInfo>(inCreateInfo.extend);
 
-            // TODO: check the uav typed load
+            D3D12_SHADER_RESOURCE_VIEW_DESC desc {};
+            desc.Format = DXGI_FORMAT_UNKNOWN;
+            desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+            desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            desc.Buffer.FirstElement = inCreateInfo.offset;
+            desc.Buffer.NumElements = inCreateInfo.size / storageViewInfo.stride;
+            desc.Buffer.StructureByteStride = storageViewInfo.stride;
+
+            nativeView = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
+            buffer.GetDevice().GetNative()->CreateShaderResourceView(buffer.GetNative(), &desc, std::get<Common::UniqueRef<DescriptorAllocation>>(nativeView)->GetCpuHandle());
+        } else if (inCreateInfo.type == BufferViewType::rwStorageBinding) {
+            Assert((bufferUsages & BufferUsageBits::rwStorage) != 0);
+            auto storageViewInfo = std::get<StorageBufferViewInfo>(inCreateInfo.extend);
+
+            // TODO: check the uav typed load when it is necessary
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc {};
-            desc.Format = EnumCast<StorageFormat, DXGI_FORMAT>(storageViewInfo.format);
+            desc.Format = DXGI_FORMAT_UNKNOWN;
             desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
             desc.Buffer.FirstElement = inCreateInfo.offset;
-            desc.Buffer.NumElements = inCreateInfo.size / GetStrideOfStorageBuffer(storageViewInfo.format);
+            desc.Buffer.NumElements = inCreateInfo.size / storageViewInfo.stride;
+            desc.Buffer.StructureByteStride = storageViewInfo.stride;
 
             nativeView = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
             buffer.GetDevice().GetNative()->CreateUnorderedAccessView(buffer.GetNative(), nullptr, &desc, std::get<Common::UniqueRef<DescriptorAllocation>>(nativeView)->GetCpuHandle());

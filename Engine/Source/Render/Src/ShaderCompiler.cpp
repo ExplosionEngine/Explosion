@@ -43,7 +43,7 @@ namespace Render {
             { D3D_SIT_SAMPLER, RHI::BindingType::sampler },
             { D3D_SIT_UAV_RWTYPED, RHI::BindingType::storageTexture },
             { D3D_SIT_STRUCTURED, RHI::BindingType::storageBuffer },
-            { D3D_SIT_UAV_RWSTRUCTURED, RHI::BindingType::storageBuffer }
+            { D3D_SIT_UAV_RWSTRUCTURED, RHI::BindingType::rwStorageBuffer }
         };
         return map.at(type);
     }
@@ -55,7 +55,7 @@ namespace Render {
             { D3D_SIT_TEXTURE, RHI::HlslBindingRangeType::texture },
             { D3D_SIT_SAMPLER, RHI::HlslBindingRangeType::sampler },
             { D3D_SIT_UAV_RWTYPED, RHI::HlslBindingRangeType::unorderedAccess },
-            { D3D_SIT_STRUCTURED, RHI::HlslBindingRangeType::unorderedAccess },
+            { D3D_SIT_STRUCTURED, RHI::HlslBindingRangeType::texture },
             { D3D_SIT_UAV_RWSTRUCTURED, RHI::HlslBindingRangeType::unorderedAccess }
         };
         return map.at(type);

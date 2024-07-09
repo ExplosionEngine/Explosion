@@ -30,15 +30,15 @@ public:
         BuildCmdBufferAndSubmit();
 
         // Map the data so we can read it on CPU.
-        const auto* mappedData = static_cast<FVec4*>(readbackBuffer->Map(MapMode::read, 0, dataNum * sizeof(FVec4)));
+        const auto* mappedData = static_cast<PackedVec*>(readbackBuffer->Map(MapMode::read, 0, dataNum * sizeof(PackedVec)));
 
         std::ofstream fout("results.txt");
         Assert(fout.is_open());
 
         for(int i = 0; i < dataNum; ++i)
         {
-            fout << "(" << mappedData[i].x << ", " << mappedData[i].y << ", " <<
-                 ", " << mappedData[i].z << ", " << mappedData[i].w << ")" << '\n';
+            std::cout << "(" << mappedData[i].v1.x << ", " << mappedData[i].v1.y << ", " << mappedData[i].v2.x << ", " << mappedData[i].v2.y << ", "
+                 << mappedData[i].v2.z << ", " << mappedData[i].v2.w << ")" << '\n';
         }
 
         readbackBuffer->UnMap();
@@ -57,14 +57,15 @@ private:
 
     void PrepareDataAndCreateGPURes()
     {
-        std::vector<FVec4> data(dataNum);
+        std::vector<PackedVec> data(dataNum);
         for(int i = 0; i < dataNum; ++i)
         {
-            data[i] = FVec4(i - 2, i - 1, i, i + 1);
+            data[i].v1 = FVec2(i + 1);
+            data[i].v2 = FVec4(i + 1);
         }
 
         const auto bufInfo = BufferCreateInfo()
-            .SetSize(data.size() * sizeof(FVec4))
+            .SetSize(data.size() * sizeof(PackedVec))
             .SetUsages(BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
             .SetInitialState(BufferState::staging);
 
@@ -76,15 +77,16 @@ private:
         }
 
         const auto inputBufInfo = BufferCreateInfo()
-            .SetSize(data.size() * sizeof(FVec4))
-            .SetUsages(BufferUsageBits::copyDst | BufferUsageBits::uniform)
+            .SetSize(data.size() * sizeof(PackedVec))
+            .SetUsages(BufferUsageBits::copyDst | BufferUsageBits::storage)
             .SetInitialState(BufferState::undefined);
         inputBuffer = device->CreateBuffer(inputBufInfo);
 
         const auto inputBufViewInfo = BufferViewCreateInfo()
-            .SetType(BufferViewType::uniformBinding)
-            .SetSize(data.size() * sizeof(FVec4))
-            .SetOffset(0);
+            .SetType(BufferViewType::storageBinding)
+            .SetSize(data.size() * sizeof(PackedVec))
+            .SetOffset(0)
+            .SetExtendStorage(sizeof(PackedVec));
         inputBufferView = inputBuffer->CreateBufferView(inputBufViewInfo);
 
         const UniqueRef<CommandBuffer> copyCmd = device->CreateCommandBuffer();
@@ -95,7 +97,7 @@ private:
             copyRecorder->CopyBufferToBuffer(
                 stagingBuf.Get(),
                 inputBuffer.Get(),
-                BufferCopyInfo(0, 0, data.size() * sizeof(FVec4)));
+                BufferCopyInfo(0, 0, data.size() * sizeof(PackedVec)));
             copyRecorder->ResourceBarrier(Barrier::Transition(inputBuffer.Get(), BufferState::copyDst, BufferState::shaderReadOnly));
             copyRecorder->EndPass();
         }
@@ -108,20 +110,20 @@ private:
         mFence->Wait();
 
         const auto outputBufferInfo = BufferCreateInfo()
-            .SetSize(data.size() * sizeof(FVec4))
-            .SetUsages(BufferUsageBits::storage | BufferUsageBits::copySrc)
-            .SetInitialState(BufferState::storage);
+            .SetSize(data.size() * sizeof(PackedVec))
+            .SetUsages(BufferUsageBits::rwStorage | BufferUsageBits::copySrc)
+            .SetInitialState(BufferState::rwStorage);
         outputBuffer = device->CreateBuffer(outputBufferInfo);
 
         const auto outputBufferViewInfo = BufferViewCreateInfo()
-            .SetType(BufferViewType::storageBinding)
-            .SetSize(data.size() * sizeof(FVec4))
+            .SetType(BufferViewType::rwStorageBinding)
+            .SetSize(data.size() * sizeof(PackedVec))
             .SetOffset(0)
-            .SetExtendStorage(StorageFormat::float32);
+            .SetExtendStorage(sizeof(PackedVec));
         outputBufferView = outputBuffer->CreateBufferView(outputBufferViewInfo);
 
         const auto readbackBufferInfo = BufferCreateInfo()
-            .SetSize(data.size() * sizeof(FVec4))
+            .SetSize(data.size() * sizeof(PackedVec))
             .SetUsages(BufferUsageBits::mapRead | BufferUsageBits::copyDst)
             .SetInitialState(BufferState::copyDst);
         readbackBuffer = device->CreateBuffer(readbackBufferInfo);
@@ -175,11 +177,11 @@ private:
 
         // read back to host buffer
         UniqueRef<CopyPassCommandRecorder> copyRecorder = recorder->BeginCopyPass();
-        copyRecorder->ResourceBarrier(Barrier::Transition(outputBuffer.Get(), BufferState::storage, BufferState::copySrc));
+        copyRecorder->ResourceBarrier(Barrier::Transition(outputBuffer.Get(), BufferState::rwStorage, BufferState::copySrc));
         copyRecorder->CopyBufferToBuffer(
             outputBuffer.Get(),
             readbackBuffer.Get(),
-            BufferCopyInfo(0, 0, dataNum * sizeof(FVec4)));
+            BufferCopyInfo(0, 0, dataNum * sizeof(PackedVec)));
         copyRecorder->EndPass();
 
         recorder->End();
@@ -190,7 +192,12 @@ private:
         fence->Wait();
     }
 
-    const int dataNum = 16;
+    struct PackedVec {
+        FVec2 v1;
+        FVec4 v2;
+    };
+
+    const int dataNum = 32;
 
     Gpu* gpu = nullptr;
     UniqueRef<Device> device;

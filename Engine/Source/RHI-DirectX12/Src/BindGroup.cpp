@@ -12,11 +12,14 @@
 namespace RHI::DirectX12 {
     static CD3DX12_CPU_DESCRIPTOR_HANDLE GetDescriptorCpuHandle(const BindGroupEntry& entry)
     {
-        if (entry.binding.type == BindingType::uniformBuffer || entry.binding.type == BindingType::storageBuffer) {
+        if (entry.binding.type == BindingType::uniformBuffer ||
+            entry.binding.type == BindingType::storageBuffer ||
+            entry.binding.type == BindingType::rwStorageBuffer) {
             const auto* bufferView = static_cast<DX12BufferView*>(std::get<BufferView*>(entry.entity));
             return bufferView->GetNativeCpuDescriptorHandle();
         }
-        if (entry.binding.type == BindingType::texture || entry.binding.type == BindingType::storageTexture) {
+        if (entry.binding.type == BindingType::texture ||
+            entry.binding.type == BindingType::storageTexture) {
             const auto* textureView = static_cast<DX12TextureView*>(std::get<TextureView*>(entry.entity));
             return textureView->GetNativeCpuDescriptorHandle();
         }

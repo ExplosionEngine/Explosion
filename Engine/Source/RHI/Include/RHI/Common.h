@@ -192,6 +192,7 @@ namespace RHI {
         index,
         uniformBinding,
         storageBinding,
+        rwStorageBinding,
         max
     };
 
@@ -231,6 +232,7 @@ namespace RHI {
     enum class BindingType : EnumType {
         uniformBuffer,
         storageBuffer,
+        rwStorageBuffer,
         sampler,
         texture,
         storageTexture,
@@ -287,14 +289,6 @@ namespace RHI {
     enum class IndexFormat : EnumType {
         uint16,
         uint32,
-        max
-    };
-
-    // TODO: Support more format
-    enum class StorageFormat: EnumType {
-        float32,
-        uint32,
-        sint32,
         max
     };
 
@@ -386,6 +380,7 @@ namespace RHI {
         copyDst,
         shaderReadOnly,
         storage,
+        rwStorage,
         max
     };
 
@@ -492,8 +487,9 @@ namespace RHI {
         vertex       = 0x20,
         uniform      = 0x40,
         storage      = 0x80,
-        indirect     = 0x100,
-        queryResolve = 0x200,
+        rwStorage    = 0x100,
+        indirect     = 0x200,
+        queryResolve = 0x400,
         max
     };
     using BufferUsageFlags = Flags<BufferUsageBits>;

@@ -1,14 +1,17 @@
 #include <Platform.h>
 
-VkBinding(0, 0) cbuffer input : register(b0)
-{
-    float4 v[16];
+struct Data {
+    float2 v1;
+    float4 v2;
 };
 
-VkBinding(1, 0) RWStructuredBuffer<float4> output : register(u0);
+VkBinding(0, 0) StructuredBuffer<Data> input : register(t0);
 
-[numthreads(16, 1, 1)]
-void CSMain(int id : SV_DispatchThreadID) {
-    output[id.x] = v[id.x] * v[id.x];
+VkBinding(1, 0) RWStructuredBuffer<Data> output : register(u0);
+
+[numthreads(32, 1, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID) {
+    output[id.x].v1 = input[id.x].v1 * input[id.x].v1;
+    output[id.x].v2 = input[id.x].v2 * input[id.x].v2;
 }
 
