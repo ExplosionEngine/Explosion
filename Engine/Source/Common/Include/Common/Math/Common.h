@@ -23,4 +23,11 @@ namespace Common {
             return lhs == rhs;
         }
     }
+
+    template <typename T>
+    requires std::is_integral_v<T>
+    T DivideAndRoundUp(T lhs, T rhs)
+    {
+        return (lhs + rhs - 1) / rhs;
+    }
 }

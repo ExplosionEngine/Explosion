@@ -14,6 +14,13 @@
 
 using namespace Common;
 
+TEST(MathTest, CommonTest)
+{
+    ASSERT_EQ(DivideAndRoundUp(7, 3), 3);
+    ASSERT_EQ(DivideAndRoundUp(6, 2), 3);
+    ASSERT_EQ(DivideAndRoundUp(70, 9), 8);
+}
+
 TEST(MathTest, HFloatTest) // NOLINT
 {
     const HFloat v0 = 1.0f;
