@@ -1,7 +1,8 @@
 #include <Platform.h>
 
+// spir-v treat vec2 and vec4 as built-in type?
 struct Data {
-    float2 v1;
+    float4 v1;
     float4 v2;
 };
 

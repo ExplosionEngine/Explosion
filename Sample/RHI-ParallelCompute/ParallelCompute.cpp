@@ -37,8 +37,10 @@ public:
 
         for(int i = 0; i < dataNum; ++i)
         {
-            std::cout << "(" << mappedData[i].v1.x << ", " << mappedData[i].v1.y << ", " << mappedData[i].v2.x << ", " << mappedData[i].v2.y << ", "
-                 << mappedData[i].v2.z << ", " << mappedData[i].v2.w << ")" << '\n';
+            std::cout << "("
+            << mappedData[i].v1.x << ", " << mappedData[i].v1.y << ", " << mappedData[i].v1.z << ", " << mappedData[i].v1.w << ", "
+            << mappedData[i].v2.x << ", " << mappedData[i].v2.y << ", " << mappedData[i].v2.z << ", " << mappedData[i].v2.w
+            << ")" << '\n';
         }
 
         readbackBuffer->UnMap();
@@ -60,7 +62,7 @@ private:
         std::vector<PackedVec> data(dataNum);
         for(int i = 0; i < dataNum; ++i)
         {
-            data[i].v1 = FVec2(i + 1);
+            data[i].v1 = FVec4(i - 1);
             data[i].v2 = FVec4(i + 1);
         }
 
@@ -193,7 +195,7 @@ private:
     }
 
     struct PackedVec {
-        FVec2 v1;
+        FVec4 v1;
         FVec4 v2;
     };
 
