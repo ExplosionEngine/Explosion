@@ -2,7 +2,7 @@
 // Created by johnk on 2023/4/14.
 //
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Common/Memory.h>
 using namespace Common;

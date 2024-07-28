@@ -2,7 +2,7 @@
 // Created by Zach Lee on 2022/9/12.
 //
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Common/Math/Vector.h>
 #include <Common/Math/Matrix.h>

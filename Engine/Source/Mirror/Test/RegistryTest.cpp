@@ -2,7 +2,7 @@
 // Created by johnk on 2022/9/29.
 //
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Mirror/Registry.h>
 

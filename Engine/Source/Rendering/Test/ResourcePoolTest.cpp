@@ -2,7 +2,7 @@
 // Created by johnk on 2023/12/11.
 //
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Rendering/ResourcePool.h>
 

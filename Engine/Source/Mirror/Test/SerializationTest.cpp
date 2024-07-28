@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <filesystem>
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Mirror/Registry.h>
 #include <Mirror/Mirror.h>

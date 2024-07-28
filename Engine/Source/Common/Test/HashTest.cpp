@@ -4,7 +4,7 @@
 
 #include <string_view>
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Common/Hash.h>
 

@@ -4,7 +4,7 @@
 
 #include <type_traits>
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Mirror/Registry.h>
 

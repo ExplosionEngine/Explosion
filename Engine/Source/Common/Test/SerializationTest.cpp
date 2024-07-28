@@ -4,7 +4,7 @@
 
 #include <filesystem>
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Common/Serialization.h>
 

@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include <unordered_map>
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Mirror/Mirror.h>
 
