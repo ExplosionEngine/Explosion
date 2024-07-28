@@ -52,3 +52,8 @@ TEST(ContainerTest, SetGetIntersection)
 
     ASSERT_EQ(result.size(), 3);
 }
+
+TEST(ContainerTest, TrunkBasic)
+{
+    // TODO
+}
