@@ -37,72 +37,60 @@ namespace Common {
     };
 
     template <typename T>
+    class TrunkIter;
+
+    template <typename I, typename T>
+    concept AnyTrunkIter = std::is_same_v<I, TrunkIter<T>> || std::is_same_v<I, TrunkIter<const T>>;
+
+    template <typename T>
     class TrunkIter {
     public:
         using Offset = int64_t;
 
-        explicit TrunkIter(T* inPtr);
+        template <AnyTrunkIter<T> T2>
+        Offset operator-(const T2& inOther) const;
 
+        template <AnyTrunkIter<T> T2>
+        bool operator==(const T2& inOther) const;
+
+        template <AnyTrunkIter<T> T2>
+        bool operator!=(const T2& inOther) const;
+
+        template <AnyTrunkIter<T> T2>
+        bool operator>(const T2& inOther) const;
+
+        template <AnyTrunkIter<T> T2>
+        bool operator>=(const T2& inOther) const;
+
+        template <AnyTrunkIter<T> T2>
+        bool operator<(const T2& inOther) const;
+
+        template <AnyTrunkIter<T> T2>
+        bool operator<=(const T2& inOther) const;
+
+        explicit TrunkIter(T* inPtr);
         T& operator*() const;
         T* operator->() const;
         TrunkIter operator+(Offset inOffset) const;
         TrunkIter operator-(Offset inOffset) const;
-        Offset operator-(const TrunkIter& inOther) const;
         TrunkIter& operator+=(Offset inOffset);
         TrunkIter& operator-=(Offset inOffset);
         TrunkIter& operator++();
         TrunkIter& operator--();
         TrunkIter operator++(int);
         TrunkIter operator--(int);
-        bool operator==(const TrunkIter& inOther) const;
-        bool operator!=(const TrunkIter& inOther) const;
-        bool operator>(const TrunkIter& inOther) const;
-        bool operator>=(const TrunkIter& inOther) const;
-        bool operator<(const TrunkIter& inOther) const;
-        bool operator<=(const TrunkIter& inOther) const;
+        T* Ptr() const;
 
     private:
         T* ptr;
     };
-
-    template <typename T>
-    class TrunkConstIter {
-    public:
-        using Offset = int64_t;
-
-        explicit TrunkConstIter(const T* inPtr);
-
-        T& operator*() const;
-        T* operator->() const;
-        TrunkConstIter operator+(Offset inOffset) const;
-        TrunkConstIter operator-(Offset inOffset) const;
-        Offset operator-(const TrunkConstIter& inOther) const;
-        TrunkConstIter& operator+=(Offset inOffset);
-        TrunkConstIter& operator-=(Offset inOffset);
-        TrunkConstIter& operator++();
-        TrunkConstIter& operator--();
-        TrunkConstIter operator++(int);
-        TrunkConstIter operator--(int);
-        bool operator==(const TrunkConstIter& inOther) const;
-        bool operator!=(const TrunkConstIter& inOther) const;
-        bool operator>(const TrunkConstIter& inOther) const;
-        bool operator>=(const TrunkConstIter& inOther) const;
-        bool operator<(const TrunkConstIter& inOther) const;
-        bool operator<=(const TrunkConstIter& inOther) const;
-
-    private:
-        const T* ptr;
-    };
-
-    template <typename T, typename I>
-    concept AnyTrunkIter = std::is_same_v<I, TrunkIter<T>> || std::is_same_v<I, TrunkConstIter<T>>;
 
     // vector with fixed capacity, this container allocate the stack memory internal, so memory access is efficient
     template <typename T, size_t N>
     class Trunk {
     public:
         using Iter = TrunkIter<T>;
-        using ConstIter = TrunkConstIter<T>;
+        using ConstIter = TrunkIter<const T>;
 
         static constexpr size_t Capacity();
 
@@ -124,20 +112,21 @@ namespace Common {
         T& Insert(size_t inIndex, T&& inElement);
         T& Insert(const TrunkIter<T>& inIter, const T& inElement);
         T& Insert(const TrunkIter<T>& inIter, T&& inElement);
-        T& Insert(const TrunkConstIter<T>& inIter, const T& inElement);
-        T& Insert(const TrunkConstIter<T>& inIter, T&& inElement);
+        T& Insert(const TrunkIter<const T>& inIter, const T& inElement);
+        T& Insert(const TrunkIter<const T>& inIter, T&& inElement);
         void PopBack();
         void Erase(size_t inIndex);
         void Erase(const TrunkIter<T>& inIter);
-        void Erase(const TrunkConstIter<T>& inIter);
+        void Erase(const TrunkIter<const T>& inIter);
         void EraseSwapLast(size_t inIndex);
         void EraseSwapLast(const TrunkIter<T>& inIter);
-        void EraseSwapLast(const TrunkConstIter<T>& inIter);
+        void EraseSwapLast(const TrunkIter<const T>& inIter);
         T& At(size_t inIndex);
         const T& At(size_t inIndex) const;
         T& Back();
         const T& Back() const;
         bool Empty() const;
+        void Resize(size_t inSize, T inDefault = {});
         size_t Size() const;
         size_t MemorySize() const;
         void* Data();
@@ -257,6 +246,55 @@ namespace Common {
     }
 
     template <typename T>
+    template <AnyTrunkIter<T> T2>
+    typename TrunkIter<T>::Offset TrunkIter<T>::operator-(const T2& inOther) const
+    {
+        return ptr - inOther.Ptr();
+    }
+
+    template <typename T>
+    template <AnyTrunkIter<T> T2>
+    bool TrunkIter<T>::operator==(const T2& inOther) const
+    {
+        return ptr == inOther.Ptr();
+    }
+
+    template <typename T>
+    template <AnyTrunkIter<T> T2>
+    bool TrunkIter<T>::operator!=(const T2& inOther) const
+    {
+        return !this->operator==(inOther);
+    }
+
+    template <typename T>
+    template <AnyTrunkIter<T> T2>
+    bool TrunkIter<T>::operator>(const T2& inOther) const
+    {
+        return ptr > inOther.Ptr();
+    }
+
+    template <typename T>
+    template <AnyTrunkIter<T> T2>
+    bool TrunkIter<T>::operator>=(const T2& inOther) const
+    {
+        return ptr >= inOther.Ptr();
+    }
+
+    template <typename T>
+    template <AnyTrunkIter<T> T2>
+    bool TrunkIter<T>::operator<(const T2& inOther) const
+    {
+        return ptr < inOther.Ptr();
+    }
+
+    template <typename T>
+    template <AnyTrunkIter<T> T2>
+    bool TrunkIter<T>::operator<=(const T2& inOther) const
+    {
+        return ptr <= inOther.Ptr();
+    }
+
+    template <typename T>
     TrunkIter<T>::TrunkIter(T* inPtr)
         : ptr(inPtr)
     {
@@ -284,12 +322,6 @@ namespace Common {
     TrunkIter<T> TrunkIter<T>::operator-(Offset inOffset) const
     {
         return TrunkIter(ptr - inOffset);
-    }
-
-    template <typename T>
-    typename TrunkIter<T>::Offset TrunkIter<T>::operator-(const TrunkIter& inOther) const
-    {
-        return ptr - inOther.ptr;
     }
 
     template <typename T>
@@ -337,155 +369,9 @@ namespace Common {
     }
 
     template <typename T>
-    bool TrunkIter<T>::operator==(const TrunkIter& inOther) const
-    {
-        return ptr == inOther.ptr;
-    }
-
-    template <typename T>
-    bool TrunkIter<T>::operator!=(const TrunkIter& inOther) const
-    {
-        return !this->operator==(inOther);
-    }
-
-    template <typename T>
-    bool TrunkIter<T>::operator>(const TrunkIter& inOther) const
-    {
-        return ptr > inOther.ptr;
-    }
-
-    template <typename T>
-    bool TrunkIter<T>::operator>=(const TrunkIter& inOther) const
-    {
-        return ptr >= inOther.ptr;
-    }
-
-    template <typename T>
-    bool TrunkIter<T>::operator<(const TrunkIter& inOther) const
-    {
-        return ptr < inOther.ptr;
-    }
-
-    template <typename T>
-    bool TrunkIter<T>::operator<=(const TrunkIter& inOther) const
-    {
-        return ptr <= inOther.ptr;
-    }
-
-    template <typename T>
-    TrunkConstIter<T>::TrunkConstIter(const T* inPtr)
-        : ptr(inPtr)
-    {
-    }
-
-    template <typename T>
-    T& TrunkConstIter<T>::operator*() const
-    {
-        return *ptr;
-    }
-
-    template <typename T>
-    T* TrunkConstIter<T>::operator->() const
+    T* TrunkIter<T>::Ptr() const
     {
         return ptr;
-    }
-
-    template <typename T>
-    TrunkConstIter<T> TrunkConstIter<T>::operator+(Offset inOffset) const
-    {
-        return TrunkConstIter(ptr + inOffset);
-    }
-
-    template <typename T>
-    TrunkConstIter<T> TrunkConstIter<T>::operator-(Offset inOffset) const
-    {
-        return TrunkConstIter(ptr - inOffset);
-    }
-
-    template <typename T>
-    typename TrunkConstIter<T>::Offset TrunkConstIter<T>::operator-(const TrunkConstIter& inOther) const
-    {
-        return ptr - inOther.ptr;
-    }
-
-    template <typename T>
-    TrunkConstIter<T>& TrunkConstIter<T>::operator+=(Offset inOffset)
-    {
-        ptr += inOffset;
-        return *this;
-    }
-
-    template <typename T>
-    TrunkConstIter<T>& TrunkConstIter<T>::operator-=(Offset inOffset)
-    {
-        ptr -= inOffset;
-        return *this;
-    }
-
-    template <typename T>
-    TrunkConstIter<T>& TrunkConstIter<T>::operator++()
-    {
-        ptr += 1;
-        return *this;
-    }
-
-    template <typename T>
-    TrunkConstIter<T>& TrunkConstIter<T>::operator--()
-    {
-        ptr -= 1;
-        return *this;
-    }
-
-    template <typename T>
-    TrunkConstIter<T> TrunkConstIter<T>::operator++(int)
-    {
-        TrunkConstIter result = *this;
-        ptr += 1;
-        return result;
-    }
-
-    template <typename T>
-    TrunkConstIter<T> TrunkConstIter<T>::operator--(int)
-    {
-        TrunkConstIter result = *this;
-        ptr -= 1;
-        return result;
-    }
-
-    template <typename T>
-    bool TrunkConstIter<T>::operator==(const TrunkConstIter& inOther) const
-    {
-        return ptr == inOther.ptr;
-    }
-
-    template <typename T>
-    bool TrunkConstIter<T>::operator!=(const TrunkConstIter& inOther) const
-    {
-        return !this->operator==(inOther);
-    }
-
-    template <typename T>
-    bool TrunkConstIter<T>::operator>(const TrunkConstIter& inOther) const
-    {
-        return ptr > inOther.ptr;
-    }
-
-    template <typename T>
-    bool TrunkConstIter<T>::operator>=(const TrunkConstIter& inOther) const
-    {
-        return ptr >= inOther.ptr;
-    }
-
-    template <typename T>
-    bool TrunkConstIter<T>::operator<(const TrunkConstIter& inOther) const
-    {
-        return ptr < inOther.ptr;
-    }
-
-    template <typename T>
-    bool TrunkConstIter<T>::operator<=(const TrunkConstIter& inOther) const
-    {
-        return ptr <= inOther.ptr;
     }
 
     template <typename T, size_t N>
@@ -544,6 +430,10 @@ namespace Common {
         static_assert(std::is_copy_constructible_v<T> && std::is_copy_assignable_v<T>);
         const auto oldSize = size;
         size = inOther.size;
+        for (auto i = size; i < oldSize; i++) {
+            EmplaceDestruct(i);
+        }
+
         for (auto i = 0; i < size; i++) {
             if (i < oldSize) {
                 TypedMemory(i) = inOther.TypedMemory(i);
@@ -560,6 +450,10 @@ namespace Common {
         static_assert(std::is_move_constructible_v<T> && std::is_move_assignable_v<T>);
         const auto oldSize = size;
         size = inOther.size;
+        for (auto i = size; i < oldSize; i++) {
+            EmplaceDestruct(i);
+        }
+
         for (auto i = 0; i < size; i++) {
             if (i < oldSize) {
                 TypedMemory(i) = std::move(inOther.TypedMemory(i));
@@ -617,13 +511,13 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    T& Trunk<T, N>::Insert(const TrunkConstIter<T>& inIter, const T& inElement)
+    T& Trunk<T, N>::Insert(const TrunkIter<const T>& inIter, const T& inElement)
     {
         return InsertInternal(inIter, inElement);
     }
 
     template <typename T, size_t N>
-    T& Trunk<T, N>::Insert(const TrunkConstIter<T>& inIter, T&& inElement)
+    T& Trunk<T, N>::Insert(const TrunkIter<const T>& inIter, T&& inElement)
     {
         return InsertInternal(inIter, std::move(inElement));
     }
@@ -661,7 +555,7 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    void Trunk<T, N>::Erase(const TrunkConstIter<T>& inIter)
+    void Trunk<T, N>::Erase(const TrunkIter<const T>& inIter)
     {
         return EraseInternal(inIter);
     }
@@ -690,7 +584,7 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    void Trunk<T, N>::EraseSwapLast(const TrunkConstIter<T>& inIter)
+    void Trunk<T, N>::EraseSwapLast(const TrunkIter<const T>& inIter)
     {
         EraseSwapLastInternal(inIter);
     }
@@ -723,6 +617,24 @@ namespace Common {
     bool Trunk<T, N>::Empty() const
     {
         return size == 0;
+    }
+
+    template <typename T, size_t N>
+    void Trunk<T, N>::Resize(size_t inSize, T inDefault)
+    {
+        const auto oldSize = size;
+        size = inSize;
+        for (auto i = size; i < oldSize; i++) {
+            EmplaceDestruct(i);
+        }
+
+        for (auto i = 0; i < size; i++) {
+            if (i < oldSize) {
+                TypedMemory(i) = inDefault;
+            } else {
+                EmplaceConstruct(i, inDefault);
+            }
+        }
     }
 
     template <typename T, size_t N>
@@ -770,25 +682,25 @@ namespace Common {
     template <typename T, size_t N>
     typename Trunk<T, N>::Iter Trunk<T, N>::Begin()
     {
-        return { reinterpret_cast<T*>(memory.data()) };
+        return Iter(reinterpret_cast<T*>(memory.data()));
     }
 
     template <typename T, size_t N>
     typename Trunk<T, N>::ConstIter Trunk<T, N>::Begin() const
     {
-        return { reinterpret_cast<const T*>(memory.data()) };
+        return ConstIter(reinterpret_cast<const T*>(memory.data()));
     }
 
     template <typename T, size_t N>
     typename Trunk<T, N>::Iter Trunk<T, N>::End()
     {
-        return { reinterpret_cast<T*>(memory.data()) + size };
+        return Iter(reinterpret_cast<T*>(memory.data()) + size);
     }
 
     template <typename T, size_t N>
     typename Trunk<T, N>::ConstIter Trunk<T, N>::End() const
     {
-        return { reinterpret_cast<const T*>(memory.data()) + size };
+        return ConstIter(reinterpret_cast<const T*>(memory.data()) + size);
     }
 
     template <typename T, size_t N>
@@ -827,7 +739,7 @@ namespace Common {
     void Trunk<T, N>::EmplaceConstruct(size_t inIndex, Args&&... inArgs)
     {
         CheckIndexValid(inIndex);
-        new(static_cast<T*>(memory.data()) + inIndex) T(std::forward<Args>(inArgs)...);
+        new(reinterpret_cast<T*>(memory.data()) + inIndex) T(std::forward<Args>(inArgs)...);
     }
 
     template <typename T, size_t N>
@@ -860,7 +772,7 @@ namespace Common {
         }
 
         size++;
-        for (auto i = inIndex + 1; i < size; i++) {
+        for (auto i = size - 1; i > inIndex; i--) {
             if (i == size - 1) {
                 if constexpr (std::is_move_constructible_v<T>) {
                     EmplaceConstruct(i, std::move(TypedMemory(i - 1)));
@@ -898,7 +810,7 @@ namespace Common {
         }
 
         size++;
-        for (auto iter = inIter + 1; iter < End(); ++iter) {
+        for (auto iter = End() - 1; iter > inIter; --iter) {
             if (iter == End() - 1) {
                 if constexpr (std::is_move_constructible_v<T>) {
                     EmplaceConstruct(iter, std::move(*(iter - 1)));
@@ -971,14 +883,14 @@ namespace Common {
     T& Trunk<T, N>::TypedMemory(size_t inIndex)
     {
         CheckIndexValid(inIndex);
-        return *(static_cast<T*>(memory.data()) + inIndex);
+        return *(reinterpret_cast<T*>(memory.data()) + inIndex);
     }
 
     template <typename T, size_t N>
     const T& Trunk<T, N>::TypedMemory(size_t inIndex) const
     {
         CheckIndexValid(inIndex);
-        return *(static_cast<const T*>(memory.data()) + inIndex);
+        return *(reinterpret_cast<const T*>(memory.data()) + inIndex);
     }
 
     template <typename T, size_t N>
