@@ -540,6 +540,15 @@ namespace Mirror {
         return memberFunctions.at(inName);
     }
 
+    template <typename F>
+    void Class::ForEachClass(F&& func)
+    {
+        const auto& classes = Registry::Get().classes;
+        for (const auto& [name, clazz] : func) {
+            func(clazz);
+        }
+    }
+
     bool Class::Has(const std::string& name)
     {
         const auto& classes = Registry::Get().classes;
@@ -593,6 +602,30 @@ namespace Mirror {
         const auto iter = typeToNameMap.find(typeId);
         AssertWithReason(iter != typeToNameMap.end(), "did you forget add EClass() annotation to class ?");
         return Get(iter->second);
+    }
+
+    std::vector<const Class*> Class::GetAll()
+    {
+        const auto& classes = Registry::Get().classes;
+        std::vector<const Class*> result;
+        result.reserve(classes.size());
+        for (const auto& [name, clazz] : classes) {
+            result.emplace_back(&clazz);
+        }
+        return result;
+    }
+
+    std::vector<const Class*> Class::FindWithCategory(const std::string& category)
+    {
+        const auto& classes = Registry::Get().classes;
+        std::vector<const Class*> result;
+        result.reserve(classes.size());
+        for (const auto& [name, clazz] : classes) {
+            if (clazz.HasMeta("category") && clazz.GetMeta("category") == category) {
+                result.emplace_back(&clazz);
+            }
+        }
+        return result;
     }
 
     const TypeInfo* Class::GetTypeInfo() const

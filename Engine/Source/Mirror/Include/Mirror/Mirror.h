@@ -493,6 +493,9 @@ namespace Mirror {
             return constructor->NewObject(refs);
         }
 
+        template <typename F>
+        static void ForEachClass(F&& func);
+
         static bool Has(const std::string& name);
         static const Class* Find(const std::string& name);
         static const Class& Get(const std::string& name);
@@ -501,6 +504,9 @@ namespace Mirror {
         static const Class& Get(const TypeInfo* typeInfo);
         static const Class* Find(TypeId typeId);
         static const Class& Get(TypeId typeId);
+        static std::vector<const Class*> GetAll();
+        static std::vector<const Class*> FindWithCategory(const std::string& category);
+
         const TypeInfo* GetTypeInfo() const;
         bool HasDefaultConstructor() const;
         const Class* GetBaseClass() const;
