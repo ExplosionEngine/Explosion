@@ -10,34 +10,34 @@
 namespace Common {
     template <typename T>
     struct BoxBase {
-        Vector<T, 3> min;
-        Vector<T, 3> max;
+        Vec<T, 3> min;
+        Vec<T, 3> max;
     };
 
     template <typename T>
     struct Box : BoxBase<T> {
         static Box FromMinExtent(T inMinX, T inMinY, T inMinZ, T inExtentX, T inExtentY, T inExtentZ);
-        static Box FromMinExtent(Vector<T, 3> inMin, Vector<T, 3> inExtent);
+        static Box FromMinExtent(Vec<T, 3> inMin, Vec<T, 3> inExtent);
 
         Box();
         Box(T inMinX, T inMinY, T inMinZ, T inMaxX, T inMaxY, T inMaxZ);
-        Box(Vector<T, 3> inMin, Vector<T, 3> inMax);
+        Box(Vec<T, 3> inMin, Vec<T, 3> inMax);
         Box(const Box& inOther);
         Box(Box&& inOther) noexcept;
         Box& operator=(const Box& inOther);
 
-        Vector<T, 3> Extent() const;
+        Vec<T, 3> Extent() const;
         T ExtentX() const;
         T ExtentY() const;
         T ExtentZ() const;
-        Vector<T, 3> Center() const;
+        Vec<T, 3> Center() const;
         T CenterX() const;
         T CenterY() const;
         T CenterZ() const;
         T Distance(const Box& inOther) const;
         // half of diagonal
         T Size() const;
-        bool Inside(const Vector<T, 3>& inPoint) const;
+        bool Inside(const Vec<T, 3>& inPoint) const;
         bool Intersect(const Box& inOther) const;
 
         template <typename IT>
@@ -63,8 +63,8 @@ namespace Common { // NOLINT
         {
             TypeIdSerializer<Common::Box<T>>::Serialize(stream);
 
-            Serializer<Vector<T, 3>>::Serialize(stream, value.min);
-            Serializer<Vector<T, 3>>::Serialize(stream, value.max);
+            Serializer<Vec<T, 3>>::Serialize(stream, value.min);
+            Serializer<Vec<T, 3>>::Serialize(stream, value.max);
         }
 
         static bool Deserialize(DeserializeStream& stream, Common::Box<T>& value)
@@ -73,8 +73,8 @@ namespace Common { // NOLINT
                 return false;
             }
 
-            Serializer<Vector<T, 3>>::Deserialize(stream, value.min);
-            Serializer<Vector<T, 3>>::Deserialize(stream, value.max);
+            Serializer<Vec<T, 3>>::Deserialize(stream, value.min);
+            Serializer<Vec<T, 3>>::Deserialize(stream, value.max);
             return true;
         }
     };
@@ -88,7 +88,7 @@ namespace Common {
     }
 
     template <typename T>
-    Box<T> Box<T>::FromMinExtent(Vector<T, 3> inMin, Vector<T, 3> inExtent)
+    Box<T> Box<T>::FromMinExtent(Vec<T, 3> inMin, Vec<T, 3> inExtent)
     {
         return Box(inMin, inMin + inExtent);
     }
@@ -103,12 +103,12 @@ namespace Common {
     template <typename T>
     Box<T>::Box(T inMinX, T inMinY, T inMinZ, T inMaxX, T inMaxY, T inMaxZ)
     {
-        this->min = Vector<T, 3>(inMinX, inMinY, inMinZ);
-        this->max = Vector<T, 3>(inMaxX, inMaxY, inMaxZ);
+        this->min = Vec<T, 3>(inMinX, inMinY, inMinZ);
+        this->max = Vec<T, 3>(inMaxX, inMaxY, inMaxZ);
     }
 
     template <typename T>
-    Box<T>::Box(Vector<T, 3> inMin, Vector<T, 3> inMax)
+    Box<T>::Box(Vec<T, 3> inMin, Vec<T, 3> inMax)
     {
         this->min = std::move(inMin);
         this->max = std::move(inMax);
@@ -137,7 +137,7 @@ namespace Common {
     }
 
     template <typename T>
-    Vector<T, 3> Box<T>::Extent() const
+    Vec<T, 3> Box<T>::Extent() const
     {
         return this->max - this->min;
     }
@@ -161,7 +161,7 @@ namespace Common {
     }
 
     template <typename T>
-    Vector<T, 3> Box<T>::Center() const
+    Vec<T, 3> Box<T>::Center() const
     {
         return (this->min + this->max) / T(2);
     }
@@ -187,19 +187,19 @@ namespace Common {
     template <typename T>
     T Box<T>::Distance(const Box& inOther) const
     {
-        Vector<T, 3> direction = Center() - inOther.Center();
+        Vec<T, 3> direction = Center() - inOther.Center();
         return direction.Model();
     }
 
     template <typename T>
     T Box<T>::Size() const
     {
-        Vector<T, 3> diagonal = this->max - this->min;
+        Vec<T, 3> diagonal = this->max - this->min;
         return diagonal.Model() / T(2);
     }
 
     template <typename T>
-    bool Box<T>::Inside(const Vector<T, 3>& inPoint) const
+    bool Box<T>::Inside(const Vec<T, 3>& inPoint) const
     {
         return inPoint.x >= this->min.x && inPoint.x <= this->max.x
             && inPoint.y >= this->min.y && inPoint.y <= this->max.y

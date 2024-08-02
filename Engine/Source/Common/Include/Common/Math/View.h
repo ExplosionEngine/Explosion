@@ -10,16 +10,16 @@
 namespace Common {
     template <typename T>
     struct ViewTransform : Transform<T> {
-        static ViewTransform LookAt(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
+        static ViewTransform LookAt(const Vec<T, 3>& inPosition, const Vec<T, 3>& inTargetPosition, const Vec<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
 
         ViewTransform();
-        ViewTransform(Quaternion<T> inRotation, Vector<T, 3> inTranslation);
+        ViewTransform(Quaternion<T> inRotation, Vec<T, 3> inTranslation);
         explicit ViewTransform(const Transform<T>& inTransform);
         ViewTransform(const ViewTransform& inOther);
         ViewTransform(ViewTransform&& inOther) noexcept;
         ViewTransform& operator=(const ViewTransform& inOther);
 
-        Matrix<T, 4, 4> GetViewMatrix() const;
+        Mat<T, 4, 4> GetViewMatrix() const;
     };
 
     using HViewTransform = ViewTransform<HFloat>;
@@ -56,7 +56,7 @@ namespace Common { // NOLINT
 
 namespace Common {
     template <typename T>
-    ViewTransform<T> ViewTransform<T>::LookAt(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection)
+    ViewTransform<T> ViewTransform<T>::LookAt(const Vec<T, 3>& inPosition, const Vec<T, 3>& inTargetPosition, const Vec<T, 3>& inUpDirection)
     {
         return Transform<T>::LookAt(inPosition, inTargetPosition, inUpDirection);
     }
@@ -68,7 +68,7 @@ namespace Common {
     }
 
     template <typename T>
-    ViewTransform<T>::ViewTransform(Quaternion<T> inRotation, Vector<T, 3> inTranslation)
+    ViewTransform<T>::ViewTransform(Quaternion<T> inRotation, Vec<T, 3> inTranslation)
         : Transform<T>(std::move(inRotation), std::move(inTranslation))
     {
     }
@@ -99,17 +99,17 @@ namespace Common {
     }
 
     template <typename T>
-    Matrix<T, 4, 4> ViewTransform<T>::GetViewMatrix() const
+    Mat<T, 4, 4> ViewTransform<T>::GetViewMatrix() const
     {
-        // before apply axis transform matrix:
+        // before apply axis transform Mat:
         //     x+ -> from screen outer to inner
         //     y+ -> from left to right
         //     z+ -> from bottom to top
-        // after apply axis transform matrix:
+        // after apply axis transform Mat:
         //     x+ -> from left to right
         //     y+ -> from bottom to top
         //     z+ -> from screen outer to inner
-        static Matrix<T, 4, 4> axisTransMat = Matrix<T, 4, 4>(
+        static Mat<T, 4, 4> axisTransMat = Mat<T, 4, 4>(
             0, 1, 0, 0,
             0, 0, 1, 0,
             1, 0, 0, 0,

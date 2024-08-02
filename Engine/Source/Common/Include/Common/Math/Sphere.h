@@ -10,7 +10,7 @@
 namespace Common {
     template <typename T>
     struct SphereBase {
-        Vector<T, 3> center;
+        Vec<T, 3> center;
         T radius;
     };
 
@@ -18,13 +18,13 @@ namespace Common {
     struct Sphere : SphereBase<T> {
         Sphere();
         Sphere(T inX, T inY, T inZ, T inRadius);
-        Sphere(Vector<T, 3> inCenter, T inRadius);
+        Sphere(Vec<T, 3> inCenter, T inRadius);
         Sphere(const Sphere& inOther);
         Sphere(Sphere&& inOther) noexcept;
         Sphere& operator=(const Sphere& inOther);
 
         T Distance(const Sphere& inOther) const;
-        bool Inside(const Vector<T, 3>& inPoint) const;
+        bool Inside(const Vec<T, 3>& inPoint) const;
         bool Intersect(const Sphere& inOther) const;
 
         template <typename IT>
@@ -49,7 +49,7 @@ namespace Common { // NOLINT
         {
             TypeIdSerializer<Sphere<T>>::Serialize(stream);
 
-            Serializer<Vector<T, 3>>::Serialize(stream, value.center);
+            Serializer<Vec<T, 3>>::Serialize(stream, value.center);
             Serializer<T>::Serialize(stream, value.radius);
         }
 
@@ -59,7 +59,7 @@ namespace Common { // NOLINT
                 return false;
             }
 
-            Serializer<Vector<T, 3>>::Deserialize(stream, value.center);
+            Serializer<Vec<T, 3>>::Deserialize(stream, value.center);
             Serializer<T>::Deserialize(stream, value.radius);
             return true;
         }
@@ -77,12 +77,12 @@ namespace Common {
     template <typename T>
     Sphere<T>::Sphere(T inX, T inY, T inZ, T inRadius)
     {
-        this->center = Vector<T, 3>(inX, inY, inZ);
+        this->center = Vec<T, 3>(inX, inY, inZ);
         this->radius = inRadius;
     }
 
     template <typename T>
-    Sphere<T>::Sphere(Vector<T, 3> inCenter, T inRadius)
+    Sphere<T>::Sphere(Vec<T, 3> inCenter, T inRadius)
     {
         this->center = std::move(inCenter);
         this->radius = inRadius;
@@ -113,21 +113,21 @@ namespace Common {
     template <typename T>
     T Sphere<T>::Distance(const Sphere& inOther) const
     {
-        Vector<T, 3> direction = this->center - inOther.center;
+        Vec<T, 3> direction = this->center - inOther.center;
         return direction.Model();
     }
 
     template <typename T>
-    bool Sphere<T>::Inside(const Vector<T, 3>& inPoint) const
+    bool Sphere<T>::Inside(const Vec<T, 3>& inPoint) const
     {
-        Vector<T, 3> direction = this->center - inPoint;
+        Vec<T, 3> direction = this->center - inPoint;
         return direction.Model() <= this->radius;
     }
 
     template <typename T>
     bool Sphere<T>::Intersect(const Sphere& inOther) const
     {
-        Vector<T, 3> direction = this->center - inOther.center;
+        Vec<T, 3> direction = this->center - inOther.center;
         return direction.Model() <= (this->radius + inOther.radius);
     }
 

@@ -54,9 +54,9 @@ TEST(ContainerTest, SetGetIntersection)
     ASSERT_EQ(result.size(), 3);
 }
 
-TEST(ContainerTest, TrunkBasic)
+TEST(ContainerTest, HeapVectorBasic)
 {
-    Trunk<int, 10> t0(4, 0);
+    HeapVector<int, 10> t0(4, 0);
     ASSERT_EQ(t0.Capacity(), 10);
     ASSERT_EQ(t0.Size(), 4);
 
@@ -99,7 +99,7 @@ TEST(ContainerTest, TrunkBasic)
     AssertVecEq(t0, std::vector { 5, 2, 3 });
 }
 
-TEST(ContainerTest, TrunkIter)
+TEST(ContainerTest, HeapVectorIter)
 {
     struct S0 {
         int32_t a;
@@ -111,7 +111,7 @@ TEST(ContainerTest, TrunkIter)
         }
     };
 
-    Trunk<S0, 10> t0(3, {});
+    HeapVector<S0, 10> t0(3, {});
     ASSERT_EQ(t0.Capacity(), 10);
     ASSERT_EQ(t0.Size(), 3);
 
@@ -151,7 +151,7 @@ TEST(ContainerTest, TrunkIter)
     AssertVecEq(t0, std::vector<S0> { { 8, 9 }, { 3, 4 } });
 }
 
-TEST(ContainerTest, TrunkCopyAndMoveTest)
+TEST(ContainerTest, HeapVectorCopyAndMove)
 {
     enum class ConstructType : uint8_t {
         cDefault,
@@ -213,7 +213,7 @@ TEST(ContainerTest, TrunkCopyAndMoveTest)
         }
     };
 
-    Trunk<S0, 10> t0;
+    HeapVector<S0, 10> t0;
     t0.EmplaceBack();
     t0.EmplaceBack();
     ASSERT_EQ(t0[0].constructType, ConstructType::cDefault);
@@ -227,7 +227,7 @@ TEST(ContainerTest, TrunkCopyAndMoveTest)
     ASSERT_EQ(t0[3].constructType, ConstructType::cCopy);
 
     // copy assign
-    Trunk<S0, 10> t2;
+    HeapVector<S0, 10> t2;
     t2.Resize(2);
     ASSERT_EQ(t2[0].constructType, ConstructType::cCopy);
     ASSERT_EQ(t2[1].constructType, ConstructType::cCopy);
@@ -243,7 +243,7 @@ TEST(ContainerTest, TrunkCopyAndMoveTest)
     ASSERT_EQ(t2[3], temp1);
 
     // move assign
-    Trunk<S0, 10> t3;
+    HeapVector<S0, 10> t3;
     t3.Resize(1);
     t3 = std::move(t2);
     temp1.constructType = ConstructType::cCopy;
@@ -258,7 +258,7 @@ TEST(ContainerTest, TrunkCopyAndMoveTest)
     ASSERT_EQ(t3[3], temp1);
 
     // copy construct
-    Trunk<S0, 10> t4 = t3;
+    HeapVector<S0, 10> t4 = t3;
     temp1.constructType = ConstructType::cCopy;
     temp1.copyAssigned = false;
     temp1.moveAssigned = false;
@@ -268,7 +268,7 @@ TEST(ContainerTest, TrunkCopyAndMoveTest)
     ASSERT_EQ(t4[3], temp1);
 
     // move construct
-    Trunk<S0, 10> t5 = std::move(t4);
+    HeapVector<S0, 10> t5 = std::move(t4);
     temp1.constructType = ConstructType::cMove;
     temp1.copyAssigned = false;
     temp1.moveAssigned = false;
