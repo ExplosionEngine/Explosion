@@ -12,120 +12,210 @@
 #include <Common/Hash.h>
 
 namespace Mirror {
-    TypeId GetTypeIdByName(const std::string& name)
-    {
-        return Common::HashUtils::CityHash(name.data(), name.size());
-    }
-
     Any::Any()
-        : typeInfo(nullptr)
-        , rtti(nullptr)
     {
-        ResizeMemory(0);
+        Reset();
     }
 
     Any::~Any()
     {
-        if (rtti != nullptr) {
-            rtti->detor(GetMemory());
+        if (IsMemoryHolder() && rtti != nullptr) {
+            rtti->detor(Ptr());
         }
     }
 
-    Any::Any(const Any& inAny)
+    Any::Any(Any& inOther)
     {
-        typeInfo = inAny.typeInfo;
-        rtti = inAny.rtti;
-        ResizeMemory(inAny.memorySize);
-        Assert(typeInfo->copyConstructible || typeInfo->copyAssignable);
-        rtti->copy(GetMemory(), inAny.GetMemory());
+        PerformCopyConstruct(inOther);
     }
 
-    Any::Any(Any&& inAny) noexcept // NOLINT
+    Any::Any(const Any& inOther)
     {
-        typeInfo = inAny.typeInfo;
-        rtti = inAny.rtti;
-        ResizeMemory(inAny.memorySize);
-        Assert(typeInfo->moveConstructible || typeInfo->moveAssignable);
-        rtti->move(GetMemory(), inAny.GetMemory());
+        PerformCopyConstruct(inOther);
     }
 
-    Any& Any::operator=(const Any& inAny)
+    Any::Any(const Any& inOther, const AnyPolicy inPolicy)
     {
-        if (&inAny == this) {
+        PerformCopyConstructWithPolicy(inOther, inPolicy);
+    }
+
+    Any::Any(Any&& inOther) noexcept
+    {
+        PerformMoveConstruct(std::move(inOther));
+    }
+
+    Any& Any::operator=(const Any& inOther)
+    {
+        if (&inOther == this) {
             return *this;
         }
+
         Reset();
-        typeInfo = inAny.typeInfo;
-        rtti = inAny.rtti;
-        ResizeMemory(inAny.memorySize);
-        Assert(typeInfo->copyConstructible || typeInfo->copyAssignable);
-        rtti->copy(GetMemory(), inAny.GetMemory());
+        PerformCopyConstruct(inOther);
         return *this;
     }
 
-    Any& Any::operator=(Any&& inAny) noexcept
+    Any& Any::operator=(Any&& inOther) noexcept
     {
         Reset();
-        typeInfo = inAny.typeInfo;
-        rtti = inAny.rtti;
-        ResizeMemory(inAny.memorySize);
-        Assert(typeInfo->moveConstructible || typeInfo->moveAssignable);
-        rtti->move(GetMemory(), inAny.GetMemory());
+        PerformMoveConstruct(std::move(inOther));
         return *this;
     }
 
-    bool Any::Convertible(const Mirror::TypeInfo* dstType) const
+    bool Any::Convertible(const TypeInfo* inType) // NOLINT
     {
-        if (typeInfo->id == dstType->id) {
-            return true;
+        if (typeId != inType->id) {
+            return false;
         }
 
-        const Class* srcClass;
-        const Class* dstClass;
-        if (typeInfo->isPointer && dstType->isPointer) {
-            srcClass = Class::Find(typeInfo->removePointerType);
-            dstClass = Class::Find(dstType->removePointerType);
+        if (IsConstRef()) {
+            return !inType->isLValueReference || inType->isLValueConstReference;
+        }
+        return true;
+    }
+
+    bool Any::Convertible(const TypeInfo* inType) const
+    {
+        if (typeId != inType->id) {
+            return false;
+        }
+
+        if (IsConstRef() || IsMemoryHolder()) {
+            return !inType->isLValueReference || inType->isLValueConstReference;
+        }
+        return true;
+    }
+
+    void Any::PerformCopyConstruct(const Any& inOther)
+    {
+        policy = inOther.policy;
+        rtti = inOther.rtti;
+        typeId = inOther.typeId;
+        info = inOther.info;
+
+        if (IsMemoryHolder()) {
+            rtti->copyConstruct(Ptr(), inOther.Ptr());
+        }
+    }
+
+    void Any::PerformCopyConstructWithPolicy(const Any& inOther, const AnyPolicy inPolicy)
+    {
+        policy = inPolicy;
+        rtti = inOther.rtti;
+        typeId = inOther.typeId;
+
+        if (IsRef()) {
+            info = RefInfo(inOther.Ptr(), inOther.Size());
         } else {
-            srcClass = Class::Find(typeInfo->id);
-            dstClass = Class::Find(dstType->id);
+            info = HolderInfo(inOther.Size());
+            rtti->copyConstruct(Ptr(), inOther.Ptr());
         }
-        return srcClass != nullptr && dstClass != nullptr && srcClass->IsDerivedFrom(dstClass);
     }
 
-    size_t Any::Size() const
+    void Any::PerformMoveConstruct(Any&& inOther)
     {
-        return memorySize;
+        policy = inOther.policy;
+        rtti = inOther.rtti;
+        typeId = inOther.typeId;
+
+        if (IsRef()) {
+            info = RefInfo(inOther.Ptr(), inOther.Size());
+        } else {
+            info = HolderInfo(inOther.Size());
+            rtti->moveConstruct(Ptr(), inOther.Ptr());
+        }
     }
 
-    const void* Any::Data() const
+    Any Any::GetRef()
     {
-        return GetMemory();
+        return { *this, IsMemoryHolder() ? AnyPolicy::ref : policy };
     }
 
-    const TypeInfo* Any::TypeInfo() const
+    Any Any::GetRef() const
     {
-        return typeInfo;
+        return { *this, IsMemoryHolder() ? AnyPolicy::constRef : policy };
+    }
+
+    Any Any::GetConstRef() const
+    {
+        return { *this, AnyPolicy::constRef };
+    }
+
+    Any Any::AsValue() const
+    {
+        return { *this, AnyPolicy::memoryHolder };
+    }
+
+    AnyPolicy Any::Policy() const
+    {
+        return policy;
+    }
+
+    bool Any::IsMemoryHolder() const
+    {
+        return policy == AnyPolicy::memoryHolder;
+    }
+
+    bool Any::IsRef() const
+    {
+        return policy == AnyPolicy::ref || policy == AnyPolicy::constRef;
+    }
+
+    bool Any::IsConstRef() const
+    {
+        return policy == AnyPolicy::constRef;
     }
 
     void Any::Reset()
     {
-        if (typeInfo != nullptr && rtti != nullptr) {
-            rtti->detor(GetMemory());
-        }
-        typeInfo = nullptr;
+        policy = AnyPolicy::max;
         rtti = nullptr;
+        typeId = typeIdNull;
+        info = {};
     }
 
-    bool Any::operator==(const Any& rhs) const
+    bool Any::Empty() const
     {
-        return typeInfo == rhs.typeInfo
-            && rtti->equal(GetMemory(), rhs.Data());
+        return rtti == nullptr;
     }
 
-    void Any::ResizeMemory(size_t size)
+    void* Any::Ptr() const
     {
-        memorySize = size;
-        if (size <= MaxStackMemorySize) {
+        return IsRef() ? std::get<RefInfo>(info).Ptr() : std::get<HolderInfo>(info).Ptr();
+    }
+
+    size_t Any::Size() const
+    {
+        return IsRef() ? std::get<RefInfo>(info).Size() : std::get<HolderInfo>(info).Size();
+    }
+
+    Any::operator bool() const
+    {
+        return !Empty();
+    }
+
+    bool Any::operator==(const Any& inAny) const
+    {
+        if (typeId != inAny.typeId) {
+            return false;
+        }
+        return rtti->equal(Ptr(), inAny.Ptr());
+    }
+
+    Any::HolderInfo::HolderInfo()
+        : memorySize(0)
+    {
+    }
+
+    Any::HolderInfo::HolderInfo(size_t inMemorySize)
+    {
+        ResizeMemory(inMemorySize);
+    }
+
+    void Any::HolderInfo::ResizeMemory(size_t inSize)
+    {
+        memorySize = inSize;
+        if (inSize <= MaxStackMemorySize) {
             memory = StackMemory {};
         } else {
             memory = HeapMemory {};
@@ -133,15 +223,39 @@ namespace Mirror {
         }
     }
 
-    void* Any::GetMemory() const
+    void* Any::HolderInfo::Ptr() const
     {
         if (memory.index() == 0) {
             return const_cast<uint8_t*>(std::get<StackMemory>(memory).data());
         }
-        if (memory.index() == 1) {
-            return const_cast<uint8_t*>(std::get<HeapMemory>(memory).data());
-        }
-        return Assert(false), nullptr;
+        return const_cast<uint8_t*>(std::get<HeapMemory>(memory).data());
+    }
+
+    size_t Any::HolderInfo::Size() const
+    {
+        return memorySize;
+    }
+
+    Any::RefInfo::RefInfo()
+        : ptr(nullptr)
+        , memorySize(0)
+    {
+    }
+
+    Any::RefInfo::RefInfo(void* inPtr, size_t inSize)
+        : ptr(inPtr)
+        , memorySize(inSize)
+    {
+    }
+
+    void* Any::RefInfo::Ptr() const
+    {
+        return ptr;
+    }
+
+    size_t Any::RefInfo::Size() const
+    {
+        return memorySize;
     }
 
     Type::Type(std::string inName) : name(std::move(inName)) {}

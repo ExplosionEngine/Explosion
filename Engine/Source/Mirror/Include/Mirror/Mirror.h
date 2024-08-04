@@ -17,6 +17,7 @@
 
 #include <Common/Serialization.h>
 #include <Common/Debug.h>
+#include <Common/String.h>
 #include <Mirror/Api.h>
 
 #if COMPILER_MSVC
@@ -26,48 +27,14 @@
 #endif
 
 namespace Mirror {
-    using TypeId = size_t;
-}
+    using TypeId = uint64_t;
 
-namespace Mirror::Internal {
-    struct AnyRtti {
-        using DetorFunc = void(void*) noexcept;
-        using CopyFunc = void(void*, const void*);
-        using MoveFunc = void(void*, void*) noexcept;
-        using EqualFunc = bool(const void*, const void*);
-
-        template <typename T>
-        static void DetorImpl(void* object) noexcept;
-
-        template <typename T>
-        static void CopyImpl(void* object, const void* other);
-
-        template <typename T>
-        static void MoveImpl(void* object, void* other) noexcept;
-
-        template <typename T>
-        static bool EqualImpl(const void* object, const void* other);
-
-        DetorFunc* detor;
-        CopyFunc* copy;
-        MoveFunc* move;
-        EqualFunc* equal;
-    };
-
-    template <typename T>
-    inline constexpr AnyRtti anyRttiImpl = {
-        &AnyRtti::DetorImpl<T>,
-        &AnyRtti::CopyImpl<T>,
-        &AnyRtti::MoveImpl<T>,
-        &AnyRtti::EqualImpl<T>
-    };
+    constexpr TypeId typeIdNull = 0;
 }
 
 namespace Mirror {
     class Variable;
     class MemberVariable;
-
-    static constexpr size_t typeIdNull = 0u;
 
     struct TypeInfo {
 #if BUILD_CONFIG_DEBUG
@@ -76,16 +43,22 @@ namespace Mirror {
 #endif
         std::string name;
         TypeId id;
-        const bool isConst;
-        const bool isLValueReference;
-        const bool isRValueReference;
-        const bool isPointer;
-        const bool isClass;
-        const bool copyConstructible;
-        const bool copyAssignable;
-        const bool moveConstructible;
-        const bool moveAssignable;
         TypeId removePointerType;
+        const uint32_t isConst : 1;
+        const uint32_t isLValueReference : 1;
+        const uint32_t isLValueConstReference : 1;
+        const uint32_t isRValueReference : 1;
+        const uint32_t isPointer : 1;
+        const uint32_t isConstPointer : 1;
+        const uint32_t isClass : 1;
+        const uint32_t isArray : 1;
+        const uint32_t isArithmetic : 1;
+        const uint32_t isIntegral : 1;
+        const uint32_t isFloatingPoint : 1;
+        const uint32_t copyConstructible : 1;
+        const uint32_t copyAssignable : 1;
+        const uint32_t moveConstructible : 1;
+        const uint32_t moveAssignable : 1;
     };
 
     template <typename T>
@@ -97,73 +70,133 @@ namespace Mirror {
         static constexpr auto defaultConstructor = "_defaultConstructor";
     };
 
+    enum class AnyPolicy : uint8_t {
+        memoryHolder,
+        ref,
+        constRef,
+        max
+    };
+
+    struct AnyRtti {
+        using DetorFunc = void(void*) noexcept;
+        using CopyConstructFunc = void(void*, const void*);
+        using MoveConstructFunc = void(void*, void*) noexcept;
+        using EqualFunc = bool(const void*, const void*);
+
+        template <typename T> static void Detor(void* inThis) noexcept;
+        template <typename T> static void CopyConstruct(void* inThis, const void* inOther);
+        template <typename T> static void MoveConstruct(void* inThis, void* inOther) noexcept;
+        template <typename T> static bool Equal(const void* inThis, const void* inOther) noexcept;
+
+        DetorFunc* detor;
+        CopyConstructFunc* copyConstruct;
+        MoveConstructFunc* moveConstruct;
+        EqualFunc* equal;
+    };
+
+    template <typename T>
+    static constexpr AnyRtti anyRttiImpl = {
+        &AnyRtti::Detor<T>,
+        &AnyRtti::CopyConstruct<T>,
+        &AnyRtti::MoveConstruct<T>,
+        &AnyRtti::Equal<T>
+    };
+
     class MIRROR_API Any {
     public:
         Any();
         ~Any();
-        Any(const Any& inAny);
-        Any(Any&& inAny) noexcept;
+        Any(Any& inOther);
+        Any(const Any& inOther);
+        Any(const Any& inOther, AnyPolicy inPolicy);
+        Any(Any&& inOther) noexcept;
 
-        template <typename T>
-        Any(T&& value); // NOLINT
+        template <typename T> Any(T&& inValue); // NOLINT
+        template <typename T> Any(std::reference_wrapper<T>& inRef); // NOLINT
+        template <typename T> Any(std::reference_wrapper<T>&& inRef); // NOLINT
+        template <typename T> Any(const std::reference_wrapper<T>& inRef); // NOLINT
 
-        template <typename T>
-        Any(const std::reference_wrapper<T>& ref); // NOLINT
+        Any& operator=(const Any& inOther);
+        Any& operator=(Any&& inOther) noexcept;
 
-        template <typename T>
-        Any(std::reference_wrapper<T>&& ref); // NOLINT
+        template <typename T> Any& operator=(T&& inValue);
+        template <typename T> Any& operator=(const std::reference_wrapper<T>& inRef);
 
-        Any& operator=(const Any& inAny);
-        Any& operator=(Any&& inAny) noexcept;
+        template <typename T> bool Convertible();
+        template <typename T> bool Convertible() const;
+        bool Convertible(const TypeInfo* inType);
+        bool Convertible(const TypeInfo* inType) const;
 
-        template <typename T>
-        Any& operator=(T&& value);
+        template <typename T> T As();
+        template <typename T> T As() const;
+        template <typename T> T* TryAs();
+        template <typename T> T* TryAs() const;
 
-        template <typename T>
-        Any& operator=(const std::reference_wrapper<T>& ref);
+        Any GetRef();
+        Any GetRef() const;
+        Any GetConstRef() const;
+        Any AsValue() const;
 
-        template <typename T>
-        Any& operator=(std::reference_wrapper<T>&& ref);
-
-        template <typename T>
-        bool Convertible() const;
-
-        template <typename T>
-        T As() const;
-
-        template <typename T>
-        T ForceAs() const;
-
-        template <typename T>
-        T* TryAs() const;
-
-        bool Convertible(const TypeInfo* dstType) const;
-        size_t Size() const;
-        const void* Data() const;
-        const TypeInfo* TypeInfo() const;
+        AnyPolicy Policy() const;
+        bool IsMemoryHolder() const;
+        bool IsRef() const;
+        bool IsConstRef() const;
         void Reset();
-        bool operator==(const Any& rhs) const;
+        bool Empty() const;
+
+        // always return original ptr and size, even policy is ref
+        void* Ptr() const;
+        size_t Size() const;
+
+        explicit operator bool() const;
+        bool operator==(const Any& inAny) const;
 
     private:
-        static constexpr size_t MaxStackMemorySize = sizeof(std::vector<uint8_t>);
-        using StackMemory = std::array<uint8_t, MaxStackMemorySize>;
-        using HeapMemory = std::vector<uint8_t>;
+        class MIRROR_API HolderInfo {
+        public:
+            HolderInfo();
+            explicit HolderInfo(size_t inMemorySize);
 
-        void ResizeMemory(size_t size);
-        void* GetMemory() const;
+            void ResizeMemory(size_t inSize);
+            void* Ptr() const;
+            size_t Size() const;
 
-        template <typename T>
-        void ConstructValue(T&& value);
+        private:
+            static constexpr size_t MaxStackMemorySize = sizeof(std::vector<uint8_t>);
+            using StackMemory = std::array<uint8_t, MaxStackMemorySize>;
+            using HeapMemory = std::vector<uint8_t>;
 
-        template <typename T>
-        void ConstructRef(const std::reference_wrapper<T>& ref);
+            std::variant<StackMemory, HeapMemory> memory;
+            size_t memorySize;
+        };
 
-        const Mirror::TypeInfo* typeInfo;
-        const Internal::AnyRtti* rtti;
-        std::variant<StackMemory, HeapMemory> memory;
-        size_t memorySize;
+        class MIRROR_API RefInfo {
+        public:
+            RefInfo();
+            RefInfo(void* inPtr, size_t inSize);
+
+            void* Ptr() const;
+            size_t Size() const;
+
+        private:
+            void* ptr;
+            size_t memorySize;
+        };
+
+        template <typename T> void ConstructFromValue(T&& inValue);
+        template <typename T> void ConstructFromRef(std::reference_wrapper<T> inRef);
+
+        void PerformCopyConstruct(const Any& inOther);
+        void PerformCopyConstructWithPolicy(const Any& inOther, AnyPolicy inPolicy);
+        void PerformMoveConstruct(Any&& inOther);
+
+        AnyPolicy policy;
+        const AnyRtti* rtti;
+        TypeId typeId;
+        std::variant<RefInfo, HolderInfo> info;
     };
 
+    // TODO find by compile time id
     class MIRROR_API Type {
     public:
         virtual ~Type();
@@ -243,6 +276,7 @@ namespace Mirror {
         const TypeInfo* GetRetTypeInfo() const;
         const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
         const std::vector<const TypeInfo*>& GetArgTypeInfos() const;
+        // TODO replace with Arguments
         Any InvokeWith(Any* arguments, uint8_t argumentsSize) const;
 
     private:
@@ -284,6 +318,8 @@ namespace Mirror {
         uint8_t GetArgsNum() const;
         const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
         const std::vector<const TypeInfo*>& GetArgTypeInfos() const;
+
+        // TODO replace with arguments
         Any ConstructOnStackWith(Any* arguments, uint8_t argumentsSize) const;
         Any NewObjectWith(Any* arguments, uint8_t argumentsSize) const;
 
@@ -346,6 +382,7 @@ namespace Mirror {
         const TypeInfo* GetTypeInfo() const;
         void Set(Any* object, Any* value) const;
         Any Get(Any* object) const;
+        // TODO const getter
         void Serialize(Common::SerializeStream& stream, Any* object) const;
         void Deserialize(Common::DeserializeStream& stream, Any* object) const;
         bool IsTransient() const;
@@ -355,6 +392,7 @@ namespace Mirror {
         template <typename C> friend class ClassRegistry;
 
         using Setter = std::function<void(Any*, Any*)>;
+        // TODO const getter
         using Getter = std::function<Any(Any*)>;
         using MemberVariableSerializer = std::function<void(Common::SerializeStream&, const MemberVariable&, Any*)>;
         using MemberVariableDeserializer = std::function<void(Common::DeserializeStream&, const MemberVariable&, Any*)>;
@@ -387,10 +425,13 @@ namespace Mirror {
         template <typename C, typename... Args>
         Any Invoke(C&& object, Args&&... args) const;
 
+        // TODO invoke const
+
         uint8_t GetArgsNum() const;
         const TypeInfo* GetRetTypeInfo() const;
         const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
         const std::vector<const TypeInfo*>& GetArgTypeInfos() const;
+        // TODO replace with arguments
         Any InvokeWith(Any* object, Any* args, size_t argsSize) const;
 
     private:
@@ -508,6 +549,8 @@ namespace Mirror {
         static std::vector<const Class*> FindWithCategory(const std::string& category);
 
         const TypeInfo* GetTypeInfo() const;
+        // TODO GetPointerTypeInfo() / GetConstPointerTypeInfo()
+        // TODO DynamicCast(Any/const Any)
         bool HasDefaultConstructor() const;
         const Class* GetBaseClass() const;
         bool IsBaseOf(const Class* derivedClass) const;
@@ -644,45 +687,6 @@ namespace Mirror {
     };
 }
 
-namespace Mirror::Internal {
-    template <typename T>
-    void AnyRtti::DetorImpl(void* const object) noexcept
-    {
-        static_cast<T*>(object)->~T();
-    }
-
-    template <typename T>
-    void AnyRtti::CopyImpl(void* const object, const void* const other)
-    {
-        if constexpr (std::is_copy_constructible_v<T>) {
-            new(object) T(*static_cast<const T*>(other));
-        } else if constexpr (std::is_copy_assignable_v<T>) {
-            *static_cast<T*>(object) = *static_cast<const T*>(other);
-        }
-    }
-
-    template <typename T>
-    void AnyRtti::MoveImpl(void* const object, void* const other) noexcept
-    {
-        if constexpr (std::is_move_constructible_v<T>) {
-            new(object) T(std::move(*static_cast<T*>(other)));
-        } else if constexpr (std::is_move_assignable_v<T>) {
-            *static_cast<T*>(object) = std::move(*static_cast<T*>(other));
-        }
-    }
-
-    template <typename T>
-    bool AnyRtti::EqualImpl(const void* const object, const void* const other)
-    {
-        if constexpr (std::equality_comparable<T>) {
-            return *static_cast<const T*>(object) == *static_cast<const T*>(other);
-        } else {
-            AssertWithReason(false, "type is not comparable");
-            return false;
-        }
-    }
-}
-
 namespace Mirror {
     template <typename T>
     TypeInfo* GetTypeInfo()
@@ -693,60 +697,107 @@ namespace Mirror {
 #endif
             typeid(T).name(),
             typeid(T).hash_code(),
+            typeid(std::remove_pointer_t<T>).hash_code(),
             std::is_const_v<T>,
             std::is_lvalue_reference_v<T>,
+            std::is_lvalue_reference_v<T> ? std::is_const_v<std::remove_reference_t<T>> : false,
             std::is_rvalue_reference_v<T>,
             std::is_pointer_v<T>,
+            std::is_pointer_v<T> ? std::is_const_v<std::remove_pointer_t<T>> : false,
             std::is_class_v<T>,
+            std::is_array_v<T>,
+            std::is_arithmetic_v<T>,
+            std::is_integral_v<T>,
+            std::is_floating_point_v<T>,
             std::is_copy_constructible_v<T>,
             std::is_copy_assignable_v<T>,
             std::is_move_constructible_v<T>,
             std::is_move_assignable_v<T>,
-            typeid(std::remove_pointer_t<T>).hash_code()
         };
         return &typeInfo;
     }
 
     template <typename T>
-    Any::Any(T&& value)
+    void AnyRtti::Detor(void* inThis) noexcept
     {
-        ConstructValue(std::forward<T>(value));
+        static_cast<T*>(inThis)->~T();
     }
 
     template <typename T>
-    Any::Any(const std::reference_wrapper<T>& ref)
+    void AnyRtti::CopyConstruct(void* inThis, const void* inOther)
     {
-        ConstructRef(ref);
+        if constexpr (std::is_copy_constructible_v<T>) {
+            new(inThis) T(*static_cast<const T*>(inOther));
+        } else {
+            QuickFailWithReason(fmt::format("type {} is no support copy construct", GetTypeInfo<T>()->name));
+        }
     }
 
     template <typename T>
-    Any::Any(std::reference_wrapper<T>&& ref)
+    void AnyRtti::MoveConstruct(void* inThis, void* inOther) noexcept
     {
-        ConstructRef(std::move(ref));
+        if constexpr (std::is_move_constructible_v<T>) {
+            new(inThis) T(std::move(*static_cast<T*>(inOther)));
+        } else {
+            QuickFailWithReason(fmt::format("type {} is no support move construct", GetTypeInfo<T>()->name));
+        }
     }
 
     template <typename T>
-    Any& Any::operator=(T&& value)
+    bool AnyRtti::Equal(const void* inThis, const void* inOther) noexcept
+    {
+        if constexpr (std::equality_comparable<T>) {
+            return *static_cast<const T*>(inThis) == *static_cast<const T*>(inOther);
+        } else {
+            QuickFailWithReason(fmt::format("type {} is no support equal compare", GetTypeInfo<T>()->name));
+            return false;
+        }
+    }
+
+    template <typename T>
+    Any::Any(T&& inValue)
+    {
+        ConstructFromValue(std::forward<T>(inValue));
+    }
+
+    template <typename T>
+    Any::Any(std::reference_wrapper<T>& inRef)
+    {
+        ConstructFromRef(inRef);
+    }
+
+    template <typename T>
+    Any::Any(std::reference_wrapper<T>&& inRef)
+    {
+        ConstructFromRef(inRef);
+    }
+
+    template <typename T>
+    Any::Any(const std::reference_wrapper<T>& inRef)
+    {
+        ConstructFromRef(inRef);
+    }
+
+    template <typename T>
+    Any& Any::operator=(T&& inValue)
     {
         Reset();
-        ConstructValue(std::forward<T>(value));
+        ConstructFromValue(inValue);
         return *this;
     }
 
     template <typename T>
-    Any& Any::operator=(const std::reference_wrapper<T>& ref)
+    Any& Any::operator=(const std::reference_wrapper<T>& inRef)
     {
         Reset();
-        ConstructRef(ref);
+        ConstructFromRef(inRef);
         return *this;
     }
 
     template <typename T>
-    Any& Any::operator=(std::reference_wrapper<T>&& ref)
+    bool Any::Convertible()
     {
-        Reset();
-        ConstructRef(ref);
-        return *this;
+        return Convertible(GetTypeInfo<T>());
     }
 
     template <typename T>
@@ -756,57 +807,52 @@ namespace Mirror {
     }
 
     template <typename T>
-    T Any::As() const
+    T Any::As()
     {
         Assert(Convertible<T>());
-        return ForceAs<T>();
+        return *static_cast<std::remove_cvref_t<T>*>(Ptr());
     }
 
     template <typename T>
-    T Any::ForceAs() const
+    T Any::As() const
     {
-        if (typeInfo->isLValueReference) {
-            return static_cast<std::add_const_t<std::reference_wrapper<std::remove_reference_t<T>>>*>(GetMemory())->get();
-        } else {
-            return *static_cast<std::remove_reference_t<T>*>(GetMemory());
-        }
+        Assert(Convertible<T>());
+        return *static_cast<std::remove_cvref_t<T>*>(Ptr());
+    }
+
+    template <typename T>
+    T* Any::TryAs()
+    {
+        return Convertible<T>() ? static_cast<std::remove_cvref_t<T>*>(Ptr()) : nullptr;
     }
 
     template <typename T>
     T* Any::TryAs() const
     {
-        Assert(!typeInfo->isLValueReference);
-        if (Convertible<T>()) {
-            return static_cast<std::remove_reference_t<T>*>(GetMemory());
-        } else {
-            return nullptr;
-        }
+        return Convertible<T>() ? static_cast<std::remove_cvref_t<T>*>(Ptr()) : nullptr;
     }
 
     template <typename T>
-    void Any::ConstructValue(T&& value)
+    void Any::ConstructFromValue(T&& inValue)
     {
-        using RemoveCVRefType = std::remove_cvref_t<T>;
-        using RemoveRefType = std::remove_reference_t<T>;
+        using RawType = std::remove_cvref_t<T>;
 
-        typeInfo = GetTypeInfo<RemoveRefType>();
-        rtti = &Internal::anyRttiImpl<RemoveCVRefType>;
-
-        ResizeMemory(sizeof(RemoveCVRefType));
-        new(GetMemory()) RemoveCVRefType(std::forward<T>(value));
+        policy = AnyPolicy::memoryHolder;
+        rtti = &anyRttiImpl<RawType>;
+        typeId = GetTypeInfo<T>()->id;
+        info = HolderInfo(sizeof(RawType));
+        new(Ptr()) RawType(std::forward<T>(inValue));
     }
 
     template <typename T>
-    void Any::ConstructRef(const std::reference_wrapper<T>& ref)
+    void Any::ConstructFromRef(std::reference_wrapper<T> inRef)
     {
-        using RefWrapperType = std::reference_wrapper<T>;
-        using RefType = T&;
+        using RawType = std::remove_const_t<T>;
 
-        typeInfo = GetTypeInfo<RefType>();
-        rtti = &Internal::anyRttiImpl<RefWrapperType>;
-
-        ResizeMemory(sizeof(RefWrapperType));
-        new(GetMemory()) RefWrapperType(ref);
+        policy = std::is_const_v<T> ? AnyPolicy::constRef : AnyPolicy::ref;
+        rtti = &anyRttiImpl<RawType>;
+        typeId = GetTypeInfo<T>()->id;
+        info = RefInfo(const_cast<RawType*>(&inRef.get()), sizeof(RawType));
     }
 
     template <typename T>
@@ -819,6 +865,7 @@ namespace Mirror {
     template <typename... Args>
     Any Function::Invoke(Args&&... args) const
     {
+        // TODO check const any and non const any
         std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
         return InvokeWith(refs.data(), refs.size());
     }
@@ -826,6 +873,7 @@ namespace Mirror {
     template <typename... Args>
     Any Constructor::ConstructOnStack(Args&&... args) const
     {
+        // TODO check const any and non const any
         std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
         return ConstructOnStackWith(refs.data(), refs.size());
     }
@@ -833,6 +881,7 @@ namespace Mirror {
     template <typename... Args>
     Any Constructor::NewObject(Args&&... args) const
     {
+        // TODO check const any and non const any
         std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
         return NewObjectWith(refs.data(), refs.size());
     }
@@ -855,6 +904,7 @@ namespace Mirror {
     template <typename C, typename... Args>
     Any MemberFunction::Invoke(C&& object, Args&&... args) const
     {
+        // TODO support const any and non-const any
         auto classRef = Any(std::ref(std::forward<C>(object)));
         std::array<Any, sizeof...(args)> argRefs = { Any(std::forward<Args>(args))... };
         return InvokeWith(&classRef, argRefs.data(), argRefs.size());

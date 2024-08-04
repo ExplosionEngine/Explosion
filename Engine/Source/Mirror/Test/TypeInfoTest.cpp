@@ -22,6 +22,36 @@ struct TestClass {
     }
 };
 
+template <typename A, typename B>
+void AssertTypeIdEq()
+{
+    ASSERT_EQ(Mirror::GetTypeInfo<A>()->id, Mirror::GetTypeInfo<B>()->id);
+}
+
+template <typename A, typename B>
+void AssertTypeIdNe()
+{
+    ASSERT_NE(Mirror::GetTypeInfo<A>()->id, Mirror::GetTypeInfo<B>()->id);
+}
+
+TEST(TypeTest, TypeInfoTest)
+{
+    AssertTypeIdEq<int, int>();
+    AssertTypeIdEq<int, const int>();
+    AssertTypeIdEq<int, int&>();
+    AssertTypeIdEq<int, const int&>();
+
+    AssertTypeIdEq<const int, int>();
+    AssertTypeIdEq<const int, const int>();
+    AssertTypeIdEq<const int, int&>();
+    AssertTypeIdEq<const int, const int&>();
+
+    AssertTypeIdEq<int*, int*>();
+    AssertTypeIdEq<const int*, const int*>();
+    AssertTypeIdNe<int, int*>();
+    AssertTypeIdNe<int*, const int*>();
+}
+
 TEST(TypeTest, TypeTraitsTest)
 {
     ASSERT_TRUE((std::is_same_v<Mirror::Internal::FunctionTraits<decltype(&Add)>::RetType, int>));
