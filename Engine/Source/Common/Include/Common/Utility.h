@@ -4,8 +4,11 @@
 
 #pragma once
 
+#include <concepts>
 #include <cstdint>
 #include <type_traits>
+
+#include <Common/Concepts.h>
 
 #define DefaultCopyCtor(clz) \
     clz(clz&) = default; \
@@ -40,8 +43,7 @@
     NonCopyAssignOp(clz) \
 
 namespace Common {
-    template <uint32_t A, typename T>
-    requires std::is_integral_v<T>
+    template <uint32_t A, CppIntegral T>
     T AlignUp(T value);
 
     template <typename LHS, typename... RHS>
@@ -49,7 +51,7 @@ namespace Common {
 }
 
 namespace Common {
-    template <uint32_t A, typename T> requires std::is_integral_v<T>
+    template <uint32_t A, CppIntegral T>
     T AlignUp(T value)
     {
         return (value + (A - 1)) & ~(A - 1);

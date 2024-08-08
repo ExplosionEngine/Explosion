@@ -37,48 +37,48 @@ namespace Common {
     };
 
     template <typename T>
-    class HeapVectorIter;
+    class InplaceVectorIter;
 
     template <typename I, typename T>
-    concept ValidHeapVectorIter = std::is_same_v<I, HeapVectorIter<T>> || std::is_same_v<I, HeapVectorIter<const T>>;
+    concept ValidInplaceVectorIter = std::is_same_v<I, InplaceVectorIter<T>> || std::is_same_v<I, InplaceVectorIter<const T>>;
 
     template <typename T>
-    class HeapVectorIter {
+    class InplaceVectorIter {
     public:
         using Offset = int64_t;
 
-        template <ValidHeapVectorIter<T> T2>
+        template <ValidInplaceVectorIter<T> T2>
         Offset operator-(const T2& inOther) const;
 
-        template <ValidHeapVectorIter<T> T2>
+        template <ValidInplaceVectorIter<T> T2>
         bool operator==(const T2& inOther) const;
 
-        template <ValidHeapVectorIter<T> T2>
+        template <ValidInplaceVectorIter<T> T2>
         bool operator!=(const T2& inOther) const;
 
-        template <ValidHeapVectorIter<T> T2>
+        template <ValidInplaceVectorIter<T> T2>
         bool operator>(const T2& inOther) const;
 
-        template <ValidHeapVectorIter<T> T2>
+        template <ValidInplaceVectorIter<T> T2>
         bool operator>=(const T2& inOther) const;
 
-        template <ValidHeapVectorIter<T> T2>
+        template <ValidInplaceVectorIter<T> T2>
         bool operator<(const T2& inOther) const;
 
-        template <ValidHeapVectorIter<T> T2>
+        template <ValidInplaceVectorIter<T> T2>
         bool operator<=(const T2& inOther) const;
 
-        explicit HeapVectorIter(T* inPtr);
+        explicit InplaceVectorIter(T* inPtr);
         T& operator*() const;
         T* operator->() const;
-        HeapVectorIter operator+(Offset inOffset) const;
-        HeapVectorIter operator-(Offset inOffset) const;
-        HeapVectorIter& operator+=(Offset inOffset);
-        HeapVectorIter& operator-=(Offset inOffset);
-        HeapVectorIter& operator++();
-        HeapVectorIter& operator--();
-        HeapVectorIter operator++(int);
-        HeapVectorIter operator--(int);
+        InplaceVectorIter operator+(Offset inOffset) const;
+        InplaceVectorIter operator-(Offset inOffset) const;
+        InplaceVectorIter& operator+=(Offset inOffset);
+        InplaceVectorIter& operator-=(Offset inOffset);
+        InplaceVectorIter& operator++();
+        InplaceVectorIter& operator--();
+        InplaceVectorIter operator++(int);
+        InplaceVectorIter operator--(int);
         T* Ptr() const;
 
     private:
@@ -87,21 +87,21 @@ namespace Common {
 
     // vector with fixed capacity, this container allocate the stack memory internal, so memory access is efficient
     template <typename T, size_t N>
-    class HeapVector {
+    class InplaceVector {
     public:
-        using Iter = HeapVectorIter<T>;
-        using ConstIter = HeapVectorIter<const T>;
+        using Iter = InplaceVectorIter<T>;
+        using ConstIter = InplaceVectorIter<const T>;
 
         static constexpr size_t Capacity();
 
-        HeapVector();
-        explicit HeapVector(size_t inSize, T inDefault = {});
-        ~HeapVector();
+        InplaceVector();
+        explicit InplaceVector(size_t inSize, T inDefault = {});
+        ~InplaceVector();
 
-        HeapVector(const HeapVector& inOther);
-        HeapVector(HeapVector&& inOther) noexcept;
-        HeapVector& operator=(const HeapVector& inOther);
-        HeapVector& operator=(HeapVector&& inOther) noexcept;
+        InplaceVector(const InplaceVector& inOther);
+        InplaceVector(InplaceVector&& inOther) noexcept;
+        InplaceVector& operator=(const InplaceVector& inOther);
+        InplaceVector& operator=(InplaceVector&& inOther) noexcept;
 
         template <typename... Args>
         T& EmplaceBack(Args&&... inArgs);
@@ -110,17 +110,17 @@ namespace Common {
         T& PushBack(const T& inElement);
         T& Insert(size_t inIndex, const T& inElement);
         T& Insert(size_t inIndex, T&& inElement);
-        T& Insert(const HeapVectorIter<T>& inIter, const T& inElement);
-        T& Insert(const HeapVectorIter<T>& inIter, T&& inElement);
-        T& Insert(const HeapVectorIter<const T>& inIter, const T& inElement);
-        T& Insert(const HeapVectorIter<const T>& inIter, T&& inElement);
+        T& Insert(const InplaceVectorIter<T>& inIter, const T& inElement);
+        T& Insert(const InplaceVectorIter<T>& inIter, T&& inElement);
+        T& Insert(const InplaceVectorIter<const T>& inIter, const T& inElement);
+        T& Insert(const InplaceVectorIter<const T>& inIter, T&& inElement);
         void PopBack();
         void Erase(size_t inIndex);
-        void Erase(const HeapVectorIter<T>& inIter);
-        void Erase(const HeapVectorIter<const T>& inIter);
+        void Erase(const InplaceVectorIter<T>& inIter);
+        void Erase(const InplaceVectorIter<const T>& inIter);
         void EraseSwapLast(size_t inIndex);
-        void EraseSwapLast(const HeapVectorIter<T>& inIter);
-        void EraseSwapLast(const HeapVectorIter<const T>& inIter);
+        void EraseSwapLast(const InplaceVectorIter<T>& inIter);
+        void EraseSwapLast(const InplaceVectorIter<const T>& inIter);
         T& At(size_t inIndex);
         const T& At(size_t inIndex) const;
         T& Back();
@@ -129,8 +129,8 @@ namespace Common {
         void Resize(size_t inSize, T inDefault = {});
         size_t Size() const;
         size_t MemorySize() const;
-        void* Data();
-        const void* Data() const;
+        T* Data();
+        const T* Data() const;
         T& operator[](size_t inIndex);
         const T& operator[](size_t inIndex) const;
         explicit operator bool() const;
@@ -147,28 +147,28 @@ namespace Common {
         static constexpr size_t elementSize = sizeof(T);
         static constexpr size_t memorySize = elementSize * N;
 
-        template <ValidHeapVectorIter<T> I>
+        template <ValidInplaceVectorIter<T> I>
         void CheckIterValid(const I& inIter) const;
 
         template <typename... Args>
         void EmplaceConstruct(size_t inIndex, Args&&... inArgs);
 
-        template <ValidHeapVectorIter<T> I, typename... Args>
+        template <ValidInplaceVectorIter<T> I, typename... Args>
         void EmplaceConstruct(const I& inIter, Args&&... inArgs);
 
-        template <ValidHeapVectorIter<T> I>
+        template <ValidInplaceVectorIter<T> I>
         void EmplaceDestruct(const I& inIter);
 
         template <typename T2>
         T& InsertInternal(size_t inIndex, T2&& inElement);
 
-        template <ValidHeapVectorIter<T> I, typename T2>
+        template <ValidInplaceVectorIter<T> I, typename T2>
         T& InsertInternal(const I& inIter, T2&& inElement);
 
-        template <ValidHeapVectorIter<T> I>
+        template <ValidInplaceVectorIter<T> I>
         void EraseInternal(const I& inIter);
 
-        template <ValidHeapVectorIter<T> I>
+        template <ValidInplaceVectorIter<T> I>
         void EraseSwapLastInternal(const I& inIter);
 
         void EmplaceDestruct(size_t inIndex);
@@ -246,149 +246,149 @@ namespace Common {
     }
 
     template <typename T>
-    template <ValidHeapVectorIter<T> T2>
-    typename HeapVectorIter<T>::Offset HeapVectorIter<T>::operator-(const T2& inOther) const
+    template <ValidInplaceVectorIter<T> T2>
+    typename InplaceVectorIter<T>::Offset InplaceVectorIter<T>::operator-(const T2& inOther) const
     {
         return ptr - inOther.Ptr();
     }
 
     template <typename T>
-    template <ValidHeapVectorIter<T> T2>
-    bool HeapVectorIter<T>::operator==(const T2& inOther) const
+    template <ValidInplaceVectorIter<T> T2>
+    bool InplaceVectorIter<T>::operator==(const T2& inOther) const
     {
         return ptr == inOther.Ptr();
     }
 
     template <typename T>
-    template <ValidHeapVectorIter<T> T2>
-    bool HeapVectorIter<T>::operator!=(const T2& inOther) const
+    template <ValidInplaceVectorIter<T> T2>
+    bool InplaceVectorIter<T>::operator!=(const T2& inOther) const
     {
         return !this->operator==(inOther);
     }
 
     template <typename T>
-    template <ValidHeapVectorIter<T> T2>
-    bool HeapVectorIter<T>::operator>(const T2& inOther) const
+    template <ValidInplaceVectorIter<T> T2>
+    bool InplaceVectorIter<T>::operator>(const T2& inOther) const
     {
         return ptr > inOther.Ptr();
     }
 
     template <typename T>
-    template <ValidHeapVectorIter<T> T2>
-    bool HeapVectorIter<T>::operator>=(const T2& inOther) const
+    template <ValidInplaceVectorIter<T> T2>
+    bool InplaceVectorIter<T>::operator>=(const T2& inOther) const
     {
         return ptr >= inOther.Ptr();
     }
 
     template <typename T>
-    template <ValidHeapVectorIter<T> T2>
-    bool HeapVectorIter<T>::operator<(const T2& inOther) const
+    template <ValidInplaceVectorIter<T> T2>
+    bool InplaceVectorIter<T>::operator<(const T2& inOther) const
     {
         return ptr < inOther.Ptr();
     }
 
     template <typename T>
-    template <ValidHeapVectorIter<T> T2>
-    bool HeapVectorIter<T>::operator<=(const T2& inOther) const
+    template <ValidInplaceVectorIter<T> T2>
+    bool InplaceVectorIter<T>::operator<=(const T2& inOther) const
     {
         return ptr <= inOther.Ptr();
     }
 
     template <typename T>
-    HeapVectorIter<T>::HeapVectorIter(T* inPtr)
+    InplaceVectorIter<T>::InplaceVectorIter(T* inPtr)
         : ptr(inPtr)
     {
     }
 
     template <typename T>
-    T& HeapVectorIter<T>::operator*() const
+    T& InplaceVectorIter<T>::operator*() const
     {
         return *ptr;
     }
 
     template <typename T>
-    T* HeapVectorIter<T>::operator->() const
+    T* InplaceVectorIter<T>::operator->() const
     {
         return ptr;
     }
 
     template <typename T>
-    HeapVectorIter<T> HeapVectorIter<T>::operator+(Offset inOffset) const
+    InplaceVectorIter<T> InplaceVectorIter<T>::operator+(Offset inOffset) const
     {
-        return HeapVectorIter(ptr + inOffset);
+        return InplaceVectorIter(ptr + inOffset);
     }
 
     template <typename T>
-    HeapVectorIter<T> HeapVectorIter<T>::operator-(Offset inOffset) const
+    InplaceVectorIter<T> InplaceVectorIter<T>::operator-(Offset inOffset) const
     {
-        return HeapVectorIter(ptr - inOffset);
+        return InplaceVectorIter(ptr - inOffset);
     }
 
     template <typename T>
-    HeapVectorIter<T>& HeapVectorIter<T>::operator+=(Offset inOffset)
+    InplaceVectorIter<T>& InplaceVectorIter<T>::operator+=(Offset inOffset)
     {
         ptr += inOffset;
         return *this;
     }
 
     template <typename T>
-    HeapVectorIter<T>& HeapVectorIter<T>::operator-=(Offset inOffset)
+    InplaceVectorIter<T>& InplaceVectorIter<T>::operator-=(Offset inOffset)
     {
         ptr -= inOffset;
         return *this;
     }
 
     template <typename T>
-    HeapVectorIter<T>& HeapVectorIter<T>::operator++()
+    InplaceVectorIter<T>& InplaceVectorIter<T>::operator++()
     {
         ptr += 1;
         return *this;
     }
 
     template <typename T>
-    HeapVectorIter<T>& HeapVectorIter<T>::operator--()
+    InplaceVectorIter<T>& InplaceVectorIter<T>::operator--()
     {
         ptr -= 1;
         return *this;
     }
 
     template <typename T>
-    HeapVectorIter<T> HeapVectorIter<T>::operator++(int)
+    InplaceVectorIter<T> InplaceVectorIter<T>::operator++(int)
     {
-        HeapVectorIter result = *this;
+        InplaceVectorIter result = *this;
         ptr += 1;
         return result;
     }
 
     template <typename T>
-    HeapVectorIter<T> HeapVectorIter<T>::operator--(int)
+    InplaceVectorIter<T> InplaceVectorIter<T>::operator--(int)
     {
-        HeapVectorIter result = *this;
+        InplaceVectorIter result = *this;
         ptr -= 1;
         return result;
     }
 
     template <typename T>
-    T* HeapVectorIter<T>::Ptr() const
+    T* InplaceVectorIter<T>::Ptr() const
     {
         return ptr;
     }
 
     template <typename T, size_t N>
-    constexpr size_t HeapVector<T, N>::Capacity()
+    constexpr size_t InplaceVector<T, N>::Capacity()
     {
         return N;
     }
 
     template <typename T, size_t N>
-    HeapVector<T, N>::HeapVector()
+    InplaceVector<T, N>::InplaceVector()
         : size(0)
         , memory()
     {
     }
 
     template <typename T, size_t N>
-    HeapVector<T, N>::HeapVector(size_t inSize, T inDefault)
+    InplaceVector<T, N>::InplaceVector(size_t inSize, T inDefault)
         : size(inSize)
     {
         for (auto i = 0; i < size; i++) {
@@ -397,7 +397,7 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    HeapVector<T, N>::~HeapVector()
+    InplaceVector<T, N>::~InplaceVector()
     {
         for (auto i = 0; i < size; i++) {
             EmplaceDestruct(i);
@@ -405,7 +405,7 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    HeapVector<T, N>::HeapVector(const HeapVector& inOther)
+    InplaceVector<T, N>::InplaceVector(const InplaceVector& inOther)
         : size(inOther.size)
     {
         static_assert(std::is_copy_constructible_v<T>);
@@ -415,7 +415,7 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    HeapVector<T, N>::HeapVector(HeapVector&& inOther) noexcept
+    InplaceVector<T, N>::InplaceVector(InplaceVector&& inOther) noexcept
         : size(inOther.size)
     {
         static_assert(std::is_move_constructible_v<T>);
@@ -425,7 +425,7 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    HeapVector<T, N>& HeapVector<T, N>::operator=(const HeapVector& inOther)
+    InplaceVector<T, N>& InplaceVector<T, N>::operator=(const InplaceVector& inOther)
     {
         static_assert(std::is_copy_constructible_v<T> && std::is_copy_assignable_v<T>);
         const auto oldSize = size;
@@ -445,7 +445,7 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    HeapVector<T, N>& HeapVector<T, N>::operator=(HeapVector&& inOther) noexcept
+    InplaceVector<T, N>& InplaceVector<T, N>::operator=(InplaceVector&& inOther) noexcept
     {
         static_assert(std::is_move_constructible_v<T> && std::is_move_assignable_v<T>);
         const auto oldSize = size;
@@ -466,7 +466,7 @@ namespace Common {
 
     template <typename T, size_t N>
     template <typename ... Args>
-    T& HeapVector<T, N>::EmplaceBack(Args&&... inArgs)
+    T& InplaceVector<T, N>::EmplaceBack(Args&&... inArgs)
     {
         CheckInsertible();
         auto lastIndex = size++;
@@ -475,62 +475,62 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    T& HeapVector<T, N>::PushBack(T&& inElement)
+    T& InplaceVector<T, N>::PushBack(T&& inElement)
     {
         return EmplaceBack(std::move(inElement));
     }
 
     template <typename T, size_t N>
-    T& HeapVector<T, N>::PushBack(const T& inElement)
+    T& InplaceVector<T, N>::PushBack(const T& inElement)
     {
         return EmplaceBack(inElement);
     }
 
     template <typename T, size_t N>
-    T& HeapVector<T, N>::Insert(size_t inIndex, const T& inElement)
+    T& InplaceVector<T, N>::Insert(size_t inIndex, const T& inElement)
     {
         return InsertInternal(inIndex, inElement);
     }
 
     template <typename T, size_t N>
-    T& HeapVector<T, N>::Insert(size_t inIndex, T&& inElement)
+    T& InplaceVector<T, N>::Insert(size_t inIndex, T&& inElement)
     {
         return InsertInternal(inIndex, std::move(inElement));
     }
 
     template <typename T, size_t N>
-    T& HeapVector<T, N>::Insert(const HeapVectorIter<T>& inIter, const T& inElement)
+    T& InplaceVector<T, N>::Insert(const InplaceVectorIter<T>& inIter, const T& inElement)
     {
         return InsertInternal(inIter, inElement);
     }
 
     template <typename T, size_t N>
-    T& HeapVector<T, N>::Insert(const HeapVectorIter<T>& inIter, T&& inElement)
+    T& InplaceVector<T, N>::Insert(const InplaceVectorIter<T>& inIter, T&& inElement)
     {
         return InsertInternal(inIter, std::move(inElement));
     }
 
     template <typename T, size_t N>
-    T& HeapVector<T, N>::Insert(const HeapVectorIter<const T>& inIter, const T& inElement)
+    T& InplaceVector<T, N>::Insert(const InplaceVectorIter<const T>& inIter, const T& inElement)
     {
         return InsertInternal(inIter, inElement);
     }
 
     template <typename T, size_t N>
-    T& HeapVector<T, N>::Insert(const HeapVectorIter<const T>& inIter, T&& inElement)
+    T& InplaceVector<T, N>::Insert(const InplaceVectorIter<const T>& inIter, T&& inElement)
     {
         return InsertInternal(inIter, std::move(inElement));
     }
 
     template <typename T, size_t N>
-    void HeapVector<T, N>::PopBack()
+    void InplaceVector<T, N>::PopBack()
     {
         EmplaceDestruct(size - 1);
         size--;
     }
 
     template <typename T, size_t N>
-    void HeapVector<T, N>::Erase(size_t inIndex)
+    void InplaceVector<T, N>::Erase(size_t inIndex)
     {
         static_assert(std::is_move_assignable_v<T> || std::is_move_assignable_v<T>);
         CheckIndexValid(inIndex);
@@ -549,19 +549,19 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    void HeapVector<T, N>::Erase(const HeapVectorIter<T>& inIter)
+    void InplaceVector<T, N>::Erase(const InplaceVectorIter<T>& inIter)
     {
         return EraseInternal(inIter);
     }
 
     template <typename T, size_t N>
-    void HeapVector<T, N>::Erase(const HeapVectorIter<const T>& inIter)
+    void InplaceVector<T, N>::Erase(const InplaceVectorIter<const T>& inIter)
     {
         return EraseInternal(inIter);
     }
 
     template <typename T, size_t N>
-    void HeapVector<T, N>::EraseSwapLast(size_t inIndex)
+    void InplaceVector<T, N>::EraseSwapLast(size_t inIndex)
     {
         static_assert(std::is_move_assignable_v<T> || std::is_move_assignable_v<T>);
         CheckIndexValid(inIndex);
@@ -578,49 +578,49 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    void HeapVector<T, N>::EraseSwapLast(const HeapVectorIter<T>& inIter)
+    void InplaceVector<T, N>::EraseSwapLast(const InplaceVectorIter<T>& inIter)
     {
         EraseSwapLastInternal(inIter);
     }
 
     template <typename T, size_t N>
-    void HeapVector<T, N>::EraseSwapLast(const HeapVectorIter<const T>& inIter)
+    void InplaceVector<T, N>::EraseSwapLast(const InplaceVectorIter<const T>& inIter)
     {
         EraseSwapLastInternal(inIter);
     }
 
     template <typename T, size_t N>
-    T& HeapVector<T, N>::At(size_t inIndex)
+    T& InplaceVector<T, N>::At(size_t inIndex)
     {
         return TypedMemory(inIndex);
     }
 
     template <typename T, size_t N>
-    const T& HeapVector<T, N>::At(size_t inIndex) const
+    const T& InplaceVector<T, N>::At(size_t inIndex) const
     {
         return TypedMemory(inIndex);
     }
 
     template <typename T, size_t N>
-    T& HeapVector<T, N>::Back()
+    T& InplaceVector<T, N>::Back()
     {
         return TypedMemory(size - 1);
     }
 
     template <typename T, size_t N>
-    const T& HeapVector<T, N>::Back() const
+    const T& InplaceVector<T, N>::Back() const
     {
         return TypedMemory(size - 1);
     }
 
     template <typename T, size_t N>
-    bool HeapVector<T, N>::Empty() const
+    bool InplaceVector<T, N>::Empty() const
     {
         return size == 0;
     }
 
     template <typename T, size_t N>
-    void HeapVector<T, N>::Resize(size_t inSize, T inDefault)
+    void InplaceVector<T, N>::Resize(size_t inSize, T inDefault)
     {
         const auto oldSize = size;
         size = inSize;
@@ -638,121 +638,121 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    size_t HeapVector<T, N>::Size() const
+    size_t InplaceVector<T, N>::Size() const
     {
         return size;
     }
 
     template <typename T, size_t N>
-    size_t HeapVector<T, N>::MemorySize() const
+    size_t InplaceVector<T, N>::MemorySize() const
     {
         return elementSize * size;
     }
 
     template <typename T, size_t N>
-    void* HeapVector<T, N>::Data()
+    T* InplaceVector<T, N>::Data()
     {
         return memory.data();
     }
 
     template <typename T, size_t N>
-    const void* HeapVector<T, N>::Data() const
+    const T* InplaceVector<T, N>::Data() const
     {
         return memory.data();
     }
 
     template <typename T, size_t N>
-    T& HeapVector<T, N>::operator[](size_t inIndex)
+    T& InplaceVector<T, N>::operator[](size_t inIndex)
     {
         return TypedMemory(inIndex);
     }
 
     template <typename T, size_t N>
-    const T& HeapVector<T, N>::operator[](size_t inIndex) const
+    const T& InplaceVector<T, N>::operator[](size_t inIndex) const
     {
         return TypedMemory(inIndex);
     }
 
     template <typename T, size_t N>
-    HeapVector<T, N>::operator bool() const
+    InplaceVector<T, N>::operator bool() const
     {
         return !Empty();
     }
 
     template <typename T, size_t N>
-    typename HeapVector<T, N>::Iter HeapVector<T, N>::Begin()
+    typename InplaceVector<T, N>::Iter InplaceVector<T, N>::Begin()
     {
         return Iter(reinterpret_cast<T*>(memory.data()));
     }
 
     template <typename T, size_t N>
-    typename HeapVector<T, N>::ConstIter HeapVector<T, N>::Begin() const
+    typename InplaceVector<T, N>::ConstIter InplaceVector<T, N>::Begin() const
     {
         return ConstIter(reinterpret_cast<const T*>(memory.data()));
     }
 
     template <typename T, size_t N>
-    typename HeapVector<T, N>::Iter HeapVector<T, N>::End()
+    typename InplaceVector<T, N>::Iter InplaceVector<T, N>::End()
     {
         return Iter(reinterpret_cast<T*>(memory.data()) + size);
     }
 
     template <typename T, size_t N>
-    typename HeapVector<T, N>::ConstIter HeapVector<T, N>::End() const
+    typename InplaceVector<T, N>::ConstIter InplaceVector<T, N>::End() const
     {
         return ConstIter(reinterpret_cast<const T*>(memory.data()) + size);
     }
 
     template <typename T, size_t N>
-    typename HeapVector<T, N>::Iter HeapVector<T, N>::begin()
+    typename InplaceVector<T, N>::Iter InplaceVector<T, N>::begin()
     {
         return Begin();
     }
 
     template <typename T, size_t N>
-    typename HeapVector<T, N>::ConstIter HeapVector<T, N>::begin() const
+    typename InplaceVector<T, N>::ConstIter InplaceVector<T, N>::begin() const
     {
         return Begin();
     }
 
     template <typename T, size_t N>
-    typename HeapVector<T, N>::Iter HeapVector<T, N>::end()
+    typename InplaceVector<T, N>::Iter InplaceVector<T, N>::end()
     {
         return End();
     }
 
     template <typename T, size_t N>
-    typename HeapVector<T, N>::ConstIter HeapVector<T, N>::end() const
+    typename InplaceVector<T, N>::ConstIter InplaceVector<T, N>::end() const
     {
         return End();
     }
 
     template <typename T, size_t N>
-    template <ValidHeapVectorIter<T> I>
-    void HeapVector<T, N>::CheckIterValid(const I& inIter) const
+    template <ValidInplaceVectorIter<T> I>
+    void InplaceVector<T, N>::CheckIterValid(const I& inIter) const
     {
         Assert(inIter >= Begin() || inIter < End());
     }
 
     template <typename T, size_t N>
     template <typename... Args>
-    void HeapVector<T, N>::EmplaceConstruct(size_t inIndex, Args&&... inArgs)
+    void InplaceVector<T, N>::EmplaceConstruct(size_t inIndex, Args&&... inArgs)
     {
         CheckIndexValid(inIndex);
         new(reinterpret_cast<T*>(memory.data()) + inIndex) T(std::forward<Args>(inArgs)...);
     }
 
     template <typename T, size_t N>
-    template <ValidHeapVectorIter<T> I, typename ... Args>
-    void HeapVector<T, N>::EmplaceConstruct(const I& inIter, Args&&... inArgs)
+    template <ValidInplaceVectorIter<T> I, typename ... Args>
+    void InplaceVector<T, N>::EmplaceConstruct(const I& inIter, Args&&... inArgs)
     {
         CheckIterValid(inIter);
         new(&*inIter) T(std::forward<Args>(inArgs)...);
     }
 
     template <typename T, size_t N>
-    template <ValidHeapVectorIter<T> I>
-    void HeapVector<T, N>::EmplaceDestruct(const I& inIter)
+    template <ValidInplaceVectorIter<T> I>
+    void InplaceVector<T, N>::EmplaceDestruct(const I& inIter)
     {
         CheckIterValid(inIter);
         inIter->~T();
@@ -760,7 +760,7 @@ namespace Common {
 
     template <typename T, size_t N>
     template <typename T2>
-    T& HeapVector<T, N>::InsertInternal(size_t inIndex, T2&& inElement)
+    T& InplaceVector<T, N>::InsertInternal(size_t inIndex, T2&& inElement)
     {
         static_assert(std::is_move_constructible_v<T> || std::is_copy_constructible_v<T>);
         static_assert(std::is_move_assignable_v<T> || std::is_move_assignable_v<T>);
@@ -797,8 +797,8 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    template <ValidHeapVectorIter<T> I, typename T2>
-    T& HeapVector<T, N>::InsertInternal(const I& inIter, T2&& inElement)
+    template <ValidInplaceVectorIter<T> I, typename T2>
+    T& InplaceVector<T, N>::InsertInternal(const I& inIter, T2&& inElement)
     {
         static_assert(std::is_move_constructible_v<T> || std::is_copy_constructible_v<T>);
         static_assert(std::is_move_assignable_v<T> || std::is_move_assignable_v<T>);
@@ -835,8 +835,8 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    template <ValidHeapVectorIter<T> I>
-    void HeapVector<T, N>::EraseInternal(const I& inIter)
+    template <ValidInplaceVectorIter<T> I>
+    void InplaceVector<T, N>::EraseInternal(const I& inIter)
     {
         static_assert(std::is_move_assignable_v<T> || std::is_move_assignable_v<T>);
         CheckIterValid(inIter);
@@ -855,8 +855,8 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    template <ValidHeapVectorIter<T> I>
-    void HeapVector<T, N>::EraseSwapLastInternal(const I& inIter)
+    template <ValidInplaceVectorIter<T> I>
+    void InplaceVector<T, N>::EraseSwapLastInternal(const I& inIter)
     {
         static_assert(std::is_move_assignable_v<T> || std::is_move_assignable_v<T>);
         CheckIterValid(inIter);
@@ -873,34 +873,34 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    void HeapVector<T, N>::EmplaceDestruct(size_t inIndex)
+    void InplaceVector<T, N>::EmplaceDestruct(size_t inIndex)
     {
         CheckIndexValid(inIndex);
         TypedMemory(inIndex).~T();
     }
 
     template <typename T, size_t N>
-    T& HeapVector<T, N>::TypedMemory(size_t inIndex)
+    T& InplaceVector<T, N>::TypedMemory(size_t inIndex)
     {
         CheckIndexValid(inIndex);
         return *(reinterpret_cast<T*>(memory.data()) + inIndex);
     }
 
     template <typename T, size_t N>
-    const T& HeapVector<T, N>::TypedMemory(size_t inIndex) const
+    const T& InplaceVector<T, N>::TypedMemory(size_t inIndex) const
     {
         CheckIndexValid(inIndex);
         return *(reinterpret_cast<const T*>(memory.data()) + inIndex);
     }
 
     template <typename T, size_t N>
-    void HeapVector<T, N>::CheckIndexValid(size_t inIndex) const
+    void InplaceVector<T, N>::CheckIndexValid(size_t inIndex) const
     {
         Assert(inIndex < size);
     }
 
     template <typename T, size_t N>
-    void HeapVector<T, N>::CheckInsertible(size_t inNum) const
+    void InplaceVector<T, N>::CheckInsertible(size_t inNum) const
     {
         Assert(size + inNum <= N);
     }

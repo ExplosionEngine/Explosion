@@ -12,20 +12,17 @@ namespace Common {
     template <typename T> struct Angle;
     template <typename T> struct Radian;
 
-    template <typename T>
-    requires isFloatingPointV<T>
+    template <FloatingPoint T>
     struct AngleBase {
         T value;
     };
 
-    template <typename T>
-    requires isFloatingPointV<T>
+    template <FloatingPoint T>
     struct RadianBase {
         T value;
     };
 
-    template <typename T>
-    requires isFloatingPointV<T>
+    template <FloatingPoint T>
     struct QuaternionBase {
         T x;
         T y;

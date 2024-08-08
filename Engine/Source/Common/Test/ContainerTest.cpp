@@ -56,7 +56,7 @@ TEST(ContainerTest, SetGetIntersection)
 
 TEST(ContainerTest, HeapVectorBasic)
 {
-    HeapVector<int, 10> t0(4, 0);
+    InplaceVector<int, 10> t0(4, 0);
     ASSERT_EQ(t0.Capacity(), 10);
     ASSERT_EQ(t0.Size(), 4);
 
@@ -111,7 +111,7 @@ TEST(ContainerTest, HeapVectorIter)
         }
     };
 
-    HeapVector<S0, 10> t0(3, {});
+    InplaceVector<S0, 10> t0(3, {});
     ASSERT_EQ(t0.Capacity(), 10);
     ASSERT_EQ(t0.Size(), 3);
 
@@ -213,7 +213,7 @@ TEST(ContainerTest, HeapVectorCopyAndMove)
         }
     };
 
-    HeapVector<S0, 10> t0;
+    InplaceVector<S0, 10> t0;
     t0.EmplaceBack();
     t0.EmplaceBack();
     ASSERT_EQ(t0[0].constructType, ConstructType::cDefault);
@@ -227,7 +227,7 @@ TEST(ContainerTest, HeapVectorCopyAndMove)
     ASSERT_EQ(t0[3].constructType, ConstructType::cCopy);
 
     // copy assign
-    HeapVector<S0, 10> t2;
+    InplaceVector<S0, 10> t2;
     t2.Resize(2);
     ASSERT_EQ(t2[0].constructType, ConstructType::cCopy);
     ASSERT_EQ(t2[1].constructType, ConstructType::cCopy);
@@ -243,7 +243,7 @@ TEST(ContainerTest, HeapVectorCopyAndMove)
     ASSERT_EQ(t2[3], temp1);
 
     // move assign
-    HeapVector<S0, 10> t3;
+    InplaceVector<S0, 10> t3;
     t3.Resize(1);
     t3 = std::move(t2);
     temp1.constructType = ConstructType::cCopy;
@@ -258,7 +258,7 @@ TEST(ContainerTest, HeapVectorCopyAndMove)
     ASSERT_EQ(t3[3], temp1);
 
     // copy construct
-    HeapVector<S0, 10> t4 = t3;
+    InplaceVector<S0, 10> t4 = t3;
     temp1.constructType = ConstructType::cCopy;
     temp1.copyAssigned = false;
     temp1.moveAssigned = false;
@@ -268,7 +268,7 @@ TEST(ContainerTest, HeapVectorCopyAndMove)
     ASSERT_EQ(t4[3], temp1);
 
     // move construct
-    HeapVector<S0, 10> t5 = std::move(t4);
+    InplaceVector<S0, 10> t5 = std::move(t4);
     temp1.constructType = ConstructType::cMove;
     temp1.copyAssigned = false;
     temp1.moveAssigned = false;

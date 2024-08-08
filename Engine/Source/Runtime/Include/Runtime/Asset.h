@@ -12,6 +12,7 @@
 #include <Common/Memory.h>
 #include <Common/Serialization.h>
 #include <Common/Concurrent.h>
+#include <Common/Concepts.h>
 #include <Core/Uri.h>
 #include <Mirror/Meta.h>
 #include <Mirror/Mirror.h>
@@ -35,8 +36,7 @@ namespace Runtime {
         Core::Uri uri;
     };
 
-    template <typename A>
-    requires std::is_base_of_v<Asset, A>
+    template <Common::DerivedFrom<Asset> A>
     class AssetRef {
     public:
         template <typename A2> AssetRef(Common::SharedRef<A2>& inRef) : ref(inRef) {} // NOLINT
@@ -147,8 +147,7 @@ namespace Runtime {
         Common::SharedRef<A> ref;
     };
 
-    template <typename A>
-    requires std::is_base_of_v<Asset, A>
+    template <Common::DerivedFrom<Asset> A>
     class WeakAssetRef {
     public:
         template <typename A2> WeakAssetRef(AssetRef<A2>& inRef) : ref(inRef.GetSharedRef()) {} // NOLINT
@@ -376,7 +375,8 @@ namespace Runtime {
             Common::BinaryFileSerializeStream stream(pathString);
 
             Mirror::Any ref = std::ref(*assetRef.Get());
-            A::GetClass().Serialize(stream, &ref);
+            // TODO replace with static version
+            A::GetClass().SerializeDyn(stream, ref);
         }
 
         template <typename A>
@@ -395,7 +395,8 @@ namespace Runtime {
 
             AssetRef<A> result = Common::SharedRef<A>(new A());
             Mirror::Any ref = std::ref(*result.Get());
-            A::GetClass().Deserailize(stream, &ref);
+            // TODO replace with static version
+            A::GetClass().DeserailizeDyn(stream, ref);
 
             // reset uri is useful for moved asset
             result->uri = uri;
@@ -411,8 +412,7 @@ namespace Runtime {
 }
 
 namespace Common {
-    template <typename A>
-    requires std::is_base_of_v<Runtime::Asset, A>
+    template <DerivedFrom<Runtime::Asset> A>
     struct Serializer<Runtime::AssetRef<A>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("Runtime::AssetRef");
@@ -436,8 +436,7 @@ namespace Common {
         }
     };
 
-    template <typename A>
-    requires std::is_base_of_v<Runtime::Asset, A>
+    template <DerivedFrom<Runtime::Asset> A>
     struct Serializer<Runtime::SoftAssetRef<A>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("Runtime::SoftAssetRef");

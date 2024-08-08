@@ -10,8 +10,7 @@
 #include <Common/Serialization.h>
 
 namespace Common {
-    template <typename T>
-    requires isFloatingPointV<T>
+    template <FloatingPoint T>
     struct TransformBase {
         Vec<T, 3> scale;
         Quaternion<T> rotation;

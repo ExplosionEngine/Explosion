@@ -18,8 +18,13 @@ namespace Common::Internal {
 }
 
 namespace Common {
+    template <typename T, uint8_t L> struct Vec;
+
+    template <uint8_t L> concept ValidVecDim = L >= 1 && L <= 4;
+    template <typename T, typename VT, uint8_t L> concept VecN = std::is_same_v<T, Vec<VT, L>>;
+
     template <typename T, uint8_t L>
-    requires (L >= 1) && (L <= 4)
+    requires ValidVecDim<L>
     struct BaseVec {};
 
     template <typename T, uint8_t L>
@@ -78,7 +83,7 @@ namespace Common {
     };
 
     template <typename T, uint8_t L>
-    requires (L >= 1) && (L <= 4)
+    requires ValidVecDim<L>
     struct VecConsts {};
 
     template <typename T>
@@ -717,7 +722,7 @@ namespace Common {
     template <typename T, uint8_t L>
     T Vec<T, L>::Model() const
     {
-        static_assert(isFloatingPointV<T>);
+        static_assert(FloatingPoint<T>);
         T temp = 0;
         for (auto i = 0; i < L; i++) {
             temp += this->data[i] * this->data[i];
@@ -743,7 +748,7 @@ namespace Common {
     template <typename T, uint8_t L>
     T Vec<T, L>::Dot(const Vec& rhs) const
     {
-        static_assert(isFloatingPointV<T>);
+        static_assert(FloatingPoint<T>);
         T temp = 0;
         for (auto i = 0; i < L; i++) {
             temp += this->data[i] * rhs.data[i];
@@ -754,7 +759,7 @@ namespace Common {
     template <typename T, uint8_t L>
     typename Internal::VecCrossResultTraits<T, L>::Type Vec<T, L>::Cross(const Vec& rhs) const
     {
-        static_assert(isFloatingPointV<T> && L >= 2 && L <= 3);
+        static_assert(FloatingPoint<T> && L >= 2 && L <= 3);
         typename Internal::VecCrossResultTraits<T, L>::Type result;
         if constexpr (L == 2) {
             result = this->x * rhs.y - this->y * rhs.x;

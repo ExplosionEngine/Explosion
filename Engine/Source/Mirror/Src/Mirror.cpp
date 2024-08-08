@@ -12,6 +12,70 @@
 #include <Common/Hash.h>
 
 namespace Mirror {
+    bool PointerConvertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType)
+    {
+        const auto [srcRaw, srcRemoveRef, srcRemovePointer] = inSrcType;
+        const auto [dstRaw, dstRemoveRef, dstRemovePointer] = inDstType;
+
+        if (!srcRaw->isPointer || !dstRaw->isPointer) {
+            return false;
+        }
+        if (srcRemovePointer->id != dstRemovePointer->id) {
+            return false;
+        }
+        return !srcRemovePointer->isConst || dstRemovePointer->isConst;
+    }
+
+    bool PolymorphismConvertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType)
+    {
+        const auto [srcRaw, srcRemoveRef, srcRemovePointer] = inSrcType;
+        const auto [dstRaw, dstRemoveRef, dstRemovePointer] = inDstType;
+
+        const bool checkPointer = srcRaw->isPointer && dstRaw->isPointer;
+        const bool checkRef = dstRaw->isLValueReference;
+
+        if (!checkPointer && !checkRef) {
+            return false;
+        }
+
+        const Mirror::TypeInfo* srcRemoveRefOrPtr = nullptr;
+        const Mirror::TypeInfo* dstRemoveRefOrPtr = nullptr;
+
+        if (checkRef) {
+            srcRemoveRefOrPtr = srcRemoveRef;
+            dstRemoveRefOrPtr = dstRemoveRef;
+        } else {
+            srcRemoveRefOrPtr = srcRemovePointer;
+            dstRemoveRefOrPtr = dstRemovePointer;
+        }
+
+        const auto* srcClass = Class::Find(srcRemoveRefOrPtr->id); // NOLINT
+        const auto* dstClass = Class::Find(dstRemoveRefOrPtr->id); // NOLINT
+
+        if (srcClass == nullptr || dstClass == nullptr || !dstClass->IsBaseOf(srcClass)) {
+            return false;
+        }
+        return !srcRemoveRefOrPtr->isConst || dstRemoveRefOrPtr->isConst;
+    }
+
+    bool Convertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType)
+    {
+        const auto [srcRaw, srcRemoveRef, srcRemovePointer] = inSrcType;
+        const auto [dstRaw, dstRemoveRef, dstRemovePointer] = inDstType;
+
+        if (dstRaw->isRValueReference) {
+            return false;
+        }
+
+        if (srcRaw->id == dstRaw->id) { // NOLINT
+            if (!dstRaw->isLValueReference) {
+                return true;
+            }
+            return !srcRemoveRef->isConst || dstRemoveRef->isConst;
+        }
+        return PointerConvertible(inSrcType, inDstType) || PolymorphismConvertible(inSrcType, inDstType);
+    }
+
     Any::Any()
     {
         Reset();
@@ -20,7 +84,7 @@ namespace Mirror {
     Any::~Any()
     {
         if (IsMemoryHolder() && rtti != nullptr) {
-            rtti->detor(Ptr());
+            rtti->detor(Data());
         }
     }
 
@@ -62,39 +126,14 @@ namespace Mirror {
         return *this;
     }
 
-    bool Any::Convertible(const TypeInfo* inType) // NOLINT
-    {
-        if (typeId != inType->id) {
-            return false;
-        }
-
-        if (IsConstRef()) {
-            return !inType->isLValueReference || inType->isLValueConstReference;
-        }
-        return true;
-    }
-
-    bool Any::Convertible(const TypeInfo* inType) const
-    {
-        if (typeId != inType->id) {
-            return false;
-        }
-
-        if (IsConstRef() || IsMemoryHolder()) {
-            return !inType->isLValueReference || inType->isLValueConstReference;
-        }
-        return true;
-    }
-
     void Any::PerformCopyConstruct(const Any& inOther)
     {
         policy = inOther.policy;
         rtti = inOther.rtti;
-        typeId = inOther.typeId;
         info = inOther.info;
 
         if (IsMemoryHolder()) {
-            rtti->copyConstruct(Ptr(), inOther.Ptr());
+            rtti->copyConstruct(Data(), inOther.Data());
         }
     }
 
@@ -102,13 +141,12 @@ namespace Mirror {
     {
         policy = inPolicy;
         rtti = inOther.rtti;
-        typeId = inOther.typeId;
 
         if (IsRef()) {
-            info = RefInfo(inOther.Ptr(), inOther.Size());
+            info = RefInfo(inOther.Data(), inOther.Size());
         } else {
             info = HolderInfo(inOther.Size());
-            rtti->copyConstruct(Ptr(), inOther.Ptr());
+            rtti->copyConstruct(Data(), inOther.Data());
         }
     }
 
@@ -116,27 +154,26 @@ namespace Mirror {
     {
         policy = inOther.policy;
         rtti = inOther.rtti;
-        typeId = inOther.typeId;
 
         if (IsRef()) {
-            info = RefInfo(inOther.Ptr(), inOther.Size());
+            info = RefInfo(inOther.Data(), inOther.Size());
         } else {
             info = HolderInfo(inOther.Size());
-            rtti->moveConstruct(Ptr(), inOther.Ptr());
+            rtti->moveConstruct(Data(), inOther.Data());
         }
     }
 
-    Any Any::GetRef()
+    Any Any::Ref()
     {
         return { *this, IsMemoryHolder() ? AnyPolicy::ref : policy };
     }
 
-    Any Any::GetRef() const
+    Any Any::Ref() const
     {
         return { *this, IsMemoryHolder() ? AnyPolicy::constRef : policy };
     }
 
-    Any Any::GetConstRef() const
+    Any Any::ConstRef() const
     {
         return { *this, AnyPolicy::constRef };
     }
@@ -144,6 +181,46 @@ namespace Mirror {
     Any Any::AsValue() const
     {
         return { *this, AnyPolicy::memoryHolder };
+    }
+
+    Any Any::Ptr()
+    {
+        if (policy == AnyPolicy::memoryHolder) {
+            return rtti->getPtr(Data());
+        }
+        if (policy == AnyPolicy::ref) {
+            return rtti->getPtr(Data());
+        }
+        if (policy == AnyPolicy::constRef) {
+            return rtti->getConstPtr(Data());
+        }
+        QuickFail();
+        return {};
+    }
+
+    Any Any::Ptr() const
+    {
+        if (policy == AnyPolicy::memoryHolder) {
+            return rtti->getConstPtr(Data());
+        }
+        if (policy == AnyPolicy::ref) {
+            return rtti->getPtr(Data());
+        }
+        if (policy == AnyPolicy::constRef) {
+            return rtti->getConstPtr(Data());
+        }
+        QuickFail();
+        return {};
+    }
+
+    Any Any::ConstPtr() const
+    {
+        return rtti->getConstPtr(Data());
+    }
+
+    Any Any::Deref() const
+    {
+        return rtti->deref(Data());
     }
 
     AnyPolicy Any::Policy() const
@@ -166,11 +243,128 @@ namespace Mirror {
         return policy == AnyPolicy::constRef;
     }
 
+    const TypeInfo* Any::Type()
+    {
+        if (policy == AnyPolicy::memoryHolder) {
+            return rtti->getValueType();
+        }
+        if (policy == AnyPolicy::ref) {
+            return rtti->getRefType();
+        }
+        if (policy == AnyPolicy::constRef) {
+            return rtti->getConstRefType();
+        }
+        QuickFail();
+        return nullptr;
+    }
+
+    const TypeInfo* Any::Type() const
+    {
+        if (policy == AnyPolicy::memoryHolder) {
+            return rtti->getConstValueType();
+        }
+        if (policy == AnyPolicy::ref) {
+            return rtti->getRefType();
+        }
+        if (policy == AnyPolicy::constRef) {
+            return rtti->getConstRefType();
+        }
+        QuickFail();
+        return nullptr;
+    }
+
+    const TypeInfo* Any::RemoveRefType()
+    {
+        if (policy == AnyPolicy::memoryHolder) {
+            return rtti->getValueType();
+        }
+        if (policy == AnyPolicy::ref) {
+            return rtti->getValueType();
+        }
+        if (policy == AnyPolicy::constRef) {
+            return rtti->getConstValueType();
+        }
+        QuickFail();
+        return nullptr;
+    }
+
+    const TypeInfo* Any::RemoveRefType() const
+    {
+        if (policy == AnyPolicy::memoryHolder) {
+            return rtti->getConstValueType();
+        }
+        if (policy == AnyPolicy::ref) {
+            return rtti->getValueType();
+        }
+        if (policy == AnyPolicy::constRef) {
+            return rtti->getConstValueType();
+        }
+        QuickFail();
+        return nullptr;
+    }
+
+    const TypeInfo* Any::AddPointerType()
+    {
+        if (policy == AnyPolicy::memoryHolder) {
+            return rtti->getAddPointerType();
+        }
+        if (policy == AnyPolicy::ref) {
+            return rtti->getAddPointerType();
+        }
+        if (policy == AnyPolicy::constRef) {
+            return rtti->getAddConstPointerType();
+        }
+        QuickFail();
+        return nullptr;
+    }
+
+    const TypeInfo* Any::AddPointerType() const
+    {
+        if (policy == AnyPolicy::memoryHolder) {
+            return rtti->getAddConstPointerType();
+        }
+        if (policy == AnyPolicy::ref) {
+            return rtti->getAddPointerType();
+        }
+        if (policy == AnyPolicy::constRef) {
+            return rtti->getAddConstPointerType();
+        }
+        QuickFail();
+        return nullptr;
+    }
+
+    const TypeInfo* Any::RemovePointerType()
+    {
+        if (const auto* typeInfo = Type();
+            !typeInfo->isPointer) { // NOLINT
+            return typeInfo;
+        }
+        return rtti->getRemovePointerType();
+    }
+
+    const TypeInfo* Any::RemovePointerType() const
+    {
+        if (const auto* typeInfo = Type();
+            !typeInfo->isPointer) { // NOLINT
+            return typeInfo;
+        }
+        return rtti->getRemovePointerType();
+    }
+
+    Mirror::TypeId Any::TypeId()
+    {
+        return Type()->id;
+    }
+
+    TypeId Any::TypeId() const
+    {
+        return Type()->id;
+    }
+
     void Any::Reset()
     {
         policy = AnyPolicy::max;
         rtti = nullptr;
-        typeId = typeIdNull;
         info = {};
     }
 
@@ -179,7 +373,7 @@ namespace Mirror {
         return rtti == nullptr;
     }
 
-    void* Any::Ptr() const
+    void* Any::Data() const
     {
         return IsRef() ? std::get<RefInfo>(info).Ptr() : std::get<HolderInfo>(info).Ptr();
     }
@@ -196,16 +390,13 @@ namespace Mirror {
 
     bool Any::operator==(const Any& inAny) const
     {
-        if (typeId != inAny.typeId) {
+        if (TypeId() != inAny.TypeId()) {
             return false;
         }
-        return rtti->equal(Ptr(), inAny.Ptr());
+        return rtti->equal(Data(), inAny.Data());
     }
 
-    Any::HolderInfo::HolderInfo()
-        : memorySize(0)
-    {
-    }
+    Any::HolderInfo::HolderInfo() = default;
 
     Any::HolderInfo::HolderInfo(size_t inMemorySize)
     {
@@ -214,26 +405,29 @@ namespace Mirror {
 
     void Any::HolderInfo::ResizeMemory(size_t inSize)
     {
-        memorySize = inSize;
         if (inSize <= MaxStackMemorySize) {
             memory = StackMemory {};
+            std::get<StackMemory>(memory).Resize(inSize);
         } else {
             memory = HeapMemory {};
-            std::get<HeapMemory>(memory).resize(memorySize);
+            std::get<HeapMemory>(memory).resize(inSize);
         }
     }
 
     void* Any::HolderInfo::Ptr() const
     {
         if (memory.index() == 0) {
-            return const_cast<uint8_t*>(std::get<StackMemory>(memory).data());
+            return const_cast<uint8_t*>(std::get<StackMemory>(memory).Data());
         }
         return const_cast<uint8_t*>(std::get<HeapMemory>(memory).data());
     }
 
     size_t Any::HolderInfo::Size() const
     {
-        return memorySize;
+        if (memory.index() == 0) {
+            return std::get<StackMemory>(memory).Size();
+        }
+        return std::get<HeapMemory>(memory).size();
     }
 
     Any::RefInfo::RefInfo()
@@ -256,6 +450,105 @@ namespace Mirror {
     size_t Any::RefInfo::Size() const
     {
         return memorySize;
+    }
+
+    Argument::Argument() = default;
+
+    Argument::Argument(Any& inAny)
+        : any(&inAny)
+    {
+    }
+
+    Argument::Argument(const Any& inAny)
+        : any(&inAny)
+    {
+    }
+
+    Argument::Argument(Any&& inAny)
+        : any(std::move(inAny))
+    {
+    }
+
+    Argument& Argument::operator=(Any& inAny)
+    {
+        any = &inAny;
+        return *this;
+    }
+
+    Argument& Argument::operator=(const Any& inAny)
+    {
+        any = &inAny;
+        return *this;
+    }
+
+    Argument& Argument::operator=(Any&& inAny)
+    {
+        any = std::move(inAny);
+        return *this;
+    }
+
+    const TypeInfo* Argument::Type() const
+    {
+        const auto index = any.index();
+        if (index == 1) {
+            return std::get<Any*>(any)->Type();
+        }
+        if (index == 2) {
+            return std::get<const Any*>(any)->Type();
+        }
+        if (index == 3) {
+            return const_cast<Any&>(std::get<Any>(any)).Type();
+        }
+        QuickFailWithReason("Argument is empty");
+        return std::get<Any*>(any)->Type();
+    }
+
+    const TypeInfo* Argument::RemoveRefType() const
+    {
+        const auto index = any.index();
+        if (index == 1) {
+            return std::get<Any*>(any)->RemoveRefType();
+        }
+        if (index == 2) {
+            return std::get<const Any*>(any)->RemoveRefType();
+        }
+        if (index == 3) {
+            return const_cast<Any&>(std::get<Any>(any)).RemoveRefType();
+        }
+        QuickFailWithReason("Argument is empty");
+        return std::get<Any*>(any)->RemoveRefType();
+    }
+
+    const TypeInfo* Argument::AddPointerType() const
+    {
+        const auto index = any.index();
+        if (index == 1) {
+            return std::get<Any*>(any)->AddPointerType();
+        }
+        if (index == 2) {
+            return std::get<const Any*>(any)->AddPointerType();
+        }
+        if (index == 3) {
+            return const_cast<Any&>(std::get<Any>(any)).AddPointerType();
+        }
+        QuickFailWithReason("Argument is empty");
+        return std::get<Any*>(any)->AddPointerType();
+    }
+
+    const TypeInfo* Argument::RemovePointerType() const
+    {
+        const auto index = any.index();
+        if (index == 1) {
+            return std::get<Any*>(any)->RemovePointerType();
+        }
+        if (index == 2) {
+            return std::get<const Any*>(any)->RemovePointerType();
+        }
+        if (index == 3) {
+            return const_cast<Any&>(std::get<Any>(any)).RemovePointerType();
+        }
+        QuickFailWithReason("Argument is empty");
+        return std::get<Any*>(any)->RemovePointerType();
     }
 
     Type::Type(std::string inName) : name(std::move(inName)) {}
@@ -334,27 +627,42 @@ namespace Mirror {
 
     Variable::~Variable() = default;
 
+    Any Variable::Get() const
+    {
+        return GetDyn();
+    }
+
+    void Variable::Serialize(Common::SerializeStream& stream) const
+    {
+        SerializeDyn(stream);
+    }
+
+    void Variable::Deserialize(Common::DeserializeStream& stream) const
+    {
+        DeserializeDyn(stream);
+    }
+
     const TypeInfo* Variable::GetTypeInfo() const
     {
         return typeInfo;
     }
 
-    void Variable::Set(Any* value) const
+    void Variable::SetDyn(const Argument& inArgument) const
     {
-        setter(value);
+        setter(inArgument);
     }
 
-    Any Variable::Get() const
+    Any Variable::GetDyn() const
     {
         return getter();
     }
 
-    void Variable::Serialize(Common::SerializeStream& stream) const
+    void Variable::SerializeDyn(Common::SerializeStream& stream) const
     {
         serializer(stream, *this);
     }
 
-    void Variable::Deserialize(Common::DeserializeStream& stream) const
+    void Variable::DeserializeDyn(Common::DeserializeStream& stream) const
     {
         deserializer(stream, *this);
     }
@@ -390,15 +698,17 @@ namespace Mirror {
         return argTypeInfos;
     }
 
-    Any Function::InvokeWith(Any* arguments, const uint8_t argumentsSize) const
+    Any Function::InvokeDyn(const ArgumentList& inArgumentList) const
     {
-        return invoker(arguments, argumentsSize);
+        return invoker(inArgumentList);
     }
 
     Constructor::Constructor(ConstructParams&& params)
         : Type(std::move(params.name))
         , argsNum(params.argsNum)
         , argTypeInfos(std::move(params.argTypeInfos))
+        , argRemoveRefTypeInfos(std::move(params.argRemoveRefTypeInfos))
+        , argRemovePointerTypeInfos(std::move(params.argRemovePointerTypeInfos))
         , stackConstructor(std::move(params.stackConstructor))
         , heapConstructor(std::move(params.heapConstructor))
     {
@@ -421,27 +731,47 @@ namespace Mirror {
         return argTypeInfos;
     }
 
-    Any Constructor::ConstructOnStackWith(Any* arguments, const uint8_t argumentsSize) const
+    const TypeInfo* Constructor::GetArgRemoveRefTypeInfo(uint8_t argIndex) const
     {
-        return stackConstructor(arguments, argumentsSize);
+        return argRemoveRefTypeInfos[argIndex];
     }
 
-    Any Constructor::NewObjectWith(Any* arguments, const uint8_t argumentsSize) const
+    const std::vector<const TypeInfo*>& Constructor::GetArgRemoveRefTypeInfos() const
     {
-        return heapConstructor(arguments, argumentsSize);
+        return argRemoveRefTypeInfos;
+    }
+
+    const TypeInfo* Constructor::GetArgRemovePointerTypeInfo(uint8_t argIndex) const
+    {
+        return argRemovePointerTypeInfos[argIndex];
+    }
+
+    const std::vector<const TypeInfo*>& Constructor::GetArgRemovePointerTypeInfos() const
+    {
+        return argRemovePointerTypeInfos;
+    }
+
+    Any Constructor::ConstructDyn(const ArgumentList& arguments) const
+    {
+        return stackConstructor(arguments);
+    }
+
+    Any Constructor::NewDyn(const ArgumentList& arguments) const
+    {
+        return heapConstructor(arguments);
     }
 
     Destructor::Destructor(ConstructParams&& params)
-        : Type(std::string(NamePresets::destructor))
+        : Type(std::string(NamePresets::detor))
         , destructor(std::move(params.destructor))
     {
     }
 
     Destructor::~Destructor() = default;
 
-    void Destructor::InvokeWith(Any* object) const
+    void Destructor::InvokeDyn(const Argument& argument) const
     {
-        destructor(object);
+        destructor(argument);
     }
 
     MemberVariable::MemberVariable(ConstructParams&& params)
@@ -467,22 +797,22 @@ namespace Mirror {
         return typeInfo;
     }
 
-    void MemberVariable::Set(Any* object, Any* value) const
+    void MemberVariable::SetDyn(const Argument& object, const Argument& value) const
     {
         setter(object, value);
     }
 
-    Any MemberVariable::Get(Any* object) const
+    Any MemberVariable::GetDyn(const Argument& object) const
     {
         return getter(object);
     }
 
-    void MemberVariable::Serialize(Common::SerializeStream& stream, Any* object) const
+    void MemberVariable::SerializeDyn(Common::SerializeStream& stream, const Argument& object) const
     {
         serializer(stream, *this, object);
     }
 
-    void MemberVariable::Deserialize(Common::DeserializeStream& stream, Any* object) const
+    void MemberVariable::DeserializeDyn(Common::DeserializeStream& stream, const Argument& object) const
     {
         deserializer(stream, *this, object);
     }
@@ -523,9 +853,9 @@ namespace Mirror {
         return argTypeInfos;
     }
 
-    Any MemberFunction::InvokeWith(Any* object, Any* args, const size_t argsSize) const
+    Any MemberFunction::InvokeDyn(const Argument& object, const ArgumentList& arguments) const
     {
-        return invoker(object, args, argsSize);
+        return invoker(object, arguments);
     }
 
     GlobalScope::GlobalScope() : Type(std::string(NamePresets::globalScope)) {}
@@ -549,6 +879,20 @@ namespace Mirror {
     const GlobalScope& GlobalScope::Get()
     {
         return Registry::Get().globalScope;
+    }
+
+    void GlobalScope::ForEachVariable(const VariableTraverser& func) const
+    {
+        for (const auto& [name, variable] : variables) {
+            func(variable);
+        }
+    }
+
+    void GlobalScope::ForEachFunction(const FunctionTraverser& func) const
+    {
+        for (const auto& [name, function] : functions) {
+            func(function);
+        }
     }
 
     bool GlobalScope::HasVariable(const std::string& name) const
@@ -601,11 +945,127 @@ namespace Mirror {
             destructor = Destructor(std::move(params.destructorParams.value()));
         }
         if (params.defaultConstructorParams.has_value()) {
-            EmplaceConstructor(NamePresets::defaultConstructor, std::move(params.defaultConstructorParams.value()));
+            EmplaceConstructor(NamePresets::defaultCtor, std::move(params.defaultConstructorParams.value()));
         }
     }
 
+    bool Class::Has(const std::string& name)
+    {
+        const auto& classes = Registry::Get().classes;
+        return classes.contains(name);
+    }
+
+    const Class* Class::Find(const std::string& name)
+    {
+        const auto& classes = Registry::Get().classes;
+        const auto iter = classes.find(name);
+        return iter == classes.end() ? nullptr : &iter->second;
+    }
+
+    const Class& Class::Get(const std::string& name)
+    {
+        const auto& classes = Registry::Get().classes;
+        const auto iter = classes.find(name);
+        Assert(iter != classes.end());
+        return iter->second;
+    }
+
+    bool Class::Has(const TypeInfo* typeInfo)
+    {
+        Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
+        return typeToNameMap.contains(typeInfo->id); // NOLINT
+    }
+
+    const Class* Class::Find(const TypeInfo* typeInfo)
+    {
+        Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
+        return Find(typeInfo->id); // NOLINT
+    }
+
+    const Class& Class::Get(const TypeInfo* typeInfo)
+    {
+        Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
+        return Get(typeInfo->id); // NOLINT
+    }
+
+    bool Class::Has(TypeId typeId)
+    {
+        const auto iter = typeToNameMap.find(typeId);
+        if (iter == typeToNameMap.end()) {
+            return false;
+        }
+        return Has(iter->second);
+    }
+
+    const Class* Class::Find(const TypeId typeId)
+    {
+        const auto iter = typeToNameMap.find(typeId);
+        if (iter == typeToNameMap.end()) {
+            return nullptr;
+        }
+        return Find(iter->second);
+    }
+
+    const Class& Class::Get(TypeId typeId)
+    {
+        const auto iter = typeToNameMap.find(typeId);
+        AssertWithReason(iter != typeToNameMap.end(), "did you forget add EClass() annotation to class ?");
+        return Get(iter->second);
+    }
+
+    std::vector<const Class*> Class::GetAll()
+    {
+        const auto& classes = Registry::Get().classes;
+        std::vector<const Class*> result;
+        result.reserve(classes.size());
+        for (const auto& [name, clazz] : classes) {
+            result.emplace_back(&clazz);
+        }
+        return result;
+    }
+
+    std::vector<const Class*> Class::FindWithCategory(const std::string& category)
+    {
+        const auto& classes = Registry::Get().classes;
+        std::vector<const Class*> result;
+        result.reserve(classes.size());
+        for (const auto& [name, clazz] : classes) {
+            if (clazz.HasMeta("category") && clazz.GetMeta("category") == category) {
+                result.emplace_back(&clazz);
+            }
+        }
+        return result;
+    }
+
     Class::~Class() = default;
+
+    void Class::ForEachStaticVariable(const VariableTraverser& func) const
+    {
+        for (const auto& [name, variable] : staticVariables) {
+            func(variable);
+        }
+    }
+
+    void Class::ForEachStaticFunction(const FunctionTraverser& func) const
+    {
+        for (const auto& [name, function] : staticFunctions) {
+            func(function);
+        }
+    }
+
+    void Class::ForEachMemberVariable(const MemberVariableTraverser& func) const
+    {
+        for (const auto& [name, memberVariable] : memberVariables) {
+            func(memberVariable);
+        }
+    }
+
+    void Class::ForEachMemberFunction(const MemberFunctionTraverser& func) const
+    {
+        for (const auto& [name, memberFunction] : memberFunctions) {
+            func(memberFunction);
+        }
+    }
 
     void Class::CreateDefaultObject(const std::function<Any()>& inCreator)
     {
@@ -654,94 +1114,6 @@ namespace Mirror {
         return memberFunctions.at(inName);
     }
 
-    template <typename F>
-    void Class::ForEachClass(F&& func)
-    {
-        const auto& classes = Registry::Get().classes;
-        for (const auto& [name, clazz] : func) {
-            func(clazz);
-        }
-    }
-
-    bool Class::Has(const std::string& name)
-    {
-        const auto& classes = Registry::Get().classes;
-        return classes.contains(name);
-    }
-
-    const Class* Class::Find(const std::string& name)
-    {
-        const auto& classes = Registry::Get().classes;
-        const auto iter = classes.find(name);
-        return iter == classes.end() ? nullptr : &iter->second;
-    }
-
-    const Class& Class::Get(const std::string& name)
-    {
-        const auto& classes = Registry::Get().classes;
-        const auto iter = classes.find(name);
-        Assert(iter != classes.end());
-        return iter->second;
-    }
-
-    bool Class::Has(const TypeInfo* typeInfo)
-    {
-        Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
-        return typeToNameMap.contains(typeInfo->id); // NOLINT
-    }
-
-    const Class* Class::Find(const TypeInfo* typeInfo)
-    {
-        Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
-        return Find(typeInfo->id); // NOLINT
-    }
-
-    const Class& Class::Get(const TypeInfo* typeInfo)
-    {
-        Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
-        return Get(typeInfo->id); // NOLINT
-    }
-
-    const Class* Class::Find(const TypeId typeId)
-    {
-        const auto iter = typeToNameMap.find(typeId);
-        if (iter == typeToNameMap.end()) {
-            return nullptr;
-        }
-        return Find(iter->second);
-    }
-
-    const Class& Class::Get(TypeId typeId)
-    {
-        const auto iter = typeToNameMap.find(typeId);
-        AssertWithReason(iter != typeToNameMap.end(), "did you forget add EClass() annotation to class ?");
-        return Get(iter->second);
-    }
-
-    std::vector<const Class*> Class::GetAll()
-    {
-        const auto& classes = Registry::Get().classes;
-        std::vector<const Class*> result;
-        result.reserve(classes.size());
-        for (const auto& [name, clazz] : classes) {
-            result.emplace_back(&clazz);
-        }
-        return result;
-    }
-
-    std::vector<const Class*> Class::FindWithCategory(const std::string& category)
-    {
-        const auto& classes = Registry::Get().classes;
-        std::vector<const Class*> result;
-        result.reserve(classes.size());
-        for (const auto& [name, clazz] : classes) {
-            if (clazz.HasMeta("category") && clazz.GetMeta("category") == category) {
-                result.emplace_back(&clazz);
-            }
-        }
-        return result;
-    }
-
     const TypeInfo* Class::GetTypeInfo() const
     {
         return typeInfo;
@@ -749,7 +1121,7 @@ namespace Mirror {
 
     bool Class::HasDefaultConstructor() const
     {
-        return HasConstructor(NamePresets::defaultConstructor);
+        return HasConstructor(NamePresets::defaultCtor);
     }
 
     const Class* Class::GetBaseClass() const
@@ -776,12 +1148,12 @@ namespace Mirror {
 
     const Constructor* Class::FindDefaultConstructor() const
     {
-        return FindConstructor(NamePresets::defaultConstructor);
+        return FindConstructor(NamePresets::defaultCtor);
     }
 
     const Constructor& Class::GetDefaultConstructor() const
     {
-        return GetConstructor(NamePresets::defaultConstructor);
+        return GetConstructor(NamePresets::defaultCtor);
     }
 
     bool Class::HasDestructor() const
@@ -805,17 +1177,22 @@ namespace Mirror {
         return constructors.contains(name);
     }
 
-    const Constructor* Class::FindSuitableConstructor(const Any* args, const uint8_t argNum) const
+    const Constructor* Class::FindSuitableConstructor(const ArgumentList& arguments) const
     {
         for (const auto& [constructorName, constructor] : constructors) {
             const auto& argTypeInfos = constructor.GetArgTypeInfos();
-            if (argTypeInfos.size() != argNum) {
+            const auto& argRemoveRefTypeInfos = constructor.GetArgRemoveRefTypeInfos();
+            const auto& argRemovePointerTypeInfos = constructor.GetArgRemovePointerTypeInfos();
+
+            if (argTypeInfos.size() != arguments.size()) {
                 continue;
             }
 
             bool bSuitable = true;
-            for (auto i = 0; i < argNum; i++) {
-                if (args[i].Convertible(argTypeInfos[i])) {
+            for (auto i = 0; i < arguments.size(); i++) {
+                const TypeInfoCompact srcType { arguments[i].Type(), arguments[i].RemoveRefType(), arguments[i].RemovePointerType() }; // NOLINT
+                const TypeInfoCompact dstType { argTypeInfos[i], argRemoveRefTypeInfos[i], argRemovePointerTypeInfos[i] }; // NOLINT
+                if (Convertible(srcType, dstType)) {
                     continue;
                 }
 
@@ -830,18 +1207,18 @@ namespace Mirror {
         return nullptr;
     }
 
-    Any Class::ConstructOnStackSuitable(Any* args, uint8_t argNum) const
+    Any Class::ConstructDyn(const ArgumentList& arguments) const
     {
-        const auto* constructor = FindSuitableConstructor(args, argNum);
+        const auto* constructor = FindSuitableConstructor(arguments);
         Assert(constructor != nullptr);
-        return constructor->ConstructOnStackWith(args, argNum);
+        return constructor->ConstructDyn(arguments);
     }
 
-    Any Class::NewObjectSuitable(Any* args, uint8_t argNum) const
+    Any Class::NewDyn(const ArgumentList& arguments) const
     {
-        const auto* constructor = FindSuitableConstructor(args, argNum);
+        const auto* constructor = FindSuitableConstructor(arguments);
         Assert(constructor != nullptr);
-        return constructor->NewObjectWith(args, argNum);
+        return constructor->NewDyn(arguments);
     }
 
     const Constructor* Class::FindConstructor(const std::string& name) const
@@ -929,11 +1306,11 @@ namespace Mirror {
         return iter->second;
     }
 
-    void Class::Serialize(Common::SerializeStream& stream, Any* obj) const // NOLINT
+    void Class::SerializeDyn(Common::SerializeStream& stream, const Argument& obj) const // NOLINT
     {
         if (const auto* baseClass = GetBaseClass();
             baseClass != nullptr) {
-            baseClass->Serialize(stream, obj);
+            baseClass->SerializeDyn(stream, obj);
         }
 
         AssertWithReason(defaultObject.has_value(), "do you forget add default constructor to EClass() which you want to serialize");
@@ -950,27 +1327,27 @@ namespace Mirror {
 
             Common::Serializer<std::string>::Serialize(stream, name);
 
-            const bool sameWithDefaultObject = memberVariable.Get(obj) == defaultObject.value();
+            const bool sameWithDefaultObject = memberVariable.GetDyn(obj) == defaultObject.value();
             Common::Serializer<bool>::Serialize(stream, sameWithDefaultObject);
 
             if (sameWithDefaultObject) {
                 Common::Serializer<uint32_t>::Serialize(stream, 0);
             } else {
                 Common::Serializer<uint32_t>::Serialize(stream, memberVariable.SizeOf());
-                memberVariable.Serialize(stream, obj);
+                memberVariable.SerializeDyn(stream, obj);
             }
         }
 
         if (HasMemberFunction("OnSerialized")) {
-            GetMemberFunction("OnSerialized").InvokeWith(obj, nullptr, 0);
+            (void) GetMemberFunction("OnSerialized").InvokeDyn(obj, {});
         }
     }
 
-    void Class::Deserailize(Common::DeserializeStream& stream, Any* obj) const // NOLINT
+    void Class::DeserailizeDyn(Common::DeserializeStream& stream, const Argument& obj) const // NOLINT
     {
         if (const auto* baseClass = GetBaseClass();
             baseClass != nullptr) {
-            baseClass->Deserailize(stream, obj);
+            baseClass->DeserailizeDyn(stream, obj);
         }
 
         Assert(defaultObject.has_value());
@@ -1005,12 +1382,12 @@ namespace Mirror {
             }
 
             if (!restoreAsDefaultObject) {
-                memberVariable.Deserialize(stream, obj);
+                memberVariable.DeserializeDyn(stream, obj);
             }
         }
 
         if (HasMemberFunction("OnDeserialize")) {
-            GetMemberFunction("OnDeserialize").InvokeWith(obj, nullptr, 0);
+            (void) GetMemberFunction("OnDeserialize").InvokeDyn(obj, {});
         }
     }
 
@@ -1028,9 +1405,9 @@ namespace Mirror {
         return getter();
     }
 
-    bool EnumElement::Compare(Any* value) const
+    bool EnumElement::Compare(const Argument& argument) const
     {
-        return comparer(value);
+        return comparer(argument);
     }
 
     const Enum* Enum::Find(const std::string& name)
@@ -1070,10 +1447,10 @@ namespace Mirror {
         return iter->second.Get();
     }
 
-    std::string Enum::GetElementName(Any* value) const
+    std::string Enum::GetElementName(const Argument& argument) const
     {
         for (const auto& [name, element] : elements) {
-            if (element.Compare(value)) {
+            if (element.Compare(argument)) {
                 return name;
             }
         }

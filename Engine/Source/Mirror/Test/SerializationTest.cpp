@@ -66,9 +66,9 @@ TEST(SerializationTest, VariableFileSerializationTest)
         gc = "3";
 
         const auto& globalScope = Mirror::GlobalScope::Get();
-        globalScope.GetVariable("ga").Serialize(stream);
-        globalScope.GetVariable("gb").Serialize(stream);
-        globalScope.GetVariable("gc").Serialize(stream);
+        globalScope.GetVariable("ga").SerializeDyn(stream);
+        globalScope.GetVariable("gb").SerializeDyn(stream);
+        globalScope.GetVariable("gc").SerializeDyn(stream);
     }
 
     {
@@ -79,9 +79,9 @@ TEST(SerializationTest, VariableFileSerializationTest)
         Common::BinaryFileDeserializeStream stream(fileName.string());
 
         const auto& globalScope = Mirror::GlobalScope::Get();
-        globalScope.GetVariable("ga").Deserialize(stream);
-        globalScope.GetVariable("gb").Deserialize(stream);
-        globalScope.GetVariable("gc").Deserialize(stream);
+        globalScope.GetVariable("ga").DeserializeDyn(stream);
+        globalScope.GetVariable("gb").DeserializeDyn(stream);
+        globalScope.GetVariable("gc").DeserializeDyn(stream);
 
         ASSERT_EQ(ga, 1);
         ASSERT_EQ(gb, 2.0f);
@@ -101,18 +101,16 @@ TEST(SerializationTest, ClassFileSerializationTest)
         obj.b = 2.0f;
         obj.c = "3";
 
-        Mirror::Any ref = std::ref(obj);
-
         const auto& clazz = Mirror::Class::Get("SerializationTestStruct0");
-        clazz.Serialize(stream, &ref);
+        clazz.SerializeDyn(stream, Mirror::Any(std::ref(obj)));
     }
 
     {
         Common::BinaryFileDeserializeStream stream(fileName.string());
 
         const auto& clazz = Mirror::Class::Get("SerializationTestStruct0");
-        Mirror::Any obj = clazz.GetDefaultConstructor().ConstructOnStack();
-        clazz.Deserailize(stream, &obj);
+        Mirror::Any obj = clazz.GetDefaultConstructor().Construct();
+        clazz.DeserailizeDyn(stream, obj);
 
         const auto& [a, b, c] = obj.As<const SerializationTestStruct0&>();
         ASSERT_EQ(a, 1);
@@ -135,15 +133,14 @@ TEST(SerializationTest, ContainerFileSerializationTest)
         obj.c = { { 5, "6" }, { 7, "8" } };
         obj.d = { { false, true }, { true, false } };
 
-        Mirror::Any ref = std::ref(obj);
-        clazz.Serialize(stream, &ref);
+        clazz.SerializeDyn(stream, Mirror::Any(std::ref(obj)));
     }
 
     {
         Common::BinaryFileDeserializeStream stream(fileName.string());
 
-        Mirror::Any ref = clazz.GetDefaultConstructor().ConstructOnStack();
-        clazz.Deserailize(stream, &ref);
+        Mirror::Any ref = clazz.GetDefaultConstructor().Construct();
+        clazz.DeserailizeDyn(stream, ref);
 
         const auto& [a, b, c, d] = ref.As<const SerializationTestStruct1&>();
         ASSERT_EQ(a.size(), 2);

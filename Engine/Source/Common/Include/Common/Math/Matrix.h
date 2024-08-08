@@ -10,6 +10,13 @@
 #include <Common/Utility.h>
 
 namespace Common {
+    template <uint8_t R> concept ValidMatRow = R >= 1 && R <= 4;
+    template <uint8_t C> concept ValidMatCol = C >= 1 && C <= 4;
+    template <uint8_t R, uint8_t C> concept ValidMatDims = ValidMatRow<R> && ValidMatCol<C>;
+    template <uint8_t R, uint8_t MR> concept ValidSubMatRow = R >= 1 && R < MR;
+    template <uint8_t C, uint8_t MC> concept ValidSubMatCol = C >= 1 && C < MC;
+    template <uint8_t R, uint8_t C, uint8_t MR, uint8_t MC> concept ValidSubMatDims = ValidSubMatRow<R, MR> && ValidSubMatCol<C, MC>;
+
     enum class MatSetupType : uint8_t {
         rows,
         cols,
@@ -18,7 +25,7 @@ namespace Common {
 
     // matrix stored in row-major
     template <typename T, uint8_t R, uint8_t C>
-    requires (R >= 1) && (R <= 4) && (C >= 1) && (C <= 4)
+    requires ValidMatDims<R, C>
     struct BaseMat {
         T data[R * C];
     };
@@ -29,12 +36,12 @@ namespace Common {
         static constexpr uint8_t rows = R;
         static constexpr uint8_t cols = C;
 
-        template <typename... IT>
-        requires (IsAllSame<Vec<T, C>, IT...>::value) && (sizeof...(IT) == R)
+        template <VecN<T, C>... IT>
+        requires ArgsNumEqual<R, IT...>
         static Mat FromRowVecs(IT&&... inVectors);
 
-        template <typename... IT>
-        requires (IsAllSame<Vec<T, R>, IT...>::value) && (sizeof...(IT) == C)
+        template <VecN<T, R>... IT>
+        requires ArgsNumEqual<C, IT...>
         static Mat FromColVecs(IT&&... inVectors);
 
         Mat();
@@ -44,7 +51,7 @@ namespace Common {
         Mat& operator=(const Mat& other);
 
         template <typename... IT>
-        requires (sizeof...(IT) > 1)
+        requires ArgsNumGreater<1, IT...>
         Mat(IT&&... inValues); // NOLINT
 
         T& At(uint8_t row, uint8_t col);
@@ -101,7 +108,7 @@ namespace Common {
         Mat<T, C, R> Transpose() const;
 
         template<uint8_t DR, uint8_t DC>
-        requires (DR < R) && (DC < C)
+        requires ValidSubMatDims<DR, DC, R, C>
         Mat<T, DR, DC> SubMatrix() const;
 
         bool CanInverse() const;
@@ -110,13 +117,13 @@ namespace Common {
     };
 
     template <typename T, uint8_t R, uint8_t C>
-    requires (R >= 1) && (R <= 4) && (C >= 1) && (C <= 4)
+    requires ValidMatDims<R, C>
     struct MatConsts {
         static const Mat<T, R, C> zero;
     };
 
     template <typename T, uint8_t L>
-    requires (L >= 1) && (L <= 4)
+    requires ValidVecDim<L>
     struct MatConsts<T, L, L> {
         static const Mat<T, L, L> zero;
         static const Mat<T, L, L> identity;
@@ -410,8 +417,8 @@ namespace Common::Internal {
 
 namespace Common {
     template <typename T, uint8_t R, uint8_t C>
-    template <typename... IT>
-    requires (IsAllSame<Vec<T, C>, IT...>::value) && (sizeof...(IT) == R)
+    template <VecN<T, C>... IT>
+    requires ArgsNumEqual<R, IT...>
     Mat<T, R, C> Mat<T, R, C>::FromRowVecs(IT&&... inVectors)
     {
         Mat<T, R, C> result;
@@ -420,8 +427,8 @@ namespace Common {
     }
 
     template <typename T, uint8_t R, uint8_t C>
-    template <typename... IT>
-    requires (IsAllSame<Vec<T, R>, IT...>::value) && (sizeof...(IT) == C)
+    template <VecN<T, R>... IT>
+    requires ArgsNumEqual<C, IT...>
     Mat<T, R, C> Mat<T, R, C>::FromColVecs(IT&&... inVectors)
     {
         Mat<T, R, C> result;
@@ -472,7 +479,7 @@ namespace Common {
 
     template <typename T, uint8_t R, uint8_t C>
     template <typename... IT>
-    requires (sizeof...(IT) > 1)
+    requires ArgsNumGreater<1, IT...>
     Mat<T, R, C>::Mat(IT&&... inValues)
     {
         static_assert(sizeof...(IT) == R || sizeof...(IT) == R * C);
@@ -760,7 +767,7 @@ namespace Common {
 
     template <typename T, uint8_t R, uint8_t C>
     template <uint8_t DR, uint8_t DC>
-    requires(DR < R) && (DC < C)
+    requires ValidSubMatDims<DR, DC, R, C>
     Mat<T, DR, DC> Mat<T, R, C>::SubMatrix() const
     {
         Mat<T, DR, DC> result;
@@ -902,15 +909,15 @@ namespace Common {
     }
 
     template <typename T, uint8_t R, uint8_t C>
-    requires (R >= 1) && (R <= 4) && (C >= 1) && (C <= 4)
+    requires ValidMatDims<R, C>
     const Mat<T, R, C> MatConsts<T, R, C>::zero = Mat<T, R, C>(0);
 
     template <typename T, uint8_t L>
-    requires (L >= 1) && (L <= 4)
+    requires ValidVecDim<L>
     const Mat<T, L, L> MatConsts<T, L, L>::zero = Mat<T, L, L>(0);
 
     template <typename T, uint8_t L>
-    requires (L >= 1) && (L <= 4)
+    requires ValidVecDim<L>
     const Mat<T, L, L> MatConsts<T, L, L>::identity = Internal::GetIdentityMatrix<T, L>();
 
     template <typename T, uint8_t R, uint8_t C>

@@ -100,8 +100,9 @@ namespace Common {
         }
     };
 
-    template <typename T>
-    requires Serializer<T>::serializable
+    template <typename T> concept Serializable = Serializer<T>::serializable;
+
+    template <Serializable T>
     struct TypeIdSerializer {
         static void Serialize(SerializeStream& stream)
         {
@@ -181,8 +182,7 @@ namespace Common {
         }
     };
 
-    template <typename T>
-    requires Serializer<T>::serializable
+    template <Serializable T>
     struct Serializer<std::optional<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -220,8 +220,7 @@ namespace Common {
         }
     };
 
-    template <typename K, typename V>
-    requires Serializer<K>::serializable && Serializer<V>::serializable
+    template <Serializable K, Serializable V>
     struct Serializer<std::pair<K, V>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -249,8 +248,7 @@ namespace Common {
         }
     };
 
-    template <typename T>
-    requires Serializer<T>::serializable
+    template <Serializable T>
     struct Serializer<std::vector<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -290,8 +288,7 @@ namespace Common {
         }
     };
 
-    template <typename T>
-    requires Serializer<T>::serializable
+    template <Serializable T>
     struct Serializer<std::unordered_set<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -331,8 +328,7 @@ namespace Common {
         }
     };
 
-    template <typename K, typename V>
-    requires Serializer<K>::serializable && Serializer<V>::serializable
+    template <Serializable K, Serializable V>
     struct Serializer<std::unordered_map<K, V>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId

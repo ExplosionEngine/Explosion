@@ -11,8 +11,7 @@
 #include <Common/Serialization.h>
 
 namespace Common {
-    template <typename T>
-    requires isFloatingPointV<T>
+    template <FloatingPoint T>
     struct ReversedZOrthogonalProjectionBase {
         T width;
         T height;
@@ -20,8 +19,7 @@ namespace Common {
         std::optional<T> farPlane;
     };
 
-    template <typename T>
-    requires isFloatingPointV<T>
+    template <FloatingPoint T>
     struct ReversedZPerspectiveProjectionBase {
         T fov;
         T width;

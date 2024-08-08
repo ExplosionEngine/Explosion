@@ -10,8 +10,7 @@
 #include <Runtime/ECS.h>
 
 namespace Runtime::Internal {
-    template <typename T>
-    const Mirror::Class* GetClassChecked(const std::string& inName);
+    template <typename T> const Mirror::Class* GetClassChecked(const std::string& inName);
 }
 
 namespace Runtime {
@@ -34,8 +33,7 @@ namespace Runtime {
 
         explicit CompView(const entt::basic_view<Entity, Args...>& inView);
 
-        template <typename F>
-        void Each(F&& inFunc);
+        template <typename F> void Each(F&& inFunc);
 
         Iterator Begin() const;
         Iterator End() const;
@@ -55,51 +53,22 @@ namespace Runtime {
         explicit Commands(World& inWorld);
         ~Commands();
 
-        template <StateDerived S>
-        bool HasState() const;
-
-        template <StateDerived S, typename... Args>
-        S& EmplaceState(Args&&... inArgs);
-
-        template <StateDerived S>
-        S* FindState();
-
-        template <StateDerived S>
-        const S* FindState() const;
-
-        template <StateDerived S>
-        S& GetState();
-
-        template <StateDerived S>
-        const S& GetState() const;
-
-        template <CompDerived C>
-        bool HasComp(Entity inEntity) const;
-
-        template <CompDerived C, typename... Args>
-        C& EmplaceComp(Entity inEntity, Args&&... inArgs);
-
-        template <CompDerived C>
-        C* FindComp(Entity inEntity);
-
-        template <CompDerived C>
-        const C* FindComp(Entity inEntity) const;
-
-        template <CompDerived C>
-        C& GetComp(Entity inEntity);
-
-        template <CompDerived C>
-        const C& GetComp(Entity inEntity) const;
-
-        template <typename... C, typename... E>
-        auto View(Exclude<E...> = {});
-
-        template <typename... C, typename... E>
-        auto View(Exclude<E...> = {}) const;
-
+        template <StateDerived S> bool HasState() const;
+        template <StateDerived S, typename... Args> S& EmplaceState(Args&&... inArgs);
+        template <StateDerived S> S* FindState();
+        template <StateDerived S> const S* FindState() const;
+        template <StateDerived S> S& GetState();
+        template <StateDerived S> const S& GetState() const;
+        template <CompDerived C> bool HasComp(Entity inEntity) const;
+        template <CompDerived C, typename... Args> C& EmplaceComp(Entity inEntity, Args&&... inArgs);
+        template <CompDerived C> C* FindComp(Entity inEntity);
+        template <CompDerived C> const C* FindComp(Entity inEntity) const;
+        template <CompDerived C> C& GetComp(Entity inEntity);
+        template <CompDerived C> const C& GetComp(Entity inEntity) const;
+        template <typename... C, typename... E> auto View(Exclude<E...> = {});
+        template <typename... C, typename... E> auto View(Exclude<E...> = {}) const;
         Entity CreateEntity();
         void DestroyEntity(Entity inEntity);
-
         // TODO runtime view
 
     private:
@@ -112,12 +81,8 @@ namespace Runtime {
         explicit World(std::string inName = "");
         ~World();
 
-        template <CompDerived System, typename... Args>
-        void AddSystem(Args&&... inSystemArgs);
-
-        template <EventDerived E, typename... Args>
-        void BroadcastEvent(Args&&... inEventArgs);
-
+        template <CompDerived System, typename... Args> void AddSystem(Args&&... inSystemArgs);
+        template <EventDerived E, typename... Args> void BroadcastEvent(Args&&... inEventArgs);
         void Duplicate(World& inWorld) const;
 
     private:
