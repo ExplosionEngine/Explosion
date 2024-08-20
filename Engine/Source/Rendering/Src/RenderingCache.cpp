@@ -157,7 +157,6 @@ namespace Rendering {
 
     RHI::VertexState RVertexState::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
     {
-        // TODO check hash
         RHI::VertexState result;
         result.bufferLayouts.reserve(bufferLayouts.size());
         for (const auto& bufferLayout : bufferLayouts) {

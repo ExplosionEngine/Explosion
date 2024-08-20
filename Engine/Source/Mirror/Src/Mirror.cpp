@@ -132,6 +132,11 @@ namespace Mirror {
         rtti = inOther.rtti;
         info = inOther.info;
 
+        if (Empty()) {
+            Reset();
+            return;
+        }
+
         if (IsMemoryHolder()) {
             rtti->copyConstruct(Data(), inOther.Data());
         }
@@ -141,6 +146,11 @@ namespace Mirror {
     {
         policy = inPolicy;
         rtti = inOther.rtti;
+
+        if (Empty()) {
+            Reset();
+            return;
+        }
 
         if (IsRef()) {
             info = RefInfo(inOther.Data(), inOther.Size());
@@ -154,6 +164,11 @@ namespace Mirror {
     {
         policy = inOther.policy;
         rtti = inOther.rtti;
+
+        if (Empty()) {
+            Reset();
+            return;
+        }
 
         if (IsRef()) {
             info = RefInfo(inOther.Data(), inOther.Size());

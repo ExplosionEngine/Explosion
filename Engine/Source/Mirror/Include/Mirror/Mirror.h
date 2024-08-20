@@ -545,7 +545,6 @@ namespace Mirror {
 
         static const GlobalScope& Get();
 
-        // TODO iter version
         void ForEachVariable(const VariableTraverser& func) const;
         void ForEachFunction(const FunctionTraverser& func) const;
         bool HasVariable(const std::string& name) const;
