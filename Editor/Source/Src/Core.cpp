@@ -9,9 +9,9 @@ Core::CmdlineArgValue<std::string> caRhiType(
     "rhiType", "-rhi", RHI::GetPlatformDefaultRHIAbbrString(),
     "rhi abbr string, can be 'dx12' or 'vulkan'");
 
-Core::CmdlineArgValue<std::string> caProjectRoot(
-    "projectRoot", "-project", "",
-    "project root path");
+Core::CmdlineArgValue<std::string> caProjectFile(
+    "projectFile", "-project", "",
+    "project file path");
 
 namespace Editor {
     Core& Core::Get()
@@ -21,8 +21,7 @@ namespace Editor {
     }
 
     Core::Core()
-        : runtimeModule(nullptr)
-        , renderingModule(nullptr)
+        : renderingModule(nullptr)
         , engine(nullptr)
     {
     }
@@ -42,19 +41,14 @@ namespace Editor {
         ::Core::ModuleManager::Get().Unload("Rendering");
     }
 
-    Runtime::EditorEngine* Core::GetEngine() const
+    Runtime::Engine* Core::GetEngine() const
     {
         return engine;
     }
 
-    bool Core::ProjectRooHasSet() const // NOLINT
+    bool Core::ProjectHasSet() const // NOLINT
     {
-        return !caProjectRoot.GetValue().empty();
-    }
-
-    Runtime::RuntimeModule* Core::GetRuntimeModule() const
-    {
-        return runtimeModule;
+        return !caProjectFile.GetValue().empty();
     }
 
     Rendering::RenderingModule* Core::GetRenderingModule() const
@@ -69,14 +63,10 @@ namespace Editor {
 
     void Core::InitializeRuntime()
     {
-        runtimeModule = ::Core::ModuleManager::Get().FindOrLoadTyped<Runtime::RuntimeModule>("Runtime");
-        Assert(runtimeModule != nullptr);
-
-        Runtime::RuntimeModuleInitParams initParams;
-        initParams.isEditor = true;
-        runtimeModule->Initialize(initParams);
-
-        engine = static_cast<Runtime::EditorEngine*>(runtimeModule->GetEngine());
+        Runtime::EngineInitParams params {};
+        params.projectFile = caProjectFile.GetValue();
+        Runtime::EngineHolder::Load("Editor", params);
+        engine = &Runtime::EngineHolder::Get();
     }
 
     void Core::InitializeRendering()

@@ -3,6 +3,7 @@
 //
 
 #include <Runtime/World.h>
+#include <Runtime/Engine.h>
 
 namespace Runtime {
     const Mirror::Class* Internal::GetClassChecked(const std::string& inName)
@@ -36,13 +37,12 @@ namespace Runtime {
         : started(false)
         , name(std::move(inName))
     {
+        EngineHolder::Get().MountWorld(this);
     }
 
-    World::~World() = default;
-
-    void World::Duplicate(World& inWorld) const
+    World::~World()
     {
-        // TODO
+        EngineHolder::Get().UnmountWorld(this);
     }
 
     void World::Start()
@@ -63,6 +63,11 @@ namespace Runtime {
     {
         Assert(started);
         BroadcastEvent<WorldTick>(inFrameTimeMs);
+    }
+
+    bool World::Started() const
+    {
+        return started;
     }
 
     EventBroadcaster::EventBroadcaster(World& inWorld)

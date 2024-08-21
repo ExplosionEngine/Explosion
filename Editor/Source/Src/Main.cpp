@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
     QApplication qtApplication(argc, argv);
 
     Common::UniqueRef<QWidget> mainWindow;
-    if (!Editor::Core::Get().ProjectRooHasSet()) {
+    if (!Editor::Core::Get().ProjectHasSet()) {
         mainWindow = new Editor::QProjectSelector();
     } else {
         // TODO editor main

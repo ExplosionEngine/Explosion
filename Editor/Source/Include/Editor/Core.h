@@ -6,7 +6,6 @@
 
 #include <Runtime/Engine.h>
 #include <Rendering/RenderingModule.h>
-#include <Runtime/RuntimeModule.h>
 
 namespace Editor {
     class Core {
@@ -17,10 +16,9 @@ namespace Editor {
 
         void Initialize(int argc, char** argv);
         void Cleanup();
-        bool ProjectRooHasSet() const;
-        Runtime::RuntimeModule* GetRuntimeModule() const;
+        bool ProjectHasSet() const;
         Rendering::RenderingModule* GetRenderingModule() const;
-        Runtime::EditorEngine* GetEngine() const;
+        Runtime::Engine* GetEngine() const;
 
     private:
         Core();
@@ -29,8 +27,7 @@ namespace Editor {
         void InitializeRuntime();
         void InitializeRendering();
 
-        Runtime::RuntimeModule* runtimeModule;
         Rendering::RenderingModule* renderingModule;
-        Runtime::EditorEngine* engine;
+        Runtime::Engine* engine;
     };
 }

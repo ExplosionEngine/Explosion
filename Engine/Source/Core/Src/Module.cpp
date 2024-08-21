@@ -39,28 +39,9 @@ namespace Core {
             return iter->second.instance;
         }
 
-        const std::optional<std::string> modulePath = SearchModule(moduleName);
-        if (!modulePath.has_value()) {
+        if (!Load(moduleName)) {
             return nullptr;
         }
-
-        Common::DynamicLibrary dynamicLib = Common::DynamicLibraryFinder::Find(modulePath.value());
-        if (!dynamicLib.IsValid()) {
-            return nullptr;
-        }
-        dynamicLib.Load();
-
-        const auto getModuleFunc = reinterpret_cast<GetModuleFunc>(dynamicLib.GetSymbol("GetModule"));
-        if (getModuleFunc == nullptr) {
-            return nullptr;
-        }
-
-        ModuleRuntimeInfo moduleRuntimeInfo;
-        moduleRuntimeInfo.instance = getModuleFunc();
-        moduleRuntimeInfo.dynamicLib = std::move(dynamicLib);
-        moduleRuntimeInfo.instance->OnLoad();
-
-        loadedModules.emplace(moduleName, std::move(moduleRuntimeInfo));
         return loadedModules.at(moduleName).instance;
     }
 
@@ -71,6 +52,63 @@ namespace Core {
             return nullptr;
         }
         return iter->second.instance;
+    }
+
+    Module* ModuleManager::GetOrLoad(const std::string& moduleName)
+    {
+        auto* result = FindOrLoad(moduleName);
+        Assert(result);
+        return result;
+    }
+
+    Module* ModuleManager::Get(const std::string& moduleName)
+    {
+        auto* result = Find(moduleName);
+        Assert(result);
+        return result;
+    }
+
+    void ModuleManager::Register(const std::string& inName, Module& inStaticModule)
+    {
+        if (loadedModules.contains(inName)) {
+            return;
+        }
+
+        ModuleRuntimeInfo moduleRuntimeInfo {};
+        moduleRuntimeInfo.instance = &inStaticModule;
+        moduleRuntimeInfo.instance->OnLoad();
+        loadedModules.emplace(inName, std::move(moduleRuntimeInfo));
+    }
+
+    bool ModuleManager::Load(const std::string& moduleName)
+    {
+        if (loadedModules.contains(moduleName)) {
+            return true;
+        }
+
+        const std::optional<std::string> modulePath = SearchModule(moduleName);
+        if (!modulePath.has_value()) {
+            return false;
+        }
+
+        Common::DynamicLibrary dynamicLib = Common::DynamicLibraryFinder::Find(modulePath.value());
+        if (!dynamicLib.IsValid()) {
+            return false;
+        }
+        dynamicLib.Load();
+
+        const auto getModuleFunc = reinterpret_cast<GetModuleFunc>(dynamicLib.GetSymbol("GetModule"));
+        if (getModuleFunc == nullptr) {
+            return false;
+        }
+
+        ModuleRuntimeInfo moduleRuntimeInfo {};
+        moduleRuntimeInfo.instance = getModuleFunc();
+        moduleRuntimeInfo.dynamicLib = std::move(dynamicLib);
+        moduleRuntimeInfo.instance->OnLoad();
+
+        loadedModules.emplace(moduleName, std::move(moduleRuntimeInfo));
+        return true;
     }
 
     void ModuleManager::Unload(const std::string& moduleName)

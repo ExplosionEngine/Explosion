@@ -13,8 +13,5 @@ namespace Editor {
 
     public:
         QProjectSelector();
-        ~QProjectSelector() override;
-
-    private:
     };
 }

@@ -10,6 +10,4 @@ namespace Editor {
     {
         resize(1280, 720);
     }
-
-    QProjectSelector::~QProjectSelector() = default;
 }

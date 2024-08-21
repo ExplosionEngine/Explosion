@@ -80,6 +80,7 @@ namespace Runtime {
     };
 
     class World;
+    class Ticker;
 
     template <typename... Args>
     class CompView {
@@ -141,17 +142,19 @@ namespace Runtime {
 
     class RUNTIME_API World {
     public:
-        NonCopyable(World)
         explicit World(std::string inName = "");
         ~World();
 
+        DefaultCopyable(World)
+        DefaultMovable(World)
+
         template <SystemDerived System, typename... Args> void AddSystem(Args&&... inSystemArgs);
         template <EventDerived E, typename... Args> void BroadcastEvent(Args&&... inEventArgs);
-        void Duplicate(World& inWorld) const;
 
         void Start();
         void Stop();
         void Tick(float inFrameTimeMs);
+        bool Started() const;
 
     private:
         // TODO

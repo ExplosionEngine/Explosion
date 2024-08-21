@@ -20,10 +20,15 @@ namespace RHI::Dummy {
         delete gInstance;
     }
 
+    Core::ModuleType DummyRHIModule::Type() const
+    {
+        return Core::ModuleType::mDynamic;
+    }
+
     Instance* DummyRHIModule::GetRHIInstance() // NOLINT
     {
         return gInstance;
     }
 }
 
-IMPLEMENT_MODULE(RHI_DUMMY_API, RHI::Dummy::DummyRHIModule);
+IMPLEMENT_DYNAMIC_MODULE(RHI_DUMMY_API, RHI::Dummy::DummyRHIModule);
