@@ -3,7 +3,15 @@
 //
 
 #include <WorldTest.h>
+#include <Runtime/Engine.h>
 #include <Test/Test.h>
+
+struct WorldTest : testing::Test {
+    void SetUp() override
+    {
+        Runtime::EngineHolder::Load("RuntimeTest", {});
+    }
+};
 
 void BasicSetupSystem::Execute(Runtime::Commands& commands, const Runtime::WorldStart&) // NOLINT
 {
@@ -16,7 +24,7 @@ void BasicSetupSystem::Execute(Runtime::Commands& commands, const Runtime::World
 
 StartVerify BasicTickSystem::Execute(Runtime::Commands& commands, const Runtime::WorldTick&) // NOLINT
 {
-    IterTimeCount& count = commands.GetState<IterTimeCount>();
+    auto& count = commands.GetState<IterTimeCount>();
     count.value += 1;
 
     auto view = commands.View<Position, Velocity>();
@@ -38,7 +46,7 @@ void PositionVerifySystem::Execute(Runtime::Commands& commands, const StartVerif
     });
 }
 
-TEST(WorldTest, ECSBasic)
+TEST_F(WorldTest, ECSBasic)
 {
     Runtime::World world;
     world.AddSystem<BasicSetupSystem>();

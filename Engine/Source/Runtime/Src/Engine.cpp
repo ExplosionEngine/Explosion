@@ -29,6 +29,18 @@ namespace Runtime {
 
     Engine* EngineHolder::engine = nullptr;
 
+    MinEngine::MinEngine(const EngineInitParams& inParams)
+        : Engine(inParams)
+    {
+    }
+
+    MinEngine::~MinEngine() = default;
+
+    bool MinEngine::IsEditor()
+    {
+        return false;
+    }
+
     void EngineHolder::Load(const std::string& inModuleName, const EngineInitParams& inInitParams)
     {
         Assert(engine == nullptr);

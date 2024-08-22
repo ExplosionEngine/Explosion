@@ -4,7 +4,7 @@
 
 #include <QApplication>
 #include <Editor/Core.h>
-#include <Editor/Widget/ProjectSelector.h>
+#include <Editor/Widget/Launcher.h>
 
 int main(int argc, char* argv[])
 {
@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 
     Common::UniqueRef<QWidget> mainWindow;
     if (!Editor::Core::Get().ProjectHasSet()) {
-        mainWindow = new Editor::QProjectSelector();
+        mainWindow = new Editor::Launcher();
     } else {
         // TODO editor main
     }

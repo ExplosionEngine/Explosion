@@ -31,8 +31,16 @@ namespace Runtime {
         std::unordered_set<World*> worlds;
     };
 
+    class RUNTIME_API MinEngine final : public Engine {
+    public:
+        explicit MinEngine(const EngineInitParams& inParams);
+        ~MinEngine() override;
+        
+        bool IsEditor() override;
+    };
+
     struct RUNTIME_API IGameModule : Core::Module { // NOLINT
-        virtual Engine* CreateEngine(const EngineInitParams&) = 0;
+        virtual Engine* CreateEngine(const EngineInitParams& inParams) = 0;
     };
 
     class RUNTIME_API EngineHolder {

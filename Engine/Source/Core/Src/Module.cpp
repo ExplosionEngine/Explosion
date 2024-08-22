@@ -132,10 +132,10 @@ namespace Core {
     std::optional<std::string> ModuleManager::SearchModule(const std::string& moduleName)
     {
         const std::vector searchPaths = {
-            Paths::EngineBinariesPath(),
-            Paths::ProjectBinariesPath(),
-            Paths::EnginePluginPath(),
-            Paths::ProjectPluginPath()
+            Paths::EngineBin(),
+            Paths::ProjectBin(),
+            Paths::EnginePlugin(),
+            Paths::ProjectPlugin()
         };
         const std::filesystem::path workingDir = Paths::WorkingDir();
 

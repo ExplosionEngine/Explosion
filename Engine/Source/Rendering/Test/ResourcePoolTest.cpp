@@ -8,7 +8,7 @@
 
 using namespace Rendering;
 
-struct ResourcePoolTest : public testing::Test {
+struct ResourcePoolTest : testing::Test {
     void SetUp() override
     {
         instance = RHI::Instance::GetByType(RHI::RHIType::dummy);
