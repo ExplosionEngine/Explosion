@@ -46,7 +46,7 @@ namespace Editor {
         return colorBackground;
     }
 
-    auto defaultTheme = Theme();
+    Theme defaultTheme = Theme(); // NOLINT
 
     void ThemeSwitcher::Set(const Theme& inTheme)
     {

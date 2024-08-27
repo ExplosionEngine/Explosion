@@ -84,6 +84,7 @@ namespace Common {
         const std::vector<uint8_t>& bytes;
     };
 
+    // TODO maybe there is a better way to do this ?
     template <typename T>
     struct Serializer {
         static constexpr bool serializable = false;

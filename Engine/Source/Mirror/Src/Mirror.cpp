@@ -566,6 +566,31 @@ namespace Mirror {
         return std::get<Any*>(any)->RemovePointerType();
     }
 
+    Id::Id()
+        : hash(0)
+    {
+    }
+
+    Id::Id(std::string inName)
+        : hash(Common::HashUtils::StrCrc32(inName))
+        , name(std::move(inName))
+    {
+    }
+
+    bool Id::operator==(const Id& inRhs) const
+    {
+        return hash == inRhs.hash;
+    }
+
+    size_t IdHashProvider::operator()(const Id& inId) const noexcept
+    {
+        return inId.hash;
+    }
+
+    const Id NamePresets::globalScope = Id("_globalScope");
+    const Id NamePresets::detor = Id("_detor");
+    const Id NamePresets::defaultCtor = Id("_defaultCtor");
+
     Type::Type(std::string inName) : name(std::move(inName)) {}
 
     Type::~Type() = default;
@@ -587,7 +612,7 @@ namespace Mirror {
         std::stringstream stream;
         uint32_t count = 0;
         for (const auto& [key, value] : metas) {
-            stream << fmt::format("{}={}", key, value);
+            stream << fmt::format("{}={}", key.name, value);
 
             count++;
             if (count != metas.size()) {
@@ -777,7 +802,7 @@ namespace Mirror {
     }
 
     Destructor::Destructor(ConstructParams&& params)
-        : Type(std::string(NamePresets::detor))
+        : Type(std::string(NamePresets::detor.name))
         , destructor(std::move(params.destructor))
     {
     }
@@ -873,22 +898,22 @@ namespace Mirror {
         return invoker(object, arguments);
     }
 
-    GlobalScope::GlobalScope() : Type(std::string(NamePresets::globalScope)) {}
+    GlobalScope::GlobalScope() : Type(std::string(NamePresets::globalScope.name)) {}
 
     GlobalScope::~GlobalScope() = default;
 
-    Variable& GlobalScope::EmplaceVariable(const std::string& inName, Variable::ConstructParams&& inParams)
+    Variable& GlobalScope::EmplaceVariable(const Id& inId, Variable::ConstructParams&& inParams)
     {
-        Assert(!variables.contains(inName));
-        variables.emplace(inName, Variable(std::move(inParams)));
-        return variables.at(inName);
+        Assert(!variables.contains(inId));
+        variables.emplace(inId, Variable(std::move(inParams)));
+        return variables.at(inId);
     }
 
-    Function& GlobalScope::EmplaceFunction(const std::string& inName, Function::ConstructParams&& inParams)
+    Function& GlobalScope::EmplaceFunction(const Id& inId, Function::ConstructParams&& inParams)
     {
-        Assert(!functions.contains(inName));
-        functions.emplace(inName, Function(std::move(inParams)));
-        return functions.at(inName);
+        Assert(!functions.contains(inId));
+        functions.emplace(inId, Function(std::move(inParams)));
+        return functions.at(inId);
     }
 
     const GlobalScope& GlobalScope::Get()
@@ -898,55 +923,55 @@ namespace Mirror {
 
     void GlobalScope::ForEachVariable(const VariableTraverser& func) const
     {
-        for (const auto& [name, variable] : variables) {
+        for (const auto& [id, variable] : variables) {
             func(variable);
         }
     }
 
     void GlobalScope::ForEachFunction(const FunctionTraverser& func) const
     {
-        for (const auto& [name, function] : functions) {
+        for (const auto& [id, function] : functions) {
             func(function);
         }
     }
 
-    bool GlobalScope::HasVariable(const std::string& name) const
+    bool GlobalScope::HasVariable(const Id& inId) const
     {
-        return variables.contains(name);
+        return variables.contains(inId);
     }
 
-    const Variable* GlobalScope::FindVariable(const std::string& name) const
+    const Variable* GlobalScope::FindVariable(const Id& inId) const
     {
-        const auto iter = variables.find(name);
+        const auto iter = variables.find(inId);
         return iter == variables.end() ? nullptr : &iter->second;
     }
 
-    const Variable& GlobalScope::GetVariable(const std::string& name) const
+    const Variable& GlobalScope::GetVariable(const Id& inId) const
     {
-        const auto iter = variables.find(name);
+        const auto iter = variables.find(inId);
         Assert(iter != variables.end());
         return iter->second;
     }
 
-    bool GlobalScope::HasFunction(const std::string& name) const
+    bool GlobalScope::HasFunction(const Id& inId) const
     {
-        return functions.contains(name);
+        return functions.contains(inId);
     }
 
-    const Function* GlobalScope::FindFunction(const std::string& name) const
+    const Function* GlobalScope::FindFunction(const Id& inId) const
     {
-        const auto iter = functions.find(name);
+        const auto iter = functions.find(inId);
         return iter == functions.end() ? nullptr : &iter->second;
     }
 
-    const Function& GlobalScope::GetFunction(const std::string& name) const
+    const Function& GlobalScope::GetFunction(const Id& inId) const
     {
-        const auto iter = functions.find(name);
+        const auto iter = functions.find(inId);
         Assert(iter != functions.end());
         return iter->second;
     }
 
-    std::unordered_map<TypeId, std::string> Class::typeToNameMap = {};
+    std::unordered_map<TypeId, Id> Class::typeToIdMap = {};
 
     Class::Class(ConstructParams&& params)
         : Type(std::move(params.name))
@@ -964,23 +989,23 @@ namespace Mirror {
         }
     }
 
-    bool Class::Has(const std::string& name)
+    bool Class::Has(const Id& inId)
     {
         const auto& classes = Registry::Get().classes;
-        return classes.contains(name);
+        return classes.contains(inId);
     }
 
-    const Class* Class::Find(const std::string& name)
+    const Class* Class::Find(const Id& inId)
     {
         const auto& classes = Registry::Get().classes;
-        const auto iter = classes.find(name);
+        const auto iter = classes.find(inId);
         return iter == classes.end() ? nullptr : &iter->second;
     }
 
-    const Class& Class::Get(const std::string& name)
+    const Class& Class::Get(const Id& inId)
     {
         const auto& classes = Registry::Get().classes;
-        const auto iter = classes.find(name);
+        const auto iter = classes.find(inId);
         Assert(iter != classes.end());
         return iter->second;
     }
@@ -988,7 +1013,7 @@ namespace Mirror {
     bool Class::Has(const TypeInfo* typeInfo)
     {
         Assert(typeInfo != nullptr && typeInfo->isClass && !typeInfo->isConst);
-        return typeToNameMap.contains(typeInfo->id); // NOLINT
+        return typeToIdMap.contains(typeInfo->id); // NOLINT
     }
 
     const Class* Class::Find(const TypeInfo* typeInfo)
@@ -1005,8 +1030,8 @@ namespace Mirror {
 
     bool Class::Has(TypeId typeId)
     {
-        const auto iter = typeToNameMap.find(typeId);
-        if (iter == typeToNameMap.end()) {
+        const auto iter = typeToIdMap.find(typeId);
+        if (iter == typeToIdMap.end()) {
             return false;
         }
         return Has(iter->second);
@@ -1014,8 +1039,8 @@ namespace Mirror {
 
     const Class* Class::Find(const TypeId typeId)
     {
-        const auto iter = typeToNameMap.find(typeId);
-        if (iter == typeToNameMap.end()) {
+        const auto iter = typeToIdMap.find(typeId);
+        if (iter == typeToIdMap.end()) {
             return nullptr;
         }
         return Find(iter->second);
@@ -1023,8 +1048,8 @@ namespace Mirror {
 
     const Class& Class::Get(TypeId typeId)
     {
-        const auto iter = typeToNameMap.find(typeId);
-        AssertWithReason(iter != typeToNameMap.end(), "did you forget add EClass() annotation to class ?");
+        const auto iter = typeToIdMap.find(typeId);
+        AssertWithReason(iter != typeToIdMap.end(), "did you forget add EClass() annotation to class ?");
         return Get(iter->second);
     }
 
@@ -1033,7 +1058,7 @@ namespace Mirror {
         const auto& classes = Registry::Get().classes;
         std::vector<const Class*> result;
         result.reserve(classes.size());
-        for (const auto& [name, clazz] : classes) {
+        for (const auto& [id, clazz] : classes) {
             result.emplace_back(&clazz);
         }
         return result;
@@ -1044,7 +1069,7 @@ namespace Mirror {
         const auto& classes = Registry::Get().classes;
         std::vector<const Class*> result;
         result.reserve(classes.size());
-        for (const auto& [name, clazz] : classes) {
+        for (const auto& [id, clazz] : classes) {
             if (clazz.HasMeta("category") && clazz.GetMeta("category") == category) {
                 result.emplace_back(&clazz);
             }
@@ -1056,28 +1081,28 @@ namespace Mirror {
 
     void Class::ForEachStaticVariable(const VariableTraverser& func) const
     {
-        for (const auto& [name, variable] : staticVariables) {
+        for (const auto& [id, variable] : staticVariables) {
             func(variable);
         }
     }
 
     void Class::ForEachStaticFunction(const FunctionTraverser& func) const
     {
-        for (const auto& [name, function] : staticFunctions) {
+        for (const auto& [id, function] : staticFunctions) {
             func(function);
         }
     }
 
     void Class::ForEachMemberVariable(const MemberVariableTraverser& func) const
     {
-        for (const auto& [name, memberVariable] : memberVariables) {
+        for (const auto& [id, memberVariable] : memberVariables) {
             func(memberVariable);
         }
     }
 
     void Class::ForEachMemberFunction(const MemberFunctionTraverser& func) const
     {
-        for (const auto& [name, memberFunction] : memberFunctions) {
+        for (const auto& [id, memberFunction] : memberFunctions) {
             func(memberFunction);
         }
     }
@@ -1094,39 +1119,39 @@ namespace Mirror {
         return destructor.value();
     }
 
-    Constructor& Class::EmplaceConstructor(const std::string& inName, Constructor::ConstructParams&& inParams)
+    Constructor& Class::EmplaceConstructor(const Id& inId, Constructor::ConstructParams&& inParams)
     {
-        Assert(!constructors.contains(inName));
-        constructors.emplace(inName, Constructor(std::move(inParams)));
-        return constructors.at(inName);
+        Assert(!constructors.contains(inId));
+        constructors.emplace(inId, Constructor(std::move(inParams)));
+        return constructors.at(inId);
     }
 
-    Variable& Class::EmplaceStaticVariable(const std::string& inName, Variable::ConstructParams&& inParams)
+    Variable& Class::EmplaceStaticVariable(const Id& inId, Variable::ConstructParams&& inParams)
     {
-        Assert(!staticVariables.contains(inName));
-        staticVariables.emplace(inName, Variable(std::move(inParams)));
-        return staticVariables.at(inName);
+        Assert(!staticVariables.contains(inId));
+        staticVariables.emplace(inId, Variable(std::move(inParams)));
+        return staticVariables.at(inId);
     }
 
-    Function& Class::EmplaceStaticFunction(const std::string& inName, Function::ConstructParams&& inParams)
+    Function& Class::EmplaceStaticFunction(const Id& inId, Function::ConstructParams&& inParams)
     {
-        Assert(!staticFunctions.contains(inName));
-        staticFunctions.emplace(inName, Function(std::move(inParams)));
-        return staticFunctions.at(inName);
+        Assert(!staticFunctions.contains(inId));
+        staticFunctions.emplace(inId, Function(std::move(inParams)));
+        return staticFunctions.at(inId);
     }
 
-    MemberVariable& Class::EmplaceMemberVariable(const std::string& inName, MemberVariable::ConstructParams&& inParams)
+    MemberVariable& Class::EmplaceMemberVariable(const Id& inId, MemberVariable::ConstructParams&& inParams)
     {
-        Assert(!memberVariables.contains(inName));
-        memberVariables.emplace(inName, MemberVariable(std::move(inParams)));
-        return memberVariables.at(inName);
+        Assert(!memberVariables.contains(inId));
+        memberVariables.emplace(inId, MemberVariable(std::move(inParams)));
+        return memberVariables.at(inId);
     }
 
-    MemberFunction& Class::EmplaceMemberFunction(const std::string& inName, MemberFunction::ConstructParams&& inParams)
+    MemberFunction& Class::EmplaceMemberFunction(const Id& inId, MemberFunction::ConstructParams&& inParams)
     {
-        Assert(!memberFunctions.contains(inName));
-        memberFunctions.emplace(inName, MemberFunction(std::move(inParams)));
-        return memberFunctions.at(inName);
+        Assert(!memberFunctions.contains(inId));
+        memberFunctions.emplace(inId, MemberFunction(std::move(inParams)));
+        return memberFunctions.at(inId);
     }
 
     const TypeInfo* Class::GetTypeInfo() const
@@ -1187,9 +1212,9 @@ namespace Mirror {
         return destructor.value(); // NOLINT
     }
 
-    bool Class::HasConstructor(const std::string& name) const
+    bool Class::HasConstructor(const Id& inId) const
     {
-        return constructors.contains(name);
+        return constructors.contains(inId);
     }
 
     const Constructor* Class::FindSuitableConstructor(const ArgumentList& arguments) const
@@ -1236,87 +1261,87 @@ namespace Mirror {
         return constructor->NewDyn(arguments);
     }
 
-    const Constructor* Class::FindConstructor(const std::string& name) const
+    const Constructor* Class::FindConstructor(const Id& inId) const
     {
-        const auto iter = constructors.find(name);
+        const auto iter = constructors.find(inId);
         return iter == constructors.end() ? nullptr : &iter->second;
     }
 
-    const Constructor& Class::GetConstructor(const std::string& name) const
+    const Constructor& Class::GetConstructor(const Id& inId) const
     {
-        const auto iter = constructors.find(name);
+        const auto iter = constructors.find(inId);
         Assert(iter != constructors.end());
         return iter->second;
     }
 
-    bool Class::HasStaticVariable(const std::string& name) const
+    bool Class::HasStaticVariable(const Id& inId) const
     {
-        return staticVariables.contains(name);
+        return staticVariables.contains(inId);
     }
 
-    const Variable* Class::FindStaticVariable(const std::string& name) const
+    const Variable* Class::FindStaticVariable(const Id& inId) const
     {
-        const auto iter = staticVariables.find(name);
+        const auto iter = staticVariables.find(inId);
         return iter == staticVariables.end() ? nullptr : &iter->second;
     }
 
-    const Variable& Class::GetStaticVariable(const std::string& name) const
+    const Variable& Class::GetStaticVariable(const Id& inId) const
     {
-        const auto iter = staticVariables.find(name);
+        const auto iter = staticVariables.find(inId);
         Assert(iter != staticVariables.end());
         return iter->second;
     }
 
-    bool Class::HasStaticFunction(const std::string& name) const
+    bool Class::HasStaticFunction(const Id& inId) const
     {
-        return staticFunctions.contains(name);
+        return staticFunctions.contains(inId);
     }
 
-    const Function* Class::FindStaticFunction(const std::string& name) const
+    const Function* Class::FindStaticFunction(const Id& inId) const
     {
-        const auto iter = staticFunctions.find(name);
+        const auto iter = staticFunctions.find(inId);
         return iter == staticFunctions.end() ? nullptr : &iter->second;
     }
 
-    const Function& Class::GetStaticFunction(const std::string& name) const
+    const Function& Class::GetStaticFunction(const Id& inId) const
     {
-        const auto iter = staticFunctions.find(name);
+        const auto iter = staticFunctions.find(inId);
         Assert(iter != staticFunctions.end());
         return iter->second;
     }
 
-    bool Class::HasMemberVariable(const std::string& name) const
+    bool Class::HasMemberVariable(const Id& inId) const
     {
-        return memberVariables.contains(name);
+        return memberVariables.contains(inId);
     }
 
-    const MemberVariable* Class::FindMemberVariable(const std::string& name) const
+    const MemberVariable* Class::FindMemberVariable(const Id& inId) const
     {
-        const auto iter = memberVariables.find(name);
+        const auto iter = memberVariables.find(inId);
         return iter == memberVariables.end() ? nullptr : &iter->second;
     }
 
-    const MemberVariable& Class::GetMemberVariable(const std::string& name) const
+    const MemberVariable& Class::GetMemberVariable(const Id& inId) const
     {
-        const auto iter = memberVariables.find(name);
+        const auto iter = memberVariables.find(inId);
         Assert(iter != memberVariables.end());
         return iter->second;
     }
 
-    bool Class::HasMemberFunction(const std::string& name) const
+    bool Class::HasMemberFunction(const Id& inId) const
     {
-        return memberFunctions.contains(name);
+        return memberFunctions.contains(inId);
     }
 
-    const MemberFunction* Class::FindMemberFunction(const std::string& name) const
+    const MemberFunction* Class::FindMemberFunction(const Id& inId) const
     {
-        const auto iter = memberFunctions.find(name);
+        const auto iter = memberFunctions.find(inId);
         return iter == memberFunctions.end() ? nullptr : &iter->second;
     }
 
-    const MemberFunction& Class::GetMemberFunction(const std::string& name) const
+    const MemberFunction& Class::GetMemberFunction(const Id& inId) const
     {
-        const auto iter = memberFunctions.find(name);
+        const auto iter = memberFunctions.find(inId);
         Assert(iter != memberFunctions.end());
         return iter->second;
     }
@@ -1335,12 +1360,12 @@ namespace Mirror {
         Common::Serializer<std::string>::Serialize(stream, name);
         Common::Serializer<uint64_t>::Serialize(stream, memberVariablesNum);
 
-        for (const auto& [name, memberVariable] : memberVariables) {
+        for (const auto& [id, memberVariable] : memberVariables) {
             if (memberVariable.IsTransient()) {
                 continue;
             }
 
-            Common::Serializer<std::string>::Serialize(stream, name);
+            Common::Serializer<std::string>::Serialize(stream, id.name);
 
             const bool sameWithDefaultObject = memberVariable.GetDyn(obj) == defaultObject.value();
             Common::Serializer<bool>::Serialize(stream, sameWithDefaultObject);
@@ -1425,22 +1450,22 @@ namespace Mirror {
         return comparer(argument);
     }
 
-    const Enum* Enum::Find(const std::string& name)
+    const Enum* Enum::Find(const Id& inId)
     {
         const auto& enums = Registry::Get().enums;
-        const auto iter = enums.find(name);
+        const auto iter = enums.find(inId);
         return iter == enums.end() ? nullptr : &iter->second;
     }
 
-    const Enum& Enum::Get(const std::string& name)
+    const Enum& Enum::Get(const Id& inId)
     {
         const auto& enums = Registry::Get().enums;
-        const auto iter = enums.find(name);
+        const auto iter = enums.find(inId);
         Assert(iter != enums.end());
         return iter->second;
     }
 
-    std::unordered_map<TypeId, std::string> Enum::typeToNameMap = {};
+    std::unordered_map<TypeId, Id> Enum::typeToIdMap = {};
 
     Enum::Enum(ConstructParams&& params)
         : Type(std::move(params.name))
@@ -1455,28 +1480,28 @@ namespace Mirror {
         return typeInfo;
     }
 
-    Any Enum::GetElement(const std::string& name) const
+    Any Enum::GetElement(const Id& inId) const
     {
-        const auto iter = elements.find(name);
+        const auto iter = elements.find(inId);
         Assert(iter != elements.end());
         return iter->second.Get();
     }
 
     std::string Enum::GetElementName(const Argument& argument) const
     {
-        for (const auto& [name, element] : elements) {
+        for (const auto& [id, element] : elements) {
             if (element.Compare(argument)) {
-                return name;
+                return id.name;
             }
         }
         QuickFail();
         return "";
     }
 
-    EnumElement& Enum::EmplaceElement(const std::string& inName, EnumElement::ConstructParams&& inParams)
+    EnumElement& Enum::EmplaceElement(const Id& inId, EnumElement::ConstructParams&& inParams)
     {
-        Assert(!elements.contains(inName));
-        elements.emplace(inName, EnumElement(std::move(inParams)));
-        return elements.at(inName);
+        Assert(!elements.contains(inId));
+        elements.emplace(inId, EnumElement(std::move(inParams)));
+        return elements.at(inId);
     }
 }

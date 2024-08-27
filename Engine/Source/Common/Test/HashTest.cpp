@@ -19,3 +19,9 @@ TEST(HashTest, StrCrc32Test)
     ASSERT_EQ(Common::HashUtils::StrCrc32("hello"), 0x3610a686);
     ASSERT_EQ(Common::HashUtils::StrCrc32("explosion game engine"), 0xdb39167f);
 }
+
+TEST(HashTest, StrCrc32DynTest)
+{
+    ASSERT_EQ(Common::HashUtils::StrCrc32(std::string("hello")), 0x3610a686);
+    ASSERT_EQ(Common::HashUtils::StrCrc32(std::string("explosion game engine")), 0xdb39167f);
+}

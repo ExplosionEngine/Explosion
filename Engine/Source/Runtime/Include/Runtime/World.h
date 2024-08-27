@@ -268,7 +268,7 @@ namespace Runtime {
     {
         auto* clazz = Internal::GetClassChecked<S>();
         auto iter = world.states.find(clazz);
-        return iter == world.states.end() ? nullptr : &iter->second.As<S&>();
+        return iter == world.states.end() ? nullptr : &iter->second.template As<S&>();
     }
 
     template <StateDerived S>
@@ -276,21 +276,21 @@ namespace Runtime {
     {
         auto* clazz = Internal::GetClassChecked<S>();
         auto iter = world.states.find(clazz);
-        return iter == world.states.end() ? nullptr : &iter->second.As<const S&>();
+        return iter == world.states.end() ? nullptr : &iter->second.template As<const S&>();
     }
 
     template <StateDerived S>
     S& Commands::GetState()
     {
         Assert(HasState<S>());
-        return world.states.at(Internal::GetClassChecked<S>()).As<S&>();
+        return world.states.at(Internal::GetClassChecked<S>()).template As<S&>();
     }
 
     template <StateDerived S>
     const S& Commands::GetState() const
     {
         Assert(HasState<S>());
-        return world.states.at(Internal::GetClassChecked<S>()).As<const S&>();
+        return world.states.at(Internal::GetClassChecked<S>()).template As<const S&>();
     }
 
     template <CompDerived C>

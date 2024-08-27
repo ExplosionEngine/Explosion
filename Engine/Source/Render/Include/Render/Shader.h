@@ -372,7 +372,7 @@ namespace Render {
     void GlobalShaderType<Shader>::ReadCode()
     {
         static std::unordered_map<std::string, std::string> pathMap = {
-            { "/Engine/Shader", Core::Paths::EngineShaderPath().string() }
+            { "/Engine/Shader", Core::Paths::EngineShader().string() }
         };
 
         const std::string sourceFile = Shader::sourceFile;

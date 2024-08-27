@@ -105,13 +105,25 @@ TEST(ContainerTest, HeapVectorIter)
         int32_t a;
         uint32_t b;
 
+        S0()
+            : a(0)
+            , b(0)
+        {
+        }
+
+        S0(int32_t inA, uint32_t inB)
+            : a(inA)
+            , b(inB)
+        {
+        }
+
         bool operator==(const S0& inOther) const
         {
             return a == inOther.a && b == inOther.b;
         }
     };
 
-    InplaceVector<S0, 10> t0(3, {});
+    InplaceVector<S0, 10> t0(3, S0 {});
     ASSERT_EQ(t0.Capacity(), 10);
     ASSERT_EQ(t0.Size(), 3);
 

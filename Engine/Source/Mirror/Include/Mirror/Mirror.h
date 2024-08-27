@@ -72,12 +72,6 @@ namespace Mirror {
     MIRROR_API bool PolymorphismConvertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType);
     MIRROR_API bool Convertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType);
 
-    struct NamePresets {
-        static constexpr auto globalScope = "_globalScope";
-        static constexpr auto detor = "_detor";
-        static constexpr auto defaultCtor = "_defaultCtor";
-    };
-
     enum class AnyPolicy : uint8_t {
         memoryHolder,
         ref,
@@ -282,6 +276,27 @@ namespace Mirror {
 
     using ArgumentList = std::vector<Argument>;
 
+    struct MIRROR_API Id {
+        Id();
+        template <size_t N> Id(const char (&inName)[N]); // NOLINT
+        Id(std::string inName); // NOLINT
+
+        bool operator==(const Id& inRhs) const;
+
+        size_t hash;
+        std::string name;
+    };
+
+    struct MIRROR_API IdHashProvider {
+        size_t operator()(const Id& inId) const noexcept;
+    };
+
+    struct MIRROR_API NamePresets {
+        static const Id globalScope;
+        static const Id detor;
+        static const Id defaultCtor;
+    };
+
     class MIRROR_API Type {
     public:
         virtual ~Type();
@@ -302,7 +317,7 @@ namespace Mirror {
         template <typename Derived> friend class MetaDataRegistry;
 
         std::string name;
-        std::unordered_map<std::string, std::string> metas;
+        std::unordered_map<Id, std::string, IdHashProvider> metas;
     };
 
     class MIRROR_API Variable final : public Type {
@@ -547,24 +562,24 @@ namespace Mirror {
 
         void ForEachVariable(const VariableTraverser& func) const;
         void ForEachFunction(const FunctionTraverser& func) const;
-        bool HasVariable(const std::string& name) const;
-        const Variable* FindVariable(const std::string& name) const;
-        const Variable& GetVariable(const std::string& name) const;
-        bool HasFunction(const std::string& name) const;
-        const Function* FindFunction(const std::string& name) const;
-        const Function& GetFunction(const std::string& name) const;
+        bool HasVariable(const Id& inId) const;
+        const Variable* FindVariable(const Id& inId) const;
+        const Variable& GetVariable(const Id& inId) const;
+        bool HasFunction(const Id& inId) const;
+        const Function* FindFunction(const Id& inId) const;
+        const Function& GetFunction(const Id& inId) const;
 
     private:
         friend class Registry;
         friend class GlobalRegistry;
 
-        Variable& EmplaceVariable(const std::string& inName, Variable::ConstructParams&& inParams);
-        Function& EmplaceFunction(const std::string& inName, Function::ConstructParams&& inParams);
+        Variable& EmplaceVariable(const Id& inId, Variable::ConstructParams&& inParams);
+        Function& EmplaceFunction(const Id& inId, Function::ConstructParams&& inParams);
 
         GlobalScope();
 
-        std::unordered_map<std::string, Variable> variables;
-        std::unordered_map<std::string, Function> functions;
+        std::unordered_map<Id, Variable, IdHashProvider> variables;
+        std::unordered_map<Id, Function, IdHashProvider> functions;
     };
 
     class MIRROR_API Class final : public Type {
@@ -573,9 +588,9 @@ namespace Mirror {
         template <Common::CppClass C> static const Class* Find();
         template <Common::CppClass C> static const Class& Get();
 
-        static bool Has(const std::string& name);
-        static const Class* Find(const std::string& name);
-        static const Class& Get(const std::string& name);
+        static bool Has(const Id& inId);
+        static const Class* Find(const Id& inId);
+        static const Class& Get(const Id& inId);
         static bool Has(const TypeInfo* typeInfo);
         static const Class* Find(const TypeInfo* typeInfo);
         static const Class& Get(const TypeInfo* typeInfo);
@@ -606,22 +621,22 @@ namespace Mirror {
         bool HasDestructor() const;
         const Destructor* FindDestructor() const;
         const Destructor& GetDestructor() const;
-        bool HasConstructor(const std::string& name) const;
+        bool HasConstructor(const Id& inId) const;
         const Constructor* FindSuitableConstructor(const ArgumentList& arguments) const;
-        const Constructor* FindConstructor(const std::string& name) const;
-        const Constructor& GetConstructor(const std::string& name) const;
-        bool HasStaticVariable(const std::string& name) const;
-        const Variable* FindStaticVariable(const std::string& name) const;
-        const Variable& GetStaticVariable(const std::string& name) const;
-        bool HasStaticFunction(const std::string& name) const;
-        const Function* FindStaticFunction(const std::string& name) const;
-        const Function& GetStaticFunction(const std::string& name) const;
-        bool HasMemberVariable(const std::string& name) const;
-        const MemberVariable* FindMemberVariable(const std::string& name) const;
-        const MemberVariable& GetMemberVariable(const std::string& name) const;
-        bool HasMemberFunction(const std::string& name) const;
-        const MemberFunction* FindMemberFunction(const std::string& name) const;
-        const MemberFunction& GetMemberFunction(const std::string& name) const;
+        const Constructor* FindConstructor(const Id& inId) const;
+        const Constructor& GetConstructor(const Id& inId) const;
+        bool HasStaticVariable(const Id& inId) const;
+        const Variable* FindStaticVariable(const Id& inId) const;
+        const Variable& GetStaticVariable(const Id& inId) const;
+        bool HasStaticFunction(const Id& inId) const;
+        const Function* FindStaticFunction(const Id& inId) const;
+        const Function& GetStaticFunction(const Id& inId) const;
+        bool HasMemberVariable(const Id& inId) const;
+        const MemberVariable* FindMemberVariable(const Id& inId) const;
+        const MemberVariable& GetMemberVariable(const Id& inId) const;
+        bool HasMemberFunction(const Id& inId) const;
+        const MemberFunction* FindMemberFunction(const Id& inId) const;
+        const MemberFunction& GetMemberFunction(const Id& inId) const;
 
         Any ConstructDyn(const ArgumentList& arguments) const;
         Any NewDyn(const ArgumentList& arguments) const;
@@ -629,7 +644,7 @@ namespace Mirror {
         void DeserailizeDyn(Common::DeserializeStream& stream, const Argument& obj) const;
 
     private:
-        static std::unordered_map<TypeId, std::string> typeToNameMap;
+        static std::unordered_map<TypeId, Id> typeToIdMap;
 
         friend class Registry;
         template <typename T> friend class ClassRegistry;
@@ -649,21 +664,21 @@ namespace Mirror {
 
         void CreateDefaultObject(const std::function<Any()>& inCreator);
         Destructor& EmplaceDestructor(Destructor::ConstructParams&& inParams);
-        Constructor& EmplaceConstructor(const std::string& inName, Constructor::ConstructParams&& inParams);
-        Variable& EmplaceStaticVariable(const std::string& inName, Variable::ConstructParams&& inParams);
-        Function& EmplaceStaticFunction(const std::string& inName, Function::ConstructParams&& inParams);
-        MemberVariable& EmplaceMemberVariable(const std::string& inName, MemberVariable::ConstructParams&& inParams);
-        MemberFunction& EmplaceMemberFunction(const std::string& inName, MemberFunction::ConstructParams&& inParams);
+        Constructor& EmplaceConstructor(const Id& inId, Constructor::ConstructParams&& inParams);
+        Variable& EmplaceStaticVariable(const Id& inId, Variable::ConstructParams&& inParams);
+        Function& EmplaceStaticFunction(const Id& inId, Function::ConstructParams&& inParams);
+        MemberVariable& EmplaceMemberVariable(const Id& inId, MemberVariable::ConstructParams&& inParams);
+        MemberFunction& EmplaceMemberFunction(const Id& inId, MemberFunction::ConstructParams&& inParams);
 
         const TypeInfo* typeInfo;
         BaseClassGetter baseClassGetter;
         std::optional<Any> defaultObject;
         std::optional<Destructor> destructor;
-        std::unordered_map<std::string, Constructor> constructors;
-        std::unordered_map<std::string, Variable> staticVariables;
-        std::unordered_map<std::string, Function> staticFunctions;
-        std::unordered_map<std::string, MemberVariable> memberVariables;
-        std::unordered_map<std::string, MemberFunction> memberFunctions;
+        std::unordered_map<Id, Constructor, IdHashProvider> constructors;
+        std::unordered_map<Id, Variable, IdHashProvider> staticVariables;
+        std::unordered_map<Id, Function, IdHashProvider> staticFunctions;
+        std::unordered_map<Id, MemberVariable, IdHashProvider> memberVariables;
+        std::unordered_map<Id, MemberFunction, IdHashProvider> memberFunctions;
     };
 
     class MIRROR_API EnumElement final : public Type {
@@ -703,17 +718,17 @@ namespace Mirror {
         template <Common::CppEnum T>
         static const Enum& Get();
 
-        static const Enum* Find(const std::string& name);
-        static const Enum& Get(const std::string& name);
+        static const Enum* Find(const Id& inId);
+        static const Enum& Get(const Id& inId);
 
         ~Enum() override;
 
         const TypeInfo* GetTypeInfo() const;
-        Any GetElement(const std::string& name) const;
+        Any GetElement(const Id& inId) const;
         std::string GetElementName(const Argument& argument) const;
 
     private:
-        static std::unordered_map<TypeId, std::string> typeToNameMap;
+        static std::unordered_map<TypeId, Id> typeToIdMap;
 
         friend class Registry;
         template <typename T> friend class EnumRegistry;
@@ -725,10 +740,10 @@ namespace Mirror {
 
         explicit Enum(ConstructParams&& params);
 
-        EnumElement& EmplaceElement(const std::string& inName, EnumElement::ConstructParams&& inParams);
+        EnumElement& EmplaceElement(const Id& inId, EnumElement::ConstructParams&& inParams);
 
         const TypeInfo* typeInfo;
-        std::unordered_map<std::string, EnumElement> elements;
+        std::unordered_map<Id, EnumElement, IdHashProvider> elements;
     };
 }
 
@@ -1058,6 +1073,13 @@ namespace Mirror {
         return std::get<Any*>(any)->As<T>();
     }
 
+    template <size_t N>
+    Id::Id(const char(&inName)[N])
+        : hash(Common::HashUtils::StrCrc32(inName))
+        , name(inName)
+    {
+    }
+
     template <typename T>
     void Variable::Set(T&& value) const
     {
@@ -1169,16 +1191,16 @@ namespace Mirror {
     template <Common::CppEnum T>
     const Enum* Enum::Find()
     {
-        auto iter = typeToNameMap.find(Mirror::GetTypeInfo<T>()->id);
-        Assert(iter != typeToNameMap.end());
+        auto iter = typeToIdMap.find(Mirror::GetTypeInfo<T>()->id);
+        Assert(iter != typeToIdMap.end());
         return Find(iter->second);
     }
 
     template <Common::CppEnum T>
     const Enum& Enum::Get()
     {
-        auto iter = typeToNameMap.find(Mirror::GetTypeInfo<T>()->id);
-        Assert(iter != typeToNameMap.end());
+        auto iter = typeToIdMap.find(Mirror::GetTypeInfo<T>()->id);
+        Assert(iter != typeToIdMap.end());
         return Get(iter->second);
     }
 }

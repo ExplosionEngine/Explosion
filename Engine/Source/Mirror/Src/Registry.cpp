@@ -28,17 +28,17 @@ namespace Mirror {
         return GlobalRegistry(globalScope);
     }
 
-    Class& Registry::EmplaceClass(const std::string& inName, Class::ConstructParams&& inParams)
+    Class& Registry::EmplaceClass(const Id& inId, Class::ConstructParams&& inParams)
     {
-        Assert(!classes.contains(inName));
-        classes.emplace(inName, Mirror::Class(std::move(inParams)));
-        return classes.at(inName);
+        Assert(!classes.contains(inId));
+        classes.emplace(inId, Mirror::Class(std::move(inParams)));
+        return classes.at(inId);
     }
 
-    Enum& Registry::EmplaceEnum(const std::string& inName, Enum::ConstructParams&& inParams)
+    Enum& Registry::EmplaceEnum(const Id& inId, Enum::ConstructParams&& inParams)
     {
-        Assert(!enums.contains(inName));
-        enums.emplace(inName, Mirror::Enum(std::move(inParams)));
-        return enums.at(inName);
+        Assert(!enums.contains(inId));
+        enums.emplace(inId, Mirror::Enum(std::move(inParams)));
+        return enums.at(inId);
     }
 }

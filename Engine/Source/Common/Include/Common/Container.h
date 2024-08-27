@@ -14,26 +14,16 @@
 namespace Common {
     class VectorUtils {
     public:
-        template <typename T>
-        static typename std::vector<T>::iterator SwapWithLastAndDelete(std::vector<T>& vector, const typename std::vector<T>::iterator& iterator);
-
-        template <typename T>
-        static size_t SwapWithLastAndDelete(std::vector<T>& vector, size_t index);
-
-        template <typename T>
-        static std::vector<T> GetIntersection(const std::vector<T>& lhs, const std::vector<T>& rhs);
+        template <typename T> static typename std::vector<T>::iterator SwapWithLastAndDelete(std::vector<T>& vector, const typename std::vector<T>::iterator& iterator);
+        template <typename T> static size_t SwapWithLastAndDelete(std::vector<T>& vector, size_t index);
+        template <typename T> static std::vector<T> GetIntersection(const std::vector<T>& lhs, const std::vector<T>& rhs);
     };
 
     class SetUtils {
     public:
-        template <typename T>
-        static std::unordered_set<T> GetIntersection(const std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs);
-
-        template <typename T>
-        static std::unordered_set<T> GetUnion(const std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs);
-
-        template <typename T>
-        static void GetUnionInline(std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs);
+        template <typename T> static std::unordered_set<T> GetIntersection(const std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs);
+        template <typename T> static std::unordered_set<T> GetUnion(const std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs);
+        template <typename T> static void GetUnionInline(std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs);
     };
 
     template <typename T>
@@ -47,28 +37,15 @@ namespace Common {
     public:
         using Offset = int64_t;
 
-        template <ValidInplaceVectorIter<T> T2>
-        Offset operator-(const T2& inOther) const;
-
-        template <ValidInplaceVectorIter<T> T2>
-        bool operator==(const T2& inOther) const;
-
-        template <ValidInplaceVectorIter<T> T2>
-        bool operator!=(const T2& inOther) const;
-
-        template <ValidInplaceVectorIter<T> T2>
-        bool operator>(const T2& inOther) const;
-
-        template <ValidInplaceVectorIter<T> T2>
-        bool operator>=(const T2& inOther) const;
-
-        template <ValidInplaceVectorIter<T> T2>
-        bool operator<(const T2& inOther) const;
-
-        template <ValidInplaceVectorIter<T> T2>
-        bool operator<=(const T2& inOther) const;
-
         explicit InplaceVectorIter(T* inPtr);
+
+        template <ValidInplaceVectorIter<T> T2> Offset operator-(const T2& inOther) const;
+        template <ValidInplaceVectorIter<T> T2> bool operator==(const T2& inOther) const;
+        template <ValidInplaceVectorIter<T> T2> bool operator!=(const T2& inOther) const;
+        template <ValidInplaceVectorIter<T> T2> bool operator>(const T2& inOther) const;
+        template <ValidInplaceVectorIter<T> T2> bool operator>=(const T2& inOther) const;
+        template <ValidInplaceVectorIter<T> T2> bool operator<(const T2& inOther) const;
+        template <ValidInplaceVectorIter<T> T2> bool operator<=(const T2& inOther) const;
         T& operator*() const;
         T* operator->() const;
         InplaceVectorIter operator+(Offset inOffset) const;
@@ -103,9 +80,7 @@ namespace Common {
         InplaceVector& operator=(const InplaceVector& inOther);
         InplaceVector& operator=(InplaceVector&& inOther) noexcept;
 
-        template <typename... Args>
-        T& EmplaceBack(Args&&... inArgs);
-
+        template <typename... Args> T& EmplaceBack(Args&&... inArgs);
         T& PushBack(T&& inElement);
         T& PushBack(const T& inElement);
         T& Insert(size_t inIndex, const T& inElement);
@@ -147,30 +122,14 @@ namespace Common {
         static constexpr size_t elementSize = sizeof(T);
         static constexpr size_t memorySize = elementSize * N;
 
-        template <ValidInplaceVectorIter<T> I>
-        void CheckIterValid(const I& inIter) const;
-
-        template <typename... Args>
-        void EmplaceConstruct(size_t inIndex, Args&&... inArgs);
-
-        template <ValidInplaceVectorIter<T> I, typename... Args>
-        void EmplaceConstruct(const I& inIter, Args&&... inArgs);
-
-        template <ValidInplaceVectorIter<T> I>
-        void EmplaceDestruct(const I& inIter);
-
-        template <typename T2>
-        T& InsertInternal(size_t inIndex, T2&& inElement);
-
-        template <ValidInplaceVectorIter<T> I, typename T2>
-        T& InsertInternal(const I& inIter, T2&& inElement);
-
-        template <ValidInplaceVectorIter<T> I>
-        void EraseInternal(const I& inIter);
-
-        template <ValidInplaceVectorIter<T> I>
-        void EraseSwapLastInternal(const I& inIter);
-
+        template <ValidInplaceVectorIter<T> I> void CheckIterValid(const I& inIter) const;
+        template <typename... Args> void EmplaceConstruct(size_t inIndex, Args&&... inArgs);
+        template <ValidInplaceVectorIter<T> I, typename... Args> void EmplaceConstruct(const I& inIter, Args&&... inArgs);
+        template <ValidInplaceVectorIter<T> I> void EmplaceDestruct(const I& inIter);
+        template <typename T2> T& InsertInternal(size_t inIndex, T2&& inElement);
+        template <ValidInplaceVectorIter<T> I, typename T2> T& InsertInternal(const I& inIter, T2&& inElement);
+        template <ValidInplaceVectorIter<T> I> void EraseInternal(const I& inIter);
+        template <ValidInplaceVectorIter<T> I> void EraseSwapLastInternal(const I& inIter);
         void EmplaceDestruct(size_t inIndex);
         T& TypedMemory(size_t inIndex);
         const T& TypedMemory(size_t inIndex) const;
