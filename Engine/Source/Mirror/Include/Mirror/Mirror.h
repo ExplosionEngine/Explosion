@@ -17,6 +17,9 @@
 
 #include <Common/Serialization.h>
 #include <Common/Debug.h>
+#include <Common/String.h>
+#include <Common/Container.h>
+#include <Common/Concepts.h>
 #include <Mirror/Api.h>
 
 #if COMPILER_MSVC
@@ -26,142 +29,272 @@
 #endif
 
 namespace Mirror {
-    using TypeId = size_t;
-}
+    using TypeId = uint64_t;
 
-namespace Mirror::Internal {
-    struct AnyRtti {
-        using DetorFunc = void(void*) noexcept;
-        using CopyFunc = void(void*, const void*);
-        using MoveFunc = void(void*, void*) noexcept;
-        using EqualFunc = bool(const void*, const void*);
-
-        template <typename T>
-        static void DetorImpl(void* object) noexcept;
-
-        template <typename T>
-        static void CopyImpl(void* object, const void* other);
-
-        template <typename T>
-        static void MoveImpl(void* object, void* other) noexcept;
-
-        template <typename T>
-        static bool EqualImpl(const void* object, const void* other);
-
-        DetorFunc* detor;
-        CopyFunc* copy;
-        MoveFunc* move;
-        EqualFunc* equal;
-    };
-
-    template <typename T>
-    inline constexpr AnyRtti anyRttiImpl = {
-        &AnyRtti::DetorImpl<T>,
-        &AnyRtti::CopyImpl<T>,
-        &AnyRtti::MoveImpl<T>,
-        &AnyRtti::EqualImpl<T>
-    };
+    constexpr TypeId typeIdNull = 0;
 }
 
 namespace Mirror {
-    class Variable;
-    class MemberVariable;
-
-    static constexpr size_t typeIdNull = 0u;
-
     struct TypeInfo {
 #if BUILD_CONFIG_DEBUG
         // NOTICE: this name is platform relative, so do not use it unless for debug
-        std::string debugName;
+        const std::string_view debugName;
 #endif
-        std::string name;
-        TypeId id;
-        const bool isConst;
-        const bool isLValueReference;
-        const bool isRValueReference;
-        const bool isPointer;
-        const bool isClass;
-        const bool copyConstructible;
-        const bool copyAssignable;
-        const bool moveConstructible;
-        const bool moveAssignable;
-        TypeId removePointerType;
+        const std::string_view name;
+        const TypeId id;
+        const TypeId removePointerType;
+        const uint32_t isConst : 1;
+        const uint32_t isLValueReference : 1;
+        const uint32_t isLValueConstReference : 1;
+        const uint32_t isRValueReference : 1;
+        const uint32_t isPointer : 1;
+        const uint32_t isConstPointer : 1;
+        const uint32_t isClass : 1;
+        const uint32_t isArray : 1;
+        const uint32_t isArithmetic : 1;
+        const uint32_t isIntegral : 1;
+        const uint32_t isFloatingPoint : 1;
+        const uint32_t copyConstructible : 1;
+        const uint32_t copyAssignable : 1;
+        const uint32_t moveConstructible : 1;
+        const uint32_t moveAssignable : 1;
+    };
+
+    template <typename T> const TypeInfo* GetTypeInfo();
+
+    struct TypeInfoCompact {
+        const TypeInfo* raw;
+        const TypeInfo* removeRef;
+        const TypeInfo* removePointer;
+    };
+
+    MIRROR_API bool PointerConvertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType);
+    MIRROR_API bool PolymorphismConvertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType);
+    MIRROR_API bool Convertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType);
+
+    enum class AnyPolicy : uint8_t {
+        memoryHolder,
+        ref,
+        constRef,
+        max
+    };
+
+    class Any;
+
+    struct AnyRtti {
+        using DetorFunc = void(void*) noexcept;
+        using CopyConstructFunc = void(void*, const void*);
+        using MoveConstructFunc = void(void*, void*) noexcept;
+        using EqualFunc = bool(const void*, const void*);
+        using GetTypeInfoFunc = const TypeInfo*();
+        using GetPtrFunc = Any(void*);
+        using GetConstPtrFunc = Any(const void*);
+        using DerefFunc = Any(const void*);
+
+        template <typename T> static void Detor(void* inThis) noexcept;
+        template <typename T> static void CopyConstruct(void* inThis, const void* inOther);
+        template <typename T> static void MoveConstruct(void* inThis, void* inOther) noexcept;
+        template <typename T> static bool Equal(const void* inThis, const void* inOther) noexcept;
+        template <typename T> static const TypeInfo* GetValueType();
+        template <typename T> static const TypeInfo* GetConstValueType();
+        template <typename T> static const TypeInfo* GetRefType();
+        template <typename T> static const TypeInfo* GetConstRefType();
+        template <typename T> static const TypeInfo* GetRemovePointerType();
+        template <typename T> static const TypeInfo* GetAddPointerType();
+        template <typename T> static const TypeInfo* GetAddConstPointerType();
+        template <typename T> static Any GetPtr(void* inThis);
+        template <typename T> static Any GetConstPtr(const void* inThis);
+        template <typename T> static Any Deref(const void* inThis);
+
+        DetorFunc* detor;
+        CopyConstructFunc* copyConstruct;
+        MoveConstructFunc* moveConstruct;
+        EqualFunc* equal;
+        GetTypeInfoFunc* getValueType;
+        GetTypeInfoFunc* getConstValueType;
+        GetTypeInfoFunc* getRefType;
+        GetTypeInfoFunc* getConstRefType;
+        GetTypeInfoFunc* getRemovePointerType;
+        GetTypeInfoFunc* getAddPointerType;
+        GetTypeInfoFunc* getAddConstPointerType;
+        GetPtrFunc* getPtr;
+        GetConstPtrFunc* getConstPtr;
+        DerefFunc* deref;
     };
 
     template <typename T>
-    TypeInfo* GetTypeInfo();
-
-    struct NamePresets {
-        static constexpr auto globalScope = "_globalScope";
-        static constexpr auto destructor = "_destructor";
-        static constexpr auto defaultConstructor = "_defaultConstructor";
+    static constexpr AnyRtti anyRttiImpl = {
+        &AnyRtti::Detor<T>,
+        &AnyRtti::CopyConstruct<T>,
+        &AnyRtti::MoveConstruct<T>,
+        &AnyRtti::Equal<T>,
+        &AnyRtti::GetValueType<T>,
+        &AnyRtti::GetConstValueType<T>,
+        &AnyRtti::GetRefType<T>,
+        &AnyRtti::GetConstRefType<T>,
+        &AnyRtti::GetRemovePointerType<T>,
+        &AnyRtti::GetAddPointerType<T>,
+        &AnyRtti::GetAddConstPointerType<T>,
+        &AnyRtti::GetPtr<T>,
+        &AnyRtti::GetConstPtr<T>,
+        &AnyRtti::Deref<T>
     };
 
     class MIRROR_API Any {
     public:
         Any();
         ~Any();
-        Any(const Any& inAny);
-        Any(Any&& inAny) noexcept;
+        Any(Any& inOther);
+        Any(const Any& inOther);
+        Any(const Any& inOther, AnyPolicy inPolicy);
+        Any(Any&& inOther) noexcept;
 
-        template <typename T>
-        Any(T&& value); // NOLINT
+        template <typename T> Any(T&& inValue); // NOLINT
+        template <typename T> Any(std::reference_wrapper<T>& inRef); // NOLINT
+        template <typename T> Any(std::reference_wrapper<T>&& inRef); // NOLINT
+        template <typename T> Any(const std::reference_wrapper<T>& inRef); // NOLINT
 
-        template <typename T>
-        Any(const std::reference_wrapper<T>& ref); // NOLINT
+        Any& operator=(const Any& inOther);
+        Any& operator=(Any&& inOther) noexcept;
 
-        template <typename T>
-        Any(std::reference_wrapper<T>&& ref); // NOLINT
+        template <typename T> Any& operator=(T&& inValue);
+        template <typename T> Any& operator=(std::reference_wrapper<T>& inRef);
+        template <typename T> Any& operator=(std::reference_wrapper<T>&& inRef);
+        template <typename T> Any& operator=(const std::reference_wrapper<T>& inRef);
 
-        Any& operator=(const Any& inAny);
-        Any& operator=(Any&& inAny) noexcept;
+        template <typename T> bool Convertible();
+        template <typename T> bool Convertible() const;
 
-        template <typename T>
-        Any& operator=(T&& value);
+        template <typename T> T As();
+        template <typename T> T As() const;
+        template <typename T> T* TryAs();
+        template <typename T> T* TryAs() const;
 
-        template <typename T>
-        Any& operator=(const std::reference_wrapper<T>& ref);
+        // TODO array support
 
-        template <typename T>
-        Any& operator=(std::reference_wrapper<T>&& ref);
+        Any Ref();
+        Any Ref() const;
+        Any ConstRef() const;
+        Any AsValue() const;
+        Any Ptr();
+        Any Ptr() const;
+        Any ConstPtr() const;
+        Any Deref() const;
 
-        template <typename T>
-        bool Convertible() const;
+        AnyPolicy Policy() const;
+        bool IsMemoryHolder() const;
+        bool IsRef() const;
+        bool IsConstRef() const;
+        const TypeInfo* Type();
+        const TypeInfo* Type() const;
+        const TypeInfo* RemoveRefType();
+        const TypeInfo* RemoveRefType() const;
+        const TypeInfo* AddPointerType();
+        const TypeInfo* AddPointerType() const;
+        const TypeInfo* RemovePointerType();
+        const TypeInfo* RemovePointerType() const;
+        Mirror::TypeId TypeId();
+        Mirror::TypeId TypeId() const;
+        void Reset();
+        bool Empty() const;
+
+        // always return original ptr and size, even policy is ref
+        void* Data() const;
+        size_t Size() const;
+
+        explicit operator bool() const;
+        bool operator==(const Any& inAny) const;
+
+    private:
+        class MIRROR_API HolderInfo {
+        public:
+            HolderInfo();
+            explicit HolderInfo(size_t inMemorySize);
+
+            void ResizeMemory(size_t inSize);
+            void* Ptr() const;
+            size_t Size() const;
+
+        private:
+            static constexpr size_t MaxStackMemorySize = sizeof(std::vector<uint8_t>) - sizeof(size_t);
+            using StackMemory = Common::InplaceVector<uint8_t, MaxStackMemorySize>;
+            using HeapMemory = std::vector<uint8_t>;
+            static_assert(sizeof(StackMemory) == sizeof(HeapMemory));
+
+            std::variant<StackMemory, HeapMemory> memory;
+        };
+
+        class MIRROR_API RefInfo {
+        public:
+            RefInfo();
+            RefInfo(void* inPtr, size_t inSize);
+
+            void* Ptr() const;
+            size_t Size() const;
+
+        private:
+            void* ptr;
+            size_t memorySize;
+        };
+
+        template <typename T> void ConstructFromValue(T&& inValue);
+        template <typename T> void ConstructFromRef(std::reference_wrapper<T> inRef);
+
+        void PerformCopyConstruct(const Any& inOther);
+        void PerformCopyConstructWithPolicy(const Any& inOther, AnyPolicy inPolicy);
+        void PerformMoveConstruct(Any&& inOther);
+
+        AnyPolicy policy;
+        const AnyRtti* rtti;
+        std::variant<RefInfo, HolderInfo> info;
+    };
+
+    class Variable;
+    class MemberVariable;
+
+    class MIRROR_API Argument {
+    public:
+        Argument();
+        Argument(Any& inAny); // NOLINT
+        Argument(const Any& inAny); // NOLINT
+        Argument(Any&& inAny); // NOLINT
+        Argument& operator=(Any& inAny);
+        Argument& operator=(const Any& inAny);
+        Argument& operator=(Any&& inAny);
 
         template <typename T>
         T As() const;
 
-        template <typename T>
-        T ForceAs() const;
-
-        template <typename T>
-        T* TryAs() const;
-
-        bool Convertible(const TypeInfo* dstType) const;
-        size_t Size() const;
-        const void* Data() const;
-        const TypeInfo* TypeInfo() const;
-        void Reset();
-        bool operator==(const Any& rhs) const;
+        const TypeInfo* Type() const;
+        const TypeInfo* RemoveRefType() const;
+        const TypeInfo* AddPointerType() const;
+        const TypeInfo* RemovePointerType() const;
 
     private:
-        static constexpr size_t MaxStackMemorySize = sizeof(std::vector<uint8_t>);
-        using StackMemory = std::array<uint8_t, MaxStackMemorySize>;
-        using HeapMemory = std::vector<uint8_t>;
+        std::variant<std::monostate, Any*, const Any*, Any> any;
+    };
 
-        void ResizeMemory(size_t size);
-        void* GetMemory() const;
+    using ArgumentList = std::vector<Argument>;
 
-        template <typename T>
-        void ConstructValue(T&& value);
+    struct MIRROR_API Id {
+        Id();
+        template <size_t N> Id(const char (&inName)[N]); // NOLINT
+        Id(std::string inName); // NOLINT
 
-        template <typename T>
-        void ConstructRef(const std::reference_wrapper<T>& ref);
+        bool operator==(const Id& inRhs) const;
 
-        const Mirror::TypeInfo* typeInfo;
-        const Internal::AnyRtti* rtti;
-        std::variant<StackMemory, HeapMemory> memory;
-        size_t memorySize;
+        size_t hash;
+        std::string name;
+    };
+
+    struct MIRROR_API IdHashProvider {
+        size_t operator()(const Id& inId) const noexcept;
+    };
+
+    struct MIRROR_API NamePresets {
+        static const Id globalScope;
+        static const Id detor;
+        static const Id defaultCtor;
     };
 
     class MIRROR_API Type {
@@ -184,21 +317,23 @@ namespace Mirror {
         template <typename Derived> friend class MetaDataRegistry;
 
         std::string name;
-        std::unordered_map<std::string, std::string> metas;
+        std::unordered_map<Id, std::string, IdHashProvider> metas;
     };
 
     class MIRROR_API Variable final : public Type {
     public:
         ~Variable() override;
 
-        template <typename T>
-        void Set(T value) const;
-
-        const TypeInfo* GetTypeInfo() const;
-        void Set(Any* value) const;
+        template <typename T> void Set(T&& value) const;
         Any Get() const;
         void Serialize(Common::SerializeStream& stream) const;
         void Deserialize(Common::DeserializeStream& stream) const;
+
+        const TypeInfo* GetTypeInfo() const;
+        void SetDyn(const Argument& inArgument) const;
+        Any GetDyn() const;
+        void SerializeDyn(Common::SerializeStream& stream) const;
+        void DeserializeDyn(Common::DeserializeStream& stream) const;
 
     private:
         friend class GlobalRegistry;
@@ -206,7 +341,7 @@ namespace Mirror {
         friend class Class;
         template <typename C> friend class ClassRegistry;
 
-        using Setter = std::function<void(Any*)>;
+        using Setter = std::function<void(const Argument&)>;
         using Getter = std::function<Any()>;
         using VariableSerializer = std::function<void(Common::SerializeStream&, const Variable&)>;
         using VariableDeserializer = std::function<void(Common::DeserializeStream&, const Variable&)>;
@@ -235,15 +370,12 @@ namespace Mirror {
     public:
         ~Function() override;
 
-        // args must passed by std::ref()
-        template <typename... Args>
-        Any Invoke(Args&&... args) const;
-
+        template <typename... Args> Any Invoke(Args&&... args) const;
         uint8_t GetArgsNum() const;
         const TypeInfo* GetRetTypeInfo() const;
         const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
         const std::vector<const TypeInfo*>& GetArgTypeInfos() const;
-        Any InvokeWith(Any* arguments, uint8_t argumentsSize) const;
+        Any InvokeDyn(const ArgumentList& inArgumentList) const;
 
     private:
         friend class GlobalRegistry;
@@ -251,7 +383,7 @@ namespace Mirror {
         friend class Class;
         template <typename C> friend class ClassRegistry;
 
-        using Invoker = std::function<Any(Any*, uint8_t)>;
+        using Invoker = std::function<Any(const ArgumentList&)>;
 
         struct ConstructParams {
             std::string name;
@@ -273,31 +405,33 @@ namespace Mirror {
     public:
         ~Constructor() override;
 
-        // args must passed by std::ref()
-        template <typename... Args>
-        Any ConstructOnStack(Args&&... args) const;
-
-        // args must passed by std::ref()
-        template <typename... Args>
-        Any NewObject(Args&&... args) const;
+        template <typename... Args> Any Construct(Args&&... args) const;
+        template <typename... Args> Any New(Args&&... args) const;
 
         uint8_t GetArgsNum() const;
         const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
         const std::vector<const TypeInfo*>& GetArgTypeInfos() const;
-        Any ConstructOnStackWith(Any* arguments, uint8_t argumentsSize) const;
-        Any NewObjectWith(Any* arguments, uint8_t argumentsSize) const;
+        const TypeInfo* GetArgRemoveRefTypeInfo(uint8_t argIndex) const;
+        const std::vector<const TypeInfo*>& GetArgRemoveRefTypeInfos() const;
+        const TypeInfo* GetArgRemovePointerTypeInfo(uint8_t argIndex) const;
+        const std::vector<const TypeInfo*>& GetArgRemovePointerTypeInfos() const;
+
+        Any ConstructDyn(const ArgumentList& arguments) const;
+        Any NewDyn(const ArgumentList& arguments) const;
 
     private:
         friend class Registry;
         friend class Class;
         template <typename C> friend class ClassRegistry;
 
-        using Invoker = std::function<Any(Any*, uint8_t)>;
+        using Invoker = std::function<Any(const ArgumentList&)>;
 
         struct ConstructParams {
             std::string name;
             uint8_t argsNum;
             std::vector<const TypeInfo*> argTypeInfos;
+            std::vector<const TypeInfo*> argRemoveRefTypeInfos;
+            std::vector<const TypeInfo*> argRemovePointerTypeInfos;
             Invoker stackConstructor;
             Invoker heapConstructor;
         };
@@ -306,6 +440,8 @@ namespace Mirror {
 
         uint8_t argsNum;
         std::vector<const TypeInfo*> argTypeInfos;
+        std::vector<const TypeInfo*> argRemoveRefTypeInfos;
+        std::vector<const TypeInfo*> argRemovePointerTypeInfos;
         Invoker stackConstructor;
         Invoker heapConstructor;
     };
@@ -314,17 +450,15 @@ namespace Mirror {
     public:
         ~Destructor() override;
 
-        template <typename C>
-        void Invoke(C&& object) const;
-
-        void InvokeWith(Any* object) const;
+        template <typename C> void Invoke(C&& object) const;
+        void InvokeDyn(const Argument& argument) const;
 
     private:
         friend class Registry;
         friend class Class;
         template <typename C> friend class ClassRegistry;
 
-        using Invoker = std::function<void(Any*)>;
+        using Invoker = std::function<void(const Argument&)>;
 
         struct ConstructParams {
             Invoker destructor;
@@ -339,25 +473,27 @@ namespace Mirror {
     public:
         ~MemberVariable() override;
 
-        template <typename C, typename T>
-        void Set(C&& object, T value) const;
+        template <typename C, typename T> void Set(C&& object, T&& value) const;
+        template <typename C> Any Get(C&& object) const;
+        template <typename C> void Serialize(Common::SerializeStream& stream, C&& object) const;
+        template <typename C> void Deserialize(Common::DeserializeStream& stream, C&& object) const;
 
         uint32_t SizeOf() const;
         const TypeInfo* GetTypeInfo() const;
-        void Set(Any* object, Any* value) const;
-        Any Get(Any* object) const;
-        void Serialize(Common::SerializeStream& stream, Any* object) const;
-        void Deserialize(Common::DeserializeStream& stream, Any* object) const;
+        void SetDyn(const Argument& object, const Argument& value) const;
+        Any GetDyn(const Argument& object) const;
+        void SerializeDyn(Common::SerializeStream& stream, const Argument& object) const;
+        void DeserializeDyn(Common::DeserializeStream& stream, const Argument& object) const;
         bool IsTransient() const;
 
     private:
         friend class Class;
         template <typename C> friend class ClassRegistry;
 
-        using Setter = std::function<void(Any*, Any*)>;
-        using Getter = std::function<Any(Any*)>;
-        using MemberVariableSerializer = std::function<void(Common::SerializeStream&, const MemberVariable&, Any*)>;
-        using MemberVariableDeserializer = std::function<void(Common::DeserializeStream&, const MemberVariable&, Any*)>;
+        using Setter = std::function<void(const Argument&, const Argument&)>;
+        using Getter = std::function<Any(const Argument&)>;
+        using MemberVariableSerializer = std::function<void(Common::SerializeStream&, const MemberVariable&, const Argument&)>;
+        using MemberVariableDeserializer = std::function<void(Common::DeserializeStream&, const MemberVariable&, const Argument&)>;
 
         struct ConstructParams {
             std::string name;
@@ -383,21 +519,19 @@ namespace Mirror {
     public:
         ~MemberFunction() override;
 
-        // args must passed by std::ref()
-        template <typename C, typename... Args>
-        Any Invoke(C&& object, Args&&... args) const;
+        template <typename C, typename... Args> Any Invoke(C&& object, Args&&... args) const;
 
         uint8_t GetArgsNum() const;
         const TypeInfo* GetRetTypeInfo() const;
         const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
         const std::vector<const TypeInfo*>& GetArgTypeInfos() const;
-        Any InvokeWith(Any* object, Any* args, size_t argsSize) const;
+        Any InvokeDyn(const Argument& object, const ArgumentList& arguments) const;
 
     private:
         friend class Class;
         template <typename C> friend class ClassRegistry;
 
-        using Invoker = std::function<Any(Any*, Any*, size_t)>;
+        using Invoker = std::function<Any(const Argument&, const ArgumentList&)>;
 
         struct ConstructParams {
             std::string name;
@@ -415,92 +549,68 @@ namespace Mirror {
         Invoker invoker;
     };
 
+    using VariableTraverser = std::function<void(const Variable&)>;
+    using FunctionTraverser = std::function<void(const Function&)>;
+    using MemberVariableTraverser = std::function<void(const MemberVariable&)>;
+    using MemberFunctionTraverser = std::function<void(const MemberFunction&)>;
+
     class MIRROR_API GlobalScope final : public Type {
     public:
         ~GlobalScope() override;
 
         static const GlobalScope& Get();
 
-        template <typename F>
-        void ForEachVariable(F&& func) const;
-
-        template <typename F>
-        void ForEachFunction(F&& func) const;
-
-        bool HasVariable(const std::string& name) const;
-        const Variable* FindVariable(const std::string& name) const;
-        const Variable& GetVariable(const std::string& name) const;
-        bool HasFunction(const std::string& name) const;
-        const Function* FindFunction(const std::string& name) const;
-        const Function& GetFunction(const std::string& name) const;
+        void ForEachVariable(const VariableTraverser& func) const;
+        void ForEachFunction(const FunctionTraverser& func) const;
+        bool HasVariable(const Id& inId) const;
+        const Variable* FindVariable(const Id& inId) const;
+        const Variable& GetVariable(const Id& inId) const;
+        bool HasFunction(const Id& inId) const;
+        const Function* FindFunction(const Id& inId) const;
+        const Function& GetFunction(const Id& inId) const;
 
     private:
         friend class Registry;
         friend class GlobalRegistry;
 
-        Variable& EmplaceVariable(const std::string& inName, Variable::ConstructParams&& inParams);
-        Function& EmplaceFunction(const std::string& inName, Function::ConstructParams&& inParams);
+        Variable& EmplaceVariable(const Id& inId, Variable::ConstructParams&& inParams);
+        Function& EmplaceFunction(const Id& inId, Function::ConstructParams&& inParams);
 
         GlobalScope();
 
-        std::unordered_map<std::string, Variable> variables;
-        std::unordered_map<std::string, Function> functions;
+        std::unordered_map<Id, Variable, IdHashProvider> variables;
+        std::unordered_map<Id, Function, IdHashProvider> functions;
     };
 
     class MIRROR_API Class final : public Type {
     public:
-        ~Class() override;
+        template <Common::CppClass C> static bool Has();
+        template <Common::CppClass C> static const Class* Find();
+        template <Common::CppClass C> static const Class& Get();
 
-        template <typename C>
-        requires std::is_class_v<C>
-        static bool Has();
-
-        template <typename C>
-        requires std::is_class_v<C>
-        static const Class* Find();
-
-        template <typename C>
-        requires std::is_class_v<C>
-        static const Class& Get();
-
-        template <typename F>
-        void ForEachStaticVariable(F&& func) const;
-
-        template <typename F>
-        void ForEachStaticFunction(F&& func) const;
-
-        template <typename F>
-        void ForEachMemberVariable(F&& func) const;
-
-        template <typename F>
-        void ForEachMemberFunction(F&& func) const;
-
-        template <typename... Args>
-        Any ConstructOnStack(Args&&... args)
-        {
-            std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
-            const auto* constructor = FindSuitableConstructor(refs);
-            Assert(constructor != nullptr);
-            return constructor->ConstructOnStack(refs);
-        }
-
-        template <typename... Args>
-        Any NewObject(Args&&... args)
-        {
-            std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
-            const auto* constructor = FindSuitableConstructor(refs);
-            Assert(constructor != nullptr);
-            return constructor->NewObject(refs);
-        }
-
-        static bool Has(const std::string& name);
-        static const Class* Find(const std::string& name);
-        static const Class& Get(const std::string& name);
+        static bool Has(const Id& inId);
+        static const Class* Find(const Id& inId);
+        static const Class& Get(const Id& inId);
         static bool Has(const TypeInfo* typeInfo);
         static const Class* Find(const TypeInfo* typeInfo);
         static const Class& Get(const TypeInfo* typeInfo);
+        static bool Has(TypeId typeId);
         static const Class* Find(TypeId typeId);
         static const Class& Get(TypeId typeId);
+        static std::vector<const Class*> GetAll();
+        static std::vector<const Class*> FindWithCategory(const std::string& category);
+
+        ~Class() override;
+
+        template <typename... Args> Any Construct(Args&&... args);
+        template <typename... Args> Any New(Args&&... args);
+        template <typename T> void Serialize(Common::SerializeStream& stream, T&& obj) const;
+        template <typename T> void Deserailize(Common::DeserializeStream& stream, T&& obj) const;
+
+        void ForEachStaticVariable(const VariableTraverser& func) const;
+        void ForEachStaticFunction(const FunctionTraverser& func) const;
+        void ForEachMemberVariable(const MemberVariableTraverser& func) const;
+        void ForEachMemberFunction(const MemberFunctionTraverser& func) const;
         const TypeInfo* GetTypeInfo() const;
         bool HasDefaultConstructor() const;
         const Class* GetBaseClass() const;
@@ -511,29 +621,30 @@ namespace Mirror {
         bool HasDestructor() const;
         const Destructor* FindDestructor() const;
         const Destructor& GetDestructor() const;
-        bool HasConstructor(const std::string& name) const;
-        const Constructor* FindSuitableConstructor(const Any* args, uint8_t argNum) const;
-        Any ConstructOnStackSuitable(Any* args, uint8_t argNum) const;
-        Any NewObjectSuitable(Any* args, uint8_t argNum) const;
-        const Constructor* FindConstructor(const std::string& name) const;
-        const Constructor& GetConstructor(const std::string& name) const;
-        bool HasStaticVariable(const std::string& name) const;
-        const Variable* FindStaticVariable(const std::string& name) const;
-        const Variable& GetStaticVariable(const std::string& name) const;
-        bool HasStaticFunction(const std::string& name) const;
-        const Function* FindStaticFunction(const std::string& name) const;
-        const Function& GetStaticFunction(const std::string& name) const;
-        bool HasMemberVariable(const std::string& name) const;
-        const MemberVariable* FindMemberVariable(const std::string& name) const;
-        const MemberVariable& GetMemberVariable(const std::string& name) const;
-        bool HasMemberFunction(const std::string& name) const;
-        const MemberFunction* FindMemberFunction(const std::string& name) const;
-        const MemberFunction& GetMemberFunction(const std::string& name) const;
-        void Serialize(Common::SerializeStream& stream, Any* obj) const;
-        void Deserailize(Common::DeserializeStream& stream, Any* obj) const;
+        bool HasConstructor(const Id& inId) const;
+        const Constructor* FindSuitableConstructor(const ArgumentList& arguments) const;
+        const Constructor* FindConstructor(const Id& inId) const;
+        const Constructor& GetConstructor(const Id& inId) const;
+        bool HasStaticVariable(const Id& inId) const;
+        const Variable* FindStaticVariable(const Id& inId) const;
+        const Variable& GetStaticVariable(const Id& inId) const;
+        bool HasStaticFunction(const Id& inId) const;
+        const Function* FindStaticFunction(const Id& inId) const;
+        const Function& GetStaticFunction(const Id& inId) const;
+        bool HasMemberVariable(const Id& inId) const;
+        const MemberVariable* FindMemberVariable(const Id& inId) const;
+        const MemberVariable& GetMemberVariable(const Id& inId) const;
+        bool HasMemberFunction(const Id& inId) const;
+        const MemberFunction* FindMemberFunction(const Id& inId) const;
+        const MemberFunction& GetMemberFunction(const Id& inId) const;
+
+        Any ConstructDyn(const ArgumentList& arguments) const;
+        Any NewDyn(const ArgumentList& arguments) const;
+        void SerializeDyn(Common::SerializeStream& stream, const Argument& obj) const;
+        void DeserailizeDyn(Common::DeserializeStream& stream, const Argument& obj) const;
 
     private:
-        static std::unordered_map<TypeId, std::string> typeToNameMap;
+        static std::unordered_map<TypeId, Id> typeToIdMap;
 
         friend class Registry;
         template <typename T> friend class ClassRegistry;
@@ -553,21 +664,21 @@ namespace Mirror {
 
         void CreateDefaultObject(const std::function<Any()>& inCreator);
         Destructor& EmplaceDestructor(Destructor::ConstructParams&& inParams);
-        Constructor& EmplaceConstructor(const std::string& inName, Constructor::ConstructParams&& inParams);
-        Variable& EmplaceStaticVariable(const std::string& inName, Variable::ConstructParams&& inParams);
-        Function& EmplaceStaticFunction(const std::string& inName, Function::ConstructParams&& inParams);
-        MemberVariable& EmplaceMemberVariable(const std::string& inName, MemberVariable::ConstructParams&& inParams);
-        MemberFunction& EmplaceMemberFunction(const std::string& inName, MemberFunction::ConstructParams&& inParams);
+        Constructor& EmplaceConstructor(const Id& inId, Constructor::ConstructParams&& inParams);
+        Variable& EmplaceStaticVariable(const Id& inId, Variable::ConstructParams&& inParams);
+        Function& EmplaceStaticFunction(const Id& inId, Function::ConstructParams&& inParams);
+        MemberVariable& EmplaceMemberVariable(const Id& inId, MemberVariable::ConstructParams&& inParams);
+        MemberFunction& EmplaceMemberFunction(const Id& inId, MemberFunction::ConstructParams&& inParams);
 
         const TypeInfo* typeInfo;
         BaseClassGetter baseClassGetter;
         std::optional<Any> defaultObject;
         std::optional<Destructor> destructor;
-        std::unordered_map<std::string, Constructor> constructors;
-        std::unordered_map<std::string, Variable> staticVariables;
-        std::unordered_map<std::string, Function> staticFunctions;
-        std::unordered_map<std::string, MemberVariable> memberVariables;
-        std::unordered_map<std::string, MemberFunction> memberFunctions;
+        std::unordered_map<Id, Constructor, IdHashProvider> constructors;
+        std::unordered_map<Id, Variable, IdHashProvider> staticVariables;
+        std::unordered_map<Id, Function, IdHashProvider> staticFunctions;
+        std::unordered_map<Id, MemberVariable, IdHashProvider> memberVariables;
+        std::unordered_map<Id, MemberFunction, IdHashProvider> memberFunctions;
     };
 
     class MIRROR_API EnumElement final : public Type {
@@ -582,10 +693,10 @@ namespace Mirror {
         friend class Enum;
 
         Any Get() const;
-        bool Compare(Any* value) const;
+        bool Compare(const Argument& argument) const;
 
         using Getter = std::function<Any()>;
-        using Comparer = std::function<bool(Any*)>;
+        using Comparer = std::function<bool(const Argument&)>;
 
         struct ConstructParams {
             std::string name;
@@ -601,25 +712,23 @@ namespace Mirror {
 
     class MIRROR_API Enum final : public Type {
     public:
-        template <typename T>
-        requires std::is_enum_v<T>
+        template <Common::CppEnum T>
         static const Enum* Find();
 
-        template <typename T>
-        requires std::is_enum_v<T>
+        template <Common::CppEnum T>
         static const Enum& Get();
 
-        static const Enum* Find(const std::string& name);
-        static const Enum& Get(const std::string& name);
+        static const Enum* Find(const Id& inId);
+        static const Enum& Get(const Id& inId);
 
         ~Enum() override;
 
         const TypeInfo* GetTypeInfo() const;
-        Any GetElement(const std::string& name) const;
-        std::string GetElementName(Any* value) const;
+        Any GetElement(const Id& inId) const;
+        std::string GetElementName(const Argument& argument) const;
 
     private:
-        static std::unordered_map<TypeId, std::string> typeToNameMap;
+        static std::unordered_map<TypeId, Id> typeToIdMap;
 
         friend class Registry;
         template <typename T> friend class EnumRegistry;
@@ -631,55 +740,56 @@ namespace Mirror {
 
         explicit Enum(ConstructParams&& params);
 
-        EnumElement& EmplaceElement(const std::string& inName, EnumElement::ConstructParams&& inParams);
+        EnumElement& EmplaceElement(const Id& inId, EnumElement::ConstructParams&& inParams);
 
         const TypeInfo* typeInfo;
-        std::unordered_map<std::string, EnumElement> elements;
+        std::unordered_map<Id, EnumElement, IdHashProvider> elements;
     };
 }
 
 namespace Mirror::Internal {
     template <typename T>
-    void AnyRtti::DetorImpl(void* const object) noexcept
+    void StaticCheckArgumentType()
     {
-        static_cast<T*>(object)->~T();
+        using RawType = std::remove_cvref_t<T>;
+        static_assert(
+            !std::is_same_v<RawType, Any> && !std::is_same_v<RawType, Any*> && !std::is_same_v<RawType, const Any*>,
+            "static version reflection method do no support use Any/Any*/const Any* as argument, please check you arguments");
     }
 
     template <typename T>
-    void AnyRtti::CopyImpl(void* const object, const void* const other)
+    Argument ForwardAsArgument(T&& value)
     {
-        if constexpr (std::is_copy_constructible_v<T>) {
-            new(object) T(*static_cast<const T*>(other));
-        } else if constexpr (std::is_copy_assignable_v<T>) {
-            *static_cast<T*>(object) = *static_cast<const T*>(other);
-        }
-    }
+        StaticCheckArgumentType<T>();
 
-    template <typename T>
-    void AnyRtti::MoveImpl(void* const object, void* const other) noexcept
-    {
-        if constexpr (std::is_move_constructible_v<T>) {
-            new(object) T(std::move(*static_cast<T*>(other)));
-        } else if constexpr (std::is_move_assignable_v<T>) {
-            *static_cast<T*>(object) = std::move(*static_cast<T*>(other));
-        }
-    }
-
-    template <typename T>
-    bool AnyRtti::EqualImpl(const void* const object, const void* const other)
-    {
-        if constexpr (std::equality_comparable<T>) {
-            return *static_cast<const T*>(object) == *static_cast<const T*>(other);
+        if constexpr (std::is_lvalue_reference_v<T&&>) {
+            return { Any(std::ref(std::forward<T>(value))) };
         } else {
-            AssertWithReason(false, "type is not comparable");
-            return false;
+            return { Any(std::forward<T>(value)) };
         }
+    }
+
+    template <typename... Args>
+    ArgumentList ForwardAsArgumentList(Args&&... args)
+    {
+        ArgumentList result;
+        result.reserve(sizeof...(args));
+        (void) std::initializer_list<int> { ([&]() -> void {
+            StaticCheckArgumentType<Args>();
+
+            if constexpr (std::is_lvalue_reference_v<Args&&>) {
+                result.emplace_back(Any(std::ref(std::forward<Args>(args))));
+            } else {
+                result.emplace_back(Any(std::forward<Args>(args)));
+            }
+        }(), 0)... };
+        return result;
     }
 }
 
 namespace Mirror {
     template <typename T>
-    TypeInfo* GetTypeInfo()
+    const TypeInfo* GetTypeInfo()
     {
         static TypeInfo typeInfo = {
 #if BUILD_CONFIG_DEBUG
@@ -687,257 +797,410 @@ namespace Mirror {
 #endif
             typeid(T).name(),
             typeid(T).hash_code(),
+            typeid(std::remove_pointer_t<T>).hash_code(),
             std::is_const_v<T>,
             std::is_lvalue_reference_v<T>,
+            std::is_lvalue_reference_v<T> ? std::is_const_v<std::remove_reference_t<T>> : false,
             std::is_rvalue_reference_v<T>,
             std::is_pointer_v<T>,
+            std::is_pointer_v<T> ? std::is_const_v<std::remove_pointer_t<T>> : false,
             std::is_class_v<T>,
+            std::is_array_v<T>,
+            std::is_arithmetic_v<T>,
+            std::is_integral_v<T>,
+            std::is_floating_point_v<T>,
             std::is_copy_constructible_v<T>,
             std::is_copy_assignable_v<T>,
             std::is_move_constructible_v<T>,
             std::is_move_assignable_v<T>,
-            typeid(std::remove_pointer_t<T>).hash_code()
         };
         return &typeInfo;
     }
 
     template <typename T>
-    Any::Any(T&& value)
+    void AnyRtti::Detor(void* inThis) noexcept
     {
-        ConstructValue(std::forward<T>(value));
+        static_cast<T*>(inThis)->~T();
     }
 
     template <typename T>
-    Any::Any(const std::reference_wrapper<T>& ref)
+    void AnyRtti::CopyConstruct(void* inThis, const void* inOther)
     {
-        ConstructRef(ref);
+        if constexpr (std::is_copy_constructible_v<T>) {
+            new(inThis) T(*static_cast<const T*>(inOther));
+        } else {
+            QuickFailWithReason(fmt::format("type {} is no support copy construct", GetTypeInfo<T>()->name));
+        }
     }
 
     template <typename T>
-    Any::Any(std::reference_wrapper<T>&& ref)
+    void AnyRtti::MoveConstruct(void* inThis, void* inOther) noexcept
     {
-        ConstructRef(std::move(ref));
+        if constexpr (std::is_move_constructible_v<T>) {
+            new(inThis) T(std::move(*static_cast<T*>(inOther)));
+        } else {
+            QuickFailWithReason(fmt::format("type {} is no support move construct", GetTypeInfo<T>()->name));
+        }
     }
 
     template <typename T>
-    Any& Any::operator=(T&& value)
+    bool AnyRtti::Equal(const void* inThis, const void* inOther) noexcept
+    {
+        if constexpr (std::equality_comparable<T>) {
+            return *static_cast<const T*>(inThis) == *static_cast<const T*>(inOther);
+        } else {
+            QuickFailWithReason(fmt::format("type {} is no support equal compare", GetTypeInfo<T>()->name));
+            return false;
+        }
+    }
+
+    template <typename T>
+    const TypeInfo* AnyRtti::GetValueType()
+    {
+        return GetTypeInfo<T>();
+    }
+
+    template <typename T>
+    const TypeInfo* AnyRtti::GetConstValueType()
+    {
+        return GetTypeInfo<const T>();
+    }
+
+    template <typename T>
+    const TypeInfo* AnyRtti::GetRefType()
+    {
+        return GetTypeInfo<T&>();
+    }
+
+    template <typename T>
+    const TypeInfo* AnyRtti::GetConstRefType()
+    {
+        return GetTypeInfo<const T&>();
+    }
+
+    template <typename T>
+    const TypeInfo* AnyRtti::GetRemovePointerType()
+    {
+        return GetTypeInfo<std::remove_pointer_t<T>>();
+    }
+
+    template <typename T>
+    const TypeInfo* AnyRtti::GetAddPointerType()
+    {
+        return GetTypeInfo<std::add_pointer_t<T>>();
+    }
+
+    template <typename T>
+    const TypeInfo* AnyRtti::GetAddConstPointerType()
+    {
+        return GetTypeInfo<std::add_pointer_t<std::add_const_t<T>>>();
+    }
+
+    template <typename T>
+    Any AnyRtti::GetPtr(void* inThis)
+    {
+        if constexpr (!std::is_pointer_v<T>) {
+            return { static_cast<T*>(inThis) };
+        } else {
+            QuickFailWithReason("AnyRtti::GetPtr() only support non-pointer type");
+            return {};
+        }
+    }
+
+    template <typename T>
+    Any AnyRtti::GetConstPtr(const void* inThis)
+    {
+        if constexpr (!std::is_pointer_v<T>) {
+            return { static_cast<const T*>(inThis) };
+        } else {
+            QuickFailWithReason("AnyRtti::GetConstPtr() only support non-pointer type");
+            return {};
+        }
+    }
+
+    template <typename T>
+    Any AnyRtti::Deref(const void* inThis)
+    {
+        if constexpr (std::is_pointer_v<T>) {
+            return { std::ref(**static_cast<const T*>(inThis)) };
+        } else {
+            QuickFailWithReason("AnyRtti::Dref() only support pointer type");
+            return {};
+        }
+    }
+
+    template <typename T>
+    Any::Any(T&& inValue)
+    {
+        ConstructFromValue(std::forward<T>(inValue));
+    }
+
+    template <typename T>
+    Any::Any(std::reference_wrapper<T>& inRef)
+    {
+        ConstructFromRef(inRef);
+    }
+
+    template <typename T>
+    Any::Any(std::reference_wrapper<T>&& inRef)
+    {
+        ConstructFromRef(inRef);
+    }
+
+    template <typename T>
+    Any::Any(const std::reference_wrapper<T>& inRef)
+    {
+        ConstructFromRef(inRef);
+    }
+
+    template <typename T>
+    Any& Any::operator=(T&& inValue)
     {
         Reset();
-        ConstructValue(std::forward<T>(value));
+        ConstructFromValue(std::forward<T>(inValue));
         return *this;
     }
 
     template <typename T>
-    Any& Any::operator=(const std::reference_wrapper<T>& ref)
+    Any& Any::operator=(std::reference_wrapper<T>& inRef)
     {
         Reset();
-        ConstructRef(ref);
+        ConstructFromRef(inRef);
         return *this;
     }
 
     template <typename T>
-    Any& Any::operator=(std::reference_wrapper<T>&& ref)
+    Any& Any::operator=(std::reference_wrapper<T>&& inRef)
     {
         Reset();
-        ConstructRef(ref);
+        ConstructFromRef(inRef);
         return *this;
+    }
+
+    template <typename T>
+    Any& Any::operator=(const std::reference_wrapper<T>& inRef)
+    {
+        Reset();
+        ConstructFromRef(inRef);
+        return *this;
+    }
+
+    template <typename T>
+    bool Any::Convertible()
+    {
+        return Mirror::Convertible(
+            { Type(), RemoveRefType(), RemovePointerType() },
+            { GetTypeInfo<T>(), GetTypeInfo<std::remove_reference_t<T>>(), GetTypeInfo<std::remove_pointer_t<T>>() });
     }
 
     template <typename T>
     bool Any::Convertible() const
     {
-        return Convertible(GetTypeInfo<T>());
+        return Mirror::Convertible(
+            { Type(), RemoveRefType(), RemovePointerType() },
+            { GetTypeInfo<T>(), GetTypeInfo<std::remove_reference_t<T>>(), GetTypeInfo<std::remove_pointer_t<T>>() });
+    }
+
+    template <typename T>
+    T Any::As()
+    {
+        Assert(Convertible<T>());
+        return *static_cast<std::remove_cvref_t<T>*>(Data());
     }
 
     template <typename T>
     T Any::As() const
     {
         Assert(Convertible<T>());
-        return ForceAs<T>();
+        return *static_cast<std::remove_cvref_t<T>*>(Data());
     }
 
     template <typename T>
-    T Any::ForceAs() const
+    T* Any::TryAs()
     {
-        if (typeInfo->isLValueReference) {
-            return static_cast<std::add_const_t<std::reference_wrapper<std::remove_reference_t<T>>>*>(GetMemory())->get();
-        } else {
-            return *static_cast<std::remove_reference_t<T>*>(GetMemory());
-        }
+        Assert(!std::is_reference_v<T>);
+        const bool convertible = Mirror::Convertible(
+            { AddPointerType(), AddPointerType(), RemoveRefType() },
+            { GetTypeInfo<T*>(), GetTypeInfo<T*>(), GetTypeInfo<T>() });
+        return convertible ? static_cast<std::remove_cvref_t<T>*>(Data()) : nullptr;
     }
 
     template <typename T>
     T* Any::TryAs() const
     {
-        Assert(!typeInfo->isLValueReference);
-        if (Convertible<T>()) {
-            return static_cast<std::remove_reference_t<T>*>(GetMemory());
-        } else {
-            return nullptr;
+        Assert(!std::is_reference_v<T>);
+        const bool convertible = Mirror::Convertible(
+            { AddPointerType(), AddPointerType(), RemoveRefType() },
+            { GetTypeInfo<T*>(), GetTypeInfo<T*>(), GetTypeInfo<T>() });
+        return convertible ? static_cast<std::remove_cvref_t<T>*>(Data()) : nullptr;
+    }
+
+    template <typename T>
+    void Any::ConstructFromValue(T&& inValue)
+    {
+        using RawType = std::remove_cvref_t<T>;
+
+        policy = AnyPolicy::memoryHolder;
+        rtti = &anyRttiImpl<RawType>;
+        info = HolderInfo(sizeof(RawType));
+        new(Data()) RawType(std::forward<T>(inValue));
+    }
+
+    template <typename T>
+    void Any::ConstructFromRef(std::reference_wrapper<T> inRef)
+    {
+        using RawType = std::remove_const_t<T>;
+
+        policy = std::is_const_v<T> ? AnyPolicy::constRef : AnyPolicy::ref;
+        rtti = &anyRttiImpl<RawType>;
+        info = RefInfo(const_cast<RawType*>(&inRef.get()), sizeof(RawType));
+    }
+
+    template <typename T>
+    T Argument::As() const // NOLINT
+    {
+        const auto index = any.index();
+        if (index == 1) {
+            return std::get<Any*>(any)->As<T>();
         }
+        if (index == 2) {
+            return std::get<const Any*>(any)->As<T>();
+        }
+        if (index == 3) {
+            return const_cast<Any&>(std::get<Any>(any)).As<T>();
+        }
+        QuickFailWithReason("Argument is empty");
+        return std::get<Any*>(any)->As<T>();
+    }
+
+    template <size_t N>
+    Id::Id(const char(&inName)[N])
+        : hash(Common::HashUtils::StrCrc32(inName))
+        , name(inName)
+    {
     }
 
     template <typename T>
-    void Any::ConstructValue(T&& value)
+    void Variable::Set(T&& value) const
     {
-        using RemoveCVRefType = std::remove_cvref_t<T>;
-        using RemoveRefType = std::remove_reference_t<T>;
-
-        typeInfo = GetTypeInfo<RemoveRefType>();
-        rtti = &Internal::anyRttiImpl<RemoveCVRefType>;
-
-        ResizeMemory(sizeof(RemoveCVRefType));
-        new(GetMemory()) RemoveCVRefType(std::forward<T>(value));
-    }
-
-    template <typename T>
-    void Any::ConstructRef(const std::reference_wrapper<T>& ref)
-    {
-        using RefWrapperType = std::reference_wrapper<T>;
-        using RefType = T&;
-
-        typeInfo = GetTypeInfo<RefType>();
-        rtti = &Internal::anyRttiImpl<RefWrapperType>;
-
-        ResizeMemory(sizeof(RefWrapperType));
-        new(GetMemory()) RefWrapperType(ref);
-    }
-
-    template <typename T>
-    void Variable::Set(T value) const
-    {
-        auto ref = Any(std::forward<std::remove_reference_t<T>>(value));
-        Set(&ref);
+        SetDyn(Internal::ForwardAsArgument(std::forward<T>(value)));
     }
 
     template <typename... Args>
     Any Function::Invoke(Args&&... args) const
     {
-        std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
-        return InvokeWith(refs.data(), refs.size());
+        return InvokeDyn(Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
     }
 
     template <typename... Args>
-    Any Constructor::ConstructOnStack(Args&&... args) const
+    Any Constructor::Construct(Args&&... args) const
     {
-        std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
-        return ConstructOnStackWith(refs.data(), refs.size());
+        return ConstructDyn(Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
     }
 
     template <typename... Args>
-    Any Constructor::NewObject(Args&&... args) const
+    Any Constructor::New(Args&&... args) const
     {
-        std::array<Any, sizeof...(args)> refs = { Any(std::forward<Args>(args))... };
-        return NewObjectWith(refs.data(), refs.size());
+        return NewDyn(Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
     }
 
     template <typename C>
     void Destructor::Invoke(C&& object) const
     {
-        auto classRef = Any(std::ref(std::forward<C>(object)));
-        InvokeWith(&classRef);
+        InvokeDyn(Internal::ForwardAsArgument(std::forward<C>(object)));
     }
 
     template <typename C, typename T>
-    void MemberVariable::Set(C&& object, T value) const
+    void MemberVariable::Set(C&& object, T&& value) const
     {
-        auto classRef = Any(std::ref(std::forward<C>(object)));
-        auto valueRef = Any(std::forward<std::remove_reference_t<T>>(value));
-        Set(&classRef, &valueRef);
+        SetDyn(Internal::ForwardAsArgument(std::forward<C>(object)), Internal::ForwardAsArgument(std::forward<T>(value)));
+    }
+
+    template <typename C>
+    Any MemberVariable::Get(C&& object) const
+    {
+        return GetDyn(Internal::ForwardAsArgument(std::forward<C>(object)));
+    }
+
+    template <typename C>
+    void MemberVariable::Serialize(Common::SerializeStream& stream, C&& object) const
+    {
+        SerializeDyn(stream, Internal::ForwardAsArgument(std::forward<C>(object)));
+    }
+
+    template <typename C>
+    void MemberVariable::Deserialize(Common::DeserializeStream& stream, C&& object) const
+    {
+        DeserializeDyn(stream, Internal::ForwardAsArgument(std::forward<C>(object)));
     }
 
     template <typename C, typename... Args>
     Any MemberFunction::Invoke(C&& object, Args&&... args) const
     {
-        auto classRef = Any(std::ref(std::forward<C>(object)));
-        std::array<Any, sizeof...(args)> argRefs = { Any(std::forward<Args>(args))... };
-        return InvokeWith(&classRef, argRefs.data(), argRefs.size());
+        return InvokeDyn(Internal::ForwardAsArgument(std::forward<C>(object)), Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
     }
 
-    template <typename F>
-    void GlobalScope::ForEachVariable(F&& func) const
-    {
-        for (const auto& [name, variable] : variables) {
-            func(variable);
-        }
-    }
-
-    template <typename F>
-    void GlobalScope::ForEachFunction(F&& func) const
-    {
-        for (const auto& [name, function] : functions) {
-            func(function);
-        }
-    }
-
-    template <typename C>
-    requires std::is_class_v<C>
+    template <Common::CppClass C>
     bool Class::Has()
     {
         return Has(Mirror::GetTypeInfo<C>());
     }
 
-    template <typename C>
-    requires std::is_class_v<C>
+    template <Common::CppClass C>
     const Class* Class::Find()
     {
         return Find(Mirror::GetTypeInfo<C>());
     }
 
-    template <typename C>
-    requires std::is_class_v<C>
+    template <Common::CppClass C>
     const Class& Class::Get()
     {
         return Get(Mirror::GetTypeInfo<C>());
     }
 
-    template <typename F>
-    void Class::ForEachStaticVariable(F&& func) const
+    template <typename ... Args>
+    Any Class::Construct(Args&&... args)
     {
-        for (const auto& [name, staticVariable] : staticVariables) {
-            func(staticVariable);
-        }
+        auto arguments = Internal::ForwardAsArgumentList(std::forward<Args>(args)...);
+        const auto* constructor = FindSuitableConstructor(arguments);
+        Assert(constructor != nullptr);
+        return constructor->Construct(arguments);
     }
 
-    template <typename F>
-    void Class::ForEachStaticFunction(F&& func) const
+    template <typename ... Args>
+    Any Class::New(Args&&... args)
     {
-        for (const auto& [name, staticFunction] : staticFunctions) {
-            func(staticFunction);
-        }
-    }
-
-    template <typename F>
-    void Class::ForEachMemberVariable(F&& func) const
-    {
-        for (const auto& [name, variable] : memberVariables) {
-            func(variable);
-        }
-    }
-
-    template <typename F>
-    void Class::ForEachMemberFunction(F&& func) const
-    {
-        for (const auto& [name, function] : memberFunctions) {
-            func(function);
-        }
+        auto arguments = Internal::ForwardAsArgumentList(std::forward<Args>(args)...);
+        const auto* constructor = FindSuitableConstructor(arguments);
+        Assert(constructor != nullptr);
+        return constructor->New(arguments);
     }
 
     template <typename T>
-    requires std::is_enum_v<T>
+    void Class::Serialize(Common::SerializeStream& stream, T&& obj) const
+    {
+        SerializeDyn(stream, Internal::ForwardAsArgument(std::forward<T>(obj)));
+    }
+
+    template <typename T>
+    void Class::Deserailize(Common::DeserializeStream& stream, T&& obj) const
+    {
+        DeserailizeDyn(stream, Internal::ForwardAsArgument(std::forward<T>(obj)));
+    }
+
+    template <Common::CppEnum T>
     const Enum* Enum::Find()
     {
-        auto iter = typeToNameMap.find(Mirror::GetTypeInfo<T>()->id);
-        Assert(iter != typeToNameMap.end());
+        auto iter = typeToIdMap.find(Mirror::GetTypeInfo<T>()->id);
+        Assert(iter != typeToIdMap.end());
         return Find(iter->second);
     }
 
-    template <typename T>
-    requires std::is_enum_v<T>
+    template <Common::CppEnum T>
     const Enum& Enum::Get()
     {
-        auto iter = typeToNameMap.find(Mirror::GetTypeInfo<T>()->id);
-        Assert(iter != typeToNameMap.end());
+        auto iter = typeToIdMap.find(Mirror::GetTypeInfo<T>()->id);
+        Assert(iter != typeToIdMap.end());
         return Get(iter->second);
     }
 }

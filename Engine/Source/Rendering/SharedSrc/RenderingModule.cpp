@@ -24,6 +24,11 @@ namespace Rendering {
         Module::OnUnload();
     }
 
+    Core::ModuleType RenderingModule::Type() const
+    {
+        return Core::ModuleType::mDynamic;
+    }
+
     void RenderingModule::Initialize(const RenderingModuleInitParams& inParams)
     {
         Assert(!initialized);
@@ -67,4 +72,4 @@ namespace Rendering {
     }
 }
 
-IMPLEMENT_MODULE(RENDERING_API, Rendering::RenderingModule);
+IMPLEMENT_DYNAMIC_MODULE(RENDERING_API, Rendering::RenderingModule);

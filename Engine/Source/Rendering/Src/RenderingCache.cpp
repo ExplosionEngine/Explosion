@@ -16,8 +16,7 @@ namespace Rendering {
 
         void Invalidate();
 
-        template <typename D>
-        requires std::is_same_v<D, ComputePipelineLayoutDesc> || std::is_same_v<D, RasterPipelineLayoutDesc>
+        template <AnyPipelineLayoutDesc D>
         PipelineLayout* GetLayout(const D& desc)
         {
             auto hash = desc.Hash();
@@ -158,7 +157,6 @@ namespace Rendering {
 
     RHI::VertexState RVertexState::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
     {
-        // TODO check hash
         RHI::VertexState result;
         result.bufferLayouts.reserve(bufferLayouts.size());
         for (const auto& bufferLayout : bufferLayouts) {

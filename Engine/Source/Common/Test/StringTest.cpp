@@ -2,7 +2,7 @@
 // Created by johnk on 2022/6/22.
 //
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Common/String.h>
 using namespace Common;

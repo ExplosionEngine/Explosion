@@ -2,7 +2,7 @@
 // Created by johnk on 2022/7/20.
 //
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Common/Concurrent.h>
 

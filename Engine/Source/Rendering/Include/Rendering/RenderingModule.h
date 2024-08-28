@@ -24,6 +24,7 @@ namespace Rendering {
 
         void OnLoad() override;
         void OnUnload() override;
+        Core::ModuleType Type() const override;
 
         void Initialize(const RenderingModuleInitParams& inParams);
         RHI::Device* GetDevice() const;

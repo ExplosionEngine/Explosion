@@ -11,8 +11,7 @@
 #include <Common/Serialization.h>
 
 namespace Common {
-    template <typename T>
-    requires isFloatingPointV<T>
+    template <FloatingPoint T>
     struct ReversedZOrthogonalProjectionBase {
         T width;
         T height;
@@ -20,8 +19,7 @@ namespace Common {
         std::optional<T> farPlane;
     };
 
-    template <typename T>
-    requires isFloatingPointV<T>
+    template <FloatingPoint T>
     struct ReversedZPerspectiveProjectionBase {
         T fov;
         T width;
@@ -34,14 +32,14 @@ namespace Common {
     struct ReversedZOrthogonalProjection : ReversedZOrthogonalProjectionBase<T> {
         ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane);
         ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane, T inFarPlane);
-        Matrix<T, 4, 4> GetProjectionMatrix() const;
+        Mat<T, 4, 4> GetProjectionMatrix() const;
     };
 
     template <typename T>
     struct ReversedZPerspectiveProjection : ReversedZPerspectiveProjectionBase<T> {
         ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane);
         ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane, T inFarPlane);
-        Matrix<T, 4, 4> GetProjectionMatrix() const;
+        Mat<T, 4, 4> GetProjectionMatrix() const;
     };
 
     using HReversedZOrthoProjection = ReversedZOrthogonalProjection<HFloat>;
@@ -139,10 +137,10 @@ namespace Common {
     }
 
     template <typename T>
-    Matrix<T, 4, 4> ReversedZOrthogonalProjection<T>::GetProjectionMatrix() const
+    Mat<T, 4, 4> ReversedZOrthogonalProjection<T>::GetProjectionMatrix() const
     {
         if (this->farPlane.has_value()) {
-            return Matrix<T, 4, 4>(
+            return Mat<T, 4, 4>(
                 2.0f / this->width, 0.0f, 0.0f, 0.0f,
                 0.0f, 2.0f / this->height, 0.0f, 0.0f,
                 0.0f, 0.0f, -1.0f / (this->farPlane.value() - this->nearPlane), 1.0f + (this->nearPlane / (this->farPlane.value() - this->nearPlane)),
@@ -150,7 +148,7 @@ namespace Common {
             );
         } else {
             // Infinite Far Plane
-            return Matrix<T, 4, 4>(
+            return Mat<T, 4, 4>(
                 2.0f / this->width, 0.0f, 0.0f, 0.0f,
                 0.0f, 2.0f / this->height, 0.0f, 0.0f,
                 0.0f, 0.0f, 0.0f, 1.0f,
@@ -180,13 +178,13 @@ namespace Common {
     }
 
     template <typename T>
-    Matrix<T, 4, 4> ReversedZPerspectiveProjection<T>::GetProjectionMatrix() const
+    Mat<T, 4, 4> ReversedZPerspectiveProjection<T>::GetProjectionMatrix() const
     {
         Angle<T> angle(this->fov);
         T tanHalfFov = tan(angle.ToRadian() / static_cast<T>(2));
 
         if (this->farPlane.has_value()) {
-            return Matrix<T, 4, 4>(
+            return Mat<T, 4, 4>(
                 this->height / (this->width * tanHalfFov), 0.0f, 0.0f, 0.0f,
                 0.0f, 1.0f / tanHalfFov, 0.0f, 0.0f,
                 0.0f, 0.0f, this->nearPlane / (this->nearPlane - this->farPlane.value()), this->nearPlane * this->farPlane.value() / (this->farPlane.value() - this->nearPlane),
@@ -195,7 +193,7 @@ namespace Common {
         }
 
         // Infinite Far Plane
-        return Matrix<T, 4, 4>(
+        return Mat<T, 4, 4>(
             this->height / (this->width * tanHalfFov), 0.0f, 0.0f, 0.0f,
             0.0f, 1.0f / tanHalfFov, 0.0f, 0.0f,
             0.0f, 0.0f, 0.0f, this->nearPlane,

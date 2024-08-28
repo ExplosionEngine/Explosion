@@ -1,5 +1,5 @@
 if (${BUILD_TEST})
-    add_subdirectory(TestMain)
+    add_subdirectory(Test)
 endif()
 
 add_subdirectory(Common)

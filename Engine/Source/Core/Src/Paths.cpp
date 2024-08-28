@@ -22,29 +22,34 @@ namespace Core {
         return WorkingDir().parent_path();
     }
 
-    std::filesystem::path Paths::EngineShaderPath()
+    std::filesystem::path Paths::EngineRes()
+    {
+        return EngineRoot() / "Resource";
+    }
+
+    std::filesystem::path Paths::EngineShader()
     {
         return EngineRoot() / "Shader";
     }
 
-    std::filesystem::path Paths::EngineAssetPath()
+    std::filesystem::path Paths::EngineAsset()
     {
         return EngineRoot() / "Asset";
     }
 
-    std::filesystem::path Paths::EngineBinariesPath()
+    std::filesystem::path Paths::EngineBin()
     {
         return EngineRoot() / "Binaries";
     }
 
-    std::filesystem::path Paths::EnginePluginPath()
+    std::filesystem::path Paths::EnginePlugin()
     {
         return EngineRoot() / "Plugin";
     }
 
-    std::filesystem::path Paths::EnginePluginAssetPath(const std::string& pluginName)
+    std::filesystem::path Paths::EnginePluginAsset(const std::string& pluginName)
     {
-        return EnginePluginPath() / pluginName / "Asset";
+        return EnginePlugin() / pluginName / "Asset";
     }
 
     void Paths::SetCurrentProjectFile(std::filesystem::path inFile)
@@ -62,28 +67,28 @@ namespace Core {
         return currentProjectFile.parent_path();
     }
 
-    std::filesystem::path Paths::ProjectAssetPath()
+    std::filesystem::path Paths::ProjectAsset()
     {
         return ProjectRoot() / "Asset";
     }
 
-    std::filesystem::path Paths::ProjectBinariesPath()
+    std::filesystem::path Paths::ProjectBin()
     {
         return ProjectRoot() / "Binaries";
     }
 
-    std::filesystem::path Paths::ProjectPluginPath()
+    std::filesystem::path Paths::ProjectPlugin()
     {
         return ProjectRoot() / "Plugin";
     }
 
-    std::filesystem::path Paths::ProjectPluginAssetPath(const std::string& pluginName)
+    std::filesystem::path Paths::ProjectPluginAsset(const std::string& pluginName)
     {
-        return ProjectPluginPath() / pluginName / "Asset";
+        return ProjectPlugin() / pluginName / "Asset";
     }
 
 #if BUILD_TEST
-    std::filesystem::path Paths::EngineTestPath()
+    std::filesystem::path Paths::EngineTest()
     {
         return EngineRoot() / "Test";
     }

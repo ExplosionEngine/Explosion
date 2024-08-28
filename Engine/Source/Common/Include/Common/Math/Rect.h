@@ -10,32 +10,32 @@
 namespace Common {
     template <typename T>
     struct RectBase {
-        Vector<T, 2> min;
-        Vector<T, 2> max;
+        Vec<T, 2> min;
+        Vec<T, 2> max;
     };
 
     template <typename T>
     struct Rect : RectBase<T> {
         static Rect FromMinExtent(T inMinX, T inMinY, T inExtentX, T inExtentY);
-        static Rect FromMinExtent(Vector<T, 2> inMin, Vector<T, 2> inExtent);
+        static Rect FromMinExtent(Vec<T, 2> inMin, Vec<T, 2> inExtent);
 
         Rect();
         Rect(T inMinX, T inMinY, T inMaxX, T inMaxY);
-        Rect(Vector<T, 2> inMin, Vector<T, 2> inMax);
+        Rect(Vec<T, 2> inMin, Vec<T, 2> inMax);
         Rect(const Rect& inOther);
         Rect(Rect&& inOther) noexcept;
         Rect& operator=(const Rect& inOther);
 
-        Vector<T, 2> Extent() const;
+        Vec<T, 2> Extent() const;
         T ExtentX() const;
         T ExtentY() const;
-        Vector<T, 2> Center() const;
+        Vec<T, 2> Center() const;
         T CenterX() const;
         T CenterY() const;
         T Distance(const Rect& inOther) const;
         // half of diagonal
         T Size() const;
-        bool Inside(const Vector<T, 2>& inPoint) const;
+        bool Inside(const Vec<T, 2>& inPoint) const;
         bool Intersect(const Rect& inOther) const;
 
         template <typename IT>
@@ -61,8 +61,8 @@ namespace Common {
         {
             TypeIdSerializer<Rect<T>>::Serialize(stream);
 
-            Serializer<Vector<T, 2>>::Serialize(stream, value.min);
-            Serializer<Vector<T, 2>>::Serialize(stream, value.max);
+            Serializer<Vec<T, 2>>::Serialize(stream, value.min);
+            Serializer<Vec<T, 2>>::Serialize(stream, value.max);
         }
 
         static bool Deserialize(DeserializeStream& stream, Rect<T>& value)
@@ -71,8 +71,8 @@ namespace Common {
                 return false;
             }
 
-            Serializer<Vector<T, 2>>::Deserialize(stream, value.min);
-            Serializer<Vector<T, 2>>::Deserialize(stream, value.max);
+            Serializer<Vec<T, 2>>::Deserialize(stream, value.min);
+            Serializer<Vec<T, 2>>::Deserialize(stream, value.max);
             return true;
         }
     };
@@ -86,7 +86,7 @@ namespace Common {
     }
 
     template <typename T>
-    Rect<T> Rect<T>::FromMinExtent(Vector<T, 2> inMin, Vector<T, 2> inExtent)
+    Rect<T> Rect<T>::FromMinExtent(Vec<T, 2> inMin, Vec<T, 2> inExtent)
     {
         return Rect(inMin, inMin + inExtent);
     }
@@ -101,12 +101,12 @@ namespace Common {
     template <typename T>
     Rect<T>::Rect(T inMinX, T inMinY, T inMaxX, T inMaxY)
     {
-        this->min = Vector<T, 2>(inMinX, inMinY);
-        this->max = Vector<T, 2>(inMaxX, inMaxY);
+        this->min = Vec<T, 2>(inMinX, inMinY);
+        this->max = Vec<T, 2>(inMaxX, inMaxY);
     }
 
     template <typename T>
-    Rect<T>::Rect(Vector<T, 2> inMin, Vector<T, 2> inMax)
+    Rect<T>::Rect(Vec<T, 2> inMin, Vec<T, 2> inMax)
     {
         this->min = std::move(inMin);
         this->max = std::move(inMax);
@@ -135,7 +135,7 @@ namespace Common {
     }
 
     template <typename T>
-    Vector<T, 2> Rect<T>::Extent() const
+    Vec<T, 2> Rect<T>::Extent() const
     {
         return this->max - this->min;
     }
@@ -153,7 +153,7 @@ namespace Common {
     }
 
     template <typename T>
-    Vector<T, 2> Rect<T>::Center() const
+    Vec<T, 2> Rect<T>::Center() const
     {
         return (this->min + this->max) / T(2);
     }
@@ -173,19 +173,19 @@ namespace Common {
     template <typename T>
     T Rect<T>::Distance(const Rect& inOther) const
     {
-        Vector<T, 2> direction = Center() - inOther.Center();
+        Vec<T, 2> direction = Center() - inOther.Center();
         return direction.Model();
     }
 
     template <typename T>
     T Rect<T>::Size() const
     {
-        Vector<T, 3> diagonal = this->max - this->min;
+        Vec<T, 3> diagonal = this->max - this->min;
         return diagonal.Model() / T(2);
     }
 
     template <typename T>
-    bool Rect<T>::Inside(const Vector<T, 2>& inPoint) const
+    bool Rect<T>::Inside(const Vec<T, 2>& inPoint) const
     {
         return inPoint.x >= this->min.x && inPoint.x <= this->max.x
             && inPoint.y >= this->min.y && inPoint.y <= this->max.y;

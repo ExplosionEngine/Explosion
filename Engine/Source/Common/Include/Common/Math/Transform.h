@@ -10,21 +10,20 @@
 #include <Common/Serialization.h>
 
 namespace Common {
-    template <typename T>
-    requires isFloatingPointV<T>
+    template <FloatingPoint T>
     struct TransformBase {
-        Vector<T, 3> scale;
+        Vec<T, 3> scale;
         Quaternion<T> rotation;
-        Vector<T, 3> translation;
+        Vec<T, 3> translation;
     };
 
     template <typename T>
     struct Transform : TransformBase<T> {
-        static Transform LookAt(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
+        static Transform LookAt(const Vec<T, 3>& inPosition, const Vec<T, 3>& inTargetPosition, const Vec<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
 
         Transform();
-        Transform(Quaternion<T> inRotation, Vector<T, 3> inTranslation);
-        Transform(Vector<T, 3> inScale, Quaternion<T> inRotation, Vector<T, 3> inTranslation);
+        Transform(Quaternion<T> inRotation, Vec<T, 3> inTranslation);
+        Transform(Vec<T, 3> inScale, Quaternion<T> inRotation, Vec<T, 3> inTranslation);
         Transform(const Transform& other);
         Transform(Transform&& other) noexcept;
         Transform& operator=(const Transform& other);
@@ -32,30 +31,30 @@ namespace Common {
         bool operator==(const Transform& rhs) const;
         bool operator!=(const Transform& rhs) const;
 
-        Transform operator+(const Vector<T, 3>& inTranslation) const;
+        Transform operator+(const Vec<T, 3>& inTranslation) const;
         Transform operator|(const Quaternion<T>& inRotation) const;
-        Transform operator*(const Vector<T, 3>& inScale) const;
+        Transform operator*(const Vec<T, 3>& inScale) const;
 
-        Transform& operator+=(const Vector<T, 3>& inTranslation);
+        Transform& operator+=(const Vec<T, 3>& inTranslation);
         Transform& operator|=(const Quaternion<T>& inRotation);
-        Transform& operator*=(const Vector<T, 3>& inScale);
+        Transform& operator*=(const Vec<T, 3>& inScale);
 
-        Transform& Translate(const Vector<T, 3>& inTranslation);
+        Transform& Translate(const Vec<T, 3>& inTranslation);
         Transform& Rotate(const Quaternion<T>& inRotation);
-        Transform& Scale(const Vector<T, 3>& inScale);
-        Transform& UpdateRotation(const Vector<T, 3>& forward, const Vector<T, 3>& side, const Vector<T, 3>& up);
-        Transform& LookTo(const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
-        Transform& MoveAndLookTo(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
+        Transform& Scale(const Vec<T, 3>& inScale);
+        Transform& UpdateRotation(const Vec<T, 3>& forward, const Vec<T, 3>& side, const Vec<T, 3>& up);
+        Transform& LookTo(const Vec<T, 3>& inTargetPosition, const Vec<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
+        Transform& MoveAndLookTo(const Vec<T, 3>& inPosition, const Vec<T, 3>& inTargetPosition, const Vec<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
 
-        Matrix<T, 4, 4> GetTranslationMatrix() const;
-        Matrix<T, 4, 4> GetRotationMatrix() const;
-        Matrix<T, 4, 4> GetScaleMatrix() const;
+        Mat<T, 4, 4> GetTranslationMatrix() const;
+        Mat<T, 4, 4> GetRotationMatrix() const;
+        Mat<T, 4, 4> GetScaleMatrix() const;
         // scale -> rotate -> translate
-        Matrix<T, 4, 4> GetTransformMatrix() const;
+        Mat<T, 4, 4> GetTransformMatrix() const;
         // rotate -> translate
-        Matrix<T, 4, 4> GetTransformMatrixNoScale() const;
-        Vector<T, 3> TransformPosition(const Vector<T, 3>& inPosition) const;
-        Vector<T, 4> TransformPosition(const Vector<T, 4>& inPosition) const;
+        Mat<T, 4, 4> GetTransformMatrixNoScale() const;
+        Vec<T, 3> TransformPosition(const Vec<T, 3>& inPosition) const;
+        Vec<T, 4> TransformPosition(const Vec<T, 4>& inPosition) const;
 
         template <typename IT>
         Transform<IT> CastTo() const;
@@ -78,9 +77,9 @@ namespace Common { // NOLINT
         {
             TypeIdSerializer<Transform<T>>::Serialize(stream);
 
-            Serializer<Vector<T, 3>>::Serialize(stream, value.scale);
+            Serializer<Vec<T, 3>>::Serialize(stream, value.scale);
             Serializer<Quaternion<T>>::Serialize(stream, value.rotation);
-            Serializer<Vector<T, 3>>::Serialize(stream, value.translation);
+            Serializer<Vec<T, 3>>::Serialize(stream, value.translation);
         }
 
         static bool Deserialize(DeserializeStream& stream, Transform<T>& value)
@@ -89,9 +88,9 @@ namespace Common { // NOLINT
                 return false;
             }
 
-            Serializer<Vector<T, 3>>::Deserialize(stream, value.scale);
+            Serializer<Vec<T, 3>>::Deserialize(stream, value.scale);
             Serializer<Quaternion<T>>::Deserialize(stream, value.rotation);
-            Serializer<Vector<T, 3>>::Deserialize(stream, value.translation);
+            Serializer<Vec<T, 3>>::Deserialize(stream, value.translation);
             return true;
         }
     };
@@ -99,7 +98,7 @@ namespace Common { // NOLINT
 
 namespace Common {
     template <typename T>
-    Transform<T> Transform<T>::LookAt(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection)
+    Transform<T> Transform<T>::LookAt(const Vec<T, 3>& inPosition, const Vec<T, 3>& inTargetPosition, const Vec<T, 3>& inUpDirection)
     {
         Transform result;
         result.MoveAndLookTo(inPosition, inTargetPosition, inUpDirection);
@@ -115,7 +114,7 @@ namespace Common {
     }
 
     template <typename T>
-    Transform<T>::Transform(Quaternion<T> inRotation, Vector<T, 3> inTranslation)
+    Transform<T>::Transform(Quaternion<T> inRotation, Vec<T, 3> inTranslation)
     {
         this->scale = VecConsts<T, 3>::unit;
         this->rotation = inRotation;
@@ -123,7 +122,7 @@ namespace Common {
     }
 
     template <typename T>
-    Transform<T>::Transform(Vector<T, 3> inScale, Quaternion<T> inRotation, Vector<T, 3> inTranslation)
+    Transform<T>::Transform(Vec<T, 3> inScale, Quaternion<T> inRotation, Vec<T, 3> inTranslation)
     {
         this->scale = inScale;
         this->rotation = inRotation;
@@ -170,7 +169,7 @@ namespace Common {
     }
 
     template <typename T>
-    Transform<T> Transform<T>::operator+(const Vector<T, 3>& inTranslation) const
+    Transform<T> Transform<T>::operator+(const Vec<T, 3>& inTranslation) const
     {
         Transform result;
         result.scale = this->scale;
@@ -190,7 +189,7 @@ namespace Common {
     }
 
     template <typename T>
-    Transform<T> Transform<T>::operator*(const Vector<T, 3>& inScale) const
+    Transform<T> Transform<T>::operator*(const Vec<T, 3>& inScale) const
     {
         Transform result;
         result.scale = this->scale * inScale;
@@ -200,7 +199,7 @@ namespace Common {
     }
 
     template <typename T>
-    Transform<T>& Transform<T>::operator+=(const Vector<T, 3>& inTranslation)
+    Transform<T>& Transform<T>::operator+=(const Vec<T, 3>& inTranslation)
     {
         return Translate(inTranslation);
     }
@@ -212,13 +211,13 @@ namespace Common {
     }
 
     template <typename T>
-    Transform<T>& Transform<T>::operator*=(const Vector<T, 3>& inScale)
+    Transform<T>& Transform<T>::operator*=(const Vec<T, 3>& inScale)
     {
         return Scale(inScale);
     }
 
     template <typename T>
-    Transform<T>& Transform<T>::Translate(const Vector<T, 3>& inTranslation)
+    Transform<T>& Transform<T>::Translate(const Vec<T, 3>& inTranslation)
     {
         this->translation += inTranslation;
         return *this;
@@ -232,28 +231,28 @@ namespace Common {
     }
 
     template <typename T>
-    Transform<T>& Transform<T>::Scale(const Vector<T, 3>& inScale)
+    Transform<T>& Transform<T>::Scale(const Vec<T, 3>& inScale)
     {
         this->scale *= inScale;
         return *this;
     }
 
     template <typename T>
-    Transform<T>& Transform<T>::UpdateRotation(const Vector<T, 3>& forward, const Vector<T, 3>& side, const Vector<T, 3>& up)
+    Transform<T>& Transform<T>::UpdateRotation(const Vec<T, 3>& forward, const Vec<T, 3>& side, const Vec<T, 3>& up)
     {
         // Transform of an object(camera) is the inverse of transform represented in lookAtMatrix
-        // Matrix<T, 4, 4> lookAtMat {
+        // Mat<T, 4, 4> lookAtMat {
         //     s.x, s.y, s.z, -s.Dot(inPosition),
         //     u.x, u.y, u.z, -u.Dot(inPosition),
         //     f.x, f.y. f.z, -f.Dot(inPosition),
         //     0, 0, 0, 1
         // };
 
-        // Rotaion matrix is orthogonal, its inverse equals to its transpose
+        // Rotaion Mat is orthogonal, its inverse equals to its transpose
         // So, we get quaternion from the transposed rotation part of lookAtMatrix
         // Algorithm: https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
 
-        Matrix<T, 3, 3> rotMat {
+        Mat<T, 3, 3> rotMat {
             side.x, up.x, forward.x,
             side.y, up.y, forward.y,
             side.z, up.z, forward.z
@@ -298,15 +297,15 @@ namespace Common {
     }
 
     template <typename T>
-    Transform<T>& Transform<T>::LookTo(const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection)
+    Transform<T>& Transform<T>::LookTo(const Vec<T, 3>& inTargetPosition, const Vec<T, 3>& inUpDirection)
     {
-        Vector<T, 3> f(inTargetPosition - this->translation);
+        Vec<T, 3> f(inTargetPosition - this->translation);
         f.Normalize();
 
-        Vector<T, 3> s = inUpDirection.Cross(f);
+        Vec<T, 3> s = inUpDirection.Cross(f);
         s.Normalize();
 
-        Vector<T, 3> u = f.Cross(s);
+        Vec<T, 3> u = f.Cross(s);
 
         this->UpdateRotation(f, s, u);
 
@@ -314,19 +313,19 @@ namespace Common {
     }
 
     template <typename T>
-    Transform<T>& Transform<T>::MoveAndLookTo(const Vector<T, 3>& inPosition, const Vector<T, 3>& inTargetPosition, const Vector<T, 3>& inUpDirection)
+    Transform<T>& Transform<T>::MoveAndLookTo(const Vec<T, 3>& inPosition, const Vec<T, 3>& inTargetPosition, const Vec<T, 3>& inUpDirection)
     {
         // Translation of LookAtMatrix ([s.Dot(inPosition), u.Dot(inPosition), f.Dot(inPosition)]) applying to visible objects is in camera space, whose coordinate system consists of s u and f
         // The translation we need is in world space, exactly inPosition
         this->translation = inPosition;
 
-        Vector<T, 3> f(inTargetPosition - this->translation);
+        Vec<T, 3> f(inTargetPosition - this->translation);
         f.Normalize();
 
-        Vector<T, 3> s = inUpDirection.Cross(f);
+        Vec<T, 3> s = inUpDirection.Cross(f);
         s.Normalize();
 
-        Vector<T, 3> u = f.Cross(s);
+        Vec<T, 3> u = f.Cross(s);
 
         this->UpdateRotation(f, s, u);
 
@@ -334,23 +333,23 @@ namespace Common {
     }
 
     template <typename T>
-    Matrix<T, 4, 4> Transform<T>::GetTranslationMatrix() const
+    Mat<T, 4, 4> Transform<T>::GetTranslationMatrix() const
     {
-        Matrix<T, 4, 4> result = MatConsts<T, 4, 4>::identity;
+        Mat<T, 4, 4> result = MatConsts<T, 4, 4>::identity;
         result.SetCol(3, this->translation.x, this->translation.y, this->translation.z, 1);
         return result;
     }
 
     template <typename T>
-    Matrix<T, 4, 4> Transform<T>::GetRotationMatrix() const
+    Mat<T, 4, 4> Transform<T>::GetRotationMatrix() const
     {
         return this->rotation.GetRotationMatrix();
     }
 
     template <typename T>
-    Matrix<T, 4, 4> Transform<T>::GetScaleMatrix() const
+    Mat<T, 4, 4> Transform<T>::GetScaleMatrix() const
     {
-        Matrix<T, 4, 4> result = MatConsts<T, 4, 4>::identity;
+        Mat<T, 4, 4> result = MatConsts<T, 4, 4>::identity;
         result.At(0, 0) = this->scale.x;
         result.At(1, 1) = this->scale.y;
         result.At(2, 2) = this->scale.z;
@@ -358,28 +357,28 @@ namespace Common {
     }
 
     template <typename T>
-    Matrix<T, 4, 4> Transform<T>::GetTransformMatrix() const
+    Mat<T, 4, 4> Transform<T>::GetTransformMatrix() const
     {
         return GetTranslationMatrix() * GetRotationMatrix() * GetScaleMatrix();
     }
 
     template <typename T>
-    Matrix<T, 4, 4> Transform<T>::GetTransformMatrixNoScale() const
+    Mat<T, 4, 4> Transform<T>::GetTransformMatrixNoScale() const
     {
         return GetTranslationMatrix() * GetRotationMatrix();
     }
 
     template <typename T>
-    Vector<T, 3> Transform<T>::TransformPosition(const Vector<T, 3>& inPosition) const
+    Vec<T, 3> Transform<T>::TransformPosition(const Vec<T, 3>& inPosition) const
     {
-        Matrix<T, 4, 1> posColMat = Matrix<T, 4, 1>::FromColVecs(Vector<T, 4>(inPosition.x, inPosition.y, inPosition.z, 1));
+        Mat<T, 4, 1> posColMat = Mat<T, 4, 1>::FromColVecs(Vec<T, 4>(inPosition.x, inPosition.y, inPosition.z, 1));
         return (GetTransformMatrix() * posColMat).Col(0).template SubVec<0, 1, 2>();
     }
 
     template <typename T>
-    Vector<T, 4> Transform<T>::TransformPosition(const Vector<T, 4>& inPosition) const
+    Vec<T, 4> Transform<T>::TransformPosition(const Vec<T, 4>& inPosition) const
     {
-        Matrix<T, 4, 1> posColMat = Matrix<T, 4, 1>::FromColVecs(inPosition);
+        Mat<T, 4, 1> posColMat = Mat<T, 4, 1>::FromColVecs(inPosition);
         return (GetTransformMatrix() * posColMat).Col(0);
     }
 

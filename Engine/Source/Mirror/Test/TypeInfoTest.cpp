@@ -4,7 +4,7 @@
 
 #include <type_traits>
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Mirror/Registry.h>
 
@@ -21,6 +21,36 @@ struct TestClass {
         return a + b;
     }
 };
+
+template <typename A, typename B>
+void AssertTypeIdEq()
+{
+    ASSERT_EQ(Mirror::GetTypeInfo<A>()->id, Mirror::GetTypeInfo<B>()->id);
+}
+
+template <typename A, typename B>
+void AssertTypeIdNe()
+{
+    ASSERT_NE(Mirror::GetTypeInfo<A>()->id, Mirror::GetTypeInfo<B>()->id);
+}
+
+TEST(TypeTest, TypeInfoTest)
+{
+    AssertTypeIdEq<int, int>();
+    AssertTypeIdEq<int, const int>();
+    AssertTypeIdEq<int, int&>();
+    AssertTypeIdEq<int, const int&>();
+
+    AssertTypeIdEq<const int, int>();
+    AssertTypeIdEq<const int, const int>();
+    AssertTypeIdEq<const int, int&>();
+    AssertTypeIdEq<const int, const int&>();
+
+    AssertTypeIdEq<int*, int*>();
+    AssertTypeIdEq<const int*, const int*>();
+    AssertTypeIdNe<int, int*>();
+    AssertTypeIdNe<int*, const int*>();
+}
 
 TEST(TypeTest, TypeTraitsTest)
 {
