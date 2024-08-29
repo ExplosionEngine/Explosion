@@ -6,6 +6,7 @@
 
 #include <Common/Math/Transform.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <typename T>
@@ -27,8 +28,8 @@ namespace Common {
     using DViewTransform = ViewTransform<double>;
 }
 
-namespace Common { // NOLINT
-    template <typename T>
+namespace Common {
+    template <Serializable T>
     struct Serializer<ViewTransform<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -50,6 +51,16 @@ namespace Common { // NOLINT
 
             Serializer<Transform<T>>::Deserialize(stream, value);
             return true;
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<ViewTransform<T>> {
+        static constexpr auto convertible = false;
+
+        static std::string ToString(const ViewTransform<T>& inValue)
+        {
+            return StringConverter<Transform<T>>::ToString(inValue);
         }
     };
 }

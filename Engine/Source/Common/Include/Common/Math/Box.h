@@ -6,6 +6,7 @@
 
 #include <Common/Math/Vector.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <typename T>
@@ -52,7 +53,7 @@ namespace Common {
 }
 
 namespace Common { // NOLINT
-    template <typename T>
+    template <Serializable T>
     struct Serializer<Box<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -76,6 +77,19 @@ namespace Common { // NOLINT
             Serializer<Vec<T, 3>>::Deserialize(stream, value.min);
             Serializer<Vec<T, 3>>::Deserialize(stream, value.max);
             return true;
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<Box<T>> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const Box<T>& inValue)
+        {
+            return fmt::format(
+                "{min={}, max={}}",
+                StringConverter<Vec<T, 3>>::ToString(inValue.min),
+                StringConverter<Vec<T, 3>>::ToString(inValue.max));
         }
     };
 }

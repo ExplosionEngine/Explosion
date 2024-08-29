@@ -12,6 +12,8 @@ namespace Common {
     template <typename T> concept CppSigned = std::is_signed_v<T>;
     template <typename T> concept CppUnsigned = std::is_unsigned_v<T>;
     template <typename T> concept CppArithmetic = std::is_arithmetic_v<T>;
+    template <typename T> concept CppBool = std::is_same_v<T, bool>;
+    template <typename T> concept CppArithmeticNonBool = CppArithmetic<T> && !CppBool<T>;
     template <typename T> concept CppClass = std::is_class_v<T>;
     template <typename T> concept CppVoid = std::is_void_v<T>;
     template <typename T> concept CppUnion = std::is_union_v<T>;

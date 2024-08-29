@@ -26,16 +26,24 @@ namespace Common {
 
     BinaryFileSerializeStream::~BinaryFileSerializeStream()
     {
-        try {
-            file.close();
-        } catch (const std::exception&) {
-            QuickFail();
-        }
+        Close();
     }
 
     void BinaryFileSerializeStream::Write(const void* data, const size_t size)
     {
         file.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
+    }
+
+    void BinaryFileSerializeStream::Close()
+    {
+        if (!file.is_open()) {
+            return;
+        }
+        try {
+            file.close();
+        } catch (const std::exception&) {
+            QuickFail();
+        }
     }
 
     BinaryFileDeserializeStream::BinaryFileDeserializeStream(const std::string& inFileName)
@@ -45,16 +53,24 @@ namespace Common {
 
     BinaryFileDeserializeStream::~BinaryFileDeserializeStream()
     {
-        try {
-            file.close();
-        } catch (const std::exception&) {
-            QuickFail();
-        }
+        Close();
     }
 
     void BinaryFileDeserializeStream::Read(void* data, const size_t size)
     {
         file.read(static_cast<char*>(data), static_cast<std::streamsize>(size));
+    }
+
+    void BinaryFileDeserializeStream::Close()
+    {
+        if (!file.is_open()) {
+            return;
+        }
+        try {
+            file.close();
+        } catch (const std::exception&) {
+            QuickFail();
+        }
     }
 
     ByteSerializeStream::ByteSerializeStream(std::vector<uint8_t>& inBytes, const size_t pointerBegin)

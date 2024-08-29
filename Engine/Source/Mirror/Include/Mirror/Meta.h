@@ -18,6 +18,10 @@
 #define ECtor(...)
 #endif
 
+namespace Mirror {
+    class Class;
+}
+
 #define EClassBody(className) \
 private: \
     static int _mirrorRegistry; \

@@ -7,6 +7,7 @@
 #include <cstdint>
 
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     struct Color;
@@ -121,6 +122,40 @@ namespace Common {
             Serializer<float>::Deserialize(stream, value.b);
             Serializer<float>::Deserialize(stream, value.a);
             return true;
+        }
+    };
+
+    template <>
+    struct StringConverter<Color> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const Color& inValue)
+        {
+            return fmt::format(
+                "{}r={}, g={}, b={}, a={}{}",
+                "{",
+                StringConverter<uint8_t>::ToString(inValue.r),
+                StringConverter<uint8_t>::ToString(inValue.g),
+                StringConverter<uint8_t>::ToString(inValue.b),
+                StringConverter<uint8_t>::ToString(inValue.a),
+                "}");
+        }
+    };
+
+    template <>
+    struct StringConverter<LinearColor> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const LinearColor& inValue)
+        {
+            return fmt::format(
+                "{}r={}, g={}, b={}, a={}{}",
+                "{",
+                StringConverter<float>::ToString(inValue.r),
+                StringConverter<float>::ToString(inValue.g),
+                StringConverter<float>::ToString(inValue.b),
+                StringConverter<float>::ToString(inValue.a),
+                "}");
         }
     };
 }

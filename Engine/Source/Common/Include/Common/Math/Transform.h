@@ -8,6 +8,7 @@
 #include <Common/Math/Matrix.h>
 #include <Common/Math/Quaternion.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <FloatingPoint T>
@@ -65,8 +66,8 @@ namespace Common {
     using DTransform = Transform<double>;
 }
 
-namespace Common { // NOLINT
-    template <typename T>
+namespace Common {
+    template <Serializable T>
     struct Serializer<Transform<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -92,6 +93,20 @@ namespace Common { // NOLINT
             Serializer<Quaternion<T>>::Deserialize(stream, value.rotation);
             Serializer<Vec<T, 3>>::Deserialize(stream, value.translation);
             return true;
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<Transform<T>> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const Transform<T>& inValue)
+        {
+            return fmt::format(
+                "{scale={}, rotation={}, translation={}}",
+                StringConverter<Vec<T, 3>>::ToString(inValue.scale),
+                StringConverter<Quaternion<T>>::ToString(inValue.rotation),
+                StringConverter<Vec<T, 3>>::ToString(inValue.translation));
         }
     };
 }

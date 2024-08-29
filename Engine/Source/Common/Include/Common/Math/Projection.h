@@ -9,6 +9,7 @@
 #include <Common/Math/Matrix.h>
 #include <Common/Math/Quaternion.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <FloatingPoint T>
@@ -52,7 +53,7 @@ namespace Common {
 }
 
 namespace Common {
-    template <typename T>
+    template <Serializable T>
     struct Serializer<ReversedZOrthogonalProjection<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -83,7 +84,7 @@ namespace Common {
         }
     };
 
-    template <typename T>
+    template <Serializable T>
     struct Serializer<ReversedZPerspectiveProjection<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -113,6 +114,37 @@ namespace Common {
             Serializer<T>::Deserialize(stream, value.nearPlane);
             Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
             return true;
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<ReversedZOrthogonalProjection<T>> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const ReversedZOrthogonalProjection<T>& inValue)
+        {
+            return fmt::format(
+                "{width={}, height={}, near={}, far={}}",
+                StringConverter<T>::ToString(inValue.width),
+                StringConverter<T>::ToString(inValue.height),
+                StringConverter<T>::ToString(inValue.nearPlane),
+                StringConverter<std::optional<T>>::ToString(inValue.farPlane));
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<ReversedZPerspectiveProjection<T>> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const ReversedZPerspectiveProjection<T>& inValue)
+        {
+            return fmt::format(
+                "{fov={}, width={}, height={}, near={}, far={}}",
+                StringConverter<T>::ToString(inValue.fov),
+                StringConverter<T>::ToString(inValue.width),
+                StringConverter<T>::ToString(inValue.height),
+                StringConverter<T>::ToString(inValue.nearPlane),
+                StringConverter<std::optional<T>>::ToString(inValue.farPlane));
         }
     };
 }

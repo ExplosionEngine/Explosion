@@ -6,6 +6,7 @@
 
 #include <Common/Math/Vector.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <typename T>
@@ -50,7 +51,7 @@ namespace Common {
 }
 
 namespace Common {
-    template <typename T>
+    template <Serializable T>
     struct Serializer<Rect<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -74,6 +75,19 @@ namespace Common {
             Serializer<Vec<T, 2>>::Deserialize(stream, value.min);
             Serializer<Vec<T, 2>>::Deserialize(stream, value.max);
             return true;
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<Rect<T>> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const Rect<T>& inValue)
+        {
+            return fmt::format(
+                "{min={}, max={}}",
+                StringConverter<Vec<T, 2>>::ToString(inValue.min),
+                StringConverter<Vec<T, 2>>::ToString(inValue.max));
         }
     };
 }

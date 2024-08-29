@@ -6,6 +6,7 @@
 
 #include <Common/Math/Vector.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <typename T>
@@ -37,8 +38,8 @@ namespace Common {
     using DSphere = Sphere<double>;
 }
 
-namespace Common { // NOLINT
-    template <typename T>
+namespace Common {
+    template <Serializable T>
     struct Serializer<Sphere<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -62,6 +63,19 @@ namespace Common { // NOLINT
             Serializer<Vec<T, 3>>::Deserialize(stream, value.center);
             Serializer<T>::Deserialize(stream, value.radius);
             return true;
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<Sphere<T>> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const Sphere<T>& inValue)
+        {
+            return fmt::format(
+                "{center={}, radius={}}",
+                StringConverter<Vec<T, 3>>::Convert(inValue.center),
+                StringConverter<T>::Convert(inValue.radius));
         }
     };
 }

@@ -388,6 +388,11 @@ namespace Mirror {
         return rtti == nullptr;
     }
 
+    std::string Any::ToString() const
+    {
+        return Empty() ? "" : rtti->toString(Data());
+    }
+
     void* Any::Data() const
     {
         return IsRef() ? std::get<RefInfo>(info).Ptr() : std::get<HolderInfo>(info).Ptr();

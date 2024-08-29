@@ -7,6 +7,7 @@
 #include <Common/Math/Half.h>
 #include <Common/Math/Matrix.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <typename T> struct Angle;
@@ -120,7 +121,7 @@ namespace Common {
 }
 
 namespace Common {
-    template <typename T>
+    template <Serializable T>
     struct Serializer<Angle<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -145,7 +146,7 @@ namespace Common {
         }
     };
 
-    template <typename T>
+    template <Serializable T>
     struct Serializer<Radian<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -170,7 +171,7 @@ namespace Common {
         }
     };
 
-    template <typename T>
+    template <Serializable T>
     struct Serializer<Quaternion<T>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -198,6 +199,41 @@ namespace Common {
             Serializer<T>::Deserialize(stream, value.z);
             Serializer<T>::Deserialize(stream, value.w);
             return true;
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<Angle<T>> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const Angle<T>& inValue)
+        {
+            return fmt::format("a{}", StringConverter<T>::ToString(inValue.value));
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<Radian<T>> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const Radian<T>& inValue)
+        {
+            return StringConverter<T>::ToString(inValue.value);
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<Quaternion<T>> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const Quaternion<T>& inValue)
+        {
+            return fmt::format(
+                "({}, {}, {}, {})",
+                StringConverter<T>::ToString(inValue.x),
+                StringConverter<T>::ToString(inValue.y),
+                StringConverter<T>::ToString(inValue.z),
+                StringConverter<T>::ToString(inValue.w));
         }
     };
 }

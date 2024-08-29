@@ -104,3 +104,30 @@ TEST(StringUtilsTest, BeforeLastTest)
     ASSERT_EQ(StringUtils::BeforeLast("Hello, World", ", "), "Hello");
     ASSERT_EQ(StringUtils::BeforeLast("12, 34, 56", ", "), "12, 34");
 }
+
+TEST(StringUtilsTest, ToStringTest)
+{
+    ASSERT_EQ(Common::ToString(true), "true");
+    ASSERT_EQ(Common::ToString(false), "false");
+    ASSERT_EQ(Common::ToString(1), "1");
+
+    const std::string v0 = "1";
+    ASSERT_EQ(Common::ToString(v0), "1");
+
+    std::optional<int> v1 {};
+    ASSERT_EQ(Common::ToString(v1), "nullopt");
+    v1 = 1;
+    ASSERT_EQ(Common::ToString(v1), "1");
+
+    const std::pair<int, bool> v2 = { 1, false }; // NOLINT
+    ASSERT_EQ(Common::ToString(v2), "1: false");
+
+    const std::vector<int> v3 = { 1, 2, 3 };
+    ASSERT_EQ(Common::ToString(v3), "(1, 2, 3)");
+
+    const std::unordered_set<int> v4 = { 1, 2, 3 };
+    ASSERT_EQ(Common::ToString(v4), "(1, 2, 3)");
+
+    const std::unordered_map<int, bool> v5 = { { 1, false }, { 2, true } };
+    ASSERT_EQ(Common::ToString(v5), "{1: false, 2: true}");
+}

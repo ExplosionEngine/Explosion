@@ -90,6 +90,7 @@ namespace Mirror {
         using GetPtrFunc = Any(void*);
         using GetConstPtrFunc = Any(const void*);
         using DerefFunc = Any(const void*);
+        using ToStringFunc = std::string(const void*);
 
         template <typename T> static void Detor(void* inThis) noexcept;
         template <typename T> static void CopyConstruct(void* inThis, const void* inOther);
@@ -105,6 +106,7 @@ namespace Mirror {
         template <typename T> static Any GetPtr(void* inThis);
         template <typename T> static Any GetConstPtr(const void* inThis);
         template <typename T> static Any Deref(const void* inThis);
+        template <typename T> static std::string ToString(const void* inThis);
 
         DetorFunc* detor;
         CopyConstructFunc* copyConstruct;
@@ -120,6 +122,7 @@ namespace Mirror {
         GetPtrFunc* getPtr;
         GetConstPtrFunc* getConstPtr;
         DerefFunc* deref;
+        ToStringFunc* toString;
     };
 
     template <typename T>
@@ -137,7 +140,8 @@ namespace Mirror {
         &AnyRtti::GetAddConstPointerType<T>,
         &AnyRtti::GetPtr<T>,
         &AnyRtti::GetConstPtr<T>,
-        &AnyRtti::Deref<T>
+        &AnyRtti::Deref<T>,
+        &AnyRtti::ToString<T>
     };
 
     class MIRROR_API Any {
@@ -197,6 +201,7 @@ namespace Mirror {
         Mirror::TypeId TypeId() const;
         void Reset();
         bool Empty() const;
+        std::string ToString() const;
 
         // always return original ptr and size, even policy is ref
         void* Data() const;
@@ -927,6 +932,12 @@ namespace Mirror {
             QuickFailWithReason("AnyRtti::Dref() only support pointer type");
             return {};
         }
+    }
+
+    template <typename T>
+    std::string AnyRtti::ToString(const void* inThis)
+    {
+        return Common::ToString(*static_cast<const T*>(inThis));
     }
 
     template <typename T>

@@ -9,6 +9,7 @@
 
 #include <Common/Math/Half.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common::Internal {
     template <typename T, uint8_t L>
@@ -212,8 +213,8 @@ namespace Common::Internal {
     };
 }
 
-namespace Common { // NOLINT
-    template <typename T, uint8_t L>
+namespace Common {
+    template <Serializable T, uint8_t L>
     struct Serializer<Vec<T, L>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -240,6 +241,25 @@ namespace Common { // NOLINT
                 Serializer<T>::Deserialize(stream, value.data[i]);
             }
             return true;
+        }
+    };
+
+    template <StringConvertible T, uint8_t L>
+    struct StringConverter<Vec<T, L>> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const Vec<T, L>& inValue)
+        {
+            std::stringstream stream;
+            stream << "(";
+            for (auto i = 0; i < L; i++) {
+                stream << inValue.data[i];
+                if (i != L - 1) {
+                    stream << ", ";
+                }
+            }
+            stream << ")";
+            return stream.str();
         }
     };
 }

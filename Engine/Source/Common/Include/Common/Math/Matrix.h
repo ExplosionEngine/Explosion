@@ -6,6 +6,7 @@
 
 #include <Common/Math/Vector.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 #include <Common/Debug.h>
 #include <Common/Utility.h>
 
@@ -301,7 +302,7 @@ namespace Common {
 }
 
 namespace Common { // NOLINT
-    template <typename T, uint8_t R, uint8_t C>
+    template <Serializable T, uint8_t R, uint8_t C>
     struct Serializer<Mat<T, R, C>> {
         static constexpr bool serializable = true;
         static constexpr uint32_t typeId
@@ -327,6 +328,20 @@ namespace Common { // NOLINT
                 Serializer<T>::Deserialize(stream, value.data[i]);
             }
             return true;
+        }
+    };
+
+    template <StringConvertible T, uint8_t R, uint8_t C>
+    struct StringConverter<Mat<T, R, C>> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const Mat<T, R, C>& inValue)
+        {
+            return fmt::format("{row0={}, row1={}, row2={}, row3={}}",
+                StringConverter<Vec<T, C>>::ToString(inValue.Row(0)),
+                StringConverter<Vec<T, C>>::ToString(inValue.Row(1)),
+                StringConverter<Vec<T, C>>::ToString(inValue.Row(2)),
+                StringConverter<Vec<T, C>>::ToString(inValue.Row(3)));
         }
     };
 }

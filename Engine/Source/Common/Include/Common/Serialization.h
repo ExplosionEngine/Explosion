@@ -44,6 +44,7 @@ namespace Common {
         explicit BinaryFileSerializeStream(const std::string& inFileName);
         ~BinaryFileSerializeStream() override;
         void Write(const void* data, size_t size) override;
+        void Close();
 
     private:
         std::ofstream file;
@@ -55,6 +56,7 @@ namespace Common {
         explicit BinaryFileDeserializeStream(const std::string& inFileName);
         ~BinaryFileDeserializeStream() override;
         void Read(void* data, size_t size) override;
+        void Close();
 
     private:
         std::ifstream file;
@@ -84,7 +86,6 @@ namespace Common {
         const std::vector<uint8_t>& bytes;
     };
 
-    // TODO maybe there is a better way to do this ?
     template <typename T>
     struct Serializer {
         static constexpr bool serializable = false;
@@ -118,6 +119,8 @@ namespace Common {
             return typeId == Serializer<T>::typeId;
         }
     };
+
+    // TODO to json object support
 }
 
 #define IMPL_BASIC_TYPE_SERIALIZER(typeName) \

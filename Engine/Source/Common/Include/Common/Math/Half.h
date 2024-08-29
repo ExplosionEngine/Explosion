@@ -10,6 +10,7 @@
 
 #include <Common/Math/Common.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <std::endian E> concept ValidEndian = E == std::endian::little || E == std::endian::big;
@@ -124,6 +125,26 @@ namespace Common {
 
             Serializer<uint16_t>::Deserialize(stream, value.value);
             return true;
+        }
+    };
+
+    template <std::endian E>
+    struct StringConverter<Internal::FullFloat<E>> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const Internal::FullFloat<E>& inValue)
+        {
+            return StringConverter<float>::ToString(inValue.value);
+        }
+    };
+
+    template <std::endian E>
+    struct StringConverter<HalfFloat<E>> {
+        static constexpr auto convertible = true;
+
+        static std::string ToString(const HalfFloat<E>& inValue)
+        {
+            return StringConverter<float>::ToString(inValue.AsFloat());
         }
     };
 }
