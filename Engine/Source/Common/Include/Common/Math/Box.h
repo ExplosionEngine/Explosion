@@ -92,6 +92,8 @@ namespace Common { // NOLINT
                 StringConverter<Vec<T, 3>>::ToString(inValue.max));
         }
     };
+
+    // TODO json converter impl
 }
 
 namespace Common {

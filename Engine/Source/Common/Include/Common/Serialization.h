@@ -11,6 +11,8 @@
 #include <unordered_set>
 #include <unordered_map>
 
+#include <rapidjson/document.h>
+
 #include <Common/Utility.h>
 #include <Common/Debug.h>
 #include <Common/Hash.h>
@@ -120,7 +122,22 @@ namespace Common {
         }
     };
 
-    // TODO to json object support
+    template <typename T>
+    struct JsonValueConverter {
+        static constexpr auto convertible = false;
+
+        static rapidjson::Value ToJsonValue(const T& inValue)
+        {
+            QuickFailWithReason("your type is not support convert to json value");
+            return {};
+        }
+    };
+
+    template <typename T> rapidjson::Value ToJsonValue(const T& inValue)
+    {
+        // TODO
+        return {};
+    }
 }
 
 #define IMPL_BASIC_TYPE_SERIALIZER(typeName) \
@@ -374,4 +391,6 @@ namespace Common {
             return true;
         }
     };
+
+    // TODO json converter impl
 }

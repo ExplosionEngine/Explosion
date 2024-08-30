@@ -202,6 +202,7 @@ namespace Mirror {
         void Reset();
         bool Empty() const;
         std::string ToString() const;
+        // TODO rapidjson::Value ToJsonValue() const;
 
         // always return original ptr and size, even policy is ref
         void* Data() const;

@@ -236,6 +236,8 @@ namespace Common {
                 StringConverter<T>::ToString(inValue.w));
         }
     };
+
+    // TODO json converter impl
 }
 
 namespace Common {

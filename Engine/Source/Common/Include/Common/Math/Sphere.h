@@ -78,6 +78,8 @@ namespace Common {
                 StringConverter<T>::Convert(inValue.radius));
         }
     };
+
+    // TODO json converter impl
 }
 
 namespace Common {

@@ -90,6 +90,8 @@ namespace Common {
                 StringConverter<Vec<T, 2>>::ToString(inValue.max));
         }
     };
+
+    // TODO json converter impl
 }
 
 namespace Common {

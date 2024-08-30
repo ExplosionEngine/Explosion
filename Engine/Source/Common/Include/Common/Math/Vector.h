@@ -262,6 +262,8 @@ namespace Common {
             return stream.str();
         }
     };
+
+    // TODO json converter impl
 }
 
 namespace Common {

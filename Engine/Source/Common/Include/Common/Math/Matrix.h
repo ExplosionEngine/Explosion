@@ -344,6 +344,8 @@ namespace Common { // NOLINT
                 StringConverter<Vec<T, C>>::ToString(inValue.Row(3)));
         }
     };
+
+    // TODO json converter impl
 }
 
 namespace Common::Internal {

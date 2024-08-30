@@ -158,4 +158,6 @@ namespace Common {
                 "}");
         }
     };
+
+    // TODO json converter impl
 }

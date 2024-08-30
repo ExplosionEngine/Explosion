@@ -109,6 +109,8 @@ namespace Common {
                 StringConverter<Vec<T, 3>>::ToString(inValue.translation));
         }
     };
+
+    // TODO json converter impl
 }
 
 namespace Common {
