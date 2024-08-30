@@ -233,3 +233,12 @@ Find3rdPackage(
             $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Gui$<IF:$<CONFIG:Debug>,d,>.dll
             $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Widgets$<IF:$<CONFIG:Debug>,d,>.dll
 )
+
+# rapidjson
+Add3rdHeaderOnlyPackage(
+    NAME rapidjson
+    PLATFORM All
+    VERSION 1.1.0
+    HASH c19c92601374a161b0355ccb73f02b31076c70d4446e5ad53c8b80263a9c900c
+    INCLUDE $<SOURCE_DIR>/include
+)

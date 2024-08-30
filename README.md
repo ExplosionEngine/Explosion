@@ -99,6 +99,7 @@ Thanks all those following projects:
 * [assimp](https://github.com/assimp/assimp)
 * [VulkanMemoryAllocator](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator)
 * [Qt6](https://www.qt.io/product/qt6)
+* [rapidjson](https://github.com/Tencent/rapidjson)
 
 # Sponsor
 
