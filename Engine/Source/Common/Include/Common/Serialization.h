@@ -88,9 +88,7 @@ namespace Common {
         const std::vector<uint8_t>& bytes;
     };
 
-    template <typename T>
-    struct Serializer {};
-
+    template <typename T> struct Serializer {};
     template <typename T> concept Serializable = requires(T inValue, SerializeStream& serializeStream, DeserializeStream& deserializeStream)
     {
         { Serializer<T>::typeId } -> std::convertible_to<uint32_t>;
@@ -100,19 +98,60 @@ namespace Common {
 
     template <Serializable T>
     struct TypeIdSerializer {
-        static void Serialize(SerializeStream& stream)
-        {
-            const uint32_t typeId = Serializer<T>::typeId;
-            stream.Write(&typeId, sizeof(uint32_t));
-        }
-
-        static bool Deserialize(DeserializeStream& stream)
-        {
-            uint32_t typeId;
-            stream.Read(&typeId, sizeof(uint32_t));
-            return typeId == Serializer<T>::typeId;
-        }
+        static void Serialize(SerializeStream& stream);
+        static bool Deserialize(DeserializeStream& stream);
     };
+
+    template <typename T> void Serialize(SerializeStream& inStream, const T& inValue);
+    template <typename T> void Deserialize(DeserializeStream& inStream, T& inValue);
+
+    template <typename T> struct JsonValueConverter {};
+    template <typename T> concept JsonValueConvertible = requires(T inValue, rapidjson::Document::AllocatorType& inAllocator, const rapidjson::Value& inJsonValue)
+    {
+        { JsonValueConverter<T>::ToJsonValue(inValue, inAllocator) } -> std::convertible_to<rapidjson::Value>;
+        { JsonValueConverter<T>::FromJsonValue(inJsonValue) } -> std::same_as<T>;
+    };
+
+    template <typename T> rapidjson::Value ToJsonValue(const T& inValue, rapidjson::Document::AllocatorType& inAllocator);
+    template <typename T> T FromJsonValue(const rapidjson::Value& inJsonValue);
+}
+
+#define IMPL_BASIC_TYPE_SERIALIZER(typeName) \
+    template <> \
+    struct Serializer<typeName> { \
+        static constexpr uint32_t typeId = HashUtils::StrCrc32(#typeName); \
+        \
+        static void Serialize(SerializeStream& stream, const typeName& value) \
+        { \
+            TypeIdSerializer<typeName>::Serialize(stream); \
+            stream.Write(&value, sizeof(typeName)); \
+        } \
+        \
+        static bool Deserialize(DeserializeStream& stream, typeName& value) \
+        { \
+            if (!TypeIdSerializer<typeName>::Deserialize(stream)) { \
+                return false;\
+            } \
+            stream.Read(&value, sizeof(typeName)); \
+            return true; \
+        } \
+    }; \
+
+namespace Common {
+    template <Serializable T>
+    void TypeIdSerializer<T>::Serialize(SerializeStream& stream)
+    {
+        const uint32_t typeId = Serializer<T>::typeId;
+        stream.Write(&typeId, sizeof(uint32_t));
+    }
+
+    template <Serializable T>
+    bool TypeIdSerializer<T>::Deserialize(DeserializeStream& stream)
+    {
+        uint32_t typeId;
+        stream.Read(&typeId, sizeof(uint32_t));
+        return typeId == Serializer<T>::typeId;
+    }
 
     template <typename T>
     void Serialize(SerializeStream& inStream, const T& inValue)
@@ -135,21 +174,6 @@ namespace Common {
     }
 
     template <typename T>
-    struct JsonValueConverter {
-        static rapidjson::Value ToJsonValue(const T& inValue, rapidjson::Document::AllocatorType& inAllocator)
-        {
-            QuickFailWithReason("your type is not support convert to json value");
-            return {};
-        }
-    };
-
-    template <typename T> concept JsonValueConvertible = requires(T inValue, rapidjson::Document::AllocatorType& inAllocator, const rapidjson::Value& inJsonValue)
-    {
-        { JsonValueConverter<T>::ToJsonValue(inValue, inAllocator) } -> std::convertible_to<rapidjson::Value>;
-        { JsonValueConverter<T>::FromJsonValue(inJsonValue) } -> std::same_as<T>;
-    };
-
-    template <typename T>
     rapidjson::Value ToJsonValue(const T& inValue, rapidjson::Document::AllocatorType& inAllocator)
     {
         if constexpr (JsonValueConvertible<T>) {
@@ -170,30 +194,7 @@ namespace Common {
             return {};
         }
     }
-}
 
-#define IMPL_BASIC_TYPE_SERIALIZER(typeName) \
-    template <> \
-    struct Serializer<typeName> { \
-        static constexpr uint32_t typeId = Common::HashUtils::StrCrc32(#typeName); \
-        \
-        static void Serialize(SerializeStream& stream, const typeName& value) \
-        { \
-            TypeIdSerializer<typeName>::Serialize(stream); \
-            stream.Write(&value, sizeof(typeName)); \
-        } \
-        \
-        static bool Deserialize(DeserializeStream& stream, typeName& value) \
-        { \
-            if (!TypeIdSerializer<typeName>::Deserialize(stream)) { \
-                return false;\
-            } \
-            stream.Read(&value, sizeof(typeName)); \
-            return true; \
-        } \
-    }; \
-
-namespace Common {
     IMPL_BASIC_TYPE_SERIALIZER(bool)
     IMPL_BASIC_TYPE_SERIALIZER(int8_t)
     IMPL_BASIC_TYPE_SERIALIZER(uint8_t)
@@ -208,7 +209,7 @@ namespace Common {
 
     template <>
     struct Serializer<std::string> {
-        static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("string");
+        static constexpr uint32_t typeId = HashUtils::StrCrc32("string");
 
         static void Serialize(SerializeStream& stream, const std::string& value)
         {
@@ -378,7 +379,7 @@ namespace Common {
     template <Serializable K, Serializable V>
     struct Serializer<std::unordered_map<K, V>> {
         static constexpr uint32_t typeId
-            = Common::HashUtils::StrCrc32("std::unordered_map")
+            = HashUtils::StrCrc32("std::unordered_map")
             + Serializer<K>::typeId
             + Serializer<V>::typeId;
 
