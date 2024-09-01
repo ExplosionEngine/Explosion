@@ -55,7 +55,6 @@ namespace Common {
 namespace Common {
     template <Serializable T>
     struct Serializer<ReversedZOrthogonalProjection<T>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = HashUtils::StrCrc32("Common::ReversedZOrthogonalProjection")
             + Serializer<T>::typeId;
@@ -86,7 +85,6 @@ namespace Common {
 
     template <Serializable T>
     struct Serializer<ReversedZPerspectiveProjection<T>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = HashUtils::StrCrc32("Common::ReversedZPerspectiveProjection")
             + Serializer<T>::typeId;

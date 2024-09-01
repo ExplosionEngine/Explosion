@@ -336,22 +336,14 @@ namespace Mirror {
             return { std::ref(object.As<ClassType&>().*Ptr) };
         };
         params.serializer = [](Common::SerializeStream& stream, const Mirror::MemberVariable& variable, const Argument& object) -> void {
-            if constexpr (Common::Serializer<ValueType>::serializable) {
-                ValueType& value = variable.GetDyn(object).As<ValueType&>();
-                Common::Serializer<ValueType>::Serialize(stream, value);
-            } else {
-                Unimplement();
-            }
+            ValueType& value = variable.GetDyn(object).As<ValueType&>(); // NOLINT
+            Common::Serialize<ValueType>(stream, value);
         };
         params.deserializer = [](Common::DeserializeStream& stream, const Mirror::MemberVariable& variable, const Argument& object) -> void {
-            if constexpr (Common::Serializer<ValueType>::serializable) {
-                ValueType value;
-                Common::Serializer<ValueType>::Deserialize(stream, value);
-                Any valueRef = std::ref(value);
-                variable.SetDyn(object, valueRef);
-            } else {
-                Unimplement();
-            }
+            ValueType value;
+            Common::Deserialize<ValueType>(stream, value);
+            Any valueRef = std::ref(value);
+            variable.SetDyn(object, valueRef);
         };
 
         return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceMemberVariable(inId, std::move(params)));
@@ -409,21 +401,13 @@ namespace Mirror {
             return { std::ref(*Ptr) };
         };
         params.serializer = [](Common::SerializeStream& stream, const Mirror::Variable& variable) -> void {
-            if constexpr (Common::Serializer<ValueType>::serializable) {
-                ValueType& value = variable.GetDyn().As<ValueType&>();
-                Common::Serializer<ValueType>::Serialize(stream, value);
-            } else {
-                Unimplement();
-            }
+            ValueType& value = variable.GetDyn().As<ValueType&>(); // NOLINT
+            Common::Serialize<ValueType>(stream, value);
         };
         params.deserializer = [](Common::DeserializeStream& stream, const Mirror::Variable& variable) -> void {
-            if constexpr (Common::Serializer<ValueType>::serializable) {
-                ValueType value;
-                Common::Serializer<ValueType>::Deserialize(stream, value);
-                variable.Set(value);
-            } else {
-                Unimplement();
-            }
+            ValueType value;
+            Common::Deserialize<ValueType>(stream, value);
+            variable.Set(value);
         };
 
         return SetContext(&globalScope.EmplaceVariable(inId, std::move(params)));

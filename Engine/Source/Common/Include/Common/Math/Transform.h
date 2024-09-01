@@ -69,7 +69,6 @@ namespace Common {
 namespace Common {
     template <Serializable T>
     struct Serializer<Transform<T>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = HashUtils::StrCrc32("Common::Transform")
             + Serializer<T>::typeId;

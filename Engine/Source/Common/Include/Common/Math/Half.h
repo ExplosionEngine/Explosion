@@ -84,7 +84,6 @@ namespace Common {
 namespace Common {
     template <std::endian E>
     struct Serializer<Internal::FullFloat<E>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId = HashUtils::StrCrc32("Common::Internal::FullFloat");
 
         static void Serialize(SerializeStream& stream, const Internal::FullFloat<E>& value)
@@ -107,7 +106,6 @@ namespace Common {
 
     template <std::endian E>
     struct Serializer<HalfFloat<E>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId = HashUtils::StrCrc32("Common::Internal::HalfFloat");
 
         static void Serialize(SerializeStream& stream, const HalfFloat<E>& value)

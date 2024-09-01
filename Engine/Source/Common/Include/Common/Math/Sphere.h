@@ -41,7 +41,6 @@ namespace Common {
 namespace Common {
     template <Serializable T>
     struct Serializer<Sphere<T>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = HashUtils::StrCrc32("Common::Sphere")
             + Serializer<T>::typeId;

@@ -65,7 +65,6 @@ namespace std { // NOLINT
 namespace Common { // NOLINT
     template <>
     struct Serializer<Core::Uri> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId = HashUtils::StrCrc32("Core::Uri");
 
         static void Serialize(SerializeStream& stream, const Core::Uri& value)

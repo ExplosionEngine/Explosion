@@ -123,7 +123,6 @@ namespace Common {
 namespace Common {
     template <Serializable T>
     struct Serializer<Angle<T>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = HashUtils::StrCrc32("Common::Angle")
             + Serializer<T>::typeId;
@@ -148,7 +147,6 @@ namespace Common {
 
     template <Serializable T>
     struct Serializer<Radian<T>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = HashUtils::StrCrc32("Common::Radian")
             + Serializer<T>::typeId;
@@ -173,7 +171,6 @@ namespace Common {
 
     template <Serializable T>
     struct Serializer<Quaternion<T>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = HashUtils::StrCrc32("Common::Quaternion")
             + Serializer<T>::typeId;

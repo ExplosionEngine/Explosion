@@ -414,7 +414,6 @@ namespace Runtime {
 namespace Common {
     template <DerivedFrom<Runtime::Asset> A>
     struct Serializer<Runtime::AssetRef<A>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("Runtime::AssetRef");
 
         static void Serialize(SerializeStream& stream, const Runtime::AssetRef<A>& value)
@@ -438,7 +437,6 @@ namespace Common {
 
     template <DerivedFrom<Runtime::Asset> A>
     struct Serializer<Runtime::SoftAssetRef<A>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("Runtime::SoftAssetRef");
 
         static void Serialize(SerializeStream& stream, const Runtime::SoftAssetRef<A>& value)

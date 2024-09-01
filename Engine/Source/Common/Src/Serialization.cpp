@@ -15,18 +15,6 @@ namespace Common {
 
     DeserializeStream::~DeserializeStream() = default;
 
-    EmptySerializeStream::EmptySerializeStream() = default;
-
-    EmptySerializeStream::~EmptySerializeStream() = default;
-
-    void EmptySerializeStream::Write(const void* data, size_t size) {}
-
-    EmptyDeserializeStream::EmptyDeserializeStream() = default;
-
-    EmptyDeserializeStream::~EmptyDeserializeStream() = default;
-
-    void EmptyDeserializeStream::Read(void* data, size_t size) {}
-
     BinaryFileSerializeStream::BinaryFileSerializeStream(const std::string& inFileName)
     {
         if (const auto parent_path = std::filesystem::path(inFileName).parent_path();

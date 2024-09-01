@@ -69,7 +69,6 @@ namespace Common {
 namespace Common {
     template <>
     struct Serializer<Color> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId = HashUtils::StrCrc32("Common::Color");
 
         static void Serialize(SerializeStream& stream, const Color& value)
@@ -98,7 +97,6 @@ namespace Common {
 
     template <>
     struct Serializer<LinearColor> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId = HashUtils::StrCrc32("Common::LinearColor");
 
         static void Serialize(SerializeStream& stream, const LinearColor& value)

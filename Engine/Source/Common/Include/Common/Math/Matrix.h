@@ -304,7 +304,6 @@ namespace Common {
 namespace Common { // NOLINT
     template <Serializable T, uint8_t R, uint8_t C>
     struct Serializer<Mat<T, R, C>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = HashUtils::StrCrc32("Common::Matrix")
             + Serializer<T>::typeId + (R << 8) + C;

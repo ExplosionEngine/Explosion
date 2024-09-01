@@ -55,7 +55,6 @@ namespace Common {
 namespace Common { // NOLINT
     template <Serializable T>
     struct Serializer<Box<T>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = HashUtils::StrCrc32("Common::Box")
             + Serializer<T>::typeId;

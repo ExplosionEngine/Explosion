@@ -216,7 +216,6 @@ namespace Common::Internal {
 namespace Common {
     template <Serializable T, uint8_t L>
     struct Serializer<Vec<T, L>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = Common::HashUtils::StrCrc32("Common::Vector")
             + Serializer<T>::typeId

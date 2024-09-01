@@ -40,24 +40,6 @@ namespace Common {
         DeserializeStream();
     };
 
-    class EmptySerializeStream final : public SerializeStream {
-    public:
-        NonCopyable(EmptySerializeStream)
-        EmptySerializeStream();
-        ~EmptySerializeStream() override;
-
-        void Write(const void* data, size_t size) override;
-    };
-
-    class EmptyDeserializeStream final : public DeserializeStream {
-    public:
-        NonCopyable(EmptyDeserializeStream)
-        EmptyDeserializeStream();
-        ~EmptyDeserializeStream() override;
-
-        void Read(void* data, size_t size) override;
-    };
-
     class BinaryFileSerializeStream final : public SerializeStream {
     public:
         NonCopyable(BinaryFileSerializeStream)
@@ -107,22 +89,14 @@ namespace Common {
     };
 
     template <typename T>
-    struct Serializer {
-        static constexpr bool serializable = false;
+    struct Serializer {};
 
-        static void Serialize(SerializeStream&, const T&)
-        {
-            Unimplement();
-        }
-
-        static bool Deserialize(DeserializeStream&, T&)
-        {
-            Unimplement();
-            return false;
-        }
+    template <typename T> concept Serializable = requires(T inValue, SerializeStream& serializeStream, DeserializeStream& deserializeStream)
+    {
+        { Serializer<T>::typeId } -> std::convertible_to<uint32_t>;
+        Serializer<T>::Serialize(serializeStream, inValue);
+        Serializer<T>::Deserialize(deserializeStream, inValue);
     };
-
-    template <typename T> concept Serializable = Serializer<T>::serializable;
 
     template <Serializable T>
     struct TypeIdSerializer {
@@ -141,6 +115,26 @@ namespace Common {
     };
 
     template <typename T>
+    void Serialize(SerializeStream& inStream, const T& inValue)
+    {
+        if constexpr (Serializable<T>) {
+            Serializer<T>::Serialize(inStream, inValue);
+        } else {
+            QuickFailWithReason("your type is not support serialization");
+        }
+    }
+
+    template <typename T>
+    void Deserialize(DeserializeStream& inStream, T& inValue)
+    {
+        if constexpr (Serializable<T>) {
+            Serializer<T>::Deserialize(inStream, inValue);
+        } else {
+            QuickFailWithReason("your type is not support serialization");
+        }
+    }
+
+    template <typename T>
     struct JsonValueConverter {
         static constexpr auto convertible = false;
 
@@ -151,17 +145,22 @@ namespace Common {
         }
     };
 
+    template <typename T> concept JsonValueConvertible = requires(T inValue) { { JsonValueConverter<T>::ToJsonValue(inValue) } -> std::convertible_to<rapidjson::Value>; };
+
     template <typename T> rapidjson::Value ToJsonValue(const T& inValue)
     {
-        // TODO
-        return {};
+        if constexpr (JsonValueConvertible<T>) {
+            return JsonValueConverter<T>::ToJsonValue(inValue);
+        } else {
+            QuickFailWithReason("your type is not support convert to json value");
+            return {};
+        }
     }
 }
 
 #define IMPL_BASIC_TYPE_SERIALIZER(typeName) \
     template <> \
     struct Serializer<typeName> { \
-        static constexpr bool serializable = true; \
         static constexpr uint32_t typeId = Common::HashUtils::StrCrc32(#typeName); \
         \
         static void Serialize(SerializeStream& stream, const typeName& value) \
@@ -195,7 +194,6 @@ namespace Common {
 
     template <>
     struct Serializer<std::string> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("string");
 
         static void Serialize(SerializeStream& stream, const std::string& value)
@@ -223,7 +221,6 @@ namespace Common {
 
     template <Serializable T>
     struct Serializer<std::optional<T>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = HashUtils::StrCrc32("std::optional")
             + Serializer<T>::typeId;
@@ -261,7 +258,6 @@ namespace Common {
 
     template <Serializable K, Serializable V>
     struct Serializer<std::pair<K, V>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = HashUtils::StrCrc32("std::pair")
             + Serializer<K>::typeId
@@ -289,7 +285,6 @@ namespace Common {
 
     template <Serializable T>
     struct Serializer<std::vector<T>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = HashUtils::StrCrc32("std::vector")
             + Serializer<T>::typeId;
@@ -329,7 +324,6 @@ namespace Common {
 
     template <Serializable T>
     struct Serializer<std::unordered_set<T>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = HashUtils::StrCrc32("std::unordered_set")
             + Serializer<T>::typeId;
@@ -369,7 +363,6 @@ namespace Common {
 
     template <Serializable K, Serializable V>
     struct Serializer<std::unordered_map<K, V>> {
-        static constexpr bool serializable = true;
         static constexpr uint32_t typeId
             = Common::HashUtils::StrCrc32("std::unordered_map")
             + Serializer<K>::typeId
