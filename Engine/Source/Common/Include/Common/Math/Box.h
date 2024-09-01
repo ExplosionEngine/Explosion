@@ -82,8 +82,6 @@ namespace Common { // NOLINT
 
     template <StringConvertible T>
     struct StringConverter<Box<T>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const Box<T>& inValue)
         {
             return fmt::format(

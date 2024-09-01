@@ -68,8 +68,6 @@ namespace Common {
 
     template <StringConvertible T>
     struct StringConverter<Sphere<T>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const Sphere<T>& inValue)
         {
             return fmt::format(

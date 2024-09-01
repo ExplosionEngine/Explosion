@@ -119,8 +119,6 @@ namespace Common {
 
     template <StringConvertible T>
     struct StringConverter<ReversedZOrthogonalProjection<T>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const ReversedZOrthogonalProjection<T>& inValue)
         {
             return fmt::format(
@@ -134,8 +132,6 @@ namespace Common {
 
     template <StringConvertible T>
     struct StringConverter<ReversedZPerspectiveProjection<T>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const ReversedZPerspectiveProjection<T>& inValue)
         {
             return fmt::format(

@@ -127,8 +127,6 @@ namespace Common {
 
     template <>
     struct StringConverter<Color> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const Color& inValue)
         {
             return fmt::format(
@@ -144,8 +142,6 @@ namespace Common {
 
     template <>
     struct StringConverter<LinearColor> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const LinearColor& inValue)
         {
             return fmt::format(

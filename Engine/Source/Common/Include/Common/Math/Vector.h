@@ -246,8 +246,6 @@ namespace Common {
 
     template <StringConvertible T, uint8_t L>
     struct StringConverter<Vec<T, L>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const Vec<T, L>& inValue)
         {
             std::stringstream stream;

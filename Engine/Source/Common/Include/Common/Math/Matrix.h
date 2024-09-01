@@ -333,8 +333,6 @@ namespace Common { // NOLINT
 
     template <StringConvertible T, uint8_t R, uint8_t C>
     struct StringConverter<Mat<T, R, C>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const Mat<T, R, C>& inValue)
         {
             return fmt::format("{row0={}, row1={}, row2={}, row3={}}",

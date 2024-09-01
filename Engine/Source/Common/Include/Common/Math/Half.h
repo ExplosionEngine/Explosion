@@ -130,8 +130,6 @@ namespace Common {
 
     template <std::endian E>
     struct StringConverter<Internal::FullFloat<E>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const Internal::FullFloat<E>& inValue)
         {
             return StringConverter<float>::ToString(inValue.value);
@@ -140,8 +138,6 @@ namespace Common {
 
     template <std::endian E>
     struct StringConverter<HalfFloat<E>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const HalfFloat<E>& inValue)
         {
             return StringConverter<float>::ToString(inValue.AsFloat());

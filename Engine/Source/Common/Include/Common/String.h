@@ -34,18 +34,8 @@ namespace Common {
         static std::string BeforeLast(const std::string& src, const std::string& split);
     };
 
-    template <typename T>
-    struct StringConverter {
-        static constexpr auto convertible = false;
-
-        static std::string ToString(const T& inValue)
-        {
-            Unimplement();
-            return "";
-        }
-    };
-
-    template <typename T> concept StringConvertible = StringConverter<T>::convertible;
+    template <typename T> struct StringConverter {};
+    template <typename T> concept StringConvertible = requires (T inValue) { { StringConverter<T>::ToString(inValue) } -> std::convertible_to<std::string>; };
     template <typename T> std::string ToString(const T& inValue);
 }
 
@@ -63,8 +53,6 @@ namespace Common {
 
     template <>
     struct StringConverter<bool> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const bool& inValue)
         {
             return inValue ? "true" : "false";
@@ -73,8 +61,6 @@ namespace Common {
 
     template <CppArithmeticNonBool T>
     struct StringConverter<T> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const T& inValue)
         {
             return std::to_string(inValue);
@@ -83,8 +69,6 @@ namespace Common {
 
     template <>
     struct StringConverter<std::string> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const std::string& inValue)
         {
             return inValue;
@@ -93,8 +77,6 @@ namespace Common {
 
     template <StringConvertible T>
     struct StringConverter<std::optional<T>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const std::optional<T>& inValue)
         {
             return inValue.has_value()
@@ -105,8 +87,6 @@ namespace Common {
 
     template <StringConvertible K, StringConvertible V>
     struct StringConverter<std::pair<K, V>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const std::pair<K, V>& inValue)
         {
             return fmt::format(
@@ -118,8 +98,6 @@ namespace Common {
 
     template <StringConvertible T>
     struct StringConverter<std::vector<T>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const std::vector<T>& inValue)
         {
             std::stringstream stream;
@@ -137,8 +115,6 @@ namespace Common {
 
     template <StringConvertible T>
     struct StringConverter<std::unordered_set<T>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const std::unordered_set<T>& inValue)
         {
             std::vector<const T*> temp;
@@ -162,8 +138,6 @@ namespace Common {
 
     template <StringConvertible K, StringConvertible V>
     struct StringConverter<std::unordered_map<K, V>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const std::unordered_map<K, V>& inValue)
         {
             std::vector<std::pair<const K*, const V*>> temp;

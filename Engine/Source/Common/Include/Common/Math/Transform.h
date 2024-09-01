@@ -98,8 +98,6 @@ namespace Common {
 
     template <StringConvertible T>
     struct StringConverter<Transform<T>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const Transform<T>& inValue)
         {
             return fmt::format(

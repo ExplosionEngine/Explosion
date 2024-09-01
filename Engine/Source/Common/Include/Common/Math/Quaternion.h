@@ -204,8 +204,6 @@ namespace Common {
 
     template <StringConvertible T>
     struct StringConverter<Angle<T>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const Angle<T>& inValue)
         {
             return fmt::format("a{}", StringConverter<T>::ToString(inValue.value));
@@ -214,8 +212,6 @@ namespace Common {
 
     template <StringConvertible T>
     struct StringConverter<Radian<T>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const Radian<T>& inValue)
         {
             return StringConverter<T>::ToString(inValue.value);
@@ -224,8 +220,6 @@ namespace Common {
 
     template <StringConvertible T>
     struct StringConverter<Quaternion<T>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const Quaternion<T>& inValue)
         {
             return fmt::format(

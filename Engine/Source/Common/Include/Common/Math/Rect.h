@@ -80,8 +80,6 @@ namespace Common {
 
     template <StringConvertible T>
     struct StringConverter<Rect<T>> {
-        static constexpr auto convertible = true;
-
         static std::string ToString(const Rect<T>& inValue)
         {
             return fmt::format(
