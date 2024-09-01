@@ -40,6 +40,24 @@ namespace Common {
         DeserializeStream();
     };
 
+    class EmptySerializeStream final : public SerializeStream {
+    public:
+        NonCopyable(EmptySerializeStream)
+        EmptySerializeStream();
+        ~EmptySerializeStream() override;
+
+        void Write(const void* data, size_t size) override;
+    };
+
+    class EmptyDeserializeStream final : public DeserializeStream {
+    public:
+        NonCopyable(EmptyDeserializeStream)
+        EmptyDeserializeStream();
+        ~EmptyDeserializeStream() override;
+
+        void Read(void* data, size_t size) override;
+    };
+
     class BinaryFileSerializeStream final : public SerializeStream {
     public:
         NonCopyable(BinaryFileSerializeStream)
