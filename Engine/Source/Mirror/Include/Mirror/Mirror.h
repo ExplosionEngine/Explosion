@@ -340,6 +340,7 @@ namespace Mirror {
         Any GetDyn() const;
         void SerializeDyn(Common::SerializeStream& stream) const;
         void DeserializeDyn(Common::DeserializeStream& stream) const;
+        // TODO json support
 
     private:
         friend class GlobalRegistry;
@@ -360,6 +361,7 @@ namespace Mirror {
             Getter getter;
             VariableSerializer serializer;
             VariableDeserializer deserializer;
+            // TODO json support
         };
 
         explicit Variable(ConstructParams&& params);
@@ -483,6 +485,7 @@ namespace Mirror {
         template <typename C> Any Get(C&& object) const;
         template <typename C> void Serialize(Common::SerializeStream& stream, C&& object) const;
         template <typename C> void Deserialize(Common::DeserializeStream& stream, C&& object) const;
+        // TODO json support
 
         uint32_t SizeOf() const;
         const TypeInfo* GetTypeInfo() const;
@@ -509,6 +512,7 @@ namespace Mirror {
             Getter getter;
             MemberVariableSerializer serializer;
             MemberVariableDeserializer deserializer;
+            // TODO json support
         };
 
         explicit MemberVariable(ConstructParams&& params);
@@ -648,6 +652,7 @@ namespace Mirror {
         Any NewDyn(const ArgumentList& arguments) const;
         void SerializeDyn(Common::SerializeStream& stream, const Argument& obj) const;
         void DeserailizeDyn(Common::DeserializeStream& stream, const Argument& obj) const;
+        // TODO json support
 
     private:
         static std::unordered_map<TypeId, Id> typeToIdMap;

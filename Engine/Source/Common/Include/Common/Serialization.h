@@ -136,23 +136,37 @@ namespace Common {
 
     template <typename T>
     struct JsonValueConverter {
-        static constexpr auto convertible = false;
-
-        static rapidjson::Value ToJsonValue(const T& inValue)
+        static rapidjson::Value ToJsonValue(const T& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             QuickFailWithReason("your type is not support convert to json value");
             return {};
         }
     };
 
-    template <typename T> concept JsonValueConvertible = requires(T inValue) { { JsonValueConverter<T>::ToJsonValue(inValue) } -> std::convertible_to<rapidjson::Value>; };
+    template <typename T> concept JsonValueConvertible = requires(T inValue, rapidjson::Document::AllocatorType& inAllocator, const rapidjson::Value& inJsonValue)
+    {
+        { JsonValueConverter<T>::ToJsonValue(inValue, inAllocator) } -> std::convertible_to<rapidjson::Value>;
+        { JsonValueConverter<T>::FromJsonValue(inJsonValue) } -> std::same_as<T>;
+    };
 
-    template <typename T> rapidjson::Value ToJsonValue(const T& inValue)
+    template <typename T>
+    rapidjson::Value ToJsonValue(const T& inValue, rapidjson::Document::AllocatorType& inAllocator)
     {
         if constexpr (JsonValueConvertible<T>) {
-            return JsonValueConverter<T>::ToJsonValue(inValue);
+            return JsonValueConverter<T>::ToJsonValue(inValue, inAllocator);
         } else {
-            QuickFailWithReason("your type is not support convert to json value");
+            QuickFailWithReason("your type is not support json serialization");
+            return {};
+        }
+    }
+
+    template <typename T>
+    T FromJsonValue(const rapidjson::Value& inJsonValue)
+    {
+        if constexpr (JsonValueConvertible<T>) {
+            return JsonValueConverter<T>::FromJsonValue(inJsonValue);
+        } else {
+            QuickFailWithReason("your type is not support json serialization");
             return {};
         }
     }
@@ -403,5 +417,260 @@ namespace Common {
         }
     };
 
-    // TODO json converter impl
+    template <>
+    struct JsonValueConverter<bool> {
+        static rapidjson::Value ToJsonValue(const bool& inValue, rapidjson::Document& inAllocator)
+        {
+            return rapidjson::Value(inValue);
+        }
+
+        static bool FromJsonValue(const rapidjson::Value& inValue)
+        {
+            return inValue.GetBool();
+        }
+    };
+
+    template <>
+    struct JsonValueConverter<int8_t> {
+        static rapidjson::Value ToJsonValue(const int8_t& inValue, rapidjson::Document& inAllocator)
+        {
+            return rapidjson::Value(inValue);
+        }
+
+        static int8_t FromJsonValue(const rapidjson::Value& inValue)
+        {
+            return static_cast<int8_t>(inValue.GetInt());
+        }
+    };
+
+    template <>
+    struct JsonValueConverter<uint8_t> {
+        static rapidjson::Value ToJsonValue(const uint8_t& inValue, rapidjson::Document& inAllocator)
+        {
+            return rapidjson::Value(inValue);
+        }
+
+        static uint8_t FromJsonValue(const rapidjson::Value& inValue)
+        {
+            return static_cast<uint8_t>(inValue.GetUint());
+        }
+    };
+
+    template <>
+    struct JsonValueConverter<int16_t> {
+        static rapidjson::Value ToJsonValue(const int16_t& inValue, rapidjson::Document& inAllocator)
+        {
+            return rapidjson::Value(inValue);
+        }
+
+        static int16_t FromJsonValue(const rapidjson::Value& inValue)
+        {
+            return static_cast<int16_t>(inValue.GetInt());
+        }
+    };
+
+    template <>
+    struct JsonValueConverter<uint16_t> {
+        static rapidjson::Value ToJsonValue(const uint16_t& inValue, rapidjson::Document& inAllocator)
+        {
+            return rapidjson::Value(inValue);
+        }
+
+        static uint16_t FromJsonValue(const rapidjson::Value& inValue)
+        {
+            return static_cast<uint16_t>(inValue.GetUint());
+        }
+    };
+
+    template <>
+    struct JsonValueConverter<int32_t> {
+        static rapidjson::Value ToJsonValue(const int32_t& inValue, rapidjson::Document& inAllocator)
+        {
+            return rapidjson::Value(inValue);
+        }
+
+        static int32_t FromJsonValue(const rapidjson::Value& inValue)
+        {
+            return inValue.GetInt();
+        }
+    };
+
+    template <>
+    struct JsonValueConverter<uint32_t> {
+        static rapidjson::Value ToJsonValue(const uint32_t& inValue, rapidjson::Document& inAllocator)
+        {
+            return rapidjson::Value(inValue);
+        }
+
+        static uint32_t FromJsonValue(const rapidjson::Value& inValue)
+        {
+            return inValue.GetUint();
+        }
+    };
+
+    template <>
+    struct JsonValueConverter<int64_t> {
+        static rapidjson::Value ToJsonValue(const int64_t& inValue, rapidjson::Document& inAllocator)
+        {
+            return rapidjson::Value(inValue);
+        }
+
+        static int64_t FromJsonValue(const rapidjson::Value& inValue)
+        {
+            return inValue.GetInt64();
+        }
+    };
+
+    template <>
+    struct JsonValueConverter<uint64_t> {
+        static rapidjson::Value ToJsonValue(const uint64_t& inValue, rapidjson::Document& inAllocator)
+        {
+            return rapidjson::Value(inValue);
+        }
+
+        static uint64_t FromJsonValue(const rapidjson::Value& inValue)
+        {
+            return inValue.GetUint64();
+        }
+    };
+
+    template <>
+    struct JsonValueConverter<float> {
+        static rapidjson::Value ToJsonValue(const float& inValue, rapidjson::Document& inAllocator)
+        {
+            return rapidjson::Value(inValue);
+        }
+
+        static float FromJsonValue(const rapidjson::Value& inValue)
+        {
+            return inValue.GetFloat();
+        }
+    };
+
+    template <>
+    struct JsonValueConverter<double> {
+        static rapidjson::Value ToJsonValue(const double& inValue, rapidjson::Document& inAllocator)
+        {
+            return rapidjson::Value(inValue);
+        }
+
+        static double FromJsonValue(const rapidjson::Value& inValue)
+        {
+            return inValue.GetDouble();
+        }
+    };
+
+    template <>
+    struct JsonValueConverter<std::string> {
+        static rapidjson::Value ToJsonValue(const std::string& inValue, rapidjson::Document& inAllocator)
+        {
+            return rapidjson::Value(inValue.c_str(), inValue.length());
+        }
+
+        static std::string FromJsonValue(const rapidjson::Value& inValue)
+        {
+            return { inValue.GetString(), inValue.GetStringLength() };
+        }
+    };
+
+    template <JsonValueConvertible T>
+    struct JsonValueConverter<std::optional<T>> {
+        static rapidjson::Value ToJsonValue(const std::optional<T>& inValue, rapidjson::Document& inAllocator)
+        {
+            if (inValue.has_value()) {
+                return JsonValueConverter<T>::ToJsonValue(inValue.value());
+            }
+            return rapidjson::Value(rapidjson::kNullType);
+        }
+
+        static std::optional<T> FromJsonValue(const rapidjson::Value& inValue)
+        {
+            if (inValue.IsNull()) {
+                return {};
+            }
+            return JsonValueConverter<T>::FromJsonValue(inValue);
+        }
+    };
+
+    template <JsonValueConvertible K, JsonValueConvertible V>
+    struct JsonValueConverter<std::pair<K, V>> {
+        static rapidjson::Value ToJsonValue(const std::pair<K, V>& inValue, rapidjson::Document& inAllocator)
+        {
+            rapidjson::Value result(rapidjson::kObjectType);
+            result.AddMember("key", JsonValueConverter<K>::ToJsonValue(inValue.first), inAllocator);
+            result.AddMember("value", JsonValueConverter<V>::ToJsonValue(inValue.second), inAllocator);
+            return result;
+        }
+
+        static std::pair<K, V> FromJsonValue(const rapidjson::Value& inValue)
+        {
+            return {
+                JsonValueConverter<K>::FromJsonValue(inValue["key"]),
+                JsonValueConverter<V>::FromJsonValue(inValue["value"])
+            };
+        }
+    };
+
+    template <JsonValueConvertible T>
+    struct JsonValueConverter<std::vector<T>> {
+        static rapidjson::Value ToJsonValue(const std::vector<T>& inValue, rapidjson::Document& inAllocator)
+        {
+            rapidjson::Value result(rapidjson::kArrayType);
+            for (const auto& element : inValue) {
+                result.PushBack(JsonValueConverter<T>::ToJsonValue(element), inAllocator);
+            }
+            return result;
+        }
+
+        static std::vector<T> FromJsonValue(const rapidjson::Value& inValue)
+        {
+            std::vector<T> result;
+            for (auto i = 0; i < inValue.Size(); i++) {
+                result.emplace_back(JsonValueConverter<T>::FromJsonValue(inValue[i]));
+            }
+            return result;
+        }
+    };
+
+    template <JsonValueConvertible T>
+    struct JsonValueConverter<std::unordered_set<T>> {
+        static rapidjson::Value ToJsonValue(const std::unordered_set<T>& inValue, rapidjson::Document& inAllocator)
+        {
+            rapidjson::Value result(rapidjson::kArrayType);
+            for (const auto& element : inValue) {
+                result.PushBack(JsonValueConverter<T>::ToJsonValue(element), inAllocator);
+            }
+            return result;
+        }
+
+        static std::unordered_set<T> FromJsonValue(const rapidjson::Value& inValue)
+        {
+            std::unordered_set<T> result;
+            for (auto i = 0; i < inValue.Size(); i++) {
+                result.emplace(JsonValueConverter<T>::FromJsonValue(inValue[i]));
+            }
+            return result;
+        }
+    };
+
+    template <JsonValueConvertible K, JsonValueConvertible V>
+    struct JsonValueConverter<std::unordered_map<K, V>> {
+        static rapidjson::Value ToJsonValue(const std::unordered_map<K, V>& inValue, rapidjson::Document& inAllocator)
+        {
+            rapidjson::Value result(rapidjson::kArrayType);
+            for (const auto& pair : inValue) {
+                result.PushBack(JsonValueConverter<std::pair<K, V>>::ToJsonValue(pair), inAllocator);
+            }
+            return result;
+        }
+
+        static std::unordered_map<K, V> FromJsonValue(const rapidjson::Value& inValue)
+        {
+            std::unordered_map<K, V> result;
+            for (auto i = 0; i < inValue.Size(); i++) {
+                result.emplace(JsonValueConverter<std::pair<K, V>>::FromJsonValue(inValue[i]));
+            }
+            return result;
+        }
+    };
 }

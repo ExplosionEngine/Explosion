@@ -29,3 +29,13 @@ TEST(SerializationTest, FileStreamTest)
         ASSERT_EQ(value, 5);
     }
 }
+
+TEST(SerializationTest, SerializationTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, JsonSerializeTest)
+{
+    // TODO
+}

@@ -55,8 +55,6 @@ namespace Common {
 
     template <StringConvertible T>
     struct StringConverter<ViewTransform<T>> {
-        static constexpr auto convertible = false;
-
         static std::string ToString(const ViewTransform<T>& inValue)
         {
             return StringConverter<Transform<T>>::ToString(inValue);
