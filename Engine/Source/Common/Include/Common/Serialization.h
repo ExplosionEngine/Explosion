@@ -420,7 +420,7 @@ namespace Common {
 
     template <>
     struct JsonValueConverter<bool> {
-        static rapidjson::Value ToJsonValue(const bool& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const bool& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             return rapidjson::Value(inValue);
         }
@@ -433,7 +433,7 @@ namespace Common {
 
     template <>
     struct JsonValueConverter<int8_t> {
-        static rapidjson::Value ToJsonValue(const int8_t& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const int8_t& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             return rapidjson::Value(inValue);
         }
@@ -446,7 +446,7 @@ namespace Common {
 
     template <>
     struct JsonValueConverter<uint8_t> {
-        static rapidjson::Value ToJsonValue(const uint8_t& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const uint8_t& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             return rapidjson::Value(inValue);
         }
@@ -459,7 +459,7 @@ namespace Common {
 
     template <>
     struct JsonValueConverter<int16_t> {
-        static rapidjson::Value ToJsonValue(const int16_t& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const int16_t& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             return rapidjson::Value(inValue);
         }
@@ -472,7 +472,7 @@ namespace Common {
 
     template <>
     struct JsonValueConverter<uint16_t> {
-        static rapidjson::Value ToJsonValue(const uint16_t& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const uint16_t& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             return rapidjson::Value(inValue);
         }
@@ -485,7 +485,7 @@ namespace Common {
 
     template <>
     struct JsonValueConverter<int32_t> {
-        static rapidjson::Value ToJsonValue(const int32_t& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const int32_t& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             return rapidjson::Value(inValue);
         }
@@ -498,7 +498,7 @@ namespace Common {
 
     template <>
     struct JsonValueConverter<uint32_t> {
-        static rapidjson::Value ToJsonValue(const uint32_t& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const uint32_t& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             return rapidjson::Value(inValue);
         }
@@ -511,7 +511,7 @@ namespace Common {
 
     template <>
     struct JsonValueConverter<int64_t> {
-        static rapidjson::Value ToJsonValue(const int64_t& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const int64_t& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             return rapidjson::Value(inValue);
         }
@@ -524,7 +524,7 @@ namespace Common {
 
     template <>
     struct JsonValueConverter<uint64_t> {
-        static rapidjson::Value ToJsonValue(const uint64_t& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const uint64_t& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             return rapidjson::Value(inValue);
         }
@@ -537,7 +537,7 @@ namespace Common {
 
     template <>
     struct JsonValueConverter<float> {
-        static rapidjson::Value ToJsonValue(const float& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const float& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             return rapidjson::Value(inValue);
         }
@@ -550,7 +550,7 @@ namespace Common {
 
     template <>
     struct JsonValueConverter<double> {
-        static rapidjson::Value ToJsonValue(const double& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const double& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             return rapidjson::Value(inValue);
         }
@@ -563,9 +563,9 @@ namespace Common {
 
     template <>
     struct JsonValueConverter<std::string> {
-        static rapidjson::Value ToJsonValue(const std::string& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const std::string& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
-            return rapidjson::Value(inValue.c_str(), inValue.length());
+            return rapidjson::Value(inValue.c_str(), inValue.length()); // NOLINT
         }
 
         static std::string FromJsonValue(const rapidjson::Value& inValue)
@@ -576,10 +576,10 @@ namespace Common {
 
     template <JsonValueConvertible T>
     struct JsonValueConverter<std::optional<T>> {
-        static rapidjson::Value ToJsonValue(const std::optional<T>& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const std::optional<T>& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             if (inValue.has_value()) {
-                return JsonValueConverter<T>::ToJsonValue(inValue.value());
+                return JsonValueConverter<T>::ToJsonValue(inValue.value(), inAllocator);
             }
             return rapidjson::Value(rapidjson::kNullType);
         }
@@ -595,11 +595,11 @@ namespace Common {
 
     template <JsonValueConvertible K, JsonValueConvertible V>
     struct JsonValueConverter<std::pair<K, V>> {
-        static rapidjson::Value ToJsonValue(const std::pair<K, V>& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const std::pair<K, V>& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             rapidjson::Value result(rapidjson::kObjectType);
-            result.AddMember("key", JsonValueConverter<K>::ToJsonValue(inValue.first), inAllocator);
-            result.AddMember("value", JsonValueConverter<V>::ToJsonValue(inValue.second), inAllocator);
+            result.AddMember("key", JsonValueConverter<K>::ToJsonValue(inValue.first, inAllocator), inAllocator);
+            result.AddMember("value", JsonValueConverter<V>::ToJsonValue(inValue.second, inAllocator), inAllocator);
             return result;
         }
 
@@ -614,11 +614,11 @@ namespace Common {
 
     template <JsonValueConvertible T>
     struct JsonValueConverter<std::vector<T>> {
-        static rapidjson::Value ToJsonValue(const std::vector<T>& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const std::vector<T>& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             rapidjson::Value result(rapidjson::kArrayType);
             for (const auto& element : inValue) {
-                result.PushBack(JsonValueConverter<T>::ToJsonValue(element), inAllocator);
+                result.PushBack(JsonValueConverter<T>::ToJsonValue(element, inAllocator), inAllocator);
             }
             return result;
         }
@@ -635,11 +635,11 @@ namespace Common {
 
     template <JsonValueConvertible T>
     struct JsonValueConverter<std::unordered_set<T>> {
-        static rapidjson::Value ToJsonValue(const std::unordered_set<T>& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const std::unordered_set<T>& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             rapidjson::Value result(rapidjson::kArrayType);
             for (const auto& element : inValue) {
-                result.PushBack(JsonValueConverter<T>::ToJsonValue(element), inAllocator);
+                result.PushBack(JsonValueConverter<T>::ToJsonValue(element, inAllocator), inAllocator);
             }
             return result;
         }
@@ -656,11 +656,11 @@ namespace Common {
 
     template <JsonValueConvertible K, JsonValueConvertible V>
     struct JsonValueConverter<std::unordered_map<K, V>> {
-        static rapidjson::Value ToJsonValue(const std::unordered_map<K, V>& inValue, rapidjson::Document& inAllocator)
+        static rapidjson::Value ToJsonValue(const std::unordered_map<K, V>& inValue, rapidjson::Document::AllocatorType& inAllocator)
         {
             rapidjson::Value result(rapidjson::kArrayType);
             for (const auto& pair : inValue) {
-                result.PushBack(JsonValueConverter<std::pair<K, V>>::ToJsonValue(pair), inAllocator);
+                result.PushBack(JsonValueConverter<std::pair<K, V>>::ToJsonValue(pair, inAllocator), inAllocator);
             }
             return result;
         }

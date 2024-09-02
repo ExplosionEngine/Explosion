@@ -26,6 +26,7 @@ namespace Common {
         Color(const Color& inOther);
         Color(Color&& inOther) noexcept;
         Color& operator=(const Color& inOther);
+        bool operator==(const Color& inRhs) const;
 
         LinearColor ToLinearColor() const;
         std::string ToHexString() const;
@@ -44,6 +45,7 @@ namespace Common {
         LinearColor(const LinearColor& inOther);
         LinearColor(LinearColor&& inOther) noexcept;
         LinearColor& operator=(const LinearColor& inOther);
+        bool operator==(const LinearColor& inRhs) const;
 
         void CheckValid() const;
         Color ToColor() const;

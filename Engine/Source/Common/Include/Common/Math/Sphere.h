@@ -27,9 +27,9 @@ namespace Common {
         T Distance(const Sphere& inOther) const;
         bool Inside(const Vec<T, 3>& inPoint) const;
         bool Intersect(const Sphere& inOther) const;
+        bool operator==(const Sphere& inRhs) const;
 
-        template <typename IT>
-        Sphere<IT> CastTo() const;
+        template <typename IT> Sphere<IT> CastTo() const;
     };
 
     using ISphere = Sphere<int32_t>;
@@ -142,6 +142,13 @@ namespace Common {
     {
         Vec<T, 3> direction = this->center - inOther.center;
         return direction.Model() <= (this->radius + inOther.radius);
+    }
+
+    template <typename T>
+    bool Sphere<T>::operator==(const Sphere& inRhs) const
+    {
+        return this->center == inRhs.center
+            && CompareNumber(this->radius, inRhs.radius);
     }
 
     template <typename T>

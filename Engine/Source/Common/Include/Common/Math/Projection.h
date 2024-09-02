@@ -33,14 +33,18 @@ namespace Common {
     struct ReversedZOrthogonalProjection : ReversedZOrthogonalProjectionBase<T> {
         ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane);
         ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane, T inFarPlane);
+
         Mat<T, 4, 4> GetProjectionMatrix() const;
+        bool operator==(const ReversedZOrthogonalProjection& inRhs) const;
     };
 
     template <typename T>
     struct ReversedZPerspectiveProjection : ReversedZPerspectiveProjectionBase<T> {
         ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane);
         ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane, T inFarPlane);
+
         Mat<T, 4, 4> GetProjectionMatrix() const;
+        bool operator==(const ReversedZPerspectiveProjection& inRhs) const;
     };
 
     using HReversedZOrthoProjection = ReversedZOrthogonalProjection<HFloat>;
@@ -186,6 +190,23 @@ namespace Common {
     }
 
     template <typename T>
+    bool ReversedZOrthogonalProjection<T>::operator==(const ReversedZOrthogonalProjection& inRhs) const
+    {
+        const auto thisHasFar = this->farPlane.has_value();
+        const auto rhsHasFar = inRhs.farPlane.has_value();
+        if (thisHasFar && !rhsHasFar || !thisHasFar && rhsHasFar) {
+            return false;
+        }
+        if (thisHasFar && !CompareNumber(this->farPlane.value(), inRhs.farPlane.value())) {
+            return false;
+        }
+
+        return CompareNumber(this->width, inRhs.width)
+            && CompareNumber(this->height, inRhs.height)
+            && CompareNumber(this->nearPlane, inRhs.nearPlane);
+    }
+
+    template <typename T>
     ReversedZPerspectiveProjection<T>::ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane)
     {
         this->fov = inFOV;
@@ -227,5 +248,23 @@ namespace Common {
             0.0f, 0.0f, 0.0f, this->nearPlane,
             0.0f, 0.0f, 1.0f, 0.0f
         );
+    }
+
+    template <typename T>
+    bool ReversedZPerspectiveProjection<T>::operator==(const ReversedZPerspectiveProjection& inRhs) const
+    {
+        const auto thisHasFar = this->farPlane.has_value();
+        const auto rhsHasFar = inRhs.farPlane.has_value();
+        if (thisHasFar && !rhsHasFar || !thisHasFar && rhsHasFar) {
+            return false;
+        }
+        if (thisHasFar && !CompareNumber(this->farPlane.value(), inRhs.farPlane.value())) {
+            return false;
+        }
+
+        return CompareNumber(this->fov, inRhs.fov)
+            && CompareNumber(this->width, inRhs.width)
+            && CompareNumber(this->height, inRhs.height)
+            && CompareNumber(this->nearPlane, inRhs.nearPlane);
     }
 }

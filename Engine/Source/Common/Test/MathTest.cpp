@@ -607,3 +607,8 @@ TEST(MathTest, SphereTest)
     ASSERT_TRUE(!sphere0.Intersect(sphere2));
     ASSERT_TRUE(sphere0.Distance(sphere1) == 0.5f);
 }
+
+TEST(MathTest, SerializationTest)
+{
+    // TODO
+}

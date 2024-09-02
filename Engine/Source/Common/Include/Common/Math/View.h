@@ -19,6 +19,7 @@ namespace Common {
         ViewTransform(const ViewTransform& inOther);
         ViewTransform(ViewTransform&& inOther) noexcept;
         ViewTransform& operator=(const ViewTransform& inOther);
+        bool operator==(const ViewTransform& inRhs) const;
 
         Mat<T, 4, 4> GetViewMatrix() const;
     };
@@ -106,6 +107,12 @@ namespace Common {
     {
         Transform<T>::operator=(inOther);
         return *this;
+    }
+
+    template <typename T>
+    bool ViewTransform<T>::operator==(const ViewTransform& inRhs) const
+    {
+        return Transform<T>::operator==(inRhs);
     }
 
     template <typename T>

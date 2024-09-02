@@ -38,9 +38,9 @@ namespace Common {
         T Size() const;
         bool Inside(const Vec<T, 2>& inPoint) const;
         bool Intersect(const Rect& inOther) const;
+        bool operator==(const Rect& inRhs) const;
 
-        template <typename IT>
-        Rect<IT> CastTo() const;
+        template <typename IT> Rect<IT> CastTo() const;
     };
 
     using IRect = Rect<int32_t>;
@@ -211,6 +211,13 @@ namespace Common {
             && this->min.y < inOther.max.y
             && inOther.min.x < this->max.x
             && inOther.min.y < this->max.y;
+    }
+
+    template <typename T>
+    bool Rect<T>::operator==(const Rect& inRhs) const
+    {
+        return this->min == inRhs.min
+            && this->max == inRhs.max;
     }
 
     template <typename T>

@@ -40,9 +40,9 @@ namespace Common {
         T Size() const;
         bool Inside(const Vec<T, 3>& inPoint) const;
         bool Intersect(const Box& inOther) const;
+        bool operator==(const Box& inRhs) const;
 
-        template <typename IT>
-        Box<IT> CastTo() const;
+        template <typename IT> Box<IT> CastTo() const;
     };
 
     using IBox = Box<int32_t>;
@@ -228,6 +228,13 @@ namespace Common {
             && inOther.min.x < this->max.x
             && inOther.min.y < this->max.y
             && inOther.min.z < this->max.z;
+    }
+
+    template <typename T>
+    bool Box<T>::operator==(const Box& inRhs) const
+    {
+        return this->min == inRhs.min
+            && this->max == inRhs.max;
     }
 
     template <typename T>
