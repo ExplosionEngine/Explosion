@@ -1436,6 +1436,21 @@ namespace Mirror {
         }
     }
 
+    std::string Class::ToStringDyn(const Argument& obj) const
+    {
+        std::stringstream stream;
+        stream << "{ ";
+        auto count = 0;
+        for (const auto& [id, var] : memberVariables) {
+            stream << fmt::format("{}: {}", id.name, var.GetDyn(obj).ToString());
+            if (count++ != memberVariables.size() - 1) {
+                stream << ", ";
+            }
+        }
+        stream << "}";
+        return stream.str();
+    }
+
     EnumElement::EnumElement(ConstructParams&& inParams)
         : Type(std::move(inParams.name))
         , getter(std::move(inParams.getter))

@@ -202,6 +202,7 @@ namespace Mirror {
         void Reset();
         bool Empty() const;
         std::string ToString() const;
+        // TODO serialization
         // TODO rapidjson::Value ToJsonValue() const;
 
         // always return original ptr and size, even policy is ref
@@ -616,6 +617,7 @@ namespace Mirror {
         template <typename... Args> Any New(Args&&... args);
         template <typename T> void Serialize(Common::SerializeStream& stream, T&& obj) const;
         template <typename T> void Deserailize(Common::DeserializeStream& stream, T&& obj) const;
+        template <typename T> std::string ToString(T&& obj) const;
 
         void ForEachStaticVariable(const VariableTraverser& func) const;
         void ForEachStaticFunction(const FunctionTraverser& func) const;
@@ -652,6 +654,7 @@ namespace Mirror {
         Any NewDyn(const ArgumentList& arguments) const;
         void SerializeDyn(Common::SerializeStream& stream, const Argument& obj) const;
         void DeserailizeDyn(Common::DeserializeStream& stream, const Argument& obj) const;
+        std::string ToStringDyn(const Argument& obj) const;
         // TODO json support
 
     private:
@@ -756,6 +759,8 @@ namespace Mirror {
         const TypeInfo* typeInfo;
         std::unordered_map<Id, EnumElement, IdHashProvider> elements;
     };
+
+    template <typename T> concept MetaClass = requires(T inValue) { { T::GetClass() } -> std::same_as<const Class&>; };
 }
 
 namespace Mirror::Internal {
@@ -796,6 +801,49 @@ namespace Mirror::Internal {
         }(), 0)... };
         return result;
     }
+}
+
+namespace Common { // NOLINT
+    template <Mirror::MetaClass T>
+    struct Serializer<T> {
+        static constexpr uint32_t typeId = HashUtils::StrCrc32("_MetaObject");
+
+        static void Serialize(SerializeStream& stream, const T& value)
+        {
+            TypeIdSerializer<T>::Serialize(stream);
+
+            const auto& clazz = Mirror::Class::Get<T>();
+            Serializer<std::string>::Serialize(stream, clazz.GetName());
+            clazz.Serialize(stream, value);
+        }
+
+        static bool Deserialize(DeserializeStream& stream, T& value)
+        {
+            if (!TypeIdSerializer<T>::Deserialize(stream)) {
+                return false;
+            }
+
+            const auto& clazz = Mirror::Class::Get<T>();
+            std::string className;
+            Serializer<std::string>::Deserialize(stream, className);
+            if (className != clazz.GetName()) {
+                return false;
+            }
+            clazz.Deserailize(stream, value);
+            return true;
+        }
+    };
+
+    template <Mirror::MetaClass T>
+    struct StringConverter<T> {
+        static std::string ToString(const T& inValue)
+        {
+            const auto& clazz = Mirror::Class::Get<T>();
+            return clazz.ToString(inValue);
+        }
+    };
+
+    // TODO meta object to json
 }
 
 namespace Mirror {
@@ -1203,6 +1251,12 @@ namespace Mirror {
     void Class::Deserailize(Common::DeserializeStream& stream, T&& obj) const
     {
         DeserailizeDyn(stream, Internal::ForwardAsArgument(std::forward<T>(obj)));
+    }
+
+    template <typename T>
+    std::string Class::ToString(T&& obj) const
+    {
+        return ToStringDyn(Internal::ForwardAsArgument(std::forward<T>(obj)));
     }
 
     template <Common::CppEnum T>
