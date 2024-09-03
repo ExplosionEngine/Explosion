@@ -103,7 +103,7 @@ namespace Common {
     };
 
     template <typename T> void Serialize(SerializeStream& inStream, const T& inValue);
-    template <typename T> void Deserialize(DeserializeStream& inStream, T& inValue);
+    template <typename T> bool Deserialize(DeserializeStream& inStream, T& inValue);
 
     template <typename T> struct JsonValueConverter {};
     template <typename T> concept JsonValueConvertible = requires(T inValue, rapidjson::Document::AllocatorType& inAllocator, const rapidjson::Value& inJsonValue)
@@ -164,12 +164,13 @@ namespace Common {
     }
 
     template <typename T>
-    void Deserialize(DeserializeStream& inStream, T& inValue)
+    bool Deserialize(DeserializeStream& inStream, T& inValue)
     {
         if constexpr (Serializable<T>) {
-            Serializer<T>::Deserialize(inStream, inValue);
+            return Serializer<T>::Deserialize(inStream, inValue);
         } else {
             QuickFailWithReason("your type is not support serialization");
+            return false;
         }
     }
 

@@ -388,6 +388,18 @@ namespace Mirror {
         return rtti == nullptr;
     }
 
+    void Any::Serialize(Common::SerializeStream& inStream) const
+    {
+        Assert(rtti != nullptr);
+        rtti->serialize(Data(), inStream);
+    }
+
+    bool Any::Deserialize(Common::DeserializeStream& inStream) const
+    {
+        Assert(rtti != nullptr);
+        return rtti->deserialize(Data(), inStream);
+    }
+
     std::string Any::ToString() const
     {
         return Empty() ? "" : rtti->toString(Data());
@@ -426,8 +438,8 @@ namespace Mirror {
     void Any::HolderInfo::ResizeMemory(size_t inSize)
     {
         if (inSize <= MaxStackMemorySize) {
-            memory = StackMemory {};
-            std::get<StackMemory>(memory).Resize(inSize);
+            memory = InplaceMemory {};
+            std::get<InplaceMemory>(memory).Resize(inSize);
         } else {
             memory = HeapMemory {};
             std::get<HeapMemory>(memory).resize(inSize);
@@ -437,7 +449,7 @@ namespace Mirror {
     void* Any::HolderInfo::Ptr() const
     {
         if (memory.index() == 0) {
-            return const_cast<uint8_t*>(std::get<StackMemory>(memory).Data());
+            return const_cast<uint8_t*>(std::get<InplaceMemory>(memory).Data());
         }
         return const_cast<uint8_t*>(std::get<HeapMemory>(memory).data());
     }
@@ -445,7 +457,7 @@ namespace Mirror {
     size_t Any::HolderInfo::Size() const
     {
         if (memory.index() == 0) {
-            return std::get<StackMemory>(memory).Size();
+            return std::get<InplaceMemory>(memory).Size();
         }
         return std::get<HeapMemory>(memory).size();
     }

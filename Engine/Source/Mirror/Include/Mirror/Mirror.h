@@ -90,6 +90,8 @@ namespace Mirror {
         using GetPtrFunc = Any(void*);
         using GetConstPtrFunc = Any(const void*);
         using DerefFunc = Any(const void*);
+        using SerializeFunc = void(const void*, Common::SerializeStream&);
+        using DeserializeFunc = bool(void*, Common::DeserializeStream&);
         using ToStringFunc = std::string(const void*);
 
         template <typename T> static void Detor(void* inThis) noexcept;
@@ -106,6 +108,8 @@ namespace Mirror {
         template <typename T> static Any GetPtr(void* inThis);
         template <typename T> static Any GetConstPtr(const void* inThis);
         template <typename T> static Any Deref(const void* inThis);
+        template <typename T> static void Serialize(const void* inThis, Common::SerializeStream& inStream);
+        template <typename T> static bool Deserialize(void* inThis, Common::DeserializeStream& inStream);
         template <typename T> static std::string ToString(const void* inThis);
 
         DetorFunc* detor;
@@ -122,6 +126,8 @@ namespace Mirror {
         GetPtrFunc* getPtr;
         GetConstPtrFunc* getConstPtr;
         DerefFunc* deref;
+        SerializeFunc* serialize;
+        DeserializeFunc* deserialize;
         ToStringFunc* toString;
     };
 
@@ -141,6 +147,8 @@ namespace Mirror {
         &AnyRtti::GetPtr<T>,
         &AnyRtti::GetConstPtr<T>,
         &AnyRtti::Deref<T>,
+        &AnyRtti::Serialize<T>,
+        &AnyRtti::Deserialize<T>,
         &AnyRtti::ToString<T>
     };
 
@@ -201,8 +209,9 @@ namespace Mirror {
         Mirror::TypeId TypeId() const;
         void Reset();
         bool Empty() const;
+        void Serialize(Common::SerializeStream& inStream) const;
+        bool Deserialize(Common::DeserializeStream& inStream) const;
         std::string ToString() const;
-        // TODO serialization
         // TODO rapidjson::Value ToJsonValue() const;
 
         // always return original ptr and size, even policy is ref
@@ -224,11 +233,11 @@ namespace Mirror {
 
         private:
             static constexpr size_t MaxStackMemorySize = sizeof(std::vector<uint8_t>) - sizeof(size_t);
-            using StackMemory = Common::InplaceVector<uint8_t, MaxStackMemorySize>;
+            using InplaceMemory = Common::InplaceVector<uint8_t, MaxStackMemorySize>;
             using HeapMemory = std::vector<uint8_t>;
-            static_assert(sizeof(StackMemory) == sizeof(HeapMemory));
+            static_assert(sizeof(InplaceMemory) == sizeof(HeapMemory));
 
-            std::variant<StackMemory, HeapMemory> memory;
+            std::variant<InplaceMemory, HeapMemory> memory;
         };
 
         class MIRROR_API RefInfo {
@@ -986,6 +995,18 @@ namespace Mirror {
             QuickFailWithReason("AnyRtti::Dref() only support pointer type");
             return {};
         }
+    }
+
+    template <typename T>
+    void AnyRtti::Serialize(const void* inThis, Common::SerializeStream& inStream)
+    {
+        Common::Serialize<T>(inStream, *static_cast<const T*>(inThis));
+    }
+
+    template <typename T>
+    bool AnyRtti::Deserialize(void* inThis, Common::DeserializeStream& inStream)
+    {
+        return Common::Deserialize<T>(inStream, *static_cast<T*>(inThis));
     }
 
     template <typename T>
