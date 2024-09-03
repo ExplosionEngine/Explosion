@@ -330,13 +330,13 @@ namespace Mirror {
         params.memorySize = sizeof(ValueType);
         params.typeInfo = GetTypeInfo<ValueType>();
         params.setter = [](const Argument& object, const Argument& value) -> void {
-            object.As<ClassType&>().*Ptr = value.As<ValueType>();
+            object.As<ClassType&>().*Ptr = value.As<const ValueType&>();
         };
         params.getter = [](const Argument& object) -> Any {
             return { std::ref(object.As<ClassType&>().*Ptr) };
         };
         params.serializer = [](Common::SerializeStream& stream, const Mirror::MemberVariable& variable, const Argument& object) -> void {
-            ValueType& value = variable.GetDyn(object).As<ValueType&>(); // NOLINT
+            const ValueType& value = variable.GetDyn(object).As<const ValueType&>(); // NOLINT
             Common::Serialize<ValueType>(stream, value);
         };
         params.deserializer = [](Common::DeserializeStream& stream, const Mirror::MemberVariable& variable, const Argument& object) -> void {
@@ -395,13 +395,13 @@ namespace Mirror {
         params.memorySize = sizeof(ValueType);
         params.typeInfo = GetTypeInfo<ValueType>();
         params.setter = [](const Argument& argument) -> void {
-            *Ptr = argument.As<ValueType>();
+            *Ptr = argument.As<const ValueType&>();
         };
         params.getter = []() -> Any {
             return { std::ref(*Ptr) };
         };
         params.serializer = [](Common::SerializeStream& stream, const Mirror::Variable& variable) -> void {
-            ValueType& value = variable.GetDyn().As<ValueType&>(); // NOLINT
+            const ValueType& value = variable.GetDyn().As<const ValueType&>(); // NOLINT
             Common::Serialize<ValueType>(stream, value);
         };
         params.deserializer = [](Common::DeserializeStream& stream, const Mirror::Variable& variable) -> void {
