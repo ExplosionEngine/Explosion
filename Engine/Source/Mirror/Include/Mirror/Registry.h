@@ -277,8 +277,6 @@ namespace Mirror {
         params.getter = []() -> Any {
             return { std::ref(*Ptr) };
         };
-        params.serializer = nullptr;
-        params.deserializer = nullptr;
 
         return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceStaticVariable(inId, std::move(params)));
     }
@@ -335,17 +333,6 @@ namespace Mirror {
         params.getter = [](const Argument& object) -> Any {
             return { std::ref(object.As<ClassType&>().*Ptr) };
         };
-        params.serializer = [](Common::SerializeStream& stream, const Mirror::MemberVariable& variable, const Argument& object) -> void {
-            const ValueType& value = variable.GetDyn(object).As<const ValueType&>(); // NOLINT
-            Common::Serialize<ValueType>(stream, value);
-        };
-        params.deserializer = [](Common::DeserializeStream& stream, const Mirror::MemberVariable& variable, const Argument& object) -> void {
-            ValueType value;
-            Common::Deserialize<ValueType>(stream, value);
-            Any valueRef = std::ref(value);
-            variable.SetDyn(object, valueRef);
-        };
-
         return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceMemberVariable(inId, std::move(params)));
     }
 
@@ -400,16 +387,6 @@ namespace Mirror {
         params.getter = []() -> Any {
             return { std::ref(*Ptr) };
         };
-        params.serializer = [](Common::SerializeStream& stream, const Mirror::Variable& variable) -> void {
-            const ValueType& value = variable.GetDyn().As<const ValueType&>(); // NOLINT
-            Common::Serialize<ValueType>(stream, value);
-        };
-        params.deserializer = [](Common::DeserializeStream& stream, const Mirror::Variable& variable) -> void {
-            ValueType value;
-            Common::Deserialize<ValueType>(stream, value);
-            variable.Set(value);
-        };
-
         return SetContext(&globalScope.EmplaceVariable(inId, std::move(params)));
     }
 

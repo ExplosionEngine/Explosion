@@ -342,15 +342,10 @@ namespace Mirror {
 
         template <typename T> void Set(T&& value) const;
         Any Get() const;
-        void Serialize(Common::SerializeStream& stream) const;
-        void Deserialize(Common::DeserializeStream& stream) const;
 
         const TypeInfo* GetTypeInfo() const;
         void SetDyn(const Argument& inArgument) const;
         Any GetDyn() const;
-        void SerializeDyn(Common::SerializeStream& stream) const;
-        void DeserializeDyn(Common::DeserializeStream& stream) const;
-        // TODO json support
 
     private:
         friend class GlobalRegistry;
@@ -360,8 +355,6 @@ namespace Mirror {
 
         using Setter = std::function<void(const Argument&)>;
         using Getter = std::function<Any()>;
-        using VariableSerializer = std::function<void(Common::SerializeStream&, const Variable&)>;
-        using VariableDeserializer = std::function<void(Common::DeserializeStream&, const Variable&)>;
 
         struct ConstructParams {
             std::string name;
@@ -369,9 +362,6 @@ namespace Mirror {
             const TypeInfo* typeInfo;
             Setter setter;
             Getter getter;
-            VariableSerializer serializer;
-            VariableDeserializer deserializer;
-            // TODO json support
         };
 
         explicit Variable(ConstructParams&& params);
@@ -380,8 +370,6 @@ namespace Mirror {
         const TypeInfo* typeInfo;
         Setter setter;
         Getter getter;
-        VariableSerializer serializer;
-        VariableDeserializer deserializer;
     };
 
     class MIRROR_API Function final : public Type {
@@ -493,16 +481,11 @@ namespace Mirror {
 
         template <typename C, typename T> void Set(C&& object, T&& value) const;
         template <typename C> Any Get(C&& object) const;
-        template <typename C> void Serialize(Common::SerializeStream& stream, C&& object) const;
-        template <typename C> void Deserialize(Common::DeserializeStream& stream, C&& object) const;
-        // TODO json support
 
         uint32_t SizeOf() const;
         const TypeInfo* GetTypeInfo() const;
         void SetDyn(const Argument& object, const Argument& value) const;
         Any GetDyn(const Argument& object) const;
-        void SerializeDyn(Common::SerializeStream& stream, const Argument& object) const;
-        void DeserializeDyn(Common::DeserializeStream& stream, const Argument& object) const;
         bool IsTransient() const;
 
     private:
@@ -511,8 +494,6 @@ namespace Mirror {
 
         using Setter = std::function<void(const Argument&, const Argument&)>;
         using Getter = std::function<Any(const Argument&)>;
-        using MemberVariableSerializer = std::function<void(Common::SerializeStream&, const MemberVariable&, const Argument&)>;
-        using MemberVariableDeserializer = std::function<void(Common::DeserializeStream&, const MemberVariable&, const Argument&)>;
 
         struct ConstructParams {
             std::string name;
@@ -520,9 +501,6 @@ namespace Mirror {
             const TypeInfo* typeInfo;
             Setter setter;
             Getter getter;
-            MemberVariableSerializer serializer;
-            MemberVariableDeserializer deserializer;
-            // TODO json support
         };
 
         explicit MemberVariable(ConstructParams&& params);
@@ -531,8 +509,6 @@ namespace Mirror {
         const TypeInfo* typeInfo;
         Setter setter;
         Getter getter;
-        MemberVariableSerializer serializer;
-        MemberVariableDeserializer deserializer;
     };
 
     class MIRROR_API MemberFunction final : public Type {
@@ -624,8 +600,10 @@ namespace Mirror {
 
         template <typename... Args> Any Construct(Args&&... args);
         template <typename... Args> Any New(Args&&... args);
+        // TODO move to template <MetaClass T> Serializer
         template <typename T> void Serialize(Common::SerializeStream& stream, T&& obj) const;
         template <typename T> void Deserailize(Common::DeserializeStream& stream, T&& obj) const;
+        // TODO move to template <MetaClass T> StringConverter
         template <typename T> std::string ToString(T&& obj) const;
 
         void ForEachStaticVariable(const VariableTraverser& func) const;
@@ -661,10 +639,11 @@ namespace Mirror {
 
         Any ConstructDyn(const ArgumentList& arguments) const;
         Any NewDyn(const ArgumentList& arguments) const;
+        // TODO move to template <MetaClass T> Serializer
         void SerializeDyn(Common::SerializeStream& stream, const Argument& obj) const;
         void DeserailizeDyn(Common::DeserializeStream& stream, const Argument& obj) const;
+        // TODO move to template <MetaClass T> StringConverter
         std::string ToStringDyn(const Argument& obj) const;
-        // TODO json support
 
     private:
         static std::unordered_map<TypeId, Id> typeToIdMap;
@@ -1206,18 +1185,6 @@ namespace Mirror {
     Any MemberVariable::Get(C&& object) const
     {
         return GetDyn(Internal::ForwardAsArgument(std::forward<C>(object)));
-    }
-
-    template <typename C>
-    void MemberVariable::Serialize(Common::SerializeStream& stream, C&& object) const
-    {
-        SerializeDyn(stream, Internal::ForwardAsArgument(std::forward<C>(object)));
-    }
-
-    template <typename C>
-    void MemberVariable::Deserialize(Common::DeserializeStream& stream, C&& object) const
-    {
-        DeserializeDyn(stream, Internal::ForwardAsArgument(std::forward<C>(object)));
     }
 
     template <typename C, typename... Args>

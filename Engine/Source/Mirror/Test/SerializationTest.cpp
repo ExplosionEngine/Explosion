@@ -66,9 +66,9 @@ TEST(SerializationTest, VariableFileSerializationTest)
         gc = "3";
 
         const auto& globalScope = Mirror::GlobalScope::Get();
-        globalScope.GetVariable("ga").SerializeDyn(stream);
-        globalScope.GetVariable("gb").SerializeDyn(stream);
-        globalScope.GetVariable("gc").SerializeDyn(stream);
+        globalScope.GetVariable("ga").GetDyn().Serialize(stream);
+        globalScope.GetVariable("gb").GetDyn().Serialize(stream);
+        globalScope.GetVariable("gc").GetDyn().Serialize(stream);
     }
 
     {
@@ -79,9 +79,9 @@ TEST(SerializationTest, VariableFileSerializationTest)
         Common::BinaryFileDeserializeStream stream(fileName.string());
 
         const auto& globalScope = Mirror::GlobalScope::Get();
-        globalScope.GetVariable("ga").DeserializeDyn(stream);
-        globalScope.GetVariable("gb").DeserializeDyn(stream);
-        globalScope.GetVariable("gc").DeserializeDyn(stream);
+        globalScope.GetVariable("ga").GetDyn().Deserialize(stream);
+        globalScope.GetVariable("gb").GetDyn().Deserialize(stream);
+        globalScope.GetVariable("gc").GetDyn().Deserialize(stream);
 
         ASSERT_EQ(ga, 1);
         ASSERT_EQ(gb, 2.0f);

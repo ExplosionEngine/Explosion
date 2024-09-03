@@ -677,8 +677,6 @@ namespace Mirror {
         , typeInfo(params.typeInfo)
         , setter(std::move(params.setter))
         , getter(std::move(params.getter))
-        , serializer(std::move(params.serializer))
-        , deserializer(std::move(params.deserializer))
     {
     }
 
@@ -687,16 +685,6 @@ namespace Mirror {
     Any Variable::Get() const
     {
         return GetDyn();
-    }
-
-    void Variable::Serialize(Common::SerializeStream& stream) const
-    {
-        SerializeDyn(stream);
-    }
-
-    void Variable::Deserialize(Common::DeserializeStream& stream) const
-    {
-        DeserializeDyn(stream);
     }
 
     const TypeInfo* Variable::GetTypeInfo() const
@@ -712,16 +700,6 @@ namespace Mirror {
     Any Variable::GetDyn() const
     {
         return getter();
-    }
-
-    void Variable::SerializeDyn(Common::SerializeStream& stream) const
-    {
-        serializer(stream, *this);
-    }
-
-    void Variable::DeserializeDyn(Common::DeserializeStream& stream) const
-    {
-        deserializer(stream, *this);
     }
 
     Function::Function(ConstructParams&& params)
@@ -837,8 +815,6 @@ namespace Mirror {
         , typeInfo(params.typeInfo)
         , setter(std::move(params.setter))
         , getter(std::move(params.getter))
-        , serializer(std::move(params.serializer))
-        , deserializer(std::move(params.deserializer))
     {
     }
 
@@ -862,16 +838,6 @@ namespace Mirror {
     Any MemberVariable::GetDyn(const Argument& object) const
     {
         return getter(object);
-    }
-
-    void MemberVariable::SerializeDyn(Common::SerializeStream& stream, const Argument& object) const
-    {
-        serializer(stream, *this, object);
-    }
-
-    void MemberVariable::DeserializeDyn(Common::DeserializeStream& stream, const Argument& object) const
-    {
-        deserializer(stream, *this, object);
     }
 
     bool MemberVariable::IsTransient() const
@@ -1391,7 +1357,7 @@ namespace Mirror {
                 Common::Serializer<uint32_t>::Serialize(stream, 0);
             } else {
                 Common::Serializer<uint32_t>::Serialize(stream, memberVariable.SizeOf());
-                memberVariable.SerializeDyn(stream, obj);
+                memberVariable.GetDyn(obj).Serialize(stream);
             }
         }
 
@@ -1439,7 +1405,7 @@ namespace Mirror {
             }
 
             if (!restoreAsDefaultObject) {
-                memberVariable.DeserializeDyn(stream, obj);
+                memberVariable.GetDyn(obj).Deserialize(stream);
             }
         }
 
