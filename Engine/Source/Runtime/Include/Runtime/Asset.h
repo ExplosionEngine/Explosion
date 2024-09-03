@@ -375,8 +375,7 @@ namespace Runtime {
             Common::BinaryFileSerializeStream stream(pathString);
 
             Mirror::Any ref = std::ref(*assetRef.Get());
-            // TODO replace with static version
-            A::GetClass().SerializeDyn(stream, ref);
+            ref.Serialize(stream);
         }
 
         template <typename A>
@@ -395,8 +394,7 @@ namespace Runtime {
 
             AssetRef<A> result = Common::SharedRef<A>(new A());
             Mirror::Any ref = std::ref(*result.Get());
-            // TODO replace with static version
-            A::GetClass().DeserailizeDyn(stream, ref);
+            ref.Deserialize(stream);
 
             // reset uri is useful for moved asset
             result->uri = uri;

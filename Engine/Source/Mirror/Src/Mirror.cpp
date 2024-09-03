@@ -1316,6 +1316,11 @@ namespace Mirror {
         return memberFunctions.contains(inId);
     }
 
+    const std::unordered_map<Id, MemberVariable, IdHashProvider>& Class::GetMemberVariables() const
+    {
+        return memberVariables;
+    }
+
     const MemberFunction* Class::FindMemberFunction(const Id& inId) const
     {
         const auto iter = memberFunctions.find(inId);
@@ -1329,104 +1334,12 @@ namespace Mirror {
         return iter->second;
     }
 
-    void Class::SerializeDyn(Common::SerializeStream& stream, const Argument& obj) const // NOLINT
+    std::optional<Any> Class::GetDefaultObject() const
     {
-        if (const auto* baseClass = GetBaseClass();
-            baseClass != nullptr) {
-            baseClass->SerializeDyn(stream, obj);
+        if (defaultObject.has_value()) {
+            return defaultObject->ConstRef();
         }
-
-        AssertWithReason(defaultObject.has_value(), "do you forget add default constructor to EClass() which you want to serialize");
-
-        const auto& name = GetName();
-        const auto memberVariablesNum = memberVariables.size();
-        Common::Serializer<std::string>::Serialize(stream, name);
-        Common::Serializer<uint64_t>::Serialize(stream, memberVariablesNum);
-
-        for (const auto& [id, memberVariable] : memberVariables) {
-            if (memberVariable.IsTransient()) {
-                continue;
-            }
-
-            Common::Serializer<std::string>::Serialize(stream, id.name);
-
-            const bool sameWithDefaultObject = memberVariable.GetDyn(obj) == defaultObject.value();
-            Common::Serializer<bool>::Serialize(stream, sameWithDefaultObject);
-
-            if (sameWithDefaultObject) {
-                Common::Serializer<uint32_t>::Serialize(stream, 0);
-            } else {
-                Common::Serializer<uint32_t>::Serialize(stream, memberVariable.SizeOf());
-                memberVariable.GetDyn(obj).Serialize(stream);
-            }
-        }
-
-        if (HasMemberFunction("OnSerialized")) {
-            (void) GetMemberFunction("OnSerialized").InvokeDyn(obj, {});
-        }
-    }
-
-    void Class::DeserailizeDyn(Common::DeserializeStream& stream, const Argument& obj) const // NOLINT
-    {
-        if (const auto* baseClass = GetBaseClass();
-            baseClass != nullptr) {
-            baseClass->DeserailizeDyn(stream, obj);
-        }
-
-        Assert(defaultObject.has_value());
-
-        std::string className;
-        Common::Serializer<std::string>::Deserialize(stream, className);
-
-        uint64_t memberVariableSize;
-        Common::Serializer<uint64_t>::Deserialize(stream, memberVariableSize);
-
-        for (auto i = 0; i < memberVariableSize; i++) {
-            std::string varName;
-            Common::Serializer<std::string>::Deserialize(stream, varName);
-
-            auto iter = memberVariables.find(varName);
-            if (iter == memberVariables.end()) {
-                continue;
-            }
-
-            const auto& memberVariable = iter->second;
-            if (memberVariable.IsTransient()) {
-                continue;
-            }
-
-            bool restoreAsDefaultObject = true;
-            Common::Serializer<bool>::Deserialize(stream, restoreAsDefaultObject);
-
-            uint32_t memorySize = 0;
-            Common::Serializer<uint32_t>::Deserialize(stream, memorySize);
-            if (memorySize == 0 || memorySize != memberVariable.SizeOf()) {
-                restoreAsDefaultObject = true;
-            }
-
-            if (!restoreAsDefaultObject) {
-                memberVariable.GetDyn(obj).Deserialize(stream);
-            }
-        }
-
-        if (HasMemberFunction("OnDeserialize")) {
-            (void) GetMemberFunction("OnDeserialize").InvokeDyn(obj, {});
-        }
-    }
-
-    std::string Class::ToStringDyn(const Argument& obj) const
-    {
-        std::stringstream stream;
-        stream << "{ ";
-        auto count = 0;
-        for (const auto& [id, var] : memberVariables) {
-            stream << fmt::format("{}: {}", id.name, var.GetDyn(obj).ToString());
-            if (count++ != memberVariables.size() - 1) {
-                stream << ", ";
-            }
-        }
-        stream << "}";
-        return stream.str();
+        return {};
     }
 
     EnumElement::EnumElement(ConstructParams&& inParams)

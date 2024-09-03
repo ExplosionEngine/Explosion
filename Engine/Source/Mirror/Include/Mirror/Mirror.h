@@ -600,11 +600,6 @@ namespace Mirror {
 
         template <typename... Args> Any Construct(Args&&... args);
         template <typename... Args> Any New(Args&&... args);
-        // TODO move to template <MetaClass T> Serializer
-        template <typename T> void Serialize(Common::SerializeStream& stream, T&& obj) const;
-        template <typename T> void Deserailize(Common::DeserializeStream& stream, T&& obj) const;
-        // TODO move to template <MetaClass T> StringConverter
-        template <typename T> std::string ToString(T&& obj) const;
 
         void ForEachStaticVariable(const VariableTraverser& func) const;
         void ForEachStaticFunction(const FunctionTraverser& func) const;
@@ -634,16 +629,13 @@ namespace Mirror {
         const MemberVariable* FindMemberVariable(const Id& inId) const;
         const MemberVariable& GetMemberVariable(const Id& inId) const;
         bool HasMemberFunction(const Id& inId) const;
+        const std::unordered_map<Id, MemberVariable, IdHashProvider>& GetMemberVariables() const;
         const MemberFunction* FindMemberFunction(const Id& inId) const;
         const MemberFunction& GetMemberFunction(const Id& inId) const;
+        std::optional<Any> GetDefaultObject() const;
 
         Any ConstructDyn(const ArgumentList& arguments) const;
         Any NewDyn(const ArgumentList& arguments) const;
-        // TODO move to template <MetaClass T> Serializer
-        void SerializeDyn(Common::SerializeStream& stream, const Argument& obj) const;
-        void DeserailizeDyn(Common::DeserializeStream& stream, const Argument& obj) const;
-        // TODO move to template <MetaClass T> StringConverter
-        std::string ToStringDyn(const Argument& obj) const;
 
     private:
         static std::unordered_map<TypeId, Id> typeToIdMap;
@@ -796,13 +788,105 @@ namespace Common { // NOLINT
     struct Serializer<T> {
         static constexpr uint32_t typeId = HashUtils::StrCrc32("_MetaObject");
 
+        static void SerializeDyn(SerializeStream& stream, const Mirror::Class& clazz, const Mirror::Argument& argument)
+        {
+            if (const auto* baseClass = clazz.GetBaseClass();
+                baseClass != nullptr) {
+                SerializeDyn(stream, *baseClass, argument);
+            }
+
+            const auto defaultObject = clazz.GetDefaultObject();
+            AssertWithReason(defaultObject.has_value(), "do you forget add default constructor to EClass() which you want to serialize ?");
+
+            const auto& name = clazz.GetName();
+            const auto& memberVariables = clazz.GetMemberVariables();
+
+            const auto memberVariablesNum = memberVariables.size();
+            Serializer<std::string>::Serialize(stream, name);
+            Serializer<uint64_t>::Serialize(stream, memberVariablesNum);
+
+            for (const auto& [id, memberVariable] : memberVariables) {
+                if (memberVariable.IsTransient()) {
+                    continue;
+                }
+
+                Serializer<std::string>::Serialize(stream, id.name);
+
+                const bool sameWithDefaultObject = memberVariable.GetDyn(argument) == defaultObject.value();
+                Serializer<bool>::Serialize(stream, sameWithDefaultObject);
+
+                if (sameWithDefaultObject) {
+                    Serializer<uint32_t>::Serialize(stream, 0);
+                } else {
+                    Serializer<uint32_t>::Serialize(stream, memberVariable.SizeOf());
+                    memberVariable.GetDyn(argument).Serialize(stream);
+                }
+            }
+
+            if (clazz.HasMemberFunction("OnSerialized")) {
+                (void) clazz.GetMemberFunction("OnSerialized").InvokeDyn(argument, {});
+            }
+        }
+
+        static bool DeserializeDyn(DeserializeStream& stream, const Mirror::Class& clazz, const Mirror::Argument& argument)
+        {
+            if (const auto* baseClass = clazz.GetBaseClass();
+                baseClass != nullptr) {
+                DeserializeDyn(stream, *baseClass, argument);
+            }
+
+            const auto defaultObject = clazz.GetDefaultObject();
+            AssertWithReason(defaultObject.has_value(), "do you forget add default constructor to EClass() which you want to serialize ?");
+
+            std::string className;
+            Serializer<std::string>::Deserialize(stream, className);
+
+            uint64_t memberVariableSize;
+            Serializer<uint64_t>::Deserialize(stream, memberVariableSize);
+
+            uint32_t failedCount = 0;
+            const auto& memberVariables = clazz.GetMemberVariables();
+            for (auto i = 0; i < memberVariableSize; i++) {
+                std::string varName;
+                Serializer<std::string>::Deserialize(stream, varName);
+
+                auto iter = memberVariables.find(varName);
+                if (iter == memberVariables.end()) {
+                    failedCount++;
+                    continue;
+                }
+
+                const auto& memberVariable = iter->second;
+                if (memberVariable.IsTransient()) {
+                    continue;
+                }
+
+                bool restoreAsDefaultObject = true;
+                Serializer<bool>::Deserialize(stream, restoreAsDefaultObject);
+
+                uint32_t memorySize = 0;
+                Serializer<uint32_t>::Deserialize(stream, memorySize);
+                if (memorySize == 0 || memorySize != memberVariable.SizeOf()) {
+                    failedCount++;
+                    restoreAsDefaultObject = true;
+                }
+
+                if (!restoreAsDefaultObject) {
+                    memberVariable.GetDyn(argument).Deserialize(stream);
+                }
+                return failedCount == 0;
+            }
+
+            if (clazz.HasMemberFunction("OnDeserialize")) {
+                (void) clazz.GetMemberFunction("OnDeserialize").InvokeDyn(argument, {});
+            }
+            return true;
+        }
+
         static void Serialize(SerializeStream& stream, const T& value)
         {
             TypeIdSerializer<T>::Serialize(stream);
-
-            const auto& clazz = Mirror::Class::Get<T>();
-            Serializer<std::string>::Serialize(stream, clazz.GetName());
-            clazz.Serialize(stream, value);
+            SerializeDyn(stream, Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(value));
         }
 
         static bool Deserialize(DeserializeStream& stream, T& value)
@@ -810,24 +894,32 @@ namespace Common { // NOLINT
             if (!TypeIdSerializer<T>::Deserialize(stream)) {
                 return false;
             }
-
-            const auto& clazz = Mirror::Class::Get<T>();
-            std::string className;
-            Serializer<std::string>::Deserialize(stream, className);
-            if (className != clazz.GetName()) {
-                return false;
-            }
-            clazz.Deserailize(stream, value);
-            return true;
+            return DeserializeDyn(stream, Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(value));
         }
     };
 
     template <Mirror::MetaClass T>
     struct StringConverter<T> {
+        static std::string ToStringDyn(const Mirror::Class& clazz, const Mirror::Argument& argument)
+        {
+            const auto& memberVariables = clazz.GetMemberVariables();
+
+            std::stringstream stream;
+            stream << "{ ";
+            auto count = 0;
+            for (const auto& [id, var] : memberVariables) {
+                stream << fmt::format("{}: {}", id.name, var.GetDyn(argument).ToString());
+                if (count++ != memberVariables.size() - 1) {
+                    stream << ", ";
+                }
+            }
+            stream << "}";
+            return stream.str();
+        }
+
         static std::string ToString(const T& inValue)
         {
-            const auto& clazz = Mirror::Class::Get<T>();
-            return clazz.ToString(inValue);
+            return ToStringDyn(Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(inValue));
         }
     };
 
@@ -1227,24 +1319,6 @@ namespace Mirror {
         const auto* constructor = FindSuitableConstructor(arguments);
         Assert(constructor != nullptr);
         return constructor->New(arguments);
-    }
-
-    template <typename T>
-    void Class::Serialize(Common::SerializeStream& stream, T&& obj) const
-    {
-        SerializeDyn(stream, Internal::ForwardAsArgument(std::forward<T>(obj)));
-    }
-
-    template <typename T>
-    void Class::Deserailize(Common::DeserializeStream& stream, T&& obj) const
-    {
-        DeserailizeDyn(stream, Internal::ForwardAsArgument(std::forward<T>(obj)));
-    }
-
-    template <typename T>
-    std::string Class::ToString(T&& obj) const
-    {
-        return ToStringDyn(Internal::ForwardAsArgument(std::forward<T>(obj)));
     }
 
     template <Common::CppEnum T>
