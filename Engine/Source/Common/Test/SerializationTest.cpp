@@ -41,7 +41,10 @@ void PerformJsonSerializationTest(const T& inValue, const std::string& inExceptJ
 {
     {
         rapidjson::Document document;
-        document.CopyFrom(ToJsonValue<T>(inValue, document.GetAllocator()), document.GetAllocator());
+
+        rapidjson::Value jsonValue;
+        JsonSerialize<T>(jsonValue, document.GetAllocator(), inValue);
+        document.CopyFrom(jsonValue, document.GetAllocator());
 
         rapidjson::StringBuffer buffer;
         rapidjson::Writer writer(buffer);
@@ -58,7 +61,8 @@ void PerformJsonSerializationTest(const T& inValue, const std::string& inExceptJ
         rapidjson::Value jsonValue;
         jsonValue.CopyFrom(document, document.GetAllocator());
 
-        T value = FromJsonValue<T>(jsonValue);
+        T value;
+        JsonDeserialize<T>(jsonValue, value);
         if (inCustomCompareFunc) {
             ASSERT_TRUE(inCustomCompareFunc(inValue, value));
         } else {

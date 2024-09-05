@@ -155,5 +155,43 @@ namespace Common {
         }
     };
 
-    // TODO json converter impl
+    template <>
+    struct JsonSerializer<Color> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Color& inValue)
+        {
+            outJsonValue.SetObject();
+            outJsonValue.AddMember("r", inValue.r, inAllocator);
+            outJsonValue.AddMember("g", inValue.g, inAllocator);
+            outJsonValue.AddMember("b", inValue.b, inAllocator);
+            outJsonValue.AddMember("a", inValue.a, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Color& outValue)
+        {
+            outValue.r = static_cast<uint8_t>(inJsonValue["r"].GetUint());
+            outValue.g = static_cast<uint8_t>(inJsonValue["g"].GetUint());
+            outValue.b = static_cast<uint8_t>(inJsonValue["b"].GetUint());
+            outValue.a = static_cast<uint8_t>(inJsonValue["a"].GetUint());
+        }
+    };
+
+    template <>
+    struct JsonSerializer<LinearColor> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const LinearColor& inValue)
+        {
+            outJsonValue.SetObject();
+            outJsonValue.AddMember("r", inValue.r, inAllocator);
+            outJsonValue.AddMember("g", inValue.g, inAllocator);
+            outJsonValue.AddMember("b", inValue.b, inAllocator);
+            outJsonValue.AddMember("a", inValue.a, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, LinearColor& outValue)
+        {
+            outValue.r = inJsonValue["r"].GetFloat();
+            outValue.g = inJsonValue["g"].GetFloat();
+            outValue.b = inJsonValue["b"].GetFloat();
+            outValue.a = inJsonValue["a"].GetFloat();
+        }
+    };
 }

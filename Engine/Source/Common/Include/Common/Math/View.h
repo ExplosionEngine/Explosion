@@ -62,7 +62,18 @@ namespace Common {
         }
     };
 
-    // TODO json converter impl
+    template <JsonSerializable T>
+    struct JsonSerializer<ViewTransform<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const ViewTransform<T>& inValue)
+        {
+            JsonSerializer<Transform<T>>::JsonSerialize(outJsonValue, inAllocator, inValue);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, ViewTransform<T>& outValue)
+        {
+            JsonSerializer<Transform<T>>::JsonDeserialize(inJsonValue, outValue);
+        }
+    };
 }
 
 namespace Common {

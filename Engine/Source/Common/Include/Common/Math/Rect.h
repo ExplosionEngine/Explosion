@@ -88,7 +88,27 @@ namespace Common {
         }
     };
 
-    // TODO json converter impl
+    template <JsonSerializable T>
+    struct JsonSerializer<Rect<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Rect<T>& inValue)
+        {
+            rapidjson::Value minJson;
+            JsonSerializer<Vec<T, 2>>::JsonSerialize(minJson, inAllocator, inValue.min);
+
+            rapidjson::Value maxJson;
+            JsonSerializer<Vec<T, 2>>::JsonSerialize(maxJson, inAllocator, inValue.max);
+
+            outJsonValue.SetObject();
+            outJsonValue.AddMember("min", minJson, inAllocator);
+            outJsonValue.AddMember("max", maxJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Rect<T>& outValue)
+        {
+            JsonSerializer<Vec<T, 2>>::JsonDeserialize(inJsonValue["min"], outValue.min);
+            JsonSerializer<Vec<T, 2>>::JsonDeserialize(inJsonValue["max"], outValue.max);
+        }
+    };
 }
 
 namespace Common {

@@ -146,7 +146,37 @@ namespace Common {
         }
     };
 
-    // TODO json converter impl
+    template <JsonSerializable T>
+    struct JsonSerializer<ReversedZOrthogonalProjection<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const ReversedZOrthogonalProjection<T>& inValue)
+        {
+            rapidjson::Value widthJson;
+            JsonSerializer<T>::JsonSerialize(widthJson, inAllocator, inValue.width);
+
+            rapidjson::Value heightJson;
+            JsonSerializer<T>::JsonSerialize(heightJson, inAllocator, inValue.height);
+
+            rapidjson::Value nearJson;
+            JsonSerializer<T>::JsonSerialize(nearJson, inAllocator, inValue.nearPlane);
+
+            rapidjson::Value farJson;
+            JsonSerializer<std::optional<T>>::JsonSerialize(farJson, inAllocator, inValue.farPlane);
+
+            outJsonValue.SetObject();
+            outJsonValue.AddMember("width", widthJson, inAllocator);
+            outJsonValue.AddMember("height", heightJson, inAllocator);
+            outJsonValue.AddMember("near", nearJson, inAllocator);
+            outJsonValue.AddMember("far", farJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, ReversedZOrthogonalProjection<T>& outValue)
+        {
+            JsonSerializer<T>::JsonDeserialize(inJsonValue["width"], outValue.width);
+            JsonSerializer<T>::JsonDeserialize(inJsonValue["height"], outValue.height);
+            JsonSerializer<T>::JsonDeserialize(inJsonValue["near"], outValue.nearPlane);
+            JsonSerializer<std::optional<T>>::JsonDeserialize(inJsonValue["far"], outValue.farPlane);
+        }
+    };
 }
 
 namespace Common {

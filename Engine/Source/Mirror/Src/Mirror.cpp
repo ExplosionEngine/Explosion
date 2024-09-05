@@ -180,7 +180,7 @@ namespace Mirror {
 
     Any Any::Ref()
     {
-        return { *this, IsMemoryHolder() ? AnyPolicy::ref : policy };
+        return { *this, IsMemoryHolder() ? AnyPolicy::nonConstRef : policy };
     }
 
     Any Any::Ref() const
@@ -203,7 +203,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getPtr(Data());
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getPtr(Data());
         }
         if (policy == AnyPolicy::constRef) {
@@ -218,7 +218,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getConstPtr(Data());
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getPtr(Data());
         }
         if (policy == AnyPolicy::constRef) {
@@ -250,7 +250,12 @@ namespace Mirror {
 
     bool Any::IsRef() const
     {
-        return policy == AnyPolicy::ref || policy == AnyPolicy::constRef;
+        return policy == AnyPolicy::nonConstRef || policy == AnyPolicy::constRef;
+    }
+
+    bool Any::IsNonConstRef() const
+    {
+        return policy == AnyPolicy::nonConstRef;
     }
 
     bool Any::IsConstRef() const
@@ -263,7 +268,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getValueType();
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getRefType();
         }
         if (policy == AnyPolicy::constRef) {
@@ -278,7 +283,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getConstValueType();
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getRefType();
         }
         if (policy == AnyPolicy::constRef) {
@@ -293,7 +298,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getValueType();
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getValueType();
         }
         if (policy == AnyPolicy::constRef) {
@@ -308,7 +313,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getConstValueType();
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getValueType();
         }
         if (policy == AnyPolicy::constRef) {
@@ -323,7 +328,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getAddPointerType();
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getAddPointerType();
         }
         if (policy == AnyPolicy::constRef) {
@@ -338,7 +343,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getAddConstPointerType();
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getAddPointerType();
         }
         if (policy == AnyPolicy::constRef) {
@@ -394,9 +399,15 @@ namespace Mirror {
         rtti->serialize(Data(), inStream);
     }
 
+    bool Any::Deserialize(Common::DeserializeStream& inStream)
+    {
+        Assert(rtti != nullptr && !IsConstRef());
+        return rtti->deserialize(Data(), inStream);
+    }
+
     bool Any::Deserialize(Common::DeserializeStream& inStream) const
     {
-        Assert(rtti != nullptr);
+        Assert(rtti != nullptr && IsNonConstRef());
         return rtti->deserialize(Data(), inStream);
     }
 
@@ -517,6 +528,70 @@ namespace Mirror {
     {
         any = std::move(inAny);
         return *this;
+    }
+
+    bool Argument::IsMemoryHolder() const
+    {
+        const auto index = any.index();
+        if (index == 1) {
+            return std::get<Any*>(any)->IsMemoryHolder();
+        }
+        if (index == 2) {
+            return std::get<const Any*>(any)->IsMemoryHolder();
+        }
+        if (index == 3) {
+            return const_cast<Any&>(std::get<Any>(any)).IsMemoryHolder();
+        }
+        QuickFailWithReason("Argument is empty");
+        return std::get<Any*>(any)->IsMemoryHolder();
+    }
+
+    bool Argument::IsRef() const
+    {
+        const auto index = any.index();
+        if (index == 1) {
+            return std::get<Any*>(any)->IsRef();
+        }
+        if (index == 2) {
+            return std::get<const Any*>(any)->IsRef();
+        }
+        if (index == 3) {
+            return const_cast<Any&>(std::get<Any>(any)).IsRef();
+        }
+        QuickFailWithReason("Argument is empty");
+        return std::get<Any*>(any)->IsRef();
+    }
+
+    bool Argument::IsNonConstRef() const
+    {
+        const auto index = any.index();
+        if (index == 1) {
+            return std::get<Any*>(any)->IsNonConstRef();
+        }
+        if (index == 2) {
+            return std::get<const Any*>(any)->IsNonConstRef();
+        }
+        if (index == 3) {
+            return const_cast<Any&>(std::get<Any>(any)).IsNonConstRef();
+        }
+        QuickFailWithReason("Argument is empty");
+        return std::get<Any*>(any)->IsNonConstRef();
+    }
+
+    bool Argument::IsConstRef() const
+    {
+        const auto index = any.index();
+        if (index == 1) {
+            return std::get<Any*>(any)->IsConstRef();
+        }
+        if (index == 2) {
+            return std::get<const Any*>(any)->IsConstRef();
+        }
+        if (index == 3) {
+            return const_cast<Any&>(std::get<Any>(any)).IsConstRef();
+        }
+        QuickFailWithReason("Argument is empty");
+        return std::get<Any*>(any)->IsConstRef();
     }
 
     const TypeInfo* Argument::Type() const

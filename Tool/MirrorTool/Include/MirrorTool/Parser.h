@@ -61,6 +61,13 @@ namespace MirrorTool {
         std::vector<ClassFunctionInfo> staticFunctions;
         std::vector<ClassVariableInfo> variables;
         std::vector<ClassFunctionInfo> functions;
+        // TODO enums in class
+    };
+
+    struct EnumElementInfo : Node {};
+
+    struct EnumInfo : Node {
+        std::vector<EnumElementInfo> elements;
     };
 
     struct NamespaceInfo : Node {
@@ -68,6 +75,7 @@ namespace MirrorTool {
         std::vector<FunctionInfo> functions;
         std::vector<ClassInfo> classes;
         std::vector<NamespaceInfo> namespaces;
+        std::vector<EnumInfo> enums;
     };
 
     struct MetaInfo {

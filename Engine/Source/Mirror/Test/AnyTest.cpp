@@ -7,106 +7,72 @@
 #include <unordered_map>
 
 #include <Test/Test.h>
+#include <AnyTest.h>
 #include <Mirror/Mirror.h>
-#include <Mirror/Registry.h>
 
 using namespace Mirror;
 
-struct AnyDtorTest {
-    explicit AnyDtorTest(bool& inLive)
-        : record(false)
-        , live(inLive)
-    {
-    }
+AnyDtorTest::AnyDtorTest(bool& inLive)
+    : record(false)
+    , live(inLive)
+{
+}
 
-    AnyDtorTest(bool& inLive, bool inRecord)
-        : record(inRecord)
-        , live(inLive)
-    {
-        if (record) {
-            live = true;
-        }
-    }
-
-    AnyDtorTest(AnyDtorTest&& inOther) noexcept
-        : record(true)
-        , live(inOther.live)
-    {
+AnyDtorTest::AnyDtorTest(bool& inLive, bool inRecord)
+    : record(inRecord)
+    , live(inLive)
+{
+    if (record) {
         live = true;
     }
+}
 
-    ~AnyDtorTest()
-    {
-        if (record) {
-            live = false;
-        }
+AnyDtorTest::AnyDtorTest(AnyDtorTest&& inOther) noexcept
+    : record(true)
+    , live(inOther.live)
+{
+    live = true;
+}
+
+AnyDtorTest::~AnyDtorTest()
+{
+    if (record) {
+        live = false;
     }
+}
 
-    bool record;
-    bool& live;
-};
+AnyCopyCtorTest::AnyCopyCtorTest(bool& inCopyCtorCalled)
+    : copyCtorCalled(inCopyCtorCalled)
+{
+}
 
-struct AnyCopyCtorTest {
-    explicit AnyCopyCtorTest(bool& inCopyCtorCalled)
-        : copyCtorCalled(inCopyCtorCalled)
-    {
-    }
+AnyCopyCtorTest::AnyCopyCtorTest(AnyCopyCtorTest&& inOther) noexcept
+    : copyCtorCalled(inOther.copyCtorCalled)
+{
+}
 
-    AnyCopyCtorTest(AnyCopyCtorTest&& inOther) noexcept
-        : copyCtorCalled(inOther.copyCtorCalled)
-    {
-    }
+AnyCopyCtorTest::AnyCopyCtorTest(const AnyCopyCtorTest& inOther)
+    : copyCtorCalled(inOther.copyCtorCalled)
+{
+    copyCtorCalled = true;
+}
 
-    AnyCopyCtorTest(const AnyCopyCtorTest& inOther)
-        : copyCtorCalled(inOther.copyCtorCalled)
-    {
-        copyCtorCalled = true;
-    }
+AnyMoveCtorTest::AnyMoveCtorTest(uint8_t& inMoveTime)
+    : moveTime(inMoveTime)
+{
+}
 
-    bool& copyCtorCalled;
-};
+AnyMoveCtorTest::AnyMoveCtorTest(AnyMoveCtorTest&& inOther) noexcept
+    : moveTime(inOther.moveTime)
+{
+    moveTime++;
+}
 
-struct AnyMoveCtorTest {
-    explicit AnyMoveCtorTest(uint8_t& inMoveTime)
-        : moveTime(inMoveTime)
-    {
-    }
-
-    AnyMoveCtorTest(AnyMoveCtorTest&& inOther) noexcept
-        : moveTime(inOther.moveTime)
-    {
-        moveTime++;
-    }
-
-    uint8_t& moveTime;
-};
-
-struct AnyBasicTest {
-    int a;
-    float b;
-
-    bool operator==(const AnyBasicTest& inRhs) const
-    {
-        return a == inRhs.a
-            && b == inRhs.b;
-    }
-};
-
-struct AnyBaseClassTest {};
-
-struct AnyDerivedClassTest : AnyBaseClassTest {};
-
-struct AnyTestMirrorRegistry {
-    AnyTestMirrorRegistry()
-    {
-        Registry::Get()
-            .Class<AnyBaseClassTest>("AnyBaseClassTest");
-
-        Registry::Get()
-            .Class<AnyDerivedClassTest, AnyBaseClassTest>("AnyDerivedClassTest");
-    }
-};
-static AnyTestMirrorRegistry registry;
+bool AnyBasicTest::operator==(const AnyBasicTest& inRhs) const
+{
+    return a == inRhs.a
+        && b == inRhs.b;
+}
 
 TEST(AnyTest, DefaultCtorTest)
 {
@@ -164,9 +130,9 @@ TEST(AnyTest, CopyCtorWithPolicyTest)
     Any a0 = AnyCopyCtorTest(called);
     ASSERT_FALSE(called);
 
-    Any a1 { a0, AnyPolicy::ref };
+    Any a1 { a0, AnyPolicy::nonConstRef };
     ASSERT_FALSE(called);
-    ASSERT_EQ(a1.Policy(), AnyPolicy::ref);
+    ASSERT_EQ(a1.Policy(), AnyPolicy::nonConstRef);
     ASSERT_EQ(a1.Size(), a0.Size());
     ASSERT_EQ(a1.Data(), a0.Data());
 
@@ -221,7 +187,7 @@ TEST(AnyTest, RefCtorTest)
 {
     int v0 = 1;
     Any a0 = std::ref(v0);
-    ASSERT_EQ(a0.Policy(), AnyPolicy::ref);
+    ASSERT_EQ(a0.Policy(), AnyPolicy::nonConstRef);
     ASSERT_EQ(a0.As<const int&>(), 1);
 
     const float v1 = 2.0f; // NOLINT
@@ -232,7 +198,7 @@ TEST(AnyTest, RefCtorTest)
 
     std::vector v2 = { 1, 2, 3 };
     const Any a2 = std::ref(v2);
-    ASSERT_EQ(a2.Policy(), AnyPolicy::ref);
+    ASSERT_EQ(a2.Policy(), AnyPolicy::nonConstRef);
     ::Test::AssertVecEq(a2.As<const decltype(v2)&>(), std::vector { 1, 2, 3 });
 
     const AnyBasicTest v3 { 1, 2.0f }; // NOLINT
@@ -286,7 +252,7 @@ TEST(AnyTest, RefAssignTest)
     float v0 = 2.0f;
     a0 = std::ref(v0);
     ASSERT_EQ(a0.TypeId(), GetTypeInfo<float>()->id);
-    ASSERT_EQ(a0.Policy(), AnyPolicy::ref);
+    ASSERT_EQ(a0.Policy(), AnyPolicy::nonConstRef);
     ASSERT_EQ(a0.As<float>(), 2.0f);
 }
 
@@ -642,14 +608,14 @@ TEST(AnyTest, GetRefTest)
 {
     Any a0 = 1;
     const Any a1 = a0.Ref();
-    ASSERT_EQ(a1.Policy(), AnyPolicy::ref);
+    ASSERT_EQ(a1.Policy(), AnyPolicy::nonConstRef);
 
     const Any a2 = a0.ConstRef();
     ASSERT_EQ(a2.Policy(), AnyPolicy::constRef);
 
     Any a3 = a0.Ref();
     const Any a4 = a3.Ref();
-    ASSERT_EQ(a4.Policy(), AnyPolicy::ref);
+    ASSERT_EQ(a4.Policy(), AnyPolicy::nonConstRef);
     const Any a5 = a3.ConstRef();
     ASSERT_EQ(a5.Policy(), AnyPolicy::constRef);
 
@@ -682,7 +648,7 @@ TEST(AnyTest, ConstGetRefTest)
     int v0 = 1;
     const Any a7 = std::ref(v0);
     const Any a8 = a7.Ref();
-    ASSERT_EQ(a8.Policy(), AnyPolicy::ref);
+    ASSERT_EQ(a8.Policy(), AnyPolicy::nonConstRef);
     const Any a9 = a7.ConstRef();
     ASSERT_EQ(a9.Policy(), AnyPolicy::constRef);
 }
@@ -774,7 +740,7 @@ TEST(AnyTest, PolicyTest)
 
     int v0 = 1;
     a0 = std::ref(v0);
-    ASSERT_EQ(a0.Policy(), AnyPolicy::ref);
+    ASSERT_EQ(a0.Policy(), AnyPolicy::nonConstRef);
 
     const int v1 = 1; // NOLINT
     a0 = std::ref(v1);

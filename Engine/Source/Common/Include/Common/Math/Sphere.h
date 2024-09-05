@@ -76,7 +76,27 @@ namespace Common {
         }
     };
 
-    // TODO json converter impl
+    template <JsonSerializable T>
+    struct JsonSerializer<Sphere<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Sphere<T>& inValue)
+        {
+            rapidjson::Value centerJson;
+            JsonSerializer<Vec<T, 3>>::JsonSerialize(centerJson, inAllocator, inValue.center);
+
+            rapidjson::Value radiusJson;
+            JsonSerializer<T>::JsonSerialize(radiusJson, inAllocator, inValue.radius);
+
+            outJsonValue.SetObject();
+            outJsonValue.AddMember("center", centerJson, inAllocator);
+            outJsonValue.AddMember("radius", radiusJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Sphere<T>& outValue)
+        {
+            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["center"], outValue.center);
+            JsonSerializer<T>::JsonDeserialize(inJsonValue["radius", outValue.radius]);
+        }
+    };
 }
 
 namespace Common {

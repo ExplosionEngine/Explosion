@@ -142,7 +142,33 @@ namespace Common {
         }
     };
 
-    // TODO json converter impl
+    template <std::endian E>
+    struct JsonSerializer<Internal::FullFloat<E>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Internal::FullFloat<E>& inValue)
+        {
+            JsonSerializer<float>::JsonSerialize(outJsonValue, inAllocator, inValue.value);
+        }
+
+        static void JsonDeserialize(rapidjson::Value& inJsonValue, Internal::FullFloat<E>& outValue)
+        {
+            JsonSerializer<float>::JsonDeserialize(inJsonValue, outValue.value);
+        }
+    };
+
+    template <std::endian E>
+    struct JsonSerializer<HalfFloat<E>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const HalfFloat<E>& inValue)
+        {
+            JsonSerializer<float>::JsonSerialize(outJsonValue, inAllocator, inValue.AsFloat());
+        }
+
+        static void JsonDeserialize(rapidjson::Value& inJsonValue, HalfFloat<E>& outValue)
+        {
+            float fltValue;
+            JsonSerializer<float>::JsonDeserialize(inJsonValue, fltValue);
+            outValue = fltValue;
+        }
+    };
 }
 
 namespace Common::Internal {

@@ -342,7 +342,33 @@ namespace Common { // NOLINT
         }
     };
 
-    // TODO json converter impl
+    template <StringConvertible T, uint8_t R, uint8_t C>
+    struct JsonSerializer<Mat<T, R, C>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mat<T, R, C>& inValue)
+        {
+            outJsonValue.SetArray();
+            outJsonValue.Reserve(R * C, inAllocator);
+            for (auto i = 0; i < R; i++) {
+                for (auto j = 0; j < C; j++) {
+                    rapidjson::Value jsonElement;
+                    JsonSerializer<T>::JsonSerialize(jsonElement, inAllocator, inValue.At(i, j));
+                    outJsonValue.PushBack(jsonElement, inAllocator);
+                }
+            }
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Mat<T, R, C>& outValue)
+        {
+            for (auto i = 0; i < inJsonValue.Size(); i++) {
+                auto row = i / C;
+                auto col = i % C;
+
+                T element;
+                JsonSerializer<T>::JsonDeserialize(inJsonValue[i], element);
+                outValue.At(row, col) = std::move(element);
+            }
+        }
+    };
 }
 
 namespace Common::Internal {

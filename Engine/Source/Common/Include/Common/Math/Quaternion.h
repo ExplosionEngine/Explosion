@@ -228,7 +228,63 @@ namespace Common {
         }
     };
 
-    // TODO json converter impl
+    template <JsonSerializable T>
+    struct JsonSerializer<Angle<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Angle<T>& inValue)
+        {
+            outJsonValue.SetFloat(inValue.value);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Angle<T>& outValue)
+        {
+            outValue.value = inJsonValue.GetFloat();
+        }
+    };
+
+    template <JsonSerializable T>
+    struct JsonSerializer<Radian<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Radian<T>& inValue)
+        {
+            outJsonValue.SetFloat(inValue.value);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Radian<T>& outValue)
+        {
+            outValue.value = inJsonValue.GetFloat();
+        }
+    };
+
+    template <JsonSerializable T>
+    struct JsonSerializer<Quaternion<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Quaternion<T>& inValue)
+        {
+            rapidjson::Value xJson;
+            JsonSerializer<T>::JsonSerialize(xJson, inAllocator, inValue.x);
+
+            rapidjson::Value yJson;
+            JsonSerializer<T>::JsonSerialize(yJson, inAllocator, inValue.y);
+
+            rapidjson::Value zJson;
+            JsonSerializer<T>::JsonSerialize(zJson, inAllocator, inValue.z);
+
+            rapidjson::Value wJson;
+            JsonSerializer<T>::JsonSerialize(wJson, inAllocator, inValue.w);
+
+            outJsonValue.SetArray();
+            outJsonValue.PushBack(xJson, inAllocator);
+            outJsonValue.PushBack(yJson, inAllocator);
+            outJsonValue.PushBack(zJson, inAllocator);
+            outJsonValue.PushBack(wJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Quaternion<T>& outValue)
+        {
+            JsonSerializer<T>::JsonDeserialize(inJsonValue[0], outValue.x);
+            JsonSerializer<T>::JsonDeserialize(inJsonValue[1], outValue.y);
+            JsonSerializer<T>::JsonDeserialize(inJsonValue[2], outValue.z);
+            JsonSerializer<T>::JsonDeserialize(inJsonValue[3], outValue.w);
+        }
+    };
 }
 
 namespace Common {

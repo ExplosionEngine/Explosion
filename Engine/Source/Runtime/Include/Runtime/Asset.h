@@ -22,12 +22,10 @@ namespace Runtime {
     struct EClass() Asset {
         EClassBody(Asset)
 
-        ECtor()
         Asset()
         {
         }
 
-        ECtor()
         explicit Asset(Core::Uri inUri) : uri(std::move(inUri))
         {
         }

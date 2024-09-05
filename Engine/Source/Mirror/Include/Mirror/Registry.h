@@ -15,6 +15,7 @@ namespace Mirror::Internal {
     template <typename T> struct FunctionTraits {};
     template <typename T> struct MemberVariableTraits {};
     template <typename T> struct MemberFunctionTraits {};
+
     template <typename ArgsTuple, size_t... I> auto GetArgTypeInfosByArgsTuple(std::index_sequence<I...>);
     template <typename ArgsTuple, size_t... I> auto ForwardArgumentsListAsTuple(const ArgumentList& args, std::index_sequence<I...>);
     template <auto Ptr, typename ArgsTuple, size_t... I> auto InvokeFunction(ArgsTuple& args, std::index_sequence<I...>);
@@ -49,6 +50,7 @@ namespace Mirror {
         template <auto Ptr> ClassRegistry& StaticVariable(const Id& inId);
         template <auto Ptr> ClassRegistry& StaticFunction(const Id& inId);
         template <auto Ptr> ClassRegistry& MemberVariable(const Id& inId);
+        // TODO support overload
         template <auto Ptr> ClassRegistry& MemberFunction(const Id& inId);
 
     private:
@@ -65,6 +67,7 @@ namespace Mirror {
 
         template <auto Ptr> GlobalRegistry& Variable(const Id& inId);
         template <auto Ptr> GlobalRegistry& Function(const Id& inId);
+        // TODO overload support
 
     private:
         friend class Registry;
@@ -133,12 +136,6 @@ namespace Mirror::Internal {
     template <typename Class, typename T>
     struct MemberVariableTraits<T Class::*> {
         using ClassType = Class;
-        using ValueType = T;
-    };
-
-    template <typename Class, typename T>
-    struct MemberVariableTraits<T Class::* const> {
-        using ClassType = const Class;
         using ValueType = T;
     };
 
@@ -272,7 +269,11 @@ namespace Mirror {
         params.memorySize = sizeof(ValueType);
         params.typeInfo = GetTypeInfo<ValueType>();
         params.setter = [](const Argument& value) -> void {
-            *Ptr = value.As<ValueType>();
+            if constexpr (!std::is_const_v<ValueType>) {
+                *Ptr = value.As<const ValueType&>();
+            } else {
+                QuickFail();
+            }
         };
         params.getter = []() -> Any {
             return { std::ref(*Ptr) };
@@ -328,9 +329,13 @@ namespace Mirror {
         params.memorySize = sizeof(ValueType);
         params.typeInfo = GetTypeInfo<ValueType>();
         params.setter = [](const Argument& object, const Argument& value) -> void {
+            Assert(!object.IsConstRef());
             object.As<ClassType&>().*Ptr = value.As<const ValueType&>();
         };
         params.getter = [](const Argument& object) -> Any {
+            if (object.IsConstRef()) {
+                return { std::ref(object.As<const ClassType&>().*Ptr) };
+            }
             return { std::ref(object.As<ClassType&>().*Ptr) };
         };
         return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceMemberVariable(inId, std::move(params)));
@@ -340,6 +345,7 @@ namespace Mirror {
     template <auto Ptr>
     ClassRegistry<C>& ClassRegistry<C>::MemberFunction(const Id& inId)
     {
+        // ClassType here contains const, #see Internal::MemberFunctionTraits
         using ClassType = typename Internal::MemberFunctionTraits<decltype(Ptr)>::ClassType;
         using ArgsTupleType = typename Internal::MemberFunctionTraits<decltype(Ptr)>::ArgsTupleType;
         using RetType = typename Internal::MemberFunctionTraits<decltype(Ptr)>::RetType;
@@ -382,7 +388,11 @@ namespace Mirror {
         params.memorySize = sizeof(ValueType);
         params.typeInfo = GetTypeInfo<ValueType>();
         params.setter = [](const Argument& argument) -> void {
-            *Ptr = argument.As<const ValueType&>();
+            if (!std::is_const_v<ValueType>) {
+                *Ptr = argument.As<const ValueType&>();
+            } else {
+                QuickFail();
+            }
         };
         params.getter = []() -> Any {
             return { std::ref(*Ptr) };
@@ -474,6 +484,7 @@ namespace Mirror {
         if constexpr (std::is_destructible_v<C>) {
             Destructor::ConstructParams detorParams;
             detorParams.destructor = [](const Argument& object) -> void {
+                Assert(!object.IsConstRef());
                 object.As<C&>().~C();
             };
             params.destructorParams = detorParams;

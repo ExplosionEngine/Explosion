@@ -5,7 +5,6 @@
 #include <type_traits>
 
 #include <Test/Test.h>
-
 #include <Mirror/Registry.h>
 
 int Add(const int a, const int b)

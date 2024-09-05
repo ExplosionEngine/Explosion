@@ -2,57 +2,16 @@
 // Created by johnk on 2023/4/23.
 //
 
-#include <vector>
-#include <unordered_set>
-#include <unordered_map>
 #include <filesystem>
 
 #include <Test/Test.h>
 
-#include <Mirror/Registry.h>
 #include <Mirror/Mirror.h>
+#include <SerializationTest.h>
 
-int ga;
-float gb;
+int ga = 0;
+float gb = 0.0f;
 std::string gc;
-
-struct SerializationTestStruct0 {
-    int a;
-    float b;
-    std::string c;
-};
-
-struct SerializationTestStruct1 {
-    std::vector<int> a;
-    std::unordered_set<std::string> b;
-    std::unordered_map<int, std::string> c;
-    std::vector<std::vector<bool>> d;
-};
-
-struct MirrorInfoRegistry {
-    MirrorInfoRegistry()
-    {
-        Mirror::Registry::Get()
-            .Global()
-                .Variable<&ga>("ga")
-                .Variable<&gb>("gb")
-                .Variable<&gc>("gc");
-
-        Mirror::Registry::Get()
-            .Class<SerializationTestStruct0>("SerializationTestStruct0")
-                .MemberVariable<&SerializationTestStruct0::a>("a")
-                .MemberVariable<&SerializationTestStruct0::b>("b")
-                .MemberVariable<&SerializationTestStruct0::c>("c");
-
-        Mirror::Registry::Get()
-            .Class<SerializationTestStruct1>("SerializationTestStruct1")
-                .MemberVariable<&SerializationTestStruct1::a>("a")
-                .MemberVariable<&SerializationTestStruct1::b>("b")
-                .MemberVariable<&SerializationTestStruct1::c>("c")
-                .MemberVariable<&SerializationTestStruct1::d>("d");
-    }
-};
-static MirrorInfoRegistry registry;
 
 TEST(SerializationTest, VariableFileSerializationTest)
 {
@@ -158,4 +117,24 @@ TEST(SerializationTest, ContainerFileSerializationTest)
         ASSERT_EQ(d[1][0], true);
         ASSERT_EQ(d[1][1], false);
     }
+}
+
+TEST(SerializationTest, MetaObjectTypeSerializationTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, EnumSerializationTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, TransientTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, CallbackTest)
+{
+    // TODO
 }

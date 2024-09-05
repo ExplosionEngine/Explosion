@@ -260,7 +260,26 @@ namespace Common {
         }
     };
 
-    // TODO json converter impl
+    template <JsonSerializable T, uint8_t L>
+    struct JsonSerializer<Vec<T, L>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Vec<T, L>& inValue)
+        {
+            outJsonValue.SetArray();
+            outJsonValue.Reserve(L, inAllocator);
+            for (auto i = 0; i < L; i++) {
+                rapidjson::Value elementJson;
+                JsonSerializer<T>::JsonSerialize(elementJson, inAllocator, inValue[i]);
+                outJsonValue.PushBack(elementJson, inAllocator);
+            }
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Vec<T, L>& outValue)
+        {
+            for (auto i = 0; i < L; i++) {
+                JsonSerializer<T>::JsonDeserialize(inJsonValue[i], outValue[i]);
+            }
+        }
+    };
 }
 
 namespace Common {

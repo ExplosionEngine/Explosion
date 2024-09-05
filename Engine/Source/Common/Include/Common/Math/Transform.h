@@ -107,7 +107,32 @@ namespace Common {
         }
     };
 
-    // TODO json converter impl
+    template <JsonSerializable T>
+    struct JsonSerializer<Transform<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Transform<T>& inValue)
+        {
+            rapidjson::Value scaleJson;
+            JsonSerializer<Vec<T, 3>>::JsonSerialize(scaleJson, inAllocator, inValue.scale);
+
+            rapidjson::Value rotationJson;
+            JsonSerializer<Quaternion<T>>::JsonSerialize(rotationJson, inAllocator, inValue.rotation);
+
+            rapidjson::Value translationJson;
+            JsonSerializer<Vec<T, 3>>::JsonSerialize(translationJson, inAllocator, inValue.translation);
+
+            outJsonValue.SetObject();
+            outJsonValue.AddMember("scale", scaleJson, inAllocator);
+            outJsonValue.AddMember("rotation", rotationJson, inAllocator);
+            outJsonValue.AddMember("translation", translationJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Transform<T>& outValue)
+        {
+            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["scale"], outValue.scale);
+            JsonSerializer<Quaternion<T>>::JsonDeserialize(inJsonValue["rotation"], outValue.rotation);
+            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["scale"], outValue.scale);
+        }
+    };
 }
 
 namespace Common {

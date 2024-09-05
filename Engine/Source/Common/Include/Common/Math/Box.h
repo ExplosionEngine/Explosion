@@ -59,17 +59,17 @@ namespace Common { // NOLINT
             = HashUtils::StrCrc32("Common::Box")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const Common::Box<T>& value)
+        static void Serialize(SerializeStream& stream, const Box<T>& value)
         {
-            TypeIdSerializer<Common::Box<T>>::Serialize(stream);
+            TypeIdSerializer<Box<T>>::Serialize(stream);
 
             Serializer<Vec<T, 3>>::Serialize(stream, value.min);
             Serializer<Vec<T, 3>>::Serialize(stream, value.max);
         }
 
-        static bool Deserialize(DeserializeStream& stream, Common::Box<T>& value)
+        static bool Deserialize(DeserializeStream& stream, Box<T>& value)
         {
-            if (!TypeIdSerializer<Common::Box<T>>::Deserialize(stream)) {
+            if (!TypeIdSerializer<Box<T>>::Deserialize(stream)) {
                 return false;
             }
 
@@ -90,7 +90,27 @@ namespace Common { // NOLINT
         }
     };
 
-    // TODO json converter impl
+    template <JsonSerializable T>
+    struct JsonSerializer<T> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Box<T>& inValue)
+        {
+            rapidjson::Value minJson;
+            JsonSerializer<Vec<T, 3>>::JsonSerialize(minJson, inAllocator, inValue.min);
+
+            rapidjson::Value maxJson;
+            JsonSerializer<Vec<T, 3>>::JsonSerialize(maxJson, inAllocator, inValue.max);
+
+            outJsonValue.SetObject();
+            outJsonValue.AddMember("min", minJson, inAllocator);
+            outJsonValue.AddMember("max", maxJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Box<T>& outValue)
+        {
+            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["min"], outValue.min);
+            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["max"], outValue.max);
+        }
+    };
 }
 
 namespace Common {

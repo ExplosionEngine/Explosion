@@ -74,7 +74,7 @@ namespace Mirror {
 
     enum class AnyPolicy : uint8_t {
         memoryHolder,
-        ref,
+        nonConstRef,
         constRef,
         max
     };
@@ -196,6 +196,7 @@ namespace Mirror {
         AnyPolicy Policy() const;
         bool IsMemoryHolder() const;
         bool IsRef() const;
+        bool IsNonConstRef() const;
         bool IsConstRef() const;
         const TypeInfo* Type();
         const TypeInfo* Type() const;
@@ -210,6 +211,7 @@ namespace Mirror {
         void Reset();
         bool Empty() const;
         void Serialize(Common::SerializeStream& inStream) const;
+        bool Deserialize(Common::DeserializeStream& inStream);
         bool Deserialize(Common::DeserializeStream& inStream) const;
         std::string ToString() const;
         // TODO rapidjson::Value ToJsonValue() const;
@@ -219,6 +221,7 @@ namespace Mirror {
         size_t Size() const;
 
         explicit operator bool() const;
+        // TODO use custom comparer
         bool operator==(const Any& inAny) const;
 
     private:
@@ -278,9 +281,12 @@ namespace Mirror {
         Argument& operator=(const Any& inAny);
         Argument& operator=(Any&& inAny);
 
-        template <typename T>
-        T As() const;
+        template <typename T> T As() const;
 
+        bool IsMemoryHolder() const;
+        bool IsRef() const;
+        bool IsNonConstRef() const;
+        bool IsConstRef() const;
         const TypeInfo* Type() const;
         const TypeInfo* RemoveRefType() const;
         const TypeInfo* AddPointerType() const;
@@ -788,11 +794,11 @@ namespace Common { // NOLINT
     struct Serializer<T> {
         static constexpr uint32_t typeId = HashUtils::StrCrc32("_MetaObject");
 
-        static void SerializeDyn(SerializeStream& stream, const Mirror::Class& clazz, const Mirror::Argument& argument)
+        static void SerializeDyn(SerializeStream& stream, const Mirror::Class& clazz, const Mirror::Argument& obj)
         {
             if (const auto* baseClass = clazz.GetBaseClass();
                 baseClass != nullptr) {
-                SerializeDyn(stream, *baseClass, argument);
+                SerializeDyn(stream, *baseClass, obj);
             }
 
             const auto defaultObject = clazz.GetDefaultObject();
@@ -812,27 +818,27 @@ namespace Common { // NOLINT
 
                 Serializer<std::string>::Serialize(stream, id.name);
 
-                const bool sameWithDefaultObject = memberVariable.GetDyn(argument) == defaultObject.value();
+                const bool sameWithDefaultObject = memberVariable.GetDyn(obj) == defaultObject.value();
                 Serializer<bool>::Serialize(stream, sameWithDefaultObject);
 
                 if (sameWithDefaultObject) {
                     Serializer<uint32_t>::Serialize(stream, 0);
                 } else {
                     Serializer<uint32_t>::Serialize(stream, memberVariable.SizeOf());
-                    memberVariable.GetDyn(argument).Serialize(stream);
+                    memberVariable.GetDyn(obj).Serialize(stream);
                 }
             }
 
             if (clazz.HasMemberFunction("OnSerialized")) {
-                (void) clazz.GetMemberFunction("OnSerialized").InvokeDyn(argument, {});
+                (void) clazz.GetMemberFunction("OnSerialized").InvokeDyn(obj, {});
             }
         }
 
-        static bool DeserializeDyn(DeserializeStream& stream, const Mirror::Class& clazz, const Mirror::Argument& argument)
+        static bool DeserializeDyn(DeserializeStream& stream, const Mirror::Class& clazz, const Mirror::Argument& obj)
         {
             if (const auto* baseClass = clazz.GetBaseClass();
                 baseClass != nullptr) {
-                DeserializeDyn(stream, *baseClass, argument);
+                DeserializeDyn(stream, *baseClass, obj);
             }
 
             const auto defaultObject = clazz.GetDefaultObject();
@@ -872,15 +878,14 @@ namespace Common { // NOLINT
                 }
 
                 if (!restoreAsDefaultObject) {
-                    memberVariable.GetDyn(argument).Deserialize(stream);
+                    memberVariable.GetDyn(obj).Deserialize(stream);
                 }
-                return failedCount == 0;
             }
 
             if (clazz.HasMemberFunction("OnDeserialize")) {
-                (void) clazz.GetMemberFunction("OnDeserialize").InvokeDyn(argument, {});
+                (void) clazz.GetMemberFunction("OnDeserialize").InvokeDyn(obj, {});
             }
-            return true;
+            return failedCount == 0;
         }
 
         static void Serialize(SerializeStream& stream, const T& value)
@@ -924,6 +929,9 @@ namespace Common { // NOLINT
     };
 
     // TODO meta object to json
+
+    // TODO Mirror::Any serialization serialization/tostring/tojson
+    // TODO Type class serialization/tostring/tojson
 }
 
 namespace Mirror {
@@ -1208,7 +1216,7 @@ namespace Mirror {
     {
         using RawType = std::remove_const_t<T>;
 
-        policy = std::is_const_v<T> ? AnyPolicy::constRef : AnyPolicy::ref;
+        policy = std::is_const_v<T> ? AnyPolicy::constRef : AnyPolicy::nonConstRef;
         rtti = &anyRttiImpl<RawType>;
         info = RefInfo(const_cast<RawType*>(&inRef.get()), sizeof(RawType));
     }
@@ -1325,7 +1333,9 @@ namespace Mirror {
     const Enum* Enum::Find()
     {
         auto iter = typeToIdMap.find(Mirror::GetTypeInfo<T>()->id);
-        Assert(iter != typeToIdMap.end());
+        if (iter == typeToIdMap.end()) {
+            return nullptr;
+        }
         return Find(iter->second);
     }
 
