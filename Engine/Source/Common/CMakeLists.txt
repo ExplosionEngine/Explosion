@@ -10,5 +10,6 @@ AddLibrary(
 file(GLOB TEST_SOURCES Test/*.cpp)
 AddTest(
     NAME Common.Test
+    INC Test
     SRC ${TEST_SOURCES}
 )

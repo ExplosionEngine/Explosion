@@ -11,6 +11,11 @@
 #include <Common/Math/Rect.h>
 #include <Common/Math/Box.h>
 #include <Common/Math/Sphere.h>
+#include <Common/Math/Color.h>
+#include <Common/Math/View.h>
+#include <Common/Math/Half.h>
+#include <Common/Math/Projection.h>
+#include <SerializationTest.h>
 
 using namespace Common;
 
@@ -609,6 +614,57 @@ TEST(MathTest, SphereTest)
 }
 
 TEST(MathTest, SerializationTest)
+{
+    // half
+    PerformTypedSerializationTest(HFloat(1.0f));
+
+    // vec
+    PerformTypedSerializationTest(FVec1(1.0f));
+    PerformTypedSerializationTest(HVec2(2.0f, 3.0f));
+    PerformTypedSerializationTest(IVec3(1, 2, 3));
+    PerformTypedSerializationTest(UVec4(1, 2, 3, 4));
+
+    // mat
+    PerformTypedSerializationTest(FMat1x1(1.0f));
+    PerformTypedSerializationTest(HMat2x3(2.0f, 3.0f, 4.0f, 5.0f, 5.0f, 7.0f));
+    PerformTypedSerializationTest(IMat3x4(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12));
+    PerformTypedSerializationTest(FMat4x4(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f));
+
+    // quaternion
+    PerformTypedSerializationTest(FQuat(1.0f, 0.1f, 0.2f, 0.5f));
+    PerformTypedSerializationTest(DQuat(1.0f, 0.1f, 0.2f, 0.5f));
+
+    // color
+    PerformTypedSerializationTest(Color(1, 2, 3, 1));
+    PerformTypedSerializationTest(LinearColor(1.0f, 0.5f, 0.2f, 1.0f));
+
+    // rect
+    PerformTypedSerializationTest(FRect(1.0f, 2.0f, 3.0f, 4.0f));
+
+    // box
+    PerformTypedSerializationTest(FBox(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f));
+
+    // sphere
+    PerformTypedSerializationTest(FSphere(1.0f, 2.0f, 3.0f, 1.0f));
+
+    // transform
+    const FTransform transform(FVec3(2.0f, 2.0f, 2.0f), FQuat::FromEulerZYX(90.0f, 0, 0), FVec3(1.0f, 2.0f, 3.0f));
+    PerformTypedSerializationTest(transform);
+
+    // view transform
+    PerformTypedSerializationTest(FViewTransform(transform));
+
+    // projection
+    PerformTypedSerializationTest(FReversedZOrthoProjection(512.0f, 1024.0f, 1.0f));
+    PerformTypedSerializationTest(FReversedZPerspectiveProjection(512.0f, 1024.0f, 1.0f, 500.0f));
+}
+
+TEST(MathTest, ToStringTest)
+{
+    // TODO
+}
+
+TEST(MathTest, JsonSerializationTest)
 {
     // TODO
 }

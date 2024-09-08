@@ -31,6 +31,7 @@ namespace Common {
 
     template <typename T>
     struct ReversedZOrthogonalProjection : ReversedZOrthogonalProjectionBase<T> {
+        ReversedZOrthogonalProjection();
         ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane);
         ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane, T inFarPlane);
 
@@ -40,6 +41,7 @@ namespace Common {
 
     template <typename T>
     struct ReversedZPerspectiveProjection : ReversedZPerspectiveProjectionBase<T> {
+        ReversedZPerspectiveProjection();
         ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane);
         ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane, T inFarPlane);
 
@@ -181,6 +183,15 @@ namespace Common {
 
 namespace Common {
     template <typename T>
+    ReversedZOrthogonalProjection<T>::ReversedZOrthogonalProjection()
+    {
+        this->width = 0;
+        this->height = 0;
+        this->nearPlane = 0;
+        this->farPlane = {};
+    }
+
+    template <typename T>
     ReversedZOrthogonalProjection<T>::ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane)
     {
         this->width = inWidth;
@@ -234,6 +245,16 @@ namespace Common {
         return CompareNumber(this->width, inRhs.width)
             && CompareNumber(this->height, inRhs.height)
             && CompareNumber(this->nearPlane, inRhs.nearPlane);
+    }
+
+    template <typename T>
+    ReversedZPerspectiveProjection<T>::ReversedZPerspectiveProjection()
+    {
+        this->fov = 0.0f;
+        this->width = 0.0f;
+        this->height = 0.0f;
+        this->nearPlane = 0;
+        this->farPlane = {};
     }
 
     template <typename T>
