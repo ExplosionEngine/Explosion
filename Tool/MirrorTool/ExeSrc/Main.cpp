@@ -12,7 +12,7 @@
 
 static std::string GetUnixStylePath(const std::string& inPath)
 {
-    return Common::StringUtils::Replace(std::filesystem::canonical(inPath).string(), "\\", "/");
+    return Common::StringUtils::Replace(std::filesystem::weakly_canonical(inPath).string(), "\\", "/");
 }
 
 int main(int argc, char* argv[]) // NOLINT
