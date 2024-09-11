@@ -235,7 +235,6 @@ namespace Mirror {
         size_t Size() const;
 
         explicit operator bool() const;
-        // TODO use custom comparer
         bool operator==(const Any& inAny) const;
 
     private:
@@ -1010,7 +1009,7 @@ namespace Mirror {
     template <typename T>
     bool AnyRtti::Equal(const void* inThis, const void* inOther) noexcept
     {
-        if constexpr (std::equality_comparable<T>) {
+        if constexpr (Common::EqualComparable<T>) {
             return *static_cast<const T*>(inThis) == *static_cast<const T*>(inOther);
         } else {
             QuickFailWithReason(fmt::format("type {} is no support equal compare", GetTypeInfo<T>()->name));

@@ -27,6 +27,13 @@ struct EClass() SerializationTestStruct0 {
     EProperty() int a;
     EProperty() float b;
     EProperty() std::string c;
+
+    bool operator==(const SerializationTestStruct0& rhs) const
+    {
+        return a == rhs.a
+            && b == rhs.b
+            && c == rhs.c;
+    }
 };
 
 struct EClass() SerializationTestStruct1 {
@@ -36,4 +43,5 @@ struct EClass() SerializationTestStruct1 {
     EProperty() std::unordered_set<std::string> b;
     EProperty() std::unordered_map<int, std::string> c;
     EProperty() std::vector<std::vector<bool>> d;
+    EProperty() std::vector<SerializationTestStruct0> e;
 };

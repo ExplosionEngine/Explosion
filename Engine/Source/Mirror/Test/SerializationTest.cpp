@@ -88,6 +88,7 @@ TEST(SerializationTest, ContainerFileSerializationTest)
         obj.b = { "3", "4" };
         obj.c = { { 5, "6" }, { 7, "8" } };
         obj.d = { { false, true }, { true, false } };
+        obj.e = { { 1, 2.0f, "3" } };
 
         Mirror::Any(std::ref(obj))
             .Serialize(stream);
@@ -99,7 +100,7 @@ TEST(SerializationTest, ContainerFileSerializationTest)
         Mirror::Any ref = clazz.GetDefaultConstructor().Construct();
         ref.Deserialize(stream);
 
-        const auto& [a, b, c, d] = ref.As<const SerializationTestStruct1&>();
+        const auto& [a, b, c, d, e] = ref.As<const SerializationTestStruct1&>();
         ASSERT_EQ(a.size(), 2);
         ASSERT_EQ(a[0], 1);
         ASSERT_EQ(a[1], 2);
@@ -116,6 +117,10 @@ TEST(SerializationTest, ContainerFileSerializationTest)
         ASSERT_EQ(d[1].size(), 2);
         ASSERT_EQ(d[1][0], true);
         ASSERT_EQ(d[1][1], false);
+        ASSERT_EQ(e.size(), 1);
+        ASSERT_EQ(e[0].a, 1);
+        ASSERT_EQ(e[0].b, 2.0f);
+        ASSERT_EQ(e[0].c, "3");
     }
 }
 
