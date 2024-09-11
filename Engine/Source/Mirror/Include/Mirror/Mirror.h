@@ -50,6 +50,7 @@ namespace Mirror {
         const uint32_t isPointer : 1;
         const uint32_t isConstPointer : 1;
         const uint32_t isClass : 1;
+        const uint32_t isEnum: 1;
         const uint32_t isArray : 1;
         const uint32_t isArithmetic : 1;
         const uint32_t isIntegral : 1;
@@ -181,6 +182,9 @@ namespace Mirror {
         template <typename T> T As() const;
         template <typename T> T* TryAs();
         template <typename T> T* TryAs() const;
+
+        // TODO
+        // template <typename B, typename T> T PolyAs() const;
 
         // TODO array support
 
@@ -954,6 +958,7 @@ namespace Mirror {
             std::is_pointer_v<T>,
             std::is_pointer_v<T> ? std::is_const_v<std::remove_pointer_t<T>> : false,
             std::is_class_v<T>,
+            std::is_enum_v<T>,
             std::is_array_v<T>,
             std::is_arithmetic_v<T>,
             std::is_integral_v<T>,
