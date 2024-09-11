@@ -18,6 +18,7 @@ TEST(SerializationTest, FileStreamTest)
         const uint32_t value = 5; // NOLINT
 
         BinaryFileSerializeStream stream(fileName.string());
+        stream.Seek(3);
         stream.Write(&value, sizeof(uint32_t));
     }
 
@@ -25,6 +26,29 @@ TEST(SerializationTest, FileStreamTest)
         uint32_t value;
 
         BinaryFileDeserializeStream stream(fileName.string());
+        stream.Seek(3);
+        stream.Read(&value, sizeof(uint32_t));
+        ASSERT_EQ(value, 5);
+    }
+}
+
+TEST(SerializationTest, ByteStreamTest)
+{
+    static std::filesystem::path fileName = "../Test/Generated/Common/SerializationTest.ByteStreamTest.bin";
+    std::filesystem::create_directories(fileName.parent_path());
+
+    std::vector<uint8_t> memory;
+    {
+        const uint32_t value = 5; // NOLINT
+        ByteSerializeStream stream(memory);
+        stream.Seek(3);
+        stream.Write(&value, sizeof(uint32_t));
+    }
+
+    {
+        uint32_t value;
+        ByteDeserializeStream stream(memory);
+        stream.Seek(3);
         stream.Read(&value, sizeof(uint32_t));
         ASSERT_EQ(value, 5);
     }

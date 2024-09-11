@@ -7,6 +7,7 @@
 #include <fstream>
 #include <string>
 #include <optional>
+#include <array>
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
@@ -23,8 +24,9 @@ namespace Common {
         NonCopyable(SerializeStream)
         virtual ~SerializeStream();
 
+        void WriteTyped(const void* data, size_t size, uint32_t typeCrc);
         virtual void Write(const void* data, size_t size) = 0;
-        // TODO seek
+        virtual void Seek(int64_t offset) = 0;
 
     protected:
         SerializeStream();
@@ -35,8 +37,9 @@ namespace Common {
         NonCopyable(DeserializeStream);
         virtual ~DeserializeStream();
 
+        bool ReadTyped(void* data, size_t size, uint32_t typeCrc);
         virtual void Read(void* data, size_t size) = 0;
-        // TODO seek
+        virtual void Seek(int64_t offset) = 0;
 
     protected:
         DeserializeStream();
@@ -48,6 +51,7 @@ namespace Common {
         explicit BinaryFileSerializeStream(const std::string& inFileName);
         ~BinaryFileSerializeStream() override;
         void Write(const void* data, size_t size) override;
+        void Seek(int64_t offset) override;
         void Close();
 
     private:
@@ -60,6 +64,7 @@ namespace Common {
         explicit BinaryFileDeserializeStream(const std::string& inFileName);
         ~BinaryFileDeserializeStream() override;
         void Read(void* data, size_t size) override;
+        void Seek(int64_t offset) override;
         void Close();
 
     private:
@@ -72,6 +77,7 @@ namespace Common {
         explicit ByteSerializeStream(std::vector<uint8_t>& inBytes, size_t pointerBegin = 0);
         ~ByteSerializeStream() override;
         void Write(const void* data, size_t size) override;
+        void Seek(int64_t offset) override;
 
     private:
         size_t pointer;
@@ -84,6 +90,7 @@ namespace Common {
         explicit ByteDeserializeStream(const std::vector<uint8_t>& inBytes, size_t pointerBegin = 0);
         ~ByteDeserializeStream() override;
         void Read(void* data, size_t size) override;
+        void Seek(int64_t offset) override;
 
     private:
         size_t pointer;
