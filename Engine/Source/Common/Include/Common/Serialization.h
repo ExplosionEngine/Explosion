@@ -201,7 +201,7 @@ namespace Common {
     void JsonDeserialize(const rapidjson::Value& inJsonValue, T& outValue)
     {
         if constexpr (JsonSerializable<T>) {
-            return JsonSerializer<T>::JsonDeserialize(inJsonValue, outValue);
+            JsonSerializer<T>::JsonDeserialize(inJsonValue, outValue);
         } else {
             QuickFailWithReason("your type is not support json serialization");
         }
@@ -647,9 +647,12 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::vector<T>& outValue)
         {
-            outValue.resize(inJsonValue.Size());
+            outValue.clear();
+            outValue.reserve(inJsonValue.Size());
             for (auto i = 0; i < inJsonValue.Size(); i++) {
-                JsonSerializer<T>::JsonDeserialize(inJsonValue[i], outValue[i]);
+                T element;
+                JsonSerializer<T>::JsonDeserialize(inJsonValue[i], element);
+                outValue.emplace_back(std::move(element));
             }
         }
     };

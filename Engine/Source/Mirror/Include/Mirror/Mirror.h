@@ -93,6 +93,8 @@ namespace Mirror {
         using DerefFunc = Any(const void*);
         using SerializeFunc = void(const void*, Common::SerializeStream&);
         using DeserializeFunc = bool(void*, Common::DeserializeStream&);
+        using JsonSerializeFunc = void(const void*, rapidjson::Value&, rapidjson::Document::AllocatorType&);
+        using JsonDeserializeFunc = void(void*, const rapidjson::Value&);
         using ToStringFunc = std::string(const void*);
 
         template <typename T> static void Detor(void* inThis) noexcept;
@@ -111,6 +113,8 @@ namespace Mirror {
         template <typename T> static Any Deref(const void* inThis);
         template <typename T> static void Serialize(const void* inThis, Common::SerializeStream& inStream);
         template <typename T> static bool Deserialize(void* inThis, Common::DeserializeStream& inStream);
+        template <typename T> static void JsonSerialize(const void* inThis, rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator);
+        template <typename T> static void JsonDeserialize(void* inThis, const rapidjson::Value& inJsonValue);
         template <typename T> static std::string ToString(const void* inThis);
 
         DetorFunc* detor;
@@ -129,6 +133,8 @@ namespace Mirror {
         DerefFunc* deref;
         SerializeFunc* serialize;
         DeserializeFunc* deserialize;
+        JsonSerializeFunc* jsonSerialize;
+        JsonDeserializeFunc* jsonDeserialize;
         ToStringFunc* toString;
     };
 
@@ -150,6 +156,8 @@ namespace Mirror {
         &AnyRtti::Deref<T>,
         &AnyRtti::Serialize<T>,
         &AnyRtti::Deserialize<T>,
+        &AnyRtti::JsonSerialize<T>,
+        &AnyRtti::JsonDeserialize<T>,
         &AnyRtti::ToString<T>
     };
 
@@ -217,8 +225,10 @@ namespace Mirror {
         void Serialize(Common::SerializeStream& inStream) const;
         bool Deserialize(Common::DeserializeStream& inStream);
         bool Deserialize(Common::DeserializeStream& inStream) const;
+        void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator) const;
+        void JsonDeserialize(const rapidjson::Value& inJsonValue);
+        void JsonDeserialize(const rapidjson::Value& inJsonValue) const;
         std::string ToString() const;
-        // TODO rapidjson::Value ToJsonValue() const;
 
         // always return original ptr and size, even policy is ref
         void* Data() const;
@@ -1093,6 +1103,18 @@ namespace Mirror {
     bool AnyRtti::Deserialize(void* inThis, Common::DeserializeStream& inStream)
     {
         return Common::Deserialize<T>(inStream, *static_cast<T*>(inThis));
+    }
+
+    template <typename T>
+    void AnyRtti::JsonSerialize(const void* inThis, rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator)
+    {
+        Common::JsonSerialize(outJsonValue, inAllocator, *static_cast<const T*>(inThis));
+    }
+
+    template <typename T>
+    void AnyRtti::JsonDeserialize(void* inThis, const rapidjson::Value& inJsonValue)
+    {
+        Common::JsonDeserialize(inJsonValue, *static_cast<T*>(inThis));
     }
 
     template <typename T>

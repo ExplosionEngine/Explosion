@@ -411,6 +411,24 @@ namespace Mirror {
         return rtti->deserialize(Data(), inStream);
     }
 
+    void Any::JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator) const
+    {
+        Assert(rtti != nullptr);
+        rtti->jsonSerialize(Data(), outJsonValue, inAllocator);
+    }
+
+    void Any::JsonDeserialize(const rapidjson::Value& inJsonValue)
+    {
+        Assert(rtti != nullptr && !IsConstRef());
+        rtti->jsonDeserialize(Data(), inJsonValue);
+    }
+
+    void Any::JsonDeserialize(const rapidjson::Value& inJsonValue) const
+    {
+        Assert(rtti != nullptr && IsNonConstRef());
+        return rtti->jsonDeserialize(Data(), inJsonValue);
+    }
+
     std::string Any::ToString() const
     {
         return Empty() ? "" : rtti->toString(Data());
