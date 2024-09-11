@@ -818,7 +818,7 @@ namespace Common { // NOLINT
 
                 Serializer<std::string>::Serialize(stream, id.name);
 
-                const bool sameWithDefaultObject = memberVariable.GetDyn(obj) == defaultObject.value();
+                const bool sameWithDefaultObject = memberVariable.GetDyn(obj) == memberVariable.GetDyn(defaultObject.value());
                 Serializer<bool>::Serialize(stream, sameWithDefaultObject);
 
                 if (sameWithDefaultObject) {
@@ -877,7 +877,9 @@ namespace Common { // NOLINT
                     restoreAsDefaultObject = true;
                 }
 
-                if (!restoreAsDefaultObject) {
+                if (restoreAsDefaultObject) {
+                    memberVariable.SetDyn(obj, memberVariable.GetDyn(defaultObject.value()));
+                } else {
                     memberVariable.GetDyn(obj).Deserialize(stream);
                 }
             }
