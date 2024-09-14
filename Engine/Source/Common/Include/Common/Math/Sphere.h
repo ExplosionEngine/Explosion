@@ -41,27 +41,20 @@ namespace Common {
 namespace Common {
     template <Serializable T>
     struct Serializer<Sphere<T>> {
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::Sphere")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const Sphere<T>& value)
+        static size_t Serialize(SerializeStream& stream, const Sphere<T>& value)
         {
-            TypeIdSerializer<Sphere<T>>::Serialize(stream);
-
-            Serializer<Vec<T, 3>>::Serialize(stream, value.center);
-            Serializer<T>::Serialize(stream, value.radius);
+            return Serializer<Vec<T, 3>>::Serialize(stream, value.center)
+                + Serializer<T>::Serialize(stream, value.radius);
         }
 
-        static bool Deserialize(DeserializeStream& stream, Sphere<T>& value)
+        static size_t Deserialize(DeserializeStream& stream, Sphere<T>& value)
         {
-            if (!TypeIdSerializer<Sphere<T>>::Deserialize(stream)) {
-                return false;
-            }
-
-            Serializer<Vec<T, 3>>::Deserialize(stream, value.center);
-            Serializer<T>::Deserialize(stream, value.radius);
-            return true;
+            return Serializer<Vec<T, 3>>::Deserialize(stream, value.center)
+                + Serializer<T>::Deserialize(stream, value.radius);
         }
     };
 

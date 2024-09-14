@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <fstream>
 #include <string>
 #include <optional>
@@ -26,6 +27,7 @@ namespace Common {
 
         virtual void Write(const void* data, size_t size) = 0;
         virtual void Seek(int64_t offset) = 0;
+        virtual size_t Loc() = 0;
 
     protected:
         SerializeStream();
@@ -38,6 +40,7 @@ namespace Common {
 
         virtual void Read(void* data, size_t size) = 0;
         virtual void Seek(int64_t offset) = 0;
+        virtual size_t Loc() = 0;
 
     protected:
         DeserializeStream();
@@ -50,6 +53,7 @@ namespace Common {
         ~BinaryFileSerializeStream() override;
         void Write(const void* data, size_t size) override;
         void Seek(int64_t offset) override;
+        size_t Loc() override;
         void Close();
 
     private:
@@ -63,10 +67,12 @@ namespace Common {
         ~BinaryFileDeserializeStream() override;
         void Read(void* data, size_t size) override;
         void Seek(int64_t offset) override;
+        size_t Loc() override;
         void Close();
 
     private:
         std::ifstream file;
+        size_t fileSize;
     };
 
     class ByteSerializeStream final : public SerializeStream {
@@ -76,6 +82,7 @@ namespace Common {
         ~ByteSerializeStream() override;
         void Write(const void* data, size_t size) override;
         void Seek(int64_t offset) override;
+        size_t Loc() override;
 
     private:
         size_t pointer;
@@ -89,6 +96,7 @@ namespace Common {
         ~ByteDeserializeStream() override;
         void Read(void* data, size_t size) override;
         void Seek(int64_t offset) override;
+        size_t Loc() override;
 
     private:
         size_t pointer;
@@ -99,18 +107,14 @@ namespace Common {
     template <typename T> concept Serializable = requires(T inValue, SerializeStream& serializeStream, DeserializeStream& deserializeStream)
     {
         { Serializer<T>::typeId } -> std::convertible_to<uint32_t>;
-        Serializer<T>::Serialize(serializeStream, inValue);
-        Serializer<T>::Deserialize(deserializeStream, inValue);
+        { Serializer<T>::Serialize(serializeStream, inValue) } -> std::convertible_to<size_t>;
+        { Serializer<T>::Deserialize(deserializeStream, inValue) } -> std::convertible_to<size_t>;
     };
 
-    template <Serializable T>
-    struct TypeIdSerializer {
-        static void Serialize(SerializeStream& stream);
-        static bool Deserialize(DeserializeStream& stream);
-    };
+    template <Serializable T> struct FieldSerializer;
 
-    template <typename T> void Serialize(SerializeStream& inStream, const T& inValue);
-    template <typename T> bool Deserialize(DeserializeStream& inStream, T& inValue);
+    template <typename T> size_t Serialize(SerializeStream& inStream, const T& inValue);
+    template <typename T> std::pair<bool, size_t> Deserialize(DeserializeStream& inStream, T& inValue);
 
     template <typename T> struct JsonSerializer {};
     template <typename T> concept JsonSerializable = requires(
@@ -129,58 +133,41 @@ namespace Common {
 #define IMPL_BASIC_TYPE_SERIALIZER(typeName) \
     template <> \
     struct Serializer<typeName> { \
-        static constexpr uint32_t typeId = HashUtils::StrCrc32(#typeName); \
+        static constexpr size_t typeId = HashUtils::StrCrc32(#typeName); \
         \
-        static void Serialize(SerializeStream& stream, const typeName& value) \
+        static size_t Serialize(SerializeStream& stream, const typeName& value) \
         { \
-            TypeIdSerializer<typeName>::Serialize(stream); \
             stream.Write(&value, sizeof(typeName)); \
+            return sizeof(typeName); \
         } \
         \
-        static bool Deserialize(DeserializeStream& stream, typeName& value) \
+        static size_t Deserialize(DeserializeStream& stream, typeName& value) \
         { \
-            if (!TypeIdSerializer<typeName>::Deserialize(stream)) { \
-                return false;\
-            } \
             stream.Read(&value, sizeof(typeName)); \
-            return true; \
+            return sizeof(typeName); \
         } \
     }; \
 
 namespace Common {
-    template <Serializable T>
-    void TypeIdSerializer<T>::Serialize(SerializeStream& stream)
-    {
-        const uint32_t typeId = Serializer<T>::typeId;
-        stream.Write(&typeId, sizeof(uint32_t));
-    }
-
-    template <Serializable T>
-    bool TypeIdSerializer<T>::Deserialize(DeserializeStream& stream)
-    {
-        uint32_t typeId;
-        stream.Read(&typeId, sizeof(uint32_t));
-        return typeId == Serializer<T>::typeId;
-    }
-
     template <typename T>
-    void Serialize(SerializeStream& inStream, const T& inValue)
+    size_t Serialize(SerializeStream& inStream, const T& inValue)
     {
         if constexpr (Serializable<T>) {
-            Serializer<T>::Serialize(inStream, inValue);
+            return FieldSerializer<T>::Serialize(inStream, inValue);
         } else {
             QuickFailWithReason("your type is not support serialization");
+            return 0;
         }
     }
 
     template <typename T>
-    bool Deserialize(DeserializeStream& inStream, T& inValue)
+    std::pair<bool, size_t> Deserialize(DeserializeStream& inStream, T& inValue)
     {
         if constexpr (Serializable<T>) {
-            return Serializer<T>::Deserialize(inStream, inValue);
+            return FieldSerializer<T>::Deserialize(inStream, inValue);
         } else {
             QuickFailWithReason("your type is not support serialization");
-            return false;
+            return { false, 0 };
         }
     }
 
@@ -204,6 +191,45 @@ namespace Common {
         }
     }
 
+    template <Serializable T>
+    struct FieldSerializer {
+        struct Header {
+            size_t typeId;
+            size_t contentSize;
+        };
+
+        static size_t Serialize(SerializeStream& stream, const T& value)
+        {
+            Header header;
+            header.typeId = Serializer<T>::typeId;
+
+            stream.Seek(sizeof(Header));
+            header.contentSize = Serializer<T>::Serialize(stream, value);
+            stream.Seek(-static_cast<int64_t>(sizeof(Header)) - static_cast<int64_t>(header.contentSize));
+            stream.Write(&header, sizeof(Header));
+            stream.Seek(header.contentSize);
+            return sizeof(Header) + header.contentSize;
+        }
+
+        static std::pair<bool, size_t> Deserialize(DeserializeStream& stream, T& value)
+        {
+            Header header {};
+            stream.Read(&header, sizeof(Header));
+
+            if (header.typeId != Serializer<T>::typeId) {
+                stream.Seek(header.contentSize);
+                return { false, sizeof(Header) };
+            }
+
+            size_t deserializedSize = Serializer<T>::Deserialize(stream, value);
+            if (deserializedSize != header.contentSize) {
+                stream.Seek(header.contentSize - deserializedSize);
+                return { false, sizeof(Header) + deserializedSize };
+            }
+            return { true, sizeof(Header) + header.contentSize };
+        }
+    };
+
     IMPL_BASIC_TYPE_SERIALIZER(bool)
     IMPL_BASIC_TYPE_SERIALIZER(int8_t)
     IMPL_BASIC_TYPE_SERIALIZER(uint8_t)
@@ -218,212 +244,199 @@ namespace Common {
 
     template <>
     struct Serializer<std::string> {
-        static constexpr uint32_t typeId = HashUtils::StrCrc32("string");
+        static constexpr size_t typeId = HashUtils::StrCrc32("string");
 
-        static void Serialize(SerializeStream& stream, const std::string& value)
+        static size_t Serialize(SerializeStream& stream, const std::string& value)
         {
-            TypeIdSerializer<std::string>::Serialize(stream);
+            size_t serialized = 0;
 
             const uint64_t size = value.size();
-            Serializer<uint64_t>::Serialize(stream, size);
+            serialized += Serializer<uint64_t>::Serialize(stream, size);
+
             stream.Write(value.data(), value.size());
+            serialized += size;
+            return serialized;
         }
 
-        static bool Deserialize(DeserializeStream& stream, std::string& value)
+        static size_t Deserialize(DeserializeStream& stream, std::string& value)
         {
-            if (!TypeIdSerializer<std::string>::Deserialize(stream)) {
-                return false;
-            }
+            size_t deserialized = 0;
 
             uint64_t size;
-            Serializer<uint64_t>::Deserialize(stream, size);
+            deserialized += Serializer<uint64_t>::Deserialize(stream, size);
+
             value.resize(size);
             stream.Read(value.data(), size);
-            return true;
+            deserialized += size;
+            return deserialized;
         }
     };
 
     template <Serializable T>
     struct Serializer<std::optional<T>> {
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("std::optional")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const std::optional<T>& value)
+        static size_t Serialize(SerializeStream& stream, const std::optional<T>& value)
         {
-            TypeIdSerializer<std::optional<T>>::Serialize(stream);
+            size_t serialized = 0;
 
             const bool hasValue = value.has_value();
-            Serializer<bool>::Serialize(stream, hasValue);
+            serialized += Serializer<bool>::Serialize(stream, hasValue);
 
             if (hasValue) {
-                Serializer<T>::Serialize(stream, value.value());
+                serialized += Serializer<T>::Serialize(stream, value.value());
             }
+            return serialized;
         }
 
-        static bool Deserialize(DeserializeStream& stream, std::optional<T>& value)
+        static size_t Deserialize(DeserializeStream& stream, std::optional<T>& value)
         {
-            if (!TypeIdSerializer<std::optional<T>>::Deserialize(stream)) {
-                return false;
-            }
+            size_t deserialized = 0;
 
             value.reset();
             bool hasValue;
-            Serializer<bool>::Deserialize(stream, hasValue);
+            deserialized += Serializer<bool>::Deserialize(stream, hasValue);
 
             if (hasValue) {
                 T temp;
-                Serializer<T>::Deserialize(stream, temp);
+                deserialized += Serializer<T>::Deserialize(stream, temp);
                 value.emplace(std::move(temp));
             }
-            return true;
+            return deserialized;
         }
     };
 
     template <Serializable K, Serializable V>
     struct Serializer<std::pair<K, V>> {
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("std::pair")
             + Serializer<K>::typeId
             + Serializer<V>::typeId;
 
-        static void Serialize(SerializeStream& stream, const std::pair<K, V>& value)
+        static size_t Serialize(SerializeStream& stream, const std::pair<K, V>& value)
         {
-            TypeIdSerializer<std::pair<K, V>>::Serialize(stream);
-
-            Serializer<K>::Serialize(stream, value.first);
-            Serializer<V>::Serialize(stream, value.second);
+            return Serializer<K>::Serialize(stream, value.first)
+                + Serializer<V>::Serialize(stream, value.second);
         }
 
-        static bool Deserialize(DeserializeStream& stream, std::pair<K, V>& value)
+        static size_t Deserialize(DeserializeStream& stream, std::pair<K, V>& value)
         {
-            if (!TypeIdSerializer<std::pair<K, V>>::Deserialize(stream)) {
-                return false;
-            }
-
-            Serializer<K>::Deserialize(stream, value.first);
-            Serializer<V>::Deserialize(stream, value.second);
-            return true;
+            return Serializer<K>::Deserialize(stream, value.first)
+                + Serializer<V>::Deserialize(stream, value.second);
         }
     };
 
     template <Serializable T>
     struct Serializer<std::vector<T>> {
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("std::vector")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const std::vector<T>& value)
+        static size_t Serialize(SerializeStream& stream, const std::vector<T>& value)
         {
-            TypeIdSerializer<std::vector<T>>::Serialize(stream);
+            size_t serialized = 0;
 
             const uint64_t size = value.size();
-            Serializer<uint64_t>::Serialize(stream, size);
+            serialized += Serializer<uint64_t>::Serialize(stream, size);
 
             for (auto i = 0; i < size; i++) {
-                Serializer<T>::Serialize(stream, value[i]);
+                serialized += Serializer<T>::Serialize(stream, value[i]);
             }
+            return serialized;
         }
 
-        static bool Deserialize(DeserializeStream& stream, std::vector<T>& value)
+        static size_t Deserialize(DeserializeStream& stream, std::vector<T>& value)
         {
-            if (!TypeIdSerializer<std::vector<T>>::Deserialize(stream)) {
-                return false;
-            }
+            size_t deserialized = 0;
 
             value.clear();
-
             uint64_t size;
-            Serializer<uint64_t>::Deserialize(stream, size);
+            deserialized += Serializer<uint64_t>::Deserialize(stream, size);
 
             value.reserve(size);
             for (auto i = 0; i < size; i++) {
                 T element;
-                Serializer<T>::Deserialize(stream, element);
+                deserialized += Serializer<T>::Deserialize(stream, element);
                 value.emplace_back(std::move(element));
             }
-            return true;
+            return deserialized;
         }
     };
 
     template <Serializable T>
     struct Serializer<std::unordered_set<T>> {
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("std::unordered_set")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const std::unordered_set<T>& value)
+        static size_t Serialize(SerializeStream& stream, const std::unordered_set<T>& value)
         {
-            TypeIdSerializer<T>::Serialize(stream);
+            size_t serialized = 0;
 
             const uint64_t size = value.size();
-            Serializer<uint64_t>::Serialize(stream, size);
+            serialized += Serializer<uint64_t>::Serialize(stream, size);
 
             for (const auto& element : value) {
-                Serializer<T>::Serialize(stream, element);
+                serialized += Serializer<T>::Serialize(stream, element);
             }
+            return serialized;
         }
 
-        static bool Deserialize(DeserializeStream& stream, std::unordered_set<T>& value)
+        static size_t Deserialize(DeserializeStream& stream, std::unordered_set<T>& value)
         {
-            if (!TypeIdSerializer<T>::Deserialize(stream)) {
-                return false;
-            }
+            size_t deserialized = 0;
 
             value.clear();
-
             uint64_t size;
-            Serializer<uint64_t>::Deserialize(stream, size);
+            deserialized += Serializer<uint64_t>::Deserialize(stream, size);
 
             value.reserve(size);
             for (auto i = 0; i < size; i++) {
                 T temp;
-                Serializer<T>::Deserialize(stream, temp);
+                deserialized += Serializer<T>::Deserialize(stream, temp);
                 value.emplace(std::move(temp));
             }
-            return true;
+            return deserialized;
         }
     };
 
     template <Serializable K, Serializable V>
     struct Serializer<std::unordered_map<K, V>> {
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("std::unordered_map")
             + Serializer<K>::typeId
             + Serializer<V>::typeId;
 
-        static void Serialize(SerializeStream& stream, const std::unordered_map<K, V>& value)
+        static size_t Serialize(SerializeStream& stream, const std::unordered_map<K, V>& value)
         {
-            TypeIdSerializer<std::unordered_map<K, V>>::Serialize(stream);
+            size_t serialized = 0;
 
             const uint64_t size = value.size();
-            Serializer<uint64_t>::Serialize(stream, size);
+            serialized += Serializer<uint64_t>::Serialize(stream, size);
 
             for (const auto& pair : value) {
-                Serializer<K>::Serialize(stream, pair.first);
-                Serializer<V>::Serialize(stream, pair.second);
+                serialized += Serializer<std::pair<K, V>>::Serialize(stream, pair);
             }
+            return serialized;
         }
 
-        static bool Deserialize(DeserializeStream& stream, std::unordered_map<K, V>& value)
+        static size_t Deserialize(DeserializeStream& stream, std::unordered_map<K, V>& value)
         {
-            if (!TypeIdSerializer<std::unordered_map<K, V>>::Deserialize(stream)) {
-                return false;
-            }
+            size_t deserialized = 0;
 
             value.clear();
-
             uint64_t size;
-            Serializer<uint64_t>::Deserialize(stream, size);
+            deserialized += Serializer<uint64_t>::Deserialize(stream, size);
 
             value.reserve(size);
             for (auto i = 0; i < size; i++) {
                 std::pair<K, V> pair;
-                Serializer<K>::Deserialize(stream, pair.first);
-                Serializer<V>::Deserialize(stream, pair.second);
+                deserialized += Serializer<std::pair<K, V>>::Deserialize(stream, pair);
                 value.emplace(std::move(pair));
             }
-            return true;
+            return deserialized;
         }
     };
 

@@ -84,45 +84,31 @@ namespace Common {
 namespace Common {
     template <std::endian E>
     struct Serializer<Internal::FullFloat<E>> {
-        static constexpr uint32_t typeId = HashUtils::StrCrc32("Common::Internal::FullFloat");
+        static constexpr size_t typeId = HashUtils::StrCrc32("Common::Internal::FullFloat");
 
-        static void Serialize(SerializeStream& stream, const Internal::FullFloat<E>& value)
+        static size_t Serialize(SerializeStream& stream, const Internal::FullFloat<E>& value)
         {
-            TypeIdSerializer<Internal::FullFloat<E>>::Serialize(stream);
-
-            Serializer<float>::Serialize(stream, value.value);
+            return Serializer<float>::Serialize(stream, value.value);
         }
 
-        static bool Deserialize(DeserializeStream& stream, Internal::FullFloat<E>& value)
+        static size_t Deserialize(DeserializeStream& stream, Internal::FullFloat<E>& value)
         {
-            if (!TypeIdSerializer<Internal::FullFloat<E>>::Deserialize(stream)) {
-                return false;
-            }
-
-            Serializer<float>::Deserialize(stream, value.value);
-            return true;
+            return Serializer<float>::Deserialize(stream, value.value);
         }
     };
 
     template <std::endian E>
     struct Serializer<HalfFloat<E>> {
-        static constexpr uint32_t typeId = HashUtils::StrCrc32("Common::Internal::HalfFloat");
+        static constexpr size_t typeId = HashUtils::StrCrc32("Common::Internal::HalfFloat");
 
-        static void Serialize(SerializeStream& stream, const HalfFloat<E>& value)
+        static size_t Serialize(SerializeStream& stream, const HalfFloat<E>& value)
         {
-            TypeIdSerializer<HalfFloat<E>>::Serialize(stream);
-
-            Serializer<uint16_t>::Serialize(stream, value.value);
+            return Serializer<uint16_t>::Serialize(stream, value.value);
         }
 
-        static bool Deserialize(DeserializeStream& stream, HalfFloat<E>& value)
+        static size_t Deserialize(DeserializeStream& stream, HalfFloat<E>& value)
         {
-            if (!TypeIdSerializer<HalfFloat<E>>::Deserialize(stream)) {
-                return false;
-            }
-
-            Serializer<uint16_t>::Deserialize(stream, value.value);
-            return true;
+            return Serializer<uint16_t>::Deserialize(stream, value.value);
         }
     };
 

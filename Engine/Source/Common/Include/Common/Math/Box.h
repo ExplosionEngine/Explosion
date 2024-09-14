@@ -55,27 +55,20 @@ namespace Common {
 namespace Common { // NOLINT
     template <Serializable T>
     struct Serializer<Box<T>> {
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::Box")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const Box<T>& value)
+        static size_t Serialize(SerializeStream& stream, const Box<T>& value)
         {
-            TypeIdSerializer<Box<T>>::Serialize(stream);
-
-            Serializer<Vec<T, 3>>::Serialize(stream, value.min);
-            Serializer<Vec<T, 3>>::Serialize(stream, value.max);
+            return Serializer<Vec<T, 3>>::Serialize(stream, value.min)
+                + Serializer<Vec<T, 3>>::Serialize(stream, value.max);
         }
 
-        static bool Deserialize(DeserializeStream& stream, Box<T>& value)
+        static size_t Deserialize(DeserializeStream& stream, Box<T>& value)
         {
-            if (!TypeIdSerializer<Box<T>>::Deserialize(stream)) {
-                return false;
-            }
-
-            Serializer<Vec<T, 3>>::Deserialize(stream, value.min);
-            Serializer<Vec<T, 3>>::Deserialize(stream, value.max);
-            return true;
+            return Serializer<Vec<T, 3>>::Deserialize(stream, value.min)
+                + Serializer<Vec<T, 3>>::Deserialize(stream, value.max);
         }
     };
 

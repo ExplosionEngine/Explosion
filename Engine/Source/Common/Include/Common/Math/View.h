@@ -32,25 +32,18 @@ namespace Common {
 namespace Common {
     template <Serializable T>
     struct Serializer<ViewTransform<T>> {
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::ViewTransform")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const ViewTransform<T>& value)
+        static size_t Serialize(SerializeStream& stream, const ViewTransform<T>& value)
         {
-            TypeIdSerializer<ViewTransform<T>>::Serialize(stream);
-
-            Serializer<Transform<T>>::Serialize(stream, value);
+            return Serializer<Transform<T>>::Serialize(stream, value);
         }
 
-        static bool Deserialize(DeserializeStream& stream, ViewTransform<T>& value)
+        static size_t Deserialize(DeserializeStream& stream, ViewTransform<T>& value)
         {
-            if (!TypeIdSerializer<ViewTransform<T>>::Deserialize(stream)) {
-                return false;
-            }
-
-            Serializer<Transform<T>>::Deserialize(stream, value);
-            return true;
+            return Serializer<Transform<T>>::Deserialize(stream, value);
         }
     };
 

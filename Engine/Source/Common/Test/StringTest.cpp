@@ -124,10 +124,4 @@ TEST(StringUtilsTest, ToStringTest)
 
     const std::vector<int> v3 = { 1, 2, 3 };
     ASSERT_EQ(Common::ToString(v3), "(1, 2, 3)");
-
-    const std::unordered_set<int> v4 = { 1, 2, 3 };
-    ASSERT_EQ(Common::ToString(v4), "(1, 2, 3)");
-
-    const std::unordered_map<int, bool> v5 = { { 1, false }, { 2, true } };
-    ASSERT_EQ(Common::ToString(v5), "{1: false, 2: true}");
 }

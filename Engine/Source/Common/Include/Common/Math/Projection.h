@@ -61,63 +61,49 @@ namespace Common {
 namespace Common {
     template <Serializable T>
     struct Serializer<ReversedZOrthogonalProjection<T>> {
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::ReversedZOrthogonalProjection")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const ReversedZOrthogonalProjection<T>& value)
+        static size_t Serialize(SerializeStream& stream, const ReversedZOrthogonalProjection<T>& value)
         {
-            TypeIdSerializer<ReversedZOrthogonalProjection<T>>::Serialize(stream);
-
-            Serializer<T>::Serialize(stream, value.width);
-            Serializer<T>::Serialize(stream, value.height);
-            Serializer<T>::Serialize(stream, value.nearPlane);
-            Serializer<std::optional<T>>::Serialize(stream, value.farPlane);
+            return Serializer<T>::Serialize(stream, value.width)
+                + Serializer<T>::Serialize(stream, value.height)
+                + Serializer<T>::Serialize(stream, value.nearPlane)
+                + Serializer<std::optional<T>>::Serialize(stream, value.farPlane);
         }
 
-        static bool Deserialize(DeserializeStream& stream, ReversedZOrthogonalProjection<T>& value)
+        static size_t Deserialize(DeserializeStream& stream, ReversedZOrthogonalProjection<T>& value)
         {
-            if (!TypeIdSerializer<ReversedZOrthogonalProjection<T>>::Deserialize(stream)) {
-                return false;
-            }
-
-            Serializer<T>::Deserialize(stream, value.width);
-            Serializer<T>::Deserialize(stream, value.height);
-            Serializer<T>::Deserialize(stream, value.nearPlane);
-            Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
-            return true;
+            return Serializer<T>::Deserialize(stream, value.width)
+                + Serializer<T>::Deserialize(stream, value.height)
+                + Serializer<T>::Deserialize(stream, value.nearPlane)
+                + Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
         }
     };
 
     template <Serializable T>
     struct Serializer<ReversedZPerspectiveProjection<T>> {
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::ReversedZPerspectiveProjection")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const ReversedZPerspectiveProjection<T>& value)
+        static size_t Serialize(SerializeStream& stream, const ReversedZPerspectiveProjection<T>& value)
         {
-            TypeIdSerializer<ReversedZPerspectiveProjection<T>>::Serialize(stream);
-
-            Serializer<T>::Serialize(stream, value.fov);
-            Serializer<T>::Serialize(stream, value.width);
-            Serializer<T>::Serialize(stream, value.height);
-            Serializer<T>::Serialize(stream, value.nearPlane);
-            Serializer<std::optional<T>>::Serialize(stream, value.farPlane);
+            return Serializer<T>::Serialize(stream, value.fov)
+                + Serializer<T>::Serialize(stream, value.width)
+                + Serializer<T>::Serialize(stream, value.height)
+                + Serializer<T>::Serialize(stream, value.nearPlane)
+                + Serializer<std::optional<T>>::Serialize(stream, value.farPlane);
         }
 
-        static bool Deserialize(DeserializeStream& stream, ReversedZPerspectiveProjection<T>& value)
+        static size_t Deserialize(DeserializeStream& stream, ReversedZPerspectiveProjection<T>& value)
         {
-            if (!TypeIdSerializer<ReversedZPerspectiveProjection<T>>::Deserialize(stream)) {
-                return false;
-            }
-
-            Serializer<T>::Deserialize(stream, value.fov);
-            Serializer<T>::Deserialize(stream, value.width);
-            Serializer<T>::Deserialize(stream, value.height);
-            Serializer<T>::Deserialize(stream, value.nearPlane);
-            Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
-            return true;
+            return Serializer<T>::Deserialize(stream, value.fov)
+                + Serializer<T>::Deserialize(stream, value.width)
+                + Serializer<T>::Deserialize(stream, value.height)
+                + Serializer<T>::Deserialize(stream, value.nearPlane)
+                + Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
         }
     };
 

@@ -71,57 +71,43 @@ namespace Common {
 namespace Common {
     template <>
     struct Serializer<Color> {
-        static constexpr uint32_t typeId = HashUtils::StrCrc32("Common::Color");
+        static constexpr size_t typeId = HashUtils::StrCrc32("Common::Color");
 
-        static void Serialize(SerializeStream& stream, const Color& value)
+        static size_t Serialize(SerializeStream& stream, const Color& value)
         {
-            TypeIdSerializer<Color>::Serialize(stream);
-
-            Serializer<uint8_t>::Serialize(stream, value.r);
-            Serializer<uint8_t>::Serialize(stream, value.g);
-            Serializer<uint8_t>::Serialize(stream, value.b);
-            Serializer<uint8_t>::Serialize(stream, value.a);
+            return Serializer<uint8_t>::Serialize(stream, value.r)
+                + Serializer<uint8_t>::Serialize(stream, value.g)
+                + Serializer<uint8_t>::Serialize(stream, value.b)
+                + Serializer<uint8_t>::Serialize(stream, value.a);
         }
 
-        static bool Deserialize(DeserializeStream& stream, Color& value)
+        static size_t Deserialize(DeserializeStream& stream, Color& value)
         {
-            if (!TypeIdSerializer<Color>::Deserialize(stream)) {
-                return false;
-            }
-
-            Serializer<uint8_t>::Deserialize(stream, value.r);
-            Serializer<uint8_t>::Deserialize(stream, value.g);
-            Serializer<uint8_t>::Deserialize(stream, value.b);
-            Serializer<uint8_t>::Deserialize(stream, value.a);
-            return true;
+            return Serializer<uint8_t>::Deserialize(stream, value.r)
+                + Serializer<uint8_t>::Deserialize(stream, value.g)
+                + Serializer<uint8_t>::Deserialize(stream, value.b)
+                + Serializer<uint8_t>::Deserialize(stream, value.a);
         }
     };
 
     template <>
     struct Serializer<LinearColor> {
-        static constexpr uint32_t typeId = HashUtils::StrCrc32("Common::LinearColor");
+        static constexpr size_t typeId = HashUtils::StrCrc32("Common::LinearColor");
 
-        static void Serialize(SerializeStream& stream, const LinearColor& value)
+        static size_t Serialize(SerializeStream& stream, const LinearColor& value)
         {
-            TypeIdSerializer<Color>::Serialize(stream);
-
-            Serializer<float>::Serialize(stream, value.r);
-            Serializer<float>::Serialize(stream, value.g);
-            Serializer<float>::Serialize(stream, value.b);
-            Serializer<float>::Serialize(stream, value.a);
+            return Serializer<float>::Serialize(stream, value.r)
+                + Serializer<float>::Serialize(stream, value.g)
+                + Serializer<float>::Serialize(stream, value.b)
+                + Serializer<float>::Serialize(stream, value.a);
         }
 
-        static bool Deserialize(DeserializeStream& stream, LinearColor& value)
+        static size_t Deserialize(DeserializeStream& stream, LinearColor& value)
         {
-            if (!TypeIdSerializer<Color>::Deserialize(stream)) {
-                return false;
-            }
-
-            Serializer<float>::Deserialize(stream, value.r);
-            Serializer<float>::Deserialize(stream, value.g);
-            Serializer<float>::Deserialize(stream, value.b);
-            Serializer<float>::Deserialize(stream, value.a);
-            return true;
+            return Serializer<float>::Deserialize(stream, value.r)
+                + Serializer<float>::Deserialize(stream, value.g)
+                + Serializer<float>::Deserialize(stream, value.b)
+                + Serializer<float>::Deserialize(stream, value.a);
         }
     };
 

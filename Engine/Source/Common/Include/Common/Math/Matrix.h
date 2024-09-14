@@ -304,29 +304,26 @@ namespace Common {
 namespace Common { // NOLINT
     template <Serializable T, uint8_t R, uint8_t C>
     struct Serializer<Mat<T, R, C>> {
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::Matrix")
             + Serializer<T>::typeId + (R << 8) + C;
 
-        static void Serialize(SerializeStream& stream, const Mat<T, R, C>& value)
+        static size_t Serialize(SerializeStream& stream, const Mat<T, R, C>& value)
         {
-            TypeIdSerializer<Mat<T, R, C>>::Serialize(stream);
-
+            auto serialized = 0;
             for (auto i = 0; i < R * C; i++) {
-                Serializer<T>::Serialize(stream, value.data[i]);
+                serialized += Serializer<T>::Serialize(stream, value.data[i]);
             }
+            return serialized;
         }
 
-        static bool Deserialize(DeserializeStream& stream, Mat<T, R, C>& value)
+        static size_t Deserialize(DeserializeStream& stream, Mat<T, R, C>& value)
         {
-            if (!TypeIdSerializer<Mat<T, R, C>>::Deserialize(stream)) {
-                return false;
-            }
-
+            auto deserialized = 0;
             for (auto i = 0; i < R * C; i++) {
-                Serializer<T>::Deserialize(stream, value.data[i]);
+                deserialized += Serializer<T>::Deserialize(stream, value.data[i]);
             }
-            return true;
+            return deserialized;
         }
     };
 

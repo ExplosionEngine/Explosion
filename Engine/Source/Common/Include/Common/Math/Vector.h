@@ -216,30 +216,27 @@ namespace Common::Internal {
 namespace Common {
     template <Serializable T, uint8_t L>
     struct Serializer<Vec<T, L>> {
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = Common::HashUtils::StrCrc32("Common::Vector")
             + Serializer<T>::typeId
             + L;
 
-        static void Serialize(SerializeStream& stream, const Vec<T, L>& value)
+        static size_t Serialize(SerializeStream& stream, const Vec<T, L>& value)
         {
-            TypeIdSerializer<Vec<T, L>>::Serialize(stream);
-
+            size_t serialized = 0;
             for (auto i = 0; i < L; i++) {
-                Serializer<T>::Serialize(stream, value.data[i]);
+                serialized += Serializer<T>::Serialize(stream, value.data[i]);
             }
+            return serialized;
         }
 
-        static bool Deserialize(DeserializeStream& stream, Vec<T, L>& value)
+        static size_t Deserialize(DeserializeStream& stream, Vec<T, L>& value)
         {
-            if (!TypeIdSerializer<Vec<T, L>>::Deserialize(stream)) {
-                return false;
-            }
-
+            size_t deserialized = 0;
             for (auto i = 0; i < L; i++) {
-                Serializer<T>::Deserialize(stream, value.data[i]);
+                deserialized += Serializer<T>::Deserialize(stream, value.data[i]);
             }
-            return true;
+            return deserialized;
         }
     };
 

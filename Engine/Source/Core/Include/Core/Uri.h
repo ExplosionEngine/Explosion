@@ -65,25 +65,19 @@ namespace std { // NOLINT
 namespace Common { // NOLINT
     template <>
     struct Serializer<Core::Uri> {
-        static constexpr uint32_t typeId = HashUtils::StrCrc32("Core::Uri");
+        static constexpr size_t typeId = HashUtils::StrCrc32("Core::Uri");
 
-        static void Serialize(SerializeStream& stream, const Core::Uri& value)
+        static size_t Serialize(SerializeStream& stream, const Core::Uri& value)
         {
-            TypeIdSerializer<std::string>::Serialize(stream);
-
-            Serializer<std::string>::Serialize(stream, value.Str());
+            return Serializer<std::string>::Serialize(stream, value.Str());
         }
 
-        static bool Deserialize(DeserializeStream& stream, Core::Uri& value)
+        static size_t Deserialize(DeserializeStream& stream, Core::Uri& value)
         {
-            if (!TypeIdSerializer<std::string>::Deserialize(stream)) {
-                return false;
-            }
-
             std::string str;
-            Serializer<std::string>::Deserialize(stream, str);
+            const auto deserialized = Serializer<std::string>::Deserialize(stream, str);
             value = str;
-            return true;
+            return deserialized;
         }
     };
 }

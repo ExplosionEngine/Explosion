@@ -19,13 +19,13 @@ void PerformTypedSerializationTest(const T& inValue, const Test::CustomComparer<
 
     {
         Common::BinaryFileSerializeStream stream(fileName.string());
-        Serialize<T>(stream, inValue);
+        Common::Serialize<T>(stream, inValue);
     }
 
     {
         T value;
         Common::BinaryFileDeserializeStream stream(fileName.string());
-        Deserialize<T>(stream, value);
+        Common::Deserialize<T>(stream, value);
 
         if (inCustomCompareFunc) {
             ASSERT_TRUE(inCustomCompareFunc(inValue, value));
@@ -38,30 +38,33 @@ void PerformTypedSerializationTest(const T& inValue, const Test::CustomComparer<
 template <typename T>
 void PerformJsonSerializationTest(const T& inValue, const std::string& inExceptJson, const Test::CustomComparer<T>& inCustomCompareFunc = {})
 {
+    std::string json;
     {
         rapidjson::Document document;
 
         rapidjson::Value jsonValue;
-        JsonSerialize<T>(jsonValue, document.GetAllocator(), inValue);
+        Common::JsonSerialize<T>(jsonValue, document.GetAllocator(), inValue);
         document.CopyFrom(jsonValue, document.GetAllocator());
 
         rapidjson::StringBuffer buffer;
         rapidjson::Writer writer(buffer);
         document.Accept(writer);
 
-        const auto json = std::string(buffer.GetString(), buffer.GetSize());
-        ASSERT_EQ(json, inExceptJson);
+        json = std::string(buffer.GetString(), buffer.GetSize());
+        if (!inExceptJson.empty()) {
+            ASSERT_EQ(json, inExceptJson);
+        }
     }
 
     {
         rapidjson::Document document;
-        document.Parse(inExceptJson.c_str());
+        document.Parse(json.c_str());
 
         rapidjson::Value jsonValue;
         jsonValue.CopyFrom(document, document.GetAllocator());
 
         T value;
-        JsonDeserialize<T>(jsonValue, value);
+        Common::JsonDeserialize<T>(jsonValue, value);
         if (inCustomCompareFunc) {
             ASSERT_TRUE(inCustomCompareFunc(inValue, value));
         } else {

@@ -53,27 +53,20 @@ namespace Common {
 namespace Common {
     template <Serializable T>
     struct Serializer<Rect<T>> {
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::Rect")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const Rect<T>& value)
+        static size_t Serialize(SerializeStream& stream, const Rect<T>& value)
         {
-            TypeIdSerializer<Rect<T>>::Serialize(stream);
-
-            Serializer<Vec<T, 2>>::Serialize(stream, value.min);
-            Serializer<Vec<T, 2>>::Serialize(stream, value.max);
+            return Serializer<Vec<T, 2>>::Serialize(stream, value.min)
+                + Serializer<Vec<T, 2>>::Serialize(stream, value.max);
         }
 
-        static bool Deserialize(DeserializeStream& stream, Rect<T>& value)
+        static size_t Deserialize(DeserializeStream& stream, Rect<T>& value)
         {
-            if (!TypeIdSerializer<Rect<T>>::Deserialize(stream)) {
-                return false;
-            }
-
-            Serializer<Vec<T, 2>>::Deserialize(stream, value.min);
-            Serializer<Vec<T, 2>>::Deserialize(stream, value.max);
-            return true;
+            return Serializer<Vec<T, 2>>::Deserialize(stream, value.min)
+                + Serializer<Vec<T, 2>>::Deserialize(stream, value.max);
         }
     };
 

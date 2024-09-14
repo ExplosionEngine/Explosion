@@ -13,7 +13,7 @@ int ga = 0;
 float gb = 0.0f;
 std::string gc;
 
-TEST(SerializationTest, VariableFileSerializationTest)
+TEST(SerializationTest, VariableFileTest)
 {
     static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.VariableFileSerializationTest.bin";
     std::filesystem::create_directories(fileName.parent_path());
@@ -48,7 +48,7 @@ TEST(SerializationTest, VariableFileSerializationTest)
     }
 }
 
-TEST(SerializationTest, ClassFileSerializationTest)
+TEST(SerializationTest, ClassFileTest)
 {
     static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.ClassFileSerializationTest.bin";
     std::filesystem::create_directories(fileName.parent_path());
@@ -75,7 +75,7 @@ TEST(SerializationTest, ClassFileSerializationTest)
     }
 }
 
-TEST(SerializationTest, ContainerFileSerializationTest)
+TEST(SerializationTest, ContainerFileTest)
 {
     static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.ContainerFileSerializationTest.bin";
     std::filesystem::create_directories(fileName.parent_path());
@@ -124,7 +124,22 @@ TEST(SerializationTest, ContainerFileSerializationTest)
     }
 }
 
-TEST(SerializationTest, MetaObjectTypeSerializationTest)
+TEST(SerializationTest, MetaObjectTypeTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, MetaObjectSameAsDefaultObjectTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, MetaObjectWithBaseClassTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, MetaObjectUpgradeTest)
 {
     // TODO
 }

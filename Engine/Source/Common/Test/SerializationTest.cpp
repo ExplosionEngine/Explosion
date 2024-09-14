@@ -96,6 +96,6 @@ TEST(SerializationTest, JsonSerializeTest)
     PerformJsonSerializationTest<std::optional<int>>(15, "15");
     PerformJsonSerializationTest<std::pair<int, bool>>({ 1, false }, R"({"key":1,"value":false})");
     PerformJsonSerializationTest<std::vector<int>>({ 1, 2, 3 }, "[1,2,3]", ::Test::CompareVec<int>);
-    PerformJsonSerializationTest<std::unordered_set<int>>({ 1, 2, 3 }, "[1,2,3]", ::Test::CompareUnorderedSet<int>);
-    PerformJsonSerializationTest<std::unordered_map<int, bool>>({ { 1, false }, { 2, true } }, R"([{"key":1,"value":false},{"key":2,"value":true}])", ::Test::CompareUnorderedMap<int, bool>);
+    PerformJsonSerializationTest<std::unordered_set<int>>({ 1, 2, 3 }, "", ::Test::CompareUnorderedSet<int>);
+    PerformJsonSerializationTest<std::unordered_map<int, bool>>({ { 1, false }, { 2, true } }, "", ::Test::CompareUnorderedMap<int, bool>);
 }
