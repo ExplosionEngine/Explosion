@@ -2,7 +2,7 @@
 // Created by Zach Lee on 2022/9/12.
 //
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Common/Math/Vector.h>
 #include <Common/Math/Matrix.h>
@@ -13,6 +13,13 @@
 #include <Common/Math/Sphere.h>
 
 using namespace Common;
+
+TEST(MathTest, CommonTest)
+{
+    ASSERT_EQ(DivideAndRoundUp(7, 3), 3);
+    ASSERT_EQ(DivideAndRoundUp(6, 2), 3);
+    ASSERT_EQ(DivideAndRoundUp(70, 9), 8);
+}
 
 TEST(MathTest, HFloatTest) // NOLINT
 {

@@ -1,72 +1,130 @@
 //
-// Created by johnk on 2023/9/5.
+// Created by johnk on 2024/8/2.
 //
 
-#include <taskflow/taskflow.hpp>
-
 #include <Runtime/World.h>
+#include <Runtime/Engine.h>
 
 namespace Runtime {
+    const Mirror::Class* Internal::GetClassChecked(const std::string& inName)
+    {
+        return &Mirror::Class::Get(inName);
+    }
+
+    WorldTick::WorldTick(float inFrameTimeMs)
+        : frameTimeMs(inFrameTimeMs)
+    {
+    }
+
+    Commands::Commands(World& inWorld)
+        : world(inWorld)
+    {
+    }
+
+    Commands::~Commands() = default;
+
+    Entity Commands::CreateEntity() // NOLINT
+    {
+        return world.registry.create();
+    }
+
+    void Commands::DestroyEntity(Entity inEntity) // NOLINT
+    {
+        world.registry.destroy(inEntity);
+    }
+
     World::World(std::string inName)
-        : ECSHost()
+        : started(false)
         , name(std::move(inName))
     {
+        EngineHolder::Get().MountWorld(this);
     }
 
-    World::~World() = default;
-
-    void World::Setup()
+    World::~World()
     {
-        ECSHost::Setup();
+        EngineHolder::Get().UnmountWorld(this);
     }
 
-    void World::Tick(float timeMS)
+    void World::Start()
     {
-        ECSHost::Tick(timeMS);
+        Assert(!started);
+        started = true;
+        BroadcastEvent<WorldStart>();
     }
 
-    void World::Shutdown()
+    void World::Stop()
     {
-        ECSHost::Shutdown();
+        Assert(started);
+        started = false;
+        BroadcastEvent<WorldStop>();
     }
 
-    bool World::Setuped()
+    void World::Tick(float inFrameTimeMs)
     {
-        return ECSHost::Setuped();
+        Assert(started);
+        BroadcastEvent<WorldTick>(inFrameTimeMs);
     }
 
-    void World::Reset()
+    bool World::Started() const
     {
-        ECSHost::Reset();
+        return started;
     }
 
-    void World::LoadFromLevel(const AssetRef<Level>& level)
+    EventBroadcaster::EventBroadcaster(World& inWorld)
+        : world(inWorld)
     {
-        Assert(!Setuped());
-        for (const auto& systemClassName : level->systems) {
-            const auto* systemType = SystemTypeFinder::FromSystemClassName(systemClassName);
-            systemType->add(*this);
+    }
+
+    void EventBroadcaster::Dispatch()
+    {
+        tf::Executor executor;
+        executor.run(taskflow);
+    }
+
+    void EventBroadcaster::AllocateEvent(EventClass inEventClass) // NOLINT
+    {
+        AssertWithReason(
+            !allocatedEvents.contains(inEventClass),
+            "system dependency do not support a event signal multi times in a dispatch graph, please check your systems");
+
+        allocatedEvents.emplace(inEventClass, Mirror::Any());
+        if (!world.listenersMap.contains(inEventClass)) {
+            return;
+        }
+
+        for (const auto* listener : world.listenersMap.at(inEventClass)) {
+            if (auto iter = world.signals.find(listener);
+                iter != world.signals.end()) {
+                AllocateEvent(iter->second);
+            }
         }
     }
 
-    void World::SaveToLevel(AssetRef<Level>& level)
+    void EventBroadcaster::BuildGraph(EventClass inEventClass, const tf::Task& wait) // NOLINT
     {
-        auto addSystem = [&](SystemSignature signature) -> void {
-            Assert(signature.type == ClassSignatureType::staticClass);
-            Assert(!level->systems.contains(signature.name));
-            level->systems.emplace(signature.name);
-        };
+        if (!world.listenersMap.contains(inEventClass)) {
+            return;
+        }
 
-        level->systems.clear();
-        for (const auto& system : setupSystems) {
-            addSystem(system);
-        }
-        for (const auto& system : tickSystems) {
-            addSystem(system);
-        }
-        for (const auto& pair : eventSystems) {
-            for (const auto& system : pair.second) {
-                addSystem(system);
+        for (const auto* listener : world.listenersMap.at(inEventClass)) {
+            const auto iter = world.signals.find(listener);
+            const bool hasSignalEvent = iter != world.signals.end();
+
+            auto task = taskflow.emplace([iter, hasSignalEvent, inEventClass, listener, this]() -> void {
+                const auto& listenEvent = allocatedEvents.at(inEventClass);
+
+                Commands commands(world);
+                auto result = listener->GetMemberFunction("Execute").InvokeDyn(world.systemObjs.at(listener), { Mirror::Any(std::ref(commands)), listenEvent });
+                if (hasSignalEvent) {
+                    allocatedEvents.at(iter->second) = result;
+                }
+            });
+            if (!wait.empty()) {
+                task.succeed(wait);
+            }
+
+            if (hasSignalEvent) {
+                BuildGraph(iter->second, task);
             }
         }
     }

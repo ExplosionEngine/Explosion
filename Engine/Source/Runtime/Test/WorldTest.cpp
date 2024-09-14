@@ -1,109 +1,56 @@
 //
-// Created by johnk on 2023/9/20.
+// Created by johnk on 2024/8/20.
 //
 
 #include <WorldTest.h>
+#include <Runtime/Engine.h>
+#include <Test/Test.h>
 
-TEST(WorldTest, BasicTest)
+struct WorldTest : testing::Test {
+    void SetUp() override
+    {
+        Runtime::EngineHolder::Load("RuntimeTest", {});
+    }
+};
+
+void BasicSetupSystem::Execute(Runtime::Commands& commands, const Runtime::WorldStart&) // NOLINT
 {
-    World world;
-    world.AddTickSystem<BasicTest_MotionSystem>();
-    world.AddSetupSystem<BasicTest_WorldSetupSystem>();
-    world.Setup();
-    world.Tick(0.01f);
-
-    SystemCommands commands(world);
-
-    ASSERT_TRUE(commands.HasState<BasicTest_GlobalState>());
-    const auto* savedEntities = commands.GetState<BasicTest_GlobalState>();
-
-    const auto* testPosition0 = commands.Get<BasicTest_Position>(savedEntities->testEntity0);
-    const auto* testVelocity0 = commands.Get<BasicTest_Velocity>(savedEntities->testEntity0);
-    ASSERT_TRUE(testPosition0 != nullptr);
-    ASSERT_EQ(testPosition0->x, 2.0f);
-    ASSERT_EQ(testPosition0->y, 3.0f);
-    ASSERT_EQ(testPosition0->z, 4.0f);
-    ASSERT_TRUE(testVelocity0 != nullptr);
-    ASSERT_EQ(testVelocity0->x, 1.0f);
-    ASSERT_EQ(testVelocity0->y, 1.0f);
-    ASSERT_EQ(testVelocity0->z, 1.0f);
-
-    const auto* testPosition1 = commands.Get<BasicTest_Position>(savedEntities->testEntity1);
-    const auto* testVelocity1 = commands.Get<BasicTest_Velocity>(savedEntities->testEntity1);
-    ASSERT_TRUE(testPosition1 != nullptr);
-    ASSERT_EQ(testPosition1->x, 4.0f);
-    ASSERT_EQ(testPosition1->y, 5.0f);
-    ASSERT_EQ(testPosition1->z, 6.0f);
-    ASSERT_TRUE(testVelocity1 != nullptr);
-    ASSERT_EQ(testVelocity1->x, 2.0f);
-    ASSERT_EQ(testVelocity1->y, 2.0f);
-    ASSERT_EQ(testVelocity1->z, 2.0f);
-
-    world.Shutdown();
+    for (auto i = 0; i < 5; i++) {
+        const Runtime::Entity entity = commands.CreateEntity();
+        commands.EmplaceComp<Position>(entity);
+        commands.EmplaceComp<Velocity>(entity);
+    }
 }
 
-TEST(WorldTest, StateTest)
+StartVerify BasicTickSystem::Execute(Runtime::Commands& commands, const Runtime::WorldTick&) // NOLINT
 {
-    World world;
-    world.AddSetupSystem<StateTest_WorldSetupSystem>();
-    world.Setup();
-    world.Shutdown();
+    auto& count = commands.GetState<IterTimeCount>();
+    count.value += 1;
+
+    auto view = commands.View<Position, Velocity>();
+    view.Each([](Position& position, Velocity& velocity) -> void {
+        position.x += velocity.x;
+        position.y += velocity.y;
+    });
+
+    return {};
 }
 
-TEST(WorldTest, SystemScheduleTest)
+void PositionVerifySystem::Execute(Runtime::Commands& commands, const StartVerify&) // NOLINT
 {
-    World world;
-    world.AddSetupSystem<SystemScheduleTest_WorldSetupSystem>();
-    world.AddTickSystem<SystemScheduleTest_System1>();
-    world.AddTickSystem<SystemScheduleTest_System2>();
-    world.AddTickSystem<SystemScheduleTest_System3>();
-    world.Setup();
-    world.Tick(0.01f);
+    const IterTimeCount& count = commands.GetState<IterTimeCount>();
 
-    SystemCommands commands(world);
-
-    ASSERT_TRUE(commands.HasState<SystemScheduleTest_Context>());
-    const auto* context = commands.GetState<SystemScheduleTest_Context>();
-    ASSERT_TRUE(context->system1Executed);
-    ASSERT_TRUE(context->system2Executed);
-    ASSERT_TRUE(context->system3Executed);
-
-    world.Shutdown();
+    auto view = commands.View<Position, Velocity>();
+    view.Each([&](const Position& position, const Velocity& velocity) -> void {
+        ASSERT_EQ(position.x, velocity.x * count.value);
+    });
 }
 
-TEST(WorldTest, EventTest)
+TEST_F(WorldTest, ECSBasic)
 {
-    World world;
-    world.AddSetupSystem<EventTest_WorldSetupSystem>();
-    world.AddTickSystem<EventTest_WorldTickSystem>();
-    world.AddEventSystem<EventTest_EmptyState::Added, EventTest_OnStateAddedSystem>();
-    world.AddEventSystem<EventTest_EmptyState::Updated, EventTest_OnStateUpdatedSystem>();
-    world.AddEventSystem<EventTest_EmptyState::Removed, EventTest_OnStateRemoveSystem>();
-    world.AddEventSystem<EventTest_EmptyComponent::Added, EventTest_OnComponentAddedSystem>();
-    world.AddEventSystem<EventTest_EmptyComponent::Updated, EventTest_OnComponentUpdatedSystem>();
-    world.AddEventSystem<EventTest_EmptyComponent::Removed, EventTest_OnComponentRemovedSystem>();
-
-    world.Setup();
-    world.Tick(0.01f);
-    world.Tick(0.01f);
-    world.Tick(0.01f);
-    world.Shutdown();
-}
-
-TEST(WorldTest, CustomEventTest)
-{
-    World world;
-    world.AddSetupSystem<CustomEventTest_WorldSetupSystem>();
-    world.AddEventSystem<CustomEventTest_CustomEvent, CustomEventTest_CustomEventSystem>();
-
-    world.Setup();
-    world.Tick(0.01f);
-    world.Shutdown();
-}
-
-TEST(WorldTest, ModuleTest)
-{
-    auto* module = ModuleManager::Get().FindOrLoadTyped<RuntimeModule>("Runtime");
-    auto* world = module->CreateWorld();
-    module->DestroyWorld(world);
+    Runtime::World world;
+    world.AddSystem<BasicSetupSystem>();
+    world.AddSystem<PositionVerifySystem>();
+    world.Start();
+    world.Tick(10.f);
 }

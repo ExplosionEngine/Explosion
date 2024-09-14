@@ -11,9 +11,13 @@
 #include <Common/Math/Common.h>
 #include <Common/Serialization.h>
 
+namespace Common {
+    template <std::endian E> concept ValidEndian = E == std::endian::little || E == std::endian::big;
+}
+
 namespace Common::Internal {
     template <std::endian E>
-    requires (E == std::endian::little) || (E == std::endian::big)
+    requires ValidEndian<E>
     struct FullFloatBase {};
 
     template <std::endian E>
@@ -27,7 +31,7 @@ namespace Common::Internal {
 
 namespace Common {
     template <std::endian E>
-    requires (E == std::endian::little) || (E == std::endian::big)
+    requires ValidEndian<E>
     struct HalfFloatBase {};
 
     template <std::endian E>
@@ -72,11 +76,8 @@ namespace Common {
 
     using HFloat = HalfFloat<std::endian::native>;
 
-    template <typename T>
-    constexpr bool isHalfFloatingPointV = std::is_same_v<T, HFloat>;
-
-    template <typename T>
-    constexpr bool isFloatingPointV = std::is_floating_point_v<T> || isHalfFloatingPointV<T>;
+    template <typename T> concept HalfFloatingPoint = std::is_same_v<T, HFloat>;
+    template <typename T> concept FloatingPoint = std::is_floating_point_v<T> || std::is_same_v<T, HFloat>;
 }
 
 namespace Common {

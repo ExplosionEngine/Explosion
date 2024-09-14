@@ -7,10 +7,17 @@
 #include <cmath>
 #include <numbers>
 
+#include <Common/Concepts.h>
+
 namespace Common {
     static constexpr float epsilon = 0.000001f;
     static constexpr float halfEpsilon = 0.001f;
     static constexpr float pi = std::numbers::pi_v<float>;
+}
+
+namespace Common {
+    template <typename T> T CompareNumber(T lhs, T rhs);
+    template <CppIntegral T> T DivideAndRoundUp(T lhs, T rhs);
 }
 
 namespace Common {
@@ -22,5 +29,11 @@ namespace Common {
         } else {
             return lhs == rhs;
         }
+    }
+
+    template <CppIntegral T>
+    T DivideAndRoundUp(T lhs, T rhs)
+    {
+        return (lhs + rhs - 1) / rhs;
     }
 }

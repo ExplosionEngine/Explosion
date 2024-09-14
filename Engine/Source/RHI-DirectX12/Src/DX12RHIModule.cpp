@@ -20,10 +20,15 @@ namespace RHI::DirectX12 {
         delete gInstance;
     }
 
+    Core::ModuleType DX12RHIModule::Type() const
+    {
+        return Core::ModuleType::mDynamic;
+    }
+
     Instance* DX12RHIModule::GetRHIInstance() // NOLINT
     {
         return gInstance;
     }
 }
 
-IMPLEMENT_MODULE(RHI_DIRECTX12_API, RHI::DirectX12::DX12RHIModule);
+IMPLEMENT_DYNAMIC_MODULE(RHI_DIRECTX12_API, RHI::DirectX12::DX12RHIModule);

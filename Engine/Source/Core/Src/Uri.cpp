@@ -111,20 +111,20 @@ namespace Core {
         std::filesystem::path path;
 #if BUILD_TEST
         if (IsEngineTestAsset()) {
-            path = Paths::EngineTestPath() / Common::StringUtils::AfterFirst(content, "Engine/Test/");
+            path = Paths::EngineTest() / Common::StringUtils::AfterFirst(content, "Engine/Test/");
         } else if (IsEnginePluginAsset()) {
 #else
         if (IsEnginePluginAsset()) {
 #endif
             const std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Engine/Plugin/");
-            path = Paths::EnginePluginAssetPath(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
+            path = Paths::EnginePluginAsset(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
         } else if (IsProjectPluginAsset()) {
             const std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Project/Plugin/");
-            path = Paths::ProjectPluginAssetPath(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
+            path = Paths::ProjectPluginAsset(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
         } else if (IsEngineAsset()) {
-            path = Paths::EngineAssetPath() / Common::StringUtils::AfterFirst(content, "Engine/");
+            path = Paths::EngineAsset() / Common::StringUtils::AfterFirst(content, "Engine/");
         } else if (IsProjectAsset()) {
-            path = Paths::ProjectAssetPath() / Common::StringUtils::AfterFirst(content, "Project/");
+            path = Paths::ProjectAsset() / Common::StringUtils::AfterFirst(content, "Project/");
         } else {
             AssertWithReason(false, "bad asset uri");
         }

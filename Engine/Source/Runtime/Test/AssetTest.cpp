@@ -2,7 +2,7 @@
 // Created by johnk on 2023/10/16.
 //
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <AssetTest.h>
 

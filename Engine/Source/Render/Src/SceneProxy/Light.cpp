@@ -15,7 +15,7 @@ namespace Render {
 
     ILightSceneProxy::~ILightSceneProxy() = default;
 
-    Common::FMat4x4 ILightSceneProxy::RGetWorldMatrix() const
+    Common::FMat4x4 ILightSceneProxy::RGetLocalToWorld() const
     {
         return worldMatrix;
     }

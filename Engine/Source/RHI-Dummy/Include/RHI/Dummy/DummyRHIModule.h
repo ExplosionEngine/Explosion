@@ -15,6 +15,7 @@ namespace RHI::Dummy {
 
         void OnLoad() override;
         void OnUnload() override;
+        Core::ModuleType Type() const override;
         Instance* GetRHIInstance() override;
     };
 }

@@ -101,6 +101,8 @@ namespace Rendering {
         size_t Hash() const;
     };
 
+    template <typename T> concept AnyPipelineLayoutDesc = std::is_same_v<T, ComputePipelineLayoutDesc> || std::is_same_v<T, RasterPipelineLayoutDesc>;
+
     struct ComputePipelineStateDesc {
         ComputePipelineShaderSet shaders;
 

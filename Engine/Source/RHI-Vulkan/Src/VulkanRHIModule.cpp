@@ -20,10 +20,15 @@ namespace RHI::Vulkan {
         delete gInstance;
     }
 
+    Core::ModuleType VulkanRHIModule::Type() const
+    {
+        return Core::ModuleType::mDynamic;
+    }
+
     Instance* VulkanRHIModule::GetRHIInstance() // NOLINT
     {
         return gInstance;
     }
 }
 
-IMPLEMENT_MODULE(RHI_VULKAN_API, RHI::Vulkan::VulkanRHIModule);
+IMPLEMENT_DYNAMIC_MODULE(RHI_VULKAN_API, RHI::Vulkan::VulkanRHIModule);

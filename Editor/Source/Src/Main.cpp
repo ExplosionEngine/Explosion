@@ -3,10 +3,25 @@
 //
 
 #include <QApplication>
-#include <QPushButton>
+#include <Editor/Core.h>
+#include <Editor/Widget/Launcher.h>
 
 int main(int argc, char* argv[])
 {
+    Editor::Core::Get().Initialize(argc, argv);
+
     QApplication qtApplication(argc, argv);
-    return QApplication::exec();
+
+    Common::UniqueRef<QWidget> mainWindow;
+    if (!Editor::Core::Get().ProjectHasSet()) {
+        mainWindow = new Editor::Launcher();
+    } else {
+        // TODO editor main
+    }
+    mainWindow->show();
+    const int execRes = QApplication::exec();
+
+    mainWindow = nullptr;
+    Editor::Core::Get().Cleanup();
+    return execRes;
 }

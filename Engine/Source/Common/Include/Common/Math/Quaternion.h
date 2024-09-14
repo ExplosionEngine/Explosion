@@ -12,20 +12,17 @@ namespace Common {
     template <typename T> struct Angle;
     template <typename T> struct Radian;
 
-    template <typename T>
-    requires isFloatingPointV<T>
+    template <FloatingPoint T>
     struct AngleBase {
         T value;
     };
 
-    template <typename T>
-    requires isFloatingPointV<T>
+    template <FloatingPoint T>
     struct RadianBase {
         T value;
     };
 
-    template <typename T>
-    requires isFloatingPointV<T>
+    template <FloatingPoint T>
     struct QuaternionBase {
         T x;
         T y;
@@ -68,8 +65,8 @@ namespace Common {
 
         Quaternion();
         Quaternion(T inW, T inX, T inY, T inZ);
-        Quaternion(const Vector<T, 3>& inAxis, float inAngle);
-        Quaternion(const Vector<T, 3>& inAxis, const Radian<T>& inRadian);
+        Quaternion(const Vec<T, 3>& inAxis, float inAngle);
+        Quaternion(const Vec<T, 3>& inAxis, const Radian<T>& inRadian);
         Quaternion(const Quaternion& inValue);
         Quaternion(Quaternion&& inValue) noexcept;
         Quaternion& operator=(const Quaternion& inValue);
@@ -88,15 +85,15 @@ namespace Common {
         Quaternion& operator*=(const Quaternion& rhs);
         Quaternion& operator/=(T rhs);
 
-        Vector<T, 3> ImaginaryPart() const;
+        Vec<T, 3> ImaginaryPart() const;
         T Model() const;
         Quaternion Negatived() const;
         Quaternion Conjugated() const;
         Quaternion Normalized() const;
         T Dot(const Quaternion& rhs) const;
         // when axis faced to us, ccw as positive direction
-        Vector<T, 3> RotateVector(const Vector<T, 3>& inVector) const;
-        Matrix<T, 4, 4> GetRotationMatrix() const;
+        Vec<T, 3> RotateVector(const Vec<T, 3>& inVector) const;
+        Mat<T, 4, 4> GetRotationMatrix() const;
     };
 
     template <typename T>
@@ -327,9 +324,9 @@ namespace Common {
     }
 
     template <typename T>
-    Quaternion<T>::Quaternion(const Vector<T, 3>& inAxis, float inAngle)
+    Quaternion<T>::Quaternion(const Vec<T, 3>& inAxis, float inAngle)
     {
-        Vector<T, 3> axis = inAxis.Normalized();
+        Vec<T, 3> axis = inAxis.Normalized();
         T halfRadian = Angle<T>(inAngle).ToRadian() / 2.0f;
         T halfRadianSin = std::sin(halfRadian);
         T halfRadianCos = std::cos(halfRadian);
@@ -341,7 +338,7 @@ namespace Common {
     }
 
     template <typename T>
-    Quaternion<T>::Quaternion(const Vector<T, 3>& inAxis, const Radian<T>& inRadian)
+    Quaternion<T>::Quaternion(const Vec<T, 3>& inAxis, const Radian<T>& inRadian)
         : Quaternion(inAxis, inRadian.ToAngle())
     {
     }
@@ -486,9 +483,9 @@ namespace Common {
     }
 
     template <typename T>
-    Vector<T, 3> Quaternion<T>::ImaginaryPart() const
+    Vec<T, 3> Quaternion<T>::ImaginaryPart() const
     {
-        return Vector<T, 3>(this->x, this->y, this->z);
+        return Vec<T, 3>(this->x, this->y, this->z);
     }
 
     template <typename T>
@@ -532,15 +529,15 @@ namespace Common {
     }
 
     template <typename T>
-    Vector<T, 3> Quaternion<T>::RotateVector(const Vector<T, 3>& inVector) const
+    Vec<T, 3> Quaternion<T>::RotateVector(const Vec<T, 3>& inVector) const
     {
         Quaternion v = Quaternion(0, inVector.x, inVector.y, inVector.z);
         Quaternion v2 = Conjugated() * v * (*this);
-        return Vector<T, 3>(v2.x, v2.y, v2.z);
+        return Vec<T, 3>(v2.x, v2.y, v2.z);
     }
 
     template <typename T>
-    Matrix<T, 4, 4> Quaternion<T>::GetRotationMatrix() const
+    Mat<T, 4, 4> Quaternion<T>::GetRotationMatrix() const
     {
         T xx2 = this->x * this->x * 2;
         T yy2 = this->y * this->y * 2;
@@ -553,7 +550,7 @@ namespace Common {
         T xz2 = this->x * this->z * 2;
         T yz2 = this->y * this->z * 2;
 
-        return Matrix<T, 4, 4>(
+        return Mat<T, 4, 4>(
             1 - yy2 - zz2, xy2 + wz2, xz2 - wy2, 0,
             xy2 - wz2, 1 - xx2 - zz2, yz2 + wx2, 0,
             xz2 + wy2, yz2 - wx2, 1 - xx2 - yy2, 0,

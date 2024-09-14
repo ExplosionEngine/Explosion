@@ -2,7 +2,7 @@
 // Created by johnk on 2022/9/29.
 //
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Mirror/Registry.h>
 
@@ -91,7 +91,7 @@ TEST(RegistryTest, GlobalScopeTest)
         const auto& variable = globalScope.GetVariable("v0");
         ASSERT_EQ(variable.GetMeta("TestKey"), "v0");
 
-        auto value = variable.Get();
+        auto value = variable.GetDyn();
         ASSERT_EQ(value.As<int>(), 1);
         ASSERT_EQ(value.As<const int&>(), 1);
         value.As<int&>() = 2;
@@ -101,11 +101,11 @@ TEST(RegistryTest, GlobalScopeTest)
         ASSERT_EQ(v0, 3);
 
         value = 4;
-        variable.Set(&value);
+        variable.SetDyn(value);
         ASSERT_EQ(v0, 4);
 
         Mirror::Any anyValue = 5;
-        variable.Set(&anyValue);
+        variable.SetDyn(anyValue);
         ASSERT_EQ(v0, 5);
     }
 
@@ -124,12 +124,11 @@ TEST(RegistryTest, GlobalScopeTest)
     {
         const auto& function = globalScope.GetFunction("F2");
         int value = 0;
-        function.Invoke(std::ref(value));
+        function.Invoke(value);
         ASSERT_EQ(value, 1);
 
         value = 0;
-        std::vector<Mirror::Any> arguments = { std::ref(value) };
-        function.InvokeWith(arguments.data(), arguments.size());
+        function.InvokeDyn({ Mirror::Any(std::ref(value)) });
         ASSERT_EQ(value, 1);
     }
 }
@@ -168,7 +167,7 @@ TEST(RegistryTest, ClassTest)
             const auto& variable = clazz.GetStaticVariable("v0");
             ASSERT_EQ(variable.GetMeta("TestKey"), "v0");
             variable.Set(1);
-            ASSERT_EQ(variable.Get().As<int>(), 1);
+            ASSERT_EQ(variable.GetDyn().As<int>(), 1);
         }
 
         {
@@ -185,7 +184,7 @@ TEST(RegistryTest, ClassTest)
         const auto& setter = clazz.GetMemberFunction("SetV0");
         const auto& getter = clazz.GetMemberFunction("GetV0");
 
-        auto object = constructor.ConstructOnStack(1);
+        auto object = constructor.Construct(1);
         ASSERT_EQ(getter.Invoke(object.As<C1&>()).As<int>(), 1);
         setter.Invoke(object.As<C1&>(), 2);
         ASSERT_EQ(getter.Invoke(object.As<C1&>()).As<int>(), 2);
@@ -198,16 +197,16 @@ TEST(RegistryTest, ClassTest)
         const auto& a = clazz.GetMemberVariable("a");
         const auto& b = clazz.GetMemberVariable("b");
 
-        auto object = constructor.NewObject(1, 2);
-        auto objectRef = Mirror::Any(*object.As<C2*>());
-        ASSERT_EQ(a.Get(&objectRef).As<int>(), 1);
-        ASSERT_EQ(b.Get(&objectRef).As<int>(), 2);
-        destructor.InvokeWith(&objectRef);
+        auto object = constructor.New(1, 2);
+        Mirror::Any objectRef = *object.As<C2*>();
+        ASSERT_EQ(a.GetDyn(objectRef).As<int>(), 1);
+        ASSERT_EQ(b.GetDyn(objectRef).As<int>(), 2);
+        destructor.InvokeDyn(objectRef);
     }
 
     {
         const auto& clazz = Mirror::Class::Get<C3>();
-        auto object = clazz.GetConstructor("Constructor0").NewObject(1, 2, 3);
+        auto object = clazz.GetConstructor("Constructor0").New(1, 2, 3);
         auto* c2Obj = object.As<C2*>();
 
         ASSERT_EQ(c2Obj->a, 1);
@@ -235,8 +234,8 @@ TEST(RegistryTest, EnumTest)
     ASSERT_EQ(c.As<E0>(), E0::c);
     ASSERT_EQ(max.As<E0>(), E0::max);
 
-    ASSERT_EQ(enumInfo.GetElementName(&a), "A");
-    ASSERT_EQ(enumInfo.GetElementName(&b), "B");
-    ASSERT_EQ(enumInfo.GetElementName(&c), "C");
-    ASSERT_EQ(enumInfo.GetElementName(&max), "max");
+    ASSERT_EQ(enumInfo.GetElementName(a), "A");
+    ASSERT_EQ(enumInfo.GetElementName(b), "B");
+    ASSERT_EQ(enumInfo.GetElementName(c), "C");
+    ASSERT_EQ(enumInfo.GetElementName(max), "max");
 }

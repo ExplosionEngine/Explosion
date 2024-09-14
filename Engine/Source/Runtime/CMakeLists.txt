@@ -5,7 +5,7 @@ AddLibrary(
     SRC ${SOURCES}
     PUBLIC_INC Include
     REFLECT Include
-    LIB Core EnTT Mirror assimp-lib Render
+    LIB Core Mirror assimp-lib Render EnTT
 )
 
 file(GLOB TEST_SOURCES Test/*.cpp)

@@ -2,13 +2,13 @@
 // Created by johnk on 2023/12/11.
 //
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Rendering/ResourcePool.h>
 
 using namespace Rendering;
 
-struct ResourcePoolTest : public testing::Test {
+struct ResourcePoolTest : testing::Test {
     void SetUp() override
     {
         instance = RHI::Instance::GetByType(RHI::RHIType::dummy);

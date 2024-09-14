@@ -4,18 +4,46 @@
 
 #pragma once
 
+#include <concepts>
 #include <cstdint>
 #include <type_traits>
 
-#define NonCopyable(clz) \
-    clz(clz&) = delete;   \
-    clz& operator=(clz&) = delete; \
+#include <Common/Concepts.h>
+
+#define DefaultCopyCtor(clz) \
+    clz(clz&) = default; \
+    clz(const clz&) = default; \
+
+#define DefaultCopyAssignOp(clz) \
+    clz& operator=(clz&) = default; \
+    clz& operator=(const clz&) = default; \
+
+#define NonCopyCtor(clz) \
+    clz(clz&) = delete; \
     clz(const clz&) = delete; \
+
+#define NonCopyAssignOp(clz) \
+    clz& operator=(clz&) = delete; \
     clz& operator=(const clz&) = delete; \
 
+#define DefaultMovable(clz) \
+    clz(clz&&) noexcept = default; \
+    clz& operator=(clz&&) noexcept = default; \
+
+#define NonMovable(clz) \
+    clz(clz&&) = delete; \
+    clz& operator=(clz&&) = delete; \
+
+#define DefaultCopyable(clz) \
+    DefaultCopyCtor(clz) \
+    DefaultCopyAssignOp(clz) \
+
+#define NonCopyable(clz) \
+    NonCopyCtor(clz) \
+    NonCopyAssignOp(clz) \
+
 namespace Common {
-    template <uint32_t A, typename T>
-    requires std::is_integral_v<T>
+    template <uint32_t A, CppIntegral T>
     T AlignUp(T value);
 
     template <typename LHS, typename... RHS>
@@ -23,7 +51,7 @@ namespace Common {
 }
 
 namespace Common {
-    template <uint32_t A, typename T> requires std::is_integral_v<T>
+    template <uint32_t A, CppIntegral T>
     T AlignUp(T value)
     {
         return (value + (A - 1)) & ~(A - 1);

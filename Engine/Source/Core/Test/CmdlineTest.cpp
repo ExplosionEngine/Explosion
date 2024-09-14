@@ -2,7 +2,7 @@
 // Created by johnk on 2023/7/25.
 //
 
-#include <gtest/gtest.h>
+#include <Test/Test.h>
 
 #include <Core/Cmdline.h>
 

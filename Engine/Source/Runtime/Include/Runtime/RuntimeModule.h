@@ -1,34 +1,12 @@
 //
-// Created by johnk on 2023/9/1.
+// Created by johnk on 2024/8/21.
 //
 
 #pragma once
 
-#include <Common/Memory.h>
 #include <Core/Module.h>
 #include <Runtime/Api.h>
-#include <Runtime/World.h>
-#include <Runtime/Engine.h>
 
 namespace Runtime {
-    struct RuntimeModuleInitParams {
-        bool isEditor;
-    };
-
-    class RUNTIME_API RuntimeModule : public Core::Module {
-    public:
-        RuntimeModule();
-        ~RuntimeModule() override;
-
-        void Initialize(const RuntimeModuleInitParams& inParams);
-        Engine* GetEngine();
-        World* CreateWorld(const std::string& inName = "") const;
-        void DestroyWorld(World* inWorld) const;
-
-    private:
-        void CreateEngine();
-
-        bool initialized;
-        Common::UniqueRef<Engine> engine;
-    };
+    DECLARE_MIN_MODULE(RUNTIME_API, RuntimeModule, Core::ModuleType::mDynamic)
 }

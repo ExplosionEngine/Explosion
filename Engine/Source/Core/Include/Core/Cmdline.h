@@ -10,6 +10,7 @@
 #include <unordered_map>
 
 #include <Core/Api.h>
+#include <Common/Debug.h>
 
 namespace Core {
     class CORE_API CmdlineArg {
@@ -32,6 +33,8 @@ namespace Core {
         ~Cli();
 
         std::pair<bool, std::string> Parse(int argc, char* argv[]);
+        CmdlineArg* FindArg(const std::string& name) const;
+        CmdlineArg& FindArgChecked(const std::string& name) const;
 
     private:
         template <typename T> friend class CmdlineArgValue;
@@ -40,7 +43,7 @@ namespace Core {
         Cli();
 
         bool parsed;
-        std::vector<CmdlineArg*> args;
+        std::unordered_map<std::string, CmdlineArg*> args;
     };
 
     template <typename T>
@@ -96,7 +99,8 @@ namespace Core {
         , option(std::move(inOption))
         , doc(std::move(inDoc))
     {
-        Cli::Get().args.emplace_back(this);
+        Assert(!Cli::Get().args.contains(name));
+        Cli::Get().args.emplace(name, this);
     }
 
     template <typename T>
@@ -131,7 +135,8 @@ namespace Core {
         , option(std::move(inOption))
         , doc(std::move(inDoc))
     {
-        Cli::Get().args.emplace_back(this);
+        Assert(!Cli::Get().args.contains(name));
+        Cli::Get().args.emplace(name, this);
     }
 
     template <typename T>
