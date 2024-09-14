@@ -24,7 +24,6 @@ namespace Common {
         NonCopyable(SerializeStream)
         virtual ~SerializeStream();
 
-        void WriteTyped(const void* data, size_t size, uint32_t typeCrc);
         virtual void Write(const void* data, size_t size) = 0;
         virtual void Seek(int64_t offset) = 0;
 
@@ -37,7 +36,6 @@ namespace Common {
         NonCopyable(DeserializeStream);
         virtual ~DeserializeStream();
 
-        bool ReadTyped(void* data, size_t size, uint32_t typeCrc);
         virtual void Read(void* data, size_t size) = 0;
         virtual void Seek(int64_t offset) = 0;
 
@@ -105,7 +103,6 @@ namespace Common {
         Serializer<T>::Deserialize(deserializeStream, inValue);
     };
 
-    // TODO remove this or find a better way to perform check
     template <Serializable T>
     struct TypeIdSerializer {
         static void Serialize(SerializeStream& stream);

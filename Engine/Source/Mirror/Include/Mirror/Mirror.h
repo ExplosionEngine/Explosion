@@ -651,7 +651,7 @@ namespace Mirror {
         const std::unordered_map<Id, MemberVariable, IdHashProvider>& GetMemberVariables() const;
         const MemberFunction* FindMemberFunction(const Id& inId) const;
         const MemberFunction& GetMemberFunction(const Id& inId) const;
-        std::optional<Any> GetDefaultObject() const;
+        Any GetDefaultObject() const;
 
         Any ConstructDyn(const ArgumentList& arguments) const;
         Any NewDyn(const ArgumentList& arguments) const;
@@ -668,7 +668,7 @@ namespace Mirror {
             std::string name;
             const TypeInfo* typeInfo;
             BaseClassGetter baseClassGetter;
-            std::optional<std::function<Any()>> defaultObjectCreator;
+            std::function<Any()> defaultObjectCreator;
             std::optional<Destructor::ConstructParams> destructorParams;
             std::optional<Constructor::ConstructParams> defaultConstructorParams;
         };
@@ -685,7 +685,7 @@ namespace Mirror {
 
         const TypeInfo* typeInfo;
         BaseClassGetter baseClassGetter;
-        std::optional<Any> defaultObject;
+        Any defaultObject;
         std::optional<Destructor> destructor;
         std::unordered_map<Id, Constructor, IdHashProvider> constructors;
         std::unordered_map<Id, Variable, IdHashProvider> staticVariables;
@@ -807,6 +807,7 @@ namespace Common { // NOLINT
     struct Serializer<T> {
         static constexpr uint32_t typeId = HashUtils::StrCrc32("_MetaObject");
 
+        // TODO need process serialize failed
         static void SerializeDyn(SerializeStream& stream, const Mirror::Class& clazz, const Mirror::Argument& obj)
         {
             if (const auto* baseClass = clazz.GetBaseClass();
@@ -815,7 +816,7 @@ namespace Common { // NOLINT
             }
 
             const auto defaultObject = clazz.GetDefaultObject();
-            AssertWithReason(defaultObject.has_value(), "do you forget add default constructor to EClass() which you want to serialize ?");
+            AssertWithReason(!defaultObject.Empty(), "do you forget add default constructor to EClass() which you want to serialize ?");
 
             const auto& name = clazz.GetName();
             const auto& memberVariables = clazz.GetMemberVariables();
@@ -831,7 +832,7 @@ namespace Common { // NOLINT
 
                 Serializer<std::string>::Serialize(stream, id.name);
 
-                const bool sameWithDefaultObject = memberVariable.GetDyn(obj) == memberVariable.GetDyn(defaultObject.value());
+                const bool sameWithDefaultObject = memberVariable.GetDyn(obj) == memberVariable.GetDyn(defaultObject);
                 Serializer<bool>::Serialize(stream, sameWithDefaultObject);
 
                 if (sameWithDefaultObject) {
@@ -855,7 +856,7 @@ namespace Common { // NOLINT
             }
 
             const auto defaultObject = clazz.GetDefaultObject();
-            AssertWithReason(defaultObject.has_value(), "do you forget add default constructor to EClass() which you want to serialize ?");
+            AssertWithReason(!defaultObject.Empty(), "do you forget add default constructor to EClass() which you want to serialize ?");
 
             std::string className;
             Serializer<std::string>::Deserialize(stream, className);
@@ -891,7 +892,7 @@ namespace Common { // NOLINT
                 }
 
                 if (restoreAsDefaultObject) {
-                    memberVariable.SetDyn(obj, memberVariable.GetDyn(defaultObject.value()));
+                    memberVariable.SetDyn(obj, memberVariable.GetDyn(defaultObject));
                 } else {
                     memberVariable.GetDyn(obj).Deserialize(stream);
                 }

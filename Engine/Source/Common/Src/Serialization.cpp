@@ -11,33 +11,9 @@ namespace Common {
 
     SerializeStream::~SerializeStream() = default;
 
-    void SerializeStream::WriteTyped(const void* data, size_t size, uint32_t typeCrc)
-    {
-        Write(&typeCrc, sizeof(uint32_t));
-        Write(&size, sizeof(size_t));
-        Write(data, size);
-    }
-
     DeserializeStream::DeserializeStream() = default;
 
     DeserializeStream::~DeserializeStream() = default;
-
-    bool DeserializeStream::ReadTyped(void* data, size_t size, uint32_t typeCrc)
-    {
-        uint32_t tempCrc = 0;
-        Read(&tempCrc, sizeof(uint32_t));
-
-        size_t tempSize = 0;
-        Read(&tempSize, sizeof(size_t));
-
-        if (tempCrc != typeCrc || tempSize != size) {
-            Seek(static_cast<int64_t>(tempSize));
-            return false;
-        }
-
-        Read(data, size);
-        return true;
-    }
 
     BinaryFileSerializeStream::BinaryFileSerializeStream(const std::string& inFileName)
     {

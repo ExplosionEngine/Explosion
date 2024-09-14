@@ -2,6 +2,7 @@
 // Created by johnk on 2022/9/21.
 //
 
+#include <ranges>
 #include <utility>
 #include <sstream>
 
@@ -1054,9 +1055,7 @@ namespace Mirror {
         , typeInfo(params.typeInfo)
         , baseClassGetter(std::move(params.baseClassGetter))
     {
-        if (params.defaultObjectCreator.has_value()) {
-            CreateDefaultObject(params.defaultObjectCreator.value());
-        }
+        CreateDefaultObject(params.defaultObjectCreator);
         if (params.destructorParams.has_value()) {
             destructor = Destructor(std::move(params.destructorParams.value()));
         }
@@ -1185,7 +1184,9 @@ namespace Mirror {
 
     void Class::CreateDefaultObject(const std::function<Any()>& inCreator)
     {
-        defaultObject = inCreator();
+        if (inCreator) {
+            defaultObject = inCreator();
+        }
     }
 
     Destructor& Class::EmplaceDestructor(Destructor::ConstructParams&& inParams)
@@ -1427,10 +1428,10 @@ namespace Mirror {
         return iter->second;
     }
 
-    std::optional<Any> Class::GetDefaultObject() const
+    Any Class::GetDefaultObject() const
     {
-        if (defaultObject.has_value()) {
-            return defaultObject->ConstRef();
+        if (!defaultObject.Empty()) {
+            return defaultObject.ConstRef();
         }
         return {};
     }
