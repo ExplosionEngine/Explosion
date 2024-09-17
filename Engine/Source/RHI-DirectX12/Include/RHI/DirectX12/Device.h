@@ -91,6 +91,7 @@ namespace RHI::DirectX12 {
         Common::UniqueRef<Semaphore> CreateSemaphore() override;
 
         bool CheckSwapChainFormatSupport(Surface* inSurface, PixelFormat inFormat) override;
+        TextureSubResourceCopyFootprint GetTextureSubResourceCopyFootprint(const Texture& texture, const TextureSubResourceInfo& subResourceInfo) override;
 
         DX12Gpu& GetGpu() const;
         ID3D12Device* GetNative() const;

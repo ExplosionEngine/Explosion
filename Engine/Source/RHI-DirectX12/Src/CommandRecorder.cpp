@@ -43,15 +43,6 @@ namespace RHI::DirectX12 {
     {
         return { texture.GetNative(), static_cast<UINT>(GetNativeSubResourceIndex(texture, subResource)) };
     }
-
-    size_t GetNativeBytesPerPixel(DX12Device& device, const DX12Texture& texture, const TextureSubResourceInfo& subResource)
-    {
-        const auto nativeResourceDesc = texture.GetNative()->GetDesc();
-
-        D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint;
-        device.GetNative()->GetCopyableFootprints(&nativeResourceDesc, GetNativeSubResourceIndex(texture, subResource), 1, 0, &footprint, nullptr, nullptr, nullptr);
-        return footprint.Footprint.RowPitch / footprint.Footprint.Width;
-    }
 }
 
 namespace RHI::DirectX12 {
@@ -85,13 +76,15 @@ namespace RHI::DirectX12 {
         const auto* srcBuffer = static_cast<DX12Buffer*>(src);
         const auto* dstTexture = static_cast<DX12Texture*>(dst);
 
+        const auto aspectLayout = device.GetTextureSubResourceCopyFootprint(*dst, copyInfo.textureSubResource); // NOLINT
+
         D3D12_PLACED_SUBRESOURCE_FOOTPRINT srcLayout;
         srcLayout.Offset = copyInfo.bufferOffset;
         srcLayout.Footprint.Format = dstTexture->GetNative()->GetDesc().Format;
         srcLayout.Footprint.Width = copyInfo.copyRegion.x;
         srcLayout.Footprint.Height = copyInfo.copyRegion.y;
         srcLayout.Footprint.Depth = copyInfo.copyRegion.z;
-        srcLayout.Footprint.RowPitch = srcLayout.Footprint.Width * GetNativeBytesPerPixel(device, *dstTexture, copyInfo.textureSubResource);
+        srcLayout.Footprint.RowPitch = aspectLayout.rowPitch;
 
         const CD3DX12_TEXTURE_COPY_LOCATION srcCopyRegion(srcBuffer->GetNative(), srcLayout);
         const CD3DX12_TEXTURE_COPY_LOCATION dstCopyRegion = GetNativeTextureCopyLocation(*dstTexture, copyInfo.textureSubResource);
