@@ -2,59 +2,18 @@
 // Created by johnk on 2023/4/23.
 //
 
-#include <vector>
-#include <unordered_set>
-#include <unordered_map>
 #include <filesystem>
 
 #include <Test/Test.h>
 
-#include <Mirror/Registry.h>
 #include <Mirror/Mirror.h>
+#include <SerializationTest.h>
 
-int ga;
-float gb;
+int ga = 0;
+float gb = 0.0f;
 std::string gc;
 
-struct SerializationTestStruct0 {
-    int a;
-    float b;
-    std::string c;
-};
-
-struct SerializationTestStruct1 {
-    std::vector<int> a;
-    std::unordered_set<std::string> b;
-    std::unordered_map<int, std::string> c;
-    std::vector<std::vector<bool>> d;
-};
-
-struct MirrorInfoRegistry {
-    MirrorInfoRegistry()
-    {
-        Mirror::Registry::Get()
-            .Global()
-                .Variable<&ga>("ga")
-                .Variable<&gb>("gb")
-                .Variable<&gc>("gc");
-
-        Mirror::Registry::Get()
-            .Class<SerializationTestStruct0>("SerializationTestStruct0")
-                .MemberVariable<&SerializationTestStruct0::a>("a")
-                .MemberVariable<&SerializationTestStruct0::b>("b")
-                .MemberVariable<&SerializationTestStruct0::c>("c");
-
-        Mirror::Registry::Get()
-            .Class<SerializationTestStruct1>("SerializationTestStruct1")
-                .MemberVariable<&SerializationTestStruct1::a>("a")
-                .MemberVariable<&SerializationTestStruct1::b>("b")
-                .MemberVariable<&SerializationTestStruct1::c>("c")
-                .MemberVariable<&SerializationTestStruct1::d>("d");
-    }
-};
-static MirrorInfoRegistry registry;
-
-TEST(SerializationTest, VariableFileSerializationTest)
+TEST(SerializationTest, VariableFileTest)
 {
     static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.VariableFileSerializationTest.bin";
     std::filesystem::create_directories(fileName.parent_path());
@@ -66,9 +25,9 @@ TEST(SerializationTest, VariableFileSerializationTest)
         gc = "3";
 
         const auto& globalScope = Mirror::GlobalScope::Get();
-        globalScope.GetVariable("ga").SerializeDyn(stream);
-        globalScope.GetVariable("gb").SerializeDyn(stream);
-        globalScope.GetVariable("gc").SerializeDyn(stream);
+        globalScope.GetVariable("ga").GetDyn().Serialize(stream);
+        globalScope.GetVariable("gb").GetDyn().Serialize(stream);
+        globalScope.GetVariable("gc").GetDyn().Serialize(stream);
     }
 
     {
@@ -79,9 +38,9 @@ TEST(SerializationTest, VariableFileSerializationTest)
         Common::BinaryFileDeserializeStream stream(fileName.string());
 
         const auto& globalScope = Mirror::GlobalScope::Get();
-        globalScope.GetVariable("ga").DeserializeDyn(stream);
-        globalScope.GetVariable("gb").DeserializeDyn(stream);
-        globalScope.GetVariable("gc").DeserializeDyn(stream);
+        globalScope.GetVariable("ga").GetDyn().Deserialize(stream);
+        globalScope.GetVariable("gb").GetDyn().Deserialize(stream);
+        globalScope.GetVariable("gc").GetDyn().Deserialize(stream);
 
         ASSERT_EQ(ga, 1);
         ASSERT_EQ(gb, 2.0f);
@@ -89,7 +48,7 @@ TEST(SerializationTest, VariableFileSerializationTest)
     }
 }
 
-TEST(SerializationTest, ClassFileSerializationTest)
+TEST(SerializationTest, ClassFileTest)
 {
     static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.ClassFileSerializationTest.bin";
     std::filesystem::create_directories(fileName.parent_path());
@@ -100,26 +59,23 @@ TEST(SerializationTest, ClassFileSerializationTest)
         obj.a = 1;
         obj.b = 2.0f;
         obj.c = "3";
-
-        const auto& clazz = Mirror::Class::Get("SerializationTestStruct0");
-        clazz.SerializeDyn(stream, Mirror::Any(std::ref(obj)));
+        Serialize(stream, obj);
     }
 
     {
         Common::BinaryFileDeserializeStream stream(fileName.string());
 
-        const auto& clazz = Mirror::Class::Get("SerializationTestStruct0");
-        Mirror::Any obj = clazz.GetDefaultConstructor().Construct();
-        clazz.DeserailizeDyn(stream, obj);
+        SerializationTestStruct0 obj;
+        Deserialize(stream, obj);
 
-        const auto& [a, b, c] = obj.As<const SerializationTestStruct0&>();
+        const auto& [a, b, c] = obj;
         ASSERT_EQ(a, 1);
         ASSERT_EQ(b, 2.0f);
         ASSERT_EQ(c, "3");
     }
 }
 
-TEST(SerializationTest, ContainerFileSerializationTest)
+TEST(SerializationTest, ContainerFileTest)
 {
     static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.ContainerFileSerializationTest.bin";
     std::filesystem::create_directories(fileName.parent_path());
@@ -132,17 +88,19 @@ TEST(SerializationTest, ContainerFileSerializationTest)
         obj.b = { "3", "4" };
         obj.c = { { 5, "6" }, { 7, "8" } };
         obj.d = { { false, true }, { true, false } };
+        obj.e = { { 1, 2.0f, "3" } };
 
-        clazz.SerializeDyn(stream, Mirror::Any(std::ref(obj)));
+        Mirror::Any(std::ref(obj))
+            .Serialize(stream);
     }
 
     {
         Common::BinaryFileDeserializeStream stream(fileName.string());
 
         Mirror::Any ref = clazz.GetDefaultConstructor().Construct();
-        clazz.DeserailizeDyn(stream, ref);
+        ref.Deserialize(stream);
 
-        const auto& [a, b, c, d] = ref.As<const SerializationTestStruct1&>();
+        const auto& [a, b, c, d, e] = ref.As<const SerializationTestStruct1&>();
         ASSERT_EQ(a.size(), 2);
         ASSERT_EQ(a[0], 1);
         ASSERT_EQ(a[1], 2);
@@ -159,5 +117,44 @@ TEST(SerializationTest, ContainerFileSerializationTest)
         ASSERT_EQ(d[1].size(), 2);
         ASSERT_EQ(d[1][0], true);
         ASSERT_EQ(d[1][1], false);
+        ASSERT_EQ(e.size(), 1);
+        ASSERT_EQ(e[0].a, 1);
+        ASSERT_EQ(e[0].b, 2.0f);
+        ASSERT_EQ(e[0].c, "3");
     }
+}
+
+TEST(SerializationTest, MetaObjectTypeTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, MetaObjectSameAsDefaultObjectTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, MetaObjectWithBaseClassTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, MetaObjectUpgradeTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, EnumSerializationTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, TransientTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, CallbackTest)
+{
+    // TODO
 }

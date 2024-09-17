@@ -69,11 +69,13 @@ namespace RHI {
 
     enum class PixelFormat : EnumType {
         // 8-Bits
+        begin8Bits,
         r8Unorm,
         r8Snorm,
         r8Uint,
         r8Sint,
         // 16-Bits
+        begin16Bits,
         r16Uint,
         r16Sint,
         r16Float,
@@ -81,7 +83,9 @@ namespace RHI {
         rg8Snorm,
         rg8Uint,
         rg8Sint,
+        d16Unorm,
         // 32-Bits
+        begin32Bits,
         r32Uint,
         r32Sint,
         r32Float,
@@ -98,22 +102,22 @@ namespace RHI {
         rgb9E5Float,
         rgb10A2Unorm,
         rg11B10Float,
+        d24UnormS8Uint,
+        d32Float,
         // 64-Bits
+        begin64Bits,
         rg32Uint,
         rg32Sint,
         rg32Float,
         rgba16Uint,
         rgba16Sint,
         rgba16Float,
+        d32FloatS8Uint,
         // 128-Bits
+        begin128Bits,
         rgba32Uint,
         rgba32Sint,
         rgba32Float,
-        // Depth-Stencil
-        d16Unorm,
-        d24UnormS8Uint,
-        d32Float,
-        d32FloatS8Uint,
         max
     };
 
@@ -530,6 +534,10 @@ namespace RHI {
     };
     using ColorWriteFlags = Flags<ColorWriteBits>;
     RHI_FLAGS_DECLARE(ColorWriteFlags, ColorWriteBits)
+}
+
+namespace RHI {
+    size_t GetBytesPerPixel(PixelFormat format);
 }
 
 namespace std {

@@ -50,6 +50,7 @@ namespace Mirror {
         const uint32_t isPointer : 1;
         const uint32_t isConstPointer : 1;
         const uint32_t isClass : 1;
+        const uint32_t isEnum: 1;
         const uint32_t isArray : 1;
         const uint32_t isArithmetic : 1;
         const uint32_t isIntegral : 1;
@@ -74,7 +75,7 @@ namespace Mirror {
 
     enum class AnyPolicy : uint8_t {
         memoryHolder,
-        ref,
+        nonConstRef,
         constRef,
         max
     };
@@ -90,6 +91,11 @@ namespace Mirror {
         using GetPtrFunc = Any(void*);
         using GetConstPtrFunc = Any(const void*);
         using DerefFunc = Any(const void*);
+        using SerializeFunc = size_t(const void*, Common::SerializeStream&);
+        using DeserializeFunc = std::pair<bool, size_t>(void*, Common::DeserializeStream&);
+        using JsonSerializeFunc = void(const void*, rapidjson::Value&, rapidjson::Document::AllocatorType&);
+        using JsonDeserializeFunc = void(void*, const rapidjson::Value&);
+        using ToStringFunc = std::string(const void*);
 
         template <typename T> static void Detor(void* inThis) noexcept;
         template <typename T> static void CopyConstruct(void* inThis, const void* inOther);
@@ -105,6 +111,11 @@ namespace Mirror {
         template <typename T> static Any GetPtr(void* inThis);
         template <typename T> static Any GetConstPtr(const void* inThis);
         template <typename T> static Any Deref(const void* inThis);
+        template <typename T> static size_t Serialize(const void* inThis, Common::SerializeStream& inStream);
+        template <typename T> static std::pair<bool, size_t> Deserialize(void* inThis, Common::DeserializeStream& inStream);
+        template <typename T> static void JsonSerialize(const void* inThis, rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator);
+        template <typename T> static void JsonDeserialize(void* inThis, const rapidjson::Value& inJsonValue);
+        template <typename T> static std::string ToString(const void* inThis);
 
         DetorFunc* detor;
         CopyConstructFunc* copyConstruct;
@@ -120,6 +131,11 @@ namespace Mirror {
         GetPtrFunc* getPtr;
         GetConstPtrFunc* getConstPtr;
         DerefFunc* deref;
+        SerializeFunc* serialize;
+        DeserializeFunc* deserialize;
+        JsonSerializeFunc* jsonSerialize;
+        JsonDeserializeFunc* jsonDeserialize;
+        ToStringFunc* toString;
     };
 
     template <typename T>
@@ -137,7 +153,12 @@ namespace Mirror {
         &AnyRtti::GetAddConstPointerType<T>,
         &AnyRtti::GetPtr<T>,
         &AnyRtti::GetConstPtr<T>,
-        &AnyRtti::Deref<T>
+        &AnyRtti::Deref<T>,
+        &AnyRtti::Serialize<T>,
+        &AnyRtti::Deserialize<T>,
+        &AnyRtti::JsonSerialize<T>,
+        &AnyRtti::JsonDeserialize<T>,
+        &AnyRtti::ToString<T>
     };
 
     class MIRROR_API Any {
@@ -170,6 +191,9 @@ namespace Mirror {
         template <typename T> T* TryAs();
         template <typename T> T* TryAs() const;
 
+        // TODO
+        // template <typename B, typename T> T PolyAs() const;
+
         // TODO array support
 
         Any Ref();
@@ -184,6 +208,7 @@ namespace Mirror {
         AnyPolicy Policy() const;
         bool IsMemoryHolder() const;
         bool IsRef() const;
+        bool IsNonConstRef() const;
         bool IsConstRef() const;
         const TypeInfo* Type();
         const TypeInfo* Type() const;
@@ -197,6 +222,13 @@ namespace Mirror {
         Mirror::TypeId TypeId() const;
         void Reset();
         bool Empty() const;
+        size_t Serialize(Common::SerializeStream& inStream) const;
+        std::pair<bool, size_t> Deserialize(Common::DeserializeStream& inStream);
+        std::pair<bool, size_t> Deserialize(Common::DeserializeStream& inStream) const;
+        void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator) const;
+        void JsonDeserialize(const rapidjson::Value& inJsonValue);
+        void JsonDeserialize(const rapidjson::Value& inJsonValue) const;
+        std::string ToString() const;
 
         // always return original ptr and size, even policy is ref
         void* Data() const;
@@ -217,11 +249,11 @@ namespace Mirror {
 
         private:
             static constexpr size_t MaxStackMemorySize = sizeof(std::vector<uint8_t>) - sizeof(size_t);
-            using StackMemory = Common::InplaceVector<uint8_t, MaxStackMemorySize>;
+            using InplaceMemory = Common::InplaceVector<uint8_t, MaxStackMemorySize>;
             using HeapMemory = std::vector<uint8_t>;
-            static_assert(sizeof(StackMemory) == sizeof(HeapMemory));
+            static_assert(sizeof(InplaceMemory) == sizeof(HeapMemory));
 
-            std::variant<StackMemory, HeapMemory> memory;
+            std::variant<InplaceMemory, HeapMemory> memory;
         };
 
         class MIRROR_API RefInfo {
@@ -262,9 +294,12 @@ namespace Mirror {
         Argument& operator=(const Any& inAny);
         Argument& operator=(Any&& inAny);
 
-        template <typename T>
-        T As() const;
+        template <typename T> T As() const;
 
+        bool IsMemoryHolder() const;
+        bool IsRef() const;
+        bool IsNonConstRef() const;
+        bool IsConstRef() const;
         const TypeInfo* Type() const;
         const TypeInfo* RemoveRefType() const;
         const TypeInfo* AddPointerType() const;
@@ -326,14 +361,10 @@ namespace Mirror {
 
         template <typename T> void Set(T&& value) const;
         Any Get() const;
-        void Serialize(Common::SerializeStream& stream) const;
-        void Deserialize(Common::DeserializeStream& stream) const;
 
         const TypeInfo* GetTypeInfo() const;
         void SetDyn(const Argument& inArgument) const;
         Any GetDyn() const;
-        void SerializeDyn(Common::SerializeStream& stream) const;
-        void DeserializeDyn(Common::DeserializeStream& stream) const;
 
     private:
         friend class GlobalRegistry;
@@ -343,8 +374,6 @@ namespace Mirror {
 
         using Setter = std::function<void(const Argument&)>;
         using Getter = std::function<Any()>;
-        using VariableSerializer = std::function<void(Common::SerializeStream&, const Variable&)>;
-        using VariableDeserializer = std::function<void(Common::DeserializeStream&, const Variable&)>;
 
         struct ConstructParams {
             std::string name;
@@ -352,8 +381,6 @@ namespace Mirror {
             const TypeInfo* typeInfo;
             Setter setter;
             Getter getter;
-            VariableSerializer serializer;
-            VariableDeserializer deserializer;
         };
 
         explicit Variable(ConstructParams&& params);
@@ -362,8 +389,6 @@ namespace Mirror {
         const TypeInfo* typeInfo;
         Setter setter;
         Getter getter;
-        VariableSerializer serializer;
-        VariableDeserializer deserializer;
     };
 
     class MIRROR_API Function final : public Type {
@@ -475,15 +500,11 @@ namespace Mirror {
 
         template <typename C, typename T> void Set(C&& object, T&& value) const;
         template <typename C> Any Get(C&& object) const;
-        template <typename C> void Serialize(Common::SerializeStream& stream, C&& object) const;
-        template <typename C> void Deserialize(Common::DeserializeStream& stream, C&& object) const;
 
         uint32_t SizeOf() const;
         const TypeInfo* GetTypeInfo() const;
         void SetDyn(const Argument& object, const Argument& value) const;
         Any GetDyn(const Argument& object) const;
-        void SerializeDyn(Common::SerializeStream& stream, const Argument& object) const;
-        void DeserializeDyn(Common::DeserializeStream& stream, const Argument& object) const;
         bool IsTransient() const;
 
     private:
@@ -492,8 +513,6 @@ namespace Mirror {
 
         using Setter = std::function<void(const Argument&, const Argument&)>;
         using Getter = std::function<Any(const Argument&)>;
-        using MemberVariableSerializer = std::function<void(Common::SerializeStream&, const MemberVariable&, const Argument&)>;
-        using MemberVariableDeserializer = std::function<void(Common::DeserializeStream&, const MemberVariable&, const Argument&)>;
 
         struct ConstructParams {
             std::string name;
@@ -501,8 +520,6 @@ namespace Mirror {
             const TypeInfo* typeInfo;
             Setter setter;
             Getter getter;
-            MemberVariableSerializer serializer;
-            MemberVariableDeserializer deserializer;
         };
 
         explicit MemberVariable(ConstructParams&& params);
@@ -511,8 +528,6 @@ namespace Mirror {
         const TypeInfo* typeInfo;
         Setter setter;
         Getter getter;
-        MemberVariableSerializer serializer;
-        MemberVariableDeserializer deserializer;
     };
 
     class MIRROR_API MemberFunction final : public Type {
@@ -604,8 +619,6 @@ namespace Mirror {
 
         template <typename... Args> Any Construct(Args&&... args);
         template <typename... Args> Any New(Args&&... args);
-        template <typename T> void Serialize(Common::SerializeStream& stream, T&& obj) const;
-        template <typename T> void Deserailize(Common::DeserializeStream& stream, T&& obj) const;
 
         void ForEachStaticVariable(const VariableTraverser& func) const;
         void ForEachStaticFunction(const FunctionTraverser& func) const;
@@ -635,13 +648,13 @@ namespace Mirror {
         const MemberVariable* FindMemberVariable(const Id& inId) const;
         const MemberVariable& GetMemberVariable(const Id& inId) const;
         bool HasMemberFunction(const Id& inId) const;
+        const std::unordered_map<Id, MemberVariable, IdHashProvider>& GetMemberVariables() const;
         const MemberFunction* FindMemberFunction(const Id& inId) const;
         const MemberFunction& GetMemberFunction(const Id& inId) const;
+        Any GetDefaultObject() const;
 
         Any ConstructDyn(const ArgumentList& arguments) const;
         Any NewDyn(const ArgumentList& arguments) const;
-        void SerializeDyn(Common::SerializeStream& stream, const Argument& obj) const;
-        void DeserailizeDyn(Common::DeserializeStream& stream, const Argument& obj) const;
 
     private:
         static std::unordered_map<TypeId, Id> typeToIdMap;
@@ -655,7 +668,7 @@ namespace Mirror {
             std::string name;
             const TypeInfo* typeInfo;
             BaseClassGetter baseClassGetter;
-            std::optional<std::function<Any()>> defaultObjectCreator;
+            std::function<Any()> defaultObjectCreator;
             std::optional<Destructor::ConstructParams> destructorParams;
             std::optional<Constructor::ConstructParams> defaultConstructorParams;
         };
@@ -672,7 +685,7 @@ namespace Mirror {
 
         const TypeInfo* typeInfo;
         BaseClassGetter baseClassGetter;
-        std::optional<Any> defaultObject;
+        Any defaultObject;
         std::optional<Destructor> destructor;
         std::unordered_map<Id, Constructor, IdHashProvider> constructors;
         std::unordered_map<Id, Variable, IdHashProvider> staticVariables;
@@ -745,6 +758,8 @@ namespace Mirror {
         const TypeInfo* typeInfo;
         std::unordered_map<Id, EnumElement, IdHashProvider> elements;
     };
+
+    template <typename T> concept MetaClass = requires(T inValue) { { T::GetClass() } -> std::same_as<const Class&>; };
 }
 
 namespace Mirror::Internal {
@@ -753,8 +768,8 @@ namespace Mirror::Internal {
     {
         using RawType = std::remove_cvref_t<T>;
         static_assert(
-            !std::is_same_v<RawType, Any> && !std::is_same_v<RawType, Any*> && !std::is_same_v<RawType, const Any*>,
-            "static version reflection method do no support use Any/Any*/const Any* as argument, please check you arguments");
+            !std::is_same_v<RawType, Any> && !std::is_same_v<RawType, Any*> && !std::is_same_v<RawType, const Any*> && !std::is_same_v<RawType, Argument>,
+            "static version reflection method do no support use Any/Any*/const Any*/Argument as argument, please check you arguments");
     }
 
     template <typename T>
@@ -787,6 +802,163 @@ namespace Mirror::Internal {
     }
 }
 
+namespace Common { // NOLINT
+    template <Mirror::MetaClass T>
+    struct Serializer<T> {
+        static constexpr size_t typeId = HashUtils::StrCrc32("_MetaObject");
+
+        // struct
+        // std::string className                  : classNameSize
+        // size_t baseContentSize                 : sizeof(size_t)
+        // void* baseContent                      : baseContentSize
+        // size_t memberVariableCount             : sizeof(size_t)
+        // size_t[] memberVariableContentEnds     : sizeof(size_t) * memberVariableCount
+        // void*[] memberVariableContent          : memberVariablesContentSize
+        //     |- std::string memberVariableName  : memberVariableNameSize
+        //     |- bool sameAsDefaultObject        : sizeof(bool)
+        //     |- void* memberVariableContent     : memberVariableEnd - memberVariableLastEnd
+
+        static size_t SerializeDyn(SerializeStream& stream, const Mirror::Class& clazz, const Mirror::Argument& obj)
+        {
+            const auto& className = clazz.GetName();
+            const auto* baseClass = clazz.GetBaseClass();
+            const auto& memberVariables = clazz.GetMemberVariables();
+            const auto defaultObject = clazz.GetDefaultObject();
+
+            const auto classNameSize = Serializer<std::string>::Serialize(stream, className);
+
+            uint64_t baseClassContentSize = 0;
+            stream.Seek(sizeof(uint64_t));
+            if (baseClass != nullptr) {
+                baseClassContentSize = SerializeDyn(stream, *baseClass, obj);
+            }
+
+            stream.Seek(-static_cast<int64_t>(baseClassContentSize) - static_cast<int64_t>(sizeof(uint64_t)));
+            Serializer<uint64_t>::Serialize(stream, baseClassContentSize);
+            stream.Seek(static_cast<int64_t>(baseClassContentSize));
+
+            const uint64_t memberVariableCount = memberVariables.size();
+            std::vector<uint64_t> memberVariableContentEnds;
+            memberVariableContentEnds.reserve(memberVariableCount);
+
+            stream.Seek(static_cast<int64_t>(sizeof(uint64_t) * (memberVariableCount + 1)));
+            uint64_t memberVariableContentSize = 0;
+            for (const auto& [id, memberVariable] : memberVariables) {
+                const bool sameAsDefaultObject = defaultObject.Empty() ? false : memberVariable.GetDyn(obj) == memberVariable.GetDyn(defaultObject);
+
+                memberVariableContentSize += Serializer<std::string>::Serialize(stream, memberVariable.GetName());
+                memberVariableContentSize += Serializer<bool>::Serialize(stream, sameAsDefaultObject);
+                if (!sameAsDefaultObject) {
+                    memberVariableContentSize += memberVariable.GetDyn(obj).Serialize(stream);
+                }
+                memberVariableContentEnds.emplace_back(memberVariableContentSize);
+            }
+
+            stream.Seek(-static_cast<int64_t>(memberVariableContentSize) - static_cast<int64_t>(sizeof(uint64_t) * (memberVariableCount + 1)));
+            Serializer<uint64_t>::Serialize(stream, memberVariableCount);
+            for (const auto& end : memberVariableContentEnds) {
+                Serializer<uint64_t>::Serialize(stream, end);
+            }
+            stream.Seek(static_cast<int64_t>(memberVariableContentSize));
+            return classNameSize + baseClassContentSize + sizeof(uint64_t) * (memberVariableCount + 2) + memberVariableContentSize; // NOLINT
+        }
+
+        static size_t DeserializeDyn(DeserializeStream& stream, const Mirror::Class& clazz, const Mirror::Argument& obj)
+        {
+            const auto& className = clazz.GetName();
+            const auto* baseClass = clazz.GetBaseClass();
+            const auto& memberVariables = clazz.GetMemberVariables();
+            const auto defaultObject = clazz.GetDefaultObject();
+
+            std::string name;
+            const auto nameSize = Serializer<std::string>::Deserialize(stream, name);
+
+            uint64_t aspectBaseClassContentSize = 0;
+            Serializer<uint64_t>::Deserialize(stream, aspectBaseClassContentSize);
+            if (aspectBaseClassContentSize != 0 && baseClass != nullptr) {
+                const auto actualBaseClassContentSize = DeserializeDyn(stream, *baseClass, obj);
+                stream.Seek(static_cast<int64_t>(aspectBaseClassContentSize) - static_cast<int64_t>(actualBaseClassContentSize));
+            }
+
+            uint64_t memberVariableCount = 0;
+            Serializer<uint64_t>::Deserialize(stream, memberVariableCount);
+
+            std::vector<uint64_t> memberVariableEnds;
+            memberVariableEnds.resize(memberVariableCount);
+            for (auto& offset : memberVariableEnds) {
+                Serializer<uint64_t>::Deserialize(stream, offset);
+            }
+
+            uint64_t memberVariableContentCur = 0;
+            for (const auto& end : memberVariableEnds) {
+                std::string memberVariableName;
+                memberVariableContentCur += Serializer<std::string>::Deserialize(stream, memberVariableName);
+
+                if (!clazz.HasMemberVariable(memberVariableName)) {
+                    stream.Seek(static_cast<int64_t>(end) - static_cast<int64_t>(memberVariableContentCur));
+                    memberVariableContentCur = end;
+                    continue;
+                }
+                const auto& memberVariable = clazz.GetMemberVariable(memberVariableName);
+
+                bool sameAsDefaultObject = false;
+                memberVariableContentCur += Serializer<bool>::Deserialize(stream, sameAsDefaultObject);
+                if (sameAsDefaultObject) {
+                    if (!defaultObject.Empty()) {
+                        memberVariable.SetDyn(obj, memberVariable.GetDyn(obj));
+                    }
+                    continue;
+                }
+
+                memberVariableContentCur += memberVariable.GetDyn(obj).Deserialize(stream).second;
+                stream.Seek(static_cast<int64_t>(end) - static_cast<int64_t>(memberVariableContentCur));
+                memberVariableContentCur = end;
+            }
+            return nameSize + aspectBaseClassContentSize + sizeof(uint64_t) * (memberVariableCount + 2) + memberVariableContentCur;
+        }
+
+        static size_t Serialize(SerializeStream& stream, const T& value)
+        {
+            return SerializeDyn(stream, Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(value));
+        }
+
+        static size_t Deserialize(DeserializeStream& stream, T& value)
+        {
+            return DeserializeDyn(stream, Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(value));
+        }
+    };
+
+    template <Mirror::MetaClass T>
+    struct StringConverter<T> {
+        static std::string ToStringDyn(const Mirror::Class& clazz, const Mirror::Argument& argument)
+        {
+            const auto& memberVariables = clazz.GetMemberVariables();
+
+            std::stringstream stream;
+            stream << "{ ";
+            auto count = 0;
+            for (const auto& [id, var] : memberVariables) {
+                stream << fmt::format("{}: {}", id.name, var.GetDyn(argument).ToString());
+                if (count++ != memberVariables.size() - 1) {
+                    stream << ", ";
+                }
+            }
+            stream << "}";
+            return stream.str();
+        }
+
+        static std::string ToString(const T& inValue)
+        {
+            return ToStringDyn(Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(inValue));
+        }
+    };
+
+    // TODO meta object to json
+
+    // TODO Mirror::Any serialization serialization/tostring/tojson
+    // TODO Type class serialization/tostring/tojson
+}
+
 namespace Mirror {
     template <typename T>
     const TypeInfo* GetTypeInfo()
@@ -805,6 +977,7 @@ namespace Mirror {
             std::is_pointer_v<T>,
             std::is_pointer_v<T> ? std::is_const_v<std::remove_pointer_t<T>> : false,
             std::is_class_v<T>,
+            std::is_enum_v<T>,
             std::is_array_v<T>,
             std::is_arithmetic_v<T>,
             std::is_integral_v<T>,
@@ -846,7 +1019,7 @@ namespace Mirror {
     template <typename T>
     bool AnyRtti::Equal(const void* inThis, const void* inOther) noexcept
     {
-        if constexpr (std::equality_comparable<T>) {
+        if constexpr (Common::EqualComparable<T>) {
             return *static_cast<const T*>(inThis) == *static_cast<const T*>(inOther);
         } else {
             QuickFailWithReason(fmt::format("type {} is no support equal compare", GetTypeInfo<T>()->name));
@@ -927,6 +1100,36 @@ namespace Mirror {
             QuickFailWithReason("AnyRtti::Dref() only support pointer type");
             return {};
         }
+    }
+
+    template <typename T>
+    size_t AnyRtti::Serialize(const void* inThis, Common::SerializeStream& inStream)
+    {
+        return Common::Serialize<T>(inStream, *static_cast<const T*>(inThis));
+    }
+
+    template <typename T>
+    std::pair<bool, size_t> AnyRtti::Deserialize(void* inThis, Common::DeserializeStream& inStream)
+    {
+        return Common::Deserialize<T>(inStream, *static_cast<T*>(inThis));
+    }
+
+    template <typename T>
+    void AnyRtti::JsonSerialize(const void* inThis, rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator)
+    {
+        Common::JsonSerialize(outJsonValue, inAllocator, *static_cast<const T*>(inThis));
+    }
+
+    template <typename T>
+    void AnyRtti::JsonDeserialize(void* inThis, const rapidjson::Value& inJsonValue)
+    {
+        Common::JsonDeserialize(inJsonValue, *static_cast<T*>(inThis));
+    }
+
+    template <typename T>
+    std::string AnyRtti::ToString(const void* inThis)
+    {
+        return Common::ToString(*static_cast<const T*>(inThis));
     }
 
     template <typename T>
@@ -1051,7 +1254,7 @@ namespace Mirror {
     {
         using RawType = std::remove_const_t<T>;
 
-        policy = std::is_const_v<T> ? AnyPolicy::constRef : AnyPolicy::ref;
+        policy = std::is_const_v<T> ? AnyPolicy::constRef : AnyPolicy::nonConstRef;
         rtti = &anyRttiImpl<RawType>;
         info = RefInfo(const_cast<RawType*>(&inRef.get()), sizeof(RawType));
     }
@@ -1122,18 +1325,6 @@ namespace Mirror {
         return GetDyn(Internal::ForwardAsArgument(std::forward<C>(object)));
     }
 
-    template <typename C>
-    void MemberVariable::Serialize(Common::SerializeStream& stream, C&& object) const
-    {
-        SerializeDyn(stream, Internal::ForwardAsArgument(std::forward<C>(object)));
-    }
-
-    template <typename C>
-    void MemberVariable::Deserialize(Common::DeserializeStream& stream, C&& object) const
-    {
-        DeserializeDyn(stream, Internal::ForwardAsArgument(std::forward<C>(object)));
-    }
-
     template <typename C, typename... Args>
     Any MemberFunction::Invoke(C&& object, Args&&... args) const
     {
@@ -1176,23 +1367,13 @@ namespace Mirror {
         return constructor->New(arguments);
     }
 
-    template <typename T>
-    void Class::Serialize(Common::SerializeStream& stream, T&& obj) const
-    {
-        SerializeDyn(stream, Internal::ForwardAsArgument(std::forward<T>(obj)));
-    }
-
-    template <typename T>
-    void Class::Deserailize(Common::DeserializeStream& stream, T&& obj) const
-    {
-        DeserailizeDyn(stream, Internal::ForwardAsArgument(std::forward<T>(obj)));
-    }
-
     template <Common::CppEnum T>
     const Enum* Enum::Find()
     {
         auto iter = typeToIdMap.find(Mirror::GetTypeInfo<T>()->id);
-        Assert(iter != typeToIdMap.end());
+        if (iter == typeToIdMap.end()) {
+            return nullptr;
+        }
         return Find(iter->second);
     }
 

@@ -9,6 +9,7 @@
 #include <Common/Math/Matrix.h>
 #include <Common/Math/Quaternion.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <FloatingPoint T>
@@ -30,16 +31,22 @@ namespace Common {
 
     template <typename T>
     struct ReversedZOrthogonalProjection : ReversedZOrthogonalProjectionBase<T> {
+        ReversedZOrthogonalProjection();
         ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane);
         ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane, T inFarPlane);
+
         Mat<T, 4, 4> GetProjectionMatrix() const;
+        bool operator==(const ReversedZOrthogonalProjection& inRhs) const;
     };
 
     template <typename T>
     struct ReversedZPerspectiveProjection : ReversedZPerspectiveProjectionBase<T> {
+        ReversedZPerspectiveProjection();
         ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane);
         ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane, T inFarPlane);
+
         Mat<T, 4, 4> GetProjectionMatrix() const;
+        bool operator==(const ReversedZPerspectiveProjection& inRhs) const;
     };
 
     using HReversedZOrthoProjection = ReversedZOrthogonalProjection<HFloat>;
@@ -52,72 +59,124 @@ namespace Common {
 }
 
 namespace Common {
-    template <typename T>
+    template <Serializable T>
     struct Serializer<ReversedZOrthogonalProjection<T>> {
-        static constexpr bool serializable = true;
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::ReversedZOrthogonalProjection")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const ReversedZOrthogonalProjection<T>& value)
+        static size_t Serialize(SerializeStream& stream, const ReversedZOrthogonalProjection<T>& value)
         {
-            TypeIdSerializer<ReversedZOrthogonalProjection<T>>::Serialize(stream);
-
-            Serializer<T>::Serialize(stream, value.width);
-            Serializer<T>::Serialize(stream, value.height);
-            Serializer<T>::Serialize(stream, value.nearPlane);
-            Serializer<std::optional<T>>::Serialize(stream, value.farPlane);
+            return Serializer<T>::Serialize(stream, value.width)
+                + Serializer<T>::Serialize(stream, value.height)
+                + Serializer<T>::Serialize(stream, value.nearPlane)
+                + Serializer<std::optional<T>>::Serialize(stream, value.farPlane);
         }
 
-        static bool Deserialize(DeserializeStream& stream, ReversedZOrthogonalProjection<T>& value)
+        static size_t Deserialize(DeserializeStream& stream, ReversedZOrthogonalProjection<T>& value)
         {
-            if (!TypeIdSerializer<ReversedZOrthogonalProjection<T>>::Deserialize(stream)) {
-                return false;
-            }
-
-            Serializer<T>::Deserialize(stream, value.width);
-            Serializer<T>::Deserialize(stream, value.height);
-            Serializer<T>::Deserialize(stream, value.nearPlane);
-            Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
-            return true;
+            return Serializer<T>::Deserialize(stream, value.width)
+                + Serializer<T>::Deserialize(stream, value.height)
+                + Serializer<T>::Deserialize(stream, value.nearPlane)
+                + Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
         }
     };
 
-    template <typename T>
+    template <Serializable T>
     struct Serializer<ReversedZPerspectiveProjection<T>> {
-        static constexpr bool serializable = true;
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::ReversedZPerspectiveProjection")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const ReversedZPerspectiveProjection<T>& value)
+        static size_t Serialize(SerializeStream& stream, const ReversedZPerspectiveProjection<T>& value)
         {
-            TypeIdSerializer<ReversedZPerspectiveProjection<T>>::Serialize(stream);
-
-            Serializer<T>::Serialize(stream, value.fov);
-            Serializer<T>::Serialize(stream, value.width);
-            Serializer<T>::Serialize(stream, value.height);
-            Serializer<T>::Serialize(stream, value.nearPlane);
-            Serializer<std::optional<T>>::Serialize(stream, value.farPlane);
+            return Serializer<T>::Serialize(stream, value.fov)
+                + Serializer<T>::Serialize(stream, value.width)
+                + Serializer<T>::Serialize(stream, value.height)
+                + Serializer<T>::Serialize(stream, value.nearPlane)
+                + Serializer<std::optional<T>>::Serialize(stream, value.farPlane);
         }
 
-        static bool Deserialize(DeserializeStream& stream, ReversedZPerspectiveProjection<T>& value)
+        static size_t Deserialize(DeserializeStream& stream, ReversedZPerspectiveProjection<T>& value)
         {
-            if (!TypeIdSerializer<ReversedZPerspectiveProjection<T>>::Deserialize(stream)) {
-                return false;
-            }
+            return Serializer<T>::Deserialize(stream, value.fov)
+                + Serializer<T>::Deserialize(stream, value.width)
+                + Serializer<T>::Deserialize(stream, value.height)
+                + Serializer<T>::Deserialize(stream, value.nearPlane)
+                + Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
+        }
+    };
 
-            Serializer<T>::Deserialize(stream, value.fov);
-            Serializer<T>::Deserialize(stream, value.width);
-            Serializer<T>::Deserialize(stream, value.height);
-            Serializer<T>::Deserialize(stream, value.nearPlane);
-            Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
-            return true;
+    template <StringConvertible T>
+    struct StringConverter<ReversedZOrthogonalProjection<T>> {
+        static std::string ToString(const ReversedZOrthogonalProjection<T>& inValue)
+        {
+            return fmt::format(
+                "{width={}, height={}, near={}, far={}}",
+                StringConverter<T>::ToString(inValue.width),
+                StringConverter<T>::ToString(inValue.height),
+                StringConverter<T>::ToString(inValue.nearPlane),
+                StringConverter<std::optional<T>>::ToString(inValue.farPlane));
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<ReversedZPerspectiveProjection<T>> {
+        static std::string ToString(const ReversedZPerspectiveProjection<T>& inValue)
+        {
+            return fmt::format(
+                "{fov={}, width={}, height={}, near={}, far={}}",
+                StringConverter<T>::ToString(inValue.fov),
+                StringConverter<T>::ToString(inValue.width),
+                StringConverter<T>::ToString(inValue.height),
+                StringConverter<T>::ToString(inValue.nearPlane),
+                StringConverter<std::optional<T>>::ToString(inValue.farPlane));
+        }
+    };
+
+    template <JsonSerializable T>
+    struct JsonSerializer<ReversedZOrthogonalProjection<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const ReversedZOrthogonalProjection<T>& inValue)
+        {
+            rapidjson::Value widthJson;
+            JsonSerializer<T>::JsonSerialize(widthJson, inAllocator, inValue.width);
+
+            rapidjson::Value heightJson;
+            JsonSerializer<T>::JsonSerialize(heightJson, inAllocator, inValue.height);
+
+            rapidjson::Value nearJson;
+            JsonSerializer<T>::JsonSerialize(nearJson, inAllocator, inValue.nearPlane);
+
+            rapidjson::Value farJson;
+            JsonSerializer<std::optional<T>>::JsonSerialize(farJson, inAllocator, inValue.farPlane);
+
+            outJsonValue.SetObject();
+            outJsonValue.AddMember("width", widthJson, inAllocator);
+            outJsonValue.AddMember("height", heightJson, inAllocator);
+            outJsonValue.AddMember("near", nearJson, inAllocator);
+            outJsonValue.AddMember("far", farJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, ReversedZOrthogonalProjection<T>& outValue)
+        {
+            JsonSerializer<T>::JsonDeserialize(inJsonValue["width"], outValue.width);
+            JsonSerializer<T>::JsonDeserialize(inJsonValue["height"], outValue.height);
+            JsonSerializer<T>::JsonDeserialize(inJsonValue["near"], outValue.nearPlane);
+            JsonSerializer<std::optional<T>>::JsonDeserialize(inJsonValue["far"], outValue.farPlane);
         }
     };
 }
 
 namespace Common {
+    template <typename T>
+    ReversedZOrthogonalProjection<T>::ReversedZOrthogonalProjection()
+    {
+        this->width = 0;
+        this->height = 0;
+        this->nearPlane = 0;
+        this->farPlane = {};
+    }
+
     template <typename T>
     ReversedZOrthogonalProjection<T>::ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane)
     {
@@ -155,6 +214,33 @@ namespace Common {
                 0.0f, 0.0f, 0.0f, 1.0f
             );
         }
+    }
+
+    template <typename T>
+    bool ReversedZOrthogonalProjection<T>::operator==(const ReversedZOrthogonalProjection& inRhs) const
+    {
+        const auto thisHasFar = this->farPlane.has_value();
+        const auto rhsHasFar = inRhs.farPlane.has_value();
+        if (thisHasFar && !rhsHasFar || !thisHasFar && rhsHasFar) {
+            return false;
+        }
+        if (thisHasFar && !CompareNumber(this->farPlane.value(), inRhs.farPlane.value())) {
+            return false;
+        }
+
+        return CompareNumber(this->width, inRhs.width)
+            && CompareNumber(this->height, inRhs.height)
+            && CompareNumber(this->nearPlane, inRhs.nearPlane);
+    }
+
+    template <typename T>
+    ReversedZPerspectiveProjection<T>::ReversedZPerspectiveProjection()
+    {
+        this->fov = 0.0f;
+        this->width = 0.0f;
+        this->height = 0.0f;
+        this->nearPlane = 0;
+        this->farPlane = {};
     }
 
     template <typename T>
@@ -199,5 +285,23 @@ namespace Common {
             0.0f, 0.0f, 0.0f, this->nearPlane,
             0.0f, 0.0f, 1.0f, 0.0f
         );
+    }
+
+    template <typename T>
+    bool ReversedZPerspectiveProjection<T>::operator==(const ReversedZPerspectiveProjection& inRhs) const
+    {
+        const auto thisHasFar = this->farPlane.has_value();
+        const auto rhsHasFar = inRhs.farPlane.has_value();
+        if (thisHasFar && !rhsHasFar || !thisHasFar && rhsHasFar) {
+            return false;
+        }
+        if (thisHasFar && !CompareNumber(this->farPlane.value(), inRhs.farPlane.value())) {
+            return false;
+        }
+
+        return CompareNumber(this->fov, inRhs.fov)
+            && CompareNumber(this->width, inRhs.width)
+            && CompareNumber(this->height, inRhs.height)
+            && CompareNumber(this->nearPlane, inRhs.nearPlane);
     }
 }

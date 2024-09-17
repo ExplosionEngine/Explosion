@@ -204,20 +204,6 @@ private:
         stbi_uc* pixels = stbi_load("../Test/Sample/RHI-TexSampling/Awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         Assert(pixels != nullptr);
 
-        const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
-            .SetSize(texWidth * texHeight * 4)
-            .SetUsages(BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
-            .SetInitialState(BufferState::staging)
-            .SetDebugName("stagingBuffer");
-
-        pixelBuffer = device->CreateBuffer(bufferCreateInfo);
-        if (pixelBuffer != nullptr) {
-            auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
-            memcpy(data, pixels, bufferCreateInfo.size);
-            pixelBuffer->UnMap();
-        }
-        stbi_image_free(pixels);
-
         sampleTexture = device->CreateTexture(
             TextureCreateInfo()
                 .SetFormat(PixelFormat::rgba8Unorm)
@@ -237,6 +223,27 @@ private:
                 .SetArrayLayers(0, 1)
                 .SetAspect(TextureAspect::color)
                 .SetType(TextureViewType::textureBinding));
+
+        const auto copyFootprint = device->GetTextureSubResourceCopyFootprint(*sampleTexture, TextureSubResourceInfo()); // NOLINT
+
+        const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+            .SetSize(copyFootprint.totalBytes)
+            .SetUsages(BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+            .SetInitialState(BufferState::staging)
+            .SetDebugName("stagingBuffer");
+
+        pixelBuffer = device->CreateBuffer(bufferCreateInfo);
+        if (pixelBuffer != nullptr) {
+            auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
+            for (auto i = 0; i < texHeight; i++) {
+                const auto srcRowPitch = texWidth * copyFootprint.bytesPerPixel;
+                const auto* src = pixels + i * srcRowPitch;
+                auto* dst = static_cast<uint8_t*>(data) + i * copyFootprint.rowPitch;
+                memcpy(dst, src, srcRowPitch);
+            }
+            pixelBuffer->UnMap();
+        }
+        stbi_image_free(pixels);
 
         // use the default attrib to create sampler
         sampler = device->CreateSampler(SamplerCreateInfo());

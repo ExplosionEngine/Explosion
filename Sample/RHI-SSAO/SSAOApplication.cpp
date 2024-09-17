@@ -215,18 +215,6 @@ private:
             // upload diffuseColorMap
             const auto& texData = mesh.materialData->baseColorTexture;
 
-            const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
-                .SetSize(texData->GetSize())
-                .SetUsages(BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
-                .SetInitialState(BufferState::staging);
-
-            const UniqueRef<Buffer> pixelBuffer = device.CreateBuffer(bufferCreateInfo);
-            if (pixelBuffer != nullptr) {
-                auto* mapData = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
-                memcpy(mapData, texData->buffer.data(), bufferCreateInfo.size);
-                pixelBuffer->UnMap();
-            }
-
             diffuseColorMap = device.CreateTexture(
                 TextureCreateInfo()
                     .SetFormat(PixelFormat::rgba8Unorm)
@@ -247,8 +235,26 @@ private:
                     .SetAspect(TextureAspect::color)
                     .SetType(TextureViewType::textureBinding));
 
-            const UniqueRef<CommandBuffer> texCommandBuffer = device.CreateCommandBuffer();
+            const auto copyFootprint = device.GetTextureSubResourceCopyFootprint(*diffuseColorMap, TextureSubResourceInfo()); // NOLINT
 
+            const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
+                .SetSize(copyFootprint.totalBytes)
+                .SetUsages(BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+                .SetInitialState(BufferState::staging);
+
+            const UniqueRef<Buffer> pixelBuffer = device.CreateBuffer(bufferCreateInfo);
+            if (pixelBuffer != nullptr) {
+                auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
+                for (auto i = 0; i < texData->height; i++) {
+                    const auto srcRowPitch = texData->width * copyFootprint.bytesPerPixel;
+                    const auto* src = texData->buffer.data() + i * srcRowPitch;
+                    auto* dst = static_cast<uint8_t*>(data) + i * copyFootprint.rowPitch;
+                    memcpy(dst, src, srcRowPitch);
+                }
+                pixelBuffer->UnMap();
+            }
+
+            const UniqueRef<CommandBuffer> texCommandBuffer = device.CreateCommandBuffer();
             const UniqueRef<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
             {
                 const UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
