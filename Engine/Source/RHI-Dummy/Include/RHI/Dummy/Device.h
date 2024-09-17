@@ -33,6 +33,7 @@ namespace RHI::Dummy {
         Common::UniqueRef<Semaphore> CreateSemaphore() override;
 
         bool CheckSwapChainFormatSupport(Surface *surface, PixelFormat format) override;
+        TextureSubResourceCopyFootprint GetTextureSubResourceCopyFootprint(const Texture& texture, const TextureSubResourceInfo& subResourceInfo) override;
 
     private:
         Common::UniqueRef<DummyQueue> dummyQueue;

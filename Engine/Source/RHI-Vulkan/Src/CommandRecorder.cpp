@@ -131,12 +131,18 @@ namespace RHI::Vulkan {
         return result;
     }
 
-    static VkBufferImageCopy GetNativeBufferImageCopy(const BufferTextureCopyInfo& copyInfo)
+    static VkBufferImageCopy GetNativeBufferImageCopy(Device& device, Texture& texture, const BufferTextureCopyInfo& copyInfo)
     {
+        const auto aspectLayout = device.GetTextureSubResourceCopyFootprint(texture, copyInfo.textureSubResource); // NOLINT
+        const auto createInfo = texture.GetCreateInfo();
+
+        const auto linearRowPitch = GetBytesPerPixel(createInfo.format) * copyInfo.copyRegion.x;
+        const auto linearSlicePitch = linearRowPitch * copyInfo.copyRegion.y;
+
         VkBufferImageCopy result {};
         result.bufferOffset = copyInfo.bufferOffset;
-        result.bufferRowLength = 0;
-        result.bufferImageHeight = 0;
+        result.bufferRowLength = aspectLayout.rowPitch == linearRowPitch ? 0 : aspectLayout.rowPitch;
+        result.bufferImageHeight = aspectLayout.slicePitch == linearSlicePitch ? 0 : aspectLayout.slicePitch;
         result.imageOffset = { static_cast<int32_t>(copyInfo.textureOrigin.x), static_cast<int32_t>(copyInfo.textureOrigin.y), static_cast<int32_t>(copyInfo.textureOrigin.z) };
         result.imageExtent = { copyInfo.copyRegion.x, copyInfo.copyRegion.y, copyInfo.copyRegion.z };
         result.imageSubresource = GetNativeImageSubResourceLayers(copyInfo.textureSubResource);
@@ -251,7 +257,7 @@ namespace RHI::Vulkan {
         const auto* srcBuffer = static_cast<VulkanBuffer*>(src);
         const auto* dstTexture = static_cast<VulkanTexture*>(dst);
 
-        const VkBufferImageCopy nativeBufferImageCopy = GetNativeBufferImageCopy(copyInfo);
+        const VkBufferImageCopy nativeBufferImageCopy = GetNativeBufferImageCopy(device, *dst, copyInfo);
         vkCmdCopyBufferToImage(commandBuffer.GetNative(), srcBuffer->GetNative(), dstTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &nativeBufferImageCopy);
     }
 
@@ -260,7 +266,7 @@ namespace RHI::Vulkan {
         const auto* srcTexture = static_cast<VulkanTexture*>(src);
         const auto* dstBuffer = static_cast<VulkanBuffer*>(dst);
 
-        const VkBufferImageCopy nativeBufferImageCopy = GetNativeBufferImageCopy(copyInfo);
+        const VkBufferImageCopy nativeBufferImageCopy = GetNativeBufferImageCopy(device, *src, copyInfo);
         vkCmdCopyImageToBuffer(commandBuffer.GetNative(), srcTexture->GetNative(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstBuffer->GetNative(), 1, &nativeBufferImageCopy);
     }
 

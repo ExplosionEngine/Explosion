@@ -25,6 +25,8 @@ namespace RHI {
     struct RasterPipelineCreateInfo;
     struct SwapChainCreateInfo;
     struct SurfaceCreateInfo;
+    struct TextureSubResourceCopyFootprint;
+    struct TextureSubResourceInfo;
     class Queue;
     class Buffer;
     class Texture;
@@ -78,6 +80,7 @@ namespace RHI {
         virtual Common::UniqueRef<Semaphore> CreateSemaphore() = 0;
 
         virtual bool CheckSwapChainFormatSupport(Surface* surface, PixelFormat format) = 0;
+        virtual TextureSubResourceCopyFootprint GetTextureSubResourceCopyFootprint(const Texture& texture, const TextureSubResourceInfo& subResourceInfo) = 0;
 
     protected:
         explicit Device(const DeviceCreateInfo& createInfo);
