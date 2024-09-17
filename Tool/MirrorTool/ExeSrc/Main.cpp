@@ -3,10 +3,17 @@
 //
 
 #include <clipp.h>
+#include <filesystem>
 
 #include <MirrorTool/Parser.h>
 #include <MirrorTool/Generator.h>
 #include <Common/IO.h>
+#include <Common/String.h>
+
+static std::string GetUnixStylePath(const std::string& inPath)
+{
+    return Common::StringUtils::Replace(std::filesystem::weakly_canonical(inPath).string(), "\\", "/");
+}
 
 int main(int argc, char* argv[]) // NOLINT
 {
@@ -23,6 +30,12 @@ int main(int argc, char* argv[]) // NOLINT
         !clipp::parse(argc, argv, cli)) {
         std::cout << clipp::make_man_page(cli, argv[0]);
         return 1;
+    }
+
+    inputFile = GetUnixStylePath(inputFile);
+    outputFile = GetUnixStylePath(outputFile);
+    for (auto& headerDir : headerDirs) {
+        headerDir = GetUnixStylePath(headerDir);
     }
 
     if (!inputFile.ends_with(".h")) {

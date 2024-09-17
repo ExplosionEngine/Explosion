@@ -91,6 +91,13 @@ void AssertClassInfoEqual(const ClassInfo& lhs, const ClassInfo& rhs)
     AssertClassFunctionInfoVectorEqual(lhs.functions, rhs.functions);
 }
 
+void AssertEnumInfoEqual(const EnumInfo& lhs, const EnumInfo& rhs)
+{
+    AssertVectorEqual(lhs.elements, rhs.elements, [](const EnumElementInfo& elhs, const EnumElementInfo& erhs) -> void {
+        AssertNodeEqual(elhs, erhs);
+    });
+}
+
 void AssertNamespaceInfoEqual(const NamespaceInfo& lhs, const NamespaceInfo& rhs) // NOLINT
 {
     AssertNodeEqual(lhs, rhs);
@@ -105,6 +112,9 @@ void AssertNamespaceInfoEqual(const NamespaceInfo& lhs, const NamespaceInfo& rhs
     });
     AssertVectorEqual(lhs.namespaces, rhs.namespaces, [](const NamespaceInfo& elhs, const NamespaceInfo& erhs) -> void { // NOLINT
         AssertNamespaceInfoEqual(elhs, erhs);
+    });
+    AssertVectorEqual(lhs.enums, rhs.enums, [](const EnumInfo& elhs, const EnumInfo& erhs) -> void {
+        AssertEnumInfoEqual(elhs, erhs);
     });
 }
 
@@ -138,6 +148,12 @@ TEST(MirrorTest, ParserTest)
     };
     predicatedGlobalNamespace.classes[0].functions = {
         { "C0", "f0", {}, "int", {}, FieldAccess::pub }
+    };
+    predicatedGlobalNamespace.enums = { { "", "TestEnum", {} } };
+    predicatedGlobalNamespace.enums[0].elements = {
+        { "TestEnum", "a", {} },
+        { "TestEnum", "b", {} },
+        { "TestEnum", "max", {} }
     };
     AssertNamespaceInfoEqual(global, predicatedGlobalNamespace);
 }

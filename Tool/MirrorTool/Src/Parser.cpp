@@ -65,6 +65,11 @@ static void PrintDebugInfo(const std::string& visitorName, CXCursor cursor)
 }
 
 namespace MirrorTool {
+    static constexpr auto propertyMetaTag = "property";
+    static constexpr auto functionMetaTag = "func";
+    static constexpr auto classMetaTag = "class";
+    static constexpr auto enumMetaTag = "enum";
+
     static FieldAccess GetFieldAccess(CX_CXXAccessSpecifier accessSpecifier)
     {
         static std::unordered_map<CX_CXXAccessSpecifier, FieldAccess> map = {
@@ -142,7 +147,7 @@ namespace MirrorTool {
         for (auto i = 0; i < info.parameters.size(); i++) {
             stream << info.parameters[i].second;
             if (i != info.parameters.size() - 1) {
-                stream << ",";
+                stream << ", ";
             }
         }
         info.name = stream.str();
@@ -204,7 +209,7 @@ namespace MirrorTool {
             auto& variables = kind == CXCursor_VarDecl ? context.staticVariables : context.variables;
             variables.emplace_back(std::move(variableInfo));
             VisitChildren(ClassVariableVisitor, ClassVariableInfo, cursor, variables.back());
-            ApplyMetaFilter(variables, "property");
+            ApplyMetaFilter(variables, propertyMetaTag);
 
             clang_disposeString(typeSpelling);
         } else if (kind == CXCursor_CXXMethod) {
@@ -220,7 +225,7 @@ namespace MirrorTool {
             auto& functions = isStatic ? context.staticFunctions : context.functions;
             functions.emplace_back(std::move(functionInfo));
             VisitChildren(ClassFunctionVisitor, ClassFunctionInfo, cursor, functions.back());
-            ApplyMetaFilter(functions, "func");
+            ApplyMetaFilter(functions, functionMetaTag);
 
             clang_disposeString(retTypeSpelling);
         } else if (kind == CXCursor_Constructor) {
@@ -230,7 +235,6 @@ namespace MirrorTool {
             context.constructors.emplace_back(std::move(constructorInfo));
             VisitChildren(ClassConstructorVisitor, ClassConstructorInfo, cursor, context.constructors.back());
             UpdateConstructorName(context.constructors.back());
-            ApplyMetaFilter(context.constructors, "constructor");
         } else if (kind == CXCursor_StructDecl || kind == CXCursor_ClassDecl) {
             ClassInfo classInfo;
             classInfo.outerName = GetOuterName(context.outerName, context.name);
@@ -238,7 +242,31 @@ namespace MirrorTool {
             classInfo.lastFieldAccess = kind == CXCursor_StructDecl ? FieldAccess::pub : FieldAccess::pri;
             context.classes.emplace_back(std::move(classInfo));
             VisitChildren(ClassVisitor, ClassInfo, cursor, context.classes.back());
-            ApplyMetaFilter(context.classes, "class");
+            ApplyMetaFilter(context.classes, classMetaTag);
+        }
+        CleanUpAndContinueVisit;
+    }
+
+    DeclareVisitor(EnumElementVisitor, EnumElementInfo)
+    {
+        FetchCursorInfo(EnumElementVisitor, cursor);
+        if (kind == CXCursor_AnnotateAttr) {
+            ParseMetaDatas(context, spellingStr);
+        }
+        CleanUpAndContinueVisit;
+    }
+
+    DeclareVisitor(EnumVisitor, EnumInfo)
+    {
+        FetchCursorInfo(EnumVisitor, cursor);
+        if (kind == CXCursor_AnnotateAttr) {
+            ParseMetaDatas(context, spellingStr);
+        } else if (kind == CXCursor_EnumConstantDecl) {
+            EnumElementInfo elementInfo;
+            elementInfo.outerName = GetOuterName(context.outerName, context.name);
+            elementInfo.name = spellingStr;
+            context.elements.emplace_back(std::move(elementInfo));
+            VisitChildren(EnumElementVisitor, EnumElementInfo, cursor, context.elements.back());
         }
         CleanUpAndContinueVisit;
     }
@@ -246,7 +274,9 @@ namespace MirrorTool {
     DeclareVisitor(NamespaceVisitor, NamespaceInfo)
     {
         FetchCursorInfo(NamespaceVisitor, cursor);
-        if (kind == CXCursor_VarDecl) {
+        if (kind == CXCursor_AnnotateAttr) {
+            ParseMetaDatas(context, spellingStr);
+        } else if (kind == CXCursor_VarDecl) {
             CXType type = clang_getCursorType(cursor);
             CXString typeSpelling = clang_getTypeSpelling(type);
 
@@ -256,7 +286,7 @@ namespace MirrorTool {
             variableInfo.type = clang_getCString(typeSpelling);
             context.variables.emplace_back(std::move(variableInfo));
             VisitChildren(GlobalVariableVisitor, VariableInfo, cursor, context.variables.back());
-            ApplyMetaFilter(context.variables, "property");
+            ApplyMetaFilter(context.variables, propertyMetaTag);
 
             clang_disposeString(typeSpelling);
         } else if (kind == CXCursor_FunctionDecl) {
@@ -269,7 +299,7 @@ namespace MirrorTool {
             functionInfo.retType = clang_getCString(retTypeSpelling);
             context.functions.emplace_back(std::move(functionInfo));
             VisitChildren(GlobalFunctionVisitor, FunctionInfo, cursor, context.functions.back());
-            ApplyMetaFilter(context.functions, "func");
+            ApplyMetaFilter(context.functions, functionMetaTag);
 
             clang_disposeString(retTypeSpelling);
         } else if (kind == CXCursor_StructDecl || kind == CXCursor_ClassDecl) {
@@ -279,7 +309,14 @@ namespace MirrorTool {
             classInfo.lastFieldAccess = kind == CXCursor_StructDecl ? FieldAccess::pub : FieldAccess::pri;
             context.classes.emplace_back(std::move(classInfo));
             VisitChildren(ClassVisitor, ClassInfo, cursor, context.classes.back());
-            ApplyMetaFilter(context.classes, "class");
+            ApplyMetaFilter(context.classes, classMetaTag);
+        } else if (kind == CXCursor_EnumDecl) {
+            EnumInfo enumInfo;
+            enumInfo.outerName = GetOuterName(context.outerName, context.name);
+            enumInfo.name = spellingStr;
+            context.enums.emplace_back(std::move(enumInfo));
+            VisitChildren(EnumVisitor, EnumInfo, cursor, context.enums.back());
+            ApplyMetaFilter(context.enums, enumMetaTag);
         } else if (kind == CXCursor_Namespace) {
             NamespaceInfo namespaceInfo;
             namespaceInfo.outerName = GetOuterName(context.outerName, context.name);
@@ -307,7 +344,7 @@ namespace MirrorTool {
             variableInfo.type = clang_getCString(typeSpelling);
             context.global.variables.emplace_back(std::move(variableInfo));
             VisitChildren(GlobalVariableVisitor, VariableInfo, cursor, context.global.variables.back());
-            ApplyMetaFilter(context.global.variables, "property");
+            ApplyMetaFilter(context.global.variables, propertyMetaTag);
 
             clang_disposeString(typeSpelling);
         } else if (kind == CXCursor_FunctionDecl) {
@@ -319,7 +356,7 @@ namespace MirrorTool {
             functionInfo.retType = clang_getCString(retTypeSpelling);
             context.global.functions.emplace_back(std::move(functionInfo));
             VisitChildren(GlobalFunctionVisitor, FunctionInfo, cursor, context.global.functions.back());
-            ApplyMetaFilter(context.global.functions, "func");
+            ApplyMetaFilter(context.global.functions, functionMetaTag);
 
             clang_disposeString(retTypeSpelling);
         } else if (kind == CXCursor_StructDecl || kind == CXCursor_ClassDecl) {
@@ -328,7 +365,13 @@ namespace MirrorTool {
             classInfo.lastFieldAccess = kind == CXCursor_StructDecl ? FieldAccess::pub : FieldAccess::pri;
             context.global.classes.emplace_back(std::move(classInfo));
             VisitChildren(ClassVisitor, ClassInfo, cursor, context.global.classes.back());
-            ApplyMetaFilter(context.global.classes, "class");
+            ApplyMetaFilter(context.global.classes, classMetaTag);
+        } else if (kind == CXCursor_EnumDecl) {
+            EnumInfo enumInfo;
+            enumInfo.name = spellingStr;
+            context.global.enums.emplace_back(std::move(enumInfo));
+            VisitChildren(EnumVisitor, EnumInfo, cursor, context.global.enums.back());
+            ApplyMetaFilter(context.global.enums, enumMetaTag);
         } else if (kind == CXCursor_Namespace) {
             NamespaceInfo namespaceInfo;
             namespaceInfo.name = spellingStr;

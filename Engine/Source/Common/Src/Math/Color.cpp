@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include <Common/Math/Color.h>
+#include <Common/Math/Common.h>
 
 namespace Common {
     Color::Color()
@@ -36,6 +37,14 @@ namespace Common {
     }
 
     Color& Color::operator=(const Color& inOther) = default;
+
+    bool Color::operator==(const Color& inRhs) const
+    {
+        return r == inRhs.r
+            && g == inRhs.g
+            && b == inRhs.b
+            && a == inRhs.a;
+    }
 
     LinearColor Color::ToLinearColor() const
     {
@@ -98,6 +107,14 @@ namespace Common {
         a = inOther.a;
         CheckValid();
         return *this;
+    }
+
+    bool LinearColor::operator==(const LinearColor& inRhs) const
+    {
+        return CompareNumber(r, inRhs.r)
+            && CompareNumber(g, inRhs.g)
+            && CompareNumber(b, inRhs.b)
+            && CompareNumber(a, inRhs.a);
     }
 
     Color LinearColor::ToColor() const

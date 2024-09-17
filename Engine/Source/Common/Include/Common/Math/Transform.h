@@ -8,6 +8,7 @@
 #include <Common/Math/Matrix.h>
 #include <Common/Math/Quaternion.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <FloatingPoint T>
@@ -65,33 +66,64 @@ namespace Common {
     using DTransform = Transform<double>;
 }
 
-namespace Common { // NOLINT
-    template <typename T>
+namespace Common {
+    template <Serializable T>
     struct Serializer<Transform<T>> {
-        static constexpr bool serializable = true;
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::Transform")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const Transform<T>& value)
+        static size_t Serialize(SerializeStream& stream, const Transform<T>& value)
         {
-            TypeIdSerializer<Transform<T>>::Serialize(stream);
-
-            Serializer<Vec<T, 3>>::Serialize(stream, value.scale);
-            Serializer<Quaternion<T>>::Serialize(stream, value.rotation);
-            Serializer<Vec<T, 3>>::Serialize(stream, value.translation);
+            return Serializer<Vec<T, 3>>::Serialize(stream, value.scale)
+                + Serializer<Quaternion<T>>::Serialize(stream, value.rotation)
+                + Serializer<Vec<T, 3>>::Serialize(stream, value.translation);
         }
 
-        static bool Deserialize(DeserializeStream& stream, Transform<T>& value)
+        static size_t Deserialize(DeserializeStream& stream, Transform<T>& value)
         {
-            if (!TypeIdSerializer<Transform<T>>::Deserialize(stream)) {
-                return false;
-            }
+            return Serializer<Vec<T, 3>>::Deserialize(stream, value.scale)
+                + Serializer<Quaternion<T>>::Deserialize(stream, value.rotation)
+                + Serializer<Vec<T, 3>>::Deserialize(stream, value.translation);
+        }
+    };
 
-            Serializer<Vec<T, 3>>::Deserialize(stream, value.scale);
-            Serializer<Quaternion<T>>::Deserialize(stream, value.rotation);
-            Serializer<Vec<T, 3>>::Deserialize(stream, value.translation);
-            return true;
+    template <StringConvertible T>
+    struct StringConverter<Transform<T>> {
+        static std::string ToString(const Transform<T>& inValue)
+        {
+            return fmt::format(
+                "{scale={}, rotation={}, translation={}}",
+                StringConverter<Vec<T, 3>>::ToString(inValue.scale),
+                StringConverter<Quaternion<T>>::ToString(inValue.rotation),
+                StringConverter<Vec<T, 3>>::ToString(inValue.translation));
+        }
+    };
+
+    template <JsonSerializable T>
+    struct JsonSerializer<Transform<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Transform<T>& inValue)
+        {
+            rapidjson::Value scaleJson;
+            JsonSerializer<Vec<T, 3>>::JsonSerialize(scaleJson, inAllocator, inValue.scale);
+
+            rapidjson::Value rotationJson;
+            JsonSerializer<Quaternion<T>>::JsonSerialize(rotationJson, inAllocator, inValue.rotation);
+
+            rapidjson::Value translationJson;
+            JsonSerializer<Vec<T, 3>>::JsonSerialize(translationJson, inAllocator, inValue.translation);
+
+            outJsonValue.SetObject();
+            outJsonValue.AddMember("scale", scaleJson, inAllocator);
+            outJsonValue.AddMember("rotation", rotationJson, inAllocator);
+            outJsonValue.AddMember("translation", translationJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Transform<T>& outValue)
+        {
+            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["scale"], outValue.scale);
+            JsonSerializer<Quaternion<T>>::JsonDeserialize(inJsonValue["rotation"], outValue.rotation);
+            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["scale"], outValue.scale);
         }
     };
 }

@@ -26,11 +26,7 @@ namespace Common {
 
     BinaryFileSerializeStream::~BinaryFileSerializeStream()
     {
-        try {
-            file.close();
-        } catch (const std::exception&) {
-            QuickFail();
-        }
+        Close();
     }
 
     void BinaryFileSerializeStream::Write(const void* data, const size_t size)
@@ -38,13 +34,21 @@ namespace Common {
         file.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
     }
 
-    BinaryFileDeserializeStream::BinaryFileDeserializeStream(const std::string& inFileName)
-        : file(inFileName, std::ios::binary)
+    void BinaryFileSerializeStream::Seek(int64_t offset)
     {
+        file.seekp(offset, std::ios::cur);
     }
 
-    BinaryFileDeserializeStream::~BinaryFileDeserializeStream()
+    size_t BinaryFileSerializeStream::Loc()
     {
+        return file.tellp();
+    }
+
+    void BinaryFileSerializeStream::Close()
+    {
+        if (!file.is_open()) {
+            return;
+        }
         try {
             file.close();
         } catch (const std::exception&) {
@@ -52,9 +56,45 @@ namespace Common {
         }
     }
 
+    BinaryFileDeserializeStream::BinaryFileDeserializeStream(const std::string& inFileName)
+        : file(inFileName, std::ios::binary)
+    {
+        file.seekg(0, std::ios::end);
+        fileSize = file.tellg();
+        file.seekg(0, std::ios::beg);
+    }
+
+    BinaryFileDeserializeStream::~BinaryFileDeserializeStream()
+    {
+        Close();
+    }
+
     void BinaryFileDeserializeStream::Read(void* data, const size_t size)
     {
+        Assert(static_cast<size_t>(file.tellg()) + size <= fileSize);
         file.read(static_cast<char*>(data), static_cast<std::streamsize>(size));
+    }
+
+    void BinaryFileDeserializeStream::Seek(int64_t offset)
+    {
+        file.seekg(offset, std::ios::cur);
+    }
+
+    size_t BinaryFileDeserializeStream::Loc()
+    {
+        return file.tellg();
+    }
+
+    void BinaryFileDeserializeStream::Close()
+    {
+        if (!file.is_open()) {
+            return;
+        }
+        try {
+            file.close();
+        } catch (const std::exception&) {
+            QuickFail();
+        }
     }
 
     ByteSerializeStream::ByteSerializeStream(std::vector<uint8_t>& inBytes, const size_t pointerBegin)
@@ -79,6 +119,16 @@ namespace Common {
         pointer = newPointer;
     }
 
+    void ByteSerializeStream::Seek(int64_t offset)
+    {
+        pointer += offset;
+    }
+
+    size_t ByteSerializeStream::Loc()
+    {
+        return pointer;
+    }
+
     ByteDeserializeStream::ByteDeserializeStream(const std::vector<uint8_t>& inBytes, const size_t pointerBegin)
         : pointer(pointerBegin)
         , bytes(inBytes)
@@ -94,5 +144,15 @@ namespace Common {
         Assert(newPointer <= bytes.size());
         memcpy(data, bytes.data() + pointer, size);
         pointer = newPointer;
+    }
+
+    void ByteDeserializeStream::Seek(int64_t offset)
+    {
+        pointer += offset;
+    }
+
+    size_t ByteDeserializeStream::Loc()
+    {
+        return pointer;
     }
 }

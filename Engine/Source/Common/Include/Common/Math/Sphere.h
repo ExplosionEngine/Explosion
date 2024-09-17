@@ -6,6 +6,7 @@
 
 #include <Common/Math/Vector.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <typename T>
@@ -26,9 +27,9 @@ namespace Common {
         T Distance(const Sphere& inOther) const;
         bool Inside(const Vec<T, 3>& inPoint) const;
         bool Intersect(const Sphere& inOther) const;
+        bool operator==(const Sphere& inRhs) const;
 
-        template <typename IT>
-        Sphere<IT> CastTo() const;
+        template <typename IT> Sphere<IT> CastTo() const;
     };
 
     using ISphere = Sphere<int32_t>;
@@ -37,31 +38,56 @@ namespace Common {
     using DSphere = Sphere<double>;
 }
 
-namespace Common { // NOLINT
-    template <typename T>
+namespace Common {
+    template <Serializable T>
     struct Serializer<Sphere<T>> {
-        static constexpr bool serializable = true;
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::Sphere")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const Sphere<T>& value)
+        static size_t Serialize(SerializeStream& stream, const Sphere<T>& value)
         {
-            TypeIdSerializer<Sphere<T>>::Serialize(stream);
-
-            Serializer<Vec<T, 3>>::Serialize(stream, value.center);
-            Serializer<T>::Serialize(stream, value.radius);
+            return Serializer<Vec<T, 3>>::Serialize(stream, value.center)
+                + Serializer<T>::Serialize(stream, value.radius);
         }
 
-        static bool Deserialize(DeserializeStream& stream, Sphere<T>& value)
+        static size_t Deserialize(DeserializeStream& stream, Sphere<T>& value)
         {
-            if (!TypeIdSerializer<Sphere<T>>::Deserialize(stream)) {
-                return false;
-            }
+            return Serializer<Vec<T, 3>>::Deserialize(stream, value.center)
+                + Serializer<T>::Deserialize(stream, value.radius);
+        }
+    };
 
-            Serializer<Vec<T, 3>>::Deserialize(stream, value.center);
-            Serializer<T>::Deserialize(stream, value.radius);
-            return true;
+    template <StringConvertible T>
+    struct StringConverter<Sphere<T>> {
+        static std::string ToString(const Sphere<T>& inValue)
+        {
+            return fmt::format(
+                "{center={}, radius={}}",
+                StringConverter<Vec<T, 3>>::Convert(inValue.center),
+                StringConverter<T>::Convert(inValue.radius));
+        }
+    };
+
+    template <JsonSerializable T>
+    struct JsonSerializer<Sphere<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Sphere<T>& inValue)
+        {
+            rapidjson::Value centerJson;
+            JsonSerializer<Vec<T, 3>>::JsonSerialize(centerJson, inAllocator, inValue.center);
+
+            rapidjson::Value radiusJson;
+            JsonSerializer<T>::JsonSerialize(radiusJson, inAllocator, inValue.radius);
+
+            outJsonValue.SetObject();
+            outJsonValue.AddMember("center", centerJson, inAllocator);
+            outJsonValue.AddMember("radius", radiusJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Sphere<T>& outValue)
+        {
+            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["center"], outValue.center);
+            JsonSerializer<T>::JsonDeserialize(inJsonValue["radius", outValue.radius]);
         }
     };
 }
@@ -129,6 +155,13 @@ namespace Common {
     {
         Vec<T, 3> direction = this->center - inOther.center;
         return direction.Model() <= (this->radius + inOther.radius);
+    }
+
+    template <typename T>
+    bool Sphere<T>::operator==(const Sphere& inRhs) const
+    {
+        return this->center == inRhs.center
+            && CompareNumber(this->radius, inRhs.radius);
     }
 
     template <typename T>

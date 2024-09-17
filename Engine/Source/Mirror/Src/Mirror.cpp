@@ -2,6 +2,7 @@
 // Created by johnk on 2022/9/21.
 //
 
+#include <ranges>
 #include <utility>
 #include <sstream>
 
@@ -180,7 +181,7 @@ namespace Mirror {
 
     Any Any::Ref()
     {
-        return { *this, IsMemoryHolder() ? AnyPolicy::ref : policy };
+        return { *this, IsMemoryHolder() ? AnyPolicy::nonConstRef : policy };
     }
 
     Any Any::Ref() const
@@ -203,7 +204,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getPtr(Data());
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getPtr(Data());
         }
         if (policy == AnyPolicy::constRef) {
@@ -218,7 +219,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getConstPtr(Data());
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getPtr(Data());
         }
         if (policy == AnyPolicy::constRef) {
@@ -250,7 +251,12 @@ namespace Mirror {
 
     bool Any::IsRef() const
     {
-        return policy == AnyPolicy::ref || policy == AnyPolicy::constRef;
+        return policy == AnyPolicy::nonConstRef || policy == AnyPolicy::constRef;
+    }
+
+    bool Any::IsNonConstRef() const
+    {
+        return policy == AnyPolicy::nonConstRef;
     }
 
     bool Any::IsConstRef() const
@@ -263,7 +269,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getValueType();
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getRefType();
         }
         if (policy == AnyPolicy::constRef) {
@@ -278,7 +284,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getConstValueType();
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getRefType();
         }
         if (policy == AnyPolicy::constRef) {
@@ -293,7 +299,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getValueType();
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getValueType();
         }
         if (policy == AnyPolicy::constRef) {
@@ -308,7 +314,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getConstValueType();
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getValueType();
         }
         if (policy == AnyPolicy::constRef) {
@@ -323,7 +329,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getAddPointerType();
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getAddPointerType();
         }
         if (policy == AnyPolicy::constRef) {
@@ -338,7 +344,7 @@ namespace Mirror {
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getAddConstPointerType();
         }
-        if (policy == AnyPolicy::ref) {
+        if (policy == AnyPolicy::nonConstRef) {
             return rtti->getAddPointerType();
         }
         if (policy == AnyPolicy::constRef) {
@@ -388,6 +394,47 @@ namespace Mirror {
         return rtti == nullptr;
     }
 
+    size_t Any::Serialize(Common::SerializeStream& inStream) const
+    {
+        Assert(rtti != nullptr);
+        return rtti->serialize(Data(), inStream);
+    }
+
+    std::pair<bool, size_t> Any::Deserialize(Common::DeserializeStream& inStream)
+    {
+        Assert(rtti != nullptr && !IsConstRef());
+        return rtti->deserialize(Data(), inStream);
+    }
+
+    std::pair<bool, size_t> Any::Deserialize(Common::DeserializeStream& inStream) const
+    {
+        Assert(rtti != nullptr && IsNonConstRef());
+        return rtti->deserialize(Data(), inStream);
+    }
+
+    void Any::JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator) const
+    {
+        Assert(rtti != nullptr);
+        rtti->jsonSerialize(Data(), outJsonValue, inAllocator);
+    }
+
+    void Any::JsonDeserialize(const rapidjson::Value& inJsonValue)
+    {
+        Assert(rtti != nullptr && !IsConstRef());
+        rtti->jsonDeserialize(Data(), inJsonValue);
+    }
+
+    void Any::JsonDeserialize(const rapidjson::Value& inJsonValue) const
+    {
+        Assert(rtti != nullptr && IsNonConstRef());
+        return rtti->jsonDeserialize(Data(), inJsonValue);
+    }
+
+    std::string Any::ToString() const
+    {
+        return Empty() ? "" : rtti->toString(Data());
+    }
+
     void* Any::Data() const
     {
         return IsRef() ? std::get<RefInfo>(info).Ptr() : std::get<HolderInfo>(info).Ptr();
@@ -421,8 +468,8 @@ namespace Mirror {
     void Any::HolderInfo::ResizeMemory(size_t inSize)
     {
         if (inSize <= MaxStackMemorySize) {
-            memory = StackMemory {};
-            std::get<StackMemory>(memory).Resize(inSize);
+            memory = InplaceMemory {};
+            std::get<InplaceMemory>(memory).Resize(inSize);
         } else {
             memory = HeapMemory {};
             std::get<HeapMemory>(memory).resize(inSize);
@@ -432,7 +479,7 @@ namespace Mirror {
     void* Any::HolderInfo::Ptr() const
     {
         if (memory.index() == 0) {
-            return const_cast<uint8_t*>(std::get<StackMemory>(memory).Data());
+            return const_cast<uint8_t*>(std::get<InplaceMemory>(memory).Data());
         }
         return const_cast<uint8_t*>(std::get<HeapMemory>(memory).data());
     }
@@ -440,7 +487,7 @@ namespace Mirror {
     size_t Any::HolderInfo::Size() const
     {
         if (memory.index() == 0) {
-            return std::get<StackMemory>(memory).Size();
+            return std::get<InplaceMemory>(memory).Size();
         }
         return std::get<HeapMemory>(memory).size();
     }
@@ -500,6 +547,70 @@ namespace Mirror {
     {
         any = std::move(inAny);
         return *this;
+    }
+
+    bool Argument::IsMemoryHolder() const
+    {
+        const auto index = any.index();
+        if (index == 1) {
+            return std::get<Any*>(any)->IsMemoryHolder();
+        }
+        if (index == 2) {
+            return std::get<const Any*>(any)->IsMemoryHolder();
+        }
+        if (index == 3) {
+            return const_cast<Any&>(std::get<Any>(any)).IsMemoryHolder();
+        }
+        QuickFailWithReason("Argument is empty");
+        return std::get<Any*>(any)->IsMemoryHolder();
+    }
+
+    bool Argument::IsRef() const
+    {
+        const auto index = any.index();
+        if (index == 1) {
+            return std::get<Any*>(any)->IsRef();
+        }
+        if (index == 2) {
+            return std::get<const Any*>(any)->IsRef();
+        }
+        if (index == 3) {
+            return const_cast<Any&>(std::get<Any>(any)).IsRef();
+        }
+        QuickFailWithReason("Argument is empty");
+        return std::get<Any*>(any)->IsRef();
+    }
+
+    bool Argument::IsNonConstRef() const
+    {
+        const auto index = any.index();
+        if (index == 1) {
+            return std::get<Any*>(any)->IsNonConstRef();
+        }
+        if (index == 2) {
+            return std::get<const Any*>(any)->IsNonConstRef();
+        }
+        if (index == 3) {
+            return const_cast<Any&>(std::get<Any>(any)).IsNonConstRef();
+        }
+        QuickFailWithReason("Argument is empty");
+        return std::get<Any*>(any)->IsNonConstRef();
+    }
+
+    bool Argument::IsConstRef() const
+    {
+        const auto index = any.index();
+        if (index == 1) {
+            return std::get<Any*>(any)->IsConstRef();
+        }
+        if (index == 2) {
+            return std::get<const Any*>(any)->IsConstRef();
+        }
+        if (index == 3) {
+            return const_cast<Any&>(std::get<Any>(any)).IsConstRef();
+        }
+        QuickFailWithReason("Argument is empty");
+        return std::get<Any*>(any)->IsConstRef();
     }
 
     const TypeInfo* Argument::Type() const
@@ -660,8 +771,6 @@ namespace Mirror {
         , typeInfo(params.typeInfo)
         , setter(std::move(params.setter))
         , getter(std::move(params.getter))
-        , serializer(std::move(params.serializer))
-        , deserializer(std::move(params.deserializer))
     {
     }
 
@@ -670,16 +779,6 @@ namespace Mirror {
     Any Variable::Get() const
     {
         return GetDyn();
-    }
-
-    void Variable::Serialize(Common::SerializeStream& stream) const
-    {
-        SerializeDyn(stream);
-    }
-
-    void Variable::Deserialize(Common::DeserializeStream& stream) const
-    {
-        DeserializeDyn(stream);
     }
 
     const TypeInfo* Variable::GetTypeInfo() const
@@ -695,16 +794,6 @@ namespace Mirror {
     Any Variable::GetDyn() const
     {
         return getter();
-    }
-
-    void Variable::SerializeDyn(Common::SerializeStream& stream) const
-    {
-        serializer(stream, *this);
-    }
-
-    void Variable::DeserializeDyn(Common::DeserializeStream& stream) const
-    {
-        deserializer(stream, *this);
     }
 
     Function::Function(ConstructParams&& params)
@@ -820,8 +909,6 @@ namespace Mirror {
         , typeInfo(params.typeInfo)
         , setter(std::move(params.setter))
         , getter(std::move(params.getter))
-        , serializer(std::move(params.serializer))
-        , deserializer(std::move(params.deserializer))
     {
     }
 
@@ -845,16 +932,6 @@ namespace Mirror {
     Any MemberVariable::GetDyn(const Argument& object) const
     {
         return getter(object);
-    }
-
-    void MemberVariable::SerializeDyn(Common::SerializeStream& stream, const Argument& object) const
-    {
-        serializer(stream, *this, object);
-    }
-
-    void MemberVariable::DeserializeDyn(Common::DeserializeStream& stream, const Argument& object) const
-    {
-        deserializer(stream, *this, object);
     }
 
     bool MemberVariable::IsTransient() const
@@ -978,9 +1055,7 @@ namespace Mirror {
         , typeInfo(params.typeInfo)
         , baseClassGetter(std::move(params.baseClassGetter))
     {
-        if (params.defaultObjectCreator.has_value()) {
-            CreateDefaultObject(params.defaultObjectCreator.value());
-        }
+        CreateDefaultObject(params.defaultObjectCreator);
         if (params.destructorParams.has_value()) {
             destructor = Destructor(std::move(params.destructorParams.value()));
         }
@@ -1109,7 +1184,9 @@ namespace Mirror {
 
     void Class::CreateDefaultObject(const std::function<Any()>& inCreator)
     {
-        defaultObject = inCreator();
+        if (inCreator) {
+            defaultObject = inCreator();
+        }
     }
 
     Destructor& Class::EmplaceDestructor(Destructor::ConstructParams&& inParams)
@@ -1333,6 +1410,11 @@ namespace Mirror {
         return memberFunctions.contains(inId);
     }
 
+    const std::unordered_map<Id, MemberVariable, IdHashProvider>& Class::GetMemberVariables() const
+    {
+        return memberVariables;
+    }
+
     const MemberFunction* Class::FindMemberFunction(const Id& inId) const
     {
         const auto iter = memberFunctions.find(inId);
@@ -1346,89 +1428,12 @@ namespace Mirror {
         return iter->second;
     }
 
-    void Class::SerializeDyn(Common::SerializeStream& stream, const Argument& obj) const // NOLINT
+    Any Class::GetDefaultObject() const
     {
-        if (const auto* baseClass = GetBaseClass();
-            baseClass != nullptr) {
-            baseClass->SerializeDyn(stream, obj);
+        if (!defaultObject.Empty()) {
+            return defaultObject.ConstRef();
         }
-
-        AssertWithReason(defaultObject.has_value(), "do you forget add default constructor to EClass() which you want to serialize");
-
-        const auto& name = GetName();
-        const auto memberVariablesNum = memberVariables.size();
-        Common::Serializer<std::string>::Serialize(stream, name);
-        Common::Serializer<uint64_t>::Serialize(stream, memberVariablesNum);
-
-        for (const auto& [id, memberVariable] : memberVariables) {
-            if (memberVariable.IsTransient()) {
-                continue;
-            }
-
-            Common::Serializer<std::string>::Serialize(stream, id.name);
-
-            const bool sameWithDefaultObject = memberVariable.GetDyn(obj) == defaultObject.value();
-            Common::Serializer<bool>::Serialize(stream, sameWithDefaultObject);
-
-            if (sameWithDefaultObject) {
-                Common::Serializer<uint32_t>::Serialize(stream, 0);
-            } else {
-                Common::Serializer<uint32_t>::Serialize(stream, memberVariable.SizeOf());
-                memberVariable.SerializeDyn(stream, obj);
-            }
-        }
-
-        if (HasMemberFunction("OnSerialized")) {
-            (void) GetMemberFunction("OnSerialized").InvokeDyn(obj, {});
-        }
-    }
-
-    void Class::DeserailizeDyn(Common::DeserializeStream& stream, const Argument& obj) const // NOLINT
-    {
-        if (const auto* baseClass = GetBaseClass();
-            baseClass != nullptr) {
-            baseClass->DeserailizeDyn(stream, obj);
-        }
-
-        Assert(defaultObject.has_value());
-
-        std::string className;
-        Common::Serializer<std::string>::Deserialize(stream, className);
-
-        uint64_t memberVariableSize;
-        Common::Serializer<uint64_t>::Deserialize(stream, memberVariableSize);
-
-        for (auto i = 0; i < memberVariableSize; i++) {
-            std::string varName;
-            Common::Serializer<std::string>::Deserialize(stream, varName);
-
-            auto iter = memberVariables.find(varName);
-            if (iter == memberVariables.end()) {
-                continue;
-            }
-
-            const auto& memberVariable = iter->second;
-            if (memberVariable.IsTransient()) {
-                continue;
-            }
-
-            bool restoreAsDefaultObject = true;
-            Common::Serializer<bool>::Deserialize(stream, restoreAsDefaultObject);
-
-            uint32_t memorySize = 0;
-            Common::Serializer<uint32_t>::Deserialize(stream, memorySize);
-            if (memorySize == 0 || memorySize != memberVariable.SizeOf()) {
-                restoreAsDefaultObject = true;
-            }
-
-            if (!restoreAsDefaultObject) {
-                memberVariable.DeserializeDyn(stream, obj);
-            }
-        }
-
-        if (HasMemberFunction("OnDeserialize")) {
-            (void) GetMemberFunction("OnDeserialize").InvokeDyn(obj, {});
-        }
+        return {};
     }
 
     EnumElement::EnumElement(ConstructParams&& inParams)

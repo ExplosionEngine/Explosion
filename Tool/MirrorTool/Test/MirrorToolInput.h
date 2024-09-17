@@ -6,6 +6,12 @@
 
 #include <Mirror/Meta.h>
 
+enum class EEnum() TestEnum {
+    a,
+    b,
+    max
+};
+
 EProperty()
 int gv0;
 
