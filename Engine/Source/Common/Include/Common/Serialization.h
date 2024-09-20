@@ -716,8 +716,12 @@ namespace Common {
         }
     };
 
+    // TODO std::wstring
     // TODO std::array
     // TODO std::set
     // TODO std::map
-    // TODO std::wstring
+    // TODO std::tuple
+    // TODO std::queue
+    // TODO std::stack
+    // TODO std::list
 }
