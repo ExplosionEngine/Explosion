@@ -328,6 +328,49 @@ namespace Common {
         }
     };
 
+    template <Serializable T, size_t N>
+    struct Serializer<std::array<T, N>> {
+        static constexpr size_t typeId
+            = HashUtils::StrCrc32("std::array")
+            + Serializer<T>::typeId
+            + N;
+
+        static size_t Serialize(SerializeStream& stream, const std::array<T, N>& value)
+        {
+            size_t serialized = 0;
+
+            const uint64_t size = value.size();
+            serialized += Serializer<uint64_t>::Serialize(stream, size);
+
+            for (const auto& element : value) {
+                serialized += Serializer<T>::Serialize(stream, element);
+            }
+            return serialized;
+        }
+
+        static size_t Deserialize(DeserializeStream& stream, std::array<T, N>& value)
+        {
+            size_t deserialized = 0;
+
+            for (auto& element : value) {
+                element = T();
+            }
+
+            uint64_t size;
+            deserialized += Serializer<uint64_t>::Deserialize(stream, size);
+            if (size != N) {
+                return deserialized;
+            }
+
+            for (auto i = 0; i < size; i++) {
+                T element;
+                deserialized += Serializer<T>::Deserialize(stream, element);
+                value[i] = std::move(element);
+            }
+            return deserialized;
+        }
+    };
+
     template <Serializable T>
     struct Serializer<std::vector<T>> {
         static constexpr size_t typeId
@@ -642,6 +685,32 @@ namespace Common {
         }
     };
 
+    template <JsonSerializable T, size_t N>
+    struct JsonSerializer<std::array<T, N>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const std::array<T, N>& inValue)
+        {
+            outJsonValue.SetArray();
+            outJsonValue.Reserve(inValue.size(), inAllocator);
+            for (const auto& element : inValue) {
+                rapidjson::Value jsonElement;
+                JsonSerializer<T>::JsonSerialize(jsonElement, inAllocator, element);
+                outJsonValue.PushBack(jsonElement, inAllocator);
+            }
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::array<T, N>& outValue)
+        {
+            for (auto& element : outValue) {
+                element = T();
+            }
+            for (auto i = 0; i < inJsonValue.Size(); i++) {
+                T element;
+                JsonSerializer<T>::JsonDeserialize(inJsonValue[i], element);
+                outValue[i] = std::move(element);
+            }
+        }
+    };
+
     template <JsonSerializable T>
     struct JsonSerializer<std::vector<T>> {
         static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const std::vector<T>& inValue)
@@ -717,7 +786,6 @@ namespace Common {
     };
 
     // TODO std::wstring
-    // TODO std::array
     // TODO std::set
     // TODO std::map
     // TODO std::tuple
