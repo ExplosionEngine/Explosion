@@ -73,7 +73,7 @@ namespace Common {
     struct Serializer<Color> {
         static constexpr size_t typeId = HashUtils::StrCrc32("Common::Color");
 
-        static size_t Serialize(SerializeStream& stream, const Color& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Color& value)
         {
             return Serializer<uint8_t>::Serialize(stream, value.r)
                 + Serializer<uint8_t>::Serialize(stream, value.g)
@@ -81,7 +81,7 @@ namespace Common {
                 + Serializer<uint8_t>::Serialize(stream, value.a);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Color& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Color& value)
         {
             return Serializer<uint8_t>::Deserialize(stream, value.r)
                 + Serializer<uint8_t>::Deserialize(stream, value.g)
@@ -94,7 +94,7 @@ namespace Common {
     struct Serializer<LinearColor> {
         static constexpr size_t typeId = HashUtils::StrCrc32("Common::LinearColor");
 
-        static size_t Serialize(SerializeStream& stream, const LinearColor& value)
+        static size_t Serialize(BinarySerializeStream& stream, const LinearColor& value)
         {
             return Serializer<float>::Serialize(stream, value.r)
                 + Serializer<float>::Serialize(stream, value.g)
@@ -102,7 +102,7 @@ namespace Common {
                 + Serializer<float>::Serialize(stream, value.a);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, LinearColor& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, LinearColor& value)
         {
             return Serializer<float>::Deserialize(stream, value.r)
                 + Serializer<float>::Deserialize(stream, value.g)

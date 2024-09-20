@@ -412,12 +412,12 @@ namespace Common {
     struct Serializer<Runtime::AssetRef<A>> {
         static constexpr size_t typeId = Common::HashUtils::StrCrc32("Runtime::AssetRef");
 
-        static size_t Serialize(SerializeStream& stream, const Runtime::AssetRef<A>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Runtime::AssetRef<A>& value)
         {
             return Serializer<Core::Uri>::Serialize(stream, value);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Runtime::AssetRef<A>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Runtime::AssetRef<A>& value)
         {
             Core::Uri uri;
             const auto deserialized = Serializer<Core::Uri>::Deserialize(stream, uri);
@@ -430,12 +430,12 @@ namespace Common {
     struct Serializer<Runtime::SoftAssetRef<A>> {
         static constexpr size_t typeId = Common::HashUtils::StrCrc32("Runtime::SoftAssetRef");
 
-        static size_t Serialize(SerializeStream& stream, const Runtime::SoftAssetRef<A>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Runtime::SoftAssetRef<A>& value)
         {
             return Serializer<Core::Uri>::Serialize(stream, value);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Runtime::SoftAssetRef<A>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Runtime::SoftAssetRef<A>& value)
         {
             Core::Uri uri;
             const auto deserialized = Serializer<Core::Uri>::Deserialize(stream, uri);

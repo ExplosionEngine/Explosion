@@ -36,12 +36,12 @@ namespace Common {
             = HashUtils::StrCrc32("Common::ViewTransform")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const ViewTransform<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const ViewTransform<T>& value)
         {
             return Serializer<Transform<T>>::Serialize(stream, value);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, ViewTransform<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, ViewTransform<T>& value)
         {
             return Serializer<Transform<T>>::Deserialize(stream, value);
         }

@@ -59,13 +59,13 @@ namespace Common { // NOLINT
             = HashUtils::StrCrc32("Common::Box")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const Box<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Box<T>& value)
         {
             return Serializer<Vec<T, 3>>::Serialize(stream, value.min)
                 + Serializer<Vec<T, 3>>::Serialize(stream, value.max);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Box<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Box<T>& value)
         {
             return Serializer<Vec<T, 3>>::Deserialize(stream, value.min)
                 + Serializer<Vec<T, 3>>::Deserialize(stream, value.max);

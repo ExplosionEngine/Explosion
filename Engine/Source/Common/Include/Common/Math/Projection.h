@@ -65,7 +65,7 @@ namespace Common {
             = HashUtils::StrCrc32("Common::ReversedZOrthogonalProjection")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const ReversedZOrthogonalProjection<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const ReversedZOrthogonalProjection<T>& value)
         {
             return Serializer<T>::Serialize(stream, value.width)
                 + Serializer<T>::Serialize(stream, value.height)
@@ -73,7 +73,7 @@ namespace Common {
                 + Serializer<std::optional<T>>::Serialize(stream, value.farPlane);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, ReversedZOrthogonalProjection<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, ReversedZOrthogonalProjection<T>& value)
         {
             return Serializer<T>::Deserialize(stream, value.width)
                 + Serializer<T>::Deserialize(stream, value.height)
@@ -88,7 +88,7 @@ namespace Common {
             = HashUtils::StrCrc32("Common::ReversedZPerspectiveProjection")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const ReversedZPerspectiveProjection<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const ReversedZPerspectiveProjection<T>& value)
         {
             return Serializer<T>::Serialize(stream, value.fov)
                 + Serializer<T>::Serialize(stream, value.width)
@@ -97,7 +97,7 @@ namespace Common {
                 + Serializer<std::optional<T>>::Serialize(stream, value.farPlane);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, ReversedZPerspectiveProjection<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, ReversedZPerspectiveProjection<T>& value)
         {
             return Serializer<T>::Deserialize(stream, value.fov)
                 + Serializer<T>::Deserialize(stream, value.width)

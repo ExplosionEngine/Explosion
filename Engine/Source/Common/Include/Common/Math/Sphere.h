@@ -45,13 +45,13 @@ namespace Common {
             = HashUtils::StrCrc32("Common::Sphere")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const Sphere<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Sphere<T>& value)
         {
             return Serializer<Vec<T, 3>>::Serialize(stream, value.center)
                 + Serializer<T>::Serialize(stream, value.radius);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Sphere<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Sphere<T>& value)
         {
             return Serializer<Vec<T, 3>>::Deserialize(stream, value.center)
                 + Serializer<T>::Deserialize(stream, value.radius);

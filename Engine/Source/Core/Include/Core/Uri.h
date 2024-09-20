@@ -67,12 +67,12 @@ namespace Common { // NOLINT
     struct Serializer<Core::Uri> {
         static constexpr size_t typeId = HashUtils::StrCrc32("Core::Uri");
 
-        static size_t Serialize(SerializeStream& stream, const Core::Uri& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Core::Uri& value)
         {
             return Serializer<std::string>::Serialize(stream, value.Str());
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Core::Uri& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Core::Uri& value)
         {
             std::string str;
             const auto deserialized = Serializer<std::string>::Deserialize(stream, str);

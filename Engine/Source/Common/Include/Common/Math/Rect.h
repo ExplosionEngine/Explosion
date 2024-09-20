@@ -57,13 +57,13 @@ namespace Common {
             = HashUtils::StrCrc32("Common::Rect")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const Rect<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Rect<T>& value)
         {
             return Serializer<Vec<T, 2>>::Serialize(stream, value.min)
                 + Serializer<Vec<T, 2>>::Serialize(stream, value.max);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Rect<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Rect<T>& value)
         {
             return Serializer<Vec<T, 2>>::Deserialize(stream, value.min)
                 + Serializer<Vec<T, 2>>::Deserialize(stream, value.max);

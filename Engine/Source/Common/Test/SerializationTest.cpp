@@ -40,14 +40,14 @@ TEST(SerializationTest, ByteStreamTest)
     std::vector<uint8_t> memory;
     {
         const uint32_t value = 5; // NOLINT
-        ByteSerializeStream stream(memory);
+        MemorySerializeStream stream(memory);
         stream.Seek(3);
         stream.Write(&value, sizeof(uint32_t));
     }
 
     {
         uint32_t value;
-        ByteDeserializeStream stream(memory);
+        MemoryDeserializeStream stream(memory);
         stream.Seek(3);
         stream.Read(&value, sizeof(uint32_t));
         ASSERT_EQ(value, 5);

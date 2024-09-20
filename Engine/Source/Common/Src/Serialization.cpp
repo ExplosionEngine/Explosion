@@ -7,13 +7,13 @@
 #include <Common/Serialization.h>
 
 namespace Common {
-    SerializeStream::SerializeStream() = default;
+    BinarySerializeStream::BinarySerializeStream() = default;
 
-    SerializeStream::~SerializeStream() = default;
+    BinarySerializeStream::~BinarySerializeStream() = default;
 
-    DeserializeStream::DeserializeStream() = default;
+    BinaryDeserializeStream::BinaryDeserializeStream() = default;
 
-    DeserializeStream::~DeserializeStream() = default;
+    BinaryDeserializeStream::~BinaryDeserializeStream() = default;
 
     BinaryFileSerializeStream::BinaryFileSerializeStream(const std::string& inFileName)
     {
@@ -97,16 +97,16 @@ namespace Common {
         }
     }
 
-    ByteSerializeStream::ByteSerializeStream(std::vector<uint8_t>& inBytes, const size_t pointerBegin)
+    MemorySerializeStream::MemorySerializeStream(std::vector<uint8_t>& inBytes, const size_t pointerBegin)
         : pointer(pointerBegin)
         , bytes(inBytes)
     {
         Assert(pointer <= bytes.size());
     }
 
-    ByteSerializeStream::~ByteSerializeStream() = default;
+    MemorySerializeStream::~MemorySerializeStream() = default;
 
-    void ByteSerializeStream::Write(const void* data, const size_t size)
+    void MemorySerializeStream::Write(const void* data, const size_t size)
     {
         const auto newPointer = pointer + size;
         if (newPointer > bytes.size()) {
@@ -119,26 +119,26 @@ namespace Common {
         pointer = newPointer;
     }
 
-    void ByteSerializeStream::Seek(int64_t offset)
+    void MemorySerializeStream::Seek(int64_t offset)
     {
         pointer += offset;
     }
 
-    size_t ByteSerializeStream::Loc()
+    size_t MemorySerializeStream::Loc()
     {
         return pointer;
     }
 
-    ByteDeserializeStream::ByteDeserializeStream(const std::vector<uint8_t>& inBytes, const size_t pointerBegin)
+    MemoryDeserializeStream::MemoryDeserializeStream(const std::vector<uint8_t>& inBytes, const size_t pointerBegin)
         : pointer(pointerBegin)
         , bytes(inBytes)
     {
         Assert(pointer <= bytes.size());
     }
 
-    ByteDeserializeStream::~ByteDeserializeStream() = default;
+    MemoryDeserializeStream::~MemoryDeserializeStream() = default;
 
-    void ByteDeserializeStream::Read(void* data, const size_t size)
+    void MemoryDeserializeStream::Read(void* data, const size_t size)
     {
         const auto newPointer = pointer + size;
         Assert(newPointer <= bytes.size());
@@ -146,12 +146,12 @@ namespace Common {
         pointer = newPointer;
     }
 
-    void ByteDeserializeStream::Seek(int64_t offset)
+    void MemoryDeserializeStream::Seek(int64_t offset)
     {
         pointer += offset;
     }
 
-    size_t ByteDeserializeStream::Loc()
+    size_t MemoryDeserializeStream::Loc()
     {
         return pointer;
     }

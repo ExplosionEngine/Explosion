@@ -73,14 +73,14 @@ namespace Common {
             = HashUtils::StrCrc32("Common::Transform")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const Transform<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Transform<T>& value)
         {
             return Serializer<Vec<T, 3>>::Serialize(stream, value.scale)
                 + Serializer<Quaternion<T>>::Serialize(stream, value.rotation)
                 + Serializer<Vec<T, 3>>::Serialize(stream, value.translation);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Transform<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Transform<T>& value)
         {
             return Serializer<Vec<T, 3>>::Deserialize(stream, value.scale)
                 + Serializer<Quaternion<T>>::Deserialize(stream, value.rotation)

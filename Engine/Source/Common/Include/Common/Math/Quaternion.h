@@ -127,12 +127,12 @@ namespace Common {
             = HashUtils::StrCrc32("Common::Angle")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const Angle<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Angle<T>& value)
         {
             return Serializer<T>::Serialize(stream, value.value);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Angle<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Angle<T>& value)
         {
             return Serializer<T>::Deserialize(stream, value.value);
         }
@@ -144,12 +144,12 @@ namespace Common {
             = HashUtils::StrCrc32("Common::Radian")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const Radian<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Radian<T>& value)
         {
             return Serializer<T>::Serialize(stream, value.value);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Radian<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Radian<T>& value)
         {
             return Serializer<T>::Deserialize(stream, value.value);
         }
@@ -161,7 +161,7 @@ namespace Common {
             = HashUtils::StrCrc32("Common::Quaternion")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const Quaternion<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Quaternion<T>& value)
         {
             return Serializer<T>::Serialize(stream, value.x)
                 + Serializer<T>::Serialize(stream, value.y)
@@ -169,7 +169,7 @@ namespace Common {
                 + Serializer<T>::Serialize(stream, value.w);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Quaternion<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Quaternion<T>& value)
         {
             return Serializer<T>::Deserialize(stream, value.x)
                 + Serializer<T>::Deserialize(stream, value.y)
