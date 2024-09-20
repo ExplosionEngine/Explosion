@@ -159,7 +159,7 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, ReversedZOrthogonalProjection<T>& outValue)
         {
-            if (!inJsonValue.IsObject) {
+            if (!inJsonValue.IsObject()) {
                 return;
             }
             if (inJsonValue.HasMember("width")) {

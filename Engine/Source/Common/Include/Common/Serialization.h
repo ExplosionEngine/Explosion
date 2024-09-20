@@ -12,6 +12,7 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
+#include <filesystem>
 
 #include <rapidjson/document.h>
 
@@ -28,6 +29,7 @@ namespace Common {
         virtual void Write(const void* data, size_t size) = 0;
         virtual void Seek(int64_t offset) = 0;
         virtual size_t Loc() = 0;
+        virtual std::endian Endian() = 0;
 
     protected:
         BinarySerializeStream();
@@ -41,11 +43,13 @@ namespace Common {
         virtual void Read(void* data, size_t size) = 0;
         virtual void Seek(int64_t offset) = 0;
         virtual size_t Loc() = 0;
+        virtual std::endian Endian() = 0;
 
     protected:
         BinaryDeserializeStream();
     };
 
+    template <std::endian E = std::endian::little>
     class BinaryFileSerializeStream final : public BinarySerializeStream {
     public:
         NonCopyable(BinaryFileSerializeStream)
@@ -54,12 +58,14 @@ namespace Common {
         void Write(const void* data, size_t size) override;
         void Seek(int64_t offset) override;
         size_t Loc() override;
+        std::endian Endian() override;
         void Close();
 
     private:
         std::ofstream file;
     };
 
+    template <std::endian E = std::endian::little>
     class BinaryFileDeserializeStream final : public BinaryDeserializeStream {
     public:
         NonCopyable(BinaryFileDeserializeStream)
@@ -68,6 +74,7 @@ namespace Common {
         void Read(void* data, size_t size) override;
         void Seek(int64_t offset) override;
         size_t Loc() override;
+        std::endian Endian() override;
         void Close();
 
     private:
@@ -75,6 +82,7 @@ namespace Common {
         size_t fileSize;
     };
 
+    template <std::endian E = std::endian::little>
     class MemorySerializeStream final : public BinarySerializeStream {
     public:
         NonCopyable(MemorySerializeStream)
@@ -83,12 +91,14 @@ namespace Common {
         void Write(const void* data, size_t size) override;
         void Seek(int64_t offset) override;
         size_t Loc() override;
+        std::endian Endian() override;
 
     private:
         size_t pointer;
         std::vector<uint8_t>& bytes;
     };
 
+    template <std::endian E = std::endian::little>
     class MemoryDeserializeStream final : public BinaryDeserializeStream {
     public:
         NonCopyable(MemoryDeserializeStream)
@@ -96,6 +106,7 @@ namespace Common {
         ~MemoryDeserializeStream() override;
         void Read(void* data, size_t size) override;
         void Seek(int64_t offset) override;
+        std::endian Endian() override;
         size_t Loc() override;
 
     private:
@@ -148,7 +159,224 @@ namespace Common {
         } \
     }; \
 
+namespace Common::Internal {
+    inline std::vector<uint8_t> SwapEndian(const void* data, const size_t size)
+    {
+        std::vector<uint8_t> result;
+        result.resize(size);
+
+        const auto* bytes = static_cast<const uint8_t*>(data);
+        for (auto i = 0; i < size; i++) {
+            result[i] = bytes[size - 1 - i];
+        }
+        return result;
+    }
+
+    inline void SwapEndianInplace(void* data, size_t size)
+    {
+        auto* bytes = static_cast<uint8_t*>(data);
+        for (auto i = 0; i < size / 2; i++) {
+            std::swap(bytes[i], bytes[size - 1 - i]);
+        }
+    }
+}
+
 namespace Common {
+    template <std::endian E>
+    BinaryFileSerializeStream<E>::BinaryFileSerializeStream(const std::string& inFileName)
+    {
+        if (const auto parent_path = std::filesystem::path(inFileName).parent_path();
+            !std::filesystem::exists(parent_path)) {
+            std::filesystem::create_directories(parent_path);
+        }
+        file = std::ofstream(inFileName, std::ios::binary);
+    }
+
+    template <std::endian E>
+    BinaryFileSerializeStream<E>::~BinaryFileSerializeStream()
+    {
+        Close();
+    }
+
+    template <std::endian E>
+    void BinaryFileSerializeStream<E>::Write(const void* data, const size_t size)
+    {
+        if (std::endian::native == E) {
+            file.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
+        } else {
+            const auto swapped = Internal::SwapEndian(data, size);
+            file.write(reinterpret_cast<const char*>(swapped.data()), static_cast<std::streamsize>(swapped.size()));
+        }
+    }
+
+    template <std::endian E>
+    void BinaryFileSerializeStream<E>::Seek(int64_t offset)
+    {
+        file.seekp(offset, std::ios::cur);
+    }
+
+    template <std::endian E>
+    size_t BinaryFileSerializeStream<E>::Loc()
+    {
+        return file.tellp();
+    }
+
+    template <std::endian E>
+    std::endian BinaryFileSerializeStream<E>::Endian()
+    {
+        return E;
+    }
+
+    template <std::endian E>
+    void BinaryFileSerializeStream<E>::Close()
+    {
+        if (!file.is_open()) {
+            return;
+        }
+        try {
+            file.close();
+        } catch (const std::exception&) {
+            QuickFail();
+        }
+    }
+
+    template <std::endian E>
+    BinaryFileDeserializeStream<E>::BinaryFileDeserializeStream(const std::string& inFileName)
+        : file(inFileName, std::ios::binary)
+    {
+        file.seekg(0, std::ios::end);
+        fileSize = file.tellg();
+        file.seekg(0, std::ios::beg);
+    }
+
+    template <std::endian E>
+    BinaryFileDeserializeStream<E>::~BinaryFileDeserializeStream()
+    {
+        Close();
+    }
+
+    template <std::endian E>
+    void BinaryFileDeserializeStream<E>::Read(void* data, const size_t size)
+    {
+        Assert(static_cast<size_t>(file.tellg()) + size <= fileSize);
+        file.read(static_cast<char*>(data), static_cast<std::streamsize>(size));
+        if (std::endian::native != E) {
+            Internal::SwapEndianInplace(data, size);
+        }
+    }
+
+    template <std::endian E>
+    void BinaryFileDeserializeStream<E>::Seek(int64_t offset)
+    {
+        file.seekg(offset, std::ios::cur);
+    }
+
+    template <std::endian E>
+    size_t BinaryFileDeserializeStream<E>::Loc()
+    {
+        return file.tellg();
+    }
+
+    template <std::endian E>
+    std::endian BinaryFileDeserializeStream<E>::Endian()
+    {
+        return E;
+    }
+
+    template <std::endian E>
+    void BinaryFileDeserializeStream<E>::Close()
+    {
+        if (!file.is_open()) {
+            return;
+        }
+        try {
+            file.close();
+        } catch (const std::exception&) {
+            QuickFail();
+        }
+    }
+
+    template <std::endian E>
+    MemorySerializeStream<E>::MemorySerializeStream(std::vector<uint8_t>& inBytes, const size_t pointerBegin)
+        : pointer(pointerBegin)
+        , bytes(inBytes)
+    {
+        Assert(pointer <= bytes.size());
+    }
+
+    template <std::endian E>
+    MemorySerializeStream<E>::~MemorySerializeStream() = default;
+
+    template <std::endian E>
+    void MemorySerializeStream<E>::Write(const void* data, const size_t size)
+    {
+        const auto newPointer = pointer + size;
+        if (newPointer > bytes.size()) {
+            if (newPointer > bytes.capacity()) {
+                bytes.reserve(std::ceil(static_cast<float>(newPointer) * 1.5f));
+            }
+            bytes.resize(newPointer);
+        }
+        memcpy(bytes.data() + pointer, data, size);
+        pointer = newPointer;
+    }
+
+    template <std::endian E>
+    void MemorySerializeStream<E>::Seek(int64_t offset)
+    {
+        pointer += offset;
+    }
+
+    template <std::endian E>
+    size_t MemorySerializeStream<E>::Loc()
+    {
+        return pointer;
+    }
+
+    template <std::endian E>
+    std::endian MemorySerializeStream<E>::Endian()
+    {
+        return E;
+    }
+
+    template <std::endian E>
+    MemoryDeserializeStream<E>::MemoryDeserializeStream(const std::vector<uint8_t>& inBytes, const size_t pointerBegin)
+        : pointer(pointerBegin)
+        , bytes(inBytes)
+    {
+        Assert(pointer <= bytes.size());
+    }
+
+    template <std::endian E>
+    MemoryDeserializeStream<E>::~MemoryDeserializeStream() = default;
+
+    template <std::endian E>
+    void MemoryDeserializeStream<E>::Read(void* data, const size_t size)
+    {
+        const auto newPointer = pointer + size;
+        Assert(newPointer <= bytes.size());
+        memcpy(data, bytes.data() + pointer, size);
+        pointer = newPointer;
+    }
+
+    template <std::endian E>
+    void MemoryDeserializeStream<E>::Seek(int64_t offset)
+    {
+        pointer += offset;
+    }
+
+    template <std::endian E>
+    size_t MemoryDeserializeStream<E>::Loc()
+    {
+        return pointer;
+    }
+
+    template <std::endian E>
+    std::endian MemoryDeserializeStream<E>::Endian()
+    {
+        return E;
+    }
+
     template <typename T>
     size_t Serialize(BinarySerializeStream& inStream, const T& inValue)
     {

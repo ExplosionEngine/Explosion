@@ -11,20 +11,20 @@
 #include <Test/Test.h>
 #include <Common/Serialization.h>
 
-template <typename T>
-void PerformTypedSerializationTest(const T& inValue, const Test::CustomComparer<T>& inCustomCompareFunc = {})
+template <typename T, std::endian E>
+void PerformTypedSerializationTestWithEndian(const T& inValue, const Test::CustomComparer<T>& inCustomCompareFunc = {})
 {
     static std::filesystem::path fileName = "../Test/Generated/Common/SerializationTest.TypedSerializationTest";
     std::filesystem::create_directories(fileName.parent_path());
 
     {
-        Common::BinaryFileSerializeStream stream(fileName.string());
+        Common::BinaryFileSerializeStream<E> stream(fileName.string());
         Common::Serialize<T>(stream, inValue);
     }
 
     {
         T value;
-        Common::BinaryFileDeserializeStream stream(fileName.string());
+        Common::BinaryFileDeserializeStream<E> stream(fileName.string());
         Common::Deserialize<T>(stream, value);
 
         if (inCustomCompareFunc) {
@@ -33,6 +33,14 @@ void PerformTypedSerializationTest(const T& inValue, const Test::CustomComparer<
             ASSERT_EQ(inValue, value);
         }
     }
+}
+
+template <typename T>
+void PerformTypedSerializationTest(const T& inValue, const Test::CustomComparer<T>& inCustomCompareFunc = {})
+{
+    PerformTypedSerializationTestWithEndian<T, std::endian::little>(inValue, inCustomCompareFunc);
+    PerformTypedSerializationTestWithEndian<T, std::endian::big>(inValue, inCustomCompareFunc);
+    PerformTypedSerializationTestWithEndian<T, std::endian::native>(inValue, inCustomCompareFunc);
 }
 
 template <typename T>
