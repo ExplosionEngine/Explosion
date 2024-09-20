@@ -272,6 +272,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Vec<T, L>& outValue)
         {
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != L) {
+                return;
+            }
             for (auto i = 0; i < L; i++) {
                 JsonSerializer<T>::JsonDeserialize(inJsonValue[i], outValue[i]);
             }

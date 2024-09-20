@@ -100,8 +100,15 @@ namespace Common { // NOLINT
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Box<T>& outValue)
         {
-            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["min"], outValue.min);
-            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["max"], outValue.max);
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("min")) {
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["min"], outValue.min);
+            }
+            if (inJsonValue.HasMember("max")) {
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["max"], outValue.max);
+            }
         }
     };
 }

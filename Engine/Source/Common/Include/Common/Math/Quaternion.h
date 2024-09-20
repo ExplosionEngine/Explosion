@@ -211,12 +211,12 @@ namespace Common {
     struct JsonSerializer<Angle<T>> {
         static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Angle<T>& inValue)
         {
-            outJsonValue.SetFloat(inValue.value);
+            JsonSerializer<T>::JsonSerialize(outJsonValue, inAllocator, inValue.value);
         }
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Angle<T>& outValue)
         {
-            outValue.value = inJsonValue.GetFloat();
+            JsonSerializer<T>::JsonDeserialize(inJsonValue, outValue.value);
         }
     };
 
@@ -224,12 +224,12 @@ namespace Common {
     struct JsonSerializer<Radian<T>> {
         static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Radian<T>& inValue)
         {
-            outJsonValue.SetFloat(inValue.value);
+            JsonSerializer<T>::JsonSerialize(outJsonValue, inAllocator, inValue.value);
         }
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Radian<T>& outValue)
         {
-            outValue.value = inJsonValue.GetFloat();
+            JsonSerializer<T>::JsonDeserialize(inJsonValue, outValue.value);
         }
     };
 
@@ -258,6 +258,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Quaternion<T>& outValue)
         {
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != 4) {
+                return;
+            }
             JsonSerializer<T>::JsonDeserialize(inJsonValue[0], outValue.x);
             JsonSerializer<T>::JsonDeserialize(inJsonValue[1], outValue.y);
             JsonSerializer<T>::JsonDeserialize(inJsonValue[2], outValue.z);

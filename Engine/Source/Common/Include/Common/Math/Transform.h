@@ -121,9 +121,18 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Transform<T>& outValue)
         {
-            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["scale"], outValue.scale);
-            JsonSerializer<Quaternion<T>>::JsonDeserialize(inJsonValue["rotation"], outValue.rotation);
-            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["scale"], outValue.scale);
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("scale")) {
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["scale"], outValue.scale);
+            }
+            if (inJsonValue.HasMember("rotation")) {
+                JsonSerializer<Quaternion<T>>::JsonDeserialize(inJsonValue["rotation"], outValue.rotation);
+            }
+            if (inJsonValue.HasMember("translation")) {
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["translation"], outValue.scale);
+            }
         }
     };
 }

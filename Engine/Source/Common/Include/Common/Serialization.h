@@ -328,6 +328,49 @@ namespace Common {
         }
     };
 
+    template <Serializable T, size_t N>
+    struct Serializer<std::array<T, N>> {
+        static constexpr size_t typeId
+            = HashUtils::StrCrc32("std::array")
+            + Serializer<T>::typeId
+            + N;
+
+        static size_t Serialize(SerializeStream& stream, const std::array<T, N>& value)
+        {
+            size_t serialized = 0;
+
+            const uint64_t size = value.size();
+            serialized += Serializer<uint64_t>::Serialize(stream, size);
+
+            for (const auto& element : value) {
+                serialized += Serializer<T>::Serialize(stream, element);
+            }
+            return serialized;
+        }
+
+        static size_t Deserialize(DeserializeStream& stream, std::array<T, N>& value)
+        {
+            size_t deserialized = 0;
+
+            for (auto& element : value) {
+                element = T();
+            }
+
+            uint64_t size;
+            deserialized += Serializer<uint64_t>::Deserialize(stream, size);
+            if (size != N) {
+                return deserialized;
+            }
+
+            for (auto i = 0; i < size; i++) {
+                T element;
+                deserialized += Serializer<T>::Deserialize(stream, element);
+                value[i] = std::move(element);
+            }
+            return deserialized;
+        }
+    };
+
     template <Serializable T>
     struct Serializer<std::vector<T>> {
         static constexpr size_t typeId
@@ -449,6 +492,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, bool& outValue)
         {
+            if (!inJsonValue.IsBool()) {
+                return;
+            }
             outValue = inJsonValue.GetBool();
         }
     };
@@ -462,6 +508,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, int8_t& outValue)
         {
+            if (!inJsonValue.IsInt()) {
+                return;
+            }
             outValue = static_cast<int8_t>(inJsonValue.GetInt());
         }
     };
@@ -475,6 +524,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, uint8_t& outValue)
         {
+            if (!inJsonValue.IsUint()) {
+                return;
+            }
             outValue = static_cast<uint8_t>(inJsonValue.GetUint());
         }
     };
@@ -488,6 +540,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, int16_t& outValue)
         {
+            if (!inJsonValue.IsInt()) {
+                return;
+            }
             outValue = static_cast<int16_t>(inJsonValue.GetInt());
         }
     };
@@ -501,6 +556,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, uint16_t& outValue)
         {
+            if (!inJsonValue.IsUint()) {
+                return;
+            }
             outValue = static_cast<uint16_t>(inJsonValue.GetUint());
         }
     };
@@ -514,6 +572,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, int32_t& outValue)
         {
+            if (!inJsonValue.IsInt()) {
+                return;
+            }
             outValue = inJsonValue.GetInt();
         }
     };
@@ -527,6 +588,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, uint32_t& outValue)
         {
+            if (!inJsonValue.IsUint()) {
+                return;
+            }
             outValue = inJsonValue.GetUint();
         }
     };
@@ -540,6 +604,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, int64_t& outValue)
         {
+            if (!inJsonValue.IsInt64()) {
+                return;
+            }
             outValue = inJsonValue.GetInt64();
         }
     };
@@ -553,6 +620,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, uint64_t& outValue)
         {
+            if (!inJsonValue.IsUint64()) {
+                return;
+            }
             outValue = inJsonValue.GetUint64();
         }
     };
@@ -566,6 +636,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, float& outValue)
         {
+            if (!inJsonValue.IsFloat()) {
+                return;
+            }
             outValue = inJsonValue.GetFloat();
         }
     };
@@ -579,6 +652,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, double& outValue)
         {
+            if (!inJsonValue.IsDouble()) {
+                return;
+            }
             outValue = inJsonValue.GetDouble();
         }
     };
@@ -592,6 +668,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::string& outValue)
         {
+            if (!inJsonValue.IsString()) {
+                return;
+            }
             outValue = std::string(inJsonValue.GetString(), inJsonValue.GetStringLength());
         }
     };
@@ -637,8 +716,45 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::pair<K, V>& outValue)
         {
-            JsonSerializer<K>::JsonDeserialize(inJsonValue["key"], outValue.first);
-            JsonSerializer<V>::JsonDeserialize(inJsonValue["value"], outValue.second);
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("key")) {
+                JsonSerializer<K>::JsonDeserialize(inJsonValue["key"], outValue.first);
+            }
+            if (inJsonValue.HasMember("value")) {
+                JsonSerializer<V>::JsonDeserialize(inJsonValue["value"], outValue.second);
+            }
+        }
+    };
+
+    template <JsonSerializable T, size_t N>
+    struct JsonSerializer<std::array<T, N>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const std::array<T, N>& inValue)
+        {
+            outJsonValue.SetArray();
+            outJsonValue.Reserve(inValue.size(), inAllocator);
+            for (const auto& element : inValue) {
+                rapidjson::Value jsonElement;
+                JsonSerializer<T>::JsonSerialize(jsonElement, inAllocator, element);
+                outJsonValue.PushBack(jsonElement, inAllocator);
+            }
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::array<T, N>& outValue)
+        {
+            for (auto& element : outValue) {
+                element = T();
+            }
+
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != N) {
+                return;
+            }
+            for (auto i = 0; i < inJsonValue.Size(); i++) {
+                T element;
+                JsonSerializer<T>::JsonDeserialize(inJsonValue[i], element);
+                outValue[i] = std::move(element);
+            }
         }
     };
 
@@ -658,6 +774,10 @@ namespace Common {
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::vector<T>& outValue)
         {
             outValue.clear();
+
+            if (!inJsonValue.IsArray()) {
+                return;
+            }
             outValue.reserve(inJsonValue.Size());
             for (auto i = 0; i < inJsonValue.Size(); i++) {
                 T element;
@@ -683,6 +803,10 @@ namespace Common {
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::unordered_set<T>& outValue)
         {
             outValue.clear();
+
+            if (!inJsonValue.IsArray()) {
+                return;
+            }
             outValue.reserve(inJsonValue.Size());
             for (auto i = 0; i < inJsonValue.Size(); i++) {
                 T element;
@@ -707,6 +831,11 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::unordered_map<K, V>& outValue)
         {
+            outValue.clear();
+
+            if (!inJsonValue.IsArray()) {
+                return;
+            }
             outValue.reserve(inJsonValue.Size());
             for (auto i = 0; i < inJsonValue.Size(); i++) {
                 std::pair<K, V> pair;
@@ -717,7 +846,6 @@ namespace Common {
     };
 
     // TODO std::wstring
-    // TODO std::array
     // TODO std::set
     // TODO std::map
     // TODO std::tuple

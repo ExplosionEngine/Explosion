@@ -159,10 +159,21 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, ReversedZOrthogonalProjection<T>& outValue)
         {
-            JsonSerializer<T>::JsonDeserialize(inJsonValue["width"], outValue.width);
-            JsonSerializer<T>::JsonDeserialize(inJsonValue["height"], outValue.height);
-            JsonSerializer<T>::JsonDeserialize(inJsonValue["near"], outValue.nearPlane);
-            JsonSerializer<std::optional<T>>::JsonDeserialize(inJsonValue["far"], outValue.farPlane);
+            if (!inJsonValue.IsObject) {
+                return;
+            }
+            if (inJsonValue.HasMember("width")) {
+                JsonSerializer<T>::JsonDeserialize(inJsonValue["width"], outValue.width);
+            }
+            if (inJsonValue.HasMember("height")) {
+                JsonSerializer<T>::JsonDeserialize(inJsonValue["height"], outValue.height);
+            }
+            if (inJsonValue.HasMember("near")) {
+                JsonSerializer<T>::JsonDeserialize(inJsonValue["near"], outValue.nearPlane);
+            }
+            if (inJsonValue.HasMember("far")) {
+                JsonSerializer<std::optional<T>>::JsonDeserialize(inJsonValue["far"], outValue.farPlane);
+            }
         }
     };
 }

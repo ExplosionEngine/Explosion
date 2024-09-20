@@ -86,8 +86,15 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Sphere<T>& outValue)
         {
-            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["center"], outValue.center);
-            JsonSerializer<T>::JsonDeserialize(inJsonValue["radius", outValue.radius]);
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("center")) {
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["center"], outValue.center);
+            }
+            if (inJsonValue.HasMember("radius")) {
+                JsonSerializer<T>::JsonDeserialize(inJsonValue["radius", outValue.radius]);
+            }
         }
     };
 }

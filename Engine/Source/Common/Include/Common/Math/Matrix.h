@@ -356,6 +356,9 @@ namespace Common { // NOLINT
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Mat<T, R, C>& outValue)
         {
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != R * C) {
+                return;
+            }
             for (auto i = 0; i < inJsonValue.Size(); i++) {
                 auto row = i / C;
                 auto col = i % C;

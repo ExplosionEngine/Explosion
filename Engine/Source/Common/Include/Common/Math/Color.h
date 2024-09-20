@@ -154,10 +154,21 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Color& outValue)
         {
-            outValue.r = static_cast<uint8_t>(inJsonValue["r"].GetUint());
-            outValue.g = static_cast<uint8_t>(inJsonValue["g"].GetUint());
-            outValue.b = static_cast<uint8_t>(inJsonValue["b"].GetUint());
-            outValue.a = static_cast<uint8_t>(inJsonValue["a"].GetUint());
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("r") && inJsonValue["r"].IsUint()) {
+                outValue.r = static_cast<uint8_t>(inJsonValue["r"].GetUint());
+            }
+            if (inJsonValue.HasMember("g") && inJsonValue["g"].IsUint()) {
+                outValue.g = static_cast<uint8_t>(inJsonValue["g"].GetUint());
+            }
+            if (inJsonValue.HasMember("b") && inJsonValue["b"].IsUint()) {
+                outValue.b = static_cast<uint8_t>(inJsonValue["b"].GetUint());
+            }
+            if (inJsonValue.HasMember("a") && inJsonValue["a"].IsUint()) {
+                outValue.a = static_cast<uint8_t>(inJsonValue["a"].GetUint());
+            }
         }
     };
 
@@ -174,10 +185,21 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, LinearColor& outValue)
         {
-            outValue.r = inJsonValue["r"].GetFloat();
-            outValue.g = inJsonValue["g"].GetFloat();
-            outValue.b = inJsonValue["b"].GetFloat();
-            outValue.a = inJsonValue["a"].GetFloat();
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("r") && inJsonValue["r"].IsFloat()) {
+                outValue.r = inJsonValue["r"].GetFloat();
+            }
+            if (inJsonValue.HasMember("g") && inJsonValue["g"].IsFloat()) {
+                outValue.g = inJsonValue["g"].GetFloat();
+            }
+            if (inJsonValue.HasMember("b") && inJsonValue["b"].IsFloat()) {
+                outValue.b = inJsonValue["b"].GetFloat();
+            }
+            if (inJsonValue.HasMember("a") && inJsonValue["a"].IsFloat()) {
+                outValue.a = inJsonValue["a"].GetFloat();
+            }
         }
     };
 }

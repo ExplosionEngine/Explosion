@@ -98,8 +98,15 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Rect<T>& outValue)
         {
-            JsonSerializer<Vec<T, 2>>::JsonDeserialize(inJsonValue["min"], outValue.min);
-            JsonSerializer<Vec<T, 2>>::JsonDeserialize(inJsonValue["max"], outValue.max);
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("min")) {
+                JsonSerializer<Vec<T, 2>>::JsonDeserialize(inJsonValue["min"], outValue.min);
+            }
+            if (inJsonValue.HasMember("max")) {
+                JsonSerializer<Vec<T, 2>>::JsonDeserialize(inJsonValue["max"], outValue.max);
+            }
         }
     };
 }
