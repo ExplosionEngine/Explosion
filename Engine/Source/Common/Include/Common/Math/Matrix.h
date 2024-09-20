@@ -308,7 +308,7 @@ namespace Common { // NOLINT
             = HashUtils::StrCrc32("Common::Matrix")
             + Serializer<T>::typeId + (R << 8) + C;
 
-        static size_t Serialize(SerializeStream& stream, const Mat<T, R, C>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Mat<T, R, C>& value)
         {
             auto serialized = 0;
             for (auto i = 0; i < R * C; i++) {
@@ -317,7 +317,7 @@ namespace Common { // NOLINT
             return serialized;
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Mat<T, R, C>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Mat<T, R, C>& value)
         {
             auto deserialized = 0;
             for (auto i = 0; i < R * C; i++) {
@@ -356,6 +356,9 @@ namespace Common { // NOLINT
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Mat<T, R, C>& outValue)
         {
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != R * C) {
+                return;
+            }
             for (auto i = 0; i < inJsonValue.Size(); i++) {
                 auto row = i / C;
                 auto col = i % C;

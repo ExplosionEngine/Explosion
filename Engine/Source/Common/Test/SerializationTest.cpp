@@ -40,14 +40,14 @@ TEST(SerializationTest, ByteStreamTest)
     std::vector<uint8_t> memory;
     {
         const uint32_t value = 5; // NOLINT
-        ByteSerializeStream stream(memory);
+        MemorySerializeStream stream(memory);
         stream.Seek(3);
         stream.Write(&value, sizeof(uint32_t));
     }
 
     {
         uint32_t value;
-        ByteDeserializeStream stream(memory);
+        MemoryDeserializeStream stream(memory);
         stream.Seek(3);
         stream.Read(&value, sizeof(uint32_t));
         ASSERT_EQ(value, 5);
@@ -72,6 +72,7 @@ TEST(SerializationTest, TypedSerializationTest)
     PerformTypedSerializationTest<std::optional<int>>({});
     PerformTypedSerializationTest<std::optional<int>>(15);
     PerformTypedSerializationTest<std::pair<int, bool>>({ 1, false });
+    PerformTypedSerializationTest<std::array<int, 3>>({ 1, 2, 3 }, ::Test::CompareArray<int, 3>);
     PerformTypedSerializationTest<std::vector<int>>({ 1, 2, 3 }, ::Test::CompareVec<int>);
     PerformTypedSerializationTest<std::unordered_set<int>>({ 1, 2, 3 }, ::Test::CompareUnorderedSet<int>);
     PerformTypedSerializationTest<std::unordered_map<int, bool>>({ { 1, false }, { 2, true } }, ::Test::CompareUnorderedMap<int, bool>);
@@ -95,6 +96,7 @@ TEST(SerializationTest, JsonSerializeTest)
     PerformJsonSerializationTest<std::optional<int>>({}, "null");
     PerformJsonSerializationTest<std::optional<int>>(15, "15");
     PerformJsonSerializationTest<std::pair<int, bool>>({ 1, false }, R"({"key":1,"value":false})");
+    PerformJsonSerializationTest<std::array<int, 3>>({ 1, 2, 3 }, "[1,2,3]", ::Test::CompareArray<int, 3>);
     PerformJsonSerializationTest<std::vector<int>>({ 1, 2, 3 }, "[1,2,3]", ::Test::CompareVec<int>);
     PerformJsonSerializationTest<std::unordered_set<int>>({ 1, 2, 3 }, "", ::Test::CompareUnorderedSet<int>);
     PerformJsonSerializationTest<std::unordered_map<int, bool>>({ { 1, false }, { 2, true } }, "", ::Test::CompareUnorderedMap<int, bool>);

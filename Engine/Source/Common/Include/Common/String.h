@@ -21,6 +21,7 @@ namespace Common {
     class StringUtils {
     public:
         static std::wstring ToWideString(const std::string& src);
+        static std::string ToByteString(const std::wstring& src);
         static std::string ToUpperCase(const std::string& src);
         static std::string ToLowerCase(const std::string& src);
         static std::string Replace(const std::string& src, const std::string& match, const std::string& replace);

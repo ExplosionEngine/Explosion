@@ -73,7 +73,7 @@ namespace Common {
     struct Serializer<Color> {
         static constexpr size_t typeId = HashUtils::StrCrc32("Common::Color");
 
-        static size_t Serialize(SerializeStream& stream, const Color& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Color& value)
         {
             return Serializer<uint8_t>::Serialize(stream, value.r)
                 + Serializer<uint8_t>::Serialize(stream, value.g)
@@ -81,7 +81,7 @@ namespace Common {
                 + Serializer<uint8_t>::Serialize(stream, value.a);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Color& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Color& value)
         {
             return Serializer<uint8_t>::Deserialize(stream, value.r)
                 + Serializer<uint8_t>::Deserialize(stream, value.g)
@@ -94,7 +94,7 @@ namespace Common {
     struct Serializer<LinearColor> {
         static constexpr size_t typeId = HashUtils::StrCrc32("Common::LinearColor");
 
-        static size_t Serialize(SerializeStream& stream, const LinearColor& value)
+        static size_t Serialize(BinarySerializeStream& stream, const LinearColor& value)
         {
             return Serializer<float>::Serialize(stream, value.r)
                 + Serializer<float>::Serialize(stream, value.g)
@@ -102,7 +102,7 @@ namespace Common {
                 + Serializer<float>::Serialize(stream, value.a);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, LinearColor& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, LinearColor& value)
         {
             return Serializer<float>::Deserialize(stream, value.r)
                 + Serializer<float>::Deserialize(stream, value.g)
@@ -154,10 +154,21 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Color& outValue)
         {
-            outValue.r = static_cast<uint8_t>(inJsonValue["r"].GetUint());
-            outValue.g = static_cast<uint8_t>(inJsonValue["g"].GetUint());
-            outValue.b = static_cast<uint8_t>(inJsonValue["b"].GetUint());
-            outValue.a = static_cast<uint8_t>(inJsonValue["a"].GetUint());
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("r") && inJsonValue["r"].IsUint()) {
+                outValue.r = static_cast<uint8_t>(inJsonValue["r"].GetUint());
+            }
+            if (inJsonValue.HasMember("g") && inJsonValue["g"].IsUint()) {
+                outValue.g = static_cast<uint8_t>(inJsonValue["g"].GetUint());
+            }
+            if (inJsonValue.HasMember("b") && inJsonValue["b"].IsUint()) {
+                outValue.b = static_cast<uint8_t>(inJsonValue["b"].GetUint());
+            }
+            if (inJsonValue.HasMember("a") && inJsonValue["a"].IsUint()) {
+                outValue.a = static_cast<uint8_t>(inJsonValue["a"].GetUint());
+            }
         }
     };
 
@@ -174,10 +185,21 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, LinearColor& outValue)
         {
-            outValue.r = inJsonValue["r"].GetFloat();
-            outValue.g = inJsonValue["g"].GetFloat();
-            outValue.b = inJsonValue["b"].GetFloat();
-            outValue.a = inJsonValue["a"].GetFloat();
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("r") && inJsonValue["r"].IsFloat()) {
+                outValue.r = inJsonValue["r"].GetFloat();
+            }
+            if (inJsonValue.HasMember("g") && inJsonValue["g"].IsFloat()) {
+                outValue.g = inJsonValue["g"].GetFloat();
+            }
+            if (inJsonValue.HasMember("b") && inJsonValue["b"].IsFloat()) {
+                outValue.b = inJsonValue["b"].GetFloat();
+            }
+            if (inJsonValue.HasMember("a") && inJsonValue["a"].IsFloat()) {
+                outValue.a = inJsonValue["a"].GetFloat();
+            }
         }
     };
 }

@@ -394,19 +394,19 @@ namespace Mirror {
         return rtti == nullptr;
     }
 
-    size_t Any::Serialize(Common::SerializeStream& inStream) const
+    size_t Any::Serialize(Common::BinarySerializeStream& inStream) const
     {
         Assert(rtti != nullptr);
         return rtti->serialize(Data(), inStream);
     }
 
-    std::pair<bool, size_t> Any::Deserialize(Common::DeserializeStream& inStream)
+    std::pair<bool, size_t> Any::Deserialize(Common::BinaryDeserializeStream& inStream)
     {
         Assert(rtti != nullptr && !IsConstRef());
         return rtti->deserialize(Data(), inStream);
     }
 
-    std::pair<bool, size_t> Any::Deserialize(Common::DeserializeStream& inStream) const
+    std::pair<bool, size_t> Any::Deserialize(Common::BinaryDeserializeStream& inStream) const
     {
         Assert(rtti != nullptr && IsNonConstRef());
         return rtti->deserialize(Data(), inStream);

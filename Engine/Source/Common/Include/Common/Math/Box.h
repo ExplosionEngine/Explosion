@@ -59,13 +59,13 @@ namespace Common { // NOLINT
             = HashUtils::StrCrc32("Common::Box")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const Box<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Box<T>& value)
         {
             return Serializer<Vec<T, 3>>::Serialize(stream, value.min)
                 + Serializer<Vec<T, 3>>::Serialize(stream, value.max);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Box<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Box<T>& value)
         {
             return Serializer<Vec<T, 3>>::Deserialize(stream, value.min)
                 + Serializer<Vec<T, 3>>::Deserialize(stream, value.max);
@@ -100,8 +100,15 @@ namespace Common { // NOLINT
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Box<T>& outValue)
         {
-            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["min"], outValue.min);
-            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["max"], outValue.max);
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("min")) {
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["min"], outValue.min);
+            }
+            if (inJsonValue.HasMember("max")) {
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["max"], outValue.max);
+            }
         }
     };
 }
