@@ -10,6 +10,7 @@
 #include <array>
 
 #include <Common/Debug.h>
+#include <Common/Concepts.h>
 
 namespace Common {
     class VectorUtils {
@@ -109,6 +110,8 @@ namespace Common {
         T& operator[](size_t inIndex);
         const T& operator[](size_t inIndex) const;
         explicit operator bool() const;
+        template <size_t N2> bool operator==(const InplaceVector<T, N2>& inRhs) const;
+        std::vector<T> ToVector() const;
         Iter Begin();
         ConstIter Begin() const;
         Iter End();
@@ -138,6 +141,13 @@ namespace Common {
 
         size_t size;
         std::array<uint8_t, memorySize> memory;
+    };
+}
+
+namespace Common { // NOLINT
+    template <typename T, size_t N>
+    struct EqualComparableTest<InplaceVector<T, N>> {
+        static constexpr bool value = BaseEqualComparable<T>;
     };
 }
 
@@ -636,6 +646,33 @@ namespace Common {
     InplaceVector<T, N>::operator bool() const
     {
         return !Empty();
+    }
+
+    template <typename T, size_t N>
+    template <size_t N2>
+    bool InplaceVector<T, N>::operator==(const InplaceVector<T, N2>& inRhs) const
+    {
+        if (Size() != inRhs.Size()) {
+            return false;
+        }
+        for (auto i = 0; i < Size(); i++) {
+            if (At(i) != inRhs.At(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    template <typename T, size_t N>
+    std::vector<T> InplaceVector<T, N>::ToVector() const
+    {
+        std::vector<T> result;
+        result.reserve(Size());
+
+        for (auto i = 0; i < Size(); i++) {
+            result.emplace_back(At(i));
+        }
+        return result;
     }
 
     template <typename T, size_t N>

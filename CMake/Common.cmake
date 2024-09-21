@@ -1,4 +1,5 @@
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_UNITY_BUILD ON)
 
 option(BUILD_EDITOR "Build Explosion editor" ON)
 option(CI "Build in CI" OFF)

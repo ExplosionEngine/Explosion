@@ -230,7 +230,7 @@ namespace Mirror {
         void JsonDeserialize(const rapidjson::Value& inJsonValue) const;
         std::string ToString() const;
 
-        // always return original ptr and size, even policy is ref
+        // always return original ptr and size, even policy is a reference
         void* Data() const;
         size_t Size() const;
 

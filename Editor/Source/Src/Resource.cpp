@@ -13,7 +13,7 @@ namespace Editor {
 
     std::filesystem::path Resource::Path() const
     {
-        return Core::Paths::EngineRes() / file;
+        return ::Core::Paths::EngineRes() / file;
     }
 
     std::string Resource::String() const

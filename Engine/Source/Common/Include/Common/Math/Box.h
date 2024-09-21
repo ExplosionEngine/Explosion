@@ -84,7 +84,7 @@ namespace Common { // NOLINT
     };
 
     template <JsonSerializable T>
-    struct JsonSerializer<T> {
+    struct JsonSerializer<Box<T>> {
         static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Box<T>& inValue)
         {
             rapidjson::Value minJson;

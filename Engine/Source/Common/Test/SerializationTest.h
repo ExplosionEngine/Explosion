@@ -12,7 +12,7 @@
 #include <Common/Serialization.h>
 
 template <typename T, std::endian E>
-void PerformTypedSerializationTestWithEndian(const T& inValue, const Test::CustomComparer<T>& inCustomCompareFunc = {})
+void PerformTypedSerializationTestWithEndian(const T& inValue)
 {
     static std::filesystem::path fileName = "../Test/Generated/Common/SerializationTest.TypedSerializationTest";
     std::filesystem::create_directories(fileName.parent_path());
@@ -27,24 +27,20 @@ void PerformTypedSerializationTestWithEndian(const T& inValue, const Test::Custo
         Common::BinaryFileDeserializeStream<E> stream(fileName.string());
         Common::Deserialize<T>(stream, value);
 
-        if (inCustomCompareFunc) {
-            ASSERT_TRUE(inCustomCompareFunc(inValue, value));
-        } else {
-            ASSERT_EQ(inValue, value);
-        }
+        ASSERT_EQ(inValue, value);
     }
 }
 
 template <typename T>
-void PerformTypedSerializationTest(const T& inValue, const Test::CustomComparer<T>& inCustomCompareFunc = {})
+void PerformTypedSerializationTest(const T& inValue)
 {
-    PerformTypedSerializationTestWithEndian<T, std::endian::little>(inValue, inCustomCompareFunc);
-    PerformTypedSerializationTestWithEndian<T, std::endian::big>(inValue, inCustomCompareFunc);
-    PerformTypedSerializationTestWithEndian<T, std::endian::native>(inValue, inCustomCompareFunc);
+    PerformTypedSerializationTestWithEndian<T, std::endian::little>(inValue);
+    PerformTypedSerializationTestWithEndian<T, std::endian::big>(inValue);
+    PerformTypedSerializationTestWithEndian<T, std::endian::native>(inValue);
 }
 
 template <typename T>
-void PerformJsonSerializationTest(const T& inValue, const std::string& inExceptJson, const Test::CustomComparer<T>& inCustomCompareFunc = {})
+void PerformJsonSerializationTest(const T& inValue, const std::string& inExceptJson)
 {
     std::string json;
     {
@@ -73,10 +69,6 @@ void PerformJsonSerializationTest(const T& inValue, const std::string& inExceptJ
 
         T value;
         Common::JsonDeserialize<T>(jsonValue, value);
-        if (inCustomCompareFunc) {
-            ASSERT_TRUE(inCustomCompareFunc(inValue, value));
-        } else {
-            ASSERT_EQ(inValue, value);
-        }
+        ASSERT_EQ(inValue, value);
     }
 }

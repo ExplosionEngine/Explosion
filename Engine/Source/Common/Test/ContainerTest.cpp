@@ -4,7 +4,6 @@
 
 #include <Test/Test.h>
 #include <Common/Container.h>
-using namespace Test;
 using namespace Common;
 
 TEST(ContainerTest, VectorSwapDeleteTest)
@@ -12,7 +11,7 @@ TEST(ContainerTest, VectorSwapDeleteTest)
     std::vector vec0 = { 1, 2, 3, 4, 5 };
     const auto index = VectorUtils::SwapWithLastAndDelete(vec0, 2);
     ASSERT_EQ(index, 2);
-    AssertVecEq(vec0, std::vector { 1, 2, 5, 4 });
+    ASSERT_EQ(vec0, (std::vector { 1, 2, 5, 4 }));
 
     std::vector vec1 = { 1, 1, 2, 2, 3, 4, 4, 4 };
     for (size_t i = 0; i < vec1.size();) {
@@ -22,7 +21,7 @@ TEST(ContainerTest, VectorSwapDeleteTest)
             i++;
         }
     }
-    AssertVecEq(vec1, std::vector { 1, 1, 4, 4, 3, 4 });
+    ASSERT_EQ(vec1, (std::vector { 1, 1, 4, 4, 3, 4 }));
 
     std::vector vec2 = { 2, 2, 3, 3, 4, 4, 5 };
     auto iter = vec2.begin();
@@ -33,7 +32,7 @@ TEST(ContainerTest, VectorSwapDeleteTest)
             ++iter;
         }
     }
-    AssertVecEq(vec2, std::vector { 2, 2, 5, 4, 4 });
+    ASSERT_EQ(vec2, (std::vector { 2, 2, 5, 4, 4 }));
 }
 
 TEST(ContainerTest, VectorGetIntersection)
@@ -42,7 +41,7 @@ TEST(ContainerTest, VectorGetIntersection)
     const std::vector b = { 3, 4, 5, 6, 7 };
     const auto result = VectorUtils::GetIntersection(a, b);
 
-    AssertVecEq(result, std::vector { 3, 4, 5 });
+    ASSERT_EQ(result, (std::vector { 3, 4, 5 }));
 }
 
 TEST(ContainerTest, SetGetIntersection)
@@ -54,7 +53,7 @@ TEST(ContainerTest, SetGetIntersection)
     ASSERT_EQ(result.size(), 3);
 }
 
-TEST(ContainerTest, HeapVectorBasic)
+TEST(ContainerTest, InplaceVectorBasic)
 {
     InplaceVector<int, 10> t0(4, 0);
     ASSERT_EQ(t0.Capacity(), 10);
@@ -63,43 +62,43 @@ TEST(ContainerTest, HeapVectorBasic)
     for (auto i = 0; i < t0.Size(); i++) {
         t0[i] = i + 1;
     }
-    AssertVecEq(t0, std::vector { 1, 2, 3, 4 });
+    ASSERT_EQ(t0.ToVector(), (std::vector { 1, 2, 3, 4 }));
 
     t0.EmplaceBack(5);
-    AssertVecEq(t0, std::vector { 1, 2, 3, 4, 5 });
+    ASSERT_EQ(t0.ToVector(), (std::vector { 1, 2, 3, 4, 5 }));
 
     t0.PushBack(6);
-    AssertVecEq(t0, std::vector { 1, 2, 3, 4, 5, 6 });
+    ASSERT_EQ(t0.ToVector(), (std::vector { 1, 2, 3, 4, 5, 6 }));
 
     t0.PopBack();
-    AssertVecEq(t0, std::vector { 1, 2, 3, 4, 5 });
+    ASSERT_EQ(t0.ToVector(), (std::vector { 1, 2, 3, 4, 5 }));
 
     t0.Insert(0, 0);
-    AssertVecEq(t0, std::vector { 0, 1, 2, 3, 4, 5 });
+    ASSERT_EQ(t0.ToVector(), (std::vector { 0, 1, 2, 3, 4, 5 }));
 
     t0.Insert(3, 6);
-    AssertVecEq(t0, std::vector { 0, 1, 2, 6, 3, 4, 5 });
+    ASSERT_EQ(t0.ToVector(), (std::vector { 0, 1, 2, 6, 3, 4, 5 }));
 
     t0.Insert(7, 7);
-    AssertVecEq(t0, std::vector { 0, 1, 2, 6, 3, 4, 5, 7 });
+    ASSERT_EQ(t0.ToVector(), (std::vector { 0, 1, 2, 6, 3, 4, 5, 7 }));
 
     t0.Erase(3);
-    AssertVecEq(t0, std::vector { 0, 1, 2, 3, 4, 5, 7 });
+    ASSERT_EQ(t0.ToVector(), (std::vector { 0, 1, 2, 3, 4, 5, 7 }));
 
     t0.Erase(0);
-    AssertVecEq(t0, std::vector { 1, 2, 3, 4, 5, 7 });
+    ASSERT_EQ(t0.ToVector(), (std::vector { 1, 2, 3, 4, 5, 7 }));
 
     t0.Erase(5);
-    AssertVecEq(t0, std::vector { 1, 2, 3, 4, 5 });
+    ASSERT_EQ(t0.ToVector(), (std::vector { 1, 2, 3, 4, 5 }));
 
     t0.EraseSwapLast(0);
-    AssertVecEq(t0, std::vector { 5, 2, 3, 4 });
+    ASSERT_EQ(t0.ToVector(), (std::vector { 5, 2, 3, 4 }));
 
     t0.EraseSwapLast(3);
-    AssertVecEq(t0, std::vector { 5, 2, 3 });
+    ASSERT_EQ(t0.ToVector(), (std::vector { 5, 2, 3 }));
 }
 
-TEST(ContainerTest, HeapVectorIter)
+TEST(ContainerTest, InplaceVectorIter)
 {
     struct S0 {
         int32_t a;
@@ -133,7 +132,7 @@ TEST(ContainerTest, HeapVectorIter)
     t0.At(2) = { 3, 4 };
     t0.At(3) = { 4, 5 };
     t0.At(4) = { 5, 6 };
-    AssertVecEq(t0, std::vector<S0> { { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 } });
+    ASSERT_EQ(t0.ToVector(), (std::vector<S0> { { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 } }));
 
     auto i = 0;
     for (const auto& element : t0) {
@@ -142,28 +141,28 @@ TEST(ContainerTest, HeapVectorIter)
     }
 
     t0.Erase(t0.Begin());
-    AssertVecEq(t0, std::vector<S0> { { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 } });
+    ASSERT_EQ(t0.ToVector(), (std::vector<S0> { { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 } }));
 
     t0.Erase(t0.Begin() + 2);
-    AssertVecEq(t0, std::vector<S0> { { 2, 3 }, { 3, 4 }, { 5, 6 } });
+    ASSERT_EQ(t0.ToVector(), (std::vector<S0> { { 2, 3 }, { 3, 4 }, { 5, 6 } }));
 
     t0.Erase(t0.End());
-    AssertVecEq(t0, std::vector<S0> { { 2, 3 }, { 3, 4 } });
+    ASSERT_EQ(t0.ToVector(), (std::vector<S0> { { 2, 3 }, { 3, 4 } }));
 
     t0.EmplaceBack(7, 8);
-    AssertVecEq(t0, std::vector<S0> { { 2, 3 }, { 3, 4 }, { 7, 8 } });
+    ASSERT_EQ(t0.ToVector(), (std::vector<S0> { { 2, 3 }, { 3, 4 }, { 7, 8 } }));
 
     t0.EmplaceBack(8, 9);
-    AssertVecEq(t0, std::vector<S0> { { 2, 3 }, { 3, 4 }, { 7, 8 }, { 8, 9 } });
+    ASSERT_EQ(t0.ToVector(), (std::vector<S0> { { 2, 3 }, { 3, 4 }, { 7, 8 }, { 8, 9 } }));
 
     t0.EraseSwapLast(t0.Begin());
-    AssertVecEq(t0, std::vector<S0> { { 8, 9 }, { 3, 4 }, { 7, 8 } });
+    ASSERT_EQ(t0.ToVector(), (std::vector<S0> { { 8, 9 }, { 3, 4 }, { 7, 8 } }));
 
     t0.EraseSwapLast(t0.End() - 1);
-    AssertVecEq(t0, std::vector<S0> { { 8, 9 }, { 3, 4 } });
+    ASSERT_EQ(t0.ToVector(), (std::vector<S0> { { 8, 9 }, { 3, 4 } }));
 }
 
-TEST(ContainerTest, HeapVectorCopyAndMove)
+TEST(ContainerTest, InplaceVectorCopyAndMove)
 {
     enum class ConstructType : uint8_t {
         cDefault,

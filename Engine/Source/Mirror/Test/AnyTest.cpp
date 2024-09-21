@@ -171,7 +171,7 @@ TEST(AnyTest, ValueCtorTest)
     ASSERT_EQ(a1.As<float>(), 2.0f);
 
     Any a2 = std::vector { 1, 2, 3 };
-    ::Test::AssertVecEq(a2.As<std::vector<int>>(), std::vector { 1, 2, 3 });
+    ASSERT_EQ(a2.As<std::vector<int>>(), (std::vector { 1, 2, 3 }));
 
     const Any a3 = AnyBasicTest { 1, 2.0f };
     ASSERT_EQ(a3.As<const AnyBasicTest&>(), (AnyBasicTest { 1, 2 }));
@@ -199,7 +199,7 @@ TEST(AnyTest, RefCtorTest)
     std::vector v2 = { 1, 2, 3 };
     const Any a2 = std::ref(v2);
     ASSERT_EQ(a2.Policy(), AnyPolicy::nonConstRef);
-    ::Test::AssertVecEq(a2.As<const decltype(v2)&>(), std::vector { 1, 2, 3 });
+    ASSERT_EQ(a2.As<const decltype(v2)&>(), (std::vector { 1, 2, 3 }));
 
     const AnyBasicTest v3 { 1, 2.0f }; // NOLINT
     const auto r1 = std::ref(v3);

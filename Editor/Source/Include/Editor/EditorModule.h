@@ -10,7 +10,7 @@ namespace Editor {
     class EditorModule final : public Runtime::IGameModule {
     public:
         void OnUnload() override;
-        Core::ModuleType Type() const override;
+        ::Core::ModuleType Type() const override;
         Runtime::Engine* CreateEngine(const Runtime::EngineInitParams&) override;
 
     private:

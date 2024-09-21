@@ -14,8 +14,8 @@
 #include <set>
 #include <map>
 
-namespace Common::Internal {
-    template <typename T> concept BaseEqualComparable = requires(const T& lhs, const T& rhs) { { lhs == rhs } -> std::same_as<bool>; };
+namespace Common {
+    template <typename T> concept BaseEqualComparable = requires(const T& lhs, const T& rhs) { { lhs == rhs } -> std::same_as<bool>; { lhs != rhs } -> std::same_as<bool>; };
     template <typename T> struct EqualComparableTest { static constexpr bool value = BaseEqualComparable<T>; };
 }
 
@@ -51,10 +51,10 @@ namespace Common {
     template <uint8_t N, typename... T> concept ArgsNumLessEqual = sizeof...(T) <= N;
     template <uint8_t N, typename... T> concept ArgsNumGreaterEqual = sizeof...(T) >= N;
     template <typename C, typename B> concept DerivedFrom = std::is_base_of_v<B, C>;
-    template <typename T> concept EqualComparable = Internal::EqualComparableTest<T>::value;
+    template <typename T> concept EqualComparable = EqualComparableTest<T>::value;
 }
 
-namespace Common::Internal {
+namespace Common {
     // some types can perform operator== compare, but it requires element type also support operator== compare, so we test it further
     template <typename T> struct EqualComparableTest<std::optional<T>> { static constexpr bool value = BaseEqualComparable<T>; };
     template <typename T> struct EqualComparableTest<std::vector<T>> { static constexpr bool value = BaseEqualComparable<T>; };

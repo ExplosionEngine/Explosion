@@ -12,9 +12,9 @@ namespace Editor {
         engine.Reset();
     }
 
-    Core::ModuleType EditorModule::Type() const
+    ::Core::ModuleType EditorModule::Type() const
     {
-        return Core::ModuleType::mStatic;
+        return ::Core::ModuleType::mStatic;
     }
 
     Runtime::Engine* EditorModule::CreateEngine(const Runtime::EngineInitParams& inParams)
