@@ -13,6 +13,7 @@
 #include <type_traits>
 #include <typeinfo>
 #include <functional>
+#include <ranges>
 #include <variant>
 
 #include <Common/Serialization.h>
@@ -59,6 +60,7 @@ namespace Mirror {
         const uint32_t copyAssignable : 1;
         const uint32_t moveConstructible : 1;
         const uint32_t moveAssignable : 1;
+        const uint32_t equalComparable : 1;
     };
 
     template <typename T> const TypeInfo* GetTypeInfo();
@@ -306,6 +308,8 @@ namespace Mirror {
         const TypeInfo* RemovePointerType() const;
 
     private:
+        template <typename F> decltype(auto) Delegate(F&& inFunc) const;
+
         std::variant<std::monostate, Any*, const Any*, Any> any;
     };
 
@@ -843,8 +847,10 @@ namespace Common { // NOLINT
 
             stream.Seek(static_cast<int64_t>(sizeof(uint64_t) * (memberVariableCount + 1)));
             uint64_t memberVariableContentSize = 0;
-            for (const auto& [id, memberVariable] : memberVariables) {
-                const bool sameAsDefaultObject = defaultObject.Empty() ? false : memberVariable.GetDyn(obj) == memberVariable.GetDyn(defaultObject);
+            for (const auto& memberVariable : memberVariables | std::views::values) {
+                const bool sameAsDefaultObject = defaultObject.Empty() || !memberVariable.GetTypeInfo()->equalComparable
+                    ? false
+                    : memberVariable.GetDyn(obj) == memberVariable.GetDyn(defaultObject);
 
                 memberVariableContentSize += Serializer<std::string>::Serialize(stream, memberVariable.GetName());
                 memberVariableContentSize += Serializer<bool>::Serialize(stream, sameAsDefaultObject);
@@ -867,11 +873,13 @@ namespace Common { // NOLINT
         {
             const auto& className = clazz.GetName();
             const auto* baseClass = clazz.GetBaseClass();
-            const auto& memberVariables = clazz.GetMemberVariables();
             const auto defaultObject = clazz.GetDefaultObject();
 
             std::string name;
             const auto nameSize = Serializer<std::string>::Deserialize(stream, name);
+            if (name != className) {
+                return nameSize;
+            }
 
             uint64_t aspectBaseClassContentSize = 0;
             Serializer<uint64_t>::Deserialize(stream, aspectBaseClassContentSize);
@@ -905,7 +913,7 @@ namespace Common { // NOLINT
                 memberVariableContentCur += Serializer<bool>::Deserialize(stream, sameAsDefaultObject);
                 if (sameAsDefaultObject) {
                     if (!defaultObject.Empty()) {
-                        memberVariable.SetDyn(obj, memberVariable.GetDyn(obj));
+                        memberVariable.SetDyn(obj, memberVariable.GetDyn(defaultObject));
                     }
                     continue;
                 }
@@ -925,6 +933,76 @@ namespace Common { // NOLINT
         static size_t Deserialize(BinaryDeserializeStream& stream, T& value)
         {
             return DeserializeDyn(stream, Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(value));
+        }
+    };
+
+    template <Mirror::MetaClass T>
+    struct JsonSerializer<T> {
+        static void JsonSerializeDyn(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mirror::Class& clazz, const Mirror::Argument& inObj)
+        {
+            const auto& className = clazz.GetName();
+            const auto* baseClass = clazz.GetBaseClass();
+            const auto& memberVariables = clazz.GetMemberVariables();
+            const auto defaultObject = clazz.GetDefaultObject();
+
+            rapidjson::Value classNameJson;
+            JsonSerializer<std::string>::JsonSerialize(classNameJson, inAllocator, className);
+
+            rapidjson::Value baseClassJson;
+            if (baseClass != nullptr) {
+                JsonSerializeDyn(baseClassJson, inAllocator, *baseClass, inObj);
+            } else {
+                baseClassJson.SetNull();
+            }
+
+            rapidjson::Value membersJson;
+            membersJson.SetArray();
+            membersJson.Reserve(memberVariables.size(), inAllocator);
+            for (const auto& member : memberVariables | std::views::values) {
+                rapidjson::Value memberNameJson;
+                JsonSerializer<std::string>::JsonSerialize(memberNameJson, inAllocator, member.GetName());
+
+                bool sameAsDefault = defaultObject.Empty() || !member.GetTypeInfo()->equalComparable
+                    ? false
+                    : member.GetDyn(inObj) == member.GetDyn(defaultObject);
+
+                rapidjson::Value memberSameAsDefaultJson;
+                JsonSerializer<bool>::JsonSerialize(memberSameAsDefaultJson, inAllocator, sameAsDefault);
+
+                rapidjson::Value memberContentJson;
+                if (sameAsDefault) {
+                    memberContentJson.SetNull();
+                } else {
+                    member.GetDyn(inObj).JsonSerialize(memberContentJson, inAllocator);
+                }
+
+                rapidjson::Value memberJson;
+                memberJson.SetObject();
+                memberJson.AddMember("memberName", memberNameJson, inAllocator);
+                memberJson.AddMember("sameAsDefault", memberSameAsDefaultJson, inAllocator);
+                memberJson.AddMember("content", memberContentJson, inAllocator);
+                membersJson.PushBack(memberJson, inAllocator);
+            }
+
+            outJsonValue.SetObject();
+            outJsonValue.AddMember("className", classNameJson, inAllocator);
+            outJsonValue.AddMember("baseClass", baseClassJson, inAllocator);
+            outJsonValue.AddMember("members", membersJson, inAllocator);
+        }
+
+        static void JsonDeserializeDyn(const rapidjson::Value& inJsonValue, const Mirror::Class& clazz, const Mirror::Argument& outValue)
+        {
+            // TODO
+        }
+
+        static void JsonSerialize(rapidjson::Value& outValue, rapidjson::Document::AllocatorType& inAllocator, const T& inValue)
+        {
+            JsonSerializeDyn(outValue, inAllocator, Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(inValue));
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inValue, T& outValue)
+        {
+            JsonDeserializeDyn(inValue, Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(outValue));
         }
     };
 
@@ -953,9 +1031,7 @@ namespace Common { // NOLINT
         }
     };
 
-    // TODO meta object to json
-
-    // TODO Mirror::Any serialization serialization/tostring/tojson
+    // TODO meta enum serialization/tostring/tojson
     // TODO Type class serialization/tostring/tojson
 }
 
@@ -970,22 +1046,23 @@ namespace Mirror {
             typeid(T).name(),
             typeid(T).hash_code(),
             typeid(std::remove_pointer_t<T>).hash_code(),
-            std::is_const_v<T>,
-            std::is_lvalue_reference_v<T>,
-            std::is_lvalue_reference_v<T> ? std::is_const_v<std::remove_reference_t<T>> : false,
-            std::is_rvalue_reference_v<T>,
-            std::is_pointer_v<T>,
-            std::is_pointer_v<T> ? std::is_const_v<std::remove_pointer_t<T>> : false,
-            std::is_class_v<T>,
-            std::is_enum_v<T>,
-            std::is_array_v<T>,
-            std::is_arithmetic_v<T>,
-            std::is_integral_v<T>,
-            std::is_floating_point_v<T>,
-            std::is_copy_constructible_v<T>,
-            std::is_copy_assignable_v<T>,
-            std::is_move_constructible_v<T>,
-            std::is_move_assignable_v<T>,
+            Common::CppConst<T>,
+            Common::CppLValueRef<T>,
+            Common::CppLValueConstRef<T>,
+            Common::CppRValueRef<T>,
+            Common::CppPointer<T>,
+            Common::CppConstPointer<T>,
+            Common::CppClass<T>,
+            Common::CppEnum<T>,
+            Common::CppArray<T>,
+            Common::CppArithmetic<T>,
+            Common::CppIntegral<T>,
+            Common::CppFloatingPoint<T>,
+            Common::CppCopyConstructible<T>,
+            Common::CppCopyAssignable<T>,
+            Common::CppMoveConstructible<T>,
+            Common::CppMoveAssignable<T>,
+            Common::EqualComparable<T>
         };
         return &typeInfo;
     }
@@ -1262,18 +1339,26 @@ namespace Mirror {
     template <typename T>
     T Argument::As() const // NOLINT
     {
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.template As<T>();
+        });
+    }
+
+    template <typename F>
+    decltype(auto) Argument::Delegate(F&& inFunc) const
+    {
         const auto index = any.index();
         if (index == 1) {
-            return std::get<Any*>(any)->As<T>();
+            return inFunc(*std::get<Any*>(any));
         }
         if (index == 2) {
-            return std::get<const Any*>(any)->As<T>();
+            return inFunc(*std::get<const Any*>(any));
         }
         if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).As<T>();
+            return inFunc(const_cast<Any&>(std::get<Any>(any)));
         }
         QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->As<T>();
+        return inFunc(Any {});
     }
 
     template <size_t N>

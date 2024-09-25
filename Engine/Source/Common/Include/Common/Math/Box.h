@@ -77,9 +77,11 @@ namespace Common { // NOLINT
         static std::string ToString(const Box<T>& inValue)
         {
             return fmt::format(
-                "{min={}, max={}}",
+                "{}min={}, max={}{}",
+                "{",
                 StringConverter<Vec<T, 3>>::ToString(inValue.min),
-                StringConverter<Vec<T, 3>>::ToString(inValue.max));
+                StringConverter<Vec<T, 3>>::ToString(inValue.max),
+                "}");
         }
     };
 

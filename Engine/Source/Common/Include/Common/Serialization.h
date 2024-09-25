@@ -321,8 +321,12 @@ namespace Common {
             }
             bytes.resize(newPointer);
         }
-        // TODO endian swap
-        memcpy(bytes.data() + pointer, data, size);
+        if (std::endian::native == E) {
+            memcpy(bytes.data() + pointer, data, size);
+        } else {
+            const auto swaped = Internal::SwapEndian(data, size);
+            memcpy(bytes.data() + pointer, swaped.data(), swaped.size());
+        }
         pointer = newPointer;
     }
 
@@ -360,8 +364,10 @@ namespace Common {
     {
         const auto newPointer = pointer + size;
         Assert(newPointer <= bytes.size());
-        // TODO endian swap
         memcpy(data, bytes.data() + pointer, size);
+        if (std::endian::native != E) {
+            Internal::SwapEndianInplace(data, size);
+        }
         pointer = newPointer;
     }
 
@@ -1072,7 +1078,7 @@ namespace Common {
     struct JsonSerializer<std::string> {
         static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const std::string& inValue)
         {
-            outJsonValue.SetString(inValue.c_str(), inValue.length());
+            outJsonValue.SetString(inValue.c_str(), inValue.length(), inAllocator);
         }
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::string& outValue)
@@ -1089,9 +1095,7 @@ namespace Common {
         static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const std::wstring& inValue)
         {
             const auto str = StringUtils::ToByteString(inValue);
-            auto* memory = static_cast<char*>(inAllocator.Malloc(str.length()));
-            memcpy(memory, str.c_str(), str.length());
-            outJsonValue.SetString(memory, str.length());
+            outJsonValue.SetString(str.c_str(), str.length(), inAllocator);
         }
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::wstring& outValue)
@@ -1364,13 +1368,14 @@ namespace Common {
         {
             std::initializer_list<int> { ([&]() -> void {
                 const auto key = std::to_string(I);
-                auto* keyMemory = static_cast<char*>(inAllocator.Malloc(key.length()));
-                memcpy(keyMemory, key.data(), key.length());
 
-                rapidjson::Value jsonElement;
-                JsonSerializer<T>::JsonSerialize(jsonElement, inAllocator, std::get<I>(inValue));
+                rapidjson::Value jsonKey;
+                JsonSerializer<std::string>::JsonSerialize(jsonKey, inAllocator, key);
 
-                outJsonValue.AddMember(rapidjson::StringRef(keyMemory, key.length()), jsonElement, inAllocator);
+                rapidjson::Value jsonValue;
+                JsonSerializer<T>::JsonSerialize(jsonValue, inAllocator, std::get<I>(inValue));
+
+                outJsonValue.AddMember(jsonKey, jsonValue, inAllocator);
             }(), 0)... };
         }
 

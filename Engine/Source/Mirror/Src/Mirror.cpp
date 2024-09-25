@@ -551,130 +551,58 @@ namespace Mirror {
 
     bool Argument::IsMemoryHolder() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->IsMemoryHolder();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->IsMemoryHolder();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).IsMemoryHolder();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->IsMemoryHolder();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.IsMemoryHolder();
+        });
     }
 
     bool Argument::IsRef() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->IsRef();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->IsRef();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).IsRef();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->IsRef();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.IsRef();
+        });
     }
 
     bool Argument::IsNonConstRef() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->IsNonConstRef();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->IsNonConstRef();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).IsNonConstRef();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->IsNonConstRef();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.IsNonConstRef();
+        });
     }
 
     bool Argument::IsConstRef() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->IsConstRef();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->IsConstRef();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).IsConstRef();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->IsConstRef();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.IsConstRef();
+        });
     }
 
     const TypeInfo* Argument::Type() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->Type();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->Type();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).Type();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->Type();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.Type();
+        });
     }
 
     const TypeInfo* Argument::RemoveRefType() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->RemoveRefType();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->RemoveRefType();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).RemoveRefType();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->RemoveRefType();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.RemoveRefType();
+        });
     }
 
     const TypeInfo* Argument::AddPointerType() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->AddPointerType();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->AddPointerType();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).AddPointerType();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->AddPointerType();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.AddPointerType();
+        });
     }
 
     const TypeInfo* Argument::RemovePointerType() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->RemovePointerType();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->RemovePointerType();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).RemovePointerType();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->RemovePointerType();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.RemovePointerType();
+        });
     }
 
     Id::Id()

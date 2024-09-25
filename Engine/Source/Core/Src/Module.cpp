@@ -156,9 +156,7 @@ namespace Core {
                         return path.string();
                     }
                 }
-            } catch (const std::exception&) { // NOLINT
-                // TODO maybe output log here
-            }
+            } catch (const std::exception&) {} // NOLINT
         }
         return {};
     }

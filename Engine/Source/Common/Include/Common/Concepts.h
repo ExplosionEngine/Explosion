@@ -35,11 +35,13 @@ namespace Common {
     template <typename T> concept CppEnum = std::is_enum_v<T>;
     template <typename T> concept CppFunction = std::is_function_v<T>;
     template <typename T> concept CppInvocable = std::is_invocable_v<T>;
+    template <typename T> concept CppConst = std::is_const_v<T>;
     template <typename T> concept CppPointer = std::is_pointer_v<T>;
+    template <typename T> concept CppConstPointer = CppPointer<T> && CppConst<std::remove_pointer_t<T>>;
     template <typename T> concept CppRef = std::is_reference_v<T>;
     template <typename T> concept CppLValueRef = std::is_lvalue_reference_v<T>;
+    template <typename T> concept CppLValueConstRef = CppLValueRef<T> && CppConst<std::remove_reference_t<T>>;
     template <typename T> concept CppRValueRef = std::is_rvalue_reference_v<T>;
-    template <typename T> concept CppConst = std::is_const_v<T>;
     template <typename T> concept CppVolatile = std::is_volatile_v<T>;
     template <typename T> concept CppCopyConstructible = std::is_copy_constructible_v<T>;
     template <typename T> concept CppMoveConstructible = std::is_move_constructible_v<T>;

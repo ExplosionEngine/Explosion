@@ -10,6 +10,38 @@
 
 #include <Test/Test.h>
 #include <Common/Serialization.h>
+#include <Common/Memory.h>
+
+inline std::string FltToJson(float value)
+{
+    rapidjson::Document document;
+    document.SetFloat(value);
+
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer writer(buffer);
+    document.Accept(writer);
+    return std::string(buffer.GetString(), buffer.GetSize()); // NOLINT
+}
+
+template <typename T>
+void PerformTypedSerializationTestWithStream(
+    const std::function<Common::UniqueRef<BinarySerializeStream>()>& createSerializeStream,
+    const std::function<Common::UniqueRef<BinaryDeserializeStream>()>& createDeserializeStream,
+    const T& inValue)
+{
+    {
+        const auto stream = createSerializeStream();
+        Common::Serialize<T>(*stream, inValue);
+    }
+
+    {
+        T value;
+        const auto stream = createDeserializeStream();
+        Common::Deserialize<T>(*stream, value);
+
+        ASSERT_EQ(inValue, value);
+    }
+}
 
 template <typename T, std::endian E>
 void PerformTypedSerializationTestWithEndian(const T& inValue)
@@ -17,18 +49,16 @@ void PerformTypedSerializationTestWithEndian(const T& inValue)
     static std::filesystem::path fileName = "../Test/Generated/Common/SerializationTest.TypedSerializationTest";
     std::filesystem::create_directories(fileName.parent_path());
 
-    {
-        Common::BinaryFileSerializeStream<E> stream(fileName.string());
-        Common::Serialize<T>(stream, inValue);
-    }
+    PerformTypedSerializationTestWithStream<T>(
+        []() -> Common::UniqueRef<BinarySerializeStream> { return { new BinaryFileSerializeStream<E>(fileName.string()) }; },
+        []() -> Common::UniqueRef<BinaryDeserializeStream> { return { new BinaryFileDeserializeStream<E>(fileName.string()) }; },
+        inValue);
 
-    {
-        T value;
-        Common::BinaryFileDeserializeStream<E> stream(fileName.string());
-        Common::Deserialize<T>(stream, value);
-
-        ASSERT_EQ(inValue, value);
-    }
+    std::vector<uint8_t> buffer;
+    PerformTypedSerializationTestWithStream<T>(
+        [&]() -> Common::UniqueRef<BinarySerializeStream> { return { new MemorySerializeStream<E>(buffer) }; },
+        [&]() -> Common::UniqueRef<BinaryDeserializeStream> { return { new MemoryDeserializeStream<E>(buffer) }; },
+        inValue);
 }
 
 template <typename T>

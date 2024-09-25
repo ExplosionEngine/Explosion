@@ -109,5 +109,6 @@ TEST(SerializationTest, JsonSerializeTest)
     PerformJsonSerializationTest<std::set<int>>({ 1, 2, 3 }, "[1,2,3]");
     PerformJsonSerializationTest<std::unordered_map<int, bool>>({ { 1, false }, { 2, true } }, "");
     PerformJsonSerializationTest<std::map<int, bool>>({ { 1, false }, { 2, true } }, R"([{"key":1,"value":false},{"key":2,"value":true}])");
+    PerformJsonSerializationTest<std::map<std::string, int>>({ { "1", 1 }, { "2", 2 } }, R"([{"key":"1","value":1},{"key":"2","value":2}])");
     PerformJsonSerializationTest<std::tuple<int, bool, int>>({ 1, true, 2 }, R"({"0":1,"1":true,"2":2})");
 }
