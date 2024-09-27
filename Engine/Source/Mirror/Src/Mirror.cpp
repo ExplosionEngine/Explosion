@@ -85,7 +85,9 @@ namespace Mirror {
     Any::~Any()
     {
         if (IsMemoryHolder() && rtti != nullptr) {
-            rtti->detor(Data());
+            for (auto i = 0; i < ElementNum(); i++) {
+                rtti->detor(Data(i));
+            }
         }
     }
 
@@ -102,6 +104,11 @@ namespace Mirror {
     Any::Any(const Any& inOther, const AnyPolicy inPolicy)
     {
         PerformCopyConstructWithPolicy(inOther, inPolicy);
+    }
+
+    Any::Any(const Any& inOther, AnyPolicy inPolicy, uint32_t inIndex)
+    {
+        PerformCopyConstructForElementWithPolicy(inOther, inPolicy, inIndex);
     }
 
     Any::Any(Any&& inOther) noexcept
@@ -129,6 +136,7 @@ namespace Mirror {
 
     void Any::PerformCopyConstruct(const Any& inOther)
     {
+        arrayLength = inOther.arrayLength;
         policy = inOther.policy;
         rtti = inOther.rtti;
         info = inOther.info;
@@ -139,12 +147,15 @@ namespace Mirror {
         }
 
         if (IsMemoryHolder()) {
-            rtti->copyConstruct(Data(), inOther.Data());
+            for (auto i = 0; i < ElementNum(); i++) {
+                rtti->copyConstruct(Data(i), inOther.Data(i));
+            }
         }
     }
 
     void Any::PerformCopyConstructWithPolicy(const Any& inOther, const AnyPolicy inPolicy)
     {
+        arrayLength = inOther.arrayLength;
         policy = inPolicy;
         rtti = inOther.rtti;
 
@@ -154,15 +165,37 @@ namespace Mirror {
         }
 
         if (IsRef()) {
-            info = RefInfo(inOther.Data(), inOther.Size());
+            info = RefInfo(inOther.Data(), inOther.MemorySize());
         } else {
-            info = HolderInfo(inOther.Size());
-            rtti->copyConstruct(Data(), inOther.Data());
+            info = HolderInfo(inOther.MemorySize());
+            for (auto i = 0; i < ElementNum(); i++) {
+                rtti->copyConstruct(Data(i), inOther.Data(i));
+            }
+        }
+    }
+
+    void Any::PerformCopyConstructForElementWithPolicy(const Any& inOther, AnyPolicy inPolicy, uint32_t inIndex)
+    {
+        arrayLength = 0;
+        policy = inPolicy;
+        rtti = inOther.rtti;
+
+        if (Empty()) {
+            Reset();
+            return;
+        }
+
+        if (IsRef()) {
+            info = RefInfo(inOther.Data(inIndex), inOther.ElementSize());
+        } else {
+            info = HolderInfo(inOther.ElementSize());
+            rtti->copyConstruct(Data(), inOther.Data(inIndex));
         }
     }
 
     void Any::PerformMoveConstruct(Any&& inOther)
     {
+        arrayLength = inOther.arrayLength;
         policy = inOther.policy;
         rtti = inOther.rtti;
 
@@ -172,35 +205,75 @@ namespace Mirror {
         }
 
         if (IsRef()) {
-            info = RefInfo(inOther.Data(), inOther.Size());
+            info = RefInfo(inOther.Data(), inOther.MemorySize());
         } else {
-            info = HolderInfo(inOther.Size());
-            rtti->moveConstruct(Data(), inOther.Data());
+            info = HolderInfo(inOther.MemorySize());
+            for (auto i = 0; i < ElementNum(); i++) {
+                rtti->moveConstruct(Data(i), inOther.Data(i));
+            }
         }
+    }
+
+    uint32_t Any::ElementNum() const
+    {
+        return std::max(1u, arrayLength);
+    }
+
+    bool Any::IsArray() const
+    {
+        return arrayLength > 0;
+    }
+
+    Any Any::At(uint32_t inIndex)
+    {
+        Assert(IsArray());
+        return { *this, AnyPolicy::nonConstRef, inIndex };
+    }
+
+    Any Any::At(uint32_t inIndex) const
+    {
+        Assert(IsArray());
+        return { *this, AnyPolicy::constRef, inIndex };
+    }
+
+    size_t Any::ElementSize() const
+    {
+        return MemorySize() / ElementNum();
+    }
+
+    uint32_t Any::ArrayLength() const
+    {
+        Assert(IsArray());
+        return arrayLength;
     }
 
     Any Any::Ref()
     {
+        Assert(!IsArray());
         return { *this, IsMemoryHolder() ? AnyPolicy::nonConstRef : policy };
     }
 
     Any Any::Ref() const
     {
+        Assert(!IsArray());
         return { *this, IsMemoryHolder() ? AnyPolicy::constRef : policy };
     }
 
     Any Any::ConstRef() const
     {
+        Assert(!IsArray());
         return { *this, AnyPolicy::constRef };
     }
 
-    Any Any::AsValue() const
+    Any Any::Value() const
     {
+        Assert(!IsArray());
         return { *this, AnyPolicy::memoryHolder };
     }
 
     Any Any::Ptr()
     {
+        Assert(!IsArray());
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getPtr(Data());
         }
@@ -216,6 +289,7 @@ namespace Mirror {
 
     Any Any::Ptr() const
     {
+        Assert(!IsArray());
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getConstPtr(Data());
         }
@@ -231,11 +305,13 @@ namespace Mirror {
 
     Any Any::ConstPtr() const
     {
+        Assert(!IsArray());
         return rtti->getConstPtr(Data());
     }
 
     Any Any::Deref() const
     {
+        Assert(!IsArray());
         return rtti->deref(Data());
     }
 
@@ -384,6 +460,7 @@ namespace Mirror {
 
     void Any::Reset()
     {
+        arrayLength = 0;
         policy = AnyPolicy::max;
         rtti = nullptr;
         info = {};
@@ -396,51 +473,53 @@ namespace Mirror {
 
     size_t Any::Serialize(Common::BinarySerializeStream& inStream) const
     {
-        Assert(rtti != nullptr);
+        Assert(!IsArray() && rtti != nullptr);
         return rtti->serialize(Data(), inStream);
     }
 
     std::pair<bool, size_t> Any::Deserialize(Common::BinaryDeserializeStream& inStream)
     {
-        Assert(rtti != nullptr && !IsConstRef());
+        Assert(!IsArray() && rtti != nullptr && !IsConstRef());
         return rtti->deserialize(Data(), inStream);
     }
 
     std::pair<bool, size_t> Any::Deserialize(Common::BinaryDeserializeStream& inStream) const
     {
-        Assert(rtti != nullptr && IsNonConstRef());
+        Assert(!IsArray() && rtti != nullptr && IsNonConstRef());
         return rtti->deserialize(Data(), inStream);
     }
 
     void Any::JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator) const
     {
-        Assert(rtti != nullptr);
+        Assert(!IsArray() && rtti != nullptr);
         rtti->jsonSerialize(Data(), outJsonValue, inAllocator);
     }
 
     void Any::JsonDeserialize(const rapidjson::Value& inJsonValue)
     {
-        Assert(rtti != nullptr && !IsConstRef());
+        Assert(!IsArray() && rtti != nullptr && !IsConstRef());
         rtti->jsonDeserialize(Data(), inJsonValue);
     }
 
     void Any::JsonDeserialize(const rapidjson::Value& inJsonValue) const
     {
-        Assert(rtti != nullptr && IsNonConstRef());
+        Assert(!IsArray() && rtti != nullptr && IsNonConstRef());
         return rtti->jsonDeserialize(Data(), inJsonValue);
     }
 
     std::string Any::ToString() const
     {
+        Assert(!IsArray());
         return Empty() ? "" : rtti->toString(Data());
     }
 
-    void* Any::Data() const
+    void* Any::Data(uint32_t inIndex) const
     {
-        return IsRef() ? std::get<RefInfo>(info).Ptr() : std::get<HolderInfo>(info).Ptr();
+        void* ptr = IsRef() ? std::get<RefInfo>(info).Ptr() : std::get<HolderInfo>(info).Ptr();
+        return static_cast<uint8_t*>(ptr) + ElementSize() * inIndex;
     }
 
-    size_t Any::Size() const
+    size_t Any::MemorySize() const
     {
         return IsRef() ? std::get<RefInfo>(info).Size() : std::get<HolderInfo>(info).Size();
     }
@@ -450,12 +529,29 @@ namespace Mirror {
         return !Empty();
     }
 
+    Any Any::operator[](uint32_t inIndex)
+    {
+        return At(inIndex);
+    }
+
+    Any Any::operator[](uint32_t inIndex) const
+    {
+        return At(inIndex);
+    }
+
     bool Any::operator==(const Any& inAny) const
     {
+        Assert(!IsArray());
         if (TypeId() != inAny.TypeId()) {
             return false;
         }
         return rtti->equal(Data(), inAny.Data());
+    }
+
+    bool Any::operator!=(const Any& inAny) const
+    {
+        Assert(!IsArray());
+        return !operator==(inAny);
     }
 
     Any::HolderInfo::HolderInfo() = default;
@@ -1364,23 +1460,45 @@ namespace Mirror {
         return {};
     }
 
-    EnumElement::EnumElement(ConstructParams&& inParams)
+    EnumValue::EnumValue(ConstructParams&& inParams)
         : Type(std::move(inParams.name))
         , getter(std::move(inParams.getter))
+        , integralGetter(std::move(inParams.integralGetter))
+        , setter(std::move(inParams.setter))
         , comparer(std::move(inParams.comparer))
     {
     }
 
-    EnumElement::~EnumElement() = default;
+    EnumValue::~EnumValue() = default;
 
-    Any EnumElement::Get() const
+    Any EnumValue::Get() const
     {
         return getter();
     }
 
-    bool EnumElement::Compare(const Argument& argument) const
+    EnumValue::IntegralValue EnumValue::GetIntegral() const
     {
-        return comparer(argument);
+        return GetIntegralDyn();
+    }
+
+    Any EnumValue::GetDyn() const
+    {
+        return getter();
+    }
+
+    EnumValue::IntegralValue EnumValue::GetIntegralDyn() const
+    {
+        return integralGetter();
+    }
+
+    void EnumValue::SetDyn(const Argument& arg) const
+    {
+        setter(arg);
+    }
+
+    bool EnumValue::CompareDyn(const Argument& arg) const
+    {
+        return comparer(arg);
     }
 
     const Enum* Enum::Find(const Id& inId)
@@ -1413,28 +1531,85 @@ namespace Mirror {
         return typeInfo;
     }
 
-    Any Enum::GetElement(const Id& inId) const
+    bool Enum::HasValue(const Id& inId) const
     {
-        const auto iter = elements.find(inId);
-        Assert(iter != elements.end());
-        return iter->second.Get();
+        return values.contains(inId);
     }
 
-    std::string Enum::GetElementName(const Argument& argument) const
+    const EnumValue* Enum::FindValue(const Id& inId) const
     {
-        for (const auto& [id, element] : elements) {
-            if (element.Compare(argument)) {
-                return id.name;
+        const auto iter = values.find(inId);
+        return iter == values.end() ? nullptr : &iter->second;
+    }
+
+    const EnumValue& Enum::GetValue(const Id& inId) const
+    {
+        return values.at(inId);
+    }
+
+    bool Enum::HasValue(EnumValue::IntegralValue inValue) const
+    {
+        return FindValue(inValue) != nullptr;
+    }
+
+    const EnumValue* Enum::FindValue(EnumValue::IntegralValue inValue) const
+    {
+        for (const auto& value : values | std::views::values) {
+            if (value.GetIntegralDyn() == inValue) {
+                return &value;
             }
         }
-        QuickFail();
-        return "";
+        return nullptr;
     }
 
-    EnumElement& Enum::EmplaceElement(const Id& inId, EnumElement::ConstructParams&& inParams)
+    const EnumValue& Enum::GetValue(EnumValue::IntegralValue inValue) const
     {
-        Assert(!elements.contains(inId));
-        elements.emplace(inId, EnumElement(std::move(inParams)));
-        return elements.at(inId);
+        const auto* value = FindValue(inValue);
+        Assert(value != nullptr);
+        return *value;
+    }
+
+    bool Enum::HasValue(const Argument& inArg) const
+    {
+        return FindValue(inArg) != nullptr;
+    }
+
+    const EnumValue* Enum::FindValue(const Argument& inArg) const
+    {
+        for (const auto& value : values | std::views::values) {
+            if (value.CompareDyn(inArg)) {
+                return &value;
+            }
+        }
+        return nullptr;
+    }
+
+    const EnumValue& Enum::GetValue(const Argument& inArg) const
+    {
+        const auto* value = FindValue(inArg);
+        Assert(value != nullptr);
+        return *value;
+    }
+
+    const std::unordered_map<Id, EnumValue, IdHashProvider>& Enum::GetValues() const
+    {
+        return values;
+    }
+
+    std::vector<const EnumValue*> Enum::GetSortedValues() const
+    {
+        std::vector<const EnumValue*> result;
+        for (const auto& value : values | std::views::values) {
+            result.emplace_back(&value);
+        }
+        std::ranges::sort(result, [](const EnumValue* lhs, const EnumValue* rhs) { return lhs->GetIntegralDyn() < rhs->GetIntegralDyn(); });
+        return result;
+    }
+
+    EnumValue& Enum::EmplaceElement(const Id& inId, EnumValue::ConstructParams&& inParams)
+    {
+        Assert(!values.contains(inId));
+        values.emplace(inId, EnumValue(std::move(inParams)));
+        return values.at(inId);
     }
 }

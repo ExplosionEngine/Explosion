@@ -140,7 +140,7 @@ namespace Mirror {
         ToStringFunc* toString;
     };
 
-    template <typename T>
+    template <typename T, size_t N = 1>
     static constexpr AnyRtti anyRttiImpl = {
         &AnyRtti::Detor<T>,
         &AnyRtti::CopyConstruct<T>,
@@ -170,12 +170,18 @@ namespace Mirror {
         Any(Any& inOther);
         Any(const Any& inOther);
         Any(const Any& inOther, AnyPolicy inPolicy);
+        Any(const Any& inOther, AnyPolicy inPolicy, uint32_t inIndex);
         Any(Any&& inOther) noexcept;
 
         template <typename T> Any(T&& inValue); // NOLINT
         template <typename T> Any(std::reference_wrapper<T>& inRef); // NOLINT
         template <typename T> Any(std::reference_wrapper<T>&& inRef); // NOLINT
         template <typename T> Any(const std::reference_wrapper<T>& inRef); // NOLINT
+        template <typename T, size_t N> Any(T (&inArray)[N]); // NOLINT
+        template <typename T, size_t N> Any(T (&&inArray)[N]); // NOLINT
+        template <typename T, size_t N> Any(std::reference_wrapper<T[N]>& inArrayRef); // NOLINT
+        template <typename T, size_t N> Any(std::reference_wrapper<T[N]>&& inArrayRef); // NOLINT
+        template <typename T, size_t N> Any(const std::reference_wrapper<T[N]>& inArrayRef); // NOLINT
 
         Any& operator=(const Any& inOther);
         Any& operator=(Any&& inOther) noexcept;
@@ -184,29 +190,36 @@ namespace Mirror {
         template <typename T> Any& operator=(std::reference_wrapper<T>& inRef);
         template <typename T> Any& operator=(std::reference_wrapper<T>&& inRef);
         template <typename T> Any& operator=(const std::reference_wrapper<T>& inRef);
+        template <typename T, size_t N> Any& operator=(T (&inArray)[N]); // NOLINT
+        template <typename T, size_t N> Any& operator=(T (&&inArray)[N]); // NOLINT
+        template <typename T, size_t N> Any& operator=(std::reference_wrapper<T[N]>& inArrayRef); // NOLINT
+        template <typename T, size_t N> Any& operator=(std::reference_wrapper<T[N]>&& inArrayRef); // NOLINT
+        template <typename T, size_t N> Any& operator=(const std::reference_wrapper<T[N]>& inArrayRef); // NOLINT
 
         template <typename T> bool Convertible();
         template <typename T> bool Convertible() const;
 
         template <typename T> T As();
         template <typename T> T As() const;
-        template <typename T> T* TryAs();
-        template <typename T> T* TryAs() const;
+        template <Common::CppNotRef T> T* TryAs();
+        template <Common::CppNotRef T> T* TryAs() const;
+        template <typename B, typename T> T PolyAs();
+        template <typename B, typename T> T PolyAs() const;
 
-        // TODO
-        // template <typename B, typename T> T PolyAs() const;
-
-        // TODO array support
+        bool IsArray() const;
+        Any At(uint32_t inIndex);
+        Any At(uint32_t inIndex) const;
+        size_t ElementSize() const;
+        uint32_t ArrayLength() const;
 
         Any Ref();
         Any Ref() const;
         Any ConstRef() const;
-        Any AsValue() const;
+        Any Value() const;
         Any Ptr();
         Any Ptr() const;
         Any ConstPtr() const;
         Any Deref() const;
-
         AnyPolicy Policy() const;
         bool IsMemoryHolder() const;
         bool IsRef() const;
@@ -231,13 +244,13 @@ namespace Mirror {
         void JsonDeserialize(const rapidjson::Value& inJsonValue);
         void JsonDeserialize(const rapidjson::Value& inJsonValue) const;
         std::string ToString() const;
-
-        // always return original ptr and size, even policy is a reference
-        void* Data() const;
-        size_t Size() const;
-
+        void* Data(uint32_t inIndex = 0) const;
+        size_t MemorySize() const;
         explicit operator bool() const;
+        Any operator[](uint32_t inIndex);
+        Any operator[](uint32_t inIndex) const;
         bool operator==(const Any& inAny) const;
+        bool operator!=(const Any& inAny) const;
 
     private:
         class MIRROR_API HolderInfo {
@@ -273,11 +286,17 @@ namespace Mirror {
 
         template <typename T> void ConstructFromValue(T&& inValue);
         template <typename T> void ConstructFromRef(std::reference_wrapper<T> inRef);
+        template <typename T, size_t N> void ConstructFromArrayValue(T (&inValue)[N]);
+        template <typename T, size_t N> void ConstructFromArrayValue(T (&&inValue)[N]);
+        template <typename T, size_t N> void ConstructFromArrayRef(std::reference_wrapper<T[N]> inRef);
 
         void PerformCopyConstruct(const Any& inOther);
         void PerformCopyConstructWithPolicy(const Any& inOther, AnyPolicy inPolicy);
+        void PerformCopyConstructForElementWithPolicy(const Any& inOther, AnyPolicy inPolicy, uint32_t inIndex);
         void PerformMoveConstruct(Any&& inOther);
+        uint32_t ElementNum() const;
 
+        uint32_t arrayLength;
         AnyPolicy policy;
         const AnyRtti* rtti;
         std::variant<RefInfo, HolderInfo> info;
@@ -698,9 +717,21 @@ namespace Mirror {
         std::unordered_map<Id, MemberFunction, IdHashProvider> memberFunctions;
     };
 
-    class MIRROR_API EnumElement final : public Type {
+    class MIRROR_API EnumValue final : public Type {
     public:
-        ~EnumElement() override;
+        using IntegralValue = int64_t;
+
+        ~EnumValue() override;
+
+        Any Get() const;
+        IntegralValue GetIntegral() const;
+        template <Common::CppEnum E> void Set(E& value) const;
+        template <Common::CppEnum E> bool Compare(const E& value) const;
+
+        Any GetDyn() const;
+        IntegralValue GetIntegralDyn() const;
+        void SetDyn(const Argument& arg) const;
+        bool CompareDyn(const Argument& arg) const;
 
     private:
         friend class Registry;
@@ -709,40 +740,51 @@ namespace Mirror {
 
         friend class Enum;
 
-        Any Get() const;
-        bool Compare(const Argument& argument) const;
-
         using Getter = std::function<Any()>;
+        using IntegralGetter = std::function<IntegralValue()>;
+        using Setter = std::function<void(const Argument&)>;
         using Comparer = std::function<bool(const Argument&)>;
 
         struct ConstructParams {
             std::string name;
             Getter getter;
+            IntegralGetter integralGetter;
+            Setter setter;
             Comparer comparer;
         };
 
-        explicit EnumElement(ConstructParams&& inParams);
+        explicit EnumValue(ConstructParams&& inParams);
 
         Getter getter;
+        IntegralGetter integralGetter;
+        Setter setter;
         Comparer comparer;
     };
 
     class MIRROR_API Enum final : public Type {
     public:
-        template <Common::CppEnum T>
-        static const Enum* Find();
-
-        template <Common::CppEnum T>
-        static const Enum& Get();
-
+        template <Common::CppEnum T> static const Enum* Find();
+        template <Common::CppEnum T> static const Enum& Get();
         static const Enum* Find(const Id& inId);
         static const Enum& Get(const Id& inId);
 
         ~Enum() override;
 
         const TypeInfo* GetTypeInfo() const;
-        Any GetElement(const Id& inId) const;
-        std::string GetElementName(const Argument& argument) const;
+        bool HasValue(const Id& inId) const;
+        const EnumValue* FindValue(const Id& inId) const;
+        const EnumValue& GetValue(const Id& inId) const;
+        bool HasValue(EnumValue::IntegralValue inValue) const;
+        const EnumValue* FindValue(EnumValue::IntegralValue inValue) const;
+        const EnumValue& GetValue(EnumValue::IntegralValue inValue) const;
+        template <Common::CppEnum E> bool HasValue(E inValue) const;
+        template <Common::CppEnum E> const EnumValue* FindValue(E inValue) const;
+        template <Common::CppEnum E> const EnumValue& GetValue(E inValue) const;
+        bool HasValue(const Argument& inArg) const;
+        const EnumValue* FindValue(const Argument& inArg) const;
+        const EnumValue& GetValue(const Argument& inArg) const;
+        const std::unordered_map<Id, EnumValue, IdHashProvider>& GetValues() const;
+        std::vector<const EnumValue*> GetSortedValues() const;
 
     private:
         static std::unordered_map<TypeId, Id> typeToIdMap;
@@ -757,10 +799,10 @@ namespace Mirror {
 
         explicit Enum(ConstructParams&& params);
 
-        EnumElement& EmplaceElement(const Id& inId, EnumElement::ConstructParams&& inParams);
+        EnumValue& EmplaceElement(const Id& inId, EnumValue::ConstructParams&& inParams);
 
         const TypeInfo* typeInfo;
-        std::unordered_map<Id, EnumElement, IdHashProvider> elements;
+        std::unordered_map<Id, EnumValue, IdHashProvider> values;
     };
 
     template <typename T> concept MetaClass = requires(T inValue) { { T::GetClass() } -> std::same_as<const Class&>; };
@@ -936,6 +978,58 @@ namespace Common { // NOLINT
         }
     };
 
+    template <CppEnum E>
+    struct Serializer<E> {
+        static constexpr size_t typeId = HashUtils::StrCrc32("_MetaEnum");
+
+        static size_t Serialize(BinarySerializeStream& stream, const E& value)
+        {
+            size_t serialized = 0;
+            const Mirror::Enum* metaEnum = Mirror::Enum::Find<E>();
+            serialized += Serializer<bool>::Serialize(stream, metaEnum != nullptr);
+
+            if (metaEnum == nullptr) {
+                serialized += Serializer<std::underlying_type_t<E>>::Serialize(stream, static_cast<std::underlying_type_t<E>>(value));
+            } else {
+                const Mirror::EnumValue& metaEnumValue = metaEnum->GetValue(value);
+                serialized += Serializer<std::string>::Serialize(stream, metaEnum->GetName());
+                serialized += Serializer<std::string>::Serialize(stream, metaEnumValue.GetName());
+            }
+            return serialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, E& value)
+        {
+            size_t deserialized = 0;
+            bool isMetaEnum = false;
+            deserialized += Serializer<bool>::Deserialize(stream, isMetaEnum);
+
+            if (isMetaEnum) {
+                std::string metaEnumName;
+                std::string metaEnumValueName;
+                deserialized += Serializer<std::string>::Deserialize(stream, metaEnumName);
+                deserialized += Serializer<std::string>::Deserialize(stream, metaEnumValueName);
+
+                const Mirror::Enum* aspectMetaEnum = Mirror::Enum::Find(metaEnumName);
+                const Mirror::Enum* metaEnum = Mirror::Enum::Find<E>();
+                if (aspectMetaEnum != metaEnum || metaEnum == nullptr) {
+                    return deserialized;
+                }
+
+                const auto* metaEnumValue = metaEnum->FindValue(metaEnumValueName);
+                if (metaEnumValue == nullptr) {
+                    return deserialized;
+                }
+                metaEnumValue->Set(value);
+            } else {
+                std::underlying_type_t<E> unlderlyingValue;
+                deserialized += Serializer<std::underlying_type_t<E>>::Deserialize(stream, unlderlyingValue);
+                value = static_cast<E>(unlderlyingValue);
+            }
+            return deserialized;
+        }
+    };
+
     template <Mirror::MetaClass T>
     struct JsonSerializer<T> {
         static void JsonSerializeDyn(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mirror::Class& clazz, const Mirror::Argument& inObj)
@@ -990,9 +1084,67 @@ namespace Common { // NOLINT
             outJsonValue.AddMember("members", membersJson, inAllocator);
         }
 
-        static void JsonDeserializeDyn(const rapidjson::Value& inJsonValue, const Mirror::Class& clazz, const Mirror::Argument& outValue)
+        static void JsonDeserializeDyn(const rapidjson::Value& inJsonValue, const Mirror::Class& clazz, const Mirror::Argument& outObj)
         {
-            // TODO
+            const auto& className = clazz.GetName();
+            const auto* baseClass = clazz.GetBaseClass();
+            const auto defaultObject = clazz.GetDefaultObject();
+
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+
+            if (!inJsonValue.HasMember("className")) {
+                return;
+            }
+            std::string aspectClassName;
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue["className"], aspectClassName);
+            if (aspectClassName != className) {
+                return;
+            }
+
+            if (inJsonValue.HasMember("baseClass") && baseClass != nullptr) {
+                JsonDeserializeDyn(inJsonValue["baseClass"], *baseClass, outObj);
+            }
+
+            if (!inJsonValue.HasMember("members")) {
+                return;
+            }
+
+            const auto& membersJson = inJsonValue["members"];
+            if (!membersJson.IsArray()) {
+                return;
+            }
+
+            for (rapidjson::SizeType i = 0; i < membersJson.Size(); i++) {
+                const auto& memberJson = membersJson[i];
+                if (!memberJson.HasMember("memberName")) {
+                    continue;
+                }
+
+                std::string memberName;
+                JsonSerializer<std::string>::JsonDeserialize(memberJson["memberName"], memberName);
+                if (!clazz.HasMemberVariable(memberName)) {
+                    continue;
+                }
+                const auto& memberVariable = clazz.GetMemberVariable(memberName);
+
+                bool sameAsDefault = false;
+                if (memberJson.HasMember("sameAsDefault")) {
+                    JsonSerializer<bool>::JsonDeserialize(memberJson["sameAsDefault"], sameAsDefault);
+                }
+                if (sameAsDefault) {
+                    if (!defaultObject.Empty()) {
+                        memberVariable.SetDyn(outObj, memberVariable.GetDyn(defaultObject));
+                    }
+                    continue;
+                }
+
+                if (!memberJson.HasMember("content")) {
+                    continue;
+                }
+                memberVariable.GetDyn(outObj).JsonDeserialize(memberJson["content"]);
+            }
         }
 
         static void JsonSerialize(rapidjson::Value& outValue, rapidjson::Document::AllocatorType& inAllocator, const T& inValue)
@@ -1003,6 +1155,59 @@ namespace Common { // NOLINT
         static void JsonDeserialize(const rapidjson::Value& inValue, T& outValue)
         {
             JsonDeserializeDyn(inValue, Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(outValue));
+        }
+    };
+
+    template <CppEnum E>
+    struct JsonSerializer<E> {
+        static void JsonSerialize(rapidjson::Value& outValue, rapidjson::Document::AllocatorType& inAllocator, const E& inValue)
+        {
+            if (const Mirror::Enum* metaEnum = Mirror::Enum::Find<E>();
+                metaEnum == nullptr) {
+                JsonSerializer<std::underlying_type_t<E>>::JsonSerialize(outValue, inAllocator, static_cast<std::underlying_type_t<E>>(inValue));
+            } else {
+                const Mirror::EnumValue& metaEnumValue = metaEnum->GetValue(inValue);
+
+                rapidjson::Value enumNameJson;
+                JsonSerializer<std::string>::JsonSerialize(enumNameJson, inAllocator, metaEnum->GetName());
+
+                rapidjson::Value valueNameJson;
+                JsonSerializer<std::string>::JsonSerialize(valueNameJson, inAllocator, metaEnumValue.GetName());
+
+                outValue.SetArray();
+                outValue.PushBack(enumNameJson, inAllocator);
+                outValue.PushBack(valueNameJson, inAllocator);
+            }
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inValue, E& outValue)
+        {
+            if (inValue.IsArray()) {
+                if (inValue.Size() != 2) {
+                    return;
+                }
+
+                std::string metaEnumName;
+                std::string metaEnumValueName;
+                JsonSerializer<std::string>::JsonDeserialize(inValue[0], metaEnumName);
+                JsonSerializer<std::string>::JsonDeserialize(inValue[1], metaEnumValueName);
+
+                const Mirror::Enum* aspectMetaEnum = Mirror::Enum::Find(metaEnumName);
+                const Mirror::Enum* metaEnum = Mirror::Enum::Find<E>();
+                if (aspectMetaEnum != metaEnum || metaEnum == nullptr) {
+                    return;
+                }
+
+                const auto* metaEnumValue = metaEnum->FindValue(metaEnumValueName);
+                if (metaEnumValue == nullptr) {
+                    return;
+                }
+                metaEnumValue->Set(outValue);
+            } else {
+                std::underlying_type_t<E> unlderlyingValue;
+                JsonSerializer<std::underlying_type_t<E>>::JsonDeserialize(inValue, unlderlyingValue);
+                outValue = static_cast<E>(unlderlyingValue);
+            }
         }
     };
 
@@ -1031,7 +1236,22 @@ namespace Common { // NOLINT
         }
     };
 
-    // TODO meta enum serialization/tostring/tojson
+    template <CppEnum E>
+    struct StringConverter<E> {
+        static std::string ToString(const E& inValue)
+        {
+            if (const Mirror::Enum* metaEnum = Mirror::Enum::Find<E>();
+                metaEnum != nullptr) {
+                return fmt::format(
+                    "{}::{}",
+                    StringConverter<std::string>::ToString(metaEnum->GetName()),
+                    StringConverter<std::string>::ToString(metaEnum->GetValue(inValue).GetName()));
+            } else {
+                return StringConverter<std::underlying_type_t<E>>::ToString(static_cast<std::underlying_type_t<E>>(inValue));
+            }
+        }
+    };
+
     // TODO Type class serialization/tostring/tojson
 }
 
@@ -1233,6 +1453,36 @@ namespace Mirror {
         ConstructFromRef(inRef);
     }
 
+    template <typename T, size_t N>
+    Any::Any(T(& inArray)[N])
+    {
+        ConstructFromArrayValue(inArray);
+    }
+
+    template <typename T, size_t N>
+    Any::Any(T(&& inArray)[N])
+    {
+        ConstructFromArrayValue(std::move(inArray));
+    }
+
+    template <typename T, size_t N>
+    Any::Any(std::reference_wrapper<T[N]>& inArrayRef)
+    {
+        ConstructFromArrayRef(inArrayRef);
+    }
+
+    template <typename T, size_t N>
+    Any::Any(std::reference_wrapper<T[N]>&& inArrayRef)
+    {
+        ConstructFromArrayRef(inArrayRef);
+    }
+
+    template <typename T, size_t N>
+    Any::Any(const std::reference_wrapper<T[N]>& inArrayRef)
+    {
+        ConstructFromArrayRef(inArrayRef);
+    }
+
     template <typename T>
     Any& Any::operator=(T&& inValue)
     {
@@ -1265,9 +1515,50 @@ namespace Mirror {
         return *this;
     }
 
+    template <typename T, size_t N>
+    Any& Any::operator=(T(& inArray)[N])
+    {
+        Reset();
+        ConstructFromArrayValue(inArray);
+        return *this;
+    }
+
+    template <typename T, size_t N>
+    Any& Any::operator=(T(&& inArray)[N])
+    {
+        Reset();
+        ConstructFromArrayValue(std::move(inArray));
+        return *this;
+    }
+
+    template <typename T, size_t N>
+    Any& Any::operator=(std::reference_wrapper<T[N]>& inArrayRef)
+    {
+        Reset();
+        ConstructFromArrayRef(inArrayRef);
+        return *this;
+    }
+
+    template <typename T, size_t N>
+    Any& Any::operator=(std::reference_wrapper<T[N]>&& inArrayRef)
+    {
+        Reset();
+        ConstructFromArrayRef(inArrayRef);
+        return *this;
+    }
+
+    template <typename T, size_t N>
+    Any& Any::operator=(const std::reference_wrapper<T[N]>& inArrayRef)
+    {
+        Reset();
+        ConstructFromArrayRef(inArrayRef);
+        return *this;
+    }
+
     template <typename T>
     bool Any::Convertible()
     {
+        Assert(!IsArray());
         return Mirror::Convertible(
             { Type(), RemoveRefType(), RemovePointerType() },
             { GetTypeInfo<T>(), GetTypeInfo<std::remove_reference_t<T>>(), GetTypeInfo<std::remove_pointer_t<T>>() });
@@ -1276,6 +1567,7 @@ namespace Mirror {
     template <typename T>
     bool Any::Convertible() const
     {
+        Assert(!IsArray());
         return Mirror::Convertible(
             { Type(), RemoveRefType(), RemovePointerType() },
             { GetTypeInfo<T>(), GetTypeInfo<std::remove_reference_t<T>>(), GetTypeInfo<std::remove_pointer_t<T>>() });
@@ -1295,24 +1587,38 @@ namespace Mirror {
         return *static_cast<std::remove_cvref_t<T>*>(Data());
     }
 
-    template <typename T>
+    template <Common::CppNotRef T>
     T* Any::TryAs()
     {
-        Assert(!std::is_reference_v<T>);
+        Assert(!IsArray());
         const bool convertible = Mirror::Convertible(
             { AddPointerType(), AddPointerType(), RemoveRefType() },
             { GetTypeInfo<T*>(), GetTypeInfo<T*>(), GetTypeInfo<T>() });
         return convertible ? static_cast<std::remove_cvref_t<T>*>(Data()) : nullptr;
     }
 
-    template <typename T>
+    template <Common::CppNotRef T>
     T* Any::TryAs() const
     {
-        Assert(!std::is_reference_v<T>);
+        Assert(!IsArray());
         const bool convertible = Mirror::Convertible(
             { AddPointerType(), AddPointerType(), RemoveRefType() },
             { GetTypeInfo<T*>(), GetTypeInfo<T*>(), GetTypeInfo<T>() });
         return convertible ? static_cast<std::remove_cvref_t<T>*>(Data()) : nullptr;
+    }
+
+    template <typename B, typename T>
+    T Any::PolyAs()
+    {
+        Assert(!IsArray());
+        return dynamic_cast<T>(As<B>());
+    }
+
+    template <typename B, typename T>
+    T Any::PolyAs() const
+    {
+        Assert(!IsArray());
+        return dynamic_cast<T>(As<B>());
     }
 
     template <typename T>
@@ -1320,6 +1626,7 @@ namespace Mirror {
     {
         using RawType = std::remove_cvref_t<T>;
 
+        arrayLength = 0;
         policy = AnyPolicy::memoryHolder;
         rtti = &anyRttiImpl<RawType>;
         info = HolderInfo(sizeof(RawType));
@@ -1329,11 +1636,51 @@ namespace Mirror {
     template <typename T>
     void Any::ConstructFromRef(std::reference_wrapper<T> inRef)
     {
-        using RawType = std::remove_const_t<T>;
+        using RawType = std::remove_cv_t<T>;
 
+        arrayLength = 0;
         policy = std::is_const_v<T> ? AnyPolicy::constRef : AnyPolicy::nonConstRef;
         rtti = &anyRttiImpl<RawType>;
         info = RefInfo(const_cast<RawType*>(&inRef.get()), sizeof(RawType));
+    }
+
+    template <typename T, size_t N>
+    void Any::ConstructFromArrayValue(T(& inValue)[N])
+    {
+        using RawType = std::remove_cv_t<T>;
+
+        arrayLength = N;
+        policy = AnyPolicy::memoryHolder;
+        rtti = &anyRttiImpl<RawType>;
+        info = HolderInfo(sizeof(RawType) * N);
+        for (auto i = 0; i < N; i++) {
+            new(Data(i)) RawType(inValue[i]);
+        }
+    }
+
+    template <typename T, size_t N>
+    void Any::ConstructFromArrayValue(T(&& inValue)[N])
+    {
+        using RawType = std::remove_cv_t<T>;
+
+        arrayLength = N;
+        policy = AnyPolicy::memoryHolder;
+        rtti = &anyRttiImpl<RawType>;
+        info = HolderInfo(sizeof(RawType) * N);
+        for (auto i = 0; i < N; i++) {
+            new(Data(i)) RawType(std::move(inValue[i]));
+        }
+    }
+
+    template <typename T, size_t N>
+    void Any::ConstructFromArrayRef(std::reference_wrapper<T[N]> inRef)
+    {
+        using RawType = std::remove_cv_t<T>;
+
+        arrayLength = N;
+        policy = std::is_const_v<T> ? AnyPolicy::constRef : AnyPolicy::nonConstRef;
+        rtti = &anyRttiImpl<RawType>;
+        info = RefInfo(const_cast<RawType*>(&inRef.get()[0]), sizeof(RawType) * N);
     }
 
     template <typename T>
@@ -1468,5 +1815,35 @@ namespace Mirror {
         auto iter = typeToIdMap.find(Mirror::GetTypeInfo<T>()->id);
         Assert(iter != typeToIdMap.end());
         return Get(iter->second);
+    }
+
+    template <Common::CppEnum E>
+    void EnumValue::Set(E& value) const
+    {
+        SetDyn(Internal::ForwardAsArgument(value));
+    }
+
+    template <Common::CppEnum E>
+    bool EnumValue::Compare(const E& value) const
+    {
+        return Compare(Internal::ForwardAsArgument(value));
+    }
+
+    template <Common::CppEnum E>
+    bool Enum::HasValue(E inValue) const
+    {
+        return HasValue(Internal::ForwardAsArgument(inValue));
+    }
+
+    template <Common::CppEnum E>
+    const EnumValue* Enum::FindValue(E inValue) const
+    {
+        return FindValue(Internal::ForwardAsArgument(inValue));
+    }
+
+    template <Common::CppEnum E>
+    const EnumValue& Enum::GetValue(E inValue) const
+    {
+        return GetValue(Internal::ForwardAsArgument(inValue));
     }
 }

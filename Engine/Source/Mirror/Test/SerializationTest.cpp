@@ -13,10 +13,29 @@ int ga = 0;
 float gb = 0.0f;
 std::string gc;
 
+template <typename T>
+void PerformMetaObjectSerializationTest(const std::filesystem::path& fileName, const T& object)
+{
+    std::filesystem::create_directories(fileName.parent_path());
+    {
+        Common::BinaryFileSerializeStream stream(fileName.string());
+        Serialize(stream, object);
+    }
+
+    {
+        Common::BinaryFileDeserializeStream stream(fileName.string());
+
+        T restored;
+        Deserialize(stream, restored);
+        ASSERT_EQ(restored, object);
+    }
+}
+
 TEST(SerializationTest, VariableFileTest)
 {
     static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.VariableFileSerializationTest.bin";
     std::filesystem::create_directories(fileName.parent_path());
+
     {
         Common::BinaryFileSerializeStream stream(fileName.string());
 
@@ -50,101 +69,66 @@ TEST(SerializationTest, VariableFileTest)
 
 TEST(SerializationTest, ClassFileTest)
 {
-    static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.ClassFileSerializationTest.bin";
-    std::filesystem::create_directories(fileName.parent_path());
-    {
-        Common::BinaryFileSerializeStream stream(fileName.string());
-
-        SerializationTestStruct0 obj;
-        obj.a = 1;
-        obj.b = 2.0f;
-        obj.c = "3";
-        Serialize(stream, obj);
-    }
-
-    {
-        Common::BinaryFileDeserializeStream stream(fileName.string());
-
-        SerializationTestStruct0 obj;
-        Deserialize(stream, obj);
-
-        const auto& [a, b, c] = obj;
-        ASSERT_EQ(a, 1);
-        ASSERT_EQ(b, 2.0f);
-        ASSERT_EQ(c, "3");
-    }
+    PerformMetaObjectSerializationTest(
+        "../Test/Generated/Mirror/SerializationTest.ClassFileSerializationTest.bin",
+        SerializationTestStruct0 { 1, 2, "3.0" });
 }
 
 TEST(SerializationTest, ContainerFileTest)
 {
-    static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.ContainerFileSerializationTest.bin";
-    std::filesystem::create_directories(fileName.parent_path());
-    const auto& clazz = Mirror::Class::Get("SerializationTestStruct1");
-    {
-        Common::BinaryFileSerializeStream stream(fileName.string());
+    SerializationTestStruct1 obj;
+    obj.a = { 1, 2 };
+    obj.b = { "3", "4" };
+    obj.c = { { 5, "6" }, { 7, "8" } };
+    obj.d = { { false, true }, { true, false } };
+    obj.e = { { 1, 2.0f, "3" } };
 
-        SerializationTestStruct1 obj;
-        obj.a = { 1, 2 };
-        obj.b = { "3", "4" };
-        obj.c = { { 5, "6" }, { 7, "8" } };
-        obj.d = { { false, true }, { true, false } };
-        obj.e = { { 1, 2.0f, "3" } };
-
-        Mirror::Any(std::ref(obj))
-            .Serialize(stream);
-    }
-
-    {
-        Common::BinaryFileDeserializeStream stream(fileName.string());
-
-        Mirror::Any ref = clazz.GetDefaultConstructor().Construct();
-        ref.Deserialize(stream);
-
-        const auto& [a, b, c, d, e] = ref.As<const SerializationTestStruct1&>();
-        ASSERT_EQ(a.size(), 2);
-        ASSERT_EQ(a[0], 1);
-        ASSERT_EQ(a[1], 2);
-        ASSERT_EQ(b.size(), 2);
-        ASSERT_EQ(b.contains("3"), true);
-        ASSERT_EQ(b.contains("4"), true);
-        ASSERT_EQ(c.size(), 2);
-        ASSERT_EQ(c.at(5), "6");
-        ASSERT_EQ(c.at(7), "8");
-        ASSERT_EQ(d.size(), 2);
-        ASSERT_EQ(d[0].size(), 2);
-        ASSERT_EQ(d[0][0], false);
-        ASSERT_EQ(d[0][1], true);
-        ASSERT_EQ(d[1].size(), 2);
-        ASSERT_EQ(d[1][0], true);
-        ASSERT_EQ(d[1][1], false);
-        ASSERT_EQ(e.size(), 1);
-        ASSERT_EQ(e[0].a, 1);
-        ASSERT_EQ(e[0].b, 2.0f);
-        ASSERT_EQ(e[0].c, "3");
-    }
-}
-
-TEST(SerializationTest, MetaObjectTypeTest)
-{
-    // TODO
-}
-
-TEST(SerializationTest, MetaObjectSameAsDefaultObjectTest)
-{
-    // TODO
+    PerformMetaObjectSerializationTest(
+        "../Test/Generated/Mirror/SerializationTest.ContainerFileSerializationTest.bin",
+        obj);
 }
 
 TEST(SerializationTest, MetaObjectWithBaseClassTest)
 {
-    // TODO
+    PerformMetaObjectSerializationTest(
+        "../Test/Generated/Mirror/SerializationTest.MetaObjectWithBaseClassTest.bin",
+        SerializationTestStruct2 { { 1, 2, "3.0" }, 4.0 });
 }
 
-TEST(SerializationTest, MetaObjectUpgradeTest)
+TEST(SerializationTest, EnumSerializationTest)
+{
+    static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.EnumSerializationTest.bin";
+    std::filesystem::create_directories(fileName.parent_path());
+
+    {
+        Common::BinaryFileSerializeStream stream(fileName.string());
+        Serialize(stream, SerializationTestEnum::b);
+    }
+
+    {
+        Common::BinaryFileDeserializeStream stream(fileName.string());
+        SerializationTestEnum metaEnum;
+        Deserialize(stream, metaEnum);
+        ASSERT_EQ(metaEnum, SerializationTestEnum::b);
+    }
+}
+
+TEST(SerializationTest, MetaTypeSerializationTest)
 {
     // TODO
 }
 
-TEST(SerializationTest, EnumSerializationTest)
+TEST(SerializationTest, MetaObjectJsonSerializationTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, EnumJsonSerializationTest)
+{
+    // TODO
+}
+
+TEST(SerializationTest, MetaTypeJsonSerializationTest)
 {
     // TODO
 }

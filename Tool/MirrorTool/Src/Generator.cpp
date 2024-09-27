@@ -62,7 +62,7 @@ namespace MirrorTool {
         for (const auto& element : enumInfo.elements) {
             const auto elementFullName = GetFullName(element);
             stream << Common::newline;
-            stream << Common::tab<3> << fmt::format(R"(.Element<{}>("{}"))", elementFullName, element.name);
+            stream << Common::tab<3> << fmt::format(R"(.Value<{}>("{}"))", elementFullName, element.name);
             stream << GetMetaDataCode<4>(element);
         }
         stream << ";" << Common::newline;

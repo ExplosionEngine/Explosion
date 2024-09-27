@@ -82,7 +82,7 @@ namespace Mirror {
     public:
         ~EnumRegistry() override;
 
-        template <auto Value> EnumRegistry& Element(const Id& inId);
+        template <auto V> EnumRegistry& Value(const Id& inId);
 
     private:
         friend class Registry;
@@ -442,15 +442,21 @@ namespace Mirror {
 
     template <typename T>
     template <auto Value>
-    EnumRegistry<T>& EnumRegistry<T>::Element(const Id& inId)
+    EnumRegistry<T>& EnumRegistry<T>::Value(const Id& inId)
     {
-        const auto iter = enumInfo.elements.find(inId);
-        Assert(iter == enumInfo.elements.end());
+        const auto iter = enumInfo.values.find(inId);
+        Assert(iter == enumInfo.values.end());
 
-        EnumElement::ConstructParams params;
+        EnumValue::ConstructParams params;
         params.name = inId.name;
         params.getter = []() -> Any {
             return { Value };
+        };
+        params.integralGetter = []() -> EnumValue::IntegralValue {
+            return static_cast<EnumValue::IntegralValue>(Value);
+        };
+        params.setter = [](const Argument& value) -> void {
+            value.As<T&>() = Value;
         };
         params.comparer = [](const Argument& value) -> bool {
             return value.As<T>() == Value;
