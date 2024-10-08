@@ -701,6 +701,8 @@ namespace Mirror {
         });
     }
 
+    Id Id::null = Id();
+
     Id::Id()
         : hash(0)
     {
@@ -710,6 +712,11 @@ namespace Mirror {
         : hash(Common::HashUtils::StrCrc32(inName))
         , name(std::move(inName))
     {
+    }
+
+    bool Id::IsNull() const
+    {
+        return hash == null.hash;
     }
 
     bool Id::operator==(const Id& inRhs) const
@@ -722,27 +729,32 @@ namespace Mirror {
         return inId.hash;
     }
 
-    const Id NamePresets::globalScope = Id("_globalScope");
-    const Id NamePresets::detor = Id("_detor");
-    const Id NamePresets::defaultCtor = Id("_defaultCtor");
+    const Id IdPresets::globalScope = Id("_globalScope");
+    const Id IdPresets::detor = Id("_detor");
+    const Id IdPresets::defaultCtor = Id("_defaultCtor");
 
-    Type::Type(std::string inName) : name(std::move(inName)) {}
+    ReflNode::ReflNode(Id inId) : id(std::move(inId)) {}
 
-    Type::~Type() = default;
+    ReflNode::~ReflNode() = default;
 
-    const std::string& Type::GetName() const
+    const Id& ReflNode::GetId() const
     {
-        return name;
+        return id;
     }
 
-    const std::string& Type::GetMeta(const std::string& key) const
+    const std::string& ReflNode::GetName() const
+    {
+        return id.name;
+    }
+
+    const std::string& ReflNode::GetMeta(const std::string& key) const
     {
         const auto iter = metas.find(key);
         Assert(iter != metas.end());
         return iter->second;
     }
 
-    std::string Type::GetAllMeta() const
+    std::string ReflNode::GetAllMeta() const
     {
         std::stringstream stream;
         uint32_t count = 0;
@@ -757,12 +769,12 @@ namespace Mirror {
         return stream.str();
     }
 
-    bool Type::HasMeta(const std::string& key) const
+    bool ReflNode::HasMeta(const std::string& key) const
     {
         return metas.contains(key);
     }
 
-    bool Type::GetMetaBool(const std::string& key) const
+    bool ReflNode::GetMetaBool(const std::string& key) const
     {
         const auto& value = GetMeta(key);
         if (value == "true") {
@@ -774,23 +786,24 @@ namespace Mirror {
         return Assert(false), false;
     }
 
-    int32_t Type::GetMetaInt32(const std::string& key) const
+    int32_t ReflNode::GetMetaInt32(const std::string& key) const
     {
         return std::atoi(GetMeta(key).c_str());
     }
 
-    int64_t Type::GetMetaInt64(const std::string& key) const
+    int64_t ReflNode::GetMetaInt64(const std::string& key) const
     {
         return std::atoll(GetMeta(key).c_str());
     }
 
-    float Type::GetMetaFloat(const std::string& key) const
+    float ReflNode::GetMetaFloat(const std::string& key) const
     {
         return std::atof(GetMeta(key).c_str());
     }
 
     Variable::Variable(ConstructParams&& params)
-        : Type(std::move(params.name))
+        : ReflNode(std::move(params.id))
+        , owner(std::move(params.owner))
         , memorySize(params.memorySize)
         , typeInfo(params.typeInfo)
         , setter(std::move(params.setter))
@@ -803,6 +816,11 @@ namespace Mirror {
     Any Variable::Get() const
     {
         return GetDyn();
+    }
+
+    const Class* Variable::GetOwner() const
+    {
+        return owner.IsNull() ? nullptr : Class::Find(owner);
     }
 
     const TypeInfo* Variable::GetTypeInfo() const
@@ -821,7 +839,8 @@ namespace Mirror {
     }
 
     Function::Function(ConstructParams&& params)
-        : Type(std::move(params.name))
+        : ReflNode(std::move(params.id))
+        , owner(std::move(params.owner))
         , argsNum(params.argsNum)
         , retTypeInfo(params.retTypeInfo)
         , argTypeInfos(std::move(params.argTypeInfos))
@@ -830,6 +849,11 @@ namespace Mirror {
     }
 
     Function::~Function() = default;
+
+    const Class* Function::GetOwner() const
+    {
+        return owner.IsNull() ? nullptr : Class::Find(owner);
+    }
 
     uint8_t Function::GetArgsNum() const
     {
@@ -857,7 +881,8 @@ namespace Mirror {
     }
 
     Constructor::Constructor(ConstructParams&& params)
-        : Type(std::move(params.name))
+        : ReflNode(std::move(params.id))
+        , owner(std::move(params.owner))
         , argsNum(params.argsNum)
         , argTypeInfos(std::move(params.argTypeInfos))
         , argRemoveRefTypeInfos(std::move(params.argRemoveRefTypeInfos))
@@ -868,6 +893,11 @@ namespace Mirror {
     }
 
     Constructor::~Constructor() = default;
+
+    const Class* Constructor::GetOwner() const
+    {
+        return owner.IsNull() ? nullptr : Class::Find(owner);
+    }
 
     uint8_t Constructor::GetArgsNum() const
     {
@@ -915,7 +945,7 @@ namespace Mirror {
     }
 
     Destructor::Destructor(ConstructParams&& params)
-        : Type(std::string(NamePresets::detor.name))
+        : ReflNode(std::string(IdPresets::detor.name))
         , destructor(std::move(params.destructor))
     {
     }
@@ -928,7 +958,8 @@ namespace Mirror {
     }
 
     MemberVariable::MemberVariable(ConstructParams&& params)
-        : Type(std::move(params.name))
+        : ReflNode(std::move(params.id))
+        , owner(std::move(params.owner))
         , memorySize(params.memorySize)
         , typeInfo(params.typeInfo)
         , setter(std::move(params.setter))
@@ -937,6 +968,11 @@ namespace Mirror {
     }
 
     MemberVariable::~MemberVariable() = default;
+
+    const Class* MemberVariable::GetOwner() const
+    {
+        return owner.IsNull() ? nullptr : Class::Find(owner);
+    }
 
     uint32_t MemberVariable::SizeOf() const
     {
@@ -964,7 +1000,8 @@ namespace Mirror {
     }
 
     MemberFunction::MemberFunction(ConstructParams&& params)
-        : Type(std::move(params.name))
+        : ReflNode(std::move(params.id))
+        , owner(std::move(params.owner))
         , argsNum(params.argsNum)
         , retTypeInfo(params.retTypeInfo)
         , argTypeInfos(std::move(params.argTypeInfos))
@@ -973,6 +1010,11 @@ namespace Mirror {
     }
 
     MemberFunction::~MemberFunction() = default;
+
+    const Class* MemberFunction::GetOwner() const
+    {
+        return owner.IsNull() ? nullptr : Class::Find(owner);
+    }
 
     uint8_t MemberFunction::GetArgsNum() const
     {
@@ -999,7 +1041,7 @@ namespace Mirror {
         return invoker(object, arguments);
     }
 
-    GlobalScope::GlobalScope() : Type(std::string(NamePresets::globalScope.name)) {}
+    GlobalScope::GlobalScope() : ReflNode(std::string(IdPresets::globalScope.name)) {}
 
     GlobalScope::~GlobalScope() = default;
 
@@ -1075,7 +1117,7 @@ namespace Mirror {
     std::unordered_map<TypeId, Id> Class::typeToIdMap = {};
 
     Class::Class(ConstructParams&& params)
-        : Type(std::move(params.name))
+        : ReflNode(std::move(params.id))
         , typeInfo(params.typeInfo)
         , baseClassGetter(std::move(params.baseClassGetter))
     {
@@ -1084,7 +1126,7 @@ namespace Mirror {
             destructor = Destructor(std::move(params.destructorParams.value()));
         }
         if (params.defaultConstructorParams.has_value()) {
-            EmplaceConstructor(NamePresets::defaultCtor, std::move(params.defaultConstructorParams.value()));
+            EmplaceConstructor(IdPresets::defaultCtor, std::move(params.defaultConstructorParams.value()));
         }
     }
 
@@ -1262,7 +1304,7 @@ namespace Mirror {
 
     bool Class::HasDefaultConstructor() const
     {
-        return HasConstructor(NamePresets::defaultCtor);
+        return HasConstructor(IdPresets::defaultCtor);
     }
 
     const Class* Class::GetBaseClass() const
@@ -1289,12 +1331,12 @@ namespace Mirror {
 
     const Constructor* Class::FindDefaultConstructor() const
     {
-        return FindConstructor(NamePresets::defaultCtor);
+        return FindConstructor(IdPresets::defaultCtor);
     }
 
     const Constructor& Class::GetDefaultConstructor() const
     {
-        return GetConstructor(NamePresets::defaultCtor);
+        return GetConstructor(IdPresets::defaultCtor);
     }
 
     bool Class::HasDestructor() const
@@ -1461,7 +1503,8 @@ namespace Mirror {
     }
 
     EnumValue::EnumValue(ConstructParams&& inParams)
-        : Type(std::move(inParams.name))
+        : ReflNode(std::move(inParams.id))
+        , owner(std::move(inParams.owner))
         , getter(std::move(inParams.getter))
         , integralGetter(std::move(inParams.integralGetter))
         , setter(std::move(inParams.setter))
@@ -1479,6 +1522,11 @@ namespace Mirror {
     EnumValue::IntegralValue EnumValue::GetIntegral() const
     {
         return GetIntegralDyn();
+    }
+
+    const Enum* EnumValue::GetOwner() const
+    {
+        return owner.IsNull() ? nullptr : Enum::Find(owner);
     }
 
     Any EnumValue::GetDyn() const
@@ -1519,7 +1567,7 @@ namespace Mirror {
     std::unordered_map<TypeId, Id> Enum::typeToIdMap = {};
 
     Enum::Enum(ConstructParams&& params)
-        : Type(std::move(params.name))
+        : ReflNode(std::move(params.id))
         , typeInfo(params.typeInfo)
     {
     }

@@ -33,12 +33,12 @@ namespace Mirror {
         Derived& MetaData(const Id& inKey, const std::string& inValue);
 
     protected:
-        explicit MetaDataRegistry(Type* inContext);
+        explicit MetaDataRegistry(ReflNode* inContext);
 
-        Derived& SetContext(Type* inContext);
+        Derived& SetContext(ReflNode* inContext);
 
     private:
-        Type* context;
+        ReflNode* context;
     };
 
     template <typename C>
@@ -192,7 +192,7 @@ namespace Mirror::Internal {
 
 namespace Mirror {
     template <typename Derived>
-    MetaDataRegistry<Derived>::MetaDataRegistry(Type* inContext)
+    MetaDataRegistry<Derived>::MetaDataRegistry(ReflNode* inContext)
         : context(inContext)
     {
         Assert(context);
@@ -209,7 +209,7 @@ namespace Mirror {
     }
 
     template <typename Derived>
-    Derived& MetaDataRegistry<Derived>::SetContext(Type* inContext)
+    Derived& MetaDataRegistry<Derived>::SetContext(ReflNode* inContext)
     {
         Assert(inContext);
         context = inContext;
@@ -236,7 +236,8 @@ namespace Mirror {
         Assert(iter == clazz.constructors.end());
 
         Constructor::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = clazz.GetId();
         params.argsNum = sizeof...(Args);
         params.argTypeInfos = { GetTypeInfo<Args>()... };
         params.argRemoveRefTypeInfos = { GetTypeInfo<std::remove_reference_t<Args>>()... };
@@ -265,7 +266,8 @@ namespace Mirror {
         Assert(iter == clazz.staticVariables.end());
 
         Variable::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = clazz.GetId();
         params.memorySize = sizeof(ValueType);
         params.typeInfo = GetTypeInfo<ValueType>();
         params.setter = [](const Argument& value) -> void {
@@ -295,7 +297,8 @@ namespace Mirror {
         constexpr size_t argsTupleSize = std::tuple_size_v<ArgsTupleType>;
 
         Function::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = clazz.GetId();
         params.retTypeInfo = GetTypeInfo<RetType>();
         params.argsNum = argsTupleSize;
         params.argTypeInfos = Internal::GetArgTypeInfosByArgsTuple<ArgsTupleType>(std::make_index_sequence<argsTupleSize> {});
@@ -325,7 +328,8 @@ namespace Mirror {
         Assert(iter == clazz.memberVariables.end());
 
         MemberVariable::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = clazz.GetId();
         params.memorySize = sizeof(ValueType);
         params.typeInfo = GetTypeInfo<ValueType>();
         params.setter = [](const Argument& object, const Argument& value) -> void {
@@ -356,7 +360,8 @@ namespace Mirror {
         constexpr size_t argsTupleSize = std::tuple_size_v<ArgsTupleType>;
 
         MemberFunction::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = clazz.GetId();
         params.retTypeInfo = GetTypeInfo<RetType>();
         params.argsNum = argsTupleSize;
         params.argTypeInfos = Internal::GetArgTypeInfosByArgsTuple<ArgsTupleType>(std::make_index_sequence<argsTupleSize> {});
@@ -384,7 +389,8 @@ namespace Mirror {
         Assert(iter == globalScope.variables.end());
 
         Variable::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = Id::null;
         params.memorySize = sizeof(ValueType);
         params.typeInfo = GetTypeInfo<ValueType>();
         params.setter = [](const Argument& argument) -> void {
@@ -412,7 +418,8 @@ namespace Mirror {
         constexpr size_t argsTupleSize = std::tuple_size_v<ArgsTupleType>;
 
         Function::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = Id::null;
         params.retTypeInfo = GetTypeInfo<RetType>();
         params.argsNum = argsTupleSize;
         params.argTypeInfos = Internal::GetArgTypeInfosByArgsTuple<ArgsTupleType>(std::make_index_sequence<argsTupleSize> {});
@@ -448,7 +455,8 @@ namespace Mirror {
         Assert(iter == enumInfo.values.end());
 
         EnumValue::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = enumInfo.GetId();
         params.getter = []() -> Any {
             return { Value };
         };
@@ -473,7 +481,7 @@ namespace Mirror {
         Assert(!classes.contains(inId));
 
         Class::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
         params.typeInfo = GetTypeInfo<C>();
         params.baseClassGetter = []() -> const Mirror::Class* {
             if constexpr (std::is_void_v<B>) {
@@ -497,7 +505,8 @@ namespace Mirror {
         }
         if constexpr (std::is_default_constructible_v<C>) {
             Constructor::ConstructParams ctorParams;
-            ctorParams.name = NamePresets::defaultCtor.name;
+            ctorParams.id = IdPresets::defaultCtor.name;
+            ctorParams.owner = inId;
             ctorParams.argsNum = 0;
             ctorParams.argTypeInfos = {};
             ctorParams.stackConstructor = [](const ArgumentList& args) -> Any {
@@ -523,7 +532,7 @@ namespace Mirror {
         Assert(!enums.contains(inId));
 
         Enum::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
 
         Enum::typeToIdMap[typeId] = inId;
         return EnumRegistry<T>(EmplaceEnum(inId, std::move(params)));

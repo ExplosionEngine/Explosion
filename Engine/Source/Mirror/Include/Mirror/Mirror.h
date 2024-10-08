@@ -304,6 +304,8 @@ namespace Mirror {
 
     class Variable;
     class MemberVariable;
+    class Class;
+    class Enum;
 
     class MIRROR_API Argument {
     public:
@@ -335,10 +337,13 @@ namespace Mirror {
     using ArgumentList = std::vector<Argument>;
 
     struct MIRROR_API Id {
+        static Id null;
+
         Id();
         template <size_t N> Id(const char (&inName)[N]); // NOLINT
         Id(std::string inName); // NOLINT
 
+        bool IsNull() const;
         bool operator==(const Id& inRhs) const;
 
         size_t hash;
@@ -349,16 +354,17 @@ namespace Mirror {
         size_t operator()(const Id& inId) const noexcept;
     };
 
-    struct MIRROR_API NamePresets {
+    struct MIRROR_API IdPresets {
         static const Id globalScope;
         static const Id detor;
         static const Id defaultCtor;
     };
 
-    class MIRROR_API Type {
+    class MIRROR_API ReflNode {
     public:
-        virtual ~Type();
+        virtual ~ReflNode();
 
+        const Id& GetId() const;
         const std::string& GetName() const;
         const std::string& GetMeta(const std::string& key) const;
         std::string GetAllMeta() const;
@@ -369,22 +375,23 @@ namespace Mirror {
         float GetMetaFloat(const std::string& key) const;
 
     protected:
-        explicit Type(std::string inName);
+        explicit ReflNode(Id inId);
 
     private:
         template <typename Derived> friend class MetaDataRegistry;
 
-        std::string name;
+        Id id;
         std::unordered_map<Id, std::string, IdHashProvider> metas;
     };
 
-    class MIRROR_API Variable final : public Type {
+    class MIRROR_API Variable final : public ReflNode {
     public:
         ~Variable() override;
 
         template <typename T> void Set(T&& value) const;
         Any Get() const;
 
+        const Class* GetOwner() const;
         const TypeInfo* GetTypeInfo() const;
         void SetDyn(const Argument& inArgument) const;
         Any GetDyn() const;
@@ -399,7 +406,8 @@ namespace Mirror {
         using Getter = std::function<Any()>;
 
         struct ConstructParams {
-            std::string name;
+            Id id;
+            Id owner;
             size_t memorySize;
             const TypeInfo* typeInfo;
             Setter setter;
@@ -408,16 +416,18 @@ namespace Mirror {
 
         explicit Variable(ConstructParams&& params);
 
+        Id owner;
         size_t memorySize;
         const TypeInfo* typeInfo;
         Setter setter;
         Getter getter;
     };
 
-    class MIRROR_API Function final : public Type {
+    class MIRROR_API Function final : public ReflNode {
     public:
         ~Function() override;
 
+        const Class* GetOwner() const;
         template <typename... Args> Any Invoke(Args&&... args) const;
         uint8_t GetArgsNum() const;
         const TypeInfo* GetRetTypeInfo() const;
@@ -434,7 +444,8 @@ namespace Mirror {
         using Invoker = std::function<Any(const ArgumentList&)>;
 
         struct ConstructParams {
-            std::string name;
+            Id id;
+            Id owner;
             uint8_t argsNum;
             const TypeInfo* retTypeInfo;
             std::vector<const TypeInfo*> argTypeInfos;
@@ -443,19 +454,21 @@ namespace Mirror {
 
         explicit Function(ConstructParams&& params);
 
+        Id owner;
         uint8_t argsNum;
         const TypeInfo* retTypeInfo;
         std::vector<const TypeInfo*> argTypeInfos;
         Invoker invoker;
     };
 
-    class MIRROR_API Constructor final : public Type {
+    class MIRROR_API Constructor final : public ReflNode {
     public:
         ~Constructor() override;
 
         template <typename... Args> Any Construct(Args&&... args) const;
         template <typename... Args> Any New(Args&&... args) const;
 
+        const Class* GetOwner() const;
         uint8_t GetArgsNum() const;
         const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
         const std::vector<const TypeInfo*>& GetArgTypeInfos() const;
@@ -475,7 +488,8 @@ namespace Mirror {
         using Invoker = std::function<Any(const ArgumentList&)>;
 
         struct ConstructParams {
-            std::string name;
+            Id id;
+            Id owner;
             uint8_t argsNum;
             std::vector<const TypeInfo*> argTypeInfos;
             std::vector<const TypeInfo*> argRemoveRefTypeInfos;
@@ -486,6 +500,7 @@ namespace Mirror {
 
         explicit Constructor(ConstructParams&& params);
 
+        Id owner;
         uint8_t argsNum;
         std::vector<const TypeInfo*> argTypeInfos;
         std::vector<const TypeInfo*> argRemoveRefTypeInfos;
@@ -494,7 +509,7 @@ namespace Mirror {
         Invoker heapConstructor;
     };
 
-    class MIRROR_API Destructor final : public Type {
+    class MIRROR_API Destructor final : public ReflNode {
     public:
         ~Destructor() override;
 
@@ -517,13 +532,14 @@ namespace Mirror {
         Invoker destructor;
     };
 
-    class MIRROR_API MemberVariable final : public Type {
+    class MIRROR_API MemberVariable final : public ReflNode {
     public:
         ~MemberVariable() override;
 
         template <typename C, typename T> void Set(C&& object, T&& value) const;
         template <typename C> Any Get(C&& object) const;
 
+        const Class* GetOwner() const;
         uint32_t SizeOf() const;
         const TypeInfo* GetTypeInfo() const;
         void SetDyn(const Argument& object, const Argument& value) const;
@@ -538,7 +554,8 @@ namespace Mirror {
         using Getter = std::function<Any(const Argument&)>;
 
         struct ConstructParams {
-            std::string name;
+            Id id;
+            Id owner;
             uint32_t memorySize;
             const TypeInfo* typeInfo;
             Setter setter;
@@ -547,18 +564,20 @@ namespace Mirror {
 
         explicit MemberVariable(ConstructParams&& params);
 
+        Id owner;
         uint32_t memorySize;
         const TypeInfo* typeInfo;
         Setter setter;
         Getter getter;
     };
 
-    class MIRROR_API MemberFunction final : public Type {
+    class MIRROR_API MemberFunction final : public ReflNode {
     public:
         ~MemberFunction() override;
 
         template <typename C, typename... Args> Any Invoke(C&& object, Args&&... args) const;
 
+        const Class* GetOwner() const;
         uint8_t GetArgsNum() const;
         const TypeInfo* GetRetTypeInfo() const;
         const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
@@ -572,7 +591,8 @@ namespace Mirror {
         using Invoker = std::function<Any(const Argument&, const ArgumentList&)>;
 
         struct ConstructParams {
-            std::string name;
+            Id id;
+            Id owner;
             uint8_t argsNum;
             const TypeInfo* retTypeInfo;
             std::vector<const TypeInfo*> argTypeInfos;
@@ -581,6 +601,7 @@ namespace Mirror {
 
         explicit MemberFunction(ConstructParams&& params);
 
+        Id owner;
         uint8_t argsNum;
         const TypeInfo* retTypeInfo;
         std::vector<const TypeInfo*> argTypeInfos;
@@ -592,7 +613,7 @@ namespace Mirror {
     using MemberVariableTraverser = std::function<void(const MemberVariable&)>;
     using MemberFunctionTraverser = std::function<void(const MemberFunction&)>;
 
-    class MIRROR_API GlobalScope final : public Type {
+    class MIRROR_API GlobalScope final : public ReflNode {
     public:
         ~GlobalScope() override;
 
@@ -620,7 +641,7 @@ namespace Mirror {
         std::unordered_map<Id, Function, IdHashProvider> functions;
     };
 
-    class MIRROR_API Class final : public Type {
+    class MIRROR_API Class final : public ReflNode {
     public:
         template <Common::CppClass C> static bool Has();
         template <Common::CppClass C> static const Class* Find();
@@ -688,7 +709,7 @@ namespace Mirror {
         using BaseClassGetter = std::function<const Class*()>;
 
         struct ConstructParams {
-            std::string name;
+            Id id;
             const TypeInfo* typeInfo;
             BaseClassGetter baseClassGetter;
             std::function<Any()> defaultObjectCreator;
@@ -717,7 +738,7 @@ namespace Mirror {
         std::unordered_map<Id, MemberFunction, IdHashProvider> memberFunctions;
     };
 
-    class MIRROR_API EnumValue final : public Type {
+    class MIRROR_API EnumValue final : public ReflNode {
     public:
         using IntegralValue = int64_t;
 
@@ -728,6 +749,7 @@ namespace Mirror {
         template <Common::CppEnum E> void Set(E& value) const;
         template <Common::CppEnum E> bool Compare(const E& value) const;
 
+        const Enum* GetOwner() const;
         Any GetDyn() const;
         IntegralValue GetIntegralDyn() const;
         void SetDyn(const Argument& arg) const;
@@ -746,7 +768,8 @@ namespace Mirror {
         using Comparer = std::function<bool(const Argument&)>;
 
         struct ConstructParams {
-            std::string name;
+            Id id;
+            Id owner;
             Getter getter;
             IntegralGetter integralGetter;
             Setter setter;
@@ -755,13 +778,14 @@ namespace Mirror {
 
         explicit EnumValue(ConstructParams&& inParams);
 
+        Id owner;
         Getter getter;
         IntegralGetter integralGetter;
         Setter setter;
         Comparer comparer;
     };
 
-    class MIRROR_API Enum final : public Type {
+    class MIRROR_API Enum final : public ReflNode {
     public:
         template <Common::CppEnum T> static const Enum* Find();
         template <Common::CppEnum T> static const Enum& Get();
@@ -793,7 +817,7 @@ namespace Mirror {
         template <typename T> friend class EnumRegistry;
 
         struct ConstructParams {
-            std::string name;
+            Id id;
             const TypeInfo* typeInfo;
         };
 
