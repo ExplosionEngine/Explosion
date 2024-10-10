@@ -497,6 +497,7 @@ namespace Mirror {
         }
         if constexpr (std::is_destructible_v<C>) {
             Destructor::ConstructParams detorParams;
+            detorParams.owner = inId;
             detorParams.destructor = [](const Argument& object) -> void {
                 Assert(!object.IsConstRef());
                 object.As<C&>().~C();

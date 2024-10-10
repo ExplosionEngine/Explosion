@@ -391,6 +391,8 @@ namespace Mirror {
         template <typename T> void Set(T&& value) const;
         Any Get() const;
 
+        const std::string& GetOwnerName() const;
+        const Id& GetOwnerId() const;
         const Class* GetOwner() const;
         const TypeInfo* GetTypeInfo() const;
         void SetDyn(const Argument& inArgument) const;
@@ -427,6 +429,8 @@ namespace Mirror {
     public:
         ~Function() override;
 
+        const std::string& GetOwnerName() const;
+        const Id& GetOwnerId() const;
         const Class* GetOwner() const;
         template <typename... Args> Any Invoke(Args&&... args) const;
         uint8_t GetArgsNum() const;
@@ -468,6 +472,8 @@ namespace Mirror {
         template <typename... Args> Any Construct(Args&&... args) const;
         template <typename... Args> Any New(Args&&... args) const;
 
+        const std::string& GetOwnerName() const;
+        const Id& GetOwnerId() const;
         const Class* GetOwner() const;
         uint8_t GetArgsNum() const;
         const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
@@ -514,6 +520,10 @@ namespace Mirror {
         ~Destructor() override;
 
         template <typename C> void Invoke(C&& object) const;
+
+        const std::string& GetOwnerName() const;
+        const Id& GetOwnerId() const;
+        const Class* GetOwner() const;
         void InvokeDyn(const Argument& argument) const;
 
     private:
@@ -524,11 +534,13 @@ namespace Mirror {
         using Invoker = std::function<void(const Argument&)>;
 
         struct ConstructParams {
+            Id owner;
             Invoker destructor;
         };
 
         explicit Destructor(ConstructParams&& params);
 
+        Id owner;
         Invoker destructor;
     };
 
@@ -539,6 +551,8 @@ namespace Mirror {
         template <typename C, typename T> void Set(C&& object, T&& value) const;
         template <typename C> Any Get(C&& object) const;
 
+        const std::string& GetOwnerName() const;
+        const Id& GetOwnerId() const;
         const Class* GetOwner() const;
         uint32_t SizeOf() const;
         const TypeInfo* GetTypeInfo() const;
@@ -577,6 +591,8 @@ namespace Mirror {
 
         template <typename C, typename... Args> Any Invoke(C&& object, Args&&... args) const;
 
+        const std::string& GetOwnerName() const;
+        const Id& GetOwnerId() const;
         const Class* GetOwner() const;
         uint8_t GetArgsNum() const;
         const TypeInfo* GetRetTypeInfo() const;
@@ -749,6 +765,8 @@ namespace Mirror {
         template <Common::CppEnum E> void Set(E& value) const;
         template <Common::CppEnum E> bool Compare(const E& value) const;
 
+        const std::string& GetOwnerName() const;
+        const Id& GetOwnerId() const;
         const Enum* GetOwner() const;
         Any GetDyn() const;
         IntegralValue GetIntegralDyn() const;
@@ -914,6 +932,10 @@ namespace Common { // NOLINT
             stream.Seek(static_cast<int64_t>(sizeof(uint64_t) * (memberVariableCount + 1)));
             uint64_t memberVariableContentSize = 0;
             for (const auto& memberVariable : memberVariables | std::views::values) {
+                if (memberVariable.IsTransient()) {
+                    continue;
+                }
+
                 const bool sameAsDefaultObject = defaultObject.Empty() || !memberVariable.GetTypeInfo()->equalComparable
                     ? false
                     : memberVariable.GetDyn(obj) == memberVariable.GetDyn(defaultObject);
@@ -1054,6 +1076,282 @@ namespace Common { // NOLINT
         }
     };
 
+    template <>
+    struct Serializer<const Mirror::Variable*> {
+        static constexpr size_t typeId = HashUtils::StrCrc32("const Mirror::Variable*");
+
+        static size_t Serialize(BinarySerializeStream& stream, const Mirror::Variable* value)
+        {
+            std::string ownerName;
+            std::string name;
+
+            if (value != nullptr) {
+                ownerName = value->GetOwnerName();
+                name = value->GetName();
+            }
+
+            size_t serialized = 0;
+            serialized += Serializer<std::string>::Serialize(stream, ownerName);
+            serialized += Serializer<std::string>::Serialize(stream, name);
+            return serialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, const Mirror::Variable*& value)
+        {
+            std::string ownerName;
+            std::string name;
+
+            size_t deserialized = 0;
+            deserialized += Serializer<std::string>::Deserialize(stream, ownerName);
+            deserialized += Serializer<std::string>::Deserialize(stream, name);
+
+            if (const Mirror::Class* owner = Mirror::Class::Find(ownerName);
+                owner != nullptr) {
+                value = owner->FindStaticVariable(name);
+            } else {
+                value = Mirror::GlobalScope::Get().FindVariable(name);
+            }
+            return deserialized;
+        }
+    };
+
+    template <>
+    struct Serializer<const Mirror::Function*> {
+        static constexpr size_t typeId = HashUtils::StrCrc32("const Mirror::Function*");
+
+        static size_t Serialize(BinarySerializeStream& stream, const Mirror::Function* value)
+        {
+            std::string ownerName;
+            std::string name;
+
+            if (value != nullptr) {
+                ownerName = value->GetOwnerName();
+                name = value->GetName();
+            }
+
+            size_t serialized = 0;
+            serialized += Serializer<std::string>::Serialize(stream, ownerName);
+            serialized += Serializer<std::string>::Serialize(stream, name);
+            return serialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, const Mirror::Function*& value)
+        {
+            std::string ownerName;
+            std::string name;
+
+            size_t deserialized = 0;
+            deserialized += Serializer<std::string>::Deserialize(stream, ownerName);
+            deserialized += Serializer<std::string>::Deserialize(stream, name);
+
+            if (const Mirror::Class* owner = Mirror::Class::Find(ownerName);
+                owner != nullptr) {
+                value = owner->FindStaticFunction(name);
+            } else {
+                value = Mirror::GlobalScope::Get().FindFunction(name);
+            }
+            return deserialized;
+        }
+    };
+
+    template <>
+    struct Serializer<const Mirror::Constructor*> {
+        static constexpr size_t typeId = HashUtils::StrCrc32("const Mirror::Constructor*");
+
+        static size_t Serialize(BinarySerializeStream& stream, const Mirror::Constructor* value)
+        {
+            std::string ownerName;
+            std::string name;
+
+            if (value != nullptr) {
+                ownerName = value->GetOwnerName();
+                name = value->GetName();
+            }
+
+            size_t serialized = 0;
+            serialized += Serializer<std::string>::Serialize(stream, ownerName);
+            serialized += Serializer<std::string>::Serialize(stream, name);
+            return serialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, const Mirror::Constructor*& value)
+        {
+            std::string ownerName;
+            std::string name;
+
+            size_t deserialized = 0;
+            deserialized += Serializer<std::string>::Deserialize(stream, ownerName);
+            deserialized += Serializer<std::string>::Deserialize(stream, name);
+
+            const Mirror::Class* owner = Mirror::Class::Find(ownerName);
+            value = owner != nullptr ? owner->FindConstructor(name) : nullptr;
+            return deserialized;
+        }
+    };
+
+    template <>
+    struct Serializer<const Mirror::Destructor*> {
+        static constexpr size_t typeId = HashUtils::StrCrc32("const Mirror::Destructor*");
+
+        static size_t Serialize(BinarySerializeStream& stream, const Mirror::Destructor* value)
+        {
+            const std::string ownerName = value != nullptr ? value->GetOwnerName() : "";
+            return Serializer<std::string>::Serialize(stream, ownerName);
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, const Mirror::Destructor*& value)
+        {
+            std::string ownerName;
+            const size_t deserialized = Serializer<std::string>::Deserialize(stream, ownerName);
+            const Mirror::Class* owner = Mirror::Class::Find(ownerName);
+            value = owner != nullptr ? &owner->GetDestructor() : nullptr;
+            return deserialized;
+        }
+    };
+
+    template <>
+    struct Serializer<const Mirror::MemberVariable*> {
+        static constexpr size_t typeId = HashUtils::StrCrc32("const Mirror::MemberVariable*");
+
+        static size_t Serialize(BinarySerializeStream& stream, const Mirror::MemberVariable* value)
+        {
+            std::string ownerName;
+            std::string name;
+
+            if (value != nullptr) {
+                ownerName = value->GetOwnerName();
+                name = value->GetName();
+            }
+
+            size_t serialized = 0;
+            serialized += Serializer<std::string>::Serialize(stream, ownerName);
+            serialized += Serializer<std::string>::Serialize(stream, name);
+            return serialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, const Mirror::MemberVariable*& value)
+        {
+            std::string ownerName;
+            std::string name;
+
+            size_t deserialized = 0;
+            deserialized += Serializer<std::string>::Deserialize(stream, ownerName);
+            deserialized += Serializer<std::string>::Deserialize(stream, name);
+
+            const Mirror::Class* owner = Mirror::Class::Find(ownerName);
+            value = owner != nullptr ? owner->FindMemberVariable(name) : nullptr;
+            return deserialized;
+        }
+    };
+
+    template <>
+    struct Serializer<const Mirror::MemberFunction*> {
+        static constexpr size_t typeId = HashUtils::StrCrc32("const Mirror::MemberFunction*");
+
+        static size_t Serialize(BinarySerializeStream& stream, const Mirror::MemberFunction* value)
+        {
+            std::string ownerName;
+            std::string name;
+
+            if (value != nullptr) {
+                ownerName = value->GetOwnerName();
+                name = value->GetName();
+            }
+
+            size_t serialized = 0;
+            serialized += Serializer<std::string>::Serialize(stream, ownerName);
+            serialized += Serializer<std::string>::Serialize(stream, name);
+            return serialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, const Mirror::MemberFunction*& value)
+        {
+            std::string ownerName;
+            std::string name;
+
+            size_t deserialized = 0;
+            deserialized += Serializer<std::string>::Deserialize(stream, ownerName);
+            deserialized += Serializer<std::string>::Deserialize(stream, name);
+
+            const Mirror::Class* owner = Mirror::Class::Find(ownerName);
+            value = owner != nullptr ? owner->FindMemberFunction(name) : nullptr;
+            return deserialized;
+        }
+    };
+
+    template <>
+    struct Serializer<const Mirror::Class*> {
+        static constexpr size_t typeId = HashUtils::StrCrc32("const Mirror::Class*");
+
+        static size_t Serialize(BinarySerializeStream& stream, const Mirror::Class* value)
+        {
+            const std::string name = value != nullptr ? value->GetName() : "";
+            return Serializer<std::string>::Serialize(stream, name);
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, const Mirror::Class*& value)
+        {
+            std::string name;
+            const size_t deserialized = Serializer<std::string>::Deserialize(stream, name);
+            value = Mirror::Class::Find(name);
+            return deserialized;
+        }
+    };
+
+    template <>
+    struct Serializer<const Mirror::EnumValue*> {
+        static constexpr size_t typeId = HashUtils::StrCrc32("const Mirror::EnumValue*");
+
+        static size_t Serialize(BinarySerializeStream& stream, const Mirror::EnumValue* value)
+        {
+            std::string ownerName;
+            std::string name;
+
+            if (value != nullptr) {
+                ownerName = value->GetOwnerName();
+                name = value->GetName();
+            }
+
+            size_t serialized = 0;
+            serialized += Serializer<std::string>::Serialize(stream, ownerName);
+            serialized += Serializer<std::string>::Serialize(stream, name);
+            return serialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, const Mirror::EnumValue*& value)
+        {
+            std::string ownerName;
+            std::string name;
+
+            size_t deserialized = 0;
+            deserialized += Serializer<std::string>::Deserialize(stream, ownerName);
+            deserialized += Serializer<std::string>::Deserialize(stream, name);
+
+            const Mirror::Enum* owner = Mirror::Enum::Find(ownerName);
+            value = owner != nullptr ? owner->FindValue(name) : nullptr;
+            return deserialized;
+        }
+    };
+
+    template <>
+    struct Serializer<const Mirror::Enum*> {
+        static constexpr size_t typeId = HashUtils::StrCrc32("const Mirror::Enum*");
+
+        static size_t Serialize(BinarySerializeStream& stream, const Mirror::Enum* value)
+        {
+            const std::string name = value != nullptr ? value->GetName() : "";
+            return Serializer<std::string>::Serialize(stream, name);
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, const Mirror::Enum*& value)
+        {
+            std::string name;
+            const size_t deserialized = Serializer<std::string>::Deserialize(stream, name);
+            value = Mirror::Enum::Find(name);
+            return deserialized;
+        }
+    };
+
     template <Mirror::MetaClass T>
     struct JsonSerializer<T> {
         static void JsonSerializeDyn(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mirror::Class& clazz, const Mirror::Argument& inObj)
@@ -1076,13 +1374,18 @@ namespace Common { // NOLINT
             rapidjson::Value membersJson;
             membersJson.SetArray();
             membersJson.Reserve(memberVariables.size(), inAllocator);
-            for (const auto& member : memberVariables | std::views::values) {
-                rapidjson::Value memberNameJson;
-                JsonSerializer<std::string>::JsonSerialize(memberNameJson, inAllocator, member.GetName());
 
-                bool sameAsDefault = defaultObject.Empty() || !member.GetTypeInfo()->equalComparable
+            for (const auto& memberVariable : memberVariables | std::views::values) {
+                if (memberVariable.IsTransient()) {
+                    continue;
+                }
+
+                rapidjson::Value memberNameJson;
+                JsonSerializer<std::string>::JsonSerialize(memberNameJson, inAllocator, memberVariable.GetName());
+
+                bool sameAsDefault = defaultObject.Empty() || !memberVariable.GetTypeInfo()->equalComparable
                     ? false
-                    : member.GetDyn(inObj) == member.GetDyn(defaultObject);
+                    : memberVariable.GetDyn(inObj) == memberVariable.GetDyn(defaultObject);
 
                 rapidjson::Value memberSameAsDefaultJson;
                 JsonSerializer<bool>::JsonSerialize(memberSameAsDefaultJson, inAllocator, sameAsDefault);
@@ -1091,7 +1394,7 @@ namespace Common { // NOLINT
                 if (sameAsDefault) {
                     memberContentJson.SetNull();
                 } else {
-                    member.GetDyn(inObj).JsonSerialize(memberContentJson, inAllocator);
+                    memberVariable.GetDyn(inObj).JsonSerialize(memberContentJson, inAllocator);
                 }
 
                 rapidjson::Value memberJson;
@@ -1184,11 +1487,11 @@ namespace Common { // NOLINT
 
     template <CppEnum E>
     struct JsonSerializer<E> {
-        static void JsonSerialize(rapidjson::Value& outValue, rapidjson::Document::AllocatorType& inAllocator, const E& inValue)
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const E& inValue)
         {
             if (const Mirror::Enum* metaEnum = Mirror::Enum::Find<E>();
                 metaEnum == nullptr) {
-                JsonSerializer<std::underlying_type_t<E>>::JsonSerialize(outValue, inAllocator, static_cast<std::underlying_type_t<E>>(inValue));
+                JsonSerializer<std::underlying_type_t<E>>::JsonSerialize(outJsonValue, inAllocator, static_cast<std::underlying_type_t<E>>(inValue));
             } else {
                 const Mirror::EnumValue& metaEnumValue = metaEnum->GetValue(inValue);
 
@@ -1198,23 +1501,23 @@ namespace Common { // NOLINT
                 rapidjson::Value valueNameJson;
                 JsonSerializer<std::string>::JsonSerialize(valueNameJson, inAllocator, metaEnumValue.GetName());
 
-                outValue.SetArray();
-                outValue.PushBack(enumNameJson, inAllocator);
-                outValue.PushBack(valueNameJson, inAllocator);
+                outJsonValue.SetArray();
+                outJsonValue.PushBack(enumNameJson, inAllocator);
+                outJsonValue.PushBack(valueNameJson, inAllocator);
             }
         }
 
-        static void JsonDeserialize(const rapidjson::Value& inValue, E& outValue)
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, E& outValue)
         {
-            if (inValue.IsArray()) {
-                if (inValue.Size() != 2) {
+            if (inJsonValue.IsArray()) {
+                if (!inJsonValue.IsArray() || inJsonValue.Size() != 2) {
                     return;
                 }
 
                 std::string metaEnumName;
                 std::string metaEnumValueName;
-                JsonSerializer<std::string>::JsonDeserialize(inValue[0], metaEnumName);
-                JsonSerializer<std::string>::JsonDeserialize(inValue[1], metaEnumValueName);
+                JsonSerializer<std::string>::JsonDeserialize(inJsonValue[0], metaEnumName);
+                JsonSerializer<std::string>::JsonDeserialize(inJsonValue[1], metaEnumValueName);
 
                 const Mirror::Enum* aspectMetaEnum = Mirror::Enum::Find(metaEnumName);
                 const Mirror::Enum* metaEnum = Mirror::Enum::Find<E>();
@@ -1229,9 +1532,293 @@ namespace Common { // NOLINT
                 metaEnumValue->Set(outValue);
             } else {
                 std::underlying_type_t<E> unlderlyingValue;
-                JsonSerializer<std::underlying_type_t<E>>::JsonDeserialize(inValue, unlderlyingValue);
+                JsonSerializer<std::underlying_type_t<E>>::JsonDeserialize(inJsonValue, unlderlyingValue);
                 outValue = static_cast<E>(unlderlyingValue);
             }
+        }
+    };
+
+    template <>
+    struct JsonSerializer<const Mirror::Variable*> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mirror::Variable* inValue)
+        {
+            std::string ownerName;
+            std::string name;
+
+            if (inValue != nullptr) {
+                ownerName = inValue->GetOwnerName();
+                name = inValue->GetName();
+            }
+
+            rapidjson::Value ownerNameJson;
+            JsonSerializer<std::string>::JsonSerialize(ownerNameJson, inAllocator, ownerName);
+
+            rapidjson::Value nameJson;
+            JsonSerializer<std::string>::JsonSerialize(nameJson, inAllocator, name);
+
+            outJsonValue.SetArray();
+            outJsonValue.PushBack(ownerNameJson, inAllocator);
+            outJsonValue.PushBack(nameJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, const Mirror::Variable*& outValue)
+        {
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != 2) {
+                return;
+            }
+
+            std::string ownerName;
+            std::string name;
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue[0], ownerName);
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue[1], name);
+
+            const Mirror::Class* owner = Mirror::Class::Find(ownerName);
+            outValue = owner != nullptr ? owner->FindStaticVariable(name) : Mirror::GlobalScope::Get().FindVariable(name);
+        }
+    };
+
+    template <>
+    struct JsonSerializer<const Mirror::Function*> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mirror::Function* inValue)
+        {
+            std::string ownerName;
+            std::string name;
+
+            if (inValue != nullptr) {
+                ownerName = inValue->GetOwnerName();
+                name = inValue->GetName();
+            }
+
+            rapidjson::Value ownerNameJson;
+            JsonSerializer<std::string>::JsonSerialize(ownerNameJson, inAllocator, ownerName);
+
+            rapidjson::Value nameJson;
+            JsonSerializer<std::string>::JsonSerialize(nameJson, inAllocator, name);
+
+            outJsonValue.SetArray();
+            outJsonValue.PushBack(ownerNameJson, inAllocator);
+            outJsonValue.PushBack(nameJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, const Mirror::Function*& outValue)
+        {
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != 2) {
+                return;
+            }
+
+            std::string ownerName;
+            std::string name;
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue[0], ownerName);
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue[1], name);
+
+            const Mirror::Class* owner = Mirror::Class::Find(ownerName);
+            outValue = owner != nullptr ? owner->FindStaticFunction(name) : Mirror::GlobalScope::Get().FindFunction(name);
+        }
+    };
+
+    template <>
+    struct JsonSerializer<const Mirror::Constructor*> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mirror::Constructor* inValue)
+        {
+            std::string ownerName;
+            std::string name;
+
+            if (inValue != nullptr) {
+                ownerName = inValue->GetOwnerName();
+                name = inValue->GetName();
+            }
+
+            rapidjson::Value ownerNameJson;
+            JsonSerializer<std::string>::JsonSerialize(ownerNameJson, inAllocator, ownerName);
+
+            rapidjson::Value nameJson;
+            JsonSerializer<std::string>::JsonSerialize(nameJson, inAllocator, name);
+
+            outJsonValue.SetArray();
+            outJsonValue.PushBack(ownerNameJson, inAllocator);
+            outJsonValue.PushBack(nameJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, const Mirror::Constructor*& outValue)
+        {
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != 2) {
+                return;
+            }
+
+            std::string ownerName;
+            std::string name;
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue[0], ownerName);
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue[1], name);
+
+            const Mirror::Class* owner = Mirror::Class::Find(ownerName);
+            outValue = owner != nullptr ? owner->FindConstructor(name) : nullptr;
+        }
+    };
+
+    template <>
+    struct JsonSerializer<const Mirror::Destructor*> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mirror::Destructor* inValue)
+        {
+            const std::string ownerName = inValue != nullptr ? inValue->GetOwnerName() : "";
+            JsonSerializer<std::string>::JsonSerialize(outJsonValue, inAllocator, ownerName);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, const Mirror::Destructor*& outValue)
+        {
+            std::string ownerName;
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue, ownerName);
+
+            const Mirror::Class* owner = Mirror::Class::Find(ownerName);
+            outValue = owner != nullptr ? &owner->GetDestructor() : nullptr;
+        }
+    };
+
+    template <>
+    struct JsonSerializer<const Mirror::MemberVariable*> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mirror::MemberVariable* inValue)
+        {
+            std::string ownerName;
+            std::string name;
+
+            if (inValue != nullptr) {
+                ownerName = inValue->GetOwnerName();
+                name = inValue->GetName();
+            }
+
+            rapidjson::Value ownerNameJson;
+            JsonSerializer<std::string>::JsonSerialize(ownerNameJson, inAllocator, ownerName);
+
+            rapidjson::Value nameJson;
+            JsonSerializer<std::string>::JsonSerialize(nameJson, inAllocator, name);
+
+            outJsonValue.SetArray();
+            outJsonValue.PushBack(ownerNameJson, inAllocator);
+            outJsonValue.PushBack(nameJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, const Mirror::MemberVariable*& outValue)
+        {
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != 2) {
+                return;
+            }
+
+            std::string ownerName;
+            std::string name;
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue[0], ownerName);
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue[1], name);
+
+            const Mirror::Class* owner = Mirror::Class::Find(ownerName);
+            outValue = owner != nullptr ? owner->FindMemberVariable(name) : nullptr;
+        }
+    };
+
+    template <>
+    struct JsonSerializer<const Mirror::MemberFunction*> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mirror::MemberFunction* inValue)
+        {
+            std::string ownerName;
+            std::string name;
+
+            if (inValue != nullptr) {
+                ownerName = inValue->GetOwnerName();
+                name = inValue->GetName();
+            }
+
+            rapidjson::Value ownerNameJson;
+            JsonSerializer<std::string>::JsonSerialize(ownerNameJson, inAllocator, ownerName);
+
+            rapidjson::Value nameJson;
+            JsonSerializer<std::string>::JsonSerialize(nameJson, inAllocator, name);
+
+            outJsonValue.SetArray();
+            outJsonValue.PushBack(ownerNameJson, inAllocator);
+            outJsonValue.PushBack(nameJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, const Mirror::MemberFunction*& outValue)
+        {
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != 2) {
+                return;
+            }
+
+            std::string ownerName;
+            std::string name;
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue[0], ownerName);
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue[1], name);
+
+            const Mirror::Class* owner = Mirror::Class::Find(ownerName);
+            outValue = owner != nullptr ? owner->FindMemberFunction(name) : nullptr;
+        }
+    };
+
+    template <>
+    struct JsonSerializer<const Mirror::Class*> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mirror::Class* inValue)
+        {
+            const std::string name = inValue != nullptr ? inValue->GetName() : "";
+            JsonSerializer<std::string>::JsonSerialize(outJsonValue, inAllocator, name);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, const Mirror::Class*& outValue)
+        {
+            std::string name;
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue, name);
+            outValue = Mirror::Class::Find(name);
+        }
+    };
+
+    template <>
+    struct JsonSerializer<const Mirror::EnumValue*> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mirror::EnumValue* inValue)
+        {
+            std::string ownerName;
+            std::string name;
+
+            if (inValue != nullptr) {
+                ownerName = inValue->GetOwnerName();
+                name = inValue->GetName();
+            }
+
+            rapidjson::Value ownerNameJson;
+            JsonSerializer<std::string>::JsonSerialize(ownerNameJson, inAllocator, ownerName);
+
+            rapidjson::Value nameJson;
+            JsonSerializer<std::string>::JsonSerialize(nameJson, inAllocator, name);
+
+            outJsonValue.SetArray();
+            outJsonValue.PushBack(ownerNameJson, inAllocator);
+            outJsonValue.PushBack(nameJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, const Mirror::EnumValue*& outValue)
+        {
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != 2) {
+                return;
+            }
+
+            std::string ownerName;
+            std::string name;
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue[0], ownerName);
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue[1], name);
+
+            const Mirror::Enum* owner = Mirror::Enum::Find(ownerName);
+            outValue = owner != nullptr ? owner->FindValue(name) : nullptr;
+        }
+    };
+
+    template <>
+    struct JsonSerializer<const Mirror::Enum*> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mirror::Enum* inValue)
+        {
+            const std::string name = inValue != nullptr ? inValue->GetName() : "";
+            JsonSerializer<std::string>::JsonSerialize(outJsonValue, inAllocator, name);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, const Mirror::Enum*& outValue)
+        {
+            std::string name;
+            JsonSerializer<std::string>::JsonDeserialize(inJsonValue, name);
+            outValue = Mirror::Enum::Find(name);
         }
     };
 
@@ -1276,7 +1863,114 @@ namespace Common { // NOLINT
         }
     };
 
-    // TODO Type class serialization/tostring/tojson
+    template <>
+    struct StringConverter<const Mirror::Variable*> {
+        static std::string ToString(const Mirror::Variable* inValue)
+        {
+            std::string ownerName;
+            std::string name;
+            if (inValue != nullptr) {
+                ownerName = inValue->GetOwnerName();
+                name = inValue->GetName();
+            }
+            return fmt::format("{}{}{}", ownerName, ownerName.empty() ? "" : ":", name);
+        }
+    };
+
+    template <>
+    struct StringConverter<const Mirror::Function*> {
+        static std::string ToString(const Mirror::Variable* inValue)
+        {
+            std::string ownerName;
+            std::string name;
+            if (inValue != nullptr) {
+                ownerName = inValue->GetOwnerName();
+                name = inValue->GetName();
+            }
+            return fmt::format("{}{}{}{}", ownerName, ownerName.empty() ? "" : ":", name, name.empty() ? "" : "()");
+        }
+    };
+
+    template <>
+    struct StringConverter<const Mirror::Constructor*> {
+        static std::string ToString(const Mirror::Constructor* inValue)
+        {
+            std::string ownerName;
+            std::string name;
+            if (inValue != nullptr) {
+                ownerName = inValue->GetOwnerName();
+                name = inValue->GetName();
+            }
+            return fmt::format("{}::{}({})", ownerName, StringUtils::AfterLast(ownerName, "::"), name);
+        }
+    };
+
+    template <>
+    struct StringConverter<const Mirror::Destructor*> {
+        static std::string ToString(const Mirror::Destructor* inValue)
+        {
+            const std::string ownerName = inValue != nullptr ? inValue->GetOwnerName() : "";
+            return fmt::format("{}::~{}()", ownerName, StringUtils::AfterLast(ownerName, "::"));
+        }
+    };
+
+    template <>
+    struct StringConverter<const Mirror::MemberVariable*> {
+        static std::string ToString(const Mirror::MemberVariable* inValue)
+        {
+            std::string ownerName;
+            std::string name;
+            if (inValue != nullptr) {
+                ownerName = inValue->GetOwnerName();
+                name = inValue->GetName();
+            }
+            return fmt::format("{}::{}", ownerName, name);
+        }
+    };
+
+    template <>
+    struct StringConverter<const Mirror::MemberFunction*> {
+        static std::string ToString(const Mirror::MemberFunction* inValue)
+        {
+            std::string ownerName;
+            std::string name;
+            if (inValue != nullptr) {
+                ownerName = inValue->GetOwnerName();
+                name = inValue->GetName();
+            }
+            return fmt::format("{}::{}()", ownerName, name);
+        }
+    };
+
+    template <>
+    struct StringConverter<const Mirror::Class*> {
+        static std::string ToString(const Mirror::Class* inValue)
+        {
+            return inValue != nullptr ? inValue->GetName() : "";
+        }
+    };
+
+    template <>
+    struct StringConverter<const Mirror::EnumValue*> {
+        static std::string ToString(const Mirror::EnumValue* inValue)
+        {
+            std::string ownerName;
+            std::string name;
+            if (inValue != nullptr) {
+                ownerName = inValue->GetOwnerName();
+                name = inValue->GetName();
+            }
+            return fmt::format("{}::{}", ownerName, name);
+        }
+    };
+
+    template <>
+    struct StringConverter<const Mirror::Enum*> {
+        static std::string ToString(const Mirror::Enum* inValue)
+        {
+            return inValue != nullptr ? inValue->GetName() : "";
+        }
+    };
 }
 
 namespace Mirror {

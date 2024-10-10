@@ -21,6 +21,8 @@ EProperty() extern int ga;
 EProperty() extern float gb;
 EProperty() extern std::string gc;
 
+EFunc() int gf(int a, int b);
+
 struct EClass() SerializationTestStruct0 {
     EClassBody(SerializationTestStruct0)
 
@@ -59,4 +61,14 @@ struct EClass() SerializationTestStruct2 : SerializationTestStruct0 {
     EClassBody(SerializationTestStruct2);
 
     EProperty() double d;
+};
+
+struct EClass() SerializationTestStruct3 {
+    EClassBody(SerializationTestStruct3)
+
+    EProperty() static int ga;
+    EFunc() static int gf(int a, int b);
+
+    EProperty() int a;
+    EFunc() int f() const;
 };

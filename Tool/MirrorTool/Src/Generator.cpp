@@ -216,7 +216,7 @@ namespace MirrorTool {
         stream << "{";
         stream << GetNamespaceGlobalCode(metaInfo.global);
         for (const auto& ns : metaInfo.namespaces) {
-            stream << GetNamespaceEnumsCode(ns);
+            stream << GetNamespaceGlobalCode(ns);
         }
         stream << Common::newline;
         stream << Common::tab<1> << "return 0;" << Common::newline;

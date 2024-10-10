@@ -818,6 +818,16 @@ namespace Mirror {
         return GetDyn();
     }
 
+    const std::string& Variable::GetOwnerName() const
+    {
+        return owner.name;
+    }
+
+    const Id& Variable::GetOwnerId() const
+    {
+        return owner;
+    }
+
     const Class* Variable::GetOwner() const
     {
         return owner.IsNull() ? nullptr : Class::Find(owner);
@@ -849,6 +859,16 @@ namespace Mirror {
     }
 
     Function::~Function() = default;
+
+    const std::string& Function::GetOwnerName() const
+    {
+        return owner.name;
+    }
+
+    const Id& Function::GetOwnerId() const
+    {
+        return owner;
+    }
 
     const Class* Function::GetOwner() const
     {
@@ -893,6 +913,16 @@ namespace Mirror {
     }
 
     Constructor::~Constructor() = default;
+
+    const std::string& Constructor::GetOwnerName() const
+    {
+        return owner.name;
+    }
+
+    const Id& Constructor::GetOwnerId() const
+    {
+        return owner;
+    }
 
     const Class* Constructor::GetOwner() const
     {
@@ -946,11 +976,27 @@ namespace Mirror {
 
     Destructor::Destructor(ConstructParams&& params)
         : ReflNode(std::string(IdPresets::detor.name))
+        , owner(std::move(params.owner))
         , destructor(std::move(params.destructor))
     {
     }
 
     Destructor::~Destructor() = default;
+
+    const std::string& Destructor::GetOwnerName() const
+    {
+        return owner.name;
+    }
+
+    const Id& Destructor::GetOwnerId() const
+    {
+        return owner;
+    }
+
+    const Class* Destructor::GetOwner() const
+    {
+        return owner.IsNull() ? nullptr : Class::Find(owner);
+    }
 
     void Destructor::InvokeDyn(const Argument& argument) const
     {
@@ -968,6 +1014,16 @@ namespace Mirror {
     }
 
     MemberVariable::~MemberVariable() = default;
+
+    const std::string& MemberVariable::GetOwnerName() const
+    {
+        return owner.name;
+    }
+
+    const Id& MemberVariable::GetOwnerId() const
+    {
+        return owner;
+    }
 
     const Class* MemberVariable::GetOwner() const
     {
@@ -1010,6 +1066,16 @@ namespace Mirror {
     }
 
     MemberFunction::~MemberFunction() = default;
+
+    const std::string& MemberFunction::GetOwnerName() const
+    {
+        return owner.name;
+    }
+
+    const Id& MemberFunction::GetOwnerId() const
+    {
+        return owner;
+    }
 
     const Class* MemberFunction::GetOwner() const
     {
@@ -1522,6 +1588,16 @@ namespace Mirror {
     EnumValue::IntegralValue EnumValue::GetIntegral() const
     {
         return GetIntegralDyn();
+    }
+
+    const std::string& EnumValue::GetOwnerName() const
+    {
+        return owner.name;
+    }
+
+    const Id& EnumValue::GetOwnerId() const
+    {
+        return owner;
     }
 
     const Enum* EnumValue::GetOwner() const
