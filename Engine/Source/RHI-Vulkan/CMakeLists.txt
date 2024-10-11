@@ -17,3 +17,10 @@ AddLibrary(
     PUBLIC_INC Include
     LIB RHI VulkanSDK spirv-cross VulkanMemoryAllocator ${PLATFORM_EXT_LIBS}
 )
+
+# .mm files can not perform unity build with .cpp files
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    set_target_properties(
+        RHI-Vulkan PROPERTIES
+        UNITY_BUILD OFF)
+endif()

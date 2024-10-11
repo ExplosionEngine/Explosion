@@ -847,7 +847,11 @@ namespace Mirror {
         std::unordered_map<Id, EnumValue, IdHashProvider> values;
     };
 
-    template <typename T> concept MetaClass = requires(T inValue) { { T::GetClass() } -> std::same_as<const Class&>; };
+    template <typename T> concept MetaClass = requires(T inValue)
+    {
+        { T::GetStaticClass() } -> std::same_as<const Class&>;
+        { inValue.GetClass() } -> std::same_as<const Class&>;
+    };
 }
 
 namespace Mirror::Internal {
@@ -861,15 +865,22 @@ namespace Mirror::Internal {
     }
 
     template <typename T>
-    Argument ForwardAsArgument(T&& value)
+    Any ForwardAsAny(T&& value)
     {
         StaticCheckArgumentType<T>();
 
         if constexpr (std::is_lvalue_reference_v<T&&>) {
-            return { Any(std::ref(std::forward<T>(value))) };
+            return { std::ref(std::forward<T>(value)) };
         } else {
-            return { Any(std::forward<T>(value)) };
+            return { std::forward<T>(value) };
         }
+    }
+
+    template <typename T>
+    Argument ForwardAsArgument(T&& value)
+    {
+        StaticCheckArgumentType<T>();
+        return ForwardAsAny(std::forward<T>(value));
     }
 
     template <typename... Args>
@@ -878,13 +889,7 @@ namespace Mirror::Internal {
         ArgumentList result;
         result.reserve(sizeof...(args));
         (void) std::initializer_list<int> { ([&]() -> void {
-            StaticCheckArgumentType<Args>();
-
-            if constexpr (std::is_lvalue_reference_v<Args&&>) {
-                result.emplace_back(Any(std::ref(std::forward<Args>(args))));
-            } else {
-                result.emplace_back(Any(std::forward<Args>(args)));
-            }
+            result.emplace_back(ForwardAsArgument(std::forward<Args>(args)));
         }(), 0)... };
         return result;
     }
@@ -1372,23 +1377,19 @@ namespace Common { // NOLINT
             }
 
             rapidjson::Value membersJson;
-            membersJson.SetArray();
-            membersJson.Reserve(memberVariables.size(), inAllocator);
+            membersJson.SetObject();
 
             for (const auto& memberVariable : memberVariables | std::views::values) {
                 if (memberVariable.IsTransient()) {
                     continue;
                 }
 
-                rapidjson::Value memberNameJson;
-                JsonSerializer<std::string>::JsonSerialize(memberNameJson, inAllocator, memberVariable.GetName());
-
                 bool sameAsDefault = defaultObject.Empty() || !memberVariable.GetTypeInfo()->equalComparable
                     ? false
                     : memberVariable.GetDyn(inObj) == memberVariable.GetDyn(defaultObject);
 
-                rapidjson::Value memberSameAsDefaultJson;
-                JsonSerializer<bool>::JsonSerialize(memberSameAsDefaultJson, inAllocator, sameAsDefault);
+                rapidjson::Value memberNameJson;
+                JsonSerializer<std::string>::JsonSerialize(memberNameJson, inAllocator, memberVariable.GetName());
 
                 rapidjson::Value memberContentJson;
                 if (sameAsDefault) {
@@ -1396,13 +1397,7 @@ namespace Common { // NOLINT
                 } else {
                     memberVariable.GetDyn(inObj).JsonSerialize(memberContentJson, inAllocator);
                 }
-
-                rapidjson::Value memberJson;
-                memberJson.SetObject();
-                memberJson.AddMember("memberName", memberNameJson, inAllocator);
-                memberJson.AddMember("sameAsDefault", memberSameAsDefaultJson, inAllocator);
-                memberJson.AddMember("content", memberContentJson, inAllocator);
-                membersJson.PushBack(memberJson, inAllocator);
+                membersJson.AddMember(memberNameJson, memberContentJson, inAllocator);
             }
 
             outJsonValue.SetObject();
@@ -1439,38 +1434,27 @@ namespace Common { // NOLINT
             }
 
             const auto& membersJson = inJsonValue["members"];
-            if (!membersJson.IsArray()) {
+            if (!membersJson.IsObject()) {
                 return;
             }
 
-            for (rapidjson::SizeType i = 0; i < membersJson.Size(); i++) {
-                const auto& memberJson = membersJson[i];
-                if (!memberJson.HasMember("memberName")) {
-                    continue;
-                }
-
+            for (auto iter = membersJson.MemberBegin(); iter != membersJson.MemberEnd(); ++iter) {
                 std::string memberName;
-                JsonSerializer<std::string>::JsonDeserialize(memberJson["memberName"], memberName);
+                JsonSerializer<std::string>::JsonDeserialize(iter->name, memberName);
+
                 if (!clazz.HasMemberVariable(memberName)) {
                     continue;
                 }
                 const auto& memberVariable = clazz.GetMemberVariable(memberName);
 
-                bool sameAsDefault = false;
-                if (memberJson.HasMember("sameAsDefault")) {
-                    JsonSerializer<bool>::JsonDeserialize(memberJson["sameAsDefault"], sameAsDefault);
-                }
-                if (sameAsDefault) {
+                if ( const auto& valueJson = iter->value;
+                    valueJson.IsNull()) {
                     if (!defaultObject.Empty()) {
                         memberVariable.SetDyn(outObj, memberVariable.GetDyn(defaultObject));
                     }
-                    continue;
+                } else {
+                    memberVariable.GetDyn(outObj).JsonDeserialize(valueJson);
                 }
-
-                if (!memberJson.HasMember("content")) {
-                    continue;
-                }
-                memberVariable.GetDyn(outObj).JsonDeserialize(memberJson["content"]);
             }
         }
 

@@ -9,48 +9,62 @@
 struct WorldTest : testing::Test {
     void SetUp() override
     {
-        Runtime::EngineHolder::Load("RuntimeTest", {});
+        EngineHolder::Load("RuntimeTest", {});
     }
 };
 
-void BasicSetupSystem::Execute(Runtime::Commands& commands, const Runtime::WorldStart&) // NOLINT
+GlobalCounter::GlobalCounter()
+    : tickTime(0)
+    , value(0)
 {
-    for (auto i = 0; i < 5; i++) {
-        const Runtime::Entity entity = commands.CreateEntity();
-        commands.EmplaceComp<Position>(entity);
-        commands.EmplaceComp<Velocity>(entity);
-    }
 }
 
-StartVerify BasicTickSystem::Execute(Runtime::Commands& commands, const Runtime::WorldTick&) // NOLINT
+ParralCountSystemA::ParralCountSystemA() = default;
+
+ParralCountSystemA::~ParralCountSystemA() = default;
+
+void ParralCountSystemA::Tick(Commands& commands, float inTimeMs) const
 {
-    auto& count = commands.GetState<IterTimeCount>();
-    count.value += 1;
-
-    auto view = commands.View<Position, Velocity>();
-    view.Each([](Position& position, Velocity& velocity) -> void {
-        position.x += velocity.x;
-        position.y += velocity.y;
-    });
-
-    return {};
+    auto& globalCounter = commands.GetState<GlobalCounter>();
+    globalCounter.tickTime += 1;
+    globalCounter.value += 2;
 }
 
-void PositionVerifySystem::Execute(Runtime::Commands& commands, const StartVerify&) // NOLINT
-{
-    const IterTimeCount& count = commands.GetState<IterTimeCount>();
+ParralCountSystemB::ParralCountSystemB() = default;
 
-    auto view = commands.View<Position, Velocity>();
-    view.Each([&](const Position& position, const Velocity& velocity) -> void {
-        ASSERT_EQ(position.x, velocity.x * count.value);
-    });
+ParralCountSystemB::~ParralCountSystemB() = default;
+
+void ParralCountSystemB::Tick(Commands& commands, float inTimeMs) const
+{
+    commands.GetState<GlobalCounter>().value += 3;
+}
+
+GlobalCounterVerifySystem::GlobalCounterVerifySystem() = default;
+
+GlobalCounterVerifySystem::~GlobalCounterVerifySystem() = default;
+
+void GlobalCounterVerifySystem::Setup(Commands& commands) const
+{
+    commands.EmplaceState<GlobalCounter>();
+}
+
+void GlobalCounterVerifySystem::Tick(Commands& commands, float inTimeMs) const
+{
+    const auto& globalCounter = commands.GetState<GlobalCounter>();
+    ASSERT_EQ(globalCounter.value, globalCounter.tickTime * 5);
 }
 
 TEST_F(WorldTest, ECSBasic)
 {
-    Runtime::World world;
-    world.AddSystem<BasicSetupSystem>();
-    world.AddSystem<PositionVerifySystem>();
-    world.Start();
-    world.Tick(10.f);
+    World world;
+    world.AddSystem<ParralCountSystemA>();
+    world.AddSystem<ParralCountSystemB>();
+    world.AddBarrier();
+    world.AddSystem<GlobalCounterVerifySystem>();
+    world.AddBarrier();
+
+    world.Play();
+    world.Tick(3.0f);
+    world.Tick(3.0f);
+    world.Stop();
 }

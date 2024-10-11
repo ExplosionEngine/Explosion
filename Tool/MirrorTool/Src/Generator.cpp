@@ -142,6 +142,11 @@ namespace MirrorTool {
         stream << Common::tab<1> << "return 0;" << Common::newline;
         stream << "}();" << Common::newline;
         stream << Common::newline;
+        stream << fmt::format("const Mirror::Class& {}::GetStaticClass()", fullName) << Common::newline;
+        stream << "{" << Common::newline;
+        stream << Common::tab<1> << fmt::format("static const Mirror::Class& clazz = Mirror::Class::Get<{}>();", fullName) << Common::newline;
+        stream << Common::tab<1> << "return clazz;" << Common::newline;
+        stream << "}" << Common::newline;
         stream << fmt::format("const Mirror::Class& {}::GetClass()", fullName) << Common::newline;
         stream << "{" << Common::newline;
         stream << Common::tab<1> << fmt::format("static const Mirror::Class& clazz = Mirror::Class::Get<{}>();", fullName) << Common::newline;

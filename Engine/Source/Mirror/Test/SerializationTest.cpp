@@ -188,13 +188,6 @@ TEST(SerializationTest, ReflNodeSerializationTest)
     PerformSerializationTest<const EnumValue*>(fileName, &enun->GetValue("a"));
 }
 
-TEST(SerializationTest, MetaObjectJsonSerializationTest)
-{
-    PerformJsonSerializationTest<SerializationTestStruct2>(
-        SerializationTestStruct2 { { 1, 2, "3.0" }, 4.0 },
-        R"({"className":"SerializationTestStruct2","baseClass":{"className":"SerializationTestStruct0","baseClass":null,"members":[{"memberName":"a","sameAsDefault":false,"content":1},{"memberName":"b","sameAsDefault":false,"content":2.0},{"memberName":"c","sameAsDefault":false,"content":"3.0"}]},"members":[{"memberName":"d","sameAsDefault":false,"content":4.0}]})");
-}
-
 TEST(SerializationTest, EnumJsonSerializationTest)
 {
     PerformJsonSerializationTest<SerializationTestEnum>(

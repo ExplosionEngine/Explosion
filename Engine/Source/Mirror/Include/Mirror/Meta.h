@@ -22,9 +22,16 @@ namespace Mirror {
     class Class;
 }
 
-// TODO maybe need virtual const Mirror::Class& GetClass() ?
 #define EClassBody(className) \
 private: \
     static int _mirrorRegistry; \
 public: \
-    static const Mirror::Class& GetClass(); \
+    static const Mirror::Class& GetStaticClass(); \
+    const Mirror::Class& GetClass(); \
+
+#define EPolyClassBody(className) \
+private: \
+    static int _mirrorRegistry; \
+public: \
+    static const Mirror::Class& GetStaticClass(); \
+    virtual const Mirror::Class& GetClass(); \
