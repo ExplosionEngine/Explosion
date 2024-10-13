@@ -135,7 +135,7 @@ namespace Common {
             JsonSerializer<float>::JsonSerialize(outJsonValue, inAllocator, inValue.value);
         }
 
-        static void JsonDeserialize(rapidjson::Value& inJsonValue, Internal::FullFloat<E>& outValue)
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Internal::FullFloat<E>& outValue)
         {
             JsonSerializer<float>::JsonDeserialize(inJsonValue, outValue.value);
         }
@@ -148,7 +148,7 @@ namespace Common {
             JsonSerializer<float>::JsonSerialize(outJsonValue, inAllocator, inValue.AsFloat());
         }
 
-        static void JsonDeserialize(rapidjson::Value& inJsonValue, HalfFloat<E>& outValue)
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, HalfFloat<E>& outValue)
         {
             float fltValue;
             JsonSerializer<float>::JsonDeserialize(inJsonValue, fltValue);

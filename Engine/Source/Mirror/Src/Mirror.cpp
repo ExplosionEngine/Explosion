@@ -85,7 +85,9 @@ namespace Mirror {
     Any::~Any()
     {
         if (IsMemoryHolder() && rtti != nullptr) {
-            rtti->detor(Data());
+            for (auto i = 0; i < ElementNum(); i++) {
+                rtti->detor(Data(i));
+            }
         }
     }
 
@@ -102,6 +104,11 @@ namespace Mirror {
     Any::Any(const Any& inOther, const AnyPolicy inPolicy)
     {
         PerformCopyConstructWithPolicy(inOther, inPolicy);
+    }
+
+    Any::Any(const Any& inOther, AnyPolicy inPolicy, uint32_t inIndex)
+    {
+        PerformCopyConstructForElementWithPolicy(inOther, inPolicy, inIndex);
     }
 
     Any::Any(Any&& inOther) noexcept
@@ -129,6 +136,7 @@ namespace Mirror {
 
     void Any::PerformCopyConstruct(const Any& inOther)
     {
+        arrayLength = inOther.arrayLength;
         policy = inOther.policy;
         rtti = inOther.rtti;
         info = inOther.info;
@@ -139,12 +147,15 @@ namespace Mirror {
         }
 
         if (IsMemoryHolder()) {
-            rtti->copyConstruct(Data(), inOther.Data());
+            for (auto i = 0; i < ElementNum(); i++) {
+                rtti->copyConstruct(Data(i), inOther.Data(i));
+            }
         }
     }
 
     void Any::PerformCopyConstructWithPolicy(const Any& inOther, const AnyPolicy inPolicy)
     {
+        arrayLength = inOther.arrayLength;
         policy = inPolicy;
         rtti = inOther.rtti;
 
@@ -154,15 +165,37 @@ namespace Mirror {
         }
 
         if (IsRef()) {
-            info = RefInfo(inOther.Data(), inOther.Size());
+            info = RefInfo(inOther.Data(), inOther.MemorySize());
         } else {
-            info = HolderInfo(inOther.Size());
-            rtti->copyConstruct(Data(), inOther.Data());
+            info = HolderInfo(inOther.MemorySize());
+            for (auto i = 0; i < ElementNum(); i++) {
+                rtti->copyConstruct(Data(i), inOther.Data(i));
+            }
+        }
+    }
+
+    void Any::PerformCopyConstructForElementWithPolicy(const Any& inOther, AnyPolicy inPolicy, uint32_t inIndex)
+    {
+        arrayLength = 0;
+        policy = inPolicy;
+        rtti = inOther.rtti;
+
+        if (Empty()) {
+            Reset();
+            return;
+        }
+
+        if (IsRef()) {
+            info = RefInfo(inOther.Data(inIndex), inOther.ElementSize());
+        } else {
+            info = HolderInfo(inOther.ElementSize());
+            rtti->copyConstruct(Data(), inOther.Data(inIndex));
         }
     }
 
     void Any::PerformMoveConstruct(Any&& inOther)
     {
+        arrayLength = inOther.arrayLength;
         policy = inOther.policy;
         rtti = inOther.rtti;
 
@@ -172,35 +205,75 @@ namespace Mirror {
         }
 
         if (IsRef()) {
-            info = RefInfo(inOther.Data(), inOther.Size());
+            info = RefInfo(inOther.Data(), inOther.MemorySize());
         } else {
-            info = HolderInfo(inOther.Size());
-            rtti->moveConstruct(Data(), inOther.Data());
+            info = HolderInfo(inOther.MemorySize());
+            for (auto i = 0; i < ElementNum(); i++) {
+                rtti->moveConstruct(Data(i), inOther.Data(i));
+            }
         }
+    }
+
+    uint32_t Any::ElementNum() const
+    {
+        return std::max(1u, arrayLength);
+    }
+
+    bool Any::IsArray() const
+    {
+        return arrayLength > 0;
+    }
+
+    Any Any::At(uint32_t inIndex)
+    {
+        Assert(IsArray());
+        return { *this, AnyPolicy::nonConstRef, inIndex };
+    }
+
+    Any Any::At(uint32_t inIndex) const
+    {
+        Assert(IsArray());
+        return { *this, AnyPolicy::constRef, inIndex };
+    }
+
+    size_t Any::ElementSize() const
+    {
+        return MemorySize() / ElementNum();
+    }
+
+    uint32_t Any::ArrayLength() const
+    {
+        Assert(IsArray());
+        return arrayLength;
     }
 
     Any Any::Ref()
     {
+        Assert(!IsArray());
         return { *this, IsMemoryHolder() ? AnyPolicy::nonConstRef : policy };
     }
 
     Any Any::Ref() const
     {
+        Assert(!IsArray());
         return { *this, IsMemoryHolder() ? AnyPolicy::constRef : policy };
     }
 
     Any Any::ConstRef() const
     {
+        Assert(!IsArray());
         return { *this, AnyPolicy::constRef };
     }
 
-    Any Any::AsValue() const
+    Any Any::Value() const
     {
+        Assert(!IsArray());
         return { *this, AnyPolicy::memoryHolder };
     }
 
     Any Any::Ptr()
     {
+        Assert(!IsArray());
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getPtr(Data());
         }
@@ -216,6 +289,7 @@ namespace Mirror {
 
     Any Any::Ptr() const
     {
+        Assert(!IsArray());
         if (policy == AnyPolicy::memoryHolder) {
             return rtti->getConstPtr(Data());
         }
@@ -231,11 +305,13 @@ namespace Mirror {
 
     Any Any::ConstPtr() const
     {
+        Assert(!IsArray());
         return rtti->getConstPtr(Data());
     }
 
     Any Any::Deref() const
     {
+        Assert(!IsArray());
         return rtti->deref(Data());
     }
 
@@ -384,6 +460,7 @@ namespace Mirror {
 
     void Any::Reset()
     {
+        arrayLength = 0;
         policy = AnyPolicy::max;
         rtti = nullptr;
         info = {};
@@ -396,51 +473,53 @@ namespace Mirror {
 
     size_t Any::Serialize(Common::BinarySerializeStream& inStream) const
     {
-        Assert(rtti != nullptr);
+        Assert(!IsArray() && rtti != nullptr);
         return rtti->serialize(Data(), inStream);
     }
 
     std::pair<bool, size_t> Any::Deserialize(Common::BinaryDeserializeStream& inStream)
     {
-        Assert(rtti != nullptr && !IsConstRef());
+        Assert(!IsArray() && rtti != nullptr && !IsConstRef());
         return rtti->deserialize(Data(), inStream);
     }
 
     std::pair<bool, size_t> Any::Deserialize(Common::BinaryDeserializeStream& inStream) const
     {
-        Assert(rtti != nullptr && IsNonConstRef());
+        Assert(!IsArray() && rtti != nullptr && IsNonConstRef());
         return rtti->deserialize(Data(), inStream);
     }
 
     void Any::JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator) const
     {
-        Assert(rtti != nullptr);
+        Assert(!IsArray() && rtti != nullptr);
         rtti->jsonSerialize(Data(), outJsonValue, inAllocator);
     }
 
     void Any::JsonDeserialize(const rapidjson::Value& inJsonValue)
     {
-        Assert(rtti != nullptr && !IsConstRef());
+        Assert(!IsArray() && rtti != nullptr && !IsConstRef());
         rtti->jsonDeserialize(Data(), inJsonValue);
     }
 
     void Any::JsonDeserialize(const rapidjson::Value& inJsonValue) const
     {
-        Assert(rtti != nullptr && IsNonConstRef());
+        Assert(!IsArray() && rtti != nullptr && IsNonConstRef());
         return rtti->jsonDeserialize(Data(), inJsonValue);
     }
 
     std::string Any::ToString() const
     {
+        Assert(!IsArray());
         return Empty() ? "" : rtti->toString(Data());
     }
 
-    void* Any::Data() const
+    void* Any::Data(uint32_t inIndex) const
     {
-        return IsRef() ? std::get<RefInfo>(info).Ptr() : std::get<HolderInfo>(info).Ptr();
+        void* ptr = IsRef() ? std::get<RefInfo>(info).Ptr() : std::get<HolderInfo>(info).Ptr();
+        return static_cast<uint8_t*>(ptr) + ElementSize() * inIndex;
     }
 
-    size_t Any::Size() const
+    size_t Any::MemorySize() const
     {
         return IsRef() ? std::get<RefInfo>(info).Size() : std::get<HolderInfo>(info).Size();
     }
@@ -450,12 +529,29 @@ namespace Mirror {
         return !Empty();
     }
 
+    Any Any::operator[](uint32_t inIndex)
+    {
+        return At(inIndex);
+    }
+
+    Any Any::operator[](uint32_t inIndex) const
+    {
+        return At(inIndex);
+    }
+
     bool Any::operator==(const Any& inAny) const
     {
+        Assert(!IsArray());
         if (TypeId() != inAny.TypeId()) {
             return false;
         }
         return rtti->equal(Data(), inAny.Data());
+    }
+
+    bool Any::operator!=(const Any& inAny) const
+    {
+        Assert(!IsArray());
+        return !operator==(inAny);
     }
 
     Any::HolderInfo::HolderInfo() = default;
@@ -551,131 +647,61 @@ namespace Mirror {
 
     bool Argument::IsMemoryHolder() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->IsMemoryHolder();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->IsMemoryHolder();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).IsMemoryHolder();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->IsMemoryHolder();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.IsMemoryHolder();
+        });
     }
 
     bool Argument::IsRef() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->IsRef();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->IsRef();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).IsRef();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->IsRef();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.IsRef();
+        });
     }
 
     bool Argument::IsNonConstRef() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->IsNonConstRef();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->IsNonConstRef();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).IsNonConstRef();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->IsNonConstRef();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.IsNonConstRef();
+        });
     }
 
     bool Argument::IsConstRef() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->IsConstRef();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->IsConstRef();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).IsConstRef();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->IsConstRef();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.IsConstRef();
+        });
     }
 
     const TypeInfo* Argument::Type() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->Type();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->Type();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).Type();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->Type();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.Type();
+        });
     }
 
     const TypeInfo* Argument::RemoveRefType() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->RemoveRefType();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->RemoveRefType();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).RemoveRefType();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->RemoveRefType();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.RemoveRefType();
+        });
     }
 
     const TypeInfo* Argument::AddPointerType() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->AddPointerType();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->AddPointerType();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).AddPointerType();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->AddPointerType();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.AddPointerType();
+        });
     }
 
     const TypeInfo* Argument::RemovePointerType() const
     {
-        const auto index = any.index();
-        if (index == 1) {
-            return std::get<Any*>(any)->RemovePointerType();
-        }
-        if (index == 2) {
-            return std::get<const Any*>(any)->RemovePointerType();
-        }
-        if (index == 3) {
-            return const_cast<Any&>(std::get<Any>(any)).RemovePointerType();
-        }
-        QuickFailWithReason("Argument is empty");
-        return std::get<Any*>(any)->RemovePointerType();
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.RemovePointerType();
+        });
     }
+
+    Id Id::null = Id();
 
     Id::Id()
         : hash(0)
@@ -688,6 +714,11 @@ namespace Mirror {
     {
     }
 
+    bool Id::IsNull() const
+    {
+        return hash == null.hash;
+    }
+
     bool Id::operator==(const Id& inRhs) const
     {
         return hash == inRhs.hash;
@@ -698,27 +729,32 @@ namespace Mirror {
         return inId.hash;
     }
 
-    const Id NamePresets::globalScope = Id("_globalScope");
-    const Id NamePresets::detor = Id("_detor");
-    const Id NamePresets::defaultCtor = Id("_defaultCtor");
+    const Id IdPresets::globalScope = Id("_globalScope");
+    const Id IdPresets::detor = Id("_detor");
+    const Id IdPresets::defaultCtor = Id("_defaultCtor");
 
-    Type::Type(std::string inName) : name(std::move(inName)) {}
+    ReflNode::ReflNode(Id inId) : id(std::move(inId)) {}
 
-    Type::~Type() = default;
+    ReflNode::~ReflNode() = default;
 
-    const std::string& Type::GetName() const
+    const Id& ReflNode::GetId() const
     {
-        return name;
+        return id;
     }
 
-    const std::string& Type::GetMeta(const std::string& key) const
+    const std::string& ReflNode::GetName() const
+    {
+        return id.name;
+    }
+
+    const std::string& ReflNode::GetMeta(const std::string& key) const
     {
         const auto iter = metas.find(key);
         Assert(iter != metas.end());
         return iter->second;
     }
 
-    std::string Type::GetAllMeta() const
+    std::string ReflNode::GetAllMeta() const
     {
         std::stringstream stream;
         uint32_t count = 0;
@@ -733,12 +769,12 @@ namespace Mirror {
         return stream.str();
     }
 
-    bool Type::HasMeta(const std::string& key) const
+    bool ReflNode::HasMeta(const std::string& key) const
     {
         return metas.contains(key);
     }
 
-    bool Type::GetMetaBool(const std::string& key) const
+    bool ReflNode::GetMetaBool(const std::string& key) const
     {
         const auto& value = GetMeta(key);
         if (value == "true") {
@@ -750,23 +786,24 @@ namespace Mirror {
         return Assert(false), false;
     }
 
-    int32_t Type::GetMetaInt32(const std::string& key) const
+    int32_t ReflNode::GetMetaInt32(const std::string& key) const
     {
         return std::atoi(GetMeta(key).c_str());
     }
 
-    int64_t Type::GetMetaInt64(const std::string& key) const
+    int64_t ReflNode::GetMetaInt64(const std::string& key) const
     {
         return std::atoll(GetMeta(key).c_str());
     }
 
-    float Type::GetMetaFloat(const std::string& key) const
+    float ReflNode::GetMetaFloat(const std::string& key) const
     {
         return std::atof(GetMeta(key).c_str());
     }
 
     Variable::Variable(ConstructParams&& params)
-        : Type(std::move(params.name))
+        : ReflNode(std::move(params.id))
+        , owner(std::move(params.owner))
         , memorySize(params.memorySize)
         , typeInfo(params.typeInfo)
         , setter(std::move(params.setter))
@@ -779,6 +816,21 @@ namespace Mirror {
     Any Variable::Get() const
     {
         return GetDyn();
+    }
+
+    const std::string& Variable::GetOwnerName() const
+    {
+        return owner.name;
+    }
+
+    const Id& Variable::GetOwnerId() const
+    {
+        return owner;
+    }
+
+    const Class* Variable::GetOwner() const
+    {
+        return owner.IsNull() ? nullptr : Class::Find(owner);
     }
 
     const TypeInfo* Variable::GetTypeInfo() const
@@ -797,7 +849,8 @@ namespace Mirror {
     }
 
     Function::Function(ConstructParams&& params)
-        : Type(std::move(params.name))
+        : ReflNode(std::move(params.id))
+        , owner(std::move(params.owner))
         , argsNum(params.argsNum)
         , retTypeInfo(params.retTypeInfo)
         , argTypeInfos(std::move(params.argTypeInfos))
@@ -806,6 +859,21 @@ namespace Mirror {
     }
 
     Function::~Function() = default;
+
+    const std::string& Function::GetOwnerName() const
+    {
+        return owner.name;
+    }
+
+    const Id& Function::GetOwnerId() const
+    {
+        return owner;
+    }
+
+    const Class* Function::GetOwner() const
+    {
+        return owner.IsNull() ? nullptr : Class::Find(owner);
+    }
 
     uint8_t Function::GetArgsNum() const
     {
@@ -833,7 +901,8 @@ namespace Mirror {
     }
 
     Constructor::Constructor(ConstructParams&& params)
-        : Type(std::move(params.name))
+        : ReflNode(std::move(params.id))
+        , owner(std::move(params.owner))
         , argsNum(params.argsNum)
         , argTypeInfos(std::move(params.argTypeInfos))
         , argRemoveRefTypeInfos(std::move(params.argRemoveRefTypeInfos))
@@ -844,6 +913,21 @@ namespace Mirror {
     }
 
     Constructor::~Constructor() = default;
+
+    const std::string& Constructor::GetOwnerName() const
+    {
+        return owner.name;
+    }
+
+    const Id& Constructor::GetOwnerId() const
+    {
+        return owner;
+    }
+
+    const Class* Constructor::GetOwner() const
+    {
+        return owner.IsNull() ? nullptr : Class::Find(owner);
+    }
 
     uint8_t Constructor::GetArgsNum() const
     {
@@ -891,12 +975,28 @@ namespace Mirror {
     }
 
     Destructor::Destructor(ConstructParams&& params)
-        : Type(std::string(NamePresets::detor.name))
+        : ReflNode(std::string(IdPresets::detor.name))
+        , owner(std::move(params.owner))
         , destructor(std::move(params.destructor))
     {
     }
 
     Destructor::~Destructor() = default;
+
+    const std::string& Destructor::GetOwnerName() const
+    {
+        return owner.name;
+    }
+
+    const Id& Destructor::GetOwnerId() const
+    {
+        return owner;
+    }
+
+    const Class* Destructor::GetOwner() const
+    {
+        return owner.IsNull() ? nullptr : Class::Find(owner);
+    }
 
     void Destructor::InvokeDyn(const Argument& argument) const
     {
@@ -904,7 +1004,8 @@ namespace Mirror {
     }
 
     MemberVariable::MemberVariable(ConstructParams&& params)
-        : Type(std::move(params.name))
+        : ReflNode(std::move(params.id))
+        , owner(std::move(params.owner))
         , memorySize(params.memorySize)
         , typeInfo(params.typeInfo)
         , setter(std::move(params.setter))
@@ -913,6 +1014,21 @@ namespace Mirror {
     }
 
     MemberVariable::~MemberVariable() = default;
+
+    const std::string& MemberVariable::GetOwnerName() const
+    {
+        return owner.name;
+    }
+
+    const Id& MemberVariable::GetOwnerId() const
+    {
+        return owner;
+    }
+
+    const Class* MemberVariable::GetOwner() const
+    {
+        return owner.IsNull() ? nullptr : Class::Find(owner);
+    }
 
     uint32_t MemberVariable::SizeOf() const
     {
@@ -940,7 +1056,8 @@ namespace Mirror {
     }
 
     MemberFunction::MemberFunction(ConstructParams&& params)
-        : Type(std::move(params.name))
+        : ReflNode(std::move(params.id))
+        , owner(std::move(params.owner))
         , argsNum(params.argsNum)
         , retTypeInfo(params.retTypeInfo)
         , argTypeInfos(std::move(params.argTypeInfos))
@@ -949,6 +1066,21 @@ namespace Mirror {
     }
 
     MemberFunction::~MemberFunction() = default;
+
+    const std::string& MemberFunction::GetOwnerName() const
+    {
+        return owner.name;
+    }
+
+    const Id& MemberFunction::GetOwnerId() const
+    {
+        return owner;
+    }
+
+    const Class* MemberFunction::GetOwner() const
+    {
+        return owner.IsNull() ? nullptr : Class::Find(owner);
+    }
 
     uint8_t MemberFunction::GetArgsNum() const
     {
@@ -975,7 +1107,7 @@ namespace Mirror {
         return invoker(object, arguments);
     }
 
-    GlobalScope::GlobalScope() : Type(std::string(NamePresets::globalScope.name)) {}
+    GlobalScope::GlobalScope() : ReflNode(std::string(IdPresets::globalScope.name)) {}
 
     GlobalScope::~GlobalScope() = default;
 
@@ -1051,7 +1183,7 @@ namespace Mirror {
     std::unordered_map<TypeId, Id> Class::typeToIdMap = {};
 
     Class::Class(ConstructParams&& params)
-        : Type(std::move(params.name))
+        : ReflNode(std::move(params.id))
         , typeInfo(params.typeInfo)
         , baseClassGetter(std::move(params.baseClassGetter))
     {
@@ -1060,7 +1192,7 @@ namespace Mirror {
             destructor = Destructor(std::move(params.destructorParams.value()));
         }
         if (params.defaultConstructorParams.has_value()) {
-            EmplaceConstructor(NamePresets::defaultCtor, std::move(params.defaultConstructorParams.value()));
+            EmplaceConstructor(IdPresets::defaultCtor, std::move(params.defaultConstructorParams.value()));
         }
     }
 
@@ -1238,7 +1370,7 @@ namespace Mirror {
 
     bool Class::HasDefaultConstructor() const
     {
-        return HasConstructor(NamePresets::defaultCtor);
+        return HasConstructor(IdPresets::defaultCtor);
     }
 
     const Class* Class::GetBaseClass() const
@@ -1265,12 +1397,12 @@ namespace Mirror {
 
     const Constructor* Class::FindDefaultConstructor() const
     {
-        return FindConstructor(NamePresets::defaultCtor);
+        return FindConstructor(IdPresets::defaultCtor);
     }
 
     const Constructor& Class::GetDefaultConstructor() const
     {
-        return GetConstructor(NamePresets::defaultCtor);
+        return GetConstructor(IdPresets::defaultCtor);
     }
 
     bool Class::HasDestructor() const
@@ -1436,23 +1568,61 @@ namespace Mirror {
         return {};
     }
 
-    EnumElement::EnumElement(ConstructParams&& inParams)
-        : Type(std::move(inParams.name))
+    EnumValue::EnumValue(ConstructParams&& inParams)
+        : ReflNode(std::move(inParams.id))
+        , owner(std::move(inParams.owner))
         , getter(std::move(inParams.getter))
+        , integralGetter(std::move(inParams.integralGetter))
+        , setter(std::move(inParams.setter))
         , comparer(std::move(inParams.comparer))
     {
     }
 
-    EnumElement::~EnumElement() = default;
+    EnumValue::~EnumValue() = default;
 
-    Any EnumElement::Get() const
+    Any EnumValue::Get() const
     {
         return getter();
     }
 
-    bool EnumElement::Compare(const Argument& argument) const
+    EnumValue::IntegralValue EnumValue::GetIntegral() const
     {
-        return comparer(argument);
+        return GetIntegralDyn();
+    }
+
+    const std::string& EnumValue::GetOwnerName() const
+    {
+        return owner.name;
+    }
+
+    const Id& EnumValue::GetOwnerId() const
+    {
+        return owner;
+    }
+
+    const Enum* EnumValue::GetOwner() const
+    {
+        return owner.IsNull() ? nullptr : Enum::Find(owner);
+    }
+
+    Any EnumValue::GetDyn() const
+    {
+        return getter();
+    }
+
+    EnumValue::IntegralValue EnumValue::GetIntegralDyn() const
+    {
+        return integralGetter();
+    }
+
+    void EnumValue::SetDyn(const Argument& arg) const
+    {
+        setter(arg);
+    }
+
+    bool EnumValue::CompareDyn(const Argument& arg) const
+    {
+        return comparer(arg);
     }
 
     const Enum* Enum::Find(const Id& inId)
@@ -1473,7 +1643,7 @@ namespace Mirror {
     std::unordered_map<TypeId, Id> Enum::typeToIdMap = {};
 
     Enum::Enum(ConstructParams&& params)
-        : Type(std::move(params.name))
+        : ReflNode(std::move(params.id))
         , typeInfo(params.typeInfo)
     {
     }
@@ -1485,28 +1655,85 @@ namespace Mirror {
         return typeInfo;
     }
 
-    Any Enum::GetElement(const Id& inId) const
+    bool Enum::HasValue(const Id& inId) const
     {
-        const auto iter = elements.find(inId);
-        Assert(iter != elements.end());
-        return iter->second.Get();
+        return values.contains(inId);
     }
 
-    std::string Enum::GetElementName(const Argument& argument) const
+    const EnumValue* Enum::FindValue(const Id& inId) const
     {
-        for (const auto& [id, element] : elements) {
-            if (element.Compare(argument)) {
-                return id.name;
+        const auto iter = values.find(inId);
+        return iter == values.end() ? nullptr : &iter->second;
+    }
+
+    const EnumValue& Enum::GetValue(const Id& inId) const
+    {
+        return values.at(inId);
+    }
+
+    bool Enum::HasValue(EnumValue::IntegralValue inValue) const
+    {
+        return FindValue(inValue) != nullptr;
+    }
+
+    const EnumValue* Enum::FindValue(EnumValue::IntegralValue inValue) const
+    {
+        for (const auto& value : values | std::views::values) {
+            if (value.GetIntegralDyn() == inValue) {
+                return &value;
             }
         }
-        QuickFail();
-        return "";
+        return nullptr;
     }
 
-    EnumElement& Enum::EmplaceElement(const Id& inId, EnumElement::ConstructParams&& inParams)
+    const EnumValue& Enum::GetValue(EnumValue::IntegralValue inValue) const
     {
-        Assert(!elements.contains(inId));
-        elements.emplace(inId, EnumElement(std::move(inParams)));
-        return elements.at(inId);
+        const auto* value = FindValue(inValue);
+        Assert(value != nullptr);
+        return *value;
+    }
+
+    bool Enum::HasValue(const Argument& inArg) const
+    {
+        return FindValue(inArg) != nullptr;
+    }
+
+    const EnumValue* Enum::FindValue(const Argument& inArg) const
+    {
+        for (const auto& value : values | std::views::values) {
+            if (value.CompareDyn(inArg)) {
+                return &value;
+            }
+        }
+        return nullptr;
+    }
+
+    const EnumValue& Enum::GetValue(const Argument& inArg) const
+    {
+        const auto* value = FindValue(inArg);
+        Assert(value != nullptr);
+        return *value;
+    }
+
+    const std::unordered_map<Id, EnumValue, IdHashProvider>& Enum::GetValues() const
+    {
+        return values;
+    }
+
+    std::vector<const EnumValue*> Enum::GetSortedValues() const
+    {
+        std::vector<const EnumValue*> result;
+        for (const auto& value : values | std::views::values) {
+            result.emplace_back(&value);
+        }
+        std::ranges::sort(result, [](const EnumValue* lhs, const EnumValue* rhs) { return lhs->GetIntegralDyn() < rhs->GetIntegralDyn(); });
+        return result;
+    }
+
+    EnumValue& Enum::EmplaceElement(const Id& inId, EnumValue::ConstructParams&& inParams)
+    {
+        Assert(!values.contains(inId));
+        values.emplace(inId, EnumValue(std::move(inParams)));
+        return values.at(inId);
     }
 }

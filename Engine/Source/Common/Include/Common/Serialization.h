@@ -10,8 +10,11 @@
 #include <optional>
 #include <array>
 #include <vector>
+#include <list>
 #include <unordered_set>
 #include <unordered_map>
+#include <set>
+#include <map>
 #include <filesystem>
 
 #include <rapidjson/document.h>
@@ -19,6 +22,7 @@
 #include <Common/Utility.h>
 #include <Common/Debug.h>
 #include <Common/Hash.h>
+#include <Common/String.h>
 
 namespace Common {
     class BinarySerializeStream {
@@ -317,7 +321,12 @@ namespace Common {
             }
             bytes.resize(newPointer);
         }
-        memcpy(bytes.data() + pointer, data, size);
+        if (std::endian::native == E) {
+            memcpy(bytes.data() + pointer, data, size);
+        } else {
+            const auto swaped = Internal::SwapEndian(data, size);
+            memcpy(bytes.data() + pointer, swaped.data(), swaped.size());
+        }
         pointer = newPointer;
     }
 
@@ -356,6 +365,9 @@ namespace Common {
         const auto newPointer = pointer + size;
         Assert(newPointer <= bytes.size());
         memcpy(data, bytes.data() + pointer, size);
+        if (std::endian::native != E) {
+            Internal::SwapEndianInplace(data, size);
+        }
         pointer = newPointer;
     }
 
@@ -472,7 +484,7 @@ namespace Common {
 
     template <>
     struct Serializer<std::string> {
-        static constexpr size_t typeId = HashUtils::StrCrc32("string");
+        static constexpr size_t typeId = HashUtils::StrCrc32("std::string");
 
         static size_t Serialize(BinarySerializeStream& stream, const std::string& value)
         {
@@ -494,6 +506,36 @@ namespace Common {
             deserialized += Serializer<uint64_t>::Deserialize(stream, size);
 
             value.resize(size);
+            stream.Read(value.data(), size);
+            deserialized += size;
+            return deserialized;
+        }
+    };
+
+    template <>
+    struct Serializer<std::wstring> {
+        static constexpr size_t typeId = HashUtils::StrCrc32("std::wstring");
+
+        static size_t Serialize(BinarySerializeStream& stream, const std::wstring& value)
+        {
+            size_t serialized = 0;
+
+            const uint64_t size = value.size() * sizeof(std::wstring::value_type);
+            serialized += Serializer<uint64_t>::Serialize(stream, size);
+
+            stream.Write(value.data(), size);
+            serialized += size;
+            return serialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, std::wstring& value)
+        {
+            size_t deserialized = 0;
+
+            uint64_t size;
+            deserialized += Serializer<uint64_t>::Deserialize(stream, size);
+
+            value.resize(size / sizeof(std::wstring::value_type));
             stream.Read(value.data(), size);
             deserialized += size;
             return deserialized;
@@ -637,6 +679,40 @@ namespace Common {
     };
 
     template <Serializable T>
+    struct Serializer<std::list<T>> {
+        static constexpr size_t typeId
+            = HashUtils::StrCrc32("std::list")
+            + Serializer<T>::typeId;
+
+        static size_t Serialize(BinarySerializeStream& stream, const std::list<T>& value)
+        {
+            size_t serialized = 0;
+
+            serialized += Serializer<uint64_t>::Serialize(stream, value.size());
+            for (const auto& element : value) {
+                serialized += Serializer<T>::Serialize(stream, element);
+            }
+            return serialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, std::list<T>& value)
+        {
+            size_t deserialized = 0;
+
+            value.clear();
+            uint64_t size;
+            deserialized += Serializer<uint64_t>::Deserialize(stream, size);
+
+            for (auto i = 0; i < size; i++) {
+                T element;
+                deserialized += Serializer<T>::Deserialize(stream, element);
+                value.emplace_back(std::move(element));
+            }
+            return deserialized;
+        }
+    };
+
+    template <Serializable T>
     struct Serializer<std::unordered_set<T>> {
         static constexpr size_t typeId
             = HashUtils::StrCrc32("std::unordered_set")
@@ -644,11 +720,7 @@ namespace Common {
 
         static size_t Serialize(BinarySerializeStream& stream, const std::unordered_set<T>& value)
         {
-            size_t serialized = 0;
-
-            const uint64_t size = value.size();
-            serialized += Serializer<uint64_t>::Serialize(stream, size);
-
+            size_t serialized = Serializer<uint64_t>::Serialize(stream, value.size());
             for (const auto& element : value) {
                 serialized += Serializer<T>::Serialize(stream, element);
             }
@@ -664,6 +736,38 @@ namespace Common {
             deserialized += Serializer<uint64_t>::Deserialize(stream, size);
 
             value.reserve(size);
+            for (auto i = 0; i < size; i++) {
+                T temp;
+                deserialized += Serializer<T>::Deserialize(stream, temp);
+                value.emplace(std::move(temp));
+            }
+            return deserialized;
+        }
+    };
+
+    template <Serializable T>
+    struct Serializer<std::set<T>> {
+        static constexpr size_t typeId
+            = HashUtils::StrCrc32("std::set")
+            + Serializer<T>::typeId;
+
+        static size_t Serialize(BinarySerializeStream& stream, const std::set<T>& value)
+        {
+            size_t serialized = Serializer<uint64_t>::Serialize(stream, value.size());
+            for (const auto& element : value) {
+                serialized += Serializer<T>::Serialize(stream, element);
+            }
+            return serialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, std::set<T>& value)
+        {
+            size_t deserialized = 0;
+
+            value.clear();
+            uint64_t size;
+            deserialized += Serializer<uint64_t>::Deserialize(stream, size);
+
             for (auto i = 0; i < size; i++) {
                 T temp;
                 deserialized += Serializer<T>::Deserialize(stream, temp);
@@ -707,6 +811,89 @@ namespace Common {
                 deserialized += Serializer<std::pair<K, V>>::Deserialize(stream, pair);
                 value.emplace(std::move(pair));
             }
+            return deserialized;
+        }
+    };
+
+    template <Serializable K, Serializable V>
+    struct Serializer<std::map<K, V>> {
+        static constexpr size_t typeId
+            = HashUtils::StrCrc32("std::map")
+            + Serializer<K>::typeId
+            + Serializer<V>::typeId;
+
+        static size_t Serialize(BinarySerializeStream& stream, const std::map<K, V>& value)
+        {
+            size_t serialized = 0;
+
+            serialized += Serializer<uint64_t>::Serialize(stream, value.size());
+            for (const auto& pair : value) {
+                serialized += Serializer<std::pair<K, V>>::Serialize(stream, pair);
+            }
+            return serialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, std::map<K, V>& value)
+        {
+            size_t deserialized = 0;
+
+            value.clear();
+            uint64_t size;
+            deserialized += Serializer<uint64_t>::Deserialize(stream, size);
+
+            for (auto i = 0; i < size; i++) {
+                std::pair<K, V> pair;
+                deserialized += Serializer<std::pair<K, V>>::Deserialize(stream, pair);
+                value.emplace(std::move(pair));
+            }
+            return deserialized;
+        }
+    };
+
+    template <typename... T> struct TupleTypeId {};
+    template <typename T> struct TupleTypeId<T> { static constexpr size_t value = HashUtils::StrCrc32("std::tuple"); };
+    template <typename T, typename... T2> struct TupleTypeId<T, T2...> { static constexpr size_t value = Serializer<T>::typeId + TupleTypeId<T2...>::value; };
+
+    template <Serializable... T>
+    struct Serializer<std::tuple<T...>> {
+        static constexpr size_t typeId = TupleTypeId<T...>::value;
+
+        template <size_t... I>
+        static size_t SerializeInternal(BinarySerializeStream& stream, const std::tuple<T...>& value, std::index_sequence<I...>)
+        {
+            size_t result = 0;
+            std::initializer_list<int> { ([&]() -> void {
+                result += Serializer<T>::Serialize(stream, std::get<I>(value));
+            }(), 0)... };
+            return result;
+        }
+
+        template <size_t... I>
+        static size_t DeserializeInternal(BinaryDeserializeStream& stream, std::tuple<T...>& value, std::index_sequence<I...>)
+        {
+            size_t result = 0;
+            std::initializer_list<int> { ([&]() -> void {
+                result += Serializer<T>::Deserialize(stream, std::get<I>(value));
+            }(), 0)... };
+            return result;
+        }
+
+        static size_t Serialize(BinarySerializeStream& stream, const std::tuple<T...>& value)
+        {
+            size_t serialized = 0;
+            serialized += Serializer<uint64_t>::Serialize(stream, sizeof...(T));
+            serialized += SerializeInternal(stream, value, std::make_index_sequence<sizeof...(T)> {});
+            return serialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, std::tuple<T...>& value)
+        {
+            size_t deserialized = 0;
+
+            value = {};
+            uint64_t size;
+            deserialized += Serializer<uint64_t>::Deserialize(stream, size);
+            deserialized += DeserializeInternal(stream, value, std::make_index_sequence<sizeof...(T)> {});
             return deserialized;
         }
     };
@@ -891,7 +1078,7 @@ namespace Common {
     struct JsonSerializer<std::string> {
         static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const std::string& inValue)
         {
-            outJsonValue.SetString(inValue.c_str(), inValue.length());
+            outJsonValue.SetString(inValue.c_str(), inValue.length(), inAllocator);
         }
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::string& outValue)
@@ -900,6 +1087,23 @@ namespace Common {
                 return;
             }
             outValue = std::string(inJsonValue.GetString(), inJsonValue.GetStringLength());
+        }
+    };
+
+    template <>
+    struct JsonSerializer<std::wstring> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const std::wstring& inValue)
+        {
+            const auto str = StringUtils::ToByteString(inValue);
+            outJsonValue.SetString(str.c_str(), str.length(), inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::wstring& outValue)
+        {
+            if (!inJsonValue.IsString()) {
+                return;
+            }
+            outValue = StringUtils::ToWideString(std::string(inJsonValue.GetString(), inJsonValue.GetStringLength()));
         }
     };
 
@@ -1016,6 +1220,34 @@ namespace Common {
     };
 
     template <JsonSerializable T>
+    struct JsonSerializer<std::list<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const std::list<T>& inValue)
+        {
+            outJsonValue.SetArray();
+            outJsonValue.Reserve(inValue.size(), inAllocator);
+            for (const auto& element : inValue) {
+                rapidjson::Value jsonElement;
+                JsonSerializer<T>::JsonSerialize(jsonElement, inAllocator, element);
+                outJsonValue.PushBack(jsonElement, inAllocator);
+            }
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::list<T>& outValue)
+        {
+            outValue.clear();
+
+            if (!inJsonValue.IsArray()) {
+                return;
+            }
+            for (auto i = 0; i < inJsonValue.Size(); i++) {
+                T element;
+                JsonSerializer<T>::JsonDeserialize(inJsonValue[i], element);
+                outValue.emplace_back(std::move(element));
+            }
+        }
+    };
+
+    template <JsonSerializable T>
     struct JsonSerializer<std::unordered_set<T>> {
         static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const std::unordered_set<T>& inValue)
         {
@@ -1036,6 +1268,34 @@ namespace Common {
                 return;
             }
             outValue.reserve(inJsonValue.Size());
+            for (auto i = 0; i < inJsonValue.Size(); i++) {
+                T element;
+                JsonSerializer<T>::JsonDeserialize(inJsonValue[i], element);
+                outValue.emplace(std::move(element));
+            }
+        }
+    };
+
+    template <JsonSerializable T>
+    struct JsonSerializer<std::set<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const std::set<T>& inValue)
+        {
+            outJsonValue.SetArray();
+            outJsonValue.Reserve(inValue.size(), inAllocator);
+            for (const auto& element : inValue) {
+                rapidjson::Value jsonElement;
+                JsonSerializer<T>::JsonSerialize(jsonElement, inAllocator, element);
+                outJsonValue.PushBack(jsonElement, inAllocator);
+            }
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::set<T>& outValue)
+        {
+            outValue.clear();
+
+            if (!inJsonValue.IsArray()) {
+                return;
+            }
             for (auto i = 0; i < inJsonValue.Size(); i++) {
                 T element;
                 JsonSerializer<T>::JsonDeserialize(inJsonValue[i], element);
@@ -1073,11 +1333,78 @@ namespace Common {
         }
     };
 
-    // TODO std::wstring
-    // TODO std::set
-    // TODO std::map
-    // TODO std::tuple
-    // TODO std::queue
-    // TODO std::stack
-    // TODO std::list
+    template <JsonSerializable K, JsonSerializable V>
+    struct JsonSerializer<std::map<K, V>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const std::map<K, V>& inValue)
+        {
+            outJsonValue.SetArray();
+            outJsonValue.Reserve(inValue.size(), inAllocator);
+            for (const auto& pair : inValue) {
+                rapidjson::Value jsonElement;
+                JsonSerializer<std::pair<K, V>>::JsonSerialize(jsonElement, inAllocator, pair);
+                outJsonValue.PushBack(jsonElement, inAllocator);
+            }
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::map<K, V>& outValue)
+        {
+            outValue.clear();
+
+            if (!inJsonValue.IsArray()) {
+                return;
+            }
+            for (auto i = 0; i < inJsonValue.Size(); i++) {
+                std::pair<K, V> pair;
+                JsonSerializer<std::pair<K, V>>::JsonDeserialize(inJsonValue[i], pair);
+                outValue.emplace(std::move(pair));
+            }
+        }
+    };
+
+    template <JsonSerializable... T>
+    struct JsonSerializer<std::tuple<T...>> {
+        template <size_t... I>
+        static void JsonSerializeInternal(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const std::tuple<T...>& inValue, std::index_sequence<I...>)
+        {
+            std::initializer_list<int> { ([&]() -> void {
+                const auto key = std::to_string(I);
+
+                rapidjson::Value jsonKey;
+                JsonSerializer<std::string>::JsonSerialize(jsonKey, inAllocator, key);
+
+                rapidjson::Value jsonValue;
+                JsonSerializer<T>::JsonSerialize(jsonValue, inAllocator, std::get<I>(inValue));
+
+                outJsonValue.AddMember(jsonKey, jsonValue, inAllocator);
+            }(), 0)... };
+        }
+
+        template <size_t... I>
+        static void JsonDeserializeInternal(const rapidjson::Value& inJsonValue, std::tuple<T...>& outValue, std::index_sequence<I...>)
+        {
+            std::initializer_list<int> { ([&]() -> void {
+                const auto key = std::to_string(I);
+                if (!inJsonValue.HasMember(key.c_str())) {
+                    return;
+                }
+                JsonSerializer<T>::JsonDeserialize(inJsonValue[key.c_str()], std::get<I>(outValue));
+            }(), 0)... };
+        }
+
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const std::tuple<T...>& inValue)
+        {
+            outJsonValue.SetObject();
+            JsonSerializeInternal(outJsonValue, inAllocator, inValue, std::make_index_sequence<sizeof...(T)>());
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::tuple<T...>& outValue)
+        {
+            outValue = {};
+
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            JsonDeserializeInternal(inJsonValue, outValue, std::make_index_sequence<sizeof...(T)>());
+        }
+    };
 }

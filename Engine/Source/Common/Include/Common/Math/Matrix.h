@@ -331,11 +331,18 @@ namespace Common { // NOLINT
     struct StringConverter<Mat<T, R, C>> {
         static std::string ToString(const Mat<T, R, C>& inValue)
         {
-            return fmt::format("{row0={}, row1={}, row2={}, row3={}}",
-                StringConverter<Vec<T, C>>::ToString(inValue.Row(0)),
-                StringConverter<Vec<T, C>>::ToString(inValue.Row(1)),
-                StringConverter<Vec<T, C>>::ToString(inValue.Row(2)),
-                StringConverter<Vec<T, C>>::ToString(inValue.Row(3)));
+            std::stringstream stream;
+            stream << "(";
+            for (auto i = 0; i < R; i++) {
+                for (auto j = 0; j < C; j++) {
+                    stream << StringConverter<T>::ToString(inValue.At(i, j));
+                    if (i * C + j != R * C - 1) {
+                        stream << ", ";
+                    }
+                }
+            }
+            stream << ")";
+            return stream.str();
         }
     };
 

@@ -6,7 +6,6 @@
 
 namespace Editor {
     Theme::Theme()
-        // TODO
         : colorPrimary()
         , colorSecondary()
         , colorBackground(0x24, 0x29, 0x2f)

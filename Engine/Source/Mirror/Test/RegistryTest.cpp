@@ -166,18 +166,18 @@ TEST(RegistryTest, ClassTest)
 TEST(RegistryTest, EnumTest)
 {
     const auto& enumInfo = Mirror::Enum::Get<E0>();
-    auto a = enumInfo.GetElement("a");
-    auto b = enumInfo.GetElement("b");
-    auto c = enumInfo.GetElement("c");
-    auto max = enumInfo.GetElement("max");
+    auto a = enumInfo.GetValue("a");
+    auto b = enumInfo.GetValue("b");
+    auto c = enumInfo.GetValue("c");
+    auto max = enumInfo.GetValue("max");
 
-    ASSERT_EQ(a.As<E0>(), E0::a);
-    ASSERT_EQ(b.As<E0>(), E0::b);
-    ASSERT_EQ(c.As<E0>(), E0::c);
-    ASSERT_EQ(max.As<E0>(), E0::max);
+    ASSERT_EQ(a.GetDyn().As<E0>(), E0::a);
+    ASSERT_EQ(b.GetDyn().As<E0>(), E0::b);
+    ASSERT_EQ(c.GetDyn().As<E0>(), E0::c);
+    ASSERT_EQ(max.GetDyn().As<E0>(), E0::max);
 
-    ASSERT_EQ(enumInfo.GetElementName(a), "a");
-    ASSERT_EQ(enumInfo.GetElementName(b), "b");
-    ASSERT_EQ(enumInfo.GetElementName(c), "c");
-    ASSERT_EQ(enumInfo.GetElementName(max), "max");
+    ASSERT_EQ(a.GetName(), "a");
+    ASSERT_EQ(b.GetName(), "b");
+    ASSERT_EQ(c.GetName(), "c");
+    ASSERT_EQ(max.GetName(), "max");
 }

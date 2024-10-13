@@ -7,44 +7,41 @@
 #include <Mirror/Meta.h>
 #include <Runtime/World.h>
 
-struct EClass() Position : Runtime::Component {
-    EClassBody(Position);
+using namespace Runtime;
 
-    float x;
-    float y;
+class EClass() GlobalCounter final : public State {
+    EClassBody(GlobalCounter)
+
+    GlobalCounter();
+
+    EProperty() uint32_t tickTime;
+    EProperty() uint32_t value;
 };
 
-struct EClass() Velocity : Runtime::Component {
-    EClassBody(Velocity);
+class EClass() ParralCountSystemA final : public System {
+    EPolyClassBody(ParralCountSystemA)
 
-    float x;
-    float y;
+    ParralCountSystemA();
+    ~ParralCountSystemA() override;
+
+    EFunc() void Tick(Commands& commands, float inTimeMs) const override;
 };
 
-struct EClass() IterTimeCount : Runtime::State {
-    EClassBody(IterTimeCount);
+class EClass() ParralCountSystemB final : public System {
+    EPolyClassBody(ParralCountSystemB)
 
-    size_t value;
+    ParralCountSystemB();
+    ~ParralCountSystemB() override;
+
+    EFunc() void Tick(Commands& commands, float inTimeMs) const override;
 };
 
-struct EClass() StartVerify : Runtime::Event {
-    EClassBody(StartVerify);
-};
+class EClass() GlobalCounterVerifySystem final : public System {
+    EPolyClassBody(GlobalCounterVerifySystem)
 
-struct EClass() BasicSetupSystem : Runtime::System {
-    EClassBody(SetupSystem);
+    GlobalCounterVerifySystem();
+    ~GlobalCounterVerifySystem() override;
 
-    EFunc() void Execute(Runtime::Commands& commands, const Runtime::WorldStart&);
-};
-
-struct EClass() BasicTickSystem : Runtime::System {
-    EClassBody(BasicTickSystem);
-
-    EFunc() StartVerify Execute(Runtime::Commands& commands, const Runtime::WorldTick&);
-};
-
-struct EClass() PositionVerifySystem : Runtime::System {
-    EClassBody(PositionVerifySystem)
-
-    EFunc() void Execute(Runtime::Commands& commands, const StartVerify&);
+    EFunc() void Setup(Commands& commands) const override;
+    EFunc() void Tick(Commands& commands, float inTimeMs) const override;
 };

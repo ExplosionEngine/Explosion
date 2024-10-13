@@ -62,7 +62,7 @@ namespace MirrorTool {
         for (const auto& element : enumInfo.elements) {
             const auto elementFullName = GetFullName(element);
             stream << Common::newline;
-            stream << Common::tab<3> << fmt::format(R"(.Element<{}>("{}"))", elementFullName, element.name);
+            stream << Common::tab<3> << fmt::format(R"(.Value<{}>("{}"))", elementFullName, element.name);
             stream << GetMetaDataCode<4>(element);
         }
         stream << ";" << Common::newline;
@@ -142,6 +142,11 @@ namespace MirrorTool {
         stream << Common::tab<1> << "return 0;" << Common::newline;
         stream << "}();" << Common::newline;
         stream << Common::newline;
+        stream << fmt::format("const Mirror::Class& {}::GetStaticClass()", fullName) << Common::newline;
+        stream << "{" << Common::newline;
+        stream << Common::tab<1> << fmt::format("static const Mirror::Class& clazz = Mirror::Class::Get<{}>();", fullName) << Common::newline;
+        stream << Common::tab<1> << "return clazz;" << Common::newline;
+        stream << "}" << Common::newline;
         stream << fmt::format("const Mirror::Class& {}::GetClass()", fullName) << Common::newline;
         stream << "{" << Common::newline;
         stream << Common::tab<1> << fmt::format("static const Mirror::Class& clazz = Mirror::Class::Get<{}>();", fullName) << Common::newline;
@@ -216,7 +221,7 @@ namespace MirrorTool {
         stream << "{";
         stream << GetNamespaceGlobalCode(metaInfo.global);
         for (const auto& ns : metaInfo.namespaces) {
-            stream << GetNamespaceEnumsCode(ns);
+            stream << GetNamespaceGlobalCode(ns);
         }
         stream << Common::newline;
         stream << Common::tab<1> << "return 0;" << Common::newline;

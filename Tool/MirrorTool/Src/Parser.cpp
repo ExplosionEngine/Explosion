@@ -294,7 +294,7 @@ namespace MirrorTool {
             CXString retTypeSpelling = clang_getTypeSpelling(retType);
 
             FunctionInfo functionInfo;
-            functionInfo.name = GetOuterName(context.outerName, context.name);
+            functionInfo.outerName = GetOuterName(context.outerName, context.name);
             functionInfo.name = spellingStr;
             functionInfo.retType = clang_getCString(retTypeSpelling);
             context.functions.emplace_back(std::move(functionInfo));

@@ -122,6 +122,18 @@ TEST(StringUtilsTest, ToStringTest)
     const std::pair<int, bool> v2 = { 1, false }; // NOLINT
     ASSERT_EQ(Common::ToString(v2), "1: false");
 
-    const std::vector<int> v3 = { 1, 2, 3 };
+    const std::array<int, 3> v3 = { 1, 2, 3 };
     ASSERT_EQ(Common::ToString(v3), "(1, 2, 3)");
+
+    const std::vector<int> v4 = { 1, 2, 3 };
+    ASSERT_EQ(Common::ToString(v4), "(1, 2, 3)");
+
+    const std::tuple<int, bool, int> v5 = { 1, false, 2 };
+    ASSERT_EQ(Common::ToString(v5), "(1, false, 2)");
+
+    const std::list<int> v6 = { 1, 2, 3 };
+    ASSERT_EQ(Common::ToString(v6), "(1, 2, 3)");
+
+    const std::set<int> v7 = { 1, 2, 3 };
+    ASSERT_EQ(Common::ToString(v7), "(1, 2, 3)");
 }

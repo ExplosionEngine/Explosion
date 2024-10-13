@@ -21,64 +21,34 @@ namespace Runtime {
     using Entity = entt::entity;
     constexpr auto entityNull = entt::null;
 
-    struct RUNTIME_API EClass() Component {
+    class RUNTIME_API EClass() Component {
         EClassBody(Component)
+        Component();
     };
 
-    struct RUNTIME_API EClass() State {
+    class RUNTIME_API EClass() State {
         EClassBody(State)
+        State();
     };
 
-    struct RUNTIME_API EClass() Event {
-        EClassBody(Event)
-    };
+    class Commands;
 
-    struct RUNTIME_API EClass() System {
-        EClassBody(System)
+    class RUNTIME_API EClass() System {
+        EPolyClassBody(System)
+        System();
+        virtual ~System();
+
+        EFunc() virtual void Setup(Commands& commands) const;
+        EFunc() virtual void Tick(Commands& commands, float inTimeMs) const;
     };
 
     template <typename S> concept StateDerived = std::is_base_of_v<State, S>;
     template <typename C> concept CompDerived = std::is_base_of_v<Component, C>;
-    template <typename E> concept EventDerived = std::is_base_of_v<Event, E>;
-    template <typename E> concept EventDerivedOrVoid = std::is_void_v<E> || EventDerived<E>;
     template <typename S> concept SystemDerived = std::is_base_of_v<System, S>;
-    template <typename T> struct SystemExecuteFuncTraits {};
     template <typename... T> struct Exclude {};
 }
 
 namespace Runtime {
-    class Commands;
-
-    template <typename System, typename Ret, typename Arg>
-    struct SystemExecuteFuncTraits<Ret(System::*)(Commands&, const Arg&)> {
-        using ListenEvent = Arg;
-        using SignalEvent = Ret;
-    };
-
-    template <typename System, typename Ret, typename Arg>
-    struct SystemExecuteFuncTraits<Ret(System::*)(Commands&, const Arg&) const> {
-        using ListenEvent = Arg;
-        using SignalEvent = Ret;
-    };
-}
-
-namespace Runtime {
-    struct RUNTIME_API EClass() WorldStart : Event {
-        EClassBody(WorldStart)
-    };
-
-    struct RUNTIME_API EClass() WorldStop : Event {
-        EClassBody(WorldStop)
-    };
-
-    struct RUNTIME_API EClass() WorldTick : Event {
-        EClassBody(WorldTick)
-
-        explicit WorldTick(float inFrameTimeMs);
-
-        float frameTimeMs;
-    };
-
     class World;
     class Ticker;
 
@@ -106,7 +76,6 @@ namespace Runtime {
 
     using StateClass = const Mirror::Class*;
     using SystemClass = const Mirror::Class*;
-    using EventClass = const Mirror::Class*;
 
     class RUNTIME_API Commands {
     public:
@@ -133,13 +102,14 @@ namespace Runtime {
         // TODO runtime view
 
     private:
-        friend class EventBroadcaster;
+        friend class World;
 
         explicit Commands(World& inWorld);
 
         World& world;
     };
 
+    // world is fully runtime structure, we use level to perform persist storage
     class RUNTIME_API World {
     public:
         explicit World(std::string inName = "");
@@ -149,46 +119,30 @@ namespace Runtime {
         DefaultMovable(World)
 
         template <SystemDerived System, typename... Args> void AddSystem(Args&&... inSystemArgs);
-        template <EventDerived E, typename... Args> void BroadcastEvent(Args&&... inEventArgs);
+        void AddBarrier();
 
-        void Start();
+        void Play();
         void Stop();
+        void Pause();
+        void Resume();
         void Tick(float inFrameTimeMs);
         bool Started() const;
+        bool Playing() const;
 
     private:
-        // TODO
-        friend class Common::Serializer<World>;
         friend class Commands;
-        friend class EventBroadcaster;
 
-        template <EventDerived ListenEvent, EventDerivedOrVoid SignalEvent, SystemDerived System, typename... Args> void AddSystemInternal(Args&&... inSystemArgs);
+        using SystemOp = std::function<void(const System&)>;
+        void ExecuteSystemGraph(const SystemOp& inOp);
 
-        bool started;
+        bool setuped;
+        bool playing;
         std::string name;
         std::unordered_map<StateClass, Mirror::Any> states;
-        std::unordered_map<SystemClass, Mirror::Any> systemObjs;
-        std::unordered_map<EventClass, std::vector<SystemClass>> listenersMap;
-        std::unordered_map<SystemClass, EventClass> signals;
+        std::unordered_map<SystemClass, Mirror::Any> systems;
+        std::vector<std::vector<SystemClass>> systemsGraph;
+        std::vector<SystemClass> systemsInBarriers;
         entt::registry registry;
-    };
-
-    class RUNTIME_API EventBroadcaster {
-    public:
-        NonCopyable(EventBroadcaster)
-
-        explicit EventBroadcaster(World& inWorld);
-        template <EventDerived E, typename... Args> void Compile(Args&&... inEventArgs);
-        void Dispatch();
-
-    private:
-        template <typename E, typename... Args> void MakeInitialEvent(Args&&... inEventArgs);
-        void AllocateEvent(EventClass inEventClass);
-        void BuildGraph(EventClass inEventClass, const tf::Task& wait = {});
-
-        World& world;
-        tf::Taskflow taskflow;
-        std::unordered_map<EventClass, Mirror::Any> allocatedEvents;
     };
 }
 
@@ -348,54 +302,8 @@ namespace Runtime {
     template <SystemDerived System, typename ... Args>
     void World::AddSystem(Args&&... inSystemArgs)
     {
-        using ListenEvent = typename SystemExecuteFuncTraits<decltype(&System::Execute)>::ListenEvent;
-        using SignalEvent = typename SystemExecuteFuncTraits<decltype(&System::Execute)>::SignalEvent;
-
-        AddSystemInternal<ListenEvent, SignalEvent, System>(std::forward<Args>(inSystemArgs)...);
-    }
-
-    template <EventDerived E, typename ... Args>
-    void World::BroadcastEvent(Args&&... inEventArgs)
-    {
-        EventBroadcaster broadcaster(*this);
-        broadcaster.Compile<E>(std::forward<Args>(inEventArgs)...);
-        broadcaster.Dispatch();
-    }
-
-    template <EventDerived ListenEvent, EventDerivedOrVoid SignalEvent, SystemDerived System, typename... Args>
-    void World::AddSystemInternal(Args&&... inSystemArgs)
-    {
-        static_assert(!std::is_same_v<ListenEvent, void>);
-
-        const auto* systemClass = Internal::GetClassChecked<System>();
-        const auto* listenEventClass = Internal::GetClassChecked<ListenEvent>();
-        const Mirror::Class* signalEventClass = nullptr;
-        if constexpr (!std::is_same_v<SignalEvent, void>) {
-            signalEventClass = Internal::GetClassChecked<SignalEvent>();
-        }
-
-        Assert(!systemObjs.contains(systemClass) && !signals.contains(systemClass));
-        systemObjs.emplace(systemClass, Mirror::Any(System(std::forward<Args>(inSystemArgs)...)));
-        listenersMap[listenEventClass].emplace_back(systemClass);
-        if (signalEventClass != nullptr) {
-            signals.emplace(systemClass, signalEventClass);
-        }
-    }
-
-    template <EventDerived E, typename ... Args>
-    void EventBroadcaster::Compile(Args&&... inEventArgs)
-    {
-        const auto* eventClass = Internal::GetClassChecked<E>();
-
-        AllocateEvent(eventClass);
-        MakeInitialEvent<E>(std::forward<Args>(inEventArgs)...);
-        BuildGraph(eventClass);
-    }
-
-    template <typename E, typename ... Args>
-    void EventBroadcaster::MakeInitialEvent(Args&&... inEventArgs)
-    {
-        const auto* eventClass = Internal::GetClassChecked<E>();
-        allocatedEvents.at(eventClass) = E(std::forward<Args>(inEventArgs)...);
+        SystemClass clazz = Internal::GetClassChecked<System>();
+        systems.emplace(clazz, System(std::forward<Args>(inSystemArgs)...));
+        systemsInBarriers.emplace_back(clazz);
     }
 };

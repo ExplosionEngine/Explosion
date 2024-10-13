@@ -75,9 +75,11 @@ namespace Common {
         static std::string ToString(const Rect<T>& inValue)
         {
             return fmt::format(
-                "{min={}, max={}}",
+                "{}min={}, max={}{}",
+                "{",
                 StringConverter<Vec<T, 2>>::ToString(inValue.min),
-                StringConverter<Vec<T, 2>>::ToString(inValue.max));
+                StringConverter<Vec<T, 2>>::ToString(inValue.max),
+                "}");
         }
     };
 

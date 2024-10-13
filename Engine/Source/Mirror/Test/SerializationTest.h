@@ -12,14 +12,16 @@
 #include <Mirror/Meta.h>
 
 enum class EEnum(test=true) SerializationTestEnum {
-    a EMeta(test=true),
-    b,
-    max
+    a EMeta(test=a),
+    b EMeta(test=b),
+    max EMeta(test=c)
 };
 
 EProperty() extern int ga;
 EProperty() extern float gb;
 EProperty() extern std::string gc;
+
+EFunc() int gf(int a, int b);
 
 struct EClass() SerializationTestStruct0 {
     EClassBody(SerializationTestStruct0)
@@ -44,4 +46,29 @@ struct EClass() SerializationTestStruct1 {
     EProperty() std::unordered_map<int, std::string> c;
     EProperty() std::vector<std::vector<bool>> d;
     EProperty() std::vector<SerializationTestStruct0> e;
+
+    bool operator==(const SerializationTestStruct1& rhs) const
+    {
+        return a == rhs.a
+            && b == rhs.b
+            && c == rhs.c
+            && d == rhs.d
+            && e == rhs.e;
+    }
+};
+
+struct EClass() SerializationTestStruct2 : SerializationTestStruct0 {
+    EClassBody(SerializationTestStruct2);
+
+    EProperty() double d;
+};
+
+struct EClass() SerializationTestStruct3 {
+    EClassBody(SerializationTestStruct3)
+
+    EProperty() static int ga;
+    EFunc() static int gf(int a, int b);
+
+    EProperty() int a;
+    EFunc() int f() const;
 };

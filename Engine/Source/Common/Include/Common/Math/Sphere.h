@@ -63,9 +63,11 @@ namespace Common {
         static std::string ToString(const Sphere<T>& inValue)
         {
             return fmt::format(
-                "{center={}, radius={}}",
-                StringConverter<Vec<T, 3>>::Convert(inValue.center),
-                StringConverter<T>::Convert(inValue.radius));
+                "{}center={}, radius={}{}",
+                "{",
+                StringConverter<Vec<T, 3>>::ToString(inValue.center),
+                StringConverter<T>::ToString(inValue.radius),
+                "}");
         }
     };
 
@@ -93,7 +95,7 @@ namespace Common {
                 JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["center"], outValue.center);
             }
             if (inJsonValue.HasMember("radius")) {
-                JsonSerializer<T>::JsonDeserialize(inJsonValue["radius", outValue.radius]);
+                JsonSerializer<T>::JsonDeserialize(inJsonValue["radius"], outValue.radius);
             }
         }
     };

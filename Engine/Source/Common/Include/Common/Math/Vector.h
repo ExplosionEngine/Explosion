@@ -247,7 +247,7 @@ namespace Common {
             std::stringstream stream;
             stream << "(";
             for (auto i = 0; i < L; i++) {
-                stream << inValue.data[i];
+                stream << StringConverter<T>::ToString(inValue.data[i]);
                 if (i != L - 1) {
                     stream << ", ";
                 }

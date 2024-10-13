@@ -93,10 +93,12 @@ namespace Common {
         static std::string ToString(const Transform<T>& inValue)
         {
             return fmt::format(
-                "{scale={}, rotation={}, translation={}}",
+                "{}scale={}, rotation={}, translation={}{}",
+                "{",
                 StringConverter<Vec<T, 3>>::ToString(inValue.scale),
                 StringConverter<Quaternion<T>>::ToString(inValue.rotation),
-                StringConverter<Vec<T, 3>>::ToString(inValue.translation));
+                StringConverter<Vec<T, 3>>::ToString(inValue.translation),
+                "}");
         }
     };
 
@@ -131,7 +133,7 @@ namespace Common {
                 JsonSerializer<Quaternion<T>>::JsonDeserialize(inJsonValue["rotation"], outValue.rotation);
             }
             if (inJsonValue.HasMember("translation")) {
-                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["translation"], outValue.scale);
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["translation"], outValue.translation);
             }
         }
     };
