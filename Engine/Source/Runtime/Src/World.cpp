@@ -11,20 +11,43 @@ namespace Runtime {
         return &Mirror::Class::Get(inName);
     }
 
-    Component::Component() = default;
-
-    State::State() = default;
-
     System::System() = default;
 
     System::~System() = default;
 
-    void System::Setup(Commands& commands) const {}
+    void System::Setup(Commands& inCommands) const {}
 
-    void System::Tick(Commands& commands, float inTimeMs) const {}
+    void System::Tick(Commands& inCommands, float inTimeMs) const {}
 
-    Commands::Commands(World& inWorld)
-        : world(inWorld)
+    void System::Stop(Commands& inCommands) const {}
+
+    void Observer::Clear()
+    {
+        observer.clear();
+    }
+
+    Observer::Iterator Observer::Begin() const
+    {
+        return observer.begin();
+    }
+
+    Observer::Iterator Observer::End() const
+    {
+        return observer.end();
+    }
+
+    Observer::Iterator Observer::begin() const
+    {
+        return Begin();
+    }
+
+    Observer::Iterator Observer::end() const
+    {
+        return End();
+    }
+
+    Commands::Commands(entt::registry& inRegistry)
+        : registry(inRegistry)
     {
     }
 
@@ -32,16 +55,21 @@ namespace Runtime {
 
     Entity Commands::CreateEntity() // NOLINT
     {
-        return world.registry.create();
+        return registry.create();
     }
 
     void Commands::DestroyEntity(Entity inEntity) // NOLINT
     {
-        world.registry.destroy(inEntity);
+        registry.destroy(inEntity);
+    }
+
+    bool Commands::HasEntity(Entity inEntity) const
+    {
+        return registry.valid(inEntity);
     }
 
     World::World(std::string inName)
-        : setuped(false)
+        : setup(false)
         , playing(false)
         , name(std::move(inName))
     {
@@ -61,46 +89,46 @@ namespace Runtime {
 
     void World::Play()
     {
-        Assert(!setuped && systemsInBarriers.empty());
-        setuped = true;
+        Assert(!setup && systemsInBarriers.empty());
+        setup = true;
         playing = true;
         ExecuteSystemGraph([&](const System& inSystem) -> void {
-            Commands commands(*this);
+            Commands commands(registry);
             inSystem.Setup(commands);
         });
     }
 
     void World::Stop()
     {
-        Assert(setuped);
-        setuped = false;
+        Assert(setup);
+        setup = false;
         playing = false;
     }
 
     void World::Pause()
     {
-        Assert(setuped && playing);
+        Assert(setup && playing);
         playing = false;
     }
 
     void World::Resume()
     {
-        Assert(setuped && !playing);
+        Assert(setup && !playing);
         playing = true;
     }
 
     void World::Tick(float inFrameTimeMs)
     {
-        Assert(setuped && playing);
+        Assert(setup && playing);
         ExecuteSystemGraph([&](const System& inSystem) -> void {
-            Commands commands(*this);
+            Commands commands(registry);
             inSystem.Tick(commands, inFrameTimeMs);
         });
     }
 
     bool World::Started() const
     {
-        return setuped;
+        return setup;
     }
 
     bool World::Playing() const

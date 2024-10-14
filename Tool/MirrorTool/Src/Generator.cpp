@@ -97,9 +97,30 @@ namespace MirrorTool {
         return stream.str();
     }
 
+    static std::string GetFieldAccessStr(FieldAccess access)
+    {
+        static const std::unordered_map<FieldAccess, std::string> map = {
+            { FieldAccess::pri, "Mirror::FieldAccess::faPrivate" },
+            { FieldAccess::pro, "Mirror::FieldAccess::faProtected" },
+            { FieldAccess::pub, "Mirror::FieldAccess::faPublic" },
+        };
+        return map.at(access);
+    }
+
     static std::string GetClassCode(const ClassInfo& clazz) // NOLINT
     {
         const std::string fullName = GetFullName(clazz);
+        auto defaultCtorFieldAccess = FieldAccess::pub;
+        for (const auto& constructor : clazz.constructors) {
+            if (constructor.parameters.empty()) {
+                defaultCtorFieldAccess = constructor.fieldAccess;
+            }
+        }
+        auto detorFieldAccess = clazz.destructor.has_value() ? clazz.destructor->fieldAccess : FieldAccess::pub;
+
+        std::string defaultCtorAndDetorFieldAccessParams = defaultCtorFieldAccess != FieldAccess::pub || detorFieldAccess != FieldAccess::pub
+            ? fmt::format(", {}, {}", GetFieldAccessStr(defaultCtorFieldAccess), GetFieldAccessStr(detorFieldAccess))
+            : "";
 
         std::stringstream stream;
         stream << Common::newline;
@@ -107,34 +128,39 @@ namespace MirrorTool {
         stream << "{" << Common::newline;
         stream << Common::tab<1> << "Mirror::Registry::Get()";
         if (clazz.baseClassName.empty()) {
-            stream << Common::newline << Common::tab<2> << fmt::format(R"(.Class<{}>("{}"))", fullName, fullName);
+            stream << Common::newline << Common::tab<2> << fmt::format(R"(.Class<{}, void{}>("{}"))", fullName, defaultCtorAndDetorFieldAccessParams, fullName);
         } else {
-            stream << Common::newline << Common::tab<2> << fmt::format(R"(.Class<{}, {}>("{}"))", fullName, clazz.baseClassName, fullName);
+            stream << Common::newline << Common::tab<2> << fmt::format(R"(.Class<{}, {}{}>("{}"))", fullName, clazz.baseClassName, defaultCtorAndDetorFieldAccessParams, fullName);
         }
         stream << GetMetaDataCode<3>(clazz);
         for (const auto& constructor : clazz.constructors) {
-            stream << Common::newline << Common::tab<3> << fmt::format(R"(.Constructor<{}>("{}"))", constructor.name, constructor.name);
+            const std::string fieldAccessStr = constructor.fieldAccess != FieldAccess::pub ? fmt::format(", {}", GetFieldAccessStr(constructor.fieldAccess)) : "";
+            stream << Common::newline << Common::tab<3> << fmt::format(R"(.Constructor<{}{}>("{}"))", constructor.name, fieldAccessStr, constructor.name);
             stream << GetMetaDataCode<4>(constructor);
         }
         for (const auto& staticVariable : clazz.staticVariables) {
             const std::string variableName = GetFullName(staticVariable);
-            stream << Common::newline << Common::tab<3> << fmt::format(R"(.StaticVariable<&{}>("{}"))", variableName, staticVariable.name);
+            const std::string fieldAccessStr = staticVariable.fieldAccess != FieldAccess::pub ? fmt::format(", {}", GetFieldAccessStr(staticVariable.fieldAccess)) : "";
+            stream << Common::newline << Common::tab<3> << fmt::format(R"(.StaticVariable<&{}{}>("{}"))", variableName, fieldAccessStr, staticVariable.name);
             stream << GetMetaDataCode<4>(staticVariable);
         }
         for (const auto& staticFunction : clazz.staticFunctions) {
             const std::string functionName = GetFullName(staticFunction);
-            stream << Common::newline << Common::tab<3> << fmt::format(R"(.StaticFunction<&{}>("{}"))", functionName, staticFunction.name);
+            const std::string fieldAccessStr = staticFunction.fieldAccess != FieldAccess::pub ? fmt::format(", {}", GetFieldAccessStr(staticFunction.fieldAccess)) : "";
+            stream << Common::newline << Common::tab<3> << fmt::format(R"(.StaticFunction<&{}{}>("{}"))", functionName, fieldAccessStr, staticFunction.name);
             stream << GetMetaDataCode<4>(staticFunction);
         }
         // TODO overload support
         for (const auto& variable : clazz.variables) {
             const std::string variableName = GetFullName(variable);
-            stream << Common::newline << Common::tab<3> << fmt::format(R"(.MemberVariable<&{}>("{}"))", variableName, variable.name);
+            const std::string fieldAccessStr = variable.fieldAccess != FieldAccess::pub ? fmt::format(", {}", GetFieldAccessStr(variable.fieldAccess)) : "";
+            stream << Common::newline << Common::tab<3> << fmt::format(R"(.MemberVariable<&{}{}>("{}"))", variableName, fieldAccessStr, variable.name);
             stream << GetMetaDataCode<4>(variable);
         }
         for (const auto& function : clazz.functions) {
             const std::string functionName = GetFullName(function);
-            stream << Common::newline << Common::tab<3> << fmt::format(R"(.MemberFunction<&{}>("{}"))", functionName, function.name);
+            const std::string fieldAccessStr = function.fieldAccess != FieldAccess::pub ? fmt::format(", {}", GetFieldAccessStr(function.fieldAccess)) : "";
+            stream << Common::newline << Common::tab<3> << fmt::format(R"(.MemberFunction<&{}{}>("{}"))", functionName, fieldAccessStr, function.name);
             stream << GetMetaDataCode<4>(function);
         }
         // TODO overload support

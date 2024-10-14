@@ -384,6 +384,13 @@ namespace Mirror {
         std::unordered_map<Id, std::string, IdHashProvider> metas;
     };
 
+    enum class FieldAccess : uint8_t {
+        faPrivate,
+        faProtected,
+        faPublic,
+        max
+    };
+
     class MIRROR_API Variable final : public ReflNode {
     public:
         ~Variable() override;
@@ -394,6 +401,7 @@ namespace Mirror {
         const std::string& GetOwnerName() const;
         const Id& GetOwnerId() const;
         const Class* GetOwner() const;
+        FieldAccess GetAccess() const;
         const TypeInfo* GetTypeInfo() const;
         void SetDyn(const Argument& inArgument) const;
         Any GetDyn() const;
@@ -410,6 +418,7 @@ namespace Mirror {
         struct ConstructParams {
             Id id;
             Id owner;
+            FieldAccess access;
             size_t memorySize;
             const TypeInfo* typeInfo;
             Setter setter;
@@ -419,6 +428,7 @@ namespace Mirror {
         explicit Variable(ConstructParams&& params);
 
         Id owner;
+        FieldAccess access;
         size_t memorySize;
         const TypeInfo* typeInfo;
         Setter setter;
@@ -432,6 +442,7 @@ namespace Mirror {
         const std::string& GetOwnerName() const;
         const Id& GetOwnerId() const;
         const Class* GetOwner() const;
+        FieldAccess GetAccess() const;
         template <typename... Args> Any Invoke(Args&&... args) const;
         uint8_t GetArgsNum() const;
         const TypeInfo* GetRetTypeInfo() const;
@@ -450,6 +461,7 @@ namespace Mirror {
         struct ConstructParams {
             Id id;
             Id owner;
+            FieldAccess access;
             uint8_t argsNum;
             const TypeInfo* retTypeInfo;
             std::vector<const TypeInfo*> argTypeInfos;
@@ -459,6 +471,7 @@ namespace Mirror {
         explicit Function(ConstructParams&& params);
 
         Id owner;
+        FieldAccess access;
         uint8_t argsNum;
         const TypeInfo* retTypeInfo;
         std::vector<const TypeInfo*> argTypeInfos;
@@ -474,7 +487,8 @@ namespace Mirror {
 
         const std::string& GetOwnerName() const;
         const Id& GetOwnerId() const;
-        const Class* GetOwner() const;
+        const Class& GetOwner() const;
+        FieldAccess GetAccess() const;
         uint8_t GetArgsNum() const;
         const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
         const std::vector<const TypeInfo*>& GetArgTypeInfos() const;
@@ -496,6 +510,7 @@ namespace Mirror {
         struct ConstructParams {
             Id id;
             Id owner;
+            FieldAccess access;
             uint8_t argsNum;
             std::vector<const TypeInfo*> argTypeInfos;
             std::vector<const TypeInfo*> argRemoveRefTypeInfos;
@@ -507,6 +522,7 @@ namespace Mirror {
         explicit Constructor(ConstructParams&& params);
 
         Id owner;
+        FieldAccess access;
         uint8_t argsNum;
         std::vector<const TypeInfo*> argTypeInfos;
         std::vector<const TypeInfo*> argRemoveRefTypeInfos;
@@ -523,7 +539,8 @@ namespace Mirror {
 
         const std::string& GetOwnerName() const;
         const Id& GetOwnerId() const;
-        const Class* GetOwner() const;
+        const Class& GetOwner() const;
+        FieldAccess GetAccess() const;
         void InvokeDyn(const Argument& argument) const;
 
     private:
@@ -535,12 +552,14 @@ namespace Mirror {
 
         struct ConstructParams {
             Id owner;
+            FieldAccess access;
             Invoker destructor;
         };
 
         explicit Destructor(ConstructParams&& params);
 
         Id owner;
+        FieldAccess access;
         Invoker destructor;
     };
 
@@ -553,7 +572,8 @@ namespace Mirror {
 
         const std::string& GetOwnerName() const;
         const Id& GetOwnerId() const;
-        const Class* GetOwner() const;
+        const Class& GetOwner() const;
+        FieldAccess GetAccess() const;
         uint32_t SizeOf() const;
         const TypeInfo* GetTypeInfo() const;
         void SetDyn(const Argument& object, const Argument& value) const;
@@ -570,6 +590,7 @@ namespace Mirror {
         struct ConstructParams {
             Id id;
             Id owner;
+            FieldAccess access;
             uint32_t memorySize;
             const TypeInfo* typeInfo;
             Setter setter;
@@ -579,6 +600,7 @@ namespace Mirror {
         explicit MemberVariable(ConstructParams&& params);
 
         Id owner;
+        FieldAccess access;
         uint32_t memorySize;
         const TypeInfo* typeInfo;
         Setter setter;
@@ -593,7 +615,8 @@ namespace Mirror {
 
         const std::string& GetOwnerName() const;
         const Id& GetOwnerId() const;
-        const Class* GetOwner() const;
+        const Class& GetOwner() const;
+        FieldAccess GetAccess() const;
         uint8_t GetArgsNum() const;
         const TypeInfo* GetRetTypeInfo() const;
         const TypeInfo* GetArgTypeInfo(uint8_t argIndex) const;
@@ -609,6 +632,7 @@ namespace Mirror {
         struct ConstructParams {
             Id id;
             Id owner;
+            FieldAccess access;
             uint8_t argsNum;
             const TypeInfo* retTypeInfo;
             std::vector<const TypeInfo*> argTypeInfos;
@@ -618,6 +642,7 @@ namespace Mirror {
         explicit MemberFunction(ConstructParams&& params);
 
         Id owner;
+        FieldAccess access;
         uint8_t argsNum;
         const TypeInfo* retTypeInfo;
         std::vector<const TypeInfo*> argTypeInfos;
@@ -1361,23 +1386,17 @@ namespace Common { // NOLINT
     struct JsonSerializer<T> {
         static void JsonSerializeDyn(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mirror::Class& clazz, const Mirror::Argument& inObj)
         {
-            const auto& className = clazz.GetName();
             const auto* baseClass = clazz.GetBaseClass();
             const auto& memberVariables = clazz.GetMemberVariables();
             const auto defaultObject = clazz.GetDefaultObject();
 
-            rapidjson::Value classNameJson;
-            JsonSerializer<std::string>::JsonSerialize(classNameJson, inAllocator, className);
-
-            rapidjson::Value baseClassJson;
-            if (baseClass != nullptr) {
-                JsonSerializeDyn(baseClassJson, inAllocator, *baseClass, inObj);
-            } else {
-                baseClassJson.SetNull();
+            if (!outJsonValue.IsObject()) {
+                outJsonValue.SetObject();
             }
 
-            rapidjson::Value membersJson;
-            membersJson.SetObject();
+            if (baseClass != nullptr) {
+                JsonSerializeDyn(outJsonValue, inAllocator, *baseClass, inObj);
+            }
 
             for (const auto& memberVariable : memberVariables | std::views::values) {
                 if (memberVariable.IsTransient()) {
@@ -1391,24 +1410,17 @@ namespace Common { // NOLINT
                 rapidjson::Value memberNameJson;
                 JsonSerializer<std::string>::JsonSerialize(memberNameJson, inAllocator, memberVariable.GetName());
 
-                rapidjson::Value memberContentJson;
                 if (sameAsDefault) {
-                    memberContentJson.SetNull();
-                } else {
-                    memberVariable.GetDyn(inObj).JsonSerialize(memberContentJson, inAllocator);
+                    continue;
                 }
-                membersJson.AddMember(memberNameJson, memberContentJson, inAllocator);
+                rapidjson::Value memberContentJson;
+                memberVariable.GetDyn(inObj).JsonSerialize(memberContentJson, inAllocator);
+                outJsonValue.AddMember(memberNameJson, memberContentJson, inAllocator);
             }
-
-            outJsonValue.SetObject();
-            outJsonValue.AddMember("className", classNameJson, inAllocator);
-            outJsonValue.AddMember("baseClass", baseClassJson, inAllocator);
-            outJsonValue.AddMember("members", membersJson, inAllocator);
         }
 
         static void JsonDeserializeDyn(const rapidjson::Value& inJsonValue, const Mirror::Class& clazz, const Mirror::Argument& outObj)
         {
-            const auto& className = clazz.GetName();
             const auto* baseClass = clazz.GetBaseClass();
             const auto defaultObject = clazz.GetDefaultObject();
 
@@ -1416,44 +1428,18 @@ namespace Common { // NOLINT
                 return;
             }
 
-            if (!inJsonValue.HasMember("className")) {
-                return;
-            }
-            std::string aspectClassName;
-            JsonSerializer<std::string>::JsonDeserialize(inJsonValue["className"], aspectClassName);
-            if (aspectClassName != className) {
-                return;
+            if (baseClass != nullptr) {
+                JsonDeserializeDyn(inJsonValue, *baseClass, outObj);
             }
 
-            if (inJsonValue.HasMember("baseClass") && baseClass != nullptr) {
-                JsonDeserializeDyn(inJsonValue["baseClass"], *baseClass, outObj);
-            }
-
-            if (!inJsonValue.HasMember("members")) {
-                return;
-            }
-
-            const auto& membersJson = inJsonValue["members"];
-            if (!membersJson.IsObject()) {
-                return;
-            }
-
-            for (auto iter = membersJson.MemberBegin(); iter != membersJson.MemberEnd(); ++iter) {
-                std::string memberName;
-                JsonSerializer<std::string>::JsonDeserialize(iter->name, memberName);
-
-                if (!clazz.HasMemberVariable(memberName)) {
-                    continue;
-                }
-                const auto& memberVariable = clazz.GetMemberVariable(memberName);
-
-                if ( const auto& valueJson = iter->value;
-                    valueJson.IsNull()) {
+            for (const auto& memberVariable : clazz.GetMemberVariables() | std::views::values) {
+                const auto& memberName = memberVariable.GetName();
+                if (inJsonValue.HasMember(memberName.c_str())) {
+                    memberVariable.GetDyn(outObj).JsonDeserialize(inJsonValue[memberName.c_str()]);
+                } else {
                     if (!defaultObject.Empty()) {
                         memberVariable.SetDyn(outObj, memberVariable.GetDyn(defaultObject));
                     }
-                } else {
-                    memberVariable.GetDyn(outObj).JsonDeserialize(valueJson);
                 }
             }
         }

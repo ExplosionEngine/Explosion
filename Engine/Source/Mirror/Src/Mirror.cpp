@@ -804,6 +804,7 @@ namespace Mirror {
     Variable::Variable(ConstructParams&& params)
         : ReflNode(std::move(params.id))
         , owner(std::move(params.owner))
+        , access(params.access)
         , memorySize(params.memorySize)
         , typeInfo(params.typeInfo)
         , setter(std::move(params.setter))
@@ -833,6 +834,12 @@ namespace Mirror {
         return owner.IsNull() ? nullptr : Class::Find(owner);
     }
 
+    FieldAccess Variable::GetAccess() const
+    {
+        Assert(!owner.IsNull());
+        return access;
+    }
+
     const TypeInfo* Variable::GetTypeInfo() const
     {
         return typeInfo;
@@ -851,6 +858,7 @@ namespace Mirror {
     Function::Function(ConstructParams&& params)
         : ReflNode(std::move(params.id))
         , owner(std::move(params.owner))
+        , access(params.access)
         , argsNum(params.argsNum)
         , retTypeInfo(params.retTypeInfo)
         , argTypeInfos(std::move(params.argTypeInfos))
@@ -873,6 +881,12 @@ namespace Mirror {
     const Class* Function::GetOwner() const
     {
         return owner.IsNull() ? nullptr : Class::Find(owner);
+    }
+
+    FieldAccess Function::GetAccess() const
+    {
+        Assert(!owner.IsNull());
+        return access;
     }
 
     uint8_t Function::GetArgsNum() const
@@ -903,6 +917,7 @@ namespace Mirror {
     Constructor::Constructor(ConstructParams&& params)
         : ReflNode(std::move(params.id))
         , owner(std::move(params.owner))
+        , access(params.access)
         , argsNum(params.argsNum)
         , argTypeInfos(std::move(params.argTypeInfos))
         , argRemoveRefTypeInfos(std::move(params.argRemoveRefTypeInfos))
@@ -924,9 +939,16 @@ namespace Mirror {
         return owner;
     }
 
-    const Class* Constructor::GetOwner() const
+    const Class& Constructor::GetOwner() const
     {
-        return owner.IsNull() ? nullptr : Class::Find(owner);
+        Assert(!owner.IsNull());
+        return Class::Get(owner);
+    }
+
+    FieldAccess Constructor::GetAccess() const
+    {
+        Assert(!owner.IsNull());
+        return access;
     }
 
     uint8_t Constructor::GetArgsNum() const
@@ -977,6 +999,7 @@ namespace Mirror {
     Destructor::Destructor(ConstructParams&& params)
         : ReflNode(std::string(IdPresets::detor.name))
         , owner(std::move(params.owner))
+        , access(params.access)
         , destructor(std::move(params.destructor))
     {
     }
@@ -993,9 +1016,16 @@ namespace Mirror {
         return owner;
     }
 
-    const Class* Destructor::GetOwner() const
+    const Class& Destructor::GetOwner() const
     {
-        return owner.IsNull() ? nullptr : Class::Find(owner);
+        Assert(!owner.IsNull());
+        return Class::Get(owner);
+    }
+
+    FieldAccess Destructor::GetAccess() const
+    {
+        Assert(!owner.IsNull());
+        return access;
     }
 
     void Destructor::InvokeDyn(const Argument& argument) const
@@ -1006,6 +1036,7 @@ namespace Mirror {
     MemberVariable::MemberVariable(ConstructParams&& params)
         : ReflNode(std::move(params.id))
         , owner(std::move(params.owner))
+        , access(params.access)
         , memorySize(params.memorySize)
         , typeInfo(params.typeInfo)
         , setter(std::move(params.setter))
@@ -1025,9 +1056,16 @@ namespace Mirror {
         return owner;
     }
 
-    const Class* MemberVariable::GetOwner() const
+    const Class& MemberVariable::GetOwner() const
     {
-        return owner.IsNull() ? nullptr : Class::Find(owner);
+        Assert(!owner.IsNull());
+        return Class::Get(owner);
+    }
+
+    FieldAccess MemberVariable::GetAccess() const
+    {
+        Assert(!owner.IsNull());
+        return access;
     }
 
     uint32_t MemberVariable::SizeOf() const
@@ -1058,6 +1096,7 @@ namespace Mirror {
     MemberFunction::MemberFunction(ConstructParams&& params)
         : ReflNode(std::move(params.id))
         , owner(std::move(params.owner))
+        , access(params.access)
         , argsNum(params.argsNum)
         , retTypeInfo(params.retTypeInfo)
         , argTypeInfos(std::move(params.argTypeInfos))
@@ -1077,9 +1116,16 @@ namespace Mirror {
         return owner;
     }
 
-    const Class* MemberFunction::GetOwner() const
+    const Class& MemberFunction::GetOwner() const
     {
-        return owner.IsNull() ? nullptr : Class::Find(owner);
+        Assert(!owner.IsNull());
+        return Class::Get(owner);
+    }
+
+    FieldAccess MemberFunction::GetAccess() const
+    {
+        Assert(!owner.IsNull());
+        return access;
     }
 
     uint8_t MemberFunction::GetArgsNum() const

@@ -245,9 +245,11 @@ function(AddMirrorInfoSourceGenerationTarget)
     foreach (SEARCH_DIR ${PARAMS_SEARCH_DIR})
         file(GLOB_RECURSE INPUT_HEADER_FILES "${SEARCH_DIR}/*.h")
         foreach (INPUT_HEADER_FILE ${INPUT_HEADER_FILES})
-            get_filename_component(FILENAME ${INPUT_HEADER_FILE} NAME_WE)
+            string(REPLACE "${CMAKE_SOURCE_DIR}/" "" TEMP ${INPUT_HEADER_FILE})
+            get_filename_component(DIR ${TEMP} DIRECTORY)
+            get_filename_component(FILENAME ${TEMP} NAME_WE)
 
-            set(OUTPUT_SOURCE "${CMAKE_BINARY_DIR}/Generated/MirrorInfoSource/${PARAMS_NAME}/${FILENAME}.generated.cpp")
+            set(OUTPUT_SOURCE "${CMAKE_BINARY_DIR}/Generated/MirrorInfoSource/${DIR}/${FILENAME}.generated.cpp")
             list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
 
             add_custom_command(

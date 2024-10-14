@@ -188,6 +188,13 @@ TEST(SerializationTest, ReflNodeSerializationTest)
     PerformSerializationTest<const EnumValue*>(fileName, &enun->GetValue("a"));
 }
 
+TEST(SerializationTest, MetaObjectSerializationTest)
+{
+    PerformJsonSerializationTest<SerializationTestStruct2>(
+        SerializationTestStruct2 { 1, 2.0f, "3", 4.0 },
+        "");
+}
+
 TEST(SerializationTest, EnumJsonSerializationTest)
 {
     PerformJsonSerializationTest<SerializationTestEnum>(

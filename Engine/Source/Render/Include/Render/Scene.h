@@ -4,16 +4,19 @@
 
 #pragma once
 
+#include <functional>
+
 #include <Render/SceneProxy/Light.h>
-#include <Render/SceneProxy/Primitive.h>
 
 namespace Render {
+    template <typename T>
+    using SceneProxyPatcher = std::function<void(T&)>;
+
     class IScene {
     public:
         virtual ~IScene() = default;
-        virtual void AddLight(ILightSceneProxy* inProxy) = 0;
-        virtual void RemoveLight(ILightSceneProxy* inProxy) = 0;
-        virtual void AddPrimitive(IPrimitiveSceneProxy* inProxy) = 0;
-        virtual void RemovePrimitive(IPrimitiveSceneProxy* inProxy) = 0;
+        virtual size_t GAddLight(const LightSceneProxy& inLight) = 0;
+        virtual void GRemoveLight(size_t inLightIndex) = 0;
+        virtual void GPatchLight(size_t inLightIndex, const SceneProxyPatcher<LightSceneProxy>& inPatcher) = 0;
     };
 }

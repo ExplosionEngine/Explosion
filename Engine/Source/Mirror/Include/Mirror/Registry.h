@@ -46,12 +46,12 @@ namespace Mirror {
     public:
         ~ClassRegistry() override;
 
-        template <typename... Args> ClassRegistry& Constructor(const Id& inId);
-        template <auto Ptr> ClassRegistry& StaticVariable(const Id& inId);
-        template <auto Ptr> ClassRegistry& StaticFunction(const Id& inId);
-        template <auto Ptr> ClassRegistry& MemberVariable(const Id& inId);
+        template <typename... Args, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& Constructor(const Id& inId);
+        template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& StaticVariable(const Id& inId);
+        template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& StaticFunction(const Id& inId);
+        template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& MemberVariable(const Id& inId);
         // TODO support overload
-        template <auto Ptr> ClassRegistry& MemberFunction(const Id& inId);
+        template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& MemberFunction(const Id& inId);
 
     private:
         friend class Registry;
@@ -102,8 +102,11 @@ namespace Mirror {
 
         GlobalRegistry Global();
 
-        template <Common::CppClass C, CppBaseClassOrVoid<C> B = void> ClassRegistry<C> Class(const Id& inId);
-        template <Common::CppEnum T> EnumRegistry<T> Enum(const Id& inId);
+        template <Common::CppClass C, CppBaseClassOrVoid<C> B = void, FieldAccess DefaultCtorAccess = FieldAccess::faPublic, FieldAccess DetorAccess = FieldAccess::faPublic>
+        ClassRegistry<C> Class(const Id& inId);
+
+        template <Common::CppEnum T> EnumRegistry<T>
+        Enum(const Id& inId);
 
     private:
         friend class GlobalScope;
@@ -226,7 +229,7 @@ namespace Mirror {
     ClassRegistry<C>::~ClassRegistry() = default;
 
     template <typename C>
-    template <typename... Args>
+    template <typename... Args, FieldAccess Access>
     ClassRegistry<C>& ClassRegistry<C>::Constructor(const Id& inId)
     {
         using ArgsTupleType = std::tuple<Args...>;
@@ -238,6 +241,7 @@ namespace Mirror {
         Constructor::ConstructParams params;
         params.id = inId;
         params.owner = clazz.GetId();
+        params.access = Access;
         params.argsNum = sizeof...(Args);
         params.argTypeInfos = { GetTypeInfo<Args>()... };
         params.argRemoveRefTypeInfos = { GetTypeInfo<std::remove_reference_t<Args>>()... };
@@ -257,7 +261,7 @@ namespace Mirror {
     }
 
     template <typename C>
-    template <auto Ptr>
+    template <auto Ptr, FieldAccess Access>
     ClassRegistry<C>& ClassRegistry<C>::StaticVariable(const Id& inId)
     {
         using ValueType = typename Internal::VariableTraits<decltype(Ptr)>::ValueType;
@@ -268,6 +272,7 @@ namespace Mirror {
         Variable::ConstructParams params;
         params.id = inId;
         params.owner = clazz.GetId();
+        params.access = Access;
         params.memorySize = sizeof(ValueType);
         params.typeInfo = GetTypeInfo<ValueType>();
         params.setter = [](const Argument& value) -> void {
@@ -285,7 +290,7 @@ namespace Mirror {
     }
 
     template <typename C>
-    template <auto Ptr>
+    template <auto Ptr, FieldAccess Access>
     ClassRegistry<C>& ClassRegistry<C>::StaticFunction(const Id& inId)
     {
         using ArgsTupleType = typename Internal::FunctionTraits<decltype(Ptr)>::ArgsTupleType;
@@ -299,6 +304,7 @@ namespace Mirror {
         Function::ConstructParams params;
         params.id = inId;
         params.owner = clazz.GetId();
+        params.access = Access;
         params.retTypeInfo = GetTypeInfo<RetType>();
         params.argsNum = argsTupleSize;
         params.argTypeInfos = Internal::GetArgTypeInfosByArgsTuple<ArgsTupleType>(std::make_index_sequence<argsTupleSize> {});
@@ -318,7 +324,7 @@ namespace Mirror {
     }
 
     template <typename C>
-    template <auto Ptr>
+    template <auto Ptr, FieldAccess Access>
     ClassRegistry<C>& ClassRegistry<C>::MemberVariable(const Id& inId)
     {
         using ClassType = typename Internal::MemberVariableTraits<decltype(Ptr)>::ClassType;
@@ -330,6 +336,7 @@ namespace Mirror {
         MemberVariable::ConstructParams params;
         params.id = inId;
         params.owner = clazz.GetId();
+        params.access = Access;
         params.memorySize = sizeof(ValueType);
         params.typeInfo = GetTypeInfo<ValueType>();
         params.setter = [](const Argument& object, const Argument& value) -> void {
@@ -346,7 +353,7 @@ namespace Mirror {
     }
 
     template <typename C>
-    template <auto Ptr>
+    template <auto Ptr, FieldAccess Access>
     ClassRegistry<C>& ClassRegistry<C>::MemberFunction(const Id& inId)
     {
         // ClassType here contains const, #see Internal::MemberFunctionTraits
@@ -362,6 +369,7 @@ namespace Mirror {
         MemberFunction::ConstructParams params;
         params.id = inId;
         params.owner = clazz.GetId();
+        params.access = Access;
         params.retTypeInfo = GetTypeInfo<RetType>();
         params.argsNum = argsTupleSize;
         params.argTypeInfos = Internal::GetArgTypeInfosByArgsTuple<ArgsTupleType>(std::make_index_sequence<argsTupleSize> {});
@@ -391,6 +399,7 @@ namespace Mirror {
         Variable::ConstructParams params;
         params.id = inId;
         params.owner = Id::null;
+        params.access = FieldAccess::max;
         params.memorySize = sizeof(ValueType);
         params.typeInfo = GetTypeInfo<ValueType>();
         params.setter = [](const Argument& argument) -> void {
@@ -420,6 +429,7 @@ namespace Mirror {
         Function::ConstructParams params;
         params.id = inId;
         params.owner = Id::null;
+        params.access = FieldAccess::max;
         params.retTypeInfo = GetTypeInfo<RetType>();
         params.argsNum = argsTupleSize;
         params.argTypeInfos = Internal::GetArgTypeInfosByArgsTuple<ArgsTupleType>(std::make_index_sequence<argsTupleSize> {});
@@ -473,7 +483,7 @@ namespace Mirror {
         return MetaDataRegistry<EnumRegistry<T>>::SetContext(&enumInfo.EmplaceElement(inId, std::move(params)));
     }
 
-    template <Common::CppClass C, CppBaseClassOrVoid<C> B>
+    template <Common::CppClass C, CppBaseClassOrVoid<C> B, FieldAccess DefaultCtorAccess, FieldAccess DetorAccess>
     ClassRegistry<C> Registry::Class(const Id& inId)
     {
         const auto typeId = GetTypeInfo<C>()->id;
@@ -498,6 +508,7 @@ namespace Mirror {
         if constexpr (std::is_destructible_v<C>) {
             Destructor::ConstructParams detorParams;
             detorParams.owner = inId;
+            detorParams.access = DetorAccess;
             detorParams.destructor = [](const Argument& object) -> void {
                 Assert(!object.IsConstRef());
                 object.As<C&>().~C();
@@ -508,6 +519,7 @@ namespace Mirror {
             Constructor::ConstructParams ctorParams;
             ctorParams.id = IdPresets::defaultCtor.name;
             ctorParams.owner = inId;
+            ctorParams.access = DefaultCtorAccess;
             ctorParams.argsNum = 0;
             ctorParams.argTypeInfos = {};
             ctorParams.stackConstructor = [](const ArgumentList& args) -> Any {

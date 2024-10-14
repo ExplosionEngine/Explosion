@@ -86,15 +86,20 @@ namespace MirrorTool {
         return Common::StringUtils::Replace(result, "struct", "");
     }
 
+    static std::string RemoveStrSpace(const std::string& value)
+    {
+        return Common::StringUtils::Replace(value, " ", "");
+    }
+
     static void ParseMetaDatas(Node& node, const std::string& metaDataStr)
     {
-        for (const auto metaDatas = Common::StringUtils::Split(metaDataStr, ";");
+        for (const auto metaDatas = Common::StringUtils::Split(metaDataStr, ",");
             const auto& metaData : metaDatas) {
             if (auto keyValue = Common::StringUtils::Split(metaData, "=");
                 keyValue.size() == 1) {
-                node.metaDatas.emplace(std::make_pair(keyValue[0], "true"));
+                node.metaDatas.emplace(std::make_pair(RemoveStrSpace(keyValue[0]), "true"));
             } else if (keyValue.size() == 2) {
-                node.metaDatas.emplace(std::make_pair(keyValue[0], keyValue[1]));
+                node.metaDatas.emplace(std::make_pair(RemoveStrSpace(keyValue[0]), RemoveStrSpace(keyValue[1])));
             }
         }
     }
@@ -235,6 +240,11 @@ namespace MirrorTool {
             context.constructors.emplace_back(std::move(constructorInfo));
             VisitChildren(ClassConstructorVisitor, ClassConstructorInfo, cursor, context.constructors.back());
             UpdateConstructorName(context.constructors.back());
+        } else if (kind == CXCursor_Destructor) {
+            ClassDestructorInfo destructorInfo;
+            destructorInfo.outerName = GetOuterName(context.outerName, context.name);
+            destructorInfo.fieldAccess = context.lastFieldAccess;
+            context.destructor = std::move(destructorInfo);
         } else if (kind == CXCursor_StructDecl || kind == CXCursor_ClassDecl) {
             ClassInfo classInfo;
             classInfo.outerName = GetOuterName(context.outerName, context.name);

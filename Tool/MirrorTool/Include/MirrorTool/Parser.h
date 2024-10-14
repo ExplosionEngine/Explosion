@@ -52,9 +52,14 @@ namespace MirrorTool {
         FieldAccess fieldAccess;
     };
 
+    struct ClassDestructorInfo : Node {
+        FieldAccess fieldAccess;
+    };
+
     struct ClassInfo : Node {
         FieldAccess lastFieldAccess;
         std::string baseClassName;
+        std::optional<ClassDestructorInfo> destructor;
         std::vector<ClassInfo> classes;
         std::vector<ClassConstructorInfo> constructors;
         std::vector<ClassVariableInfo> staticVariables;

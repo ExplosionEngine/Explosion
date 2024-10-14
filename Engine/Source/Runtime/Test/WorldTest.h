@@ -9,7 +9,7 @@
 
 using namespace Runtime;
 
-class EClass() GlobalCounter final : public State {
+class EClass() GlobalCounter {
     EClassBody(GlobalCounter)
 
     GlobalCounter();

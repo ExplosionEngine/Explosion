@@ -11,14 +11,12 @@
 namespace Rendering {
     class Scene final : public Render::IScene {
     public:
+        Scene();
         ~Scene() override;
-        void AddLight(Render::ILightSceneProxy* inProxy) override;
-        void RemoveLight(Render::ILightSceneProxy* inProxy) override;
-        void AddPrimitive(Render::IPrimitiveSceneProxy* inProxy) override;
-        void RemovePrimitive(Render::IPrimitiveSceneProxy* inProxy) override;
+
+        // TODO AddLight/RemoveLight/PatchLight
 
     private:
-        std::unordered_set<Render::ILightSceneProxy*> lights;
-        std::unordered_set<Render::IPrimitiveSceneProxy*> primitives;
+        // TODO use object tool
     };
 }

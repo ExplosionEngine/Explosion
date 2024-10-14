@@ -25,9 +25,10 @@ ParralCountSystemA::~ParralCountSystemA() = default;
 
 void ParralCountSystemA::Tick(Commands& commands, float inTimeMs) const
 {
-    auto& globalCounter = commands.GetState<GlobalCounter>();
-    globalCounter.tickTime += 1;
-    globalCounter.value += 2;
+    commands.PatchState<GlobalCounter>([](auto& state) -> void {
+        state.tickTime += 1;
+        state.value += 2;
+    });
 }
 
 ParralCountSystemB::ParralCountSystemB() = default;
@@ -36,7 +37,9 @@ ParralCountSystemB::~ParralCountSystemB() = default;
 
 void ParralCountSystemB::Tick(Commands& commands, float inTimeMs) const
 {
-    commands.GetState<GlobalCounter>().value += 3;
+    commands.PatchState<GlobalCounter>([](auto& state) -> void {
+        state.value += 3;
+    });
 }
 
 GlobalCounterVerifySystem::GlobalCounterVerifySystem() = default;

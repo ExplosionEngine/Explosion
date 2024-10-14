@@ -4,13 +4,16 @@
 
 #pragma once
 
+#include <set>
 #include <vector>
 #include <unordered_set>
 #include <algorithm>
 #include <array>
+#include <bitset>
 
 #include <Common/Debug.h>
 #include <Common/Concepts.h>
+#include <Common/Math/Common.h>
 
 namespace Common {
     class VectorUtils {
@@ -27,11 +30,8 @@ namespace Common {
         template <typename T> static void GetUnionInline(std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs);
     };
 
-    template <typename T>
-    class InplaceVectorIter;
-
-    template <typename I, typename T>
-    concept ValidInplaceVectorIter = std::is_same_v<I, InplaceVectorIter<T>> || std::is_same_v<I, InplaceVectorIter<const T>>;
+    template <typename T> class InplaceVectorIter;
+    template <typename I, typename T> concept ValidInplaceVectorIter = std::is_same_v<I, InplaceVectorIter<T>> || std::is_same_v<I, InplaceVectorIter<const T>>;
 
     template <typename T>
     class InplaceVectorIter {
@@ -39,6 +39,11 @@ namespace Common {
         using Offset = int64_t;
 
         explicit InplaceVectorIter(T* inPtr);
+
+        InplaceVectorIter(const InplaceVectorIter& inOther);
+        InplaceVectorIter(InplaceVectorIter&& inOther) noexcept;
+        InplaceVectorIter& operator=(const InplaceVectorIter& inOther);
+        InplaceVectorIter& operator=(InplaceVectorIter&& inOther) noexcept;
 
         template <ValidInplaceVectorIter<T> T2> Offset operator-(const T2& inOther) const;
         template <ValidInplaceVectorIter<T> T2> bool operator==(const T2& inOther) const;
@@ -126,14 +131,14 @@ namespace Common {
         static constexpr size_t memorySize = elementSize * N;
 
         template <ValidInplaceVectorIter<T> I> void CheckIterValid(const I& inIter) const;
-        template <typename... Args> void EmplaceConstruct(size_t inIndex, Args&&... inArgs);
-        template <ValidInplaceVectorIter<T> I, typename... Args> void EmplaceConstruct(const I& inIter, Args&&... inArgs);
-        template <ValidInplaceVectorIter<T> I> void EmplaceDestruct(const I& inIter);
+        template <typename... Args> void InplaceConstruct(size_t inIndex, Args&&... inArgs);
+        template <ValidInplaceVectorIter<T> I, typename... Args> void InplaceConstruct(const I& inIter, Args&&... inArgs);
+        template <ValidInplaceVectorIter<T> I> void InplaceDestruct(const I& inIter);
         template <typename T2> T& InsertInternal(size_t inIndex, T2&& inElement);
         template <ValidInplaceVectorIter<T> I, typename T2> T& InsertInternal(const I& inIter, T2&& inElement);
         template <ValidInplaceVectorIter<T> I> void EraseInternal(const I& inIter);
         template <ValidInplaceVectorIter<T> I> void EraseSwapLastInternal(const I& inIter);
-        void EmplaceDestruct(size_t inIndex);
+        void InplaceDestruct(size_t inIndex);
         T& TypedMemory(size_t inIndex);
         const T& TypedMemory(size_t inIndex) const;
         void CheckIndexValid(size_t inIndex) const;
@@ -141,6 +146,91 @@ namespace Common {
 
         size_t size;
         std::array<uint8_t, memorySize> memory;
+    };
+
+    // TODO trunk handle
+    // TODO trunk list handle
+
+    template <typename T>
+    class TrunkHandle {
+    public:
+        TrunkHandle();
+        ~TrunkHandle();
+
+        NonCopyable(TrunkHandle)
+        TrunkHandle(TrunkHandle&& inOther) noexcept;
+        TrunkHandle& operator=(TrunkHandle&& inOther) noexcept;
+
+        // TODO
+
+    private:
+        T* ptr;
+    };
+
+    template <typename T, size_t ElemNumPerTrunk = 128>
+    class Trunk {
+    public:
+        using TraverseFunc = std::function<void(T&)>;
+        using ConstTraverseFunc = std::function<void(const T&)>;
+
+        Trunk();
+        ~Trunk();
+
+        Trunk(const Trunk& inOther);
+        Trunk(Trunk&& inOther) noexcept;
+        Trunk& operator=(const Trunk& inOther);
+        Trunk& operator=(Trunk&& inOther) noexcept;
+
+        // TODO use handle version
+        template <typename... Args> T& Allocate(Args&&... inArgs);
+        bool HasFree() const;
+        bool Valid(const T& inObj) const;
+        void Erase(const T& inObj);
+        void Each(const TraverseFunc& inFunc);
+        void Each(const ConstTraverseFunc& inFunc) const;
+        size_t Free() const;
+        size_t Used() const;
+
+    private:
+        static constexpr size_t elemMemSize = sizeof(T);
+        static constexpr size_t totalMemSize = elemMemSize * ElemNumPerTrunk;
+
+        bool CheckContains(const T& inObj);
+        T& TypedMemory(size_t inIndex);
+        const T& TypedMemory(size_t inIndex) const;
+
+        std::bitset<ElemNumPerTrunk> allocated;
+        std::array<uint8_t, totalMemSize> memory;
+    };
+
+    // pointer stable
+    template <typename T, size_t ElemNumPerTrunk = 128>
+    class TrunkList {
+    public:
+        using TraverseFunc = typename Trunk<T>::TraverseFunc;
+        using ConstTraverseFunc = typename Trunk<T>::ConstTraverseFunc;
+
+        TrunkList();
+        ~TrunkList();
+
+        TrunkList(const TrunkList& inOther);
+        TrunkList(TrunkList&& inOther) noexcept;
+        TrunkList& operator=(const TrunkList& inOther);
+        TrunkList& operator=(TrunkList&& inOther) noexcept;
+
+        // TODO use handle version
+        template <typename... Args> T& Emplace(Args&&... inArgs);
+        void Erase(const T& inObj);
+        bool Valid(const T& inObj) const;
+        void Each(const TraverseFunc& inFunc);
+        void Each(const ConstTraverseFunc& inFunc) const;
+        size_t Size() const;
+        size_t Capacity() const;
+        void Reserve(size_t inSize);
+        void Clear();
+
+    private:
+        std::list<Trunk<T>> trunks;
     };
 }
 
@@ -215,6 +305,38 @@ namespace Common {
     }
 
     template <typename T>
+    InplaceVectorIter<T>::InplaceVectorIter(T* inPtr)
+        : ptr(inPtr)
+    {
+    }
+
+    template <typename T>
+    InplaceVectorIter<T>::InplaceVectorIter(const InplaceVectorIter& inOther)
+        : ptr(inOther.ptr)
+    {
+    }
+
+    template <typename T>
+    InplaceVectorIter<T>::InplaceVectorIter(InplaceVectorIter&& inOther) noexcept
+        : ptr(inOther.ptr)
+    {
+    }
+
+    template <typename T>
+    InplaceVectorIter<T>& InplaceVectorIter<T>::operator=(const InplaceVectorIter& inOther)
+    {
+        ptr = inOther.ptr;
+        return *this;
+    }
+
+    template <typename T>
+    InplaceVectorIter<T>& InplaceVectorIter<T>::operator=(InplaceVectorIter&& inOther) noexcept
+    {
+        ptr = inOther.ptr;
+        return *this;
+    }
+
+    template <typename T>
     template <ValidInplaceVectorIter<T> T2>
     typename InplaceVectorIter<T>::Offset InplaceVectorIter<T>::operator-(const T2& inOther) const
     {
@@ -261,12 +383,6 @@ namespace Common {
     bool InplaceVectorIter<T>::operator<=(const T2& inOther) const
     {
         return ptr <= inOther.Ptr();
-    }
-
-    template <typename T>
-    InplaceVectorIter<T>::InplaceVectorIter(T* inPtr)
-        : ptr(inPtr)
-    {
     }
 
     template <typename T>
@@ -361,7 +477,7 @@ namespace Common {
         : size(inSize)
     {
         for (auto i = 0; i < size; i++) {
-            EmplaceConstruct(i, inDefault);
+            InplaceConstruct(i, inDefault);
         }
     }
 
@@ -369,7 +485,7 @@ namespace Common {
     InplaceVector<T, N>::~InplaceVector()
     {
         for (auto i = 0; i < size; i++) {
-            EmplaceDestruct(i);
+            InplaceDestruct(i);
         }
     }
 
@@ -379,7 +495,7 @@ namespace Common {
     {
         static_assert(std::is_copy_constructible_v<T>);
         for (auto i = 0; i < size; i++) {
-            EmplaceConstruct(i, inOther.TypedMemory(i));
+            InplaceConstruct(i, inOther.TypedMemory(i));
         }
     }
 
@@ -389,7 +505,7 @@ namespace Common {
     {
         static_assert(std::is_move_constructible_v<T>);
         for (auto i = 0; i < size; i++) {
-            EmplaceConstruct(i, std::move(inOther.TypedMemory(i)));
+            InplaceConstruct(i, std::move(inOther.TypedMemory(i)));
         }
     }
 
@@ -400,14 +516,14 @@ namespace Common {
         const auto oldSize = size;
         size = inOther.size;
         for (auto i = size; i < oldSize; i++) {
-            EmplaceDestruct(i);
+            InplaceDestruct(i);
         }
 
         for (auto i = 0; i < size; i++) {
             if (i < oldSize) {
                 TypedMemory(i) = inOther.TypedMemory(i);
             } else {
-                EmplaceConstruct(i, inOther.TypedMemory(i));
+                InplaceConstruct(i, inOther.TypedMemory(i));
             }
         }
         return *this;
@@ -420,14 +536,14 @@ namespace Common {
         const auto oldSize = size;
         size = inOther.size;
         for (auto i = size; i < oldSize; i++) {
-            EmplaceDestruct(i);
+            InplaceDestruct(i);
         }
 
         for (auto i = 0; i < size; i++) {
             if (i < oldSize) {
                 TypedMemory(i) = std::move(inOther.TypedMemory(i));
             } else {
-                EmplaceConstruct(i, std::move(inOther.TypedMemory(i)));
+                InplaceConstruct(i, std::move(inOther.TypedMemory(i)));
             }
         }
         return *this;
@@ -439,7 +555,7 @@ namespace Common {
     {
         CheckInsertible();
         auto lastIndex = size++;
-        EmplaceConstruct(lastIndex, std::forward<Args>(inArgs)...);
+        InplaceConstruct(lastIndex, std::forward<Args>(inArgs)...);
         return TypedMemory(lastIndex);
     }
 
@@ -494,7 +610,7 @@ namespace Common {
     template <typename T, size_t N>
     void InplaceVector<T, N>::PopBack()
     {
-        EmplaceDestruct(size - 1);
+        InplaceDestruct(size - 1);
         size--;
     }
 
@@ -513,7 +629,7 @@ namespace Common {
                 Assert(false);
             }
         }
-        EmplaceDestruct(size - 1);
+        InplaceDestruct(size - 1);
         size--;
     }
 
@@ -542,7 +658,7 @@ namespace Common {
         } else {
             Assert(false);
         }
-        EmplaceDestruct(size - 1);
+        InplaceDestruct(size - 1);
         size--;
     }
 
@@ -594,14 +710,14 @@ namespace Common {
         const auto oldSize = size;
         size = inSize;
         for (auto i = size; i < oldSize; i++) {
-            EmplaceDestruct(i);
+            InplaceDestruct(i);
         }
 
         for (auto i = 0; i < size; i++) {
             if (i < oldSize) {
                 TypedMemory(i) = inDefault;
             } else {
-                EmplaceConstruct(i, inDefault);
+                InplaceConstruct(i, inDefault);
             }
         }
     }
@@ -732,7 +848,7 @@ namespace Common {
 
     template <typename T, size_t N>
     template <typename... Args>
-    void InplaceVector<T, N>::EmplaceConstruct(size_t inIndex, Args&&... inArgs)
+    void InplaceVector<T, N>::InplaceConstruct(size_t inIndex, Args&&... inArgs)
     {
         CheckIndexValid(inIndex);
         new(reinterpret_cast<T*>(memory.data()) + inIndex) T(std::forward<Args>(inArgs)...);
@@ -740,7 +856,7 @@ namespace Common {
 
     template <typename T, size_t N>
     template <ValidInplaceVectorIter<T> I, typename ... Args>
-    void InplaceVector<T, N>::EmplaceConstruct(const I& inIter, Args&&... inArgs)
+    void InplaceVector<T, N>::InplaceConstruct(const I& inIter, Args&&... inArgs)
     {
         CheckIterValid(inIter);
         new(&*inIter) T(std::forward<Args>(inArgs)...);
@@ -748,7 +864,7 @@ namespace Common {
 
     template <typename T, size_t N>
     template <ValidInplaceVectorIter<T> I>
-    void InplaceVector<T, N>::EmplaceDestruct(const I& inIter)
+    void InplaceVector<T, N>::InplaceDestruct(const I& inIter)
     {
         CheckIterValid(inIter);
         inIter->~T();
@@ -771,9 +887,9 @@ namespace Common {
         for (auto i = size - 1; i > inIndex; i--) {
             if (i == size - 1) {
                 if constexpr (std::is_move_constructible_v<T>) {
-                    EmplaceConstruct(i, std::move(TypedMemory(i - 1)));
+                    InplaceConstruct(i, std::move(TypedMemory(i - 1)));
                 } else if constexpr (std::is_copy_constructible_v<T>) {
-                    EmplaceConstruct(i, TypedMemory(i - 1));
+                    InplaceConstruct(i, TypedMemory(i - 1));
                 } else {
                     Assert(false);
                 }
@@ -809,9 +925,9 @@ namespace Common {
         for (auto iter = End() - 1; iter > inIter; --iter) {
             if (iter == End() - 1) {
                 if constexpr (std::is_move_constructible_v<T>) {
-                    EmplaceConstruct(iter, std::move(*(iter - 1)));
+                    InplaceConstruct(iter, std::move(*(iter - 1)));
                 } else if constexpr (std::is_copy_constructible_v<T>) {
-                    EmplaceConstruct(iter, TypedMemory(*(iter - 1)));
+                    InplaceConstruct(iter, TypedMemory(*(iter - 1)));
                 } else {
                     Assert(false);
                 }
@@ -846,7 +962,7 @@ namespace Common {
                 Assert(false);
             }
         }
-        EmplaceDestruct(End() - 1);
+        InplaceDestruct(End() - 1);
         size--;
     }
 
@@ -864,12 +980,12 @@ namespace Common {
         } else {
             Assert(false);
         }
-        EmplaceDestruct(End() - 1);
+        InplaceDestruct(End() - 1);
         size--;
     }
 
     template <typename T, size_t N>
-    void InplaceVector<T, N>::EmplaceDestruct(size_t inIndex)
+    void InplaceVector<T, N>::InplaceDestruct(size_t inIndex)
     {
         CheckIndexValid(inIndex);
         TypedMemory(inIndex).~T();

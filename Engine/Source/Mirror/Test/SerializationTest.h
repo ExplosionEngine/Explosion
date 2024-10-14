@@ -61,6 +61,12 @@ struct EClass() SerializationTestStruct2 : SerializationTestStruct0 {
     EClassBody(SerializationTestStruct2);
 
     EProperty() double d;
+
+    bool operator==(const SerializationTestStruct2& rhs) const
+    {
+        return SerializationTestStruct0::operator==(rhs)
+            && d == rhs.d;
+    }
 };
 
 struct EClass() SerializationTestStruct3 {

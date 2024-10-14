@@ -21,16 +21,6 @@ namespace Runtime {
     using Entity = entt::entity;
     constexpr auto entityNull = entt::null;
 
-    class RUNTIME_API EClass() Component {
-        EClassBody(Component)
-        Component();
-    };
-
-    class RUNTIME_API EClass() State {
-        EClassBody(State)
-        State();
-    };
-
     class Commands;
 
     class RUNTIME_API EClass() System {
@@ -38,12 +28,11 @@ namespace Runtime {
         System();
         virtual ~System();
 
-        EFunc() virtual void Setup(Commands& commands) const;
-        EFunc() virtual void Tick(Commands& commands, float inTimeMs) const;
+        virtual void Setup(Commands& inCommands) const;
+        virtual void Tick(Commands& inCommands, float inTimeMs) const;
+        virtual void Stop(Commands& inCommands) const;
     };
 
-    template <typename S> concept StateDerived = std::is_base_of_v<State, S>;
-    template <typename C> concept CompDerived = std::is_base_of_v<Component, C>;
     template <typename S> concept SystemDerived = std::is_base_of_v<System, S>;
     template <typename... T> struct Exclude {};
 }
@@ -51,6 +40,9 @@ namespace Runtime {
 namespace Runtime {
     class World;
     class Ticker;
+
+    template <typename... Args> class BasicCollector;
+    using Collector = BasicCollector<>;
 
     template <typename... Args>
     class CompView {
@@ -75,7 +67,27 @@ namespace Runtime {
     // TODO runtime view
 
     using StateClass = const Mirror::Class*;
+    using CompClass = const Mirror::Class*;
     using SystemClass = const Mirror::Class*;
+
+    class Commands;
+
+    class RUNTIME_API Observer {
+    public:
+        using Iterator = entt::observer::iterator;
+
+        template <typename... Matchers> Observer(Commands& inCommands, const BasicCollector<Matchers...>& inCollector);
+
+        template <typename F> void Each(F&& inFunc);
+        void Clear();
+        Iterator Begin() const;
+        Iterator End() const;
+        Iterator begin() const;
+        Iterator end() const;
+
+    private:
+        entt::observer observer;
+    };
 
     class RUNTIME_API Commands {
     public:
@@ -83,30 +95,33 @@ namespace Runtime {
 
         Entity CreateEntity();
         void DestroyEntity(Entity inEntity);
+        bool HasEntity(Entity inEntity) const;
 
-        template <StateDerived S> bool HasState() const;
-        template <StateDerived S, typename... Args> S& EmplaceState(Args&&... inArgs);
-        template <StateDerived S> S* FindState();
-        template <StateDerived S> const S* FindState() const;
-        template <StateDerived S> S& GetState();
-        template <StateDerived S> const S& GetState() const;
-        template <CompDerived C> bool HasComp(Entity inEntity) const;
-        template <CompDerived C, typename... Args> C& EmplaceComp(Entity inEntity, Args&&... inArgs);
-        template <CompDerived C> C* FindComp(Entity inEntity);
-        template <CompDerived C> const C* FindComp(Entity inEntity) const;
-        template <CompDerived C> C& GetComp(Entity inEntity);
-        template <CompDerived C> const C& GetComp(Entity inEntity) const;
-
+        template <typename S> bool HasState() const;
+        template <typename S, typename... Args> const S& EmplaceState(Args&&... inArgs);
+        template <typename S> const S* FindState() const;
+        template <typename S> const S& GetState() const;
+        template <typename S> void RemoveState();
+        template <typename S, typename F> void PatchState(F&& inFunc);
+        template <typename C> bool HasComp(Entity inEntity) const;
+        template <typename C, typename... Args> const C& EmplaceComp(Entity inEntity, Args&&... inArgs);
+        template <typename C> const C* FindComp(Entity inEntity) const;
+        template <typename C> const C& GetComp(Entity inEntity) const;
+        template <typename C> void RemoveComp(Entity inEntity);
+        template <typename C, typename F> void PatchComp(Entity inEntity, F&& inFunc);
         template <typename... C, typename... E> auto View(Exclude<E...> = {});
         template <typename... C, typename... E> auto View(Exclude<E...> = {}) const;
         // TODO runtime view
+        template <typename... M> Observer CreateObserver(const BasicCollector<M...>& inCollector);
+        // TODO component lifecycle listeners
 
     private:
         friend class World;
+        friend class Observer;
 
-        explicit Commands(World& inWorld);
+        explicit Commands(entt::registry& inRegistry);
 
-        World& world;
+        entt::registry& registry;
     };
 
     // world is fully runtime structure, we use level to perform persist storage
@@ -131,18 +146,20 @@ namespace Runtime {
 
     private:
         friend class Commands;
+        friend class Observer;
 
         using SystemOp = std::function<void(const System&)>;
+
+        // TODO we not want read-write in a barrier time, so we maybe need runtime read-write check
         void ExecuteSystemGraph(const SystemOp& inOp);
 
-        bool setuped;
+        bool setup;
         bool playing;
         std::string name;
-        std::unordered_map<StateClass, Mirror::Any> states;
+        entt::registry registry;
         std::unordered_map<SystemClass, Mirror::Any> systems;
         std::vector<std::vector<SystemClass>> systemsGraph;
         std::vector<SystemClass> systemsInBarriers;
-        entt::registry registry;
     };
 }
 
@@ -152,9 +169,97 @@ namespace Runtime::Internal {
     {
         return &Mirror::Class::Get<T>();
     }
+
+    template <typename LibType>
+    struct CollectorConverter {};
+
+    template <>
+    struct CollectorConverter<entt::basic_collector<>> {
+        using EngineType = BasicCollector<>;
+    };
+
+    template <typename... Reject, typename... Require, typename... Rule, typename... Other>
+    struct CollectorConverter<entt::basic_collector<entt::matcher<entt::type_list<Reject...>, entt::type_list<Require...>, Rule...>, Other...>> {
+        using EngineType = BasicCollector<entt::matcher<entt::type_list<Reject...>, entt::type_list<Require...>, Rule...>, Other...>;
+    };
 }
 
 namespace Runtime {
+    template <>
+    class BasicCollector<> {
+    public:
+        BasicCollector() = default;
+
+        template <typename... AllOf, typename... NoneOf>
+        static constexpr auto Group(Exclude<NoneOf...> = {}) noexcept
+        {
+            using LibRetType = decltype(entt::basic_collector<>::group<AllOf..., NoneOf...>(entt::exclude<NoneOf...>));
+            return typename Internal::CollectorConverter<LibRetType>::EngineType {};
+        }
+
+        template <typename AnyOf>
+        static constexpr auto Update() noexcept
+        {
+            using LibRetType = decltype(entt::basic_collector<>::update<AnyOf>());
+            return typename Internal::CollectorConverter<LibRetType>::EngineType {};
+        }
+
+    private:
+        friend class Observer;
+
+        static auto Final() noexcept
+        {
+            return entt::basic_collector<> {};
+        }
+    };
+
+    template <typename... Args>
+    class BasicCollector {
+    public:
+        BasicCollector() = default;
+
+        template<typename... AllOf, typename... NoneOf>
+        static constexpr auto Group(Exclude<NoneOf...> = {}) noexcept
+        {
+            using LibRetType = decltype(entt::basic_collector<Args...>::template group<AllOf..., NoneOf...>(entt::exclude<NoneOf...>));
+            return typename Internal::CollectorConverter<LibRetType>::EngineType {};
+        }
+
+        template<typename AnyOf>
+        static constexpr auto Update() noexcept
+        {
+            using LibRetType = decltype(entt::basic_collector<Args...>::template update<AnyOf>());
+            return typename Internal::CollectorConverter<LibRetType>::EngineType {};
+        }
+
+        template<typename... AllOf, typename... NoneOf>
+        static constexpr auto Where(Exclude<NoneOf...> = {}) noexcept
+        {
+            using LibRetType = decltype(entt::basic_collector<Args...>::template where<AllOf..., NoneOf...>(entt::exclude<NoneOf...>));
+            return typename Internal::CollectorConverter<LibRetType>::EngineType {};
+        }
+
+    private:
+        friend class Observer;
+
+        static auto Final() noexcept
+        {
+            return entt::basic_collector<Args...> {};
+        }
+    };
+
+    template <typename ... Matchers>
+    Observer::Observer(Commands& inCommands, const BasicCollector<Matchers...>& inCollector)
+        : observer(inCommands.registry, inCollector.Final())
+    {
+    }
+
+    template <typename F>
+    void Observer::Each(F&& inFunc)
+    {
+        observer.each(std::forward<F>(inFunc));
+    }
+
     template <typename ... Args>
     CompView<Args...>::CompView(const entt::basic_view<Entity, Args...>& inView)
         : view(inView)
@@ -204,99 +309,97 @@ namespace Runtime {
         return End();
     }
 
-    template <StateDerived S>
+    template <typename S>
     bool Commands::HasState() const
     {
-        return world.states.contains(Internal::GetClassChecked<S>());
+        return registry.try_ctx<S>() != nullptr;
     }
 
-    template <StateDerived S, typename ... Args>
-    S& Commands::EmplaceState(Args&&... inArgs)
+    template <typename S, typename ... Args>
+    const S& Commands::EmplaceState(Args&&... inArgs)
     {
-        world.states.emplace(Internal::GetClassChecked<S>(), Mirror::Any(S(std::forward<S>(inArgs)...)));
-        return GetState<S>();
+        return registry.set<S>(std::forward<Args>(inArgs)...);
     }
 
-    template <StateDerived S>
-    S* Commands::FindState()
-    {
-        auto* clazz = Internal::GetClassChecked<S>();
-        auto iter = world.states.find(clazz);
-        return iter == world.states.end() ? nullptr : &iter->second.template As<S&>();
-    }
-
-    template <StateDerived S>
+    template <typename S>
     const S* Commands::FindState() const
     {
-        auto* clazz = Internal::GetClassChecked<S>();
-        auto iter = world.states.find(clazz);
-        return iter == world.states.end() ? nullptr : &iter->second.template As<const S&>();
+        return registry.try_ctx<S>();
     }
 
-    template <StateDerived S>
-    S& Commands::GetState()
-    {
-        Assert(HasState<S>());
-        return world.states.at(Internal::GetClassChecked<S>()).template As<S&>();
-    }
-
-    template <StateDerived S>
+    template <typename S>
     const S& Commands::GetState() const
     {
-        Assert(HasState<S>());
-        return world.states.at(Internal::GetClassChecked<S>()).template As<const S&>();
+        return registry.ctx<S>();
     }
 
-    template <CompDerived C>
+    template <typename S>
+    void Commands::RemoveState() // NOLINT
+    {
+        registry.unset<S>();
+    }
+
+    template <typename S, typename F>
+    void Commands::PatchState(F&& inFunc)
+    {
+        Assert(HasState<S>());
+        inFunc(registry.ctx<S>());
+    }
+
+    template <typename C>
     bool Commands::HasComp(Entity inEntity) const
     {
-        return world.registry.try_get<C>(inEntity) != nullptr;
+        return registry.try_get<C>(inEntity) != nullptr;
     }
 
-    template <CompDerived C, typename ... Args>
-    C& Commands::EmplaceComp(Entity inEntity, Args&&... inArgs)
+    template <typename C, typename ... Args>
+    const C& Commands::EmplaceComp(Entity inEntity, Args&&... inArgs)
     {
-        return world.registry.emplace<C>(inEntity, std::forward<Args>(inArgs)...);
+        return registry.emplace<C>(inEntity, std::forward<Args>(inArgs)...);
     }
 
-    template <CompDerived C>
-    C* Commands::FindComp(Entity inEntity)
-    {
-        return world.registry.try_get<C>(inEntity);
-    }
-
-    template <CompDerived C>
+    template <typename C>
     const C* Commands::FindComp(Entity inEntity) const
     {
-        return world.registry.try_get<C>(inEntity);
+        return registry.try_get<C>(inEntity);
     }
 
-    template <CompDerived C>
-    C& Commands::GetComp(Entity inEntity)
-    {
-        auto* result = world.registry.try_get<C>(inEntity);
-        Assert(result != nullptr);
-        return *result;
-    }
-
-    template <CompDerived C>
+    template <typename C>
     const C& Commands::GetComp(Entity inEntity) const
     {
-        auto* result = world.registry.try_get<C>(inEntity);
+        auto* result = registry.try_get<C>(inEntity);
         Assert(result != nullptr);
         return *result;
+    }
+
+    template <typename C>
+    void Commands::RemoveComp(Entity inEntity) // NOLINT
+    {
+        registry.erase<C>(inEntity);
+    }
+
+    template <typename C, typename F>
+    void Commands::PatchComp(Entity inEntity, F&& inFunc)
+    {
+        registry.patch<C>(inEntity, std::forward<F>(inFunc));
     }
 
     template <typename ... C, typename ... E>
     auto Commands::View(Exclude<E...>)
     {
-        return CompView<entt::exclude_t<E...>, C...>(world.registry.view<C...>(entt::exclude_t<E...> {}));
+        return CompView<entt::exclude_t<E...>, C...>(registry.view<C...>(entt::exclude_t<E...> {}));
     }
 
     template <typename ... C, typename ... E>
     auto Commands::View(Exclude<E...>) const
     {
-        return CompView<entt::exclude_t<E...>, std::add_const_t<C>...>(world.registry.view<C...>(entt::exclude_t<E...> {}));
+        return CompView<entt::exclude_t<E...>, std::add_const_t<C>...>(registry.view<C...>(entt::exclude_t<E...> {}));
+    }
+
+    template <typename ... M>
+    Observer Commands::CreateObserver(const BasicCollector<M...>& inCollector)
+    {
+        return { *this, inCollector };
     }
 
     template <SystemDerived System, typename ... Args>
