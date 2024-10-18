@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <array>
 #include <bitset>
+#include <list>
 
 #include <Common/Debug.h>
 #include <Common/Concepts.h>
@@ -148,30 +149,14 @@ namespace Common {
         std::array<uint8_t, memorySize> memory;
     };
 
-    // TODO trunk handle
-    // TODO trunk list handle
-
-    template <typename T>
-    class TrunkHandle {
-    public:
-        TrunkHandle();
-        ~TrunkHandle();
-
-        NonCopyable(TrunkHandle)
-        TrunkHandle(TrunkHandle&& inOther) noexcept;
-        TrunkHandle& operator=(TrunkHandle&& inOther) noexcept;
-
-        // TODO
-
-    private:
-        T* ptr;
-    };
-
-    template <typename T, size_t ElemNumPerTrunk = 128>
+    // container which perform inplace destruct and leave a slot for re-alloc when erase
+    template <typename T, size_t N = 128>
     class Trunk {
     public:
         using TraverseFunc = std::function<void(T&)>;
         using ConstTraverseFunc = std::function<void(const T&)>;
+
+        static constexpr size_t Capacity();
 
         Trunk();
         ~Trunk();
@@ -181,56 +166,99 @@ namespace Common {
         Trunk& operator=(const Trunk& inOther);
         Trunk& operator=(Trunk&& inOther) noexcept;
 
-        // TODO use handle version
-        template <typename... Args> T& Allocate(Args&&... inArgs);
-        bool HasFree() const;
-        bool Valid(const T& inObj) const;
-        void Erase(const T& inObj);
+        template <typename... Args> size_t Allocate(Args&&... inArgs);
+        bool Valid(size_t inIndex) const;
+        void Erase(size_t inIndex);
+        T* Try(size_t inIndex);
+        const T* Try(size_t inIndex) const;
+        T* At(size_t inIndex);
+        const T* At(size_t inIndex) const;
         void Each(const TraverseFunc& inFunc);
         void Each(const ConstTraverseFunc& inFunc) const;
+        bool HasFree() const;
         size_t Free() const;
-        size_t Used() const;
+        size_t Allocated() const;
+        bool Empty() const;
+        void Clear();
+        explicit operator bool() const;
+        T& operator[](size_t inIndex);
+        const T& operator[](size_t inIndex) const;
 
     private:
         static constexpr size_t elemMemSize = sizeof(T);
-        static constexpr size_t totalMemSize = elemMemSize * ElemNumPerTrunk;
+        static constexpr size_t totalMemSize = elemMemSize * N;
+        static bool Contains(size_t inIndex);
 
-        bool CheckContains(const T& inObj);
         T& TypedMemory(size_t inIndex);
         const T& TypedMemory(size_t inIndex) const;
+        template <typename... Args> void InplaceConstruct(size_t inIndex, Args&&... inArgs);
+        void InplaceDestruct(size_t inIndex);
 
-        std::bitset<ElemNumPerTrunk> allocated;
+        std::bitset<N> allocated;
         std::array<uint8_t, totalMemSize> memory;
     };
 
     // pointer stable
-    template <typename T, size_t ElemNumPerTrunk = 128>
+    template <typename T, size_t N = 128>
     class TrunkList {
     public:
-        using TraverseFunc = typename Trunk<T>::TraverseFunc;
-        using ConstTraverseFunc = typename Trunk<T>::ConstTraverseFunc;
+        using TraverseFunc = typename Trunk<T, N>::TraverseFunc;
+        using ConstTraverseFunc = typename Trunk<T, N>::ConstTraverseFunc;
+
+        class ConstHandle {
+        public:
+            ConstHandle(const TrunkList* inOwner, const Trunk<T, N>* inTrunk, size_t inIndex);
+
+            explicit operator bool() const;
+            T* operator->() const;
+            T& operator*() const;
+
+        private:
+            friend class TrunkList;
+
+            void Valid();
+
+            const TrunkList* owner;
+            const Trunk<T, N>* trunk;
+            size_t index;
+        };
+
+        class Handle {
+        public:
+            Handle(TrunkList* inOwner, Trunk<T, N>* inTrunk, size_t inIndex);
+
+            ConstHandle Const() const;
+            explicit operator bool() const;
+            const T* operator->() const;
+            const T& operator*() const;
+
+        private:
+            friend class TrunkList;
+
+            void Valid();
+
+            TrunkList* owner;
+            Trunk<T, N>* trunk;
+            size_t index;
+        };
 
         TrunkList();
         ~TrunkList();
 
-        TrunkList(const TrunkList& inOther);
-        TrunkList(TrunkList&& inOther) noexcept;
-        TrunkList& operator=(const TrunkList& inOther);
-        TrunkList& operator=(TrunkList&& inOther) noexcept;
-
-        // TODO use handle version
-        template <typename... Args> T& Emplace(Args&&... inArgs);
-        void Erase(const T& inObj);
-        bool Valid(const T& inObj) const;
+        template <typename... Args> Handle Allocate(Args&&... inArgs) const;
+        void Erase(const Handle& inHandle);
+        void Erase(const ConstHandle& inHandle);
         void Each(const TraverseFunc& inFunc);
         void Each(const ConstTraverseFunc& inFunc) const;
-        size_t Size() const;
+        void Reserve(size_t inIndex) const;
+        size_t Allocated() const;
         size_t Capacity() const;
-        void Reserve(size_t inSize);
-        void Clear();
+        size_t Free() const;
+        bool Empty() const;
+        explicit operator bool() const;
 
     private:
-        std::list<Trunk<T>> trunks;
+        std::list<Trunk<T, N>> trunks;
     };
 }
 
@@ -1015,5 +1043,418 @@ namespace Common {
     void InplaceVector<T, N>::CheckInsertible(size_t inNum) const
     {
         Assert(size + inNum <= N);
+    }
+
+    template <typename T, size_t N>
+    constexpr size_t Trunk<T, N>::Capacity()
+    {
+        return N;
+    }
+
+    template <typename T, size_t N>
+    Trunk<T, N>::Trunk() = default;
+
+    template <typename T, size_t N>
+    Trunk<T, N>::~Trunk()
+    {
+        Clear();
+    }
+
+    template <typename T, size_t N>
+    Trunk<T, N>::Trunk(const Trunk& inOther)
+        : allocated(inOther.allocated)
+        , memory()
+    {
+        for (auto i = 0; i < allocated.size(); i++) {
+            if (allocated.test(i)) {
+                InplaceConstruct(i, inOther.TypedMemory(i));
+            }
+        }
+    }
+
+    template <typename T, size_t N>
+    Trunk<T, N>::Trunk(Trunk&& inOther) noexcept
+        : allocated(std::move(inOther.allocated))
+        , memory()
+    {
+        for (auto i = 0; i < allocated.size(); i++) {
+            if (allocated.test(i)) {
+                InplaceConstruct(i, std::move(inOther.TypedMemory(i)));
+            }
+        }
+    }
+
+    template <typename T, size_t N>
+    Trunk<T, N>& Trunk<T, N>::operator=(const Trunk& inOther)
+    {
+        auto oldAllocated = allocated;
+        allocated = inOther.allocated;
+
+        for (auto i = 0; i < allocated.size(); i++) {
+            if (oldAllocated.test(i) && !allocated.test(i)) {
+                InplaceDestruct(i);
+            }
+            if (!oldAllocated.test(i) && allocated.test(i)) {
+                InplaceConstruct(i, inOther.TypedMemory(i));
+            }
+            if (oldAllocated.test(i) && allocated.test(i)) {
+                TypedMemory(i) = inOther.TypedMemory(i);
+            }
+        }
+        return *this;
+    }
+
+    template <typename T, size_t N>
+    Trunk<T, N>& Trunk<T, N>::operator=(Trunk&& inOther) noexcept
+    {
+        auto oldAllocated = allocated;
+        allocated = inOther.allocated;
+
+        for (auto i = 0; i < allocated.size(); i++) {
+            if (oldAllocated.test(i) && !allocated.test(i)) {
+                InplaceDestruct(i);
+            }
+            if (!oldAllocated.test(i) && allocated.test(i)) {
+                InplaceConstruct(i, std::move(inOther.TypedMemory(i)));
+            }
+            if (oldAllocated.test(i) && allocated.test(i)) {
+                TypedMemory(i) = std::move(inOther.TypedMemory(i));
+            }
+        }
+        return *this;
+    }
+
+    template <typename T, size_t N>
+    template <typename ... Args>
+    size_t Trunk<T, N>::Allocate(Args&&... inArgs)
+    {
+        for (auto i = 0; i < allocated.size(); i++) {
+            if (!allocated.test(i)) {
+                allocated.set(i, true);
+                InplaceConstruct(i, std::forward<Args>(inArgs)...);
+                return i;
+            }
+        }
+        QuickFailWithReason("container is full");
+        return 0;
+    }
+
+    template <typename T, size_t N>
+    bool Trunk<T, N>::Valid(size_t inIndex) const
+    {
+        if (!Contains(inIndex)) {
+            return false;
+        }
+        return allocated.test(inIndex);
+    }
+
+    template <typename T, size_t N>
+    void Trunk<T, N>::Erase(size_t inIndex)
+    {
+        Assert(Valid(inIndex));
+        allocated.set(inIndex, false);
+        InplaceDestruct(inIndex);
+    }
+
+    template <typename T, size_t N>
+    T* Trunk<T, N>::Try(size_t inIndex)
+    {
+        return Valid(inIndex) ? &TypedMemory(inIndex) : nullptr;
+    }
+
+    template <typename T, size_t N>
+    const T* Trunk<T, N>::Try(size_t inIndex) const
+    {
+        return Valid(inIndex) ? &TypedMemory(inIndex) : nullptr;
+    }
+
+    template <typename T, size_t N>
+    T* Trunk<T, N>::At(size_t inIndex)
+    {
+        Assert(Valid(inIndex));
+        return &TypedMemory(inIndex);
+    }
+
+    template <typename T, size_t N>
+    const T* Trunk<T, N>::At(size_t inIndex) const
+    {
+        Assert(Valid(inIndex));
+        return &TypedMemory(inIndex);
+    }
+
+    template <typename T, size_t N>
+    void Trunk<T, N>::Each(const TraverseFunc& inFunc)
+    {
+        for (auto i = 0; i < allocated.size(); i++) {
+            if (allocated.test(i)) {
+                inFunc(TypedMemory(i));
+            }
+        }
+    }
+
+    template <typename T, size_t N>
+    void Trunk<T, N>::Each(const ConstTraverseFunc& inFunc) const
+    {
+        for (auto i = 0; i < allocated.size(); i++) {
+            if (allocated.test(i)) {
+                inFunc(TypedMemory(i));
+            }
+        }
+    }
+
+    template <typename T, size_t N>
+    bool Trunk<T, N>::HasFree() const
+    {
+        return Free() > 0;
+    }
+
+    template <typename T, size_t N>
+    size_t Trunk<T, N>::Free() const
+    {
+        return Capacity() - Allocated();
+    }
+
+    template <typename T, size_t N>
+    size_t Trunk<T, N>::Allocated() const
+    {
+        return allocated.count();
+    }
+
+    template <typename T, size_t N>
+    bool Trunk<T, N>::Empty() const
+    {
+        return Allocated() > 0;
+    }
+
+    template <typename T, size_t N>
+    void Trunk<T, N>::Clear()
+    {
+        for (auto i = 0; i < allocated.size(); i++) {
+            if (allocated.test(i)) {
+                InplaceDestruct(i);
+            }
+        }
+    }
+
+    template <typename T, size_t N>
+    Trunk<T, N>::operator bool() const
+    {
+        return !Empty();
+    }
+
+    template <typename T, size_t N>
+    T& Trunk<T, N>::operator[](size_t inIndex)
+    {
+        return At(inIndex);
+    }
+
+    template <typename T, size_t N>
+    const T& Trunk<T, N>::operator[](size_t inIndex) const
+    {
+        return At(inIndex);
+    }
+
+    template <typename T, size_t N>
+    bool Trunk<T, N>::Contains(size_t inIndex)
+    {
+        return inIndex < Capacity();
+    }
+
+    template <typename T, size_t N>
+    T& Trunk<T, N>::TypedMemory(size_t inIndex)
+    {
+        Assert(Contains(inIndex));
+        auto* data = reinterpret_cast<T*>(memory.data());
+        return data[inIndex];
+    }
+
+    template <typename T, size_t N>
+    const T& Trunk<T, N>::TypedMemory(size_t inIndex) const
+    {
+        Assert(Contains(inIndex));
+        const auto* data = reinterpret_cast<const T*>(memory.data());
+        return data[inIndex];
+    }
+
+    template <typename T, size_t N>
+    template <typename ... Args>
+    void Trunk<T, N>::InplaceConstruct(size_t inIndex, Args&&... inArgs)
+    {
+        new(&TypedMemory(inIndex)) T(std::forward<Args>(inArgs)...);
+    }
+
+    template <typename T, size_t N>
+    void Trunk<T, N>::InplaceDestruct(size_t inIndex)
+    {
+        TypedMemory(inIndex).~T();
+    }
+
+    template <typename T, size_t N>
+    TrunkList<T, N>::ConstHandle::ConstHandle(const TrunkList* inOwner, const Trunk<T, N>* inTrunk, size_t inIndex)
+        : owner(inOwner)
+        , trunk(inTrunk)
+        , index(inIndex)
+    {
+    }
+
+    template <typename T, size_t N>
+    TrunkList<T, N>::ConstHandle::operator bool() const
+    {
+        return Valid();
+    }
+
+    template <typename T, size_t N>
+    T* TrunkList<T, N>::ConstHandle::operator->() const
+    {
+        return trunk->Try(index);
+    }
+
+    template <typename T, size_t N>
+    T& TrunkList<T, N>::ConstHandle::operator*() const
+    {
+        return trunk->At(index);
+    }
+
+    template <typename T, size_t N>
+    void TrunkList<T, N>::ConstHandle::Valid()
+    {
+        return trunk->Valid(index);
+    }
+
+    template <typename T, size_t N>
+    TrunkList<T, N>::Handle::Handle(TrunkList* inOwner, Trunk<T, N>* inTrunk, size_t inIndex)
+        : owner(inOwner)
+        , trunk(inTrunk)
+        , index(inIndex)
+    {
+    }
+
+    template <typename T, size_t N>
+    typename TrunkList<T, N>::ConstHandle TrunkList<T, N>::Handle::Const() const
+    {
+        return { trunk, index };
+    }
+
+    template <typename T, size_t N>
+    TrunkList<T, N>::Handle::operator bool() const
+    {
+        return Valid();
+    }
+
+    template <typename T, size_t N>
+    const T* TrunkList<T, N>::Handle::operator->() const
+    {
+        return trunk->Try(index);
+    }
+
+    template <typename T, size_t N>
+    const T& TrunkList<T, N>::Handle::operator*() const
+    {
+        return trunk->At(index);
+    }
+
+    template <typename T, size_t N>
+    void TrunkList<T, N>::Handle::Valid()
+    {
+        return trunk->Valid(index);
+    }
+
+    template <typename T, size_t N>
+    TrunkList<T, N>::TrunkList() = default;
+
+    template <typename T, size_t N>
+    TrunkList<T, N>::~TrunkList() = default;
+
+    template <typename T, size_t N>
+    template <typename ... Args>
+    typename TrunkList<T, N>::Handle TrunkList<T, N>::Allocate(Args&&... inArgs) const
+    {
+        Trunk<T, N>* allocator = nullptr;
+        for (auto& trunk : trunks) {
+            if (trunk.HasFree()) {
+                allocator = &trunk;
+                break;
+            }
+        }
+        allocator = &trunks.emplace_back();
+        return { allocator, allocator->Allocate(std::forward<Args>(inArgs)...) };
+    }
+
+    template <typename T, size_t N>
+    void TrunkList<T, N>::Erase(const Handle& inHandle)
+    {
+        Assert(this == inHandle.owner);
+        inHandle.trunk->Erase(inHandle.index);
+    }
+
+    template <typename T, size_t N>
+    void TrunkList<T, N>::Erase(const ConstHandle& inHandle)
+    {
+        Assert(this == inHandle.owner);
+        inHandle.trunk->Erase(inHandle.index);
+    }
+
+    template <typename T, size_t N>
+    void TrunkList<T, N>::Each(const TraverseFunc& inFunc)
+    {
+        for (auto& trunk : trunks) {
+            trunk.Each(inFunc);
+        }
+    }
+
+    template <typename T, size_t N>
+    void TrunkList<T, N>::Each(const ConstTraverseFunc& inFunc) const
+    {
+        for (auto& trunk : trunks) {
+            trunk.Each(inFunc);
+        }
+    }
+
+    template <typename T, size_t N>
+    void TrunkList<T, N>::Reserve(size_t inIndex) const
+    {
+        auto trunkNum = DivideAndRoundUp(inIndex, N);
+        if (trunkNum <= trunks.size()) {
+            return;
+        }
+        trunks.reserve(trunkNum);
+    }
+
+    template <typename T, size_t N>
+    size_t TrunkList<T, N>::Allocated() const
+    {
+        size_t result = 0;
+        for (const auto& trunk : trunks) {
+            result += trunk.Allocated();
+        }
+        return result;
+    }
+
+    template <typename T, size_t N>
+    size_t TrunkList<T, N>::Capacity() const
+    {
+        return trunks.size() * N;
+    }
+
+    template <typename T, size_t N>
+    size_t TrunkList<T, N>::Free() const
+    {
+        size_t result = 0;
+        for (const auto& trunk : trunks) {
+            result += trunk.Free();
+        }
+        return result;
+    }
+
+    template <typename T, size_t N>
+    bool TrunkList<T, N>::Empty() const
+    {
+        return Allocated() == 0;
+    }
+
+    template <typename T, size_t N>
+    TrunkList<T, N>::operator bool() const
+    {
+        return Empty();
     }
 }

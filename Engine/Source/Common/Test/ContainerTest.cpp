@@ -288,3 +288,13 @@ TEST(ContainerTest, InplaceVectorCopyAndMove)
     ASSERT_EQ(t5[2], temp1);
     ASSERT_EQ(t5[3], temp1);
 }
+
+TEST(ContainerTest, TrunkTest)
+{
+    // TODO
+}
+
+TEST(ContainerTest, TrunkListTest)
+{
+    // TODO
+}
