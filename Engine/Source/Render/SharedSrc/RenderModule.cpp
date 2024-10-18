@@ -2,34 +2,34 @@
 // Created by johnk on 2023/8/4.
 //
 
-#include <Rendering/RenderingModule.h>
-#include <Rendering/Scene.h>
+#include <Render/RenderModule.h>
+#include <Render/Scene.h>
 
-namespace Rendering {
-    RenderingModule::RenderingModule()
+namespace Render {
+    RenderModule::RenderModule()
         : initialized(false)
         , rhiInstance(nullptr)
     {
     }
 
-    RenderingModule::~RenderingModule() = default;
+    RenderModule::~RenderModule() = default;
 
-    void RenderingModule::OnLoad()
+    void RenderModule::OnLoad()
     {
         Module::OnLoad();
     }
 
-    void RenderingModule::OnUnload()
+    void RenderModule::OnUnload()
     {
         Module::OnUnload();
     }
 
-    Core::ModuleType RenderingModule::Type() const
+    Core::ModuleType RenderModule::Type() const
     {
         return Core::ModuleType::mDynamic;
     }
 
-    void RenderingModule::Initialize(const RenderingModuleInitParams& inParams)
+    void RenderModule::Initialize(const RenderModuleInitParams& inParams)
     {
         Assert(!initialized);
 
@@ -45,31 +45,31 @@ namespace Rendering {
         initialized = true;
     }
 
-    RHI::Device* RenderingModule::GetDevice() const
+    RHI::Device* RenderModule::GetDevice() const
     {
         return rhiDevice.Get();
     }
 
-    Render::IScene* RenderingModule::AllocateScene() // NOLINT
+    Render::Scene* RenderModule::AllocateScene() // NOLINT
     {
         return new Scene();
     }
 
-    void RenderingModule::DestroyScene(Render::IScene* inScene) // NOLINT
+    void RenderModule::DestroyScene(Render::Scene* inScene) // NOLINT
     {
         delete inScene;
     }
 
-    void RenderingModule::ShutdownRenderingThread()
+    void RenderModule::ShutdownRenderingThread()
     {
         renderingThread = nullptr;
     }
 
-    void RenderingModule::FlushAllRenderingCommands() const
+    void RenderModule::FlushAllRenderingCommands() const
     {
         Assert(renderingThread != nullptr);
         renderingThread->Flush();
     }
 }
 
-IMPLEMENT_DYNAMIC_MODULE(RENDERING_API, Rendering::RenderingModule);
+IMPLEMENT_DYNAMIC_MODULE(RENDER_API, Render::RenderModule);

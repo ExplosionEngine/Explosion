@@ -7,9 +7,6 @@
 #include <cstdint>
 #include <string>
 
-#include <Render/Canvas.h>
-#include <Rendering/Scene.h>
-
-namespace Rendering {
+namespace Render {
     // TODO
 }

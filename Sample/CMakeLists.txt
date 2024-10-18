@@ -48,7 +48,7 @@ Addlibrary(
     NAME Sample-Base
     SRC ${SOURCES}
     PUBLIC_INC Base
-    LIB RHI glfw clipp ${PLATFORM_EXT_LIBS} Render stb assimp-lib Rendering.Static
+    LIB RHI glfw clipp ${PLATFORM_EXT_LIBS} Render.Static stb assimp-lib
 )
 
 file(GLOB SOURCES RHI-Triangle/*.cpp)

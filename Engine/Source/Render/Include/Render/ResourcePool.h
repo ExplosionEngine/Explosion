@@ -11,7 +11,7 @@
 #include <Common/Container.h>
 #include <RHI/RHI.h>
 
-namespace Rendering {
+namespace Render {
     template <typename RHIRes>
     struct RHIResTraits {};
 
@@ -63,7 +63,7 @@ namespace Rendering {
     using TexturePool = RGResourcePool<PooledTexture>;
 }
 
-namespace Rendering {
+namespace Render {
     template <>
     struct RHIResTraits<RHI::Buffer> {
         using DescType = RHI::BufferCreateInfo;

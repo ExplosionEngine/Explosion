@@ -4,9 +4,9 @@
 
 #include <Test/Test.h>
 
-#include <Rendering/ResourcePool.h>
+#include <Render/ResourcePool.h>
 
-using namespace Rendering;
+using namespace Render;
 
 struct ResourcePoolTest : testing::Test {
     void SetUp() override

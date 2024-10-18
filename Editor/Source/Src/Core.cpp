@@ -21,7 +21,7 @@ namespace Editor {
     }
 
     Core::Core()
-        : renderingModule(nullptr)
+        : renderModule(nullptr)
         , engine(nullptr)
     {
     }
@@ -51,11 +51,6 @@ namespace Editor {
         return !caProjectFile.GetValue().empty();
     }
 
-    Rendering::RenderingModule* Core::GetRenderingModule() const
-    {
-        return renderingModule;
-    }
-
     void Core::ParseCommandLineArgs(int argc, char** argv) const // NOLINT
     {
         ::Core::Cli::Get().Parse(argc, argv);
@@ -71,11 +66,12 @@ namespace Editor {
 
     void Core::InitializeRendering()
     {
-        renderingModule = ::Core::ModuleManager::Get().FindOrLoadTyped<Rendering::RenderingModule>("Rendering");
-        Assert(renderingModule != nullptr);
+        // TODO move render module initialize to engine internal
+        renderModule = ::Core::ModuleManager::Get().FindOrLoadTyped<Render::RenderModule>("Render");
+        Assert(renderModule != nullptr);
 
-        Rendering::RenderingModuleInitParams initParams;
+        Render::RenderModuleInitParams initParams;
         initParams.rhiType = RHI::RHIAbbrStringToRHIType(caRhiType.GetValue());
-        renderingModule->Initialize(initParams);
+        renderModule->Initialize(initParams);
     }
 }

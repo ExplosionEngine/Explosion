@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Runtime/Engine.h>
-#include <Rendering/RenderingModule.h>
+#include <Render/RenderModule.h>
 
 namespace Editor {
     class Core {
@@ -17,7 +17,6 @@ namespace Editor {
         void Initialize(int argc, char** argv);
         void Cleanup();
         bool ProjectHasSet() const;
-        Rendering::RenderingModule* GetRenderingModule() const;
         Runtime::Engine* GetEngine() const;
 
     private:
@@ -27,7 +26,7 @@ namespace Editor {
         void InitializeRuntime();
         void InitializeRendering();
 
-        Rendering::RenderingModule* renderingModule;
+        Render::RenderModule* renderModule;
         Runtime::Engine* engine;
     };
 }

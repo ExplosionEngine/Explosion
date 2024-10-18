@@ -10,7 +10,8 @@
 
 namespace Runtime {
     struct SceneState {
-        Render::IScene* scene;
+        Render::Scene* scene;
+        // TODO views
     };
 
     class EClass() SceneSystem final : public System {

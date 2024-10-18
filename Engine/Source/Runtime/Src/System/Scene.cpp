@@ -3,7 +3,7 @@
 //
 
 #include <Runtime/System/Scene.h>
-#include <Rendering/RenderingModule.h>
+#include <Render/RenderModule.h>
 
 namespace Runtime {
     SceneSystem::SceneSystem() = default;
@@ -14,8 +14,8 @@ namespace Runtime {
     {
         inCommands.EmplaceState<SceneState>();
         inCommands.PatchState<SceneState>([](auto& state) -> void {
-            auto& renderingModule = Core::ModuleManager::Get().GetOrLoadTyped<Rendering::RenderingModule>("Rendering");
-            state.scene = renderingModule.AllocateScene();
+            auto& renderModule = Core::ModuleManager::Get().GetTyped<Render::RenderModule>("Render");
+            state.scene = renderModule.AllocateScene();
         });
     }
 

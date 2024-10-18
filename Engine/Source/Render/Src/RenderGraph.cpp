@@ -4,11 +4,11 @@
 
 #include <ranges>
 
-#include <Rendering/RenderGraph.h>
-#include <Rendering/RenderingCache.h>
+#include <Render/RenderGraph.h>
+#include <Render/RenderingCache.h>
 #include <Common/Container.h>
 
-namespace Rendering::Internal {
+namespace Render::Internal {
     static void ComputeReadsWritesForBindGroup(const RGBindGroupDesc& inDesc, std::unordered_set<RGResourceRef>& outReads, std::unordered_set<RGResourceRef>& outWrites)
     {
         for (const auto& [name, item] : inDesc.items) {
@@ -55,7 +55,7 @@ namespace Rendering::Internal {
     }
 }
 
-namespace Rendering {
+namespace Render {
     RGResource::RGResource(const RGResType inType)
         : type(inType)
         , forceUsed(false)

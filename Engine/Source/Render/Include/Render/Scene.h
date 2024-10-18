@@ -1,22 +1,20 @@
 //
-// Created by johnk on 2022/8/3.
+// Created by johnk on 2023/7/22.
 //
 
 #pragma once
 
-#include <functional>
-
-#include <Render/SceneProxy/Light.h>
+#include <Render/Scene.h>
 
 namespace Render {
-    template <typename T>
-    using SceneProxyPatcher = std::function<void(T&)>;
-
-    class IScene {
+    class Scene final {
     public:
-        virtual ~IScene() = default;
-        virtual size_t GAddLight(const LightSceneProxy& inLight) = 0;
-        virtual void GRemoveLight(size_t inLightIndex) = 0;
-        virtual void GPatchLight(size_t inLightIndex, const SceneProxyPatcher<LightSceneProxy>& inPatcher) = 0;
+        Scene();
+        ~Scene();
+
+        // TODO AddLight/RemoveLight/PatchLight
+
+    private:
+        // TODO use object tool
     };
 }

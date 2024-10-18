@@ -2,13 +2,13 @@
 // Created by johnk on 2023/3/11.
 //
 
-#include <Rendering/RenderingCache.h>
+#include <Render/RenderingCache.h>
 
 #include <utility>
 
 #include <Common/IO.h>
 
-namespace Rendering {
+namespace Render {
     class PipelineLayoutCache {
     public:
         static PipelineLayoutCache& Get(RHI::Device& device);
@@ -58,7 +58,7 @@ namespace Rendering {
     }
 }
 
-namespace Rendering {
+namespace Render {
     RVertexBinding::RVertexBinding()
         : semanticName()
         , semanticIndex(0)

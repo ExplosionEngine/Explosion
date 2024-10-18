@@ -3,9 +3,9 @@
 //
 
 #include <Common/Debug.h>
-#include <Rendering/Scene.h>
+#include <Render/Scene.h>
 
-namespace Rendering {
+namespace Render {
     Scene::Scene() = default;
 
     Scene::~Scene() = default;
