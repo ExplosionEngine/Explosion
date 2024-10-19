@@ -406,15 +406,19 @@ namespace MirrorTool {
             "-std=c++20",
 #if BUILD_CONFIG_DEBUG
             "-DBUILD_CONFIG_DEBUG=1",
+#else
+            "-DBUILD_CONFIG_DEBUG=0",
 #endif
 #if BUILD_EDITOR
             "-DBUILD_EDITOR=1",
+#else
+            "-DBUILD_EDITOR=0",
 #endif
 #if PLATFORM_WINDOWS
             "-DPLATFORM_WINDOWS=1",
+            "-DNOMINMAX=1",
 #elif PLATFORM_MACOS
             "-DPLATFORM_MACOS=1",
-//            "-I/Library/Developer/CommandLineTools/usr/include/c++/v1",
             fmt::format("-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{}.sdk/usr/include/c++/v1", MACOS_SDK_VERSION),
             fmt::format("-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{}.sdk/usr/include", MACOS_SDK_VERSION),
             fmt::format("-I/Library/Developer/CommandLineTools/usr/lib/clang/{}.{}.{}/include", __clang_major__, __clang_minor__, __clang_patchlevel__),

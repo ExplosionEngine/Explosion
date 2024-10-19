@@ -13,9 +13,19 @@ namespace Runtime {
         if (!inParams.projectFile.empty()) {
             Core::Paths::SetCurrentProjectFile(inParams.projectFile);
         }
+
+        renderModule = ::Core::ModuleManager::Get().FindOrLoadTyped<Render::RenderModule>("Render");
+        Assert(renderModule != nullptr);
+
+        Render::RenderModuleInitParams initParams;
+        initParams.rhiType = RHI::RHIAbbrStringToRHIType(inParams.rhiType);
+        renderModule->Initialize(initParams);
     }
 
-    Engine::~Engine() = default;
+    Engine::~Engine()
+    {
+        ::Core::ModuleManager::Get().Unload("Render");
+    }
 
     void Engine::MountWorld(World* inWorld)
     {
@@ -25,6 +35,18 @@ namespace Runtime {
     void Engine::UnmountWorld(World* inWorld)
     {
         worlds.erase(inWorld);
+    }
+
+    Render::RenderModule& Engine::GetRenderModule() const
+    {
+        return *renderModule;
+    }
+
+    void Engine::Tick(float inTimeMs) const
+    {
+        // TODO tick each playing world
+        // TODO fetch each scene
+        // TODO traverse each view in scene, create a renderer, perform rendering
     }
 
     Engine* EngineHolder::engine = nullptr;

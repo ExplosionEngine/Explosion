@@ -24,9 +24,7 @@ namespace Editor {
 
         void ParseCommandLineArgs(int argc, char** argv) const;
         void InitializeRuntime();
-        void InitializeRendering();
 
-        Render::RenderModule* renderModule;
         Runtime::Engine* engine;
     };
 }

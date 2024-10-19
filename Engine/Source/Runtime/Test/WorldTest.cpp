@@ -9,7 +9,10 @@
 struct WorldTest : testing::Test {
     void SetUp() override
     {
-        EngineHolder::Load("RuntimeTest", {});
+        EngineInitParams initParams;
+        initParams.projectFile = "";
+        initParams.rhiType = RHI::GetPlatformDefaultRHIAbbrString();
+        EngineHolder::Load("RuntimeTest", initParams);
     }
 };
 

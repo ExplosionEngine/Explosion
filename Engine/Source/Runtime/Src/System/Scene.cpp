@@ -3,7 +3,7 @@
 //
 
 #include <Runtime/System/Scene.h>
-#include <Render/RenderModule.h>
+#include <Runtime/Engine.h>
 
 namespace Runtime {
     SceneSystem::SceneSystem() = default;
@@ -14,7 +14,7 @@ namespace Runtime {
     {
         inCommands.EmplaceState<SceneState>();
         inCommands.PatchState<SceneState>([](auto& state) -> void {
-            auto& renderModule = Core::ModuleManager::Get().GetTyped<Render::RenderModule>("Render");
+            auto& renderModule = EngineHolder::Get().GetRenderModule();
             state.scene = renderModule.AllocateScene();
         });
     }
@@ -22,5 +22,11 @@ namespace Runtime {
     void SceneSystem::Tick(Commands& inCommands, float inTimeMs) const
     {
         // TODO
+    }
+
+    void SceneSystem::Stop(Commands& inCommands) const
+    {
+        auto& renderModule = EngineHolder::Get().GetRenderModule();
+        renderModule.DestroyScene(inCommands.GetState<SceneState>().scene);
     }
 }

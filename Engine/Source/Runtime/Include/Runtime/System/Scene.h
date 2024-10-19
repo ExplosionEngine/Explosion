@@ -22,5 +22,6 @@ namespace Runtime {
 
         void Setup(Commands& inCommands) const override;
         void Tick(Commands& inCommands, float inTimeMs) const override;
+        void Stop(Commands& inCommands) const override;
     };
 }

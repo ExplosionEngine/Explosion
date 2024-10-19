@@ -166,13 +166,13 @@ namespace Common {
         Trunk& operator=(const Trunk& inOther);
         Trunk& operator=(Trunk&& inOther) noexcept;
 
-        template <typename... Args> size_t Allocate(Args&&... inArgs);
+        template <typename... Args> size_t Emplace(Args&&... inArgs);
         bool Valid(size_t inIndex) const;
         void Erase(size_t inIndex);
         T* Try(size_t inIndex);
         const T* Try(size_t inIndex) const;
-        T* At(size_t inIndex);
-        const T* At(size_t inIndex) const;
+        T& At(size_t inIndex);
+        const T& At(size_t inIndex) const;
         void Each(const TraverseFunc& inFunc);
         void Each(const ConstTraverseFunc& inFunc) const;
         bool HasFree() const;
@@ -245,7 +245,7 @@ namespace Common {
         TrunkList();
         ~TrunkList();
 
-        template <typename... Args> Handle Allocate(Args&&... inArgs) const;
+        template <typename... Args> Handle Emplace(Args&&... inArgs) const;
         void Erase(const Handle& inHandle);
         void Erase(const ConstHandle& inHandle);
         void Each(const TraverseFunc& inFunc);
@@ -1126,7 +1126,7 @@ namespace Common {
 
     template <typename T, size_t N>
     template <typename ... Args>
-    size_t Trunk<T, N>::Allocate(Args&&... inArgs)
+    size_t Trunk<T, N>::Emplace(Args&&... inArgs)
     {
         for (auto i = 0; i < allocated.size(); i++) {
             if (!allocated.test(i)) {
@@ -1169,17 +1169,17 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    T* Trunk<T, N>::At(size_t inIndex)
+    T& Trunk<T, N>::At(size_t inIndex)
     {
         Assert(Valid(inIndex));
-        return &TypedMemory(inIndex);
+        return TypedMemory(inIndex);
     }
 
     template <typename T, size_t N>
-    const T* Trunk<T, N>::At(size_t inIndex) const
+    const T& Trunk<T, N>::At(size_t inIndex) const
     {
         Assert(Valid(inIndex));
-        return &TypedMemory(inIndex);
+        return TypedMemory(inIndex);
     }
 
     template <typename T, size_t N>
@@ -1223,7 +1223,7 @@ namespace Common {
     template <typename T, size_t N>
     bool Trunk<T, N>::Empty() const
     {
-        return Allocated() > 0;
+        return Allocated() == 0;
     }
 
     template <typename T, size_t N>
@@ -1367,7 +1367,7 @@ namespace Common {
 
     template <typename T, size_t N>
     template <typename ... Args>
-    typename TrunkList<T, N>::Handle TrunkList<T, N>::Allocate(Args&&... inArgs) const
+    typename TrunkList<T, N>::Handle TrunkList<T, N>::Emplace(Args&&... inArgs) const
     {
         Trunk<T, N>* allocator = nullptr;
         for (auto& trunk : trunks) {
@@ -1377,7 +1377,7 @@ namespace Common {
             }
         }
         allocator = &trunks.emplace_back();
-        return { allocator, allocator->Allocate(std::forward<Args>(inArgs)...) };
+        return { allocator, allocator->Emplace(std::forward<Args>(inArgs)...) };
     }
 
     template <typename T, size_t N>
