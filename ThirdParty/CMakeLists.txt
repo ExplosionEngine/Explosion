@@ -165,15 +165,6 @@ Add3rdHeaderOnlyPackage(
     INCLUDE $<SOURCE_DIR>
 )
 
-# fmt-lib
-Add3rdHeaderOnlyPackage(
-    NAME fmt-lib
-    PLATFORM All
-    VERSION 9.1.0
-    HASH 09fb58ad10d1071ca8dbe0dc02b64fac6b2f4d4ba626b6d21a67d5b60ffe9f95
-    INCLUDE $<SOURCE_DIR>/include
-)
-
 # spirv-cross
 Add3rdCMakeProject(
     NAME spirv-cross

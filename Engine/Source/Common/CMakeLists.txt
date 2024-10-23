@@ -4,7 +4,7 @@ AddLibrary(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB debugbreak cityhash taskflow fmt-lib rapidjson
+    LIB debugbreak cityhash taskflow rapidjson
 )
 
 file(GLOB TEST_SOURCES Test/*.cpp)

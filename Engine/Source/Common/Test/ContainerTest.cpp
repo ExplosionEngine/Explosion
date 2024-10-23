@@ -323,12 +323,109 @@ TEST(ContainerTest, TrunkBasic)
     ASSERT_EQ(t0[v2], 3);
 }
 
-TEST(ContainerTest, TrunkCopyAndMove)
+TEST(ContainerTest, TrunkEachTest)
 {
-    // TODO
+    Trunk<int, 4> t0;
+    constexpr auto count = 2;
+    for (auto i = 0; i < count; i++) {
+        t0.Emplace(i + 1);
+    }
+
+    int i = 0;
+    t0.Each([&](auto elem) -> void {
+        ASSERT_EQ(elem, ++i);
+    });
+    ASSERT_EQ(i, 2);
 }
 
-TEST(ContainerTest, TrunkListTest)
+TEST(ContainerTest, TrunkCopyAndMove)
 {
-    // TODO
+    Trunk<CopyAndMoveTest, 10> t0;
+    t0.Emplace();
+    t0.Emplace();
+    ASSERT_EQ(t0[0].constructType, ConstructType::cDefault);
+    ASSERT_EQ(t0[1].constructType, ConstructType::cDefault);
+
+    t0.Emplace(CopyAndMoveTest());
+    ASSERT_EQ(t0[2].constructType, ConstructType::cMove);
+
+    CopyAndMoveTest temp0;
+    t0.Emplace(temp0);
+    ASSERT_EQ(t0[3].constructType, ConstructType::cCopy);
+
+    // copy assign
+    Trunk<CopyAndMoveTest, 10> t1;
+    t1.Emplace();
+    t1 = t0;
+    ASSERT_EQ(t1.Allocated(), 4);
+    ASSERT_TRUE(t1[0].copyAssigned);
+    ASSERT_TRUE(!t1[1].copyAssigned && t1[1].constructType == ConstructType::cCopy);
+    ASSERT_TRUE(!t1[2].copyAssigned && t1[2].constructType == ConstructType::cCopy);
+    ASSERT_TRUE(!t1[3].copyAssigned && t1[3].constructType == ConstructType::cCopy);
+
+    Trunk<CopyAndMoveTest, 10> t2;
+    t2.Emplace();
+    t2.Emplace();
+    t2.Emplace();
+    t2.Emplace();
+    t2.Emplace();
+    t2 = t0;
+    ASSERT_EQ(t2.Allocated(), 4);
+    ASSERT_TRUE(t2[0].copyAssigned);
+    ASSERT_TRUE(t2[0].copyAssigned);
+    ASSERT_TRUE(t2[0].copyAssigned);
+    ASSERT_TRUE(t2[0].copyAssigned);
+
+    // move assign
+    Trunk<CopyAndMoveTest, 10> t3;
+    t3.Emplace();
+    t3 = std::move(t1);
+    ASSERT_EQ(t3.Allocated(), 4);
+    ASSERT_TRUE(t3[0].moveAssigned);
+    ASSERT_TRUE(!t3[1].moveAssigned && t3[1].constructType == ConstructType::cMove);
+    ASSERT_TRUE(!t3[2].moveAssigned && t3[2].constructType == ConstructType::cMove);
+    ASSERT_TRUE(!t3[3].moveAssigned && t3[3].constructType == ConstructType::cMove);
+
+    // copy ctor
+    Trunk t4(t3);
+    ASSERT_EQ(t4.Allocated(), 4);
+    ASSERT_TRUE(!t4[0].copyAssigned && t4[0].constructType == ConstructType::cCopy);
+    ASSERT_TRUE(!t4[1].copyAssigned && t4[1].constructType == ConstructType::cCopy);
+    ASSERT_TRUE(!t4[2].copyAssigned && t4[2].constructType == ConstructType::cCopy);
+    ASSERT_TRUE(!t4[3].copyAssigned && t4[3].constructType == ConstructType::cCopy);
+
+    // move ctor
+    Trunk t5(std::move(t4));
+    ASSERT_EQ(t5.Allocated(), 4);
+    ASSERT_TRUE(!t5[0].moveAssigned && t5[0].constructType == ConstructType::cMove);
+    ASSERT_TRUE(!t5[1].moveAssigned && t5[1].constructType == ConstructType::cMove);
+    ASSERT_TRUE(!t5[2].moveAssigned && t5[2].constructType == ConstructType::cMove);
+    ASSERT_TRUE(!t5[3].moveAssigned && t5[3].constructType == ConstructType::cMove);
+}
+
+TEST(ContainerTest, TrunkListBasic)
+{
+    TrunkList<int, 4> t0;
+    const auto i0 = t0.Emplace(1);
+    t0.Emplace(2);
+    t0.Emplace(3);
+    ASSERT_EQ(t0.Allocated(), 3);
+    ASSERT_EQ(t0.Free(), 1);
+    ASSERT_EQ(t0.Capacity(), 4);
+
+    t0.Emplace(4);
+    t0.Emplace(5);
+    ASSERT_EQ(t0.Allocated(), 5);
+    ASSERT_EQ(t0.Free(), 3);
+    ASSERT_EQ(t0.Capacity(), 8);
+
+    t0.Erase(i0);
+    ASSERT_EQ(t0.Allocated(), 4);
+    ASSERT_EQ(t0.Free(), 4);
+    ASSERT_EQ(t0.Capacity(), 8);
+
+    int count = 2;
+    t0.Each([&](auto elem) -> void {
+        ASSERT_EQ(elem, count++);
+    });
 }

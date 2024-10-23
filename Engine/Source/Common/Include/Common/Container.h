@@ -245,12 +245,12 @@ namespace Common {
         TrunkList();
         ~TrunkList();
 
-        template <typename... Args> Handle Emplace(Args&&... inArgs) const;
+        template <typename... Args> Handle Emplace(Args&&... inArgs);
         void Erase(const Handle& inHandle);
         void Erase(const ConstHandle& inHandle);
         void Each(const TraverseFunc& inFunc);
         void Each(const ConstTraverseFunc& inFunc) const;
-        void Reserve(size_t inIndex) const;
+        void Reserve(size_t inIndex);
         size_t Allocated() const;
         size_t Capacity() const;
         size_t Free() const;
@@ -1367,7 +1367,7 @@ namespace Common {
 
     template <typename T, size_t N>
     template <typename ... Args>
-    typename TrunkList<T, N>::Handle TrunkList<T, N>::Emplace(Args&&... inArgs) const
+    typename TrunkList<T, N>::Handle TrunkList<T, N>::Emplace(Args&&... inArgs)
     {
         Trunk<T, N>* allocator = nullptr;
         for (auto& trunk : trunks) {
@@ -1376,8 +1376,10 @@ namespace Common {
                 break;
             }
         }
-        allocator = &trunks.emplace_back();
-        return { allocator, allocator->Emplace(std::forward<Args>(inArgs)...) };
+        if (allocator == nullptr) {
+            allocator = &trunks.emplace_back();
+        }
+        return { this, allocator, allocator->Emplace(std::forward<Args>(inArgs)...) };
     }
 
     template <typename T, size_t N>
@@ -1411,7 +1413,7 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    void TrunkList<T, N>::Reserve(size_t inIndex) const
+    void TrunkList<T, N>::Reserve(size_t inIndex)
     {
         auto trunkNum = DivideAndRoundUp(inIndex, N);
         if (trunkNum <= trunks.size()) {
