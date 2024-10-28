@@ -92,7 +92,7 @@ namespace Common {
     struct StringConverter<Transform<T>> {
         static std::string ToString(const Transform<T>& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "{}scale={}, rotation={}, translation={}{}",
                 "{",
                 StringConverter<Vec<T, 3>>::ToString(inValue.scale),

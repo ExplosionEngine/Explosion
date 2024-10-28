@@ -89,6 +89,10 @@ namespace Runtime {
         entt::observer observer;
     };
 
+    struct EntityCompRegistry {
+        entt::registry native;
+    };
+
     class RUNTIME_API Commands {
     public:
         ~Commands();
@@ -119,9 +123,15 @@ namespace Runtime {
         friend class World;
         friend class Observer;
 
-        explicit Commands(entt::registry& inRegistry);
+        explicit Commands(EntityCompRegistry& inRegistry);
 
-        entt::registry& registry;
+        EntityCompRegistry& registry;
+    };
+
+    struct SystemRegistry {
+        std::unordered_map<SystemClass, Mirror::Any> systems;
+        std::vector<std::vector<SystemClass>> systemsGraph;
+        std::vector<SystemClass> systemsInBarriers;
     };
 
     // world is fully runtime structure, we use level to perform persist storage
@@ -156,10 +166,8 @@ namespace Runtime {
         bool setup;
         bool playing;
         std::string name;
-        entt::registry registry;
-        std::unordered_map<SystemClass, Mirror::Any> systems;
-        std::vector<std::vector<SystemClass>> systemsGraph;
-        std::vector<SystemClass> systemsInBarriers;
+        EntityCompRegistry entityCompRegistry;
+        SystemRegistry systemRegistry;
     };
 }
 
@@ -312,62 +320,62 @@ namespace Runtime {
     template <typename S>
     bool Commands::HasState() const
     {
-        return registry.try_ctx<S>() != nullptr;
+        return registry.native.try_ctx<S>() != nullptr;
     }
 
     template <typename S, typename ... Args>
     const S& Commands::EmplaceState(Args&&... inArgs)
     {
-        return registry.set<S>(std::forward<Args>(inArgs)...);
+        return registry.native.set<S>(std::forward<Args>(inArgs)...);
     }
 
     template <typename S>
     const S* Commands::FindState() const
     {
-        return registry.try_ctx<S>();
+        return registry.native.try_ctx<S>();
     }
 
     template <typename S>
     const S& Commands::GetState() const
     {
-        return registry.ctx<S>();
+        return registry.native.ctx<S>();
     }
 
     template <typename S>
     void Commands::RemoveState() // NOLINT
     {
-        registry.unset<S>();
+        registry.native.unset<S>();
     }
 
     template <typename S, typename F>
     void Commands::PatchState(F&& inFunc)
     {
         Assert(HasState<S>());
-        inFunc(registry.ctx<S>());
+        inFunc(registry.native.ctx<S>());
     }
 
     template <typename C>
     bool Commands::HasComp(Entity inEntity) const
     {
-        return registry.try_get<C>(inEntity) != nullptr;
+        return registry.native.try_get<C>(inEntity) != nullptr;
     }
 
     template <typename C, typename ... Args>
     const C& Commands::EmplaceComp(Entity inEntity, Args&&... inArgs)
     {
-        return registry.emplace<C>(inEntity, std::forward<Args>(inArgs)...);
+        return registry.native.emplace<C>(inEntity, std::forward<Args>(inArgs)...);
     }
 
     template <typename C>
     const C* Commands::FindComp(Entity inEntity) const
     {
-        return registry.try_get<C>(inEntity);
+        return registry.native.try_get<C>(inEntity);
     }
 
     template <typename C>
     const C& Commands::GetComp(Entity inEntity) const
     {
-        auto* result = registry.try_get<C>(inEntity);
+        auto* result = registry.native.try_get<C>(inEntity);
         Assert(result != nullptr);
         return *result;
     }
@@ -375,25 +383,25 @@ namespace Runtime {
     template <typename C>
     void Commands::RemoveComp(Entity inEntity) // NOLINT
     {
-        registry.erase<C>(inEntity);
+        registry.native.erase<C>(inEntity);
     }
 
     template <typename C, typename F>
     void Commands::PatchComp(Entity inEntity, F&& inFunc)
     {
-        registry.patch<C>(inEntity, std::forward<F>(inFunc));
+        registry.native.patch<C>(inEntity, std::forward<F>(inFunc));
     }
 
     template <typename ... C, typename ... E>
     auto Commands::View(Exclude<E...>)
     {
-        return CompView<entt::exclude_t<E...>, C...>(registry.view<C...>(entt::exclude_t<E...> {}));
+        return CompView<entt::exclude_t<E...>, C...>(registry.native.view<C...>(entt::exclude_t<E...> {}));
     }
 
     template <typename ... C, typename ... E>
     auto Commands::View(Exclude<E...>) const
     {
-        return CompView<entt::exclude_t<E...>, std::add_const_t<C>...>(registry.view<C...>(entt::exclude_t<E...> {}));
+        return CompView<entt::exclude_t<E...>, std::add_const_t<C>...>(registry.native.view<C...>(entt::exclude_t<E...> {}));
     }
 
     template <typename ... M>
@@ -406,7 +414,7 @@ namespace Runtime {
     void World::AddSystem(Args&&... inSystemArgs)
     {
         SystemClass clazz = Internal::GetClassChecked<System>();
-        systems.emplace(clazz, System(std::forward<Args>(inSystemArgs)...));
-        systemsInBarriers.emplace_back(clazz);
+        systemRegistry.systems.emplace(clazz, System(std::forward<Args>(inSystemArgs)...));
+        systemRegistry.systemsInBarriers.emplace_back(clazz);
     }
 };

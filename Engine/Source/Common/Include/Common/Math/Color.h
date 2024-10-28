@@ -115,7 +115,7 @@ namespace Common {
     struct StringConverter<Color> {
         static std::string ToString(const Color& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "{}r={}, g={}, b={}, a={}{}",
                 "{",
                 StringConverter<uint8_t>::ToString(inValue.r),
@@ -130,7 +130,7 @@ namespace Common {
     struct StringConverter<LinearColor> {
         static std::string ToString(const LinearColor& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "{}r={}, g={}, b={}, a={}{}",
                 "{",
                 StringConverter<float>::ToString(inValue.r),

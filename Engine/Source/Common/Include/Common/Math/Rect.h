@@ -74,7 +74,7 @@ namespace Common {
     struct StringConverter<Rect<T>> {
         static std::string ToString(const Rect<T>& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "{}min={}, max={}{}",
                 "{",
                 StringConverter<Vec<T, 2>>::ToString(inValue.min),

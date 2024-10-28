@@ -1802,7 +1802,7 @@ namespace Common { // NOLINT
             stream << "{ ";
             auto count = 0;
             for (const auto& [id, var] : memberVariables) {
-                stream << fmt::format("{}: {}", id.name, var.GetDyn(argument).ToString());
+                stream << std::format("{}: {}", id.name, var.GetDyn(argument).ToString());
                 if (count++ != memberVariables.size() - 1) {
                     stream << ", ";
                 }
@@ -1823,7 +1823,7 @@ namespace Common { // NOLINT
         {
             if (const Mirror::Enum* metaEnum = Mirror::Enum::Find<E>();
                 metaEnum != nullptr) {
-                return fmt::format(
+                return std::format(
                     "{}::{}",
                     StringConverter<std::string>::ToString(metaEnum->GetName()),
                     StringConverter<std::string>::ToString(metaEnum->GetValue(inValue).GetName()));
@@ -1843,7 +1843,7 @@ namespace Common { // NOLINT
                 ownerName = inValue->GetOwnerName();
                 name = inValue->GetName();
             }
-            return fmt::format("{}{}{}", ownerName, ownerName.empty() ? "" : ":", name);
+            return std::format("{}{}{}", ownerName, ownerName.empty() ? "" : ":", name);
         }
     };
 
@@ -1857,7 +1857,7 @@ namespace Common { // NOLINT
                 ownerName = inValue->GetOwnerName();
                 name = inValue->GetName();
             }
-            return fmt::format("{}{}{}{}", ownerName, ownerName.empty() ? "" : ":", name, name.empty() ? "" : "()");
+            return std::format("{}{}{}{}", ownerName, ownerName.empty() ? "" : ":", name, name.empty() ? "" : "()");
         }
     };
 
@@ -1871,7 +1871,7 @@ namespace Common { // NOLINT
                 ownerName = inValue->GetOwnerName();
                 name = inValue->GetName();
             }
-            return fmt::format("{}::{}({})", ownerName, StringUtils::AfterLast(ownerName, "::"), name);
+            return std::format("{}::{}({})", ownerName, StringUtils::AfterLast(ownerName, "::"), name);
         }
     };
 
@@ -1880,7 +1880,7 @@ namespace Common { // NOLINT
         static std::string ToString(const Mirror::Destructor* inValue)
         {
             const std::string ownerName = inValue != nullptr ? inValue->GetOwnerName() : "";
-            return fmt::format("{}::~{}()", ownerName, StringUtils::AfterLast(ownerName, "::"));
+            return std::format("{}::~{}()", ownerName, StringUtils::AfterLast(ownerName, "::"));
         }
     };
 
@@ -1894,7 +1894,7 @@ namespace Common { // NOLINT
                 ownerName = inValue->GetOwnerName();
                 name = inValue->GetName();
             }
-            return fmt::format("{}::{}", ownerName, name);
+            return std::format("{}::{}", ownerName, name);
         }
     };
 
@@ -1908,7 +1908,7 @@ namespace Common { // NOLINT
                 ownerName = inValue->GetOwnerName();
                 name = inValue->GetName();
             }
-            return fmt::format("{}::{}()", ownerName, name);
+            return std::format("{}::{}()", ownerName, name);
         }
     };
 
@@ -1930,7 +1930,7 @@ namespace Common { // NOLINT
                 ownerName = inValue->GetOwnerName();
                 name = inValue->GetName();
             }
-            return fmt::format("{}::{}", ownerName, name);
+            return std::format("{}::{}", ownerName, name);
         }
     };
 
@@ -1987,7 +1987,7 @@ namespace Mirror {
         if constexpr (std::is_copy_constructible_v<T>) {
             new(inThis) T(*static_cast<const T*>(inOther));
         } else {
-            QuickFailWithReason(fmt::format("type {} is no support copy construct", GetTypeInfo<T>()->name));
+            QuickFailWithReason(std::format("type {} is no support copy construct", GetTypeInfo<T>()->name));
         }
     }
 
@@ -1997,7 +1997,7 @@ namespace Mirror {
         if constexpr (std::is_move_constructible_v<T>) {
             new(inThis) T(std::move(*static_cast<T*>(inOther)));
         } else {
-            QuickFailWithReason(fmt::format("type {} is no support move construct", GetTypeInfo<T>()->name));
+            QuickFailWithReason(std::format("type {} is no support move construct", GetTypeInfo<T>()->name));
         }
     }
 
@@ -2007,7 +2007,7 @@ namespace Mirror {
         if constexpr (Common::EqualComparable<T>) {
             return *static_cast<const T*>(inThis) == *static_cast<const T*>(inOther);
         } else {
-            QuickFailWithReason(fmt::format("type {} is no support equal compare", GetTypeInfo<T>()->name));
+            QuickFailWithReason(std::format("type {} is no support equal compare", GetTypeInfo<T>()->name));
             return false;
         }
     }

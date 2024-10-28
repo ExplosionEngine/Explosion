@@ -25,8 +25,8 @@ inline std::string FltToJson(float value)
 
 template <typename T>
 void PerformTypedSerializationTestWithStream(
-    const std::function<Common::UniqueRef<BinarySerializeStream>()>& createSerializeStream,
-    const std::function<Common::UniqueRef<BinaryDeserializeStream>()>& createDeserializeStream,
+    const std::function<Common::UniqueRef<Common::BinarySerializeStream>()>& createSerializeStream,
+    const std::function<Common::UniqueRef<Common::BinaryDeserializeStream>()>& createDeserializeStream,
     const T& inValue)
 {
     {
@@ -50,14 +50,14 @@ void PerformTypedSerializationTestWithEndian(const T& inValue)
     std::filesystem::create_directories(fileName.parent_path());
 
     PerformTypedSerializationTestWithStream<T>(
-        []() -> Common::UniqueRef<BinarySerializeStream> { return { new BinaryFileSerializeStream<E>(fileName.string()) }; },
-        []() -> Common::UniqueRef<BinaryDeserializeStream> { return { new BinaryFileDeserializeStream<E>(fileName.string()) }; },
+        []() -> Common::UniqueRef<Common::BinarySerializeStream> { return { new Common::BinaryFileSerializeStream<E>(fileName.string()) }; },
+        []() -> Common::UniqueRef<Common::BinaryDeserializeStream> { return { new Common::BinaryFileDeserializeStream<E>(fileName.string()) }; },
         inValue);
 
     std::vector<uint8_t> buffer;
     PerformTypedSerializationTestWithStream<T>(
-        [&]() -> Common::UniqueRef<BinarySerializeStream> { return { new MemorySerializeStream<E>(buffer) }; },
-        [&]() -> Common::UniqueRef<BinaryDeserializeStream> { return { new MemoryDeserializeStream<E>(buffer) }; },
+        [&]() -> Common::UniqueRef<Common::BinarySerializeStream> { return { new Common::MemorySerializeStream<E>(buffer) }; },
+        [&]() -> Common::UniqueRef<Common::BinaryDeserializeStream> { return { new Common::MemoryDeserializeStream<E>(buffer) }; },
         inValue);
 }
 

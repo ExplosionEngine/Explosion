@@ -184,7 +184,7 @@ namespace Common {
     struct StringConverter<Angle<T>> {
         static std::string ToString(const Angle<T>& inValue)
         {
-            return fmt::format("a{}", StringConverter<T>::ToString(inValue.value));
+            return std::format("a{}", StringConverter<T>::ToString(inValue.value));
         }
     };
 
@@ -200,7 +200,7 @@ namespace Common {
     struct StringConverter<Quaternion<T>> {
         static std::string ToString(const Quaternion<T>& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "({}, {}, {}, {})",
                 StringConverter<T>::ToString(inValue.w),
                 StringConverter<T>::ToString(inValue.x),

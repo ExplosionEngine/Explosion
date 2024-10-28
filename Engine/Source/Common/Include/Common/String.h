@@ -15,9 +15,7 @@
 #include <map>
 #include <tuple>
 #include <list>
-
-#define FMT_HEADER_ONLY 1
-#include <fmt/format.h>
+#include <format>
 
 #include <Common/Debug.h>
 #include <Common/Concepts.h>
@@ -95,7 +93,7 @@ namespace Common {
     struct StringConverter<std::pair<K, V>> {
         static std::string ToString(const std::pair<K, V>& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "{}: {}",
                 StringConverter<K>::ToString(inValue.first),
                 StringConverter<V>::ToString(inValue.second));

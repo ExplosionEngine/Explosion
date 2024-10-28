@@ -759,7 +759,7 @@ namespace Mirror {
         std::stringstream stream;
         uint32_t count = 0;
         for (const auto& [key, value] : metas) {
-            stream << fmt::format("{}={}", key.name, value);
+            stream << std::format("{}={}", key.name, value);
 
             count++;
             if (count != metas.size()) {

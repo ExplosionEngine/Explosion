@@ -46,7 +46,7 @@ namespace Runtime {
         return End();
     }
 
-    Commands::Commands(entt::registry& inRegistry)
+    Commands::Commands(EntityCompRegistry& inRegistry)
         : registry(inRegistry)
     {
     }
@@ -55,17 +55,17 @@ namespace Runtime {
 
     Entity Commands::CreateEntity() // NOLINT
     {
-        return registry.create();
+        return registry.native.create();
     }
 
     void Commands::DestroyEntity(Entity inEntity) // NOLINT
     {
-        registry.destroy(inEntity);
+        registry.native.destroy(inEntity);
     }
 
     bool Commands::HasEntity(Entity inEntity) const
     {
-        return registry.valid(inEntity);
+        return registry.native.valid(inEntity);
     }
 
     World::World(std::string inName)
@@ -83,17 +83,17 @@ namespace Runtime {
 
     void World::AddBarrier()
     {
-        systemsGraph.emplace_back(systemsInBarriers);
-        systemsInBarriers.clear();
+        systemRegistry.systemsGraph.emplace_back(systemRegistry.systemsInBarriers);
+        systemRegistry.systemsInBarriers.clear();
     }
 
     void World::Play()
     {
-        Assert(!setup && systemsInBarriers.empty());
+        Assert(!setup && systemRegistry.systemsInBarriers.empty());
         setup = true;
         playing = true;
         ExecuteSystemGraph([&](const System& inSystem) -> void {
-            Commands commands(registry);
+            Commands commands(entityCompRegistry);
             inSystem.Setup(commands);
         });
     }
@@ -121,7 +121,7 @@ namespace Runtime {
     {
         Assert(setup && playing);
         ExecuteSystemGraph([&](const System& inSystem) -> void {
-            Commands commands(registry);
+            Commands commands(entityCompRegistry);
             inSystem.Tick(commands, inFrameTimeMs);
         });
     }
@@ -144,11 +144,11 @@ namespace Runtime {
         };
 
         tf::Task barrierTask = newBarrierTask();
-        for (const auto& systemSet : systemsGraph) {
+        for (const auto& systemSet : systemRegistry.systemsGraph) {
             std::vector<tf::Task> tasks;
             for (const auto& systemClass : systemSet) {
                 auto& addedTask = tasks.emplace_back(taskFlow.emplace([&]() -> void {
-                    inOp(systems.at(systemClass).As<const System&>());
+                    inOp(systemRegistry.systems.at(systemClass).As<const System&>());
                 }));
                 addedTask.succeed(barrierTask);
             }

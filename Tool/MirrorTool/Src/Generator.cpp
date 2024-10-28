@@ -16,7 +16,7 @@ namespace MirrorTool {
     {
         std::string outerName = node.outerName;
         const std::string name = node.name;
-        return outerName.empty() ? name : fmt::format("{}::{}", outerName, name);
+        return outerName.empty() ? name : std::format("{}::{}", outerName, name);
     }
 
     template <uint8_t TabN>
@@ -24,7 +24,7 @@ namespace MirrorTool {
     {
         std::stringstream stream;
         for (const auto& [key, value] : node.metaDatas) {
-            stream << Common::newline << Common::tab<TabN> << fmt::format(R"(.MetaData("{}", "{}"))", key, value);
+            stream << Common::newline << Common::tab<TabN> << std::format(R"(.MetaData("{}", "{}"))", key, value);
         }
         return stream.str();
     }
@@ -56,13 +56,13 @@ namespace MirrorTool {
 
         std::stringstream stream;
         stream << Common::newline;
-        stream << Common::tab<1> << fmt::format("Mirror::Registry::Get()") << Common::newline;
-        stream << Common::tab<2> << fmt::format(R"(.Enum<{}>("{}"))", fullName, fullName);
+        stream << Common::tab<1> << std::format("Mirror::Registry::Get()") << Common::newline;
+        stream << Common::tab<2> << std::format(R"(.Enum<{}>("{}"))", fullName, fullName);
         stream << GetMetaDataCode<3>(enumInfo);
         for (const auto& element : enumInfo.elements) {
             const auto elementFullName = GetFullName(element);
             stream << Common::newline;
-            stream << Common::tab<3> << fmt::format(R"(.Value<{}>("{}"))", elementFullName, element.name);
+            stream << Common::tab<3> << std::format(R"(.Value<{}>("{}"))", elementFullName, element.name);
             stream << GetMetaDataCode<4>(element);
         }
         stream << ";" << Common::newline;
@@ -85,7 +85,7 @@ namespace MirrorTool {
     {
         std::stringstream stream;
         stream << Common::newline;
-        stream << fmt::format("int _mirrorEnumRegistry_{} = []() -> int", uniqueId) << Common::newline;
+        stream << std::format("int _mirrorEnumRegistry_{} = []() -> int", uniqueId) << Common::newline;
         stream << "{";
         stream << GetNamespaceEnumsCode(metaInfo.global);
         for (const auto& ns : metaInfo.namespaces) {
@@ -119,48 +119,48 @@ namespace MirrorTool {
         auto detorFieldAccess = clazz.destructor.has_value() ? clazz.destructor->fieldAccess : FieldAccess::pub;
 
         std::string defaultCtorAndDetorFieldAccessParams = defaultCtorFieldAccess != FieldAccess::pub || detorFieldAccess != FieldAccess::pub
-            ? fmt::format(", {}, {}", GetFieldAccessStr(defaultCtorFieldAccess), GetFieldAccessStr(detorFieldAccess))
+            ? std::format(", {}, {}", GetFieldAccessStr(defaultCtorFieldAccess), GetFieldAccessStr(detorFieldAccess))
             : "";
 
         std::stringstream stream;
         stream << Common::newline;
-        stream << fmt::format("int {}::_mirrorRegistry = []() -> int ", fullName) << Common::newline;
+        stream << std::format("int {}::_mirrorRegistry = []() -> int ", fullName) << Common::newline;
         stream << "{" << Common::newline;
         stream << Common::tab<1> << "Mirror::Registry::Get()";
         if (clazz.baseClassName.empty()) {
-            stream << Common::newline << Common::tab<2> << fmt::format(R"(.Class<{}, void{}>("{}"))", fullName, defaultCtorAndDetorFieldAccessParams, fullName);
+            stream << Common::newline << Common::tab<2> << std::format(R"(.Class<{}, void{}>("{}"))", fullName, defaultCtorAndDetorFieldAccessParams, fullName);
         } else {
-            stream << Common::newline << Common::tab<2> << fmt::format(R"(.Class<{}, {}{}>("{}"))", fullName, clazz.baseClassName, defaultCtorAndDetorFieldAccessParams, fullName);
+            stream << Common::newline << Common::tab<2> << std::format(R"(.Class<{}, {}{}>("{}"))", fullName, clazz.baseClassName, defaultCtorAndDetorFieldAccessParams, fullName);
         }
         stream << GetMetaDataCode<3>(clazz);
         for (const auto& constructor : clazz.constructors) {
-            const std::string fieldAccessStr = constructor.fieldAccess != FieldAccess::pub ? fmt::format(", {}", GetFieldAccessStr(constructor.fieldAccess)) : "";
-            stream << Common::newline << Common::tab<3> << fmt::format(R"(.Constructor<{}{}>("{}"))", constructor.name, fieldAccessStr, constructor.name);
+            const std::string fieldAccessStr = constructor.fieldAccess != FieldAccess::pub ? std::format(", {}", GetFieldAccessStr(constructor.fieldAccess)) : "";
+            stream << Common::newline << Common::tab<3> << std::format(R"(.Constructor<{}{}>("{}"))", constructor.name, fieldAccessStr, constructor.name);
             stream << GetMetaDataCode<4>(constructor);
         }
         for (const auto& staticVariable : clazz.staticVariables) {
             const std::string variableName = GetFullName(staticVariable);
-            const std::string fieldAccessStr = staticVariable.fieldAccess != FieldAccess::pub ? fmt::format(", {}", GetFieldAccessStr(staticVariable.fieldAccess)) : "";
-            stream << Common::newline << Common::tab<3> << fmt::format(R"(.StaticVariable<&{}{}>("{}"))", variableName, fieldAccessStr, staticVariable.name);
+            const std::string fieldAccessStr = staticVariable.fieldAccess != FieldAccess::pub ? std::format(", {}", GetFieldAccessStr(staticVariable.fieldAccess)) : "";
+            stream << Common::newline << Common::tab<3> << std::format(R"(.StaticVariable<&{}{}>("{}"))", variableName, fieldAccessStr, staticVariable.name);
             stream << GetMetaDataCode<4>(staticVariable);
         }
         for (const auto& staticFunction : clazz.staticFunctions) {
             const std::string functionName = GetFullName(staticFunction);
-            const std::string fieldAccessStr = staticFunction.fieldAccess != FieldAccess::pub ? fmt::format(", {}", GetFieldAccessStr(staticFunction.fieldAccess)) : "";
-            stream << Common::newline << Common::tab<3> << fmt::format(R"(.StaticFunction<&{}{}>("{}"))", functionName, fieldAccessStr, staticFunction.name);
+            const std::string fieldAccessStr = staticFunction.fieldAccess != FieldAccess::pub ? std::format(", {}", GetFieldAccessStr(staticFunction.fieldAccess)) : "";
+            stream << Common::newline << Common::tab<3> << std::format(R"(.StaticFunction<&{}{}>("{}"))", functionName, fieldAccessStr, staticFunction.name);
             stream << GetMetaDataCode<4>(staticFunction);
         }
         // TODO overload support
         for (const auto& variable : clazz.variables) {
             const std::string variableName = GetFullName(variable);
-            const std::string fieldAccessStr = variable.fieldAccess != FieldAccess::pub ? fmt::format(", {}", GetFieldAccessStr(variable.fieldAccess)) : "";
-            stream << Common::newline << Common::tab<3> << fmt::format(R"(.MemberVariable<&{}{}>("{}"))", variableName, fieldAccessStr, variable.name);
+            const std::string fieldAccessStr = variable.fieldAccess != FieldAccess::pub ? std::format(", {}", GetFieldAccessStr(variable.fieldAccess)) : "";
+            stream << Common::newline << Common::tab<3> << std::format(R"(.MemberVariable<&{}{}>("{}"))", variableName, fieldAccessStr, variable.name);
             stream << GetMetaDataCode<4>(variable);
         }
         for (const auto& function : clazz.functions) {
             const std::string functionName = GetFullName(function);
-            const std::string fieldAccessStr = function.fieldAccess != FieldAccess::pub ? fmt::format(", {}", GetFieldAccessStr(function.fieldAccess)) : "";
-            stream << Common::newline << Common::tab<3> << fmt::format(R"(.MemberFunction<&{}{}>("{}"))", functionName, fieldAccessStr, function.name);
+            const std::string fieldAccessStr = function.fieldAccess != FieldAccess::pub ? std::format(", {}", GetFieldAccessStr(function.fieldAccess)) : "";
+            stream << Common::newline << Common::tab<3> << std::format(R"(.MemberFunction<&{}{}>("{}"))", functionName, fieldAccessStr, function.name);
             stream << GetMetaDataCode<4>(function);
         }
         // TODO overload support
@@ -168,14 +168,14 @@ namespace MirrorTool {
         stream << Common::tab<1> << "return 0;" << Common::newline;
         stream << "}();" << Common::newline;
         stream << Common::newline;
-        stream << fmt::format("const Mirror::Class& {}::GetStaticClass()", fullName) << Common::newline;
+        stream << std::format("const Mirror::Class& {}::GetStaticClass()", fullName) << Common::newline;
         stream << "{" << Common::newline;
-        stream << Common::tab<1> << fmt::format("static const Mirror::Class& clazz = Mirror::Class::Get<{}>();", fullName) << Common::newline;
+        stream << Common::tab<1> << std::format("static const Mirror::Class& clazz = Mirror::Class::Get<{}>();", fullName) << Common::newline;
         stream << Common::tab<1> << "return clazz;" << Common::newline;
         stream << "}" << Common::newline;
-        stream << fmt::format("const Mirror::Class& {}::GetClass()", fullName) << Common::newline;
+        stream << std::format("const Mirror::Class& {}::GetClass()", fullName) << Common::newline;
         stream << "{" << Common::newline;
-        stream << Common::tab<1> << fmt::format("static const Mirror::Class& clazz = Mirror::Class::Get<{}>();", fullName) << Common::newline;
+        stream << Common::tab<1> << std::format("static const Mirror::Class& clazz = Mirror::Class::Get<{}>();", fullName) << Common::newline;
         stream << Common::tab<1> << "return clazz;" << Common::newline;
         stream << "}" << Common::newline;
         stream << Common::newline;
@@ -217,7 +217,7 @@ namespace MirrorTool {
             stream << Common::newline;
             stream << Common::tab<1> << "Mirror::Registry::Get()" << Common::newline;
             stream << Common::tab<2> << ".Global()" << Common::newline;
-            stream << Common::tab<3> << fmt::format(R"(.Variable<&{}>("{}"))", fullName, fullName);
+            stream << Common::tab<3> << std::format(R"(.Variable<&{}>("{}"))", fullName, fullName);
             stream << GetMetaDataCode<4>(var);
             stream << ";" << Common::newline;
         }
@@ -227,7 +227,7 @@ namespace MirrorTool {
             stream << Common::newline;
             stream << Common::tab<1> << "Mirror::Registry::Get()" << Common::newline;
             stream << Common::tab<2> << ".Global()" << Common::newline;
-            stream << Common::tab<3> << fmt::format(R"(.Function<&{}>("{}"))", fullName, fullName);
+            stream << Common::tab<3> << std::format(R"(.Function<&{}>("{}"))", fullName, fullName);
             stream << GetMetaDataCode<4>(func);
             stream << ";" << Common::newline;
         }
@@ -243,7 +243,7 @@ namespace MirrorTool {
     {
         std::stringstream stream;
         stream << Common::newline;
-        stream << fmt::format("int _globalRegistry_{} = []() -> int", uniqueId) << Common::newline;
+        stream << std::format("int _globalRegistry_{} = []() -> int", uniqueId) << Common::newline;
         stream << "{";
         stream << GetNamespaceGlobalCode(metaInfo.global);
         for (const auto& ns : metaInfo.namespaces) {
@@ -297,7 +297,7 @@ namespace MirrorTool {
         }
 
         outFile << GetHeaderNote() << Common::newline;
-        outFile << fmt::format("#include <{}>", bestMatchHeaderPath) << Common::newline;
+        outFile << std::format("#include <{}>", bestMatchHeaderPath) << Common::newline;
         outFile << "#include <Mirror/Registry.h>" << Common::newline;
         outFile << GetGlobalCode(metaInfo, uniqueId);
         outFile << GetEnumsCode(metaInfo, uniqueId);

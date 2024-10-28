@@ -19,7 +19,7 @@ TEST(SerializationTest, FileStreamTest)
 
         BinaryFileSerializeStream stream(fileName.string());
         stream.Seek(3);
-        stream.Write(&value, sizeof(uint32_t));
+        stream.Write<uint32_t>(value);
     }
 
     {
@@ -27,7 +27,7 @@ TEST(SerializationTest, FileStreamTest)
 
         BinaryFileDeserializeStream stream(fileName.string());
         stream.Seek(3);
-        stream.Read(&value, sizeof(uint32_t));
+        stream.Read<uint32_t>(value);
         ASSERT_EQ(value, 5);
     }
 }
@@ -42,14 +42,14 @@ TEST(SerializationTest, ByteStreamTest)
         const uint32_t value = 5; // NOLINT
         MemorySerializeStream stream(memory);
         stream.Seek(3);
-        stream.Write(&value, sizeof(uint32_t));
+        stream.Write<uint32_t>(value);
     }
 
     {
         uint32_t value;
         MemoryDeserializeStream stream(memory);
         stream.Seek(3);
-        stream.Read(&value, sizeof(uint32_t));
+        stream.Read<uint32_t>(value);
         ASSERT_EQ(value, 5);
     }
 }

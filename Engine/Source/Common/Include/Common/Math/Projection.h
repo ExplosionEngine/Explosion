@@ -111,7 +111,7 @@ namespace Common {
     struct StringConverter<ReversedZOrthogonalProjection<T>> {
         static std::string ToString(const ReversedZOrthogonalProjection<T>& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "{}width={}, height={}, near={}, far={}{}",
                 "{",
                 StringConverter<T>::ToString(inValue.width),
@@ -126,7 +126,7 @@ namespace Common {
     struct StringConverter<ReversedZPerspectiveProjection<T>> {
         static std::string ToString(const ReversedZPerspectiveProjection<T>& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "{}fov={}, width={}, height={}, near={}, far={}{}",
                 "{",
                 StringConverter<T>::ToString(inValue.fov),

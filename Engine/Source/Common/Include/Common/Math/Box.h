@@ -76,7 +76,7 @@ namespace Common { // NOLINT
     struct StringConverter<Box<T>> {
         static std::string ToString(const Box<T>& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "{}min={}, max={}{}",
                 "{",
                 StringConverter<Vec<T, 3>>::ToString(inValue.min),

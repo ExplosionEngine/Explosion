@@ -10,6 +10,7 @@
 #include <Test/Test.h>
 #include <Mirror/Mirror.h>
 #include <SerializationTest.h>
+using namespace Mirror;
 
 int ga = 1;
 float gb = 2.0f;

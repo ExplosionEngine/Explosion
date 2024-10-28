@@ -62,7 +62,7 @@ namespace Common {
     struct StringConverter<Sphere<T>> {
         static std::string ToString(const Sphere<T>& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "{}center={}, radius={}{}",
                 "{",
                 StringConverter<Vec<T, 3>>::ToString(inValue.center),

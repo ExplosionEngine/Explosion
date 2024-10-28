@@ -11,6 +11,7 @@
 #include <array>
 #include <bitset>
 #include <list>
+#include <functional>
 
 #include <Common/Debug.h>
 #include <Common/Concepts.h>
