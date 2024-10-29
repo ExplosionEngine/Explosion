@@ -28,6 +28,7 @@ namespace Runtime {
         void UnmountWorld(World* inWorld);
         Render::RenderModule& GetRenderModule() const;
         void Tick(float inTimeMs) const;
+        Common::UniqueRef<World> CreateWorld(const std::string& inName = "") const;
 
     protected:
         explicit Engine(const EngineInitParams& inParams);

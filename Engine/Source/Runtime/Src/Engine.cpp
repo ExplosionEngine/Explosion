@@ -3,9 +3,10 @@
 //
 
 #include <Runtime/Engine.h>
-#include <Core/Module.h>
 #include <Common/Debug.h>
+#include <Core/Module.h>
 #include <Core/Paths.h>
+#include <Runtime/World.h>
 
 namespace Runtime {
     Engine::Engine(const EngineInitParams& inParams)
@@ -24,6 +25,7 @@ namespace Runtime {
 
     Engine::~Engine()
     {
+        renderModule->DeInitialize();
         ::Core::ModuleManager::Get().Unload("Render");
     }
 
@@ -47,6 +49,11 @@ namespace Runtime {
         // TODO tick each playing world
         // TODO fetch each scene
         // TODO traverse each view in scene, create a renderer, perform rendering
+    }
+
+    Common::UniqueRef<World> Engine::CreateWorld(const std::string& inName) const // NOLINT
+    {
+        return new World(inName);
     }
 
     Engine* EngineHolder::engine = nullptr;

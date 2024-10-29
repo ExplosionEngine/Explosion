@@ -27,9 +27,9 @@ namespace Render {
         Core::ModuleType Type() const override;
 
         void Initialize(const RenderModuleInitParams& inParams);
+        void DeInitialize();
         RHI::Device* GetDevice() const;
         Scene* AllocateScene();
-        void DestroyScene(Scene* inScene);
         void ShutdownRenderingThread();
         void FlushAllRenderingCommands() const;
 

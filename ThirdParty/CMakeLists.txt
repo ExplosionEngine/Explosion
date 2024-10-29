@@ -1,12 +1,3 @@
-# EnTT
-Add3rdHeaderOnlyPackage(
-    NAME EnTT
-    PLATFORM All
-    VERSION 3.8.1
-    HASH abe24e5da599ef9f172c25f68f3b777dd404896b06e500742ecc88bbfef2216c
-    INCLUDE $<SOURCE_DIR>/single_include
-)
-
 # DirectX 12 Headers
 Add3rdHeaderOnlyPackage(
     NAME DirectXHeaders

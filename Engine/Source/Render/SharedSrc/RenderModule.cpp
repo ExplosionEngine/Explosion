@@ -45,6 +45,14 @@ namespace Render {
         initialized = true;
     }
 
+    void RenderModule::DeInitialize()
+    {
+        renderingThread = nullptr;
+        rhiInstance = nullptr;
+        rhiDevice = nullptr;
+        initialized = false;
+    }
+
     RHI::Device* RenderModule::GetDevice() const
     {
         return rhiDevice.Get();
@@ -53,11 +61,6 @@ namespace Render {
     Render::Scene* RenderModule::AllocateScene() // NOLINT
     {
         return new Scene();
-    }
-
-    void RenderModule::DestroyScene(Render::Scene* inScene) // NOLINT
-    {
-        delete inScene;
     }
 
     void RenderModule::ShutdownRenderingThread()
