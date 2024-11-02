@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <Common/Utility.h>
+
 namespace Runtime {
     class World {
     public:

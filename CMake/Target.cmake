@@ -291,10 +291,10 @@ function(AddExecutable)
         )
     endif()
 
-    add_executable(
+    add_executable(${PARAMS_NAME})
+    target_sources(
         ${PARAMS_NAME}
-        ${PARAMS_SRC}
-        ${GENERATED_SRC}
+        PRIVATE ${PARAMS_SRC} ${GENERATED_SRC}
     )
     target_include_directories(
         ${PARAMS_NAME}
@@ -353,8 +353,10 @@ function(AddLibrary)
     add_library(
         ${PARAMS_NAME}
         ${PARAMS_TYPE}
-        ${PARAMS_SRC}
-        ${GENERATED_SRC}
+    )
+    target_sources(
+        ${PARAMS_NAME}
+        PRIVATE ${PARAMS_SRC} ${GENERATED_SRC}
     )
     target_include_directories(
         ${PARAMS_NAME}
@@ -416,10 +418,10 @@ function(AddTest)
         )
     endif()
 
-    add_executable(
+    add_executable(${PARAMS_NAME})
+    target_sources(
         ${PARAMS_NAME}
-        ${PARAMS_SRC}
-        ${GENERATED_SRC}
+        PRIVATE ${PARAMS_SRC} ${GENERATED_SRC}
     )
     target_include_directories(
         ${PARAMS_NAME}
