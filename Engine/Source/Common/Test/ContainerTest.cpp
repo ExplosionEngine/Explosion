@@ -104,6 +104,19 @@ TEST(ContainerTest, VectorGetIntersection)
     ASSERT_EQ(result, (std::vector { 3, 4, 5 }));
 }
 
+TEST(ContainerTest, VectorGetDifferences)
+{
+    std::vector a = { 1, 2, 5, 5, 5, 9 };
+    std::vector b = { 2, 5, 7 };
+    auto result = VectorUtils::GetDifferences(a, b);
+    ASSERT_EQ(result, (std::vector { 1, 5, 5, 9 }));
+
+    a = { 1, 2, 3, 4, 5 };
+    b = { 4, 5, 6, 7, 8 };
+    result = VectorUtils::GetDifferences(a, b);
+    ASSERT_EQ(result, (std::vector { 1, 2, 3 }));
+}
+
 TEST(ContainerTest, SetGetIntersection)
 {
     const std::unordered_set a = { 1, 2, 3, 4, 5 };

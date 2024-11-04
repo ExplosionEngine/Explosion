@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string>
+
 #include <Common/Utility.h>
 
 namespace Runtime {

@@ -644,8 +644,8 @@ namespace Render {
     {
         auto collectQueueReadWrites = [this](const std::vector<RGPassRef>& passes, std::unordered_set<RGResourceRef>& outReads, std::unordered_set<RGResourceRef>& outWrites) -> void {
             for (auto* pass : passes) {
-                Common::SetUtils::GetUnionInline(outReads, passReadsMap.at(pass));
-                Common::SetUtils::GetUnionInline(outWrites, passWritesMap.at(pass));
+                Common::SetUtils::GetUnionInplace(outReads, passReadsMap.at(pass));
+                Common::SetUtils::GetUnionInplace(outWrites, passWritesMap.at(pass));
             }
         };
 

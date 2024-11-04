@@ -23,13 +23,14 @@ namespace Common {
         template <typename T> static typename std::vector<T>::iterator SwapWithLastAndDelete(std::vector<T>& vector, const typename std::vector<T>::iterator& iterator);
         template <typename T> static size_t SwapWithLastAndDelete(std::vector<T>& vector, size_t index);
         template <typename T> static std::vector<T> GetIntersection(const std::vector<T>& lhs, const std::vector<T>& rhs);
+        template <typename T> static std::vector<T> GetDifferences(const std::vector<T>& lhs, const std::vector<T>& rhs);
     };
 
     class SetUtils {
     public:
         template <typename T> static std::unordered_set<T> GetIntersection(const std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs);
         template <typename T> static std::unordered_set<T> GetUnion(const std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs);
-        template <typename T> static void GetUnionInline(std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs);
+        template <typename T> static void GetUnionInplace(std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs);
     };
 
     template <typename T> class InplaceVectorIter;
@@ -296,6 +297,14 @@ namespace Common {
     }
 
     template <typename T>
+    std::vector<T> VectorUtils::GetDifferences(const std::vector<T>& lhs, const std::vector<T>& rhs)
+    {
+        std::vector<T> result;
+        std::set_difference(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), std::back_inserter(result));
+        return result;
+    }
+
+    template <typename T>
     std::unordered_set<T> SetUtils::GetIntersection(const std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs)
     {
         std::unordered_set<T> result;
@@ -325,7 +334,7 @@ namespace Common {
     }
 
     template <typename T>
-    void SetUtils::GetUnionInline(std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs)
+    void SetUtils::GetUnionInplace(std::unordered_set<T>& lhs, const std::unordered_set<T>& rhs)
     {
         lhs.reserve(lhs.size() + rhs.size());
         for (const auto& element : rhs) {
