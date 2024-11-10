@@ -574,7 +574,7 @@ namespace Mirror {
         const Id& GetOwnerId() const;
         const Class& GetOwner() const;
         FieldAccess GetAccess() const;
-        uint32_t SizeOf() const;
+        size_t SizeOf() const;
         const TypeInfo* GetTypeInfo() const;
         void SetDyn(const Argument& object, const Argument& value) const;
         Any GetDyn(const Argument& object) const;
@@ -591,7 +591,7 @@ namespace Mirror {
             Id id;
             Id owner;
             FieldAccess access;
-            uint32_t memorySize;
+            size_t memorySize;
             const TypeInfo* typeInfo;
             Setter setter;
             Getter getter;
@@ -601,7 +601,7 @@ namespace Mirror {
 
         Id owner;
         FieldAccess access;
-        uint32_t memorySize;
+        size_t memorySize;
         const TypeInfo* typeInfo;
         Setter setter;
         Getter getter;
@@ -710,6 +710,7 @@ namespace Mirror {
         void ForEachMemberVariable(const MemberVariableTraverser& func) const;
         void ForEachMemberFunction(const MemberFunctionTraverser& func) const;
         const TypeInfo* GetTypeInfo() const;
+        size_t SizeOf() const;
         bool HasDefaultConstructor() const;
         const Class* GetBaseClass() const;
         bool IsBaseOf(const Class* derivedClass) const;
@@ -752,6 +753,7 @@ namespace Mirror {
         struct ConstructParams {
             Id id;
             const TypeInfo* typeInfo;
+            size_t memorySize;
             BaseClassGetter baseClassGetter;
             std::function<Any()> defaultObjectCreator;
             std::optional<Destructor::ConstructParams> destructorParams;
@@ -769,6 +771,7 @@ namespace Mirror {
         MemberFunction& EmplaceMemberFunction(const Id& inId, MemberFunction::ConstructParams&& inParams);
 
         const TypeInfo* typeInfo;
+        size_t memorySize;
         BaseClassGetter baseClassGetter;
         Any defaultObject;
         std::optional<Destructor> destructor;

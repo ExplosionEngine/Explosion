@@ -47,7 +47,7 @@ namespace Common {
         Event();
 
         template <auto F> ReceiverHandle BindStatic();
-        template <auto F, typename C> ReceiverHandle BindMember(C&& inObj);
+        template <auto F, typename C> ReceiverHandle BindMember(C& inObj);
         template <typename F> ReceiverHandle BindLambda(F&& inLambda);
         template <typename... Args> void Broadcast(Args&&... inArgs) const;
         void Unbind(ReceiverHandle inHandle);
@@ -56,7 +56,7 @@ namespace Common {
 
     private:
         template <auto F, size_t... I> void BindStaticInternal(ReceiverHandle inHandle, std::index_sequence<I...>);
-        template <auto F, typename C, size_t... I> void BindMemberInternal(ReceiverHandle inHandle, C&& inObj, std::index_sequence<I...>);
+        template <auto F, typename C, size_t... I> void BindMemberInternal(ReceiverHandle inHandle, C& inObj, std::index_sequence<I...>);
         template <typename F, size_t... I> void BindLambdaInternal(ReceiverHandle inHandle, F&& inLambda, std::index_sequence<I...>);
 
         ReceiverHandle counter;
@@ -82,10 +82,10 @@ namespace Common {
 
     template <typename... T>
     template <auto F, typename C>
-    ReceiverHandle Event<T...>::BindMember(C&& inObj)
+    ReceiverHandle Event<T...>::BindMember(C& inObj)
     {
         const auto handle = counter++;
-        BindMemberInternal<F, C>(handle, std::forward<C>(inObj), std::make_index_sequence<sizeof...(T)>());
+        BindMemberInternal<F, C>(handle, inObj, std::make_index_sequence<sizeof...(T)>());
         return handle;
     }
 
@@ -137,9 +137,9 @@ namespace Common {
 
     template <typename... T>
     template <auto F, typename C, size_t... I>
-    void Event<T...>::BindMemberInternal(ReceiverHandle inHandle, C&& inObj, std::index_sequence<I...>)
+    void Event<T...>::BindMemberInternal(ReceiverHandle inHandle, C& inObj, std::index_sequence<I...>)
     {
-        receivers.emplace_back(inHandle, std::bind(F, std::forward<C>(inObj), Internal::IndexToStdPlaceholder<I + 1>::value...));
+        receivers.emplace_back(inHandle, std::bind(F, &inObj, Internal::IndexToStdPlaceholder<I + 1>::value...));
     }
 
     template <typename... T>

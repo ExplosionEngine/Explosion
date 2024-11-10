@@ -1068,7 +1068,7 @@ namespace Mirror {
         return access;
     }
 
-    uint32_t MemberVariable::SizeOf() const
+    size_t MemberVariable::SizeOf() const
     {
         return memorySize;
     }
@@ -1231,6 +1231,7 @@ namespace Mirror {
     Class::Class(ConstructParams&& params)
         : ReflNode(std::move(params.id))
         , typeInfo(params.typeInfo)
+        , memorySize(params.memorySize)
         , baseClassGetter(std::move(params.baseClassGetter))
     {
         CreateDefaultObject(params.defaultObjectCreator);
@@ -1412,6 +1413,11 @@ namespace Mirror {
     const TypeInfo* Class::GetTypeInfo() const
     {
         return typeInfo;
+    }
+
+    size_t Class::SizeOf() const
+    {
+        return memorySize;
     }
 
     bool Class::HasDefaultConstructor() const

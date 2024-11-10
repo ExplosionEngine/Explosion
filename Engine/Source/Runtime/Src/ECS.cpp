@@ -5,117 +5,239 @@
 #include <Runtime/ECS.h>
 
 namespace Runtime::Internal {
-    void CompOp::SetOffset(size_t inOffset)
+    CompRtti::CompRtti() = default;
+
+    void CompRtti::Bind(size_t inOffset)
     {
+        bound = true;
         offset = inOffset;
     }
 
-    void* CompOp::Emplace(void* inElem, void* inOther) const
+    Mirror::Any CompRtti::MoveConstruct(ElemPtr inElem, const Mirror::Argument& inOther) const
     {
-        return emplace(inElem, offset, inOther);
+        return moveConstruct(inElem, offset, inOther);
     }
 
-    void CompOp::Destruct(void* inElem) const
+    Mirror::Any CompRtti::MoveAssign(ElemPtr inElem, const Mirror::Argument& inOther) const
     {
-        destruct(inElem, offset);
+        return moveAssign(inElem, offset, inOther);
     }
 
-    void* CompOp::Get(void* inElem) const
+    void CompRtti::Destruct(ElemPtr inElem) const
+    {
+        return destructor(inElem, offset);
+    }
+
+    Mirror::Any CompRtti::Get(ElemPtr inElem) const
     {
         return get(inElem, offset);
     }
 
-    CompId CompOp::GetCompId() const
+    CompClass CompRtti::Class() const
     {
-        return compId;
+        return clazz;
     }
 
-    size_t CompOp::GetOffset() const
+    size_t CompRtti::Offset() const
     {
         return offset;
     }
 
-    size_t CompOp::GetSize() const
+    size_t CompRtti::Size() const
     {
-        return size;
+        return clazz->SizeOf();
     }
 
-    CompOp::CompOp()
-        : compId(0)
-        , offset(0)
-        , size(0)
-        , emplace(nullptr)
-        , destruct(nullptr)
-        , get(nullptr)
-    {
-    }
-
-    Archetype::Archetype(const std::vector<CompOp>& inCompOps)
-        : archetypeId(0)
+    Archetype::Archetype(const std::vector<CompRtti>& inRttiVec)
+        : id(0)
         , size(0)
         , elemSize(0)
-        , compOps(inCompOps)
+        , rttiVec(inRttiVec)
     {
-        for (auto& compOp : compOps) {
-            archetypeId += compOp.GetCompId();
-            compOp.SetOffset(elemSize);
-            elemSize += compOp.GetSize();
+        rttiMap.reserve(rttiVec.size());
+        for (auto i = 0; i < rttiVec.size(); i++) {
+            auto& rtti = rttiVec[i];
+            const auto clazz = rtti.Class();
+            rttiMap.emplace(clazz, i);
+
+            id += clazz->GetTypeInfo()->id;
+            rtti.Bind(elemSize);
+            elemSize += rtti.Size();
         }
     }
 
-    bool Archetype::Contains(CompId inCompId) const
+    bool Archetype::Contains(CompClass inClazz) const
     {
-        for (const auto& compOp : compOps) {
-            if (compOp.GetCompId() == inCompId) {
+        for (const auto& rtti : rttiVec) {
+            if (rtti.Class() == inClazz) {
                 return true;
             }
         }
         return false;
     }
 
-    bool Archetype::ContainsAll(const std::vector<CompId>& inCompIds) const
+    bool Archetype::ContainsAll(const std::vector<CompClass>& inClasses) const
     {
-        for (const auto& compId : inCompIds) {
-            if (!Contains(compId)) {
+        for (const auto& rtti : rttiVec) {
+            if (!Contains(rtti.Class())) {
                 return false;
             }
         }
         return true;
     }
 
-    bool Archetype::NotContainsAny(const std::vector<CompId>& inCompIds) const
+    bool Archetype::NotContainsAny(const std::vector<CompClass>& inCompClasses) const
     {
-        for (const auto& compId : inCompIds) {
-            if (Contains(compId)) {
+        for (const auto& rtti : rttiVec) {
+            if (Contains(rtti.Class())) {
                 return false;
             }
         }
         return true;
     }
 
-    void* Archetype::Emplace(Entity inEntity)
+    ElemPtr Archetype::EmplaceElem(Entity inEntity)
     {
-        if (Size() == Capacity()) {
-            Reserve();
-        }
-        auto* result = AllocateNewElemBack();
-        auto backElem = BackElemIndex();
+        ElemPtr result = AllocateNewElemBack();
+        auto backElem = size - 1;
         entityMap.emplace(inEntity, backElem);
         elemMap.emplace(backElem, inEntity);
         return result;
     }
 
-    void* Archetype::Emplace(Entity inEntity, void* inSourceElem, const std::vector<CompOp>& inSourceCompOps)
+    ElemPtr Archetype::EmplaceElem(Entity inEntity, ElemPtr inSrcElem, const std::vector<CompRtti>& inSrcRttiVec)
     {
-        void* newElem = Emplace(inEntity);
-        for (const auto& sourceCompOp : inSourceCompOps) {
-            const auto* newCompOp = FindCompOp(sourceCompOp.GetCompId());
-            if (newCompOp == nullptr) {
+        ElemPtr newElem = EmplaceElem(inEntity);
+        for (const auto& srcRtti : inSrcRttiVec) {
+            const auto* newRtti = FindCompRtti(srcRtti.Class());
+            if (newRtti == nullptr) {
                 continue;
             }
-            newCompOp->Emplace(newElem, sourceCompOp.Get(inSourceElem));
+            newRtti->MoveConstruct(newElem, srcRtti.Get(inSrcElem));
         }
         return newElem;
+    }
+
+    Mirror::Any Archetype::EmplaceComp(Entity inEntity, CompClass inCompClass, Mirror::Any inComp) // NOLINT
+    {
+        ElemPtr elem = ElemAt(entityMap.at(inEntity));
+        return GetCompRtti(inCompClass).MoveConstruct(elem, inComp);
+    }
+
+    void Archetype::EraseElem(Entity inEntity)
+    {
+        const auto elemIndex = entityMap.at(inEntity);
+        ElemPtr elem = ElemAt(elemIndex);
+        const auto lastElemIndex = Size() - 1;
+        const auto entityToLastElem = elemMap.at(lastElemIndex);
+        ElemPtr lastElem = ElemAt(lastElemIndex);
+        for (const auto& rtti : rttiVec) {
+            rtti.MoveAssign(elem, rtti.Get(lastElem));
+        }
+        entityMap.erase(inEntity);
+        entityMap.at(entityToLastElem) = elemIndex;
+        elemMap.erase(lastElemIndex);
+        elemMap.at(elemIndex) = entityToLastElem;
+    }
+
+    ElemPtr Archetype::GetElem(Entity inEntity)
+    {
+        return ElemAt(entityMap.at(inEntity));
+    }
+
+    Mirror::Any Archetype::GetComp(Entity inEntity, CompClass inCompClass)
+    {
+        ElemPtr element = GetElem(inEntity);
+        return GetCompRtti(inCompClass).Get(element);
+    }
+
+    size_t Archetype::Size() const
+    {
+        return size;
+    }
+
+    auto Archetype::All() const
+    {
+        return elemMap | std::ranges::views::values;
+    }
+
+    const std::vector<CompRtti>& Archetype::GetRttiVec() const
+    {
+        return rttiVec;
+    }
+
+    ArchetypeId Archetype::Id() const
+    {
+        return id;
+    }
+
+    std::vector<CompRtti> Archetype::NewRttiVecByAdd(const CompRtti& inRtti) const
+    {
+        auto result = rttiVec;
+        result.emplace_back(inRtti);
+        return result;
+    }
+
+    std::vector<CompRtti> Archetype::NewRttiVecByRemove(const CompRtti& inRtti) const
+    {
+        auto result = rttiVec;
+        const auto iter = std::ranges::find_if(result, [&](const CompRtti& rtti) -> bool { return rtti.Class() == inRtti.Class(); });
+        Assert(iter != result.end());
+        result.erase(iter);
+        return result;
+    }
+
+    const CompRtti* Archetype::FindCompRtti(CompClass clazz) const
+    {
+        const auto iter = rttiMap.find(clazz);
+        return iter != rttiMap.end() ? &rttiVec[iter->second] : nullptr;
+    }
+
+    const CompRtti& Archetype::GetCompRtti(CompClass clazz) const
+    {
+        Assert(rttiMap.contains(clazz));
+        return rttiVec[rttiMap.at(clazz)];
+    }
+
+    ElemPtr Archetype::ElemAt(std::vector<uint8_t>& inMemory, size_t inIndex) // NOLINT
+    {
+        return inMemory.data() + (inIndex * elemSize);
+    }
+
+    ElemPtr Archetype::ElemAt(size_t inIndex)
+    {
+        return ElemAt(memory, inIndex);
+    }
+
+    size_t Archetype::Capacity() const
+    {
+        return memory.size() / elemSize;
+    }
+
+    void Archetype::Reserve(float inRatio)
+    {
+        Assert(inRatio > 1.0f);
+        const size_t newCapacity = static_cast<size_t>(static_cast<float>(Capacity()) * inRatio);
+        std::vector<uint8_t> newMemory(newCapacity * elemSize);
+
+        for (auto i = 0; i < size; i++) {
+            for (const auto& rtti : rttiVec) {
+                void* dstElem = ElemAt(newMemory, i);
+                void* srcElem = ElemAt(i);
+                rtti.MoveConstruct(dstElem, rtti.Get(srcElem));
+                rtti.Destruct(srcElem);
+            }
+        }
+        memory = std::move(newMemory);
+    }
+
+    void* Archetype::AllocateNewElemBack()
+    {
+        if (Size() == Capacity()) {
+            Reserve();
+        }
+        size++;
+        return ElemAt(size - 1);
     }
 
     EntityPool::EntityPool()
@@ -189,6 +311,83 @@ namespace Runtime::Internal {
 } // namespace Runtime::Internal
 
 namespace Runtime {
+    RuntimeViewRule::RuntimeViewRule() = default;
+
+    RuntimeView::RuntimeView(ECRegistry& inRegistry, const RuntimeViewRule& inArgs)
+    {
+        Evaluate(inRegistry, inArgs);
+    }
+
+    auto RuntimeView::Begin()
+    {
+        return resultEntities.begin();
+    }
+
+    auto RuntimeView::Begin() const
+    {
+        return resultEntities.begin();
+    }
+
+    auto RuntimeView::End()
+    {
+        return resultEntities.end();
+    }
+
+    auto RuntimeView::End() const
+    {
+        return resultEntities.end();
+    }
+
+    auto RuntimeView::begin()
+    {
+        return Begin();
+    }
+
+    auto RuntimeView::begin() const
+    {
+        return Begin();
+    }
+
+    auto RuntimeView::end()
+    {
+        return End();
+    }
+
+    auto RuntimeView::end() const
+    {
+        return End();
+    }
+
+    void RuntimeView::Evaluate(ECRegistry& inRegistry, const RuntimeViewRule& inArgs)
+    {
+        const std::vector includes(inArgs.includes.begin(), inArgs.includes.end());
+        const std::vector excludes(inArgs.excludes.begin(), inArgs.excludes.end());
+
+        slotMap.reserve(includes.size());
+        for (auto i = 0; i < includes.size(); i++) {
+            slotMap.emplace(includes[i], i);
+        }
+
+        for (auto& [_, archetype] : inRegistry.archetypes) {
+            if (!archetype.ContainsAll(includes) || !archetype.NotContainsAny(excludes)) {
+                continue;
+            }
+
+            resultEntities.reserve(result.size() + archetype.Size());
+            result.reserve(result.size() + archetype.Size());
+            for (const auto entity : archetype.All()) {
+                std::vector<Mirror::Any> comps;
+                comps.reserve(includes.size());
+                for (const auto clazz : includes) {
+                    comps.emplace_back(archetype.GetComp(entity, clazz));
+                }
+
+                resultEntities.emplace_back(entity);
+                result.emplace_back(entity, std::move(comps));
+            }
+        }
+    }
+
     Observer::Observer(ECRegistry& inRegistry)
         : registry(inRegistry)
     {
@@ -260,31 +459,39 @@ namespace Runtime {
 
     ECRegistry::ECRegistry(const ECRegistry& inOther)
         : entities(inOther.entities)
+        , globalComps(inOther.globalComps)
         , archetypes(inOther.archetypes)
         , compEvents(inOther.compEvents)
+        , globalCompEvents(inOther.globalCompEvents)
     {
     }
 
     ECRegistry::ECRegistry(ECRegistry&& inOther) noexcept
         : entities(std::move(inOther.entities))
+        , globalComps(std::move(inOther.globalComps))
         , archetypes(std::move(inOther.archetypes))
         , compEvents(std::move(inOther.compEvents))
+        , globalCompEvents(std::move(inOther.globalCompEvents))
     {
     }
 
     ECRegistry& ECRegistry::operator=(const ECRegistry& inOther)
     {
         entities = inOther.entities;
+        globalComps = inOther.globalComps;
         archetypes = inOther.archetypes;
         compEvents = inOther.compEvents;
+        globalCompEvents = inOther.globalCompEvents;
         return *this;
     }
 
     ECRegistry& ECRegistry::operator=(ECRegistry&& inOther) noexcept
     {
         entities = std::move(inOther.entities);
+        globalComps = std::move(inOther.globalComps);
         archetypes = std::move(inOther.archetypes);
         compEvents = std::move(inOther.compEvents);
+        globalCompEvents = std::move(inOther.globalCompEvents);
         return *this;
     }
 
@@ -311,8 +518,10 @@ namespace Runtime {
     void ECRegistry::Clear()
     {
         entities.Clear();
+        globalComps.clear();
         archetypes.clear();
         compEvents.clear();
+        globalCompEvents.clear();
     }
 
     void ECRegistry::Each(const EntityTraverseFunc& inFunc) const
@@ -338,6 +547,11 @@ namespace Runtime {
     ECRegistry::ConstIter ECRegistry::end() const
     {
         return End();
+    }
+
+    RuntimeView ECRegistry::RuntimeView(const RuntimeViewRule& inRule)
+    {
+        return Runtime::RuntimeView { *this, inRule };
     }
 
     Observer ECRegistry::Observer()
