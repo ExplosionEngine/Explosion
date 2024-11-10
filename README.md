@@ -44,7 +44,7 @@ We use cmake as build tool, the following table contains supported platform, too
     </tr>
     <tr>
         <td rowspan="3">macOS</td>
-        <td rowspan="3">x64 / arm64</td>
+        <td rowspan="3">arm64</td>
         <td rowspan="3">Apple Clang</td>
         <td>Unix Makefiles</td>
     </tr>
