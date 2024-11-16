@@ -311,7 +311,44 @@ namespace Runtime::Internal {
 } // namespace Runtime::Internal
 
 namespace Runtime {
+    ScopedUpdaterDyn::ScopedUpdaterDyn(ECRegistry& inRegistry, CompClass inClass, Entity inEntity, const Mirror::Any& inCompRef)
+        : registry(inRegistry)
+        , clazz(inClass)
+        , entity(inEntity)
+        , compRef(inCompRef)
+    {
+    }
+
+    ScopedUpdaterDyn::~ScopedUpdaterDyn()
+    {
+        registry.NotifyUpdatedDyn(clazz, entity);
+    }
+
+    GScopedUpdaterDyn::GScopedUpdaterDyn(ECRegistry& inRegistry, GCompClass inClass, const Mirror::Any& inGlobalCompRef)
+        : registry(inRegistry)
+        , clazz(inClass)
+        , globalCompRef(inGlobalCompRef)
+    {
+    }
+
+    GScopedUpdaterDyn::~GScopedUpdaterDyn()
+    {
+        registry.GNotifyUpdatedDyn(clazz);
+    }
+
     RuntimeViewRule::RuntimeViewRule() = default;
+
+    RuntimeViewRule& RuntimeViewRule::IncludeDyn(CompClass inClass)
+    {
+        includes.emplace(inClass);
+        return *this;
+    }
+
+    RuntimeViewRule& RuntimeViewRule::ExcludeDyn(CompClass inClass)
+    {
+        excludes.emplace(inClass);
+        return *this;
+    }
 
     RuntimeView::RuntimeView(ECRegistry& inRegistry, const RuntimeViewRule& inArgs)
     {

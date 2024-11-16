@@ -13,12 +13,12 @@
 
 namespace Runtime {
     using Entity = size_t;
+    using CompClass = const Mirror::Class*;
+    using GCompClass = const Mirror::Class*;
 }
 
 namespace Runtime::Internal {
     using ArchetypeId = Mirror::TypeId;
-    using CompClass = const Mirror::Class*;
-    using GlobalCompClass = const Mirror::Class*;
     using ElemPtr = void*;
 
     template <typename T> const Mirror::Class* GetClass();
@@ -164,6 +164,39 @@ namespace Runtime {
         G& globalCompRef;
     };
 
+    class ScopedUpdaterDyn {
+    public:
+        ScopedUpdaterDyn(ECRegistry& inRegistry, CompClass inClass, Entity inEntity, const Mirror::Any& inCompRef);
+        ~ScopedUpdaterDyn();
+
+        NonCopyable(ScopedUpdaterDyn)
+        NonMovable(ScopedUpdaterDyn)
+
+        template <typename T> T As() const;
+
+    private:
+        ECRegistry& registry;
+        CompClass clazz;
+        Entity entity;
+        const Mirror::Any& compRef;
+    };
+
+    class GScopedUpdaterDyn {
+    public:
+        GScopedUpdaterDyn(ECRegistry& inRegistry, GCompClass inClass, const Mirror::Any& inGlobalCompRef);
+        ~GScopedUpdaterDyn();
+
+        NonCopyable(GScopedUpdaterDyn)
+        NonMovable(GScopedUpdaterDyn)
+
+        template <typename T> T As() const;
+
+    private:
+        ECRegistry& registry;
+        GCompClass clazz;
+        const Mirror::Any& globalCompRef;
+    };
+
     template <typename... T>
     struct Contains {};
 
@@ -201,12 +234,14 @@ namespace Runtime {
         RuntimeViewRule();
         template <typename C> RuntimeViewRule& Include();
         template <typename C> RuntimeViewRule& Exclude();
+        RuntimeViewRule& IncludeDyn(CompClass inClass);
+        RuntimeViewRule& ExcludeDyn(CompClass inClass);
 
     private:
         friend class RuntimeView;
 
-        std::unordered_set<Internal::CompClass> includes;
-        std::unordered_set<Internal::CompClass> excludes;
+        std::unordered_set<CompClass> includes;
+        std::unordered_set<CompClass> excludes;
     };
 
     class RuntimeView {
@@ -230,7 +265,7 @@ namespace Runtime {
         template <typename C> decltype(auto) GetCompRef(std::vector<void*>& inComps) const;
         void Evaluate(ECRegistry& inRegistry, const RuntimeViewRule& inArgs);
 
-        std::unordered_map<Internal::CompClass, size_t> slotMap;
+        std::unordered_map<CompClass, size_t> slotMap;
         std::vector<Entity> resultEntities;
         std::vector<std::pair<Entity, std::vector<Mirror::Any>>> result;
     };
@@ -269,6 +304,7 @@ namespace Runtime {
     class ECRegistry {
     public:
         using EntityTraverseFunc = Internal::EntityPool::EntityTraverseFunc;
+        using DynUpdateFunc = std::function<void(const Mirror::Any&)>;
         using ConstIter = Internal::EntityPool::ConstIter;
         using CompEvent = Common::Event<ECRegistry&, Entity>;
         using GCompEvent = Common::Event<ECRegistry&>;
@@ -305,7 +341,7 @@ namespace Runtime {
         ConstIter begin() const;
         ConstIter end() const;
 
-        // component
+        // component static
         template <typename C, typename... Args> C& Emplace(Entity inEntity, Args&&... inArgs);
         template <typename C> void Remove(Entity inEntity);
         template <typename C> void NotifyUpdated(Entity inEntity) const;
@@ -318,11 +354,24 @@ namespace Runtime {
         template <typename C> const C& Get(Entity inEntity) const;
         template <typename... C, typename... E> View<Exclude<E...>, C...> View(Exclude<E...>);
         template <typename C> CompEvents& Events();
-        RuntimeView RuntimeView(const RuntimeViewRule& inRule);
         Observer Observer();
 
-        // global component
-        template <typename G, typename... Args> void GEmplace(Args&&... inArgs);
+        // component dynamic
+        Mirror::Any EmplaceDyn(CompClass inClass, Entity inEntity, const Mirror::ArgumentList& inArgs);
+        void RemoveDyn(CompClass inClass, Entity inEntity);
+        void NotifyUpdatedDyn(CompClass inClass, Entity inEntity) const;
+        void UpdateDyn(CompClass inClass, Entity inEntity, const DynUpdateFunc& inFunc);
+        ScopedUpdaterDyn UpdateDyn(CompClass inClass, Entity inEntity);
+        bool HasDyn(CompClass inClass, Entity inEntity) const;
+        Mirror::Any FindDyn(CompClass inClass, Entity inEntity);
+        Mirror::Any FindDyn(CompClass inClass, Entity inEntity) const;
+        Mirror::Any GetDyn(CompClass inClass, Entity inEntity);
+        Mirror::Any GetDyn(CompClass inClass, Entity inEntity) const;
+        CompEvents& EventsDyn(CompClass inClass, Entity inEntity);
+        RuntimeView RuntimeView(const RuntimeViewRule& inRule);
+
+        // global component static
+        template <typename G, typename... Args> G& GEmplace(Args&&... inArgs);
         template <typename G> void GRemove();
         template <typename G> void GNotifyUpdated() const;
         template <typename G, typename F> void GUpdate(F&& inFunc);
@@ -334,6 +383,19 @@ namespace Runtime {
         template <typename G> const G& GGet() const;
         template <typename G> GCompEvents& GEvents();
 
+        // global component dynamic
+        Mirror::Any GEmplaceDyn(GCompClass inClass, const Mirror::ArgumentList& inArgs);
+        void GRemoveDyn(GCompClass inClass);
+        void GNotifyUpdatedDyn(GCompClass inClass) const;
+        void GUpdateDyn(GCompClass inClass, const DynUpdateFunc& inFunc);
+        GScopedUpdaterDyn GUpdateDyn(GCompClass inClass);
+        bool GHasDyn(GCompClass inClass) const;
+        Mirror::Any GFindDyn(GCompClass inClass);
+        Mirror::Any GFindDyn(GCompClass inClass) const;
+        Mirror::Any GGetDyn(GCompClass inClass);
+        Mirror::Any GGetDyn(GCompClass inClass) const;
+        GCompEvents& GEventsDyn(GCompClass inClass);
+
     private:
         template <typename... T> friend class View;
         friend class RuntimeView;
@@ -342,12 +404,16 @@ namespace Runtime {
         template <typename C> void NotifyRemove(Entity inEntity) const;
         template <typename G> void GNotifyConstructed() const;
         template <typename G> void GNotifyRemove() const;
+        void NotifyConstructedDyn(CompClass inClass, Entity inEntity) const;
+        void NotifyRemoveDyn(CompClass inClass, Entity inEntity) const;
+        void GNotifyConstructedDyn(GCompClass inClass) const;
+        void GNotifyRemoveDyn(CompClass inClass) const;
 
         Internal::EntityPool entities;
-        std::unordered_map<Internal::GlobalCompClass, Mirror::Any> globalComps;
+        std::unordered_map<GCompClass, Mirror::Any> globalComps;
         std::unordered_map<Internal::ArchetypeId, Internal::Archetype> archetypes;
-        std::unordered_map<Internal::CompClass, CompEvents> compEvents;
-        std::unordered_map<Internal::GlobalCompClass, GCompEvent> globalCompEvents;
+        std::unordered_map<CompClass, CompEvents> compEvents;
+        std::unordered_map<GCompClass, GCompEvent> globalCompEvents;
     };
 
     class SystemRegistry {
@@ -455,6 +521,18 @@ namespace Runtime {
         return &globalCompRef;
     }
 
+    template <typename T>
+    T ScopedUpdaterDyn::As() const
+    {
+        return compRef.As<T>();
+    }
+
+    template <typename T>
+    T GScopedUpdaterDyn::As() const
+    {
+        return globalCompRef.As<T>();
+    }
+
     template <typename... C, typename... E>
     View<Exclude<E...>, C...>::View(ECRegistry& inRegistry)
     {
@@ -521,13 +599,13 @@ namespace Runtime {
     template <typename... C, typename... E>
     void View<Exclude<E...>, C...>::Evaluate(ECRegistry& inRegistry)
     {
-        std::vector<Internal::CompClass> includeCompIds;
+        std::vector<CompClass> includeCompIds;
         includeCompIds.reserve(sizeof...(C));
         (void) std::initializer_list<int> { ([&]() -> void {
             includeCompIds.emplace_back(Internal::GetClass<C>());
         }(), 0)... };
 
-        std::vector<Internal::CompClass> excludeCompIds;
+        std::vector<CompClass> excludeCompIds;
         excludeCompIds.reserve(sizeof...(E));
         (void) std::initializer_list<int> { ([&]() -> void {
             excludeCompIds.emplace_back(Internal::GetClass<C>());
@@ -626,9 +704,9 @@ namespace Runtime {
         }
 
         C tempObj(std::forward<Args>(inArgs)...);
-        auto& result = *static_cast<C*>(newArchetype->EmplaceComp(inEntity, clazz, &tempObj));
+        Mirror::Any compRef = newArchetype->EmplaceComp(inEntity, clazz, &tempObj);
         NotifyConstructed<C>(inEntity);
-        return result;
+        return compRef.As<C&>();
     }
 
     template <typename C>
@@ -691,20 +769,20 @@ namespace Runtime {
     C& ECRegistry::Get(Entity inEntity)
     {
         Assert(Valid(inEntity) && Has<C>());
-        void* ptr = archetypes
+        Mirror::Any compRef = archetypes
             .at(entities.GetArchetype(inEntity))
             .GetComp(inEntity, Internal::GetClass<C>());
-        return *static_cast<C*>(ptr);
+        return compRef.As<C&>();
     }
 
     template <typename C>
     const C& ECRegistry::Get(Entity inEntity) const
     {
         Assert(Valid(inEntity) && Has<C>());
-        const void* ptr = archetypes
+        Mirror::Any compRef = archetypes
             .at(entities.GetArchetype(inEntity))
             .GetComp(inEntity, Internal::GetClass<C>());
-        return *static_cast<const C*>(ptr);
+        return compRef.As<const C&>();
     }
 
     template <typename... C, typename... E>
@@ -750,11 +828,12 @@ namespace Runtime {
     }
 
     template <typename G, typename ... Args>
-    void ECRegistry::GEmplace(Args&&... inArgs)
+    G& ECRegistry::GEmplace(Args&&... inArgs)
     {
         Assert(!GHas<G>());
         globalComps.emplace(Internal::GetClass<G>(), Mirror::Any(G(std::forward<Args>(inArgs))...));
         GNotifyConstructed<G>();
+        return GGet<G>();
     }
 
     template <typename G>
