@@ -264,7 +264,7 @@ TEST(AnyTest, ConvertibleTest)
     ASSERT_TRUE(a0.Convertible<const int>());
     ASSERT_TRUE(a0.Convertible<int&>());
     ASSERT_TRUE(a0.Convertible<const int&>());
-    ASSERT_FALSE(a0.Convertible<int&&>());
+    ASSERT_TRUE(a0.Convertible<int&&>());
 
     const int v0 = 1; // NOLINT
     a0 = v0;
@@ -272,7 +272,7 @@ TEST(AnyTest, ConvertibleTest)
     ASSERT_TRUE(a0.Convertible<const int>());
     ASSERT_TRUE(a0.Convertible<int&>());
     ASSERT_TRUE(a0.Convertible<const int&>());
-    ASSERT_FALSE(a0.Convertible<int&&>());
+    ASSERT_TRUE(a0.Convertible<int&&>());
 
     int v1 = 1;
     a0 = std::ref(v1);
@@ -280,14 +280,14 @@ TEST(AnyTest, ConvertibleTest)
     ASSERT_TRUE(a0.Convertible<const int>());
     ASSERT_TRUE(a0.Convertible<int&>());
     ASSERT_TRUE(a0.Convertible<const int&>());
-    ASSERT_FALSE(a0.Convertible<int&&>());
+    ASSERT_TRUE(a0.Convertible<int&&>());
 
     a0 = std::ref(v0);
     ASSERT_TRUE(a0.Convertible<int>());
     ASSERT_TRUE(a0.Convertible<const int>());
     ASSERT_FALSE(a0.Convertible<int&>());
     ASSERT_TRUE(a0.Convertible<const int&>());
-    ASSERT_FALSE(a0.Convertible<int&&>());
+    ASSERT_TRUE(a0.Convertible<int&&>());
 
     a0 = 1;
     Any a1 = a0.Ref();
@@ -295,21 +295,21 @@ TEST(AnyTest, ConvertibleTest)
     ASSERT_TRUE(a1.Convertible<const int>());
     ASSERT_TRUE(a1.Convertible<int&>());
     ASSERT_TRUE(a1.Convertible<const int&>());
-    ASSERT_FALSE(a1.Convertible<int&&>());
+    ASSERT_TRUE(a1.Convertible<int&&>());
 
     a1 = a1.ConstRef();
     ASSERT_TRUE(a1.Convertible<int>());
     ASSERT_TRUE(a1.Convertible<const int>());
     ASSERT_FALSE(a1.Convertible<int&>());
     ASSERT_TRUE(a1.Convertible<const int&>());
-    ASSERT_FALSE(a1.Convertible<int&&>());
+    ASSERT_TRUE(a1.Convertible<int&&>());
 
     a1 = a1.Value();
     ASSERT_TRUE(a1.Convertible<int>());
     ASSERT_TRUE(a1.Convertible<const int>());
     ASSERT_TRUE(a1.Convertible<int&>());
     ASSERT_TRUE(a1.Convertible<const int&>());
-    ASSERT_FALSE(a1.Convertible<int&&>());
+    ASSERT_TRUE(a1.Convertible<int&&>());
 
     AnyDerivedClassTest derived {};
     a0 = derived;

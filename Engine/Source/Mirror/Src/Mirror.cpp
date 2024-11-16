@@ -33,7 +33,7 @@ namespace Mirror {
         const auto [dstRaw, dstRemoveRef, dstRemovePointer] = inDstType;
 
         const bool checkPointer = srcRaw->isPointer && dstRaw->isPointer;
-        const bool checkRef = dstRaw->isLValueReference;
+        const bool checkRef = dstRaw->isReference;
 
         if (!checkPointer && !checkRef) {
             return false;
@@ -56,7 +56,7 @@ namespace Mirror {
         if (srcClass == nullptr || dstClass == nullptr || !dstClass->IsBaseOf(srcClass)) {
             return false;
         }
-        return !srcRemoveRefOrPtr->isConst || dstRemoveRefOrPtr->isConst;
+        return !srcRemoveRefOrPtr->isConst || dstRaw->isRValueReference || dstRemoveRefOrPtr->isConst;
     }
 
     bool Convertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType)
@@ -64,15 +64,11 @@ namespace Mirror {
         const auto [srcRaw, srcRemoveRef, srcRemovePointer] = inSrcType;
         const auto [dstRaw, dstRemoveRef, dstRemovePointer] = inDstType;
 
-        if (dstRaw->isRValueReference) {
-            return false;
-        }
-
         if (srcRaw->id == dstRaw->id) { // NOLINT
-            if (!dstRaw->isLValueReference) {
+            if (!dstRaw->isReference) {
                 return true;
             }
-            return !srcRemoveRef->isConst || dstRemoveRef->isConst;
+            return !srcRemoveRef->isConst || dstRaw->isRValueReference || dstRemoveRef->isConst;
         }
         return PointerConvertible(inSrcType, inDstType) || PolymorphismConvertible(inSrcType, inDstType);
     }

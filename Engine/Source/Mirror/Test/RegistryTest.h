@@ -11,6 +11,7 @@ EProperty(testKey=v0) extern int v0;
 EFunc() int F0(const int a, const int b);
 EFunc() int& F1();
 EFunc() void F2(int& outValue);
+EFunc() int F3(int&& inValue);
 
 struct EClass(testKey=C0) C0 {
     EClassBody(C0)

@@ -48,6 +48,7 @@ namespace Mirror {
         const uint32_t isLValueReference : 1;
         const uint32_t isLValueConstReference : 1;
         const uint32_t isRValueReference : 1;
+        const uint32_t isReference : 1;
         const uint32_t isPointer : 1;
         const uint32_t isConstPointer : 1;
         const uint32_t isClass : 1;
@@ -1961,6 +1962,7 @@ namespace Mirror {
             Common::CppLValueRef<T>,
             Common::CppLValueConstRef<T>,
             Common::CppRValueRef<T>,
+            Common::CppRef<T>,
             Common::CppPointer<T>,
             Common::CppConstPointer<T>,
             Common::CppClass<T>,
@@ -2268,14 +2270,14 @@ namespace Mirror {
     T Any::As()
     {
         Assert(Convertible<T>());
-        return *static_cast<std::remove_cvref_t<T>*>(Data());
+        return static_cast<T>(*static_cast<std::remove_cvref_t<T>*>(Data()));
     }
 
     template <typename T>
     T Any::As() const
     {
         Assert(Convertible<T>());
-        return *static_cast<std::remove_cvref_t<T>*>(Data());
+        return static_cast<T>(*static_cast<std::remove_cvref_t<T>*>(Data()));
     }
 
     template <Common::CppNotRef T>

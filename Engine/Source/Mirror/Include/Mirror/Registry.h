@@ -17,11 +17,10 @@ namespace Mirror::Internal {
     template <typename T> struct MemberFunctionTraits {};
 
     template <typename ArgsTuple, size_t... I> auto GetArgTypeInfosByArgsTuple(std::index_sequence<I...>);
-    template <typename ArgsTuple, size_t... I> auto ForwardArgumentsListAsTuple(const ArgumentList& args, std::index_sequence<I...>);
-    template <auto Ptr, typename ArgsTuple, size_t... I> decltype(auto) InvokeFunction(ArgsTuple& args, std::index_sequence<I...>);
-    template <typename Class, auto Ptr, typename ArgsTuple, size_t... I> decltype(auto) InvokeMemberFunction(Class& object, ArgsTuple& args, std::index_sequence<I...>);
-    template <typename Class, typename ArgsTuple, size_t... I> decltype(auto) InvokeConstructorStack(ArgsTuple& args, std::index_sequence<I...>);
-    template <typename Class, typename ArgsTuple, size_t... I> decltype(auto) InvokeConstructorNew(ArgsTuple& args, std::index_sequence<I...>);
+    template <auto Ptr, typename ArgsTuple, size_t... I> decltype(auto) InvokeFunction(const ArgumentList& args, std::index_sequence<I...>);
+    template <typename Class, auto Ptr, typename ArgsTuple, size_t... I> decltype(auto) InvokeMemberFunction(Class& object, const ArgumentList& args, std::index_sequence<I...>);
+    template <typename Class, typename ArgsTuple, size_t... I> decltype(auto) InvokeConstructorStack(const ArgumentList& args, std::index_sequence<I...>);
+    template <typename Class, typename ArgsTuple, size_t... I> decltype(auto) InvokeConstructorNew(const ArgumentList& args, std::index_sequence<I...>);
 }
 
 namespace Mirror {
@@ -163,34 +162,28 @@ namespace Mirror::Internal {
         return std::vector<const TypeInfo*> { GetTypeInfo<std::tuple_element_t<I, ArgsTuple>>()... };
     }
 
-    template <typename ArgsTuple, size_t... I>
-    auto ForwardArgumentsListAsTuple(const ArgumentList& args, std::index_sequence<I...>)
-    {
-        return ArgsTuple { args[I].template As<std::tuple_element_t<I, ArgsTuple>>()... };
-    }
-
     template <auto Ptr, typename ArgsTuple, size_t... I>
-    decltype(auto) InvokeFunction(ArgsTuple& args, std::index_sequence<I...>)
+    decltype(auto) InvokeFunction(const ArgumentList& args, std::index_sequence<I...>)
     {
-        return Ptr(std::get<I>(args)...);
+        return Ptr(args[I].template As<std::tuple_element_t<I, ArgsTuple>>()...);
     }
 
     template <typename Class, auto Ptr, typename ArgsTuple, size_t... I>
-    decltype(auto) InvokeMemberFunction(Class& object, ArgsTuple& args, std::index_sequence<I...>)
+    decltype(auto) InvokeMemberFunction(Class& object, const ArgumentList& args, std::index_sequence<I...>)
     {
-        return (object.*Ptr)(std::get<I>(args)...);
+        return (object.*Ptr)(args[I].template As<std::tuple_element_t<I, ArgsTuple>>()...);
     }
 
     template <typename Class, typename ArgsTuple, size_t... I>
-    decltype(auto) InvokeConstructorStack(ArgsTuple& args, std::index_sequence<I...>)
+    decltype(auto) InvokeConstructorStack(const ArgumentList& args, std::index_sequence<I...>)
     {
-        return Class(std::get<I>(args)...);
+        return Class(args[I].template As<std::tuple_element_t<I, ArgsTuple>>()...);
     }
 
     template <typename Class, typename ArgsTuple, size_t... I>
-    decltype(auto) InvokeConstructorNew(ArgsTuple& args, std::index_sequence<I...>)
+    decltype(auto) InvokeConstructorNew(const ArgumentList& args, std::index_sequence<I...>)
     {
-        return new Class(std::get<I>(args)...);
+        return new Class(args[I].template As<std::tuple_element_t<I, ArgsTuple>>()...);
     }
 }
 
@@ -249,13 +242,11 @@ namespace Mirror {
         params.argRemovePointerTypeInfos = { GetTypeInfo<std::remove_pointer_t<Args>>()... };
         params.stackConstructor = [](const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
-            auto argsTuple = Internal::ForwardArgumentsListAsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
-            return Internal::ForwardAsAny(Internal::InvokeConstructorStack<C, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {}));
+            return Internal::ForwardAsAny(Internal::InvokeConstructorStack<C, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
         };
         params.heapConstructor = [](const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
-            auto argsTuple = Internal::ForwardArgumentsListAsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
-            return Internal::ForwardAsAny(Internal::InvokeConstructorNew<C, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {}));
+            return Internal::ForwardAsAny(Internal::InvokeConstructorNew<C, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
         };
 
         return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceConstructor(inId, std::move(params)));
@@ -312,12 +303,11 @@ namespace Mirror {
         params.invoker = [](const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
 
-            auto argsTuple = Internal::ForwardArgumentsListAsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
             if constexpr (std::is_void_v<RetType>) {
-                Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {});
+                Internal::InvokeFunction<Ptr, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
                 return {};
             } else {
-                return Internal::ForwardAsAny(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {}));
+                return Internal::ForwardAsAny(Internal::InvokeFunction<Ptr, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
             }
         };
 
@@ -377,12 +367,11 @@ namespace Mirror {
         params.invoker = [](const Argument& object, const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
 
-            auto argsTuple = Internal::ForwardArgumentsListAsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
             if constexpr (std::is_void_v<RetType>) {
-                Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object.As<ClassType&>(), argsTuple, std::make_index_sequence<argsTupleSize> {});
+                Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object.As<ClassType&>(), args, std::make_index_sequence<argsTupleSize> {});
                 return {};
             } else {
-                return Internal::ForwardAsAny(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object.As<ClassType&>(), argsTuple, std::make_index_sequence<argsTupleSize> {}));
+                return Internal::ForwardAsAny(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object.As<ClassType&>(), args, std::make_index_sequence<argsTupleSize> {}));
             }
         };
 
@@ -437,12 +426,11 @@ namespace Mirror {
         params.invoker = [](const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
 
-            auto argsTuple = Internal::ForwardArgumentsListAsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
             if constexpr (std::is_void_v<RetType>) {
-                Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {});
+                Internal::InvokeFunction<Ptr, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
                 return {};
             } else {
-                return Internal::ForwardAsAny(Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {}));
+                return Internal::ForwardAsAny(Internal::InvokeFunction<Ptr, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
             }
         };
 

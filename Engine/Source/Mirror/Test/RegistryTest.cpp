@@ -26,6 +26,11 @@ void F2(int& outValue)
     outValue = 1;
 }
 
+int F3(int&& inValue)
+{
+    return std::move(inValue);
+}
+
 int C0::v0 = 0;
 
 int& C0::F0()
@@ -103,6 +108,13 @@ TEST(RegistryTest, GlobalScopeTest)
 
         value = 0;
         function.InvokeDyn({ Mirror::Any(std::ref(value)) });
+        ASSERT_EQ(value, 1);
+    }
+
+    {
+        const auto& function = globalScope.GetFunction("F3");
+        int value = 1;
+        function.Invoke(std::ref(value));
         ASSERT_EQ(value, 1);
     }
 }

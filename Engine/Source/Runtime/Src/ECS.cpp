@@ -118,10 +118,10 @@ namespace Runtime::Internal {
         return newElem;
     }
 
-    Mirror::Any Archetype::EmplaceComp(Entity inEntity, CompClass inCompClass, Mirror::Any inComp) // NOLINT
+    Mirror::Any Archetype::EmplaceComp(Entity inEntity, CompClass inCompClass, const Mirror::Argument& inCompRef) // NOLINT
     {
         ElemPtr elem = ElemAt(entityMap.at(inEntity));
-        return GetCompRtti(inCompClass).MoveConstruct(elem, inComp);
+        return GetCompRtti(inCompClass).MoveConstruct(elem, inCompRef);
     }
 
     void Archetype::EraseElem(Entity inEntity)
@@ -591,8 +591,62 @@ namespace Runtime {
         return Runtime::RuntimeView { *this, inRule };
     }
 
+    void ECRegistry::NotifyUpdatedDyn(CompClass inClass, Entity inEntity)
+    {
+        const auto iter = compEvents.find(inClass);
+        if (iter == compEvents.end()) {
+            return;
+        }
+        iter->second.onUpdated.Broadcast(*this, inEntity);
+    }
+
+    void ECRegistry::NotifyConstructedDyn(CompClass inClass, Entity inEntity)
+    {
+        const auto iter = compEvents.find(inClass);
+        if (iter == compEvents.end()) {
+            return;
+        }
+        iter->second.onConstructed.Broadcast(*this, inEntity);
+    }
+
+    void ECRegistry::NotifyRemoveDyn(CompClass inClass, Entity inEntity)
+    {
+        const auto iter = compEvents.find(inClass);
+        if (iter == compEvents.end()) {
+            return;
+        }
+        iter->second.onRemove.Broadcast(*this, inEntity);
+    }
+
     Observer ECRegistry::Observer()
     {
         return Runtime::Observer { *this };
+    }
+
+    void ECRegistry::GNotifyUpdatedDyn(GCompClass inClass)
+    {
+        const auto iter = globalCompEvents.find(inClass);
+        if (iter == globalCompEvents.end()) {
+            return;
+        }
+        iter->second.onUpdated.Broadcast(*this);
+    }
+
+    void ECRegistry::GNotifyConstructedDyn(GCompClass inClass)
+    {
+        const auto iter = globalCompEvents.find(inClass);
+        if (iter == globalCompEvents.end()) {
+            return;
+        }
+        iter->second.onConstructed.Broadcast(*this);
+    }
+
+    void ECRegistry::GNotifyRemoveDyn(CompClass inClass)
+    {
+        const auto iter = globalCompEvents.find(inClass);
+        if (iter == globalCompEvents.end()) {
+            return;
+        }
+        iter->second.onRemove.Broadcast(*this);
     }
 } // namespace Runtime
