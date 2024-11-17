@@ -21,6 +21,7 @@ namespace Mirror::Internal {
     template <typename Class, auto Ptr, typename ArgsTuple, size_t... I> decltype(auto) InvokeMemberFunction(Class& object, const ArgumentList& args, std::index_sequence<I...>);
     template <typename Class, typename ArgsTuple, size_t... I> decltype(auto) InvokeConstructorStack(const ArgumentList& args, std::index_sequence<I...>);
     template <typename Class, typename ArgsTuple, size_t... I> decltype(auto) InvokeConstructorNew(const ArgumentList& args, std::index_sequence<I...>);
+    template <typename Class, typename ArgsTuple, size_t... I> decltype(auto) InvokeConstructorInplace(void* ptr, const ArgumentList& args, std::index_sequence<I...>);
 }
 
 namespace Mirror {
@@ -185,6 +186,13 @@ namespace Mirror::Internal {
     {
         return new Class(args[I].template As<std::tuple_element_t<I, ArgsTuple>>()...);
     }
+
+    template <typename Class, typename ArgsTuple, size_t... I>
+    decltype(auto) InvokeConstructorInplace(void* ptr, const ArgumentList& args, std::index_sequence<I...>)
+    {
+        new(ptr) Class(args[I].template As<std::tuple_element_t<I, ArgsTuple>>()...);
+        return *static_cast<Class*>(ptr);
+    }
 }
 
 namespace Mirror {
@@ -247,6 +255,10 @@ namespace Mirror {
         params.heapConstructor = [](const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
             return Internal::ForwardAsAny(Internal::InvokeConstructorNew<C, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
+        };
+        params.inplaceConstructor = [](void* ptr, const ArgumentList& args) -> Any {
+            Assert(argsTupleSize == args.size());
+            return Internal::ForwardAsAny(Internal::InvokeConstructorInplace<C, ArgsTupleType>(ptr, args, std::make_index_sequence<argsTupleSize> {}));
         };
 
         return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceConstructor(inId, std::move(params)));

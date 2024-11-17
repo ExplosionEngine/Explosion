@@ -920,6 +920,7 @@ namespace Mirror {
         , argRemovePointerTypeInfos(std::move(params.argRemovePointerTypeInfos))
         , stackConstructor(std::move(params.stackConstructor))
         , heapConstructor(std::move(params.heapConstructor))
+        , inplaceConstructor(std::move(params.inplaceConstructor))
     {
     }
 
@@ -990,6 +991,11 @@ namespace Mirror {
     Any Constructor::NewDyn(const ArgumentList& arguments) const
     {
         return heapConstructor(arguments);
+    }
+
+    Any Constructor::InplaceNewDyn(void* ptr, const ArgumentList& arguments) const
+    {
+        return inplaceConstructor(ptr, arguments);
     }
 
     Destructor::Destructor(ConstructParams&& params)
@@ -1485,6 +1491,7 @@ namespace Mirror {
                 continue;
             }
 
+            // TODO prefer rvalue params version
             bool bSuitable = true;
             for (auto i = 0; i < arguments.size(); i++) {
                 const TypeInfoCompact srcType { arguments[i].Type(), arguments[i].RemoveRefType(), arguments[i].RemovePointerType() }; // NOLINT
@@ -1516,6 +1523,13 @@ namespace Mirror {
         const auto* constructor = FindSuitableConstructor(arguments);
         Assert(constructor != nullptr);
         return constructor->NewDyn(arguments);
+    }
+
+    Any Class::InplaceNewDyn(void* ptr, const ArgumentList& arguments) const
+    {
+        const auto* constructor = FindSuitableConstructor(arguments);
+        Assert(constructor != nullptr);
+        return constructor->InplaceNewDyn(ptr, arguments);
     }
 
     const Constructor* Class::FindConstructor(const Id& inId) const

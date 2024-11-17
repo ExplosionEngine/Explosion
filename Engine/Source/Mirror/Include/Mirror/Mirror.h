@@ -485,6 +485,7 @@ namespace Mirror {
 
         template <typename... Args> Any Construct(Args&&... args) const;
         template <typename... Args> Any New(Args&&... args) const;
+        template <typename... Args> Any InplaceNew(Args&&... args) const;
 
         const std::string& GetOwnerName() const;
         const Id& GetOwnerId() const;
@@ -500,6 +501,7 @@ namespace Mirror {
 
         Any ConstructDyn(const ArgumentList& arguments) const;
         Any NewDyn(const ArgumentList& arguments) const;
+        Any InplaceNewDyn(void* ptr, const ArgumentList& arguments) const;
 
     private:
         friend class Registry;
@@ -507,6 +509,7 @@ namespace Mirror {
         template <typename C> friend class ClassRegistry;
 
         using Invoker = std::function<Any(const ArgumentList&)>;
+        using InplaceInvoker = std::function<Any(void*, const ArgumentList&)>;
 
         struct ConstructParams {
             Id id;
@@ -518,6 +521,7 @@ namespace Mirror {
             std::vector<const TypeInfo*> argRemovePointerTypeInfos;
             Invoker stackConstructor;
             Invoker heapConstructor;
+            InplaceInvoker inplaceConstructor;
         };
 
         explicit Constructor(ConstructParams&& params);
@@ -530,6 +534,7 @@ namespace Mirror {
         std::vector<const TypeInfo*> argRemovePointerTypeInfos;
         Invoker stackConstructor;
         Invoker heapConstructor;
+        InplaceInvoker inplaceConstructor;
     };
 
     class MIRROR_API Destructor final : public ReflNode {
@@ -705,6 +710,7 @@ namespace Mirror {
 
         template <typename... Args> Any Construct(Args&&... args);
         template <typename... Args> Any New(Args&&... args);
+        template <typename... Args> Any InplaceNew(void* ptr, Args&&... args);
 
         void ForEachStaticVariable(const VariableTraverser& func) const;
         void ForEachStaticFunction(const FunctionTraverser& func) const;
@@ -742,6 +748,7 @@ namespace Mirror {
 
         Any ConstructDyn(const ArgumentList& arguments) const;
         Any NewDyn(const ArgumentList& arguments) const;
+        Any InplaceNewDyn(void* ptr, const ArgumentList& arguments) const;
 
     private:
         static std::unordered_map<TypeId, Id> typeToIdMap;
@@ -2432,6 +2439,12 @@ namespace Mirror {
         return NewDyn(Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
     }
 
+    template <typename ... Args>
+    Any Constructor::InplaceNew(Args&&... args) const
+    {
+        return InplaceNewDyn(Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
+    }
+
     template <typename C>
     void Destructor::Invoke(C&& object) const
     {
@@ -2477,19 +2490,19 @@ namespace Mirror {
     template <typename ... Args>
     Any Class::Construct(Args&&... args)
     {
-        auto arguments = Internal::ForwardAsArgumentList(std::forward<Args>(args)...);
-        const auto* constructor = FindSuitableConstructor(arguments);
-        Assert(constructor != nullptr);
-        return constructor->Construct(arguments);
+        return ConstructDyn(Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
     }
 
     template <typename ... Args>
     Any Class::New(Args&&... args)
     {
-        auto arguments = Internal::ForwardAsArgumentList(std::forward<Args>(args)...);
-        const auto* constructor = FindSuitableConstructor(arguments);
-        Assert(constructor != nullptr);
-        return constructor->New(arguments);
+        return NewDyn(Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
+    }
+
+    template <typename ... Args>
+    Any Class::InplaceNew(void* ptr, Args&&... args)
+    {
+        return InplaceNewDyn(ptr, Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
     }
 
     template <Common::CppEnum T>
