@@ -69,6 +69,38 @@ AnyMoveCtorTest::AnyMoveCtorTest(AnyMoveCtorTest&& inOther) noexcept
     moveTime++;
 }
 
+AnyCopyAssignTest::AnyCopyAssignTest()
+    : called(false)
+{
+}
+
+AnyCopyAssignTest::AnyCopyAssignTest(AnyCopyAssignTest&& inOther) noexcept
+    : called(inOther.called)
+{
+}
+
+AnyCopyAssignTest& AnyCopyAssignTest::operator=(const AnyCopyAssignTest& inOther)
+{
+    called = true;
+    return *this;
+}
+
+AnyMoveAssignTest::AnyMoveAssignTest()
+    : called(false)
+{
+}
+
+AnyMoveAssignTest::AnyMoveAssignTest(AnyMoveAssignTest&& inOther) noexcept
+    : called(inOther.called)
+{
+}
+
+AnyMoveAssignTest& AnyMoveAssignTest::operator=(AnyMoveAssignTest&& inOther) noexcept
+{
+    called = true;
+    return *this;
+}
+
 bool AnyBasicTest::operator==(const AnyBasicTest& inRhs) const
 {
     return a == inRhs.a
@@ -233,6 +265,26 @@ TEST(AnyTest, MoveAssignTest)
     a1 = std::move(a0);
     ASSERT_EQ(moveTime, 2);
     ASSERT_EQ(a0.TypeId(), a1.TypeId());
+}
+
+TEST(AnyTest, ValueCopyAssignTest)
+{
+    Any a0 = AnyCopyAssignTest();
+    ASSERT_EQ(a0.As<const AnyCopyAssignTest&>().called, false);
+
+    Any a1 = AnyCopyAssignTest();
+    a0.CopyAssign(a1);
+    ASSERT_EQ(a0.As<const AnyCopyAssignTest&>().called, true);
+}
+
+TEST(AnyTest, ValueMoveAssignTest)
+{
+    Any a0 = AnyMoveAssignTest();
+    ASSERT_EQ(a0.As<const AnyMoveAssignTest&>().called, false);
+
+    Any a1 = AnyMoveAssignTest();
+    a0.MoveAssign(a1);
+    ASSERT_EQ(a0.As<const AnyMoveAssignTest&>().called, true);
 }
 
 TEST(AnyTest, ValueAssignTest)
@@ -1229,4 +1281,9 @@ TEST(AnyTest, ArrayTest)
     ASSERT_EQ(a6.MemorySize(), sizeof(v0));
     ASSERT_EQ(a6.ArrayLength(), sizeof(v0) / sizeof(int));
     ASSERT_EQ(a6[1].As<int>(), 2);
+}
+
+TEST(AnyTest, AnyViewTest)
+{
+    // TODO
 }

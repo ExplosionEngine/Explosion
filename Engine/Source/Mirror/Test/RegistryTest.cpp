@@ -159,10 +159,10 @@ TEST(RegistryTest, ClassTest)
         const auto& b = clazz.GetMemberVariable("b");
 
         auto object = constructor.New(1, 2);
-        Mirror::Any objectRef = *object.As<C2*>();
+        Mirror::Any objectRef = object.Deref();
         ASSERT_EQ(a.GetDyn(objectRef).As<int>(), 1);
         ASSERT_EQ(b.GetDyn(objectRef).As<int>(), 2);
-        destructor.InvokeDyn(objectRef);
+        destructor.DeleteDyn(object);
     }
 
     {

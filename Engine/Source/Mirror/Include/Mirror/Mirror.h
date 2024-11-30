@@ -85,10 +85,15 @@ namespace Mirror {
 
     class Any;
 
+    using TemplateViewId = uint32_t;
+    using TemplateViewRttiPtr = const void*;
+
     struct AnyRtti {
         using DetorFunc = void(void*) noexcept;
         using CopyConstructFunc = void(void*, const void*);
         using MoveConstructFunc = void(void*, void*) noexcept;
+        using CopyAssignFunc = void(void*, const void*);
+        using MoveAssignFunc = void(void*, void*) noexcept;
         using EqualFunc = bool(const void*, const void*);
         using GetTypeInfoFunc = const TypeInfo*();
         using GetPtrFunc = Any(void*);
@@ -99,10 +104,13 @@ namespace Mirror {
         using JsonSerializeFunc = void(const void*, rapidjson::Value&, rapidjson::Document::AllocatorType&);
         using JsonDeserializeFunc = void(void*, const rapidjson::Value&);
         using ToStringFunc = std::string(const void*);
+        using GetTemplateViewRttiFunc = std::pair<TemplateViewId, TemplateViewRttiPtr>();
 
         template <typename T> static void Detor(void* inThis) noexcept;
         template <typename T> static void CopyConstruct(void* inThis, const void* inOther);
         template <typename T> static void MoveConstruct(void* inThis, void* inOther) noexcept;
+        template <typename T> static void CopyAssign(void* inThis, const void* inOther);
+        template <typename T> static void MoveAssign(void* inThis, void* inOther) noexcept;
         template <typename T> static bool Equal(const void* inThis, const void* inOther) noexcept;
         template <typename T> static const TypeInfo* GetValueType();
         template <typename T> static const TypeInfo* GetConstValueType();
@@ -119,10 +127,13 @@ namespace Mirror {
         template <typename T> static void JsonSerialize(const void* inThis, rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator);
         template <typename T> static void JsonDeserialize(void* inThis, const rapidjson::Value& inJsonValue);
         template <typename T> static std::string ToString(const void* inThis);
+        template <typename T> static std::pair<TemplateViewId, TemplateViewRttiPtr> GetTemplateViewRtti();
 
         DetorFunc* detor;
         CopyConstructFunc* copyConstruct;
         MoveConstructFunc* moveConstruct;
+        CopyAssignFunc* copyAssign;
+        MoveAssignFunc* moveAssign;
         EqualFunc* equal;
         GetTypeInfoFunc* getValueType;
         GetTypeInfoFunc* getConstValueType;
@@ -139,6 +150,7 @@ namespace Mirror {
         JsonSerializeFunc* jsonSerialize;
         JsonDeserializeFunc* jsonDeserialize;
         ToStringFunc* toString;
+        GetTemplateViewRttiFunc* getTemplateViewRtti;
     };
 
     template <typename T, size_t N = 1>
@@ -146,6 +158,8 @@ namespace Mirror {
         &AnyRtti::Detor<T>,
         &AnyRtti::CopyConstruct<T>,
         &AnyRtti::MoveConstruct<T>,
+        &AnyRtti::CopyAssign<T>,
+        &AnyRtti::MoveAssign<T>,
         &AnyRtti::Equal<T>,
         &AnyRtti::GetValueType<T>,
         &AnyRtti::GetConstValueType<T>,
@@ -161,7 +175,20 @@ namespace Mirror {
         &AnyRtti::Deserialize<T>,
         &AnyRtti::JsonSerialize<T>,
         &AnyRtti::JsonDeserialize<T>,
-        &AnyRtti::ToString<T>
+        &AnyRtti::ToString<T>,
+        &AnyRtti::GetTemplateViewRtti<T>
+    };
+
+    template <typename T>
+    struct TemplateViewRttiGetter {
+        static constexpr TemplateViewId Id();
+        static const void* Get();
+    };
+
+    template <typename T>
+    concept ValidTemplateView = requires(T object)
+    {
+        { T::id } -> std::convertible_to<TemplateViewId>;
     };
 
     class MIRROR_API Any {
@@ -184,9 +211,10 @@ namespace Mirror {
         template <typename T, size_t N> Any(std::reference_wrapper<T[N]>&& inArrayRef); // NOLINT
         template <typename T, size_t N> Any(const std::reference_wrapper<T[N]>& inArrayRef); // NOLINT
 
+        // NOTICE: Any::operator=() is designed to reset this and re-construct from new value
+        // if you want to call assign operator, use CopyAssign() and MoveAssign() instead.
         Any& operator=(const Any& inOther);
         Any& operator=(Any&& inOther) noexcept;
-
         template <typename T> Any& operator=(T&& inValue);
         template <typename T> Any& operator=(std::reference_wrapper<T>& inRef);
         template <typename T> Any& operator=(std::reference_wrapper<T>&& inRef);
@@ -197,6 +225,15 @@ namespace Mirror {
         template <typename T, size_t N> Any& operator=(std::reference_wrapper<T[N]>&& inArrayRef); // NOLINT
         template <typename T, size_t N> Any& operator=(const std::reference_wrapper<T[N]>& inArrayRef); // NOLINT
 
+        Any& CopyAssign(Any& inOther);
+        Any& CopyAssign(const Any& inOther);
+        Any& MoveAssign(Any& inOther) noexcept;
+        Any& MoveAssign(const Any& inOther) noexcept;
+        const Any& CopyAssign(Any& inOther) const;
+        const Any& CopyAssign(const Any& inOther) const;
+        const Any& MoveAssign(Any& inOther) const noexcept;
+        const Any& MoveAssign(const Any& inOther) const noexcept;
+
         template <typename T> bool Convertible();
         template <typename T> bool Convertible() const;
 
@@ -206,6 +243,9 @@ namespace Mirror {
         template <Common::CppNotRef T> T* TryAs() const;
         template <typename B, typename T> T PolyAs();
         template <typename B, typename T> T PolyAs() const;
+
+        template <ValidTemplateView V> bool CanAsTemplateView() const;
+        TemplateViewRttiPtr GetTemplateViewRtti() const;
 
         bool IsArray() const;
         Any At(uint32_t inIndex);
@@ -290,11 +330,12 @@ namespace Mirror {
         template <typename T, size_t N> void ConstructFromArrayValue(T (&inValue)[N]);
         template <typename T, size_t N> void ConstructFromArrayValue(T (&&inValue)[N]);
         template <typename T, size_t N> void ConstructFromArrayRef(std::reference_wrapper<T[N]> inRef);
-
         void PerformCopyConstruct(const Any& inOther);
         void PerformCopyConstructWithPolicy(const Any& inOther, AnyPolicy inPolicy);
         void PerformCopyConstructForElementWithPolicy(const Any& inOther, AnyPolicy inPolicy, uint32_t inIndex);
-        void PerformMoveConstruct(Any&& inOther);
+        void PerformMoveConstruct(Any&& inOther) noexcept;
+        void PerformCopyAssign(const Any& inOther) const;
+        void PerformMoveAssign(const Any& inOther) const noexcept;
         uint32_t ElementNum() const;
 
         uint32_t arrayLength;
@@ -320,6 +361,9 @@ namespace Mirror {
 
         template <typename T> T As() const;
 
+        template <ValidTemplateView V> bool CanAsTemplateView() const;
+        TemplateViewRttiPtr GetTemplateViewRtti() const;
+
         bool IsMemoryHolder() const;
         bool IsRef() const;
         bool IsNonConstRef() const;
@@ -329,6 +373,8 @@ namespace Mirror {
         const TypeInfo* AddPointerType() const;
         const TypeInfo* RemovePointerType() const;
 
+        // TODO more proxy func
+
     private:
         template <typename F> decltype(auto) Delegate(F&& inFunc) const;
 
@@ -336,6 +382,13 @@ namespace Mirror {
     };
 
     using ArgumentList = std::vector<Argument>;
+
+    template <typename T> Any ForwardAsAny(T&& value);
+    template <typename T> Argument ForwardAsArg(T&& value);
+    template <typename... Args> ArgumentList ForwardAsArgList(Args&&... args);
+    template <typename T> Any ForwardAsAnyByValue(T&& value);
+    template <typename T> Argument ForwardAsArgByValue(T&& value);
+    template <typename... Args> ArgumentList ForwardAsArgListByValue(Args&&... args);
 
     struct MIRROR_API Id {
         static Id null;
@@ -541,13 +594,15 @@ namespace Mirror {
     public:
         ~Destructor() override;
 
-        template <typename C> void Invoke(C&& object) const;
+        template <typename C> void Destruct(C&& object) const;
+        template <typename C> void Delete(C* object) const;
 
         const std::string& GetOwnerName() const;
         const Id& GetOwnerId() const;
         const Class& GetOwner() const;
         FieldAccess GetAccess() const;
-        void InvokeDyn(const Argument& argument) const;
+        void DestructDyn(const Argument& argument) const;
+        void DeleteDyn(const Argument& argument) const;
 
     private:
         friend class Registry;
@@ -560,6 +615,7 @@ namespace Mirror {
             Id owner;
             FieldAccess access;
             Invoker destructor;
+            Invoker deleter;
         };
 
         explicit Destructor(ConstructParams&& params);
@@ -567,6 +623,7 @@ namespace Mirror {
         Id owner;
         FieldAccess access;
         Invoker destructor;
+        Invoker deleter;
     };
 
     class MIRROR_API MemberVariable final : public ReflNode {
@@ -708,9 +765,12 @@ namespace Mirror {
 
         ~Class() override;
 
-        template <typename... Args> Any Construct(Args&&... args);
-        template <typename... Args> Any New(Args&&... args);
-        template <typename... Args> Any InplaceNew(void* ptr, Args&&... args);
+        template <typename... Args> Any Construct(Args&&... args) const;
+        template <typename... Args> Any New(Args&&... args) const;
+        template <typename... Args> Any InplaceNew(void* ptr, Args&&... args) const;
+        template <typename C> void Destruct(C&& object) const;
+        template <typename C> void Delete(C* object) const;
+        Any InplaceGetObject(void* ptr) const;
 
         void ForEachStaticVariable(const VariableTraverser& func) const;
         void ForEachStaticFunction(const FunctionTraverser& func) const;
@@ -749,6 +809,8 @@ namespace Mirror {
         Any ConstructDyn(const ArgumentList& arguments) const;
         Any NewDyn(const ArgumentList& arguments) const;
         Any InplaceNewDyn(void* ptr, const ArgumentList& arguments) const;
+        void DestructDyn(const Argument& argument) const;
+        void DeleteDyn(const Argument& argument) const;
 
     private:
         static std::unordered_map<TypeId, Id> typeToIdMap;
@@ -757,12 +819,14 @@ namespace Mirror {
         template <typename T> friend class ClassRegistry;
 
         using BaseClassGetter = std::function<const Class*()>;
+        using InplaceGetter = std::function<Any(void*)>;
 
         struct ConstructParams {
             Id id;
             const TypeInfo* typeInfo;
             size_t memorySize;
             BaseClassGetter baseClassGetter;
+            InplaceGetter inplaceGetter;
             std::function<Any()> defaultObjectCreator;
             std::optional<Destructor::ConstructParams> destructorParams;
             std::optional<Constructor::ConstructParams> defaultConstructorParams;
@@ -781,6 +845,7 @@ namespace Mirror {
         const TypeInfo* typeInfo;
         size_t memorySize;
         BaseClassGetter baseClassGetter;
+        InplaceGetter inplaceGetter;
         Any defaultObject;
         std::optional<Destructor> destructor;
         std::unordered_map<Id, Constructor, IdHashProvider> constructors;
@@ -890,6 +955,702 @@ namespace Mirror {
     };
 }
 
+namespace Mirror {
+    // ---------------- begin std::optional<T> ----------------
+    struct StdOptionalViewRtti {
+        static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdOptionalView");
+
+        using GetBaseTypeFunc = const TypeInfo*();
+        using HasValueFunc = bool(const Argument&);
+        using GetValueFunc = Any(const Argument&);
+
+        template <typename T> static const TypeInfo* GetBaseType();
+        template <typename T> static bool HasValue(const Argument& inArg);
+        template <typename T> static Any GetValue(const Argument& inArg);
+
+        GetBaseTypeFunc* getBaseType;
+        HasValueFunc* hasValue;
+        GetValueFunc* getValue;
+    };
+
+    template <typename T>
+    static constexpr StdOptionalViewRtti stdOptionalViewRttiImpl = {
+        &StdOptionalViewRtti::GetBaseType<T>,
+        &StdOptionalViewRtti::HasValue<T>,
+        &StdOptionalViewRtti::GetValue<T>
+    };
+
+    template <typename T>
+    struct TemplateViewRttiGetter<std::optional<T>> {
+        static constexpr TemplateViewId Id();
+        static const void* Get();
+    };
+
+    class MIRROR_API StdOptionalView {
+    public:
+        static constexpr TemplateViewId id = StdOptionalViewRtti::id;
+
+        explicit StdOptionalView(const Argument& inObj);
+        NonCopyable(StdOptionalView)
+        NonMovable(StdOptionalView)
+
+        const TypeInfo* BaseType() const;
+        bool HasValue() const;
+        Any GetValue() const;
+
+    private:
+        const Argument& obj;
+        const StdOptionalViewRtti* rtti;
+    };
+    // ---------------- end std::optional<T>-- ----------------
+
+    // ---------------- begin std::pair<K, V> -----------------
+    struct StdPairViewRtti {
+        static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdPairView");
+
+        using GetKeyTypeFunc = const TypeInfo*();
+        using GetValueTypeFunc = const TypeInfo*();
+        using GetKeyFunc = Any(const Argument&);
+        using GetValueFunc = Any(const Argument&);
+
+        template <typename K, typename V> static const TypeInfo* GetKeyType();
+        template <typename K, typename V> static const TypeInfo* GetValueType();
+        template <typename K, typename V> static Any GetKey(const Argument& inObj);
+        template <typename K, typename V> static Any GetValue(const Argument& inObj);
+        template <typename K, typename V> static Any GetConstKey(const Argument& inObj);
+        template <typename K, typename V> static Any GetConstValue(const Argument& inObj);
+
+        GetKeyTypeFunc* getKeyType;
+        GetValueTypeFunc* getValueType;
+        GetKeyFunc* getKey;
+        GetValueFunc* getValue;
+        GetKeyFunc* getConstKey;
+        GetValueFunc* getConstValue;
+    };
+
+    template <typename K, typename V>
+    static constexpr StdPairViewRtti stdPairViewRttiImpl = {
+        &StdPairViewRtti::GetKeyType<K, V>,
+        &StdPairViewRtti::GetValueType<K, V>,
+        &StdPairViewRtti::GetKey<K, V>,
+        &StdPairViewRtti::GetValue<K, V>,
+        &StdPairViewRtti::GetConstKey<K, V>,
+        &StdPairViewRtti::GetConstValue<K, V>
+    };
+
+    template <typename K, typename V>
+    struct TemplateViewRttiGetter<std::pair<K, V>> {
+        static constexpr TemplateViewId Id();
+        static const void* Get();
+    };
+
+    class MIRROR_API StdPairView {
+    public:
+        static constexpr TemplateViewId id = StdPairViewRtti::id;
+
+        explicit StdPairView(const Argument& inObj);
+        NonCopyable(StdPairView)
+        NonMovable(StdPairView)
+
+        const TypeInfo* GetKeyType() const;
+        const TypeInfo* GetValueType() const;
+        Any GetKey() const;
+        Any GetValue() const;
+        Any GetConstKey() const;
+        Any GetConstValue() const;
+
+    private:
+        const Argument& obj;
+        const StdPairViewRtti* rtti;
+    };
+    // ---------------- end std::pair<K, V> -------------------
+
+    // ---------------- begin std::array<T> -------------------
+    struct StdArrayViewRtti {
+        static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdArrayView");
+
+        using GetElementTypeFunc = const TypeInfo*();
+        using GetSizeFunc = size_t();
+        using GetElementFunc = Any(const Argument&, size_t);
+        using GetConstElementFunc = Any(const Argument&, size_t);
+
+        template <typename T, size_t N> static const TypeInfo* GetElementType();
+        template <typename T, size_t N> static size_t GetSize();
+        template <typename T, size_t N> static Any GetElement(const Argument& inObj, size_t inIndex);
+        template <typename T, size_t N> static Any GetConstElement(const Argument& inObj, size_t inIndex);
+
+        GetElementTypeFunc* getElementType;
+        GetSizeFunc* getSize;
+        GetElementFunc* getElement;
+        GetConstElementFunc* getConstElement;
+    };
+
+    template <typename T, size_t N>
+    static constexpr StdArrayViewRtti stdArrayViewRttiImpl = {
+        &StdArrayViewRtti::GetElementType<T, N>,
+        &StdArrayViewRtti::GetSize<T, N>,
+        &StdArrayViewRtti::GetElement<T, N>,
+        &StdArrayViewRtti::GetConstElement<T, N>,
+    };
+
+    template <typename T, size_t N>
+    struct TemplateViewRttiGetter<std::array<T, N>> {
+        static constexpr TemplateViewId Id();
+        static const void* Get();
+    };
+
+    class MIRROR_API StdArrayView {
+    public:
+        static constexpr TemplateViewId id = StdArrayViewRtti::id;
+
+        explicit StdArrayView(const Argument& inObj);
+        NonCopyable(StdArrayView)
+        NonMovable(StdArrayView)
+
+        const TypeInfo* GetElementType() const;
+        size_t GetSize() const;
+        Any GetElement(size_t inIndex) const;
+        Any GetConstElement(size_t inIndex) const;
+
+    private:
+        const Argument& obj;
+        const StdArrayViewRtti* rtti;
+    };
+    // ---------------- end std::array<T> ---------------------
+
+    // ---------------- begin std::vector<T> ------------------
+    struct StdVectorViewRtti {
+        static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdVectorView");
+
+        using GetElementTypeFunc = const TypeInfo*();
+        using GetSizeFunc = size_t(const Argument&);
+        using GetElementFunc = Any(const Argument&, size_t);
+        using GetConstElementFunc = Any(const Argument&, size_t);
+        using EmplaceBackFunc = Any(const Argument&, const Argument&);
+        using EraseFunc = void(const Argument&, size_t);
+
+        template <typename T> static const TypeInfo* GetElementType();
+        template <typename T> static size_t GetSize(const Argument& inObj);
+        template <typename T> static Any GetElement(const Argument& inObj, size_t inIndex);
+        template <typename T> static Any GetConstElement(const Argument& inObj, size_t inIndex);
+        template <typename T> static Any EmplaceBack(const Argument& inObj, const Argument& inTempObj);
+        template <typename T> static void Erase(const Argument& inObj, size_t inIndex);
+
+        GetElementTypeFunc* getElementType;
+        GetSizeFunc* getSize;
+        GetElementFunc* getElement;
+        GetConstElementFunc* getConstElement;
+        EmplaceBackFunc* emplaceBack;
+        EraseFunc* erase;
+    };
+
+    template <typename T>
+    static constexpr StdVectorViewRtti stdVectorViewRttiImpl = {
+        &StdVectorViewRtti::GetElementType<T>,
+        &StdVectorViewRtti::GetSize<T>,
+        &StdVectorViewRtti::GetElement<T>,
+        &StdVectorViewRtti::GetConstElement<T>,
+        &StdVectorViewRtti::EmplaceBack<T>,
+        &StdVectorViewRtti::Erase<T>
+    };
+
+    template <typename T>
+    struct TemplateViewRttiGetter<std::vector<T>> {
+        static constexpr TemplateViewId Id();
+        static const void* Get();
+    };
+
+    class MIRROR_API StdVectorView {
+    public:
+        static constexpr TemplateViewId id = StdVectorViewRtti::id;
+
+        explicit StdVectorView(const Argument& inObj);
+        NonCopyable(StdVectorView)
+        NonMovable(StdVectorView)
+
+        const TypeInfo* ElementType() const;
+        size_t GetSize() const;
+        Any GetElement(size_t inIndex) const;
+        Any GetConstElement(size_t inIndex) const;
+        Any EmplaceBack(const Argument& inNewObj) const;
+        void Erase(size_t inIndex) const;
+
+    private:
+        const Argument& obj;
+        const StdVectorViewRtti* rtti;
+    };
+    // ---------------- end std::vector<T> --------------------
+
+    // ---------------- begin std::list<T> --------------------
+    struct StdListViewRtti {
+        static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdListViewRtti");
+
+        using GetElementTypeFunc = const TypeInfo*();
+        using GetSizeFunc = size_t(const Argument&);
+        using TraverseFunc = void(const Argument&, const std::function<void(const Any&)>&);
+        using ConstTraverseFunc = void(const Argument&, const std::function<void(const Any&)>&);
+        using EmplaceFrontFunc = Any(const Argument&, const Argument&);
+        using EmplaceBackFunc = Any(const Argument&, const Argument&);
+        using GetBeginIterFunc = Any(const Argument&);
+        using GetEndIterFunc = Any(const Argument&);
+        using GetBeginConstIterFunc = Any(const Argument&);
+        using GetEndConstIterFunc = Any(const Argument&);
+        using GetNextIterFunc = Any(const Argument&);
+        using GetLastIterFunc = Any(const Argument&);
+        using GetNextConstIterFunc = Any(const Argument&);
+        using GetLastConstIterFunc = Any(const Argument&);
+        using DerefIterFunc = Any(const Argument&);
+        using DerefConstIterFunc = Any(const Argument&);
+
+        template <typename T> static const TypeInfo* GetElementType();
+        template <typename T> static size_t GetSize(const Argument& inObj);
+        template <typename T> static void Traverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser);
+        template <typename T> static void ConstTraverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser);
+        template <typename T> static Any EmplaceFront(const Argument& inObj, const Argument& inTempObj);
+        template <typename T> static Any EmplaceBack(const Argument& inObj, const Argument& inTempObj);
+        template <typename T> static Any GetBeginIter(const Argument& inObj);
+        template <typename T> static Any GetEndIter(const Argument& inObj);
+        template <typename T> static Any GetBeginConstIter(const Argument& inObj);
+        template <typename T> static Any GetEndConstIter(const Argument& inObj);
+        template <typename T> static Any GetNextIter(const Argument& inIter);
+        template <typename T> static Any GetLastIter(const Argument& inIter);
+        template <typename T> static Any GetNextConstIter(const Argument& inIter);
+        template <typename T> static Any GetLastConstIter(const Argument& inIter);
+        template <typename T> static Any DerefIter(const Argument& inIter);
+        template <typename T> static Any DerefConstIter(const Argument& inIter);
+
+        GetElementTypeFunc* getElementType;
+        GetSizeFunc* getSize;
+        TraverseFunc* traverse;
+        ConstTraverseFunc* constTraverse;
+        EmplaceFrontFunc* emplaceFront;
+        EmplaceBackFunc* emplaceBack;
+        GetBeginIterFunc* getBeginIter;
+        GetEndIterFunc* getEndIter;
+        GetBeginConstIterFunc* getBeginConstIter;
+        GetEndConstIterFunc* getEndConstIter;
+        GetNextIterFunc* getNextIter;
+        GetLastIterFunc* getLastIter;
+        GetNextConstIterFunc* getNextConstIter;
+        GetLastConstIterFunc* getLastConstIter;
+        DerefIterFunc* derefIter;
+        DerefConstIterFunc* derefConstIter;
+    };
+
+    template <typename T>
+    static constexpr StdListViewRtti stdListViewRttiImpl = {
+        &StdListViewRtti::GetElementType<T>,
+        &StdListViewRtti::GetSize<T>,
+        &StdListViewRtti::Traverse<T>,
+        &StdListViewRtti::ConstTraverse<T>,
+        &StdListViewRtti::EmplaceFront<T>,
+        &StdListViewRtti::EmplaceBack<T>,
+        &StdListViewRtti::GetBeginIter<T>,
+        &StdListViewRtti::GetEndIter<T>,
+        &StdListViewRtti::GetBeginConstIter<T>,
+        &StdListViewRtti::GetEndConstIter<T>,
+        &StdListViewRtti::GetNextIter<T>,
+        &StdListViewRtti::GetLastIter<T>,
+        &StdListViewRtti::GetNextConstIter<T>,
+        &StdListViewRtti::GetLastConstIter<T>,
+        &StdListViewRtti::DerefIter<T>,
+        &StdListViewRtti::DerefConstIter<T>,
+    };
+
+    template <typename T>
+    struct TemplateViewRttiGetter<std::list<T>> {
+        static constexpr TemplateViewId Id();
+        static const void* Get();
+    };
+
+    class MIRROR_API StdListView {
+    public:
+        using ElementTraverser = std::function<void(const Any&)>;
+        static constexpr TemplateViewId id = StdListViewRtti::id;
+
+        explicit StdListView(const Argument& inObj);
+        NonCopyable(StdListView)
+        NonMovable(StdListView)
+
+        const TypeInfo* GetElementType() const;
+        size_t GetSize() const;
+        void Traverse(const ElementTraverser& inTraverser) const;
+        void ConstTraverse(const ElementTraverser& inTraverser) const;
+        Any EmplaceFront(const Argument& inTempObj) const;
+        Any EmplaceBack(const Argument& inTempObj) const;
+        Any GetBeginIter() const;
+        Any GetEndIter() const;
+        Any GetBeginConstIter() const;
+        Any GetEndConstIter() const;
+        Any GetNextIter(const Argument& inIter) const;
+        Any GetLastIter(const Argument& inIter) const;
+        Any GetNextConstIter(const Argument& inIter) const;
+        Any GetLastConstIter(const Argument& inIter) const;
+        Any DerefIter(const Argument& inIter) const;
+        Any DerefConstIter(const Argument& inIter) const;
+
+    private:
+        const Argument& obj;
+        const StdListViewRtti* rtti;
+    };
+    // ---------------- end std::list<T> ----------------------
+
+    // ------------- begin std::unordered_set<T> --------------
+    struct StdUnorderedSetViewRtti {
+        static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdUnorderedSetView");
+
+        using GetElementTypeFunc = const TypeInfo*();
+        using GetSizeFunc = size_t(const Argument&);
+        using TraverseFunc = void(const Argument&, const std::function<void(const Any&)>&);
+        using ConstTraverseFunc = void(const Argument&, const std::function<void(const Any&)>&);
+        using ContainsFunc = bool(const Argument&, const Argument&);
+        using EmplaceFunc = void(const Argument&, const Argument&);
+        using EraseFunc = void(const Argument&, const Argument&);
+
+        template <typename T> static const TypeInfo* GetElementType();
+        template <typename T> static size_t GetSize(const Argument& inObj);
+        template <typename T> static void Traverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser);
+        template <typename T> static void ConstTraverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser);
+        template <typename T> static bool Contains(const Argument& inObj, const Argument& inElement);
+        template <typename T> static void Emplace(const Argument& inObj, const Argument& inTempObj);
+        template <typename T> static void Erase(const Argument& inObj, const Argument& inElement);
+
+        GetElementTypeFunc* getElementType;
+        GetSizeFunc* getSize;
+        TraverseFunc* traverse;
+        ConstTraverseFunc* constTraverse;
+        ContainsFunc* contains;
+        EmplaceFunc* emplace;
+        EraseFunc* erase;
+    };
+
+    template <typename T>
+    static constexpr StdUnorderedSetViewRtti stdUnorderedSetViewRttiImpl = {
+        &StdUnorderedSetViewRtti::GetElementType<T>,
+        &StdUnorderedSetViewRtti::GetSize<T>,
+        &StdUnorderedSetViewRtti::Traverse<T>,
+        &StdUnorderedSetViewRtti::ConstTraverse<T>,
+        &StdUnorderedSetViewRtti::Contains<T>,
+        &StdUnorderedSetViewRtti::Emplace<T>,
+        &StdUnorderedSetViewRtti::Erase<T>,
+    };
+
+    template <typename T>
+    struct TemplateViewRttiGetter<std::unordered_set<T>> {
+        static constexpr TemplateViewId Id();
+        static const void* Get();
+    };
+
+    class MIRROR_API StdUnorderedSetView {
+    public:
+        using ElementTraverser = std::function<void(const Any&)>;
+        static constexpr TemplateViewId id = StdUnorderedSetViewRtti::id;
+
+        explicit StdUnorderedSetView(const Argument& inObj);
+        NonCopyable(StdUnorderedSetView)
+        NonMovable(StdUnorderedSetView)
+
+        const TypeInfo* GetElementType() const;
+        size_t GetSize() const;
+        void Traverse(const ElementTraverser& inTraverser) const;
+        void ConstTraverse(const ElementTraverser& inTraverser) const;
+        bool Contains(const Argument& inElement) const;
+        void Emplace(const Argument& inTempObj) const;
+        void Erase(const Argument& inElement) const;
+
+    private:
+        const Argument& obj;
+        const StdUnorderedSetViewRtti* rtti;
+    };
+    // ------------- end std::unordered_set<T> ----------------
+
+    // ----------------- begin std::set<T> --------------------
+    struct StdSetViewRtti {
+        static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdSetView");
+
+        using GetElementTypeFunc = const TypeInfo*();
+        using GetSizeFunc = size_t(const Argument&);
+        using TraverseFunc = void(const Argument&, const std::function<void(const Any&)>&);
+        using ContainsFunc = bool(const Argument&, const Argument&);
+        using EmplaceFunc = void(const Argument&, const Argument&);
+        using EraseFunc = void(const Argument&, const Argument&);
+
+        template <typename T> static const TypeInfo* GetElementType();
+        template <typename T> static size_t GetSize(const Argument& inObj);
+        template <typename T> static void Traverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser);
+        template <typename T> static bool Contains(const Argument& inObj, const Argument& inElement);
+        template <typename T> static void Emplace(const Argument& inObj, const Argument& inTempObj);
+        template <typename T> static void Erase(const Argument& inObj, const Argument& inElement);
+
+        GetElementTypeFunc* getElementType;
+        GetSizeFunc* getSize;
+        TraverseFunc* traverse;
+        ContainsFunc* contains;
+        EmplaceFunc* emplace;
+        EraseFunc* erase;
+    };
+
+    template <typename T>
+    static constexpr StdSetViewRtti stdSetViewRttiImpl = {
+        &StdSetViewRtti::GetElementType<T>,
+        &StdSetViewRtti::GetSize<T>,
+        &StdSetViewRtti::Traverse<T>,
+        &StdSetViewRtti::Contains<T>,
+        &StdSetViewRtti::Emplace<T>,
+        &StdSetViewRtti::Erase<T>
+    };
+
+    template <typename T>
+    struct TemplateViewRttiGetter<std::set<T>> {
+        static constexpr TemplateViewId Id();
+        static const void* Get();
+    };
+
+    class MIRROR_API StdSetView {
+    public:
+        using ElementTraverser = std::function<void(const Any&)>;
+        static constexpr TemplateViewId id = StdSetViewRtti::id;
+
+        explicit StdSetView(const Argument& inObj);
+        NonCopyable(StdSetView)
+        NonMovable(StdSetView)
+
+        const TypeInfo* GetElementType() const;
+        size_t GetSize() const;
+        void Traverse(const ElementTraverser& inTraverser) const;
+        bool Contains(const Argument& inElement) const;
+        void Emplace(const Argument& inTempObj) const;
+        void Erase(const Argument& inElement) const;
+
+    private:
+        const Argument& obj;
+        const StdSetViewRtti* rtti;
+    };
+    // ----------------- end std::set<T> ----------------------
+
+    // ------------- begin std::unordered_map<K, V> -----------
+    struct StdUnorderedMapViewRtti {
+        static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdUnorderedMapView");
+
+        using GetKeyTypeFunc = const TypeInfo*();
+        using GetValueTypeFunc = const TypeInfo*();
+        using GetSizeFunc = size_t(const Argument&);
+        using AtFunc = Any(const Argument&, const Argument&);
+        using GetOrAddFunc = Any(const Argument&, const Argument&);
+        using TraverseFunc = void(const Argument&, const std::function<void(const Any&, const Any&)>&);
+        using ConstTraverseFunc = void(const Argument&, const std::function<void(const Any&, const Any&)>&);
+        using ContainsFunc = bool(const Argument&, const Argument&);
+        using EmplaceFunc = void(const Argument&, const Argument&, const Argument&);
+        using EraseFunc = void(const Argument&, const Argument&);
+
+        template <typename K, typename V> static const TypeInfo* GetKeyType();
+        template <typename K, typename V> static const TypeInfo* GetValueType();
+        template <typename K, typename V> static size_t GetSize(const Argument& inObj);
+        template <typename K, typename V> static Any At(const Argument& inObj, const Argument& inKey);
+        template <typename K, typename V> static Any GetOrAdd(const Argument& inObj, const Argument& inKey);
+        template <typename K, typename V> static void Traverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser);
+        template <typename K, typename V> static void ConstTraverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser);
+        template <typename K, typename V> static bool Contains(const Argument& inObj, const Argument& inKey);
+        template <typename K, typename V> static void Emplace(const Argument& inObj, const Argument& inTempKey, const Argument& inTempValue);
+        template <typename K, typename V> static void Erase(const Argument& inObj, const Argument& inKey);
+
+        GetKeyTypeFunc* getKeyType;
+        GetValueTypeFunc* getValueType;
+        GetSizeFunc* getSize;
+        AtFunc* at;
+        GetOrAddFunc* getOrAdd;
+        TraverseFunc* traverse;
+        ConstTraverseFunc* constTraverse;
+        ContainsFunc* contains;
+        EmplaceFunc* emplace;
+        EraseFunc* erase;
+    };
+
+    template <typename K, typename V>
+    static constexpr StdUnorderedMapViewRtti stdUnorderedMapViewRttiImpl = {
+        &StdUnorderedMapViewRtti::GetKeyType<K, V>,
+        &StdUnorderedMapViewRtti::GetValueType<K, V>,
+        &StdUnorderedMapViewRtti::GetSize<K, V>,
+        &StdUnorderedMapViewRtti::At<K, V>,
+        &StdUnorderedMapViewRtti::GetOrAdd<K, V>,
+        &StdUnorderedMapViewRtti::Traverse<K, V>,
+        &StdUnorderedMapViewRtti::ConstTraverse<K, V>,
+        &StdUnorderedMapViewRtti::Contains<K, V>,
+        &StdUnorderedMapViewRtti::Emplace<K, V>,
+        &StdUnorderedMapViewRtti::Erase<K, V>
+    };
+
+    template <typename  K, typename V>
+    struct TemplateViewRttiGetter<std::unordered_map<K, V>> {
+        static constexpr TemplateViewId Id();
+        static const void* Get();
+    };;
+
+    class MIRROR_API StdUnorderedMapView {
+    public:
+        using PairTraverser = std::function<void(const Any&, const Any&)>;
+        static constexpr TemplateViewId id = StdUnorderedMapViewRtti::id;
+
+        explicit StdUnorderedMapView(const Argument& inObj);
+        NonCopyable(StdUnorderedMapView)
+        NonMovable(StdUnorderedMapView)
+
+        const TypeInfo* GetKeyType() const;
+        const TypeInfo* GetValueType() const;
+        size_t GetSize() const;
+        Any At(const Argument& inKey) const;
+        Any GetOrAdd(const Argument& inKey) const;
+        void Traverse(const PairTraverser& inTraverser) const;
+        void ConstTraverse(const PairTraverser& inTraverser) const;
+        bool Contains(const Argument& inKey) const;
+        void Emplace(const Argument& inTempKey, const Argument& inTempValue) const;
+        void Erase(const Argument& inKey) const;
+
+    private:
+        const Argument& obj;
+        const StdUnorderedMapViewRtti* rtti;
+    };
+    // ------------- end std::unordered_map<K, V> -------------
+
+    // ----------------- begin std::map<K, V> -----------------
+    struct StdMapViewRtti {
+        static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdMapView");
+
+        using GetKeyTypeFunc = const TypeInfo*();
+        using GetValueTypeFunc = const TypeInfo*();
+        using GetSizeFunc = size_t(const Argument&);
+        using AtFunc = Any(const Argument&, const Argument&);
+        using GetOrAddFunc = Any(const Argument&, const Argument&);
+        using TraverseFunc = void(const Argument&, const std::function<void(const Any&, const Any&)>&);
+        using ConstTraverseFunc = void(const Argument&, const std::function<void(const Any&, const Any&)>&);
+        using ContainsFunc = bool(const Argument&, const Argument&);
+        using EmplaceFunc = void(const Argument&, const Argument&, const Argument&);
+        using EraseFunc = void(const Argument&, const Argument&);
+
+        template <typename K, typename V> static const TypeInfo* GetKeyType();
+        template <typename K, typename V> static const TypeInfo* GetValueType();
+        template <typename K, typename V> static size_t GetSize(const Argument& inObj);
+        template <typename K, typename V> static Any At(const Argument& inObj, const Argument& inKey);
+        template <typename K, typename V> static Any GetOrAdd(const Argument& inObj, const Argument& inKey);
+        template <typename K, typename V> static void Traverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser);
+        template <typename K, typename V> static void ConstTraverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser);
+        template <typename K, typename V> static bool Contains(const Argument& inObj, const Argument& inKey);
+        template <typename K, typename V> static void Emplace(const Argument& inObj, const Argument& inTempKey, const Argument& inTempValue);
+        template <typename K, typename V> static void Erase(const Argument& inObj, const Argument& inKey);
+
+        GetKeyTypeFunc* getKeyType;
+        GetValueTypeFunc* getValueType;
+        GetSizeFunc* getSize;
+        AtFunc* at;
+        GetOrAddFunc* getOrAdd;
+        TraverseFunc* traverse;
+        ConstTraverseFunc* constTraverse;
+        ContainsFunc* contains;
+        EmplaceFunc* emplace;
+        EraseFunc* erase;
+    };
+
+    template <typename K, typename V>
+    static constexpr StdMapViewRtti stdMapViewRttiImpl = {
+        &StdMapViewRtti::GetKeyType<K, V>,
+        &StdMapViewRtti::GetValueType<K, V>,
+        &StdMapViewRtti::GetSize<K, V>,
+        &StdMapViewRtti::At<K, V>,
+        &StdMapViewRtti::GetOrAdd<K, V>,
+        &StdMapViewRtti::Traverse<K, V>,
+        &StdMapViewRtti::ConstTraverse<K, V>,
+        &StdMapViewRtti::Contains<K, V>,
+        &StdMapViewRtti::Emplace<K, V>,
+        &StdMapViewRtti::Erase<K, V>
+    };
+
+    template <typename K, typename V>
+    struct TemplateViewRttiGetter<std::map<K, V>> {
+        static constexpr TemplateViewId Id();
+        static const void* Get();
+    };
+
+    class MIRROR_API StdMapView {
+    public:
+        using PairTraverser = std::function<void(const Any&, const Any&)>;
+        static constexpr TemplateViewId id = StdMapViewRtti::id;
+
+        explicit StdMapView(const Argument& inObj);
+        NonCopyable(StdMapView)
+        NonMovable(StdMapView)
+
+        const TypeInfo* GetKeyType() const;
+        const TypeInfo* GetValueType() const;
+        size_t GetSize() const;
+        Any At(const Argument& inKey) const;
+        Any GetOrAdd(const Argument& inKey) const;
+        void Traverse(const PairTraverser& inTraverser) const;
+        void ConstTraverse(const PairTraverser& inTraverser) const;
+        bool Contains(const Argument& inKey) const;
+        void Emplace(const Argument& inTempKey, const Argument& inTempValue) const;
+        void Erase(const Argument& inKey) const;
+
+    private:
+        const Argument& obj;
+        const StdMapViewRtti* rtti;
+    };
+    // ----------------- end std::map<K, V> -------------------
+
+    // --------------- begin std::tuple<T...> -----------------
+    struct StdTupleRtti {
+        static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdTupleView");
+
+        using GetSizeFunc = size_t();
+        using GetElementTypeFunc = const TypeInfo*(size_t);
+        using GetElementFunc = Any(const Argument&, size_t);
+        using VisitFunc = void(const Argument&, const std::function<void(const Any&)>&);
+
+        template <typename... T> static size_t GetSize();
+        template <typename... T> static const TypeInfo* GetElementType(size_t inIndex);
+        template <typename... T> static Any GetElement(const Argument&, size_t inIndex);
+        template <typename... T> static void Visit(const Argument&, const std::function<void(const Any&)>& inVisitor);
+
+        GetSizeFunc* getSize;
+        GetElementTypeFunc* getElementType;
+        GetElementFunc* getElement;
+        VisitFunc* visit;
+    };
+
+    template <typename... T>
+    static constexpr StdTupleRtti stdTupleRttiImpl = {
+        &StdTupleRtti::GetSize<T...>,
+        &StdTupleRtti::GetElementType<T...>,
+        &StdTupleRtti::GetElement<T...>,
+        &StdTupleRtti::Visit<T...>
+    };
+
+    template <typename... T>
+    struct TemplateViewRttiGetter<std::tuple<T...>> {
+        static constexpr TemplateViewId Id();
+        static const void* Get();
+    };
+
+    class MIRROR_API StdTupleView {
+    public:
+        using Visitor = std::function<void(const Any&)>;
+        static constexpr TemplateViewId id = StdTupleRtti::id;
+
+        explicit StdTupleView(const Argument& inObj);
+        NonCopyable(StdTupleView)
+        NonMovable(StdTupleView)
+
+        size_t GetSize() const;
+        const TypeInfo* GetElementType(size_t inIndex) const;
+        Any GetElement(size_t inIndex) const;
+        void Visit(const Visitor& inVisitor) const;
+
+    private:
+        const Argument& obj;
+        const StdTupleRtti* rtti;
+    };
+    // --------------- end std::tuple<T...> -------------------
+}
+
 namespace Mirror::Internal {
     template <typename T>
     void StaticCheckArgumentType()
@@ -900,34 +1661,14 @@ namespace Mirror::Internal {
             "static version reflection method do no support use Any/Any*/const Any*/Argument as argument, please check you arguments");
     }
 
-    template <typename T>
-    Any ForwardAsAny(T&& value)
+    template <typename... T, size_t... I>
+    static std::array<std::function<Any(const Argument&)>, sizeof...(T)> BuildTupleGetterArray(std::index_sequence<I...>)
     {
-        StaticCheckArgumentType<T>();
-
-        if constexpr (std::is_lvalue_reference_v<T&&>) {
-            return { std::ref(std::forward<T>(value)) };
-        } else {
-            return { std::forward<T>(value) };
-        }
-    }
-
-    template <typename T>
-    Argument ForwardAsArgument(T&& value)
-    {
-        StaticCheckArgumentType<T>();
-        return ForwardAsAny(std::forward<T>(value));
-    }
-
-    template <typename... Args>
-    ArgumentList ForwardAsArgumentList(Args&&... args)
-    {
-        ArgumentList result;
-        result.reserve(sizeof...(args));
-        (void) std::initializer_list<int> { ([&]() -> void {
-            result.emplace_back(ForwardAsArgument(std::forward<Args>(args)));
-        }(), 0)... };
-        return result;
+        return {
+            [](const Argument& inObj) -> Any {
+                return std::get<I>(inObj.As<std::tuple<T...>&>());
+            }...
+        };
     }
 }
 
@@ -1056,12 +1797,12 @@ namespace Common { // NOLINT
 
         static size_t Serialize(BinarySerializeStream& stream, const T& value)
         {
-            return SerializeDyn(stream, Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(value));
+            return SerializeDyn(stream, Mirror::Class::Get<T>(), Mirror::ForwardAsArg(value));
         }
 
         static size_t Deserialize(BinaryDeserializeStream& stream, T& value)
         {
-            return DeserializeDyn(stream, Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(value));
+            return DeserializeDyn(stream, Mirror::Class::Get<T>(), Mirror::ForwardAsArg(value));
         }
     };
 
@@ -1457,12 +2198,12 @@ namespace Common { // NOLINT
 
         static void JsonSerialize(rapidjson::Value& outValue, rapidjson::Document::AllocatorType& inAllocator, const T& inValue)
         {
-            JsonSerializeDyn(outValue, inAllocator, Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(inValue));
+            JsonSerializeDyn(outValue, inAllocator, Mirror::Class::Get<T>(), Mirror::ForwardAsArg(inValue));
         }
 
         static void JsonDeserialize(const rapidjson::Value& inValue, T& outValue)
         {
-            JsonDeserializeDyn(inValue, Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(outValue));
+            JsonDeserializeDyn(inValue, Mirror::Class::Get<T>(), Mirror::ForwardAsArg(outValue));
         }
     };
 
@@ -1824,7 +2565,7 @@ namespace Common { // NOLINT
 
         static std::string ToString(const T& inValue)
         {
-            return ToStringDyn(Mirror::Class::Get<T>(), Mirror::Internal::ForwardAsArgument(inValue));
+            return ToStringDyn(Mirror::Class::Get<T>(), Mirror::ForwardAsArg(inValue));
         }
     };
 
@@ -2014,6 +2755,26 @@ namespace Mirror {
     }
 
     template <typename T>
+    void AnyRtti::CopyAssign(void* inThis, const void* inOther)
+    {
+        if constexpr (std::is_copy_assignable_v<T>) {
+            *static_cast<T*>(inThis) = *static_cast<const T*>(inOther);
+        } else {
+            QuickFailWithReason(std::format("type {} is no support copy assign", GetTypeInfo<T>()->name));
+        }
+    }
+
+    template <typename T>
+    void AnyRtti::MoveAssign(void* inThis, void* inOther) noexcept
+    {
+        if constexpr (std::is_move_assignable_v<T>) {
+            *static_cast<T*>(inThis) = std::move(*static_cast<T*>(inOther));
+        } else {
+            QuickFailWithReason(std::format("type {} is no support move assign", GetTypeInfo<T>()->name));
+        }
+    }
+
+    template <typename T>
     bool AnyRtti::Equal(const void* inThis, const void* inOther) noexcept
     {
         if constexpr (Common::EqualComparable<T>) {
@@ -2127,6 +2888,27 @@ namespace Mirror {
     std::string AnyRtti::ToString(const void* inThis)
     {
         return Common::ToString(*static_cast<const T*>(inThis));
+    }
+
+    template <typename T>
+    std::pair<TemplateViewId, TemplateViewRttiPtr> AnyRtti::GetTemplateViewRtti()
+    {
+        return {
+            TemplateViewRttiGetter<T>::Id(),
+            TemplateViewRttiGetter<T>::Get()
+        };
+    }
+
+    template <typename T>
+    constexpr TemplateViewId TemplateViewRttiGetter<T>::Id()
+    {
+        return 0;
+    }
+
+    template <typename T>
+    const void* TemplateViewRttiGetter<T>::Get()
+    {
+        return nullptr;
     }
 
     template <typename T>
@@ -2321,6 +3103,13 @@ namespace Mirror {
         return dynamic_cast<T>(As<B>());
     }
 
+    template <ValidTemplateView V>
+    bool Any::CanAsTemplateView() const
+    {
+        Assert(!Empty());
+        return rtti->getTemplateViewRtti().first == V::id;
+    }
+
     template <typename T>
     void Any::ConstructFromValue(T&& inValue)
     {
@@ -2341,7 +3130,7 @@ namespace Mirror {
         arrayLength = 0;
         policy = std::is_const_v<T> ? AnyPolicy::constRef : AnyPolicy::nonConstRef;
         rtti = &anyRttiImpl<RawType>;
-        info = RefInfo(const_cast<RawType*>(&inRef.get()), sizeof(RawType));
+        info = RefInfo(const_cast<RawType*>(std::addressof(inRef.get())), sizeof(RawType));
     }
 
     template <typename T, size_t N>
@@ -2391,6 +3180,14 @@ namespace Mirror {
         });
     }
 
+    template <ValidTemplateView V>
+    bool Argument::CanAsTemplateView() const
+    {
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.template CanAsTemplateView<V>();
+        });
+    }
+
     template <typename F>
     decltype(auto) Argument::Delegate(F&& inFunc) const
     {
@@ -2408,6 +3205,62 @@ namespace Mirror {
         return inFunc(Any {});
     }
 
+    template <typename T>
+    Any ForwardAsAny(T&& value)
+    {
+        Internal::StaticCheckArgumentType<T>();
+
+        if constexpr (std::is_lvalue_reference_v<T&&>) {
+            return { std::ref(std::forward<T>(value)) };
+        } else {
+            return { std::forward<T>(value) };
+        }
+    }
+
+    template <typename T>
+    Argument ForwardAsArg(T&& value)
+    {
+        Internal::StaticCheckArgumentType<T>();
+        return ForwardAsAny(std::forward<T>(value));
+    }
+
+    template <typename... Args>
+    ArgumentList ForwardAsArgList(Args&&... args)
+    {
+        ArgumentList result;
+        result.reserve(sizeof...(args));
+        (void) std::initializer_list<int> { ([&]() -> void {
+            result.emplace_back(ForwardAsArg(std::forward<Args>(args)));
+        }(), 0)... };
+        return result;
+    }
+
+    template <typename T>
+    Any ForwardAsAnyByValue(T&& value)
+    {
+        Internal::StaticCheckArgumentType<T>();
+        auto any = ForwardAsAny(std::forward<T>(value));
+        return any.IsMemoryHolder() ? any : any.Value();
+    }
+
+    template <typename T>
+    Argument ForwardAsArgByValue(T&& value)
+    {
+        Internal::StaticCheckArgumentType<T>();
+        return { ForwardAsAnyByValue(std::forward<T>(value)) };
+    }
+
+    template <typename ... Args>
+    ArgumentList ForwardAsArgListByValue(Args&&... args)
+    {
+        ArgumentList result;
+        result.reserve(sizeof...(args));
+        (void) std::initializer_list<int> { ([&]() -> void {
+            result.emplace_back(ForwardAsArgByValue(std::forward<Args>(args)));
+        }(), 0)... };
+        return result;
+    }
+
     template <size_t N>
     Id::Id(const char(&inName)[N])
         : hash(Common::HashUtils::StrCrc32(inName))
@@ -2418,55 +3271,61 @@ namespace Mirror {
     template <typename T>
     void Variable::Set(T&& value) const
     {
-        SetDyn(Internal::ForwardAsArgument(std::forward<T>(value)));
+        SetDyn(ForwardAsArg(std::forward<T>(value)));
     }
 
     template <typename... Args>
     Any Function::Invoke(Args&&... args) const
     {
-        return InvokeDyn(Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
+        return InvokeDyn(ForwardAsArgList(std::forward<Args>(args)...));
     }
 
     template <typename... Args>
     Any Constructor::Construct(Args&&... args) const
     {
-        return ConstructDyn(Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
+        return ConstructDyn(ForwardAsArgList(std::forward<Args>(args)...));
     }
 
     template <typename... Args>
     Any Constructor::New(Args&&... args) const
     {
-        return NewDyn(Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
+        return NewDyn(ForwardAsArgList(std::forward<Args>(args)...));
     }
 
     template <typename ... Args>
     Any Constructor::InplaceNew(Args&&... args) const
     {
-        return InplaceNewDyn(Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
+        return InplaceNewDyn(ForwardAsArgList(std::forward<Args>(args)...));
     }
 
     template <typename C>
-    void Destructor::Invoke(C&& object) const
+    void Destructor::Destruct(C&& object) const
     {
-        InvokeDyn(Internal::ForwardAsArgument(std::forward<C>(object)));
+        DestructDyn(ForwardAsArg(std::forward<C>(object)));
+    }
+
+    template <typename C>
+    void Destructor::Delete(C* object) const
+    {
+        DeleteDyn(ForwardAsArg(object));
     }
 
     template <typename C, typename T>
     void MemberVariable::Set(C&& object, T&& value) const
     {
-        SetDyn(Internal::ForwardAsArgument(std::forward<C>(object)), Internal::ForwardAsArgument(std::forward<T>(value)));
+        SetDyn(ForwardAsArg(std::forward<C>(object)), ForwardAsArg(std::forward<T>(value)));
     }
 
     template <typename C>
     Any MemberVariable::Get(C&& object) const
     {
-        return GetDyn(Internal::ForwardAsArgument(std::forward<C>(object)));
+        return GetDyn(ForwardAsArg(std::forward<C>(object)));
     }
 
     template <typename C, typename... Args>
     Any MemberFunction::Invoke(C&& object, Args&&... args) const
     {
-        return InvokeDyn(Internal::ForwardAsArgument(std::forward<C>(object)), Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
+        return InvokeDyn(ForwardAsArg(std::forward<C>(object)), ForwardAsArgList(std::forward<Args>(args)...));
     }
 
     template <Common::CppClass C>
@@ -2488,21 +3347,33 @@ namespace Mirror {
     }
 
     template <typename ... Args>
-    Any Class::Construct(Args&&... args)
+    Any Class::Construct(Args&&... args) const
     {
-        return ConstructDyn(Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
+        return ConstructDyn(ForwardAsArgList(std::forward<Args>(args)...));
     }
 
     template <typename ... Args>
-    Any Class::New(Args&&... args)
+    Any Class::New(Args&&... args) const
     {
-        return NewDyn(Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
+        return NewDyn(ForwardAsArgList(std::forward<Args>(args)...));
     }
 
     template <typename ... Args>
-    Any Class::InplaceNew(void* ptr, Args&&... args)
+    Any Class::InplaceNew(void* ptr, Args&&... args) const
     {
-        return InplaceNewDyn(ptr, Internal::ForwardAsArgumentList(std::forward<Args>(args)...));
+        return InplaceNewDyn(ptr, ForwardAsArgList(std::forward<Args>(args)...));
+    }
+
+    template <typename C>
+    void Class::Destruct(C&& object) const
+    {
+        DestructDyn(ForwardAsArg(std::forward<C>(object)));
+    }
+
+    template <typename C>
+    void Class::Delete(C* object) const
+    {
+        DeleteDyn(ForwardAsArg(object));
     }
 
     template <Common::CppEnum T>
@@ -2526,30 +3397,636 @@ namespace Mirror {
     template <Common::CppEnum E>
     void EnumValue::Set(E& value) const
     {
-        SetDyn(Internal::ForwardAsArgument(value));
+        SetDyn(ForwardAsArg(value));
     }
 
     template <Common::CppEnum E>
     bool EnumValue::Compare(const E& value) const
     {
-        return Compare(Internal::ForwardAsArgument(value));
+        return Compare(ForwardAsArg(value));
     }
 
     template <Common::CppEnum E>
     bool Enum::HasValue(E inValue) const
     {
-        return HasValue(Internal::ForwardAsArgument(inValue));
+        return HasValue(ForwardAsArg(inValue));
     }
 
     template <Common::CppEnum E>
     const EnumValue* Enum::FindValue(E inValue) const
     {
-        return FindValue(Internal::ForwardAsArgument(inValue));
+        return FindValue(ForwardAsArg(inValue));
     }
 
     template <Common::CppEnum E>
     const EnumValue& Enum::GetValue(E inValue) const
     {
-        return GetValue(Internal::ForwardAsArgument(inValue));
+        return GetValue(ForwardAsArg(inValue));
     }
-}
+
+    template <typename T>
+    const TypeInfo* StdOptionalViewRtti::GetBaseType()
+    {
+        return GetTypeInfo<T>();
+    }
+
+    template <typename T>
+    bool StdOptionalViewRtti::HasValue(const Argument& inArg)
+    {
+        return inArg.As<const std::optional<T>&>().has_value();
+    }
+
+    template <typename T>
+    Any StdOptionalViewRtti::GetValue(const Argument& inArg)
+    {
+        return std::ref(inArg.As<const std::optional<T>&>().value());
+    }
+
+    template <typename T>
+    constexpr TemplateViewId TemplateViewRttiGetter<std::optional<T>>::Id()
+    {
+        return StdOptionalViewRtti::id;
+    }
+
+    template <typename T>
+    const void* TemplateViewRttiGetter<std::optional<T>>::Get()
+    {
+        return &stdOptionalViewRttiImpl<T>;
+    }
+
+    template <typename K, typename V>
+    const TypeInfo* StdPairViewRtti::GetKeyType()
+    {
+        return GetTypeInfo<K>();
+    }
+
+    template <typename K, typename V>
+    const TypeInfo* StdPairViewRtti::GetValueType()
+    {
+        return GetTypeInfo<V>();
+    }
+
+    template <typename K, typename V>
+    Any StdPairViewRtti::GetKey(const Argument& inObj)
+    {
+        return { std::ref(inObj.As<std::pair<K, V>&>().first) };
+    }
+
+    template <typename K, typename V>
+    Any StdPairViewRtti::GetValue(const Argument& inObj)
+    {
+        return { std::ref(inObj.As<std::pair<K, V>&>().second) };
+    }
+
+    template <typename K, typename V>
+    Any StdPairViewRtti::GetConstKey(const Argument& inObj)
+    {
+        return { std::ref(inObj.As<const std::pair<K, V>&>().first) };
+    }
+
+    template <typename K, typename V>
+    Any StdPairViewRtti::GetConstValue(const Argument& inObj)
+    {
+        return { std::ref(inObj.As<const std::pair<K, V>&>().second) };
+    }
+
+    template <typename K, typename V>
+    constexpr TemplateViewId TemplateViewRttiGetter<std::pair<K, V>>::Id()
+    {
+        return StdPairViewRtti::id;
+    }
+
+    template <typename K, typename V>
+    const void* TemplateViewRttiGetter<std::pair<K, V>>::Get()
+    {
+        return &stdPairViewRttiImpl<K, V>;
+    }
+
+    template <typename T, size_t N>
+    const TypeInfo* StdArrayViewRtti::GetElementType()
+    {
+        return GetTypeInfo<T>();
+    }
+
+    template <typename T, size_t N>
+    size_t StdArrayViewRtti::GetSize()
+    {
+        return N;
+    }
+
+    template <typename T, size_t N>
+    Any StdArrayViewRtti::GetElement(const Argument& inObj, size_t inIndex)
+    {
+        return { std::ref(inObj.As<std::array<T, N>&>()[inIndex]) };
+    }
+
+    template <typename T, size_t N>
+    Any StdArrayViewRtti::GetConstElement(const Argument& inObj, size_t inIndex)
+    {
+        return { std::ref(inObj.As<const std::array<T, N>&>()[inIndex]) };
+    }
+
+    template <typename T, size_t N>
+    constexpr TemplateViewId TemplateViewRttiGetter<std::array<T, N>>::Id()
+    {
+        return StdArrayViewRtti::id;
+    }
+
+    template <typename T, size_t N>
+    const void* TemplateViewRttiGetter<std::array<T, N>>::Get()
+    {
+        return &stdArrayViewRttiImpl<T, N>;
+    }
+
+    template <typename T>
+    const TypeInfo* StdVectorViewRtti::GetElementType()
+    {
+        return GetTypeInfo<T>();
+    }
+
+    template <typename T>
+    size_t StdVectorViewRtti::GetSize(const Argument& inObj)
+    {
+        return inObj.As<const std::vector<T>&>().size();
+    }
+
+    template <typename T>
+    Any StdVectorViewRtti::GetElement(const Argument& inObj, size_t inIndex)
+    {
+        if constexpr (std::is_same_v<T, bool>) {
+            return { inObj.As<std::vector<T>&>()[inIndex] };
+        } else {
+            return { std::ref(inObj.As<std::vector<T>&>()[inIndex]) };
+        }
+    }
+
+    template <typename T>
+    Any StdVectorViewRtti::GetConstElement(const Argument& inObj, size_t inIndex)
+    {
+        if constexpr (std::is_same_v<T, bool>) {
+            return { inObj.As<const std::vector<T>&>()[inIndex] };
+        } else {
+            return { std::ref(inObj.As<const std::vector<T>&>()[inIndex]) };
+        }
+    }
+
+    template <typename T>
+    Any StdVectorViewRtti::EmplaceBack(const Argument& inObj, const Argument& inTempObj)
+    {
+        if constexpr (std::is_same_v<T, bool>) {
+            return { inObj.As<std::vector<T>&>().emplace_back(std::move(inTempObj.As<T&>())) };
+        } else {
+            return { std::ref(inObj.As<std::vector<T>&>().emplace_back(std::move(inTempObj.As<T&>()))) };
+        }
+    }
+
+    template <typename T>
+    void StdVectorViewRtti::Erase(const Argument& inObj, size_t inIndex)
+    {
+        auto& vec = inObj.As<std::vector<T>&>();
+        vec.erase(vec.begin() + inIndex);
+    }
+
+    template <typename T>
+    constexpr TemplateViewId TemplateViewRttiGetter<std::vector<T>>::Id()
+    {
+        return StdVectorViewRtti::id;
+    }
+
+    template <typename T>
+    const void* TemplateViewRttiGetter<std::vector<T>>::Get()
+    {
+        return &stdVectorViewRttiImpl<T>;
+    }
+
+    template <typename T>
+    const TypeInfo* StdListViewRtti::GetElementType()
+    {
+        return GetTypeInfo<T>();
+    }
+
+    template <typename T>
+    size_t StdListViewRtti::GetSize(const Argument& inObj)
+    {
+        return inObj.As<const std::list<T>&>().size();
+    }
+
+    template <typename T>
+    void StdListViewRtti::Traverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser)
+    {
+        auto& list = inObj.As<std::list<T>&>(); // NOLINT
+        for (auto& element : list) {
+            inTraverser(std::ref(element));
+        }
+    }
+
+    template <typename T>
+    void StdListViewRtti::ConstTraverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser)
+    {
+        const auto& list = inObj.As<const std::list<T>&>(); // NOLINT
+        for (const auto& element : list) {
+            inTraverser(std::ref(element));
+        }
+    }
+
+    template <typename T>
+    Any StdListViewRtti::EmplaceFront(const Argument& inObj, const Argument& inTempObj)
+    {
+        T& elemRef = inObj.As<std::list<T>&>().emplace_front(std::move(inTempObj.As<T&>()));
+        return { std::ref(elemRef) };
+    }
+
+    template <typename T>
+    Any StdListViewRtti::EmplaceBack(const Argument& inObj, const Argument& inTempObj)
+    {
+        T& elemRef = inObj.As<std::list<T>&>().emplace_back(std::move(inTempObj.As<T&>()));
+        return { std::ref(elemRef) };
+    }
+
+    template <typename T>
+    Any StdListViewRtti::GetBeginIter(const Argument& inObj)
+    {
+        return { inObj.As<std::list<T>&>().begin() };
+    }
+
+    template <typename T>
+    Any StdListViewRtti::GetEndIter(const Argument& inObj)
+    {
+        return { inObj.As<std::list<T>&>().end() };
+    }
+
+    template <typename T>
+    Any StdListViewRtti::GetBeginConstIter(const Argument& inObj)
+    {
+        return { inObj.As<const std::list<T>&>().begin() };
+    }
+
+    template <typename T>
+    Any StdListViewRtti::GetEndConstIter(const Argument& inObj)
+    {
+        return { inObj.As<const std::list<T>&>().end() };
+    }
+
+    template <typename T>
+    Any StdListViewRtti::GetNextIter(const Argument& inIter)
+    {
+        using Iter = typename std::list<T>::iterator;
+        return { ++inIter.As<const Iter&>() };
+    }
+
+    template <typename T>
+    Any StdListViewRtti::GetLastIter(const Argument& inIter)
+    {
+        using Iter = typename std::list<T>::iterator;
+        return { --inIter.As<const Iter&>() };
+    }
+
+    template <typename T>
+    Any StdListViewRtti::GetNextConstIter(const Argument& inIter)
+    {
+        using ConstIter = typename std::list<T>::const_iterator;
+        return { ++inIter.As<const ConstIter&>() };
+    }
+
+    template <typename T>
+    Any StdListViewRtti::GetLastConstIter(const Argument& inIter)
+    {
+        using ConstIter = typename std::list<T>::const_iterator;
+        return { --inIter.As<const ConstIter&>() };
+    }
+
+    template <typename T>
+    Any StdListViewRtti::DerefIter(const Argument& inIter)
+    {
+        using Iter = typename std::list<T>::iterator;
+        return { std::ref(*inIter.As<const Iter&>()) };
+    }
+
+    template <typename T>
+    Any StdListViewRtti::DerefConstIter(const Argument& inIter)
+    {
+        using ConstIter = typename std::list<T>::const_iterator;
+        return { std::ref(*inIter.As<const ConstIter&>()) };
+    }
+
+    template <typename T>
+    constexpr TemplateViewId TemplateViewRttiGetter<std::list<T>>::Id()
+    {
+        return StdListViewRtti::id;
+    }
+
+    template <typename T>
+    const void* TemplateViewRttiGetter<std::list<T>>::Get()
+    {
+        return &stdListViewRttiImpl<T>;
+    }
+
+    template <typename T>
+    const TypeInfo* StdUnorderedSetViewRtti::GetElementType()
+    {
+        return GetTypeInfo<T>();
+    }
+
+    template <typename T>
+    size_t StdUnorderedSetViewRtti::GetSize(const Argument& inObj)
+    {
+        return inObj.As<const std::unordered_set<T>&>().size();
+    }
+
+    template <typename T>
+    void StdUnorderedSetViewRtti::Traverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser)
+    {
+        auto& set = inObj.As<std::unordered_set<T>&>(); // NOLINT
+        for (auto& element : set) {
+            inTraverser(std::ref(element));
+        }
+    }
+
+    template <typename T>
+    void StdUnorderedSetViewRtti::ConstTraverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser)
+    {
+        const auto& set = inObj.As<const std::unordered_set<T>&>(); // NOLINT
+        for (const auto& element : set) {
+            inTraverser(std::ref(element));
+        }
+    }
+
+    template <typename T>
+    bool StdUnorderedSetViewRtti::Contains(const Argument& inObj, const Argument& inElement)
+    {
+        return inObj.As<const std::unordered_set<T>&>().contains(inElement.As<const T&>());
+    }
+
+    template <typename T>
+    void StdUnorderedSetViewRtti::Emplace(const Argument& inObj, const Argument& inTempObj)
+    {
+        inObj.As<std::unordered_set<T>&>().emplace(std::move(inTempObj.As<T&>()));
+    }
+
+    template <typename T>
+    void StdUnorderedSetViewRtti::Erase(const Argument& inObj, const Argument& inElement)
+    {
+        inObj.As<std::unordered_set<T>&>().erase(inElement.As<const T&>());
+    }
+
+    template <typename T>
+    constexpr TemplateViewId TemplateViewRttiGetter<std::unordered_set<T>>::Id()
+    {
+        return StdUnorderedSetViewRtti::id;
+    }
+
+    template <typename T>
+    const void* TemplateViewRttiGetter<std::unordered_set<T>>::Get()
+    {
+        return &stdUnorderedSetViewRttiImpl<T>;
+    }
+
+    template <typename T>
+    const TypeInfo* StdSetViewRtti::GetElementType()
+    {
+        return GetTypeInfo<T>();
+    }
+
+    template <typename T>
+    size_t StdSetViewRtti::GetSize(const Argument& inObj)
+    {
+        return inObj.As<const std::set<T>&>().size();
+    }
+
+    template <typename T>
+    void StdSetViewRtti::Traverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser)
+    {
+        const auto& set = inObj.As<const std::set<T>&>(); // NOLINT
+        for (const auto& element : set) {
+            inTraverser(std::ref(element));
+        }
+    }
+
+    template <typename T>
+    bool StdSetViewRtti::Contains(const Argument& inObj, const Argument& inElement)
+    {
+        return inObj.As<const std::set<T>&>().contains(inElement.As<const T&>());
+    }
+
+    template <typename T>
+    void StdSetViewRtti::Emplace(const Argument& inObj, const Argument& inTempObj)
+    {
+        inObj.As<std::set<T>&>().emplace(inTempObj.As<const T&>());
+    }
+
+    template <typename T>
+    void StdSetViewRtti::Erase(const Argument& inObj, const Argument& inElement)
+    {
+        inObj.As<std::set<T>&>().erase(inElement.As<const T&>());
+    }
+
+    template <typename T>
+    constexpr TemplateViewId TemplateViewRttiGetter<std::set<T>>::Id()
+    {
+        return StdSetViewRtti::id;
+    }
+
+    template <typename T>
+    const void* TemplateViewRttiGetter<std::set<T>>::Get()
+    {
+        return &stdSetViewRttiImpl<T>;
+    }
+
+    template <typename K, typename V>
+    const TypeInfo* StdUnorderedMapViewRtti::GetKeyType()
+    {
+        return GetTypeInfo<K>();
+    }
+
+    template <typename K, typename V>
+    const TypeInfo* StdUnorderedMapViewRtti::GetValueType()
+    {
+        return GetTypeInfo<V>();
+    }
+
+    template <typename K, typename V>
+    size_t StdUnorderedMapViewRtti::GetSize(const Argument& inObj)
+    {
+        return inObj.As<const std::unordered_map<K, V>&>().size();
+    }
+
+    template <typename K, typename V>
+    Any StdUnorderedMapViewRtti::At(const Argument& inObj, const Argument& inKey)
+    {
+        return { std::ref(inObj.As<std::unordered_map<K, V>&>().at(inKey.As<const K&>())) };
+    }
+
+    template <typename K, typename V>
+    Any StdUnorderedMapViewRtti::GetOrAdd(const Argument& inObj, const Argument& inKey)
+    {
+        return { std::ref(inObj.As<std::unordered_map<K, V>&>()[inKey.As<const K&>()]) };
+    }
+
+    template <typename K, typename V>
+    void StdUnorderedMapViewRtti::Traverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser)
+    {
+        auto& map = inObj.As<std::unordered_map<K, V>&>(); // NOLINT
+        for (auto& pair : map) {
+            inTraverser(std::ref(pair.first), std::ref(pair.second));
+        }
+    }
+
+    template <typename K, typename V>
+    void StdUnorderedMapViewRtti::ConstTraverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser)
+    {
+        const auto& map = inObj.As<const std::unordered_map<K, V>&>(); // NOLINT
+        for (const auto& pair : map) {
+            inTraverser(std::ref(pair.first), std::ref(pair.second));
+        }
+    }
+
+    template <typename K, typename V>
+    bool StdUnorderedMapViewRtti::Contains(const Argument& inObj, const Argument& inKey)
+    {
+        return inObj.As<const std::unordered_map<K, V>&>().contains(inKey.As<const K&>());
+    }
+
+    template <typename K, typename V>
+    void StdUnorderedMapViewRtti::Emplace(const Argument& inObj, const Argument& inTempKey, const Argument& inTempValue)
+    {
+        inObj.As<std::unordered_map<K, V>&>().emplace(std::move(inTempKey.As<K&>()), std::move(inTempValue.As<V&>()));
+    }
+
+    template <typename K, typename V>
+    void StdUnorderedMapViewRtti::Erase(const Argument& inObj, const Argument& inKey)
+    {
+        inObj.As<std::unordered_map<K, V>&>().erase(inKey.As<const K&>());
+    }
+
+    template <typename K, typename V>
+    constexpr TemplateViewId TemplateViewRttiGetter<std::unordered_map<K, V>>::Id()
+    {
+        return StdUnorderedMapViewRtti::id;
+    }
+
+    template <typename K, typename V>
+    const void* TemplateViewRttiGetter<std::unordered_map<K, V>>::Get()
+    {
+        return &stdUnorderedMapViewRttiImpl<K, V>;
+    }
+
+    template <typename K, typename V>
+    const TypeInfo* StdMapViewRtti::GetKeyType()
+    {
+        return GetTypeInfo<K>();
+    }
+
+    template <typename K, typename V>
+    const TypeInfo* StdMapViewRtti::GetValueType()
+    {
+        return GetTypeInfo<V>();
+    }
+
+    template <typename K, typename V>
+    size_t StdMapViewRtti::GetSize(const Argument& inObj)
+    {
+        return inObj.As<const std::map<K, V>&>().size();
+    }
+
+    template <typename K, typename V>
+    Any StdMapViewRtti::At(const Argument& inObj, const Argument& inKey)
+    {
+        return { std::ref(inObj.As<std::map<K, V>&>().at(inKey.As<const K&>())) };
+    }
+
+    template <typename K, typename V>
+    Any StdMapViewRtti::GetOrAdd(const Argument& inObj, const Argument& inKey)
+    {
+        return { std::ref(inObj.As<std::map<K, V>&>()[inKey.As<const K&>()]) };
+    }
+
+    template <typename K, typename V>
+    void StdMapViewRtti::Traverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser)
+    {
+        auto& map = inObj.As<std::map<K, V>&>(); // NOLINT
+        for (auto& pair : map) {
+            inTraverser(std::ref(pair.first), std::ref(pair.second));
+        }
+    }
+
+    template <typename K, typename V>
+    void StdMapViewRtti::ConstTraverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser)
+    {
+        const auto& map = inObj.As<std::map<K, V>&>(); // NOLINT
+        for (const auto& pair : map) {
+            inTraverser(std::ref(pair.first), std::ref(pair.second));
+        }
+    }
+
+    template <typename K, typename V>
+    bool StdMapViewRtti::Contains(const Argument& inObj, const Argument& inKey)
+    {
+        return inObj.As<const std::map<K, V>&>().contains(inKey.As<const K&>());
+    }
+
+    template <typename K, typename V>
+    void StdMapViewRtti::Emplace(const Argument& inObj, const Argument& inTempKey, const Argument& inTempValue)
+    {
+        inObj.As<std::map<K, V>&>().emplace(std::move(inTempKey.As<K&>()), std::move(inTempValue.As<V&>()));
+    }
+
+    template <typename K, typename V>
+    void StdMapViewRtti::Erase(const Argument& inObj, const Argument& inKey)
+    {
+        inObj.As<std::map<K, V>&>().erase(inKey.As<const K&>());
+    }
+
+    template <typename K, typename V>
+    constexpr TemplateViewId TemplateViewRttiGetter<std::map<K, V>>::Id()
+    {
+        return StdMapViewRtti::id;
+    }
+
+    template <typename K, typename V>
+    const void* TemplateViewRttiGetter<std::map<K, V>>::Get()
+    {
+        return &stdMapViewRttiImpl<K, V>;
+    }
+
+    template <typename... T>
+    size_t StdTupleRtti::GetSize()
+    {
+        return std::tuple_size_v<std::tuple<T...>>();
+    }
+
+    template <typename... T>
+    const TypeInfo* StdTupleRtti::GetElementType(size_t inIndex)
+    {
+        static std::array<const TypeInfo*, sizeof...(T)> types = { GetTypeInfo<T>()... };
+        Assert(inIndex < types.size());
+        return types[inIndex];
+    }
+
+    template <typename... T>
+    Any StdTupleRtti::GetElement(const Argument& inObj, size_t inIndex)
+    {
+        static std::array<std::function<Any(const Argument&)>, sizeof...(T)> getters = Internal::BuildTupleGetterArray<T...>(std::make_index_sequence<sizeof...(T)> {});
+        Assert(inIndex < getters.size());
+        return getters[inIndex](inObj);
+    }
+
+    template <typename... T>
+    void StdTupleRtti::Visit(const Argument& inObj, const std::function<void(const Any&)>& inVisitor)
+    {
+        std::visit([&](auto&& inElement) -> void { // NOLINT
+            inVisitor(ForwardAsAny(std::forward<decltype(inElement)>(inElement)));
+        }, inObj.As<std::tuple<T...>&>());
+    }
+
+    template <typename... T>
+    constexpr TemplateViewId TemplateViewRttiGetter<std::tuple<T...>>::Id()
+    {
+        return StdTupleRtti::GetSize();
+    }
+
+    template <typename... T>
+    const void* TemplateViewRttiGetter<std::tuple<T...>>::Get()
+    {
+        return &stdTupleRttiImpl<T...>;
+    }
+} // namespace Mirror

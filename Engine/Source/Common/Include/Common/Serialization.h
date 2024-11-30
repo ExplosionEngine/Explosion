@@ -559,6 +559,8 @@ namespace Common {
     template <>
     struct Serializer<std::wstring> {
         static constexpr size_t typeId = HashUtils::StrCrc32("std::wstring");
+        // windows: 16, macOS: 32
+        static_assert(sizeof(std::wstring::value_type) <= sizeof(uint32_t));
 
         static size_t Serialize(BinarySerializeStream& stream, const std::wstring& value)
         {
@@ -567,12 +569,12 @@ namespace Common {
             const uint64_t size = value.size();
             serialized += Serializer<uint64_t>::Serialize(stream, size);
 
-            const auto* data = reinterpret_cast<const uint16_t*>(value.data());
+            const auto* data = value.data();
             for (auto i = 0; i < size; i++) {
-                stream.Write<uint16_t>(data[i]);
+                stream.Write<uint32_t>(data[i]);
             }
 
-            serialized += size * sizeof(std::wstring::value_type);
+            serialized += size * sizeof(uint32_t);
             return serialized;
         }
 
@@ -584,12 +586,14 @@ namespace Common {
             deserialized += Serializer<uint64_t>::Deserialize(stream, size);
 
             value.resize(size);
-            auto* data = reinterpret_cast<uint16_t*>(value.data());
+            auto* data = value.data();
             for (auto i = 0; i < size; i++) {
-                stream.Read<uint16_t>(data[i]);
+                uint32_t tempValue;
+                stream.Read<uint32_t>(tempValue);
+                data[i] = static_cast<std::wstring::value_type>(tempValue);
             }
 
-            deserialized += size * sizeof(std::wstring::value_type);
+            deserialized += size * sizeof(uint32_t);
             return deserialized;
         }
     };
