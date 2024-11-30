@@ -15,6 +15,7 @@ namespace Runtime {
     using Entity = size_t;
     using CompClass = const Mirror::Class*;
     using GCompClass = const Mirror::Class*;
+    using SystemClass = const Mirror::Class*;
 }
 
 namespace Runtime::Internal {
@@ -26,11 +27,10 @@ namespace Runtime::Internal {
 
     class CompRtti {
     public:
-        template <typename C> CompRtti From();
-
+        explicit CompRtti(CompClass inClass);
         void Bind(size_t inOffset);
-        Mirror::Any MoveConstruct(ElemPtr inElem, const Mirror::Argument& inOther) const;
-        Mirror::Any MoveAssign(ElemPtr inElem, const Mirror::Argument& inOther) const;
+        Mirror::Any MoveConstruct(ElemPtr inElem, const Mirror::Any& inOther) const;
+        Mirror::Any MoveAssign(ElemPtr inElem, const Mirror::Any& inOther) const;
         void Destruct(ElemPtr inElem) const;
         Mirror::Any Get(ElemPtr inElem) const;
         CompClass Class() const;
@@ -38,23 +38,12 @@ namespace Runtime::Internal {
         size_t Size() const;
 
     private:
-        using MoveConstructFunc = Mirror::Any(ElemPtr, size_t, const Mirror::Argument&);
-        using MoveAssignFunc = Mirror::Any(ElemPtr, size_t, const Mirror::Argument&);
+        using MoveConstructFunc = Mirror::Any(ElemPtr, size_t, const Mirror::Any&);
+        using MoveAssignFunc = Mirror::Any(ElemPtr, size_t, const Mirror::Any&);
         using DestructorFunc = void(ElemPtr, size_t);
         using GetFunc = Mirror::Any(ElemPtr, size_t);
 
-        template <typename T> static Mirror::Any MoveConstructImpl(ElemPtr inElem, size_t inOffset, const Mirror::Argument& inOther);
-        template <typename T> static Mirror::Any MoveAssignImpl(ElemPtr inElem, size_t inOffset, const Mirror::Argument& inOther);
-        template <typename T> static void DestructImpl(ElemPtr inElem, size_t inOffset);
-        template <typename T> static Mirror::Any GetImpl(ElemPtr inElem, size_t inOffset);
-
-        CompRtti();
-
         CompClass clazz;
-        MoveConstructFunc* moveConstruct;
-        MoveAssignFunc* moveAssign;
-        DestructorFunc* destructor;
-        GetFunc* get;
         // runtime, need Bind()
         bool bound;
         size_t offset;
@@ -71,8 +60,9 @@ namespace Runtime::Internal {
         ElemPtr EmplaceElem(Entity inEntity, ElemPtr inSrcElem, const std::vector<CompRtti>& inSrcRttiVec);
         Mirror::Any EmplaceComp(Entity inEntity, CompClass inCompClass, const Mirror::Argument& inCompRef);
         void EraseElem(Entity inEntity);
-        ElemPtr GetElem(Entity inEntity);
+        ElemPtr GetElem(Entity inEntity) const;
         Mirror::Any GetComp(Entity inEntity, CompClass inCompClass);
+        Mirror::Any GetComp(Entity inEntity, CompClass inCompClass) const;
         size_t Size() const;
         auto All() const;
         const std::vector<CompRtti>& GetRttiVec() const;
@@ -89,8 +79,8 @@ namespace Runtime::Internal {
         size_t Capacity() const;
         void Reserve(float inRatio = 1.5f);
         ElemPtr AllocateNewElemBack();
-        ElemPtr ElemAt(std::vector<uint8_t>& inMemory, size_t inIndex);
-        ElemPtr ElemAt(size_t inIndex);
+        ElemPtr ElemAt(std::vector<uint8_t>& inMemory, size_t inIndex) const;
+        ElemPtr ElemAt(size_t inIndex) const;
 
         ArchetypeId id;
         size_t size;
@@ -335,6 +325,7 @@ namespace Runtime {
         bool Valid(Entity inEntity) const;
         size_t Size() const;
         void Clear();
+        void ResetRuntime();
         void Each(const EntityTraverseFunc& inFunc) const;
         ConstIter Begin() const;
         ConstIter End() const;
@@ -367,7 +358,7 @@ namespace Runtime {
         Mirror::Any FindDyn(CompClass inClass, Entity inEntity) const;
         Mirror::Any GetDyn(CompClass inClass, Entity inEntity);
         Mirror::Any GetDyn(CompClass inClass, Entity inEntity) const;
-        CompEvents& EventsDyn(CompClass inClass, Entity inEntity);
+        CompEvents& EventsDyn(CompClass inClass);
         RuntimeView RuntimeView(const RuntimeViewRule& inRule);
 
         // global component static
@@ -412,12 +403,14 @@ namespace Runtime {
         Internal::EntityPool entities;
         std::unordered_map<GCompClass, Mirror::Any> globalComps;
         std::unordered_map<Internal::ArchetypeId, Internal::Archetype> archetypes;
+        // transients
         std::unordered_map<CompClass, CompEvents> compEvents;
         std::unordered_map<GCompClass, GCompEvents> globalCompEvents;
     };
 
     class SystemRegistry {
     public:
+        // TODO
 
     private:
     };
@@ -436,48 +429,9 @@ namespace Runtime::Internal {
         using ArgsTupleType = std::tuple<T...>;
     };
 
-    template <typename C>
-    CompRtti CompRtti::From()
+    inline auto Archetype::All() const
     {
-        CompRtti result;
-        result.clazz = Internal::GetClass<C>();
-        result.moveConstruct = &MoveConstructImpl<C>;
-        result.moveAssign = &MoveAssignImpl<C>;
-        result.destructor = &DestructImpl<C>;
-        result.get = &GetImpl<C>;
-        result.bound = false;
-        result.offset = 0;
-        return result;
-    }
-
-    template <typename T>
-    Mirror::Any CompRtti::MoveConstructImpl(ElemPtr inElem, size_t inOffset, const Mirror::Argument& inOther)
-    {
-        void* compBegin = static_cast<uint8_t*>(inElem) + inOffset;
-        new(compBegin) T(std::move(inOther.As<T&>()));
-        return GetImpl<T>(inElem, inOffset);
-    }
-
-    template <typename T>
-    Mirror::Any CompRtti::MoveAssignImpl(ElemPtr inElem, size_t inOffset, const Mirror::Argument& inOther)
-    {
-        auto compRef = GetImpl<T>(inElem, inOffset);
-        compRef.template As<T&>() = std::move(inOther.As<T&>());
-        return compRef;
-    }
-
-    template <typename T>
-    void CompRtti::DestructImpl(ElemPtr inElem, size_t inOffset)
-    {
-        auto compRef = GetImpl<T>(inElem, inOffset);
-        compRef.template As<T&>().~T();
-    }
-
-    template <typename T>
-    Mirror::Any CompRtti::GetImpl(ElemPtr inElem, size_t inOffset)
-    {
-        void* compBegin = static_cast<uint8_t*>(inElem) + inOffset;
-        return { std::ref(*static_cast<T*>(compBegin)) };
+        return elemMap | std::ranges::views::values;
     }
 } // namespace Runtime::Internal
 
@@ -684,57 +638,19 @@ namespace Runtime {
     template <typename C, typename ... Args>
     C& ECRegistry::Emplace(Entity inEntity, Args&&... inArgs)
     {
-        Assert(Valid(inEntity));
-        const auto* clazz = Internal::GetClass<C>();
-        const Internal::ArchetypeId archetypeId = entities.GetArchetype(inEntity);
-        Internal::Archetype& archetype = archetypes.at(archetypeId);
-
-        const Internal::ArchetypeId newArchetypeId = archetypeId + clazz->GetTypeInfo()->id;
-        entities.SetArchetype(inEntity, newArchetypeId);
-
-        Internal::Archetype* newArchetype;
-        if (archetypes.contains(newArchetypeId)) {
-            newArchetype = &archetypes.at(newArchetypeId);
-            newArchetype->EmplaceElem(inEntity, archetype.GetElem(inEntity), archetype.GetRttiVec());
-            archetype.EraseElem(inEntity);
-        } else {
-            archetypes.emplace(newArchetypeId, Internal::Archetype(archetype.NewRttiVecByAdd(Internal::CompRtti::From<C>())));
-            newArchetype = &archetypes.at(newArchetypeId);
-            newArchetype->EmplaceElem(inEntity);
-        }
-
-        C tempObj(std::forward<Args>(inArgs)...);
-        Mirror::Any compRef = newArchetype->EmplaceComp(inEntity, clazz, std::ref(tempObj));
-        NotifyConstructed<C>(inEntity);
-        return compRef.As<C&>();
+        return EmplaceDyn(Internal::GetClass<C>(), inEntity, Mirror::ForwardAsArgList(std::forward<Args>(inArgs)...)).template As<C&>();
     }
 
     template <typename C>
     void ECRegistry::Remove(Entity inEntity)
     {
-        Assert(Valid(inEntity) && Has<C>(inEntity));
-        const auto* clazz = Internal::GetClass<C>();
-        const Internal::ArchetypeId archetypeId = entities.GetArchetype(inEntity);
-        Internal::Archetype& archetype = archetypes.at(archetypeId);
-
-        const Internal::ArchetypeId newArchetypeId = archetypeId - clazz->GetTypeInfo()->id;
-        entities.SetArchetype(inEntity, newArchetypeId);
-
-        if (!archetypes.contains(newArchetypeId)) {
-            archetypes.emplace(newArchetypeId, Internal::Archetype(archetype.NewRttiVecByRemove(Internal::CompRtti::From<C>())));
-        }
-        NotifyRemove<C>(inEntity);
-        Internal::Archetype& newArchetype = archetypes.at(newArchetypeId);
-        newArchetype.EmplaceElem(inEntity, archetype.GetElem(inEntity), archetype.GetRttiVec());
-        archetype.EraseElem(inEntity);
+        RemoveDyn(Internal::GetClass<C>(), inEntity);
     }
 
     template <typename C, typename F>
     void ECRegistry::Update(Entity inEntity, F&& inFunc)
     {
-        Assert(Valid(inEntity) && Has<C>());
-        inFunc(Get<C>(inEntity));
-        NotifyUpdated<C>(inEntity);
+        UpdateDyn(Internal::GetClass<C>(), inEntity, std::forward<F>(inFunc));
     }
 
     template <typename C>
@@ -747,10 +663,7 @@ namespace Runtime {
     template <typename C>
     bool ECRegistry::Has(Entity inEntity) const
     {
-        Assert(Valid(inEntity));
-        return archetypes
-            .at(entities.GetArchetype(inEntity))
-            .Contains(Internal::GetClass<C>());
+        return HasDyn(Internal::GetClass<C>(), inEntity);
     }
 
     template <typename C>
@@ -768,21 +681,13 @@ namespace Runtime {
     template <typename C>
     C& ECRegistry::Get(Entity inEntity)
     {
-        Assert(Valid(inEntity) && Has<C>());
-        Mirror::Any compRef = archetypes
-            .at(entities.GetArchetype(inEntity))
-            .GetComp(inEntity, Internal::GetClass<C>());
-        return compRef.As<C&>();
+        return GetDyn(Internal::GetClass<C>(), inEntity).template As<C&>();
     }
 
     template <typename C>
     const C& ECRegistry::Get(Entity inEntity) const
     {
-        Assert(Valid(inEntity) && Has<C>());
-        Mirror::Any compRef = archetypes
-            .at(entities.GetArchetype(inEntity))
-            .GetComp(inEntity, Internal::GetClass<C>());
-        return compRef.As<const C&>();
+        return GetDyn(Internal::GetClass<C>(), inEntity).template As<const C&>();
     }
 
     template <typename... C, typename... E>
@@ -794,7 +699,7 @@ namespace Runtime {
     template <typename C>
     ECRegistry::CompEvents& ECRegistry::Events()
     {
-        return compEvents[Internal::GetClass<C>()];
+        return EventsDyn(Internal::GetClass<C>());
     }
 
     template <typename C>
@@ -818,26 +723,19 @@ namespace Runtime {
     template <typename G, typename ... Args>
     G& ECRegistry::GEmplace(Args&&... inArgs)
     {
-        Assert(!GHas<G>());
-        globalComps.emplace(Internal::GetClass<G>(), Mirror::Any(G(std::forward<Args>(inArgs))...));
-        GNotifyConstructed<G>();
-        return GGet<G>();
+        return GEmplaceDyn(Internal::GetClass<G>(), Mirror::ForwardAsArgList(std::forward<Args>(inArgs)...));
     }
 
     template <typename G>
     void ECRegistry::GRemove()
     {
-        Assert(GHas<G>());
-        GNotifyRemove<G>();
-        globalComps.erase(Internal::GetClass<G>());
+        return GRemoveDyn(Internal::GetClass<G>());
     }
 
     template <typename G, typename F>
     void ECRegistry::GUpdate(F&& inFunc)
     {
-        Assert(GHas<G>());
-        inFunc(GGet<G>());
-        GNotifyUpdated<G>();
+        GUpdateDyn(Internal::GetClass<G>(), std::forward<F>(inFunc));
     }
 
     template <typename G>
@@ -850,7 +748,7 @@ namespace Runtime {
     template <typename G>
     bool ECRegistry::GHas() const
     {
-        return globalComps.contains(Internal::GetClass<G>());
+        return GHasDyn(Internal::GetClass<G>());
     }
 
     template <typename G>
@@ -868,21 +766,19 @@ namespace Runtime {
     template <typename G>
     G& ECRegistry::GGet()
     {
-        Assert(GHas<G>());
-        return globalComps.at(Internal::GetClass<G>()).template As<G&>();
+        return GGetDyn(Internal::GetClass<G>()).template As<G&>();
     }
 
     template <typename G>
     const G& ECRegistry::GGet() const
     {
-        Assert(GHas<G>());
-        return globalComps.at(Internal::GetClass<G>()).template As<const G&>();
+        return GGetDyn(Internal::GetClass<G>()).template As<const G&>();
     }
 
     template <typename G>
     ECRegistry::GCompEvents& ECRegistry::GEvents()
     {
-        return globalCompEvents[Internal::GetClass<G>()];
+        return GEventsDyn(Internal::GetClass<G>());
     }
 
     template <typename G>

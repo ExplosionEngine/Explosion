@@ -5,7 +5,12 @@
 #include <Runtime/ECS.h>
 
 namespace Runtime::Internal {
-    CompRtti::CompRtti() = default;
+    CompRtti::CompRtti(CompClass inClass)
+        : clazz(inClass)
+        , bound(false)
+        , offset(0)
+    {
+    }
 
     void CompRtti::Bind(size_t inOffset)
     {
@@ -13,24 +18,30 @@ namespace Runtime::Internal {
         offset = inOffset;
     }
 
-    Mirror::Any CompRtti::MoveConstruct(ElemPtr inElem, const Mirror::Argument& inOther) const
+    Mirror::Any CompRtti::MoveConstruct(ElemPtr inElem, const Mirror::Any& inOther) const
     {
-        return moveConstruct(inElem, offset, inOther);
+        auto* compBegin = static_cast<uint8_t*>(inElem) + offset;
+        return clazz->InplaceNewDyn(compBegin, { inOther });
     }
 
-    Mirror::Any CompRtti::MoveAssign(ElemPtr inElem, const Mirror::Argument& inOther) const
+    Mirror::Any CompRtti::MoveAssign(ElemPtr inElem, const Mirror::Any& inOther) const
     {
-        return moveAssign(inElem, offset, inOther);
+        auto* compBegin = static_cast<uint8_t*>(inElem) + offset;
+        auto compRef = clazz->InplaceGetObject(compBegin);
+        compRef.MoveAssign(inOther);
+        return compRef;
     }
 
     void CompRtti::Destruct(ElemPtr inElem) const
     {
-        return destructor(inElem, offset);
+        auto* compBegin = static_cast<uint8_t*>(inElem) + offset;
+        clazz->DestructDyn(clazz->InplaceGetObject(compBegin));
     }
 
     Mirror::Any CompRtti::Get(ElemPtr inElem) const
     {
-        return get(inElem, offset);
+        auto* compBegin = static_cast<uint8_t*>(inElem) + offset;
+        return clazz->InplaceGetObject(compBegin);
     }
 
     CompClass CompRtti::Class() const
@@ -140,7 +151,7 @@ namespace Runtime::Internal {
         elemMap.at(elemIndex) = entityToLastElem;
     }
 
-    ElemPtr Archetype::GetElem(Entity inEntity)
+    ElemPtr Archetype::GetElem(Entity inEntity) const
     {
         return ElemAt(entityMap.at(inEntity));
     }
@@ -151,14 +162,15 @@ namespace Runtime::Internal {
         return GetCompRtti(inCompClass).Get(element);
     }
 
+    Mirror::Any Archetype::GetComp(Entity inEntity, CompClass inCompClass) const
+    {
+        ElemPtr element = GetElem(inEntity);
+        return GetCompRtti(inCompClass).Get(element).ConstRef();
+    }
+
     size_t Archetype::Size() const
     {
         return size;
-    }
-
-    auto Archetype::All() const
-    {
-        return elemMap | std::ranges::views::values;
     }
 
     const std::vector<CompRtti>& Archetype::GetRttiVec() const
@@ -199,14 +211,14 @@ namespace Runtime::Internal {
         return rttiVec[rttiMap.at(clazz)];
     }
 
-    ElemPtr Archetype::ElemAt(std::vector<uint8_t>& inMemory, size_t inIndex) // NOLINT
+    ElemPtr Archetype::ElemAt(std::vector<uint8_t>& inMemory, size_t inIndex) const // NOLINT
     {
         return inMemory.data() + (inIndex * elemSize);
     }
 
-    ElemPtr Archetype::ElemAt(size_t inIndex)
+    ElemPtr Archetype::ElemAt(size_t inIndex) const
     {
-        return ElemAt(memory, inIndex);
+        return ElemAt(const_cast<std::vector<uint8_t>&>(memory), inIndex);
     }
 
     size_t Archetype::Capacity() const
@@ -492,14 +504,15 @@ namespace Runtime {
 
     ECRegistry::ECRegistry() = default;
 
-    ECRegistry::~ECRegistry() = default;
+    ECRegistry::~ECRegistry()
+    {
+        ResetRuntime();
+    }
 
     ECRegistry::ECRegistry(const ECRegistry& inOther)
         : entities(inOther.entities)
         , globalComps(inOther.globalComps)
         , archetypes(inOther.archetypes)
-        , compEvents(inOther.compEvents)
-        , globalCompEvents(inOther.globalCompEvents)
     {
     }
 
@@ -507,8 +520,6 @@ namespace Runtime {
         : entities(std::move(inOther.entities))
         , globalComps(std::move(inOther.globalComps))
         , archetypes(std::move(inOther.archetypes))
-        , compEvents(std::move(inOther.compEvents))
-        , globalCompEvents(std::move(inOther.globalCompEvents))
     {
     }
 
@@ -517,8 +528,6 @@ namespace Runtime {
         entities = inOther.entities;
         globalComps = inOther.globalComps;
         archetypes = inOther.archetypes;
-        compEvents = inOther.compEvents;
-        globalCompEvents = inOther.globalCompEvents;
         return *this;
     }
 
@@ -527,8 +536,6 @@ namespace Runtime {
         entities = std::move(inOther.entities);
         globalComps = std::move(inOther.globalComps);
         archetypes = std::move(inOther.archetypes);
-        compEvents = std::move(inOther.compEvents);
-        globalCompEvents = std::move(inOther.globalCompEvents);
         return *this;
     }
 
@@ -557,6 +564,11 @@ namespace Runtime {
         entities.Clear();
         globalComps.clear();
         archetypes.clear();
+        ResetRuntime();
+    }
+
+    void ECRegistry::ResetRuntime()
+    {
         compEvents.clear();
         globalCompEvents.clear();
     }
@@ -623,6 +635,104 @@ namespace Runtime {
         return Runtime::Observer { *this };
     }
 
+    Mirror::Any ECRegistry::EmplaceDyn(CompClass inClass, Entity inEntity, const Mirror::ArgumentList& inArgs)
+    {
+        Assert(Valid(inEntity));
+        const Internal::ArchetypeId archetypeId = entities.GetArchetype(inEntity);
+        Internal::Archetype& archetype = archetypes.at(archetypeId);
+
+        const Internal::ArchetypeId newArchetypeId = archetypeId + inClass->GetTypeInfo()->id;
+        entities.SetArchetype(inEntity, newArchetypeId);
+
+        Internal::Archetype* newArchetype;
+        if (archetypes.contains(newArchetypeId)) {
+            newArchetype = &archetypes.at(newArchetypeId);
+            newArchetype->EmplaceElem(inEntity, archetype.GetElem(inEntity), archetype.GetRttiVec());
+            archetype.EraseElem(inEntity);
+        } else {
+            archetypes.emplace(newArchetypeId, Internal::Archetype(archetype.NewRttiVecByAdd(Internal::CompRtti(inClass))));
+            newArchetype = &archetypes.at(newArchetypeId);
+            newArchetype->EmplaceElem(inEntity);
+        }
+
+        Mirror::Any tempObj = inClass->Construct(inArgs);
+        Mirror::Any compRef = newArchetype->EmplaceComp(inEntity, inClass, tempObj.Ref());
+        NotifyConstructedDyn(inClass, inEntity);
+        return compRef;
+    }
+
+    void ECRegistry::RemoveDyn(CompClass inClass, Entity inEntity)
+    {
+        Assert(Valid(inEntity) && HasDyn(inClass, inEntity));
+        const Internal::ArchetypeId archetypeId = entities.GetArchetype(inEntity);
+        Internal::Archetype& archetype = archetypes.at(archetypeId);
+
+        const Internal::ArchetypeId newArchetypeId = archetypeId - inClass->GetTypeInfo()->id;
+        entities.SetArchetype(inEntity, newArchetypeId);
+
+        if (!archetypes.contains(newArchetypeId)) {
+            archetypes.emplace(newArchetypeId, Internal::Archetype(archetype.NewRttiVecByRemove(Internal::CompRtti(inClass))));
+        }
+        NotifyRemoveDyn(inClass, inEntity);
+        Internal::Archetype& newArchetype = archetypes.at(newArchetypeId);
+        newArchetype.EmplaceElem(inEntity, archetype.GetElem(inEntity), archetype.GetRttiVec());
+        archetype.EraseElem(inEntity);
+    }
+
+    void ECRegistry::UpdateDyn(CompClass inClass, Entity inEntity, const DynUpdateFunc& inFunc)
+    {
+        Assert(Valid(inEntity) && HasDyn(inClass, inEntity));
+        inFunc(GetDyn(inClass, inEntity));
+        NotifyUpdatedDyn(inClass, inEntity);
+    }
+
+    ScopedUpdaterDyn ECRegistry::UpdateDyn(CompClass inClass, Entity inEntity)
+    {
+        Assert(Valid(inEntity) && HasDyn(inClass, inEntity));
+        return { *this, inClass, inEntity, GetDyn(inClass, inEntity) };
+    }
+
+    bool ECRegistry::HasDyn(CompClass inClass, Entity inEntity) const
+    {
+        Assert(Valid(inEntity));
+        return archetypes
+            .at(entities.GetArchetype(inEntity))
+            .Contains(inClass);
+    }
+
+    Mirror::Any ECRegistry::FindDyn(CompClass inClass, Entity inEntity)
+    {
+        return HasDyn(inClass, inEntity) ? GetDyn(inClass, inEntity) : Mirror::Any();
+    }
+
+    Mirror::Any ECRegistry::FindDyn(CompClass inClass, Entity inEntity) const
+    {
+        return HasDyn(inClass, inEntity) ? GetDyn(inClass, inEntity) : Mirror::Any();
+    }
+
+    Mirror::Any ECRegistry::GetDyn(CompClass inClass, Entity inEntity)
+    {
+        Assert(Valid(inEntity) && HasDyn(inClass, inEntity));
+        Mirror::Any compRef = archetypes
+            .at(entities.GetArchetype(inEntity))
+            .GetComp(inEntity, inClass);
+        return compRef;
+    }
+
+    Mirror::Any ECRegistry::GetDyn(CompClass inClass, Entity inEntity) const
+    {
+        Assert(Valid(inEntity) && HasDyn(inClass, inEntity));
+        Mirror::Any compRef = archetypes
+            .at(entities.GetArchetype(inEntity))
+            .GetComp(inEntity, inClass);
+        return compRef.ConstRef();
+    }
+
+    ECRegistry::CompEvents& ECRegistry::EventsDyn(CompClass inClass)
+    {
+        return compEvents[inClass];
+    }
+
     void ECRegistry::GNotifyUpdatedDyn(GCompClass inClass)
     {
         const auto iter = globalCompEvents.find(inClass);
@@ -648,5 +758,65 @@ namespace Runtime {
             return;
         }
         iter->second.onRemove.Broadcast(*this);
+    }
+
+    Mirror::Any ECRegistry::GEmplaceDyn(GCompClass inClass, const Mirror::ArgumentList& inArgs)
+    {
+        Assert(!GHasDyn(inClass));
+        globalComps.emplace(inClass, inClass->ConstructDyn(inArgs));
+        GNotifyConstructedDyn(inClass);
+        return GGetDyn(inClass);
+    }
+
+    void ECRegistry::GRemoveDyn(GCompClass inClass)
+    {
+        Assert(GHasDyn(inClass));
+        GNotifyRemoveDyn(inClass);
+        globalComps.erase(inClass);
+    }
+
+    void ECRegistry::GUpdateDyn(GCompClass inClass, const DynUpdateFunc& inFunc)
+    {
+        Assert(GHasDyn(inClass));
+        inFunc(GGetDyn(inClass));
+        GNotifyUpdatedDyn(inClass);
+    }
+
+    GScopedUpdaterDyn ECRegistry::GUpdateDyn(GCompClass inClass)
+    {
+        Assert(GHasDyn(inClass));
+        return { *this, inClass, GGetDyn(inClass) };
+    }
+
+    bool ECRegistry::GHasDyn(GCompClass inClass) const
+    {
+        return globalComps.contains(inClass);
+    }
+
+    Mirror::Any ECRegistry::GFindDyn(GCompClass inClass)
+    {
+        return GHasDyn(inClass) ? GGetDyn(inClass) : Mirror::Any();
+    }
+
+    Mirror::Any ECRegistry::GFindDyn(GCompClass inClass) const
+    {
+        return GHasDyn(inClass) ? GGetDyn(inClass) : Mirror::Any();
+    }
+
+    Mirror::Any ECRegistry::GGetDyn(GCompClass inClass)
+    {
+        Assert(GHasDyn(inClass));
+        return globalComps.at(inClass);
+    }
+
+    Mirror::Any ECRegistry::GGetDyn(GCompClass inClass) const
+    {
+        Assert(GHasDyn(inClass));
+        return globalComps.at(inClass).ConstRef();
+    }
+
+    ECRegistry::GCompEvents& ECRegistry::GEventsDyn(GCompClass inClass)
+    {
+        return globalCompEvents[inClass];
     }
 } // namespace Runtime
