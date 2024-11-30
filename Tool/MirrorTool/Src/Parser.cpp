@@ -420,10 +420,10 @@ namespace MirrorTool {
             "-DNOMINMAX=1",
 #elif PLATFORM_MACOS
             "-DPLATFORM_MACOS=1",
-            std::format("-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{}.sdk/usr/include/c++/v1", MACOS_SDK_VERSION),
-            std::format("-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{}.sdk/usr/include", MACOS_SDK_VERSION),
-            std::format("-I/Library/Developer/CommandLineTools/usr/lib/clang/{}.{}.{}/include", __clang_major__, __clang_minor__, __clang_patchlevel__),
-            std::format("-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/{}.{}.{}/include", __clang_major__, __clang_minor__, __clang_patchlevel__),
+            "-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1",
+            std::format("-I/Library/Developer/CommandLineTools/usr/lib/clang/{}/include", __clang_major__),
+            "-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include",
+            "-I/Library/Developer/CommandLineTools/usr/include",
 #elif DPLATFORM_LINUX
             "-DPLATFORM_LINUX=1",
 #endif
