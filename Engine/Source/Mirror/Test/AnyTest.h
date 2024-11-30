@@ -34,6 +34,22 @@ struct AnyMoveCtorTest {
     uint8_t& moveTime;
 };
 
+struct AnyCopyAssignTest {
+    AnyCopyAssignTest();
+    AnyCopyAssignTest(AnyCopyAssignTest&& inOther) noexcept;
+    AnyCopyAssignTest& operator=(const AnyCopyAssignTest& inOther);
+
+    bool called;
+};
+
+struct AnyMoveAssignTest {
+    AnyMoveAssignTest();
+    AnyMoveAssignTest(AnyMoveAssignTest&& inOther) noexcept;
+    AnyMoveAssignTest& operator=(AnyMoveAssignTest&& inOther) noexcept;
+
+    bool called;
+};
+
 struct AnyBasicTest {
     int a;
     float b;

@@ -130,6 +130,66 @@ namespace Mirror {
         return *this;
     }
 
+    Any& Any::CopyAssign(Any& inOther)
+    {
+        Assert(!IsConstRef());
+        PerformCopyAssign(inOther);
+        return *this;
+    }
+
+    Any& Any::CopyAssign(const Any& inOther)
+    {
+        Assert(!IsConstRef());
+        PerformCopyAssign(inOther);
+        return *this;
+    }
+
+    Any& Any::MoveAssign(Any& inOther) noexcept
+    {
+        Assert(!IsConstRef());
+        Assert(!inOther.IsRef() || inOther.IsNonConstRef());
+        PerformMoveAssign(inOther);
+        return *this;
+    }
+
+    Any& Any::MoveAssign(const Any& inOther) noexcept
+    {
+        Assert(!IsConstRef());
+        Assert(inOther.IsNonConstRef());
+        PerformMoveAssign(inOther);
+        return *this;
+    }
+
+    const Any& Any::CopyAssign(Any& inOther) const
+    {
+        Assert(IsNonConstRef());
+        PerformCopyAssign(inOther);
+        return *this;
+    }
+
+    const Any& Any::CopyAssign(const Any& inOther) const
+    {
+        Assert(IsNonConstRef());
+        PerformCopyAssign(inOther);
+        return *this;
+    }
+
+    const Any& Any::MoveAssign(Any& inOther) const noexcept
+    {
+        Assert(IsNonConstRef());
+        Assert(!inOther.IsRef() || inOther.IsNonConstRef());
+        PerformMoveAssign(inOther);
+        return *this;
+    }
+
+    const Any& Any::MoveAssign(const Any& inOther) const noexcept
+    {
+        Assert(IsNonConstRef());
+        Assert(inOther.IsNonConstRef());
+        PerformMoveAssign(inOther);
+        return *this;
+    }
+
     void Any::PerformCopyConstruct(const Any& inOther)
     {
         arrayLength = inOther.arrayLength;
@@ -189,7 +249,7 @@ namespace Mirror {
         }
     }
 
-    void Any::PerformMoveConstruct(Any&& inOther)
+    void Any::PerformMoveConstruct(Any&& inOther) noexcept
     {
         arrayLength = inOther.arrayLength;
         policy = inOther.policy;
@@ -210,9 +270,33 @@ namespace Mirror {
         }
     }
 
+    void Any::PerformCopyAssign(const Any& inOther) const
+    {
+        Assert(!Empty() && !inOther.Empty() && arrayLength == inOther.arrayLength && rtti == inOther.rtti);
+
+        for (auto i = 0; i < ElementNum(); i++) {
+            rtti->copyAssign(Data(i), inOther.Data(i));
+        }
+    }
+
+    void Any::PerformMoveAssign(const Any& inOther) const noexcept
+    {
+        Assert(!Empty() && !inOther.Empty() && arrayLength == inOther.arrayLength && rtti == inOther.rtti);
+
+        for (auto i = 0; i < ElementNum(); i++) {
+            rtti->moveAssign(Data(i), inOther.Data(i));
+        }
+    }
+
     uint32_t Any::ElementNum() const
     {
         return std::max(1u, arrayLength);
+    }
+
+    TemplateViewRttiPtr Any::GetTemplateViewRtti() const
+    {
+        Assert(!Empty());
+        return rtti->getTemplateViewRtti().second;
     }
 
     bool Any::IsArray() const
@@ -641,6 +725,13 @@ namespace Mirror {
         return *this;
     }
 
+    TemplateViewRttiPtr Argument::GetTemplateViewRtti() const
+    {
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.GetTemplateViewRtti();
+        });
+    }
+
     bool Argument::IsMemoryHolder() const
     {
         return Delegate([](auto&& value) -> decltype(auto) {
@@ -1003,6 +1094,7 @@ namespace Mirror {
         , owner(std::move(params.owner))
         , access(params.access)
         , destructor(std::move(params.destructor))
+        , deleter(std::move(params.deleter))
     {
     }
 
@@ -1030,9 +1122,14 @@ namespace Mirror {
         return access;
     }
 
-    void Destructor::InvokeDyn(const Argument& argument) const
+    void Destructor::DestructDyn(const Argument& argument) const
     {
         destructor(argument);
+    }
+
+    void Destructor::DeleteDyn(const Argument& argument) const
+    {
+        deleter(argument);
     }
 
     MemberVariable::MemberVariable(ConstructParams&& params)
@@ -1235,6 +1332,7 @@ namespace Mirror {
         , typeInfo(params.typeInfo)
         , memorySize(params.memorySize)
         , baseClassGetter(std::move(params.baseClassGetter))
+        , inplaceGetter(std::move(params.inplaceGetter))
     {
         CreateDefaultObject(params.defaultObjectCreator);
         if (params.destructorParams.has_value()) {
@@ -1244,6 +1342,8 @@ namespace Mirror {
             EmplaceConstructor(IdPresets::defaultCtor, std::move(params.defaultConstructorParams.value()));
         }
     }
+
+    Class::~Class() = default;
 
     bool Class::Has(const Id& inId)
     {
@@ -1333,7 +1433,10 @@ namespace Mirror {
         return result;
     }
 
-    Class::~Class() = default;
+    Any Class::InplaceGetObject(void* ptr) const
+    {
+        return inplaceGetter(ptr);
+    }
 
     void Class::ForEachStaticVariable(const VariableTraverser& func) const
     {
@@ -1482,7 +1585,10 @@ namespace Mirror {
 
     const Constructor* Class::FindSuitableConstructor(const ArgumentList& arguments) const
     {
-        for (const auto& [constructorName, constructor] : constructors) {
+        std::vector<std::pair<const Constructor*, uint32_t>> candidateAndRates;
+        candidateAndRates.reserve(constructors.size());
+
+        for (const auto& constructor : constructors | std::views::values) {
             const auto& argTypeInfos = constructor.GetArgTypeInfos();
             const auto& argRemoveRefTypeInfos = constructor.GetArgRemoveRefTypeInfos();
             const auto& argRemovePointerTypeInfos = constructor.GetArgRemovePointerTypeInfos();
@@ -1491,12 +1597,13 @@ namespace Mirror {
                 continue;
             }
 
-            // TODO prefer rvalue params version
+            uint32_t rate = 0;
             bool bSuitable = true;
             for (auto i = 0; i < arguments.size(); i++) {
                 const TypeInfoCompact srcType { arguments[i].Type(), arguments[i].RemoveRefType(), arguments[i].RemovePointerType() }; // NOLINT
                 const TypeInfoCompact dstType { argTypeInfos[i], argRemoveRefTypeInfos[i], argRemovePointerTypeInfos[i] }; // NOLINT
                 if (Convertible(srcType, dstType)) {
+                    rate += dstType.raw->isRValueReference ? 2 : 1;
                     continue;
                 }
 
@@ -1505,10 +1612,11 @@ namespace Mirror {
             }
 
             if (bSuitable) {
-                return &constructor;
+                candidateAndRates.emplace_back(&constructor, rate);
             }
         }
-        return nullptr;
+        std::ranges::sort(candidateAndRates, [](const auto& lhs, const auto& rhs) -> bool { return lhs.second < rhs.second; });
+        return candidateAndRates.empty() ? nullptr : candidateAndRates.back().first;
     }
 
     Any Class::ConstructDyn(const ArgumentList& arguments) const
@@ -1530,6 +1638,16 @@ namespace Mirror {
         const auto* constructor = FindSuitableConstructor(arguments);
         Assert(constructor != nullptr);
         return constructor->InplaceNewDyn(ptr, arguments);
+    }
+
+    void Class::DestructDyn(const Argument& argument) const
+    {
+        GetDestructor().DestructDyn(argument);
+    }
+
+    void Class::DeleteDyn(const Argument& argument) const
+    {
+        GetDestructor().DeleteDyn(argument);
     }
 
     const Constructor* Class::FindConstructor(const Id& inId) const
@@ -1798,4 +1916,384 @@ namespace Mirror {
         values.emplace(inId, EnumValue(std::move(inParams)));
         return values.at(inId);
     }
-}
+
+    StdOptionalView::StdOptionalView(const Argument& inObj)
+        : obj(inObj)
+    {
+        Assert(inObj.CanAsTemplateView<StdOptionalView>());
+        rtti = static_cast<const StdOptionalViewRtti*>(inObj.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdOptionalView::ElementType() const
+    {
+        return rtti->getElementType();
+    }
+
+    bool StdOptionalView::HasValue() const
+    {
+        return rtti->hasValue(obj);
+    }
+
+    Any StdOptionalView::Value() const
+    {
+        return rtti->getValue(obj);
+    }
+
+    StdPairView::StdPairView(const Argument& inObj)
+        : obj(inObj)
+    {
+        Assert(inObj.CanAsTemplateView<StdPairView>());
+        rtti = static_cast<const StdPairViewRtti*>(inObj.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdPairView::KeyType() const
+    {
+        return rtti->getKeyType();
+    }
+
+    const TypeInfo* StdPairView::ValueType() const
+    {
+        return rtti->getValueType();
+    }
+
+    Any StdPairView::Key() const
+    {
+        return rtti->getKey(obj);
+    }
+
+    Any StdPairView::Value() const
+    {
+        return rtti->getValue(obj);
+    }
+
+    Any StdPairView::ConstKey() const
+    {
+        return rtti->getConstKey(obj);
+    }
+
+    Any StdPairView::ConstValue() const
+    {
+        return rtti->getConstValue(obj);
+    }
+
+    StdArrayView::StdArrayView(const Argument& inObj)
+        : obj(inObj)
+    {
+        Assert(inObj.CanAsTemplateView<StdArrayView>());
+        rtti = static_cast<const StdArrayViewRtti*>(inObj.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdArrayView::ElementType() const
+    {
+        return rtti->getElementType();
+    }
+
+    size_t StdArrayView::Size() const
+    {
+        return rtti->getSize();
+    }
+
+    Any StdArrayView::At(size_t inIndex) const
+    {
+        return rtti->getElement(obj, inIndex);
+    }
+
+    Any StdArrayView::ConstAt(size_t inIndex) const
+    {
+        return rtti->getConstElement(obj, inIndex);
+    }
+
+    StdVectorView::StdVectorView(const Argument& inObj)
+        : obj(inObj)
+    {
+        Assert(inObj.CanAsTemplateView<StdVectorView>());
+        rtti = static_cast<const StdVectorViewRtti*>(inObj.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdVectorView::ElementType() const
+    {
+        return rtti->getElementType();
+    }
+
+    size_t StdVectorView::Size() const
+    {
+        return rtti->getSize(obj);
+    }
+
+    Any StdVectorView::At(size_t inIndex) const
+    {
+        return rtti->getElement(obj, inIndex);
+    }
+
+    Any StdVectorView::ConstAt(size_t inIndex) const
+    {
+        return rtti->getConstElement(obj, inIndex);
+    }
+
+    Any StdVectorView::EmplaceBack(const Argument& inNewObj) const
+    {
+        return rtti->emplaceBack(obj, inNewObj);
+    }
+
+    void StdVectorView::Erase(size_t inIndex) const
+    {
+        rtti->erase(obj, inIndex);
+    }
+
+    StdListView::StdListView(const Argument& inObj)
+        : obj(inObj)
+    {
+        Assert(inObj.CanAsTemplateView<StdListView>());
+        rtti = static_cast<const StdListViewRtti*>(inObj.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdListView::ElementType() const
+    {
+        return rtti->getElementType();
+    }
+
+    size_t StdListView::Size() const
+    {
+        return rtti->getSize(obj);
+    }
+
+    void StdListView::Traverse(const ElementTraverser& inTraverser) const
+    {
+        rtti->traverse(obj, inTraverser);
+    }
+
+    void StdListView::ConstTraverse(const ElementTraverser& inTraverser) const
+    {
+        rtti->traverse(obj, inTraverser);
+    }
+
+    Any StdListView::EmplaceFront(const Argument& inTempObj) const
+    {
+        return rtti->emplaceFront(obj, inTempObj);
+    }
+
+    Any StdListView::EmplaceBack(const Argument& inTempObj) const
+    {
+        return rtti->emplaceBack(obj, inTempObj);
+    }
+
+    StdUnorderedSetView::StdUnorderedSetView(const Argument& inObj)
+        : obj(inObj)
+    {
+        Assert(inObj.CanAsTemplateView<StdUnorderedSetView>());
+        rtti = static_cast<const StdUnorderedSetViewRtti*>(inObj.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdUnorderedSetView::ElementType() const
+    {
+        return rtti->getElementType();
+    }
+
+    size_t StdUnorderedSetView::Size() const
+    {
+        return rtti->getSize(obj);
+    }
+
+    void StdUnorderedSetView::Traverse(const ElementTraverser& inTraverser) const
+    {
+        rtti->traverse(obj, inTraverser);
+    }
+
+    void StdUnorderedSetView::ConstTraverse(const ElementTraverser& inTraverser) const
+    {
+        rtti->constTraverse(obj, inTraverser);
+    }
+
+    bool StdUnorderedSetView::Contains(const Argument& inElement) const
+    {
+        return rtti->contains(obj, inElement);
+    }
+
+    void StdUnorderedSetView::Emplace(const Argument& inTempObj) const
+    {
+        rtti->emplace(obj, inTempObj);
+    }
+
+    void StdUnorderedSetView::Erase(const Argument& inElement) const
+    {
+        rtti->erase(obj, inElement);
+    }
+
+    StdSetView::StdSetView(const Argument& inObj)
+        : obj(inObj)
+    {
+        Assert(inObj.CanAsTemplateView<StdSetView>());
+        rtti = static_cast<const StdSetViewRtti*>(inObj.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdSetView::ElementType() const
+    {
+        return rtti->getElementType();
+    }
+
+    size_t StdSetView::Size() const
+    {
+        return rtti->getSize(obj);
+    }
+
+    void StdSetView::Traverse(const ElementTraverser& inTraverser) const
+    {
+        rtti->traverse(obj, inTraverser);
+    }
+
+    bool StdSetView::Contains(const Argument& inElement) const
+    {
+        return rtti->contains(obj, inElement);
+    }
+
+    void StdSetView::Emplace(const Argument& inTempObj) const
+    {
+        rtti->emplace(obj, inTempObj);
+    }
+
+    void StdSetView::Erase(const Argument& inElement) const
+    {
+        rtti->erase(obj, inElement);
+    }
+
+    StdUnorderedMapView::StdUnorderedMapView(const Argument& inObj)
+        : obj(inObj)
+    {
+        Assert(inObj.CanAsTemplateView<StdUnorderedMapView>());
+        rtti = static_cast<const StdUnorderedMapViewRtti*>(inObj.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdUnorderedMapView::KeyType() const
+    {
+        return rtti->getKeyType();
+    }
+
+    const TypeInfo* StdUnorderedMapView::ValueType() const
+    {
+        return rtti->getValueType();
+    }
+
+    size_t StdUnorderedMapView::Size() const
+    {
+        return rtti->getSize(obj);
+    }
+
+    Any StdUnorderedMapView::At(const Argument& inKey) const
+    {
+        return rtti->at(obj, inKey);
+    }
+
+    Any StdUnorderedMapView::GetOrAdd(const Argument& inKey) const
+    {
+        return rtti->getOrAdd(obj, inKey);
+    }
+
+    void StdUnorderedMapView::Traverse(const PairTraverser& inTraverser) const
+    {
+        rtti->traverse(obj, inTraverser);
+    }
+
+    void StdUnorderedMapView::ConstTraverse(const PairTraverser& inTraverser) const
+    {
+        rtti->constTraverse(obj, inTraverser);
+    }
+
+    bool StdUnorderedMapView::Contains(const Argument& inKey) const
+    {
+        return rtti->contains(obj, inKey);
+    }
+
+    void StdUnorderedMapView::Emplace(const Argument& inTempKey, const Argument& inTempValue) const
+    {
+        rtti->emplace(obj, inTempKey, inTempValue);
+    }
+
+    void StdUnorderedMapView::Erase(const Argument& inKey) const
+    {
+        rtti->erase(obj, inKey);
+    }
+
+    StdMapView::StdMapView(const Argument& inObj)
+        : obj(inObj)
+    {
+        Assert(inObj.CanAsTemplateView<StdMapView>());
+        rtti = static_cast<const StdMapViewRtti*>(inObj.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdMapView::KeyType() const
+    {
+        return rtti->getKeyType();
+    }
+
+    const TypeInfo* StdMapView::ValueType() const
+    {
+        return rtti->getValueType();
+    }
+
+    size_t StdMapView::Size() const
+    {
+        return rtti->getSize(obj);
+    }
+
+    Any StdMapView::At(const Argument& inKey) const
+    {
+        return rtti->at(obj, inKey);
+    }
+
+    Any StdMapView::GetOrAdd(const Argument& inKey) const
+    {
+        return rtti->getOrAdd(obj, inKey);
+    }
+
+    void StdMapView::Traverse(const PairTraverser& inTraverser) const
+    {
+        rtti->traverse(obj, inTraverser);
+    }
+
+    void StdMapView::ConstTraverse(const PairTraverser& inTraverser) const
+    {
+        rtti->constTraverse(obj, inTraverser);
+    }
+
+    bool StdMapView::Contains(const Argument& inKey) const
+    {
+        return rtti->contains(obj, inKey);
+    }
+
+    void StdMapView::Emplace(const Argument& inTempKey, const Argument& inTempValue) const
+    {
+        rtti->emplace(obj, inTempKey, inTempValue);
+    }
+
+    void StdMapView::Erase(const Argument& inKey) const
+    {
+        rtti->erase(obj, inKey);
+    }
+
+    StdTupleView::StdTupleView(const Argument& inObj)
+        : obj(inObj)
+    {
+        Assert(inObj.CanAsTemplateView<StdTupleView>());
+        rtti = static_cast<const StdTupleRtti*>(inObj.GetTemplateViewRtti());
+    }
+
+    size_t StdTupleView::Size() const
+    {
+        return rtti->getSize();
+    }
+
+    const TypeInfo* StdTupleView::ElementType(size_t inIndex) const
+    {
+        return rtti->getElementType(inIndex);
+    }
+
+    Any StdTupleView::Get(size_t inIndex) const
+    {
+        return rtti->getElement(obj, inIndex);
+    }
+
+    void StdTupleView::Traverse(const Visitor& inVisitor) const
+    {
+        rtti->traverse(obj, inVisitor);
+    }
+} // namespace Mirror

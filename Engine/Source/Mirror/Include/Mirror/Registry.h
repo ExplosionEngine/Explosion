@@ -250,15 +250,15 @@ namespace Mirror {
         params.argRemovePointerTypeInfos = { GetTypeInfo<std::remove_pointer_t<Args>>()... };
         params.stackConstructor = [](const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
-            return Internal::ForwardAsAny(Internal::InvokeConstructorStack<C, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
+            return ForwardAsAny(Internal::InvokeConstructorStack<C, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
         };
         params.heapConstructor = [](const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
-            return Internal::ForwardAsAny(Internal::InvokeConstructorNew<C, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
+            return ForwardAsAny(Internal::InvokeConstructorNew<C, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
         };
         params.inplaceConstructor = [](void* ptr, const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
-            return Internal::ForwardAsAny(Internal::InvokeConstructorInplace<C, ArgsTupleType>(ptr, args, std::make_index_sequence<argsTupleSize> {}));
+            return ForwardAsAny(Internal::InvokeConstructorInplace<C, ArgsTupleType>(ptr, args, std::make_index_sequence<argsTupleSize> {}));
         };
 
         return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceConstructor(inId, std::move(params)));
@@ -319,7 +319,7 @@ namespace Mirror {
                 Internal::InvokeFunction<Ptr, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
                 return {};
             } else {
-                return Internal::ForwardAsAny(Internal::InvokeFunction<Ptr, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
+                return ForwardAsAny(Internal::InvokeFunction<Ptr, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
             }
         };
 
@@ -383,7 +383,7 @@ namespace Mirror {
                 Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object.As<ClassType&>(), args, std::make_index_sequence<argsTupleSize> {});
                 return {};
             } else {
-                return Internal::ForwardAsAny(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object.As<ClassType&>(), args, std::make_index_sequence<argsTupleSize> {}));
+                return ForwardAsAny(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object.As<ClassType&>(), args, std::make_index_sequence<argsTupleSize> {}));
             }
         };
 
@@ -442,7 +442,7 @@ namespace Mirror {
                 Internal::InvokeFunction<Ptr, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
                 return {};
             } else {
-                return Internal::ForwardAsAny(Internal::InvokeFunction<Ptr, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
+                return ForwardAsAny(Internal::InvokeFunction<Ptr, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
             }
         };
 
@@ -502,6 +502,9 @@ namespace Mirror {
                 return &Mirror::Class::Get<B>();
             }
         };
+        params.inplaceGetter = [](void* ptr) -> Any {
+            return { std::ref(*static_cast<C*>(ptr)) };
+        };
         if constexpr (std::is_default_constructible_v<C>) {
             params.defaultObjectCreator = []() -> Any {
                 return { C() };
@@ -512,8 +515,10 @@ namespace Mirror {
             detorParams.owner = inId;
             detorParams.access = DetorAccess;
             detorParams.destructor = [](const Argument& object) -> void {
-                Assert(!object.IsConstRef());
                 object.As<C&>().~C();
+            };
+            detorParams.deleter = [](const Argument& object) -> void {
+                delete object.As<C*>();
             };
             params.destructorParams = detorParams;
         }

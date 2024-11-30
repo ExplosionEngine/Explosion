@@ -69,6 +69,38 @@ AnyMoveCtorTest::AnyMoveCtorTest(AnyMoveCtorTest&& inOther) noexcept
     moveTime++;
 }
 
+AnyCopyAssignTest::AnyCopyAssignTest()
+    : called(false)
+{
+}
+
+AnyCopyAssignTest::AnyCopyAssignTest(AnyCopyAssignTest&& inOther) noexcept
+    : called(inOther.called)
+{
+}
+
+AnyCopyAssignTest& AnyCopyAssignTest::operator=(const AnyCopyAssignTest& inOther)
+{
+    called = true;
+    return *this;
+}
+
+AnyMoveAssignTest::AnyMoveAssignTest()
+    : called(false)
+{
+}
+
+AnyMoveAssignTest::AnyMoveAssignTest(AnyMoveAssignTest&& inOther) noexcept
+    : called(inOther.called)
+{
+}
+
+AnyMoveAssignTest& AnyMoveAssignTest::operator=(AnyMoveAssignTest&& inOther) noexcept
+{
+    called = true;
+    return *this;
+}
+
 bool AnyBasicTest::operator==(const AnyBasicTest& inRhs) const
 {
     return a == inRhs.a
@@ -233,6 +265,26 @@ TEST(AnyTest, MoveAssignTest)
     a1 = std::move(a0);
     ASSERT_EQ(moveTime, 2);
     ASSERT_EQ(a0.TypeId(), a1.TypeId());
+}
+
+TEST(AnyTest, ValueCopyAssignTest)
+{
+    Any a0 = AnyCopyAssignTest();
+    ASSERT_EQ(a0.As<const AnyCopyAssignTest&>().called, false);
+
+    Any a1 = AnyCopyAssignTest();
+    a0.CopyAssign(a1);
+    ASSERT_EQ(a0.As<const AnyCopyAssignTest&>().called, true);
+}
+
+TEST(AnyTest, ValueMoveAssignTest)
+{
+    Any a0 = AnyMoveAssignTest();
+    ASSERT_EQ(a0.As<const AnyMoveAssignTest&>().called, false);
+
+    Any a1 = AnyMoveAssignTest();
+    a0.MoveAssign(a1);
+    ASSERT_EQ(a0.As<const AnyMoveAssignTest&>().called, true);
 }
 
 TEST(AnyTest, ValueAssignTest)
@@ -1229,4 +1281,206 @@ TEST(AnyTest, ArrayTest)
     ASSERT_EQ(a6.MemorySize(), sizeof(v0));
     ASSERT_EQ(a6.ArrayLength(), sizeof(v0) / sizeof(int));
     ASSERT_EQ(a6[1].As<int>(), 2);
+}
+
+TEST(AnyTest, StdOptionalViewTest)
+{
+    Any a0 = std::optional<int> {};
+    const StdOptionalView v0(a0);
+    ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
+    ASSERT_FALSE(v0.HasValue());
+
+    std::optional<int> t0 = 1;
+    Any a1 = std::ref(t0);
+    const StdOptionalView v1(a1);
+    ASSERT_TRUE(v1.HasValue());
+    ASSERT_EQ(v1.Value().As<const int&>(), 1);
+}
+
+TEST(AnyTest, StdPairViewTest)
+{
+    Any a0 = std::pair<int, bool> { 1, true };
+    const StdPairView v0(a0);
+    ASSERT_EQ(v0.KeyType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.ValueType(), GetTypeInfo<bool>());
+    ASSERT_EQ(v0.Key().As<const int&>(), 1);
+    ASSERT_EQ(v0.Value().As<const bool&>(), true);
+}
+
+TEST(AnyTest, StdArrayViewTest)
+{
+    Any a0 = std::array<int, 3> { 1, 2, 3 };
+    const StdArrayView v0(a0);
+    ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.Size(), 3);
+    for (auto i = 0; i < 3; i++) {
+        ASSERT_EQ(v0.At(i).As<int&>(), i + 1);
+        ASSERT_EQ(v0.ConstAt(i).As<const int&>(), i + 1);
+    };
+}
+
+TEST(AnyTest, StdVectorViewTest)
+{
+    Any a0 = std::vector<int> { 1, 2, 3 };
+    const StdVectorView v0(a0);
+    ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.Size(), 3);
+    for (auto i = 0; i < 3; i++) {
+        ASSERT_EQ(v0.At(i).As<int&>(), i + 1);
+        ASSERT_EQ(v0.ConstAt(i).As<const int&>(), i + 1);
+    };
+    v0.Erase(1);
+    ASSERT_EQ(v0.Size(), 2);
+    v0.EmplaceBack(Any(5));
+    ASSERT_EQ(v0.Size(), 3);
+}
+
+TEST(AnyTest, StdListViewTest)
+{
+    std::list<int> t0 = { 1, 2, 3 };
+    Any a0 = std::ref(t0);
+    const StdListView v0(a0);
+    ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.Size(), 3);
+
+    int count = 0;
+    v0.Traverse([&count](const Any& inRef) -> void {
+        ASSERT_EQ(inRef.As<int&>(), ++count);
+    });
+
+    v0.EmplaceBack(Any(4));
+    ASSERT_EQ(v0.Size(), 4);
+    v0.EmplaceFront(Any(0));
+    ASSERT_EQ(v0.Size(), 5);
+
+    count = 0;
+    v0.ConstTraverse([&count](const Any& inRef) -> void {
+        ASSERT_EQ(inRef.As<const int&>(), count++);
+    });
+}
+
+TEST(AnyTest, StdunorderedSetViewTest)
+{
+    Any a0 = std::unordered_set<int> { 1, 2, 3 };
+    const StdUnorderedSetView v0(a0);
+    ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.Size(), 3);
+
+    v0.Traverse([](const Any& inRef) -> void {
+        const int& valueRef = inRef.As<const int&>();
+        ASSERT_TRUE(valueRef >= 1 && valueRef <= 3);
+    });
+
+    v0.Emplace(Any(4));
+    v0.ConstTraverse([](const Any& inRef) -> void {
+        const int& valueRef = inRef.As<const int&>();
+        ASSERT_TRUE(valueRef >= 1 && valueRef <= 4);
+    });
+    v0.Erase(Any(1));
+    for (auto i = 2; i <= 4; i++) {
+        v0.Contains(Any(std::ref(i)));
+    }
+}
+
+TEST(AnyTest, StdSetViewTest)
+{
+    Any a0 = std::set<int> { 1, 2, 3 };
+    const StdSetView v0(a0);
+    ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.Size(), 3);
+
+    v0.Traverse([](const Any& inRef) -> void {
+        const int& valueRef = inRef.As<const int&>();
+        ASSERT_TRUE(valueRef >= 1 && valueRef <= 3);
+    });
+
+    v0.Emplace(Any(4));
+    v0.Traverse([](const Any& inRef) -> void {
+        const int& valueRef = inRef.As<const int&>();
+        ASSERT_TRUE(valueRef >= 1 && valueRef <= 4);
+    });
+    v0.Erase(Any(1));
+    for (auto i = 2; i <= 4; i++) {
+        v0.Contains(Any(std::ref(i)));
+    }
+}
+
+TEST(AnyTest, StdUnorderedMapViewTest)
+{
+    Any a0 = std::unordered_map<int, bool> {
+        { 1, false },
+        { 2, true }
+    };
+    const StdUnorderedMapView v0(a0);
+    ASSERT_EQ(v0.KeyType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.ValueType(), GetTypeInfo<bool>());
+    ASSERT_EQ(v0.Size(), 2);
+    ASSERT_TRUE(v0.At(Any(2)).As<const bool&>());
+    v0.At(Any(1)).As<bool&>() = true;
+
+    v0.GetOrAdd(Any(3)).As<bool&>() = true;
+    ASSERT_TRUE(v0.Contains(Any(3)));
+    ASSERT_TRUE(v0.At(Any(3)).As<const bool&>());
+    v0.Emplace(Any(4), Any(true));
+
+    auto traverser = [](const Any& inKey, const Any& inValue) -> void {
+        const int keyNum = inKey.As<const int&>();
+        ASSERT_TRUE(keyNum >= 1 && keyNum <= 4);
+        ASSERT_TRUE(inValue.As<const bool&>());
+    };
+    v0.Traverse(traverser);
+    v0.ConstTraverse(traverser);
+}
+
+TEST(AnyTest, StdMapViewTest)
+{
+    Any a0 = std::map<int, bool> {
+            { 1, false },
+            { 2, true }
+    };
+    const StdMapView v0(a0);
+    ASSERT_EQ(v0.KeyType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.ValueType(), GetTypeInfo<bool>());
+    ASSERT_EQ(v0.Size(), 2);
+    ASSERT_TRUE(v0.At(Any(2)).As<const bool&>());
+    v0.At(Any(1)).As<bool&>() = true;
+
+    v0.GetOrAdd(Any(3)).As<bool&>() = true;
+    ASSERT_TRUE(v0.Contains(Any(3)));
+    ASSERT_TRUE(v0.At(Any(3)).As<const bool&>());
+    v0.Emplace(Any(4), Any(true));
+
+    auto traverser = [](const Any& inKey, const Any& inValue) -> void {
+        const int keyNum = inKey.As<const int&>();
+        ASSERT_TRUE(keyNum >= 1 && keyNum <= 4);
+        ASSERT_TRUE(inValue.As<const bool&>());
+    };
+    v0.Traverse(traverser);
+    v0.ConstTraverse(traverser);
+}
+
+TEST(AnyTest, StdTupleViewTest)
+{
+    Any a0 = std::tuple<int, bool, std::string> { 1, true, "2" };
+    const StdTupleView v0(a0);
+    ASSERT_EQ(v0.Size(), 3);
+    ASSERT_EQ(v0.ElementType(0), GetTypeInfo<int>());
+    ASSERT_EQ(v0.ElementType(1), GetTypeInfo<bool>());
+    ASSERT_EQ(v0.ElementType(2), GetTypeInfo<std::string>());
+    ASSERT_EQ(v0.Get(0).As<const int&>(), 1);
+    ASSERT_TRUE(v0.Get(1).As<const bool&>());
+    ASSERT_EQ(v0.Get(2).As<const std::string&>(), "2");
+
+    int count = 0;
+    v0.Traverse([&](const Any& inRef) -> void {
+        if (count == 0) {
+            ASSERT_EQ(inRef.As<const int&>(), 1);
+        } else if (count == 1) {
+            ASSERT_TRUE(inRef.As<const bool&>());
+        } else if (count == 2) {
+            ASSERT_EQ(inRef.As<const std::string&>(), "2");
+        }
+        count++;
+    });
+    ASSERT_EQ(count, 3);
 }

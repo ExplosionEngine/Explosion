@@ -321,7 +321,7 @@ namespace Runtime {
         template <typename A>
         void AsyncLoad(const Core::Uri& uri, const OnAssetLoaded<A>& onAssetLoaded)
         {
-            threadPool.EmplaceTask([this, uri, onAssetLoaded]() -> void {
+            threadPool.EmplaceTask([=]() -> void {
                 AssetRef<A> result = nullptr;
                 {
                     std::unique_lock<std::mutex> lock(mutex);
