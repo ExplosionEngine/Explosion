@@ -9,13 +9,28 @@
 
 #include <Common/Event.h>
 #include <Common/Utility.h>
+#include <Common/Memory.h>
 #include <Mirror/Mirror.h>
+#include <Mirror/Meta.h>
 
 namespace Runtime {
     using Entity = size_t;
     using CompClass = const Mirror::Class*;
     using GCompClass = const Mirror::Class*;
     using SystemClass = const Mirror::Class*;
+
+    class ECRegistry;
+
+    class EClass() System {
+    public:
+        explicit System(ECRegistry& inRegistry);
+        virtual ~System();
+        virtual void Setup();
+        virtual void Execute(float inDeltaTimeMs);
+
+    protected:
+        ECRegistry& registry;
+    };
 }
 
 namespace Runtime::Internal {
@@ -116,11 +131,22 @@ namespace Runtime::Internal {
         std::set<Entity> allocated;
         std::unordered_map<Entity, ArchetypeId> archetypeMap;
     };
+
+    class SystemFactory {
+    public:
+        explicit SystemFactory(SystemClass inClass);
+        Common::UniqueRef<System> Build(ECRegistry& inRegistry) const;
+        const std::unordered_map<std::string, Mirror::Any>& GetArguments() const;
+
+    private:
+        void BuildArgumentLists();
+
+        SystemClass clazz;
+        std::unordered_map<std::string, Mirror::Any> arguments;
+    };
 }
 
 namespace Runtime {
-    class ECRegistry;
-
     template <typename C>
     class ScopedUpdater {
     public:
@@ -325,7 +351,7 @@ namespace Runtime {
         bool Valid(Entity inEntity) const;
         size_t Size() const;
         void Clear();
-        void ResetRuntime();
+        void ResetTransients();
         void Each(const EntityTraverseFunc& inFunc) const;
         ConstIter Begin() const;
         ConstIter End() const;
@@ -408,11 +434,45 @@ namespace Runtime {
         std::unordered_map<GCompClass, GCompEvents> globalCompEvents;
     };
 
-    class SystemRegistry {
+    class SystemGroup {
     public:
-        // TODO
+        explicit SystemGroup(std::string inName);
+
+        void AddSystem(SystemClass inClass);
+        void RemoveSystem(SystemClass inClass);
+        const std::string& GetName() const;
+        auto GetSystems() const;
 
     private:
+        std::string name;
+        std::unordered_map<SystemClass, Internal::SystemFactory> systems;
+    };
+
+    class Feature {
+    public:
+        Feature();
+
+        SystemGroup& AddSystemGroup(const std::string& inName);
+        SystemGroup& GetSystemGroup(const std::string& inName);
+
+    private:
+        std::vector<SystemGroup> systemGroups;
+    };
+
+    class SystemRegistry {
+    public:
+        SystemRegistry();
+
+        SystemGroup& AddSystemGroup(const std::string& inName);
+        SystemGroup& GetSystemGroup(const std::string& inName);
+        void UseFeature(const Feature& inFeature);
+
+        // TODO runtime
+
+    private:
+        std::vector<SystemGroup> systemGroups;
+        // transients
+        // TODO
     };
 }
 
@@ -565,7 +625,7 @@ namespace Runtime {
             excludeCompIds.emplace_back(Internal::GetClass<C>());
         }(), 0)... };
 
-        for (auto& [_, archetype] : inRegistry.archetypes) {
+        for (auto& archetype : inRegistry.archetypes | std::views::values) {
             if (!archetype.ContainsAll(includeCompIds) || !archetype.NotContainsAny(excludeCompIds)) {
                 continue;
             }
@@ -638,7 +698,7 @@ namespace Runtime {
     template <typename C, typename ... Args>
     C& ECRegistry::Emplace(Entity inEntity, Args&&... inArgs)
     {
-        return EmplaceDyn(Internal::GetClass<C>(), inEntity, Mirror::ForwardAsArgList(std::forward<Args>(inArgs)...)).template As<C&>();
+        return EmplaceDyn(Internal::GetClass<C>(), inEntity, Mirror::ForwardAsArgList(std::forward<Args>(inArgs)...)).As<C&>();
     }
 
     template <typename C>
@@ -681,13 +741,13 @@ namespace Runtime {
     template <typename C>
     C& ECRegistry::Get(Entity inEntity)
     {
-        return GetDyn(Internal::GetClass<C>(), inEntity).template As<C&>();
+        return GetDyn(Internal::GetClass<C>(), inEntity).As<C&>();
     }
 
     template <typename C>
     const C& ECRegistry::Get(Entity inEntity) const
     {
-        return GetDyn(Internal::GetClass<C>(), inEntity).template As<const C&>();
+        return GetDyn(Internal::GetClass<C>(), inEntity).As<const C&>();
     }
 
     template <typename... C, typename... E>
@@ -766,13 +826,13 @@ namespace Runtime {
     template <typename G>
     G& ECRegistry::GGet()
     {
-        return GGetDyn(Internal::GetClass<G>()).template As<G&>();
+        return GGetDyn(Internal::GetClass<G>()).As<G&>();
     }
 
     template <typename G>
     const G& ECRegistry::GGet() const
     {
-        return GGetDyn(Internal::GetClass<G>()).template As<const G&>();
+        return GGetDyn(Internal::GetClass<G>()).As<const G&>();
     }
 
     template <typename G>

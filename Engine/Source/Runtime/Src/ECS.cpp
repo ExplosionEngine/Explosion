@@ -4,6 +4,19 @@
 
 #include <Runtime/ECS.h>
 
+namespace Runtime {
+    System::System(ECRegistry& inRegistry)
+        : registry(inRegistry)
+    {
+    }
+
+    System::~System() = default;
+
+    void System::Setup() {}
+
+    void System::Execute(float inDeltaTimeMs) {}
+}
+
 namespace Runtime::Internal {
     CompRtti::CompRtti(CompClass inClass)
         : clazz(inClass)
@@ -320,6 +333,36 @@ namespace Runtime::Internal {
     {
         return allocated.end();
     }
+
+    SystemFactory::SystemFactory(SystemClass inClass)
+        : clazz(inClass)
+    {
+        BuildArgumentLists();
+    }
+
+    Common::UniqueRef<System> SystemFactory::Build(ECRegistry& inRegistry) const
+    {
+        const Mirror::Any system = clazz->New(inRegistry);
+        const Mirror::Any systemRef = system.Deref();
+        for (const auto& [name, argument] : arguments) {
+            clazz->GetMemberVariable(name).Set(systemRef, argument.ConstRef());
+        }
+        return system.As<System*>();
+    }
+
+    const std::unordered_map<std::string, Mirror::Any>& SystemFactory::GetArguments() const
+    {
+        return arguments;
+    }
+
+    void SystemFactory::BuildArgumentLists()
+    {
+        const auto& memberVariables = clazz->GetMemberVariables();
+        arguments.reserve(memberVariables.size());
+        for (const auto& [id, member] : memberVariables) {
+            arguments.emplace(id.name, member.Get(clazz->GetDefaultObject()));
+        }
+    }
 } // namespace Runtime::Internal
 
 namespace Runtime {
@@ -506,7 +549,7 @@ namespace Runtime {
 
     ECRegistry::~ECRegistry()
     {
-        ResetRuntime();
+        ResetTransients();
     }
 
     ECRegistry::ECRegistry(const ECRegistry& inOther)
@@ -564,10 +607,10 @@ namespace Runtime {
         entities.Clear();
         globalComps.clear();
         archetypes.clear();
-        ResetRuntime();
+        ResetTransients();
     }
 
-    void ECRegistry::ResetRuntime()
+    void ECRegistry::ResetTransients()
     {
         compEvents.clear();
         globalCompEvents.clear();
