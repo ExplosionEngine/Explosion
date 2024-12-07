@@ -30,6 +30,10 @@ jobs:
         with:
           detached: true
 
+      - name: Set XCode Version
+        run: sudo xcode-select -s /Library/Developer/CommandLineTools
+        if: runner.os == 'macOS'
+
       - name: Checkout Repo
         uses: actions/checkout@v2
 

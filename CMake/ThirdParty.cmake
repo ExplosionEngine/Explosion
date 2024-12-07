@@ -331,7 +331,7 @@ function(Add3rdCMakeProject)
         SOURCE_DIR ${SOURCE_DIR}
         BINARY_DIR ${BINARY_DIR}
         CMAKE_ARGS ${CMAKE_BUILD_TYPE_ARGS} -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${PARAMS_CMAKE_ARG}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG>
+        BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG> -j 16
         INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG>
     )
     set_target_properties(

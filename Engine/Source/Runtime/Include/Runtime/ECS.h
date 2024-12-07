@@ -23,6 +23,8 @@ namespace Runtime {
 
     class EClass() System {
     public:
+        EClassBody(System)
+
         explicit System(ECRegistry& inRegistry);
         virtual ~System();
         virtual void Setup();
@@ -698,7 +700,7 @@ namespace Runtime {
     template <typename C, typename ... Args>
     C& ECRegistry::Emplace(Entity inEntity, Args&&... inArgs)
     {
-        return EmplaceDyn(Internal::GetClass<C>(), inEntity, Mirror::ForwardAsArgList(std::forward<Args>(inArgs)...)).As<C&>();
+        return EmplaceDyn(Internal::GetClass<C>(), inEntity, Mirror::ForwardAsArgList(std::forward<Args>(inArgs)...)).template As<C&>();
     }
 
     template <typename C>
@@ -741,13 +743,13 @@ namespace Runtime {
     template <typename C>
     C& ECRegistry::Get(Entity inEntity)
     {
-        return GetDyn(Internal::GetClass<C>(), inEntity).As<C&>();
+        return GetDyn(Internal::GetClass<C>(), inEntity).template As<C&>();
     }
 
     template <typename C>
     const C& ECRegistry::Get(Entity inEntity) const
     {
-        return GetDyn(Internal::GetClass<C>(), inEntity).As<const C&>();
+        return GetDyn(Internal::GetClass<C>(), inEntity).template As<const C&>();
     }
 
     template <typename... C, typename... E>
@@ -826,13 +828,13 @@ namespace Runtime {
     template <typename G>
     G& ECRegistry::GGet()
     {
-        return GGetDyn(Internal::GetClass<G>()).As<G&>();
+        return GGetDyn(Internal::GetClass<G>()).template As<G&>();
     }
 
     template <typename G>
     const G& ECRegistry::GGet() const
     {
-        return GGetDyn(Internal::GetClass<G>()).As<const G&>();
+        return GGetDyn(Internal::GetClass<G>()).template As<const G&>();
     }
 
     template <typename G>

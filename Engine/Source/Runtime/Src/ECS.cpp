@@ -345,7 +345,7 @@ namespace Runtime::Internal {
         const Mirror::Any system = clazz->New(inRegistry);
         const Mirror::Any systemRef = system.Deref();
         for (const auto& [name, argument] : arguments) {
-            clazz->GetMemberVariable(name).Set(systemRef, argument.ConstRef());
+            clazz->GetMemberVariable(name).SetDyn(systemRef, argument.ConstRef());
         }
         return system.As<System*>();
     }
@@ -360,7 +360,7 @@ namespace Runtime::Internal {
         const auto& memberVariables = clazz->GetMemberVariables();
         arguments.reserve(memberVariables.size());
         for (const auto& [id, member] : memberVariables) {
-            arguments.emplace(id.name, member.Get(clazz->GetDefaultObject()));
+            arguments.emplace(id.name, member.GetDyn(clazz->GetDefaultObject()));
         }
     }
 } // namespace Runtime::Internal

@@ -77,6 +77,25 @@ The parameters' meaning:
 
 After build the project, you can get all dist binaries in `<build_dir>/dist`.
 
+## macOS Notice
+If you have not installed xcode command line tools, you need install it:
+
+```shell
+xcode-select --install
+```
+
+If xcode app or xcode command line tools installed on you system, you need check xcode path set to command line tools path, continue with this command:
+
+```shell
+xcode-select -p
+```
+
+if the command print is not `/Library/Developer/CommandLineTools`, use this command to reset it:
+
+```shell
+sudo xcode-select -s /Library/Developer/CommandLineTools
+```
+
 # Third Party Project Usage
 
 Thanks all those following projects:
