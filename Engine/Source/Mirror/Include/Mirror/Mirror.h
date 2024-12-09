@@ -991,7 +991,7 @@ namespace Mirror {
     public:
         static constexpr TemplateViewId id = StdOptionalViewRtti::id;
 
-        explicit StdOptionalView(const Argument& inObj);
+        explicit StdOptionalView(const Any& inRef);
         NonCopyable(StdOptionalView)
         NonMovable(StdOptionalView)
 
@@ -1000,7 +1000,7 @@ namespace Mirror {
         Any Value() const;
 
     private:
-        const Argument& obj;
+        const Any& ref;
         const StdOptionalViewRtti* rtti;
     };
     // ---------------- end std::optional<T>-- ----------------
@@ -1049,7 +1049,7 @@ namespace Mirror {
     public:
         static constexpr TemplateViewId id = StdPairViewRtti::id;
 
-        explicit StdPairView(const Argument& inObj);
+        explicit StdPairView(const Any& inRef);
         NonCopyable(StdPairView)
         NonMovable(StdPairView)
 
@@ -1061,7 +1061,7 @@ namespace Mirror {
         Any ConstValue() const;
 
     private:
-        const Argument& obj;
+        const Any& ref;
         const StdPairViewRtti* rtti;
     };
     // ---------------- end std::pair<K, V> -------------------
@@ -1104,7 +1104,7 @@ namespace Mirror {
     public:
         static constexpr TemplateViewId id = StdArrayViewRtti::id;
 
-        explicit StdArrayView(const Argument& inObj);
+        explicit StdArrayView(const Any& inRef);
         NonCopyable(StdArrayView)
         NonMovable(StdArrayView)
 
@@ -1114,7 +1114,7 @@ namespace Mirror {
         Any ConstAt(size_t inIndex) const;
 
     private:
-        const Argument& obj;
+        const Any& ref;
         const StdArrayViewRtti* rtti;
     };
     // ---------------- end std::array<T> ---------------------
@@ -1165,7 +1165,7 @@ namespace Mirror {
     public:
         static constexpr TemplateViewId id = StdVectorViewRtti::id;
 
-        explicit StdVectorView(const Argument& inObj);
+        explicit StdVectorView(const Any& inRef);
         NonCopyable(StdVectorView)
         NonMovable(StdVectorView)
 
@@ -1177,7 +1177,7 @@ namespace Mirror {
         void Erase(size_t inIndex) const;
 
     private:
-        const Argument& obj;
+        const Any& ref;
         const StdVectorViewRtti* rtti;
     };
     // ---------------- end std::vector<T> --------------------
@@ -1229,7 +1229,7 @@ namespace Mirror {
         using ElementTraverser = std::function<void(const Any&)>;
         static constexpr TemplateViewId id = StdListViewRtti::id;
 
-        explicit StdListView(const Argument& inObj);
+        explicit StdListView(const Any& inRef);
         NonCopyable(StdListView)
         NonMovable(StdListView)
 
@@ -1241,7 +1241,7 @@ namespace Mirror {
         Any EmplaceBack(const Argument& inTempObj) const;
 
     private:
-        const Argument& obj;
+        const Any& ref;
         const StdListViewRtti* rtti;
     };
     // ---------------- end std::list<T> ----------------------
@@ -1297,7 +1297,7 @@ namespace Mirror {
         using ElementTraverser = std::function<void(const Any&)>;
         static constexpr TemplateViewId id = StdUnorderedSetViewRtti::id;
 
-        explicit StdUnorderedSetView(const Argument& inObj);
+        explicit StdUnorderedSetView(const Any& inRef);
         NonCopyable(StdUnorderedSetView)
         NonMovable(StdUnorderedSetView)
 
@@ -1310,7 +1310,7 @@ namespace Mirror {
         void Erase(const Argument& inElement) const;
 
     private:
-        const Argument& obj;
+        const Any& ref;
         const StdUnorderedSetViewRtti* rtti;
     };
     // ------------- end std::unordered_set<T> ----------------
@@ -1362,7 +1362,7 @@ namespace Mirror {
         using ElementTraverser = std::function<void(const Any&)>;
         static constexpr TemplateViewId id = StdSetViewRtti::id;
 
-        explicit StdSetView(const Argument& inObj);
+        explicit StdSetView(const Any& inRef);
         NonCopyable(StdSetView)
         NonMovable(StdSetView)
 
@@ -1374,7 +1374,7 @@ namespace Mirror {
         void Erase(const Argument& inElement) const;
 
     private:
-        const Argument& obj;
+        const Any& ref;
         const StdSetViewRtti* rtti;
     };
     // ----------------- end std::set<T> ----------------------
@@ -1442,7 +1442,7 @@ namespace Mirror {
         using PairTraverser = std::function<void(const Any&, const Any&)>;
         static constexpr TemplateViewId id = StdUnorderedMapViewRtti::id;
 
-        explicit StdUnorderedMapView(const Argument& inObj);
+        explicit StdUnorderedMapView(const Any& inRef);
         NonCopyable(StdUnorderedMapView)
         NonMovable(StdUnorderedMapView)
 
@@ -1458,7 +1458,7 @@ namespace Mirror {
         void Erase(const Argument& inKey) const;
 
     private:
-        const Argument& obj;
+        const Any& ref;
         const StdUnorderedMapViewRtti* rtti;
     };
     // ------------- end std::unordered_map<K, V> -------------
@@ -1526,7 +1526,7 @@ namespace Mirror {
         using PairTraverser = std::function<void(const Any&, const Any&)>;
         static constexpr TemplateViewId id = StdMapViewRtti::id;
 
-        explicit StdMapView(const Argument& inObj);
+        explicit StdMapView(const Any& inRef);
         NonCopyable(StdMapView)
         NonMovable(StdMapView)
 
@@ -1542,7 +1542,7 @@ namespace Mirror {
         void Erase(const Argument& inKey) const;
 
     private:
-        const Argument& obj;
+        const Any& ref;
         const StdMapViewRtti* rtti;
     };
     // ----------------- end std::map<K, V> -------------------
@@ -1586,7 +1586,7 @@ namespace Mirror {
         using Visitor = std::function<void(const Any&)>;
         static constexpr TemplateViewId id = StdTupleRtti::id;
 
-        explicit StdTupleView(const Argument& inObj);
+        explicit StdTupleView(const Any& inRef);
         NonCopyable(StdTupleView)
         NonMovable(StdTupleView)
 
@@ -1596,7 +1596,7 @@ namespace Mirror {
         void Traverse(const Visitor& inVisitor) const;
 
     private:
-        const Argument& obj;
+        const Any& ref;
         const StdTupleRtti* rtti;
     };
     // --------------- end std::tuple<T...> -------------------
