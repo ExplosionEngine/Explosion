@@ -46,9 +46,12 @@ namespace Runtime {
 
     void Engine::Tick(float inTimeMs) const
     {
-        // TODO tick each playing world
-        // TODO fetch each scene
-        // TODO traverse each view in scene, create a renderer, perform rendering
+        for (auto* world : worlds) {
+            if (!world->Playing()) {
+                continue;
+            }
+            world->Tick(inTimeMs);
+        }
     }
 
     Common::UniqueRef<World> Engine::CreateWorld(const std::string& inName) const // NOLINT

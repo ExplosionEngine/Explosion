@@ -27,7 +27,6 @@ namespace Runtime {
 
         explicit System(ECRegistry& inRegistry);
         virtual ~System();
-        virtual void Setup();
         virtual void Execute(float inDeltaTimeMs);
 
     protected:
@@ -138,6 +137,7 @@ namespace Runtime::Internal {
     public:
         explicit SystemFactory(SystemClass inClass);
         Common::UniqueRef<System> Build(ECRegistry& inRegistry) const;
+        std::unordered_map<std::string, Mirror::Any> GetArguments();
         const std::unordered_map<std::string, Mirror::Any>& GetArguments() const;
 
     private:
@@ -319,7 +319,7 @@ namespace Runtime {
         std::vector<Entity> entities;
     };
 
-    class ECRegistry {
+    class MIRROR_API ECRegistry {
     public:
         using EntityTraverseFunc = Internal::EntityPool::EntityTraverseFunc;
         using DynUpdateFunc = std::function<void(const Mirror::Any&)>;
@@ -347,13 +347,14 @@ namespace Runtime {
         ECRegistry& operator=(const ECRegistry& inOther);
         ECRegistry& operator=(ECRegistry&& inOther) noexcept;
 
+        void ResetTransients();
+
         // entity
         Entity Create();
         void Destroy(Entity inEntity);
         bool Valid(Entity inEntity) const;
         size_t Size() const;
         void Clear();
-        void ResetTransients();
         void Each(const EntityTraverseFunc& inFunc) const;
         ConstIter Begin() const;
         ConstIter End() const;
@@ -440,41 +441,67 @@ namespace Runtime {
     public:
         explicit SystemGroup(std::string inName);
 
-        void AddSystem(SystemClass inClass);
+        Internal::SystemFactory& EmplaceSystem(SystemClass inClass);
         void RemoveSystem(SystemClass inClass);
-        const std::string& GetName() const;
+        bool HasSystem(SystemClass inClass) const;
+        Internal::SystemFactory& GetSystem(SystemClass inClass);
+        const Internal::SystemFactory& GetSystem(SystemClass inClass) const;
+        auto GetSystems();
         auto GetSystems() const;
+        const std::string& GetName() const;
 
     private:
         std::string name;
         std::unordered_map<SystemClass, Internal::SystemFactory> systems;
     };
 
-    class Feature {
+    class SystemGraph {
     public:
-        Feature();
+        SystemGraph();
 
-        SystemGroup& AddSystemGroup(const std::string& inName);
-        SystemGroup& GetSystemGroup(const std::string& inName);
+        SystemGroup& AddGroup(const std::string& inName);
+        void RemoveGroup(const std::string& inName);
+        bool HasGroup(const std::string& inName) const;
+        SystemGroup& GetGroup(const std::string& inName);
+        const SystemGroup& GetGroup(const std::string& inName) const;
+        const std::vector<SystemGroup>& GetGroups() const;
 
     private:
         std::vector<SystemGroup> systemGroups;
     };
 
-    class SystemRegistry {
+    class SystemPipeline {
     public:
-        SystemRegistry();
-
-        SystemGroup& AddSystemGroup(const std::string& inName);
-        SystemGroup& GetSystemGroup(const std::string& inName);
-        void UseFeature(const Feature& inFeature);
-
-        // TODO runtime
+        explicit SystemPipeline(const SystemGraph& inGraph);
 
     private:
-        std::vector<SystemGroup> systemGroups;
-        // transients
-        // TODO
+        struct SystemContext {
+            const Internal::SystemFactory& factory;
+            Common::UniqueRef<System> instance;
+        };
+        using ActionFunc = std::function<void(SystemContext&)>;
+
+        void ParallelPerformAction(const ActionFunc& inActionFunc);
+
+        friend class SystemGraphExecutor;
+
+        std::vector<std::vector<SystemContext>> systemGraph;
+    };
+
+    class SystemGraphExecutor {
+    public:
+        explicit SystemGraphExecutor(ECRegistry& inEcRegistry, const SystemGraph& inSystemGraph);
+        ~SystemGraphExecutor();
+
+        NonCopyable(SystemGraphExecutor)
+        NonMovable(SystemGraphExecutor)
+
+        void Tick(float inDeltaTimeMs);
+
+    private:
+        ECRegistry& ecRegistry;
+        SystemGraph systemGraph;
+        SystemPipeline pipeline;
     };
 }
 

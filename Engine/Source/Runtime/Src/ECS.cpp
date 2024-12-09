@@ -2,6 +2,8 @@
 // Created by johnk on 2024/10/31.
 //
 
+#include <taskflow/taskflow.hpp>
+
 #include <Runtime/ECS.h>
 
 namespace Runtime {
@@ -11,8 +13,6 @@ namespace Runtime {
     }
 
     System::~System() = default;
-
-    void System::Setup() {}
 
     void System::Execute(float inDeltaTimeMs) {}
 }
@@ -350,6 +350,15 @@ namespace Runtime::Internal {
         return system.As<System*>();
     }
 
+    std::unordered_map<std::string, Mirror::Any> SystemFactory::GetArguments()
+    {
+        std::unordered_map<std::string, Mirror::Any> result;
+        for (auto& [name, argument] : arguments) {
+            result.emplace(name, argument.Ref());
+        }
+        return result;
+    }
+
     const std::unordered_map<std::string, Mirror::Any>& SystemFactory::GetArguments() const
     {
         return arguments;
@@ -582,6 +591,12 @@ namespace Runtime {
         return *this;
     }
 
+    void ECRegistry::ResetTransients()
+    {
+        compEvents.clear();
+        globalCompEvents.clear();
+    }
+
     Entity ECRegistry::Create()
     {
         return entities.Allocate();
@@ -608,12 +623,6 @@ namespace Runtime {
         globalComps.clear();
         archetypes.clear();
         ResetTransients();
-    }
-
-    void ECRegistry::ResetTransients()
-    {
-        compEvents.clear();
-        globalCompEvents.clear();
     }
 
     void ECRegistry::Each(const EntityTraverseFunc& inFunc) const
@@ -861,5 +870,173 @@ namespace Runtime {
     ECRegistry::GCompEvents& ECRegistry::GEventsDyn(GCompClass inClass)
     {
         return globalCompEvents[inClass];
+    }
+
+    SystemGroup::SystemGroup(std::string inName)
+        : name(std::move(inName))
+    {
+    }
+
+    Internal::SystemFactory& SystemGroup::EmplaceSystem(SystemClass inClass)
+    {
+        systems.emplace(inClass, Internal::SystemFactory(inClass));
+        return systems.at(inClass);
+    }
+
+    void SystemGroup::RemoveSystem(SystemClass inClass)
+    {
+        systems.erase(inClass);
+    }
+
+    bool SystemGroup::HasSystem(SystemClass inClass) const
+    {
+        return systems.contains(inClass);
+    }
+
+    Internal::SystemFactory& SystemGroup::GetSystem(SystemClass inClass)
+    {
+        return systems.at(inClass);
+    }
+
+    const Internal::SystemFactory& SystemGroup::GetSystem(SystemClass inClass) const
+    {
+        return systems.at(inClass);
+    }
+
+    auto SystemGroup::GetSystems()
+    {
+        return systems | std::views::values;
+    }
+
+    auto SystemGroup::GetSystems() const
+    {
+        return systems | std::views::values;
+    }
+
+    const std::string& SystemGroup::GetName() const
+    {
+        return name;
+    }
+
+    SystemGraph::SystemGraph() = default;
+
+    SystemGroup& SystemGraph::AddGroup(const std::string& inName)
+    {
+        return systemGroups.emplace_back(inName);
+    }
+
+    void SystemGraph::RemoveGroup(const std::string& inName)
+    {
+        const auto iter = std::ranges::find_if(systemGroups, [&](const SystemGroup& group) -> bool {
+            return group.GetName() == inName;
+        });
+        Assert(iter != systemGroups.end());
+        systemGroups.erase(iter);
+    }
+
+    bool SystemGraph::HasGroup(const std::string& inName) const
+    {
+        for (const auto& group : systemGroups) {
+            if (group.GetName() == inName) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    SystemGroup& SystemGraph::GetGroup(const std::string& inName)
+    {
+        for (auto& group : systemGroups) {
+            if (group.GetName() == inName) {
+                return group;
+            }
+        }
+        Assert(false);
+        return systemGroups.back();
+    }
+
+    const SystemGroup& SystemGraph::GetGroup(const std::string& inName) const
+    {
+        for (const auto& group : systemGroups) {
+            if (group.GetName() == inName) {
+                return group;
+            }
+        }
+        Assert(false);
+        return systemGroups.back();
+    }
+
+    const std::vector<SystemGroup>& SystemGraph::GetGroups() const
+    {
+        return systemGroups;
+    }
+
+    SystemPipeline::SystemPipeline(const SystemGraph& inGraph)
+    {
+        const auto& systemGroups = inGraph.GetGroups();
+        systemGraph.reserve(systemGroups.size());
+
+        for (const auto& group : systemGroups) {
+            auto& contexts = systemGraph.emplace_back();
+            const auto& factories = group.GetSystems();
+            contexts.reserve(factories.size());
+
+            for (const auto& factory : group.GetSystems()) {
+                contexts.emplace_back(factory, nullptr);
+            }
+        }
+    }
+
+    void SystemPipeline::ParallelPerformAction(const ActionFunc& inActionFunc)
+    {
+        tf::Taskflow taskFlow;
+        auto lastBarrier = taskFlow.emplace([]() -> void {});
+
+        for (auto& contexts : systemGraph) {
+            std::vector<tf::Task> tasks;
+            tasks.reserve(contexts.size());
+
+            for (auto& context : contexts) {
+                tasks.emplace_back(taskFlow.emplace([&]() -> void {
+                    inActionFunc(context);
+                }));
+                tasks.back().succeed(lastBarrier);
+            }
+
+            auto barrier = taskFlow.emplace([]() -> void {});
+            for (const auto& task : tasks) {
+                barrier.succeed(task);
+            }
+            lastBarrier = barrier;
+        }
+
+        tf::Executor executor;
+        executor
+            .run(taskFlow)
+            .wait();
+    }
+
+    SystemGraphExecutor::SystemGraphExecutor(ECRegistry& inEcRegistry, const SystemGraph& inSystemGraph)
+        : ecRegistry(inEcRegistry)
+        , systemGraph(inSystemGraph)
+        , pipeline(inSystemGraph)
+    {
+        pipeline.ParallelPerformAction([&](SystemPipeline::SystemContext& context) -> void {
+            context.instance = context.factory.Build(inEcRegistry);
+        });
+    }
+
+    SystemGraphExecutor::~SystemGraphExecutor()
+    {
+        pipeline.ParallelPerformAction([](SystemPipeline::SystemContext& context) -> void {
+            context.instance = nullptr;
+        });
+    }
+
+    void SystemGraphExecutor::Tick(float inDeltaTimeMs)
+    {
+        pipeline.ParallelPerformAction([&](const SystemPipeline::SystemContext& context) -> void {
+            context.instance->Execute(inDeltaTimeMs);
+        });
     }
 } // namespace Runtime
