@@ -103,7 +103,10 @@ namespace Mirror {
 
         GlobalRegistry Global();
 
-        template <Common::CppClass C, CppBaseClassOrVoid<C> B = void, FieldAccess DefaultCtorAccess = FieldAccess::faPublic, FieldAccess DetorAccess = FieldAccess::faPublic>
+        template <
+            Common::CppClass C, CppBaseClassOrVoid<C> B = void,
+            FieldAccess DefaultCtorAccess = FieldAccess::faPublic,
+            FieldAccess DestructorAccess = FieldAccess::faPublic>
         ClassRegistry<C> Class(const Id& inId);
 
         template <Common::CppEnum T> EnumRegistry<T>
@@ -520,7 +523,7 @@ namespace Mirror {
             detorParams.deleter = [](const Argument& object) -> void {
                 delete object.As<C*>();
             };
-            params.destructorParams = detorParams;
+            params.destructorParams = std::move(detorParams);
         }
         if constexpr (std::is_default_constructible_v<C>) {
             Constructor::ConstructParams ctorParams;
@@ -529,15 +532,70 @@ namespace Mirror {
             ctorParams.access = DefaultCtorAccess;
             ctorParams.argsNum = 0;
             ctorParams.argTypeInfos = {};
+            ctorParams.argRemoveRefTypeInfos = {};
+            ctorParams.argRemovePointerTypeInfos = {};
             ctorParams.stackConstructor = [](const ArgumentList& args) -> Any {
-                Assert(args.size() == 0);
+                Assert(args.empty());
                 return { C() };
             };
             ctorParams.heapConstructor = [](const ArgumentList& args) -> Any {
-                Assert(args.size() == 0);
+                Assert(args.empty());
                 return { new C() };
             };
+            ctorParams.inplaceConstructor = [](void* ptr, const ArgumentList& args) -> Any {
+                Assert(ptr != nullptr && args.empty());
+                new(ptr) C();
+                return std::ref(*static_cast<C*>(ptr));
+            };
             params.defaultConstructorParams = ctorParams;
+        }
+        if constexpr (std::is_copy_constructible_v<C>) {
+            Constructor::ConstructParams copyCtorParams;
+            copyCtorParams.id = IdPresets::copyCtor.name;
+            copyCtorParams.owner = inId;
+            copyCtorParams.access = FieldAccess::faPublic;
+            copyCtorParams.argsNum = 1;
+            copyCtorParams.argTypeInfos = { GetTypeInfo<const C&>() };
+            copyCtorParams.argRemoveRefTypeInfos = { GetTypeInfo<std::remove_reference_t<const C&>>() };
+            copyCtorParams.argRemovePointerTypeInfos = { GetTypeInfo<std::remove_pointer_t<const C&>>() };
+            copyCtorParams.stackConstructor = [](const ArgumentList& args) -> Any {
+                Assert(args.size() == 1);
+                return { C(args[0].As<const C&>()) };
+            };
+            copyCtorParams.heapConstructor = [](const ArgumentList& args) -> Any {
+                Assert(args.size() == 1);
+                return { new C(args[0].As<const C&>()) };
+            };
+            copyCtorParams.inplaceConstructor = [](void* ptr, const ArgumentList& args) -> Any {
+                Assert(ptr != nullptr && args.size() == 1);
+                new(ptr) C(args[0].As<const C&>());
+                return std::ref(*static_cast<C*>(ptr));
+            };
+            params.copyConstructorParams = std::move(copyCtorParams);
+        }
+        if constexpr (std::is_move_constructible_v<C>) {
+            Constructor::ConstructParams moveCtorParams;
+            moveCtorParams.id = IdPresets::moveCtor.name;
+            moveCtorParams.owner = inId;
+            moveCtorParams.access = FieldAccess::faPublic;
+            moveCtorParams.argsNum = 1;
+            moveCtorParams.argTypeInfos = { GetTypeInfo<C&&>() };
+            moveCtorParams.argRemoveRefTypeInfos = { GetTypeInfo<std::remove_reference_t<C&&>>() };
+            moveCtorParams.argRemovePointerTypeInfos = { GetTypeInfo<std::remove_pointer_t<C&&>>() };
+            moveCtorParams.stackConstructor = [](const ArgumentList& args) -> Any {
+                Assert(args.size() == 1);
+                return { C(args[0].As<C&&>()) };
+            };
+            moveCtorParams.heapConstructor = [](const ArgumentList& args) -> Any {
+                Assert(args.size() == 1);
+                return { new C(args[0].As<C&&>()) };
+            };
+            moveCtorParams.inplaceConstructor = [](void* ptr, const ArgumentList& args) -> Any {
+                Assert(ptr != nullptr && args.size() == 1);
+                new(ptr) C(args[0].As<C&&>());
+                return std::ref(*static_cast<C*>(ptr));
+            };
+            params.moveConstructorParams = std::move(moveCtorParams);
         }
 
         Class::typeToIdMap[typeId] = inId;

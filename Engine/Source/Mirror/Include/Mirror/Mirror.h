@@ -413,6 +413,8 @@ namespace Mirror {
         static const Id globalScope;
         static const Id detor;
         static const Id defaultCtor;
+        static const Id copyCtor;
+        static const Id moveCtor;
     };
 
     class MIRROR_API ReflNode {
@@ -831,6 +833,9 @@ namespace Mirror {
             std::function<Any()> defaultObjectCreator;
             std::optional<Destructor::ConstructParams> destructorParams;
             std::optional<Constructor::ConstructParams> defaultConstructorParams;
+            std::optional<Constructor::ConstructParams> moveConstructorParams;
+            std::optional<Constructor::ConstructParams> copyConstructorParams;
+            // TODO assign operator ?
         };
 
         explicit Class(ConstructParams&& params);
@@ -962,12 +967,12 @@ namespace Mirror {
         static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdOptionalView");
 
         using GetElementTypeFunc = const TypeInfo*();
-        using HasValueFunc = bool(const Argument&);
-        using GetValueFunc = Any(const Argument&);
+        using HasValueFunc = bool(const Any&);
+        using GetValueFunc = Any(const Any&);
 
         template <typename T> static const TypeInfo* GetElementType();
-        template <typename T> static bool HasValue(const Argument& inArg);
-        template <typename T> static Any GetValue(const Argument& inArg);
+        template <typename T> static bool HasValue(const Any& inRef);
+        template <typename T> static Any GetValue(const Any& inRef);
 
         GetElementTypeFunc* getElementType;
         HasValueFunc* hasValue;
@@ -1000,7 +1005,7 @@ namespace Mirror {
         Any Value() const;
 
     private:
-        const Any& ref;
+        Any ref;
         const StdOptionalViewRtti* rtti;
     };
     // ---------------- end std::optional<T>-- ----------------
@@ -1011,15 +1016,15 @@ namespace Mirror {
 
         using GetKeyTypeFunc = const TypeInfo*();
         using GetValueTypeFunc = const TypeInfo*();
-        using GetKeyFunc = Any(const Argument&);
-        using GetValueFunc = Any(const Argument&);
+        using GetKeyFunc = Any(const Any&);
+        using GetValueFunc = Any(const Any&);
 
         template <typename K, typename V> static const TypeInfo* GetKeyType();
         template <typename K, typename V> static const TypeInfo* GetValueType();
-        template <typename K, typename V> static Any GetKey(const Argument& inObj);
-        template <typename K, typename V> static Any GetValue(const Argument& inObj);
-        template <typename K, typename V> static Any GetConstKey(const Argument& inObj);
-        template <typename K, typename V> static Any GetConstValue(const Argument& inObj);
+        template <typename K, typename V> static Any GetKey(const Any& inRef);
+        template <typename K, typename V> static Any GetValue(const Any& inRef);
+        template <typename K, typename V> static Any GetConstKey(const Any& inRef);
+        template <typename K, typename V> static Any GetConstValue(const Any& inRef);
 
         GetKeyTypeFunc* getKeyType;
         GetValueTypeFunc* getValueType;
@@ -1061,7 +1066,7 @@ namespace Mirror {
         Any ConstValue() const;
 
     private:
-        const Any& ref;
+        Any ref;
         const StdPairViewRtti* rtti;
     };
     // ---------------- end std::pair<K, V> -------------------
@@ -1072,13 +1077,13 @@ namespace Mirror {
 
         using GetElementTypeFunc = const TypeInfo*();
         using GetSizeFunc = size_t();
-        using GetElementFunc = Any(const Argument&, size_t);
-        using GetConstElementFunc = Any(const Argument&, size_t);
+        using GetElementFunc = Any(const Any&, size_t);
+        using GetConstElementFunc = Any(const Any&, size_t);
 
         template <typename T, size_t N> static const TypeInfo* GetElementType();
         template <typename T, size_t N> static size_t GetSize();
-        template <typename T, size_t N> static Any GetElement(const Argument& inObj, size_t inIndex);
-        template <typename T, size_t N> static Any GetConstElement(const Argument& inObj, size_t inIndex);
+        template <typename T, size_t N> static Any GetElement(const Any& inRef, size_t inIndex);
+        template <typename T, size_t N> static Any GetConstElement(const Any& inRef, size_t inIndex);
 
         GetElementTypeFunc* getElementType;
         GetSizeFunc* getSize;
@@ -1114,7 +1119,7 @@ namespace Mirror {
         Any ConstAt(size_t inIndex) const;
 
     private:
-        const Any& ref;
+        Any ref;
         const StdArrayViewRtti* rtti;
     };
     // ---------------- end std::array<T> ---------------------
@@ -1124,18 +1129,18 @@ namespace Mirror {
         static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdVectorView");
 
         using GetElementTypeFunc = const TypeInfo*();
-        using GetSizeFunc = size_t(const Argument&);
-        using GetElementFunc = Any(const Argument&, size_t);
-        using GetConstElementFunc = Any(const Argument&, size_t);
-        using EmplaceBackFunc = Any(const Argument&, const Argument&);
-        using EraseFunc = void(const Argument&, size_t);
+        using GetSizeFunc = size_t(const Any&);
+        using GetElementFunc = Any(const Any&, size_t);
+        using GetConstElementFunc = Any(const Any&, size_t);
+        using EmplaceBackFunc = Any(const Any&, const Argument&);
+        using EraseFunc = void(const Any&, size_t);
 
         template <typename T> static const TypeInfo* GetElementType();
-        template <typename T> static size_t GetSize(const Argument& inObj);
-        template <typename T> static Any GetElement(const Argument& inObj, size_t inIndex);
-        template <typename T> static Any GetConstElement(const Argument& inObj, size_t inIndex);
-        template <typename T> static Any EmplaceBack(const Argument& inObj, const Argument& inTempObj);
-        template <typename T> static void Erase(const Argument& inObj, size_t inIndex);
+        template <typename T> static size_t GetSize(const Any& inRef);
+        template <typename T> static Any GetElement(const Any& inRef, size_t inIndex);
+        template <typename T> static Any GetConstElement(const Any& inRef, size_t inIndex);
+        template <typename T> static Any EmplaceBack(const Any& inRef, const Argument& inTempObj);
+        template <typename T> static void Erase(const Any& inRef, size_t inIndex);
 
         GetElementTypeFunc* getElementType;
         GetSizeFunc* getSize;
@@ -1173,11 +1178,11 @@ namespace Mirror {
         size_t Size() const;
         Any At(size_t inIndex) const;
         Any ConstAt(size_t inIndex) const;
-        Any EmplaceBack(const Argument& inNewObj) const;
+        Any EmplaceBack(const Argument& inTempObj) const;
         void Erase(size_t inIndex) const;
 
     private:
-        const Any& ref;
+        Any ref;
         const StdVectorViewRtti* rtti;
     };
     // ---------------- end std::vector<T> --------------------
@@ -1187,18 +1192,18 @@ namespace Mirror {
         static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdListViewRtti");
 
         using GetElementTypeFunc = const TypeInfo*();
-        using GetSizeFunc = size_t(const Argument&);
-        using TraverseFunc = void(const Argument&, const std::function<void(const Any&)>&);
-        using ConstTraverseFunc = void(const Argument&, const std::function<void(const Any&)>&);
-        using EmplaceFrontFunc = Any(const Argument&, const Argument&);
-        using EmplaceBackFunc = Any(const Argument&, const Argument&);
+        using GetSizeFunc = size_t(const Any&);
+        using TraverseFunc = void(const Any&, const std::function<void(const Any&)>&);
+        using ConstTraverseFunc = void(const Any&, const std::function<void(const Any&)>&);
+        using EmplaceFrontFunc = Any(const Any&, const Argument&);
+        using EmplaceBackFunc = Any(const Any&, const Argument&);
 
         template <typename T> static const TypeInfo* GetElementType();
-        template <typename T> static size_t GetSize(const Argument& inObj);
-        template <typename T> static void Traverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser);
-        template <typename T> static void ConstTraverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser);
-        template <typename T> static Any EmplaceFront(const Argument& inObj, const Argument& inTempObj);
-        template <typename T> static Any EmplaceBack(const Argument& inObj, const Argument& inTempObj);
+        template <typename T> static size_t GetSize(const Any& inRef);
+        template <typename T> static void Traverse(const Any& inRef, const std::function<void(const Any&)>& inTraverser);
+        template <typename T> static void ConstTraverse(const Any& inRef, const std::function<void(const Any&)>& inTraverser);
+        template <typename T> static Any EmplaceFront(const Any& inRef, const Argument& inTempObj);
+        template <typename T> static Any EmplaceBack(const Any& inRef, const Argument& inTempObj);
 
         GetElementTypeFunc* getElementType;
         GetSizeFunc* getSize;
@@ -1241,7 +1246,7 @@ namespace Mirror {
         Any EmplaceBack(const Argument& inTempObj) const;
 
     private:
-        const Any& ref;
+        Any ref;
         const StdListViewRtti* rtti;
     };
     // ---------------- end std::list<T> ----------------------
@@ -1251,20 +1256,20 @@ namespace Mirror {
         static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdUnorderedSetView");
 
         using GetElementTypeFunc = const TypeInfo*();
-        using GetSizeFunc = size_t(const Argument&);
-        using TraverseFunc = void(const Argument&, const std::function<void(const Any&)>&);
-        using ConstTraverseFunc = void(const Argument&, const std::function<void(const Any&)>&);
-        using ContainsFunc = bool(const Argument&, const Argument&);
-        using EmplaceFunc = void(const Argument&, const Argument&);
-        using EraseFunc = void(const Argument&, const Argument&);
+        using GetSizeFunc = size_t(const Any&);
+        using TraverseFunc = void(const Any&, const std::function<void(const Any&)>&);
+        using ConstTraverseFunc = void(const Any&, const std::function<void(const Any&)>&);
+        using ContainsFunc = bool(const Any&, const Argument&);
+        using EmplaceFunc = void(const Any&, const Argument&);
+        using EraseFunc = void(const Any&, const Argument&);
 
         template <typename T> static const TypeInfo* GetElementType();
-        template <typename T> static size_t GetSize(const Argument& inObj);
-        template <typename T> static void Traverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser);
-        template <typename T> static void ConstTraverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser);
-        template <typename T> static bool Contains(const Argument& inObj, const Argument& inElement);
-        template <typename T> static void Emplace(const Argument& inObj, const Argument& inTempObj);
-        template <typename T> static void Erase(const Argument& inObj, const Argument& inElement);
+        template <typename T> static size_t GetSize(const Any& inRef);
+        template <typename T> static void Traverse(const Any& inRef, const std::function<void(const Any&)>& inTraverser);
+        template <typename T> static void ConstTraverse(const Any& inRef, const std::function<void(const Any&)>& inTraverser);
+        template <typename T> static bool Contains(const Any& inRef, const Argument& inElement);
+        template <typename T> static void Emplace(const Any& inRef, const Argument& inTempObj);
+        template <typename T> static void Erase(const Any& inRef, const Argument& inElement);
 
         GetElementTypeFunc* getElementType;
         GetSizeFunc* getSize;
@@ -1310,7 +1315,7 @@ namespace Mirror {
         void Erase(const Argument& inElement) const;
 
     private:
-        const Any& ref;
+        Any ref;
         const StdUnorderedSetViewRtti* rtti;
     };
     // ------------- end std::unordered_set<T> ----------------
@@ -1320,18 +1325,18 @@ namespace Mirror {
         static constexpr TemplateViewId id = Common::HashUtils::StrCrc32("Mirror::StdSetView");
 
         using GetElementTypeFunc = const TypeInfo*();
-        using GetSizeFunc = size_t(const Argument&);
-        using TraverseFunc = void(const Argument&, const std::function<void(const Any&)>&);
-        using ContainsFunc = bool(const Argument&, const Argument&);
-        using EmplaceFunc = void(const Argument&, const Argument&);
-        using EraseFunc = void(const Argument&, const Argument&);
+        using GetSizeFunc = size_t(const Any&);
+        using TraverseFunc = void(const Any&, const std::function<void(const Any&)>&);
+        using ContainsFunc = bool(const Any&, const Argument&);
+        using EmplaceFunc = void(const Any&, const Argument&);
+        using EraseFunc = void(const Any&, const Argument&);
 
         template <typename T> static const TypeInfo* GetElementType();
-        template <typename T> static size_t GetSize(const Argument& inObj);
-        template <typename T> static void Traverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser);
-        template <typename T> static bool Contains(const Argument& inObj, const Argument& inElement);
-        template <typename T> static void Emplace(const Argument& inObj, const Argument& inTempObj);
-        template <typename T> static void Erase(const Argument& inObj, const Argument& inElement);
+        template <typename T> static size_t GetSize(const Any& inRef);
+        template <typename T> static void Traverse(const Any& inRef, const std::function<void(const Any&)>& inTraverser);
+        template <typename T> static bool Contains(const Any& inRef, const Argument& inElement);
+        template <typename T> static void Emplace(const Any& inRef, const Argument& inTempObj);
+        template <typename T> static void Erase(const Any& inRef, const Argument& inElement);
 
         GetElementTypeFunc* getElementType;
         GetSizeFunc* getSize;
@@ -1374,7 +1379,7 @@ namespace Mirror {
         void Erase(const Argument& inElement) const;
 
     private:
-        const Any& ref;
+        Any ref;
         const StdSetViewRtti* rtti;
     };
     // ----------------- end std::set<T> ----------------------
@@ -1385,25 +1390,25 @@ namespace Mirror {
 
         using GetKeyTypeFunc = const TypeInfo*();
         using GetValueTypeFunc = const TypeInfo*();
-        using GetSizeFunc = size_t(const Argument&);
-        using AtFunc = Any(const Argument&, const Argument&);
-        using GetOrAddFunc = Any(const Argument&, const Argument&);
-        using TraverseFunc = void(const Argument&, const std::function<void(const Any&, const Any&)>&);
-        using ConstTraverseFunc = void(const Argument&, const std::function<void(const Any&, const Any&)>&);
-        using ContainsFunc = bool(const Argument&, const Argument&);
-        using EmplaceFunc = void(const Argument&, const Argument&, const Argument&);
-        using EraseFunc = void(const Argument&, const Argument&);
+        using GetSizeFunc = size_t(const Any&);
+        using AtFunc = Any(const Any&, const Argument&);
+        using GetOrAddFunc = Any(const Any&, const Argument&);
+        using TraverseFunc = void(const Any&, const std::function<void(const Any&, const Any&)>&);
+        using ConstTraverseFunc = void(const Any&, const std::function<void(const Any&, const Any&)>&);
+        using ContainsFunc = bool(const Any&, const Argument&);
+        using EmplaceFunc = void(const Any&, const Argument&, const Argument&);
+        using EraseFunc = void(const Any&, const Argument&);
 
         template <typename K, typename V> static const TypeInfo* GetKeyType();
         template <typename K, typename V> static const TypeInfo* GetValueType();
-        template <typename K, typename V> static size_t GetSize(const Argument& inObj);
-        template <typename K, typename V> static Any At(const Argument& inObj, const Argument& inKey);
-        template <typename K, typename V> static Any GetOrAdd(const Argument& inObj, const Argument& inKey);
-        template <typename K, typename V> static void Traverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser);
-        template <typename K, typename V> static void ConstTraverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser);
-        template <typename K, typename V> static bool Contains(const Argument& inObj, const Argument& inKey);
-        template <typename K, typename V> static void Emplace(const Argument& inObj, const Argument& inTempKey, const Argument& inTempValue);
-        template <typename K, typename V> static void Erase(const Argument& inObj, const Argument& inKey);
+        template <typename K, typename V> static size_t GetSize(const Any& inRef);
+        template <typename K, typename V> static Any At(const Any& inRef, const Argument& inKey);
+        template <typename K, typename V> static Any GetOrAdd(const Any& inRef, const Argument& inKey);
+        template <typename K, typename V> static void Traverse(const Any& inRef, const std::function<void(const Any&, const Any&)>& inTraverser);
+        template <typename K, typename V> static void ConstTraverse(const Any& inRef, const std::function<void(const Any&, const Any&)>& inTraverser);
+        template <typename K, typename V> static bool Contains(const Any& inRef, const Argument& inKey);
+        template <typename K, typename V> static void Emplace(const Any& inRef, const Argument& inTempKey, const Argument& inTempValue);
+        template <typename K, typename V> static void Erase(const Any& inRef, const Argument& inKey);
 
         GetKeyTypeFunc* getKeyType;
         GetValueTypeFunc* getValueType;
@@ -1458,7 +1463,7 @@ namespace Mirror {
         void Erase(const Argument& inKey) const;
 
     private:
-        const Any& ref;
+        Any ref;
         const StdUnorderedMapViewRtti* rtti;
     };
     // ------------- end std::unordered_map<K, V> -------------
@@ -1469,25 +1474,25 @@ namespace Mirror {
 
         using GetKeyTypeFunc = const TypeInfo*();
         using GetValueTypeFunc = const TypeInfo*();
-        using GetSizeFunc = size_t(const Argument&);
-        using AtFunc = Any(const Argument&, const Argument&);
-        using GetOrAddFunc = Any(const Argument&, const Argument&);
-        using TraverseFunc = void(const Argument&, const std::function<void(const Any&, const Any&)>&);
-        using ConstTraverseFunc = void(const Argument&, const std::function<void(const Any&, const Any&)>&);
-        using ContainsFunc = bool(const Argument&, const Argument&);
-        using EmplaceFunc = void(const Argument&, const Argument&, const Argument&);
-        using EraseFunc = void(const Argument&, const Argument&);
+        using GetSizeFunc = size_t(const Any&);
+        using AtFunc = Any(const Any&, const Argument&);
+        using GetOrAddFunc = Any(const Any&, const Argument&);
+        using TraverseFunc = void(const Any&, const std::function<void(const Any&, const Any&)>&);
+        using ConstTraverseFunc = void(const Any&, const std::function<void(const Any&, const Any&)>&);
+        using ContainsFunc = bool(const Any&, const Argument&);
+        using EmplaceFunc = void(const Any&, const Argument&, const Argument&);
+        using EraseFunc = void(const Any&, const Argument&);
 
         template <typename K, typename V> static const TypeInfo* GetKeyType();
         template <typename K, typename V> static const TypeInfo* GetValueType();
-        template <typename K, typename V> static size_t GetSize(const Argument& inObj);
-        template <typename K, typename V> static Any At(const Argument& inObj, const Argument& inKey);
-        template <typename K, typename V> static Any GetOrAdd(const Argument& inObj, const Argument& inKey);
-        template <typename K, typename V> static void Traverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser);
-        template <typename K, typename V> static void ConstTraverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser);
-        template <typename K, typename V> static bool Contains(const Argument& inObj, const Argument& inKey);
-        template <typename K, typename V> static void Emplace(const Argument& inObj, const Argument& inTempKey, const Argument& inTempValue);
-        template <typename K, typename V> static void Erase(const Argument& inObj, const Argument& inKey);
+        template <typename K, typename V> static size_t GetSize(const Any& inRef);
+        template <typename K, typename V> static Any At(const Any& inRef, const Argument& inKey);
+        template <typename K, typename V> static Any GetOrAdd(const Any& inRef, const Argument& inKey);
+        template <typename K, typename V> static void Traverse(const Any& inRef, const std::function<void(const Any&, const Any&)>& inTraverser);
+        template <typename K, typename V> static void ConstTraverse(const Any& inRef, const std::function<void(const Any&, const Any&)>& inTraverser);
+        template <typename K, typename V> static bool Contains(const Any& inRef, const Argument& inKey);
+        template <typename K, typename V> static void Emplace(const Any& inRef, const Argument& inTempKey, const Argument& inTempValue);
+        template <typename K, typename V> static void Erase(const Any& inRef, const Argument& inKey);
 
         GetKeyTypeFunc* getKeyType;
         GetValueTypeFunc* getValueType;
@@ -1542,7 +1547,7 @@ namespace Mirror {
         void Erase(const Argument& inKey) const;
 
     private:
-        const Any& ref;
+        Any ref;
         const StdMapViewRtti* rtti;
     };
     // ----------------- end std::map<K, V> -------------------
@@ -1553,13 +1558,13 @@ namespace Mirror {
 
         using GetSizeFunc = size_t();
         using GetElementTypeFunc = const TypeInfo*(size_t);
-        using GetElementFunc = Any(const Argument&, size_t);
-        using TraverseFunc = void(const Argument&, const std::function<void(const Any&)>&);
+        using GetElementFunc = Any(const Any&, size_t);
+        using TraverseFunc = void(const Any&, const std::function<void(const Any&)>&);
 
         template <typename... T> static size_t GetSize();
         template <typename... T> static const TypeInfo* GetElementType(size_t inIndex);
-        template <typename... T> static Any GetElement(const Argument&, size_t inIndex);
-        template <typename... T> static void Traverse(const Argument&, const std::function<void(const Any&)>& inVisitor);
+        template <typename... T> static Any GetElement(const Any& inRef, size_t inIndex);
+        template <typename... T> static void Traverse(const Any& inRef, const std::function<void(const Any&)>& inVisitor);
 
         GetSizeFunc* getSize;
         GetElementTypeFunc* getElementType;
@@ -1596,7 +1601,7 @@ namespace Mirror {
         void Traverse(const Visitor& inVisitor) const;
 
     private:
-        const Any& ref;
+        Any ref;
         const StdTupleRtti* rtti;
     };
     // --------------- end std::tuple<T...> -------------------
@@ -3391,15 +3396,15 @@ namespace Mirror {
     }
 
     template <typename T>
-    bool StdOptionalViewRtti::HasValue(const Argument& inArg)
+    bool StdOptionalViewRtti::HasValue(const Any& inRef)
     {
-        return inArg.As<const std::optional<T>&>().has_value();
+        return inRef.As<const std::optional<T>&>().has_value();
     }
 
     template <typename T>
-    Any StdOptionalViewRtti::GetValue(const Argument& inArg)
+    Any StdOptionalViewRtti::GetValue(const Any& inRef)
     {
-        return std::ref(inArg.As<const std::optional<T>&>().value());
+        return std::ref(inRef.As<const std::optional<T>&>().value());
     }
 
     template <typename T>
@@ -3427,27 +3432,27 @@ namespace Mirror {
     }
 
     template <typename K, typename V>
-    Any StdPairViewRtti::GetKey(const Argument& inObj)
+    Any StdPairViewRtti::GetKey(const Any& inRef)
     {
-        return { std::ref(inObj.As<std::pair<K, V>&>().first) };
+        return { std::ref(inRef.As<std::pair<K, V>&>().first) };
     }
 
     template <typename K, typename V>
-    Any StdPairViewRtti::GetValue(const Argument& inObj)
+    Any StdPairViewRtti::GetValue(const Any& inRef)
     {
-        return { std::ref(inObj.As<std::pair<K, V>&>().second) };
+        return { std::ref(inRef.As<std::pair<K, V>&>().second) };
     }
 
     template <typename K, typename V>
-    Any StdPairViewRtti::GetConstKey(const Argument& inObj)
+    Any StdPairViewRtti::GetConstKey(const Any& inRef)
     {
-        return { std::ref(inObj.As<const std::pair<K, V>&>().first) };
+        return { std::ref(inRef.As<const std::pair<K, V>&>().first) };
     }
 
     template <typename K, typename V>
-    Any StdPairViewRtti::GetConstValue(const Argument& inObj)
+    Any StdPairViewRtti::GetConstValue(const Any& inRef)
     {
-        return { std::ref(inObj.As<const std::pair<K, V>&>().second) };
+        return { std::ref(inRef.As<const std::pair<K, V>&>().second) };
     }
 
     template <typename K, typename V>
@@ -3475,15 +3480,15 @@ namespace Mirror {
     }
 
     template <typename T, size_t N>
-    Any StdArrayViewRtti::GetElement(const Argument& inObj, size_t inIndex)
+    Any StdArrayViewRtti::GetElement(const Any& inRef, size_t inIndex)
     {
-        return { std::ref(inObj.As<std::array<T, N>&>()[inIndex]) };
+        return { std::ref(inRef.As<std::array<T, N>&>()[inIndex]) };
     }
 
     template <typename T, size_t N>
-    Any StdArrayViewRtti::GetConstElement(const Argument& inObj, size_t inIndex)
+    Any StdArrayViewRtti::GetConstElement(const Any& inRef, size_t inIndex)
     {
-        return { std::ref(inObj.As<const std::array<T, N>&>()[inIndex]) };
+        return { std::ref(inRef.As<const std::array<T, N>&>()[inIndex]) };
     }
 
     template <typename T, size_t N>
@@ -3505,45 +3510,45 @@ namespace Mirror {
     }
 
     template <typename T>
-    size_t StdVectorViewRtti::GetSize(const Argument& inObj)
+    size_t StdVectorViewRtti::GetSize(const Any& inRef)
     {
-        return inObj.As<const std::vector<T>&>().size();
+        return inRef.As<const std::vector<T>&>().size();
     }
 
     template <typename T>
-    Any StdVectorViewRtti::GetElement(const Argument& inObj, size_t inIndex)
+    Any StdVectorViewRtti::GetElement(const Any& inRef, size_t inIndex)
     {
         if constexpr (std::is_same_v<T, bool>) {
-            return { inObj.As<std::vector<T>&>()[inIndex] };
+            return { inRef.As<std::vector<T>&>()[inIndex] };
         } else {
-            return { std::ref(inObj.As<std::vector<T>&>()[inIndex]) };
+            return { std::ref(inRef.As<std::vector<T>&>()[inIndex]) };
         }
     }
 
     template <typename T>
-    Any StdVectorViewRtti::GetConstElement(const Argument& inObj, size_t inIndex)
+    Any StdVectorViewRtti::GetConstElement(const Any& inRef, size_t inIndex)
     {
         if constexpr (std::is_same_v<T, bool>) {
-            return { inObj.As<const std::vector<T>&>()[inIndex] };
+            return { inRef.As<const std::vector<T>&>()[inIndex] };
         } else {
-            return { std::ref(inObj.As<const std::vector<T>&>()[inIndex]) };
+            return { std::ref(inRef.As<const std::vector<T>&>()[inIndex]) };
         }
     }
 
     template <typename T>
-    Any StdVectorViewRtti::EmplaceBack(const Argument& inObj, const Argument& inTempObj)
+    Any StdVectorViewRtti::EmplaceBack(const Any& inRef, const Argument& inTempObj)
     {
         if constexpr (std::is_same_v<T, bool>) {
-            return { inObj.As<std::vector<T>&>().emplace_back(std::move(inTempObj.As<T&>())) };
+            return { inRef.As<std::vector<T>&>().emplace_back(std::move(inTempObj.As<T&>())) };
         } else {
-            return { std::ref(inObj.As<std::vector<T>&>().emplace_back(std::move(inTempObj.As<T&>()))) };
+            return { std::ref(inRef.As<std::vector<T>&>().emplace_back(std::move(inTempObj.As<T&>()))) };
         }
     }
 
     template <typename T>
-    void StdVectorViewRtti::Erase(const Argument& inObj, size_t inIndex)
+    void StdVectorViewRtti::Erase(const Any& inRef, size_t inIndex)
     {
-        auto& vec = inObj.As<std::vector<T>&>();
+        auto& vec = inRef.As<std::vector<T>&>();
         vec.erase(vec.begin() + inIndex);
     }
 
@@ -3566,40 +3571,40 @@ namespace Mirror {
     }
 
     template <typename T>
-    size_t StdListViewRtti::GetSize(const Argument& inObj)
+    size_t StdListViewRtti::GetSize(const Any& inRef)
     {
-        return inObj.As<const std::list<T>&>().size();
+        return inRef.As<const std::list<T>&>().size();
     }
 
     template <typename T>
-    void StdListViewRtti::Traverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser)
+    void StdListViewRtti::Traverse(const Any& inRef, const std::function<void(const Any&)>& inTraverser)
     {
-        auto& list = inObj.As<std::list<T>&>(); // NOLINT
+        auto& list = inRef.As<std::list<T>&>(); // NOLINT
         for (auto& element : list) {
             inTraverser(std::ref(element));
         }
     }
 
     template <typename T>
-    void StdListViewRtti::ConstTraverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser)
+    void StdListViewRtti::ConstTraverse(const Any& inRef, const std::function<void(const Any&)>& inTraverser)
     {
-        const auto& list = inObj.As<const std::list<T>&>(); // NOLINT
+        const auto& list = inRef.As<const std::list<T>&>(); // NOLINT
         for (const auto& element : list) {
             inTraverser(std::ref(element));
         }
     }
 
     template <typename T>
-    Any StdListViewRtti::EmplaceFront(const Argument& inObj, const Argument& inTempObj)
+    Any StdListViewRtti::EmplaceFront(const Any& inRef, const Argument& inTempObj)
     {
-        T& elemRef = inObj.As<std::list<T>&>().emplace_front(std::move(inTempObj.As<T&>()));
+        T& elemRef = inRef.As<std::list<T>&>().emplace_front(std::move(inTempObj.As<T&>()));
         return { std::ref(elemRef) };
     }
 
     template <typename T>
-    Any StdListViewRtti::EmplaceBack(const Argument& inObj, const Argument& inTempObj)
+    Any StdListViewRtti::EmplaceBack(const Any& inRef, const Argument& inTempObj)
     {
-        T& elemRef = inObj.As<std::list<T>&>().emplace_back(std::move(inTempObj.As<T&>()));
+        T& elemRef = inRef.As<std::list<T>&>().emplace_back(std::move(inTempObj.As<T&>()));
         return { std::ref(elemRef) };
     }
 
@@ -3622,45 +3627,45 @@ namespace Mirror {
     }
 
     template <typename T>
-    size_t StdUnorderedSetViewRtti::GetSize(const Argument& inObj)
+    size_t StdUnorderedSetViewRtti::GetSize(const Any& inRef)
     {
-        return inObj.As<const std::unordered_set<T>&>().size();
+        return inRef.As<const std::unordered_set<T>&>().size();
     }
 
     template <typename T>
-    void StdUnorderedSetViewRtti::Traverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser)
+    void StdUnorderedSetViewRtti::Traverse(const Any& inRef, const std::function<void(const Any&)>& inTraverser)
     {
-        auto& set = inObj.As<std::unordered_set<T>&>(); // NOLINT
+        auto& set = inRef.As<std::unordered_set<T>&>(); // NOLINT
         for (auto& element : set) {
             inTraverser(std::ref(element));
         }
     }
 
     template <typename T>
-    void StdUnorderedSetViewRtti::ConstTraverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser)
+    void StdUnorderedSetViewRtti::ConstTraverse(const Any& inRef, const std::function<void(const Any&)>& inTraverser)
     {
-        const auto& set = inObj.As<const std::unordered_set<T>&>(); // NOLINT
+        const auto& set = inRef.As<const std::unordered_set<T>&>(); // NOLINT
         for (const auto& element : set) {
             inTraverser(std::ref(element));
         }
     }
 
     template <typename T>
-    bool StdUnorderedSetViewRtti::Contains(const Argument& inObj, const Argument& inElement)
+    bool StdUnorderedSetViewRtti::Contains(const Any& inRef, const Argument& inElement)
     {
-        return inObj.As<const std::unordered_set<T>&>().contains(inElement.As<const T&>());
+        return inRef.As<const std::unordered_set<T>&>().contains(inElement.As<const T&>());
     }
 
     template <typename T>
-    void StdUnorderedSetViewRtti::Emplace(const Argument& inObj, const Argument& inTempObj)
+    void StdUnorderedSetViewRtti::Emplace(const Any& inRef, const Argument& inTempObj)
     {
-        inObj.As<std::unordered_set<T>&>().emplace(std::move(inTempObj.As<T&>()));
+        inRef.As<std::unordered_set<T>&>().emplace(std::move(inTempObj.As<T&>()));
     }
 
     template <typename T>
-    void StdUnorderedSetViewRtti::Erase(const Argument& inObj, const Argument& inElement)
+    void StdUnorderedSetViewRtti::Erase(const Any& inRef, const Argument& inElement)
     {
-        inObj.As<std::unordered_set<T>&>().erase(inElement.As<const T&>());
+        inRef.As<std::unordered_set<T>&>().erase(inElement.As<const T&>());
     }
 
     template <typename T>
@@ -3682,36 +3687,36 @@ namespace Mirror {
     }
 
     template <typename T>
-    size_t StdSetViewRtti::GetSize(const Argument& inObj)
+    size_t StdSetViewRtti::GetSize(const Any& inRef)
     {
-        return inObj.As<const std::set<T>&>().size();
+        return inRef.As<const std::set<T>&>().size();
     }
 
     template <typename T>
-    void StdSetViewRtti::Traverse(const Argument& inObj, const std::function<void(const Any&)>& inTraverser)
+    void StdSetViewRtti::Traverse(const Any& inRef, const std::function<void(const Any&)>& inTraverser)
     {
-        const auto& set = inObj.As<const std::set<T>&>(); // NOLINT
+        const auto& set = inRef.As<const std::set<T>&>(); // NOLINT
         for (const auto& element : set) {
             inTraverser(std::ref(element));
         }
     }
 
     template <typename T>
-    bool StdSetViewRtti::Contains(const Argument& inObj, const Argument& inElement)
+    bool StdSetViewRtti::Contains(const Any& inRef, const Argument& inElement)
     {
-        return inObj.As<const std::set<T>&>().contains(inElement.As<const T&>());
+        return inRef.As<const std::set<T>&>().contains(inElement.As<const T&>());
     }
 
     template <typename T>
-    void StdSetViewRtti::Emplace(const Argument& inObj, const Argument& inTempObj)
+    void StdSetViewRtti::Emplace(const Any& inRef, const Argument& inTempObj)
     {
-        inObj.As<std::set<T>&>().emplace(inTempObj.As<const T&>());
+        inRef.As<std::set<T>&>().emplace(inTempObj.As<const T&>());
     }
 
     template <typename T>
-    void StdSetViewRtti::Erase(const Argument& inObj, const Argument& inElement)
+    void StdSetViewRtti::Erase(const Any& inRef, const Argument& inElement)
     {
-        inObj.As<std::set<T>&>().erase(inElement.As<const T&>());
+        inRef.As<std::set<T>&>().erase(inElement.As<const T&>());
     }
 
     template <typename T>
@@ -3739,57 +3744,57 @@ namespace Mirror {
     }
 
     template <typename K, typename V>
-    size_t StdUnorderedMapViewRtti::GetSize(const Argument& inObj)
+    size_t StdUnorderedMapViewRtti::GetSize(const Any& inRef)
     {
-        return inObj.As<const std::unordered_map<K, V>&>().size();
+        return inRef.As<const std::unordered_map<K, V>&>().size();
     }
 
     template <typename K, typename V>
-    Any StdUnorderedMapViewRtti::At(const Argument& inObj, const Argument& inKey)
+    Any StdUnorderedMapViewRtti::At(const Any& inRef, const Argument& inKey)
     {
-        return { std::ref(inObj.As<std::unordered_map<K, V>&>().at(inKey.As<const K&>())) };
+        return { std::ref(inRef.As<std::unordered_map<K, V>&>().at(inKey.As<const K&>())) };
     }
 
     template <typename K, typename V>
-    Any StdUnorderedMapViewRtti::GetOrAdd(const Argument& inObj, const Argument& inKey)
+    Any StdUnorderedMapViewRtti::GetOrAdd(const Any& inRef, const Argument& inKey)
     {
-        return { std::ref(inObj.As<std::unordered_map<K, V>&>()[inKey.As<const K&>()]) };
+        return { std::ref(inRef.As<std::unordered_map<K, V>&>()[inKey.As<const K&>()]) };
     }
 
     template <typename K, typename V>
-    void StdUnorderedMapViewRtti::Traverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser)
+    void StdUnorderedMapViewRtti::Traverse(const Any& inRef, const std::function<void(const Any&, const Any&)>& inTraverser)
     {
-        auto& map = inObj.As<std::unordered_map<K, V>&>(); // NOLINT
+        auto& map = inRef.As<std::unordered_map<K, V>&>(); // NOLINT
         for (auto& pair : map) {
             inTraverser(std::ref(pair.first), std::ref(pair.second));
         }
     }
 
     template <typename K, typename V>
-    void StdUnorderedMapViewRtti::ConstTraverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser)
+    void StdUnorderedMapViewRtti::ConstTraverse(const Any& inRef, const std::function<void(const Any&, const Any&)>& inTraverser)
     {
-        const auto& map = inObj.As<const std::unordered_map<K, V>&>(); // NOLINT
+        const auto& map = inRef.As<const std::unordered_map<K, V>&>(); // NOLINT
         for (const auto& pair : map) {
             inTraverser(std::ref(pair.first), std::ref(pair.second));
         }
     }
 
     template <typename K, typename V>
-    bool StdUnorderedMapViewRtti::Contains(const Argument& inObj, const Argument& inKey)
+    bool StdUnorderedMapViewRtti::Contains(const Any& inRef, const Argument& inKey)
     {
-        return inObj.As<const std::unordered_map<K, V>&>().contains(inKey.As<const K&>());
+        return inRef.As<const std::unordered_map<K, V>&>().contains(inKey.As<const K&>());
     }
 
     template <typename K, typename V>
-    void StdUnorderedMapViewRtti::Emplace(const Argument& inObj, const Argument& inTempKey, const Argument& inTempValue)
+    void StdUnorderedMapViewRtti::Emplace(const Any& inRef, const Argument& inTempKey, const Argument& inTempValue)
     {
-        inObj.As<std::unordered_map<K, V>&>().emplace(std::move(inTempKey.As<K&>()), std::move(inTempValue.As<V&>()));
+        inRef.As<std::unordered_map<K, V>&>().emplace(std::move(inTempKey.As<K&>()), std::move(inTempValue.As<V&>()));
     }
 
     template <typename K, typename V>
-    void StdUnorderedMapViewRtti::Erase(const Argument& inObj, const Argument& inKey)
+    void StdUnorderedMapViewRtti::Erase(const Any& inRef, const Argument& inKey)
     {
-        inObj.As<std::unordered_map<K, V>&>().erase(inKey.As<const K&>());
+        inRef.As<std::unordered_map<K, V>&>().erase(inKey.As<const K&>());
     }
 
     template <typename K, typename V>
@@ -3817,57 +3822,57 @@ namespace Mirror {
     }
 
     template <typename K, typename V>
-    size_t StdMapViewRtti::GetSize(const Argument& inObj)
+    size_t StdMapViewRtti::GetSize(const Any& inRef)
     {
-        return inObj.As<const std::map<K, V>&>().size();
+        return inRef.As<const std::map<K, V>&>().size();
     }
 
     template <typename K, typename V>
-    Any StdMapViewRtti::At(const Argument& inObj, const Argument& inKey)
+    Any StdMapViewRtti::At(const Any& inRef, const Argument& inKey)
     {
-        return { std::ref(inObj.As<std::map<K, V>&>().at(inKey.As<const K&>())) };
+        return { std::ref(inRef.As<std::map<K, V>&>().at(inKey.As<const K&>())) };
     }
 
     template <typename K, typename V>
-    Any StdMapViewRtti::GetOrAdd(const Argument& inObj, const Argument& inKey)
+    Any StdMapViewRtti::GetOrAdd(const Any& inRef, const Argument& inKey)
     {
-        return { std::ref(inObj.As<std::map<K, V>&>()[inKey.As<const K&>()]) };
+        return { std::ref(inRef.As<std::map<K, V>&>()[inKey.As<const K&>()]) };
     }
 
     template <typename K, typename V>
-    void StdMapViewRtti::Traverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser)
+    void StdMapViewRtti::Traverse(const Any& inRef, const std::function<void(const Any&, const Any&)>& inTraverser)
     {
-        auto& map = inObj.As<std::map<K, V>&>(); // NOLINT
+        auto& map = inRef.As<std::map<K, V>&>(); // NOLINT
         for (auto& pair : map) {
             inTraverser(std::ref(pair.first), std::ref(pair.second));
         }
     }
 
     template <typename K, typename V>
-    void StdMapViewRtti::ConstTraverse(const Argument& inObj, const std::function<void(const Any&, const Any&)>& inTraverser)
+    void StdMapViewRtti::ConstTraverse(const Any& inRef, const std::function<void(const Any&, const Any&)>& inTraverser)
     {
-        const auto& map = inObj.As<std::map<K, V>&>(); // NOLINT
+        const auto& map = inRef.As<std::map<K, V>&>(); // NOLINT
         for (const auto& pair : map) {
             inTraverser(std::ref(pair.first), std::ref(pair.second));
         }
     }
 
     template <typename K, typename V>
-    bool StdMapViewRtti::Contains(const Argument& inObj, const Argument& inKey)
+    bool StdMapViewRtti::Contains(const Any& inRef, const Argument& inKey)
     {
-        return inObj.As<const std::map<K, V>&>().contains(inKey.As<const K&>());
+        return inRef.As<const std::map<K, V>&>().contains(inKey.As<const K&>());
     }
 
     template <typename K, typename V>
-    void StdMapViewRtti::Emplace(const Argument& inObj, const Argument& inTempKey, const Argument& inTempValue)
+    void StdMapViewRtti::Emplace(const Any& inRef, const Argument& inTempKey, const Argument& inTempValue)
     {
-        inObj.As<std::map<K, V>&>().emplace(std::move(inTempKey.As<K&>()), std::move(inTempValue.As<V&>()));
+        inRef.As<std::map<K, V>&>().emplace(std::move(inTempKey.As<K&>()), std::move(inTempValue.As<V&>()));
     }
 
     template <typename K, typename V>
-    void StdMapViewRtti::Erase(const Argument& inObj, const Argument& inKey)
+    void StdMapViewRtti::Erase(const Any& inRef, const Argument& inKey)
     {
-        inObj.As<std::map<K, V>&>().erase(inKey.As<const K&>());
+        inRef.As<std::map<K, V>&>().erase(inKey.As<const K&>());
     }
 
     template <typename K, typename V>
@@ -3897,17 +3902,17 @@ namespace Mirror {
     }
 
     template <typename... T>
-    Any StdTupleRtti::GetElement(const Argument& inObj, size_t inIndex)
+    Any StdTupleRtti::GetElement(const Any& inRef, size_t inIndex)
     {
         static std::array<std::function<Any(const Argument&)>, sizeof...(T)> getters = Internal::BuildTupleDynGetterArray<T...>(std::make_index_sequence<sizeof...(T)> {});
         Assert(inIndex < getters.size());
-        return getters[inIndex](inObj);
+        return getters[inIndex](inRef);
     }
 
     template <typename... T>
-    void StdTupleRtti::Traverse(const Argument& inObj, const std::function<void(const Any&)>& inVisitor)
+    void StdTupleRtti::Traverse(const Any& inRef, const std::function<void(const Any&)>& inVisitor)
     {
-        Internal::TraverseTupleDyn<T...>(inObj, inVisitor, std::make_index_sequence<sizeof...(T)> {});
+        Internal::TraverseTupleDyn<T...>(inRef, inVisitor, std::make_index_sequence<sizeof...(T)> {});
     }
 
     template <typename... T>
