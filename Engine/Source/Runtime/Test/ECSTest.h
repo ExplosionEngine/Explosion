@@ -11,5 +11,10 @@ using namespace Runtime;
 struct EClass() CompA {
     EClassBody(CompA)
 
+    explicit CompA(int inValue)
+        : value(inValue)
+    {
+    }
+
     int value;
 };

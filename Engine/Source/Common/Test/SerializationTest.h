@@ -11,6 +11,7 @@
 #include <Test/Test.h>
 #include <Common/Serialization.h>
 #include <Common/Memory.h>
+#include <Common/IO.h>
 
 inline std::string FltToJson(float value)
 {
@@ -23,8 +24,19 @@ inline std::string FltToJson(float value)
     return std::string(buffer.GetString(), buffer.GetSize()); // NOLINT
 }
 
+inline std::string GetEndianString(std::endian e)
+{
+    static std::unordered_map<std::endian, std::string> map = {
+        { std::endian::big, "std::endian::big" },
+        { std::endian::little, "std::endian::little" },
+        { std::endian::native, "std::endian::native" }
+    };
+    return map.at(e);
+}
+
 template <typename T>
 void PerformTypedSerializationTestWithStream(
+    const std::string& contextString,
     const std::function<Common::UniqueRef<Common::BinarySerializeStream>()>& createSerializeStream,
     const std::function<Common::UniqueRef<Common::BinaryDeserializeStream>()>& createDeserializeStream,
     const T& inValue)
@@ -39,6 +51,7 @@ void PerformTypedSerializationTestWithStream(
         const auto stream = createDeserializeStream();
         Common::Deserialize<T>(*stream, value);
 
+        std::cout << "PerformTypedSerializationTestWithStream, context: " << contextString << std::endl;
         ASSERT_EQ(inValue, value);
     }
 }
@@ -50,12 +63,14 @@ void PerformTypedSerializationTestWithEndian(const T& inValue)
     std::filesystem::create_directories(fileName.parent_path());
 
     PerformTypedSerializationTestWithStream<T>(
+        std::format("BinaryFile<{}, {}>", typeid(T).name(), GetEndianString(E)),
         []() -> Common::UniqueRef<Common::BinarySerializeStream> { return { new Common::BinaryFileSerializeStream<E>(fileName.string()) }; },
         []() -> Common::UniqueRef<Common::BinaryDeserializeStream> { return { new Common::BinaryFileDeserializeStream<E>(fileName.string()) }; },
         inValue);
 
     std::vector<uint8_t> buffer;
     PerformTypedSerializationTestWithStream<T>(
+        std::format("Memory<{}, {}>", typeid(T).name(), GetEndianString(E)),
         [&]() -> Common::UniqueRef<Common::BinarySerializeStream> { return { new Common::MemorySerializeStream<E>(buffer) }; },
         [&]() -> Common::UniqueRef<Common::BinaryDeserializeStream> { return { new Common::MemoryDeserializeStream<E>(buffer) }; },
         inValue);

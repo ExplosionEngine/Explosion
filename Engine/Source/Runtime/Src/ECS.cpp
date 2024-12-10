@@ -31,13 +31,13 @@ namespace Runtime::Internal {
         offset = inOffset;
     }
 
-    Mirror::Any CompRtti::MoveConstruct(ElemPtr inElem, const Mirror::Any& inOther) const
+    Mirror::Any CompRtti::MoveConstruct(ElemPtr inElem, const Mirror::Argument& inOther) const
     {
         auto* compBegin = static_cast<uint8_t*>(inElem) + offset;
         return clazz->InplaceNewDyn(compBegin, { inOther });
     }
 
-    Mirror::Any CompRtti::MoveAssign(ElemPtr inElem, const Mirror::Any& inOther) const
+    Mirror::Any CompRtti::MoveAssign(ElemPtr inElem, const Mirror::Argument& inOther) const
     {
         auto* compBegin = static_cast<uint8_t*>(inElem) + offset;
         auto compRef = clazz->InplaceGetObject(compBegin);
@@ -75,7 +75,7 @@ namespace Runtime::Internal {
     Archetype::Archetype(const std::vector<CompRtti>& inRttiVec)
         : id(0)
         , size(0)
-        , elemSize(0)
+        , elemSize(1)
         , rttiVec(inRttiVec)
     {
         rttiMap.reserve(rttiVec.size());
@@ -158,10 +158,10 @@ namespace Runtime::Internal {
         for (const auto& rtti : rttiVec) {
             rtti.MoveAssign(elem, rtti.Get(lastElem));
         }
-        entityMap.erase(inEntity);
         entityMap.at(entityToLastElem) = elemIndex;
-        elemMap.erase(lastElemIndex);
+        entityMap.erase(inEntity);
         elemMap.at(elemIndex) = entityToLastElem;
+        elemMap.erase(lastElemIndex);
     }
 
     ElemPtr Archetype::GetElem(Entity inEntity) const
@@ -242,7 +242,7 @@ namespace Runtime::Internal {
     void Archetype::Reserve(float inRatio)
     {
         Assert(inRatio > 1.0f);
-        const size_t newCapacity = static_cast<size_t>(static_cast<float>(Capacity()) * inRatio);
+        const size_t newCapacity = static_cast<size_t>(std::ceil(static_cast<float>(std::max(Capacity(), static_cast<size_t>(1))) * inRatio));
         std::vector<uint8_t> newMemory(newCapacity * elemSize);
 
         for (auto i = 0; i < size; i++) {
@@ -266,7 +266,7 @@ namespace Runtime::Internal {
     }
 
     EntityPool::EntityPool()
-        : counter()
+        : counter(1)
     {
     }
 
@@ -282,15 +282,16 @@ namespace Runtime::Internal {
 
     Entity EntityPool::Allocate()
     {
+        Entity result = entityNull;
         if (!free.empty()) {
-            const Entity result = *free.begin();
+            result = *free.begin();
             free.erase(result);
-            return result;
         } else {
-            const Entity result = counter++;
+            result = counter++;
             allocated.emplace(result);
-            return result;
         }
+        SetArchetype(result, 0);
+        return result;
     }
 
     void EntityPool::Free(Entity inEntity)
@@ -298,6 +299,7 @@ namespace Runtime::Internal {
         Assert(Valid(inEntity));
         allocated.erase(inEntity);
         free.emplace(inEntity);
+        archetypeMap.erase(inEntity);
     }
 
     void EntityPool::Clear()
@@ -305,6 +307,7 @@ namespace Runtime::Internal {
         counter = 0;
         free.clear();
         allocated.clear();
+        archetypeMap.clear();
     }
 
     void EntityPool::Each(const EntityTraverseFunc& inFunc) const
@@ -554,7 +557,10 @@ namespace Runtime {
             });
     }
 
-    ECRegistry::ECRegistry() = default;
+    ECRegistry::ECRegistry()
+    {
+        archetypes.emplace(0, Internal::Archetype({}));
+    }
 
     ECRegistry::~ECRegistry()
     {
@@ -599,11 +605,15 @@ namespace Runtime {
 
     Entity ECRegistry::Create()
     {
-        return entities.Allocate();
+        const Entity result = entities.Allocate();
+        archetypes.at(entities.GetArchetype(result)).EmplaceElem(result);
+        return result;
     }
 
     void ECRegistry::Destroy(Entity inEntity)
     {
+        Assert(Valid(inEntity));
+        archetypes.at(entities.GetArchetype(inEntity)).EraseElem(inEntity);
         entities.Free(inEntity);
     }
 
@@ -707,7 +717,7 @@ namespace Runtime {
             newArchetype->EmplaceElem(inEntity);
         }
 
-        Mirror::Any tempObj = inClass->Construct(inArgs);
+        Mirror::Any tempObj = inClass->ConstructDyn(inArgs);
         Mirror::Any compRef = newArchetype->EmplaceComp(inEntity, inClass, tempObj.Ref());
         NotifyConstructedDyn(inClass, inEntity);
         return compRef;

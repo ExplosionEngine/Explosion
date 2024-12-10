@@ -1286,13 +1286,13 @@ TEST(AnyTest, ArrayTest)
 TEST(AnyTest, StdOptionalViewTest)
 {
     Any a0 = std::optional<int> {};
-    const StdOptionalView v0(a0);
+    const StdOptionalView v0(a0.Ref());
     ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
     ASSERT_FALSE(v0.HasValue());
 
     std::optional<int> t0 = 1;
     Any a1 = std::ref(t0);
-    const StdOptionalView v1(a1);
+    const StdOptionalView v1(a1.Ref());
     ASSERT_TRUE(v1.HasValue());
     ASSERT_EQ(v1.Value().As<const int&>(), 1);
 }
@@ -1300,7 +1300,7 @@ TEST(AnyTest, StdOptionalViewTest)
 TEST(AnyTest, StdPairViewTest)
 {
     Any a0 = std::pair<int, bool> { 1, true };
-    const StdPairView v0(a0);
+    const StdPairView v0(a0.Ref());
     ASSERT_EQ(v0.KeyType(), GetTypeInfo<int>());
     ASSERT_EQ(v0.ValueType(), GetTypeInfo<bool>());
     ASSERT_EQ(v0.Key().As<const int&>(), 1);
@@ -1310,7 +1310,7 @@ TEST(AnyTest, StdPairViewTest)
 TEST(AnyTest, StdArrayViewTest)
 {
     Any a0 = std::array<int, 3> { 1, 2, 3 };
-    const StdArrayView v0(a0);
+    const StdArrayView v0(a0.Ref());
     ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
     ASSERT_EQ(v0.Size(), 3);
     for (auto i = 0; i < 3; i++) {
@@ -1322,7 +1322,7 @@ TEST(AnyTest, StdArrayViewTest)
 TEST(AnyTest, StdVectorViewTest)
 {
     Any a0 = std::vector<int> { 1, 2, 3 };
-    const StdVectorView v0(a0);
+    const StdVectorView v0(a0.Ref());
     ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
     ASSERT_EQ(v0.Size(), 3);
     for (auto i = 0; i < 3; i++) {
@@ -1339,7 +1339,7 @@ TEST(AnyTest, StdListViewTest)
 {
     std::list<int> t0 = { 1, 2, 3 };
     Any a0 = std::ref(t0);
-    const StdListView v0(a0);
+    const StdListView v0(a0.Ref());
     ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
     ASSERT_EQ(v0.Size(), 3);
 
@@ -1362,7 +1362,7 @@ TEST(AnyTest, StdListViewTest)
 TEST(AnyTest, StdunorderedSetViewTest)
 {
     Any a0 = std::unordered_set<int> { 1, 2, 3 };
-    const StdUnorderedSetView v0(a0);
+    const StdUnorderedSetView v0(a0.Ref());
     ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
     ASSERT_EQ(v0.Size(), 3);
 
@@ -1385,7 +1385,7 @@ TEST(AnyTest, StdunorderedSetViewTest)
 TEST(AnyTest, StdSetViewTest)
 {
     Any a0 = std::set<int> { 1, 2, 3 };
-    const StdSetView v0(a0);
+    const StdSetView v0(a0.Ref());
     ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
     ASSERT_EQ(v0.Size(), 3);
 
@@ -1411,7 +1411,7 @@ TEST(AnyTest, StdUnorderedMapViewTest)
         { 1, false },
         { 2, true }
     };
-    const StdUnorderedMapView v0(a0);
+    const StdUnorderedMapView v0(a0.Ref());
     ASSERT_EQ(v0.KeyType(), GetTypeInfo<int>());
     ASSERT_EQ(v0.ValueType(), GetTypeInfo<bool>());
     ASSERT_EQ(v0.Size(), 2);
@@ -1435,10 +1435,10 @@ TEST(AnyTest, StdUnorderedMapViewTest)
 TEST(AnyTest, StdMapViewTest)
 {
     Any a0 = std::map<int, bool> {
-            { 1, false },
-            { 2, true }
+        { 1, false },
+        { 2, true }
     };
-    const StdMapView v0(a0);
+    const StdMapView v0(a0.Ref());
     ASSERT_EQ(v0.KeyType(), GetTypeInfo<int>());
     ASSERT_EQ(v0.ValueType(), GetTypeInfo<bool>());
     ASSERT_EQ(v0.Size(), 2);
@@ -1462,7 +1462,7 @@ TEST(AnyTest, StdMapViewTest)
 TEST(AnyTest, StdTupleViewTest)
 {
     Any a0 = std::tuple<int, bool, std::string> { 1, true, "2" };
-    const StdTupleView v0(a0);
+    const StdTupleView v0(a0.Ref());
     ASSERT_EQ(v0.Size(), 3);
     ASSERT_EQ(v0.ElementType(0), GetTypeInfo<int>());
     ASSERT_EQ(v0.ElementType(1), GetTypeInfo<bool>());

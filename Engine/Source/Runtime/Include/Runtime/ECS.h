@@ -15,6 +15,8 @@
 
 namespace Runtime {
     using Entity = size_t;
+    static constexpr Entity entityNull = 0;
+
     using CompClass = const Mirror::Class*;
     using GCompClass = const Mirror::Class*;
     using SystemClass = const Mirror::Class*;
@@ -45,8 +47,8 @@ namespace Runtime::Internal {
     public:
         explicit CompRtti(CompClass inClass);
         void Bind(size_t inOffset);
-        Mirror::Any MoveConstruct(ElemPtr inElem, const Mirror::Any& inOther) const;
-        Mirror::Any MoveAssign(ElemPtr inElem, const Mirror::Any& inOther) const;
+        Mirror::Any MoveConstruct(ElemPtr inElem, const Mirror::Argument& inOther) const;
+        Mirror::Any MoveAssign(ElemPtr inElem, const Mirror::Argument& inOther) const;
         void Destruct(ElemPtr inElem) const;
         Mirror::Any Get(ElemPtr inElem) const;
         CompClass Class() const;
@@ -758,13 +760,13 @@ namespace Runtime {
     template <typename C>
     C* ECRegistry::Find(Entity inEntity)
     {
-        return Has<C>() ? &Get<C>(inEntity) : nullptr;
+        return Has<C>(inEntity) ? &Get<C>(inEntity) : nullptr;
     }
 
     template <typename C>
     const C* ECRegistry::Find(Entity inEntity) const
     {
-        return Has<C>() ? &Get<C>(inEntity) : nullptr;
+        return Has<C>(inEntity) ? &Get<C>(inEntity) : nullptr;
     }
 
     template <typename C>

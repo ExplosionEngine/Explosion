@@ -32,14 +32,24 @@ TEST(ECSTest, EntityTest)
 
 TEST(ECSTest, ComponentStaticTest)
 {
-    // ECRegistry registry;
-    // const auto entity0 = registry.Create();
-    // const auto entity1 = registry.Create();
-    //
-    // registry.Emplace<CompA>(entity0, 1);
-    // registry.Emplace<CompA>(entity1, 2);
-    // ASSERT_TRUE(registry.Has<CompA>(entity0));
-    // ASSERT_TRUE(registry.Has<CompA>(entity1));
+    ECRegistry registry;
+    const auto entity0 = registry.Create();
+    const auto entity1 = registry.Create();
+
+    registry.Emplace<CompA>(entity0, 1);
+    registry.Emplace<CompA>(entity1, 2);
+    ASSERT_TRUE(registry.Has<CompA>(entity0));
+    ASSERT_TRUE(registry.Has<CompA>(entity1));
+    ASSERT_EQ(registry.Find<CompA>(entity0)->value, 1);
+    ASSERT_EQ(registry.Find<CompA>(entity1)->value, 2);
+    ASSERT_EQ(registry.Get<CompA>(entity0).value, 1);
+    ASSERT_EQ(registry.Get<CompA>(entity1).value, 2);
+
+    const ECRegistry& constRegistry = registry;
+    ASSERT_EQ(constRegistry.Find<CompA>(entity0)->value, 1);
+    ASSERT_EQ(constRegistry.Find<CompA>(entity1)->value, 2);
+    ASSERT_EQ(constRegistry.Get<CompA>(entity0).value, 1);
+    ASSERT_EQ(constRegistry.Get<CompA>(entity1).value, 2);
 
     // TODO
 }

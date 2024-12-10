@@ -819,6 +819,8 @@ namespace Mirror {
     const Id IdPresets::globalScope = Id("_globalScope");
     const Id IdPresets::detor = Id("_detor");
     const Id IdPresets::defaultCtor = Id("_defaultCtor");
+    const Id IdPresets::copyCtor = Id("_copyCtor");
+    const Id IdPresets::moveCtor = Id("_moveCtor");
 
     ReflNode::ReflNode(Id inId) : id(std::move(inId)) {}
 
@@ -1340,6 +1342,12 @@ namespace Mirror {
         }
         if (params.defaultConstructorParams.has_value()) {
             EmplaceConstructor(IdPresets::defaultCtor, std::move(params.defaultConstructorParams.value()));
+        }
+        if (params.copyConstructorParams.has_value()) {
+            EmplaceConstructor(IdPresets::copyCtor, std::move(params.copyConstructorParams.value()));
+        }
+        if (params.moveConstructorParams.has_value()) {
+            EmplaceConstructor(IdPresets::moveCtor, std::move(params.moveConstructorParams.value()));
         }
     }
 
@@ -1920,7 +1928,7 @@ namespace Mirror {
     StdOptionalView::StdOptionalView(const Any& inRef)
         : ref(inRef)
     {
-        Assert(ref.CanAsTemplateView<StdOptionalView>());
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdOptionalView>());
         rtti = static_cast<const StdOptionalViewRtti*>(ref.GetTemplateViewRtti());
     }
 
@@ -1942,7 +1950,7 @@ namespace Mirror {
     StdPairView::StdPairView(const Any& inRef)
         : ref(inRef)
     {
-        Assert(ref.CanAsTemplateView<StdPairView>());
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdPairView>());
         rtti = static_cast<const StdPairViewRtti*>(ref.GetTemplateViewRtti());
     }
 
@@ -1979,7 +1987,7 @@ namespace Mirror {
     StdArrayView::StdArrayView(const Any& inRef)
         : ref(inRef)
     {
-        Assert(ref.CanAsTemplateView<StdArrayView>());
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdArrayView>());
         rtti = static_cast<const StdArrayViewRtti*>(ref.GetTemplateViewRtti());
     }
 
@@ -2006,7 +2014,7 @@ namespace Mirror {
     StdVectorView::StdVectorView(const Any& inRef)
         : ref(inRef)
     {
-        Assert(ref.CanAsTemplateView<StdVectorView>());
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdVectorView>());
         rtti = static_cast<const StdVectorViewRtti*>(ref.GetTemplateViewRtti());
     }
 
@@ -2030,9 +2038,9 @@ namespace Mirror {
         return rtti->getConstElement(ref, inIndex);
     }
 
-    Any StdVectorView::EmplaceBack(const Argument& inNewObj) const
+    Any StdVectorView::EmplaceBack(const Argument& inTempObj) const
     {
-        return rtti->emplaceBack(ref, inNewObj);
+        return rtti->emplaceBack(ref, inTempObj);
     }
 
     void StdVectorView::Erase(size_t inIndex) const
@@ -2043,8 +2051,8 @@ namespace Mirror {
     StdListView::StdListView(const Any& inRef)
         : ref(inRef)
     {
-        Assert(ref.CanAsTemplateView<StdListView>());
-        rtti = static_cast<const StdListViewRtti*>(ref.GetTemplateViewRtti());
+        Assert(ref.IsRef() && inRef.CanAsTemplateView<StdListView>());
+        rtti = static_cast<const StdListViewRtti*>(inRef.GetTemplateViewRtti());
     }
 
     const TypeInfo* StdListView::ElementType() const
@@ -2080,7 +2088,7 @@ namespace Mirror {
     StdUnorderedSetView::StdUnorderedSetView(const Any& inRef)
         : ref(inRef)
     {
-        Assert(ref.CanAsTemplateView<StdUnorderedSetView>());
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdUnorderedSetView>());
         rtti = static_cast<const StdUnorderedSetViewRtti*>(ref.GetTemplateViewRtti());
     }
 
@@ -2122,7 +2130,7 @@ namespace Mirror {
     StdSetView::StdSetView(const Any& inRef)
         : ref(inRef)
     {
-        Assert(ref.CanAsTemplateView<StdSetView>());
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdSetView>());
         rtti = static_cast<const StdSetViewRtti*>(ref.GetTemplateViewRtti());
     }
 
@@ -2159,7 +2167,7 @@ namespace Mirror {
     StdUnorderedMapView::StdUnorderedMapView(const Any& inRef)
         : ref(inRef)
     {
-        Assert(ref.CanAsTemplateView<StdUnorderedMapView>());
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdUnorderedMapView>());
         rtti = static_cast<const StdUnorderedMapViewRtti*>(ref.GetTemplateViewRtti());
     }
 
@@ -2216,7 +2224,7 @@ namespace Mirror {
     StdMapView::StdMapView(const Any& inRef)
         : ref(inRef)
     {
-        Assert(ref.CanAsTemplateView<StdMapView>());
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdMapView>());
         rtti = static_cast<const StdMapViewRtti*>(ref.GetTemplateViewRtti());
     }
 
@@ -2273,7 +2281,7 @@ namespace Mirror {
     StdTupleView::StdTupleView(const Any& inRef)
         : ref(inRef)
     {
-        Assert(ref.CanAsTemplateView<StdTupleView>());
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdTupleView>());
         rtti = static_cast<const StdTupleRtti*>(ref.GetTemplateViewRtti());
     }
 
