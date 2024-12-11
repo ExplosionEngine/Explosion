@@ -67,18 +67,22 @@ namespace Common {
 
         static size_t Serialize(BinarySerializeStream& stream, const ReversedZOrthogonalProjection<T>& value)
         {
-            return Serializer<T>::Serialize(stream, value.width)
-                + Serializer<T>::Serialize(stream, value.height)
-                + Serializer<T>::Serialize(stream, value.nearPlane)
-                + Serializer<std::optional<T>>::Serialize(stream, value.farPlane);
+            size_t serialized = 0;
+            serialized += Serializer<T>::Serialize(stream, value.width);
+            serialized += Serializer<T>::Serialize(stream, value.height);
+            serialized += Serializer<T>::Serialize(stream, value.nearPlane);
+            serialized += Serializer<std::optional<T>>::Serialize(stream, value.farPlane);
+            return serialized;
         }
 
         static size_t Deserialize(BinaryDeserializeStream& stream, ReversedZOrthogonalProjection<T>& value)
         {
-            return Serializer<T>::Deserialize(stream, value.width)
-                + Serializer<T>::Deserialize(stream, value.height)
-                + Serializer<T>::Deserialize(stream, value.nearPlane)
-                + Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
+            size_t deserialized = 0;
+            deserialized += Serializer<T>::Deserialize(stream, value.width);
+            deserialized += Serializer<T>::Deserialize(stream, value.height);
+            deserialized += Serializer<T>::Deserialize(stream, value.nearPlane);
+            deserialized += Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
+            return deserialized;
         }
     };
 
@@ -90,20 +94,24 @@ namespace Common {
 
         static size_t Serialize(BinarySerializeStream& stream, const ReversedZPerspectiveProjection<T>& value)
         {
-            return Serializer<T>::Serialize(stream, value.fov)
-                + Serializer<T>::Serialize(stream, value.width)
-                + Serializer<T>::Serialize(stream, value.height)
-                + Serializer<T>::Serialize(stream, value.nearPlane)
-                + Serializer<std::optional<T>>::Serialize(stream, value.farPlane);
+            size_t serialized = 0;
+            serialized += Serializer<T>::Serialize(stream, value.fov);
+            serialized += Serializer<T>::Serialize(stream, value.width);
+            serialized += Serializer<T>::Serialize(stream, value.height);
+            serialized += Serializer<T>::Serialize(stream, value.nearPlane);
+            serialized += Serializer<std::optional<T>>::Serialize(stream, value.farPlane);
+            return serialized;
         }
 
         static size_t Deserialize(BinaryDeserializeStream& stream, ReversedZPerspectiveProjection<T>& value)
         {
-            return Serializer<T>::Deserialize(stream, value.fov)
-                + Serializer<T>::Deserialize(stream, value.width)
-                + Serializer<T>::Deserialize(stream, value.height)
-                + Serializer<T>::Deserialize(stream, value.nearPlane)
-                + Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
+            size_t deserialized = 0;
+            deserialized += Serializer<T>::Deserialize(stream, value.fov);
+            deserialized += Serializer<T>::Deserialize(stream, value.width);
+            deserialized += Serializer<T>::Deserialize(stream, value.height);
+            deserialized += Serializer<T>::Deserialize(stream, value.nearPlane);
+            deserialized += Serializer<std::optional<T>>::Deserialize(stream, value.farPlane);
+            return deserialized;
         }
     };
 

@@ -61,14 +61,18 @@ namespace Common { // NOLINT
 
         static size_t Serialize(BinarySerializeStream& stream, const Box<T>& value)
         {
-            return Serializer<Vec<T, 3>>::Serialize(stream, value.min)
-                + Serializer<Vec<T, 3>>::Serialize(stream, value.max);
+            size_t serialized = 0;
+            serialized += Serializer<Vec<T, 3>>::Serialize(stream, value.min);
+            serialized += Serializer<Vec<T, 3>>::Serialize(stream, value.max);
+            return serialized;
         }
 
         static size_t Deserialize(BinaryDeserializeStream& stream, Box<T>& value)
         {
-            return Serializer<Vec<T, 3>>::Deserialize(stream, value.min)
-                + Serializer<Vec<T, 3>>::Deserialize(stream, value.max);
+            size_t deserialized = 0;
+            deserialized += Serializer<Vec<T, 3>>::Deserialize(stream, value.min);
+            deserialized += Serializer<Vec<T, 3>>::Deserialize(stream, value.max);
+            return deserialized;
         }
     };
 

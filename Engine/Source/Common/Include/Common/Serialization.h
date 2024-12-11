@@ -643,14 +643,18 @@ namespace Common {
 
         static size_t Serialize(BinarySerializeStream& stream, const std::pair<K, V>& value)
         {
-            return Serializer<K>::Serialize(stream, value.first)
-                + Serializer<V>::Serialize(stream, value.second);
+            size_t serialized = 0;
+            serialized += Serializer<K>::Serialize(stream, value.first);
+            serialized += Serializer<V>::Serialize(stream, value.second);
+            return serialized;
         }
 
         static size_t Deserialize(BinaryDeserializeStream& stream, std::pair<K, V>& value)
         {
-            return Serializer<K>::Deserialize(stream, value.first)
-                + Serializer<V>::Deserialize(stream, value.second);
+            size_t deserialized = 0;
+            deserialized += Serializer<K>::Deserialize(stream, value.first);
+            deserialized += Serializer<V>::Deserialize(stream, value.second);
+            return deserialized;
         }
     };
 
