@@ -66,7 +66,7 @@ function(Get3rdPlatformValue)
     cmake_parse_arguments(PARAMS "ARCH" "OUTPUT" "INPUT" ${ARGN})
 
     if (${PARAMS_ARCH})
-        set(PLATFORM_KEYWORDS "Windows-AMD64;Darwin-arm64;Darwin-x86_64")
+        set(PLATFORM_KEYWORDS "Windows-AMD64;Darwin-arm64")
         set(CURRENT_KEYWORDS "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
     else()
         set(PLATFORM_KEYWORDS "Windows;Darwin;Linux")
@@ -331,7 +331,7 @@ function(Add3rdCMakeProject)
         SOURCE_DIR ${SOURCE_DIR}
         BINARY_DIR ${BINARY_DIR}
         CMAKE_ARGS ${CMAKE_BUILD_TYPE_ARGS} -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${PARAMS_CMAKE_ARG}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG>
+        BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG> -j 16
         INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG>
     )
     set_target_properties(

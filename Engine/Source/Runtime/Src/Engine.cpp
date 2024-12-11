@@ -3,9 +3,10 @@
 //
 
 #include <Runtime/Engine.h>
-#include <Core/Module.h>
 #include <Common/Debug.h>
+#include <Core/Module.h>
 #include <Core/Paths.h>
+#include <Runtime/World.h>
 
 namespace Runtime {
     Engine::Engine(const EngineInitParams& inParams)
@@ -13,9 +14,20 @@ namespace Runtime {
         if (!inParams.projectFile.empty()) {
             Core::Paths::SetCurrentProjectFile(inParams.projectFile);
         }
+
+        renderModule = ::Core::ModuleManager::Get().FindOrLoadTyped<Render::RenderModule>("Render");
+        Assert(renderModule != nullptr);
+
+        Render::RenderModuleInitParams initParams;
+        initParams.rhiType = RHI::RHIAbbrStringToRHIType(inParams.rhiType);
+        renderModule->Initialize(initParams);
     }
 
-    Engine::~Engine() = default;
+    Engine::~Engine()
+    {
+        renderModule->DeInitialize();
+        ::Core::ModuleManager::Get().Unload("Render");
+    }
 
     void Engine::MountWorld(World* inWorld)
     {
@@ -25,6 +37,26 @@ namespace Runtime {
     void Engine::UnmountWorld(World* inWorld)
     {
         worlds.erase(inWorld);
+    }
+
+    Render::RenderModule& Engine::GetRenderModule() const
+    {
+        return *renderModule;
+    }
+
+    void Engine::Tick(float inTimeMs) const
+    {
+        for (auto* world : worlds) {
+            if (!world->Playing()) {
+                continue;
+            }
+            world->Tick(inTimeMs);
+        }
+    }
+
+    Common::UniqueRef<World> Engine::CreateWorld(const std::string& inName) const // NOLINT
+    {
+        return new World(inName);
     }
 
     Engine* EngineHolder::engine = nullptr;

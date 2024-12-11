@@ -10,10 +10,10 @@
 
 #include <Common/Memory.h>
 #include <RHI/RHI.h>
-#include <Rendering/ResourcePool.h>
-#include <Rendering/RenderingCache.h>
+#include <Render/ResourcePool.h>
+#include <Render/RenderingCache.h>
 
-namespace Rendering {
+namespace Render {
     class RGBuilder;
 
     enum class RGResType : uint8_t {

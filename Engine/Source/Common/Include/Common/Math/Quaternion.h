@@ -165,18 +165,22 @@ namespace Common {
 
         static size_t Serialize(BinarySerializeStream& stream, const Quaternion<T>& value)
         {
-            return Serializer<T>::Serialize(stream, value.w)
-                + Serializer<T>::Serialize(stream, value.x)
-                + Serializer<T>::Serialize(stream, value.y)
-                + Serializer<T>::Serialize(stream, value.z);
+            size_t serialized = 0;
+            serialized += Serializer<T>::Serialize(stream, value.w);
+            serialized += Serializer<T>::Serialize(stream, value.x);
+            serialized += Serializer<T>::Serialize(stream, value.y);
+            serialized += Serializer<T>::Serialize(stream, value.z);
+            return serialized;
         }
 
         static size_t Deserialize(BinaryDeserializeStream& stream, Quaternion<T>& value)
         {
-            return Serializer<T>::Deserialize(stream, value.w)
-                + Serializer<T>::Deserialize(stream, value.x)
-                + Serializer<T>::Deserialize(stream, value.y)
-                + Serializer<T>::Deserialize(stream, value.z);
+            size_t deserialized = 0;
+            deserialized += Serializer<T>::Deserialize(stream, value.w);
+            deserialized += Serializer<T>::Deserialize(stream, value.x);
+            deserialized += Serializer<T>::Deserialize(stream, value.y);
+            deserialized += Serializer<T>::Deserialize(stream, value.z);
+            return deserialized;
         }
     };
 
@@ -184,7 +188,7 @@ namespace Common {
     struct StringConverter<Angle<T>> {
         static std::string ToString(const Angle<T>& inValue)
         {
-            return fmt::format("a{}", StringConverter<T>::ToString(inValue.value));
+            return std::format("a{}", StringConverter<T>::ToString(inValue.value));
         }
     };
 
@@ -200,7 +204,7 @@ namespace Common {
     struct StringConverter<Quaternion<T>> {
         static std::string ToString(const Quaternion<T>& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "({}, {}, {}, {})",
                 StringConverter<T>::ToString(inValue.w),
                 StringConverter<T>::ToString(inValue.x),

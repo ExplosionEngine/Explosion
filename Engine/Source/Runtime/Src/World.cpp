@@ -1,49 +1,13 @@
 //
-// Created by johnk on 2024/8/2.
+// Created by johnk on 2024/10/31.
 //
 
 #include <Runtime/World.h>
 #include <Runtime/Engine.h>
 
 namespace Runtime {
-    const Mirror::Class* Internal::GetClassChecked(const std::string& inName)
-    {
-        return &Mirror::Class::Get(inName);
-    }
-
-    Component::Component() = default;
-
-    State::State() = default;
-
-    System::System() = default;
-
-    System::~System() = default;
-
-    void System::Setup(Commands& commands) const {}
-
-    void System::Tick(Commands& commands, float inTimeMs) const {}
-
-    Commands::Commands(World& inWorld)
-        : world(inWorld)
-    {
-    }
-
-    Commands::~Commands() = default;
-
-    Entity Commands::CreateEntity() // NOLINT
-    {
-        return world.registry.create();
-    }
-
-    void Commands::DestroyEntity(Entity inEntity) // NOLINT
-    {
-        world.registry.destroy(inEntity);
-    }
-
-    World::World(std::string inName)
-        : setuped(false)
-        , playing(false)
-        , name(std::move(inName))
+    World::World(const std::string& inName)
+        : name(inName)
     {
         EngineHolder::Get().MountWorld(this);
     }
@@ -53,87 +17,64 @@ namespace Runtime {
         EngineHolder::Get().UnmountWorld(this);
     }
 
-    void World::AddBarrier()
+    void World::SetSystemGraph(const SystemGraph& inSystemGraph)
     {
-        systemsGraph.emplace_back(systemsInBarriers);
-        systemsInBarriers.clear();
+        systemGraph = inSystemGraph;
     }
 
-    void World::Play()
+    void World::Reset()
     {
-        Assert(!setuped && systemsInBarriers.empty());
-        setuped = true;
-        playing = true;
-        ExecuteSystemGraph([&](const System& inSystem) -> void {
-            Commands commands(*this);
-            inSystem.Setup(commands);
-        });
+        playStatus = PlayStatus::stopped;
     }
 
-    void World::Stop()
+    PlayStatus World::PlayStatus() const
     {
-        Assert(setuped);
-        setuped = false;
-        playing = false;
+        return playStatus;
     }
 
-    void World::Pause()
+    bool World::Stopped() const
     {
-        Assert(setuped && playing);
-        playing = false;
-    }
-
-    void World::Resume()
-    {
-        Assert(setuped && !playing);
-        playing = true;
-    }
-
-    void World::Tick(float inFrameTimeMs)
-    {
-        Assert(setuped && playing);
-        ExecuteSystemGraph([&](const System& inSystem) -> void {
-            Commands commands(*this);
-            inSystem.Tick(commands, inFrameTimeMs);
-        });
-    }
-
-    bool World::Started() const
-    {
-        return setuped;
+        return playStatus == PlayStatus::stopped;
     }
 
     bool World::Playing() const
     {
-        return playing;
+        return playStatus == PlayStatus::playing;
     }
 
-    void World::ExecuteSystemGraph(const SystemOp& inOp)
+    bool World::Paused() const
     {
-        tf::Taskflow taskFlow;
-        auto newBarrierTask = [&]() -> decltype(auto) {
-            return taskFlow.emplace([]() -> void {});
-        };
-
-        tf::Task barrierTask = newBarrierTask();
-        for (const auto& systemSet : systemsGraph) {
-            std::vector<tf::Task> tasks;
-            for (const auto& systemClass : systemSet) {
-                auto& addedTask = tasks.emplace_back(taskFlow.emplace([&]() -> void {
-                    inOp(systems.at(systemClass).As<const System&>());
-                }));
-                addedTask.succeed(barrierTask);
-            }
-
-            barrierTask = newBarrierTask();
-            for (const auto& task : tasks) {
-                barrierTask.succeed(task);
-            }
-        }
-
-        tf::Executor executor;
-        executor
-            .run(taskFlow)
-            .wait();
+        return playStatus == PlayStatus::paused;
     }
-}
+
+    void World::Play()
+    {
+        Assert(Stopped() && !executor.has_value());
+        playStatus = PlayStatus::playing;
+        executor.emplace(ecRegistry, systemGraph);
+    }
+
+    void World::Resume()
+    {
+        Assert(Paused());
+        playStatus = PlayStatus::playing;
+    }
+
+    void World::Pause()
+    {
+        Assert(Playing());
+        playStatus = PlayStatus::paused;
+    }
+
+    void World::Stop()
+    {
+        Assert((Playing() || Paused()) && executor.has_value());
+        playStatus = PlayStatus::stopped;
+        executor.reset();
+    }
+
+    void World::Tick(float inTimeMs)
+    {
+        executor->Tick(inTimeMs);
+    }
+} // namespace Runtime

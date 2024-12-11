@@ -9,27 +9,27 @@
 #include <Common/Debug.h>
 #include <Core/Module.h>
 #include <Render/Scene.h>
-#include <Rendering/Api.h>
+#include <Render/Api.h>
 #include <RHI/RHI.h>
 
-namespace Rendering {
-    struct RenderingModuleInitParams {
+namespace Render {
+    struct RenderModuleInitParams {
         RHI::RHIType rhiType;
     };
 
-    class RENDERING_API RenderingModule final : public Core::Module {
+    class RENDER_API RenderModule final : public Core::Module {
     public:
-        RenderingModule();
-        ~RenderingModule() override;
+        RenderModule();
+        ~RenderModule() override;
 
         void OnLoad() override;
         void OnUnload() override;
         Core::ModuleType Type() const override;
 
-        void Initialize(const RenderingModuleInitParams& inParams);
+        void Initialize(const RenderModuleInitParams& inParams);
+        void DeInitialize();
         RHI::Device* GetDevice() const;
-        Render::IScene* AllocateScene();
-        void DestroyScene(Render::IScene* inScene);
+        Scene* AllocateScene();
         void ShutdownRenderingThread();
         void FlushAllRenderingCommands() const;
 

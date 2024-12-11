@@ -21,8 +21,7 @@ namespace Editor {
     }
 
     Core::Core()
-        : renderingModule(nullptr)
-        , engine(nullptr)
+        : engine(nullptr)
     {
     }
 
@@ -32,13 +31,11 @@ namespace Editor {
     {
         ParseCommandLineArgs(argc, argv);
         InitializeRuntime();
-        InitializeRendering();
     }
 
     void Core::Cleanup() // NOLINT
     {
         ::Core::ModuleManager::Get().Unload("Runtime");
-        ::Core::ModuleManager::Get().Unload("Rendering");
     }
 
     Runtime::Engine* Core::GetEngine() const
@@ -51,11 +48,6 @@ namespace Editor {
         return !caProjectFile.GetValue().empty();
     }
 
-    Rendering::RenderingModule* Core::GetRenderingModule() const
-    {
-        return renderingModule;
-    }
-
     void Core::ParseCommandLineArgs(int argc, char** argv) const // NOLINT
     {
         ::Core::Cli::Get().Parse(argc, argv);
@@ -65,17 +57,9 @@ namespace Editor {
     {
         Runtime::EngineInitParams params {};
         params.projectFile = caProjectFile.GetValue();
+        params.rhiType = caRhiType.GetValue();
+
         Runtime::EngineHolder::Load("Editor", params);
         engine = &Runtime::EngineHolder::Get();
-    }
-
-    void Core::InitializeRendering()
-    {
-        renderingModule = ::Core::ModuleManager::Get().FindOrLoadTyped<Rendering::RenderingModule>("Rendering");
-        Assert(renderingModule != nullptr);
-
-        Rendering::RenderingModuleInitParams initParams;
-        initParams.rhiType = RHI::RHIAbbrStringToRHIType(caRhiType.GetValue());
-        renderingModule->Initialize(initParams);
     }
 }

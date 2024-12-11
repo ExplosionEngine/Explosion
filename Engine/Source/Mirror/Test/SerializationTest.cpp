@@ -10,6 +10,7 @@
 #include <Test/Test.h>
 #include <Mirror/Mirror.h>
 #include <SerializationTest.h>
+using namespace Mirror;
 
 int ga = 1;
 float gb = 2.0f;
@@ -186,6 +187,13 @@ TEST(SerializationTest, ReflNodeSerializationTest)
     PerformSerializationTest<const Enum*>(fileName, enun);
     PerformSerializationTest<const EnumValue*>(fileName, nullptr);
     PerformSerializationTest<const EnumValue*>(fileName, &enun->GetValue("a"));
+}
+
+TEST(SerializationTest, MetaObjectSerializationTest)
+{
+    PerformJsonSerializationTest<SerializationTestStruct2>(
+        SerializationTestStruct2 { 1, 2.0f, "3", 4.0 },
+        "");
 }
 
 TEST(SerializationTest, EnumJsonSerializationTest)

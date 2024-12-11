@@ -674,27 +674,27 @@ TEST(MathTest, ToStringTest)
     // mat
     ASSERT_EQ(
         ToString(HMat2x3(2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f)),
-        fmt::format("({}, {}, {}, {}, {}, {})",
+        std::format("({}, {}, {}, {}, {}, {})",
             std::to_string(2.0f), std::to_string(3.0f), std::to_string(4.0f),
             std::to_string(5.0f), std::to_string(6.0f), std::to_string(7.0f)));
 
     // angle/radian
-    ASSERT_EQ(ToString(FAngle(75.0f)), fmt::format("a{}", std::to_string(75.0f)));
+    ASSERT_EQ(ToString(FAngle(75.0f)), std::format("a{}", std::to_string(75.0f)));
     ASSERT_EQ(ToString(FRadian(1.5f * pi)), std::to_string(1.5f * pi));
 
     // quaternion
     ASSERT_EQ(
         ToString(FQuat(1.0f, 0.1f, 0.2f, 0.5f)),
-        fmt::format("({}, {}, {}, {})",
+        std::format("({}, {}, {}, {})",
             std::to_string(1.0f), std::to_string(0.1f), std::to_string(0.2f), std::to_string(0.5f)));
 
     // color
     ASSERT_EQ(
         ToString(Color(1, 2, 3, 1)),
-        fmt::format("{}r={}, g={}, b={}, a={}{}", "{", 1, 2, 3, 1, "}"));
+        std::format("{}r={}, g={}, b={}, a={}{}", "{", 1, 2, 3, 1, "}"));
     ASSERT_EQ(
         ToString(LinearColor(1.0f, 0.5f, 0.2f, 1.0f)),
-        fmt::format("{}r={}, g={}, b={}, a={}{}",
+        std::format("{}r={}, g={}, b={}, a={}{}",
             "{",
             std::to_string(1.0f), std::to_string(0.5f),
             std::to_string(0.2f), std::to_string(1.0f),
@@ -703,7 +703,7 @@ TEST(MathTest, ToStringTest)
     // react
     ASSERT_EQ(
         ToString(FRect(1.0f, 2.0f, 3.0f, 4.0f)),
-        fmt::format("{}min=({}, {}), max=({}, {}){}",
+        std::format("{}min=({}, {}), max=({}, {}){}",
             "{",
             std::to_string(1.0f), std::to_string(2.0f),
             std::to_string(3.0f), std::to_string(4.0f),
@@ -712,7 +712,7 @@ TEST(MathTest, ToStringTest)
     // box
     ASSERT_EQ(
         ToString(FBox(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f)),
-        fmt::format("{}min=({}, {}, {}), max=({}, {}, {}){}",
+        std::format("{}min=({}, {}, {}), max=({}, {}, {}){}",
             "{",
             std::to_string(1.0f), std::to_string(2.0f), std::to_string(3.0f),
             std::to_string(4.0f), std::to_string(5.0f), std::to_string(6.0f),
@@ -721,7 +721,7 @@ TEST(MathTest, ToStringTest)
     // sphere
     ASSERT_EQ(
         ToString(FSphere(1.0f, 2.0f, 3.0f, 1.0f)),
-        fmt::format("{}center=({}, {}, {}), radius={}{}",
+        std::format("{}center=({}, {}, {}), radius={}{}",
             "{",
             std::to_string(1.0f), std::to_string(2.0f), std::to_string(3.0f), std::to_string(1.0f),
             "}"));
@@ -729,7 +729,7 @@ TEST(MathTest, ToStringTest)
     // transform
     ASSERT_EQ(
         ToString(FTransform(FVec3(2.0f, 2.0f, 2.0f), FQuat(0.5f, 0.2f, 0.1f, 0.3f), FVec3(1.0f, 2.0f, 3.0f))),
-        fmt::format("{}scale=({}, {}, {}), rotation=({}, {}, {}, {}), translation=({}, {}, {}){}",
+        std::format("{}scale=({}, {}, {}), rotation=({}, {}, {}, {}), translation=({}, {}, {}){}",
             "{",
             std::to_string(2.0f), std::to_string(2.0f), std::to_string(2.0f),
             std::to_string(0.5f), std::to_string(0.2f), std::to_string(0.1f), std::to_string(0.3f),
@@ -739,7 +739,7 @@ TEST(MathTest, ToStringTest)
     // view transform
     ASSERT_EQ(
         ToString(FViewTransform(FQuat(0.5f, 0.2f, 0.1f, 0.3f), FVec3(1.0f, 2.0f, 3.0f))),
-        fmt::format("{}scale=({}, {}, {}), rotation=({}, {}, {}, {}), translation=({}, {}, {}){}",
+        std::format("{}scale=({}, {}, {}), rotation=({}, {}, {}, {}), translation=({}, {}, {}){}",
             "{",
             std::to_string(1.0f), std::to_string(1.0f), std::to_string(1.0f),
             std::to_string(0.5f), std::to_string(0.2f), std::to_string(0.1f), std::to_string(0.3f),
@@ -749,13 +749,13 @@ TEST(MathTest, ToStringTest)
     // projection
     ASSERT_EQ(
         ToString(FReversedZOrthoProjection(1024.0f, 768.0f, 1.0f, 500.0f)),
-        fmt::format("{}width={}, height={}, near={}, far={}{}",
+        std::format("{}width={}, height={}, near={}, far={}{}",
             "{",
             std::to_string(1024.0f), std::to_string(768.0f), std::to_string(1.0f), std::to_string(500.0f),
             "}"));
     ASSERT_EQ(
         ToString(FReversedZPerspectiveProjection(90.0f, 1024.0f, 768.0f, 1.0f, 500.0f)),
-        fmt::format("{}fov={}, width={}, height={}, near={}, far={}{}",
+        std::format("{}fov={}, width={}, height={}, near={}, far={}{}",
             "{",
             std::to_string(90.0f), std::to_string(1024.0f), std::to_string(768.0f), std::to_string(1.0f), std::to_string(500.0f),
             "}"));
@@ -767,22 +767,22 @@ TEST(MathTest, JsonSerializationTest)
     PerformJsonSerializationTest(HFloat(1.0f), FltToJson(1.0f));
 
     // vec
-    PerformJsonSerializationTest(FVec1(1.0f), fmt::format("[{}]", FltToJson(1.0f)));
-    PerformJsonSerializationTest(HVec2(2.0f, 3.0f), fmt::format("[{},{}]", FltToJson(2.0f), FltToJson(3.0f)));
+    PerformJsonSerializationTest(FVec1(1.0f), std::format("[{}]", FltToJson(1.0f)));
+    PerformJsonSerializationTest(HVec2(2.0f, 3.0f), std::format("[{},{}]", FltToJson(2.0f), FltToJson(3.0f)));
     PerformJsonSerializationTest(IVec3(1, 2, 3), "[1,2,3]");
     PerformJsonSerializationTest(UVec4(1, 2, 3, 4), "[1,2,3,4]");
 
     // mat
-    PerformJsonSerializationTest(FMat1x1(1.0f), fmt::format("[{}]", FltToJson(1.0f)));
+    PerformJsonSerializationTest(FMat1x1(1.0f), std::format("[{}]", FltToJson(1.0f)));
     PerformJsonSerializationTest(
         HMat2x3(2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f),
-        fmt::format("[{},{},{},{},{},{}]", FltToJson(2.0f), FltToJson(3.0f), FltToJson(4.0f), FltToJson(5.0f), FltToJson(6.0f), FltToJson(7.0f)));
+        std::format("[{},{},{},{},{},{}]", FltToJson(2.0f), FltToJson(3.0f), FltToJson(4.0f), FltToJson(5.0f), FltToJson(6.0f), FltToJson(7.0f)));
     PerformJsonSerializationTest(
         IMat3x4(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12),
         "[1,2,3,4,5,6,7,8,9,10,11,12]");
     PerformJsonSerializationTest(
         FMat4x4(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f),
-        fmt::format("[{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}]",
+        std::format("[{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}]",
             FltToJson(1.0f), FltToJson(2.0f), FltToJson(3.0f), FltToJson(4.0f),
             FltToJson(5.0f), FltToJson(6.0f), FltToJson(7.0f), FltToJson(8.0f),
             FltToJson(9.0f), FltToJson(10.0f), FltToJson(11.0f), FltToJson(12.0f),
@@ -793,13 +793,13 @@ TEST(MathTest, JsonSerializationTest)
     PerformJsonSerializationTest(FRadian(1.0f), FltToJson(1.0f));
 
     // quaternion
-    PerformJsonSerializationTest(FQuat(1.0f, 0.1f, 0.2f, 0.5f), fmt::format("[{},{},{},{}]", FltToJson(1.0f), FltToJson(0.1f), FltToJson(0.2f), FltToJson(0.5f)));
+    PerformJsonSerializationTest(FQuat(1.0f, 0.1f, 0.2f, 0.5f), std::format("[{},{},{},{}]", FltToJson(1.0f), FltToJson(0.1f), FltToJson(0.2f), FltToJson(0.5f)));
 
     // color
     PerformJsonSerializationTest(Color(1, 2, 3, 1), R"({"r":1,"g":2,"b":3,"a":1})");
     PerformJsonSerializationTest(
         LinearColor(1.0f, 0.5f, 0.2f, 1.0f),
-        fmt::format(R"({}"r":{},"g":{},"b":{},"a":{}{})",
+        std::format(R"({}"r":{},"g":{},"b":{},"a":{}{})",
             "{",
             FltToJson(1.0f), FltToJson(0.5f), FltToJson(0.2f), FltToJson(1.0f),
             "}"));
@@ -807,7 +807,7 @@ TEST(MathTest, JsonSerializationTest)
     // rect
     PerformJsonSerializationTest(
         FRect(1.0f, 2.0f, 3.0f, 4.0f),
-        fmt::format(R"({}"min":[{},{}],"max":[{},{}]{})",
+        std::format(R"({}"min":[{},{}],"max":[{},{}]{})",
             "{",
             FltToJson(1.0f), FltToJson(2.0f),
             FltToJson(3.0f), FltToJson(4.0f),
@@ -816,7 +816,7 @@ TEST(MathTest, JsonSerializationTest)
     // box
     PerformJsonSerializationTest(
         FBox(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f),
-        fmt::format(R"({}"min":[{},{},{}],"max":[{},{},{}]{})",
+        std::format(R"({}"min":[{},{},{}],"max":[{},{},{}]{})",
             "{",
             FltToJson(1.0f), FltToJson(2.0f), FltToJson(3.0f),
             FltToJson(4.0f), FltToJson(5.0f), FltToJson(6.0f),
@@ -825,7 +825,7 @@ TEST(MathTest, JsonSerializationTest)
     // sphere
     PerformJsonSerializationTest(
         FSphere(1.0f, 2.0f, 3.0f, 1.0f),
-        fmt::format(R"({}"center":[{},{},{}],"radius":{}{})",
+        std::format(R"({}"center":[{},{},{}],"radius":{}{})",
             "{",
             FltToJson(1.0f), FltToJson(2.0f), FltToJson(3.0f),
             FltToJson(1.0f),
@@ -835,7 +835,7 @@ TEST(MathTest, JsonSerializationTest)
     const FTransform transform(FVec3(2.0f, 2.0f, 2.0f), FQuat(1.0f, 0.2f, 0.3f, 0.4f), FVec3(1.0f, 2.0f, 3.0f));
     PerformJsonSerializationTest(
         transform,
-        fmt::format(R"({}"scale":[{},{},{}],"rotation":[{},{},{},{}],"translation":[{},{},{}]{})",
+        std::format(R"({}"scale":[{},{},{}],"rotation":[{},{},{},{}],"translation":[{},{},{}]{})",
             "{",
             FltToJson(2.0f), FltToJson(2.0f), FltToJson(2.0f),
             FltToJson(1.0f), FltToJson(0.2f), FltToJson(0.3f), FltToJson(0.4f),
@@ -845,7 +845,7 @@ TEST(MathTest, JsonSerializationTest)
     // view transform
     PerformJsonSerializationTest(
         FViewTransform(transform),
-        fmt::format(R"({}"scale":[{},{},{}],"rotation":[{},{},{},{}],"translation":[{},{},{}]{})",
+        std::format(R"({}"scale":[{},{},{}],"rotation":[{},{},{},{}],"translation":[{},{},{}]{})",
             "{",
             FltToJson(2.0f), FltToJson(2.0f), FltToJson(2.0f),
             FltToJson(1.0f), FltToJson(0.2f), FltToJson(0.3f), FltToJson(0.4f),
@@ -855,13 +855,13 @@ TEST(MathTest, JsonSerializationTest)
     // projection
     PerformJsonSerializationTest(
         FReversedZOrthoProjection(512.0f, 1024.0f, 1.0f),
-        fmt::format(R"({}"width":{},"height":{},"near":{},"far":{}{})",
+        std::format(R"({}"width":{},"height":{},"near":{},"far":{}{})",
             "{",
             FltToJson(512.0f), FltToJson(1024.0f), FltToJson(1.0f), "null",
             "}"));
     PerformJsonSerializationTest(
         FReversedZPerspectiveProjection(90.0f, 512.0f, 1024.0f, 1.0f, 500.0f),
-        fmt::format(R"({}"fov":{},"width":{},"height":{},"near":{},"far":{}{})",
+        std::format(R"({}"fov":{},"width":{},"height":{},"near":{},"far":{}{})",
             "{",
             FltToJson(90.0f), FltToJson(512.0f), FltToJson(1024.0f), FltToJson(1.0f), FltToJson(500.0f),
             "}"));

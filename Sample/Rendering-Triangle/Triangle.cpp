@@ -5,12 +5,11 @@
 #include <Application.h>
 #include <RHI/RHI.h>
 #include <Render/ShaderCompiler.h>
-#include <Rendering/RenderingCache.h>
-#include <Rendering/RenderGraph.h>
+#include <Render/RenderingCache.h>
+#include <Render/RenderGraph.h>
 
 using namespace Common;
 using namespace Render;
-using namespace Rendering;
 using namespace RHI;
 
 struct Vertex {

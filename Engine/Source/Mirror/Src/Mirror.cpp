@@ -33,7 +33,7 @@ namespace Mirror {
         const auto [dstRaw, dstRemoveRef, dstRemovePointer] = inDstType;
 
         const bool checkPointer = srcRaw->isPointer && dstRaw->isPointer;
-        const bool checkRef = dstRaw->isLValueReference;
+        const bool checkRef = dstRaw->isReference;
 
         if (!checkPointer && !checkRef) {
             return false;
@@ -56,7 +56,7 @@ namespace Mirror {
         if (srcClass == nullptr || dstClass == nullptr || !dstClass->IsBaseOf(srcClass)) {
             return false;
         }
-        return !srcRemoveRefOrPtr->isConst || dstRemoveRefOrPtr->isConst;
+        return !srcRemoveRefOrPtr->isConst || dstRaw->isRValueReference || dstRemoveRefOrPtr->isConst;
     }
 
     bool Convertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType)
@@ -64,15 +64,11 @@ namespace Mirror {
         const auto [srcRaw, srcRemoveRef, srcRemovePointer] = inSrcType;
         const auto [dstRaw, dstRemoveRef, dstRemovePointer] = inDstType;
 
-        if (dstRaw->isRValueReference) {
-            return false;
-        }
-
         if (srcRaw->id == dstRaw->id) { // NOLINT
-            if (!dstRaw->isLValueReference) {
+            if (!dstRaw->isReference) {
                 return true;
             }
-            return !srcRemoveRef->isConst || dstRemoveRef->isConst;
+            return !srcRemoveRef->isConst || dstRaw->isRValueReference || dstRemoveRef->isConst;
         }
         return PointerConvertible(inSrcType, inDstType) || PolymorphismConvertible(inSrcType, inDstType);
     }
@@ -131,6 +127,66 @@ namespace Mirror {
     {
         Reset();
         PerformMoveConstruct(std::move(inOther));
+        return *this;
+    }
+
+    Any& Any::CopyAssign(Any& inOther)
+    {
+        Assert(!IsConstRef());
+        PerformCopyAssign(inOther);
+        return *this;
+    }
+
+    Any& Any::CopyAssign(const Any& inOther)
+    {
+        Assert(!IsConstRef());
+        PerformCopyAssign(inOther);
+        return *this;
+    }
+
+    Any& Any::MoveAssign(Any& inOther) noexcept
+    {
+        Assert(!IsConstRef());
+        Assert(!inOther.IsRef() || inOther.IsNonConstRef());
+        PerformMoveAssign(inOther);
+        return *this;
+    }
+
+    Any& Any::MoveAssign(const Any& inOther) noexcept
+    {
+        Assert(!IsConstRef());
+        Assert(inOther.IsNonConstRef());
+        PerformMoveAssign(inOther);
+        return *this;
+    }
+
+    const Any& Any::CopyAssign(Any& inOther) const
+    {
+        Assert(IsNonConstRef());
+        PerformCopyAssign(inOther);
+        return *this;
+    }
+
+    const Any& Any::CopyAssign(const Any& inOther) const
+    {
+        Assert(IsNonConstRef());
+        PerformCopyAssign(inOther);
+        return *this;
+    }
+
+    const Any& Any::MoveAssign(Any& inOther) const noexcept
+    {
+        Assert(IsNonConstRef());
+        Assert(!inOther.IsRef() || inOther.IsNonConstRef());
+        PerformMoveAssign(inOther);
+        return *this;
+    }
+
+    const Any& Any::MoveAssign(const Any& inOther) const noexcept
+    {
+        Assert(IsNonConstRef());
+        Assert(inOther.IsNonConstRef());
+        PerformMoveAssign(inOther);
         return *this;
     }
 
@@ -193,7 +249,7 @@ namespace Mirror {
         }
     }
 
-    void Any::PerformMoveConstruct(Any&& inOther)
+    void Any::PerformMoveConstruct(Any&& inOther) noexcept
     {
         arrayLength = inOther.arrayLength;
         policy = inOther.policy;
@@ -214,9 +270,33 @@ namespace Mirror {
         }
     }
 
+    void Any::PerformCopyAssign(const Any& inOther) const
+    {
+        Assert(!Empty() && !inOther.Empty() && arrayLength == inOther.arrayLength && rtti == inOther.rtti);
+
+        for (auto i = 0; i < ElementNum(); i++) {
+            rtti->copyAssign(Data(i), inOther.Data(i));
+        }
+    }
+
+    void Any::PerformMoveAssign(const Any& inOther) const noexcept
+    {
+        Assert(!Empty() && !inOther.Empty() && arrayLength == inOther.arrayLength && rtti == inOther.rtti);
+
+        for (auto i = 0; i < ElementNum(); i++) {
+            rtti->moveAssign(Data(i), inOther.Data(i));
+        }
+    }
+
     uint32_t Any::ElementNum() const
     {
         return std::max(1u, arrayLength);
+    }
+
+    TemplateViewRttiPtr Any::GetTemplateViewRtti() const
+    {
+        Assert(!Empty());
+        return rtti->getTemplateViewRtti().second;
     }
 
     bool Any::IsArray() const
@@ -645,6 +725,13 @@ namespace Mirror {
         return *this;
     }
 
+    TemplateViewRttiPtr Argument::GetTemplateViewRtti() const
+    {
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.GetTemplateViewRtti();
+        });
+    }
+
     bool Argument::IsMemoryHolder() const
     {
         return Delegate([](auto&& value) -> decltype(auto) {
@@ -732,6 +819,8 @@ namespace Mirror {
     const Id IdPresets::globalScope = Id("_globalScope");
     const Id IdPresets::detor = Id("_detor");
     const Id IdPresets::defaultCtor = Id("_defaultCtor");
+    const Id IdPresets::copyCtor = Id("_copyCtor");
+    const Id IdPresets::moveCtor = Id("_moveCtor");
 
     ReflNode::ReflNode(Id inId) : id(std::move(inId)) {}
 
@@ -759,7 +848,7 @@ namespace Mirror {
         std::stringstream stream;
         uint32_t count = 0;
         for (const auto& [key, value] : metas) {
-            stream << fmt::format("{}={}", key.name, value);
+            stream << std::format("{}={}", key.name, value);
 
             count++;
             if (count != metas.size()) {
@@ -804,6 +893,7 @@ namespace Mirror {
     Variable::Variable(ConstructParams&& params)
         : ReflNode(std::move(params.id))
         , owner(std::move(params.owner))
+        , access(params.access)
         , memorySize(params.memorySize)
         , typeInfo(params.typeInfo)
         , setter(std::move(params.setter))
@@ -833,6 +923,12 @@ namespace Mirror {
         return owner.IsNull() ? nullptr : Class::Find(owner);
     }
 
+    FieldAccess Variable::GetAccess() const
+    {
+        Assert(!owner.IsNull());
+        return access;
+    }
+
     const TypeInfo* Variable::GetTypeInfo() const
     {
         return typeInfo;
@@ -851,6 +947,7 @@ namespace Mirror {
     Function::Function(ConstructParams&& params)
         : ReflNode(std::move(params.id))
         , owner(std::move(params.owner))
+        , access(params.access)
         , argsNum(params.argsNum)
         , retTypeInfo(params.retTypeInfo)
         , argTypeInfos(std::move(params.argTypeInfos))
@@ -873,6 +970,12 @@ namespace Mirror {
     const Class* Function::GetOwner() const
     {
         return owner.IsNull() ? nullptr : Class::Find(owner);
+    }
+
+    FieldAccess Function::GetAccess() const
+    {
+        Assert(!owner.IsNull());
+        return access;
     }
 
     uint8_t Function::GetArgsNum() const
@@ -903,12 +1006,14 @@ namespace Mirror {
     Constructor::Constructor(ConstructParams&& params)
         : ReflNode(std::move(params.id))
         , owner(std::move(params.owner))
+        , access(params.access)
         , argsNum(params.argsNum)
         , argTypeInfos(std::move(params.argTypeInfos))
         , argRemoveRefTypeInfos(std::move(params.argRemoveRefTypeInfos))
         , argRemovePointerTypeInfos(std::move(params.argRemovePointerTypeInfos))
         , stackConstructor(std::move(params.stackConstructor))
         , heapConstructor(std::move(params.heapConstructor))
+        , inplaceConstructor(std::move(params.inplaceConstructor))
     {
     }
 
@@ -924,9 +1029,16 @@ namespace Mirror {
         return owner;
     }
 
-    const Class* Constructor::GetOwner() const
+    const Class& Constructor::GetOwner() const
     {
-        return owner.IsNull() ? nullptr : Class::Find(owner);
+        Assert(!owner.IsNull());
+        return Class::Get(owner);
+    }
+
+    FieldAccess Constructor::GetAccess() const
+    {
+        Assert(!owner.IsNull());
+        return access;
     }
 
     uint8_t Constructor::GetArgsNum() const
@@ -974,10 +1086,17 @@ namespace Mirror {
         return heapConstructor(arguments);
     }
 
+    Any Constructor::InplaceNewDyn(void* ptr, const ArgumentList& arguments) const
+    {
+        return inplaceConstructor(ptr, arguments);
+    }
+
     Destructor::Destructor(ConstructParams&& params)
         : ReflNode(std::string(IdPresets::detor.name))
         , owner(std::move(params.owner))
+        , access(params.access)
         , destructor(std::move(params.destructor))
+        , deleter(std::move(params.deleter))
     {
     }
 
@@ -993,19 +1112,32 @@ namespace Mirror {
         return owner;
     }
 
-    const Class* Destructor::GetOwner() const
+    const Class& Destructor::GetOwner() const
     {
-        return owner.IsNull() ? nullptr : Class::Find(owner);
+        Assert(!owner.IsNull());
+        return Class::Get(owner);
     }
 
-    void Destructor::InvokeDyn(const Argument& argument) const
+    FieldAccess Destructor::GetAccess() const
+    {
+        Assert(!owner.IsNull());
+        return access;
+    }
+
+    void Destructor::DestructDyn(const Argument& argument) const
     {
         destructor(argument);
+    }
+
+    void Destructor::DeleteDyn(const Argument& argument) const
+    {
+        deleter(argument);
     }
 
     MemberVariable::MemberVariable(ConstructParams&& params)
         : ReflNode(std::move(params.id))
         , owner(std::move(params.owner))
+        , access(params.access)
         , memorySize(params.memorySize)
         , typeInfo(params.typeInfo)
         , setter(std::move(params.setter))
@@ -1025,12 +1157,19 @@ namespace Mirror {
         return owner;
     }
 
-    const Class* MemberVariable::GetOwner() const
+    const Class& MemberVariable::GetOwner() const
     {
-        return owner.IsNull() ? nullptr : Class::Find(owner);
+        Assert(!owner.IsNull());
+        return Class::Get(owner);
     }
 
-    uint32_t MemberVariable::SizeOf() const
+    FieldAccess MemberVariable::GetAccess() const
+    {
+        Assert(!owner.IsNull());
+        return access;
+    }
+
+    size_t MemberVariable::SizeOf() const
     {
         return memorySize;
     }
@@ -1058,6 +1197,7 @@ namespace Mirror {
     MemberFunction::MemberFunction(ConstructParams&& params)
         : ReflNode(std::move(params.id))
         , owner(std::move(params.owner))
+        , access(params.access)
         , argsNum(params.argsNum)
         , retTypeInfo(params.retTypeInfo)
         , argTypeInfos(std::move(params.argTypeInfos))
@@ -1077,9 +1217,16 @@ namespace Mirror {
         return owner;
     }
 
-    const Class* MemberFunction::GetOwner() const
+    const Class& MemberFunction::GetOwner() const
     {
-        return owner.IsNull() ? nullptr : Class::Find(owner);
+        Assert(!owner.IsNull());
+        return Class::Get(owner);
+    }
+
+    FieldAccess MemberFunction::GetAccess() const
+    {
+        Assert(!owner.IsNull());
+        return access;
     }
 
     uint8_t MemberFunction::GetArgsNum() const
@@ -1185,7 +1332,9 @@ namespace Mirror {
     Class::Class(ConstructParams&& params)
         : ReflNode(std::move(params.id))
         , typeInfo(params.typeInfo)
+        , memorySize(params.memorySize)
         , baseClassGetter(std::move(params.baseClassGetter))
+        , inplaceGetter(std::move(params.inplaceGetter))
     {
         CreateDefaultObject(params.defaultObjectCreator);
         if (params.destructorParams.has_value()) {
@@ -1194,7 +1343,15 @@ namespace Mirror {
         if (params.defaultConstructorParams.has_value()) {
             EmplaceConstructor(IdPresets::defaultCtor, std::move(params.defaultConstructorParams.value()));
         }
+        if (params.copyConstructorParams.has_value()) {
+            EmplaceConstructor(IdPresets::copyCtor, std::move(params.copyConstructorParams.value()));
+        }
+        if (params.moveConstructorParams.has_value()) {
+            EmplaceConstructor(IdPresets::moveCtor, std::move(params.moveConstructorParams.value()));
+        }
     }
+
+    Class::~Class() = default;
 
     bool Class::Has(const Id& inId)
     {
@@ -1284,7 +1441,10 @@ namespace Mirror {
         return result;
     }
 
-    Class::~Class() = default;
+    Any Class::InplaceGetObject(void* ptr) const
+    {
+        return inplaceGetter(ptr);
+    }
 
     void Class::ForEachStaticVariable(const VariableTraverser& func) const
     {
@@ -1368,6 +1528,11 @@ namespace Mirror {
         return typeInfo;
     }
 
+    size_t Class::SizeOf() const
+    {
+        return memorySize;
+    }
+
     bool Class::HasDefaultConstructor() const
     {
         return HasConstructor(IdPresets::defaultCtor);
@@ -1428,7 +1593,10 @@ namespace Mirror {
 
     const Constructor* Class::FindSuitableConstructor(const ArgumentList& arguments) const
     {
-        for (const auto& [constructorName, constructor] : constructors) {
+        std::vector<std::pair<const Constructor*, uint32_t>> candidateAndRates;
+        candidateAndRates.reserve(constructors.size());
+
+        for (const auto& constructor : constructors | std::views::values) {
             const auto& argTypeInfos = constructor.GetArgTypeInfos();
             const auto& argRemoveRefTypeInfos = constructor.GetArgRemoveRefTypeInfos();
             const auto& argRemovePointerTypeInfos = constructor.GetArgRemovePointerTypeInfos();
@@ -1437,11 +1605,13 @@ namespace Mirror {
                 continue;
             }
 
+            uint32_t rate = 0;
             bool bSuitable = true;
             for (auto i = 0; i < arguments.size(); i++) {
                 const TypeInfoCompact srcType { arguments[i].Type(), arguments[i].RemoveRefType(), arguments[i].RemovePointerType() }; // NOLINT
                 const TypeInfoCompact dstType { argTypeInfos[i], argRemoveRefTypeInfos[i], argRemovePointerTypeInfos[i] }; // NOLINT
                 if (Convertible(srcType, dstType)) {
+                    rate += dstType.raw->isRValueReference ? 2 : 1;
                     continue;
                 }
 
@@ -1450,10 +1620,11 @@ namespace Mirror {
             }
 
             if (bSuitable) {
-                return &constructor;
+                candidateAndRates.emplace_back(&constructor, rate);
             }
         }
-        return nullptr;
+        std::ranges::sort(candidateAndRates, [](const auto& lhs, const auto& rhs) -> bool { return lhs.second < rhs.second; });
+        return candidateAndRates.empty() ? nullptr : candidateAndRates.back().first;
     }
 
     Any Class::ConstructDyn(const ArgumentList& arguments) const
@@ -1468,6 +1639,23 @@ namespace Mirror {
         const auto* constructor = FindSuitableConstructor(arguments);
         Assert(constructor != nullptr);
         return constructor->NewDyn(arguments);
+    }
+
+    Any Class::InplaceNewDyn(void* ptr, const ArgumentList& arguments) const
+    {
+        const auto* constructor = FindSuitableConstructor(arguments);
+        Assert(constructor != nullptr);
+        return constructor->InplaceNewDyn(ptr, arguments);
+    }
+
+    void Class::DestructDyn(const Argument& argument) const
+    {
+        GetDestructor().DestructDyn(argument);
+    }
+
+    void Class::DeleteDyn(const Argument& argument) const
+    {
+        GetDestructor().DeleteDyn(argument);
     }
 
     const Constructor* Class::FindConstructor(const Id& inId) const
@@ -1736,4 +1924,384 @@ namespace Mirror {
         values.emplace(inId, EnumValue(std::move(inParams)));
         return values.at(inId);
     }
-}
+
+    StdOptionalView::StdOptionalView(const Any& inRef)
+        : ref(inRef)
+    {
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdOptionalView>());
+        rtti = static_cast<const StdOptionalViewRtti*>(ref.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdOptionalView::ElementType() const
+    {
+        return rtti->getElementType();
+    }
+
+    bool StdOptionalView::HasValue() const
+    {
+        return rtti->hasValue(ref);
+    }
+
+    Any StdOptionalView::Value() const
+    {
+        return rtti->getValue(ref);
+    }
+
+    StdPairView::StdPairView(const Any& inRef)
+        : ref(inRef)
+    {
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdPairView>());
+        rtti = static_cast<const StdPairViewRtti*>(ref.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdPairView::KeyType() const
+    {
+        return rtti->getKeyType();
+    }
+
+    const TypeInfo* StdPairView::ValueType() const
+    {
+        return rtti->getValueType();
+    }
+
+    Any StdPairView::Key() const
+    {
+        return rtti->getKey(ref);
+    }
+
+    Any StdPairView::Value() const
+    {
+        return rtti->getValue(ref);
+    }
+
+    Any StdPairView::ConstKey() const
+    {
+        return rtti->getConstKey(ref);
+    }
+
+    Any StdPairView::ConstValue() const
+    {
+        return rtti->getConstValue(ref);
+    }
+
+    StdArrayView::StdArrayView(const Any& inRef)
+        : ref(inRef)
+    {
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdArrayView>());
+        rtti = static_cast<const StdArrayViewRtti*>(ref.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdArrayView::ElementType() const
+    {
+        return rtti->getElementType();
+    }
+
+    size_t StdArrayView::Size() const
+    {
+        return rtti->getSize();
+    }
+
+    Any StdArrayView::At(size_t inIndex) const
+    {
+        return rtti->getElement(ref, inIndex);
+    }
+
+    Any StdArrayView::ConstAt(size_t inIndex) const
+    {
+        return rtti->getConstElement(ref, inIndex);
+    }
+
+    StdVectorView::StdVectorView(const Any& inRef)
+        : ref(inRef)
+    {
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdVectorView>());
+        rtti = static_cast<const StdVectorViewRtti*>(ref.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdVectorView::ElementType() const
+    {
+        return rtti->getElementType();
+    }
+
+    size_t StdVectorView::Size() const
+    {
+        return rtti->getSize(ref);
+    }
+
+    Any StdVectorView::At(size_t inIndex) const
+    {
+        return rtti->getElement(ref, inIndex);
+    }
+
+    Any StdVectorView::ConstAt(size_t inIndex) const
+    {
+        return rtti->getConstElement(ref, inIndex);
+    }
+
+    Any StdVectorView::EmplaceBack(const Argument& inTempObj) const
+    {
+        return rtti->emplaceBack(ref, inTempObj);
+    }
+
+    void StdVectorView::Erase(size_t inIndex) const
+    {
+        rtti->erase(ref, inIndex);
+    }
+
+    StdListView::StdListView(const Any& inRef)
+        : ref(inRef)
+    {
+        Assert(ref.IsRef() && inRef.CanAsTemplateView<StdListView>());
+        rtti = static_cast<const StdListViewRtti*>(inRef.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdListView::ElementType() const
+    {
+        return rtti->getElementType();
+    }
+
+    size_t StdListView::Size() const
+    {
+        return rtti->getSize(ref);
+    }
+
+    void StdListView::Traverse(const ElementTraverser& inTraverser) const
+    {
+        rtti->traverse(ref, inTraverser);
+    }
+
+    void StdListView::ConstTraverse(const ElementTraverser& inTraverser) const
+    {
+        rtti->traverse(ref, inTraverser);
+    }
+
+    Any StdListView::EmplaceFront(const Argument& inTempObj) const
+    {
+        return rtti->emplaceFront(ref, inTempObj);
+    }
+
+    Any StdListView::EmplaceBack(const Argument& inTempObj) const
+    {
+        return rtti->emplaceBack(ref, inTempObj);
+    }
+
+    StdUnorderedSetView::StdUnorderedSetView(const Any& inRef)
+        : ref(inRef)
+    {
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdUnorderedSetView>());
+        rtti = static_cast<const StdUnorderedSetViewRtti*>(ref.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdUnorderedSetView::ElementType() const
+    {
+        return rtti->getElementType();
+    }
+
+    size_t StdUnorderedSetView::Size() const
+    {
+        return rtti->getSize(ref);
+    }
+
+    void StdUnorderedSetView::Traverse(const ElementTraverser& inTraverser) const
+    {
+        rtti->traverse(ref, inTraverser);
+    }
+
+    void StdUnorderedSetView::ConstTraverse(const ElementTraverser& inTraverser) const
+    {
+        rtti->constTraverse(ref, inTraverser);
+    }
+
+    bool StdUnorderedSetView::Contains(const Argument& inElement) const
+    {
+        return rtti->contains(ref, inElement);
+    }
+
+    void StdUnorderedSetView::Emplace(const Argument& inTempObj) const
+    {
+        rtti->emplace(ref, inTempObj);
+    }
+
+    void StdUnorderedSetView::Erase(const Argument& inElement) const
+    {
+        rtti->erase(ref, inElement);
+    }
+
+    StdSetView::StdSetView(const Any& inRef)
+        : ref(inRef)
+    {
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdSetView>());
+        rtti = static_cast<const StdSetViewRtti*>(ref.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdSetView::ElementType() const
+    {
+        return rtti->getElementType();
+    }
+
+    size_t StdSetView::Size() const
+    {
+        return rtti->getSize(ref);
+    }
+
+    void StdSetView::Traverse(const ElementTraverser& inTraverser) const
+    {
+        rtti->traverse(ref, inTraverser);
+    }
+
+    bool StdSetView::Contains(const Argument& inElement) const
+    {
+        return rtti->contains(ref, inElement);
+    }
+
+    void StdSetView::Emplace(const Argument& inTempObj) const
+    {
+        rtti->emplace(ref, inTempObj);
+    }
+
+    void StdSetView::Erase(const Argument& inElement) const
+    {
+        rtti->erase(ref, inElement);
+    }
+
+    StdUnorderedMapView::StdUnorderedMapView(const Any& inRef)
+        : ref(inRef)
+    {
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdUnorderedMapView>());
+        rtti = static_cast<const StdUnorderedMapViewRtti*>(ref.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdUnorderedMapView::KeyType() const
+    {
+        return rtti->getKeyType();
+    }
+
+    const TypeInfo* StdUnorderedMapView::ValueType() const
+    {
+        return rtti->getValueType();
+    }
+
+    size_t StdUnorderedMapView::Size() const
+    {
+        return rtti->getSize(ref);
+    }
+
+    Any StdUnorderedMapView::At(const Argument& inKey) const
+    {
+        return rtti->at(ref, inKey);
+    }
+
+    Any StdUnorderedMapView::GetOrAdd(const Argument& inKey) const
+    {
+        return rtti->getOrAdd(ref, inKey);
+    }
+
+    void StdUnorderedMapView::Traverse(const PairTraverser& inTraverser) const
+    {
+        rtti->traverse(ref, inTraverser);
+    }
+
+    void StdUnorderedMapView::ConstTraverse(const PairTraverser& inTraverser) const
+    {
+        rtti->constTraverse(ref, inTraverser);
+    }
+
+    bool StdUnorderedMapView::Contains(const Argument& inKey) const
+    {
+        return rtti->contains(ref, inKey);
+    }
+
+    void StdUnorderedMapView::Emplace(const Argument& inTempKey, const Argument& inTempValue) const
+    {
+        rtti->emplace(ref, inTempKey, inTempValue);
+    }
+
+    void StdUnorderedMapView::Erase(const Argument& inKey) const
+    {
+        rtti->erase(ref, inKey);
+    }
+
+    StdMapView::StdMapView(const Any& inRef)
+        : ref(inRef)
+    {
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdMapView>());
+        rtti = static_cast<const StdMapViewRtti*>(ref.GetTemplateViewRtti());
+    }
+
+    const TypeInfo* StdMapView::KeyType() const
+    {
+        return rtti->getKeyType();
+    }
+
+    const TypeInfo* StdMapView::ValueType() const
+    {
+        return rtti->getValueType();
+    }
+
+    size_t StdMapView::Size() const
+    {
+        return rtti->getSize(ref);
+    }
+
+    Any StdMapView::At(const Argument& inKey) const
+    {
+        return rtti->at(ref, inKey);
+    }
+
+    Any StdMapView::GetOrAdd(const Argument& inKey) const
+    {
+        return rtti->getOrAdd(ref, inKey);
+    }
+
+    void StdMapView::Traverse(const PairTraverser& inTraverser) const
+    {
+        rtti->traverse(ref, inTraverser);
+    }
+
+    void StdMapView::ConstTraverse(const PairTraverser& inTraverser) const
+    {
+        rtti->constTraverse(ref, inTraverser);
+    }
+
+    bool StdMapView::Contains(const Argument& inKey) const
+    {
+        return rtti->contains(ref, inKey);
+    }
+
+    void StdMapView::Emplace(const Argument& inTempKey, const Argument& inTempValue) const
+    {
+        rtti->emplace(ref, inTempKey, inTempValue);
+    }
+
+    void StdMapView::Erase(const Argument& inKey) const
+    {
+        rtti->erase(ref, inKey);
+    }
+
+    StdTupleView::StdTupleView(const Any& inRef)
+        : ref(inRef)
+    {
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdTupleView>());
+        rtti = static_cast<const StdTupleRtti*>(ref.GetTemplateViewRtti());
+    }
+
+    size_t StdTupleView::Size() const
+    {
+        return rtti->getSize();
+    }
+
+    const TypeInfo* StdTupleView::ElementType(size_t inIndex) const
+    {
+        return rtti->getElementType(inIndex);
+    }
+
+    Any StdTupleView::Get(size_t inIndex) const
+    {
+        return rtti->getElement(ref, inIndex);
+    }
+
+    void StdTupleView::Traverse(const Visitor& inVisitor) const
+    {
+        rtti->traverse(ref, inVisitor);
+    }
+} // namespace Mirror

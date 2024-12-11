@@ -75,18 +75,22 @@ namespace Common {
 
         static size_t Serialize(BinarySerializeStream& stream, const Color& value)
         {
-            return Serializer<uint8_t>::Serialize(stream, value.r)
-                + Serializer<uint8_t>::Serialize(stream, value.g)
-                + Serializer<uint8_t>::Serialize(stream, value.b)
-                + Serializer<uint8_t>::Serialize(stream, value.a);
+            size_t serialized = 0;
+            serialized += Serializer<uint8_t>::Serialize(stream, value.r);
+            serialized += Serializer<uint8_t>::Serialize(stream, value.g);
+            serialized += Serializer<uint8_t>::Serialize(stream, value.b);
+            serialized += Serializer<uint8_t>::Serialize(stream, value.a);
+            return serialized;
         }
 
         static size_t Deserialize(BinaryDeserializeStream& stream, Color& value)
         {
-            return Serializer<uint8_t>::Deserialize(stream, value.r)
-                + Serializer<uint8_t>::Deserialize(stream, value.g)
-                + Serializer<uint8_t>::Deserialize(stream, value.b)
-                + Serializer<uint8_t>::Deserialize(stream, value.a);
+            size_t deserialized = 0;
+            deserialized += Serializer<uint8_t>::Deserialize(stream, value.r);
+            deserialized += Serializer<uint8_t>::Deserialize(stream, value.g);
+            deserialized += Serializer<uint8_t>::Deserialize(stream, value.b);
+            deserialized += Serializer<uint8_t>::Deserialize(stream, value.a);
+            return deserialized;
         }
     };
 
@@ -96,18 +100,22 @@ namespace Common {
 
         static size_t Serialize(BinarySerializeStream& stream, const LinearColor& value)
         {
-            return Serializer<float>::Serialize(stream, value.r)
-                + Serializer<float>::Serialize(stream, value.g)
-                + Serializer<float>::Serialize(stream, value.b)
-                + Serializer<float>::Serialize(stream, value.a);
+            size_t serialized = 0;
+            serialized += Serializer<float>::Serialize(stream, value.r);
+            serialized += Serializer<float>::Serialize(stream, value.g);
+            serialized += Serializer<float>::Serialize(stream, value.b);
+            serialized += Serializer<float>::Serialize(stream, value.a);
+            return serialized;
         }
 
         static size_t Deserialize(BinaryDeserializeStream& stream, LinearColor& value)
         {
-            return Serializer<float>::Deserialize(stream, value.r)
-                + Serializer<float>::Deserialize(stream, value.g)
-                + Serializer<float>::Deserialize(stream, value.b)
-                + Serializer<float>::Deserialize(stream, value.a);
+            size_t deserialized = 0;
+            deserialized += Serializer<float>::Deserialize(stream, value.r);
+            deserialized += Serializer<float>::Deserialize(stream, value.g);
+            deserialized += Serializer<float>::Deserialize(stream, value.b);
+            deserialized += Serializer<float>::Deserialize(stream, value.a);
+            return deserialized;
         }
     };
 
@@ -115,7 +123,7 @@ namespace Common {
     struct StringConverter<Color> {
         static std::string ToString(const Color& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "{}r={}, g={}, b={}, a={}{}",
                 "{",
                 StringConverter<uint8_t>::ToString(inValue.r),
@@ -130,7 +138,7 @@ namespace Common {
     struct StringConverter<LinearColor> {
         static std::string ToString(const LinearColor& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "{}r={}, g={}, b={}, a={}{}",
                 "{",
                 StringConverter<float>::ToString(inValue.r),

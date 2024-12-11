@@ -1,12 +1,3 @@
-# EnTT
-Add3rdHeaderOnlyPackage(
-    NAME EnTT
-    PLATFORM All
-    VERSION 3.8.1
-    HASH abe24e5da599ef9f172c25f68f3b777dd404896b06e500742ecc88bbfef2216c
-    INCLUDE $<SOURCE_DIR>/single_include
-)
-
 # DirectX 12 Headers
 Add3rdHeaderOnlyPackage(
     NAME DirectXHeaders
@@ -35,6 +26,7 @@ Add3rdBinaryPackage(
         Darwin vulkan.1
 )
 if (NOT ${CI})
+    #see https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderLayerInterface.md
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         execute_process(COMMAND reg query "HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\ExplicitLayers" OUTPUT_VARIABLE LAYERS)
         string(REGEX MATCH "VkLayer_khronos_validation\.json" MATCH_RESULT ${LAYERS})
@@ -48,8 +40,51 @@ if (NOT ${CI})
             string(REPLACE "/" "\\" VALIDATION_LAYER_JSON ${VALIDATION_LAYER_JSON})
             execute_process(COMMAND PowerShell -Command "Start-Process reg -ArgumentList 'add HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\ExplicitLayers /v ${VALIDATION_LAYER_JSON} /t REG_DWORD /d 0' -Verb RunAs")
         endif ()
-    else ()
-        # TODO check macOS
+    else (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+        # check drivers
+        set(PLATFORM_VULKAN_SDK_DIR ${CMAKE_SOURCE_DIR}/ThirdParty/Lib/VulkanSDK-Darwin-${VULKAN_SDK_VERSION}/macOS)
+        execute_process(COMMAND ${PLATFORM_VULKAN_SDK_DIR}/bin/vulkaninfo OUTPUT_VARIABLE VULKAN_INFO ERROR_VARIABLE VULKAN_INFO)
+        string(REGEX MATCH "ERROR_INCOMPATIBLE_DRIVER" MATCH_RESULT ${VULKAN_INFO})
+        list(LENGTH MATCH_RESULT MATCH_RESULT_LENGTH)
+        if (${MATCH_RESULT_LENGTH} GREATER 0)
+            message("there is no drivers found for vulkan, copy and rewrite driver files to ~/.config/vulkan/icd.d")
+            get_filename_component(DRIVERS_DIR_ABSOLUTE ~/.config/vulkan/icd.d ABSOLUTE)
+            if (NOT EXISTS ${DRIVERS_DIR_ABSOLUTE})
+                file(MAKE_DIRECTORY ${DRIVERS_DIR_ABSOLUTE})
+            endif ()
+
+            file(GLOB DRIVER_FILES ${PLATFORM_VULKAN_SDK_DIR}/share/vulkan/icd.d/*.json)
+            foreach (DRIVER_FILE ${DRIVER_FILES})
+                file(READ ${DRIVER_FILE} FILE_CONTENT)
+                string(REPLACE "../../../lib" "${PLATFORM_VULKAN_SDK_DIR}/lib" FILE_CONTENT ${FILE_CONTENT})
+                get_filename_component(FILE_NAME ${DRIVER_FILE} NAME)
+                file(WRITE ${DRIVERS_DIR_ABSOLUTE}/${FILE_NAME} ${FILE_CONTENT})
+            endforeach ()
+        else ()
+            message("found vulkan drivers installed in system, will use it")
+        endif ()
+
+        # check layers
+        execute_process(COMMAND ${PLATFORM_VULKAN_SDK_DIR}/bin/vulkaninfo OUTPUT_VARIABLE VULKAN_INFO ERROR_VARIABLE VULKAN_INFO)
+        string(REGEX MATCH "Layers:\n=======" MATCH_RESULT ${VULKAN_INFO})
+        list(LENGTH MATCH_RESULT MATCH_RESULT_LENGTH)
+        if (${MATCH_RESULT_LENGTH} GREATER 0)
+            message("there is no layers found for vulkan, copy and rewrite layer files to ~/.config/vulkan/explicit_layer.d")
+            get_filename_component(LAYERS_DIR_ABSOLUTE ~/.config/vulkan/explicit_layer.d ABSOLUTE)
+            if (NOT EXISTS ${LAYERS_DIR_ABSOLUTE})
+                file(MAKE_DIRECTORY ${LAYERS_DIR_ABSOLUTE})
+            endif ()
+
+            file(GLOB LAYER_FILES ${PLATFORM_VULKAN_SDK_DIR}/share/vulkan/explicit_layer.d/*.json)
+            foreach (LAYER_FILE ${LAYER_FILES})
+                file(READ ${LAYER_FILE} FILE_CONTENT)
+                string(REPLACE "../../../lib" "${PLATFORM_VULKAN_SDK_DIR}/lib" FILE_CONTENT ${FILE_CONTENT})
+                get_filename_component(FILE_NAME ${LAYER_FILE} NAME)
+                file(WRITE ${LAYERS_DIR_ABSOLUTE}/${FILE_NAME} ${FILE_CONTENT})
+            endforeach ()
+        else ()
+            message("found vulkan layers installed in system, will use it")
+        endif ()
     endif ()
 endif ()
 
@@ -108,17 +143,14 @@ Add3rdBinaryPackage(
     ARCH
     VERSION
         Windows-AMD64 17.0.4
-        Darwin-x86_64 15.0.7
         Darwin-arm64 15.0.7
     HASH
         Windows-AMD64 3443a2259d092797521bde0c4b6e402ddeca4beb0abd87274ece91ac44b178ce
-        Darwin-x86_64 75b45dda76d52fcf7f3253aedea1f7327eb2aca37871b287d89234b55bde5504
         Darwin-arm64 99a4884945674163374d99c2220cadbfe20a947b1217193140c6b6638a3b0627
     INCLUDE $<SOURCE_DIR>/include
     LINK $<SOURCE_DIR>/lib
     LIB
         Windows-AMD64 libclang
-        Darwin-x86_64 clang
         Darwin-arm64 clang
     RUNTIME_DEP
         Windows $<SOURCE_DIR>/bin/libclang.dll
@@ -163,15 +195,6 @@ Add3rdHeaderOnlyPackage(
     VERSION master-8b5f1f37b5b75829fc72d38e7b5d4bcbf8a26d55
     HASH 32e28f89a85b3bb6749e8caed9eb5226f7f5956769005d2b5a41d48d9481d90c
     INCLUDE $<SOURCE_DIR>
-)
-
-# fmt-lib
-Add3rdHeaderOnlyPackage(
-    NAME fmt-lib
-    PLATFORM All
-    VERSION 9.1.0
-    HASH 09fb58ad10d1071ca8dbe0dc02b64fac6b2f4d4ba626b6d21a67d5b60ffe9f95
-    INCLUDE $<SOURCE_DIR>/include
 )
 
 # spirv-cross
@@ -220,7 +243,7 @@ Find3rdPackage(
     VERSION 6.5.2
     HASH
         Windows e2a573a53b6de88c0ce768868bd5a8258d432ad71c45a407afa55243b051668f
-        Darwin 4379592e8b3af8eb32f5d030608651da8dc59c30b9bfa7837b7ed17949ff3365
+        Darwin 2fadcb1f07e5f11d4345e7d5631f35f8f4a8033c35901fb20a22c2feb7486e57
     PREFIX
         Windows $<SOURCE_DIR>/6.5.2/msvc2019_64
         Darwin $<SOURCE_DIR>/6.5.2/macos
@@ -233,6 +256,7 @@ Find3rdPackage(
             $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Gui$<IF:$<CONFIG:Debug>,d,>.dll
             $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Widgets$<IF:$<CONFIG:Debug>,d,>.dll
 )
+set(Qt6Core_VERSION_MAJOR 6 CACHE STRING "" FORCE)
 
 # rapidjson
 Add3rdHeaderOnlyPackage(

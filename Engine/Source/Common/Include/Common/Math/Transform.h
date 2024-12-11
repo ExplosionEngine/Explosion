@@ -75,16 +75,20 @@ namespace Common {
 
         static size_t Serialize(BinarySerializeStream& stream, const Transform<T>& value)
         {
-            return Serializer<Vec<T, 3>>::Serialize(stream, value.scale)
-                + Serializer<Quaternion<T>>::Serialize(stream, value.rotation)
-                + Serializer<Vec<T, 3>>::Serialize(stream, value.translation);
+            size_t serialized = 0;
+            serialized += Serializer<Vec<T, 3>>::Serialize(stream, value.scale);
+            serialized += Serializer<Quaternion<T>>::Serialize(stream, value.rotation);
+            serialized += Serializer<Vec<T, 3>>::Serialize(stream, value.translation);
+            return serialized;
         }
 
         static size_t Deserialize(BinaryDeserializeStream& stream, Transform<T>& value)
         {
-            return Serializer<Vec<T, 3>>::Deserialize(stream, value.scale)
-                + Serializer<Quaternion<T>>::Deserialize(stream, value.rotation)
-                + Serializer<Vec<T, 3>>::Deserialize(stream, value.translation);
+            size_t deserialized = 0;
+            deserialized += Serializer<Vec<T, 3>>::Deserialize(stream, value.scale);
+            deserialized += Serializer<Quaternion<T>>::Deserialize(stream, value.rotation);
+            deserialized += Serializer<Vec<T, 3>>::Deserialize(stream, value.translation);
+            return deserialized;
         }
     };
 
@@ -92,7 +96,7 @@ namespace Common {
     struct StringConverter<Transform<T>> {
         static std::string ToString(const Transform<T>& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "{}scale={}, rotation={}, translation={}{}",
                 "{",
                 StringConverter<Vec<T, 3>>::ToString(inValue.scale),

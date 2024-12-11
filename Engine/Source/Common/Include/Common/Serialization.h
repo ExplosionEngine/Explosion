@@ -30,13 +30,15 @@ namespace Common {
         NonCopyable(BinarySerializeStream)
         virtual ~BinarySerializeStream();
 
-        virtual void Write(const void* data, size_t size) = 0;
+        template <CppArithmetic T> void Write(const T& value);
         virtual void Seek(int64_t offset) = 0;
         virtual size_t Loc() = 0;
         virtual std::endian Endian() = 0;
 
     protected:
         BinarySerializeStream();
+
+        virtual void WriteInternal(const void* data, size_t size) = 0;
     };
 
     class BinaryDeserializeStream {
@@ -44,13 +46,15 @@ namespace Common {
         NonCopyable(BinaryDeserializeStream);
         virtual ~BinaryDeserializeStream();
 
-        virtual void Read(void* data, size_t size) = 0;
+        template <CppArithmetic T> void Read(T& value);
         virtual void Seek(int64_t offset) = 0;
         virtual size_t Loc() = 0;
         virtual std::endian Endian() = 0;
 
     protected:
         BinaryDeserializeStream();
+
+        virtual void ReadInternal(void* data, size_t size) = 0;
     };
 
     template <std::endian E = std::endian::little>
@@ -59,11 +63,14 @@ namespace Common {
         NonCopyable(BinaryFileSerializeStream)
         explicit BinaryFileSerializeStream(const std::string& inFileName);
         ~BinaryFileSerializeStream() override;
-        void Write(const void* data, size_t size) override;
+
         void Seek(int64_t offset) override;
         size_t Loc() override;
         std::endian Endian() override;
         void Close();
+
+    protected:
+        void WriteInternal(const void* data, size_t size) override;
 
     private:
         std::ofstream file;
@@ -75,11 +82,14 @@ namespace Common {
         NonCopyable(BinaryFileDeserializeStream)
         explicit BinaryFileDeserializeStream(const std::string& inFileName);
         ~BinaryFileDeserializeStream() override;
-        void Read(void* data, size_t size) override;
+
         void Seek(int64_t offset) override;
         size_t Loc() override;
         std::endian Endian() override;
         void Close();
+
+    protected:
+        void ReadInternal(void* data, size_t size) override;
 
     private:
         std::ifstream file;
@@ -92,10 +102,13 @@ namespace Common {
         NonCopyable(MemorySerializeStream)
         explicit MemorySerializeStream(std::vector<uint8_t>& inBytes, size_t pointerBegin = 0);
         ~MemorySerializeStream() override;
-        void Write(const void* data, size_t size) override;
+
         void Seek(int64_t offset) override;
         size_t Loc() override;
         std::endian Endian() override;
+
+    protected:
+        void WriteInternal(const void* data, size_t size) override;
 
     private:
         size_t pointer;
@@ -108,10 +121,12 @@ namespace Common {
         NonCopyable(MemoryDeserializeStream)
         explicit MemoryDeserializeStream(const std::vector<uint8_t>& inBytes, size_t pointerBegin = 0);
         ~MemoryDeserializeStream() override;
-        void Read(void* data, size_t size) override;
         void Seek(int64_t offset) override;
         std::endian Endian() override;
         size_t Loc() override;
+
+    protected:
+        void ReadInternal(void* data, size_t size) override;
 
     private:
         size_t pointer;
@@ -152,13 +167,13 @@ namespace Common {
         \
         static size_t Serialize(BinarySerializeStream& stream, const typeName& value) \
         { \
-            stream.Write(&value, sizeof(typeName)); \
+            stream.Write<typeName>(value); \
             return sizeof(typeName); \
         } \
         \
         static size_t Deserialize(BinaryDeserializeStream& stream, typeName& value) \
         { \
-            stream.Read(&value, sizeof(typeName)); \
+            stream.Read<typeName>(value); \
             return sizeof(typeName); \
         } \
     }; \
@@ -186,6 +201,26 @@ namespace Common::Internal {
 }
 
 namespace Common {
+    template <CppArithmetic T>
+    void BinarySerializeStream::Write(const T& value)
+    {
+        if (std::endian::native == Endian()) {
+            WriteInternal(&value, sizeof(T));
+        } else {
+            const auto swapped = Internal::SwapEndian(&value, sizeof(T));
+            WriteInternal(reinterpret_cast<const char*>(swapped.data()), static_cast<std::streamsize>(swapped.size()));
+        }
+    }
+
+    template <CppArithmetic T>
+    void BinaryDeserializeStream::Read(T& value)
+    {
+        ReadInternal(&value, sizeof(T));
+        if (std::endian::native != Endian()) {
+            Internal::SwapEndianInplace(&value, sizeof(T));
+        }
+    }
+
     template <std::endian E>
     BinaryFileSerializeStream<E>::BinaryFileSerializeStream(const std::string& inFileName)
     {
@@ -203,14 +238,9 @@ namespace Common {
     }
 
     template <std::endian E>
-    void BinaryFileSerializeStream<E>::Write(const void* data, const size_t size)
+    void BinaryFileSerializeStream<E>::WriteInternal(const void* data, const size_t size)
     {
-        if (std::endian::native == E) {
-            file.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
-        } else {
-            const auto swapped = Internal::SwapEndian(data, size);
-            file.write(reinterpret_cast<const char*>(swapped.data()), static_cast<std::streamsize>(swapped.size()));
-        }
+        file.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
     }
 
     template <std::endian E>
@@ -260,13 +290,10 @@ namespace Common {
     }
 
     template <std::endian E>
-    void BinaryFileDeserializeStream<E>::Read(void* data, const size_t size)
+    void BinaryFileDeserializeStream<E>::ReadInternal(void* data, const size_t size)
     {
         Assert(static_cast<size_t>(file.tellg()) + size <= fileSize);
         file.read(static_cast<char*>(data), static_cast<std::streamsize>(size));
-        if (std::endian::native != E) {
-            Internal::SwapEndianInplace(data, size);
-        }
     }
 
     template <std::endian E>
@@ -312,7 +339,7 @@ namespace Common {
     MemorySerializeStream<E>::~MemorySerializeStream() = default;
 
     template <std::endian E>
-    void MemorySerializeStream<E>::Write(const void* data, const size_t size)
+    void MemorySerializeStream<E>::WriteInternal(const void* data, const size_t size)
     {
         const auto newPointer = pointer + size;
         if (newPointer > bytes.size()) {
@@ -321,12 +348,7 @@ namespace Common {
             }
             bytes.resize(newPointer);
         }
-        if (std::endian::native == E) {
-            memcpy(bytes.data() + pointer, data, size);
-        } else {
-            const auto swaped = Internal::SwapEndian(data, size);
-            memcpy(bytes.data() + pointer, swaped.data(), swaped.size());
-        }
+        memcpy(bytes.data() + pointer, data, size);
         pointer = newPointer;
     }
 
@@ -360,14 +382,11 @@ namespace Common {
     MemoryDeserializeStream<E>::~MemoryDeserializeStream() = default;
 
     template <std::endian E>
-    void MemoryDeserializeStream<E>::Read(void* data, const size_t size)
+    void MemoryDeserializeStream<E>::ReadInternal(void* data, const size_t size)
     {
         const auto newPointer = pointer + size;
         Assert(newPointer <= bytes.size());
         memcpy(data, bytes.data() + pointer, size);
-        if (std::endian::native != E) {
-            Internal::SwapEndianInplace(data, size);
-        }
         pointer = newPointer;
     }
 
@@ -436,6 +455,23 @@ namespace Common {
         struct Header {
             size_t typeId;
             size_t contentSize;
+
+            void Serialize(BinarySerializeStream& stream) const
+            {
+                stream.Write<uint64_t>(static_cast<uint64_t>(typeId));
+                stream.Write<uint64_t>(static_cast<uint64_t>(contentSize));
+            }
+
+            void Deserialize(BinaryDeserializeStream& stream)
+            {
+                uint64_t tempTypeId;
+                stream.Read<uint64_t>(tempTypeId);
+                typeId = static_cast<size_t>(tempTypeId);
+
+                uint64_t tempContentSize;
+                stream.Read<uint64_t>(tempContentSize);
+                contentSize = static_cast<size_t>(tempContentSize);
+            }
         };
 
         static size_t Serialize(BinarySerializeStream& stream, const T& value)
@@ -446,7 +482,7 @@ namespace Common {
             stream.Seek(sizeof(Header));
             header.contentSize = Serializer<T>::Serialize(stream, value);
             stream.Seek(-static_cast<int64_t>(sizeof(Header)) - static_cast<int64_t>(header.contentSize));
-            stream.Write(&header, sizeof(Header));
+            header.Serialize(stream);
             stream.Seek(header.contentSize);
             return sizeof(Header) + header.contentSize;
         }
@@ -454,7 +490,7 @@ namespace Common {
         static std::pair<bool, size_t> Deserialize(BinaryDeserializeStream& stream, T& value)
         {
             Header header {};
-            stream.Read(&header, sizeof(Header));
+            header.Deserialize(stream);
 
             if (header.typeId != Serializer<T>::typeId) {
                 stream.Seek(header.contentSize);
@@ -493,7 +529,11 @@ namespace Common {
             const uint64_t size = value.size();
             serialized += Serializer<uint64_t>::Serialize(stream, size);
 
-            stream.Write(value.data(), value.size());
+            const auto* data = reinterpret_cast<const uint8_t*>(value.data());
+            for (auto i = 0; i < size; i++) {
+                stream.Write<uint8_t>(data[i]);
+            }
+
             serialized += size;
             return serialized;
         }
@@ -506,7 +546,11 @@ namespace Common {
             deserialized += Serializer<uint64_t>::Deserialize(stream, size);
 
             value.resize(size);
-            stream.Read(value.data(), size);
+            auto* data = reinterpret_cast<uint8_t*>(value.data());
+            for (auto i = 0; i < size; i++) {
+                stream.Read<uint8_t>(data[i]);
+            }
+
             deserialized += size;
             return deserialized;
         }
@@ -515,16 +559,22 @@ namespace Common {
     template <>
     struct Serializer<std::wstring> {
         static constexpr size_t typeId = HashUtils::StrCrc32("std::wstring");
+        // windows: 16, macOS: 32
+        static_assert(sizeof(std::wstring::value_type) <= sizeof(uint32_t));
 
         static size_t Serialize(BinarySerializeStream& stream, const std::wstring& value)
         {
             size_t serialized = 0;
 
-            const uint64_t size = value.size() * sizeof(std::wstring::value_type);
+            const uint64_t size = value.size();
             serialized += Serializer<uint64_t>::Serialize(stream, size);
 
-            stream.Write(value.data(), size);
-            serialized += size;
+            const auto* data = static_cast<const std::wstring::value_type*>(value.data());
+            for (auto i = 0; i < size; i++) {
+                stream.Write<uint32_t>(static_cast<uint32_t>(data[i]));
+            }
+
+            serialized += size * sizeof(uint32_t);
             return serialized;
         }
 
@@ -535,9 +585,15 @@ namespace Common {
             uint64_t size;
             deserialized += Serializer<uint64_t>::Deserialize(stream, size);
 
-            value.resize(size / sizeof(std::wstring::value_type));
-            stream.Read(value.data(), size);
-            deserialized += size;
+            value.resize(size);
+            auto* data = static_cast<std::wstring::value_type*>(value.data());
+            for (auto i = 0; i < size; i++) {
+                uint32_t tempValue;
+                stream.Read<uint32_t>(tempValue);
+                data[i] = static_cast<std::wstring::value_type>(tempValue);
+            }
+
+            deserialized += size * sizeof(uint32_t);
             return deserialized;
         }
     };
@@ -587,14 +643,18 @@ namespace Common {
 
         static size_t Serialize(BinarySerializeStream& stream, const std::pair<K, V>& value)
         {
-            return Serializer<K>::Serialize(stream, value.first)
-                + Serializer<V>::Serialize(stream, value.second);
+            size_t serialized = 0;
+            serialized += Serializer<K>::Serialize(stream, value.first);
+            serialized += Serializer<V>::Serialize(stream, value.second);
+            return serialized;
         }
 
         static size_t Deserialize(BinaryDeserializeStream& stream, std::pair<K, V>& value)
         {
-            return Serializer<K>::Deserialize(stream, value.first)
-                + Serializer<V>::Deserialize(stream, value.second);
+            size_t deserialized = 0;
+            deserialized += Serializer<K>::Deserialize(stream, value.first);
+            deserialized += Serializer<V>::Deserialize(stream, value.second);
+            return deserialized;
         }
     };
 

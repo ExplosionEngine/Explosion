@@ -9,7 +9,7 @@ AddExecutable(
     NAME Editor
     SRC ${SOURCES}
     INC Include
-    LIB Qt Core RHI Rendering Runtime
+    LIB Qt Core RHI Runtime
     RES ${FINAL_RESOURCES}
 )
 

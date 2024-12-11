@@ -9,7 +9,7 @@
 #include <RHI/RHI.h>
 #include <Render/Shader.h>
 
-namespace Rendering {
+namespace Render {
     class PipelineLayout;
     class ComputePipelineState;
     class RasterPipelineState;

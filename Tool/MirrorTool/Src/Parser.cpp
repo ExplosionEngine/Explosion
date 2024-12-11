@@ -3,6 +3,7 @@
 //
 
 #include <sstream>
+#include <format>
 
 #include <Common/String.h>
 #include <MirrorTool/Parser.h>
@@ -86,15 +87,20 @@ namespace MirrorTool {
         return Common::StringUtils::Replace(result, "struct", "");
     }
 
+    static std::string RemoveStrSpace(const std::string& value)
+    {
+        return Common::StringUtils::Replace(value, " ", "");
+    }
+
     static void ParseMetaDatas(Node& node, const std::string& metaDataStr)
     {
-        for (const auto metaDatas = Common::StringUtils::Split(metaDataStr, ";");
+        for (const auto metaDatas = Common::StringUtils::Split(metaDataStr, ",");
             const auto& metaData : metaDatas) {
             if (auto keyValue = Common::StringUtils::Split(metaData, "=");
                 keyValue.size() == 1) {
-                node.metaDatas.emplace(std::make_pair(keyValue[0], "true"));
+                node.metaDatas.emplace(std::make_pair(RemoveStrSpace(keyValue[0]), "true"));
             } else if (keyValue.size() == 2) {
-                node.metaDatas.emplace(std::make_pair(keyValue[0], keyValue[1]));
+                node.metaDatas.emplace(std::make_pair(RemoveStrSpace(keyValue[0]), RemoveStrSpace(keyValue[1])));
             }
         }
     }
@@ -235,6 +241,11 @@ namespace MirrorTool {
             context.constructors.emplace_back(std::move(constructorInfo));
             VisitChildren(ClassConstructorVisitor, ClassConstructorInfo, cursor, context.constructors.back());
             UpdateConstructorName(context.constructors.back());
+        } else if (kind == CXCursor_Destructor) {
+            ClassDestructorInfo destructorInfo;
+            destructorInfo.outerName = GetOuterName(context.outerName, context.name);
+            destructorInfo.fieldAccess = context.lastFieldAccess;
+            context.destructor = std::move(destructorInfo);
         } else if (kind == CXCursor_StructDecl || kind == CXCursor_ClassDecl) {
             ClassInfo classInfo;
             classInfo.outerName = GetOuterName(context.outerName, context.name);
@@ -396,19 +407,23 @@ namespace MirrorTool {
             "-std=c++20",
 #if BUILD_CONFIG_DEBUG
             "-DBUILD_CONFIG_DEBUG=1",
+#else
+            "-DBUILD_CONFIG_DEBUG=0",
 #endif
 #if BUILD_EDITOR
             "-DBUILD_EDITOR=1",
+#else
+            "-DBUILD_EDITOR=0",
 #endif
 #if PLATFORM_WINDOWS
             "-DPLATFORM_WINDOWS=1",
+            "-DNOMINMAX=1",
 #elif PLATFORM_MACOS
             "-DPLATFORM_MACOS=1",
-//            "-I/Library/Developer/CommandLineTools/usr/include/c++/v1",
-            fmt::format("-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{}.sdk/usr/include/c++/v1", MACOS_SDK_VERSION),
-            fmt::format("-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{}.sdk/usr/include", MACOS_SDK_VERSION),
-            fmt::format("-I/Library/Developer/CommandLineTools/usr/lib/clang/{}.{}.{}/include", __clang_major__, __clang_minor__, __clang_patchlevel__),
-            fmt::format("-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/{}.{}.{}/include", __clang_major__, __clang_minor__, __clang_patchlevel__),
+            "-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1",
+            std::format("-I/Library/Developer/CommandLineTools/usr/lib/clang/{}/include", __clang_major__),
+            "-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include",
+            "-I/Library/Developer/CommandLineTools/usr/include",
 #elif DPLATFORM_LINUX
             "-DPLATFORM_LINUX=1",
 #endif

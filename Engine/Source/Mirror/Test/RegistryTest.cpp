@@ -26,6 +26,11 @@ void F2(int& outValue)
     outValue = 1;
 }
 
+int F3(int&& inValue)
+{
+    return std::move(inValue);
+}
+
 int C0::v0 = 0;
 
 int& C0::F0()
@@ -105,6 +110,13 @@ TEST(RegistryTest, GlobalScopeTest)
         function.InvokeDyn({ Mirror::Any(std::ref(value)) });
         ASSERT_EQ(value, 1);
     }
+
+    {
+        const auto& function = globalScope.GetFunction("F3");
+        int value = 1;
+        function.Invoke(std::ref(value));
+        ASSERT_EQ(value, 1);
+    }
 }
 
 TEST(RegistryTest, ClassTest)
@@ -147,10 +159,10 @@ TEST(RegistryTest, ClassTest)
         const auto& b = clazz.GetMemberVariable("b");
 
         auto object = constructor.New(1, 2);
-        Mirror::Any objectRef = *object.As<C2*>();
+        Mirror::Any objectRef = object.Deref();
         ASSERT_EQ(a.GetDyn(objectRef).As<int>(), 1);
         ASSERT_EQ(b.GetDyn(objectRef).As<int>(), 2);
-        destructor.InvokeDyn(objectRef);
+        destructor.DeleteDyn(object);
     }
 
     {
