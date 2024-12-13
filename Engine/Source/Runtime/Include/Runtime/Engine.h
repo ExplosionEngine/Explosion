@@ -27,7 +27,7 @@ namespace Runtime {
         void MountWorld(World* inWorld);
         void UnmountWorld(World* inWorld);
         Render::RenderModule& GetRenderModule() const;
-        void Tick(float inTimeMs) const;
+        void Tick(float inTimeSeconds) const;
         Common::UniqueRef<World> CreateWorld(const std::string& inName = "") const;
 
     protected:
@@ -45,7 +45,7 @@ namespace Runtime {
         bool IsEditor() override;
     };
 
-    struct RUNTIME_API IGameModule : Core::Module { // NOLINT
+    struct RUNTIME_API IEngineModule : Core::Module { // NOLINT
         virtual Engine* CreateEngine(const EngineInitParams& inParams) = 0;
     };
 
@@ -56,6 +56,6 @@ namespace Runtime {
         static Engine& Get();
 
     private:
-        static Engine* engine;
+        static Common::UniqueRef<Engine> engine;
     };
 }

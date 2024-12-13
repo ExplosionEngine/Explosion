@@ -7,13 +7,10 @@
 #include <Runtime/Engine.h>
 
 namespace Editor {
-    class EditorModule final : public Runtime::IGameModule {
+    class EditorModule final : public Runtime::IEngineModule {
     public:
         void OnUnload() override;
         ::Core::ModuleType Type() const override;
         Runtime::Engine* CreateEngine(const Runtime::EngineInitParams&) override;
-
-    private:
-        Common::UniqueRef<Runtime::Engine> engine;
     };
 }

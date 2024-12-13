@@ -7,11 +7,12 @@
 #include <set>
 #include <unordered_map>
 
-#include <Common/Event.h>
+#include <Common/Delegate.h>
 #include <Common/Utility.h>
 #include <Common/Memory.h>
 #include <Mirror/Mirror.h>
 #include <Mirror/Meta.h>
+#include <Runtime/Api.h>
 
 namespace Runtime {
     using Entity = size_t;
@@ -23,13 +24,16 @@ namespace Runtime {
 
     class ECRegistry;
 
-    class EClass() System {
+    template <typename T>
+    concept ECRegistryOrConst = std::is_same_v<std::remove_const_t<T>, ECRegistry>;
+
+    class RUNTIME_API EClass() System {
     public:
         EClassBody(System)
 
         explicit System(ECRegistry& inRegistry);
         virtual ~System();
-        virtual void Execute(float inDeltaTimeMs);
+        virtual void Tick(float inDeltaTimeMs);
 
     protected:
         ECRegistry& registry;
@@ -41,14 +45,14 @@ namespace Runtime::Internal {
     using ElemPtr = void*;
 
     template <typename T> const Mirror::Class* GetClass();
-    template <typename T> struct LambdaTraits;
+    template <typename T> struct MemberFuncPtrTraits;
 
     class CompRtti {
     public:
         explicit CompRtti(CompClass inClass);
         void Bind(size_t inOffset);
-        Mirror::Any MoveConstruct(ElemPtr inElem, const Mirror::Argument& inOther) const;
-        Mirror::Any MoveAssign(ElemPtr inElem, const Mirror::Argument& inOther) const;
+        Mirror::Any MoveConstruct(ElemPtr inElem, const Mirror::Any& inOther) const;
+        Mirror::Any MoveAssign(ElemPtr inElem, const Mirror::Any& inOther) const;
         void Destruct(ElemPtr inElem) const;
         Mirror::Any Get(ElemPtr inElem) const;
         CompClass Class() const;
@@ -67,16 +71,16 @@ namespace Runtime::Internal {
         size_t offset;
     };
 
-    class Archetype {
+    class RUNTIME_API Archetype {
     public:
         explicit Archetype(const std::vector<CompRtti>& inRttiVec);
 
         bool Contains(CompClass inClazz) const;
         bool ContainsAll(const std::vector<CompClass>& inClasses) const;
-        bool NotContainsAny(const std::vector<CompClass>& inCompClasses) const;
+        bool NotContainsAny(const std::vector<CompClass>& inClasses) const;
         ElemPtr EmplaceElem(Entity inEntity);
         ElemPtr EmplaceElem(Entity inEntity, ElemPtr inSrcElem, const std::vector<CompRtti>& inSrcRttiVec);
-        Mirror::Any EmplaceComp(Entity inEntity, CompClass inCompClass, const Mirror::Argument& inCompRef);
+        Mirror::Any EmplaceComp(Entity inEntity, CompClass inCompClass, const Mirror::Any& inCompRef);
         void EraseElem(Entity inEntity);
         ElemPtr GetElem(Entity inEntity) const;
         Mirror::Any GetComp(Entity inEntity, CompClass inCompClass);
@@ -184,7 +188,7 @@ namespace Runtime {
         G& globalCompRef;
     };
 
-    class ScopedUpdaterDyn {
+    class RUNTIME_API ScopedUpdaterDyn {
     public:
         ScopedUpdaterDyn(ECRegistry& inRegistry, CompClass inClass, Entity inEntity, const Mirror::Any& inCompRef);
         ~ScopedUpdaterDyn();
@@ -198,10 +202,10 @@ namespace Runtime {
         ECRegistry& registry;
         CompClass clazz;
         Entity entity;
-        const Mirror::Any& compRef;
+        Mirror::Any compRef;
     };
 
-    class GScopedUpdaterDyn {
+    class RUNTIME_API GScopedUpdaterDyn {
     public:
         GScopedUpdaterDyn(ECRegistry& inRegistry, GCompClass inClass, const Mirror::Any& inGlobalCompRef);
         ~GScopedUpdaterDyn();
@@ -214,7 +218,7 @@ namespace Runtime {
     private:
         ECRegistry& registry;
         GCompClass clazz;
-        const Mirror::Any& globalCompRef;
+        Mirror::Any globalCompRef;
     };
 
     template <typename... T>
@@ -224,73 +228,82 @@ namespace Runtime {
     struct Exclude {};
 
     template <typename... T>
-    class View;
+    class BasicView;
 
-    template <typename... C, typename... E>
-    class View<Exclude<E...>, C...> {
+    template <ECRegistryOrConst R, typename... C, typename... E>
+    class BasicView<R, Exclude<E...>, C...> {
     public:
-        explicit View(ECRegistry& inRegistry);
-        NonCopyable(View)
-        NonMovable(View)
+        using ResultVector = std::vector<std::tuple<Entity, C&...>>;
+        using ConstIter = typename ResultVector::const_iterator;
+
+        explicit BasicView(R& inRegistry);
+        NonCopyable(BasicView)
+        NonMovable(BasicView)
 
         template <typename F> void Each(F&& inFunc) const;
-        auto Begin();
-        auto Begin() const;
-        auto End();
-        auto End() const;
-        auto begin();
-        auto begin() const;
-        auto end();
-        auto end() const;
+        size_t Size() const;
+        ConstIter Begin() const;
+        ConstIter End() const;
+        ConstIter begin() const;
+        ConstIter end() const;
 
     private:
-        void Evaluate(ECRegistry& inRegistry);
+        void Evaluate(R& inRegistry);
 
-        std::vector<std::tuple<Entity, C&...>> result;
+        ResultVector result;
     };
 
-    class RuntimeViewRule {
+    template <typename R, typename E, typename... C> using View = BasicView<R, E, C...>;
+    template <typename R, typename E, typename... C> using ConstView = BasicView<const R, E, const C...>;
+
+    class RUNTIME_API RuntimeFilter {
     public:
-        RuntimeViewRule();
-        template <typename C> RuntimeViewRule& Include();
-        template <typename C> RuntimeViewRule& Exclude();
-        RuntimeViewRule& IncludeDyn(CompClass inClass);
-        RuntimeViewRule& ExcludeDyn(CompClass inClass);
+        RuntimeFilter();
+        template <typename C> RuntimeFilter& Include();
+        template <typename C> RuntimeFilter& Exclude();
+        RuntimeFilter& IncludeDyn(CompClass inClass);
+        RuntimeFilter& ExcludeDyn(CompClass inClass);
 
     private:
-        friend class RuntimeView;
+        template <ECRegistryOrConst R> friend class BasicRuntimeView;
 
         std::unordered_set<CompClass> includes;
         std::unordered_set<CompClass> excludes;
     };
 
-    class RuntimeView {
+    template <ECRegistryOrConst R>
+    class BasicRuntimeView {
     public:
-        explicit RuntimeView(ECRegistry& inRegistry, const RuntimeViewRule& inArgs);
-        NonCopyable(RuntimeView)
-        NonMovable(RuntimeView)
+        using ResultEntitiesVector = std::vector<Entity>;
+        using ConstIter = typename ResultEntitiesVector::const_iterator;
+
+        explicit BasicRuntimeView(R& inRegistry, const RuntimeFilter& inFilter);
+        NonCopyable(BasicRuntimeView)
+        NonMovable(BasicRuntimeView)
 
         template <typename F> void Each(F&& inFunc) const;
-        auto Begin();
-        auto Begin() const;
-        auto End();
-        auto End() const;
-        auto begin();
-        auto begin() const;
-        auto end();
-        auto end() const;
+        size_t Size() const;
+        ConstIter Begin() const;
+        ConstIter End() const;
+        ConstIter begin() const;
+        ConstIter end() const;
 
     private:
-        template <typename F, typename ArgTuple, size_t... I> void InvokeTraverseFuncInternal(F&& inFunc, std::pair<Entity, std::vector<Mirror::Any>>& inEntityAndComps, std::index_sequence<I...>) const;
-        template <typename C> decltype(auto) GetCompRef(std::vector<Mirror::Any>& inComps) const;
-        void Evaluate(ECRegistry& inRegistry, const RuntimeViewRule& inArgs);
+        using ResultVector = std::vector<std::pair<Entity, std::vector<Mirror::Any>>>;
+
+        template <typename F, typename ArgTuple, size_t... I> void InvokeTraverseFuncInternal(F&& inFunc, const std::pair<Entity, std::vector<Mirror::Any>>& inEntityAndComps, std::index_sequence<I...>) const;
+        template <typename C> decltype(auto) GetCompRef(const std::vector<Mirror::Any>& inComps) const;
+        void Evaluate(R& inRegistry, const RuntimeFilter& inFilter);
 
         std::unordered_map<CompClass, size_t> slotMap;
-        std::vector<Entity> resultEntities;
-        std::vector<std::pair<Entity, std::vector<Mirror::Any>>> result;
+        ResultEntitiesVector resultEntities;
+        ResultVector result;
     };
 
-    class Observer {
+    using RuntimeView = BasicRuntimeView<ECRegistry>;
+    using ConstRuntimeView = BasicRuntimeView<const ECRegistry>;
+
+    class RUNTIME_API Observer {
     public:
         using ConstIter = std::vector<Entity>::const_iterator;
         using EntityTraverseFunc = Internal::EntityPool::EntityTraverseFunc;
@@ -301,33 +314,35 @@ namespace Runtime {
         NonCopyable(Observer)
         NonMovable(Observer)
 
-        template <typename C> void ObConstructed();
-        template <typename C> void ObUpdated();
-        template <typename C> void ObRemove();
+        template <typename C> Observer& ObConstructed();
+        template <typename C> Observer& ObUpdated();
+        Observer& ObConstructedDyn(CompClass inClass);
+        Observer& ObUpdatedDyn(CompClass inClass);
+        size_t Size() const;
         void Each(const EntityTraverseFunc& inFunc) const;
         void Clear();
-        void Reset();
+        void UnbindAll();
         ConstIter Begin() const;
         ConstIter End() const;
         ConstIter begin() const;
         ConstIter end() const;
 
     private:
-        void OnEvent(Common::Event<ECRegistry&, Entity>& inEvent);
+        Observer& OnEvent(Common::Delegate<ECRegistry&, Entity>& inEvent);
         void RecordEntity(ECRegistry& inRegistry, Entity inEntity);
 
         ECRegistry& registry;
-        std::vector<std::pair<Common::ReceiverHandle, ReceiverDeleter>> receiverHandles;
+        std::vector<std::pair<Common::CallbackHandle, ReceiverDeleter>> receiverHandles;
         std::vector<Entity> entities;
     };
 
-    class MIRROR_API ECRegistry {
+    class RUNTIME_API ECRegistry {
     public:
         using EntityTraverseFunc = Internal::EntityPool::EntityTraverseFunc;
         using DynUpdateFunc = std::function<void(const Mirror::Any&)>;
         using ConstIter = Internal::EntityPool::ConstIter;
-        using CompEvent = Common::Event<ECRegistry&, Entity>;
-        using GCompEvent = Common::Event<ECRegistry&>;
+        using CompEvent = Common::Delegate<ECRegistry&, Entity>;
+        using GCompEvent = Common::Delegate<ECRegistry&>;
 
         struct CompEvents {
             CompEvent onConstructed;
@@ -374,7 +389,9 @@ namespace Runtime {
         template <typename C> const C* Find(Entity inEntity) const;
         template <typename C> C& Get(Entity inEntity);
         template <typename C> const C& Get(Entity inEntity) const;
-        template <typename... C, typename... E> View<Exclude<E...>, C...> View(Exclude<E...>);
+        template <typename... C, typename... E> Runtime::View<ECRegistry, Exclude<E...>, C...> View(Exclude<E...> = {});
+        template <typename... C, typename... E> Runtime::ConstView<ECRegistry, Exclude<E...>, C...> View(Exclude<E...> = {}) const;
+        template <typename... C, typename... E> Runtime::ConstView<ECRegistry, Exclude<E...>, C...> ConstView(Exclude<E...> = {}) const;
         template <typename C> CompEvents& Events();
         Observer Observer();
 
@@ -390,7 +407,9 @@ namespace Runtime {
         Mirror::Any GetDyn(CompClass inClass, Entity inEntity);
         Mirror::Any GetDyn(CompClass inClass, Entity inEntity) const;
         CompEvents& EventsDyn(CompClass inClass);
-        RuntimeView RuntimeView(const RuntimeViewRule& inRule);
+        Runtime::RuntimeView RuntimeView(const RuntimeFilter& inFilter);
+        Runtime::ConstRuntimeView RuntimeView(const RuntimeFilter& inFilter) const;
+        Runtime::ConstRuntimeView ConstRuntimeView(const RuntimeFilter& inFilter) const;
 
         // global component static
         template <typename G, typename... Args> G& GEmplace(Args&&... inArgs);
@@ -419,8 +438,8 @@ namespace Runtime {
         GCompEvents& GEventsDyn(GCompClass inClass);
 
     private:
-        template <typename... T> friend class View;
-        friend class RuntimeView;
+        template <typename... T> friend class BasicView;
+        template <ECRegistryOrConst R> friend class BasicRuntimeView;
 
         template <typename C> void NotifyConstructed(Entity inEntity);
         template <typename C> void NotifyRemove(Entity inEntity);
@@ -439,7 +458,7 @@ namespace Runtime {
         std::unordered_map<GCompClass, GCompEvents> globalCompEvents;
     };
 
-    class SystemGroup {
+    class RUNTIME_API SystemGroup {
     public:
         explicit SystemGroup(std::string inName);
 
@@ -457,7 +476,7 @@ namespace Runtime {
         std::unordered_map<SystemClass, Internal::SystemFactory> systems;
     };
 
-    class SystemGraph {
+    class RUNTIME_API SystemGraph {
     public:
         SystemGraph();
 
@@ -514,10 +533,18 @@ namespace Runtime::Internal {
         return &Mirror::Class::Get<T>();
     }
 
-    template <typename Ret, typename... T>
-    struct LambdaTraits<std::function<Ret(T...)>> {
-        static constexpr auto ArgSize = sizeof...(T);
-        using ArgsTupleType = std::tuple<T...>;
+    template <typename Class, typename Ret, typename... Args>
+    struct MemberFuncPtrTraits<Ret(Class::*)(Args...)> {
+        static constexpr auto ArgSize = sizeof...(Args);
+        using ClassType = Class;
+        using ArgsTupleType = std::tuple<Args...>;
+    };
+
+    template <typename Class, typename Ret, typename... Args>
+    struct MemberFuncPtrTraits<Ret(Class::*)(Args...) const> {
+        static constexpr auto ArgSize = sizeof...(Args);
+        using ClassType = const Class;
+        using ArgsTupleType = std::tuple<Args...>;
     };
 
     inline auto Archetype::All() const
@@ -578,82 +605,68 @@ namespace Runtime {
         return globalCompRef.As<T>();
     }
 
-    template <typename... C, typename... E>
-    View<Exclude<E...>, C...>::View(ECRegistry& inRegistry)
+    template <ECRegistryOrConst R, typename ... C, typename ... E>
+    BasicView<R, Exclude<E...>, C...>::BasicView(R& inRegistry)
     {
         Evaluate(inRegistry);
     }
 
-    template <typename... C, typename... E>
+    template <ECRegistryOrConst R, typename ... C, typename ... E>
     template <typename F>
-    void View<Exclude<E...>, C...>::Each(F&& inFunc) const
+    void BasicView<R, Exclude<E...>, C...>::Each(F&& inFunc) const
     {
-        for (const auto& entity : result) {
-            std::apply(inFunc, entity);
+        for (const auto& entityAndComps : result) {
+            if constexpr (Internal::MemberFuncPtrTraits<decltype(&F::operator())>::ArgSize == 1) {
+                inFunc(std::get<0>(entityAndComps));
+            } else {
+                std::apply(inFunc, entityAndComps);
+            }
         }
     }
 
-    template <typename... C, typename... E>
-    auto View<Exclude<E...>, C...>::Begin()
+    template <ECRegistryOrConst R, typename ... C, typename ... E>
+    size_t BasicView<R, Exclude<E...>, C...>::Size() const
+    {
+        return result.size();
+    }
+
+    template <ECRegistryOrConst R, typename ... C, typename ... E>
+    typename BasicView<R, Exclude<E...>, C...>::ConstIter BasicView<R, Exclude<E...>, C...>::Begin() const
     {
         return result.begin();
     }
 
-    template <typename... C, typename... E>
-    auto View<Exclude<E...>, C...>::Begin() const
-    {
-        return result.begin();
-    }
-
-    template <typename... C, typename... E>
-    auto View<Exclude<E...>, C...>::End()
+    template <ECRegistryOrConst R, typename ... C, typename ... E>
+    typename BasicView<R, Exclude<E...>, C...>::ConstIter BasicView<R, Exclude<E...>, C...>::End() const
     {
         return result.end();
     }
 
-    template <typename... C, typename... E>
-    auto View<Exclude<E...>, C...>::End() const
-    {
-        return result.end();
-    }
-
-    template <typename... C, typename... E>
-    auto View<Exclude<E...>, C...>::begin()
+    template <ECRegistryOrConst R, typename ... C, typename ... E>
+    typename BasicView<R, Exclude<E...>, C...>::ConstIter BasicView<R, Exclude<E...>, C...>::begin() const
     {
         return Begin();
     }
 
-    template <typename... C, typename... E>
-    auto View<Exclude<E...>, C...>::begin() const
-    {
-        return Begin();
-    }
-
-    template <typename... C, typename... E>
-    auto View<Exclude<E...>, C...>::end()
+    template <ECRegistryOrConst R, typename ... C, typename ... E>
+    typename BasicView<R, Exclude<E...>, C...>::ConstIter BasicView<R, Exclude<E...>, C...>::end() const
     {
         return End();
     }
 
-    template <typename... C, typename... E>
-    auto View<Exclude<E...>, C...>::end() const
-    {
-        return End();
-    }
-
-    template <typename... C, typename... E>
-    void View<Exclude<E...>, C...>::Evaluate(ECRegistry& inRegistry)
+    template <ECRegistryOrConst R, typename... C, typename... E>
+    void BasicView<R, Exclude<E...>, C...>::Evaluate(R& inRegistry)
     {
         std::vector<CompClass> includeCompIds;
         includeCompIds.reserve(sizeof...(C));
         (void) std::initializer_list<int> { ([&]() -> void {
-            includeCompIds.emplace_back(Internal::GetClass<C>());
+            includeCompIds.emplace_back(Internal::GetClass<std::decay_t<C>>());
         }(), 0)... };
 
         std::vector<CompClass> excludeCompIds;
         excludeCompIds.reserve(sizeof...(E));
         (void) std::initializer_list<int> { ([&]() -> void {
-            excludeCompIds.emplace_back(Internal::GetClass<C>());
+            excludeCompIds.emplace_back(Internal::GetClass<E>());
         }(), 0)... };
 
         for (auto& archetype : inRegistry.archetypes | std::views::values) {
@@ -663,35 +676,107 @@ namespace Runtime {
 
             result.reserve(result.size() + archetype.Size());
             for (auto entity : archetype.All()) {
-                result.emplace_back(entity, inRegistry.Get<C>(entity)...);
+                result.emplace_back(entity, inRegistry.template Get<std::decay_t<C>>(entity)...);
             }
         }
     }
 
-    template <typename F>
-    void RuntimeView::Each(F&& inFunc) const
+    template <ECRegistryOrConst R>
+    BasicRuntimeView<R>::BasicRuntimeView(R& inRegistry, const RuntimeFilter& inFilter)
     {
+        Evaluate(inRegistry, inFilter);
+    }
+
+    template <ECRegistryOrConst R>
+    template <typename F>
+    void BasicRuntimeView<R>::Each(F&& inFunc) const
+    {
+        using Traits = Internal::MemberFuncPtrTraits<decltype(&F::operator())>;
+
         for (const auto& pair : result) {
-            InvokeTraverseFuncInternal<F, Internal::LambdaTraits<F>::ArgsTupleType>(std::forward<F>(inFunc), pair, std::make_index_sequence<Internal::LambdaTraits<F>::ArgSize> {});
+            InvokeTraverseFuncInternal<F, typename Traits::ArgsTupleType>(std::forward<F>(inFunc), pair, std::make_index_sequence<Traits::ArgSize - 1> {});
         }
     }
 
-    template <typename F, typename ArgTuple, size_t... I>
-    void RuntimeView::InvokeTraverseFuncInternal(F&& inFunc, std::pair<Entity, std::vector<Mirror::Any>>& inEntityAndComps, std::index_sequence<I...>) const
+    template <ECRegistryOrConst R>
+    size_t BasicRuntimeView<R>::Size() const
     {
-        inFunc(inEntityAndComps.first, GetCompRef<std::tuple_element_t<I, ArgTuple>>(inEntityAndComps.second)...);
+        return resultEntities.size();
     }
 
+    template <ECRegistryOrConst R>
+    typename BasicRuntimeView<R>::ConstIter BasicRuntimeView<R>::Begin() const
+    {
+        return resultEntities.begin();
+    }
+
+    template <ECRegistryOrConst R>
+    typename BasicRuntimeView<R>::ConstIter BasicRuntimeView<R>::End() const
+    {
+        return resultEntities.end();
+    }
+
+    template <ECRegistryOrConst R>
+    typename BasicRuntimeView<R>::ConstIter BasicRuntimeView<R>::begin() const
+    {
+        return Begin();
+    }
+
+    template <ECRegistryOrConst R>
+    typename BasicRuntimeView<R>::ConstIter BasicRuntimeView<R>::end() const
+    {
+        return End();
+    }
+
+    template <ECRegistryOrConst R>
+    template <typename F, typename ArgTuple, size_t... I>
+    void BasicRuntimeView<R>::InvokeTraverseFuncInternal(F&& inFunc, const std::pair<Entity, std::vector<Mirror::Any>>& inEntityAndComps, std::index_sequence<I...>) const
+    {
+        inFunc(inEntityAndComps.first, GetCompRef<std::tuple_element_t<I + 1, ArgTuple>>(inEntityAndComps.second)...);
+    }
+
+    template <ECRegistryOrConst R>
     template <typename C>
-    decltype(auto) RuntimeView::GetCompRef(std::vector<Mirror::Any>& inComps) const
+    decltype(auto) BasicRuntimeView<R>::GetCompRef(const std::vector<Mirror::Any>& inComps) const
     {
         static_assert(std::is_reference_v<C>);
-        const auto compIndex = slotMap.at(Internal::GetClass<C>());
+        const auto compIndex = slotMap.at(Internal::GetClass<std::decay_t<C>>());
         return inComps[compIndex].template As<C>();
     }
 
+    template <ECRegistryOrConst R>
+    void BasicRuntimeView<R>::Evaluate(R& inRegistry, const RuntimeFilter& inFilter)
+    {
+        const std::vector includes(inFilter.includes.begin(), inFilter.includes.end());
+        const std::vector excludes(inFilter.excludes.begin(), inFilter.excludes.end());
+
+        slotMap.reserve(includes.size());
+        for (auto i = 0; i < includes.size(); i++) {
+            slotMap.emplace(includes[i], i);
+        }
+
+        for (auto& archetype : inRegistry.archetypes | std::views::values) {
+            if (!archetype.ContainsAll(includes) || !archetype.NotContainsAny(excludes)) {
+                continue;
+            }
+
+            resultEntities.reserve(result.size() + archetype.Size());
+            result.reserve(result.size() + archetype.Size());
+            for (const auto entity : archetype.All()) {
+                std::vector<Mirror::Any> comps;
+                comps.reserve(includes.size());
+                for (const auto clazz : includes) {
+                    comps.emplace_back(archetype.GetComp(entity, clazz));
+                }
+
+                resultEntities.emplace_back(entity);
+                result.emplace_back(entity, std::move(comps));
+            }
+        }
+    }
+
     template <typename C>
-    RuntimeViewRule& RuntimeViewRule::Include()
+    RuntimeFilter& RuntimeFilter::Include()
     {
         const auto* clazz = Internal::GetClass<C>();
         Assert(!includes.contains(clazz));
@@ -700,7 +785,7 @@ namespace Runtime {
     }
 
     template <typename C>
-    RuntimeViewRule& RuntimeViewRule::Exclude()
+    RuntimeFilter& RuntimeFilter::Exclude()
     {
         const auto* clazz = Internal::GetClass<C>();
         Assert(!excludes.contains(clazz));
@@ -709,21 +794,15 @@ namespace Runtime {
     }
 
     template <typename C>
-    void Observer::ObConstructed()
+    Observer& Observer::ObConstructed()
     {
-        OnEvent(registry.Events<C>().onConstructed);
+        return OnEvent(registry.Events<C>().onConstructed);
     }
 
     template <typename C>
-    void Observer::ObUpdated()
+    Observer& Observer::ObUpdated()
     {
-        OnEvent(registry.Events<C>().onUpdated);
-    }
-
-    template <typename C>
-    void Observer::ObRemove()
-    {
-        OnEvent(registry.Events<C>().onRemove);
+        return OnEvent(registry.Events<C>().onUpdated);
     }
 
     template <typename C, typename ... Args>
@@ -741,13 +820,15 @@ namespace Runtime {
     template <typename C, typename F>
     void ECRegistry::Update(Entity inEntity, F&& inFunc)
     {
-        UpdateDyn(Internal::GetClass<C>(), inEntity, std::forward<F>(inFunc));
+        UpdateDyn(Internal::GetClass<C>(), inEntity, [&](const Mirror::Any& ref) -> void {
+            inFunc(ref.As<C&>());
+        });
     }
 
     template <typename C>
     ScopedUpdater<C> ECRegistry::Update(Entity inEntity)
     {
-        Assert(Valid(inEntity) && Has<C>());
+        Assert(Valid(inEntity) && Has<C>(inEntity));
         return { *this, inEntity, Get<C>(inEntity) };
     }
 
@@ -782,9 +863,21 @@ namespace Runtime {
     }
 
     template <typename... C, typename... E>
-    View<Exclude<E...>, C...> ECRegistry::View(Exclude<E...>)
+    Runtime::View<ECRegistry, Exclude<E...>, C...> ECRegistry::View(Exclude<E...>)
     {
-        return { *this };
+        return Runtime::View<ECRegistry, Exclude<E...>, C...>(*this);
+    }
+
+    template <typename ... C, typename ... E>
+    Runtime::ConstView<ECRegistry, Exclude<E...>, C...> ECRegistry::View(Exclude<E...>) const
+    {
+        return Runtime::ConstView<ECRegistry, Exclude<E...>, C...>(*this);
+    }
+
+    template <typename ... C, typename ... E>
+    Runtime::ConstView<ECRegistry, Exclude<E...>, C...> ECRegistry::ConstView(Exclude<E...>) const
+    {
+        return Runtime::ConstView<ECRegistry, Exclude<E...>, C...>(*this);
     }
 
     template <typename C>
@@ -814,7 +907,7 @@ namespace Runtime {
     template <typename G, typename ... Args>
     G& ECRegistry::GEmplace(Args&&... inArgs)
     {
-        return GEmplaceDyn(Internal::GetClass<G>(), Mirror::ForwardAsArgList(std::forward<Args>(inArgs)...));
+        return GEmplaceDyn(Internal::GetClass<G>(), Mirror::ForwardAsArgList(std::forward<Args>(inArgs)...)).template As<G&>();
     }
 
     template <typename G>
@@ -826,7 +919,9 @@ namespace Runtime {
     template <typename G, typename F>
     void ECRegistry::GUpdate(F&& inFunc)
     {
-        GUpdateDyn(Internal::GetClass<G>(), std::forward<F>(inFunc));
+        GUpdateDyn(Internal::GetClass<G>(), [&](const Mirror::Any& ref) -> void {
+            inFunc(ref.As<G&>());
+        });
     }
 
     template <typename G>
