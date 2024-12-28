@@ -142,11 +142,11 @@ Add3rdBinaryPackage(
     NAME llvm-clang
     ARCH
     VERSION
-        Windows-AMD64 17.0.4
-        Darwin-arm64 15.0.7
+        Windows-AMD64 19.1.6
+        Darwin-arm64 19.1.6
     HASH
-        Windows-AMD64 3443a2259d092797521bde0c4b6e402ddeca4beb0abd87274ece91ac44b178ce
-        Darwin-arm64 99a4884945674163374d99c2220cadbfe20a947b1217193140c6b6638a3b0627
+        Windows-AMD64 f68b922c87a99b22c0b53a5cbd55db86bd3870c16c4e9060efaecfb9ce49e726
+        Darwin-arm64 08fdf1b6208823acadc23027fda1f12e5171101ec05fa526b545088be31fe19d
     INCLUDE $<SOURCE_DIR>/include
     LINK $<SOURCE_DIR>/lib
     LIB
@@ -262,7 +262,7 @@ set(Qt6Core_VERSION_MAJOR 6 CACHE STRING "" FORCE)
 Add3rdHeaderOnlyPackage(
     NAME rapidjson
     PLATFORM All
-    VERSION 1.1.0
-    HASH c19c92601374a161b0355ccb73f02b31076c70d4446e5ad53c8b80263a9c900c
+    VERSION d621dc9
+    HASH 696f6ca1ecca9d13170c0a47eda66a3015bcf02a7b4bdd23f574ea302eb4bf3e
     INCLUDE $<SOURCE_DIR>/include
 )
