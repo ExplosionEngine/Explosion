@@ -8,13 +8,13 @@ Add3rdHeaderOnlyPackage(
 )
 
 # VulkanSDK
-set(VULKAN_SDK_VERSION 1.3.243.0)
+set(VULKAN_SDK_VERSION 1.3.296.0)
 Add3rdBinaryPackage(
     NAME VulkanSDK
     VERSION ${VULKAN_SDK_VERSION}
     HASH
-        Windows 23ded0e6155a8ea265da84bd62f7a45cc3fc637fb1eeba61a5b9430fa704e4b5
-        Darwin a5c63a4f29984540efa00190240d31b59539413cf4783792bd9f53207f4f7d07
+        Windows 27b8344a5b1333222d55c9c107914dba1cc9beb788b207e087c27dc7b8762816
+        Darwin a792aaad3937a694a4cb853d2fbb3fa7025ba3754bedd52799e687a4c254129c
     INCLUDE
         Windows $<SOURCE_DIR>/Include
         Darwin $<SOURCE_DIR>/macOS/include
@@ -41,9 +41,23 @@ if (NOT ${CI})
             execute_process(COMMAND PowerShell -Command "Start-Process reg -ArgumentList 'add HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\ExplicitLayers /v ${VALIDATION_LAYER_JSON} /t REG_DWORD /d 0' -Verb RunAs")
         endif ()
     else (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-        # check drivers
+        # new version of vulkaninfo application use volk to perform dynamic loading, which need libvulkan.dylib in working directory or system,
+        # so if vulkaninfo print initialized failed, we need copy vulkan dynamic lib to working directory
         set(PLATFORM_VULKAN_SDK_DIR ${CMAKE_SOURCE_DIR}/ThirdParty/Lib/VulkanSDK-Darwin-${VULKAN_SDK_VERSION}/macOS)
-        execute_process(COMMAND ${PLATFORM_VULKAN_SDK_DIR}/bin/vulkaninfo OUTPUT_VARIABLE VULKAN_INFO ERROR_VARIABLE VULKAN_INFO)
+        execute_process(COMMAND ${PLATFORM_VULKAN_SDK_DIR}/bin/vulkaninfo WORKING_DIRECTORY ${PLATFORM_VULKAN_SDK_DIR}/bin OUTPUT_VARIABLE VULKAN_INFO ERROR_VARIABLE VULKAN_INFO)
+        string(REGEX MATCH "Failed to initialize" MATCH_RESULT ${VULKAN_INFO})
+        list(LENGTH MATCH_RESULT MATCH_RESULT_LENGTH)
+        if (${MATCH_RESULT_LENGTH} GREATER 0)
+            set(SRC_FILE ${PLATFORM_VULKAN_SDK_DIR}/lib/libvulkan.dylib)
+            set(DST_FILE ${PLATFORM_VULKAN_SDK_DIR}/bin/libvulkan.dylib)
+            message("vulkaninfo initialized failed, perform vulkan dynamic library copy: ${SRC_FILE} -> ${DST_FILE}")
+            file(COPY_FILE ${SRC_FILE} ${DST_FILE} ONLY_IF_DIFFERENT)
+        else ()
+            message("vulkaninfo test success")
+        endif ()
+
+        # check drivers
+        execute_process(COMMAND ${PLATFORM_VULKAN_SDK_DIR}/bin/vulkaninfo WORKING_DIRECTORY ${PLATFORM_VULKAN_SDK_DIR}/bin OUTPUT_VARIABLE VULKAN_INFO ERROR_VARIABLE VULKAN_INFO)
         string(REGEX MATCH "ERROR_INCOMPATIBLE_DRIVER" MATCH_RESULT ${VULKAN_INFO})
         list(LENGTH MATCH_RESULT MATCH_RESULT_LENGTH)
         if (${MATCH_RESULT_LENGTH} GREATER 0)
@@ -65,7 +79,7 @@ if (NOT ${CI})
         endif ()
 
         # check layers
-        execute_process(COMMAND ${PLATFORM_VULKAN_SDK_DIR}/bin/vulkaninfo OUTPUT_VARIABLE VULKAN_INFO ERROR_VARIABLE VULKAN_INFO)
+        execute_process(COMMAND ${PLATFORM_VULKAN_SDK_DIR}/bin/vulkaninfo WORKING_DIRECTORY ${PLATFORM_VULKAN_SDK_DIR}/bin OUTPUT_VARIABLE VULKAN_INFO ERROR_VARIABLE VULKAN_INFO)
         string(REGEX MATCH "Layers:\n=======" MATCH_RESULT ${VULKAN_INFO})
         list(LENGTH MATCH_RESULT MATCH_RESULT_LENGTH)
         if (${MATCH_RESULT_LENGTH} GREATER 0)
