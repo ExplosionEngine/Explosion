@@ -19,7 +19,6 @@ namespace RHI::Vulkan {
 #if PLATFORM_WINDOWS
         "VK_KHR_win32_surface",
 #elif PLATFORM_MACOS
-        "VK_MVK_macos_surface",
         "VK_EXT_metal_surface",
         "VK_KHR_portability_enumeration",
         "VK_KHR_get_physical_device_properties2",
