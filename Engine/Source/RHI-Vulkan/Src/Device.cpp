@@ -24,7 +24,7 @@
 #include <RHI/Vulkan/Surface.h>
 
 namespace RHI::Vulkan {
-    const std::vector DEVICE_EXTENSIONS = {
+    const std::vector requiredExtensions = {
         "VK_KHR_swapchain",
         "VK_KHR_dynamic_rendering",
         "VK_KHR_depth_stencil_resolve",
@@ -34,7 +34,7 @@ namespace RHI::Vulkan {
 #endif
     };
 
-    const std::vector VALIDATION_LAYERS = {
+    const std::vector requiredValidationLayers = {
         "VK_LAYER_KHRONOS_validation"
     };
 }
@@ -259,12 +259,12 @@ namespace RHI::Vulkan {
         dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
         deviceCreateInfo.pNext = &dynamicRenderingFeatures;
 
-        deviceCreateInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
-        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
+        deviceCreateInfo.ppEnabledExtensionNames = requiredExtensions.data();
+        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
 
 #ifdef BUILD_CONFIG_DEBUG
-        deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
-        deviceCreateInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
+        deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(requiredValidationLayers.size());
+        deviceCreateInfo.ppEnabledLayerNames = requiredValidationLayers.data();
 #endif
 
         Assert(vkCreateDevice(gpu.GetNative(), &deviceCreateInfo, nullptr, &nativeDevice) == VK_SUCCESS);
