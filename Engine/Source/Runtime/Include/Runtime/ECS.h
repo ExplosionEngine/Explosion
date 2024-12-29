@@ -458,21 +458,35 @@ namespace Runtime {
         std::unordered_map<GCompClass, GCompEvents> globalCompEvents;
     };
 
+    enum class SystemExecuteStrategy : uint8_t {
+        sequential,
+        concurrent,
+        max
+    };
+
     class RUNTIME_API SystemGroup {
     public:
-        explicit SystemGroup(std::string inName);
+        explicit SystemGroup(std::string inName, SystemExecuteStrategy inStrategy);
 
-        Internal::SystemFactory& EmplaceSystem(SystemClass inClass);
-        void RemoveSystem(SystemClass inClass);
-        bool HasSystem(SystemClass inClass) const;
-        Internal::SystemFactory& GetSystem(SystemClass inClass);
-        const Internal::SystemFactory& GetSystem(SystemClass inClass) const;
+        template <typename S> Internal::SystemFactory& EmplaceSystem();
+        template <typename S> void RemoveSystem();
+        template <typename S> bool HasSystem() const;
+        template <typename S> Internal::SystemFactory& GetSystem();
+        template <typename S> const Internal::SystemFactory& GetSystem() const;
+
+        Internal::SystemFactory& EmplaceSystemDyn(SystemClass inClass);
+        void RemoveSystemDyn(SystemClass inClass);
+        bool HasSystemDyn(SystemClass inClass) const;
+        Internal::SystemFactory& GetSystemDyn(SystemClass inClass);
+        const Internal::SystemFactory& GetSystemDyn(SystemClass inClass) const;
         auto GetSystems();
         auto GetSystems() const;
         const std::string& GetName() const;
+        SystemExecuteStrategy GetStrategy() const;
 
     private:
         std::string name;
+        SystemExecuteStrategy strategy;
         std::unordered_map<SystemClass, Internal::SystemFactory> systems;
     };
 
@@ -480,7 +494,7 @@ namespace Runtime {
     public:
         SystemGraph();
 
-        SystemGroup& AddGroup(const std::string& inName);
+        SystemGroup& AddGroup(const std::string& inName, SystemExecuteStrategy inStrategy);
         void RemoveGroup(const std::string& inName);
         bool HasGroup(const std::string& inName) const;
         SystemGroup& GetGroup(const std::string& inName);
@@ -500,13 +514,18 @@ namespace Runtime {
             const Internal::SystemFactory& factory;
             Common::UniqueRef<System> instance;
         };
+
+        struct SystemGroupContext {
+            std::vector<SystemContext> systems;
+            SystemExecuteStrategy strategy;
+        };
+
+        friend class SystemGraphExecutor;
         using ActionFunc = std::function<void(SystemContext&)>;
 
         void ParallelPerformAction(const ActionFunc& inActionFunc);
 
-        friend class SystemGraphExecutor;
-
-        std::vector<std::vector<SystemContext>> systemGraph;
+        std::vector<SystemGroupContext> systemGraph;
     };
 
     class SystemGraphExecutor {
@@ -983,5 +1002,35 @@ namespace Runtime {
     void ECRegistry::GNotifyRemove()
     {
         GNotifyRemoveDyn(Internal::GetClass<G>());
+    }
+
+    template <typename S>
+    Internal::SystemFactory& SystemGroup::EmplaceSystem()
+    {
+        return EmplaceSystemDyn(Internal::GetClass<S>());
+    }
+
+    template <typename S>
+    void SystemGroup::RemoveSystem()
+    {
+        RemoveSystemDyn(Internal::GetClass<S>());
+    }
+
+    template <typename S>
+    bool SystemGroup::HasSystem() const
+    {
+        return HasSystemDyn(Internal::GetClass<S>());
+    }
+
+    template <typename S>
+    Internal::SystemFactory& SystemGroup::GetSystem()
+    {
+        return GetSystemDyn(Internal::GetClass<S>());
+    }
+
+    template <typename S>
+    const Internal::SystemFactory& SystemGroup::GetSystem() const
+    {
+        return GetSystemDyn(Internal::GetClass<S>());
     }
 } // namespace Runtime

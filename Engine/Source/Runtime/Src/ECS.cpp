@@ -830,33 +830,34 @@ namespace Runtime {
         return globalCompEvents[inClass];
     }
 
-    SystemGroup::SystemGroup(std::string inName)
+    SystemGroup::SystemGroup(std::string inName, SystemExecuteStrategy inStrategy)
         : name(std::move(inName))
+        , strategy(inStrategy)
     {
     }
 
-    Internal::SystemFactory& SystemGroup::EmplaceSystem(SystemClass inClass)
+    Internal::SystemFactory& SystemGroup::EmplaceSystemDyn(SystemClass inClass)
     {
         systems.emplace(inClass, Internal::SystemFactory(inClass));
         return systems.at(inClass);
     }
 
-    void SystemGroup::RemoveSystem(SystemClass inClass)
+    void SystemGroup::RemoveSystemDyn(SystemClass inClass)
     {
         systems.erase(inClass);
     }
 
-    bool SystemGroup::HasSystem(SystemClass inClass) const
+    bool SystemGroup::HasSystemDyn(SystemClass inClass) const
     {
         return systems.contains(inClass);
     }
 
-    Internal::SystemFactory& SystemGroup::GetSystem(SystemClass inClass)
+    Internal::SystemFactory& SystemGroup::GetSystemDyn(SystemClass inClass)
     {
         return systems.at(inClass);
     }
 
-    const Internal::SystemFactory& SystemGroup::GetSystem(SystemClass inClass) const
+    const Internal::SystemFactory& SystemGroup::GetSystemDyn(SystemClass inClass) const
     {
         return systems.at(inClass);
     }
@@ -876,11 +877,16 @@ namespace Runtime {
         return name;
     }
 
+    SystemExecuteStrategy SystemGroup::GetStrategy() const
+    {
+        return strategy;
+    }
+
     SystemGraph::SystemGraph() = default;
 
-    SystemGroup& SystemGraph::AddGroup(const std::string& inName)
+    SystemGroup& SystemGraph::AddGroup(const std::string& inName, SystemExecuteStrategy inStrategy)
     {
-        return systemGroups.emplace_back(inName);
+        return systemGroups.emplace_back(inName, inStrategy);
     }
 
     void SystemGraph::RemoveGroup(const std::string& inName)
@@ -935,12 +941,13 @@ namespace Runtime {
         systemGraph.reserve(systemGroups.size());
 
         for (const auto& group : systemGroups) {
-            auto& contexts = systemGraph.emplace_back();
+            auto& [systemContexts, strategy] = systemGraph.emplace_back();
             const auto& factories = group.GetSystems();
-            contexts.reserve(factories.size());
 
+            strategy = group.GetStrategy();
+            systemContexts.reserve(factories.size());
             for (const auto& factory : group.GetSystems()) {
-                contexts.emplace_back(factory, nullptr);
+                systemContexts.emplace_back(factory, nullptr);
             }
         }
     }
@@ -950,22 +957,36 @@ namespace Runtime {
         tf::Taskflow taskFlow;
         auto lastBarrier = taskFlow.emplace([]() -> void {});
 
-        for (auto& contexts : systemGraph) {
-            std::vector<tf::Task> tasks;
-            tasks.reserve(contexts.size());
+        for (auto& groupContext : systemGraph) {
+            if (groupContext.strategy == SystemExecuteStrategy::sequential) {
+                tf::Task lastTask = lastBarrier;
+                for (auto& systemContext : groupContext.systems) {
+                    auto task = taskFlow.emplace([&]() -> void {
+                        inActionFunc(systemContext);
+                    });
+                    task.succeed(lastTask);
+                    lastTask = task;
+                }
+                lastBarrier = lastTask;
+            } else if (groupContext.strategy == SystemExecuteStrategy::concurrent) {
+                std::vector<tf::Task> tasks;
+                tasks.reserve(groupContext.systems.size());
 
-            for (auto& context : contexts) {
-                tasks.emplace_back(taskFlow.emplace([&]() -> void {
-                    inActionFunc(context);
-                }));
-                tasks.back().succeed(lastBarrier);
-            }
+                for (auto& systemContext : groupContext.systems) {
+                    tasks.emplace_back(taskFlow.emplace([&]() -> void {
+                        inActionFunc(systemContext);
+                    }));
+                    tasks.back().succeed(lastBarrier);
+                }
 
-            auto barrier = taskFlow.emplace([]() -> void {});
-            for (const auto& task : tasks) {
-                barrier.succeed(task);
+                auto barrier = taskFlow.emplace([]() -> void {});
+                for (const auto& task : tasks) {
+                    barrier.succeed(task);
+                }
+                lastBarrier = barrier;
+            } else {
+                QuickFail();
             }
-            lastBarrier = barrier;
         }
 
         tf::Executor executor;

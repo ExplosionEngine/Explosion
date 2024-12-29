@@ -103,8 +103,8 @@ void BasicTest_MotionSystem::Tick(float inDeltaTimeMs)
 TEST_F(WorldTest, BasicTest)
 {
     SystemGraph systemGraph;
-    auto& mainGroup = systemGraph.AddGroup("MainGroup");
-    mainGroup.EmplaceSystem(&BasicTest_MotionSystem::GetStaticClass());
+    auto& mainGroup = systemGraph.AddGroup("MainGroup", SystemExecuteStrategy::sequential);
+    mainGroup.EmplaceSystemDyn(&BasicTest_MotionSystem::GetStaticClass());
 
     const auto world = engine->CreateWorld();
     world->SetSystemGraph(systemGraph);
@@ -115,7 +115,68 @@ TEST_F(WorldTest, BasicTest)
     world->Stop();
 }
 
+ConcurrentTest_SystemA::ConcurrentTest_SystemA(Runtime::ECRegistry& inRegistry)
+    : System(inRegistry)
+{
+}
+
+ConcurrentTest_SystemA::~ConcurrentTest_SystemA() = default;
+
+void ConcurrentTest_SystemA::Tick(float inDeltaTimeMs)
+{
+    auto& context = registry.GGet<ConcurrentTest_Context>();
+    context.a = 1;
+}
+
+ConcurrentTest_SystemB::ConcurrentTest_SystemB(Runtime::ECRegistry& inRegistry)
+    : System(inRegistry)
+{
+}
+
+ConcurrentTest_SystemB::~ConcurrentTest_SystemB() = default;
+
+void ConcurrentTest_SystemB::Tick(float inDeltaTimeMs)
+{
+    auto& context = registry.GGet<ConcurrentTest_Context>();
+    context.b = 2;
+}
+
+ConcurrentTest_VerifySystem::ConcurrentTest_VerifySystem(Runtime::ECRegistry& inRegistry)
+    : System(inRegistry)
+{
+    auto& context = registry.GEmplace<ConcurrentTest_Context>();
+    context.a = 0;
+    context.b = 0;
+    context.sum = 0;
+    context.tickCount = 0;
+}
+
+ConcurrentTest_VerifySystem::~ConcurrentTest_VerifySystem() = default;
+
+void ConcurrentTest_VerifySystem::Tick(float inDeltaTimeMs)
+{
+    auto& context = registry.GGet<ConcurrentTest_Context>();
+    context.sum = context.sum + context.a + context.b;
+    context.a = 0;
+    context.b = 0;
+    context.tickCount++;
+    ASSERT_EQ(context.sum, 3 * context.tickCount);
+}
+
 TEST_F(WorldTest, ConcurrentTest)
 {
-    // TODO
+    SystemGraph systemGraph;
+    auto& ConcurrentGroup = systemGraph.AddGroup("ConcurrentGroup", SystemExecuteStrategy::concurrent);
+    ConcurrentGroup.EmplaceSystem<ConcurrentTest_SystemA>();
+    ConcurrentGroup.EmplaceSystem<ConcurrentTest_SystemB>();
+    auto& verifyGroup = systemGraph.AddGroup("VerifyGroup", SystemExecuteStrategy::sequential);
+    verifyGroup.EmplaceSystem<ConcurrentTest_VerifySystem>();
+
+    const auto world = engine->CreateWorld();
+    world->SetSystemGraph(systemGraph);
+    world->Play();
+    for (auto i = 0; i < 5; i++) {
+        engine->Tick(0.0167f);
+    }
+    world->Stop();
 }
