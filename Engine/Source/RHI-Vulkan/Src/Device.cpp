@@ -30,7 +30,8 @@ namespace RHI::Vulkan {
         "VK_KHR_depth_stencil_resolve",
         "VK_KHR_create_renderpass2",
 #if PLATFORM_MACOS
-        "VK_KHR_portability_subset"
+        "VK_KHR_portability_subset",
+        "VK_EXT_extended_dynamic_state"
 #endif
     };
 
@@ -262,7 +263,15 @@ namespace RHI::Vulkan {
         deviceCreateInfo.ppEnabledExtensionNames = requiredExtensions.data();
         deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
 
-#ifdef BUILD_CONFIG_DEBUG
+#if PLATFORM_MACOS
+        // MoltenVK not support use vkCmdSetPrimitiveTopology() directly current
+        VkPhysicalDeviceExtendedDynamicStateFeaturesEXT extendedDynamicStateFeatures = {};
+        extendedDynamicStateFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
+        extendedDynamicStateFeatures.extendedDynamicState = VK_TRUE;
+        dynamicRenderingFeatures.pNext = &extendedDynamicStateFeatures;
+#endif
+
+#if BUILD_CONFIG_DEBUG
         deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(requiredValidationLayers.size());
         deviceCreateInfo.ppEnabledLayerNames = requiredValidationLayers.data();
 #endif
