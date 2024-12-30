@@ -5,7 +5,7 @@
 #pragma once
 
 #include <QMainWindow>
-#include <QVBoxLayout>
+#include <QHBoxLayout>
 
 namespace Editor {
     class Launcher final : public QWidget {
@@ -15,9 +15,9 @@ namespace Editor {
         Launcher();
 
         void SetWindowProperties();
-        void CreateMainCol();
-        void CreateLogoRow() const;
+        void CreateMainRow();
+        void CreateMenuCol() const;
 
-        QVBoxLayout* mainCol;
+        QHBoxLayout* mainRow;
     };
 }

@@ -4,6 +4,7 @@
 
 #include <QLabel>
 #include <QPushButton>
+#include <QVBoxLayout>
 
 #include <Editor/Widget/Launcher.h>
 #include <Editor/Widget/moc_Launcher.cpp> // NOLINT
@@ -14,8 +15,8 @@ namespace Editor {
     Launcher::Launcher()
     {
         SetWindowProperties();
-        CreateMainCol();
-        CreateLogoRow();
+        CreateMainRow();
+        CreateMenuCol();
     }
 
     void Launcher::SetWindowProperties()
@@ -29,21 +30,24 @@ namespace Editor {
         setPalette(pal);
     }
 
-    void Launcher::CreateMainCol()
+    void Launcher::CreateMainRow()
     {
-        mainCol = new QVBoxLayout();
-        setLayout(mainCol);
+        mainRow = new QHBoxLayout();
+        mainRow->setContentsMargins(QMargins(50, 50, 50, 50));
+        setLayout(mainRow);
     }
 
-    void Launcher::CreateLogoRow() const
+    void Launcher::CreateMenuCol() const
     {
-        auto* logoRow = new QHBoxLayout();
-        logoRow->setContentsMargins(QMargins(0, 50, 0, 0));
-        mainCol->addLayout(logoRow);
+        auto* menuCol = new QVBoxLayout();
+        mainRow->addLayout(menuCol);
+
+        auto* logoAndVersionRow = new QHBoxLayout();
+        menuCol->addLayout(logoAndVersionRow);
 
         auto* logoLabel = new QLabel();
-        logoLabel->setPixmap(QPixmap(StaticResources::picLogo).scaled(250, 250, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-        logoLabel->setAlignment(Qt::AlignHCenter);
-        mainCol->addWidget(logoLabel);
+        logoLabel->setPixmap(QPixmap(StaticResources::picLogo).scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        logoLabel->setAlignment(Qt::AlignVCenter);
+        logoAndVersionRow->addWidget(logoLabel);
     }
 }
