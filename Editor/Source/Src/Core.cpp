@@ -35,6 +35,8 @@ namespace Editor {
 
     void Core::Cleanup() // NOLINT
     {
+        Runtime::EngineHolder::Unload();
+        engine = nullptr;
         ::Core::ModuleManager::Get().Unload("Runtime");
     }
 
