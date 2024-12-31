@@ -251,26 +251,22 @@ Add3rdHeaderOnlyPackage(
 )
 
 # Qt6
-Find3rdPackage(
+set(QT_VERSION "6.5.2" CACHE STRING "" FORCE)
+Setup3rdPackage(
     NAME Qt
-    PACKAGE Qt6
-    VERSION 6.5.2
+    VERSION ${QT_VERSION}
     HASH
         Windows e2a573a53b6de88c0ce768868bd5a8258d432ad71c45a407afa55243b051668f
         Darwin 2fadcb1f07e5f11d4345e7d5631f35f8f4a8033c35901fb20a22c2feb7486e57
     PREFIX
         Windows $<SOURCE_DIR>/6.5.2/msvc2019_64
         Darwin $<SOURCE_DIR>/6.5.2/macos
-    COMPONENTS Core Gui Widgets
-    LIB Qt::Core Qt::Gui Qt::Widgets
-    RUNTIME_DEP
-        Windows
-            $<SOURCE_DIR>/6.5.2/msvc2019_64/plugins/platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll->platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll
-            $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Core$<IF:$<CONFIG:Debug>,d,>.dll
-            $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Gui$<IF:$<CONFIG:Debug>,d,>.dll
-            $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Widgets$<IF:$<CONFIG:Debug>,d,>.dll
 )
-set(Qt6Core_VERSION_MAJOR 6 CACHE STRING "" FORCE)
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64 CACHE PATH "" FORCE)
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/macos CACHE PATH "" FORCE)
+endif ()
 
 # rapidjson
 Add3rdHeaderOnlyPackage(

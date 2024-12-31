@@ -1,17 +1,16 @@
-file(GLOB_RECURSE RESOURCES ../Resource/*)
-foreach(R ${RESOURCES})
-    string(REGEX REPLACE ".*Resource/" "" FILENAME ${R})
-    list(APPEND FINAL_RESOURCES ${R}->../Resource/${FILENAME})
-endforeach()
+set(CMAKE_PREFIX_PATH ${QT_LIB_PREFIX})
+find_package(
+    Qt6 ${QT_VERSION}
+    COMPONENTS Core Gui Widgets
+    REQUIRED
+)
+
+qt_standard_project_setup()
 
 file(GLOB_RECURSE SOURCES Src/*.cpp)
-AddExecutable(
-    NAME Editor
-    SRC ${SOURCES}
-    INC Include
-    LIB Qt Core RHI Runtime
-    RES ${FINAL_RESOURCES}
-)
+qt_add_executable(Editor ${SOURCES})
+target_include_directories(Editor PRIVATE Include)
+target_link_libraries(Editor PRIVATE Core RHI Runtime Qt6::Core Qt6::Gui Qt6::Widgets)
 
 set_target_properties(
     Editor PROPERTIES
