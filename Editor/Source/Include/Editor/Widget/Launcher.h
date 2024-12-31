@@ -4,20 +4,13 @@
 
 #pragma once
 
-#include <QMainWindow>
-#include <QHBoxLayout>
+#include <Editor/Widget/QmlWidget.h>
 
 namespace Editor {
-    class Launcher final : public QWidget {
+    class Launcher final : public QmlWidget {
         Q_OBJECT
 
     public:
         Launcher();
-
-        void SetWindowProperties();
-        void CreateMainRow();
-        void CreateMenuCol() const;
-
-        QHBoxLayout* mainRow;
     };
 }

@@ -4,6 +4,7 @@
 
 #include <QApplication>
 #include <Editor/Core.h>
+#include <Editor/QmlHotReload.h>
 #include <Editor/Widget/Launcher.h>
 
 int main(int argc, char* argv[])
@@ -19,7 +20,11 @@ int main(int argc, char* argv[])
         // TODO editor main
     }
     mainWindow->show();
+
+    auto& qmlHotReloadEngine = Editor::QmlHotReloadEngine::Get();
+    qmlHotReloadEngine.Start();
     const int execRes = QApplication::exec();
+    qmlHotReloadEngine.Stop();
 
     mainWindow = nullptr;
     Editor::Core::Get().Cleanup();
