@@ -531,5 +531,5 @@ function(Setup3rdPackage)
         HASH ${HASH_VALUE}
     )
 
-    set(${PARAMS_NAME}_SOURCE_DIR ${SOURCE_DIR})
+    set(${PARAMS_NAME}_SOURCE_DIR ${SOURCE_DIR} CACHE PATH "" FORCE)
 endfunction()
