@@ -127,14 +127,21 @@ function(AddRuntimeDependenciesCopyCommand)
             string(REPLACE "->" ";" TEMP ${R})
             list(GET TEMP 0 SRC)
             list(GET TEMP 1 DST)
+            set(COPY_COMMAND ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST})
+        else ()
+            set(SRC ${R})
+            set(COPY_COMMAND ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>)
+        endif ()
+
+        if (IS_DIRECTORY ${SRC})
             add_custom_command(
                 TARGET ${PARAMS_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST}
+                COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${COPY_COMMAND}
             )
         else ()
             add_custom_command(
                 TARGET ${PARAMS_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${R} $<TARGET_FILE_DIR:${PARAMS_NAME}>
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${COPY_COMMAND}
             )
         endif ()
     endforeach()

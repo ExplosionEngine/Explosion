@@ -12,7 +12,24 @@ qt_add_executable(Editor ${SOURCES})
 target_include_directories(Editor PRIVATE Include)
 target_link_libraries(Editor PRIVATE Core RHI Runtime Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Quick)
 
-# TODO config runtime dependencies in Windows
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    list(
+        APPEND RUNTIME_DEP
+            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/plugins/platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll->platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll
+            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/qml->qml
+            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6Core$<IF:$<CONFIG:Debug>,d,>.dll
+            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6Widgets$<IF:$<CONFIG:Debug>,d,>.dll
+            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6Quick$<IF:$<CONFIG:Debug>,d,>.dll
+            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6Qml$<IF:$<CONFIG:Debug>,d,>.dll
+            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6QmlModels$<IF:$<CONFIG:Debug>,d,>.dll
+            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6QmlWorkerScript$<IF:$<CONFIG:Debug>,d,>.dll
+            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6Network$<IF:$<CONFIG:Debug>,d,>.dll
+            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6Gui$<IF:$<CONFIG:Debug>,d,>.dll
+            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6OpenGL$<IF:$<CONFIG:Debug>,d,>.dll
+    )
+    set_target_properties(Editor PROPERTIES RUNTIME_DEP "${RUNTIME_DEP}")
+    AddRuntimeDependenciesCopyCommand(NAME Editor)
+endif ()
 
 file(GLOB_RECURSE QML_SOURCES QML/*.qml)
 file(GLOB_RECURSE RESOURCES Resource/*)
