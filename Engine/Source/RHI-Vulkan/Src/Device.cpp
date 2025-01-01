@@ -24,17 +24,18 @@
 #include <RHI/Vulkan/Surface.h>
 
 namespace RHI::Vulkan {
-    const std::vector DEVICE_EXTENSIONS = {
+    const std::vector requiredExtensions = {
         "VK_KHR_swapchain",
         "VK_KHR_dynamic_rendering",
         "VK_KHR_depth_stencil_resolve",
         "VK_KHR_create_renderpass2",
 #if PLATFORM_MACOS
-        "VK_KHR_portability_subset"
+        "VK_KHR_portability_subset",
+        "VK_EXT_extended_dynamic_state"
 #endif
     };
 
-    const std::vector VALIDATION_LAYERS = {
+    const std::vector requiredValidationLayers = {
         "VK_LAYER_KHRONOS_validation"
     };
 }
@@ -259,12 +260,20 @@ namespace RHI::Vulkan {
         dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
         deviceCreateInfo.pNext = &dynamicRenderingFeatures;
 
-        deviceCreateInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
-        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
+        deviceCreateInfo.ppEnabledExtensionNames = requiredExtensions.data();
+        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
 
-#ifdef BUILD_CONFIG_DEBUG
-        deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
-        deviceCreateInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
+#if PLATFORM_MACOS
+        // MoltenVK not support use vkCmdSetPrimitiveTopology() directly current
+        VkPhysicalDeviceExtendedDynamicStateFeaturesEXT extendedDynamicStateFeatures = {};
+        extendedDynamicStateFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
+        extendedDynamicStateFeatures.extendedDynamicState = VK_TRUE;
+        dynamicRenderingFeatures.pNext = &extendedDynamicStateFeatures;
+#endif
+
+#if BUILD_CONFIG_DEBUG
+        deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(requiredValidationLayers.size());
+        deviceCreateInfo.ppEnabledLayerNames = requiredValidationLayers.data();
 #endif
 
         Assert(vkCreateDevice(gpu.GetNative(), &deviceCreateInfo, nullptr, &nativeDevice) == VK_SUCCESS);

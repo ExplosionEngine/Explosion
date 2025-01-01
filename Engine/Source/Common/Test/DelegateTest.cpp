@@ -2,7 +2,7 @@
 // Created by johnk on 2024/11/5.
 //
 
-#include <Common/Event.h>
+#include <Common/Delegate.h>
 
 static int counter = 0;
 
@@ -29,7 +29,7 @@ TEST(EventTest, BasicTest)
 {
     Receiver receiver;
 
-    Event<int, bool> event;
+    Delegate<int, bool> event;
     ASSERT_EQ(event.BindStatic<&StaticReceiver>(), 0);
     ASSERT_EQ(event.BindMember<&Receiver::Receive>(receiver), 1);
     ASSERT_EQ(event.BindLambda([](int a, bool b) -> void {

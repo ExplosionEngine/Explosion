@@ -14,7 +14,7 @@ namespace Runtime {
 
     System::~System() = default;
 
-    void System::Execute(float inDeltaTimeMs) {}
+    void System::Tick(float inDeltaTimeMs) {}
 }
 
 namespace Runtime::Internal {
@@ -31,13 +31,13 @@ namespace Runtime::Internal {
         offset = inOffset;
     }
 
-    Mirror::Any CompRtti::MoveConstruct(ElemPtr inElem, const Mirror::Argument& inOther) const
+    Mirror::Any CompRtti::MoveConstruct(ElemPtr inElem, const Mirror::Any& inOther) const
     {
         auto* compBegin = static_cast<uint8_t*>(inElem) + offset;
         return clazz->InplaceNewDyn(compBegin, { inOther });
     }
 
-    Mirror::Any CompRtti::MoveAssign(ElemPtr inElem, const Mirror::Argument& inOther) const
+    Mirror::Any CompRtti::MoveAssign(ElemPtr inElem, const Mirror::Any& inOther) const
     {
         auto* compBegin = static_cast<uint8_t*>(inElem) + offset;
         auto compRef = clazz->InplaceGetObject(compBegin);
@@ -102,18 +102,18 @@ namespace Runtime::Internal {
 
     bool Archetype::ContainsAll(const std::vector<CompClass>& inClasses) const
     {
-        for (const auto& rtti : rttiVec) {
-            if (!Contains(rtti.Class())) {
+        for (const auto& clazz : inClasses) {
+            if (!Contains(clazz)) {
                 return false;
             }
         }
         return true;
     }
 
-    bool Archetype::NotContainsAny(const std::vector<CompClass>& inCompClasses) const
+    bool Archetype::NotContainsAny(const std::vector<CompClass>& inClasses) const
     {
-        for (const auto& rtti : rttiVec) {
-            if (Contains(rtti.Class())) {
+        for (const auto& clazz : inClasses) {
+            if (Contains(clazz)) {
                 return false;
             }
         }
@@ -142,7 +142,7 @@ namespace Runtime::Internal {
         return newElem;
     }
 
-    Mirror::Any Archetype::EmplaceComp(Entity inEntity, CompClass inCompClass, const Mirror::Argument& inCompRef) // NOLINT
+    Mirror::Any Archetype::EmplaceComp(Entity inEntity, CompClass inCompClass, const Mirror::Any& inCompRef) // NOLINT
     {
         ElemPtr elem = ElemAt(entityMap.at(inEntity));
         return GetCompRtti(inCompClass).MoveConstruct(elem, inCompRef);
@@ -162,6 +162,7 @@ namespace Runtime::Internal {
         entityMap.erase(inEntity);
         elemMap.at(elemIndex) = entityToLastElem;
         elemMap.erase(lastElemIndex);
+        size--;
     }
 
     ElemPtr Archetype::GetElem(Entity inEntity) const
@@ -403,93 +404,18 @@ namespace Runtime {
         registry.GNotifyUpdatedDyn(clazz);
     }
 
-    RuntimeViewRule::RuntimeViewRule() = default;
+    RuntimeFilter::RuntimeFilter() = default;
 
-    RuntimeViewRule& RuntimeViewRule::IncludeDyn(CompClass inClass)
+    RuntimeFilter& RuntimeFilter::IncludeDyn(CompClass inClass)
     {
         includes.emplace(inClass);
         return *this;
     }
 
-    RuntimeViewRule& RuntimeViewRule::ExcludeDyn(CompClass inClass)
+    RuntimeFilter& RuntimeFilter::ExcludeDyn(CompClass inClass)
     {
         excludes.emplace(inClass);
         return *this;
-    }
-
-    RuntimeView::RuntimeView(ECRegistry& inRegistry, const RuntimeViewRule& inArgs)
-    {
-        Evaluate(inRegistry, inArgs);
-    }
-
-    auto RuntimeView::Begin()
-    {
-        return resultEntities.begin();
-    }
-
-    auto RuntimeView::Begin() const
-    {
-        return resultEntities.begin();
-    }
-
-    auto RuntimeView::End()
-    {
-        return resultEntities.end();
-    }
-
-    auto RuntimeView::End() const
-    {
-        return resultEntities.end();
-    }
-
-    auto RuntimeView::begin()
-    {
-        return Begin();
-    }
-
-    auto RuntimeView::begin() const
-    {
-        return Begin();
-    }
-
-    auto RuntimeView::end()
-    {
-        return End();
-    }
-
-    auto RuntimeView::end() const
-    {
-        return End();
-    }
-
-    void RuntimeView::Evaluate(ECRegistry& inRegistry, const RuntimeViewRule& inArgs)
-    {
-        const std::vector includes(inArgs.includes.begin(), inArgs.includes.end());
-        const std::vector excludes(inArgs.excludes.begin(), inArgs.excludes.end());
-
-        slotMap.reserve(includes.size());
-        for (auto i = 0; i < includes.size(); i++) {
-            slotMap.emplace(includes[i], i);
-        }
-
-        for (auto& [_, archetype] : inRegistry.archetypes) {
-            if (!archetype.ContainsAll(includes) || !archetype.NotContainsAny(excludes)) {
-                continue;
-            }
-
-            resultEntities.reserve(result.size() + archetype.Size());
-            result.reserve(result.size() + archetype.Size());
-            for (const auto entity : archetype.All()) {
-                std::vector<Mirror::Any> comps;
-                comps.reserve(includes.size());
-                for (const auto clazz : includes) {
-                    comps.emplace_back(archetype.GetComp(entity, clazz));
-                }
-
-                resultEntities.emplace_back(entity);
-                result.emplace_back(entity, std::move(comps));
-            }
-        }
     }
 
     Observer::Observer(ECRegistry& inRegistry)
@@ -499,7 +425,22 @@ namespace Runtime {
 
     Observer::~Observer()
     {
-        Reset();
+        UnbindAll();
+    }
+
+    Observer& Observer::ObConstructedDyn(CompClass inClass)
+    {
+        return OnEvent(registry.EventsDyn(inClass).onConstructed);
+    }
+
+    Observer& Observer::ObUpdatedDyn(CompClass inClass)
+    {
+        return OnEvent(registry.EventsDyn(inClass).onUpdated);
+    }
+
+    size_t Observer::Size() const
+    {
+        return entities.size();
     }
 
     void Observer::Each(const EntityTraverseFunc& inFunc) const
@@ -514,9 +455,9 @@ namespace Runtime {
         entities.clear();
     }
 
-    void Observer::Reset()
+    void Observer::UnbindAll()
     {
-        for (auto& [handle, deleter] : receiverHandles) {
+        for (auto& deleter : receiverHandles | std::views::values) {
             deleter();
         }
         receiverHandles.clear();
@@ -547,14 +488,15 @@ namespace Runtime {
         entities.emplace_back(inEntity);
     }
 
-    void Observer::OnEvent(Common::Event<ECRegistry&, Entity>& inEvent)
+    Observer& Observer::OnEvent(Common::Delegate<ECRegistry&, Entity>& inEvent)
     {
         const auto handle = inEvent.BindMember<&Observer::RecordEntity>(*this);
         receiverHandles.emplace_back(
             handle,
-            [&]() -> void {
+            [&inEvent, handle]() -> void {
                 inEvent.Unbind(handle);
             });
+        return *this;
     }
 
     ECRegistry::ECRegistry()
@@ -660,9 +602,19 @@ namespace Runtime {
         return End();
     }
 
-    RuntimeView ECRegistry::RuntimeView(const RuntimeViewRule& inRule)
+    Runtime::RuntimeView ECRegistry::RuntimeView(const RuntimeFilter& inFilter)
     {
-        return Runtime::RuntimeView { *this, inRule };
+        return Runtime::RuntimeView { *this, inFilter };
+    }
+
+    Runtime::ConstRuntimeView ECRegistry::RuntimeView(const RuntimeFilter& inFilter) const
+    {
+        return Runtime::ConstRuntimeView { *this, inFilter };
+    }
+
+    Runtime::ConstRuntimeView ECRegistry::ConstRuntimeView(const RuntimeFilter& inFilter) const
+    {
+        return Runtime::ConstRuntimeView { *this, inFilter };
     }
 
     void ECRegistry::NotifyUpdatedDyn(CompClass inClass, Entity inEntity)
@@ -706,19 +658,15 @@ namespace Runtime {
         const Internal::ArchetypeId newArchetypeId = archetypeId + inClass->GetTypeInfo()->id;
         entities.SetArchetype(inEntity, newArchetypeId);
 
-        Internal::Archetype* newArchetype;
-        if (archetypes.contains(newArchetypeId)) {
-            newArchetype = &archetypes.at(newArchetypeId);
-            newArchetype->EmplaceElem(inEntity, archetype.GetElem(inEntity), archetype.GetRttiVec());
-            archetype.EraseElem(inEntity);
-        } else {
+        if (!archetypes.contains(newArchetypeId)) {
             archetypes.emplace(newArchetypeId, Internal::Archetype(archetype.NewRttiVecByAdd(Internal::CompRtti(inClass))));
-            newArchetype = &archetypes.at(newArchetypeId);
-            newArchetype->EmplaceElem(inEntity);
         }
+        Internal::Archetype& newArchetype = archetypes.at(newArchetypeId);
+        newArchetype.EmplaceElem(inEntity, archetype.GetElem(inEntity), archetype.GetRttiVec());
+        archetype.EraseElem(inEntity);
 
         Mirror::Any tempObj = inClass->ConstructDyn(inArgs);
-        Mirror::Any compRef = newArchetype->EmplaceComp(inEntity, inClass, tempObj.Ref());
+        Mirror::Any compRef = newArchetype.EmplaceComp(inEntity, inClass, tempObj.Ref());
         NotifyConstructedDyn(inClass, inEntity);
         return compRef;
     }
@@ -868,7 +816,7 @@ namespace Runtime {
     Mirror::Any ECRegistry::GGetDyn(GCompClass inClass)
     {
         Assert(GHasDyn(inClass));
-        return globalComps.at(inClass);
+        return globalComps.at(inClass).Ref();
     }
 
     Mirror::Any ECRegistry::GGetDyn(GCompClass inClass) const
@@ -882,33 +830,34 @@ namespace Runtime {
         return globalCompEvents[inClass];
     }
 
-    SystemGroup::SystemGroup(std::string inName)
+    SystemGroup::SystemGroup(std::string inName, SystemExecuteStrategy inStrategy)
         : name(std::move(inName))
+        , strategy(inStrategy)
     {
     }
 
-    Internal::SystemFactory& SystemGroup::EmplaceSystem(SystemClass inClass)
+    Internal::SystemFactory& SystemGroup::EmplaceSystemDyn(SystemClass inClass)
     {
         systems.emplace(inClass, Internal::SystemFactory(inClass));
         return systems.at(inClass);
     }
 
-    void SystemGroup::RemoveSystem(SystemClass inClass)
+    void SystemGroup::RemoveSystemDyn(SystemClass inClass)
     {
         systems.erase(inClass);
     }
 
-    bool SystemGroup::HasSystem(SystemClass inClass) const
+    bool SystemGroup::HasSystemDyn(SystemClass inClass) const
     {
         return systems.contains(inClass);
     }
 
-    Internal::SystemFactory& SystemGroup::GetSystem(SystemClass inClass)
+    Internal::SystemFactory& SystemGroup::GetSystemDyn(SystemClass inClass)
     {
         return systems.at(inClass);
     }
 
-    const Internal::SystemFactory& SystemGroup::GetSystem(SystemClass inClass) const
+    const Internal::SystemFactory& SystemGroup::GetSystemDyn(SystemClass inClass) const
     {
         return systems.at(inClass);
     }
@@ -928,11 +877,16 @@ namespace Runtime {
         return name;
     }
 
+    SystemExecuteStrategy SystemGroup::GetStrategy() const
+    {
+        return strategy;
+    }
+
     SystemGraph::SystemGraph() = default;
 
-    SystemGroup& SystemGraph::AddGroup(const std::string& inName)
+    SystemGroup& SystemGraph::AddGroup(const std::string& inName, SystemExecuteStrategy inStrategy)
     {
-        return systemGroups.emplace_back(inName);
+        return systemGroups.emplace_back(inName, inStrategy);
     }
 
     void SystemGraph::RemoveGroup(const std::string& inName)
@@ -987,12 +941,13 @@ namespace Runtime {
         systemGraph.reserve(systemGroups.size());
 
         for (const auto& group : systemGroups) {
-            auto& contexts = systemGraph.emplace_back();
+            auto& [systemContexts, strategy] = systemGraph.emplace_back();
             const auto& factories = group.GetSystems();
-            contexts.reserve(factories.size());
 
+            strategy = group.GetStrategy();
+            systemContexts.reserve(factories.size());
             for (const auto& factory : group.GetSystems()) {
-                contexts.emplace_back(factory, nullptr);
+                systemContexts.emplace_back(factory, nullptr);
             }
         }
     }
@@ -1002,22 +957,36 @@ namespace Runtime {
         tf::Taskflow taskFlow;
         auto lastBarrier = taskFlow.emplace([]() -> void {});
 
-        for (auto& contexts : systemGraph) {
-            std::vector<tf::Task> tasks;
-            tasks.reserve(contexts.size());
+        for (auto& groupContext : systemGraph) {
+            if (groupContext.strategy == SystemExecuteStrategy::sequential) {
+                tf::Task lastTask = lastBarrier;
+                for (auto& systemContext : groupContext.systems) {
+                    auto task = taskFlow.emplace([&]() -> void {
+                        inActionFunc(systemContext);
+                    });
+                    task.succeed(lastTask);
+                    lastTask = task;
+                }
+                lastBarrier = lastTask;
+            } else if (groupContext.strategy == SystemExecuteStrategy::concurrent) {
+                std::vector<tf::Task> tasks;
+                tasks.reserve(groupContext.systems.size());
 
-            for (auto& context : contexts) {
-                tasks.emplace_back(taskFlow.emplace([&]() -> void {
-                    inActionFunc(context);
-                }));
-                tasks.back().succeed(lastBarrier);
-            }
+                for (auto& systemContext : groupContext.systems) {
+                    tasks.emplace_back(taskFlow.emplace([&]() -> void {
+                        inActionFunc(systemContext);
+                    }));
+                    tasks.back().succeed(lastBarrier);
+                }
 
-            auto barrier = taskFlow.emplace([]() -> void {});
-            for (const auto& task : tasks) {
-                barrier.succeed(task);
+                auto barrier = taskFlow.emplace([]() -> void {});
+                for (const auto& task : tasks) {
+                    barrier.succeed(task);
+                }
+                lastBarrier = barrier;
+            } else {
+                QuickFail();
             }
-            lastBarrier = barrier;
         }
 
         tf::Executor executor;
@@ -1046,7 +1015,7 @@ namespace Runtime {
     void SystemGraphExecutor::Tick(float inDeltaTimeMs)
     {
         pipeline.ParallelPerformAction([&](const SystemPipeline::SystemContext& context) -> void {
-            context.instance->Execute(inDeltaTimeMs);
+            context.instance->Tick(inDeltaTimeMs);
         });
     }
 } // namespace Runtime

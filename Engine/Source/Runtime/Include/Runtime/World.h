@@ -18,16 +18,11 @@ namespace Runtime {
         max
     };
 
-    class World {
+    class RUNTIME_API World {
     public:
         NonCopyable(World)
         NonMovable(World)
         ~World();
-
-    private:
-        friend class Engine;
-
-        explicit World(const std::string& inName = "");
 
         void SetSystemGraph(const SystemGraph& inSystemGraph);
         void Reset();
@@ -39,6 +34,11 @@ namespace Runtime {
         void Resume();
         void Pause();
         void Stop();
+
+    private:
+        friend class Engine;
+
+        explicit World(const std::string& inName = "");
         void Tick(float inTimeMs);
 
         std::string name;

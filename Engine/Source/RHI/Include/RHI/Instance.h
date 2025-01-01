@@ -15,7 +15,8 @@ namespace RHI {
 
     RHIType GetPlatformRHIType();
     std::string GetPlatformDefaultRHIAbbrString();
-    RHIType RHIAbbrStringToRHIType(const std::string& abbrString);
+    std::string GetAbbrStringByType(RHIType type);
+    RHIType GetRHITypeByAbbrString(const std::string& abbrString);
     std::string GetRHIModuleNameByType(RHIType type);
 
     class Instance {

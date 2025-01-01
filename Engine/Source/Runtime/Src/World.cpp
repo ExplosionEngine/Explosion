@@ -8,6 +8,7 @@
 namespace Runtime {
     World::World(const std::string& inName)
         : name(inName)
+        , playStatus(PlayStatus::stopped)
     {
         EngineHolder::Get().MountWorld(this);
     }

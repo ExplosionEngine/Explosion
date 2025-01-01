@@ -8,13 +8,13 @@ Add3rdHeaderOnlyPackage(
 )
 
 # VulkanSDK
-set(VULKAN_SDK_VERSION 1.3.243.0)
+set(VULKAN_SDK_VERSION 1.3.296.0)
 Add3rdBinaryPackage(
     NAME VulkanSDK
     VERSION ${VULKAN_SDK_VERSION}
     HASH
-        Windows 23ded0e6155a8ea265da84bd62f7a45cc3fc637fb1eeba61a5b9430fa704e4b5
-        Darwin a5c63a4f29984540efa00190240d31b59539413cf4783792bd9f53207f4f7d07
+        Windows 27b8344a5b1333222d55c9c107914dba1cc9beb788b207e087c27dc7b8762816
+        Darwin a792aaad3937a694a4cb853d2fbb3fa7025ba3754bedd52799e687a4c254129c
     INCLUDE
         Windows $<SOURCE_DIR>/Include
         Darwin $<SOURCE_DIR>/macOS/include
@@ -41,9 +41,23 @@ if (NOT ${CI})
             execute_process(COMMAND PowerShell -Command "Start-Process reg -ArgumentList 'add HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\ExplicitLayers /v ${VALIDATION_LAYER_JSON} /t REG_DWORD /d 0' -Verb RunAs")
         endif ()
     else (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-        # check drivers
+        # new version of vulkaninfo application use volk to perform dynamic loading, which need libvulkan.dylib in working directory or system,
+        # so if vulkaninfo print initialized failed, we need copy vulkan dynamic lib to working directory
         set(PLATFORM_VULKAN_SDK_DIR ${CMAKE_SOURCE_DIR}/ThirdParty/Lib/VulkanSDK-Darwin-${VULKAN_SDK_VERSION}/macOS)
-        execute_process(COMMAND ${PLATFORM_VULKAN_SDK_DIR}/bin/vulkaninfo OUTPUT_VARIABLE VULKAN_INFO ERROR_VARIABLE VULKAN_INFO)
+        execute_process(COMMAND ${PLATFORM_VULKAN_SDK_DIR}/bin/vulkaninfo WORKING_DIRECTORY ${PLATFORM_VULKAN_SDK_DIR}/bin OUTPUT_VARIABLE VULKAN_INFO ERROR_VARIABLE VULKAN_INFO)
+        string(REGEX MATCH "Failed to initialize" MATCH_RESULT ${VULKAN_INFO})
+        list(LENGTH MATCH_RESULT MATCH_RESULT_LENGTH)
+        if (${MATCH_RESULT_LENGTH} GREATER 0)
+            set(SRC_FILE ${PLATFORM_VULKAN_SDK_DIR}/lib/libvulkan.dylib)
+            set(DST_FILE ${PLATFORM_VULKAN_SDK_DIR}/bin/libvulkan.dylib)
+            message("vulkaninfo initialized failed, perform vulkan dynamic library copy: ${SRC_FILE} -> ${DST_FILE}")
+            file(COPY_FILE ${SRC_FILE} ${DST_FILE} ONLY_IF_DIFFERENT)
+        else ()
+            message("vulkaninfo test success")
+        endif ()
+
+        # check drivers
+        execute_process(COMMAND ${PLATFORM_VULKAN_SDK_DIR}/bin/vulkaninfo WORKING_DIRECTORY ${PLATFORM_VULKAN_SDK_DIR}/bin OUTPUT_VARIABLE VULKAN_INFO ERROR_VARIABLE VULKAN_INFO)
         string(REGEX MATCH "ERROR_INCOMPATIBLE_DRIVER" MATCH_RESULT ${VULKAN_INFO})
         list(LENGTH MATCH_RESULT MATCH_RESULT_LENGTH)
         if (${MATCH_RESULT_LENGTH} GREATER 0)
@@ -65,7 +79,7 @@ if (NOT ${CI})
         endif ()
 
         # check layers
-        execute_process(COMMAND ${PLATFORM_VULKAN_SDK_DIR}/bin/vulkaninfo OUTPUT_VARIABLE VULKAN_INFO ERROR_VARIABLE VULKAN_INFO)
+        execute_process(COMMAND ${PLATFORM_VULKAN_SDK_DIR}/bin/vulkaninfo WORKING_DIRECTORY ${PLATFORM_VULKAN_SDK_DIR}/bin OUTPUT_VARIABLE VULKAN_INFO ERROR_VARIABLE VULKAN_INFO)
         string(REGEX MATCH "Layers:\n=======" MATCH_RESULT ${VULKAN_INFO})
         list(LENGTH MATCH_RESULT MATCH_RESULT_LENGTH)
         if (${MATCH_RESULT_LENGTH} GREATER 0)
@@ -142,11 +156,11 @@ Add3rdBinaryPackage(
     NAME llvm-clang
     ARCH
     VERSION
-        Windows-AMD64 17.0.4
-        Darwin-arm64 15.0.7
+        Windows-AMD64 19.1.6
+        Darwin-arm64 19.1.6
     HASH
-        Windows-AMD64 3443a2259d092797521bde0c4b6e402ddeca4beb0abd87274ece91ac44b178ce
-        Darwin-arm64 99a4884945674163374d99c2220cadbfe20a947b1217193140c6b6638a3b0627
+        Windows-AMD64 f68b922c87a99b22c0b53a5cbd55db86bd3870c16c4e9060efaecfb9ce49e726
+        Darwin-arm64 08fdf1b6208823acadc23027fda1f12e5171101ec05fa526b545088be31fe19d
     INCLUDE $<SOURCE_DIR>/include
     LINK $<SOURCE_DIR>/lib
     LIB
@@ -237,32 +251,28 @@ Add3rdHeaderOnlyPackage(
 )
 
 # Qt6
-Find3rdPackage(
+set(QT_VERSION "6.5.2" CACHE STRING "" FORCE)
+Setup3rdPackage(
     NAME Qt
-    PACKAGE Qt6
-    VERSION 6.5.2
+    VERSION ${QT_VERSION}
     HASH
         Windows e2a573a53b6de88c0ce768868bd5a8258d432ad71c45a407afa55243b051668f
         Darwin 2fadcb1f07e5f11d4345e7d5631f35f8f4a8033c35901fb20a22c2feb7486e57
     PREFIX
         Windows $<SOURCE_DIR>/6.5.2/msvc2019_64
         Darwin $<SOURCE_DIR>/6.5.2/macos
-    COMPONENTS Core Gui Widgets
-    LIB Qt::Core Qt::Gui Qt::Widgets
-    RUNTIME_DEP
-        Windows
-            $<SOURCE_DIR>/6.5.2/msvc2019_64/plugins/platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll->platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll
-            $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Core$<IF:$<CONFIG:Debug>,d,>.dll
-            $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Gui$<IF:$<CONFIG:Debug>,d,>.dll
-            $<SOURCE_DIR>/6.5.2/msvc2019_64/bin/Qt6Widgets$<IF:$<CONFIG:Debug>,d,>.dll
 )
-set(Qt6Core_VERSION_MAJOR 6 CACHE STRING "" FORCE)
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64 CACHE PATH "" FORCE)
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/macos CACHE PATH "" FORCE)
+endif ()
 
 # rapidjson
 Add3rdHeaderOnlyPackage(
     NAME rapidjson
     PLATFORM All
-    VERSION 1.1.0
-    HASH c19c92601374a161b0355ccb73f02b31076c70d4446e5ad53c8b80263a9c900c
+    VERSION d621dc9
+    HASH 696f6ca1ecca9d13170c0a47eda66a3015bcf02a7b4bdd23f574ea302eb4bf3e
     INCLUDE $<SOURCE_DIR>/include
 )

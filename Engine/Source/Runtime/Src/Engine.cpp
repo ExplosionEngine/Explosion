@@ -19,7 +19,7 @@ namespace Runtime {
         Assert(renderModule != nullptr);
 
         Render::RenderModuleInitParams initParams;
-        initParams.rhiType = RHI::RHIAbbrStringToRHIType(inParams.rhiType);
+        initParams.rhiType = RHI::GetRHITypeByAbbrString(inParams.rhiType);
         renderModule->Initialize(initParams);
     }
 
@@ -44,13 +44,13 @@ namespace Runtime {
         return *renderModule;
     }
 
-    void Engine::Tick(float inTimeMs) const
+    void Engine::Tick(float inTimeSeconds) const
     {
         for (auto* world : worlds) {
             if (!world->Playing()) {
                 continue;
             }
-            world->Tick(inTimeMs);
+            world->Tick(inTimeSeconds);
         }
     }
 
@@ -59,7 +59,7 @@ namespace Runtime {
         return new World(inName);
     }
 
-    Engine* EngineHolder::engine = nullptr;
+    Common::UniqueRef<Engine> EngineHolder::engine = nullptr;
 
     MinEngine::MinEngine(const EngineInitParams& inParams)
         : Engine(inParams)
@@ -76,7 +76,7 @@ namespace Runtime {
     void EngineHolder::Load(const std::string& inModuleName, const EngineInitParams& inInitParams)
     {
         Assert(engine == nullptr);
-        auto& gameModule = Core::ModuleManager::Get().GetOrLoadTyped<IGameModule>(inModuleName);
+        auto& gameModule = Core::ModuleManager::Get().GetOrLoadTyped<IEngineModule>(inModuleName);
         engine = gameModule.CreateEngine(inInitParams);
     }
 

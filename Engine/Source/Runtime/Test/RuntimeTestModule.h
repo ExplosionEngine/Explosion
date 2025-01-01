@@ -6,12 +6,9 @@
 
 #include <Runtime/Engine.h>
 
-class RuntimeTestModule final : public Runtime::IGameModule {
+class RuntimeTestModule final : public Runtime::IEngineModule {
 public:
     void OnUnload() override;
     Core::ModuleType Type() const override;
     Runtime::Engine* CreateEngine(const Runtime::EngineInitParams& inParams) override;
-
-private:
-    Common::UniqueRef<Runtime::Engine> engine;
 };

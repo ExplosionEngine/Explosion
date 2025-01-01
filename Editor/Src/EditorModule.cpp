@@ -9,7 +9,6 @@ namespace Editor {
     void EditorModule::OnUnload()
     {
         Runtime::EngineHolder::Unload();
-        engine.Reset();
     }
 
     ::Core::ModuleType EditorModule::Type() const
@@ -19,9 +18,7 @@ namespace Editor {
 
     Runtime::Engine* EditorModule::CreateEngine(const Runtime::EngineInitParams& inParams)
     {
-        Assert(engine == nullptr);
-        engine = new EditorEngine(inParams);
-        return engine.Get();
+        return new EditorEngine(inParams);
     }
 }
 

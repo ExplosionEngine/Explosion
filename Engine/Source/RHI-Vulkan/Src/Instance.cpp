@@ -10,6 +10,24 @@
 #include <Common/IO.h>
 
 namespace RHI::Vulkan {
+    static std::vector requiredLayerNames = {
+        "VK_LAYER_KHRONOS_validation"
+    };
+
+    static std::vector requiredExtensionNames = {
+        "VK_KHR_surface",
+#if PLATFORM_WINDOWS
+        "VK_KHR_win32_surface",
+#elif PLATFORM_MACOS
+        "VK_EXT_metal_surface",
+        "VK_KHR_portability_enumeration",
+        "VK_KHR_get_physical_device_properties2",
+#endif
+#if BUILD_CONFIG_DEBUG
+        "VK_EXT_debug_utils"
+#endif
+    };
+
 #if BUILD_CONFIG_DEBUG
     static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -66,10 +84,6 @@ namespace RHI::Vulkan {
 #if BUILD_CONFIG_DEBUG
     void VulkanInstance::PrepareLayers()
     {
-        static std::vector requiredLayerNames = {
-            "VK_LAYER_KHRONOS_validation"
-        };
-
         uint32_t supportedLayerCount = 0;
         vkEnumerateInstanceLayerProperties(&supportedLayerCount, nullptr);
         std::vector<VkLayerProperties> supportedLayers(supportedLayerCount);
@@ -81,30 +95,14 @@ namespace RHI::Vulkan {
                     [&requiredLayerName](const auto& elem) -> bool { return std::string(requiredLayerName) == elem.layerName; }
                 );
                 iter == supportedLayers.end()) {
-                QuickFailWithReason("not found required vulkan layers");
+                QuickFailWithReason("required vulkan layers is missing");
             }
-            vkEnabledLayerNames.emplace_back(requiredLayerName);
         }
     }
 #endif
 
     void VulkanInstance::PrepareExtensions()
     {
-        static std::vector<const char*> requiredExtensionNames = {
-            VK_KHR_SURFACE_EXTENSION_NAME,
-#if PLATFORM_WINDOWS
-            "VK_KHR_win32_surface",
-#elif PLATFORM_MACOS
-            "VK_MVK_macos_surface",
-            "VK_EXT_metal_surface",
-            VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
-            VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
-#endif
-#if BUILD_CONFIG_DEBUG
-            VK_EXT_DEBUG_UTILS_EXTENSION_NAME
-#endif
-        };
-
         uint32_t supportedExtensionCount = 0;
         vkEnumerateInstanceExtensionProperties(nullptr, &supportedExtensionCount, nullptr);
         std::vector<VkExtensionProperties> supportedExtensions(supportedExtensionCount);
@@ -116,9 +114,8 @@ namespace RHI::Vulkan {
                     [&requiredExtensionName](const auto& elem) -> bool { return std::string(requiredExtensionName) == elem.extensionName; }
                 );
                 iter == supportedExtensions.end()) {
-                continue;
+                QuickFailWithReason("required vulkan extensions is not support");
             }
-            vkEnabledExtensionNames.emplace_back(requiredExtensionName);
         }
     }
 
@@ -134,11 +131,11 @@ namespace RHI::Vulkan {
         VkInstanceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &applicationInfo;
-        createInfo.enabledExtensionCount = vkEnabledExtensionNames.size();
-        createInfo.ppEnabledExtensionNames = vkEnabledExtensionNames.data();
+        createInfo.enabledExtensionCount = requiredExtensionNames.size();
+        createInfo.ppEnabledExtensionNames = requiredExtensionNames.data();
 #if BUILD_CONFIG_DEBUG
-        createInfo.enabledLayerCount = vkEnabledLayerNames.size();
-        createInfo.ppEnabledLayerNames = vkEnabledLayerNames.data();
+        createInfo.enabledLayerCount = requiredLayerNames.size();
+        createInfo.ppEnabledLayerNames = requiredLayerNames.data();
 
         VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {};
         PopulateDebugMessengerCreateInfo(debugCreateInfo);

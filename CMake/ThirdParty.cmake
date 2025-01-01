@@ -503,3 +503,33 @@ function(Find3rdPackage)
         )
     endif()
 endfunction()
+
+function(Setup3rdPackage)
+    cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION" "HASH" ${ARGN})
+
+    set(NAME "${PARAMS_NAME}")
+    if (DEFINED PARAMS_PLATFORM)
+        if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
+            return()
+        endif()
+        set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
+    else()
+        set(FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${PARAMS_VERSION}")
+    endif()
+    set(URL "${3RD_REPO}/${FULL_NAME}.7z")
+    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.7z")
+    set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
+
+    Get3rdPlatformValue(
+        OUTPUT HASH_VALUE
+        INPUT ${PARAMS_HASH}
+    )
+    DownloadAndExtract3rdPackage(
+        URL ${URL}
+        SAVE_AS ${ZIP}
+        EXTRACT_TO ${SOURCE_DIR}
+        HASH ${HASH_VALUE}
+    )
+
+    set(${PARAMS_NAME}_SOURCE_DIR ${SOURCE_DIR} CACHE PATH "" FORCE)
+endfunction()
