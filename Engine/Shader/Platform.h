@@ -1,12 +1,21 @@
-#ifndef __PLATFORM_H__
-#define __PLATFORM_H__
+#pragma once
 
-#if VULKAN
-#define VkBinding(x, y) [[vk::binding(x, y)]]
-#define VkLocation(x)   [[vk::location(x)]]
+#ifndef PLATFORM_H
+#define PLATFORM_H
+
+/// \file Platform.hpp
+/// \brief Macros to handle Vulkan-specific attributes in shader code.
+
+/// If VULKAN is defined, these macros expand to Vulkan binding/attribute specifiers.
+/// Otherwise, they expand to nothing.
+
+// If building with Vulkan, define the macros with valid attributes
+#if defined(VULKAN)
+    #define VK_BINDING(set_index, binding_index) [[vk::binding(set_index, binding_index)]]
+    #define VK_LOCATION(location_index)          [[vk::location(location_index)]]
 #else
-#define VkBinding(x, y)
-#define VkLocation(x)
+    #define VK_BINDING(set_index, binding_index)
+    #define VK_LOCATION(location_index)
 #endif
 
-#endif
+#endif // PLATFORM_H
