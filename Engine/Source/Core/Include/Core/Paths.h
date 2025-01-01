@@ -29,6 +29,8 @@ namespace Core {
         static std::filesystem::path ProjectBin();
         static std::filesystem::path ProjectPlugin();
         static std::filesystem::path ProjectPluginAsset(const std::string& pluginName);
+        static std::filesystem::path EngineCMakeSourceDir();
+        static std::filesystem::path EngineCMakeBinaryDir();
 
 #if BUILD_TEST
         static std::filesystem::path EngineTest();

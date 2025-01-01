@@ -87,6 +87,16 @@ namespace Core {
         return ProjectPlugin() / pluginName / "Asset";
     }
 
+    std::filesystem::path Paths::EngineCMakeSourceDir()
+    {
+        return ENGINE_CMAKE_SOURCE_DIRECTORY;
+    }
+
+    std::filesystem::path Paths::EngineCMakeBinaryDir()
+    {
+        return ENGINE_CMAKE_BINARY_DIRECTORY;
+    }
+
 #if BUILD_TEST
     std::filesystem::path Paths::EngineTest()
     {

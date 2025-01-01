@@ -15,6 +15,9 @@ else ()
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Lib)
 endif ()
 
+add_definitions(-DENGINE_CMAKE_SOURCE_DIRECTORY="${CMAKE_SOURCE_DIR}")
+add_definitions(-DENGINE_CMAKE_BINARY_DIRECTORY="${CMAKE_BINARY_DIR}")
+
 add_definitions(-DBUILD_CONFIG_DEBUG=$<IF:$<CONFIG:Debug>,1,0>)
 
 add_definitions(-DPLATFORM_WINDOWS=$<IF:$<PLATFORM_ID:Windows>,1,0>)

@@ -13,6 +13,9 @@ int main(int argc, char* argv[])
 
     QApplication qtApplication(argc, argv);
 
+    auto& qmlHotReloadEngine = Editor::QmlHotReloadEngine::Get();
+    qmlHotReloadEngine.Start();
+
     Common::UniqueRef<QWidget> mainWindow;
     if (!Editor::Core::Get().ProjectHasSet()) {
         mainWindow = new Editor::Launcher();
@@ -21,8 +24,6 @@ int main(int argc, char* argv[])
     }
     mainWindow->show();
 
-    auto& qmlHotReloadEngine = Editor::QmlHotReloadEngine::Get();
-    qmlHotReloadEngine.Start();
     const int execRes = QApplication::exec();
     qmlHotReloadEngine.Stop();
 

@@ -8,18 +8,17 @@
 #include <Editor/Widget/moc_QmlWidget.cpp> // NOLINT
 
 namespace Editor {
-    QmlWidget::QmlWidget(const std::string& qmlFileName, QWidget* parent)
-        : QWidget(parent)
-        , url(QUrl(QString(std::format("qrc:/qt/qml/editor/{}", qmlFileName).c_str())))
+    QmlWidget::QmlWidget(std::string inShortQmlFileName, QWidget* inParent)
+        : QWidget(inParent)
+        , shortQmlFileName(std::move(inShortQmlFileName))
         , quickView(new QQuickView)
     {
         quickView->setResizeMode(QQuickView::SizeRootObjectToView);
-        quickView->setSource(url);
-        quickView->show();
+        quickView->setSource(QmlHotReloadEngine::Get().GetUrlFromShort(shortQmlFileName));
 
-        QWidget* quickViewContainer = createWindowContainer(quickView);
-        quickViewContainer->setMinimumSize(quickView->size());
-        quickViewContainer->setFocusPolicy(Qt::TabFocus);
+        quickViewContainer = createWindowContainer(quickView);
+        quickViewContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        quickViewContainer->show();
 
         QVBoxLayout* layout = new QVBoxLayout(); // NOLINT
         setLayout(layout);
@@ -27,7 +26,17 @@ namespace Editor {
         layout->setContentsMargins(0, 0, 0, 0);
         layout->addWidget(quickViewContainer);
 
-        // TODO support hot reload
+        QmlHotReloadEngine::Get().Register(shortQmlFileName, quickView);
+    }
+
+    QmlWidget::~QmlWidget()
+    {
+        QmlHotReloadEngine::Get().Unregister(shortQmlFileName, quickView);
+    }
+
+    const std::string& QmlWidget::GetShotQmlFileName() const
+    {
+        return shortQmlFileName;
     }
 
     QQuickView* QmlWidget::GetQuickView() // NOLINT
@@ -35,8 +44,8 @@ namespace Editor {
         return quickView;
     }
 
-    const QUrl& QmlWidget::GetQmlUrl() const
+    QWidget* QmlWidget::GetQuickViewContainer() const
     {
-        return url;
+        return quickViewContainer;
     }
 } // namespace Editor

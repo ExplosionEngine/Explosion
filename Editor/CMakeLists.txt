@@ -13,6 +13,13 @@ target_include_directories(Editor PRIVATE Include)
 target_link_libraries(Editor PRIVATE Core RHI Runtime Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Quick)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(PLATFORM_DEP_TARGET RHI-DirectX12 RHI-Vulkan)
+else()
+    set(PLATFORM_DEP_TARGET RHI-Vulkan)
+endif()
+add_dependencies(Editor ${PLATFORM_DEP_TARGET})
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     list(
         APPEND RUNTIME_DEP
             ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/plugins/platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll->platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll
@@ -45,4 +52,5 @@ qt_add_qml_module(
     URI editor
     QML_FILES ${QML_SOURCES}
     RESOURCES ${RESOURCES}
+    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Generated/QmlModule
 )
