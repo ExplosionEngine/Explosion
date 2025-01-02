@@ -6,6 +6,7 @@
 
 #include <Editor/QmlHotReload.h>
 #include <Core/Paths.h>
+#include <Common/FileSystem.h>
 
 namespace Editor {
     static ::Core::CmdlineArgValue<bool> caQmlHotReload(
@@ -21,8 +22,8 @@ namespace Editor {
     }
 
     QmlHotReloadEngine::QmlHotReloadEngine()
-        : qmlSourceDirectory(::Core::Paths::EngineCMakeSourceDir() / "Editor" / "QML")
-        , qmlModuleDirectory(::Core::Paths::EngineCMakeBinaryDir() / "Generated" / "QmlModule")
+        : qmlSourceDirectory(Common::FileSystem::GetUnixStylePath(::Core::Paths::EngineCMakeSourceDir() / "Editor" / "QML"))
+        , qmlModuleDirectory(Common::FileSystem::GetUnixStylePath(::Core::Paths::EngineCMakeBinaryDir() / "Generated" / "QmlModule"))
     {
     }
 
@@ -47,6 +48,7 @@ namespace Editor {
 
         watcher = new QFileSystemWatcher();
         QObject::connect(watcher.Get(), &QFileSystemWatcher::fileChanged, [this](const QString& inPath) -> void {
+            // TODO support multi level directory level
             const std::filesystem::path changedQml = inPath.toStdString();
             const std::filesystem::path qmlShortName = changedQml.filename();
 
@@ -55,7 +57,7 @@ namespace Editor {
                 return;
             }
             for (auto* liveQuickView : iter->second) {
-                QUrl url(QString::fromStdString(changedQml.string()));
+                QUrl url = QUrl::fromLocalFile(QString::fromStdString(changedQml.string()));
                 liveQuickView->source().clear();
                 liveQuickView->engine()->clearComponentCache();
                 liveQuickView->setSource(url);
@@ -80,8 +82,8 @@ namespace Editor {
         }
 
         if (!liveQuickViewsMap.contains(inQmlShotFileName)) {
-            const auto qmlFileFullPath = qmlSourceDirectory / inQmlShotFileName;
-            watcher->addPath(qmlFileFullPath.string().c_str());
+            const auto qmlFileFullPath = Common::FileSystem::GetUnixStylePath(qmlSourceDirectory / inQmlShotFileName);
+            watcher->addPath(qmlFileFullPath.c_str());
             liveQuickViewsMap.emplace(inQmlShotFileName, std::unordered_set<QQuickView*> {});
         }
         auto& liveQuickViews = liveQuickViewsMap.at(inQmlShotFileName);
@@ -97,8 +99,8 @@ namespace Editor {
         auto& liveQuickViews = liveQuickViewsMap.at(inQmlShotFileName);
         liveQuickViews.erase(inView);
         if (liveQuickViews.empty()) {
-            const auto qmlFileFullPath = qmlSourceDirectory / inQmlShotFileName;
-            watcher->removePath(qmlFileFullPath.string().c_str());
+            const auto qmlFileFullPath = Common::FileSystem::GetUnixStylePath(qmlSourceDirectory / inQmlShotFileName);
+            watcher->removePath(qmlFileFullPath.c_str());
             liveQuickViewsMap.erase(inQmlShotFileName);
         }
     }

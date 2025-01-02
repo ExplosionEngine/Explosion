@@ -8,12 +8,7 @@
 #include <MirrorTool/Parser.h>
 #include <MirrorTool/Generator.h>
 #include <Common/IO.h>
-#include <Common/String.h>
-
-static std::string GetUnixStylePath(const std::string& inPath)
-{
-    return Common::StringUtils::Replace(std::filesystem::weakly_canonical(inPath).string(), "\\", "/");
-}
+#include <Common/FileSystem.h>
 
 int main(int argc, char* argv[]) // NOLINT
 {
@@ -32,10 +27,10 @@ int main(int argc, char* argv[]) // NOLINT
         return 1;
     }
 
-    inputFile = GetUnixStylePath(inputFile);
-    outputFile = GetUnixStylePath(outputFile);
+    inputFile = Common::FileSystem::GetUnixStylePath(inputFile);
+    outputFile = Common::FileSystem::GetUnixStylePath(outputFile);
     for (auto& headerDir : headerDirs) {
-        headerDir = GetUnixStylePath(headerDir);
+        headerDir = Common::FileSystem::GetUnixStylePath(headerDir);
     }
 
     if (!inputFile.ends_with(".h")) {

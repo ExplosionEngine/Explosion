@@ -23,6 +23,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     list(
         APPEND RUNTIME_DEP
             ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/plugins/platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll->platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll
+            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/plugins/tls->tls
             ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/qml->qml
             ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6Core$<IF:$<CONFIG:Debug>,d,>.dll
             ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6Widgets$<IF:$<CONFIG:Debug>,d,>.dll

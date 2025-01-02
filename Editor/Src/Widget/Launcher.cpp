@@ -7,7 +7,8 @@
 
 namespace Editor {
     Launcher::Launcher()
-        : QmlWidget("launcher.qml")
+        : QmlWidget("Launcher.qml")
     {
+        setFixedSize(1024, 768);
     }
 }
