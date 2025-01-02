@@ -6,6 +6,7 @@
 
 #include <Common/Math/Vector.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 #include <Common/Debug.h>
 #include <Common/Utility.h>
 
@@ -301,32 +302,78 @@ namespace Common {
 }
 
 namespace Common { // NOLINT
-    template <typename T, uint8_t R, uint8_t C>
+    template <Serializable T, uint8_t R, uint8_t C>
     struct Serializer<Mat<T, R, C>> {
-        static constexpr bool serializable = true;
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::Matrix")
             + Serializer<T>::typeId + (R << 8) + C;
 
-        static void Serialize(SerializeStream& stream, const Mat<T, R, C>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Mat<T, R, C>& value)
         {
-            TypeIdSerializer<Mat<T, R, C>>::Serialize(stream);
-
+            auto serialized = 0;
             for (auto i = 0; i < R * C; i++) {
-                Serializer<T>::Serialize(stream, value.data[i]);
+                serialized += Serializer<T>::Serialize(stream, value.data[i]);
+            }
+            return serialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, Mat<T, R, C>& value)
+        {
+            auto deserialized = 0;
+            for (auto i = 0; i < R * C; i++) {
+                deserialized += Serializer<T>::Deserialize(stream, value.data[i]);
+            }
+            return deserialized;
+        }
+    };
+
+    template <StringConvertible T, uint8_t R, uint8_t C>
+    struct StringConverter<Mat<T, R, C>> {
+        static std::string ToString(const Mat<T, R, C>& inValue)
+        {
+            std::stringstream stream;
+            stream << "(";
+            for (auto i = 0; i < R; i++) {
+                for (auto j = 0; j < C; j++) {
+                    stream << StringConverter<T>::ToString(inValue.At(i, j));
+                    if (i * C + j != R * C - 1) {
+                        stream << ", ";
+                    }
+                }
+            }
+            stream << ")";
+            return stream.str();
+        }
+    };
+
+    template <StringConvertible T, uint8_t R, uint8_t C>
+    struct JsonSerializer<Mat<T, R, C>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Mat<T, R, C>& inValue)
+        {
+            outJsonValue.SetArray();
+            outJsonValue.Reserve(R * C, inAllocator);
+            for (auto i = 0; i < R; i++) {
+                for (auto j = 0; j < C; j++) {
+                    rapidjson::Value jsonElement;
+                    JsonSerializer<T>::JsonSerialize(jsonElement, inAllocator, inValue.At(i, j));
+                    outJsonValue.PushBack(jsonElement, inAllocator);
+                }
             }
         }
 
-        static bool Deserialize(DeserializeStream& stream, Mat<T, R, C>& value)
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Mat<T, R, C>& outValue)
         {
-            if (!TypeIdSerializer<Mat<T, R, C>>::Deserialize(stream)) {
-                return false;
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != R * C) {
+                return;
             }
+            for (auto i = 0; i < inJsonValue.Size(); i++) {
+                auto row = i / C;
+                auto col = i % C;
 
-            for (auto i = 0; i < R * C; i++) {
-                Serializer<T>::Deserialize(stream, value.data[i]);
+                T element;
+                JsonSerializer<T>::JsonDeserialize(inJsonValue[i], element);
+                outValue.At(row, col) = std::move(element);
             }
-            return true;
         }
     };
 }

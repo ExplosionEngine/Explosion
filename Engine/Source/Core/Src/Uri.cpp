@@ -58,7 +58,7 @@ namespace Core {
 
     UriProtocol Uri::Protocal() const // NOLINT
     {
-        static std::unordered_map<std::string, UriProtocol> protocolMap = {
+        static const std::unordered_map<std::string, UriProtocol> protocolMap = {
             { "asset", UriProtocol::asset }
         };
 
@@ -66,8 +66,7 @@ namespace Core {
         if (splits.size() != 2) {
             return UriProtocol::max;
         }
-        const auto iter = protocolMap.find(splits[0]);
-        return iter == protocolMap.end() ? UriProtocol::max : iter->second;
+        return protocolMap.at(splits[0]);
     }
 
     std::string Uri::Content() const

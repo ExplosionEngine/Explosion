@@ -5,21 +5,33 @@
 #pragma once
 
 #if __clang__
-#define EProperty(...) __attribute__((annotate("property;" #__VA_ARGS__)))
-#define EFunc(...) __attribute__((annotate("func;" #__VA_ARGS__)))
-#define EClass(...) __attribute__((annotate("class;" #__VA_ARGS__)))
-#define EEnum(...) __attribute__((annotate("enum;" #__VA_ARGS__)))
-#define ECtor(...) __attribute__((annotate("constructor;" #__VA_ARGS__)))
+#define EProperty(...) __attribute__((annotate("property," #__VA_ARGS__)))
+#define EFunc(...) __attribute__((annotate("func," #__VA_ARGS__)))
+#define EClass(...) __attribute__((annotate("class," #__VA_ARGS__)))
+#define EEnum(...) __attribute__((annotate("enum," #__VA_ARGS__)))
+#define EMeta(...) __attribute__((annotate(#__VA_ARGS__)))
 #else
 #define EProperty(...)
 #define EFunc(...)
 #define EClass(...)
 #define EEnum(...)
-#define ECtor(...)
+#define EMeta(...)
 #endif
+
+namespace Mirror {
+    class Class;
+}
 
 #define EClassBody(className) \
 private: \
     static int _mirrorRegistry; \
 public: \
-    static const Mirror::Class& GetClass(); \
+    static const Mirror::Class& GetStaticClass(); \
+    const Mirror::Class& GetClass(); \
+
+#define EPolyClassBody(className) \
+private: \
+    static int _mirrorRegistry; \
+public: \
+    static const Mirror::Class& GetStaticClass(); \
+    virtual const Mirror::Class& GetClass(); \

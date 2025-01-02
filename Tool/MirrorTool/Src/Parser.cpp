@@ -3,6 +3,7 @@
 //
 
 #include <sstream>
+#include <format>
 
 #include <Common/String.h>
 #include <MirrorTool/Parser.h>
@@ -65,6 +66,11 @@ static void PrintDebugInfo(const std::string& visitorName, CXCursor cursor)
 }
 
 namespace MirrorTool {
+    static constexpr auto propertyMetaTag = "property";
+    static constexpr auto functionMetaTag = "func";
+    static constexpr auto classMetaTag = "class";
+    static constexpr auto enumMetaTag = "enum";
+
     static FieldAccess GetFieldAccess(CX_CXXAccessSpecifier accessSpecifier)
     {
         static std::unordered_map<CX_CXXAccessSpecifier, FieldAccess> map = {
@@ -81,15 +87,20 @@ namespace MirrorTool {
         return Common::StringUtils::Replace(result, "struct", "");
     }
 
+    static std::string RemoveStrSpace(const std::string& value)
+    {
+        return Common::StringUtils::Replace(value, " ", "");
+    }
+
     static void ParseMetaDatas(Node& node, const std::string& metaDataStr)
     {
-        for (const auto metaDatas = Common::StringUtils::Split(metaDataStr, ";");
+        for (const auto metaDatas = Common::StringUtils::Split(metaDataStr, ",");
             const auto& metaData : metaDatas) {
             if (auto keyValue = Common::StringUtils::Split(metaData, "=");
                 keyValue.size() == 1) {
-                node.metaDatas.emplace(std::make_pair(keyValue[0], "true"));
+                node.metaDatas.emplace(std::make_pair(RemoveStrSpace(keyValue[0]), "true"));
             } else if (keyValue.size() == 2) {
-                node.metaDatas.emplace(std::make_pair(keyValue[0], keyValue[1]));
+                node.metaDatas.emplace(std::make_pair(RemoveStrSpace(keyValue[0]), RemoveStrSpace(keyValue[1])));
             }
         }
     }
@@ -142,7 +153,7 @@ namespace MirrorTool {
         for (auto i = 0; i < info.parameters.size(); i++) {
             stream << info.parameters[i].second;
             if (i != info.parameters.size() - 1) {
-                stream << ",";
+                stream << ", ";
             }
         }
         info.name = stream.str();
@@ -204,7 +215,7 @@ namespace MirrorTool {
             auto& variables = kind == CXCursor_VarDecl ? context.staticVariables : context.variables;
             variables.emplace_back(std::move(variableInfo));
             VisitChildren(ClassVariableVisitor, ClassVariableInfo, cursor, variables.back());
-            ApplyMetaFilter(variables, "property");
+            ApplyMetaFilter(variables, propertyMetaTag);
 
             clang_disposeString(typeSpelling);
         } else if (kind == CXCursor_CXXMethod) {
@@ -220,7 +231,7 @@ namespace MirrorTool {
             auto& functions = isStatic ? context.staticFunctions : context.functions;
             functions.emplace_back(std::move(functionInfo));
             VisitChildren(ClassFunctionVisitor, ClassFunctionInfo, cursor, functions.back());
-            ApplyMetaFilter(functions, "func");
+            ApplyMetaFilter(functions, functionMetaTag);
 
             clang_disposeString(retTypeSpelling);
         } else if (kind == CXCursor_Constructor) {
@@ -230,7 +241,11 @@ namespace MirrorTool {
             context.constructors.emplace_back(std::move(constructorInfo));
             VisitChildren(ClassConstructorVisitor, ClassConstructorInfo, cursor, context.constructors.back());
             UpdateConstructorName(context.constructors.back());
-            ApplyMetaFilter(context.constructors, "constructor");
+        } else if (kind == CXCursor_Destructor) {
+            ClassDestructorInfo destructorInfo;
+            destructorInfo.outerName = GetOuterName(context.outerName, context.name);
+            destructorInfo.fieldAccess = context.lastFieldAccess;
+            context.destructor = std::move(destructorInfo);
         } else if (kind == CXCursor_StructDecl || kind == CXCursor_ClassDecl) {
             ClassInfo classInfo;
             classInfo.outerName = GetOuterName(context.outerName, context.name);
@@ -238,7 +253,31 @@ namespace MirrorTool {
             classInfo.lastFieldAccess = kind == CXCursor_StructDecl ? FieldAccess::pub : FieldAccess::pri;
             context.classes.emplace_back(std::move(classInfo));
             VisitChildren(ClassVisitor, ClassInfo, cursor, context.classes.back());
-            ApplyMetaFilter(context.classes, "class");
+            ApplyMetaFilter(context.classes, classMetaTag);
+        }
+        CleanUpAndContinueVisit;
+    }
+
+    DeclareVisitor(EnumElementVisitor, EnumElementInfo)
+    {
+        FetchCursorInfo(EnumElementVisitor, cursor);
+        if (kind == CXCursor_AnnotateAttr) {
+            ParseMetaDatas(context, spellingStr);
+        }
+        CleanUpAndContinueVisit;
+    }
+
+    DeclareVisitor(EnumVisitor, EnumInfo)
+    {
+        FetchCursorInfo(EnumVisitor, cursor);
+        if (kind == CXCursor_AnnotateAttr) {
+            ParseMetaDatas(context, spellingStr);
+        } else if (kind == CXCursor_EnumConstantDecl) {
+            EnumElementInfo elementInfo;
+            elementInfo.outerName = GetOuterName(context.outerName, context.name);
+            elementInfo.name = spellingStr;
+            context.elements.emplace_back(std::move(elementInfo));
+            VisitChildren(EnumElementVisitor, EnumElementInfo, cursor, context.elements.back());
         }
         CleanUpAndContinueVisit;
     }
@@ -246,7 +285,9 @@ namespace MirrorTool {
     DeclareVisitor(NamespaceVisitor, NamespaceInfo)
     {
         FetchCursorInfo(NamespaceVisitor, cursor);
-        if (kind == CXCursor_VarDecl) {
+        if (kind == CXCursor_AnnotateAttr) {
+            ParseMetaDatas(context, spellingStr);
+        } else if (kind == CXCursor_VarDecl) {
             CXType type = clang_getCursorType(cursor);
             CXString typeSpelling = clang_getTypeSpelling(type);
 
@@ -256,7 +297,7 @@ namespace MirrorTool {
             variableInfo.type = clang_getCString(typeSpelling);
             context.variables.emplace_back(std::move(variableInfo));
             VisitChildren(GlobalVariableVisitor, VariableInfo, cursor, context.variables.back());
-            ApplyMetaFilter(context.variables, "property");
+            ApplyMetaFilter(context.variables, propertyMetaTag);
 
             clang_disposeString(typeSpelling);
         } else if (kind == CXCursor_FunctionDecl) {
@@ -264,12 +305,12 @@ namespace MirrorTool {
             CXString retTypeSpelling = clang_getTypeSpelling(retType);
 
             FunctionInfo functionInfo;
-            functionInfo.name = GetOuterName(context.outerName, context.name);
+            functionInfo.outerName = GetOuterName(context.outerName, context.name);
             functionInfo.name = spellingStr;
             functionInfo.retType = clang_getCString(retTypeSpelling);
             context.functions.emplace_back(std::move(functionInfo));
             VisitChildren(GlobalFunctionVisitor, FunctionInfo, cursor, context.functions.back());
-            ApplyMetaFilter(context.functions, "func");
+            ApplyMetaFilter(context.functions, functionMetaTag);
 
             clang_disposeString(retTypeSpelling);
         } else if (kind == CXCursor_StructDecl || kind == CXCursor_ClassDecl) {
@@ -279,7 +320,14 @@ namespace MirrorTool {
             classInfo.lastFieldAccess = kind == CXCursor_StructDecl ? FieldAccess::pub : FieldAccess::pri;
             context.classes.emplace_back(std::move(classInfo));
             VisitChildren(ClassVisitor, ClassInfo, cursor, context.classes.back());
-            ApplyMetaFilter(context.classes, "class");
+            ApplyMetaFilter(context.classes, classMetaTag);
+        } else if (kind == CXCursor_EnumDecl) {
+            EnumInfo enumInfo;
+            enumInfo.outerName = GetOuterName(context.outerName, context.name);
+            enumInfo.name = spellingStr;
+            context.enums.emplace_back(std::move(enumInfo));
+            VisitChildren(EnumVisitor, EnumInfo, cursor, context.enums.back());
+            ApplyMetaFilter(context.enums, enumMetaTag);
         } else if (kind == CXCursor_Namespace) {
             NamespaceInfo namespaceInfo;
             namespaceInfo.outerName = GetOuterName(context.outerName, context.name);
@@ -307,7 +355,7 @@ namespace MirrorTool {
             variableInfo.type = clang_getCString(typeSpelling);
             context.global.variables.emplace_back(std::move(variableInfo));
             VisitChildren(GlobalVariableVisitor, VariableInfo, cursor, context.global.variables.back());
-            ApplyMetaFilter(context.global.variables, "property");
+            ApplyMetaFilter(context.global.variables, propertyMetaTag);
 
             clang_disposeString(typeSpelling);
         } else if (kind == CXCursor_FunctionDecl) {
@@ -319,7 +367,7 @@ namespace MirrorTool {
             functionInfo.retType = clang_getCString(retTypeSpelling);
             context.global.functions.emplace_back(std::move(functionInfo));
             VisitChildren(GlobalFunctionVisitor, FunctionInfo, cursor, context.global.functions.back());
-            ApplyMetaFilter(context.global.functions, "func");
+            ApplyMetaFilter(context.global.functions, functionMetaTag);
 
             clang_disposeString(retTypeSpelling);
         } else if (kind == CXCursor_StructDecl || kind == CXCursor_ClassDecl) {
@@ -328,7 +376,13 @@ namespace MirrorTool {
             classInfo.lastFieldAccess = kind == CXCursor_StructDecl ? FieldAccess::pub : FieldAccess::pri;
             context.global.classes.emplace_back(std::move(classInfo));
             VisitChildren(ClassVisitor, ClassInfo, cursor, context.global.classes.back());
-            ApplyMetaFilter(context.global.classes, "class");
+            ApplyMetaFilter(context.global.classes, classMetaTag);
+        } else if (kind == CXCursor_EnumDecl) {
+            EnumInfo enumInfo;
+            enumInfo.name = spellingStr;
+            context.global.enums.emplace_back(std::move(enumInfo));
+            VisitChildren(EnumVisitor, EnumInfo, cursor, context.global.enums.back());
+            ApplyMetaFilter(context.global.enums, enumMetaTag);
         } else if (kind == CXCursor_Namespace) {
             NamespaceInfo namespaceInfo;
             namespaceInfo.name = spellingStr;
@@ -353,19 +407,23 @@ namespace MirrorTool {
             "-std=c++20",
 #if BUILD_CONFIG_DEBUG
             "-DBUILD_CONFIG_DEBUG=1",
+#else
+            "-DBUILD_CONFIG_DEBUG=0",
 #endif
 #if BUILD_EDITOR
             "-DBUILD_EDITOR=1",
+#else
+            "-DBUILD_EDITOR=0",
 #endif
 #if PLATFORM_WINDOWS
             "-DPLATFORM_WINDOWS=1",
+            "-DNOMINMAX=1",
 #elif PLATFORM_MACOS
             "-DPLATFORM_MACOS=1",
-//            "-I/Library/Developer/CommandLineTools/usr/include/c++/v1",
-            fmt::format("-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{}.sdk/usr/include/c++/v1", MACOS_SDK_VERSION),
-            fmt::format("-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{}.sdk/usr/include", MACOS_SDK_VERSION),
-            fmt::format("-I/Library/Developer/CommandLineTools/usr/lib/clang/{}.{}.{}/include", __clang_major__, __clang_minor__, __clang_patchlevel__),
-            fmt::format("-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/{}.{}.{}/include", __clang_major__, __clang_minor__, __clang_patchlevel__),
+            "-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1",
+            std::format("-I/Library/Developer/CommandLineTools/usr/lib/clang/{}/include", __clang_major__),
+            "-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include",
+            "-I/Library/Developer/CommandLineTools/usr/include",
 #elif DPLATFORM_LINUX
             "-DPLATFORM_LINUX=1",
 #endif

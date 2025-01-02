@@ -8,7 +8,6 @@ add_subdirectory(Mirror)
 add_subdirectory(Core)
 add_subdirectory(Render)
 add_subdirectory(Runtime)
-add_subdirectory(Rendering)
 
 add_subdirectory(RHI-Dummy)
 add_subdirectory(RHI-Vulkan)

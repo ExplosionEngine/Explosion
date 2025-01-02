@@ -9,6 +9,7 @@
 
 #include <Common/Math/Half.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common::Internal {
     template <typename T, uint8_t L>
@@ -212,34 +213,71 @@ namespace Common::Internal {
     };
 }
 
-namespace Common { // NOLINT
-    template <typename T, uint8_t L>
+namespace Common {
+    template <Serializable T, uint8_t L>
     struct Serializer<Vec<T, L>> {
-        static constexpr bool serializable = true;
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = Common::HashUtils::StrCrc32("Common::Vector")
             + Serializer<T>::typeId
             + L;
 
-        static void Serialize(SerializeStream& stream, const Vec<T, L>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Vec<T, L>& value)
         {
-            TypeIdSerializer<Vec<T, L>>::Serialize(stream);
-
+            size_t serialized = 0;
             for (auto i = 0; i < L; i++) {
-                Serializer<T>::Serialize(stream, value.data[i]);
+                serialized += Serializer<T>::Serialize(stream, value.data[i]);
+            }
+            return serialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, Vec<T, L>& value)
+        {
+            size_t deserialized = 0;
+            for (auto i = 0; i < L; i++) {
+                deserialized += Serializer<T>::Deserialize(stream, value.data[i]);
+            }
+            return deserialized;
+        }
+    };
+
+    template <StringConvertible T, uint8_t L>
+    struct StringConverter<Vec<T, L>> {
+        static std::string ToString(const Vec<T, L>& inValue)
+        {
+            std::stringstream stream;
+            stream << "(";
+            for (auto i = 0; i < L; i++) {
+                stream << StringConverter<T>::ToString(inValue.data[i]);
+                if (i != L - 1) {
+                    stream << ", ";
+                }
+            }
+            stream << ")";
+            return stream.str();
+        }
+    };
+
+    template <JsonSerializable T, uint8_t L>
+    struct JsonSerializer<Vec<T, L>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Vec<T, L>& inValue)
+        {
+            outJsonValue.SetArray();
+            outJsonValue.Reserve(L, inAllocator);
+            for (auto i = 0; i < L; i++) {
+                rapidjson::Value elementJson;
+                JsonSerializer<T>::JsonSerialize(elementJson, inAllocator, inValue[i]);
+                outJsonValue.PushBack(elementJson, inAllocator);
             }
         }
 
-        static bool Deserialize(DeserializeStream& stream, Vec<T, L>& value)
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Vec<T, L>& outValue)
         {
-            if (!TypeIdSerializer<Vec<T, L>>::Deserialize(stream)) {
-                return false;
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != L) {
+                return;
             }
-
             for (auto i = 0; i < L; i++) {
-                Serializer<T>::Deserialize(stream, value.data[i]);
+                JsonSerializer<T>::JsonDeserialize(inJsonValue[i], outValue[i]);
             }
-            return true;
         }
     };
 }

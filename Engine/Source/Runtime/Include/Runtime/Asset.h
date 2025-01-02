@@ -22,12 +22,10 @@ namespace Runtime {
     struct EClass() Asset {
         EClassBody(Asset)
 
-        ECtor()
         Asset()
         {
         }
 
-        ECtor()
         explicit Asset(Core::Uri inUri) : uri(std::move(inUri))
         {
         }
@@ -323,7 +321,7 @@ namespace Runtime {
         template <typename A>
         void AsyncLoad(const Core::Uri& uri, const OnAssetLoaded<A>& onAssetLoaded)
         {
-            threadPool.EmplaceTask([this, uri, onAssetLoaded]() -> void {
+            threadPool.EmplaceTask([=]() -> void {
                 AssetRef<A> result = nullptr;
                 {
                     std::unique_lock<std::mutex> lock(mutex);
@@ -375,8 +373,7 @@ namespace Runtime {
             Common::BinaryFileSerializeStream stream(pathString);
 
             Mirror::Any ref = std::ref(*assetRef.Get());
-            // TODO replace with static version
-            A::GetClass().SerializeDyn(stream, ref);
+            ref.Serialize(stream);
         }
 
         template <typename A>
@@ -395,8 +392,7 @@ namespace Runtime {
 
             AssetRef<A> result = Common::SharedRef<A>(new A());
             Mirror::Any ref = std::ref(*result.Get());
-            // TODO replace with static version
-            A::GetClass().DeserailizeDyn(stream, ref);
+            ref.Deserialize(stream);
 
             // reset uri is useful for moved asset
             result->uri = uri;
@@ -414,49 +410,37 @@ namespace Runtime {
 namespace Common {
     template <DerivedFrom<Runtime::Asset> A>
     struct Serializer<Runtime::AssetRef<A>> {
-        static constexpr bool serializable = true;
-        static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("Runtime::AssetRef");
+        static constexpr size_t typeId = Common::HashUtils::StrCrc32("Runtime::AssetRef");
 
-        static void Serialize(SerializeStream& stream, const Runtime::AssetRef<A>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Runtime::AssetRef<A>& value)
         {
-            TypeIdSerializer<Runtime::AssetRef<A>>::Serialize(stream);
-            Serializer<Core::Uri>::Serialize(stream, value);
+            return Serializer<Core::Uri>::Serialize(stream, value);
         }
 
-        static bool Deserialize(DeserializeStream& stream, Runtime::AssetRef<A>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Runtime::AssetRef<A>& value)
         {
-            if (!TypeIdSerializer<Runtime::AssetRef<A>>::Deserialize(stream)) {
-                return false;
-            }
-
             Core::Uri uri;
-            Serializer<Core::Uri>::Deserialize(stream, uri);
+            const auto deserialized = Serializer<Core::Uri>::Deserialize(stream, uri);
             value = Runtime::AssetManager::Get().SyncLoad<A>(uri, uri);
-            return true;
+            return deserialized;
         }
     };
 
     template <DerivedFrom<Runtime::Asset> A>
     struct Serializer<Runtime::SoftAssetRef<A>> {
-        static constexpr bool serializable = true;
-        static constexpr uint32_t typeId = Common::HashUtils::StrCrc32("Runtime::SoftAssetRef");
+        static constexpr size_t typeId = Common::HashUtils::StrCrc32("Runtime::SoftAssetRef");
 
-        static void Serialize(SerializeStream& stream, const Runtime::SoftAssetRef<A>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Runtime::SoftAssetRef<A>& value)
         {
-            TypeIdSerializer<Runtime::AssetRef<A>>::Serialize(stream);
-            Serializer<Core::Uri>::Serialize(stream, value);
+            return Serializer<Core::Uri>::Serialize(stream, value);
         }
 
-        static bool Deserialize(DeserializeStream& stream, Runtime::SoftAssetRef<A>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Runtime::SoftAssetRef<A>& value)
         {
-            if (!TypeIdSerializer<Runtime::AssetRef<A>>::Deserialize(stream)) {
-                return false;
-            }
-
             Core::Uri uri;
-            Serializer<Core::Uri>::Deserialize(stream, uri);
+            const auto deserialized = Serializer<Core::Uri>::Deserialize(stream, uri);
             value = uri;
-            return true;
+            return deserialized;
         }
     };
 }

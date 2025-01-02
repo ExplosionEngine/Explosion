@@ -15,6 +15,12 @@ namespace Common {
         return converter.from_bytes(src);
     }
 
+    std::string StringUtils::ToByteString(const std::wstring& src)
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> converter; // NOLINT
+        return converter.to_bytes(src);
+    }
+
     std::string StringUtils::ToUpperCase(const std::string& src)
     {
         std::string result = src;

@@ -23,4 +23,9 @@ namespace Common {
     private:
         Debug();
     };
+
+    // for compile-time check type from compile error
+    // sample:
+    //     TypeDiagnosis<decltype(x)> xType;
+    template <typename T> class TypeDiagnosis;
 }

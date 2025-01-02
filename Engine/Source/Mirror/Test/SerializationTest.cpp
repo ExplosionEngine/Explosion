@@ -2,62 +2,94 @@
 // Created by johnk on 2023/4/23.
 //
 
-#include <vector>
-#include <unordered_set>
-#include <unordered_map>
 #include <filesystem>
 
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 #include <Test/Test.h>
-
-#include <Mirror/Registry.h>
 #include <Mirror/Mirror.h>
+#include <SerializationTest.h>
+using namespace Mirror;
 
-int ga;
-float gb;
-std::string gc;
+int ga = 1;
+float gb = 2.0f;
+std::string gc = "3";
 
-struct SerializationTestStruct0 {
-    int a;
-    float b;
-    std::string c;
-};
+int gf(int a, int b)
+{
+    return a + b;
+}
 
-struct SerializationTestStruct1 {
-    std::vector<int> a;
-    std::unordered_set<std::string> b;
-    std::unordered_map<int, std::string> c;
-    std::vector<std::vector<bool>> d;
-};
+int SerializationTestStruct3::ga = 1;
 
-struct MirrorInfoRegistry {
-    MirrorInfoRegistry()
+int SerializationTestStruct3::gf(int a, int b)
+{
+    return a + b;
+}
+
+int SerializationTestStruct3::f() const // NOLINT
+{
+    return 1;
+}
+
+template <typename T>
+void PerformSerializationTest(const std::filesystem::path& fileName, const T& object)
+{
+    std::filesystem::create_directories(fileName.parent_path());
     {
-        Mirror::Registry::Get()
-            .Global()
-                .Variable<&ga>("ga")
-                .Variable<&gb>("gb")
-                .Variable<&gc>("gc");
-
-        Mirror::Registry::Get()
-            .Class<SerializationTestStruct0>("SerializationTestStruct0")
-                .MemberVariable<&SerializationTestStruct0::a>("a")
-                .MemberVariable<&SerializationTestStruct0::b>("b")
-                .MemberVariable<&SerializationTestStruct0::c>("c");
-
-        Mirror::Registry::Get()
-            .Class<SerializationTestStruct1>("SerializationTestStruct1")
-                .MemberVariable<&SerializationTestStruct1::a>("a")
-                .MemberVariable<&SerializationTestStruct1::b>("b")
-                .MemberVariable<&SerializationTestStruct1::c>("c")
-                .MemberVariable<&SerializationTestStruct1::d>("d");
+        Common::BinaryFileSerializeStream stream(fileName.string());
+        Serialize(stream, object);
     }
-};
-static MirrorInfoRegistry registry;
 
-TEST(SerializationTest, VariableFileSerializationTest)
+    {
+        Common::BinaryFileDeserializeStream stream(fileName.string());
+
+        T restored;
+        Deserialize(stream, restored);
+        ASSERT_EQ(restored, object);
+    }
+}
+
+template <typename T>
+void PerformJsonSerializationTest(const T& inValue, const std::string& inExceptJson)
+{
+    std::string json;
+    {
+        rapidjson::Document document;
+
+        rapidjson::Value jsonValue;
+        Common::JsonSerialize<T>(jsonValue, document.GetAllocator(), inValue);
+        document.CopyFrom(jsonValue, document.GetAllocator());
+
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer writer(buffer);
+        document.Accept(writer);
+
+        json = std::string(buffer.GetString(), buffer.GetSize());
+        if (!inExceptJson.empty()) {
+            ASSERT_EQ(json, inExceptJson);
+        }
+    }
+
+    {
+        rapidjson::Document document;
+        document.Parse(json.c_str());
+
+        rapidjson::Value jsonValue;
+        jsonValue.CopyFrom(document, document.GetAllocator());
+
+        T value;
+        Common::JsonDeserialize<T>(jsonValue, value);
+        ASSERT_EQ(inValue, value);
+    }
+}
+
+TEST(SerializationTest, VariableFileTest)
 {
     static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.VariableFileSerializationTest.bin";
     std::filesystem::create_directories(fileName.parent_path());
+
     {
         Common::BinaryFileSerializeStream stream(fileName.string());
 
@@ -66,9 +98,9 @@ TEST(SerializationTest, VariableFileSerializationTest)
         gc = "3";
 
         const auto& globalScope = Mirror::GlobalScope::Get();
-        globalScope.GetVariable("ga").SerializeDyn(stream);
-        globalScope.GetVariable("gb").SerializeDyn(stream);
-        globalScope.GetVariable("gc").SerializeDyn(stream);
+        globalScope.GetVariable("ga").GetDyn().Serialize(stream);
+        globalScope.GetVariable("gb").GetDyn().Serialize(stream);
+        globalScope.GetVariable("gc").GetDyn().Serialize(stream);
     }
 
     {
@@ -79,9 +111,9 @@ TEST(SerializationTest, VariableFileSerializationTest)
         Common::BinaryFileDeserializeStream stream(fileName.string());
 
         const auto& globalScope = Mirror::GlobalScope::Get();
-        globalScope.GetVariable("ga").DeserializeDyn(stream);
-        globalScope.GetVariable("gb").DeserializeDyn(stream);
-        globalScope.GetVariable("gc").DeserializeDyn(stream);
+        globalScope.GetVariable("ga").GetDyn().Deserialize(stream);
+        globalScope.GetVariable("gb").GetDyn().Deserialize(stream);
+        globalScope.GetVariable("gc").GetDyn().Deserialize(stream);
 
         ASSERT_EQ(ga, 1);
         ASSERT_EQ(gb, 2.0f);
@@ -89,75 +121,115 @@ TEST(SerializationTest, VariableFileSerializationTest)
     }
 }
 
-TEST(SerializationTest, ClassFileSerializationTest)
+TEST(SerializationTest, ClassFileTest)
 {
-    static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.ClassFileSerializationTest.bin";
-    std::filesystem::create_directories(fileName.parent_path());
-    {
-        Common::BinaryFileSerializeStream stream(fileName.string());
-
-        SerializationTestStruct0 obj;
-        obj.a = 1;
-        obj.b = 2.0f;
-        obj.c = "3";
-
-        const auto& clazz = Mirror::Class::Get("SerializationTestStruct0");
-        clazz.SerializeDyn(stream, Mirror::Any(std::ref(obj)));
-    }
-
-    {
-        Common::BinaryFileDeserializeStream stream(fileName.string());
-
-        const auto& clazz = Mirror::Class::Get("SerializationTestStruct0");
-        Mirror::Any obj = clazz.GetDefaultConstructor().Construct();
-        clazz.DeserailizeDyn(stream, obj);
-
-        const auto& [a, b, c] = obj.As<const SerializationTestStruct0&>();
-        ASSERT_EQ(a, 1);
-        ASSERT_EQ(b, 2.0f);
-        ASSERT_EQ(c, "3");
-    }
+    PerformSerializationTest(
+        "../Test/Generated/Mirror/SerializationTest.ClassFileSerializationTest.bin",
+        SerializationTestStruct0 { 1, 2, "3.0" });
 }
 
-TEST(SerializationTest, ContainerFileSerializationTest)
+TEST(SerializationTest, ContainerFileTest)
 {
-    static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.ContainerFileSerializationTest.bin";
-    std::filesystem::create_directories(fileName.parent_path());
-    const auto& clazz = Mirror::Class::Get("SerializationTestStruct1");
-    {
-        Common::BinaryFileSerializeStream stream(fileName.string());
+    SerializationTestStruct1 obj;
+    obj.a = { 1, 2 };
+    obj.b = { "3", "4" };
+    obj.c = { { 5, "6" }, { 7, "8" } };
+    obj.d = { { false, true }, { true, false } };
+    obj.e = { { 1, 2.0f, "3" } };
 
-        SerializationTestStruct1 obj;
-        obj.a = { 1, 2 };
-        obj.b = { "3", "4" };
-        obj.c = { { 5, "6" }, { 7, "8" } };
-        obj.d = { { false, true }, { true, false } };
+    PerformSerializationTest(
+        "../Test/Generated/Mirror/SerializationTest.ContainerFileSerializationTest.bin",
+        obj);
+}
 
-        clazz.SerializeDyn(stream, Mirror::Any(std::ref(obj)));
-    }
+TEST(SerializationTest, MetaObjectWithBaseClassTest)
+{
+    PerformSerializationTest(
+        "../Test/Generated/Mirror/SerializationTest.MetaObjectWithBaseClassTest.bin",
+        SerializationTestStruct2 { { 1, 2, "3.0" }, 4.0 });
+}
 
-    {
-        Common::BinaryFileDeserializeStream stream(fileName.string());
+TEST(SerializationTest, EnumSerializationTest)
+{
+    PerformSerializationTest<SerializationTestEnum>(
+        "../Test/Generated/Mirror/SerializationTest.EnumSerializationTest.bin",
+        SerializationTestEnum::b);
+}
 
-        Mirror::Any ref = clazz.GetDefaultConstructor().Construct();
-        clazz.DeserailizeDyn(stream, ref);
+TEST(SerializationTest, ReflNodeSerializationTest)
+{
+    static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.MetaTypeSerializationTest.bin";
 
-        const auto& [a, b, c, d] = ref.As<const SerializationTestStruct1&>();
-        ASSERT_EQ(a.size(), 2);
-        ASSERT_EQ(a[0], 1);
-        ASSERT_EQ(a[1], 2);
-        ASSERT_EQ(b.size(), 2);
-        ASSERT_EQ(b.contains("3"), true);
-        ASSERT_EQ(b.contains("4"), true);
-        ASSERT_EQ(c.size(), 2);
-        ASSERT_EQ(c.at(5), "6");
-        ASSERT_EQ(c.at(7), "8");
-        ASSERT_EQ(d.size(), 2);
-        ASSERT_EQ(d[0].size(), 2);
-        ASSERT_EQ(d[0][0], false);
-        ASSERT_EQ(d[0][1], true);
-        ASSERT_EQ(d[1].size(), 2);
-        ASSERT_EQ(d[1][0], true);
-        ASSERT_EQ(d[1][1], false);
-    }
+    const auto& globalScope = GlobalScope::Get();
+    PerformSerializationTest<const Variable*>(fileName, nullptr);
+    PerformSerializationTest<const Variable*>(fileName, &globalScope.GetVariable("ga"));
+    PerformSerializationTest<const Function*>(fileName, nullptr);
+    PerformSerializationTest<const Function*>(fileName, &globalScope.GetFunction("gf"));
+
+    const auto* clazz = &Class::Get<SerializationTestStruct3>();
+    PerformSerializationTest<const Class*>(fileName, nullptr);
+    PerformSerializationTest<const Class*>(fileName, clazz);
+    PerformSerializationTest<const Constructor*>(fileName, nullptr);
+    PerformSerializationTest<const Constructor*>(fileName, &clazz->GetDefaultConstructor());
+    PerformSerializationTest<const Destructor*>(fileName, nullptr);
+    PerformSerializationTest<const Destructor*>(fileName, &clazz->GetDestructor());
+    PerformSerializationTest<const Variable*>(fileName, nullptr);
+    PerformSerializationTest<const Variable*>(fileName, &clazz->GetStaticVariable("ga"));
+    PerformSerializationTest<const Function*>(fileName, nullptr);
+    PerformSerializationTest<const Function*>(fileName, &clazz->GetStaticFunction("gf"));
+    PerformSerializationTest<const MemberVariable*>(fileName, nullptr);
+    PerformSerializationTest<const MemberVariable*>(fileName, &clazz->GetMemberVariable("a"));
+    PerformSerializationTest<const MemberFunction*>(fileName, nullptr);
+    PerformSerializationTest<const MemberFunction*>(fileName, &clazz->GetMemberFunction("f"));
+
+    const auto* enun = &Enum::Get<SerializationTestEnum>();
+    PerformSerializationTest<const Enum*>(fileName, nullptr);
+    PerformSerializationTest<const Enum*>(fileName, enun);
+    PerformSerializationTest<const EnumValue*>(fileName, nullptr);
+    PerformSerializationTest<const EnumValue*>(fileName, &enun->GetValue("a"));
+}
+
+TEST(SerializationTest, MetaObjectSerializationTest)
+{
+    PerformJsonSerializationTest<SerializationTestStruct2>(
+        SerializationTestStruct2 { 1, 2.0f, "3", 4.0 },
+        "");
+}
+
+TEST(SerializationTest, EnumJsonSerializationTest)
+{
+    PerformJsonSerializationTest<SerializationTestEnum>(
+        SerializationTestEnum::b,
+        R"(["SerializationTestEnum","b"])");
+}
+
+TEST(SerializationTest, MetaTypeJsonSerializationTest)
+{
+    const auto& globalScope = GlobalScope::Get();
+    PerformJsonSerializationTest<const Variable*>(nullptr, R"(["",""])");
+    PerformJsonSerializationTest<const Variable*>(&globalScope.GetVariable("ga"), R"(["","ga"])");
+    PerformJsonSerializationTest<const Function*>(nullptr, R"(["",""])");
+    PerformJsonSerializationTest<const Function*>(&globalScope.GetFunction("gf"), R"(["","gf"])");
+
+    const auto* clazz = &Class::Get<SerializationTestStruct3>();
+    PerformJsonSerializationTest<const Class*>(nullptr, R"("")");
+    PerformJsonSerializationTest<const Class*>(clazz, R"("SerializationTestStruct3")");
+    PerformJsonSerializationTest<const Constructor*>(nullptr, R"(["",""])");
+    PerformJsonSerializationTest<const Constructor*>(&clazz->GetDefaultConstructor(), R"(["SerializationTestStruct3","_defaultCtor"])");
+    PerformJsonSerializationTest<const Destructor*>(nullptr, R"("")");
+    PerformJsonSerializationTest<const Destructor*>(&clazz->GetDestructor(), R"("SerializationTestStruct3")");
+    PerformJsonSerializationTest<const Variable*>(nullptr, R"(["",""])");
+    PerformJsonSerializationTest<const Variable*>(&clazz->GetStaticVariable("ga"), R"(["SerializationTestStruct3","ga"])");
+    PerformJsonSerializationTest<const Function*>(nullptr, R"(["",""])");
+    PerformJsonSerializationTest<const Function*>(&clazz->GetStaticFunction("gf"), R"(["SerializationTestStruct3","gf"])");
+    PerformJsonSerializationTest<const MemberVariable*>(nullptr, R"(["",""])");
+    PerformJsonSerializationTest<const MemberVariable*>(&clazz->GetMemberVariable("a"), R"(["SerializationTestStruct3","a"])");
+    PerformJsonSerializationTest<const MemberFunction*>(nullptr, R"(["",""])");
+    PerformJsonSerializationTest<const MemberFunction*>(&clazz->GetMemberFunction("f"), R"(["SerializationTestStruct3","f"])");
+
+    const auto* enun = &Enum::Get<SerializationTestEnum>();
+    PerformJsonSerializationTest<const Enum*>(nullptr, R"("")");
+    PerformJsonSerializationTest<const Enum*>(enun, R"("SerializationTestEnum")");
+    PerformJsonSerializationTest<const EnumValue*>(nullptr, R"(["",""])");
+    PerformJsonSerializationTest<const EnumValue*>(&enun->GetValue("a"), R"(["SerializationTestEnum","a"])");
 }

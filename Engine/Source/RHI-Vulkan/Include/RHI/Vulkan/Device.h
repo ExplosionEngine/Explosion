@@ -39,7 +39,9 @@ namespace RHI::Vulkan {
         Common::UniqueRef<CommandBuffer> CreateCommandBuffer() override;
         Common::UniqueRef<Fence> CreateFence(bool initAsSignaled) override;
         Common::UniqueRef<Semaphore> CreateSemaphore() override;
+
         bool CheckSwapChainFormatSupport(Surface* inSurface, PixelFormat inFormat) override;
+        TextureSubResourceCopyFootprint GetTextureSubResourceCopyFootprint(const Texture& texture, const TextureSubResourceInfo& subResourceInfo) override;
 
         VkDevice GetNative() const;
         VmaAllocator& GetNativeAllocator();

@@ -151,14 +151,12 @@ namespace Core {
 
                     if (auto extension = path.extension().string();
                         (extension == ".dll" || extension == ".so" || extension == ".dylib")
-                        && (fileName == fmt::format("{}{}", moduleName, extension) || fileName == fmt::format("lib{}{}", moduleName, extension)))
+                        && (fileName == std::format("{}{}", moduleName, extension) || fileName == std::format("lib{}{}", moduleName, extension)))
                     {
                         return path.string();
                     }
                 }
-            } catch (const std::exception&) { // NOLINT
-                // TODO maybe output log here
-            }
+            } catch (const std::exception&) {} // NOLINT
         }
         return {};
     }

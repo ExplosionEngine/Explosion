@@ -112,4 +112,9 @@ namespace RHI::Dummy {
     {
         return true;
     }
+
+    TextureSubResourceCopyFootprint DummyDevice::GetTextureSubResourceCopyFootprint(const Texture& texture, const TextureSubResourceInfo& subResourceInfo)
+    {
+        return {};
+    }
 }

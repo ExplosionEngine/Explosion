@@ -11,4 +11,6 @@ AddTest(
     NAME Mirror.Test
     SRC ${TEST_SOURCES}
     LIB Mirror
+    INC Test
+    REFLECT Test
 )

@@ -245,9 +245,11 @@ function(AddMirrorInfoSourceGenerationTarget)
     foreach (SEARCH_DIR ${PARAMS_SEARCH_DIR})
         file(GLOB_RECURSE INPUT_HEADER_FILES "${SEARCH_DIR}/*.h")
         foreach (INPUT_HEADER_FILE ${INPUT_HEADER_FILES})
-            get_filename_component(FILENAME ${INPUT_HEADER_FILE} NAME_WE)
+            string(REPLACE "${CMAKE_SOURCE_DIR}/" "" TEMP ${INPUT_HEADER_FILE})
+            get_filename_component(DIR ${TEMP} DIRECTORY)
+            get_filename_component(FILENAME ${TEMP} NAME_WE)
 
-            set(OUTPUT_SOURCE "${CMAKE_BINARY_DIR}/Generated/MirrorInfoSource/${PARAMS_NAME}/${FILENAME}.generated.cpp")
+            set(OUTPUT_SOURCE "${CMAKE_BINARY_DIR}/Generated/MirrorInfoSource/${DIR}/${FILENAME}.generated.cpp")
             list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
 
             add_custom_command(
@@ -289,10 +291,10 @@ function(AddExecutable)
         )
     endif()
 
-    add_executable(
+    add_executable(${PARAMS_NAME})
+    target_sources(
         ${PARAMS_NAME}
-        ${PARAMS_SRC}
-        ${GENERATED_SRC}
+        PRIVATE ${PARAMS_SRC} ${GENERATED_SRC}
     )
     target_include_directories(
         ${PARAMS_NAME}
@@ -351,8 +353,10 @@ function(AddLibrary)
     add_library(
         ${PARAMS_NAME}
         ${PARAMS_TYPE}
-        ${PARAMS_SRC}
-        ${GENERATED_SRC}
+    )
+    target_sources(
+        ${PARAMS_NAME}
+        PRIVATE ${PARAMS_SRC} ${GENERATED_SRC}
     )
     target_include_directories(
         ${PARAMS_NAME}
@@ -414,10 +418,10 @@ function(AddTest)
         )
     endif()
 
-    add_executable(
+    add_executable(${PARAMS_NAME})
+    target_sources(
         ${PARAMS_NAME}
-        ${PARAMS_SRC}
-        ${GENERATED_SRC}
+        PRIVATE ${PARAMS_SRC} ${GENERATED_SRC}
     )
     target_include_directories(
         ${PARAMS_NAME}

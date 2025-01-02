@@ -6,6 +6,7 @@
 
 #include <Common/Math/Vector.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <typename T>
@@ -39,9 +40,9 @@ namespace Common {
         T Size() const;
         bool Inside(const Vec<T, 3>& inPoint) const;
         bool Intersect(const Box& inOther) const;
+        bool operator==(const Box& inRhs) const;
 
-        template <typename IT>
-        Box<IT> CastTo() const;
+        template <typename IT> Box<IT> CastTo() const;
     };
 
     using IBox = Box<int32_t>;
@@ -52,30 +53,68 @@ namespace Common {
 }
 
 namespace Common { // NOLINT
-    template <typename T>
+    template <Serializable T>
     struct Serializer<Box<T>> {
-        static constexpr bool serializable = true;
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::Box")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const Common::Box<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Box<T>& value)
         {
-            TypeIdSerializer<Common::Box<T>>::Serialize(stream);
-
-            Serializer<Vec<T, 3>>::Serialize(stream, value.min);
-            Serializer<Vec<T, 3>>::Serialize(stream, value.max);
+            size_t serialized = 0;
+            serialized += Serializer<Vec<T, 3>>::Serialize(stream, value.min);
+            serialized += Serializer<Vec<T, 3>>::Serialize(stream, value.max);
+            return serialized;
         }
 
-        static bool Deserialize(DeserializeStream& stream, Common::Box<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Box<T>& value)
         {
-            if (!TypeIdSerializer<Common::Box<T>>::Deserialize(stream)) {
-                return false;
-            }
+            size_t deserialized = 0;
+            deserialized += Serializer<Vec<T, 3>>::Deserialize(stream, value.min);
+            deserialized += Serializer<Vec<T, 3>>::Deserialize(stream, value.max);
+            return deserialized;
+        }
+    };
 
-            Serializer<Vec<T, 3>>::Deserialize(stream, value.min);
-            Serializer<Vec<T, 3>>::Deserialize(stream, value.max);
-            return true;
+    template <StringConvertible T>
+    struct StringConverter<Box<T>> {
+        static std::string ToString(const Box<T>& inValue)
+        {
+            return std::format(
+                "{}min={}, max={}{}",
+                "{",
+                StringConverter<Vec<T, 3>>::ToString(inValue.min),
+                StringConverter<Vec<T, 3>>::ToString(inValue.max),
+                "}");
+        }
+    };
+
+    template <JsonSerializable T>
+    struct JsonSerializer<Box<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Box<T>& inValue)
+        {
+            rapidjson::Value minJson;
+            JsonSerializer<Vec<T, 3>>::JsonSerialize(minJson, inAllocator, inValue.min);
+
+            rapidjson::Value maxJson;
+            JsonSerializer<Vec<T, 3>>::JsonSerialize(maxJson, inAllocator, inValue.max);
+
+            outJsonValue.SetObject();
+            outJsonValue.AddMember("min", minJson, inAllocator);
+            outJsonValue.AddMember("max", maxJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Box<T>& outValue)
+        {
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("min")) {
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["min"], outValue.min);
+            }
+            if (inJsonValue.HasMember("max")) {
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["max"], outValue.max);
+            }
         }
     };
 }
@@ -215,6 +254,13 @@ namespace Common {
             && inOther.min.x < this->max.x
             && inOther.min.y < this->max.y
             && inOther.min.z < this->max.z;
+    }
+
+    template <typename T>
+    bool Box<T>::operator==(const Box& inRhs) const
+    {
+        return this->min == inRhs.min
+            && this->max == inRhs.max;
     }
 
     template <typename T>

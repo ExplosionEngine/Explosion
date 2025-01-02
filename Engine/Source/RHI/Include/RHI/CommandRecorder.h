@@ -34,6 +34,14 @@ namespace RHI {
         TextureSubResourceInfo& SetAspect(TextureAspect inAspect);
     };
 
+    struct TextureSubResourceCopyFootprint {
+        Common::UVec3 extent;
+        size_t bytesPerPixel;
+        size_t rowPitch;
+        size_t slicePitch;
+        size_t totalBytes;
+    };
+
     struct BufferCopyInfo {
         size_t srcOffset;
         size_t dstOffset;

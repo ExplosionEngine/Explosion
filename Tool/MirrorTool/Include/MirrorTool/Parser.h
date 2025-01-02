@@ -52,15 +52,27 @@ namespace MirrorTool {
         FieldAccess fieldAccess;
     };
 
+    struct ClassDestructorInfo : Node {
+        FieldAccess fieldAccess;
+    };
+
     struct ClassInfo : Node {
         FieldAccess lastFieldAccess;
         std::string baseClassName;
+        std::optional<ClassDestructorInfo> destructor;
         std::vector<ClassInfo> classes;
         std::vector<ClassConstructorInfo> constructors;
         std::vector<ClassVariableInfo> staticVariables;
         std::vector<ClassFunctionInfo> staticFunctions;
         std::vector<ClassVariableInfo> variables;
         std::vector<ClassFunctionInfo> functions;
+        // TODO enums in class
+    };
+
+    struct EnumElementInfo : Node {};
+
+    struct EnumInfo : Node {
+        std::vector<EnumElementInfo> elements;
     };
 
     struct NamespaceInfo : Node {
@@ -68,6 +80,7 @@ namespace MirrorTool {
         std::vector<FunctionInfo> functions;
         std::vector<ClassInfo> classes;
         std::vector<NamespaceInfo> namespaces;
+        std::vector<EnumInfo> enums;
     };
 
     struct MetaInfo {

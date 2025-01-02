@@ -8,12 +8,14 @@
 
 #include <Core/Module.h>
 #include <Runtime/Api.h>
+#include <Render/RenderModule.h>
 
 namespace Runtime {
     class World;
 
     struct EngineInitParams {
         std::string projectFile;
+        std::string rhiType;
     };
 
     class RUNTIME_API Engine { // NOLINT
@@ -24,11 +26,15 @@ namespace Runtime {
 
         void MountWorld(World* inWorld);
         void UnmountWorld(World* inWorld);
+        Render::RenderModule& GetRenderModule() const;
+        void Tick(float inTimeSeconds) const;
+        Common::UniqueRef<World> CreateWorld(const std::string& inName = "") const;
 
     protected:
         explicit Engine(const EngineInitParams& inParams);
 
         std::unordered_set<World*> worlds;
+        Render::RenderModule* renderModule;
     };
 
     class RUNTIME_API MinEngine final : public Engine {
@@ -39,7 +45,7 @@ namespace Runtime {
         bool IsEditor() override;
     };
 
-    struct RUNTIME_API IGameModule : Core::Module { // NOLINT
+    struct RUNTIME_API IEngineModule : Core::Module { // NOLINT
         virtual Engine* CreateEngine(const EngineInitParams& inParams) = 0;
     };
 
@@ -50,6 +56,6 @@ namespace Runtime {
         static Engine& Get();
 
     private:
-        static Engine* engine;
+        static Common::UniqueRef<Engine> engine;
     };
 }

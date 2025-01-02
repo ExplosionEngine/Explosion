@@ -3,9 +3,10 @@
 //
 
 #include <Runtime/Engine.h>
-#include <Core/Module.h>
 #include <Common/Debug.h>
+#include <Core/Module.h>
 #include <Core/Paths.h>
+#include <Runtime/World.h>
 
 namespace Runtime {
     Engine::Engine(const EngineInitParams& inParams)
@@ -13,9 +14,20 @@ namespace Runtime {
         if (!inParams.projectFile.empty()) {
             Core::Paths::SetCurrentProjectFile(inParams.projectFile);
         }
+
+        renderModule = ::Core::ModuleManager::Get().FindOrLoadTyped<Render::RenderModule>("Render");
+        Assert(renderModule != nullptr);
+
+        Render::RenderModuleInitParams initParams;
+        initParams.rhiType = RHI::GetRHITypeByAbbrString(inParams.rhiType);
+        renderModule->Initialize(initParams);
     }
 
-    Engine::~Engine() = default;
+    Engine::~Engine()
+    {
+        renderModule->DeInitialize();
+        ::Core::ModuleManager::Get().Unload("Render");
+    }
 
     void Engine::MountWorld(World* inWorld)
     {
@@ -27,7 +39,27 @@ namespace Runtime {
         worlds.erase(inWorld);
     }
 
-    Engine* EngineHolder::engine = nullptr;
+    Render::RenderModule& Engine::GetRenderModule() const
+    {
+        return *renderModule;
+    }
+
+    void Engine::Tick(float inTimeSeconds) const
+    {
+        for (auto* world : worlds) {
+            if (!world->Playing()) {
+                continue;
+            }
+            world->Tick(inTimeSeconds);
+        }
+    }
+
+    Common::UniqueRef<World> Engine::CreateWorld(const std::string& inName) const // NOLINT
+    {
+        return new World(inName);
+    }
+
+    Common::UniqueRef<Engine> EngineHolder::engine = nullptr;
 
     MinEngine::MinEngine(const EngineInitParams& inParams)
         : Engine(inParams)
@@ -44,7 +76,7 @@ namespace Runtime {
     void EngineHolder::Load(const std::string& inModuleName, const EngineInitParams& inInitParams)
     {
         Assert(engine == nullptr);
-        auto& gameModule = Core::ModuleManager::Get().GetOrLoadTyped<IGameModule>(inModuleName);
+        auto& gameModule = Core::ModuleManager::Get().GetOrLoadTyped<IEngineModule>(inModuleName);
         engine = gameModule.CreateEngine(inInitParams);
     }
 

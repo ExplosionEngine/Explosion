@@ -7,6 +7,7 @@
 #include <Common/Math/Half.h>
 #include <Common/Math/Matrix.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <typename T> struct Angle;
@@ -39,6 +40,7 @@ namespace Common {
         Angle(Angle&& inValue) noexcept;
         Angle& operator=(const Angle& inValue);
         Angle& operator=(const Radian<T>& inValue);
+        bool operator==(const Angle& inRhs) const;
         T ToRadian() const;
     };
 
@@ -51,6 +53,7 @@ namespace Common {
         Radian(Radian&& inValue) noexcept;
         Radian& operator=(const Radian& inValue);
         Radian& operator=(const Angle<T>& inValue);
+        bool operator==(const Radian& inRhs) const;
         T ToAngle() const;
     };
 
@@ -120,84 +123,154 @@ namespace Common {
 }
 
 namespace Common {
-    template <typename T>
+    template <Serializable T>
     struct Serializer<Angle<T>> {
-        static constexpr bool serializable = true;
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::Angle")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const Angle<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Angle<T>& value)
         {
-            TypeIdSerializer<Angle<T>>::Serialize(stream);
-
-            Serializer<T>::Serialize(stream, value.value);
+            return Serializer<T>::Serialize(stream, value.value);
         }
 
-        static bool Deserialize(DeserializeStream& stream, Angle<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Angle<T>& value)
         {
-            if (!TypeIdSerializer<Angle<T>>::Deserialize(stream)) {
-                return false;
-            }
-
-            Serializer<T>::Deserialize(stream, value.value);
-            return true;
+            return Serializer<T>::Deserialize(stream, value.value);
         }
     };
 
-    template <typename T>
+    template <Serializable T>
     struct Serializer<Radian<T>> {
-        static constexpr bool serializable = true;
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::Radian")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const Radian<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Radian<T>& value)
         {
-            TypeIdSerializer<Radian<T>>::Serialize(stream);
-
-            Serializer<T>::Serialize(stream, value.value);
+            return Serializer<T>::Serialize(stream, value.value);
         }
 
-        static bool Deserialize(DeserializeStream& stream, Radian<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Radian<T>& value)
         {
-            if (!TypeIdSerializer<Radian<T>>::Deserialize(stream)) {
-                return false;
-            }
-
-            Serializer<T>::Deserialize(stream, value.value);
-            return true;
+            return Serializer<T>::Deserialize(stream, value.value);
         }
     };
 
-    template <typename T>
+    template <Serializable T>
     struct Serializer<Quaternion<T>> {
-        static constexpr bool serializable = true;
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::Quaternion")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const Quaternion<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Quaternion<T>& value)
         {
-            TypeIdSerializer<Quaternion<T>>::Serialize(stream);
-
-            Serializer<T>::Serialize(stream, value.x);
-            Serializer<T>::Serialize(stream, value.y);
-            Serializer<T>::Serialize(stream, value.z);
-            Serializer<T>::Serialize(stream, value.w);
+            size_t serialized = 0;
+            serialized += Serializer<T>::Serialize(stream, value.w);
+            serialized += Serializer<T>::Serialize(stream, value.x);
+            serialized += Serializer<T>::Serialize(stream, value.y);
+            serialized += Serializer<T>::Serialize(stream, value.z);
+            return serialized;
         }
 
-        static bool Deserialize(DeserializeStream& stream, Quaternion<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Quaternion<T>& value)
         {
-            if (!TypeIdSerializer<Quaternion<T>>::Deserialize(stream)) {
-                return false;
-            }
+            size_t deserialized = 0;
+            deserialized += Serializer<T>::Deserialize(stream, value.w);
+            deserialized += Serializer<T>::Deserialize(stream, value.x);
+            deserialized += Serializer<T>::Deserialize(stream, value.y);
+            deserialized += Serializer<T>::Deserialize(stream, value.z);
+            return deserialized;
+        }
+    };
 
-            Serializer<T>::Deserialize(stream, value.x);
-            Serializer<T>::Deserialize(stream, value.y);
-            Serializer<T>::Deserialize(stream, value.z);
-            Serializer<T>::Deserialize(stream, value.w);
-            return true;
+    template <StringConvertible T>
+    struct StringConverter<Angle<T>> {
+        static std::string ToString(const Angle<T>& inValue)
+        {
+            return std::format("a{}", StringConverter<T>::ToString(inValue.value));
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<Radian<T>> {
+        static std::string ToString(const Radian<T>& inValue)
+        {
+            return StringConverter<T>::ToString(inValue.value);
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<Quaternion<T>> {
+        static std::string ToString(const Quaternion<T>& inValue)
+        {
+            return std::format(
+                "({}, {}, {}, {})",
+                StringConverter<T>::ToString(inValue.w),
+                StringConverter<T>::ToString(inValue.x),
+                StringConverter<T>::ToString(inValue.y),
+                StringConverter<T>::ToString(inValue.z));
+        }
+    };
+
+    template <JsonSerializable T>
+    struct JsonSerializer<Angle<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Angle<T>& inValue)
+        {
+            JsonSerializer<T>::JsonSerialize(outJsonValue, inAllocator, inValue.value);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Angle<T>& outValue)
+        {
+            JsonSerializer<T>::JsonDeserialize(inJsonValue, outValue.value);
+        }
+    };
+
+    template <JsonSerializable T>
+    struct JsonSerializer<Radian<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Radian<T>& inValue)
+        {
+            JsonSerializer<T>::JsonSerialize(outJsonValue, inAllocator, inValue.value);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Radian<T>& outValue)
+        {
+            JsonSerializer<T>::JsonDeserialize(inJsonValue, outValue.value);
+        }
+    };
+
+    template <JsonSerializable T>
+    struct JsonSerializer<Quaternion<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Quaternion<T>& inValue)
+        {
+            rapidjson::Value xJson;
+            JsonSerializer<T>::JsonSerialize(xJson, inAllocator, inValue.w);
+
+            rapidjson::Value yJson;
+            JsonSerializer<T>::JsonSerialize(yJson, inAllocator, inValue.x);
+
+            rapidjson::Value zJson;
+            JsonSerializer<T>::JsonSerialize(zJson, inAllocator, inValue.y);
+
+            rapidjson::Value wJson;
+            JsonSerializer<T>::JsonSerialize(wJson, inAllocator, inValue.z);
+
+            outJsonValue.SetArray();
+            outJsonValue.PushBack(xJson, inAllocator);
+            outJsonValue.PushBack(yJson, inAllocator);
+            outJsonValue.PushBack(zJson, inAllocator);
+            outJsonValue.PushBack(wJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Quaternion<T>& outValue)
+        {
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != 4) {
+                return;
+            }
+            JsonSerializer<T>::JsonDeserialize(inJsonValue[0], outValue.w);
+            JsonSerializer<T>::JsonDeserialize(inJsonValue[1], outValue.x);
+            JsonSerializer<T>::JsonDeserialize(inJsonValue[2], outValue.y);
+            JsonSerializer<T>::JsonDeserialize(inJsonValue[3], outValue.z);
         }
     };
 }
@@ -239,6 +312,12 @@ namespace Common {
     }
 
     template <typename T>
+    bool Angle<T>::operator==(const Angle& inRhs) const
+    {
+        return CompareNumber(this->value, inRhs.value);
+    }
+
+    template <typename T>
     T Angle<T>::ToRadian() const
     {
         return this->value / 180.0f * pi;
@@ -277,6 +356,12 @@ namespace Common {
     {
         this->value = inValue.value;
         return *this;
+    }
+
+    template <typename T>
+    bool Radian<T>::operator==(const Radian& inRhs) const
+    {
+        return CompareNumber(this->value, inRhs.value);
     }
 
     template <typename T>

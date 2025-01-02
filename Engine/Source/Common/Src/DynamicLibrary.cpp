@@ -2,6 +2,8 @@
 // Created by johnk on 28/12/2021.
 //
 
+#include <utility>
+
 #include <Common/DynamicLibrary.h>
 #include <Common/Debug.h>
 
@@ -38,19 +40,17 @@ namespace Common {
     }
 
     DynamicLibrary::DynamicLibrary(DynamicLibrary&& inOther) noexcept
-        : loaded(inOther.loaded)
-        , fullPath(std::move(inOther.fullPath))
-        , handle(inOther.handle)
+        : loaded(std::exchange(inOther.loaded, false))
+        , fullPath(std::exchange(inOther.fullPath, ""))
+        , handle(std::exchange(inOther.handle, nullptr))
     {
-        inOther.loaded = false;
     }
 
     DynamicLibrary& DynamicLibrary::operator=(DynamicLibrary&& inOther) noexcept
     {
-        loaded = inOther.loaded;
-        fullPath = std::move(inOther.fullPath);
-        handle = inOther.handle;
-        inOther.loaded = false;
+        loaded = std::exchange(inOther.loaded, false);
+        fullPath = std::exchange(inOther.fullPath, "");
+        handle = std::exchange(inOther.handle, nullptr);
         return *this;
     }
 

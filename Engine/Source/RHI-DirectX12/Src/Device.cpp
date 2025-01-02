@@ -259,6 +259,26 @@ namespace RHI::DirectX12 {
         return supportedFormats.contains(inFormat);
     }
 
+    TextureSubResourceCopyFootprint DX12Device::GetTextureSubResourceCopyFootprint(const Texture& texture, const TextureSubResourceInfo& subResourceInfo)
+    {
+        const auto& dx12Texture = static_cast<const DX12Texture&>(texture);
+        const auto createInfo = texture.GetCreateInfo();
+        const auto nativeResourceDesc = dx12Texture.GetNative()->GetDesc();
+
+        const size_t nativeSubResourceIndex = D3D12CalcSubresource(subResourceInfo.mipLevel, subResourceInfo.arrayLayer, 0, createInfo.mipLevels, createInfo.dimension == TextureDimension::t3D ? 1 : createInfo.depthOrArraySize);
+
+        D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint;
+        nativeDevice->GetCopyableFootprints(&nativeResourceDesc, nativeSubResourceIndex, 1, 0, &footprint, nullptr, nullptr, nullptr);
+
+        TextureSubResourceCopyFootprint result {};
+        result.extent = { footprint.Footprint.Width, footprint.Footprint.Height, footprint.Footprint.Depth };
+        result.bytesPerPixel = GetBytesPerPixel(createInfo.format);
+        result.rowPitch = footprint.Footprint.RowPitch;
+        result.slicePitch = footprint.Footprint.RowPitch * footprint.Footprint.Height;
+        result.totalBytes = footprint.Footprint.RowPitch * footprint.Footprint.Height * footprint.Footprint.Depth;
+        return result;
+    }
+
     DX12Gpu& DX12Device::GetGpu() const
     {
         return gpu;

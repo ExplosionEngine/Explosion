@@ -47,7 +47,7 @@ bool Application::Initialize(int argc, char* argv[])
         return false;
     }
 
-    rhiType = RHI::RHIAbbrStringToRHIType(rhiString);
+    rhiType = RHI::GetRHITypeByAbbrString(rhiString);
     instance = RHI::Instance::GetByType(rhiType);
 
     return true;

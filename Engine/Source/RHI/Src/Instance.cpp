@@ -24,7 +24,17 @@ namespace RHI {
 #endif
     }
 
-    RHIType RHIAbbrStringToRHIType(const std::string& abbrString)
+    std::string GetAbbrStringByType(RHIType type)
+    {
+        static std::unordered_map<RHIType, std::string> map = {
+            { RHIType::directX12, "dx12" },
+            { RHIType::vulkan, "vulkan" },
+            { RHIType::dummy, "dummy" }
+        };
+        return map.at(type);
+    }
+
+    RHIType GetRHITypeByAbbrString(const std::string& abbrString) // NOLINT
     {
         static std::unordered_map<std::string, RHIType> map = {
             { "dx12", RHIType::directX12 },

@@ -6,6 +6,7 @@
 
 #include <Common/Math/Transform.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <typename T>
@@ -18,6 +19,7 @@ namespace Common {
         ViewTransform(const ViewTransform& inOther);
         ViewTransform(ViewTransform&& inOther) noexcept;
         ViewTransform& operator=(const ViewTransform& inOther);
+        bool operator==(const ViewTransform& inRhs) const;
 
         Mat<T, 4, 4> GetViewMatrix() const;
     };
@@ -27,29 +29,42 @@ namespace Common {
     using DViewTransform = ViewTransform<double>;
 }
 
-namespace Common { // NOLINT
-    template <typename T>
+namespace Common {
+    template <Serializable T>
     struct Serializer<ViewTransform<T>> {
-        static constexpr bool serializable = true;
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::ViewTransform")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const ViewTransform<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const ViewTransform<T>& value)
         {
-            TypeIdSerializer<ViewTransform<T>>::Serialize(stream);
-
-            Serializer<Transform<T>>::Serialize(stream, value);
+            return Serializer<Transform<T>>::Serialize(stream, value);
         }
 
-        static bool Deserialize(DeserializeStream& stream, ViewTransform<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, ViewTransform<T>& value)
         {
-            if (!TypeIdSerializer<ViewTransform<T>>::Deserialize(stream)) {
-                return false;
-            }
+            return Serializer<Transform<T>>::Deserialize(stream, value);
+        }
+    };
 
-            Serializer<Transform<T>>::Deserialize(stream, value);
-            return true;
+    template <StringConvertible T>
+    struct StringConverter<ViewTransform<T>> {
+        static std::string ToString(const ViewTransform<T>& inValue)
+        {
+            return StringConverter<Transform<T>>::ToString(inValue);
+        }
+    };
+
+    template <JsonSerializable T>
+    struct JsonSerializer<ViewTransform<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const ViewTransform<T>& inValue)
+        {
+            JsonSerializer<Transform<T>>::JsonSerialize(outJsonValue, inAllocator, inValue);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, ViewTransform<T>& outValue)
+        {
+            JsonSerializer<Transform<T>>::JsonDeserialize(inJsonValue, outValue);
         }
     };
 }
@@ -96,6 +111,12 @@ namespace Common {
     {
         Transform<T>::operator=(inOther);
         return *this;
+    }
+
+    template <typename T>
+    bool ViewTransform<T>::operator==(const ViewTransform& inRhs) const
+    {
+        return Transform<T>::operator==(inRhs);
     }
 
     template <typename T>

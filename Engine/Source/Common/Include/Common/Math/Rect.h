@@ -6,6 +6,7 @@
 
 #include <Common/Math/Vector.h>
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 namespace Common {
     template <typename T>
@@ -37,9 +38,9 @@ namespace Common {
         T Size() const;
         bool Inside(const Vec<T, 2>& inPoint) const;
         bool Intersect(const Rect& inOther) const;
+        bool operator==(const Rect& inRhs) const;
 
-        template <typename IT>
-        Rect<IT> CastTo() const;
+        template <typename IT> Rect<IT> CastTo() const;
     };
 
     using IRect = Rect<int32_t>;
@@ -50,30 +51,68 @@ namespace Common {
 }
 
 namespace Common {
-    template <typename T>
+    template <Serializable T>
     struct Serializer<Rect<T>> {
-        static constexpr bool serializable = true;
-        static constexpr uint32_t typeId
+        static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::Rect")
             + Serializer<T>::typeId;
 
-        static void Serialize(SerializeStream& stream, const Rect<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Rect<T>& value)
         {
-            TypeIdSerializer<Rect<T>>::Serialize(stream);
-
-            Serializer<Vec<T, 2>>::Serialize(stream, value.min);
-            Serializer<Vec<T, 2>>::Serialize(stream, value.max);
+            size_t serialized = 0;
+            serialized += Serializer<Vec<T, 2>>::Serialize(stream, value.min);
+            serialized += Serializer<Vec<T, 2>>::Serialize(stream, value.max);
+            return serialized;
         }
 
-        static bool Deserialize(DeserializeStream& stream, Rect<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Rect<T>& value)
         {
-            if (!TypeIdSerializer<Rect<T>>::Deserialize(stream)) {
-                return false;
-            }
+            size_t deserialized = 0;
+            deserialized += Serializer<Vec<T, 2>>::Deserialize(stream, value.min);
+            deserialized += Serializer<Vec<T, 2>>::Deserialize(stream, value.max);
+            return deserialized;
+        }
+    };
 
-            Serializer<Vec<T, 2>>::Deserialize(stream, value.min);
-            Serializer<Vec<T, 2>>::Deserialize(stream, value.max);
-            return true;
+    template <StringConvertible T>
+    struct StringConverter<Rect<T>> {
+        static std::string ToString(const Rect<T>& inValue)
+        {
+            return std::format(
+                "{}min={}, max={}{}",
+                "{",
+                StringConverter<Vec<T, 2>>::ToString(inValue.min),
+                StringConverter<Vec<T, 2>>::ToString(inValue.max),
+                "}");
+        }
+    };
+
+    template <JsonSerializable T>
+    struct JsonSerializer<Rect<T>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Rect<T>& inValue)
+        {
+            rapidjson::Value minJson;
+            JsonSerializer<Vec<T, 2>>::JsonSerialize(minJson, inAllocator, inValue.min);
+
+            rapidjson::Value maxJson;
+            JsonSerializer<Vec<T, 2>>::JsonSerialize(maxJson, inAllocator, inValue.max);
+
+            outJsonValue.SetObject();
+            outJsonValue.AddMember("min", minJson, inAllocator);
+            outJsonValue.AddMember("max", maxJson, inAllocator);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Rect<T>& outValue)
+        {
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("min")) {
+                JsonSerializer<Vec<T, 2>>::JsonDeserialize(inJsonValue["min"], outValue.min);
+            }
+            if (inJsonValue.HasMember("max")) {
+                JsonSerializer<Vec<T, 2>>::JsonDeserialize(inJsonValue["max"], outValue.max);
+            }
         }
     };
 }
@@ -198,6 +237,13 @@ namespace Common {
             && this->min.y < inOther.max.y
             && inOther.min.x < this->max.x
             && inOther.min.y < this->max.y;
+    }
+
+    template <typename T>
+    bool Rect<T>::operator==(const Rect& inRhs) const
+    {
+        return this->min == inRhs.min
+            && this->max == inRhs.max;
     }
 
     template <typename T>
