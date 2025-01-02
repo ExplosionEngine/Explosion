@@ -144,6 +144,13 @@ namespace Mirror {
         return *this;
     }
 
+    Any& Any::CopyAssign(Any&& inOther)
+    {
+        Assert(!IsConstRef());
+        PerformCopyAssign(std::move(inOther));
+        return *this;
+    }
+
     Any& Any::MoveAssign(Any& inOther) noexcept
     {
         Assert(!IsConstRef());
@@ -157,6 +164,14 @@ namespace Mirror {
         Assert(!IsConstRef());
         Assert(inOther.IsNonConstRef());
         PerformMoveAssign(inOther);
+        return *this;
+    }
+
+    Any& Any::MoveAssign(Any&& inOther) noexcept
+    {
+        Assert(!IsConstRef());
+        Assert(!inOther.IsRef() || inOther.IsNonConstRef());
+        PerformMoveAssign(std::move(inOther));
         return *this;
     }
 
@@ -174,6 +189,13 @@ namespace Mirror {
         return *this;
     }
 
+    const Any& Any::CopyAssign(Any&& inOther) const
+    {
+        Assert(IsNonConstRef());
+        PerformCopyAssign(std::move(inOther));
+        return *this;
+    }
+
     const Any& Any::MoveAssign(Any& inOther) const noexcept
     {
         Assert(IsNonConstRef());
@@ -187,6 +209,14 @@ namespace Mirror {
         Assert(IsNonConstRef());
         Assert(inOther.IsNonConstRef());
         PerformMoveAssign(inOther);
+        return *this;
+    }
+
+    const Any& Any::MoveAssign(Any&& inOther) const noexcept
+    {
+        Assert(IsNonConstRef());
+        Assert(!inOther.IsRef() || inOther.IsNonConstRef());
+        PerformMoveAssign(std::move(inOther));
         return *this;
     }
 
@@ -285,6 +315,24 @@ namespace Mirror {
 
         for (auto i = 0; i < ElementNum(); i++) {
             rtti->moveAssign(Data(i), inOther.Data(i));
+        }
+    }
+
+    void Any::PerformCopyAssign(Any&& inOther) const
+    {
+        Assert(!Empty() && !inOther.Empty() && arrayLength == inOther.arrayLength && rtti == inOther.rtti);
+
+        for (auto i = 0; i < ElementNum(); i++) {
+            rtti->copyAssign(Data(i), inOther.Data(i));
+        }
+    }
+
+    void Any::PerformMoveAssign(Any&& inOther) const noexcept
+    {
+        Assert(!Empty() && !inOther.Empty() && arrayLength == inOther.arrayLength && rtti == inOther.rtti);
+
+        for (auto i = 0; i < ElementNum(); i++) {
+            rtti->copyAssign(Data(i), inOther.Data(i));
         }
     }
 

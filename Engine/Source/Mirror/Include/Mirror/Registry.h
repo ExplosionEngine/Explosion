@@ -50,8 +50,6 @@ namespace Mirror {
         template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& StaticVariable(const Id& inId);
         template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& StaticFunction(const Id& inId);
         template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& MemberVariable(const Id& inId);
-        // TODO support overload
-        // TODO virtual function support
         template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& MemberFunction(const Id& inId);
 
     private:
@@ -68,7 +66,6 @@ namespace Mirror {
 
         template <auto Ptr> GlobalRegistry& Variable(const Id& inId);
         template <auto Ptr> GlobalRegistry& Function(const Id& inId);
-        // TODO overload support
 
     private:
         friend class Registry;

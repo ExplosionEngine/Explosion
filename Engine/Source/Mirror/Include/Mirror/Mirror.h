@@ -227,13 +227,16 @@ namespace Mirror {
 
         Any& CopyAssign(Any& inOther);
         Any& CopyAssign(const Any& inOther);
+        Any& CopyAssign(Any&& inOther);
         Any& MoveAssign(Any& inOther) noexcept;
         Any& MoveAssign(const Any& inOther) noexcept;
+        Any& MoveAssign(Any&& inOther) noexcept;
         const Any& CopyAssign(Any& inOther) const;
         const Any& CopyAssign(const Any& inOther) const;
+        const Any& CopyAssign(Any&& inOther) const;
         const Any& MoveAssign(Any& inOther) const noexcept;
         const Any& MoveAssign(const Any& inOther) const noexcept;
-        // TODO rvalue version CopyAssign/MoveAssign
+        const Any& MoveAssign(Any&& inOther) const noexcept;
 
         template <typename T> bool Convertible();
         template <typename T> bool Convertible() const;
@@ -337,6 +340,8 @@ namespace Mirror {
         void PerformMoveConstruct(Any&& inOther) noexcept;
         void PerformCopyAssign(const Any& inOther) const;
         void PerformMoveAssign(const Any& inOther) const noexcept;
+        void PerformCopyAssign(Any&& inOther) const;
+        void PerformMoveAssign(Any&& inOther) const noexcept;
         uint32_t ElementNum() const;
 
         uint32_t arrayLength;
@@ -373,8 +378,6 @@ namespace Mirror {
         const TypeInfo* RemoveRefType() const;
         const TypeInfo* AddPointerType() const;
         const TypeInfo* RemovePointerType() const;
-
-        // TODO more proxy func
 
     private:
         template <typename F> decltype(auto) Delegate(F&& inFunc) const;
@@ -835,7 +838,6 @@ namespace Mirror {
             std::optional<Constructor::ConstructParams> defaultConstructorParams;
             std::optional<Constructor::ConstructParams> moveConstructorParams;
             std::optional<Constructor::ConstructParams> copyConstructorParams;
-            // TODO assign operator ?
         };
 
         explicit Class(ConstructParams&& params);
