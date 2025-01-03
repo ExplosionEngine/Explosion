@@ -22,8 +22,8 @@ namespace Editor {
     }
 
     QmlHotReloadEngine::QmlHotReloadEngine()
-        : qmlSourceDirectory(Common::FileSystem::GetUnixStylePath(::Core::Paths::EngineCMakeSourceDir() / "Editor" / "QML"))
-        , qmlModuleDirectory(Common::FileSystem::GetUnixStylePath(::Core::Paths::EngineCMakeBinaryDir() / "Generated" / "QmlModule"))
+        : qmlSourceDirectory(::Core::Paths::EngineCMakeSourceDir() / "Editor" / "QML")
+        , qmlModuleDirectory(::Core::Paths::EngineCMakeBinaryDir() / "Generated" / "QmlModule")
     {
     }
 
@@ -32,8 +32,8 @@ namespace Editor {
     QUrl QmlHotReloadEngine::GetUrlFromShort(const std::string& inQmlShortFileName) const
     {
         if (caQmlHotReload.GetValue()) {
-            const std::filesystem::path qmlSourcePath = qmlSourceDirectory / inQmlShortFileName;
-            return QUrl::fromLocalFile(QString::fromStdString(qmlSourcePath.string()));
+            const Common::Path qmlSourcePath = qmlSourceDirectory / inQmlShortFileName;
+            return QUrl::fromLocalFile(QString::fromStdString(qmlSourcePath.String()));
         } else { // NOLINT
             const auto urlString = std::format("qrc:/qt/qml/editor/{}", inQmlShortFileName);
             return QString::fromStdString(urlString);
@@ -82,7 +82,7 @@ namespace Editor {
         }
 
         if (!liveQuickViewsMap.contains(inQmlShotFileName)) {
-            const auto qmlFileFullPath = Common::FileSystem::GetUnixStylePath(qmlSourceDirectory / inQmlShotFileName);
+            const auto qmlFileFullPath = (qmlSourceDirectory / inQmlShotFileName).String();
             watcher->addPath(qmlFileFullPath.c_str());
             liveQuickViewsMap.emplace(inQmlShotFileName, std::unordered_set<QQuickView*> {});
         }
@@ -99,7 +99,7 @@ namespace Editor {
         auto& liveQuickViews = liveQuickViewsMap.at(inQmlShotFileName);
         liveQuickViews.erase(inView);
         if (liveQuickViews.empty()) {
-            const auto qmlFileFullPath = Common::FileSystem::GetUnixStylePath(qmlSourceDirectory / inQmlShotFileName);
+            const auto qmlFileFullPath = (qmlSourceDirectory / inQmlShotFileName).String();
             watcher->removePath(qmlFileFullPath.c_str());
             liveQuickViewsMap.erase(inQmlShotFileName);
         }

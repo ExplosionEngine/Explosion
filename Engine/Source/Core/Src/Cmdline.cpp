@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include <Core/Cmdline.h>
+#include <Core/Paths.h>
 #include <Common/Debug.h>
 
 namespace Core {
@@ -27,6 +28,8 @@ namespace Core {
     {
         Assert(!parsed);
         parsed = true;
+
+        Core::Paths::SetExecutableDir(argv[0]);
 
         clipp::group cli;
         for (const auto& [name, arg] : args) {

@@ -105,9 +105,9 @@ namespace Core {
         return Common::StringUtils::RegexMatch(content, R"(Project/Plugin/.*)");
     }
 
-    std::filesystem::path AssetUriParser::AbsoluteFilePath() const
+    Common::Path AssetUriParser::AbsoluteFilePath() const
     {
-        std::filesystem::path path;
+        Common::Path path;
 #if BUILD_TEST
         if (IsEngineTestAsset()) {
             path = Paths::EngineTest() / Common::StringUtils::AfterFirst(content, "Engine/Test/");
@@ -127,7 +127,8 @@ namespace Core {
         } else {
             AssertWithReason(false, "bad asset uri");
         }
-        return std::filesystem::absolute(path.concat(".expa"));
+        path = path + ".expa";
+        return path.Absolute();
     }
 
 #if BUILD_TEST

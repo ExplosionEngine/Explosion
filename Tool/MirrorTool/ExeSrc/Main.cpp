@@ -27,10 +27,10 @@ int main(int argc, char* argv[]) // NOLINT
         return 1;
     }
 
-    inputFile = Common::FileSystem::GetUnixStylePath(inputFile);
-    outputFile = Common::FileSystem::GetUnixStylePath(outputFile);
+    inputFile = Common::Path(inputFile).String();
+    outputFile = Common::Path(outputFile).String();
     for (auto& headerDir : headerDirs) {
-        headerDir = Common::FileSystem::GetUnixStylePath(headerDir);
+        headerDir = Common::Path(headerDir).String();
     }
 
     if (!inputFile.ends_with(".h")) {

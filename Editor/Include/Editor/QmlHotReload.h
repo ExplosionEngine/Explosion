@@ -7,10 +7,11 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <string>
-#include <filesystem>
 
 #include <QQuickView>
 #include <QFileSystemWatcher>
+
+#include <Core/Paths.h>
 
 namespace Editor {
     class QmlHotReloadEngine {
@@ -28,8 +29,8 @@ namespace Editor {
     private:
         QmlHotReloadEngine();
 
-        std::filesystem::path qmlSourceDirectory;
-        std::filesystem::path qmlModuleDirectory;
+        Common::Path qmlSourceDirectory;
+        Common::Path qmlModuleDirectory;
         std::unordered_map<std::string, std::unordered_set<QQuickView*>> liveQuickViewsMap;
         Common::UniqueRef<QFileSystemWatcher> watcher;
     };

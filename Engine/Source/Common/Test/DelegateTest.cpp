@@ -25,7 +25,7 @@ public:
     }
 };
 
-TEST(EventTest, BasicTest)
+TEST(DelegateTest, BasicTest)
 {
     Receiver receiver;
 

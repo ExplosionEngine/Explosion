@@ -5,100 +5,130 @@
 #include <Core/Paths.h>
 
 namespace Core {
-    std::filesystem::path Paths::workdingDir = std::filesystem::path();
-    std::filesystem::path Paths::currentProjectFile = std::filesystem::path();
+    Common::Path Paths::executableDir = Common::Path();
+    Common::Path Paths::workingDir = Common::Path();
+    Common::Path Paths::currentProjectFile = Common::Path();
 
-    std::filesystem::path Paths::WorkingDir()
+    void Paths::SetExecutableDir(const Common::Path& inPath)
+    {
+        executableDir = inPath;
+    }
+
+    void Paths::SetCurrentProjectFile(const Common::Path& inFile)
+    {
+        currentProjectFile = inFile;
+    }
+
+    bool Paths::HasProjectFile()
+    {
+        return !currentProjectFile.Empty();
+    }
+
+    bool Paths::HasSetExecutableDir()
+    {
+        return !executableDir.Empty();
+    }
+
+    Common::Path Paths::WorkingDir()
     {
         // working directory is set to engine binaries directory as default
-        if (workdingDir.empty()) {
-            workdingDir = std::filesystem::current_path();
+        if (workingDir.Empty()) {
+            workingDir = Common::Path::WorkingDirectory();
         }
-        return workdingDir;
+        return workingDir;
     }
 
-    std::filesystem::path Paths::EngineRoot()
+    Common::Path Paths::ExecutableDir()
     {
-        return WorkingDir().parent_path();
+        Assert(!executableDir.Empty());
+        return executableDir;
     }
 
-    std::filesystem::path Paths::EngineRes()
+    Common::Path Paths::EngineRoot()
+    {
+#if BUILD_TEST
+        if (HasSetExecutableDir()) {
+            return ExecutableDir().Parent().Parent();
+        }
+        return WorkingDir().Parent();
+#else
+        Assert(HasSetExecutableDir());
+        return ExecutableDir().Parent().Parent();
+#endif
+    }
+
+    Common::Path Paths::EngineRes()
     {
         return EngineRoot() / "Resource";
     }
 
-    std::filesystem::path Paths::EngineShader()
+    Common::Path Paths::EngineShader()
     {
         return EngineRoot() / "Shader";
     }
 
-    std::filesystem::path Paths::EngineAsset()
+    Common::Path Paths::EngineAsset()
     {
         return EngineRoot() / "Asset";
     }
 
-    std::filesystem::path Paths::EngineBin()
+    Common::Path Paths::EngineBin()
     {
         return EngineRoot() / "Binaries";
     }
 
-    std::filesystem::path Paths::EnginePlugin()
+    Common::Path Paths::EnginePlugin()
     {
         return EngineRoot() / "Plugin";
     }
 
-    std::filesystem::path Paths::EnginePluginAsset(const std::string& pluginName)
+    Common::Path Paths::EnginePluginAsset(const std::string& pluginName)
     {
         return EnginePlugin() / pluginName / "Asset";
     }
 
-    void Paths::SetCurrentProjectFile(std::filesystem::path inFile)
-    {
-        currentProjectFile = std::move(inFile);
-    }
-
-    std::filesystem::path Paths::ProjectFile()
+    Common::Path Paths::ProjectFile()
     {
         return currentProjectFile;
     }
 
-    std::filesystem::path Paths::ProjectRoot()
+    Common::Path Paths::ProjectRoot()
     {
-        return currentProjectFile.parent_path();
+        return currentProjectFile.Parent();
     }
 
-    std::filesystem::path Paths::ProjectAsset()
+    Common::Path Paths::ProjectAsset()
     {
         return ProjectRoot() / "Asset";
     }
 
-    std::filesystem::path Paths::ProjectBin()
+    Common::Path Paths::ProjectBin()
     {
         return ProjectRoot() / "Binaries";
     }
 
-    std::filesystem::path Paths::ProjectPlugin()
+    Common::Path Paths::ProjectPlugin()
     {
         return ProjectRoot() / "Plugin";
     }
 
-    std::filesystem::path Paths::ProjectPluginAsset(const std::string& pluginName)
+    Common::Path Paths::ProjectPluginAsset(const std::string& pluginName)
     {
         return ProjectPlugin() / pluginName / "Asset";
     }
 
-    std::filesystem::path Paths::EngineCMakeSourceDir()
+    Common::Path Paths::EngineCMakeSourceDir()
     {
         return ENGINE_CMAKE_SOURCE_DIRECTORY;
     }
 
-    std::filesystem::path Paths::EngineCMakeBinaryDir()
+    Common::Path Paths::EngineCMakeBinaryDir()
     {
         return ENGINE_CMAKE_BINARY_DIRECTORY;
     }
 
 #if BUILD_TEST
-    std::filesystem::path Paths::EngineTest()
+    Common::Path Paths::EngineTest()
     {
         return EngineRoot() / "Test";
     }

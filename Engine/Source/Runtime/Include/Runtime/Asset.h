@@ -369,7 +369,7 @@ namespace Runtime {
             }
 
             Core::AssetUriParser parser(assetRef.Uri());
-            auto pathString = parser.AbsoluteFilePath().string();
+            auto pathString = parser.AbsoluteFilePath().String();
             Common::BinaryFileSerializeStream stream(pathString);
 
             Mirror::Any ref = std::ref(*assetRef.Get());
@@ -387,7 +387,7 @@ namespace Runtime {
         AssetRef<A> LoadInternal(const Core::Uri& uri)
         {
             Core::AssetUriParser parser(uri);
-            auto pathString = parser.AbsoluteFilePath().string();
+            auto pathString = parser.AbsoluteFilePath().String();
             Common::BinaryFileDeserializeStream stream(pathString);
 
             AssetRef<A> result = Common::SharedRef<A>(new A());
