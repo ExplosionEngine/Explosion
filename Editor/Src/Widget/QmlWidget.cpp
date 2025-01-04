@@ -5,16 +5,18 @@
 #include <QVBoxLayout>
 
 #include <Editor/Widget/QmlWidget.h>
+#include <Editor/QmlEngine.h>
 #include <Editor/Widget/moc_QmlWidget.cpp> // NOLINT
 
 namespace Editor {
     QmlWidget::QmlWidget(std::string inShortQmlFileName, QWidget* inParent)
         : QWidget(inParent)
         , shortQmlFileName(std::move(inShortQmlFileName))
+        , url(QmlEngine::Get().GetUrlFromShort(shortQmlFileName))
         , quickView(new QQuickView)
     {
         quickView->setResizeMode(QQuickView::SizeRootObjectToView);
-        quickView->setSource(QmlHotReloadEngine::Get().GetUrlFromShort(shortQmlFileName));
+        quickView->setSource(url);
 
         quickViewContainer = createWindowContainer(quickView);
         quickViewContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -26,17 +28,22 @@ namespace Editor {
         layout->setContentsMargins(0, 0, 0, 0);
         layout->addWidget(quickViewContainer);
 
-        QmlHotReloadEngine::Get().Register(shortQmlFileName, quickView);
+        QmlEngine::Get().Register(this);
     }
 
     QmlWidget::~QmlWidget()
     {
-        QmlHotReloadEngine::Get().Unregister(shortQmlFileName, quickView);
+        QmlEngine::Get().Unregister(this);
     }
 
     const std::string& QmlWidget::GetShotQmlFileName() const
     {
         return shortQmlFileName;
+    }
+
+    const QUrl& QmlWidget::GetUrl() const
+    {
+        return url;
     }
 
     QQuickView* QmlWidget::GetQuickView() // NOLINT

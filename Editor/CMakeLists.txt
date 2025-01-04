@@ -20,36 +20,45 @@ endif()
 add_dependencies(Editor ${PLATFORM_DEP_TARGET})
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    list(
-        APPEND RUNTIME_DEP
-            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/plugins/platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll->platforms/qwindows$<IF:$<CONFIG:Debug>,d,>.dll
-            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/plugins/tls->tls
-            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/qml->qml
-            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6Core$<IF:$<CONFIG:Debug>,d,>.dll
-            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6Widgets$<IF:$<CONFIG:Debug>,d,>.dll
-            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6Quick$<IF:$<CONFIG:Debug>,d,>.dll
-            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6Qml$<IF:$<CONFIG:Debug>,d,>.dll
-            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6QmlModels$<IF:$<CONFIG:Debug>,d,>.dll
-            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6QmlWorkerScript$<IF:$<CONFIG:Debug>,d,>.dll
-            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6Network$<IF:$<CONFIG:Debug>,d,>.dll
-            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6Gui$<IF:$<CONFIG:Debug>,d,>.dll
-            ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64/bin/Qt6OpenGL$<IF:$<CONFIG:Debug>,d,>.dll
+    set(QT_WIN_DEPLOY_EXECUTABLE ${QT_LIB_PREFIX}/bin/windeployqt.exe)
+    set(QT_BUILDIN_QML_DIRECTORY ${QT_LIB_PREFIX}/qml)
+    add_custom_command(
+        TARGET Editor POST_BUILD
+        COMMAND ${QT_WIN_DEPLOY_EXECUTABLE} $<TARGET_FILE:Editor> --qmldir ${QT_BUILDIN_QML_DIRECTORY}
     )
-    set_target_properties(Editor PROPERTIES RUNTIME_DEP "${RUNTIME_DEP}")
-    AddRuntimeDependenciesCopyCommand(NAME Editor)
 endif ()
 
-file(GLOB_RECURSE QML_SOURCES QML/*.qml)
-file(GLOB_RECURSE RESOURCES Resource/*)
+set(EDITOR_QML_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/QML)
+set(EDITOR_RESOURCE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Resource)
+get_filename_component(EDITOR_QML_ROOT_ABSOLUTE ${EDITOR_QML_ROOT} ABSOLUTE)
+get_filename_component(EDITOR_RESOURCE_ROOT_ABSOLUTE ${EDITOR_RESOURCE_ROOT} ABSOLUTE)
 
-list(APPEND RESOURCES_PENDING_SET_ALIAS ${QML_SOURCES} ${RESOURCES})
-foreach (RESOURCE ${RESOURCES_PENDING_SET_ALIAS})
-    get_filename_component(FILENAME ${RESOURCE} NAME)
+file(GLOB QML_SOURCES ${EDITOR_QML_ROOT}/*.qml)
+file(GLOB_RECURSE RESOURCES ${EDITOR_RESOURCE_ROOT}/*)
+
+list(
+    APPEND SINGLETON_QML_SOURCES
+        ETheme.qml)
+target_compile_definitions(Editor PRIVATE -DSINGLETON_QML_SOURCES="${SINGLETON_QML_SOURCES}")
+
+# QML only support placed in root dir
+foreach (QML_SOURCE ${QML_SOURCES})
+    get_filename_component(ALIAS ${QML_SOURCE} NAME)
+    set_source_files_properties(${QML_SOURCE} PROPERTIES QT_RESOURCE_ALIAS ${ALIAS})
+    if (${ALIAS} IN_LIST SINGLETON_QML_SOURCES)
+        set_source_files_properties(${QML_SOURCE} PROPERTIES QT_QML_SINGLETON_TYPE true)
+    endif ()
+endforeach ()
+
+foreach (RESOURCE ${RESOURCES})
+    string(REPLACE ${EDITOR_RESOURCE_ROOT_ABSOLUTE}/ "" ALIAS ${RESOURCE})
     set_source_files_properties(${RESOURCE} PROPERTIES QT_RESOURCE_ALIAS ${FILENAME})
 endforeach ()
 
 qt_add_qml_module(
     Editor
+    NO_CACHEGEN
+    NO_GENERATE_QMLDIR
     URI editor
     QML_FILES ${QML_SOURCES}
     RESOURCES ${RESOURCES}

@@ -21,6 +21,7 @@ namespace Common {
         std::string String() const;
         Path Parent() const;
         std::string FileName() const;
+        std::string FileNameWithoutExtension() const;
         bool Empty() const;
         bool Exists() const;
         bool IsFile() const;
@@ -34,6 +35,8 @@ namespace Common {
         Path Canonical() const;
         size_t Traverse(const TraverseFunc& inFunc) const;
         size_t TraverseRecurse(const TraverseFunc& inFunc) const;
+        void CopyTo(const Path& inPath) const;
+
         Path operator/(const Path& inPath) const;
         Path operator/(const std::string& inPath) const;
         Path operator/(const char* inPath) const;

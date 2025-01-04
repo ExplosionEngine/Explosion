@@ -16,11 +16,13 @@ namespace Editor {
         ~QmlWidget() override;
 
         const std::string& GetShotQmlFileName() const;
+        const QUrl& GetUrl() const;
         QQuickView* GetQuickView();
         QWidget* GetQuickViewContainer() const;
 
     private:
         std::string shortQmlFileName;
+        QUrl url;
         QQuickView* quickView;
         QWidget* quickViewContainer;
     };

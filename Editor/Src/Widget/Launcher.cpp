@@ -7,8 +7,9 @@
 
 namespace Editor {
     Launcher::Launcher()
-        : QmlWidget("Launcher.qml")
+        : QmlWidget("ELauncher.qml")
     {
+        setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
         setFixedSize(1024, 768);
     }
 }
