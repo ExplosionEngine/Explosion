@@ -18,20 +18,23 @@
 #define EMeta(...)
 #endif
 
+namespace Mirror::Internal {
+    class ScopedReleaser;
+}
 namespace Mirror {
     class Class;
 }
 
 #define EClassBody(className) \
 private: \
-    static int _mirrorRegistry; \
+    static Mirror::Internal::ScopedReleaser _mirrorRegistry; \
 public: \
     static const Mirror::Class& GetStaticClass(); \
     const Mirror::Class& GetClass(); \
 
 #define EPolyClassBody(className) \
 private: \
-    static int _mirrorRegistry; \
+    static Mirror::Internal::ScopedReleaser _mirrorRegistry; \
 public: \
     static const Mirror::Class& GetStaticClass(); \
     virtual const Mirror::Class& GetClass(); \

@@ -747,8 +747,8 @@ namespace Mirror {
 
         GlobalScope();
 
-        std::unordered_map<Id, Variable, IdHashProvider> variables;
-        std::unordered_map<Id, Function, IdHashProvider> functions;
+        Common::StableUnorderedMap<Id, Variable, IdHashProvider> variables;
+        Common::StableUnorderedMap<Id, Function, IdHashProvider> functions;
     };
 
     class MIRROR_API Class final : public ReflNode {
@@ -1817,9 +1817,9 @@ namespace Common { // NOLINT
                 }
                 metaEnumValue->Set(value);
             } else {
-                std::underlying_type_t<E> unlderlyingValue;
-                deserialized += Serializer<std::underlying_type_t<E>>::Deserialize(stream, unlderlyingValue);
-                value = static_cast<E>(unlderlyingValue);
+                std::underlying_type_t<E> underlyingValue;
+                deserialized += Serializer<std::underlying_type_t<E>>::Deserialize(stream, underlyingValue);
+                value = static_cast<E>(underlyingValue);
             }
             return deserialized;
         }

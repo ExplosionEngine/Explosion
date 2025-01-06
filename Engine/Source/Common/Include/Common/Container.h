@@ -186,6 +186,8 @@ namespace Common {
         T& operator[](size_t inIndex);
         const T& operator[](size_t inIndex) const;
 
+        // TODO iter
+
     private:
         static constexpr size_t elemMemSize = sizeof(T);
         static constexpr size_t totalMemSize = elemMemSize * N;
@@ -212,8 +214,8 @@ namespace Common {
             ConstHandle(const TrunkList* inOwner, const Trunk<T, N>* inTrunk, size_t inIndex);
 
             explicit operator bool() const;
-            T* operator->() const;
-            T& operator*() const;
+            const T* operator->() const;
+            const T& operator*() const;
 
         private:
             friend class TrunkList;
@@ -231,8 +233,8 @@ namespace Common {
 
             ConstHandle Const() const;
             explicit operator bool() const;
-            const T* operator->() const;
-            const T& operator*() const;
+            T* operator->() const;
+            T& operator*() const;
 
         private:
             friend class TrunkList;
@@ -247,6 +249,10 @@ namespace Common {
         TrunkList();
         ~TrunkList();
 
+        // move and copy will cause handle invalid
+        NonCopyable(TrunkList)
+        NonMovable(TrunkList)
+
         template <typename... Args> Handle Emplace(Args&&... inArgs);
         void Erase(const Handle& inHandle);
         void Erase(const ConstHandle& inHandle);
@@ -259,12 +265,46 @@ namespace Common {
         bool Empty() const;
         explicit operator bool() const;
 
+        // TODO iter
+
     private:
         std::list<Trunk<T, N>> trunks;
     };
+
+    template <typename K, typename V, typename HashProvider = std::hash<K>, typename EqualTo = std::equal_to<K>>
+    class StableUnorderedMap {
+    public:
+        using TraverseFunc = std::function<void(const K&, V&)>;
+        using ConstTraverseFunc = std::function<void(const K&, const V&)>;
+
+        StableUnorderedMap();
+        ~StableUnorderedMap();
+
+        NonCopyable(StableUnorderedMap)
+        NonMovable(StableUnorderedMap)
+
+        template <typename... Args> V& Emplace(const K& inKey, Args&&... inValueArgs);
+        void Each(const TraverseFunc& inFunc);
+        void Each(const ConstTraverseFunc& inFunc) const;
+        V& At(const K& inKey);
+        const V& At(const K& inKey) const;
+        bool Contains(const K& inKey) const;
+        void Erase(const K& inKey);
+        void Reserve(size_t inCapacity);
+        size_t Size() const;
+        size_t Capacity() const;
+
+        // TODO iter
+
+    private:
+        using ValuesContainer = TrunkList<V>;
+
+        std::unordered_map<K, typename ValuesContainer::Handle, HashProvider, EqualTo> handleMap;
+        ValuesContainer values;
+    };
 }
 
-namespace Common { // NOLINT
+namespace Common {
     template <typename T, size_t N>
     struct EqualComparableTest<InplaceVector<T, N>> {
         static constexpr bool value = BaseEqualComparable<T>;
@@ -1314,13 +1354,13 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    T* TrunkList<T, N>::ConstHandle::operator->() const
+    const T* TrunkList<T, N>::ConstHandle::operator->() const
     {
         return trunk->Try(index);
     }
 
     template <typename T, size_t N>
-    T& TrunkList<T, N>::ConstHandle::operator*() const
+    const T& TrunkList<T, N>::ConstHandle::operator*() const
     {
         return trunk->At(index);
     }
@@ -1352,13 +1392,13 @@ namespace Common {
     }
 
     template <typename T, size_t N>
-    const T* TrunkList<T, N>::Handle::operator->() const
+    T* TrunkList<T, N>::Handle::operator->() const
     {
         return trunk->Try(index);
     }
 
     template <typename T, size_t N>
-    const T& TrunkList<T, N>::Handle::operator*() const
+    T& TrunkList<T, N>::Handle::operator*() const
     {
         return trunk->At(index);
     }
@@ -1468,5 +1508,84 @@ namespace Common {
     TrunkList<T, N>::operator bool() const
     {
         return Empty();
+    }
+
+    template <typename K, typename V, typename HashProvider, typename EqualTo>
+    StableUnorderedMap<K, V, HashProvider, EqualTo>::StableUnorderedMap() = default;
+
+    template <typename K, typename V, typename HashProvider, typename EqualTo>
+    StableUnorderedMap<K, V, HashProvider, EqualTo>::~StableUnorderedMap() = default;
+
+    template <typename K, typename V, typename HashProvider, typename EqualTo>
+    template <typename ... Args>
+    V& StableUnorderedMap<K, V, HashProvider, EqualTo>::Emplace(const K& inKey, Args&&... inValueArgs)
+    {
+        Assert(!Contains(inKey));
+        const auto handle = values.Emplace(std::forward<Args>(inValueArgs)...);
+        handleMap.emplace(inKey, handle);
+        return *handle;
+    }
+
+    template <typename K, typename V, typename HashProvider, typename EqualTo>
+    void StableUnorderedMap<K, V, HashProvider, EqualTo>::Each(const TraverseFunc& inFunc)
+    {
+        for (const auto& [key, handle] : handleMap) {
+            inFunc(key, *handle);
+        }
+    }
+
+    template <typename K, typename V, typename HashProvider, typename EqualTo>
+    void StableUnorderedMap<K, V, HashProvider, EqualTo>::Each(const ConstTraverseFunc& inFunc) const
+    {
+        for (const auto& [key, handle] : handleMap) {
+            inFunc(key, *handle);
+        }
+    }
+
+    template <typename K, typename V, typename HashProvider, typename EqualTo>
+    V& StableUnorderedMap<K, V, HashProvider, EqualTo>::At(const K& inKey)
+    {
+        const auto& handle = handleMap.at(inKey);
+        return *handle;
+    }
+
+    template <typename K, typename V, typename HashProvider, typename EqualTo>
+    const V& StableUnorderedMap<K, V, HashProvider, EqualTo>::At(const K& inKey) const
+    {
+        const auto& handle = handleMap.at(inKey);
+        return *handle;
+    }
+
+    template <typename K, typename V, typename HashProvider, typename EqualTo>
+    bool StableUnorderedMap<K, V, HashProvider, EqualTo>::Contains(const K& inKey) const
+    {
+        return handleMap.contains(inKey);
+    }
+
+    template <typename K, typename V, typename HashProvider, typename EqualTo>
+    void StableUnorderedMap<K, V, HashProvider, EqualTo>::Erase(const K& inKey)
+    {
+        const auto& handle = handleMap.at(inKey);
+        values.Erase(handle);
+        handleMap.erase(inKey);
+    }
+
+    template <typename K, typename V, typename HashProvider, typename EqualTo>
+    void StableUnorderedMap<K, V, HashProvider, EqualTo>::Reserve(size_t inCapacity)
+    {
+        values.Reserve(inCapacity);
+        handleMap.reserve(values.Capacity());
+    }
+
+    template <typename K, typename V, typename HashProvider, typename EqualTo>
+    size_t StableUnorderedMap<K, V, HashProvider, EqualTo>::Size() const
+    {
+        return handleMap.size();
+    }
+
+    template <typename K, typename V, typename HashProvider, typename EqualTo>
+    size_t StableUnorderedMap<K, V, HashProvider, EqualTo>::Capacity() const
+    {
+        return handleMap.capacity();
     }
 }

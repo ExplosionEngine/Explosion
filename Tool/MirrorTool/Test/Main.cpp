@@ -164,7 +164,7 @@ TEST(MirrorTest, GeneratorTest)
     auto [parseSuccess, parseResultOrError] = parser.Parse();
     ASSERT_TRUE(parseSuccess);
 
-    const Generator generator("../Test/Resource/Mirror/MirrorToolInput.h", "../Test/Generated/Mirror/MirrorToolTest.generated.cpp", { "../" }, std::get<MetaInfo>(parseResultOrError));
+    const Generator generator("../Test/Resource/Mirror/MirrorToolInput.h", "../Test/Generated/Mirror/MirrorToolTest.generated.cpp", { "../" }, std::get<MetaInfo>(parseResultOrError), false);
     auto [generateSuccess, generateResultOrError] = generator.Generate();
     ASSERT_EQ(generateSuccess, true);
 }

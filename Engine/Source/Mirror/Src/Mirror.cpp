@@ -1308,16 +1308,14 @@ namespace Mirror {
 
     Variable& GlobalScope::EmplaceVariable(const Id& inId, Variable::ConstructParams&& inParams)
     {
-        Assert(!variables.contains(inId));
-        variables.emplace(inId, Variable(std::move(inParams)));
-        return variables.at(inId);
+        variables.Emplace(inId, Variable(std::move(inParams)));
+        return variables.At(inId);
     }
 
     Function& GlobalScope::EmplaceFunction(const Id& inId, Function::ConstructParams&& inParams)
     {
-        Assert(!functions.contains(inId));
-        functions.emplace(inId, Function(std::move(inParams)));
-        return functions.at(inId);
+        functions.Emplace(inId, Function(std::move(inParams)));
+        return functions.At(inId);
     }
 
     const GlobalScope& GlobalScope::Get()
@@ -1327,52 +1325,46 @@ namespace Mirror {
 
     void GlobalScope::ForEachVariable(const VariableTraverser& func) const
     {
-        for (const auto& [id, variable] : variables) {
+        variables.Each([&](const Id&, const Variable& variable) -> void {
             func(variable);
-        }
+        });
     }
 
     void GlobalScope::ForEachFunction(const FunctionTraverser& func) const
     {
-        for (const auto& [id, function] : functions) {
+        functions.Each([&](const Id&, const Function& function) -> void {
             func(function);
-        }
+        });
     }
 
     bool GlobalScope::HasVariable(const Id& inId) const
     {
-        return variables.contains(inId);
+        return variables.Contains(inId);
     }
 
     const Variable* GlobalScope::FindVariable(const Id& inId) const
     {
-        const auto iter = variables.find(inId);
-        return iter == variables.end() ? nullptr : &iter->second;
+        return variables.Contains(inId) ? &variables.At(inId) : nullptr;
     }
 
     const Variable& GlobalScope::GetVariable(const Id& inId) const
     {
-        const auto iter = variables.find(inId);
-        Assert(iter != variables.end());
-        return iter->second;
+        return variables.At(inId);
     }
 
     bool GlobalScope::HasFunction(const Id& inId) const
     {
-        return functions.contains(inId);
+        return functions.Contains(inId);
     }
 
     const Function* GlobalScope::FindFunction(const Id& inId) const
     {
-        const auto iter = functions.find(inId);
-        return iter == functions.end() ? nullptr : &iter->second;
+        return functions.Contains(inId) ? &functions.At(inId) : nullptr;
     }
 
     const Function& GlobalScope::GetFunction(const Id& inId) const
     {
-        const auto iter = functions.find(inId);
-        Assert(iter != functions.end());
-        return iter->second;
+        return functions.At(inId);
     }
 
     std::unordered_map<TypeId, Id> Class::typeToIdMap = {};
@@ -1404,22 +1396,19 @@ namespace Mirror {
     bool Class::Has(const Id& inId)
     {
         const auto& classes = Registry::Get().classes;
-        return classes.contains(inId);
+        return classes.Contains(inId);
     }
 
     const Class* Class::Find(const Id& inId)
     {
         const auto& classes = Registry::Get().classes;
-        const auto iter = classes.find(inId);
-        return iter == classes.end() ? nullptr : &iter->second;
+        return classes.Contains(inId) ? &classes.At(inId) : nullptr;
     }
 
     const Class& Class::Get(const Id& inId)
     {
         const auto& classes = Registry::Get().classes;
-        const auto iter = classes.find(inId);
-        Assert(iter != classes.end());
-        return iter->second;
+        return classes.At(inId);
     }
 
     bool Class::Has(const TypeInfo* typeInfo)
@@ -1469,10 +1458,10 @@ namespace Mirror {
     {
         const auto& classes = Registry::Get().classes;
         std::vector<const Class*> result;
-        result.reserve(classes.size());
-        for (const auto& [id, clazz] : classes) {
+        result.reserve(classes.Size());
+        classes.Each([&](const Id& id, const Class& clazz) -> void {
             result.emplace_back(&clazz);
-        }
+        });
         return result;
     }
 
@@ -1480,12 +1469,12 @@ namespace Mirror {
     {
         const auto& classes = Registry::Get().classes;
         std::vector<const Class*> result;
-        result.reserve(classes.size());
-        for (const auto& [id, clazz] : classes) {
+        result.reserve(classes.Size());
+        classes.Each([&](const Id& id, const Class& clazz) -> void {
             if (clazz.HasMeta("category") && clazz.GetMeta("category") == category) {
                 result.emplace_back(&clazz);
             }
-        }
+        });
         return result;
     }
 
@@ -1864,16 +1853,13 @@ namespace Mirror {
     const Enum* Enum::Find(const Id& inId)
     {
         const auto& enums = Registry::Get().enums;
-        const auto iter = enums.find(inId);
-        return iter == enums.end() ? nullptr : &iter->second;
+        return enums.Contains(inId) ? &enums.At(inId) : nullptr;
     }
 
     const Enum& Enum::Get(const Id& inId)
     {
         const auto& enums = Registry::Get().enums;
-        const auto iter = enums.find(inId);
-        Assert(iter != enums.end());
-        return iter->second;
+        return enums.At(inId);
     }
 
     std::unordered_map<TypeId, Id> Enum::typeToIdMap = {};

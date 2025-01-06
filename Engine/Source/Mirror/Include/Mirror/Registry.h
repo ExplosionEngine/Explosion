@@ -4,9 +4,8 @@
 
 #pragma once
 
-#include <unordered_map>
-
 #include <Common/Debug.h>
+#include <Common/Container.h>
 #include <Mirror/Api.h>
 #include <Mirror/Mirror.h>
 
@@ -22,6 +21,16 @@ namespace Mirror::Internal {
     template <typename Class, typename ArgsTuple, size_t... I> decltype(auto) InvokeConstructorStack(const ArgumentList& args, std::index_sequence<I...>);
     template <typename Class, typename ArgsTuple, size_t... I> decltype(auto) InvokeConstructorNew(const ArgumentList& args, std::index_sequence<I...>);
     template <typename Class, typename ArgsTuple, size_t... I> decltype(auto) InvokeConstructorInplace(void* ptr, const ArgumentList& args, std::index_sequence<I...>);
+
+    class MIRROR_API ScopedReleaser {
+    public:
+        using ReleaseFunc = std::function<void()>;
+        explicit ScopedReleaser(ReleaseFunc inReleaseFunc = {});
+        ~ScopedReleaser();
+
+    private:
+        ReleaseFunc releaseFunc;
+    };
 }
 
 namespace Mirror {
@@ -66,6 +75,8 @@ namespace Mirror {
 
         template <auto Ptr> GlobalRegistry& Variable(const Id& inId);
         template <auto Ptr> GlobalRegistry& Function(const Id& inId);
+        void UnloadVariable(const Id& inId);
+        void UnloadFunction(const Id& inId);
 
     private:
         friend class Registry;
@@ -100,14 +111,10 @@ namespace Mirror {
 
         GlobalRegistry Global();
 
-        template <
-            Common::CppClass C, CppBaseClassOrVoid<C> B = void,
-            FieldAccess DefaultCtorAccess = FieldAccess::faPublic,
-            FieldAccess DestructorAccess = FieldAccess::faPublic>
-        ClassRegistry<C> Class(const Id& inId);
-
-        template <Common::CppEnum T> EnumRegistry<T>
-        Enum(const Id& inId);
+        template <Common::CppClass C, CppBaseClassOrVoid<C> B = void, FieldAccess DefaultCtorAccess = FieldAccess::faPublic, FieldAccess DestructorAccess = FieldAccess::faPublic> ClassRegistry<C> Class(const Id& inId);
+        template <Common::CppEnum T> EnumRegistry<T> Enum(const Id& inId);
+        void UnloadClass(const Id& inId);
+        void UnloadEnum(const Id& inId);
 
     private:
         friend class GlobalScope;
@@ -120,8 +127,8 @@ namespace Mirror {
         Mirror::Enum& EmplaceEnum(const Id& inId, Enum::ConstructParams&& inParams);
 
         GlobalScope globalScope;
-        std::unordered_map<Id, Mirror::Class, IdHashProvider> classes;
-        std::unordered_map<Id, Mirror::Enum, IdHashProvider> enums;
+        Common::StableUnorderedMap<Id, Mirror::Class, IdHashProvider> classes;
+        Common::StableUnorderedMap<Id, Mirror::Enum, IdHashProvider> enums;
     };
 }
 
@@ -395,8 +402,7 @@ namespace Mirror {
     {
         using ValueType = typename Internal::VariableTraits<decltype(Ptr)>::ValueType;
 
-        const auto iter = globalScope.variables.find(inId);
-        Assert(iter == globalScope.variables.end());
+        Assert(!globalScope.variables.Contains(inId));
 
         Variable::ConstructParams params;
         params.id = inId;
@@ -422,11 +428,9 @@ namespace Mirror {
     {
         using ArgsTupleType = typename Internal::FunctionTraits<decltype(Ptr)>::ArgsTupleType;
         using RetType = typename Internal::FunctionTraits<decltype(Ptr)>::RetType;
-
-        const auto iter = globalScope.functions.find(inId);
-        Assert(iter == globalScope.functions.end());
-
         constexpr size_t argsTupleSize = std::tuple_size_v<ArgsTupleType>;
+
+        Assert(!globalScope.functions.Contains(inId));
 
         Function::ConstructParams params;
         params.id = inId;
@@ -489,7 +493,7 @@ namespace Mirror {
     {
         const auto typeId = GetTypeInfo<C>()->id;
         Assert(!Class::typeToIdMap.contains(typeId));
-        Assert(!classes.contains(inId));
+        Assert(!classes.Contains(inId));
 
         Class::ConstructParams params;
         params.id = inId;
@@ -604,7 +608,7 @@ namespace Mirror {
     {
         const auto typeId = GetTypeInfo<T>()->id;
         Assert(!Enum::typeToIdMap.contains(typeId));
-        Assert(!enums.contains(inId));
+        Assert(!enums.Contains(inId));
 
         Enum::ConstructParams params;
         params.id = inId;

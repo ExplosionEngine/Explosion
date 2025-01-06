@@ -18,7 +18,7 @@ namespace MirrorTool {
         using Result = std::pair<bool, std::string>;
 
         NonCopyable(Generator)
-        explicit Generator(std::string inInputFile, std::string inOutputFile, std::vector<std::string> inHeaderDirs, const MetaInfo& inMetaInfo);
+        explicit Generator(std::string inInputFile, std::string inOutputFile, std::vector<std::string> inHeaderDirs, const MetaInfo& inMetaInfo, bool inDynamic);
         ~Generator();
 
         Result Generate() const;
@@ -30,5 +30,6 @@ namespace MirrorTool {
         std::string inputFile;
         std::string outputFile;
         std::vector<std::string> headerDirs;
+        bool dynamic;
     };
 }

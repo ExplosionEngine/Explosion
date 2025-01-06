@@ -24,7 +24,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(QT_BUILDIN_QML_DIRECTORY ${QT_LIB_PREFIX}/qml)
     add_custom_command(
         TARGET Editor POST_BUILD
-        COMMAND ${QT_WIN_DEPLOY_EXECUTABLE} $<TARGET_FILE:Editor> --qmldir ${QT_BUILDIN_QML_DIRECTORY}
+        COMMAND ${QT_WIN_DEPLOY_EXECUTABLE} $<TARGET_FILE:Editor> --qmldir ${QT_BUILDIN_QML_DIRECTORY} --verbose 0
     )
 endif ()
 
