@@ -5,12 +5,31 @@ import QtQuick.Layouts
 Rectangle {
     color: ETheme.bgColor
 
-    ColumnLayout {
+    ScrollView {
         width: parent.width
+        height: parent.height
 
-        RowLayout {
-            EButton {
-                text: 'Hello'
+        ColumnLayout {
+            width: parent.width
+
+            RowLayout {
+                width: parent.width
+                height: 50
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: 'white'
+                }
+            }
+
+            RowLayout {
+                width: parent.width
+                height: 50
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: 'white'
+                }
             }
         }
     }

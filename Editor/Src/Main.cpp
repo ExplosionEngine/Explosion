@@ -27,9 +27,9 @@ int main(int argc, char* argv[])
 #if BUILD_CONFIG_DEBUG
     if (caRunSample.GetValue()) {
         mainWidget = new Editor::WidgetSamples();
-    }
+    } else
 #endif
-    else if (!Editor::Core::Get().ProjectHasSet()) {
+    if (!Editor::Core::Get().ProjectHasSet()) { // NOLINT
         mainWidget = new Editor::Launcher();
     } else {
         // TODO editor main
