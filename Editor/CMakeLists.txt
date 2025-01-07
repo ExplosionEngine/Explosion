@@ -30,7 +30,6 @@ endif ()
 
 set(EDITOR_QML_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/QML)
 set(EDITOR_RESOURCE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Resource)
-get_filename_component(EDITOR_QML_ROOT_ABSOLUTE ${EDITOR_QML_ROOT} ABSOLUTE)
 get_filename_component(EDITOR_RESOURCE_ROOT_ABSOLUTE ${EDITOR_RESOURCE_ROOT} ABSOLUTE)
 
 file(GLOB QML_SOURCES ${EDITOR_QML_ROOT}/*.qml)
@@ -52,7 +51,7 @@ endforeach ()
 
 foreach (RESOURCE ${RESOURCES})
     string(REPLACE ${EDITOR_RESOURCE_ROOT_ABSOLUTE}/ "" ALIAS ${RESOURCE})
-    set_source_files_properties(${RESOURCE} PROPERTIES QT_RESOURCE_ALIAS ${FILENAME})
+    set_source_files_properties(${RESOURCE} PROPERTIES QT_RESOURCE_ALIAS ${ALIAS})
 endforeach ()
 
 qt_add_qml_module(

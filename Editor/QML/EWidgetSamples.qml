@@ -6,29 +6,29 @@ Rectangle {
     color: ETheme.bgColor
 
     ScrollView {
-        width: parent.width
-        height: parent.height
+        anchors.fill: parent
 
         ColumnLayout {
-            width: parent.width
+            anchors.fill: parent
+            anchors.margins: 10
 
             RowLayout {
-                width: parent.width
-                height: 50
+                Layout.leftMargin: 5
 
-                Rectangle {
-                    anchors.fill: parent
-                    color: 'white'
+                // TODO replace with EText
+                Text {
+                    text: 'Buttons'
+                    font.bold: true
+                    font.pixelSize: 18
+                    color: ETheme.fontColor
                 }
             }
 
             RowLayout {
-                width: parent.width
-                height: 50
+                Layout.margins: 5
 
-                Rectangle {
-                    anchors.fill: parent
-                    color: 'white'
+                EButton {
+                    text: 'Basic'
                 }
             }
         }

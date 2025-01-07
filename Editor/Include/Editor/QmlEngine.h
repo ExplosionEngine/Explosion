@@ -30,6 +30,7 @@ namespace Editor {
         void ReloadSingletonTypes() const;
 
         Common::Path qmlSourceDir;
+        Common::Path qmlModuleDir;
         std::unordered_set<QmlWidget*> widgets;
         Common::UniqueRef<QFileSystemWatcher> watcher;
     };
