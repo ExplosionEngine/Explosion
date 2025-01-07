@@ -784,7 +784,7 @@ namespace Runtime {
             for (const auto entity : archetype.All()) {
                 std::vector<Mirror::Any> comps;
                 comps.reserve(includes.size());
-                for (const auto clazz : includes) {
+                for (const auto* clazz : includes) {
                     comps.emplace_back(archetype.GetComp(entity, clazz));
                 }
 

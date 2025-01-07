@@ -747,8 +747,8 @@ namespace Mirror {
 
         GlobalScope();
 
-        Common::StableUnorderedMap<Id, Variable, IdHashProvider> variables;
-        Common::StableUnorderedMap<Id, Function, IdHashProvider> functions;
+        Common::StableUnorderedMap<Id, Variable, 128, IdHashProvider> variables;
+        Common::StableUnorderedMap<Id, Function, 128, IdHashProvider> functions;
     };
 
     class MIRROR_API Class final : public ReflNode {

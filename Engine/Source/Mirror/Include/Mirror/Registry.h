@@ -127,8 +127,8 @@ namespace Mirror {
         Mirror::Enum& EmplaceEnum(const Id& inId, Enum::ConstructParams&& inParams);
 
         GlobalScope globalScope;
-        Common::StableUnorderedMap<Id, Mirror::Class, IdHashProvider> classes;
-        Common::StableUnorderedMap<Id, Mirror::Enum, IdHashProvider> enums;
+        Common::StableUnorderedMap<Id, Mirror::Class, 128, IdHashProvider> classes;
+        Common::StableUnorderedMap<Id, Mirror::Enum, 128, IdHashProvider> enums;
     };
 }
 
