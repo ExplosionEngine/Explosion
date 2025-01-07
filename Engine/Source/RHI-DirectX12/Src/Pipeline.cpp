@@ -70,7 +70,6 @@ namespace RHI::DirectX12 {
     CD3DX12_DEPTH_STENCIL_DESC GetDX12DepthStencilDesc(const RasterPipelineCreateInfo& createInfo)
     {
         CD3DX12_DEPTH_STENCIL_DESC desc(D3D12_DEFAULT);
-        // TODO check this
         desc.DepthEnable = createInfo.depthStencilState.depthEnabled;
         desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
         desc.DepthFunc = EnumCast<CompareFunc, D3D12_COMPARISON_FUNC>(createInfo.depthStencilState.depthCompareFunc);
@@ -86,7 +85,6 @@ namespace RHI::DirectX12 {
     {
         DXGI_SAMPLE_DESC desc {};
         desc.Count = createInfo.multiSampleState.count;
-        // TODO https://docs.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc
         desc.Quality = 0;
         return desc;
     }

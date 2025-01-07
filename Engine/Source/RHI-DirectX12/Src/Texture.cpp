@@ -47,7 +47,6 @@ namespace RHI::DirectX12 {
         textureDesc.Flags = FlagsCast<TextureUsageFlags, D3D12_RESOURCE_FLAGS>(inCreateInfo.usages);
         textureDesc.DepthOrArraySize = inCreateInfo.depthOrArraySize;
         textureDesc.SampleDesc.Count = inCreateInfo.samples;
-        // TODO https://docs.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc
         textureDesc.SampleDesc.Quality = 0;
         textureDesc.Dimension = EnumCast<TextureDimension, D3D12_RESOURCE_DIMENSION>(inCreateInfo.dimension);
 

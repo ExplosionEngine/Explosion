@@ -79,7 +79,7 @@ namespace RHI::DirectX12 {
             dx12Queue->GetNative(),
             dx12Surface->GetNative(),
             &desc,
-            /* TODO fullscreen */ nullptr,
+            nullptr,
             nullptr,
             &dx12SwapChain1));
         Assert(success);
