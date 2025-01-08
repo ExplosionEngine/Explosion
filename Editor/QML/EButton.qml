@@ -5,8 +5,7 @@ import QtQuick.Controls.Basic
 Button {
     contentItem: Text {
         text: parent.text
-        font.bold: true
-        font.pixelSize: ETheme.fontSizeMain
+        font.pixelSize: ETheme.contentFontSize
         font.family: ETheme.fontFamily
         color: ETheme.fontColor
         horizontalAlignment: Text.AlignHCenter
