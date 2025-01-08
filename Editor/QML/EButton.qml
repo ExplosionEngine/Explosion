@@ -6,7 +6,8 @@ Button {
     contentItem: Text {
         text: parent.text
         font.bold: true
-        font.pixelSize: ETheme.fontSize
+        font.pixelSize: ETheme.fontSizeMain
+        font.family: ETheme.fontFamily
         color: ETheme.fontColor
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter

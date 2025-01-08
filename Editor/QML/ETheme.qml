@@ -8,6 +8,9 @@ QtObject {
     property color focusColor: Qt.color('#c0392b')
     property color secondaryColor: Qt.color('#f1c40f')
     property color fontColor: Qt.color('#ecf0f1')
-    property int fontSize: 14
-    // TODO fontFamily
+
+    property FontLoader fontNormal: FontLoader { source: Qt.url('Font/MiSans-Normal.ttf') }
+    property FontLoader fontBold: FontLoader { source: Qt.url('Font/MiSans-Bold.ttf') }
+    property int fontSizeMain: 14
+    property string fontFamily: 'MiSans'
 }

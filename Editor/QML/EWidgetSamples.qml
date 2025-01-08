@@ -20,6 +20,7 @@ Rectangle {
                     text: 'Buttons'
                     font.bold: true
                     font.pixelSize: 18
+                    font.family: ETheme.fontFamily
                     color: ETheme.fontColor
                 }
             }
