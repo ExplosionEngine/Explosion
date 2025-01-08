@@ -58,9 +58,14 @@ namespace Render {
         return rhiDevice.Get();
     }
 
-    Render::Scene* RenderModule::AllocateScene() // NOLINT
+    Common::UniqueRef<Render::Scene> RenderModule::NewScene() // NOLINT
     {
         return new Scene();
+    }
+
+    Common::UniqueRef<View> RenderModule::NewView() // NOLINT
+    {
+        return new View();
     }
 
     void RenderModule::ShutdownRenderingThread()

@@ -21,6 +21,9 @@ namespace Render {
         Scene();
         ~Scene();
 
+        NonCopyable(Scene)
+        NonMovable(Scene)
+
         LightSPH AddLight(const LightSceneProxy& inLight);
         void RemoveLight(const LightSPH& inHandle);
         void PatchLight(const LightSPH& inHandle, const LightSPPatcher& inPatcher);
