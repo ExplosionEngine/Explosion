@@ -2114,7 +2114,9 @@ namespace Common { // NOLINT
             }
 
             if (baseClass != nullptr) {
-                JsonSerializeDyn(outJsonValue, inAllocator, *baseClass, inObj);
+                rapidjson::Value baseContentValue;
+                JsonSerializeDyn(baseContentValue, inAllocator, *baseClass, inObj);
+                outJsonValue.AddMember("_base", baseContentValue, inAllocator);
             }
 
             for (const auto& memberVariable : memberVariables | std::views::values) {
@@ -2147,8 +2149,8 @@ namespace Common { // NOLINT
                 return;
             }
 
-            if (baseClass != nullptr) {
-                JsonDeserializeDyn(inJsonValue, *baseClass, outObj);
+            if (baseClass != nullptr && inJsonValue.HasMember("_base")) {
+                JsonDeserializeDyn(inJsonValue["_base"], *baseClass, outObj);
             }
 
             for (const auto& memberVariable : clazz.GetMemberVariables() | std::views::values) {
@@ -2516,9 +2518,14 @@ namespace Common { // NOLINT
         static std::string ToStringDyn(const Mirror::Class& clazz, const Mirror::Argument& argument)
         {
             const auto& memberVariables = clazz.GetMemberVariables();
+            const Mirror::Class* baseClass = clazz.GetBaseClass();
 
             std::stringstream stream;
             stream << "{ ";
+            if (baseClass != nullptr) {
+                stream << std::format("_base: {}", ToStringDyn(*baseClass, argument));
+            }
+
             auto count = 0;
             for (const auto& [id, var] : memberVariables) {
                 stream << std::format("{}: {}", id.name, var.GetDyn(argument).ToString());

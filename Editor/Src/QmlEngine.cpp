@@ -22,8 +22,7 @@ namespace Editor {
     }
 
     QmlEngine::QmlEngine()
-        : qmlSourceDir(::Core::Paths::EngineCMakeSourceDir() / "Editor" / "QML")
-        , qmlModuleDir(::Core::Paths::EngineCMakeBinaryDir() / "Generated" / "QmlModule")
+        : qmlSourceDir(::Core::Paths::EngineCMakeSourceDir() / "Editor" / "Qml")
     {
     }
 
@@ -32,7 +31,7 @@ namespace Editor {
     QUrl QmlEngine::GetUrlFromShort(const std::string& inQmlShortFileName) const
     {
         if (caQmlHotReload.GetValue()) {
-            const Common::Path qmlSourcePath = qmlModuleDir / inQmlShortFileName;
+            const Common::Path qmlSourcePath = qmlSourceDir / inQmlShortFileName;
             return QUrl::fromLocalFile(QString::fromStdString(qmlSourcePath.String()));
         } else { // NOLINT
             const auto urlString = std::format("qrc:/qt/qml/editor/{}", inQmlShortFileName);
@@ -57,7 +56,6 @@ namespace Editor {
         });
 
         QObject::connect(watcher.Get(), &QFileSystemWatcher::directoryChanged, [this](const QString&) -> void {
-            qmlSourceDir.CopyTo(qmlModuleDir);
             ReloadSingletonTypes();
 
             for (auto* widget : widgets) {

@@ -35,6 +35,11 @@ namespace RHI::DirectX12 {
 
     DX12SwapChain::~DX12SwapChain() = default;
 
+    uint8_t DX12SwapChain::GetTextureNum()
+    {
+        return textureNum;
+    }
+
     Texture* DX12SwapChain::GetTexture(uint8_t inIndex)
     {
         return textures[inIndex].Get();

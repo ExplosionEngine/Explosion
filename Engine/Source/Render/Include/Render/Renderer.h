@@ -6,19 +6,42 @@
 
 #include <Render/Scene.h>
 #include <Render/View.h>
-#include <Render/Surface.h>
 
 namespace Render {
     class Renderer {
     public:
-        Renderer(const Scene* inScene, const std::vector<const View*>& inViews, const std::vector<const Surface*>& inSurfaces);
+        struct Params {
+            const Scene* scene;
+            const RHI::Texture* surface;
+            std::vector<const View*> views;
+            RHI::Semaphore* waitSemaphore;
+            RHI::Semaphore* signalSemaphore;
+            RHI::Fence* signalFence;
+        };
+
+        explicit Renderer(const Params& inParams);
         virtual ~Renderer();
 
         virtual void Render(float inDeltaTimeSeconds) = 0;
 
-    private:
+    protected:
         const Scene* scene;
-        const std::vector<const View*>& views;
-        const std::vector<const Surface*>& surfaces;
+        const RHI::Texture* surface;
+        std::vector<const View*> views;
+        RHI::Semaphore* waitSemaphore;
+        RHI::Semaphore* signalSemaphore;
+        RHI::Fence* signalFence;
     };
+
+    class StandardRenderer final : public Renderer {
+    public:
+        explicit StandardRenderer(const Params& inParams);
+        ~StandardRenderer() override;
+
+        void Render(float inDeltaTimeSeconds) override;
+
+    private:
+    };
+
+    // TODO ScriptableRenderer
 }

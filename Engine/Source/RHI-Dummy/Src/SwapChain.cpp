@@ -18,6 +18,11 @@ namespace RHI::Dummy {
 
     DummySwapChain::~DummySwapChain() = default;
 
+    uint8_t DummySwapChain::GetTextureNum()
+    {
+        return dummyTextures.size();
+    }
+
     Texture* DummySwapChain::GetTexture(uint8_t index)
     {
         Assert(index < dummyTextures.size());

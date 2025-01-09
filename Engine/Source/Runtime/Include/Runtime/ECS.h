@@ -5,6 +5,7 @@
 #pragma once
 
 #include <set>
+#include <unordered_set>
 #include <unordered_map>
 
 #include <Common/Delegate.h>
@@ -29,7 +30,7 @@ namespace Runtime {
 
     class RUNTIME_API EClass() System {
     public:
-        EClassBody(System)
+        EPolyClassBody(System)
 
         explicit System(ECRegistry& inRegistry);
         virtual ~System();
@@ -145,6 +146,7 @@ namespace Runtime::Internal {
         Common::UniqueRef<System> Build(ECRegistry& inRegistry) const;
         std::unordered_map<std::string, Mirror::Any> GetArguments();
         const std::unordered_map<std::string, Mirror::Any>& GetArguments() const;
+        SystemClass GetClass() const;
 
     private:
         void BuildArgumentLists();
@@ -316,8 +318,10 @@ namespace Runtime {
 
         template <typename C> Observer& ObConstructed();
         template <typename C> Observer& ObUpdated();
+        template <typename C> Observer& ObRemoved();
         Observer& ObConstructedDyn(CompClass inClass);
         Observer& ObUpdatedDyn(CompClass inClass);
+        Observer& ObRemoved(CompClass inClass);
         size_t Size() const;
         void Each(const EntityTraverseFunc& inFunc) const;
         void Clear();
@@ -334,6 +338,65 @@ namespace Runtime {
         ECRegistry& registry;
         std::vector<std::pair<Common::CallbackHandle, ReceiverDeleter>> receiverHandles;
         std::vector<Entity> entities;
+    };
+
+    template <typename C>
+    class EventsObserver {
+    public:
+        using EntityTraverseFunc = Observer::EntityTraverseFunc;
+
+        explicit EventsObserver(ECRegistry& inRegistry);
+        ~EventsObserver();
+        NonCopyable(EventsObserver)
+        NonMovable(EventsObserver)
+
+        size_t ConstructedSize() const;
+        size_t UpdatedSize() const;
+        size_t RemovedSize() const;
+        void EachConstructed(const EntityTraverseFunc& inFunc) const;
+        void EachUpdated(const EntityTraverseFunc& inFunc) const;
+        void EachRemoved(const EntityTraverseFunc& inFunc) const;
+        void ClearConstructed();
+        void ClearUpdated();
+        void ClearRemoved();
+        void Clear();
+        const auto& Constructed() const;
+        const auto& Updated() const;
+        const auto& Removed() const;
+
+    private:
+        Observer constructedObserver;
+        Observer updatedObserver;
+        Observer removedObserver;
+    };
+
+    class RUNTIME_API EventsObserverDyn {
+    public:
+        using EntityTraverseFunc = Observer::EntityTraverseFunc;
+
+        explicit EventsObserverDyn(ECRegistry& inRegistry, CompClass inClass);
+        ~EventsObserverDyn();
+        NonCopyable(EventsObserverDyn)
+        NonMovable(EventsObserverDyn)
+
+        size_t ConstructedSize() const;
+        size_t UpdatedSize() const;
+        size_t RemovedSize() const;
+        void EachConstructed(const EntityTraverseFunc& inFunc) const;
+        void EachUpdated(const EntityTraverseFunc& inFunc) const;
+        void EachRemoved(const EntityTraverseFunc& inFunc) const;
+        void ClearConstructed();
+        void ClearUpdated();
+        void ClearRemoved();
+        void Clear();
+        const auto& Constructed() const;
+        const auto& Updated() const;
+        const auto& Removed() const;
+
+    private:
+        Observer constructedObserver;
+        Observer updatedObserver;
+        Observer removedObserver;
     };
 
     class RUNTIME_API ECRegistry {
@@ -393,7 +456,7 @@ namespace Runtime {
         template <typename... C, typename... E> Runtime::ConstView<ECRegistry, Exclude<E...>, C...> View(Exclude<E...> = {}) const;
         template <typename... C, typename... E> Runtime::ConstView<ECRegistry, Exclude<E...>, C...> ConstView(Exclude<E...> = {}) const;
         template <typename C> CompEvents& Events();
-        Observer Observer();
+        template <typename C> EventsObserver<C> EventsObserver();
 
         // component dynamic
         Mirror::Any EmplaceDyn(CompClass inClass, Entity inEntity, const Mirror::ArgumentList& inArgs);
@@ -410,6 +473,7 @@ namespace Runtime {
         Runtime::RuntimeView RuntimeView(const RuntimeFilter& inFilter);
         Runtime::ConstRuntimeView RuntimeView(const RuntimeFilter& inFilter) const;
         Runtime::ConstRuntimeView ConstRuntimeView(const RuntimeFilter& inFilter) const;
+        EventsObserverDyn EventsObserverDyn(CompClass inClass);
 
         // global component static
         template <typename G, typename... Args> G& GEmplace(Args&&... inArgs);
@@ -436,6 +500,8 @@ namespace Runtime {
         Mirror::Any GGetDyn(GCompClass inClass);
         Mirror::Any GGetDyn(GCompClass inClass) const;
         GCompEvents& GEventsDyn(GCompClass inClass);
+
+        Observer Observer();
 
     private:
         template <typename... T> friend class BasicView;
@@ -473,21 +539,27 @@ namespace Runtime {
         template <typename S> bool HasSystem() const;
         template <typename S> Internal::SystemFactory& GetSystem();
         template <typename S> const Internal::SystemFactory& GetSystem() const;
+        template <typename SrcSys, typename DstSys> const Internal::SystemFactory& MoveSystemTo();
 
         Internal::SystemFactory& EmplaceSystemDyn(SystemClass inClass);
         void RemoveSystemDyn(SystemClass inClass);
         bool HasSystemDyn(SystemClass inClass) const;
         Internal::SystemFactory& GetSystemDyn(SystemClass inClass);
         const Internal::SystemFactory& GetSystemDyn(SystemClass inClass) const;
-        auto GetSystems();
-        auto GetSystems() const;
+        Internal::SystemFactory& MoveSystemToDyn(SystemClass inSrcClass, SystemClass inDstClass);
+
+        const std::vector<Internal::SystemFactory>& GetSystems();
+        const std::vector<Internal::SystemFactory>& GetSystems() const;
         const std::string& GetName() const;
         SystemExecuteStrategy GetStrategy() const;
 
     private:
+        std::vector<Internal::SystemFactory>::iterator FindSystem(SystemClass inClass);
+        std::vector<Internal::SystemFactory>::const_iterator FindSystem(SystemClass inClass) const;
+
         std::string name;
         SystemExecuteStrategy strategy;
-        std::unordered_map<SystemClass, Internal::SystemFactory> systems;
+        std::vector<Internal::SystemFactory> systems;
     };
 
     class RUNTIME_API SystemGraph {
@@ -500,8 +572,12 @@ namespace Runtime {
         SystemGroup& GetGroup(const std::string& inName);
         const SystemGroup& GetGroup(const std::string& inName) const;
         const std::vector<SystemGroup>& GetGroups() const;
+        SystemGroup& MoveGroupTo(const std::string& inSrcName, const std::string& inDstName);
 
     private:
+        std::vector<SystemGroup>::iterator FindGroup(const std::string& inName);
+        std::vector<SystemGroup>::const_iterator FindGroup(const std::string& inName) const;
+
         std::vector<SystemGroup> systemGroups;
     };
 
@@ -824,6 +900,106 @@ namespace Runtime {
         return OnEvent(registry.Events<C>().onUpdated);
     }
 
+    template <typename C>
+    Observer& Observer::ObRemoved()
+    {
+        return OnEvent(registry.Events<C>().onRemove);
+    }
+
+    template <typename C>
+    EventsObserver<C>::EventsObserver(ECRegistry& inRegistry)
+        : constructedObserver(inRegistry.Observer())
+        , updatedObserver(inRegistry.Observer())
+        , removedObserver(inRegistry.Observer())
+    {
+        constructedObserver.ObConstructed<C>();
+        constructedObserver.ObUpdated<C>();
+        constructedObserver.ObRemoved<C>();
+    }
+
+    template <typename C>
+    EventsObserver<C>::~EventsObserver() = default;
+
+    template <typename C>
+    size_t EventsObserver<C>::ConstructedSize() const
+    {
+        return constructedObserver.Size();
+    }
+
+    template <typename C>
+    size_t EventsObserver<C>::UpdatedSize() const
+    {
+        return updatedObserver.Size();
+    }
+
+    template <typename C>
+    size_t EventsObserver<C>::RemovedSize() const
+    {
+        return removedObserver.Size();
+    }
+
+    template <typename C>
+    void EventsObserver<C>::EachConstructed(const EntityTraverseFunc& inFunc) const
+    {
+        constructedObserver.Each(inFunc);
+    }
+
+    template <typename C>
+    void EventsObserver<C>::EachUpdated(const EntityTraverseFunc& inFunc) const
+    {
+        updatedObserver.Each(inFunc);
+    }
+
+    template <typename C>
+    void EventsObserver<C>::EachRemoved(const EntityTraverseFunc& inFunc) const
+    {
+        removedObserver.Each(inFunc);
+    }
+
+    template <typename C>
+    void EventsObserver<C>::ClearConstructed()
+    {
+        constructedObserver.Clear();
+    }
+
+    template <typename C>
+    void EventsObserver<C>::ClearUpdated()
+    {
+        updatedObserver.Clear();
+    }
+
+    template <typename C>
+    void EventsObserver<C>::ClearRemoved()
+    {
+        removedObserver.Clear();
+    }
+
+    template <typename C>
+    void EventsObserver<C>::Clear()
+    {
+        ClearConstructed();
+        ClearUpdated();
+        ClearRemoved();
+    }
+
+    template <typename C>
+    const auto& EventsObserver<C>::Constructed() const
+    {
+        return constructedObserver;
+    }
+
+    template <typename C>
+    const auto& EventsObserver<C>::Updated() const
+    {
+        return updatedObserver;
+    }
+
+    template <typename C>
+    const auto& EventsObserver<C>::Removed() const
+    {
+        return removedObserver;
+    }
+
     template <typename C, typename ... Args>
     C& ECRegistry::Emplace(Entity inEntity, Args&&... inArgs)
     {
@@ -903,6 +1079,12 @@ namespace Runtime {
     ECRegistry::CompEvents& ECRegistry::Events()
     {
         return EventsDyn(Internal::GetClass<C>());
+    }
+
+    template <typename C>
+    EventsObserver<C> ECRegistry::EventsObserver()
+    {
+        return Runtime::EventsObserver<C> { *this };
     }
 
     template <typename C>
@@ -1032,5 +1214,11 @@ namespace Runtime {
     const Internal::SystemFactory& SystemGroup::GetSystem() const
     {
         return GetSystemDyn(Internal::GetClass<S>());
+    }
+
+    template <typename SrcSys, typename DstSys>
+    const Internal::SystemFactory& SystemGroup::MoveSystemTo()
+    {
+        return MoveSystemToDyn(Internal::GetClass<SrcSys>(), Internal::GetClass<DstSys>());
     }
 } // namespace Runtime

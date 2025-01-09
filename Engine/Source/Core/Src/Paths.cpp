@@ -5,13 +5,13 @@
 #include <Core/Paths.h>
 
 namespace Core {
-    Common::Path Paths::executableDir = Common::Path();
+    Common::Path Paths::executablePath = Common::Path();
     Common::Path Paths::workingDir = Common::Path();
     Common::Path Paths::currentProjectFile = Common::Path();
 
     void Paths::SetExecutableDir(const Common::Path& inPath)
     {
-        executableDir = inPath;
+        executablePath = inPath;
     }
 
     void Paths::SetCurrentProjectFile(const Common::Path& inFile)
@@ -19,14 +19,14 @@ namespace Core {
         currentProjectFile = inFile;
     }
 
-    bool Paths::HasProjectFile()
+    bool Paths::HasSetProjectFile()
     {
         return !currentProjectFile.Empty();
     }
 
     bool Paths::HasSetExecutableDir()
     {
-        return !executableDir.Empty();
+        return !executablePath.Empty();
     }
 
     Common::Path Paths::WorkingDir()
@@ -38,17 +38,17 @@ namespace Core {
         return workingDir;
     }
 
-    Common::Path Paths::ExecutableDir()
+    Common::Path Paths::ExecutablePath()
     {
-        Assert(!executableDir.Empty());
-        return executableDir;
+        Assert(!executablePath.Empty());
+        return executablePath;
     }
 
-    Common::Path Paths::EngineRoot()
+    Common::Path Paths::EngineRootDir()
     {
 #if BUILD_TEST
         if (HasSetExecutableDir()) {
-            return ExecutableDir().Parent().Parent();
+            return ExecutablePath().Parent().Parent();
         }
         return WorkingDir().Parent();
 #else
@@ -57,34 +57,44 @@ namespace Core {
 #endif
     }
 
-    Common::Path Paths::EngineRes()
+    Common::Path Paths::EngineResDir()
     {
-        return EngineRoot() / "Resource";
+        return EngineRootDir() / "Resource";
     }
 
-    Common::Path Paths::EngineShader()
+    Common::Path Paths::EngineShaderDir()
     {
-        return EngineRoot() / "Shader";
+        return EngineRootDir() / "Shader";
     }
 
-    Common::Path Paths::EngineAsset()
+    Common::Path Paths::EngineAssetDir()
     {
-        return EngineRoot() / "Asset";
+        return EngineRootDir() / "Asset";
     }
 
-    Common::Path Paths::EngineBin()
+    Common::Path Paths::EngineBinDir()
     {
-        return EngineRoot() / "Binaries";
+        return EngineRootDir() / "Binaries";
     }
 
-    Common::Path Paths::EnginePlugin()
+    Common::Path Paths::EngineCacheDir()
     {
-        return EngineRoot() / "Plugin";
+        return EngineRootDir() / "Cache";
     }
 
-    Common::Path Paths::EnginePluginAsset(const std::string& pluginName)
+    Common::Path Paths::EngineLogDir()
     {
-        return EnginePlugin() / pluginName / "Asset";
+        return EngineCacheDir() / "Log";
+    }
+
+    Common::Path Paths::EnginePluginDir()
+    {
+        return EngineRootDir() / "Plugin";
+    }
+
+    Common::Path Paths::EnginePluginAssetDir(const std::string& pluginName)
+    {
+        return EnginePluginDir() / pluginName / "Asset";
     }
 
     Common::Path Paths::ProjectFile()
@@ -92,29 +102,39 @@ namespace Core {
         return currentProjectFile;
     }
 
-    Common::Path Paths::ProjectRoot()
+    Common::Path Paths::ProjectRootDir()
     {
         return currentProjectFile.Parent();
     }
 
-    Common::Path Paths::ProjectAsset()
+    Common::Path Paths::ProjectAssetDir()
     {
-        return ProjectRoot() / "Asset";
+        return ProjectRootDir() / "Asset";
     }
 
-    Common::Path Paths::ProjectBin()
+    Common::Path Paths::ProjectBinDir()
     {
-        return ProjectRoot() / "Binaries";
+        return ProjectRootDir() / "Binaries";
     }
 
-    Common::Path Paths::ProjectPlugin()
+    Common::Path Paths::ProjectCacheDir()
     {
-        return ProjectRoot() / "Plugin";
+        return ProjectRootDir() / "Cache";
     }
 
-    Common::Path Paths::ProjectPluginAsset(const std::string& pluginName)
+    Common::Path Paths::ProjectLogDir()
     {
-        return ProjectPlugin() / pluginName / "Asset";
+        return ProjectCacheDir() / "Log";
+    }
+
+    Common::Path Paths::ProjectPluginDir()
+    {
+        return ProjectRootDir() / "Plugin";
+    }
+
+    Common::Path Paths::ProjectPluginAssetDir(const std::string& pluginName)
+    {
+        return ProjectPluginDir() / pluginName / "Asset";
     }
 
     Common::Path Paths::EngineCMakeSourceDir()
@@ -130,7 +150,7 @@ namespace Core {
 #if BUILD_TEST
     Common::Path Paths::EngineTest()
     {
-        return EngineRoot() / "Test";
+        return EngineRootDir() / "Test";
     }
 #endif
 }

@@ -256,8 +256,13 @@ namespace Mirror {
         params.argRemoveRefTypeInfos = { GetTypeInfo<std::remove_reference_t<Args>>()... };
         params.argRemovePointerTypeInfos = { GetTypeInfo<std::remove_pointer_t<Args>>()... };
         params.stackConstructor = [](const ArgumentList& args) -> Any {
-            Assert(argsTupleSize == args.size());
-            return ForwardAsAny(Internal::InvokeConstructorStack<C, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
+            if constexpr (std::is_copy_constructible_v<C> || std::is_move_constructible_v<C>) {
+                Assert(argsTupleSize == args.size());
+                return ForwardAsAny(Internal::InvokeConstructorStack<C, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
+            } else {
+                QuickFail();
+                return {};
+            }
         };
         params.heapConstructor = [](const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
@@ -265,7 +270,7 @@ namespace Mirror {
         };
         params.inplaceConstructor = [](void* ptr, const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
-            return ForwardAsAny(Internal::InvokeConstructorInplace<C, ArgsTupleType>(ptr, args, std::make_index_sequence<argsTupleSize> {}));
+            return ForwardAsAny(std::ref(Internal::InvokeConstructorInplace<C, ArgsTupleType>(ptr, args, std::make_index_sequence<argsTupleSize> {})));
         };
 
         return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceConstructor(inId, std::move(params)));
@@ -536,8 +541,13 @@ namespace Mirror {
             ctorParams.argRemoveRefTypeInfos = {};
             ctorParams.argRemovePointerTypeInfos = {};
             ctorParams.stackConstructor = [](const ArgumentList& args) -> Any {
-                Assert(args.empty());
-                return { C() };
+                if constexpr (std::is_copy_constructible_v<C> || std::is_move_constructible_v<C>) {
+                    Assert(args.empty());
+                    return { C() };
+                } else {
+                    QuickFail();
+                    return {};
+                }
             };
             ctorParams.heapConstructor = [](const ArgumentList& args) -> Any {
                 Assert(args.empty());
@@ -560,8 +570,13 @@ namespace Mirror {
             copyCtorParams.argRemoveRefTypeInfos = { GetTypeInfo<std::remove_reference_t<const C&>>() };
             copyCtorParams.argRemovePointerTypeInfos = { GetTypeInfo<std::remove_pointer_t<const C&>>() };
             copyCtorParams.stackConstructor = [](const ArgumentList& args) -> Any {
-                Assert(args.size() == 1);
-                return { C(args[0].As<const C&>()) };
+                if constexpr (std::is_copy_constructible_v<C> || std::is_move_constructible_v<C>) {
+                    Assert(args.size() == 1);
+                    return { C(args[0].As<const C&>()) };
+                } else {
+                    QuickFail();
+                    return {};
+                }
             };
             copyCtorParams.heapConstructor = [](const ArgumentList& args) -> Any {
                 Assert(args.size() == 1);
@@ -584,8 +599,13 @@ namespace Mirror {
             moveCtorParams.argRemoveRefTypeInfos = { GetTypeInfo<std::remove_reference_t<C&&>>() };
             moveCtorParams.argRemovePointerTypeInfos = { GetTypeInfo<std::remove_pointer_t<C&&>>() };
             moveCtorParams.stackConstructor = [](const ArgumentList& args) -> Any {
-                Assert(args.size() == 1);
-                return { C(args[0].As<C&&>()) };
+                if constexpr (std::is_copy_constructible_v<C> || std::is_move_constructible_v<C>) {
+                    Assert(args.size() == 1);
+                    return { C(args[0].As<C&&>()) };
+                } else {
+                    QuickFail();
+                    return {};
+                }
             };
             moveCtorParams.heapConstructor = [](const ArgumentList& args) -> Any {
                 Assert(args.size() == 1);

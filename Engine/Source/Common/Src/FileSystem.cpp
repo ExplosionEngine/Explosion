@@ -83,12 +83,13 @@ namespace Common {
     std::string Path::FileName() const
     {
         Assert(IsFile());
-        return {path.filename().string()};
+        return { path.filename().string() };
     }
 
     std::string Path::FileNameWithoutExtension() const
     {
-        return Common::StringUtils::Replace(FileName(), Extension(), "");
+        const auto extension = Extension();
+        return extension.empty() ? FileName() : Common::StringUtils::Replace(FileName(), Extension(), "");
     }
 
     bool Path::Empty() const
@@ -176,5 +177,10 @@ namespace Common {
     void Path::CopyTo(const Path& inPath) const
     {
         std::filesystem::copy(path, inPath.path, std::filesystem::copy_options::update_existing | std::filesystem::copy_options::recursive);
+    }
+
+    void Path::MakeDir() const
+    {
+        std::filesystem::create_directories(path);
     }
 } // namespace Common

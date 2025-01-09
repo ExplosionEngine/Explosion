@@ -17,23 +17,27 @@ namespace Core {
         static void SetExecutableDir(const Common::Path& inPath);
         static void SetCurrentProjectFile(const Common::Path& inFile);
 
-        static bool HasProjectFile();
+        static bool HasSetProjectFile();
         static bool HasSetExecutableDir();
         static Common::Path WorkingDir();
-        static Common::Path ExecutableDir();
-        static Common::Path EngineRoot();
-        static Common::Path EngineRes();
-        static Common::Path EngineShader();
-        static Common::Path EngineAsset();
-        static Common::Path EngineBin();
-        static Common::Path EnginePlugin();
-        static Common::Path EnginePluginAsset(const std::string& pluginName);
+        static Common::Path ExecutablePath();
+        static Common::Path EngineRootDir();
+        static Common::Path EngineResDir();
+        static Common::Path EngineShaderDir();
+        static Common::Path EngineAssetDir();
+        static Common::Path EngineBinDir();
+        static Common::Path EngineCacheDir();
+        static Common::Path EngineLogDir();
+        static Common::Path EnginePluginDir();
+        static Common::Path EnginePluginAssetDir(const std::string& pluginName);
         static Common::Path ProjectFile();
-        static Common::Path ProjectRoot();
-        static Common::Path ProjectAsset();
-        static Common::Path ProjectBin();
-        static Common::Path ProjectPlugin();
-        static Common::Path ProjectPluginAsset(const std::string& pluginName);
+        static Common::Path ProjectRootDir();
+        static Common::Path ProjectAssetDir();
+        static Common::Path ProjectBinDir();
+        static Common::Path ProjectCacheDir();
+        static Common::Path ProjectLogDir();
+        static Common::Path ProjectPluginDir();
+        static Common::Path ProjectPluginAssetDir(const std::string& pluginName);
         static Common::Path EngineCMakeSourceDir();
         static Common::Path EngineCMakeBinaryDir();
 
@@ -42,7 +46,7 @@ namespace Core {
 #endif
 
     private:
-        static Common::Path executableDir;
+        static Common::Path executablePath;
         static Common::Path workingDir;
         static Common::Path currentProjectFile;
     };

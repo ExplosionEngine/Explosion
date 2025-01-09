@@ -37,6 +37,11 @@ namespace RHI::Vulkan {
         }
     }
 
+    uint8_t VulkanSwapChain::GetTextureNum()
+    {
+        return swapChainImageCount;
+    }
+
     Texture* VulkanSwapChain::GetTexture(const uint8_t inIndex)
     {
         return textures[inIndex];

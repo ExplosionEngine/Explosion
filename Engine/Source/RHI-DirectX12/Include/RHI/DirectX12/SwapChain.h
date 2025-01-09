@@ -20,6 +20,7 @@ namespace RHI::DirectX12 {
         explicit DX12SwapChain(DX12Device& inDevice, const SwapChainCreateInfo& inCreateInfo);
         ~DX12SwapChain() override;
 
+        uint8_t GetTextureNum() override;
         Texture* GetTexture(uint8_t inIndex) override;
         uint8_t AcquireBackTexture(Semaphore* inSignalSemaphore) override;
         void Present(RHI::Semaphore* inWaitSemaphore) override;

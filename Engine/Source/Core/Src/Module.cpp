@@ -136,13 +136,13 @@ namespace Core {
         };
 
         if (Paths::HasSetExecutableDir()) {
-            searchPaths.emplace_back(Paths::EngineBin());
-            searchPaths.emplace_back(Paths::EnginePlugin());
+            searchPaths.emplace_back(Paths::EngineBinDir());
+            searchPaths.emplace_back(Paths::EnginePluginDir());
         }
 
-        if (Paths::HasProjectFile()) {
-            searchPaths.emplace_back(Paths::ProjectBin());
-            searchPaths.emplace_back(Paths::ProjectPlugin());
+        if (Paths::HasSetProjectFile()) {
+            searchPaths.emplace_back(Paths::ProjectBinDir());
+            searchPaths.emplace_back(Paths::ProjectPluginDir());
         }
 
         for (const auto& searchPath : searchPaths) {

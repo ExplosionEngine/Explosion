@@ -9,10 +9,10 @@ namespace Render {
 
     View::~View() = default;
 
-    void View::Update(const Common::FMat4x4& inViewMatrix, const Common::FMat4x4& inProjectionMatrix)
+    void View::Update(const Common::FMat4x4& inViewMatrix, const Common::FMat4x4& inProjectionMatrix, const Common::FRect& inViewport)
     {
         viewMatrix = inViewMatrix;
         projectionMatrix = inProjectionMatrix;
-        // TODO ...
+        viewport = inViewport;
     }
 }

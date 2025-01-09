@@ -20,6 +20,7 @@ namespace RHI::Vulkan {
         explicit VulkanSwapChain(VulkanDevice& inDevice, const SwapChainCreateInfo& inCreateInfo);
         ~VulkanSwapChain() override;
 
+        uint8_t GetTextureNum() override;
         Texture* GetTexture(uint8_t inIndex) override;
         uint8_t AcquireBackTexture(Semaphore* inSignalSemaphore) override;
         void Present(Semaphore* inWaitSemaphore) override;
