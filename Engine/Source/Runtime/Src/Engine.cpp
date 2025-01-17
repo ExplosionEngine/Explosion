@@ -8,11 +8,13 @@
 #include <Core/Module.h>
 #include <Core/Paths.h>
 #include <Core/Log.h>
+#include <Core/Thread.h>
 #include <Runtime/World.h>
 
 namespace Runtime {
     Engine::Engine(const EngineInitParams& inParams)
     {
+        Core::ScopedThreadTag tag(Core::ThreadTag::game);
         if (!inParams.projectFile.empty()) {
             Core::Paths::SetCurrentProjectFile(inParams.projectFile);
         }

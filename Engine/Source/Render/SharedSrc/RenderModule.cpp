@@ -2,6 +2,7 @@
 // Created by johnk on 2023/8/4.
 //
 
+#include <Core/Thread.h>
 #include <Render/RenderModule.h>
 #include <Render/Scene.h>
 
@@ -34,6 +35,7 @@ namespace Render {
         Assert(!initialized);
 
         renderingThread = Common::MakeUnique<Common::WorkerThread>("RenderingThread");
+        renderingThread->EmplaceTask([]() -> void { Core::ThreadContext::SetTag(Core::ThreadTag::render); });
 
         rhiInstance = RHI::Instance::GetByType(inParams.rhiType);
         rhiDevice = rhiInstance->GetGpu(0)->RequestDevice(

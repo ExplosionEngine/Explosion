@@ -51,6 +51,7 @@ namespace Common {
     template <typename T> concept CppMoveConstructible = std::is_move_constructible_v<T>;
     template <typename T> concept CppCopyAssignable = std::is_copy_assignable_v<T>;
     template <typename T> concept CppMoveAssignable = std::is_move_assignable_v<T>;
+    template <typename T> concept CppStdString = std::is_same_v<T, std::string>;
     template <uint8_t N, typename... T> concept ArgsNumEqual = sizeof...(T) == N;
     template <uint8_t N, typename... T> concept ArgsNumLess = sizeof...(T) < N;
     template <uint8_t N, typename... T> concept ArgsNumGreater = sizeof...(T) > N;
