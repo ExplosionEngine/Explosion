@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <variant>
+
 #include <Common/Math/Transform.h>
 #include <Common/Math/Color.h>
 
@@ -15,19 +17,24 @@ namespace Render {
         max
     };
 
-    class ILightSceneProxy {
-    public:
-        ILightSceneProxy();
-        virtual ~ILightSceneProxy();
-        virtual Common::FMat4x4 RGetLocalToWorld() const;
-        virtual LightType RGetLightType() const;
-        virtual Common::Color RGetColor() const;
-        virtual float RGetIntensity() const;
+    struct DirectionalLightSceneProxyPart {
+        // TODO
+    };
 
-    protected:
-        Common::FMat4x4 worldMatrix;
+    struct PointLightSceneProxyPart {
+        float radius;
+        // TODO
+    };
+
+    struct SpotLightSceneProxyPart {
+        // TODO
+    };
+
+    struct LightSceneProxy {
         LightType type;
+        Common::FMat4x4 localToWorld;
         Common::Color color;
         float intensity;
+        std::variant<DirectionalLightSceneProxyPart, PointLightSceneProxyPart, SpotLightSceneProxyPart> typedPart;
     };
 }

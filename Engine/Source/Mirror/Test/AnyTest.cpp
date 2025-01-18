@@ -9,6 +9,7 @@
 #include <Test/Test.h>
 #include <AnyTest.h>
 #include <Mirror/Mirror.h>
+#include <Common/Memory.h>
 
 using namespace Mirror;
 
@@ -66,6 +67,38 @@ AnyMoveCtorTest::AnyMoveCtorTest(AnyMoveCtorTest&& inOther) noexcept
     : moveTime(inOther.moveTime)
 {
     moveTime++;
+}
+
+AnyCopyAssignTest::AnyCopyAssignTest()
+    : called(false)
+{
+}
+
+AnyCopyAssignTest::AnyCopyAssignTest(AnyCopyAssignTest&& inOther) noexcept
+    : called(inOther.called)
+{
+}
+
+AnyCopyAssignTest& AnyCopyAssignTest::operator=(const AnyCopyAssignTest& inOther)
+{
+    called = true;
+    return *this;
+}
+
+AnyMoveAssignTest::AnyMoveAssignTest()
+    : called(false)
+{
+}
+
+AnyMoveAssignTest::AnyMoveAssignTest(AnyMoveAssignTest&& inOther) noexcept
+    : called(inOther.called)
+{
+}
+
+AnyMoveAssignTest& AnyMoveAssignTest::operator=(AnyMoveAssignTest&& inOther) noexcept
+{
+    called = true;
+    return *this;
 }
 
 bool AnyBasicTest::operator==(const AnyBasicTest& inRhs) const
@@ -133,19 +166,19 @@ TEST(AnyTest, CopyCtorWithPolicyTest)
     Any a1 { a0, AnyPolicy::nonConstRef };
     ASSERT_FALSE(called);
     ASSERT_EQ(a1.Policy(), AnyPolicy::nonConstRef);
-    ASSERT_EQ(a1.Size(), a0.Size());
+    ASSERT_EQ(a1.MemorySize(), a0.MemorySize());
     ASSERT_EQ(a1.Data(), a0.Data());
 
     Any a2 { a0, AnyPolicy::constRef };
     ASSERT_FALSE(called);
     ASSERT_EQ(a2.Policy(), AnyPolicy::constRef);
-    ASSERT_EQ(a2.Size(), a0.Size());
+    ASSERT_EQ(a2.MemorySize(), a0.MemorySize());
     ASSERT_EQ(a2.Data(), a0.Data());
 
     Any a3 { a0, AnyPolicy::memoryHolder };
     ASSERT_TRUE(called);
     ASSERT_EQ(a3.Policy(), AnyPolicy::memoryHolder);
-    ASSERT_EQ(a3.Size(), a0.Size());
+    ASSERT_EQ(a3.MemorySize(), a0.MemorySize());
     ASSERT_NE(a3.Data(), a0.Data());
 }
 
@@ -171,7 +204,7 @@ TEST(AnyTest, ValueCtorTest)
     ASSERT_EQ(a1.As<float>(), 2.0f);
 
     Any a2 = std::vector { 1, 2, 3 };
-    ::Test::AssertVecEq(a2.As<std::vector<int>>(), std::vector { 1, 2, 3 });
+    ASSERT_EQ(a2.As<std::vector<int>>(), (std::vector { 1, 2, 3 }));
 
     const Any a3 = AnyBasicTest { 1, 2.0f };
     ASSERT_EQ(a3.As<const AnyBasicTest&>(), (AnyBasicTest { 1, 2 }));
@@ -199,7 +232,7 @@ TEST(AnyTest, RefCtorTest)
     std::vector v2 = { 1, 2, 3 };
     const Any a2 = std::ref(v2);
     ASSERT_EQ(a2.Policy(), AnyPolicy::nonConstRef);
-    ::Test::AssertVecEq(a2.As<const decltype(v2)&>(), std::vector { 1, 2, 3 });
+    ASSERT_EQ(a2.As<const decltype(v2)&>(), (std::vector { 1, 2, 3 }));
 
     const AnyBasicTest v3 { 1, 2.0f }; // NOLINT
     const auto r1 = std::ref(v3);
@@ -234,6 +267,26 @@ TEST(AnyTest, MoveAssignTest)
     ASSERT_EQ(a0.TypeId(), a1.TypeId());
 }
 
+TEST(AnyTest, ValueCopyAssignTest)
+{
+    Any a0 = AnyCopyAssignTest();
+    ASSERT_EQ(a0.As<const AnyCopyAssignTest&>().called, false);
+
+    Any a1 = AnyCopyAssignTest();
+    a0.CopyAssign(a1);
+    ASSERT_EQ(a0.As<const AnyCopyAssignTest&>().called, true);
+}
+
+TEST(AnyTest, ValueMoveAssignTest)
+{
+    Any a0 = AnyMoveAssignTest();
+    ASSERT_EQ(a0.As<const AnyMoveAssignTest&>().called, false);
+
+    Any a1 = AnyMoveAssignTest();
+    a0.MoveAssign(a1);
+    ASSERT_EQ(a0.As<const AnyMoveAssignTest&>().called, true);
+}
+
 TEST(AnyTest, ValueAssignTest)
 {
     Any a0 = 1;
@@ -263,7 +316,7 @@ TEST(AnyTest, ConvertibleTest)
     ASSERT_TRUE(a0.Convertible<const int>());
     ASSERT_TRUE(a0.Convertible<int&>());
     ASSERT_TRUE(a0.Convertible<const int&>());
-    ASSERT_FALSE(a0.Convertible<int&&>());
+    ASSERT_TRUE(a0.Convertible<int&&>());
 
     const int v0 = 1; // NOLINT
     a0 = v0;
@@ -271,7 +324,7 @@ TEST(AnyTest, ConvertibleTest)
     ASSERT_TRUE(a0.Convertible<const int>());
     ASSERT_TRUE(a0.Convertible<int&>());
     ASSERT_TRUE(a0.Convertible<const int&>());
-    ASSERT_FALSE(a0.Convertible<int&&>());
+    ASSERT_TRUE(a0.Convertible<int&&>());
 
     int v1 = 1;
     a0 = std::ref(v1);
@@ -279,14 +332,14 @@ TEST(AnyTest, ConvertibleTest)
     ASSERT_TRUE(a0.Convertible<const int>());
     ASSERT_TRUE(a0.Convertible<int&>());
     ASSERT_TRUE(a0.Convertible<const int&>());
-    ASSERT_FALSE(a0.Convertible<int&&>());
+    ASSERT_TRUE(a0.Convertible<int&&>());
 
     a0 = std::ref(v0);
     ASSERT_TRUE(a0.Convertible<int>());
     ASSERT_TRUE(a0.Convertible<const int>());
     ASSERT_FALSE(a0.Convertible<int&>());
     ASSERT_TRUE(a0.Convertible<const int&>());
-    ASSERT_FALSE(a0.Convertible<int&&>());
+    ASSERT_TRUE(a0.Convertible<int&&>());
 
     a0 = 1;
     Any a1 = a0.Ref();
@@ -294,21 +347,21 @@ TEST(AnyTest, ConvertibleTest)
     ASSERT_TRUE(a1.Convertible<const int>());
     ASSERT_TRUE(a1.Convertible<int&>());
     ASSERT_TRUE(a1.Convertible<const int&>());
-    ASSERT_FALSE(a1.Convertible<int&&>());
+    ASSERT_TRUE(a1.Convertible<int&&>());
 
     a1 = a1.ConstRef();
     ASSERT_TRUE(a1.Convertible<int>());
     ASSERT_TRUE(a1.Convertible<const int>());
     ASSERT_FALSE(a1.Convertible<int&>());
     ASSERT_TRUE(a1.Convertible<const int&>());
-    ASSERT_FALSE(a1.Convertible<int&&>());
+    ASSERT_TRUE(a1.Convertible<int&&>());
 
-    a1 = a1.AsValue();
+    a1 = a1.Value();
     ASSERT_TRUE(a1.Convertible<int>());
     ASSERT_TRUE(a1.Convertible<const int>());
     ASSERT_TRUE(a1.Convertible<int&>());
     ASSERT_TRUE(a1.Convertible<const int&>());
-    ASSERT_FALSE(a1.Convertible<int&&>());
+    ASSERT_TRUE(a1.Convertible<int&&>());
 
     AnyDerivedClassTest derived {};
     a0 = derived;
@@ -388,7 +441,7 @@ TEST(AnyTest, ConstConvertibleTest)
     ASSERT_FALSE(a6.Convertible<int&>());
     ASSERT_TRUE(a6.Convertible<const int&>());
 
-    const Any a7 = a6.AsValue();
+    const Any a7 = a6.Value();
     ASSERT_TRUE(a1.Convertible<int>());
     ASSERT_TRUE(a1.Convertible<const int>());
     ASSERT_FALSE(a1.Convertible<int&>());
@@ -604,6 +657,40 @@ TEST(AnyTest, ConstTryAsTest)
     ASSERT_EQ(a3.TryAs<const float>(), nullptr);
 }
 
+TEST(AnyTest, PolyAsTest)
+{
+    const Common::UniqueRef<AnyBaseClassTest2> v0 = new AnyDerivedClassTest2(1, 2.0f, "3");
+
+    Any a0 = std::ref(*v0);
+    const auto& r0 = a0.PolyAs<AnyBaseClassTest2&, AnyDerivedClassTest2&>();
+    ASSERT_EQ(r0.a, 1);
+    ASSERT_EQ(r0.b, 2.0f);
+    ASSERT_EQ(r0.c, "3");
+
+    Any a1 = v0.Get();
+    const auto* p0 = a1.PolyAs<AnyBaseClassTest2*, AnyDerivedClassTest2*>();
+    ASSERT_EQ(p0->a, 1);
+    ASSERT_EQ(p0->b, 2.0f);
+    ASSERT_EQ(p0->c, "3");
+}
+
+TEST(AnyTest, ConstPolyAsTest)
+{
+    const Common::UniqueRef<AnyBaseClassTest2> v0 = new AnyDerivedClassTest2(1, 2.0f, "3");
+
+    const Any a0 = std::ref(*v0);
+    const auto& r0 = a0.PolyAs<AnyBaseClassTest2&, AnyDerivedClassTest2&>();
+    ASSERT_EQ(r0.a, 1);
+    ASSERT_EQ(r0.b, 2.0f);
+    ASSERT_EQ(r0.c, "3");
+
+    const Any a1 = v0.Get();
+    const auto* p0 = a1.PolyAs<AnyBaseClassTest2*, AnyDerivedClassTest2*>();
+    ASSERT_EQ(p0->a, 1);
+    ASSERT_EQ(p0->b, 2.0f);
+    ASSERT_EQ(p0->c, "3");
+}
+
 TEST(AnyTest, GetRefTest)
 {
     Any a0 = 1;
@@ -653,23 +740,23 @@ TEST(AnyTest, ConstGetRefTest)
     ASSERT_EQ(a9.Policy(), AnyPolicy::constRef);
 }
 
-TEST(AnyTest, AsValueTest)
+TEST(AnyTest, ValueTest)
 {
     const Any a0 = 1;
-    const Any a1 = a0.AsValue();
+    const Any a1 = a0.Value();
     ASSERT_NE(a0.Data(), a1.Data());
     ASSERT_EQ(a1.Policy(), AnyPolicy::memoryHolder);
 
     int v0 = 2;
     const Any a2 = std::ref(v0);
-    const Any a3 = a2.AsValue();
+    const Any a3 = a2.Value();
     ASSERT_EQ(&v0, a2.Data());
     ASSERT_NE(a2.Data(), a3.Data());
     ASSERT_EQ(a3.Policy(), AnyPolicy::memoryHolder);
 
     const int v1 = 2; // NOLINT
     const Any a4 = std::ref(v1);
-    const Any a5 = a4.AsValue();
+    const Any a5 = a4.Value();
     ASSERT_EQ(&v1, a4.Data());
     ASSERT_NE(a4.Data(), a5.Data());
     ASSERT_EQ(a5.Policy(), AnyPolicy::memoryHolder);
@@ -1100,15 +1187,15 @@ TEST(AnyTest, DataTest)
 TEST(AnyTest, SizeTest)
 {
     const Any a0 = 1;
-    ASSERT_EQ(a0.Size(), sizeof(int));
+    ASSERT_EQ(a0.MemorySize(), sizeof(int));
 
     int v0 = 1;
     const Any a1 = std::ref(v0);
-    ASSERT_EQ(a1.Size(), sizeof(int));
+    ASSERT_EQ(a1.MemorySize(), sizeof(int));
 
     const int v1 = 1; // NOLINT
     const Any a2 = std::ref(v1);
-    ASSERT_EQ(a2.Size(), sizeof(int));
+    ASSERT_EQ(a2.MemorySize(), sizeof(int));
 }
 
 TEST(AnyTest, OperatorBoolTest)
@@ -1152,5 +1239,248 @@ TEST(AnyTest, OperatorEqualTest)
 
 TEST(AnyTest, ToStringTest)
 {
-    // TODO
+    const Any a0 = 1;
+    ASSERT_EQ(a0.ToString(), "1");
+}
+
+TEST(AnyTest, ArrayTest)
+{
+    int v0[] = { 1, 2, 3 };
+    Any a0 = v0;
+    ASSERT_TRUE(a0.IsMemoryHolder());
+    ASSERT_EQ(a0.ElementSize(), sizeof(int));
+    ASSERT_EQ(a0.MemorySize(), sizeof(v0));
+    ASSERT_EQ(a0.ArrayLength(), sizeof(v0) / sizeof(int));
+
+    const Any a1 = a0.At(0);
+    ASSERT_TRUE(a1.IsNonConstRef());
+    ASSERT_EQ(a1.As<int&>(), 1);
+
+    const Any a2 = v0;
+    ASSERT_TRUE(a2.IsMemoryHolder());
+    ASSERT_EQ(a2.ElementSize(), sizeof(int));
+    ASSERT_EQ(a2.MemorySize(), sizeof(v0));
+    ASSERT_EQ(a2.ArrayLength(), sizeof(v0) / sizeof(int));
+
+    const Any a3 = a2[1];
+    ASSERT_EQ(a3.As<const int&>(), 2);
+
+    Any a4 = std::move(v0);
+    ASSERT_TRUE(a4.IsMemoryHolder());
+    ASSERT_EQ(a4.ElementSize(), sizeof(int));
+    ASSERT_EQ(a4.MemorySize(), sizeof(v0));
+    ASSERT_EQ(a4.ArrayLength(), sizeof(v0) / sizeof(int));
+
+    const Any a5 = a4.At(2);
+    ASSERT_EQ(a5.As<int>(), 3);
+
+    const int v1[] = { 1, 2, 3 }; // NOLINT
+    Any a6 = std::ref(v1);
+    ASSERT_TRUE(a6.IsConstRef());
+    ASSERT_EQ(a6.ElementSize(), sizeof(int));
+    ASSERT_EQ(a6.MemorySize(), sizeof(v0));
+    ASSERT_EQ(a6.ArrayLength(), sizeof(v0) / sizeof(int));
+    ASSERT_EQ(a6[1].As<int>(), 2);
+}
+
+TEST(AnyTest, StdOptionalViewTest)
+{
+    Any a0 = std::optional<int> {};
+    const StdOptionalView v0(a0.Ref());
+    ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
+    ASSERT_FALSE(v0.HasValue());
+
+    std::optional<int> t0 = 1;
+    Any a1 = std::ref(t0);
+    const StdOptionalView v1(a1.Ref());
+    ASSERT_TRUE(v1.HasValue());
+    ASSERT_EQ(v1.Value().As<const int&>(), 1);
+}
+
+TEST(AnyTest, StdPairViewTest)
+{
+    Any a0 = std::pair<int, bool> { 1, true };
+    const StdPairView v0(a0.Ref());
+    ASSERT_EQ(v0.KeyType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.ValueType(), GetTypeInfo<bool>());
+    ASSERT_EQ(v0.Key().As<const int&>(), 1);
+    ASSERT_EQ(v0.Value().As<const bool&>(), true);
+}
+
+TEST(AnyTest, StdArrayViewTest)
+{
+    Any a0 = std::array<int, 3> { 1, 2, 3 };
+    const StdArrayView v0(a0.Ref());
+    ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.Size(), 3);
+    for (auto i = 0; i < 3; i++) {
+        ASSERT_EQ(v0.At(i).As<int&>(), i + 1);
+        ASSERT_EQ(v0.ConstAt(i).As<const int&>(), i + 1);
+    };
+}
+
+TEST(AnyTest, StdVectorViewTest)
+{
+    Any a0 = std::vector<int> { 1, 2, 3 };
+    const StdVectorView v0(a0.Ref());
+    ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.Size(), 3);
+    for (auto i = 0; i < 3; i++) {
+        ASSERT_EQ(v0.At(i).As<int&>(), i + 1);
+        ASSERT_EQ(v0.ConstAt(i).As<const int&>(), i + 1);
+    };
+    v0.Erase(1);
+    ASSERT_EQ(v0.Size(), 2);
+    v0.EmplaceBack(Any(5));
+    ASSERT_EQ(v0.Size(), 3);
+}
+
+TEST(AnyTest, StdListViewTest)
+{
+    std::list<int> t0 = { 1, 2, 3 };
+    Any a0 = std::ref(t0);
+    const StdListView v0(a0.Ref());
+    ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.Size(), 3);
+
+    int count = 0;
+    v0.Traverse([&count](const Any& inRef) -> void {
+        ASSERT_EQ(inRef.As<int&>(), ++count);
+    });
+
+    v0.EmplaceBack(Any(4));
+    ASSERT_EQ(v0.Size(), 4);
+    v0.EmplaceFront(Any(0));
+    ASSERT_EQ(v0.Size(), 5);
+
+    count = 0;
+    v0.ConstTraverse([&count](const Any& inRef) -> void {
+        ASSERT_EQ(inRef.As<const int&>(), count++);
+    });
+}
+
+TEST(AnyTest, StdunorderedSetViewTest)
+{
+    Any a0 = std::unordered_set<int> { 1, 2, 3 };
+    const StdUnorderedSetView v0(a0.Ref());
+    ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.Size(), 3);
+
+    v0.Traverse([](const Any& inRef) -> void {
+        const int& valueRef = inRef.As<const int&>();
+        ASSERT_TRUE(valueRef >= 1 && valueRef <= 3);
+    });
+
+    v0.Emplace(Any(4));
+    v0.ConstTraverse([](const Any& inRef) -> void {
+        const int& valueRef = inRef.As<const int&>();
+        ASSERT_TRUE(valueRef >= 1 && valueRef <= 4);
+    });
+    v0.Erase(Any(1));
+    for (auto i = 2; i <= 4; i++) {
+        v0.Contains(Any(std::ref(i)));
+    }
+}
+
+TEST(AnyTest, StdSetViewTest)
+{
+    Any a0 = std::set<int> { 1, 2, 3 };
+    const StdSetView v0(a0.Ref());
+    ASSERT_EQ(v0.ElementType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.Size(), 3);
+
+    v0.Traverse([](const Any& inRef) -> void {
+        const int& valueRef = inRef.As<const int&>();
+        ASSERT_TRUE(valueRef >= 1 && valueRef <= 3);
+    });
+
+    v0.Emplace(Any(4));
+    v0.Traverse([](const Any& inRef) -> void {
+        const int& valueRef = inRef.As<const int&>();
+        ASSERT_TRUE(valueRef >= 1 && valueRef <= 4);
+    });
+    v0.Erase(Any(1));
+    for (auto i = 2; i <= 4; i++) {
+        v0.Contains(Any(std::ref(i)));
+    }
+}
+
+TEST(AnyTest, StdUnorderedMapViewTest)
+{
+    Any a0 = std::unordered_map<int, bool> {
+        { 1, false },
+        { 2, true }
+    };
+    const StdUnorderedMapView v0(a0.Ref());
+    ASSERT_EQ(v0.KeyType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.ValueType(), GetTypeInfo<bool>());
+    ASSERT_EQ(v0.Size(), 2);
+    ASSERT_TRUE(v0.At(Any(2)).As<const bool&>());
+    v0.At(Any(1)).As<bool&>() = true;
+
+    v0.GetOrAdd(Any(3)).As<bool&>() = true;
+    ASSERT_TRUE(v0.Contains(Any(3)));
+    ASSERT_TRUE(v0.At(Any(3)).As<const bool&>());
+    v0.Emplace(Any(4), Any(true));
+
+    auto traverser = [](const Any& inKey, const Any& inValue) -> void {
+        const int keyNum = inKey.As<const int&>();
+        ASSERT_TRUE(keyNum >= 1 && keyNum <= 4);
+        ASSERT_TRUE(inValue.As<const bool&>());
+    };
+    v0.Traverse(traverser);
+    v0.ConstTraverse(traverser);
+}
+
+TEST(AnyTest, StdMapViewTest)
+{
+    Any a0 = std::map<int, bool> {
+        { 1, false },
+        { 2, true }
+    };
+    const StdMapView v0(a0.Ref());
+    ASSERT_EQ(v0.KeyType(), GetTypeInfo<int>());
+    ASSERT_EQ(v0.ValueType(), GetTypeInfo<bool>());
+    ASSERT_EQ(v0.Size(), 2);
+    ASSERT_TRUE(v0.At(Any(2)).As<const bool&>());
+    v0.At(Any(1)).As<bool&>() = true;
+
+    v0.GetOrAdd(Any(3)).As<bool&>() = true;
+    ASSERT_TRUE(v0.Contains(Any(3)));
+    ASSERT_TRUE(v0.At(Any(3)).As<const bool&>());
+    v0.Emplace(Any(4), Any(true));
+
+    auto traverser = [](const Any& inKey, const Any& inValue) -> void {
+        const int keyNum = inKey.As<const int&>();
+        ASSERT_TRUE(keyNum >= 1 && keyNum <= 4);
+        ASSERT_TRUE(inValue.As<const bool&>());
+    };
+    v0.Traverse(traverser);
+    v0.ConstTraverse(traverser);
+}
+
+TEST(AnyTest, StdTupleViewTest)
+{
+    Any a0 = std::tuple<int, bool, std::string> { 1, true, "2" };
+    const StdTupleView v0(a0.Ref());
+    ASSERT_EQ(v0.Size(), 3);
+    ASSERT_EQ(v0.ElementType(0), GetTypeInfo<int>());
+    ASSERT_EQ(v0.ElementType(1), GetTypeInfo<bool>());
+    ASSERT_EQ(v0.ElementType(2), GetTypeInfo<std::string>());
+    ASSERT_EQ(v0.Get(0).As<const int&>(), 1);
+    ASSERT_TRUE(v0.Get(1).As<const bool&>());
+    ASSERT_EQ(v0.Get(2).As<const std::string&>(), "2");
+
+    int count = 0;
+    v0.Traverse([&](const Any& inRef) -> void {
+        if (count == 0) {
+            ASSERT_EQ(inRef.As<const int&>(), 1);
+        } else if (count == 1) {
+            ASSERT_TRUE(inRef.As<const bool&>());
+        } else if (count == 2) {
+            ASSERT_EQ(inRef.As<const std::string&>(), "2");
+        }
+        count++;
+    });
+    ASSERT_EQ(count, 3);
 }

@@ -19,7 +19,7 @@ TEST(SerializationTest, FileStreamTest)
 
         BinaryFileSerializeStream stream(fileName.string());
         stream.Seek(3);
-        stream.Write(&value, sizeof(uint32_t));
+        stream.Write<uint32_t>(value);
     }
 
     {
@@ -27,7 +27,7 @@ TEST(SerializationTest, FileStreamTest)
 
         BinaryFileDeserializeStream stream(fileName.string());
         stream.Seek(3);
-        stream.Read(&value, sizeof(uint32_t));
+        stream.Read<uint32_t>(value);
         ASSERT_EQ(value, 5);
     }
 }
@@ -40,16 +40,16 @@ TEST(SerializationTest, ByteStreamTest)
     std::vector<uint8_t> memory;
     {
         const uint32_t value = 5; // NOLINT
-        ByteSerializeStream stream(memory);
+        MemorySerializeStream stream(memory);
         stream.Seek(3);
-        stream.Write(&value, sizeof(uint32_t));
+        stream.Write<uint32_t>(value);
     }
 
     {
         uint32_t value;
-        ByteDeserializeStream stream(memory);
+        MemoryDeserializeStream stream(memory);
         stream.Seek(3);
-        stream.Read(&value, sizeof(uint32_t));
+        stream.Read<uint32_t>(value);
         ASSERT_EQ(value, 5);
     }
 }
@@ -69,12 +69,18 @@ TEST(SerializationTest, TypedSerializationTest)
     PerformTypedSerializationTest<float>(5.0f);
     PerformTypedSerializationTest<double>(6.0);
     PerformTypedSerializationTest<std::string>("hello");
+    PerformTypedSerializationTest<std::wstring>(L"hello");
     PerformTypedSerializationTest<std::optional<int>>({});
     PerformTypedSerializationTest<std::optional<int>>(15);
     PerformTypedSerializationTest<std::pair<int, bool>>({ 1, false });
-    PerformTypedSerializationTest<std::vector<int>>({ 1, 2, 3 }, ::Test::CompareVec<int>);
-    PerformTypedSerializationTest<std::unordered_set<int>>({ 1, 2, 3 }, ::Test::CompareUnorderedSet<int>);
-    PerformTypedSerializationTest<std::unordered_map<int, bool>>({ { 1, false }, { 2, true } }, ::Test::CompareUnorderedMap<int, bool>);
+    PerformTypedSerializationTest<std::array<int, 3>>({ 1, 2, 3 });
+    PerformTypedSerializationTest<std::vector<int>>({ 1, 2, 3 });
+    PerformTypedSerializationTest<std::list<int>>({ 1, 2, 3 });
+    PerformTypedSerializationTest<std::unordered_set<int>>({ 1, 2, 3 });
+    PerformTypedSerializationTest<std::set<int>>({ 1, 2, 3 });
+    PerformTypedSerializationTest<std::unordered_map<int, bool>>({ { 1, false }, { 2, true } });
+    PerformTypedSerializationTest<std::map<int, bool>>({ { 1, false }, { 2, true } });
+    PerformTypedSerializationTest<std::tuple<int, bool, int>>({ 1, true, 2 });
 }
 
 TEST(SerializationTest, JsonSerializeTest)
@@ -92,10 +98,17 @@ TEST(SerializationTest, JsonSerializeTest)
     PerformJsonSerializationTest<float>(5.0f, "5.0");
     PerformJsonSerializationTest<double>(6.0, "6.0");
     PerformJsonSerializationTest<std::string>("hello", R"("hello")");
+    PerformJsonSerializationTest<std::wstring>(L"hello", R"("hello")");
     PerformJsonSerializationTest<std::optional<int>>({}, "null");
     PerformJsonSerializationTest<std::optional<int>>(15, "15");
     PerformJsonSerializationTest<std::pair<int, bool>>({ 1, false }, R"({"key":1,"value":false})");
-    PerformJsonSerializationTest<std::vector<int>>({ 1, 2, 3 }, "[1,2,3]", ::Test::CompareVec<int>);
-    PerformJsonSerializationTest<std::unordered_set<int>>({ 1, 2, 3 }, "", ::Test::CompareUnorderedSet<int>);
-    PerformJsonSerializationTest<std::unordered_map<int, bool>>({ { 1, false }, { 2, true } }, "", ::Test::CompareUnorderedMap<int, bool>);
+    PerformJsonSerializationTest<std::array<int, 3>>({ 1, 2, 3 }, "[1,2,3]");
+    PerformJsonSerializationTest<std::vector<int>>({ 1, 2, 3 }, "[1,2,3]");
+    PerformJsonSerializationTest<std::list<int>>({ 1, 2, 3 }, "[1,2,3]");
+    PerformJsonSerializationTest<std::unordered_set<int>>({ 1, 2, 3 }, "");
+    PerformJsonSerializationTest<std::set<int>>({ 1, 2, 3 }, "[1,2,3]");
+    PerformJsonSerializationTest<std::unordered_map<int, bool>>({ { 1, false }, { 2, true } }, "");
+    PerformJsonSerializationTest<std::map<int, bool>>({ { 1, false }, { 2, true } }, R"([{"key":1,"value":false},{"key":2,"value":true}])");
+    PerformJsonSerializationTest<std::map<std::string, int>>({ { "1", 1 }, { "2", 2 } }, R"([{"key":"1","value":1},{"key":"2","value":2}])");
+    PerformJsonSerializationTest<std::tuple<int, bool, int>>({ 1, true, 2 }, R"({"0":1,"1":true,"2":2})");
 }

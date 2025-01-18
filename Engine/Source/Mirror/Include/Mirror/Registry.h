@@ -17,11 +17,11 @@ namespace Mirror::Internal {
     template <typename T> struct MemberFunctionTraits {};
 
     template <typename ArgsTuple, size_t... I> auto GetArgTypeInfosByArgsTuple(std::index_sequence<I...>);
-    template <typename ArgsTuple, size_t... I> auto ForwardArgumentsListAsTuple(const ArgumentList& args, std::index_sequence<I...>);
-    template <auto Ptr, typename ArgsTuple, size_t... I> auto InvokeFunction(ArgsTuple& args, std::index_sequence<I...>);
-    template <typename Class, auto Ptr, typename ArgsTuple, size_t... I> auto InvokeMemberFunction(Class& object, ArgsTuple& args, std::index_sequence<I...>);
-    template <typename Class, typename ArgsTuple, size_t... I> auto InvokeConstructorStack(ArgsTuple& args, std::index_sequence<I...>);
-    template <typename Class, typename ArgsTuple, size_t... I> auto InvokeConstructorNew(ArgsTuple& args, std::index_sequence<I...>);
+    template <auto Ptr, typename ArgsTuple, size_t... I> decltype(auto) InvokeFunction(const ArgumentList& args, std::index_sequence<I...>);
+    template <typename Class, auto Ptr, typename ArgsTuple, size_t... I> decltype(auto) InvokeMemberFunction(Class& object, const ArgumentList& args, std::index_sequence<I...>);
+    template <typename Class, typename ArgsTuple, size_t... I> decltype(auto) InvokeConstructorStack(const ArgumentList& args, std::index_sequence<I...>);
+    template <typename Class, typename ArgsTuple, size_t... I> decltype(auto) InvokeConstructorNew(const ArgumentList& args, std::index_sequence<I...>);
+    template <typename Class, typename ArgsTuple, size_t... I> decltype(auto) InvokeConstructorInplace(void* ptr, const ArgumentList& args, std::index_sequence<I...>);
 }
 
 namespace Mirror {
@@ -33,12 +33,12 @@ namespace Mirror {
         Derived& MetaData(const Id& inKey, const std::string& inValue);
 
     protected:
-        explicit MetaDataRegistry(Type* inContext);
+        explicit MetaDataRegistry(ReflNode* inContext);
 
-        Derived& SetContext(Type* inContext);
+        Derived& SetContext(ReflNode* inContext);
 
     private:
-        Type* context;
+        ReflNode* context;
     };
 
     template <typename C>
@@ -46,12 +46,13 @@ namespace Mirror {
     public:
         ~ClassRegistry() override;
 
-        template <typename... Args> ClassRegistry& Constructor(const Id& inId);
-        template <auto Ptr> ClassRegistry& StaticVariable(const Id& inId);
-        template <auto Ptr> ClassRegistry& StaticFunction(const Id& inId);
-        template <auto Ptr> ClassRegistry& MemberVariable(const Id& inId);
+        template <typename... Args, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& Constructor(const Id& inId);
+        template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& StaticVariable(const Id& inId);
+        template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& StaticFunction(const Id& inId);
+        template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& MemberVariable(const Id& inId);
         // TODO support overload
-        template <auto Ptr> ClassRegistry& MemberFunction(const Id& inId);
+        // TODO virtual function support
+        template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& MemberFunction(const Id& inId);
 
     private:
         friend class Registry;
@@ -82,7 +83,7 @@ namespace Mirror {
     public:
         ~EnumRegistry() override;
 
-        template <auto Value> EnumRegistry& Element(const Id& inId);
+        template <T V> EnumRegistry& Value(const Id& inId);
 
     private:
         friend class Registry;
@@ -102,8 +103,14 @@ namespace Mirror {
 
         GlobalRegistry Global();
 
-        template <Common::CppClass C, CppBaseClassOrVoid<C> B = void> ClassRegistry<C> Class(const Id& inId);
-        template <Common::CppEnum T> EnumRegistry<T> Enum(const Id& inId);
+        template <
+            Common::CppClass C, CppBaseClassOrVoid<C> B = void,
+            FieldAccess DefaultCtorAccess = FieldAccess::faPublic,
+            FieldAccess DestructorAccess = FieldAccess::faPublic>
+        ClassRegistry<C> Class(const Id& inId);
+
+        template <Common::CppEnum T> EnumRegistry<T>
+        Enum(const Id& inId);
 
     private:
         friend class GlobalScope;
@@ -159,40 +166,41 @@ namespace Mirror::Internal {
         return std::vector<const TypeInfo*> { GetTypeInfo<std::tuple_element_t<I, ArgsTuple>>()... };
     }
 
-    template <typename ArgsTuple, size_t... I>
-    auto ForwardArgumentsListAsTuple(const ArgumentList& args, std::index_sequence<I...>)
-    {
-        return ArgsTuple { args[I].template As<std::tuple_element_t<I, ArgsTuple>>()... };
-    }
-
     template <auto Ptr, typename ArgsTuple, size_t... I>
-    auto InvokeFunction(ArgsTuple& args, std::index_sequence<I...>)
+    decltype(auto) InvokeFunction(const ArgumentList& args, std::index_sequence<I...>)
     {
-        return Ptr(std::get<I>(args)...);
+        return Ptr(args[I].template As<std::tuple_element_t<I, ArgsTuple>>()...);
     }
 
     template <typename Class, auto Ptr, typename ArgsTuple, size_t... I>
-    auto InvokeMemberFunction(Class& object, ArgsTuple& args, std::index_sequence<I...>)
+    decltype(auto) InvokeMemberFunction(Class& object, const ArgumentList& args, std::index_sequence<I...>)
     {
-        return (object.*Ptr)(std::get<I>(args)...);
+        return (object.*Ptr)(args[I].template As<std::tuple_element_t<I, ArgsTuple>>()...);
     }
 
     template <typename Class, typename ArgsTuple, size_t... I>
-    auto InvokeConstructorStack(ArgsTuple& args, std::index_sequence<I...>)
+    decltype(auto) InvokeConstructorStack(const ArgumentList& args, std::index_sequence<I...>)
     {
-        return Class(std::get<I>(args)...);
+        return Class(args[I].template As<std::tuple_element_t<I, ArgsTuple>>()...);
     }
 
     template <typename Class, typename ArgsTuple, size_t... I>
-    auto InvokeConstructorNew(ArgsTuple& args, std::index_sequence<I...>)
+    decltype(auto) InvokeConstructorNew(const ArgumentList& args, std::index_sequence<I...>)
     {
-        return new Class(std::get<I>(args)...);
+        return new Class(args[I].template As<std::tuple_element_t<I, ArgsTuple>>()...);
+    }
+
+    template <typename Class, typename ArgsTuple, size_t... I>
+    decltype(auto) InvokeConstructorInplace(void* ptr, const ArgumentList& args, std::index_sequence<I...>)
+    {
+        new(ptr) Class(args[I].template As<std::tuple_element_t<I, ArgsTuple>>()...);
+        return *static_cast<Class*>(ptr);
     }
 }
 
 namespace Mirror {
     template <typename Derived>
-    MetaDataRegistry<Derived>::MetaDataRegistry(Type* inContext)
+    MetaDataRegistry<Derived>::MetaDataRegistry(ReflNode* inContext)
         : context(inContext)
     {
         Assert(context);
@@ -209,7 +217,7 @@ namespace Mirror {
     }
 
     template <typename Derived>
-    Derived& MetaDataRegistry<Derived>::SetContext(Type* inContext)
+    Derived& MetaDataRegistry<Derived>::SetContext(ReflNode* inContext)
     {
         Assert(inContext);
         context = inContext;
@@ -226,7 +234,7 @@ namespace Mirror {
     ClassRegistry<C>::~ClassRegistry() = default;
 
     template <typename C>
-    template <typename... Args>
+    template <typename... Args, FieldAccess Access>
     ClassRegistry<C>& ClassRegistry<C>::Constructor(const Id& inId)
     {
         using ArgsTupleType = std::tuple<Args...>;
@@ -236,27 +244,31 @@ namespace Mirror {
         Assert(iter == clazz.constructors.end());
 
         Constructor::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = clazz.GetId();
+        params.access = Access;
         params.argsNum = sizeof...(Args);
         params.argTypeInfos = { GetTypeInfo<Args>()... };
         params.argRemoveRefTypeInfos = { GetTypeInfo<std::remove_reference_t<Args>>()... };
         params.argRemovePointerTypeInfos = { GetTypeInfo<std::remove_pointer_t<Args>>()... };
         params.stackConstructor = [](const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
-            auto argsTuple = Internal::ForwardArgumentsListAsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
-            return { Internal::InvokeConstructorStack<C, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {}) };
+            return ForwardAsAny(Internal::InvokeConstructorStack<C, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
         };
         params.heapConstructor = [](const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
-            auto argsTuple = Internal::ForwardArgumentsListAsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
-            return { Internal::InvokeConstructorNew<C, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {}) };
+            return ForwardAsAny(Internal::InvokeConstructorNew<C, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
+        };
+        params.inplaceConstructor = [](void* ptr, const ArgumentList& args) -> Any {
+            Assert(argsTupleSize == args.size());
+            return ForwardAsAny(Internal::InvokeConstructorInplace<C, ArgsTupleType>(ptr, args, std::make_index_sequence<argsTupleSize> {}));
         };
 
         return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceConstructor(inId, std::move(params)));
     }
 
     template <typename C>
-    template <auto Ptr>
+    template <auto Ptr, FieldAccess Access>
     ClassRegistry<C>& ClassRegistry<C>::StaticVariable(const Id& inId)
     {
         using ValueType = typename Internal::VariableTraits<decltype(Ptr)>::ValueType;
@@ -265,7 +277,9 @@ namespace Mirror {
         Assert(iter == clazz.staticVariables.end());
 
         Variable::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = clazz.GetId();
+        params.access = Access;
         params.memorySize = sizeof(ValueType);
         params.typeInfo = GetTypeInfo<ValueType>();
         params.setter = [](const Argument& value) -> void {
@@ -283,7 +297,7 @@ namespace Mirror {
     }
 
     template <typename C>
-    template <auto Ptr>
+    template <auto Ptr, FieldAccess Access>
     ClassRegistry<C>& ClassRegistry<C>::StaticFunction(const Id& inId)
     {
         using ArgsTupleType = typename Internal::FunctionTraits<decltype(Ptr)>::ArgsTupleType;
@@ -295,19 +309,20 @@ namespace Mirror {
         constexpr size_t argsTupleSize = std::tuple_size_v<ArgsTupleType>;
 
         Function::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = clazz.GetId();
+        params.access = Access;
         params.retTypeInfo = GetTypeInfo<RetType>();
         params.argsNum = argsTupleSize;
         params.argTypeInfos = Internal::GetArgTypeInfosByArgsTuple<ArgsTupleType>(std::make_index_sequence<argsTupleSize> {});
         params.invoker = [](const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
 
-            auto argsTuple = Internal::ForwardArgumentsListAsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
             if constexpr (std::is_void_v<RetType>) {
-                Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {});
+                Internal::InvokeFunction<Ptr, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
                 return {};
             } else {
-                return { Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {}) };
+                return ForwardAsAny(Internal::InvokeFunction<Ptr, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
             }
         };
 
@@ -315,7 +330,7 @@ namespace Mirror {
     }
 
     template <typename C>
-    template <auto Ptr>
+    template <auto Ptr, FieldAccess Access>
     ClassRegistry<C>& ClassRegistry<C>::MemberVariable(const Id& inId)
     {
         using ClassType = typename Internal::MemberVariableTraits<decltype(Ptr)>::ClassType;
@@ -325,7 +340,9 @@ namespace Mirror {
         Assert(iter == clazz.memberVariables.end());
 
         MemberVariable::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = clazz.GetId();
+        params.access = Access;
         params.memorySize = sizeof(ValueType);
         params.typeInfo = GetTypeInfo<ValueType>();
         params.setter = [](const Argument& object, const Argument& value) -> void {
@@ -342,7 +359,7 @@ namespace Mirror {
     }
 
     template <typename C>
-    template <auto Ptr>
+    template <auto Ptr, FieldAccess Access>
     ClassRegistry<C>& ClassRegistry<C>::MemberFunction(const Id& inId)
     {
         // ClassType here contains const, #see Internal::MemberFunctionTraits
@@ -356,19 +373,20 @@ namespace Mirror {
         constexpr size_t argsTupleSize = std::tuple_size_v<ArgsTupleType>;
 
         MemberFunction::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = clazz.GetId();
+        params.access = Access;
         params.retTypeInfo = GetTypeInfo<RetType>();
         params.argsNum = argsTupleSize;
         params.argTypeInfos = Internal::GetArgTypeInfosByArgsTuple<ArgsTupleType>(std::make_index_sequence<argsTupleSize> {});
         params.invoker = [](const Argument& object, const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
 
-            auto argsTuple = Internal::ForwardArgumentsListAsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
             if constexpr (std::is_void_v<RetType>) {
-                Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object.As<ClassType&>(), argsTuple, std::make_index_sequence<argsTupleSize> {});
+                Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object.As<ClassType&>(), args, std::make_index_sequence<argsTupleSize> {});
                 return {};
             } else {
-                return { Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object.As<ClassType&>(), argsTuple, std::make_index_sequence<argsTupleSize> {}) };
+                return ForwardAsAny(Internal::InvokeMemberFunction<ClassType, Ptr, ArgsTupleType>(object.As<ClassType&>(), args, std::make_index_sequence<argsTupleSize> {}));
             }
         };
 
@@ -384,7 +402,9 @@ namespace Mirror {
         Assert(iter == globalScope.variables.end());
 
         Variable::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = Id::null;
+        params.access = FieldAccess::max;
         params.memorySize = sizeof(ValueType);
         params.typeInfo = GetTypeInfo<ValueType>();
         params.setter = [](const Argument& argument) -> void {
@@ -412,19 +432,20 @@ namespace Mirror {
         constexpr size_t argsTupleSize = std::tuple_size_v<ArgsTupleType>;
 
         Function::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
+        params.owner = Id::null;
+        params.access = FieldAccess::max;
         params.retTypeInfo = GetTypeInfo<RetType>();
         params.argsNum = argsTupleSize;
         params.argTypeInfos = Internal::GetArgTypeInfosByArgsTuple<ArgsTupleType>(std::make_index_sequence<argsTupleSize> {});
         params.invoker = [](const ArgumentList& args) -> Any {
             Assert(argsTupleSize == args.size());
 
-            auto argsTuple = Internal::ForwardArgumentsListAsTuple<ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
             if constexpr (std::is_void_v<RetType>) {
-                Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {});
+                Internal::InvokeFunction<Ptr, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {});
                 return {};
             } else {
-                return { Internal::InvokeFunction<Ptr, ArgsTupleType>(argsTuple, std::make_index_sequence<argsTupleSize> {}) };
+                return ForwardAsAny(Internal::InvokeFunction<Ptr, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
             }
         };
 
@@ -441,25 +462,32 @@ namespace Mirror {
     EnumRegistry<T>::~EnumRegistry() = default;
 
     template <typename T>
-    template <auto Value>
-    EnumRegistry<T>& EnumRegistry<T>::Element(const Id& inId)
+    template <T V>
+    EnumRegistry<T>& EnumRegistry<T>::Value(const Id& inId)
     {
-        const auto iter = enumInfo.elements.find(inId);
-        Assert(iter == enumInfo.elements.end());
+        const auto iter = enumInfo.values.find(inId);
+        Assert(iter == enumInfo.values.end());
 
-        EnumElement::ConstructParams params;
-        params.name = inId.name;
+        EnumValue::ConstructParams params;
+        params.id = inId;
+        params.owner = enumInfo.GetId();
         params.getter = []() -> Any {
-            return { Value };
+            return { V };
+        };
+        params.integralGetter = []() -> EnumValue::IntegralValue {
+            return static_cast<EnumValue::IntegralValue>(V);
+        };
+        params.setter = [](const Argument& value) -> void {
+            value.As<T&>() = V;
         };
         params.comparer = [](const Argument& value) -> bool {
-            return value.As<T>() == Value;
+            return value.As<T>() == V;
         };
 
         return MetaDataRegistry<EnumRegistry<T>>::SetContext(&enumInfo.EmplaceElement(inId, std::move(params)));
     }
 
-    template <Common::CppClass C, CppBaseClassOrVoid<C> B>
+    template <Common::CppClass C, CppBaseClassOrVoid<C> B, FieldAccess DefaultCtorAccess, FieldAccess DetorAccess>
     ClassRegistry<C> Registry::Class(const Id& inId)
     {
         const auto typeId = GetTypeInfo<C>()->id;
@@ -467,14 +495,18 @@ namespace Mirror {
         Assert(!classes.contains(inId));
 
         Class::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
         params.typeInfo = GetTypeInfo<C>();
+        params.memorySize = sizeof(C);
         params.baseClassGetter = []() -> const Mirror::Class* {
             if constexpr (std::is_void_v<B>) {
                 return nullptr;
             } else {
                 return &Mirror::Class::Get<B>();
             }
+        };
+        params.inplaceGetter = [](void* ptr) -> Any {
+            return { std::ref(*static_cast<C*>(ptr)) };
         };
         if constexpr (std::is_default_constructible_v<C>) {
             params.defaultObjectCreator = []() -> Any {
@@ -483,26 +515,87 @@ namespace Mirror {
         }
         if constexpr (std::is_destructible_v<C>) {
             Destructor::ConstructParams detorParams;
+            detorParams.owner = inId;
+            detorParams.access = DetorAccess;
             detorParams.destructor = [](const Argument& object) -> void {
-                Assert(!object.IsConstRef());
                 object.As<C&>().~C();
             };
-            params.destructorParams = detorParams;
+            detorParams.deleter = [](const Argument& object) -> void {
+                delete object.As<C*>();
+            };
+            params.destructorParams = std::move(detorParams);
         }
         if constexpr (std::is_default_constructible_v<C>) {
             Constructor::ConstructParams ctorParams;
-            ctorParams.name = NamePresets::defaultCtor.name;
+            ctorParams.id = IdPresets::defaultCtor.name;
+            ctorParams.owner = inId;
+            ctorParams.access = DefaultCtorAccess;
             ctorParams.argsNum = 0;
             ctorParams.argTypeInfos = {};
+            ctorParams.argRemoveRefTypeInfos = {};
+            ctorParams.argRemovePointerTypeInfos = {};
             ctorParams.stackConstructor = [](const ArgumentList& args) -> Any {
-                Assert(args.size() == 0);
+                Assert(args.empty());
                 return { C() };
             };
             ctorParams.heapConstructor = [](const ArgumentList& args) -> Any {
-                Assert(args.size() == 0);
+                Assert(args.empty());
                 return { new C() };
             };
+            ctorParams.inplaceConstructor = [](void* ptr, const ArgumentList& args) -> Any {
+                Assert(ptr != nullptr && args.empty());
+                new(ptr) C();
+                return std::ref(*static_cast<C*>(ptr));
+            };
             params.defaultConstructorParams = ctorParams;
+        }
+        if constexpr (std::is_copy_constructible_v<C>) {
+            Constructor::ConstructParams copyCtorParams;
+            copyCtorParams.id = IdPresets::copyCtor.name;
+            copyCtorParams.owner = inId;
+            copyCtorParams.access = FieldAccess::faPublic;
+            copyCtorParams.argsNum = 1;
+            copyCtorParams.argTypeInfos = { GetTypeInfo<const C&>() };
+            copyCtorParams.argRemoveRefTypeInfos = { GetTypeInfo<std::remove_reference_t<const C&>>() };
+            copyCtorParams.argRemovePointerTypeInfos = { GetTypeInfo<std::remove_pointer_t<const C&>>() };
+            copyCtorParams.stackConstructor = [](const ArgumentList& args) -> Any {
+                Assert(args.size() == 1);
+                return { C(args[0].As<const C&>()) };
+            };
+            copyCtorParams.heapConstructor = [](const ArgumentList& args) -> Any {
+                Assert(args.size() == 1);
+                return { new C(args[0].As<const C&>()) };
+            };
+            copyCtorParams.inplaceConstructor = [](void* ptr, const ArgumentList& args) -> Any {
+                Assert(ptr != nullptr && args.size() == 1);
+                new(ptr) C(args[0].As<const C&>());
+                return std::ref(*static_cast<C*>(ptr));
+            };
+            params.copyConstructorParams = std::move(copyCtorParams);
+        }
+        if constexpr (std::is_move_constructible_v<C>) {
+            Constructor::ConstructParams moveCtorParams;
+            moveCtorParams.id = IdPresets::moveCtor.name;
+            moveCtorParams.owner = inId;
+            moveCtorParams.access = FieldAccess::faPublic;
+            moveCtorParams.argsNum = 1;
+            moveCtorParams.argTypeInfos = { GetTypeInfo<C&&>() };
+            moveCtorParams.argRemoveRefTypeInfos = { GetTypeInfo<std::remove_reference_t<C&&>>() };
+            moveCtorParams.argRemovePointerTypeInfos = { GetTypeInfo<std::remove_pointer_t<C&&>>() };
+            moveCtorParams.stackConstructor = [](const ArgumentList& args) -> Any {
+                Assert(args.size() == 1);
+                return { C(args[0].As<C&&>()) };
+            };
+            moveCtorParams.heapConstructor = [](const ArgumentList& args) -> Any {
+                Assert(args.size() == 1);
+                return { new C(args[0].As<C&&>()) };
+            };
+            moveCtorParams.inplaceConstructor = [](void* ptr, const ArgumentList& args) -> Any {
+                Assert(ptr != nullptr && args.size() == 1);
+                new(ptr) C(args[0].As<C&&>());
+                return std::ref(*static_cast<C*>(ptr));
+            };
+            params.moveConstructorParams = std::move(moveCtorParams);
         }
 
         Class::typeToIdMap[typeId] = inId;
@@ -517,7 +610,7 @@ namespace Mirror {
         Assert(!enums.contains(inId));
 
         Enum::ConstructParams params;
-        params.name = inId.name;
+        params.id = inId;
 
         Enum::typeToIdMap[typeId] = inId;
         return EnumRegistry<T>(EmplaceEnum(inId, std::move(params)));

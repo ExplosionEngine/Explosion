@@ -1,56 +1,182 @@
 //
-// Created by johnk on 2024/8/20.
+// Created by johnk on 2024/12/25.
 //
 
 #include <WorldTest.h>
-#include <Runtime/Engine.h>
 #include <Test/Test.h>
+#include <Runtime/Engine.h>
+#include <Runtime/World.h>
+#include <RHI/Instance.h>
+using namespace Runtime;
 
 struct WorldTest : testing::Test {
     void SetUp() override
     {
-        Runtime::EngineHolder::Load("RuntimeTest", {});
+        EngineInitParams engineInitParams;
+        engineInitParams.rhiType = RHI::GetAbbrStringByType(RHI::RHIType::dummy);
+
+        EngineHolder::Load("RuntimeTest", engineInitParams);
+        engine = &EngineHolder::Get();
     }
+
+    void TearDown() override
+    {
+        EngineHolder::Unload();
+    }
+
+    Engine* engine;
 };
 
-void BasicSetupSystem::Execute(Runtime::Commands& commands, const Runtime::WorldStart&) // NOLINT
+Position::Position()
+    : x(0.0f)
+    , y(0.0f)
 {
-    for (auto i = 0; i < 5; i++) {
-        const Runtime::Entity entity = commands.CreateEntity();
-        commands.EmplaceComp<Position>(entity);
-        commands.EmplaceComp<Velocity>(entity);
-    }
 }
 
-StartVerify BasicTickSystem::Execute(Runtime::Commands& commands, const Runtime::WorldTick&) // NOLINT
+Position::Position(float inX, float inY)
+    : x(inX)
+    , y(inY)
 {
-    auto& count = commands.GetState<IterTimeCount>();
-    count.value += 1;
+}
 
-    auto view = commands.View<Position, Velocity>();
-    view.Each([](Position& position, Velocity& velocity) -> void {
+bool Position::operator==(const Position& inRhs) const
+{
+    return CompareNumber(x, inRhs.x)
+        && CompareNumber(y, inRhs.y);
+}
+
+Velocity::Velocity()
+    : x(0.0f)
+    , y(0.0f)
+{
+}
+
+Velocity::Velocity(float inX, float inY)
+    : x(inX)
+    , y(inY)
+{
+}
+
+bool Velocity::operator==(const Velocity& inRhs) const
+{
+    return CompareNumber(x, inRhs.x)
+        && CompareNumber(y, inRhs.y);
+}
+
+BasicTest_MotionSystem::BasicTest_MotionSystem(ECRegistry& inRegistry)
+    : System(inRegistry)
+{
+    auto entity0 = registry.Create();
+    registry.Emplace<Position>(entity0, 1.0f, 2.0f);
+    registry.Emplace<Velocity>(entity0, 0.5f, 1.0f);
+
+    auto entity1 = registry.Create();
+    registry.Emplace<Position>(entity1, 0.0f, 1.0f);
+    registry.Emplace<Velocity>(entity1, 1.0f, 0.0f);
+
+    auto& [entities] = registry.GEmplace<BasicTest_ExpectVerifyResult>();
+    entities = {
+        { entity0, Position(1.5f, 3.0f) },
+        { entity1, Position(1.0f, 1.0f) }
+    };
+}
+
+BasicTest_MotionSystem::~BasicTest_MotionSystem() = default;
+
+void BasicTest_MotionSystem::Tick(float inDeltaTimeMs)
+{
+    auto& [entities] = registry.GGet<BasicTest_ExpectVerifyResult>();
+
+    const auto view = registry.View<Position, Velocity>();
+    view.Each([&](Entity entity, Position& position, Velocity& velocity) -> void {
+        auto& expectPos = entities.at(entity);
         position.x += velocity.x;
         position.y += velocity.y;
-    });
+        ASSERT_EQ(expectPos, position);
 
-    return {};
+        expectPos.x = position.x + velocity.x;
+        expectPos.y = position.y + velocity.y;
+    });
+    registry.GNotifyUpdated<BasicTest_ExpectVerifyResult>();
 }
 
-void PositionVerifySystem::Execute(Runtime::Commands& commands, const StartVerify&) // NOLINT
+TEST_F(WorldTest, BasicTest)
 {
-    const IterTimeCount& count = commands.GetState<IterTimeCount>();
+    SystemGraph systemGraph;
+    auto& mainGroup = systemGraph.AddGroup("MainGroup", SystemExecuteStrategy::sequential);
+    mainGroup.EmplaceSystemDyn(&BasicTest_MotionSystem::GetStaticClass());
 
-    auto view = commands.View<Position, Velocity>();
-    view.Each([&](const Position& position, const Velocity& velocity) -> void {
-        ASSERT_EQ(position.x, velocity.x * count.value);
-    });
+    const auto world = engine->CreateWorld();
+    world->SetSystemGraph(systemGraph);
+    world->Play();
+    for (auto i = 0; i < 5; i++) {
+        engine->Tick(0.0167f);
+    }
+    world->Stop();
 }
 
-TEST_F(WorldTest, ECSBasic)
+ConcurrentTest_SystemA::ConcurrentTest_SystemA(Runtime::ECRegistry& inRegistry)
+    : System(inRegistry)
 {
-    Runtime::World world;
-    world.AddSystem<BasicSetupSystem>();
-    world.AddSystem<PositionVerifySystem>();
-    world.Start();
-    world.Tick(10.f);
+}
+
+ConcurrentTest_SystemA::~ConcurrentTest_SystemA() = default;
+
+void ConcurrentTest_SystemA::Tick(float inDeltaTimeMs)
+{
+    auto& context = registry.GGet<ConcurrentTest_Context>();
+    context.a = 1;
+}
+
+ConcurrentTest_SystemB::ConcurrentTest_SystemB(Runtime::ECRegistry& inRegistry)
+    : System(inRegistry)
+{
+}
+
+ConcurrentTest_SystemB::~ConcurrentTest_SystemB() = default;
+
+void ConcurrentTest_SystemB::Tick(float inDeltaTimeMs)
+{
+    auto& context = registry.GGet<ConcurrentTest_Context>();
+    context.b = 2;
+}
+
+ConcurrentTest_VerifySystem::ConcurrentTest_VerifySystem(Runtime::ECRegistry& inRegistry)
+    : System(inRegistry)
+{
+    auto& context = registry.GEmplace<ConcurrentTest_Context>();
+    context.a = 0;
+    context.b = 0;
+    context.sum = 0;
+    context.tickCount = 0;
+}
+
+ConcurrentTest_VerifySystem::~ConcurrentTest_VerifySystem() = default;
+
+void ConcurrentTest_VerifySystem::Tick(float inDeltaTimeMs)
+{
+    auto& context = registry.GGet<ConcurrentTest_Context>();
+    context.sum = context.sum + context.a + context.b;
+    context.a = 0;
+    context.b = 0;
+    context.tickCount++;
+    ASSERT_EQ(context.sum, 3 * context.tickCount);
+}
+
+TEST_F(WorldTest, ConcurrentTest)
+{
+    SystemGraph systemGraph;
+    auto& ConcurrentGroup = systemGraph.AddGroup("ConcurrentGroup", SystemExecuteStrategy::concurrent);
+    ConcurrentGroup.EmplaceSystem<ConcurrentTest_SystemA>();
+    ConcurrentGroup.EmplaceSystem<ConcurrentTest_SystemB>();
+    auto& verifyGroup = systemGraph.AddGroup("VerifyGroup", SystemExecuteStrategy::sequential);
+    verifyGroup.EmplaceSystem<ConcurrentTest_VerifySystem>();
+
+    const auto world = engine->CreateWorld();
+    world->SetSystemGraph(systemGraph);
+    world->Play();
+    for (auto i = 0; i < 5; i++) {
+        engine->Tick(0.0167f);
+    }
+    world->Stop();
 }

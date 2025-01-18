@@ -44,7 +44,7 @@ We use cmake as build tool, the following table contains supported platform, too
     </tr>
     <tr>
         <td rowspan="3">macOS</td>
-        <td rowspan="3">x64 / arm64</td>
+        <td rowspan="3">arm64</td>
         <td rowspan="3">Apple Clang</td>
         <td>Unix Makefiles</td>
     </tr>
@@ -76,6 +76,25 @@ The parameters' meaning:
 * `<generator_name>`: C++ generator which cmake will use to build project, you can transfer any generator in table list above, such as `Visual Studio 2019`.
 
 After build the project, you can get all dist binaries in `<build_dir>/dist`.
+
+## macOS Notice
+If you have not installed xcode command line tools, you need install it:
+
+```shell
+xcode-select --install
+```
+
+If xcode app or xcode command line tools installed on you system, you need check xcode path set to command line tools path, continue with this command:
+
+```shell
+xcode-select -p
+```
+
+if the command print is not `/Library/Developer/CommandLineTools`, use this command to reset it:
+
+```shell
+sudo xcode-select -s /Library/Developer/CommandLineTools
+```
 
 # Third Party Project Usage
 

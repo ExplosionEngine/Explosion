@@ -475,7 +475,13 @@ namespace RHI::Vulkan {
 
     void VulkanRasterPassCommandRecorder::SetPrimitiveTopology(PrimitiveTopology inPrimitiveTopology)
     {
+#if PLATFORM_MACOS
+        // MoltenVK not support use vkCmdSetPrimitiveTopology() directly current
+        auto* pfn = device.GetGpu().GetInstance().FindOrGetTypedDynamicFuncPointer<PFN_vkCmdSetPrimitiveTopologyEXT>("vkCmdSetPrimitiveTopologyEXT");
+        pfn(commandBuffer.GetNative(), EnumCast<PrimitiveTopology, VkPrimitiveTopology>(inPrimitiveTopology));
+#else
         vkCmdSetPrimitiveTopology(commandBuffer.GetNative(), EnumCast<PrimitiveTopology, VkPrimitiveTopology>(inPrimitiveTopology));
+#endif
     }
 
     void VulkanRasterPassCommandRecorder::SetBlendConstant(const float *inConstants)

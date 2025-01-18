@@ -73,18 +73,22 @@ namespace Common {
             = HashUtils::StrCrc32("Common::Transform")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const Transform<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Transform<T>& value)
         {
-            return Serializer<Vec<T, 3>>::Serialize(stream, value.scale)
-                + Serializer<Quaternion<T>>::Serialize(stream, value.rotation)
-                + Serializer<Vec<T, 3>>::Serialize(stream, value.translation);
+            size_t serialized = 0;
+            serialized += Serializer<Vec<T, 3>>::Serialize(stream, value.scale);
+            serialized += Serializer<Quaternion<T>>::Serialize(stream, value.rotation);
+            serialized += Serializer<Vec<T, 3>>::Serialize(stream, value.translation);
+            return serialized;
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Transform<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Transform<T>& value)
         {
-            return Serializer<Vec<T, 3>>::Deserialize(stream, value.scale)
-                + Serializer<Quaternion<T>>::Deserialize(stream, value.rotation)
-                + Serializer<Vec<T, 3>>::Deserialize(stream, value.translation);
+            size_t deserialized = 0;
+            deserialized += Serializer<Vec<T, 3>>::Deserialize(stream, value.scale);
+            deserialized += Serializer<Quaternion<T>>::Deserialize(stream, value.rotation);
+            deserialized += Serializer<Vec<T, 3>>::Deserialize(stream, value.translation);
+            return deserialized;
         }
     };
 
@@ -92,11 +96,13 @@ namespace Common {
     struct StringConverter<Transform<T>> {
         static std::string ToString(const Transform<T>& inValue)
         {
-            return fmt::format(
-                "{scale={}, rotation={}, translation={}}",
+            return std::format(
+                "{}scale={}, rotation={}, translation={}{}",
+                "{",
                 StringConverter<Vec<T, 3>>::ToString(inValue.scale),
                 StringConverter<Quaternion<T>>::ToString(inValue.rotation),
-                StringConverter<Vec<T, 3>>::ToString(inValue.translation));
+                StringConverter<Vec<T, 3>>::ToString(inValue.translation),
+                "}");
         }
     };
 
@@ -121,9 +127,18 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Transform<T>& outValue)
         {
-            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["scale"], outValue.scale);
-            JsonSerializer<Quaternion<T>>::JsonDeserialize(inJsonValue["rotation"], outValue.rotation);
-            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["scale"], outValue.scale);
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("scale")) {
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["scale"], outValue.scale);
+            }
+            if (inJsonValue.HasMember("rotation")) {
+                JsonSerializer<Quaternion<T>>::JsonDeserialize(inJsonValue["rotation"], outValue.rotation);
+            }
+            if (inJsonValue.HasMember("translation")) {
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["translation"], outValue.translation);
+            }
         }
     };
 }

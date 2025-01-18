@@ -4,15 +4,18 @@
 
 #pragma once
 
+#include <array>
 #include <string>
 #include <vector>
 #include <optional>
 #include <sstream>
 #include <unordered_set>
 #include <unordered_map>
-
-#define FMT_HEADER_ONLY 1
-#include <fmt/format.h>
+#include <set>
+#include <map>
+#include <tuple>
+#include <list>
+#include <format>
 
 #include <Common/Debug.h>
 #include <Common/Concepts.h>
@@ -21,6 +24,7 @@ namespace Common {
     class StringUtils {
     public:
         static std::wstring ToWideString(const std::string& src);
+        static std::string ToByteString(const std::wstring& src);
         static std::string ToUpperCase(const std::string& src);
         static std::string ToLowerCase(const std::string& src);
         static std::string Replace(const std::string& src, const std::string& match, const std::string& replace);
@@ -89,10 +93,27 @@ namespace Common {
     struct StringConverter<std::pair<K, V>> {
         static std::string ToString(const std::pair<K, V>& inValue)
         {
-            return fmt::format(
+            return std::format(
                 "{}: {}",
                 StringConverter<K>::ToString(inValue.first),
                 StringConverter<V>::ToString(inValue.second));
+        }
+    };
+
+    template <StringConvertible T, size_t N>
+    struct StringConverter<std::array<T, N>> {
+        static std::string ToString(const std::array<T, N>& inValue)
+        {
+            std::stringstream stream;
+            stream << "(";
+            for (auto i = 0; i < N; i++) {
+                stream << StringConverter<T>::ToString(inValue[i]);
+                if (i != N - 1) {
+                    stream << ", ";
+                }
+            }
+            stream << ")";
+            return stream.str();
         }
     };
 
@@ -117,17 +138,30 @@ namespace Common {
     struct StringConverter<std::unordered_set<T>> {
         static std::string ToString(const std::unordered_set<T>& inValue)
         {
-            std::vector<const T*> temp;
-            temp.reserve(inValue.size());
-            for (auto iter = inValue.begin(); iter != inValue.end(); ++iter) {
-                temp.emplace_back(&*iter);
-            }
-
             std::stringstream stream;
             stream << "(";
-            for (auto i = 0; i < temp.size(); i++) {
-                stream << StringConverter<T>::ToString(*temp[i]);
-                if (i != temp.size() - 1) {
+            for (auto iter = inValue.begin(); iter != inValue.end(); ++iter) {
+                stream << StringConverter<T>::ToString(*iter);
+                auto iter2 = iter;
+                if (++iter2 != inValue.end()) {
+                    stream << ", ";
+                }
+            }
+            stream << ")";
+            return stream.str();
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<std::set<T>> {
+        static std::string ToString(const std::set<T>& inValue)
+        {
+            std::stringstream stream;
+            stream << "(";
+            for (auto iter = inValue.begin(); iter != inValue.end(); ++iter) {
+                stream << StringConverter<T>::ToString(*iter);
+                auto iter2 = iter;
+                if (++iter2 != inValue.end()) {
                     stream << ", ";
                 }
             }
@@ -140,24 +174,75 @@ namespace Common {
     struct StringConverter<std::unordered_map<K, V>> {
         static std::string ToString(const std::unordered_map<K, V>& inValue)
         {
-            std::vector<std::pair<const K*, const V*>> temp;
-            temp.reserve(inValue.size());
-            for (auto iter = inValue.begin(); iter != inValue.end(); ++iter) {
-                temp.emplace_back(std::make_pair(&iter->first, &iter->second));
-            }
-
             std::stringstream stream;
             stream << "{";
-            for (auto i = 0; i < temp.size(); i++) {
-                stream << fmt::format(
-                    "{}: {}",
-                    StringConverter<K>::ToString(*temp[i].first),
-                    StringConverter<V>::ToString(*temp[i].second));
-                if (i != temp.size() - 1) {
+            for (auto iter = inValue.begin(); iter != inValue.end(); ++iter) {
+                stream << StringConverter<std::pair<K, V>>::ToString(*iter);
+                auto iter2 = iter;
+                if (++iter2 != inValue.end()) {
                     stream << ", ";
                 }
             }
             stream << "}";
+            return stream.str();
+        }
+    };
+
+    template <StringConvertible K, StringConvertible V>
+    struct StringConverter<std::map<K, V>> {
+        static std::string ToString(const std::map<K, V>& inValue)
+        {
+            std::stringstream stream;
+            stream << "{";
+            for (auto iter = inValue.begin(); iter != inValue.end(); ++iter) {
+                stream << StringConverter<std::pair<K, V>>::ToString(*iter);
+                auto iter2 = iter;
+                if (++iter2 != inValue.end()) {
+                    stream << ", ";
+                }
+            }
+            stream << "}";
+            return stream.str();
+        }
+    };
+
+    template <StringConvertible... T>
+    struct StringConverter<std::tuple<T...>> {
+        template <size_t N, typename TupleType, size_t... I>
+        static void ContactInternal(std::stringstream& stream, const TupleType& tuple, std::index_sequence<I...>)
+        {
+            std::initializer_list<int> { ([&]() -> void {
+                stream << StringConverter<std::tuple_element_t<I, TupleType>>::ToString(std::get<I>(tuple));
+                if (I != N - 1) {
+                    stream << ", ";
+                }
+            }(), 0)... };
+        }
+
+        static std::string ToString(const std::tuple<T...>& inValue)
+        {
+            std::stringstream stream;
+            stream << "(";
+            ContactInternal<sizeof...(T)>(stream, inValue, std::make_index_sequence<sizeof...(T)> {});
+            stream << ")";
+            return stream.str();
+        }
+    };
+
+    template <StringConvertible T>
+    struct StringConverter<std::list<T>> {
+        static std::string ToString(const std::list<T>& inValue)
+        {
+            std::stringstream stream;
+            stream << "(";
+            for (auto iter = inValue.begin(); iter != inValue.end(); ++iter) {
+                stream << StringConverter<T>::ToString(*iter);
+                auto iter2 = iter;
+                if (++iter2 != inValue.end()) {
+                    stream << ", ";
+                }
+            }
+            stream << ")";
             return stream.str();
         }
     };

@@ -59,16 +59,20 @@ namespace Common { // NOLINT
             = HashUtils::StrCrc32("Common::Box")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const Box<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Box<T>& value)
         {
-            return Serializer<Vec<T, 3>>::Serialize(stream, value.min)
-                + Serializer<Vec<T, 3>>::Serialize(stream, value.max);
+            size_t serialized = 0;
+            serialized += Serializer<Vec<T, 3>>::Serialize(stream, value.min);
+            serialized += Serializer<Vec<T, 3>>::Serialize(stream, value.max);
+            return serialized;
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Box<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Box<T>& value)
         {
-            return Serializer<Vec<T, 3>>::Deserialize(stream, value.min)
-                + Serializer<Vec<T, 3>>::Deserialize(stream, value.max);
+            size_t deserialized = 0;
+            deserialized += Serializer<Vec<T, 3>>::Deserialize(stream, value.min);
+            deserialized += Serializer<Vec<T, 3>>::Deserialize(stream, value.max);
+            return deserialized;
         }
     };
 
@@ -76,15 +80,17 @@ namespace Common { // NOLINT
     struct StringConverter<Box<T>> {
         static std::string ToString(const Box<T>& inValue)
         {
-            return fmt::format(
-                "{min={}, max={}}",
+            return std::format(
+                "{}min={}, max={}{}",
+                "{",
                 StringConverter<Vec<T, 3>>::ToString(inValue.min),
-                StringConverter<Vec<T, 3>>::ToString(inValue.max));
+                StringConverter<Vec<T, 3>>::ToString(inValue.max),
+                "}");
         }
     };
 
     template <JsonSerializable T>
-    struct JsonSerializer<T> {
+    struct JsonSerializer<Box<T>> {
         static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Box<T>& inValue)
         {
             rapidjson::Value minJson;
@@ -100,8 +106,15 @@ namespace Common { // NOLINT
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Box<T>& outValue)
         {
-            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["min"], outValue.min);
-            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["max"], outValue.max);
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("min")) {
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["min"], outValue.min);
+            }
+            if (inJsonValue.HasMember("max")) {
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["max"], outValue.max);
+            }
         }
     };
 }

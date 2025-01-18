@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 #include <Mirror/Meta.h>
 
@@ -33,6 +34,22 @@ struct AnyMoveCtorTest {
     uint8_t& moveTime;
 };
 
+struct AnyCopyAssignTest {
+    AnyCopyAssignTest();
+    AnyCopyAssignTest(AnyCopyAssignTest&& inOther) noexcept;
+    AnyCopyAssignTest& operator=(const AnyCopyAssignTest& inOther);
+
+    bool called;
+};
+
+struct AnyMoveAssignTest {
+    AnyMoveAssignTest();
+    AnyMoveAssignTest(AnyMoveAssignTest&& inOther) noexcept;
+    AnyMoveAssignTest& operator=(AnyMoveAssignTest&& inOther) noexcept;
+
+    bool called;
+};
+
 struct AnyBasicTest {
     int a;
     float b;
@@ -46,4 +63,33 @@ struct EClass() AnyBaseClassTest {
 
 struct EClass() AnyDerivedClassTest : AnyBaseClassTest {
     EClassBody(AnyDerivedClassTest)
+};
+
+struct EClass() AnyBaseClassTest2 {
+    EClassBody(AnyBaseClassTest2)
+
+    AnyBaseClassTest2(int inA, float inB)
+        : a(inA)
+        , b(inB)
+    {
+    }
+
+    virtual ~AnyBaseClassTest2() = default;
+
+    int a;
+    float b;
+};
+
+struct EClass() AnyDerivedClassTest2 final : AnyBaseClassTest2 {
+    EClassBody(AnyDerivedClassTest2)
+
+    AnyDerivedClassTest2(int inA, float inB, std::string inC)
+        : AnyBaseClassTest2(inA, inB)
+        , c(std::move(inC))
+    {
+    }
+
+    ~AnyDerivedClassTest2() override = default;
+
+    std::string c;
 };

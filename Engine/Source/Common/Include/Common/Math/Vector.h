@@ -221,7 +221,7 @@ namespace Common {
             + Serializer<T>::typeId
             + L;
 
-        static size_t Serialize(SerializeStream& stream, const Vec<T, L>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Vec<T, L>& value)
         {
             size_t serialized = 0;
             for (auto i = 0; i < L; i++) {
@@ -230,7 +230,7 @@ namespace Common {
             return serialized;
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Vec<T, L>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Vec<T, L>& value)
         {
             size_t deserialized = 0;
             for (auto i = 0; i < L; i++) {
@@ -247,7 +247,7 @@ namespace Common {
             std::stringstream stream;
             stream << "(";
             for (auto i = 0; i < L; i++) {
-                stream << inValue.data[i];
+                stream << StringConverter<T>::ToString(inValue.data[i]);
                 if (i != L - 1) {
                     stream << ", ";
                 }
@@ -272,6 +272,9 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Vec<T, L>& outValue)
         {
+            if (!inJsonValue.IsArray() || inJsonValue.Size() != L) {
+                return;
+            }
             for (auto i = 0; i < L; i++) {
                 JsonSerializer<T>::JsonDeserialize(inJsonValue[i], outValue[i]);
             }

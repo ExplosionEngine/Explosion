@@ -26,6 +26,11 @@ void F2(int& outValue)
     outValue = 1;
 }
 
+int F3(int&& inValue)
+{
+    return std::move(inValue);
+}
+
 int C0::v0 = 0;
 
 int& C0::F0()
@@ -105,6 +110,13 @@ TEST(RegistryTest, GlobalScopeTest)
         function.InvokeDyn({ Mirror::Any(std::ref(value)) });
         ASSERT_EQ(value, 1);
     }
+
+    {
+        const auto& function = globalScope.GetFunction("F3");
+        int value = 1;
+        function.Invoke(std::ref(value));
+        ASSERT_EQ(value, 1);
+    }
 }
 
 TEST(RegistryTest, ClassTest)
@@ -147,10 +159,10 @@ TEST(RegistryTest, ClassTest)
         const auto& b = clazz.GetMemberVariable("b");
 
         auto object = constructor.New(1, 2);
-        Mirror::Any objectRef = *object.As<C2*>();
+        Mirror::Any objectRef = object.Deref();
         ASSERT_EQ(a.GetDyn(objectRef).As<int>(), 1);
         ASSERT_EQ(b.GetDyn(objectRef).As<int>(), 2);
-        destructor.InvokeDyn(objectRef);
+        destructor.DeleteDyn(object);
     }
 
     {
@@ -166,18 +178,18 @@ TEST(RegistryTest, ClassTest)
 TEST(RegistryTest, EnumTest)
 {
     const auto& enumInfo = Mirror::Enum::Get<E0>();
-    auto a = enumInfo.GetElement("a");
-    auto b = enumInfo.GetElement("b");
-    auto c = enumInfo.GetElement("c");
-    auto max = enumInfo.GetElement("max");
+    auto a = enumInfo.GetValue("a");
+    auto b = enumInfo.GetValue("b");
+    auto c = enumInfo.GetValue("c");
+    auto max = enumInfo.GetValue("max");
 
-    ASSERT_EQ(a.As<E0>(), E0::a);
-    ASSERT_EQ(b.As<E0>(), E0::b);
-    ASSERT_EQ(c.As<E0>(), E0::c);
-    ASSERT_EQ(max.As<E0>(), E0::max);
+    ASSERT_EQ(a.GetDyn().As<E0>(), E0::a);
+    ASSERT_EQ(b.GetDyn().As<E0>(), E0::b);
+    ASSERT_EQ(c.GetDyn().As<E0>(), E0::c);
+    ASSERT_EQ(max.GetDyn().As<E0>(), E0::max);
 
-    ASSERT_EQ(enumInfo.GetElementName(a), "a");
-    ASSERT_EQ(enumInfo.GetElementName(b), "b");
-    ASSERT_EQ(enumInfo.GetElementName(c), "c");
-    ASSERT_EQ(enumInfo.GetElementName(max), "max");
+    ASSERT_EQ(a.GetName(), "a");
+    ASSERT_EQ(b.GetName(), "b");
+    ASSERT_EQ(c.GetName(), "c");
+    ASSERT_EQ(max.GetName(), "max");
 }

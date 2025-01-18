@@ -8,7 +8,7 @@
 #include <RHI/Surface.h>
 #include <Common/Debug.h>
 
-#define VK_USE_PLATFORM_MACOS_MVK
+#define VK_USE_PLATFORM_METAL_EXT
 #include <vulkan/vulkan.h>
 
 namespace RHI::Vulkan {
@@ -22,14 +22,12 @@ namespace RHI::Vulkan {
         [view setLayer: layer];
         [view setWantsLayer: YES];
 
-        VkMacOSSurfaceCreateInfoMVK surfaceInfo = {};
-        surfaceInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
-        surfaceInfo.pView = view;
-        surfaceInfo.pNext = nullptr;
-        surfaceInfo.flags = 0;
+        VkMetalSurfaceCreateInfoEXT surfaceInfo = {};
+        surfaceInfo.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
+        surfaceInfo.pLayer = static_cast<CAMetalLayer*>(layer);
 
         VkSurfaceKHR surface = VK_NULL_HANDLE;
-        vkCreateMacOSSurfaceMVK(instance, &surfaceInfo, nullptr, &surface);
+        vkCreateMetalSurfaceEXT(instance, &surfaceInfo, nullptr, &surface);
         return surface;
     }
 }

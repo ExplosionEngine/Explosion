@@ -1,6 +1,14 @@
 name: Build
 
-on: [pull_request, workflow_dispatch]
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      debug:
+        type: boolean
+        description: 'Enable TMate Debug'
+        required: false
+        default: false
 
 env:
   BUILD_TYPE: Release
@@ -16,6 +24,16 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+      - name: Setup TMate Session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug }}
+        with:
+          detached: true
+
+      - name: Set XCode Version
+        run: sudo xcode-select -s /Library/Developer/CommandLineTools
+        if: runner.os == 'macOS'
+
       - name: Checkout Repo
         uses: actions/checkout@v2
 
@@ -38,4 +56,4 @@ jobs:
 
       - name: Test
         working-directory: ${{github.workspace}}/build
-        run: ctest -C ${{env.BUILD_TYPE}}
+        run: ctest -C ${{env.BUILD_TYPE}} --extra-verbose

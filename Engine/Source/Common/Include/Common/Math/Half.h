@@ -86,12 +86,12 @@ namespace Common {
     struct Serializer<Internal::FullFloat<E>> {
         static constexpr size_t typeId = HashUtils::StrCrc32("Common::Internal::FullFloat");
 
-        static size_t Serialize(SerializeStream& stream, const Internal::FullFloat<E>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Internal::FullFloat<E>& value)
         {
             return Serializer<float>::Serialize(stream, value.value);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Internal::FullFloat<E>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Internal::FullFloat<E>& value)
         {
             return Serializer<float>::Deserialize(stream, value.value);
         }
@@ -101,12 +101,12 @@ namespace Common {
     struct Serializer<HalfFloat<E>> {
         static constexpr size_t typeId = HashUtils::StrCrc32("Common::Internal::HalfFloat");
 
-        static size_t Serialize(SerializeStream& stream, const HalfFloat<E>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const HalfFloat<E>& value)
         {
             return Serializer<uint16_t>::Serialize(stream, value.value);
         }
 
-        static size_t Deserialize(DeserializeStream& stream, HalfFloat<E>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, HalfFloat<E>& value)
         {
             return Serializer<uint16_t>::Deserialize(stream, value.value);
         }
@@ -135,7 +135,7 @@ namespace Common {
             JsonSerializer<float>::JsonSerialize(outJsonValue, inAllocator, inValue.value);
         }
 
-        static void JsonDeserialize(rapidjson::Value& inJsonValue, Internal::FullFloat<E>& outValue)
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Internal::FullFloat<E>& outValue)
         {
             JsonSerializer<float>::JsonDeserialize(inJsonValue, outValue.value);
         }
@@ -148,7 +148,7 @@ namespace Common {
             JsonSerializer<float>::JsonSerialize(outJsonValue, inAllocator, inValue.AsFloat());
         }
 
-        static void JsonDeserialize(rapidjson::Value& inJsonValue, HalfFloat<E>& outValue)
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, HalfFloat<E>& outValue)
         {
             float fltValue;
             JsonSerializer<float>::JsonDeserialize(inJsonValue, fltValue);

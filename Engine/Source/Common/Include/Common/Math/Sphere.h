@@ -45,16 +45,20 @@ namespace Common {
             = HashUtils::StrCrc32("Common::Sphere")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const Sphere<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Sphere<T>& value)
         {
-            return Serializer<Vec<T, 3>>::Serialize(stream, value.center)
-                + Serializer<T>::Serialize(stream, value.radius);
+            size_t serialized = 0;
+            serialized += Serializer<Vec<T, 3>>::Serialize(stream, value.center);
+            serialized += Serializer<T>::Serialize(stream, value.radius);
+            return serialized;
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Sphere<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Sphere<T>& value)
         {
-            return Serializer<Vec<T, 3>>::Deserialize(stream, value.center)
-                + Serializer<T>::Deserialize(stream, value.radius);
+            size_t deserialized = 0;
+            deserialized += Serializer<Vec<T, 3>>::Deserialize(stream, value.center);
+            deserialized += Serializer<T>::Deserialize(stream, value.radius);
+            return deserialized;
         }
     };
 
@@ -62,10 +66,12 @@ namespace Common {
     struct StringConverter<Sphere<T>> {
         static std::string ToString(const Sphere<T>& inValue)
         {
-            return fmt::format(
-                "{center={}, radius={}}",
-                StringConverter<Vec<T, 3>>::Convert(inValue.center),
-                StringConverter<T>::Convert(inValue.radius));
+            return std::format(
+                "{}center={}, radius={}{}",
+                "{",
+                StringConverter<Vec<T, 3>>::ToString(inValue.center),
+                StringConverter<T>::ToString(inValue.radius),
+                "}");
         }
     };
 
@@ -86,8 +92,15 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Sphere<T>& outValue)
         {
-            JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["center"], outValue.center);
-            JsonSerializer<T>::JsonDeserialize(inJsonValue["radius", outValue.radius]);
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("center")) {
+                JsonSerializer<Vec<T, 3>>::JsonDeserialize(inJsonValue["center"], outValue.center);
+            }
+            if (inJsonValue.HasMember("radius")) {
+                JsonSerializer<T>::JsonDeserialize(inJsonValue["radius"], outValue.radius);
+            }
         }
     };
 }

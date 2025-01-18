@@ -57,16 +57,20 @@ namespace Common {
             = HashUtils::StrCrc32("Common::Rect")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(SerializeStream& stream, const Rect<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Rect<T>& value)
         {
-            return Serializer<Vec<T, 2>>::Serialize(stream, value.min)
-                + Serializer<Vec<T, 2>>::Serialize(stream, value.max);
+            size_t serialized = 0;
+            serialized += Serializer<Vec<T, 2>>::Serialize(stream, value.min);
+            serialized += Serializer<Vec<T, 2>>::Serialize(stream, value.max);
+            return serialized;
         }
 
-        static size_t Deserialize(DeserializeStream& stream, Rect<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Rect<T>& value)
         {
-            return Serializer<Vec<T, 2>>::Deserialize(stream, value.min)
-                + Serializer<Vec<T, 2>>::Deserialize(stream, value.max);
+            size_t deserialized = 0;
+            deserialized += Serializer<Vec<T, 2>>::Deserialize(stream, value.min);
+            deserialized += Serializer<Vec<T, 2>>::Deserialize(stream, value.max);
+            return deserialized;
         }
     };
 
@@ -74,10 +78,12 @@ namespace Common {
     struct StringConverter<Rect<T>> {
         static std::string ToString(const Rect<T>& inValue)
         {
-            return fmt::format(
-                "{min={}, max={}}",
+            return std::format(
+                "{}min={}, max={}{}",
+                "{",
                 StringConverter<Vec<T, 2>>::ToString(inValue.min),
-                StringConverter<Vec<T, 2>>::ToString(inValue.max));
+                StringConverter<Vec<T, 2>>::ToString(inValue.max),
+                "}");
         }
     };
 
@@ -98,8 +104,15 @@ namespace Common {
 
         static void JsonDeserialize(const rapidjson::Value& inJsonValue, Rect<T>& outValue)
         {
-            JsonSerializer<Vec<T, 2>>::JsonDeserialize(inJsonValue["min"], outValue.min);
-            JsonSerializer<Vec<T, 2>>::JsonDeserialize(inJsonValue["max"], outValue.max);
+            if (!inJsonValue.IsObject()) {
+                return;
+            }
+            if (inJsonValue.HasMember("min")) {
+                JsonSerializer<Vec<T, 2>>::JsonDeserialize(inJsonValue["min"], outValue.min);
+            }
+            if (inJsonValue.HasMember("max")) {
+                JsonSerializer<Vec<T, 2>>::JsonDeserialize(inJsonValue["max"], outValue.max);
+            }
         }
     };
 }
