@@ -26,7 +26,8 @@ namespace RHI::Vulkan {
             { BufferState::copySrc, VK_ACCESS_TRANSFER_READ_BIT },
             { BufferState::copyDst, VK_ACCESS_TRANSFER_WRITE_BIT },
             { BufferState::shaderReadOnly, VK_ACCESS_SHADER_READ_BIT },
-            { BufferState::storage, VK_ACCESS_SHADER_WRITE_BIT }
+            { BufferState::storage, VK_ACCESS_SHADER_READ_BIT },
+            { BufferState::rwStorage, VK_ACCESS_SHADER_WRITE_BIT }
         };
         return map.at(inState);
     }
@@ -39,7 +40,9 @@ namespace RHI::Vulkan {
             { BufferState::copySrc, VK_PIPELINE_STAGE_TRANSFER_BIT },
             { BufferState::copyDst, VK_PIPELINE_STAGE_TRANSFER_BIT },
             { BufferState::shaderReadOnly, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
-            { BufferState::storage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT }
+            { BufferState::storage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
+            { BufferState::rwStorage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT }
+
         };
         return map.at(inState);
     }
@@ -52,7 +55,8 @@ namespace RHI::Vulkan {
             { BufferState::copySrc, VK_PIPELINE_STAGE_TRANSFER_BIT },
             { BufferState::copyDst, VK_PIPELINE_STAGE_TRANSFER_BIT },
             { BufferState::shaderReadOnly, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
-            { BufferState::storage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT }
+            { BufferState::storage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
+            { BufferState::rwStorage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT }
         };
         return map.at(inState);
     }

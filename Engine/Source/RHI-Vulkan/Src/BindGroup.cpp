@@ -81,9 +81,13 @@ namespace RHI::Vulkan {
         int bufferInfosNum = 0;
         for (int i = 0; i < entryCount; i++) {
             const auto& entry = inCreateInfo.entries[i];
-            if (entry.binding.type == BindingType::uniformBuffer || entry.binding.type == BindingType::storageBuffer) {
+            if (entry.binding.type == BindingType::uniformBuffer
+                || entry.binding.type == BindingType::storageBuffer
+                || entry.binding.type == BindingType::rwStorageBuffer) {
                 bufferInfosNum++;
-            } else if (entry.binding.type == BindingType::sampler || entry.binding.type == BindingType::texture ||entry.binding.type == BindingType::storageTexture) {
+            } else if (entry.binding.type == BindingType::sampler
+                || entry.binding.type == BindingType::texture
+                ||entry.binding.type == BindingType::storageTexture) {
                 imageInfosNum++;
             }
         }
@@ -99,7 +103,9 @@ namespace RHI::Vulkan {
             descriptorWrites[i].descriptorCount = 1;
             descriptorWrites[i].descriptorType = EnumCast<BindingType, VkDescriptorType>(entry.binding.type);
 
-            if (entry.binding.type == BindingType::uniformBuffer || entry.binding.type == BindingType::storageBuffer) {
+            if (entry.binding.type == BindingType::uniformBuffer
+                || entry.binding.type == BindingType::storageBuffer
+                || entry.binding.type == BindingType::rwStorageBuffer) {
                 auto* bufferView = static_cast<VulkanBufferView*>(std::get<BufferView*>(entry.entity));
 
                 bufferInfos.emplace_back();
