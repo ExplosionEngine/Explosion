@@ -12,7 +12,7 @@ using namespace Runtime;
 struct WorldTest : testing::Test {
     void SetUp() override
     {
-        EngineInitParams engineInitParams;
+        EngineInitParams engineInitParams {};
         engineInitParams.rhiType = RHI::GetAbbrStringByType(RHI::RHIType::dummy);
 
         EngineHolder::Load("RuntimeTest", engineInitParams);

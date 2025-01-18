@@ -3,3 +3,7 @@
 //
 
 #include <Core/Console.h>
+
+namespace Core {
+
+}

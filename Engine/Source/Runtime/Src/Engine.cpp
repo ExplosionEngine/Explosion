@@ -19,7 +19,9 @@ namespace Runtime {
             Core::Paths::SetCurrentProjectFile(inParams.projectFile);
         }
 
-        AttachLogFile();
+        if (inParams.logToFile) {
+            AttachLogFile();
+        }
         InitRender(inParams.rhiType);
     }
 

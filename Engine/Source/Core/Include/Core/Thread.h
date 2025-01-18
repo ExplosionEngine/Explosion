@@ -6,6 +6,8 @@
 
 #include <cstdint>
 
+#include <Core/Api.h>
+
 namespace Core {
     enum class ThreadTag : uint8_t {
         unknown,
@@ -16,7 +18,7 @@ namespace Core {
         max
     };
 
-    class ThreadContext {
+    class CORE_API ThreadContext {
     public:
         static void SetTag(ThreadTag inTag);
         static ThreadTag GetTag();
@@ -30,7 +32,7 @@ namespace Core {
         static thread_local ThreadTag tag;
     };
 
-    class ScopedThreadTag {
+    class CORE_API ScopedThreadTag {
     public:
         explicit ScopedThreadTag(ThreadTag inTag);
         ~ScopedThreadTag();

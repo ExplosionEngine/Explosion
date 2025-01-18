@@ -60,6 +60,7 @@ namespace Editor {
     void Core::InitializeRuntime()
     {
         Runtime::EngineInitParams params {};
+        params.logToFile = true;
         params.projectFile = caProjectFile.GetValue();
         params.rhiType = caRhiType.GetValue();
 

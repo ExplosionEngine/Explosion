@@ -15,6 +15,7 @@ namespace Runtime {
     class World;
 
     struct EngineInitParams {
+        bool logToFile;
         std::string projectFile;
         std::string rhiType;
     };
