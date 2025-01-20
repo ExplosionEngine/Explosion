@@ -368,6 +368,11 @@ namespace Runtime::Internal {
         return arguments;
     }
 
+    SystemClass SystemFactory::GetClass() const
+    {
+        return clazz;
+    }
+
     void SystemFactory::BuildArgumentLists()
     {
         const auto& memberVariables = clazz->GetMemberVariables();
@@ -438,6 +443,11 @@ namespace Runtime {
         return OnEvent(registry.EventsDyn(inClass).onUpdated);
     }
 
+    Observer& Observer::ObRemoved(CompClass inClass)
+    {
+        return OnEvent(registry.EventsDyn(inClass).onRemove);
+    }
+
     size_t Observer::Size() const
     {
         return entities.size();
@@ -497,6 +507,85 @@ namespace Runtime {
                 inEvent.Unbind(handle);
             });
         return *this;
+    }
+
+    EventsObserverDyn::EventsObserverDyn(ECRegistry& inRegistry, CompClass inClass)
+        : constructedObserver(inRegistry.Observer())
+        , updatedObserver(inRegistry.Observer())
+        , removedObserver(inRegistry.Observer())
+    {
+        constructedObserver.ObConstructedDyn(inClass);
+        updatedObserver.ObUpdatedDyn(inClass);
+        removedObserver.ObRemoved(inClass);
+    }
+
+    EventsObserverDyn::~EventsObserverDyn() = default;
+
+    size_t EventsObserverDyn::ConstructedSize() const
+    {
+        return constructedObserver.Size();
+    }
+
+    size_t EventsObserverDyn::UpdatedSize() const
+    {
+        return updatedObserver.Size();
+    }
+
+    size_t EventsObserverDyn::RemovedSize() const
+    {
+        return removedObserver.Size();
+    }
+
+    void EventsObserverDyn::EachConstructed(const EntityTraverseFunc& inFunc) const
+    {
+        constructedObserver.Each(inFunc);
+    }
+
+    void EventsObserverDyn::EachUpdated(const EntityTraverseFunc& inFunc) const
+    {
+        updatedObserver.Each(inFunc);
+    }
+
+    void EventsObserverDyn::EachRemoved(const EntityTraverseFunc& inFunc) const
+    {
+        removedObserver.Each(inFunc);
+    }
+
+    void EventsObserverDyn::ClearConstructed()
+    {
+        constructedObserver.Clear();
+    }
+
+    void EventsObserverDyn::ClearUpdated()
+    {
+        updatedObserver.Clear();
+    }
+
+    void EventsObserverDyn::ClearRemoved()
+    {
+        removedObserver.Clear();
+    }
+
+    void EventsObserverDyn::Clear()
+    {
+        ClearConstructed();
+        ClearUpdated();
+        ClearRemoved();
+    }
+
+    const auto& EventsObserverDyn::Constructed() const
+    {
+        return constructedObserver;
+    }
+
+    const auto& EventsObserverDyn::Updated() const
+    {
+        return updatedObserver;
+    }
+
+    const auto& EventsObserverDyn::Removed() const
+    {
+        return removedObserver;
     }
 
     ECRegistry::ECRegistry()
@@ -615,6 +704,11 @@ namespace Runtime {
     Runtime::ConstRuntimeView ECRegistry::ConstRuntimeView(const RuntimeFilter& inFilter) const
     {
         return Runtime::ConstRuntimeView { *this, inFilter };
+    }
+
+    EventsObserverDyn ECRegistry::EventsObserverDyn(CompClass inClass)
+    {
+        return Runtime::EventsObserverDyn { *this, inClass };
     }
 
     void ECRegistry::NotifyUpdatedDyn(CompClass inClass, Entity inEntity)
@@ -838,38 +932,57 @@ namespace Runtime {
 
     Internal::SystemFactory& SystemGroup::EmplaceSystemDyn(SystemClass inClass)
     {
-        systems.emplace(inClass, Internal::SystemFactory(inClass));
-        return systems.at(inClass);
+        Assert(!HasSystemDyn(inClass));
+        return systems.emplace_back(inClass);
     }
 
     void SystemGroup::RemoveSystemDyn(SystemClass inClass)
     {
-        systems.erase(inClass);
+        const auto iter = FindSystem(inClass);
+        Assert(iter != systems.end());
+        systems.erase(iter);
     }
 
     bool SystemGroup::HasSystemDyn(SystemClass inClass) const
     {
-        return systems.contains(inClass);
+        const auto iter = FindSystem(inClass);
+        return iter != systems.end();
     }
 
     Internal::SystemFactory& SystemGroup::GetSystemDyn(SystemClass inClass)
     {
-        return systems.at(inClass);
+        const auto iter = FindSystem(inClass);
+        Assert(iter != systems.end());
+        return *iter;
     }
 
     const Internal::SystemFactory& SystemGroup::GetSystemDyn(SystemClass inClass) const
     {
-        return systems.at(inClass);
+        const auto iter = FindSystem(inClass);
+        Assert(iter != systems.end());
+        return *iter;
     }
 
-    auto SystemGroup::GetSystems()
+    Internal::SystemFactory& SystemGroup::MoveSystemToDyn(SystemClass inSrcClass, SystemClass inDstClass)
     {
-        return systems | std::views::values;
+        const auto srcIter = FindSystem(inSrcClass);
+        Assert(srcIter != systems.end());
+        const auto tempGroup = std::move(*srcIter);
+        systems.erase(srcIter);
+
+        const auto dstIter = FindSystem(inDstClass);
+        Assert(dstIter != systems.end());
+        return *systems.emplace(dstIter, std::move(tempGroup));
     }
 
-    auto SystemGroup::GetSystems() const
+    const std::vector<Internal::SystemFactory>& SystemGroup::GetSystems()
     {
-        return systems | std::views::values;
+        return systems;
+    }
+
+    const std::vector<Internal::SystemFactory>& SystemGroup::GetSystems() const
+    {
+        return systems;
     }
 
     const std::string& SystemGroup::GetName() const
@@ -882,57 +995,84 @@ namespace Runtime {
         return strategy;
     }
 
+    std::vector<Internal::SystemFactory>::iterator SystemGroup::FindSystem(SystemClass inClass)
+    {
+        return std::ranges::find_if(systems, [inClass](const Internal::SystemFactory& inFactory) -> bool {
+            return inFactory.GetClass() == inClass;
+        });
+    }
+
+    std::vector<Internal::SystemFactory>::const_iterator SystemGroup::FindSystem(SystemClass inClass) const
+    {
+        return std::ranges::find_if(systems, [inClass](const Internal::SystemFactory& inFactory) -> bool {
+            return inFactory.GetClass() == inClass;
+        });
+    }
+
     SystemGraph::SystemGraph() = default;
 
     SystemGroup& SystemGraph::AddGroup(const std::string& inName, SystemExecuteStrategy inStrategy)
     {
+        Assert(!HasGroup(inName));
         return systemGroups.emplace_back(inName, inStrategy);
     }
 
     void SystemGraph::RemoveGroup(const std::string& inName)
     {
-        const auto iter = std::ranges::find_if(systemGroups, [&](const SystemGroup& group) -> bool {
-            return group.GetName() == inName;
-        });
+        const auto iter = FindGroup(inName);
         Assert(iter != systemGroups.end());
         systemGroups.erase(iter);
     }
 
     bool SystemGraph::HasGroup(const std::string& inName) const
     {
-        for (const auto& group : systemGroups) {
-            if (group.GetName() == inName) {
-                return true;
-            }
-        }
-        return false;
+        const auto iter = FindGroup(inName);
+        return iter != systemGroups.end();
     }
 
     SystemGroup& SystemGraph::GetGroup(const std::string& inName)
     {
-        for (auto& group : systemGroups) {
-            if (group.GetName() == inName) {
-                return group;
-            }
-        }
-        Assert(false);
-        return systemGroups.back();
+        const auto iter = FindGroup(inName);
+        Assert(iter != systemGroups.end());
+        return *iter;
     }
 
     const SystemGroup& SystemGraph::GetGroup(const std::string& inName) const
     {
-        for (const auto& group : systemGroups) {
-            if (group.GetName() == inName) {
-                return group;
-            }
-        }
-        Assert(false);
-        return systemGroups.back();
+        const auto iter = FindGroup(inName);
+        Assert(iter != systemGroups.end());
+        return *iter;
     }
 
     const std::vector<SystemGroup>& SystemGraph::GetGroups() const
     {
         return systemGroups;
+    }
+
+    SystemGroup& SystemGraph::MoveGroupTo(const std::string& inSrcName, const std::string& inDstName)
+    {
+        const auto srcIter = FindGroup(inSrcName);
+        Assert(srcIter != systemGroups.end());
+        const auto tempGroup = std::move(*srcIter);
+        systemGroups.erase(srcIter);
+
+        const auto dstIter = FindGroup(inDstName);
+        Assert(dstIter != systemGroups.end());
+        return *systemGroups.emplace(dstIter, std::move(tempGroup));
+    }
+
+    std::vector<SystemGroup>::iterator SystemGraph::FindGroup(const std::string& inName)
+    {
+        return std::ranges::find_if(systemGroups, [&](const SystemGroup& group) -> bool {
+            return group.GetName() == inName;
+        });
+    }
+
+    std::vector<SystemGroup>::const_iterator SystemGraph::FindGroup(const std::string& inName) const
+    {
+        return std::ranges::find_if(systemGroups, [&](const SystemGroup& group) -> bool {
+            return group.GetName() == inName;
+        });
     }
 
     SystemPipeline::SystemPipeline(const SystemGraph& inGraph)

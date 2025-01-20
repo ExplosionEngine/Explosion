@@ -6,6 +6,7 @@
 
 #include <Common/Math/Transform.h>
 #include <Mirror/Meta.h>
+#include <Runtime/ECS.h>
 #include <Runtime/Api.h>
 
 namespace Runtime {
@@ -16,5 +17,24 @@ namespace Runtime {
         explicit Transform(const Common::FTransform& inLocalToWorld);
 
         EProperty() Common::FTransform localToWorld;
+    };
+
+    struct RUNTIME_API EClass() ChildOfConstraint final {
+        EClassBody(ChildOfConstraint)
+
+        ChildOfConstraint();
+        explicit ChildOfConstraint(Entity inParent, const Common::FTransform& inLocalToParent);
+
+        EProperty() Entity parent;
+        EProperty() Common::FTransform localToParent;
+    };
+
+    struct RUNTIME_API EClass() CopyConstraint final {
+        EClassBody(CopyConstraint)
+
+        CopyConstraint();
+        explicit CopyConstraint(Entity inTarget);
+
+        EProperty() Entity target;
     };
 }

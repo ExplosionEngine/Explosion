@@ -4,8 +4,15 @@
 
 #include <QApplication>
 #include <Editor/Core.h>
-#include <Editor/QmlHotReload.h>
+#include <Editor/QmlEngine.h>
 #include <Editor/Widget/Launcher.h>
+#include <Editor/Widget/WidgetSamples.h>
+
+#if BUILD_CONFIG_DEBUG
+static ::Core::CmdlineArgValue<bool> caRunSample(
+    "widgetSamples", "-widgetSamples", false,
+    "Whether to run widget samples instead of editor");
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -13,20 +20,26 @@ int main(int argc, char* argv[])
 
     QApplication qtApplication(argc, argv);
 
-    Common::UniqueRef<QWidget> mainWindow;
-    if (!Editor::Core::Get().ProjectHasSet()) {
-        mainWindow = new Editor::Launcher();
+    auto& qmlEngine = Editor::QmlEngine::Get();
+    qmlEngine.Start();
+
+    Common::UniqueRef<QWidget> mainWidget;
+#if BUILD_CONFIG_DEBUG
+    if (caRunSample.GetValue()) {
+        mainWidget = new Editor::WidgetSamples();
+    } else
+#endif
+    if (!Editor::Core::Get().ProjectHasSet()) { // NOLINT
+        mainWidget = new Editor::Launcher();
     } else {
         // TODO editor main
     }
-    mainWindow->show();
+    mainWidget->show();
 
-    auto& qmlHotReloadEngine = Editor::QmlHotReloadEngine::Get();
-    qmlHotReloadEngine.Start();
     const int execRes = QApplication::exec();
-    qmlHotReloadEngine.Stop();
+    qmlEngine.Stop();
 
-    mainWindow = nullptr;
+    mainWidget = nullptr;
     Editor::Core::Get().Cleanup();
     return execRes;
 }

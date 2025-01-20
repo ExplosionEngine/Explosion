@@ -9,7 +9,7 @@ namespace RHI::DirectX12 {
     D3D12_SHADER_VISIBILITY GetShaderVisibility(const ShaderStageFlags shaderStageFlags)
     {
         uint8_t count = 0;
-        ForEachBitsType<ShaderStageBits>([&](ShaderStageBits shaderStage) -> void {
+        Common::ForEachBits<ShaderStageBits>([&](ShaderStageBits shaderStage) -> void {
             if (shaderStageFlags & shaderStage) {
                 count++;
             }

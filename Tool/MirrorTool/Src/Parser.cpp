@@ -159,6 +159,20 @@ namespace MirrorTool {
         info.name = stream.str();
     }
 
+    static bool NeedProcessClassFunctionCursor(const CXCursor& cursor)
+    {
+        return !clang_CXXMethod_isDeleted(cursor);
+    }
+
+    static bool NeedProcessConstructorCursor(const CXCursor& cursor)
+    {
+        return NeedProcessClassFunctionCursor(cursor)
+            && !clang_CXXConstructor_isDefaultConstructor(cursor)
+            && !clang_CXXConstructor_isCopyConstructor(cursor)
+            && !clang_CXXConstructor_isMoveConstructor(cursor)
+            && !clang_CXXConstructor_isConvertingConstructor(cursor);
+    }
+
     DeclareVisitor(GlobalVariableVisitor, VariableInfo)
     {
         FetchCursorInfo(GlobalVariableVisitor, cursor);
@@ -218,7 +232,7 @@ namespace MirrorTool {
             ApplyMetaFilter(variables, propertyMetaTag);
 
             clang_disposeString(typeSpelling);
-        } else if (kind == CXCursor_CXXMethod) {
+        } else if (kind == CXCursor_CXXMethod && NeedProcessClassFunctionCursor(cursor)) {
             bool isStatic = static_cast<bool>(clang_CXXMethod_isStatic(cursor));
             CXType retType = clang_getCursorResultType(cursor);
             CXString retTypeSpelling = clang_getTypeSpelling(retType);
@@ -234,7 +248,7 @@ namespace MirrorTool {
             ApplyMetaFilter(functions, functionMetaTag);
 
             clang_disposeString(retTypeSpelling);
-        } else if (kind == CXCursor_Constructor) {
+        } else if (kind == CXCursor_Constructor && NeedProcessConstructorCursor(cursor)) {
             ClassConstructorInfo constructorInfo;
             constructorInfo.outerName = GetOuterName(context.outerName, context.name);
             constructorInfo.fieldAccess = context.lastFieldAccess;

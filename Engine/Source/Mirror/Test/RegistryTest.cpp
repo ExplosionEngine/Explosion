@@ -31,11 +31,41 @@ int F3(int&& inValue)
     return std::move(inValue);
 }
 
+int F4(int inValue)
+{
+    return inValue;
+}
+
+float F4(int inValue, float inRet)
+{
+    return inRet;
+}
+
 int C0::v0 = 0;
 
 int& C0::F0()
 {
     return v0;
+}
+
+int C0::F1(int inValue)
+{
+    return inValue;
+}
+
+int C0::F1(int inValue0, int inValue1)
+{
+    return inValue0 + inValue1;
+}
+
+int C0::F2(int inValue) // NOLINT
+{
+    return inValue;
+}
+
+int C0::F2(int inValue0, int inValue1) // NOLINT
+{
+    return inValue0 + inValue1;
 }
 
 C1::C1(const int inV0)
@@ -117,6 +147,21 @@ TEST(RegistryTest, GlobalScopeTest)
         function.Invoke(std::ref(value));
         ASSERT_EQ(value, 1);
     }
+
+    {
+        const auto& function = globalScope.GetFunction("F4(int)");
+        int value = 1;
+        auto ret = function.Invoke(value);
+        ASSERT_EQ(ret.As<int>(), 1);
+    }
+
+    {
+        const auto& function = globalScope.GetFunction("F4(int, float)");
+        int value = 1;
+        float temp = 2.0f;
+        auto ret = function.Invoke(value, temp);
+        ASSERT_EQ(ret.As<float>(), 2.0f);
+    }
 }
 
 TEST(RegistryTest, ClassTest)
@@ -136,6 +181,36 @@ TEST(RegistryTest, ClassTest)
             ASSERT_EQ(function.GetMeta("testKey"), "F0");
             auto result = function.Invoke();
             ASSERT_EQ(result.As<int&>(), 1);
+        }
+
+        {
+            const auto& function = clazz.GetStaticFunction("F1(int)");
+            ASSERT_EQ(function.GetMeta("testKey"), "F1");
+            auto result = function.Invoke(1);
+            ASSERT_EQ(result.As<int>(), 1);
+        }
+
+        {
+            const auto& function = clazz.GetStaticFunction("F1(int, int)");
+            ASSERT_EQ(function.GetMeta("testKey"), "F1");
+            auto result = function.Invoke(1, 2);
+            ASSERT_EQ(result.As<int>(), 3);
+        }
+
+        {
+            C0 object = {}; // NOLINT
+            const auto& function = clazz.GetMemberFunction("F2(int)");
+            ASSERT_EQ(function.GetMeta("testKey"), "F2");
+            auto result = function.Invoke(object, 1);
+            ASSERT_EQ(result.As<int>(), 1);
+        }
+
+        {
+            C0 object = {}; // NOLINT
+            const auto& function = clazz.GetMemberFunction("F2(int, int)");
+            ASSERT_EQ(function.GetMeta("testKey"), "F2");
+            auto result = function.Invoke(object, 1, 2);
+            ASSERT_EQ(result.As<int>(), 3);
         }
     }
 

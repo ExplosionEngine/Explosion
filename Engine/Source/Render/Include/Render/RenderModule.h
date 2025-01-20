@@ -9,6 +9,7 @@
 #include <Common/Debug.h>
 #include <Core/Module.h>
 #include <Render/Scene.h>
+#include <Render/View.h>
 #include <Render/Api.h>
 #include <RHI/RHI.h>
 
@@ -29,7 +30,8 @@ namespace Render {
         void Initialize(const RenderModuleInitParams& inParams);
         void DeInitialize();
         RHI::Device* GetDevice() const;
-        Scene* AllocateScene();
+        Common::UniqueRef<Scene> NewScene();
+        Common::UniqueRef<View> NewView();
         void ShutdownRenderingThread();
         void FlushAllRenderingCommands() const;
 

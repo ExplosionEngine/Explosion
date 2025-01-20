@@ -227,13 +227,16 @@ namespace Mirror {
 
         Any& CopyAssign(Any& inOther);
         Any& CopyAssign(const Any& inOther);
+        Any& CopyAssign(Any&& inOther);
         Any& MoveAssign(Any& inOther) noexcept;
         Any& MoveAssign(const Any& inOther) noexcept;
+        Any& MoveAssign(Any&& inOther) noexcept;
         const Any& CopyAssign(Any& inOther) const;
         const Any& CopyAssign(const Any& inOther) const;
+        const Any& CopyAssign(Any&& inOther) const;
         const Any& MoveAssign(Any& inOther) const noexcept;
         const Any& MoveAssign(const Any& inOther) const noexcept;
-        // TODO rvalue version CopyAssign/MoveAssign
+        const Any& MoveAssign(Any&& inOther) const noexcept;
 
         template <typename T> bool Convertible();
         template <typename T> bool Convertible() const;
@@ -337,6 +340,8 @@ namespace Mirror {
         void PerformMoveConstruct(Any&& inOther) noexcept;
         void PerformCopyAssign(const Any& inOther) const;
         void PerformMoveAssign(const Any& inOther) const noexcept;
+        void PerformCopyAssign(Any&& inOther) const;
+        void PerformMoveAssign(Any&& inOther) const noexcept;
         uint32_t ElementNum() const;
 
         uint32_t arrayLength;
@@ -373,8 +378,6 @@ namespace Mirror {
         const TypeInfo* RemoveRefType() const;
         const TypeInfo* AddPointerType() const;
         const TypeInfo* RemovePointerType() const;
-
-        // TODO more proxy func
 
     private:
         template <typename F> decltype(auto) Delegate(F&& inFunc) const;
@@ -744,8 +747,8 @@ namespace Mirror {
 
         GlobalScope();
 
-        std::unordered_map<Id, Variable, IdHashProvider> variables;
-        std::unordered_map<Id, Function, IdHashProvider> functions;
+        Common::StableUnorderedMap<Id, Variable, 128, IdHashProvider> variables;
+        Common::StableUnorderedMap<Id, Function, 128, IdHashProvider> functions;
     };
 
     class MIRROR_API Class final : public ReflNode {
@@ -835,7 +838,6 @@ namespace Mirror {
             std::optional<Constructor::ConstructParams> defaultConstructorParams;
             std::optional<Constructor::ConstructParams> moveConstructorParams;
             std::optional<Constructor::ConstructParams> copyConstructorParams;
-            // TODO assign operator ?
         };
 
         explicit Class(ConstructParams&& params);
@@ -1815,9 +1817,9 @@ namespace Common { // NOLINT
                 }
                 metaEnumValue->Set(value);
             } else {
-                std::underlying_type_t<E> unlderlyingValue;
-                deserialized += Serializer<std::underlying_type_t<E>>::Deserialize(stream, unlderlyingValue);
-                value = static_cast<E>(unlderlyingValue);
+                std::underlying_type_t<E> underlyingValue;
+                deserialized += Serializer<std::underlying_type_t<E>>::Deserialize(stream, underlyingValue);
+                value = static_cast<E>(underlyingValue);
             }
             return deserialized;
         }
@@ -2112,7 +2114,9 @@ namespace Common { // NOLINT
             }
 
             if (baseClass != nullptr) {
-                JsonSerializeDyn(outJsonValue, inAllocator, *baseClass, inObj);
+                rapidjson::Value baseContentValue;
+                JsonSerializeDyn(baseContentValue, inAllocator, *baseClass, inObj);
+                outJsonValue.AddMember("_base", baseContentValue, inAllocator);
             }
 
             for (const auto& memberVariable : memberVariables | std::views::values) {
@@ -2145,8 +2149,8 @@ namespace Common { // NOLINT
                 return;
             }
 
-            if (baseClass != nullptr) {
-                JsonDeserializeDyn(inJsonValue, *baseClass, outObj);
+            if (baseClass != nullptr && inJsonValue.HasMember("_base")) {
+                JsonDeserializeDyn(inJsonValue["_base"], *baseClass, outObj);
             }
 
             for (const auto& memberVariable : clazz.GetMemberVariables() | std::views::values) {
@@ -2514,9 +2518,14 @@ namespace Common { // NOLINT
         static std::string ToStringDyn(const Mirror::Class& clazz, const Mirror::Argument& argument)
         {
             const auto& memberVariables = clazz.GetMemberVariables();
+            const Mirror::Class* baseClass = clazz.GetBaseClass();
 
             std::stringstream stream;
             stream << "{ ";
+            if (baseClass != nullptr) {
+                stream << std::format("_base: {}", ToStringDyn(*baseClass, argument));
+            }
+
             auto count = 0;
             for (const auto& [id, var] : memberVariables) {
                 stream << std::format("{}: {}", id.name, var.GetDyn(argument).ToString());

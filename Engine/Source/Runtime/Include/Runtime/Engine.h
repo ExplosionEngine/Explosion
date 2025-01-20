@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <string>
 #include <unordered_set>
 
 #include <Core/Module.h>
@@ -14,6 +15,7 @@ namespace Runtime {
     class World;
 
     struct EngineInitParams {
+        bool logToFile;
         std::string projectFile;
         std::string rhiType;
     };
@@ -32,6 +34,9 @@ namespace Runtime {
 
     protected:
         explicit Engine(const EngineInitParams& inParams);
+
+        void AttachLogFile();
+        void InitRender(const std::string& inRhiTypeStr);
 
         std::unordered_set<World*> worlds;
         Render::RenderModule* renderModule;

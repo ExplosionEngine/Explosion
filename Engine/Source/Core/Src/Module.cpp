@@ -131,32 +131,41 @@ namespace Core {
 
     std::optional<std::string> ModuleManager::SearchModule(const std::string& moduleName)
     {
-        const std::vector searchPaths = {
-            Paths::EngineBin(),
-            Paths::ProjectBin(),
-            Paths::EnginePlugin(),
-            Paths::ProjectPlugin()
+        std::vector searchPaths = {
+            Paths::WorkingDir(),
         };
-        const std::filesystem::path workingDir = Paths::WorkingDir();
+
+        if (Paths::HasSetExecutableDir()) {
+            searchPaths.emplace_back(Paths::EngineBinDir());
+            searchPaths.emplace_back(Paths::EnginePluginDir());
+        }
+
+        if (Paths::HasSetProjectFile()) {
+            searchPaths.emplace_back(Paths::ProjectBinDir());
+            searchPaths.emplace_back(Paths::ProjectPluginDir());
+        }
 
         for (const auto& searchPath : searchPaths) {
-            try {
-                for (const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator(searchPath)) {
-                    if (entry.is_directory()) {
-                        continue;
-                    }
-
-                    const auto& path = entry.path();
-                    auto fileName = path.filename().string();
-
-                    if (auto extension = path.extension().string();
-                        (extension == ".dll" || extension == ".so" || extension == ".dylib")
-                        && (fileName == std::format("{}{}", moduleName, extension) || fileName == std::format("lib{}{}", moduleName, extension)))
-                    {
-                        return path.string();
-                    }
+            std::optional<std::string> result = std::nullopt;
+            (void) searchPath.TraverseRecurse([&](const Common::Path& path) -> bool {
+                if (path.IsDirectory()) {
+                    return true;
                 }
-            } catch (const std::exception&) {} // NOLINT
+
+                const auto fileName = path.FileName();
+                const auto extension = path.Extension(); // NOLINT
+
+                if ((extension == ".dll" || extension == ".so" || extension == ".dylib")
+                    && (fileName == std::format("{}{}", moduleName, extension) || fileName == std::format("lib{}{}", moduleName, extension))) {
+                    result = path.String();
+                    return false;
+                }
+                return true;
+            });
+
+            if (result.has_value()) {
+                return result;
+            }
         }
         return {};
     }

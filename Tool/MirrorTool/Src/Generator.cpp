@@ -5,6 +5,8 @@
 #include <sstream>
 #include <filesystem>
 #include <utility>
+#include <unordered_map>
+#include <ranges>
 
 #include <MirrorTool/Generator.h>
 #include <Common/Hash.h>
@@ -81,18 +83,49 @@ namespace MirrorTool {
         return stream.str();
     }
 
-    static std::string GetEnumsCode(const MetaInfo& metaInfo, size_t uniqueId)
+    static std::string GetEnumUnloadCode(const EnumInfo& enumInfo)
+    {
+        const auto fullName = GetFullName(enumInfo);
+
+        std::stringstream stream;
+        stream << Common::newline;
+        stream << Common::tab<2> << std::format(R"("Mirror::Registry::Get().UnloadEnum("{}");")", fullName) << Common::newline;
+        return stream.str();
+    }
+
+    static std::string GetNamespaceEnumsUnloadCode(const NamespaceInfo& ns) // NOLINT
+    {
+        std::stringstream stream;
+        for (const auto& e : ns.enums) {
+            stream << GetEnumUnloadCode(e);
+        }
+        for (const auto& cns : ns.namespaces) {
+            stream << GetNamespaceEnumsUnloadCode(cns);
+        }
+        return stream.str();
+    }
+
+    static std::string GetEnumsCode(const MetaInfo& metaInfo, size_t uniqueId, bool dynamic)
     {
         std::stringstream stream;
         stream << Common::newline;
-        stream << std::format("int _mirrorEnumRegistry_{} = []() -> int", uniqueId) << Common::newline;
+        stream << std::format("Mirror::Internal::ScopedReleaser _mirrorEnumRegistry_{} = []() -> Mirror::Internal::ScopedReleaser", uniqueId) << Common::newline;
         stream << "{";
         stream << GetNamespaceEnumsCode(metaInfo.global);
         for (const auto& ns : metaInfo.namespaces) {
             stream << GetNamespaceEnumsCode(ns);
         }
         stream << Common::newline;
-        stream << Common::tab<1> << "return 0;" << Common::newline;
+        if (dynamic) {
+            stream << Common::tab<1> << "return Mirror::Internal::ScopedReleaser([]() -> void {" << Common::newline;
+            stream << GetNamespaceEnumsUnloadCode(metaInfo.global);
+            for (const auto& ns : metaInfo.namespaces) {
+                stream << GetNamespaceEnumsUnloadCode(ns);
+            }
+            stream << Common::tab<1> << "});" << Common::newline;
+        } else {
+            stream << Common::tab<1> << "return Mirror::Internal::ScopedReleaser();" << Common::newline;
+        }
         stream << "}();" << Common::newline;
         return stream.str();
     }
@@ -107,7 +140,53 @@ namespace MirrorTool {
         return map.at(access);
     }
 
-    static std::string GetClassCode(const ClassInfo& clazz) // NOLINT
+    template <typename FuncInfo>
+    static std::unordered_map<std::string, std::vector<const FuncInfo*>> GetFunctionOverloadMap(const std::vector<FuncInfo>& infos)
+    {
+        std::unordered_map<std::string, std::vector<const FuncInfo*>> result;
+        result.reserve(infos.size());
+
+        for (const auto& info : infos) {
+            result[info.name].emplace_back(&info);
+        }
+        return result;
+    }
+
+    template <typename FuncInfo>
+    static std::string GetOverloadFunctionFullNameWithParams(const FuncInfo& info, const std::string& name)
+    {
+        std::stringstream stream;
+        stream << name;
+        stream << "(";
+        for (auto i = 0; i < info.parameters.size(); i++) {
+            const auto& paramNameAndType = info.parameters[i];
+            stream << paramNameAndType.second;
+            if (i != info.parameters.size() - 1) {
+                stream << ", ";
+            }
+        }
+        stream << ")";
+        return stream.str();
+    }
+
+    template <typename FuncInfo>
+    static std::string GetOverloadFunctionPtrType(const FuncInfo& info, const std::optional<std::string>& className = std::nullopt)
+    {
+        std::stringstream stream;
+        stream << info.retType;
+        stream << std::format("({}*)(", className.has_value() ? className.value() + "::" : "");
+        for (auto i = 0; i < info.parameters.size(); i++) {
+            const auto& paramNameAndType = info.parameters[i];
+            stream << paramNameAndType.second;
+            if (i != info.parameters.size() - 1) {
+                stream << ", ";
+            }
+        }
+        stream << ")";
+        return stream.str();
+    }
+
+    static std::string GetClassCode(const ClassInfo& clazz, bool dynamic) // NOLINT
     {
         const std::string fullName = GetFullName(clazz);
         auto defaultCtorFieldAccess = FieldAccess::pub;
@@ -124,7 +203,7 @@ namespace MirrorTool {
 
         std::stringstream stream;
         stream << Common::newline;
-        stream << std::format("int {}::_mirrorRegistry = []() -> int ", fullName) << Common::newline;
+        stream << std::format("Mirror::Internal::ScopedReleaser {}::_mirrorRegistry = []() -> Mirror::Internal::ScopedReleaser ", fullName) << Common::newline;
         stream << "{" << Common::newline;
         stream << Common::tab<1> << "Mirror::Registry::Get()";
         if (clazz.baseClassName.empty()) {
@@ -144,29 +223,66 @@ namespace MirrorTool {
             stream << Common::newline << Common::tab<3> << std::format(R"(.StaticVariable<&{}{}>("{}"))", variableName, fieldAccessStr, staticVariable.name);
             stream << GetMetaDataCode<4>(staticVariable);
         }
-        for (const auto& staticFunction : clazz.staticFunctions) {
-            const std::string functionName = GetFullName(staticFunction);
-            const std::string fieldAccessStr = staticFunction.fieldAccess != FieldAccess::pub ? std::format(", {}", GetFieldAccessStr(staticFunction.fieldAccess)) : "";
-            stream << Common::newline << Common::tab<3> << std::format(R"(.StaticFunction<&{}{}>("{}"))", functionName, fieldAccessStr, staticFunction.name);
-            stream << GetMetaDataCode<4>(staticFunction);
+
+        for (const auto staticFunctionOverloadMap = GetFunctionOverloadMap(clazz.staticFunctions);
+            const auto& overloads : staticFunctionOverloadMap | std::views::values) {
+            if (overloads.size() > 1) {
+                for (const auto& overload : overloads) {
+                    const ClassFunctionInfo& staticFunction = *overload;
+                    const std::string functionName = GetFullName(staticFunction);
+                    const std::string shortFunctionNameWithParams = GetOverloadFunctionFullNameWithParams(staticFunction, staticFunction.name);
+                    const std::string ptrType = GetOverloadFunctionPtrType(staticFunction);
+                    const std::string fieldAccessStr = staticFunction.fieldAccess != FieldAccess::pub ? std::format(", {}", GetFieldAccessStr(staticFunction.fieldAccess)) : "";
+                    stream << Common::newline << Common::tab<3> << std::format(R"(.StaticFunction<static_cast<{}>(&{}){}>("{}"))", ptrType, functionName, fieldAccessStr, shortFunctionNameWithParams);
+                    stream << GetMetaDataCode<4>(staticFunction);
+                }
+            } else {
+                const ClassFunctionInfo& staticFunction = *overloads[0];
+                const std::string functionName = GetFullName(staticFunction);
+                const std::string fieldAccessStr = staticFunction.fieldAccess != FieldAccess::pub ? std::format(", {}", GetFieldAccessStr(staticFunction.fieldAccess)) : "";
+                stream << Common::newline << Common::tab<3> << std::format(R"(.StaticFunction<&{}{}>("{}"))", functionName, fieldAccessStr, staticFunction.name);
+                stream << GetMetaDataCode<4>(staticFunction);
+            }
         }
-        // TODO overload support
+
         for (const auto& variable : clazz.variables) {
             const std::string variableName = GetFullName(variable);
             const std::string fieldAccessStr = variable.fieldAccess != FieldAccess::pub ? std::format(", {}", GetFieldAccessStr(variable.fieldAccess)) : "";
             stream << Common::newline << Common::tab<3> << std::format(R"(.MemberVariable<&{}{}>("{}"))", variableName, fieldAccessStr, variable.name);
             stream << GetMetaDataCode<4>(variable);
         }
-        for (const auto& function : clazz.functions) {
-            const std::string functionName = GetFullName(function);
-            const std::string fieldAccessStr = function.fieldAccess != FieldAccess::pub ? std::format(", {}", GetFieldAccessStr(function.fieldAccess)) : "";
-            stream << Common::newline << Common::tab<3> << std::format(R"(.MemberFunction<&{}{}>("{}"))", functionName, fieldAccessStr, function.name);
-            stream << GetMetaDataCode<4>(function);
+
+        for (const auto memberFunctionOverloadMap = GetFunctionOverloadMap(clazz.functions);
+            const auto& overloads : memberFunctionOverloadMap | std::views::values) {
+            if (overloads.size() > 1) {
+                for (const auto& overload : overloads) {
+                    const ClassFunctionInfo& function = *overload;
+                    const std::string functionName = GetFullName(function);
+                    const std::string shortFunctionNameWithParams = GetOverloadFunctionFullNameWithParams(function, function.name);
+                    const std::string ptrType = GetOverloadFunctionPtrType(function, fullName);
+                    const std::string fieldAccessStr = function.fieldAccess != FieldAccess::pub ? std::format(", {}", GetFieldAccessStr(function.fieldAccess)) : "";
+                    stream << Common::newline << Common::tab<3> << std::format(R"(.MemberFunction<static_cast<{}>(&{}){}>("{}"))", ptrType, functionName, fieldAccessStr, shortFunctionNameWithParams);
+                    stream << GetMetaDataCode<4>(function);
+                }
+            } else {
+                const ClassFunctionInfo& function = *overloads[0];
+                const std::string functionName = GetFullName(function);
+                const std::string fieldAccessStr = function.fieldAccess != FieldAccess::pub ? std::format(", {}", GetFieldAccessStr(function.fieldAccess)) : "";
+                stream << Common::newline << Common::tab<3> << std::format(R"(.MemberFunction<&{}{}>("{}"))", functionName, fieldAccessStr, function.name);
+                stream << GetMetaDataCode<4>(function);
+            }
         }
-        // TODO overload support
+
         stream << ";" << Common::newline;
-        stream << Common::tab<1> << "return 0;" << Common::newline;
+        if (dynamic) {
+            stream << Common::tab<1> << "return Mirror::Internal::ScopedReleaser([]() -> void {" << Common::newline;
+            stream << Common::tab<2> << std::format(R"(Mirror::Registry::Get().UnloadClass("{}");)", fullName) << Common::newline;
+            stream << Common::tab<1> << "});" << Common::newline;
+        } else {
+            stream << Common::tab<1> << "return Mirror::Internal::ScopedReleaser();" << Common::newline;
+        }
         stream << "}();" << Common::newline;
+
         stream << Common::newline;
         stream << std::format("const Mirror::Class& {}::GetStaticClass()", fullName) << Common::newline;
         stream << "{" << Common::newline;
@@ -178,32 +294,31 @@ namespace MirrorTool {
         stream << Common::tab<1> << std::format("static const Mirror::Class& clazz = Mirror::Class::Get<{}>();", fullName) << Common::newline;
         stream << Common::tab<1> << "return clazz;" << Common::newline;
         stream << "}" << Common::newline;
-        stream << Common::newline;
 
         for (const auto& internalClass : clazz.classes) {
-            stream << GetClassCode(internalClass);
+            stream << GetClassCode(internalClass, dynamic);
         }
         return stream.str();
     }
 
-    static std::string GetNamespaceClassesCode(const NamespaceInfo& ns) // NOLINT
+    static std::string GetNamespaceClassesCode(const NamespaceInfo& ns, bool dynamic) // NOLINT
     {
         std::stringstream stream;
         for (const auto& clazz : ns.classes) {
-            stream << GetClassCode(clazz);
+            stream << GetClassCode(clazz, dynamic);
         }
         for (const auto& cns : ns.namespaces) {
-            stream << GetNamespaceClassesCode(cns);
+            stream << GetNamespaceClassesCode(cns, dynamic);
         }
         return stream.str();
     }
 
-    static std::string GetClassesCode(const MetaInfo& metaInfo)
+    static std::string GetClassesCode(const MetaInfo& metaInfo, bool dynamic)
     {
         std::stringstream stream;
-        stream << GetNamespaceClassesCode(metaInfo.global);
+        stream << GetNamespaceClassesCode(metaInfo.global, dynamic);
         for (const auto& ns : metaInfo.namespaces) {
-            stream << GetNamespaceClassesCode(ns);
+            stream << GetNamespaceClassesCode(ns, dynamic);
         }
         return stream.str();
     }
@@ -221,17 +336,35 @@ namespace MirrorTool {
             stream << GetMetaDataCode<4>(var);
             stream << ";" << Common::newline;
         }
-        for (const auto& func : ns.functions) {
-            const auto fullName = GetFullName(func);
 
-            stream << Common::newline;
-            stream << Common::tab<1> << "Mirror::Registry::Get()" << Common::newline;
-            stream << Common::tab<2> << ".Global()" << Common::newline;
-            stream << Common::tab<3> << std::format(R"(.Function<&{}>("{}"))", fullName, fullName);
-            stream << GetMetaDataCode<4>(func);
-            stream << ";" << Common::newline;
+        for (const auto funcOverloadMap = GetFunctionOverloadMap(ns.functions);
+            const auto& overloads : funcOverloadMap | std::views::values) {
+            if (overloads.size() > 1) {
+                for (const auto& overload : overloads) {
+                    const FunctionInfo& func = *overload;
+                    const auto fullName = GetFullName(func);
+                    const auto fullNameWithParams = GetOverloadFunctionFullNameWithParams(func, GetFullName(func));;
+                    const auto ptrType = GetOverloadFunctionPtrType(func);
+
+                    stream << Common::newline;
+                    stream << Common::tab<1> << "Mirror::Registry::Get()" << Common::newline;
+                    stream << Common::tab<2> << ".Global()" << Common::newline;
+                    stream << Common::tab<3> << std::format(R"(.Function<static_cast<{}>(&{})>("{}"))", ptrType, fullName, fullNameWithParams);
+                    stream << GetMetaDataCode<4>(func);
+                    stream << ";" << Common::newline;
+                }
+            } else {
+                const FunctionInfo& func = *overloads[0];
+                const auto fullName = GetFullName(func);
+
+                stream << Common::newline;
+                stream << Common::tab<1> << "Mirror::Registry::Get()" << Common::newline;
+                stream << Common::tab<2> << ".Global()" << Common::newline;
+                stream << Common::tab<3> << std::format(R"(.Function<&{}>("{}"))", fullName, fullName);
+                stream << GetMetaDataCode<4>(func);
+                stream << ";" << Common::newline;
+            }
         }
-        // TODO overload support
 
         for (const auto& cns : ns.namespaces) {
             stream << GetNamespaceGlobalCode(cns);
@@ -239,29 +372,73 @@ namespace MirrorTool {
         return stream.str();
     }
 
-    static std::string GetGlobalCode(const MetaInfo& metaInfo, size_t uniqueId)
+    static std::string GetNamespaceGlobalUnloadCode(const NamespaceInfo& ns)
+    {
+        std::stringstream stream;
+        for (const auto& var : ns.variables) {
+            const auto fullName = GetFullName(var);
+            stream << Common::newline;
+            stream << Common::tab<2> << std::format(R"(Mirror::Registry::Get().Global().UnloadVariable("{}");)", fullName) << Common::newline;
+        }
+
+        for (const auto funcOverloadMap = GetFunctionOverloadMap(ns.functions);
+            const auto& overloads : funcOverloadMap | std::views::values) {
+            if (overloads.size() > 1) {
+                for (const auto& overload : overloads) {
+                    const FunctionInfo& func = *overload;
+                    const auto fullNameWithParams = GetOverloadFunctionFullNameWithParams(func, GetFullName(func));;
+
+                    stream << Common::newline;
+                    stream << Common::tab<2> << std::format(R"("Mirror::Registry::Get().Global().UnloadFunction("{}");")", fullNameWithParams) << Common::newline;
+                }
+            } else {
+                const FunctionInfo& func = *overloads[0];
+                const auto fullName = GetFullName(func);
+
+                stream << Common::newline;
+                stream << Common::tab<2> << std::format(R"(Mirror::Registry::Get().Global().UnloadFunction<&{}>("{}"))", fullName, fullName) << Common::newline;
+            }
+        }
+
+        for (const auto& cns : ns.namespaces) {
+            stream << GetNamespaceGlobalCode(cns);
+        }
+        return stream.str();
+    }
+
+    static std::string GetGlobalCode(const MetaInfo& metaInfo, size_t uniqueId, bool dynamic)
     {
         std::stringstream stream;
         stream << Common::newline;
-        stream << std::format("int _globalRegistry_{} = []() -> int", uniqueId) << Common::newline;
+        stream << std::format("Mirror::Internal::ScopedReleaser _globalRegistry_{} = []() -> Mirror::Internal::ScopedReleaser", uniqueId) << Common::newline;
         stream << "{";
         stream << GetNamespaceGlobalCode(metaInfo.global);
         for (const auto& ns : metaInfo.namespaces) {
             stream << GetNamespaceGlobalCode(ns);
         }
         stream << Common::newline;
-        stream << Common::tab<1> << "return 0;" << Common::newline;
+        if (dynamic) {
+            stream << Common::tab<1> << "return Mirror::Internal::ScopedReleaser([]() -> void {" << Common::newline;
+            stream << GetNamespaceGlobalCode(metaInfo.global);
+            for (const auto& ns : metaInfo.namespaces) {
+                stream << GetNamespaceGlobalCode(ns);
+            }
+            stream << Common::tab<1> << "});" << Common::newline;
+        } else {
+            stream << Common::tab<1> << "return Mirror::Internal::ScopedReleaser();" << Common::newline;
+        }
         stream << "}();" << Common::newline;
         return stream.str();
     }
 }
 
 namespace MirrorTool {
-    Generator::Generator(std::string inInputFile, std::string inOutputFile, std::vector<std::string> inHeaderDirs, const MetaInfo& inMetaInfo)
+    Generator::Generator(std::string inInputFile, std::string inOutputFile, std::vector<std::string> inHeaderDirs, const MetaInfo& inMetaInfo, bool inDynamic)
         : metaInfo(inMetaInfo)
         , inputFile(std::move(inInputFile))
         , outputFile(std::move(inOutputFile))
         , headerDirs(std::move(inHeaderDirs))
+        , dynamic(inDynamic)
     {
     }
 
@@ -299,9 +476,9 @@ namespace MirrorTool {
         outFile << GetHeaderNote() << Common::newline;
         outFile << std::format("#include <{}>", bestMatchHeaderPath) << Common::newline;
         outFile << "#include <Mirror/Registry.h>" << Common::newline;
-        outFile << GetGlobalCode(metaInfo, uniqueId);
-        outFile << GetEnumsCode(metaInfo, uniqueId);
-        outFile << GetClassesCode(metaInfo);
+        outFile << GetGlobalCode(metaInfo, uniqueId, dynamic);
+        outFile << GetEnumsCode(metaInfo, uniqueId, dynamic);
+        outFile << GetClassesCode(metaInfo, dynamic);
         return std::make_pair(true, "");
     }
 }

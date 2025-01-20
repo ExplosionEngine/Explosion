@@ -3,17 +3,11 @@
 //
 
 #include <clipp.h>
-#include <filesystem>
 
 #include <MirrorTool/Parser.h>
 #include <MirrorTool/Generator.h>
 #include <Common/IO.h>
-#include <Common/String.h>
-
-static std::string GetUnixStylePath(const std::string& inPath)
-{
-    return Common::StringUtils::Replace(std::filesystem::weakly_canonical(inPath).string(), "\\", "/");
-}
+#include <Common/FileSystem.h>
 
 int main(int argc, char* argv[]) // NOLINT
 {
@@ -22,20 +16,22 @@ int main(int argc, char* argv[]) // NOLINT
     std::string inputFile;
     std::string outputFile;
     std::vector<std::string> headerDirs;
+    bool dynamic = false;
 
     if (const auto cli = (
             clipp::required("-i").doc("input header file") & clipp::value("input header file", inputFile),
             clipp::required("-o").doc("output file") & clipp::value("output file", outputFile),
-            clipp::option("-I").doc("header search dirs") & clipp::values("header search dirs", headerDirs));
+            clipp::option("-I").doc("header search dirs") & clipp::values("header search dirs", headerDirs),
+            clipp::option("-d").set(dynamic).doc("used for dynamic library (auto unload some metas)"));
         !clipp::parse(argc, argv, cli)) {
         std::cout << clipp::make_man_page(cli, argv[0]);
         return 1;
     }
 
-    inputFile = GetUnixStylePath(inputFile);
-    outputFile = GetUnixStylePath(outputFile);
+    inputFile = Common::Path(inputFile).String();
+    outputFile = Common::Path(outputFile).String();
     for (auto& headerDir : headerDirs) {
-        headerDir = GetUnixStylePath(headerDir);
+        headerDir = Common::Path(headerDir).String();
     }
 
     if (!inputFile.ends_with(".h")) {
@@ -55,7 +51,7 @@ int main(int argc, char* argv[]) // NOLINT
         return 1;
     }
 
-    MirrorTool::Generator generator(inputFile, outputFile, headerDirs, std::get<MirrorTool::MetaInfo>(parseResultOrError));
+    MirrorTool::Generator generator(inputFile, outputFile, headerDirs, std::get<MirrorTool::MetaInfo>(parseResultOrError), dynamic);
     if (auto [generateSuccess, generateError] = generator.Generate();
         !generateSuccess) {
         std::cout << generateError << Common::newline;

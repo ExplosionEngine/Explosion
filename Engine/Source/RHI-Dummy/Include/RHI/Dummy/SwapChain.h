@@ -17,6 +17,7 @@ namespace RHI::Dummy {
         explicit DummySwapChain(const SwapChainCreateInfo& createInfo);
         ~DummySwapChain() override;
 
+        uint8_t GetTextureNum() override;
         Texture* GetTexture(uint8_t index) override;
         uint8_t AcquireBackTexture(Semaphore* signalSemaphore) override;
         void Present(Semaphore* waitSemaphore) override;

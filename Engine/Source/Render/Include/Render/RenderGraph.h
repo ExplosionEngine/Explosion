@@ -11,7 +11,7 @@
 #include <Common/Memory.h>
 #include <RHI/RHI.h>
 #include <Render/ResourcePool.h>
-#include <Render/RenderingCache.h>
+#include <Render/RenderCache.h>
 
 namespace Render {
     class RGBuilder;

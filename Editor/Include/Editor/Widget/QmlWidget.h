@@ -12,13 +12,18 @@ namespace Editor {
         Q_OBJECT
 
     public:
-        explicit QmlWidget(const std::string& qmlFileName, QWidget* parent = nullptr);
+        explicit QmlWidget(std::string inShortQmlFileName, QWidget* inParent = nullptr);
+        ~QmlWidget() override;
 
+        const std::string& GetShotQmlFileName() const;
+        const QUrl& GetUrl() const;
         QQuickView* GetQuickView();
-        const QUrl& GetQmlUrl() const;
+        QWidget* GetQuickViewContainer() const;
 
     private:
+        std::string shortQmlFileName;
         QUrl url;
         QQuickView* quickView;
+        QWidget* quickViewContainer;
     };
 }

@@ -5,13 +5,15 @@
 #include <Editor/Core.h>
 #include <Core/Cmdline.h>
 
-Core::CmdlineArgValue<std::string> caRhiType(
-    "rhiType", "-rhi", RHI::GetPlatformDefaultRHIAbbrString(),
-    "rhi abbr string, can be 'dx12' or 'vulkan'");
+namespace Editor {
+    static ::Core::CmdlineArgValue<std::string> caRhiType(
+        "rhiType", "-rhi", RHI::GetPlatformDefaultRHIAbbrString(),
+        "rhi abbr string, can be 'dx12' or 'vulkan'");
 
-Core::CmdlineArgValue<std::string> caProjectFile(
-    "projectFile", "-project", "",
-    "project file path");
+    static ::Core::CmdlineArgValue<std::string> caProjectFile(
+        "projectFile", "-project", "",
+        "project file path");
+}
 
 namespace Editor {
     Core& Core::Get()
@@ -58,6 +60,7 @@ namespace Editor {
     void Core::InitializeRuntime()
     {
         Runtime::EngineInitParams params {};
+        params.logToFile = true;
         params.projectFile = caProjectFile.GetValue();
         params.rhiType = caRhiType.GetValue();
 

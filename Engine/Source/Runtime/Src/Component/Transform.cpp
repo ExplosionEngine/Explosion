@@ -11,4 +11,19 @@ namespace Runtime {
         : localToWorld(inLocalToWorld)
     {
     }
+
+    ChildOfConstraint::ChildOfConstraint() = default;
+
+    ChildOfConstraint::ChildOfConstraint(Entity inParent, const Common::FTransform& inLocalToParent)
+        : parent(inParent)
+        , localToParent(inLocalToParent)
+    {
+    }
+
+    CopyConstraint::CopyConstraint() = default;
+
+    CopyConstraint::CopyConstraint(Entity inTarget)
+        : target(inTarget)
+    {
+    }
 }

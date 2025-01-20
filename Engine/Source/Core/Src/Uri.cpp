@@ -105,9 +105,9 @@ namespace Core {
         return Common::StringUtils::RegexMatch(content, R"(Project/Plugin/.*)");
     }
 
-    std::filesystem::path AssetUriParser::AbsoluteFilePath() const
+    Common::Path AssetUriParser::AbsoluteFilePath() const
     {
-        std::filesystem::path path;
+        Common::Path path;
 #if BUILD_TEST
         if (IsEngineTestAsset()) {
             path = Paths::EngineTest() / Common::StringUtils::AfterFirst(content, "Engine/Test/");
@@ -116,18 +116,19 @@ namespace Core {
         if (IsEnginePluginAsset()) {
 #endif
             const std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Engine/Plugin/");
-            path = Paths::EnginePluginAsset(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
+            path = Paths::EnginePluginAssetDir(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
         } else if (IsProjectPluginAsset()) {
             const std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Project/Plugin/");
-            path = Paths::ProjectPluginAsset(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
+            path = Paths::ProjectPluginAssetDir(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
         } else if (IsEngineAsset()) {
-            path = Paths::EngineAsset() / Common::StringUtils::AfterFirst(content, "Engine/");
+            path = Paths::EngineAssetDir() / Common::StringUtils::AfterFirst(content, "Engine/");
         } else if (IsProjectAsset()) {
-            path = Paths::ProjectAsset() / Common::StringUtils::AfterFirst(content, "Project/");
+            path = Paths::ProjectAssetDir() / Common::StringUtils::AfterFirst(content, "Project/");
         } else {
             AssertWithReason(false, "bad asset uri");
         }
-        return std::filesystem::absolute(path.concat(".expa"));
+        path = path + ".expa";
+        return path.Absolute();
     }
 
 #if BUILD_TEST

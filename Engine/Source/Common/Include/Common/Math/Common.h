@@ -16,13 +16,13 @@ namespace Common {
 }
 
 namespace Common {
-    template <typename T> T CompareNumber(T lhs, T rhs);
+    template <typename T> bool CompareNumber(T lhs, T rhs);
     template <CppIntegral T> T DivideAndRoundUp(T lhs, T rhs);
 }
 
 namespace Common {
     template <typename T>
-    T CompareNumber(T lhs, T rhs)
+    bool CompareNumber(T lhs, T rhs)
     {
         if constexpr (std::is_floating_point_v<T>) {
             return std::abs(lhs - rhs) < epsilon;

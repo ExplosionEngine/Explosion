@@ -442,3 +442,32 @@ TEST(ContainerTest, TrunkListBasic)
         ASSERT_EQ(elem, count++);
     });
 }
+
+TEST(ContainerTest, StableUnorderedMapTest)
+{
+    StableUnorderedMap<int, bool, 4> t0;
+    bool* a0 = &t0.Emplace(1, true);
+    t0.Emplace(2, true);
+    t0.Emplace(3, false);
+    t0.Emplace(4, true);
+    t0.Emplace(5, false);
+    ASSERT_EQ(a0, &t0.At(1));
+
+    ASSERT_TRUE(t0.Contains(1));
+    ASSERT_TRUE(t0.Contains(3));
+    t0.Erase(1);
+    ASSERT_FALSE(t0.Contains(1));
+
+    ASSERT_EQ(t0.At(2), true);
+    ASSERT_EQ(t0.At(3), false);
+    ASSERT_EQ(t0.At(4), true);
+    ASSERT_EQ(t0.At(5), false);
+
+    uint32_t count = 0;
+    t0.Each([&](const int&, const bool&) -> void {
+        count++;
+    });
+    ASSERT_EQ(count, 4);
+    ASSERT_EQ(t0.Size(), 4);
+    ASSERT_EQ(t0.Capacity(), 8);
+}

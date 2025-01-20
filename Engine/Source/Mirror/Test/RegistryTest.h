@@ -12,11 +12,18 @@ EFunc() int F0(const int a, const int b);
 EFunc() int& F1();
 EFunc() void F2(int& outValue);
 EFunc() int F3(int&& inValue);
+EFunc() int F4(int inValue);
+EFunc() float F4(int inValue, float inRet);
 
 struct EClass(testKey=C0) C0 {
     EClassBody(C0)
 
     EFunc(testKey=F0) static int& F0();
+    EFunc(testKey=F1) static int F1(int inValue);
+    EFunc(testKey=F1) static int F1(int inValue0, int inValue1);
+    EFunc(testKey=F2) int F2(int inValue);
+    EFunc(testKey=F2) int F2(int inValue0, int inValue1);
+
     EProperty(testKey=v0) static int v0;
 };
 

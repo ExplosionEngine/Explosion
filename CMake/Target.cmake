@@ -2,7 +2,6 @@ option(BUILD_TEST "Build unit tests" ON)
 option(BUILD_SAMPLE "Build sample" ON)
 
 set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Generated/Api CACHE PATH "" FORCE)
-set(META_HEADER_DIR ${CMAKE_BINARY_DIR}/Generated/Meta CACHE PATH "" FORCE)
 set(BASIC_LIBS Common CACHE STRING "" FORCE)
 set(BASIC_TEST_LIBS Test CACHE STRING "" FORCE)
 
@@ -127,14 +126,21 @@ function(AddRuntimeDependenciesCopyCommand)
             string(REPLACE "->" ";" TEMP ${R})
             list(GET TEMP 0 SRC)
             list(GET TEMP 1 DST)
+            set(COPY_COMMAND ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST})
+        else ()
+            set(SRC ${R})
+            set(COPY_COMMAND ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>)
+        endif ()
+
+        if (IS_DIRECTORY ${SRC})
             add_custom_command(
                 TARGET ${PARAMS_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST}
+                COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${COPY_COMMAND}
             )
         else ()
             add_custom_command(
                 TARGET ${PARAMS_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${R} $<TARGET_FILE_DIR:${PARAMS_NAME}>
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${COPY_COMMAND}
             )
         endif ()
     endforeach()
@@ -214,7 +220,7 @@ function(GetTargetIncludeDirectoriesRecurse)
 endfunction()
 
 function(AddMirrorInfoSourceGenerationTarget)
-    cmake_parse_arguments(PARAMS "" "NAME;OUTPUT_SRC;OUTPUT_TARGET_NAME" "SEARCH_DIR;PUBLIC_INC;PRIVATE_INC;LIB" ${ARGN})
+    cmake_parse_arguments(PARAMS "DYNAMIC" "NAME;OUTPUT_SRC;OUTPUT_TARGET_NAME" "SEARCH_DIR;PUBLIC_INC;PRIVATE_INC;LIB" ${ARGN})
 
     if (DEFINED PARAMS_PUBLIC_INC)
         list(APPEND INC ${PARAMS_PUBLIC_INC})
@@ -242,6 +248,10 @@ function(AddMirrorInfoSourceGenerationTarget)
         list(APPEND INC_ARGS ${ABSOLUTE_I})
     endforeach()
 
+    if (${PARAMS_DYNAMIC})
+        list(APPEND DYNAMIC_ARG "-d")
+    endif ()
+
     foreach (SEARCH_DIR ${PARAMS_SEARCH_DIR})
         file(GLOB_RECURSE INPUT_HEADER_FILES "${SEARCH_DIR}/*.h")
         foreach (INPUT_HEADER_FILE ${INPUT_HEADER_FILES})
@@ -254,7 +264,7 @@ function(AddMirrorInfoSourceGenerationTarget)
 
             add_custom_command(
                 OUTPUT ${OUTPUT_SOURCE}
-                COMMAND "$<TARGET_FILE:MirrorTool>" "-i" ${INPUT_HEADER_FILE} "-o" ${OUTPUT_SOURCE} ${INC_ARGS}
+                COMMAND "$<TARGET_FILE:MirrorTool>" ${DYNAMIC_ARG} "-i" ${INPUT_HEADER_FILE} "-o" ${OUTPUT_SOURCE} ${INC_ARGS}
                 DEPENDS MirrorTool ${INPUT_HEADER_FILE}
             )
         endforeach()
@@ -274,7 +284,7 @@ function(AddMirrorInfoSourceGenerationTarget)
 endfunction()
 
 function(AddExecutable)
-    cmake_parse_arguments(PARAMS "SAMPLE;META" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES;REFLECT" ${ARGN})
+    cmake_parse_arguments(PARAMS "SAMPLE" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES;REFLECT" ${ARGN})
 
     if (${PARAMS_SAMPLE} AND (NOT ${BUILD_SAMPLE}))
         return()
@@ -332,13 +342,17 @@ function(AddExecutable)
 endfunction()
 
 function(AddLibrary)
-    cmake_parse_arguments(PARAMS "META" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB;REFLECT" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB;REFLECT" ${ARGN})
 
     if ("${PARAMS_TYPE}" STREQUAL "SHARED")
         list(APPEND PARAMS_PUBLIC_INC ${API_HEADER_DIR}/${PARAMS_NAME})
     endif ()
 
     if (DEFINED PARAMS_REFLECT)
+        if ("${PARAMS_TYPE}" STREQUAL "SHARED")
+            list(APPEND EXTRA_PARAMS DYNAMIC)
+        endif ()
+
         AddMirrorInfoSourceGenerationTarget(
             NAME ${PARAMS_NAME}
             OUTPUT_SRC GENERATED_SRC
@@ -347,6 +361,7 @@ function(AddLibrary)
             PUBLIC_INC ${PARAMS_PUBLIC_INC}
             PRIVATE_INC ${PARAMS_PRIVATE_INC}
             LIB ${PARAMS_LIB}
+            ${EXTRA_PARAMS}
         )
     endif()
 

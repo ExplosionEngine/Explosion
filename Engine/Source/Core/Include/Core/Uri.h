@@ -41,7 +41,7 @@ namespace Core {
         bool IsProjectAsset() const;
         bool IsEnginePluginAsset() const;
         bool IsProjectPluginAsset() const;
-        std::filesystem::path AbsoluteFilePath() const;
+        Common::Path AbsoluteFilePath() const;
 
 #if BUILD_TEST
         bool IsEngineTestAsset() const;

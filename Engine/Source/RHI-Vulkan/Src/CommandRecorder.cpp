@@ -135,7 +135,7 @@ namespace RHI::Vulkan {
         return result;
     }
 
-    static VkBufferImageCopy GetNativeBufferImageCopy(Device& device, Texture& texture, const BufferTextureCopyInfo& copyInfo)
+    static VkBufferImageCopy GetNativeBufferImageCopy(Device& device, const Texture& texture, const BufferTextureCopyInfo& copyInfo)
     {
         const auto aspectLayout = device.GetTextureSubResourceCopyFootprint(texture, copyInfo.textureSubResource); // NOLINT
         const auto createInfo = texture.GetCreateInfo();
@@ -371,7 +371,7 @@ namespace RHI::Vulkan {
 
         if (inBeginInfo.depthStencilAttachment.has_value())
         {
-            auto* depthStencilTextureView = static_cast<VulkanTextureView*>(inBeginInfo.depthStencilAttachment->view);
+            const auto* depthStencilTextureView = static_cast<VulkanTextureView*>(inBeginInfo.depthStencilAttachment->view);
 
             VkRenderingAttachmentInfo depthAttachmentInfo = {};
             depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;

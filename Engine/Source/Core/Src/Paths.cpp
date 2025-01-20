@@ -5,92 +5,152 @@
 #include <Core/Paths.h>
 
 namespace Core {
-    std::filesystem::path Paths::workdingDir = std::filesystem::path();
-    std::filesystem::path Paths::currentProjectFile = std::filesystem::path();
+    Common::Path Paths::executablePath = Common::Path();
+    Common::Path Paths::workingDir = Common::Path();
+    Common::Path Paths::currentProjectFile = Common::Path();
 
-    std::filesystem::path Paths::WorkingDir()
+    void Paths::SetExecutableDir(const Common::Path& inPath)
+    {
+        executablePath = inPath;
+    }
+
+    void Paths::SetCurrentProjectFile(const Common::Path& inFile)
+    {
+        currentProjectFile = inFile;
+    }
+
+    bool Paths::HasSetProjectFile()
+    {
+        return !currentProjectFile.Empty();
+    }
+
+    bool Paths::HasSetExecutableDir()
+    {
+        return !executablePath.Empty();
+    }
+
+    Common::Path Paths::WorkingDir()
     {
         // working directory is set to engine binaries directory as default
-        if (workdingDir.empty()) {
-            workdingDir = std::filesystem::current_path();
+        if (workingDir.Empty()) {
+            workingDir = Common::Path::WorkingDirectory();
         }
-        return workdingDir;
+        return workingDir;
     }
 
-    std::filesystem::path Paths::EngineRoot()
+    Common::Path Paths::ExecutablePath()
     {
-        return WorkingDir().parent_path();
+        Assert(!executablePath.Empty());
+        return executablePath;
     }
 
-    std::filesystem::path Paths::EngineRes()
+    Common::Path Paths::EngineRootDir()
     {
-        return EngineRoot() / "Resource";
+#if BUILD_TEST
+        if (HasSetExecutableDir()) {
+            return ExecutablePath().Parent().Parent();
+        }
+        return WorkingDir().Parent();
+#else
+        Assert(HasSetExecutableDir());
+        return ExecutableDir().Parent().Parent();
+#endif
     }
 
-    std::filesystem::path Paths::EngineShader()
+    Common::Path Paths::EngineResDir()
     {
-        return EngineRoot() / "Shader";
+        return EngineRootDir() / "Resource";
     }
 
-    std::filesystem::path Paths::EngineAsset()
+    Common::Path Paths::EngineShaderDir()
     {
-        return EngineRoot() / "Asset";
+        return EngineRootDir() / "Shader";
     }
 
-    std::filesystem::path Paths::EngineBin()
+    Common::Path Paths::EngineAssetDir()
     {
-        return EngineRoot() / "Binaries";
+        return EngineRootDir() / "Asset";
     }
 
-    std::filesystem::path Paths::EnginePlugin()
+    Common::Path Paths::EngineBinDir()
     {
-        return EngineRoot() / "Plugin";
+        return EngineRootDir() / "Binaries";
     }
 
-    std::filesystem::path Paths::EnginePluginAsset(const std::string& pluginName)
+    Common::Path Paths::EngineCacheDir()
     {
-        return EnginePlugin() / pluginName / "Asset";
+        return EngineRootDir() / "Cache";
     }
 
-    void Paths::SetCurrentProjectFile(std::filesystem::path inFile)
+    Common::Path Paths::EngineLogDir()
     {
-        currentProjectFile = std::move(inFile);
+        return EngineCacheDir() / "Log";
     }
 
-    std::filesystem::path Paths::ProjectFile()
+    Common::Path Paths::EnginePluginDir()
+    {
+        return EngineRootDir() / "Plugin";
+    }
+
+    Common::Path Paths::EnginePluginAssetDir(const std::string& pluginName)
+    {
+        return EnginePluginDir() / pluginName / "Asset";
+    }
+
+    Common::Path Paths::ProjectFile()
     {
         return currentProjectFile;
     }
 
-    std::filesystem::path Paths::ProjectRoot()
+    Common::Path Paths::ProjectRootDir()
     {
-        return currentProjectFile.parent_path();
+        return currentProjectFile.Parent();
     }
 
-    std::filesystem::path Paths::ProjectAsset()
+    Common::Path Paths::ProjectAssetDir()
     {
-        return ProjectRoot() / "Asset";
+        return ProjectRootDir() / "Asset";
     }
 
-    std::filesystem::path Paths::ProjectBin()
+    Common::Path Paths::ProjectBinDir()
     {
-        return ProjectRoot() / "Binaries";
+        return ProjectRootDir() / "Binaries";
     }
 
-    std::filesystem::path Paths::ProjectPlugin()
+    Common::Path Paths::ProjectCacheDir()
     {
-        return ProjectRoot() / "Plugin";
+        return ProjectRootDir() / "Cache";
     }
 
-    std::filesystem::path Paths::ProjectPluginAsset(const std::string& pluginName)
+    Common::Path Paths::ProjectLogDir()
     {
-        return ProjectPlugin() / pluginName / "Asset";
+        return ProjectCacheDir() / "Log";
+    }
+
+    Common::Path Paths::ProjectPluginDir()
+    {
+        return ProjectRootDir() / "Plugin";
+    }
+
+    Common::Path Paths::ProjectPluginAssetDir(const std::string& pluginName)
+    {
+        return ProjectPluginDir() / pluginName / "Asset";
+    }
+
+    Common::Path Paths::EngineCMakeSourceDir()
+    {
+        return ENGINE_CMAKE_SOURCE_DIRECTORY;
+    }
+
+    Common::Path Paths::EngineCMakeBinaryDir()
+    {
+        return ENGINE_CMAKE_BINARY_DIRECTORY;
     }
 
 #if BUILD_TEST
-    std::filesystem::path Paths::EngineTest()
+    Common::Path Paths::EngineTest()
     {
-        return EngineRoot() / "Test";
+        return EngineRootDir() / "Test";
     }
 #endif
 }

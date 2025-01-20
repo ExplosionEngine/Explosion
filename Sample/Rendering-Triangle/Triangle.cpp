@@ -5,7 +5,6 @@
 #include <Application.h>
 #include <RHI/RHI.h>
 #include <Render/ShaderCompiler.h>
-#include <Render/RenderingCache.h>
 #include <Render/RenderGraph.h>
 
 using namespace Common;

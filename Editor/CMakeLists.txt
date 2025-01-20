@@ -12,20 +12,54 @@ qt_add_executable(Editor ${SOURCES})
 target_include_directories(Editor PRIVATE Include)
 target_link_libraries(Editor PRIVATE Core RHI Runtime Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Quick)
 
-# TODO config runtime dependencies in Windows
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(PLATFORM_DEP_TARGET RHI-DirectX12 RHI-Vulkan)
+else()
+    set(PLATFORM_DEP_TARGET RHI-Vulkan)
+endif()
+add_dependencies(Editor ${PLATFORM_DEP_TARGET})
 
-file(GLOB_RECURSE QML_SOURCES QML/*.qml)
-file(GLOB_RECURSE RESOURCES Resource/*)
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(QT_WIN_DEPLOY_EXECUTABLE ${QT_LIB_PREFIX}/bin/windeployqt.exe)
+    set(QT_BUILDIN_QML_DIRECTORY ${QT_LIB_PREFIX}/qml)
+    add_custom_command(
+        TARGET Editor POST_BUILD
+        COMMAND ${QT_WIN_DEPLOY_EXECUTABLE} $<TARGET_FILE:Editor> --qmldir ${QT_BUILDIN_QML_DIRECTORY} --verbose 0
+    )
+endif ()
 
-list(APPEND RESOURCES_PENDING_SET_ALIAS ${QML_SOURCES} ${RESOURCES})
-foreach (RESOURCE ${RESOURCES_PENDING_SET_ALIAS})
-    get_filename_component(FILENAME ${RESOURCE} NAME)
-    set_source_files_properties(${RESOURCE} PROPERTIES QT_RESOURCE_ALIAS ${FILENAME})
+set(EDITOR_QML_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Qml)
+set(EDITOR_RESOURCE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Qml/Resource)
+get_filename_component(EDITOR_RESOURCE_ROOT_ABSOLUTE ${EDITOR_RESOURCE_ROOT} ABSOLUTE)
+
+file(GLOB QML_SOURCES ${EDITOR_QML_ROOT}/*.qml)
+file(GLOB_RECURSE RESOURCES ${EDITOR_RESOURCE_ROOT}/*)
+
+list(
+    APPEND SINGLETON_QML_SOURCES
+        ETheme.qml)
+target_compile_definitions(Editor PRIVATE -DSINGLETON_QML_SOURCES="${SINGLETON_QML_SOURCES}")
+
+# QML only support placed in root dir
+foreach (QML_SOURCE ${QML_SOURCES})
+    get_filename_component(ALIAS ${QML_SOURCE} NAME)
+    set_source_files_properties(${QML_SOURCE} PROPERTIES QT_RESOURCE_ALIAS ${ALIAS})
+    if (${ALIAS} IN_LIST SINGLETON_QML_SOURCES)
+        set_source_files_properties(${QML_SOURCE} PROPERTIES QT_QML_SINGLETON_TYPE true)
+    endif ()
+endforeach ()
+
+foreach (RESOURCE ${RESOURCES})
+    string(REPLACE ${EDITOR_RESOURCE_ROOT_ABSOLUTE} "Resource" ALIAS ${RESOURCE})
+    set_source_files_properties(${RESOURCE} PROPERTIES QT_RESOURCE_ALIAS ${ALIAS})
 endforeach ()
 
 qt_add_qml_module(
     Editor
+    NO_CACHEGEN
+    NO_GENERATE_QMLDIR
     URI editor
     QML_FILES ${QML_SOURCES}
     RESOURCES ${RESOURCES}
+    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Generated/QmlModule
 )

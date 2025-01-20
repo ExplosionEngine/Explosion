@@ -40,6 +40,7 @@ namespace RHI {
         NonCopyable(SwapChain)
         virtual ~SwapChain();
 
+        virtual uint8_t GetTextureNum() = 0;
         virtual Texture* GetTexture(uint8_t index) = 0;
         virtual uint8_t AcquireBackTexture(Semaphore* signalSemaphore) = 0;
         virtual void Present(Semaphore* waitSemaphore) = 0;
