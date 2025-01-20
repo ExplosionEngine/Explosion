@@ -29,36 +29,16 @@ Rectangle {
                 }
 
                 EButton {
-                    text: 'TODO Secondary Button'
+                    style: EButton.Style.Secondary
+                    text: 'Secondary Button'
                 }
 
                 EButton {
-                    text: 'TODO Disabled Button'
+                    style: EButton.Style.Disabled
+                    text: 'Disabled Button'
                 }
 
-                EButton {
-                    text: 'TODO Icon Button'
-                }
-
-                EButton {
-                    text: 'TODO Outline Button'
-                }
-            }
-
-            RowLayout {
-                Layout.margins: 5
-
-                EButton {
-                    text: 'TODO Dashed Button'
-                }
-
-                EButton {
-                    text: 'TODO Dashed Button'
-                }
-
-                EButton {
-                    text: 'TODO Text Button'
-                }
+                // TODO icon button
             }
 
             RowLayout {
@@ -93,6 +73,9 @@ Rectangle {
                     text: 'Content'
                     style: EText.Style.Content
                 }
+
+                // TODO superlink text
+                // TODO button text
             }
         }
     }
