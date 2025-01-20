@@ -5,42 +5,52 @@
 #include <Core/Thread.h>
 
 namespace Core {
+    static thread_local auto currentTag = ThreadTag::unknown;
+
     void ThreadContext::SetTag(ThreadTag inTag)
     {
-        tag = inTag;
+        currentTag = inTag;
     }
 
     ThreadTag ThreadContext::GetTag()
     {
-        return tag;
+        return currentTag;
     }
 
     bool ThreadContext::IsUnknownThread()
     {
-        return tag == ThreadTag::unknown;
+        return currentTag == ThreadTag::unknown;
     }
 
     bool ThreadContext::IsGameThread()
     {
-        return tag == ThreadTag::game;
+        return currentTag == ThreadTag::game;
     }
 
     bool ThreadContext::IsRenderThread()
     {
-        return tag == ThreadTag::render;
+        return currentTag == ThreadTag::render;
     }
 
     bool ThreadContext::IsGameWorkerThread()
     {
-        return tag == ThreadTag::gameWorker;
+        return currentTag == ThreadTag::gameWorker;
     }
 
     bool ThreadContext::IsRenderWorkerThread()
     {
-        return tag == ThreadTag::renderWorker;
+        return currentTag == ThreadTag::renderWorker;
     }
 
-    thread_local ThreadTag ThreadContext::tag = ThreadTag::unknown;
+    bool ThreadContext::IsGameOrWorkerThread()
+    {
+        return currentTag == ThreadTag::game || currentTag == ThreadTag::gameWorker;
+    }
+
+    bool ThreadContext::IsRenderOrWorkerThread()
+    {
+        return currentTag == ThreadTag::render || currentTag == ThreadTag::renderWorker;
+    }
 
     ScopedThreadTag::ScopedThreadTag(ThreadTag inTag)
     {

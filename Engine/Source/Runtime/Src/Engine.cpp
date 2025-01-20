@@ -54,6 +54,8 @@ namespace Runtime {
             }
             world->Tick(inTimeSeconds);
         }
+
+        // TODO emplace render thread task, like wait fence, console command copy
     }
 
     Common::UniqueRef<World> Engine::CreateWorld(const std::string& inName) const // NOLINT

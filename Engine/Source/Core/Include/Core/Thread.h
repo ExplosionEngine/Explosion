@@ -27,9 +27,8 @@ namespace Core {
         static bool IsRenderThread();
         static bool IsGameWorkerThread();
         static bool IsRenderWorkerThread();
-
-    private:
-        static thread_local ThreadTag tag;
+        static bool IsGameOrWorkerThread();
+        static bool IsRenderOrWorkerThread();
     };
 
     class CORE_API ScopedThreadTag {
