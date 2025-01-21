@@ -324,7 +324,10 @@ namespace Runtime {
         Observer& ObRemoved(CompClass inClass);
         size_t Size() const;
         void Each(const EntityTraverseFunc& inFunc) const;
+        void EachThenClear(const EntityTraverseFunc& inFunc);
         void Clear();
+        const std::vector<Entity>& All() const;
+        std::vector<Entity> Pop();
         void UnbindAll();
         ConstIter Begin() const;
         ConstIter End() const;
@@ -360,6 +363,9 @@ namespace Runtime {
         void ClearUpdated();
         void ClearRemoved();
         void Clear();
+        auto& Constructed();
+        auto& Updated();
+        auto& Removed();
         const auto& Constructed() const;
         const auto& Updated() const;
         const auto& Removed() const;
@@ -430,6 +436,7 @@ namespace Runtime {
         void ResetTransients();
 
         // entity
+        // TODO create with hint
         Entity Create();
         void Destroy(Entity inEntity);
         bool Valid(Entity inEntity) const;
@@ -980,6 +987,24 @@ namespace Runtime {
         ClearConstructed();
         ClearUpdated();
         ClearRemoved();
+    }
+
+    template <typename C>
+    auto& EventsObserver<C>::Constructed()
+    {
+        return constructedObserver;
+    }
+
+    template <typename C>
+    auto& EventsObserver<C>::Updated()
+    {
+        return updatedObserver;
+    }
+
+    template <typename C>
+    auto& EventsObserver<C>::Removed()
+    {
+        return removedObserver;
     }
 
     template <typename C>

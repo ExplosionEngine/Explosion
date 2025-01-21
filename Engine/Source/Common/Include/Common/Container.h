@@ -12,6 +12,7 @@
 #include <bitset>
 #include <list>
 #include <functional>
+#include <iterator>
 
 #include <Common/Debug.h>
 #include <Common/Concepts.h>

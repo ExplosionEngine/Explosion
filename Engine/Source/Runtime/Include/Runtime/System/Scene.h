@@ -27,9 +27,9 @@ namespace Runtime {
     private:
         template <typename SP> using SPMap = std::unordered_map<Entity, Render::SPHandle<SP>>;
 
-        static Render::LightSceneProxy MakeLightSceneProxy(const DirectionalLight& inDirectionalLight, const Transform* inTransform);
-        static Render::LightSceneProxy MakeLightSceneProxy(const PointLight& inPointLight, const Transform* inTransform);
-        static Render::LightSceneProxy MakeLightSceneProxy(const SpotLight& inSpotLight, const Transform* inTransform);
+        static Render::LightSceneProxy MakeLightSceneProxy(const DirectionalLight& inDirectionalLight, const WorldTransform* inTransform);
+        static Render::LightSceneProxy MakeLightSceneProxy(const PointLight& inPointLight, const WorldTransform* inTransform);
+        static Render::LightSceneProxy MakeLightSceneProxy(const SpotLight& inSpotLight, const WorldTransform* inTransform);
         template <typename L> void EmplaceLightSceneProxy(Entity inEntity);
         template <typename L> void UpdateLightSceneProxy(Entity inEntity);
         template <typename SP> void UpdateTransformForSceneProxy(SPMap<SP>& inSceneProxyMap, Entity inEntity, bool inWithScale = true);
@@ -49,13 +49,13 @@ namespace Runtime {
     template <typename L>
     void SceneSystem::EmplaceLightSceneProxy(Entity inEntity)
     {
-        lightSceneProxies.emplace(inEntity, scene->AddLight(MakeLightSceneProxy(registry.Get<L>(inEntity), registry.Find<Transform>(inEntity))));
+        lightSceneProxies.emplace(inEntity, scene->AddLight(MakeLightSceneProxy(registry.Get<L>(inEntity), registry.Find<WorldTransform>(inEntity))));
     }
 
     template <typename L>
     void SceneSystem::UpdateLightSceneProxy(Entity inEntity)
     {
-        *lightSceneProxies.at(inEntity) = MakeLightSceneProxy(registry.Get<L>(inEntity), registry.Find<Transform>(inEntity));
+        *lightSceneProxies.at(inEntity) = MakeLightSceneProxy(registry.Get<L>(inEntity), registry.Find<WorldTransform>(inEntity));
     }
 
     template <typename SP>
@@ -66,7 +66,7 @@ namespace Runtime {
             return;
         }
 
-        if (const Transform* transform = registry.Find<Transform>(inEntity);
+        if (const WorldTransform* transform = registry.Find<WorldTransform>(inEntity);
             transform == nullptr) {
             iter->second->localToWorld = Common::FMat4x4Consts::identity;
         } else {

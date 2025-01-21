@@ -413,12 +413,14 @@ namespace Runtime {
 
     RuntimeFilter& RuntimeFilter::IncludeDyn(CompClass inClass)
     {
+        Assert(!includes.contains(inClass));
         includes.emplace(inClass);
         return *this;
     }
 
     RuntimeFilter& RuntimeFilter::ExcludeDyn(CompClass inClass)
     {
+        Assert(!excludes.contains(inClass));
         excludes.emplace(inClass);
         return *this;
     }
@@ -460,9 +462,27 @@ namespace Runtime {
         }
     }
 
+    void Observer::EachThenClear(const EntityTraverseFunc& inFunc)
+    {
+        Each(inFunc);
+        Clear();
+    }
+
     void Observer::Clear()
     {
         entities.clear();
+    }
+
+    const std::vector<Entity>& Observer::All() const
+    {
+        return entities;
+    }
+
+    std::vector<Entity> Observer::Pop()
+    {
+        auto result = entities;
+        Clear();
+        return result;
     }
 
     void Observer::UnbindAll()
