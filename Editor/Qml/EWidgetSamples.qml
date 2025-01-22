@@ -6,11 +6,12 @@ Rectangle {
     color: ETheme.bgColor
 
     ScrollView {
+        id: 'scrollview'
         anchors.fill: parent
+        anchors.margins: 20
 
         ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 20
+            width: Math.max(implicitWidth, scrollview.availableWidth)
 
             RowLayout {
                 Layout.leftMargin: 5
@@ -25,20 +26,87 @@ Rectangle {
                 Layout.margins: 5
 
                 EButton {
-                    text: 'Basic'
+                    text: 'Basic Button'
+                    onClicked: {
+                        console.log('basic button clicked')
+                    }
                 }
 
                 EButton {
                     style: EButton.Style.Secondary
                     text: 'Secondary Button'
+                    onClicked: {
+                        console.log('secondary button clicked')
+                    }
                 }
 
                 EButton {
-                    style: EButton.Style.Disabled
                     text: 'Disabled Button'
+                    disabled: true
+                    onClicked: {
+                        console.log('disabled button clicked')
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.margins: 5
+
+                EButton {
+                    text: 'Large Button'
+                    size: EButton.Size.Large
+                    onClicked: {
+                        console.log('large button clicked')
+                    }
                 }
 
-                // TODO icon button
+                EButton {
+                    text: 'Middle Button'
+                    size: EButton.Size.Middle
+                    onClicked: {
+                        console.log('middle button clicked')
+                    }
+                }
+
+                EButton {
+                    text: 'Small Button'
+                    size: EButton.Size.Small
+                    onClicked: {
+                        console.log('small button clicked')
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.margins: 5
+
+                EButton {
+                    text: 'Rect Button'
+                    shape: EButton.Shape.Rect
+                    onClicked: {
+                        console.log('rect button clicked')
+                    }
+                }
+
+                EButton {
+                    text: 'Round Button'
+                    shape: EButton.Shape.Round
+                    onClicked: {
+                        console.log('round button clicked')
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.margins: 5
+
+                EButton {
+                    text: 'Block Button'
+                    Layout.fillWidth: true
+                    onClicked: {
+                        console.log('block button clicked')
+                    }
+                }
             }
 
             RowLayout {
@@ -68,14 +136,26 @@ Rectangle {
                     text: 'Title3'
                     style: EText.Style.Title3
                 }
+            }
+
+            RowLayout {
+                Layout.leftMargin: 5
 
                 EText {
-                    text: 'Content'
+                    text: 'Basic Content'
                     style: EText.Style.Content
                 }
 
-                // TODO superlink text
-                // TODO button text
+                EText {
+                    text: 'Sample Link'
+                    href: 'https://github.com/ExplosionEngine/Explosion'
+                    style: EText.Style.Link
+                }
+
+                EText {
+                    text: 'Italic Content'
+                    style: EText.Style.Italic
+                }
             }
         }
     }
