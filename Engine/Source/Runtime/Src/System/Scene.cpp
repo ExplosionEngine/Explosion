@@ -17,8 +17,8 @@ namespace Runtime {
         , spotLightsObserver(inRegistry.EventsObserver<SpotLight>())
     {
         transformUpdatedObserver
-            .ObConstructed<Transform>()
-            .ObUpdated<Transform>();
+            .ObConstructed<WorldTransform>()
+            .ObUpdated<WorldTransform>();
     }
 
     SceneSystem::~SceneSystem() = default;
@@ -42,7 +42,7 @@ namespace Runtime {
         spotLightsObserver.Clear();
     }
 
-    Render::LightSceneProxy SceneSystem::MakeLightSceneProxy(const DirectionalLight& inDirectionalLight, const Transform* inTransform)
+    Render::LightSceneProxy SceneSystem::MakeLightSceneProxy(const DirectionalLight& inDirectionalLight, const WorldTransform* inTransform)
     {
         Render::LightSceneProxy result {};
         result.type = Render::LightType::directional;
@@ -53,7 +53,7 @@ namespace Runtime {
         return result;
     }
 
-    Render::LightSceneProxy SceneSystem::MakeLightSceneProxy(const PointLight& inPointLight, const Transform* inTransform)
+    Render::LightSceneProxy SceneSystem::MakeLightSceneProxy(const PointLight& inPointLight, const WorldTransform* inTransform)
     {
         Render::LightSceneProxy result {};
         result.type = Render::LightType::point;
@@ -66,7 +66,7 @@ namespace Runtime {
         return result;
     }
 
-    Render::LightSceneProxy SceneSystem::MakeLightSceneProxy(const SpotLight& inSpotLight, const Transform* inTransform)
+    Render::LightSceneProxy SceneSystem::MakeLightSceneProxy(const SpotLight& inSpotLight, const WorldTransform* inTransform)
     {
         Render::LightSceneProxy result {};
         result.type = Render::LightType::spot;

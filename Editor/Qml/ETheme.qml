@@ -10,6 +10,7 @@ QtObject {
     property color secondaryFocusColor: Qt.color('#9b6a40')
     property color disabledColor: Qt.color('#676563')
     property color fontColor: Qt.color('#ecf0f1')
+    property color linkFontColor: Qt.color('#91b9c4')
 
     property FontLoader normalFont: FontLoader { source: Qt.url('Resource/Font/MiSans-Normal.ttf') }
     property FontLoader boldFont: FontLoader { source: Qt.url('Resource/Font/MiSans-Bold.ttf') }
