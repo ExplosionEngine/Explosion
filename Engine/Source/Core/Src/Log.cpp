@@ -3,6 +3,7 @@
 //
 
 #include <Core/Log.h>
+#include <Common/FileSystem.h>
 #include <Common/IO.h>
 
 namespace Core {

@@ -9,6 +9,7 @@
 #include <QFileSystemWatcher>
 
 #include <Core/Paths.h>
+#include <Common/Memory.h>
 #include <Editor/Widget/QmlWidget.h>
 
 namespace Editor {

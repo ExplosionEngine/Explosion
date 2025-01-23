@@ -3,6 +3,7 @@
 //
 
 #include <Common/Delegate.h>
+#include <gtest/gtest.h>
 
 static int counter = 0;
 
@@ -29,7 +30,7 @@ TEST(DelegateTest, BasicTest)
 {
     Receiver receiver;
 
-    Delegate<int, bool> event;
+    Common::Delegate<int, bool> event;
     ASSERT_EQ(event.BindStatic<&StaticReceiver>(), 0);
     ASSERT_EQ(event.BindMember<&Receiver::Receive>(receiver), 1);
     ASSERT_EQ(event.BindLambda([](int a, bool b) -> void {

@@ -7,6 +7,12 @@
 #include <Render/Scene.h>
 #include <Render/View.h>
 
+namespace RHI {
+    class Texture;
+    class Semaphore;
+    class Fence;
+}
+
 namespace Render {
     class Renderer {
     public:

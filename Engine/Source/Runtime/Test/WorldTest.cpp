@@ -41,8 +41,8 @@ Position::Position(float inX, float inY)
 
 bool Position::operator==(const Position& inRhs) const
 {
-    return CompareNumber(x, inRhs.x)
-        && CompareNumber(y, inRhs.y);
+    return Common::CompareNumber(x, inRhs.x)
+        && Common::CompareNumber(y, inRhs.y);
 }
 
 Velocity::Velocity()
@@ -59,8 +59,8 @@ Velocity::Velocity(float inX, float inY)
 
 bool Velocity::operator==(const Velocity& inRhs) const
 {
-    return CompareNumber(x, inRhs.x)
-        && CompareNumber(y, inRhs.y);
+    return Common::CompareNumber(x, inRhs.x)
+        && Common::CompareNumber(y, inRhs.y);
 }
 
 BasicTest_MotionSystem::BasicTest_MotionSystem(ECRegistry& inRegistry)

@@ -5,8 +5,10 @@
 #include <QQmlEngine>
 
 #include <Editor/QmlEngine.h>
+#include <Core/Cmdline.h>
 #include <Core/Paths.h>
 #include <Common/FileSystem.h>
+#include <Common/String.h>
 
 namespace Editor {
     static ::Core::CmdlineArgValue<bool> caQmlHotReload(
