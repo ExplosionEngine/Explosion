@@ -3,6 +3,8 @@
 //
 
 #include <QApplication>
+
+#include <Core/Cmdline.h>
 #include <Editor/Core.h>
 #include <Editor/QmlEngine.h>
 #include <Editor/Widget/Launcher.h>

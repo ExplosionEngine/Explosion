@@ -2,6 +2,7 @@
 // Created by johnk on 2023/7/31.
 //
 
+#include <Common/Debug.h>
 #include <Core/Paths.h>
 
 namespace Core {
