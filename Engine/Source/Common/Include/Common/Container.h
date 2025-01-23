@@ -17,6 +17,7 @@
 #include <Common/Debug.h>
 #include <Common/Concepts.h>
 #include <Common/Math/Common.h>
+#include <Common/Utility.h>
 
 namespace Common {
     class VectorUtils {
