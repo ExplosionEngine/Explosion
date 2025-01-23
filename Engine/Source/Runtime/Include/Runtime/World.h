@@ -39,7 +39,7 @@ namespace Runtime {
         friend class Engine;
 
         explicit World(const std::string& inName = "");
-        void Tick(float inTimeMs);
+        void Tick(float inDeltaTimeSeconds);
 
         std::string name;
         Runtime::PlayStatus playStatus;

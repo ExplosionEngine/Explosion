@@ -14,7 +14,7 @@ namespace Runtime {
 
     System::~System() = default;
 
-    void System::Tick(float inDeltaTimeMs) {}
+    void System::Tick(float inDeltaTimeSeconds) {}
 }
 
 namespace Runtime::Internal {
@@ -1172,10 +1172,10 @@ namespace Runtime {
         });
     }
 
-    void SystemGraphExecutor::Tick(float inDeltaTimeMs)
+    void SystemGraphExecutor::Tick(float inDeltaTimeSeconds)
     {
         pipeline.ParallelPerformAction([&](const SystemPipeline::SystemContext& context) -> void {
-            context.instance->Tick(inDeltaTimeMs);
+            context.instance->Tick(inDeltaTimeSeconds);
         });
     }
 } // namespace Runtime

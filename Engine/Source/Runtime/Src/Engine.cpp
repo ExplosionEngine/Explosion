@@ -46,13 +46,13 @@ namespace Runtime {
         return *renderModule;
     }
 
-    void Engine::Tick(float inTimeSeconds) const
+    void Engine::Tick(float inDeltaTimeSeconds) const
     {
         for (auto* world : worlds) {
             if (!world->Playing()) {
                 continue;
             }
-            world->Tick(inTimeSeconds);
+            world->Tick(inDeltaTimeSeconds);
         }
 
         // TODO emplace render thread task, like wait fence, console command copy

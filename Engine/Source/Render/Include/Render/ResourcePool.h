@@ -48,9 +48,9 @@ namespace Render {
         using DescType = typename PooledResTraits<PooledRes>::DescType;
 
         static RGResourcePool& Get(RHI::Device& device);
-        ~RGResourcePool();
 
         ResRefType Allocate(const DescType& desc);
+        void GarbageCollect();
 
     private:
         explicit RGResourcePool(RHI::Device& inDevice);
@@ -137,9 +137,6 @@ namespace Render {
     }
 
     template <typename PooledResource>
-    RGResourcePool<PooledResource>::~RGResourcePool() = default;
-
-    template <typename PooledResource>
     typename RGResourcePool<PooledResource>::ResRefType RGResourcePool<PooledResource>::Allocate(const DescType& desc)
     {
         for (const auto& pooledResource : pooledResources) {
@@ -150,5 +147,18 @@ namespace Render {
         auto result = PooledResTraits<PooledResource>::CreateResource(device, desc);
         pooledResources.push_back(result);
         return result;
+    }
+
+    template <typename PooledRes>
+    void RGResourcePool<PooledRes>::GarbageCollect()
+    {
+        // TODO maybe we need add a age check ? >= 2 frame not be used == need release
+        for (auto i = 0; i < pooledResources.size();) {
+            if (pooledResources[i].RefCount() <= 1) {
+                pooledResources.erase(pooledResources.begin() + i);
+            } else {
+                i++;
+            }
+        }
     }
 }

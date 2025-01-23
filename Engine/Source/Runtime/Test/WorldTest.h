@@ -46,7 +46,7 @@ class EClass() BasicTest_MotionSystem : public Runtime::System {
     explicit BasicTest_MotionSystem(Runtime::ECRegistry& inRegistry);
     ~BasicTest_MotionSystem() override;
 
-    void Tick(float inDeltaTimeMs) override;
+    void Tick(float inDeltaTimeSeconds) override;
 };
 
 struct EClass() ConcurrentTest_Context {
@@ -64,7 +64,7 @@ struct EClass() ConcurrentTest_SystemA : public Runtime::System {
     explicit ConcurrentTest_SystemA(Runtime::ECRegistry& inRegistry);
     ~ConcurrentTest_SystemA() override;
 
-    void Tick(float inDeltaTimeMs) override;
+    void Tick(float inDeltaTimeSeconds) override;
 };
 
 struct EClass() ConcurrentTest_SystemB : public Runtime::System {
@@ -73,7 +73,7 @@ struct EClass() ConcurrentTest_SystemB : public Runtime::System {
     explicit ConcurrentTest_SystemB(Runtime::ECRegistry& inRegistry);
     ~ConcurrentTest_SystemB() override;
 
-    void Tick(float inDeltaTimeMs) override;
+    void Tick(float inDeltaTimeSeconds) override;
 };
 
 struct EClass() ConcurrentTest_VerifySystem : public Runtime::System {
@@ -82,5 +82,5 @@ struct EClass() ConcurrentTest_VerifySystem : public Runtime::System {
     explicit ConcurrentTest_VerifySystem(Runtime::ECRegistry& inRegistry);
     ~ConcurrentTest_VerifySystem() override;
 
-    void Tick(float inDeltaTimeMs) override;
+    void Tick(float inDeltaTimeSeconds) override;
 };

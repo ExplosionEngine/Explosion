@@ -4,31 +4,31 @@
 
 #pragma once
 
-#include <variant>
-
-#include <Common/Math/Projection.h>
+#include <Common/Container.h>
 #include <Mirror/Meta.h>
 #include <Runtime/Api.h>
+#include <Runtime/ECS.h>
 
 namespace Runtime {
-    struct RUNTIME_API EClass() Camera final {
+    constexpr uint8_t maxPlayerCount = 4;
+
+    struct RUNTIME_API EClass(transient) GViewSource final {
+        EClassBody(GViewSource)
+
+        Common::InplaceVector<Entity, maxPlayerCount> playerCameras;
+    };
+
+    struct RUNTIME_API EClass(transient) Camera final {
         EClassBody(Camera)
 
         Camera();
-        explicit Camera(const Common::FReversedZOrthoProjection& inProjection);
-        explicit Camera(const Common::FReversedZPerspectiveProjection& inProjection);
 
-        EProperty() std::variant<Common::FReversedZOrthoProjection, Common::FReversedZPerspectiveProjection> projection;
+        EProperty() bool perspective;
+        EProperty() float nearPlane;
+        EProperty() std::optional<float> farPlane;
+        // only need when perspective
+        EProperty() std::optional<float> fov;
     };
 
-    struct RUNTIME_API EClass() SceneCapture final {
-        EClassBody(SceneCapture)
-
-        SceneCapture();
-        explicit SceneCapture(const Common::FReversedZOrthoProjection& inProjection);
-        explicit SceneCapture(const Common::FReversedZPerspectiveProjection& inProjection);
-
-        EProperty() std::variant<Common::FReversedZOrthoProjection, Common::FReversedZPerspectiveProjection> projection;
-        // TODO texture render target
-    };
+    // TODO scene capture
 }

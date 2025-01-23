@@ -252,9 +252,9 @@ namespace Render {
         return *this;
     }
 
-    RasterPipelineStateDesc& RasterPipelineStateDesc::SetPrimitiveState(const RPrimitiveState& inPrimtiveState)
+    RasterPipelineStateDesc& RasterPipelineStateDesc::SetPrimitiveState(const RPrimitiveState& inPrimitiveState)
     {
-        primitiveState = inPrimtiveState;
+        primitiveState = inPrimitiveState;
         return *this;
     }
 

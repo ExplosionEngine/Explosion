@@ -14,6 +14,7 @@ namespace Render {
     using LightSPPool = SPPool<LightSceneProxy>;
     using LightSPH = SPHandle<LightSceneProxy>;
 
+    // scene only store render thread cpu data copy, gpu data will auto created by render graph and managed by resource pool
     class Scene final {
     public:
         Scene();
@@ -22,7 +23,7 @@ namespace Render {
         NonCopyable(Scene)
         NonMovable(Scene)
 
-        LightSPH AddLight(LightSceneProxy&& inLight);
+        LightSPH AddLight();
         void RemoveLight(const LightSPH& inHandle);
 
     private:

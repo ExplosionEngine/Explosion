@@ -16,7 +16,7 @@ namespace Runtime {
 
     TransformSystem::~TransformSystem() = default;
 
-    void TransformSystem::Tick(float inDeltaTimeMs)
+    void TransformSystem::Tick(float inDeltaTimeSeconds)
     {
         // Step0: classify the updated entities
         std::vector<Entity> pendingUpdateLocalTransforms;

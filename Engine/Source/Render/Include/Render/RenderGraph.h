@@ -259,6 +259,7 @@ namespace Render {
     private:
         friend class RGBuilder;
 
+        // TODO pre/post execute func
         RGCopyPass(std::string inName, RGCopyPassDesc inPassDesc, RGCopyPassExecuteFunc inFunc);
 
         RGCopyPassDesc passDesc;
@@ -272,6 +273,7 @@ namespace Render {
     private:
         friend class RGBuilder;
 
+        // TODO pre/post execute func
         RGComputePass(std::string inName, std::vector<RGBindGroupRef> inBindGroups, RGComputePassExecuteFunc inFunc);
 
         RGComputePassExecuteFunc func;
@@ -285,6 +287,7 @@ namespace Render {
     private:
         friend class RGBuilder;
 
+        // TODO pre/post execute func
         RGRasterPass(std::string inName, RGRasterPassDesc inPassDesc, std::vector<RGBindGroupRef> inBindGroupds, RGRasterPassExecuteFunc inFunc);
 
         RGRasterPassDesc passDesc;
@@ -319,6 +322,9 @@ namespace Render {
         void AddSyncPoint();
         void Execute(const RGExecuteInfo& inExecuteInfo);
 
+        // TODO upload interface
+
+        // TODO make private
         // execute
         RHI::Buffer* GetRHI(RGBufferRef inBuffer) const;
         RHI::Texture* GetRHI(RGTextureRef inTexture) const;
@@ -341,7 +347,7 @@ namespace Render {
         void CompilePassReadWrites();
         void PerformSyncCheck() const;
         void PerformCull();
-        // TODO resource states check inside pass (e.g. read/write a resource whin a pass)
+        // TODO resource states check inside pass (e.g. read/write a resource within a pass)
         void ComputeResourcesInitialState();
         void ExecuteCopyPass(RHI::CommandRecorder& inRecoder, RGCopyPass* inCopyPass);
         void ExecuteComputePass(RHI::CommandRecorder& inRecoder, RGComputePass* inComputePass);

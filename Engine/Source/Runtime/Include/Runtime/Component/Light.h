@@ -38,6 +38,5 @@ namespace Runtime {
         EProperty() Common::Color color;
         EProperty() float intensity;
         EProperty() bool castShadows;
-        // TODO
     };
 }

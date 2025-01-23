@@ -9,9 +9,9 @@ namespace Render {
 
     Scene::~Scene() = default;
 
-    LightSPH Scene::AddLight(LightSceneProxy&& inLight)
+    LightSPH Scene::AddLight()
     {
-        return lights.Emplace(std::move(inLight));
+        return lights.Emplace();
     }
 
     void Scene::RemoveLight(const LightSPH& inHandle)

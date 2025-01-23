@@ -5,6 +5,13 @@
 #include <Runtime/Asset.h>
 
 namespace Runtime {
+    Asset::Asset() = default;
+
+    Asset::Asset(Core::Uri inUri)
+        : uri(std::move(inUri))
+    {
+    }
+
     AssetManager& AssetManager::Get()
     {
         static AssetManager instance;
