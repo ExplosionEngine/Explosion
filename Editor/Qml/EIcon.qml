@@ -4,8 +4,8 @@ import QtQuick.Controls.Basic
 import QtQuick.Effects
 
 Item {
-    property string src: ''
-    property int srcSize: ETheme.iconFontSize
+    property string name: ''
+    property int size: ETheme.iconFontSize
 
     id: 'root'
     implicitWidth: imageWidget.implicitWidth
@@ -13,9 +13,9 @@ Item {
 
     Image {
         id: 'imageWidget'
-        source: root.src
-        sourceSize.width: root.srcSize
-        sourceSize.height: root.srcSize
+        source: root.name === '' ? '' : 'Resource/Icon/%1.svg'.arg(root.name)
+        sourceSize.width: root.size
+        sourceSize.height: root.size
         layer.enabled: true
         layer.effect: MultiEffect {
             brightness: 1

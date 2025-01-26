@@ -22,7 +22,7 @@ Item {
     }
 
     property string text: ''
-    property string iconSrc: ''
+    property string icon: ''
     property bool disabled: false
     property int style: EButton.Style.Primary
     property int size: EButton.Size.Middle
@@ -47,8 +47,8 @@ Item {
             spacing: 6
 
             EIcon {
-                src: root.iconSrc
-                visible: iconSrc !== ''
+                name: root.icon
+                visible: root.icon !== ''
             }
 
             Text {

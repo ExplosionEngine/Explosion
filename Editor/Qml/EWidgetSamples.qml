@@ -102,7 +102,7 @@ Rectangle {
 
                 EButton {
                     text: 'Icon Button 1'
-                    iconSrc: 'Resource/Icon/home.svg'
+                    icon: 'home'
                     onClicked: {
                         console.log('icon button clicked')
                     }
@@ -110,21 +110,21 @@ Rectangle {
 
                 EButton {
                     text: 'Icon Button 2'
-                    iconSrc: 'Resource/Icon/anchor.svg'
+                    icon: 'anchor'
                     onClicked: {
                         console.log('icon button clicked')
                     }
                 }
 
                 EButton {
-                    iconSrc: 'Resource/Icon/alarm.svg'
+                    icon: 'alarm'
                     onClicked: {
                         console.log('icon button clicked')
                     }
                 }
 
                 EButton {
-                    iconSrc: 'Resource/Icon/api.svg'
+                    icon: 'api'
                     shape: EButton.Shape.Round
                     onClicked: {
                         console.log('icon button clicked')
@@ -206,71 +206,71 @@ Rectangle {
             RowLayout {
                 Layout.leftMargin: 5
 
-                EIcon { src: 'Resource/Icon/arrow-left.svg' }
-                EIcon { src: 'Resource/Icon/arrow-left-up.svg' }
-                EIcon { src: 'Resource/Icon/arrow-up.svg' }
-                EIcon { src: 'Resource/Icon/arrow-right-up.svg' }
-                EIcon { src: 'Resource/Icon/arrow-right.svg' }
-                EIcon { src: 'Resource/Icon/arrow-right-down.svg' }
-                EIcon { src: 'Resource/Icon/arrow-down.svg' }
-                EIcon { src: 'Resource/Icon/arrow-left-down.svg' }
+                EIcon { name: 'arrow-left' }
+                EIcon { name: 'arrow-left-up' }
+                EIcon { name: 'arrow-up' }
+                EIcon { name: 'arrow-right-up' }
+                EIcon { name: 'arrow-right' }
+                EIcon { name: 'arrow-right-down' }
+                EIcon { name: 'arrow-down' }
+                EIcon { name: 'arrow-left-down' }
 
-                EIcon { src: 'Resource/Icon/arrow-left-circle.svg' }
-                EIcon { src: 'Resource/Icon/arrow-left-up-circle.svg' }
-                EIcon { src: 'Resource/Icon/arrow-up-circle.svg' }
-                EIcon { src: 'Resource/Icon/arrow-right-up-circle.svg' }
-                EIcon { src: 'Resource/Icon/arrow-right-circle.svg' }
-                EIcon { src: 'Resource/Icon/arrow-right-down-circle.svg' }
-                EIcon { src: 'Resource/Icon/arrow-down-circle.svg' }
-                EIcon { src: 'Resource/Icon/arrow-left-down-circle.svg' }
+                EIcon { name: 'arrow-left-circle' }
+                EIcon { name: 'arrow-left-up-circle' }
+                EIcon { name: 'arrow-up-circle' }
+                EIcon { name: 'arrow-right-up-circle' }
+                EIcon { name: 'arrow-right-circle' }
+                EIcon { name: 'arrow-right-down-circle' }
+                EIcon { name: 'arrow-down-circle' }
+                EIcon { name: 'arrow-left-down-circle' }
 
-                EIcon { src: 'Resource/Icon/caret-left.svg' }
-                EIcon { src: 'Resource/Icon/caret-up.svg' }
-                EIcon { src: 'Resource/Icon/caret-right.svg' }
-                EIcon { src: 'Resource/Icon/caret-down.svg' }
+                EIcon { name: 'caret-left' }
+                EIcon { name: 'caret-up' }
+                EIcon { name: 'caret-right' }
+                EIcon { name: 'caret-down' }
 
-                EIcon { src: 'Resource/Icon/chevron-left.svg' }
-                EIcon { src: 'Resource/Icon/chevron-up.svg' }
-                EIcon { src: 'Resource/Icon/chevron-right.svg' }
-                EIcon { src: 'Resource/Icon/chevron-down.svg' }
+                EIcon { name: 'chevron-left' }
+                EIcon { name: 'chevron-up' }
+                EIcon { name: 'chevron-right' }
+                EIcon { name: 'chevron-down' }
 
-                EIcon { src: 'Resource/Icon/chevron-left-double.svg' }
-                EIcon { src: 'Resource/Icon/chevron-up-double.svg' }
-                EIcon { src: 'Resource/Icon/chevron-right-double.svg' }
-                EIcon { src: 'Resource/Icon/chevron-down-double.svg' }
+                EIcon { name: 'chevron-left-double' }
+                EIcon { name: 'chevron-up-double' }
+                EIcon { name: 'chevron-right-double' }
+                EIcon { name: 'chevron-down-double' }
             }
 
             RowLayout {
                 Layout.leftMargin: 5
 
-                EIcon { src: 'Resource/Icon/download.svg' }
-                EIcon { src: 'Resource/Icon/login.svg' }
-                EIcon { src: 'Resource/Icon/logout.svg' }
-                EIcon { src: 'Resource/Icon/fullscreen-1.svg' }
-                EIcon { src: 'Resource/Icon/fullscreen-exit-1.svg' }
-                EIcon { src: 'Resource/Icon/load.svg' }
-                EIcon { src: 'Resource/Icon/filter.svg' }
-                EIcon { src: 'Resource/Icon/dashboard.svg' }
-                EIcon { src: 'Resource/Icon/add-rectangle.svg' }
-                EIcon { src: 'Resource/Icon/app.svg' }
-                EIcon { src: 'Resource/Icon/hard-disk-storage.svg' }
-                EIcon { src: 'Resource/Icon/share.svg' }
-                EIcon { src: 'Resource/Icon/system-log.svg' }
-                EIcon { src: 'Resource/Icon/system-code.svg' }
-                EIcon { src: 'Resource/Icon/system-setting.svg' }
-                EIcon { src: 'Resource/Icon/hourglass.svg' }
-                EIcon { src: 'Resource/Icon/more.svg' }
-                EIcon { src: 'Resource/Icon/service.svg' }
-                EIcon { src: 'Resource/Icon/drag-move.svg' }
-                EIcon { src: 'Resource/Icon/focus.svg' }
-                EIcon { src: 'Resource/Icon/fill-color.svg' }
-                EIcon { src: 'Resource/Icon/sip.svg' }
-                EIcon { src: 'Resource/Icon/slice.svg' }
-                EIcon { src: 'Resource/Icon/copy.svg' }
-                EIcon { src: 'Resource/Icon/file-add.svg' }
-                EIcon { src: 'Resource/Icon/folder-add.svg' }
-                EIcon { src: 'Resource/Icon/folder.svg' }
-                EIcon { src: 'Resource/Icon/folder-import.svg' }
+                EIcon { name: 'download' }
+                EIcon { name: 'login' }
+                EIcon { name: 'logout' }
+                EIcon { name: 'fullscreen-1' }
+                EIcon { name: 'fullscreen-exit-1' }
+                EIcon { name: 'load' }
+                EIcon { name: 'filter' }
+                EIcon { name: 'dashboard' }
+                EIcon { name: 'add-rectangle' }
+                EIcon { name: 'app' }
+                EIcon { name: 'hard-disk-storage' }
+                EIcon { name: 'share' }
+                EIcon { name: 'system-log' }
+                EIcon { name: 'system-code' }
+                EIcon { name: 'system-setting' }
+                EIcon { name: 'hourglass' }
+                EIcon { name: 'more' }
+                EIcon { name: 'service' }
+                EIcon { name: 'drag-move' }
+                EIcon { name: 'focus' }
+                EIcon { name: 'fill-color' }
+                EIcon { name: 'sip' }
+                EIcon { name: 'slice' }
+                EIcon { name: 'copy' }
+                EIcon { name: 'file-add' }
+                EIcon { name: 'folder-add' }
+                EIcon { name: 'folder' }
+                EIcon { name: 'folder-import' }
             }
         }
     }
