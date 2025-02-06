@@ -12,7 +12,7 @@
 #include <Common/Concurrent.h>
 
 namespace Render {
-    enum class ShaderByteCodeType {
+    enum class ShaderByteCodeType : uint8_t {
         dxil,
         spirv,
         max

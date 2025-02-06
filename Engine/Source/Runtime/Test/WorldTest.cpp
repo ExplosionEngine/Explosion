@@ -83,7 +83,7 @@ BasicTest_MotionSystem::BasicTest_MotionSystem(ECRegistry& inRegistry)
 
 BasicTest_MotionSystem::~BasicTest_MotionSystem() = default;
 
-void BasicTest_MotionSystem::Tick(float inDeltaTimeMs)
+void BasicTest_MotionSystem::Tick(float inDeltaTimeSeconds)
 {
     auto& [entities] = registry.GGet<BasicTest_ExpectVerifyResult>();
 
@@ -122,7 +122,7 @@ ConcurrentTest_SystemA::ConcurrentTest_SystemA(Runtime::ECRegistry& inRegistry)
 
 ConcurrentTest_SystemA::~ConcurrentTest_SystemA() = default;
 
-void ConcurrentTest_SystemA::Tick(float inDeltaTimeMs)
+void ConcurrentTest_SystemA::Tick(float inDeltaTimeSeconds)
 {
     auto& context = registry.GGet<ConcurrentTest_Context>();
     context.a = 1;
@@ -135,7 +135,7 @@ ConcurrentTest_SystemB::ConcurrentTest_SystemB(Runtime::ECRegistry& inRegistry)
 
 ConcurrentTest_SystemB::~ConcurrentTest_SystemB() = default;
 
-void ConcurrentTest_SystemB::Tick(float inDeltaTimeMs)
+void ConcurrentTest_SystemB::Tick(float inDeltaTimeSeconds)
 {
     auto& context = registry.GGet<ConcurrentTest_Context>();
     context.b = 2;
@@ -153,7 +153,7 @@ ConcurrentTest_VerifySystem::ConcurrentTest_VerifySystem(Runtime::ECRegistry& in
 
 ConcurrentTest_VerifySystem::~ConcurrentTest_VerifySystem() = default;
 
-void ConcurrentTest_VerifySystem::Tick(float inDeltaTimeMs)
+void ConcurrentTest_VerifySystem::Tick(float inDeltaTimeSeconds)
 {
     auto& context = registry.GGet<ConcurrentTest_Context>();
     context.sum = context.sum + context.a + context.b;

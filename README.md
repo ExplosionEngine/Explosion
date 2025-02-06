@@ -119,6 +119,7 @@ Thanks all those following projects:
 * [VulkanMemoryAllocator](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator)
 * [Qt6](https://www.qt.io/product/qt6)
 * [rapidjson](https://github.com/Tencent/rapidjson)
+* [tdesign-icons](https://github.com/Tencent/tdesign-icons)
 
 # Sponsor
 
@@ -126,4 +127,4 @@ Thanks all those following projects:
 
 # License
 
-[MIT](https://github.com/ExplosionEngine/Explosion/blob/master/LICENSE) @ Explosion Development Team All right Reserved 2023.
+[MIT](https://github.com/ExplosionEngine/Explosion/blob/master/LICENSE) @ Explosion Development Team All right Reserved 2025.

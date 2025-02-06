@@ -17,24 +17,12 @@ namespace Render {
         max
     };
 
-    struct DirectionalLightSceneProxyPart {
-        // TODO
-    };
-
-    struct PointLightSceneProxyPart {
-        float radius;
-        // TODO
-    };
-
-    struct SpotLightSceneProxyPart {
-        // TODO
-    };
-
     struct LightSceneProxy {
         LightType type;
         Common::FMat4x4 localToWorld;
         Common::Color color;
         float intensity;
-        std::variant<DirectionalLightSceneProxyPart, PointLightSceneProxyPart, SpotLightSceneProxyPart> typedPart;
+        // point light only
+        float radius;
     };
 }

@@ -236,7 +236,7 @@ void TriangleApplication::CreateSyncObjects()
 
 int main(int argc, char* argv[])
 {
-    TriangleApplication application("Rendering-PostProcess");
+    TriangleApplication application("Rendering-Triangle");
     if (!application.Initialize(argc, argv)) {
         return -1;
     }

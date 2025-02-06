@@ -54,4 +54,6 @@ TEST_F(ResourcePoolTest, BasicTest)
     t1.Reset();
     const PooledTextureRef t4 = texturePool.Allocate(textureDesc);
     ASSERT_EQ(texturePtr, t4.Get());
+
+    texturePool.GarbageCollect();
 }

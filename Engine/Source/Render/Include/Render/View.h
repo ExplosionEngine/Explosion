@@ -25,5 +25,6 @@ namespace Render {
         Common::FMat4x4 projectionMatrix;
         Common::FRect viewport;
         // TODO viewOrigin, etc...
+        // TODO render resource (uniform buffer)
     };
 }

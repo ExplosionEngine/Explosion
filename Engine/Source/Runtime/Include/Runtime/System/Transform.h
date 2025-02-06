@@ -20,7 +20,7 @@ namespace Runtime {
         NonCopyable(TransformSystem)
         NonMovable(TransformSystem)
 
-        void Tick(float inDeltaTimeMs) override;
+        void Tick(float inDeltaTimeSeconds) override;
 
     private:
         Observer worldTransformUpdatedObserver;

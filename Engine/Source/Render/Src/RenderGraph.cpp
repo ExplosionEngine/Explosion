@@ -14,6 +14,8 @@ namespace Render::Internal {
             if (item.type == RHI::BindingType::uniformBuffer) {
                 outReads.emplace(std::get<RGBufferViewRef>(item.view)->GetResource());
             } else if (item.type == RHI::BindingType::storageBuffer) {
+                outReads.emplace(std::get<RGBufferViewRef>(item.view)->GetResource());
+            } else if (item.type == RHI::BindingType::rwStorageBuffer) {
                 outWrites.emplace(std::get<RGBufferViewRef>(item.view)->GetResource());
             } else if (item.type == RHI::BindingType::texture) {
                 outReads.emplace(std::get<RGTextureViewRef>(item.view)->GetResource());
@@ -736,12 +738,12 @@ namespace Render {
     {
         DevirtualizeResources(passWritesMap.at(inCopyPass));
         {
-            const auto copyPassRecoder = inRecoder.BeginCopyPass();
+            TransitionResourcesForCopyPassDesc(inRecoder, inCopyPass->passDesc);
             {
-                TransitionResourcesForCopyPassDesc(inRecoder, inCopyPass->passDesc);
+                const auto copyPassRecoder = inRecoder.BeginCopyPass();
                 inCopyPass->func(*this, *copyPassRecoder);
+                copyPassRecoder->EndPass();
             }
-            copyPassRecoder->EndPass();
         }
         FinalizePassResources(passReadsMap.at(inCopyPass));
     }
@@ -751,12 +753,12 @@ namespace Render {
         DevirtualizeResources(passWritesMap.at(inComputePass));
         DevirtualizeBindGroupsAndViews(inComputePass->bindGroups);
         {
-            const auto computePassRecoder = inRecoder.BeginComputePass();
+            TransitionResourcesForBindGroups(inRecoder, inComputePass->bindGroups);
             {
-                TransitionResourcesForBindGroups(inRecoder, inComputePass->bindGroups);
+                const auto computePassRecoder = inRecoder.BeginComputePass();
                 inComputePass->func(*this, *computePassRecoder);
+                computePassRecoder->EndPass();
             }
-            computePassRecoder->EndPass();
         }
         FinalizePassResources(passReadsMap.at(inComputePass));
         FinalizePassBindGroups(inComputePass->bindGroups);
@@ -768,13 +770,13 @@ namespace Render {
         DevirtualizeAttachmentViews(inRasterPass->passDesc);
         DevirtualizeBindGroupsAndViews(inRasterPass->bindGroups);
         {
-            const auto rasterPassRecoder = inRecoder.BeginRasterPass(Internal::GetRHIRasterPassBeginInfo(*this, inRasterPass->passDesc));
+            TransitionResourcesForBindGroups(inRecoder, inRasterPass->bindGroups);
+            TransitionResourcesForRasterPassDesc(inRecoder, inRasterPass->passDesc);
             {
-                TransitionResourcesForBindGroups(inRecoder, inRasterPass->bindGroups);
-                TransitionResourcesForRasterPassDesc(inRecoder, inRasterPass->passDesc);
+                const auto rasterPassRecoder = inRecoder.BeginRasterPass(Internal::GetRHIRasterPassBeginInfo(*this, inRasterPass->passDesc));
                 inRasterPass->func(*this, *rasterPassRecoder);
+                rasterPassRecoder->EndPass();
             }
-            rasterPassRecoder->EndPass();
         }
         FinalizePassResources(passReadsMap.at(inRasterPass));
         FinalizePassBindGroups(inRasterPass->bindGroups);

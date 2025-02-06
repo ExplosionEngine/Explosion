@@ -101,6 +101,41 @@ Rectangle {
                 Layout.margins: 5
 
                 EButton {
+                    text: 'Icon Button 1'
+                    icon: 'home'
+                    onClicked: {
+                        console.log('icon button clicked')
+                    }
+                }
+
+                EButton {
+                    text: 'Icon Button 2'
+                    icon: 'anchor'
+                    onClicked: {
+                        console.log('icon button clicked')
+                    }
+                }
+
+                EButton {
+                    icon: 'alarm'
+                    onClicked: {
+                        console.log('icon button clicked')
+                    }
+                }
+
+                EButton {
+                    icon: 'api'
+                    shape: EButton.Shape.Round
+                    onClicked: {
+                        console.log('icon button clicked')
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.margins: 5
+
+                EButton {
                     text: 'Block Button'
                     Layout.fillWidth: true
                     onClicked: {
@@ -111,7 +146,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 10
+                Layout.topMargin: 15
 
                 EText {
                     text: 'Texts'
@@ -156,6 +191,86 @@ Rectangle {
                     text: 'Italic Content'
                     style: EText.Style.Italic
                 }
+            }
+
+            RowLayout {
+                Layout.leftMargin: 5
+                Layout.topMargin: 15
+
+                EText {
+                    text: 'Icons'
+                    style: EText.Style.Title1
+                }
+            }
+
+            RowLayout {
+                Layout.leftMargin: 5
+
+                EIcon { name: 'arrow-left' }
+                EIcon { name: 'arrow-left-up' }
+                EIcon { name: 'arrow-up' }
+                EIcon { name: 'arrow-right-up' }
+                EIcon { name: 'arrow-right' }
+                EIcon { name: 'arrow-right-down' }
+                EIcon { name: 'arrow-down' }
+                EIcon { name: 'arrow-left-down' }
+
+                EIcon { name: 'arrow-left-circle' }
+                EIcon { name: 'arrow-left-up-circle' }
+                EIcon { name: 'arrow-up-circle' }
+                EIcon { name: 'arrow-right-up-circle' }
+                EIcon { name: 'arrow-right-circle' }
+                EIcon { name: 'arrow-right-down-circle' }
+                EIcon { name: 'arrow-down-circle' }
+                EIcon { name: 'arrow-left-down-circle' }
+
+                EIcon { name: 'caret-left' }
+                EIcon { name: 'caret-up' }
+                EIcon { name: 'caret-right' }
+                EIcon { name: 'caret-down' }
+
+                EIcon { name: 'chevron-left' }
+                EIcon { name: 'chevron-up' }
+                EIcon { name: 'chevron-right' }
+                EIcon { name: 'chevron-down' }
+
+                EIcon { name: 'chevron-left-double' }
+                EIcon { name: 'chevron-up-double' }
+                EIcon { name: 'chevron-right-double' }
+                EIcon { name: 'chevron-down-double' }
+            }
+
+            RowLayout {
+                Layout.leftMargin: 5
+
+                EIcon { name: 'download' }
+                EIcon { name: 'login' }
+                EIcon { name: 'logout' }
+                EIcon { name: 'fullscreen-1' }
+                EIcon { name: 'fullscreen-exit-1' }
+                EIcon { name: 'load' }
+                EIcon { name: 'filter' }
+                EIcon { name: 'dashboard' }
+                EIcon { name: 'add-rectangle' }
+                EIcon { name: 'app' }
+                EIcon { name: 'hard-disk-storage' }
+                EIcon { name: 'share' }
+                EIcon { name: 'system-log' }
+                EIcon { name: 'system-code' }
+                EIcon { name: 'system-setting' }
+                EIcon { name: 'hourglass' }
+                EIcon { name: 'more' }
+                EIcon { name: 'service' }
+                EIcon { name: 'drag-move' }
+                EIcon { name: 'focus' }
+                EIcon { name: 'fill-color' }
+                EIcon { name: 'sip' }
+                EIcon { name: 'slice' }
+                EIcon { name: 'copy' }
+                EIcon { name: 'file-add' }
+                EIcon { name: 'folder-add' }
+                EIcon { name: 'folder' }
+                EIcon { name: 'folder-import' }
             }
         }
     }

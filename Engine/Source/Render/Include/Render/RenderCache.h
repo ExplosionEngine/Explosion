@@ -124,7 +124,7 @@ namespace Render {
         RasterPipelineStateDesc& SetDomainShader(const Render::ShaderInstance& inShader);
         RasterPipelineStateDesc& SetHullShader(const Render::ShaderInstance& inShader);
         RasterPipelineStateDesc& SetVertexState(const RVertexState& inVertexState);
-        RasterPipelineStateDesc& SetPrimitiveState(const RPrimitiveState& inPrimtiveState);
+        RasterPipelineStateDesc& SetPrimitiveState(const RPrimitiveState& inPrimitiveState);
         RasterPipelineStateDesc& SetDepthStencilState(const RDepthStencilState& inDepthStencilState);
         RasterPipelineStateDesc& SetMultiSampleState(const RMultiSampleState& inMultiSampleState);
         RasterPipelineStateDesc& SetFragmentState(const RFragmentState& inFragmentState);

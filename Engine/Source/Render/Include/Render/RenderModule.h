@@ -34,13 +34,7 @@ namespace Render {
         Common::UniqueRef<View> NewView();
         void ShutdownRenderingThread();
         void FlushAllRenderingCommands() const;
-
-        template <typename F, typename... Args>
-        auto EnqueueRenderingCommand(F&& command, Args&&... args)
-        {
-            Assert(renderingThread != nullptr);
-            return renderingThread->EmplaceTask(std::forward<F>(command), std::forward<Args>(args)...);
-        }
+        template <typename F, typename... Args> auto EnqueueRenderingCommand(F&& command, Args&&... args);
 
     private:
         bool initialized;
@@ -48,4 +42,13 @@ namespace Render {
         RHI::Instance* rhiInstance;
         Common::UniqueRef<RHI::Device> rhiDevice;
     };
+}
+
+namespace Render {
+    template <typename F, typename ... Args>
+    auto RenderModule::EnqueueRenderingCommand(F&& command, Args&&... args)
+    {
+        Assert(renderingThread != nullptr);
+        return renderingThread->EmplaceTask(std::forward<F>(command), std::forward<Args>(args)...);
+    }
 }

@@ -74,8 +74,8 @@ namespace Runtime {
         executor.reset();
     }
 
-    void World::Tick(float inTimeMs)
+    void World::Tick(float inDeltaTimeSeconds)
     {
-        executor->Tick(inTimeMs);
+        executor->Tick(inDeltaTimeSeconds);
     }
 } // namespace Runtime

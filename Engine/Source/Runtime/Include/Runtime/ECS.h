@@ -16,7 +16,7 @@
 #include <Runtime/Api.h>
 
 namespace Runtime {
-    using Entity = size_t;
+    using Entity = uint32_t;
     static constexpr Entity entityNull = 0;
 
     using CompClass = const Mirror::Class*;
@@ -34,7 +34,7 @@ namespace Runtime {
 
         explicit System(ECRegistry& inRegistry);
         virtual ~System();
-        virtual void Tick(float inDeltaTimeMs);
+        virtual void Tick(float inDeltaTimeSeconds);
 
     protected:
         ECRegistry& registry;
@@ -619,7 +619,7 @@ namespace Runtime {
         NonCopyable(SystemGraphExecutor)
         NonMovable(SystemGraphExecutor)
 
-        void Tick(float inDeltaTimeMs);
+        void Tick(float inDeltaTimeSeconds);
 
     private:
         ECRegistry& ecRegistry;
