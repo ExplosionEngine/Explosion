@@ -251,6 +251,7 @@ namespace Render {
     using RGCopyPassExecuteFunc = std::function<void(const RGBuilder&, RHI::CopyPassCommandRecorder&)>;
     using RGComputePassExecuteFunc = std::function<void(const RGBuilder&, RHI::ComputePassCommandRecorder&)>;
     using RGRasterPassExecuteFunc = std::function<void(const RGBuilder&, RHI::RasterPassCommandRecorder&)>;
+    using RGCommonPassExecuteFunc = std::function<void(const RGBuilder&, RHI::CommandRecorder&)>;
 
     class RGCopyPass final : public RGPass {
     public:
@@ -259,11 +260,17 @@ namespace Render {
     private:
         friend class RGBuilder;
 
-        // TODO pre/post execute func
-        RGCopyPass(std::string inName, RGCopyPassDesc inPassDesc, RGCopyPassExecuteFunc inFunc);
+        RGCopyPass(
+            std::string inName,
+            RGCopyPassDesc inPassDesc,
+            RGCopyPassExecuteFunc inFunc,
+            RGCommonPassExecuteFunc inPreExecuteFunc = {},
+            RGCommonPassExecuteFunc inPostExecuteFunc = {});
 
         RGCopyPassDesc passDesc;
-        RGCopyPassExecuteFunc func;
+        RGCopyPassExecuteFunc passFunc;
+        RGCommonPassExecuteFunc prePassFunc;
+        RGCommonPassExecuteFunc postPassFunc;
     };
 
     class RGComputePass final : public RGPass {
@@ -273,10 +280,16 @@ namespace Render {
     private:
         friend class RGBuilder;
 
-        // TODO pre/post execute func
-        RGComputePass(std::string inName, std::vector<RGBindGroupRef> inBindGroups, RGComputePassExecuteFunc inFunc);
+        RGComputePass(
+            std::string inName,
+            std::vector<RGBindGroupRef> inBindGroups,
+            RGComputePassExecuteFunc inFunc,
+            RGCommonPassExecuteFunc inPreExecuteFunc = {},
+            RGCommonPassExecuteFunc inPostExecuteFunc = {});
 
-        RGComputePassExecuteFunc func;
+        RGComputePassExecuteFunc passFunc;
+        RGCommonPassExecuteFunc prePassFunc;
+        RGCommonPassExecuteFunc postPassFunc;
         std::vector<RGBindGroupRef> bindGroups;
     };
 
@@ -287,11 +300,17 @@ namespace Render {
     private:
         friend class RGBuilder;
 
-        // TODO pre/post execute func
-        RGRasterPass(std::string inName, RGRasterPassDesc inPassDesc, std::vector<RGBindGroupRef> inBindGroupds, RGRasterPassExecuteFunc inFunc);
+        RGRasterPass(
+            std::string inName, RGRasterPassDesc inPassDesc,
+            std::vector<RGBindGroupRef> inBindGroups,
+            RGRasterPassExecuteFunc inFunc,
+            RGCommonPassExecuteFunc inPreExecuteFunc = {},
+            RGCommonPassExecuteFunc inPostExecuteFunc = {});
 
         RGRasterPassDesc passDesc;
-        RGRasterPassExecuteFunc func;
+        RGRasterPassExecuteFunc passFunc;
+        RGCommonPassExecuteFunc prePassFunc;
+        RGCommonPassExecuteFunc postPassFunc;
         std::vector<RGBindGroupRef> bindGroups;
     };
 
@@ -316,16 +335,15 @@ namespace Render {
         RGBufferRef ImportBuffer(RHI::Buffer* inBuffer, RHI::BufferState inInitialState);
         RGTextureRef ImportTexture(RHI::Texture* inTexture, RHI::TextureState inInitialState);
         RGBindGroupRef AllocateBindGroup(const RGBindGroupDesc& inDesc);
-        void AddCopyPass(const std::string& inName, const RGCopyPassDesc& inPassDesc, const RGCopyPassExecuteFunc& inFunc, bool inAsyncCopy = false);
-        void AddComputePass(const std::string& inName, const std::vector<RGBindGroupRef>& inBindGroups, const RGComputePassExecuteFunc& inFunc, bool inAsyncCompute = false);
-        void AddRasterPass(const std::string& inName, const RGRasterPassDesc& inPassDesc, const std::vector<RGBindGroupRef>& inBindGroupds, const RGRasterPassExecuteFunc& inFunc);
+        void AddCopyPass(const std::string& inName, const RGCopyPassDesc& inPassDesc, const RGCopyPassExecuteFunc& inFunc, bool inAsyncCopy = false, const RGCommonPassExecuteFunc& inPreExecuteFunc = {}, const RGCommonPassExecuteFunc& inPostExecuteFunc = {});
+        void AddComputePass(const std::string& inName, const std::vector<RGBindGroupRef>& inBindGroups, const RGComputePassExecuteFunc& inFunc, bool inAsyncCompute = false, const RGCommonPassExecuteFunc& inPreExecuteFunc = {}, const RGCommonPassExecuteFunc& inPostExecuteFunc = {});
+        void AddRasterPass(const std::string& inName, const RGRasterPassDesc& inPassDesc, const std::vector<RGBindGroupRef>& inBindGroups, const RGRasterPassExecuteFunc& inFunc, const RGCommonPassExecuteFunc& inPreExecuteFunc = {}, const RGCommonPassExecuteFunc& inPostExecuteFunc = {});
         void AddSyncPoint();
-        void Execute(const RGExecuteInfo& inExecuteInfo);
 
         // TODO upload interface
 
-        // TODO make private
         // execute
+        void Execute(const RGExecuteInfo& inExecuteInfo);
         RHI::Buffer* GetRHI(RGBufferRef inBuffer) const;
         RHI::Texture* GetRHI(RGTextureRef inTexture) const;
         RHI::BufferView* GetRHI(RGBufferViewRef inBufferView) const;

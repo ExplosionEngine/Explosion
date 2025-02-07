@@ -317,29 +317,35 @@ namespace Render {
 
     RGPass::~RGPass() = default;
 
-    RGCopyPass::RGCopyPass(std::string inName, RGCopyPassDesc inPassDesc, RGCopyPassExecuteFunc inFunc)
+    RGCopyPass::RGCopyPass(std::string inName, RGCopyPassDesc inPassDesc, RGCopyPassExecuteFunc inFunc, RGCommonPassExecuteFunc inPreExecuteFunc, RGCommonPassExecuteFunc inPostExecuteFunc)
         : RGPass(std::move(inName), RGPassType::copy)
         , passDesc(std::move(inPassDesc))
-        , func(std::move(inFunc))
+        , passFunc(std::move(inFunc))
+        , prePassFunc(std::move(inPreExecuteFunc))
+        , postPassFunc(std::move(inPostExecuteFunc))
     {
     }
 
     RGCopyPass::~RGCopyPass() = default;
 
-    RGComputePass::RGComputePass(std::string inName, std::vector<RGBindGroupRef> inBindGroups, RGComputePassExecuteFunc inFunc)
+    RGComputePass::RGComputePass(std::string inName, std::vector<RGBindGroupRef> inBindGroups, RGComputePassExecuteFunc inFunc, RGCommonPassExecuteFunc inPreExecuteFunc, RGCommonPassExecuteFunc inPostExecuteFunc)
         : RGPass(std::move(inName), RGPassType::compute)
-        , func(std::move(inFunc))
+        , passFunc(std::move(inFunc))
+        , prePassFunc(std::move(inPreExecuteFunc))
+        , postPassFunc(std::move(inPostExecuteFunc))
         , bindGroups(std::move(inBindGroups))
     {
     }
 
     RGComputePass::~RGComputePass() = default;
 
-    RGRasterPass::RGRasterPass(std::string inName, RGRasterPassDesc inPassDesc, std::vector<RGBindGroupRef> inBindGroupds, RGRasterPassExecuteFunc inFunc)
+    RGRasterPass::RGRasterPass(std::string inName, RGRasterPassDesc inPassDesc, std::vector<RGBindGroupRef> inBindGroups, RGRasterPassExecuteFunc inFunc, RGCommonPassExecuteFunc inPreExecuteFunc, RGCommonPassExecuteFunc inPostExecuteFunc)
         : RGPass(std::move(inName), RGPassType::raster)
         , passDesc(std::move(inPassDesc))
-        , bindGroups(std::move(inBindGroupds))
-        , func(std::move(inFunc))
+        , passFunc(std::move(inFunc))
+        , prePassFunc(std::move(inPreExecuteFunc))
+        , postPassFunc(std::move(inPostExecuteFunc))
+        , bindGroups(std::move(inBindGroups))
     {
     }
 
@@ -408,24 +414,24 @@ namespace Render {
         return bindGroups.back().Get();
     }
 
-    void RGBuilder::AddCopyPass(const std::string& inName, const RGCopyPassDesc& inPassDesc, const RGCopyPassExecuteFunc& inFunc, bool inAsyncCopy)
+    void RGBuilder::AddCopyPass(const std::string& inName, const RGCopyPassDesc& inPassDesc, const RGCopyPassExecuteFunc& inFunc, bool inAsyncCopy, const RGCommonPassExecuteFunc& inPreExecuteFunc, const RGCommonPassExecuteFunc& inPostExecuteFunc)
     {
         Assert(!executed);
-        const auto& pass = passes.emplace_back(new RGCopyPass(inName, inPassDesc, inFunc));
+        const auto& pass = passes.emplace_back(new RGCopyPass(inName, inPassDesc, inFunc, inPreExecuteFunc, inPostExecuteFunc));
         recordingAsyncTimeline[inAsyncCopy ? RGQueueType::asyncCopy : RGQueueType::main].emplace_back(pass.Get());
     }
 
-    void RGBuilder::AddComputePass(const std::string& inName, const std::vector<RGBindGroupRef>& inBindGroups, const RGComputePassExecuteFunc& inFunc, bool inAsyncCompute)
+    void RGBuilder::AddComputePass(const std::string& inName, const std::vector<RGBindGroupRef>& inBindGroups, const RGComputePassExecuteFunc& inFunc, bool inAsyncCompute, const RGCommonPassExecuteFunc& inPreExecuteFunc, const RGCommonPassExecuteFunc& inPostExecuteFunc)
     {
         Assert(!executed);
-        const auto& pass = passes.emplace_back(new RGComputePass(inName, inBindGroups, inFunc));
+        const auto& pass = passes.emplace_back(new RGComputePass(inName, inBindGroups, inFunc, inPreExecuteFunc, inPostExecuteFunc));
         recordingAsyncTimeline[inAsyncCompute ? RGQueueType::asyncCompute : RGQueueType::main].emplace_back(pass.Get());
     }
 
-    void RGBuilder::AddRasterPass(const std::string& inName, const RGRasterPassDesc& inPassDesc, const std::vector<RGBindGroupRef>& inBindGroupds, const RGRasterPassExecuteFunc& inFunc)
+    void RGBuilder::AddRasterPass(const std::string& inName, const RGRasterPassDesc& inPassDesc, const std::vector<RGBindGroupRef>& inBindGroups, const RGRasterPassExecuteFunc& inFunc, const RGCommonPassExecuteFunc& inPreExecuteFunc, const RGCommonPassExecuteFunc& inPostExecuteFunc)
     {
         Assert(!executed);
-        const auto& pass = passes.emplace_back(new RGRasterPass(inName, inPassDesc, inBindGroupds, inFunc));
+        const auto& pass = passes.emplace_back(new RGRasterPass(inName, inPassDesc, inBindGroups, inFunc, inPreExecuteFunc, inPostExecuteFunc));
         recordingAsyncTimeline[RGQueueType::main].emplace_back(pass.Get());
     }
 
@@ -739,10 +745,16 @@ namespace Render {
         DevirtualizeResources(passWritesMap.at(inCopyPass));
         {
             TransitionResourcesForCopyPassDesc(inRecoder, inCopyPass->passDesc);
+            if (inCopyPass->prePassFunc) {
+                inCopyPass->prePassFunc(*this, inRecoder);
+            }
             {
                 const auto copyPassRecoder = inRecoder.BeginCopyPass();
-                inCopyPass->func(*this, *copyPassRecoder);
+                inCopyPass->passFunc(*this, *copyPassRecoder);
                 copyPassRecoder->EndPass();
+            }
+            if (inCopyPass->postPassFunc) {
+                inCopyPass->postPassFunc(*this, inRecoder);
             }
         }
         FinalizePassResources(passReadsMap.at(inCopyPass));
@@ -754,10 +766,16 @@ namespace Render {
         DevirtualizeBindGroupsAndViews(inComputePass->bindGroups);
         {
             TransitionResourcesForBindGroups(inRecoder, inComputePass->bindGroups);
+            if (inComputePass->prePassFunc) {
+                inComputePass->prePassFunc(*this, inRecoder);
+            }
             {
                 const auto computePassRecoder = inRecoder.BeginComputePass();
-                inComputePass->func(*this, *computePassRecoder);
+                inComputePass->passFunc(*this, *computePassRecoder);
                 computePassRecoder->EndPass();
+            }
+            if (inComputePass->postPassFunc) {
+                inComputePass->postPassFunc(*this, inRecoder);
             }
         }
         FinalizePassResources(passReadsMap.at(inComputePass));
@@ -772,10 +790,16 @@ namespace Render {
         {
             TransitionResourcesForBindGroups(inRecoder, inRasterPass->bindGroups);
             TransitionResourcesForRasterPassDesc(inRecoder, inRasterPass->passDesc);
+            if (inRasterPass->prePassFunc) {
+                inRasterPass->prePassFunc(*this, inRecoder);
+            }
             {
                 const auto rasterPassRecoder = inRecoder.BeginRasterPass(Internal::GetRHIRasterPassBeginInfo(*this, inRasterPass->passDesc));
-                inRasterPass->func(*this, *rasterPassRecoder);
+                inRasterPass->passFunc(*this, *rasterPassRecoder);
                 rasterPassRecoder->EndPass();
+            }
+            if (inRasterPass->postPassFunc) {
+                inRasterPass->postPassFunc(*this, inRecoder);
             }
         }
         FinalizePassResources(passReadsMap.at(inRasterPass));

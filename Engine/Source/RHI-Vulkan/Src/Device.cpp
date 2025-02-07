@@ -260,9 +260,6 @@ namespace RHI::Vulkan {
         dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
         deviceCreateInfo.pNext = &dynamicRenderingFeatures;
 
-        deviceCreateInfo.ppEnabledExtensionNames = requiredExtensions.data();
-        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
-
 #if PLATFORM_MACOS
         // MoltenVK not support use vkCmdSetPrimitiveTopology() directly current
         VkPhysicalDeviceExtendedDynamicStateFeaturesEXT extendedDynamicStateFeatures = {};
@@ -270,6 +267,9 @@ namespace RHI::Vulkan {
         extendedDynamicStateFeatures.extendedDynamicState = VK_TRUE;
         dynamicRenderingFeatures.pNext = &extendedDynamicStateFeatures;
 #endif
+
+        deviceCreateInfo.ppEnabledExtensionNames = requiredExtensions.data();
+        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
 
 #if BUILD_CONFIG_DEBUG
         deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(requiredValidationLayers.size());

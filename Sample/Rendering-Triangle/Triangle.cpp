@@ -120,13 +120,16 @@ void TriangleApplication::OnDrawFrame()
         RGRasterPassDesc()
             .AddColorAttachment(RGColorAttachment(backTextureView, LoadOp::load, StoreOp::store)),
         {},
-        [pso, vertexBufferView, backTexture, viewportWidth = GetWindowWidth(), viewportHeight = GetWindowHeight()](const RGBuilder& rg, RasterPassCommandRecorder& recorder) -> void {
+        [pso, vertexBufferView, viewportWidth = GetWindowWidth(), viewportHeight = GetWindowHeight()](const RGBuilder& rg, RasterPassCommandRecorder& recorder) -> void {
             recorder.SetPipeline(pso->GetRHI());
             recorder.SetScissor(0, 0, viewportWidth, viewportHeight);
             recorder.SetViewport(0, 0, static_cast<float>(viewportWidth), static_cast<float>(viewportHeight), 0, 1);
             recorder.SetVertexBuffer(0, rg.GetRHI(vertexBufferView));
             recorder.SetPrimitiveTopology(PrimitiveTopology::triangleList);
             recorder.Draw(3, 1, 0, 0);
+        },
+        {},
+        [backTexture](const RGBuilder& rg, CommandRecorder& recorder) -> void {
             recorder.ResourceBarrier(Barrier::Transition(rg.GetRHI(backTexture), TextureState::renderTarget, TextureState::present));
         });
 
