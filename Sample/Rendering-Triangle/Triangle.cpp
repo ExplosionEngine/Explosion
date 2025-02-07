@@ -118,7 +118,7 @@ void TriangleApplication::OnDrawFrame()
     builder.AddRasterPass(
         "BasePass",
         RGRasterPassDesc()
-            .AddColorAttachment(RGColorAttachment(backTextureView, LoadOp::load, StoreOp::store)),
+            .AddColorAttachment(RGColorAttachment(backTextureView, LoadOp::clear, StoreOp::store)),
         {},
         [pso, vertexBufferView, viewportWidth = GetWindowWidth(), viewportHeight = GetWindowHeight()](const RGBuilder& rg, RasterPassCommandRecorder& recorder) -> void {
             recorder.SetPipeline(pso->GetRHI());
