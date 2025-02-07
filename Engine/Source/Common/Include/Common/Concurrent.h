@@ -40,10 +40,12 @@ namespace Common {
         ThreadPool(const std::string& name, uint8_t threadNum);
         ~ThreadPool();
 
-        template <typename F, typename... Args>
-        auto EmplaceTask(F&& task, Args&&... args);
+        template <typename F, typename... Args> auto EmplaceTask(F&& task, Args&&... args);
+        template <typename F, typename... Args> void ExecuteTasks(size_t taskNum, F&& task, Args&&... args);
 
     private:
+        template <typename Ret> auto EmplaceTaskInternal(std::shared_ptr<std::packaged_task<Ret()>> packedTask);
+
         bool stop;
         std::mutex mutex;
         std::condition_variable condition;
@@ -83,15 +85,36 @@ namespace Common {
     }
 
     template <typename F, typename... Args>
-    auto ThreadPool::EmplaceTask(F&& task, Args&& ... args)
+    auto ThreadPool::EmplaceTask(F&& task, Args&&... args)
     {
         using RetType = std::invoke_result_t<F, Args...>;
-        auto packagedTask = std::make_shared<std::packaged_task<RetType()>>(std::bind(std::forward<F>(task), std::forward<Args>(args)...));
-        auto result = packagedTask->get_future();
+        return EmplaceTaskInternal<RetType>(std::make_shared<std::packaged_task<RetType()>>(std::bind(std::forward<F>(task), std::forward<Args>(args)...)));
+    }
+
+    template <typename F, typename... Args>
+    void ThreadPool::ExecuteTasks(size_t taskNum, F&& task, Args&&... args)
+    {
+        using RetType = std::invoke_result_t<F, Args...>;
+
+        std::vector<RetType> futures;
+        futures.reserve(taskNum);
+        for (auto i = 0; i < taskNum; i++) {
+            futures.emplace_back(EmplaceTaskInternal<RetType>(std::make_shared<std::packaged_task<RetType()>>(std::bind(std::forward<F>(task), i, std::forward<Args>(args)...))));
+        }
+
+        for (const auto& future : futures) {
+            future.wait();
+        }
+    }
+
+    template <typename Ret>
+    auto ThreadPool::EmplaceTaskInternal(std::shared_ptr<std::packaged_task<Ret()>> packedTask)
+    {
+        auto result = packedTask->get_future();
         {
             std::unique_lock lock(mutex);
             Assert(!stop);
-            tasks.emplace([packagedTask]() -> void { (*packagedTask)(); });
+            tasks.emplace([packedTask]() -> void { (*packedTask)(); });
         }
         condition.notify_one();
         return result;
