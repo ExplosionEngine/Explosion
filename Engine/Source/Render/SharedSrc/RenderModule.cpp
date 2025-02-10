@@ -34,8 +34,8 @@ namespace Render {
     {
         Assert(!initialized);
 
-        renderingThread = Common::MakeUnique<Common::WorkerThread>("RenderingThread");
-        renderingThread->EmplaceTask([]() -> void { Core::ThreadContext::SetTag(Core::ThreadTag::render); });
+        renderThread = Common::MakeUnique<Common::WorkerThread>("RenderingThread");
+        renderThread->EmplaceTask([]() -> void { Core::ThreadContext::SetTag(Core::ThreadTag::render); });
 
         rhiInstance = RHI::Instance::GetByType(inParams.rhiType);
         rhiDevice = rhiInstance->GetGpu(0)->RequestDevice(
@@ -49,7 +49,7 @@ namespace Render {
 
     void RenderModule::DeInitialize()
     {
-        renderingThread = nullptr;
+        renderThread = nullptr;
         rhiInstance = nullptr;
         rhiDevice = nullptr;
         initialized = false;
@@ -72,13 +72,13 @@ namespace Render {
 
     void RenderModule::ShutdownRenderingThread()
     {
-        renderingThread = nullptr;
+        renderThread = nullptr;
     }
 
     void RenderModule::FlushAllRenderingCommands() const
     {
-        Assert(renderingThread != nullptr);
-        renderingThread->Flush();
+        Assert(renderThread != nullptr);
+        renderThread->Flush();
     }
 }
 
