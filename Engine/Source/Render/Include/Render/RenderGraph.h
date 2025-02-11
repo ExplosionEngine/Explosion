@@ -6,6 +6,7 @@
 
 #include <unordered_map>
 #include <functional>
+#include <future>
 #include <optional>
 
 #include <Common/Memory.h>
@@ -213,6 +214,7 @@ namespace Render {
         RGBindGroupDesc& Sampler(std::string inName, RHI::Sampler* inSampler);
         RGBindGroupDesc& UniformBuffer(std::string inName, RGBufferViewRef bufferView);
         RGBindGroupDesc& StorageBuffer(std::string inName, RGBufferViewRef bufferView);
+        RGBindGroupDesc& RwStorageBuffer(std::string inName, RGBufferViewRef bufferView);
         RGBindGroupDesc& Texture(std::string inName, RGTextureViewRef textureView);
         RGBindGroupDesc& StorageTexture(std::string inName, RGTextureViewRef textureView);
     };
@@ -232,6 +234,16 @@ namespace Render {
     };
 
     using RGBindGroupRef = RGBindGroup*;
+
+    struct RGBufferUploadInfo {
+        void* data;
+        size_t size;
+        size_t srcOffset;
+        size_t dstOffset;
+
+        RGBufferUploadInfo();
+        RGBufferUploadInfo(void* inData, size_t inSize, size_t inSrcOffset = 0, size_t inDstOffset = 0);
+    };
 
     class RGPass {
     public:
@@ -335,12 +347,11 @@ namespace Render {
         RGBufferRef ImportBuffer(RHI::Buffer* inBuffer, RHI::BufferState inInitialState);
         RGTextureRef ImportTexture(RHI::Texture* inTexture, RHI::TextureState inInitialState);
         RGBindGroupRef AllocateBindGroup(const RGBindGroupDesc& inDesc);
+        void QueueBufferUpload(RGBufferRef inBuffer, const RGBufferUploadInfo& inUploadInfo);
         void AddCopyPass(const std::string& inName, const RGCopyPassDesc& inPassDesc, const RGCopyPassExecuteFunc& inFunc, bool inAsyncCopy = false, const RGCommonPassExecuteFunc& inPreExecuteFunc = {}, const RGCommonPassExecuteFunc& inPostExecuteFunc = {});
         void AddComputePass(const std::string& inName, const std::vector<RGBindGroupRef>& inBindGroups, const RGComputePassExecuteFunc& inFunc, bool inAsyncCompute = false, const RGCommonPassExecuteFunc& inPreExecuteFunc = {}, const RGCommonPassExecuteFunc& inPostExecuteFunc = {});
         void AddRasterPass(const std::string& inName, const RGRasterPassDesc& inPassDesc, const std::vector<RGBindGroupRef>& inBindGroups, const RGRasterPassExecuteFunc& inFunc, const RGCommonPassExecuteFunc& inPreExecuteFunc = {}, const RGCommonPassExecuteFunc& inPostExecuteFunc = {});
         void AddSyncPoint();
-
-        // TODO upload interface
 
         // execute
         void Execute(const RGExecuteInfo& inExecuteInfo);
@@ -370,7 +381,10 @@ namespace Render {
         void ExecuteCopyPass(RHI::CommandRecorder& inRecoder, RGCopyPass* inCopyPass);
         void ExecuteComputePass(RHI::CommandRecorder& inRecoder, RGComputePass* inComputePass);
         void ExecuteRasterPass(RHI::CommandRecorder& inRecoder, RGRasterPass* inRasterPass);
+        void PerformBufferUploads();
+        void WaitBufferUploadsFinish() const;
         void DevirtualizeViewsCreatedOnImportedResources();
+        void DevirtualizeResource(RGResourceRef inResource);
         void DevirtualizeResources(const std::unordered_set<RGResourceRef>& inResources);
         void DevirtualizeBindGroupsAndViews(const std::vector<RGBindGroupRef>& inBindGroups);
         void DevirtualizeAttachmentViews(const RGRasterPassDesc& inDesc);
@@ -390,6 +404,7 @@ namespace Render {
         std::vector<Common::UniqueRef<RGPass>> passes;
         std::unordered_map<RGQueueType, std::vector<RGPassRef>> recordingAsyncTimeline;
         std::vector<std::unordered_map<RGQueueType, std::vector<RGPassRef>>> asyncTimelines;
+        std::unordered_map<RGBufferRef, RGBufferUploadInfo> bufferUploads;
 
         // execute context
         std::unordered_map<RGResourceRef, uint32_t> resourceReadCounts;
@@ -402,5 +417,6 @@ namespace Render {
         std::unordered_map<RGResourceRef, std::variant<PooledBufferRef, PooledTextureRef>> devirtualizedResources;
         std::unordered_map<RGResourceViewRef, std::variant<RHI::BufferView*, RHI::TextureView*>> devirtualizedResourceViews;
         std::unordered_map<RGBindGroupRef, Common::UniqueRef<RHI::BindGroup>> devirtualizedBindGroups;
+        std::vector<std::future<void>> bufferUploadTasks;
     };
 }

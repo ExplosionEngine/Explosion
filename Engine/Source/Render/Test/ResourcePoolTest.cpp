@@ -38,22 +38,34 @@ TEST_F(ResourcePoolTest, BasicTest)
     textureDesc.samples = 1;
     textureDesc.initialState = RHI::TextureState::undefined;
     PooledTextureRef t1 = texturePool.Allocate(textureDesc);
+    ASSERT_EQ(texturePool.Size(), 1);
 
     textureDesc.width = 1024;
     textureDesc.height = 1024;
     textureDesc.depthOrArraySize = 1;
     PooledTextureRef t2 = texturePool.Allocate(textureDesc);
+    ASSERT_EQ(texturePool.Size(), 2);
 
     textureDesc.width = 1920;
     textureDesc.height = 1080;
     textureDesc.depthOrArraySize = 1;
-    const PooledTextureRef t3 = texturePool.Allocate(textureDesc);
+    PooledTextureRef t3 = texturePool.Allocate(textureDesc);
     ASSERT_NE(t1.Get(), t3.Get());
+    ASSERT_EQ(texturePool.Size(), 3);
 
     auto* texturePtr = t1.Get();
     t1.Reset();
     const PooledTextureRef t4 = texturePool.Allocate(textureDesc);
     ASSERT_EQ(texturePtr, t4.Get());
+    ASSERT_EQ(texturePool.Size(), 3);
 
-    texturePool.GarbageCollect();
+    t2.Reset();
+    t3.Reset();
+    ASSERT_EQ(texturePool.Size(), 3);
+
+    texturePool.Tick();
+    ASSERT_EQ(texturePool.Size(), 3);
+
+    texturePool.Tick();
+    ASSERT_EQ(texturePool.Size(), 1);
 }

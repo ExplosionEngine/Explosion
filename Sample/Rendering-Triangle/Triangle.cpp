@@ -6,6 +6,7 @@
 #include <RHI/RHI.h>
 #include <Render/ShaderCompiler.h>
 #include <Render/RenderGraph.h>
+#include <Render/RenderThread.h>
 
 using namespace Common;
 using namespace Render;
@@ -83,6 +84,7 @@ TriangleApplication::~TriangleApplication() = default;
 
 void TriangleApplication::OnCreate()
 {
+    RenderWorkerThreads::Get().Start();
     CreateDevice();
     CompileAllShaders();
     CreateSwapChain();
@@ -140,6 +142,9 @@ void TriangleApplication::OnDrawFrame()
     builder.Execute(executeInfo);
     swapChain->Present(renderFinishedSemaphore.Get());
     frameFence->Wait();
+
+    BufferPool::Get(*device).Tick();
+    TexturePool::Get(*device).Tick();
 }
 
 void TriangleApplication::OnDestroy()
@@ -151,6 +156,7 @@ void TriangleApplication::OnDestroy()
     ResourceViewCache::Get(*device).Invalidate();
     PipelineCache::Get(*device).Invalidate();
     GlobalShaderRegistry::Get().InvalidateAll();
+    RenderWorkerThreads::Get().Stop();
 }
 
 void TriangleApplication::CreateDevice()

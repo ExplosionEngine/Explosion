@@ -5,22 +5,23 @@
 #include <ranges>
 
 #include <Render/RenderGraph.h>
+#include <Render/RenderThread.h>
 #include <Common/Container.h>
 
 namespace Render::Internal {
     static void ComputeReadsWritesForBindGroup(const RGBindGroupDesc& inDesc, std::unordered_set<RGResourceRef>& outReads, std::unordered_set<RGResourceRef>& outWrites)
     {
-        for (const auto& [name, item] : inDesc.items) {
-            if (item.type == RHI::BindingType::uniformBuffer) {
-                outReads.emplace(std::get<RGBufferViewRef>(item.view)->GetResource());
-            } else if (item.type == RHI::BindingType::storageBuffer) {
-                outReads.emplace(std::get<RGBufferViewRef>(item.view)->GetResource());
-            } else if (item.type == RHI::BindingType::rwStorageBuffer) {
-                outWrites.emplace(std::get<RGBufferViewRef>(item.view)->GetResource());
-            } else if (item.type == RHI::BindingType::texture) {
-                outReads.emplace(std::get<RGTextureViewRef>(item.view)->GetResource());
-            } else if (item.type == RHI::BindingType::storageTexture) {
-                outWrites.emplace(std::get<RGTextureViewRef>(item.view)->GetResource());
+        for (const auto& [type, view] : inDesc.items | std::views::values) {
+            if (type == RHI::BindingType::uniformBuffer) {
+                outReads.emplace(std::get<RGBufferViewRef>(view)->GetResource());
+            } else if (type == RHI::BindingType::storageBuffer) {
+                outReads.emplace(std::get<RGBufferViewRef>(view)->GetResource());
+            } else if (type == RHI::BindingType::rwStorageBuffer) {
+                outWrites.emplace(std::get<RGBufferViewRef>(view)->GetResource());
+            } else if (type == RHI::BindingType::texture) {
+                outReads.emplace(std::get<RGTextureViewRef>(view)->GetResource());
+            } else if (type == RHI::BindingType::storageTexture) {
+                outWrites.emplace(std::get<RGTextureViewRef>(view)->GetResource());
             } else {
                 Unimplement();
             }
@@ -275,6 +276,17 @@ namespace Render {
         return *this;
     }
 
+    RGBindGroupDesc& RGBindGroupDesc::RwStorageBuffer(std::string inName, RGBufferViewRef bufferView)
+    {
+        Assert(!items.contains(inName));
+
+        RGBindItemDesc item;
+        item.type = RHI::BindingType::rwStorageBuffer;
+        item.view = bufferView;
+        items.emplace(std::make_pair(std::move(inName), item));
+        return *this;
+    }
+
     RGBindGroupDesc& RGBindGroupDesc::Texture(std::string inName, RGTextureViewRef textureView)
     {
         Assert(!items.contains(inName));
@@ -307,6 +319,22 @@ namespace Render {
     const RGBindGroupDesc& RGBindGroup::GetDesc() const
     {
         return desc;
+    }
+
+    RGBufferUploadInfo::RGBufferUploadInfo()
+        : data(nullptr)
+        , size(0)
+        , srcOffset(0)
+        , dstOffset(0)
+    {
+    }
+
+    RGBufferUploadInfo::RGBufferUploadInfo(void* inData, size_t inSize, size_t inSrcOffset, size_t inDstOffset)
+        : data(inData)
+        , size(inSize)
+        , srcOffset(inSrcOffset)
+        , dstOffset(inDstOffset)
+    {
     }
 
     RGPass::RGPass(std::string inName, RGPassType inType)
@@ -414,6 +442,12 @@ namespace Render {
         return bindGroups.back().Get();
     }
 
+    void RGBuilder::QueueBufferUpload(RGBufferRef inBuffer, const RGBufferUploadInfo& inUploadInfo)
+    {
+        Assert((inBuffer->GetDesc().usages & RHI::BufferUsageBits::mapWrite) != RHI::BufferUsageFlags::null);
+        bufferUploads.emplace(inBuffer, inUploadInfo);
+    }
+
     void RGBuilder::AddCopyPass(const std::string& inName, const RGCopyPassDesc& inPassDesc, const RGCopyPassExecuteFunc& inFunc, bool inAsyncCopy, const RGCommonPassExecuteFunc& inPreExecuteFunc, const RGCommonPassExecuteFunc& inPostExecuteFunc)
     {
         Assert(!executed);
@@ -515,11 +549,13 @@ namespace Render {
 
     void RGBuilder::ExecuteInternal(const RGExecuteInfo& inExecuteInfo) // NOLINT
     {
+        PerformBufferUploads();
         DevirtualizeViewsCreatedOnImportedResources();
 
         const auto asyncTimelineNum = asyncTimelines.size();
         asyncTimelineExecuteContexts.reserve(asyncTimelineNum);
 
+        WaitBufferUploadsFinish();
         for (const auto& queuePasses : asyncTimelines) {
             const bool isFirstAsyncTimeline = asyncTimelineExecuteContexts.empty();
             const bool isLastAsyncTimeline = asyncTimelineExecuteContexts.size() + 1 == asyncTimelines.size();
@@ -533,7 +569,7 @@ namespace Render {
             } else {
                 // wait all cmd buffers in last async timeline executed
                 for (const AsyncTimelineExecuteContext& lastContext = asyncTimelineExecuteContexts.back();
-                    const auto& [queue, semaphore] : lastContext.queueSemaphoreToSignalMap) {
+                    const auto& semaphore : lastContext.queueSemaphoreToSignalMap | std::views::values) {
                     semaphoresToWait.emplace_back(semaphore.Get());
                 }
             }
@@ -662,7 +698,7 @@ namespace Render {
             queueReadsVec.reserve(queuePasses.size());
             queueWritesVec.reserve(queuePasses.size());
 
-            for (const auto& [queueType, passes] : queuePasses) {
+            for (const auto& passes : queuePasses | std::views::values) {
                 auto& queueReads = queueReadsVec.emplace_back();
                 auto& queueWrites = queueWritesVec.emplace_back();
                 collectQueueReadWrites(passes, queueReads, queueWrites);
@@ -806,6 +842,29 @@ namespace Render {
         FinalizePassBindGroups(inRasterPass->bindGroups);
     }
 
+    void RGBuilder::PerformBufferUploads()
+    {
+        bufferUploadTasks.reserve(bufferUploads.size());
+        for (const auto& [buffer, uploadInfo] : bufferUploads) {
+            DevirtualizeResource(buffer);
+            auto* rhiBuffer = GetRHI(buffer);
+
+            bufferUploadTasks.emplace_back(RenderWorkerThreads::Get().EmplaceTask([rhiBuffer, uploadInfo]() -> void {
+                const auto* src = static_cast<const uint8_t*>(uploadInfo.data) + uploadInfo.srcOffset;
+                auto* dst = rhiBuffer->Map(RHI::MapMode::write, uploadInfo.dstOffset, uploadInfo.size);
+                memcpy(dst, src, uploadInfo.size);
+                rhiBuffer->UnMap();
+            }));
+        }
+    }
+
+    void RGBuilder::WaitBufferUploadsFinish() const
+    {
+        for (const auto& task : bufferUploadTasks) {
+            task.wait();
+        }
+    }
+
     void RGBuilder::DevirtualizeViewsCreatedOnImportedResources()
     {
         for (const auto& view : views) {
@@ -828,22 +887,27 @@ namespace Render {
         }
     }
 
+    void RGBuilder::DevirtualizeResource(RGResourceRef inResource)
+    {
+        if (inResource->imported
+            || culledResources.contains(inResource)
+            || devirtualizedResources.contains(inResource)) {
+            return;
+        }
+
+        if (inResource->type == RGResType::buffer) {
+            devirtualizedResources.emplace(std::make_pair(inResource, BufferPool::Get(device).Allocate(static_cast<RGBufferRef>(inResource)->desc)));
+        } else if (inResource->type == RGResType::texture) {
+            devirtualizedResources.emplace(std::make_pair(inResource, TexturePool::Get(device).Allocate(static_cast<RGTextureRef>(inResource)->desc)));
+        } else {
+            Unimplement();
+        }
+    }
+
     void RGBuilder::DevirtualizeResources(const std::unordered_set<RGResourceRef>& inResources)
     {
         for (auto* resource : inResources) {
-            if (resource->imported
-                || culledResources.contains(resource)
-                || devirtualizedResources.contains(resource)) {
-                continue;
-            }
-
-            if (resource->type == RGResType::buffer) {
-                devirtualizedResources.emplace(std::make_pair(resource, BufferPool::Get(device).Allocate(static_cast<RGBufferRef>(resource)->desc)));
-            } else if (resource->type == RGResType::texture) {
-                devirtualizedResources.emplace(std::make_pair(resource, TexturePool::Get(device).Allocate(static_cast<RGTextureRef>(resource)->desc)));
-            } else {
-                Unimplement();
-            }
+            DevirtualizeResource(resource);
         }
     }
 
@@ -857,7 +921,7 @@ namespace Render {
                 const auto* binding = layout->GetBinding(name);
                 Assert(binding != nullptr);
 
-                if (item.type == RHI::BindingType::uniformBuffer || item.type == RHI::BindingType::storageBuffer) {
+                if (item.type == RHI::BindingType::uniformBuffer || item.type == RHI::BindingType::storageBuffer || item.type == RHI::BindingType::rwStorageBuffer) {
                     auto* bufferView = std::get<RGBufferViewRef>(item.view);
                     if (!devirtualizedResourceViews.contains(bufferView)) {
                         devirtualizedResourceViews.emplace(std::make_pair(bufferView, ResourceViewCache::Get(device).GetOrCreate(GetRHI(bufferView->GetBuffer()), bufferView->desc)));
@@ -955,16 +1019,18 @@ namespace Render {
     void RGBuilder::TransitionResourcesForBindGroups(RHI::CommandCommandRecorder& inRecoder, const std::vector<RGBindGroupRef>& inBindGroups)
     {
         for (auto* bindGroup : inBindGroups) {
-            for (const auto& [name, item] : bindGroup->desc.items) {
-                if (item.type == RHI::BindingType::uniformBuffer) {
-                    TransitionBuffer(inRecoder, std::get<RGBufferViewRef>(item.view)->GetBuffer(), RHI::BufferState::shaderReadOnly);
-                } else if (item.type == RHI::BindingType::storageBuffer) {
-                    TransitionBuffer(inRecoder, std::get<RGBufferViewRef>(item.view)->GetBuffer(), RHI::BufferState::storage);
-                } else if (item.type == RHI::BindingType::texture) {
-                    TransitionTexture(inRecoder, std::get<RGTextureViewRef>(item.view)->GetTexture(), RHI::TextureState::shaderReadOnly);
-                } else if (item.type == RHI::BindingType::storageTexture) {
-                    TransitionTexture(inRecoder, std::get<RGTextureViewRef>(item.view)->GetTexture(), RHI::TextureState::storage);
-                } else if (item.type == RHI::BindingType::sampler) {} else {
+            for (const auto& [type, view] : bindGroup->desc.items | std::views::values) {
+                if (type == RHI::BindingType::uniformBuffer) {
+                    TransitionBuffer(inRecoder, std::get<RGBufferViewRef>(view)->GetBuffer(), RHI::BufferState::shaderReadOnly);
+                } else if (type == RHI::BindingType::storageBuffer) {
+                    TransitionBuffer(inRecoder, std::get<RGBufferViewRef>(view)->GetBuffer(), RHI::BufferState::storage);
+                } else if (type == RHI::BindingType::rwStorageBuffer) {
+                    TransitionBuffer(inRecoder, std::get<RGBufferViewRef>(view)->GetBuffer(), RHI::BufferState::rwStorage);
+                } else if (type == RHI::BindingType::texture) {
+                    TransitionTexture(inRecoder, std::get<RGTextureViewRef>(view)->GetTexture(), RHI::TextureState::shaderReadOnly);
+                } else if (type == RHI::BindingType::storageTexture) {
+                    TransitionTexture(inRecoder, std::get<RGTextureViewRef>(view)->GetTexture(), RHI::TextureState::storage);
+                } else if (type == RHI::BindingType::sampler) {} else {
                     Unimplement();
                 }
             }

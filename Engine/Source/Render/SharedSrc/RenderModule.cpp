@@ -34,8 +34,8 @@ namespace Render {
     {
         Assert(!initialized);
 
-        renderThread = Common::MakeUnique<Common::WorkerThread>("RenderingThread");
-        renderThread->EmplaceTask([]() -> void { Core::ThreadContext::SetTag(Core::ThreadTag::render); });
+        RenderThread::Get().Start();
+        RenderWorkerThreads::Get().Start();
 
         rhiInstance = RHI::Instance::GetByType(inParams.rhiType);
         rhiDevice = rhiInstance->GetGpu(0)->RequestDevice(
@@ -49,7 +49,9 @@ namespace Render {
 
     void RenderModule::DeInitialize()
     {
-        renderThread = nullptr;
+        RenderThread::Get().Stop();
+        RenderWorkerThreads::Get().Stop();
+
         rhiInstance = nullptr;
         rhiDevice = nullptr;
         initialized = false;
@@ -60,6 +62,11 @@ namespace Render {
         return rhiDevice.Get();
     }
 
+    Render::RenderThread& RenderModule::GetRenderThread() const // NOLINT
+    {
+        return RenderThread::Get();
+    }
+
     Common::UniqueRef<Render::Scene> RenderModule::NewScene() // NOLINT
     {
         return new Scene();
@@ -68,17 +75,6 @@ namespace Render {
     Common::UniqueRef<View> RenderModule::NewView() // NOLINT
     {
         return new View();
-    }
-
-    void RenderModule::ShutdownRenderingThread()
-    {
-        renderThread = nullptr;
-    }
-
-    void RenderModule::FlushAllRenderingCommands() const
-    {
-        Assert(renderThread != nullptr);
-        renderThread->Flush();
     }
 }
 
