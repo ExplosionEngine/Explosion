@@ -19,7 +19,7 @@ namespace RHI::Vulkan {
         VulkanCommandBuffer(VulkanDevice& inDevice, VkCommandPool inNativeCmdPool);
         ~VulkanCommandBuffer() override;
 
-        Common::UniqueRef<CommandRecorder> Begin() override;
+        Common::UniquePtr<CommandRecorder> Begin() override;
 
         VkCommandBuffer GetNative() const;
 

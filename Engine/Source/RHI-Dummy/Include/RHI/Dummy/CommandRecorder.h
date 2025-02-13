@@ -16,9 +16,9 @@ namespace RHI::Dummy {
         ~DummyCommandRecorder() override;
 
         void ResourceBarrier(const Barrier& barrier) override;
-        Common::UniqueRef<CopyPassCommandRecorder> BeginCopyPass() override;
-        Common::UniqueRef<ComputePassCommandRecorder> BeginComputePass() override;
-        Common::UniqueRef<RasterPassCommandRecorder> BeginRasterPass(const RasterPassBeginInfo& beginInfo) override;
+        Common::UniquePtr<CopyPassCommandRecorder> BeginCopyPass() override;
+        Common::UniquePtr<ComputePassCommandRecorder> BeginComputePass() override;
+        Common::UniquePtr<RasterPassCommandRecorder> BeginRasterPass(const RasterPassBeginInfo& beginInfo) override;
         void End() override;
 
     private:

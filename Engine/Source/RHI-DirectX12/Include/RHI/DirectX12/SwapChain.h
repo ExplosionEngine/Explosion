@@ -34,6 +34,6 @@ namespace RHI::DirectX12 {
         uint8_t textureNum;
         PresentMode presentMode;
         ComPtr<IDXGISwapChain3> nativeSwapChain;
-        std::vector<Common::UniqueRef<Texture>> textures;
+        std::vector<Common::UniquePtr<Texture>> textures;
     };
 }

@@ -344,7 +344,7 @@ namespace Runtime::Internal {
         BuildArgumentLists();
     }
 
-    Common::UniqueRef<System> SystemFactory::Build(ECRegistry& inRegistry) const
+    Common::UniquePtr<System> SystemFactory::Build(ECRegistry& inRegistry) const
     {
         const Mirror::Any system = clazz->New(inRegistry);
         const Mirror::Any systemRef = system.Deref();

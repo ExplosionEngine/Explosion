@@ -363,8 +363,8 @@ namespace Render {
 
     private:
         struct AsyncTimelineExecuteContext {
-            std::unordered_map<RGQueueType, Common::UniqueRef<RHI::CommandBuffer>> queueCmdBufferMap;
-            std::unordered_map<RGQueueType, Common::UniqueRef<RHI::Semaphore>> queueSemaphoreToSignalMap;
+            std::unordered_map<RGQueueType, Common::UniquePtr<RHI::CommandBuffer>> queueCmdBufferMap;
+            std::unordered_map<RGQueueType, Common::UniquePtr<RHI::Semaphore>> queueSemaphoreToSignalMap;
 
             AsyncTimelineExecuteContext();
             AsyncTimelineExecuteContext(AsyncTimelineExecuteContext&& inOther) noexcept;
@@ -398,10 +398,10 @@ namespace Render {
 
         bool executed;
         RHI::Device& device;
-        std::vector<Common::UniqueRef<RGResource>> resources;
-        std::vector<Common::UniqueRef<RGResourceView>> views;
-        std::vector<Common::UniqueRef<RGBindGroup>> bindGroups;
-        std::vector<Common::UniqueRef<RGPass>> passes;
+        std::vector<Common::UniquePtr<RGResource>> resources;
+        std::vector<Common::UniquePtr<RGResourceView>> views;
+        std::vector<Common::UniquePtr<RGBindGroup>> bindGroups;
+        std::vector<Common::UniquePtr<RGPass>> passes;
         std::unordered_map<RGQueueType, std::vector<RGPassRef>> recordingAsyncTimeline;
         std::vector<std::unordered_map<RGQueueType, std::vector<RGPassRef>>> asyncTimelines;
         std::unordered_map<RGBufferRef, RGBufferUploadInfo> bufferUploads;
@@ -416,7 +416,7 @@ namespace Render {
         std::vector<AsyncTimelineExecuteContext> asyncTimelineExecuteContexts;
         std::unordered_map<RGResourceRef, std::variant<PooledBufferRef, PooledTextureRef>> devirtualizedResources;
         std::unordered_map<RGResourceViewRef, std::variant<RHI::BufferView*, RHI::TextureView*>> devirtualizedResourceViews;
-        std::unordered_map<RGBindGroupRef, Common::UniqueRef<RHI::BindGroup>> devirtualizedBindGroups;
+        std::unordered_map<RGBindGroupRef, Common::UniquePtr<RHI::BindGroup>> devirtualizedBindGroups;
         std::vector<std::future<void>> bufferUploadTasks;
     };
 }

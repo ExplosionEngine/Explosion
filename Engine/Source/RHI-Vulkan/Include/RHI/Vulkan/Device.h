@@ -25,20 +25,20 @@ namespace RHI::Vulkan {
 
         size_t GetQueueNum(QueueType inType) override;
         Queue* GetQueue(QueueType inType, size_t inIndex) override;
-        Common::UniqueRef<Surface> CreateSurface(const SurfaceCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<SwapChain> CreateSwapChain(const SwapChainCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<Buffer> CreateBuffer(const BufferCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<Texture> CreateTexture(const TextureCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<Sampler> CreateSampler(const SamplerCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<BindGroupLayout> CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<BindGroup> CreateBindGroup(const BindGroupCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<PipelineLayout> CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<ShaderModule> CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<RasterPipeline> CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<CommandBuffer> CreateCommandBuffer() override;
-        Common::UniqueRef<Fence> CreateFence(bool initAsSignaled) override;
-        Common::UniqueRef<Semaphore> CreateSemaphore() override;
+        Common::UniquePtr<Surface> CreateSurface(const SurfaceCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<SwapChain> CreateSwapChain(const SwapChainCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<Buffer> CreateBuffer(const BufferCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<Texture> CreateTexture(const TextureCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<Sampler> CreateSampler(const SamplerCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<BindGroupLayout> CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<BindGroup> CreateBindGroup(const BindGroupCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<PipelineLayout> CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<ShaderModule> CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<RasterPipeline> CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<CommandBuffer> CreateCommandBuffer() override;
+        Common::UniquePtr<Fence> CreateFence(bool initAsSignaled) override;
+        Common::UniquePtr<Semaphore> CreateSemaphore() override;
 
         bool CheckSwapChainFormatSupport(Surface* inSurface, PixelFormat inFormat) override;
         TextureSubResourceCopyFootprint GetTextureSubResourceCopyFootprint(const Texture& texture, const TextureSubResourceInfo& subResourceInfo) override;
@@ -61,7 +61,7 @@ namespace RHI::Vulkan {
         VkDevice nativeDevice;
         VmaAllocator nativeAllocator;
         std::unordered_map<QueueType, std::pair<uint32_t, uint32_t>> queueFamilyMappings;
-        std::unordered_map<QueueType, std::vector<Common::UniqueRef<VulkanQueue>>> queues;
+        std::unordered_map<QueueType, std::vector<Common::UniquePtr<VulkanQueue>>> queues;
         std::unordered_map<QueueType, VkCommandPool> nativeCmdPools;
     };
 }

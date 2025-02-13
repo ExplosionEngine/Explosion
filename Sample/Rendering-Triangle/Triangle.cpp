@@ -62,21 +62,22 @@ private:
     void CreateTriangleVertexBuffer();
     void CreateSyncObjects();
 
-    PixelFormat swapChainFormat = PixelFormat::max;
+    PixelFormat swapChainFormat;
     ShaderInstance triangleVS;
     ShaderInstance trianglePS;
-    UniqueRef<Device> device;
-    UniqueRef<Surface> surface;
-    UniqueRef<SwapChain> swapChain;
+    UniquePtr<Device> device;
+    UniquePtr<Surface> surface;
+    UniquePtr<SwapChain> swapChain;
     std::array<Texture*, backBufferCount> swapChainTextures {};
-    UniqueRef<Buffer> triangleVertexBuffer;
-    UniqueRef<Semaphore> imageReadySemaphore;
-    UniqueRef<Semaphore> renderFinishedSemaphore;
-    UniqueRef<Fence> frameFence;
+    UniquePtr<Buffer> triangleVertexBuffer;
+    UniquePtr<Semaphore> imageReadySemaphore;
+    UniquePtr<Semaphore> renderFinishedSemaphore;
+    UniquePtr<Fence> frameFence;
 };
 
 TriangleApplication::TriangleApplication(const std::string& inName)
     : Application(inName)
+    , swapChainFormat(PixelFormat::max)
 {
 }
 
@@ -99,17 +100,17 @@ void TriangleApplication::OnDrawFrame()
 
     auto* pso = PipelineCache::Get(*device).GetOrCreate(
         RasterPipelineStateDesc()
-                .SetVertexShader(triangleVS)
-                .SetPixelShader(trianglePS)
-                .SetVertexState(
-                    RVertexState()
-                        .AddVertexBufferLayout(
-                            RVertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
-                                .AddAttribute(RVertexAttribute(RVertexBinding("POSITION", 0), VertexFormat::float32X3, offsetof(Vertex, position)))
-                                .AddAttribute(RVertexAttribute(RVertexBinding("COLOR", 0), VertexFormat::float32X3, offsetof(Vertex, color)))))
-                .SetFragmentState(
-                    RFragmentState()
-                        .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all, false))));
+            .SetVertexShader(triangleVS)
+            .SetPixelShader(trianglePS)
+            .SetVertexState(
+                RVertexState()
+                    .AddVertexBufferLayout(
+                        RVertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
+                            .AddAttribute(RVertexAttribute(RVertexBinding("POSITION", 0), VertexFormat::float32X3, offsetof(Vertex, position)))
+                            .AddAttribute(RVertexAttribute(RVertexBinding("COLOR", 0), VertexFormat::float32X3, offsetof(Vertex, color)))))
+            .SetFragmentState(
+                RFragmentState()
+                    .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all, false))));
 
     RGBuilder builder(*device);
     auto* backTexture = builder.ImportTexture(swapChainTextures[backTextureIndex], TextureState::present);
@@ -149,7 +150,7 @@ void TriangleApplication::OnDrawFrame()
 
 void TriangleApplication::OnDestroy()
 {
-    const UniqueRef<Fence> fence = device->CreateFence(false);
+    const UniquePtr<Fence> fence = device->CreateFence(false);
     device->GetQueue(QueueType::graphics, 0)->Flush(fence.Get());
     fence->Wait();
 
@@ -217,9 +218,9 @@ void TriangleApplication::CreateSwapChain()
 void TriangleApplication::CreateTriangleVertexBuffer()
 {
     const std::vector<Vertex> vertices = {
-        {{-.5f, -.5f, 0.f}, {1.f, 0.f, 0.f}},
-        {{.5f, -.5f, 0.f}, {0.f, 1.f, 0.f}},
-        {{0.f, .5f, 0.f}, {0.f, 0.f, 1.f}},
+        { { -.5f, -.5f, 0.f }, { 1.f, 0.f, 0.f } },
+        { { .5f, -.5f, 0.f }, { 0.f, 1.f, 0.f } },
+        { { 0.f, .5f, 0.f }, { 0.f, 0.f, 1.f } },
     };
 
     const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()

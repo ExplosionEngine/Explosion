@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
     auto& qmlEngine = Editor::QmlEngine::Get();
     qmlEngine.Start();
 
-    Common::UniqueRef<QWidget> mainWidget;
+    Common::UniquePtr<QWidget> mainWidget;
 #if BUILD_CONFIG_DEBUG
     if (caRunSample.GetValue()) {
         mainWidget = new Editor::WidgetSamples();

@@ -58,7 +58,7 @@ namespace Runtime {
         // TODO emplace render thread task, like wait fence, console command copy
     }
 
-    Common::UniqueRef<World> Engine::CreateWorld(const std::string& inName) const // NOLINT
+    Common::UniquePtr<World> Engine::CreateWorld(const std::string& inName) const // NOLINT
     {
         return new World(inName);
     }
@@ -84,7 +84,7 @@ namespace Runtime {
         LogInfo(Render, "RHI type: {}", inRhiTypeStr);
     }
 
-    Common::UniqueRef<Engine> EngineHolder::engine = nullptr;
+    Common::UniquePtr<Engine> EngineHolder::engine = nullptr;
 
     MinEngine::MinEngine(const EngineInitParams& inParams)
         : Engine(inParams)

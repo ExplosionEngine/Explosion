@@ -20,14 +20,14 @@ namespace Render {
     public:
         using DescType = typename RHIResTraits<RHIRes>::DescType;
 
-        explicit PooledResource(Common::UniqueRef<RHIRes>&& inRhiHandle, DescType inDesc);
+        explicit PooledResource(Common::UniquePtr<RHIRes>&& inRhiHandle, DescType inDesc);
         ~PooledResource();
 
         RHIRes* GetRHI() const;
         const DescType& GetDesc() const;
 
     private:
-        Common::UniqueRef<RHIRes> rhiHandle;
+        Common::UniquePtr<RHIRes> rhiHandle;
         DescType desc;
     };
 
@@ -35,8 +35,8 @@ namespace Render {
     using PooledTexture = PooledResource<RHI::Texture>;
     using PooledBufferDesc = RHI::BufferCreateInfo;
     using PooledTextureDesc = RHI::TextureCreateInfo;
-    using PooledBufferRef = Common::SharedRef<PooledBuffer>;
-    using PooledTextureRef = Common::SharedRef<PooledTexture>;
+    using PooledBufferRef = Common::SharedPtr<PooledBuffer>;
+    using PooledTextureRef = Common::SharedPtr<PooledTexture>;
 
     template <typename PooledRes>
     struct PooledResTraits {};
@@ -76,7 +76,7 @@ namespace Render {
     };
 
     template <typename RHIResource>
-    PooledResource<RHIResource>::PooledResource(Common::UniqueRef<RHIResource>&& inRhiHandle, DescType inDesc)
+    PooledResource<RHIResource>::PooledResource(Common::UniquePtr<RHIResource>&& inRhiHandle, DescType inDesc)
         : rhiHandle(std::move(inRhiHandle))
         , desc(std::move(inDesc))
     {
@@ -124,9 +124,9 @@ namespace Render {
     template <typename PooledResource>
     ResourcePool<PooledResource>& ResourcePool<PooledResource>::Get(RHI::Device& device)
     {
-        static std::unordered_map<RHI::Device*, Common::UniqueRef<ResourcePool>> deviceMap;
+        static std::unordered_map<RHI::Device*, Common::UniquePtr<ResourcePool>> deviceMap;
         if (!deviceMap.contains(&device)) {
-            deviceMap.emplace(std::make_pair(&device, Common::UniqueRef<ResourcePool>(new ResourcePool(device))));
+            deviceMap.emplace(std::make_pair(&device, Common::UniquePtr<ResourcePool>(new ResourcePool(device))));
         }
         return *deviceMap.at(&device);
     }

@@ -29,21 +29,21 @@ namespace Runtime {
     };
 
     template <Common::DerivedFrom<Asset> A>
-    class AssetRef {
+    class AssetPtr {
     public:
-        template <Common::DerivedFrom<Asset> A2> AssetRef(Common::SharedRef<A2>& inRef); // NOLINT
-        template <Common::DerivedFrom<Asset> A2> AssetRef(Common::SharedRef<A2>&& inRef) noexcept; // NOLINT
-        AssetRef(A* pointer); // NOLINT
-        AssetRef(AssetRef& other); // NOLINT
-        AssetRef(AssetRef&& other) noexcept; // NOLINT
-        AssetRef();
-        ~AssetRef();
+        template <Common::DerivedFrom<Asset> A2> AssetPtr(Common::SharedPtr<A2>& sharedPtr); // NOLINT
+        template <Common::DerivedFrom<Asset> A2> AssetPtr(Common::SharedPtr<A2>&& sharedPtr) noexcept; // NOLINT
+        AssetPtr(A* pointer); // NOLINT
+        AssetPtr(AssetPtr& other); // NOLINT
+        AssetPtr(AssetPtr&& other) noexcept; // NOLINT
+        AssetPtr();
+        ~AssetPtr();
 
-        template <Common::DerivedFrom<Asset> A2> AssetRef& operator=(Common::SharedRef<A2>& inRef);
-        template <Common::DerivedFrom<Asset> A2> AssetRef& operator=(Common::SharedRef<A2>&& inRef) noexcept;
-        AssetRef& operator=(A* pointer);
-        AssetRef& operator=(AssetRef& other); // NOLINT
-        AssetRef& operator=(AssetRef&& other) noexcept;
+        template <Common::DerivedFrom<Asset> A2> AssetPtr& operator=(Common::SharedPtr<A2>& sharedPtr);
+        template <Common::DerivedFrom<Asset> A2> AssetPtr& operator=(Common::SharedPtr<A2>&& sharedPtr) noexcept;
+        AssetPtr& operator=(A* pointer);
+        AssetPtr& operator=(AssetPtr& other); // NOLINT
+        AssetPtr& operator=(AssetPtr&& other) noexcept;
 
         const Core::Uri& Uri() const;
         A* operator->() const noexcept;
@@ -53,60 +53,60 @@ namespace Runtime {
         A* Get() const;
         void Reset(A* pointer = nullptr);
         auto RefCount() const;
-        Common::SharedRef<A>& GetSharedRef();
-        template <Common::DerivedFrom<Asset> A2> AssetRef<A2> StaticCast();
-        template <Common::DerivedFrom<Asset> A2> AssetRef<A2> DynamicCast();
-        template <Common::DerivedFrom<Asset> A2> AssetRef<A2> ReinterpretCast();
+        Common::SharedPtr<A>& GetSharedRef();
+        template <Common::DerivedFrom<Asset> A2> AssetPtr<A2> StaticCast();
+        template <Common::DerivedFrom<Asset> A2> AssetPtr<A2> DynamicCast();
+        template <Common::DerivedFrom<Asset> A2> AssetPtr<A2> ReinterpretCast();
 
     private:
-        Common::SharedRef<A> ref;
+        Common::SharedPtr<A> ptr;
     };
 
     template <Common::DerivedFrom<Asset> A>
-    class WeakAssetRef {
+    class WeakAssetPtr {
     public:
-        template <Common::DerivedFrom<Asset> A2> WeakAssetRef(AssetRef<A2>& inRef); // NOLINT
-        WeakAssetRef(WeakAssetRef& other); // NOLINT
-        WeakAssetRef(WeakAssetRef&& other) noexcept; // NOLINT
+        template <Common::DerivedFrom<Asset> A2> WeakAssetPtr(AssetPtr<A2>& assetPtr); // NOLINT
+        WeakAssetPtr(WeakAssetPtr& other); // NOLINT
+        WeakAssetPtr(WeakAssetPtr&& other) noexcept; // NOLINT
 
-        template <Common::DerivedFrom<Asset> A2> WeakAssetRef& operator=(AssetRef<A2>& inRef);
-        WeakAssetRef& operator=(WeakAssetRef& other); // NOLINT
-        WeakAssetRef& operator=(WeakAssetRef&& other) noexcept;
+        template <Common::DerivedFrom<Asset> A2> WeakAssetPtr& operator=(AssetPtr<A2>& assetPtr);
+        WeakAssetPtr& operator=(WeakAssetPtr& other); // NOLINT
+        WeakAssetPtr& operator=(WeakAssetPtr&& other) noexcept;
         void Reset();
         bool Expired() const;
-        AssetRef<A> Lock() const;
+        AssetPtr<A> Lock() const;
 
     private:
-        Common::WeakRef<A> ref;
+        Common::WeakPtr<A> ptr;
     };
 
     template <Common::DerivedFrom<Asset> A>
-    class SoftAssetRef {
+    class SoftAssetPtr {
     public:
-        SoftAssetRef();
-        explicit SoftAssetRef(Core::Uri inUri);
-        explicit SoftAssetRef(AssetRef<A>& inAsset);
-        SoftAssetRef(const SoftAssetRef<A>& other);
-        SoftAssetRef(SoftAssetRef<A>&& other) noexcept;
-        ~SoftAssetRef();
+        SoftAssetPtr();
+        explicit SoftAssetPtr(Core::Uri inUri);
+        explicit SoftAssetPtr(AssetPtr<A>& inAsset);
+        SoftAssetPtr(const SoftAssetPtr<A>& other);
+        SoftAssetPtr(SoftAssetPtr<A>&& other) noexcept;
+        ~SoftAssetPtr();
 
-        SoftAssetRef& operator=(Core::Uri inUri);
-        SoftAssetRef& operator=(AssetRef<A>& inAsset);
-        SoftAssetRef& operator=(const SoftAssetRef<A>& other);
-        SoftAssetRef& operator=(SoftAssetRef<A>&& other) noexcept;
+        SoftAssetPtr& operator=(Core::Uri inUri);
+        SoftAssetPtr& operator=(AssetPtr<A>& inAsset);
+        SoftAssetPtr& operator=(const SoftAssetPtr<A>& other);
+        SoftAssetPtr& operator=(SoftAssetPtr<A>&& other) noexcept;
 
         bool Empty() const;
         bool Loaded() const;
-        AssetRef<A> Get() const;
+        AssetPtr<A> Get() const;
         void Reset();
         const Core::Uri& Uri() const;
 
     private:
         Core::Uri uri;
-        AssetRef<A> asset;
+        AssetPtr<A> asset;
     };
 
-    template <Common::DerivedFrom<Asset> A> using OnAssetLoaded = std::function<void(AssetRef<A>)>;
+    template <Common::DerivedFrom<Asset> A> using OnAssetLoaded = std::function<void(AssetPtr<A>)>;
     template <Common::DerivedFrom<Asset> A> using OnSoftAssetLoaded = std::function<void()>;
 
     class RUNTIME_API AssetManager {
@@ -114,35 +114,35 @@ namespace Runtime {
         static AssetManager& Get();
         ~AssetManager();
 
-        template <Common::DerivedFrom<Asset> A> AssetRef<A> SyncLoad(const Core::Uri& uri);
-        template <Common::DerivedFrom<Asset> A> void SyncLoadSoft(SoftAssetRef<A>& softAssetRef);
+        template <Common::DerivedFrom<Asset> A> AssetPtr<A> SyncLoad(const Core::Uri& uri);
+        template <Common::DerivedFrom<Asset> A> void SyncLoadSoft(SoftAssetPtr<A>& softAssetRef);
         template <Common::DerivedFrom<Asset> A> void AsyncLoad(const Core::Uri& uri, const OnAssetLoaded<A>& onAssetLoaded);
-        template <Common::DerivedFrom<Asset> A> void AsyncLoadSoft(SoftAssetRef<A>& softAssetRef, const OnSoftAssetLoaded<A>& onSoftAssetLoaded);
-        template <Common::DerivedFrom<Asset> A> void Save(const AssetRef<A>& assetRef);
-        template <Common::DerivedFrom<Asset> A> void SaveSoft(const SoftAssetRef<A>& softAssetRef);
+        template <Common::DerivedFrom<Asset> A> void AsyncLoadSoft(SoftAssetPtr<A>& softAssetRef, const OnSoftAssetLoaded<A>& onSoftAssetLoaded);
+        template <Common::DerivedFrom<Asset> A> void Save(const AssetPtr<A>& assetRef);
+        template <Common::DerivedFrom<Asset> A> void SaveSoft(const SoftAssetPtr<A>& softAssetRef);
 
     private:
-        template <Common::DerivedFrom<Asset> A> AssetRef<A> LoadInternal(const Core::Uri& uri);
+        template <Common::DerivedFrom<Asset> A> AssetPtr<A> LoadInternal(const Core::Uri& uri);
 
         AssetManager();
 
         std::mutex mutex;
-        std::unordered_map<Core::Uri, WeakAssetRef<Asset>> weakAssetRefs;
+        std::unordered_map<Core::Uri, WeakAssetPtr<Asset>> weakAssetRefs;
         Common::ThreadPool threadPool;
     };
 }
 
 namespace Common {
     template <DerivedFrom<Runtime::Asset> A>
-    struct Serializer<Runtime::AssetRef<A>> {
+    struct Serializer<Runtime::AssetPtr < A>> {
         static constexpr size_t typeId = Common::HashUtils::StrCrc32("Runtime::AssetRef");
 
-        static size_t Serialize(BinarySerializeStream& stream, const Runtime::AssetRef<A>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Runtime::AssetPtr<A>& value)
         {
             return Serializer<Core::Uri>::Serialize(stream, value);
         }
 
-        static size_t Deserialize(BinaryDeserializeStream& stream, Runtime::AssetRef<A>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Runtime::AssetPtr<A>& value)
         {
             Core::Uri uri;
             const auto deserialized = Serializer<Core::Uri>::Deserialize(stream, uri);
@@ -152,15 +152,15 @@ namespace Common {
     };
 
     template <DerivedFrom<Runtime::Asset> A>
-    struct Serializer<Runtime::SoftAssetRef<A>> {
+    struct Serializer<Runtime::SoftAssetPtr<A>> {
         static constexpr size_t typeId = Common::HashUtils::StrCrc32("Runtime::SoftAssetRef");
 
-        static size_t Serialize(BinarySerializeStream& stream, const Runtime::SoftAssetRef<A>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Runtime::SoftAssetPtr<A>& value)
         {
             return Serializer<Core::Uri>::Serialize(stream, value);
         }
 
-        static size_t Deserialize(BinaryDeserializeStream& stream, Runtime::SoftAssetRef<A>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Runtime::SoftAssetPtr<A>& value)
         {
             Core::Uri uri;
             const auto deserialized = Serializer<Core::Uri>::Deserialize(stream, uri);
@@ -173,254 +173,254 @@ namespace Common {
 namespace Runtime {
     template <Common::DerivedFrom<Asset> A>
     template <Common::DerivedFrom<Asset> A2>
-    AssetRef<A>::AssetRef(Common::SharedRef<A2>& inRef)
-        : ref(inRef)
+    AssetPtr<A>::AssetPtr(Common::SharedPtr<A2>& sharedPtr)
+        : ptr(sharedPtr)
     {
     }
 
     template <Common::DerivedFrom<Asset> A>
     template <Common::DerivedFrom<Asset> A2>
-    AssetRef<A>::AssetRef(Common::SharedRef<A2>&& inRef) noexcept
-        : ref(std::move(inRef))
+    AssetPtr<A>::AssetPtr(Common::SharedPtr<A2>&& sharedPtr) noexcept
+        : ptr(std::move(sharedPtr))
     {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    AssetRef<A>::AssetRef(A* pointer)
-        : ref(pointer)
+    AssetPtr<A>::AssetPtr(A* pointer)
+        : ptr(pointer)
     {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    AssetRef<A>::AssetRef(AssetRef& other)
-        : ref(other.ref)
+    AssetPtr<A>::AssetPtr(AssetPtr& other)
+        : ptr(other.ptr)
     {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    AssetRef<A>::AssetRef(AssetRef&& other) noexcept
-        : ref(std::move(other.ref))
+    AssetPtr<A>::AssetPtr(AssetPtr&& other) noexcept
+        : ptr(std::move(other.ptr))
     {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    AssetRef<A>::AssetRef() = default;
+    AssetPtr<A>::AssetPtr() = default;
 
     template <Common::DerivedFrom<Asset> A>
-    AssetRef<A>::~AssetRef() = default;
+    AssetPtr<A>::~AssetPtr() = default;
 
     template <Common::DerivedFrom<Asset> A>
     template <Common::DerivedFrom<Asset> A2>
-    AssetRef<A>& AssetRef<A>::operator=(Common::SharedRef<A2>& inRef)
+    AssetPtr<A>& AssetPtr<A>::operator=(Common::SharedPtr<A2>& sharedPtr)
     {
-        ref = inRef;
+        ptr = sharedPtr;
         return *this;
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    template <Common::DerivedFrom<Asset> A2>
-    AssetRef<A>& AssetRef<A>::operator=(Common::SharedRef<A2>&& inRef) noexcept
-    {
-        ref = inRef;
-        return *this;
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    AssetRef<A>& AssetRef<A>::operator=(A* pointer)
-    {
-        ref = pointer;
-        return *this;
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    AssetRef<A>& AssetRef<A>::operator=(AssetRef& other)
-    {
-        ref = other.ref;
-        return *this;
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    AssetRef<A>& AssetRef<A>::operator=(AssetRef&& other) noexcept
-    {
-        ref = std::move(other.ref);
-        return *this;
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    const Core::Uri& AssetRef<A>::Uri() const
-    {
-        Assert(ref != nullptr);
-        return ref->uri;
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    A* AssetRef<A>::operator->() const noexcept
-    {
-        return ref.operator->();
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    A& AssetRef<A>::operator*() const noexcept
-    {
-        return ref.operator*();
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    bool AssetRef<A>::operator==(nullptr_t) const noexcept
-    {
-        return ref == nullptr;
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    bool AssetRef<A>::operator!=(nullptr_t) const noexcept
-    {
-        return ref != nullptr;
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    A* AssetRef<A>::Get() const
-    {
-        return ref.Get();
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    void AssetRef<A>::Reset(A* pointer)
-    {
-        ref.Reset(pointer);
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    auto AssetRef<A>::RefCount() const
-    {
-        return ref.RefCount();
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    Common::SharedRef<A>& AssetRef<A>::GetSharedRef()
-    {
-        return ref;
     }
 
     template <Common::DerivedFrom<Asset> A>
     template <Common::DerivedFrom<Asset> A2>
-    AssetRef<A2> AssetRef<A>::StaticCast()
+    AssetPtr<A>& AssetPtr<A>::operator=(Common::SharedPtr<A2>&& sharedPtr) noexcept
     {
-        return ref.template StaticCast<A2>();
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    template <Common::DerivedFrom<Asset> A2>
-    AssetRef<A2> AssetRef<A>::DynamicCast()
-    {
-        return ref.template DynamicCast<A2>();
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    template <Common::DerivedFrom<Asset> A2>
-    AssetRef<A2> AssetRef<A>::ReinterpretCast()
-    {
-        return ref.template ReinterpretCast<A2>();
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    template <Common::DerivedFrom<Asset> A2>
-    WeakAssetRef<A>::WeakAssetRef(AssetRef<A2>& inRef)
-        : ref(inRef.GetSharedRef())
-    {
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    WeakAssetRef<A>::WeakAssetRef(WeakAssetRef& other)
-        : ref(other.ref)
-    {
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    WeakAssetRef<A>::WeakAssetRef(WeakAssetRef&& other) noexcept
-        : ref(std::move(other.ref))
-    {
-    }
-
-    template <Common::DerivedFrom<Asset> A>
-    template <Common::DerivedFrom<Asset> A2>
-    WeakAssetRef<A>& WeakAssetRef<A>::operator=(AssetRef<A2>& inRef)
-    {
-        ref = inRef.GetSharedRef();
+        ptr = sharedPtr;
         return *this;
     }
 
     template <Common::DerivedFrom<Asset> A>
-    WeakAssetRef<A>& WeakAssetRef<A>::operator=(WeakAssetRef& other)
+    AssetPtr<A>& AssetPtr<A>::operator=(A* pointer)
     {
-        ref = other.ref;
+        ptr = pointer;
         return *this;
     }
 
     template <Common::DerivedFrom<Asset> A>
-    WeakAssetRef<A>& WeakAssetRef<A>::operator=(WeakAssetRef&& other) noexcept
+    AssetPtr<A>& AssetPtr<A>::operator=(AssetPtr& other)
     {
-        ref = std::move(other.ref);
+        ptr = other.ptr;
         return *this;
     }
 
     template <Common::DerivedFrom<Asset> A>
-    void WeakAssetRef<A>::Reset()
+    AssetPtr<A>& AssetPtr<A>::operator=(AssetPtr&& other) noexcept
     {
-        ref.Reset();
+        ptr = std::move(other.ptr);
+        return *this;
     }
 
     template <Common::DerivedFrom<Asset> A>
-    bool WeakAssetRef<A>::Expired() const
+    const Core::Uri& AssetPtr<A>::Uri() const
     {
-        return ref.Expired();
+        Assert(ptr != nullptr);
+        return ptr->uri;
     }
 
     template <Common::DerivedFrom<Asset> A>
-    AssetRef<A> WeakAssetRef<A>::Lock() const
+    A* AssetPtr<A>::operator->() const noexcept
     {
-        return ref.Lock();
+        return ptr.operator->();
     }
 
     template <Common::DerivedFrom<Asset> A>
-    SoftAssetRef<A>::SoftAssetRef()
+    A& AssetPtr<A>::operator*() const noexcept
+    {
+        return ptr.operator*();
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    bool AssetPtr<A>::operator==(nullptr_t) const noexcept
+    {
+        return ptr == nullptr;
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    bool AssetPtr<A>::operator!=(nullptr_t) const noexcept
+    {
+        return ptr != nullptr;
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    A* AssetPtr<A>::Get() const
+    {
+        return ptr.Get();
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    void AssetPtr<A>::Reset(A* pointer)
+    {
+        ptr.Reset(pointer);
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    auto AssetPtr<A>::RefCount() const
+    {
+        return ptr.RefCount();
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    Common::SharedPtr<A>& AssetPtr<A>::GetSharedRef()
+    {
+        return ptr;
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    template <Common::DerivedFrom<Asset> A2>
+    AssetPtr<A2> AssetPtr<A>::StaticCast()
+    {
+        return ptr.template StaticCast<A2>();
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    template <Common::DerivedFrom<Asset> A2>
+    AssetPtr<A2> AssetPtr<A>::DynamicCast()
+    {
+        return ptr.template DynamicCast<A2>();
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    template <Common::DerivedFrom<Asset> A2>
+    AssetPtr<A2> AssetPtr<A>::ReinterpretCast()
+    {
+        return ptr.template ReinterpretCast<A2>();
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    template <Common::DerivedFrom<Asset> A2>
+    WeakAssetPtr<A>::WeakAssetPtr(AssetPtr<A2>& assetPtr)
+        : ptr(assetPtr.GetSharedRef())
+    {
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    WeakAssetPtr<A>::WeakAssetPtr(WeakAssetPtr& other)
+        : ptr(other.ptr)
+    {
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    WeakAssetPtr<A>::WeakAssetPtr(WeakAssetPtr&& other) noexcept
+        : ptr(std::move(other.ptr))
+    {
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    template <Common::DerivedFrom<Asset> A2>
+    WeakAssetPtr<A>& WeakAssetPtr<A>::operator=(AssetPtr<A2>& assetPtr)
+    {
+        ptr = assetPtr.GetSharedRef();
+        return *this;
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    WeakAssetPtr<A>& WeakAssetPtr<A>::operator=(WeakAssetPtr& other)
+    {
+        ptr = other.ptr;
+        return *this;
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    WeakAssetPtr<A>& WeakAssetPtr<A>::operator=(WeakAssetPtr&& other) noexcept
+    {
+        ptr = std::move(other.ptr);
+        return *this;
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    void WeakAssetPtr<A>::Reset()
+    {
+        ptr.Reset();
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    bool WeakAssetPtr<A>::Expired() const
+    {
+        return ptr.Expired();
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    AssetPtr<A> WeakAssetPtr<A>::Lock() const
+    {
+        return ptr.Lock();
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    SoftAssetPtr<A>::SoftAssetPtr()
         : uri()
         , asset()
     {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    SoftAssetRef<A>::SoftAssetRef(Core::Uri inUri)
+    SoftAssetPtr<A>::SoftAssetPtr(Core::Uri inUri)
         : uri(std::move(inUri))
         , asset()
     {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    SoftAssetRef<A>::SoftAssetRef(AssetRef<A>& inAsset)
+    SoftAssetPtr<A>::SoftAssetPtr(AssetPtr<A>& inAsset)
         : uri(inAsset.Uri())
         , asset(inAsset)
     {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    SoftAssetRef<A>::SoftAssetRef(const SoftAssetRef<A>& other)
+    SoftAssetPtr<A>::SoftAssetPtr(const SoftAssetPtr<A>& other)
         : uri(other.uri)
         , asset(other.asset)
     {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    SoftAssetRef<A>::SoftAssetRef(SoftAssetRef<A>&& other) noexcept
+    SoftAssetPtr<A>::SoftAssetPtr(SoftAssetPtr<A>&& other) noexcept
         : uri(std::move(other.uri))
         , asset(std::move(other.asset))
     {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    SoftAssetRef<A>::~SoftAssetRef() = default;
+    SoftAssetPtr<A>::~SoftAssetPtr() = default;
 
     template <Common::DerivedFrom<Asset> A>
-    SoftAssetRef<A>& SoftAssetRef<A>::operator=(Core::Uri inUri)
+    SoftAssetPtr<A>& SoftAssetPtr<A>::operator=(Core::Uri inUri)
     {
         uri = std::move(inUri);
         asset = nullptr;
@@ -428,7 +428,7 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    SoftAssetRef<A>& SoftAssetRef<A>::operator=(AssetRef<A>& inAsset)
+    SoftAssetPtr<A>& SoftAssetPtr<A>::operator=(AssetPtr<A>& inAsset)
     {
         uri = inAsset.Uri();
         asset = inAsset;
@@ -436,7 +436,7 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    SoftAssetRef<A>& SoftAssetRef<A>::operator=(const SoftAssetRef<A>& other)
+    SoftAssetPtr<A>& SoftAssetPtr<A>::operator=(const SoftAssetPtr<A>& other)
     {
         uri = other.uri;
         asset = other.asset;
@@ -444,7 +444,7 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    SoftAssetRef<A>& SoftAssetRef<A>::operator=(SoftAssetRef<A>&& other) noexcept
+    SoftAssetPtr<A>& SoftAssetPtr<A>::operator=(SoftAssetPtr<A>&& other) noexcept
     {
         uri = std::move(other.uri);
         asset = std::move(other.asset);
@@ -452,47 +452,47 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    bool SoftAssetRef<A>::Empty() const
+    bool SoftAssetPtr<A>::Empty() const
     {
         return uri.Empty();
     }
 
     template <Common::DerivedFrom<Asset> A>
-    bool SoftAssetRef<A>::Loaded() const
+    bool SoftAssetPtr<A>::Loaded() const
     {
         return asset != nullptr;
     }
 
     template <Common::DerivedFrom<Asset> A>
-    AssetRef<A> SoftAssetRef<A>::Get() const
+    AssetPtr<A> SoftAssetPtr<A>::Get() const
     {
         return asset;
     }
 
     template <Common::DerivedFrom<Asset> A>
-    void SoftAssetRef<A>::Reset()
+    void SoftAssetPtr<A>::Reset()
     {
         asset = nullptr;
     }
 
     template <Common::DerivedFrom<Asset> A>
-    const Core::Uri& SoftAssetRef<A>::Uri() const
+    const Core::Uri& SoftAssetPtr<A>::Uri() const
     {
         return uri;
     }
 
     template <Common::DerivedFrom<Asset> A>
-    AssetRef<A> AssetManager::SyncLoad(const Core::Uri& uri)
+    AssetPtr<A> AssetManager::SyncLoad(const Core::Uri& uri)
     {
         auto iter = weakAssetRefs.find(uri);
         if (iter != weakAssetRefs.end() && !iter->second.Expired()) {
             return iter->second.Lock().StaticCast<A>();
         }
 
-        AssetRef<A> result = LoadInternal<A>(uri);
-        AssetRef<Asset> tempRef = result.template StaticCast<Asset>();
+        AssetPtr<A> result = LoadInternal<A>(uri);
+        AssetPtr<Asset> tempRef = result.template StaticCast<Asset>();
         if (iter == weakAssetRefs.end()) {
-            weakAssetRefs.emplace(std::make_pair(uri, WeakAssetRef<Asset>(tempRef)));
+            weakAssetRefs.emplace(std::make_pair(uri, WeakAssetPtr<Asset>(tempRef)));
         } else {
             iter->second = tempRef;
         }
@@ -500,7 +500,7 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    void AssetManager::SyncLoadSoft(SoftAssetRef<A>& softAssetRef)
+    void AssetManager::SyncLoadSoft(SoftAssetPtr<A>& softAssetRef)
     {
         softAssetRef = SyncLoad<A>(softAssetRef.Uri());
     }
@@ -509,7 +509,7 @@ namespace Runtime {
     void AssetManager::AsyncLoad(const Core::Uri& uri, const OnAssetLoaded<A>& onAssetLoaded)
     {
         threadPool.EmplaceTask([=]() -> void {
-            AssetRef<A> result = nullptr;
+            AssetPtr<A> result = nullptr;
             {
                 std::unique_lock<std::mutex> lock(mutex);
                 auto iter = weakAssetRefs.find(uri);
@@ -522,12 +522,12 @@ namespace Runtime {
                 result = LoadInternal<A>(uri);
             }
 
-            AssetRef<Asset> tempRef = result.template StaticCast<Asset>();
+            AssetPtr<Asset> tempRef = result.template StaticCast<Asset>();
             {
                 std::unique_lock<std::mutex> lock(mutex);
                 auto iter = weakAssetRefs.find(uri);
                 if (iter == weakAssetRefs.end()) {
-                    weakAssetRefs.emplace(std::make_pair(uri, WeakAssetRef<Asset>(tempRef)));
+                    weakAssetRefs.emplace(std::make_pair(uri, WeakAssetPtr<Asset>(tempRef)));
                 } else {
                     iter->second = tempRef;
                 }
@@ -538,10 +538,10 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    void AssetManager::AsyncLoadSoft(SoftAssetRef<A>& softAssetRef, const OnSoftAssetLoaded<A>& onSoftAssetLoaded)
+    void AssetManager::AsyncLoadSoft(SoftAssetPtr<A>& softAssetRef, const OnSoftAssetLoaded<A>& onSoftAssetLoaded)
     {
         threadPool.EmplaceTask([this, softAssetRef, onSoftAssetLoaded]() -> void {
-            AsyncLoad(softAssetRef.Uri(), [&](AssetRef<A>& ref) -> void {
+            AsyncLoad(softAssetRef.Uri(), [&](AssetPtr<A>& ref) -> void {
                 softAssetRef = ref;
                 onSoftAssetLoaded();
             });
@@ -549,7 +549,7 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    void AssetManager::Save(const AssetRef<A>& assetRef)
+    void AssetManager::Save(const AssetPtr<A>& assetRef)
     {
         if (assetRef == nullptr) {
             return;
@@ -564,19 +564,19 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    void AssetManager::SaveSoft(const SoftAssetRef<A>& softAssetRef)
+    void AssetManager::SaveSoft(const SoftAssetPtr<A>& softAssetRef)
     {
         Save(softAssetRef.Uri());
     }
 
     template <Common::DerivedFrom<Asset> A>
-    AssetRef<A> AssetManager::LoadInternal(const Core::Uri& uri)
+    AssetPtr<A> AssetManager::LoadInternal(const Core::Uri& uri)
     {
         Core::AssetUriParser parser(uri);
         auto pathString = parser.AbsoluteFilePath().String();
         Common::BinaryFileDeserializeStream stream(pathString);
 
-        AssetRef<A> result = Common::SharedRef<A>(new A());
+        AssetPtr<A> result = Common::SharedPtr<A>(new A());
         Mirror::Any ref = std::ref(*result.Get());
         ref.Deserialize(stream);
 

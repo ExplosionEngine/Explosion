@@ -91,9 +91,9 @@ namespace RHI::DirectX12 {
 
     DX12CommandBuffer::~DX12CommandBuffer() = default;
 
-    Common::UniqueRef<CommandRecorder> DX12CommandBuffer::Begin()
+    Common::UniquePtr<CommandRecorder> DX12CommandBuffer::Begin()
     {
-        return Common::UniqueRef<CommandRecorder>(new DX12CommandRecorder(device, *this));
+        return Common::UniquePtr<CommandRecorder>(new DX12CommandRecorder(device, *this));
     }
 
     ID3D12GraphicsCommandList* DX12CommandBuffer::GetNative() const

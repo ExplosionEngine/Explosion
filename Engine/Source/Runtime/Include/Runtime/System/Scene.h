@@ -34,7 +34,7 @@ namespace Runtime {
         void RemoveLightSceneProxy(Entity e);
 
         Render::RenderModule& renderModule;
-        Common::UniqueRef<Render::Scene> scene;
+        Common::UniquePtr<Render::Scene> scene;
         Observer transformUpdatedObserver;
         EventsObserver<DirectionalLight> directionalLightsObserver;
         EventsObserver<PointLight> pointLightsObserver;

@@ -246,9 +246,9 @@ namespace RHI {
         NonCopyable(CommandRecorder)
         ~CommandRecorder() override;
 
-        virtual Common::UniqueRef<CopyPassCommandRecorder> BeginCopyPass() = 0;
-        virtual Common::UniqueRef<ComputePassCommandRecorder> BeginComputePass() = 0;
-        virtual Common::UniqueRef<RasterPassCommandRecorder> BeginRasterPass(const RasterPassBeginInfo& beginInfo) = 0;
+        virtual Common::UniquePtr<CopyPassCommandRecorder> BeginCopyPass() = 0;
+        virtual Common::UniquePtr<ComputePassCommandRecorder> BeginComputePass() = 0;
+        virtual Common::UniquePtr<RasterPassCommandRecorder> BeginRasterPass(const RasterPassBeginInfo& beginInfo) = 0;
         virtual void End() = 0;
 
     protected:

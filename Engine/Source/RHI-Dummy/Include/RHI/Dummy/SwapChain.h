@@ -24,6 +24,6 @@ namespace RHI::Dummy {
 
     private:
         bool pingPong;
-        std::vector<Common::UniqueRef<DummyTexture>> dummyTextures;
+        std::vector<Common::UniquePtr<DummyTexture>> dummyTextures;
     };
 }

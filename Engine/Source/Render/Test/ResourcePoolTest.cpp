@@ -21,7 +21,7 @@ struct ResourcePoolTest : testing::Test {
     void TearDown() override {}
 
     RHI::Instance* instance;
-    Common::UniqueRef<RHI::Device> device;
+    Common::UniquePtr<RHI::Device> device;
 };
 
 TEST_F(ResourcePoolTest, BasicTest)

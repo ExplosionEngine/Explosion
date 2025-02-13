@@ -8,7 +8,7 @@
 namespace RHI::Dummy {
     DummyCommandBuffer::DummyCommandBuffer() = default;
 
-    Common::UniqueRef<CommandRecorder> DummyCommandBuffer::Begin()
+    Common::UniquePtr<CommandRecorder> DummyCommandBuffer::Begin()
     {
         return { new DummyCommandRecorder(*this) };
     }

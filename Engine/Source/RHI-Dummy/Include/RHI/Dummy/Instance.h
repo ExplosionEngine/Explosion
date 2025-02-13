@@ -22,6 +22,6 @@ namespace RHI::Dummy {
         void Destroy() override;
 
     private:
-        Common::UniqueRef<DummyGpu> dummyGpu;
+        Common::UniquePtr<DummyGpu> dummyGpu;
     };
 }

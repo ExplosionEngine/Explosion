@@ -38,72 +38,72 @@ namespace RHI::Dummy {
         return dummyQueue.Get();
     }
 
-    Common::UniqueRef<Surface> DummyDevice::CreateSurface(const SurfaceCreateInfo& createInfo)
+    Common::UniquePtr<Surface> DummyDevice::CreateSurface(const SurfaceCreateInfo& createInfo)
     {
         return { new DummySurface(createInfo) };
     }
 
-    Common::UniqueRef<SwapChain> DummyDevice::CreateSwapChain(const SwapChainCreateInfo& createInfo)
+    Common::UniquePtr<SwapChain> DummyDevice::CreateSwapChain(const SwapChainCreateInfo& createInfo)
     {
         return { new DummySwapChain(createInfo) };
     }
 
-    Common::UniqueRef<Buffer> DummyDevice::CreateBuffer(const BufferCreateInfo& createInfo)
+    Common::UniquePtr<Buffer> DummyDevice::CreateBuffer(const BufferCreateInfo& createInfo)
     {
         return { new DummyBuffer(createInfo) };
     }
 
-    Common::UniqueRef<Texture> DummyDevice::CreateTexture(const TextureCreateInfo& createInfo)
+    Common::UniquePtr<Texture> DummyDevice::CreateTexture(const TextureCreateInfo& createInfo)
     {
         return { new DummyTexture(createInfo) };
     }
 
-    Common::UniqueRef<Sampler> DummyDevice::CreateSampler(const SamplerCreateInfo& createInfo)
+    Common::UniquePtr<Sampler> DummyDevice::CreateSampler(const SamplerCreateInfo& createInfo)
     {
         return { new DummySampler(createInfo) };
     }
 
-    Common::UniqueRef<BindGroupLayout> DummyDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo)
+    Common::UniquePtr<BindGroupLayout> DummyDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo)
     {
         return { new DummyBindGroupLayout(createInfo) };
     }
 
-    Common::UniqueRef<BindGroup> DummyDevice::CreateBindGroup(const BindGroupCreateInfo& createInfo)
+    Common::UniquePtr<BindGroup> DummyDevice::CreateBindGroup(const BindGroupCreateInfo& createInfo)
     {
         return { new DummyBindGroup(createInfo) };
     }
 
-    Common::UniqueRef<PipelineLayout> DummyDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo)
+    Common::UniquePtr<PipelineLayout> DummyDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo)
     {
         return { new DummyPipelineLayout(createInfo) };
     }
 
-    Common::UniqueRef<ShaderModule> DummyDevice::CreateShaderModule(const ShaderModuleCreateInfo& createInfo)
+    Common::UniquePtr<ShaderModule> DummyDevice::CreateShaderModule(const ShaderModuleCreateInfo& createInfo)
     {
         return { new DummyShaderModule(createInfo) };
     }
 
-    Common::UniqueRef<ComputePipeline> DummyDevice::CreateComputePipeline(const ComputePipelineCreateInfo& createInfo)
+    Common::UniquePtr<ComputePipeline> DummyDevice::CreateComputePipeline(const ComputePipelineCreateInfo& createInfo)
     {
         return { new DummyComputePipeline(createInfo) };
     }
 
-    Common::UniqueRef<RasterPipeline> DummyDevice::CreateRasterPipeline(const RasterPipelineCreateInfo& createInfo)
+    Common::UniquePtr<RasterPipeline> DummyDevice::CreateRasterPipeline(const RasterPipelineCreateInfo& createInfo)
     {
         return { new DummyRasterPipeline(createInfo) };
     }
 
-    Common::UniqueRef<CommandBuffer> DummyDevice::CreateCommandBuffer()
+    Common::UniquePtr<CommandBuffer> DummyDevice::CreateCommandBuffer()
     {
         return { new DummyCommandBuffer() };
     }
 
-    Common::UniqueRef<Fence> DummyDevice::CreateFence(const bool bInitAsSignaled)
+    Common::UniquePtr<Fence> DummyDevice::CreateFence(const bool bInitAsSignaled)
     {
         return { new DummyFence(*this, bInitAsSignaled) };
     }
 
-    Common::UniqueRef<Semaphore> DummyDevice::CreateSemaphore()
+    Common::UniquePtr<Semaphore> DummyDevice::CreateSemaphore()
     {
         return { new DummySemaphore(*this) };
     }

@@ -20,7 +20,7 @@ namespace RHI::DirectX12 {
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE DX12BufferView::GetNativeCpuDescriptorHandle() const
     {
-        return std::get<Common::UniqueRef<DescriptorAllocation>>(nativeView)->GetCpuHandle();
+        return std::get<Common::UniquePtr<DescriptorAllocation>>(nativeView)->GetCpuHandle();
     }
 
     const D3D12_VERTEX_BUFFER_VIEW& DX12BufferView::GetNativeVertexBufferView() const
@@ -45,7 +45,7 @@ namespace RHI::DirectX12 {
             desc.SizeInBytes = Common::AlignUp<D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(inCreateInfo.size);
 
             nativeView = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
-            buffer.GetDevice().GetNative()->CreateConstantBufferView(&desc, std::get<Common::UniqueRef<DescriptorAllocation>>(nativeView)->GetCpuHandle());
+            buffer.GetDevice().GetNative()->CreateConstantBufferView(&desc, std::get<Common::UniquePtr<DescriptorAllocation>>(nativeView)->GetCpuHandle());
         } else if (inCreateInfo.type == BufferViewType::storageBinding) {
             Assert((bufferUsages & BufferUsageBits::storage) != 0);
             auto storageViewInfo = std::get<StorageBufferViewInfo>(inCreateInfo.extend);
@@ -59,7 +59,7 @@ namespace RHI::DirectX12 {
             desc.Buffer.StructureByteStride = storageViewInfo.stride;
 
             nativeView = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
-            buffer.GetDevice().GetNative()->CreateShaderResourceView(buffer.GetNative(), &desc, std::get<Common::UniqueRef<DescriptorAllocation>>(nativeView)->GetCpuHandle());
+            buffer.GetDevice().GetNative()->CreateShaderResourceView(buffer.GetNative(), &desc, std::get<Common::UniquePtr<DescriptorAllocation>>(nativeView)->GetCpuHandle());
         } else if (inCreateInfo.type == BufferViewType::rwStorageBinding) {
             Assert((bufferUsages & BufferUsageBits::rwStorage) != 0);
             auto storageViewInfo = std::get<StorageBufferViewInfo>(inCreateInfo.extend);
@@ -73,7 +73,7 @@ namespace RHI::DirectX12 {
             desc.Buffer.StructureByteStride = storageViewInfo.stride;
 
             nativeView = buffer.GetDevice().AllocateCbvSrvUavDescriptor();
-            buffer.GetDevice().GetNative()->CreateUnorderedAccessView(buffer.GetNative(), nullptr, &desc, std::get<Common::UniqueRef<DescriptorAllocation>>(nativeView)->GetCpuHandle());
+            buffer.GetDevice().GetNative()->CreateUnorderedAccessView(buffer.GetNative(), nullptr, &desc, std::get<Common::UniquePtr<DescriptorAllocation>>(nativeView)->GetCpuHandle());
         } else if (inCreateInfo.type == BufferViewType::vertex) {
             Assert((bufferUsages & BufferUsageBits::vertex) != 0);
 

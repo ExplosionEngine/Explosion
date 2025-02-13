@@ -23,7 +23,7 @@ namespace RHI::Vulkan {
         }
     }
 
-    Common::UniqueRef<CommandRecorder> VulkanCommandBuffer::Begin()
+    Common::UniquePtr<CommandRecorder> VulkanCommandBuffer::Begin()
     {
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;

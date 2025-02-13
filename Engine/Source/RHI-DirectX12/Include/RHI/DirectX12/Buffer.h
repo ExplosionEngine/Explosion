@@ -22,7 +22,7 @@ namespace RHI::DirectX12 {
 
         void* Map(MapMode inMapMode, size_t inOffset, size_t inLength) override;
         void UnMap() override;
-        Common::UniqueRef<BufferView> CreateBufferView(const BufferViewCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<BufferView> CreateBufferView(const BufferViewCreateInfo& inCreateInfo) override;
 
         ID3D12Resource* GetNative() const;
         DX12Device& GetDevice() const;

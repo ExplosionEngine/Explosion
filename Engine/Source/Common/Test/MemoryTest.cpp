@@ -34,18 +34,18 @@ TEST(MemoryTest, UniqueRefTest) // NOLINT
 {
     bool live;
     {
-        const UniqueRef ref = new TestStruct(1, live);
+        const UniquePtr ref = new TestStruct(1, live);
         ASSERT_EQ(live, true);
         ASSERT_EQ(ref->value, 1);
     }
     ASSERT_EQ(live, false);
 
     {
-        UniqueRef ref = new TestStruct(1, live);
+        UniquePtr ref = new TestStruct(1, live);
         ASSERT_EQ(live, true);
         ASSERT_EQ(ref->value, 1);
 
-        UniqueRef<TestStruct> movedRef = std::move(ref);
+        UniquePtr<TestStruct> movedRef = std::move(ref);
         ASSERT_EQ(live, true);
     }
     ASSERT_EQ(live, false);
@@ -55,17 +55,17 @@ TEST(MemoryTest, SharedRefTest) // NOLINT
 {
     bool live;
     {
-        const SharedRef ref1 = new TestStruct(1, live);
+        const SharedPtr ref1 = new TestStruct(1, live);
         ASSERT_EQ(live, true);
         ASSERT_EQ(ref1->value, 1);
         ASSERT_EQ(ref1.RefCount(), 1);
 
-        SharedRef<TestStruct> ref2 = ref1;
+        SharedPtr<TestStruct> ref2 = ref1;
         ASSERT_EQ(live, true);
         ASSERT_EQ(ref2->value, 1);
         ASSERT_EQ(ref2.RefCount(), 2);
 
-        const SharedRef<TestStruct> ref3 = std::move(ref2);
+        const SharedPtr<TestStruct> ref3 = std::move(ref2);
         ASSERT_EQ(live, true);
         ASSERT_EQ(ref3->value, 1);
         ASSERT_EQ(ref1.RefCount(), 2);
@@ -77,12 +77,12 @@ TEST(MemoryTest, SharedRefTest) // NOLINT
 TEST(MemoryTest, WeakRefTest) // NOLINT
 {
     bool live;
-    SharedRef ref = new TestStruct(1, live);
+    SharedPtr ref = new TestStruct(1, live);
     ASSERT_EQ(live, true);
     ASSERT_EQ(ref->value, 1);
     ASSERT_EQ(ref.RefCount(), 1);
 
-    const WeakRef<TestStruct> weakRef = ref;
+    const WeakPtr<TestStruct> weakRef = ref;
     ASSERT_EQ(live, true);
     ASSERT_EQ(weakRef.Expired(), false);
     ASSERT_EQ(ref.RefCount(), 1);
@@ -108,19 +108,19 @@ TEST(MemoryTest, WeakRefTest) // NOLINT
 TEST(MemoryTest, WeakRefDeriveTest) // NOLINT
 {
     bool live;
-    SharedRef ref = new ChildTestStruct(1, 2, live);
+    SharedPtr ref = new ChildTestStruct(1, 2, live);
     ASSERT_EQ(live, true);
     ASSERT_EQ(ref->value, 1);
     ASSERT_EQ(ref->cValue, 2);
     ASSERT_EQ(ref.RefCount(), 1);
 
-    const WeakRef<TestStruct> weakRef = ref;
+    const WeakPtr<TestStruct> weakRef = ref;
     ASSERT_EQ(live, true);
     ASSERT_EQ(weakRef.Expired(), false);
     ASSERT_EQ(ref.RefCount(), 1);
 
     {
-        const SharedRef<ChildTestStruct> lockRef = weakRef.Lock().StaticCast<ChildTestStruct>();
+        const SharedPtr<ChildTestStruct> lockRef = weakRef.Lock().StaticCast<ChildTestStruct>();
         ASSERT_EQ(lockRef != nullptr, true);
         ASSERT_EQ(live, true);
         ASSERT_EQ(lockRef->value, 1);

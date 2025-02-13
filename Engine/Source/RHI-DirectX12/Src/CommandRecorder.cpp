@@ -369,19 +369,19 @@ namespace RHI::DirectX12 {
         commandBuffer.GetNative()->ResourceBarrier(1, &resourceBarrier);
     }
 
-    Common::UniqueRef<CopyPassCommandRecorder> DX12CommandRecorder::BeginCopyPass()
+    Common::UniquePtr<CopyPassCommandRecorder> DX12CommandRecorder::BeginCopyPass()
     {
-        return Common::UniqueRef<CopyPassCommandRecorder>(new DX12CopyPassCommandRecorder(device, *this, commandBuffer));
+        return Common::UniquePtr<CopyPassCommandRecorder>(new DX12CopyPassCommandRecorder(device, *this, commandBuffer));
     }
 
-    Common::UniqueRef<ComputePassCommandRecorder> DX12CommandRecorder::BeginComputePass()
+    Common::UniquePtr<ComputePassCommandRecorder> DX12CommandRecorder::BeginComputePass()
     {
-        return Common::UniqueRef<ComputePassCommandRecorder>(new DX12ComputePassCommandRecorder(device, *this, commandBuffer));
+        return Common::UniquePtr<ComputePassCommandRecorder>(new DX12ComputePassCommandRecorder(device, *this, commandBuffer));
     }
 
-    Common::UniqueRef<RasterPassCommandRecorder> DX12CommandRecorder::BeginRasterPass(const RasterPassBeginInfo& inBeginInfo)
+    Common::UniquePtr<RasterPassCommandRecorder> DX12CommandRecorder::BeginRasterPass(const RasterPassBeginInfo& inBeginInfo)
     {
-        return Common::UniqueRef<RasterPassCommandRecorder>(new DX12RasterPassCommandRecorder(device, *this, commandBuffer, inBeginInfo));
+        return Common::UniquePtr<RasterPassCommandRecorder>(new DX12RasterPassCommandRecorder(device, *this, commandBuffer, inBeginInfo));
     }
 
     void DX12CommandRecorder::End()

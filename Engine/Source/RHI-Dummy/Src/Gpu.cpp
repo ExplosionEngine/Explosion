@@ -15,7 +15,7 @@ namespace RHI::Dummy {
         return {};
     }
 
-    Common::UniqueRef<Device> DummyGpu::RequestDevice(const DeviceCreateInfo& createInfo)
+    Common::UniquePtr<Device> DummyGpu::RequestDevice(const DeviceCreateInfo& createInfo)
     {
         return { new DummyDevice(createInfo) };
     }

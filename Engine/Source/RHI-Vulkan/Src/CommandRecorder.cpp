@@ -209,19 +209,19 @@ namespace RHI::Vulkan {
         }
     }
 
-    Common::UniqueRef<CopyPassCommandRecorder> VulkanCommandRecorder::BeginCopyPass()
+    Common::UniquePtr<CopyPassCommandRecorder> VulkanCommandRecorder::BeginCopyPass()
     {
-        return Common::UniqueRef<CopyPassCommandRecorder>(new VulkanCopyPassCommandRecorder(device, *this, commandBuffer));
+        return Common::UniquePtr<CopyPassCommandRecorder>(new VulkanCopyPassCommandRecorder(device, *this, commandBuffer));
     }
 
-    Common::UniqueRef<ComputePassCommandRecorder> VulkanCommandRecorder::BeginComputePass()
+    Common::UniquePtr<ComputePassCommandRecorder> VulkanCommandRecorder::BeginComputePass()
     {
-        return Common::UniqueRef<ComputePassCommandRecorder>(new VulkanComputePassCommandRecorder(device, *this, commandBuffer));
+        return Common::UniquePtr<ComputePassCommandRecorder>(new VulkanComputePassCommandRecorder(device, *this, commandBuffer));
     }
 
-    Common::UniqueRef<RasterPassCommandRecorder> VulkanCommandRecorder::BeginRasterPass(const RasterPassBeginInfo& inBeginInfo)
+    Common::UniquePtr<RasterPassCommandRecorder> VulkanCommandRecorder::BeginRasterPass(const RasterPassBeginInfo& inBeginInfo)
     {
-        return Common::UniqueRef<RasterPassCommandRecorder>(new VulkanRasterPassCommandRecorder(device, *this, commandBuffer, inBeginInfo));
+        return Common::UniquePtr<RasterPassCommandRecorder>(new VulkanRasterPassCommandRecorder(device, *this, commandBuffer, inBeginInfo));
     }
 
     void VulkanCommandRecorder::End()

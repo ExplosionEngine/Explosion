@@ -15,7 +15,7 @@ namespace RHI {
         NonCopyable(CommandBuffer)
         virtual ~CommandBuffer();
 
-        virtual Common::UniqueRef<CommandRecorder> Begin() = 0;
+        virtual Common::UniquePtr<CommandRecorder> Begin() = 0;
 
     protected:
         CommandBuffer();

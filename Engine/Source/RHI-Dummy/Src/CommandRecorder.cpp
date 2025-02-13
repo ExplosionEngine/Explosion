@@ -132,19 +132,19 @@ namespace RHI::Dummy {
     {
     }
 
-    Common::UniqueRef<CopyPassCommandRecorder> DummyCommandRecorder::BeginCopyPass()
+    Common::UniquePtr<CopyPassCommandRecorder> DummyCommandRecorder::BeginCopyPass()
     {
-        return Common::UniqueRef<CopyPassCommandRecorder>(new DummyCopyPassCommandRecorder(dummyCommandBuffer));
+        return Common::UniquePtr<CopyPassCommandRecorder>(new DummyCopyPassCommandRecorder(dummyCommandBuffer));
     }
 
-    Common::UniqueRef<ComputePassCommandRecorder> DummyCommandRecorder::BeginComputePass()
+    Common::UniquePtr<ComputePassCommandRecorder> DummyCommandRecorder::BeginComputePass()
     {
-        return Common::UniqueRef<ComputePassCommandRecorder>(new DummyComputePassCommandRecorder(dummyCommandBuffer));
+        return Common::UniquePtr<ComputePassCommandRecorder>(new DummyComputePassCommandRecorder(dummyCommandBuffer));
     }
 
-    Common::UniqueRef<RasterPassCommandRecorder> DummyCommandRecorder::BeginRasterPass(const RasterPassBeginInfo& beginInfo)
+    Common::UniquePtr<RasterPassCommandRecorder> DummyCommandRecorder::BeginRasterPass(const RasterPassBeginInfo& beginInfo)
     {
-        return Common::UniqueRef<RasterPassCommandRecorder>(new DummyRasterPassCommandRecorder(dummyCommandBuffer));
+        return Common::UniquePtr<RasterPassCommandRecorder>(new DummyRasterPassCommandRecorder(dummyCommandBuffer));
     }
 
     void DummyCommandRecorder::End()

@@ -11,448 +11,465 @@
 
 namespace Common {
     template <typename T>
-    class UniqueRef {
+    class UniquePtr {
     public:
-        NonCopyable(UniqueRef)
-        UniqueRef(T* pointer); // NOLINT
-        UniqueRef(std::unique_ptr<T>&& inRef); // NOLINT
-        UniqueRef(UniqueRef&& other) noexcept; // NOLINT
-        UniqueRef();
-        ~UniqueRef();
+        NonCopyable(UniquePtr)
+        UniquePtr(T* pointer); // NOLINT
+        UniquePtr(std::unique_ptr<T>&& uniquePtr); // NOLINT
+        UniquePtr(UniquePtr&& other) noexcept; // NOLINT
+        UniquePtr();
+        ~UniquePtr();
 
-        UniqueRef& operator=(T* pointer);
-        UniqueRef& operator=(std::unique_ptr<T>&& inRef);
-        UniqueRef& operator=(UniqueRef&& other) noexcept;
+        UniquePtr& operator=(T* pointer);
+        UniquePtr& operator=(std::unique_ptr<T>&& uniquePtr);
+        UniquePtr& operator=(UniquePtr&& other) noexcept;
 
         T* operator->() const noexcept;
         T& operator*() const noexcept;
         bool operator==(nullptr_t) const noexcept;
         bool operator!=(nullptr_t) const noexcept;
+        explicit operator bool() const noexcept;
 
+        bool Valid() const;
         T* Get() const;
         void Reset(T* pointer = nullptr);
+        std::unique_ptr<T>& GetStd();
 
     private:
-        std::unique_ptr<T> ref;
+        std::unique_ptr<T> ptr;
     };
 
     template <typename T>
-    class SharedRef {
+    class SharedPtr {
     public:
-        template <typename T2>
-        SharedRef(std::shared_ptr<T2>& inRef); // NOLINT
+        template <typename T2> SharedPtr(std::shared_ptr<T2>& sharedPtr); // NOLINT
+        template <typename T2> SharedPtr(std::shared_ptr<T2>&& sharedPtr) noexcept; // NOLINT
+        template <typename T2> SharedPtr(std::unique_ptr<T2>&& uniquePtr) noexcept; // NOLINT
+        template <typename T2> SharedPtr(UniquePtr<T2>&& uniquePtr) noexcept; // NOLINT
 
-        template <typename T2>
-        SharedRef(std::shared_ptr<T2>&& inRef) noexcept; // NOLINT
+        SharedPtr(T* pointer); // NOLINT
+        SharedPtr(const SharedPtr& other); // NOLINT
+        SharedPtr(SharedPtr&& other) noexcept; // NOLINT
+        SharedPtr();
+        ~SharedPtr();
 
-        template <typename T2>
-        SharedRef(std::unique_ptr<T2>&& inRef) noexcept; // NOLINT
+        template <typename T2> SharedPtr& operator=(std::shared_ptr<T2>& sharedPtr);
+        template <typename T2> SharedPtr& operator=(std::shared_ptr<T2>&& sharedPtr);
+        template <typename T2> SharedPtr& operator=(std::unique_ptr<T2>&& uniquePtr) noexcept;
+        template <typename T2> SharedPtr& operator=(UniquePtr<T2>&& uniquePtr) noexcept;
 
-        template <typename T2>
-        SharedRef(UniqueRef<T2>&& inRef) noexcept; // NOLINT
-
-        SharedRef(T* pointer); // NOLINT
-        SharedRef(const SharedRef& other); // NOLINT
-        SharedRef(SharedRef&& other) noexcept; // NOLINT
-        SharedRef();
-        ~SharedRef();
-
-        template <typename T2>
-        SharedRef& operator=(std::shared_ptr<T2>& inRef);
-
-        template <typename T2>
-        SharedRef& operator=(std::shared_ptr<T2>&& inRef);
-
-        template <typename T2>
-        SharedRef& operator=(std::unique_ptr<T2>&& inRef) noexcept;
-
-        template <typename T2>
-        SharedRef& operator=(UniqueRef<T2>&& inRef) noexcept;
-
-        SharedRef& operator=(T* pointer);
-        SharedRef& operator=(SharedRef& other); // NOLINT
-        SharedRef& operator=(SharedRef&& other) noexcept;
+        SharedPtr& operator=(T* pointer);
+        SharedPtr& operator=(SharedPtr& other); // NOLINT
+        SharedPtr& operator=(SharedPtr&& other) noexcept;
         T* operator->() const noexcept;
         T& operator*() const noexcept;
         bool operator==(nullptr_t) const noexcept;
         bool operator!=(nullptr_t) const noexcept;
+        explicit operator bool() const noexcept;
 
+        bool Valid() const;
         T* Get() const;
         void Reset(T* pointer = nullptr);
         auto RefCount() const;
         std::shared_ptr<T>& GetStd();
 
-        template <typename T2>
-        SharedRef<T2> StaticCast();
-
-        template <typename T2>
-        SharedRef<T2> DynamicCast();
-
-        template <typename T2>
-        SharedRef<T2> ReinterpretCast();
+        template <typename T2> SharedPtr<T2> StaticCast();
+        template <typename T2> SharedPtr<T2> DynamicCast();
+        template <typename T2> SharedPtr<T2> ReinterpretCast();
 
     private:
-        std::shared_ptr<T> ref;
+        std::shared_ptr<T> ptr;
     };
 
     template <typename T>
-    class WeakRef {
+    class WeakPtr {
     public:
-        template <typename T2>
-        WeakRef(SharedRef<T2>& inRef); // NOLINT
+        template <typename T2> WeakPtr(SharedPtr<T2>& sharedPtr); // NOLINT
 
-        WeakRef(WeakRef& other); // NOLINT
-        WeakRef(WeakRef&& other) noexcept; // NOLINT
-        ~WeakRef();
+        WeakPtr(WeakPtr& other); // NOLINT
+        WeakPtr(WeakPtr&& other) noexcept; // NOLINT
+        ~WeakPtr();
 
-        template <typename T2>
-        WeakRef& operator=(SharedRef<T2>& inRef);
-
-        WeakRef& operator=(WeakRef& other); // NOLINT
-        WeakRef& operator=(WeakRef&& other) noexcept;
+        template <typename T2> WeakPtr& operator=(SharedPtr<T2>& sharedPtr);
+        WeakPtr& operator=(WeakPtr& other); // NOLINT
+        WeakPtr& operator=(WeakPtr&& other) noexcept;
 
         void Reset();
         bool Expired() const;
-        SharedRef<T> Lock() const;
+        SharedPtr<T> Lock() const;
+        std::weak_ptr<T>& GetStd();
 
     private:
-        std::weak_ptr<T> ref;
+        std::weak_ptr<T> ptr;
     };
 
-    template <typename T, typename... Args>
-    UniqueRef<T> MakeUnique(Args&&... args);
-
-    template <typename T, typename... Args>
-    SharedRef<T> MakeShared(Args&&... args);
+    template <typename T, typename... Args> UniquePtr<T> MakeUnique(Args&&... args);
+    template <typename T, typename... Args> SharedPtr<T> MakeShared(Args&&... args);
 }
 
 namespace Common {
     template <typename T>
-    UniqueRef<T>::UniqueRef(T* pointer)
-        : ref(pointer)
+    UniquePtr<T>::UniquePtr(T* pointer)
+        : ptr(pointer)
     {
     }
 
     template <typename T>
-    UniqueRef<T>::UniqueRef(std::unique_ptr<T>&& inRef)
-        : ref(std::move(inRef))
+    UniquePtr<T>::UniquePtr(std::unique_ptr<T>&& uniquePtr)
+        : ptr(std::move(uniquePtr))
     {
     }
 
     template <typename T>
-    UniqueRef<T>::UniqueRef(UniqueRef&& other) noexcept
-        : ref(std::move(other.ref))
+    UniquePtr<T>::UniquePtr(UniquePtr&& other) noexcept
+        : ptr(std::move(other.ptr))
     {
     }
 
     template <typename T>
-    UniqueRef<T>::UniqueRef() = default;
+    UniquePtr<T>::UniquePtr() = default;
 
     template <typename T>
-    UniqueRef<T>::~UniqueRef() = default;
+    UniquePtr<T>::~UniquePtr() = default;
 
     template <typename T>
-    UniqueRef<T>& UniqueRef<T>::operator=(T* pointer)
+    UniquePtr<T>& UniquePtr<T>::operator=(T* pointer)
     {
-        ref = std::unique_ptr<T>(pointer);
+        ptr = std::unique_ptr<T>(pointer);
         return *this;
     }
 
     template <typename T>
-    UniqueRef<T>& UniqueRef<T>::operator=(std::unique_ptr<T>&& inRef)
+    UniquePtr<T>& UniquePtr<T>::operator=(std::unique_ptr<T>&& uniquePtr)
     {
-        ref = std::move(inRef);
+        ptr = std::move(uniquePtr);
         return *this;
     }
 
     template <typename T>
-    UniqueRef<T>& UniqueRef<T>::operator=(UniqueRef&& other) noexcept
+    UniquePtr<T>& UniquePtr<T>::operator=(UniquePtr&& other) noexcept
     {
-        ref = std::move(other.ref);
+        ptr = std::move(other.ptr);
         return *this;
     }
 
     template <typename T>
-    T* UniqueRef<T>::operator->() const noexcept
+    T* UniquePtr<T>::operator->() const noexcept
     {
-        return ref.operator->();
+        return ptr.operator->();
     }
 
     template <typename T>
-    T& UniqueRef<T>::operator*() const noexcept
+    T& UniquePtr<T>::operator*() const noexcept
     {
-        return ref.operator*();
+        return ptr.operator*();
     }
 
     template <typename T>
-    bool UniqueRef<T>::operator==(nullptr_t) const noexcept
+    bool UniquePtr<T>::operator==(nullptr_t) const noexcept
     {
-        return ref == nullptr;
+        return ptr == nullptr;
     }
 
     template <typename T>
-    bool UniqueRef<T>::operator!=(nullptr_t) const noexcept
+    bool UniquePtr<T>::operator!=(nullptr_t) const noexcept
     {
-        return ref != nullptr;
+        return ptr != nullptr;
     }
 
     template <typename T>
-    T* UniqueRef<T>::Get() const
+    UniquePtr<T>::operator bool() const noexcept
     {
-        return ref.get();
+        return Valid();
     }
 
     template <typename T>
-    void UniqueRef<T>::Reset(T* pointer)
+    T* UniquePtr<T>::Get() const
     {
-        ref.reset(pointer);
+        return ptr.get();
+    }
+
+    template <typename T>
+    bool UniquePtr<T>::Valid() const
+    {
+        return ptr != nullptr;
+    }
+
+    template <typename T>
+    void UniquePtr<T>::Reset(T* pointer)
+    {
+        ptr.reset(pointer);
+    }
+
+    template <typename T>
+    std::unique_ptr<T>& UniquePtr<T>::GetStd()
+    {
+        return ptr;
     }
 
     template <typename T>
     template <typename T2>
-    SharedRef<T>::SharedRef(std::shared_ptr<T2>& inRef)
-        : ref(inRef)
+    SharedPtr<T>::SharedPtr(std::shared_ptr<T2>& sharedPtr)
+        : ptr(sharedPtr)
     {
     }
 
     template <typename T>
     template <typename T2>
-    SharedRef<T>::SharedRef(std::shared_ptr<T2>&& inRef) noexcept
-        : ref(std::move(inRef))
+    SharedPtr<T>::SharedPtr(std::shared_ptr<T2>&& sharedPtr) noexcept
+        : ptr(std::move(sharedPtr))
     {
     }
 
     template <typename T>
     template <typename T2>
-    SharedRef<T>::SharedRef(std::unique_ptr<T2>&& inRef) noexcept
-        : ref(std::move(inRef))
+    SharedPtr<T>::SharedPtr(std::unique_ptr<T2>&& uniquePtr) noexcept
+        : ptr(std::move(uniquePtr))
     {
     }
 
     template <typename T>
     template <typename T2>
-    SharedRef<T>::SharedRef(UniqueRef<T2>&& inRef) noexcept
-        : ref(std::move(inRef.Get()))
+    SharedPtr<T>::SharedPtr(UniquePtr<T2>&& uniquePtr) noexcept
+        : ptr(std::move(uniquePtr.Get()))
     {
     }
 
     template <typename T>
-    SharedRef<T>::SharedRef(T* pointer)
-        : ref(pointer)
+    SharedPtr<T>::SharedPtr(T* pointer)
+        : ptr(pointer)
     {
     }
 
     template <typename T>
-    SharedRef<T>::SharedRef(const SharedRef& other)
-        : ref(other.ref)
+    SharedPtr<T>::SharedPtr(const SharedPtr& other)
+        : ptr(other.ptr)
     {
     }
 
     template <typename T>
-    SharedRef<T>::SharedRef(SharedRef && other) noexcept
-        : ref(std::move(other.ref))
+    SharedPtr<T>::SharedPtr(SharedPtr && other) noexcept
+        : ptr(std::move(other.ptr))
     {
     }
 
     template <typename T>
-    SharedRef<T>::SharedRef() = default;
+    SharedPtr<T>::SharedPtr() = default;
 
     template <typename T>
-    SharedRef<T>::~SharedRef() = default;
+    SharedPtr<T>::~SharedPtr() = default;
 
     template <typename T>
     template <typename T2>
-    SharedRef<T> & SharedRef<T>::operator=(std::shared_ptr<T2> & inRef)
+    SharedPtr<T> & SharedPtr<T>::operator=(std::shared_ptr<T2> & sharedPtr)
     {
-        ref = inRef;
+        ptr = sharedPtr;
         return *this;
     }
 
     template <typename T>
     template <typename T2>
-    SharedRef<T> & SharedRef<T>::operator=(std::shared_ptr<T2> && inRef)
+    SharedPtr<T> & SharedPtr<T>::operator=(std::shared_ptr<T2> && sharedPtr)
     {
-        ref = std::move(inRef);
+        ptr = std::move(sharedPtr);
         return *this;
     }
 
     template <typename T>
     template <typename T2>
-    SharedRef<T>& SharedRef<T>::operator=(std::unique_ptr<T2>&& inRef) noexcept
+    SharedPtr<T>& SharedPtr<T>::operator=(std::unique_ptr<T2>&& uniquePtr) noexcept
     {
-        ref = std::move(inRef);
+        ptr = std::move(uniquePtr);
         return *this;
     }
 
     template <typename T>
     template <typename T2>
-    SharedRef<T>& SharedRef<T>::operator=(UniqueRef<T2>&& inRef) noexcept
+    SharedPtr<T>& SharedPtr<T>::operator=(UniquePtr<T2>&& uniquePtr) noexcept
     {
-        ref = std::move(inRef.Get());
+        ptr = std::move(uniquePtr.Get());
         return *this;
     }
 
     template <typename T>
-    SharedRef<T> & SharedRef<T>::operator=(T* pointer)
+    SharedPtr<T> & SharedPtr<T>::operator=(T* pointer)
     {
-        ref = std::shared_ptr<T>(pointer);
+        ptr = std::shared_ptr<T>(pointer);
         return *this;
     }
 
     template <typename T>
-    SharedRef<T> & SharedRef<T>::operator=(SharedRef & other)
+    SharedPtr<T> & SharedPtr<T>::operator=(SharedPtr& other)
     {
-        ref = other.ref;
+        ptr = other.ptr;
         return *this;
     }
 
     template <typename T>
-    SharedRef<T> & SharedRef<T>::operator=(SharedRef && other) noexcept
+    SharedPtr<T> & SharedPtr<T>::operator=(SharedPtr&& other) noexcept
     {
-        ref = std::move(other.ref);
+        ptr = std::move(other.ptr);
         return *this;
     }
 
     template <typename T>
-    T* SharedRef<T>::operator->() const noexcept
+    T* SharedPtr<T>::operator->() const noexcept
     {
-        return ref.operator->();
+        return ptr.operator->();
     }
 
     template <typename T>
-    T& SharedRef<T>::operator*() const noexcept
+    T& SharedPtr<T>::operator*() const noexcept
     {
-        return ref.operator*();
+        return ptr.operator*();
     }
 
     template <typename T>
-    bool SharedRef<T>::operator==(nullptr_t) const noexcept
+    bool SharedPtr<T>::operator==(nullptr_t) const noexcept
     {
-        return ref == nullptr;
+        return ptr == nullptr;
     }
 
     template <typename T>
-    bool SharedRef<T>::operator!=(nullptr_t) const noexcept
+    bool SharedPtr<T>::operator!=(nullptr_t) const noexcept
     {
-        return ref != nullptr;
+        return ptr != nullptr;
     }
 
     template <typename T>
-    T* SharedRef<T>::Get() const
+    SharedPtr<T>::operator bool() const noexcept
     {
-        return ref.get();
+        return Valid();
     }
 
     template <typename T>
-    void SharedRef<T>::Reset(T* pointer)
+    bool SharedPtr<T>::Valid() const
     {
-        ref.reset(pointer);
+        return ptr != nullptr;
     }
 
     template <typename T>
-    auto SharedRef<T>::RefCount() const
+    T* SharedPtr<T>::Get() const
     {
-        return ref.use_count();
+        return ptr.get();
     }
 
     template <typename T>
-    std::shared_ptr<T> & SharedRef<T>::GetStd()
+    void SharedPtr<T>::Reset(T* pointer)
     {
-        return ref;
+        ptr.reset(pointer);
+    }
+
+    template <typename T>
+    auto SharedPtr<T>::RefCount() const
+    {
+        return ptr.use_count();
+    }
+
+    template <typename T>
+    std::shared_ptr<T> & SharedPtr<T>::GetStd()
+    {
+        return ptr;
     }
 
     template <typename T>
     template <typename T2>
-    SharedRef<T2> SharedRef<T>::StaticCast()
+    SharedPtr<T2> SharedPtr<T>::StaticCast()
     {
-        return static_pointer_cast<T2, T>(ref);
+        return static_pointer_cast<T2, T>(ptr);
     }
 
     template <typename T>
     template <typename T2>
-    SharedRef<T2> SharedRef<T>::DynamicCast()
+    SharedPtr<T2> SharedPtr<T>::DynamicCast()
     {
-        return dynamic_pointer_cast<T2, T>(ref);
+        return dynamic_pointer_cast<T2, T>(ptr);
     }
 
     template <typename T>
     template <typename T2>
-    SharedRef<T2> SharedRef<T>::ReinterpretCast()
+    SharedPtr<T2> SharedPtr<T>::ReinterpretCast()
     {
-        return reinterpret_pointer_cast<T2, T>(ref);
+        return reinterpret_pointer_cast<T2, T>(ptr);
     }
 
     template <typename T>
     template <typename T2>
-    WeakRef<T>::WeakRef(SharedRef<T2> & inRef)
-        : ref(inRef.GetStd())
+    WeakPtr<T>::WeakPtr(SharedPtr<T2> & sharedPtr)
+        : ptr(sharedPtr.GetStd())
     {
     }
 
     template <typename T>
-    WeakRef<T>::WeakRef(WeakRef& other)
-        : ref(other.ref)
+    WeakPtr<T>::WeakPtr(WeakPtr& other)
+        : ptr(other.ptr)
     {
     }
 
     template <typename T>
-    WeakRef<T>::WeakRef(WeakRef && other) noexcept
-        : ref(std::move(other.ref))
+    WeakPtr<T>::WeakPtr(WeakPtr && other) noexcept
+        : ptr(std::move(other.ptr))
     {
     }
 
     template <typename T>
-    WeakRef<T>::~WeakRef() = default;
+    WeakPtr<T>::~WeakPtr() = default;
 
     template <typename T>
     template <typename T2>
-    WeakRef<T>& WeakRef<T>::operator=(SharedRef<T2> & inRef)
+    WeakPtr<T>& WeakPtr<T>::operator=(SharedPtr<T2> & sharedPtr)
     {
-        ref = inRef.GetStd();
+        ptr = sharedPtr.GetStd();
         return *this;
     }
 
     template <typename T>
-    WeakRef<T>& WeakRef<T>::operator=(WeakRef & other)
+    WeakPtr<T>& WeakPtr<T>::operator=(WeakPtr & other)
     {
-        ref = other.ref;
+        ptr = other.ptr;
         return *this;
     }
 
     template <typename T>
-    WeakRef<T> & WeakRef<T>::operator=(WeakRef && other) noexcept
+    WeakPtr<T> & WeakPtr<T>::operator=(WeakPtr && other) noexcept
     {
-        ref = std::move(other.ref);
+        ptr = std::move(other.ptr);
         return *this;
     }
 
     template <typename T>
-    void WeakRef<T>::Reset()
+    void WeakPtr<T>::Reset()
     {
-        ref.reset();
+        ptr.reset();
     }
 
     template <typename T>
-    bool WeakRef<T>::Expired() const
+    bool WeakPtr<T>::Expired() const
     {
-        return ref.expired();
+        return ptr.expired();
     }
 
     template <typename T>
-    SharedRef<T> WeakRef<T>::Lock() const
+    SharedPtr<T> WeakPtr<T>::Lock() const
     {
-        return ref.lock();
+        return ptr.lock();
+    }
+
+    template <typename T>
+    std::weak_ptr<T>& WeakPtr<T>::GetStd()
+    {
+        return ptr;
     }
 
     template <typename T, typename... Args>
-    UniqueRef<T> MakeUnique(Args && ... args)
+    UniquePtr<T> MakeUnique(Args && ... args)
     {
-        return Common::UniqueRef<T>(new T(std::forward<Args>(args)...));
+        return Common::UniquePtr<T>(new T(std::forward<Args>(args)...));
     }
 
     template <typename T, typename... Args>
-    SharedRef<T> MakeShared(Args && ... args)
+    SharedPtr<T> MakeShared(Args && ... args)
     {
-        return Common::SharedRef<T>(new T(std::forward<Args>(args)...));
+        return Common::SharedPtr<T>(new T(std::forward<Args>(args)...));
     }
 }

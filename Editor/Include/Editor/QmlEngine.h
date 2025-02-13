@@ -32,6 +32,6 @@ namespace Editor {
 
         Common::Path qmlSourceDir;
         std::unordered_set<QmlWidget*> widgets;
-        Common::UniqueRef<QFileSystemWatcher> watcher;
+        Common::UniquePtr<QFileSystemWatcher> watcher;
     };
 }

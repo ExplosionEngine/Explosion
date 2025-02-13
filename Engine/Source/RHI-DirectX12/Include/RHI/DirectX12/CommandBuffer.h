@@ -50,8 +50,8 @@ namespace RHI::DirectX12 {
         static constexpr uint32_t cbvSrvUavHeapCapacity = 10240;
 
         DX12Device& device;
-        Common::UniqueRef<RuntimeDescriptorHeap> samplerHeap;
-        Common::UniqueRef<RuntimeDescriptorHeap> cbvSrvUavHeap;
+        Common::UniquePtr<RuntimeDescriptorHeap> samplerHeap;
+        Common::UniquePtr<RuntimeDescriptorHeap> cbvSrvUavHeap;
     };
 
     class DX12CommandBuffer final : public CommandBuffer {
@@ -60,7 +60,7 @@ namespace RHI::DirectX12 {
         explicit DX12CommandBuffer(DX12Device& inDevice);
         ~DX12CommandBuffer() override;
 
-        Common::UniqueRef<CommandRecorder> Begin() override;
+        Common::UniquePtr<CommandRecorder> Begin() override;
 
         ID3D12GraphicsCommandList* GetNative() const;
         RuntimeDescriptorCompact* GetRuntimeDescriptorHeaps() const;
@@ -70,6 +70,6 @@ namespace RHI::DirectX12 {
 
         DX12Device& device;
         ComPtr<ID3D12GraphicsCommandList> dx12GraphicsCommandList;
-        Common::UniqueRef<RuntimeDescriptorCompact> runtimeDescriptorHeaps;
+        Common::UniquePtr<RuntimeDescriptorCompact> runtimeDescriptorHeaps;
     };
 }

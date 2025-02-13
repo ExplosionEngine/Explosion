@@ -23,7 +23,7 @@ namespace Render {
     private:
         RenderThread();
 
-        Common::UniqueRef<Common::WorkerThread> thread;
+        Common::UniquePtr<Common::WorkerThread> thread;
     };
 
     class RenderWorkerThreads {
@@ -40,7 +40,7 @@ namespace Render {
     private:
         RenderWorkerThreads();
 
-        Common::UniqueRef<Common::ThreadPool> threads;
+        Common::UniquePtr<Common::ThreadPool> threads;
     };
 }
 

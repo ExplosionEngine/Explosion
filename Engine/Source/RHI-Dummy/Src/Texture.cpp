@@ -13,8 +13,8 @@ namespace RHI::Dummy {
 
     DummyTexture::~DummyTexture() = default;
 
-    Common::UniqueRef<TextureView> DummyTexture::CreateTextureView(const TextureViewCreateInfo& createInfo)
+    Common::UniquePtr<TextureView> DummyTexture::CreateTextureView(const TextureViewCreateInfo& createInfo)
     {
-        return Common::UniqueRef<TextureView>(new DummyTextureView(createInfo));
+        return Common::UniquePtr<TextureView>(new DummyTextureView(createInfo));
     }
 }

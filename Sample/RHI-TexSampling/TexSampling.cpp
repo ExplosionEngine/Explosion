@@ -42,10 +42,10 @@ protected:
         const auto backTextureIndex = swapChain->AcquireBackTexture(backBufferReadySemaphores[nextFrameIndex].Get());
         inflightFences[nextFrameIndex]->Reset();
 
-        const UniqueRef<CommandRecorder> commandRecorder = commandBuffers[nextFrameIndex]->Begin();
+        const UniquePtr<CommandRecorder> commandRecorder = commandBuffers[nextFrameIndex]->Begin();
         {
             commandRecorder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-            const UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+            const UniquePtr<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
                 RasterPassBeginInfo()
                     .AddColorAttachment(ColorAttachment(swapChainTextureViews[backTextureIndex].Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black)));
             {
@@ -75,7 +75,7 @@ protected:
 
     void OnDestroy() override
     {
-        const UniqueRef<Fence> fence = device->CreateFence(false);
+        const UniquePtr<Fence> fence = device->CreateFence(false);
         graphicsQueue->Flush(fence.Get());
         fence->Wait();
     }
@@ -249,9 +249,9 @@ private:
         sampler = device->CreateSampler(SamplerCreateInfo());
 
         texCommandBuffer = device->CreateCommandBuffer();
-        const UniqueRef<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
+        const UniquePtr<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
         {
-            const UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
+            const UniquePtr<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
             {
                 copyRecorder->ResourceBarrier(Barrier::Transition(sampleTexture.Get(), TextureState::undefined, TextureState::copyDst));
                 copyRecorder->CopyBufferToTexture(
@@ -264,7 +264,7 @@ private:
         }
         commandRecorder->End();
 
-        const UniqueRef<Fence> fence = device->CreateFence(false);
+        const UniquePtr<Fence> fence = device->CreateFence(false);
         QueueSubmitInfo submitInfo {};
         submitInfo.signalFence = fence.Get();
         graphicsQueue->Submit(texCommandBuffer.Get(), submitInfo);
@@ -379,35 +379,35 @@ private:
 
     PixelFormat swapChainFormat = PixelFormat::max;
     Gpu* gpu = nullptr;
-    UniqueRef<Device> device;
+    UniquePtr<Device> device;
     Queue* graphicsQueue = nullptr;
-    UniqueRef<Surface> surface;
-    UniqueRef<SwapChain> swapChain;
-    UniqueRef<Buffer> vertexBuffer;
-    UniqueRef<BufferView> vertexBufferView;
-    UniqueRef<Buffer> indexBuffer;
-    UniqueRef<BufferView> indexBufferView;
-    UniqueRef<BindGroupLayout> bindGroupLayout;
-    UniqueRef<BindGroup> bindGroup;
-    UniqueRef<Texture> sampleTexture;
-    UniqueRef<TextureView> sampleTextureView;
-    UniqueRef<Sampler> sampler;
-    UniqueRef<Buffer> uniformBuffer;
-    UniqueRef<BufferView> uniformBufferView;
-    UniqueRef<CommandBuffer> texCommandBuffer;
-    UniqueRef<Buffer> pixelBuffer;
+    UniquePtr<Surface> surface;
+    UniquePtr<SwapChain> swapChain;
+    UniquePtr<Buffer> vertexBuffer;
+    UniquePtr<BufferView> vertexBufferView;
+    UniquePtr<Buffer> indexBuffer;
+    UniquePtr<BufferView> indexBufferView;
+    UniquePtr<BindGroupLayout> bindGroupLayout;
+    UniquePtr<BindGroup> bindGroup;
+    UniquePtr<Texture> sampleTexture;
+    UniquePtr<TextureView> sampleTextureView;
+    UniquePtr<Sampler> sampler;
+    UniquePtr<Buffer> uniformBuffer;
+    UniquePtr<BufferView> uniformBufferView;
+    UniquePtr<CommandBuffer> texCommandBuffer;
+    UniquePtr<Buffer> pixelBuffer;
     std::array<Texture*, backBufferCount> swapChainTextures {};
-    std::array<UniqueRef<TextureView>, backBufferCount> swapChainTextureViews;
-    UniqueRef<PipelineLayout> pipelineLayout;
-    UniqueRef<RasterPipeline> pipeline;
-    UniqueRef<ShaderModule> vertexShader;
+    std::array<UniquePtr<TextureView>, backBufferCount> swapChainTextureViews;
+    UniquePtr<PipelineLayout> pipelineLayout;
+    UniquePtr<RasterPipeline> pipeline;
+    UniquePtr<ShaderModule> vertexShader;
     ShaderCompileOutput vsCompileOutput;
-    UniqueRef<ShaderModule> pixelShader;
+    UniquePtr<ShaderModule> pixelShader;
     ShaderCompileOutput psCompileOutput;
-    std::array<UniqueRef<CommandBuffer>, backBufferCount> commandBuffers;
-    std::array<UniqueRef<Semaphore>, backBufferCount> backBufferReadySemaphores;
-    std::array<UniqueRef<Semaphore>, backBufferCount> renderFinishedSemaphores;
-    std::array<UniqueRef<Fence>, backBufferCount> inflightFences;
+    std::array<UniquePtr<CommandBuffer>, backBufferCount> commandBuffers;
+    std::array<UniquePtr<Semaphore>, backBufferCount> backBufferReadySemaphores;
+    std::array<UniquePtr<Semaphore>, backBufferCount> renderFinishedSemaphores;
+    std::array<UniquePtr<Fence>, backBufferCount> inflightFences;
     uint8_t nextFrameIndex = 0;
 };
 

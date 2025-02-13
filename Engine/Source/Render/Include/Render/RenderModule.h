@@ -30,12 +30,12 @@ namespace Render {
         void DeInitialize();
         RHI::Device* GetDevice() const;
         Render::RenderThread& GetRenderThread() const;
-        Common::UniqueRef<Scene> NewScene();
-        Common::UniqueRef<View> NewView();
+        Common::UniquePtr<Scene> NewScene();
+        Common::UniquePtr<View> NewView();
 
     private:
         bool initialized;
         RHI::Instance* rhiInstance;
-        Common::UniqueRef<RHI::Device> rhiDevice;
+        Common::UniquePtr<RHI::Device> rhiDevice;
     };
 }

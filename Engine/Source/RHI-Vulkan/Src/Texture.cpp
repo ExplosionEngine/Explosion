@@ -40,9 +40,9 @@ namespace RHI::Vulkan {
         }
     }
 
-    Common::UniqueRef<TextureView> VulkanTexture::CreateTextureView(const TextureViewCreateInfo& inCreateInfo)
+    Common::UniquePtr<TextureView> VulkanTexture::CreateTextureView(const TextureViewCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<TextureView>(new VulkanTextureView(*this, device, inCreateInfo));
+        return Common::UniquePtr<TextureView>(new VulkanTextureView(*this, device, inCreateInfo));
     }
 
     VkImage VulkanTexture::GetNative() const

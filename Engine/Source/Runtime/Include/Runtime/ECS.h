@@ -143,7 +143,7 @@ namespace Runtime::Internal {
     class SystemFactory {
     public:
         explicit SystemFactory(SystemClass inClass);
-        Common::UniqueRef<System> Build(ECRegistry& inRegistry) const;
+        Common::UniquePtr<System> Build(ECRegistry& inRegistry) const;
         std::unordered_map<std::string, Mirror::Any> GetArguments();
         const std::unordered_map<std::string, Mirror::Any>& GetArguments() const;
         SystemClass GetClass() const;
@@ -595,7 +595,7 @@ namespace Runtime {
     private:
         struct SystemContext {
             const Internal::SystemFactory& factory;
-            Common::UniqueRef<System> instance;
+            Common::UniquePtr<System> instance;
         };
 
         struct SystemGroupContext {
