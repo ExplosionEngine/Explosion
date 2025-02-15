@@ -147,7 +147,6 @@ namespace RHI::DirectX12 {
     {
         CreateNativeDevice();
         CreateNativeQueues(inCreateInfo);
-        CreateNativeCmdAllocator();
         QueryNativeDescriptorSize();
         CreateDescriptorPools();
 #if BUILD_CONFIG_DEBUG
@@ -182,11 +181,6 @@ namespace RHI::DirectX12 {
     Common::UniquePtr<SwapChain> DX12Device::CreateSwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
         return { new DX12SwapChain(*this, inCreateInfo) };
-    }
-
-    ID3D12CommandAllocator* DX12Device::GetNativeCmdAllocator() const
-    {
-        return nativeCmdAllocator.Get();
     }
 
     Common::UniquePtr<Buffer> DX12Device::CreateBuffer(const BufferCreateInfo& inCreateInfo)
@@ -340,11 +334,6 @@ namespace RHI::DirectX12 {
 
             queues[iter.first] = std::move(tempQueues);
         }
-    }
-
-    void DX12Device::CreateNativeCmdAllocator()
-    {
-        nativeDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&nativeCmdAllocator));
     }
 
     void DX12Device::QueryNativeDescriptorSize()

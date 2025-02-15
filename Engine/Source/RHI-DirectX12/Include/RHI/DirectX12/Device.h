@@ -95,7 +95,6 @@ namespace RHI::DirectX12 {
 
         DX12Gpu& GetGpu() const;
         ID3D12Device* GetNative() const;
-        ID3D12CommandAllocator* GetNativeCmdAllocator() const;
         Common::UniquePtr<DescriptorAllocation> AllocateRtvDescriptor() const;
         Common::UniquePtr<DescriptorAllocation> AllocateCbvSrvUavDescriptor() const;
         Common::UniquePtr<DescriptorAllocation> AllocateSamplerDescriptor() const;
@@ -104,7 +103,6 @@ namespace RHI::DirectX12 {
     private:
         void CreateNativeDevice();
         void CreateNativeQueues(const DeviceCreateInfo& inCreateInfo);
-        void CreateNativeCmdAllocator();
         void QueryNativeDescriptorSize();
         void CreateDescriptorPools();
 #if BUILD_CONFIG_DEBUG
@@ -123,6 +121,5 @@ namespace RHI::DirectX12 {
         Common::UniquePtr<DescriptorPool> samplerDescriptorPool;
         Common::UniquePtr<DescriptorPool> dsvDescriptorPool;
         ComPtr<ID3D12Device> nativeDevice;
-        ComPtr<ID3D12CommandAllocator> nativeCmdAllocator;
     };
 }

@@ -62,14 +62,17 @@ namespace RHI::DirectX12 {
 
         Common::UniquePtr<CommandRecorder> Begin() override;
 
-        ID3D12GraphicsCommandList* GetNative() const;
+        ID3D12CommandAllocator* GetNativeAllocator() const;
+        ID3D12GraphicsCommandList* GetNativeCmdList() const;
         RuntimeDescriptorCompact* GetRuntimeDescriptorHeaps() const;
 
     private:
-        void AllocateDX12CommandList(DX12Device& inDevice);
+        void CreateNativeCommandAllocator(DX12Device& inDevice);
+        void CreateNativeCommandList(DX12Device& inDevice);
 
         DX12Device& device;
-        ComPtr<ID3D12GraphicsCommandList> dx12GraphicsCommandList;
+        ComPtr<ID3D12CommandAllocator> nativeCommandAllocator;
+        ComPtr<ID3D12GraphicsCommandList> nativeGraphicsCommandList;
         Common::UniquePtr<RuntimeDescriptorCompact> runtimeDescriptorHeaps;
     };
 }
