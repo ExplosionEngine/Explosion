@@ -71,7 +71,7 @@ private:
             .SetUsages(BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
             .SetInitialState(BufferState::staging);
 
-        const UniqueRef<Buffer> stagingBuf = device->CreateBuffer(bufInfo);
+        const UniquePtr<Buffer> stagingBuf = device->CreateBuffer(bufInfo);
         if (stagingBuf != nullptr) {
             auto* mapPointer = stagingBuf->Map(MapMode::write, 0, bufInfo.size);
             memcpy(mapPointer, data.data(), bufInfo.size);
@@ -91,10 +91,10 @@ private:
             .SetExtendStorage(sizeof(PackedVec));
         inputBufferView = inputBuffer->CreateBufferView(inputBufViewInfo);
 
-        const UniqueRef<CommandBuffer> copyCmd = device->CreateCommandBuffer();
-        const UniqueRef<CommandRecorder> recorder = copyCmd->Begin();
+        const UniquePtr<CommandBuffer> copyCmd = device->CreateCommandBuffer();
+        const UniquePtr<CommandRecorder> recorder = copyCmd->Begin();
         {
-            const UniqueRef<CopyPassCommandRecorder> copyRecorder = recorder->BeginCopyPass();
+            const UniquePtr<CopyPassCommandRecorder> copyRecorder = recorder->BeginCopyPass();
             copyRecorder->ResourceBarrier(Barrier::Transition(inputBuffer.Get(), BufferState::undefined, BufferState::copyDst));
             copyRecorder->CopyBufferToBuffer(
                 stagingBuf.Get(),
@@ -105,7 +105,7 @@ private:
         }
         recorder->End();
 
-        const UniqueRef<Fence> mFence = device->CreateFence(false);
+        const UniquePtr<Fence> mFence = device->CreateFence(false);
         QueueSubmitInfo submitInfo {};
         submitInfo.signalFence = mFence.Get();
         queue->Submit(copyCmd.Get(), submitInfo);
@@ -168,17 +168,17 @@ private:
 
     void BuildCmdBufferAndSubmit()
     {
-        UniqueRef<CommandRecorder> recorder = commandBuffer->Begin();
+        UniquePtr<CommandRecorder> recorder = commandBuffer->Begin();
 
         // do compute work
-        UniqueRef<ComputePassCommandRecorder> computeRecorder = recorder->BeginComputePass();
+        UniquePtr<ComputePassCommandRecorder> computeRecorder = recorder->BeginComputePass();
         computeRecorder->SetPipeline(pipeline.Get());
         computeRecorder->SetBindGroup(0, bindGroup.Get());
         computeRecorder->Dispatch(1, 1, 1);
         computeRecorder->EndPass();
 
         // read back to host buffer
-        UniqueRef<CopyPassCommandRecorder> copyRecorder = recorder->BeginCopyPass();
+        UniquePtr<CopyPassCommandRecorder> copyRecorder = recorder->BeginCopyPass();
         copyRecorder->ResourceBarrier(Barrier::Transition(outputBuffer.Get(), BufferState::rwStorage, BufferState::copySrc));
         copyRecorder->CopyBufferToBuffer(
             outputBuffer.Get(),
@@ -202,24 +202,24 @@ private:
     const int dataNum = 32;
 
     Gpu* gpu = nullptr;
-    UniqueRef<Device> device;
+    UniquePtr<Device> device;
     Queue* queue = nullptr;
-    UniqueRef<Buffer> inputBuffer;
-    UniqueRef<BufferView> inputBufferView;
-    UniqueRef<Buffer> outputBuffer;
-    UniqueRef<BufferView> outputBufferView;
-    UniqueRef<Buffer> readbackBuffer;
-    UniqueRef<BindGroupLayout> bindGroupLayout;
-    UniqueRef<BindGroup> bindGroup;
-    UniqueRef<Sampler> sampler;
-    UniqueRef<CommandBuffer> cmdBuffer;
-    UniqueRef<PipelineLayout> pipelineLayout;
-    UniqueRef<ComputePipeline> pipeline;
-    UniqueRef<ShaderModule> computeShader;
-    UniqueRef<Fence> fence;
+    UniquePtr<Buffer> inputBuffer;
+    UniquePtr<BufferView> inputBufferView;
+    UniquePtr<Buffer> outputBuffer;
+    UniquePtr<BufferView> outputBufferView;
+    UniquePtr<Buffer> readbackBuffer;
+    UniquePtr<BindGroupLayout> bindGroupLayout;
+    UniquePtr<BindGroup> bindGroup;
+    UniquePtr<Sampler> sampler;
+    UniquePtr<CommandBuffer> cmdBuffer;
+    UniquePtr<PipelineLayout> pipelineLayout;
+    UniquePtr<ComputePipeline> pipeline;
+    UniquePtr<ShaderModule> computeShader;
+    UniquePtr<Fence> fence;
     ShaderCompileOutput csOutPut;
-    UniqueRef<ShaderModule> csShaderModule;
-    UniqueRef<CommandBuffer> commandBuffer;
+    UniquePtr<ShaderModule> csShaderModule;
+    UniquePtr<CommandBuffer> commandBuffer;
 };
 
 int main(int argc, char* argv[])

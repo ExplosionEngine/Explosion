@@ -54,7 +54,7 @@ namespace RHI::Vulkan {
 #endif
         VkInstance nativeInstance;
         std::vector<VkPhysicalDevice> nativePhysicalDevices;
-        std::vector<Common::UniqueRef<Gpu>> gpus;
+        std::vector<Common::UniquePtr<Gpu>> gpus;
         std::unordered_map<std::string, PFN_vkVoidFunction> dynamicFuncPointers;
     };
 }

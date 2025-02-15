@@ -43,7 +43,7 @@ namespace RHI::DirectX12 {
         DescriptorHeapNode(ComPtr<ID3D12DescriptorHeap>&& inHeap, uint32_t inDescriptorSize, uint32_t inCapacity);
 
         bool HasFreeSlot() const;
-        Common::UniqueRef<DescriptorAllocation> Allocate();
+        Common::UniquePtr<DescriptorAllocation> Allocate();
         void Free(uint32_t slot);
 
     private:
@@ -57,7 +57,7 @@ namespace RHI::DirectX12 {
     class DescriptorPool {
     public:
         DescriptorPool(DX12Device& inDevice, D3D12_DESCRIPTOR_HEAP_TYPE inNativeHeapType, uint32_t inDescriptorSize, uint32_t inCapacity);
-        Common::UniqueRef<DescriptorAllocation> Allocate();
+        Common::UniquePtr<DescriptorAllocation> Allocate();
 
     private:
         DX12Device& device;
@@ -75,36 +75,34 @@ namespace RHI::DirectX12 {
 
         size_t GetQueueNum(QueueType inType) override;
         Queue* GetQueue(QueueType inType, size_t inIndex) override;
-        Common::UniqueRef<Surface> CreateSurface(const SurfaceCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<SwapChain> CreateSwapChain(const SwapChainCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<Buffer> CreateBuffer(const BufferCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<Texture> CreateTexture(const TextureCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<Sampler> CreateSampler(const SamplerCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<BindGroupLayout> CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<BindGroup> CreateBindGroup(const BindGroupCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<PipelineLayout> CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<ShaderModule> CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<RasterPipeline> CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo) override;
-        Common::UniqueRef<CommandBuffer> CreateCommandBuffer() override;
-        Common::UniqueRef<Fence> CreateFence(bool inInitAsSignaled) override;
-        Common::UniqueRef<Semaphore> CreateSemaphore() override;
+        Common::UniquePtr<Surface> CreateSurface(const SurfaceCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<SwapChain> CreateSwapChain(const SwapChainCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<Buffer> CreateBuffer(const BufferCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<Texture> CreateTexture(const TextureCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<Sampler> CreateSampler(const SamplerCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<BindGroupLayout> CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<BindGroup> CreateBindGroup(const BindGroupCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<PipelineLayout> CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<ShaderModule> CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<RasterPipeline> CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo) override;
+        Common::UniquePtr<CommandBuffer> CreateCommandBuffer() override;
+        Common::UniquePtr<Fence> CreateFence(bool inInitAsSignaled) override;
+        Common::UniquePtr<Semaphore> CreateSemaphore() override;
 
         bool CheckSwapChainFormatSupport(Surface* inSurface, PixelFormat inFormat) override;
         TextureSubResourceCopyFootprint GetTextureSubResourceCopyFootprint(const Texture& texture, const TextureSubResourceInfo& subResourceInfo) override;
 
         DX12Gpu& GetGpu() const;
         ID3D12Device* GetNative() const;
-        ID3D12CommandAllocator* GetNativeCmdAllocator() const;
-        Common::UniqueRef<DescriptorAllocation> AllocateRtvDescriptor() const;
-        Common::UniqueRef<DescriptorAllocation> AllocateCbvSrvUavDescriptor() const;
-        Common::UniqueRef<DescriptorAllocation> AllocateSamplerDescriptor() const;
-        Common::UniqueRef<DescriptorAllocation> AllocateDsvDescriptor() const;
+        Common::UniquePtr<DescriptorAllocation> AllocateRtvDescriptor() const;
+        Common::UniquePtr<DescriptorAllocation> AllocateCbvSrvUavDescriptor() const;
+        Common::UniquePtr<DescriptorAllocation> AllocateSamplerDescriptor() const;
+        Common::UniquePtr<DescriptorAllocation> AllocateDsvDescriptor() const;
 
     private:
         void CreateNativeDevice();
         void CreateNativeQueues(const DeviceCreateInfo& inCreateInfo);
-        void CreateNativeCmdAllocator();
         void QueryNativeDescriptorSize();
         void CreateDescriptorPools();
 #if BUILD_CONFIG_DEBUG
@@ -113,16 +111,15 @@ namespace RHI::DirectX12 {
 #endif
 
         DX12Gpu& gpu;
-        std::unordered_map<QueueType, std::vector<Common::UniqueRef<DX12Queue>>> queues;
+        std::unordered_map<QueueType, std::vector<Common::UniquePtr<DX12Queue>>> queues;
         uint32_t nativeRtvDescriptorSize;
         uint32_t nativeCbvSrvUavDescriptorSize;
         uint32_t nativeSamplerDescriptorSize;
         uint32_t nativeDsvDescriptorSize;
-        Common::UniqueRef<DescriptorPool> rtvDescriptorPool;
-        Common::UniqueRef<DescriptorPool> cbvSrvUavDescriptorPool;
-        Common::UniqueRef<DescriptorPool> samplerDescriptorPool;
-        Common::UniqueRef<DescriptorPool> dsvDescriptorPool;
+        Common::UniquePtr<DescriptorPool> rtvDescriptorPool;
+        Common::UniquePtr<DescriptorPool> cbvSrvUavDescriptorPool;
+        Common::UniquePtr<DescriptorPool> samplerDescriptorPool;
+        Common::UniquePtr<DescriptorPool> dsvDescriptorPool;
         ComPtr<ID3D12Device> nativeDevice;
-        ComPtr<ID3D12CommandAllocator> nativeCmdAllocator;
     };
 }

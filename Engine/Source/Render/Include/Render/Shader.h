@@ -148,7 +148,7 @@ namespace Render {
 
         [[nodiscard]] const ShaderArchive& GetArchive(const typename T::VariantSet& variantSet) const;
 
-        std::unordered_map<RHI::Device*, std::unordered_map<VariantKey, Common::UniqueRef<RHI::ShaderModule>>> shaderModules;
+        std::unordered_map<RHI::Device*, std::unordered_map<VariantKey, Common::UniquePtr<RHI::ShaderModule>>> shaderModules;
     };
 
     class GlobalShaderRegistry {
@@ -263,7 +263,7 @@ namespace Render {
     class VariantSet : public Render::VariantSetImpl<__VA_ARGS__> {};
 
 #define NonVariant \
-    RangedIntShaderVariantField(_PlaceholderVariantField, "__PLACEHOLDER_VARIANT", 0, 0); \
+    RangedIntShaderVariantField(_PlaceholderVariantField, "__PLACEHOLDER_VARIANT", 0, 0); /* NOLINT */ \
     VariantSet(_PlaceholderVariantField);
 
 #define RegisterGlobalShader(inClass) \

@@ -4,14 +4,13 @@
 
 #pragma once
 
-#include <Common/Memory.h>
-#include <Common/Concurrent.h>
 #include <Common/Debug.h>
 #include <Core/Module.h>
+#include <RHI/RHI.h>
 #include <Render/Scene.h>
 #include <Render/View.h>
+#include <Render/RenderThread.h>
 #include <Render/Api.h>
-#include <RHI/RHI.h>
 
 namespace Render {
     struct RenderModuleInitParams {
@@ -30,25 +29,13 @@ namespace Render {
         void Initialize(const RenderModuleInitParams& inParams);
         void DeInitialize();
         RHI::Device* GetDevice() const;
-        Common::UniqueRef<Scene> NewScene();
-        Common::UniqueRef<View> NewView();
-        void ShutdownRenderingThread();
-        void FlushAllRenderingCommands() const;
-        template <typename F, typename... Args> auto EnqueueRenderingCommand(F&& command, Args&&... args);
+        Render::RenderThread& GetRenderThread() const;
+        Common::UniquePtr<Scene> NewScene();
+        Common::UniquePtr<View> NewView();
 
     private:
         bool initialized;
-        Common::UniqueRef<Common::WorkerThread> renderingThread;
         RHI::Instance* rhiInstance;
-        Common::UniqueRef<RHI::Device> rhiDevice;
+        Common::UniquePtr<RHI::Device> rhiDevice;
     };
-}
-
-namespace Render {
-    template <typename F, typename ... Args>
-    auto RenderModule::EnqueueRenderingCommand(F&& command, Args&&... args)
-    {
-        Assert(renderingThread != nullptr);
-        return renderingThread->EmplaceTask(std::forward<F>(command), std::forward<Args>(args)...);
-    }
 }

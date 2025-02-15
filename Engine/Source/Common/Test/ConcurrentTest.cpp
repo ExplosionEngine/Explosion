@@ -65,6 +65,14 @@ TEST(ConcurrentTest, ThreadPoolTest3)
     ASSERT_EQ(count, 200);
 }
 
+TEST(ConcurrentTest, ThreadPoolExecuteTasksTest)
+{
+    Common::ThreadPool threadPool("TestThreadPool", 4);
+    std::atomic<uint32_t> count = 0;
+    threadPool.ExecuteTasks(64, [&count](size_t i) -> void { ++count; });
+    ASSERT_EQ(count, 64);
+}
+
 TEST(ConcurrentTest, WorkerThread0)
 {
     uint32_t value = 0;

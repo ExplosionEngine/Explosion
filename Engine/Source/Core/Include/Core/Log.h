@@ -74,7 +74,7 @@ namespace Core {
         NonMovable(Logger)
 
         void Log(const std::string& inTag, const std::string& inLevel, const std::string& inContent);
-        void Attach(Common::UniqueRef<LogStream>&& inStream);
+        void Attach(Common::UniquePtr<LogStream>&& inStream);
         void Flush();
 
     private:
@@ -83,6 +83,6 @@ namespace Core {
         void LogInternal(const std::string& inString);
 
         float lastFlushTimeSec;
-        std::vector<Common::UniqueRef<LogStream>> streams;
+        std::vector<Common::UniquePtr<LogStream>> streams;
     };
 }

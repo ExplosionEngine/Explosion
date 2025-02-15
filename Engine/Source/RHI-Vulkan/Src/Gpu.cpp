@@ -27,7 +27,7 @@ namespace RHI::Vulkan {
         return property;
     }
 
-    Common::UniqueRef<Device> VulkanGpu::RequestDevice(const DeviceCreateInfo& inCreateInfo)
+    Common::UniquePtr<Device> VulkanGpu::RequestDevice(const DeviceCreateInfo& inCreateInfo)
     {
         return { new VulkanDevice(*this, inCreateInfo) };
     }

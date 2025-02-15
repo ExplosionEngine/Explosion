@@ -64,7 +64,7 @@ namespace RHI::DirectX12 {
         return free > 0;
     }
 
-    Common::UniqueRef<DescriptorAllocation> DescriptorHeapNode::Allocate()
+    Common::UniquePtr<DescriptorAllocation> DescriptorHeapNode::Allocate()
     {
         Assert(HasFreeSlot());
 
@@ -117,7 +117,7 @@ namespace RHI::DirectX12 {
     {
     }
 
-    Common::UniqueRef<DescriptorAllocation> DescriptorPool::Allocate()
+    Common::UniquePtr<DescriptorAllocation> DescriptorPool::Allocate()
     {
         for (auto& node : heapNodes) {
             if (node.HasFreeSlot()) {
@@ -147,7 +147,6 @@ namespace RHI::DirectX12 {
     {
         CreateNativeDevice();
         CreateNativeQueues(inCreateInfo);
-        CreateNativeCmdAllocator();
         QueryNativeDescriptorSize();
         CreateDescriptorPools();
 #if BUILD_CONFIG_DEBUG
@@ -174,77 +173,72 @@ namespace RHI::DirectX12 {
         return queueArray[inIndex].Get();
     }
 
-    Common::UniqueRef<Surface> DX12Device::CreateSurface(const SurfaceCreateInfo& inCreateInfo)
+    Common::UniquePtr<Surface> DX12Device::CreateSurface(const SurfaceCreateInfo& inCreateInfo)
     {
         return { new DX12Surface(inCreateInfo) };
     }
 
-    Common::UniqueRef<SwapChain> DX12Device::CreateSwapChain(const SwapChainCreateInfo& inCreateInfo)
+    Common::UniquePtr<SwapChain> DX12Device::CreateSwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
         return { new DX12SwapChain(*this, inCreateInfo) };
     }
 
-    ID3D12CommandAllocator* DX12Device::GetNativeCmdAllocator() const
-    {
-        return nativeCmdAllocator.Get();
-    }
-
-    Common::UniqueRef<Buffer> DX12Device::CreateBuffer(const BufferCreateInfo& inCreateInfo)
+    Common::UniquePtr<Buffer> DX12Device::CreateBuffer(const BufferCreateInfo& inCreateInfo)
     {
         return { new DX12Buffer(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<Texture> DX12Device::CreateTexture(const TextureCreateInfo& inCreateInfo)
+    Common::UniquePtr<Texture> DX12Device::CreateTexture(const TextureCreateInfo& inCreateInfo)
     {
         return { new DX12Texture(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<Sampler> DX12Device::CreateSampler(const SamplerCreateInfo& inCreateInfo)
+    Common::UniquePtr<Sampler> DX12Device::CreateSampler(const SamplerCreateInfo& inCreateInfo)
     {
         return { new DX12Sampler(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<BindGroupLayout> DX12Device::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
+    Common::UniquePtr<BindGroupLayout> DX12Device::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
     {
         return { new DX12BindGroupLayout(inCreateInfo) };
     }
 
-    Common::UniqueRef<BindGroup> DX12Device::CreateBindGroup(const BindGroupCreateInfo& inCreateInfo)
+    Common::UniquePtr<BindGroup> DX12Device::CreateBindGroup(const BindGroupCreateInfo& inCreateInfo)
     {
         return { new DX12BindGroup(inCreateInfo) };
     }
 
-    Common::UniqueRef<PipelineLayout> DX12Device::CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo)
+    Common::UniquePtr<PipelineLayout> DX12Device::CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo)
     {
         return { new DX12PipelineLayout(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<ShaderModule> DX12Device::CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo)
+    Common::UniquePtr<ShaderModule> DX12Device::CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo)
     {
         return { new DX12ShaderModule(inCreateInfo) };
     }
 
-    Common::UniqueRef<ComputePipeline> DX12Device::CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo)
+    Common::UniquePtr<ComputePipeline> DX12Device::CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo)
     {
         return { new DX12ComputePipeline(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<RasterPipeline> DX12Device::CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo)
+    Common::UniquePtr<RasterPipeline> DX12Device::CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo)
     {
         return { new DX12RasterPipeline(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<CommandBuffer> DX12Device::CreateCommandBuffer()
+    Common::UniquePtr<CommandBuffer> DX12Device::CreateCommandBuffer()
     {
         return { new DX12CommandBuffer(*this) };
     }
 
-    Common::UniqueRef<Fence> DX12Device::CreateFence(const bool inInitAsSignaled)
+    Common::UniquePtr<Fence> DX12Device::CreateFence(const bool inInitAsSignaled)
     {
         return { new DX12Fence(*this, inInitAsSignaled) };
     }
 
-    Common::UniqueRef<Semaphore> DX12Device::CreateSemaphore()
+    Common::UniquePtr<Semaphore> DX12Device::CreateSemaphore()
     {
         return { new DX12Semaphore(*this) };
     }
@@ -289,22 +283,22 @@ namespace RHI::DirectX12 {
         return nativeDevice.Get();
     }
 
-    Common::UniqueRef<DescriptorAllocation> DX12Device::AllocateRtvDescriptor() const
+    Common::UniquePtr<DescriptorAllocation> DX12Device::AllocateRtvDescriptor() const
     {
         return rtvDescriptorPool->Allocate();
     }
 
-    Common::UniqueRef<DescriptorAllocation> DX12Device::AllocateCbvSrvUavDescriptor() const
+    Common::UniquePtr<DescriptorAllocation> DX12Device::AllocateCbvSrvUavDescriptor() const
     {
         return cbvSrvUavDescriptorPool->Allocate();
     }
 
-    Common::UniqueRef<DescriptorAllocation> DX12Device::AllocateSamplerDescriptor() const
+    Common::UniquePtr<DescriptorAllocation> DX12Device::AllocateSamplerDescriptor() const
     {
         return samplerDescriptorPool->Allocate();
     }
 
-    Common::UniqueRef<DescriptorAllocation> DX12Device::AllocateDsvDescriptor() const
+    Common::UniquePtr<DescriptorAllocation> DX12Device::AllocateDsvDescriptor() const
     {
         return dsvDescriptorPool->Allocate();
     }
@@ -327,7 +321,7 @@ namespace RHI::DirectX12 {
         }
 
         for (auto iter : queueNumMap) {
-            std::vector<Common::UniqueRef<DX12Queue>> tempQueues(iter.second);
+            std::vector<Common::UniquePtr<DX12Queue>> tempQueues(iter.second);
 
             D3D12_COMMAND_QUEUE_DESC queueDesc {};
             queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
@@ -340,11 +334,6 @@ namespace RHI::DirectX12 {
 
             queues[iter.first] = std::move(tempQueues);
         }
-    }
-
-    void DX12Device::CreateNativeCmdAllocator()
-    {
-        nativeDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&nativeCmdAllocator));
     }
 
     void DX12Device::QueryNativeDescriptorSize()

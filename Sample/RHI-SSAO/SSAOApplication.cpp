@@ -52,14 +52,14 @@ protected:
         const auto backTextureIndex = swapChain->AcquireBackTexture(backBufferReadySemaphores[nextFrameIndex].Get());
         inflightFences[nextFrameIndex]->Reset();
 
-        const UniqueRef<CommandRecorder> commandRecorder = commandBuffers[nextFrameIndex]->Begin();
+        const UniquePtr<CommandRecorder> commandRecorder = commandBuffers[nextFrameIndex]->Begin();
         {
             commandRecorder->ResourceBarrier(Barrier::Transition(gBufferPos.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
             commandRecorder->ResourceBarrier(Barrier::Transition(gBufferNormal.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
             commandRecorder->ResourceBarrier(Barrier::Transition(gBufferAlbedo.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
             commandRecorder->ResourceBarrier(Barrier::Transition(gBufferDepth.texture.Get(), TextureState::depthStencilReadonly, TextureState::depthStencilWrite));
 
-            const UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+            const UniquePtr<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
                 RasterPassBeginInfo()
                     .AddColorAttachment(RHI::ColorAttachment(gBufferPos.rtv.Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black))
                     .AddColorAttachment(RHI::ColorAttachment(gBufferNormal.rtv.Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black))
@@ -91,7 +91,7 @@ protected:
             // ssao
             commandRecorder->ResourceBarrier(Barrier::Transition(ssaoOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
 
-            const UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+            const UniquePtr<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
                 RasterPassBeginInfo()
                     .AddColorAttachment(RHI::ColorAttachment(ssaoOutput.rtv.Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black)));
             {
@@ -112,7 +112,7 @@ protected:
             // ssaoBlur
             commandRecorder->ResourceBarrier(Barrier::Transition(ssaoBlurOutput.texture.Get(), TextureState::shaderReadOnly, TextureState::renderTarget));
 
-            const UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+            const UniquePtr<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
                 RasterPassBeginInfo()
                     .AddColorAttachment(RHI::ColorAttachment(ssaoBlurOutput.rtv.Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black)));
             {
@@ -132,7 +132,7 @@ protected:
         {
             // composition
             commandRecorder->ResourceBarrier(Barrier::Transition(swapChainTextures[backTextureIndex], TextureState::present, TextureState::renderTarget));
-            const UniqueRef<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
+            const UniquePtr<RasterPassCommandRecorder> rasterRecorder = commandRecorder->BeginRasterPass(
                 RasterPassBeginInfo()
                     .AddColorAttachment(RHI::ColorAttachment(swapChainTextureViews[backTextureIndex].Get(), LoadOp::clear, StoreOp::store, LinearColorConsts::black)));
             {
@@ -163,7 +163,7 @@ protected:
 
     void OnDestroy() override
     {
-        const UniqueRef<Fence> fence = device->CreateFence(false);
+        const UniquePtr<Fence> fence = device->CreateFence(false);
         graphicsQueue->Flush(fence.Get());
         fence->Wait();
     }
@@ -175,38 +175,38 @@ private:
 
     PixelFormat swapChainFormat = PixelFormat::max;
     Gpu* gpu = nullptr;
-    UniqueRef<Device> device = nullptr;
+    UniquePtr<Device> device = nullptr;
     Queue* graphicsQueue = nullptr;
-    UniqueRef<Surface> surface = nullptr;
-    UniqueRef<SwapChain> swapChain = nullptr;
-    UniqueRef<Buffer> vertexBuffer = nullptr;
-    UniqueRef<BufferView> vertexBufferView = nullptr;
-    UniqueRef<Buffer> indexBuffer = nullptr;
-    UniqueRef<BufferView> indexBufferView = nullptr;
+    UniquePtr<Surface> surface = nullptr;
+    UniquePtr<SwapChain> swapChain = nullptr;
+    UniquePtr<Buffer> vertexBuffer = nullptr;
+    UniquePtr<BufferView> vertexBufferView = nullptr;
+    UniquePtr<Buffer> indexBuffer = nullptr;
+    UniquePtr<BufferView> indexBufferView = nullptr;
     std::array<Texture*, backBufferCount> swapChainTextures {};
-    std::array<UniqueRef<TextureView>, backBufferCount> swapChainTextureViews {};
+    std::array<UniquePtr<TextureView>, backBufferCount> swapChainTextureViews {};
 
-    UniqueRef<Buffer> quadVertexBuffer = nullptr;
-    UniqueRef<BufferView> quadVertexBufferView = nullptr;
-    UniqueRef<Buffer> quadIndexBuffer = nullptr;
-    UniqueRef<BufferView> quadIndexBufferView = nullptr;
+    UniquePtr<Buffer> quadVertexBuffer = nullptr;
+    UniquePtr<BufferView> quadVertexBufferView = nullptr;
+    UniquePtr<Buffer> quadIndexBuffer = nullptr;
+    UniquePtr<BufferView> quadIndexBufferView = nullptr;
 
-    std::array<UniqueRef<CommandBuffer>, backBufferCount> commandBuffers {};
-    std::array<UniqueRef<Semaphore>, backBufferCount> backBufferReadySemaphores {};
-    std::array<UniqueRef<Semaphore>, backBufferCount> renderFinishedSemaphores {};
-    std::array<UniqueRef<Fence>, backBufferCount> inflightFences {};
+    std::array<UniquePtr<CommandBuffer>, backBufferCount> commandBuffers {};
+    std::array<UniquePtr<Semaphore>, backBufferCount> backBufferReadySemaphores {};
+    std::array<UniquePtr<Semaphore>, backBufferCount> renderFinishedSemaphores {};
+    std::array<UniquePtr<Fence>, backBufferCount> inflightFences {};
     uint8_t nextFrameIndex = 0;
 
-    UniqueRef<Sampler> sampler = nullptr;
-    UniqueRef<Sampler> noiseSampler = nullptr;
+    UniquePtr<Sampler> sampler = nullptr;
+    UniquePtr<Sampler> noiseSampler = nullptr;
 
     struct Renderable {
         uint32_t indexCount;
         uint32_t firstIndex;
 
-        UniqueRef<BindGroup> bindGroup;
-        UniqueRef<Texture> diffuseColorMap;
-        UniqueRef<TextureView> diffuseColorMapView;
+        UniquePtr<BindGroup> bindGroup;
+        UniquePtr<Texture> diffuseColorMap;
+        UniquePtr<TextureView> diffuseColorMapView;
 
         Renderable(Instance& instance, Device& device, BindGroupLayout& bindGroupLayout, Render::ShaderReflectionData& gBufferPsReflectionData, Sampler& sampler, const Mesh& mesh) {
             indexCount = mesh.indexCount;
@@ -242,7 +242,7 @@ private:
                 .SetUsages(BufferUsageBits::uniform | BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
                 .SetInitialState(BufferState::staging);
 
-            const UniqueRef<Buffer> pixelBuffer = device.CreateBuffer(bufferCreateInfo);
+            const UniquePtr<Buffer> pixelBuffer = device.CreateBuffer(bufferCreateInfo);
             if (pixelBuffer != nullptr) {
                 auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
                 for (auto i = 0; i < texData->height; i++) {
@@ -254,10 +254,10 @@ private:
                 pixelBuffer->UnMap();
             }
 
-            const UniqueRef<CommandBuffer> texCommandBuffer = device.CreateCommandBuffer();
-            const UniqueRef<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
+            const UniquePtr<CommandBuffer> texCommandBuffer = device.CreateCommandBuffer();
+            const UniquePtr<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
             {
-                const UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
+                const UniquePtr<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
                 {
                     copyRecorder->ResourceBarrier(Barrier::Transition(diffuseColorMap.Get(), TextureState::undefined, TextureState::copyDst));
                     copyRecorder->CopyBufferToTexture(
@@ -270,7 +270,7 @@ private:
             }
             commandRecorder->End();
 
-            const UniqueRef<Fence> fence = device.CreateFence(false);
+            const UniquePtr<Fence> fence = device.CreateFence(false);
             QueueSubmitInfo submitInfo {};
             submitInfo.signalFence = fence.Get();
             device.GetQueue(QueueType::graphics, 0)->Submit(texCommandBuffer.Get(), submitInfo);
@@ -284,12 +284,12 @@ private:
         }
     };
 
-    UniqueRef<Model> model = nullptr;
-    std::vector<UniqueRef<Renderable>> renderables;
+    UniquePtr<Model> model = nullptr;
+    std::vector<UniquePtr<Renderable>> renderables;
 
     struct UBuffer {
-        UniqueRef<Buffer> buf;
-        UniqueRef<BufferView> bufView;
+        UniquePtr<Buffer> buf;
+        UniquePtr<BufferView> bufView;
     };
 
     struct UniformBuffers {
@@ -315,19 +315,19 @@ private:
     } ubossaoParams;
 
     struct Noise {
-        UniqueRef<Texture> tex;
-        UniqueRef<TextureView> view;
+        UniquePtr<Texture> tex;
+        UniquePtr<TextureView> view;
     } noise;
 
     struct ShaderObjects {
-        UniqueRef<ShaderModule> gBufferVs;
-        UniqueRef<ShaderModule> gBufferPs;
-        UniqueRef<ShaderModule> ssaoVs;
-        UniqueRef<ShaderModule> ssaoPs;
-        UniqueRef<ShaderModule> ssaoBlurVs;
-        UniqueRef<ShaderModule> ssaoBlurPs;
-        UniqueRef<ShaderModule> compositionVs;
-        UniqueRef<ShaderModule> compositionPs;
+        UniquePtr<ShaderModule> gBufferVs;
+        UniquePtr<ShaderModule> gBufferPs;
+        UniquePtr<ShaderModule> ssaoVs;
+        UniquePtr<ShaderModule> ssaoPs;
+        UniquePtr<ShaderModule> ssaoBlurVs;
+        UniquePtr<ShaderModule> ssaoBlurPs;
+        UniquePtr<ShaderModule> compositionVs;
+        UniquePtr<ShaderModule> compositionPs;
         ShaderCompileOutput gBufferVsCompileOutput;
         ShaderCompileOutput gBufferPsCompileOutput;
         ShaderCompileOutput ssaoVsCompileOutput;
@@ -339,47 +339,47 @@ private:
     } shaderObjects;
 
     struct Pipelines {
-        UniqueRef<RasterPipeline> gBuffer;
-        UniqueRef<RasterPipeline> ssao;
-        UniqueRef<RasterPipeline> ssaoBlur;
-        UniqueRef<RasterPipeline> composition;
+        UniquePtr<RasterPipeline> gBuffer;
+        UniquePtr<RasterPipeline> ssao;
+        UniquePtr<RasterPipeline> ssaoBlur;
+        UniquePtr<RasterPipeline> composition;
     } pipelines;
 
     struct PipelineLayouts {
-        UniqueRef<PipelineLayout> gBuffer;
-        UniqueRef<PipelineLayout> ssao;
-        UniqueRef<PipelineLayout> ssaoBlur;
-        UniqueRef<PipelineLayout> composition;
+        UniquePtr<PipelineLayout> gBuffer;
+        UniquePtr<PipelineLayout> ssao;
+        UniquePtr<PipelineLayout> ssaoBlur;
+        UniquePtr<PipelineLayout> composition;
     } pipelineLayouts;
 
-    UniqueRef<BindGroupLayout> renderableLayout;
+    UniquePtr<BindGroupLayout> renderableLayout;
 
     struct BindGroupLayouts {
-        UniqueRef<BindGroupLayout> gBuffer;
-        UniqueRef<BindGroupLayout> ssao;
-        UniqueRef<BindGroupLayout> ssaoBlur;
-        UniqueRef<BindGroupLayout> composition;
+        UniquePtr<BindGroupLayout> gBuffer;
+        UniquePtr<BindGroupLayout> ssao;
+        UniquePtr<BindGroupLayout> ssaoBlur;
+        UniquePtr<BindGroupLayout> composition;
     } bindGroupLayouts;
 
     struct BindGroups {
-        UniqueRef<BindGroup> scene;
-        UniqueRef<BindGroup> ssao;
-        UniqueRef<BindGroup> ssaoBlur;
-        UniqueRef<BindGroup> composition;
+        UniquePtr<BindGroup> scene;
+        UniquePtr<BindGroup> ssao;
+        UniquePtr<BindGroup> ssaoBlur;
+        UniquePtr<BindGroup> composition;
     } bindGroups;
 
     struct ColorAttachment {
-        UniqueRef<Texture> texture;
-        UniqueRef<TextureView> rtv;
-        UniqueRef<TextureView> srv;
+        UniquePtr<Texture> texture;
+        UniquePtr<TextureView> rtv;
+        UniquePtr<TextureView> srv;
     };
 
     ColorAttachment gBufferPos;
     ColorAttachment gBufferNormal;
     ColorAttachment gBufferAlbedo;
     struct {
-        UniqueRef<Texture> texture;
-        UniqueRef<TextureView> view;
+        UniquePtr<Texture> texture;
+        UniquePtr<TextureView> view;
     } gBufferDepth;
 
     ColorAttachment ssaoOutput;
@@ -757,7 +757,7 @@ private:
             .SetUsages(BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
             .SetInitialState(BufferState::staging);
 
-        const UniqueRef<Buffer> pixelBuffer = device->CreateBuffer(bufferCreateInfo);
+        const UniquePtr<Buffer> pixelBuffer = device->CreateBuffer(bufferCreateInfo);
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, ssaoNoise.data(), bufferCreateInfo.size);
@@ -789,11 +789,11 @@ private:
                 .SetAddressModeU(AddressMode::repeat)
                 .SetAddressModeV(AddressMode::repeat));
 
-        const UniqueRef<CommandBuffer> texCommandBuffer = device->CreateCommandBuffer();
+        const UniquePtr<CommandBuffer> texCommandBuffer = device->CreateCommandBuffer();
 
-        const UniqueRef<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
+        const UniquePtr<CommandRecorder> commandRecorder = texCommandBuffer->Begin();
         {
-            const UniqueRef<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
+            const UniquePtr<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
             {
                 copyRecorder->ResourceBarrier(Barrier::Transition(noise.tex.Get(), TextureState::undefined, TextureState::copyDst));
                 copyRecorder->CopyBufferToTexture(
@@ -806,7 +806,7 @@ private:
         }
         commandRecorder->End();
 
-        const UniqueRef<Fence> fence = device->CreateFence(false);
+        const UniquePtr<Fence> fence = device->CreateFence(false);
         QueueSubmitInfo submitInfo {};
         submitInfo.signalFence = fence.Get();
         graphicsQueue->Submit(texCommandBuffer.Get(), submitInfo);
@@ -866,7 +866,7 @@ private:
                 .SetType(TextureViewType::textureBinding));
     }
 
-    void CompileShaderAndCreateShaderModule(UniqueRef<ShaderModule>& outShaderModule, ShaderCompileOutput& outCompileOutput, const std::string& fileName, const std::string& entryPoint, ShaderStageBits shaderStage) const
+    void CompileShaderAndCreateShaderModule(UniquePtr<ShaderModule>& outShaderModule, ShaderCompileOutput& outCompileOutput, const std::string& fileName, const std::string& entryPoint, ShaderStageBits shaderStage) const
     {
         const std::vector<std::string> includePath { "../Test/Sample/RHI-SSAO/Shader"};
         outCompileOutput = CompileShader(fileName, entryPoint, shaderStage, includePath);

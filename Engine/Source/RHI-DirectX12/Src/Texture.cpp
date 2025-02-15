@@ -26,9 +26,9 @@ namespace RHI::DirectX12 {
 
     DX12Texture::~DX12Texture() = default;
 
-    Common::UniqueRef<TextureView> DX12Texture::CreateTextureView(const TextureViewCreateInfo& inCreateInfo)
+    Common::UniquePtr<TextureView> DX12Texture::CreateTextureView(const TextureViewCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<TextureView>(new DX12TextureView(static_cast<DX12Device&>(device), *this, inCreateInfo));
+        return Common::UniquePtr<TextureView>(new DX12TextureView(static_cast<DX12Device&>(device), *this, inCreateInfo));
     }
 
     ID3D12Resource* DX12Texture::GetNative() const

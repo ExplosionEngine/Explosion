@@ -67,7 +67,7 @@ private:
     UVec2 windowExtent;
     RHI::RHIType rhiType;
     RHI::Instance* instance;
-    UniqueRef<Camera> camera;
+    UniquePtr<Camera> camera;
     FVec2 mousePos;
     std::array<bool, static_cast<size_t>(MouseButton::max)> mouseButtonsStatus;
     std::chrono::time_point<std::chrono::high_resolution_clock> lastTime;

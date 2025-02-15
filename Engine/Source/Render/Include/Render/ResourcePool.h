@@ -20,14 +20,14 @@ namespace Render {
     public:
         using DescType = typename RHIResTraits<RHIRes>::DescType;
 
-        explicit PooledResource(Common::UniqueRef<RHIRes>&& inRhiHandle, DescType inDesc);
+        explicit PooledResource(Common::UniquePtr<RHIRes>&& inRhiHandle, DescType inDesc);
         ~PooledResource();
 
         RHIRes* GetRHI() const;
         const DescType& GetDesc() const;
 
     private:
-        Common::UniqueRef<RHIRes> rhiHandle;
+        Common::UniquePtr<RHIRes> rhiHandle;
         DescType desc;
     };
 
@@ -35,32 +35,33 @@ namespace Render {
     using PooledTexture = PooledResource<RHI::Texture>;
     using PooledBufferDesc = RHI::BufferCreateInfo;
     using PooledTextureDesc = RHI::TextureCreateInfo;
-    using PooledBufferRef = Common::SharedRef<PooledBuffer>;
-    using PooledTextureRef = Common::SharedRef<PooledTexture>;
+    using PooledBufferRef = Common::SharedPtr<PooledBuffer>;
+    using PooledTextureRef = Common::SharedPtr<PooledTexture>;
 
     template <typename PooledRes>
     struct PooledResTraits {};
 
     template <typename PooledRes>
-    class RGResourcePool {
+    class ResourcePool {
     public:
         using ResRefType = typename PooledResTraits<PooledRes>::RefType;
         using DescType = typename PooledResTraits<PooledRes>::DescType;
 
-        static RGResourcePool& Get(RHI::Device& device);
+        static ResourcePool& Get(RHI::Device& device);
 
         ResRefType Allocate(const DescType& desc);
-        void GarbageCollect();
+        size_t Size() const;
+        void Tick();
 
     private:
-        explicit RGResourcePool(RHI::Device& inDevice);
+        explicit ResourcePool(RHI::Device& inDevice);
 
         RHI::Device& device;
-        std::vector<ResRefType> pooledResources;
+        std::vector<std::pair<ResRefType, uint32_t>> pooledResourceAndAges;
     };
 
-    using BufferPool = RGResourcePool<PooledBuffer>;
-    using TexturePool = RGResourcePool<PooledTexture>;
+    using BufferPool = ResourcePool<PooledBuffer>;
+    using TexturePool = ResourcePool<PooledTexture>;
 }
 
 namespace Render {
@@ -75,7 +76,7 @@ namespace Render {
     };
 
     template <typename RHIResource>
-    PooledResource<RHIResource>::PooledResource(Common::UniqueRef<RHIResource>&& inRhiHandle, DescType inDesc)
+    PooledResource<RHIResource>::PooledResource(Common::UniquePtr<RHIResource>&& inRhiHandle, DescType inDesc)
         : rhiHandle(std::move(inRhiHandle))
         , desc(std::move(inDesc))
     {
@@ -121,41 +122,56 @@ namespace Render {
     };
 
     template <typename PooledResource>
-    RGResourcePool<PooledResource>& RGResourcePool<PooledResource>::Get(RHI::Device& device)
+    ResourcePool<PooledResource>& ResourcePool<PooledResource>::Get(RHI::Device& device)
     {
-        static std::unordered_map<RHI::Device*, Common::UniqueRef<RGResourcePool>> deviceMap;
+        static std::unordered_map<RHI::Device*, Common::UniquePtr<ResourcePool>> deviceMap;
         if (!deviceMap.contains(&device)) {
-            deviceMap.emplace(std::make_pair(&device, Common::UniqueRef<RGResourcePool>(new RGResourcePool(device))));
+            deviceMap.emplace(std::make_pair(&device, Common::UniquePtr<ResourcePool>(new ResourcePool(device))));
         }
         return *deviceMap.at(&device);
     }
 
     template <typename PooledResource>
-    RGResourcePool<PooledResource>::RGResourcePool(RHI::Device& inDevice)
+    ResourcePool<PooledResource>::ResourcePool(RHI::Device& inDevice)
         : device(inDevice)
     {
     }
 
     template <typename PooledResource>
-    typename RGResourcePool<PooledResource>::ResRefType RGResourcePool<PooledResource>::Allocate(const DescType& desc)
+    typename ResourcePool<PooledResource>::ResRefType ResourcePool<PooledResource>::Allocate(const DescType& desc)
     {
-        for (const auto& pooledResource : pooledResources) {
+        for (auto& [pooledResource, age] : pooledResourceAndAges) {
             if (pooledResource.RefCount() == 1 && desc == pooledResource->GetDesc()) {
+                age = 0;
                 return pooledResource;
             }
         }
         auto result = PooledResTraits<PooledResource>::CreateResource(device, desc);
-        pooledResources.push_back(result);
+        pooledResourceAndAges.emplace_back(result, 0);
         return result;
     }
 
     template <typename PooledRes>
-    void RGResourcePool<PooledRes>::GarbageCollect()
+    size_t ResourcePool<PooledRes>::Size() const
     {
-        // TODO maybe we need add a age check ? >= 2 frame not be used == need release
-        for (auto i = 0; i < pooledResources.size();) {
-            if (pooledResources[i].RefCount() <= 1) {
-                pooledResources.erase(pooledResources.begin() + i);
+        return pooledResourceAndAges.size();
+    }
+
+    template <typename PooledRes>
+    void ResourcePool<PooledRes>::Tick()
+    {
+        for (auto i = 0; i < pooledResourceAndAges.size();) {
+            bool needRelease = false;
+            auto& [pooledResource, age] = pooledResourceAndAges[i];
+
+            if (pooledResource.RefCount() <= 1) {
+                needRelease = ++age >= 2;
+            } else {
+                age = 0;
+            }
+
+            if (needRelease) { // NOLINT
+                pooledResourceAndAges.erase(pooledResourceAndAges.begin() + i);
             } else {
                 i++;
             }

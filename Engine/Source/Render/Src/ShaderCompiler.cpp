@@ -332,11 +332,11 @@ namespace Render {
 
     std::future<ShaderCompileOutput> ShaderCompiler::Compile(const ShaderCompileInput& inInput, const ShaderCompileOptions& inOptions)
     {
-        return threadPool.EmplaceTask([](const ShaderCompileInput& input, const ShaderCompileOptions& options) -> ShaderCompileOutput {
+        return threadPool.EmplaceTask([inInput, inOptions]() -> ShaderCompileOutput {
             ShaderCompileOutput output;
-            CompileDxilOrSpriv(input, options, output);
+            CompileDxilOrSpriv(inInput, inOptions, output);
             return output;
-        }, inInput, inOptions);
+        });
     }
 
     ShaderTypeCompiler& ShaderTypeCompiler::Get()
@@ -354,10 +354,10 @@ namespace Render {
 
     std::future<ShaderTypeCompileResult> ShaderTypeCompiler::Compile(const std::vector<IShaderType*>& inShaderTypes, const ShaderCompileOptions& inOptions)
     {
-        return threadPool.EmplaceTask([](const std::vector<IShaderType*>& shaderTypes, const ShaderCompileOptions& options) -> ShaderTypeCompileResult {
+        return threadPool.EmplaceTask([inShaderTypes, inOptions]() -> ShaderTypeCompileResult {
             std::unordered_map<ShaderTypeKey, std::unordered_map<VariantKey, std::future<ShaderCompileOutput>>> compileOutputs;
-            compileOutputs.reserve(shaderTypes.size());
-            for (auto* shaderType : shaderTypes) {
+            compileOutputs.reserve(inShaderTypes.size());
+            for (auto* shaderType : inShaderTypes) {
                 auto typeKey = shaderType->GetKey();
                 auto stage = shaderType->GetStage();
                 const auto& entryPoint = shaderType->GetEntryPoint();
@@ -375,7 +375,7 @@ namespace Render {
                     input.stage = stage;
                     input.definitions = shaderType->GetDefinitions(variantKey);
 
-                    variantCompileOutputs.emplace(std::make_pair(variantKey, ShaderCompiler::Get().Compile(input, options)));
+                    variantCompileOutputs.emplace(std::make_pair(variantKey, ShaderCompiler::Get().Compile(input, inOptions)));
                 }
             }
 
@@ -399,7 +399,7 @@ namespace Render {
             }
             result.success = result.errorInfos.empty();
             return result;
-        }, inShaderTypes, inOptions);
+        });
     }
 
     std::future<ShaderTypeCompileResult> ShaderTypeCompiler::CompileGlobalShaderTypes(const ShaderCompileOptions& inOptions)

@@ -55,7 +55,7 @@ namespace RHI::DirectX12 {
 #endif
 
         ComPtr<IDXGIFactory4> nativeFactory;
-        std::vector<Common::UniqueRef<DX12Gpu>> gpus;
+        std::vector<Common::UniquePtr<DX12Gpu>> gpus;
 #if BUILD_CONFIG_DEBUG
         void* nativeExceptionHandler;
         std::unordered_map<const DX12Device*, NativeDebugLayerExceptionHandler> nativeDebugLayerExceptionHandlers;

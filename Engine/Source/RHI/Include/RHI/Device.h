@@ -64,20 +64,20 @@ namespace RHI {
 
         virtual size_t GetQueueNum(QueueType type) = 0;
         virtual Queue* GetQueue(QueueType type, size_t index) = 0;
-        virtual Common::UniqueRef<Surface> CreateSurface(const SurfaceCreateInfo& createInfo) = 0;
-        virtual Common::UniqueRef<SwapChain> CreateSwapChain(const SwapChainCreateInfo& createInfo) = 0;
-        virtual Common::UniqueRef<Buffer> CreateBuffer(const BufferCreateInfo& createInfo) = 0;
-        virtual Common::UniqueRef<Texture> CreateTexture(const TextureCreateInfo& createInfo) = 0;
-        virtual Common::UniqueRef<Sampler> CreateSampler(const SamplerCreateInfo& createInfo) = 0;
-        virtual Common::UniqueRef<BindGroupLayout> CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo) = 0;
-        virtual Common::UniqueRef<BindGroup> CreateBindGroup(const BindGroupCreateInfo& createInfo) = 0;
-        virtual Common::UniqueRef<PipelineLayout> CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo) = 0;
-        virtual Common::UniqueRef<ShaderModule> CreateShaderModule(const ShaderModuleCreateInfo& createInfo) = 0;
-        virtual Common::UniqueRef<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) = 0;
-        virtual Common::UniqueRef<RasterPipeline> CreateRasterPipeline(const RasterPipelineCreateInfo& createInfo) = 0;
-        virtual Common::UniqueRef<CommandBuffer> CreateCommandBuffer() = 0;
-        virtual Common::UniqueRef<Fence> CreateFence(bool bInitAsSignaled) = 0;
-        virtual Common::UniqueRef<Semaphore> CreateSemaphore() = 0;
+        virtual Common::UniquePtr<Surface> CreateSurface(const SurfaceCreateInfo& createInfo) = 0;
+        virtual Common::UniquePtr<SwapChain> CreateSwapChain(const SwapChainCreateInfo& createInfo) = 0;
+        virtual Common::UniquePtr<Buffer> CreateBuffer(const BufferCreateInfo& createInfo) = 0;
+        virtual Common::UniquePtr<Texture> CreateTexture(const TextureCreateInfo& createInfo) = 0;
+        virtual Common::UniquePtr<Sampler> CreateSampler(const SamplerCreateInfo& createInfo) = 0;
+        virtual Common::UniquePtr<BindGroupLayout> CreateBindGroupLayout(const BindGroupLayoutCreateInfo& createInfo) = 0;
+        virtual Common::UniquePtr<BindGroup> CreateBindGroup(const BindGroupCreateInfo& createInfo) = 0;
+        virtual Common::UniquePtr<PipelineLayout> CreatePipelineLayout(const PipelineLayoutCreateInfo& createInfo) = 0;
+        virtual Common::UniquePtr<ShaderModule> CreateShaderModule(const ShaderModuleCreateInfo& createInfo) = 0;
+        virtual Common::UniquePtr<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) = 0;
+        virtual Common::UniquePtr<RasterPipeline> CreateRasterPipeline(const RasterPipelineCreateInfo& createInfo) = 0;
+        virtual Common::UniquePtr<CommandBuffer> CreateCommandBuffer() = 0;
+        virtual Common::UniquePtr<Fence> CreateFence(bool bInitAsSignaled) = 0;
+        virtual Common::UniquePtr<Semaphore> CreateSemaphore() = 0;
 
         virtual bool CheckSwapChainFormatSupport(Surface* surface, PixelFormat format) = 0;
         virtual TextureSubResourceCopyFootprint GetTextureSubResourceCopyFootprint(const Texture& texture, const TextureSubResourceInfo& subResourceInfo) = 0;

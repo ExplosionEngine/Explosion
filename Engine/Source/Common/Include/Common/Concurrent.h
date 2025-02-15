@@ -4,17 +4,17 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 #include <queue>
 #include <mutex>
 #include <thread>
 #include <future>
-#include <memory>
 #include <functional>
 #include <type_traits>
 
-#include <Common/String.h>
 #include <Common/Debug.h>
+#include <Common/Memory.h>
 #include <Common/Utility.h>
 
 namespace Common {
@@ -24,8 +24,7 @@ namespace Common {
 
         NamedThread();
 
-        template <typename F, typename... Args>
-        explicit NamedThread(const std::string& name, F&& task, Args&&... args);
+        template <typename F> explicit NamedThread(const std::string& name, F&& task);
 
         void Join();
 
@@ -40,10 +39,12 @@ namespace Common {
         ThreadPool(const std::string& name, uint8_t threadNum);
         ~ThreadPool();
 
-        template <typename F, typename... Args>
-        auto EmplaceTask(F&& task, Args&&... args);
+        template <typename F> auto EmplaceTask(F&& task);
+        template <typename F> void ExecuteTasks(size_t taskNum, F&& task);
 
     private:
+        template <typename Ret> auto EmplaceTaskInternal(Common::SharedPtr<std::packaged_task<Ret()>> packedTask);
+
         bool stop;
         std::mutex mutex;
         std::condition_variable condition;
@@ -58,8 +59,7 @@ namespace Common {
 
         void Flush();
 
-        template <typename F, typename... Args>
-        auto EmplaceTask(F&& task, Args&&... args);
+        template <typename F> auto EmplaceTask(F&& task);
 
     private:
         bool stop;
@@ -73,35 +73,56 @@ namespace Common {
 }
 
 namespace Common {
-    template <typename F, typename... Args>
-    NamedThread::NamedThread(const std::string& name, F&& task, Args&& ... args)
+    template <typename F>
+    NamedThread::NamedThread(const std::string& name, F&& task)
     {
-        thread = std::thread([this, task = std::forward<F>(task), name](Args&&... args) -> void {
+        thread = std::thread([this, task, name]() -> void {
             SetThreadName(name);
-            task(args...);
-        }, std::forward<Args>(args)...);
+            task();
+        });
     }
 
-    template <typename F, typename... Args>
-    auto ThreadPool::EmplaceTask(F&& task, Args&& ... args)
+    template <typename F>
+    auto ThreadPool::EmplaceTask(F&& task)
     {
-        using RetType = std::invoke_result_t<F, Args...>;
-        auto packagedTask = std::make_shared<std::packaged_task<RetType()>>(std::bind(std::forward<F>(task), std::forward<Args>(args)...));
-        auto result = packagedTask->get_future();
+        using RetType = std::invoke_result_t<F>;
+        return EmplaceTaskInternal<RetType>(Common::MakeShared<std::packaged_task<RetType()>>(task));
+    }
+
+    template <typename F>
+    void ThreadPool::ExecuteTasks(size_t taskNum, F&& task)
+    {
+        using RetType = std::invoke_result_t<F, size_t>;
+
+        std::vector<std::future<RetType>> futures;
+        futures.reserve(taskNum);
+        for (size_t i = 0; i < taskNum; i++) {
+            futures.emplace_back(EmplaceTaskInternal<RetType>(Common::MakeShared<std::packaged_task<RetType()>>(std::bind(std::forward<F>(task), i))));
+        }
+
+        for (const auto& future : futures) {
+            future.wait();
+        }
+    }
+
+    template <typename Ret>
+    auto ThreadPool::EmplaceTaskInternal(Common::SharedPtr<std::packaged_task<Ret()>> packedTask)
+    {
+        auto result = packedTask->get_future();
         {
             std::unique_lock lock(mutex);
             Assert(!stop);
-            tasks.emplace([packagedTask]() -> void { (*packagedTask)(); });
+            tasks.emplace([packedTask]() -> void { (*packedTask)(); });
         }
         condition.notify_one();
         return result;
     }
 
-    template <typename F, typename... Args>
-    auto WorkerThread::EmplaceTask(F&& task, Args&& ... args)
+    template <typename F>
+    auto WorkerThread::EmplaceTask(F&& task)
     {
-        using RetType = std::invoke_result_t<F, Args...>;
-        auto packagedTask = std::make_shared<std::packaged_task<RetType()>>(std::bind(std::forward<F>(task), std::forward<Args>(args)...));
+        using RetType = std::invoke_result_t<F>;
+        auto packagedTask = Common::MakeShared<std::packaged_task<RetType()>>(task);
         auto result = packagedTask->get_future();
         {
             std::unique_lock lock(mutex);

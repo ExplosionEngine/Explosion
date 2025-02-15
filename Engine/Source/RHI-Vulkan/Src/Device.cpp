@@ -72,72 +72,72 @@ namespace RHI::Vulkan {
         return queueArray[inIndex].Get();
     }
 
-    Common::UniqueRef<Surface> VulkanDevice::CreateSurface(const SurfaceCreateInfo& inCreateInfo)
+    Common::UniquePtr<Surface> VulkanDevice::CreateSurface(const SurfaceCreateInfo& inCreateInfo)
     {
         return { new VulkanSurface(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<SwapChain> VulkanDevice::CreateSwapChain(const SwapChainCreateInfo& inCreateInfo)
+    Common::UniquePtr<SwapChain> VulkanDevice::CreateSwapChain(const SwapChainCreateInfo& inCreateInfo)
     {
         return { new VulkanSwapChain(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<Buffer> VulkanDevice::CreateBuffer(const BufferCreateInfo& inCreateInfo)
+    Common::UniquePtr<Buffer> VulkanDevice::CreateBuffer(const BufferCreateInfo& inCreateInfo)
     {
         return { new VulkanBuffer(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<Texture> VulkanDevice::CreateTexture(const TextureCreateInfo& inCreateInfo)
+    Common::UniquePtr<Texture> VulkanDevice::CreateTexture(const TextureCreateInfo& inCreateInfo)
     {
         return { new VulkanTexture(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<Sampler> VulkanDevice::CreateSampler(const SamplerCreateInfo& inCreateInfo)
+    Common::UniquePtr<Sampler> VulkanDevice::CreateSampler(const SamplerCreateInfo& inCreateInfo)
     {
         return { new VulkanSampler(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<BindGroupLayout> VulkanDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
+    Common::UniquePtr<BindGroupLayout> VulkanDevice::CreateBindGroupLayout(const BindGroupLayoutCreateInfo& inCreateInfo)
     {
         return { new VulkanBindGroupLayout(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<BindGroup> VulkanDevice::CreateBindGroup(const BindGroupCreateInfo& inCreateInfo)
+    Common::UniquePtr<BindGroup> VulkanDevice::CreateBindGroup(const BindGroupCreateInfo& inCreateInfo)
     {
         return { new VulkanBindGroup(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<PipelineLayout> VulkanDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo)
+    Common::UniquePtr<PipelineLayout> VulkanDevice::CreatePipelineLayout(const PipelineLayoutCreateInfo& inCreateInfo)
     {
         return { new VulkanPipelineLayout(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<ShaderModule> VulkanDevice::CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo)
+    Common::UniquePtr<ShaderModule> VulkanDevice::CreateShaderModule(const ShaderModuleCreateInfo& inCreateInfo)
     {
         return { new VulkanShaderModule(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<ComputePipeline> VulkanDevice::CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo)
+    Common::UniquePtr<ComputePipeline> VulkanDevice::CreateComputePipeline(const ComputePipelineCreateInfo& inCreateInfo)
     {
         return { new VulkanComputePipeline(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<RasterPipeline> VulkanDevice::CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo)
+    Common::UniquePtr<RasterPipeline> VulkanDevice::CreateRasterPipeline(const RasterPipelineCreateInfo& inCreateInfo)
     {
         return { new VulkanRasterPipeline(*this, inCreateInfo) };
     }
 
-    Common::UniqueRef<CommandBuffer> VulkanDevice::CreateCommandBuffer()
+    Common::UniquePtr<CommandBuffer> VulkanDevice::CreateCommandBuffer()
     {
         return { new VulkanCommandBuffer(*this, nativeCmdPools[QueueType::graphics]) };
     }
 
-    Common::UniqueRef<Fence> VulkanDevice::CreateFence(const bool initAsSignaled)
+    Common::UniquePtr<Fence> VulkanDevice::CreateFence(const bool initAsSignaled)
     {
         return { new VulkanFence(*this, initAsSignaled) };
     }
 
-    Common::UniqueRef<Semaphore> VulkanDevice::CreateSemaphore()
+    Common::UniquePtr<Semaphore> VulkanDevice::CreateSemaphore()
     {
         return { new VulkanSemaphore(*this) };
     }
@@ -260,9 +260,6 @@ namespace RHI::Vulkan {
         dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
         deviceCreateInfo.pNext = &dynamicRenderingFeatures;
 
-        deviceCreateInfo.ppEnabledExtensionNames = requiredExtensions.data();
-        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
-
 #if PLATFORM_MACOS
         // MoltenVK not support use vkCmdSetPrimitiveTopology() directly current
         VkPhysicalDeviceExtendedDynamicStateFeaturesEXT extendedDynamicStateFeatures = {};
@@ -270,6 +267,9 @@ namespace RHI::Vulkan {
         extendedDynamicStateFeatures.extendedDynamicState = VK_TRUE;
         dynamicRenderingFeatures.pNext = &extendedDynamicStateFeatures;
 #endif
+
+        deviceCreateInfo.ppEnabledExtensionNames = requiredExtensions.data();
+        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
 
 #if BUILD_CONFIG_DEBUG
         deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(requiredValidationLayers.size());
@@ -288,7 +288,7 @@ namespace RHI::Vulkan {
         for (auto [queueType, queueFamilyInfo] : queueFamilyMappings) {
             auto [queueFamilyIndex, queueNum] = queueFamilyInfo;
 
-            std::vector<Common::UniqueRef<VulkanQueue>> tempQueues(queueNum);
+            std::vector<Common::UniquePtr<VulkanQueue>> tempQueues(queueNum);
             for (auto i = 0; i < tempQueues.size(); i++) {
                 VkQueue queue;
                 vkGetDeviceQueue(nativeDevice, queueFamilyIndex, i, &queue);

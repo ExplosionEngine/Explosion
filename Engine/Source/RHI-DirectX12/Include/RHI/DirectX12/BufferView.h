@@ -29,6 +29,6 @@ namespace RHI::DirectX12 {
         void CreateNativeView(const BufferViewCreateInfo& inCreateInfo);
 
         DX12Buffer& buffer;
-        std::variant<Common::UniqueRef<DescriptorAllocation>, D3D12_VERTEX_BUFFER_VIEW, D3D12_INDEX_BUFFER_VIEW> nativeView;
+        std::variant<Common::UniquePtr<DescriptorAllocation>, D3D12_VERTEX_BUFFER_VIEW, D3D12_INDEX_BUFFER_VIEW> nativeView;
     };
 }

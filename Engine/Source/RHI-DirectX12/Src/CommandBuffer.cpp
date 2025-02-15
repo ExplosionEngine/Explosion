@@ -85,20 +85,26 @@ namespace RHI::DirectX12 {
     DX12CommandBuffer::DX12CommandBuffer(DX12Device& inDevice)
         : device(inDevice)
     {
-        AllocateDX12CommandList(inDevice);
+        CreateNativeCommandAllocator(inDevice);
+        CreateNativeCommandList(inDevice);
         runtimeDescriptorHeaps = Common::MakeUnique<RuntimeDescriptorCompact>(inDevice);
     }
 
     DX12CommandBuffer::~DX12CommandBuffer() = default;
 
-    Common::UniqueRef<CommandRecorder> DX12CommandBuffer::Begin()
+    Common::UniquePtr<CommandRecorder> DX12CommandBuffer::Begin()
     {
-        return Common::UniqueRef<CommandRecorder>(new DX12CommandRecorder(device, *this));
+        return Common::UniquePtr<CommandRecorder>(new DX12CommandRecorder(device, *this));
     }
 
-    ID3D12GraphicsCommandList* DX12CommandBuffer::GetNative() const
+    ID3D12CommandAllocator* DX12CommandBuffer::GetNativeAllocator() const
     {
-        return dx12GraphicsCommandList.Get();
+        return nativeCommandAllocator.Get();
+    }
+
+    ID3D12GraphicsCommandList* DX12CommandBuffer::GetNativeCmdList() const
+    {
+        return nativeGraphicsCommandList.Get();
     }
 
     RuntimeDescriptorCompact* DX12CommandBuffer::GetRuntimeDescriptorHeaps() const
@@ -106,9 +112,14 @@ namespace RHI::DirectX12 {
         return runtimeDescriptorHeaps.Get();
     }
 
-    void DX12CommandBuffer::AllocateDX12CommandList(DX12Device& inDevice)
+    void DX12CommandBuffer::CreateNativeCommandAllocator(DX12Device& inDevice)
     {
-        Assert(SUCCEEDED(inDevice.GetNative()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, inDevice.GetNativeCmdAllocator(), nullptr, IID_PPV_ARGS(&dx12GraphicsCommandList))));
-        Assert(SUCCEEDED(dx12GraphicsCommandList->Close()));
+        Assert(SUCCEEDED(inDevice.GetNative()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&nativeCommandAllocator))));
+    }
+
+    void DX12CommandBuffer::CreateNativeCommandList(DX12Device& inDevice)
+    {
+        Assert(SUCCEEDED(inDevice.GetNative()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, nativeCommandAllocator.Get(), nullptr, IID_PPV_ARGS(&nativeGraphicsCommandList))));
+        Assert(SUCCEEDED(nativeGraphicsCommandList->Close()));
     }
 }

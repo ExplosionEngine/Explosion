@@ -37,8 +37,8 @@ namespace RHI::DirectX12 {
         return nativeAdapter.Get();
     }
 
-    Common::UniqueRef<Device> DX12Gpu::RequestDevice(const DeviceCreateInfo& inCreateInfo)
+    Common::UniquePtr<Device> DX12Gpu::RequestDevice(const DeviceCreateInfo& inCreateInfo)
     {
-        return Common::UniqueRef<Device>(new DX12Device(*this, inCreateInfo));
+        return Common::UniquePtr<Device>(new DX12Device(*this, inCreateInfo));
     }
 }

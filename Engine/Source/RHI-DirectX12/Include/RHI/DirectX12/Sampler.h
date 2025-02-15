@@ -24,6 +24,6 @@ namespace RHI::DirectX12 {
     private:
         void CreateDX12Descriptor(DX12Device& inDevice, const SamplerCreateInfo& inCreateInfo);
 
-        Common::UniqueRef<DescriptorAllocation> descriptorAllocation;
+        Common::UniquePtr<DescriptorAllocation> descriptorAllocation;
     };
 }

@@ -30,7 +30,7 @@ namespace Runtime {
         void UnmountWorld(World* inWorld);
         Render::RenderModule& GetRenderModule() const;
         void Tick(float inDeltaTimeSeconds) const;
-        Common::UniqueRef<World> CreateWorld(const std::string& inName = "") const;
+        Common::UniquePtr<World> CreateWorld(const std::string& inName = "") const;
 
     protected:
         explicit Engine(const EngineInitParams& inParams);
@@ -61,6 +61,6 @@ namespace Runtime {
         static Engine& Get();
 
     private:
-        static Common::UniqueRef<Engine> engine;
+        static Common::UniquePtr<Engine> engine;
     };
 }

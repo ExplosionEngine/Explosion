@@ -24,7 +24,7 @@ namespace RHI::DirectX12 {
             Assert(SUCCEEDED(nativeCmdQueue->Wait(waitSemaphore->GetNative(), 1)));
         }
 
-        std::array<ID3D12CommandList*, 1> cmdListsToExecute = { commandBuffer->GetNative() };
+        std::array<ID3D12CommandList*, 1> cmdListsToExecute = { commandBuffer->GetNativeCmdList() };
         nativeCmdQueue->ExecuteCommandLists(cmdListsToExecute.size(), cmdListsToExecute.data());
 
         for (auto i = 0; i < inSubmitInfo.signalSemaphores.size(); i++) {

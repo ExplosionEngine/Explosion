@@ -659,7 +659,7 @@ TEST(AnyTest, ConstTryAsTest)
 
 TEST(AnyTest, PolyAsTest)
 {
-    const Common::UniqueRef<AnyBaseClassTest2> v0 = new AnyDerivedClassTest2(1, 2.0f, "3");
+    const Common::UniquePtr<AnyBaseClassTest2> v0 = new AnyDerivedClassTest2(1, 2.0f, "3");
 
     Any a0 = std::ref(*v0);
     const auto& r0 = a0.PolyAs<AnyBaseClassTest2&, AnyDerivedClassTest2&>();
@@ -676,7 +676,7 @@ TEST(AnyTest, PolyAsTest)
 
 TEST(AnyTest, ConstPolyAsTest)
 {
-    const Common::UniqueRef<AnyBaseClassTest2> v0 = new AnyDerivedClassTest2(1, 2.0f, "3");
+    const Common::UniquePtr<AnyBaseClassTest2> v0 = new AnyDerivedClassTest2(1, 2.0f, "3");
 
     const Any a0 = std::ref(*v0);
     const auto& r0 = a0.PolyAs<AnyBaseClassTest2&, AnyDerivedClassTest2&>();

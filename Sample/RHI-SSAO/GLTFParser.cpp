@@ -40,8 +40,8 @@ void Model::LoadFromFile(const std::string& path)
 
     LoadMaterials(scene);
 
-    SharedRef<Node> parentForRoot = nullptr;
-    rootNode = SharedRef<Node>(new Node(parentForRoot));
+    SharedPtr<Node> parentForRoot = nullptr;
+    rootNode = SharedPtr<Node>(new Node(parentForRoot));
     for (unsigned int i = 0; i < scene->mRootNode->mNumChildren; i++) {
         LoadNode(scene, scene->mRootNode->mChildren[i], rootNode);
     }
@@ -54,7 +54,7 @@ void Model::LoadMaterials(const aiScene* scene)
     for (unsigned int i = 0; i < scene->mNumMaterials; i++) {
         const auto* material = scene->mMaterials[i];
 
-        SharedRef mMaterial = new MaterialData();
+        SharedPtr mMaterial = new MaterialData();
         mMaterial->baseColorTexture = LoadMaterialTexture(scene, material, aiTextureType_DIFFUSE, fromEmbedded);
         mMaterial->normalTexture = LoadMaterialTexture(scene, material, aiTextureType_NORMALS, fromEmbedded);
 
@@ -62,7 +62,7 @@ void Model::LoadMaterials(const aiScene* scene)
     }
 }
 
-UniqueRef<TextureData> Model::LoadMaterialTexture(const aiScene* scene, const aiMaterial* mat, aiTextureType type, bool fromEmbedded) const
+UniquePtr<TextureData> Model::LoadMaterialTexture(const aiScene* scene, const aiMaterial* mat, aiTextureType type, bool fromEmbedded) const
 {
     if (mat->GetTextureCount(type) == 0) {
         return nullptr;
@@ -84,7 +84,7 @@ UniqueRef<TextureData> Model::LoadMaterialTexture(const aiScene* scene, const ai
         data = stbi_load(filePath.c_str(), &width, &height, &comp,0);
     }
 
-    UniqueRef mTexData = new TextureData();
+    UniquePtr mTexData = new TextureData();
 
     // Most device don`t support RGB only on Vulkan, so convert if necessary
     if (comp == 3) {
@@ -111,9 +111,9 @@ UniqueRef<TextureData> Model::LoadMaterialTexture(const aiScene* scene, const ai
     return mTexData;
 }
 
-void Model::LoadNode(const aiScene* scene, aiNode* node, SharedRef<Node>& parent)
+void Model::LoadNode(const aiScene* scene, aiNode* node, SharedPtr<Node>& parent)
 {
-    SharedRef mNode = new Node(parent);
+    SharedPtr mNode = new Node(parent);
 
     // the layout of matrix in assimp math lib is row major, which is equal to expolsion math lib
     memcpy(mNode->matrix.data, &node->mTransformation.a1, sizeof(Common::FMat4x4));
@@ -184,7 +184,7 @@ void Model::LoadNode(const aiScene* scene, aiNode* node, SharedRef<Node>& parent
             }
         }
 
-        UniqueRef<Mesh> mMesh = new Mesh(indexStart, indexCount, vertexStart, vertexCount, materialDatas[mesh->mMaterialIndex]);
+        UniquePtr<Mesh> mMesh = new Mesh(indexStart, indexCount, vertexStart, vertexCount, materialDatas[mesh->mMaterialIndex]);
 
         // cache meshes in model instead of node, for the convenience of reading them
         meshes.emplace_back(std::move(mMesh));

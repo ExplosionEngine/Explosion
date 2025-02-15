@@ -12,6 +12,6 @@ namespace RHI::Dummy {
         NonCopyable(DummyCommandBuffer)
         DummyCommandBuffer();
 
-        Common::UniqueRef<CommandRecorder> Begin() override;
+        Common::UniquePtr<CommandRecorder> Begin() override;
     };
 }

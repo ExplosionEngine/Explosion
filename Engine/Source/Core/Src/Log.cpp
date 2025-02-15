@@ -65,7 +65,7 @@ namespace Core {
         LogInternal(std::format("[{}][{}][{}] {}", time.ToString(), inTag, inLevel, inContent));
     }
 
-    void Logger::Attach(Common::UniqueRef<LogStream>&& inStream)
+    void Logger::Attach(Common::UniquePtr<LogStream>&& inStream)
     {
         streams.emplace_back(std::move(inStream));
     }

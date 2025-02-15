@@ -142,7 +142,7 @@ namespace Render {
 
         Sampler(RHI::Device& inDevice, const RSamplerDesc& inDesc);
 
-        Common::UniqueRef<RHI::Sampler> rhiHandle;
+        Common::UniquePtr<RHI::Sampler> rhiHandle;
     };
 
     class BindGroupLayout {
@@ -159,7 +159,7 @@ namespace Render {
         BindGroupLayout(RHI::Device& inDevice, const BindGroupLayoutDesc& inDesc);
 
         RBindingMap bindings;
-        Common::UniqueRef<RHI::BindGroupLayout> rhiHandle;
+        Common::UniquePtr<RHI::BindGroupLayout> rhiHandle;
     };
 
     class PipelineLayout {
@@ -184,8 +184,8 @@ namespace Render {
         void CreateRHIPipelineLayout(RHI::Device& device);
 
         size_t hash;
-        std::unordered_map<uint32_t, Common::UniqueRef<BindGroupLayout>> bindGroupLayouts;
-        Common::UniqueRef<RHI::PipelineLayout> rhiHandle;
+        std::unordered_map<uint32_t, Common::UniquePtr<BindGroupLayout>> bindGroupLayouts;
+        Common::UniquePtr<RHI::PipelineLayout> rhiHandle;
     };
 
     class ComputePipelineState {
@@ -204,7 +204,7 @@ namespace Render {
 
         size_t hash;
         PipelineLayout* pipelineLayout;
-        Common::UniqueRef<RHI::ComputePipeline> rhiHandle;
+        Common::UniquePtr<RHI::ComputePipeline> rhiHandle;
     };
 
     class RasterPipelineState {
@@ -222,7 +222,7 @@ namespace Render {
 
         size_t hash;
         PipelineLayout* pipelineLayout;
-        Common::UniqueRef<RHI::RasterPipeline> rhiHandle;
+        Common::UniquePtr<RHI::RasterPipeline> rhiHandle;
     };
 
     class SamplerCache {
@@ -236,7 +236,7 @@ namespace Render {
         explicit SamplerCache(RHI::Device& inDevice);
 
         RHI::Device& device;
-        std::unordered_map<size_t, Common::UniqueRef<Sampler>> samplers;
+        std::unordered_map<size_t, Common::UniquePtr<Sampler>> samplers;
     };
 
     class PipelineCache {
@@ -253,8 +253,8 @@ namespace Render {
         explicit PipelineCache(RHI::Device& inDevice);
 
         RHI::Device& device;
-        std::unordered_map<size_t, Common::UniqueRef<ComputePipelineState>> computePipelines;
-        std::unordered_map<size_t, Common::UniqueRef<RasterPipelineState>> rasterPipelines;
+        std::unordered_map<size_t, Common::UniquePtr<ComputePipelineState>> computePipelines;
+        std::unordered_map<size_t, Common::UniquePtr<RasterPipelineState>> rasterPipelines;
     };
 
     class ResourceViewCache {
@@ -272,7 +272,7 @@ namespace Render {
         explicit ResourceViewCache(RHI::Device& inDevice);
 
         RHI::Device& device;
-        std::unordered_map<RHI::Buffer*, std::unordered_map<size_t, Common::UniqueRef<RHI::BufferView>>> bufferViews;
-        std::unordered_map<RHI::Texture*, std::unordered_map<size_t, Common::UniqueRef<RHI::TextureView>>> textureViews;
+        std::unordered_map<RHI::Buffer*, std::unordered_map<size_t, Common::UniquePtr<RHI::BufferView>>> bufferViews;
+        std::unordered_map<RHI::Texture*, std::unordered_map<size_t, Common::UniquePtr<RHI::TextureView>>> textureViews;
     };
 }

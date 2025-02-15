@@ -9,6 +9,7 @@
 #endif
 
 #include <Common/Concurrent.h>
+#include <Common/String.h>
 
 namespace Common {
     NamedThread::NamedThread() = default;
