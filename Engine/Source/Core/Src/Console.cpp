@@ -56,7 +56,7 @@ namespace Core {
         return *settings.at(inName);
     }
 
-    void Console::PerformRenderThreadCopy() const
+    void Console::PerformRenderThreadSettingsCopy() const
     {
         for (const auto& setting : settings | std::views::values) {
             setting->PerformRenderThreadCopy();

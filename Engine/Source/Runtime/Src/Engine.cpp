@@ -9,14 +9,17 @@
 #include <Core/Paths.h>
 #include <Core/Log.h>
 #include <Core/Thread.h>
+#include <Core/Console.h>
+#include <Mirror/Mirror.h>
 #include <Runtime/World.h>
 
 namespace Runtime {
     Engine::Engine(const EngineInitParams& inParams)
     {
-        Core::ScopedThreadTag tag(Core::ThreadTag::game);
+        Core::ThreadContext::SetTag(Core::ThreadTag::game);
         if (!inParams.projectFile.empty()) {
             Core::Paths::SetCurrentProjectFile(inParams.projectFile);
+            LoadProject(inParams.projectFile);
         }
 
         if (inParams.logToFile) {
@@ -46,8 +49,18 @@ namespace Runtime {
         return *renderModule;
     }
 
-    void Engine::Tick(float inDeltaTimeSeconds) const
+    void Engine::Tick(float inDeltaTimeSeconds)
     {
+        // game thread can run faster than render thread 1 frame as max
+        if (last2FrameRenderThreadFence.valid()) {
+            last2FrameRenderThreadFence.wait();
+        }
+
+        auto& renderThread = renderModule->GetRenderThread();
+        renderThread.EmplaceTask([]() -> void {
+            Core::Console::Get().PerformRenderThreadSettingsCopy();
+        });
+
         for (auto* world : worlds) {
             if (!world->Playing()) {
                 continue;
@@ -55,12 +68,26 @@ namespace Runtime {
             world->Tick(inDeltaTimeSeconds);
         }
 
-        // TODO emplace render thread task, like wait fence, console command copy
+        last2FrameRenderThreadFence = std::move(lastFrameRenderThreadFence);
+        lastFrameRenderThreadFence = renderThread.EmplaceTask([]() -> void {});
     }
 
     Common::UniquePtr<World> Engine::CreateWorld(const std::string& inName) const // NOLINT
     {
         return new World(inName);
+    }
+
+    Project* Engine::GetProject()
+    {
+        return project.has_value() ? &project.value() : nullptr;
+    }
+
+    void Engine::SaveProject() const
+    {
+        if (!project.has_value()) {
+            return;
+        }
+        Common::JsonSerializeToFile<Project>(Core::Paths::ProjectFile().String(), project.value());
     }
 
     void Engine::AttachLogFile() // NOLINT
@@ -82,6 +109,12 @@ namespace Runtime {
         initParams.rhiType = RHI::GetRHITypeByAbbrString(inRhiTypeStr);
         renderModule->Initialize(initParams);
         LogInfo(Render, "RHI type: {}", inRhiTypeStr);
+    }
+
+    void Engine::LoadProject(const std::string& inProjectFile)
+    {
+        project = Project();
+        Common::JsonDeserializeFromFile<Project>(Core::Paths::ProjectFile().String(), project.value());
     }
 
     Common::UniquePtr<Engine> EngineHolder::engine = nullptr;

@@ -15,14 +15,18 @@
 #include <unordered_map>
 #include <set>
 #include <map>
-#include <filesystem>
 
 #include <rapidjson/document.h>
+#include <rapidjson/filereadstream.h>
+#include <rapidjson/filewritestream.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/prettywriter.h>
 
 #include <Common/Utility.h>
 #include <Common/Debug.h>
 #include <Common/Hash.h>
 #include <Common/String.h>
+#include <Common/FileSystem.h>
 
 namespace Common {
     class BinarySerializeStream {
@@ -144,7 +148,9 @@ namespace Common {
     template <Serializable T> struct FieldSerializer;
 
     template <typename T> size_t Serialize(BinarySerializeStream& inStream, const T& inValue);
-    template <typename T> std::pair<bool, size_t> Deserialize(BinaryDeserializeStream& inStream, T& inValue);
+    template <typename T> std::pair<bool, size_t> Deserialize(BinaryDeserializeStream& inStream, T& outValue);
+    template <typename T> void SerializeToFile(const std::string& inFile, const T& inValue);
+    template <typename T> bool DeserializeFromFile(const std::string& inFile, T& outValue);
 
     template <typename T> struct JsonSerializer {};
     template <typename T> concept JsonSerializable = requires(
@@ -158,6 +164,8 @@ namespace Common {
 
     template <typename T> void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const T& inValue);
     template <typename T> void JsonDeserialize(const rapidjson::Value& inJsonValue, T& outValue);
+    template <typename T> void JsonSerializeToFile(const std::string& inFile, const T& inValue, bool inPretty = true);
+    template <typename T> void JsonDeserializeFromFile(const std::string& inFile, T& outValue);
 }
 
 #define IMPL_BASIC_TYPE_SERIALIZER(typeName) \
@@ -224,9 +232,9 @@ namespace Common {
     template <std::endian E>
     BinaryFileSerializeStream<E>::BinaryFileSerializeStream(const std::string& inFileName)
     {
-        if (const auto parent_path = std::filesystem::path(inFileName).parent_path();
-            !std::filesystem::exists(parent_path)) {
-            std::filesystem::create_directories(parent_path);
+        if (const auto parentPath = Common::Path(inFileName).Parent();
+            !parentPath.Exists()) {
+            parentPath.MakeDir();
         }
         file = std::ofstream(inFileName, std::ios::binary);
     }
@@ -420,14 +428,29 @@ namespace Common {
     }
 
     template <typename T>
-    std::pair<bool, size_t> Deserialize(BinaryDeserializeStream& inStream, T& inValue)
+    std::pair<bool, size_t> Deserialize(BinaryDeserializeStream& inStream, T& outValue)
     {
         if constexpr (Serializable<T>) {
-            return FieldSerializer<T>::Deserialize(inStream, inValue);
+            return FieldSerializer<T>::Deserialize(inStream, outValue);
         } else {
             QuickFailWithReason("your type is not support serialization");
             return { false, 0 };
         }
+    }
+
+    template <typename T>
+    void SerializeToFile(const std::string& inFile, const T& inValue)
+    {
+        BinaryFileSerializeStream stream(inFile);
+        Serialize<T>(stream, inValue);
+    }
+
+    template <typename T>
+    bool DeserializeFromFile(const std::string& inFile, T& outValue)
+    {
+        BinaryFileDeserializeStream stream(inFile);
+        const auto result = Deserialize(stream, outValue);
+        return result.first;
     }
 
     template <typename T>
@@ -448,6 +471,43 @@ namespace Common {
         } else {
             QuickFailWithReason("your type is not support json serialization");
         }
+    }
+
+    template <typename T> void JsonSerializeToFile(const std::string& inFile, const T& inValue, bool inPretty)
+    {
+        Common::Path parentPath = Common::Path(inFile).Parent();
+        if (!parentPath.Exists()) {
+            parentPath.MakeDir();
+        }
+
+        rapidjson::Document document;
+        JsonSerialize<T>(document, document.GetAllocator(), inValue);
+
+        char buffer[65536];
+        std::FILE* file = fopen(inFile.c_str(), "wb");
+        rapidjson::FileWriteStream stream(file, buffer, sizeof(buffer));
+
+        if (inPretty) {
+            rapidjson::PrettyWriter writer(stream);
+            document.Accept(writer);
+        } else {
+            rapidjson::Writer writer(stream);
+            document.Accept(writer);
+        }
+        (void) fclose(file);
+    }
+
+    template <typename T> void JsonDeserializeFromFile(const std::string& inFile, T& outValue)
+    {
+        char buffer[65536];
+        std::FILE* file = fopen(inFile.c_str(), "rb");
+        rapidjson::FileReadStream stream(file, buffer, sizeof(buffer));
+
+        rapidjson::Document document;
+        document.ParseStream(stream);
+
+        JsonDeserialize<T>(document, outValue);
+        (void) fclose(file);
     }
 
     template <Serializable T>

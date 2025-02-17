@@ -3,13 +3,14 @@
 //
 
 #include <Runtime/System/Scene.h>
+#include <Runtime/Engine.h>
 #include <Runtime/Component/Transform.h>
 #include <Core/Module.h>
 
 namespace Runtime {
     SceneSystem::SceneSystem(ECRegistry& inRegistry)
         : System(inRegistry)
-        , renderModule(Core::ModuleManager::Get().GetTyped<Render::RenderModule>("Render"))
+        , renderModule(EngineHolder::Get().GetRenderModule())
         , scene(renderModule.NewScene())
         , transformUpdatedObserver(inRegistry.Observer())
         , directionalLightsObserver(inRegistry.EventsObserver<DirectionalLight>())

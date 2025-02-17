@@ -5,9 +5,11 @@
 #include <Runtime/World.h>
 #include <Runtime/Engine.h>
 
+#include <utility>
+
 namespace Runtime {
-    World::World(const std::string& inName)
-        : name(inName)
+    World::World(std::string inName)
+        : name(std::move(inName))
         , playStatus(PlayStatus::stopped)
     {
         EngineHolder::Get().MountWorld(this);

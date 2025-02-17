@@ -42,8 +42,13 @@ namespace Runtime {
         SPMap<Render::LightSceneProxy> lightSceneProxies;
     };
 }
-
 namespace Runtime {
+    template <typename L>
+    void SceneSystem::FillLightSceneProxy(const Render::LightSPH& inHandle, const L& inLight, const WorldTransform* inTransform)
+    {
+        Unimplement();
+    }
+
     template <>
     inline void SceneSystem::FillLightSceneProxy<DirectionalLight>(const Render::LightSPH& inHandle, const DirectionalLight& inLight, const WorldTransform* inTransform)
     {
@@ -79,7 +84,7 @@ namespace Runtime {
     void SceneSystem::EmplaceLightSceneProxy(Entity inEntity)
     {
         lightSceneProxies.emplace(inEntity, scene->AddLight());
-        UpdateLightSceneProxy<L>(inEntity);
+        FillLightSceneProxy(lightSceneProxies.at(inEntity), registry.Get<L>(inEntity), registry.Find<WorldTransform>(inEntity));
     }
 
     template <typename L>
@@ -87,6 +92,7 @@ namespace Runtime {
     {
         const Render::LightSPH& handle = lightSceneProxies.at(inEntity);
         FillLightSceneProxy(handle, registry.Get<L>(inEntity), registry.Find<WorldTransform>(inEntity));
+        scene->UpdateLight(handle);
     }
 
     template <typename SP>

@@ -10,14 +10,6 @@
 #include <Runtime/ECS.h>
 
 namespace Runtime {
-    constexpr uint8_t maxPlayerCount = 4;
-
-    struct RUNTIME_API EClass(transient) GViewSource final {
-        EClassBody(GViewSource)
-
-        Common::InplaceVector<Entity, maxPlayerCount> playerCameras;
-    };
-
     struct RUNTIME_API EClass(transient) Camera final {
         EClassBody(Camera)
 

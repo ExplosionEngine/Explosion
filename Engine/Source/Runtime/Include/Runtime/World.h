@@ -38,7 +38,7 @@ namespace Runtime {
     private:
         friend class Engine;
 
-        explicit World(const std::string& inName = "");
+        explicit World(std::string inName = "");
         void Tick(float inDeltaTimeSeconds);
 
         std::string name;

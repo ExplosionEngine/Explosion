@@ -24,6 +24,7 @@ namespace Render {
         NonMovable(Scene)
 
         LightSPH AddLight();
+        void UpdateLight(const LightSPH& inHandle);
         void RemoveLight(const LightSPH& inHandle);
 
     private:

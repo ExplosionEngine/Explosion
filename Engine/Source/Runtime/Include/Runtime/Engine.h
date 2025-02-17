@@ -8,8 +8,9 @@
 #include <unordered_set>
 
 #include <Core/Module.h>
-#include <Runtime/Api.h>
 #include <Render/RenderModule.h>
+#include <Runtime/Project.h>
+#include <Runtime/Api.h>
 
 namespace Runtime {
     class World;
@@ -29,17 +30,23 @@ namespace Runtime {
         void MountWorld(World* inWorld);
         void UnmountWorld(World* inWorld);
         Render::RenderModule& GetRenderModule() const;
-        void Tick(float inDeltaTimeSeconds) const;
+        void Tick(float inDeltaTimeSeconds);
         Common::UniquePtr<World> CreateWorld(const std::string& inName = "") const;
+        Project* GetProject();
+        void SaveProject() const;
 
     protected:
         explicit Engine(const EngineInitParams& inParams);
 
         void AttachLogFile();
         void InitRender(const std::string& inRhiTypeStr);
+        void LoadProject(const std::string& inProjectFile);
 
         std::unordered_set<World*> worlds;
         Render::RenderModule* renderModule;
+        std::optional<Project> project;
+        std::future<void> lastFrameRenderThreadFence;
+        std::future<void> last2FrameRenderThreadFence;
     };
 
     class RUNTIME_API MinEngine final : public Engine {

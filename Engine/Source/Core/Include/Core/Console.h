@@ -120,6 +120,7 @@ namespace Core {
         // 0: game/gameWorker
         // 1: render/renderWorker
         T value[2];
+        bool dirty;
     };
 
     class CORE_API Console {
@@ -132,7 +133,7 @@ namespace Core {
         ConsoleSetting& GetSetting(const std::string& inName) const;
         template <typename T> ConsoleSettingValue<T>* FindSettingValue(const std::string& inName) const;
         template <typename T> ConsoleSettingValue<T>& GetSettingValue(const std::string& inName) const;
-        void PerformRenderThreadCopy() const;
+        void PerformRenderThreadSettingsCopy() const;
 
     private:
         friend class ConsoleSetting;
@@ -149,6 +150,7 @@ namespace Core {
     template <ConsoleSettingBasicType T>
     ConsoleSettingValue<T>::ConsoleSettingValue(const std::string& inName, const std::string& inDescription, const T& inDefaultValue, const CSFlags& inFlags)
         : ConsoleSetting(inName, inDescription, inFlags)
+        , dirty(false)
     {
         value[0] = inDefaultValue;
         value[1] = inDefaultValue;
@@ -187,12 +189,17 @@ namespace Core {
     void ConsoleSettingValue<T>::Set(const T& inValue)
     {
         value[0] = inValue;
+        dirty = true;
     }
 
     template <ConsoleSettingBasicType T>
     void ConsoleSettingValue<T>::PerformRenderThreadCopy()
     {
+        if (!dirty) {
+            return;
+        }
         value[1] = value[0];
+        dirty = false;
     }
 
     template <ConsoleSettingBasicType T>

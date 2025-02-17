@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
-import QtQuick.Effects
 
 Item {
     enum Style {
@@ -29,12 +28,12 @@ Item {
     property int shape: EButton.Shape.Rect
     signal clicked()
 
-    id: 'root'
+    id: root
     implicitWidth: btnWidget.implicitWidth
     implicitHeight: btnWidget.implicitHeight
 
     Button {
-        id: 'btnWidget'
+        id: btnWidget
         enabled: !root.disabled
         onClicked: root.clicked()
         leftPadding: 10
@@ -75,7 +74,7 @@ Item {
                 return focus ? ETheme.primaryFocusColor : (hovered ? ETheme.primaryHoverColor : ETheme.primaryColor);
             }
 
-            color: getBackgroundColor(root.style, parent.down, parent.hovered, root.disabled)
+            color: getBackgroundColor(root.style, btnWidget.down, btnWidget.hovered, root.disabled)
             radius: 5 + root.shape * 8
         }
     }
