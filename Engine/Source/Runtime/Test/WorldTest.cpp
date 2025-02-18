@@ -4,9 +4,7 @@
 
 #include <WorldTest.h>
 #include <Test/Test.h>
-#include <Runtime/Engine.h>
 #include <Runtime/World.h>
-#include <RHI/Instance.h>
 using namespace Runtime;
 
 struct WorldTest : testing::Test {
@@ -74,7 +72,7 @@ BasicTest_MotionSystem::BasicTest_MotionSystem(ECRegistry& inRegistry)
     registry.Emplace<Position>(entity1, 0.0f, 1.0f);
     registry.Emplace<Velocity>(entity1, 1.0f, 0.0f);
 
-    auto& [entities] = registry.GEmplace<BasicTest_ExpectVerifyResult>();
+    auto& [entities] = registry.GEmplace<GBasicTest_ExpectVerifyResult>();
     entities = {
         { entity0, Position(1.5f, 3.0f) },
         { entity1, Position(1.0f, 1.0f) }
@@ -85,7 +83,7 @@ BasicTest_MotionSystem::~BasicTest_MotionSystem() = default;
 
 void BasicTest_MotionSystem::Tick(float inDeltaTimeSeconds)
 {
-    auto& [entities] = registry.GGet<BasicTest_ExpectVerifyResult>();
+    auto& [entities] = registry.GGet<GBasicTest_ExpectVerifyResult>();
 
     const auto view = registry.View<Position, Velocity>();
     view.Each([&](Entity entity, Position& position, Velocity& velocity) -> void {
@@ -97,7 +95,7 @@ void BasicTest_MotionSystem::Tick(float inDeltaTimeSeconds)
         expectPos.x = position.x + velocity.x;
         expectPos.y = position.y + velocity.y;
     });
-    registry.GNotifyUpdated<BasicTest_ExpectVerifyResult>();
+    registry.GNotifyUpdated<GBasicTest_ExpectVerifyResult>();
 }
 
 TEST_F(WorldTest, BasicTest)
@@ -106,13 +104,13 @@ TEST_F(WorldTest, BasicTest)
     auto& mainGroup = systemGraph.AddGroup("MainGroup", SystemExecuteStrategy::sequential);
     mainGroup.EmplaceSystemDyn(&BasicTest_MotionSystem::GetStaticClass());
 
-    const auto world = engine->CreateWorld();
-    world->SetSystemGraph(systemGraph);
-    world->Play();
+    World world("BasicTestWorld", nullptr);
+    world.SetSystemGraph(systemGraph);
+    world.Play();
     for (auto i = 0; i < 5; i++) {
         engine->Tick(0.0167f);
     }
-    world->Stop();
+    world.Stop();
 }
 
 ConcurrentTest_SystemA::ConcurrentTest_SystemA(Runtime::ECRegistry& inRegistry)
@@ -124,7 +122,7 @@ ConcurrentTest_SystemA::~ConcurrentTest_SystemA() = default;
 
 void ConcurrentTest_SystemA::Tick(float inDeltaTimeSeconds)
 {
-    auto& context = registry.GGet<ConcurrentTest_Context>();
+    auto& context = registry.GGet<GConcurrentTest_Context>();
     context.a = 1;
 }
 
@@ -137,14 +135,14 @@ ConcurrentTest_SystemB::~ConcurrentTest_SystemB() = default;
 
 void ConcurrentTest_SystemB::Tick(float inDeltaTimeSeconds)
 {
-    auto& context = registry.GGet<ConcurrentTest_Context>();
+    auto& context = registry.GGet<GConcurrentTest_Context>();
     context.b = 2;
 }
 
 ConcurrentTest_VerifySystem::ConcurrentTest_VerifySystem(Runtime::ECRegistry& inRegistry)
     : System(inRegistry)
 {
-    auto& context = registry.GEmplace<ConcurrentTest_Context>();
+    auto& context = registry.GEmplace<GConcurrentTest_Context>();
     context.a = 0;
     context.b = 0;
     context.sum = 0;
@@ -155,7 +153,7 @@ ConcurrentTest_VerifySystem::~ConcurrentTest_VerifySystem() = default;
 
 void ConcurrentTest_VerifySystem::Tick(float inDeltaTimeSeconds)
 {
-    auto& context = registry.GGet<ConcurrentTest_Context>();
+    auto& context = registry.GGet<GConcurrentTest_Context>();
     context.sum = context.sum + context.a + context.b;
     context.a = 0;
     context.b = 0;
@@ -172,11 +170,11 @@ TEST_F(WorldTest, ConcurrentTest)
     auto& verifyGroup = systemGraph.AddGroup("VerifyGroup", SystemExecuteStrategy::sequential);
     verifyGroup.EmplaceSystem<ConcurrentTest_VerifySystem>();
 
-    const auto world = engine->CreateWorld();
-    world->SetSystemGraph(systemGraph);
-    world->Play();
+    World world("ConcurrentTestWorld", nullptr);
+    world.SetSystemGraph(systemGraph);
+    world.Play();
     for (auto i = 0; i < 5; i++) {
         engine->Tick(0.0167f);
     }
-    world->Stop();
+    world.Stop();
 }

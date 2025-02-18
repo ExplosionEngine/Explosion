@@ -34,8 +34,8 @@ struct EClass() Velocity {
     float y;
 };
 
-struct EClass() BasicTest_ExpectVerifyResult {
-    EClassBody(BasicTest_ExpectVerifyResult)
+struct EClass(global, transient) GBasicTest_ExpectVerifyResult {
+    EClassBody(GBasicTest_ExpectVerifyResult)
 
     std::unordered_map<Runtime::Entity, Position> entities;
 };
@@ -49,8 +49,8 @@ class EClass() BasicTest_MotionSystem : public Runtime::System {
     void Tick(float inDeltaTimeSeconds) override;
 };
 
-struct EClass() ConcurrentTest_Context {
-    EClassBody(ConcurrentTest_Context)
+struct EClass(global, transient) GConcurrentTest_Context {
+    EClassBody(GConcurrentTest_Context)
 
     uint32_t a;
     uint32_t b;

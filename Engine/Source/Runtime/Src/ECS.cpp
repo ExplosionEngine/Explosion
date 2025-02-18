@@ -18,6 +18,16 @@ namespace Runtime {
 }
 
 namespace Runtime::Internal {
+    static bool IsGlobalCompClass(GCompClass inClass)
+    {
+        return inClass->HasMeta("global") && inClass->GetMetaBool("global");
+    }
+
+    static bool IsClassTransient(CompClass inClass)
+    {
+        return inClass->HasMeta("transient") && inClass->GetMetaBool("transient");
+    }
+
     CompRtti::CompRtti(CompClass inClass)
         : clazz(inClass)
         , bound(false)
@@ -613,10 +623,7 @@ namespace Runtime {
         archetypes.emplace(0, Internal::Archetype({}));
     }
 
-    ECRegistry::~ECRegistry()
-    {
-        ResetTransients();
-    }
+    ECRegistry::~ECRegistry() = default;
 
     ECRegistry::ECRegistry(const ECRegistry& inOther)
         : entities(inOther.entities)
@@ -652,6 +659,17 @@ namespace Runtime {
     {
         compEvents.clear();
         globalCompEvents.clear();
+
+        for (const auto& [clazz, entitySet] : transientCompMap) {
+            for (auto e : entitySet) {
+                // TODO not affect transient map
+                RemoveDyn(clazz, e);
+            }
+        }
+        for (const auto* clazz : transientGlobalComps) {
+            // TODO not affect transient map
+            GRemoveDyn(clazz);
+        }
     }
 
     Entity ECRegistry::Create()
@@ -688,7 +706,7 @@ namespace Runtime {
 
     void ECRegistry::Each(const EntityTraverseFunc& inFunc) const
     {
-        return entities.Each(inFunc);
+        entities.Each(inFunc);
     }
 
     ECRegistry::ConstIter ECRegistry::Begin() const
@@ -709,6 +727,15 @@ namespace Runtime {
     ECRegistry::ConstIter ECRegistry::end() const
     {
         return End();
+    }
+
+    void ECRegistry::EachComp(Entity inEntity, const ComponentTraverseFunc& inFunc)
+    {
+        const Internal::ArchetypeId archetypeId = entities.GetArchetype(inEntity);
+        const Internal::Archetype& archetype = archetypes.at(archetypeId);
+        for (const auto& compRtti : archetype.GetRttiVec()) {
+            inFunc(compRtti.Class());
+        }
     }
 
     Runtime::RuntimeView ECRegistry::RuntimeView(const RuntimeFilter& inFilter)
@@ -782,6 +809,10 @@ namespace Runtime {
         Mirror::Any tempObj = inClass->ConstructDyn(inArgs);
         Mirror::Any compRef = newArchetype.EmplaceComp(inEntity, inClass, tempObj.Ref());
         NotifyConstructedDyn(inClass, inEntity);
+
+        if (Internal::IsClassTransient(inClass)) {
+            transientCompMap[inClass].emplace(inEntity);
+        }
         return compRef;
     }
 
@@ -801,6 +832,10 @@ namespace Runtime {
         Internal::Archetype& newArchetype = archetypes.at(newArchetypeId);
         newArchetype.EmplaceElem(inEntity, archetype.GetElem(inEntity), archetype.GetRttiVec());
         archetype.EraseElem(inEntity);
+
+        if (Internal::IsClassTransient(inClass)) {
+            transientCompMap[inClass].erase(inEntity);
+        }
     }
 
     void ECRegistry::UpdateDyn(CompClass inClass, Entity inEntity, const DynUpdateFunc& inFunc)
@@ -886,21 +921,32 @@ namespace Runtime {
 
     Mirror::Any ECRegistry::GEmplaceDyn(GCompClass inClass, const Mirror::ArgumentList& inArgs)
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         Assert(!GHasDyn(inClass));
         globalComps.emplace(inClass, inClass->ConstructDyn(inArgs));
         GNotifyConstructedDyn(inClass);
+
+        if (Internal::IsClassTransient(inClass)) {
+            transientGlobalComps.emplace(inClass);
+        }
         return GGetDyn(inClass);
     }
 
     void ECRegistry::GRemoveDyn(GCompClass inClass)
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         Assert(GHasDyn(inClass));
         GNotifyRemoveDyn(inClass);
         globalComps.erase(inClass);
+
+        if (Internal::IsClassTransient(inClass)) {
+            transientGlobalComps.erase(inClass);
+        }
     }
 
     void ECRegistry::GUpdateDyn(GCompClass inClass, const DynUpdateFunc& inFunc)
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         Assert(GHasDyn(inClass));
         inFunc(GGetDyn(inClass));
         GNotifyUpdatedDyn(inClass);
@@ -908,39 +954,46 @@ namespace Runtime {
 
     GScopedUpdaterDyn ECRegistry::GUpdateDyn(GCompClass inClass)
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         Assert(GHasDyn(inClass));
         return { *this, inClass, GGetDyn(inClass) };
     }
 
     bool ECRegistry::GHasDyn(GCompClass inClass) const
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         return globalComps.contains(inClass);
     }
 
     Mirror::Any ECRegistry::GFindDyn(GCompClass inClass)
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         return GHasDyn(inClass) ? GGetDyn(inClass) : Mirror::Any();
     }
 
     Mirror::Any ECRegistry::GFindDyn(GCompClass inClass) const
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         return GHasDyn(inClass) ? GGetDyn(inClass) : Mirror::Any();
     }
 
     Mirror::Any ECRegistry::GGetDyn(GCompClass inClass)
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         Assert(GHasDyn(inClass));
         return globalComps.at(inClass).Ref();
     }
 
     Mirror::Any ECRegistry::GGetDyn(GCompClass inClass) const
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         Assert(GHasDyn(inClass));
         return globalComps.at(inClass).ConstRef();
     }
 
     ECRegistry::GCompEvents& ECRegistry::GEventsDyn(GCompClass inClass)
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         return globalCompEvents[inClass];
     }
 
@@ -1170,6 +1223,7 @@ namespace Runtime {
         pipeline.ParallelPerformAction([](SystemPipeline::SystemContext& context) -> void {
             context.instance = nullptr;
         });
+        ecRegistry.ResetTransients();
     }
 
     void SystemGraphExecutor::Tick(float inDeltaTimeSeconds)

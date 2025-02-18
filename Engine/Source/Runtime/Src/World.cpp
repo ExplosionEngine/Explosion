@@ -8,8 +8,9 @@
 #include <utility>
 
 namespace Runtime {
-    World::World(std::string inName)
+    World::World(std::string inName, Client* inClient)
         : name(std::move(inName))
+        , client(inClient)
         , playStatus(PlayStatus::stopped)
     {
         EngineHolder::Get().MountWorld(this);

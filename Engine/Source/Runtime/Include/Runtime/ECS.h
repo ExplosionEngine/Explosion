@@ -408,6 +408,7 @@ namespace Runtime {
     class RUNTIME_API ECRegistry {
     public:
         using EntityTraverseFunc = Internal::EntityPool::EntityTraverseFunc;
+        using ComponentTraverseFunc = std::function<void(CompClass)>;
         using DynUpdateFunc = std::function<void(const Mirror::Any&)>;
         using ConstIter = Internal::EntityPool::ConstIter;
         using CompEvent = Common::Delegate<ECRegistry&, Entity>;
@@ -436,7 +437,6 @@ namespace Runtime {
         void ResetTransients();
 
         // entity
-        // TODO create with hint
         Entity Create();
         void Destroy(Entity inEntity);
         bool Valid(Entity inEntity) const;
@@ -447,6 +447,7 @@ namespace Runtime {
         ConstIter End() const;
         ConstIter begin() const;
         ConstIter end() const;
+        void EachComp(Entity inEntity, const ComponentTraverseFunc& inFunc);
 
         // component static
         template <typename C, typename... Args> C& Emplace(Entity inEntity, Args&&... inArgs);
@@ -527,6 +528,8 @@ namespace Runtime {
         std::unordered_map<GCompClass, Mirror::Any> globalComps;
         std::unordered_map<Internal::ArchetypeId, Internal::Archetype> archetypes;
         // transients
+        std::unordered_map<CompClass, std::unordered_set<Entity>> transientCompMap;
+        std::unordered_set<GCompClass> transientGlobalComps;
         std::unordered_map<CompClass, CompEvents> compEvents;
         std::unordered_map<GCompClass, GCompEvents> globalCompEvents;
     };

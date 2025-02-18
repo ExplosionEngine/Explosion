@@ -49,6 +49,19 @@ namespace Runtime {
         return *renderModule;
     }
 
+    Project* Engine::GetProject()
+    {
+        return project.has_value() ? &project.value() : nullptr;
+    }
+
+    void Engine::SaveProject() const
+    {
+        if (!project.has_value()) {
+            return;
+        }
+        Common::JsonSerializeToFile<Project>(Core::Paths::ProjectFile().String(), project.value());
+    }
+
     void Engine::Tick(float inDeltaTimeSeconds)
     {
         // game thread can run faster than render thread 1 frame as max
@@ -70,24 +83,6 @@ namespace Runtime {
 
         last2FrameRenderThreadFence = std::move(lastFrameRenderThreadFence);
         lastFrameRenderThreadFence = renderThread.EmplaceTask([]() -> void {});
-    }
-
-    Common::UniquePtr<World> Engine::CreateWorld(const std::string& inName) const // NOLINT
-    {
-        return new World(inName);
-    }
-
-    Project* Engine::GetProject()
-    {
-        return project.has_value() ? &project.value() : nullptr;
-    }
-
-    void Engine::SaveProject() const
-    {
-        if (!project.has_value()) {
-            return;
-        }
-        Common::JsonSerializeToFile<Project>(Core::Paths::ProjectFile().String(), project.value());
     }
 
     void Engine::AttachLogFile() // NOLINT

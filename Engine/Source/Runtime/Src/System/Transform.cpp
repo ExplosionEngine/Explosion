@@ -26,18 +26,18 @@ namespace Runtime {
         pendingUpdateLocalTransforms.reserve(worldTransformUpdatedObserver.Size());
         pendingUpdateChildrenWorldTransforms.reserve(worldTransformUpdatedObserver.Size());
         worldTransformUpdatedObserver.EachThenClear([&](Entity e) -> void {
-            if (registry.Has<LocalTransform>(e) && registry.Has<Hierarchy>(e) && HierarchyUtils::HasParent(registry, e)) {
+            if (registry.Has<LocalTransform>(e) && registry.Has<Hierarchy>(e) && HierarchyOps::HasParent(registry, e)) {
                 pendingUpdateLocalTransforms.emplace_back(e);
             }
 
-            if (registry.Has<Hierarchy>(e) && HierarchyUtils::HasChildren(registry, e)) {
+            if (registry.Has<Hierarchy>(e) && HierarchyOps::HasChildren(registry, e)) {
                 pendingUpdateChildrenWorldTransforms.emplace_back(e);
             }
         });
 
         pendingUpdateSelfAndChildrenWorldTransforms.reserve(localTransformUpdatedObserver.Size());
         localTransformUpdatedObserver.EachThenClear([&](Entity e) -> void {
-            if (registry.Has<WorldTransform>(e) && registry.Has<Hierarchy>(e) && HierarchyUtils::HasParent(registry, e)) {
+            if (registry.Has<WorldTransform>(e) && registry.Has<Hierarchy>(e) && HierarchyOps::HasParent(registry, e)) {
                 pendingUpdateSelfAndChildrenWorldTransforms.emplace_back(e);
             }
         });
@@ -70,7 +70,7 @@ namespace Runtime {
         };
 
         for (const auto e : pendingUpdateChildrenWorldTransforms) {
-            HierarchyUtils::TraverseChildrenRecursively(registry, e, [&](Entity child, Entity parent) -> void {
+            HierarchyOps::TraverseChildrenRecursively(registry, e, [&](Entity child, Entity parent) -> void {
                 updateWorldByLocal(child, parent);
             });
         }
@@ -78,7 +78,7 @@ namespace Runtime {
             const auto& hierarchy = registry.Get<Hierarchy>(e);
             updateWorldByLocal(e, hierarchy.parent);
 
-            HierarchyUtils::TraverseChildrenRecursively(registry, e, [&](Entity child, Entity parent) -> void {
+            HierarchyOps::TraverseChildrenRecursively(registry, e, [&](Entity child, Entity parent) -> void {
                 updateWorldByLocal(child, parent);
             });
         }

@@ -30,7 +30,7 @@ struct EClass() CompB {
     float value;
 };
 
-struct EClass() GCompA {
+struct EClass(global) GCompA {
     EClassBody(GCompA)
 
     explicit GCompA(int inValue)
@@ -41,7 +41,7 @@ struct EClass() GCompA {
     int value;
 };
 
-struct EClass() GCompB {
+struct EClass(global) GCompB {
     EClassBody(GCompB)
 
     explicit GCompB(float inValue)

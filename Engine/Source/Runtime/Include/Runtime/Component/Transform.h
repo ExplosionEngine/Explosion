@@ -40,7 +40,7 @@ namespace Runtime {
         EProperty() Entity nextBro;
     };
 
-    class HierarchyUtils {
+    class HierarchyOps {
     public:
         using TraverseFunc = std::function<void(Entity, Entity)>;
 

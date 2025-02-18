@@ -30,10 +30,9 @@ namespace Runtime {
         void MountWorld(World* inWorld);
         void UnmountWorld(World* inWorld);
         Render::RenderModule& GetRenderModule() const;
-        void Tick(float inDeltaTimeSeconds);
-        Common::UniquePtr<World> CreateWorld(const std::string& inName = "") const;
         Project* GetProject();
         void SaveProject() const;
+        void Tick(float inDeltaTimeSeconds);
 
     protected:
         explicit Engine(const EngineInitParams& inParams);
