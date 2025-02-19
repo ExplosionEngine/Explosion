@@ -15,7 +15,10 @@ namespace Core {
         Console::Get().RegisterConsoleSetting(*this);
     }
 
-    ConsoleSetting::~ConsoleSetting() = default;
+    ConsoleSetting::~ConsoleSetting()
+    {
+        Console::Get().UnregisterConsoleSetting(*this);
+    }
 
     const std::string& ConsoleSetting::Name() const
     {
@@ -68,5 +71,10 @@ namespace Core {
     void Console::RegisterConsoleSetting(ConsoleSetting& inSetting)
     {
         settings.emplace(inSetting.Name(), &inSetting);
+    }
+
+    void Console::UnregisterConsoleSetting(ConsoleSetting& inSetting)
+    {
+        settings.erase(inSetting.Name());
     }
 }

@@ -75,6 +75,11 @@ namespace Common {
         return { String() + inPath, false };
     }
 
+    bool Path::operator==(const Path& inPath) const
+    {
+        return path == inPath.path;
+    }
+
     Path Path::Parent() const
     {
         return { path.parent_path(), false };

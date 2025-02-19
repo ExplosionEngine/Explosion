@@ -8,6 +8,8 @@
 #include <RHI/Synchronous.h>
 
 namespace Runtime {
+    class Client;
+
     struct PresentInfo {
         PresentInfo();
 
@@ -19,9 +21,14 @@ namespace Runtime {
     class Viewport {
     public:
         virtual ~Viewport();
+
+        virtual Client& GetClient() = 0;
         virtual PresentInfo GetNextPresentInfo() = 0;
+        virtual size_t GetWidth() = 0;
+        virtual size_t GetHeight() = 0;
 
         // TODO mouse keyboard inputs etc.
+        // TODO resolution change etc.
 
     protected:
         Viewport();

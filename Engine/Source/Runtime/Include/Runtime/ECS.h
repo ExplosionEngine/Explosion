@@ -24,6 +24,8 @@ namespace Runtime {
     using SystemClass = const Mirror::Class*;
 
     class ECRegistry;
+    class Client;
+    class SystemSetupContext;
 
     template <typename T>
     concept ECRegistryOrConst = std::is_same_v<std::remove_const_t<T>, ECRegistry>;
@@ -32,7 +34,7 @@ namespace Runtime {
     public:
         EPolyClassBody(System)
 
-        explicit System(ECRegistry& inRegistry);
+        explicit System(ECRegistry& inRegistry, const SystemSetupContext&);
         virtual ~System();
         virtual void Tick(float inDeltaTimeSeconds);
 
@@ -58,7 +60,7 @@ namespace Runtime::Internal {
         Mirror::Any Get(ElemPtr inElem) const;
         CompClass Class() const;
         size_t Offset() const;
-        size_t Size() const;
+        size_t MemorySize() const;
 
     private:
         using MoveConstructFunc = Mirror::Any(ElemPtr, size_t, const Mirror::Any&);
@@ -86,7 +88,7 @@ namespace Runtime::Internal {
         ElemPtr GetElem(Entity inEntity) const;
         Mirror::Any GetComp(Entity inEntity, CompClass inCompClass);
         Mirror::Any GetComp(Entity inEntity, CompClass inCompClass) const;
-        size_t Size() const;
+        size_t Count() const;
         auto All() const;
         const std::vector<CompRtti>& GetRttiVec() const;
         ArchetypeId Id() const;
@@ -106,7 +108,7 @@ namespace Runtime::Internal {
         ElemPtr ElemAt(size_t inIndex) const;
 
         ArchetypeId id;
-        size_t size;
+        size_t count;
         size_t elemSize;
         std::vector<CompRtti> rttiVec;
         std::unordered_map<CompClass, CompRttiIndex> rttiMap;
@@ -122,9 +124,10 @@ namespace Runtime::Internal {
 
         EntityPool();
 
-        size_t Size() const;
+        size_t Count() const;
         bool Valid(Entity inEntity) const;
         Entity Allocate();
+        void Allocate(Entity inEntity);
         void Free(Entity inEntity);
         void Clear();
         void Each(const EntityTraverseFunc& inFunc) const;
@@ -134,7 +137,7 @@ namespace Runtime::Internal {
         ConstIter End() const;
 
     private:
-        size_t counter;
+        uint32_t counter;
         std::set<Entity> free;
         std::set<Entity> allocated;
         std::unordered_map<Entity, ArchetypeId> archetypeMap;
@@ -143,7 +146,7 @@ namespace Runtime::Internal {
     class SystemFactory {
     public:
         explicit SystemFactory(SystemClass inClass);
-        Common::UniquePtr<System> Build(ECRegistry& inRegistry) const;
+        Common::UniquePtr<System> Build(ECRegistry& inRegistry, const SystemSetupContext& inSetupContext) const;
         std::unordered_map<std::string, Mirror::Any> GetArguments();
         const std::unordered_map<std::string, Mirror::Any>& GetArguments() const;
         SystemClass GetClass() const;
@@ -243,7 +246,7 @@ namespace Runtime {
         NonMovable(BasicView)
 
         template <typename F> void Each(F&& inFunc) const;
-        size_t Size() const;
+        size_t Count() const;
         ConstIter Begin() const;
         ConstIter End() const;
         ConstIter begin() const;
@@ -284,7 +287,7 @@ namespace Runtime {
         NonMovable(BasicRuntimeView)
 
         template <typename F> void Each(F&& inFunc) const;
-        size_t Size() const;
+        size_t Count() const;
         ConstIter Begin() const;
         ConstIter End() const;
         ConstIter begin() const;
@@ -322,7 +325,7 @@ namespace Runtime {
         Observer& ObConstructedDyn(CompClass inClass);
         Observer& ObUpdatedDyn(CompClass inClass);
         Observer& ObRemoved(CompClass inClass);
-        size_t Size() const;
+        size_t Count() const;
         void Each(const EntityTraverseFunc& inFunc) const;
         void EachThenClear(const EntityTraverseFunc& inFunc);
         void Clear();
@@ -353,9 +356,9 @@ namespace Runtime {
         NonCopyable(EventsObserver)
         NonMovable(EventsObserver)
 
-        size_t ConstructedSize() const;
-        size_t UpdatedSize() const;
-        size_t RemovedSize() const;
+        size_t ConstructedCount() const;
+        size_t UpdatedCount() const;
+        size_t RemovedCount() const;
         void EachConstructed(const EntityTraverseFunc& inFunc) const;
         void EachUpdated(const EntityTraverseFunc& inFunc) const;
         void EachRemoved(const EntityTraverseFunc& inFunc) const;
@@ -385,9 +388,9 @@ namespace Runtime {
         NonCopyable(EventsObserverDyn)
         NonMovable(EventsObserverDyn)
 
-        size_t ConstructedSize() const;
-        size_t UpdatedSize() const;
-        size_t RemovedSize() const;
+        size_t ConstructedCount() const;
+        size_t UpdatedCount() const;
+        size_t RemovedCount() const;
         void EachConstructed(const EntityTraverseFunc& inFunc) const;
         void EachUpdated(const EntityTraverseFunc& inFunc) const;
         void EachRemoved(const EntityTraverseFunc& inFunc) const;
@@ -405,10 +408,24 @@ namespace Runtime {
         Observer removedObserver;
     };
 
+    struct RUNTIME_API EClass() EntityArchive {
+        EClassBody(EntityArchive)
+
+        EProperty() std::unordered_map<CompClass, std::vector<uint8_t>> comps;
+    };
+
+    struct RUNTIME_API EClass() ECArchive {
+        EClassBody(ECArchive)
+
+        EProperty() std::unordered_map<Entity, EntityArchive> entities;
+        EProperty() std::unordered_map<GCompClass, std::vector<uint8_t>> globalComps;
+    };
+
     class RUNTIME_API ECRegistry {
     public:
         using EntityTraverseFunc = Internal::EntityPool::EntityTraverseFunc;
-        using ComponentTraverseFunc = std::function<void(CompClass)>;
+        using CompTraverseFunc = std::function<void(CompClass)>;
+        using GCompTraverseFunc = std::function<void(GCompClass)>;
         using DynUpdateFunc = std::function<void(const Mirror::Any&)>;
         using ConstIter = Internal::EntityPool::ConstIter;
         using CompEvent = Common::Delegate<ECRegistry&, Entity>;
@@ -434,20 +451,20 @@ namespace Runtime {
         ECRegistry& operator=(const ECRegistry& inOther);
         ECRegistry& operator=(ECRegistry&& inOther) noexcept;
 
-        void ResetTransients();
-
         // entity
         Entity Create();
+        void Create(Entity inEntity);
         void Destroy(Entity inEntity);
         bool Valid(Entity inEntity) const;
-        size_t Size() const;
+        size_t Count() const;
         void Clear();
         void Each(const EntityTraverseFunc& inFunc) const;
         ConstIter Begin() const;
         ConstIter End() const;
         ConstIter begin() const;
         ConstIter end() const;
-        void EachComp(Entity inEntity, const ComponentTraverseFunc& inFunc);
+        void CompEach(Entity inEntity, const CompTraverseFunc& inFunc) const;
+        size_t CompCount(Entity inEntity) const;
 
         // component static
         template <typename C, typename... Args> C& Emplace(Entity inEntity, Args&&... inArgs);
@@ -508,17 +525,23 @@ namespace Runtime {
         Mirror::Any GGetDyn(GCompClass inClass);
         Mirror::Any GGetDyn(GCompClass inClass) const;
         GCompEvents& GEventsDyn(GCompClass inClass);
+        void GCompEach(const GCompTraverseFunc& inFunc) const;
+        size_t GCompCount() const;
 
+        // comp observer
         Observer Observer();
+
+        // serialization
+        void Save(ECArchive& outArchive) const;
+        void Load(const ECArchive& inArchive);
+
+        // utils
+        void CheckEventsUnbound() const;
 
     private:
         template <typename... T> friend class BasicView;
         template <ECRegistryOrConst R> friend class BasicRuntimeView;
 
-        template <typename C> void NotifyConstructed(Entity inEntity);
-        template <typename C> void NotifyRemove(Entity inEntity);
-        template <typename G> void GNotifyConstructed();
-        template <typename G> void GNotifyRemove();
         void NotifyConstructedDyn(CompClass inClass, Entity inEntity);
         void NotifyRemoveDyn(CompClass inClass, Entity inEntity);
         void GNotifyConstructedDyn(GCompClass inClass);
@@ -527,9 +550,7 @@ namespace Runtime {
         Internal::EntityPool entities;
         std::unordered_map<GCompClass, Mirror::Any> globalComps;
         std::unordered_map<Internal::ArchetypeId, Internal::Archetype> archetypes;
-        // transients
-        std::unordered_map<CompClass, std::unordered_set<Entity>> transientCompMap;
-        std::unordered_set<GCompClass> transientGlobalComps;
+        // transients, not copy or move
         std::unordered_map<CompClass, CompEvents> compEvents;
         std::unordered_map<GCompClass, GCompEvents> globalCompEvents;
     };
@@ -614,9 +635,15 @@ namespace Runtime {
         std::vector<SystemGroupContext> systemGraph;
     };
 
+    struct SystemSetupContext {
+        SystemSetupContext();
+
+        Client* client;
+    };
+
     class SystemGraphExecutor {
     public:
-        explicit SystemGraphExecutor(ECRegistry& inEcRegistry, const SystemGraph& inSystemGraph);
+        explicit SystemGraphExecutor(ECRegistry& inEcRegistry, const SystemGraph& inSystemGraph, const SystemSetupContext& inSetupContext);
         ~SystemGraphExecutor();
 
         NonCopyable(SystemGraphExecutor)
@@ -730,7 +757,7 @@ namespace Runtime {
     }
 
     template <ECRegistryOrConst R, typename ... C, typename ... E>
-    size_t BasicView<R, Exclude<E...>, C...>::Size() const
+    size_t BasicView<R, Exclude<E...>, C...>::Count() const
     {
         return result.size();
     }
@@ -779,7 +806,7 @@ namespace Runtime {
                 continue;
             }
 
-            result.reserve(result.size() + archetype.Size());
+            result.reserve(result.size() + archetype.Count());
             for (auto entity : archetype.All()) {
                 result.emplace_back(entity, inRegistry.template Get<std::decay_t<C>>(entity)...);
             }
@@ -804,7 +831,7 @@ namespace Runtime {
     }
 
     template <ECRegistryOrConst R>
-    size_t BasicRuntimeView<R>::Size() const
+    size_t BasicRuntimeView<R>::Count() const
     {
         return resultEntities.size();
     }
@@ -865,8 +892,8 @@ namespace Runtime {
                 continue;
             }
 
-            resultEntities.reserve(result.size() + archetype.Size());
-            result.reserve(result.size() + archetype.Size());
+            resultEntities.reserve(result.size() + archetype.Count());
+            result.reserve(result.size() + archetype.Count());
             for (const auto entity : archetype.All()) {
                 std::vector<Mirror::Any> comps;
                 comps.reserve(includes.size());
@@ -931,21 +958,21 @@ namespace Runtime {
     EventsObserver<C>::~EventsObserver() = default;
 
     template <typename C>
-    size_t EventsObserver<C>::ConstructedSize() const
+    size_t EventsObserver<C>::ConstructedCount() const
     {
-        return constructedObserver.Size();
+        return constructedObserver.Count();
     }
 
     template <typename C>
-    size_t EventsObserver<C>::UpdatedSize() const
+    size_t EventsObserver<C>::UpdatedCount() const
     {
-        return updatedObserver.Size();
+        return updatedObserver.Count();
     }
 
     template <typename C>
-    size_t EventsObserver<C>::RemovedSize() const
+    size_t EventsObserver<C>::RemovedCount() const
     {
-        return removedObserver.Size();
+        return removedObserver.Count();
     }
 
     template <typename C>
@@ -1121,18 +1148,6 @@ namespace Runtime {
         NotifyUpdatedDyn(Internal::GetClass<C>(), inEntity);
     }
 
-    template <typename C>
-    void ECRegistry::NotifyConstructed(Entity inEntity)
-    {
-        NotifyConstructedDyn(Internal::GetClass<C>(), inEntity);
-    }
-
-    template <typename C>
-    void ECRegistry::NotifyRemove(Entity inEntity)
-    {
-        NotifyRemoveDyn(Internal::GetClass<C>(), inEntity);
-    }
-
     template <typename G, typename ... Args>
     G& ECRegistry::GEmplace(Args&&... inArgs)
     {
@@ -1200,18 +1215,6 @@ namespace Runtime {
     void ECRegistry::GNotifyUpdated()
     {
         GNotifyUpdatedDyn(Internal::GetClass<G>());
-    }
-
-    template <typename G>
-    void ECRegistry::GNotifyConstructed()
-    {
-        GNotifyConstructedDyn(Internal::GetClass<G>());
-    }
-
-    template <typename G>
-    void ECRegistry::GNotifyRemove()
-    {
-        GNotifyRemoveDyn(Internal::GetClass<G>());
     }
 
     template <typename S>

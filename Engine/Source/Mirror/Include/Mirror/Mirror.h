@@ -430,9 +430,13 @@ namespace Mirror {
         std::string GetAllMeta() const;
         bool HasMeta(const std::string& key) const;
         bool GetMetaBool(const std::string& key) const;
+        bool GetMetaBoolOr(const std::string& key, bool defaultValue) const;
         int32_t GetMetaInt32(const std::string& key) const;
+        int32_t GetMetaInt32Or(const std::string& key, int32_t defaultValue) const;
         int64_t GetMetaInt64(const std::string& key) const;
+        int64_t GetMetaInt64Or(const std::string& key, int64_t defaultValue) const;
         float GetMetaFloat(const std::string& key) const;
+        float GetMetaFloatOr(const std::string& key, float defaultValue) const;
 
     protected:
         explicit ReflNode(Id inId);
@@ -811,6 +815,7 @@ namespace Mirror {
         const MemberFunction* FindMemberFunction(const Id& inId) const;
         const MemberFunction& GetMemberFunction(const Id& inId) const;
         Any GetDefaultObject() const;
+        bool IsTransient() const;
 
         Any ConstructDyn(const ArgumentList& arguments) const;
         Any NewDyn(const ArgumentList& arguments) const;
@@ -1657,6 +1662,7 @@ namespace Common { // NOLINT
 
         static size_t SerializeDyn(BinarySerializeStream& stream, const Mirror::Class& clazz, const Mirror::Argument& obj)
         {
+            Assert(!clazz.IsTransient());
             const auto& className = clazz.GetName();
             const auto* baseClass = clazz.GetBaseClass();
             const auto& memberVariables = clazz.GetMemberVariables();
@@ -1708,6 +1714,7 @@ namespace Common { // NOLINT
 
         static size_t DeserializeDyn(BinaryDeserializeStream& stream, const Mirror::Class& clazz, const Mirror::Argument& obj)
         {
+            Assert(!clazz.IsTransient());
             const auto& className = clazz.GetName();
             const auto* baseClass = clazz.GetBaseClass();
             const auto defaultObject = clazz.GetDefaultObject();

@@ -8,6 +8,7 @@
 #include <vector>
 #include <functional>
 
+#include <Common/Utility.h>
 #include <Common/Debug.h>
 
 #define IMPL_INDEX_TO_STD_PLACEHOLDER(I) \
@@ -34,6 +35,9 @@ namespace Common {
     template <typename... T>
     class Delegate {
     public:
+        NonCopyable(Delegate)
+        NonMovable(Delegate)
+
         Delegate();
 
         template <auto F> CallbackHandle BindStatic();

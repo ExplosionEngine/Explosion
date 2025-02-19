@@ -9,7 +9,6 @@
 
 #include <Core/Module.h>
 #include <Render/RenderModule.h>
-#include <Runtime/Project.h>
 #include <Runtime/Api.h>
 
 namespace Runtime {
@@ -17,7 +16,7 @@ namespace Runtime {
 
     struct EngineInitParams {
         bool logToFile;
-        std::string projectFile;
+        std::string gameRoot;
         std::string rhiType;
     };
 
@@ -30,20 +29,16 @@ namespace Runtime {
         void MountWorld(World* inWorld);
         void UnmountWorld(World* inWorld);
         Render::RenderModule& GetRenderModule() const;
-        Project* GetProject();
-        void SaveProject() const;
         void Tick(float inDeltaTimeSeconds);
 
     protected:
         explicit Engine(const EngineInitParams& inParams);
 
-        void AttachLogFile();
+        void AttachLogFile() const;
         void InitRender(const std::string& inRhiTypeStr);
-        void LoadProject(const std::string& inProjectFile);
 
         std::unordered_set<World*> worlds;
         Render::RenderModule* renderModule;
-        std::optional<Project> project;
         std::future<void> lastFrameRenderThreadFence;
         std::future<void> last2FrameRenderThreadFence;
     };

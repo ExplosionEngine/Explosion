@@ -8,8 +8,8 @@
 #include <Core/Module.h>
 
 namespace Runtime {
-    SceneSystem::SceneSystem(ECRegistry& inRegistry)
-        : System(inRegistry)
+    SceneSystem::SceneSystem(ECRegistry& inRegistry, const SystemSetupContext& inContext)
+        : System(inRegistry, inContext)
         , renderModule(EngineHolder::Get().GetRenderModule())
         , scene(renderModule.NewScene())
         , transformUpdatedObserver(inRegistry.Observer())

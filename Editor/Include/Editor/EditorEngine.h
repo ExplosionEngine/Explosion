@@ -18,4 +18,6 @@ namespace Editor {
 
         explicit EditorEngine(const Runtime::EngineInitParams& inParams);
     };
+
+    EditorEngine& GetEditorEngine();
 }

@@ -16,7 +16,7 @@ namespace Runtime {
         EPolyClassBody(SceneSystem)
 
     public:
-        explicit SceneSystem(ECRegistry& inRegistry);
+        explicit SceneSystem(ECRegistry& inRegistry, const SystemSetupContext& inContext);
         ~SceneSystem() override;
 
         NonCopyable(SceneSystem)

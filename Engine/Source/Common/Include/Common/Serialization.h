@@ -125,6 +125,7 @@ namespace Common {
         NonCopyable(MemoryDeserializeStream)
         explicit MemoryDeserializeStream(const std::vector<uint8_t>& inBytes, size_t pointerBegin = 0);
         ~MemoryDeserializeStream() override;
+
         void Seek(int64_t offset) override;
         std::endian Endian() override;
         size_t Loc() override;

@@ -5,8 +5,8 @@
 #include <Runtime/System/Transform.h>
 
 namespace Runtime {
-    TransformSystem::TransformSystem(ECRegistry& inRegistry)
-        : System(inRegistry)
+    TransformSystem::TransformSystem(ECRegistry& inRegistry, const SystemSetupContext& inContext)
+        : System(inRegistry, inContext)
         , worldTransformUpdatedObserver(registry.Observer())
         , localTransformUpdatedObserver(registry.Observer())
     {
@@ -23,8 +23,8 @@ namespace Runtime {
         std::vector<Entity> pendingUpdateChildrenWorldTransforms;
         std::vector<Entity> pendingUpdateSelfAndChildrenWorldTransforms;
 
-        pendingUpdateLocalTransforms.reserve(worldTransformUpdatedObserver.Size());
-        pendingUpdateChildrenWorldTransforms.reserve(worldTransformUpdatedObserver.Size());
+        pendingUpdateLocalTransforms.reserve(worldTransformUpdatedObserver.Count());
+        pendingUpdateChildrenWorldTransforms.reserve(worldTransformUpdatedObserver.Count());
         worldTransformUpdatedObserver.EachThenClear([&](Entity e) -> void {
             if (registry.Has<LocalTransform>(e) && registry.Has<Hierarchy>(e) && HierarchyOps::HasParent(registry, e)) {
                 pendingUpdateLocalTransforms.emplace_back(e);
@@ -35,7 +35,7 @@ namespace Runtime {
             }
         });
 
-        pendingUpdateSelfAndChildrenWorldTransforms.reserve(localTransformUpdatedObserver.Size());
+        pendingUpdateSelfAndChildrenWorldTransforms.reserve(localTransformUpdatedObserver.Count());
         localTransformUpdatedObserver.EachThenClear([&](Entity e) -> void {
             if (registry.Has<WorldTransform>(e) && registry.Has<Hierarchy>(e) && HierarchyOps::HasParent(registry, e)) {
                 pendingUpdateSelfAndChildrenWorldTransforms.emplace_back(e);

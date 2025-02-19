@@ -2,7 +2,7 @@
 // Created by johnk on 2023/10/10.
 //
 
-#include <Runtime/Asset.h>
+#include <Runtime/Asset/Asset.h>
 
 namespace Runtime {
     Asset::Asset() = default;

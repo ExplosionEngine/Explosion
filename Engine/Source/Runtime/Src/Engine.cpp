@@ -12,20 +12,23 @@
 #include <Core/Console.h>
 #include <Mirror/Mirror.h>
 #include <Runtime/World.h>
+#include <Runtime/Settings/Registry.h>
 
 namespace Runtime {
     Engine::Engine(const EngineInitParams& inParams)
     {
         Core::ThreadContext::SetTag(Core::ThreadTag::game);
-        if (!inParams.projectFile.empty()) {
-            Core::Paths::SetCurrentProjectFile(inParams.projectFile);
-            LoadProject(inParams.projectFile);
+        if (!inParams.gameRoot.empty()) {
+            Core::Paths::SetGameRoot(inParams.gameRoot);
         }
 
         if (inParams.logToFile) {
             AttachLogFile();
         }
         InitRender(inParams.rhiType);
+
+        // TODO load all modules and plugins
+        SettingsRegistry::Get().LoadAllSettings();
     }
 
     Engine::~Engine()
@@ -47,19 +50,6 @@ namespace Runtime {
     Render::RenderModule& Engine::GetRenderModule() const
     {
         return *renderModule;
-    }
-
-    Project* Engine::GetProject()
-    {
-        return project.has_value() ? &project.value() : nullptr;
-    }
-
-    void Engine::SaveProject() const
-    {
-        if (!project.has_value()) {
-            return;
-        }
-        Common::JsonSerializeToFile<Project>(Core::Paths::ProjectFile().String(), project.value());
     }
 
     void Engine::Tick(float inDeltaTimeSeconds)
@@ -85,11 +75,11 @@ namespace Runtime {
         lastFrameRenderThreadFence = renderThread.EmplaceTask([]() -> void {});
     }
 
-    void Engine::AttachLogFile() // NOLINT
+    void Engine::AttachLogFile() const // NOLINT
     {
         const auto time = Common::Time(Common::TimePoint::Now());
         const auto logName = Core::Paths::ExecutablePath().FileNameWithoutExtension() + "-" + time.ToString() + ".log";
-        const auto logFile = ((Core::Paths::HasSetProjectFile() ? Core::Paths::ProjectLogDir() : Core::Paths::EngineLogDir()) / logName).String();
+        const auto logFile = ((Core::Paths::HasSetGameRoot() ? Core::Paths::GameLogDir() : Core::Paths::EngineLogDir()) / logName).String();
 
         Core::Logger::Get().Attach(new Core::FileLogStream(logFile));
         LogInfo(Core, "logger attached to file {}", logFile);
@@ -104,12 +94,6 @@ namespace Runtime {
         initParams.rhiType = RHI::GetRHITypeByAbbrString(inRhiTypeStr);
         renderModule->Initialize(initParams);
         LogInfo(Render, "RHI type: {}", inRhiTypeStr);
-    }
-
-    void Engine::LoadProject(const std::string& inProjectFile)
-    {
-        project = Project();
-        Common::JsonDeserializeFromFile<Project>(Core::Paths::ProjectFile().String(), project.value());
     }
 
     Common::UniquePtr<Engine> EngineHolder::engine = nullptr;

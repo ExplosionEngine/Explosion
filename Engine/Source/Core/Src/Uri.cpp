@@ -16,49 +16,15 @@ namespace Core {
     {
     }
 
-    Uri::Uri(const Uri& other) // NOLINT
-        : value(other.value)
-    {
-    }
-
-    Uri::Uri(Uri&& other) noexcept // NOLINT
-        : value(std::move(other.value))
-    {
-    }
-
-    Uri::~Uri() = default;
-
-    Uri& Uri::operator=(const Uri& other) // NOLINT
-    {
-        value = other.value;
-        return *this;
-    }
-
-    Uri& Uri::operator=(const std::string& inValue)
-    {
-        value = inValue;
-        return *this;
-    }
-
-    Uri& Uri::operator=(Uri&& other) noexcept // NOLINT
-    {
-        value = std::move(other.value);
-        return *this;
-    }
-
-    bool Uri::operator==(const Uri& rhs) const
-    {
-        return value == rhs.value;
-    }
-
     const std::string& Uri::Str() const
     {
         return value;
     }
 
-    UriProtocol Uri::Protocal() const // NOLINT
+    UriProtocol Uri::Protocol() const // NOLINT
     {
         static const std::unordered_map<std::string, UriProtocol> protocolMap = {
+            { "file", UriProtocol::file },
             { "asset", UriProtocol::asset }
         };
 
@@ -79,10 +45,49 @@ namespace Core {
         return value.empty();
     }
 
+    bool Uri::operator==(const Uri& rhs) const
+    {
+        return value == rhs.value;
+    }
+
+    FileUriParser::FileUriParser(const Uri& inUri)
+        : content(inUri.Content())
+    {
+        Assert(inUri.Protocol() == UriProtocol::file);
+    }
+
+    bool FileUriParser::IsEngineFile() const
+    {
+        return Common::StringUtils::RegexMatch(content, R"(Engine/.*)");
+    }
+
+    bool FileUriParser::IsGameFile() const
+    {
+        return Common::StringUtils::RegexMatch(content, R"(Game/.*)");
+    }
+
+    bool FileUriParser::IsRegularFile() const
+    {
+        return !IsEngineFile() && !IsGameFile();
+    }
+
+    Common::Path FileUriParser::Parse() const
+    {
+        Common::Path path;
+        if (IsEngineFile()) {
+            path = Paths::EngineRootDir() / Common::StringUtils::AfterFirst(content, "Engine/");
+        } else if (IsGameFile()) {
+            path = Paths::GameRootDir() / Common::StringUtils::AfterFirst(content, "Game/");
+        } else {
+            path = content;
+        }
+        return path;
+    }
+
     AssetUriParser::AssetUriParser(const Uri& inUri)
         : content(inUri.Content())
     {
-        Assert(inUri.Protocal() == UriProtocol::asset);
+        Assert(inUri.Protocol() == UriProtocol::asset);
     }
 
     bool AssetUriParser::IsEngineAsset() const
@@ -90,9 +95,9 @@ namespace Core {
         return Common::StringUtils::RegexMatch(content, R"(Engine/.*)");
     }
 
-    bool AssetUriParser::IsProjectAsset() const
+    bool AssetUriParser::IsGameAsset() const
     {
-        return Common::StringUtils::RegexMatch(content, R"(Project/.*)");
+        return Common::StringUtils::RegexMatch(content, R"(Game/.*)");
     }
 
     bool AssetUriParser::IsEnginePluginAsset() const
@@ -100,12 +105,12 @@ namespace Core {
         return Common::StringUtils::RegexMatch(content, R"(Engine/Plugin/.*)");
     }
 
-    bool AssetUriParser::IsProjectPluginAsset() const
+    bool AssetUriParser::IsGamePluginAsset() const
     {
-        return Common::StringUtils::RegexMatch(content, R"(Project/Plugin/.*)");
+        return Common::StringUtils::RegexMatch(content, R"(Game/Plugin/.*)");
     }
 
-    Common::Path AssetUriParser::AbsoluteFilePath() const
+    Common::Path AssetUriParser::Parse() const
     {
         Common::Path path;
 #if BUILD_TEST
@@ -117,18 +122,17 @@ namespace Core {
 #endif
             const std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Engine/Plugin/");
             path = Paths::EnginePluginAssetDir(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
-        } else if (IsProjectPluginAsset()) {
-            const std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Project/Plugin/");
-            path = Paths::ProjectPluginAssetDir(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
+        } else if (IsGamePluginAsset()) {
+            const std::string pathWithPluginName = Common::StringUtils::AfterFirst(content, "Game/Plugin/");
+            path = Paths::GamePluginAssetDir(Common::StringUtils::BeforeFirst(pathWithPluginName, "/")) / Common::StringUtils::AfterFirst(pathWithPluginName, "/");
         } else if (IsEngineAsset()) {
             path = Paths::EngineAssetDir() / Common::StringUtils::AfterFirst(content, "Engine/");
-        } else if (IsProjectAsset()) {
-            path = Paths::ProjectAssetDir() / Common::StringUtils::AfterFirst(content, "Project/");
+        } else if (IsGameAsset()) {
+            path = Paths::GameAssetDir() / Common::StringUtils::AfterFirst(content, "Game/");
         } else {
             AssertWithReason(false, "bad asset uri");
         }
-        path = path + ".expa";
-        return path.Absolute();
+        return path + ".expa";
     }
 
 #if BUILD_TEST

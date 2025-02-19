@@ -34,22 +34,22 @@ struct EClass() Velocity {
     float y;
 };
 
-struct EClass(global, transient) GBasicTest_ExpectVerifyResult {
+struct EClass(global) GBasicTest_ExpectVerifyResult {
     EClassBody(GBasicTest_ExpectVerifyResult)
 
     std::unordered_map<Runtime::Entity, Position> entities;
 };
 
 class EClass() BasicTest_MotionSystem : public Runtime::System {
-    EClassBody(BasicTest_MotionSystem)
+    EPolyClassBody(BasicTest_MotionSystem)
 
-    explicit BasicTest_MotionSystem(Runtime::ECRegistry& inRegistry);
+    explicit BasicTest_MotionSystem(Runtime::ECRegistry& inRegistry, const Runtime::SystemSetupContext& inContext);
     ~BasicTest_MotionSystem() override;
 
     void Tick(float inDeltaTimeSeconds) override;
 };
 
-struct EClass(global, transient) GConcurrentTest_Context {
+struct EClass(global) GConcurrentTest_Context {
     EClassBody(GConcurrentTest_Context)
 
     uint32_t a;
@@ -59,27 +59,27 @@ struct EClass(global, transient) GConcurrentTest_Context {
 };
 
 struct EClass() ConcurrentTest_SystemA : public Runtime::System {
-    EClassBody(ConcurrentTest_SystemA)
+    EPolyClassBody(ConcurrentTest_SystemA)
 
-    explicit ConcurrentTest_SystemA(Runtime::ECRegistry& inRegistry);
+    explicit ConcurrentTest_SystemA(Runtime::ECRegistry& inRegistry, const Runtime::SystemSetupContext& inContext);
     ~ConcurrentTest_SystemA() override;
 
     void Tick(float inDeltaTimeSeconds) override;
 };
 
 struct EClass() ConcurrentTest_SystemB : public Runtime::System {
-    EClassBody(ConcurrentTest_SystemB)
+    EPolyClassBody(ConcurrentTest_SystemB)
 
-    explicit ConcurrentTest_SystemB(Runtime::ECRegistry& inRegistry);
+    explicit ConcurrentTest_SystemB(Runtime::ECRegistry& inRegistry, const Runtime::SystemSetupContext& inContext);
     ~ConcurrentTest_SystemB() override;
 
     void Tick(float inDeltaTimeSeconds) override;
 };
 
 struct EClass() ConcurrentTest_VerifySystem : public Runtime::System {
-    EClassBody(ConcurrentTest_VerifySystem)
+    EPolyClassBody(ConcurrentTest_VerifySystem)
 
-    explicit ConcurrentTest_VerifySystem(Runtime::ECRegistry& inRegistry);
+    explicit ConcurrentTest_VerifySystem(Runtime::ECRegistry& inRegistry, const Runtime::SystemSetupContext& inContext);
     ~ConcurrentTest_VerifySystem() override;
 
     void Tick(float inDeltaTimeSeconds) override;

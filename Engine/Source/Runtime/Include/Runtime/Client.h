@@ -12,8 +12,9 @@ namespace Runtime {
     class Client {
     public:
         virtual ~Client();
-        virtual World* GetWorld() = 0;
-        virtual Viewport* GetViewport() = 0;
+
+        virtual World& GetWorld() = 0;
+        virtual Viewport& GetViewport() = 0;
 
     protected:
         Client();

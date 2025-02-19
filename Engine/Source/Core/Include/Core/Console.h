@@ -12,8 +12,10 @@
 #include <Core/Api.h>
 
 namespace Core {
-    enum class CSFlagBits {
-        // TODO
+    enum class CSFlagBits : uint8_t {
+        configOverridable = 0x1,
+        settingsOverridable = 0x2,
+        max = 0x4
     };
     using CSFlags = Common::Flags<CSFlagBits>;
     DECLARE_FLAG_BITS_OP(CSFlags, CSFlagBits)
@@ -23,6 +25,9 @@ namespace Core {
 
     class CORE_API ConsoleSetting {
     public:
+        NonCopyable(ConsoleSetting)
+        NonMovable(ConsoleSetting)
+
         virtual ~ConsoleSetting();
 
         const std::string& Name() const;
@@ -73,6 +78,9 @@ namespace Core {
     template <ConsoleSettingBasicType T>
     class ConsoleSettingValue final : public ConsoleSetting {
     public:
+        NonCopyable(ConsoleSettingValue)
+        NonMovable(ConsoleSettingValue)
+
         ConsoleSettingValue(const std::string& inName, const std::string& inDescription, const T& inDefaultValue, const CSFlags& inFlags = CSFlags::null);
         ~ConsoleSettingValue() override;
 
@@ -141,6 +149,7 @@ namespace Core {
         Console();
 
         void RegisterConsoleSetting(ConsoleSetting& inSetting);
+        void UnregisterConsoleSetting(ConsoleSetting& inSetting);
 
         std::unordered_map<std::string, ConsoleSetting*> settings;
     };

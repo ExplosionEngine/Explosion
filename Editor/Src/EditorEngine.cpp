@@ -16,4 +16,9 @@ namespace Editor {
         : Engine(inParams)
     {
     }
+
+    EditorEngine& GetEditorEngine()
+    {
+        return static_cast<EditorEngine&>(Runtime::EngineHolder::Get());
+    }
 }

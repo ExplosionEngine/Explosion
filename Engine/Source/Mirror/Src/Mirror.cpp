@@ -923,9 +923,19 @@ namespace Mirror {
         return Assert(false), false;
     }
 
+    bool ReflNode::GetMetaBoolOr(const std::string& key, bool defaultValue) const
+    {
+        return HasMeta(key) ? GetMetaBool(key) : defaultValue;
+    }
+
     int32_t ReflNode::GetMetaInt32(const std::string& key) const
     {
         return std::atoi(GetMeta(key).c_str());
+    }
+
+    int32_t ReflNode::GetMetaInt32Or(const std::string& key, int32_t defaultValue) const
+    {
+        return HasMeta(key) ? GetMetaInt32(key) : defaultValue;
     }
 
     int64_t ReflNode::GetMetaInt64(const std::string& key) const
@@ -933,9 +943,19 @@ namespace Mirror {
         return std::atoll(GetMeta(key).c_str());
     }
 
+    int64_t ReflNode::GetMetaInt64Or(const std::string& key, int64_t defaultValue) const
+    {
+        return HasMeta(key) ? GetMetaInt64(key) : defaultValue;
+    }
+
     float ReflNode::GetMetaFloat(const std::string& key) const
     {
         return std::atof(GetMeta(key).c_str());
+    }
+
+    float ReflNode::GetMetaFloatOr(const std::string& key, float defaultValue) const
+    {
+        return HasMeta(key) ? GetMetaFloat(key) : defaultValue;
     }
 
     Variable::Variable(ConstructParams&& params)
@@ -1239,7 +1259,7 @@ namespace Mirror {
 
     bool MemberVariable::IsTransient() const
     {
-        return HasMeta("transient") && GetMetaBool("transient");
+        return GetMetaBoolOr("transient", false);
     }
 
     MemberFunction::MemberFunction(ConstructParams&& params)
@@ -1791,6 +1811,11 @@ namespace Mirror {
             return defaultObject.ConstRef();
         }
         return {};
+    }
+
+    bool Class::IsTransient() const
+    {
+        return GetMetaBoolOr("transient", false);
     }
 
     EnumValue::EnumValue(ConstructParams&& inParams)
