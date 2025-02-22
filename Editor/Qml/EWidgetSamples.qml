@@ -6,7 +6,7 @@ Rectangle {
     color: ETheme.bgColor
 
     ScrollView {
-        id: 'scrollview'
+        id: scrollview
         anchors.fill: parent
         anchors.margins: 20
 

@@ -9,6 +9,8 @@
 
 #include <Common/Utility.h>
 #include <Runtime/ECS.h>
+#include <Runtime/Client.h>
+#include <Runtime/Asset/Level.h>
 
 namespace Runtime {
     enum class PlayStatus : uint8_t {
@@ -24,8 +26,8 @@ namespace Runtime {
         NonMovable(World)
         ~World();
 
+        World(std::string inName, Client* inClient);
         void SetSystemGraph(const SystemGraph& inSystemGraph);
-        void Reset();
         PlayStatus PlayStatus() const;
         bool Stopped() const;
         bool Playing() const;
@@ -34,15 +36,17 @@ namespace Runtime {
         void Resume();
         void Pause();
         void Stop();
+        void LoadFrom(AssetPtr<Level> inLevel);
+        void SaveTo(AssetPtr<Level> inLevel);
 
     private:
         friend class Engine;
 
-        explicit World(const std::string& inName = "");
         void Tick(float inDeltaTimeSeconds);
 
         std::string name;
         Runtime::PlayStatus playStatus;
+        SystemSetupContext systemSetupContext;
         ECRegistry ecRegistry;
         SystemGraph systemGraph;
         std::optional<SystemGraphExecutor> executor;

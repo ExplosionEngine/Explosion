@@ -44,6 +44,7 @@ namespace Common {
         Path operator+(const Path& inPath) const;
         Path operator+(const std::string& inPath) const;
         Path operator+(const char* inPath) const;
+        bool operator==(const Path& inPath) const;
 
     private:
         std::filesystem::path path;

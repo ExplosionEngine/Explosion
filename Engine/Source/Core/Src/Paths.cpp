@@ -8,26 +8,26 @@
 namespace Core {
     Common::Path Paths::executablePath = Common::Path();
     Common::Path Paths::workingDir = Common::Path();
-    Common::Path Paths::currentProjectFile = Common::Path();
+    Common::Path Paths::gameRoot = Common::Path();
 
     void Paths::SetExecutableDir(const Common::Path& inPath)
     {
         executablePath = inPath;
     }
 
-    void Paths::SetCurrentProjectFile(const Common::Path& inFile)
+    void Paths::SetGameRoot(const Common::Path& inPath)
     {
-        currentProjectFile = inFile;
-    }
-
-    bool Paths::HasSetProjectFile()
-    {
-        return !currentProjectFile.Empty();
+        gameRoot = inPath;
     }
 
     bool Paths::HasSetExecutableDir()
     {
         return !executablePath.Empty();
+    }
+
+    bool Paths::HasSetGameRoot()
+    {
+        return !gameRoot.Empty();
     }
 
     Common::Path Paths::WorkingDir()
@@ -47,15 +47,7 @@ namespace Core {
 
     Common::Path Paths::EngineRootDir()
     {
-#if BUILD_TEST
-        if (HasSetExecutableDir()) {
-            return ExecutablePath().Parent().Parent();
-        }
         return WorkingDir().Parent();
-#else
-        Assert(HasSetExecutableDir());
-        return ExecutableDir().Parent().Parent();
-#endif
     }
 
     Common::Path Paths::EngineResDir()
@@ -78,6 +70,11 @@ namespace Core {
         return EngineRootDir() / "Binaries";
     }
 
+    Common::Path Paths::EngineConfigDir()
+    {
+        return EngineRootDir() / "Config";
+    }
+
     Common::Path Paths::EngineCacheDir()
     {
         return EngineRootDir() / "Cache";
@@ -98,44 +95,44 @@ namespace Core {
         return EnginePluginDir() / pluginName / "Asset";
     }
 
-    Common::Path Paths::ProjectFile()
+    Common::Path Paths::GameRootDir()
     {
-        return currentProjectFile;
+        return gameRoot;
     }
 
-    Common::Path Paths::ProjectRootDir()
+    Common::Path Paths::GameAssetDir()
     {
-        return currentProjectFile.Parent();
+        return GameRootDir() / "Asset";
     }
 
-    Common::Path Paths::ProjectAssetDir()
+    Common::Path Paths::GameBinDir()
     {
-        return ProjectRootDir() / "Asset";
+        return GameRootDir() / "Binaries";
     }
 
-    Common::Path Paths::ProjectBinDir()
+    Common::Path Paths::GameConfigDir()
     {
-        return ProjectRootDir() / "Binaries";
+        return GameRootDir() / "Config";
     }
 
-    Common::Path Paths::ProjectCacheDir()
+    Common::Path Paths::GameCacheDir()
     {
-        return ProjectRootDir() / "Cache";
+        return GameRootDir() / "Cache";
     }
 
-    Common::Path Paths::ProjectLogDir()
+    Common::Path Paths::GameLogDir()
     {
-        return ProjectCacheDir() / "Log";
+        return GameCacheDir() / "Log";
     }
 
-    Common::Path Paths::ProjectPluginDir()
+    Common::Path Paths::GamePluginDir()
     {
-        return ProjectRootDir() / "Plugin";
+        return GameRootDir() / "Plugin";
     }
 
-    Common::Path Paths::ProjectPluginAssetDir(const std::string& pluginName)
+    Common::Path Paths::GamePluginAssetDir(const std::string& pluginName)
     {
-        return ProjectPluginDir() / pluginName / "Asset";
+        return GamePluginDir() / pluginName / "Asset";
     }
 
     Common::Path Paths::EngineCMakeSourceDir()

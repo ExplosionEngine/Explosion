@@ -7,7 +7,7 @@
 #include <Runtime/ECS.h>
 
 namespace Runtime {
-    System::System(ECRegistry& inRegistry)
+    System::System(ECRegistry& inRegistry, const SystemSetupContext&)
         : registry(inRegistry)
     {
     }
@@ -18,6 +18,11 @@ namespace Runtime {
 }
 
 namespace Runtime::Internal {
+    static bool IsGlobalCompClass(GCompClass inClass)
+    {
+        return inClass->HasMeta("global") && inClass->GetMetaBool("global");
+    }
+
     CompRtti::CompRtti(CompClass inClass)
         : clazz(inClass)
         , bound(false)
@@ -67,14 +72,14 @@ namespace Runtime::Internal {
         return offset;
     }
 
-    size_t CompRtti::Size() const
+    size_t CompRtti::MemorySize() const
     {
         return clazz->SizeOf();
     }
 
     Archetype::Archetype(const std::vector<CompRtti>& inRttiVec)
         : id(0)
-        , size(0)
+        , count(0)
         , elemSize(1)
         , rttiVec(inRttiVec)
     {
@@ -86,7 +91,7 @@ namespace Runtime::Internal {
 
             id += clazz->GetTypeInfo()->id;
             rtti.Bind(elemSize);
-            elemSize += rtti.Size();
+            elemSize += rtti.MemorySize();
         }
     }
 
@@ -123,7 +128,7 @@ namespace Runtime::Internal {
     ElemPtr Archetype::EmplaceElem(Entity inEntity)
     {
         ElemPtr result = AllocateNewElemBack();
-        auto backElem = size - 1;
+        auto backElem = count - 1;
         entityMap.emplace(inEntity, backElem);
         elemMap.emplace(backElem, inEntity);
         return result;
@@ -152,7 +157,7 @@ namespace Runtime::Internal {
     {
         const auto elemIndex = entityMap.at(inEntity);
         ElemPtr elem = ElemAt(elemIndex);
-        const auto lastElemIndex = Size() - 1;
+        const auto lastElemIndex = count - 1;
         const auto entityToLastElem = elemMap.at(lastElemIndex);
         ElemPtr lastElem = ElemAt(lastElemIndex);
         for (const auto& rtti : rttiVec) {
@@ -162,7 +167,7 @@ namespace Runtime::Internal {
         entityMap.erase(inEntity);
         elemMap.at(elemIndex) = entityToLastElem;
         elemMap.erase(lastElemIndex);
-        size--;
+        count--;
     }
 
     ElemPtr Archetype::GetElem(Entity inEntity) const
@@ -182,9 +187,9 @@ namespace Runtime::Internal {
         return GetCompRtti(inCompClass).Get(element).ConstRef();
     }
 
-    size_t Archetype::Size() const
+    size_t Archetype::Count() const
     {
-        return size;
+        return count;
     }
 
     const std::vector<CompRtti>& Archetype::GetRttiVec() const
@@ -246,7 +251,7 @@ namespace Runtime::Internal {
         const size_t newCapacity = static_cast<size_t>(std::ceil(static_cast<float>(std::max(Capacity(), static_cast<size_t>(1))) * inRatio));
         std::vector<uint8_t> newMemory(newCapacity * elemSize);
 
-        for (auto i = 0; i < size; i++) {
+        for (auto i = 0; i < count; i++) {
             for (const auto& rtti : rttiVec) {
                 void* dstElem = ElemAt(newMemory, i);
                 void* srcElem = ElemAt(i);
@@ -259,11 +264,11 @@ namespace Runtime::Internal {
 
     void* Archetype::AllocateNewElemBack()
     {
-        if (Size() == Capacity()) {
+        if (Count() == Capacity()) {
             Reserve();
         }
-        size++;
-        return ElemAt(size - 1);
+        count++;
+        return ElemAt(count - 1);
     }
 
     EntityPool::EntityPool()
@@ -271,7 +276,7 @@ namespace Runtime::Internal {
     {
     }
 
-    size_t EntityPool::Size() const
+    size_t EntityPool::Count() const
     {
         return allocated.size();
     }
@@ -289,10 +294,25 @@ namespace Runtime::Internal {
             free.erase(result);
         } else {
             result = counter++;
-            allocated.emplace(result);
         }
+        allocated.emplace(result);
         SetArchetype(result, 0);
         return result;
+    }
+
+    void EntityPool::Allocate(Entity inEntity)
+    {
+        if (inEntity < counter) {
+            Assert(free.contains(inEntity));
+            free.erase(inEntity);
+        } else {
+            for (uint32_t i = counter; i < inEntity; i++) {
+                free.emplace(i);
+            }
+            counter = inEntity + 1;
+        }
+        allocated.emplace(inEntity);
+        SetArchetype(inEntity, 0);
     }
 
     void EntityPool::Free(Entity inEntity)
@@ -305,7 +325,7 @@ namespace Runtime::Internal {
 
     void EntityPool::Clear()
     {
-        counter = 0;
+        counter = 1;
         free.clear();
         allocated.clear();
         archetypeMap.clear();
@@ -344,9 +364,9 @@ namespace Runtime::Internal {
         BuildArgumentLists();
     }
 
-    Common::UniquePtr<System> SystemFactory::Build(ECRegistry& inRegistry) const
+    Common::UniquePtr<System> SystemFactory::Build(ECRegistry& inRegistry, const SystemSetupContext& inSetupContext) const
     {
-        const Mirror::Any system = clazz->New(inRegistry);
+        const Mirror::Any system = clazz->New(inRegistry, inSetupContext);
         const Mirror::Any systemRef = system.Deref();
         for (const auto& [name, argument] : arguments) {
             clazz->GetMemberVariable(name).SetDyn(systemRef, argument.ConstRef());
@@ -450,7 +470,7 @@ namespace Runtime {
         return OnEvent(registry.EventsDyn(inClass).onRemove);
     }
 
-    size_t Observer::Size() const
+    size_t Observer::Count() const
     {
         return entities.size();
     }
@@ -541,19 +561,19 @@ namespace Runtime {
 
     EventsObserverDyn::~EventsObserverDyn() = default;
 
-    size_t EventsObserverDyn::ConstructedSize() const
+    size_t EventsObserverDyn::ConstructedCount() const
     {
-        return constructedObserver.Size();
+        return constructedObserver.Count();
     }
 
-    size_t EventsObserverDyn::UpdatedSize() const
+    size_t EventsObserverDyn::UpdatedCount() const
     {
-        return updatedObserver.Size();
+        return updatedObserver.Count();
     }
 
-    size_t EventsObserverDyn::RemovedSize() const
+    size_t EventsObserverDyn::RemovedCount() const
     {
-        return removedObserver.Size();
+        return removedObserver.Count();
     }
 
     void EventsObserverDyn::EachConstructed(const EntityTraverseFunc& inFunc) const
@@ -615,7 +635,7 @@ namespace Runtime {
 
     ECRegistry::~ECRegistry()
     {
-        ResetTransients();
+        CheckEventsUnbound();
     }
 
     ECRegistry::ECRegistry(const ECRegistry& inOther)
@@ -648,17 +668,17 @@ namespace Runtime {
         return *this;
     }
 
-    void ECRegistry::ResetTransients()
-    {
-        compEvents.clear();
-        globalCompEvents.clear();
-    }
-
     Entity ECRegistry::Create()
     {
         const Entity result = entities.Allocate();
         archetypes.at(entities.GetArchetype(result)).EmplaceElem(result);
         return result;
+    }
+
+    void ECRegistry::Create(Entity inEntity)
+    {
+        entities.Allocate(inEntity);
+        archetypes.at(entities.GetArchetype(inEntity)).EmplaceElem(inEntity);
     }
 
     void ECRegistry::Destroy(Entity inEntity)
@@ -673,9 +693,9 @@ namespace Runtime {
         return entities.Valid(inEntity);
     }
 
-    size_t ECRegistry::Size() const
+    size_t ECRegistry::Count() const
     {
-        return entities.Size();
+        return entities.Count();
     }
 
     void ECRegistry::Clear()
@@ -683,12 +703,12 @@ namespace Runtime {
         entities.Clear();
         globalComps.clear();
         archetypes.clear();
-        ResetTransients();
+        archetypes.emplace(0, Internal::Archetype({}));
     }
 
     void ECRegistry::Each(const EntityTraverseFunc& inFunc) const
     {
-        return entities.Each(inFunc);
+        entities.Each(inFunc);
     }
 
     ECRegistry::ConstIter ECRegistry::Begin() const
@@ -709,6 +729,22 @@ namespace Runtime {
     ECRegistry::ConstIter ECRegistry::end() const
     {
         return End();
+    }
+
+    void ECRegistry::CompEach(Entity inEntity, const CompTraverseFunc& inFunc) const
+    {
+        const Internal::ArchetypeId archetypeId = entities.GetArchetype(inEntity);
+        const Internal::Archetype& archetype = archetypes.at(archetypeId);
+        for (const auto& compRtti : archetype.GetRttiVec()) {
+            inFunc(compRtti.Class());
+        }
+    }
+
+    size_t ECRegistry::CompCount(Entity inEntity) const
+    {
+        const Internal::ArchetypeId archetypeId = entities.GetArchetype(inEntity);
+        const Internal::Archetype& archetype = archetypes.at(archetypeId);
+        return archetype.GetRttiVec().size();
     }
 
     Runtime::RuntimeView ECRegistry::RuntimeView(const RuntimeFilter& inFilter)
@@ -761,6 +797,80 @@ namespace Runtime {
     Observer ECRegistry::Observer()
     {
         return Runtime::Observer { *this };
+    }
+
+    void ECRegistry::Save(ECArchive& outArchive) const
+    {
+        outArchive = {};
+        outArchive.entities.reserve(Count());
+        Each([&](Entity entity) -> void {
+            outArchive.entities.emplace(entity, EntityArchive {});
+            auto& comps = outArchive.entities.at(entity).comps;
+            comps.reserve(CompCount(entity));
+
+            CompEach(entity, [&](CompClass clazz) -> void {
+                if (clazz->IsTransient()) {
+                    return;
+                }
+                comps.emplace(clazz, std::vector<uint8_t> {});
+                Common::MemorySerializeStream stream(comps.at(clazz));
+                GetDyn(clazz, entity).Serialize(stream);
+            });
+        });
+
+        auto& gComps = outArchive.globalComps;
+        gComps.reserve(GCompCount());
+        GCompEach([&](GCompClass clazz) -> void {
+            if (clazz->IsTransient()) {
+                return;
+            }
+            gComps.emplace(clazz, std::vector<uint8_t> {});
+            Common::MemorySerializeStream stream(gComps.at(clazz));
+            GGetDyn(clazz).Serialize(stream);
+        });
+    }
+
+    void ECRegistry::Load(const ECArchive& inArchive)
+    {
+        Clear();
+
+        for (const auto& [entity, entityArchive] : inArchive.entities) {
+            Create(entity);
+            for (const auto& [compClass, compData] : entityArchive.comps) {
+                if (compClass->IsTransient()) {
+                    continue;
+                }
+                Assert(compClass->HasDefaultConstructor());
+                Mirror::Any compRef = EmplaceDyn(compClass, entity, {});
+                Common::MemoryDeserializeStream stream(compData);
+                compRef.Deserialize(stream);
+            }
+        }
+
+        for (const auto& [gCompClass, gCompData] : inArchive.globalComps) {
+            if (gCompClass->IsTransient()) {
+                continue;
+            }
+            Assert(gCompClass->HasDefaultConstructor());
+            Mirror::Any gCompRef = GEmplaceDyn(gCompClass, {});
+            Common::MemoryDeserializeStream stream(gCompData);
+            gCompRef.Deserialize(stream);
+        }
+    }
+
+    void ECRegistry::CheckEventsUnbound() const
+    {
+        for (const auto& events : compEvents | std::views::values) {
+            Assert(events.onConstructed.Count() == 0);
+            Assert(events.onUpdated.Count() == 0);
+            Assert(events.onRemove.Count() == 0);
+        }
+
+        for (const auto& events : globalCompEvents | std::views::values) {
+            Assert(events.onConstructed.Count() == 0);
+            Assert(events.onUpdated.Count() == 0);
+            Assert(events.onRemove.Count() == 0);
+        }
     }
 
     Mirror::Any ECRegistry::EmplaceDyn(CompClass inClass, Entity inEntity, const Mirror::ArgumentList& inArgs)
@@ -886,6 +996,7 @@ namespace Runtime {
 
     Mirror::Any ECRegistry::GEmplaceDyn(GCompClass inClass, const Mirror::ArgumentList& inArgs)
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         Assert(!GHasDyn(inClass));
         globalComps.emplace(inClass, inClass->ConstructDyn(inArgs));
         GNotifyConstructedDyn(inClass);
@@ -894,6 +1005,7 @@ namespace Runtime {
 
     void ECRegistry::GRemoveDyn(GCompClass inClass)
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         Assert(GHasDyn(inClass));
         GNotifyRemoveDyn(inClass);
         globalComps.erase(inClass);
@@ -901,6 +1013,7 @@ namespace Runtime {
 
     void ECRegistry::GUpdateDyn(GCompClass inClass, const DynUpdateFunc& inFunc)
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         Assert(GHasDyn(inClass));
         inFunc(GGetDyn(inClass));
         GNotifyUpdatedDyn(inClass);
@@ -908,40 +1021,59 @@ namespace Runtime {
 
     GScopedUpdaterDyn ECRegistry::GUpdateDyn(GCompClass inClass)
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         Assert(GHasDyn(inClass));
         return { *this, inClass, GGetDyn(inClass) };
     }
 
     bool ECRegistry::GHasDyn(GCompClass inClass) const
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         return globalComps.contains(inClass);
     }
 
     Mirror::Any ECRegistry::GFindDyn(GCompClass inClass)
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         return GHasDyn(inClass) ? GGetDyn(inClass) : Mirror::Any();
     }
 
     Mirror::Any ECRegistry::GFindDyn(GCompClass inClass) const
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         return GHasDyn(inClass) ? GGetDyn(inClass) : Mirror::Any();
     }
 
     Mirror::Any ECRegistry::GGetDyn(GCompClass inClass)
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         Assert(GHasDyn(inClass));
         return globalComps.at(inClass).Ref();
     }
 
     Mirror::Any ECRegistry::GGetDyn(GCompClass inClass) const
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         Assert(GHasDyn(inClass));
         return globalComps.at(inClass).ConstRef();
     }
 
     ECRegistry::GCompEvents& ECRegistry::GEventsDyn(GCompClass inClass)
     {
+        Assert(Internal::IsGlobalCompClass(inClass));
         return globalCompEvents[inClass];
+    }
+
+    void ECRegistry::GCompEach(const GCompTraverseFunc& inFunc) const
+    {
+        for (const auto& clazz : globalComps | std::views::keys) {
+            inFunc(clazz);
+        }
+    }
+
+    size_t ECRegistry::GCompCount() const
+    {
+        return globalComps.size();
     }
 
     SystemGroup::SystemGroup(std::string inName, SystemExecuteStrategy inStrategy)
@@ -1155,13 +1287,18 @@ namespace Runtime {
             .wait();
     }
 
-    SystemGraphExecutor::SystemGraphExecutor(ECRegistry& inEcRegistry, const SystemGraph& inSystemGraph)
+    SystemSetupContext::SystemSetupContext()
+        : client(nullptr)
+    {
+    }
+
+    SystemGraphExecutor::SystemGraphExecutor(ECRegistry& inEcRegistry, const SystemGraph& inSystemGraph, const SystemSetupContext& inSetupContext)
         : ecRegistry(inEcRegistry)
         , systemGraph(inSystemGraph)
         , pipeline(inSystemGraph)
     {
         pipeline.ParallelPerformAction([&](SystemPipeline::SystemContext& context) -> void {
-            context.instance = context.factory.Build(inEcRegistry);
+            context.instance = context.factory.Build(inEcRegistry, inSetupContext);
         });
     }
 
@@ -1170,6 +1307,7 @@ namespace Runtime {
         pipeline.ParallelPerformAction([](SystemPipeline::SystemContext& context) -> void {
             context.instance = nullptr;
         });
+        ecRegistry.CheckEventsUnbound();
     }
 
     void SystemGraphExecutor::Tick(float inDeltaTimeSeconds)

@@ -9,20 +9,26 @@
 #include <Core/Paths.h>
 #include <Core/Log.h>
 #include <Core/Thread.h>
+#include <Core/Console.h>
+#include <Mirror/Mirror.h>
 #include <Runtime/World.h>
+#include <Runtime/Settings/Registry.h>
 
 namespace Runtime {
     Engine::Engine(const EngineInitParams& inParams)
     {
-        Core::ScopedThreadTag tag(Core::ThreadTag::game);
-        if (!inParams.projectFile.empty()) {
-            Core::Paths::SetCurrentProjectFile(inParams.projectFile);
+        Core::ThreadContext::SetTag(Core::ThreadTag::game);
+        if (!inParams.gameRoot.empty()) {
+            Core::Paths::SetGameRoot(inParams.gameRoot);
         }
 
         if (inParams.logToFile) {
             AttachLogFile();
         }
         InitRender(inParams.rhiType);
+
+        // TODO load all modules and plugins
+        SettingsRegistry::Get().LoadAllSettings();
     }
 
     Engine::~Engine()
@@ -46,8 +52,18 @@ namespace Runtime {
         return *renderModule;
     }
 
-    void Engine::Tick(float inDeltaTimeSeconds) const
+    void Engine::Tick(float inDeltaTimeSeconds)
     {
+        // game thread can run faster than render thread 1 frame as max
+        if (last2FrameRenderThreadFence.valid()) {
+            last2FrameRenderThreadFence.wait();
+        }
+
+        auto& renderThread = renderModule->GetRenderThread();
+        renderThread.EmplaceTask([]() -> void {
+            Core::Console::Get().PerformRenderThreadSettingsCopy();
+        });
+
         for (auto* world : worlds) {
             if (!world->Playing()) {
                 continue;
@@ -55,19 +71,15 @@ namespace Runtime {
             world->Tick(inDeltaTimeSeconds);
         }
 
-        // TODO emplace render thread task, like wait fence, console command copy
+        last2FrameRenderThreadFence = std::move(lastFrameRenderThreadFence);
+        lastFrameRenderThreadFence = renderThread.EmplaceTask([]() -> void {});
     }
 
-    Common::UniquePtr<World> Engine::CreateWorld(const std::string& inName) const // NOLINT
-    {
-        return new World(inName);
-    }
-
-    void Engine::AttachLogFile() // NOLINT
+    void Engine::AttachLogFile() const // NOLINT
     {
         const auto time = Common::Time(Common::TimePoint::Now());
         const auto logName = Core::Paths::ExecutablePath().FileNameWithoutExtension() + "-" + time.ToString() + ".log";
-        const auto logFile = ((Core::Paths::HasSetProjectFile() ? Core::Paths::ProjectLogDir() : Core::Paths::EngineLogDir()) / logName).String();
+        const auto logFile = ((Core::Paths::HasSetGameRoot() ? Core::Paths::GameLogDir() : Core::Paths::EngineLogDir()) / logName).String();
 
         Core::Logger::Get().Attach(new Core::FileLogStream(logFile));
         LogInfo(Core, "logger attached to file {}", logFile);

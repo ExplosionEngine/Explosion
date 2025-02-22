@@ -21,7 +21,7 @@ class TriangleVS : public GlobalShader {
 public:
     ShaderInfo(
         "TriangleVS",
-        "../Test/Sample/Rendering-Triangle/Triangle.esl",
+        "Engine/Test/Sample/Rendering-Triangle/Triangle.esl",
         "VSMain",
         RHI::ShaderStageBits::sVertex);
 
@@ -33,7 +33,7 @@ class TrianglePS : public GlobalShader {
 public:
     ShaderInfo(
         "TrianglePS",
-        "../Test/Sample/Rendering-Triangle/Triangle.esl",
+        "Engine/Test/Sample/Rendering-Triangle/Triangle.esl",
         "PSMain",
         RHI::ShaderStageBits::sPixel);
 

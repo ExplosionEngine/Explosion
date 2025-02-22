@@ -555,9 +555,8 @@ namespace Runtime {
             return;
         }
 
-        Core::AssetUriParser parser(assetRef.Uri());
-        auto pathString = parser.AbsoluteFilePath().String();
-        Common::BinaryFileSerializeStream stream(pathString);
+        const Core::AssetUriParser parser(assetRef.Uri());
+        Common::BinaryFileSerializeStream stream(parser.Parse().Absolute().String());
 
         Mirror::Any ref = std::ref(*assetRef.Get());
         ref.Serialize(stream);
@@ -572,9 +571,8 @@ namespace Runtime {
     template <Common::DerivedFrom<Asset> A>
     AssetPtr<A> AssetManager::LoadInternal(const Core::Uri& uri)
     {
-        Core::AssetUriParser parser(uri);
-        auto pathString = parser.AbsoluteFilePath().String();
-        Common::BinaryFileDeserializeStream stream(pathString);
+        const Core::AssetUriParser parser(uri);
+        Common::BinaryFileDeserializeStream stream(parser.Parse().Absolute().String());
 
         AssetPtr<A> result = Common::SharedPtr<A>(new A());
         Mirror::Any ref = std::ref(*result.Get());

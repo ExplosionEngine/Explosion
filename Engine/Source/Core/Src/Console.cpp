@@ -15,7 +15,10 @@ namespace Core {
         Console::Get().RegisterConsoleSetting(*this);
     }
 
-    ConsoleSetting::~ConsoleSetting() = default;
+    ConsoleSetting::~ConsoleSetting()
+    {
+        Console::Get().UnregisterConsoleSetting(*this);
+    }
 
     const std::string& ConsoleSetting::Name() const
     {
@@ -56,7 +59,7 @@ namespace Core {
         return *settings.at(inName);
     }
 
-    void Console::PerformRenderThreadCopy() const
+    void Console::PerformRenderThreadSettingsCopy() const
     {
         for (const auto& setting : settings | std::views::values) {
             setting->PerformRenderThreadCopy();
@@ -68,5 +71,10 @@ namespace Core {
     void Console::RegisterConsoleSetting(ConsoleSetting& inSetting)
     {
         settings.emplace(inSetting.Name(), &inSetting);
+    }
+
+    void Console::UnregisterConsoleSetting(ConsoleSetting& inSetting)
+    {
+        settings.erase(inSetting.Name());
     }
 }

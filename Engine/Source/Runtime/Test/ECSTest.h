@@ -11,45 +11,65 @@ using namespace Runtime;
 struct EClass() CompA {
     EClassBody(CompA)
 
+    CompA()
+        : value(0)
+    {
+    }
+
     explicit CompA(int inValue)
         : value(inValue)
     {
     }
 
-    int value;
+    EProperty() int value;
 };
 
 struct EClass() CompB {
     EClassBody(CompB)
+
+    CompB()
+        : value(0.0f)
+    {
+    }
 
     explicit CompB(float inValue)
         : value(inValue)
     {
     }
 
-    float value;
+    EProperty() float value;
 };
 
-struct EClass() GCompA {
+struct EClass(global) GCompA {
     EClassBody(GCompA)
+
+    GCompA()
+        : value(0)
+    {
+    }
 
     explicit GCompA(int inValue)
         : value(inValue)
     {
     }
 
-    int value;
+    EProperty() int value;
 };
 
-struct EClass() GCompB {
+struct EClass(global) GCompB {
     EClassBody(GCompB)
+
+    GCompB()
+        : value(0.0f)
+    {
+    }
 
     explicit GCompB(float inValue)
         : value(inValue)
     {
     }
 
-    float value;
+    EProperty() float value;
 };
 
 struct EventCounts {

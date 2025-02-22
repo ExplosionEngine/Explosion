@@ -18,7 +18,7 @@
 #include <RHI/ShaderModule.h>
 #include <RHI/BindGroupLayout.h>
 #include <RHI/Pipeline.h>
-#include <Core/Paths.h>
+#include <Core/Uri.h>
 
 namespace Render {
     class Shader {};
@@ -371,18 +371,10 @@ namespace Render {
     template <typename Shader>
     void GlobalShaderType<Shader>::ReadCode()
     {
-        static std::unordered_map<std::string, std::string> pathMap = {
-            { "/Engine/Shader", Core::Paths::EngineShaderDir().String() }
-        };
-
         const std::string sourceFile = Shader::sourceFile;
-        for (const auto& [mapFrom, mapTo] : pathMap) {
-            if (sourceFile.starts_with(mapFrom)) {
-                code = Common::FileUtils::ReadTextFile(Common::StringUtils::Replace(sourceFile, mapFrom, mapTo));
-                return;
-            }
-        }
-        code = Common::FileUtils::ReadTextFile(sourceFile);
+        const Core::Uri uri(std::format("file://{}", sourceFile));
+        const Core::FileUriParser parser(uri);
+        code = Common::FileUtils::ReadTextFile(parser.Parse().String());
     }
 
     template <typename Shader>

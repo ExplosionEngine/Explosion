@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Mirror/Meta.h>
-#include <Runtime/Asset.h>
+#include <Runtime/Asset/Asset.h>
 using namespace Common;
 using namespace Runtime;
 

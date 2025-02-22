@@ -29,25 +29,25 @@ namespace Runtime {
     {
     }
 
-    bool HierarchyUtils::HasParent(ECRegistry& inRegistry, Entity inTarget)
+    bool HierarchyOps::HasParent(ECRegistry& inRegistry, Entity inTarget)
     {
         const auto& hierarchy = inRegistry.Get<Hierarchy>(inTarget);
         return hierarchy.parent != entityNull;
     }
 
-    bool HierarchyUtils::HasBro(ECRegistry& inRegistry, Entity inTarget)
+    bool HierarchyOps::HasBro(ECRegistry& inRegistry, Entity inTarget)
     {
         const auto& hierarchy = inRegistry.Get<Hierarchy>(inTarget);
         return hierarchy.prevBro != entityNull || hierarchy.nextBro != entityNull;
     }
 
-    bool HierarchyUtils::HasChildren(ECRegistry& inRegistry, Entity inTarget)
+    bool HierarchyOps::HasChildren(ECRegistry& inRegistry, Entity inTarget)
     {
         const auto& hierarchy = inRegistry.Get<Hierarchy>(inTarget);
         return hierarchy.firstChild != entityNull;
     }
 
-    void HierarchyUtils::AttachToParent(ECRegistry& inRegistry, Entity inChild, Entity inParent)
+    void HierarchyOps::AttachToParent(ECRegistry& inRegistry, Entity inChild, Entity inParent)
     {
         Assert(!HasParent(inRegistry, inChild) && !HasBro(inRegistry, inChild));
         auto& childHierarchy = inRegistry.Get<Hierarchy>(inChild);
@@ -61,7 +61,7 @@ namespace Runtime {
         parentHierarchy.firstChild = inChild;
     }
 
-    void HierarchyUtils::DetachFromParent(ECRegistry& inRegistry, Entity inChild)
+    void HierarchyOps::DetachFromParent(ECRegistry& inRegistry, Entity inChild)
     {
         Assert(HasParent(inRegistry, inChild));
         auto& childHierarchy = inRegistry.Get<Hierarchy>(inChild);
@@ -93,7 +93,7 @@ namespace Runtime {
         childHierarchy.parent = entityNull;
     }
 
-    void HierarchyUtils::TraverseChildren(ECRegistry& inRegistry, Entity inParent, const TraverseFunc& inFunc)
+    void HierarchyOps::TraverseChildren(ECRegistry& inRegistry, Entity inParent, const TraverseFunc& inFunc)
     {
         const auto& parentHierarchy = inRegistry.Get<Hierarchy>(inParent);
         for (auto child = parentHierarchy.firstChild; child != entityNull;) {
@@ -103,7 +103,7 @@ namespace Runtime {
         }
     }
 
-    void HierarchyUtils::TraverseChildrenRecursively(ECRegistry& inRegistry, Entity inParent, const TraverseFunc& inFunc) // NOLINT
+    void HierarchyOps::TraverseChildrenRecursively(ECRegistry& inRegistry, Entity inParent, const TraverseFunc& inFunc) // NOLINT
     {
         const auto& parentHierarchy = inRegistry.Get<Hierarchy>(inParent);
         for (auto child = parentHierarchy.firstChild; child != entityNull;) {

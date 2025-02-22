@@ -8,15 +8,15 @@
 #include <unordered_set>
 
 #include <Core/Module.h>
-#include <Runtime/Api.h>
 #include <Render/RenderModule.h>
+#include <Runtime/Api.h>
 
 namespace Runtime {
     class World;
 
     struct EngineInitParams {
         bool logToFile;
-        std::string projectFile;
+        std::string gameRoot;
         std::string rhiType;
     };
 
@@ -29,17 +29,18 @@ namespace Runtime {
         void MountWorld(World* inWorld);
         void UnmountWorld(World* inWorld);
         Render::RenderModule& GetRenderModule() const;
-        void Tick(float inDeltaTimeSeconds) const;
-        Common::UniquePtr<World> CreateWorld(const std::string& inName = "") const;
+        void Tick(float inDeltaTimeSeconds);
 
     protected:
         explicit Engine(const EngineInitParams& inParams);
 
-        void AttachLogFile();
+        void AttachLogFile() const;
         void InitRender(const std::string& inRhiTypeStr);
 
         std::unordered_set<World*> worlds;
         Render::RenderModule* renderModule;
+        std::future<void> lastFrameRenderThreadFence;
+        std::future<void> last2FrameRenderThreadFence;
     };
 
     class RUNTIME_API MinEngine final : public Engine {

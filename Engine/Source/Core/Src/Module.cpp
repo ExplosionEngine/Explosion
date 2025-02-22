@@ -131,18 +131,16 @@ namespace Core {
 
     std::optional<std::string> ModuleManager::SearchModule(const std::string& moduleName)
     {
-        std::vector searchPaths = {
-            Paths::WorkingDir(),
-        };
-
+        std::vector<Common::Path> searchPaths;
+        searchPaths.reserve(5);
+        searchPaths.emplace_back(Paths::WorkingDir());
         if (Paths::HasSetExecutableDir()) {
             searchPaths.emplace_back(Paths::EngineBinDir());
             searchPaths.emplace_back(Paths::EnginePluginDir());
         }
-
-        if (Paths::HasSetProjectFile()) {
-            searchPaths.emplace_back(Paths::ProjectBinDir());
-            searchPaths.emplace_back(Paths::ProjectPluginDir());
+        if (Paths::HasSetGameRoot()) {
+            searchPaths.emplace_back(Paths::GameBinDir());
+            searchPaths.emplace_back(Paths::GamePluginDir());
         }
 
         for (const auto& searchPath : searchPaths) {

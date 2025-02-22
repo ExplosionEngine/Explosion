@@ -2,13 +2,12 @@
 // Created by johnk on 2023/4/23.
 //
 
-#include <filesystem>
-
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
 #include <Test/Test.h>
 #include <Mirror/Mirror.h>
+#include <Common/FileSystem.h>
 #include <SerializationTest.h>
 using namespace Mirror;
 
@@ -34,16 +33,15 @@ int SerializationTestStruct3::f() const // NOLINT
 }
 
 template <typename T>
-void PerformSerializationTest(const std::filesystem::path& fileName, const T& object)
+void PerformSerializationTest(const Common::Path& fileName, const T& object)
 {
-    std::filesystem::create_directories(fileName.parent_path());
     {
-        Common::BinaryFileSerializeStream stream(fileName.string());
+        Common::BinaryFileSerializeStream stream(fileName.String());
         Serialize(stream, object);
     }
 
     {
-        Common::BinaryFileDeserializeStream stream(fileName.string());
+        Common::BinaryFileDeserializeStream stream(fileName.String());
 
         T restored;
         Deserialize(stream, restored);
@@ -57,10 +55,7 @@ void PerformJsonSerializationTest(const T& inValue, const std::string& inExceptJ
     std::string json;
     {
         rapidjson::Document document;
-
-        rapidjson::Value jsonValue;
-        Common::JsonSerialize<T>(jsonValue, document.GetAllocator(), inValue);
-        document.CopyFrom(jsonValue, document.GetAllocator());
+        Common::JsonSerialize<T>(document, document.GetAllocator(), inValue);
 
         rapidjson::StringBuffer buffer;
         rapidjson::Writer writer(buffer);
@@ -76,22 +71,17 @@ void PerformJsonSerializationTest(const T& inValue, const std::string& inExceptJ
         rapidjson::Document document;
         document.Parse(json.c_str());
 
-        rapidjson::Value jsonValue;
-        jsonValue.CopyFrom(document, document.GetAllocator());
-
         T value;
-        Common::JsonDeserialize<T>(jsonValue, value);
+        Common::JsonDeserialize<T>(document, value);
         ASSERT_EQ(inValue, value);
     }
 }
 
 TEST(SerializationTest, VariableFileTest)
 {
-    static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.VariableFileSerializationTest.bin";
-    std::filesystem::create_directories(fileName.parent_path());
-
+    static Common::Path fileName = "../Test/Generated/Mirror/SerializationTest.VariableFileSerializationTest.bin";
     {
-        Common::BinaryFileSerializeStream stream(fileName.string());
+        Common::BinaryFileSerializeStream stream(fileName.String());
 
         ga = 1;
         gb = 2.0f;
@@ -108,7 +98,7 @@ TEST(SerializationTest, VariableFileTest)
         gb = 5.0f;
         gc = "6";
 
-        Common::BinaryFileDeserializeStream stream(fileName.string());
+        Common::BinaryFileDeserializeStream stream(fileName.String());
 
         const auto& globalScope = Mirror::GlobalScope::Get();
         globalScope.GetVariable("ga").GetDyn().Deserialize(stream);
@@ -158,7 +148,7 @@ TEST(SerializationTest, EnumSerializationTest)
 
 TEST(SerializationTest, ReflNodeSerializationTest)
 {
-    static std::filesystem::path fileName = "../Test/Generated/Mirror/SerializationTest.MetaTypeSerializationTest.bin";
+    static Common::Path fileName = "../Test/Generated/Mirror/SerializationTest.MetaTypeSerializationTest.bin";
 
     const auto& globalScope = GlobalScope::Get();
     PerformSerializationTest<const Variable*>(fileName, nullptr);

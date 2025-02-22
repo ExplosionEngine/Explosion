@@ -11,13 +11,11 @@ using namespace Common;
 
 TEST(SerializationTest, FileStreamTest)
 {
-    static std::filesystem::path fileName = "../Test/Generated/Common/SerializationTest.FileStreamTest.bin";
-    std::filesystem::create_directories(fileName.parent_path());
-
+    static Common::Path fileName = "../Test/Generated/Common/SerializationTest.FileStreamTest.bin";
     {
         const uint32_t value = 5; // NOLINT
 
-        BinaryFileSerializeStream stream(fileName.string());
+        BinaryFileSerializeStream stream(fileName.String());
         stream.Seek(3);
         stream.Write<uint32_t>(value);
     }
@@ -25,7 +23,7 @@ TEST(SerializationTest, FileStreamTest)
     {
         uint32_t value;
 
-        BinaryFileDeserializeStream stream(fileName.string());
+        BinaryFileDeserializeStream stream(fileName.String());
         stream.Seek(3);
         stream.Read<uint32_t>(value);
         ASSERT_EQ(value, 5);
@@ -34,9 +32,6 @@ TEST(SerializationTest, FileStreamTest)
 
 TEST(SerializationTest, ByteStreamTest)
 {
-    static std::filesystem::path fileName = "../Test/Generated/Common/SerializationTest.ByteStreamTest.bin";
-    std::filesystem::create_directories(fileName.parent_path());
-
     std::vector<uint8_t> memory;
     {
         const uint32_t value = 5; // NOLINT
@@ -83,7 +78,38 @@ TEST(SerializationTest, TypedSerializationTest)
     PerformTypedSerializationTest<std::tuple<int, bool, int>>({ 1, true, 2 });
 }
 
-TEST(SerializationTest, JsonSerializeTest)
+TEST(SerializationTest, TypedSerializationWithFileTest)
+{
+    static std::string fileName = "../Test/Generated/Common/SerializationTest.TypedSerializationWithFileTest.bin";
+
+    PerformTypeSerializationWithFileTest<bool>(fileName, false);
+    PerformTypeSerializationWithFileTest<bool>(fileName,true);
+    PerformTypeSerializationWithFileTest<int8_t>(fileName, -1);
+    PerformTypeSerializationWithFileTest<uint8_t>(fileName, 1);
+    PerformTypeSerializationWithFileTest<int16_t>(fileName, -2);
+    PerformTypeSerializationWithFileTest<uint16_t>(fileName, 2);
+    PerformTypeSerializationWithFileTest<int32_t>(fileName, -3);
+    PerformTypeSerializationWithFileTest<uint32_t>(fileName, 3);
+    PerformTypeSerializationWithFileTest<int64_t>(fileName, -4);
+    PerformTypeSerializationWithFileTest<uint64_t>(fileName, 4);
+    PerformTypeSerializationWithFileTest<float>(fileName, 5.0f);
+    PerformTypeSerializationWithFileTest<double>(fileName, 6.0);
+    PerformTypeSerializationWithFileTest<std::string>(fileName, "hello");
+    PerformTypeSerializationWithFileTest<std::wstring>(fileName, L"hello");
+    PerformTypeSerializationWithFileTest<std::optional<int>>(fileName, {});
+    PerformTypeSerializationWithFileTest<std::optional<int>>(fileName, 15);
+    PerformTypeSerializationWithFileTest<std::pair<int, bool>>(fileName, { 1, false });
+    PerformTypeSerializationWithFileTest<std::array<int, 3>>(fileName, { 1, 2, 3 });
+    PerformTypeSerializationWithFileTest<std::vector<int>>(fileName, { 1, 2, 3 });
+    PerformTypeSerializationWithFileTest<std::list<int>>(fileName, { 1, 2, 3 });
+    PerformTypeSerializationWithFileTest<std::unordered_set<int>>(fileName, { 1, 2, 3 });
+    PerformTypeSerializationWithFileTest<std::set<int>>(fileName, { 1, 2, 3 });
+    PerformTypeSerializationWithFileTest<std::unordered_map<int, bool>>(fileName, { { 1, false }, { 2, true } });
+    PerformTypeSerializationWithFileTest<std::map<int, bool>>(fileName, { { 1, false }, { 2, true } });
+    PerformTypeSerializationWithFileTest<std::tuple<int, bool, int>>(fileName, { 1, true, 2 });
+}
+
+TEST(SerializationTest, JsonSerializationTest)
 {
     PerformJsonSerializationTest<bool>(false, "false");
     PerformJsonSerializationTest<bool>(true, "true");
@@ -111,4 +137,36 @@ TEST(SerializationTest, JsonSerializeTest)
     PerformJsonSerializationTest<std::map<int, bool>>({ { 1, false }, { 2, true } }, R"([{"key":1,"value":false},{"key":2,"value":true}])");
     PerformJsonSerializationTest<std::map<std::string, int>>({ { "1", 1 }, { "2", 2 } }, R"([{"key":"1","value":1},{"key":"2","value":2}])");
     PerformJsonSerializationTest<std::tuple<int, bool, int>>({ 1, true, 2 }, R"({"0":1,"1":true,"2":2})");
+}
+
+TEST(SerializationTest, JsonSerializationWithFileTest)
+{
+    static std::string fileName = "../Test/Generated/Common/SerializationTest.JsonSerializationWithFileTest.bin";
+
+    PerformJsonSerializationWithFileTest<bool>(fileName, false);
+    PerformJsonSerializationWithFileTest<bool>(fileName, true);
+    PerformJsonSerializationWithFileTest<int8_t>(fileName, -1);
+    PerformJsonSerializationWithFileTest<uint8_t>(fileName, 1);
+    PerformJsonSerializationWithFileTest<int16_t>(fileName, -2);
+    PerformJsonSerializationWithFileTest<uint16_t>(fileName, 2);
+    PerformJsonSerializationWithFileTest<int32_t>(fileName, -3);
+    PerformJsonSerializationWithFileTest<uint32_t>(fileName, 3);
+    PerformJsonSerializationWithFileTest<int64_t>(fileName, -4);
+    PerformJsonSerializationWithFileTest<uint64_t>(fileName, 4);
+    PerformJsonSerializationWithFileTest<float>(fileName, 5.0f);
+    PerformJsonSerializationWithFileTest<double>(fileName, 6.0);
+    PerformJsonSerializationWithFileTest<std::string>(fileName, "hello");
+    PerformJsonSerializationWithFileTest<std::wstring>(fileName, L"hello");
+    PerformJsonSerializationWithFileTest<std::optional<int>>(fileName, {});
+    PerformJsonSerializationWithFileTest<std::optional<int>>(fileName, 15);
+    PerformJsonSerializationWithFileTest<std::pair<int, bool>>(fileName, { 1, false });
+    PerformJsonSerializationWithFileTest<std::array<int, 3>>(fileName, { 1, 2, 3 });
+    PerformJsonSerializationWithFileTest<std::vector<int>>(fileName, { 1, 2, 3 });
+    PerformJsonSerializationWithFileTest<std::list<int>>(fileName, { 1, 2, 3 });
+    PerformJsonSerializationWithFileTest<std::unordered_set<int>>(fileName, { 1, 2, 3 });
+    PerformJsonSerializationWithFileTest<std::set<int>>(fileName, { 1, 2, 3 });
+    PerformJsonSerializationWithFileTest<std::unordered_map<int, bool>>(fileName, { { 1, false }, { 2, true } });
+    PerformJsonSerializationWithFileTest<std::map<int, bool>>(fileName, { { 1, false }, { 2, true } });
+    PerformJsonSerializationWithFileTest<std::map<std::string, int>>(fileName, { { "1", 1 }, { "2", 2 } });
+    PerformJsonSerializationWithFileTest<std::tuple<int, bool, int>>(fileName, { 1, true, 2 });
 }

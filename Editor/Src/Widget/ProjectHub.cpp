@@ -2,12 +2,12 @@
 // Created by johnk on 2024/6/23.
 //
 
-#include <Editor/Widget/Launcher.h>
-#include <Editor/Widget/moc_Launcher.cpp> // NOLINT
+#include <Editor/Widget/ProjectHub.h>
+#include <Editor/Widget/moc_ProjectHub.cpp> // NOLINT
 
 namespace Editor {
-    Launcher::Launcher()
-        : QmlWidget("ELauncher.qml")
+    ProjectHub::ProjectHub()
+        : QmlWidget("EProjectHub.qml")
     {
         setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
         setFixedSize(1024, 768);

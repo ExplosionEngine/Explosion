@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 
 Item {
     enum Style {
@@ -15,7 +14,7 @@ Item {
     property string href: ''
     property int style: EText.Style.Content
 
-    id: 'root'
+    id: root
     implicitWidth: textWidget.implicitWidth
     implicitHeight: textWidget.implicitHeight
 
@@ -40,7 +39,7 @@ Item {
             }
         }
 
-        id: 'textWidget'
+        id: textWidget
         text: getText(root.text, root.href, root.style)
         textFormat: root.style === EText.Style.Link ? Text.RichText : Text.PlainText;
         font.italic: root.style === EText.Style.Italic

@@ -15,10 +15,10 @@ namespace Core {
         Paths() = delete;
 
         static void SetExecutableDir(const Common::Path& inPath);
-        static void SetCurrentProjectFile(const Common::Path& inFile);
+        static void SetGameRoot(const Common::Path& inPath);
 
-        static bool HasSetProjectFile();
         static bool HasSetExecutableDir();
+        static bool HasSetGameRoot();
         static Common::Path WorkingDir();
         static Common::Path ExecutablePath();
         static Common::Path EngineRootDir();
@@ -26,18 +26,19 @@ namespace Core {
         static Common::Path EngineShaderDir();
         static Common::Path EngineAssetDir();
         static Common::Path EngineBinDir();
+        static Common::Path EngineConfigDir();
         static Common::Path EngineCacheDir();
         static Common::Path EngineLogDir();
         static Common::Path EnginePluginDir();
         static Common::Path EnginePluginAssetDir(const std::string& pluginName);
-        static Common::Path ProjectFile();
-        static Common::Path ProjectRootDir();
-        static Common::Path ProjectAssetDir();
-        static Common::Path ProjectBinDir();
-        static Common::Path ProjectCacheDir();
-        static Common::Path ProjectLogDir();
-        static Common::Path ProjectPluginDir();
-        static Common::Path ProjectPluginAssetDir(const std::string& pluginName);
+        static Common::Path GameRootDir();
+        static Common::Path GameAssetDir();
+        static Common::Path GameBinDir();
+        static Common::Path GameConfigDir();
+        static Common::Path GameCacheDir();
+        static Common::Path GameLogDir();
+        static Common::Path GamePluginDir();
+        static Common::Path GamePluginAssetDir(const std::string& pluginName);
         static Common::Path EngineCMakeSourceDir();
         static Common::Path EngineCMakeBinaryDir();
 
@@ -48,6 +49,6 @@ namespace Core {
     private:
         static Common::Path executablePath;
         static Common::Path workingDir;
-        static Common::Path currentProjectFile;
+        static Common::Path gameRoot;
     };
 }

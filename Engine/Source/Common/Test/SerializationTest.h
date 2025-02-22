@@ -4,13 +4,12 @@
 
 #pragma once
 
-#include <filesystem>
-
 #include <rapidjson/writer.h>
 
 #include <Test/Test.h>
 #include <Common/Serialization.h>
 #include <Common/Memory.h>
+#include <Common/FileSystem.h>
 
 inline std::string FltToJson(float value)
 {
@@ -21,16 +20,6 @@ inline std::string FltToJson(float value)
     rapidjson::Writer writer(buffer);
     document.Accept(writer);
     return std::string(buffer.GetString(), buffer.GetSize()); // NOLINT
-}
-
-inline std::string GetEndianString(std::endian e)
-{
-    static std::unordered_map<std::endian, std::string> map = {
-        { std::endian::big, "std::endian::big" },
-        { std::endian::little, "std::endian::little" },
-        { std::endian::native, "std::endian::native" }
-    };
-    return map.at(e);
 }
 
 template <typename T>
@@ -55,12 +44,11 @@ void PerformTypedSerializationTestWithStream(
 template <typename T, std::endian E>
 void PerformTypedSerializationTestWithEndian(const T& inValue)
 {
-    static std::filesystem::path fileName = "../Test/Generated/Common/SerializationTest.TypedSerializationTest";
-    std::filesystem::create_directories(fileName.parent_path());
+    static Common::Path fileName = "../Test/Generated/Common/SerializationTest.TypedSerializationTest";
 
     PerformTypedSerializationTestWithStream<T>(
-        []() -> Common::UniquePtr<Common::BinarySerializeStream> { return {new Common::BinaryFileSerializeStream<E>(fileName.string()) }; },
-        []() -> Common::UniquePtr<Common::BinaryDeserializeStream> { return {new Common::BinaryFileDeserializeStream<E>(fileName.string()) }; },
+        []() -> Common::UniquePtr<Common::BinarySerializeStream> { return {new Common::BinaryFileSerializeStream<E>(fileName.String()) }; },
+        []() -> Common::UniquePtr<Common::BinaryDeserializeStream> { return {new Common::BinaryFileDeserializeStream<E>(fileName.String()) }; },
         inValue);
 
     std::vector<uint8_t> buffer;
@@ -79,15 +67,22 @@ void PerformTypedSerializationTest(const T& inValue)
 }
 
 template <typename T>
+void PerformTypeSerializationWithFileTest(const std::string& inFile, const T& inValue)
+{
+    Common::SerializeToFile<T>(inFile, inValue);
+
+    T value;
+    Common::DeserializeFromFile(inFile, value);
+    ASSERT_EQ(inValue, value);
+}
+
+template <typename T>
 void PerformJsonSerializationTest(const T& inValue, const std::string& inExceptJson)
 {
     std::string json;
     {
         rapidjson::Document document;
-
-        rapidjson::Value jsonValue;
-        Common::JsonSerialize<T>(jsonValue, document.GetAllocator(), inValue);
-        document.CopyFrom(jsonValue, document.GetAllocator());
+        Common::JsonSerialize<T>(document, document.GetAllocator(), inValue);
 
         rapidjson::StringBuffer buffer;
         rapidjson::Writer writer(buffer);
@@ -103,11 +98,18 @@ void PerformJsonSerializationTest(const T& inValue, const std::string& inExceptJ
         rapidjson::Document document;
         document.Parse(json.c_str());
 
-        rapidjson::Value jsonValue;
-        jsonValue.CopyFrom(document, document.GetAllocator());
-
         T value;
-        Common::JsonDeserialize<T>(jsonValue, value);
+        Common::JsonDeserialize<T>(document, value);
         ASSERT_EQ(inValue, value);
     }
+}
+
+template <typename T>
+void PerformJsonSerializationWithFileTest(const std::string& inFile, const T& inValue)
+{
+    Common::JsonSerializeToFile<T>(inFile, inValue);
+
+    T value;
+    Common::JsonDeserializeFromFile(inFile, value);
+    ASSERT_EQ(inValue, value);
 }

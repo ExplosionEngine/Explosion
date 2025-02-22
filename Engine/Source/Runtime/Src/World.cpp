@@ -5,12 +5,17 @@
 #include <Runtime/World.h>
 #include <Runtime/Engine.h>
 
+#include <utility>
+
 namespace Runtime {
-    World::World(const std::string& inName)
-        : name(inName)
+    World::World(std::string inName, Client* inClient)
+        : name(std::move(inName))
         , playStatus(PlayStatus::stopped)
+        , systemSetupContext()
     {
         EngineHolder::Get().MountWorld(this);
+
+        systemSetupContext.client = inClient;
     }
 
     World::~World()
@@ -21,11 +26,6 @@ namespace Runtime {
     void World::SetSystemGraph(const SystemGraph& inSystemGraph)
     {
         systemGraph = inSystemGraph;
-    }
-
-    void World::Reset()
-    {
-        playStatus = PlayStatus::stopped;
     }
 
     PlayStatus World::PlayStatus() const
@@ -52,7 +52,7 @@ namespace Runtime {
     {
         Assert(Stopped() && !executor.has_value());
         playStatus = PlayStatus::playing;
-        executor.emplace(ecRegistry, systemGraph);
+        executor.emplace(ecRegistry, systemGraph, systemSetupContext);
     }
 
     void World::Resume()
@@ -72,6 +72,18 @@ namespace Runtime {
         Assert((Playing() || Paused()) && executor.has_value());
         playStatus = PlayStatus::stopped;
         executor.reset();
+    }
+
+    void World::LoadFrom(AssetPtr<Level> inLevel)
+    {
+        Assert(Stopped());
+        ecRegistry.Load(inLevel->archive);
+    }
+
+    void World::SaveTo(AssetPtr<Level> inLevel)
+    {
+        Assert(Stopped());
+        ecRegistry.Save(inLevel->archive);
     }
 
     void World::Tick(float inDeltaTimeSeconds)

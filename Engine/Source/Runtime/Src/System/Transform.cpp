@@ -5,8 +5,8 @@
 #include <Runtime/System/Transform.h>
 
 namespace Runtime {
-    TransformSystem::TransformSystem(ECRegistry& inRegistry)
-        : System(inRegistry)
+    TransformSystem::TransformSystem(ECRegistry& inRegistry, const SystemSetupContext& inContext)
+        : System(inRegistry, inContext)
         , worldTransformUpdatedObserver(registry.Observer())
         , localTransformUpdatedObserver(registry.Observer())
     {
@@ -23,21 +23,21 @@ namespace Runtime {
         std::vector<Entity> pendingUpdateChildrenWorldTransforms;
         std::vector<Entity> pendingUpdateSelfAndChildrenWorldTransforms;
 
-        pendingUpdateLocalTransforms.reserve(worldTransformUpdatedObserver.Size());
-        pendingUpdateChildrenWorldTransforms.reserve(worldTransformUpdatedObserver.Size());
+        pendingUpdateLocalTransforms.reserve(worldTransformUpdatedObserver.Count());
+        pendingUpdateChildrenWorldTransforms.reserve(worldTransformUpdatedObserver.Count());
         worldTransformUpdatedObserver.EachThenClear([&](Entity e) -> void {
-            if (registry.Has<LocalTransform>(e) && registry.Has<Hierarchy>(e) && HierarchyUtils::HasParent(registry, e)) {
+            if (registry.Has<LocalTransform>(e) && registry.Has<Hierarchy>(e) && HierarchyOps::HasParent(registry, e)) {
                 pendingUpdateLocalTransforms.emplace_back(e);
             }
 
-            if (registry.Has<Hierarchy>(e) && HierarchyUtils::HasChildren(registry, e)) {
+            if (registry.Has<Hierarchy>(e) && HierarchyOps::HasChildren(registry, e)) {
                 pendingUpdateChildrenWorldTransforms.emplace_back(e);
             }
         });
 
-        pendingUpdateSelfAndChildrenWorldTransforms.reserve(localTransformUpdatedObserver.Size());
+        pendingUpdateSelfAndChildrenWorldTransforms.reserve(localTransformUpdatedObserver.Count());
         localTransformUpdatedObserver.EachThenClear([&](Entity e) -> void {
-            if (registry.Has<WorldTransform>(e) && registry.Has<Hierarchy>(e) && HierarchyUtils::HasParent(registry, e)) {
+            if (registry.Has<WorldTransform>(e) && registry.Has<Hierarchy>(e) && HierarchyOps::HasParent(registry, e)) {
                 pendingUpdateSelfAndChildrenWorldTransforms.emplace_back(e);
             }
         });
@@ -70,7 +70,7 @@ namespace Runtime {
         };
 
         for (const auto e : pendingUpdateChildrenWorldTransforms) {
-            HierarchyUtils::TraverseChildrenRecursively(registry, e, [&](Entity child, Entity parent) -> void {
+            HierarchyOps::TraverseChildrenRecursively(registry, e, [&](Entity child, Entity parent) -> void {
                 updateWorldByLocal(child, parent);
             });
         }
@@ -78,7 +78,7 @@ namespace Runtime {
             const auto& hierarchy = registry.Get<Hierarchy>(e);
             updateWorldByLocal(e, hierarchy.parent);
 
-            HierarchyUtils::TraverseChildrenRecursively(registry, e, [&](Entity child, Entity parent) -> void {
+            HierarchyOps::TraverseChildrenRecursively(registry, e, [&](Entity child, Entity parent) -> void {
                 updateWorldByLocal(child, parent);
             });
         }

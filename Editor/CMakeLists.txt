@@ -57,7 +57,6 @@ endforeach ()
 qt_add_qml_module(
     Editor
     NO_CACHEGEN
-    NO_GENERATE_QMLDIR
     URI editor
     QML_FILES ${QML_SOURCES}
     RESOURCES ${RESOURCES}

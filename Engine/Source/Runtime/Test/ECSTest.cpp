@@ -10,7 +10,7 @@ TEST(ECSTest, EntityTest)
     ECRegistry registry;
     const auto entity0 = registry.Create();
     const auto entity1 = registry.Create();
-    ASSERT_EQ(registry.Size(), 2);
+    ASSERT_EQ(registry.Count(), 2);
     ASSERT_TRUE(registry.Valid(entity0));
     ASSERT_TRUE(registry.Valid(entity1));
     ASSERT_FALSE(registry.Valid(99));
@@ -74,28 +74,28 @@ TEST(ECSTest, ComponentStaticTest)
 
     std::unordered_set expected = { entity1, entity2 };
     const auto view0 = registry.View<CompA>();
-    ASSERT_EQ(view0.Size(), 2);
+    ASSERT_EQ(view0.Count(), 2);
     view0.Each([&](Entity e, CompA& compA) -> void {
         ASSERT_TRUE(expected.contains(e));
     });
 
     expected = { entity1 };
     const auto view1 = registry.ConstView<CompA>(Exclude<CompB> {});
-    ASSERT_EQ(view1.Size(), 1);
+    ASSERT_EQ(view1.Count(), 1);
     view1.Each([&](Entity e, const CompA& compA) -> void {
         ASSERT_TRUE(expected.contains(e));
     });
 
     expected = { entity2, entity3 };
     const auto view2 = registry.View<CompB>();
-    ASSERT_EQ(view2.Size(), 2);
+    ASSERT_EQ(view2.Count(), 2);
     for (const auto& [entity, compB] : view2) {
         ASSERT_TRUE(expected.contains(entity));
     }
 
     expected = { entity3 };
     const auto view3 = registry.ConstView<CompB>(Exclude<CompA> {});
-    ASSERT_EQ(view3.Size(), 1);
+    ASSERT_EQ(view3.Count(), 1);
     for (const auto& [entity, compB] : view3) {
         ASSERT_TRUE(expected.contains(entity));
     }
@@ -123,7 +123,7 @@ TEST(ECSTest, ComponentDynamicTest)
     const auto view0 = registry.ConstRuntimeView(
         RuntimeFilter()
             .IncludeDyn(compAClass));
-    ASSERT_EQ(view0.Size(), 2);
+    ASSERT_EQ(view0.Count(), 2);
     view0.Each([&](Entity e, const CompA& compA) -> void {
         ASSERT_TRUE(expected.contains(e));
     });
@@ -138,7 +138,7 @@ TEST(ECSTest, ComponentDynamicTest)
         RuntimeFilter()
             .Include<CompA>());
     expected = { entity0, entity1, entity2 };
-    ASSERT_EQ(view1.Size(), 3);
+    ASSERT_EQ(view1.Count(), 3);
     for (const auto& entity : view1) {
         ASSERT_TRUE(expected.contains(entity));
     }
@@ -148,7 +148,7 @@ TEST(ECSTest, ComponentDynamicTest)
             .Include<CompA>()
             .Exclude<CompB>());
     expected = { entity0, entity1 };
-    ASSERT_EQ(view2.Size(), 2);
+    ASSERT_EQ(view2.Count(), 2);
     view2.Each([&](Entity e, const CompA& compA) -> void {
         ASSERT_TRUE(expected.contains(e));
     });
@@ -157,7 +157,7 @@ TEST(ECSTest, ComponentDynamicTest)
         RuntimeFilter()
             .Include<CompB>());
     expected = { entity2, entity3 };
-    ASSERT_EQ(view3.Size(), 2);
+    ASSERT_EQ(view3.Count(), 2);
     view3.Each([&](Entity e, const CompB& compB) -> void {
         ASSERT_TRUE(expected.contains(e));
     });
@@ -167,7 +167,7 @@ TEST(ECSTest, ComponentDynamicTest)
             .Include<CompB>()
             .Exclude<CompA>());
     expected = { entity3 };
-    ASSERT_EQ(view4.Size(), 1);
+    ASSERT_EQ(view4.Count(), 1);
     view4.Each([&](Entity e, const CompB& compB) -> void {
         ASSERT_TRUE(expected.contains(e));
     });
@@ -177,7 +177,7 @@ TEST(ECSTest, ComponentDynamicTest)
             .Include<CompA>()
             .Include<CompB>());
     expected = { entity2 };
-    ASSERT_EQ(view5.Size(), 1);
+    ASSERT_EQ(view5.Count(), 1);
     view5.Each([&](Entity e, const CompA& compA, const CompB& compB) -> void {
         ASSERT_TRUE(expected.contains(e));
     });
@@ -236,9 +236,9 @@ TEST(ECSTest, ComponentEventStaticTest)
 {
     EventCounts count;
     ECRegistry registry;
-    registry.Events<CompA>().onConstructed.BindLambda([&](ECRegistry&, Entity) -> void { count.onConstructed++; });
-    registry.Events<CompA>().onUpdated.BindLambda([&](ECRegistry&, Entity) -> void { count.onUpdated++; });
-    registry.Events<CompA>().onRemove.BindLambda([&](ECRegistry&, Entity) -> void { count.onRemove++; });
+    const auto constructedCallback = registry.Events<CompA>().onConstructed.BindLambda([&](ECRegistry&, Entity) -> void { count.onConstructed++; });
+    const auto updatedCallback = registry.Events<CompA>().onUpdated.BindLambda([&](ECRegistry&, Entity) -> void { count.onUpdated++; });
+    const auto removeCallback = registry.Events<CompA>().onRemove.BindLambda([&](ECRegistry&, Entity) -> void { count.onRemove++; });
 
     const auto entity0 = registry.Create();
     const auto entity1 = registry.Create();
@@ -264,6 +264,10 @@ TEST(ECSTest, ComponentEventStaticTest)
     ASSERT_EQ(count, EventCounts(2, 3, 1));
     registry.Remove<CompA>(entity1);
     ASSERT_EQ(count, EventCounts(2, 3, 2));
+
+    registry.Events<CompA>().onConstructed.Unbind(constructedCallback);
+    registry.Events<CompA>().onUpdated.Unbind(updatedCallback);
+    registry.Events<CompA>().onRemove.Unbind(removeCallback);
 }
 
 TEST(ECSTest, ComponentEventDynamicTest)
@@ -271,9 +275,9 @@ TEST(ECSTest, ComponentEventDynamicTest)
     CompClass compAClass = &Mirror::Class::Get<CompA>();
     EventCounts count;
     ECRegistry registry;
-    registry.EventsDyn(compAClass).onConstructed.BindLambda([&](ECRegistry&, Entity) -> void { count.onConstructed++; });
-    registry.EventsDyn(compAClass).onUpdated.BindLambda([&](ECRegistry&, Entity) -> void { count.onUpdated++; });
-    registry.EventsDyn(compAClass).onRemove.BindLambda([&](ECRegistry&, Entity) -> void { count.onRemove++; });
+    const auto constructedCallback = registry.EventsDyn(compAClass).onConstructed.BindLambda([&](ECRegistry&, Entity) -> void { count.onConstructed++; });
+    const auto updatedCallback = registry.EventsDyn(compAClass).onUpdated.BindLambda([&](ECRegistry&, Entity) -> void { count.onUpdated++; });
+    const auto removeCallback = registry.EventsDyn(compAClass).onRemove.BindLambda([&](ECRegistry&, Entity) -> void { count.onRemove++; });
 
     const auto entity0 = registry.Create();
     const auto entity1 = registry.Create();
@@ -299,15 +303,19 @@ TEST(ECSTest, ComponentEventDynamicTest)
     ASSERT_EQ(count, EventCounts(2, 3, 1));
     registry.RemoveDyn(compAClass, entity1);
     ASSERT_EQ(count, EventCounts(2, 3, 2));
+
+    registry.EventsDyn(compAClass).onConstructed.Unbind(constructedCallback);
+    registry.EventsDyn(compAClass).onUpdated.Unbind(updatedCallback);
+    registry.EventsDyn(compAClass).onRemove.Unbind(removeCallback);
 }
 
 TEST(ECSTest, GlobalComponentEventStaticTest)
 {
     EventCounts count;
     ECRegistry registry;
-    registry.GEvents<GCompA>().onConstructed.BindLambda([&](ECRegistry&) -> void { count.onConstructed++; });
-    registry.GEvents<GCompA>().onUpdated.BindLambda([&](ECRegistry&) -> void { count.onUpdated++; });
-    registry.GEvents<GCompA>().onRemove.BindLambda([&](ECRegistry&) -> void { count.onRemove++; });
+    const auto constructedCallback = registry.GEvents<GCompA>().onConstructed.BindLambda([&](ECRegistry&) -> void { count.onConstructed++; });
+    const auto updatedCallback = registry.GEvents<GCompA>().onUpdated.BindLambda([&](ECRegistry&) -> void { count.onUpdated++; });
+    const auto removeCallback = registry.GEvents<GCompA>().onRemove.BindLambda([&](ECRegistry&) -> void { count.onRemove++; });
 
     registry.GEmplace<GCompA>(1);
     ASSERT_EQ(count, EventCounts(1, 0, 0));
@@ -327,6 +335,10 @@ TEST(ECSTest, GlobalComponentEventStaticTest)
 
     registry.GRemove<GCompA>();
     ASSERT_EQ(count, EventCounts(1, 3, 1));
+
+    registry.GEvents<GCompA>().onConstructed.Unbind(constructedCallback);
+    registry.GEvents<GCompA>().onUpdated.Unbind(updatedCallback);
+    registry.GEvents<GCompA>().onRemove.Unbind(removeCallback);
 }
 
 TEST(ECSTest, GlobalComponentEventDynamicTest)
@@ -334,9 +346,9 @@ TEST(ECSTest, GlobalComponentEventDynamicTest)
     GCompClass gCompAClass = &Mirror::Class::Get<GCompA>();
     EventCounts count;
     ECRegistry registry;
-    registry.GEventsDyn(gCompAClass).onConstructed.BindLambda([&](ECRegistry&) -> void { count.onConstructed++; });
-    registry.GEventsDyn(gCompAClass).onUpdated.BindLambda([&](ECRegistry&) -> void { count.onUpdated++; });
-    registry.GEventsDyn(gCompAClass).onRemove.BindLambda([&](ECRegistry&) -> void { count.onRemove++; });
+    const auto constructedCallback = registry.GEventsDyn(gCompAClass).onConstructed.BindLambda([&](ECRegistry&) -> void { count.onConstructed++; });
+    const auto updatedCallback = registry.GEventsDyn(gCompAClass).onUpdated.BindLambda([&](ECRegistry&) -> void { count.onUpdated++; });
+    const auto removeCallback = registry.GEventsDyn(gCompAClass).onRemove.BindLambda([&](ECRegistry&) -> void { count.onRemove++; });
 
     registry.GEmplaceDyn(gCompAClass, Mirror::ForwardAsArgList(1));
     ASSERT_EQ(count, EventCounts(1, 0, 0));
@@ -356,6 +368,10 @@ TEST(ECSTest, GlobalComponentEventDynamicTest)
 
     registry.GRemove<GCompA>();
     ASSERT_EQ(count, EventCounts(1, 3, 1));
+
+    registry.GEventsDyn(gCompAClass).onConstructed.Unbind(constructedCallback);
+    registry.GEventsDyn(gCompAClass).onUpdated.Unbind(updatedCallback);
+    registry.GEventsDyn(gCompAClass).onRemove.Unbind(removeCallback);
 }
 
 TEST(ECSTest, ObserverTest)
@@ -367,10 +383,10 @@ TEST(ECSTest, ObserverTest)
         .ObUpdatedDyn(&Mirror::Class::Get<CompB>());
 
     const auto entity0 = registry.Create();
-    ASSERT_EQ(observer.Size(), 0);
+    ASSERT_EQ(observer.Count(), 0);
 
     registry.Emplace<CompA>(entity0, 1);
-    ASSERT_EQ(observer.Size(), 1);
+    ASSERT_EQ(observer.Count(), 1);
     std::unordered_set expected = { entity0 };
     observer.Each([&](Entity e) -> void {
         ASSERT_TRUE(expected.contains(e));
@@ -378,11 +394,11 @@ TEST(ECSTest, ObserverTest)
 
     const auto entity1 = registry.Create();
     registry.Emplace<CompB>(entity1, 2.0f);
-    ASSERT_EQ(observer.Size(), 1);
+    ASSERT_EQ(observer.Count(), 1);
     registry.Update<CompB>(entity1, [](CompB& compB) -> void {
         compB.value = 3.0f;
     });
-    ASSERT_EQ(observer.Size(), 2);
+    ASSERT_EQ(observer.Count(), 2);
     expected = { entity0, entity1 };
     for (const auto e : expected) {
         ASSERT_TRUE(expected.contains(e));
@@ -400,4 +416,34 @@ TEST(ECSTest, ECRegistryCopyTest)
     ECRegistry registry1 = registry0;
     ASSERT_EQ(registry1.Get<CompA>(entity0).value, 1);
     ASSERT_EQ(registry1.Get<CompB>(entity1).value, 2.0f);
+}
+
+TEST(ECSTest, ECSRegistrySaveLoadTest)
+{
+    ECArchive archive;
+    {
+        ECRegistry registry;
+        const auto entity0 = registry.Create();
+        const auto entity1 = registry.Create();
+        (void) registry.Create();
+        registry.Emplace<CompA>(entity0, 1);
+        registry.Emplace<CompB>(entity1, 2.0f);
+        registry.GEmplace<GCompA>(1);
+        registry.GEmplace<GCompB>(2.0f);
+
+        registry.Save(archive);
+    }
+
+    {
+        ECRegistry registry;
+        registry.Load(archive);
+
+        ASSERT_EQ(registry.Count(), 3);
+        ASSERT_EQ(registry.Get<CompA>(1u).value, 1);
+        ASSERT_EQ(registry.Get<CompB>(2u).value, 2.0f);
+        ASSERT_EQ(registry.CompCount(3u), 0);
+        ASSERT_EQ(registry.GGet<GCompA>().value, 1);
+        ASSERT_EQ(registry.GGet<GCompB>().value, 2.0f);
+        ASSERT_EQ(registry.GCompCount(), 2);
+    }
 }

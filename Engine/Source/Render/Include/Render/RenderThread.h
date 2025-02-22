@@ -18,7 +18,7 @@ namespace Render {
         void Start();
         void Stop();
         void Flush() const;
-        template <typename F, typename... Args> auto EmplaceTask(F&& inTask, Args&&... inArgs);
+        template <typename F> auto EmplaceTask(F&& inTask);
 
     private:
         RenderThread();
@@ -34,8 +34,8 @@ namespace Render {
 
         void Start();
         void Stop();
-        template <typename F, typename... Args> auto EmplaceTask(F&& inTask, Args&&... inArgs);
-        template <typename F, typename... Args> void ExecuteTasks(size_t inTaskNum, F&& inTask, Args&&... inArgs);
+        template <typename F> auto EmplaceTask(F&& inTask);
+        template <typename F> void ExecuteTasks(size_t inTaskNum, F&& inTask);
 
     private:
         RenderWorkerThreads();
@@ -45,33 +45,33 @@ namespace Render {
 }
 
 namespace Render {
-    template <typename F, typename ... Args>
-    auto RenderThread::EmplaceTask(F&& inTask, Args&&... inArgs)
+    template <typename F>
+    auto RenderThread::EmplaceTask(F&& inTask)
     {
         Assert(thread != nullptr);
-        return thread->EmplaceTask(std::forward<F>(inTask), std::forward<Args>(inArgs)...);
+        return thread->EmplaceTask(std::forward<F>(inTask));
     }
 
-    template <typename F, typename ... Args>
-    auto RenderWorkerThreads::EmplaceTask(F&& inTask, Args&&... inArgs)
+    template <typename F>
+    auto RenderWorkerThreads::EmplaceTask(F&& inTask)
     {
-        using RetType = std::invoke_result_t<F, Args...>;
+        using RetType = std::invoke_result_t<F>;
 
         Assert(threads != nullptr);
-        auto packedTask = std::bind(std::forward<F>(inTask), std::forward<Args>(inArgs)...);
+        auto packedTask = std::bind(std::forward<F>(inTask));
         return threads->EmplaceTask([packedTask]() -> RetType {
-            Core::ThreadContext::SetTag(Core::ThreadTag::renderWorker);
+            Core::ScopedThreadTag tag(Core::ThreadTag::renderWorker);
             return packedTask();
         });
     }
 
-    template <typename F, typename ... Args>
-    void RenderWorkerThreads::ExecuteTasks(size_t inTaskNum, F&& inTask, Args&&... inArgs)
+    template <typename F>
+    void RenderWorkerThreads::ExecuteTasks(size_t inTaskNum, F&& inTask)
     {
         Assert(threads != nullptr);
-        auto packedTask = std::bind(std::forward<F>(inTask), std::placeholders::_1, std::forward<Args>(inArgs)...);
+        auto packedTask = std::bind(std::forward<F>(inTask), std::placeholders::_1);
         threads->ExecuteTasks(inTaskNum, [packedTask](size_t inIndex) -> void {
-            Core::ThreadContext::SetTag(Core::ThreadTag::renderWorker);
+            Core::ScopedThreadTag tag(Core::ThreadTag::renderWorker);
             packedTask(inIndex);
         });
     }

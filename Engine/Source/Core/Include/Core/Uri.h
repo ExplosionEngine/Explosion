@@ -8,7 +8,8 @@
 #include <Common/Serialization.h>
 
 namespace Core {
-    enum class UriProtocol {
+    enum class UriProtocol : uint8_t {
+        file,
         asset,
         max
     };
@@ -16,32 +17,38 @@ namespace Core {
     class CORE_API Uri {
     public:
         Uri();
-        explicit Uri(std::string inValue);
-        Uri(const Uri& other);
-        Uri(Uri&& other) noexcept;
-        ~Uri();
-        Uri& operator=(const Uri& other);
-        Uri& operator=(const std::string& inValue);
-        Uri& operator=(Uri&& other) noexcept;
-        bool operator==(const Uri& rhs) const;
+        Uri(std::string inValue); // NOLINT
 
         const std::string& Str() const;
-        UriProtocol Protocal() const;
+        UriProtocol Protocol() const;
         std::string Content() const;
         bool Empty() const;
+        bool operator==(const Uri& rhs) const;
 
     private:
         std::string value;
+    };
+
+    class CORE_API FileUriParser {
+    public:
+        explicit FileUriParser(const Uri& inUri);
+        bool IsEngineFile() const;
+        bool IsGameFile() const;
+        bool IsRegularFile() const;
+        Common::Path Parse() const;
+
+    private:
+        std::string content;
     };
 
     class CORE_API AssetUriParser {
     public:
         explicit AssetUriParser(const Uri& inUri);
         bool IsEngineAsset() const;
-        bool IsProjectAsset() const;
+        bool IsGameAsset() const;
         bool IsEnginePluginAsset() const;
-        bool IsProjectPluginAsset() const;
-        Common::Path AbsoluteFilePath() const;
+        bool IsGamePluginAsset() const;
+        Common::Path Parse() const;
 
 #if BUILD_TEST
         bool IsEngineTestAsset() const;

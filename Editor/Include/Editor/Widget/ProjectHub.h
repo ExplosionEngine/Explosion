@@ -7,10 +7,10 @@
 #include <Editor/Widget/QmlWidget.h>
 
 namespace Editor {
-    class Launcher final : public QmlWidget {
+    class ProjectHub final : public QmlWidget {
         Q_OBJECT
 
     public:
-        Launcher();
+        ProjectHub();
     };
 }

@@ -14,7 +14,7 @@ namespace Runtime {
         EPolyClassBody(TransformSystem)
 
     public:
-        explicit TransformSystem(ECRegistry& inRegistry);
+        explicit TransformSystem(ECRegistry& inRegistry, const SystemSetupContext& inContext);
         ~TransformSystem() override;
 
         NonCopyable(TransformSystem)
