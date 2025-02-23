@@ -36,6 +36,8 @@ namespace Runtime {
 
         void AttachLogFile() const;
         void InitRender(const std::string& inRhiTypeStr);
+        void LoadModules() const;
+        void LoadConfigs() const;
 
         std::unordered_set<World*> worlds;
         Render::RenderModule* renderModule;

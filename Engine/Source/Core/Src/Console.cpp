@@ -59,6 +59,11 @@ namespace Core {
         return *settings.at(inName);
     }
 
+    void Console::OverrideSettingsByConfig()
+    {
+        // TODO
+    }
+
     void Console::PerformRenderThreadSettingsCopy() const
     {
         for (const auto& setting : settings | std::views::values) {

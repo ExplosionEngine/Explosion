@@ -141,6 +141,7 @@ namespace Core {
         ConsoleSetting& GetSetting(const std::string& inName) const;
         template <typename T> ConsoleSettingValue<T>* FindSettingValue(const std::string& inName) const;
         template <typename T> ConsoleSettingValue<T>& GetSettingValue(const std::string& inName) const;
+        void OverrideSettingsByConfig();
         void PerformRenderThreadSettingsCopy() const;
 
     private:

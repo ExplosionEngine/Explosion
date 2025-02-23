@@ -26,9 +26,8 @@ namespace Runtime {
             AttachLogFile();
         }
         InitRender(inParams.rhiType);
-
-        // TODO load all modules and plugins
-        SettingsRegistry::Get().LoadAllSettings();
+        LoadModules();
+        LoadConfigs();
     }
 
     Engine::~Engine()
@@ -94,6 +93,17 @@ namespace Runtime {
         initParams.rhiType = RHI::GetRHITypeByAbbrString(inRhiTypeStr);
         renderModule->Initialize(initParams);
         LogInfo(Render, "RHI type: {}", inRhiTypeStr);
+    }
+
+    void Engine::LoadModules() const // NOLINT
+    {
+        // TODO
+    }
+
+    void Engine::LoadConfigs() const // NOLINT
+    {
+        Core::Console::Get().OverrideSettingsByConfig();
+        SettingsRegistry::Get().LoadAllSettings();
     }
 
     Common::UniquePtr<Engine> EngineHolder::engine = nullptr;
