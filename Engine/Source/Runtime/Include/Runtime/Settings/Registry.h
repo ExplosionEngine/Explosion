@@ -26,10 +26,10 @@ namespace Runtime {
 
         EFunc() void RegisterSettingsDyn(SettingsClass inClass);
         EFunc() Mirror::Any GetSettingsDyn(SettingsClass inClass);
-        EFunc() void SaveSettingsDyn(SettingsClass inClass);
         EFunc() void LoadSettingsDyn(SettingsClass inClass);
-        EFunc() void SaveAllSettings();
         EFunc() void LoadAllSettings();
+        EFunc() void SaveSettingsDyn(SettingsClass inClass) const;
+        EFunc() void SaveAllSettings() const;
 
     private:
         SettingsRegistry();

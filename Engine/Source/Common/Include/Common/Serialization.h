@@ -18,16 +18,13 @@
 #include <variant>
 
 #include <rapidjson/document.h>
-#include <rapidjson/filereadstream.h>
-#include <rapidjson/filewritestream.h>
-#include <rapidjson/writer.h>
-#include <rapidjson/prettywriter.h>
 
 #include <Common/Utility.h>
 #include <Common/Debug.h>
 #include <Common/Hash.h>
 #include <Common/String.h>
 #include <Common/FileSystem.h>
+#include <Common/File.h>
 
 namespace Common {
     class BinarySerializeStream {
@@ -477,39 +474,15 @@ namespace Common {
 
     template <typename T> void JsonSerializeToFile(const std::string& inFile, const T& inValue, bool inPretty)
     {
-        Common::Path parentPath = Common::Path(inFile).Parent();
-        if (!parentPath.Exists()) {
-            parentPath.MakeDir();
-        }
-
         rapidjson::Document document;
         JsonSerialize<T>(document, document.GetAllocator(), inValue);
-
-        char buffer[65536];
-        std::FILE* file = fopen(inFile.c_str(), "wb");
-        rapidjson::FileWriteStream stream(file, buffer, sizeof(buffer));
-
-        if (inPretty) {
-            rapidjson::PrettyWriter writer(stream);
-            document.Accept(writer);
-        } else {
-            rapidjson::Writer writer(stream);
-            document.Accept(writer);
-        }
-        (void) fclose(file);
+        FileUtils::WriteJsonFile(inFile, document, inPretty);
     }
 
     template <typename T> void JsonDeserializeFromFile(const std::string& inFile, T& outValue)
     {
-        char buffer[65536];
-        std::FILE* file = fopen(inFile.c_str(), "rb");
-        rapidjson::FileReadStream stream(file, buffer, sizeof(buffer));
-
-        rapidjson::Document document;
-        document.ParseStream(stream);
-
+        const rapidjson::Document document = FileUtils::ReadJsonFile(inFile);
         JsonDeserialize<T>(document, outValue);
-        (void) fclose(file);
     }
 
     template <Serializable T>
