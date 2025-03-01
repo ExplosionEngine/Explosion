@@ -5,6 +5,7 @@
 #include <Common/File.h>
 #include <Core/Paths.h>
 #include <Runtime/Settings/Registry.h>
+#include <Runtime/Settings/Game.h>
 
 namespace Runtime::Internal {
     static Common::Path GetConfigPathForSettings(SettingsClass inClass)
@@ -59,6 +60,10 @@ namespace Runtime {
 
     void SettingsRegistry::SaveSettingsDyn(SettingsClass inClass) const
     {
+#if !BUILD_EDITOR
+        Assert(!inClass->GetMetaBoolOr(MetaPresets::gameReadOnly, false));
+#endif
+
         rapidjson::Document document;
         settingsMap.at(inClass).JsonSerialize(document, document.GetAllocator());
 
@@ -75,6 +80,6 @@ namespace Runtime {
 
     void SettingsRegistry::RegisterInternalSettings()
     {
-        // TODO
+        RegisterSettings<GameSettings>();
     }
 }

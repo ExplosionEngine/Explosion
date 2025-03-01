@@ -5,6 +5,7 @@
 #pragma once
 
 #include <filesystem>
+#include <functional>
 
 namespace Common {
     class Path {
