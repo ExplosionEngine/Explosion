@@ -63,9 +63,15 @@ TEST_F(ResourcePoolTest, BasicTest)
     t3.Reset();
     ASSERT_EQ(texturePool.Size(), 3);
 
-    texturePool.Tick();
+    Core::ThreadContext::IncFrameNumber();
+    texturePool.Forfeit();
     ASSERT_EQ(texturePool.Size(), 3);
 
-    texturePool.Tick();
+    Core::ThreadContext::IncFrameNumber();
+    texturePool.Forfeit();
+    ASSERT_EQ(texturePool.Size(), 3);
+
+    Core::ThreadContext::IncFrameNumber();
+    texturePool.Forfeit();
     ASSERT_EQ(texturePool.Size(), 1);
 }

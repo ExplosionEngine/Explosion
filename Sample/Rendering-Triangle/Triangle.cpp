@@ -162,8 +162,8 @@ void TriangleApplication::OnDrawFrame()
     swapChain->Present(renderFinishedSemaphore.Get());
     frameFence->Wait();
 
-    BufferPool::Get(*device).Tick();
-    TexturePool::Get(*device).Tick();
+    BufferPool::Get(*device).Forfeit();
+    TexturePool::Get(*device).Forfeit();
     frameCount++;
 }
 

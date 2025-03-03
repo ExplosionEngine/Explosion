@@ -7,9 +7,13 @@
 #include <unordered_map>
 
 #include <Common/Memory.h>
-#include <Common/Debug.h>
 #include <Common/Container.h>
+#include <Core/Thread.h>
 #include <RHI/RHI.h>
+
+namespace Render::Internal {
+    constexpr uint64_t pooledResourceReleaseFrameLatency = 2;
+}
 
 namespace Render {
     template <typename RHIRes>
@@ -25,10 +29,13 @@ namespace Render {
 
         RHIRes* GetRHI() const;
         const DescType& GetDesc() const;
+        uint64_t LastUsedFrame() const;
+        void MarkUsedThisFrame();
 
     private:
         Common::UniquePtr<RHIRes> rhiHandle;
         DescType desc;
+        uint64_t lastUsedFrame;
     };
 
     using PooledBuffer = PooledResource<RHI::Buffer>;
@@ -51,13 +58,13 @@ namespace Render {
 
         ResRefType Allocate(const DescType& desc);
         size_t Size() const;
-        void Tick();
+        void Forfeit();
 
     private:
         explicit ResourcePool(RHI::Device& inDevice);
 
         RHI::Device& device;
-        std::vector<std::pair<ResRefType, uint32_t>> pooledResourceAndAges;
+        std::vector<ResRefType> pooledResources;
     };
 
     using BufferPool = ResourcePool<PooledBuffer>;
@@ -79,6 +86,7 @@ namespace Render {
     PooledResource<RHIResource>::PooledResource(Common::UniquePtr<RHIResource>&& inRhiHandle, DescType inDesc)
         : rhiHandle(std::move(inRhiHandle))
         , desc(std::move(inDesc))
+        , lastUsedFrame(Core::ThreadContext::FrameNumber())
     {
     }
 
@@ -95,6 +103,18 @@ namespace Render {
     const typename PooledResource<RHIResource>::DescType& PooledResource<RHIResource>::GetDesc() const
     {
         return desc;
+    }
+
+    template <typename RHIRes>
+    uint64_t PooledResource<RHIRes>::LastUsedFrame() const
+    {
+        return lastUsedFrame;
+    }
+
+    template <typename RHIRes>
+    void PooledResource<RHIRes>::MarkUsedThisFrame()
+    {
+        lastUsedFrame = Core::ThreadContext::FrameNumber();
     }
 
     template <>
@@ -140,38 +160,40 @@ namespace Render {
     template <typename PooledResource>
     typename ResourcePool<PooledResource>::ResRefType ResourcePool<PooledResource>::Allocate(const DescType& desc)
     {
-        for (auto& [pooledResource, age] : pooledResourceAndAges) {
+        for (auto& pooledResource : pooledResources) {
             if (pooledResource.RefCount() == 1 && desc == pooledResource->GetDesc()) {
-                age = 0;
+                pooledResource->MarkUsedThisFrame();
                 return pooledResource;
             }
         }
         auto result = PooledResTraits<PooledResource>::CreateResource(device, desc);
-        pooledResourceAndAges.emplace_back(result, 0);
+        pooledResources.emplace_back(result);
         return result;
     }
 
     template <typename PooledRes>
     size_t ResourcePool<PooledRes>::Size() const
     {
-        return pooledResourceAndAges.size();
+        return pooledResources.size();
     }
 
     template <typename PooledRes>
-    void ResourcePool<PooledRes>::Tick()
+    void ResourcePool<PooledRes>::Forfeit()
     {
-        for (auto i = 0; i < pooledResourceAndAges.size();) {
+        const auto currentFrame = Core::ThreadContext::FrameNumber();
+
+        for (auto i = 0; i < pooledResources.size();) {
             bool needRelease = false;
-            auto& [pooledResource, age] = pooledResourceAndAges[i];
+            auto& pooledResource = pooledResources[i];
 
             if (pooledResource.RefCount() <= 1) {
-                needRelease = ++age >= 2;
+                needRelease = currentFrame - pooledResource->LastUsedFrame() > Internal::pooledResourceReleaseFrameLatency;
             } else {
-                age = 0;
+                pooledResource->MarkUsedThisFrame();
             }
 
             if (needRelease) { // NOLINT
-                pooledResourceAndAges.erase(pooledResourceAndAges.begin() + i);
+                pooledResources.erase(pooledResources.begin() + i);
             } else {
                 i++;
             }
