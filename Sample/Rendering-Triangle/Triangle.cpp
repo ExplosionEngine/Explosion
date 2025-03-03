@@ -162,8 +162,10 @@ void TriangleApplication::OnDrawFrame()
     swapChain->Present(renderFinishedSemaphore.Get());
     frameFence->Wait();
 
+    Core::ThreadContext::IncFrameNumber();
     BufferPool::Get(*device).Forfeit();
     TexturePool::Get(*device).Forfeit();
+    ResourceViewCache::Get(*device).Forfeit();
     frameCount++;
 }
 
@@ -173,7 +175,6 @@ void TriangleApplication::OnDestroy()
     device->GetQueue(QueueType::graphics, 0)->Flush(fence.Get());
     fence->Wait();
 
-    ResourceViewCache::Get(*device).Invalidate();
     PipelineCache::Get(*device).Invalidate();
     GlobalShaderRegistry::Get().InvalidateAll();
     RenderWorkerThreads::Get().Stop();

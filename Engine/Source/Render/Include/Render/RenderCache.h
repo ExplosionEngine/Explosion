@@ -262,17 +262,29 @@ namespace Render {
         static ResourceViewCache& Get(RHI::Device& device);
         ~ResourceViewCache();
 
-        void Invalidate();
-        void Invalidate(RHI::Buffer* buffer);
-        void Invalidate(RHI::Texture* texture);
         RHI::BufferView* GetOrCreate(RHI::Buffer* buffer, const RHI::BufferViewCreateInfo& inDesc);
         RHI::TextureView* GetOrCreate(RHI::Texture* texture, const RHI::TextureViewCreateInfo& inDesc);
+        void Invalidate(RHI::Buffer* buffer);
+        void Invalidate(RHI::Texture* texture);
+        void Forfeit();
 
     private:
         explicit ResourceViewCache(RHI::Device& inDevice);
 
+        struct BufferViewCache {
+            bool valid;
+            uint64_t lastUsedFrame;
+            std::unordered_map<size_t, Common::UniquePtr<RHI::BufferView>> views;
+        };
+
+        struct TextureViewCache {
+            bool valid;
+            uint64_t lastUsedFrame;
+            std::unordered_map<size_t, Common::UniquePtr<RHI::TextureView>> views;
+        };
+
         RHI::Device& device;
-        std::unordered_map<RHI::Buffer*, std::unordered_map<size_t, Common::UniquePtr<RHI::BufferView>>> bufferViews;
-        std::unordered_map<RHI::Texture*, std::unordered_map<size_t, Common::UniquePtr<RHI::TextureView>>> textureViews;
+        std::unordered_map<RHI::Buffer*, BufferViewCache> bufferViewCaches;
+        std::unordered_map<RHI::Texture*, TextureViewCache> textureViewCaches;
     };
 }

@@ -7,6 +7,11 @@
 #include <utility>
 
 #include <Common/IO.h>
+#include <Core/Thread.h>
+
+namespace Render::Internal {
+    constexpr uint64_t resourceViewCacheReleaseFrameLatency = 2;
+}
 
 namespace Render {
     class PipelineLayoutCache {
@@ -588,31 +593,9 @@ namespace Render {
 
     ResourceViewCache::~ResourceViewCache() = default;
 
-    void ResourceViewCache::Invalidate()
-    {
-        bufferViews.clear();
-        textureViews.clear();
-    }
-
-    void ResourceViewCache::Invalidate(RHI::Buffer* buffer) // NOLINT
-    {
-        if (const auto iter = bufferViews.find(buffer);
-            iter != bufferViews.end()) {
-            iter->second.clear();
-        }
-    }
-
-    void ResourceViewCache::Invalidate(RHI::Texture* texture) // NOLINT
-    {
-        if (const auto iter = textureViews.find(texture);
-            iter != textureViews.end()) {
-            iter->second.clear();
-        }
-    }
-
     RHI::BufferView* ResourceViewCache::GetOrCreate(RHI::Buffer* buffer, const RHI::BufferViewCreateInfo& inDesc)
     {
-        auto& views = bufferViews[buffer];
+        auto& views = bufferViewCaches[buffer].views;
 
         auto hash = inDesc.Hash();
         if (const auto iter = views.find(hash);
@@ -624,7 +607,7 @@ namespace Render {
 
     RHI::TextureView* ResourceViewCache::GetOrCreate(RHI::Texture* texture, const RHI::TextureViewCreateInfo& inDesc)
     {
-        auto& views = textureViews[texture];
+        auto& views = textureViewCaches[texture].views;
 
         auto hash = inDesc.Hash();
         if (const auto iter = views.find(hash);
@@ -632,5 +615,48 @@ namespace Render {
             views.emplace(std::make_pair(hash, Common::UniquePtr(texture->CreateTextureView(inDesc))));
         }
         return views.at(hash).Get();
+    }
+
+    void ResourceViewCache::Invalidate(RHI::Buffer* buffer) // NOLINT
+    {
+        if (const auto iter = bufferViewCaches.find(buffer);
+            iter != bufferViewCaches.end()) {
+            iter->second.valid = false;
+        }
+    }
+
+    void ResourceViewCache::Invalidate(RHI::Texture* texture) // NOLINT
+    {
+        if (const auto iter = textureViewCaches.find(texture);
+            iter != textureViewCaches.end()) {
+            iter->second.valid = false;
+        }
+    }
+
+    void ResourceViewCache::Forfeit()
+    {
+        const auto forfeitCaches = [](auto& caches) -> void { // NOLINT
+            const auto currentFrameNumber = Core::ThreadContext::FrameNumber();
+
+            std::vector<typename std::decay_t<decltype(caches)>::key_type> resourcesToRelease;
+            resourcesToRelease.reserve(caches.size());
+
+            for (auto& [resource, cache] : caches) {
+                auto& [valid, lastUsedFrame, views] = cache;
+
+                if (valid) {
+                    lastUsedFrame = currentFrameNumber;
+                } else if (lastUsedFrame - currentFrameNumber > Internal::resourceViewCacheReleaseFrameLatency) {
+                    resourcesToRelease.emplace_back(resource);
+                }
+            }
+
+            for (auto* resourceToRelease : resourcesToRelease) {
+                caches.erase(resourceToRelease);
+            }
+        };
+
+        forfeitCaches(bufferViewCaches);
+        forfeitCaches(textureViewCaches);
     }
 }
