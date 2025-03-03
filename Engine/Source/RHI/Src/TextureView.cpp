@@ -55,7 +55,7 @@ namespace RHI {
         return *this;
     }
 
-    size_t TextureViewCreateInfo::Hash() const
+    uint64_t TextureViewCreateInfo::Hash() const
     {
         return Common::HashUtils::CityHash(this, sizeof(TextureViewCreateInfo));
     }

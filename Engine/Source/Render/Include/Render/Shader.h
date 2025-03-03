@@ -71,7 +71,7 @@ namespace Render {
         const ShaderReflectionData* reflectionData = nullptr;
 
         bool IsValid() const;
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     using ShaderArchivePackage = std::unordered_map<VariantKey, ShaderArchive>;

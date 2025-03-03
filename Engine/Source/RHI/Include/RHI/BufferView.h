@@ -49,7 +49,7 @@ namespace RHI {
         BufferViewCreateInfo& SetExtendIndex(IndexFormat inFormat);
         BufferViewCreateInfo& SetExtendStorage(uint32_t inStride);
 
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     class BufferView {

@@ -80,17 +80,17 @@ namespace Render {
         return rhiHandle != nullptr;
     }
 
-    size_t ShaderInstance::Hash() const
+    uint64_t ShaderInstance::Hash() const
     {
         if (!IsValid()) {
             return 0;
         }
 
-        const std::vector values = {
+        const std::vector<uint64_t> values = {
             typeKey,
             variantKey
         };
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
     GlobalShaderRegistry& GlobalShaderRegistry::Get()

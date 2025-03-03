@@ -30,7 +30,7 @@ namespace Render {
 
         std::string FinalSemantic() const;
         RHI::PlatformVertexBinding GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct RVertexAttribute : RHI::VertexAttributeBase<RVertexAttribute> {
@@ -43,7 +43,7 @@ namespace Render {
 
         RHI::VertexAttribute GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
         RVertexAttribute& SetBinding(const RVertexBinding& inBinding);
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct RVertexBufferLayout : RHI::VertexBufferLayoutBase<RVertexBufferLayout> {
@@ -55,7 +55,7 @@ namespace Render {
 
         RHI::VertexBufferLayout GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
         RVertexBufferLayout& AddAttribute(const RVertexAttribute& inAttribute);
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct RVertexState {
@@ -65,7 +65,7 @@ namespace Render {
 
         RHI::VertexState GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
         RVertexState& AddVertexBufferLayout(const RVertexBufferLayout& inLayout);
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct BindGroupLayoutDesc {
@@ -76,7 +76,7 @@ namespace Render {
     struct ComputePipelineShaderSet {
         Render::ShaderInstance computeShader;
 
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct RasterPipelineShaderSet {
@@ -86,19 +86,19 @@ namespace Render {
         Render::ShaderInstance domainShader;
         Render::ShaderInstance hullShader;
 
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct ComputePipelineLayoutDesc {
         ComputePipelineShaderSet shaders;
 
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct RasterPipelineLayoutDesc {
         RasterPipelineShaderSet shaders;
 
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     template <typename T> concept AnyPipelineLayoutDesc = std::is_same_v<T, ComputePipelineLayoutDesc> || std::is_same_v<T, RasterPipelineLayoutDesc>;
@@ -106,7 +106,7 @@ namespace Render {
     struct ComputePipelineStateDesc {
         ComputePipelineShaderSet shaders;
 
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct RasterPipelineStateDesc {
@@ -128,7 +128,7 @@ namespace Render {
         RasterPipelineStateDesc& SetDepthStencilState(const RDepthStencilState& inDepthStencilState);
         RasterPipelineStateDesc& SetMultiSampleState(const RMultiSampleState& inMultiSampleState);
         RasterPipelineStateDesc& SetFragmentState(const RFragmentState& inFragmentState);
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     class Sampler {

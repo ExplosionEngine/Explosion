@@ -112,7 +112,7 @@ namespace RHI {
         return *this;
     }
 
-    size_t PrimitiveState::Hash() const
+    uint64_t PrimitiveState::Hash() const
     {
         return Common::HashUtils::CityHash(this, sizeof(PrimitiveState));
     }
@@ -221,7 +221,7 @@ namespace RHI {
         return *this;
     }
 
-    size_t DepthStencilState::Hash() const
+    uint64_t DepthStencilState::Hash() const
     {
         return Common::HashUtils::CityHash(this, sizeof(DepthStencilState));
     }
@@ -251,7 +251,7 @@ namespace RHI {
         return *this;
     }
 
-    size_t MultiSampleState::Hash() const
+    uint64_t MultiSampleState::Hash() const
     {
         return Common::HashUtils::CityHash(this, sizeof(MultiSampleState));
     }
@@ -307,7 +307,7 @@ namespace RHI {
         return *this;
     }
 
-    size_t ColorTargetState::Hash() const
+    uint64_t ColorTargetState::Hash() const
     {
         return Common::HashUtils::CityHash(this, sizeof(ColorTargetState));
     }
@@ -322,15 +322,15 @@ namespace RHI {
         return *this;
     }
 
-    size_t FragmentState::Hash() const
+    uint64_t FragmentState::Hash() const
     {
-        std::vector<size_t> values;
+        std::vector<uint64_t> values;
         values.reserve(colorTargets.size());
 
         for (const auto& colorTarget : colorTargets) {
             values.emplace_back(colorTarget.Hash());
         }
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
     ComputePipelineCreateInfo::ComputePipelineCreateInfo()

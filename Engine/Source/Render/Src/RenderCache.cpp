@@ -84,14 +84,14 @@ namespace Render {
         return inReflectionData.QueryVertexBindingChecked(FinalSemantic());
     }
 
-    size_t RVertexBinding::Hash() const
+    uint64_t RVertexBinding::Hash() const
     {
         // NOTICE: string can not use city hash for this ptr, cause can be change every time allocated
-        const std::vector values = {
+        const std::vector<uint64_t> values = {
             Common::HashUtils::CityHash(semanticName.data(), semanticName.size()),
-            static_cast<size_t>(semanticIndex)
+            static_cast<uint64_t>(semanticIndex)
         };
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
     RVertexAttribute::RVertexAttribute(const RVertexBinding& inBinding, RHI::VertexFormat inFormat, size_t inOffset)
@@ -106,14 +106,14 @@ namespace Render {
         return *this;
     }
 
-    size_t RVertexAttribute::Hash() const
+    uint64_t RVertexAttribute::Hash() const
     {
-        const std::vector values = {
+        const std::vector<uint64_t> values = {
             binding.Hash(),
-            static_cast<size_t>(format),
+            static_cast<uint64_t>(format),
             offset
         };
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
     RHI::VertexAttribute RVertexAttribute::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
@@ -142,15 +142,15 @@ namespace Render {
         return *this;
     }
 
-    size_t RVertexBufferLayout::Hash() const
+    uint64_t RVertexBufferLayout::Hash() const
     {
-        std::vector<size_t> values;
+        std::vector<uint64_t> values;
         values.reserve(attributes.size());
 
         for (const auto& attribute : attributes) {
             values.emplace_back(attribute.Hash());
         }
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
     RVertexState::RVertexState() = default;
@@ -171,45 +171,45 @@ namespace Render {
         return *this;
     }
 
-    size_t RVertexState::Hash() const
+    uint64_t RVertexState::Hash() const
     {
-        std::vector<size_t> values;
+        std::vector<uint64_t> values;
         values.reserve(bufferLayouts.size());
 
         for (const auto& layout : bufferLayouts) {
             values.emplace_back(layout.Hash());
         }
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
-    size_t ComputePipelineShaderSet::Hash() const
+    uint64_t ComputePipelineShaderSet::Hash() const
     {
         return computeShader.Hash();
     }
 
-    size_t RasterPipelineShaderSet::Hash() const
+    uint64_t RasterPipelineShaderSet::Hash() const
     {
-        const std::vector values = {
+        const std::vector<uint64_t> values = {
             vertexShader.Hash(),
             pixelShader.Hash(),
             geometryShader.Hash(),
             domainShader.Hash(),
             hullShader.Hash()
         };
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
-    size_t ComputePipelineLayoutDesc::Hash() const
+    uint64_t ComputePipelineLayoutDesc::Hash() const
     {
         return shaders.Hash();
     }
 
-    size_t RasterPipelineLayoutDesc::Hash() const
+    uint64_t RasterPipelineLayoutDesc::Hash() const
     {
         return shaders.Hash();
     }
 
-    size_t ComputePipelineStateDesc::Hash() const
+    uint64_t ComputePipelineStateDesc::Hash() const
     {
         return shaders.Hash();
     }
@@ -276,9 +276,9 @@ namespace Render {
         return *this;
     }
 
-    size_t RasterPipelineStateDesc::Hash() const
+    uint64_t RasterPipelineStateDesc::Hash() const
     {
-        const std::vector values = {
+        const std::vector<uint64_t> values = {
             shaders.Hash(),
             vertexState.Hash(),
             primitiveState.Hash(),
@@ -286,7 +286,7 @@ namespace Render {
             multiSampleState.Hash(),
             fragmentState.Hash()
         };
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
     Sampler::Sampler(RHI::Device& inDevice, const RSamplerDesc& inDesc)
