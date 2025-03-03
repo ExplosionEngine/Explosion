@@ -26,6 +26,8 @@ namespace RHI {
         BufferCreateInfo& SetInitialState(BufferState inState);
         BufferCreateInfo& SetDebugName(std::string inDebugName);
 
+        uint64_t Hash() const;
+
         bool operator==(const BufferCreateInfo& rhs) const;
     };
 

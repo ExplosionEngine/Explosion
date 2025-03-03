@@ -78,6 +78,22 @@ namespace RHI {
         return *this;
     }
 
+    uint64_t TextureCreateInfo::Hash() const
+    {
+        const std::vector<uint64_t> values = {
+            static_cast<uint64_t>(dimension),
+            static_cast<uint64_t>(width),
+            static_cast<uint64_t>(height),
+            static_cast<uint64_t>(depthOrArraySize),
+            static_cast<uint64_t>(format),
+            static_cast<uint64_t>(usages.Value()),
+            static_cast<uint64_t>(mipLevels),
+            static_cast<uint64_t>(samples),
+            static_cast<uint64_t>(initialState),
+        };
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
+    }
+
     bool TextureCreateInfo::operator==(const TextureCreateInfo& rhs) const
     {
         return dimension == rhs.dimension
