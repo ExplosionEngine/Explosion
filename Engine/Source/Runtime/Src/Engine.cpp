@@ -63,8 +63,11 @@ namespace Runtime {
             last2FrameRenderThreadFence.wait();
         }
 
+        Core::ThreadContext::IncFrameNumber();
+
         auto& renderThread = renderModule->GetRenderThread();
         renderThread.EmplaceTask([]() -> void {
+            Core::ThreadContext::IncFrameNumber();
             Core::Console::Get().PerformRenderThreadSettingsCopy();
         });
 

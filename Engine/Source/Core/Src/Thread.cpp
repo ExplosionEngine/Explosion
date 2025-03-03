@@ -6,15 +6,26 @@
 
 namespace Core {
     static thread_local auto currentTag = ThreadTag::unknown;
+    static thread_local uint64_t frameNumber = 0;
 
     void ThreadContext::SetTag(ThreadTag inTag)
     {
         currentTag = inTag;
     }
 
-    ThreadTag ThreadContext::GetTag()
+    void ThreadContext::IncFrameNumber()
+    {
+        frameNumber++;
+    }
+
+    ThreadTag ThreadContext::Tag()
     {
         return currentTag;
+    }
+
+    uint64_t ThreadContext::FrameNumber()
+    {
+        return frameNumber;
     }
 
     bool ThreadContext::IsUnknownThread()
@@ -54,7 +65,7 @@ namespace Core {
 
     ScopedThreadTag::ScopedThreadTag(ThreadTag inTag)
     {
-        tagToRestore = ThreadContext::GetTag();
+        tagToRestore = ThreadContext::Tag();
         ThreadContext::SetTag(inTag);
     }
 
