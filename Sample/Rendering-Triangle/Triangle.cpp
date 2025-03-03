@@ -83,6 +83,7 @@ TriangleApplication::TriangleApplication(const std::string& inName)
     : Application(inName)
     , frameCount(0)
     , swapChainFormat(PixelFormat::max)
+    , swapChainTextures()
 {
 }
 
@@ -166,6 +167,7 @@ void TriangleApplication::OnDrawFrame()
     BufferPool::Get(*device).Forfeit();
     TexturePool::Get(*device).Forfeit();
     ResourceViewCache::Get(*device).Forfeit();
+    BindGroupCache::Get(*device).Forfeit();
     frameCount++;
 }
 
@@ -175,6 +177,7 @@ void TriangleApplication::OnDestroy()
     device->GetQueue(QueueType::graphics, 0)->Flush(fence.Get());
     fence->Wait();
 
+    BindGroupCache::Get(*device).Invalidate();
     PipelineCache::Get(*device).Invalidate();
     GlobalShaderRegistry::Get().InvalidateAll();
     RenderWorkerThreads::Get().Stop();

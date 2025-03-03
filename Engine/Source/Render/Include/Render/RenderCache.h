@@ -287,4 +287,22 @@ namespace Render {
         std::unordered_map<RHI::Buffer*, BufferViewCache> bufferViewCaches;
         std::unordered_map<RHI::Texture*, TextureViewCache> textureViewCaches;
     };
+
+    class BindGroupCache {
+    public:
+        static BindGroupCache& Get(RHI::Device& device);
+        ~BindGroupCache();
+
+        RHI::BindGroup* Allocate(const RHI::BindGroupCreateInfo& inCreateInfo);
+        void Invalidate();
+        void Forfeit();
+
+    private:
+        using AllocateFrameNumber = uint64_t;
+
+        explicit BindGroupCache(RHI::Device& inDevice);
+
+        RHI::Device& device;
+        std::vector<std::pair<Common::UniquePtr<RHI::BindGroup>, AllocateFrameNumber>> bindGroups;
+    };
 }

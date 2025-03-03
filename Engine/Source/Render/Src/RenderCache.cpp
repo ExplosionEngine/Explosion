@@ -11,6 +11,7 @@
 
 namespace Render::Internal {
     constexpr uint64_t resourceViewCacheReleaseFrameLatency = 2;
+    constexpr uint64_t bindGroupCacheReleaseFrameLatency = 2;
 }
 
 namespace Render {
@@ -646,7 +647,7 @@ namespace Render {
 
                 if (valid) {
                     lastUsedFrame = currentFrameNumber;
-                } else if (lastUsedFrame - currentFrameNumber > Internal::resourceViewCacheReleaseFrameLatency) {
+                } else if (currentFrameNumber - lastUsedFrame > Internal::resourceViewCacheReleaseFrameLatency) {
                     resourcesToRelease.emplace_back(resource);
                 }
             }
@@ -659,4 +660,46 @@ namespace Render {
         forfeitCaches(bufferViewCaches);
         forfeitCaches(textureViewCaches);
     }
-}
+
+    BindGroupCache& BindGroupCache::Get(RHI::Device& device)
+    {
+        static std::unordered_map<RHI::Device*, Common::UniquePtr<BindGroupCache>> map;
+
+        if (!map.contains(&device)) {
+            map.emplace(std::make_pair(&device, Common::UniquePtr(new BindGroupCache(device))));
+        }
+        return *map.at(&device);
+    }
+
+    BindGroupCache::~BindGroupCache() = default;
+
+    RHI::BindGroup* BindGroupCache::Allocate(const RHI::BindGroupCreateInfo& inCreateInfo)
+    {
+        const auto& [ptr, frameNumber] = bindGroups.emplace_back(device.CreateBindGroup(inCreateInfo), Core::ThreadContext::FrameNumber());
+        return ptr.Get();
+    }
+
+    void BindGroupCache::Invalidate()
+    {
+        bindGroups.clear();
+    }
+
+    void BindGroupCache::Forfeit()
+    {
+        const auto currentFrame = Core::ThreadContext::FrameNumber();
+
+        for (auto i = 0; i < bindGroups.size();) {
+            const auto& [ptr, lastUsedFrame] = bindGroups[i];
+            if (currentFrame - lastUsedFrame > Internal::bindGroupCacheReleaseFrameLatency) { // NOLINT
+                bindGroups.erase(bindGroups.begin() + i);
+            } else {
+                i++;
+            }
+        }
+    }
+
+    BindGroupCache::BindGroupCache(RHI::Device& inDevice)
+        : device(inDevice)
+    {
+    }
+} // namespace Render
