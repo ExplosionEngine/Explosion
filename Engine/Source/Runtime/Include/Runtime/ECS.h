@@ -25,7 +25,7 @@ namespace Runtime {
 
     class ECRegistry;
     class Client;
-    class SystemSetupContext;
+    struct SystemSetupContext;
 
     template <typename T>
     concept ECRegistryOrConst = std::is_same_v<std::remove_const_t<T>, ECRegistry>;
@@ -635,9 +635,16 @@ namespace Runtime {
         std::vector<SystemGroupContext> systemGraph;
     };
 
+    enum class PlayType : uint8_t {
+        editor,
+        game,
+        max
+    };
+
     struct SystemSetupContext {
         SystemSetupContext();
 
+        PlayType playType;
         Client* client;
     };
 

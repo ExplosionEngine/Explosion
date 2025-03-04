@@ -1288,7 +1288,8 @@ namespace Runtime {
     }
 
     SystemSetupContext::SystemSetupContext()
-        : client(nullptr)
+        : playType(PlayType::max)
+        , client(nullptr)
     {
     }
 

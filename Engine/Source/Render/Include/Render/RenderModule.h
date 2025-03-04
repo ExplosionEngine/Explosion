@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <Common/Debug.h>
 #include <Core/Module.h>
 #include <RHI/RHI.h>
 #include <Render/Scene.h>
@@ -30,8 +29,9 @@ namespace Render {
         void DeInitialize();
         RHI::Device* GetDevice() const;
         Render::RenderThread& GetRenderThread() const;
-        Common::UniquePtr<Scene> NewScene();
-        Common::UniquePtr<View> NewView();
+        Scene* NewScene() const;
+        ViewState* NewViewState() const;
+        View CreateView() const;
 
     private:
         bool initialized;

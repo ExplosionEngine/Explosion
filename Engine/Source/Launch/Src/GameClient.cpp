@@ -8,7 +8,7 @@
 namespace Launch {
     GameClient::GameClient(GameViewport& inViewport)
         : viewport(inViewport)
-        , world("GameWorld", this)
+        , world("GameWorld", this, Runtime::PlayType::game)
     {
     }
 
