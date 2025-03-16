@@ -1,4 +1,4 @@
-#include <Platform.h>
+#include <Platform.esh>
 
 struct FragmentInput {
     float4 position : SV_POSITION;

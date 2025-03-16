@@ -1,4 +1,4 @@
-#include <Platform.h>
+#include <Platform.esh>
 
 VkBinding(0, 0) Texture2D posDepthTex : register(t0);
 VkBinding(1, 0) Texture2D normalTex : register(t1);
