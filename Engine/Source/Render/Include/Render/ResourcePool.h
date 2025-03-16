@@ -59,6 +59,7 @@ namespace Render {
         ResRefType Allocate(const DescType& desc);
         size_t Size() const;
         void Forfeit();
+        void Invalidate();
 
     private:
         explicit ResourcePool(RHI::Device& inDevice);
@@ -199,4 +200,13 @@ namespace Render {
             }
         }
     }
-}
+
+    template <typename PooledRes>
+    void ResourcePool<PooledRes>::Invalidate()
+    {
+        for (const auto& pooledResource : pooledResources) {
+            Assert(pooledResource.RefCount() == 1);
+        }
+        pooledResources.clear();
+    }
+} // namespace Render

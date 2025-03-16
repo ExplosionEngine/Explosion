@@ -164,7 +164,7 @@ namespace Render {
 
         const std::vector<IShaderType*>& GetShaderTypes() const;
         // call this func before device release
-        void InvalidateAll() const;
+        void Invalidate() const;
         // call this func after shader reloaded
         void ReloadAll() const;
 

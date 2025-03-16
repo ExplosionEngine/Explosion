@@ -108,7 +108,7 @@ namespace Render {
         return shaderTypes;
     }
 
-    void GlobalShaderRegistry::InvalidateAll() const // NOLINT
+    void GlobalShaderRegistry::Invalidate() const // NOLINT
     {
         ShaderArchiveStorage::Get().InvalidateAll();
         for (auto* shaderType : shaderTypes) {
@@ -118,7 +118,7 @@ namespace Render {
 
     void GlobalShaderRegistry::ReloadAll() const
     {
-        InvalidateAll();
+        Invalidate();
         for (auto* shaderType : shaderTypes) {
             shaderType->Reload();
         }

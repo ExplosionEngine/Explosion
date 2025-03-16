@@ -179,7 +179,9 @@ void TriangleApplication::OnDestroy()
 
     BindGroupCache::Get(*device).Invalidate();
     PipelineCache::Get(*device).Invalidate();
-    GlobalShaderRegistry::Get().InvalidateAll();
+    BufferPool::Get(*device).Invalidate();
+    TexturePool::Get(*device).Invalidate();
+    GlobalShaderRegistry::Get().Invalidate();
     RenderWorkerThreads::Get().Stop();
 }
 
