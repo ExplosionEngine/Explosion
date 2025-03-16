@@ -215,7 +215,7 @@ void* Application::GetPlatformWindow() const
 #if PLATFORM_WINDOWS
     return glfwGetWin32Window(window);
 #elif PLATFORM_MACOS
-    return glfwGetCocoaWindow(window);
+    return glfwGetCocoaView(window);
 #else
     Unimplement();
     return nullptr;

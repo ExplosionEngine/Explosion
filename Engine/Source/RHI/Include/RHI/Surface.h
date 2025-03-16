@@ -8,6 +8,8 @@
 
 namespace RHI {
     struct SurfaceCreateInfo {
+        // Windows: HWND
+        // macOS: NSView*
         void* window;
 
         explicit SurfaceCreateInfo(void* inWindow = nullptr);
