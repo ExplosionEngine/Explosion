@@ -65,7 +65,6 @@ private:
     void CreateTriangleVertexBuffer();
     void CreateSyncObjects();
 
-    uint64_t frameCount;
     PixelFormat swapChainFormat;
     ShaderInstance triangleVS;
     ShaderInstance trianglePS;
@@ -81,7 +80,6 @@ private:
 
 TriangleApplication::TriangleApplication(const std::string& inName)
     : Application(inName)
-    , frameCount(0)
     , swapChainFormat(PixelFormat::max)
     , swapChainTextures()
 {
@@ -130,7 +128,10 @@ void TriangleApplication::OnDrawFrame()
             .UniformBuffer("psUniform", psUniformBufferView));
 
     PsUniform psUniform {};
-    psUniform.pixelColor = FVec3(static_cast<float>(frameCount % 256) / 255.0f, 0.0f, 0.0f);
+    psUniform.pixelColor = FVec3(
+        (std::sin(GetCurrentTimeSeconds()) + 1) / 2,
+        (std::cos(GetCurrentTimeSeconds()) + 1) / 2,
+        std::abs(std::sin(GetCurrentTimeSeconds())));
 
     builder.QueueBufferUpload(
         psUniformBuffer,
@@ -168,7 +169,6 @@ void TriangleApplication::OnDrawFrame()
     TexturePool::Get(*device).Forfeit();
     ResourceViewCache::Get(*device).Forfeit();
     BindGroupCache::Get(*device).Forfeit();
-    frameCount++;
 }
 
 void TriangleApplication::OnDestroy()
