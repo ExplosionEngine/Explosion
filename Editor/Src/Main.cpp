@@ -10,6 +10,12 @@
 #include <Editor/Widget/WidgetSamples.h>
 
 #if BUILD_CONFIG_DEBUG
+#include <Editor/Widget/GraphicsWindowSample.h>
+
+static ::Core::CmdlineArgValue<bool> caGraphicsWindowSample(
+    "graphicsSample", "-graphicsSample", false,
+    "Whether to run graphics sample instead of editor");
+
 static ::Core::CmdlineArgValue<bool> caRunSample(
     "widgetSamples", "-widgetSamples", false,
     "Whether to run widget samples instead of editor");
@@ -54,7 +60,9 @@ int main(int argc, char* argv[])
 
     Common::UniquePtr<QWidget> mainWidget;
 #if BUILD_CONFIG_DEBUG
-    if (caRunSample.GetValue()) {
+    if (caGraphicsWindowSample.GetValue()) {
+        mainWidget = new Editor::GraphicsWindowSampleWidget();
+    } else if (caRunSample.GetValue()) {
         mainWidget = new Editor::WidgetSamples();
     } else
 #endif
