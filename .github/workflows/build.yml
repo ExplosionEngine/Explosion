@@ -35,7 +35,7 @@ jobs:
         if: runner.os == 'macOS'
 
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
@@ -43,7 +43,7 @@ jobs:
           cmake-version: ${{env.CMAKE_VERSION}}
 
       - name: Update Cache Files
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{github.workspace}}/ThirdParty/Zip
           key: ${{runner.os}}-3rd-zip

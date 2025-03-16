@@ -18,8 +18,8 @@ namespace Common {
 
         Time ToTime() const;
         AccurateTime ToAccurateTime() const;
-        float ToSeconds() const;
-        float ToMilliseconds() const;
+        double ToSeconds() const;
+        double ToMilliseconds() const;
         uint64_t ToMicroseconds() const;
         const std::chrono::system_clock::time_point& GetNative() const;
 

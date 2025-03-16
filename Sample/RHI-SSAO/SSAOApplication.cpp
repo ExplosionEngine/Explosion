@@ -1003,7 +1003,7 @@ private:
                 64.0f
             });
 
-        camera->SetMoveSpeed(0.005f);
+        camera->SetMoveSpeed(5.f);
         camera->SetRotateSpeed(0.1f);
         SetCamera(camera);
     }

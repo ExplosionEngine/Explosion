@@ -416,7 +416,7 @@ namespace Render {
         std::vector<AsyncTimelineExecuteContext> asyncTimelineExecuteContexts;
         std::unordered_map<RGResourceRef, std::variant<PooledBufferRef, PooledTextureRef>> devirtualizedResources;
         std::unordered_map<RGResourceViewRef, std::variant<RHI::BufferView*, RHI::TextureView*>> devirtualizedResourceViews;
-        std::unordered_map<RGBindGroupRef, Common::UniquePtr<RHI::BindGroup>> devirtualizedBindGroups;
+        std::unordered_map<RGBindGroupRef, RHI::BindGroup*> devirtualizedBindGroups;
         std::vector<std::future<void>> bufferUploadTasks;
     };
 }

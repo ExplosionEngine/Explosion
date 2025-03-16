@@ -420,6 +420,11 @@ namespace Mirror {
         static const Id moveCtor;
     };
 
+    struct MIRROR_API MetaPresets {
+        static constexpr const auto* transient = "transient";
+        static constexpr const auto* category = "category";
+    };
+
     class MIRROR_API ReflNode {
     public:
         virtual ~ReflNode();
@@ -427,6 +432,7 @@ namespace Mirror {
         const Id& GetId() const;
         const std::string& GetName() const;
         const std::string& GetMeta(const std::string& key) const;
+        std::string GetMetaOr(const std::string& key, const std::string& defaultValue) const;
         std::string GetAllMeta() const;
         bool HasMeta(const std::string& key) const;
         bool GetMetaBool(const std::string& key) const;

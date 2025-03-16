@@ -45,14 +45,14 @@ namespace Common {
         return AccurateTime { *this };
     }
 
-    float TimePoint::ToSeconds() const
+    double TimePoint::ToSeconds() const
     {
-        return ToMilliseconds() / 1000.0f;
+        return ToMilliseconds() / 1000.0;
     }
 
-    float TimePoint::ToMilliseconds() const
+    double TimePoint::ToMilliseconds() const
     {
-        return static_cast<float>(ToMicroseconds()) / 1000.0f;
+        return static_cast<double>(ToMicroseconds()) / 1000.0;
     }
 
     uint64_t TimePoint::ToMicroseconds() const

@@ -7,6 +7,12 @@
 #include <utility>
 
 #include <Common/IO.h>
+#include <Core/Thread.h>
+
+namespace Render::Internal {
+    constexpr uint64_t resourceViewCacheReleaseFrameLatency = 2;
+    constexpr uint64_t bindGroupCacheReleaseFrameLatency = 2;
+}
 
 namespace Render {
     class PipelineLayoutCache {
@@ -84,14 +90,14 @@ namespace Render {
         return inReflectionData.QueryVertexBindingChecked(FinalSemantic());
     }
 
-    size_t RVertexBinding::Hash() const
+    uint64_t RVertexBinding::Hash() const
     {
         // NOTICE: string can not use city hash for this ptr, cause can be change every time allocated
-        const std::vector values = {
+        const std::vector<uint64_t> values = {
             Common::HashUtils::CityHash(semanticName.data(), semanticName.size()),
-            static_cast<size_t>(semanticIndex)
+            static_cast<uint64_t>(semanticIndex)
         };
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
     RVertexAttribute::RVertexAttribute(const RVertexBinding& inBinding, RHI::VertexFormat inFormat, size_t inOffset)
@@ -106,14 +112,14 @@ namespace Render {
         return *this;
     }
 
-    size_t RVertexAttribute::Hash() const
+    uint64_t RVertexAttribute::Hash() const
     {
-        const std::vector values = {
+        const std::vector<uint64_t> values = {
             binding.Hash(),
-            static_cast<size_t>(format),
+            static_cast<uint64_t>(format),
             offset
         };
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
     RHI::VertexAttribute RVertexAttribute::GetRHI(const Render::ShaderReflectionData& inReflectionData) const
@@ -142,15 +148,15 @@ namespace Render {
         return *this;
     }
 
-    size_t RVertexBufferLayout::Hash() const
+    uint64_t RVertexBufferLayout::Hash() const
     {
-        std::vector<size_t> values;
+        std::vector<uint64_t> values;
         values.reserve(attributes.size());
 
         for (const auto& attribute : attributes) {
             values.emplace_back(attribute.Hash());
         }
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
     RVertexState::RVertexState() = default;
@@ -171,45 +177,45 @@ namespace Render {
         return *this;
     }
 
-    size_t RVertexState::Hash() const
+    uint64_t RVertexState::Hash() const
     {
-        std::vector<size_t> values;
+        std::vector<uint64_t> values;
         values.reserve(bufferLayouts.size());
 
         for (const auto& layout : bufferLayouts) {
             values.emplace_back(layout.Hash());
         }
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
-    size_t ComputePipelineShaderSet::Hash() const
+    uint64_t ComputePipelineShaderSet::Hash() const
     {
         return computeShader.Hash();
     }
 
-    size_t RasterPipelineShaderSet::Hash() const
+    uint64_t RasterPipelineShaderSet::Hash() const
     {
-        const std::vector values = {
+        const std::vector<uint64_t> values = {
             vertexShader.Hash(),
             pixelShader.Hash(),
             geometryShader.Hash(),
             domainShader.Hash(),
             hullShader.Hash()
         };
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
-    size_t ComputePipelineLayoutDesc::Hash() const
+    uint64_t ComputePipelineLayoutDesc::Hash() const
     {
         return shaders.Hash();
     }
 
-    size_t RasterPipelineLayoutDesc::Hash() const
+    uint64_t RasterPipelineLayoutDesc::Hash() const
     {
         return shaders.Hash();
     }
 
-    size_t ComputePipelineStateDesc::Hash() const
+    uint64_t ComputePipelineStateDesc::Hash() const
     {
         return shaders.Hash();
     }
@@ -276,9 +282,9 @@ namespace Render {
         return *this;
     }
 
-    size_t RasterPipelineStateDesc::Hash() const
+    uint64_t RasterPipelineStateDesc::Hash() const
     {
-        const std::vector values = {
+        const std::vector<uint64_t> values = {
             shaders.Hash(),
             vertexState.Hash(),
             primitiveState.Hash(),
@@ -286,7 +292,7 @@ namespace Render {
             multiSampleState.Hash(),
             fragmentState.Hash()
         };
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(size_t));
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
     Sampler::Sampler(RHI::Device& inDevice, const RSamplerDesc& inDesc)
@@ -588,31 +594,9 @@ namespace Render {
 
     ResourceViewCache::~ResourceViewCache() = default;
 
-    void ResourceViewCache::Invalidate()
-    {
-        bufferViews.clear();
-        textureViews.clear();
-    }
-
-    void ResourceViewCache::Invalidate(RHI::Buffer* buffer) // NOLINT
-    {
-        if (const auto iter = bufferViews.find(buffer);
-            iter != bufferViews.end()) {
-            iter->second.clear();
-        }
-    }
-
-    void ResourceViewCache::Invalidate(RHI::Texture* texture) // NOLINT
-    {
-        if (const auto iter = textureViews.find(texture);
-            iter != textureViews.end()) {
-            iter->second.clear();
-        }
-    }
-
     RHI::BufferView* ResourceViewCache::GetOrCreate(RHI::Buffer* buffer, const RHI::BufferViewCreateInfo& inDesc)
     {
-        auto& views = bufferViews[buffer];
+        auto& views = bufferViewCaches[buffer].views;
 
         auto hash = inDesc.Hash();
         if (const auto iter = views.find(hash);
@@ -624,7 +608,7 @@ namespace Render {
 
     RHI::TextureView* ResourceViewCache::GetOrCreate(RHI::Texture* texture, const RHI::TextureViewCreateInfo& inDesc)
     {
-        auto& views = textureViews[texture];
+        auto& views = textureViewCaches[texture].views;
 
         auto hash = inDesc.Hash();
         if (const auto iter = views.find(hash);
@@ -633,4 +617,89 @@ namespace Render {
         }
         return views.at(hash).Get();
     }
-}
+
+    void ResourceViewCache::Invalidate(RHI::Buffer* buffer) // NOLINT
+    {
+        if (const auto iter = bufferViewCaches.find(buffer);
+            iter != bufferViewCaches.end()) {
+            iter->second.valid = false;
+        }
+    }
+
+    void ResourceViewCache::Invalidate(RHI::Texture* texture) // NOLINT
+    {
+        if (const auto iter = textureViewCaches.find(texture);
+            iter != textureViewCaches.end()) {
+            iter->second.valid = false;
+        }
+    }
+
+    void ResourceViewCache::Forfeit()
+    {
+        const auto forfeitCaches = [](auto& caches) -> void { // NOLINT
+            const auto currentFrameNumber = Core::ThreadContext::FrameNumber();
+
+            std::vector<typename std::decay_t<decltype(caches)>::key_type> resourcesToRelease;
+            resourcesToRelease.reserve(caches.size());
+
+            for (auto& [resource, cache] : caches) {
+                auto& [valid, lastUsedFrame, views] = cache;
+
+                if (valid) {
+                    lastUsedFrame = currentFrameNumber;
+                } else if (currentFrameNumber - lastUsedFrame > Internal::resourceViewCacheReleaseFrameLatency) {
+                    resourcesToRelease.emplace_back(resource);
+                }
+            }
+
+            for (auto* resourceToRelease : resourcesToRelease) {
+                caches.erase(resourceToRelease);
+            }
+        };
+
+        forfeitCaches(bufferViewCaches);
+        forfeitCaches(textureViewCaches);
+    }
+
+    BindGroupCache& BindGroupCache::Get(RHI::Device& device)
+    {
+        static std::unordered_map<RHI::Device*, Common::UniquePtr<BindGroupCache>> map;
+
+        if (!map.contains(&device)) {
+            map.emplace(std::make_pair(&device, Common::UniquePtr(new BindGroupCache(device))));
+        }
+        return *map.at(&device);
+    }
+
+    BindGroupCache::~BindGroupCache() = default;
+
+    RHI::BindGroup* BindGroupCache::Allocate(const RHI::BindGroupCreateInfo& inCreateInfo)
+    {
+        const auto& [ptr, frameNumber] = bindGroups.emplace_back(device.CreateBindGroup(inCreateInfo), Core::ThreadContext::FrameNumber());
+        return ptr.Get();
+    }
+
+    void BindGroupCache::Invalidate()
+    {
+        bindGroups.clear();
+    }
+
+    void BindGroupCache::Forfeit()
+    {
+        const auto currentFrame = Core::ThreadContext::FrameNumber();
+
+        for (auto i = 0; i < bindGroups.size();) {
+            const auto& [ptr, lastUsedFrame] = bindGroups[i];
+            if (currentFrame - lastUsedFrame > Internal::bindGroupCacheReleaseFrameLatency) { // NOLINT
+                bindGroups.erase(bindGroups.begin() + i);
+            } else {
+                i++;
+            }
+        }
+    }
+
+    BindGroupCache::BindGroupCache(RHI::Device& inDevice)
+        : device(inDevice)
+    {
+    }
+} // namespace Render

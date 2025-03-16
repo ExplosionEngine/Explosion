@@ -15,18 +15,16 @@
 #include <unordered_map>
 #include <set>
 #include <map>
+#include <variant>
 
 #include <rapidjson/document.h>
-#include <rapidjson/filereadstream.h>
-#include <rapidjson/filewritestream.h>
-#include <rapidjson/writer.h>
-#include <rapidjson/prettywriter.h>
 
 #include <Common/Utility.h>
 #include <Common/Debug.h>
 #include <Common/Hash.h>
 #include <Common/String.h>
 #include <Common/FileSystem.h>
+#include <Common/File.h>
 
 namespace Common {
     class BinarySerializeStream {
@@ -476,39 +474,15 @@ namespace Common {
 
     template <typename T> void JsonSerializeToFile(const std::string& inFile, const T& inValue, bool inPretty)
     {
-        Common::Path parentPath = Common::Path(inFile).Parent();
-        if (!parentPath.Exists()) {
-            parentPath.MakeDir();
-        }
-
         rapidjson::Document document;
         JsonSerialize<T>(document, document.GetAllocator(), inValue);
-
-        char buffer[65536];
-        std::FILE* file = fopen(inFile.c_str(), "wb");
-        rapidjson::FileWriteStream stream(file, buffer, sizeof(buffer));
-
-        if (inPretty) {
-            rapidjson::PrettyWriter writer(stream);
-            document.Accept(writer);
-        } else {
-            rapidjson::Writer writer(stream);
-            document.Accept(writer);
-        }
-        (void) fclose(file);
+        FileUtils::WriteJsonFile(inFile, document, inPretty);
     }
 
     template <typename T> void JsonDeserializeFromFile(const std::string& inFile, T& outValue)
     {
-        char buffer[65536];
-        std::FILE* file = fopen(inFile.c_str(), "rb");
-        rapidjson::FileReadStream stream(file, buffer, sizeof(buffer));
-
-        rapidjson::Document document;
-        document.ParseStream(stream);
-
+        const rapidjson::Document document = FileUtils::ReadJsonFile(inFile);
         JsonDeserialize<T>(document, outValue);
-        (void) fclose(file);
     }
 
     template <Serializable T>
@@ -982,21 +956,21 @@ namespace Common {
         template <size_t... I>
         static size_t SerializeInternal(BinarySerializeStream& stream, const std::tuple<T...>& value, std::index_sequence<I...>)
         {
-            size_t result = 0;
+            size_t serialized = 0;
             std::initializer_list<int> { ([&]() -> void {
-                result += Serializer<T>::Serialize(stream, std::get<I>(value));
+                serialized += Serializer<T>::Serialize(stream, std::get<I>(value));
             }(), 0)... };
-            return result;
+            return serialized;
         }
 
         template <size_t... I>
         static size_t DeserializeInternal(BinaryDeserializeStream& stream, std::tuple<T...>& value, std::index_sequence<I...>)
         {
-            size_t result = 0;
+            size_t deserialized = 0;
             std::initializer_list<int> { ([&]() -> void {
-                result += Serializer<T>::Deserialize(stream, std::get<I>(value));
+                deserialized += Serializer<T>::Deserialize(stream, std::get<I>(value));
             }(), 0)... };
-            return result;
+            return deserialized;
         }
 
         static size_t Serialize(BinarySerializeStream& stream, const std::tuple<T...>& value)
@@ -1032,6 +1006,51 @@ namespace Common {
                 return;
             }
             outValue = inJsonValue.GetBool();
+        }
+    };
+
+    template <typename... T> struct VariantTypeId {};
+    template <typename T> struct VariantTypeId<T> { static constexpr size_t value = HashUtils::StrCrc32("std::variant"); };
+    template <typename T, typename... T2> struct VariantTypeId<T, T2...> { static constexpr size_t value = Serializer<T>::typeId + VariantTypeId<T2...>::value; };
+
+    template <Serializable... T>
+    struct Serializer<std::variant<T...>> {
+        static constexpr size_t typeId = VariantTypeId<T...>::value;
+
+        static size_t Serialize(BinarySerializeStream& stream, const std::variant<T...>& value)
+        {
+            size_t serialized  = 0;
+            serialized += Serializer<uint64_t>::Serialize(stream, value.index());
+            std::visit([&](auto&& v) -> void { // NOLINT
+                serialized += Serializer<std::decay_t<decltype(v)>>::Serialize(stream, v);
+            }, value);
+            return serialized;
+        }
+
+        template <size_t... I>
+        static size_t DeserializeInternal(BinaryDeserializeStream& stream, std::variant<T...>& value, size_t aspectIndex, std::index_sequence<I...>)
+        {
+            size_t deserialized = 0;
+            (void) std::initializer_list<int> { ([&]() -> void {
+                if (I != aspectIndex) {
+                    return;
+                }
+
+                T tempValue;
+                deserialized += Serializer<T>::Deserialize(stream, tempValue);
+                value = std::move(tempValue);
+            }(), 0)... };
+            return deserialized;
+        }
+
+        static size_t Deserialize(BinaryDeserializeStream& stream, std::variant<T...>& value)
+        {
+            size_t deserialized = 0;
+
+            uint64_t index;
+            deserialized += Serializer<uint64_t>::Deserialize(stream, index);
+            deserialized += DeserializeInternal(stream, value, index, std::make_index_sequence<sizeof...(T)> {});
+            return deserialized;
         }
     };
 
@@ -1526,6 +1545,49 @@ namespace Common {
                 return;
             }
             JsonDeserializeInternal(inJsonValue, outValue, std::make_index_sequence<sizeof...(T)>());
+        }
+    };
+
+    template <JsonSerializable... T>
+    struct JsonSerializer<std::variant<T...>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const std::variant<T...>& inValue)
+        {
+            rapidjson::Value typeValue;
+            JsonSerializer<uint64_t>::JsonSerialize(typeValue, inAllocator, inValue.index());
+
+            rapidjson::Value contentValue;
+            std::visit([&](auto&& v) -> void {
+                JsonSerializer<std::decay_t<decltype(v)>>::JsonSerialize(contentValue, inAllocator, v);
+            }, inValue);
+
+            outJsonValue.SetObject();
+            outJsonValue.AddMember("type", typeValue, inAllocator);
+            outJsonValue.AddMember("content", contentValue, inAllocator);
+        }
+
+        template <size_t... I>
+        static void JsonDeserializeInternal(const rapidjson::Value& inContentJsonValue, std::variant<T...>& outValue, size_t inAspectIndex, std::index_sequence<I...>)
+        {
+            (void) std::initializer_list<int> { ([&]() -> void {
+                if (I != inAspectIndex) {
+                    return;
+                }
+
+                T temp;
+                JsonSerializer<T>::JsonDeserialize(inContentJsonValue, temp);
+                outValue = std::move(temp);
+            }(), 0)... };
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, std::variant<T...>& outValue)
+        {
+            if (!inJsonValue.HasMember("type") || !inJsonValue.HasMember("content")) {
+                return;
+            }
+
+            uint64_t aspectIndex;
+            JsonSerializer<uint64_t>::JsonDeserialize(inJsonValue["type"], aspectIndex);
+            JsonDeserializeInternal(inJsonValue["content"], outValue, aspectIndex, std::make_index_sequence<sizeof...(T)> {});
         }
     };
 }

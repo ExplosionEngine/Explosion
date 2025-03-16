@@ -14,7 +14,6 @@ using namespace RHI;
 
 struct Vertex {
     FVec3 position;
-    FVec3 color;
 };
 
 class TriangleVS : public GlobalShader {
@@ -44,6 +43,10 @@ public:
 RegisterGlobalShader(TriangleVS);
 RegisterGlobalShader(TrianglePS);
 
+struct PsUniform {
+    FVec3 pixelColor;
+};
+
 class TriangleApplication final : public Application {
 public:
     explicit TriangleApplication(const std::string& inName);
@@ -68,7 +71,7 @@ private:
     UniquePtr<Device> device;
     UniquePtr<Surface> surface;
     UniquePtr<SwapChain> swapChain;
-    std::array<Texture*, backBufferCount> swapChainTextures {};
+    std::array<Texture*, backBufferCount> swapChainTextures;
     UniquePtr<Buffer> triangleVertexBuffer;
     UniquePtr<Semaphore> imageReadySemaphore;
     UniquePtr<Semaphore> renderFinishedSemaphore;
@@ -78,6 +81,7 @@ private:
 TriangleApplication::TriangleApplication(const std::string& inName)
     : Application(inName)
     , swapChainFormat(PixelFormat::max)
+    , swapChainTextures()
 {
 }
 
@@ -106,8 +110,7 @@ void TriangleApplication::OnDrawFrame()
                 RVertexState()
                     .AddVertexBufferLayout(
                         RVertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
-                            .AddAttribute(RVertexAttribute(RVertexBinding("POSITION", 0), VertexFormat::float32X3, offsetof(Vertex, position)))
-                            .AddAttribute(RVertexAttribute(RVertexBinding("COLOR", 0), VertexFormat::float32X3, offsetof(Vertex, color)))))
+                            .AddAttribute(RVertexAttribute(RVertexBinding("POSITION", 0), VertexFormat::float32X3, offsetof(Vertex, position)))))
             .SetFragmentState(
                 RFragmentState()
                     .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all, false))));
@@ -117,18 +120,35 @@ void TriangleApplication::OnDrawFrame()
     auto* backTextureView = builder.CreateTextureView(backTexture, RGTextureViewDesc(TextureViewType::colorAttachment, TextureViewDimension::tv2D));
     auto* vertexBuffer = builder.ImportBuffer(triangleVertexBuffer.Get(), BufferState::shaderReadOnly);
     auto* vertexBufferView = builder.CreateBufferView(vertexBuffer, RGBufferViewDesc(BufferViewType::vertex, vertexBuffer->GetDesc().size, 0, VertexBufferViewInfo(sizeof(Vertex))));
+    auto* psUniformBuffer = builder.CreateBuffer(RGBufferDesc(sizeof(PsUniform), BufferUsageBits::uniform | BufferUsageBits::mapWrite, BufferState::staging, "psUniform"));
+    auto* psUniformBufferView = builder.CreateBufferView(psUniformBuffer, RGBufferViewDesc(BufferViewType::uniformBinding, sizeof(PsUniform)));
+
+    auto* bindGroup = builder.AllocateBindGroup(
+        RGBindGroupDesc::Create(pso->GetPipelineLayout()->GetBindGroupLayout(0))
+            .UniformBuffer("psUniform", psUniformBufferView));
+
+    PsUniform psUniform {};
+    psUniform.pixelColor = FVec3(
+        (std::sin(GetCurrentTimeSeconds()) + 1) / 2,
+        (std::cos(GetCurrentTimeSeconds()) + 1) / 2,
+        std::abs(std::sin(GetCurrentTimeSeconds())));
+
+    builder.QueueBufferUpload(
+        psUniformBuffer,
+        RGBufferUploadInfo(&psUniform, sizeof(PsUniform)));
 
     builder.AddRasterPass(
         "BasePass",
         RGRasterPassDesc()
             .AddColorAttachment(RGColorAttachment(backTextureView, LoadOp::clear, StoreOp::store)),
-        {},
-        [pso, vertexBufferView, viewportWidth = GetWindowWidth(), viewportHeight = GetWindowHeight()](const RGBuilder& rg, RasterPassCommandRecorder& recorder) -> void {
+        { bindGroup },
+        [pso, vertexBufferView, bindGroup, viewportWidth = GetWindowWidth(), viewportHeight = GetWindowHeight()](const RGBuilder& rg, RasterPassCommandRecorder& recorder) -> void {
             recorder.SetPipeline(pso->GetRHI());
             recorder.SetScissor(0, 0, viewportWidth, viewportHeight);
             recorder.SetViewport(0, 0, static_cast<float>(viewportWidth), static_cast<float>(viewportHeight), 0, 1);
             recorder.SetVertexBuffer(0, rg.GetRHI(vertexBufferView));
             recorder.SetPrimitiveTopology(PrimitiveTopology::triangleList);
+            recorder.SetBindGroup(0, rg.GetRHI(bindGroup));
             recorder.Draw(3, 1, 0, 0);
         },
         {},
@@ -144,8 +164,11 @@ void TriangleApplication::OnDrawFrame()
     swapChain->Present(renderFinishedSemaphore.Get());
     frameFence->Wait();
 
-    BufferPool::Get(*device).Tick();
-    TexturePool::Get(*device).Tick();
+    Core::ThreadContext::IncFrameNumber();
+    BufferPool::Get(*device).Forfeit();
+    TexturePool::Get(*device).Forfeit();
+    ResourceViewCache::Get(*device).Forfeit();
+    BindGroupCache::Get(*device).Forfeit();
 }
 
 void TriangleApplication::OnDestroy()
@@ -154,9 +177,11 @@ void TriangleApplication::OnDestroy()
     device->GetQueue(QueueType::graphics, 0)->Flush(fence.Get());
     fence->Wait();
 
-    ResourceViewCache::Get(*device).Invalidate();
+    BindGroupCache::Get(*device).Invalidate();
     PipelineCache::Get(*device).Invalidate();
-    GlobalShaderRegistry::Get().InvalidateAll();
+    BufferPool::Get(*device).Invalidate();
+    TexturePool::Get(*device).Invalidate();
+    GlobalShaderRegistry::Get().Invalidate();
     RenderWorkerThreads::Get().Stop();
 }
 
@@ -218,9 +243,9 @@ void TriangleApplication::CreateSwapChain()
 void TriangleApplication::CreateTriangleVertexBuffer()
 {
     const std::vector<Vertex> vertices = {
-        { { -.5f, -.5f, 0.f }, { 1.f, 0.f, 0.f } },
-        { { .5f, -.5f, 0.f }, { 0.f, 1.f, 0.f } },
-        { { 0.f, .5f, 0.f }, { 0.f, 0.f, 1.f } },
+        { { -.5f, -.5f, 0.f } },
+        { { .5f, -.5f, 0.f } },
+        { { 0.f, .5f, 0.f } },
     };
 
     const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()

@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <tuple>
 #include <utility>
+#include <format>
 
 #if PLATFORM_WINDOWS
 #include <windows.h>
@@ -117,25 +118,32 @@ namespace Render {
         return result;
     }
 
-    static std::vector<std::wstring> GetInternalPredefinition(const ShaderCompileInput& input, const ShaderCompileOptions& options)
+    static std::vector<std::wstring> GetInternalDefinitions(const ShaderCompileInput& input, const ShaderCompileOptions& options)
     {
         static const std::unordered_map<RHI::ShaderStageBits, std::wstring> stageMacroMap = {
-            { RHI::ShaderStageBits::sVertex, L"VERTEX_SHADER=1" },
-            { RHI::ShaderStageBits::sPixel, L"PIXEL_SHADER=1" },
-            { RHI::ShaderStageBits::sCompute, L"COMPUTE_SHADER=1" },
-            { RHI::ShaderStageBits::sGeometry, L"GEOMETRY_SHADER=1" },
-            { RHI::ShaderStageBits::sHull, L"HULL_SHADER=1" },
-            { RHI::ShaderStageBits::sDomain, L"DOMAIN_SHADER=1" }
+            { RHI::ShaderStageBits::sVertex, L"VERTEX_SHADER" },
+            { RHI::ShaderStageBits::sPixel, L"PIXEL_SHADER" },
+            { RHI::ShaderStageBits::sCompute, L"COMPUTE_SHADER" },
+            { RHI::ShaderStageBits::sGeometry, L"GEOMETRY_SHADER" },
+            { RHI::ShaderStageBits::sHull, L"HULL_SHADER" },
+            { RHI::ShaderStageBits::sDomain, L"DOMAIN_SHADER" }
         };
 
         // vulkan
         std::vector<std::wstring> result;
         result.emplace_back(L"-D");
-        result.emplace_back(options.byteCodeType == ShaderByteCodeType::spirv ? L"VULKAN=1" : L"VULKAN=0");
+        result.emplace_back(std::format(L"VULKAN={}", options.byteCodeType == ShaderByteCodeType::spirv ? 1 : 0));
 
         // shader stage
-        result.emplace_back(L"-D");
-        result.emplace_back(stageMacroMap.at(input.stage));
+        uint8_t trueStageMacro = 0;
+        for (const auto& [stage, macro] : stageMacroMap) {
+            if (input.stage == stage) {
+                trueStageMacro++;
+            }
+            result.emplace_back(L"-D");
+            result.emplace_back(std::format(L"{}={}", macro, input.stage == stage ? 1 : 0));
+        }
+        Assert(trueStageMacro == 1);
         return result;
     }
 
@@ -143,7 +151,7 @@ namespace Render {
     {
         std::vector<std::wstring> result;
 
-        auto preDef = GetInternalPredefinition(input, options);
+        auto preDef = GetInternalDefinitions(input, options);
         result.insert(result.end(), preDef.begin(), preDef.end());
 
         for (const auto& definition : input.definitions) {

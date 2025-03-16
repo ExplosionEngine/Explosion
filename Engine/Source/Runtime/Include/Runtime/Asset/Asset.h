@@ -14,7 +14,7 @@
 #include <Common/Concurrent.h>
 #include <Common/Concepts.h>
 #include <Core/Uri.h>
-#include <Mirror/Meta.h>
+#include <Runtime/Meta.h>
 #include <Mirror/Mirror.h>
 #include <Runtime/Api.h>
 

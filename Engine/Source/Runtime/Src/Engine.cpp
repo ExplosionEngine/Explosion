@@ -2,22 +2,25 @@
 // Created by johnk on 2024/8/21.
 //
 
-#include <Runtime/Engine.h>
 #include <Common/Debug.h>
 #include <Common/Time.h>
+#include <Core/Console.h>
+#include <Core/Log.h>
 #include <Core/Module.h>
 #include <Core/Paths.h>
-#include <Core/Log.h>
 #include <Core/Thread.h>
-#include <Core/Console.h>
 #include <Mirror/Mirror.h>
-#include <Runtime/World.h>
+#include <Runtime/Engine.h>
+#include <Runtime/GameThread.h>
 #include <Runtime/Settings/Registry.h>
+#include <Runtime/World.h>
 
 namespace Runtime {
     Engine::Engine(const EngineInitParams& inParams)
     {
         Core::ThreadContext::SetTag(Core::ThreadTag::game);
+        GameWorkerThreads::Get().Start();
+
         if (!inParams.gameRoot.empty()) {
             Core::Paths::SetGameRoot(inParams.gameRoot);
         }
@@ -26,15 +29,16 @@ namespace Runtime {
             AttachLogFile();
         }
         InitRender(inParams.rhiType);
-
-        // TODO load all modules and plugins
-        SettingsRegistry::Get().LoadAllSettings();
+        LoadPlugins();
+        LoadConfigs();
     }
 
     Engine::~Engine()
     {
         renderModule->DeInitialize();
         ::Core::ModuleManager::Get().Unload("Render");
+
+        GameWorkerThreads::Get().Stop();
     }
 
     void Engine::MountWorld(World* inWorld)
@@ -59,8 +63,11 @@ namespace Runtime {
             last2FrameRenderThreadFence.wait();
         }
 
+        Core::ThreadContext::IncFrameNumber();
+
         auto& renderThread = renderModule->GetRenderThread();
         renderThread.EmplaceTask([]() -> void {
+            Core::ThreadContext::IncFrameNumber();
             Core::Console::Get().PerformRenderThreadSettingsCopy();
         });
 
@@ -71,6 +78,7 @@ namespace Runtime {
             world->Tick(inDeltaTimeSeconds);
         }
 
+        GameThread::Get().Flush();
         last2FrameRenderThreadFence = std::move(lastFrameRenderThreadFence);
         lastFrameRenderThreadFence = renderThread.EmplaceTask([]() -> void {});
     }
@@ -94,6 +102,17 @@ namespace Runtime {
         initParams.rhiType = RHI::GetRHITypeByAbbrString(inRhiTypeStr);
         renderModule->Initialize(initParams);
         LogInfo(Render, "RHI type: {}", inRhiTypeStr);
+    }
+
+    void Engine::LoadPlugins() const // NOLINT
+    {
+        // TODO
+    }
+
+    void Engine::LoadConfigs() const // NOLINT
+    {
+        Core::Console::Get().OverrideSettingsByConfig();
+        SettingsRegistry::Get().LoadAllSettings();
     }
 
     Common::UniquePtr<Engine> EngineHolder::engine = nullptr;

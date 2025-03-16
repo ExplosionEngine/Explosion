@@ -2,12 +2,15 @@
 // Created by johnk on 2025/2/21.
 //
 
+#include <Common/File.h>
+#include <Core/Paths.h>
 #include <Runtime/Settings/Registry.h>
+#include <Runtime/Settings/Game.h>
 
 namespace Runtime::Internal {
     static Common::Path GetConfigPathForSettings(SettingsClass inClass)
     {
-        // TODO order: game -> engine
+        return Core::Paths::GameConfigDir() / std::format("{}.json", inClass->GetName());
     }
 }
 
@@ -36,21 +39,16 @@ namespace Runtime {
         return settingsMap.at(inClass);
     }
 
-    void SettingsRegistry::SaveSettingsDyn(SettingsClass inClass)
-    {
-        // TODO
-    }
-
     void SettingsRegistry::LoadSettingsDyn(SettingsClass inClass)
     {
-        // TODO
-    }
-
-    void SettingsRegistry::SaveAllSettings()
-    {
-        for (const auto* clazz : settingsMap | std::views::keys) {
-            SaveSettingsDyn(clazz);
+        const auto configPath = Internal::GetConfigPathForSettings(inClass);
+        if (!configPath.Exists()) {
+            return;
         }
+
+        const rapidjson::Document document = Common::FileUtils::ReadJsonFile(configPath.String());
+        Assert(document.IsObject());
+        settingsMap.at(inClass).JsonDeserialize(document);
     }
 
     void SettingsRegistry::LoadAllSettings()
@@ -60,8 +58,28 @@ namespace Runtime {
         }
     }
 
+    void SettingsRegistry::SaveSettingsDyn(SettingsClass inClass) const
+    {
+#if !BUILD_EDITOR
+        Assert(!inClass->GetMetaBoolOr(MetaPresets::gameReadOnly, false));
+#endif
+
+        rapidjson::Document document;
+        settingsMap.at(inClass).JsonSerialize(document, document.GetAllocator());
+
+        const auto configPath = Internal::GetConfigPathForSettings(inClass);
+        Common::FileUtils::WriteJsonFile(configPath.String(), document);
+    }
+
+    void SettingsRegistry::SaveAllSettings() const
+    {
+        for (const auto* clazz : settingsMap | std::views::keys) {
+            SaveSettingsDyn(clazz);
+        }
+    }
+
     void SettingsRegistry::RegisterInternalSettings()
     {
-        // TODO
+        RegisterSettings<GameSettings>();
     }
 }

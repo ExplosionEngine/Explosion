@@ -20,7 +20,7 @@ namespace Runtime {
 namespace Runtime::Internal {
     static bool IsGlobalCompClass(GCompClass inClass)
     {
-        return inClass->HasMeta("global") && inClass->GetMetaBool("global");
+        return inClass->GetMetaBoolOr(MetaPresets::globalComp, false);
     }
 
     CompRtti::CompRtti(CompClass inClass)
@@ -1288,7 +1288,8 @@ namespace Runtime {
     }
 
     SystemSetupContext::SystemSetupContext()
-        : client(nullptr)
+        : playType(PlayType::max)
+        , client(nullptr)
     {
     }
 

@@ -33,7 +33,7 @@ namespace RHI {
         TextureViewCreateInfo& SetMipLevels(uint8_t inBaseMipLevel, uint8_t inMipLevelNum);
         TextureViewCreateInfo& SetArrayLayers(uint8_t inBaseArrayLayer, uint8_t inArrayLayerNum);
 
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     class TextureView {

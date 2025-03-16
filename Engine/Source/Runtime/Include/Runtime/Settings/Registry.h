@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <Mirror/Meta.h>
+#include <Runtime/Meta.h>
 #include <Mirror/Mirror.h>
 #include <Runtime/Api.h>
 
@@ -21,15 +21,15 @@ namespace Runtime {
 
         template <typename T> void RegisterSettings();
         template <typename T> T& GetSettings();
-        template <typename T> void SaveSettings();
         template <typename T> void LoadSettings();
+        template <typename T> void SaveSettings() const;
 
         EFunc() void RegisterSettingsDyn(SettingsClass inClass);
         EFunc() Mirror::Any GetSettingsDyn(SettingsClass inClass);
-        EFunc() void SaveSettingsDyn(SettingsClass inClass);
         EFunc() void LoadSettingsDyn(SettingsClass inClass);
-        EFunc() void SaveAllSettings();
         EFunc() void LoadAllSettings();
+        EFunc() void SaveSettingsDyn(SettingsClass inClass) const;
+        EFunc() void SaveAllSettings() const;
 
     private:
         SettingsRegistry();
@@ -54,14 +54,14 @@ namespace Runtime {
     }
 
     template <typename T>
-    void SettingsRegistry::SaveSettings()
-    {
-        SaveSettingsDyn(&Mirror::Class::Get<T>());
-    }
-
-    template <typename T>
     void SettingsRegistry::LoadSettings()
     {
         LoadSettingsDyn(&Mirror::Class::Get<T>());
+    }
+
+    template <typename T>
+    void SettingsRegistry::SaveSettings() const
+    {
+        SaveSettingsDyn(&Mirror::Class::Get<T>());
     }
 }

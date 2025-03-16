@@ -37,10 +37,21 @@ namespace RHI {
         return *this;
     }
 
+    uint64_t BufferCreateInfo::Hash() const
+    {
+        const std::vector<uint64_t> values = {
+            size,
+            static_cast<uint64_t>(usages.Value()),
+            static_cast<uint64_t>(initialState),
+        };
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
+    }
+
     bool BufferCreateInfo::operator==(const BufferCreateInfo& rhs) const
     {
         return size == rhs.size
-            && usages == rhs.usages;
+            && usages == rhs.usages
+            && initialState == rhs.initialState;
     }
 
     Buffer::Buffer(const BufferCreateInfo& inCreateInfo)

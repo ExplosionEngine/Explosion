@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <Common/Container.h>
-#include <Mirror/Meta.h>
+#include <optional>
+
+#include <Runtime/Meta.h>
 #include <Runtime/Api.h>
-#include <Runtime/ECS.h>
 
 namespace Runtime {
     struct RUNTIME_API EClass(transient) Camera final {

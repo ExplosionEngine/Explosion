@@ -104,7 +104,7 @@ TEST_F(WorldTest, BasicTest)
     auto& mainGroup = systemGraph.AddGroup("MainGroup", SystemExecuteStrategy::sequential);
     mainGroup.EmplaceSystemDyn(&BasicTest_MotionSystem::GetStaticClass());
 
-    World world("TestWorld", nullptr);
+    World world("TestWorld", nullptr, PlayType::game);
     world.SetSystemGraph(systemGraph);
     world.Play();
     for (auto i = 0; i < 5; i++) {
@@ -170,7 +170,7 @@ TEST_F(WorldTest, ConcurrentTest)
     auto& verifyGroup = systemGraph.AddGroup("VerifyGroup", SystemExecuteStrategy::sequential);
     verifyGroup.EmplaceSystem<ConcurrentTest_VerifySystem>();
 
-    World world("TestWorld", nullptr);
+    World world("TestWorld", nullptr, PlayType::game);
     world.SetSystemGraph(systemGraph);
     world.Play();
     for (auto i = 0; i < 5; i++) {

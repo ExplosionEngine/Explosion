@@ -52,7 +52,8 @@ protected:
 
     void SetCamera(Camera* inCamera);
     const std::string& GetApplicationName() const;
-    float GetFrameTime() const;
+    double GetCurrentTimeSeconds() const;
+    float GetDeltaTimeSeconds() const;
     void* GetPlatformWindow() const;
     uint32_t GetWindowWidth() const;
     uint32_t GetWindowHeight() const;
@@ -70,6 +71,7 @@ private:
     UniquePtr<Camera> camera;
     FVec2 mousePos;
     std::array<bool, static_cast<size_t>(MouseButton::max)> mouseButtonsStatus;
-    std::chrono::time_point<std::chrono::high_resolution_clock> lastTime;
-    float frameTime;
+    double lastTimeSeconds;
+    double currentTimeSeconds;
+    float deltaTimeSeconds;
 };
