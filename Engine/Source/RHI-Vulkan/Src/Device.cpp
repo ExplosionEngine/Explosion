@@ -60,6 +60,11 @@ namespace RHI::Vulkan {
         vkDestroyDevice(nativeDevice, nullptr);
     }
 
+    VulkanGpu& VulkanDevice::GetGpu() const
+    {
+        return gpu;
+    }
+
     size_t VulkanDevice::GetQueueNum(const QueueType inType)
     {
         return queues.at(inType).size();
@@ -184,11 +189,6 @@ namespace RHI::Vulkan {
     VkDevice VulkanDevice::GetNative() const
     {
         return nativeDevice;
-    }
-
-    VulkanGpu& VulkanDevice::GetGpu() const
-    {
-        return gpu;
     }
 
     std::optional<uint32_t> VulkanDevice::FindQueueFamilyIndex(const std::vector<VkQueueFamilyProperties>& inProperties, std::vector<uint32_t>& inUsedQueueFamily, QueueType inQueueType)

@@ -50,7 +50,7 @@ namespace Core {
         return iter == args.end() ? nullptr : iter->second;
     }
 
-    CmdlineArg& Cli::FindArgChecked(const std::string& name) const
+    CmdlineArg& Cli::GetArg(const std::string& name) const
     {
         auto* result = FindArg(name);
         Assert(result != nullptr);

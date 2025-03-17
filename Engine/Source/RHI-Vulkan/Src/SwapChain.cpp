@@ -50,7 +50,8 @@ namespace RHI::Vulkan {
     uint8_t VulkanSwapChain::AcquireBackTexture(Semaphore* inSignalSemaphore)
     {
         const auto& vulkanSignalSemaphore = static_cast<VulkanSemaphore&>(*inSignalSemaphore);
-        Assert(vkAcquireNextImageKHR(device.GetNative(), nativeSwapChain, UINT64_MAX, vulkanSignalSemaphore.GetNative(), VK_NULL_HANDLE, &currentImage) == VK_SUCCESS);
+        const auto result = vkAcquireNextImageKHR(device.GetNative(), nativeSwapChain, UINT64_MAX, vulkanSignalSemaphore.GetNative(), VK_NULL_HANDLE, &currentImage);
+        Assert(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR);
         return currentImage;
     }
 
@@ -66,7 +67,9 @@ namespace RHI::Vulkan {
         presetInfo.waitSemaphoreCount = waitSemaphores.size();
         presetInfo.pWaitSemaphores = waitSemaphores.data();
         presetInfo.pImageIndices = &currentImage;
-        Assert(vkQueuePresentKHR(nativeQueue, &presetInfo) == VK_SUCCESS);
+
+        const auto result = vkQueuePresentKHR(nativeQueue, &presetInfo);
+        Assert(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR);
     }
 
     void VulkanSwapChain::CreateNativeSwapChain(const SwapChainCreateInfo& inCreateInfo)

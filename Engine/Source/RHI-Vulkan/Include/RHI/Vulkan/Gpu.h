@@ -7,10 +7,9 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/Gpu.h>
+#include <RHI/Vulkan/Instance.h>
 
 namespace RHI::Vulkan {
-    class VulkanInstance;
-
     class VulkanGpu final : public Gpu {
     public:
         NonCopyable(VulkanGpu)
@@ -19,9 +18,9 @@ namespace RHI::Vulkan {
 
         GpuProperty GetProperty() override;
         Common::UniquePtr<Device> RequestDevice(const DeviceCreateInfo& inCreateInfo) override;
+        VulkanInstance& GetInstance() const override;
 
         VkPhysicalDevice GetNative() const;
-        VulkanInstance& GetInstance() const;
         uint32_t FindMemoryType(uint32_t inFilter, VkMemoryPropertyFlags inPropertyFlag) const;
 
     private:

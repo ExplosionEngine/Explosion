@@ -10,22 +10,22 @@
 #include <Editor/Widget/WidgetSamples.h>
 
 #if BUILD_CONFIG_DEBUG
-#include <Editor/Widget/GraphicsWindowSample.h>
+#include <Editor/Widget/GraphicsSampleWidget.h>
 
-static ::Core::CmdlineArgValue<bool> caGraphicsWindowSample(
+static Core::CmdlineArgValue<bool> caGraphicsWindowSample(
     "graphicsSample", "-graphicsSample", false,
     "Whether to run graphics sample instead of editor");
 
-static ::Core::CmdlineArgValue<bool> caRunSample(
+static Core::CmdlineArgValue<bool> caRunSample(
     "widgetSamples", "-widgetSamples", false,
     "Whether to run widget samples instead of editor");
 #endif
 
-static ::Core::CmdlineArgValue<std::string> caRhiType(
+static Core::CmdlineArgValue<std::string> caRhiType(
     "rhiType", "-rhi", RHI::GetPlatformDefaultRHIAbbrString(),
     "rhi abbr string, can be 'dx12' or 'vulkan'");
 
-static ::Core::CmdlineArgValue<std::string> caProjectRoot(
+static Core::CmdlineArgValue<std::string> caProjectRoot(
     "projectRoot", "-project", "",
     "project root path");
 
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
     Common::UniquePtr<QWidget> mainWidget;
 #if BUILD_CONFIG_DEBUG
     if (caGraphicsWindowSample.GetValue()) {
-        mainWidget = new Editor::GraphicsWindowSampleWidget();
+        mainWidget = new Editor::GraphicsSampleWidget();
     } else if (caRunSample.GetValue()) {
         mainWidget = new Editor::WidgetSamples();
     } else

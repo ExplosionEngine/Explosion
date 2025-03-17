@@ -19,13 +19,19 @@
 #include <Common/Debug.h>
 
 namespace RHI::Dummy {
-    DummyDevice::DummyDevice(const DeviceCreateInfo& createInfo)
+    DummyDevice::DummyDevice(DummyGpu& gpu, const DeviceCreateInfo& createInfo)
         : Device(createInfo)
+        , gpu(gpu)
         , dummyQueue(Common::MakeUnique<DummyQueue>())
     {
     }
 
     DummyDevice::~DummyDevice() = default;
+
+    DummyGpu& DummyDevice::GetGpu() const
+    {
+        return gpu;
+    }
 
     size_t DummyDevice::GetQueueNum(const QueueType type)
     {

@@ -166,6 +166,11 @@ namespace RHI::DirectX12 {
         return queues.at(inType).size();
     }
 
+    DX12Gpu& DX12Device::GetGpu() const
+    {
+        return gpu;
+    }
+
     Queue* DX12Device::GetQueue(const QueueType inType, const size_t inIndex)
     {
         const auto& queueArray = queues.at(inType);
@@ -271,11 +276,6 @@ namespace RHI::DirectX12 {
         result.slicePitch = footprint.Footprint.RowPitch * footprint.Footprint.Height;
         result.totalBytes = footprint.Footprint.RowPitch * footprint.Footprint.Height * footprint.Footprint.Depth;
         return result;
-    }
-
-    DX12Gpu& DX12Device::GetGpu() const
-    {
-        return gpu;
     }
 
     ID3D12Device* DX12Device::GetNative() const

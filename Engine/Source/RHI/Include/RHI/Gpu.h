@@ -11,6 +11,7 @@
 
 namespace RHI {
     class Device;
+    class Instance;
     struct DeviceCreateInfo;
 
     struct GpuProperty {
@@ -25,6 +26,7 @@ namespace RHI {
         virtual ~Gpu();
         virtual GpuProperty GetProperty() = 0;
         virtual Common::UniquePtr<Device> RequestDevice(const DeviceCreateInfo& createInfo) = 0;
+        virtual Instance& GetInstance() const = 0;
 
     protected:
         Gpu();

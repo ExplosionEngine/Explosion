@@ -5,6 +5,7 @@
 #pragma once
 
 #include <RHI/Device.h>
+#include <RHI/Dummy/Gpu.h>
 
 namespace RHI::Dummy {
     class DummyQueue;
@@ -12,9 +13,10 @@ namespace RHI::Dummy {
     class DummyDevice final : public Device {
     public:
         NonCopyable(DummyDevice)
-        explicit DummyDevice(const DeviceCreateInfo& createInfo);
+        explicit DummyDevice(DummyGpu& gpu, const DeviceCreateInfo& createInfo);
         ~DummyDevice() override;
-        
+
+        DummyGpu& GetGpu() const override;
         size_t GetQueueNum(QueueType type) override;
         Queue* GetQueue(QueueType type, size_t index) override;
         Common::UniquePtr<Surface> CreateSurface(const RHI::SurfaceCreateInfo &createInfo) override;
@@ -36,6 +38,7 @@ namespace RHI::Dummy {
         TextureSubResourceCopyFootprint GetTextureSubResourceCopyFootprint(const Texture& texture, const TextureSubResourceInfo& subResourceInfo) override;
 
     private:
+        DummyGpu& gpu;
         Common::UniquePtr<DummyQueue> dummyQueue;
     };
 }
