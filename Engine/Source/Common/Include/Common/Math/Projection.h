@@ -32,8 +32,7 @@ namespace Common {
     template <typename T>
     struct ReversedZOrthogonalProjection : ReversedZOrthogonalProjectionBase<T> {
         ReversedZOrthogonalProjection();
-        ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane);
-        ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane, T inFarPlane);
+        ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane, const std::optional<T>& inFarPlane = {});
 
         Mat<T, 4, 4> GetProjectionMatrix() const;
         bool operator==(const ReversedZOrthogonalProjection& inRhs) const;
@@ -42,8 +41,7 @@ namespace Common {
     template <typename T>
     struct ReversedZPerspectiveProjection : ReversedZPerspectiveProjectionBase<T> {
         ReversedZPerspectiveProjection();
-        ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane);
-        ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane, T inFarPlane);
+        ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane, const std::optional<T>& inFarPlane);
 
         Mat<T, 4, 4> GetProjectionMatrix() const;
         bool operator==(const ReversedZPerspectiveProjection& inRhs) const;
@@ -251,16 +249,7 @@ namespace Common {
     }
 
     template <typename T>
-    ReversedZOrthogonalProjection<T>::ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane)
-    {
-        this->width = inWidth;
-        this->height = inHeight;
-        this->nearPlane = inNearPlane;
-        this->farPlane = {};
-    }
-
-    template <typename T>
-    ReversedZOrthogonalProjection<T>::ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane, T inFarPlane)
+    ReversedZOrthogonalProjection<T>::ReversedZOrthogonalProjection(T inWidth, T inHeight, T inNearPlane, const std::optional<T>& inFarPlane)
     {
         this->width = inWidth;
         this->height = inHeight;
@@ -317,17 +306,7 @@ namespace Common {
     }
 
     template <typename T>
-    ReversedZPerspectiveProjection<T>::ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane)
-    {
-        this->fov = inFOV;
-        this->width = inWidth;
-        this->height = inHeight;
-        this->nearPlane = inNearPlane;
-        this->farPlane = {};
-    }
-
-    template <typename T>
-    ReversedZPerspectiveProjection<T>::ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane, T inFarPlane)
+    ReversedZPerspectiveProjection<T>::ReversedZPerspectiveProjection(T inFOV, T inWidth, T inHeight, T inNearPlane, const std::optional<T>& inFarPlane)
     {
         this->fov = inFOV;
         this->width = inWidth;

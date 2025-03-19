@@ -246,6 +246,7 @@ namespace Runtime {
         NonMovable(BasicView)
 
         template <typename F> void Each(F&& inFunc) const;
+        const ResultVector& All() const;
         size_t Count() const;
         ConstIter Begin() const;
         ConstIter End() const;
@@ -750,7 +751,7 @@ namespace Runtime {
         Evaluate(inRegistry);
     }
 
-    template <ECRegistryOrConst R, typename ... C, typename ... E>
+    template <ECRegistryOrConst R, typename... C, typename... E>
     template <typename F>
     void BasicView<R, Exclude<E...>, C...>::Each(F&& inFunc) const
     {
@@ -761,6 +762,12 @@ namespace Runtime {
                 std::apply(inFunc, entityAndComps);
             }
         }
+    }
+
+    template <ECRegistryOrConst R, typename... C, typename... E>
+    const typename BasicView<R, Exclude<E...>, C...>::ResultVector& BasicView<R, Exclude<E...>, C...>::All() const
+    {
+        return result;
     }
 
     template <ECRegistryOrConst R, typename ... C, typename ... E>

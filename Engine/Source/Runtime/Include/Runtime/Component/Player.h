@@ -10,23 +10,36 @@
 #include <Runtime/Api.h>
 
 namespace Runtime {
+    struct RUNTIME_API EClass(globalComp, transient) PlayersInfo {
+        EClassBody(PlayersInfo)
+
+        PlayersInfo();
+
+        std::vector<Entity> players;
+    };
+
     struct RUNTIME_API EClass(transient) LocalPlayer {
         EClassBody(Player)
 
         LocalPlayer();
 
-        Entity activeCamera;
+        uint8_t localPlayerIndex;
         Render::ViewState* viewState;
     };
 
 #if BUILD_EDITOR
-    struct RUNTIME_API EClass(transient) EditorVirtualPlayer {
+    struct RUNTIME_API EClass(transient) EditorPlayer {
         EClassBody(EditorVirtualPlayer)
 
-        EditorVirtualPlayer();
+        EditorPlayer();
 
-        Entity activeCamera;
         Render::ViewState* viewState;
     };
 #endif
+
+    struct RUNTIME_API EClass() PlayerStart {
+        EClassBody(PlayerStart)
+
+        PlayerStart();
+    };
 }

@@ -8,6 +8,7 @@ namespace Render {
     Renderer::Renderer(const Params& inParams)
         : scene(inParams.scene)
         , surface(inParams.surface)
+        , surfaceExtent(inParams.surfaceExtent)
         , views(inParams.views)
         , waitSemaphore(inParams.waitSemaphore)
         , signalSemaphore(inParams.signalSemaphore)
@@ -27,5 +28,13 @@ namespace Render {
     void StandardRenderer::Render(float inDeltaTimeSeconds)
     {
         // TODO
+        FinalizeViews();
+    }
+
+    void StandardRenderer::FinalizeViews() const
+    {
+        for (const auto& view : views) {
+            view.state->prevData = view.data;
+        }
     }
 }

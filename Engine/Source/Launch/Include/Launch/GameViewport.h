@@ -7,15 +7,15 @@
 #include <Runtime/Viewport.h>
 
 namespace Launch {
-    class GameViewport : public Runtime::Viewport {
+    class GameViewport final : public Runtime::Viewport {
     public:
         GameViewport();
         ~GameViewport() override;
 
         Runtime::Client& GetClient() override;
         Runtime::PresentInfo GetNextPresentInfo() override;
-        size_t GetWidth() override;
-        size_t GetHeight() override;
+        size_t GetWidth() const override;
+        size_t GetHeight() const override;
 
     private:
         // TODO glfw window

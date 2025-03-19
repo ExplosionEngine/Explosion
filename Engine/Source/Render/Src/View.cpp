@@ -5,7 +5,7 @@
 #include <Render/View.h>
 
 namespace Render {
-    ViewRenderData::ViewRenderData()
+    ViewData::ViewData()
         : viewMatrix(Common::FMat4x4Consts::identity)
         , projectionMatrix(Common::FMat4x4Consts::identity)
         , viewport()

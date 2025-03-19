@@ -332,7 +332,7 @@ namespace Render {
         return instance;
     }
 
-    ShaderCompiler::ShaderCompiler() : threadPool("ShaderCompiler", 16)
+    ShaderCompiler::ShaderCompiler() : threadPool("ShaderCompiler", 4)
     {
     }
 
