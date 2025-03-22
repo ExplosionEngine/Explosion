@@ -81,6 +81,11 @@ namespace Render {
     {
         return View();
     }
-}
+
+    StandardRenderer RenderModule::CreateStandardRenderer(const StandardRenderer::Params& inParams) const // NOLINT
+    {
+        return StandardRenderer(inParams);
+    }
+} // namespace Render
 
 IMPLEMENT_DYNAMIC_MODULE(RENDER_API, Render::RenderModule);

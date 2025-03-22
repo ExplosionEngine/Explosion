@@ -8,18 +8,18 @@
 #include <Common/Math/Rect.h>
 
 namespace Render {
-    struct ViewRenderData {
-        ViewRenderData();
+    struct ViewData {
+        ViewData();
 
         Common::FMat4x4 viewMatrix;
         Common::FMat4x4 projectionMatrix;
-        Common::FRect viewport;
+        Common::URect viewport;
     };
 
     struct ViewState {
         ViewState();
 
-        ViewRenderData prevViewRenderData;
+        ViewData prevData;
         // TODO frame number ...
         // TODO temporal history ...
     };
@@ -27,7 +27,7 @@ namespace Render {
     struct View {
         View();
 
-        ViewRenderData renderData;
-        ViewState* viewState;
+        ViewData data;
+        ViewState* state;
     };
 }

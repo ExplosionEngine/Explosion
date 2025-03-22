@@ -1,4 +1,4 @@
-#include <Platform.h>
+#include <Platform.esh>
 
 VkBinding(0, 0) Texture2D colorTex : register(t0);
 VkBinding(1, 0) SamplerState colorSampler : register(s0);

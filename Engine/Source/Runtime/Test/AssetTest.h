@@ -12,8 +12,8 @@ using namespace Runtime;
 struct EClass() TestAsset : public Asset {
     EClassBody(TestAsset)
 
-    TestAsset()
-        : Asset(Core::Uri(""))
+    explicit TestAsset(Core::Uri uri)
+        : Asset(std::move(uri))
         , a(0)
         , b()
     {

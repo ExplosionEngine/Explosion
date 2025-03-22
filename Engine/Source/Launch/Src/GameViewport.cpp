@@ -27,13 +27,13 @@ namespace Launch {
         return Runtime::PresentInfo();
     }
 
-    size_t GameViewport::GetWidth()
+    size_t GameViewport::GetWidth() const
     {
         // TODO
         return 0;
     }
 
-    size_t GameViewport::GetHeight()
+    size_t GameViewport::GetHeight() const
     {
         // TODO
         return 0;

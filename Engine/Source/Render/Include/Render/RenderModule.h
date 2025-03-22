@@ -6,10 +6,11 @@
 
 #include <Core/Module.h>
 #include <RHI/RHI.h>
+#include <Render/Api.h>
+#include <Render/Renderer.h>
+#include <Render/RenderThread.h>
 #include <Render/Scene.h>
 #include <Render/View.h>
-#include <Render/RenderThread.h>
-#include <Render/Api.h>
 
 namespace Render {
     struct RenderModuleInitParams {
@@ -32,6 +33,7 @@ namespace Render {
         Scene* NewScene() const;
         ViewState* NewViewState() const;
         View CreateView() const;
+        StandardRenderer CreateStandardRenderer(const StandardRenderer::Params& inParams) const;
 
     private:
         bool initialized;

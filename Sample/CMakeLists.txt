@@ -22,8 +22,7 @@ function(AddSample)
         list(APPEND PATHS ${path})
     endforeach()
 
-    list(APPEND PATHS "${CMAKE_SOURCE_DIR}/Engine/Shader/Platform.h->../Test/Sample/ShaderInclude/Platform.h")
-    list(APPEND PATHS "${CMAKE_SOURCE_DIR}/Engine/Shader/Platform.h->../Test/Sample/ShaderInclude/Platform.esh")
+    list(APPEND PATHS "${CMAKE_SOURCE_DIR}/Engine/Shader/Platform.esh->../Test/Sample/ShaderInclude/Platform.esh")
 
     AddExecutable(
         SAMPLE
@@ -56,7 +55,7 @@ AddSample(
     NAME RHISample-Triangle
     SRC ${SOURCES}
     INC RHI-Triangle
-    SHADER RHI-Triangle/Triangle.hlsl
+    SHADER RHI-Triangle/Triangle.esl
 )
 
 file(GLOB SOURCES RHI-TexSampling/*.cpp)
@@ -64,7 +63,7 @@ AddSample(
     NAME RHISample-TexSampling
     SRC ${SOURCES}
     INC RHI-TexSampling
-    SHADER RHI-TexSampling/TexSampling.hlsl
+    SHADER RHI-TexSampling/TexSampling.esl
     IMAGE RHI-TexSampling/Awesomeface.png
 )
 
@@ -74,10 +73,10 @@ AddSample(
     SRC ${SOURCES}
     INC RHI-SSAO
     SHADER
-        RHI-SSAO/Shader/Gbuffer.hlsl
-        RHI-SSAO/Shader/SSAO.hlsl
-        RHI-SSAO/Shader/Blur.hlsl
-        RHI-SSAO/Shader/Composition.hlsl
+        RHI-SSAO/Shader/Gbuffer.esl
+        RHI-SSAO/Shader/SSAO.esl
+        RHI-SSAO/Shader/Blur.esl
+        RHI-SSAO/Shader/Composition.esl
     MODEL
         RHI-SSAO/Model/Voyager.gltf
 )
@@ -86,7 +85,7 @@ file(GLOB SOURCES RHI-ParallelCompute/*.cpp)
 AddSample(
     NAME RHISample-ParallelCompute
     SRC ${SOURCES}
-    SHADER RHI-ParallelCompute/Compute.hlsl
+    SHADER RHI-ParallelCompute/Compute.esl
 )
 
 file(GLOB SOURCES Rendering-Triangle/*.cpp)

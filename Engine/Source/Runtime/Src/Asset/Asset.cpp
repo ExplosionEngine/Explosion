@@ -12,6 +12,8 @@ namespace Runtime {
     {
     }
 
+    Asset::~Asset() = default;
+
     AssetManager& AssetManager::Get()
     {
         static AssetManager instance;

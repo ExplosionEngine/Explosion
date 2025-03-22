@@ -89,7 +89,7 @@ namespace MirrorTool {
 
         std::stringstream stream;
         stream << Common::newline;
-        stream << Common::tab<2> << std::format(R"("Mirror::Registry::Get().UnloadEnum("{}");")", fullName) << Common::newline;
+        stream << Common::tab<2> << std::format(R"(Mirror::Registry::Get().UnloadEnum("{}");)", fullName) << Common::newline;
         return stream.str();
     }
 

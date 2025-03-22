@@ -14,11 +14,9 @@
 namespace RHI::Vulkan {
     VkSurfaceKHR CreateNativeSurface(const VkInstance& instance, const SurfaceCreateInfo& createInfo)
     {
-        auto nsWin = static_cast<NSWindow*>(createInfo.window);
-
         NSBundle* bundle = [NSBundle bundleWithPath: @"/System/Library/Frameworks/QuartzCore.framework"];
         CALayer* layer = [[bundle classNamed: @"CAMetalLayer"] layer];
-        NSView* view = nsWin.contentView;
+        auto* view = static_cast<NSView*>(createInfo.window);
         [view setLayer: layer];
         [view setWantsLayer: YES];
 

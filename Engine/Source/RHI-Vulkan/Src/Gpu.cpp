@@ -32,14 +32,14 @@ namespace RHI::Vulkan {
         return { new VulkanDevice(*this, inCreateInfo) };
     }
 
-    VkPhysicalDevice VulkanGpu::GetNative() const
-    {
-        return nativePhysicalDevice;
-    }
-
     VulkanInstance& VulkanGpu::GetInstance() const
     {
         return instance;
+    }
+
+    VkPhysicalDevice VulkanGpu::GetNative() const
+    {
+        return nativePhysicalDevice;
     }
 
     uint32_t VulkanGpu::FindMemoryType(uint32_t inFilter, VkMemoryPropertyFlags inPropertyFlag) const

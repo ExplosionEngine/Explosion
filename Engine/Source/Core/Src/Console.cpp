@@ -6,7 +6,9 @@
 #include <vector>
 
 #include <Common/File.h>
+#include <Common/FileSystem.h>
 #include <Core/Console.h>
+#include <Core/Paths.h>
 
 namespace Core::Internal {
     static void SetConsoleSettingFromJsonValue(ConsoleSetting& inConsoleSetting, const rapidjson::Value& inJsonValue)

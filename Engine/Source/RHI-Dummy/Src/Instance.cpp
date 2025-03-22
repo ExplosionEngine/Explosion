@@ -10,7 +10,7 @@ namespace RHI::Dummy {
     Instance* gInstance = nullptr;
 
     DummyInstance::DummyInstance()
-        : dummyGpu(Common::MakeUnique<DummyGpu>())
+        : dummyGpu(Common::MakeUnique<DummyGpu>(*this))
     {
     }
 

@@ -5,15 +5,20 @@
 #include <Runtime/Component/Player.h>
 
 namespace Runtime {
+    PlayersInfo::PlayersInfo() = default;
+
     LocalPlayer::LocalPlayer()
-        : activeCamera(entityNull)
+        : localPlayerIndex(0)
+        , viewState(nullptr)
     {
     }
 
 #if BUILD_EDITOR
-    EditorVirtualPlayer::EditorVirtualPlayer()
-        : activeCamera(entityNull)
+    EditorPlayer::EditorPlayer()
+        : viewState(nullptr)
     {
     }
 #endif
-}
+
+    PlayerStart::PlayerStart() = default;
+} // namespace Runtime

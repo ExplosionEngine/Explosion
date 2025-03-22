@@ -12,9 +12,9 @@
 #include <vulkan/vulkan.h>
 
 #include <RHI/Device.h>
+#include <RHI/Vulkan/Gpu.h>
 
 namespace RHI::Vulkan {
-    class VulkanGpu;
     class VulkanQueue;
 
     class VulkanDevice final : public Device {
@@ -23,6 +23,7 @@ namespace RHI::Vulkan {
         VulkanDevice(VulkanGpu& inGpu, const DeviceCreateInfo& inCreateInfo);
         ~VulkanDevice() override;
 
+        VulkanGpu& GetGpu() const override;
         size_t GetQueueNum(QueueType inType) override;
         Queue* GetQueue(QueueType inType, size_t inIndex) override;
         Common::UniquePtr<Surface> CreateSurface(const SurfaceCreateInfo& inCreateInfo) override;
@@ -45,7 +46,6 @@ namespace RHI::Vulkan {
 
         VkDevice GetNative() const;
         VmaAllocator& GetNativeAllocator();
-        VulkanGpu& GetGpu() const;
 
 #if BUILD_CONFIG_DEBUG
         void SetObjectName(VkObjectType inObjectType, uint64_t inObjectHandle, const char* inObjectName) const;

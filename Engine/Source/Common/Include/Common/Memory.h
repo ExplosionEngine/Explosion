@@ -32,6 +32,7 @@ namespace Common {
 
         bool Valid() const;
         T* Get() const;
+        T* Release();
         void Reset(T* pointer = nullptr);
         std::unique_ptr<T>& GetStd();
 
@@ -42,9 +43,11 @@ namespace Common {
     template <typename T>
     class SharedPtr {
     public:
-        template <typename T2> SharedPtr(std::shared_ptr<T2>& sharedPtr); // NOLINT
+        template <typename T2> SharedPtr(const std::shared_ptr<T2>& sharedPtr); // NOLINT
         template <typename T2> SharedPtr(std::shared_ptr<T2>&& sharedPtr) noexcept; // NOLINT
         template <typename T2> SharedPtr(std::unique_ptr<T2>&& uniquePtr) noexcept; // NOLINT
+        template <typename T2> SharedPtr(const SharedPtr<T2>& sharedPtr); // NOLINT
+        template <typename T2> SharedPtr(SharedPtr<T2>&& sharedPtr) noexcept; // NOLINT
         template <typename T2> SharedPtr(UniquePtr<T2>&& uniquePtr) noexcept; // NOLINT
 
         SharedPtr(T* pointer); // NOLINT
@@ -53,13 +56,14 @@ namespace Common {
         SharedPtr();
         ~SharedPtr();
 
-        template <typename T2> SharedPtr& operator=(std::shared_ptr<T2>& sharedPtr);
+        template <typename T2> SharedPtr& operator=(const std::shared_ptr<T2>& sharedPtr);
         template <typename T2> SharedPtr& operator=(std::shared_ptr<T2>&& sharedPtr);
         template <typename T2> SharedPtr& operator=(std::unique_ptr<T2>&& uniquePtr) noexcept;
+        template <typename T2> SharedPtr& operator=(const SharedPtr<T2>& sharedPtr);
+        template <typename T2> SharedPtr& operator=(SharedPtr<T2>&& sharedPtr) noexcept;
         template <typename T2> SharedPtr& operator=(UniquePtr<T2>&& uniquePtr) noexcept;
-
         SharedPtr& operator=(T* pointer);
-        SharedPtr& operator=(SharedPtr& other); // NOLINT
+        SharedPtr& operator=(const SharedPtr& other); // NOLINT
         SharedPtr& operator=(SharedPtr&& other) noexcept;
         T* operator->() const noexcept;
         T& operator*() const noexcept;
@@ -190,6 +194,12 @@ namespace Common {
     }
 
     template <typename T>
+    T* UniquePtr<T>::Release()
+    {
+        return ptr.release();
+    }
+
+    template <typename T>
     bool UniquePtr<T>::Valid() const
     {
         return ptr != nullptr;
@@ -209,7 +219,7 @@ namespace Common {
 
     template <typename T>
     template <typename T2>
-    SharedPtr<T>::SharedPtr(std::shared_ptr<T2>& sharedPtr)
+    SharedPtr<T>::SharedPtr(const std::shared_ptr<T2>& sharedPtr)
         : ptr(sharedPtr)
     {
     }
@@ -230,8 +240,22 @@ namespace Common {
 
     template <typename T>
     template <typename T2>
+    SharedPtr<T>::SharedPtr(const SharedPtr<T2>& sharedPtr)
+        : ptr(sharedPtr.ptr)
+    {
+    }
+
+    template <typename T>
+    template <typename T2>
+    SharedPtr<T>::SharedPtr(SharedPtr<T2>&& sharedPtr) noexcept
+        : ptr(std::move(sharedPtr.ptr))
+    {
+    }
+
+    template <typename T>
+    template <typename T2>
     SharedPtr<T>::SharedPtr(UniquePtr<T2>&& uniquePtr) noexcept
-        : ptr(std::move(uniquePtr.Get()))
+        : ptr(uniquePtr.Release())
     {
     }
 
@@ -261,7 +285,7 @@ namespace Common {
 
     template <typename T>
     template <typename T2>
-    SharedPtr<T> & SharedPtr<T>::operator=(std::shared_ptr<T2> & sharedPtr)
+    SharedPtr<T> & SharedPtr<T>::operator=(const std::shared_ptr<T2> & sharedPtr)
     {
         ptr = sharedPtr;
         return *this;
@@ -279,7 +303,23 @@ namespace Common {
     template <typename T2>
     SharedPtr<T>& SharedPtr<T>::operator=(std::unique_ptr<T2>&& uniquePtr) noexcept
     {
-        ptr = std::move(uniquePtr);
+        ptr = uniquePtr.Release();
+        return *this;
+    }
+
+    template <typename T>
+    template <typename T2>
+    SharedPtr<T>& SharedPtr<T>::operator=(const SharedPtr<T2>& sharedPtr)
+    {
+        ptr = sharedPtr.ptr;
+        return *this;
+    }
+
+    template <typename T>
+    template <typename T2>
+    SharedPtr<T>& SharedPtr<T>::operator=(SharedPtr<T2>&& sharedPtr) noexcept
+    {
+        ptr = std::move(sharedPtr.ptr);
         return *this;
     }
 
@@ -299,7 +339,7 @@ namespace Common {
     }
 
     template <typename T>
-    SharedPtr<T> & SharedPtr<T>::operator=(SharedPtr& other)
+    SharedPtr<T> & SharedPtr<T>::operator=(const SharedPtr& other)
     {
         ptr = other.ptr;
         return *this;

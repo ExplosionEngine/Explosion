@@ -1,0 +1,34 @@
+#include <Platform.esh>
+
+struct FragmentInput {
+    float4 position : SV_POSITION;
+    float4 color : COLOR;
+};
+
+#if VERTEX_SHADER
+cbuffer vsUniform {
+    float3 vertexColor;
+};
+
+FragmentInput VSMain(
+    uint vertexId : SV_VertexID,
+    VkLocation(0) float3 position : POSITION)
+{
+    FragmentInput fragmentInput;
+    fragmentInput.position = float4(position.xyz, 1.0f);
+#if VULKAN
+    fragmentInput.position.y = - fragmentInput.position.y;
+#endif
+
+    fragmentInput.color = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    fragmentInput.color[vertexId % 3] = vertexColor[vertexId % 3];
+    return fragmentInput;
+}
+#endif
+
+#if PIXEL_SHADER
+float4 PSMain(FragmentInput input) : SV_TARGET
+{
+    return input.color;
+}
+#endif

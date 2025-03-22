@@ -28,6 +28,27 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     )
 endif ()
 
+# ---- begin shaders ---------------------------------------------------------------------------------
+GetEngineShaderResources(
+    NAME Editor
+    OUTPUT EDITOR_RESOURCES
+)
+
+file(GLOB_RECURSE SHADERS Shader/*.es*)
+foreach (SHADER ${SHADERS})
+    get_filename_component(SHADER_ABSOLUTE ${SHADER} ABSOLUTE)
+    string(REPLACE ${CMAKE_CURRENT_SOURCE_DIR}/Shader ../Shader/Editor COPY_DST ${SHADER_ABSOLUTE})
+    list(APPEND EDITOR_RESOURCES ${SHADER}->${COPY_DST})
+endforeach ()
+
+AddResourcesCopyCommand(
+    NAME Editor
+    RES ${EDITOR_RESOURCES}
+)
+# ---- end shaders -----------------------------------------------------------------------------------
+
+
+# ---- begin qml -------------------------------------------------------------------------------------
 set(EDITOR_QML_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Qml)
 set(EDITOR_RESOURCE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Qml/Resource)
 get_filename_component(EDITOR_RESOURCE_ROOT_ABSOLUTE ${EDITOR_RESOURCE_ROOT} ABSOLUTE)
@@ -62,3 +83,4 @@ qt_add_qml_module(
     RESOURCES ${RESOURCES}
     OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Generated/QmlModule
 )
+# ---- end qml ---------------------------------------------------------------------------------------
