@@ -272,6 +272,45 @@ Rectangle {
                 EIcon { name: 'folder' }
                 EIcon { name: 'folder-import' }
             }
+
+            RowLayout {
+                Layout.leftMargin: 5
+                Layout.topMargin: 15
+                EText {
+                    text: 'Switches'
+                    style: EText.Style.Title1
+                }
+            }
+            RowLayout {
+                ESwitch {
+                    text: 'Small Switch'
+                    size: ESwitch.Size.Small
+                }
+                ESwitch {
+                    text: 'Middle Switch'
+                    size: ESwitch.Size.Middle
+                }
+                ESwitch {
+                    text: 'Large Switch'
+                    size: ESwitch.Size.Large
+                }
+            }
+            RowLayout {
+                ESwitch {
+                    text: 'Disabled Checked'
+                    disabled: true
+                    checked: true
+                }
+                ESwitch {
+                    text: 'Disabled Unchecked'
+                    disabled: true
+                    checked: false
+                }
+                ESwitch {
+                    text: 'Filled Symbol'
+                    filler: ESwitch.Filler.Withchar
+                }
+            }
         }
     }
 }
