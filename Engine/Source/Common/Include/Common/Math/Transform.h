@@ -23,6 +23,7 @@ namespace Common {
         static Transform LookAt(const Vec<T, 3>& inPosition, const Vec<T, 3>& inTargetPosition, const Vec<T, 3>& inUpDirection = VecConsts<T, 3>::unitZ);
 
         Transform();
+        Transform(const Mat<T, 4, 4>& inMatrix);
         Transform(Quaternion<T> inRotation, Vec<T, 3> inTranslation);
         Transform(Vec<T, 3> inScale, Quaternion<T> inRotation, Vec<T, 3> inTranslation);
         Transform(const Transform& other);
@@ -158,6 +159,14 @@ namespace Common {
         this->scale = VecConsts<T, 3>::unit;
         this->rotation = QuatConsts<T>::identity;
         this->translation = VecConsts<T, 3>::zero;
+    }
+
+    template <typename T>
+    Transform<T>::Transform(const Mat<T, 4, 4>& inMatrix)
+    {
+        this->translation = inMatrix.ExtractTranslation();
+        this->rotation = inMatrix.ExtractRotation();
+        this->scale = inMatrix.ExtractScale();
     }
 
     template <typename T>

@@ -24,6 +24,9 @@ namespace Common {
         max
     };
 
+    template<typename T>
+    struct Quaternion;
+
     // matrix stored in row-major
     template <typename T, uint8_t R, uint8_t C>
     requires ValidMatDims<R, C>
@@ -115,6 +118,10 @@ namespace Common {
         bool CanInverse() const;
         Mat Inverse() const;
         T Determinant() const;
+
+        Vec<T, 3> ExtractTranslation() const;
+        Vec<T, 3> ExtractScale() const;
+        Quaternion<T> ExtractRotation() const;
     };
 
     template <typename T, uint8_t R, uint8_t C>
@@ -810,6 +817,82 @@ namespace Common {
             }
         }
         return result;
+    }
+
+    template<typename T, uint8_t R, uint8_t C>
+    Vec<T, 3> Mat<T, R, C>::ExtractTranslation() const
+    {
+        static_assert( R == 4 && C == 4);
+        Vec<T, 3> ret = Vec<T, 3>(this->data[3], this->data[7], this->data[11]);
+        return ret;
+    }
+
+    template<typename T, uint8_t R, uint8_t C>
+    Quaternion<T> Mat<T, R, C>::ExtractRotation() const
+    {
+        static_assert( R == 4 && C == 4);
+        Quaternion<T> ret = Quaternion<T>(1, 0, 0, 0);
+
+        T sx = Vec<T, 3>(this->data[0], this->data[4], this->data[8]).Model();
+        T sy = Vec<T, 3>(this->data[1], this->data[5], this->data[9]).Model();
+        T sz = Vec<T, 3>(this->data[2], this->data[6], this->data[10]).Model();
+        T det = this->Determinant();
+        if (det < 0) {
+            sx = -sx;
+        }
+
+        T m11 = this->data[0] / sx, m21 = this->data[4] / sx, m31 = this->data[8] / sx;
+        T m12 = this->data[1] / sy, m22 = this->data[5] / sy, m32 = this->data[9] / sy;
+        T m13 = this->data[2] / sz, m23 = this->data[6] / sz, m33 = this->data[10] / sz;
+
+        // http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
+        // assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
+        T trace = m11 + m22 + m33;
+        if (trace > 0) {
+            T s = 0.5 / std::sqrt(trace + 1.0);
+            ret.w = 0.25 / s;
+            ret.x = (m32 - m23) * s;
+            ret.y = (m13 - m31) * s;
+            ret.z = (m21 - m12) * s;
+        } else if (m11 > m22 && m11 > m33) {
+            T s = 2.0 * std::sqrt(1.0 + m11 - m22 - m33);
+            ret.w = ( m32 - m23 ) / s;
+            ret.x = 0.25 * s;
+            ret.y = ( m12 + m21 ) / s;
+            ret.z = ( m13 + m31 ) / s;
+        } else if (m22 > m33) {
+            T s = 2.0 * std::sqrt( 1.0 + m22 - m11 - m33 );
+            ret.w = ( m13 - m31 ) / s;
+            ret.x = ( m12 + m21 ) / s;
+            ret.y = 0.25 * s;
+            ret.z = ( m23 + m32 ) / s;
+        } else {
+            T s = 2.0 * std::sqrt( 1.0 + m33 - m11 - m22 );
+            ret.w = ( m21 - m12 ) / s;
+            ret.x = ( m13 + m31 ) / s;
+            ret.y = ( m23 + m32 ) / s;
+            ret.z = 0.25 * s;
+        }
+
+        return ret;
+    }
+
+    template<typename T, uint8_t R, uint8_t C>
+    Vec<T, 3> Mat<T, R, C>::ExtractScale() const
+    {
+        static_assert( R == 4 && C == 4);
+
+        T sx = Vec<T, 3>(this->data[0], this->data[4], this->data[8]).Model();
+        T sy = Vec<T, 3>(this->data[1], this->data[5], this->data[9]).Model();
+        T sz = Vec<T, 3>(this->data[2], this->data[6], this->data[10]).Model();
+
+        T det = this->Determinant();
+        if (det < 0) {
+            sx = -sx;
+        }
+        Vec<T, 3> ret = Vec<T, 3>(sx, sy, sz);
+
+        return ret;
     }
 
     template <typename T, uint8_t R, uint8_t C>

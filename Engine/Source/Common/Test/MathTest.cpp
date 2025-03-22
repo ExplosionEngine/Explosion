@@ -351,6 +351,22 @@ TEST(MathTest, SubMatrixTest)
     ASSERT_TRUE(m1.Row(2) == FVec3(7, 8, 9));
 }
 
+TEST(MathTest, MatExtractionTest)
+{
+    const FMat4x4 m = {
+        0, -2, 0, 7,
+        4, 0, 0, 5,
+        0, 0, 3, 3,
+        7, 5, 3, 1
+    };
+
+    const FTransform trans = FTransform(m);
+
+    ASSERT_TRUE(trans.translation == FVec3(7.0f, 5.0f, 3.0f));
+    ASSERT_TRUE(trans.scale == FVec3(4.0f, 2.0f, 3.0f));
+    ASSERT_TRUE(trans.rotation == FQuat(0.7071067f, .0f, .0f, .7071067f));
+}
+
 TEST(MathTest, MatViewTest)
 {
     const FMat3x3 v0(
