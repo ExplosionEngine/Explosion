@@ -4,6 +4,7 @@ import QtQuick
 
 QtObject {
     property color bgColor: Qt.color('#212121')
+    property color primaryBgColor: Qt.color('#2a2a2a')
     property color primaryColor: Qt.color('#e74c3c')
     property color primaryHoverColor: Qt.color('#ce4d40')
     property color primaryFocusColor: Qt.color('#c0392b')
