@@ -6,6 +6,7 @@
 
 #include <Core/Cmdline.h>
 #include <Editor/QmlEngine.h>
+#include <Editor/Widget/Editor.h>
 #include <Editor/Widget/ProjectHub.h>
 #include <Editor/Widget/WidgetSamples.h>
 
@@ -106,8 +107,7 @@ static Common::UniquePtr<QWidget> CreateMainWidget(EditorApplicationModel inMode
     if (inModel == EditorApplicationModel::projectHub) { // NOLINT
         return new Editor::ProjectHub();
     }
-    // TODO replace with editor main widget
-    return nullptr;
+    return new Editor::Editor();
 }
 
 int main(int argc, char* argv[])
