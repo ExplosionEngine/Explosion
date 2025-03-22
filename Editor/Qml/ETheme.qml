@@ -13,7 +13,7 @@ QtObject {
     property color disabledColor: Qt.color('#676563')
     property color fontColor: Qt.color('#ecf0f1')
     property color linkFontColor: Qt.color('#91b9c4')
-    property color inputBoxColor: Qt.color('#c0c0c0')
+    property color secondaryBgColor: Qt.color('#8e8e8e')
     property color disabledCheckedColor: Qt.color('#c9a9a6')
 
     property FontLoader normalFont: FontLoader { source: Qt.url('Resource/Font/MiSans-Normal.ttf') }

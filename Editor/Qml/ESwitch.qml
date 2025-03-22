@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Basic
-import QtQuick.Layouts
 
 
 Item {
@@ -26,12 +25,12 @@ Item {
 
     signal clicked()
 
-    id: 'root'
+    id: root
     implicitWidth: switchWidget.implicitWidth
     implicitHeight: switchWidget.implicitHeight
 
     Switch {
-        id: 'switchWidget'
+        id: switchWidget
         enabled: !root.disabled
         checked: root.checked
         onClicked: root.clicked()
@@ -41,12 +40,12 @@ Item {
                 if (disabled) {
                     return checked ? ETheme.disabledCheckedColor : ETheme.disabledColor;
                 }
-                return checked ? ETheme.primaryColor : ETheme.inputBoxColor;
+                return checked ? ETheme.primaryColor : ETheme.secondaryBgColor;
             }
 
             implicitWidth: 40 + 2 * (root.size - 1)
             implicitHeight: 24 + 2 * (root.size - 1)
-            x: parent.leftPadding
+            x: switchWidget.leftPadding
             anchors.verticalCenter: parent.verticalCenter
             radius: width / 2
             color: getBackgroundColor(switchWidget.checked, root.disabled)
