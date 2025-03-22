@@ -26,7 +26,7 @@ namespace Runtime {
         NonMovable(World)
         ~World();
 
-        World(std::string inName, Client* inClient);
+        World(std::string inName, Client* inClient, PlayType inPlayType);
         void SetSystemGraph(const SystemGraph& inSystemGraph);
         PlayStatus PlayStatus() const;
         bool Stopped() const;

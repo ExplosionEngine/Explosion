@@ -21,7 +21,10 @@ namespace Core {
     class CORE_API ThreadContext {
     public:
         static void SetTag(ThreadTag inTag);
-        static ThreadTag GetTag();
+        static void IncFrameNumber();
+
+        static ThreadTag Tag();
+        static uint64_t FrameNumber();
         static bool IsUnknownThread();
         static bool IsGameThread();
         static bool IsRenderThread();

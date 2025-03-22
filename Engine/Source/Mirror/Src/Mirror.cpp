@@ -891,6 +891,11 @@ namespace Mirror {
         return iter->second;
     }
 
+    std::string ReflNode::GetMetaOr(const std::string& key, const std::string& defaultValue) const
+    {
+        return HasMeta(key) ? GetMeta(key) : defaultValue;
+    }
+
     std::string ReflNode::GetAllMeta() const
     {
         std::stringstream stream;
@@ -1259,7 +1264,7 @@ namespace Mirror {
 
     bool MemberVariable::IsTransient() const
     {
-        return GetMetaBoolOr("transient", false);
+        return GetMetaBoolOr(MetaPresets::transient, false);
     }
 
     MemberFunction::MemberFunction(ConstructParams&& params)
@@ -1491,7 +1496,7 @@ namespace Mirror {
         std::vector<const Class*> result;
         result.reserve(classes.Size());
         classes.Each([&](const Id& id, const Class& clazz) -> void {
-            if (clazz.HasMeta("category") && clazz.GetMeta("category") == category) {
+            if (clazz.GetMetaOr(MetaPresets::category, "") == category) {
                 result.emplace_back(&clazz);
             }
         });
@@ -1505,28 +1510,28 @@ namespace Mirror {
 
     void Class::ForEachStaticVariable(const VariableTraverser& func) const
     {
-        for (const auto& [id, variable] : staticVariables) {
+        for (const auto& variable : staticVariables | std::views::values) {
             func(variable);
         }
     }
 
     void Class::ForEachStaticFunction(const FunctionTraverser& func) const
     {
-        for (const auto& [id, function] : staticFunctions) {
+        for (const auto& function : staticFunctions | std::views::values) {
             func(function);
         }
     }
 
     void Class::ForEachMemberVariable(const MemberVariableTraverser& func) const
     {
-        for (const auto& [id, memberVariable] : memberVariables) {
+        for (const auto& memberVariable : memberVariables | std::views::values) {
             func(memberVariable);
         }
     }
 
     void Class::ForEachMemberFunction(const MemberFunctionTraverser& func) const
     {
-        for (const auto& [id, memberFunction] : memberFunctions) {
+        for (const auto& memberFunction : memberFunctions | std::views::values) {
             func(memberFunction);
         }
     }
@@ -1815,7 +1820,7 @@ namespace Mirror {
 
     bool Class::IsTransient() const
     {
-        return GetMetaBoolOr("transient", false);
+        return GetMetaBoolOr(MetaPresets::transient, false);
     }
 
     EnumValue::EnumValue(ConstructParams&& inParams)

@@ -7,6 +7,7 @@
 
 #include <Application.h>
 #include <Common/Hash.h>
+#include <Common/Time.h>
 
 template <>
 struct std::hash<std::pair<int, int>> {
@@ -24,7 +25,9 @@ Application::Application(std::string n)
     , instance(nullptr)
     , mousePos(FVec2Consts::zero)
     , mouseButtonsStatus()
-    , frameTime(0.0f)
+    , lastTimeSeconds(TimePoint::Now().ToSeconds())
+    , currentTimeSeconds(TimePoint::Now().ToSeconds())
+    , deltaTimeSeconds(0.0f)
 {
 }
 
@@ -80,12 +83,12 @@ int Application::RunLoop()
         glfwSetMouseButtonCallback(window, mouseButtonCallback);
     }
 
-    while (!glfwWindowShouldClose(window)) {
-        const auto currentTime = std::chrono::high_resolution_clock::now();
-        frameTime = std::chrono::duration<float, std::milli>(currentTime - lastTime).count();
-        lastTime = currentTime;
+    while (!static_cast<bool>(glfwWindowShouldClose(window))) {
+        currentTimeSeconds = TimePoint::Now().ToSeconds();
+        deltaTimeSeconds = static_cast<float>(currentTimeSeconds - lastTimeSeconds);
+        lastTimeSeconds = currentTimeSeconds;
         if (camera != nullptr) {
-            camera->Update(GetFrameTime());
+            camera->Update(GetDeltaTimeSeconds());
         }
         OnDrawFrame();
         glfwPollEvents();
@@ -170,12 +173,24 @@ void Application::OnCursorActionReceived(float x, float y)
 void Application::OnMouseButtonActionReceived(int button, int action)
 {
     static std::unordered_map<std::pair<int, int>, std::function<void(Application&)>> actionMap = {
-        { { GLFW_PRESS, GLFW_MOUSE_BUTTON_LEFT }, [](Application& application) -> void { application.mouseButtonsStatus[static_cast<size_t>(MouseButton::left)] = true; } },
-        { { GLFW_PRESS, GLFW_MOUSE_BUTTON_RIGHT }, [](Application& application) -> void { application.mouseButtonsStatus[static_cast<size_t>(MouseButton::right)] = true; } },
-        { { GLFW_PRESS, GLFW_MOUSE_BUTTON_MIDDLE }, [](Application& application) -> void { application.mouseButtonsStatus[static_cast<size_t>(MouseButton::middle)] = true; } },
-        { { GLFW_RELEASE, GLFW_MOUSE_BUTTON_LEFT }, [](Application& application) -> void { application.mouseButtonsStatus[static_cast<size_t>(MouseButton::left)] = false; } },
-        { { GLFW_RELEASE, GLFW_MOUSE_BUTTON_RIGHT }, [](Application& application) -> void { application.mouseButtonsStatus[static_cast<size_t>(MouseButton::right)] = false; } },
-        { { GLFW_RELEASE, GLFW_MOUSE_BUTTON_MIDDLE }, [](Application& application) -> void { application.mouseButtonsStatus[static_cast<size_t>(MouseButton::middle)] = false; } },
+        {{GLFW_PRESS, GLFW_MOUSE_BUTTON_LEFT}, [](Application& application) -> void {
+             application.mouseButtonsStatus[static_cast<size_t>(MouseButton::left)] = true;
+         }},
+        {{GLFW_PRESS, GLFW_MOUSE_BUTTON_RIGHT}, [](Application& application) -> void {
+             application.mouseButtonsStatus[static_cast<size_t>(MouseButton::right)] = true;
+         }},
+        {{GLFW_PRESS, GLFW_MOUSE_BUTTON_MIDDLE}, [](Application& application) -> void {
+             application.mouseButtonsStatus[static_cast<size_t>(MouseButton::middle)] = true;
+         }},
+        {{GLFW_RELEASE, GLFW_MOUSE_BUTTON_LEFT}, [](Application& application) -> void {
+             application.mouseButtonsStatus[static_cast<size_t>(MouseButton::left)] = false;
+         }},
+        {{GLFW_RELEASE, GLFW_MOUSE_BUTTON_RIGHT}, [](Application& application) -> void {
+             application.mouseButtonsStatus[static_cast<size_t>(MouseButton::right)] = false;
+         }},
+        {{GLFW_RELEASE, GLFW_MOUSE_BUTTON_MIDDLE}, [](Application& application) -> void {
+             application.mouseButtonsStatus[static_cast<size_t>(MouseButton::middle)] = false;
+         }},
     };
 
     const auto iter = actionMap.find(std::make_pair(action, button));
@@ -185,9 +200,14 @@ void Application::OnMouseButtonActionReceived(int button, int action)
     iter->second(*this);
 }
 
-float Application::GetFrameTime() const
+double Application::GetCurrentTimeSeconds() const
 {
-    return frameTime;
+    return currentTimeSeconds;
+}
+
+float Application::GetDeltaTimeSeconds() const
+{
+    return deltaTimeSeconds;
 }
 
 void* Application::GetPlatformWindow() const
@@ -195,7 +215,7 @@ void* Application::GetPlatformWindow() const
 #if PLATFORM_WINDOWS
     return glfwGetWin32Window(window);
 #elif PLATFORM_MACOS
-    return glfwGetCocoaWindow(window);
+    return glfwGetCocoaView(window);
 #else
     Unimplement();
     return nullptr;

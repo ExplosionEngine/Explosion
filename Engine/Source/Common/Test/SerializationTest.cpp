@@ -2,8 +2,6 @@
 // Created by johnk on 2023/7/13.
 //
 
-#include <filesystem>
-
 #include <Common/Memory.h>
 #include <SerializationTest.h>
 
@@ -76,6 +74,7 @@ TEST(SerializationTest, TypedSerializationTest)
     PerformTypedSerializationTest<std::unordered_map<int, bool>>({ { 1, false }, { 2, true } });
     PerformTypedSerializationTest<std::map<int, bool>>({ { 1, false }, { 2, true } });
     PerformTypedSerializationTest<std::tuple<int, bool, int>>({ 1, true, 2 });
+    PerformTypedSerializationTest<std::variant<int, bool, float>>({ true });
 }
 
 TEST(SerializationTest, TypedSerializationWithFileTest)
@@ -107,6 +106,7 @@ TEST(SerializationTest, TypedSerializationWithFileTest)
     PerformTypeSerializationWithFileTest<std::unordered_map<int, bool>>(fileName, { { 1, false }, { 2, true } });
     PerformTypeSerializationWithFileTest<std::map<int, bool>>(fileName, { { 1, false }, { 2, true } });
     PerformTypeSerializationWithFileTest<std::tuple<int, bool, int>>(fileName, { 1, true, 2 });
+    PerformTypeSerializationWithFileTest<std::variant<int, bool, float>>(fileName, { true });
 }
 
 TEST(SerializationTest, JsonSerializationTest)
@@ -137,6 +137,7 @@ TEST(SerializationTest, JsonSerializationTest)
     PerformJsonSerializationTest<std::map<int, bool>>({ { 1, false }, { 2, true } }, R"([{"key":1,"value":false},{"key":2,"value":true}])");
     PerformJsonSerializationTest<std::map<std::string, int>>({ { "1", 1 }, { "2", 2 } }, R"([{"key":"1","value":1},{"key":"2","value":2}])");
     PerformJsonSerializationTest<std::tuple<int, bool, int>>({ 1, true, 2 }, R"({"0":1,"1":true,"2":2})");
+    PerformJsonSerializationTest<std::variant<int, bool, float>>({ true }, R"({"type":1,"content":true})");
 }
 
 TEST(SerializationTest, JsonSerializationWithFileTest)
@@ -169,4 +170,5 @@ TEST(SerializationTest, JsonSerializationWithFileTest)
     PerformJsonSerializationWithFileTest<std::map<int, bool>>(fileName, { { 1, false }, { 2, true } });
     PerformJsonSerializationWithFileTest<std::map<std::string, int>>(fileName, { { "1", 1 }, { "2", 2 } });
     PerformJsonSerializationWithFileTest<std::tuple<int, bool, int>>(fileName, { 1, true, 2 });
+    PerformTypeSerializationWithFileTest<std::variant<int, bool, float>>(fileName, { true });
 }

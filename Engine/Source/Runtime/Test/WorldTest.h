@@ -6,7 +6,7 @@
 
 #include <unordered_map>
 
-#include <Mirror/Meta.h>
+#include <Runtime/Meta.h>
 #include <Runtime/ECS.h>
 #include <Common/Math/Common.h>
 
@@ -34,7 +34,7 @@ struct EClass() Velocity {
     float y;
 };
 
-struct EClass(global) GBasicTest_ExpectVerifyResult {
+struct EClass(globalComp) GBasicTest_ExpectVerifyResult {
     EClassBody(GBasicTest_ExpectVerifyResult)
 
     std::unordered_map<Runtime::Entity, Position> entities;
@@ -49,7 +49,7 @@ class EClass() BasicTest_MotionSystem : public Runtime::System {
     void Tick(float inDeltaTimeSeconds) override;
 };
 
-struct EClass(global) GConcurrentTest_Context {
+struct EClass(globalComp) GConcurrentTest_Context {
     EClassBody(GConcurrentTest_Context)
 
     uint32_t a;

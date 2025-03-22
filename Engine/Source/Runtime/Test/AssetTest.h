@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <Mirror/Meta.h>
+#include <Runtime/Meta.h>
 #include <Runtime/Asset/Asset.h>
 using namespace Common;
 using namespace Runtime;
@@ -12,8 +12,8 @@ using namespace Runtime;
 struct EClass() TestAsset : public Asset {
     EClassBody(TestAsset)
 
-    TestAsset()
-        : Asset(Core::Uri(""))
+    explicit TestAsset(Core::Uri uri)
+        : Asset(std::move(uri))
         , a(0)
         , b()
     {

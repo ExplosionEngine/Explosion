@@ -24,11 +24,9 @@ namespace Runtime {
 
         virtual Client& GetClient() = 0;
         virtual PresentInfo GetNextPresentInfo() = 0;
-        virtual size_t GetWidth() = 0;
-        virtual size_t GetHeight() = 0;
-
+        virtual size_t GetWidth() const = 0;
+        virtual size_t GetHeight() const = 0;
         // TODO mouse keyboard inputs etc.
-        // TODO resolution change etc.
 
     protected:
         Viewport();

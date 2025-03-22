@@ -4,6 +4,7 @@
 
 #include <taskflow/taskflow.hpp>
 
+#include <Core/Thread.h>
 #include <Runtime/ECS.h>
 
 namespace Runtime {
@@ -20,7 +21,7 @@ namespace Runtime {
 namespace Runtime::Internal {
     static bool IsGlobalCompClass(GCompClass inClass)
     {
-        return inClass->HasMeta("global") && inClass->GetMetaBool("global");
+        return inClass->GetMetaBoolOr(MetaPresets::globalComp, false);
     }
 
     CompRtti::CompRtti(CompClass inClass)
@@ -1247,13 +1248,14 @@ namespace Runtime {
     void SystemPipeline::ParallelPerformAction(const ActionFunc& inActionFunc)
     {
         tf::Taskflow taskFlow;
-        auto lastBarrier = taskFlow.emplace([]() -> void {});
+        auto lastBarrier = taskFlow.emplace([]() -> void { Core::ScopedThreadTag threadTag(Core::ThreadTag::gameWorker); });
 
         for (auto& groupContext : systemGraph) {
             if (groupContext.strategy == SystemExecuteStrategy::sequential) {
                 tf::Task lastTask = lastBarrier;
                 for (auto& systemContext : groupContext.systems) {
                     auto task = taskFlow.emplace([&]() -> void {
+                        Core::ScopedThreadTag threadTag(Core::ThreadTag::gameWorker);
                         inActionFunc(systemContext);
                     });
                     task.succeed(lastTask);
@@ -1266,12 +1268,13 @@ namespace Runtime {
 
                 for (auto& systemContext : groupContext.systems) {
                     tasks.emplace_back(taskFlow.emplace([&]() -> void {
+                        Core::ScopedThreadTag threadTag(Core::ThreadTag::gameWorker);
                         inActionFunc(systemContext);
                     }));
                     tasks.back().succeed(lastBarrier);
                 }
 
-                auto barrier = taskFlow.emplace([]() -> void {});
+                auto barrier = taskFlow.emplace([]() -> void { Core::ScopedThreadTag threadTag(Core::ThreadTag::gameWorker); });
                 for (const auto& task : tasks) {
                     barrier.succeed(task);
                 }
@@ -1288,7 +1291,8 @@ namespace Runtime {
     }
 
     SystemSetupContext::SystemSetupContext()
-        : client(nullptr)
+        : playType(PlayType::max)
+        , client(nullptr)
     {
     }
 

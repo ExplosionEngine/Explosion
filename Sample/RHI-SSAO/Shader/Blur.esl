@@ -1,4 +1,4 @@
-#include <Platform.h>
+#include <Platform.esh>
 
 VkBinding(0, 0) Texture2D ssaoTex : register(t0);
 VkBinding(1, 0) SamplerState ssaoSampler : register(s0);

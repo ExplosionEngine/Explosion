@@ -13,11 +13,11 @@
 #include <RHI/Synchronous.h>
 #include <RHI/Common.h>
 #include <RHI/Device.h>
+#include <RHI/DirectX12/Gpu.h>
 
 using Microsoft::WRL::ComPtr;
 
 namespace RHI::DirectX12 {
-    class DX12Gpu;
     class DX12Queue;
     class DX12Device;
 
@@ -73,6 +73,7 @@ namespace RHI::DirectX12 {
         DX12Device(DX12Gpu& inGpu, const DeviceCreateInfo& inCreateInfo);
         ~DX12Device() override;
 
+        DX12Gpu& GetGpu() const override;
         size_t GetQueueNum(QueueType inType) override;
         Queue* GetQueue(QueueType inType, size_t inIndex) override;
         Common::UniquePtr<Surface> CreateSurface(const SurfaceCreateInfo& inCreateInfo) override;
@@ -93,7 +94,6 @@ namespace RHI::DirectX12 {
         bool CheckSwapChainFormatSupport(Surface* inSurface, PixelFormat inFormat) override;
         TextureSubResourceCopyFootprint GetTextureSubResourceCopyFootprint(const Texture& texture, const TextureSubResourceInfo& subResourceInfo) override;
 
-        DX12Gpu& GetGpu() const;
         ID3D12Device* GetNative() const;
         Common::UniquePtr<DescriptorAllocation> AllocateRtvDescriptor() const;
         Common::UniquePtr<DescriptorAllocation> AllocateCbvSrvUavDescriptor() const;

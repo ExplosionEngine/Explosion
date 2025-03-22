@@ -1,4 +1,4 @@
-#include <Platform.h>
+#include <Platform.esh>
 
 // spir-v treat vec2 and vec4 as built-in type?
 struct Data {

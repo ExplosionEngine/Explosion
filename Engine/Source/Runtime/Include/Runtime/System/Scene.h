@@ -4,9 +4,12 @@
 
 #pragma once
 
+#include <optional>
+
 #include <Runtime/ECS.h>
 #include <Runtime/Component/Light.h>
 #include <Runtime/Component/Transform.h>
+#include <Runtime/Component/Scene.h>
 #include <Render/RenderModule.h>
 #include <Render/Scene.h>
 #include <Render/SceneProxy/Light.h>
@@ -25,90 +28,111 @@ namespace Runtime {
         void Tick(float inDeltaTimeSeconds) override;
 
     private:
-        template <typename SP> using SPMap = std::unordered_map<Entity, Render::SPHandle<SP>>;
-
-        template <typename L> static void FillLightSceneProxy(const Render::LightSPH& inHandle, const L& inLight, const WorldTransform* inTransform);
-        template <typename L> void EmplaceLightSceneProxy(Entity inEntity);
-        template <typename L> void UpdateLightSceneProxy(Entity inEntity);
-        template <typename SP> void UpdateTransformForSceneProxy(SPMap<SP>& inSceneProxyMap, Entity inEntity, bool inWithScale = true);
-        void RemoveLightSceneProxy(Entity e);
+        template <typename Component, typename SceneProxy> void QueueCreateSceneProxy(Entity inEntity);
+        template <typename Component, typename SceneProxy> void QueueUpdateSceneProxyContent(Entity inEntity);
+        template <typename SceneProxy> void QueueUpdateSceneProxyTransform(Entity inEntity);
+        template <typename SceneProxy> void QueueRemoveSceneProxy(Entity inEntity);
 
         Render::RenderModule& renderModule;
-        Common::UniquePtr<Render::Scene> scene;
         Observer transformUpdatedObserver;
         EventsObserver<DirectionalLight> directionalLightsObserver;
         EventsObserver<PointLight> pointLightsObserver;
         EventsObserver<SpotLight> spotLightsObserver;
-        SPMap<Render::LightSceneProxy> lightSceneProxies;
     };
 }
-namespace Runtime {
-    template <typename L>
-    void SceneSystem::FillLightSceneProxy(const Render::LightSPH& inHandle, const L& inLight, const WorldTransform* inTransform)
+
+namespace Runtime::Internal {
+    template <typename Component, typename SceneProxy>
+    static void UpdateSceneProxyContent(SceneProxy& outSceneProxy, const Component& inComponent)
     {
         Unimplement();
     }
 
+    template <typename SceneProxy>
+    static void UpdateSceneProxyWorldTransform(SceneProxy& outSceneProxy, const WorldTransform& inTransform, bool withScale = true)
+    {
+        outSceneProxy.localToWorld = withScale ? inTransform.localToWorld.GetTransformMatrix() : inTransform.localToWorld.GetTransformMatrixNoScale();
+    }
+
+    template <typename T>
+    static std::optional<T> GetOptional(const T* inObj)
+    {
+        return inObj == nullptr ? std::optional<T>() : *inObj;
+    }
+}
+
+namespace Runtime::Internal {
     template <>
-    inline void SceneSystem::FillLightSceneProxy<DirectionalLight>(const Render::LightSPH& inHandle, const DirectionalLight& inLight, const WorldTransform* inTransform)
+    static void UpdateSceneProxyContent<DirectionalLight, Render::LightSceneProxy>(Render::LightSceneProxy& outSceneProxy, const DirectionalLight& inComponent)
     {
-        Render::LightSceneProxy& sceneProxy = *inHandle; // NOLINT
-        sceneProxy.type = Render::LightType::directional;
-        sceneProxy.localToWorld = inTransform == nullptr ? Common::FMat4x4Consts::identity : inTransform->localToWorld.GetTransformMatrixNoScale();
-        sceneProxy.color = inLight.color;
-        sceneProxy.intensity = inLight.intensity;
+        outSceneProxy.type = Render::LightType::directional;
+        outSceneProxy.color = inComponent.color;
+        outSceneProxy.intensity = inComponent.intensity;
     }
 
     template <>
-    inline void SceneSystem::FillLightSceneProxy<PointLight>(const Render::LightSPH& inHandle, const PointLight& inLight, const WorldTransform* inTransform)
+    static void UpdateSceneProxyContent<PointLight, Render::LightSceneProxy>(Render::LightSceneProxy& outSceneProxy, const PointLight& inComponent)
     {
-        Render::LightSceneProxy& sceneProxy = *inHandle; // NOLINT
-        sceneProxy.type = Render::LightType::point;
-        sceneProxy.localToWorld = inTransform == nullptr ? Common::FMat4x4Consts::identity : inTransform->localToWorld.GetTransformMatrixNoScale();
-        sceneProxy.color = inLight.color;
-        sceneProxy.intensity = inLight.intensity;
-        sceneProxy.radius = inLight.radius;
+        outSceneProxy.type = Render::LightType::point;
+        outSceneProxy.color = inComponent.color;
+        outSceneProxy.intensity = inComponent.intensity;
+        outSceneProxy.radius = inComponent.radius;
     }
 
     template <>
-    inline void SceneSystem::FillLightSceneProxy<SpotLight>(const Render::LightSPH& inHandle, const SpotLight& inLight, const WorldTransform* inTransform)
+    static void UpdateSceneProxyContent<SpotLight, Render::LightSceneProxy>(Render::LightSceneProxy& outSceneProxy, const SpotLight& inComponent)
     {
-        Render::LightSceneProxy& sceneProxy = *inHandle; // NOLINT
-        sceneProxy.type = Render::LightType::spot;
-        sceneProxy.localToWorld = inTransform == nullptr ? Common::FMat4x4Consts::identity : inTransform->localToWorld.GetTransformMatrixNoScale();
-        sceneProxy.color = inLight.color;
-        sceneProxy.intensity = inLight.intensity;
+        outSceneProxy.type = Render::LightType::spot;
+        outSceneProxy.color = inComponent.color;
+        outSceneProxy.intensity = inComponent.intensity;
+    }
+}
+
+namespace Runtime {
+    template <typename Component, typename SceneProxy>
+    void SceneSystem::QueueCreateSceneProxy(Entity inEntity)
+    {
+        const auto& sceneHolder = registry.GGet<SceneHolder>();
+        const auto& component = registry.Get<Component>(inEntity);
+        const auto* transform = registry.Find<WorldTransform>(inEntity);
+        renderModule.GetRenderThread().EmplaceTask([scene = sceneHolder.scene, inEntity, component, transform = Internal::GetOptional(transform)]() -> void {
+            SceneProxy sceneProxy;
+            Internal::UpdateSceneProxyContent(sceneProxy, component);
+            if (transform.has_value()) {
+                Internal::UpdateSceneProxyWorldTransform(sceneProxy, transform.value(), false);
+            }
+            scene->Add<SceneProxy>(inEntity, std::move(sceneProxy));
+        });
     }
 
-    template <typename L>
-    void SceneSystem::EmplaceLightSceneProxy(Entity inEntity)
+    template <typename Component, typename SceneProxy>
+    void SceneSystem::QueueUpdateSceneProxyContent(Entity inEntity)
     {
-        lightSceneProxies.emplace(inEntity, scene->AddLight());
-        FillLightSceneProxy(lightSceneProxies.at(inEntity), registry.Get<L>(inEntity), registry.Find<WorldTransform>(inEntity));
+        const auto& sceneHolder = registry.GGet<SceneHolder>();
+        const auto& component = registry.Get<Component>(inEntity);
+        renderModule.GetRenderThread().EmplaceTask([scene = sceneHolder.scene, inEntity, component]() -> void {
+            auto& sceneProxy = scene->Get<SceneProxy>(inEntity);
+            Internal::UpdateSceneProxyContent(sceneProxy, component);
+        });
     }
 
-    template <typename L>
-    void SceneSystem::UpdateLightSceneProxy(Entity inEntity)
+    template <typename SceneProxy>
+    void SceneSystem::QueueUpdateSceneProxyTransform(Entity inEntity)
     {
-        const Render::LightSPH& handle = lightSceneProxies.at(inEntity);
-        FillLightSceneProxy(handle, registry.Get<L>(inEntity), registry.Find<WorldTransform>(inEntity));
-        scene->UpdateLight(handle);
+        const auto& sceneHolder = registry.GGet<SceneHolder>();
+        const auto& transform = registry.Get<WorldTransform>(inEntity);
+        renderModule.GetRenderThread().EmplaceTask([scene = sceneHolder.scene, inEntity, transform]() -> void {
+            auto& sceneProxy = scene->Get<SceneProxy>(inEntity);
+            Internal::UpdateSceneProxyWorldTransform(sceneProxy, transform, false);
+        });
     }
 
-    template <typename SP>
-    void SceneSystem::UpdateTransformForSceneProxy(SPMap<SP>& inSceneProxyMap, Entity inEntity, bool inWithScale)
+    template <typename SceneProxy>
+    void SceneSystem::QueueRemoveSceneProxy(Entity inEntity)
     {
-        const auto iter = inSceneProxyMap.find(inEntity);
-        if (iter == inSceneProxyMap.end()) {
-            return;
-        }
-
-        const Render::LightSPH& handle = iter->second;
-        if (const WorldTransform* transform = registry.Find<WorldTransform>(inEntity);
-            transform == nullptr) {
-            handle->localToWorld = Common::FMat4x4Consts::identity;
-        } else {
-            handle->localToWorld = inWithScale ? transform->localToWorld.GetTransformMatrix() : transform->localToWorld.GetTransformMatrixNoScale();;
-        }
+        const auto& sceneHolder = registry.GGet<SceneHolder>();
+        renderModule.GetRenderThread().EmplaceTask([scene = sceneHolder.scene, inEntity]() -> void {
+            scene->Remove<SceneProxy>(inEntity);
+        });
     }
 }

@@ -19,7 +19,8 @@ namespace Render {
         struct Params {
             const Scene* scene;
             const RHI::Texture* surface;
-            std::vector<const View*> views;
+            Common::UVec2 surfaceExtent;
+            std::vector<View> views;
             RHI::Semaphore* waitSemaphore;
             RHI::Semaphore* signalSemaphore;
             RHI::Fence* signalFence;
@@ -33,7 +34,8 @@ namespace Render {
     protected:
         const Scene* scene;
         const RHI::Texture* surface;
-        std::vector<const View*> views;
+        Common::UVec2 surfaceExtent;
+        std::vector<View> views;
         RHI::Semaphore* waitSemaphore;
         RHI::Semaphore* signalSemaphore;
         RHI::Fence* signalFence;
@@ -41,13 +43,14 @@ namespace Render {
 
     class StandardRenderer final : public Renderer {
     public:
+        using Params = Renderer::Params;
+
         explicit StandardRenderer(const Params& inParams);
         ~StandardRenderer() override;
 
         void Render(float inDeltaTimeSeconds) override;
 
     private:
+        void FinalizeViews() const;
     };
-
-    // TODO ScriptableRenderer
 }

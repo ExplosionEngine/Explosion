@@ -64,12 +64,11 @@ namespace RHI {
 
     BufferViewCreateInfo& BufferViewCreateInfo::SetExtendStorage(uint32_t inStride)
     {
-        extend = StorageBufferViewInfo { inStride };
+        extend = StorageBufferViewInfo {inStride};
         return *this;
     }
 
-
-    size_t BufferViewCreateInfo::Hash() const
+    uint64_t BufferViewCreateInfo::Hash() const
     {
         return Common::HashUtils::CityHash(this, sizeof(BufferViewCreateInfo));
     }

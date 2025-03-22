@@ -67,15 +67,25 @@ namespace Render {
         return RenderThread::Get();
     }
 
-    Common::UniquePtr<Render::Scene> RenderModule::NewScene() // NOLINT
+    Scene* RenderModule::NewScene() const // NOLINT
     {
         return new Scene();
     }
 
-    Common::UniquePtr<View> RenderModule::NewView() // NOLINT
+    ViewState* RenderModule::NewViewState() const // NOLINT
     {
-        return new View();
+        return new ViewState();
     }
-}
+
+    View RenderModule::CreateView() const // NOLINT
+    {
+        return View();
+    }
+
+    StandardRenderer RenderModule::CreateStandardRenderer(const StandardRenderer::Params& inParams) const // NOLINT
+    {
+        return StandardRenderer(inParams);
+    }
+} // namespace Render
 
 IMPLEMENT_DYNAMIC_MODULE(RENDER_API, Render::RenderModule);

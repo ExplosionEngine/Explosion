@@ -9,4 +9,6 @@ namespace Runtime {
         : Asset(std::move(inUri))
     {
     }
+
+    Level::~Level() = default;
 }

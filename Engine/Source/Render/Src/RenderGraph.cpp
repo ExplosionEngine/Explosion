@@ -529,7 +529,7 @@ namespace Render {
     RHI::BindGroup* RGBuilder::GetRHI(RGBindGroupRef inBindGroup) const
     {
         AssertWithReason(devirtualizedBindGroups.contains(inBindGroup), "bind group was not devirtualized or has been released");
-        return devirtualizedBindGroups.at(inBindGroup).Get();
+        return devirtualizedBindGroups.at(inBindGroup);
     }
 
     RGBuilder::AsyncTimelineExecuteContext::AsyncTimelineExecuteContext() = default;
@@ -939,7 +939,7 @@ namespace Render {
                     Unimplement();
                 }
             }
-            devirtualizedBindGroups.emplace(std::make_pair(bindGroup, device.CreateBindGroup(createInfo)));
+            devirtualizedBindGroups.emplace(std::make_pair(bindGroup, BindGroupCache::Get(device).Allocate(createInfo)));
         }
     }
 

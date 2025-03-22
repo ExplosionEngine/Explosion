@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <Mirror/Meta.h>
+#include <Runtime/Meta.h>
 #include <Runtime/ECS.h>
 using namespace Runtime;
 
@@ -40,7 +40,7 @@ struct EClass() CompB {
     EProperty() float value;
 };
 
-struct EClass(global) GCompA {
+struct EClass(globalComp) GCompA {
     EClassBody(GCompA)
 
     GCompA()
@@ -56,7 +56,7 @@ struct EClass(global) GCompA {
     EProperty() int value;
 };
 
-struct EClass(global) GCompB {
+struct EClass(globalComp) GCompB {
     EClassBody(GCompB)
 
     GCompB()

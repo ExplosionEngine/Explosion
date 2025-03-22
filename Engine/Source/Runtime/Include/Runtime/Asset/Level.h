@@ -4,16 +4,17 @@
 
 #pragma once
 
-#include <Mirror/Meta.h>
+#include <Runtime/Meta.h>
 #include <Runtime/ECS.h>
 #include <Runtime/Asset/Asset.h>
 #include <Runtime/Api.h>
 
 namespace Runtime {
-    struct RUNTIME_API EClass() Level : public Asset {
-        EClassBody(Level)
+    struct RUNTIME_API EClass() Level final : Asset {
+        EPolyClassBody(Level)
 
         explicit Level(Core::Uri inUri);
+        ~Level() override;
 
         EProperty() ECArchive archive;
     };

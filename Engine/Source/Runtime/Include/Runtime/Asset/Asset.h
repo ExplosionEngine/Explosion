@@ -14,16 +14,17 @@
 #include <Common/Concurrent.h>
 #include <Common/Concepts.h>
 #include <Core/Uri.h>
-#include <Mirror/Meta.h>
+#include <Runtime/Meta.h>
 #include <Mirror/Mirror.h>
 #include <Runtime/Api.h>
 
 namespace Runtime {
     struct RUNTIME_API EClass() Asset {
-        EClassBody(Asset)
+        EPolyClassBody(Asset)
 
         Asset();
         explicit Asset(Core::Uri inUri);
+        virtual ~Asset();
 
         EProperty() Core::Uri uri;
     };
@@ -31,18 +32,18 @@ namespace Runtime {
     template <Common::DerivedFrom<Asset> A>
     class AssetPtr {
     public:
-        template <Common::DerivedFrom<Asset> A2> AssetPtr(Common::SharedPtr<A2>& sharedPtr); // NOLINT
+        template <Common::DerivedFrom<Asset> A2> AssetPtr(const Common::SharedPtr<A2>& sharedPtr); // NOLINT
         template <Common::DerivedFrom<Asset> A2> AssetPtr(Common::SharedPtr<A2>&& sharedPtr) noexcept; // NOLINT
         AssetPtr(A* pointer); // NOLINT
-        AssetPtr(AssetPtr& other); // NOLINT
+        AssetPtr(const AssetPtr& other); // NOLINT
         AssetPtr(AssetPtr&& other) noexcept; // NOLINT
         AssetPtr();
         ~AssetPtr();
 
-        template <Common::DerivedFrom<Asset> A2> AssetPtr& operator=(Common::SharedPtr<A2>& sharedPtr);
+        template <Common::DerivedFrom<Asset> A2> AssetPtr& operator=(const Common::SharedPtr<A2>& sharedPtr);
         template <Common::DerivedFrom<Asset> A2> AssetPtr& operator=(Common::SharedPtr<A2>&& sharedPtr) noexcept;
         AssetPtr& operator=(A* pointer);
-        AssetPtr& operator=(AssetPtr& other); // NOLINT
+        AssetPtr& operator=(const AssetPtr& other); // NOLINT
         AssetPtr& operator=(AssetPtr&& other) noexcept;
 
         const Core::Uri& Uri() const;
@@ -139,14 +140,14 @@ namespace Common {
 
         static size_t Serialize(BinarySerializeStream& stream, const Runtime::AssetPtr<A>& value)
         {
-            return Serializer<Core::Uri>::Serialize(stream, value);
+            return Serializer<Core::Uri>::Serialize(stream, value.Uri());
         }
 
         static size_t Deserialize(BinaryDeserializeStream& stream, Runtime::AssetPtr<A>& value)
         {
             Core::Uri uri;
             const auto deserialized = Serializer<Core::Uri>::Deserialize(stream, uri);
-            value = Runtime::AssetManager::Get().SyncLoad<A>(uri, uri);
+            value = Runtime::AssetManager::Get().SyncLoad<A>(uri);
             return deserialized;
         }
     };
@@ -157,7 +158,7 @@ namespace Common {
 
         static size_t Serialize(BinarySerializeStream& stream, const Runtime::SoftAssetPtr<A>& value)
         {
-            return Serializer<Core::Uri>::Serialize(stream, value);
+            return Serializer<Core::Uri>::Serialize(stream, value.Uri());
         }
 
         static size_t Deserialize(BinaryDeserializeStream& stream, Runtime::SoftAssetPtr<A>& value)
@@ -173,7 +174,7 @@ namespace Common {
 namespace Runtime {
     template <Common::DerivedFrom<Asset> A>
     template <Common::DerivedFrom<Asset> A2>
-    AssetPtr<A>::AssetPtr(Common::SharedPtr<A2>& sharedPtr)
+    AssetPtr<A>::AssetPtr(const Common::SharedPtr<A2>& sharedPtr)
         : ptr(sharedPtr)
     {
     }
@@ -192,7 +193,7 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    AssetPtr<A>::AssetPtr(AssetPtr& other)
+    AssetPtr<A>::AssetPtr(const AssetPtr& other)
         : ptr(other.ptr)
     {
     }
@@ -211,7 +212,7 @@ namespace Runtime {
 
     template <Common::DerivedFrom<Asset> A>
     template <Common::DerivedFrom<Asset> A2>
-    AssetPtr<A>& AssetPtr<A>::operator=(Common::SharedPtr<A2>& sharedPtr)
+    AssetPtr<A>& AssetPtr<A>::operator=(const Common::SharedPtr<A2>& sharedPtr)
     {
         ptr = sharedPtr;
         return *this;
@@ -233,7 +234,7 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    AssetPtr<A>& AssetPtr<A>::operator=(AssetPtr& other)
+    AssetPtr<A>& AssetPtr<A>::operator=(const AssetPtr& other)
     {
         ptr = other.ptr;
         return *this;
@@ -508,7 +509,7 @@ namespace Runtime {
     template <Common::DerivedFrom<Asset> A>
     void AssetManager::AsyncLoad(const Core::Uri& uri, const OnAssetLoaded<A>& onAssetLoaded)
     {
-        threadPool.EmplaceTask([=]() -> void {
+        threadPool.EmplaceTask([=, this]() -> void {
             AssetPtr<A> result = nullptr;
             {
                 std::unique_lock<std::mutex> lock(mutex);
@@ -574,7 +575,7 @@ namespace Runtime {
         const Core::AssetUriParser parser(uri);
         Common::BinaryFileDeserializeStream stream(parser.Parse().Absolute().String());
 
-        AssetPtr<A> result = Common::SharedPtr<A>(new A());
+        AssetPtr<A> result = Common::SharedPtr<A>(new A(uri));
         Mirror::Any ref = std::ref(*result.Get());
         ref.Deserialize(stream);
 

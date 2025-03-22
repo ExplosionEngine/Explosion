@@ -12,7 +12,7 @@
 #include <Common/Utility.h>
 #include <Common/Memory.h>
 #include <Mirror/Mirror.h>
-#include <Mirror/Meta.h>
+#include <Runtime/Meta.h>
 #include <Runtime/Api.h>
 
 namespace Runtime {
@@ -25,7 +25,7 @@ namespace Runtime {
 
     class ECRegistry;
     class Client;
-    class SystemSetupContext;
+    struct SystemSetupContext;
 
     template <typename T>
     concept ECRegistryOrConst = std::is_same_v<std::remove_const_t<T>, ECRegistry>;
@@ -246,6 +246,7 @@ namespace Runtime {
         NonMovable(BasicView)
 
         template <typename F> void Each(F&& inFunc) const;
+        const ResultVector& All() const;
         size_t Count() const;
         ConstIter Begin() const;
         ConstIter End() const;
@@ -635,9 +636,16 @@ namespace Runtime {
         std::vector<SystemGroupContext> systemGraph;
     };
 
+    enum class PlayType : uint8_t {
+        editor,
+        game,
+        max
+    };
+
     struct SystemSetupContext {
         SystemSetupContext();
 
+        PlayType playType;
         Client* client;
     };
 
@@ -743,7 +751,7 @@ namespace Runtime {
         Evaluate(inRegistry);
     }
 
-    template <ECRegistryOrConst R, typename ... C, typename ... E>
+    template <ECRegistryOrConst R, typename... C, typename... E>
     template <typename F>
     void BasicView<R, Exclude<E...>, C...>::Each(F&& inFunc) const
     {
@@ -754,6 +762,12 @@ namespace Runtime {
                 std::apply(inFunc, entityAndComps);
             }
         }
+    }
+
+    template <ECRegistryOrConst R, typename... C, typename... E>
+    const typename BasicView<R, Exclude<E...>, C...>::ResultVector& BasicView<R, Exclude<E...>, C...>::All() const
+    {
+        return result;
     }
 
     template <ECRegistryOrConst R, typename ... C, typename ... E>

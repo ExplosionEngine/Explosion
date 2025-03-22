@@ -58,10 +58,9 @@ namespace Render {
         using RetType = std::invoke_result_t<F>;
 
         Assert(threads != nullptr);
-        auto packedTask = std::bind(std::forward<F>(inTask));
-        return threads->EmplaceTask([packedTask]() -> RetType {
+        return threads->EmplaceTask([inTask]() -> RetType {
             Core::ScopedThreadTag tag(Core::ThreadTag::renderWorker);
-            return packedTask();
+            return inTask();
         });
     }
 
@@ -69,10 +68,10 @@ namespace Render {
     void RenderWorkerThreads::ExecuteTasks(size_t inTaskNum, F&& inTask)
     {
         Assert(threads != nullptr);
-        auto packedTask = std::bind(std::forward<F>(inTask), std::placeholders::_1);
-        threads->ExecuteTasks(inTaskNum, [packedTask](size_t inIndex) -> void {
+        auto reboundTask = std::bind(std::forward<F>(inTask), std::placeholders::_1);
+        threads->ExecuteTasks(inTaskNum, [reboundTask](size_t inIndex) -> void {
             Core::ScopedThreadTag tag(Core::ThreadTag::renderWorker);
-            packedTask(inIndex);
+            reboundTask(inIndex);
         });
     }
 }

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <unordered_map>
+
 #include <Common/Concepts.h>
 #include <Common/String.h>
 #include <Common/Utility.h>
@@ -14,8 +16,7 @@
 namespace Core {
     enum class CSFlagBits : uint8_t {
         configOverridable = 0x1,
-        settingsOverridable = 0x2,
-        max = 0x4
+        max = 0x2
     };
     using CSFlags = Common::Flags<CSFlagBits>;
     DECLARE_FLAG_BITS_OP(CSFlags, CSFlagBits)
@@ -63,7 +64,7 @@ namespace Core {
         virtual void SetString(const std::string& inValue) = 0;
 
     protected:
-        ConsoleSetting(const std::string& inName, const std::string& inDescription, const CSFlags& inFlags = CSFlags::null);
+        ConsoleSetting(const std::string& inName, const std::string& inDescription, const CSFlags& inFlags);
 
         virtual void PerformRenderThreadCopy() = 0;
 
@@ -141,6 +142,7 @@ namespace Core {
         ConsoleSetting& GetSetting(const std::string& inName) const;
         template <typename T> ConsoleSettingValue<T>* FindSettingValue(const std::string& inName) const;
         template <typename T> ConsoleSettingValue<T>& GetSettingValue(const std::string& inName) const;
+        void OverrideSettingsByConfig() const;
         void PerformRenderThreadSettingsCopy() const;
 
     private:
@@ -218,8 +220,10 @@ namespace Core {
             return Common::ToArithmetic<int8_t>(Get());
         } else if constexpr (Common::CppBool<T>) {
             return Get() ? 1 : 0;
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             return static_cast<int8_t>(Get());
+        } else {
+            Unimplement();
         }
     }
 
@@ -230,8 +234,10 @@ namespace Core {
             return Common::ToArithmetic<uint8_t>(Get());
         } else if constexpr (Common::CppBool<T>) {
             return Get() ? 1 : 0;
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             return static_cast<uint8_t>(Get());
+        } else {
+            Unimplement();
         }
     }
 
@@ -242,8 +248,10 @@ namespace Core {
             return Common::ToArithmetic<int16_t>(Get());
         } else if constexpr (Common::CppBool<T>) {
             return Get() ? 1 : 0;
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             return static_cast<int16_t>(Get());
+        } else {
+            Unimplement();
         }
     }
 
@@ -254,8 +262,10 @@ namespace Core {
             return Common::ToArithmetic<uint16_t>(Get());
         } else if constexpr (Common::CppBool<T>) {
             return Get() ? 1 : 0;
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             return static_cast<uint16_t>(Get());
+        } else {
+            Unimplement();
         }
     }
 
@@ -266,8 +276,10 @@ namespace Core {
             return Common::ToArithmetic<int32_t>(Get());
         } else if constexpr (Common::CppBool<T>) {
             return Get() ? 1 : 0;
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             return static_cast<int32_t>(Get());
+        } else {
+            Unimplement();
         }
     }
 
@@ -278,8 +290,10 @@ namespace Core {
             return Common::ToArithmetic<uint32_t>(Get());
         } else if constexpr (Common::CppBool<T>) {
             return Get() ? 1 : 0;
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             return static_cast<uint32_t>(Get());
+        } else {
+            Unimplement();
         }
     }
 
@@ -290,8 +304,10 @@ namespace Core {
             return Common::ToArithmetic<int64_t>(Get());
         } else if constexpr (Common::CppBool<T>) {
             return Get() ? 1 : 0;
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             return static_cast<int64_t>(Get());
+        } else {
+            Unimplement();
         }
     }
 
@@ -302,8 +318,10 @@ namespace Core {
             return Common::ToArithmetic<uint64_t>(Get());
         } else if constexpr (Common::CppBool<T>) {
             return Get() ? 1 : 0;
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             return static_cast<uint64_t>(Get());
+        } else {
+            Unimplement();
         }
     }
 
@@ -314,8 +332,10 @@ namespace Core {
             return Common::ToArithmetic<bool>(Get());
         } else if constexpr (Common::CppBool<T>) {
             return Get();
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             return Get() != 0;
+        } else {
+            Unimplement();
         }
     }
 
@@ -326,8 +346,10 @@ namespace Core {
             return Common::ToArithmetic<float>(Get());
         } else if constexpr (Common::CppBool<T>) {
             return Get() ? 1.0f : 0.0f;
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             return static_cast<float>(Get());
+        } else {
+            Unimplement();
         }
     }
 
@@ -338,8 +360,10 @@ namespace Core {
             return Common::ToArithmetic<double>(Get());
         } else if constexpr (Common::CppBool<T>) {
             return Get() ? 1.0 : 0.0;
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             return static_cast<double>(Get());
+        } else {
+            Unimplement();
         }
     }
 
@@ -350,8 +374,10 @@ namespace Core {
             return Get();
         } else if constexpr (Common::CppBool<T>) {
             return Get() ? "true" : "false";
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             return Common::ToString<T>(Get());
+        } else {
+            Unimplement();
         }
     }
 
@@ -362,8 +388,10 @@ namespace Core {
             Set(Common::ToString<int8_t>(inValue));
         } else if constexpr (Common::CppBool<T>) {
             Set(inValue != 0);
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             Set(static_cast<T>(inValue));
+        } else {
+            Unimplement();
         }
     }
 
@@ -374,8 +402,10 @@ namespace Core {
             Set(Common::ToString<uint8_t>(inValue));
         } else if constexpr (Common::CppBool<T>) {
             Set(inValue != 0);
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             Set(static_cast<T>(inValue));
+        } else {
+            Unimplement();
         }
     }
 
@@ -386,8 +416,10 @@ namespace Core {
             Set(Common::ToString<int16_t>(inValue));
         } else if constexpr (Common::CppBool<T>) {
             Set(inValue != 0);
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             Set(static_cast<T>(inValue));
+        } else {
+            Unimplement();
         }
     }
 
@@ -398,8 +430,10 @@ namespace Core {
             Set(Common::ToString<uint16_t>(inValue));
         } else if constexpr (Common::CppBool<T>) {
             Set(inValue != 0);
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             Set(static_cast<T>(inValue));
+        } else {
+            Unimplement();
         }
     }
 
@@ -410,8 +444,10 @@ namespace Core {
             Set(Common::ToString<int32_t>(inValue));
         } else if constexpr (Common::CppBool<T>) {
             Set(inValue != 0);
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             Set(static_cast<T>(inValue));
+        } else {
+            Unimplement();
         }
     }
 
@@ -422,8 +458,10 @@ namespace Core {
             Set(Common::ToString<uint32_t>(inValue));
         } else if constexpr (Common::CppBool<T>) {
             Set(inValue != 0);
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             Set(static_cast<T>(inValue));
+        } else {
+            Unimplement();
         }
     }
 
@@ -434,8 +472,10 @@ namespace Core {
             Set(Common::ToString<int64_t>(inValue));
         } else if constexpr (Common::CppBool<T>) {
             Set(inValue != 0);
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             Set(static_cast<T>(inValue));
+        } else {
+            Unimplement();
         }
     }
 
@@ -446,8 +486,10 @@ namespace Core {
             Set(Common::ToString<uint64_t>(inValue));
         } else if constexpr (Common::CppBool<T>) {
             Set(inValue != 0);
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             Set(static_cast<T>(inValue));
+        } else {
+            Unimplement();
         }
     }
 
@@ -458,8 +500,10 @@ namespace Core {
             Set(Common::ToString<bool>(inValue));
         } else if constexpr (Common::CppBool<T>) {
             Set(inValue);
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             Set(inValue ? 1 : 0);
+        } else {
+            Unimplement();
         }
     }
 
@@ -470,8 +514,10 @@ namespace Core {
             Set(Common::ToString<float>(inValue));
         } else if constexpr (Common::CppBool<T>) {
             Set(!Common::CompareNumber(inValue, 0.0f));
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             Set(static_cast<T>(inValue));
+        } else {
+            Unimplement();
         }
     }
 
@@ -482,8 +528,10 @@ namespace Core {
             Set(Common::ToString<double>(inValue));
         } else if constexpr (Common::CppBool<T>) {
             Set(!Common::CompareNumber(inValue, 0.0));
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             Set(static_cast<T>(inValue));
+        } else {
+            Unimplement();
         }
     }
 
@@ -492,8 +540,10 @@ namespace Core {
     {
         if constexpr (Common::CppStdString<T>) {
             Set(inValue);
-        } else {
+        } else if constexpr (Common::CppArithmetic<T>) {
             Set(Common::ToArithmetic<T>(inValue));
+        } else {
+            Unimplement();
         }
     }
 

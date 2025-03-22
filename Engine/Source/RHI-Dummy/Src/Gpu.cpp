@@ -6,7 +6,10 @@
 #include <RHI/Dummy/Device.h>
 
 namespace RHI::Dummy {
-    DummyGpu::DummyGpu() = default;
+    DummyGpu::DummyGpu(DummyInstance& inInstance)
+        : instance(inInstance)
+    {
+    }
 
     DummyGpu::~DummyGpu() = default;
 
@@ -17,6 +20,11 @@ namespace RHI::Dummy {
 
     Common::UniquePtr<Device> DummyGpu::RequestDevice(const DeviceCreateInfo& createInfo)
     {
-        return { new DummyDevice(createInfo) };
+        return { new DummyDevice(*this, createInfo) };
+    }
+
+    DummyInstance& DummyGpu::GetInstance() const
+    {
+        return instance;
     }
 }

@@ -6,8 +6,9 @@
 #include <array>
 #include <random>
 
+#include <GLTFParser.h>
+
 #include <Application.h>
-#include "GLTFParser.h"
 
 using namespace RHI;
 
@@ -538,14 +539,14 @@ private:
 
     void CreateShaderModules()
     {
-        CompileShaderAndCreateShaderModule(shaderObjects.gBufferVs, shaderObjects.gBufferVsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Gbuffer.hlsl", "VSMain", ShaderStageBits::sVertex);
-        CompileShaderAndCreateShaderModule(shaderObjects.gBufferPs, shaderObjects.gBufferPsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Gbuffer.hlsl", "PSMain", ShaderStageBits::sPixel);
-        CompileShaderAndCreateShaderModule(shaderObjects.ssaoVs, shaderObjects.ssaoVsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/SSAO.hlsl", "VSMain", ShaderStageBits::sVertex);
-        CompileShaderAndCreateShaderModule(shaderObjects.ssaoPs, shaderObjects.ssaoPsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/SSAO.hlsl", "PSMain", ShaderStageBits::sPixel);
-        CompileShaderAndCreateShaderModule(shaderObjects.ssaoBlurVs, shaderObjects.ssaoBlurVsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Blur.hlsl", "VSMain", ShaderStageBits::sVertex);
-        CompileShaderAndCreateShaderModule(shaderObjects.ssaoBlurPs, shaderObjects.ssaoBlurPsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Blur.hlsl", "PSMain", ShaderStageBits::sPixel);
-        CompileShaderAndCreateShaderModule(shaderObjects.compositionVs, shaderObjects.compositionVsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Composition.hlsl", "VSMain", ShaderStageBits::sVertex);
-        CompileShaderAndCreateShaderModule(shaderObjects.compositionPs, shaderObjects.compositionPsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Composition.hlsl", "PSMain", ShaderStageBits::sPixel);
+        CompileShaderAndCreateShaderModule(shaderObjects.gBufferVs, shaderObjects.gBufferVsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Gbuffer.esl", "VSMain", ShaderStageBits::sVertex);
+        CompileShaderAndCreateShaderModule(shaderObjects.gBufferPs, shaderObjects.gBufferPsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Gbuffer.esl", "PSMain", ShaderStageBits::sPixel);
+        CompileShaderAndCreateShaderModule(shaderObjects.ssaoVs, shaderObjects.ssaoVsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/SSAO.esl", "VSMain", ShaderStageBits::sVertex);
+        CompileShaderAndCreateShaderModule(shaderObjects.ssaoPs, shaderObjects.ssaoPsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/SSAO.esl", "PSMain", ShaderStageBits::sPixel);
+        CompileShaderAndCreateShaderModule(shaderObjects.ssaoBlurVs, shaderObjects.ssaoBlurVsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Blur.esl", "VSMain", ShaderStageBits::sVertex);
+        CompileShaderAndCreateShaderModule(shaderObjects.ssaoBlurPs, shaderObjects.ssaoBlurPsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Blur.esl", "PSMain", ShaderStageBits::sPixel);
+        CompileShaderAndCreateShaderModule(shaderObjects.compositionVs, shaderObjects.compositionVsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Composition.esl", "VSMain", ShaderStageBits::sVertex);
+        CompileShaderAndCreateShaderModule(shaderObjects.compositionPs, shaderObjects.compositionPsCompileOutput, "../Test/Sample/RHI-SSAO/Shader/Composition.esl", "PSMain", ShaderStageBits::sPixel);
     }
 
     void CreateSampler()
@@ -1003,7 +1004,7 @@ private:
                 64.0f
             });
 
-        camera->SetMoveSpeed(0.005f);
+        camera->SetMoveSpeed(5.f);
         camera->SetRotateSpeed(0.1f);
         SetCamera(camera);
     }

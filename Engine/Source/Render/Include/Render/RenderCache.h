@@ -30,7 +30,7 @@ namespace Render {
 
         std::string FinalSemantic() const;
         RHI::PlatformVertexBinding GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct RVertexAttribute : RHI::VertexAttributeBase<RVertexAttribute> {
@@ -43,7 +43,7 @@ namespace Render {
 
         RHI::VertexAttribute GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
         RVertexAttribute& SetBinding(const RVertexBinding& inBinding);
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct RVertexBufferLayout : RHI::VertexBufferLayoutBase<RVertexBufferLayout> {
@@ -55,7 +55,7 @@ namespace Render {
 
         RHI::VertexBufferLayout GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
         RVertexBufferLayout& AddAttribute(const RVertexAttribute& inAttribute);
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct RVertexState {
@@ -65,7 +65,7 @@ namespace Render {
 
         RHI::VertexState GetRHI(const Render::ShaderReflectionData& inReflectionData) const;
         RVertexState& AddVertexBufferLayout(const RVertexBufferLayout& inLayout);
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct BindGroupLayoutDesc {
@@ -76,7 +76,7 @@ namespace Render {
     struct ComputePipelineShaderSet {
         Render::ShaderInstance computeShader;
 
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct RasterPipelineShaderSet {
@@ -86,19 +86,19 @@ namespace Render {
         Render::ShaderInstance domainShader;
         Render::ShaderInstance hullShader;
 
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct ComputePipelineLayoutDesc {
         ComputePipelineShaderSet shaders;
 
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct RasterPipelineLayoutDesc {
         RasterPipelineShaderSet shaders;
 
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     template <typename T> concept AnyPipelineLayoutDesc = std::is_same_v<T, ComputePipelineLayoutDesc> || std::is_same_v<T, RasterPipelineLayoutDesc>;
@@ -106,7 +106,7 @@ namespace Render {
     struct ComputePipelineStateDesc {
         ComputePipelineShaderSet shaders;
 
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     struct RasterPipelineStateDesc {
@@ -128,7 +128,7 @@ namespace Render {
         RasterPipelineStateDesc& SetDepthStencilState(const RDepthStencilState& inDepthStencilState);
         RasterPipelineStateDesc& SetMultiSampleState(const RMultiSampleState& inMultiSampleState);
         RasterPipelineStateDesc& SetFragmentState(const RFragmentState& inFragmentState);
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     class Sampler {
@@ -262,17 +262,47 @@ namespace Render {
         static ResourceViewCache& Get(RHI::Device& device);
         ~ResourceViewCache();
 
-        void Invalidate();
-        void Invalidate(RHI::Buffer* buffer);
-        void Invalidate(RHI::Texture* texture);
         RHI::BufferView* GetOrCreate(RHI::Buffer* buffer, const RHI::BufferViewCreateInfo& inDesc);
         RHI::TextureView* GetOrCreate(RHI::Texture* texture, const RHI::TextureViewCreateInfo& inDesc);
+        void Invalidate(RHI::Buffer* buffer);
+        void Invalidate(RHI::Texture* texture);
+        void Forfeit();
 
     private:
         explicit ResourceViewCache(RHI::Device& inDevice);
 
+        struct BufferViewCache {
+            bool valid;
+            uint64_t lastUsedFrame;
+            std::unordered_map<size_t, Common::UniquePtr<RHI::BufferView>> views;
+        };
+
+        struct TextureViewCache {
+            bool valid;
+            uint64_t lastUsedFrame;
+            std::unordered_map<size_t, Common::UniquePtr<RHI::TextureView>> views;
+        };
+
         RHI::Device& device;
-        std::unordered_map<RHI::Buffer*, std::unordered_map<size_t, Common::UniquePtr<RHI::BufferView>>> bufferViews;
-        std::unordered_map<RHI::Texture*, std::unordered_map<size_t, Common::UniquePtr<RHI::TextureView>>> textureViews;
+        std::unordered_map<RHI::Buffer*, BufferViewCache> bufferViewCaches;
+        std::unordered_map<RHI::Texture*, TextureViewCache> textureViewCaches;
+    };
+
+    class BindGroupCache {
+    public:
+        static BindGroupCache& Get(RHI::Device& device);
+        ~BindGroupCache();
+
+        RHI::BindGroup* Allocate(const RHI::BindGroupCreateInfo& inCreateInfo);
+        void Invalidate();
+        void Forfeit();
+
+    private:
+        using AllocateFrameNumber = uint64_t;
+
+        explicit BindGroupCache(RHI::Device& inDevice);
+
+        RHI::Device& device;
+        std::vector<std::pair<Common::UniquePtr<RHI::BindGroup>, AllocateFrameNumber>> bindGroups;
     };
 }

@@ -2,7 +2,7 @@
 // Created by johnk on 2024/10/14.
 //
 
-#include <Runtime/Component/View.h>
+#include <Runtime/Component/Camera.h>
 
 namespace Runtime {
     Camera::Camera()

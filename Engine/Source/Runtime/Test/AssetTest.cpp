@@ -8,7 +8,7 @@
 
 TEST(AssetTest, AssetRefTest0)
 {
-    AssetPtr<TestAsset> a0 = MakeShared<TestAsset>();
+    AssetPtr<TestAsset> a0 = MakeShared<TestAsset>(Core::Uri(""));
     ASSERT_EQ(a0.RefCount(), 1);
 
     AssetPtr<TestAsset> a1 = a0;
@@ -23,7 +23,7 @@ TEST(AssetTest, AssetRefTest0)
 
 TEST(AssetTest, AssetRefTest1)
 {
-    AssetPtr<TestAsset> a0 = MakeShared<TestAsset>();
+    AssetPtr<TestAsset> a0 = MakeShared<TestAsset>(Core::Uri(""));
     AssetPtr<TestAsset> a1 = std::move(a0);
     ASSERT_EQ(a1.RefCount(), 1);
 

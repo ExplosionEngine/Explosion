@@ -359,6 +359,16 @@ namespace RHI::DirectX12 {
             const auto* buffer = static_cast<DX12Buffer*>(inBarrier.buffer.pointer);
             Assert(buffer);
             resource = buffer->GetNative();
+
+            D3D12_HEAP_PROPERTIES heapProperties;
+            D3D12_HEAP_FLAGS heapFlags;
+            Assert(SUCCEEDED(resource->GetHeapProperties(&heapProperties, &heapFlags)));
+
+            // validation layer: upload heap can not be transited
+            if (heapProperties.Type == D3D12_HEAP_TYPE_UPLOAD) {
+                return;
+            }
+
             beforeState = EnumCast<BufferState, D3D12_RESOURCE_STATES>(inBarrier.buffer.before);
             afterState = EnumCast<BufferState, D3D12_RESOURCE_STATES>(inBarrier.buffer.after);
         } else {

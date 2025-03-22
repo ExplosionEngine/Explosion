@@ -5,15 +5,14 @@
 #include <Render/View.h>
 
 namespace Render {
-    View::View() = default;
-
-    View::~View() = default;
-
-    void View::Update(const Common::FMat4x4& inViewMatrix, const Common::FMat4x4& inProjectionMatrix, const Common::FRect& inViewport)
+    ViewData::ViewData()
+        : viewMatrix(Common::FMat4x4Consts::identity)
+        , projectionMatrix(Common::FMat4x4Consts::identity)
+        , viewport()
     {
-        viewMatrix = inViewMatrix;
-        projectionMatrix = inProjectionMatrix;
-        viewport = inViewport;
-        // TODO
     }
+
+    ViewState::ViewState() {}
+
+    View::View() {}
 }

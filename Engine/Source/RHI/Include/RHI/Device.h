@@ -8,6 +8,7 @@
 
 #include <Common/Utility.h>
 #include <RHI/Common.h>
+#include <RHI/Gpu.h>
 
 #if PLATFORM_WINDOWS
 #undef CreateSemaphore
@@ -62,6 +63,7 @@ namespace RHI {
         NonCopyable(Device)
         virtual ~Device();
 
+        virtual Gpu& GetGpu() const = 0;
         virtual size_t GetQueueNum(QueueType type) = 0;
         virtual Queue* GetQueue(QueueType type, size_t index) = 0;
         virtual Common::UniquePtr<Surface> CreateSurface(const SurfaceCreateInfo& createInfo) = 0;

@@ -71,7 +71,7 @@ namespace Render {
         const ShaderReflectionData* reflectionData = nullptr;
 
         bool IsValid() const;
-        size_t Hash() const;
+        uint64_t Hash() const;
     };
 
     using ShaderArchivePackage = std::unordered_map<VariantKey, ShaderArchive>;
@@ -164,7 +164,7 @@ namespace Render {
 
         const std::vector<IShaderType*>& GetShaderTypes() const;
         // call this func before device release
-        void InvalidateAll() const;
+        void Invalidate() const;
         // call this func after shader reloaded
         void ReloadAll() const;
 

@@ -18,12 +18,12 @@ namespace Core {
         virtual ~CmdlineArg();
 
         template <typename T>
-        T GetValue();
+        T GetValue() const;
 
     protected:
         friend class Cli;
 
-        virtual const void* Value() = 0;
+        virtual const void* Value() const = 0;
         virtual clipp::group CreateClippParameter() = 0;
     };
 
@@ -34,7 +34,7 @@ namespace Core {
 
         std::pair<bool, std::string> Parse(int argc, char* argv[]);
         CmdlineArg* FindArg(const std::string& name) const;
-        CmdlineArg& FindArgChecked(const std::string& name) const;
+        CmdlineArg& GetArg(const std::string& name) const;
 
     private:
         template <typename T> friend class CmdlineArgValue;
@@ -55,7 +55,7 @@ namespace Core {
         T GetValue() const;
 
     protected:
-        const void* Value() override;
+        const void* Value() const override;
         clipp::group CreateClippParameter() override;
 
     private:
@@ -74,7 +74,7 @@ namespace Core {
         T GetValue() const;
 
     protected:
-        const void* Value() override;
+        const void* Value() const override;
         clipp::group CreateClippParameter() override;
 
     private:
@@ -87,7 +87,7 @@ namespace Core {
 
 namespace Core {
     template <typename T>
-    T CmdlineArg::GetValue()
+    T CmdlineArg::GetValue() const
     {
         return static_cast<const T*>(Value());
     }
@@ -113,7 +113,7 @@ namespace Core {
     }
 
     template <typename T>
-    const void* CmdlineArgValue<T>::Value()
+    const void* CmdlineArgValue<T>::Value() const
     {
         return &value;
     }
@@ -149,7 +149,7 @@ namespace Core {
     }
 
     template <typename T>
-    const void* CmdlineArgRef<T>::Value()
+    const void* CmdlineArgRef<T>::Value() const
     {
         return &valueRef;
     }
