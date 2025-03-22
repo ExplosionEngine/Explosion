@@ -20,17 +20,18 @@ namespace Editor {
 
     protected:
         void resizeEvent(QResizeEvent* event) override;
-        void OnDrawFrame() override;
 
     private:
         static constexpr uint8_t swapChainTextureNum = 2;
-        static GraphicsWidgetDesc GetGraphicsWidgetDesc();
 
-        void FetchSwapChainTextures();
+        void RecreateSwapChain(uint32_t inWidth, uint32_t inHeight);
+        void DispatchFrame() const;
+        void DrawFrame() const;
 
         Common::UniquePtr<RHI::Semaphore> imageReadySemaphore;
         Common::UniquePtr<RHI::Semaphore> renderFinishedSemaphore;
         Common::UniquePtr<RHI::Fence> frameFence;
+        Common::UniquePtr<RHI::SwapChain> swapChain;
         std::array<RHI::Texture*, 2> swapChainTextures;
         std::array<Common::UniquePtr<RHI::TextureView>, 2> swapChainTextureViews;
         Render::ShaderCompileOutput vsCompileOutput;
@@ -46,5 +47,7 @@ namespace Editor {
         Common::UniquePtr<RHI::BufferView> uniformBufferView;
         Common::UniquePtr<RHI::BindGroup> bindGroup;
         Common::UniquePtr<RHI::CommandBuffer> commandBuffer;
+        Common::UniquePtr<Common::WorkerThread> drawThread;
+        std::atomic_bool running;
     };
 }

@@ -2,6 +2,7 @@
 // Created by Kindem on 2025/3/16.
 //
 
+#include <Common/Time.h>
 #include <Editor/Widget/GraphicsSampleWidget.h>
 #include <Editor/Widget/moc_GraphicsSampleWidget.cpp> // NOLINT
 
@@ -14,30 +15,20 @@ namespace Editor {
         Common::FVec3 color;
     };
 
-    GraphicsWidgetDesc GraphicsSampleWidget::GetGraphicsWidgetDesc()
-    {
-        GraphicsWidgetDesc result;
-        result.textureNum = swapChainTextureNum;
-        result.formatQualifiers = {RHI::PixelFormat::rgba8Unorm, RHI::PixelFormat::bgra8Unorm};
-        result.presentMode = RHI::PresentMode::immediately;
-        return result;
-    }
-
     GraphicsSampleWidget::GraphicsSampleWidget(QWidget* inParent)
-        : GraphicsWidget(GetGraphicsWidgetDesc(), inParent)
+        : GraphicsWidget(inParent)
         , imageReadySemaphore(GetDevice().CreateSemaphore())
         , renderFinishedSemaphore(GetDevice().CreateSemaphore())
         , frameFence(GetDevice().CreateFence(true))
+        , drawThread(Common::MakeUnique<Common::WorkerThread>("DrawThread"))
     {
-        setFixedWidth(1024);
-        setFixedHeight(768);
-
-        FetchSwapChainTextures();
+        resize(1024, 768);
+        RecreateSwapChain(width(), height());
 
         Render::ShaderCompileOptions shaderCompileOptions;
         shaderCompileOptions.includePaths = {"../Shader/Engine"};
         shaderCompileOptions.byteCodeType = GetDevice().GetGpu().GetInstance().GetRHIType() == RHI::RHIType::directX12 ? Render::ShaderByteCodeType::dxil : Render::ShaderByteCodeType::spirv;
-        shaderCompileOptions.withDebugInfo = static_cast<bool>(BUILD_CONFIG_DEBUG);
+        shaderCompileOptions.withDebugInfo = static_cast<bool>(BUILD_CONFIG_DEBUG); // NOLINT
 
         {
             Render::ShaderCompileInput shaderCompileInput;
@@ -127,10 +118,15 @@ namespace Editor {
                 .AddEntry(RHI::BindGroupEntry(vsCompileOutput.reflectionData.QueryResourceBindingChecked("vsUniform").second, uniformBufferView.Get())));
 
         commandBuffer = GetDevice().CreateCommandBuffer();
+
+        running = true;
+        DispatchFrame();
     }
 
     GraphicsSampleWidget::~GraphicsSampleWidget()
     {
+        running = false;
+        drawThread.Reset();
         WaitDeviceIdle();
     }
 
@@ -138,13 +134,43 @@ namespace Editor {
     {
         GraphicsWidget::resizeEvent(event);
 
-        FetchSwapChainTextures();
+        drawThread->EmplaceTask([this, size = event->size()]() -> void {
+            RecreateSwapChain(size.width(), size.height());
+        });
     }
 
-    void GraphicsSampleWidget::FetchSwapChainTextures()
+    void GraphicsSampleWidget::RecreateSwapChain(uint32_t inWidth, uint32_t inHeight)
     {
+        static std::vector<RHI::PixelFormat> formatQualifiers = {
+            RHI::PixelFormat::rgba8Unorm,
+            RHI::PixelFormat::bgra8Unorm};
+
+        if (swapChain != nullptr) {
+            WaitDeviceIdle();
+            swapChain.Reset();
+        }
+
+        std::optional<RHI::PixelFormat> pixelFormat = {};
+        for (const auto format : formatQualifiers) {
+            if (device->CheckSwapChainFormatSupport(surface.Get(), format)) {
+                pixelFormat = format;
+                break;
+            }
+        }
+        Assert(pixelFormat.has_value());
+
+        swapChain = device->CreateSwapChain(
+            RHI::SwapChainCreateInfo()
+                .SetPresentQueue(device->GetQueue(RHI::QueueType::graphics, 0))
+                .SetSurface(surface.Get())
+                .SetTextureNum(2)
+                .SetFormat(pixelFormat.value())
+                .SetWidth(inWidth)
+                .SetHeight(inHeight)
+                .SetPresentMode(RHI::PresentMode::immediately));
+
         for (auto i = 0; i < swapChainTextureNum; i++) {
-            swapChainTextures[i] = GetSwapChain().GetTexture(i);
+            swapChainTextures[i] = swapChain->GetTexture(i);
             swapChainTextureViews[i] = swapChainTextures[i]->CreateTextureView(
                 RHI::TextureViewCreateInfo()
                     .SetDimension(RHI::TextureViewDimension::tv2D)
@@ -155,14 +181,20 @@ namespace Editor {
         }
     }
 
-    void GraphicsSampleWidget::OnDrawFrame()
+    void GraphicsSampleWidget::DispatchFrame() const
     {
-        GraphicsWidget::OnDrawFrame();
+        if (!running) {
+            return;
+        }
+        drawThread->EmplaceTask([this]() -> void { DrawFrame(); });
+    }
 
+    void GraphicsSampleWidget::DrawFrame() const
+    {
         frameFence->Wait();
         frameFence->Reset();
 
-        const double currentTimeSeconds = GetCurrentTimeSeconds();
+        const double currentTimeSeconds = Common::TimePoint::Now().ToSeconds();
         const GraphicsWindowSampleVsUniform uniform = {{
             (std::sin(currentTimeSeconds) + 1) / 2,
             (std::cos(currentTimeSeconds) + 1) / 2,
@@ -172,7 +204,7 @@ namespace Editor {
         memcpy(uniformData, &uniform, sizeof(GraphicsWindowSampleVsUniform));
         uniformBuffer->UnMap();
 
-        const auto backTextureIndex = GetSwapChain().AcquireBackTexture(imageReadySemaphore.Get());
+        const auto backTextureIndex = swapChain->AcquireBackTexture(imageReadySemaphore.Get());
         const Common::UniquePtr<RHI::CommandRecorder> commandRecorder = commandBuffer->Begin();
         {
             commandRecorder->ResourceBarrier(RHI::Barrier::Transition(swapChainTextures[backTextureIndex], RHI::TextureState::present, RHI::TextureState::renderTarget));
@@ -199,6 +231,8 @@ namespace Editor {
                 .AddWaitSemaphore(imageReadySemaphore.Get())
                 .AddSignalSemaphore(renderFinishedSemaphore.Get())
                 .SetSignalFence(frameFence.Get()));
-        GetSwapChain().Present(renderFinishedSemaphore.Get());
+        swapChain->Present(renderFinishedSemaphore.Get());
+
+        DispatchFrame();
     }
 } // namespace Editor
