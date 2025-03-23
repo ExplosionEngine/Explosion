@@ -35,12 +35,6 @@ Rectangle {
                         Layout.preferredHeight: 7
                         Layout.fillHeight: true
                         Layout.fillWidth: true
-
-                        Rectangle {
-                            Layout.fillHeight: true
-                            Layout.fillWidth: true
-                            color: 'red'
-                        }
                     }
                 }
             }
