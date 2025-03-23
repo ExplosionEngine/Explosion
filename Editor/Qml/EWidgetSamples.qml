@@ -281,6 +281,7 @@ Rectangle {
                     style: EText.Style.Title1
                 }
             }
+
             RowLayout {
                 ESwitch {
                     text: 'Small Switch'
@@ -295,6 +296,7 @@ Rectangle {
                     size: ESwitch.Size.Large
                 }
             }
+
             RowLayout {
                 ESwitch {
                     text: 'Disabled Checked'
@@ -308,7 +310,7 @@ Rectangle {
                 }
                 ESwitch {
                     text: 'Filled Symbol'
-                    filler: ESwitch.Filler.Withchar
+                    filler: ESwitch.Filler.Text
                 }
             }
         }
