@@ -17,6 +17,7 @@ Rectangle {
                 color: ETheme.primaryBgColor
 
                 ColumnLayout {
+                    id: menuCol
                     anchors.fill: parent
                     anchors.margins: 20
 
@@ -27,7 +28,7 @@ Rectangle {
 
                         Image {
                             source: Qt.url('Resource/Image/Logo.png')
-                            sourceSize.width: 200
+                            sourceSize.width: menuCol.width
                         }
                     }
 
