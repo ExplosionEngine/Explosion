@@ -51,7 +51,7 @@ namespace Runtime {
 
             const auto& localToWorldMatrix = worldTransform.localToWorld.GetTransformMatrix();
             const auto& parentLocalToWorldMatrix = parentWorldTransform.localToWorld.GetTransformMatrix();
-            // TODO localTransform.localToParent = parentLocalToWorldMatrix.Inverse() * localToWorldMatrix
+            localTransform.localToParent = Common::FTransform(parentLocalToWorldMatrix.Inverse() * localToWorldMatrix);
         }
 
         // Step2: update world transforms
@@ -66,7 +66,7 @@ namespace Runtime {
 
             const auto& parentLocalToWorldMatrix = parentWorldTransform.localToWorld.GetTransformMatrix();
             const auto& childLocalToParentMatrix = childLocalTransform.localToParent.GetTransformMatrix();
-            // TODO childWorldTransform.localToWorld = parentLocalToWorldMatrix * childLocalToParentMatrix
+            childWorldTransform.localToWorld = Common::FTransform(parentLocalToWorldMatrix * childLocalToParentMatrix);
         };
 
         for (const auto e : pendingUpdateChildrenWorldTransforms) {
