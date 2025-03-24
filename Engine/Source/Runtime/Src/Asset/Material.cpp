@@ -5,8 +5,6 @@
 #include <Runtime/Asset/Material.h>
 
 namespace Runtime {
-    MaterialGraph::MaterialGraph() = default;
-
     Material::Material(Core::Uri inUri)
         : Asset(std::move(inUri))
         , type(MaterialType::max)
@@ -14,4 +12,11 @@ namespace Runtime {
     }
 
     Material::~Material() = default;
+
+    MaterialInstance::MaterialInstance(Core::Uri inUri)
+        : Material(std::move(inUri))
+    {
+    }
+
+    MaterialInstance::~MaterialInstance() = default;
 }

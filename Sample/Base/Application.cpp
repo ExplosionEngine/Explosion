@@ -95,6 +95,7 @@ int Application::RunLoop()
     }
     OnDestroy();
 
+    glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }

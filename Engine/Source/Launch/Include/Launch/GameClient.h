@@ -10,7 +10,7 @@
 namespace Launch {
     class GameViewport;
 
-    class GameClient : public Runtime::Client {
+    class GameClient final : public Runtime::Client {
     public:
         explicit GameClient(GameViewport& inViewport);
         ~GameClient() override;

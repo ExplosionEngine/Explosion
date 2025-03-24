@@ -10,7 +10,7 @@ namespace Runtime {
     Viewport::Viewport() = default;
 
     PresentInfo::PresentInfo()
-        : backBuffer(nullptr)
+        : backTexture(nullptr)
         , imageReadySemaphore(nullptr)
         , renderFinishedSemaphore(nullptr)
     {

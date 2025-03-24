@@ -264,7 +264,7 @@ namespace RHI::DirectX12 {
         const auto createInfo = texture.GetCreateInfo();
         const auto nativeResourceDesc = dx12Texture.GetNative()->GetDesc();
 
-        const size_t nativeSubResourceIndex = D3D12CalcSubresource(subResourceInfo.mipLevel, subResourceInfo.arrayLayer, 0, createInfo.mipLevels, createInfo.dimension == TextureDimension::t3D ? 1 : createInfo.depthOrArraySize);
+        const size_t nativeSubResourceIndex = D3D12CalcSubresource(subResourceInfo.mipLevel, subResourceInfo.arrayLayer, 0, 1, 1);
 
         D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint;
         nativeDevice->GetCopyableFootprints(&nativeResourceDesc, nativeSubResourceIndex, 1, 0, &footprint, nullptr, nullptr, nullptr);

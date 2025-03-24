@@ -272,6 +272,8 @@ namespace Render {
         return 0; \
     }(); \
 
+#define ALIGN_AS_GPU alignas(16)
+
 namespace Render {
     class MaterialShader : public Shader {};
 }

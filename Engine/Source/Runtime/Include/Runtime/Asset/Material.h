@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <Common/Math/Vector.h>
+
 #include <Runtime/Asset/Asset.h>
 #include <Runtime/Meta.h>
 #include <Runtime/Api.h>
@@ -16,26 +18,25 @@ namespace Runtime {
         max
     };
 
-    class RUNTIME_API EClass() MaterialGraph {
-        EClassBody(MaterialGraph)
+    // TODO material parameter
 
-    public:
-        MaterialGraph();
-
-    private:
-        // TODO nodes etc.
-    };
-
-    struct RUNTIME_API EClass() Material final : Asset {
+    class RUNTIME_API EClass() Material : public Asset {
         EPolyClassBody(Material)
 
+    public:
         explicit Material(Core::Uri inUri);
         ~Material() override;
 
-        MaterialType type;
-        std::string sourceCode;
-#if BUILD_EDITOR
-        MaterialGraph graph;
-#endif
+    private:
+        EProperty() MaterialType type;
+        EProperty() std::string sourceCode;
+    };
+
+    class RUNTIME_API EClass() MaterialInstance final : public Material {
+        EPolyClassBody(MaterialInstance)
+
+    public:
+        explicit MaterialInstance(Core::Uri inUri);
+        ~MaterialInstance() override;
     };
 }

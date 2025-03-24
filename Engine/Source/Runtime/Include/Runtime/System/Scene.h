@@ -13,6 +13,7 @@
 #include <Render/RenderModule.h>
 #include <Render/Scene.h>
 #include <Render/SceneProxy/Light.h>
+#include <Render/SceneProxy/Primitive.h>
 
 namespace Runtime {
     class RUNTIME_API EClass() SceneSystem final : public System {
@@ -38,6 +39,7 @@ namespace Runtime {
         EventsObserver<DirectionalLight> directionalLightsObserver;
         EventsObserver<PointLight> pointLightsObserver;
         EventsObserver<SpotLight> spotLightsObserver;
+        // TODO primitive
     };
 }
 
@@ -86,6 +88,8 @@ namespace Runtime::Internal {
         outSceneProxy.color = inComponent.color;
         outSceneProxy.intensity = inComponent.intensity;
     }
+
+    // TODO primitive
 }
 
 namespace Runtime {
@@ -95,7 +99,7 @@ namespace Runtime {
         const auto& sceneHolder = registry.GGet<SceneHolder>();
         const auto& component = registry.Get<Component>(inEntity);
         const auto* transform = registry.Find<WorldTransform>(inEntity);
-        renderModule.GetRenderThread().EmplaceTask([scene = sceneHolder.scene, inEntity, component, transform = Internal::GetOptional(transform)]() -> void {
+        renderModule.GetRenderThread().EmplaceTask([scene = sceneHolder.scene.Get(), inEntity, component, transform = Internal::GetOptional(transform)]() -> void {
             SceneProxy sceneProxy;
             Internal::UpdateSceneProxyContent(sceneProxy, component);
             if (transform.has_value()) {
@@ -110,7 +114,7 @@ namespace Runtime {
     {
         const auto& sceneHolder = registry.GGet<SceneHolder>();
         const auto& component = registry.Get<Component>(inEntity);
-        renderModule.GetRenderThread().EmplaceTask([scene = sceneHolder.scene, inEntity, component]() -> void {
+        renderModule.GetRenderThread().EmplaceTask([scene = sceneHolder.scene.Get(), inEntity, component]() -> void {
             auto& sceneProxy = scene->Get<SceneProxy>(inEntity);
             Internal::UpdateSceneProxyContent(sceneProxy, component);
         });
@@ -121,7 +125,7 @@ namespace Runtime {
     {
         const auto& sceneHolder = registry.GGet<SceneHolder>();
         const auto& transform = registry.Get<WorldTransform>(inEntity);
-        renderModule.GetRenderThread().EmplaceTask([scene = sceneHolder.scene, inEntity, transform]() -> void {
+        renderModule.GetRenderThread().EmplaceTask([scene = sceneHolder.scene.Get(), inEntity, transform]() -> void {
             auto& sceneProxy = scene->Get<SceneProxy>(inEntity);
             Internal::UpdateSceneProxyWorldTransform(sceneProxy, transform, false);
         });
@@ -131,7 +135,7 @@ namespace Runtime {
     void SceneSystem::QueueRemoveSceneProxy(Entity inEntity)
     {
         const auto& sceneHolder = registry.GGet<SceneHolder>();
-        renderModule.GetRenderThread().EmplaceTask([scene = sceneHolder.scene, inEntity]() -> void {
+        renderModule.GetRenderThread().EmplaceTask([scene = sceneHolder.scene.Get(), inEntity]() -> void {
             scene->Remove<SceneProxy>(inEntity);
         });
     }

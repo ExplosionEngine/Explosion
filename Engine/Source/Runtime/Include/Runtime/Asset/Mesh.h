@@ -32,12 +32,14 @@ namespace Runtime {
         // TODO voxel data ?
     };
 
-    struct RUNTIME_API EClass() StaticMesh final : Asset {
+    class RUNTIME_API EClass() StaticMesh final : public Asset {
         EPolyClassBody(StaticMesh)
 
+    public:
         explicit StaticMesh(Core::Uri inUri);
         ~StaticMesh() override;
 
+    private:
         EProperty() AssetPtr<Material> material;
         EProperty() std::vector<StaticMeshLOD> lodVec;
     };

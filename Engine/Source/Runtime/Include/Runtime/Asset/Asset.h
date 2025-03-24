@@ -19,13 +19,20 @@
 #include <Runtime/Api.h>
 
 namespace Runtime {
-    struct RUNTIME_API EClass() Asset {
+    class RUNTIME_API EClass() Asset {
         EPolyClassBody(Asset)
 
+    public:
         Asset();
         explicit Asset(Core::Uri inUri);
         virtual ~Asset();
 
+        const Core::Uri& Uri() const;
+        void SetUri(Core::Uri inUri);
+
+        virtual void PostLoad();
+
+    private:
         EProperty() Core::Uri uri;
     };
 
@@ -251,7 +258,7 @@ namespace Runtime {
     const Core::Uri& AssetPtr<A>::Uri() const
     {
         Assert(ptr != nullptr);
-        return ptr->uri;
+        return ptr->Uri();
     }
 
     template <Common::DerivedFrom<Asset> A>
@@ -579,8 +586,8 @@ namespace Runtime {
         Mirror::Any ref = std::ref(*result.Get());
         ref.Deserialize(stream);
 
-        // reset uri is useful for moved asset
-        result->uri = uri;
+        result->SetUri(uri);
+        result->PostLoad();
         return result;
     }
 }

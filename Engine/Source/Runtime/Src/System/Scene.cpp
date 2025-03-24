@@ -26,10 +26,7 @@ namespace Runtime {
 
     SceneSystem::~SceneSystem() // NOLINT
     {
-        auto& sceneHolder = registry.GGet<SceneHolder>();
-        renderModule.GetRenderThread().EmplaceTask([scene = std::exchange(sceneHolder.scene, nullptr)]() -> void {
-            delete scene;
-        });
+        registry.GRemove<SceneHolder>();
     }
 
     void SceneSystem::Tick(float inDeltaTimeSeconds)
@@ -43,6 +40,7 @@ namespace Runtime {
         directionalLightsObserver.Removed().Each([this](Entity e) -> void { QueueRemoveSceneProxy<Render::LightSceneProxy>(e); });
         pointLightsObserver.Removed().Each([this](Entity e) -> void { QueueRemoveSceneProxy<Render::LightSceneProxy>(e); });
         spotLightsObserver.Removed().Each([this](Entity e) -> void { QueueRemoveSceneProxy<Render::LightSceneProxy>(e); });
+        // TODO primitive
 
         transformUpdatedObserver.Each([this](Entity e) -> void {
             if (registry.Has<DirectionalLight>(e) || registry.Has<PointLight>(e) || registry.Has<SpotLight>(e)) {
