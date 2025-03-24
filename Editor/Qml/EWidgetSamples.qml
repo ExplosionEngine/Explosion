@@ -272,6 +272,103 @@ Rectangle {
                 EIcon { name: 'folder' }
                 EIcon { name: 'folder-import' }
             }
+
+            RowLayout {
+                Layout.leftMargin: 5
+                Layout.topMargin: 15
+                EText {
+                    text: 'Switches'
+                    style: EText.Style.Title1
+                }
+            }
+
+            RowLayout {
+                ESwitch {
+                    text: 'Small Switch'
+                    size: ESwitch.Size.Small
+                }
+                ESwitch {
+                    text: 'Middle Switch'
+                    size: ESwitch.Size.Middle
+                }
+                ESwitch {
+                    text: 'Large Switch'
+                    size: ESwitch.Size.Large
+                }
+            }
+
+            RowLayout {
+                ESwitch {
+                    text: 'Disabled Checked'
+                    disabled: true
+                    checked: true
+                }
+                ESwitch {
+                    text: 'Disabled Unchecked'
+                    disabled: true
+                    checked: false
+                }
+                ESwitch {
+                    text: 'Filled Symbol'
+                    filler: ESwitch.Filler.Text
+                }
+            }
+
+            RowLayout {
+                Layout.leftMargin: 5
+                Layout.topMargin: 15
+                EText {
+                    text: 'TextInput'
+                    style: EText.Style.Title1
+                }
+            }
+
+            ColumnLayout {
+                Layout.margins: 5
+
+                RowLayout {
+                    ETextField {
+                        Layout.preferredWidth: 300
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'Default'
+                    }
+                }
+
+                RowLayout {
+                    ETextField {
+                        Layout.preferredWidth: 300
+                        placeHolderText: 'Hello World'
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'With Placeholder'
+                    }
+                }
+
+                RowLayout {
+                    ETextField {
+                        Layout.preferredWidth: 300
+                        wrapMode: TextInput.Wrap
+                        text: 'This is a very very very very very very very very very long words.'
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'Wrap'
+                    }
+                }
+
+                RowLayout {
+                    ETextField {
+                        Layout.fillWidth: true
+                        placeHolderText: 'Block Input'
+                    }
+                }
+            }
         }
     }
 }

@@ -10,6 +10,6 @@ namespace Editor {
         : QmlWidget("EProjectHub.qml")
     {
         setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
-        setFixedSize(1024, 768);
+        setFixedSize(800, 600);
     }
 }
