@@ -78,11 +78,11 @@ namespace Runtime {
     };
     static_assert(static_cast<uint8_t>(TextureFormat::max) == static_cast<uint8_t>(RHI::PixelFormat::max));
 
-    class RUNTIME_API Texture final : public Asset {
+    class RUNTIME_API EClass() Texture final : public Asset {
         EPolyClassBody(Texture)
 
     public:
-        using MipPixels = std::vector<uint8_t>;
+        using Pixels = std::vector<uint8_t>;
 
         explicit Texture(Core::Uri inUri);
         ~Texture() override;
@@ -97,9 +97,8 @@ namespace Runtime {
         EFunc() uint8_t GetMipLevels() const;
         EFunc() uint8_t GetSamples() const;
         EFunc() const std::string& GetName() const;
-        EFunc() MipPixels& GetMipPixels(uint8_t inMipLevel);
-        EFunc() const MipPixels& GetMipPixels(uint8_t inMipLevel) const;
-
+        EFunc() Pixels& GetSubResourcePixels(uint8_t inMipLevel, uint8_t inArrayLayer);
+        EFunc() const Pixels& GetSubResourcePixels(uint8_t inMipLevel, uint8_t inArrayLayer) const;
         EFunc() void SetType(TextureType inType);
         EFunc() void SetFormat(TextureFormat inFormat);
         EFunc() void SetWidth(uint32_t inWidth);
@@ -108,7 +107,8 @@ namespace Runtime {
         EFunc() void SetMipLevels(uint8_t inMipLevels);
         EFunc() void SetSamples(uint8_t inSamples);
         EFunc() void SetName(const std::string& inName);
-
+        EFunc() RHI::Texture* GetRHI() const;
+        EFunc() RHI::TextureView* GetViewRHI() const;
         EFunc() void UpdateMips();
         EFunc() void UpdateRHI();
 
@@ -121,8 +121,52 @@ namespace Runtime {
         EProperty() uint8_t mipLevels;
         EProperty() uint8_t samples;
         EProperty() std::string name;
-        EProperty() std::vector<MipPixels> mipsData;
+        EProperty() std::vector<Pixels> subResourcePixelsData;
         RenderThreadPtr<RHI::Texture> texture;
         RenderThreadPtr<RHI::TextureView> textureView;
+    };
+
+    class RUNTIME_API EClass() RenderTarget final : public Asset {
+        EPolyClassBody(RenderTarget)
+
+    public:
+        explicit RenderTarget(Core::Uri inUri);
+        ~RenderTarget() override;
+
+        void PostLoad() override;
+
+        EFunc() TextureType GetType() const;
+        EFunc() TextureFormat GetFormat() const;
+        EFunc() uint32_t GetWidth() const;
+        EFunc() uint32_t GetHeight() const;
+        EFunc() uint32_t GetDepthOrArraySize() const;
+        EFunc() uint8_t GetMipLevels() const;
+        EFunc() uint8_t GetSamples() const;
+        EFunc() const std::string& GetName() const;
+        EFunc() void SetType(TextureType inType);
+        EFunc() void SetFormat(TextureFormat inFormat);
+        EFunc() void SetWidth(uint32_t inWidth);
+        EFunc() void SetHeight(uint32_t inHeight);
+        EFunc() void SetDepthOrArraySize(uint32_t inDepthOrArraySize);
+        EFunc() void SetMipLevels(uint8_t inMipLevels);
+        EFunc() void SetSamples(uint8_t inSamples);
+        EFunc() void SetName(const std::string& inName);
+        EFunc() RHI::Texture* GetRHI() const;
+        EFunc() RHI::TextureView* GetRenderTargetViewRHI() const;
+        EFunc() RHI::TextureView* GetShaderResourceViewRHI() const;
+        EFunc() void UpdateRHI();
+
+    private:
+        EProperty() TextureType type;
+        EProperty() TextureFormat format;
+        EProperty() uint32_t width;
+        EProperty() uint32_t height;
+        EProperty() uint32_t depthOrArraySize;
+        EProperty() uint8_t mipLevels;
+        EProperty() uint8_t samples;
+        EProperty() std::string name;
+        RenderThreadPtr<RHI::Texture> texture;
+        RenderThreadPtr<RHI::TextureView> renderTargetView;
+        RenderThreadPtr<RHI::TextureView> shaderResourceView;
     };
 }

@@ -60,9 +60,11 @@ namespace Runtime {
     template <typename T>
     RenderThreadPtr<T>::~RenderThreadPtr()
     {
-        EngineHolder::Get().GetRenderModule().GetRenderThread().EmplaceTask([transferPtr = std::move(ptr)]() mutable -> void {
-            transferPtr.Reset();
-        });
+        if (ptr.Valid()) {
+            EngineHolder::Get().GetRenderModule().GetRenderThread().EmplaceTask([transferPtr = std::move(ptr)]() mutable -> void {
+                transferPtr.Reset();
+            });
+        }
     }
 
     template <typename T>

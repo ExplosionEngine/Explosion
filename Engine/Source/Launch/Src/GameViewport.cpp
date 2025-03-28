@@ -3,6 +3,7 @@
 //
 
 #include <Launch/GameViewport.h>
+#include <Runtime/Engine.h>
 
 namespace Launch::Internal {
     static void* GetGlfwPlatformWindow(GLFWwindow* inWindow)
