@@ -55,7 +55,8 @@ namespace Mirror {
     public:
         ~ClassRegistry() override;
 
-        template <typename... Args, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& Constructor(const Id& inId);
+        template <typename... Args> ClassRegistry& Constructor(const Id& inId);
+        template <FieldAccess Access, typename... Args> ClassRegistry& Constructor(const Id& inId);
         template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& StaticVariable(const Id& inId);
         template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& StaticFunction(const Id& inId);
         template <auto Ptr, FieldAccess Access = FieldAccess::faPublic> ClassRegistry& MemberVariable(const Id& inId);
@@ -238,7 +239,14 @@ namespace Mirror {
     ClassRegistry<C>::~ClassRegistry() = default;
 
     template <typename C>
-    template <typename... Args, FieldAccess Access>
+    template <typename ... Args>
+    ClassRegistry<C>& ClassRegistry<C>::Constructor(const Id& inId)
+    {
+        return Constructor<FieldAccess::faPublic, Args...>(inId);
+    }
+
+    template <typename C>
+    template <FieldAccess Access, typename... Args>
     ClassRegistry<C>& ClassRegistry<C>::Constructor(const Id& inId)
     {
         using ArgsTupleType = std::tuple<Args...>;
@@ -256,7 +264,7 @@ namespace Mirror {
         params.argRemoveRefTypeInfos = { GetTypeInfo<std::remove_reference_t<Args>>()... };
         params.argRemovePointerTypeInfos = { GetTypeInfo<std::remove_pointer_t<Args>>()... };
         params.stackConstructor = [](const ArgumentList& args) -> Any {
-            if constexpr (std::is_copy_constructible_v<C> || std::is_move_constructible_v<C>) {
+            if constexpr (!std::is_abstract_v<C> && (std::is_copy_constructible_v<C> || std::is_move_constructible_v<C>)) {
                 Assert(argsTupleSize == args.size());
                 return ForwardAsAny(Internal::InvokeConstructorStack<C, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
             } else {
@@ -265,12 +273,22 @@ namespace Mirror {
             }
         };
         params.heapConstructor = [](const ArgumentList& args) -> Any {
-            Assert(argsTupleSize == args.size());
-            return ForwardAsAny(Internal::InvokeConstructorNew<C, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
+            if constexpr (!std::is_abstract_v<C>) {
+                Assert(argsTupleSize == args.size());
+                return ForwardAsAny(Internal::InvokeConstructorNew<C, ArgsTupleType>(args, std::make_index_sequence<argsTupleSize> {}));
+            } else {
+                QuickFail();
+                return {};
+            }
         };
         params.inplaceConstructor = [](void* ptr, const ArgumentList& args) -> Any {
-            Assert(argsTupleSize == args.size());
-            return ForwardAsAny(std::ref(Internal::InvokeConstructorInplace<C, ArgsTupleType>(ptr, args, std::make_index_sequence<argsTupleSize> {})));
+            if constexpr (!std::is_abstract_v<C>) {
+                Assert(argsTupleSize == args.size());
+                return ForwardAsAny(std::ref(Internal::InvokeConstructorInplace<C, ArgsTupleType>(ptr, args, std::make_index_sequence<argsTupleSize> {})));
+            } else {
+                QuickFail();
+                return {};
+            }
         };
 
         return MetaDataRegistry<ClassRegistry>::SetContext(&clazz.EmplaceConstructor(inId, std::move(params)));
@@ -513,6 +531,16 @@ namespace Mirror {
         };
         params.inplaceGetter = [](void* ptr) -> Any {
             return { std::ref(*static_cast<C*>(ptr)) };
+        };
+        params.caster = [](const Argument& argument) -> Any {
+            if (argument.Type()->isPointer) {
+                return argument.Type()->isConstPointer ? argument.As<const C*>() : argument.As<C*>();
+            }
+            if (argument.IsRef()) {
+                return std::ref(argument.IsConstRef() ? argument.As<const C&>() : argument.As<C&>());
+            }
+            QuickFail();
+            return {};
         };
         if constexpr (std::is_default_constructible_v<C>) {
             params.defaultObjectCreator = []() -> Any {

@@ -27,7 +27,7 @@ namespace Mirror {
         return !srcRemovePointer->isConst || dstRemovePointer->isConst;
     }
 
-    bool PolymorphismConvertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType)
+    bool PolymorphismConvertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType, const Class* inSrcDynamicClass)
     {
         const auto [srcRaw, srcRemoveRef, srcRemovePointer] = inSrcType;
         const auto [dstRaw, dstRemoveRef, dstRemovePointer] = inDstType;
@@ -53,13 +53,20 @@ namespace Mirror {
         const auto* srcClass = Class::Find(srcRemoveRefOrPtr->id); // NOLINT
         const auto* dstClass = Class::Find(dstRemoveRefOrPtr->id); // NOLINT
 
-        if (srcClass == nullptr || dstClass == nullptr || !dstClass->IsBaseOf(srcClass)) {
+        const bool allClassValid = srcClass != nullptr && dstClass != nullptr;
+        if (!allClassValid) {
+            return false;
+        }
+
+        const bool canUpDynamicCast = dstClass->IsBaseOf(srcClass); // NOLINT
+        const bool canDownDynamicCast = inSrcDynamicClass != nullptr && (inSrcDynamicClass == dstClass || dstClass->IsBaseOf(inSrcDynamicClass)); // NOLINT
+        if (!canUpDynamicCast && !canDownDynamicCast) {
             return false;
         }
         return !srcRemoveRefOrPtr->isConst || dstRaw->isRValueReference || dstRemoveRefOrPtr->isConst;
     }
 
-    bool Convertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType)
+    bool Convertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType, const Class* inSrcDynamicClass)
     {
         const auto [srcRaw, srcRemoveRef, srcRemovePointer] = inSrcType;
         const auto [dstRaw, dstRemoveRef, dstRemovePointer] = inDstType;
@@ -70,7 +77,7 @@ namespace Mirror {
             }
             return !srcRemoveRef->isConst || dstRaw->isRValueReference || dstRemoveRef->isConst;
         }
-        return PointerConvertible(inSrcType, inDstType) || PolymorphismConvertible(inSrcType, inDstType);
+        return PointerConvertible(inSrcType, inDstType) || PolymorphismConvertible(inSrcType, inDstType, inSrcDynamicClass);
     }
 
     Any::Any()
@@ -586,6 +593,12 @@ namespace Mirror {
         return Type()->id;
     }
 
+    const Class* Any::GetDynamicClass() const
+    {
+        Assert(rtti != nullptr);
+        return rtti->getDynamicClass(Data());
+    }
+
     void Any::Reset()
     {
         arrayLength = 0;
@@ -833,6 +846,13 @@ namespace Mirror {
     {
         return Delegate([](auto&& value) -> decltype(auto) {
             return value.RemovePointerType();
+        });
+    }
+
+    const Class* Argument::GetDynamicClass() const
+    {
+        return Delegate([](auto&& value) -> decltype(auto) {
+            return value.GetDynamicClass();
         });
     }
 
@@ -1400,6 +1420,7 @@ namespace Mirror {
         , memorySize(params.memorySize)
         , baseClassGetter(std::move(params.baseClassGetter))
         , inplaceGetter(std::move(params.inplaceGetter))
+        , caster(std::move(params.caster))
     {
         CreateDefaultObject(params.defaultObjectCreator);
         if (params.destructorParams.has_value()) {
@@ -1672,7 +1693,7 @@ namespace Mirror {
             for (auto i = 0; i < arguments.size(); i++) {
                 const TypeInfoCompact srcType { arguments[i].Type(), arguments[i].RemoveRefType(), arguments[i].RemovePointerType() }; // NOLINT
                 const TypeInfoCompact dstType { argTypeInfos[i], argRemoveRefTypeInfos[i], argRemovePointerTypeInfos[i] }; // NOLINT
-                if (Convertible(srcType, dstType)) {
+                if (Convertible(srcType, dstType, arguments[i].GetDynamicClass())) {
                     rate += dstType.raw->isRValueReference ? 2 : 1;
                     continue;
                 }
@@ -1718,6 +1739,11 @@ namespace Mirror {
     void Class::DeleteDyn(const Argument& argument) const
     {
         GetDestructor().DeleteDyn(argument);
+    }
+
+    Any Class::Cast(const Argument& objPtrOrRef) const
+    {
+        return caster(objPtrOrRef);
     }
 
     const Constructor* Class::FindConstructor(const Id& inId) const

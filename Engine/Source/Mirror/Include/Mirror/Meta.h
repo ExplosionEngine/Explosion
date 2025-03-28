@@ -30,11 +30,11 @@ private: \
     static Mirror::Internal::ScopedReleaser _mirrorRegistry; \
 public: \
     static const Mirror::Class& GetStaticClass(); \
-    const Mirror::Class& GetClass(); \
+    const Mirror::Class& GetClass() const; \
 
 #define EPolyClassBody(className) \
 private: \
     static Mirror::Internal::ScopedReleaser _mirrorRegistry; \
 public: \
     static const Mirror::Class& GetStaticClass(); \
-    virtual const Mirror::Class& GetClass(); \
+    virtual const Mirror::Class& GetClass() const; \

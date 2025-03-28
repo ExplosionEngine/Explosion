@@ -24,3 +24,7 @@
 #include <RHI/BindGroup.h>
 #include <RHI/BindGroupLayout.h>
 #include <RHI/Synchronous.h>
+
+#if PLATFORM_WINDOWS
+#undef CreateSemaphore
+#endif

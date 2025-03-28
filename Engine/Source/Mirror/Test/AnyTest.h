@@ -58,15 +58,19 @@ struct AnyBasicTest {
 };
 
 struct EClass() AnyBaseClassTest {
-    EClassBody(AnyBaseClassTest)
+    EPolyClassBody(AnyBaseClassTest)
+
+    virtual ~AnyBaseClassTest() = default;
 };
 
 struct EClass() AnyDerivedClassTest : AnyBaseClassTest {
-    EClassBody(AnyDerivedClassTest)
+    EPolyClassBody(AnyDerivedClassTest)
+
+    ~AnyDerivedClassTest() override = default;
 };
 
 struct EClass() AnyBaseClassTest2 {
-    EClassBody(AnyBaseClassTest2)
+    EPolyClassBody(AnyBaseClassTest2)
 
     AnyBaseClassTest2(int inA, float inB)
         : a(inA)
@@ -81,7 +85,7 @@ struct EClass() AnyBaseClassTest2 {
 };
 
 struct EClass() AnyDerivedClassTest2 final : AnyBaseClassTest2 {
-    EClassBody(AnyDerivedClassTest2)
+    EPolyClassBody(AnyDerivedClassTest2)
 
     AnyDerivedClassTest2(int inA, float inB, std::string inC)
         : AnyBaseClassTest2(inA, inB)

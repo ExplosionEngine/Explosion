@@ -47,7 +47,7 @@ TEST(AssetTest, SaveLoadTest)
     AssetPtr<TestAsset> asset = MakeShared<TestAsset>(uri, 1, "hello");
     AssetManager::Get().Save(asset);
 
-    AssetPtr<TestAsset> restore = AssetManager::Get().SyncLoad<TestAsset>(uri);
+    AssetPtr<TestAsset> restore = AssetManager::Get().SyncLoad<TestAsset>(uri, TestAsset::GetStaticClass());
     ASSERT_EQ(restore.Uri(), uri);
     ASSERT_EQ(restore->a, 1);
     ASSERT_EQ(restore->b, "hello");
@@ -60,9 +60,23 @@ TEST(AssetTest, AsyncLoadTest)
     AssetPtr<TestAsset> asset = MakeShared<TestAsset>(uri, 1, "hello");
     AssetManager::Get().Save(asset);
 
-    AssetManager::Get().AsyncLoad<TestAsset>(uri, [&](AssetPtr<TestAsset> restore) -> void {
+    AssetManager::Get().AsyncLoad<TestAsset>(uri, TestAsset::GetStaticClass(), [&](AssetPtr<TestAsset> restore) -> void {
         ASSERT_EQ(restore.Uri(), uri);
         ASSERT_EQ(restore->a, 1);
         ASSERT_EQ(restore->b, "hello");
     });
+}
+
+TEST(AssetTest, PolySaveLoadTest)
+{
+    static Core::Uri uri("asset://Engine/Test/Generated/Runtime/AssetTest.PolySaveLoadTest");
+
+    AssetPtr<Asset> asset = new TestAsset(uri, 1, "hello");
+    AssetManager::Get().Save(asset);
+
+    AssetPtr<Asset> restore = AssetManager::Get().SyncLoad<Asset>(uri, TestAsset::GetStaticClass());
+    AssetPtr<TestAsset> result = restore.DynamicCast<TestAsset>();
+    ASSERT_EQ(result.Uri(), uri);
+    ASSERT_EQ(result->a, 1);
+    ASSERT_EQ(result->b, "hello");
 }

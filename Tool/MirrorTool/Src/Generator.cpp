@@ -213,8 +213,11 @@ namespace MirrorTool {
         }
         stream << GetMetaDataCode<3>(clazz);
         for (const auto& constructor : clazz.constructors) {
-            const std::string fieldAccessStr = constructor.fieldAccess != FieldAccess::pub ? std::format(", {}", GetFieldAccessStr(constructor.fieldAccess)) : "";
-            stream << Common::newline << Common::tab<3> << std::format(R"(.Constructor<{}{}>("{}"))", constructor.name, fieldAccessStr, constructor.name);
+            if (constructor.fieldAccess == FieldAccess::pub) {
+                stream << Common::newline << Common::tab<3> << std::format(R"(.Constructor<{}>("{}"))", constructor.name, constructor.name);
+            } else {
+                stream << Common::newline << Common::tab<3> << std::format(R"(.Constructor<{}, {}>("{}"))", GetFieldAccessStr(constructor.fieldAccess), constructor.name, constructor.name);
+            }
             stream << GetMetaDataCode<4>(constructor);
         }
         for (const auto& staticVariable : clazz.staticVariables) {
@@ -258,8 +261,8 @@ namespace MirrorTool {
                 for (const auto& overload : overloads) {
                     const ClassFunctionInfo& function = *overload;
                     const std::string functionName = GetFullName(function);
-                    const std::string shortFunctionNameWithParams = GetOverloadFunctionFullNameWithParams(function, function.name);
-                    const std::string ptrType = GetOverloadFunctionPtrType(function, fullName);
+                    const std::string shortFunctionNameWithParams = GetOverloadFunctionFullNameWithParams(function, function.name) + (overload->isConst ? " const" : "");
+                    const std::string ptrType = GetOverloadFunctionPtrType(function, fullName) + (overload->isConst ? " const" : "");
                     const std::string fieldAccessStr = function.fieldAccess != FieldAccess::pub ? std::format(", {}", GetFieldAccessStr(function.fieldAccess)) : "";
                     stream << Common::newline << Common::tab<3> << std::format(R"(.MemberFunction<static_cast<{}>(&{}){}>("{}"))", ptrType, functionName, fieldAccessStr, shortFunctionNameWithParams);
                     stream << GetMetaDataCode<4>(function);
@@ -289,7 +292,7 @@ namespace MirrorTool {
         stream << Common::tab<1> << std::format("static const Mirror::Class& clazz = Mirror::Class::Get<{}>();", fullName) << Common::newline;
         stream << Common::tab<1> << "return clazz;" << Common::newline;
         stream << "}" << Common::newline;
-        stream << std::format("const Mirror::Class& {}::GetClass()", fullName) << Common::newline;
+        stream << std::format("const Mirror::Class& {}::GetClass() const", fullName) << Common::newline;
         stream << "{" << Common::newline;
         stream << Common::tab<1> << std::format("static const Mirror::Class& clazz = Mirror::Class::Get<{}>();", fullName) << Common::newline;
         stream << Common::tab<1> << "return clazz;" << Common::newline;

@@ -52,7 +52,7 @@ namespace Runtime {
         const auto height = clientViewport.GetHeight();
 
         Render::View view = renderModule.CreateView();
-        view.state = player.viewState;
+        view.state = player.viewState.Get();
         view.data.viewport = GetPlayerViewport(width, height, inPlayerNum, inPlayerIndex);
         view.data.viewMatrix = worldTransform.localToWorld.GetTransformMatrixNoScale().Inverse();
         view.data.origin = worldTransform.localToWorld.translation;

@@ -662,13 +662,13 @@ TEST(AnyTest, PolyAsTest)
     const Common::UniquePtr<AnyBaseClassTest2> v0 = new AnyDerivedClassTest2(1, 2.0f, "3");
 
     Any a0 = std::ref(*v0);
-    const auto& r0 = a0.PolyAs<AnyBaseClassTest2&, AnyDerivedClassTest2&>();
+    const auto& r0 = a0.As<AnyDerivedClassTest2&>();
     ASSERT_EQ(r0.a, 1);
     ASSERT_EQ(r0.b, 2.0f);
     ASSERT_EQ(r0.c, "3");
 
     Any a1 = v0.Get();
-    const auto* p0 = a1.PolyAs<AnyBaseClassTest2*, AnyDerivedClassTest2*>();
+    const auto* p0 = a1.As<AnyDerivedClassTest2*>();
     ASSERT_EQ(p0->a, 1);
     ASSERT_EQ(p0->b, 2.0f);
     ASSERT_EQ(p0->c, "3");
@@ -679,13 +679,13 @@ TEST(AnyTest, ConstPolyAsTest)
     const Common::UniquePtr<AnyBaseClassTest2> v0 = new AnyDerivedClassTest2(1, 2.0f, "3");
 
     const Any a0 = std::ref(*v0);
-    const auto& r0 = a0.PolyAs<AnyBaseClassTest2&, AnyDerivedClassTest2&>();
+    const auto& r0 = a0.As<AnyDerivedClassTest2&>();
     ASSERT_EQ(r0.a, 1);
     ASSERT_EQ(r0.b, 2.0f);
     ASSERT_EQ(r0.c, "3");
 
     const Any a1 = v0.Get();
-    const auto* p0 = a1.PolyAs<AnyBaseClassTest2*, AnyDerivedClassTest2*>();
+    const auto* p0 = a1.As<AnyDerivedClassTest2*>();
     ASSERT_EQ(p0->a, 1);
     ASSERT_EQ(p0->b, 2.0f);
     ASSERT_EQ(p0->c, "3");

@@ -43,7 +43,7 @@ namespace Launch {
         settingRegistry.LoadAllSettings();
 
         const auto& gameSettings = Runtime::SettingsRegistry::Get().GetSettings<Runtime::GameSettings>();
-        const auto startupLevel = Runtime::AssetManager::Get().SyncLoad<Runtime::Level>(gameSettings.gameStartupLevel);
+        const auto startupLevel = Runtime::AssetManager::Get().SyncLoad<Runtime::Level>(gameSettings.gameStartupLevel, Runtime::Level::GetStaticClass());
         viewport->GetClient().GetWorld().LoadFrom(startupLevel);
     }
 
