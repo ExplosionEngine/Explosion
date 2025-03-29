@@ -11,4 +11,9 @@ namespace Runtime {
     }
 
     Level::~Level() = default;
+
+    ECArchive& Level::GetArchive()
+    {
+        return archive;
+    }
 }

@@ -29,11 +29,5 @@ namespace Runtime {
         }
     }
 
-    PlayerSystem::~PlayerSystem()
-    {
-        registry.View<LocalPlayer>().Each([this](Entity e, LocalPlayer& player) -> void { FinalizePlayer<LocalPlayer>(e); });
-#if BUILD_EDITOR
-        registry.View<EditorPlayer>().Each([this](Entity e, EditorPlayer& player) -> void { FinalizePlayer<EditorPlayer>(e); });
-#endif
-    }
+    PlayerSystem::~PlayerSystem() = default;
 } // namespace Runtime

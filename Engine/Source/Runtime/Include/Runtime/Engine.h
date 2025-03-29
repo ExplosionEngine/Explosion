@@ -53,7 +53,7 @@ namespace Runtime {
         bool IsEditor() override;
     };
 
-    struct RUNTIME_API IEngineModule : Core::Module { // NOLINT
+    struct RUNTIME_API EngineModule : Core::Module { // NOLINT
         virtual Engine* CreateEngine(const EngineInitParams& inParams) = 0;
     };
 

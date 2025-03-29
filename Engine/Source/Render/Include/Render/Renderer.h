@@ -6,6 +6,7 @@
 
 #include <Render/Scene.h>
 #include <Render/View.h>
+#include <Render/RenderGraph.h>
 
 namespace RHI {
     class Texture;
@@ -17,6 +18,7 @@ namespace Render {
     class Renderer {
     public:
         struct Params {
+            RHI::Device* device;
             const Scene* scene;
             const RHI::Texture* surface;
             Common::UVec2 surfaceExtent;
@@ -32,6 +34,7 @@ namespace Render {
         virtual void Render(float inDeltaTimeSeconds) = 0;
 
     protected:
+        RHI::Device* device;
         const Scene* scene;
         const RHI::Texture* surface;
         Common::UVec2 surfaceExtent;
@@ -52,5 +55,7 @@ namespace Render {
 
     private:
         void FinalizeViews() const;
+
+        RGBuilder rgBuilder;
     };
 }

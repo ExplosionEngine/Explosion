@@ -73,8 +73,8 @@ namespace Mirror {
     };
 
     MIRROR_API bool PointerConvertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType);
-    MIRROR_API bool PolymorphismConvertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType);
-    MIRROR_API bool Convertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType);
+    MIRROR_API bool PolymorphismConvertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType, bool allowDynamicDownCastNoCheck);
+    MIRROR_API bool Convertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType, bool allowDynamicDownCastNoCheck);
 
     enum class AnyPolicy : uint8_t {
         memoryHolder,
@@ -238,15 +238,13 @@ namespace Mirror {
         const Any& MoveAssign(const Any& inOther) const noexcept;
         const Any& MoveAssign(Any&& inOther) const noexcept;
 
-        template <typename T> bool Convertible();
-        template <typename T> bool Convertible() const;
+        template <typename T> bool Convertible(bool allowDynamicDownCastNoCheck = false);
+        template <typename T> bool Convertible(bool allowDynamicDownCastNoCheck = false) const;
 
-        template <typename T> T As();
-        template <typename T> T As() const;
-        template <Common::CppNotRef T> T* TryAs();
-        template <Common::CppNotRef T> T* TryAs() const;
-        template <typename B, typename T> T PolyAs();
-        template <typename B, typename T> T PolyAs() const;
+        template <typename T> T As(bool allowDynamicDownCastNoCheck = false);
+        template <typename T> T As(bool allowDynamicDownCastNoCheck = false) const;
+        template <Common::CppNotRef T> T* TryAs(bool allowDynamicDownCastNoCheck = false);
+        template <Common::CppNotRef T> T* TryAs(bool allowDynamicDownCastNoCheck = false) const;
 
         template <ValidTemplateView V> bool CanAsTemplateView() const;
         TemplateViewRttiPtr GetTemplateViewRtti() const;
@@ -365,7 +363,8 @@ namespace Mirror {
         Argument& operator=(const Any& inAny);
         Argument& operator=(Any&& inAny);
 
-        template <typename T> T As() const;
+        template <typename T> T As(bool allowDynamicDownCastNoCheck = false) const;
+        template <Common::CppNotRef T> T* TryAs(bool allowDynamicDownCastNoCheck = false) const;
 
         template <ValidTemplateView V> bool CanAsTemplateView() const;
         TemplateViewRttiPtr GetTemplateViewRtti() const;
@@ -822,12 +821,12 @@ namespace Mirror {
         const MemberFunction& GetMemberFunction(const Id& inId) const;
         Any GetDefaultObject() const;
         bool IsTransient() const;
-
         Any ConstructDyn(const ArgumentList& arguments) const;
         Any NewDyn(const ArgumentList& arguments) const;
         Any InplaceNewDyn(void* ptr, const ArgumentList& arguments) const;
         void DestructDyn(const Argument& argument) const;
         void DeleteDyn(const Argument& argument) const;
+        Any Cast(const Argument& objPtrOrRef) const;
 
     private:
         static std::unordered_map<TypeId, Id> typeToIdMap;
@@ -837,6 +836,8 @@ namespace Mirror {
 
         using BaseClassGetter = std::function<const Class*()>;
         using InplaceGetter = std::function<Any(void*)>;
+        using DefaultObjectCreator = std::function<Any()>;
+        using Caster = std::function<Any(const Mirror::Argument&)>;
 
         struct ConstructParams {
             Id id;
@@ -844,7 +845,8 @@ namespace Mirror {
             size_t memorySize;
             BaseClassGetter baseClassGetter;
             InplaceGetter inplaceGetter;
-            std::function<Any()> defaultObjectCreator;
+            Caster caster;
+            DefaultObjectCreator defaultObjectCreator;
             std::optional<Destructor::ConstructParams> destructorParams;
             std::optional<Constructor::ConstructParams> defaultConstructorParams;
             std::optional<Constructor::ConstructParams> moveConstructorParams;
@@ -853,7 +855,7 @@ namespace Mirror {
 
         explicit Class(ConstructParams&& params);
 
-        void CreateDefaultObject(const std::function<Any()>& inCreator);
+        void CreateDefaultObject(const DefaultObjectCreator& inCreator);
         Destructor& EmplaceDestructor(Destructor::ConstructParams&& inParams);
         Constructor& EmplaceConstructor(const Id& inId, Constructor::ConstructParams&& inParams);
         Variable& EmplaceStaticVariable(const Id& inId, Variable::ConstructParams&& inParams);
@@ -865,6 +867,7 @@ namespace Mirror {
         size_t memorySize;
         BaseClassGetter baseClassGetter;
         InplaceGetter inplaceGetter;
+        Caster caster;
         Any defaultObject;
         std::optional<Destructor> destructor;
         std::unordered_map<Id, Constructor, IdHashProvider> constructors;
@@ -3025,69 +3028,59 @@ namespace Mirror {
     }
 
     template <typename T>
-    bool Any::Convertible()
+    bool Any::Convertible(bool allowDynamicDownCastNoCheck)
     {
         Assert(!IsArray());
         return Mirror::Convertible(
             { Type(), RemoveRefType(), RemovePointerType() },
-            { GetTypeInfo<T>(), GetTypeInfo<std::remove_reference_t<T>>(), GetTypeInfo<std::remove_pointer_t<T>>() });
+            { GetTypeInfo<T>(), GetTypeInfo<std::remove_reference_t<T>>(), GetTypeInfo<std::remove_pointer_t<T>>() },
+            allowDynamicDownCastNoCheck);
     }
 
     template <typename T>
-    bool Any::Convertible() const
+    bool Any::Convertible(bool allowDynamicDownCastNoCheck) const
     {
         Assert(!IsArray());
         return Mirror::Convertible(
             { Type(), RemoveRefType(), RemovePointerType() },
-            { GetTypeInfo<T>(), GetTypeInfo<std::remove_reference_t<T>>(), GetTypeInfo<std::remove_pointer_t<T>>() });
+            { GetTypeInfo<T>(), GetTypeInfo<std::remove_reference_t<T>>(), GetTypeInfo<std::remove_pointer_t<T>>() },
+            allowDynamicDownCastNoCheck);
     }
 
     template <typename T>
-    T Any::As()
+    T Any::As(bool allowDynamicDownCastNoCheck)
     {
-        Assert(Convertible<T>());
+        Assert(Convertible<T>(allowDynamicDownCastNoCheck));
         return static_cast<T>(*static_cast<std::remove_cvref_t<T>*>(Data()));
     }
 
     template <typename T>
-    T Any::As() const
+    T Any::As(bool allowDynamicDownCastNoCheck) const
     {
-        Assert(Convertible<T>());
+        Assert(Convertible<T>(allowDynamicDownCastNoCheck));
         return static_cast<T>(*static_cast<std::remove_cvref_t<T>*>(Data()));
     }
 
     template <Common::CppNotRef T>
-    T* Any::TryAs()
+    T* Any::TryAs(bool allowDynamicDownCastNoCheck)
     {
         Assert(!IsArray());
         const bool convertible = Mirror::Convertible(
             { AddPointerType(), AddPointerType(), RemoveRefType() },
-            { GetTypeInfo<T*>(), GetTypeInfo<T*>(), GetTypeInfo<T>() });
+            { GetTypeInfo<T*>(), GetTypeInfo<T*>(), GetTypeInfo<T>() },
+            allowDynamicDownCastNoCheck);
         return convertible ? static_cast<std::remove_cvref_t<T>*>(Data()) : nullptr;
     }
 
     template <Common::CppNotRef T>
-    T* Any::TryAs() const
+    T* Any::TryAs(bool allowDynamicDownCastNoCheck) const
     {
         Assert(!IsArray());
         const bool convertible = Mirror::Convertible(
             { AddPointerType(), AddPointerType(), RemoveRefType() },
-            { GetTypeInfo<T*>(), GetTypeInfo<T*>(), GetTypeInfo<T>() });
+            { GetTypeInfo<T*>(), GetTypeInfo<T*>(), GetTypeInfo<T>() },
+            allowDynamicDownCastNoCheck);
         return convertible ? static_cast<std::remove_cvref_t<T>*>(Data()) : nullptr;
-    }
-
-    template <typename B, typename T>
-    T Any::PolyAs()
-    {
-        Assert(!IsArray());
-        return dynamic_cast<T>(As<B>());
-    }
-
-    template <typename B, typename T>
-    T Any::PolyAs() const
-    {
-        Assert(!IsArray());
-        return dynamic_cast<T>(As<B>());
     }
 
     template <ValidTemplateView V>
@@ -3160,10 +3153,18 @@ namespace Mirror {
     }
 
     template <typename T>
-    T Argument::As() const // NOLINT
+    T Argument::As(bool allowDynamicDownCastNoCheck) const // NOLINT
     {
-        return Delegate([](auto&& value) -> decltype(auto) {
-            return value.template As<T>();
+        return Delegate([&](auto&& value) -> decltype(auto) {
+            return value.template As<T>(allowDynamicDownCastNoCheck);
+        });
+    }
+
+    template <Common::CppNotRef T>
+    T* Argument::TryAs(bool allowDynamicDownCastNoCheck) const
+    {
+        return Delegate([&](auto&& value) -> decltype(auto) {
+            return value.template TryAs<T>(allowDynamicDownCastNoCheck);
         });
     }
 

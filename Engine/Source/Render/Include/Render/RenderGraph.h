@@ -8,6 +8,7 @@
 #include <functional>
 #include <future>
 #include <optional>
+#include <variant>
 
 #include <Common/Memory.h>
 #include <RHI/RHI.h>
@@ -236,13 +237,21 @@ namespace Render {
     using RGBindGroupRef = RGBindGroup*;
 
     struct RGBufferUploadInfo {
-        void* data;
-        size_t size;
+        struct DataView {
+            void* data;
+            size_t size;
+        };
+
+        struct DataCopy {
+            std::vector<uint8_t> data;
+        };
+
+        std::variant<std::monostate, DataView, DataCopy> src;
         size_t srcOffset;
         size_t dstOffset;
 
         RGBufferUploadInfo();
-        RGBufferUploadInfo(void* inData, size_t inSize, size_t inSrcOffset = 0, size_t inDstOffset = 0);
+        RGBufferUploadInfo(void* inData, size_t inSize, size_t inSrcOffset = 0, size_t inDstOffset = 0, bool inCopy = false);
     };
 
     class RGPass {

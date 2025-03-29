@@ -237,17 +237,22 @@ namespace MirrorTool {
             CXType retType = clang_getCursorResultType(cursor);
             CXString retTypeSpelling = clang_getTypeSpelling(retType);
 
+            const CXString functionPrettyPrinted = clang_getCursorPrettyPrinted(cursor, nullptr);
+            const std::string functionPrettyPrintedStr = clang_getCString(functionPrettyPrinted);
+
             ClassFunctionInfo functionInfo;
             functionInfo.outerName = GetOuterName(context.outerName, context.name);
             functionInfo.name = spellingStr;
             functionInfo.retType = clang_getCString(retTypeSpelling);
             functionInfo.fieldAccess = context.lastFieldAccess;
+            functionInfo.isConst = functionPrettyPrintedStr.find(") const") != std::string::npos;
             auto& functions = isStatic ? context.staticFunctions : context.functions;
             functions.emplace_back(std::move(functionInfo));
             VisitChildren(ClassFunctionVisitor, ClassFunctionInfo, cursor, functions.back());
             ApplyMetaFilter(functions, functionMetaTag);
 
             clang_disposeString(retTypeSpelling);
+            clang_disposeString(functionPrettyPrinted);
         } else if (kind == CXCursor_Constructor && NeedProcessConstructorCursor(cursor)) {
             ClassConstructorInfo constructorInfo;
             constructorInfo.outerName = GetOuterName(context.outerName, context.name);

@@ -6,7 +6,8 @@
 
 namespace Render {
     Renderer::Renderer(const Params& inParams)
-        : scene(inParams.scene)
+        : device(inParams.device)
+        , scene(inParams.scene)
         , surface(inParams.surface)
         , surfaceExtent(inParams.surfaceExtent)
         , views(inParams.views)
@@ -20,6 +21,7 @@ namespace Render {
 
     StandardRenderer::StandardRenderer(const Params& inParams)
         : Renderer(inParams)
+        , rgBuilder(*device)
     {
     }
 

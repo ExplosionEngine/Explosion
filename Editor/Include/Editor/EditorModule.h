@@ -7,7 +7,7 @@
 #include <Runtime/Engine.h>
 
 namespace Editor {
-    class EditorModule final : public Runtime::IEngineModule {
+    class EditorModule final : public Runtime::EngineModule {
     public:
         void OnUnload() override;
         ::Core::ModuleType Type() const override;

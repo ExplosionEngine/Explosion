@@ -169,13 +169,7 @@ namespace RHI::Vulkan {
 
     TextureSubResourceCopyFootprint VulkanDevice::GetTextureSubResourceCopyFootprint(const Texture& texture, const TextureSubResourceInfo& subResourceInfo)
     {
-        const auto& vkTexture = static_cast<const VulkanTexture&>(texture);
         const auto& createInfo = texture.GetCreateInfo();
-
-        VkImageSubresource subResource {};
-        subResource.mipLevel = subResourceInfo.mipLevel;
-        subResource.arrayLayer = subResourceInfo.arrayLayer;
-        subResource.aspectMask = EnumCast<TextureAspect, VkImageAspectFlags>(subResourceInfo.aspect);
 
         TextureSubResourceCopyFootprint result {};
         result.extent = { createInfo.width, createInfo.height, createInfo.dimension == TextureDimension::t3D ? createInfo.depthOrArraySize : 1 };

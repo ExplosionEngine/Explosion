@@ -14,6 +14,18 @@ namespace Runtime {
 
     Asset::~Asset() = default;
 
+    const Core::Uri& Asset::Uri() const
+    {
+        return uri;
+    }
+
+    void Asset::SetUri(Core::Uri inUri)
+    {
+        uri = std::move(inUri);
+    }
+
+    void Asset::PostLoad() {}
+
     AssetManager& AssetManager::Get()
     {
         static AssetManager instance;
@@ -21,8 +33,7 @@ namespace Runtime {
     }
 
     AssetManager::AssetManager()
-        : weakAssetRefs()
-        , threadPool("AssetThreadPool", 4)
+        : threadPool("AssetThreadPool", 4)
     {
     }
 

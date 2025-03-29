@@ -78,13 +78,13 @@ namespace Runtime {
     void World::LoadFrom(AssetPtr<Level> inLevel)
     {
         Assert(Stopped());
-        ecRegistry.Load(inLevel->archive);
+        ecRegistry.Load(inLevel->GetArchive());
     }
 
     void World::SaveTo(AssetPtr<Level> inLevel)
     {
         Assert(Stopped());
-        ecRegistry.Save(inLevel->archive);
+        ecRegistry.Save(inLevel->GetArchive());
     }
 
     void World::Tick(float inDeltaTimeSeconds)

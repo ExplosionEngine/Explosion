@@ -45,6 +45,7 @@ namespace MirrorTool {
 
     struct ClassFunctionInfo : FunctionInfo {
         FieldAccess fieldAccess;
+        bool isConst = false;
     };
 
     struct ClassConstructorInfo : Node {

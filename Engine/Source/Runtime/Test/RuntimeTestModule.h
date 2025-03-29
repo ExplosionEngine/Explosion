@@ -6,7 +6,7 @@
 
 #include <Runtime/Engine.h>
 
-class RuntimeTestModule final : public Runtime::IEngineModule {
+class RuntimeTestModule final : public Runtime::EngineModule {
 public:
     void OnUnload() override;
     Core::ModuleType Type() const override;

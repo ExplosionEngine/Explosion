@@ -10,12 +10,16 @@
 #include <Runtime/Api.h>
 
 namespace Runtime {
-    struct RUNTIME_API EClass() Level final : Asset {
+    class RUNTIME_API EClass() Level final : public Asset {
         EPolyClassBody(Level)
 
+    public:
         explicit Level(Core::Uri inUri);
         ~Level() override;
 
+        EFunc() ECArchive& GetArchive();
+
+    private:
         EProperty() ECArchive archive;
     };
 }

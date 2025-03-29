@@ -26,7 +26,6 @@ namespace Runtime {
     private:
         template <typename T> Entity CreatePlayer();
         template <typename T> void CreatePlayerSpecialPart(T& inPlayer);
-        template <typename T> void FinalizePlayer(Entity inEntity);
 
         uint8_t activeLocalPlayerNum;
         Render::RenderModule& renderModule;
@@ -69,13 +68,4 @@ namespace Runtime {
     {
     }
 #endif
-
-    template <typename T>
-    void PlayerSystem::FinalizePlayer(Entity inEntity)
-    {
-        auto& player = registry.Get<T>(inEntity);
-        renderModule.GetRenderThread().EmplaceTask([viewState = player.viewState]() -> void {
-            delete viewState;
-        });
-    }
 } // namespace Runtime

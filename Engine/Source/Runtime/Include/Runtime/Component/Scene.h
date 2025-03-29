@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Render/Scene.h>
+#include <Runtime/RenderThreadPtr.h>
 #include <Runtime/Meta.h>
 #include <Runtime/Api.h>
 
@@ -14,6 +15,6 @@ namespace Runtime {
 
         explicit SceneHolder(Render::Scene* inScene);
 
-        Render::Scene* scene;
+        RenderThreadPtr<Render::Scene> scene;
     };
 }

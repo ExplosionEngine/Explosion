@@ -13,7 +13,7 @@ namespace Runtime {
     struct PresentInfo {
         PresentInfo();
 
-        RHI::Texture* backBuffer;
+        RHI::Texture* backTexture;
         RHI::Semaphore* imageReadySemaphore;
         RHI::Semaphore* renderFinishedSemaphore;
     };
@@ -24,8 +24,9 @@ namespace Runtime {
 
         virtual Client& GetClient() = 0;
         virtual PresentInfo GetNextPresentInfo() = 0;
-        virtual size_t GetWidth() const = 0;
-        virtual size_t GetHeight() const = 0;
+        virtual uint32_t GetWidth() const = 0;
+        virtual uint32_t GetHeight() const = 0;
+        virtual void Resize(uint32_t inWidth, uint32_t inHeight) = 0;
         // TODO mouse keyboard inputs etc.
 
     protected:
