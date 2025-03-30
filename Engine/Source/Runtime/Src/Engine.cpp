@@ -132,7 +132,7 @@ namespace Runtime {
     void EngineHolder::Load(const std::string& inModuleName, const EngineInitParams& inInitParams)
     {
         Assert(engine == nullptr);
-        auto& gameModule = Core::ModuleManager::Get().GetOrLoadTyped<IEngineModule>(inModuleName);
+        auto& gameModule = Core::ModuleManager::Get().GetOrLoadTyped<EngineModule>(inModuleName);
         engine = gameModule.CreateEngine(inInitParams);
     }
 

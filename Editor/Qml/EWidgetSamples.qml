@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
 Rectangle {
@@ -146,7 +147,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 15
+                Layout.topMargin: 35
 
                 EText {
                     text: 'Texts'
@@ -195,7 +196,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 15
+                Layout.topMargin: 35
 
                 EText {
                     text: 'Icons'
@@ -275,7 +276,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 15
+                Layout.topMargin: 35
                 EText {
                     text: 'Switches'
                     style: EText.Style.Title1
@@ -316,7 +317,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 15
+                Layout.topMargin: 35
                 EText {
                     text: 'TextInput'
                     style: EText.Style.Title1

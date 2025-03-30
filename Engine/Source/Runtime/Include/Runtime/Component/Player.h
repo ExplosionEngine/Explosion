@@ -8,6 +8,7 @@
 #include <Runtime/Meta.h>
 #include <Runtime/ECS.h>
 #include <Runtime/Api.h>
+#include <Runtime/RenderThreadPtr.h>
 
 namespace Runtime {
     struct RUNTIME_API EClass(globalComp, transient) PlayersInfo {
@@ -24,7 +25,7 @@ namespace Runtime {
         LocalPlayer();
 
         uint8_t localPlayerIndex;
-        Render::ViewState* viewState;
+        RenderThreadPtr<Render::ViewState> viewState;
     };
 
 #if BUILD_EDITOR
@@ -33,7 +34,7 @@ namespace Runtime {
 
         EditorPlayer();
 
-        Render::ViewState* viewState;
+        RenderThreadPtr<Render::ViewState> viewState;
     };
 #endif
 

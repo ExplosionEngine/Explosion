@@ -322,19 +322,22 @@ namespace Render {
     }
 
     RGBufferUploadInfo::RGBufferUploadInfo()
-        : data(nullptr)
-        , size(0)
-        , srcOffset(0)
+        : srcOffset(0)
         , dstOffset(0)
     {
     }
 
-    RGBufferUploadInfo::RGBufferUploadInfo(void* inData, size_t inSize, size_t inSrcOffset, size_t inDstOffset)
-        : data(inData)
-        , size(inSize)
-        , srcOffset(inSrcOffset)
+    RGBufferUploadInfo::RGBufferUploadInfo(void* inData, size_t inSize, size_t inSrcOffset, size_t inDstOffset, bool inCopy)
+        : srcOffset(inSrcOffset)
         , dstOffset(inDstOffset)
     {
+        if (inCopy) {
+            auto& [data] = src.emplace<DataCopy>();
+            data.resize(inSize);
+            memcpy(data.data(), inData, inSize);
+        } else {
+            src.emplace<DataView>(inData, inSize);
+        }
     }
 
     RGPass::RGPass(std::string inName, RGPassType inType)
@@ -850,9 +853,24 @@ namespace Render {
             auto* rhiBuffer = GetRHI(buffer);
 
             bufferUploadTasks.emplace_back(RenderWorkerThreads::Get().EmplaceTask([rhiBuffer, uploadInfo]() -> void {
-                const auto* src = static_cast<const uint8_t*>(uploadInfo.data) + uploadInfo.srcOffset;
-                auto* dst = rhiBuffer->Map(RHI::MapMode::write, uploadInfo.dstOffset, uploadInfo.size);
-                memcpy(dst, src, uploadInfo.size);
+                const uint8_t* srcDataPtr = nullptr;
+                size_t srcDataSize = 0;
+                if (uploadInfo.src.index() == 1) {
+                    const auto& [srcData, srcSize] = std::get<RGBufferUploadInfo::DataView>(uploadInfo.src);
+                    srcDataPtr = static_cast<const uint8_t*>(srcData);
+                    srcDataSize = srcSize;
+                } else if (uploadInfo.src.index() == 2) {
+                    const auto& [srcData] = std::get<RGBufferUploadInfo::DataCopy>(uploadInfo.src);
+                    srcDataPtr = srcData.data();
+                    srcDataSize = srcData.size() * sizeof(uint8_t);
+                } else {
+                    Unimplement();
+                }
+
+                Assert(srcDataPtr != nullptr && srcDataSize > 0);
+                const auto* src = srcDataPtr + uploadInfo.srcOffset; // NOLINT
+                auto* dst = rhiBuffer->Map(RHI::MapMode::write, uploadInfo.dstOffset, srcDataSize);
+                memcpy(dst, src, srcDataSize);
                 rhiBuffer->UnMap();
             }));
         }

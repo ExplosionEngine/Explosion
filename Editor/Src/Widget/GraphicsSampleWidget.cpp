@@ -143,7 +143,8 @@ namespace Editor {
     {
         static std::vector<RHI::PixelFormat> formatQualifiers = {
             RHI::PixelFormat::rgba8Unorm,
-            RHI::PixelFormat::bgra8Unorm};
+            RHI::PixelFormat::bgra8Unorm
+        };
 
         if (swapChain != nullptr) {
             WaitDeviceIdle();

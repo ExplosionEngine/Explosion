@@ -72,9 +72,12 @@ namespace Mirror {
         const TypeInfo* removePointer;
     };
 
+    class Any;
+    class Class;
+
     MIRROR_API bool PointerConvertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType);
-    MIRROR_API bool PolymorphismConvertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType);
-    MIRROR_API bool Convertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType);
+    MIRROR_API bool PolymorphismConvertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType, const Class* inSrcDynamicClass);
+    MIRROR_API bool Convertible(const TypeInfoCompact& inSrcType, const TypeInfoCompact& inDstType, const Class* inSrcDynamicClass);
 
     enum class AnyPolicy : uint8_t {
         memoryHolder,
@@ -82,8 +85,6 @@ namespace Mirror {
         constRef,
         max
     };
-
-    class Any;
 
     using TemplateViewId = uint32_t;
     using TemplateViewRttiPtr = const void*;
@@ -105,6 +106,7 @@ namespace Mirror {
         using JsonDeserializeFunc = void(void*, const rapidjson::Value&);
         using ToStringFunc = std::string(const void*);
         using GetTemplateViewRttiFunc = std::pair<TemplateViewId, TemplateViewRttiPtr>();
+        using GetDynamicClassFunc = const Class*(const void*);
 
         template <typename T> static void Detor(void* inThis) noexcept;
         template <typename T> static void CopyConstruct(void* inThis, const void* inOther);
@@ -128,6 +130,7 @@ namespace Mirror {
         template <typename T> static void JsonDeserialize(void* inThis, const rapidjson::Value& inJsonValue);
         template <typename T> static std::string ToString(const void* inThis);
         template <typename T> static std::pair<TemplateViewId, TemplateViewRttiPtr> GetTemplateViewRtti();
+        template <typename T> static const Class* GetDynamicClass(const void* inThis);
 
         DetorFunc* detor;
         CopyConstructFunc* copyConstruct;
@@ -151,6 +154,7 @@ namespace Mirror {
         JsonDeserializeFunc* jsonDeserialize;
         ToStringFunc* toString;
         GetTemplateViewRttiFunc* getTemplateViewRtti;
+        GetDynamicClassFunc* getDynamicClass;
     };
 
     template <typename T, size_t N = 1>
@@ -176,7 +180,8 @@ namespace Mirror {
         &AnyRtti::JsonSerialize<T>,
         &AnyRtti::JsonDeserialize<T>,
         &AnyRtti::ToString<T>,
-        &AnyRtti::GetTemplateViewRtti<T>
+        &AnyRtti::GetTemplateViewRtti<T>,
+        &AnyRtti::GetDynamicClass<T>
     };
 
     template <typename T>
@@ -245,8 +250,6 @@ namespace Mirror {
         template <typename T> T As() const;
         template <Common::CppNotRef T> T* TryAs();
         template <Common::CppNotRef T> T* TryAs() const;
-        template <typename B, typename T> T PolyAs();
-        template <typename B, typename T> T PolyAs() const;
 
         template <ValidTemplateView V> bool CanAsTemplateView() const;
         TemplateViewRttiPtr GetTemplateViewRtti() const;
@@ -280,6 +283,7 @@ namespace Mirror {
         const TypeInfo* RemovePointerType() const;
         Mirror::TypeId TypeId();
         Mirror::TypeId TypeId() const;
+        const Class* GetDynamicClass() const;
         void Reset();
         bool Empty() const;
         size_t Serialize(Common::BinarySerializeStream& inStream) const;
@@ -366,6 +370,7 @@ namespace Mirror {
         Argument& operator=(Any&& inAny);
 
         template <typename T> T As() const;
+        template <Common::CppNotRef T> T* TryAs() const;
 
         template <ValidTemplateView V> bool CanAsTemplateView() const;
         TemplateViewRttiPtr GetTemplateViewRtti() const;
@@ -378,6 +383,7 @@ namespace Mirror {
         const TypeInfo* RemoveRefType() const;
         const TypeInfo* AddPointerType() const;
         const TypeInfo* RemovePointerType() const;
+        const Class* GetDynamicClass() const;
 
     private:
         template <typename F> decltype(auto) Delegate(F&& inFunc) const;
@@ -822,12 +828,12 @@ namespace Mirror {
         const MemberFunction& GetMemberFunction(const Id& inId) const;
         Any GetDefaultObject() const;
         bool IsTransient() const;
-
         Any ConstructDyn(const ArgumentList& arguments) const;
         Any NewDyn(const ArgumentList& arguments) const;
         Any InplaceNewDyn(void* ptr, const ArgumentList& arguments) const;
         void DestructDyn(const Argument& argument) const;
         void DeleteDyn(const Argument& argument) const;
+        Any Cast(const Argument& objPtrOrRef) const;
 
     private:
         static std::unordered_map<TypeId, Id> typeToIdMap;
@@ -837,6 +843,8 @@ namespace Mirror {
 
         using BaseClassGetter = std::function<const Class*()>;
         using InplaceGetter = std::function<Any(void*)>;
+        using DefaultObjectCreator = std::function<Any()>;
+        using Caster = std::function<Any(const Mirror::Argument&)>;
 
         struct ConstructParams {
             Id id;
@@ -844,7 +852,8 @@ namespace Mirror {
             size_t memorySize;
             BaseClassGetter baseClassGetter;
             InplaceGetter inplaceGetter;
-            std::function<Any()> defaultObjectCreator;
+            Caster caster;
+            DefaultObjectCreator defaultObjectCreator;
             std::optional<Destructor::ConstructParams> destructorParams;
             std::optional<Constructor::ConstructParams> defaultConstructorParams;
             std::optional<Constructor::ConstructParams> moveConstructorParams;
@@ -853,7 +862,7 @@ namespace Mirror {
 
         explicit Class(ConstructParams&& params);
 
-        void CreateDefaultObject(const std::function<Any()>& inCreator);
+        void CreateDefaultObject(const DefaultObjectCreator& inCreator);
         Destructor& EmplaceDestructor(Destructor::ConstructParams&& inParams);
         Constructor& EmplaceConstructor(const Id& inId, Constructor::ConstructParams&& inParams);
         Variable& EmplaceStaticVariable(const Id& inId, Variable::ConstructParams&& inParams);
@@ -865,6 +874,7 @@ namespace Mirror {
         size_t memorySize;
         BaseClassGetter baseClassGetter;
         InplaceGetter inplaceGetter;
+        Caster caster;
         Any defaultObject;
         std::optional<Destructor> destructor;
         std::unordered_map<Id, Constructor, IdHashProvider> constructors;
@@ -2882,8 +2892,25 @@ namespace Mirror {
     {
         return {
             TemplateViewRttiGetter<T>::Id(),
-            TemplateViewRttiGetter<T>::Get()
-        };
+            TemplateViewRttiGetter<T>::Get()};
+    }
+
+    template <typename T>
+    const Class* AnyRtti::GetDynamicClass(const void* inThis)
+    {
+        if constexpr (std::is_pointer_v<T>) {
+            if constexpr (MetaClass<std::decay_t<std::remove_pointer_t<T>>>) {
+                return &(*static_cast<const T*>(inThis))->GetClass();
+            } else {
+                return nullptr;
+            }
+        } else {
+            if constexpr (MetaClass<T>) {
+                return &static_cast<const T*>(inThis)->GetClass();
+            } else {
+                return nullptr;
+            }
+        }
     }
 
     template <typename T>
@@ -3030,7 +3057,8 @@ namespace Mirror {
         Assert(!IsArray());
         return Mirror::Convertible(
             { Type(), RemoveRefType(), RemovePointerType() },
-            { GetTypeInfo<T>(), GetTypeInfo<std::remove_reference_t<T>>(), GetTypeInfo<std::remove_pointer_t<T>>() });
+            { GetTypeInfo<T>(), GetTypeInfo<std::remove_reference_t<T>>(), GetTypeInfo<std::remove_pointer_t<T>>() },
+            rtti->getDynamicClass(Data()));
     }
 
     template <typename T>
@@ -3039,7 +3067,8 @@ namespace Mirror {
         Assert(!IsArray());
         return Mirror::Convertible(
             { Type(), RemoveRefType(), RemovePointerType() },
-            { GetTypeInfo<T>(), GetTypeInfo<std::remove_reference_t<T>>(), GetTypeInfo<std::remove_pointer_t<T>>() });
+            { GetTypeInfo<T>(), GetTypeInfo<std::remove_reference_t<T>>(), GetTypeInfo<std::remove_pointer_t<T>>() },
+            rtti->getDynamicClass(Data()));
     }
 
     template <typename T>
@@ -3062,7 +3091,8 @@ namespace Mirror {
         Assert(!IsArray());
         const bool convertible = Mirror::Convertible(
             { AddPointerType(), AddPointerType(), RemoveRefType() },
-            { GetTypeInfo<T*>(), GetTypeInfo<T*>(), GetTypeInfo<T>() });
+            { GetTypeInfo<T*>(), GetTypeInfo<T*>(), GetTypeInfo<T>() },
+            rtti->getDynamicClass(Data()));
         return convertible ? static_cast<std::remove_cvref_t<T>*>(Data()) : nullptr;
     }
 
@@ -3072,22 +3102,9 @@ namespace Mirror {
         Assert(!IsArray());
         const bool convertible = Mirror::Convertible(
             { AddPointerType(), AddPointerType(), RemoveRefType() },
-            { GetTypeInfo<T*>(), GetTypeInfo<T*>(), GetTypeInfo<T>() });
+            { GetTypeInfo<T*>(), GetTypeInfo<T*>(), GetTypeInfo<T>() },
+            rtti->getDynamicClass(Data()));
         return convertible ? static_cast<std::remove_cvref_t<T>*>(Data()) : nullptr;
-    }
-
-    template <typename B, typename T>
-    T Any::PolyAs()
-    {
-        Assert(!IsArray());
-        return dynamic_cast<T>(As<B>());
-    }
-
-    template <typename B, typename T>
-    T Any::PolyAs() const
-    {
-        Assert(!IsArray());
-        return dynamic_cast<T>(As<B>());
     }
 
     template <ValidTemplateView V>
@@ -3162,8 +3179,16 @@ namespace Mirror {
     template <typename T>
     T Argument::As() const // NOLINT
     {
-        return Delegate([](auto&& value) -> decltype(auto) {
+        return Delegate([&](auto&& value) -> decltype(auto) {
             return value.template As<T>();
+        });
+    }
+
+    template <Common::CppNotRef T>
+    T* Argument::TryAs() const
+    {
+        return Delegate([&](auto&& value) -> decltype(auto) {
+            return value.template TryAs<T>();
         });
     }
 

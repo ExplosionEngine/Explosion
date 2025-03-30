@@ -52,9 +52,10 @@ namespace Runtime {
         const auto height = clientViewport.GetHeight();
 
         Render::View view = renderModule.CreateView();
-        view.state = player.viewState;
+        view.state = player.viewState.Get();
         view.data.viewport = GetPlayerViewport(width, height, inPlayerNum, inPlayerIndex);
         view.data.viewMatrix = worldTransform.localToWorld.GetTransformMatrixNoScale().Inverse();
+        view.data.origin = worldTransform.localToWorld.translation;
         if (camera.perspective) {
             const Common::FReversedZPerspectiveProjection projection(camera.fov.value(), static_cast<float>(width), static_cast<float>(height), camera.nearPlane, camera.farPlane);
             view.data.projectionMatrix = projection.GetProjectionMatrix();

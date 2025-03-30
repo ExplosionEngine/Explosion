@@ -33,7 +33,7 @@ namespace Runtime {
             [
                 fence = lastFrameFence,
                 views = BuildViews(),
-                scene = registry.GGet<SceneHolder>().scene,
+                scene = registry.GGet<SceneHolder>().scene.Get(),
                 surfaceExtent = Common::UVec2(clientViewport.GetWidth(), clientViewport.GetHeight()),
                 presentInfo = clientViewport.GetNextPresentInfo(),
                 renderModule = &renderModule,
@@ -43,8 +43,9 @@ namespace Runtime {
                 fence->Reset();
 
                 Render::StandardRenderer::Params rendererParams;
+                rendererParams.device = renderModule->GetDevice();
                 rendererParams.scene = scene;
-                rendererParams.surface = presentInfo.backBuffer;
+                rendererParams.surface = presentInfo.backTexture;
                 rendererParams.surfaceExtent = surfaceExtent;
                 rendererParams.views = views;
                 rendererParams.waitSemaphore = presentInfo.imageReadySemaphore;

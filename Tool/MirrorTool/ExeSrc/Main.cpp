@@ -2,6 +2,8 @@
 // Created by johnk on 2022/11/20.
 //
 
+#include <sstream>
+
 #include <clipp.h>
 
 #include <MirrorTool/Parser.h>
@@ -9,9 +11,22 @@
 #include <Common/IO.h>
 #include <Common/FileSystem.h>
 
+#define OUTPUT_FULL_CMDLINE 0
+
 int main(int argc, char* argv[]) // NOLINT
 {
     AutoCoutFlush;
+
+#if OUTPUT_FULL_CMDLINE
+    std::stringstream fullCmdline;
+    for (auto i = 0; i < argc; i++) {
+        fullCmdline << argv[i];
+        if (i != argc - 1) {
+            fullCmdline << " ";
+        }
+    }
+    std::cout << fullCmdline.str() << std::endl;
+#endif
 
     std::string inputFile;
     std::string outputFile;

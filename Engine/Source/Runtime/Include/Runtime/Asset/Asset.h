@@ -19,13 +19,20 @@
 #include <Runtime/Api.h>
 
 namespace Runtime {
-    struct RUNTIME_API EClass() Asset {
+    class RUNTIME_API EClass() Asset {
         EPolyClassBody(Asset)
 
+    public:
         Asset();
         explicit Asset(Core::Uri inUri);
         virtual ~Asset();
 
+        const Core::Uri& Uri() const;
+        void SetUri(Core::Uri inUri);
+
+        virtual void PostLoad();
+
+    private:
         EProperty() Core::Uri uri;
     };
 
@@ -49,8 +56,10 @@ namespace Runtime {
         const Core::Uri& Uri() const;
         A* operator->() const noexcept;
         A& operator*() const noexcept;
+        explicit operator bool() const;
         bool operator==(nullptr_t) const noexcept;
         bool operator!=(nullptr_t) const noexcept;
+        bool Valid() const;
         A* Get() const;
         void Reset(A* pointer = nullptr);
         auto RefCount() const;
@@ -85,13 +94,13 @@ namespace Runtime {
     class SoftAssetPtr {
     public:
         SoftAssetPtr();
-        explicit SoftAssetPtr(Core::Uri inUri);
+        SoftAssetPtr(Core::Uri inUri, const Mirror::Class& inClass);
         explicit SoftAssetPtr(AssetPtr<A>& inAsset);
         SoftAssetPtr(const SoftAssetPtr<A>& other);
         SoftAssetPtr(SoftAssetPtr<A>&& other) noexcept;
         ~SoftAssetPtr();
 
-        SoftAssetPtr& operator=(Core::Uri inUri);
+        SoftAssetPtr& operator=(const std::pair<Core::Uri, const Mirror::Class&>& inUriAndClass);
         SoftAssetPtr& operator=(AssetPtr<A>& inAsset);
         SoftAssetPtr& operator=(const SoftAssetPtr<A>& other);
         SoftAssetPtr& operator=(SoftAssetPtr<A>&& other) noexcept;
@@ -101,9 +110,11 @@ namespace Runtime {
         AssetPtr<A> Get() const;
         void Reset();
         const Core::Uri& Uri() const;
+        const Mirror::Class* Class() const;
 
     private:
         Core::Uri uri;
+        const Mirror::Class* clazz;
         AssetPtr<A> asset;
     };
 
@@ -115,15 +126,15 @@ namespace Runtime {
         static AssetManager& Get();
         ~AssetManager();
 
-        template <Common::DerivedFrom<Asset> A> AssetPtr<A> SyncLoad(const Core::Uri& uri);
-        template <Common::DerivedFrom<Asset> A> void SyncLoadSoft(SoftAssetPtr<A>& softAssetRef);
-        template <Common::DerivedFrom<Asset> A> void AsyncLoad(const Core::Uri& uri, const OnAssetLoaded<A>& onAssetLoaded);
-        template <Common::DerivedFrom<Asset> A> void AsyncLoadSoft(SoftAssetPtr<A>& softAssetRef, const OnSoftAssetLoaded<A>& onSoftAssetLoaded);
+        template <Common::DerivedFrom<Asset> A> AssetPtr<A> SyncLoad(const Core::Uri& uri, const Mirror::Class& clazz);
+        template <Common::DerivedFrom<Asset> A> void SyncLoadSoft(SoftAssetPtr<A>& softAssetRef, const Mirror::Class& clazz);
+        template <Common::DerivedFrom<Asset> A> void AsyncLoad(const Core::Uri& uri, const Mirror::Class& clazz, const OnAssetLoaded<A>& onAssetLoaded);
+        template <Common::DerivedFrom<Asset> A> void AsyncLoadSoft(SoftAssetPtr<A>& softAssetRef, const Mirror::Class& clazz, const OnSoftAssetLoaded<A>& onSoftAssetLoaded);
         template <Common::DerivedFrom<Asset> A> void Save(const AssetPtr<A>& assetRef);
         template <Common::DerivedFrom<Asset> A> void SaveSoft(const SoftAssetPtr<A>& softAssetRef);
 
     private:
-        template <Common::DerivedFrom<Asset> A> AssetPtr<A> LoadInternal(const Core::Uri& uri);
+        template <Common::DerivedFrom<Asset> A> AssetPtr<A> LoadInternal(const Core::Uri& uri, const Mirror::Class& clazz);
 
         AssetManager();
 
@@ -140,14 +151,23 @@ namespace Common {
 
         static size_t Serialize(BinarySerializeStream& stream, const Runtime::AssetPtr<A>& value)
         {
-            return Serializer<Core::Uri>::Serialize(stream, value.Uri());
+            size_t serialized = 0;
+            serialized += Serializer<Core::Uri>::Serialize(stream, value.Uri());
+            serialized += Serializer<const Mirror::Class*>::Serialize(stream, &value->GetClass());
+            return serialized;
         }
 
         static size_t Deserialize(BinaryDeserializeStream& stream, Runtime::AssetPtr<A>& value)
         {
+            size_t deserialized = 0;
+
             Core::Uri uri;
-            const auto deserialized = Serializer<Core::Uri>::Deserialize(stream, uri);
-            value = Runtime::AssetManager::Get().SyncLoad<A>(uri);
+            deserialized += Serializer<Core::Uri>::Deserialize(stream, uri);
+
+            const Mirror::Class* clazz;
+            deserialized += Serializer<const Mirror::Class*>::Deserialize(stream, clazz);
+
+            value = Runtime::AssetManager::Get().SyncLoad<A>(uri, *clazz);
             return deserialized;
         }
     };
@@ -158,14 +178,23 @@ namespace Common {
 
         static size_t Serialize(BinarySerializeStream& stream, const Runtime::SoftAssetPtr<A>& value)
         {
-            return Serializer<Core::Uri>::Serialize(stream, value.Uri());
+            size_t serialized = 0;
+            serialized += Serializer<Core::Uri>::Serialize(stream, value.Uri());
+            serialized += Serializer<const Mirror::Class*>::Serialize(stream, &value->GetClass());
+            return serialized;
         }
 
         static size_t Deserialize(BinaryDeserializeStream& stream, Runtime::SoftAssetPtr<A>& value)
         {
+            size_t deserialized = 0;
+
             Core::Uri uri;
-            const auto deserialized = Serializer<Core::Uri>::Deserialize(stream, uri);
-            value = uri;
+            deserialized += Serializer<Core::Uri>::Deserialize(stream, uri);
+
+            const Mirror::Class* clazz;
+            deserialized += Serializer<const Mirror::Class*>::Deserialize(stream, clazz);
+
+            value = { value, *clazz };
             return deserialized;
         }
     };
@@ -251,7 +280,7 @@ namespace Runtime {
     const Core::Uri& AssetPtr<A>::Uri() const
     {
         Assert(ptr != nullptr);
-        return ptr->uri;
+        return ptr->Uri();
     }
 
     template <Common::DerivedFrom<Asset> A>
@@ -267,6 +296,12 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
+    AssetPtr<A>::operator bool() const
+    {
+        return Valid();
+    }
+
+    template <Common::DerivedFrom<Asset> A>
     bool AssetPtr<A>::operator==(nullptr_t) const noexcept
     {
         return ptr == nullptr;
@@ -274,6 +309,12 @@ namespace Runtime {
 
     template <Common::DerivedFrom<Asset> A>
     bool AssetPtr<A>::operator!=(nullptr_t) const noexcept
+    {
+        return ptr != nullptr;
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    bool AssetPtr<A>::Valid() const
     {
         return ptr != nullptr;
     }
@@ -384,14 +425,15 @@ namespace Runtime {
 
     template <Common::DerivedFrom<Asset> A>
     SoftAssetPtr<A>::SoftAssetPtr()
-        : uri()
+        : clazz(nullptr)
         , asset()
     {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    SoftAssetPtr<A>::SoftAssetPtr(Core::Uri inUri)
+    SoftAssetPtr<A>::SoftAssetPtr(Core::Uri inUri, const Mirror::Class& inClass)
         : uri(std::move(inUri))
+        , clazz(&inClass)
         , asset()
     {
     }
@@ -399,6 +441,7 @@ namespace Runtime {
     template <Common::DerivedFrom<Asset> A>
     SoftAssetPtr<A>::SoftAssetPtr(AssetPtr<A>& inAsset)
         : uri(inAsset.Uri())
+        , clazz(&inAsset->GetClass())
         , asset(inAsset)
     {
     }
@@ -406,6 +449,7 @@ namespace Runtime {
     template <Common::DerivedFrom<Asset> A>
     SoftAssetPtr<A>::SoftAssetPtr(const SoftAssetPtr<A>& other)
         : uri(other.uri)
+        , clazz(other.clazz)
         , asset(other.asset)
     {
     }
@@ -413,6 +457,7 @@ namespace Runtime {
     template <Common::DerivedFrom<Asset> A>
     SoftAssetPtr<A>::SoftAssetPtr(SoftAssetPtr<A>&& other) noexcept
         : uri(std::move(other.uri))
+        , clazz(other.clazz)
         , asset(std::move(other.asset))
     {
     }
@@ -421,9 +466,10 @@ namespace Runtime {
     SoftAssetPtr<A>::~SoftAssetPtr() = default;
 
     template <Common::DerivedFrom<Asset> A>
-    SoftAssetPtr<A>& SoftAssetPtr<A>::operator=(Core::Uri inUri)
+    SoftAssetPtr<A>& SoftAssetPtr<A>::operator=(const std::pair<Core::Uri, const Mirror::Class&>& inUriAndClass)
     {
-        uri = std::move(inUri);
+        uri = inUriAndClass.first;
+        clazz = &inUriAndClass.second;
         asset = nullptr;
         return *this;
     }
@@ -432,6 +478,7 @@ namespace Runtime {
     SoftAssetPtr<A>& SoftAssetPtr<A>::operator=(AssetPtr<A>& inAsset)
     {
         uri = inAsset.Uri();
+        clazz = &inAsset->GetClass();
         asset = inAsset;
         return *this;
     }
@@ -440,6 +487,7 @@ namespace Runtime {
     SoftAssetPtr<A>& SoftAssetPtr<A>::operator=(const SoftAssetPtr<A>& other)
     {
         uri = other.uri;
+        clazz = other.clazz;
         asset = other.asset;
         return *this;
     }
@@ -448,6 +496,7 @@ namespace Runtime {
     SoftAssetPtr<A>& SoftAssetPtr<A>::operator=(SoftAssetPtr<A>&& other) noexcept
     {
         uri = std::move(other.uri);
+        clazz = other.clazz;
         asset = std::move(other.asset);
         return *this;
     }
@@ -483,14 +532,20 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    AssetPtr<A> AssetManager::SyncLoad(const Core::Uri& uri)
+    const Mirror::Class* SoftAssetPtr<A>::Class() const
+    {
+        return clazz;
+    }
+
+    template <Common::DerivedFrom<Asset> A>
+    AssetPtr<A> AssetManager::SyncLoad(const Core::Uri& uri, const Mirror::Class& clazz)
     {
         auto iter = weakAssetRefs.find(uri);
         if (iter != weakAssetRefs.end() && !iter->second.Expired()) {
             return iter->second.Lock().StaticCast<A>();
         }
 
-        AssetPtr<A> result = LoadInternal<A>(uri);
+        AssetPtr<A> result = LoadInternal<A>(uri, clazz);
         AssetPtr<Asset> tempRef = result.template StaticCast<Asset>();
         if (iter == weakAssetRefs.end()) {
             weakAssetRefs.emplace(std::make_pair(uri, WeakAssetPtr<Asset>(tempRef)));
@@ -501,13 +556,13 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    void AssetManager::SyncLoadSoft(SoftAssetPtr<A>& softAssetRef)
+    void AssetManager::SyncLoadSoft(SoftAssetPtr<A>& softAssetRef, const Mirror::Class& clazz)
     {
-        softAssetRef = SyncLoad<A>(softAssetRef.Uri());
+        softAssetRef = SyncLoad<A>(softAssetRef.Uri(), clazz);
     }
 
     template <Common::DerivedFrom<Asset> A>
-    void AssetManager::AsyncLoad(const Core::Uri& uri, const OnAssetLoaded<A>& onAssetLoaded)
+    void AssetManager::AsyncLoad(const Core::Uri& uri, const Mirror::Class& clazz, const OnAssetLoaded<A>& onAssetLoaded)
     {
         threadPool.EmplaceTask([=, this]() -> void {
             AssetPtr<A> result = nullptr;
@@ -520,7 +575,7 @@ namespace Runtime {
             }
 
             if (result == nullptr) {
-                result = LoadInternal<A>(uri);
+                result = LoadInternal<A>(uri, clazz);
             }
 
             AssetPtr<Asset> tempRef = result.template StaticCast<Asset>();
@@ -539,10 +594,10 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    void AssetManager::AsyncLoadSoft(SoftAssetPtr<A>& softAssetRef, const OnSoftAssetLoaded<A>& onSoftAssetLoaded)
+    void AssetManager::AsyncLoadSoft(SoftAssetPtr<A>& softAssetRef, const Mirror::Class& clazz, const OnSoftAssetLoaded<A>& onSoftAssetLoaded)
     {
-        threadPool.EmplaceTask([this, softAssetRef, onSoftAssetLoaded]() -> void {
-            AsyncLoad(softAssetRef.Uri(), [&](AssetPtr<A>& ref) -> void {
+        threadPool.EmplaceTask([this, softAssetRef, onSoftAssetLoaded, clazz]() -> void {
+            AsyncLoad(softAssetRef.Uri(), clazz, [&](AssetPtr<A>& ref) -> void {
                 softAssetRef = ref;
                 onSoftAssetLoaded();
             });
@@ -552,14 +607,11 @@ namespace Runtime {
     template <Common::DerivedFrom<Asset> A>
     void AssetManager::Save(const AssetPtr<A>& assetRef)
     {
-        if (assetRef == nullptr) {
-            return;
-        }
-
+        Assert(assetRef.Valid());
         const Core::AssetUriParser parser(assetRef.Uri());
         Common::BinaryFileSerializeStream stream(parser.Parse().Absolute().String());
 
-        Mirror::Any ref = std::ref(*assetRef.Get());
+        const Mirror::Any ref = assetRef->GetClass().Cast(Mirror::ForwardAsArg(*assetRef.Get()));
         ref.Serialize(stream);
     }
 
@@ -570,17 +622,17 @@ namespace Runtime {
     }
 
     template <Common::DerivedFrom<Asset> A>
-    AssetPtr<A> AssetManager::LoadInternal(const Core::Uri& uri)
+    AssetPtr<A> AssetManager::LoadInternal(const Core::Uri& uri, const Mirror::Class& clazz)
     {
         const Core::AssetUriParser parser(uri);
         Common::BinaryFileDeserializeStream stream(parser.Parse().Absolute().String());
 
-        AssetPtr<A> result = Common::SharedPtr<A>(new A(uri));
-        Mirror::Any ref = std::ref(*result.Get());
-        ref.Deserialize(stream);
+        Mirror::Any ptr = clazz.New(uri);
+        ptr.Deref().Deserialize(stream);
 
-        // reset uri is useful for moved asset
-        result->uri = uri;
+        AssetPtr<A> result = Common::SharedPtr<A>(ptr.As<A*>());
+        result->SetUri(uri);
+        result->PostLoad();
         return result;
     }
 }
