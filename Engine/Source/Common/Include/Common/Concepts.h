@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <set>
 #include <map>
+#include <variant>
 
 namespace Common {
     template <typename T> concept BaseEqualComparable = requires(const T& lhs, const T& rhs) { { lhs == rhs } -> std::same_as<bool>; { lhs != rhs } -> std::same_as<bool>; };
@@ -64,12 +65,13 @@ namespace Common {
 
 namespace Common {
     // some types can perform operator== compare, but it requires element type also support operator== compare, so we test it further
-    template <typename T> struct EqualComparableTest<std::optional<T>> { static constexpr bool value = BaseEqualComparable<T>; };
-    template <typename T> struct EqualComparableTest<std::vector<T>> { static constexpr bool value = BaseEqualComparable<T>; };
-    template <typename T> struct EqualComparableTest<std::unordered_set<T>> { static constexpr bool value = BaseEqualComparable<T>; };
-    template <typename T> struct EqualComparableTest<std::set<T>> { static constexpr bool value = BaseEqualComparable<T>; };
-    template <typename T, size_t N> struct EqualComparableTest<std::array<T, N>> { static constexpr bool value = BaseEqualComparable<T>; };
-    template <typename K, typename V> struct EqualComparableTest<std::pair<K, V>> { static constexpr bool value = BaseEqualComparable<K> && BaseEqualComparable<V>; };
-    template <typename K, typename V> struct EqualComparableTest<std::unordered_map<K, V>> { static constexpr bool value = BaseEqualComparable<K> && BaseEqualComparable<V>; };
-    template <typename K, typename V> struct EqualComparableTest<std::map<K, V>> { static constexpr bool value = BaseEqualComparable<K> && BaseEqualComparable<V>; };
+    template <typename T> struct EqualComparableTest<std::optional<T>> { static constexpr bool value = EqualComparableTest<T>::value; };
+    template <typename T> struct EqualComparableTest<std::vector<T>> { static constexpr bool value = EqualComparableTest<T>::value; };
+    template <typename T> struct EqualComparableTest<std::unordered_set<T>> { static constexpr bool value = EqualComparableTest<T>::value; };
+    template <typename T> struct EqualComparableTest<std::set<T>> { static constexpr bool value = EqualComparableTest<T>::value; };
+    template <typename T, size_t N> struct EqualComparableTest<std::array<T, N>> { static constexpr bool value = EqualComparableTest<T>::value; };
+    template <typename K, typename V> struct EqualComparableTest<std::pair<K, V>> { static constexpr bool value = std::conjunction_v<EqualComparableTest<K>, EqualComparableTest<V>>; };
+    template <typename K, typename V> struct EqualComparableTest<std::unordered_map<K, V>> { static constexpr bool value = std::conjunction_v<EqualComparableTest<K>, EqualComparableTest<V>>; };
+    template <typename K, typename V> struct EqualComparableTest<std::map<K, V>> { static constexpr bool value = std::conjunction_v<EqualComparableTest<K>, EqualComparableTest<V>>; };
+    template <typename... T> struct EqualComparableTest<std::variant<T...>> { static constexpr bool value = std::conjunction_v<EqualComparableTest<T>...>; };
 }

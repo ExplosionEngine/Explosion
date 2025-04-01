@@ -40,7 +40,7 @@ namespace Runtime {
         ~StaticMesh() override;
 
     private:
-        EProperty() AssetPtr<IMaterial> material;
+        EProperty() AssetPtr<MaterialInstance> material;
         EProperty() std::vector<StaticMeshLOD> lodVec;
     };
 }

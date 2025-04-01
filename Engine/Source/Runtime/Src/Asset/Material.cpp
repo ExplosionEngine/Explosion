@@ -5,117 +5,80 @@
 #include <Runtime/Asset/Material.h>
 
 namespace Runtime {
-    MaterialParameter::MaterialParameter() = default;
-
-    MaterialParameterType MaterialParameter::GetType() const
-    {
-        constexpr MaterialParameterType vec[] = {
-            MaterialParameterType::max,
-            MaterialParameterType::tInt,
-            MaterialParameterType::tFloat,
-            MaterialParameterType::tFVec2,
-            MaterialParameterType::tFVec3,
-            MaterialParameterType::tFVec4,
-            MaterialParameterType::tFMat4x4
-        };
-        static_assert(sizeof(vec) / sizeof(MaterialParameterType) == std::variant_size_v<decltype(parameter)>);
-        return vec[parameter.index()];
-    }
-
-    int32_t MaterialParameter::GetInt() const
-    {
-        Assert(GetType() == MaterialParameterType::tInt);
-        return std::get<int32_t>(parameter);
-    }
-
-    float MaterialParameter::GetFloat() const
-    {
-        Assert(GetType() == MaterialParameterType::tFloat);
-        return std::get<float>(parameter);
-    }
-
-    Common::FVec2 MaterialParameter::GetFVec2() const
-    {
-        Assert(GetType() == MaterialParameterType::tFVec2);
-        return std::get<Common::FVec2>(parameter);
-    }
-
-    Common::FVec3 MaterialParameter::GetFVec3() const
-    {
-        Assert(GetType() == MaterialParameterType::tFVec3);
-        return std::get<Common::FVec3>(parameter);
-    }
-
-    Common::FVec4 MaterialParameter::GetFVec4() const
-    {
-        Assert(GetType() == MaterialParameterType::tFVec4);
-        return std::get<Common::FVec4>(parameter);
-    }
-
-    Common::FMat4x4 MaterialParameter::GetFMat4x4() const
-    {
-        Assert(GetType() == MaterialParameterType::tFMat4x4);
-        return std::get<Common::FMat4x4>(parameter);
-    }
-
-    void MaterialParameter::SetInt(int32_t inValue)
-    {
-        parameter = inValue;
-    }
-
-    void MaterialParameter::SetFloat(float inValue)
-    {
-        parameter = inValue;
-    }
-
-    void MaterialParameter::SetFVec2(const Common::FVec2& inValue)
-    {
-        parameter = inValue;
-    }
-
-    void MaterialParameter::SetFVec3(const Common::FVec3& inValue)
-    {
-        parameter = inValue;
-    }
-
-    void MaterialParameter::SetFVec4(const Common::FVec4& inValue)
-    {
-        parameter = inValue;
-    }
-
-    void MaterialParameter::SetFMat4x4(const Common::FMat4x4& inValue)
-    {
-        parameter = inValue;
-    }
-
-    IMaterial::IMaterial(Core::Uri inUri)
-        : Asset(std::move(inUri))
+    MaterialBoolVariantField::MaterialBoolVariantField()
+        : defaultValue(false)
+        , sortPriority(0)
     {
     }
 
-    IMaterial::~IMaterial() = default;
+    MaterialRangedUintVariantField::MaterialRangedUintVariantField()
+        : defaultValue(0)
+        , range(0, 0)
+        , sortPriority(0)
+    {
+    }
+
+    MaterialBoolParameterField::MaterialBoolParameterField()
+        : defaultValue(false)
+        , sortPriority(0)
+    {
+    }
+
+    MaterialIntParameterField::MaterialIntParameterField()
+        : defaultValue(0)
+        , sortPriority(0)
+    {
+    }
+
+    MaterialFloatParameterField::MaterialFloatParameterField()
+        : defaultValue(0.0f)
+        , sortPriority(0)
+    {
+    }
+
+    MaterialFVec2ParameterField::MaterialFVec2ParameterField()
+        : defaultValue(Common::FVec2Consts::zero)
+        , sortPriority(0)
+    {
+    }
+
+    MaterialFVec3ParameterField::MaterialFVec3ParameterField()
+        : defaultValue(Common::FVec3Consts::zero)
+        , sortPriority(0)
+    {
+    }
+
+    MaterialFVec4ParameterField::MaterialFVec4ParameterField()
+        : defaultValue(Common::FVec4Consts::zero)
+        , sortPriority(0)
+    {
+    }
+
+    MaterialFMat4x4ParameterField::MaterialFMat4x4ParameterField()
+        : defaultValue(Common::FMat4x4Consts::identity)
+        , sortPriority(0)
+    {
+    }
+
+    MaterialTextureParameterField::MaterialTextureParameterField()
+        : sortPriority(0)
+    {
+    }
+
+    MaterialRenderTargetParameterField::MaterialRenderTargetParameterField()
+        : sortPriority(0)
+    {
+    }
 
     Material::Material(Core::Uri inUri)
-        : IMaterial(std::move(inUri))
+        : Asset(std::move(inUri))
         , type(MaterialType::max)
     {
     }
 
-    Material::~Material() = default;
-
     MaterialType Material::GetType() const
     {
         return type;
-    }
-
-    std::string Material::GetSourceCode() const
-    {
-        return sourceCode;
-    }
-
-    void Material::SetParameter(const std::string& inName, const MaterialParameter& inParameter)
-    {
-        parameters[inName] = inParameter;
     }
 
     void Material::SetType(MaterialType inType)
@@ -123,60 +86,194 @@ namespace Runtime {
         type = inType;
     }
 
-    void Material::SetSourceCode(const std::string& inSourceCode)
+    const std::string& Material::GetSource() const
     {
-        sourceCode = inSourceCode;
+        return source;
     }
 
-    IMaterial::ParameterMap& Material::GetParameters()
+    void Material::SetSource(const std::string& inSource)
     {
-        return parameters;
+        source = inSource;
     }
 
-    const IMaterial::ParameterMap& Material::GetParameters() const
+    bool Material::HasVariantField(const std::string& inName) const
     {
-        return parameters;
+        return variantFields.contains(inName);
+    }
+
+    Material::VariantField& Material::GetVariantField(const std::string& inName)
+    {
+        return variantFields.at(inName);
+    }
+
+    const Material::VariantField& Material::GetVariantField(const std::string& inName) const
+    {
+        return variantFields.at(inName);
+    }
+
+    Material::VariantField* Material::FindVariantField(const std::string& inName)
+    {
+        return HasVariantField(inName) ? &variantFields.at(inName) : nullptr;
+    }
+
+    const Material::VariantField* Material::FindVariantField(const std::string& inName) const
+    {
+        return HasVariantField(inName) ? &variantFields.at(inName) : nullptr;
+    }
+
+    Material::VariantFieldMap& Material::GetVariantFields()
+    {
+        return variantFields;
+    }
+
+    const Material::VariantFieldMap& Material::GetVariantFields() const
+    {
+        return variantFields;
+    }
+
+    Material::VariantField& Material::EmplaceVariantField(const std::string& inName)
+    {
+        variantFields.emplace(inName, Material::VariantField {});
+        return variantFields.at(inName);
+    }
+
+    bool Material::HasParameterField(const std::string& inName) const
+    {
+        return parameterFields.contains(inName);
+    }
+
+    Material::ParameterField& Material::GetParameterField(const std::string& inName)
+    {
+        return parameterFields.at(inName);
+    }
+
+    const Material::ParameterField& Material::GetParameterField(const std::string& inName) const
+    {
+        return parameterFields.at(inName);
+    }
+
+    Material::ParameterField* Material::FindParameterField(const std::string& inName)
+    {
+        return HasParameterField(inName) ? &parameterFields.at(inName) : nullptr;
+    }
+
+    const Material::ParameterField* Material::FindParameterField(const std::string& inName) const
+    {
+        return HasParameterField(inName) ? &parameterFields.at(inName) : nullptr;
+    }
+
+    Material::ParameterFieldMap& Material::GetParameterFields()
+    {
+        return parameterFields;
+    }
+
+    const Material::ParameterFieldMap& Material::GetParameterFields() const
+    {
+        return parameterFields;
+    }
+
+    Material::ParameterField& Material::EmplaceParameterField(const std::string& inName)
+    {
+        parameterFields.emplace(inName, Material::ParameterField {});
+        return parameterFields.at(inName);
     }
 
     MaterialInstance::MaterialInstance(Core::Uri inUri)
-        : IMaterial(std::move(inUri))
+        : Asset(std::move(inUri))
     {
     }
 
-    MaterialInstance::~MaterialInstance() = default;
-
-    MaterialType MaterialInstance::GetType() const
-    {
-        return material->GetType();
-    }
-
-    std::string MaterialInstance::GetSourceCode() const
-    {
-        return material->GetSourceCode();
-    }
-
-    void MaterialInstance::SetParameter(const std::string& inName, const MaterialParameter& inParameter)
-    {
-        parameters[inName] = inParameter;
-    }
-
-    IMaterial::ParameterMap& MaterialInstance::GetParameters()
-    {
-        return parameters;
-    }
-
-    const IMaterial::ParameterMap& MaterialInstance::GetParameters() const
-    {
-        return parameters;
-    }
-
-    AssetPtr<Material> MaterialInstance::GetMaterial() const
+    const AssetPtr<Material>& MaterialInstance::GetMaterial() const
     {
         return material;
     }
 
-    void MaterialInstance::SetMaterial(const AssetPtr<Material>& inMaterial) // NOLINT
+    void MaterialInstance::SetMaterial(const AssetPtr<Material>& inMaterial)
     {
         material = inMaterial;
     }
-}
+
+    bool MaterialInstance::HasVariant(const std::string& inName) const
+    {
+        return material->HasVariantField(inName);
+    }
+
+    MaterialInstance::Variant MaterialInstance::GetVariant(const std::string& inName) const
+    {
+        if (variants.contains(inName)) {
+            return variants.at(inName);
+        }
+
+        Variant result;
+        std::visit([&](auto&& variantField) -> void {
+            result = variantField.defaultValue;
+        }, material->GetVariantField(inName));
+        return result;
+    }
+
+    void MaterialInstance::SetVariant(const std::string& inName, const Variant& inVariant)
+    {
+        Assert(inVariant.index() == material->GetVariantField(inName).index());
+        variants[inName] = inVariant;
+    }
+
+    MaterialInstance::VariantMap MaterialInstance::GetVariants() const
+    {
+        VariantMap result;
+        const auto& variantFields = material->GetVariantFields();
+        result.reserve(variantFields.size());
+
+        for (const auto& [name, variantField] : variantFields) {
+            if (variants.contains(name)) {
+                result.emplace(name, variants.at(name));
+            } else {
+                std::visit([&](auto&& field) -> void {
+                    result.emplace(name, field.defaultValue);
+                }, variantField);
+            }
+        }
+        return result;
+    }
+
+    bool MaterialInstance::HasParameter(const std::string& inName) const
+    {
+        return material->HasParameterField(inName);
+    }
+
+    MaterialInstance::Parameter MaterialInstance::GetParameter(const std::string& inName) const
+    {
+        if (parameters.contains(inName)) {
+            return parameters.at(inName);
+        }
+
+        Parameter result;
+        std::visit([&](auto&& parameterField) -> void {
+            result = parameterField.defaultValue;
+        }, material->GetParameterField(inName));
+        return result;
+    }
+
+    void MaterialInstance::SetParameter(const std::string& inName, const Parameter& inParameter)
+    {
+        Assert(inParameter.index() == material->GetParameterField(inName).index());
+        parameters[inName] = inParameter;
+    }
+
+    MaterialInstance::ParameterMap MaterialInstance::GetParameters() const
+    {
+        ParameterMap result;
+        const auto& parameterFields = material->GetParameterFields();
+        result.reserve(parameterFields.size());
+
+        for (const auto& [name, parameterField] : parameterFields) {
+            if (parameters.contains(name)) {
+                result.emplace(name, parameters.at(name));
+            } else {
+                std::visit([&](auto&& parameter) -> void {
+                    result.emplace(name, parameter.defaultValue);
+                }, parameterField);
+            }
+        }
+        return result;
+    }
+} // namespace Runtime
