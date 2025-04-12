@@ -1,6 +1,6 @@
 
-<center>
-    <div><img width="800" src=".github/resource/Logo.png" alt="Explosion Logo"/></div>
+<div>
+    <div><img width="400" src=".github/resource/Logo.png" alt="Explosion Logo"/></div>
     <div>
         <a href="https://app.codacy.com/gh/ExplosionEngine/Explosion/dashboard?branch=master">
             <img src="https://img.shields.io/codacy/grade/98afe27fd39b4b39b4c6acd8361e6d02?style=for-the-badge" alt="Codacy Grade"/>
@@ -10,7 +10,7 @@
         </a>
         <img src="https://img.shields.io/github/commit-activity/m/ExplosionEngine/Explosion?style=for-the-badge" alt="Commit Activity"/>
     </div>
-</center>
+</div>
 
 # Introduction
 

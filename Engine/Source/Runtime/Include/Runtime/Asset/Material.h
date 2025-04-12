@@ -8,8 +8,8 @@
 
 #include <Common/Math/Vector.h>
 #include <Common/Math/Matrix.h>
-
 #include <Runtime/Asset/Asset.h>
+#include <Runtime/Asset/Texture.h>
 #include <Runtime/Meta.h>
 #include <Runtime/Api.h>
 
@@ -21,98 +21,207 @@ namespace Runtime {
         max
     };
 
-    enum class EEnum() MaterialParameterType : uint8_t {
-        tInt,
-        tFloat,
-        tFVec2,
-        tFVec3,
-        tFVec4,
-        tFMat4x4,
-        max
+    struct RUNTIME_API EClass() MaterialBoolVariantField {
+        EClassBody(MaterialBoolVariantField)
+
+        MaterialBoolVariantField();
+
+        EProperty() bool defaultValue;
+        EProperty() uint8_t sortPriority;
     };
 
-    class RUNTIME_API EClass() MaterialParameter {
-        EClassBody(MaterialParameter)
+    struct RUNTIME_API EClass() MaterialRangedUintVariantField {
+        EClassBody(MaterialRangedUintVariantField)
 
-    public:
-        MaterialParameter();
+        MaterialRangedUintVariantField();
 
-        EFunc() MaterialParameterType GetType() const;
-        EFunc() int32_t GetInt() const;
-        EFunc() float GetFloat() const;
-        EFunc() Common::FVec2 GetFVec2() const;
-        EFunc() Common::FVec3 GetFVec3() const;
-        EFunc() Common::FVec4 GetFVec4() const;
-        EFunc() Common::FMat4x4 GetFMat4x4() const;
-        EFunc() void SetInt(int32_t inValue);
-        EFunc() void SetFloat(float inValue);
-        EFunc() void SetFVec2(const Common::FVec2& inValue);
-        EFunc() void SetFVec3(const Common::FVec3& inValue);
-        EFunc() void SetFVec4(const Common::FVec4& inValue);
-        EFunc() void SetFMat4x4(const Common::FMat4x4& inValue);
-
-    private:
-        std::variant<std::monostate, int32_t, float, Common::FVec2, Common::FVec3, Common::FVec4, Common::FMat4x4> parameter;
+        EProperty() uint8_t defaultValue;
+        EProperty() std::pair<uint8_t, uint8_t> range;
+        EProperty() uint8_t sortPriority;
     };
 
-    class RUNTIME_API EClass() IMaterial : public Asset {
-        EPolyClassBody(IMaterial)
+    struct RUNTIME_API EClass() MaterialBoolParameterField {
+        EClassBody(MaterialBoolParameterField)
 
-    public:
-        using ParameterMap = std::unordered_map<std::string, MaterialParameter>;
+        MaterialBoolParameterField();
 
-        ~IMaterial() override;
-
-        EFunc() virtual MaterialType GetType() const = 0;
-        EFunc() virtual std::string GetSourceCode() const = 0;
-        EFunc() virtual void SetParameter(const std::string& inName, const MaterialParameter& inParameter) = 0;
-        EFunc() virtual ParameterMap& GetParameters() = 0;
-        EFunc() virtual const ParameterMap& GetParameters() const = 0;
-
-    protected:
-        explicit IMaterial(Core::Uri inUri);
+        EProperty() bool defaultValue;
+        EProperty() uint8_t sortPriority;
     };
 
-    class RUNTIME_API EClass() Material final : public IMaterial {
+    struct RUNTIME_API EClass() MaterialIntParameterField {
+        EClassBody(MaterialIntParameterField)
+
+        MaterialIntParameterField();
+
+        EProperty() int32_t defaultValue;
+        EProperty() std::optional<std::pair<int32_t, int32_t>> range;
+        EProperty() uint8_t sortPriority;
+    };
+
+    struct RUNTIME_API EClass() MaterialFloatParameterField {
+        EClassBody(MaterialFloatParameterField)
+
+        MaterialFloatParameterField();
+
+        EProperty() float defaultValue;
+        EProperty() std::optional<std::pair<float, float>> range;
+        EProperty() uint8_t sortPriority;
+    };
+
+    struct RUNTIME_API EClass() MaterialFVec2ParameterField {
+        EClassBody(MaterialFVec2ParameterField)
+
+        MaterialFVec2ParameterField();
+
+        EProperty() Common::FVec2 defaultValue;
+        EProperty() std::optional<std::pair<Common::FVec2, Common::FVec2>> range;
+        EProperty() uint8_t sortPriority;
+    };
+
+    struct RUNTIME_API EClass() MaterialFVec3ParameterField {
+        EClassBody(MaterialFVec3ParameterField)
+
+        MaterialFVec3ParameterField();
+
+        EProperty() Common::FVec3 defaultValue;
+        EProperty() std::optional<std::pair<Common::FVec3, Common::FVec3>> range;
+        EProperty() uint8_t sortPriority;
+    };
+
+    struct RUNTIME_API EClass() MaterialFVec4ParameterField {
+        EClassBody(MaterialFVec4ParameterField)
+
+        MaterialFVec4ParameterField();
+
+        EProperty() Common::FVec4 defaultValue;
+        EProperty() std::optional<std::pair<Common::FVec4, Common::FVec4>> range;
+        EProperty() uint8_t sortPriority;
+    };
+
+    struct RUNTIME_API EClass() MaterialFMat4x4ParameterField {
+        EClassBody(MaterialFMat4x4ParameterField)
+
+        MaterialFMat4x4ParameterField();
+
+        EProperty() Common::FMat4x4 defaultValue;
+        EProperty() uint8_t sortPriority;
+    };
+
+    struct RUNTIME_API EClass() MaterialTextureParameterField {
+        EClassBody(MaterialTextureParameterField)
+
+        MaterialTextureParameterField();
+
+        EProperty() AssetPtr<Texture> defaultValue;
+        EProperty() uint8_t sortPriority;
+    };
+
+    struct RUNTIME_API EClass() MaterialRenderTargetParameterField {
+        EClassBody(MaterialRenderTargetParameterField)
+
+        MaterialRenderTargetParameterField();
+
+        EProperty() AssetPtr<RenderTarget> defaultValue;
+        EProperty() uint8_t sortPriority;
+    };
+
+    class RUNTIME_API EClass() Material final : public Asset {
         EPolyClassBody(Material)
 
     public:
+        using VariantField = std::variant<
+            MaterialBoolVariantField,
+            MaterialRangedUintVariantField
+        >;
+        using VariantFieldMap = std::unordered_map<std::string, VariantField>;
+
+        using ParameterField = std::variant<
+            MaterialBoolParameterField,
+            MaterialIntParameterField,
+            MaterialFloatParameterField,
+            MaterialFVec2ParameterField,
+            MaterialFVec3ParameterField,
+            MaterialFVec4ParameterField,
+            MaterialFMat4x4ParameterField,
+            MaterialTextureParameterField,
+            MaterialRenderTargetParameterField
+        >;
+        using ParameterFieldMap = std::unordered_map<std::string, ParameterField>;
+
         explicit Material(Core::Uri inUri);
-        ~Material() override;
 
-        EFunc() MaterialType GetType() const override;
-        EFunc() std::string GetSourceCode() const override;
-        EFunc() void SetParameter(const std::string& inName, const MaterialParameter& inParameter) override;
-        EFunc() ParameterMap& GetParameters() override;
-        EFunc() const ParameterMap& GetParameters() const override;
-
+        EFunc() MaterialType GetType() const;
         EFunc() void SetType(MaterialType inType);
-        EFunc() void SetSourceCode(const std::string& inSourceCode);
+        EFunc() const std::string& GetSource() const;
+        EFunc() void SetSource(const std::string& inSource);
+
+        EFunc() bool HasVariantField(const std::string& inName) const;
+        EFunc() VariantField& GetVariantField(const std::string& inName);
+        EFunc() const VariantField& GetVariantField(const std::string& inName) const;
+        EFunc() VariantField* FindVariantField(const std::string& inName);
+        EFunc() const VariantField* FindVariantField(const std::string& inName) const;
+        EFunc() VariantFieldMap& GetVariantFields();
+        EFunc() const VariantFieldMap& GetVariantFields() const;
+        EFunc() VariantField& EmplaceVariantField(const std::string& inName);
+
+        EFunc() bool HasParameterField(const std::string& inName) const;
+        EFunc() ParameterField& GetParameterField(const std::string& inName);
+        EFunc() const ParameterField& GetParameterField(const std::string& inName) const;
+        EFunc() ParameterField* FindParameterField(const std::string& inName);
+        EFunc() const ParameterField* FindParameterField(const std::string& inName) const;
+        EFunc() ParameterFieldMap& GetParameterFields();
+        EFunc() const ParameterFieldMap& GetParameterFields() const;
+        EFunc() ParameterField& EmplaceParameterField(const std::string& inName);
 
     private:
         EProperty() MaterialType type;
-        EProperty() std::string sourceCode;
-        EProperty() ParameterMap parameters;
+        EProperty() std::string source;
+        EProperty() VariantFieldMap variantFields;
+        EProperty() ParameterFieldMap parameterFields;
     };
 
-    class RUNTIME_API EClass() MaterialInstance final : public IMaterial {
+    class RUNTIME_API EClass() MaterialInstance final : public Asset {
         EPolyClassBody(MaterialInstance)
 
     public:
+        using Variant = std::variant<
+            bool,
+            uint8_t
+        >;
+        using VariantMap = std::unordered_map<std::string, Variant>;
+
+        using Parameter = std::variant<
+            bool,
+            int32_t,
+            float,
+            Common::FVec2,
+            Common::FVec3,
+            Common::FVec4,
+            Common::FMat4x4,
+            AssetPtr<Texture>,
+            AssetPtr<RenderTarget>
+        >;
+        using ParameterMap = std::unordered_map<std::string, Parameter>;
+
         explicit MaterialInstance(Core::Uri inUri);
-        ~MaterialInstance() override;
 
-        EFunc() MaterialType GetType() const override;
-        EFunc() std::string GetSourceCode() const override;
-        EFunc() void SetParameter(const std::string& inName, const MaterialParameter& inParameter) override;
-        EFunc() ParameterMap& GetParameters() override;
-        EFunc() const ParameterMap& GetParameters() const override;
-
-        EFunc() AssetPtr<Material> GetMaterial() const;
+        EFunc() const AssetPtr<Material>& GetMaterial() const;
         EFunc() void SetMaterial(const AssetPtr<Material>& inMaterial);
+
+        EFunc() bool HasVariant(const std::string& inName) const;
+        EFunc() Variant GetVariant(const std::string& inName) const;
+        EFunc() void SetVariant(const std::string& inName, const Variant& inVariant);
+        EFunc() VariantMap GetVariants() const;
+
+        EFunc() bool HasParameter(const std::string& inName) const;
+        EFunc() Parameter GetParameter(const std::string& inName) const;
+        EFunc() void SetParameter(const std::string& inName, const Parameter& inParameter);
+        EFunc() ParameterMap GetParameters() const;
 
     private:
         EProperty() AssetPtr<Material> material;
+        EProperty() VariantMap variants;
         EProperty() ParameterMap parameters;
     };
 }

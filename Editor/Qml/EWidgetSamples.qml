@@ -352,6 +352,26 @@ Rectangle {
 
                 RowLayout {
                     ETextField {
+                        id: textFieldWithValidator
+                        Layout.preferredWidth: 300
+                        placeHolderText: 'Hello World'
+                        validator: IntValidator {
+                            bottom: 1
+                            top: 10
+                        }
+                        onAccepted: {
+                            console.log('value accepted, value=' + text)
+                        }
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'With Validator'
+                    }
+                }
+
+                RowLayout {
+                    ETextField {
                         Layout.preferredWidth: 300
                         wrapMode: TextInput.Wrap
                         text: 'This is a very very very very very very very very very long words.'
@@ -367,6 +387,40 @@ Rectangle {
                     ETextField {
                         Layout.fillWidth: true
                         placeHolderText: 'Block Input'
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.leftMargin: 5
+                Layout.topMargin: 35
+                EText {
+                    text: 'NumberInput'
+                    style: EText.Style.Title1
+                }
+            }
+
+            ColumnLayout {
+                Layout.margins: 5
+
+                RowLayout {
+                    ENumberInput {}
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'Default'
+                    }
+                }
+
+                RowLayout {
+                    ENumberInput {
+                        from: 0
+                        to: 10
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'Limit 0-10'
                     }
                 }
             }
