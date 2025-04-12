@@ -5,7 +5,10 @@ import QtQuick.Controls.Basic
 Item {
     property string placeHolderText: ''
     property int wrapMode: TextInput.NoWrap
-    property string text: ''
+    property string text: textField.text
+    property var validator: null
+
+    signal accepted()
 
     id: root
     implicitWidth: textField.implicitWidth
@@ -24,6 +27,8 @@ Item {
         font.pixelSize: ETheme.contentFontSize
         font.family: ETheme.fontFamily
         wrapMode: root.wrapMode
+        validator: root.validator
+        onAccepted: root.accepted()
 
         background: Rectangle {
             radius: 5
