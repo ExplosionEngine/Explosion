@@ -24,7 +24,11 @@ Item {
             id: textField
             implicitWidth: 40
             text: spinBox.textFromValue(spinBox.value)
+            readOnly: !root.editable
             validator: spinBox.validator
+            onAccepted: {
+                root.value = spinBox.valueFromText(displayText, Qt.locale())
+            }
         }
 
         down.indicator: Rectangle {
@@ -33,7 +37,7 @@ Item {
             implicitWidth: 25
             implicitHeight: textField.implicitHeight
             radius: 5
-            color: spinBox.down.hovered ? ETheme.secondaryBgColor : ETheme.primaryBgColor
+            color: spinBox.down.hovered ? ETheme.primaryColor : ETheme.primaryBgColor
 
             EIcon {
                 name: 'minus'
@@ -47,7 +51,7 @@ Item {
             implicitWidth: 25
             implicitHeight: textField.implicitHeight
             radius: 5
-            color: spinBox.up.hovered ? ETheme.secondaryBgColor : ETheme.primaryBgColor
+            color: spinBox.up.hovered ? ETheme.primaryColor : ETheme.primaryBgColor
 
             EIcon {
                 name: 'add'

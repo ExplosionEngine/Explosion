@@ -423,6 +423,17 @@ Rectangle {
                         text: 'Limit 0-10'
                     }
                 }
+
+                RowLayout {
+                    ENumberInput {
+                        editable: true
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'Editable'
+                    }
+                }
             }
         }
     }
