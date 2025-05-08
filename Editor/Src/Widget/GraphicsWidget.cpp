@@ -4,6 +4,7 @@
 
 #include <Editor/Widget/GraphicsWidget.h>
 #include <Editor/Widget/moc_GraphicsWidget.cpp> // NOLINT
+#include <Render/RenderModule.h>
 
 namespace Editor {
     GraphicsWidget::GraphicsWidget(QWidget* inParent)

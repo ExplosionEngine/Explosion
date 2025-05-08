@@ -26,6 +26,7 @@ namespace Common {
         template <typename T> static size_t SwapWithLastAndDelete(std::vector<T>& vector, size_t index);
         template <typename T> static std::vector<T> GetIntersection(const std::vector<T>& lhs, const std::vector<T>& rhs);
         template <typename T> static std::vector<T> GetDifferences(const std::vector<T>& lhs, const std::vector<T>& rhs);
+        template <typename T> static std::vector<T> Combine(const std::vector<T>& lhs, const std::vector<T>& rhs);
     };
 
     class SetUtils {
@@ -332,6 +333,15 @@ namespace Common {
     {
         std::vector<T> result;
         std::set_difference(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), std::back_inserter(result));
+        return result;
+    }
+
+    template <typename T>
+    std::vector<T> VectorUtils::Combine(const std::vector<T>& lhs, const std::vector<T>& rhs)
+    {
+        std::vector<T> result;
+        result.insert(result.end(), lhs.begin(), lhs.end());
+        result.insert(result.end(), rhs.begin(), rhs.end());
         return result;
     }
 

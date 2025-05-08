@@ -4,27 +4,216 @@
 
 #pragma once
 
+#include <cstdint>
 #include <vector>
-#include <unordered_map>
 #include <utility>
 #include <tuple>
+#include <array>
 
-#include <Common/Utility.h>
-#include <Common/Debug.h>
-#include <Common/Hash.h>
-#include <Common/File.h>
-#include <RHI/Common.h>
-#include <RHI/Device.h>
-#include <RHI/ShaderModule.h>
-#include <RHI/BindGroupLayout.h>
-#include <RHI/Pipeline.h>
-#include <Core/Uri.h>
+#include <RHI/RHI.h>
+
+#define StaticShaderInfo(inClass, inName, inStage, inSourceFile, inEntryPoint) \
+    public: \
+        \
+        static const inClass& Get(); \
+        \
+    private: \
+        friend class StaticShaderType<inClass>; \
+        \
+        static constexpr const char* name = inName; \
+        static constexpr RHI::ShaderStageBits stage = inStage; \
+        static constexpr const char* sourceFile = inSourceFile; \
+        static constexpr const char* entryPoint = inEntryPoint; \
+
+#define BoolVariantField(inName, inMacro, inDefaultValue) \
+    struct inName { \
+        static constexpr Render::VariantFieldType type = Render::VariantFieldType::vfBool; \
+        static constexpr const char* macro = #inMacro; \
+        static constexpr bool defaultValue = inDefaultValue; \
+    }; \
+
+#define RangedIntVariantField(inName, inMacro, inDefaultValue, inFrom, inTo) \
+    struct inName { \
+        static constexpr Render::VariantFieldType type = Render::VariantFieldType::vfRangedInt; \
+        static constexpr const char* macro = #inMacro; \
+        static constexpr int32_t defaultValue = inDefaultValue; \
+        static constexpr int32_t from = inFrom; \
+        static constexpr int32_t to = inTo; \
+    }; \
+
+#define MakeVariantFieldVec(...) \
+    using VariantFieldVec = std::tuple<__VA_ARGS__>; \
+
+#define EmptyVariantFieldVec \
+    using VariantFieldVec = std::tuple<>; \
+
+#define BeginIncludeDirectories \
+    static constexpr auto includeDirectories = std::to_array<std::string_view>({ \
+
+#define EndIncludeDirectories \
+    }); \
+
+#define EmptyIncludeDirectories \
+    static constexpr auto includeDirectories = std::array<std::string_view, 0> {}; \
+
+#define ImplementStaticShaderType(inClass) \
+    static inClass __staticShaderTypeInstance_##inClass = inClass(); \
+    \
+    const inClass& inClass::Get() { \
+        return __staticShaderTypeInstance_##inClass; \
+    } \
 
 namespace Render {
-    class Shader {};
+    enum class VariantFieldType : uint8_t {
+        vfBool,
+        vfRangedInt,
+        max
+    };
+
+    struct ShaderBoolVariantField {
+        std::string macro;
+        bool defaultValue;
+
+        bool operator==(const ShaderBoolVariantField& inRhs) const;
+    };
+
+    struct ShaderRangedIntVariantField {
+        std::string macro;
+        int32_t defaultValue;
+        std::pair<int32_t, int32_t> range;
+
+        bool operator==(const ShaderRangedIntVariantField& inRhs) const;
+    };
 
     using ShaderTypeKey = uint64_t;
-    using VariantKey = uint64_t;
+    using ShaderVariantKey = uint64_t;
+    using ShaderSourceHash = uint64_t;
+    using ShaderVariantField = std::variant<ShaderBoolVariantField, ShaderRangedIntVariantField>;
+    using ShaderVariantFieldVec = std::vector<ShaderVariantField>;
+    using ShaderVariantValue = std::variant<bool, int32_t>;
+    using ShaderVariantValueMap = std::unordered_map<std::string, ShaderVariantValue>;
+
+    constexpr ShaderSourceHash shaderSourceHashNotCompiled = 0;
+
+    class ShaderUtils {
+    public:
+        static std::vector<ShaderVariantValueMap> GetAllVariants(const ShaderVariantFieldVec& inFields);
+        static ShaderVariantKey ComputeVariantKey(const ShaderVariantFieldVec& inFields, const ShaderVariantValueMap& inVariantSet);
+        static std::vector<std::string> ComputeVariantDefinitions(const ShaderVariantFieldVec& inFields, const ShaderVariantValueMap& inVariantSet);
+        static ShaderSourceHash ComputeShaderSourceHash(const std::string& inSourceFile, const std::vector<std::string>& inIncludeDirectories);
+
+    private:
+        static std::string GetAbsoluteIncludeFile(const std::string& inPath, const std::vector<std::string>& inIncludeDirectories);
+        static void GatherShaderSources(std::unordered_map<std::string, std::string>& outFileAndSource, const std::string& inSourceFile, const std::vector<std::string>& inIncludeDirectories);
+    };
+
+    struct VertexFactoryInput {
+        std::string name;
+        RHI::VertexFormat vertexFormat;
+        uint32_t offset;
+    };
+
+    using VertexFactoryInputVec = std::vector<VertexFactoryInput>;
+
+    class VertexFactoryType {
+    public:
+        virtual ~VertexFactoryType();
+
+        virtual const std::string& GetName() const = 0;
+        virtual const std::string& GetSourceFile() const = 0;
+        virtual const VertexFactoryInputVec& GetVertexInputs() const = 0;
+        virtual const ShaderVariantFieldVec& GetVariantFields() const = 0;
+
+    protected:
+        VertexFactoryType();
+    };
+
+    template <typename T>
+    class StaticVertexFactoryType : public VertexFactoryType {
+    public:
+        StaticVertexFactoryType();
+        ~StaticVertexFactoryType() override;
+
+        const std::string& GetName() const override;
+        const std::string& GetSourceFile() const override;
+        const VertexFactoryInputVec& GetVertexInputs() const override;
+        const ShaderVariantFieldVec& GetVariantFields() const override;
+    };
+
+    class ShaderType {
+    public:
+        NonCopyable(ShaderType)
+        NonMovable(ShaderType)
+
+        virtual ~ShaderType();
+        virtual const std::string& GetName() const = 0;
+        virtual RHI::ShaderStageBits GetStage() const = 0;
+        virtual const std::string& GetSourceFile() const = 0;
+        virtual const std::string& GetEntryPoint() const = 0;
+        virtual const std::vector<std::string>& GetIncludeDirectories() const = 0;
+        virtual const ShaderVariantFieldVec& GetVariantFields() const = 0;
+
+        ShaderTypeKey GetKey() const;
+
+    protected:
+        static ShaderTypeKey MakeTypeKeyFromName(const std::string& inName);
+
+        explicit ShaderType(ShaderTypeKey inKey);
+
+        ShaderTypeKey key;
+    };
+
+    template <typename T>
+    class StaticShaderType : public ShaderType {
+    public:
+        StaticShaderType();
+        ~StaticShaderType() override;
+
+        const std::string& GetName() const override;
+        RHI::ShaderStageBits GetStage() const override;
+        const std::string& GetSourceFile() const override;
+        const std::string& GetEntryPoint() const override;
+        const std::vector<std::string>& GetIncludeDirectories() const override;
+        const ShaderVariantFieldVec& GetVariantFields() const override;
+
+    private:
+        template <size_t... I> void InitVariantFieldsFromStatic(std::index_sequence<I...>);
+
+        std::string name;
+        std::string sourceFile;
+        std::string entryPoint;
+        std::vector<std::string> includeDirectories;
+        ShaderVariantFieldVec variantFields;
+    };
+
+    class MaterialShaderType final : public ShaderType {
+    public:
+        MaterialShaderType(
+            const VertexFactoryType& inVertexFactory,
+            std::string inName,
+            RHI::ShaderStageBits inStage,
+            std::string inSourceFile,
+            std::string inEntryPoint,
+            const std::vector<std::string>& inIncludeDirectories,
+            const ShaderVariantFieldVec& inShaderVariantFields);
+        ~MaterialShaderType() override;
+
+        const std::string& GetName() const override;
+        RHI::ShaderStageBits GetStage() const override;
+        const std::string& GetSourceFile() const override;
+        const std::string& GetEntryPoint() const override;
+        const std::vector<std::string>& GetIncludeDirectories() const override;
+        const ShaderVariantFieldVec& GetVariantFields() const override;
+
+    private:
+        const VertexFactoryType& vertexFactory;
+        std::string name;
+        RHI::ShaderStageBits stage;
+        std::string sourceFile;
+        std::string entryPoint;
+        std::vector<std::string> includeDirectories;
+        ShaderVariantFieldVec shaderVariantFields;
+    };
 
     struct ShaderReflectionData {
         using VertexSemantic = std::string;
@@ -44,547 +233,156 @@ namespace Render {
         std::unordered_map<ResourceBindingName, LayoutAndResourceBinding> resourceBindings;
     };
 
-    struct ShaderArchive {
+    struct ShaderModuleData {
+        std::string entryPoint;
         std::vector<uint8_t> byteCode;
         ShaderReflectionData reflectionData;
     };
 
-    class IShaderType {
-    public:
-        virtual ~IShaderType();
-        virtual const std::string& GetName() = 0;
-        virtual ShaderTypeKey GetKey() = 0;
-        virtual RHI::ShaderStageBits GetStage() = 0;
-        virtual const std::string& GetEntryPoint() = 0;
-        virtual const std::string& GetCode() = 0;
-        virtual uint32_t GetVariantNum() = 0;
-        virtual const std::vector<VariantKey>& GetVariants() = 0;
-        virtual const std::vector<std::string>& GetDefinitions(VariantKey variantKey) = 0;
-        virtual void Reload() = 0;
-        virtual void Invalidate() = 0;
-    };
-
     struct ShaderInstance {
-        RHI::ShaderModule* rhiHandle = nullptr;
-        ShaderTypeKey typeKey = 0;
-        VariantKey variantKey = 0;
-        const ShaderReflectionData* reflectionData = nullptr;
+        ShaderTypeKey typeKey;
+        ShaderVariantKey variantKey;
+        RHI::ShaderModule* rhiHandle;
+        const ShaderReflectionData* reflectionData;
 
-        bool IsValid() const;
+        ShaderInstance();
+
+        bool Valid() const;
         uint64_t Hash() const;
     };
 
-    using ShaderArchivePackage = std::unordered_map<VariantKey, ShaderArchive>;
-
-    class ShaderArchiveStorage {
+    class ShaderRegistry {
     public:
-        static ShaderArchiveStorage& Get();
-        ShaderArchiveStorage();
-        ~ShaderArchiveStorage();
-        NonCopyable(ShaderArchiveStorage)
+        static ShaderRegistry& Get();
 
-        void UpdateShaderArchivePackage(ShaderTypeKey shaderTypeKey, ShaderArchivePackage&& shaderArchivePackage);
-        const ShaderArchivePackage& GetShaderArchivePackage(ShaderTypeKey shaderTypeKey);
-        void InvalidateAll();
-        void Invalidate(ShaderTypeKey shaderTypeKey);
+        ~ShaderRegistry();
+
+        void RegisterType(const ShaderType& inShaderType);
+        void UnregisterType(const ShaderType& inShaderType);
+        void ResetType(const ShaderType& inShaderType);
+        void ResetAllTypes();
+        const ShaderType& GetType(ShaderTypeKey inKey) const;
+        std::vector<const ShaderType*> AllTypes() const;
+        ShaderInstance GetShaderInstance(RHI::Device& inDevice, const ShaderType& inShaderType, const ShaderVariantValueMap& inShaderVariants);
 
     private:
-        std::unordered_map<ShaderTypeKey, ShaderArchivePackage> shaderArchivePackages;
+        friend class ShaderTypeCompiler;
+
+        using DeviceShaderModulesMap = std::unordered_map<ShaderVariantKey, Common::UniquePtr<RHI::ShaderModule>>;
+
+        struct ShaderStorage {
+            const ShaderType* shaderType;
+            ShaderSourceHash sourceHash;
+            std::unordered_map<ShaderVariantKey, ShaderModuleData> shaderModuleDatas;
+            std::unordered_map<RHI::Device*, DeviceShaderModulesMap> deviceShaderModules;
+        };
+
+        ShaderRegistry();
+
+        std::unordered_map<ShaderTypeKey, ShaderStorage> shaderStorages;
     };
 }
 
 namespace Render {
-    class GlobalShader : public Shader {};
-
-    template <typename Shader>
-    class GlobalShaderType final : public IShaderType {
-    public:
-        static GlobalShaderType& Get();
-
-        GlobalShaderType();
-
-        ~GlobalShaderType() override;
-        NonCopyable(GlobalShaderType)
-
-        const std::string& GetName() override;
-        ShaderTypeKey GetKey() override;
-        RHI::ShaderStageBits GetStage() override;
-        const std::string& GetEntryPoint() override;
-        const std::string& GetCode() override;
-        uint32_t GetVariantNum() override;
-        const std::vector<VariantKey>& GetVariants() override;
-        const std::vector<std::string>& GetDefinitions(VariantKey variantKey) override;
-        void Reload() override;
-        void Invalidate() override;
-
-    private:
-        void ReloadInternal();
-        void ReadCode();
-        void ComputeVariants();
-        void ComputeVariantDefinitions();
-
-        std::string name;
-        ShaderTypeKey key;
-        RHI::ShaderStageBits stage;
-        std::string entryPoint;
-        std::string code;
-        std::vector<VariantKey> variants;
-        std::unordered_map<VariantKey, std::vector<std::string>> variantDefinitions;
-    };
+    template <typename T>
+    StaticVertexFactoryType<T>::StaticVertexFactoryType() = default;
 
     template <typename T>
-    class GlobalShaderMap {
-    public:
-        static GlobalShaderMap& Get();
+    StaticVertexFactoryType<T>::~StaticVertexFactoryType() = default;
 
-        ~GlobalShaderMap();
-        NonCopyable(GlobalShaderMap)
-
-        void Invalidate();
-        ShaderInstance GetShaderInstance(RHI::Device& device, const typename T::VariantSet& variantSet);
-
-    private:
-        GlobalShaderMap();
-
-        [[nodiscard]] const ShaderArchive& GetArchive(const typename T::VariantSet& variantSet) const;
-
-        std::unordered_map<RHI::Device*, std::unordered_map<VariantKey, Common::UniquePtr<RHI::ShaderModule>>> shaderModules;
-    };
-
-    class GlobalShaderRegistry {
-    public:
-        static GlobalShaderRegistry& Get();
-
-        GlobalShaderRegistry();
-        ~GlobalShaderRegistry();
-        NonCopyable(GlobalShaderRegistry)
-
-        template <typename Shader>
-        void Register();
-
-        const std::vector<IShaderType*>& GetShaderTypes() const;
-        // call this func before device release
-        void Invalidate() const;
-        // call this func after shader reloaded
-        void ReloadAll() const;
-
-    private:
-        std::vector<IShaderType*> shaderTypes;
-    };
-
-    class BoolShaderVariantFieldImpl {
-    public:
-        using ValueType = bool;
-
-        static constexpr std::pair<uint32_t, uint32_t> valueRange = { 0, 1 };
-        static constexpr ValueType defaultValue = false;
-
-        BoolShaderVariantFieldImpl();
-        BoolShaderVariantFieldImpl(BoolShaderVariantFieldImpl&& other) noexcept;
-        ~BoolShaderVariantFieldImpl();
-
-        void Set(ValueType inValue);
-        [[nodiscard]] ValueType Get() const;
-        [[nodiscard]] uint32_t GetNumberValue() const;
-
-    private:
-        uint32_t value;
-    };
-
-    template <uint32_t From, uint32_t To>
-    struct RangedIntShaderVariantFieldImpl {
-    public:
-        using ValueType = uint32_t;
-
-        static constexpr std::pair<uint32_t, uint32_t> valueRange = { From, To };
-        static constexpr ValueType defaultValue = From;
-
-        RangedIntShaderVariantFieldImpl();
-        RangedIntShaderVariantFieldImpl(RangedIntShaderVariantFieldImpl&& other) noexcept;
-        ~RangedIntShaderVariantFieldImpl(); // NOLINT
-
-        void Set(ValueType inValue);
-        [[nodiscard]] ValueType Get() const;
-        [[nodiscard]] uint32_t GetNumberValue() const;
-
-    private:
-        uint32_t value;
-    };
-
-    template <typename... Variants>
-    class VariantSetImpl {
-    public:
-        static uint32_t VariantNum();
-
-        VariantSetImpl();
-        VariantSetImpl(const VariantSetImpl& other);
-        VariantSetImpl(VariantSetImpl&& other) noexcept;
-        ~VariantSetImpl();
-
-        template <typename F>
-        static void TraverseAll(F&& func);
-
-        template <typename Variant>
-        void Set(typename Variant::ValueType value);
-
-        template <typename Variant>
-        typename Variant::ValueType Get();
-
-        [[nodiscard]] std::vector<std::string> ComputeDefinitions() const;
-        [[nodiscard]] VariantKey Hash() const;
-
-    private:
-        std::tuple<Variants...> variants;
-    };
-}
-
-#define ShaderInfo(inName, inSourceFile, inEntryPoint, inStage) \
-    static constexpr const char* name = inName; \
-    static constexpr const char* sourceFile = inSourceFile; \
-    static constexpr const char* entryPoint = inEntryPoint; \
-    static constexpr RHI::ShaderStageBits stage = inStage; \
-
-#define DefaultVariantFilter \
-    static bool VariantFilter(const VariantSet& variantSet) { return true; } \
-
-#define BoolShaderVariantField(inClass, inMacro) \
-    struct inClass : public Render::BoolShaderVariantFieldImpl { \
-        static constexpr const char* name = #inClass; \
-        static constexpr const char* macro = inMacro; \
-    }; \
-
-#define RangedIntShaderVariantField(inClass, inMacro, inRangeFrom, inRangeTo) \
-    struct inClass : public Render::RangedIntShaderVariantFieldImpl<inRangeFrom, inRangeTo> { \
-        static constexpr const char* name = #inClass; \
-        static constexpr const char* macro = inMacro; \
-    }
-
-#define VariantSet(...) \
-    class VariantSet : public Render::VariantSetImpl<__VA_ARGS__> {};
-
-#define NonVariant \
-    RangedIntShaderVariantField(_PlaceholderVariantField, "__PLACEHOLDER_VARIANT", 0, 0); /* NOLINT */ \
-    VariantSet(_PlaceholderVariantField);
-
-#define RegisterGlobalShader(inClass) \
-    static uint8_t _globalShaderRegister_##inClass = []() -> uint8_t { \
-        Render::GlobalShaderRegistry::Get().Register<inClass>(); \
-        return 0; \
-    }(); \
-
-#define ALIGN_AS_GPU alignas(16)
-
-namespace Render {
-    class MaterialShader : public Shader {};
-}
-
-namespace Render {
-    template <typename Shader>
-    GlobalShaderType<Shader>& GlobalShaderType<Shader>::Get()
+    template <typename T>
+    const std::string& StaticVertexFactoryType<T>::GetName() const
     {
-        static GlobalShaderType instance;
-        return instance;
+        return T::name;
     }
 
-    template <typename Shader>
-    GlobalShaderType<Shader>::GlobalShaderType()
+    template <typename T>
+    const std::string& StaticVertexFactoryType<T>::GetSourceFile() const
     {
-        ReloadInternal();
+        return T::sourceFile;
     }
 
-    template <typename Shader>
-    GlobalShaderType<Shader>::~GlobalShaderType() = default;
+    template <typename T>
+    const VertexFactoryInputVec& StaticVertexFactoryType<T>::GetVertexInputs() const
+    {
+        return T::vertexInputs;
+    }
 
-    template <typename Shader>
-    const std::string& GlobalShaderType<Shader>::GetName()
+    template <typename T>
+    const ShaderVariantFieldVec& StaticVertexFactoryType<T>::GetVariantFields() const
+    {
+        return T::variantFields;
+    }
+
+    template <typename T>
+    StaticShaderType<T>::StaticShaderType()
+        : ShaderType(MakeTypeKeyFromName(T::name))
+        , name(T::name)
+        , sourceFile(T::sourceFile)
+        , entryPoint(T::entryPoint)
+    {
+        includeDirectories.reserve(T::includeDirectories.size());
+        for (const auto& includeDir : T::includeDirectories) {
+            includeDirectories.emplace_back(includeDir.data(), includeDir.size());
+        }
+
+        InitVariantFieldsFromStatic(std::make_index_sequence<std::tuple_size_v<typename T::VariantFieldVec>> {});
+    }
+
+    template <typename T>
+    StaticShaderType<T>::~StaticShaderType() = default;
+
+    template <typename T>
+    const std::string& StaticShaderType<T>::GetName() const
     {
         return name;
     }
 
-    template <typename Shader>
-    ShaderTypeKey GlobalShaderType<Shader>::GetKey()
+    template <typename T>
+    RHI::ShaderStageBits StaticShaderType<T>::GetStage() const
     {
-        return key;
+        return T::stage;
     }
 
-    template <typename Shader>
-    RHI::ShaderStageBits GlobalShaderType<Shader>::GetStage()
+    template <typename T>
+    const std::string& StaticShaderType<T>::GetSourceFile() const
     {
-        return stage;
+        return sourceFile;
     }
 
-    template <typename Shader>
-    const std::string& GlobalShaderType<Shader>::GetEntryPoint()
+    template <typename T>
+    const std::string& StaticShaderType<T>::GetEntryPoint() const
     {
         return entryPoint;
     }
 
-    template <typename Shader>
-    const std::string& GlobalShaderType<Shader>::GetCode()
+    template <typename T>
+    const std::vector<std::string>& StaticShaderType<T>::GetIncludeDirectories() const
     {
-        return code;
-    }
-
-    template <typename Shader>
-    uint32_t GlobalShaderType<Shader>::GetVariantNum()
-    {
-        return variants.size();
-    }
-
-    template <typename Shader>
-    const std::vector<VariantKey> & GlobalShaderType<Shader>::GetVariants()
-    {
-        return variants;
-    }
-
-    template <typename Shader>
-    const std::vector<std::string>& GlobalShaderType<Shader>::GetDefinitions(VariantKey variantKey)
-    {
-        return variantDefinitions.at(variantKey);
-    }
-
-    template <typename Shader>
-    void GlobalShaderType<Shader>::Reload()
-    {
-        Invalidate();
-        ReloadInternal();
-    }
-
-    template <typename Shader>
-    void GlobalShaderType<Shader>::Invalidate()
-    {
-        GlobalShaderMap<Shader>::Get().Invalidate();
-    }
-
-    template <typename Shader>
-    void GlobalShaderType<Shader>::ReloadInternal()
-    {
-        name = Shader::name;
-        const std::string keySource = std::string("Global-") + name;
-        key = Common::HashUtils::CityHash(keySource.data(), keySource.size());
-        stage = Shader::stage;
-        entryPoint = Shader::entryPoint;
-
-        ReadCode();
-        ComputeVariants();
-        ComputeVariantDefinitions();
-    }
-
-    template <typename Shader>
-    void GlobalShaderType<Shader>::ReadCode()
-    {
-        const std::string sourceFile = Shader::sourceFile;
-        const Core::Uri uri(std::format("file://{}", sourceFile));
-        const Core::FileUriParser parser(uri);
-        code = Common::FileUtils::ReadTextFile(parser.Parse().String());
-    }
-
-    template <typename Shader>
-    void GlobalShaderType<Shader>::ComputeVariants()
-    {
-        variants.reserve(Shader::VariantSet::VariantNum());
-        Shader::VariantSet::TraverseAll([this](auto&& variantSetImpl) -> void {
-            const auto* variantSet = static_cast<typename Shader::VariantSet*>(&variantSetImpl);
-            if (!Shader::VariantFilter(*variantSet)) {
-                return;
-            }
-            variants.emplace_back(variantSet->Hash());
-        });
-    }
-
-    template <typename Shader>
-    void GlobalShaderType<Shader>::ComputeVariantDefinitions()
-    {
-        variantDefinitions.reserve(Shader::VariantSet::VariantNum());
-        Shader::VariantSet::TraverseAll([this](auto&& variantSetImpl) -> void {
-            const auto* variantSet = static_cast<typename Shader::VariantSet*>(&variantSetImpl);
-            if (!Shader::VariantFilter(*variantSet)) {
-                return;
-            }
-            variantDefinitions[variantSet->Hash()] = variantSet->ComputeDefinitions();
-        });
+        return includeDirectories;
     }
 
     template <typename T>
-    GlobalShaderMap<T>& GlobalShaderMap<T>::Get()
+    const ShaderVariantFieldVec& StaticShaderType<T>::GetVariantFields() const
     {
-        static GlobalShaderMap instance;
-        return instance;
+        return variantFields;
     }
 
     template <typename T>
-    GlobalShaderMap<T>::~GlobalShaderMap() = default;
-
-    template <typename T>
-    void GlobalShaderMap<T>::Invalidate()
+    template <size_t... I>
+    void StaticShaderType<T>::InitVariantFieldsFromStatic(std::index_sequence<I...>)
     {
-        shaderModules.clear();
-    }
+        (void) std::initializer_list<int> { ([&]() -> void {
+            using StaticVariantField = std::tuple_element_t<I, typename T::VariantFieldVec>;
+            constexpr VariantFieldType type = StaticVariantField::type; // NOLINT
 
-    template <typename T>
-    ShaderInstance GlobalShaderMap<T>::GetShaderInstance(RHI::Device& device, const typename T::VariantSet& variantSet)
-    {
-        auto variantKey = variantSet.Hash();
-        const auto& archive = GetArchive(variantSet);
-        auto& deviceShaderModules = shaderModules[&device];
-
-        auto iter = deviceShaderModules.find(variantKey);
-        if (iter == deviceShaderModules.end()) {
-            deviceShaderModules[variantKey] = device.CreateShaderModule(RHI::ShaderModuleCreateInfo(T::entryPoint, archive.byteCode));
-        }
-
-        ShaderInstance result;
-        result.rhiHandle = deviceShaderModules.at(variantKey).Get();
-        result.typeKey = GlobalShaderType<T>::Get().GetKey();
-        result.variantKey = variantKey;
-        result.reflectionData = &archive.reflectionData;
-        return result;
-    }
-
-    template <typename T>
-    GlobalShaderMap<T>::GlobalShaderMap() = default;
-
-    template<typename T>
-    const ShaderArchive& GlobalShaderMap<T>::GetArchive(const typename T::VariantSet& variantSet) const
-    {
-        const auto& package = ShaderArchiveStorage::Get().GetShaderArchivePackage(GlobalShaderType<T>::Get().GetKey());
-
-        auto iter = package.find(variantSet.Hash());
-        Assert(iter != package.end());
-        return iter->second;
-    }
-
-    template<typename Shader>
-    void GlobalShaderRegistry::Register()
-    {
-        shaderTypes.emplace_back(&GlobalShaderType<Shader>::Get());
-    }
-
-    template<uint32_t From, uint32_t To>
-    RangedIntShaderVariantFieldImpl<From, To>::RangedIntShaderVariantFieldImpl()
-        : value(defaultValue)
-    {
-    }
-
-    template<uint32_t From, uint32_t To>
-    RangedIntShaderVariantFieldImpl<From, To>::RangedIntShaderVariantFieldImpl(RangedIntShaderVariantFieldImpl&& other) noexcept
-        : value(other.value)
-    {
-    }
-
-    template<uint32_t From, uint32_t To>
-    RangedIntShaderVariantFieldImpl<From, To>::~RangedIntShaderVariantFieldImpl() = default;
-
-    template<uint32_t From, uint32_t To>
-    void RangedIntShaderVariantFieldImpl<From, To>::Set(const ValueType inValue)
-    {
-        Assert(From <= value && value <= To);
-        value = inValue;
-    }
-
-    template<uint32_t From, uint32_t To>
-    typename RangedIntShaderVariantFieldImpl<From, To>::ValueType RangedIntShaderVariantFieldImpl<From, To>::Get() const
-    {
-        return value;
-    }
-
-    template<uint32_t From, uint32_t To>
-    uint32_t RangedIntShaderVariantFieldImpl<From, To>::GetNumberValue() const
-    {
-        return value;
-    }
-
-    template<typename... Variants>
-    uint32_t VariantSetImpl<Variants...>::VariantNum()
-    {
-        uint32_t result = 1;
-        (void) std::initializer_list<int> { ([&result]() -> void {
-            auto valueRange = Variants::valueRange;
-            Assert(valueRange.first <= valueRange.second);
-            result *= valueRange.second - valueRange.first + 1;
-        }(), 0)... };
-        return result;
-    }
-
-    template<typename... Variants>
-    VariantSetImpl<Variants...>::VariantSetImpl()
-    {
-        (void) std::initializer_list<int> { ([this]() -> void { std::get<Variants>(variants).Set(Variants::defaultValue); }(), 0)... };
-    }
-
-    template<typename... Variants>
-    VariantSetImpl<Variants...>::VariantSetImpl(const VariantSetImpl& other)
-    {
-        (void) std::initializer_list<int> { ([this, &other]() -> void { std::get<Variants>(variants).Set(std::get<Variants>(other.variants).Get()); }(), 0)... };
-    }
-
-    template<typename... Variants>
-    VariantSetImpl<Variants...>::VariantSetImpl(VariantSetImpl&& other) noexcept
-        : variants(std::move(other.variants))
-    {
-    }
-
-    template<typename... Variants>
-    VariantSetImpl<Variants...>::~VariantSetImpl() = default;
-
-    template<typename... Variants>
-    template<typename F>
-    void VariantSetImpl<Variants...>::TraverseAll(F&& func)
-    {
-        std::vector<VariantSetImpl> variantSets;
-        variantSets.reserve(VariantNum());
-        variantSets.emplace_back(VariantSetImpl());
-
-        (void) std::initializer_list<int> { ([&variantSets]() -> void {
-            auto valueRange = Variants::valueRange;
-            auto variantSetsSize = variantSets.size();
-            for (auto i = valueRange.first; i <= valueRange.second; ++i) {
-                if (i == valueRange.first) {
-                    for (auto j = 0; j < variantSetsSize; j++) {
-                        variantSets[j].template Set<Variants>(static_cast<typename Variants::ValueType>(i));
-                    }
-                } else {
-                    for (auto j = 0; j < variantSetsSize; j++) {
-                        variantSets.emplace_back(variantSets[j]);
-                        variantSets.back().template Set<Variants>(static_cast<typename Variants::ValueType>(i));
-                    }
-                }
+            if constexpr (type == VariantFieldType::vfBool) {
+                variantFields.emplace_back(ShaderBoolVariantField { StaticVariantField::macro, StaticVariantField::defaultValue });
+            } else if constexpr (type == VariantFieldType::vfRangedInt) {
+                variantFields.emplace_back(ShaderRangedIntVariantField { StaticVariantField::macro, StaticVariantField::defaultValue, { StaticVariantField::from, StaticVariantField::to } });
+            } else {
+                static_assert(false);
             }
         }(), 0)... };
-
-        for (auto& variantSet : variantSets) {
-            func(variantSet);
-        }
     }
-
-    template<typename... Variants>
-    template<typename Variant>
-    void VariantSetImpl<Variants...>::Set(typename Variant::ValueType value)
-    {
-        std::get<Variant>(variants).Set(value);
-    }
-
-    template<typename... Variants>
-    template<typename Variant>
-    typename Variant::ValueType VariantSetImpl<Variants...>::Get()
-    {
-        return std::get<Variant>(variants).Get();
-    }
-
-    template<typename... Variants>
-    std::vector<std::string> VariantSetImpl<Variants...>::ComputeDefinitions() const
-    {
-        std::vector<std::string> result;
-        result.reserve(sizeof...(Variants));
-        (void) std::initializer_list<int> { ([&result, this]() -> void {
-            result.emplace_back(std::string(Variants::macro) + "=" + std::to_string(std::get<Variants>(variants).GetNumberValue()));
-        }(), 0)... };
-        return result;
-    }
-
-    template<typename... Variants>
-    VariantKey VariantSetImpl<Variants...>::Hash() const
-    {
-        return Common::HashUtils::CityHash(&variants, sizeof(std::tuple<Variants...>));
-    }
-}
+} // namespace Render

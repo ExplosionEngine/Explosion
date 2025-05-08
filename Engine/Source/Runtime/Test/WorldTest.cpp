@@ -5,6 +5,7 @@
 #include <WorldTest.h>
 #include <Test/Test.h>
 #include <Runtime/World.h>
+#include <Runtime/Engine.h>
 using namespace Runtime;
 
 struct WorldTest : testing::Test {

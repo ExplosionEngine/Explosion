@@ -74,17 +74,17 @@ namespace Render {
     };
 
     struct ComputePipelineShaderSet {
-        Render::ShaderInstance computeShader;
+        ShaderInstance computeShader;
 
         uint64_t Hash() const;
     };
 
     struct RasterPipelineShaderSet {
-        Render::ShaderInstance vertexShader;
-        Render::ShaderInstance pixelShader;
-        Render::ShaderInstance geometryShader;
-        Render::ShaderInstance domainShader;
-        Render::ShaderInstance hullShader;
+        ShaderInstance vertexShader;
+        ShaderInstance pixelShader;
+        ShaderInstance geometryShader;
+        ShaderInstance domainShader;
+        ShaderInstance hullShader;
 
         uint64_t Hash() const;
     };
@@ -173,7 +173,7 @@ namespace Render {
     private:
         struct ShaderInstancePack {
             RHI::ShaderStageBits stage;
-            const Render::ShaderInstance* instance;
+            const ShaderInstance* instance;
         };
 
         friend class PipelineLayoutCache;

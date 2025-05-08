@@ -374,7 +374,7 @@ namespace Render {
     {
         std::unordered_map<uint8_t, RBindingMap> layoutBindingMaps;
         for (const auto& [stage, instance] : shaderInstancePack) {
-            if (!instance->IsValid()) {
+            if (!instance->Valid()) {
                 continue;
             }
             Assert(instance->reflectionData != nullptr);

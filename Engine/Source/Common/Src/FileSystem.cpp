@@ -188,4 +188,9 @@ namespace Common {
     {
         std::filesystem::create_directories(path);
     }
+
+    void Path::Fixup()
+    {
+        path = Internal::GetUnixStylePath(path);
+    }
 } // namespace Common

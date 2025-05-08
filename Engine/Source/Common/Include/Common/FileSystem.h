@@ -38,6 +38,7 @@ namespace Common {
         size_t TraverseRecurse(const TraverseFunc& inFunc) const;
         void CopyTo(const Path& inPath) const;
         void MakeDir() const;
+        void Fixup();
 
         Path operator/(const Path& inPath) const;
         Path operator/(const std::string& inPath) const;

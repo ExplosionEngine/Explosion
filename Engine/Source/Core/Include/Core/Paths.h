@@ -30,6 +30,7 @@ namespace Core {
         static Common::Path EngineCacheDir();
         static Common::Path EngineLogDir();
         static Common::Path EnginePluginDir();
+        static Common::Path EnginePluginDir(const std::string& pluginName);
         static Common::Path EnginePluginAssetDir(const std::string& pluginName);
         static Common::Path GameRootDir();
         static Common::Path GameAssetDir();
@@ -38,13 +39,23 @@ namespace Core {
         static Common::Path GameCacheDir();
         static Common::Path GameLogDir();
         static Common::Path GamePluginDir();
+        static Common::Path GamePluginDir(const std::string& pluginName);
         static Common::Path GamePluginAssetDir(const std::string& pluginName);
         static Common::Path EngineCMakeSourceDir();
         static Common::Path EngineCMakeBinaryDir();
-
 #if BUILD_TEST
-        static Common::Path EngineTest();
+        static Common::Path EngineTestDir();
 #endif
+
+        static bool IsEnginePath(const Common::Path& inPath);
+        static bool IsGamePath(const Common::Path& inPath);
+        static bool IsEnginePluginPath(const Common::Path& inPath);
+        static bool IsGamePluginPath(const Common::Path& inPath);
+#if BUILD_TEST
+        static bool IsEngineTestPath(const Common::Path& inPath);
+#endif
+        static Common::Path Translate(const Common::Path& inPath);
+        static Common::Path TranslateAsset(const Common::Path& inPath);
 
     private:
         static Common::Path executablePath;

@@ -5,6 +5,7 @@
 #include <QApplication>
 
 #include <Core/Cmdline.h>
+#include <Runtime/Engine.h>
 #include <Editor/QmlEngine.h>
 #include <Editor/Widget/Editor.h>
 #include <Editor/Widget/ProjectHub.h>

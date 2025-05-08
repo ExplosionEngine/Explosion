@@ -30,7 +30,26 @@ using namespace Microsoft::WRL;
 
 #include <Render/ShaderCompiler.h>
 #include <Common/Debug.h>
+#include <Common/Container.h>
 #include <Common/String.h>
+#include <Core/Paths.h>
+
+namespace Render::Internal {
+    static std::vector<std::string> GetPresetIncludeDirectories()
+    {
+        std::vector<std::string> result;
+        return result;
+    }
+
+    static std::vector<std::string> TranslateIncludeDirectories(const std::vector<std::string>& inDir)
+    {
+        std::vector<std::string> result;
+        for (const auto& dir : inDir) {
+            result.emplace_back(Core::Paths::Translate(dir).String());
+        }
+        return result;
+    }
+}
 
 namespace Render {
 #if PLATFORM_WINDOWS
@@ -108,10 +127,10 @@ namespace Render {
         };
     }
 
-    static std::vector<std::wstring> GetIncludePathArguments(const ShaderCompileOptions& options)
+    static std::vector<std::wstring> GetIncludePathArguments(const ShaderCompileInput& input)
     {
         std::vector<std::wstring> result;
-        for (const auto& includePath : options.includePaths) {
+        for (const auto& includePath : input.includeDirectories) {
             result.emplace_back(L"-I");
             result.emplace_back(Common::StringUtils::ToWideString(includePath));
         }
@@ -209,19 +228,19 @@ namespace Render {
 
         std::vector<std::pair<const spirv_cross::Resource*, RHI::BindingType>> resourceBindings;
         for (const spirv_cross::Resource& uniformBuffer : shaderResources.uniform_buffers) {
-            resourceBindings.emplace_back(std::make_pair(&uniformBuffer, RHI::BindingType::uniformBuffer));
+            resourceBindings.emplace_back(&uniformBuffer, RHI::BindingType::uniformBuffer);
         }
         for (const spirv_cross::Resource& image : shaderResources.separate_images) {
-            resourceBindings.emplace_back(std::make_pair(&image, RHI::BindingType::texture));
+            resourceBindings.emplace_back(&image, RHI::BindingType::texture);
         }
         for (const spirv_cross::Resource& sampler : shaderResources.separate_samplers) {
-            resourceBindings.emplace_back(std::make_pair(&sampler, RHI::BindingType::sampler));
+            resourceBindings.emplace_back(&sampler, RHI::BindingType::sampler);
         }
         for (const spirv_cross::Resource& buffer : shaderResources.storage_buffers) {
-            resourceBindings.emplace_back(std::make_pair(&buffer, RHI::BindingType::storageBuffer));
+            resourceBindings.emplace_back(&buffer, RHI::BindingType::storageBuffer);
         }
         for (const spirv_cross::Resource& image : shaderResources.storage_images) {
-            resourceBindings.emplace_back(std::make_pair(&image, RHI::BindingType::storageTexture));
+            resourceBindings.emplace_back(&image, RHI::BindingType::storageTexture);
         }
 
         for (const auto& iter : resourceBindings) { // NOLINT
@@ -261,7 +280,7 @@ namespace Render {
         std::vector<LPCWSTR> arguments = GetDXCBaseArguments(options);
         const auto entryPointArgs = GetEntryPointArguments(input);
         const auto targetProfileArgs = GetTargetProfileArguments(input);
-        const auto includePathArgs = GetIncludePathArguments(options);
+        const auto includePathArgs = GetIncludePathArguments(input);
         const auto definitionArgs = GetDefinitionArguments(input, options);
         FillArguments(arguments, entryPointArgs);
         FillArguments(arguments, targetProfileArgs);
@@ -297,6 +316,7 @@ namespace Render {
         output.success = true;
         const auto* codeStart = static_cast<const uint8_t*>(codeBlob->GetBufferPointer());
         const auto* codeEnd = codeStart + codeBlob->GetBufferSize();
+        output.entryPoint = input.entryPoint;
         output.byteCode = std::vector(codeStart, codeEnd);
 
         if (options.byteCodeType == ShaderByteCodeType::dxil) {
@@ -321,9 +341,9 @@ namespace Render {
 }
 
 namespace Render {
-    size_t ShaderTypeAndVariantHashProvider::operator()(const std::pair<ShaderTypeKey, VariantKey>& value) const
+    size_t ShaderTypeAndVariantHashProvider::operator()(const std::pair<ShaderTypeKey, ShaderVariantKey>& value) const
     {
-        return Common::HashUtils::CityHash(&value, sizeof(std::pair<ShaderTypeKey, VariantKey>));
+        return Common::HashUtils::CityHash(&value, sizeof(std::pair<ShaderTypeKey, ShaderVariantKey>));
     }
 
     ShaderCompiler& ShaderCompiler::Get()
@@ -360,58 +380,73 @@ namespace Render {
 
     ShaderTypeCompiler::~ShaderTypeCompiler() = default;
 
-    std::future<ShaderTypeCompileResult> ShaderTypeCompiler::Compile(const std::vector<IShaderType*>& inShaderTypes, const ShaderCompileOptions& inOptions)
+    std::future<ShaderTypeCompileResult> ShaderTypeCompiler::Compile(const std::vector<const ShaderType*>& inShaderTypes, const ShaderCompileOptions& inOptions)
     {
         return threadPool.EmplaceTask([inShaderTypes, inOptions]() -> ShaderTypeCompileResult {
-            std::unordered_map<ShaderTypeKey, std::unordered_map<VariantKey, std::future<ShaderCompileOutput>>> compileOutputs;
+            std::unordered_map<ShaderTypeKey, std::unordered_map<ShaderVariantKey, std::future<ShaderCompileOutput>>> compileOutputs;
             compileOutputs.reserve(inShaderTypes.size());
-            for (auto* shaderType : inShaderTypes) {
+
+            for (const auto* shaderType : inShaderTypes) {
                 auto typeKey = shaderType->GetKey();
-                auto stage = shaderType->GetStage();
+                auto sourceFile = Core::Paths::Translate(shaderType->GetSourceFile()).String();
+
+                auto includeDirectories = Common::VectorUtils::Combine(Internal::GetPresetIncludeDirectories(), shaderType->GetIncludeDirectories());
+                includeDirectories = Common::VectorUtils::Combine(includeDirectories, inOptions.includeDirectories);
+                includeDirectories = Internal::TranslateIncludeDirectories(includeDirectories);
+                const auto oldHash = ShaderRegistry::Get().shaderStorages.at(typeKey).sourceHash;
+                const auto newHash = ShaderUtils::ComputeShaderSourceHash(sourceFile, includeDirectories); // NOLINT
+
+                if (oldHash != shaderSourceHashNotCompiled && oldHash == newHash) {
+                    continue;
+                }
+                ShaderRegistry::Get().ResetType(*shaderType);
+
+                const auto stage = shaderType->GetStage();
                 const auto& entryPoint = shaderType->GetEntryPoint();
-                const auto& code = shaderType->GetCode();
+                const auto& variantFields = shaderType->GetVariantFields();
+                const auto source = Common::FileUtils::ReadTextFile(sourceFile);
 
                 Assert(!compileOutputs.contains(typeKey));
-                compileOutputs.emplace(std::make_pair(typeKey, std::unordered_map<VariantKey, std::future<ShaderCompileOutput>> {}));
+                compileOutputs.emplace(std::make_pair(typeKey, std::unordered_map<ShaderVariantKey, std::future<ShaderCompileOutput>> {}));
                 auto& variantCompileOutputs = compileOutputs.at(typeKey);
 
-                for ( const auto& variants = shaderType->GetVariants();
-                    const auto& variantKey : variants) {
+                for (const auto& variantSet : ShaderUtils::GetAllVariants(variantFields)) {
+                    const auto variantKey = ShaderUtils::ComputeVariantKey(variantFields, variantSet);
+
                     ShaderCompileInput input {};
-                    input.source = code;
+                    input.source = source;
                     input.entryPoint = entryPoint;
                     input.stage = stage;
-                    input.definitions = shaderType->GetDefinitions(variantKey);
+                    input.definitions = ShaderUtils::ComputeVariantDefinitions(variantFields, variantSet);
+                    input.includeDirectories = includeDirectories;
 
-                    variantCompileOutputs.emplace(std::make_pair(variantKey, ShaderCompiler::Get().Compile(input, inOptions)));
+                    variantCompileOutputs.emplace(variantKey, ShaderCompiler::Get().Compile(input, inOptions));
                 }
             }
 
             ShaderTypeCompileResult result;
             for (auto& [typeKey, variantCompileOutputs] : compileOutputs) {
-                ShaderArchivePackage archivePackage;
-
+                auto& shaderStorage = ShaderRegistry::Get().shaderStorages.at(typeKey);
                 for (auto& [variantKey, compileFuture] : variantCompileOutputs) {
                     ShaderCompileOutput output = compileFuture.get(); // NOLINT
                     if (output.success) {
-                        ShaderArchive archive;
-                        archive.byteCode = std::move(output.byteCode);
-                        archive.reflectionData = std::move(output.reflectionData);
-
-                        archivePackage.emplace(std::make_pair(variantKey, std::move(archive)));
+                        ShaderModuleData moduleData;
+                        moduleData.entryPoint = output.entryPoint;
+                        moduleData.byteCode = std::move(output.byteCode);
+                        moduleData.reflectionData = std::move(output.reflectionData);
+                        shaderStorage.shaderModuleDatas.emplace(variantKey, std::move(moduleData));
                     } else {
                         result.errorInfos.emplace(std::make_pair(std::make_pair(typeKey, variantKey), output.errorInfo));
                     }
                 }
-                ShaderArchiveStorage::Get().UpdateShaderArchivePackage(typeKey, std::move(archivePackage));
             }
             result.success = result.errorInfos.empty();
             return result;
         });
     }
 
-    std::future<ShaderTypeCompileResult> ShaderTypeCompiler::CompileGlobalShaderTypes(const ShaderCompileOptions& inOptions)
+    std::future<ShaderTypeCompileResult> ShaderTypeCompiler::CompileAll(const ShaderCompileOptions& inOptions)
     {
-        return Compile(GlobalShaderRegistry::Get().GetShaderTypes(), inOptions);
+        return Compile(ShaderRegistry::Get().AllTypes(), inOptions);
     }
 }

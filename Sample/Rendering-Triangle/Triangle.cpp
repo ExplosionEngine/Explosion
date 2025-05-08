@@ -16,32 +16,33 @@ struct Vertex {
     FVec3 position;
 };
 
-class TriangleVS : public GlobalShader {
-public:
-    ShaderInfo(
+class TriangleVS final : public StaticShaderType<TriangleVS> {
+    StaticShaderInfo(
+        TriangleVS,
         "TriangleVS",
+        RHI::ShaderStageBits::sVertex,
         "Engine/Test/Sample/Rendering-Triangle/Triangle.esl",
-        "VSMain",
-        RHI::ShaderStageBits::sVertex);
+        "VSMain")
 
-    NonVariant;
-    DefaultVariantFilter;
+    EmptyIncludeDirectories
+    EmptyVariantFieldVec
 };
 
-class TrianglePS : public GlobalShader {
+class TrianglePS final : public StaticShaderType<TrianglePS> {
 public:
-    ShaderInfo(
+    StaticShaderInfo(
+        TrianglePS,
         "TrianglePS",
+        RHI::ShaderStageBits::sPixel,
         "Engine/Test/Sample/Rendering-Triangle/Triangle.esl",
-        "PSMain",
-        RHI::ShaderStageBits::sPixel);
+        "PSMain")
 
-    NonVariant;
-    DefaultVariantFilter;
+    EmptyIncludeDirectories
+    EmptyVariantFieldVec
 };
 
-RegisterGlobalShader(TriangleVS);
-RegisterGlobalShader(TrianglePS);
+ImplementStaticShaderType(TriangleVS);
+ImplementStaticShaderType(TrianglePS);
 
 struct PsUniform {
     FVec3 pixelColor;
@@ -181,7 +182,7 @@ void TriangleApplication::OnDestroy()
     PipelineCache::Get(*device).Invalidate();
     BufferPool::Get(*device).Invalidate();
     TexturePool::Get(*device).Invalidate();
-    GlobalShaderRegistry::Get().Invalidate();
+    ShaderRegistry::Get().ResetAllTypes();
     RenderWorkerThreads::Get().Stop();
 }
 
@@ -197,15 +198,15 @@ void TriangleApplication::CreateDevice()
 void TriangleApplication::CompileAllShaders()
 {
     ShaderCompileOptions options;
-    options.includePaths = { "../Test/Sample/ShaderInclude", "../Test/Sample/Rendering-Triangle" };
+    options.includeDirectories = { "../Test/Sample/ShaderInclude", "../Test/Sample/Rendering-Triangle" };
     options.byteCodeType = GetRHIType() == RHI::RHIType::directX12 ? ShaderByteCodeType::dxil : ShaderByteCodeType::spirv;
     options.withDebugInfo = false;
-    auto result = ShaderTypeCompiler::Get().CompileGlobalShaderTypes(options);
+    auto result = ShaderTypeCompiler::Get().CompileAll(options);
     const auto& [success, errorInfo] = result.get();
     Assert(success);
 
-    triangleVS = GlobalShaderMap<TriangleVS>::Get().GetShaderInstance(*device, {});
-    trianglePS = GlobalShaderMap<TrianglePS>::Get().GetShaderInstance(*device, {});
+    triangleVS = ShaderRegistry::Get().GetShaderInstance(*device, TriangleVS::Get(), {});
+    trianglePS = ShaderRegistry::Get().GetShaderInstance(*device, TrianglePS::Get(), {});
 }
 
 void TriangleApplication::CreateSwapChain()
