@@ -395,7 +395,7 @@ Rectangle {
                 Layout.leftMargin: 5
                 Layout.topMargin: 35
                 EText {
-                    text: 'NumberInput'
+                    text: 'IntegerInput'
                     style: EText.Style.Title1
                 }
             }
@@ -404,7 +404,7 @@ Rectangle {
                 Layout.margins: 5
 
                 RowLayout {
-                    ENumberInput {}
+                    EIntegerInput {}
 
                     EText {
                         Layout.leftMargin: 5
@@ -413,7 +413,7 @@ Rectangle {
                 }
 
                 RowLayout {
-                    ENumberInput {
+                    EIntegerInput {
                         from: 0
                         to: 10
                     }
@@ -425,7 +425,7 @@ Rectangle {
                 }
 
                 RowLayout {
-                    ENumberInput {
+                    EIntegerInput {
                         editable: true
                     }
 
