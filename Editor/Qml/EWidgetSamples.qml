@@ -435,6 +435,32 @@ Rectangle {
                     }
                 }
             }
+
+            RowLayout {
+                Layout.leftMargin: 5
+                Layout.topMargin: 35
+                EText {
+                    text: 'FloatInput'
+                    style: EText.Style.Title1
+                }
+            }
+
+            ColumnLayout {
+                Layout.margins: 5
+
+                RowLayout {
+                    EFloatInput {
+                        onAccepted: {
+                            console.log('value accepted, value=' + text)
+                        }
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'Default'
+                    }
+                }
+            }
         }
     }
 }
