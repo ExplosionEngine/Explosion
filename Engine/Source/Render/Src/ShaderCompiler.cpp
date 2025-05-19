@@ -382,6 +382,8 @@ namespace Render {
 
     std::future<ShaderTypeCompileResult> ShaderTypeCompiler::Compile(const std::vector<const ShaderType*>& inShaderTypes, const ShaderCompileOptions& inOptions)
     {
+        // TODO check in game thread
+
         return threadPool.EmplaceTask([inShaderTypes, inOptions]() -> ShaderTypeCompileResult {
             std::unordered_map<ShaderTypeKey, std::unordered_map<ShaderVariantKey, std::future<ShaderCompileOutput>>> compileOutputs;
             compileOutputs.reserve(inShaderTypes.size());

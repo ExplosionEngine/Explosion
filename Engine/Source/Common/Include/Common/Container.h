@@ -679,7 +679,7 @@ namespace Common {
             } else if constexpr (std::is_copy_assignable_v<T>) {
                 TypedMemory(i) = TypedMemory(i + 1);
             } else {
-                Assert(false);
+                QuickFail();
             }
         }
         InplaceDestruct(size - 1);
@@ -709,7 +709,7 @@ namespace Common {
         } else if constexpr (std::is_copy_assignable_v<T>) {
             TypedMemory(inIndex) = TypedMemory(size - 1);
         } else {
-            Assert(false);
+            QuickFail();
         }
         InplaceDestruct(size - 1);
         size--;
@@ -944,7 +944,7 @@ namespace Common {
                 } else if constexpr (std::is_copy_constructible_v<T>) {
                     InplaceConstruct(i, TypedMemory(i - 1));
                 } else {
-                    Assert(false);
+                    QuickFail();
                 }
             } else {
                 if constexpr (std::is_move_assignable_v<T>) {
@@ -952,7 +952,7 @@ namespace Common {
                 } else if constexpr (std::is_copy_assignable_v<T>) {
                     TypedMemory(i) = TypedMemory(i - 1);
                 } else {
-                    Assert(false);
+                    QuickFail();
                 }
             }
         }

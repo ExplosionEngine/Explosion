@@ -12,27 +12,24 @@
 
 #include <RHI/RHI.h>
 
-#define StaticShaderInfo(inClass, inName, inStage, inSourceFile, inEntryPoint) \
+#define ShaderTypeInfo(inClass, inStage, inSourceFile, inEntryPoint) \
     public: \
         \
         static const inClass& Get(); \
         \
-    private: \
-        friend class StaticShaderType<inClass>; \
-        \
-        static constexpr const char* name = inName; \
+        static constexpr const char* name = #inClass; \
         static constexpr RHI::ShaderStageBits stage = inStage; \
         static constexpr const char* sourceFile = inSourceFile; \
         static constexpr const char* entryPoint = inEntryPoint; \
 
-#define BoolVariantField(inName, inMacro, inDefaultValue) \
+#define DeclBoolVariantField(inName, inMacro, inDefaultValue) \
     struct inName { \
         static constexpr Render::VariantFieldType type = Render::VariantFieldType::vfBool; \
         static constexpr const char* macro = #inMacro; \
         static constexpr bool defaultValue = inDefaultValue; \
     }; \
 
-#define RangedIntVariantField(inName, inMacro, inDefaultValue, inFrom, inTo) \
+#define DeclRangedIntVariantField(inName, inMacro, inDefaultValue, inFrom, inTo) \
     struct inName { \
         static constexpr Render::VariantFieldType type = Render::VariantFieldType::vfRangedInt; \
         static constexpr const char* macro = #inMacro; \
@@ -62,6 +59,41 @@
     const inClass& inClass::Get() { \
         return __staticShaderTypeInstance_##inClass; \
     } \
+
+#define VertexFactoryTypeInfo(inClass, inSourceFile) \
+    public: \
+        \
+        static const inClass& Get(); \
+        \
+        static constexpr const char* name = #inClass; \
+        static constexpr const char* sourceFile = inSourceFile; \
+
+#define DeclVertexInput(inType, inName, inFormat, inOffset) \
+    struct inType { \
+        static constexpr const char* name = #inName; \
+        static constexpr RHI::VertexFormat format = inFormat; \
+        static constexpr uint32_t offset = inOffset; \
+    }; \
+
+#define MakeVertexInputVec(...) \
+    using VertexFactoryInputVec = std::tuple<__VA_ARGS__>; \
+
+#define BeginSupportedMaterialTypes \
+    static constexpr auto supportedMaterialTypes = std::to_array<Render::MaterialType>({ \
+
+#define EndSupportedMaterialTypes \
+    }); \
+
+#define ImplementStaticVertexFactoryType(inClass) \
+    static inClass __staticVertexFactoryTypeInstance_##inClass = inClass(); \
+    \
+    const inClass& inClass::Get() { \
+        return __staticVertexFactoryTypeInstance_##inClass; \
+    } \
+
+namespace Render::Internal {
+    static uint64_t MakeTypeKeyFromName(const std::string& inName);
+}
 
 namespace Render {
     enum class VariantFieldType : uint8_t {
@@ -109,11 +141,21 @@ namespace Render {
 
     struct VertexFactoryInput {
         std::string name;
-        RHI::VertexFormat vertexFormat;
+        RHI::VertexFormat format;
         uint32_t offset;
+
+        bool operator==(const VertexFactoryInput& inRhs) const;
     };
 
     using VertexFactoryInputVec = std::vector<VertexFactoryInput>;
+    using VertexFactoryTypeKey = uint64_t;
+
+    enum class MaterialType : uint8_t {
+        surface,
+        volume,
+        postProcess,
+        max
+    };
 
     class VertexFactoryType {
     public:
@@ -123,9 +165,15 @@ namespace Render {
         virtual const std::string& GetSourceFile() const = 0;
         virtual const VertexFactoryInputVec& GetVertexInputs() const = 0;
         virtual const ShaderVariantFieldVec& GetVariantFields() const = 0;
+        virtual bool SupportMaterialType(MaterialType inType) const = 0;
+
+        VertexFactoryTypeKey GetKey() const;
 
     protected:
-        VertexFactoryType();
+        explicit VertexFactoryType(VertexFactoryTypeKey inKey);
+
+    private:
+        VertexFactoryTypeKey key;
     };
 
     template <typename T>
@@ -138,6 +186,30 @@ namespace Render {
         const std::string& GetSourceFile() const override;
         const VertexFactoryInputVec& GetVertexInputs() const override;
         const ShaderVariantFieldVec& GetVariantFields() const override;
+        bool SupportMaterialType(MaterialType inType) const override;
+
+    private:
+        std::string name;
+        std::string sourceFile;
+        VertexFactoryInputVec inputs;
+        ShaderVariantFieldVec variantFields;
+        std::unordered_set<MaterialType> supportedMaterialTypes;
+    };
+
+    class VertexFactoryRegistry {
+    public:
+        static VertexFactoryRegistry& Get();
+
+        ~VertexFactoryRegistry();
+
+        void RegisterType(const VertexFactoryType* inType);
+        void UnregisterType(const VertexFactoryType* inType);
+        std::vector<const VertexFactoryType*> AllTypes() const;
+
+    private:
+        VertexFactoryRegistry();
+
+        std::unordered_map<VertexFactoryTypeKey, const VertexFactoryType*> types;
     };
 
     class ShaderType {
@@ -156,10 +228,9 @@ namespace Render {
         ShaderTypeKey GetKey() const;
 
     protected:
-        static ShaderTypeKey MakeTypeKeyFromName(const std::string& inName);
-
         explicit ShaderType(ShaderTypeKey inKey);
 
+    private:
         ShaderTypeKey key;
     };
 
@@ -177,8 +248,6 @@ namespace Render {
         const ShaderVariantFieldVec& GetVariantFields() const override;
 
     private:
-        template <size_t... I> void InitVariantFieldsFromStatic(std::index_sequence<I...>);
-
         std::string name;
         std::string sourceFile;
         std::string entryPoint;
@@ -257,6 +326,8 @@ namespace Render {
 
         ~ShaderRegistry();
 
+        // TODO consider thread issue !!! maybe shaderType, sourceHash and shaderModuleDatas need updated by game thread and copy to render thread
+        // TODO , and deviceShaderModules only be accessed in render thread, best to perform a thread data copy
         void RegisterType(const ShaderType& inShaderType);
         void UnregisterType(const ShaderType& inShaderType);
         void ResetType(const ShaderType& inShaderType);
@@ -283,9 +354,59 @@ namespace Render {
     };
 }
 
+namespace Render::Internal {
+    static uint64_t MakeTypeKeyFromName(const std::string& inName)
+    {
+        return Common::HashUtils::CityHash(inName.data(), inName.size());
+    }
+
+    template <typename T, size_t... I>
+    static ShaderVariantFieldVec BuildVariantFieldVecFromStatic(std::index_sequence<I...>)
+    {
+        ShaderVariantFieldVec result;
+        result.reserve(sizeof...(I));
+        (void) std::initializer_list<int> { ([&]() -> void {
+            using StaticVariantField = std::tuple_element_t<I, typename T::VariantFieldVec>;
+            constexpr VariantFieldType type = StaticVariantField::type; // NOLINT
+
+            if constexpr (type == VariantFieldType::vfBool) {
+                result.emplace_back(ShaderBoolVariantField { StaticVariantField::macro, StaticVariantField::defaultValue });
+            } else if constexpr (type == VariantFieldType::vfRangedInt) {
+                result.emplace_back(ShaderRangedIntVariantField { StaticVariantField::macro, StaticVariantField::defaultValue, { StaticVariantField::from, StaticVariantField::to } });
+            } else {
+                QuickFail();
+            }
+        }(), 0)... };
+        return result;
+    }
+
+    template <typename T, size_t... I>
+    static VertexFactoryInputVec BuildVertexFactoryInputVecFromStatic(std::index_sequence<I...>)
+    {
+        VertexFactoryInputVec result;
+        result.reserve(sizeof...(I));
+        (void) std::initializer_list<int> { ([&]() -> void {
+            using VertexFactoryInputStruct = std::tuple_element_t<I, typename T::VertexFactoryInputVec>;
+            result.emplace_back(VertexFactoryInput { VertexFactoryInputStruct::name, VertexFactoryInputStruct::format, VertexFactoryInputStruct::offset });
+        }(), 0)... };
+        return result;
+    }
+}
+
 namespace Render {
     template <typename T>
-    StaticVertexFactoryType<T>::StaticVertexFactoryType() = default;
+    StaticVertexFactoryType<T>::StaticVertexFactoryType()
+        : VertexFactoryType(Internal::MakeTypeKeyFromName(T::name))
+        , name(T::name)
+        , sourceFile(T::sourceFile)
+    {
+        inputs = Internal::BuildVertexFactoryInputVecFromStatic<T>(std::make_index_sequence<std::tuple_size_v<typename T::VertexFactoryInputVec>> {});
+        variantFields = Internal::BuildVariantFieldVecFromStatic<T>(std::make_index_sequence<std::tuple_size_v<typename T::VariantFieldVec>> {});
+
+        for (const auto& materialType : T::supportedMaterialTypes) {
+            supportedMaterialTypes.emplace(materialType);
+        }
+    }
 
     template <typename T>
     StaticVertexFactoryType<T>::~StaticVertexFactoryType() = default;
@@ -293,30 +414,36 @@ namespace Render {
     template <typename T>
     const std::string& StaticVertexFactoryType<T>::GetName() const
     {
-        return T::name;
+        return name;
     }
 
     template <typename T>
     const std::string& StaticVertexFactoryType<T>::GetSourceFile() const
     {
-        return T::sourceFile;
+        return sourceFile;
     }
 
     template <typename T>
     const VertexFactoryInputVec& StaticVertexFactoryType<T>::GetVertexInputs() const
     {
-        return T::vertexInputs;
+        return inputs;
     }
 
     template <typename T>
     const ShaderVariantFieldVec& StaticVertexFactoryType<T>::GetVariantFields() const
     {
-        return T::variantFields;
+        return variantFields;
+    }
+
+    template <typename T>
+    bool StaticVertexFactoryType<T>::SupportMaterialType(MaterialType inType) const
+    {
+        return supportedMaterialTypes.contains(inType);
     }
 
     template <typename T>
     StaticShaderType<T>::StaticShaderType()
-        : ShaderType(MakeTypeKeyFromName(T::name))
+        : ShaderType(Internal::MakeTypeKeyFromName(T::name))
         , name(T::name)
         , sourceFile(T::sourceFile)
         , entryPoint(T::entryPoint)
@@ -326,7 +453,7 @@ namespace Render {
             includeDirectories.emplace_back(includeDir.data(), includeDir.size());
         }
 
-        InitVariantFieldsFromStatic(std::make_index_sequence<std::tuple_size_v<typename T::VariantFieldVec>> {});
+        variantFields = Internal::BuildVariantFieldVecFromStatic<T>(std::make_index_sequence<std::tuple_size_v<typename T::VariantFieldVec>> {});
     }
 
     template <typename T>
@@ -366,23 +493,5 @@ namespace Render {
     const ShaderVariantFieldVec& StaticShaderType<T>::GetVariantFields() const
     {
         return variantFields;
-    }
-
-    template <typename T>
-    template <size_t... I>
-    void StaticShaderType<T>::InitVariantFieldsFromStatic(std::index_sequence<I...>)
-    {
-        (void) std::initializer_list<int> { ([&]() -> void {
-            using StaticVariantField = std::tuple_element_t<I, typename T::VariantFieldVec>;
-            constexpr VariantFieldType type = StaticVariantField::type; // NOLINT
-
-            if constexpr (type == VariantFieldType::vfBool) {
-                variantFields.emplace_back(ShaderBoolVariantField { StaticVariantField::macro, StaticVariantField::defaultValue });
-            } else if constexpr (type == VariantFieldType::vfRangedInt) {
-                variantFields.emplace_back(ShaderRangedIntVariantField { StaticVariantField::macro, StaticVariantField::defaultValue, { StaticVariantField::from, StaticVariantField::to } });
-            } else {
-                static_assert(false);
-            }
-        }(), 0)... };
     }
 } // namespace Render

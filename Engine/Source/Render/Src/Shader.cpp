@@ -2,12 +2,12 @@
 // Created by johnk on 2022/7/24.
 //
 
-#include "Core/Paths.h"
-
 #include <ranges>
 
 #include <Render/Shader.h>
 #include <Common/Container.h>
+#include <Core/Paths.h>
+#include <Core/Thread.h>
 
 namespace Render {
     bool ShaderBoolVariantField::operator==(const ShaderBoolVariantField& inRhs) const
@@ -164,13 +164,23 @@ namespace Render {
         }
     }
 
+    bool VertexFactoryInput::operator==(const VertexFactoryInput& inRhs) const
+    {
+        return name == inRhs.name
+            && format == inRhs.format
+            && offset == inRhs.offset;
+    }
+
+    VertexFactoryType::VertexFactoryType(VertexFactoryTypeKey inKey)
+        : key(inKey)
+    {
+    }
+
     VertexFactoryType::~VertexFactoryType() = default;
 
-    VertexFactoryType::VertexFactoryType() = default;
-
-    ShaderTypeKey ShaderType::MakeTypeKeyFromName(const std::string& inName)
+    VertexFactoryTypeKey VertexFactoryType::GetKey() const
     {
-        return Common::HashUtils::CityHash(inName.data(), inName.size());
+        return key;
     }
 
     ShaderType::ShaderType(ShaderTypeKey inKey)
@@ -197,7 +207,7 @@ namespace Render {
         std::string inEntryPoint,
         const std::vector<std::string>& inIncludeDirectories,
         const ShaderVariantFieldVec& inShaderVariantFields)
-        : ShaderType(MakeTypeKeyFromName(inName))
+        : ShaderType(Internal::MakeTypeKeyFromName(inName))
         , vertexFactory(inVertexFactory)
         , name(std::move(inName))
         , stage(inStage)

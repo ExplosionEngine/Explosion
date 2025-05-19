@@ -7,16 +7,15 @@
 #include <Render/Shader.h>
 
 class TestGlobalShaderVS final : public Render::StaticShaderType<TestGlobalShaderVS> {
-    StaticShaderInfo(
+    ShaderTypeInfo(
         TestGlobalShaderVS,
-        "TestGlobalShader",
         RHI::ShaderStageBits::sVertex,
         "Engine/Shader/Test/TestGlobalShader.esl",
         "VSMain")
 
-    BoolVariantField(TestBool, TEST_BOOL, false);
-    RangedIntVariantField(TestRangedInt, TEST_RANGED_INT, 0, 0, 3);
-    MakeVariantFieldVec(TestBool, TestRangedInt);
+    DeclBoolVariantField(TestBool, TEST_BOOL, false)
+    DeclRangedIntVariantField(TestRangedInt, TEST_RANGED_INT, 0, 0, 3)
+    MakeVariantFieldVec(TestBool, TestRangedInt)
 
     BeginIncludeDirectories
         "Engine/Shader/Test"
@@ -25,12 +24,37 @@ class TestGlobalShaderVS final : public Render::StaticShaderType<TestGlobalShade
 
 ImplementStaticShaderType(TestGlobalShaderVS)
 
-TEST(ShaderTest, StaticIncludePathAndVariantFieldsTest)
-{
-    const std::vector<std::string> aspectIncludes = { "Engine/Shader/Test" };
-    ASSERT_EQ(TestGlobalShaderVS::Get().GetIncludeDirectories(), aspectIncludes);
+class TestVertexFactory final : public Render::StaticVertexFactoryType<TestVertexFactory> {
+    VertexFactoryTypeInfo(
+        TestVertexFactory,
+        "Engine/Shader/Test/VertexFactory.esh")
 
-    const auto resultVariantFields = TestGlobalShaderVS::Get().GetVariantFields();
+    DeclBoolVariantField(TestBool, TEST_BOOL, false)
+    MakeVariantFieldVec(TestBool)
+
+    DeclVertexInput(BaseColorInput, BaseColor, RHI::VertexFormat::float32X3, 0)
+    MakeVertexInputVec(BaseColorInput)
+
+    BeginSupportedMaterialTypes
+        Render::MaterialType::surface
+    EndSupportedMaterialTypes
+};
+
+ImplementStaticVertexFactoryType(TestVertexFactory)
+
+TEST(ShaderTest, StaticShaderTypeTest)
+{
+    const auto& testGlobalShaderVS = TestGlobalShaderVS::Get();
+    ASSERT_EQ(testGlobalShaderVS.GetName(), "TestGlobalShaderVS");
+    ASSERT_EQ(testGlobalShaderVS.GetStage(), RHI::ShaderStageBits::sVertex);
+    ASSERT_EQ(testGlobalShaderVS.GetSourceFile(), "Engine/Shader/Test/TestGlobalShader.esl");
+    ASSERT_EQ(testGlobalShaderVS.GetEntryPoint(), "VSMain");
+
+    const auto& resultIncludeDirectories = testGlobalShaderVS.GetIncludeDirectories();
+    const std::vector<std::string> aspectIncludes = { "Engine/Shader/Test" };
+    ASSERT_EQ(resultIncludeDirectories, aspectIncludes);
+
+    const auto& resultVariantFields = testGlobalShaderVS.GetVariantFields();
     Render::ShaderVariantFieldVec aspectVariantFields;
     aspectVariantFields.emplace_back(Render::ShaderBoolVariantField { "TEST_BOOL", false });
     aspectVariantFields.emplace_back(Render::ShaderRangedIntVariantField { "TEST_RANGED_INT", 0, { 0, 3 } });
@@ -86,4 +110,27 @@ TEST(ShaderTest, ComputeVariantDefinitionsTest)
         "TEST_RANGED_INT=2"
     };
     ASSERT_EQ(Render::ShaderUtils::ComputeVariantDefinitions(variantFields, variantSet), definitions);
+}
+
+TEST(ShaderTest, VertexFactoryTest)
+{
+    const auto& testVertexFactory = TestVertexFactory::Get();
+    ASSERT_EQ(testVertexFactory.GetName(), "TestVertexFactory");
+    ASSERT_EQ(testVertexFactory.GetSourceFile(), "Engine/Shader/Test/VertexFactory.esh");
+
+    const auto& resultVariantFields = testVertexFactory.GetVariantFields();
+    Render::ShaderVariantFieldVec aspectVariantFields;
+    aspectVariantFields.emplace_back(Render::ShaderBoolVariantField { "TEST_BOOL", false });
+    ASSERT_EQ(resultVariantFields, aspectVariantFields);
+
+    const auto& resultInputs = testVertexFactory.GetVertexInputs();
+    Render::VertexFactoryInputVec aspectInputs;
+    aspectInputs.emplace_back(Render::VertexFactoryInput { "BaseColor", RHI::VertexFormat::float32X3, 0 });
+    ASSERT_EQ(resultInputs, aspectInputs);
+
+    const auto aspectSupportedMaterialTypes = std::unordered_set { Render::MaterialType::surface };
+    for (auto i = 0; i < static_cast<uint8_t>(Render::MaterialType::max); i++) {
+        const auto type = static_cast<Render::MaterialType>(i);
+        ASSERT_EQ(testVertexFactory.SupportMaterialType(type), aspectSupportedMaterialTypes.contains(type));
+    }
 }
