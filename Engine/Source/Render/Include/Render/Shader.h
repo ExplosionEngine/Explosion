@@ -196,18 +196,19 @@ namespace Render {
         std::unordered_set<MaterialType> supportedMaterialTypes;
     };
 
-    class VertexFactoryRegistry {
+    class VertexFactoryTypeRegistry {
     public:
-        static VertexFactoryRegistry& Get();
+        static VertexFactoryTypeRegistry& Get();
 
-        ~VertexFactoryRegistry();
+        ~VertexFactoryTypeRegistry();
 
-        void RegisterType(const VertexFactoryType* inType);
-        void UnregisterType(const VertexFactoryType* inType);
+        // game thread
+        void RegisterType(const VertexFactoryType& inType);
+        void UnregisterType(const VertexFactoryType& inType);
         std::vector<const VertexFactoryType*> AllTypes() const;
 
     private:
-        VertexFactoryRegistry();
+        VertexFactoryTypeRegistry();
 
         std::unordered_map<VertexFactoryTypeKey, const VertexFactoryType*> types;
     };
@@ -302,10 +303,15 @@ namespace Render {
         std::unordered_map<ResourceBindingName, LayoutAndResourceBinding> resourceBindings;
     };
 
-    struct ShaderModuleData {
+    struct ShaderVariantArtifact {
         std::string entryPoint;
         std::vector<uint8_t> byteCode;
         ShaderReflectionData reflectionData;
+    };
+
+    struct ShaderTypeArtifact {
+        ShaderSourceHash sourceHash;
+        std::unordered_map<ShaderVariantKey, ShaderVariantArtifact> variantArtifacts;
     };
 
     struct ShaderInstance {
@@ -320,37 +326,59 @@ namespace Render {
         uint64_t Hash() const;
     };
 
-    class ShaderRegistry {
+    class ShaderTypeRegistry {
     public:
-        static ShaderRegistry& Get();
+        static ShaderTypeRegistry& Get();
 
-        ~ShaderRegistry();
+        ~ShaderTypeRegistry();
 
-        // TODO consider thread issue !!! maybe shaderType, sourceHash and shaderModuleDatas need updated by game thread and copy to render thread
-        // TODO , and deviceShaderModules only be accessed in render thread, best to perform a thread data copy
+        // game thread
         void RegisterType(const ShaderType& inShaderType);
         void UnregisterType(const ShaderType& inShaderType);
-        void ResetType(const ShaderType& inShaderType);
-        void ResetAllTypes();
         const ShaderType& GetType(ShaderTypeKey inKey) const;
         std::vector<const ShaderType*> AllTypes() const;
-        ShaderInstance GetShaderInstance(RHI::Device& inDevice, const ShaderType& inShaderType, const ShaderVariantValueMap& inShaderVariants);
 
     private:
+        ShaderTypeRegistry();
+
+        std::unordered_map<ShaderTypeKey, const ShaderType*> types;
+    };
+
+    class ShaderArtifactRegistry {
+    public:
+        static ShaderArtifactRegistry& Get();
+
+        ~ShaderArtifactRegistry();
+
+        void PerformThreadCopy();
+
+    private:
+        friend class ShaderMap;
         friend class ShaderTypeCompiler;
 
-        using DeviceShaderModulesMap = std::unordered_map<ShaderVariantKey, Common::UniquePtr<RHI::ShaderModule>>;
+        ShaderArtifactRegistry();
 
-        struct ShaderStorage {
-            const ShaderType* shaderType;
-            ShaderSourceHash sourceHash;
-            std::unordered_map<ShaderVariantKey, ShaderModuleData> shaderModuleDatas;
-            std::unordered_map<RHI::Device*, DeviceShaderModulesMap> deviceShaderModules;
-        };
+        std::mutex mutexGT;
+        std::unordered_map<ShaderTypeKey, ShaderTypeArtifact> typeArtifactsGT;
+        std::unordered_map<ShaderTypeKey, ShaderTypeArtifact> typeArtifactsRT;
+    };
 
-        ShaderRegistry();
+    class ShaderMap {
+    public:
+        static ShaderMap& Get(RHI::Device& inDevice);
 
-        std::unordered_map<ShaderTypeKey, ShaderStorage> shaderStorages;
+        ~ShaderMap();
+
+        // render thread
+        ShaderInstance GetShaderInstance(const ShaderType& inShaderType, const ShaderVariantValueMap& inShaderVariants);
+
+    private:
+        using VariantsShaderModules = std::unordered_map<ShaderVariantKey, Common::UniquePtr<RHI::ShaderModule>>;
+
+        explicit ShaderMap(RHI::Device& inDevice);
+
+        RHI::Device& device;
+        std::unordered_map<ShaderTypeKey, VariantsShaderModules> shaderModules;
     };
 }
 

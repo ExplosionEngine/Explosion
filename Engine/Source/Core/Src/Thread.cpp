@@ -2,10 +2,13 @@
 // Created by johnk on 2025/1/17.
 //
 
+#include <thread>
+
 #include <Core/Thread.h>
 
 namespace Core {
-    static thread_local auto currentTag = ThreadTag::unknown;
+    static auto mainThreadId = std::this_thread::get_id();
+    static thread_local auto currentTag = std::this_thread::get_id() == mainThreadId ? ThreadTag::game : ThreadTag::unknown;
     static thread_local uint64_t frameNumber = 0;
 
     void ThreadContext::SetTag(ThreadTag inTag)

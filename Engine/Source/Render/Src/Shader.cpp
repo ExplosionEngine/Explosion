@@ -174,24 +174,68 @@ namespace Render {
     VertexFactoryType::VertexFactoryType(VertexFactoryTypeKey inKey)
         : key(inKey)
     {
+        VertexFactoryTypeRegistry::Get().RegisterType(*this);
     }
 
-    VertexFactoryType::~VertexFactoryType() = default;
+    VertexFactoryType::~VertexFactoryType()
+    {
+        VertexFactoryTypeRegistry::Get().UnregisterType(*this);
+    }
 
     VertexFactoryTypeKey VertexFactoryType::GetKey() const
     {
         return key;
     }
 
+    VertexFactoryTypeRegistry& VertexFactoryTypeRegistry::Get()
+    {
+        static VertexFactoryTypeRegistry instance;
+        return instance;
+    }
+
+    VertexFactoryTypeRegistry::VertexFactoryTypeRegistry() = default;
+
+    VertexFactoryTypeRegistry::~VertexFactoryTypeRegistry() = default;
+
+    void VertexFactoryTypeRegistry::RegisterType(const VertexFactoryType& inType)
+    {
+        Assert(Core::ThreadContext::IsGameThread());
+
+        const auto typeKey = inType.GetKey();
+        Assert(!types.contains(typeKey));
+        types.emplace(typeKey, &inType);
+    }
+
+    void VertexFactoryTypeRegistry::UnregisterType(const VertexFactoryType& inType)
+    {
+        Assert(Core::ThreadContext::IsGameThread());
+
+        const auto typeKey = inType.GetKey();
+        Assert(types.contains(typeKey));
+        types.erase(typeKey);
+    }
+
+    std::vector<const VertexFactoryType*> VertexFactoryTypeRegistry::AllTypes() const
+    {
+        Assert(Core::ThreadContext::IsGameThread());
+
+        std::vector<const VertexFactoryType*> result;
+        result.reserve(types.size());
+        for (const auto* type : types | std::views::values) {
+            result.emplace_back(type);
+        }
+        return result;
+    }
+
     ShaderType::ShaderType(ShaderTypeKey inKey)
         : key(inKey)
     {
-        ShaderRegistry::Get().RegisterType(*this);
+        ShaderTypeRegistry::Get().RegisterType(*this);
     }
 
     ShaderType::~ShaderType()
     {
-        ShaderRegistry::Get().UnregisterType(*this);
+        ShaderTypeRegistry::Get().UnregisterType(*this);
     }
 
     ShaderTypeKey ShaderType::GetKey() const
@@ -307,78 +351,107 @@ namespace Render {
         return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
-    ShaderRegistry& ShaderRegistry::Get()
+    ShaderTypeRegistry& ShaderTypeRegistry::Get()
     {
-        static ShaderRegistry registry;
+        static ShaderTypeRegistry registry;
         return registry;
     }
 
-    ShaderRegistry::ShaderRegistry() = default;
+    ShaderTypeRegistry::ShaderTypeRegistry() = default;
 
-    ShaderRegistry::~ShaderRegistry() = default;
+    ShaderTypeRegistry::~ShaderTypeRegistry() = default;
 
-    void ShaderRegistry::RegisterType(const ShaderType& inShaderType)
+    void ShaderTypeRegistry::RegisterType(const ShaderType& inShaderType)
     {
+        Assert(Core::ThreadContext::IsGameThread());
+
         const auto key = inShaderType.GetKey();
-        Assert(!shaderStorages.contains(key));
-        shaderStorages.emplace(std::make_pair(key, ShaderStorage { &inShaderType, shaderSourceHashNotCompiled }));
+        Assert(!types.contains(key));
+        types.emplace(key, &inShaderType);
     }
 
-    void ShaderRegistry::UnregisterType(const ShaderType& inShaderType)
+    void ShaderTypeRegistry::UnregisterType(const ShaderType& inShaderType)
     {
+        Assert(Core::ThreadContext::IsGameThread());
+
         const auto key = inShaderType.GetKey();
-        Assert(shaderStorages.contains(key));
-        shaderStorages.erase(key);
+        Assert(types.contains(key));
+        types.erase(key);
     }
 
-    void ShaderRegistry::ResetType(const ShaderType& inShaderType)
+    const ShaderType& ShaderTypeRegistry::GetType(ShaderTypeKey inKey) const
     {
-        shaderStorages.at(inShaderType.GetKey()) = ShaderStorage { &inShaderType, shaderSourceHashNotCompiled };
+        Assert(Core::ThreadContext::IsGameThread());
+        return *types.at(inKey);
     }
 
-    void ShaderRegistry::ResetAllTypes()
+    std::vector<const ShaderType*> ShaderTypeRegistry::AllTypes() const
     {
-        for (auto& storage : shaderStorages | std::views::values) {
-            storage = ShaderStorage { storage.shaderType, shaderSourceHashNotCompiled };
-        }
-    }
+        Assert(Core::ThreadContext::IsGameThread());
 
-    const ShaderType& ShaderRegistry::GetType(ShaderTypeKey inKey) const
-    {
-        return *shaderStorages.at(inKey).shaderType;
-    }
-
-    std::vector<const ShaderType*> ShaderRegistry::AllTypes() const
-    {
         std::vector<const ShaderType*> result;
-        result.reserve(shaderStorages.size());
-        for (const auto& shaderStorage : shaderStorages | std::views::values) {
-            result.emplace_back(shaderStorage.shaderType);
+        result.reserve(types.size());
+        for (const auto* type : types | std::views::values) {
+            result.emplace_back(type);
         }
         return result;
     }
 
-    ShaderInstance ShaderRegistry::GetShaderInstance(RHI::Device& inDevice, const ShaderType& inShaderType, const ShaderVariantValueMap& inShaderVariants)
+    ShaderArtifactRegistry& ShaderArtifactRegistry::Get()
     {
-        const auto typeKey = inShaderType.GetKey();
-        ShaderStorage& storage = shaderStorages.at(typeKey);
-        auto& shaderModuleMap = storage.deviceShaderModules[&inDevice];
+        static ShaderArtifactRegistry instance;
+        return instance;
+    }
 
+    ShaderArtifactRegistry::ShaderArtifactRegistry() = default;
+
+    ShaderArtifactRegistry::~ShaderArtifactRegistry() = default;
+
+    void ShaderArtifactRegistry::PerformThreadCopy()
+    {
+        typeArtifactsRT = typeArtifactsGT;
+    }
+
+    ShaderMap& ShaderMap::Get(RHI::Device& inDevice)
+    {
+        static std::unordered_map<RHI::Device*, Common::UniquePtr<ShaderMap>> instances;
+        if (!instances.contains(&inDevice)) {
+            instances.emplace(&inDevice, Common::UniquePtr(new ShaderMap(inDevice)));
+        }
+        return *instances.at(&inDevice);
+    }
+
+    ShaderMap::ShaderMap(RHI::Device& inDevice)
+        : device(inDevice)
+    {
+    }
+
+    ShaderMap::~ShaderMap() = default;
+
+    ShaderInstance ShaderMap::GetShaderInstance(const ShaderType& inShaderType, const ShaderVariantValueMap& inShaderVariants)
+    {
+        Assert(Core::ThreadContext::IsRenderThread());
+
+        const ShaderArtifactRegistry& registry = ShaderArtifactRegistry::Get();
+        const auto typeKey = inShaderType.GetKey();
+
+        const ShaderTypeArtifact& typeArtifact = registry.typeArtifactsRT.at(typeKey); // NOLINT
         const ShaderVariantKey variantKey = ShaderUtils::ComputeVariantKey(inShaderType.GetVariantFields(), inShaderVariants);
-        const auto& [entryPoint, byteCode, reflectionData] = storage.shaderModuleDatas.at(variantKey);
+        const auto& [entryPoint, byteCode, reflectionData] = typeArtifact.variantArtifacts.at(variantKey);
+
+        if (!shaderModules.contains(typeKey)) {
+            shaderModules.emplace(typeKey, VariantsShaderModules {});
+        }
+        VariantsShaderModules& variantShaderModules = shaderModules.at(typeKey);
+        if (!variantShaderModules.contains(variantKey)) {
+            variantShaderModules.emplace(variantKey, device.CreateShaderModule(RHI::ShaderModuleCreateInfo(entryPoint, byteCode)));
+        }
 
         ShaderInstance result;
         result.typeKey = typeKey;
         result.variantKey = variantKey;
-
-        if (const auto iter = shaderModuleMap.find(variantKey);
-            iter != shaderModuleMap.end()) {
-            result.rhiHandle = iter->second.Get();
-        } else {
-            shaderModuleMap.emplace(variantKey, inDevice.CreateShaderModule(RHI::ShaderModuleCreateInfo(entryPoint, byteCode)));
-            result.rhiHandle = shaderModuleMap.at(variantKey).Get();
-        }
+        result.rhiHandle = variantShaderModules.at(variantKey).Get();
         result.reflectionData = &reflectionData;
         return result;
     }
-}
+} // namespace Render

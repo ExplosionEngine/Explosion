@@ -59,7 +59,8 @@ private:
     static constexpr size_t backBufferCount = 2;
 
     void CreateDevice();
-    void CompileAllShaders();
+    void CompileAllShaders() const;
+    void FetchShaderInstances();
     void CreateSwapChain();
     void CreateTriangleVertexBuffer();
     void CreateSyncObjects();
@@ -88,12 +89,13 @@ TriangleApplication::~TriangleApplication() = default;
 
 void TriangleApplication::OnCreate()
 {
+    CompileAllShaders();
     RenderThread::Get().Start();
     RenderWorkerThreads::Get().Start();
 
     RenderThread::Get().EmplaceTask([this]() -> void {
         CreateDevice();
-        CompileAllShaders();
+        FetchShaderInstances();
         CreateSwapChain();
         CreateTriangleVertexBuffer();
         CreateSyncObjects();
@@ -190,7 +192,6 @@ void TriangleApplication::OnDestroy()
         PipelineCache::Get(*device).Invalidate();
         BufferPool::Get(*device).Invalidate();
         TexturePool::Get(*device).Invalidate();
-        ShaderRegistry::Get().ResetAllTypes();
     });
     RenderThread::Get().Flush();
 
@@ -207,18 +208,22 @@ void TriangleApplication::CreateDevice()
                 .AddQueueRequest(QueueRequestInfo(QueueType::graphics, 1)));
 }
 
-void TriangleApplication::CompileAllShaders()
+void TriangleApplication::CompileAllShaders() const
 {
     ShaderCompileOptions options;
-    options.includeDirectories = { "../Test/Sample/ShaderInclude", "../Test/Sample/Rendering-Triangle" };
+    options.includeDirectories = {"../Test/Sample/ShaderInclude", "../Test/Sample/Rendering-Triangle"};
     options.byteCodeType = GetRHIType() == RHI::RHIType::directX12 ? ShaderByteCodeType::dxil : ShaderByteCodeType::spirv;
     options.withDebugInfo = false;
     auto result = ShaderTypeCompiler::Get().CompileAll(options);
     const auto& [success, errorInfo] = result.get();
     Assert(success);
+}
 
-    triangleVS = ShaderRegistry::Get().GetShaderInstance(*device, TriangleVS::Get(), {});
-    trianglePS = ShaderRegistry::Get().GetShaderInstance(*device, TrianglePS::Get(), {});
+void TriangleApplication::FetchShaderInstances()
+{
+    ShaderArtifactRegistry::Get().PerformThreadCopy();
+    triangleVS = ShaderMap::Get(*device).GetShaderInstance(TriangleVS::Get(), {});
+    trianglePS = ShaderMap::Get(*device).GetShaderInstance(TrianglePS::Get(), {});
 }
 
 void TriangleApplication::CreateSwapChain()

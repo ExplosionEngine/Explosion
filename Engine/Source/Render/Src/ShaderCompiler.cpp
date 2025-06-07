@@ -13,6 +13,8 @@
 #else
 #define __EMULATE_UUID 1
 #endif
+#include "Core/Thread.h"
+
 #include <dxc/dxcapi.h>
 
 #if PLATFORM_WINDOWS
@@ -382,9 +384,14 @@ namespace Render {
 
     std::future<ShaderTypeCompileResult> ShaderTypeCompiler::Compile(const std::vector<const ShaderType*>& inShaderTypes, const ShaderCompileOptions& inOptions)
     {
-        // TODO check in game thread
+        Assert(Core::ThreadContext::IsGameThread());
 
         return threadPool.EmplaceTask([inShaderTypes, inOptions]() -> ShaderTypeCompileResult {
+            ShaderArtifactRegistry& artifactRegistry = ShaderArtifactRegistry::Get();
+
+            std::unique_lock lock(artifactRegistry.mutexGT);
+            auto& typeArtifactGT = artifactRegistry.typeArtifactsGT;
+
             std::unordered_map<ShaderTypeKey, std::unordered_map<ShaderVariantKey, std::future<ShaderCompileOutput>>> compileOutputs;
             compileOutputs.reserve(inShaderTypes.size());
 
@@ -395,13 +402,14 @@ namespace Render {
                 auto includeDirectories = Common::VectorUtils::Combine(Internal::GetPresetIncludeDirectories(), shaderType->GetIncludeDirectories());
                 includeDirectories = Common::VectorUtils::Combine(includeDirectories, inOptions.includeDirectories);
                 includeDirectories = Internal::TranslateIncludeDirectories(includeDirectories);
-                const auto oldHash = ShaderRegistry::Get().shaderStorages.at(typeKey).sourceHash;
+                const auto oldHash = typeArtifactGT.contains(typeKey) ? typeArtifactGT.at(typeKey).sourceHash : shaderSourceHashNotCompiled;
                 const auto newHash = ShaderUtils::ComputeShaderSourceHash(sourceFile, includeDirectories); // NOLINT
 
                 if (oldHash != shaderSourceHashNotCompiled && oldHash == newHash) {
                     continue;
                 }
-                ShaderRegistry::Get().ResetType(*shaderType);
+                typeArtifactGT[typeKey].sourceHash = newHash;
+                typeArtifactGT[typeKey].variantArtifacts.clear();
 
                 const auto stage = shaderType->GetStage();
                 const auto& entryPoint = shaderType->GetEntryPoint();
@@ -428,15 +436,15 @@ namespace Render {
 
             ShaderTypeCompileResult result;
             for (auto& [typeKey, variantCompileOutputs] : compileOutputs) {
-                auto& shaderStorage = ShaderRegistry::Get().shaderStorages.at(typeKey);
+                auto& typeArtifact = typeArtifactGT.at(typeKey);
                 for (auto& [variantKey, compileFuture] : variantCompileOutputs) {
                     ShaderCompileOutput output = compileFuture.get(); // NOLINT
                     if (output.success) {
-                        ShaderModuleData moduleData;
-                        moduleData.entryPoint = output.entryPoint;
-                        moduleData.byteCode = std::move(output.byteCode);
-                        moduleData.reflectionData = std::move(output.reflectionData);
-                        shaderStorage.shaderModuleDatas.emplace(variantKey, std::move(moduleData));
+                        ShaderVariantArtifact variantArtifact;
+                        variantArtifact.entryPoint = output.entryPoint;
+                        variantArtifact.byteCode = std::move(output.byteCode);
+                        variantArtifact.reflectionData = std::move(output.reflectionData);
+                        typeArtifact.variantArtifacts.emplace(variantKey, std::move(variantArtifact));
                     } else {
                         result.errorInfos.emplace(std::make_pair(std::make_pair(typeKey, variantKey), output.errorInfo));
                     }
@@ -449,6 +457,6 @@ namespace Render {
 
     std::future<ShaderTypeCompileResult> ShaderTypeCompiler::CompileAll(const ShaderCompileOptions& inOptions)
     {
-        return Compile(ShaderRegistry::Get().AllTypes(), inOptions);
+        return Compile(ShaderTypeRegistry::Get().AllTypes(), inOptions);
     }
 }
