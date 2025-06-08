@@ -262,27 +262,25 @@ Application::ShaderCompileOutput Application::CompileShader(const std::string& f
 {
     std::string shaderSource = FileUtils::ReadTextFile(fileName);
 
-    Render::ShaderCompileInput info;
-    info.source = shaderSource;
-    info.entryPoint = entryPoint;
-    info.stage = shaderStage;
+    Render::ShaderCompileInput input;
+    input.source = shaderSource;
+    input.entryPoint = entryPoint;
+    input.stage = shaderStage;
+    input.includeDirectories.emplace_back("../Test/Sample/ShaderInclude");
 
     Render::ShaderCompileOptions options;
-    options.includePaths.emplace_back("../Test/Sample/ShaderInclude");
-    options.includePaths.insert(options.includePaths.end(), includePaths.begin(), includePaths.end());
-
     if (rhiType == RHI::RHIType::directX12) {
         options.byteCodeType = Render::ShaderByteCodeType::dxil;
     } else {
         options.byteCodeType = Render::ShaderByteCodeType::spirv;
     }
     options.withDebugInfo = false;
-    auto future = Render::ShaderCompiler::Get().Compile(info, options);
+    auto future = Render::ShaderCompiler::Get().Compile(input, options);
 
     future.wait();
     auto compileOutput = future.get();
     if (!compileOutput.success) {
-        std::cout << "failed to compiler shader (" << fileName << ", " << info.entryPoint << ")" << '\n' << compileOutput.errorInfo << std::endl;
+        std::cout << "failed to compiler shader (" << fileName << ", " << input.entryPoint << ")" << '\n' << compileOutput.errorInfo << std::endl;
     }
     Assert(compileOutput.success);
 

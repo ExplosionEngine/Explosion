@@ -3,9 +3,11 @@ import QtQuick.Controls
 import QtQuick.Controls.Basic
 
 Item {
+    readonly property string displayText: textField.displayText
     property string placeHolderText: ''
     property int wrapMode: TextInput.NoWrap
     property string text: textField.text
+    property bool readOnly: textField.readOnly
     property var validator: null
 
     signal accepted()
@@ -27,6 +29,7 @@ Item {
         font.pixelSize: ETheme.contentFontSize
         font.family: ETheme.fontFamily
         wrapMode: root.wrapMode
+        readOnly: root.readOnly
         validator: root.validator
         onAccepted: root.accepted()
 

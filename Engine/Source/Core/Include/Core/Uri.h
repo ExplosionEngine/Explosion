@@ -32,9 +32,6 @@ namespace Core {
     class CORE_API FileUriParser {
     public:
         explicit FileUriParser(const Uri& inUri);
-        bool IsEngineFile() const;
-        bool IsGameFile() const;
-        bool IsRegularFile() const;
         Common::Path Parse() const;
 
     private:
@@ -44,15 +41,7 @@ namespace Core {
     class CORE_API AssetUriParser {
     public:
         explicit AssetUriParser(const Uri& inUri);
-        bool IsEngineAsset() const;
-        bool IsGameAsset() const;
-        bool IsEnginePluginAsset() const;
-        bool IsGamePluginAsset() const;
         Common::Path Parse() const;
-
-#if BUILD_TEST
-        bool IsEngineTestAsset() const;
-#endif
 
     private:
         std::string content;

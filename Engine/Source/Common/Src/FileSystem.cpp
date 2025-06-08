@@ -8,7 +8,7 @@
 namespace Common::Internal {
     std::filesystem::path GetUnixStylePath(const std::string& inPath)
     {
-        return Common::StringUtils::Replace(std::filesystem::weakly_canonical(inPath).string(), "\\", "/");
+        return StringUtils::Replace(inPath, "\\", "/");
     }
 
     std::filesystem::path GetUnixStylePath(const std::filesystem::path& inPath)
@@ -187,5 +187,10 @@ namespace Common {
     void Path::MakeDir() const
     {
         std::filesystem::create_directories(path);
+    }
+
+    void Path::Fixup()
+    {
+        path = Internal::GetUnixStylePath(path);
     }
 } // namespace Common

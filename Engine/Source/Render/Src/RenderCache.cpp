@@ -374,7 +374,7 @@ namespace Render {
     {
         std::unordered_map<uint8_t, RBindingMap> layoutBindingMaps;
         for (const auto& [stage, instance] : shaderInstancePack) {
-            if (!instance->IsValid()) {
+            if (!instance->Valid()) {
                 continue;
             }
             Assert(instance->reflectionData != nullptr);
@@ -504,10 +504,13 @@ namespace Render {
         return hash;
     }
 
+    std::mutex SamplerCache::mutex = std::mutex();
+
     SamplerCache& SamplerCache::Get(RHI::Device& device)
     {
         static std::unordered_map<RHI::Device*, Common::UniquePtr<SamplerCache>> map;
 
+        std::unique_lock lock(mutex);
         const auto iter = map.find(&device);
         if (iter == map.end()) {
             map[&device] = Common::UniquePtr(new SamplerCache(device));
@@ -532,10 +535,13 @@ namespace Render {
         return samplers[hash].Get();
     }
 
+    std::mutex PipelineCache::mutex = std::mutex();
+
     PipelineCache& PipelineCache::Get(RHI::Device& device)
     {
         static std::unordered_map<RHI::Device*, Common::UniquePtr<PipelineCache>> map;
 
+        std::unique_lock lock(mutex);
         if (const auto iter = map.find(&device);
             iter == map.end()) {
             map[&device] = Common::UniquePtr(new PipelineCache(device));
@@ -577,10 +583,13 @@ namespace Render {
         return rasterPipelines[hash].Get();
     }
 
+    std::mutex ResourceViewCache::mutex = std::mutex();
+
     ResourceViewCache& ResourceViewCache::Get(RHI::Device& device)
     {
         static std::unordered_map<RHI::Device*, Common::UniquePtr<ResourceViewCache>> map;
 
+        std::unique_lock lock(mutex);
         if (!map.contains(&device)) {
             map.emplace(std::make_pair(&device, Common::UniquePtr(new ResourceViewCache(device))));
         }
@@ -661,10 +670,13 @@ namespace Render {
         forfeitCaches(textureViewCaches);
     }
 
+    std::mutex BindGroupCache::mutex = std::mutex();
+
     BindGroupCache& BindGroupCache::Get(RHI::Device& device)
     {
         static std::unordered_map<RHI::Device*, Common::UniquePtr<BindGroupCache>> map;
 
+        std::unique_lock lock(mutex);
         if (!map.contains(&device)) {
             map.emplace(std::make_pair(&device, Common::UniquePtr(new BindGroupCache(device))));
         }

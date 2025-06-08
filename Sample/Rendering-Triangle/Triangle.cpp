@@ -16,32 +16,31 @@ struct Vertex {
     FVec3 position;
 };
 
-class TriangleVS : public GlobalShader {
-public:
-    ShaderInfo(
-        "TriangleVS",
+class TriangleVS final : public StaticShaderType<TriangleVS> {
+    ShaderTypeInfo(
+        TriangleVS,
+        RHI::ShaderStageBits::sVertex,
         "Engine/Test/Sample/Rendering-Triangle/Triangle.esl",
-        "VSMain",
-        RHI::ShaderStageBits::sVertex);
+        "VSMain")
 
-    NonVariant;
-    DefaultVariantFilter;
+    EmptyIncludeDirectories
+    EmptyVariantFieldVec
 };
 
-class TrianglePS : public GlobalShader {
+class TrianglePS final : public StaticShaderType<TrianglePS> {
 public:
-    ShaderInfo(
-        "TrianglePS",
+    ShaderTypeInfo(
+        TrianglePS,
+        RHI::ShaderStageBits::sPixel,
         "Engine/Test/Sample/Rendering-Triangle/Triangle.esl",
-        "PSMain",
-        RHI::ShaderStageBits::sPixel);
+        "PSMain")
 
-    NonVariant;
-    DefaultVariantFilter;
+    EmptyIncludeDirectories
+    EmptyVariantFieldVec
 };
 
-RegisterGlobalShader(TriangleVS);
-RegisterGlobalShader(TrianglePS);
+ImplementStaticShaderType(TriangleVS);
+ImplementStaticShaderType(TrianglePS);
 
 struct PsUniform {
     FVec3 pixelColor;
@@ -60,7 +59,8 @@ private:
     static constexpr size_t backBufferCount = 2;
 
     void CreateDevice();
-    void CompileAllShaders();
+    void CompileAllShaders() const;
+    void FetchShaderInstances();
     void CreateSwapChain();
     void CreateTriangleVertexBuffer();
     void CreateSyncObjects();
@@ -89,100 +89,114 @@ TriangleApplication::~TriangleApplication() = default;
 
 void TriangleApplication::OnCreate()
 {
-    RenderWorkerThreads::Get().Start();
-    CreateDevice();
     CompileAllShaders();
-    CreateSwapChain();
-    CreateTriangleVertexBuffer();
-    CreateSyncObjects();
+    RenderThread::Get().Start();
+    RenderWorkerThreads::Get().Start();
+
+    RenderThread::Get().EmplaceTask([this]() -> void {
+        CreateDevice();
+        FetchShaderInstances();
+        CreateSwapChain();
+        CreateTriangleVertexBuffer();
+        CreateSyncObjects();
+    });
 }
 
 void TriangleApplication::OnDrawFrame()
 {
-    frameFence->Reset();
-    const auto backTextureIndex = swapChain->AcquireBackTexture(imageReadySemaphore.Get());
+    RenderThread::Get().EmplaceTask([this]() -> void {
+        frameFence->Reset();
+        const auto backTextureIndex = swapChain->AcquireBackTexture(imageReadySemaphore.Get());
 
-    auto* pso = PipelineCache::Get(*device).GetOrCreate(
-        RasterPipelineStateDesc()
-            .SetVertexShader(triangleVS)
-            .SetPixelShader(trianglePS)
-            .SetVertexState(
-                RVertexState()
-                    .AddVertexBufferLayout(
-                        RVertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
-                            .AddAttribute(RVertexAttribute(RVertexBinding("POSITION", 0), VertexFormat::float32X3, offsetof(Vertex, position)))))
-            .SetFragmentState(
-                RFragmentState()
-                    .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all, false))));
+        auto* pso = PipelineCache::Get(*device).GetOrCreate(
+            RasterPipelineStateDesc()
+                .SetVertexShader(triangleVS)
+                .SetPixelShader(trianglePS)
+                .SetVertexState(
+                    RVertexState()
+                        .AddVertexBufferLayout(
+                            RVertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
+                                .AddAttribute(RVertexAttribute(RVertexBinding("POSITION", 0), VertexFormat::float32X3, offsetof(Vertex, position)))))
+                .SetFragmentState(
+                    RFragmentState()
+                        .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all, false))));
 
-    RGBuilder builder(*device);
-    auto* backTexture = builder.ImportTexture(swapChainTextures[backTextureIndex], TextureState::present);
-    auto* backTextureView = builder.CreateTextureView(backTexture, RGTextureViewDesc(TextureViewType::colorAttachment, TextureViewDimension::tv2D));
-    auto* vertexBuffer = builder.ImportBuffer(triangleVertexBuffer.Get(), BufferState::shaderReadOnly);
-    auto* vertexBufferView = builder.CreateBufferView(vertexBuffer, RGBufferViewDesc(BufferViewType::vertex, vertexBuffer->GetDesc().size, 0, VertexBufferViewInfo(sizeof(Vertex))));
-    auto* psUniformBuffer = builder.CreateBuffer(RGBufferDesc(sizeof(PsUniform), BufferUsageBits::uniform | BufferUsageBits::mapWrite, BufferState::staging, "psUniform"));
-    auto* psUniformBufferView = builder.CreateBufferView(psUniformBuffer, RGBufferViewDesc(BufferViewType::uniformBinding, sizeof(PsUniform)));
+        RGBuilder builder(*device);
+        auto* backTexture = builder.ImportTexture(swapChainTextures[backTextureIndex], TextureState::present);
+        auto* backTextureView = builder.CreateTextureView(backTexture, RGTextureViewDesc(TextureViewType::colorAttachment, TextureViewDimension::tv2D));
+        auto* vertexBuffer = builder.ImportBuffer(triangleVertexBuffer.Get(), BufferState::shaderReadOnly);
+        auto* vertexBufferView = builder.CreateBufferView(vertexBuffer, RGBufferViewDesc(BufferViewType::vertex, vertexBuffer->GetDesc().size, 0, VertexBufferViewInfo(sizeof(Vertex))));
+        auto* psUniformBuffer = builder.CreateBuffer(RGBufferDesc(sizeof(PsUniform), BufferUsageBits::uniform | BufferUsageBits::mapWrite, BufferState::staging, "psUniform"));
+        auto* psUniformBufferView = builder.CreateBufferView(psUniformBuffer, RGBufferViewDesc(BufferViewType::uniformBinding, sizeof(PsUniform)));
 
-    auto* bindGroup = builder.AllocateBindGroup(
-        RGBindGroupDesc::Create(pso->GetPipelineLayout()->GetBindGroupLayout(0))
-            .UniformBuffer("psUniform", psUniformBufferView));
+        auto* bindGroup = builder.AllocateBindGroup(
+            RGBindGroupDesc::Create(pso->GetPipelineLayout()->GetBindGroupLayout(0))
+                .UniformBuffer("psUniform", psUniformBufferView));
 
-    PsUniform psUniform {};
-    psUniform.pixelColor = FVec3(
-        (std::sin(GetCurrentTimeSeconds()) + 1) / 2,
-        (std::cos(GetCurrentTimeSeconds()) + 1) / 2,
-        std::abs(std::sin(GetCurrentTimeSeconds())));
+        PsUniform psUniform {};
+        psUniform.pixelColor = FVec3(
+            (std::sin(GetCurrentTimeSeconds()) + 1) / 2,
+            (std::cos(GetCurrentTimeSeconds()) + 1) / 2,
+            std::abs(std::sin(GetCurrentTimeSeconds())));
 
-    builder.QueueBufferUpload(
-        psUniformBuffer,
-        RGBufferUploadInfo(&psUniform, sizeof(PsUniform)));
+        builder.QueueBufferUpload(
+            psUniformBuffer,
+            RGBufferUploadInfo(&psUniform, sizeof(PsUniform)));
 
-    builder.AddRasterPass(
-        "BasePass",
-        RGRasterPassDesc()
-            .AddColorAttachment(RGColorAttachment(backTextureView, LoadOp::clear, StoreOp::store)),
-        { bindGroup },
-        [pso, vertexBufferView, bindGroup, viewportWidth = GetWindowWidth(), viewportHeight = GetWindowHeight()](const RGBuilder& rg, RasterPassCommandRecorder& recorder) -> void {
-            recorder.SetPipeline(pso->GetRHI());
-            recorder.SetScissor(0, 0, viewportWidth, viewportHeight);
-            recorder.SetViewport(0, 0, static_cast<float>(viewportWidth), static_cast<float>(viewportHeight), 0, 1);
-            recorder.SetVertexBuffer(0, rg.GetRHI(vertexBufferView));
-            recorder.SetPrimitiveTopology(PrimitiveTopology::triangleList);
-            recorder.SetBindGroup(0, rg.GetRHI(bindGroup));
-            recorder.Draw(3, 1, 0, 0);
-        },
-        {},
-        [backTexture](const RGBuilder& rg, CommandRecorder& recorder) -> void {
-            recorder.ResourceBarrier(Barrier::Transition(rg.GetRHI(backTexture), TextureState::renderTarget, TextureState::present));
-        });
+        builder.AddRasterPass(
+            "BasePass",
+            RGRasterPassDesc()
+                .AddColorAttachment(RGColorAttachment(backTextureView, LoadOp::clear, StoreOp::store)),
+            { bindGroup },
+            [pso, vertexBufferView, bindGroup, viewportWidth = GetWindowWidth(), viewportHeight = GetWindowHeight()](const RGBuilder& rg, RasterPassCommandRecorder& recorder) -> void {
+                recorder.SetPipeline(pso->GetRHI());
+                recorder.SetScissor(0, 0, viewportWidth, viewportHeight);
+                recorder.SetViewport(0, 0, static_cast<float>(viewportWidth), static_cast<float>(viewportHeight), 0, 1);
+                recorder.SetVertexBuffer(0, rg.GetRHI(vertexBufferView));
+                recorder.SetPrimitiveTopology(PrimitiveTopology::triangleList);
+                recorder.SetBindGroup(0, rg.GetRHI(bindGroup));
+                recorder.Draw(3, 1, 0, 0);
+            },
+            {},
+            [backTexture](const RGBuilder& rg, CommandRecorder& recorder) -> void {
+                recorder.ResourceBarrier(Barrier::Transition(rg.GetRHI(backTexture), TextureState::renderTarget, TextureState::present));
+            });
 
-    RGExecuteInfo executeInfo;
-    executeInfo.semaphoresToWait = { imageReadySemaphore.Get() };
-    executeInfo.semaphoresToSignal = { renderFinishedSemaphore.Get() };
-    executeInfo.inFenceToSignal = frameFence.Get();
-    builder.Execute(executeInfo);
-    swapChain->Present(renderFinishedSemaphore.Get());
-    frameFence->Wait();
+        RGExecuteInfo executeInfo;
+        executeInfo.semaphoresToWait = { imageReadySemaphore.Get() };
+        executeInfo.semaphoresToSignal = { renderFinishedSemaphore.Get() };
+        executeInfo.inFenceToSignal = frameFence.Get();
+        builder.Execute(executeInfo);
+        swapChain->Present(renderFinishedSemaphore.Get());
+        frameFence->Wait();
 
-    Core::ThreadContext::IncFrameNumber();
-    BufferPool::Get(*device).Forfeit();
-    TexturePool::Get(*device).Forfeit();
-    ResourceViewCache::Get(*device).Forfeit();
-    BindGroupCache::Get(*device).Forfeit();
+        Core::ThreadContext::IncFrameNumber();
+        BufferPool::Get(*device).Forfeit();
+        TexturePool::Get(*device).Forfeit();
+        ResourceViewCache::Get(*device).Forfeit();
+        BindGroupCache::Get(*device).Forfeit();
+    });
+
+    // TODO in sample, just sync with render thread every frame, maybe later need a better render-thread based application class
+    RenderThread::Get().Flush();
 }
 
 void TriangleApplication::OnDestroy()
 {
-    const UniquePtr<Fence> fence = device->CreateFence(false);
-    device->GetQueue(QueueType::graphics, 0)->Flush(fence.Get());
-    fence->Wait();
+    RenderThread::Get().EmplaceTask([this]() -> void {
+        const UniquePtr<Fence> fence = device->CreateFence(false);
+        device->GetQueue(QueueType::graphics, 0)->Flush(fence.Get());
+        fence->Wait();
 
-    BindGroupCache::Get(*device).Invalidate();
-    PipelineCache::Get(*device).Invalidate();
-    BufferPool::Get(*device).Invalidate();
-    TexturePool::Get(*device).Invalidate();
-    GlobalShaderRegistry::Get().Invalidate();
+        BindGroupCache::Get(*device).Invalidate();
+        PipelineCache::Get(*device).Invalidate();
+        BufferPool::Get(*device).Invalidate();
+        TexturePool::Get(*device).Invalidate();
+    });
+    RenderThread::Get().Flush();
+
     RenderWorkerThreads::Get().Stop();
+    RenderThread::Get().Stop();
 }
 
 void TriangleApplication::CreateDevice()
@@ -194,18 +208,22 @@ void TriangleApplication::CreateDevice()
                 .AddQueueRequest(QueueRequestInfo(QueueType::graphics, 1)));
 }
 
-void TriangleApplication::CompileAllShaders()
+void TriangleApplication::CompileAllShaders() const
 {
     ShaderCompileOptions options;
-    options.includePaths = { "../Test/Sample/ShaderInclude", "../Test/Sample/Rendering-Triangle" };
+    options.includeDirectories = {"../Test/Sample/ShaderInclude", "../Test/Sample/Rendering-Triangle"};
     options.byteCodeType = GetRHIType() == RHI::RHIType::directX12 ? ShaderByteCodeType::dxil : ShaderByteCodeType::spirv;
     options.withDebugInfo = false;
-    auto result = ShaderTypeCompiler::Get().CompileGlobalShaderTypes(options);
+    auto result = ShaderTypeCompiler::Get().CompileAll(options);
     const auto& [success, errorInfo] = result.get();
     Assert(success);
+}
 
-    triangleVS = GlobalShaderMap<TriangleVS>::Get().GetShaderInstance(*device, {});
-    trianglePS = GlobalShaderMap<TrianglePS>::Get().GetShaderInstance(*device, {});
+void TriangleApplication::FetchShaderInstances()
+{
+    ShaderArtifactRegistry::Get().PerformThreadCopy();
+    triangleVS = ShaderMap::Get(*device).GetShaderInstance(TriangleVS::Get(), {});
+    trianglePS = ShaderMap::Get(*device).GetShaderInstance(TrianglePS::Get(), {});
 }
 
 void TriangleApplication::CreateSwapChain()

@@ -2,6 +2,8 @@
 // Created by Kindem on 2025/3/16.
 //
 
+#include <QResizeEvent>
+
 #include <Common/Time.h>
 #include <Editor/Widget/GraphicsSampleWidget.h>
 #include <Editor/Widget/moc_GraphicsSampleWidget.cpp> // NOLINT
@@ -26,7 +28,7 @@ namespace Editor {
         RecreateSwapChain(width(), height());
 
         Render::ShaderCompileOptions shaderCompileOptions;
-        shaderCompileOptions.includePaths = {"../Shader/Engine"};
+        shaderCompileOptions.includeDirectories = {"../Shader/Engine"};
         shaderCompileOptions.byteCodeType = GetDevice().GetGpu().GetInstance().GetRHIType() == RHI::RHIType::directX12 ? Render::ShaderByteCodeType::dxil : Render::ShaderByteCodeType::spirv;
         shaderCompileOptions.withDebugInfo = static_cast<bool>(BUILD_CONFIG_DEBUG); // NOLINT
 

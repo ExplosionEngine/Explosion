@@ -21,30 +21,32 @@ namespace Render {
     struct ShaderCompileInput {
         std::string source;
         std::string entryPoint;
-        RHI::ShaderStageBits stage;
+        RHI::ShaderStageBits stage = RHI::ShaderStageBits::max;
         std::vector<std::string> definitions;
+        std::vector<std::string> includeDirectories;
     };
 
     struct ShaderCompileOptions {
+        std::vector<std::string> includeDirectories;
         ShaderByteCodeType byteCodeType = ShaderByteCodeType::max;
         bool withDebugInfo = false;
-        std::vector<std::string> includePaths;
     };
 
     struct ShaderCompileOutput {
         bool success;
+        std::string entryPoint;
         std::vector<uint8_t> byteCode;
         ShaderReflectionData reflectionData;
         std::string errorInfo;
     };
 
     struct ShaderTypeAndVariantHashProvider {
-        size_t operator()(const std::pair<ShaderTypeKey, VariantKey>& value) const;
+        size_t operator()(const std::pair<ShaderTypeKey, ShaderVariantKey>& value) const;
     };
 
     struct ShaderTypeCompileResult {
         bool success;
-        std::unordered_map<std::pair<ShaderTypeKey, VariantKey>, std::string, ShaderTypeAndVariantHashProvider> errorInfos;
+        std::unordered_map<std::pair<ShaderTypeKey, ShaderVariantKey>, std::string, ShaderTypeAndVariantHashProvider> errorInfos;
     };
 
     class ShaderCompiler {
@@ -64,8 +66,8 @@ namespace Render {
         static ShaderTypeCompiler& Get();
         ~ShaderTypeCompiler();
 
-        std::future<ShaderTypeCompileResult> Compile(const std::vector<IShaderType*>& inShaderTypes, const ShaderCompileOptions& inOptions);
-        std::future<ShaderTypeCompileResult> CompileGlobalShaderTypes(const ShaderCompileOptions& inOptions);
+        std::future<ShaderTypeCompileResult> Compile(const std::vector<const ShaderType*>& inShaderTypes, const ShaderCompileOptions& inOptions);
+        std::future<ShaderTypeCompileResult> CompileAll(const ShaderCompileOptions& inOptions);
 
     private:
         ShaderTypeCompiler();

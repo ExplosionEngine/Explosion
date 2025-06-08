@@ -69,6 +69,7 @@ namespace Runtime {
         renderThread.EmplaceTask([]() -> void {
             Core::ThreadContext::IncFrameNumber();
             Core::Console::Get().PerformRenderThreadSettingsCopy();
+            Render::ShaderArtifactRegistry::Get().PerformThreadCopy();
         });
 
         for (auto* world : worlds) {

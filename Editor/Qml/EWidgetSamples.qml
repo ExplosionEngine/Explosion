@@ -147,7 +147,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 35
+                Layout.topMargin: 15
 
                 EText {
                     text: 'Texts'
@@ -196,7 +196,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 35
+                Layout.topMargin: 15
 
                 EText {
                     text: 'Icons'
@@ -276,7 +276,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 35
+                Layout.topMargin: 15
                 EText {
                     text: 'Switches'
                     style: EText.Style.Title1
@@ -317,7 +317,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 35
+                Layout.topMargin: 15
                 EText {
                     text: 'TextInput'
                     style: EText.Style.Title1
@@ -393,9 +393,9 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 35
+                Layout.topMargin: 15
                 EText {
-                    text: 'NumberInput'
+                    text: 'IntegerInput'
                     style: EText.Style.Title1
                 }
             }
@@ -404,7 +404,7 @@ Rectangle {
                 Layout.margins: 5
 
                 RowLayout {
-                    ENumberInput {}
+                    EIntegerInput {}
 
                     EText {
                         Layout.leftMargin: 5
@@ -413,7 +413,7 @@ Rectangle {
                 }
 
                 RowLayout {
-                    ENumberInput {
+                    EIntegerInput {
                         from: 0
                         to: 10
                     }
@@ -421,6 +421,43 @@ Rectangle {
                     EText {
                         Layout.leftMargin: 5
                         text: 'Limit 0-10'
+                    }
+                }
+
+                RowLayout {
+                    EIntegerInput {
+                        editable: true
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'Editable'
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.leftMargin: 5
+                Layout.topMargin: 15
+                EText {
+                    text: 'FloatInput'
+                    style: EText.Style.Title1
+                }
+            }
+
+            ColumnLayout {
+                Layout.margins: 5
+
+                RowLayout {
+                    EFloatInput {
+                        onAccepted: {
+                            console.log('value accepted, value=' + text)
+                        }
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'Default'
                     }
                 }
             }

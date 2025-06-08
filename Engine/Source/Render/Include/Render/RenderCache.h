@@ -74,17 +74,17 @@ namespace Render {
     };
 
     struct ComputePipelineShaderSet {
-        Render::ShaderInstance computeShader;
+        ShaderInstance computeShader;
 
         uint64_t Hash() const;
     };
 
     struct RasterPipelineShaderSet {
-        Render::ShaderInstance vertexShader;
-        Render::ShaderInstance pixelShader;
-        Render::ShaderInstance geometryShader;
-        Render::ShaderInstance domainShader;
-        Render::ShaderInstance hullShader;
+        ShaderInstance vertexShader;
+        ShaderInstance pixelShader;
+        ShaderInstance geometryShader;
+        ShaderInstance domainShader;
+        ShaderInstance hullShader;
 
         uint64_t Hash() const;
     };
@@ -173,7 +173,7 @@ namespace Render {
     private:
         struct ShaderInstancePack {
             RHI::ShaderStageBits stage;
-            const Render::ShaderInstance* instance;
+            const ShaderInstance* instance;
         };
 
         friend class PipelineLayoutCache;
@@ -233,6 +233,8 @@ namespace Render {
         Sampler* GetOrCreate(const RSamplerDesc& desc);
 
     private:
+        static std::mutex mutex;
+
         explicit SamplerCache(RHI::Device& inDevice);
 
         RHI::Device& device;
@@ -250,6 +252,8 @@ namespace Render {
         RasterPipelineState* GetOrCreate(const RasterPipelineStateDesc& desc);
 
     private:
+        static std::mutex mutex;
+
         explicit PipelineCache(RHI::Device& inDevice);
 
         RHI::Device& device;
@@ -269,6 +273,8 @@ namespace Render {
         void Forfeit();
 
     private:
+        static std::mutex mutex;
+
         explicit ResourceViewCache(RHI::Device& inDevice);
 
         struct BufferViewCache {
@@ -299,6 +305,8 @@ namespace Render {
 
     private:
         using AllocateFrameNumber = uint64_t;
+
+        static std::mutex mutex;
 
         explicit BindGroupCache(RHI::Device& inDevice);
 

@@ -22,6 +22,8 @@
 #define FCIMPL_ITEM(A, B) if (flags & A) { result |= B; }
 #define FCIMPL_END(B) return result; };
 
+#define ALIGN_AS_GPU alignas(16)
+
 namespace RHI {
     enum class RHIType : uint8_t {
         directX12,
