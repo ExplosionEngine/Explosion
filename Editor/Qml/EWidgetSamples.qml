@@ -147,7 +147,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 35
+                Layout.topMargin: 15
 
                 EText {
                     text: 'Texts'
@@ -196,7 +196,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 35
+                Layout.topMargin: 15
 
                 EText {
                     text: 'Icons'
@@ -276,7 +276,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 35
+                Layout.topMargin: 15
                 EText {
                     text: 'Switches'
                     style: EText.Style.Title1
@@ -317,7 +317,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 35
+                Layout.topMargin: 15
                 EText {
                     text: 'TextInput'
                     style: EText.Style.Title1
@@ -393,7 +393,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 35
+                Layout.topMargin: 15
                 EText {
                     text: 'IntegerInput'
                     style: EText.Style.Title1
@@ -438,7 +438,7 @@ Rectangle {
 
             RowLayout {
                 Layout.leftMargin: 5
-                Layout.topMargin: 35
+                Layout.topMargin: 15
                 EText {
                     text: 'FloatInput'
                     style: EText.Style.Title1
