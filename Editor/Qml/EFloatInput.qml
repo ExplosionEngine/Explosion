@@ -2,15 +2,27 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Basic
 
-ETextField {
+Item {
+    property double value: 0.0
     property double from: 0.0
     property double to: 1.0
 
     id: root
-    implicitWidth: 100
+    implicitWidth: textField.implicitWidth
+    implicitHeight: textField.implicitHeight
 
-    validator: DoubleValidator {
-        bottom: root.from
-        top: root.to
+    ETextField {
+        id: textField
+        implicitWidth: 100
+        text: value
+
+        onAccepted: {
+            root.value = Number(text)
+        }
+
+        validator: DoubleValidator {
+            bottom: root.from
+            top: root.to
+        }
     }
 }
