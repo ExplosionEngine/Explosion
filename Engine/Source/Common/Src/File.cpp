@@ -30,6 +30,20 @@ namespace Common {
         return result;
     }
 
+    void FileUtils::WriteTextFile(const std::string& inFileName, const std::string& inContent)
+    {
+        const Path path(inFileName);
+        if (const Path parentPath = path.Parent();
+            !parentPath.Exists()) {
+            parentPath.MakeDir();
+        }
+
+        std::ofstream file(inFileName, std::ios::out | std::ios::binary | std::ios::trunc);
+        Assert(file.is_open());
+        file.write(inContent.data(), static_cast<std::streamsize>(inContent.size()));
+        file.close();
+    }
+
     rapidjson::Document FileUtils::ReadJsonFile(const std::string& inFileName)
     {
         char buffer[65536];

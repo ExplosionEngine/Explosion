@@ -20,6 +20,7 @@ namespace Runtime {
         postProcess,
         max
     };
+    static_assert(static_cast<uint8_t>(MaterialType::max) == static_cast<uint8_t>(Render::MaterialType::max));
 
     struct RUNTIME_API EClass() MaterialBoolVariantField {
         EClassBody(MaterialBoolVariantField)
@@ -151,6 +152,9 @@ namespace Runtime {
 
         explicit Material(Core::Uri inUri);
 
+        NonCopyable(Material)
+        NonMovable(Material)
+
         EFunc() MaterialType GetType() const;
         EFunc() void SetType(MaterialType inType);
         EFunc() const std::string& GetSource() const;
@@ -174,11 +178,17 @@ namespace Runtime {
         EFunc() const ParameterFieldMap& GetParameterFields() const;
         EFunc() ParameterField& EmplaceParameterField(const std::string& inName);
 
+        EFunc() void Update();
+
     private:
+        using StageShaderTypeMap = std::unordered_map<RHI::ShaderStageBits, Common::UniquePtr<Render::MaterialShaderType>>;
+
         EProperty() MaterialType type;
         EProperty() std::string source;
         EProperty() VariantFieldMap variantFields;
         EProperty() ParameterFieldMap parameterFields;
+
+        std::unordered_map<Render::VertexFactoryTypeKey, StageShaderTypeMap> shaderTypes;
     };
 
     class RUNTIME_API EClass() MaterialInstance final : public Asset {
