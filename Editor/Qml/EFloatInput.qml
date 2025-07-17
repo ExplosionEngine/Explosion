@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Controls.Basic
 
 Item {
-    property double value: 0.0
+    property double value: Number(textField.text)
     property double from: 0.0
     property double to: 1.0
 
@@ -17,7 +17,7 @@ Item {
         text: value
 
         onAccepted: {
-            root.value = Number(text)
+            root.value = Number(displayText)
         }
 
         validator: DoubleValidator {
