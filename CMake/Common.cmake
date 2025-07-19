@@ -1,6 +1,6 @@
 option(BUILD_EDITOR "Build Explosion editor" ON)
 option(CI "Build in CI" OFF)
-option(USE_UNITY_BUILD "Use unity build" OFF)
+option(USE_UNITY_BUILD "Use unity build" ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_UNITY_BUILD ${USE_UNITY_BUILD})
