@@ -54,7 +54,6 @@ set(EDITOR_RESOURCE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Qml/Resource)
 get_filename_component(EDITOR_RESOURCE_ROOT_ABSOLUTE ${EDITOR_RESOURCE_ROOT} ABSOLUTE)
 
 file(GLOB QML_SOURCES ${EDITOR_QML_ROOT}/*.qml)
-file(GLOB_RECURSE RESOURCES ${EDITOR_RESOURCE_ROOT}/*)
 
 list(
     APPEND SINGLETON_QML_SOURCES
@@ -70,17 +69,16 @@ foreach (QML_SOURCE ${QML_SOURCES})
     endif ()
 endforeach ()
 
-foreach (RESOURCE ${RESOURCES})
-    string(REPLACE ${EDITOR_RESOURCE_ROOT_ABSOLUTE} "Resource" ALIAS ${RESOURCE})
-    set_source_files_properties(${RESOURCE} PROPERTIES QT_RESOURCE_ALIAS ${ALIAS})
-endforeach ()
+add_custom_command(
+    TARGET Editor POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${EDITOR_RESOURCE_ROOT_ABSOLUTE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/../Resource
+)
 
 qt_add_qml_module(
     Editor
     NO_CACHEGEN
     URI editor
     QML_FILES ${QML_SOURCES}
-    RESOURCES ${RESOURCES}
     OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Generated/QmlModule
 )
 # ---- end qml ---------------------------------------------------------------------------------------

@@ -259,7 +259,7 @@ namespace Render {
     class MaterialShaderType final : public ShaderType {
     public:
         MaterialShaderType(
-            const VertexFactoryType& inVertexFactory,
+            const VertexFactoryType& inVertexFactoryType,
             std::string inName,
             RHI::ShaderStageBits inStage,
             std::string inSourceFile,

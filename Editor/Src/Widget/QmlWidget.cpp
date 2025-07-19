@@ -2,6 +2,7 @@
 // Created by Kindem on 2024/12/31.
 //
 
+#include <QQmlContext>
 #include <QVBoxLayout>
 
 #include <Editor/Widget/QmlWidget.h>
@@ -15,6 +16,9 @@ namespace Editor {
         , url(QmlEngine::Get().GetUrlFromShort(shortQmlFileName))
         , quickView(new QQuickView)
     {
+
+        const Common::Path resDir = Core::Paths::EngineResDir();
+        quickView->rootContext()->setContextProperty("appResDir", QString::fromStdString(resDir.String()));
         quickView->setResizeMode(QQuickView::SizeRootObjectToView);
         quickView->setSource(url);
 

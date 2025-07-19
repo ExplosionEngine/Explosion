@@ -4,6 +4,52 @@
 
 #include <Runtime/Asset/Material.h>
 
+namespace Runtime::Internal {
+    static std::string GetVariantFieldMacro(const std::string& inVariantFieldName)
+    {
+        return Common::StringUtils::ToUpperCase(std::format("MATERIAL_VARIANT_{}", inVariantFieldName));
+    }
+
+    template <typename T>
+    struct VariantFieldConverter {};
+
+    template <>
+    struct VariantFieldConverter<MaterialBoolVariantField> {
+        static Render::ShaderBoolVariantField Execute(const std::string& inVariantFieldName, const MaterialBoolVariantField& inVariantField)
+        {
+            return {
+                GetVariantFieldMacro(inVariantFieldName),
+                inVariantField.defaultValue
+            };
+        }
+    };
+
+    template <>
+    struct VariantFieldConverter<MaterialRangedUintVariantField> {
+        static Render::ShaderRangedIntVariantField Execute(const std::string& inVariantFieldName, const MaterialRangedUintVariantField& inVariantField)
+        {
+            return {
+                GetVariantFieldMacro(inVariantFieldName),
+                inVariantField.defaultValue,
+                inVariantField.range
+            };
+        }
+    };
+
+    static Render::ShaderVariantFieldVec BuildShaderVariantFieldVec(const Material::VariantFieldMap& inVariantFields)
+    {
+        Render::ShaderVariantFieldVec result;
+        result.reserve(inVariantFields.size());
+
+        for (const auto& [variantFieldName, variantField] : inVariantFields) {
+            std::visit([&]<typename T>(const T& inTypedVariantField) -> void {
+                result.emplace_back(VariantFieldConverter<T>::Execute(variantFieldName, inTypedVariantField));
+            }, variantField);
+        }
+        return result;
+    }
+}
+
 namespace Runtime {
     MaterialBoolVariantField::MaterialBoolVariantField()
         : defaultValue(false)
@@ -176,6 +222,60 @@ namespace Runtime {
     {
         parameterFields.emplace(inName, Material::ParameterField {});
         return parameterFields.at(inName);
+    }
+
+    void Material::Update()
+    {
+        static std::unordered_set supportedStages = {
+            RHI::ShaderStageBits::sVertex,
+            RHI::ShaderStageBits::sPixel};
+        static std::unordered_map<RHI::ShaderStageBits, std::string> stageEntrySourceFileMap = {
+            {RHI::ShaderStageBits::sVertex, "Engine/Shader/BasePassVS.esl"},
+            {RHI::ShaderStageBits::sPixel, "Engine/Shader/BasePassPS.esl"}};
+        static std::unordered_map<RHI::ShaderStageBits, std::string> stageSimpleNameMap = {
+            {RHI::ShaderStageBits::sVertex, "VS"},
+            {RHI::ShaderStageBits::sPixel, "PS"}};
+        static std::unordered_map<RHI::ShaderStageBits, std::string> stageEntryPointMap = {
+            {RHI::ShaderStageBits::sVertex, "VSMain"},
+            {RHI::ShaderStageBits::sPixel, "PSMain"}};
+
+        const std::string uriStr = Uri().Str();
+        const std::string materialName = Common::Path(Uri().Content()).FileNameWithoutExtension();
+        const std::uint64_t uriHash = Common::HashUtils::CityHash(uriStr.c_str(), uriStr.size());
+        const Common::Path materialRootCacheDir = std::format("Game/Cache/Materials/{}", uriHash);
+        const Common::Path materialHintFile = materialRootCacheDir / materialName;
+        const Common::Path materialHeader = materialRootCacheDir / "Material.ush";
+
+        if (const Common::Path absoluteMaterialRootCacheDir = Core::Paths::Translate(materialRootCacheDir);
+            !absoluteMaterialRootCacheDir.Exists()) {
+            absoluteMaterialRootCacheDir.MakeDir();
+        }
+        Common::FileUtils::WriteTextFile(Core::Paths::Translate(materialHintFile).Absolute().String(), "");
+        Common::FileUtils::WriteTextFile(Core::Paths::Translate(materialHeader).Absolute().String(), source);
+
+        shaderTypes.clear();
+        for (const Render::VertexFactoryType* vertexFactoryType : Render::VertexFactoryTypeRegistry::Get().AllTypes()) {
+            if (!vertexFactoryType->SupportMaterialType(static_cast<Render::MaterialType>(type))) {
+                continue;
+            }
+
+            const auto vertexFactoryTypeKey = vertexFactoryType->GetKey();
+            shaderTypes.emplace(vertexFactoryTypeKey, StageShaderTypeMap {});
+            StageShaderTypeMap& stageShaderTypeMap = shaderTypes.at(vertexFactoryTypeKey);
+
+            for (const auto stage : supportedStages) {
+                stageShaderTypeMap.emplace(
+                    stage,
+                    Common::MakeUnique<Render::MaterialShaderType>(
+                        *vertexFactoryType,
+                        std::format("{}-{}", materialName, stageSimpleNameMap.at(stage)),
+                        stage,
+                        stageEntrySourceFileMap.at(stage),
+                        stageEntryPointMap.at(stage),
+                        std::vector {materialRootCacheDir.String()},
+                        Internal::BuildShaderVariantFieldVec(variantFields)));
+            }
+        }
     }
 
     MaterialInstance::MaterialInstance(Core::Uri inUri)

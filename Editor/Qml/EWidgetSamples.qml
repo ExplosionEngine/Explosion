@@ -449,11 +449,7 @@ Rectangle {
                 Layout.margins: 5
 
                 RowLayout {
-                    EFloatInput {
-                        onAccepted: {
-                            console.log('value accepted, value=' + text)
-                        }
-                    }
+                    EFloatInput {}
 
                     EText {
                         Layout.leftMargin: 5

@@ -244,7 +244,7 @@ namespace Render {
     }
 
     MaterialShaderType::MaterialShaderType(
-        const VertexFactoryType& inVertexFactory,
+        const VertexFactoryType& inVertexFactoryType,
         std::string inName,
         RHI::ShaderStageBits inStage,
         std::string inSourceFile,
@@ -252,13 +252,13 @@ namespace Render {
         const std::vector<std::string>& inIncludeDirectories,
         const ShaderVariantFieldVec& inShaderVariantFields)
         : ShaderType(Internal::MakeTypeKeyFromName(inName))
-        , vertexFactory(inVertexFactory)
+        , vertexFactory(inVertexFactoryType)
         , name(std::move(inName))
         , stage(inStage)
         , sourceFile(std::move(inSourceFile))
         , entryPoint(std::move(inEntryPoint))
         , includeDirectories(inIncludeDirectories)
-        , shaderVariantFields(Common::VectorUtils::Combine(inVertexFactory.GetVariantFields(), inShaderVariantFields))
+        , shaderVariantFields(Common::VectorUtils::Combine(inVertexFactoryType.GetVariantFields(), inShaderVariantFields))
     {
     }
 
