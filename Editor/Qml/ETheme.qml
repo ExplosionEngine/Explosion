@@ -18,8 +18,8 @@ QtObject {
     property color placeHolderFontColor: Qt.color('#c0c3c4')
     property color linkFontColor: Qt.color('#91b9c4')
 
-    property FontLoader normalFont: FontLoader { source: Qt.url('Resource/Font/MiSans-Medium.ttf') }
-    property FontLoader boldFont: FontLoader { source: Qt.url('Resource/Font/MiSans-Semibold.ttf') }
+    property FontLoader normalFont: FontLoader { source: 'file:%1/Font/MiSans-Medium.ttf'.arg(appResDir) }
+    property FontLoader boldFont: FontLoader { source: 'file:%1/Font/MiSans-Semibold.ttf'.arg(appResDir) }
     property int tiele1FontSize: 20
     property int title2FontSize: 18
     property int title3FontSize: 16

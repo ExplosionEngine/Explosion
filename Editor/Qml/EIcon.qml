@@ -11,7 +11,7 @@ Item {
 
     Image {
         id: imageWidget
-        source: root.name === '' ? '' : 'Resource/Icon/%1.svg'.arg(root.name)
+        source: root.name === '' ? '' : 'file:../Resource/Icon/%1.svg'.arg(root.name)
         sourceSize.width: root.size
         sourceSize.height: root.size
         layer.enabled: true
