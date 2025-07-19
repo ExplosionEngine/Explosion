@@ -50,7 +50,7 @@ AddResourcesCopyCommand(
 
 # ---- begin qml -------------------------------------------------------------------------------------
 set(EDITOR_QML_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Qml)
-set(EDITOR_RESOURCE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Qml/Resource)
+set(EDITOR_RESOURCE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Resource)
 get_filename_component(EDITOR_RESOURCE_ROOT_ABSOLUTE ${EDITOR_RESOURCE_ROOT} ABSOLUTE)
 
 file(GLOB QML_SOURCES ${EDITOR_QML_ROOT}/*.qml)
