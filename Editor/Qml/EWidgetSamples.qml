@@ -395,7 +395,7 @@ Rectangle {
                 Layout.leftMargin: 5
                 Layout.topMargin: 15
                 EText {
-                    text: 'IntegerInput'
+                    text: 'IntegerSpinInput'
                     style: EText.Style.Title1
                 }
             }
@@ -404,7 +404,7 @@ Rectangle {
                 Layout.margins: 5
 
                 RowLayout {
-                    EIntegerInput {}
+                    EIntSpinInput {}
 
                     EText {
                         Layout.leftMargin: 5
@@ -413,7 +413,7 @@ Rectangle {
                 }
 
                 RowLayout {
-                    EIntegerInput {
+                    EIntSpinInput {
                         from: 0
                         to: 10
                     }
@@ -425,7 +425,7 @@ Rectangle {
                 }
 
                 RowLayout {
-                    EIntegerInput {
+                    EIntSpinInput {
                         editable: true
                     }
 
@@ -454,6 +454,17 @@ Rectangle {
                     EText {
                         Layout.leftMargin: 5
                         text: 'Default'
+                    }
+                }
+
+                RowLayout {
+                    EFloatInput {
+                        value: 5
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'With Property Value'
                     }
                 }
             }

@@ -6,6 +6,7 @@ Item {
     property int value: spinBox.value
     property int from: spinBox.from
     property int to: spinBox.to
+    property int stepSize: spinBox.stepSize
     property bool editable: spinBox.editable
 
     id: root
@@ -19,6 +20,7 @@ Item {
         editable: root.editable
         from: root.from
         to: root.to
+        stepSize: root.stepSize
 
         contentItem: ETextField {
             id: textField
