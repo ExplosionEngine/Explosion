@@ -395,7 +395,7 @@ Rectangle {
                 Layout.leftMargin: 5
                 Layout.topMargin: 15
                 EText {
-                    text: 'IntegerSpinInput'
+                    text: 'IntSpinInput'
                     style: EText.Style.Title1
                 }
             }
@@ -432,6 +432,39 @@ Rectangle {
                     EText {
                         Layout.leftMargin: 5
                         text: 'Editable'
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.leftMargin: 5
+                Layout.topMargin: 15
+                EText {
+                    text: 'IntInput'
+                    style: EText.Style.Title1
+                }
+            }
+
+            ColumnLayout {
+                Layout.margins: 5
+
+                RowLayout {
+                    EIntInput {}
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'Default'
+                    }
+                }
+
+                RowLayout {
+                    EIntInput {
+                        value: 5
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'With Property Value'
                     }
                 }
             }
