@@ -525,6 +525,30 @@ Rectangle {
                     }
                 }
             }
+
+            RowLayout {
+                Layout.leftMargin: 5
+                Layout.topMargin: 15
+                EText {
+                    text: 'FloatSliderInput'
+                    style: EText.Style.Title1
+                }
+            }
+
+            ColumnLayout {
+                Layout.margins: 5
+
+                RowLayout {
+                    EFloatSliderInput {
+                        value: 0.3
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'Default'
+                    }
+                }
+            }
         }
     }
 }
