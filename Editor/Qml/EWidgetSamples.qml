@@ -395,7 +395,7 @@ Rectangle {
                 Layout.leftMargin: 5
                 Layout.topMargin: 15
                 EText {
-                    text: 'IntegerInput'
+                    text: 'IntSpinInput'
                     style: EText.Style.Title1
                 }
             }
@@ -404,7 +404,7 @@ Rectangle {
                 Layout.margins: 5
 
                 RowLayout {
-                    EIntegerInput {}
+                    EIntSpinInput {}
 
                     EText {
                         Layout.leftMargin: 5
@@ -413,7 +413,7 @@ Rectangle {
                 }
 
                 RowLayout {
-                    EIntegerInput {
+                    EIntSpinInput {
                         from: 0
                         to: 10
                     }
@@ -425,13 +425,46 @@ Rectangle {
                 }
 
                 RowLayout {
-                    EIntegerInput {
+                    EIntSpinInput {
                         editable: true
                     }
 
                     EText {
                         Layout.leftMargin: 5
                         text: 'Editable'
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.leftMargin: 5
+                Layout.topMargin: 15
+                EText {
+                    text: 'IntInput'
+                    style: EText.Style.Title1
+                }
+            }
+
+            ColumnLayout {
+                Layout.margins: 5
+
+                RowLayout {
+                    EIntInput {}
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'Default'
+                    }
+                }
+
+                RowLayout {
+                    EIntInput {
+                        value: 5
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'With Property Value'
                     }
                 }
             }
@@ -450,6 +483,65 @@ Rectangle {
 
                 RowLayout {
                     EFloatInput {}
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'Default'
+                    }
+                }
+
+                RowLayout {
+                    EFloatInput {
+                        value: 5
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'With Property Value'
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.leftMargin: 5
+                Layout.topMargin: 15
+                EText {
+                    text: 'IntSliderInput'
+                    style: EText.Style.Title1
+                }
+            }
+
+            ColumnLayout {
+                Layout.margins: 5
+
+                RowLayout {
+                    EIntSliderInput {
+                        value: 3
+                    }
+
+                    EText {
+                        Layout.leftMargin: 5
+                        text: 'Default'
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.leftMargin: 5
+                Layout.topMargin: 15
+                EText {
+                    text: 'FloatSliderInput'
+                    style: EText.Style.Title1
+                }
+            }
+
+            ColumnLayout {
+                Layout.margins: 5
+
+                RowLayout {
+                    EFloatSliderInput {
+                        value: 0.3
+                    }
 
                     EText {
                         Layout.leftMargin: 5
