@@ -257,7 +257,7 @@ Setup3rdPackage(
     VERSION ${QT_VERSION}
     HASH
         Windows e2a573a53b6de88c0ce768868bd5a8258d432ad71c45a407afa55243b051668f
-        Darwin 2fadcb1f07e5f11d4345e7d5631f35f8f4a8033c35901fb20a22c2feb7486e57
+        Darwin b2ac69968f52c5174749e602ce567f4aa429d131921aa11e5577fa46759cf05b
     PREFIX
         Windows $<SOURCE_DIR>/6.5.2/msvc2019_64
         Darwin $<SOURCE_DIR>/6.5.2/macos
