@@ -46,39 +46,3 @@ AddResourcesCopyCommand(
     RES ${EDITOR_RESOURCES}
 )
 # ---- end shaders -----------------------------------------------------------------------------------
-
-
-# ---- begin qml -------------------------------------------------------------------------------------
-set(EDITOR_QML_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Qml)
-set(EDITOR_RESOURCE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Resource)
-get_filename_component(EDITOR_RESOURCE_ROOT_ABSOLUTE ${EDITOR_RESOURCE_ROOT} ABSOLUTE)
-
-file(GLOB QML_SOURCES ${EDITOR_QML_ROOT}/*.qml)
-
-list(
-    APPEND SINGLETON_QML_SOURCES
-        ETheme.qml)
-target_compile_definitions(Editor PRIVATE -DSINGLETON_QML_SOURCES="${SINGLETON_QML_SOURCES}")
-
-# QML only support placed in root dir
-foreach (QML_SOURCE ${QML_SOURCES})
-    get_filename_component(ALIAS ${QML_SOURCE} NAME)
-    set_source_files_properties(${QML_SOURCE} PROPERTIES QT_RESOURCE_ALIAS ${ALIAS})
-    if (${ALIAS} IN_LIST SINGLETON_QML_SOURCES)
-        set_source_files_properties(${QML_SOURCE} PROPERTIES QT_QML_SINGLETON_TYPE true)
-    endif ()
-endforeach ()
-
-add_custom_command(
-    TARGET Editor POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${EDITOR_RESOURCE_ROOT_ABSOLUTE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/../Resource
-)
-
-qt_add_qml_module(
-    Editor
-    NO_CACHEGEN
-    URI editor
-    QML_FILES ${QML_SOURCES}
-    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Generated/QmlModule
-)
-# ---- end qml ---------------------------------------------------------------------------------------

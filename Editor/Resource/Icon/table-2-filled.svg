@@ -1,8 +1,0 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M11 3.5H1.5V7.81818H11V3.5Z" fill="black" />
-    <path d="M1.5 9.81818V14.1818H11V9.81818H1.5Z" fill="black" />
-    <path d="M1.5 16.1818V20.5H11V16.1818H1.5Z" fill="black" />
-    <path d="M13 20.5H22.5V16.1818H13V20.5Z" fill="black" />
-    <path d="M22.5 14.1818V9.81818H13V14.1818H22.5Z" fill="black" />
-    <path d="M22.5 7.81818V3.5H13V7.81818H22.5Z" fill="black" />
-</svg>

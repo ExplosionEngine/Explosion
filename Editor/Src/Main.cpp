@@ -6,7 +6,6 @@
 
 #include <Core/Cmdline.h>
 #include <Runtime/Engine.h>
-#include <Editor/QmlEngine.h>
 #include <Editor/Widget/Editor.h>
 #include <Editor/Widget/ProjectHub.h>
 #include <Editor/Widget/WidgetSamples.h>
@@ -80,15 +79,10 @@ static void InitializePreQtApp(EditorApplicationModel inModel)
     Runtime::EngineHolder::Load("Editor", params);
 }
 
-static void InitializePostQtApp()
-{
-    Editor::QmlEngine::Get().Start();
-}
+static void InitializePostQtApp() {}
 
 static void Cleanup(EditorApplicationModel inModel)
 {
-    Editor::QmlEngine::Get().Stop();
-
     if (!NeedInitCore(inModel)) {
         return;
     }
