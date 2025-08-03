@@ -276,3 +276,12 @@ Add3rdHeaderOnlyPackage(
     HASH 696f6ca1ecca9d13170c0a47eda66a3015bcf02a7b4bdd23f574ea302eb4bf3e
     INCLUDE $<SOURCE_DIR>/include
 )
+
+# Node.js
+Add3rdBinaryPackage(
+    NAME Nodejs
+    VERSION 22.18.0
+    HASH
+        Windows 6c5fc993dacd58f2e3b145b06599e8a3aa1b0d0c2dea48b0a09af31c5c6ebe23
+        Darwin 0f6e16a5564c29aa45d2354ac66ea5f66232a7c45baa45fec372edb00e491c16
+)
