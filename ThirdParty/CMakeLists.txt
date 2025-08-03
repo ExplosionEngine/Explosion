@@ -251,19 +251,19 @@ Add3rdHeaderOnlyPackage(
 )
 
 # Qt6
-set(QT_VERSION "6.5.2" CACHE STRING "" FORCE)
+set(QT_VERSION "6.9.1" CACHE STRING "" FORCE)
 Setup3rdPackage(
     NAME Qt
     VERSION ${QT_VERSION}
     HASH
-        Windows e2a573a53b6de88c0ce768868bd5a8258d432ad71c45a407afa55243b051668f
-        Darwin b2ac69968f52c5174749e602ce567f4aa429d131921aa11e5577fa46759cf05b
+        Windows 348a130def92f2ee482f0b03026b5520f84b0bcd864c6d3e070e6d9f7f1b0c25
+        Darwin 3938c6156228fcf63c33029067bd4b6dd333ed284e069198b85d92de3d9b3e13
     PREFIX
-        Windows $<SOURCE_DIR>/6.5.2/msvc2019_64
-        Darwin $<SOURCE_DIR>/6.5.2/macos
+        Windows $<SOURCE_DIR>/6.9.1/msvc2019_64
+        Darwin $<SOURCE_DIR>/6.9.1/macos
 )
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64 CACHE PATH "" FORCE)
+    set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2022_64 CACHE PATH "" FORCE)
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/macos CACHE PATH "" FORCE)
 endif ()
