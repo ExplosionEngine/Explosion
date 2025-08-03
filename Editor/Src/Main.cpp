@@ -8,7 +8,6 @@
 #include <Runtime/Engine.h>
 #include <Editor/Widget/Editor.h>
 #include <Editor/Widget/ProjectHub.h>
-#include <Editor/Widget/WidgetSamples.h>
 
 #if BUILD_CONFIG_DEBUG
 #include <Editor/Widget/GraphicsSampleWidget.h>
@@ -16,10 +15,6 @@
 static Core::CmdlineArgValue<bool> caGraphicsSample(
     "graphicsSample", "-graphicsSample", false,
     "Whether to run graphics sample instead of editor");
-
-static Core::CmdlineArgValue<bool> caWidgetSamples(
-    "widgetSamples", "-widgetSamples", false,
-    "Whether to run widget samples instead of editor");
 #endif
 
 static Core::CmdlineArgValue<std::string> caRhiType(
@@ -33,7 +28,6 @@ static Core::CmdlineArgValue<std::string> caProjectRoot(
 enum class EditorApplicationModel : uint8_t {
 #if BUILD_CONFIG_DEBUG
     graphicsSample,
-    widgetSamples,
 #endif
     projectHub,
     editor,
@@ -45,9 +39,6 @@ static EditorApplicationModel GetAppModel()
 #if BUILD_CONFIG_DEBUG
     if (caGraphicsSample.GetValue()) {
         return EditorApplicationModel::graphicsSample;
-    }
-    if (caWidgetSamples.GetValue()) {
-        return EditorApplicationModel::widgetSamples;
     }
 #endif
     if (caProjectRoot.GetValue().empty()) {
@@ -94,9 +85,6 @@ static Common::UniquePtr<QWidget> CreateMainWidget(EditorApplicationModel inMode
 #if BUILD_CONFIG_DEBUG
     if (inModel == EditorApplicationModel::graphicsSample) {
         return new Editor::GraphicsSampleWidget();
-    }
-    if (inModel == EditorApplicationModel::widgetSamples) {
-        return new Editor::WidgetSamples();
     }
 #endif
     if (inModel == EditorApplicationModel::projectHub) { // NOLINT

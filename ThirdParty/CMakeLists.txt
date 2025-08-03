@@ -256,7 +256,7 @@ Setup3rdPackage(
     NAME Qt
     VERSION ${QT_VERSION}
     HASH
-        Windows 348a130def92f2ee482f0b03026b5520f84b0bcd864c6d3e070e6d9f7f1b0c25
+        Windows 9cd849f79784fda5436b0da3b7625b4530a77b93c5e80ea9a2d8a95060c174b6
         Darwin 3938c6156228fcf63c33029067bd4b6dd333ed284e069198b85d92de3d9b3e13
     PREFIX
         Windows $<SOURCE_DIR>/6.9.1/msvc2019_64
