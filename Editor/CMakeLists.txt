@@ -66,3 +66,53 @@ AddResourcesCopyCommand(
     RES ${EDITOR_RESOURCES}
 )
 # ---- end shaders -----------------------------------------------------------------------------------
+
+# ---- begin web project -----------------------------------------------------------------------------
+set(NODEJS_HOME ${3RD_SOURCE_DIR}/Nodejs-${CMAKE_SYSTEM_NAME}-${NODEJS_VERSION})
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(ENV{PATH} "$ENV{PATH};${NODEJS_HOME}")
+    set(NPM_EXECUTABLE npm.cmd)
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    set(NODEJS_BIN_PATH ${NODEJS_HOME}/bin)
+    set(NODEJS_MODULES_PATH ${NODEJS_HOME}/lib/node_modules)
+    file(REMOVE ${NODEJS_BIN_PATH}/corepack)
+    file(REMOVE ${NODEJS_BIN_PATH}/npm)
+    file(REMOVE ${NODEJS_BIN_PATH}/npx)
+    execute_process(
+        COMMAND ln -s ${NODEJS_MODULES_PATH} ${NODEJS_BIN_PATH}/node_modules
+        RESULT_VARIABLE LINK_RESULT
+        OUTPUT_VARIABLE LINK_OUTPUT
+        ERROR_VARIABLE LINK_ERROR
+    )
+    execute_process(
+        COMMAND ln -s ${NODEJS_MODULES_PATH}/npm/bin/npm ${NODEJS_BIN_PATH}/npm
+        RESULT_VARIABLE LINK_RESULT
+        OUTPUT_VARIABLE LINK_OUTPUT
+        ERROR_VARIABLE LINK_ERROR
+    )
+    execute_process(
+        COMMAND ln -s ${NODEJS_MODULES_PATH}/npm/bin/npx ${NODEJS_BIN_PATH}/npx
+        RESULT_VARIABLE LINK_RESULT
+        OUTPUT_VARIABLE LINK_OUTPUT
+        ERROR_VARIABLE LINK_ERROR
+    )
+    set(ENV{PATH} "$ENV{PATH}:${NODEJS_BIN_PATH}")
+    set(NPM_EXECUTABLE npm)
+else ()
+    message(FATAL_ERROR "Unsupported OS")
+endif ()
+
+message("Perform web project npm install......")
+execute_process(
+    COMMAND ${NPM_EXECUTABLE} install --no-fund --registry=https://registry.npmmirror.com
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Web
+    RESULT_VARIABLE NPM_INSTALL_RESULT
+    OUTPUT_VARIABLE NPM_INSTALL_OUTPUT
+    ERROR_VARIABLE NPM_INSTALL_ERROR
+)
+if (${NPM_INSTALL_RESULT} STREQUAL "0")
+    message(${NPM_INSTALL_OUTPUT})
+else ()
+    message(FATAL_ERROR ${NPM_INSTALL_ERROR})
+endif ()
+# ---- end web project -------------------------------------------------------------------------------
