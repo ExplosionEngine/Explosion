@@ -285,3 +285,12 @@ Add3rdBinaryPackage(
         Windows 6c5fc993dacd58f2e3b145b06599e8a3aa1b0d0c2dea48b0a09af31c5c6ebe23
         Darwin 0f6e16a5564c29aa45d2354ac66ea5f66232a7c45baa45fec372edb00e491c16
 )
+
+# cpp-httplib
+Add3rdHeaderOnlyPackage(
+    NAME cpp-httplib
+    PLATFORM All
+    VERSION 0.24.0
+    HASH a0320b106f4a8f945ec2556e62fffab05b068f2ddfff99c6a367b2e16c14bde1
+    INCLUDE $<SOURCE_DIR>
+)
