@@ -120,6 +120,7 @@ Thanks all those following projects:
 * [Qt6](https://www.qt.io/product/qt6)
 * [rapidjson](https://github.com/Tencent/rapidjson)
 * [Node.js](https://nodejs.org/zh-cn)
+* [cpp-httplib](https://github.com/yhirose/cpp-httplib)
 
 # Sponsor
 
