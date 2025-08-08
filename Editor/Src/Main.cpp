@@ -8,6 +8,7 @@
 #include <Runtime/Engine.h>
 #include <Editor/Widget/Editor.h>
 #include <Editor/Widget/ProjectHub.h>
+#include <Editor/WebUIServer.h>
 
 #if BUILD_CONFIG_DEBUG
 #include <Editor/Widget/GraphicsSampleWidget.h>
@@ -58,6 +59,8 @@ static bool NeedInitCore(EditorApplicationModel inModel)
 
 static void InitializePreQtApp(EditorApplicationModel inModel)
 {
+    Editor::WebUIServer::Get().Start();
+
     if (!NeedInitCore(inModel)) {
         return;
     }
@@ -74,6 +77,8 @@ static void InitializePostQtApp() {}
 
 static void Cleanup(EditorApplicationModel inModel)
 {
+    Editor::WebUIServer::Get().Stop();
+
     if (!NeedInitCore(inModel)) {
         return;
     }
