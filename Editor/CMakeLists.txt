@@ -14,6 +14,7 @@ endif ()
 file(GLOB_RECURSE SOURCES Src/*.cpp)
 qt_add_executable(Editor ${PLATFORM_EXECUTABLE_HINT} ${SOURCES})
 target_include_directories(Editor PRIVATE Include)
+target_include_directories(Editor PRIVATE ${CPP_HTTP_LIB_SOURCE_DIR})
 target_link_libraries(Editor PRIVATE Core RHI Runtime Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Quick Qt6::WebEngineWidgets)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")

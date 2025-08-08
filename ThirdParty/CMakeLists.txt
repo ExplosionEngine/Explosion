@@ -288,6 +288,7 @@ Add3rdBinaryPackage(
 )
 
 # cpp-httplib
+set(CPP_HTTP_LIB_VERSION "0.24.0")
 Add3rdHeaderOnlyPackage(
     NAME cpp-httplib
     PLATFORM All
@@ -295,3 +296,4 @@ Add3rdHeaderOnlyPackage(
     HASH a0320b106f4a8f945ec2556e62fffab05b068f2ddfff99c6a367b2e16c14bde1
     INCLUDE $<SOURCE_DIR>
 )
+set(CPP_HTTP_LIB_SOURCE_DIR ${3RD_SOURCE_DIR}/cpp-httplib-All-${CPP_HTTP_LIB_VERSION} CACHE STRING "" FORCE)
