@@ -71,7 +71,7 @@ AddResourcesCopyCommand(
 # ---- begin web project -----------------------------------------------------------------------------
 set(NODEJS_HOME ${3RD_SOURCE_DIR}/Nodejs-${CMAKE_SYSTEM_NAME}-${NODEJS_VERSION})
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set(NODEJS_PATH "$ENV{PATH};${NODEJS_HOME}")
+    set(NODEJS_PATH ${NODEJS_HOME})
     set(NPM_EXECUTABLE npm.cmd)
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(NODEJS_BIN_PATH ${NODEJS_HOME}/bin)
@@ -105,7 +105,7 @@ endif ()
 
 message("Perform web project npm install......")
 execute_process(
-    COMMAND ${CMAKE_COMMAND} -E env "PATH=${NODEJS_PATH}" ${NPM_EXECUTABLE} install --no-fund --registry=https://registry.npmmirror.com
+    COMMAND ${CMAKE_COMMAND} -E env PATH=${NODEJS_PATH} ${NPM_EXECUTABLE} install --no-fund --registry=https://registry.npmmirror.com
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Web
     RESULT_VARIABLE NPM_INSTALL_RESULT
     OUTPUT_VARIABLE NPM_INSTALL_OUTPUT
@@ -119,7 +119,7 @@ endif ()
 
 add_custom_target(
     Editor.Web
-    COMMAND ${CMAKE_COMMAND} -E env "PATH=${NODEJS_PATH}" ${NPM_EXECUTABLE} run build
+    COMMAND ${CMAKE_COMMAND} -E env PATH=${NODEJS_PATH} ${NPM_EXECUTABLE} run build
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Web
     VERBATIM
 )
