@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <QWebEngineView>
+#include <Editor/Widget/WebWidget.h>
 
 namespace Editor {
-    class ProjectHub final : public QWebEngineView {
+    class ProjectHub final : public WebWidget {
         Q_OBJECT
 
     public:

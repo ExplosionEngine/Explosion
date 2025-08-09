@@ -5,7 +5,7 @@
 #include <Editor/WebUIServer.h>
 #include <Core/Cmdline.h>
 
-static Core::CmdlineArgValue<int32_t> caWebUIPort(
+static Core::CmdlineArgValue<uint32_t> caWebUIPort(
     "webUIPort", "-webUIPort", 10907,
     "WebUI port");
 
