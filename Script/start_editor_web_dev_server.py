@@ -5,8 +5,8 @@ import subprocess
 from sys import argv
 from pathlib import Path
 
-def get_nodejs_version():
-    third_party_cmake = Path(argv[0]).parent.parent / 'ThirdParty' / 'CMakeLists.txt'
+def get_nodejs_version(py_path):
+    third_party_cmake = Path(py_path).parent.parent / 'ThirdParty' / 'CMakeLists.txt'
     if not third_party_cmake.exists():
         raise RuntimeError('Third-party CMakeLists.txt not found')
 
@@ -24,15 +24,15 @@ def get_nodejs_version():
     return found[0]
 
 
-def get_nodejs_root(nodejs_version):
-    nodejs_root = Path(argv[0]).parent.parent / 'ThirdParty' / 'Lib' / '{}-{}-{}'.format('Nodejs', platform.system(), nodejs_version)
+def get_nodejs_root(py_path, nodejs_version):
+    nodejs_root = Path(py_path).parent.parent / 'ThirdParty' / 'Lib' / '{}-{}-{}'.format('Nodejs', platform.system(), nodejs_version)
     if not nodejs_root.exists():
         raise RuntimeError('Root of node.js not found')
     return nodejs_root
 
 
-def get_web_project_root():
-    web_project_root = Path(argv[0]).parent.parent / 'Editor' / 'Web'
+def get_web_project_root(py_path):
+    web_project_root = Path(py_path).parent.parent / 'Editor' / 'Web'
     return web_project_root
 
 
@@ -50,10 +50,12 @@ def start_dev_server(nodejs_root, web_project_root):
 
 
 if __name__ == '__main__':
-    nodejs_version = get_nodejs_version()
-    print('Node.js version: ', nodejs_version)
-    nodejs_root = get_nodejs_root(nodejs_version)
-    print('Node.js root: ', nodejs_root)
-    web_project_root = get_web_project_root()
-    print('Web project root: ', web_project_root)
+    py_path = os.path.realpath(__file__)
+    print('Python File Path:', py_path)
+    nodejs_version = get_nodejs_version(py_path)
+    print('Node.js version:', nodejs_version)
+    nodejs_root = get_nodejs_root(py_path, nodejs_version)
+    print('Node.js root:', nodejs_root)
+    web_project_root = get_web_project_root(py_path)
+    print('Web project root:', web_project_root)
     start_dev_server(nodejs_root, web_project_root)
