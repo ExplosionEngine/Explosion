@@ -30,6 +30,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         TARGET Editor POST_BUILD
         # ++ QT 6.9.1 Temporal Fix Start
         # #see https://bugreports.qt.io/browse/QTBUG-137542
+        # NOTICE: seems cause some error on debug config, like render process crash after hover a remote link, please use DebugWithRelease before official fix at 6.9.2
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_devtools_resources.pak ${QT_LIB_PREFIX}/resources/qtwebengine_devtools_resources.debug.pak
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources.pak ${QT_LIB_PREFIX}/resources/qtwebengine_resources.debug.pak
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.pak ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.debug.pak
