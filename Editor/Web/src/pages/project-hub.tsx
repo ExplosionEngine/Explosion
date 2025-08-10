@@ -1,8 +1,8 @@
-import { Tabs, Tab } from "@heroui/tabs";
-import { User } from "@heroui/user";
-import { Form } from "@heroui/form";
-import { Button } from "@heroui/button";
-import { Input } from "@heroui/input";
+import { Tabs, Tab } from '@heroui/tabs';
+import { User } from '@heroui/user';
+import { Form } from '@heroui/form';
+import { Button } from '@heroui/button';
+import { Input } from '@heroui/input';
 
 export default function ProjectHubPage() {
   return (
@@ -10,10 +10,10 @@ export default function ProjectHubPage() {
       <div className='mb-4'>
         <User
           avatarProps={{
-            src: "/logo.png",
+            src: '/logo.png',
           }}
-          description="v0.0.1"
-          name="Explosion Game Engine"
+          description='v0.0.1'
+          name='Explosion Game Engine'
         />
       </div>
 
