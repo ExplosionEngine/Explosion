@@ -89,7 +89,7 @@ namespace Core {
     template <typename T>
     T CmdlineArg::GetValue() const
     {
-        return static_cast<const T*>(Value());
+        return *static_cast<const T*>(Value());
     }
 
     template <typename T>

@@ -244,7 +244,7 @@ namespace Runtime {
         const std::uint64_t uriHash = Common::HashUtils::CityHash(uriStr.c_str(), uriStr.size());
         const Common::Path materialRootCacheDir = std::format("Game/Cache/Materials/{}", uriHash);
         const Common::Path materialHintFile = materialRootCacheDir / materialName;
-        const Common::Path materialHeader = materialRootCacheDir / "Material.ush";
+        const Common::Path materialHeader = materialRootCacheDir / "Material.esh";
 
         if (const Common::Path absoluteMaterialRootCacheDir = Core::Paths::Translate(materialRootCacheDir);
             !absoluteMaterialRootCacheDir.Exists()) {

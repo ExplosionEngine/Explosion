@@ -176,7 +176,7 @@ Add3rdCMakeProject(
     PLATFORM All
     VERSION 1.11.0
     HASH bb1146f051868868b96fa83069d4d05f0e05216b5c3f697859c591fd73b93a86
-    CMAKE_ARG -Dgtest_force_shared_crt=ON
+    CMAKE_ARG -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -Dgtest_force_shared_crt=ON
     INCLUDE $<INSTALL_DIR>/include
     LINK $<INSTALL_DIR>/lib
     LIB gtest$<IF:$<CONFIG:Debug>,d,> gmock$<IF:$<CONFIG:Debug>,d,>
@@ -217,7 +217,7 @@ Add3rdCMakeProject(
     PLATFORM All
     VERSION 1.3.243.0
     HASH 2b09e3cf9357156e8a4f1bd7cde3771184f652ec3b632993495748112a7f4665
-    CMAKE_ARG -DSPIRV_CROSS_CLI=OFF -DSPIRV_CROSS_ENABLE_C_API=OFF -DSPIRV_CROSS_ENABLE_TESTS=OFF
+    CMAKE_ARG -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DSPIRV_CROSS_CLI=OFF -DSPIRV_CROSS_ENABLE_C_API=OFF -DSPIRV_CROSS_ENABLE_TESTS=OFF
     INCLUDE $<INSTALL_DIR>/include
     LINK $<INSTALL_DIR>/lib
     LIB spirv-cross-core$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
@@ -251,19 +251,19 @@ Add3rdHeaderOnlyPackage(
 )
 
 # Qt6
-set(QT_VERSION "6.5.2" CACHE STRING "" FORCE)
+set(QT_VERSION "6.9.1" CACHE STRING "" FORCE)
 Setup3rdPackage(
     NAME Qt
     VERSION ${QT_VERSION}
     HASH
-        Windows e2a573a53b6de88c0ce768868bd5a8258d432ad71c45a407afa55243b051668f
-        Darwin b2ac69968f52c5174749e602ce567f4aa429d131921aa11e5577fa46759cf05b
+        Windows 9cd849f79784fda5436b0da3b7625b4530a77b93c5e80ea9a2d8a95060c174b6
+        Darwin 3938c6156228fcf63c33029067bd4b6dd333ed284e069198b85d92de3d9b3e13
     PREFIX
-        Windows $<SOURCE_DIR>/6.5.2/msvc2019_64
-        Darwin $<SOURCE_DIR>/6.5.2/macos
+        Windows $<SOURCE_DIR>/6.9.1/msvc2019_64
+        Darwin $<SOURCE_DIR>/6.9.1/macos
 )
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2019_64 CACHE PATH "" FORCE)
+    set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2022_64 CACHE PATH "" FORCE)
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/macos CACHE PATH "" FORCE)
 endif ()
@@ -276,3 +276,24 @@ Add3rdHeaderOnlyPackage(
     HASH 696f6ca1ecca9d13170c0a47eda66a3015bcf02a7b4bdd23f574ea302eb4bf3e
     INCLUDE $<SOURCE_DIR>/include
 )
+
+# Node.js
+set(NODEJS_VERSION "22.18.0" CACHE STRING "" FORCE)
+Add3rdBinaryPackage(
+    NAME Nodejs
+    VERSION ${NODEJS_VERSION}
+    HASH
+        Windows 6c5fc993dacd58f2e3b145b06599e8a3aa1b0d0c2dea48b0a09af31c5c6ebe23
+        Darwin 0f6e16a5564c29aa45d2354ac66ea5f66232a7c45baa45fec372edb00e491c16
+)
+
+# cpp-httplib
+set(CPP_HTTP_LIB_VERSION "0.24.0")
+Add3rdHeaderOnlyPackage(
+    NAME cpp-httplib
+    PLATFORM All
+    VERSION 0.24.0
+    HASH a0320b106f4a8f945ec2556e62fffab05b068f2ddfff99c6a367b2e16c14bde1
+    INCLUDE $<SOURCE_DIR>
+)
+set(CPP_HTTP_LIB_SOURCE_DIR ${3RD_SOURCE_DIR}/cpp-httplib-All-${CPP_HTTP_LIB_VERSION} CACHE STRING "" FORCE)

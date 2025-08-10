@@ -106,8 +106,9 @@ namespace RHI::DirectX12 {
         void QueryNativeDescriptorSize();
         void CreateDescriptorPools();
 #if BUILD_CONFIG_DEBUG
-        void RegisterNativeDebugLayerExceptionHandler() const;
-        void UnregisterNativeDebugLayerExceptionHandler() const;
+        void RegisterNativeDebugLayerExceptionHandler();
+        void UnregisterNativeDebugLayerExceptionHandler();
+        bool debugLayerExceptionHandlerReady;
 #endif
 
         DX12Gpu& gpu;

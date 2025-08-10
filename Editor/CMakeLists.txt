@@ -1,16 +1,21 @@
 set(CMAKE_PREFIX_PATH ${QT_LIB_PREFIX})
 find_package(
     Qt6 ${QT_VERSION}
-    COMPONENTS Core Gui Widgets Quick
+    COMPONENTS Core Gui Widgets Quick WebEngineWidgets
     REQUIRED
 )
 
 qt_standard_project_setup(REQUIRES ${QT_VERSION})
 
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    set(PLATFORM_EXECUTABLE_HINT MACOSX_BUNDLE)
+endif ()
+
 file(GLOB_RECURSE SOURCES Src/*.cpp)
-qt_add_executable(Editor ${SOURCES})
+qt_add_executable(Editor ${PLATFORM_EXECUTABLE_HINT} ${SOURCES})
 target_include_directories(Editor PRIVATE Include)
-target_link_libraries(Editor PRIVATE Core RHI Runtime Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Quick)
+target_include_directories(Editor PRIVATE ${CPP_HTTP_LIB_SOURCE_DIR})
+target_link_libraries(Editor PRIVATE Core RHI Runtime Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Quick Qt6::WebEngineWidgets)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(PLATFORM_DEP_TARGET RHI-DirectX12 RHI-Vulkan)
@@ -21,10 +26,26 @@ add_dependencies(Editor ${PLATFORM_DEP_TARGET})
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(QT_WIN_DEPLOY_EXECUTABLE ${QT_LIB_PREFIX}/bin/windeployqt.exe)
-    set(QT_BUILDIN_QML_DIRECTORY ${QT_LIB_PREFIX}/qml)
     add_custom_command(
         TARGET Editor POST_BUILD
-        COMMAND ${QT_WIN_DEPLOY_EXECUTABLE} $<TARGET_FILE:Editor> --qmldir ${QT_BUILDIN_QML_DIRECTORY} --verbose 0
+        # ++ QT 6.9.1 Temporal Fix Start
+        # #see https://bugreports.qt.io/browse/QTBUG-137542
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_devtools_resources.pak ${QT_LIB_PREFIX}/resources/qtwebengine_devtools_resources.debug.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources.pak ${QT_LIB_PREFIX}/resources/qtwebengine_resources.debug.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.pak ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.debug.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_200p.pak ${QT_LIB_PREFIX}/resources/qtwebengine_resources_200p.debug.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_devtools_resources.pak ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/qtwebengine_devtools_resources.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources.pak ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/qtwebengine_resources.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.pak ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/qtwebengine_resources_100p.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_200p.pak ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/qtwebengine_resources_200p.pak
+        # -- QT 6.9.1 Temporal Fix End
+        COMMAND ${QT_WIN_DEPLOY_EXECUTABLE} $<TARGET_FILE:Editor>
+    )
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    set(QT_MAC_DEPLOY_EXECUTABLE ${QT_LIB_PREFIX}/bin/macdeployqt)
+    add_custom_command(
+        TARGET Editor POST_BUILD
+        COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Editor.app $<IF:$<CONFIG:Debug>,-no-strip,>
     )
 endif ()
 
@@ -47,38 +68,65 @@ AddResourcesCopyCommand(
 )
 # ---- end shaders -----------------------------------------------------------------------------------
 
+# ---- begin web project -----------------------------------------------------------------------------
+set(NODEJS_HOME ${3RD_SOURCE_DIR}/Nodejs-${CMAKE_SYSTEM_NAME}-${NODEJS_VERSION})
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(NODEJS_PATH ${NODEJS_HOME})
+    set(NPM_EXECUTABLE npm.cmd)
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    set(NODEJS_BIN_PATH ${NODEJS_HOME}/bin)
+    set(NODEJS_MODULES_PATH ${NODEJS_HOME}/lib/node_modules)
+    file(REMOVE ${NODEJS_BIN_PATH}/corepack)
+    file(REMOVE ${NODEJS_BIN_PATH}/npm)
+    file(REMOVE ${NODEJS_BIN_PATH}/npx)
+    execute_process(
+        COMMAND ln -s ${NODEJS_MODULES_PATH} ${NODEJS_BIN_PATH}/node_modules
+        RESULT_VARIABLE LINK_RESULT
+        OUTPUT_VARIABLE LINK_OUTPUT
+        ERROR_VARIABLE LINK_ERROR
+    )
+    execute_process(
+        COMMAND ln -s ${NODEJS_MODULES_PATH}/npm/bin/npm ${NODEJS_BIN_PATH}/npm
+        RESULT_VARIABLE LINK_RESULT
+        OUTPUT_VARIABLE LINK_OUTPUT
+        ERROR_VARIABLE LINK_ERROR
+    )
+    execute_process(
+        COMMAND ln -s ${NODEJS_MODULES_PATH}/npm/bin/npx ${NODEJS_BIN_PATH}/npx
+        RESULT_VARIABLE LINK_RESULT
+        OUTPUT_VARIABLE LINK_OUTPUT
+        ERROR_VARIABLE LINK_ERROR
+    )
+    set(NODEJS_PATH "$ENV{PATH}:${NODEJS_BIN_PATH}")
+    set(NPM_EXECUTABLE npm)
+else ()
+    message(FATAL_ERROR "Unsupported OS")
+endif ()
 
-# ---- begin qml -------------------------------------------------------------------------------------
-set(EDITOR_QML_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Qml)
-set(EDITOR_RESOURCE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Resource)
-get_filename_component(EDITOR_RESOURCE_ROOT_ABSOLUTE ${EDITOR_RESOURCE_ROOT} ABSOLUTE)
+message("Perform web project npm install......")
+execute_process(
+    COMMAND ${CMAKE_COMMAND} -E env PATH=${NODEJS_PATH} ${NPM_EXECUTABLE} install --no-fund --registry=https://registry.npmmirror.com
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Web
+    RESULT_VARIABLE NPM_INSTALL_RESULT
+    OUTPUT_VARIABLE NPM_INSTALL_OUTPUT
+    ERROR_VARIABLE NPM_INSTALL_ERROR
+)
+if (${NPM_INSTALL_RESULT} STREQUAL "0")
+    message(${NPM_INSTALL_OUTPUT})
+else ()
+    message(FATAL_ERROR ${NPM_INSTALL_ERROR})
+endif ()
 
-file(GLOB QML_SOURCES ${EDITOR_QML_ROOT}/*.qml)
-
-list(
-    APPEND SINGLETON_QML_SOURCES
-        ETheme.qml)
-target_compile_definitions(Editor PRIVATE -DSINGLETON_QML_SOURCES="${SINGLETON_QML_SOURCES}")
-
-# QML only support placed in root dir
-foreach (QML_SOURCE ${QML_SOURCES})
-    get_filename_component(ALIAS ${QML_SOURCE} NAME)
-    set_source_files_properties(${QML_SOURCE} PROPERTIES QT_RESOURCE_ALIAS ${ALIAS})
-    if (${ALIAS} IN_LIST SINGLETON_QML_SOURCES)
-        set_source_files_properties(${QML_SOURCE} PROPERTIES QT_QML_SINGLETON_TYPE true)
-    endif ()
-endforeach ()
+add_custom_target(
+    Editor.Web
+    COMMAND ${CMAKE_COMMAND} -E env PATH=${NODEJS_PATH} ${NPM_EXECUTABLE} run build
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Web
+    VERBATIM
+)
+add_dependencies(Editor Editor.Web)
 
 add_custom_command(
-    TARGET Editor POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${EDITOR_RESOURCE_ROOT_ABSOLUTE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/../Resource
+    TARGET Editor.Web POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${CMAKE_CURRENT_SOURCE_DIR}/Web/dist $<TARGET_FILE_DIR:Editor>/Web
 )
-
-qt_add_qml_module(
-    Editor
-    NO_CACHEGEN
-    URI editor
-    QML_FILES ${QML_SOURCES}
-    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Generated/QmlModule
-)
-# ---- end qml ---------------------------------------------------------------------------------------
+# ---- end web project -------------------------------------------------------------------------------

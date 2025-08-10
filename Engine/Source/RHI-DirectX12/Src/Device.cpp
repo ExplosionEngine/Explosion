@@ -24,7 +24,7 @@
 #include <RHI/DirectX12/SwapChain.h>
 #include <RHI/DirectX12/Synchronous.h>
 #include <RHI/DirectX12/Surface.h>
-#include <Common/IO.h>
+#include <Core/Log.h>
 
 namespace RHI::DirectX12 {
     DescriptorAllocation::DescriptorAllocation(DescriptorHeapNode* inNode, const uint32_t inSlot, const CD3DX12_CPU_DESCRIPTOR_HANDLE& inHandle, ID3D12DescriptorHeap* inHeap)
@@ -139,6 +139,9 @@ namespace RHI::DirectX12 {
 
     DX12Device::DX12Device(DX12Gpu& inGpu, const DeviceCreateInfo& inCreateInfo)
         : Device(inCreateInfo)
+#if BUILD_CONFIG_DEBUG
+        , debugLayerExceptionHandlerReady(false)
+#endif
         , gpu(inGpu)
         , nativeRtvDescriptorSize(0)
         , nativeCbvSrvUavDescriptorSize(0)
@@ -353,10 +356,14 @@ namespace RHI::DirectX12 {
     }
 
 #if BUILD_CONFIG_DEBUG
-    void DX12Device::RegisterNativeDebugLayerExceptionHandler() const
+    void DX12Device::RegisterNativeDebugLayerExceptionHandler()
     {
         ComPtr<ID3D12InfoQueue> dx12InfoQueue;
-        Assert(SUCCEEDED(nativeDevice->QueryInterface(IID_PPV_ARGS(&dx12InfoQueue))));
+        if (FAILED(nativeDevice->QueryInterface(IID_PPV_ARGS(&dx12InfoQueue)))) {
+            LogError(RHI, "DX12 debug layer can not enabled, please check the graphics tools installed in windows.");
+            return;
+        }
+        debugLayerExceptionHandlerReady = true;
         Assert(SUCCEEDED(dx12InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true)));
 
         gpu.GetInstance().AddDebugLayerExceptionHandler(this, [this]() -> void {
@@ -374,17 +381,20 @@ namespace RHI::DirectX12 {
                 Assert(SUCCEEDED(dx12InfoQueueLocal->GetMessageA(i, message.first, &message.second)));
 
                 if (message.first->Severity == D3D12_MESSAGE_SEVERITY_ERROR) {
-                    AutoCoutFlush;
-                    std::cout << message.first->pDescription << Common::newline;
+                    LogError(RHI, "{}", message.first->pDescription);
                 }
                 free(message.first);
             }
         });
     }
 
-    void DX12Device::UnregisterNativeDebugLayerExceptionHandler() const
+    void DX12Device::UnregisterNativeDebugLayerExceptionHandler()
     {
+        if (!debugLayerExceptionHandlerReady) {
+            return;
+        }
         gpu.GetInstance().RemoveDebugLayerExceptionHandler(this);
+        debugLayerExceptionHandlerReady = false;
     }
 #endif
 }

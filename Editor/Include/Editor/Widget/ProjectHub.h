@@ -1,16 +1,16 @@
 //
-// Created by johnk on 2024/6/23.
+// Created by johnk on 2025/8/3.
 //
 
 #pragma once
 
-#include <Editor/Widget/QmlWidget.h>
+#include <Editor/Widget/WebWidget.h>
 
 namespace Editor {
-    class ProjectHub final : public QmlWidget {
+    class ProjectHub final : public WebWidget {
         Q_OBJECT
 
     public:
-        ProjectHub();
+        explicit ProjectHub(QWidget* inParent = nullptr);
     };
 }

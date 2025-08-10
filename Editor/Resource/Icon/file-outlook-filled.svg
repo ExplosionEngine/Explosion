@@ -1,7 +1,0 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M10.5 14H13.5V18H10.5V14Z" fill="black" />
-    <path
-        d="M3 1H13V9H21V23H3V1ZM10.5 12C9.39543 12 8.5 12.8954 8.5 14V18C8.5 19.1046 9.39543 20 10.5 20H13.5C14.6046 20 15.5 19.1046 15.5 18V14C15.5 12.8954 14.6046 12 13.5 12H10.5Z"
-        fill="black" />
-    <path d="M21 6.58579V7H15V1H15.4142L21 6.58579Z" fill="black" />
-</svg>
