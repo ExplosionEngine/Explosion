@@ -9,7 +9,7 @@ namespace Editor {
     ProjectHub::ProjectHub(QWidget* inParent)
         : WebWidget(inParent)
     {
-        // TODO
-        Load("/");
+        setFixedSize(800, 600);
+        Load("/project-hub");
     }
 } // namespace Editor
