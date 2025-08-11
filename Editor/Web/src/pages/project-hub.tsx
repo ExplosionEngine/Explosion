@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { QWebChannel } from '@/qwebchannel'
 import { Tabs, Tab } from '@heroui/tabs';
 import { User } from '@heroui/user';
 import { Form } from '@heroui/form';
@@ -5,6 +7,17 @@ import { Button } from '@heroui/button';
 import { Input } from '@heroui/input';
 
 export default function ProjectHubPage() {
+  useEffect(() => {
+    new QWebChannel(window.qt.webChannelTransport, (channel: QWebChannel) : void => {
+      window.bridge = channel.objects.bridge;
+    })
+  }, []);
+
+  function onCreateProject(): void
+  {
+    window.bridge.CreateProject();
+  }
+
   return (
     <div className='h-screen p-6'>
       <div className='mb-4'>
@@ -23,7 +36,7 @@ export default function ProjectHubPage() {
             <Input fullWidth isRequired label='Project Name' labelPlacement='outside' placeholder='HelloExplosion'/>
             <Input fullWidth isRequired label='Project Description' labelPlacement='outside' placeholder='A simple explosion game project.'/>
             <Input fullWidth isRequired label='Project Path' labelPlacement='outside' placeholder='/path/to/your/project'/>
-            <Button color='primary'>Create</Button>
+            <Button color='primary' onPress={onCreateProject}>Create</Button>
           </Form>
         </Tab>
         <Tab title='Recently Projects'>

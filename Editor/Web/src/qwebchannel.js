@@ -448,8 +448,8 @@ QObject.prototype.toJSON = function() {
 };
 
 //required for use with nodejs
-if (typeof module === 'object') {
-    module.exports = {
-        QWebChannel: QWebChannel
-    };
+//++[kindem] use ES6 export
+export {
+    QWebChannel
 }
+//--[kindem]
