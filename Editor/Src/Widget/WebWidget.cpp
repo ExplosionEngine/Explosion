@@ -7,7 +7,7 @@
 #include <Editor/Widget/moc_WebWidget.cpp>
 
 static Core::CmdlineArgValue<bool> caWebUIDev(
-    "wevUIDev", "-wevUIDev", false,
+    "webUIDev", "-webUIDev", false,
     "Whether to enable hot reload for web UI");
 
 static Core::CmdlineArgValue<uint32_t> caWebUIDevServerPort(
