@@ -21,6 +21,9 @@ namespace Editor {
         serverThread = std::make_unique<Common::NamedThread>("WebUIServerThread", [this]() -> void {
             server = Common::MakeUnique<httplib::Server>();
             server->set_mount_point("/", "./Web");
+            server->Get("/(.+)", [](const httplib::Request&, httplib::Response& res) {
+                res.set_file_content("./Web/index.html");
+            });
             server->listen("localhost", caWebUIPort.GetValue());
         });
     }

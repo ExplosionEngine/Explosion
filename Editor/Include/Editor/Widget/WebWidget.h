@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <QWebChannel>
 #include <QWebEngineView>
 
 namespace Editor {
@@ -15,5 +16,11 @@ namespace Editor {
         ~WebWidget() override;
 
         void Load(const std::string& inUrl);
+
+    protected:
+        QWebChannel* GetWebChannel() const;
+
+    private:
+        QWebChannel* webChannel;
     };
 }

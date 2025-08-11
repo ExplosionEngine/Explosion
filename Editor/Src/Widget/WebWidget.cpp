@@ -7,7 +7,7 @@
 #include <Editor/Widget/moc_WebWidget.cpp>
 
 static Core::CmdlineArgValue<bool> caWebUIDev(
-    "wevUIDev", "-wevUIDev", false,
+    "webUIDev", "-webUIDev", false,
     "Whether to enable hot reload for web UI");
 
 static Core::CmdlineArgValue<uint32_t> caWebUIDevServerPort(
@@ -18,6 +18,8 @@ namespace Editor {
     WebWidget::WebWidget(QWidget* inParent)
         : QWebEngineView(inParent)
     {
+        webChannel = new QWebChannel(this);
+        page()->setWebChannel(webChannel);
     }
 
     WebWidget::~WebWidget() = default;
@@ -30,5 +32,10 @@ namespace Editor {
         const std::string baseUrl = std::format("http://localhost:{}", caWebUIDev.GetValue() ? caWebUIDevServerPort.GetValue() : caWebUIPort.GetValue<uint32_t>());
         const std::string fullUrl = baseUrl + inUrl;
         load(QUrl(fullUrl.c_str()));
+    }
+
+    QWebChannel* WebWidget::GetWebChannel() const
+    {
+        return webChannel;
     }
 } // namespace Editor
