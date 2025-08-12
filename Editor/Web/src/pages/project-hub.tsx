@@ -5,6 +5,7 @@ import { User } from '@heroui/user';
 import { Form } from '@heroui/form';
 import { Button } from '@heroui/button';
 import { Input } from '@heroui/input';
+import { Chip } from "@heroui/chip";
 
 export default function ProjectHubPage() {
   useEffect(() => {
@@ -23,11 +24,16 @@ export default function ProjectHubPage() {
       <div className='mb-4'>
         <User
           avatarProps={{
-            src: '/logo.png',
+            src: '/logo.png'
           }}
-          description='v0.0.1'
-          name='Explosion Game Engine'
-        />
+          description={
+            <div className='mt-1'>
+              {/*TODO fetch info from cpp*/}
+              <Chip size="sm" color="secondary" variant="flat">SourceBuilt</Chip>
+              <Chip className='ml-1' size="sm" color="secondary" variant="flat">v0.0.1</Chip>
+            </div>
+          }
+          name='Explosion Game Engine'/>
       </div>
 
       <Tabs isVertical={true}>
