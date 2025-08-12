@@ -119,8 +119,12 @@ Thanks all those following projects:
 * [VulkanMemoryAllocator](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator)
 * [Qt6](https://www.qt.io/product/qt6)
 * [rapidjson](https://github.com/Tencent/rapidjson)
-* [Node.js](https://nodejs.org/zh-cn)
 * [cpp-httplib](https://github.com/yhirose/cpp-httplib)
+* [Node.js](https://nodejs.org/zh-cn)
+* [React](https://react.dev)
+* [Vite](https://vite.dev)
+* [HeroUI](https://www.heroui.com)
+* [TailWindCSS](https://tailwindcss.com)
 
 # Sponsor
 
