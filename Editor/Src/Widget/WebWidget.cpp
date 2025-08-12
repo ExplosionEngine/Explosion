@@ -3,16 +3,9 @@
 //
 
 #include <Editor/Widget/WebWidget.h>
-#include <Core/Cmdline.h>
 #include <Editor/Widget/moc_WebWidget.cpp>
-
-static Core::CmdlineArgValue<bool> caWebUIDev(
-    "webUIDev", "-webUIDev", false,
-    "Whether to enable hot reload for web UI");
-
-static Core::CmdlineArgValue<uint32_t> caWebUIDevServerPort(
-    "webUIDevServerPort", "-webUIDevServerPort", 5173,
-    "Port of web ui dev server, which works only when dev mode enabled");
+#include <Core/Cmdline.h>
+#include <Editor/WebUIServer.h>
 
 namespace Editor {
     WebWidget::WebWidget(QWidget* inParent)
@@ -29,8 +22,8 @@ namespace Editor {
         static Core::CmdlineArg& caWebUIPort = Core::Cli::Get().GetArg("webUIPort");
 
         Assert(inUrl.starts_with("/"));
-        const std::string baseUrl = std::format("http://localhost:{}", caWebUIDev.GetValue() ? caWebUIDevServerPort.GetValue() : caWebUIPort.GetValue<uint32_t>());
-        const std::string fullUrl = baseUrl + inUrl;
+        const auto& baseUrl = WebUIServer::Get().BaseUrl();
+        const auto fullUrl = baseUrl + inUrl;
         load(QUrl(fullUrl.c_str()));
     }
 

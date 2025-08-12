@@ -2,12 +2,21 @@
 // Created by johnk on 2025/8/8.
 //
 
-#include <Editor/WebUIServer.h>
 #include <Core/Cmdline.h>
+#include <Core/Log.h>
+#include <Editor/WebUIServer.h>
 
 static Core::CmdlineArgValue<uint32_t> caWebUIPort(
     "webUIPort", "-webUIPort", 10907,
     "WebUI port");
+
+static Core::CmdlineArgValue<bool> caWebUIDev(
+    "webUIDev", "-webUIDev", false,
+    "Whether to enable hot reload for web UI");
+
+static Core::CmdlineArgValue<uint32_t> caWebUIDevServerPort(
+    "webUIDevServerPort", "-webUIDevServerPort", 5173,
+    "Port of web ui dev server, which works only when dev mode enabled");
 
 namespace Editor {
     WebUIServer& WebUIServer::Get()
@@ -16,23 +25,53 @@ namespace Editor {
         return webUIServer;
     }
 
+    WebUIServer::WebUIServer() = default;
+
     void WebUIServer::Start()
     {
-        serverThread = std::make_unique<Common::NamedThread>("WebUIServerThread", [this]() -> void {
-            server = Common::MakeUnique<httplib::Server>();
-            server->set_mount_point("/", "./Web");
-            server->Get("/(.+)", [](const httplib::Request&, httplib::Response& res) {
-                res.set_file_content("./Web/index.html");
+        uint32_t serverPort;
+        std::string serverMode;
+
+        if (caWebUIDev.GetValue()) {
+            serverPort = caWebUIDevServerPort.GetValue();
+            serverMode = "development";
+
+            httplib::Client client(std::format("http://localhost:{}", serverPort));
+            auto res = client.Get("/");
+            AssertWithReason(
+                res->status == 200,
+                "did you forget to start dev server, just call Script/start_editor_web_dev_server.py manually");
+        } else {
+            serverPort = caWebUIPort.GetValue();
+            serverMode = "product";
+            productServerThread = std::make_unique<Common::NamedThread>("WebUIServerThread", [this, serverPort]() -> void {
+                productServer = Common::MakeUnique<httplib::Server>();
+                productServer->set_mount_point("/", "./Web");
+                productServer->Get("/(.+)", [](const httplib::Request&, httplib::Response& res) {
+                    res.set_file_content("./Web/index.html");
+                });
+                productServer->listen("localhost", static_cast<int32_t>(serverPort));
             });
-            server->listen("localhost", caWebUIPort.GetValue());
-        });
+        }
+
+        baseUrl = std::format("http://localhost:{}", serverPort);
+        LogInfo(WebUI, "{} web ui server listening on {}", serverMode, baseUrl);
     }
 
     void WebUIServer::Stop()
     {
-        server->stop();
-        serverThread->Join();
-        server.Reset();
-        serverThread.Reset();
+        if (productServer.Valid()) {
+            productServer->stop();
+        }
+        if (productServerThread.Valid()) {
+            productServerThread->Join();
+        }
+        productServer.Reset();
+        productServerThread.Reset();
+    }
+
+    const std::string& WebUIServer::BaseUrl() const
+    {
+        return baseUrl;
     }
 } // namespace Editor
