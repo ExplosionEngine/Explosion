@@ -15,7 +15,10 @@ file(GLOB_RECURSE SOURCES Src/*.cpp)
 qt_add_executable(Editor ${PLATFORM_EXECUTABLE_HINT} ${SOURCES})
 target_include_directories(Editor PRIVATE Include)
 target_include_directories(Editor PRIVATE ${CPP_HTTP_LIB_SOURCE_DIR})
-target_link_libraries(Editor PRIVATE Core RHI Runtime Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Quick Qt6::WebEngineWidgets)
+LinkLibraries(
+    NAME Editor
+    LIB Core RHI Runtime Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Quick Qt6::WebEngineWidgets
+)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(PLATFORM_DEP_TARGET RHI-DirectX12 RHI-Vulkan)
@@ -23,6 +26,14 @@ else()
     set(PLATFORM_DEP_TARGET RHI-Vulkan)
 endif()
 add_dependencies(Editor ${PLATFORM_DEP_TARGET})
+
+AddRuntimeDependenciesCopyCommand(
+    NAME Editor
+)
+install(
+    TARGETS Editor
+    RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(QT_WIN_DEPLOY_EXECUTABLE ${QT_LIB_PREFIX}/bin/windeployqt.exe)
@@ -42,11 +53,17 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         # -- QT 6.9.1 Temporal Fix End
         COMMAND ${QT_WIN_DEPLOY_EXECUTABLE} $<TARGET_FILE:Editor>
     )
+    install(
+        CODE "execute_process(COMMAND ${QT_WIN_DEPLOY_EXECUTABLE} ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/$<TARGET_FILE_NAME:Editor>)"
+    )
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(QT_MAC_DEPLOY_EXECUTABLE ${QT_LIB_PREFIX}/bin/macdeployqt)
     add_custom_command(
         TARGET Editor POST_BUILD
         COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Editor.app $<IF:$<CONFIG:Debug>,-no-strip,>
+    )
+    install(
+        CODE "execute_process(COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/Editor.app $<IF:$<CONFIG:Debug>,-no-strip,>)"
     )
 endif ()
 
