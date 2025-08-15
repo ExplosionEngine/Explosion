@@ -11,12 +11,16 @@ namespace Editor {
 
     class ProjectHubBridge final : public QObject {
         Q_OBJECT
+        Q_PROPERTY(QString engineVersion MEMBER engineVersion CONSTANT)
 
     public:
         explicit ProjectHubBridge(ProjectHub* parent = nullptr);
 
     public Q_SLOTS:
         void CreateProject() const;
+
+    private:
+        QString engineVersion;
     };
 
     class ProjectHub final : public WebWidget {

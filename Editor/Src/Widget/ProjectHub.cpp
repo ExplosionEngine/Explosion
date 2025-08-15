@@ -7,10 +7,12 @@
 #include <Editor/Widget/ProjectHub.h>
 #include <Editor/Widget/moc_ProjectHub.cpp>
 #include <Core/Log.h>
+#include <Core/EngineVersion.h>
 
 namespace Editor {
     ProjectHubBridge::ProjectHubBridge(ProjectHub* parent)
         : QObject(parent)
+        , engineVersion(QString::fromStdString(std::format("v{}.{}.{}", ENGINE_VERSION_MAJOR, ENGINE_VERSION_MINOR, ENGINE_VERSION_PATCH)))
     {
     }
 
