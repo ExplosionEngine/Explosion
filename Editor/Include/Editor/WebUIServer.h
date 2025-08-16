@@ -16,9 +16,13 @@ namespace Editor {
 
         void Start();
         void Stop();
+        const std::string& BaseUrl() const;
 
     private:
-        Common::UniquePtr<Common::NamedThread> serverThread;
-        Common::UniquePtr<httplib::Server> server;
+        WebUIServer();
+
+        std::string baseUrl;
+        Common::UniquePtr<Common::NamedThread> productServerThread;
+        Common::UniquePtr<httplib::Server> productServer;
     };
 }

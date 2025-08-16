@@ -32,13 +32,13 @@ function(LinkLibraries)
 
     foreach(L ${PARAMS_LIB})
         if (NOT (TARGET ${L}))
-            target_link_libraries(${PARAMS_NAME} ${L})
+            target_link_libraries(${PARAMS_NAME} PUBLIC ${L})
             continue()
         endif()
 
         get_target_property(3RD_TYPE ${L} 3RD_TYPE)
         if (${3RD_TYPE} STREQUAL "3RD_TYPE-NOTFOUND")
-            target_link_libraries(${PARAMS_NAME} ${L})
+            target_link_libraries(${PARAMS_NAME} PUBLIC ${L})
         else()
             get_target_property(INCLUDE ${L} 3RD_INCLUDE)
             get_target_property(LINK ${L} 3RD_LINK)
@@ -51,7 +51,7 @@ function(LinkLibraries)
                 target_link_directories(${PARAMS_NAME} PUBLIC ${LINK})
             endif()
             if (NOT ("${LIB}" STREQUAL "LIB-NOTFOUND"))
-                target_link_libraries(${PARAMS_NAME} ${LIB})
+                target_link_libraries(${PARAMS_NAME} PUBLIC ${LIB})
             endif()
 
             if (${3RD_TYPE} STREQUAL "CMakeProject")
@@ -114,7 +114,7 @@ function(GetTargetRuntimeDependenciesRecurse)
 endfunction()
 
 function(AddRuntimeDependenciesCopyCommand)
-    cmake_parse_arguments(PARAMS "" "NAME" "" ${ARGN})
+    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME" "" ${ARGN})
 
     GetTargetRuntimeDependenciesRecurse(
         NAME ${PARAMS_NAME}
@@ -127,9 +127,11 @@ function(AddRuntimeDependenciesCopyCommand)
             list(GET TEMP 0 SRC)
             list(GET TEMP 1 DST)
             set(COPY_COMMAND ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST})
+            set(INSTALL_DST ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/${DST})
         else ()
             set(SRC ${R})
             set(COPY_COMMAND ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>)
+            set(INSTALL_DST ${CMAKE_INSTALL_PREFIX}/Engine/Binaries)
         endif ()
 
         if (IS_DIRECTORY ${SRC})
@@ -137,11 +139,21 @@ function(AddRuntimeDependenciesCopyCommand)
                 TARGET ${PARAMS_NAME} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${COPY_COMMAND}
             )
+            if (NOT ${PARAMS_NOT_INSTALL})
+                install(
+                    DIRECTORY ${SRC} DESTINATION ${INSTALL_DST}
+                )
+            endif ()
         else ()
             add_custom_command(
                 TARGET ${PARAMS_NAME} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${COPY_COMMAND}
             )
+            if (NOT ${PARAMS_NOT_INSTALL})
+                install(
+                    FILES ${SRC} DESTINATION ${INSTALL_DST}
+                )
+            endif ()
         endif ()
     endforeach()
 endfunction()
@@ -158,7 +170,7 @@ function(ExpandResourcePathExpression)
 endfunction()
 
 function(AddResourcesCopyCommand)
-    cmake_parse_arguments(PARAMS "" "NAME" "RES" ${ARGN})
+    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME" "RES" ${ARGN})
 
     foreach(R ${PARAMS_RES})
         ExpandResourcePathExpression(
@@ -167,13 +179,19 @@ function(AddResourcesCopyCommand)
             OUTPUT_DST DST
         )
 
-        list(APPEND COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST})
+        list(APPEND COPY_COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST})
+
+        get_filename_component(ABSOLUTE_DST ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/${DST} ABSOLUTE)
+        get_filename_component(DST_DIR ${ABSOLUTE_DST} DIRECTORY)
+        if (NOT ${PARAMS_NOT_INSTALL})
+            install(FILES ${SRC} DESTINATION ${DST_DIR})
+        endif ()
     endforeach()
 
     set(COPY_RES_TARGET_NAME ${PARAMS_NAME}.CopyRes)
     add_custom_target(
         ${COPY_RES_TARGET_NAME}
-        ${COMMANDS}
+        ${COPY_COMMANDS}
     )
     add_dependencies(${PARAMS_NAME} ${COPY_RES_TARGET_NAME})
 endfunction()
@@ -284,11 +302,17 @@ function(AddMirrorInfoSourceGenerationTarget)
 endfunction()
 
 function(AddExecutable)
-    cmake_parse_arguments(PARAMS "SAMPLE" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES;REFLECT" ${ARGN})
+    cmake_parse_arguments(PARAMS "SAMPLE;NOT_INSTALL" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES;REFLECT" ${ARGN})
 
     if (${PARAMS_SAMPLE} AND (NOT ${BUILD_SAMPLE}))
         return()
     endif()
+
+    if (${PARAMS_NOT_INSTALL})
+        set(NOT_INSTALL_FLAG NOT_INSTALL)
+    else ()
+        set(NOT_INSTALL_FLAG "")
+    endif ()
 
     if (DEFINED PARAMS_REFLECT)
         AddMirrorInfoSourceGenerationTarget(
@@ -324,10 +348,12 @@ function(AddExecutable)
     )
     AddRuntimeDependenciesCopyCommand(
         NAME ${PARAMS_NAME}
+        ${NOT_INSTALL_FLAG}
     )
     AddResourcesCopyCommand(
         NAME ${PARAMS_NAME}
         RES ${PARAMS_RES}
+        ${NOT_INSTALL_FLAG}
     )
     if (DEFINED PARAMS_DEP_TARGET)
         add_dependencies(${PARAMS_NAME} ${PARAMS_DEP_TARGET})
@@ -339,10 +365,21 @@ function(AddExecutable)
     if (${MSVC})
         set_target_properties(${PARAMS_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
     endif()
+
+    if (NOT ${PARAMS_NOT_INSTALL})
+        install(
+            TARGETS ${PARAMS_NAME}
+            RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+        )
+
+        if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+            install(CODE "execute_process(COMMAND install_name_tool -add_rpath @executable_path ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/$<TARGET_FILE_NAME:${PARAMS_NAME}>)")
+        endif ()
+    endif ()
 endfunction()
 
 function(AddLibrary)
-    cmake_parse_arguments(PARAMS "" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB;REFLECT" ${ARGN})
+    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB;REFLECT" ${ARGN})
 
     if ("${PARAMS_TYPE}" STREQUAL "SHARED")
         list(APPEND PARAMS_PUBLIC_INC ${API_HEADER_DIR}/${PARAMS_NAME})
@@ -413,6 +450,35 @@ function(AddLibrary)
     if (DEFINED PARAMS_REFLECT)
         add_dependencies(${PARAMS_NAME} ${GENERATED_TARGET})
     endif()
+
+    if (NOT ${PARAMS_NOT_INSTALL})
+        foreach (INC ${PARAMS_PUBLIC_INC})
+            get_filename_component(ABSOLUTE_INC ${INC} ABSOLUTE)
+            file(GLOB_RECURSE PUBLIC_HEADERS ${ABSOLUTE_INC}/*.h)
+            target_sources(
+                ${PARAMS_NAME}
+                PUBLIC FILE_SET HEADERS
+                BASE_DIRS ${ABSOLUTE_INC} FILES ${PUBLIC_HEADERS}
+            )
+        endforeach ()
+
+        if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" OR "${PARAMS_TYPE}" STREQUAL "STATIC")
+            install(
+                TARGETS ${PARAMS_NAME}
+                FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Include
+                ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Lib
+                LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Lib
+                RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+            )
+        endif ()
+
+        if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" AND "${PARAMS_TYPE}" STREQUAL "SHARED")
+            install(
+                FILES $<TARGET_FILE:${PARAMS_NAME}>
+                DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+            )
+        endif ()
+    endif ()
 endfunction()
 
 function(AddTest)
@@ -456,10 +522,12 @@ function(AddTest)
     )
     AddRuntimeDependenciesCopyCommand(
         NAME ${PARAMS_NAME}
+        NOT_INSTALL
     )
     AddResourcesCopyCommand(
         NAME ${PARAMS_NAME}
         RES ${PARAMS_RES}
+        NOT_INSTALL
     )
     if (DEFINED PARAMS_DEP_TARGET)
         add_dependencies(${PARAMS_NAME} ${PARAMS_DEP_TARGET})

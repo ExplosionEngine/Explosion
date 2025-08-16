@@ -9,20 +9,33 @@ qt_standard_project_setup(REQUIRES ${QT_VERSION})
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(PLATFORM_EXECUTABLE_HINT MACOSX_BUNDLE)
+    set(BUNDLE_INSTALL_DESTINATION BUNDLE DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries)
 endif ()
 
 file(GLOB_RECURSE SOURCES Src/*.cpp)
 qt_add_executable(Editor ${PLATFORM_EXECUTABLE_HINT} ${SOURCES})
 target_include_directories(Editor PRIVATE Include)
 target_include_directories(Editor PRIVATE ${CPP_HTTP_LIB_SOURCE_DIR})
-target_link_libraries(Editor PRIVATE Core RHI Runtime Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Quick Qt6::WebEngineWidgets)
+LinkLibraries(
+    NAME Editor
+    LIB Core RHI Runtime Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Quick Qt6::WebEngineWidgets
+)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set(PLATFORM_DEP_TARGET RHI-DirectX12 RHI-Vulkan)
+    set(RHI_DEP_TARGETS RHI-DirectX12 RHI-Vulkan)
 else()
-    set(PLATFORM_DEP_TARGET RHI-Vulkan)
+    set(RHI_DEP_TARGETS RHI-Vulkan)
 endif()
-add_dependencies(Editor ${PLATFORM_DEP_TARGET})
+add_dependencies(Editor ${RHI_DEP_TARGETS})
+
+AddRuntimeDependenciesCopyCommand(
+    NAME Editor
+)
+install(
+    TARGETS Editor
+    RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+    ${BUNDLE_INSTALL_DESTINATION}
+)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(QT_WIN_DEPLOY_EXECUTABLE ${QT_LIB_PREFIX}/bin/windeployqt.exe)
@@ -42,11 +55,28 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         # -- QT 6.9.1 Temporal Fix End
         COMMAND ${QT_WIN_DEPLOY_EXECUTABLE} $<TARGET_FILE:Editor>
     )
+    install(
+        CODE "execute_process(COMMAND ${QT_WIN_DEPLOY_EXECUTABLE} ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/$<TARGET_FILE_NAME:Editor>)"
+    )
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(QT_MAC_DEPLOY_EXECUTABLE ${QT_LIB_PREFIX}/bin/macdeployqt)
     add_custom_command(
         TARGET Editor POST_BUILD
-        COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Editor.app $<IF:$<CONFIG:Debug>,-no-strip,>
+        COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Editor.app -no-strip
+    )
+    install(
+        CODE "execute_process(COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/Editor.app -no-strip)"
+    )
+endif ()
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    foreach (RHI_DEP_TARGET ${RHI_DEP_TARGETS})
+        list(APPEND RHI_DEP_TARGET_COPY_COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${RHI_DEP_TARGET}> $<TARGET_FILE_DIR:Editor>/../Frameworks/$<TARGET_FILE_NAME:${RHI_DEP_TARGET}>)
+    endforeach ()
+
+    add_custom_command(
+        TARGET Editor POST_BUILD
+        ${RHI_DEP_TARGET_COPY_COMMANDS}
     )
 endif ()
 
@@ -130,4 +160,7 @@ add_custom_command(
     TARGET Editor.Web POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${CMAKE_CURRENT_SOURCE_DIR}/Web/dist $<TARGET_FILE_DIR:Editor>/Web
 )
+if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${CMAKE_CURRENT_SOURCE_DIR}/Web/dist ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/Web)")
+endif ()
 # ---- end web project -------------------------------------------------------------------------------

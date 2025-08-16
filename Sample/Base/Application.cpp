@@ -8,6 +8,7 @@
 #include <Application.h>
 #include <Common/Hash.h>
 #include <Common/Time.h>
+#include <Core/Cmdline.h>
 
 template <>
 struct std::hash<std::pair<int, int>> {
@@ -39,6 +40,8 @@ Application::~Application()
 
 bool Application::Initialize(int argc, char* argv[])
 {
+    Core::Cli::Get().Parse(argc, argv);
+
     std::string rhiString;
     if (const auto cli = (
             clipp::option("-w").doc("window width, 1024 by default") & clipp::value("width", windowExtent.x),

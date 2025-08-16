@@ -16,10 +16,18 @@ else ()
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Lib)
 endif ()
 
+if (${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
+    if (${GENERATOR_IS_MULTI_CONFIG})
+        set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/Install/$<CONFIG> CACHE PATH "" FORCE)
+    else ()
+        set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/Install CACHE PATH "" FORCE)
+    endif ()
+endif()
+
 add_definitions(-DENGINE_CMAKE_SOURCE_DIRECTORY="${CMAKE_SOURCE_DIR}")
 add_definitions(-DENGINE_CMAKE_BINARY_DIRECTORY="${CMAKE_BINARY_DIR}")
 
-add_definitions(-DBUILD_CONFIG_DEBUG=$<IF:$<CONFIG:Debug>,1,0>)
+add_definitions(-DBUILD_CONFIG_DEBUG=$<IF:$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>,1,0>)
 
 add_definitions(-DPLATFORM_WINDOWS=$<IF:$<PLATFORM_ID:Windows>,1,0>)
 add_definitions(-DPLATFORM_LINUX=$<IF:$<PLATFORM_ID:Linux>,1,0>)

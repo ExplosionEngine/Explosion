@@ -32,6 +32,7 @@ function(AddSample)
         LIB Sample-Base
         DEP_TARGET ${PLATFORM_DEP_TARGET}
         RES ${PATHS}
+        NOT_INSTALL
     )
 endfunction()
 
@@ -48,6 +49,7 @@ Addlibrary(
     SRC ${SOURCES}
     PUBLIC_INC Base
     LIB RHI glfw clipp ${PLATFORM_EXT_LIBS} Render.Static stb assimp-lib
+    NOT_INSTALL
 )
 
 file(GLOB SOURCES RHI-Triangle/*.cpp)

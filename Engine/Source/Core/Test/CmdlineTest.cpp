@@ -33,7 +33,7 @@ TEST(CmdlineTest, BasicTest)
         const_cast<char*>("world"),
     };
 
-    const auto [result, errorInfo] = Core::Cli::Get().Parse(static_cast<int>(args.size()), args.data());
+    const auto [result, errorInfo] = Core::Cli::Get().Parse(static_cast<int>(args.size()), args.data(), true);
     ASSERT_TRUE(result);
     ASSERT_TRUE(arg0.GetValue());
     ASSERT_EQ(arg1.GetValue(), 1);

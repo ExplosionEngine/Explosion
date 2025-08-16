@@ -24,9 +24,11 @@ namespace Core {
 
     Cli::~Cli() = default;
 
-    std::pair<bool, std::string> Cli::Parse(const int argc, char* argv[])
+    std::pair<bool, std::string> Cli::Parse(int argc, char* argv[], bool force)
     {
-        Assert(!parsed);
+        if (!force) {
+            Assert(!parsed);
+        }
         parsed = true;
 
         Core::Paths::SetExecutableDir(argv[0]);

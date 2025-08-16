@@ -3,6 +3,7 @@
 //
 
 #include <QApplication>
+#include <QNetworkProxy>
 
 #include <Core/Cmdline.h>
 #include <Runtime/Engine.h>
@@ -73,7 +74,10 @@ static void InitializePreQtApp(EditorApplicationModel inModel)
     Runtime::EngineHolder::Load("Editor", params);
 }
 
-static void InitializePostQtApp() {}
+static void InitializePostQtApp()
+{
+    QNetworkProxy::setApplicationProxy(QNetworkProxy::NoProxy);
+}
 
 static void Cleanup(EditorApplicationModel inModel)
 {

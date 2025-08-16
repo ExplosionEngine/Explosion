@@ -48,7 +48,8 @@ namespace Core {
 
     Common::Path Paths::EngineRootDir()
     {
-        return WorkingDir().Parent();
+        Assert(HasSetExecutableDir());
+        return ExecutablePath().Parent().Parent();
     }
 
     Common::Path Paths::EngineResDir()
