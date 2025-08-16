@@ -371,6 +371,10 @@ function(AddExecutable)
             TARGETS ${PARAMS_NAME}
             RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
         )
+
+        if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+            install(CODE "execute_process(COMMAND install_name_tool -add_rpath @executable_path ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/$<TARGET_FILE_NAME:${PARAMS_NAME}>)")
+        endif ()
     endif ()
 endfunction()
 
@@ -465,6 +469,13 @@ function(AddLibrary)
             LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Lib
             RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
         )
+
+        if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" AND "${PARAMS_TYPE}" STREQUAL "SHARED")
+            install(
+                FILES $<TARGET_FILE:${PARAMS_NAME}>
+                DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+            )
+        endif ()
     endif ()
 endfunction()
 

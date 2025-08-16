@@ -168,6 +168,7 @@ Add3rdBinaryPackage(
         Darwin-arm64 clang
     RUNTIME_DEP
         Windows $<SOURCE_DIR>/bin/libclang.dll
+        Darwin $<SOURCE_DIR>/lib/libclang.dylib
 )
 
 # Google Test
