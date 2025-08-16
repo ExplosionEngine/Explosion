@@ -4,6 +4,7 @@
 
 #include <Core/Cmdline.h>
 #include <Core/Log.h>
+#include <Core/Paths.h>
 #include <Editor/WebUIServer.h>
 
 static Core::CmdlineArgValue<uint32_t> caWebUIPort(
@@ -45,10 +46,13 @@ namespace Editor {
             serverPort = caWebUIPort.GetValue();
             serverMode = "product";
             productServerThread = std::make_unique<Common::NamedThread>("WebUIServerThread", [this, serverPort]() -> void {
+                const auto webRoot = Core::Paths::ExecutablePath().Parent() / "Web";
+                const auto indexHtmlFile = webRoot / "index.html";
+
                 productServer = Common::MakeUnique<httplib::Server>();
-                productServer->set_mount_point("/", "./Web");
-                productServer->Get("/(.+)", [](const httplib::Request&, httplib::Response& res) {
-                    res.set_file_content("./Web/index.html");
+                productServer->set_mount_point("/", webRoot.Absolute().String());
+                productServer->Get("/(.+)", [indexHtmlFile](const httplib::Request&, httplib::Response& res) {
+                    res.set_file_content(indexHtmlFile.Absolute().String());
                 });
                 productServer->listen("localhost", static_cast<int32_t>(serverPort));
             });
