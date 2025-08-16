@@ -369,11 +369,13 @@ namespace RHI::Vulkan {
         renderingInfo.renderArea = {{0, 0}, {static_cast<uint32_t>(textureCreateInfo.width), static_cast<uint32_t>(textureCreateInfo.height)}};
         renderingInfo.viewMask = 0;
 
+        VkRenderingAttachmentInfo depthAttachmentInfo = {};
+        VkRenderingAttachmentInfo stencilAttachmentInfo = {};
+
         if (inBeginInfo.depthStencilAttachment.has_value())
         {
             const auto* depthStencilTextureView = static_cast<VulkanTextureView*>(inBeginInfo.depthStencilAttachment->view);
 
-            VkRenderingAttachmentInfo depthAttachmentInfo = {};
             depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             depthAttachmentInfo.imageView = depthStencilTextureView->GetNative();
             depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -384,7 +386,6 @@ namespace RHI::Vulkan {
             renderingInfo.pDepthAttachment = &depthAttachmentInfo;
 
             if (!inBeginInfo.depthStencilAttachment->depthReadOnly) {
-                VkRenderingAttachmentInfo stencilAttachmentInfo = {};
                 stencilAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
                 stencilAttachmentInfo.imageView = depthStencilTextureView->GetNative();
                 stencilAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
