@@ -133,7 +133,10 @@ namespace Core {
     {
         std::vector<Common::Path> searchPaths;
         searchPaths.reserve(5);
-        searchPaths.emplace_back(Paths::WorkingDir());
+        searchPaths.emplace_back(Paths::ExecutablePath().Parent());
+#if PLATFORM_MACOS
+        searchPaths.emplace_back(Paths::ExecutablePath().Parent().Parent() / "Frameworks");
+#endif
         if (Paths::HasSetExecutableDir()) {
             searchPaths.emplace_back(Paths::EngineBinDir());
             searchPaths.emplace_back(Paths::EnginePluginDir());
