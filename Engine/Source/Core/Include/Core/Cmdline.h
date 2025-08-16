@@ -32,7 +32,7 @@ namespace Core {
         static Cli& Get();
         ~Cli();
 
-        std::pair<bool, std::string> Parse(int argc, char* argv[]);
+        std::pair<bool, std::string> Parse(int argc, char* argv[], bool force = false);
         CmdlineArg* FindArg(const std::string& name) const;
         CmdlineArg& GetArg(const std::string& name) const;
 
