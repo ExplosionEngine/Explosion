@@ -160,4 +160,7 @@ add_custom_command(
     TARGET Editor.Web POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${CMAKE_CURRENT_SOURCE_DIR}/Web/dist $<TARGET_FILE_DIR:Editor>/Web
 )
+if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${CMAKE_CURRENT_SOURCE_DIR}/Web/dist ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/Web)")
+endif ()
 # ---- end web project -------------------------------------------------------------------------------
