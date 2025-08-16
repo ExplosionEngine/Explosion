@@ -9,6 +9,7 @@ qt_standard_project_setup(REQUIRES ${QT_VERSION})
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(PLATFORM_EXECUTABLE_HINT MACOSX_BUNDLE)
+    set(BUNDLE_INSTALL_DESTINATION BUNDLE DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries)
 endif ()
 
 file(GLOB_RECURSE SOURCES Src/*.cpp)
@@ -33,6 +34,7 @@ AddRuntimeDependenciesCopyCommand(
 install(
     TARGETS Editor
     RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+    ${BUNDLE_INSTALL_DESTINATION}
 )
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
