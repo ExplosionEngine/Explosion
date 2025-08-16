@@ -62,10 +62,10 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(QT_MAC_DEPLOY_EXECUTABLE ${QT_LIB_PREFIX}/bin/macdeployqt)
     add_custom_command(
         TARGET Editor POST_BUILD
-        COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Editor.app $<IF:$<OR:$<CONFIG:Debug>,$<CONFIG:RELWITHDEBINFO>>,-no-strip,>
+        COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Editor.app -no-strip
     )
     install(
-        CODE "execute_process(COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/Editor.app $<IF:$<OR:$<CONFIG:Debug>,$<CONFIG:RELWITHDEBINFO>>,-no-strip,>)"
+        CODE "execute_process(COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/Editor.app -no-strip)"
     )
 endif ()
 
