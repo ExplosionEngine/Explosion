@@ -462,13 +462,15 @@ function(AddLibrary)
             )
         endforeach ()
 
-        install(
-            TARGETS ${PARAMS_NAME}
-            FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Include
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Lib
-            LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Lib
-            RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
-        )
+        if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" OR "${PARAMS_TYPE}" STREQUAL "STATIC")
+            install(
+                TARGETS ${PARAMS_NAME}
+                FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Include
+                ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Lib
+                LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Lib
+                RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+            )
+        endif ()
 
         if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" AND "${PARAMS_TYPE}" STREQUAL "SHARED")
             install(
