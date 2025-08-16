@@ -28,17 +28,6 @@ else()
 endif()
 add_dependencies(Editor ${RHI_DEP_TARGETS})
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    foreach (RHI_DEP_TARGET ${RHI_DEP_TARGETS})
-        list(APPEND RHI_DEP_TARGET_COPY_COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${RHI_DEP_TARGET}> $<TARGET_FILE_DIR:Editor>/../Frameworks/$<TARGET_FILE_NAME:${RHI_DEP_TARGET}>)
-    endforeach ()
-
-    add_custom_command(
-        TARGET Editor POST_BUILD
-        ${RHI_DEP_TARGET_COPY_COMMANDS}
-    )
-endif ()
-
 AddRuntimeDependenciesCopyCommand(
     NAME Editor
 )
@@ -77,6 +66,17 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     )
     install(
         CODE "execute_process(COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/Editor.app -no-strip)"
+    )
+endif ()
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    foreach (RHI_DEP_TARGET ${RHI_DEP_TARGETS})
+        list(APPEND RHI_DEP_TARGET_COPY_COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${RHI_DEP_TARGET}> $<TARGET_FILE_DIR:Editor>/../Frameworks/$<TARGET_FILE_NAME:${RHI_DEP_TARGET}>)
+    endforeach ()
+
+    add_custom_command(
+        TARGET Editor POST_BUILD
+        ${RHI_DEP_TARGET_COPY_COMMANDS}
     )
 endif ()
 
