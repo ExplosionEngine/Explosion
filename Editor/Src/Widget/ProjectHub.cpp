@@ -2,8 +2,6 @@
 // Created by johnk on 2025/8/3.
 //
 
-#include <QWebChannel>
-
 #include <Editor/Widget/ProjectHub.h>
 #include <Editor/Widget/moc_ProjectHub.cpp>
 #include <Core/Log.h>
