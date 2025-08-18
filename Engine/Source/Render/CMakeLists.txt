@@ -3,7 +3,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 endif()
 
 file(GLOB SOURCES Src/*.cpp)
-AddLibrary(
+exp_add_library(
     NAME Render.Static
     TYPE STATIC
     SRC ${SOURCES}
@@ -12,7 +12,7 @@ AddLibrary(
 )
 
 file(GLOB SHARED_SOURCES SharedSrc/*.cpp)
-AddLibrary(
+exp_add_library(
     NAME Render
     TYPE SHARED
     SRC ${SHARED_SOURCES}
@@ -20,7 +20,7 @@ AddLibrary(
 )
 
 file(GLOB TEST_SOURCES Test/*.cpp)
-AddTest(
+exp_add_test(
     NAME Render.Test
     SRC ${TEST_SOURCES}
     LIB RHI Render.Static

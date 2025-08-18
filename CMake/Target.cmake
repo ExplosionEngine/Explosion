@@ -12,7 +12,7 @@ else()
     add_definitions(-DBUILD_TEST=0)
 endif()
 
-function(CombineRuntimeDependencies)
+function(exp_combine_runtime_deps)
     cmake_parse_arguments(PARAMS "" "NAME" "RUNTIME_DEP" ${ARGN})
 
     get_target_property(RESULT ${PARAMS_NAME} RUNTIME_DEP)
@@ -27,7 +27,7 @@ function(CombineRuntimeDependencies)
     )
 endfunction()
 
-function(LinkLibraries)
+function(exp_link_libs)
     cmake_parse_arguments(PARAMS "" "NAME" "LIB" ${ARGN})
 
     foreach(L ${PARAMS_LIB})
@@ -61,7 +61,7 @@ function(LinkLibraries)
 
         get_target_property(RUNTIME_DEP ${L} 3RD_RUNTIME_DEP)
         if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
-            CombineRuntimeDependencies(
+            exp_combine_runtime_deps(
                 NAME ${PARAMS_NAME}
                 RUNTIME_DEP "${RUNTIME_DEP}"
             )
@@ -69,12 +69,12 @@ function(LinkLibraries)
     endforeach()
 endfunction()
 
-function(LinkBasicLibs)
+function(exp_link_basic_libs)
     cmake_parse_arguments(PARAMS "" "NAME" "LIB" ${ARGN})
 
     foreach(L ${PARAMS_LIB})
         if (NOT (${PARAMS_NAME} STREQUAL ${L}))
-            LinkLibraries(
+            exp_link_libs(
                 NAME ${PARAMS_NAME}
                 LIB ${L}
             )
@@ -82,7 +82,7 @@ function(LinkBasicLibs)
     endforeach()
 endfunction()
 
-function(GetTargetRuntimeDependenciesRecurse)
+function(exp_get_target_runtime_deps_recurse)
     cmake_parse_arguments(PARAMS "" "NAME;OUTPUT" "" ${ARGN})
 
     get_target_property(RUNTIME_DEP ${PARAMS_NAME} RUNTIME_DEP)
@@ -99,7 +99,7 @@ function(GetTargetRuntimeDependenciesRecurse)
                 continue()
             endif()
 
-            GetTargetRuntimeDependenciesRecurse(
+            exp_get_target_runtime_deps_recurse(
                 NAME ${L}
                 OUTPUT TEMP
             )
@@ -113,10 +113,10 @@ function(GetTargetRuntimeDependenciesRecurse)
     set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
 endfunction()
 
-function(AddRuntimeDependenciesCopyCommand)
+function(exp_add_runtime_deps_copy_command)
     cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME" "" ${ARGN})
 
-    GetTargetRuntimeDependenciesRecurse(
+    exp_get_target_runtime_deps_recurse(
         NAME ${PARAMS_NAME}
         OUTPUT RUNTIME_DEPS
     )
@@ -158,7 +158,7 @@ function(AddRuntimeDependenciesCopyCommand)
     endforeach()
 endfunction()
 
-function(ExpandResourcePathExpression)
+function(exp_expand_resource_path_expression)
     cmake_parse_arguments(PARAMS "" "INPUT;OUTPUT_SRC;OUTPUT_DST" "" ${ARGN})
 
     string(REPLACE "->" ";" TEMP ${PARAMS_INPUT})
@@ -169,11 +169,11 @@ function(ExpandResourcePathExpression)
     set(${PARAMS_OUTPUT_DST} ${DST} PARENT_SCOPE)
 endfunction()
 
-function(AddResourcesCopyCommand)
+function(exp_add_resources_copy_command)
     cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME" "RES" ${ARGN})
 
     foreach(R ${PARAMS_RES})
-        ExpandResourcePathExpression(
+        exp_expand_resource_path_expression(
             INPUT ${R}
             OUTPUT_SRC SRC
             OUTPUT_DST DST
@@ -196,7 +196,7 @@ function(AddResourcesCopyCommand)
     add_dependencies(${PARAMS_NAME} ${COPY_RES_TARGET_NAME})
 endfunction()
 
-function(GetTargetIncludeDirectoriesRecurse)
+function(exp_get_target_include_dirs_recurse)
     cmake_parse_arguments(PARAMS "" "NAME;OUTPUT" "" ${ARGN})
 
     if (NOT (TARGET ${PARAMS_NAME}))
@@ -215,7 +215,7 @@ function(GetTargetIncludeDirectoriesRecurse)
         get_target_property(TARGET_LIBS ${PARAMS_NAME} LINK_LIBRARIES)
         if (NOT ("${TARGET_LIBS}" STREQUAL "TARGET_LIBS-NOTFOUND"))
             foreach(TARGET_LIB ${TARGET_LIBS})
-                GetTargetIncludeDirectoriesRecurse(
+                exp_get_target_include_dirs_recurse(
                     NAME ${TARGET_LIB}
                     OUTPUT LIB_INCS
                 )
@@ -237,7 +237,7 @@ function(GetTargetIncludeDirectoriesRecurse)
     set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
 endfunction()
 
-function(AddMirrorInfoSourceGenerationTarget)
+function(exp_add_mirror_info_source_generation_target)
     cmake_parse_arguments(PARAMS "DYNAMIC" "NAME;OUTPUT_SRC;OUTPUT_TARGET_NAME" "SEARCH_DIR;PUBLIC_INC;PRIVATE_INC;LIB" ${ARGN})
 
     if (DEFINED PARAMS_PUBLIC_INC)
@@ -248,7 +248,7 @@ function(AddMirrorInfoSourceGenerationTarget)
     endif()
     if (DEFINED PARAMS_LIB)
         foreach (L ${PARAMS_LIB})
-            GetTargetIncludeDirectoriesRecurse(
+            exp_get_target_include_dirs_recurse(
                 NAME ${L}
                 OUTPUT TARGET_INCS
             )
@@ -301,7 +301,7 @@ function(AddMirrorInfoSourceGenerationTarget)
     endif()
 endfunction()
 
-function(AddExecutable)
+function(exp_add_executable)
     cmake_parse_arguments(PARAMS "SAMPLE;NOT_INSTALL" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES;REFLECT" ${ARGN})
 
     if (${PARAMS_SAMPLE} AND (NOT ${BUILD_SAMPLE}))
@@ -315,7 +315,7 @@ function(AddExecutable)
     endif ()
 
     if (DEFINED PARAMS_REFLECT)
-        AddMirrorInfoSourceGenerationTarget(
+        exp_add_mirror_info_source_generation_target(
             NAME ${PARAMS_NAME}
             OUTPUT_SRC GENERATED_SRC
             OUTPUT_TARGET_NAME GENERATED_TARGET
@@ -338,19 +338,19 @@ function(AddExecutable)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_LINK}
     )
-    LinkBasicLibs(
+    exp_link_basic_libs(
         NAME ${PARAMS_NAME}
         LIB ${BASIC_LIBS}
     )
-    LinkLibraries(
+    exp_link_libs(
         NAME ${PARAMS_NAME}
         LIB ${PARAMS_LIB}
     )
-    AddRuntimeDependenciesCopyCommand(
+    exp_add_runtime_deps_copy_command(
         NAME ${PARAMS_NAME}
         ${NOT_INSTALL_FLAG}
     )
-    AddResourcesCopyCommand(
+    exp_add_resources_copy_command(
         NAME ${PARAMS_NAME}
         RES ${PARAMS_RES}
         ${NOT_INSTALL_FLAG}
@@ -378,7 +378,7 @@ function(AddExecutable)
     endif ()
 endfunction()
 
-function(AddLibrary)
+function(exp_add_library)
     cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB;REFLECT" ${ARGN})
 
     if ("${PARAMS_TYPE}" STREQUAL "SHARED")
@@ -390,7 +390,7 @@ function(AddLibrary)
             list(APPEND EXTRA_PARAMS DYNAMIC)
         endif ()
 
-        AddMirrorInfoSourceGenerationTarget(
+        exp_add_mirror_info_source_generation_target(
             NAME ${PARAMS_NAME}
             OUTPUT_SRC GENERATED_SRC
             OUTPUT_TARGET_NAME GENERATED_TARGET
@@ -420,11 +420,11 @@ function(AddLibrary)
         PRIVATE ${PARAMS_PRIVATE_LINK}
         PUBLIC ${PARAMS_PUBLIC_LINK}
     )
-    LinkBasicLibs(
+    exp_link_basic_libs(
         NAME ${PARAMS_NAME}
         LIB ${BASIC_LIBS}
     )
-    LinkLibraries(
+    exp_link_libs(
         NAME ${PARAMS_NAME}
         LIB ${PARAMS_LIB}
     )
@@ -481,7 +481,7 @@ function(AddLibrary)
     endif ()
 endfunction()
 
-function(AddTest)
+function(exp_add_test)
     if (NOT ${BUILD_TEST})
         return()
     endif()
@@ -489,7 +489,7 @@ function(AddTest)
     cmake_parse_arguments(PARAMS "META" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES;REFLECT" ${ARGN})
 
     if (DEFINED PARAMS_REFLECT)
-        AddMirrorInfoSourceGenerationTarget(
+        exp_add_mirror_info_source_generation_target(
             NAME ${PARAMS_NAME}
             OUTPUT_SRC GENERATED_SRC
             OUTPUT_TARGET_NAME GENERATED_TARGET
@@ -512,19 +512,19 @@ function(AddTest)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_LINK}
     )
-    LinkBasicLibs(
+    exp_link_basic_libs(
         NAME ${PARAMS_NAME}
         LIB ${BASIC_LIBS} ${BASIC_TEST_LIBS}
     )
-    LinkLibraries(
+    exp_link_libs(
         NAME ${PARAMS_NAME}
         LIB ${PARAMS_LIB}
     )
-    AddRuntimeDependenciesCopyCommand(
+    exp_add_runtime_deps_copy_command(
         NAME ${PARAMS_NAME}
         NOT_INSTALL
     )
-    AddResourcesCopyCommand(
+    exp_add_resources_copy_command(
         NAME ${PARAMS_NAME}
         RES ${PARAMS_RES}
         NOT_INSTALL

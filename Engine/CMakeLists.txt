@@ -1,6 +1,6 @@
 add_subdirectory(Source)
 
-function(GetEngineShaderResources)
+function(get_engine_shader_resources)
     cmake_parse_arguments(PARAMS "" "NAME" "OUTPUT" ${ARGN})
 
     file(GLOB_RECURSE ENGINE_SHADERS ${CMAKE_SOURCE_DIR}/Engine/Shader/*.es*)

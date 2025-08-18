@@ -12,13 +12,30 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(BUNDLE_INSTALL_DESTINATION BUNDLE DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries)
 endif ()
 
-file(GLOB_RECURSE SOURCES Src/*.cpp)
-qt_add_executable(Editor ${PLATFORM_EXECUTABLE_HINT} ${SOURCES})
-target_include_directories(Editor PRIVATE Include)
-target_include_directories(Editor PRIVATE ${CPP_HTTP_LIB_SOURCE_DIR})
-LinkLibraries(
+set(EDITOR_INCLUDES Include)
+set(EDITOR_QT_LIBS Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Quick Qt6::WebEngineWidgets)
+set(EDITOR_LIBS Core RHI Runtime cpp-httplib ${EDITOR_QT_LIBS})
+
+foreach (QT_LIB ${EDITOR_QT_LIBS})
+    string(REPLACE "::" "" QT_RAW_LIB ${QT_LIB})
+    list(APPEND EDITOR_INCLUDES ${${QT_RAW_LIB}_INCLUDE_DIRS})
+endforeach ()
+
+exp_add_mirror_info_source_generation_target(
     NAME Editor
-    LIB Core RHI Runtime Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Quick Qt6::WebEngineWidgets
+    OUTPUT_SRC EDITOR_MIRROR_GENERATED_SRC
+    OUTPUT_TARGET_NAME EDITOR_MIRROR_GENERATED_TARGET
+    SEARCH_DIR Include
+    PRIVATE_INC ${EDITOR_INCLUDES}
+    LIB ${EDITOR_LIBS}
+)
+
+file(GLOB_RECURSE SOURCES Src/*.cpp)
+qt_add_executable(Editor ${PLATFORM_EXECUTABLE_HINT} ${SOURCES} ${EDITOR_MIRROR_GENERATED_SRC})
+target_include_directories(Editor PRIVATE ${EDITOR_INCLUDES})
+exp_link_libs(
+    NAME Editor
+    LIB ${EDITOR_LIBS}
 )
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
@@ -26,9 +43,9 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 else()
     set(RHI_DEP_TARGETS RHI-Vulkan)
 endif()
-add_dependencies(Editor ${RHI_DEP_TARGETS})
+add_dependencies(Editor ${EDITOR_MIRROR_GENERATED_TARGET} ${RHI_DEP_TARGETS})
 
-AddRuntimeDependenciesCopyCommand(
+exp_add_runtime_deps_copy_command(
     NAME Editor
 )
 install(
@@ -81,7 +98,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 endif ()
 
 # ---- begin shaders ---------------------------------------------------------------------------------
-GetEngineShaderResources(
+get_engine_shader_resources(
     NAME Editor
     OUTPUT EDITOR_RESOURCES
 )
@@ -93,7 +110,7 @@ foreach (SHADER ${SHADERS})
     list(APPEND EDITOR_RESOURCES ${SHADER}->${COPY_DST})
 endforeach ()
 
-AddResourcesCopyCommand(
+exp_add_resources_copy_command(
     NAME Editor
     RES ${EDITOR_RESOURCES}
 )
