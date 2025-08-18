@@ -993,22 +993,6 @@ namespace Common {
         }
     };
 
-    template <>
-    struct JsonSerializer<bool> {
-        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const bool& inValue)
-        {
-            outJsonValue.SetBool(inValue);
-        }
-
-        static void JsonDeserialize(const rapidjson::Value& inJsonValue, bool& outValue)
-        {
-            if (!inJsonValue.IsBool()) {
-                return;
-            }
-            outValue = inJsonValue.GetBool();
-        }
-    };
-
     template <typename... T> struct VariantTypeId {};
     template <typename T> struct VariantTypeId<T> { static constexpr size_t value = HashUtils::StrCrc32("std::variant"); };
     template <typename T, typename... T2> struct VariantTypeId<T, T2...> { static constexpr size_t value = Serializer<T>::typeId + VariantTypeId<T2...>::value; };
@@ -1051,6 +1035,22 @@ namespace Common {
             deserialized += Serializer<uint64_t>::Deserialize(stream, index);
             deserialized += DeserializeInternal(stream, value, index, std::make_index_sequence<sizeof...(T)> {});
             return deserialized;
+        }
+    };
+
+    template <>
+    struct JsonSerializer<bool> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const bool& inValue)
+        {
+            outJsonValue.SetBool(inValue);
+        }
+
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, bool& outValue)
+        {
+            if (!inJsonValue.IsBool()) {
+                return;
+            }
+            outValue = inJsonValue.GetBool();
         }
     };
 
@@ -1556,8 +1556,8 @@ namespace Common {
             JsonSerializer<uint64_t>::JsonSerialize(typeValue, inAllocator, inValue.index());
 
             rapidjson::Value contentValue;
-            std::visit([&](auto&& v) -> void {
-                JsonSerializer<std::decay_t<decltype(v)>>::JsonSerialize(contentValue, inAllocator, v);
+            std::visit([&]<typename T0>(T0&& v) -> void {
+                JsonSerializer<std::decay_t<T0>>::JsonSerialize(contentValue, inAllocator, v);
             }, inValue);
 
             outJsonValue.SetObject();

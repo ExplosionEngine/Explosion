@@ -3,93 +3,48 @@ import { QWebChannel } from '@/qwebchannel'
 import { Tabs, Tab } from '@heroui/tabs';
 import { User } from '@heroui/user';
 import { Form } from '@heroui/form';
-import { Button } from '@heroui/button';
+import {Button, PressEvent} from '@heroui/button';
 import { Input } from '@heroui/input';
 import { Chip } from '@heroui/chip';
 import { Listbox, ListboxItem } from '@heroui/listbox';
 import { Avatar } from '@heroui/avatar';
 import { ScrollShadow } from "@heroui/scroll-shadow";
+import { Select, SelectItem } from '@heroui/react';
+
+interface RecentProjectInfo {
+  name: string;
+  path: string;
+}
+
+interface ProjectTemplateInfo {
+  name: string;
+  path: string;
+}
 
 export default function ProjectHubPage() {
   const [engineVersion, setEngineVersion] = useState('');
-  // TODO fetch from c++
-  const [recentlyProjects] = useState([{
-    key: '1',
-    name: 'HelloExplosion1',
-    icon: '/logo.png',
-    path: '/path/to/HelloExplosion'
-  }, {
-    key: '2',
-    name: 'HelloExplosion2',
-    icon: '/logo.png',
-    path: '/path/to/HelloExplosion'
-  }, {
-    key: '3',
-    name: 'HelloExplosion3',
-    icon: '/logo.png',
-    path: '/path/to/HelloExplosion'
-  }, {
-    key: '4',
-    name: 'HelloExplosion4',
-    icon: '/logo.png',
-    path: '/path/to/HelloExplosion'
-  }, {
-    key: '5',
-    name: 'HelloExplosion5',
-    icon: '/logo.png',
-    path: '/path/to/HelloExplosion'
-  }, {
-    key: '6',
-    name: 'HelloExplosion6',
-    icon: '/logo.png',
-    path: '/path/to/HelloExplosion'
-  }, {
-    key: '7',
-    name: 'HelloExplosion7',
-    icon: '/logo.png',
-    path: '/path/to/HelloExplosion'
-  }, {
-    key: '8',
-    name: 'HelloExplosion8',
-    icon: '/logo.png',
-    path: '/path/to/HelloExplosion'
-  }, {
-    key: '9',
-    name: 'HelloExplosion9',
-    icon: '/logo.png',
-    path: '/path/to/HelloExplosion'
-  }, {
-    key: '10',
-    name: 'HelloExplosion10',
-    icon: '/logo.png',
-    path: '/path/to/HelloExplosion'
-  }, {
-    key: '11',
-    name: 'HelloExplosion11',
-    icon: '/logo.png',
-    path: '/path/to/HelloExplosion'
-  }, {
-    key: '12',
-    name: 'HelloExplosion12',
-    icon: '/logo.png',
-    path: '/path/to/HelloExplosion'
-  }, {
-    key: '13',
-    name: 'HelloExplosion13',
-    icon: '/logo.png',
-    path: '/path/to/HelloExplosion'
-  }]);
+  const [recentProjects, setRecentProjects] = useState(Array<RecentProjectInfo>);
+  const [projectTemplates, setProjectTemplates] = useState(Array<ProjectTemplateInfo>);
 
   useEffect(() => {
     new QWebChannel(window.qt.webChannelTransport, (channel: QWebChannel) : void => {
-      window.bridge = channel.objects.bridge;
-      setEngineVersion(window.bridge.engineVersion);
+      window.backend = channel.objects.backend;
+      setEngineVersion(window.backend.engineVersion);
+      setRecentProjects(window.backend.recentProjects);
+      setProjectTemplates(window.backend.projectTemplates);
     })
   }, []);
 
-  function onCreateProject(): void
+  function onCreateProject() : void
   {
-    window.bridge.CreateProject();
+    window.backend.CreateProject();
+  }
+
+  function onOpenProject(e: PressEvent) : void
+  {
+    // TODO
+    const index = parseInt(e.target.getAttribute('data-key') as string);
+    console.error('onOpenProject:', index);
   }
 
   return (
@@ -114,19 +69,19 @@ export default function ProjectHubPage() {
             className='h-[450px]'
             size={60}>
             <Listbox
-              items={recentlyProjects}
+              items={recentProjects}
               variant='flat'>
-              {(item) => (
-                <ListboxItem key={item.key} textValue={item.name}>
-                  <div className='flex gap-2 items-center'>
-                    <Avatar alt={item.name} className='shrink-0' size='sm' src={item.icon} />
-                    <div className='flex flex-col'>
-                      <span className='text-small'>{item.name}</span>
-                      <span className='text-tiny text-default-400'>{item.path}</span>
+              {recentProjects.map((item, i) => (
+                  <ListboxItem key={i} onPress={onOpenProject} textValue={item.name}>
+                    <div className='flex gap-2 items-center'>
+                      <Avatar alt={item.name} className='shrink-0' size='sm' name={item.name} />
+                      <div className='flex flex-col'>
+                        <span className='text-small'>{item.name}</span>
+                        <span className='text-tiny text-default-400'>{item.path}</span>
+                      </div>
                     </div>
-                  </div>
-                </ListboxItem>
-              )}
+                  </ListboxItem>
+              ))}
             </Listbox>
           </ScrollShadow>
         </Tab>
@@ -135,6 +90,11 @@ export default function ProjectHubPage() {
             <Input fullWidth isRequired label='Project Name' labelPlacement='outside' placeholder='HelloExplosion'/>
             <Input fullWidth isRequired label='Project Description' labelPlacement='outside' placeholder='A simple explosion game project.'/>
             <Input fullWidth isRequired label='Project Path' labelPlacement='outside' placeholder='/path/to/your/project'/>
+            <Select fullWidth isRequired label='Project Template' labelPlacement='outside' defaultSelectedKeys={['0']}>
+              {projectTemplates.map((item, i) => (
+                <SelectItem key={i}>{item.name}</SelectItem>
+              ))}
+            </Select>
             <Button color='primary' onPress={onCreateProject}>Create</Button>
           </Form>
         </Tab>

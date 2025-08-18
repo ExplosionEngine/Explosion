@@ -110,6 +110,13 @@ foreach (SHADER ${SHADERS})
     list(APPEND EDITOR_RESOURCES ${SHADER}->${COPY_DST})
 endforeach ()
 
+file(GLOB_RECURSE RESOURCES Resource/*)
+foreach (RESOURCE ${RESOURCES})
+    get_filename_component(RESOURCE_ABSOLUTE ${RESOURCE} ABSOLUTE)
+    string(REPLACE ${CMAKE_CURRENT_SOURCE_DIR}/Resource ../Resource/Editor COPY_DST ${RESOURCE_ABSOLUTE})
+    list(APPEND EDITOR_RESOURCES ${RESOURCE}->${COPY_DST})
+endforeach ()
+
 exp_add_resources_copy_command(
     NAME Editor
     RES ${EDITOR_RESOURCES}
