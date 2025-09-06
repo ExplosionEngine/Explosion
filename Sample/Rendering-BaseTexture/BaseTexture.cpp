@@ -19,6 +19,10 @@ struct Vertex {
     FVec2 uv;
 };
 
+struct VertUniform {
+    FMat4x4 modelMatrix;
+};
+
 class BaseTexVS final : public StaticShaderType<BaseTexVS> {
     ShaderTypeInfo(
         BaseTexVS,
@@ -45,12 +49,9 @@ public:
 ImplementStaticShaderType(BaseTexVS);
 ImplementStaticShaderType(BaseTexPS);
 
-struct PsUniform {
-    FVec3 pixelColor;
-};
-
 class BaseTexApp final : public Application {
 public:
+    NonCopyable(BaseTexApp)
     explicit BaseTexApp(const std::string& inName);
     ~BaseTexApp() override;
 
@@ -66,6 +67,7 @@ private:
     void FetchShaderInstances();
     void CreateSwapChain();
     void CreateVertexAndIndexBuffer();
+    void CreateTextureAndSampler();
     void CreateSyncObjects();
 
     PixelFormat swapChainFormat;
@@ -74,9 +76,14 @@ private:
     UniquePtr<Device> device;
     UniquePtr<Surface> surface;
     UniquePtr<SwapChain> swapChain;
-    std::array<Texture*, backBufferCount> swapChainTextures;
+    UniquePtr<RHI::Sampler> sampler;
     UniquePtr<Buffer> vertexBuffer;
     UniquePtr<Buffer> indexBuffer;
+    UniquePtr<Buffer> uniformBuffer;
+    UniquePtr<Texture> texture;
+    UniquePtr<Buffer> imageBuffer;
+    std::array<Texture*, backBufferCount> swapChainTextures;
+    UniquePtr<RasterPipeline> pipeline;
     UniquePtr<Semaphore> imageReadySemaphore;
     UniquePtr<Semaphore> renderFinishedSemaphore;
     UniquePtr<Fence> frameFence;
@@ -102,6 +109,7 @@ void BaseTexApp::OnCreate()
         FetchShaderInstances();
         CreateSwapChain();
         CreateVertexAndIndexBuffer();
+        CreateTextureAndSampler();
         CreateSyncObjects();
     });
 }
@@ -130,36 +138,40 @@ void BaseTexApp::OnDrawFrame()
         auto* backTextureView = builder.CreateTextureView(backTexture, RGTextureViewDesc(TextureViewType::colorAttachment, TextureViewDimension::tv2D));
         auto* vBuffer = builder.ImportBuffer(vertexBuffer.Get(), BufferState::shaderReadOnly);
         auto* vBufferView = builder.CreateBufferView(vBuffer, RGBufferViewDesc(BufferViewType::vertex, vBuffer->GetDesc().size, 0, VertexBufferViewInfo(sizeof(Vertex))));
-        auto* psUniformBuffer = builder.CreateBuffer(RGBufferDesc(sizeof(PsUniform), BufferUsageBits::uniform | BufferUsageBits::mapWrite, BufferState::staging, "psUniform"));
-        auto* psUniformBufferView = builder.CreateBufferView(psUniformBuffer, RGBufferViewDesc(BufferViewType::uniformBinding, sizeof(PsUniform)));
+        auto* iBuffer = builder.ImportBuffer(indexBuffer.Get(), BufferState::shaderReadOnly);
+        auto* iBufferView = builder.CreateBufferView(iBuffer, RGBufferViewDesc(BufferViewType::index, iBuffer->GetDesc().size, 0, IndexBufferViewInfo(IndexFormat::uint32)));
+        auto* uBuffer = builder.CreateBuffer(RGBufferDesc(sizeof(VertUniform), BufferUsageBits::uniform | BufferUsageBits::mapWrite, BufferState::staging, "psUniform"));
+        auto* uBufferView = builder.CreateBufferView(uBuffer, RGBufferViewDesc(BufferViewType::uniformBinding, sizeof(VertUniform)));
+        auto* rgTexture = builder.ImportTexture(texture.Get(), TextureState::undefined);
+        auto* rgTextureView = builder.CreateTextureView(rgTexture, RGTextureViewDesc(TextureViewType::textureBinding, TextureViewDimension::tv2D));
 
         auto* bindGroup = builder.AllocateBindGroup(
             RGBindGroupDesc::Create(pso->GetPipelineLayout()->GetBindGroupLayout(0))
-                .UniformBuffer("psUniform", psUniformBufferView));
+                .UniformBuffer("constantBuffer", uBufferView)
+                .Sampler("ColorSampler", sampler.Get())
+                .Texture("colorTex", rgTextureView));
 
-        PsUniform psUniform {};
-        psUniform.pixelColor = FVec3(
-            (std::sin(GetCurrentTimeSeconds()) + 1) / 2,
-            (std::cos(GetCurrentTimeSeconds()) + 1) / 2,
-            std::abs(std::sin(GetCurrentTimeSeconds())));
+        VertUniform vertUniform {};
+        vertUniform.modelMatrix = MatConsts<float, 4, 4>::identity * 0.5;
 
         builder.QueueBufferUpload(
-            psUniformBuffer,
-            RGBufferUploadInfo(&psUniform, sizeof(PsUniform)));
+            uBuffer,
+            RGBufferUploadInfo(&vertUniform, sizeof(VertUniform)));
 
         builder.AddRasterPass(
             "BasePass",
             RGRasterPassDesc()
                 .AddColorAttachment(RGColorAttachment(backTextureView, LoadOp::clear, StoreOp::store)),
             { bindGroup },
-            [pso, vBufferView, bindGroup, viewportWidth = GetWindowWidth(), viewportHeight = GetWindowHeight()](const RGBuilder& rg, RasterPassCommandRecorder& recorder) -> void {
+            [pso, vBufferView, iBufferView, bindGroup, viewportWidth = GetWindowWidth(), viewportHeight = GetWindowHeight()](const RGBuilder& rg, RasterPassCommandRecorder& recorder) -> void {
                 recorder.SetPipeline(pso->GetRHI());
                 recorder.SetScissor(0, 0, viewportWidth, viewportHeight);
                 recorder.SetViewport(0, 0, static_cast<float>(viewportWidth), static_cast<float>(viewportHeight), 0, 1);
                 recorder.SetVertexBuffer(0, rg.GetRHI(vBufferView));
+                recorder.SetIndexBuffer(rg.GetRHI(iBufferView));
                 recorder.SetPrimitiveTopology(PrimitiveTopology::triangleList);
                 recorder.SetBindGroup(0, rg.GetRHI(bindGroup));
-                recorder.Draw(3, 1, 0, 0);
+                recorder.DrawIndexed(6, 1, 0, 0, 0);
             },
             {},
             [backTexture](const RGBuilder& rg, CommandRecorder& recorder) -> void {
@@ -215,7 +227,7 @@ void BaseTexApp::CreateDevice()
 void BaseTexApp::CompileAllShaders() const
 {
     ShaderCompileOptions options;
-    options.includeDirectories = {"../Test/Sample/ShaderInclude", "../Test/Sample/Rendering-Triangle"};
+    options.includeDirectories = {"../Test/Sample/ShaderInclude", "../Test/Sample/Rendering-BaseTexture"};
     options.byteCodeType = GetRHIType() == RHI::RHIType::directX12 ? ShaderByteCodeType::dxil : ShaderByteCodeType::spirv;
     options.withDebugInfo = false;
     auto result = ShaderTypeCompiler::Get().CompileAll(options);
@@ -297,6 +309,72 @@ void BaseTexApp::CreateVertexAndIndexBuffer()
         memcpy(data, indices.data(), bufferCreateInfo.size);
         indexBuffer->UnMap();
     }
+}
+
+void BaseTexApp::CreateTextureAndSampler()
+{
+    int width, height, channel = 0;
+    stbi_uc* imgData = stbi_load("../Test/Sample/Rendering-BaseTexture/Awesomeface.png", &width, &height, &channel, STBI_rgb_alpha);
+    Assert(imgData != nullptr);
+
+    texture = device->CreateTexture(
+        TextureCreateInfo()
+            .SetFormat(PixelFormat::rgba8Unorm)
+            .SetMipLevels(1)
+            .SetWidth(width)
+            .SetHeight(height)
+            .SetDepthOrArraySize(1)
+            .SetDimension(TextureDimension::t2D)
+            .SetSamples(1)
+            .SetUsages(TextureUsageBits::copyDst | TextureUsageBits::textureBinding)
+            .SetInitialState(TextureState::undefined)
+        );
+
+    const auto copyFootprint = device->GetTextureSubResourceCopyFootprint(*texture, TextureSubResourceInfo());
+
+    const BufferCreateInfo info = BufferCreateInfo()
+        .SetSize(copyFootprint.totalBytes)
+        .SetUsages(BufferUsageBits::mapWrite | BufferUsageBits::copySrc)
+        .SetInitialState(BufferState::staging)
+        .SetDebugName("texStagingBuffer");
+
+    imageBuffer = device->CreateBuffer(info);
+    if (imageBuffer != nullptr) {
+        auto* data = imageBuffer->Map(MapMode::write, 0, info.size);
+        for (auto i = 0; i < height; i++) {
+            const auto srcRowPitch = width * copyFootprint.bytesPerPixel;
+            const auto* src = imgData + i * srcRowPitch;
+            auto* dst = static_cast<uint8_t*>(data) + i * copyFootprint.rowPitch;
+            memcpy(dst, src, srcRowPitch);
+        }
+        imageBuffer->UnMap();
+    }
+    stbi_image_free(imgData);
+
+    sampler = device->CreateSampler(SamplerCreateInfo());
+
+    // perform buffer->texture copy
+    auto copyCmdBuffer = device->CreateCommandBuffer();
+    const UniquePtr<CommandRecorder> commandRecorder = copyCmdBuffer->Begin();
+    {
+        const UniquePtr<CopyPassCommandRecorder> copyRecorder = commandRecorder->BeginCopyPass();
+        {
+            copyRecorder->ResourceBarrier(Barrier::Transition(texture.Get(), TextureState::undefined, TextureState::copyDst));
+            copyRecorder->CopyBufferToTexture(
+                imageBuffer.Get(),
+                texture.Get(),
+                BufferTextureCopyInfo(0, TextureSubResourceInfo(), UVec3Consts::zero, UVec3(static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1)));
+            copyRecorder->ResourceBarrier(Barrier::Transition(texture.Get(), TextureState::copyDst, TextureState::shaderReadOnly));
+        }
+        copyRecorder->EndPass();
+    }
+    commandRecorder->End();
+
+    const UniquePtr<Fence> fence = device->CreateFence(false);
+    QueueSubmitInfo submitInfo {};
+    submitInfo.signalFence = fence.Get();
+    device->GetQueue(QueueType::graphics, 0)->Submit(copyCmdBuffer.Get(), submitInfo);
+    fence->Wait();
 }
 
 void BaseTexApp::CreateSyncObjects()

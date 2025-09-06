@@ -2,7 +2,7 @@
 
 VkBinding(0, 0) Texture2D colorTex : register(t0);
 VkBinding(1, 0) SamplerState colorSampler : register(s0);
-VkBinding(2, 0) cbuffer passParams : register(b0)
+VkBinding(2, 0) cbuffer constantBuffer : register(b0)
 {
 	float4x4 model;
 };
