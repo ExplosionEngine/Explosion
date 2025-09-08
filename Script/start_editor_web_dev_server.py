@@ -44,7 +44,7 @@ def start_dev_server(nodejs_root, web_project_root):
     elif platform.system() == 'Darwin':
         nodejs_bin = Path(nodejs_root) / 'bin'
         env['PATH'] = '{}:{}'.format(env['PATH'], nodejs_bin)
-        subprocess.run(['npm', 'run', 'dev'], shell=True, encoding='utf-8', env=env, cwd=web_project_root)
+        subprocess.run(['npm', 'run', 'dev'], encoding='utf-8', env=env, cwd=web_project_root)
     else:
         raise RuntimeError('Unsupported OS')
 
