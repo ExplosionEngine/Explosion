@@ -91,6 +91,12 @@ namespace Common {
         return { path.filename().string() };
     }
 
+    std::string Path::DirName() const
+    {
+        Assert(IsDirectory());
+        return { path.filename().string() };
+    }
+
     std::string Path::FileNameWithoutExtension() const
     {
         const auto extension = Extension();

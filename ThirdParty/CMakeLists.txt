@@ -1,5 +1,5 @@
 # DirectX 12 Headers
-Add3rdHeaderOnlyPackage(
+exp_add_3rd_header_only_package(
     NAME DirectXHeaders
     PLATFORM Windows
     VERSION 1.4.9
@@ -9,7 +9,7 @@ Add3rdHeaderOnlyPackage(
 
 # VulkanSDK
 set(VULKAN_SDK_VERSION 1.3.296.0)
-Add3rdBinaryPackage(
+exp_add_3rd_binary_package(
     NAME VulkanSDK
     VERSION ${VULKAN_SDK_VERSION}
     HASH
@@ -104,7 +104,7 @@ endif ()
 
 # DXC
 # Windows uses standalone package, macOS uses lib in VulkanSDK
-Add3rdBinaryPackage(
+exp_add_3rd_binary_package(
     NAME dxc
     PLATFORM Windows
     VERSION 1.6.2112
@@ -115,14 +115,14 @@ Add3rdBinaryPackage(
     RUNTIME_DEP
         Windows $<SOURCE_DIR>/bin/x64/dxcompiler.dll $<SOURCE_DIR>/bin/x64/dxil.dll
 )
-Add3rdAliasPackage(
+exp_add_3rd_alias_package(
     NAME dxc
     PLATFORM Darwin
     LIB dxcompiler
 )
 
 # GLFW
-Add3rdCMakeProject(
+exp_add_3rd_cmake_package(
     NAME glfw
     PLATFORM All
     VERSION 4.0
@@ -134,7 +134,7 @@ Add3rdCMakeProject(
 )
 
 # clipp
-Add3rdHeaderOnlyPackage(
+exp_add_3rd_header_only_package(
     NAME clipp
     PLATFORM All
     VERSION forked-f7cffbd61a7b64189d6573e8c3848d094c35168a
@@ -143,7 +143,7 @@ Add3rdHeaderOnlyPackage(
 )
 
 # DebugBreak
-Add3rdHeaderOnlyPackage(
+exp_add_3rd_header_only_package(
     NAME debugbreak
     PLATFORM All
     VERSION 1.0
@@ -152,7 +152,7 @@ Add3rdHeaderOnlyPackage(
 )
 
 # LLVM-Clang
-Add3rdBinaryPackage(
+exp_add_3rd_binary_package(
     NAME llvm-clang
     ARCH
     VERSION
@@ -172,7 +172,7 @@ Add3rdBinaryPackage(
 )
 
 # Google Test
-Add3rdCMakeProject(
+exp_add_3rd_cmake_package(
     NAME googletest
     PLATFORM All
     VERSION 1.11.0
@@ -184,7 +184,7 @@ Add3rdCMakeProject(
 )
 
 # TaskFlow
-Add3rdHeaderOnlyPackage(
+exp_add_3rd_header_only_package(
     NAME taskflow
     PLATFORM All
     VERSION 3.4.0
@@ -193,7 +193,7 @@ Add3rdHeaderOnlyPackage(
 )
 
 # CityHash
-Add3rdCMakeProject(
+exp_add_3rd_cmake_package(
     NAME cityhash
     PLATFORM All
     VERSION forked-2f248cfbf88d0895d069258e4971b5f2fc3a9f19
@@ -204,7 +204,7 @@ Add3rdCMakeProject(
 )
 
 # stb-image
-Add3rdHeaderOnlyPackage(
+exp_add_3rd_header_only_package(
     NAME stb
     PLATFORM All
     VERSION master-8b5f1f37b5b75829fc72d38e7b5d4bcbf8a26d55
@@ -213,7 +213,7 @@ Add3rdHeaderOnlyPackage(
 )
 
 # spirv-cross
-Add3rdCMakeProject(
+exp_add_3rd_cmake_package(
     NAME spirv-cross
     PLATFORM All
     VERSION 1.3.243.0
@@ -227,7 +227,7 @@ Add3rdCMakeProject(
 )
 
 # assimp
-Add3rdCMakeProject(
+exp_add_3rd_cmake_package(
     NAME assimp-lib
     PLATFORM All
     VERSION 5.2.5
@@ -243,7 +243,7 @@ Add3rdCMakeProject(
 )
 
 # vma
-Add3rdHeaderOnlyPackage(
+exp_add_3rd_header_only_package(
     NAME VulkanMemoryAllocator
     PLATFORM All
     VERSION 3.0.1
@@ -253,7 +253,7 @@ Add3rdHeaderOnlyPackage(
 
 # Qt6
 set(QT_VERSION "6.9.1" CACHE STRING "" FORCE)
-Setup3rdPackage(
+exp_setup_3rd_package(
     NAME Qt
     VERSION ${QT_VERSION}
     HASH
@@ -267,10 +267,15 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2022_64 CACHE PATH "" FORCE)
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/macos CACHE PATH "" FORCE)
+
+    # NOTICE: Fix Qt 6.9.1 build on macOS 26, #see https://codereview.qt-project.org/c/qt/qtbase/+/652022/3/cmake/FindWrapOpenGL.cmake#b50
+    if (QT_VERSION STREQUAL "6.9.1")
+        file(COPY_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Patch/Qt-Darwin-6.9.1-FindWrapOpenGL.cmake ${QT_LIB_PREFIX}/lib/cmake/Qt6/FindWrapOpenGL.cmake)
+    endif ()
 endif ()
 
 # rapidjson
-Add3rdHeaderOnlyPackage(
+exp_add_3rd_header_only_package(
     NAME rapidjson
     PLATFORM All
     VERSION d621dc9
@@ -280,7 +285,7 @@ Add3rdHeaderOnlyPackage(
 
 # Node.js
 set(NODEJS_VERSION "22.18.0" CACHE STRING "" FORCE)
-Add3rdBinaryPackage(
+exp_add_3rd_binary_package(
     NAME Nodejs
     VERSION ${NODEJS_VERSION}
     HASH
@@ -290,11 +295,10 @@ Add3rdBinaryPackage(
 
 # cpp-httplib
 set(CPP_HTTP_LIB_VERSION "0.24.0")
-Add3rdHeaderOnlyPackage(
+exp_add_3rd_header_only_package(
     NAME cpp-httplib
     PLATFORM All
     VERSION 0.24.0
     HASH a0320b106f4a8f945ec2556e62fffab05b068f2ddfff99c6a367b2e16c14bde1
     INCLUDE $<SOURCE_DIR>
 )
-set(CPP_HTTP_LIB_SOURCE_DIR ${3RD_SOURCE_DIR}/cpp-httplib-All-${CPP_HTTP_LIB_VERSION} CACHE STRING "" FORCE)

@@ -6,5 +6,5 @@
 #include <Editor/Widget/moc_Editor.cpp>
 
 namespace Editor {
-    Editor::Editor() = default;
+    ExplosionEditor::ExplosionEditor() = default;
 } // namespace Editor

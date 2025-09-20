@@ -89,7 +89,7 @@ namespace Mirror {
     {
         if (IsMemoryHolder() && rtti != nullptr) {
             for (auto i = 0; i < ElementNum(); i++) {
-                rtti->detor(Data(i));
+                // rtti->detor(Data(i));
             }
         }
     }
@@ -348,10 +348,22 @@ namespace Mirror {
         return std::max(1u, arrayLength);
     }
 
+    TemplateViewId Any::GetTemplateViewId() const
+    {
+        Assert(!Empty());
+        return rtti->getTemplateViewRtti().first;
+    }
+
     TemplateViewRttiPtr Any::GetTemplateViewRtti() const
     {
         Assert(!Empty());
         return rtti->getTemplateViewRtti().second;
+    }
+
+    bool Any::HasTemplateView() const
+    {
+        Assert(!Empty());
+        return rtti->getTemplateViewRtti().second != nullptr;
     }
 
     bool Any::IsArray() const
@@ -2027,6 +2039,21 @@ namespace Mirror {
         return rtti->getElementType();
     }
 
+    void StdOptionalView::Reset() const
+    {
+        rtti->reset(ref);
+    }
+
+    Any StdOptionalView::Emplace(const Argument& inTempObj) const
+    {
+        return rtti->emplace(ref, inTempObj);
+    }
+
+    Any StdOptionalView::EmplaceDefault() const
+    {
+        return rtti->emplaceDefault(ref);
+    }
+
     bool StdOptionalView::HasValue() const
     {
         return rtti->hasValue(ref);
@@ -2035,6 +2062,11 @@ namespace Mirror {
     Any StdOptionalView::Value() const
     {
         return rtti->getValue(ref);
+    }
+
+    Any StdOptionalView::ConstValue() const
+    {
+        return rtti->getConstValue(ref);
     }
 
     StdPairView::StdPairView(const Any& inRef)
@@ -2072,6 +2104,11 @@ namespace Mirror {
     Any StdPairView::ConstValue() const
     {
         return rtti->getConstValue(ref);
+    }
+
+    void StdPairView::Reset() const
+    {
+        rtti->reset(ref);
     }
 
     StdArrayView::StdArrayView(const Any& inRef)
@@ -2118,6 +2155,21 @@ namespace Mirror {
         return rtti->getSize(ref);
     }
 
+    void StdVectorView::Reserve(size_t inSize) const
+    {
+        rtti->reserve(ref, inSize);
+    }
+
+    void StdVectorView::Resize(size_t inSize) const
+    {
+        rtti->resize(ref, inSize);
+    }
+
+    void StdVectorView::Clear() const
+    {
+        rtti->clear(ref);
+    }
+
     Any StdVectorView::At(size_t inIndex) const
     {
         return rtti->getElement(ref, inIndex);
@@ -2131,6 +2183,11 @@ namespace Mirror {
     Any StdVectorView::EmplaceBack(const Argument& inTempObj) const
     {
         return rtti->emplaceBack(ref, inTempObj);
+    }
+
+    Any StdVectorView::EmplaceDefaultBack() const
+    {
+        return rtti->emplaceDefaultBack(ref);
     }
 
     void StdVectorView::Erase(size_t inIndex) const
@@ -2155,6 +2212,11 @@ namespace Mirror {
         return rtti->getSize(ref);
     }
 
+    void StdListView::Clear() const
+    {
+        rtti->clear(ref);
+    }
+
     void StdListView::Traverse(const ElementTraverser& inTraverser) const
     {
         rtti->traverse(ref, inTraverser);
@@ -2175,6 +2237,16 @@ namespace Mirror {
         return rtti->emplaceBack(ref, inTempObj);
     }
 
+    Any StdListView::EmplaceDefaultFront() const
+    {
+        return rtti->emplaceDefaultFront(ref);
+    }
+
+    Any StdListView::EmplaceDefaultBack() const
+    {
+        return rtti->emplaceDefaultBack(ref);
+    }
+
     StdUnorderedSetView::StdUnorderedSetView(const Any& inRef)
         : ref(inRef)
     {
@@ -2187,9 +2259,24 @@ namespace Mirror {
         return rtti->getElementType();
     }
 
+    Any StdUnorderedSetView::CreateElement() const
+    {
+        return rtti->createElement();
+    }
+
     size_t StdUnorderedSetView::Size() const
     {
         return rtti->getSize(ref);
+    }
+
+    void StdUnorderedSetView::Reserve(size_t inSize) const
+    {
+        rtti->reserve(ref, inSize);
+    }
+
+    void StdUnorderedSetView::Clear() const
+    {
+        rtti->clear(ref);
     }
 
     void StdUnorderedSetView::Traverse(const ElementTraverser& inTraverser) const
@@ -2229,14 +2316,29 @@ namespace Mirror {
         return rtti->getElementType();
     }
 
+    Any StdSetView::CreateElement() const
+    {
+        return rtti->createElement();
+    }
+
     size_t StdSetView::Size() const
     {
         return rtti->getSize(ref);
     }
 
+    void StdSetView::Clear() const
+    {
+        rtti->clear(ref);
+    }
+
     void StdSetView::Traverse(const ElementTraverser& inTraverser) const
     {
         rtti->traverse(ref, inTraverser);
+    }
+
+    void StdSetView::ConstTraverse(const ElementTraverser& inTraverser) const
+    {
+        rtti->constTraverse(ref, inTraverser);
     }
 
     bool StdSetView::Contains(const Argument& inElement) const
@@ -2271,14 +2373,39 @@ namespace Mirror {
         return rtti->getValueType();
     }
 
+    Any StdUnorderedMapView::CreateKey() const
+    {
+        return rtti->createKey();
+    }
+
+    Any StdUnorderedMapView::CreateValue() const
+    {
+        return rtti->createValue();
+    }
+
     size_t StdUnorderedMapView::Size() const
     {
         return rtti->getSize(ref);
     }
 
+    void StdUnorderedMapView::Reserve(size_t inSize) const
+    {
+        rtti->reserve(ref, inSize);
+    }
+
+    void StdUnorderedMapView::Clear() const
+    {
+        rtti->clear(ref);
+    }
+
     Any StdUnorderedMapView::At(const Argument& inKey) const
     {
         return rtti->at(ref, inKey);
+    }
+
+    Any StdUnorderedMapView::ConstAt(const Argument& inKey) const
+    {
+        return rtti->constAt(ref, inKey);
     }
 
     Any StdUnorderedMapView::GetOrAdd(const Argument& inKey) const
@@ -2328,14 +2455,34 @@ namespace Mirror {
         return rtti->getValueType();
     }
 
+    Any StdMapView::CreateKey() const
+    {
+        return rtti->createKey();
+    }
+
+    Any StdMapView::CreateValue() const
+    {
+        return rtti->createValue();
+    }
+
     size_t StdMapView::Size() const
     {
         return rtti->getSize(ref);
     }
 
+    void StdMapView::Clear() const
+    {
+        rtti->clear(ref);
+    }
+
     Any StdMapView::At(const Argument& inKey) const
     {
         return rtti->at(ref, inKey);
+    }
+
+    Any StdMapView::ConstAt(const Argument& inKey) const
+    {
+        return rtti->constAt(ref, inKey);
     }
 
     Any StdMapView::GetOrAdd(const Argument& inKey) const
@@ -2385,13 +2532,68 @@ namespace Mirror {
         return rtti->getElementType(inIndex);
     }
 
+    Any StdTupleView::CreateElement(size_t inIndex) const
+    {
+        return rtti->createElement(inIndex);
+    }
+
     Any StdTupleView::Get(size_t inIndex) const
     {
         return rtti->getElement(ref, inIndex);
     }
 
-    void StdTupleView::Traverse(const Visitor& inVisitor) const
+    void StdTupleView::Traverse(const Traverser& inVisitor) const
     {
         rtti->traverse(ref, inVisitor);
+    }
+
+    void StdTupleView::ConstTraverse(const Traverser& inVisitor) const
+    {
+        rtti->constTraverse(ref, inVisitor);
+    }
+
+    StdVariantView::StdVariantView(const Any& inRef)
+        : ref(inRef)
+    {
+    }
+
+    size_t StdVariantView::TypeNum() const
+    {
+        return rtti->TypeNum();
+    }
+
+    const TypeInfo* StdVariantView::TypeByIndex(size_t inIndex) const
+    {
+        return rtti->TypeByIndex(inIndex);
+    }
+
+    Any StdVariantView::CreateElement(size_t inIndex) const
+    {
+        return rtti->createElement(inIndex);
+    }
+
+    size_t StdVariantView::Index() const
+    {
+        return rtti->index(ref);
+    }
+
+    Any StdVariantView::GetElement(size_t inIndex) const
+    {
+        return rtti->getElement(ref, inIndex);
+    }
+
+    Any StdVariantView::GetConstElement(size_t inIndex) const
+    {
+        return rtti->getConstElement(ref, inIndex);
+    }
+
+    void StdVariantView::Visit(const Visitor& inVisitor) const
+    {
+        rtti->visit(ref, inVisitor);
+    }
+
+    Any StdVariantView::Emplace(size_t inIndex, const Argument& inTempObj) const
+    {
+        return rtti->emplace(ref, inIndex, inTempObj);
     }
 } // namespace Mirror

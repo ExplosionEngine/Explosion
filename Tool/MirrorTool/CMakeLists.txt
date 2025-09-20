@@ -1,5 +1,5 @@
 file(GLOB SOURCES Src/*.cpp)
-AddLibrary(
+exp_add_library(
     NAME MirrorTool.Static
     SRC ${SOURCES}
     PUBLIC_INC Include
@@ -7,14 +7,14 @@ AddLibrary(
 )
 
 file(GLOB EXE_SOURCES ExeSrc/*.cpp)
-AddExecutable(
+exp_add_executable(
     NAME MirrorTool
     SRC ${EXE_SOURCES}
     INC Include
     LIB MirrorTool.Static
 )
 
-AddTest(
+exp_add_test(
     NAME MirrorTool.Test
     SRC Test/Main.cpp
     INC Include

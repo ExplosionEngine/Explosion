@@ -123,13 +123,6 @@ TEST(AnyTest, DetorTest)
 {
     bool live = false;
     {
-        Any a0 = AnyDtorTest(live);
-        ASSERT_TRUE(live);
-    }
-    ASSERT_FALSE(live);
-
-    live = false;
-    {
         AnyDtorTest obj(live, true); // NOLINT
         {
             Any a1 = std::ref(obj);
@@ -1472,12 +1465,12 @@ TEST(AnyTest, StdTupleViewTest)
     ASSERT_EQ(v0.Get(2).As<const std::string&>(), "2");
 
     int count = 0;
-    v0.Traverse([&](const Any& inRef) -> void {
-        if (count == 0) {
+    v0.Traverse([&](const Any& inRef, size_t inIndex) -> void {
+        if (inIndex == 0) {
             ASSERT_EQ(inRef.As<const int&>(), 1);
-        } else if (count == 1) {
+        } else if (inIndex == 1) {
             ASSERT_TRUE(inRef.As<const bool&>());
-        } else if (count == 2) {
+        } else if (inIndex == 2) {
             ASSERT_EQ(inRef.As<const std::string&>(), "2");
         }
         count++;

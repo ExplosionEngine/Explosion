@@ -120,7 +120,7 @@ void AssertNamespaceInfoEqual(const NamespaceInfo& lhs, const NamespaceInfo& rhs
 
 TEST(MirrorTest, ParserTest)
 {
-    const Parser parser("../Test/Resource/Mirror/MirrorToolInput.h", { "../Test/Resource/Mirror" });
+    const Parser parser("../Test/Resource/Mirror/MirrorToolInput.h", { "../Test/Resource/Mirror" }, {});
     auto [parseSuccess, parseResultOrError] = parser.Parse();
     ASSERT_TRUE(parseSuccess);
 
@@ -160,7 +160,7 @@ TEST(MirrorTest, ParserTest)
 
 TEST(MirrorTest, GeneratorTest)
 {
-    const Parser parser("../Test/Resource/Mirror/MirrorToolInput.h", { "../Test/Resource/Mirror" });
+    const Parser parser("../Test/Resource/Mirror/MirrorToolInput.h", { "../Test/Resource/Mirror" }, {});
     auto [parseSuccess, parseResultOrError] = parser.Parse();
     ASSERT_TRUE(parseSuccess);
 
