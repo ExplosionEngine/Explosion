@@ -238,7 +238,7 @@ function(exp_get_target_include_dirs_recurse)
 endfunction()
 
 function(exp_add_mirror_info_source_generation_target)
-    cmake_parse_arguments(PARAMS "DYNAMIC" "NAME;OUTPUT_SRC;OUTPUT_TARGET_NAME" "SEARCH_DIR;PUBLIC_INC;PRIVATE_INC;LIB" ${ARGN})
+    cmake_parse_arguments(PARAMS "DYNAMIC" "NAME;OUTPUT_SRC;OUTPUT_TARGET_NAME" "SEARCH_DIR;PUBLIC_INC;PRIVATE_INC;LIB;FRAMEWORK_DIR" ${ARGN})
 
     if (DEFINED PARAMS_PUBLIC_INC)
         list(APPEND INC ${PARAMS_PUBLIC_INC})
@@ -262,9 +262,19 @@ function(exp_add_mirror_info_source_generation_target)
     list(APPEND INC_ARGS "-I")
     foreach (I ${INC})
         get_filename_component(ABSOLUTE_I ${I} ABSOLUTE)
-        list(APPEND ABSOLUTE_INC ${ABSOLUTE_I})
         list(APPEND INC_ARGS ${ABSOLUTE_I})
     endforeach()
+
+    if (DEFINED PARAMS_FRAMEWORK_DIR)
+        list(APPEND FWK_DIR ${PARAMS_FRAMEWORK_DIR})
+        list(APPEND FWK_DIR_ARGS "-F")
+    endif ()
+    list(REMOVE_DUPLICATES FWK_DIR)
+
+    foreach (F ${FWK_DIR})
+        get_filename_component(ABSOLUTE_F ${F} ABSOLUTE)
+        list(APPEND FWK_DIR_ARGS ${ABSOLUTE_F})
+    endforeach ()
 
     if (${PARAMS_DYNAMIC})
         list(APPEND DYNAMIC_ARG "-d")
@@ -282,7 +292,7 @@ function(exp_add_mirror_info_source_generation_target)
 
             add_custom_command(
                 OUTPUT ${OUTPUT_SOURCE}
-                COMMAND "$<TARGET_FILE:MirrorTool>" ${DYNAMIC_ARG} "-i" ${INPUT_HEADER_FILE} "-o" ${OUTPUT_SOURCE} ${INC_ARGS}
+                COMMAND "$<TARGET_FILE:MirrorTool>" ${DYNAMIC_ARG} "-i" ${INPUT_HEADER_FILE} "-o" ${OUTPUT_SOURCE} ${INC_ARGS} ${FWK_DIR_ARGS}
                 DEPENDS MirrorTool ${INPUT_HEADER_FILE}
             )
         endforeach()

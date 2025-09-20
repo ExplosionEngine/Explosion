@@ -413,7 +413,10 @@ namespace MirrorTool {
 }
 
 namespace MirrorTool {
-    Parser::Parser(std::string inSourceFile, std::vector<std::string> inHeaderDirs) : sourceFile(std::move(inSourceFile)), headerDirs(std::move(inHeaderDirs))
+    Parser::Parser(std::string inSourceFile, std::vector<std::string> inHeaderDirs, std::vector<std::string> inFrameworkDirs)
+        : sourceFile(std::move(inSourceFile))
+        , headerDirs(std::move(inHeaderDirs))
+        , frameworkDirs(std::move(inFrameworkDirs))
     {
     }
 
@@ -451,6 +454,12 @@ namespace MirrorTool {
         for (const std::string& headerDir : headerDirs) {
             argumentStrs.emplace_back(std::string("-I") + headerDir);
         }
+#if PLATFORM_MACOS
+        for (const std::string& frameworkDir : frameworkDirs) {
+            argumentStrs.emplace_back("-iframework");
+            argumentStrs.emplace_back(frameworkDir);
+        }
+#endif
 
         std::vector<const char*> arguments(argumentStrs.size());
         for (auto i = 0; i < arguments.size(); i++) {

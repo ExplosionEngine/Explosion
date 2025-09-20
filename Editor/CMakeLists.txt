@@ -10,6 +10,7 @@ qt_standard_project_setup(REQUIRES ${QT_VERSION})
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(PLATFORM_EXECUTABLE_HINT MACOSX_BUNDLE)
     set(BUNDLE_INSTALL_DESTINATION BUNDLE DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries)
+    set(PLATFORM_FRAMEWORK_DIR ${QT_LIB_PREFIX}/lib)
 endif ()
 
 set(EDITOR_INCLUDES Include)
@@ -28,6 +29,7 @@ exp_add_mirror_info_source_generation_target(
     SEARCH_DIR Include
     PRIVATE_INC ${EDITOR_INCLUDES}
     LIB ${EDITOR_LIBS}
+    FRAMEWORK_DIR ${PLATFORM_FRAMEWORK_DIR}
 )
 
 file(GLOB_RECURSE SOURCES Src/*.cpp)

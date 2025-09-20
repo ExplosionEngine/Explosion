@@ -94,7 +94,7 @@ namespace MirrorTool {
         using Result = std::pair<bool, std::variant<std::string, MetaInfo>>;
 
         NonCopyable(Parser)
-        explicit Parser(std::string inSourceFile, std::vector<std::string> inHeaderDirs);
+        explicit Parser(std::string inSourceFile, std::vector<std::string> inHeaderDirs, std::vector<std::string> inFrameworkDirs);
         ~Parser();
 
         Result Parse() const;
@@ -105,5 +105,6 @@ namespace MirrorTool {
 
         std::string sourceFile;
         std::vector<std::string> headerDirs;
+        std::vector<std::string> frameworkDirs;
     };
 }

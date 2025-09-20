@@ -31,12 +31,14 @@ int main(int argc, char* argv[]) // NOLINT
     std::string inputFile;
     std::string outputFile;
     std::vector<std::string> headerDirs;
+    std::vector<std::string> frameworkDirs;
     bool dynamic = false;
 
     if (const auto cli = (
             clipp::required("-i").doc("input header file") & clipp::value("input header file", inputFile),
             clipp::required("-o").doc("output file") & clipp::value("output file", outputFile),
             clipp::option("-I").doc("header search dirs") & clipp::values("header search dirs", headerDirs),
+            clipp::option("-F").doc("framework search dirs") & clipp::values("framework search dirs", frameworkDirs),
             clipp::option("-d").set(dynamic).doc("used for dynamic library (auto unload some metas)"));
         !clipp::parse(argc, argv, cli)) {
         std::cout << clipp::make_man_page(cli, argv[0]);
@@ -58,7 +60,7 @@ int main(int argc, char* argv[]) // NOLINT
         return 1;
     }
 
-    MirrorTool::Parser parser(inputFile, headerDirs);
+    MirrorTool::Parser parser(inputFile, headerDirs, frameworkDirs);
     auto [parseSuccess, parseResultOrError] = parser.Parse();
 
     if (!parseSuccess) {
