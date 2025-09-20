@@ -371,6 +371,7 @@ namespace Render {
 
         // render thread
         ShaderInstance GetShaderInstance(const ShaderType& inShaderType, const ShaderVariantValueMap& inShaderVariants);
+        void Invalidate();
 
     private:
         using VariantsShaderModules = std::unordered_map<ShaderVariantKey, Common::UniquePtr<RHI::ShaderModule>>;

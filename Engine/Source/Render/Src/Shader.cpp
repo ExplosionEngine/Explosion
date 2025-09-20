@@ -454,4 +454,10 @@ namespace Render {
         result.reflectionData = &reflectionData;
         return result;
     }
+
+    void ShaderMap::Invalidate()
+    {
+        Assert(Core::ThreadContext::IsRenderThread());
+        shaderModules.clear();
+    }
 } // namespace Render

@@ -7,6 +7,7 @@
 #include <Render/ShaderCompiler.h>
 #include <Render/RenderGraph.h>
 #include <Render/RenderThread.h>
+#include <Core/Log.h>
 
 using namespace Common;
 using namespace Render;
@@ -192,6 +193,7 @@ void TriangleApplication::OnDestroy()
         PipelineCache::Get(*device).Invalidate();
         BufferPool::Get(*device).Invalidate();
         TexturePool::Get(*device).Invalidate();
+        ShaderMap::Get(*device).Invalidate();
     });
     RenderThread::Get().Flush();
 
