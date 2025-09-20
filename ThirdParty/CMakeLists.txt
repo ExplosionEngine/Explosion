@@ -267,6 +267,11 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2022_64 CACHE PATH "" FORCE)
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/macos CACHE PATH "" FORCE)
+
+    # NOTICE: Fix Qt 6.9.1 build on macOS 26, #see https://codereview.qt-project.org/c/qt/qtbase/+/652022/3/cmake/FindWrapOpenGL.cmake#b50
+    if (QT_VERSION STREQUAL "6.9.1")
+        file(COPY_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Patch/Qt-Darwin-6.9.1-FindWrapOpenGL.cmake ${QT_LIB_PREFIX}/lib/cmake/Qt6/FindWrapOpenGL.cmake)
+    endif ()
 endif ()
 
 # rapidjson
