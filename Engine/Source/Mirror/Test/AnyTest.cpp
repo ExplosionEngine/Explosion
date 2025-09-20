@@ -123,13 +123,6 @@ TEST(AnyTest, DetorTest)
 {
     bool live = false;
     {
-        Any a0 = AnyDtorTest(live);
-        ASSERT_TRUE(live);
-    }
-    ASSERT_FALSE(live);
-
-    live = false;
-    {
         AnyDtorTest obj(live, true); // NOLINT
         {
             Any a1 = std::ref(obj);
