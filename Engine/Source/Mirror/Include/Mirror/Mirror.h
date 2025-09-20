@@ -22,8 +22,6 @@
 #include <Common/Container.h>
 #include <Common/Concepts.h>
 #include <Mirror/Api.h>
-#include <Mirror/Mirror.h>
-#include <Mirror/Mirror.h>
 
 #if COMPILER_MSVC
 #define functionSignature __FUNCSIG__
