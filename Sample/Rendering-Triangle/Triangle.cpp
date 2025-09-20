@@ -62,6 +62,7 @@ private:
     void CreateDevice();
     void CompileAllShaders() const;
     void FetchShaderInstances();
+    void CreateSurface();
     void CreateSwapChain();
     void CreateTriangleVertexBuffer();
     void CreateSyncObjects();
@@ -94,8 +95,12 @@ void TriangleApplication::OnCreate()
     RenderThread::Get().Start();
     RenderWorkerThreads::Get().Start();
 
+    // NOTICE: some platform surface need created on main thread, like NSView* in macOS
+    // so we create device and surface in main thread early
+    CreateDevice();
+    CreateSurface();
+
     RenderThread::Get().EmplaceTask([this]() -> void {
-        CreateDevice();
         FetchShaderInstances();
         CreateSwapChain();
         CreateTriangleVertexBuffer();
@@ -228,14 +233,17 @@ void TriangleApplication::FetchShaderInstances()
     trianglePS = ShaderMap::Get(*device).GetShaderInstance(TrianglePS::Get(), {});
 }
 
+void TriangleApplication::CreateSurface()
+{
+    surface = device->CreateSurface(SurfaceCreateInfo(GetPlatformWindow()));
+}
+
 void TriangleApplication::CreateSwapChain()
 {
     static std::vector swapChainFormatQualifiers = {
         PixelFormat::rgba8Unorm,
         PixelFormat::bgra8Unorm
     };
-
-    surface = device->CreateSurface(SurfaceCreateInfo(GetPlatformWindow()));
 
     for (const auto format : swapChainFormatQualifiers) {
         if (device->CheckSwapChainFormatSupport(surface.Get(), format)) {
