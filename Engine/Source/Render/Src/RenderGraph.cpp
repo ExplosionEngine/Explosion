@@ -22,6 +22,8 @@ namespace Render::Internal {
                 outReads.emplace(std::get<RGTextureViewRef>(view)->GetResource());
             } else if (type == RHI::BindingType::storageTexture) {
                 outWrites.emplace(std::get<RGTextureViewRef>(view)->GetResource());
+            } else if (type == RHI::BindingType::sampler){
+                return;
             } else {
                 Unimplement();
             }

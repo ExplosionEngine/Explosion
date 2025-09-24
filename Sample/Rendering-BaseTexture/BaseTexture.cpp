@@ -128,7 +128,8 @@ void BaseTexApp::OnDrawFrame()
                     RVertexState()
                         .AddVertexBufferLayout(
                             RVertexBufferLayout(VertexStepMode::perVertex, sizeof(Vertex))
-                                .AddAttribute(RVertexAttribute(RVertexBinding("POSITION", 0), VertexFormat::float32X3, offsetof(Vertex, position)))))
+                                .AddAttribute(RVertexAttribute(RVertexBinding("POSITION", 0), VertexFormat::float32X4, offsetof(Vertex, position)))
+                                .AddAttribute(RVertexAttribute(RVertexBinding("TEXCOORD", 0), VertexFormat::float32X2, offsetof(Vertex, uv)))))
                 .SetFragmentState(
                     RFragmentState()
                         .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all, false))));
@@ -148,7 +149,7 @@ void BaseTexApp::OnDrawFrame()
         auto* bindGroup = builder.AllocateBindGroup(
             RGBindGroupDesc::Create(pso->GetPipelineLayout()->GetBindGroupLayout(0))
                 .UniformBuffer("constantBuffer", uBufferView)
-                .Sampler("ColorSampler", sampler.Get())
+                .Sampler("colorSampler", sampler.Get())
                 .Texture("colorTex", rgTextureView));
 
         VertUniform vertUniform {};
