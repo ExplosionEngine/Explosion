@@ -1,4 +1,4 @@
-function(AddSample)
+function(add_sample)
     cmake_parse_arguments(PARAMS "" "NAME" "SRC;INC;SHADER;IMAGE;MODEL" ${ARGN})
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
@@ -24,7 +24,7 @@ function(AddSample)
 
     list(APPEND PATHS "${CMAKE_SOURCE_DIR}/Engine/Shader/Platform.esh->../Test/Sample/ShaderInclude/Platform.esh")
 
-    AddExecutable(
+    exp_add_executable(
         SAMPLE
         NAME ${PARAMS_NAME}
         SRC ${PARAMS_SRC}
@@ -44,7 +44,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 endif()
 
 file(GLOB SOURCES Base/*.cpp)
-Addlibrary(
+exp_add_library(
     NAME Sample-Base
     SRC ${SOURCES}
     PUBLIC_INC Base
@@ -53,7 +53,7 @@ Addlibrary(
 )
 
 file(GLOB SOURCES RHI-Triangle/*.cpp)
-AddSample(
+add_sample(
     NAME RHISample-Triangle
     SRC ${SOURCES}
     INC RHI-Triangle
@@ -61,7 +61,7 @@ AddSample(
 )
 
 file(GLOB SOURCES RHI-TexSampling/*.cpp)
-AddSample(
+add_sample(
     NAME RHISample-TexSampling
     SRC ${SOURCES}
     INC RHI-TexSampling
@@ -70,7 +70,7 @@ AddSample(
 )
 
 file(GLOB SOURCES RHI-SSAO/*.cpp)
-AddSample(
+add_sample(
     NAME RHISample-SSAO
     SRC ${SOURCES}
     INC RHI-SSAO
@@ -84,14 +84,14 @@ AddSample(
 )
 
 file(GLOB SOURCES RHI-ParallelCompute/*.cpp)
-AddSample(
+add_sample(
     NAME RHISample-ParallelCompute
     SRC ${SOURCES}
     SHADER RHI-ParallelCompute/Compute.esl
 )
 
 file(GLOB SOURCES Rendering-Triangle/*.cpp)
-AddSample(
+add_sample(
     NAME RenderingSample-Triangle
     SRC ${SOURCES}
     INC Rendering-Triangle

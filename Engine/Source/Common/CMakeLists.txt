@@ -1,5 +1,5 @@
 file(GLOB_RECURSE SOURCES Src/*.cpp)
-AddLibrary(
+exp_add_library(
     NAME Common
     TYPE STATIC
     SRC ${SOURCES}
@@ -8,7 +8,7 @@ AddLibrary(
 )
 
 file(GLOB TEST_SOURCES Test/*.cpp)
-AddTest(
+exp_add_test(
     NAME Common.Test
     INC Test
     SRC ${TEST_SOURCES}

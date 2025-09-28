@@ -1,5 +1,5 @@
 file(GLOB SOURCES Src/*.cpp)
-AddLibrary(
+exp_add_library(
     NAME RHI-DirectX12
     TYPE SHARED
     SRC ${SOURCES}

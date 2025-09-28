@@ -1,5 +1,5 @@
 file(GLOB_RECURSE SOURCES Src/*.cpp)
-AddLibrary(
+exp_add_library(
     NAME Launch
     TYPE STATIC
     SRC ${SOURCES}

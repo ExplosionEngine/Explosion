@@ -1,9 +1,11 @@
 option(BUILD_EDITOR "Build Explosion editor" ON)
 option(CI "Build in CI" OFF)
 option(USE_UNITY_BUILD "Use unity build" ON)
+option(EXPORT_COMPILE_COMMANDS "Whether to export all compile commands" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_UNITY_BUILD ${USE_UNITY_BUILD})
+set(CMAKE_EXPORT_COMPILE_COMMANDS ${EXPORT_COMPILE_COMMANDS})
 
 get_cmake_property(GENERATOR_IS_MULTI_CONFIG GENERATOR_IS_MULTI_CONFIG)
 if (${GENERATOR_IS_MULTI_CONFIG})

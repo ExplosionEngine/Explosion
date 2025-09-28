@@ -99,7 +99,7 @@ static Common::UniquePtr<QWidget> CreateMainWidget(EditorApplicationModel inMode
     if (inModel == EditorApplicationModel::projectHub) { // NOLINT
         return new Editor::ProjectHub();
     }
-    return new Editor::Editor();
+    return new Editor::ExplosionEditor();
 }
 
 int main(int argc, char* argv[])

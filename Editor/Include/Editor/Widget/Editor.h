@@ -7,10 +7,10 @@
 #include <QWidget>
 
 namespace Editor {
-    class Editor final : public QWidget {
+    class ExplosionEditor final : public QWidget {
         Q_OBJECT
 
     public:
-        Editor();
+        ExplosionEditor();
     };
 }

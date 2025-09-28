@@ -13,6 +13,22 @@
 #define QuickFail() Assert(false)
 #define QuickFailWithReason(reason) AssertWithReason(false, reason)
 
+#if COMPILER_MSVC
+#define ENABLE_OPTIMIZATION __pragma(optimize("", on))
+#define DISABLE_OPTIMIZATION __pragma(optimize("", off))
+#elif COMPILER_APPLE_CLANG
+#define ENABLE_OPTIMIZATION _Pragma("clang optimize on")
+#define DISABLE_OPTIMIZATION _Pragma("clang optimize off")
+#endif
+
+#if !defined(__clang__)
+    #define PRAGMA_DISABLE_OPTIMIZATION_ACTUAL __pragma(optimize("",off))
+    #define PRAGMA_ENABLE_OPTIMIZATION_ACTUAL  __pragma(optimize("",on))
+#elif defined(_MSC_VER)		// Clang only supports __pragma with -fms-extensions
+    #define PRAGMA_DISABLE_OPTIMIZATION_ACTUAL __pragma(clang optimize off)
+    #define PRAGMA_ENABLE_OPTIMIZATION_ACTUAL  __pragma(clang optimize on)
+#endif
+
 namespace Common {
     class Debug {
     public:

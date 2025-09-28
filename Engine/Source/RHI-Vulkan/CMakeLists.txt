@@ -10,7 +10,7 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
         "-framework CoreFoundation")
 endif()
 
-AddLibrary(
+exp_add_library(
     NAME RHI-Vulkan
     TYPE SHARED
     SRC ${SOURCES} ${PLATFORM_SOURCES}

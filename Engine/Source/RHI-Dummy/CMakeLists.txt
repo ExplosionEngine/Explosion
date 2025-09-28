@@ -1,5 +1,5 @@
 file(GLOB SOURCES Src/*.cpp)
-AddLibrary(
+exp_add_library(
     NAME RHI-Dummy
     TYPE SHARED
     SRC ${SOURCES}

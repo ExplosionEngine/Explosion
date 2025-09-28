@@ -22,6 +22,7 @@ namespace Common {
         std::string String() const;
         Path Parent() const;
         std::string FileName() const;
+        std::string DirName() const;
         std::string FileNameWithoutExtension() const;
         bool Empty() const;
         bool Exists() const;
