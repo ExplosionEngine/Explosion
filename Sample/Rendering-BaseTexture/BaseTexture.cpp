@@ -15,7 +15,7 @@ using namespace Render;
 using namespace RHI;
 
 struct Vertex {
-    FVec3 position;
+    FVec4 position;
     FVec2 uv;
 };
 
@@ -132,7 +132,8 @@ void BaseTexApp::OnDrawFrame()
                                 .AddAttribute(RVertexAttribute(RVertexBinding("TEXCOORD", 0), VertexFormat::float32X2, offsetof(Vertex, uv)))))
                 .SetFragmentState(
                     RFragmentState()
-                        .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all, false))));
+                        .AddColorTarget(ColorTargetState(swapChainFormat, ColorWriteBits::all, false)))
+                .SetPrimitiveState(PrimitiveState(PrimitiveTopologyType::triangle, FillMode::solid, IndexFormat::uint16, FrontFace::ccw, CullMode::none)));
 
         RGBuilder builder(*device);
         auto* backTexture = builder.ImportTexture(swapChainTextures[backTextureIndex], TextureState::present);
@@ -153,7 +154,7 @@ void BaseTexApp::OnDrawFrame()
                 .Texture("colorTex", rgTextureView));
 
         VertUniform vertUniform {};
-        vertUniform.modelMatrix = MatConsts<float, 4, 4>::identity * 0.5;
+        vertUniform.modelMatrix = MatConsts<float, 4, 4>::identity;
 
         builder.QueueBufferUpload(
             uBuffer,
@@ -278,10 +279,10 @@ void BaseTexApp::CreateSwapChain()
 void BaseTexApp::CreateVertexAndIndexBuffer()
 {
     const std::vector<Vertex> vertices = {
-        {{-.5f, -.5f, .0f}, {.0f, 1.0f}},
-        {{.5f, -.5f, .0f}, {1.0f, 1.0f}},
-        {{.5f, .5f, .0f}, {1.0f, .0f}},
-        {{-.5f, .5f, .0f}, {0.f, .0f}},
+        {{-.5f, -.5f, .0f, 1.f}, {.0f, 1.0f}},
+        {{.5f, -.5f, .0f,1.f}, {1.0f, 1.0f}},
+        {{.5f, .5f, .0f, 1.f}, {1.0f, .0f}},
+        {{-.5f, .5f, .0f, 1.f}, {0.f, .0f}},
     };
 
     const BufferCreateInfo bufferCreateInfo = BufferCreateInfo()
@@ -306,7 +307,7 @@ void BaseTexApp::CreateVertexAndIndexBuffer()
 
     indexBuffer = device->CreateBuffer(indexInfo);
     if (indexBuffer != nullptr) {
-        auto* data = indexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
+        auto* data = indexBuffer->Map(MapMode::write, 0, indexInfo.size);
         memcpy(data, indices.data(), bufferCreateInfo.size);
         indexBuffer->UnMap();
     }
