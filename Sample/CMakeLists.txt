@@ -100,7 +100,7 @@ add_sample(
 )
 
 file(GLOB SOURCES Rendering-BaseTexture/*.cpp)
-AddSample(
+add_sample(
         NAME Rendering-BaseTexture
         SRC ${SOURCES}
         INC Rendering-BaseTexture
