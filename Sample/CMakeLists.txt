@@ -98,3 +98,13 @@ add_sample(
     SHADER
         Rendering-Triangle/Triangle.esl
 )
+
+file(GLOB SOURCES Rendering-BaseTexture/*.cpp)
+add_sample(
+        NAME Rendering-BaseTexture
+        SRC ${SOURCES}
+        INC Rendering-BaseTexture
+        SHADER Rendering-BaseTexture/BaseTexture.esl
+        IMAGE Rendering-BaseTexture/Awesomeface.png
+)
+
