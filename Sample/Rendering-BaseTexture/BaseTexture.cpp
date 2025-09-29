@@ -63,6 +63,7 @@ private:
     static constexpr size_t backBufferCount = 2;
 
     void CreateDevice();
+    void CreateSurface();
     void CompileAllShaders() const;
     void FetchShaderInstances();
     void CreateSwapChain();
@@ -104,8 +105,10 @@ void BaseTexApp::OnCreate()
     RenderThread::Get().Start();
     RenderWorkerThreads::Get().Start();
 
+    CreateDevice();
+    CreateSurface();
+
     RenderThread::Get().EmplaceTask([this]() -> void {
-        CreateDevice();
         FetchShaderInstances();
         CreateSwapChain();
         CreateVertexAndIndexBuffer();
@@ -210,6 +213,7 @@ void BaseTexApp::OnDestroy()
         PipelineCache::Get(*device).Invalidate();
         BufferPool::Get(*device).Invalidate();
         TexturePool::Get(*device).Invalidate();
+        ShaderMap::Get(*device).Invalidate();
     });
     RenderThread::Get().Flush();
 
@@ -224,6 +228,11 @@ void BaseTexApp::CreateDevice()
                  ->RequestDevice(
                      DeviceCreateInfo()
                          .AddQueueRequest(QueueRequestInfo(QueueType::graphics, 1)));
+}
+
+void BaseTexApp::CreateSurface()
+{
+    surface = device->CreateSurface(SurfaceCreateInfo(GetPlatformWindow()));
 }
 
 void BaseTexApp::CompileAllShaders() const
