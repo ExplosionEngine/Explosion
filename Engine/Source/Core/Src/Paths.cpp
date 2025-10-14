@@ -147,16 +147,6 @@ namespace Core {
         return GamePluginDir() / pluginName / "Asset";
     }
 
-    Common::Path Paths::EngineCMakeSourceDir()
-    {
-        return ENGINE_CMAKE_SOURCE_DIRECTORY;
-    }
-
-    Common::Path Paths::EngineCMakeBinaryDir()
-    {
-        return ENGINE_CMAKE_BINARY_DIRECTORY;
-    }
-
     bool Paths::IsEnginePath(const Common::Path& inPath)
     {
         return Common::StringUtils::RegexMatch(inPath.String(), R"(Engine/.*)");

@@ -26,9 +26,6 @@ if (${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
     endif ()
 endif()
 
-add_definitions(-DENGINE_CMAKE_SOURCE_DIRECTORY="${CMAKE_SOURCE_DIR}")
-add_definitions(-DENGINE_CMAKE_BINARY_DIRECTORY="${CMAKE_BINARY_DIR}")
-
 add_definitions(-DBUILD_CONFIG_DEBUG=$<IF:$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>,1,0>)
 
 add_definitions(-DPLATFORM_WINDOWS=$<IF:$<PLATFORM_ID:Windows>,1,0>)
