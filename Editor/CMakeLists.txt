@@ -35,10 +35,7 @@ exp_add_mirror_info_source_generation_target(
 file(GLOB_RECURSE SOURCES Src/*.cpp)
 qt_add_executable(Editor ${PLATFORM_EXECUTABLE_HINT} ${SOURCES} ${EDITOR_MIRROR_GENERATED_SRC})
 target_include_directories(Editor PRIVATE ${EDITOR_INCLUDES})
-exp_link_libs(
-    NAME Editor
-    LIB ${EDITOR_LIBS}
-)
+target_link_libraries(Editor PRIVATE ${EDITOR_LIBS})
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(RHI_DEP_TARGETS RHI-DirectX12 RHI-Vulkan)
@@ -47,7 +44,7 @@ else()
 endif()
 add_dependencies(Editor ${EDITOR_MIRROR_GENERATED_TARGET} ${RHI_DEP_TARGETS})
 
-exp_add_runtime_deps_copy_command(
+exp_process_runtime_dependencies(
     NAME Editor
 )
 install(

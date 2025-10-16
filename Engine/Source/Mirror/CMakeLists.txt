@@ -4,6 +4,7 @@ exp_add_library(
     TYPE SHARED
     SRC ${SOURCES}
     PUBLIC_INC Include
+    LIB Common
 )
 
 file(GLOB TEST_SOURCES Test/*.cpp)

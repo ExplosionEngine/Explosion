@@ -2,8 +2,6 @@ option(BUILD_TEST "Build unit tests" ON)
 option(BUILD_SAMPLE "Build sample" ON)
 
 set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Generated/Api CACHE PATH "" FORCE)
-set(BASIC_LIBS Common CACHE STRING "" FORCE)
-set(BASIC_TEST_LIBS Test CACHE STRING "" FORCE)
 
 if (${BUILD_TEST})
     enable_testing()
@@ -12,77 +10,7 @@ else()
     add_definitions(-DBUILD_TEST=0)
 endif()
 
-function(exp_combine_runtime_deps)
-    cmake_parse_arguments(PARAMS "" "NAME" "RUNTIME_DEP" ${ARGN})
-
-    get_target_property(RESULT ${PARAMS_NAME} RUNTIME_DEP)
-    if ("${RESULT}" STREQUAL "RESULT-NOTFOUND")
-        set(RESULT ${PARAMS_RUNTIME_DEP})
-    else()
-        list(APPEND RESULT ${PARAMS_RUNTIME_DEP})
-    endif()
-    set_target_properties(
-        ${PARAMS_NAME} PROPERTIES
-        RUNTIME_DEP "${RESULT}"
-    )
-endfunction()
-
-function(exp_link_libs)
-    cmake_parse_arguments(PARAMS "" "NAME" "LIB" ${ARGN})
-
-    foreach(L ${PARAMS_LIB})
-        if (NOT (TARGET ${L}))
-            target_link_libraries(${PARAMS_NAME} PUBLIC ${L})
-            continue()
-        endif()
-
-        get_target_property(3RD_TYPE ${L} 3RD_TYPE)
-        if (${3RD_TYPE} STREQUAL "3RD_TYPE-NOTFOUND")
-            target_link_libraries(${PARAMS_NAME} PUBLIC ${L})
-        else()
-            get_target_property(INCLUDE ${L} 3RD_INCLUDE)
-            get_target_property(LINK ${L} 3RD_LINK)
-            get_target_property(LIB ${L} 3RD_LIB)
-
-            if (NOT ("${INCLUDE}" STREQUAL "INCLUDE-NOTFOUND"))
-                target_include_directories(${PARAMS_NAME} PUBLIC ${INCLUDE})
-            endif()
-            if (NOT ("${LINK}" STREQUAL "LINK-NOTFOUND"))
-                target_link_directories(${PARAMS_NAME} PUBLIC ${LINK})
-            endif()
-            if (NOT ("${LIB}" STREQUAL "LIB-NOTFOUND"))
-                target_link_libraries(${PARAMS_NAME} PUBLIC ${LIB})
-            endif()
-
-            if (${3RD_TYPE} STREQUAL "CMakeProject")
-                add_dependencies(${PARAMS_NAME} ${L})
-            endif()
-        endif()
-
-        get_target_property(RUNTIME_DEP ${L} 3RD_RUNTIME_DEP)
-        if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
-            exp_combine_runtime_deps(
-                NAME ${PARAMS_NAME}
-                RUNTIME_DEP "${RUNTIME_DEP}"
-            )
-        endif()
-    endforeach()
-endfunction()
-
-function(exp_link_basic_libs)
-    cmake_parse_arguments(PARAMS "" "NAME" "LIB" ${ARGN})
-
-    foreach(L ${PARAMS_LIB})
-        if (NOT (${PARAMS_NAME} STREQUAL ${L}))
-            exp_link_libs(
-                NAME ${PARAMS_NAME}
-                LIB ${L}
-            )
-        endif()
-    endforeach()
-endfunction()
-
-function(exp_get_target_runtime_deps_recurse)
+function(exp_gather_target_runtime_dependencies_recurse)
     cmake_parse_arguments(PARAMS "" "NAME;OUTPUT" "" ${ARGN})
 
     get_target_property(RUNTIME_DEP ${PARAMS_NAME} RUNTIME_DEP)
@@ -99,7 +27,7 @@ function(exp_get_target_runtime_deps_recurse)
                 continue()
             endif()
 
-            exp_get_target_runtime_deps_recurse(
+            exp_gather_target_runtime_dependencies_recurse(
                 NAME ${L}
                 OUTPUT TEMP
             )
@@ -113,10 +41,10 @@ function(exp_get_target_runtime_deps_recurse)
     set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
 endfunction()
 
-function(exp_add_runtime_deps_copy_command)
+function(exp_process_runtime_dependencies)
     cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME" "" ${ARGN})
 
-    exp_get_target_runtime_deps_recurse(
+    exp_gather_target_runtime_dependencies_recurse(
         NAME ${PARAMS_NAME}
         OUTPUT RUNTIME_DEPS
     )
@@ -196,42 +124,32 @@ function(exp_add_resources_copy_command)
     add_dependencies(${PARAMS_NAME} ${COPY_RES_TARGET_NAME})
 endfunction()
 
-function(exp_get_target_include_dirs_recurse)
+function(exp_gather_target_include_dirs)
     cmake_parse_arguments(PARAMS "" "NAME;OUTPUT" "" ${ARGN})
 
     if (NOT (TARGET ${PARAMS_NAME}))
         return()
     endif()
 
-    get_target_property(3RD_TYPE ${PARAMS_NAME} 3RD_TYPE)
-    if ("${3RD_TYPE}" STREQUAL "3RD_TYPE-NOTFOUND")
-        get_target_property(TARGET_INCS ${PARAMS_NAME} INCLUDE_DIRECTORIES)
-        if (NOT ("${TARGET_INCS}" STREQUAL "TARGET_INCS-NOTFOUND"))
-            foreach(TARGET_INC ${TARGET_INCS})
-                list(APPEND RESULT ${TARGET_INC})
-            endforeach()
-        endif()
+    get_target_property(TARGET_INCS ${PARAMS_NAME} INTERFACE_INCLUDE_DIRECTORIES)
+    if (NOT ("${TARGET_INCS}" STREQUAL "TARGET_INCS-NOTFOUND"))
+        foreach(TARGET_INC ${TARGET_INCS})
+            list(APPEND RESULT ${TARGET_INC})
+        endforeach()
+    endif()
 
-        get_target_property(TARGET_LIBS ${PARAMS_NAME} LINK_LIBRARIES)
-        if (NOT ("${TARGET_LIBS}" STREQUAL "TARGET_LIBS-NOTFOUND"))
-            foreach(TARGET_LIB ${TARGET_LIBS})
-                exp_get_target_include_dirs_recurse(
-                    NAME ${TARGET_LIB}
-                    OUTPUT LIB_INCS
-                )
-                foreach(LIB_INC ${LIB_INCS})
-                    list(APPEND RESULT ${LIB_INC})
-                endforeach()
+    get_target_property(TARGET_LIBS ${PARAMS_NAME} LINK_LIBRARIES)
+    if (NOT ("${TARGET_LIBS}" STREQUAL "TARGET_LIBS-NOTFOUND"))
+        foreach(TARGET_LIB ${TARGET_LIBS})
+            exp_gather_target_include_dirs(
+                NAME ${TARGET_LIB}
+                OUTPUT LIB_INCS
+            )
+            foreach(LIB_INC ${LIB_INCS})
+                list(APPEND RESULT ${LIB_INC})
             endforeach()
-        endif()
-    else ()
-        get_target_property(3RD_INCLUDE ${PARAMS_NAME} 3RD_INCLUDE)
-        if (NOT ("${3RD_INCLUDE}" STREQUAL "3RD_INCLUDE-NOTFOUND"))
-            foreach(3RD_INC ${3RD_INCLUDE})
-                list(APPEND RESULT ${3RD_INC})
-            endforeach()
-        endif ()
-    endif ()
+        endforeach()
+    endif()
 
     list(REMOVE_DUPLICATES RESULT)
     set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
@@ -248,7 +166,7 @@ function(exp_add_mirror_info_source_generation_target)
     endif()
     if (DEFINED PARAMS_LIB)
         foreach (L ${PARAMS_LIB})
-            exp_get_target_include_dirs_recurse(
+            exp_gather_target_include_dirs(
                 NAME ${L}
                 OUTPUT TARGET_INCS
             )
@@ -348,15 +266,11 @@ function(exp_add_executable)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_LINK}
     )
-    exp_link_basic_libs(
-        NAME ${PARAMS_NAME}
-        LIB ${BASIC_LIBS}
+    target_link_libraries(
+        ${PARAMS_NAME}
+        PUBLIC ${PARAMS_LIB}
     )
-    exp_link_libs(
-        NAME ${PARAMS_NAME}
-        LIB ${PARAMS_LIB}
-    )
-    exp_add_runtime_deps_copy_command(
+    exp_process_runtime_dependencies(
         NAME ${PARAMS_NAME}
         ${NOT_INSTALL_FLAG}
     )
@@ -430,13 +344,9 @@ function(exp_add_library)
         PRIVATE ${PARAMS_PRIVATE_LINK}
         PUBLIC ${PARAMS_PUBLIC_LINK}
     )
-    exp_link_basic_libs(
-        NAME ${PARAMS_NAME}
-        LIB ${BASIC_LIBS}
-    )
-    exp_link_libs(
-        NAME ${PARAMS_NAME}
-        LIB ${PARAMS_LIB}
+    target_link_libraries(
+        ${PARAMS_NAME}
+        PUBLIC ${PARAMS_LIB}
     )
 
     if (${MSVC})
@@ -475,9 +385,9 @@ function(exp_add_library)
         if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" OR "${PARAMS_TYPE}" STREQUAL "STATIC")
             install(
                 TARGETS ${PARAMS_NAME}
-                FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Include
-                ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Lib
-                LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Lib
+                FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Target/${PARAMS_NAME}/Include
+                ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Target/${PARAMS_NAME}/Lib
+                LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Target/${PARAMS_NAME}/Lib
                 RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
             )
         endif ()
@@ -505,7 +415,7 @@ function(exp_add_test)
             OUTPUT_TARGET_NAME GENERATED_TARGET
             SEARCH_DIR ${PARAMS_REFLECT}
             PRIVATE_INC ${PARAMS_INC}
-            LIB ${PARAMS_LIB} ${BASIC_LIBS} ${BASIC_TEST_LIBS}
+            LIB ${PARAMS_LIB}
         )
     endif()
 
@@ -522,15 +432,11 @@ function(exp_add_test)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_LINK}
     )
-    exp_link_basic_libs(
-        NAME ${PARAMS_NAME}
-        LIB ${BASIC_LIBS} ${BASIC_TEST_LIBS}
+    target_link_libraries(
+        ${PARAMS_NAME}
+        PRIVATE Test ${PARAMS_LIB}
     )
-    exp_link_libs(
-        NAME ${PARAMS_NAME}
-        LIB ${PARAMS_LIB}
-    )
-    exp_add_runtime_deps_copy_command(
+    exp_process_runtime_dependencies(
         NAME ${PARAMS_NAME}
         NOT_INSTALL
     )

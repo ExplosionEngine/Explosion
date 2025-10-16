@@ -149,11 +149,7 @@ function(exp_add_3rd_header_only_package)
         HASH ${HASH_VALUE}
     )
 
-    add_custom_target(${NAME} ALL)
-    set_target_properties(
-        ${NAME} PROPERTIES
-        3RD_TYPE "HeaderOnly"
-    )
+    add_library(${NAME} INTERFACE)
 
     if (DEFINED PARAMS_INCLUDE)
         exp_expand_3rd_path_expression(
@@ -165,9 +161,9 @@ function(exp_add_3rd_header_only_package)
             OUTPUT P_INCLUDE
             INPUT ${R_INCLUDE}
         )
-        set_target_properties(
-            ${NAME} PROPERTIES
-            3RD_INCLUDE "${P_INCLUDE}"
+        target_include_directories(
+            ${NAME}
+            INTERFACE "${P_INCLUDE}"
         )
     endif()
 endfunction()
@@ -217,11 +213,7 @@ function(exp_add_3rd_binary_package)
         HASH ${HASH_VALUE}
     )
 
-    add_custom_target(${NAME} ALL)
-    set_target_properties(
-        ${NAME} PROPERTIES
-        3RD_TYPE "Binary"
-    )
+    add_library(${NAME} INTERFACE)
 
     if (DEFINED PARAMS_INCLUDE)
         exp_expand_3rd_path_expression(
@@ -234,9 +226,9 @@ function(exp_add_3rd_binary_package)
             INPUT ${R_INCLUDE}
             OUTPUT P_INCLUDE
         )
-        set_target_properties(
-            ${NAME} PROPERTIES
-            3RD_INCLUDE "${P_INCLUDE}"
+        target_include_directories(
+            ${NAME}
+            INTERFACE "${P_INCLUDE}"
         )
     endif()
 
@@ -251,9 +243,9 @@ function(exp_add_3rd_binary_package)
             INPUT ${R_LINK}
             OUTPUT P_LINK
         )
-        set_target_properties(
-            ${NAME} PROPERTIES
-            3RD_LINK "${P_LINK}"
+        target_link_directories(
+            ${NAME}
+            INTERFACE "${P_LINK}"
         )
     endif()
 
@@ -268,9 +260,9 @@ function(exp_add_3rd_binary_package)
             OUTPUT P_LIB
             INPUT ${R_LIB}
         )
-        set_target_properties(
-            ${NAME} PROPERTIES
-            3RD_LIB "${P_LIB}"
+        target_link_libraries(
+            ${NAME}
+            INTERFACE "${P_LIB}"
         )
     endif()
 
@@ -286,7 +278,7 @@ function(exp_add_3rd_binary_package)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            3RD_RUNTIME_DEP "${P_RUNTIME_DEP}"
+            RUNTIME_DEP "${P_RUNTIME_DEP}"
         )
     endif()
 endfunction()
@@ -327,17 +319,15 @@ function(exp_add_3rd_cmake_package)
     endif ()
 
     ExternalProject_Add(
-        ${NAME}
+        ${NAME}.External
         SOURCE_DIR ${SOURCE_DIR}
         BINARY_DIR ${BINARY_DIR}
         CMAKE_ARGS ${CMAKE_BUILD_TYPE_ARGS} -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${PARAMS_CMAKE_ARG}
         BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG> -j 16
         INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG>
     )
-    set_target_properties(
-        ${NAME} PROPERTIES
-        3RD_TYPE "CMakeProject"
-    )
+    add_library(${NAME} INTERFACE)
+    add_dependencies(${NAME} ${NAME}.External)
 
     if (DEFINED PARAMS_INCLUDE)
         exp_expand_3rd_path_expression(
@@ -351,9 +341,9 @@ function(exp_add_3rd_cmake_package)
             INPUT ${R_INCLUDE}
             OUTPUT P_INCLUDE
         )
-        set_target_properties(
-            ${NAME} PROPERTIES
-            3RD_INCLUDE "${P_INCLUDE}"
+        target_include_directories(
+            ${NAME}
+            INTERFACE "${P_INCLUDE}"
         )
     endif()
 
@@ -369,9 +359,9 @@ function(exp_add_3rd_cmake_package)
             INPUT ${R_LINK}
             OUTPUT P_LINK
         )
-        set_target_properties(
-            ${NAME} PROPERTIES
-            3RD_LINK "${P_LINK}"
+        target_link_directories(
+            ${NAME}
+            INTERFACE "${P_LINK}"
         )
     endif()
 
@@ -387,9 +377,9 @@ function(exp_add_3rd_cmake_package)
             INPUT ${R_LIB}
             OUTPUT P_LIB
         )
-        set_target_properties(
-            ${NAME} PROPERTIES
-            3RD_LIB "${P_LIB}"
+        target_link_libraries(
+            ${NAME}
+            INTERFACE "${P_LIB}"
         )
     endif()
 
@@ -407,7 +397,7 @@ function(exp_add_3rd_cmake_package)
         )
         set_target_properties(
             ${NAME} PROPERTIES
-            3RD_RUNTIME_DEP "${P_RUNTIME_DEP}"
+            RUNTIME_DEP "${P_RUNTIME_DEP}"
         )
     endif()
 endfunction()
@@ -419,11 +409,10 @@ function(exp_add_3rd_alias_package)
         return()
     endif()
 
-    add_custom_target(${PARAMS_NAME} ALL)
-    set_target_properties(
-        ${PARAMS_NAME} PROPERTIES
-        3RD_TYPE "Alias"
-        3RD_LIB "${PARAMS_LIB}"
+    add_library(${PARAMS_NAME} INTERFACE)
+    target_link_libraries(
+        ${PARAMS_NAME}
+        INTERFACE "${PARAMS_LIB}"
     )
 endfunction()
 
