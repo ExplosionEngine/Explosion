@@ -21,5 +21,5 @@ exp_add_test(
     LIB MirrorTool.Static
     RES
         ${CMAKE_CURRENT_SOURCE_DIR}/Test/MirrorToolInput.h->../Test/Resource/Mirror/MirrorToolInput.h
-        ${CMAKE_SOURCE_DIR}/Engine/Source/Mirror/Include/Mirror/Meta.h->../Test/Resource/Mirror/Mirror/Meta.h
+        ${CMAKE_SOURCE_DIR}/${ENGINE_SUB_PROJECT_NAME}/Source/Mirror/Include/Mirror/Meta.h->../Test/Resource/Mirror/Mirror/Meta.h
 )

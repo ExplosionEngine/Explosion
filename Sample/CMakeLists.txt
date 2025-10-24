@@ -22,7 +22,7 @@ function(add_sample)
         list(APPEND PATHS ${path})
     endforeach()
 
-    list(APPEND PATHS "${CMAKE_SOURCE_DIR}/Engine/Shader/Platform.esh->../Test/Sample/ShaderInclude/Platform.esh")
+    list(APPEND PATHS "${CMAKE_SOURCE_DIR}/${ENGINE_SUB_PROJECT_NAME}/Shader/Platform.esh->../Test/Sample/ShaderInclude/Platform.esh")
 
     exp_add_executable(
         SAMPLE

@@ -3,10 +3,10 @@ add_subdirectory(Source)
 function(get_engine_shader_resources)
     cmake_parse_arguments(PARAMS "" "NAME" "OUTPUT" ${ARGN})
 
-    file(GLOB_RECURSE ENGINE_SHADERS ${CMAKE_SOURCE_DIR}/Engine/Shader/*.es*)
+    file(GLOB_RECURSE ENGINE_SHADERS ${CMAKE_SOURCE_DIR}/${ENGINE_SUB_PROJECT_NAME}/Shader/*.es*)
     foreach (SHADER ${ENGINE_SHADERS})
         get_filename_component(SHADER_ABSOLUTE ${SHADER} ABSOLUTE)
-        string(REPLACE ${CMAKE_SOURCE_DIR}/Engine/Shader ../Shader/Engine COPY_DST ${SHADER_ABSOLUTE})
+        string(REPLACE ${CMAKE_SOURCE_DIR}/${ENGINE_SUB_PROJECT_NAME}/Shader ../Shader/${ENGINE_SUB_PROJECT_NAME} COPY_DST ${SHADER_ABSOLUTE})
         list(APPEND RESULT ${SHADER}->${COPY_DST})
     endforeach ()
 

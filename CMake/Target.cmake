@@ -55,11 +55,11 @@ function(exp_process_runtime_dependencies)
             list(GET TEMP 0 SRC)
             list(GET TEMP 1 DST)
             set(COPY_COMMAND ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST})
-            set(INSTALL_DST ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/${DST})
+            set(INSTALL_DST ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries/${DST})
         else ()
             set(SRC ${R})
             set(COPY_COMMAND ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>)
-            set(INSTALL_DST ${CMAKE_INSTALL_PREFIX}/Engine/Binaries)
+            set(INSTALL_DST ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries)
         endif ()
 
         if (IS_DIRECTORY ${SRC})
@@ -109,7 +109,7 @@ function(exp_add_resources_copy_command)
 
         list(APPEND COPY_COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST})
 
-        get_filename_component(ABSOLUTE_DST ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/${DST} ABSOLUTE)
+        get_filename_component(ABSOLUTE_DST ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries/${DST} ABSOLUTE)
         get_filename_component(DST_DIR ${ABSOLUTE_DST} DIRECTORY)
         if (NOT ${PARAMS_NOT_INSTALL})
             install(FILES ${SRC} DESTINATION ${DST_DIR})
@@ -293,11 +293,11 @@ function(exp_add_executable)
     if (NOT ${PARAMS_NOT_INSTALL})
         install(
             TARGETS ${PARAMS_NAME}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+            RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries
         )
 
         if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-            install(CODE "execute_process(COMMAND install_name_tool -add_rpath @executable_path ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/$<TARGET_FILE_NAME:${PARAMS_NAME}>)")
+            install(CODE "execute_process(COMMAND install_name_tool -add_rpath @executable_path ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries/$<TARGET_FILE_NAME:${PARAMS_NAME}>)")
         endif ()
     endif ()
 endfunction()
@@ -385,17 +385,17 @@ function(exp_add_library)
         if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" OR "${PARAMS_TYPE}" STREQUAL "STATIC")
             install(
                 TARGETS ${PARAMS_NAME}
-                FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Target/${PARAMS_NAME}/Include
-                ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Target/${PARAMS_NAME}/Lib
-                LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Target/${PARAMS_NAME}/Lib
-                RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+                FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Include
+                ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Lib
+                LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Lib
+                RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries
             )
         endif ()
 
         if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" AND "${PARAMS_TYPE}" STREQUAL "SHARED")
             install(
                 FILES $<TARGET_FILE:${PARAMS_NAME}>
-                DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+                DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries
             )
         endif ()
     endif ()

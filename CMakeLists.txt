@@ -4,6 +4,9 @@ project(Explosion)
 include(ExternalProject)
 include(GenerateExportHeader)
 
+set(SUB_PROJECT_NAME "Engine" CACHE STRING "" FORCE)
+set(ENGINE_SUB_PROJECT_NAME "Engine" CACHE STRING "" FORCE)
+
 include(CMake/Common.cmake)
 include(CMake/Target.cmake)
 include(CMake/ThirdParty.cmake)
