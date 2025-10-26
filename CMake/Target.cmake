@@ -374,7 +374,7 @@ function(exp_add_library)
     if (NOT ${PARAMS_NOT_INSTALL})
         foreach (INC ${PARAMS_PUBLIC_INC})
             get_filename_component(ABSOLUTE_INC ${INC} ABSOLUTE)
-            file(GLOB_RECURSE PUBLIC_HEADERS ${ABSOLUTE_INC}/*.h)
+            file(GLOB_RECURSE PUBLIC_HEADERS ${ABSOLUTE_INC}/*.h*)
             target_sources(
                 ${PARAMS_NAME}
                 PUBLIC FILE_SET HEADERS

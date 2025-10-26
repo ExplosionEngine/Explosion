@@ -121,7 +121,7 @@ function(exp_get_3rd_platform_value)
 endfunction()
 
 function(exp_add_3rd_header_only_package)
-    cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION" "HASH;INCLUDE" ${ARGN})
+    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;PLATFORM;VERSION" "HASH;INCLUDE" ${ARGN})
 
     set(NAME "${PARAMS_NAME}")
 
@@ -166,10 +166,27 @@ function(exp_add_3rd_header_only_package)
             INTERFACE "${P_INCLUDE}"
         )
     endif()
+
+    if (NOT ${PARAMS_NOT_INSTALL} AND DEFINED P_INCLUDE)
+        foreach (INC ${P_INCLUDE})
+            get_filename_component(ABSOLUTE_INC ${INC} ABSOLUTE)
+            file(GLOB_RECURSE PUBLIC_HEADERS ${ABSOLUTE_INC}/*.h*)
+            target_sources(
+                ${NAME}
+                INTERFACE FILE_SET HEADERS
+                BASE_DIRS ${ABSOLUTE_INC} FILES ${PUBLIC_HEADERS}
+            )
+        endforeach ()
+
+        install(
+            TARGETS ${NAME}
+            FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/ThirdParty/${NAME}/Include
+        )
+    endif ()
 endfunction()
 
 function(exp_add_3rd_binary_package)
-    cmake_parse_arguments(PARAMS "ARCH" "NAME;PLATFORM" "VERSION;HASH;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
+    cmake_parse_arguments(PARAMS "ARCH;NOT_INSTALL" "NAME;PLATFORM" "VERSION;HASH;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
 
     set(NAME "${PARAMS_NAME}")
     if (${PARAMS_ARCH})
@@ -281,10 +298,48 @@ function(exp_add_3rd_binary_package)
             RUNTIME_DEP "${P_RUNTIME_DEP}"
         )
     endif()
+
+    if (NOT ${PARAMS_NOT_INSTALL})
+        if (DEFINED P_INCLUDE)
+            foreach (INC ${P_INCLUDE})
+                get_filename_component(ABSOLUTE_INC ${INC} ABSOLUTE)
+                file(GLOB_RECURSE PUBLIC_HEADERS ${ABSOLUTE_INC}/*.h*)
+                target_sources(
+                    ${NAME}
+                    INTERFACE FILE_SET HEADERS
+                    BASE_DIRS ${ABSOLUTE_INC} FILES ${PUBLIC_HEADERS}
+                )
+            endforeach ()
+
+            install(
+                TARGETS ${NAME}
+                FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/ThirdParty/${NAME}/Include
+            )
+        endif ()
+
+        if (DEFINED P_LINK)
+            foreach (LINK ${P_LINK})
+                file(GLOB_RECURSE LIBS ${LINK}/*.lib ${LINK}/*.a)
+                list(APPEND INSTALL_LIBS ${LIBS})
+            endforeach ()
+
+            install(
+                FILES ${LIBS}
+                DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/ThirdParty/${NAME}/Lib
+            )
+        endif ()
+
+        if (DEFINED P_RUNTIME_DEP)
+            install(
+                FILES ${P_RUNTIME_DEP}
+                DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/ThirdParty/${NAME}/Binaries
+            )
+        endif ()
+    endif ()
 endfunction()
 
 function(exp_add_3rd_cmake_package)
-    cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION" "HASH;CMAKE_ARG;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
+    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;PLATFORM;VERSION" "HASH;CMAKE_ARG;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
 
     set(NAME "${PARAMS_NAME}")
 
@@ -400,6 +455,8 @@ function(exp_add_3rd_cmake_package)
             RUNTIME_DEP "${P_RUNTIME_DEP}"
         )
     endif()
+
+    # TODO install
 endfunction()
 
 function(exp_add_3rd_alias_package)
