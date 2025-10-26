@@ -173,13 +173,13 @@ function(exp_add_3rd_binary_package)
 
     set(NAME "${PARAMS_NAME}")
     if (${PARAMS_ARCH})
-        set(COUNT_ARCH "ARCH")
+        set(FLAG_ARCH "ARCH")
     else()
-        set(COUNT_ARCH "")
+        set(FLAG_ARCH "")
     endif()
 
     exp_get_3rd_platform_value(
-        ${COUNT_ARCH}
+        ${FLAG_ARCH}
         OUTPUT VERSION_VALUE
         INPUT ${PARAMS_VERSION}
     )
@@ -202,7 +202,7 @@ function(exp_add_3rd_binary_package)
     set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
 
     exp_get_3rd_platform_value(
-        ${COUNT_ARCH}
+        ${FLAG_ARCH}
         OUTPUT HASH_VALUE
         INPUT ${PARAMS_HASH}
     )
@@ -222,7 +222,7 @@ function(exp_add_3rd_binary_package)
             SOURCE_DIR ${SOURCE_DIR}
         )
         exp_get_3rd_platform_value(
-            ${COUNT_ARCH}
+            ${FLAG_ARCH}
             INPUT ${R_INCLUDE}
             OUTPUT P_INCLUDE
         )
@@ -239,7 +239,7 @@ function(exp_add_3rd_binary_package)
             SOURCE_DIR ${SOURCE_DIR}
         )
         exp_get_3rd_platform_value(
-            ${COUNT_ARCH}
+            ${FLAG_ARCH}
             INPUT ${R_LINK}
             OUTPUT P_LINK
         )
@@ -256,7 +256,7 @@ function(exp_add_3rd_binary_package)
             SOURCE_DIR ${SOURCE_DIR}
         )
         exp_get_3rd_platform_value(
-            ${COUNT_ARCH}
+            ${FLAG_ARCH}
             OUTPUT P_LIB
             INPUT ${R_LIB}
         )
