@@ -4,6 +4,7 @@ exp_add_library(
     SRC ${SOURCES}
     PUBLIC_INC Include
     LIB clipp llvm-clang Mirror
+    NOT_INSTALL
 )
 
 file(GLOB EXE_SOURCES ExeSrc/*.cpp)

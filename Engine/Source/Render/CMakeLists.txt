@@ -9,6 +9,7 @@ exp_add_library(
     SRC ${SOURCES}
     PUBLIC_INC Include
     LIB Core RHI ${PLATFORM_LIBS} dxc spirv-cross
+    NOT_INSTALL
 )
 
 file(GLOB SHARED_SOURCES SharedSrc/*.cpp)
