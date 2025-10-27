@@ -1,11 +1,13 @@
 cmake_minimum_required(VERSION 3.25)
 project(Explosion)
 
-include(ExternalProject)
-include(GenerateExportHeader)
+option(BUILD_EDITOR "Build Explosion editor" ON)
+option(CI "Build in CI" OFF)
 
 set(SUB_PROJECT_NAME "Engine" CACHE STRING "" FORCE)
 set(ENGINE_SUB_PROJECT_NAME "Engine" CACHE STRING "" FORCE)
+
+add_definitions(-DBUILD_EDITOR=$<BOOL:BUILD_EDITOR>)
 
 include(CMake/Common.cmake)
 include(CMake/Target.cmake)

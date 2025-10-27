@@ -154,18 +154,15 @@ exp_add_3rd_header_only_package(
 # LLVM-Clang
 exp_add_3rd_binary_package(
     NAME llvm-clang
-    ARCH
-    VERSION
-        Windows-AMD64 19.1.6
-        Darwin-arm64 19.1.6
+    VERSION 19.1.6
     HASH
-        Windows-AMD64 f68b922c87a99b22c0b53a5cbd55db86bd3870c16c4e9060efaecfb9ce49e726
-        Darwin-arm64 08fdf1b6208823acadc23027fda1f12e5171101ec05fa526b545088be31fe19d
+        Windows f68b922c87a99b22c0b53a5cbd55db86bd3870c16c4e9060efaecfb9ce49e726
+        Darwin 08fdf1b6208823acadc23027fda1f12e5171101ec05fa526b545088be31fe19d
     INCLUDE $<SOURCE_DIR>/include
     LINK $<SOURCE_DIR>/lib
     LIB
-        Windows-AMD64 libclang
-        Darwin-arm64 clang
+        Windows libclang
+        Darwin clang
     RUNTIME_DEP
         Windows $<SOURCE_DIR>/bin/libclang.dll
         Darwin $<SOURCE_DIR>/lib/libclang.dylib

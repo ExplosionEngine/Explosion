@@ -49,39 +49,14 @@ function(exp_process_runtime_dependencies)
         OUTPUT RUNTIME_DEPS
     )
     foreach(R ${RUNTIME_DEPS})
-        string(FIND ${R} "->" LOCATION)
-        if (NOT ${LOCATION} EQUAL -1)
-            string(REPLACE "->" ";" TEMP ${R})
-            list(GET TEMP 0 SRC)
-            list(GET TEMP 1 DST)
-            set(COPY_COMMAND ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST})
-            set(INSTALL_DST ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries/${DST})
-        else ()
-            set(SRC ${R})
-            set(COPY_COMMAND ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>)
-            set(INSTALL_DST ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries)
-        endif ()
-
-        if (IS_DIRECTORY ${SRC})
-            add_custom_command(
-                TARGET ${PARAMS_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${COPY_COMMAND}
+        add_custom_command(
+            TARGET ${PARAMS_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${R} $<TARGET_FILE_DIR:${PARAMS_NAME}>
+        )
+        if (NOT ${PARAMS_NOT_INSTALL})
+            install(
+                FILES ${R} DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries
             )
-            if (NOT ${PARAMS_NOT_INSTALL})
-                install(
-                    DIRECTORY ${SRC} DESTINATION ${INSTALL_DST}
-                )
-            endif ()
-        else ()
-            add_custom_command(
-                TARGET ${PARAMS_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${COPY_COMMAND}
-            )
-            if (NOT ${PARAMS_NOT_INSTALL})
-                install(
-                    FILES ${SRC} DESTINATION ${INSTALL_DST}
-                )
-            endif ()
         endif ()
     endforeach()
 endfunction()
@@ -159,10 +134,16 @@ function(exp_add_mirror_info_source_generation_target)
     cmake_parse_arguments(PARAMS "DYNAMIC" "NAME;OUTPUT_SRC;OUTPUT_TARGET_NAME" "SEARCH_DIR;PUBLIC_INC;PRIVATE_INC;LIB;FRAMEWORK_DIR" ${ARGN})
 
     if (DEFINED PARAMS_PUBLIC_INC)
-        list(APPEND INC ${PARAMS_PUBLIC_INC})
+        foreach (I ${PARAMS_PUBLIC_INC})
+            get_filename_component(ABSOLUTE_I ${I} ABSOLUTE)
+            list(APPEND INC ${ABSOLUTE_I})
+        endforeach ()
     endif()
     if (DEFINED PARAMS_PRIVATE_INC)
-        list(APPEND INC ${PARAMS_PRIVATE_INC})
+        foreach (I ${PARAMS_PRIVATE_INC})
+            get_filename_component(ABSOLUTE_I ${I} ABSOLUTE)
+            list(APPEND INC ${ABSOLUTE_I})
+        endforeach ()
     endif()
     if (DEFINED PARAMS_LIB)
         foreach (L ${PARAMS_LIB})
@@ -179,8 +160,7 @@ function(exp_add_mirror_info_source_generation_target)
 
     list(APPEND INC_ARGS "-I")
     foreach (I ${INC})
-        get_filename_component(ABSOLUTE_I ${I} ABSOLUTE)
-        list(APPEND INC_ARGS ${ABSOLUTE_I})
+        list(APPEND INC_ARGS ${I})
     endforeach()
 
     if (DEFINED PARAMS_FRAMEWORK_DIR)
@@ -293,7 +273,8 @@ function(exp_add_executable)
     if (NOT ${PARAMS_NOT_INSTALL})
         install(
             TARGETS ${PARAMS_NAME}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries
+            EXPORT ${SUB_PROJECT_NAME}Targets
+            RUNTIME DESTINATION ${SUB_PROJECT_NAME}/Binaries
         )
 
         if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
@@ -334,10 +315,14 @@ function(exp_add_library)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_SRC} ${GENERATED_SRC}
     )
+    foreach (INC ${PARAMS_PUBLIC_INC})
+        get_filename_component(ABSOLUTE_INC ${INC} ABSOLUTE)
+        list(APPEND PUBLIC_INC $<BUILD_INTERFACE:${ABSOLUTE_INC}>)
+    endforeach ()
     target_include_directories(
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_PRIVATE_INC}
-        PUBLIC ${PARAMS_PUBLIC_INC}
+        PUBLIC ${PUBLIC_INC} $<INSTALL_INTERFACE:${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Include>
     )
     target_link_directories(
         ${PARAMS_NAME}
@@ -373,25 +358,24 @@ function(exp_add_library)
 
     if (NOT ${PARAMS_NOT_INSTALL})
         foreach (INC ${PARAMS_PUBLIC_INC})
-            get_filename_component(ABSOLUTE_INC ${INC} ABSOLUTE)
-            file(GLOB_RECURSE PUBLIC_HEADERS ${ABSOLUTE_INC}/*.h*)
-            target_sources(
-                ${PARAMS_NAME}
-                PUBLIC FILE_SET HEADERS
-                BASE_DIRS ${ABSOLUTE_INC} FILES ${PUBLIC_HEADERS}
-            )
+            list(APPEND INSTALL_INC ${INC}/)
         endforeach ()
+        install(
+            DIRECTORY ${INSTALL_INC}
+            DESTINATION ${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Include
+        )
 
         if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" OR "${PARAMS_TYPE}" STREQUAL "STATIC")
             install(
                 TARGETS ${PARAMS_NAME}
-                FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Include
-                ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Lib
-                LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Lib
-                RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries
+                EXPORT ${SUB_PROJECT_NAME}Targets
+                ARCHIVE DESTINATION ${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Lib
+                LIBRARY DESTINATION ${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Lib
+                RUNTIME DESTINATION ${SUB_PROJECT_NAME}/Binaries
             )
         endif ()
 
+        # TODO merge with upper, use install(TARGETS xxx FRAMEWORK DESTINATION xxx)
         if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" AND "${PARAMS_TYPE}" STREQUAL "SHARED")
             install(
                 FILES $<TARGET_FILE:${PARAMS_NAME}>
@@ -458,3 +442,10 @@ function(exp_add_test)
         WORKING_DIRECTORY $<TARGET_FILE_DIR:${PARAMS_NAME}>
     )
 endfunction()
+
+install(
+    EXPORT ${SUB_PROJECT_NAME}Targets
+    FILE ${SUB_PROJECT_NAME}Targets.cmake
+    NAMESPACE ${SUB_PROJECT_NAME}::
+    DESTINATION ${SUB_PROJECT_NAME}/CMake
+)

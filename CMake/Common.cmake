@@ -1,5 +1,6 @@
-option(BUILD_EDITOR "Build Explosion editor" ON)
-option(CI "Build in CI" OFF)
+include(ExternalProject)
+include(GenerateExportHeader)
+
 option(USE_UNITY_BUILD "Use unity build" ON)
 option(EXPORT_COMPILE_COMMANDS "Whether to export all compile commands" OFF)
 
@@ -35,8 +36,6 @@ add_definitions(-DPLATFORM_MACOS=$<IF:$<PLATFORM_ID:Darwin>,1,0>)
 add_definitions(-DCOMPILER_MSVC=$<IF:$<CXX_COMPILER_ID:MSVC>,1,0>)
 add_definitions(-DCOMPILER_APPLE_CLANG=$<IF:$<CXX_COMPILER_ID:AppleClang>,1,0>)
 add_definitions(-DCOMPILER_GCC=$<IF:$<CXX_COMPILER_ID:GNU>,1,0>)
-
-add_definitions(-DBUILD_EDITOR=$<BOOL:BUILD_EDITOR>)
 
 if (${MSVC})
     add_compile_options(/bigobj)
