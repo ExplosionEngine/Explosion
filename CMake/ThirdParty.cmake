@@ -1,20 +1,3 @@
-option(CUSTOM_3RD_REPO "using custom 3rd repo" OFF)
-
-# TODO move to engine cmake
-if (${CUSTOM_3RD_REPO})
-    set(3RD_REPO ${3RD_REPO_URL} CACHE STRING "" FORCE)
-else()
-    set(3RD_REPO "http://1.13.181.171" CACHE STRING "" FORCE)
-endif()
-
-# TODO move to engine cmake
-set(3RD_DIR ${CMAKE_SOURCE_DIR}/ThirdParty CACHE PATH "" FORCE)
-set(3RD_ZIP_DIR ${3RD_DIR}/Zip CACHE PATH "" FORCE)
-set(3RD_SOURCE_DIR ${3RD_DIR}/Lib CACHE PATH "" FORCE)
-set(3RD_BINARY_DIR ${CMAKE_BINARY_DIR}/ThirdPartyBuild CACHE PATH "" FORCE)
-set(3RD_INSTALL_DIR ${CMAKE_BINARY_DIR}/ThirdPartyInstall CACHE PATH "" FORCE)
-
-# TODO split download and config part
 function(exp_download_and_extract_3rd_package)
     cmake_parse_arguments(PARAMS "" "URL;SAVE_AS;EXTRACT_TO" "ARG;HASH" ${ARGN})
 
@@ -123,27 +106,7 @@ function(exp_get_3rd_platform_value)
 endfunction()
 
 function(exp_add_3rd_header_only_package)
-    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;PLATFORM;VERSION" "HASH;INCLUDE" ${ARGN})
-
-    if (DEFINED PARAMS_PLATFORM)
-        if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
-            return()
-        endif()
-        set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
-    else()
-        set(FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${PARAMS_VERSION}")
-    endif()
-
-    set(URL "${3RD_REPO}/${FULL_NAME}.7z")
-    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.7z")
-    set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
-
-    exp_download_and_extract_3rd_package(
-        URL ${URL}
-        SAVE_AS ${ZIP}
-        EXTRACT_TO ${SOURCE_DIR}
-        HASH ${PARAMS_HASH}
-    )
+    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;SOURCE_DIR" "INCLUDE" ${ARGN})
 
     add_library(${PARAMS_NAME} INTERFACE)
 
@@ -151,7 +114,7 @@ function(exp_add_3rd_header_only_package)
         exp_expand_3rd_path_expression(
             INPUT ${PARAMS_INCLUDE}
             OUTPUT R_INCLUDE
-            SOURCE_DIR ${SOURCE_DIR}
+            SOURCE_DIR ${PARAMS_SOURCE_DIR}
         )
         exp_get_3rd_platform_value(
             OUTPUT P_INCLUDE
@@ -180,32 +143,7 @@ function(exp_add_3rd_header_only_package)
 endfunction()
 
 function(exp_add_3rd_binary_package)
-    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;PLATFORM" "VERSION;HASH;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
-
-    exp_get_3rd_platform_value(
-        OUTPUT VERSION_VALUE
-        INPUT ${PARAMS_VERSION}
-    )
-
-    if (DEFINED PARAMS_PLATFORM)
-        if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
-            return()
-        endif()
-        set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${VERSION_VALUE}")
-    else()
-        set(FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${VERSION_VALUE}")
-    endif()
-
-    set(URL "${3RD_REPO}/${FULL_NAME}.7z")
-    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.7z")
-    set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
-
-    exp_download_and_extract_3rd_package(
-        URL ${URL}
-        SAVE_AS ${ZIP}
-        EXTRACT_TO ${SOURCE_DIR}
-        HASH ${PARAMS_HASH}
-    )
+    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;SOURCE_DIR" "INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
 
     add_library(${PARAMS_NAME} INTERFACE)
 
@@ -213,7 +151,7 @@ function(exp_add_3rd_binary_package)
         exp_expand_3rd_path_expression(
             INPUT ${PARAMS_INCLUDE}
             OUTPUT R_INCLUDE
-            SOURCE_DIR ${SOURCE_DIR}
+            SOURCE_DIR ${PARAMS_SOURCE_DIR}
         )
         exp_get_3rd_platform_value(
             INPUT ${R_INCLUDE}
@@ -229,7 +167,7 @@ function(exp_add_3rd_binary_package)
         exp_expand_3rd_path_expression(
             INPUT ${PARAMS_LINK}
             OUTPUT R_LINK
-            SOURCE_DIR ${SOURCE_DIR}
+            SOURCE_DIR ${PARAMS_SOURCE_DIR}
         )
         exp_get_3rd_platform_value(
             INPUT ${R_LINK}
@@ -245,7 +183,7 @@ function(exp_add_3rd_binary_package)
         exp_expand_3rd_path_expression(
             INPUT ${PARAMS_LIB}
             OUTPUT R_LIB
-            SOURCE_DIR ${SOURCE_DIR}
+            SOURCE_DIR ${PARAMS_SOURCE_DIR}
         )
         exp_get_3rd_platform_value(
             OUTPUT P_LIB
@@ -261,7 +199,7 @@ function(exp_add_3rd_binary_package)
         exp_expand_3rd_path_expression(
             INPUT ${PARAMS_RUNTIME_DEP}
             OUTPUT R_RUNTIME_DEP
-            SOURCE_DIR ${SOURCE_DIR}
+            SOURCE_DIR ${PARAMS_SOURCE_DIR}
         )
         exp_get_3rd_platform_value(
             INPUT ${R_RUNTIME_DEP}
@@ -274,6 +212,11 @@ function(exp_add_3rd_binary_package)
     endif()
 
     if (NOT ${PARAMS_NOT_INSTALL})
+        set_target_properties(
+            ${PARAMS_NAME} PROPERTIES
+            EXPORT_PROPERTIES INSTALL_RUNTIME_DEP_DIR
+        )
+
         if (DEFINED P_INCLUDE)
             foreach (INC ${P_INCLUDE})
                 list(APPEND INSTALL_INC ${INC}/)
@@ -297,6 +240,10 @@ function(exp_add_3rd_binary_package)
         endif ()
 
         if (DEFINED P_RUNTIME_DEP)
+            set_target_properties(
+                ${PARAMS_NAME} PROPERTIES
+                INSTALL_RUNTIME_DEP_DIR "\$\{_IMPORT_PREFIX\}/${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Binaries"
+            )
             install(
                 FILES ${P_RUNTIME_DEP}
                 DESTINATION ${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Binaries
@@ -311,29 +258,7 @@ function(exp_add_3rd_binary_package)
 endfunction()
 
 function(exp_add_3rd_cmake_package)
-    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;PLATFORM;VERSION" "HASH;CMAKE_ARG;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
-
-    if (DEFINED PARAMS_PLATFORM)
-        if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
-            return()
-        endif()
-        set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
-    else()
-        set(FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${PARAMS_VERSION}")
-    endif()
-
-    set(URL "${3RD_REPO}/${FULL_NAME}.7z")
-    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.7z")
-    set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
-    set(BINARY_DIR "${3RD_BINARY_DIR}/${PARAMS_NAME}")
-    set(INSTALL_DIR "${3RD_INSTALL_DIR}/${PARAMS_NAME}/$<CONFIG>")
-
-    exp_download_and_extract_3rd_package(
-        URL ${URL}
-        SAVE_AS ${ZIP}
-        EXTRACT_TO ${SOURCE_DIR}
-        HASH ${PARAMS_HASH}
-    )
+    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;SOURCE_DIR;BINARY_DIR;INSTALL_DIR" "CMAKE_ARG;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
 
     if (NOT ${GENERATOR_IS_MULTI_CONFIG})
         set(CMAKE_BUILD_TYPE_ARGS -DCMAKE_BUILD_TYPE=$<CONFIG>)
@@ -341,9 +266,9 @@ function(exp_add_3rd_cmake_package)
 
     ExternalProject_Add(
         ${PARAMS_NAME}.External
-        SOURCE_DIR ${SOURCE_DIR}
-        BINARY_DIR ${BINARY_DIR}
-        CMAKE_ARGS ${CMAKE_BUILD_TYPE_ARGS} -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${PARAMS_CMAKE_ARG}
+        SOURCE_DIR ${PARAMS_SOURCE_DIR}
+        BINARY_DIR ${PARAMS_BINARY_DIR}
+        CMAKE_ARGS ${CMAKE_BUILD_TYPE_ARGS} -DCMAKE_INSTALL_PREFIX=${PARAMS_INSTALL_DIR} ${PARAMS_CMAKE_ARG}
         BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG> -j 16
         INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG>
     )
@@ -354,9 +279,9 @@ function(exp_add_3rd_cmake_package)
         exp_expand_3rd_path_expression(
             INPUT ${PARAMS_INCLUDE}
             OUTPUT R_INCLUDE
-            SOURCE_DIR ${SOURCE_DIR}
-            BINARY_DIR ${BINARY_DIR}
-            INSTALL_DIR ${INSTALL_DIR}
+            SOURCE_DIR ${PARAMS_SOURCE_DIR}
+            BINARY_DIR ${PARAMS_BINARY_DIR}
+            INSTALL_DIR ${PARAMS_INSTALL_DIR}
         )
         exp_get_3rd_platform_value(
             INPUT ${R_INCLUDE}
@@ -372,9 +297,9 @@ function(exp_add_3rd_cmake_package)
         exp_expand_3rd_path_expression(
             INPUT ${PARAMS_LINK}
             OUTPUT R_LINK
-            SOURCE_DIR ${SOURCE_DIR}
-            BINARY_DIR ${BINARY_DIR}
-            INSTALL_DIR ${INSTALL_DIR}
+            SOURCE_DIR ${PARAMS_SOURCE_DIR}
+            BINARY_DIR ${PARAMS_BINARY_DIR}
+            INSTALL_DIR ${PARAMS_INSTALL_DIR}
         )
         exp_get_3rd_platform_value(
             INPUT ${R_LINK}
@@ -390,9 +315,9 @@ function(exp_add_3rd_cmake_package)
         exp_expand_3rd_path_expression(
             INPUT ${PARAMS_LIB}
             OUTPUT R_LIB
-            SOURCE_DIR ${SOURCE_DIR}
-            BINARY_DIR ${BINARY_DIR}
-            INSTALL_DIR ${INSTALL_DIR}
+            SOURCE_DIR ${PARAMS_SOURCE_DIR}
+            BINARY_DIR ${PARAMS_BINARY_DIR}
+            INSTALL_DIR ${PARAMS_INSTALL_DIR}
         )
         exp_get_3rd_platform_value(
             INPUT ${R_LIB}
@@ -408,9 +333,9 @@ function(exp_add_3rd_cmake_package)
         exp_expand_3rd_path_expression(
             INPUT ${PARAMS_RUNTIME_DEP}
             OUTPUT R_RUNTIME_DEP
-            SOURCE_DIR ${SOURCE_DIR}
-            BINARY_DIR ${BINARY_DIR}
-            INSTALL_DIR ${INSTALL_DIR}
+            SOURCE_DIR ${PARAMS_SOURCE_DIR}
+            BINARY_DIR ${PARAMS_BINARY_DIR}
+            INSTALL_DIR ${PARAMS_INSTALL_DIR}
         )
         exp_get_3rd_platform_value(
             INPUT ${R_RUNTIME_DEP}
@@ -423,6 +348,11 @@ function(exp_add_3rd_cmake_package)
     endif()
 
     if (NOT ${PARAMS_NOT_INSTALL})
+        set_target_properties(
+            ${PARAMS_NAME} PROPERTIES
+            EXPORT_PROPERTIES INSTALL_RUNTIME_DEP_DIR
+        )
+
         if (DEFINED P_INCLUDE)
             foreach (INC ${P_INCLUDE})
                 list(APPEND INSTALL_INC ${INC}/)
@@ -444,6 +374,10 @@ function(exp_add_3rd_cmake_package)
         endif ()
 
         if (DEFINED P_RUNTIME_DEP)
+            set_target_properties(
+                ${PARAMS_NAME} PROPERTIES
+                INSTALL_RUNTIME_DEP_DIR "\$\{_IMPORT_PREFIX\}/${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Binaries"
+            )
             install(
                 FILES ${P_RUNTIME_DEP}
                 DESTINATION ${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Binaries
@@ -458,11 +392,7 @@ function(exp_add_3rd_cmake_package)
 endfunction()
 
 function(exp_add_3rd_alias_package)
-    cmake_parse_arguments(PARAMS "" "NAME;PLATFORM" "LIB" ${ARGN})
-
-    if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
-        return()
-    endif()
+    cmake_parse_arguments(PARAMS "" "NAME" "LIB" ${ARGN})
 
     add_library(${PARAMS_NAME} INTERFACE)
     target_link_libraries(
@@ -471,35 +401,9 @@ function(exp_add_3rd_alias_package)
     )
 endfunction()
 
-function(exp_setup_3rd_package)
-    cmake_parse_arguments(PARAMS "" "NAME;PLATFORM;VERSION" "HASH" ${ARGN})
-
-    set(NAME "${PARAMS_NAME}")
-    if (DEFINED PARAMS_PLATFORM)
-        if ((NOT (${PARAMS_PLATFORM} STREQUAL "All")) AND (NOT (${PARAMS_PLATFORM} STREQUAL ${CMAKE_SYSTEM_NAME})))
-            return()
-        endif()
-        set(FULL_NAME "${PARAMS_NAME}-${PARAMS_PLATFORM}-${PARAMS_VERSION}")
-    else()
-        set(FULL_NAME "${PARAMS_NAME}-${CMAKE_SYSTEM_NAME}-${PARAMS_VERSION}")
-    endif()
-    set(URL "${3RD_REPO}/${FULL_NAME}.7z")
-    set(ZIP "${3RD_ZIP_DIR}/${FULL_NAME}.7z")
-    set(SOURCE_DIR "${3RD_SOURCE_DIR}/${FULL_NAME}")
-
-    exp_download_and_extract_3rd_package(
-        URL ${URL}
-        SAVE_AS ${ZIP}
-        EXTRACT_TO ${SOURCE_DIR}
-        HASH ${PARAMS_HASH}
-    )
-
-    set(${PARAMS_NAME}_SOURCE_DIR ${SOURCE_DIR} CACHE PATH "" FORCE)
-endfunction()
-
 install(
     EXPORT ${SUB_PROJECT_NAME}ThirdPartyTargets
     FILE ${SUB_PROJECT_NAME}ThirdPartyTargets.cmake
-    NAMESPACE ThirdParty::
+    NAMESPACE ${SUB_PROJECT_NAME}ThirdParty::
     DESTINATION ${SUB_PROJECT_NAME}/CMake
 )
