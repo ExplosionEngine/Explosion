@@ -11,7 +11,7 @@ else()
 endif()
 
 function(exp_gather_target_runtime_dependencies_recurse)
-    cmake_parse_arguments(PARAMS "" "NAME;OUT_RUNTIME_DEP;OUT_INSTALL_RUNTIME_DEP_DIR" "" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME;OUT_RUNTIME_DEP" "" ${ARGN})
 
     get_target_property(IMPORTED ${PARAMS_NAME} IMPORTED)
 
@@ -21,15 +21,6 @@ function(exp_gather_target_runtime_dependencies_recurse)
             list(APPEND RESULT_RUNTIME_DEP ${R})
         endforeach()
     endif()
-
-    if (${IMPORTED})
-        get_target_property(INSTALL_RUNTIME_DEP_DIR ${PARAMS_NAME} INSTALL_RUNTIME_DEP_DIR)
-        if (NOT ("${INSTALL_RUNTIME_DEP_DIR}" STREQUAL "INSTALL_RUNTIME_DEP_DIR-NOTFOUND"))
-            foreach (R ${INSTALL_RUNTIME_DEP_DIR})
-                list(APPEND RESULT_INSTALL_RUNTIME_DEP_DIR ${R})
-            endforeach()
-        endif()
-    endif ()
 
     get_target_property(LINK_LIBRARIES ${PARAMS_NAME} LINK_LIBRARIES)
     if (NOT ("${LINK_LIBRARIES}" STREQUAL "LINK_LIBRARIES-NOTFOUND"))
@@ -41,21 +32,15 @@ function(exp_gather_target_runtime_dependencies_recurse)
             exp_gather_target_runtime_dependencies_recurse(
                 NAME ${L}
                 OUT_RUNTIME_DEP TEMP_RUNTIME_DEP
-                OUT_INSTALL_RUNTIME_DEP_DIR TEMP_INSTALL_RUNTIME_DEP_DIR
             )
             foreach(T ${TEMP_RUNTIME_DEP})
                 list(APPEND RESULT_RUNTIME_DEP ${T})
-            endforeach()
-            foreach (T ${TEMP_INSTALL_RUNTIME_DEP_DIR})
-                list(APPEND RESULT_INSTALL_RUNTIME_DEP_DIR ${T})
             endforeach()
         endforeach()
     endif()
 
     list(REMOVE_DUPLICATES RESULT_RUNTIME_DEP)
-    list(REMOVE_DUPLICATES RESULT_INSTALL_RUNTIME_DEP_DIR)
     set(${PARAMS_OUT_RUNTIME_DEP} ${RESULT_RUNTIME_DEP} PARENT_SCOPE)
-    set(${PARAMS_OUT_INSTALL_RUNTIME_DEP_DIR} ${RESULT_INSTALL_RUNTIME_DEP_DIR} PARENT_SCOPE)
 endfunction()
 
 function(exp_process_runtime_dependencies)
@@ -64,7 +49,6 @@ function(exp_process_runtime_dependencies)
     exp_gather_target_runtime_dependencies_recurse(
         NAME ${PARAMS_NAME}
         OUT_RUNTIME_DEP RUNTIME_DEPS
-        OUT_INSTALL_RUNTIME_DEP_DIR INSTALL_RUNTIME_DEP_DIRS
     )
     foreach(R ${RUNTIME_DEPS})
         add_custom_command(
@@ -77,17 +61,6 @@ function(exp_process_runtime_dependencies)
             )
         endif ()
     endforeach()
-    foreach (R ${INSTALL_RUNTIME_DEP_DIRS})
-        add_custom_command(
-            TARGET ${PARAMS_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${R}/ $<TARGET_FILE_DIR:${PARAMS_NAME}>
-        )
-        if (NOT ${PARAMS_NOT_INSTALL})
-            install(
-                DIRECTORY ${R}/ DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries
-            )
-        endif ()
-    endforeach ()
 endfunction()
 
 function(exp_expand_resource_path_expression)

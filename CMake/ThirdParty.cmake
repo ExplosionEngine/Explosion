@@ -212,11 +212,6 @@ function(exp_add_3rd_binary_package)
     endif()
 
     if (NOT ${PARAMS_NOT_INSTALL})
-        set_target_properties(
-            ${PARAMS_NAME} PROPERTIES
-            EXPORT_PROPERTIES INSTALL_RUNTIME_DEP_DIR
-        )
-
         if (DEFINED P_INCLUDE)
             foreach (INC ${P_INCLUDE})
                 list(APPEND INSTALL_INC ${INC}/)
@@ -240,10 +235,6 @@ function(exp_add_3rd_binary_package)
         endif ()
 
         if (DEFINED P_RUNTIME_DEP)
-            set_target_properties(
-                ${PARAMS_NAME} PROPERTIES
-                INSTALL_RUNTIME_DEP_DIR "\$\{_IMPORT_PREFIX\}/${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Binaries"
-            )
             install(
                 FILES ${P_RUNTIME_DEP}
                 DESTINATION ${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Binaries
@@ -348,11 +339,6 @@ function(exp_add_3rd_cmake_package)
     endif()
 
     if (NOT ${PARAMS_NOT_INSTALL})
-        set_target_properties(
-            ${PARAMS_NAME} PROPERTIES
-            EXPORT_PROPERTIES INSTALL_RUNTIME_DEP_DIR
-        )
-
         if (DEFINED P_INCLUDE)
             foreach (INC ${P_INCLUDE})
                 list(APPEND INSTALL_INC ${INC}/)
@@ -374,10 +360,6 @@ function(exp_add_3rd_cmake_package)
         endif ()
 
         if (DEFINED P_RUNTIME_DEP)
-            set_target_properties(
-                ${PARAMS_NAME} PROPERTIES
-                INSTALL_RUNTIME_DEP_DIR "\$\{_IMPORT_PREFIX\}/${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Binaries"
-            )
             install(
                 FILES ${P_RUNTIME_DEP}
                 DESTINATION ${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Binaries

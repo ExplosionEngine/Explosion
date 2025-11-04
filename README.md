@@ -16,9 +16,16 @@
 
 Explosion is a cross-platform C++ game engine, based on modern graphics api (aka Vulkan, DirectX 12, Metal), powered by ECS gameplay framework.
 
+# Requirements
+
+You need install those tools to system by youself:
+
+* [CMake](https://cmake.org/download/)
+* [Node.js](https://nodejs.org/en/download)
+
 # Build
 
-We use cmake as build tool, the following table contains supported platform, toolchain and generator:
+The following table contains supported platform, toolchain and generator:
 
 <table>
     <tr>
@@ -100,8 +107,6 @@ sudo xcode-select -s /Library/Developer/CommandLineTools
 
 Thanks all those following projects:
 
-* [EnTT](https://github.com/skypjack/entt)
-* [GLM](https://github.com/g-truc/glm)
 * [DirectX-Headers](https://github.com/microsoft/DirectX-Headers)
 * [Vulkan](https://www.vulkan.org/)
 * [DirectXShaderCompiler](https://github.com/microsoft/DirectXShaderCompiler)
@@ -120,7 +125,6 @@ Thanks all those following projects:
 * [Qt6](https://www.qt.io/product/qt6)
 * [rapidjson](https://github.com/Tencent/rapidjson)
 * [cpp-httplib](https://github.com/yhirose/cpp-httplib)
-* [Node.js](https://nodejs.org/zh-cn)
 * [React](https://react.dev)
 * [Vite](https://vite.dev)
 * [HeroUI](https://www.heroui.com)
