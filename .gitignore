@@ -11,6 +11,3 @@ build*
 # 3rd
 ThirdParty/Zip
 ThirdParty/Lib
-
-# vcpkg
-vcpkg_installed

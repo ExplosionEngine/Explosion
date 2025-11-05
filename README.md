@@ -18,10 +18,13 @@ Explosion is a cross-platform C++ game engine, based on modern graphics api (aka
 
 # Requirements
 
-You need install those tools to system by youself:
+You need install those tools to system by yourself and add them to path:
 
+* [Python3](https://www.python.org/downloads/)
 * [CMake](https://cmake.org/download/)
 * [Node.js](https://nodejs.org/en/download)
+
+build steps of engine may use them.
 
 # Build
 
