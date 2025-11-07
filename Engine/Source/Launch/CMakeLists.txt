@@ -3,6 +3,7 @@ exp_add_library(
     NAME Launch
     TYPE STATIC
     SRC ${SOURCES}
-    PRIVATE_INC Include
-    LIB glfw Runtime
+    PUBLIC_INC Include
+    PUBLIC_LIB Runtime
+    PUBLIC_MERGE_LIB glfw
 )

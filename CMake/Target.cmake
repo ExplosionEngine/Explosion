@@ -286,7 +286,7 @@ function(exp_add_executable)
 endfunction()
 
 function(exp_add_library)
-    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB;REFLECT" ${ARGN})
+    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;PUBLIC_LINK;PRIVATE_LIB;PUBLIC_LIB;PRIVATE_MERGE_LIB;PUBLIC_MERGE_LIB;REFLECT" ${ARGN})
 
     if ("${PARAMS_TYPE}" STREQUAL "SHARED")
         list(APPEND PARAMS_PUBLIC_INC ${API_HEADER_DIR}/${PARAMS_NAME})
@@ -304,7 +304,7 @@ function(exp_add_library)
             SEARCH_DIR ${PARAMS_REFLECT}
             PUBLIC_INC ${PARAMS_PUBLIC_INC}
             PRIVATE_INC ${PARAMS_PRIVATE_INC}
-            LIB ${PARAMS_LIB}
+            LIB ${PARAMS_PRIVATE_LIB} ${PARAMS_PUBLIC_LIB}
             ${EXTRA_PARAMS}
         )
     endif()
@@ -317,23 +317,47 @@ function(exp_add_library)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_SRC} ${GENERATED_SRC}
     )
+
     foreach (INC ${PARAMS_PUBLIC_INC})
+        list(APPEND PUBLIC_INC ${INC})
+    endforeach ()
+    foreach (LIB ${PARAMS_PUBLIC_MERGE_LIB})
+        if (TARGET ${LIB})
+            get_target_property(TARGET_INCS ${LIB} INTERFACE_INCLUDE_DIRECTORIES)
+            if (NOT ("${TARGET_INCS}" STREQUAL "TARGET_INCS-NOTFOUND"))
+                foreach(TARGET_INC ${TARGET_INCS})
+                    list(APPEND PUBLIC_INC ${TARGET_INC})
+                endforeach()
+            endif()
+        endif ()
+    endforeach ()
+
+    foreach (INC ${PUBLIC_INC})
         get_filename_component(ABSOLUTE_INC ${INC} ABSOLUTE)
-        list(APPEND PUBLIC_INC $<BUILD_INTERFACE:${ABSOLUTE_INC}>)
+        list(APPEND PUBLIC_BUILD_INC $<BUILD_INTERFACE:${ABSOLUTE_INC}>)
     endforeach ()
     target_include_directories(
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_PRIVATE_INC}
-        PUBLIC ${PUBLIC_INC} $<INSTALL_INTERFACE:${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Include>
+        PUBLIC ${PUBLIC_BUILD_INC} $<INSTALL_INTERFACE:${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Include>
     )
+
     target_link_directories(
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_PRIVATE_LINK}
         PUBLIC ${PARAMS_PUBLIC_LINK}
     )
+
+    foreach (LIB ${PARAMS_PRIVATE_MERGE_LIB})
+        list(APPEND BUILD_MERGE_LIB $<BUILD_INTERFACE:${LIB}>)
+    endforeach ()
+    foreach (LIB ${PARAMS_PUBLIC_MERGE_LIB})
+        list(APPEND BUILD_MERGE_LIB $<BUILD_INTERFACE:${LIB}>)
+    endforeach ()
     target_link_libraries(
         ${PARAMS_NAME}
-        PUBLIC ${PARAMS_LIB}
+        PRIVATE ${PRIVATE_PRIVATE_LIB} ${BUILD_MERGE_LIB}
+        PUBLIC ${PARAMS_PUBLIC_LIB}
     )
 
     if (${MSVC})
@@ -359,7 +383,7 @@ function(exp_add_library)
     endif()
 
     if (NOT ${PARAMS_NOT_INSTALL})
-        foreach (INC ${PARAMS_PUBLIC_INC})
+        foreach (INC ${PUBLIC_INC})
             list(APPEND INSTALL_INC ${INC}/)
         endforeach ()
         install(

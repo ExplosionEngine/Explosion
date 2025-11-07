@@ -8,7 +8,9 @@ exp_add_library(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB Core RHI ${PLATFORM_LIBS} dxc spirv-cross
+    PRIVATE_LIB ${PLATFORM_LIBS}
+    PUBLIC_LIB Core RHI
+    PUBLIC_MERGE_LIB dxc spirv-cross
 )
 
 file(GLOB SHARED_SOURCES SharedSrc/*.cpp)
@@ -16,7 +18,7 @@ exp_add_library(
     NAME Render
     TYPE SHARED
     SRC ${SHARED_SOURCES}
-    LIB Render.Static
+    PUBLIC_LIB Render.Static
 )
 
 file(GLOB TEST_SOURCES Test/*.cpp)

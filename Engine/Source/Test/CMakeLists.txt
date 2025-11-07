@@ -3,5 +3,6 @@ exp_add_library(
     TYPE STATIC
     SRC Src/Main.cpp
     PUBLIC_INC Include
-    LIB googletest Core
+    PUBLIC_LIB Core
+    PUBLIC_MERGE_LIB googletest
 )

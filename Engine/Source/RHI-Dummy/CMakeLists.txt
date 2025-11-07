@@ -4,5 +4,5 @@ exp_add_library(
     TYPE SHARED
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB RHI
+    PUBLIC_LIB RHI
 )

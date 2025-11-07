@@ -3,7 +3,8 @@ exp_add_library(
     NAME MirrorTool.Static
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB clipp llvm-clang Mirror
+    PUBLIC_LIB Mirror
+    PUBLIC_MERGE_LIB llvm-clang clipp
     NOT_INSTALL
 )
 

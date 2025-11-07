@@ -122,7 +122,7 @@ function(exp_add_3rd_header_only_package)
         )
         target_include_directories(
             ${PARAMS_NAME}
-            INTERFACE $<BUILD_INTERFACE:${P_INCLUDE}> $<INSTALL_INTERFACE:${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Include>
+            INTERFACE ${P_INCLUDE}
         )
     endif()
 endfunction()
@@ -144,7 +144,7 @@ function(exp_add_3rd_binary_package)
         )
         target_include_directories(
             ${PARAMS_NAME}
-            INTERFACE $<BUILD_INTERFACE:${P_INCLUDE}> $<INSTALL_INTERFACE:${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Include>
+            INTERFACE ${P_INCLUDE}
         )
     endif()
 
@@ -160,7 +160,7 @@ function(exp_add_3rd_binary_package)
         )
         target_link_directories(
             ${PARAMS_NAME}
-            INTERFACE $<BUILD_INTERFACE:${P_LINK}> $<INSTALL_INTERFACE:${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Lib>
+            INTERFACE ${P_LINK}
         )
     endif()
 
@@ -229,7 +229,7 @@ function(exp_add_3rd_cmake_package)
         )
         target_include_directories(
             ${PARAMS_NAME}
-            INTERFACE $<BUILD_INTERFACE:${P_INCLUDE}> $<INSTALL_INTERFACE:${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Include>
+            INTERFACE ${P_INCLUDE}
         )
     endif()
 
@@ -247,7 +247,7 @@ function(exp_add_3rd_cmake_package)
         )
         target_link_directories(
             ${PARAMS_NAME}
-            INTERFACE $<BUILD_INTERFACE:${P_LINK}> $<INSTALL_INTERFACE:${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Lib>
+            INTERFACE ${P_LINK}
         )
     endif()
 
