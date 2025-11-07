@@ -106,7 +106,7 @@ function(exp_get_3rd_platform_value)
 endfunction()
 
 function(exp_add_3rd_header_only_package)
-    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;SOURCE_DIR" "INCLUDE" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME;SOURCE_DIR" "INCLUDE" ${ARGN})
 
     add_library(${PARAMS_NAME} INTERFACE)
 
@@ -125,25 +125,10 @@ function(exp_add_3rd_header_only_package)
             INTERFACE $<BUILD_INTERFACE:${P_INCLUDE}> $<INSTALL_INTERFACE:${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Include>
         )
     endif()
-
-    if (NOT ${PARAMS_NOT_INSTALL} AND DEFINED P_INCLUDE)
-        foreach (INC ${P_INCLUDE})
-            list(APPEND INSTALL_INC ${INC}/)
-        endforeach ()
-        install(
-            DIRECTORY ${INSTALL_INC}
-            DESTINATION ${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Include
-        )
-
-        install(
-            TARGETS ${PARAMS_NAME}
-            EXPORT ${SUB_PROJECT_NAME}ThirdPartyTargets
-        )
-    endif ()
 endfunction()
 
 function(exp_add_3rd_binary_package)
-    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;SOURCE_DIR" "INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME;SOURCE_DIR" "INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
 
     add_library(${PARAMS_NAME} INTERFACE)
 
@@ -210,46 +195,10 @@ function(exp_add_3rd_binary_package)
             RUNTIME_DEP "${P_RUNTIME_DEP}"
         )
     endif()
-
-    if (NOT ${PARAMS_NOT_INSTALL})
-        if (DEFINED P_INCLUDE)
-            foreach (INC ${P_INCLUDE})
-                list(APPEND INSTALL_INC ${INC}/)
-            endforeach ()
-            install(
-                DIRECTORY ${INSTALL_INC}
-                DESTINATION ${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Include
-            )
-        endif ()
-
-        if (DEFINED P_LINK)
-            foreach (LINK ${P_LINK})
-                file(GLOB_RECURSE LIBS ${LINK}/*.lib ${LINK}/*.a)
-                list(APPEND INSTALL_LIBS ${LIBS})
-            endforeach ()
-
-            install(
-                FILES ${LIBS}
-                DESTINATION ${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Lib
-            )
-        endif ()
-
-        if (DEFINED P_RUNTIME_DEP)
-            install(
-                FILES ${P_RUNTIME_DEP}
-                DESTINATION ${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Binaries
-            )
-        endif ()
-
-        install(
-            TARGETS ${PARAMS_NAME}
-            EXPORT ${SUB_PROJECT_NAME}ThirdPartyTargets
-        )
-    endif ()
 endfunction()
 
 function(exp_add_3rd_cmake_package)
-    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;SOURCE_DIR;BINARY_DIR;INSTALL_DIR" "CMAKE_ARG;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME;SOURCE_DIR;BINARY_DIR;INSTALL_DIR" "CMAKE_ARG;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
 
     if (NOT ${GENERATOR_IS_MULTI_CONFIG})
         set(CMAKE_BUILD_TYPE_ARGS -DCMAKE_BUILD_TYPE=$<CONFIG>)
@@ -337,40 +286,6 @@ function(exp_add_3rd_cmake_package)
             RUNTIME_DEP "${P_RUNTIME_DEP}"
         )
     endif()
-
-    if (NOT ${PARAMS_NOT_INSTALL})
-        if (DEFINED P_INCLUDE)
-            foreach (INC ${P_INCLUDE})
-                list(APPEND INSTALL_INC ${INC}/)
-            endforeach ()
-            install(
-                DIRECTORY ${INSTALL_INC}
-                DESTINATION ${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Include
-            )
-        endif ()
-
-        if (DEFINED P_LINK)
-            foreach (LINK ${P_LINK})
-                list(APPEND INSTALL_LINK ${LINK}/)
-            endforeach ()
-            install(
-                DIRECTORY ${INSTALL_LINK}
-                DESTINATION ${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Lib
-            )
-        endif ()
-
-        if (DEFINED P_RUNTIME_DEP)
-            install(
-                FILES ${P_RUNTIME_DEP}
-                DESTINATION ${SUB_PROJECT_NAME}/ThirdParty/${PARAMS_NAME}/Binaries
-            )
-        endif ()
-
-        install(
-            TARGETS ${PARAMS_NAME}
-            EXPORT ${SUB_PROJECT_NAME}ThirdPartyTargets
-        )
-    endif ()
 endfunction()
 
 function(exp_add_3rd_alias_package)
@@ -382,10 +297,3 @@ function(exp_add_3rd_alias_package)
         INTERFACE "${PARAMS_LIB}"
     )
 endfunction()
-
-install(
-    EXPORT ${SUB_PROJECT_NAME}ThirdPartyTargets
-    FILE ${SUB_PROJECT_NAME}ThirdPartyTargets.cmake
-    NAMESPACE ${SUB_PROJECT_NAME}ThirdParty::
-    DESTINATION ${SUB_PROJECT_NAME}/CMake
-)
