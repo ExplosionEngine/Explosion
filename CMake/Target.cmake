@@ -349,9 +349,13 @@ function(exp_add_library)
     )
 
     foreach (LIB ${PARAMS_PRIVATE_MERGE_LIB})
-        list(APPEND BUILD_MERGE_LIB $<BUILD_INTERFACE:${LIB}>)
+        list(APPEND MERGE_LIB ${LIB})
     endforeach ()
     foreach (LIB ${PARAMS_PUBLIC_MERGE_LIB})
+        list(APPEND MERGE_LIB ${LIB})
+    endforeach ()
+
+    foreach (LIB ${MERGE_LIB})
         list(APPEND BUILD_MERGE_LIB $<BUILD_INTERFACE:${LIB}>)
     endforeach ()
     target_link_libraries(

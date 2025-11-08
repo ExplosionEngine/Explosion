@@ -106,15 +106,32 @@ function(exp_get_3rd_platform_value)
 endfunction()
 
 function(exp_add_3rd_header_only_package)
-    cmake_parse_arguments(PARAMS "" "NAME;SOURCE_DIR" "INCLUDE" ${ARGN})
+    cmake_parse_arguments(PARAMS "" "NAME;SOURCE_DIR;INSTALL_DIR" "INSTALL_FILES;INCLUDE" ${ARGN})
 
     add_library(${PARAMS_NAME} INTERFACE)
+
+    if (DEFINED PARAMS_INSTALL_DIR AND DEFINED PARAMS_INSTALL_FILES)
+        foreach (INSTALL_FILE ${PARAMS_INSTALL_FILES})
+            if (IS_DIRECTORY ${PARAMS_SOURCE_DIR}/${INSTALL_FILE})
+                list(APPEND COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${PARAMS_SOURCE_DIR}/${INSTALL_FILE} ${PARAMS_INSTALL_DIR}/${INSTALL_FILE})
+            else ()
+                list(APPEND COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PARAMS_SOURCE_DIR}/${INSTALL_FILE} ${PARAMS_INSTALL_DIR}/${INSTALL_FILE})
+            endif ()
+        endforeach ()
+
+        add_custom_target(
+            ${PARAMS_NAME}.Install
+            COMMAND ${COMMANDS}
+        )
+        add_dependencies(${PARAMS_NAME} ${PARAMS_NAME}.Install)
+    endif ()
 
     if (DEFINED PARAMS_INCLUDE)
         exp_expand_3rd_path_expression(
             INPUT ${PARAMS_INCLUDE}
             OUTPUT R_INCLUDE
             SOURCE_DIR ${PARAMS_SOURCE_DIR}
+            INSTALL_DIR ${PARAMS_INSTALL_DIR}
         )
         exp_get_3rd_platform_value(
             OUTPUT P_INCLUDE
@@ -124,7 +141,7 @@ function(exp_add_3rd_header_only_package)
             ${PARAMS_NAME}
             INTERFACE ${P_INCLUDE}
         )
-    endif()
+    endif ()
 endfunction()
 
 function(exp_add_3rd_binary_package)

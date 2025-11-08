@@ -248,7 +248,9 @@ if (${debugbreak_READY})
     exp_add_3rd_header_only_package(
         NAME debugbreak
         SOURCE_DIR ${debugbreak_SOURCE_DIR}
-        INCLUDE $<SOURCE_DIR>
+        INSTALL_DIR ${debugbreak_INSTALL_DIR}
+        INSTALL_FILES debugbreak.h
+        INCLUDE $<INSTALL_DIR>
     )
 endif ()
 
@@ -307,7 +309,9 @@ if (${taskflow_READY})
     exp_add_3rd_header_only_package(
         NAME taskflow
         SOURCE_DIR ${taskflow_SOURCE_DIR}
-        INCLUDE $<SOURCE_DIR>
+        INSTALL_DIR ${taskflow_INSTALL_DIR}
+        INSTALL_FILES taskflow
+        INCLUDE $<INSTALL_DIR>
     )
 endif ()
 
