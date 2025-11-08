@@ -18,11 +18,9 @@ function(exp_gather_target_runtime_dependencies_recurse)
         return()
     endif ()
 
-    get_target_property(IMPORTED ${PARAMS_NAME} IMPORTED)
-
-    get_target_property(BUILD_RUNTIME_DEP ${PARAMS_NAME} BUILD_RUNTIME_DEP)
-    if (NOT ("${BUILD_RUNTIME_DEP}" STREQUAL "BUILD_RUNTIME_DEP-NOTFOUND"))
-        foreach(R ${BUILD_RUNTIME_DEP})
+    get_target_property(RUNTIME_DEP ${PARAMS_NAME} RUNTIME_DEP)
+    if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
+        foreach(R ${RUNTIME_DEP})
             list(APPEND RESULT_RUNTIME_DEP ${R})
         endforeach()
     endif()
@@ -33,6 +31,11 @@ function(exp_gather_target_runtime_dependencies_recurse)
             if (NOT TARGET ${L})
                 continue()
             endif()
+
+            get_target_property(TYPE ${L} TYPE)
+            if (${TYPE} STREQUAL SHARED_LIBRARY)
+                list(APPEND RESULT_RUNTIME_DEP $<TARGET_FILE:${L}>)
+            endif ()
 
             exp_gather_target_runtime_dependencies_recurse(
                 NAME ${L}
@@ -245,6 +248,17 @@ function(exp_add_executable)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_SRC} ${GENERATED_SRC}
     )
+    get_cmake_property(GENERATOR_IS_MULTI_CONFIG GENERATOR_IS_MULTI_CONFIG)
+    if (${GENERATOR_IS_MULTI_CONFIG})
+        set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Dist/$<CONFIG>/${SUB_PROJECT_NAME}/Binaries)
+    else ()
+        set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Dist/${SUB_PROJECT_NAME}/Binaries)
+    endif ()
+    set_target_properties(
+        ${PARAMS_NAME} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${RUNTIME_OUTPUT_DIRECTORY}
+    )
+
     target_include_directories(
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_INC}
@@ -274,7 +288,7 @@ function(exp_add_executable)
     endif()
 
     if (${MSVC})
-        set_target_properties(${PARAMS_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+        set_target_properties(${PARAMS_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${RUNTIME_OUTPUT_DIRECTORY})
     endif()
 
     if (NOT ${PARAMS_NOT_INSTALL})
@@ -322,6 +336,22 @@ function(exp_add_library)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_SRC} ${GENERATED_SRC}
     )
+    get_cmake_property(GENERATOR_IS_MULTI_CONFIG GENERATOR_IS_MULTI_CONFIG)
+    if (${GENERATOR_IS_MULTI_CONFIG})
+        set_target_properties(
+            ${PARAMS_NAME} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/$<CONFIG>/Binaries
+            LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/$<CONFIG>/Binaries
+            ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/$<CONFIG>/Lib
+        )
+    else ()
+        set_target_properties(
+            ${PARAMS_NAME} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/Binaries
+            LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/Binaries
+            ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/Lib
+        )
+    endif ()
 
     foreach (INC ${PARAMS_PUBLIC_INC})
         list(APPEND PUBLIC_INC ${INC})
@@ -376,15 +406,9 @@ function(exp_add_library)
     )
 
     if (DEFINED RUNTIME_DEP)
-        foreach (R ${RUNTIME_DEP})
-            get_filename_component(FILE_NAME ${R} NAME)
-            list(APPEND INSTALL_RUNTIME_DEP ${FILE_NAME})
-        endforeach ()
         set_target_properties(
             ${PARAMS_NAME} PROPERTIES
-            EXPORT_PROPERTIES "INSTALL_RUNTIME_DEP"
-            BUILD_RUNTIME_DEP "${RUNTIME_DEP}"
-            INSTALL_RUNTIME_DEP "${INSTALL_RUNTIME_DEP}"
+            RUNTIME_DEP "${RUNTIME_DEP}"
         )
     endif ()
 
@@ -474,6 +498,19 @@ function(exp_add_test)
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_SRC} ${GENERATED_SRC}
     )
+    get_cmake_property(GENERATOR_IS_MULTI_CONFIG GENERATOR_IS_MULTI_CONFIG)
+    if (${GENERATOR_IS_MULTI_CONFIG})
+        set_target_properties(
+            ${PARAMS_NAME} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Dist/$<CONFIG>/${SUB_PROJECT_NAME}/Binaries
+        )
+    else ()
+        set_target_properties(
+            ${PARAMS_NAME} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Dist/${SUB_PROJECT_NAME}/Binaries
+        )
+    endif ()
+
     target_include_directories(
         ${PARAMS_NAME}
         PRIVATE ${PARAMS_INC}

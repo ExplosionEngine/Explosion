@@ -209,7 +209,7 @@ function(exp_add_3rd_binary_package)
         )
         set_target_properties(
             ${PARAMS_NAME} PROPERTIES
-            BUILD_RUNTIME_DEP "${P_RUNTIME_DEP}"
+            RUNTIME_DEP "${P_RUNTIME_DEP}"
         )
     endif()
 endfunction()
@@ -300,7 +300,7 @@ function(exp_add_3rd_cmake_package)
         )
         set_target_properties(
             ${PARAMS_NAME} PROPERTIES
-            BUILD_RUNTIME_DEP "${P_RUNTIME_DEP}"
+            RUNTIME_DEP "${P_RUNTIME_DEP}"
         )
     endif()
 endfunction()

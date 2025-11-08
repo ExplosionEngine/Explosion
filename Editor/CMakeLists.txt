@@ -34,6 +34,20 @@ exp_add_mirror_info_source_generation_target(
 
 file(GLOB_RECURSE SOURCES Src/*.cpp)
 qt_add_executable(Editor ${PLATFORM_EXECUTABLE_HINT} ${SOURCES} ${EDITOR_MIRROR_GENERATED_SRC})
+
+get_cmake_property(GENERATOR_IS_MULTI_CONFIG GENERATOR_IS_MULTI_CONFIG)
+if (${GENERATOR_IS_MULTI_CONFIG})
+    set_target_properties(
+        Editor PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Dist/$<CONFIG>/${SUB_PROJECT_NAME}/Binaries
+    )
+else ()
+    set_target_properties(
+        Editor PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Dist/${SUB_PROJECT_NAME}/Binaries
+    )
+endif ()
+
 target_include_directories(Editor PRIVATE ${EDITOR_INCLUDES})
 target_link_libraries(Editor PRIVATE ${EDITOR_LIBS})
 
