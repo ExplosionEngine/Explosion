@@ -26,4 +26,5 @@ exp_add_test(
     NAME Render.Test
     SRC ${TEST_SOURCES}
     LIB RHI Render.Static
+    DEP_TARGET RHI-Dummy
 )

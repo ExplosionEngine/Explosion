@@ -21,7 +21,14 @@ function(exp_gather_target_runtime_dependencies_recurse)
     get_target_property(RUNTIME_DEP ${PARAMS_NAME} RUNTIME_DEP)
     if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
         foreach(R ${RUNTIME_DEP})
-            list(APPEND RESULT_RUNTIME_DEP ${R})
+            get_target_property(TYPE ${PARAMS_NAME} TYPE)
+            if (${TYPE} STREQUAL "SHARED_LIBRARY")
+                set(TARGET_BIN_DIR $<TARGET_FILE_DIR:${PARAMS_NAME}>)
+            else ()
+                set(TARGET_BIN_DIR $<TARGET_FILE_DIR:${PARAMS_NAME}>/../Binaries)
+            endif ()
+            string(REPLACE "<TARGET_BIN_DIR>" ${TARGET_BIN_DIR} TEMP_R ${R})
+            list(APPEND RESULT_RUNTIME_DEP ${TEMP_R})
         endforeach()
     endif()
 
@@ -52,12 +59,15 @@ function(exp_gather_target_runtime_dependencies_recurse)
 endfunction()
 
 function(exp_process_runtime_dependencies)
-    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME" "" ${ARGN})
+    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME" "DEP_TARGET" ${ARGN})
 
     exp_gather_target_runtime_dependencies_recurse(
         NAME ${PARAMS_NAME}
         OUT_RUNTIME_DEP RUNTIME_DEPS
     )
+    foreach (D ${PARAMS_DEP_TARGET})
+        list(APPEND RUNTIME_DEPS $<TARGET_FILE:${D}>)
+    endforeach ()
     foreach(R ${RUNTIME_DEPS})
         add_custom_command(
             TARGET ${PARAMS_NAME} POST_BUILD
@@ -273,6 +283,7 @@ function(exp_add_executable)
     )
     exp_process_runtime_dependencies(
         NAME ${PARAMS_NAME}
+        DEP_TARGET ${PARAMS_DEP_TARGET}
         ${NOT_INSTALL_FLAG}
     )
     exp_add_resources_copy_command(
@@ -338,20 +349,20 @@ function(exp_add_library)
     )
     get_cmake_property(GENERATOR_IS_MULTI_CONFIG GENERATOR_IS_MULTI_CONFIG)
     if (${GENERATOR_IS_MULTI_CONFIG})
-        set_target_properties(
-            ${PARAMS_NAME} PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/$<CONFIG>/Binaries
-            LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/$<CONFIG>/Binaries
-            ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/$<CONFIG>/Lib
-        )
+        set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/$<CONFIG>/Binaries)
+        set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/$<CONFIG>/Binaries)
+        set(ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/$<CONFIG>/Lib)
     else ()
-        set_target_properties(
-            ${PARAMS_NAME} PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/Binaries
-            LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/Binaries
-            ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/Lib
-        )
+        set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/Binaries)
+        set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/Binaries)
+        set(ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${PARAMS_NAME}/Lib)
     endif ()
+    set_target_properties(
+        ${PARAMS_NAME} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${RUNTIME_OUTPUT_DIRECTORY}
+        LIBRARY_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_DIRECTORY}
+        ARCHIVE_OUTPUT_DIRECTORY ${ARCHIVE_OUTPUT_DIRECTORY}
+    )
 
     foreach (INC ${PARAMS_PUBLIC_INC})
         list(APPEND PUBLIC_INC ${INC})
@@ -406,9 +417,19 @@ function(exp_add_library)
     )
 
     if (DEFINED RUNTIME_DEP)
+        foreach (R ${RUNTIME_DEP})
+            get_filename_component(FILE_NAME ${R} NAME)
+            list(APPEND COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different ${R} ${RUNTIME_OUTPUT_DIRECTORY}/${FILE_NAME})
+            list(APPEND RUNTIME_DEP_FILES <TARGET_BIN_DIR>/${FILE_NAME})
+        endforeach ()
+        add_custom_command(
+            TARGET ${PARAMS_NAME} POST_BUILD
+            ${COMMANDS}
+        )
         set_target_properties(
             ${PARAMS_NAME} PROPERTIES
-            RUNTIME_DEP "${RUNTIME_DEP}"
+            EXPORT_PROPERTIES "RUNTIME_DEP"
+            RUNTIME_DEP "${RUNTIME_DEP_FILES}"
         )
     endif ()
 
@@ -525,6 +546,7 @@ function(exp_add_test)
     )
     exp_process_runtime_dependencies(
         NAME ${PARAMS_NAME}
+        DEP_TARGET ${PARAMS_DEP_TARGET}
         NOT_INSTALL
     )
     exp_add_resources_copy_command(

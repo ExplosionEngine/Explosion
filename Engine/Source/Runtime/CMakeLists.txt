@@ -16,4 +16,5 @@ exp_add_test(
     LIB Runtime
     INC Test
     REFLECT Test
+    DEP_TARGET RHI-Dummy
 )
