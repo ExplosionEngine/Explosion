@@ -13,11 +13,16 @@ endif()
 function(exp_gather_target_runtime_dependencies_recurse)
     cmake_parse_arguments(PARAMS "" "NAME;OUT_RUNTIME_DEP" "" ${ARGN})
 
+    if (NOT TARGET ${PARAMS_NAME})
+        set(${PARAMS_OUT_RUNTIME_DEP} "" PARENT_SCOPE)
+        return()
+    endif ()
+
     get_target_property(IMPORTED ${PARAMS_NAME} IMPORTED)
 
-    get_target_property(RUNTIME_DEP ${PARAMS_NAME} RUNTIME_DEP)
-    if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
-        foreach(R ${RUNTIME_DEP})
+    get_target_property(BUILD_RUNTIME_DEP ${PARAMS_NAME} BUILD_RUNTIME_DEP)
+    if (NOT ("${BUILD_RUNTIME_DEP}" STREQUAL "BUILD_RUNTIME_DEP-NOTFOUND"))
+        foreach(R ${BUILD_RUNTIME_DEP})
             list(APPEND RESULT_RUNTIME_DEP ${R})
         endforeach()
     endif()
@@ -357,12 +362,31 @@ function(exp_add_library)
 
     foreach (LIB ${MERGE_LIB})
         list(APPEND BUILD_MERGE_LIB $<BUILD_INTERFACE:${LIB}>)
+
+        exp_gather_target_runtime_dependencies_recurse(
+            NAME ${LIB}
+            OUT_RUNTIME_DEP TEMP_RUNTIME_DEP
+        )
+        list(APPEND RUNTIME_DEP ${TEMP_RUNTIME_DEP})
     endforeach ()
     target_link_libraries(
         ${PARAMS_NAME}
         PRIVATE ${PRIVATE_PRIVATE_LIB} ${BUILD_MERGE_LIB}
         PUBLIC ${PARAMS_PUBLIC_LIB}
     )
+
+    if (DEFINED RUNTIME_DEP)
+        foreach (R ${RUNTIME_DEP})
+            get_filename_component(FILE_NAME ${R} NAME)
+            list(APPEND INSTALL_RUNTIME_DEP ${FILE_NAME})
+        endforeach ()
+        set_target_properties(
+            ${PARAMS_NAME} PROPERTIES
+            EXPORT_PROPERTIES "INSTALL_RUNTIME_DEP"
+            BUILD_RUNTIME_DEP "${RUNTIME_DEP}"
+            INSTALL_RUNTIME_DEP "${INSTALL_RUNTIME_DEP}"
+        )
+    endif ()
 
     if (${MSVC})
         target_compile_options(
@@ -395,6 +419,13 @@ function(exp_add_library)
             DESTINATION ${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Include
         )
 
+        if (DEFINED RUNTIME_DEP)
+            install(
+                FILES ${RUNTIME_DEP}
+                DESTINATION ${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Binaries
+            )
+        endif ()
+
         if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" OR "${PARAMS_TYPE}" STREQUAL "STATIC")
             install(
                 TARGETS ${PARAMS_NAME}
@@ -404,12 +435,17 @@ function(exp_add_library)
                 RUNTIME DESTINATION ${SUB_PROJECT_NAME}/Binaries
             )
         endif ()
-
-        # TODO merge with upper, use install(TARGETS xxx FRAMEWORK DESTINATION xxx)
         if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" AND "${PARAMS_TYPE}" STREQUAL "SHARED")
             install(
                 FILES $<TARGET_FILE:${PARAMS_NAME}>
-                DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries
+                DESTINATION ${SUB_PROJECT_NAME}/Binaries
+            )
+        endif ()
+
+        if ("${PARAMS_TYPE}" STREQUAL "SHARED")
+            install(
+                FILES $<TARGET_FILE:${PARAMS_NAME}>
+                DESTINATION ${SUB_PROJECT_NAME}/Target/${PARAMS_NAME}/Binaries
             )
         endif ()
     endif ()

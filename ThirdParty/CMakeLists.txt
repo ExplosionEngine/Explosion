@@ -388,10 +388,10 @@ if (${assimp-lib_READY})
         INCLUDE $<INSTALL_DIR>/include
         LINK $<INSTALL_DIR>/lib
         LIB
-            Windows "assimp-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>"
+            Windows "assimp-vc${MSVC_TOOLSET_VERSION}-mt"
             Darwin "assimp$<IF:$<CONFIG:Debug>,d,>"
         RUNTIME_DEP
-            Windows "$<INSTALL_DIR>/bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>.dll"
+            Windows "$<INSTALL_DIR>/bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt.dll"
     )
 endif ()
 
