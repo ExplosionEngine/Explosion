@@ -21,13 +21,17 @@ function(exp_gather_target_runtime_dependencies_recurse)
     get_target_property(RUNTIME_DEP ${PARAMS_NAME} RUNTIME_DEP)
     if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
         foreach(R ${RUNTIME_DEP})
+            # workaround to make EXPORT_PROPERTIES support generator expression
+            string(REPLACE "[" "$<" R "${R}")
+            string(REPLACE "]" ">" R "${R}")
+
             get_target_property(TYPE ${PARAMS_NAME} TYPE)
             if (${TYPE} STREQUAL "SHARED_LIBRARY")
                 set(TARGET_BIN_DIR $<TARGET_FILE_DIR:${PARAMS_NAME}>)
             else ()
                 set(TARGET_BIN_DIR $<TARGET_FILE_DIR:${PARAMS_NAME}>/../Binaries)
             endif ()
-            string(REPLACE "<TARGET_BIN_DIR>" ${TARGET_BIN_DIR} TEMP_R ${R})
+            string(REPLACE "$<TARGET_BIN_DIR>" ${TARGET_BIN_DIR} TEMP_R ${R})
             list(APPEND RESULT_RUNTIME_DEP ${TEMP_R})
         endforeach()
     endif()
@@ -420,12 +424,16 @@ function(exp_add_library)
         foreach (R ${RUNTIME_DEP})
             get_filename_component(FILE_NAME ${R} NAME)
             list(APPEND COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different ${R} ${RUNTIME_OUTPUT_DIRECTORY}/${FILE_NAME})
-            list(APPEND RUNTIME_DEP_FILES <TARGET_BIN_DIR>/${FILE_NAME})
+            list(APPEND RUNTIME_DEP_FILES $<TARGET_BIN_DIR>/${FILE_NAME})
         endforeach ()
         add_custom_command(
             TARGET ${PARAMS_NAME} POST_BUILD
             ${COMMANDS}
         )
+
+        # workaround to make EXPORT_PROPERTIES support generator expression
+        string(REPLACE "$<" "[" RUNTIME_DEP_FILES "${RUNTIME_DEP_FILES}")
+        string(REPLACE ">" "]" RUNTIME_DEP_FILES "${RUNTIME_DEP_FILES}")
         set_target_properties(
             ${PARAMS_NAME} PROPERTIES
             EXPORT_PROPERTIES "RUNTIME_DEP"
