@@ -444,7 +444,7 @@ function(exp_add_library)
     if (${MSVC})
         target_compile_options(
             ${PARAMS_NAME}
-            PUBLIC /MD$<$<CONFIG:Debug>:d>
+            PRIVATE /MD$<$<CONFIG:Debug>:d>
         )
     endif()
 
