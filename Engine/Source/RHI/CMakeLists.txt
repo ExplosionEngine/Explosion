@@ -4,5 +4,5 @@ exp_add_library(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB Core
+    PUBLIC_LIB Core
 )

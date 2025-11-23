@@ -2,8 +2,6 @@ option(BUILD_TEST "Build unit tests" ON)
 option(BUILD_SAMPLE "Build sample" ON)
 
 set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Generated/Api CACHE PATH "" FORCE)
-set(BASIC_LIBS Common CACHE STRING "" FORCE)
-set(BASIC_TEST_LIBS Test CACHE STRING "" FORCE)
 
 if (${BUILD_TEST})
     enable_testing()
@@ -12,480 +10,513 @@ else()
     add_definitions(-DBUILD_TEST=0)
 endif()
 
-function(exp_combine_runtime_deps)
-    cmake_parse_arguments(PARAMS "" "NAME" "RUNTIME_DEP" ${ARGN})
+function(exp_gather_target_runtime_dependencies_recurse)
+    set(options "")
+    set(singleValueArgs NAME OUT_RUNTIME_DEP)
+    set(multiValueArgs "")
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    get_target_property(RESULT ${PARAMS_NAME} RUNTIME_DEP)
-    if ("${RESULT}" STREQUAL "RESULT-NOTFOUND")
-        set(RESULT ${PARAMS_RUNTIME_DEP})
-    else()
-        list(APPEND RESULT ${PARAMS_RUNTIME_DEP})
-    endif()
-    set_target_properties(
-        ${PARAMS_NAME} PROPERTIES
-        RUNTIME_DEP "${RESULT}"
-    )
-endfunction()
+    if (NOT TARGET ${arg_NAME})
+        set(${arg_OUT_RUNTIME_DEP} "" PARENT_SCOPE)
+        return()
+    endif ()
 
-function(exp_link_libs)
-    cmake_parse_arguments(PARAMS "" "NAME" "LIB" ${ARGN})
+    get_target_property(runtime_dep ${arg_NAME} RUNTIME_DEP)
+    if (NOT ("${runtime_dep}" STREQUAL "runtime_dep-NOTFOUND"))
+        foreach(r ${runtime_dep})
+            # workaround to make EXPORT_PROPERTIES support generator expression
+            string(REPLACE "[" "$<" r "${r}")
+            string(REPLACE "]" ">" r "${r}")
 
-    foreach(L ${PARAMS_LIB})
-        if (NOT (TARGET ${L}))
-            target_link_libraries(${PARAMS_NAME} PUBLIC ${L})
-            continue()
-        endif()
-
-        get_target_property(3RD_TYPE ${L} 3RD_TYPE)
-        if (${3RD_TYPE} STREQUAL "3RD_TYPE-NOTFOUND")
-            target_link_libraries(${PARAMS_NAME} PUBLIC ${L})
-        else()
-            get_target_property(INCLUDE ${L} 3RD_INCLUDE)
-            get_target_property(LINK ${L} 3RD_LINK)
-            get_target_property(LIB ${L} 3RD_LIB)
-
-            if (NOT ("${INCLUDE}" STREQUAL "INCLUDE-NOTFOUND"))
-                target_include_directories(${PARAMS_NAME} PUBLIC ${INCLUDE})
-            endif()
-            if (NOT ("${LINK}" STREQUAL "LINK-NOTFOUND"))
-                target_link_directories(${PARAMS_NAME} PUBLIC ${LINK})
-            endif()
-            if (NOT ("${LIB}" STREQUAL "LIB-NOTFOUND"))
-                target_link_libraries(${PARAMS_NAME} PUBLIC ${LIB})
-            endif()
-
-            if (${3RD_TYPE} STREQUAL "CMakeProject")
-                add_dependencies(${PARAMS_NAME} ${L})
-            endif()
-        endif()
-
-        get_target_property(RUNTIME_DEP ${L} 3RD_RUNTIME_DEP)
-        if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
-            exp_combine_runtime_deps(
-                NAME ${PARAMS_NAME}
-                RUNTIME_DEP "${RUNTIME_DEP}"
-            )
-        endif()
-    endforeach()
-endfunction()
-
-function(exp_link_basic_libs)
-    cmake_parse_arguments(PARAMS "" "NAME" "LIB" ${ARGN})
-
-    foreach(L ${PARAMS_LIB})
-        if (NOT (${PARAMS_NAME} STREQUAL ${L}))
-            exp_link_libs(
-                NAME ${PARAMS_NAME}
-                LIB ${L}
-            )
-        endif()
-    endforeach()
-endfunction()
-
-function(exp_get_target_runtime_deps_recurse)
-    cmake_parse_arguments(PARAMS "" "NAME;OUTPUT" "" ${ARGN})
-
-    get_target_property(RUNTIME_DEP ${PARAMS_NAME} RUNTIME_DEP)
-    if (NOT ("${RUNTIME_DEP}" STREQUAL "RUNTIME_DEP-NOTFOUND"))
-        foreach(R ${RUNTIME_DEP})
-            list(APPEND RESULT ${R})
+            get_target_property(type ${arg_NAME} TYPE)
+            if (${type} STREQUAL "SHARED_LIBRARY")
+                set(target_bin_dir $<TARGET_FILE_DIR:${arg_NAME}>)
+            else ()
+                set(target_bin_dir $<TARGET_FILE_DIR:${arg_NAME}>/../Binaries)
+            endif ()
+            string(REPLACE "$<TARGET_BIN_DIR>" ${target_bin_dir} temp_r ${r})
+            list(APPEND result_runtime_dep ${temp_r})
         endforeach()
     endif()
 
-    get_target_property(LINK_LIBRARIES ${PARAMS_NAME} LINK_LIBRARIES)
-    if (NOT ("${LINK_LIBRARIES}" STREQUAL "LINK_LIBRARIES-NOTFOUND"))
-        foreach(L ${LINK_LIBRARIES})
-            if (NOT TARGET ${L})
+    get_target_property(libs ${arg_NAME} LINK_LIBRARIES)
+    if (NOT ("${libs}" STREQUAL "libs-NOTFOUND"))
+        foreach(l ${libs})
+            if (NOT TARGET ${l})
                 continue()
             endif()
 
-            exp_get_target_runtime_deps_recurse(
-                NAME ${L}
-                OUTPUT TEMP
+            get_target_property(type ${l} TYPE)
+            if (${type} STREQUAL SHARED_LIBRARY)
+                list(APPEND result_runtime_dep $<TARGET_FILE:${l}>)
+            endif ()
+
+            exp_gather_target_runtime_dependencies_recurse(
+                NAME ${l}
+                OUT_RUNTIME_DEP temp_runtime_dep
             )
-            foreach(T ${TEMP})
-                list(APPEND RESULT ${T})
+            foreach(t ${temp_runtime_dep})
+                list(APPEND result_runtime_dep ${t})
             endforeach()
         endforeach()
     endif()
 
-    list(REMOVE_DUPLICATES RESULT)
-    set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
+    list(REMOVE_DUPLICATES result_runtime_dep)
+    set(${arg_OUT_RUNTIME_DEP} ${result_runtime_dep} PARENT_SCOPE)
 endfunction()
 
-function(exp_add_runtime_deps_copy_command)
-    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME" "" ${ARGN})
+function(exp_process_runtime_dependencies)
+    set(options NOT_INSTALL)
+    set(singleValueArgs NAME)
+    set(multiValueArgs DEP_TARGET)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    exp_get_target_runtime_deps_recurse(
-        NAME ${PARAMS_NAME}
-        OUTPUT RUNTIME_DEPS
+    exp_gather_target_runtime_dependencies_recurse(
+        NAME ${arg_NAME}
+        OUT_RUNTIME_DEP runtime_deps
     )
-    foreach(R ${RUNTIME_DEPS})
-        string(FIND ${R} "->" LOCATION)
-        if (NOT ${LOCATION} EQUAL -1)
-            string(REPLACE "->" ";" TEMP ${R})
-            list(GET TEMP 0 SRC)
-            list(GET TEMP 1 DST)
-            set(COPY_COMMAND ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST})
-            set(INSTALL_DST ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/${DST})
-        else ()
-            set(SRC ${R})
-            set(COPY_COMMAND ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>)
-            set(INSTALL_DST ${CMAKE_INSTALL_PREFIX}/Engine/Binaries)
-        endif ()
-
-        if (IS_DIRECTORY ${SRC})
-            add_custom_command(
-                TARGET ${PARAMS_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${COPY_COMMAND}
+    foreach (d ${arg_DEP_TARGET})
+        list(APPEND runtime_deps $<TARGET_FILE:${d}>)
+    endforeach ()
+    foreach(r ${runtime_deps})
+        add_custom_command(
+            TARGET ${arg_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${r} $<TARGET_FILE_DIR:${arg_NAME}>
+        )
+        if (NOT ${arg_NOT_INSTALL})
+            install(
+                FILES ${r} DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries
             )
-            if (NOT ${PARAMS_NOT_INSTALL})
-                install(
-                    DIRECTORY ${SRC} DESTINATION ${INSTALL_DST}
-                )
-            endif ()
-        else ()
-            add_custom_command(
-                TARGET ${PARAMS_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${COPY_COMMAND}
-            )
-            if (NOT ${PARAMS_NOT_INSTALL})
-                install(
-                    FILES ${SRC} DESTINATION ${INSTALL_DST}
-                )
-            endif ()
         endif ()
     endforeach()
 endfunction()
 
 function(exp_expand_resource_path_expression)
-    cmake_parse_arguments(PARAMS "" "INPUT;OUTPUT_SRC;OUTPUT_DST" "" ${ARGN})
+    set(options "")
+    set(singleValueArgs INPUT OUTPUT_SRC OUTPUT_DST)
+    set(multiValueArgs "")
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    string(REPLACE "->" ";" TEMP ${PARAMS_INPUT})
-    list(GET TEMP 0 SRC)
-    list(GET TEMP 1 DST)
+    string(REPLACE "->" ";" temp ${arg_INPUT})
+    list(GET temp 0 src)
+    list(GET temp 1 dst)
 
-    set(${PARAMS_OUTPUT_SRC} ${SRC} PARENT_SCOPE)
-    set(${PARAMS_OUTPUT_DST} ${DST} PARENT_SCOPE)
+    set(${arg_OUTPUT_SRC} ${src} PARENT_SCOPE)
+    set(${arg_OUTPUT_DST} ${dst} PARENT_SCOPE)
 endfunction()
 
 function(exp_add_resources_copy_command)
-    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME" "RES" ${ARGN})
+    set(options NOT_INSTALL)
+    set(singleValueArgs NAME)
+    set(multiValueArgs RES)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    foreach(R ${PARAMS_RES})
+    foreach(r ${arg_RES})
         exp_expand_resource_path_expression(
-            INPUT ${R}
-            OUTPUT_SRC SRC
-            OUTPUT_DST DST
+            INPUT ${r}
+            OUTPUT_SRC src
+            OUTPUT_DST dst
         )
 
-        list(APPEND COPY_COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC} $<TARGET_FILE_DIR:${PARAMS_NAME}>/${DST})
+        list(APPEND copy_commands COMMAND ${CMAKE_COMMAND} -E copy_if_different ${src} $<TARGET_FILE_DIR:${arg_NAME}>/${dst})
 
-        get_filename_component(ABSOLUTE_DST ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/${DST} ABSOLUTE)
-        get_filename_component(DST_DIR ${ABSOLUTE_DST} DIRECTORY)
-        if (NOT ${PARAMS_NOT_INSTALL})
-            install(FILES ${SRC} DESTINATION ${DST_DIR})
+        get_filename_component(absolute_dst ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries/${dst} ABSOLUTE)
+        get_filename_component(dst_dir ${absolute_dst} DIRECTORY)
+        if (NOT ${arg_NOT_INSTALL})
+            install(FILES ${src} DESTINATION ${dst_dir})
         endif ()
     endforeach()
 
-    set(COPY_RES_TARGET_NAME ${PARAMS_NAME}.CopyRes)
+    set(copy_res_target_name ${arg_NAME}.CopyRes)
     add_custom_target(
-        ${COPY_RES_TARGET_NAME}
-        ${COPY_COMMANDS}
+        ${copy_res_target_name}
+        ${copy_commands}
     )
-    add_dependencies(${PARAMS_NAME} ${COPY_RES_TARGET_NAME})
+    add_dependencies(${arg_NAME} ${copy_res_target_name})
 endfunction()
 
-function(exp_get_target_include_dirs_recurse)
-    cmake_parse_arguments(PARAMS "" "NAME;OUTPUT" "" ${ARGN})
+function(exp_gather_target_include_dirs)
+    set(options "")
+    set(singleValueArgs NAME OUTPUT)
+    set(multiValueArgs "")
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (NOT (TARGET ${PARAMS_NAME}))
+    if (NOT (TARGET ${arg_NAME}))
         return()
     endif()
 
-    get_target_property(3RD_TYPE ${PARAMS_NAME} 3RD_TYPE)
-    if ("${3RD_TYPE}" STREQUAL "3RD_TYPE-NOTFOUND")
-        get_target_property(TARGET_INCS ${PARAMS_NAME} INCLUDE_DIRECTORIES)
-        if (NOT ("${TARGET_INCS}" STREQUAL "TARGET_INCS-NOTFOUND"))
-            foreach(TARGET_INC ${TARGET_INCS})
-                list(APPEND RESULT ${TARGET_INC})
-            endforeach()
-        endif()
+    get_target_property(target_incs ${arg_NAME} INTERFACE_INCLUDE_DIRECTORIES)
+    if (NOT ("${target_incs}" STREQUAL "target_incs-NOTFOUND"))
+        foreach(target_inc ${target_incs})
+            list(APPEND result ${target_inc})
+        endforeach()
+    endif()
 
-        get_target_property(TARGET_LIBS ${PARAMS_NAME} LINK_LIBRARIES)
-        if (NOT ("${TARGET_LIBS}" STREQUAL "TARGET_LIBS-NOTFOUND"))
-            foreach(TARGET_LIB ${TARGET_LIBS})
-                exp_get_target_include_dirs_recurse(
-                    NAME ${TARGET_LIB}
-                    OUTPUT LIB_INCS
-                )
-                foreach(LIB_INC ${LIB_INCS})
-                    list(APPEND RESULT ${LIB_INC})
-                endforeach()
+    get_target_property(target_libs ${arg_NAME} LINK_LIBRARIES)
+    if (NOT ("${target_libs}" STREQUAL "target_libs-NOTFOUND"))
+        foreach(target_lib ${target_libs})
+            exp_gather_target_include_dirs(
+                NAME ${target_lib}
+                OUTPUT lib_incs
+            )
+            foreach(lib_inc ${lib_incs})
+                list(APPEND result ${lib_inc})
             endforeach()
-        endif()
-    else ()
-        get_target_property(3RD_INCLUDE ${PARAMS_NAME} 3RD_INCLUDE)
-        if (NOT ("${3RD_INCLUDE}" STREQUAL "3RD_INCLUDE-NOTFOUND"))
-            foreach(3RD_INC ${3RD_INCLUDE})
-                list(APPEND RESULT ${3RD_INC})
-            endforeach()
-        endif ()
-    endif ()
+        endforeach()
+    endif()
 
-    list(REMOVE_DUPLICATES RESULT)
-    set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
+    list(REMOVE_DUPLICATES result)
+    set(${arg_OUTPUT} ${result} PARENT_SCOPE)
 endfunction()
 
 function(exp_add_mirror_info_source_generation_target)
-    cmake_parse_arguments(PARAMS "DYNAMIC" "NAME;OUTPUT_SRC;OUTPUT_TARGET_NAME" "SEARCH_DIR;PUBLIC_INC;PRIVATE_INC;LIB;FRAMEWORK_DIR" ${ARGN})
+    set(options DYNAMIC)
+    set(singleValueArgs NAME OUTPUT_SRC OUTPUT_TARGET_NAME)
+    set(multiValueArgs SEARCH_DIR PUBLIC_INC PRIVATE_INC LIB FRAMEWORK_DIR)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (DEFINED PARAMS_PUBLIC_INC)
-        list(APPEND INC ${PARAMS_PUBLIC_INC})
+    if (DEFINED arg_PUBLIC_INC)
+        foreach (i ${arg_PUBLIC_INC})
+            get_filename_component(absolute_i ${i} ABSOLUTE)
+            list(APPEND inc ${absolute_i})
+        endforeach ()
     endif()
-    if (DEFINED PARAMS_PRIVATE_INC)
-        list(APPEND INC ${PARAMS_PRIVATE_INC})
+    if (DEFINED arg_PRIVATE_INC)
+        foreach (i ${arg_PRIVATE_INC})
+            get_filename_component(absolute_i ${i} ABSOLUTE)
+            list(APPEND inc ${absolute_i})
+        endforeach ()
     endif()
-    if (DEFINED PARAMS_LIB)
-        foreach (L ${PARAMS_LIB})
-            exp_get_target_include_dirs_recurse(
-                NAME ${L}
-                OUTPUT TARGET_INCS
+    if (DEFINED arg_LIB)
+        foreach (l ${arg_LIB})
+            exp_gather_target_include_dirs(
+                NAME ${l}
+                OUTPUT target_incs
             )
-            foreach (I ${TARGET_INCS})
-                list(APPEND INC ${I})
+            foreach (i ${target_incs})
+                list(APPEND inc ${i})
             endforeach ()
         endforeach()
     endif()
-    list(REMOVE_DUPLICATES INC)
+    list(REMOVE_DUPLICATES inc)
 
-    list(APPEND INC_ARGS "-I")
-    foreach (I ${INC})
-        get_filename_component(ABSOLUTE_I ${I} ABSOLUTE)
-        list(APPEND INC_ARGS ${ABSOLUTE_I})
+    list(APPEND inc_args "-I")
+    foreach (i ${inc})
+        list(APPEND inc_args ${i})
     endforeach()
 
-    if (DEFINED PARAMS_FRAMEWORK_DIR)
-        list(APPEND FWK_DIR ${PARAMS_FRAMEWORK_DIR})
-        list(APPEND FWK_DIR_ARGS "-F")
+    if (DEFINED arg_FRAMEWORK_DIR)
+        list(APPEND fwk_dir ${arg_FRAMEWORK_DIR})
+        list(APPEND fwk_dir_args "-F")
     endif ()
-    list(REMOVE_DUPLICATES FWK_DIR)
+    list(REMOVE_DUPLICATES fwk_dir)
 
-    foreach (F ${FWK_DIR})
-        get_filename_component(ABSOLUTE_F ${F} ABSOLUTE)
-        list(APPEND FWK_DIR_ARGS ${ABSOLUTE_F})
+    foreach (f ${fwk_dir})
+        get_filename_component(absolute_f ${f} ABSOLUTE)
+        list(APPEND fwk_dir_args ${absolute_f})
     endforeach ()
 
-    if (${PARAMS_DYNAMIC})
-        list(APPEND DYNAMIC_ARG "-d")
+    if (${arg_DYNAMIC})
+        list(APPEND dynamic_arg "-d")
     endif ()
 
-    foreach (SEARCH_DIR ${PARAMS_SEARCH_DIR})
-        file(GLOB_RECURSE INPUT_HEADER_FILES "${SEARCH_DIR}/*.h")
-        foreach (INPUT_HEADER_FILE ${INPUT_HEADER_FILES})
-            string(REPLACE "${CMAKE_SOURCE_DIR}/" "" TEMP ${INPUT_HEADER_FILE})
-            get_filename_component(DIR ${TEMP} DIRECTORY)
-            get_filename_component(FILENAME ${TEMP} NAME_WE)
+    foreach (search_dir ${arg_SEARCH_DIR})
+        file(GLOB_RECURSE input_header_files "${search_dir}/*.h")
+        foreach (input_header_file ${input_header_files})
+            string(REPLACE "${CMAKE_SOURCE_DIR}/" "" temp ${input_header_file})
+            get_filename_component(dir ${temp} DIRECTORY)
+            get_filename_component(filename ${temp} NAME_WE)
 
-            set(OUTPUT_SOURCE "${CMAKE_BINARY_DIR}/Generated/MirrorInfoSource/${DIR}/${FILENAME}.generated.cpp")
-            list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
+            set(output_source "${CMAKE_BINARY_DIR}/Generated/MirrorInfoSource/${dir}/${filename}.generated.cpp")
+            list(APPEND output_sources ${output_source})
 
             add_custom_command(
-                OUTPUT ${OUTPUT_SOURCE}
-                COMMAND "$<TARGET_FILE:MirrorTool>" ${DYNAMIC_ARG} "-i" ${INPUT_HEADER_FILE} "-o" ${OUTPUT_SOURCE} ${INC_ARGS} ${FWK_DIR_ARGS}
-                DEPENDS MirrorTool ${INPUT_HEADER_FILE}
+                OUTPUT ${output_source}
+                COMMAND "$<TARGET_FILE:MirrorTool>" ${dynamic_arg} "-i" ${input_header_file} "-o" ${output_source} ${inc_args} ${fwk_dir_args}
+                DEPENDS MirrorTool ${input_header_file}
             )
         endforeach()
     endforeach ()
 
-    set(CUSTOM_TARGET_NAME "${PARAMS_NAME}.Generated")
+    set(custom_target_name "${arg_NAME}.Generated")
     add_custom_target(
-        ${CUSTOM_TARGET_NAME}
-        DEPENDS MirrorTool ${OUTPUT_SOURCES}
+        ${custom_target_name}
+        DEPENDS MirrorTool ${output_sources}
     )
-    set(${PARAMS_OUTPUT_SRC} ${OUTPUT_SOURCES} PARENT_SCOPE)
-    set(${PARAMS_OUTPUT_TARGET_NAME} ${CUSTOM_TARGET_NAME} PARENT_SCOPE)
+    set(${arg_OUTPUT_SRC} ${output_sources} PARENT_SCOPE)
+    set(${arg_OUTPUT_TARGET_NAME} ${custom_target_name} PARENT_SCOPE)
 
-    if (DEFINED PARAMS_LIB)
-        add_dependencies(${CUSTOM_TARGET_NAME} ${PARAMS_LIB})
+    if (DEFINED arg_LIB)
+        add_dependencies(${custom_target_name} ${arg_LIB})
     endif()
 endfunction()
 
 function(exp_add_executable)
-    cmake_parse_arguments(PARAMS "SAMPLE;NOT_INSTALL" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES;REFLECT" ${ARGN})
+    set(options SAMPLE NOT_INSTALL)
+    set(singleValueArgs NAME)
+    set(multiValueArgs SRC INC LINK LIB DEP_TARGET RES REFLECT)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (${PARAMS_SAMPLE} AND (NOT ${BUILD_SAMPLE}))
+    if (${arg_SAMPLE} AND (NOT ${BUILD_SAMPLE}))
         return()
     endif()
 
-    if (${PARAMS_NOT_INSTALL})
-        set(NOT_INSTALL_FLAG NOT_INSTALL)
+    if (${arg_NOT_INSTALL})
+        set(not_install_flag NOT_INSTALL)
     else ()
-        set(NOT_INSTALL_FLAG "")
+        set(not_install_flag "")
     endif ()
 
-    if (DEFINED PARAMS_REFLECT)
+    if (DEFINED arg_REFLECT)
         exp_add_mirror_info_source_generation_target(
-            NAME ${PARAMS_NAME}
-            OUTPUT_SRC GENERATED_SRC
-            OUTPUT_TARGET_NAME GENERATED_TARGET
-            SEARCH_DIR ${PARAMS_REFLECT}
-            PRIVATE_INC ${PARAMS_INC}
-            LIB ${PARAMS_LIB}
+            NAME ${arg_NAME}
+            OUTPUT_SRC generated_src
+            OUTPUT_TARGET_NAME generated_target
+            SEARCH_DIR ${arg_REFLECT}
+            PRIVATE_INC ${arg_INC}
+            LIB ${arg_LIB}
         )
     endif()
 
-    add_executable(${PARAMS_NAME})
+    add_executable(${arg_NAME})
     target_sources(
-        ${PARAMS_NAME}
-        PRIVATE ${PARAMS_SRC} ${GENERATED_SRC}
+        ${arg_NAME}
+        PRIVATE ${arg_SRC} ${generated_src}
     )
+    get_cmake_property(generated_is_multi_config GENERATOR_IS_MULTI_CONFIG)
+    if (${generated_is_multi_config})
+        set(runtime_output_dir ${CMAKE_BINARY_DIR}/Dist/$<CONFIG>/${SUB_PROJECT_NAME}/Binaries)
+    else ()
+        set(runtime_output_dir ${CMAKE_BINARY_DIR}/Dist/${SUB_PROJECT_NAME}/Binaries)
+    endif ()
+    set_target_properties(
+        ${arg_NAME} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${runtime_output_dir}
+    )
+
     target_include_directories(
-        ${PARAMS_NAME}
-        PRIVATE ${PARAMS_INC}
+        ${arg_NAME}
+        PRIVATE ${arg_INC}
     )
     target_link_directories(
-        ${PARAMS_NAME}
-        PRIVATE ${PARAMS_LINK}
+        ${arg_NAME}
+        PRIVATE ${arg_LINK}
     )
-    exp_link_basic_libs(
-        NAME ${PARAMS_NAME}
-        LIB ${BASIC_LIBS}
+    target_link_libraries(
+        ${arg_NAME}
+        PUBLIC ${arg_LIB}
     )
-    exp_link_libs(
-        NAME ${PARAMS_NAME}
-        LIB ${PARAMS_LIB}
-    )
-    exp_add_runtime_deps_copy_command(
-        NAME ${PARAMS_NAME}
-        ${NOT_INSTALL_FLAG}
+    exp_process_runtime_dependencies(
+        NAME ${arg_NAME}
+        DEP_TARGET ${arg_DEP_TARGET}
+        ${not_install_flag}
     )
     exp_add_resources_copy_command(
-        NAME ${PARAMS_NAME}
-        RES ${PARAMS_RES}
-        ${NOT_INSTALL_FLAG}
+        NAME ${arg_NAME}
+        RES ${arg_RES}
+        ${not_install_flag}
     )
-    if (DEFINED PARAMS_DEP_TARGET)
-        add_dependencies(${PARAMS_NAME} ${PARAMS_DEP_TARGET})
+    if (DEFINED arg_DEP_TARGET)
+        add_dependencies(${arg_NAME} ${arg_DEP_TARGET})
     endif()
-    if (DEFINED PARAMS_REFLECT)
-        add_dependencies(${PARAMS_NAME} ${GENERATED_TARGET})
+    if (DEFINED arg_REFLECT)
+        add_dependencies(${arg_NAME} ${generated_target})
     endif()
 
     if (${MSVC})
-        set_target_properties(${PARAMS_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+        set_target_properties(
+            ${arg_NAME} PROPERTIES
+            VS_DEBUGGER_WORKING_DIRECTORY ${runtime_output_dir}
+        )
     endif()
 
-    if (NOT ${PARAMS_NOT_INSTALL})
+    if (NOT ${arg_NOT_INSTALL})
         install(
-            TARGETS ${PARAMS_NAME}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+            TARGETS ${arg_NAME}
+            EXPORT ${SUB_PROJECT_NAME}Targets
+            RUNTIME DESTINATION ${SUB_PROJECT_NAME}/Binaries
         )
 
         if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-            install(CODE "execute_process(COMMAND install_name_tool -add_rpath @executable_path ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/$<TARGET_FILE_NAME:${PARAMS_NAME}>)")
+            install(CODE "execute_process(COMMAND install_name_tool -add_rpath @executable_path ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries/$<TARGET_FILE_NAME:${arg_NAME}>)")
         endif ()
     endif ()
 endfunction()
 
 function(exp_add_library)
-    cmake_parse_arguments(PARAMS "NOT_INSTALL" "NAME;TYPE" "SRC;PRIVATE_INC;PUBLIC_INC;PRIVATE_LINK;LIB;REFLECT" ${ARGN})
+    set(options NOT_INSTALL)
+    set(singleValueArgs NAME TYPE)
+    set(multiValueArgs SRC PRIVATE_INC PUBLIC_INC PRIVATE_LINK PUBLIC_LINK PRIVATE_LIB PUBLIC_LIB PRIVATE_MERGE_LIB PUBLIC_MERGE_LIB REFLECT)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if ("${PARAMS_TYPE}" STREQUAL "SHARED")
-        list(APPEND PARAMS_PUBLIC_INC ${API_HEADER_DIR}/${PARAMS_NAME})
+    if ("${arg_TYPE}" STREQUAL "SHARED")
+        list(APPEND arg_PUBLIC_INC ${API_HEADER_DIR}/${arg_NAME})
     endif ()
 
-    if (DEFINED PARAMS_REFLECT)
-        if ("${PARAMS_TYPE}" STREQUAL "SHARED")
-            list(APPEND EXTRA_PARAMS DYNAMIC)
+    if (DEFINED arg_REFLECT)
+        if ("${arg_TYPE}" STREQUAL "SHARED")
+            list(APPEND extra_params DYNAMIC)
         endif ()
 
         exp_add_mirror_info_source_generation_target(
-            NAME ${PARAMS_NAME}
-            OUTPUT_SRC GENERATED_SRC
-            OUTPUT_TARGET_NAME GENERATED_TARGET
-            SEARCH_DIR ${PARAMS_REFLECT}
-            PUBLIC_INC ${PARAMS_PUBLIC_INC}
-            PRIVATE_INC ${PARAMS_PRIVATE_INC}
-            LIB ${PARAMS_LIB}
-            ${EXTRA_PARAMS}
+            NAME ${arg_NAME}
+            OUTPUT_SRC generated_src
+            OUTPUT_TARGET_NAME generated_target
+            SEARCH_DIR ${arg_REFLECT}
+            PUBLIC_INC ${arg_PUBLIC_INC}
+            PRIVATE_INC ${arg_PRIVATE_INC}
+            LIB ${arg_PRIVATE_LIB} ${arg_PUBLIC_LIB}
+            ${extra_params}
         )
     endif()
 
     add_library(
-        ${PARAMS_NAME}
-        ${PARAMS_TYPE}
+        ${arg_NAME}
+        ${arg_TYPE}
     )
     target_sources(
-        ${PARAMS_NAME}
-        PRIVATE ${PARAMS_SRC} ${GENERATED_SRC}
+        ${arg_NAME}
+        PRIVATE ${arg_SRC} ${generated_src}
     )
+    get_cmake_property(generator_is_multi_config GENERATOR_IS_MULTI_CONFIG)
+    if (${generator_is_multi_config})
+        set(runtime_output_dir ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${arg_NAME}/$<CONFIG>/Binaries)
+        set(library_output_dir ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${arg_NAME}/$<CONFIG>/Binaries)
+        set(archive_output_directory ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${arg_NAME}/$<CONFIG>/Lib)
+    else ()
+        set(runtime_output_dir ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${arg_NAME}/Binaries)
+        set(library_output_dir ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${arg_NAME}/Binaries)
+        set(archive_output_directory ${CMAKE_BINARY_DIR}/Targets/${SUB_PROJECT_NAME}/${arg_NAME}/Lib)
+    endif ()
+    set_target_properties(
+        ${arg_NAME} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${runtime_output_dir}
+        LIBRARY_OUTPUT_DIRECTORY ${library_output_dir}
+        ARCHIVE_OUTPUT_DIRECTORY ${archive_output_directory}
+    )
+
+    foreach (inc ${arg_PUBLIC_INC})
+        list(APPEND public_inc ${inc})
+    endforeach ()
+    foreach (lib ${arg_PUBLIC_MERGE_LIB})
+        if (TARGET ${lib})
+            get_target_property(target_incs ${lib} INTERFACE_INCLUDE_DIRECTORIES)
+            if (NOT ("${target_incs}" STREQUAL "target_incs-NOTFOUND"))
+                foreach(target_inc ${target_incs})
+                    list(APPEND public_inc ${target_inc})
+                endforeach()
+            endif()
+        endif ()
+    endforeach ()
+
+    foreach (inc ${public_inc})
+        get_filename_component(absolute_inc ${inc} ABSOLUTE)
+        list(APPEND public_build_inc $<BUILD_INTERFACE:${absolute_inc}>)
+    endforeach ()
     target_include_directories(
-        ${PARAMS_NAME}
-        PRIVATE ${PARAMS_PRIVATE_INC}
-        PUBLIC ${PARAMS_PUBLIC_INC}
+        ${arg_NAME}
+        PRIVATE ${arg_PRIVATE_INC}
+        PUBLIC ${public_build_inc} $<INSTALL_INTERFACE:${SUB_PROJECT_NAME}/Target/${arg_NAME}/Include>
     )
+
     target_link_directories(
-        ${PARAMS_NAME}
-        PRIVATE ${PARAMS_PRIVATE_LINK}
-        PUBLIC ${PARAMS_PUBLIC_LINK}
+        ${arg_NAME}
+        PRIVATE ${arg_PRIVATE_LINK}
+        PUBLIC ${arg_PUBLIC_LINK}
     )
-    exp_link_basic_libs(
-        NAME ${PARAMS_NAME}
-        LIB ${BASIC_LIBS}
+
+    foreach (lib ${arg_PRIVATE_MERGE_LIB})
+        list(APPEND merge_lib ${lib})
+    endforeach ()
+    foreach (lib ${arg_PUBLIC_MERGE_LIB})
+        list(APPEND merge_lib ${lib})
+    endforeach ()
+
+    foreach (lib ${merge_lib})
+        list(APPEND build_merge_lib $<BUILD_INTERFACE:${lib}>)
+
+        exp_gather_target_runtime_dependencies_recurse(
+            NAME ${lib}
+            OUT_RUNTIME_DEP temp_runtime_dep
+        )
+        list(APPEND runtime_dep ${temp_runtime_dep})
+    endforeach ()
+    target_link_libraries(
+        ${arg_NAME}
+        PRIVATE ${build_merge_lib}
+        PUBLIC ${arg_PUBLIC_LIB}
     )
-    exp_link_libs(
-        NAME ${PARAMS_NAME}
-        LIB ${PARAMS_LIB}
-    )
+
+    if (DEFINED runtime_dep)
+        foreach (r ${runtime_dep})
+            get_filename_component(FILE_NAME ${r} NAME)
+            list(APPEND commands COMMAND ${CMAKE_COMMAND} -E copy_if_different ${r} ${runtime_output_dir}/${FILE_NAME})
+            list(APPEND runtime_dep_files $<TARGET_BIN_DIR>/${FILE_NAME})
+        endforeach ()
+        add_custom_command(
+            TARGET ${arg_NAME} POST_BUILD
+            ${commands}
+        )
+
+        # workaround to make EXPORT_PROPERTIES support generator expression
+        string(REPLACE "$<" "[" runtime_dep_files "${runtime_dep_files}")
+        string(REPLACE ">" "]" runtime_dep_files "${runtime_dep_files}")
+        set_target_properties(
+            ${arg_NAME} PROPERTIES
+            EXPORT_PROPERTIES "runtime_dep"
+            RUNTIME_DEP "${runtime_dep_files}"
+        )
+    endif ()
 
     if (${MSVC})
         target_compile_options(
-            ${PARAMS_NAME}
-            PUBLIC /MD$<$<CONFIG:Debug>:d>
+            ${arg_NAME}
+            PRIVATE /MD$<$<CONFIG:Debug>:d>
         )
     endif()
 
-    if ("${PARAMS_TYPE}" STREQUAL "SHARED")
-        string(TOUPPER ${PARAMS_NAME}_API API_NAME)
-        string(REPLACE "-" "/" API_DIR ${PARAMS_NAME})
+    if ("${arg_TYPE}" STREQUAL "SHARED")
+        string(TOUPPER ${arg_NAME}_API api_name)
+        string(REPLACE "-" "/" api_dir ${arg_NAME})
 
         generate_export_header(
-            ${PARAMS_NAME}
-            EXPORT_MACRO_NAME ${API_NAME}
-            EXPORT_FILE_NAME ${API_HEADER_DIR}/${PARAMS_NAME}/${API_DIR}/Api.h
+            ${arg_NAME}
+            EXPORT_MACRO_NAME ${api_name}
+            EXPORT_FILE_NAME ${API_HEADER_DIR}/${arg_NAME}/${api_dir}/Api.h
         )
     endif()
 
-    if (DEFINED PARAMS_REFLECT)
-        add_dependencies(${PARAMS_NAME} ${GENERATED_TARGET})
+    if (DEFINED arg_REFLECT)
+        add_dependencies(${arg_NAME} ${generated_target})
     endif()
 
-    if (NOT ${PARAMS_NOT_INSTALL})
-        foreach (INC ${PARAMS_PUBLIC_INC})
-            get_filename_component(ABSOLUTE_INC ${INC} ABSOLUTE)
-            file(GLOB_RECURSE PUBLIC_HEADERS ${ABSOLUTE_INC}/*.h)
-            target_sources(
-                ${PARAMS_NAME}
-                PUBLIC FILE_SET HEADERS
-                BASE_DIRS ${ABSOLUTE_INC} FILES ${PUBLIC_HEADERS}
-            )
+    if (NOT ${arg_NOT_INSTALL})
+        foreach (inc ${public_inc})
+            list(APPEND install_inc ${inc}/)
         endforeach ()
+        install(
+            DIRECTORY ${install_inc}
+            DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Include
+        )
 
-        if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" OR "${PARAMS_TYPE}" STREQUAL "STATIC")
+        if (DEFINED runtime_dep)
             install(
-                TARGETS ${PARAMS_NAME}
-                FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Include
-                ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Lib
-                LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Lib
-                RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+                FILES ${runtime_dep}
+                DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Binaries
             )
         endif ()
 
-        if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" AND "${PARAMS_TYPE}" STREQUAL "SHARED")
+        install(
+            TARGETS ${arg_NAME}
+            EXPORT ${SUB_PROJECT_NAME}Targets
+            ARCHIVE DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Lib
+            LIBRARY DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Lib
+            RUNTIME DESTINATION ${SUB_PROJECT_NAME}/Binaries
+        )
+        if ("${arg_TYPE}" STREQUAL "SHARED")
             install(
-                FILES $<TARGET_FILE:${PARAMS_NAME}>
-                DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+                FILES $<TARGET_FILE:${arg_NAME}>
+                DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Binaries
             )
         endif ()
     endif ()
@@ -496,59 +527,79 @@ function(exp_add_test)
         return()
     endif()
 
-    cmake_parse_arguments(PARAMS "META" "NAME" "SRC;INC;LINK;LIB;DEP_TARGET;RES;REFLECT" ${ARGN})
+    set(options META)
+    set(singleValueArgs NAME)
+    set(multiValueArgs SRC INC LINK LIB DEP_TARGET RES REFLECT)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (DEFINED PARAMS_REFLECT)
+    if (DEFINED arg_REFLECT)
         exp_add_mirror_info_source_generation_target(
-            NAME ${PARAMS_NAME}
-            OUTPUT_SRC GENERATED_SRC
-            OUTPUT_TARGET_NAME GENERATED_TARGET
-            SEARCH_DIR ${PARAMS_REFLECT}
-            PRIVATE_INC ${PARAMS_INC}
-            LIB ${PARAMS_LIB} ${BASIC_LIBS} ${BASIC_TEST_LIBS}
+            NAME ${arg_NAME}
+            OUTPUT_SRC generated_src
+            OUTPUT_TARGET_NAME generated_target
+            SEARCH_DIR ${arg_REFLECT}
+            PRIVATE_INC ${arg_INC}
+            LIB ${arg_LIB}
         )
     endif()
 
-    add_executable(${PARAMS_NAME})
+    add_executable(${arg_NAME})
     target_sources(
-        ${PARAMS_NAME}
-        PRIVATE ${PARAMS_SRC} ${GENERATED_SRC}
+        ${arg_NAME}
+        PRIVATE ${arg_SRC} ${generated_src}
     )
+    get_cmake_property(generator_is_multi_config GENERATOR_IS_MULTI_CONFIG)
+    if (${generator_is_multi_config})
+        set_target_properties(
+            ${arg_NAME} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Dist/$<CONFIG>/${SUB_PROJECT_NAME}/Binaries
+        )
+    else ()
+        set_target_properties(
+            ${arg_NAME} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Dist/${SUB_PROJECT_NAME}/Binaries
+        )
+    endif ()
+
     target_include_directories(
-        ${PARAMS_NAME}
-        PRIVATE ${PARAMS_INC}
+        ${arg_NAME}
+        PRIVATE ${arg_INC}
     )
     target_link_directories(
-        ${PARAMS_NAME}
-        PRIVATE ${PARAMS_LINK}
+        ${arg_NAME}
+        PRIVATE ${arg_LINK}
     )
-    exp_link_basic_libs(
-        NAME ${PARAMS_NAME}
-        LIB ${BASIC_LIBS} ${BASIC_TEST_LIBS}
+    target_link_libraries(
+        ${arg_NAME}
+        PRIVATE Test ${arg_LIB}
     )
-    exp_link_libs(
-        NAME ${PARAMS_NAME}
-        LIB ${PARAMS_LIB}
-    )
-    exp_add_runtime_deps_copy_command(
-        NAME ${PARAMS_NAME}
+    exp_process_runtime_dependencies(
+        NAME ${arg_NAME}
+        DEP_TARGET ${arg_DEP_TARGET}
         NOT_INSTALL
     )
     exp_add_resources_copy_command(
-        NAME ${PARAMS_NAME}
-        RES ${PARAMS_RES}
+        NAME ${arg_NAME}
+        RES ${arg_RES}
         NOT_INSTALL
     )
-    if (DEFINED PARAMS_DEP_TARGET)
-        add_dependencies(${PARAMS_NAME} ${PARAMS_DEP_TARGET})
+    if (DEFINED arg_DEP_TARGET)
+        add_dependencies(${arg_NAME} ${arg_DEP_TARGET})
     endif()
-    if (DEFINED PARAMS_REFLECT)
-        add_dependencies(${PARAMS_NAME} ${GENERATED_TARGET})
+    if (DEFINED arg_REFLECT)
+        add_dependencies(${arg_NAME} ${generated_target})
     endif()
 
     add_test(
-        NAME ${PARAMS_NAME}
-        COMMAND ${PARAMS_NAME}
-        WORKING_DIRECTORY $<TARGET_FILE_DIR:${PARAMS_NAME}>
+        NAME ${arg_NAME}
+        COMMAND ${arg_NAME}
+        WORKING_DIRECTORY $<TARGET_FILE_DIR:${arg_NAME}>
     )
 endfunction()
+
+install(
+    EXPORT ${SUB_PROJECT_NAME}Targets
+    FILE ${SUB_PROJECT_NAME}Targets.cmake
+    NAMESPACE ${SUB_PROJECT_NAME}::
+    DESTINATION ${SUB_PROJECT_NAME}/CMake
+)

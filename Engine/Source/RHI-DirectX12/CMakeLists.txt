@@ -4,5 +4,6 @@ exp_add_library(
     TYPE SHARED
     SRC ${SOURCES}
     PUBLIC_INC Include
-    LIB RHI DirectXHeaders d3d12 dxgi d3dcompiler
+    PUBLIC_LIB RHI d3d12
+    PUBLIC_MERGE_LIB DirectXHeaders dxgi d3dcompiler
 )

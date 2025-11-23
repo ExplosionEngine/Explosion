@@ -15,7 +15,8 @@ exp_add_library(
     TYPE SHARED
     SRC ${SOURCES} ${PLATFORM_SOURCES}
     PUBLIC_INC Include
-    LIB RHI VulkanSDK spirv-cross VulkanMemoryAllocator ${PLATFORM_EXT_LIBS}
+    PUBLIC_LIB RHI ${PLATFORM_EXT_LIBS}
+    PUBLIC_MERGE_LIB VulkanSDK spirv-cross VulkanMemoryAllocator
 )
 
 # .mm files can not perform unity build with .cpp files

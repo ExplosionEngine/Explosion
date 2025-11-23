@@ -5,7 +5,8 @@ exp_add_library(
     SRC ${SOURCES}
     PUBLIC_INC Include
     REFLECT Include
-    LIB Core Mirror assimp-lib Render
+    PUBLIC_LIB Core Mirror Render
+    PUBLIC_MERGE_LIB assimp-lib
 )
 
 file(GLOB TEST_SOURCES Test/*.cpp)
@@ -15,4 +16,5 @@ exp_add_test(
     LIB Runtime
     INC Test
     REFLECT Test
+    DEP_TARGET RHI-Dummy
 )

@@ -9,7 +9,7 @@ qt_standard_project_setup(REQUIRES ${QT_VERSION})
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(PLATFORM_EXECUTABLE_HINT MACOSX_BUNDLE)
-    set(BUNDLE_INSTALL_DESTINATION BUNDLE DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries)
+    set(BUNDLE_INSTALL_DESTINATION BUNDLE DESTINATION ${CMAKE_INSTALL_PREFIX}/${ENGINE_SUB_PROJECT_NAME}/Binaries)
     set(PLATFORM_FRAMEWORK_DIR ${QT_LIB_PREFIX}/lib)
 endif ()
 
@@ -34,11 +34,22 @@ exp_add_mirror_info_source_generation_target(
 
 file(GLOB_RECURSE SOURCES Src/*.cpp)
 qt_add_executable(Editor ${PLATFORM_EXECUTABLE_HINT} ${SOURCES} ${EDITOR_MIRROR_GENERATED_SRC})
+
+get_cmake_property(GENERATOR_IS_MULTI_CONFIG GENERATOR_IS_MULTI_CONFIG)
+if (${GENERATOR_IS_MULTI_CONFIG})
+    set_target_properties(
+        Editor PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Dist/$<CONFIG>/${SUB_PROJECT_NAME}/Binaries
+    )
+else ()
+    set_target_properties(
+        Editor PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Dist/${SUB_PROJECT_NAME}/Binaries
+    )
+endif ()
+
 target_include_directories(Editor PRIVATE ${EDITOR_INCLUDES})
-exp_link_libs(
-    NAME Editor
-    LIB ${EDITOR_LIBS}
-)
+target_link_libraries(Editor PRIVATE ${EDITOR_LIBS})
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(RHI_DEP_TARGETS RHI-DirectX12 RHI-Vulkan)
@@ -47,12 +58,12 @@ else()
 endif()
 add_dependencies(Editor ${EDITOR_MIRROR_GENERATED_TARGET} ${RHI_DEP_TARGETS})
 
-exp_add_runtime_deps_copy_command(
+exp_process_runtime_dependencies(
     NAME Editor
 )
 install(
     TARGETS Editor
-    RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/Engine/Binaries
+    RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/${ENGINE_SUB_PROJECT_NAME}/Binaries
     ${BUNDLE_INSTALL_DESTINATION}
 )
 
@@ -67,24 +78,24 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources.pak ${QT_LIB_PREFIX}/resources/qtwebengine_resources.debug.pak
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.pak ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.debug.pak
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_200p.pak ${QT_LIB_PREFIX}/resources/qtwebengine_resources_200p.debug.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_devtools_resources.pak ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/qtwebengine_devtools_resources.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources.pak ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/qtwebengine_resources.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.pak ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/qtwebengine_resources_100p.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_200p.pak ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/qtwebengine_resources_200p.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_devtools_resources.pak $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/resources/qtwebengine_devtools_resources.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources.pak $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/resources/qtwebengine_resources.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.pak $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/resources/qtwebengine_resources_100p.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_200p.pak $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/resources/qtwebengine_resources_200p.pak
         # -- QT 6.9.1 Temporal Fix End
         COMMAND ${QT_WIN_DEPLOY_EXECUTABLE} $<TARGET_FILE:Editor>
     )
     install(
-        CODE "execute_process(COMMAND ${QT_WIN_DEPLOY_EXECUTABLE} ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/$<TARGET_FILE_NAME:Editor>)"
+        CODE "execute_process(COMMAND ${QT_WIN_DEPLOY_EXECUTABLE} ${CMAKE_INSTALL_PREFIX}/${ENGINE_SUB_PROJECT_NAME}/Binaries/$<TARGET_FILE_NAME:Editor>)"
     )
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(QT_MAC_DEPLOY_EXECUTABLE ${QT_LIB_PREFIX}/bin/macdeployqt)
     add_custom_command(
         TARGET Editor POST_BUILD
-        COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Editor.app -no-strip
+        COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/Editor.app -no-strip
     )
     install(
-        CODE "execute_process(COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/Editor.app -no-strip)"
+        CODE "execute_process(COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_INSTALL_PREFIX}/${ENGINE_SUB_PROJECT_NAME}/Binaries/Editor.app -no-strip)"
     )
 endif ()
 
@@ -100,10 +111,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 endif ()
 
 # ---- begin shaders ---------------------------------------------------------------------------------
-get_engine_shader_resources(
-    NAME Editor
-    OUTPUT EDITOR_RESOURCES
-)
+get_engine_shader_resources(OUTPUT EDITOR_RESOURCES)
 
 file(GLOB_RECURSE SHADERS Shader/*.es*)
 foreach (SHADER ${SHADERS})
@@ -126,43 +134,10 @@ exp_add_resources_copy_command(
 # ---- end shaders -----------------------------------------------------------------------------------
 
 # ---- begin web project -----------------------------------------------------------------------------
-set(NODEJS_HOME ${3RD_SOURCE_DIR}/Nodejs-${CMAKE_SYSTEM_NAME}-${NODEJS_VERSION})
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set(NODEJS_PATH ${NODEJS_HOME})
-    set(NPM_EXECUTABLE npm.cmd)
-elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    set(NODEJS_BIN_PATH ${NODEJS_HOME}/bin)
-    set(NODEJS_MODULES_PATH ${NODEJS_HOME}/lib/node_modules)
-    file(REMOVE ${NODEJS_BIN_PATH}/corepack)
-    file(REMOVE ${NODEJS_BIN_PATH}/npm)
-    file(REMOVE ${NODEJS_BIN_PATH}/npx)
-    execute_process(
-        COMMAND ln -s ${NODEJS_MODULES_PATH} ${NODEJS_BIN_PATH}/node_modules
-        RESULT_VARIABLE LINK_RESULT
-        OUTPUT_VARIABLE LINK_OUTPUT
-        ERROR_VARIABLE LINK_ERROR
-    )
-    execute_process(
-        COMMAND ln -s ${NODEJS_MODULES_PATH}/npm/bin/npm ${NODEJS_BIN_PATH}/npm
-        RESULT_VARIABLE LINK_RESULT
-        OUTPUT_VARIABLE LINK_OUTPUT
-        ERROR_VARIABLE LINK_ERROR
-    )
-    execute_process(
-        COMMAND ln -s ${NODEJS_MODULES_PATH}/npm/bin/npx ${NODEJS_BIN_PATH}/npx
-        RESULT_VARIABLE LINK_RESULT
-        OUTPUT_VARIABLE LINK_OUTPUT
-        ERROR_VARIABLE LINK_ERROR
-    )
-    set(NODEJS_PATH "$ENV{PATH}:${NODEJS_BIN_PATH}")
-    set(NPM_EXECUTABLE npm)
-else ()
-    message(FATAL_ERROR "Unsupported OS")
-endif ()
-
+find_program(NPM_EXECUTABLE NAMES npm.cmd npm REQUIRED NO_CACHE)
 message("Perform web project npm install......")
 execute_process(
-    COMMAND ${CMAKE_COMMAND} -E env PATH=${NODEJS_PATH} ${NPM_EXECUTABLE} install --no-fund --registry=https://registry.npmmirror.com
+    COMMAND ${CMAKE_COMMAND} -E env ${NPM_EXECUTABLE} install --no-fund --registry=https://registry.npmmirror.com
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Web
     RESULT_VARIABLE NPM_INSTALL_RESULT
     OUTPUT_VARIABLE NPM_INSTALL_OUTPUT
@@ -176,7 +151,7 @@ endif ()
 
 add_custom_target(
     Editor.Web
-    COMMAND ${CMAKE_COMMAND} -E env PATH=${NODEJS_PATH} ${NPM_EXECUTABLE} run build
+    COMMAND ${CMAKE_COMMAND} -E env ${NPM_EXECUTABLE} run build
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Web
     VERBATIM
 )
@@ -187,6 +162,6 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${CMAKE_CURRENT_SOURCE_DIR}/Web/dist $<TARGET_FILE_DIR:Editor>/Web
 )
 if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${CMAKE_CURRENT_SOURCE_DIR}/Web/dist ${CMAKE_INSTALL_PREFIX}/Engine/Binaries/Web)")
+    install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${CMAKE_CURRENT_SOURCE_DIR}/Web/dist ${CMAKE_INSTALL_PREFIX}/${ENGINE_SUB_PROJECT_NAME}/Binaries/Web)")
 endif ()
 # ---- end web project -------------------------------------------------------------------------------

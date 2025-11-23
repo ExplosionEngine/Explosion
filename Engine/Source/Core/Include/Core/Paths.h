@@ -41,8 +41,6 @@ namespace Core {
         static Common::Path GamePluginDir();
         static Common::Path GamePluginDir(const std::string& pluginName);
         static Common::Path GamePluginAssetDir(const std::string& pluginName);
-        static Common::Path EngineCMakeSourceDir();
-        static Common::Path EngineCMakeBinaryDir();
 #if BUILD_TEST
         static Common::Path EngineTestDir();
 #endif
