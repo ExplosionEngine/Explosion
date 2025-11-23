@@ -111,10 +111,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 endif ()
 
 # ---- begin shaders ---------------------------------------------------------------------------------
-get_engine_shader_resources(
-    NAME Editor
-    OUTPUT EDITOR_RESOURCES
-)
+get_engine_shader_resources(OUTPUT EDITOR_RESOURCES)
 
 file(GLOB_RECURSE SHADERS Shader/*.es*)
 foreach (SHADER ${SHADERS})

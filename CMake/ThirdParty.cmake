@@ -1,316 +1,337 @@
 function(exp_download_and_extract_3rd_package)
-    cmake_parse_arguments(PARAMS "" "URL;SAVE_AS;EXTRACT_TO" "ARG;HASH" ${ARGN})
+    set(options "")
+    set(singleValueArgs URL SAVE_AS EXTRACT_TO)
+    set(multiValueArgs HASH)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (EXISTS ${PARAMS_SAVE_AS})
-        message("found downloaded file for ${PARAMS_URL} -> ${PARAMS_SAVE_AS}")
+    if (EXISTS ${arg_SAVE_AS})
+        message("found downloaded file for ${arg_URL} -> ${arg_SAVE_AS}")
     else()
-        message("starting download package ${PARAMS_URL}")
+        message("starting download package ${arg_URL}")
         file(
             DOWNLOAD
-            ${PARAMS_URL} ${PARAMS_SAVE_AS}
+            ${arg_URL} ${arg_SAVE_AS}
             SHOW_PROGRESS
         )
     endif()
 
-    if (DEFINED PARAMS_HASH)
+    if (DEFINED arg_HASH)
         exp_get_3rd_platform_value(
-            OUTPUT PLATFORM_HASH
-            INPUT ${PARAMS_HASH}
+            OUTPUT platform_hash
+            INPUT ${arg_HASH}
         )
 
-        file(SHA256 ${PARAMS_SAVE_AS} HASH_VALUE)
-        if (NOT (${PLATFORM_HASH} STREQUAL ${HASH_VALUE}))
-            message(FATAL_ERROR "check hash value failed for file ${PARAMS_SAVE_AS}, given ${PLATFORM_HASH} actual ${HASH_VALUE}")
+        file(SHA256 ${arg_SAVE_AS} hash_value)
+        if (NOT (${platform_hash} STREQUAL ${hash_value}))
+            message(FATAL_ERROR "check hash value failed for file ${arg_SAVE_AS}, given ${platform_hash} actual ${hash_value}")
         endif ()
     endif()
 
-    if (NOT EXISTS ${PARAMS_EXTRACT_TO})
+    if (NOT EXISTS ${arg_EXTRACT_TO})
         file(
             ARCHIVE_EXTRACT
-            INPUT ${PARAMS_SAVE_AS}
-            DESTINATION ${PARAMS_EXTRACT_TO}
+            INPUT ${arg_SAVE_AS}
+            DESTINATION ${arg_EXTRACT_TO}
         )
     endif()
 endfunction()
 
 function(exp_expand_3rd_path_expression)
-    cmake_parse_arguments(PARAMS "" "OUTPUT;SOURCE_DIR;BINARY_DIR;INSTALL_DIR" "INPUT" ${ARGN})
+    set(options "")
+    set(singleValueArgs OUTPUT SOURCE_DIR BINARY_DIR INSTALL_DIR)
+    set(multiValueArgs INPUT)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    foreach(I ${PARAMS_INPUT})
-        set(TEMP "${I}")
-        if (DEFINED PARAMS_SOURCE_DIR)
-            string(REPLACE "$<SOURCE_DIR>" ${PARAMS_SOURCE_DIR} TEMP ${TEMP})
+    foreach(i ${arg_INPUT})
+        set(temp "${i}")
+        if (DEFINED arg_SOURCE_DIR)
+            string(REPLACE "$<SOURCE_DIR>" ${arg_SOURCE_DIR} temp ${temp})
         endif()
-        if (DEFINED PARAMS_BINARY_DIR)
-            string(REPLACE "$<BINARY_DIR>" ${PARAMS_BINARY_DIR} TEMP ${TEMP})
+        if (DEFINED arg_BINARY_DIR)
+            string(REPLACE "$<BINARY_DIR>" ${arg_BINARY_DIR} temp ${temp})
         endif()
-        if (DEFINED PARAMS_INSTALL_DIR)
-            string(REPLACE "$<INSTALL_DIR>" ${PARAMS_INSTALL_DIR} TEMP ${TEMP})
+        if (DEFINED arg_INSTALL_DIR)
+            string(REPLACE "$<INSTALL_DIR>" ${arg_INSTALL_DIR} temp ${temp})
         endif()
-        list(APPEND RESULT ${TEMP})
+        list(APPEND result ${temp})
     endforeach()
 
-    set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
+    set(${arg_OUTPUT} ${result} PARENT_SCOPE)
 endfunction()
 
 function(exp_get_3rd_platform_value)
-    cmake_parse_arguments(PARAMS "" "OUTPUT" "INPUT" ${ARGN})
+    set(options "")
+    set(singleValueArgs OUTPUT)
+    set(multiValueArgs INPUT)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    set(PLATFORM_KEYWORDS "Windows;Darwin;Linux")
+    set(platform_keywords "Windows;Darwin;Linux")
 
-    set(HAS_KEYWORDS FALSE)
-    foreach (I ${PARAMS_INPUT})
-        foreach (K ${PLATFORM_KEYWORDS})
-            if (${I} STREQUAL ${K})
-                set(HAS_KEYWORDS TRUE)
+    set(has_keywords FALSE)
+    foreach (i ${arg_INPUT})
+        foreach (k ${platform_keywords})
+            if (${i} STREQUAL ${k})
+                set(has_keywords TRUE)
                 break()
             endif()
         endforeach()
 
-        if (${HAS_KEYWORDS})
+        if (${has_keywords})
             break()
         endif()
     endforeach()
 
-    set(START_LOG FALSE)
-    foreach (I ${PARAMS_INPUT})
-        if ((NOT ${START_LOG}) AND (${I} STREQUAL ${CMAKE_SYSTEM_NAME}))
-            set(START_LOG TRUE)
+    set(start_log FALSE)
+    foreach (i ${arg_INPUT})
+        if ((NOT ${start_log}) AND (${i} STREQUAL ${CMAKE_SYSTEM_NAME}))
+            set(start_log TRUE)
             continue()
         endif()
 
-        if (NOT ${START_LOG})
+        if (NOT ${start_log})
             continue()
         endif()
 
-        set(END_LOG FALSE)
-        foreach (K ${PLATFORM_KEYWORDS})
-            if (${K} STREQUAL ${I})
-                set(END_LOG TRUE)
+        set(end_log FALSE)
+        foreach (k ${platform_keywords})
+            if (${k} STREQUAL ${i})
+                set(end_log TRUE)
                 break()
             endif()
         endforeach()
 
-        if (${END_LOG})
+        if (${end_log})
             break()
         endif()
 
-        list(APPEND RESULT ${I})
+        list(APPEND result ${i})
     endforeach ()
 
-    if (${HAS_KEYWORDS})
-        set(${PARAMS_OUTPUT} ${RESULT} PARENT_SCOPE)
+    if (${has_keywords})
+        set(${arg_OUTPUT} ${result} PARENT_SCOPE)
     else()
-        set(${PARAMS_OUTPUT} ${PARAMS_INPUT} PARENT_SCOPE)
+        set(${arg_OUTPUT} ${arg_INPUT} PARENT_SCOPE)
     endif()
 endfunction()
 
 function(exp_add_3rd_header_only_package)
-    cmake_parse_arguments(PARAMS "" "NAME;SOURCE_DIR;INSTALL_DIR" "INSTALL_FILES;INCLUDE" ${ARGN})
+    set(options "")
+    set(singleValueArgs NAME SOURCE_DIR INSTALL_DIR)
+    set(multiValueArgs INSTALL_FILES INCLUDE)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    add_library(${PARAMS_NAME} INTERFACE)
+    add_library(${arg_NAME} INTERFACE)
 
-    if (DEFINED PARAMS_INSTALL_DIR AND DEFINED PARAMS_INSTALL_FILES)
-        foreach (INSTALL_FILE ${PARAMS_INSTALL_FILES})
-            if (IS_DIRECTORY ${PARAMS_SOURCE_DIR}/${INSTALL_FILE})
-                list(APPEND COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${PARAMS_SOURCE_DIR}/${INSTALL_FILE} ${PARAMS_INSTALL_DIR}/${INSTALL_FILE})
+    if (DEFINED arg_INSTALL_DIR AND DEFINED arg_INSTALL_FILES)
+        foreach (install_file ${arg_INSTALL_FILES})
+            if (IS_DIRECTORY ${arg_SOURCE_DIR}/${install_file})
+                list(APPEND commands COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${arg_SOURCE_DIR}/${install_file} ${arg_INSTALL_DIR}/${install_file})
             else ()
-                list(APPEND COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PARAMS_SOURCE_DIR}/${INSTALL_FILE} ${PARAMS_INSTALL_DIR}/${INSTALL_FILE})
+                list(APPEND commands COMMAND ${CMAKE_COMMAND} -E copy_if_different ${arg_SOURCE_DIR}/${install_file} ${arg_INSTALL_DIR}/${install_file})
             endif ()
         endforeach ()
 
         add_custom_target(
-            ${PARAMS_NAME}.Install
-            COMMAND ${COMMANDS}
+            ${arg_NAME}.Install
+            COMMAND ${commands}
         )
-        add_dependencies(${PARAMS_NAME} ${PARAMS_NAME}.Install)
+        add_dependencies(${arg_NAME} ${arg_NAME}.Install)
     endif ()
 
-    if (DEFINED PARAMS_INCLUDE)
+    if (DEFINED arg_INCLUDE)
         exp_expand_3rd_path_expression(
-            INPUT ${PARAMS_INCLUDE}
-            OUTPUT R_INCLUDE
-            SOURCE_DIR ${PARAMS_SOURCE_DIR}
-            INSTALL_DIR ${PARAMS_INSTALL_DIR}
+            INPUT ${arg_INCLUDE}
+            OUTPUT r_include
+            SOURCE_DIR ${arg_SOURCE_DIR}
+            INSTALL_DIR ${arg_INSTALL_DIR}
         )
         exp_get_3rd_platform_value(
-            OUTPUT P_INCLUDE
-            INPUT ${R_INCLUDE}
+            OUTPUT p_include
+            INPUT ${r_include}
         )
         target_include_directories(
-            ${PARAMS_NAME}
-            INTERFACE ${P_INCLUDE}
+            ${arg_NAME}
+            INTERFACE ${p_include}
         )
     endif ()
 endfunction()
 
 function(exp_add_3rd_binary_package)
-    cmake_parse_arguments(PARAMS "" "NAME;SOURCE_DIR" "INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
+    set(options "")
+    set(singleValueArgs NAME SOURCE_DIR)
+    set(multiValueArgs INCLUDE LINK LIB RUNTIME_DEP)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    add_library(${PARAMS_NAME} INTERFACE)
+    add_library(${arg_NAME} INTERFACE)
 
-    if (DEFINED PARAMS_INCLUDE)
+    if (DEFINED arg_INCLUDE)
         exp_expand_3rd_path_expression(
-            INPUT ${PARAMS_INCLUDE}
-            OUTPUT R_INCLUDE
-            SOURCE_DIR ${PARAMS_SOURCE_DIR}
+            INPUT ${arg_INCLUDE}
+            OUTPUT r_include
+            SOURCE_DIR ${arg_SOURCE_DIR}
         )
         exp_get_3rd_platform_value(
-            INPUT ${R_INCLUDE}
-            OUTPUT P_INCLUDE
+            INPUT ${r_include}
+            OUTPUT p_include
         )
         target_include_directories(
-            ${PARAMS_NAME}
-            INTERFACE ${P_INCLUDE}
+            ${arg_NAME}
+            INTERFACE ${p_include}
         )
     endif()
 
-    if (DEFINED PARAMS_LINK)
+    if (DEFINED arg_LINK)
         exp_expand_3rd_path_expression(
-            INPUT ${PARAMS_LINK}
-            OUTPUT R_LINK
-            SOURCE_DIR ${PARAMS_SOURCE_DIR}
+            INPUT ${arg_LINK}
+            OUTPUT r_link
+            SOURCE_DIR ${arg_SOURCE_DIR}
         )
         exp_get_3rd_platform_value(
-            INPUT ${R_LINK}
-            OUTPUT P_LINK
+            INPUT ${r_link}
+            OUTPUT p_link
         )
         target_link_directories(
-            ${PARAMS_NAME}
-            INTERFACE ${P_LINK}
+            ${arg_NAME}
+            INTERFACE ${p_link}
         )
     endif()
 
-    if (DEFINED PARAMS_LIB)
+    if (DEFINED arg_LIB)
         exp_expand_3rd_path_expression(
-            INPUT ${PARAMS_LIB}
-            OUTPUT R_LIB
-            SOURCE_DIR ${PARAMS_SOURCE_DIR}
+            INPUT ${arg_LIB}
+            OUTPUT r_lib
+            SOURCE_DIR ${arg_SOURCE_DIR}
         )
         exp_get_3rd_platform_value(
-            OUTPUT P_LIB
-            INPUT ${R_LIB}
+            OUTPUT p_lib
+            INPUT ${r_lib}
         )
         target_link_libraries(
-            ${PARAMS_NAME}
-            INTERFACE "${P_LIB}"
+            ${arg_NAME}
+            INTERFACE "${p_lib}"
         )
     endif()
 
-    if (DEFINED PARAMS_RUNTIME_DEP)
+    if (DEFINED arg_RUNTIME_DEP)
         exp_expand_3rd_path_expression(
-            INPUT ${PARAMS_RUNTIME_DEP}
-            OUTPUT R_RUNTIME_DEP
-            SOURCE_DIR ${PARAMS_SOURCE_DIR}
+            INPUT ${arg_RUNTIME_DEP}
+            OUTPUT r_runtime_dep
+            SOURCE_DIR ${arg_SOURCE_DIR}
         )
         exp_get_3rd_platform_value(
-            INPUT ${R_RUNTIME_DEP}
-            OUTPUT P_RUNTIME_DEP
+            INPUT ${r_runtime_dep}
+            OUTPUT p_runtime_dep
         )
         set_target_properties(
-            ${PARAMS_NAME} PROPERTIES
-            RUNTIME_DEP "${P_RUNTIME_DEP}"
+            ${arg_NAME} PROPERTIES
+            RUNTIME_DEP "${p_runtime_dep}"
         )
     endif()
 endfunction()
 
 function(exp_add_3rd_cmake_package)
-    cmake_parse_arguments(PARAMS "" "NAME;SOURCE_DIR;BINARY_DIR;INSTALL_DIR" "CMAKE_ARG;INCLUDE;LINK;LIB;RUNTIME_DEP" ${ARGN})
+    set(options "")
+    set(singleValueArgs NAME SOURCE_DIR BINARY_DIR INSTALL_DIR)
+    set(multiValueArgs CMAKE_ARG INCLUDE LINK LIB RUNTIME_DEP)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (NOT ${GENERATOR_IS_MULTI_CONFIG})
-        set(CMAKE_BUILD_TYPE_ARGS -DCMAKE_BUILD_TYPE=$<CONFIG>)
+    if (NOT ${generator_is_multi_config})
+        set(build_type_args -DCMAKE_BUILD_TYPE=$<CONFIG>)
     endif ()
 
     ExternalProject_Add(
-        ${PARAMS_NAME}.External
-        SOURCE_DIR ${PARAMS_SOURCE_DIR}
-        BINARY_DIR ${PARAMS_BINARY_DIR}
-        CMAKE_ARGS ${CMAKE_BUILD_TYPE_ARGS} -DCMAKE_INSTALL_PREFIX=${PARAMS_INSTALL_DIR} ${PARAMS_CMAKE_ARG}
+        ${arg_NAME}.External
+        SOURCE_DIR ${arg_SOURCE_DIR}
+        BINARY_DIR ${arg_BINARY_DIR}
+        CMAKE_ARGS ${build_type_args} -DCMAKE_INSTALL_PREFIX=${arg_INSTALL_DIR} ${arg_CMAKE_ARG}
         BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG> -j 16
         INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG>
     )
-    add_library(${PARAMS_NAME} INTERFACE)
-    add_dependencies(${PARAMS_NAME} ${PARAMS_NAME}.External)
+    add_library(${arg_NAME} INTERFACE)
+    add_dependencies(${arg_NAME} ${arg_NAME}.External)
 
-    if (DEFINED PARAMS_INCLUDE)
+    if (DEFINED arg_INCLUDE)
         exp_expand_3rd_path_expression(
-            INPUT ${PARAMS_INCLUDE}
-            OUTPUT R_INCLUDE
-            SOURCE_DIR ${PARAMS_SOURCE_DIR}
-            BINARY_DIR ${PARAMS_BINARY_DIR}
-            INSTALL_DIR ${PARAMS_INSTALL_DIR}
+            INPUT ${arg_INCLUDE}
+            OUTPUT r_include
+            SOURCE_DIR ${arg_SOURCE_DIR}
+            BINARY_DIR ${arg_BINARY_DIR}
+            INSTALL_DIR ${arg_INSTALL_DIR}
         )
         exp_get_3rd_platform_value(
-            INPUT ${R_INCLUDE}
-            OUTPUT P_INCLUDE
+            INPUT ${r_include}
+            OUTPUT p_include
         )
         target_include_directories(
-            ${PARAMS_NAME}
-            INTERFACE ${P_INCLUDE}
+            ${arg_NAME}
+            INTERFACE ${p_include}
         )
     endif()
 
-    if (DEFINED PARAMS_LINK)
+    if (DEFINED arg_LINK)
         exp_expand_3rd_path_expression(
-            INPUT ${PARAMS_LINK}
-            OUTPUT R_LINK
-            SOURCE_DIR ${PARAMS_SOURCE_DIR}
-            BINARY_DIR ${PARAMS_BINARY_DIR}
-            INSTALL_DIR ${PARAMS_INSTALL_DIR}
+            INPUT ${arg_LINK}
+            OUTPUT r_link
+            SOURCE_DIR ${arg_SOURCE_DIR}
+            BINARY_DIR ${arg_BINARY_DIR}
+            INSTALL_DIR ${arg_INSTALL_DIR}
         )
         exp_get_3rd_platform_value(
-            INPUT ${R_LINK}
-            OUTPUT P_LINK
+            INPUT ${r_link}
+            OUTPUT p_link
         )
         target_link_directories(
-            ${PARAMS_NAME}
-            INTERFACE ${P_LINK}
+            ${arg_NAME}
+            INTERFACE ${p_link}
         )
     endif()
 
-    if (DEFINED PARAMS_LIB)
+    if (DEFINED arg_LIB)
         exp_expand_3rd_path_expression(
-            INPUT ${PARAMS_LIB}
-            OUTPUT R_LIB
-            SOURCE_DIR ${PARAMS_SOURCE_DIR}
-            BINARY_DIR ${PARAMS_BINARY_DIR}
-            INSTALL_DIR ${PARAMS_INSTALL_DIR}
+            INPUT ${arg_LIB}
+            OUTPUT r_lib
+            SOURCE_DIR ${arg_SOURCE_DIR}
+            BINARY_DIR ${arg_BINARY_DIR}
+            INSTALL_DIR ${arg_INSTALL_DIR}
         )
         exp_get_3rd_platform_value(
-            INPUT ${R_LIB}
-            OUTPUT P_LIB
+            INPUT ${r_lib}
+            OUTPUT p_lib
         )
         target_link_libraries(
-            ${PARAMS_NAME}
-            INTERFACE "${P_LIB}"
+            ${arg_NAME}
+            INTERFACE "${p_lib}"
         )
     endif()
 
-    if (DEFINED PARAMS_RUNTIME_DEP)
+    if (DEFINED arg_RUNTIME_DEP)
         exp_expand_3rd_path_expression(
-            INPUT ${PARAMS_RUNTIME_DEP}
-            OUTPUT R_RUNTIME_DEP
-            SOURCE_DIR ${PARAMS_SOURCE_DIR}
-            BINARY_DIR ${PARAMS_BINARY_DIR}
-            INSTALL_DIR ${PARAMS_INSTALL_DIR}
+            INPUT ${arg_RUNTIME_DEP}
+            OUTPUT r_runtime_dep
+            SOURCE_DIR ${arg_SOURCE_DIR}
+            BINARY_DIR ${arg_BINARY_DIR}
+            INSTALL_DIR ${arg_INSTALL_DIR}
         )
         exp_get_3rd_platform_value(
-            INPUT ${R_RUNTIME_DEP}
-            OUTPUT P_RUNTIME_DEP
+            INPUT ${r_runtime_dep}
+            OUTPUT p_runtime_dep
         )
         set_target_properties(
-            ${PARAMS_NAME} PROPERTIES
-            RUNTIME_DEP "${P_RUNTIME_DEP}"
+            ${arg_NAME} PROPERTIES
+            RUNTIME_DEP "${p_runtime_dep}"
         )
     endif()
 endfunction()
 
 function(exp_add_3rd_alias_package)
-    cmake_parse_arguments(PARAMS "" "NAME" "LIB" ${ARGN})
+    set(options "")
+    set(singleValueArgs NAME)
+    set(multiValueArgs LIB)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    add_library(${PARAMS_NAME} INTERFACE)
+    add_library(${arg_NAME} INTERFACE)
     target_link_libraries(
-        ${PARAMS_NAME}
-        INTERFACE "${PARAMS_LIB}"
+        ${arg_NAME}
+        INTERFACE "${arg_LIB}"
     )
 endfunction()

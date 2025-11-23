@@ -1,37 +1,40 @@
 function(add_sample)
-    cmake_parse_arguments(PARAMS "" "NAME" "SRC;INC;SHADER;IMAGE;MODEL" ${ARGN})
+    set(options "")
+    set(singleValueArgs NAME)
+    set(multiValueArgs SRC INC SHADER IMAGE MODEL)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-        set(PLATFORM_DEP_TARGET RHI-DirectX12 RHI-Vulkan)
+        set(platform_dep_target RHI-DirectX12 RHI-Vulkan)
     else()
-        set(PLATFORM_DEP_TARGET RHI-Vulkan)
+        set(platform_dep_target RHI-Vulkan)
     endif()
 
-    foreach(S ${PARAMS_SHADER})
-        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${S}->../Test/Sample/${S}")
-        list(APPEND PATHS ${path})
+    foreach(s ${arg_SHADER})
+        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${s}->../Test/Sample/${s}")
+        list(APPEND paths ${path})
     endforeach()
 
-    foreach(I ${PARAMS_IMAGE})
-        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${I}->../Test/Sample/${I}")
-        list(APPEND PATHS ${path})
+    foreach(i ${arg_IMAGE})
+        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${i}->../Test/Sample/${i}")
+        list(APPEND paths ${path})
     endforeach()
 
-    foreach(M ${PARAMS_MODEL})
-        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${M}->../Test/Sample/${M}")
-        list(APPEND PATHS ${path})
+    foreach(m ${arg_MODEL})
+        set(path "${CMAKE_CURRENT_SOURCE_DIR}/${m}->../Test/Sample/${m}")
+        list(APPEND paths ${path})
     endforeach()
 
-    list(APPEND PATHS "${CMAKE_SOURCE_DIR}/${ENGINE_SUB_PROJECT_NAME}/Shader/Platform.esh->../Test/Sample/ShaderInclude/Platform.esh")
+    list(APPEND paths "${CMAKE_SOURCE_DIR}/${ENGINE_SUB_PROJECT_NAME}/Shader/Platform.esh->../Test/Sample/ShaderInclude/Platform.esh")
 
     exp_add_executable(
         SAMPLE
-        NAME ${PARAMS_NAME}
-        SRC ${PARAMS_SRC}
-        INC ${PARAMS_INC}
+        NAME ${arg_NAME}
+        SRC ${arg_SRC}
+        INC ${arg_INC}
         LIB Sample-Base
-        DEP_TARGET ${PLATFORM_DEP_TARGET}
-        RES ${PATHS}
+        DEP_TARGET ${platform_dep_target}
+        RES ${paths}
         NOT_INSTALL
     )
 endfunction()

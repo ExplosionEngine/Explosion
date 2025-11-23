@@ -6,50 +6,56 @@ set(3RD_BINARY_DIR ${CMAKE_BINARY_DIR}/ThirdPartyBuild CACHE PATH "" FORCE)
 set(3RD_INSTALL_DIR ${CMAKE_BINARY_DIR}/ThirdPartyInstall CACHE PATH "" FORCE)
 
 function(download_and_setup_3rd_package)
-    cmake_parse_arguments(PARAMS "" "NAME" "PLATFORM;VERSION;HASH" ${ARGN})
+    set(options "")
+    set(singleValueArgs NAME)
+    set(multiValueArgs PLATFORM VERSION HASH)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
     exp_get_3rd_platform_value(
-        OUTPUT VERSION_VALUE
-        INPUT ${PARAMS_VERSION}
+        OUTPUT version_value
+        INPUT ${arg_VERSION}
     )
 
-    set(CUR_PLATFORM All ${CMAKE_SYSTEM_NAME})
-    foreach (PLATFORM ${CUR_PLATFORM})
-        if (${PLATFORM} IN_LIST PARAMS_PLATFORM)
-            set(FULL_NAME "${PARAMS_NAME}-${PLATFORM}-${VERSION_VALUE}")
+    set(cur_platform All ${CMAKE_SYSTEM_NAME})
+    foreach (platform ${cur_platform})
+        if (${platform} IN_LIST arg_PLATFORM)
+            set(full_name "${arg_NAME}-${platform}-${version_value}")
         endif ()
     endforeach ()
 
-    if (NOT DEFINED FULL_NAME)
-        set(${PARAMS_NAME}_READY FALSE PARENT_SCOPE)
+    if (NOT DEFINED full_name)
+        set(${arg_NAME}_READY FALSE PARENT_SCOPE)
         return()
     endif ()
 
-    set(SOURCE_DIR ${3RD_SOURCE_DIR}/${FULL_NAME})
+    set(source_dir ${3RD_SOURCE_DIR}/${full_name})
     exp_download_and_extract_3rd_package(
-        URL ${3RD_REPO}/${FULL_NAME}.7z
-        SAVE_AS ${3RD_ZIP_DIR}/${FULL_NAME}.7z
-        EXTRACT_TO ${SOURCE_DIR}
-        HASH ${PARAMS_HASH}
+        URL ${3RD_REPO}/${full_name}.7z
+        SAVE_AS ${3RD_ZIP_DIR}/${full_name}.7z
+        EXTRACT_TO ${source_dir}
+        HASH ${arg_HASH}
     )
-    set(${PARAMS_NAME}_READY TRUE PARENT_SCOPE)
-    set(${PARAMS_NAME}_SOURCE_DIR ${SOURCE_DIR} PARENT_SCOPE)
-    set(${PARAMS_NAME}_BINARY_DIR ${3RD_BINARY_DIR}/${PARAMS_NAME} PARENT_SCOPE)
-    set(${PARAMS_NAME}_INSTALL_DIR ${3RD_INSTALL_DIR}/${PARAMS_NAME}/$<CONFIG> PARENT_SCOPE)
+    set(${arg_NAME}_READY TRUE PARENT_SCOPE)
+    set(${arg_NAME}_SOURCE_DIR ${source_dir} PARENT_SCOPE)
+    set(${arg_NAME}_BINARY_DIR ${3RD_BINARY_DIR}/${arg_NAME} PARENT_SCOPE)
+    set(${arg_NAME}_INSTALL_DIR ${3RD_INSTALL_DIR}/${arg_NAME}/$<CONFIG> PARENT_SCOPE)
 endfunction()
 
 function(should_setup_3rd_package)
-    cmake_parse_arguments(PARAMS "" "NAME" "PLATFORM" ${ARGN})
+    set(options "")
+    set(singleValueArgs NAME)
+    set(multiValueArgs PLATFORM)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    set(CUR_PLATFORM All ${CMAKE_SYSTEM_NAME})
-    foreach (PLATFORM ${CUR_PLATFORM})
-        if (${PLATFORM} IN_LIST PARAMS_PLATFORM)
-            set(${PARAMS_NAME}_READY TRUE PARENT_SCOPE)
+    set(cur_platform All ${CMAKE_SYSTEM_NAME})
+    foreach (platform ${cur_platform})
+        if (${platform} IN_LIST arg_PLATFORM)
+            set(${arg_NAME}_READY TRUE PARENT_SCOPE)
             return()
         endif ()
     endforeach ()
 
-    set(${PARAMS_NAME}_READY FALSE PARENT_SCOPE)
+    set(${arg_NAME}_READY FALSE PARENT_SCOPE)
 endfunction()
 
 # DirectX 12 Headers
