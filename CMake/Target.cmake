@@ -506,22 +506,13 @@ function(exp_add_library)
             )
         endif ()
 
-        if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" OR "${arg_TYPE}" STREQUAL "STATIC")
-            install(
-                TARGETS ${arg_NAME}
-                EXPORT ${SUB_PROJECT_NAME}Targets
-                ARCHIVE DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Lib
-                LIBRARY DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Lib
-                RUNTIME DESTINATION ${SUB_PROJECT_NAME}/Binaries
-            )
-        endif ()
-        if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" AND "${arg_TYPE}" STREQUAL "SHARED")
-            install(
-                FILES $<TARGET_FILE:${arg_NAME}>
-                DESTINATION ${SUB_PROJECT_NAME}/Binaries
-            )
-        endif ()
-
+        install(
+            TARGETS ${arg_NAME}
+            EXPORT ${SUB_PROJECT_NAME}Targets
+            ARCHIVE DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Lib
+            LIBRARY DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Lib
+            RUNTIME DESTINATION ${SUB_PROJECT_NAME}/Binaries
+        )
         if ("${arg_TYPE}" STREQUAL "SHARED")
             install(
                 FILES $<TARGET_FILE:${arg_NAME}>

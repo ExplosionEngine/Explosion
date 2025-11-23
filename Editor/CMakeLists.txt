@@ -78,10 +78,10 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources.pak ${QT_LIB_PREFIX}/resources/qtwebengine_resources.debug.pak
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.pak ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.debug.pak
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_200p.pak ${QT_LIB_PREFIX}/resources/qtwebengine_resources_200p.debug.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_devtools_resources.pak ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/qtwebengine_devtools_resources.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources.pak ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/qtwebengine_resources.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.pak ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/qtwebengine_resources_100p.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_200p.pak ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/qtwebengine_resources_200p.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_devtools_resources.pak $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/resources/qtwebengine_devtools_resources.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources.pak $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/resources/qtwebengine_resources.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.pak $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/resources/qtwebengine_resources_100p.pak
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_200p.pak $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/resources/qtwebengine_resources_200p.pak
         # -- QT 6.9.1 Temporal Fix End
         COMMAND ${QT_WIN_DEPLOY_EXECUTABLE} $<TARGET_FILE:Editor>
     )
@@ -92,7 +92,7 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(QT_MAC_DEPLOY_EXECUTABLE ${QT_LIB_PREFIX}/bin/macdeployqt)
     add_custom_command(
         TARGET Editor POST_BUILD
-        COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Editor.app -no-strip
+        COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/Editor.app -no-strip
     )
     install(
         CODE "execute_process(COMMAND ${QT_MAC_DEPLOY_EXECUTABLE} ${CMAKE_INSTALL_PREFIX}/${ENGINE_SUB_PROJECT_NAME}/Binaries/Editor.app -no-strip)"

@@ -1,5 +1,5 @@
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    set(PLATFORM_LIBS VulkanSDK)
+    set(platform_libs VulkanSDK)
 endif()
 
 file(GLOB SOURCES Src/*.cpp)
@@ -8,9 +8,8 @@ exp_add_library(
     TYPE STATIC
     SRC ${SOURCES}
     PUBLIC_INC Include
-    PRIVATE_LIB ${PLATFORM_LIBS}
     PUBLIC_LIB Core RHI
-    PUBLIC_MERGE_LIB dxc spirv-cross
+    PUBLIC_MERGE_LIB dxc spirv-cross ${platform_libs}
 )
 
 file(GLOB SHARED_SOURCES SharedSrc/*.cpp)
