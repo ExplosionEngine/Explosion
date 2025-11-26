@@ -1,17 +1,17 @@
-file(GLOB SOURCES Src/*.cpp)
+file(GLOB sources Src/*.cpp)
 exp_add_library(
     NAME MirrorTool.Static
-    SRC ${SOURCES}
+    SRC ${sources}
     PUBLIC_INC Include
     PUBLIC_LIB Mirror
     PUBLIC_MERGE_LIB llvm-clang clipp
     NOT_INSTALL
 )
 
-file(GLOB EXE_SOURCES ExeSrc/*.cpp)
+file(GLOB exe_sources ExeSrc/*.cpp)
 exp_add_executable(
     NAME MirrorTool
-    SRC ${EXE_SOURCES}
+    SRC ${exe_sources}
     INC Include
     LIB MirrorTool.Static
 )

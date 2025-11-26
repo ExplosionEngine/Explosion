@@ -336,6 +336,11 @@ function(exp_add_executable)
             EXPORT ${SUB_PROJECT_NAME}Targets
             RUNTIME DESTINATION ${SUB_PROJECT_NAME}/Binaries
         )
+        export(
+            TARGETS ${arg_NAME}
+            NAMESPACE ${SUB_PROJECT_NAME}::
+            APPEND FILE ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}Targets.cmake
+        )
 
         if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
             install(CODE "execute_process(COMMAND install_name_tool -add_rpath @executable_path ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries/$<TARGET_FILE_NAME:${arg_NAME}>)")
@@ -512,6 +517,11 @@ function(exp_add_library)
             ARCHIVE DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Lib
             LIBRARY DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Lib
             RUNTIME DESTINATION ${SUB_PROJECT_NAME}/Binaries
+        )
+        export(
+            TARGETS ${arg_NAME}
+            NAMESPACE ${SUB_PROJECT_NAME}::
+            APPEND FILE ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}Targets.cmake
         )
         if ("${arg_TYPE}" STREQUAL "SHARED")
             install(

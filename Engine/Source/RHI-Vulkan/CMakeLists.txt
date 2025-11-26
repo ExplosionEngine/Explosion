@@ -1,10 +1,10 @@
-file(GLOB SOURCES Src/*.cpp)
+file(GLOB sources Src/*.cpp)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set(PLATFORM_SOURCES Src/Platform/Win32Surface.cpp)
+    set(platform_sources Src/Platform/Win32Surface.cpp)
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    set(PLATFORM_SOURCES Src/Platform/MacosSurface.mm)
-    set(PLATFORM_EXT_LIBS
+    set(platform_sources Src/Platform/MacosSurface.mm)
+    set(platform_ext_libs
         "-framework Cocoa"
         "-framework IOKit"
         "-framework CoreFoundation")
@@ -13,9 +13,9 @@ endif()
 exp_add_library(
     NAME RHI-Vulkan
     TYPE SHARED
-    SRC ${SOURCES} ${PLATFORM_SOURCES}
+    SRC ${sources} ${platform_sources}
     PUBLIC_INC Include
-    PUBLIC_LIB RHI ${PLATFORM_EXT_LIBS}
+    PUBLIC_LIB RHI ${platform_ext_libs}
     PUBLIC_MERGE_LIB VulkanSDK spirv-cross VulkanMemoryAllocator
 )
 

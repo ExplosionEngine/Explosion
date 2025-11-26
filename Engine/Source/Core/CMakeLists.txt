@@ -1,16 +1,16 @@
-file(GLOB SOURCES Src/*.cpp)
+file(GLOB sources Src/*.cpp)
 exp_add_library(
     NAME Core
     TYPE SHARED
-    SRC ${SOURCES}
+    SRC ${sources}
     PUBLIC_INC Include
     PUBLIC_LIB Common
     PUBLIC_MERGE_LIB clipp
 )
 
-file(GLOB TEST_SOURCES Test/*.cpp)
+file(GLOB test_sources Test/*.cpp)
 exp_add_test(
     NAME Core.Test
-    SRC ${TEST_SOURCES}
+    SRC ${test_sources}
     LIB Core
 )
