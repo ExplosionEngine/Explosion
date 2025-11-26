@@ -135,32 +135,32 @@ function(exp_add_resources_copy_command)
     add_dependencies(${arg_NAME} ${copy_res_target_name})
 endfunction()
 
-function(exp_gather_target_include_dirs)
+function(exp_gather_target_libs)
     set(options "")
     set(singleValueArgs NAME OUTPUT)
     set(multiValueArgs "")
     cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (NOT (TARGET ${arg_NAME}))
-        return()
-    endif()
-
-    get_target_property(target_incs ${arg_NAME} INTERFACE_INCLUDE_DIRECTORIES)
-    if (NOT ("${target_incs}" STREQUAL "target_incs-NOTFOUND"))
-        foreach(target_inc ${target_incs})
-            list(APPEND result ${target_inc})
-        endforeach()
-    endif()
+    string(REGEX MATCH "\\$\\<BUILD_INTERFACE.+\\>" match ${arg_NAME})
+    if (match)
+        set(${arg_OUTPUT} "" PARENT_SCOPE)
+    endif ()
 
     get_target_property(target_libs ${arg_NAME} LINK_LIBRARIES)
     if (NOT ("${target_libs}" STREQUAL "target_libs-NOTFOUND"))
         foreach(target_lib ${target_libs})
-            exp_gather_target_include_dirs(
+            string(REGEX MATCH "\\$\\<BUILD_INTERFACE.+\\>" match ${target_lib})
+            if (match)
+                continue()
+            endif ()
+
+            list(APPEND result ${target_lib})
+            exp_gather_target_libs(
                 NAME ${target_lib}
-                OUTPUT lib_incs
+                OUTPUT libs
             )
-            foreach(lib_inc ${lib_incs})
-                list(APPEND result ${lib_inc})
+            foreach(lib ${libs})
+                list(APPEND result ${lib})
             endforeach()
         endforeach()
     endif()
@@ -189,12 +189,12 @@ function(exp_add_mirror_info_source_generation_target)
     endif()
     if (DEFINED arg_LIB)
         foreach (l ${arg_LIB})
-            exp_gather_target_include_dirs(
+            exp_gather_target_libs(
                 NAME ${l}
-                OUTPUT target_incs
+                OUTPUT target_libs
             )
-            foreach (i ${target_incs})
-                list(APPEND inc ${i})
+            foreach (l ${target_libs})
+                list(APPEND inc $<TARGET_PROPERTY:${l},INTERFACE_INCLUDE_DIRECTORIES>)
             endforeach ()
         endforeach()
     endif()
