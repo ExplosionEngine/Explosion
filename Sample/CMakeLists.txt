@@ -52,7 +52,7 @@ exp_add_library(
     SRC ${sources}
     PUBLIC_INC Base
     PUBLIC_LIB RHI ${platform_ext_libs} Render.Static
-    PUBLIC_MERGE_LIB glfw clipp stb assimp-lib
+    PUBLIC_MERGE_LIB glfw clipp stb::stb assimp-lib
     NOT_INSTALL
 )
 

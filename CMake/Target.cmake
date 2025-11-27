@@ -189,12 +189,13 @@ function(exp_add_mirror_info_source_generation_target)
     endif()
     if (DEFINED arg_LIB)
         foreach (l ${arg_LIB})
+            list(APPEND inc $<TARGET_PROPERTY:${l},INTERFACE_INCLUDE_DIRECTORIES>)
             exp_gather_target_libs(
                 NAME ${l}
                 OUTPUT target_libs
             )
-            foreach (l ${target_libs})
-                list(APPEND inc $<TARGET_PROPERTY:${l},INTERFACE_INCLUDE_DIRECTORIES>)
+            foreach (tl ${target_libs})
+                list(APPEND inc $<TARGET_PROPERTY:${tl},INTERFACE_INCLUDE_DIRECTORIES>)
             endforeach ()
         endforeach()
     endif()
@@ -415,8 +416,13 @@ function(exp_add_library)
     endforeach ()
 
     foreach (inc ${public_inc})
-        get_filename_component(absolute_inc ${inc} ABSOLUTE)
-        list(APPEND public_build_inc $<BUILD_INTERFACE:${absolute_inc}>)
+        string(REGEX MATCH "\\$\\<.+\\>" match ${inc})
+        if (match)
+            list(APPEND public_build_inc $<BUILD_INTERFACE:${inc}>)
+        else ()
+            get_filename_component(absolute_inc ${inc} ABSOLUTE)
+            list(APPEND public_build_inc $<BUILD_INTERFACE:${absolute_inc}>)
+        endif ()
     endforeach ()
     target_include_directories(
         ${arg_NAME}

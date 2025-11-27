@@ -21,7 +21,9 @@ Explosion is a cross-platform C++ game engine, based on modern graphics api (aka
 You need install those tools to system by yourself and add them to path:
 
 * [Python3](https://www.python.org/downloads/)
+* [Conan](https://github.com/conan-io/conan)
 * [CMake](https://cmake.org/download/)
+* [Ninja](https://github.com/ninja-build/ninja)
 * [Node.js](https://nodejs.org/en/download)
 
 build steps of engine may use them.
@@ -110,6 +112,7 @@ sudo xcode-select -s /Library/Developer/CommandLineTools
 
 Thanks all those following projects:
 
+* [Conan](https://github.com/conan-io/conan)
 * [DirectX-Headers](https://github.com/microsoft/DirectX-Headers)
 * [Vulkan](https://www.vulkan.org/)
 * [DirectXShaderCompiler](https://github.com/microsoft/DirectXShaderCompiler)

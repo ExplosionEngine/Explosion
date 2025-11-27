@@ -15,7 +15,7 @@ endif ()
 
 set(editor_includes Include)
 set(editor_qt_libs Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Quick Qt6::WebEngineWidgets)
-set(editor_libs Core RHI Runtime cpp-httplib ${editor_qt_libs})
+set(editor_libs Core RHI Runtime httplib::httplib ${editor_qt_libs})
 
 foreach (QT_LIB ${editor_qt_libs})
     string(REPLACE "::" "" QT_RAW_LIB ${QT_LIB})

@@ -58,21 +58,6 @@ function(should_setup_3rd_package)
     set(${arg_NAME}_READY FALSE PARENT_SCOPE)
 endfunction()
 
-# DirectX 12 Headers
-download_and_setup_3rd_package(
-    NAME DirectXHeaders
-    PLATFORM Windows
-    VERSION 1.4.9
-    HASH 0313c5145214dda2a183af97212878482aafbb2433d4f0ec0a2efeec7cc9ef2a
-)
-if (${DirectXHeaders_READY})
-    exp_add_3rd_header_only_package(
-        NAME DirectXHeaders
-        SOURCE_DIR ${DirectXHeaders_SOURCE_DIR}
-        INCLUDE $<SOURCE_DIR>/include
-    )
-endif ()
-
 # VulkanSDK
 set(VULKAN_SDK_VERSION 1.3.296.0)
 download_and_setup_3rd_package(
@@ -208,26 +193,6 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     endif ()
 endif ()
 
-# GLFW
-download_and_setup_3rd_package(
-    NAME glfw
-    PLATFORM All
-    VERSION 4.0
-    HASH 2483836f085d616acaa48f6dc8efec5239f6a538c3a25d13fdc6a7afb2cce1d4
-)
-if (${glfw_READY})
-    exp_add_3rd_cmake_package(
-        NAME glfw
-        SOURCE_DIR ${glfw_SOURCE_DIR}
-        BINARY_DIR ${glfw_BINARY_DIR}
-        INSTALL_DIR ${glfw_INSTALL_DIR}
-        CMAKE_ARG -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF
-        INCLUDE $<INSTALL_DIR>/include
-        LINK $<INSTALL_DIR>/lib
-        LIB glfw3
-    )
-endif ()
-
 # clipp
 download_and_setup_3rd_package(
     NAME clipp
@@ -281,77 +246,6 @@ if (${llvm-clang_READY})
         RUNTIME_DEP
             Windows $<SOURCE_DIR>/bin/libclang.dll
             Darwin $<SOURCE_DIR>/lib/libclang.dylib
-    )
-endif ()
-
-# Google Test
-download_and_setup_3rd_package(
-    NAME googletest
-    PLATFORM All
-    VERSION 1.11.0
-    HASH bb1146f051868868b96fa83069d4d05f0e05216b5c3f697859c591fd73b93a86
-)
-if (${googletest_READY})
-    exp_add_3rd_cmake_package(
-        NAME googletest
-        SOURCE_DIR ${googletest_SOURCE_DIR}
-        BINARY_DIR ${googletest_BINARY_DIR}
-        INSTALL_DIR ${googletest_INSTALL_DIR}
-        CMAKE_ARG -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -Dgtest_force_shared_crt=ON
-        INCLUDE $<INSTALL_DIR>/include
-        LINK $<INSTALL_DIR>/lib
-        LIB gtest$<IF:$<CONFIG:Debug>,d,> gmock$<IF:$<CONFIG:Debug>,d,>
-    )
-endif ()
-
-# TaskFlow
-download_and_setup_3rd_package(
-    NAME taskflow
-    PLATFORM All
-    VERSION 3.4.0
-    HASH 774e23d5b6be17a5482d70ffd76ba4ccfd8821c86b7c3f0bcdcd5d96bc264041
-)
-if (${taskflow_READY})
-    exp_add_3rd_header_only_package(
-        NAME taskflow
-        SOURCE_DIR ${taskflow_SOURCE_DIR}
-        INSTALL_DIR ${taskflow_INSTALL_DIR}
-        INSTALL_FILES taskflow
-        INCLUDE $<INSTALL_DIR>
-    )
-endif ()
-
-# CityHash
-download_and_setup_3rd_package(
-    NAME cityhash
-    PLATFORM All
-    VERSION forked-2f248cfbf88d0895d069258e4971b5f2fc3a9f19
-    HASH 5acf325794585578915dfa7fbac9eb2ca436ffe4831b05c40d1f286b68d7ac20
-)
-if (${cityhash_READY})
-    exp_add_3rd_cmake_package(
-        NAME cityhash
-        SOURCE_DIR ${cityhash_SOURCE_DIR}
-        BINARY_DIR ${cityhash_BINARY_DIR}
-        INSTALL_DIR ${cityhash_INSTALL_DIR}
-        INCLUDE $<INSTALL_DIR>/include
-        LINK $<INSTALL_DIR>/lib
-        LIB city
-    )
-endif ()
-
-# stb-image
-download_and_setup_3rd_package(
-    NAME stb
-    PLATFORM All
-    VERSION master-8b5f1f37b5b75829fc72d38e7b5d4bcbf8a26d55
-    HASH 32e28f89a85b3bb6749e8caed9eb5226f7f5956769005d2b5a41d48d9481d90c
-)
-if (${stb_READY})
-    exp_add_3rd_header_only_package(
-        NAME stb
-        SOURCE_DIR ${stb_SOURCE_DIR}
-        INCLUDE $<SOURCE_DIR>
     )
 endif ()
 
@@ -452,17 +346,13 @@ if (${rapidjson_READY})
     )
 endif ()
 
-# cpp-httplib
-download_and_setup_3rd_package(
-    NAME cpp-httplib
-    PLATFORM All
-    VERSION 0.24.0
-    HASH a0320b106f4a8f945ec2556e62fffab05b068f2ddfff99c6a367b2e16c14bde1
-)
-if (${cpp-httplib_READY})
-    exp_add_3rd_header_only_package(
-        NAME cpp-httplib
-        SOURCE_DIR ${cpp-httplib_SOURCE_DIR}
-        INCLUDE $<SOURCE_DIR>
-    )
+# conan managed
+find_package(httplib REQUIRED GLOBAL)
+find_package(glfw3 REQUIRED GLOBAL)
+find_package(stb REQUIRED GLOBAL)
+find_package(cityhash REQUIRED GLOBAL)
+find_package(GTest REQUIRED GLOBAL)
+find_package(Taskflow REQUIRED GLOBAL)
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    find_package(DirectX-Headers REQUIRED GLOBAL)
 endif ()

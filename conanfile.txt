@@ -1,0 +1,11 @@
+[requires]
+cpp-httplib/0.27.0
+glfw/3.4
+stb/cci.20240531
+cityhash/1.0.1
+gtest/1.17.0
+directx-headers/1.610.2
+taskflow/3.10.0
+
+[generators]
+CMakeDeps
