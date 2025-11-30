@@ -5,7 +5,7 @@
 #pragma once
 
 #include <wrl/client.h>
-#include <d3d12.h>
+#include <directx/d3d12.h>
 
 #include <RHI/Queue.h>
 
