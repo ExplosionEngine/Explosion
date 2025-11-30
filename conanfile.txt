@@ -6,6 +6,24 @@ cityhash/1.0.1
 gtest/1.17.0
 directx-headers/1.610.2
 taskflow/3.10.0
+qt/6.8.3
 
 [generators]
 CMakeDeps
+
+[options]
+qt/*:shared=True
+qt/*:gui=True
+qt/*:qtdeclarative=True
+qt/*:qtlocation=True
+qt/*:qtmultimedia=True
+qt/*:qtquickcontrols2=True
+qt/*:qtscxml=True
+qt/*:qtsvg=True
+qt/*:qtwebchannel=True
+qt/*:qtwebengine=True
+qt/*:qtwebsockets=True
+qt/*:qtwebview=True
+qt/*:qtxmlpatterns=True
+qt/*:qtimageformats=True
+qt/*:qt5compat=True

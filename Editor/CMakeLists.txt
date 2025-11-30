@@ -1,7 +1,7 @@
 set(CMAKE_PREFIX_PATH ${QT_LIB_PREFIX})
 find_package(
     Qt6 ${QT_VERSION}
-    COMPONENTS Core Gui Widgets Quick WebEngineWidgets
+    COMPONENTS Core Gui Widgets WebEngineWidgets
     REQUIRED
 )
 
@@ -14,7 +14,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 endif ()
 
 set(editor_includes Include)
-set(editor_qt_libs Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Quick Qt6::WebEngineWidgets)
+set(editor_qt_libs Qt6::Core Qt6::Gui Qt6::Widgets Qt6::WebEngineWidgets)
 set(editor_libs Core RHI Runtime httplib::httplib ${editor_qt_libs})
 
 foreach (QT_LIB ${editor_qt_libs})

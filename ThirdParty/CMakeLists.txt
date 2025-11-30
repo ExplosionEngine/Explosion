@@ -310,27 +310,6 @@ if (${VulkanMemoryAllocator_READY})
     )
 endif ()
 
-# Qt6
-set(QT_VERSION "6.9.1" CACHE STRING "" FORCE)
-download_and_setup_3rd_package(
-    NAME Qt
-    PLATFORM Windows Darwin
-    VERSION ${QT_VERSION}
-    HASH
-        Windows 9cd849f79784fda5436b0da3b7625b4530a77b93c5e80ea9a2d8a95060c174b6
-        Darwin 3938c6156228fcf63c33029067bd4b6dd333ed284e069198b85d92de3d9b3e13
-)
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/msvc2022_64 CACHE PATH "" FORCE)
-elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    set(QT_LIB_PREFIX ${Qt_SOURCE_DIR}/${QT_VERSION}/macos CACHE PATH "" FORCE)
-
-    # NOTICE: Fix Qt 6.9.1 build on macOS 26, #see https://codereview.qt-project.org/c/qt/qtbase/+/652022/3/cmake/FindWrapOpenGL.cmake#b50
-    if (QT_VERSION STREQUAL "6.9.1")
-        file(COPY_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Patch/Qt-Darwin-6.9.1-FindWrapOpenGL.cmake ${QT_LIB_PREFIX}/lib/cmake/Qt6/FindWrapOpenGL.cmake)
-    endif ()
-endif ()
-
 # rapidjson
 download_and_setup_3rd_package(
     NAME rapidjson
@@ -356,3 +335,4 @@ find_package(Taskflow REQUIRED GLOBAL)
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     find_package(DirectX-Headers REQUIRED GLOBAL)
 endif ()
+set(QT_VERSION "6.8.3" CACHE STRING "" FORCE)
