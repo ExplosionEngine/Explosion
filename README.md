@@ -30,6 +30,39 @@ build steps of engine may use them.
 
 # Build
 
+## Configure Conan Remote
+
+Some third-party libraries managed by Conan may need to be downloaded and installed from our private repository. Please configure Conan's remote first:
+
+```shell
+conan remote add explosion https://kindem.online/artifactory/api/conan/conan
+```
+
+## macOS Notice
+If you have not installed xcode command line tools, you need install it:
+
+```shell
+xcode-select --install
+```
+
+If xcode app or xcode command line tools installed on you system, you need check xcode path set to command line tools path, continue with this command:
+
+```shell
+xcode-select -p
+```
+
+if the command print is not `/Library/Developer/CommandLineTools`, use this command to reset it:
+
+```shell
+sudo xcode-select -s /Library/Developer/CommandLineTools
+```
+
+## Windows Notice
+
+Some third-party libraries managed by conan may fail to install or compile on Windows due to excessively long build tree paths. So you need to configure the environment variable `CONAN_HOME` and set it to a relatively short path, such as `C:\t`
+
+## Build Project
+
 The following table contains supported platform, toolchain and generator:
 
 <table>
@@ -88,25 +121,6 @@ The parameters' meaning:
 * `<generator_name>`: C++ generator which cmake will use to build project, you can transfer any generator in table list above, such as `Visual Studio 2019`.
 
 After build the project, you can get all dist binaries in `<build_dir>/dist`.
-
-## macOS Notice
-If you have not installed xcode command line tools, you need install it:
-
-```shell
-xcode-select --install
-```
-
-If xcode app or xcode command line tools installed on you system, you need check xcode path set to command line tools path, continue with this command:
-
-```shell
-xcode-select -p
-```
-
-if the command print is not `/Library/Developer/CommandLineTools`, use this command to reset it:
-
-```shell
-sudo xcode-select -s /Library/Developer/CommandLineTools
-```
 
 # Third Party Project Usage
 
