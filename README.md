@@ -30,12 +30,18 @@ build steps of engine may use them.
 
 # Build
 
-## Configure Conan Remote
+## Configure Conan
 
 Some third-party libraries managed by Conan may need to be downloaded and installed from our private repository. Please configure Conan's remote first:
 
 ```shell
 conan remote add explosion https://kindem.online/artifactory/api/conan/conan
+```
+
+Additionally, to ensure the qt-webengine module builds successfully, you need to install html5lib in python:
+
+```shell
+pip3 install html5lib
 ```
 
 ## macOS Notice
