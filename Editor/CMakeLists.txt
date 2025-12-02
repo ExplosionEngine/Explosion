@@ -1,16 +1,16 @@
-set(CMAKE_PREFIX_PATH ${QT_LIB_PREFIX})
 find_package(
     Qt6 ${QT_VERSION}
     COMPONENTS Core Gui Widgets WebEngineWidgets
     REQUIRED
 )
+set(QT_ROOT ${_Qt6_COMPONENT_PATH}/../..)
 
 qt_standard_project_setup(REQUIRES ${QT_VERSION})
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(platform_executable_hint MACOSX_BUNDLE)
     set(bundle_install_dest BUNDLE DESTINATION ${CMAKE_INSTALL_PREFIX}/${ENGINE_SUB_PROJECT_NAME}/Binaries)
-    set(platform_fwk_dir ${QT_LIB_PREFIX}/lib)
+    set(platform_fwk_dir ${QT_ROOT}/lib)
 endif ()
 
 set(editor_includes Include)
@@ -73,28 +73,16 @@ export(
 )
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set(qt_win_deploy_executable ${QT_LIB_PREFIX}/bin/windeployqt.exe)
+    set(qt_win_deploy_executable ${QT_ROOT}/bin/windeployqt.exe)
     add_custom_command(
         TARGET Editor POST_BUILD
-        # ++ QT 6.9.1 Temporal Fix Start
-        # #see https://bugreports.qt.io/browse/QTBUG-137542
-        # NOTICE: seems cause some error on debug config, like render process crash after hover a remote link, please use DebugWithRelease before official fix at 6.9.2
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_devtools_resources.pak ${QT_LIB_PREFIX}/resources/qtwebengine_devtools_resources.debug.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources.pak ${QT_LIB_PREFIX}/resources/qtwebengine_resources.debug.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.pak ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.debug.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_200p.pak ${QT_LIB_PREFIX}/resources/qtwebengine_resources_200p.debug.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_devtools_resources.pak $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/resources/qtwebengine_devtools_resources.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources.pak $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/resources/qtwebengine_resources.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_100p.pak $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/resources/qtwebengine_resources_100p.pak
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_LIB_PREFIX}/resources/qtwebengine_resources_200p.pak $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/resources/qtwebengine_resources_200p.pak
-        # -- QT 6.9.1 Temporal Fix End
         COMMAND ${qt_win_deploy_executable} $<TARGET_FILE:Editor>
     )
     install(
         CODE "execute_process(COMMAND ${qt_win_deploy_executable} ${CMAKE_INSTALL_PREFIX}/${ENGINE_SUB_PROJECT_NAME}/Binaries/$<TARGET_FILE_NAME:Editor>)"
     )
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    set(qt_mac_deploy_executable ${QT_LIB_PREFIX}/bin/macdeployqt)
+    set(qt_mac_deploy_executable ${QT_ROOT}/bin/macdeployqt)
     add_custom_command(
         TARGET Editor POST_BUILD
         COMMAND ${qt_mac_deploy_executable} $<TARGET_PROPERTY:Editor,RUNTIME_OUTPUT_DIRECTORY>/Editor.app -no-strip
