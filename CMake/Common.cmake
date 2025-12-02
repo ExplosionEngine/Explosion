@@ -25,7 +25,7 @@ add_definitions(-DCOMPILER_APPLE_CLANG=$<IF:$<CXX_COMPILER_ID:AppleClang>,1,0>)
 add_definitions(-DCOMPILER_GCC=$<IF:$<CXX_COMPILER_ID:GNU>,1,0>)
 
 if (${MSVC})
-    add_compile_options(/bigobj)
+    add_compile_options(/bigobj /MD)
     add_definitions(-D_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS=1)
     add_definitions(-DWIN32_LEAN_AND_MEAN)
     add_definitions(-DNOMINMAX=1)

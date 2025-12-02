@@ -479,13 +479,6 @@ function(exp_add_library)
         )
     endif ()
 
-    if (${MSVC})
-        target_compile_options(
-            ${arg_NAME}
-            PRIVATE /MD$<$<CONFIG:Debug>:d>
-        )
-    endif()
-
     if ("${arg_TYPE}" STREQUAL "SHARED")
         string(TOUPPER ${arg_NAME}_API api_name)
         string(REPLACE "-" "/" api_dir ${arg_NAME})

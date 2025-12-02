@@ -236,7 +236,7 @@ function(exp_add_3rd_cmake_package)
     cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (NOT ${generator_is_multi_config})
-        set(build_type_args -DCMAKE_BUILD_TYPE=$<CONFIG>)
+        set(build_type_args -DCMAKE_BUILD_TYPE=Release)
     endif ()
 
     ExternalProject_Add(
@@ -244,8 +244,8 @@ function(exp_add_3rd_cmake_package)
         SOURCE_DIR ${arg_SOURCE_DIR}
         BINARY_DIR ${arg_BINARY_DIR}
         CMAKE_ARGS ${build_type_args} -DCMAKE_INSTALL_PREFIX=${arg_INSTALL_DIR} ${arg_CMAKE_ARG}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG> -j 16
-        INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG>
+        BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config Release -j 16
+        INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
     )
     add_library(${arg_NAME} INTERFACE)
     add_dependencies(${arg_NAME} ${arg_NAME}.External)

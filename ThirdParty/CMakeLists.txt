@@ -265,9 +265,9 @@ if (${spirv-cross_READY})
         CMAKE_ARG -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DSPIRV_CROSS_CLI=OFF -DSPIRV_CROSS_ENABLE_C_API=OFF -DSPIRV_CROSS_ENABLE_TESTS=OFF
         INCLUDE $<INSTALL_DIR>/include
         LINK $<INSTALL_DIR>/lib
-        LIB spirv-cross-core$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
-            spirv-cross-msl$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
-            spirv-cross-glsl$<IF:$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Windows>>,d,>
+        LIB spirv-cross-core
+            spirv-cross-msl
+            spirv-cross-glsl
     )
 endif ()
 
@@ -288,10 +288,10 @@ if (${assimp-lib_READY})
         INCLUDE $<INSTALL_DIR>/include
         LINK $<INSTALL_DIR>/lib
         LIB
-            Windows "assimp-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>"
-            Darwin "assimp$<IF:$<CONFIG:Debug>,d,>"
+            Windows "assimp-vc${MSVC_TOOLSET_VERSION}-mt"
+            Darwin "assimp"
         RUNTIME_DEP
-            Windows "$<INSTALL_DIR>/bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt$<IF:$<CONFIG:Debug>,d,>.dll"
+            Windows "$<INSTALL_DIR>/bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt.dll"
     )
 endif ()
 
