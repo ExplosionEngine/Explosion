@@ -6,7 +6,7 @@ exp_add_library(
     PUBLIC_INC Include
     REFLECT Include
     PUBLIC_LIB Core Mirror Render
-    PUBLIC_MERGE_LIB assimp-lib
+    PUBLIC_MERGE_LIB assimp::assimp
 )
 
 file(GLOB test_sources Test/*.cpp)

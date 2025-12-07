@@ -247,30 +247,6 @@ if (${spirv-cross_READY})
     )
 endif ()
 
-# assimp
-download_and_setup_3rd_package(
-    NAME assimp-lib
-    PLATFORM All
-    VERSION 5.2.5
-    HASH ae55d305a607ad8cc598c306663796dbf6e50a3cb0b952fe1ea3175f0f342ad9
-)
-if (${assimp-lib_READY})
-    exp_add_3rd_cmake_package(
-        NAME assimp-lib
-        SOURCE_DIR ${assimp-lib_SOURCE_DIR}
-        BINARY_DIR ${assimp-lib_BINARY_DIR}
-        INSTALL_DIR ${assimp-lib_INSTALL_DIR}
-        CMAKE_ARG -DASSIMP_BUILD_TESTS=OFF -DASSIMP_WARNINGS_AS_ERRORS=OFF -DASSIMP_INSTALL_PDB=OFF
-        INCLUDE $<INSTALL_DIR>/include
-        LINK $<INSTALL_DIR>/lib
-        LIB
-            Windows "assimp-vc${MSVC_TOOLSET_VERSION}-mt"
-            Darwin "assimp"
-        RUNTIME_DEP
-            Windows "$<INSTALL_DIR>/bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt.dll"
-    )
-endif ()
-
 # vma
 download_and_setup_3rd_package(
     NAME VulkanMemoryAllocator
@@ -309,8 +285,11 @@ find_package(cityhash REQUIRED GLOBAL)
 find_package(GTest REQUIRED GLOBAL)
 find_package(Taskflow REQUIRED GLOBAL)
 find_package(libclang REQUIRED GLOBAL)
+find_package(assimp REQUIRED GLOBAL)
+
+set(QT_VERSION "6.8.3" CACHE STRING "" FORCE)
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     find_package(DirectX-Headers REQUIRED GLOBAL)
+    set_target_properties(assimp::assimp PROPERTIES RUNTIME_DEP "${assimp_INCLUDE_DIR}/../bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt.dll")
     set_target_properties(libclang::libclang PROPERTIES RUNTIME_DEP "${libclang_INCLUDE_DIR}/../bin/libclang.dll")
 endif ()
-set(QT_VERSION "6.8.3" CACHE STRING "" FORCE)
