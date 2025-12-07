@@ -45,19 +45,19 @@ pip3 install html5lib
 ```
 
 ## macOS Notice
-If you have not installed xcode command line tools, you need install it:
+If you have not installed xcode and xcode command line tool, you need install them, xcode can be downloaded from app store, and xcode command line tool can be installed with:
 
 ```shell
 xcode-select --install
 ```
 
-If xcode app or xcode command line tools installed on you system, you need check xcode path set to command line tools path, continue with this command:
+In cmake configure stage, if package with your compiler and os info not be cached in our repo, conan will build qt locally, which need set xcode path to app path to make qt build success:
 
-```shell
-xcode-select -p
+```cpp
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 ```
 
-if the command print is not `/Library/Developer/CommandLineTools`, use this command to reset it:
+But in explosion project build stage, we use command line tool path instead, so you need switch it:
 
 ```shell
 sudo xcode-select -s /Library/Developer/CommandLineTools
