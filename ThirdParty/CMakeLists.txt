@@ -225,30 +225,6 @@ if (${debugbreak_READY})
     )
 endif ()
 
-# LLVM-Clang
-download_and_setup_3rd_package(
-    NAME llvm-clang
-    PLATFORM Windows Darwin
-    VERSION 19.1.6
-    HASH
-        Windows f68b922c87a99b22c0b53a5cbd55db86bd3870c16c4e9060efaecfb9ce49e726
-        Darwin 08fdf1b6208823acadc23027fda1f12e5171101ec05fa526b545088be31fe19d
-)
-if (${llvm-clang_READY})
-    exp_add_3rd_binary_package(
-        NAME llvm-clang
-        SOURCE_DIR ${llvm-clang_SOURCE_DIR}
-        INCLUDE $<SOURCE_DIR>/include
-        LINK $<SOURCE_DIR>/lib
-        LIB
-            Windows libclang
-            Darwin clang
-        RUNTIME_DEP
-            Windows $<SOURCE_DIR>/bin/libclang.dll
-            Darwin $<SOURCE_DIR>/lib/libclang.dylib
-    )
-endif ()
-
 # spirv-cross
 download_and_setup_3rd_package(
     NAME spirv-cross
@@ -332,7 +308,9 @@ find_package(stb REQUIRED GLOBAL)
 find_package(cityhash REQUIRED GLOBAL)
 find_package(GTest REQUIRED GLOBAL)
 find_package(Taskflow REQUIRED GLOBAL)
+find_package(libclang REQUIRED GLOBAL)
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     find_package(DirectX-Headers REQUIRED GLOBAL)
+    set_target_properties(libclang::libclang PROPERTIES RUNTIME_DEP "${libclang_INCLUDE_DIR}/../bin/libclang.dll")
 endif ()
 set(QT_VERSION "6.8.3" CACHE STRING "" FORCE)

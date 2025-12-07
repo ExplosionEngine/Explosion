@@ -4,7 +4,7 @@ exp_add_library(
     SRC ${sources}
     PUBLIC_INC Include
     PUBLIC_LIB Mirror
-    PUBLIC_MERGE_LIB llvm-clang clipp
+    PUBLIC_MERGE_LIB libclang::libclang clipp
     NOT_INSTALL
 )
 

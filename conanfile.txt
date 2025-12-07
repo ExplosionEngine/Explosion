@@ -7,6 +7,7 @@ gtest/1.17.0
 directx-headers/1.610.2
 taskflow/3.10.0
 qt/6.8.3
+libclang/21.1.7-exp
 
 [generators]
 CMakeDeps
