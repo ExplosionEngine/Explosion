@@ -386,8 +386,15 @@ namespace Render {
                 if (!layoutBindingMaps.contains(layoutIndex)) {
                     layoutBindingMaps[layoutIndex] = {};
                 }
+
+
+                // need to check if bindingName is used in multiple stages
                 auto& layoutBindingMap = layoutBindingMaps[layoutIndex];
-                layoutBindingMap.emplace(std::make_pair(bindingName, std::make_pair(stage, binding)));
+                auto [iter, inserted] = layoutBindingMap.emplace(std::make_pair(bindingName, std::make_pair(stage, binding)));
+                if (!inserted) {
+                    auto& existBindingInfo = iter->second;
+                    existBindingInfo.first = existBindingInfo.first | stage;
+                }
             }
         }
 
