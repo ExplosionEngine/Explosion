@@ -141,9 +141,10 @@ protected:
         RenderThread::Get().Start();
         RenderWorkerThreads::Get().Start();
 
+        CreateDevice();
+        CreateSurface();
+
         RenderThread::Get().EmplaceTask([this]() -> void {
-            CreateDevice();
-            CreateSurface();
             FetchShaderInstances();
             CreateSwapChain();
             CreateVertexAndIndexBuffer();
