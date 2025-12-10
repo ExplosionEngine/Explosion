@@ -253,7 +253,7 @@ protected:
 
             std::vector<RGBindGroupRef> gGroups = { gBindGroup };
             for (const auto& renderable: renderables) {
-                auto* diffuseTexture = builder.ImportTexture(renderable->diffuseTexture.Get(), TextureState::undefined);
+                auto* diffuseTexture = builder.ImportTexture(renderable->diffuseTexture.Get(), TextureState::shaderReadOnly);
                 auto* diffuseTextureView = builder.CreateTextureView(diffuseTexture, RGTextureViewDesc(TextureViewType::textureBinding, TextureViewDimension::tv2D));
 
                 auto* group = builder.AllocateBindGroup(
@@ -731,7 +731,7 @@ private:
                 .SetDimension(TextureDimension::t2D)
                 .SetSamples(1)
                 .SetUsages(TextureUsageBits::depthStencilAttachment)
-                .SetInitialState(TextureState::depthStencilReadonly));
+                .SetInitialState(TextureState::depthStencilWrite));
     }
 
     void PrepareSSAOTextures()
