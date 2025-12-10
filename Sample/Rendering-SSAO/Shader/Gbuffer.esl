@@ -1,0 +1,75 @@
+#include <Platform.esh>
+
+VkBinding(0, 0) cbuffer passParams : register(b0)
+{
+	float4x4 projection;
+	float4x4 model;
+	float4x4 view;
+	float nearPlane;
+	float farPlane;
+};
+
+VkBinding(0, 1) Texture2D colorTex : register(t0, space1);
+VkBinding(1, 1) SamplerState colorSampler : register(s0, space1);
+
+struct VSInput
+{
+    VkLocation(0) float4 position : POSITION;
+    VkLocation(1) float2 uv : TEXCOORD;
+    VkLocation(2) float3 color : COLOR;
+    VkLocation(3) float3 normal : NORMAL;
+};
+
+struct VSOutput
+{
+	float4 position : SV_POSITION;
+    float3 normal : NORMAL;
+    float2 uv : TEXCOORD;
+    float3 color : COLOR;
+    float3 Worldposition : POSITION;
+};
+
+VSOutput VSMain(VSInput input)
+{
+	VSOutput output = (VSOutput)0;
+	output.position = mul(projection, mul(view, mul(model, input.position)));
+
+	output.uv = input.uv;
+
+	// Vertex position in view space
+	output.Worldposition = mul(view, mul(model, input.position)).xyz;
+
+	// normal in view space
+	float3x3 normalMatrix = (float3x3)mul(model, view);
+	output.normal = mul(input.normal, normalMatrix);
+
+#if VULKAN
+    output.position.y = -output.position.y;
+    output.normal.y = -output.normal.y;
+#endif
+
+	output.color = input.color;
+	return output;
+}
+
+struct FSOutput
+{
+	float4 positionition : SV_TARGET0;
+	float4 normal : SV_TARGET1;
+	float4 Albedo : SV_TARGET2;
+};
+
+float linearDepth(float depth)
+{
+	float z = depth * 2.0f - 1.0f;
+	return (2.0f * nearPlane * farPlane) / (farPlane + nearPlane - z * (farPlane - nearPlane));
+}
+
+FSOutput PSMain(VSOutput input)
+{
+	FSOutput output = (FSOutput)0;
+	output.positionition = float4(input.Worldposition, linearDepth(input.position.z));
+	output.normal = float4(normalize(input.normal) * 0.5 + 0.5, 1.0);
+	output.Albedo = colorTex.Sample(colorSampler, input.uv) * float4(input.color, 1.0);
+	return output;
+}

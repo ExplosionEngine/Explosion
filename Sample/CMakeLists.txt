@@ -112,3 +112,17 @@ add_sample(
         IMAGE Rendering-BaseTexture/Awesomeface.png
 )
 
+file(GLOB SOURCES Rendering-SSAO/*.cpp)
+add_sample(
+    NAME Rendering-SSAO
+    SRC ${SOURCES}
+    INC Rendering-SSAO
+    SHADER
+        Rendering-SSAO/Shader/Gbuffer.esl
+        Rendering-SSAO/Shader/SSAO.esl
+        Rendering-SSAO/Shader/Blur.esl
+        Rendering-SSAO/Shader/Composition.esl
+    MODEL
+        Rendering-SSAO/Model/Voyager.gltf
+)
+
