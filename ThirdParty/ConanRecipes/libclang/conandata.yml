@@ -1,0 +1,3 @@
+sources:
+  "21.1.7-exp":
+    url: "https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-21.1.7.tar.gz"
