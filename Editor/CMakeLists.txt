@@ -1,8 +1,9 @@
 find_package(
-    Qt6 ${QT_VERSION}
+    Qt6
     COMPONENTS Core Gui Widgets WebEngineWidgets
     REQUIRED
 )
+# TODO check this
 set(QT_ROOT ${_Qt6_COMPONENT_PATH}/../..)
 
 qt_standard_project_setup(REQUIRES ${QT_VERSION})
