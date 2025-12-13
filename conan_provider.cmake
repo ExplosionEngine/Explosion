@@ -579,7 +579,9 @@ macro(conan_provide_dependency method package_name)
         construct_profile_argument(_build_profile_flags CONAN_BUILD_PROFILE)
         if(EXISTS "${CMAKE_SOURCE_DIR}/conanfile.py")
             file(READ "${CMAKE_SOURCE_DIR}/conanfile.py" outfile)
-            if(NOT "${outfile}" MATCHES ".*CMakeDeps.*")
+            # ++[kindem]
+            if(NOT "${outfile}" MATCHES ".*CMakeDeps.*" AND NOT "${outfile}" MATCHES ".*CMakeConfigDeps.*")
+            # --[kindem]
                 message(WARNING "Cmake-conan: CMakeDeps generator was not defined in the conanfile")
             endif()
             set(generator "")
@@ -619,16 +621,17 @@ macro(conan_provide_dependency method package_name)
             if(NOT _multiconfig_generator AND NOT _build_config STREQUAL "${CMAKE_BUILD_TYPE}")
                 set(_self_build_config -s &:build_type=${CMAKE_BUILD_TYPE})
             endif()
-            # ++[kindem]
-            if(DEFINED CONAN_INSTALL_SELF_CONFIGURATIONS)
-                foreach(_self_config ${CONAN_INSTALL_SELF_CONFIGURATIONS})
-                    conan_install(${_host_profile_flags} ${_build_profile_flags} -s build_type=${_build_config} -s &:build_type=${_self_config} ${CONAN_INSTALL_ARGS} ${generator})
-                endforeach()
-            else()
-                conan_install(${_host_profile_flags} ${_build_profile_flags} -s build_type=${_build_config} ${_self_build_config} ${CONAN_INSTALL_ARGS} ${generator})
-            endif()
-            # --[kindem]
+            conan_install(${_host_profile_flags} ${_build_profile_flags} -s build_type=${_build_config} ${_self_build_config} ${CONAN_INSTALL_ARGS} ${generator})
         endforeach()
+        # ++[kindem]
+        get_property(_conan_generators_folder GLOBAL PROPERTY CONAN_GENERATORS_FOLDER)
+        if(EXISTS "${_conan_generators_folder}/conan_cmakedeps_paths.cmake")
+            message(STATUS "CMake-Conan: Loading conan_cmakedeps_paths.cmake file")
+            include(${_conan_generators_folder}/conan_cmakedeps_paths.cmake)
+            set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} CACHE STRING "" FORCE)
+            set(CMAKE_PREFIX_PATH ${CMAKE_MODULE_PATH} CACHE STRING "" FORCE)
+        endif()
+        # --[kindem]
         unset(_self_build_config)
         unset(_multiconfig_generator)
         unset(_build_configs)
@@ -703,7 +706,9 @@ cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}" CALL conan_provide_dependen
 # Configurable variables for Conan profiles
 set(CONAN_HOST_PROFILE "default;auto-cmake" CACHE STRING "Conan host profile")
 set(CONAN_BUILD_PROFILE "default" CACHE STRING "Conan build profile")
-set(CONAN_INSTALL_ARGS "--build=missing" CACHE STRING "Command line arguments for conan install")
+# ++[kindem]
+set(CONAN_INSTALL_ARGS "--build=missing;-c;tools.cmake.cmakedeps:new=will_break_next" CACHE STRING "Command line arguments for conan install")
+# --[kindem]
 
 find_program(_cmake_program NAMES cmake NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_FIND_ROOT_PATH)
 if(NOT _cmake_program)

@@ -1,7 +1,7 @@
 from conan import ConanFile
 
 class ExplosionConan(ConanFile):
-    generators = "CMakeDeps"
+    generators = "CMakeConfigDeps"
     settings = "os", "compiler", "build_type", "arch"
 
     def requirements(self):

@@ -3,8 +3,7 @@ find_package(
     COMPONENTS Core Gui Widgets WebEngineWidgets
     REQUIRED
 )
-# TODO check this
-set(QT_ROOT ${_Qt6_COMPONENT_PATH}/../..)
+set(QT_ROOT ${QT6_INSTALL_PREFIX})
 
 qt_standard_project_setup(REQUIRES ${QT_VERSION})
 
