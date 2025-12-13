@@ -55,7 +55,10 @@ class QtConan(ConanFile):
             print("html5lib import test is OK")
         except ImportError:
             print("html5lib not installed, try pip install")
-            pip_main(["install", "html5lib"])
+            if self.settings.os == "Windows":
+                pip_main(["install", "html5lib"])
+            else:
+                pip_main(["install", "html5lib", "--break-system-packages"])
         try:
             import html5lib
         except ImportError:
