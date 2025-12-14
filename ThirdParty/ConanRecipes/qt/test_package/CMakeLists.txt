@@ -23,6 +23,6 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(qt_mac_deploy_executable ${QT_ROOT}/bin/macdeployqt)
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${qt_mac_deploy_executable} $<TARGET_PROPERTY:${PROJECT_NAME},RUNTIME_OUTPUT_DIRECTORY>/${PROJECT_NAME}.app -no-strip
+        COMMAND ${qt_mac_deploy_executable} $<TARGET_BUNDLE_DIR:${PROJECT_NAME}> -no-strip
     )
 endif ()
