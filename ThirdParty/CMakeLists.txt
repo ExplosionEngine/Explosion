@@ -247,21 +247,6 @@ if (${spirv-cross_READY})
     )
 endif ()
 
-# vma
-download_and_setup_3rd_package(
-    NAME VulkanMemoryAllocator
-    PLATFORM All
-    VERSION 3.0.1
-    HASH a63a5e32c21fa9e839580d0c8727c6dead9da01730a8f0d10717cd784bc632de
-)
-if (${VulkanMemoryAllocator_READY})
-    exp_add_3rd_header_only_package(
-        NAME VulkanMemoryAllocator
-        SOURCE_DIR ${VulkanMemoryAllocator_SOURCE_DIR}
-        INCLUDE $<SOURCE_DIR>/include
-    )
-endif ()
-
 # rapidjson
 download_and_setup_3rd_package(
     NAME rapidjson
@@ -290,6 +275,7 @@ find_package(GTest REQUIRED GLOBAL)
 find_package(Taskflow REQUIRED GLOBAL)
 find_package(libclang REQUIRED GLOBAL)
 find_package(assimp REQUIRED GLOBAL)
+find_package(VulkanMemoryAllocator REQUIRED GLOBAL)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     find_package(DirectX-Headers REQUIRED GLOBAL)

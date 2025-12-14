@@ -11,6 +11,7 @@ class ExplosionConan(ConanFile):
         self.requires("cityhash/1.0.1")
         self.requires("gtest/1.17.0")
         self.requires("taskflow/3.10.0")
+        self.requires("vulkan-memory-allocator/3.3.0")
         self.requires("assimp/6.0.2", options={
             "shared": True
         })
