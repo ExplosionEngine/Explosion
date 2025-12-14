@@ -5,6 +5,7 @@ from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import apply_conandata_patches, get, copy
 from pip._internal import main as pip_main
 import os
+import resource
 
 required_conan_version = ">=2.0.9"
 
@@ -63,6 +64,13 @@ class QtConan(ConanFile):
             import html5lib
         except ImportError:
             raise RuntimeError("failed to import html5lib")
+
+        # to ensure qtwebengine build success
+        if self.settings.os != "Windows":
+            soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+            resource.setrlimit(resource.RLIMIT_NOFILE, (1000000, hard_limit))
+            soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+            print(f"set resource.RLIMIT_NOFILE for qtwebengine build to (soft: {soft_limit}, hard: {hard_limit})")
 
         cmake_toolchain = CMakeToolchain(self, generator="Ninja")
         cmake_toolchain.cache_variables["QT_AUTODETECT_ANDROID"] = ""
