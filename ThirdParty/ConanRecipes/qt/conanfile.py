@@ -5,7 +5,6 @@ from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import apply_conandata_patches, get, copy
 from pip._internal import main as pip_main
 import os
-import resource
 
 required_conan_version = ">=2.0.9"
 
@@ -67,6 +66,7 @@ class QtConan(ConanFile):
 
         # to ensure qtwebengine build success
         if self.settings.os != "Windows":
+            import resource
             soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
             resource.setrlimit(resource.RLIMIT_NOFILE, (1000000, hard_limit))
             soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
