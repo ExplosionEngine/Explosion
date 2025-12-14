@@ -203,7 +203,7 @@ function(exp_add_mirror_info_source_generation_target)
 
     list(APPEND inc_args "-I")
     foreach (i ${inc})
-        list(APPEND inc_args ${i})
+        list(APPEND inc_args \"${i}\")
     endforeach()
 
     if (DEFINED arg_FRAMEWORK_DIR)
