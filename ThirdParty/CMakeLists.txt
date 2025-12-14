@@ -278,6 +278,10 @@ if (${rapidjson_READY})
 endif ()
 
 # conan managed
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    add_library(OpenGLDummy INTERFACE)
+    add_library(opengl::opengl ALIAS OpenGLDummy)
+endif ()
 find_package(httplib REQUIRED GLOBAL)
 find_package(glfw3 REQUIRED GLOBAL)
 find_package(stb REQUIRED GLOBAL)
