@@ -291,7 +291,6 @@ find_package(Taskflow REQUIRED GLOBAL)
 find_package(libclang REQUIRED GLOBAL)
 find_package(assimp REQUIRED GLOBAL)
 
-set(QT_VERSION "6.8.3" CACHE STRING "" FORCE)
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     find_package(DirectX-Headers REQUIRED GLOBAL)
     set_target_properties(assimp::assimp PROPERTIES RUNTIME_DEP "${assimp_INCLUDE_DIR}/../bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt.dll")

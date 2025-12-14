@@ -5,7 +5,7 @@ find_package(
 )
 set(QT_ROOT ${QT6_INSTALL_PREFIX})
 
-qt_standard_project_setup(REQUIRES ${QT_VERSION})
+qt_standard_project_setup()
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(platform_executable_hint MACOSX_BUNDLE)
