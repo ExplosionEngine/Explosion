@@ -208,23 +208,6 @@ if (${clipp_READY})
     )
 endif ()
 
-# DebugBreak
-download_and_setup_3rd_package(
-    NAME debugbreak
-    PLATFORM All
-    VERSION 1.0
-    HASH 16e35a330a9927181ed2e03a92efe6d39670b33c1bdf61ab88d29673ef3a89d4
-)
-if (${debugbreak_READY})
-    exp_add_3rd_header_only_package(
-        NAME debugbreak
-        SOURCE_DIR ${debugbreak_SOURCE_DIR}
-        INSTALL_DIR ${debugbreak_INSTALL_DIR}
-        INSTALL_FILES debugbreak.h
-        INCLUDE $<INSTALL_DIR>
-    )
-endif ()
-
 # spirv-cross
 download_and_setup_3rd_package(
     NAME spirv-cross
@@ -276,6 +259,7 @@ find_package(Taskflow REQUIRED GLOBAL)
 find_package(libclang REQUIRED GLOBAL)
 find_package(assimp REQUIRED GLOBAL)
 find_package(VulkanMemoryAllocator REQUIRED GLOBAL)
+find_package(debugbreak REQUIRED GLOBAL)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     find_package(DirectX-Headers REQUIRED GLOBAL)

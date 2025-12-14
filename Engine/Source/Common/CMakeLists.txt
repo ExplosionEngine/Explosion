@@ -4,7 +4,7 @@ exp_add_library(
     TYPE STATIC
     SRC ${sources}
     PUBLIC_INC Include
-    PUBLIC_MERGE_LIB rapidjson debugbreak cityhash::cityhash Taskflow::Taskflow
+    PUBLIC_MERGE_LIB rapidjson debugbreak::debugbreak cityhash::cityhash Taskflow::Taskflow
 )
 
 file(GLOB test_sources Test/*.cpp)
