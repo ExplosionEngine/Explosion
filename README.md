@@ -38,12 +38,6 @@ Some third-party libraries managed by Conan may need to be downloaded and instal
 conan remote add explosion https://kindem.online/artifactory/api/conan/conan
 ```
 
-Additionally, to ensure the qt-webengine module builds successfully, you need to install html5lib in python:
-
-```shell
-pip3 install html5lib
-```
-
 ## macOS Notice
 If you have not installed xcode and xcode command line tool, you need install them, xcode can be downloaded from app store, and xcode command line tool can be installed with:
 
@@ -51,16 +45,16 @@ If you have not installed xcode and xcode command line tool, you need install th
 xcode-select --install
 ```
 
-In cmake configure stage, if package with your compiler and os info not be cached in our repo, conan will build qt locally, which need set xcode path to app path to make qt build success:
-
-```cpp
-sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-```
-
-But in explosion project build stage, we use command line tool path instead, so you need switch it:
+And you need check the xcode-select path:
 
 ```shell
-sudo xcode-select -s /Library/Developer/CommandLineTools
+xcode-select -p
+```
+
+If the output not equals `/Applications/Xcode.app/Contents/Developer`, you need to set it:
+
+```shell
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 ```
 
 ## Windows Notice
