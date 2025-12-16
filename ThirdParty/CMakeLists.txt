@@ -230,21 +230,6 @@ if (${spirv-cross_READY})
     )
 endif ()
 
-# rapidjson
-download_and_setup_3rd_package(
-    NAME rapidjson
-    PLATFORM All
-    VERSION d621dc9
-    HASH 696f6ca1ecca9d13170c0a47eda66a3015bcf02a7b4bdd23f574ea302eb4bf3e
-)
-if (${rapidjson_READY})
-    exp_add_3rd_header_only_package(
-        NAME rapidjson
-        SOURCE_DIR ${rapidjson_SOURCE_DIR}
-        INCLUDE $<SOURCE_DIR>/include
-    )
-endif ()
-
 # conan managed
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     add_library(OpenGLDummy INTERFACE)
@@ -260,6 +245,7 @@ find_package(libclang REQUIRED GLOBAL)
 find_package(assimp REQUIRED GLOBAL)
 find_package(VulkanMemoryAllocator REQUIRED GLOBAL)
 find_package(debugbreak REQUIRED GLOBAL)
+find_package(rapidjson REQUIRED GLOBAL)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     find_package(DirectX-Headers REQUIRED GLOBAL)
