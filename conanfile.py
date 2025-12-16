@@ -14,9 +14,6 @@ class ExplosionConan(ConanFile):
         self.requires("gtest/1.17.0")
         self.requires("taskflow/3.10.0")
         self.requires("vulkan-memory-allocator/3.3.0")
-        self.requires("assimp/6.0.2", options={
-            "shared": True
-        })
 
         if self.settings.os == "Windows":
             self.requires("directx-headers/1.610.2")
@@ -26,3 +23,4 @@ class ExplosionConan(ConanFile):
         self.requires("qt/6.10.1-exp")
         self.requires("debugbreak/1.0-exp")
         self.requires("rapidjson/cci.20250205-exp")
+        self.requires("assimp/6.0.2-exp")

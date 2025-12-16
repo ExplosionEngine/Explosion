@@ -1,0 +1,3 @@
+sources:
+  "6.0.2-exp":
+    url: "https://github.com/assimp/assimp/archive/refs/tags/v6.0.2.tar.gz"
