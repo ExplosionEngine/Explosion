@@ -160,39 +160,6 @@ if (${VulkanSDK_READY})
     endif ()
 endif ()
 
-# DXC
-# Windows uses standalone package, macOS uses lib in VulkanSDK
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    download_and_setup_3rd_package(
-        NAME dxc
-        PLATFORM Windows
-        VERSION 1.6.2112
-        HASH b8d8e5cd03234e477bc3fe5d4258652a7fb61916141660408ee4c54a4f1eb939
-    )
-    if (${dxc_READY})
-        exp_add_3rd_binary_package(
-            NAME dxc
-            SOURCE_DIR ${dxc_SOURCE_DIR}
-            INCLUDE $<SOURCE_DIR>/inc
-            LINK $<SOURCE_DIR>/lib/x64
-            LIB dxcompiler
-            RUNTIME_DEP
-                Windows $<SOURCE_DIR>/bin/x64/dxcompiler.dll $<SOURCE_DIR>/bin/x64/dxil.dll
-        )
-    endif ()
-elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    should_setup_3rd_package(
-        NAME dxc
-        PLATFORM Darwin
-    )
-    if (${dxc_READY})
-        exp_add_3rd_alias_package(
-            NAME dxc
-            LIB dxcompiler
-        )
-    endif ()
-endif ()
-
 # spirv-cross
 download_and_setup_3rd_package(
     NAME spirv-cross
@@ -220,6 +187,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     add_library(OpenGLDummy INTERFACE)
     add_library(opengl::opengl ALIAS OpenGLDummy)
 endif ()
+
 find_package(httplib REQUIRED GLOBAL)
 find_package(glfw3 REQUIRED GLOBAL)
 find_package(stb REQUIRED GLOBAL)
@@ -232,9 +200,11 @@ find_package(VulkanMemoryAllocator REQUIRED GLOBAL)
 find_package(debugbreak REQUIRED GLOBAL)
 find_package(rapidjson REQUIRED GLOBAL)
 find_package(clipp REQUIRED GLOBAL)
+find_package(dxc REQUIRED GLOBAL)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     find_package(DirectX-Headers REQUIRED GLOBAL)
     set_target_properties(assimp::assimp PROPERTIES RUNTIME_DEP "${assimp_INCLUDE_DIR}/../bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt.dll")
     set_target_properties(libclang::libclang PROPERTIES RUNTIME_DEP "${libclang_INCLUDE_DIR}/../bin/libclang.dll")
+    set_target_properties(dxc::dxc PROPERTIES RUNTIME_DEP "${dxc_INCLUDE_DIR}/../bin/dxil.dll;${dxc_INCLUDE_DIR}/../bin/")
 endif ()

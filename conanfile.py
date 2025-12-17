@@ -23,3 +23,4 @@ class ExplosionConan(ConanFile):
         self.requires("rapidjson/cci.20250205-exp")
         self.requires("assimp/6.0.2-exp")
         self.requires("clipp/1.2.3-exp")
+        self.requires("dxc/1.8.2505.1-exp")

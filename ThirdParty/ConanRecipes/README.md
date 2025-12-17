@@ -27,7 +27,13 @@ conan test qt/test_package qt/6.10.1-exp
 ```
 
 # Windows User Notice
-In windows, some lib may build failed with long build tree path in development mode (like qt-webengine), in this case, you can use the commands to map conan recipes working directory as a driver and execute all conan commands in the driver root:
+On the Windows platform, we consider some Visual Studio components as part of the system toolchain. These components are not automatically configured in the conan script, so you will need to install them manually:
+
+* ATL
+* Windows SDK
+* Windows Driver Kit
+
+And some lib may build failed with long build tree path in development mode (like qt-webengine), in this case, you can use the commands to map conan recipes working directory as a driver and execute all conan commands in the driver root:
 
 ```shell
 # map

@@ -9,7 +9,7 @@ exp_add_library(
     SRC ${sources}
     PUBLIC_INC Include
     PUBLIC_LIB Core RHI
-    PUBLIC_MERGE_LIB dxc spirv-cross ${platform_libs}
+    PUBLIC_MERGE_LIB dxc::dxc spirv-cross ${platform_libs}
 )
 
 file(GLOB shader_sources SharedSrc/*.cpp)
