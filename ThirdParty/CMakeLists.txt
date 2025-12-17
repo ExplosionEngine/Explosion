@@ -193,21 +193,6 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     endif ()
 endif ()
 
-# clipp
-download_and_setup_3rd_package(
-    NAME clipp
-    PLATFORM All
-    VERSION forked-f7cffbd61a7b64189d6573e8c3848d094c35168a
-    HASH 59db8b8586381652b5e0ae629a9d32e0e443428bc4d94af091b9525a62d167fb
-)
-if (${clipp_READY})
-    exp_add_3rd_header_only_package(
-        NAME clipp
-        SOURCE_DIR ${clipp_SOURCE_DIR}
-        INCLUDE $<SOURCE_DIR>/include
-    )
-endif ()
-
 # spirv-cross
 download_and_setup_3rd_package(
     NAME spirv-cross
@@ -246,6 +231,7 @@ find_package(assimp REQUIRED GLOBAL)
 find_package(VulkanMemoryAllocator REQUIRED GLOBAL)
 find_package(debugbreak REQUIRED GLOBAL)
 find_package(rapidjson REQUIRED GLOBAL)
+find_package(clipp REQUIRED GLOBAL)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     find_package(DirectX-Headers REQUIRED GLOBAL)

@@ -1,6 +1,4 @@
 from conan import ConanFile
-from typing_extensions import override
-
 
 class ExplosionConan(ConanFile):
     generators = "CMakeConfigDeps"
@@ -24,3 +22,4 @@ class ExplosionConan(ConanFile):
         self.requires("debugbreak/1.0-exp")
         self.requires("rapidjson/cci.20250205-exp")
         self.requires("assimp/6.0.2-exp")
+        self.requires("clipp/1.2.3-exp")

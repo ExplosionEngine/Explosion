@@ -5,7 +5,7 @@ exp_add_library(
     SRC ${sources}
     PUBLIC_INC Include
     PUBLIC_LIB Common
-    PUBLIC_MERGE_LIB clipp
+    PUBLIC_MERGE_LIB clipp::clipp
 )
 
 file(GLOB test_sources Test/*.cpp)
