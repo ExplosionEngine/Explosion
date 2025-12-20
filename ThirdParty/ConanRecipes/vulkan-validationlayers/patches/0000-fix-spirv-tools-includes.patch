@@ -1,0 +1,25 @@
+From 2e18b94238535157d98b0ccfa9df9e6d8a96fe7b Mon Sep 17 00:00:00 2001
+From: kindem <johnkindem@qq.com>
+Date: Sat, 20 Dec 2025 17:16:43 +0800
+Subject: [PATCH] fix: spirv tools includes
+
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f2c844b7a..9af78879d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -115,7 +115,7 @@ find_package(VulkanUtilityLibraries CONFIG QUIET)
+ 
+ find_package(SPIRV-Headers CONFIG QUIET)
+ 
+-find_package(SPIRV-Tools-opt CONFIG QUIET)
++find_package(SPIRV-Tools CONFIG QUIET)
+ 
+ # NOTE: Our custom code generation target isn't desirable for system package managers or add_subdirectory users.
+ # So this target needs to be off by default to avoid obtuse build errors or patches.
+-- 
+2.50.1.windows.1
+
