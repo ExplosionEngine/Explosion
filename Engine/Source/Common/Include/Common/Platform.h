@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace Common {
     enum class DevelopmentPlatform {
         windows,
@@ -28,5 +30,10 @@ namespace Common {
         x86,
         x64,
         max
+    };
+
+    class PlatformUtils {
+    public:
+        static void SetEnvVar(const std::string& inKey, const std::string& inValue);
     };
 }

@@ -19,7 +19,6 @@ add_definitions(-DBUILD_EDITOR=$<BOOL:BUILD_EDITOR>)
 
 include(CMake/Common.cmake)
 include(CMake/Target.cmake)
-include(CMake/ThirdParty.cmake)
 
 add_subdirectory(ThirdParty)
 add_subdirectory(Engine)

@@ -11,7 +11,10 @@ class ExplosionConan(ConanFile):
         self.requires("cityhash/1.0.1")
         self.requires("gtest/1.17.0")
         self.requires("taskflow/3.10.0")
+        self.requires("vulkan-headers/1.4.313.0")
+        self.requires("vulkan-loader/1.4.313.0")
         self.requires("vulkan-memory-allocator/3.3.0")
+        self.requires("spirv-cross/1.4.313.0")
 
         if self.settings.os == "Windows":
             self.requires("directx-headers/1.610.2")
@@ -24,3 +27,6 @@ class ExplosionConan(ConanFile):
         self.requires("assimp/6.0.2-exp")
         self.requires("clipp/1.2.3-exp")
         self.requires("dxc/1.8.2505.1-exp")
+        self.requires("vulkan-validationlayers/1.4.313.0-exp")
+
+        # TODO molten-vk

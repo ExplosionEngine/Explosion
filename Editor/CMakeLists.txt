@@ -60,6 +60,7 @@ add_dependencies(Editor ${EDITOR_MIRROR_GENERATED_TARGET} ${RHI_DEP_TARGETS})
 
 exp_process_runtime_dependencies(
     NAME Editor
+    DEP_TARGET ${RHI_DEP_TARGETS}
 )
 install(
     TARGETS Editor
@@ -95,6 +96,7 @@ endif ()
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     foreach (rhi_dep_target ${RHI_DEP_TARGETS})
         list(APPEND rhi_dep_target_copy_commands COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${rhi_dep_target}> $<TARGET_FILE_DIR:Editor>/../Frameworks/$<TARGET_FILE_NAME:${rhi_dep_target}>)
+        # TODO also copy runtime dep of runtime dep
     endforeach ()
 
     add_custom_command(

@@ -77,6 +77,11 @@ function(exp_process_runtime_dependencies)
     )
     foreach (d ${arg_DEP_TARGET})
         list(APPEND runtime_deps $<TARGET_FILE:${d}>)
+        exp_gather_target_runtime_dependencies_recurse(
+            NAME ${d}
+            OUT_RUNTIME_DEP dep_target_runtime_deps
+        )
+        list(APPEND runtime_deps ${dep_target_runtime_deps})
     endforeach ()
     foreach(r ${runtime_deps})
         add_custom_command(

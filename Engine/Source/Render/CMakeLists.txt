@@ -1,7 +1,3 @@
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    set(platform_libs VulkanSDK)
-endif()
-
 file(GLOB sources Src/*.cpp)
 exp_add_library(
     NAME Render.Static
@@ -9,7 +5,7 @@ exp_add_library(
     SRC ${sources}
     PUBLIC_INC Include
     PUBLIC_LIB Core RHI
-    PUBLIC_MERGE_LIB dxc::dxc spirv-cross ${platform_libs}
+    PUBLIC_MERGE_LIB dxc::dxc spirv-cross::spirv-cross
 )
 
 file(GLOB shader_sources SharedSrc/*.cpp)
