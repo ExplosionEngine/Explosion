@@ -148,7 +148,7 @@ namespace Core {
 
         for (const auto& searchPath : searchPaths) {
             std::optional<std::string> result = std::nullopt;
-            (void) searchPath.TraverseRecurse([&](const Common::Path& path) -> bool {
+            (void) searchPath.Traverse([&](const Common::Path& path) -> bool {
                 if (path.IsDirectory()) {
                     return true;
                 }
