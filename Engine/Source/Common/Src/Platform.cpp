@@ -4,6 +4,8 @@
 
 #if PLATFORM_WINDOWS
 #include <windows.h>
+#else
+#include <cstdlib>
 #endif
 
 #include <Common/Platform.h>
@@ -15,7 +17,7 @@ namespace Common {
 #if PLATFORM_WINDOWS
         Assert(SetEnvironmentVariableA(inKey.c_str(), inValue.c_str()));
 #else
-        Unimplement();
+        setenv(inKey.c_str(), inValue.c_str(), 1);
 #endif
     }
 }
