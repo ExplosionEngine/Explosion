@@ -28,8 +28,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set_target_properties(dxc::dxc PROPERTIES RUNTIME_DEP "${dxc_INCLUDE_DIR}/../bin/dxil.dll;${dxc_INCLUDE_DIR}/../bin/dxcompiler.dll")
     set_target_properties(vulkan-validationlayers::vulkan-validationlayers PROPERTIES RUNTIME_DEP "${VulkanValidationLayers_INCLUDE_DIR}/../bin/VkLayer_khronos_validation.dll;${VulkanValidationLayers_INCLUDE_DIR}/../bin/VkLayer_khronos_validation.json")
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    find_package(MoltenVK REQUIRED GLOBAL)
     set_target_properties(vulkan-validationlayers::vulkan-validationlayers PROPERTIES RUNTIME_DEP "${VulkanValidationLayers_INCLUDE_DIR}/../lib/libVkLayer_khronos_validation.dylib;${VulkanValidationLayers_INCLUDE_DIR}/../share/vulkan/explicit_layer.d/VkLayer_khronos_validation.json")
+    set_target_properties(molten-vk::molten-vk PROPERTIES RUNTIME_DEP "${MoltenVK_INCLUDE_DIR}/../lib/libMoltenVK.dylib;${MoltenVK_INCLUDE_DIR}/../lib/MoltenVK_icd.json")
 endif ()
-
-# TODO macos vulkan validation layers runtime dep
-# TODO molten vk

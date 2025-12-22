@@ -60,6 +60,10 @@ namespace RHI::Vulkan {
 
     VulkanInstance::VulkanInstance()
     {
+#if PLATFORM_MACOS
+        Common::PlatformUtils::SetEnvVar("VK_DRIVER_FILES", "MoltenVK_icd.json");
+#endif
+
 #if BUILD_CONFIG_DEBUG
         PrepareLayers();
 #endif

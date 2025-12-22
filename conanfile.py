@@ -15,7 +15,6 @@ class ExplosionConan(ConanFile):
         self.requires("vulkan-loader/1.4.313.0")
         self.requires("vulkan-memory-allocator/3.3.0")
         self.requires("spirv-cross/1.4.313.0")
-
         if self.settings.os == "Windows":
             self.requires("directx-headers/1.610.2")
 
@@ -28,5 +27,5 @@ class ExplosionConan(ConanFile):
         self.requires("clipp/1.2.3-exp")
         self.requires("dxc/1.8.2505.1-exp")
         self.requires("vulkan-validationlayers/1.4.313.0-exp")
-
-        # TODO molten-vk
+        if self.settings.os == "Macos":
+            self.requires("molten-vk/1.4.1-exp")

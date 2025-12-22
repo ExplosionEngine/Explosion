@@ -4,10 +4,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(platform_sources Src/Platform/Win32Surface.cpp)
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     set(platform_sources Src/Platform/MacosSurface.mm)
-    set(platform_ext_libs
-        "-framework Cocoa"
-        "-framework IOKit"
-        "-framework CoreFoundation")
+    set(platform_ext_libs molten-vk::molten-vk "-framework Cocoa" "-framework IOKit" "-framework CoreFoundation")
 endif()
 
 exp_add_library(
