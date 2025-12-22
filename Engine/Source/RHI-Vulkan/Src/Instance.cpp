@@ -87,11 +87,7 @@ namespace RHI::Vulkan {
 #if BUILD_CONFIG_DEBUG
     void VulkanInstance::PrepareLayers()
     {
-#if PLATFORM_WINDOWS
         Common::PlatformUtils::SetEnvVar("VK_LAYER_PATH", "VkLayer_khronos_validation.json");
-#else
-        // TODO
-#endif
 
         uint32_t supportedLayerCount = 0;
         vkEnumerateInstanceLayerProperties(&supportedLayerCount, nullptr);
