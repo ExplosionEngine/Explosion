@@ -34,6 +34,7 @@ exp_add_mirror_info_source_generation_target(
 
 file(GLOB_RECURSE SOURCES Src/*.cpp)
 qt_add_executable(Editor ${platform_executable_hint} ${SOURCES} ${EDITOR_MIRROR_GENERATED_SRC})
+set_target_properties(Editor PROPERTIES FOLDER ${BASE_TARGETS_FOLDER})
 
 get_cmake_property(GENERATOR_IS_MULTI_CONFIG GENERATOR_IS_MULTI_CONFIG)
 if (${GENERATOR_IS_MULTI_CONFIG})
@@ -150,6 +151,7 @@ add_custom_target(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Web
     VERBATIM
 )
+set_target_properties(Editor.Web PROPERTIES FOLDER ${AUX_TARGETS_FOLDER})
 add_dependencies(Editor Editor.Web)
 
 add_custom_command(

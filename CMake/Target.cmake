@@ -2,6 +2,9 @@ option(BUILD_TEST "Build unit tests" ON)
 option(BUILD_SAMPLE "Build sample" ON)
 
 set(API_HEADER_DIR ${CMAKE_BINARY_DIR}/Generated/Api CACHE PATH "" FORCE)
+set(BASE_TARGETS_FOLDER "${ENGINE_SUB_PROJECT_NAME}" CACHE STRING "" FORCE)
+set(SAMPLE_TARGETS_FOLDER "${BASE_TARGETS_FOLDER}/Sample" CACHE STRING "" FORCE)
+set(AUX_TARGETS_FOLDER "${BASE_TARGETS_FOLDER}/Aux" CACHE STRING "" FORCE)
 
 if (${BUILD_TEST})
     enable_testing()
@@ -137,6 +140,7 @@ function(exp_add_resources_copy_command)
         ${copy_res_target_name}
         ${copy_commands}
     )
+    set_target_properties(${copy_res_target_name} PROPERTIES FOLDER ${AUX_TARGETS_FOLDER})
     add_dependencies(${arg_NAME} ${copy_res_target_name})
 endfunction()
 
@@ -249,6 +253,7 @@ function(exp_add_mirror_info_source_generation_target)
         ${custom_target_name}
         DEPENDS MirrorTool ${output_sources}
     )
+    set_target_properties(${custom_target_name} PROPERTIES FOLDER ${AUX_TARGETS_FOLDER})
     set(${arg_OUTPUT_SRC} ${output_sources} PARENT_SCOPE)
     set(${arg_OUTPUT_TARGET_NAME} ${custom_target_name} PARENT_SCOPE)
 
@@ -289,6 +294,12 @@ function(exp_add_executable)
         ${arg_NAME}
         PRIVATE ${arg_SRC} ${generated_src}
     )
+    if (${arg_SAMPLE})
+        set_target_properties(${arg_NAME} PROPERTIES FOLDER ${SAMPLE_TARGETS_FOLDER})
+    else ()
+        set_target_properties(${arg_NAME} PROPERTIES FOLDER ${BASE_TARGETS_FOLDER})
+    endif ()
+
     get_cmake_property(generated_is_multi_config GENERATOR_IS_MULTI_CONFIG)
     if (${generated_is_multi_config})
         set(runtime_output_dir ${CMAKE_BINARY_DIR}/Dist/$<CONFIG>/${SUB_PROJECT_NAME}/Binaries)
@@ -385,6 +396,8 @@ function(exp_add_library)
         ${arg_NAME}
         ${arg_TYPE}
     )
+    set_target_properties(${arg_NAME} PROPERTIES FOLDER ${BASE_TARGETS_FOLDER})
+
     target_sources(
         ${arg_NAME}
         PRIVATE ${arg_SRC} ${generated_src}
@@ -553,6 +566,8 @@ function(exp_add_test)
     endif()
 
     add_executable(${arg_NAME})
+    set_target_properties(${arg_NAME} PROPERTIES FOLDER ${BASE_TARGETS_FOLDER})
+
     target_sources(
         ${arg_NAME}
         PRIVATE ${arg_SRC} ${generated_src}
