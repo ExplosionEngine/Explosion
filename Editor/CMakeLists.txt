@@ -93,10 +93,10 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     )
 endif ()
 
+# TODO check is this need ?
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     foreach (rhi_dep_target ${RHI_DEP_TARGETS})
         list(APPEND rhi_dep_target_copy_commands COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${rhi_dep_target}> $<TARGET_FILE_DIR:Editor>/../Frameworks/$<TARGET_FILE_NAME:${rhi_dep_target}>)
-        # TODO also copy runtime dep of runtime dep
     endforeach ()
 
     add_custom_command(
