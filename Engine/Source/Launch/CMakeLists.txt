@@ -5,5 +5,5 @@ exp_add_library(
     SRC ${sources}
     PUBLIC_INC Include
     PUBLIC_LIB Runtime
-    PUBLIC_MERGE_LIB glfw
+    PUBLIC_MERGE_LIB glfw::glfw
 )

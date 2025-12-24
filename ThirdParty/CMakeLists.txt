@@ -4,7 +4,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 endif ()
 
 find_package(httplib REQUIRED GLOBAL)
-find_package(glfw3 REQUIRED GLOBAL)
+find_package(glfw REQUIRED GLOBAL)
 find_package(stb REQUIRED GLOBAL)
 find_package(cityhash REQUIRED GLOBAL)
 find_package(GTest REQUIRED GLOBAL)
