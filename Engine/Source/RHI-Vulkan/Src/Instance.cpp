@@ -6,8 +6,11 @@
 
 #include <RHI/Vulkan/Common.h>
 #include <RHI/Vulkan/Instance.h>
-#include <RHI/Vulkan/Gpu.h>
+
+#include "Common/Platform.h"
+
 #include <Common/IO.h>
+#include <RHI/Vulkan/Gpu.h>
 
 namespace RHI::Vulkan {
     static std::vector requiredLayerNames = {
@@ -57,6 +60,10 @@ namespace RHI::Vulkan {
 
     VulkanInstance::VulkanInstance()
     {
+#if PLATFORM_MACOS
+        Common::PlatformUtils::SetEnvVar("VK_DRIVER_FILES", "MoltenVK_icd.json");
+#endif
+
 #if BUILD_CONFIG_DEBUG
         PrepareLayers();
 #endif
@@ -84,6 +91,8 @@ namespace RHI::Vulkan {
 #if BUILD_CONFIG_DEBUG
     void VulkanInstance::PrepareLayers()
     {
+        Common::PlatformUtils::SetEnvVar("VK_LAYER_PATH", "VkLayer_khronos_validation.json");
+
         uint32_t supportedLayerCount = 0;
         vkEnumerateInstanceLayerProperties(&supportedLayerCount, nullptr);
         std::vector<VkLayerProperties> supportedLayers(supportedLayerCount);

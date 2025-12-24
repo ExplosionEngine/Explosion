@@ -1,22 +1,19 @@
-file(GLOB SOURCES Src/*.cpp)
+file(GLOB sources Src/*.cpp)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set(PLATFORM_SOURCES Src/Platform/Win32Surface.cpp)
+    set(platform_sources Src/Platform/Win32Surface.cpp)
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    set(PLATFORM_SOURCES Src/Platform/MacosSurface.mm)
-    set(PLATFORM_EXT_LIBS
-        "-framework Cocoa"
-        "-framework IOKit"
-        "-framework CoreFoundation")
+    set(platform_sources Src/Platform/MacosSurface.mm)
+    set(platform_ext_libs molten-vk::molten-vk "-framework Cocoa" "-framework IOKit" "-framework CoreFoundation")
 endif()
 
 exp_add_library(
     NAME RHI-Vulkan
     TYPE SHARED
-    SRC ${SOURCES} ${PLATFORM_SOURCES}
+    SRC ${sources} ${platform_sources}
     PUBLIC_INC Include
-    PUBLIC_LIB RHI ${PLATFORM_EXT_LIBS}
-    PUBLIC_MERGE_LIB VulkanSDK spirv-cross VulkanMemoryAllocator
+    PUBLIC_LIB RHI ${platform_ext_libs}
+    PUBLIC_MERGE_LIB Vulkan::Headers Vulkan::Loader vulkan-validationlayers::vulkan-validationlayers spirv-cross::spirv-cross GPUOpen::VulkanMemoryAllocator
 )
 
 # .mm files can not perform unity build with .cpp files

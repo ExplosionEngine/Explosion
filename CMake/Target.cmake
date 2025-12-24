@@ -77,6 +77,11 @@ function(exp_process_runtime_dependencies)
     )
     foreach (d ${arg_DEP_TARGET})
         list(APPEND runtime_deps $<TARGET_FILE:${d}>)
+        exp_gather_target_runtime_dependencies_recurse(
+            NAME ${d}
+            OUT_RUNTIME_DEP dep_target_runtime_deps
+        )
+        list(APPEND runtime_deps ${dep_target_runtime_deps})
     endforeach ()
     foreach(r ${runtime_deps})
         add_custom_command(
@@ -135,32 +140,32 @@ function(exp_add_resources_copy_command)
     add_dependencies(${arg_NAME} ${copy_res_target_name})
 endfunction()
 
-function(exp_gather_target_include_dirs)
+function(exp_gather_target_libs)
     set(options "")
     set(singleValueArgs NAME OUTPUT)
     set(multiValueArgs "")
     cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (NOT (TARGET ${arg_NAME}))
-        return()
-    endif()
-
-    get_target_property(target_incs ${arg_NAME} INTERFACE_INCLUDE_DIRECTORIES)
-    if (NOT ("${target_incs}" STREQUAL "target_incs-NOTFOUND"))
-        foreach(target_inc ${target_incs})
-            list(APPEND result ${target_inc})
-        endforeach()
-    endif()
+    string(REGEX MATCH "\\$\\<BUILD_INTERFACE.+\\>" match ${arg_NAME})
+    if (match)
+        set(${arg_OUTPUT} "" PARENT_SCOPE)
+    endif ()
 
     get_target_property(target_libs ${arg_NAME} LINK_LIBRARIES)
     if (NOT ("${target_libs}" STREQUAL "target_libs-NOTFOUND"))
         foreach(target_lib ${target_libs})
-            exp_gather_target_include_dirs(
+            string(REGEX MATCH "\\$\\<BUILD_INTERFACE.+\\>" match ${target_lib})
+            if (match)
+                continue()
+            endif ()
+
+            list(APPEND result ${target_lib})
+            exp_gather_target_libs(
                 NAME ${target_lib}
-                OUTPUT lib_incs
+                OUTPUT libs
             )
-            foreach(lib_inc ${lib_incs})
-                list(APPEND result ${lib_inc})
+            foreach(lib ${libs})
+                list(APPEND result ${lib})
             endforeach()
         endforeach()
     endif()
@@ -189,12 +194,13 @@ function(exp_add_mirror_info_source_generation_target)
     endif()
     if (DEFINED arg_LIB)
         foreach (l ${arg_LIB})
-            exp_gather_target_include_dirs(
+            list(APPEND inc $<TARGET_PROPERTY:${l},INTERFACE_INCLUDE_DIRECTORIES>)
+            exp_gather_target_libs(
                 NAME ${l}
-                OUTPUT target_incs
+                OUTPUT target_libs
             )
-            foreach (i ${target_incs})
-                list(APPEND inc ${i})
+            foreach (tl ${target_libs})
+                list(APPEND inc $<TARGET_PROPERTY:${tl},INTERFACE_INCLUDE_DIRECTORIES>)
             endforeach ()
         endforeach()
     endif()
@@ -202,7 +208,7 @@ function(exp_add_mirror_info_source_generation_target)
 
     list(APPEND inc_args "-I")
     foreach (i ${inc})
-        list(APPEND inc_args ${i})
+        list(APPEND inc_args \"${i}\")
     endforeach()
 
     if (DEFINED arg_FRAMEWORK_DIR)
@@ -336,6 +342,11 @@ function(exp_add_executable)
             EXPORT ${SUB_PROJECT_NAME}Targets
             RUNTIME DESTINATION ${SUB_PROJECT_NAME}/Binaries
         )
+        export(
+            TARGETS ${arg_NAME}
+            NAMESPACE ${SUB_PROJECT_NAME}::
+            APPEND FILE ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}Targets.cmake
+        )
 
         if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
             install(CODE "execute_process(COMMAND install_name_tool -add_rpath @executable_path ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries/$<TARGET_FILE_NAME:${arg_NAME}>)")
@@ -400,18 +411,18 @@ function(exp_add_library)
     endforeach ()
     foreach (lib ${arg_PUBLIC_MERGE_LIB})
         if (TARGET ${lib})
-            get_target_property(target_incs ${lib} INTERFACE_INCLUDE_DIRECTORIES)
-            if (NOT ("${target_incs}" STREQUAL "target_incs-NOTFOUND"))
-                foreach(target_inc ${target_incs})
-                    list(APPEND public_inc ${target_inc})
-                endforeach()
-            endif()
+            list(APPEND public_inc $<TARGET_PROPERTY:${lib},INTERFACE_INCLUDE_DIRECTORIES>)
         endif ()
     endforeach ()
 
     foreach (inc ${public_inc})
-        get_filename_component(absolute_inc ${inc} ABSOLUTE)
-        list(APPEND public_build_inc $<BUILD_INTERFACE:${absolute_inc}>)
+        string(REGEX MATCH "\\$\\<.+\\>" match ${inc})
+        if (match)
+            list(APPEND public_build_inc $<BUILD_INTERFACE:${inc}>)
+        else ()
+            get_filename_component(absolute_inc ${inc} ABSOLUTE)
+            list(APPEND public_build_inc $<BUILD_INTERFACE:${absolute_inc}>)
+        endif ()
     endforeach ()
     target_include_directories(
         ${arg_NAME}
@@ -468,13 +479,6 @@ function(exp_add_library)
         )
     endif ()
 
-    if (${MSVC})
-        target_compile_options(
-            ${arg_NAME}
-            PRIVATE /MD$<$<CONFIG:Debug>:d>
-        )
-    endif()
-
     if ("${arg_TYPE}" STREQUAL "SHARED")
         string(TOUPPER ${arg_NAME}_API api_name)
         string(REPLACE "-" "/" api_dir ${arg_NAME})
@@ -512,6 +516,11 @@ function(exp_add_library)
             ARCHIVE DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Lib
             LIBRARY DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Lib
             RUNTIME DESTINATION ${SUB_PROJECT_NAME}/Binaries
+        )
+        export(
+            TARGETS ${arg_NAME}
+            NAMESPACE ${SUB_PROJECT_NAME}::
+            APPEND FILE ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}Targets.cmake
         )
         if ("${arg_TYPE}" STREQUAL "SHARED")
             install(

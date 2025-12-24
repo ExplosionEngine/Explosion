@@ -1,16 +1,16 @@
-file(GLOB SOURCES Src/*.cpp)
+file(GLOB sources Src/*.cpp)
 exp_add_library(
     NAME Mirror
     TYPE SHARED
-    SRC ${SOURCES}
+    SRC ${sources}
     PUBLIC_INC Include
     PUBLIC_LIB Common
 )
 
-file(GLOB TEST_SOURCES Test/*.cpp)
+file(GLOB test_sources Test/*.cpp)
 exp_add_test(
     NAME Mirror.Test
-    SRC ${TEST_SOURCES}
+    SRC ${test_sources}
     LIB Mirror
     INC Test
     REFLECT Test

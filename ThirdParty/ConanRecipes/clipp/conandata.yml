@@ -1,0 +1,8 @@
+sources:
+  "1.2.3-exp":
+    url: "https://github.com/muellan/clipp/archive/refs/tags/v1.2.3.tar.gz"
+patches:
+  "1.2.3-exp":
+    - patch_file: patches/0000-fix-cpp23.patch
+      patch_description: fix build for c++23
+      patch_type: portability

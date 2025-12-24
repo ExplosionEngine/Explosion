@@ -1,8 +1,8 @@
-file(GLOB SOURCES Src/*.cpp)
+file(GLOB sources Src/*.cpp)
 exp_add_library(
     NAME RHI-Dummy
     TYPE SHARED
-    SRC ${SOURCES}
+    SRC ${sources}
     PUBLIC_INC Include
     PUBLIC_LIB RHI
 )

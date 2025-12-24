@@ -11,3 +11,6 @@ build*
 # 3rd
 ThirdParty/Zip
 ThirdParty/Lib
+ThirdParty/ConanRecipes/**/src
+ThirdParty/ConanRecipes/**/build
+ThirdParty/ConanRecipes/**/CMakeUserPresets.json

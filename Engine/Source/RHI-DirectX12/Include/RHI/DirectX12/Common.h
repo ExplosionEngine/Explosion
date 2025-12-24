@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <format>
 
-#include <d3d12.h>
+#include <directx/d3d12.h>
 
 #include <Common/Debug.h>
 #include <RHI/Common.h>

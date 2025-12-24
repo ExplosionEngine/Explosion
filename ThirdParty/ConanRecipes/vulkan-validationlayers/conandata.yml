@@ -1,0 +1,8 @@
+sources:
+  "1.4.313.0-exp":
+    branch: "vulkan-sdk-1.4.313"
+patches:
+  "1.4.313.0-exp":
+    - patch_file: patches/0000-fix-spirv-tools-includes.patch
+      patch_description: fix spir-v tools includes
+      patch_type: portability

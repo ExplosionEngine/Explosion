@@ -37,46 +37,47 @@ function(add_sample)
         RES ${paths}
         NOT_INSTALL
     )
+    add_dependencies(${arg_NAME} ${platform_dep_target})
 endfunction()
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    set(PLATFORM_EXT_LIBS
+    set(platform_ext_libs
         "-framework Cocoa"
         "-framework IOKit"
         "-framework CoreFoundation")
 endif()
 
-file(GLOB SOURCES Base/*.cpp)
+file(GLOB sources Base/*.cpp)
 exp_add_library(
     NAME Sample-Base
-    SRC ${SOURCES}
+    SRC ${sources}
     PUBLIC_INC Base
-    PUBLIC_LIB RHI ${PLATFORM_EXT_LIBS} Render.Static
-    PUBLIC_MERGE_LIB glfw clipp stb assimp-lib
+    PUBLIC_LIB RHI ${platform_ext_libs} Render.Static
+    PUBLIC_MERGE_LIB glfw::glfw clipp::clipp stb::stb assimp::assimp
     NOT_INSTALL
 )
 
-file(GLOB SOURCES RHI-Triangle/*.cpp)
+file(GLOB sources RHI-Triangle/*.cpp)
 add_sample(
     NAME RHISample-Triangle
-    SRC ${SOURCES}
+    SRC ${sources}
     INC RHI-Triangle
     SHADER RHI-Triangle/Triangle.esl
 )
 
-file(GLOB SOURCES RHI-TexSampling/*.cpp)
+file(GLOB sources RHI-TexSampling/*.cpp)
 add_sample(
     NAME RHISample-TexSampling
-    SRC ${SOURCES}
+    SRC ${sources}
     INC RHI-TexSampling
     SHADER RHI-TexSampling/TexSampling.esl
     IMAGE RHI-TexSampling/Awesomeface.png
 )
 
-file(GLOB SOURCES RHI-SSAO/*.cpp)
+file(GLOB sources RHI-SSAO/*.cpp)
 add_sample(
     NAME RHISample-SSAO
-    SRC ${SOURCES}
+    SRC ${sources}
     INC RHI-SSAO
     SHADER
         RHI-SSAO/Shader/Gbuffer.esl
@@ -87,29 +88,29 @@ add_sample(
         RHI-SSAO/Model/Voyager.gltf
 )
 
-file(GLOB SOURCES RHI-ParallelCompute/*.cpp)
+file(GLOB sources RHI-ParallelCompute/*.cpp)
 add_sample(
     NAME RHISample-ParallelCompute
-    SRC ${SOURCES}
+    SRC ${sources}
     SHADER RHI-ParallelCompute/Compute.esl
 )
 
-file(GLOB SOURCES Rendering-Triangle/*.cpp)
+file(GLOB sources Rendering-Triangle/*.cpp)
 add_sample(
     NAME RenderingSample-Triangle
-    SRC ${SOURCES}
+    SRC ${sources}
     INC Rendering-Triangle
     SHADER
         Rendering-Triangle/Triangle.esl
 )
 
-file(GLOB SOURCES Rendering-BaseTexture/*.cpp)
+file(GLOB sources Rendering-BaseTexture/*.cpp)
 add_sample(
-        NAME Rendering-BaseTexture
-        SRC ${SOURCES}
-        INC Rendering-BaseTexture
-        SHADER Rendering-BaseTexture/BaseTexture.esl
-        IMAGE Rendering-BaseTexture/Awesomeface.png
+    NAME Rendering-BaseTexture
+    SRC ${sources}
+    INC Rendering-BaseTexture
+    SHADER Rendering-BaseTexture/BaseTexture.esl
+    IMAGE Rendering-BaseTexture/Awesomeface.png
 )
 
 file(GLOB SOURCES Rendering-SSAO/*.cpp)

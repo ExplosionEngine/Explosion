@@ -8,7 +8,7 @@
 
 #include <windows.h>
 #include <wrl/client.h>
-#include <d3d12.h>
+#include <directx/d3d12.h>
 using namespace Microsoft::WRL;
 
 #include <RHI/Synchronous.h>

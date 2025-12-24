@@ -1,16 +1,16 @@
-file(GLOB_RECURSE SOURCES Src/*.cpp)
+file(GLOB_RECURSE sources Src/*.cpp)
 exp_add_library(
     NAME Common
     TYPE STATIC
-    SRC ${SOURCES}
+    SRC ${sources}
     PUBLIC_INC Include
-    PUBLIC_MERGE_LIB rapidjson debugbreak cityhash taskflow
+    PUBLIC_MERGE_LIB rapidjson::rapidjson debugbreak::debugbreak cityhash::cityhash Taskflow::Taskflow
 )
 
-file(GLOB TEST_SOURCES Test/*.cpp)
+file(GLOB test_sources Test/*.cpp)
 exp_add_test(
     NAME Common.Test
     INC Test
-    SRC ${TEST_SOURCES}
+    SRC ${test_sources}
     LIB Common
 )

@@ -9,15 +9,32 @@
 #include <MirrorTool/Parser.h>
 #include <MirrorTool/Generator.h>
 #include <Common/IO.h>
+#include <Common/String.h>
 #include <Common/FileSystem.h>
 
 #define OUTPUT_FULL_CMDLINE 0
+
+static std::vector<std::string> ProcessHeaderDirs(const std::vector<std::string>& headerDirs)
+{
+    std::unordered_set<std::string> duplicated;
+    std::vector<std::string> result;
+    for (const auto& headerDir : headerDirs) {
+        for (auto splitHeaderDirs = Common::StringUtils::Split(headerDir, ";");
+            const auto& splitHeaderDir : splitHeaderDirs) {
+            if (duplicated.contains(splitHeaderDir)) {
+                continue;
+            }
+            result.emplace_back(splitHeaderDir);
+            duplicated.emplace(splitHeaderDir);
+        }
+    }
+    return result;
+}
 
 int main(int argc, char* argv[]) // NOLINT
 {
     AutoCoutFlush;
 
-#if OUTPUT_FULL_CMDLINE
     std::stringstream fullCmdline;
     for (auto i = 0; i < argc; i++) {
         fullCmdline << argv[i];
@@ -25,8 +42,7 @@ int main(int argc, char* argv[]) // NOLINT
             fullCmdline << " ";
         }
     }
-    std::cout << fullCmdline.str() << std::endl;
-#endif
+    const std::string fullCmdLineStr = fullCmdline.str();
 
     std::string inputFile;
     std::string outputFile;
@@ -50,28 +66,47 @@ int main(int argc, char* argv[]) // NOLINT
     for (auto& headerDir : headerDirs) {
         headerDir = Common::Path(headerDir).String();
     }
+    headerDirs = ProcessHeaderDirs(headerDirs);
+
+    auto outputErrorWithDebugContext = [fullCmdLineStr, inputFile, outputFile, headerDirs, frameworkDirs, dynamic](const std::string& error) -> void {
+        std::cout << "MirrorTool fatal error:" << Common::newline;
+        std::cout << error << Common::newline;
+        std::cout << "MirrorTool debug context: " << Common::newline;
+        std::cout << "[fullCmdLine] " << fullCmdLineStr << Common::newline;
+        std::cout << "[dynamic] " << dynamic << Common::newline;
+        std::cout << "[inputFile] " << inputFile << Common::newline;
+        std::cout << "[outputFile] " << outputFile << Common::newline;
+        std::cout << "[headerDirs]" << Common::newline;
+        for (const auto& headerDir : headerDirs) {
+            std::cout << headerDir << Common::newline;
+        }
+        std::cout << "[frameworkDirs]" << Common::newline;
+        for (const auto& frameworkDir : frameworkDirs) {
+            std::cout << frameworkDir << Common::newline;
+        }
+        std::cout << Common::newline;
+    };
 
     if (!inputFile.ends_with(".h")) {
-        std::cout << "input header file must ends with .h" << Common::newline;
+        outputErrorWithDebugContext("input header file must ends with .h");
         return 1;
     }
     if (!outputFile.ends_with(".cpp")) {
-        std::cout << "output file must ends with .cpp" << Common::newline;
+        outputErrorWithDebugContext("output file must ends with .cpp");
         return 1;
     }
 
     MirrorTool::Parser parser(inputFile, headerDirs, frameworkDirs);
     auto [parseSuccess, parseResultOrError] = parser.Parse();
-
     if (!parseSuccess) {
-        std::cout << std::get<std::string>(parseResultOrError) << Common::newline;
+        outputErrorWithDebugContext(std::get<std::string>(parseResultOrError));
         return 1;
     }
 
     MirrorTool::Generator generator(inputFile, outputFile, headerDirs, std::get<MirrorTool::MetaInfo>(parseResultOrError), dynamic);
     if (auto [generateSuccess, generateError] = generator.Generate();
         !generateSuccess) {
-        std::cout << generateError << Common::newline;
+        outputErrorWithDebugContext(generateError);
         return 1;
     }
     return 0;

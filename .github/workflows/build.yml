@@ -13,7 +13,7 @@ on:
 env:
   BUILD_TYPE: Release
   MAKE_THREAD_NUM: 16
-  CMAKE_VERSION: '3.28.1'
+  CMAKE_VERSION: '4.1.2'
 
 jobs:
   build:
@@ -31,8 +31,12 @@ jobs:
           detached: true
 
       - name: Set XCode Version
-        run: sudo xcode-select -s /Library/Developer/CommandLineTools
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
         if: runner.os == 'macOS'
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
 
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -42,19 +46,19 @@ jobs:
         with:
           node-version: 24
 
-      - name: Setup cmake
+      - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{env.CMAKE_VERSION}}
 
-      - name: Update Cache Files
-        uses: actions/cache@v4
-        with:
-          path: ${{github.workspace}}/ThirdParty/Zip
-          key: ${{runner.os}}-3rd-zip
+      - name: Setup Conan
+        uses: conan-io/setup-conan@v1
+
+      - name: Config Conan Remote
+        run: conan remote add explosion https://kindem.online/artifactory/api/conan/conan
 
       - name: Configure CMake
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCI=ON
+        run: cmake -B ${{github.workspace}}/build -G=Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCI=ON
 
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j ${{env.MAKE_THREAD_NUM}}
