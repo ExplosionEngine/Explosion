@@ -88,7 +88,6 @@ export default function ProjectHubPage() {
         <Tab title='New Project' className='w-full pr-6'>
           <Form className='w-full ml-4'>
             <Input fullWidth isRequired label='Project Name' labelPlacement='outside' placeholder='HelloExplosion'/>
-            <Input fullWidth isRequired label='Project Description' labelPlacement='outside' placeholder='A simple explosion game project.'/>
             <Input fullWidth isRequired label='Project Path' labelPlacement='outside' placeholder='/path/to/your/project'/>
             <Select fullWidth isRequired label='Project Template' labelPlacement='outside' defaultSelectedKeys={['0']}>
               {projectTemplates.map((item, i) => (
