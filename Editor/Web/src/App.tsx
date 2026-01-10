@@ -4,7 +4,7 @@ import ProjectHubPage from '@/pages/project-hub';
 function App() {
   return (
     <Routes>
-      <Route element={<ProjectHubPage/>} path='/project-hub'/>
+      <Route element={<ProjectHubPage />} path='/project-hub' />
     </Routes>
   );
 }

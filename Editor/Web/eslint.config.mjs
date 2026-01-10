@@ -100,11 +100,25 @@ export default defineConfig([
       "react-hooks/exhaustive-deps": "off",
       "jsx-a11y/click-events-have-key-events": "warn",
       "jsx-a11y/interactive-supports-focus": "warn",
-      "prettier/prettier": "warn",
+      "prettier/prettier": [
+        "warn",
+        {
+          "endOfLine": "auto",
+          "singleQuote": true,
+          "jsxSingleQuote": true,
+          "semi": true,
+          "printWidth": 200,
+          "tabWidth": 2,
+          "useTabs": false,
+          "objectWrap": "collapse",
+          "bracketSameLine": true,
+          "arrowParens": "always",
+          "singleAttributePerLine": false,
+        }
+      ],
       "no-unused-vars": "off",
       "unused-imports/no-unused-vars": "off",
       "unused-imports/no-unused-imports": "warn",
-
       "@typescript-eslint/no-unused-vars": [
         "warn",
         {
@@ -113,7 +127,6 @@ export default defineConfig([
           argsIgnorePattern: "^_.*?$",
         },
       ],
-
       "import/order": [
         "warn",
         {
@@ -136,12 +149,10 @@ export default defineConfig([
             },
           ],
 
-          "newlines-between": "always",
+          "newlines-between": "never",
         },
       ],
-
       "react/self-closing-comp": "warn",
-
       "react/jsx-sort-props": [
         "warn",
         {
@@ -150,26 +161,7 @@ export default defineConfig([
           noSortAlphabetically: false,
           reservedFirst: true,
         },
-      ],
-
-      "padding-line-between-statements": [
-        "warn",
-        {
-          blankLine: "always",
-          prev: "*",
-          next: "return",
-        },
-        {
-          blankLine: "always",
-          prev: ["const", "let", "var"],
-          next: "*",
-        },
-        {
-          blankLine: "any",
-          prev: ["const", "let", "var"],
-          next: ["const", "let", "var"],
-        },
-      ],
+      ]
     },
   },
 ]);
