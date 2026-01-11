@@ -62,7 +62,7 @@ namespace Core {
     void Logger::Log(const std::string& inTag, const std::string& inLevel, const std::string& inContent)
     {
         const auto time = Common::AccurateTime(Common::TimePoint::Now());
-        LogInternal(std::format("[{}][{}][{}] {}", time.ToString(), inTag, inLevel, inContent));
+        LogInternal(std::format("[{}][{}][{}] {}", time.ToString("hh-mm-ss:mss"), inTag, inLevel, inContent));
     }
 
     void Logger::Attach(Common::UniquePtr<LogStream>&& inStream)
