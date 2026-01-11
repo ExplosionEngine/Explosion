@@ -2,6 +2,9 @@
 // Created by johnk on 2025/8/8.
 //
 
+#include <QtEnvironmentVariables>
+#include <QByteArrayView>
+
 #include <Core/Cmdline.h>
 #include <Core/Log.h>
 #include <Core/Paths.h>
@@ -18,6 +21,14 @@ static Core::CmdlineArgValue<bool> caWebUIDev(
 static Core::CmdlineArgValue<uint32_t> caWebUIDevServerPort(
     "webUIDevServerPort", "-webUIDevServerPort", 5173,
     "Port of web ui dev server, which works only when dev mode enabled");
+
+static Core::CmdlineArgValue<bool> caWebUIDebug(
+    "webUIDebug", "-webUIDebug", false,
+    "Whether to enable web ui debug (you can attach debugger to qt web engine process).");
+
+static Core::CmdlineArgValue<uint32_t> caWebUIRemoteDebugPort(
+    "webUIRemoveDebugPort", "-webUIRemoveDebugPort", 5174,
+    "Port of web ui debug port, you can attach to the url printed in log to create debug process.");
 
 namespace Editor {
     WebUIServer& WebUIServer::Get()
@@ -60,6 +71,11 @@ namespace Editor {
 
         baseUrl = std::format("http://localhost:{}", serverPort);
         LogInfo(WebUI, "{} web ui server listening on {}", serverMode, baseUrl);
+
+        if (caWebUIDebug.GetValue()) {
+            const auto flags = std::format("--remote-debugging-port={}", caWebUIRemoteDebugPort.GetValue());
+            qputenv("QTWEBENGINE_CHROMIUM_FLAGS", QByteArrayView(flags.c_str(), static_cast<qsizetype>(flags.length())));
+        }
     }
 
     void WebUIServer::Stop()
