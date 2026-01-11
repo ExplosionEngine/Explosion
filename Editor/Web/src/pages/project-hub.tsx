@@ -45,6 +45,12 @@ export default function ProjectHubPage() {
     console.error('onOpenProject:', index);
   }
 
+  async function onBrowseProjectPath(): Promise<void> {
+    // TODO
+    const dirHandle = await window.showDirectoryPicker({ startIn: 'desktop' });
+    console.error(dirHandle);
+  }
+
   return (
     <div className='h-screen p-6'>
       <div className='mb-4'>
@@ -82,7 +88,12 @@ export default function ProjectHubPage() {
         <Tab className='w-full pr-6' title='New Project'>
           <Form className='w-full ml-4'>
             <Input fullWidth isRequired label='Project Name' labelPlacement='outside' placeholder='HelloExplosion' />
-            <Input fullWidth isRequired label='Project Path' labelPlacement='outside' placeholder='/path/to/your/project' />
+            <div className='flex w-full'>
+              <Input isRequired label='Project Path' labelPlacement='outside' placeholder='/path/to/your/project' />
+              <Button className='ml-2 mt-6' onPress={() => onBrowseProjectPath()}>
+                Browse
+              </Button>
+            </div>
             <Select fullWidth isRequired defaultSelectedKeys={['0']} label='Project Template' labelPlacement='outside'>
               {projectTemplates.map((item, i) => (
                 <SelectItem key={i}>{item.name}</SelectItem>
