@@ -6,8 +6,20 @@
 
 #include <QWebChannel>
 #include <QWebEngineView>
+#include <QWebEnginePage>
 
 namespace Editor {
+    class WebPage : public QWebEnginePage {
+        Q_OBJECT
+
+    public:
+        explicit WebPage(QWidget* inParent = nullptr);
+        ~WebPage() override;
+
+    protected:
+        void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID) override;
+    };
+
     class WebWidget : public QWebEngineView {
         Q_OBJECT
 

@@ -4,5 +4,6 @@ declare global {
   interface Window {
     qt: any;
     backend: any;
+    showDirectoryPicker: any;
   }
 }
