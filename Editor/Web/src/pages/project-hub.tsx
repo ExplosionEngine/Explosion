@@ -36,6 +36,8 @@ export default function ProjectHubPage() {
   }, []);
 
   function onCreateProject(): void {
+    // TODO
+    console.error("onCreateProject()");
     window.backend.CreateProject();
   }
 

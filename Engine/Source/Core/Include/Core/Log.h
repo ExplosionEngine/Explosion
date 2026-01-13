@@ -13,12 +13,10 @@
 #include <Common/Utility.h>
 #include <Core/Api.h>
 
-#define LogVerbose(tag, ...) Core::Logger::Get().Log(#tag, "Verbose", std::format(__VA_ARGS__))
-#define LogDebug(tag, ...) Core::Logger::Get().Log(#tag, "Debug", std::format(__VA_ARGS__))
-#define LogHint(tag, ...) Core::Logger::Get().Log(#tag, "Hint", std::format(__VA_ARGS__))
-#define LogInfo(tag, ...) Core::Logger::Get().Log(#tag, "Info", std::format(__VA_ARGS__))
-#define LogWarning(tag, ...) Core::Logger::Get().Log(#tag, "Warning", std::format(__VA_ARGS__))
-#define LogError(tag, ...) Core::Logger::Get().Log(#tag, "Error", std::format(__VA_ARGS__))
+#define LogVerbose(tag, ...) Core::Logger::Get().Log(#tag, Core::LogLevel::verbose, std::format(__VA_ARGS__))
+#define LogInfo(tag, ...) Core::Logger::Get().Log(#tag, Core::LogLevel::info, std::format(__VA_ARGS__))
+#define LogWarning(tag, ...) Core::Logger::Get().Log(#tag, Core::LogLevel::warning, std::format(__VA_ARGS__))
+#define LogError(tag, ...) Core::Logger::Get().Log(#tag, Core::LogLevel::error, std::format(__VA_ARGS__))
 
 namespace Core {
     class LogStream {
@@ -57,8 +55,6 @@ namespace Core {
 
     enum class LogLevel : uint8_t {
         verbose,
-        debug,
-        hint,
         info,
         warning,
         error,
@@ -73,7 +69,7 @@ namespace Core {
         NonCopyable(Logger)
         NonMovable(Logger)
 
-        void Log(const std::string& inTag, const std::string& inLevel, const std::string& inContent);
+        void Log(const std::string& inTag, LogLevel inLevel, const std::string& inContent);
         void Attach(Common::UniquePtr<LogStream>&& inStream);
         void Flush();
 

@@ -59,10 +59,24 @@ namespace Core {
         Flush();
     }
 
-    void Logger::Log(const std::string& inTag, const std::string& inLevel, const std::string& inContent)
+    void Logger::Log(const std::string& inTag, LogLevel inLevel, const std::string& inContent)
     {
+        static std::unordered_map<LogLevel, std::string_view> LogLevelStringMap = {
+            { LogLevel::verbose, "Verbose" },
+            { LogLevel::info, "Info" },
+            { LogLevel::warning, "Warning" },
+            { LogLevel::error, "Error" }
+        };
+
+        static std::unordered_map<LogLevel, std::string_view> LogLevelColorStr = {
+            { LogLevel::verbose, "" },
+            { LogLevel::info, "" },
+            { LogLevel::warning, "\033[33m" },
+            { LogLevel::error, "\033[31m" }
+        };
+
         const auto time = Common::AccurateTime(Common::TimePoint::Now());
-        LogInternal(std::format("[{}][{}][{}] {}", time.ToString("hh-mm-ss:mss"), inTag, inLevel, inContent));
+        LogInternal(std::format("{}[{}][{}][{}] {}\033[0m", LogLevelColorStr.at(inLevel), time.ToString("hh-mm-ss:mss"), inTag, LogLevelStringMap.at(inLevel), inContent));
     }
 
     void Logger::Attach(Common::UniquePtr<LogStream>&& inStream)
