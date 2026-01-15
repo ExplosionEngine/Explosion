@@ -487,7 +487,7 @@ function(exp_add_library)
         string(REPLACE ">" "]" runtime_dep_files "${runtime_dep_files}")
         set_target_properties(
             ${arg_NAME} PROPERTIES
-            EXPORT_PROPERTIES "runtime_dep"
+            EXPORT_PROPERTIES "RUNTIME_DEP"
             RUNTIME_DEP "${runtime_dep_files}"
         )
     endif ()
