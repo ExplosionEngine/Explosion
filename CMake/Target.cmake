@@ -15,7 +15,7 @@ endif()
 
 function(exp_gather_target_runtime_dependencies_recurse)
     set(options "")
-    set(singleValueArgs NAME OUT_RUNTIME_DEP)
+    set(singleValueArgs NAME OUT_RUNTIME_DEP OUT_DEP_TARGET)
     set(multiValueArgs "")
     cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -54,18 +54,21 @@ function(exp_gather_target_runtime_dependencies_recurse)
                 list(APPEND result_runtime_dep $<TARGET_FILE:${l}>)
             endif ()
 
+            list(APPEND result_dep_target ${l})
             exp_gather_target_runtime_dependencies_recurse(
                 NAME ${l}
                 OUT_RUNTIME_DEP temp_runtime_dep
+                OUT_DEP_TARGET temp_dep_target
             )
-            foreach(t ${temp_runtime_dep})
-                list(APPEND result_runtime_dep ${t})
-            endforeach()
+            list(APPEND result_runtime_dep ${temp_runtime_dep})
+            list(APPEND result_dep_target ${temp_dep_target})
         endforeach()
     endif()
 
     list(REMOVE_DUPLICATES result_runtime_dep)
+    list(REMOVE_DUPLICATES result_dep_target)
     set(${arg_OUT_RUNTIME_DEP} ${result_runtime_dep} PARENT_SCOPE)
+    set(${arg_OUT_DEP_TARGET} ${result_dep_target} PARENT_SCOPE)
 endfunction()
 
 function(exp_process_runtime_dependencies)
@@ -77,26 +80,41 @@ function(exp_process_runtime_dependencies)
     exp_gather_target_runtime_dependencies_recurse(
         NAME ${arg_NAME}
         OUT_RUNTIME_DEP runtime_deps
+        OUT_DEP_TARGET dep_targets
     )
     foreach (d ${arg_DEP_TARGET})
         list(APPEND runtime_deps $<TARGET_FILE:${d}>)
         exp_gather_target_runtime_dependencies_recurse(
             NAME ${d}
             OUT_RUNTIME_DEP dep_target_runtime_deps
+            OUT_DEP_TARGET dep_dep_targets
         )
         list(APPEND runtime_deps ${dep_target_runtime_deps})
+        list(APPEND dep_targets ${dep_dep_targets})
     endforeach ()
+
     foreach(r ${runtime_deps})
-        add_custom_command(
-            TARGET ${arg_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${r} $<TARGET_FILE_DIR:${arg_NAME}>
-        )
-        if (NOT ${arg_NOT_INSTALL})
-            install(
-                FILES ${r} DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries
-            )
-        endif ()
+        list(APPEND copy_commands COMMAND ${CMAKE_COMMAND} -E copy_if_different ${r} $<TARGET_FILE_DIR:${arg_NAME}>)
     endforeach()
+    if (NOT "${copy_commands}" STREQUAL "")
+        set(custom_target_name ${arg_NAME}.CopyRuntimeDeps)
+        add_custom_target(
+            ${custom_target_name}
+            ${copy_commands}
+        )
+
+        add_dependencies(${arg_NAME} ${custom_target_name})
+        foreach (t ${dep_targets})
+            add_dependencies(${custom_target_name} ${t})
+        endforeach ()
+
+        set_target_properties(${custom_target_name} PROPERTIES FOLDER ${AUX_TARGETS_FOLDER})
+    endif ()
+    if (NOT ${arg_NOT_INSTALL} AND NOT "${runtime_deps}" STREQUAL "")
+        install(
+            FILES ${runtime_deps} DESTINATION ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries
+        )
+    endif ()
 endfunction()
 
 function(exp_expand_resource_path_expression)
