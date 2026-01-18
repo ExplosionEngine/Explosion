@@ -27,3 +27,9 @@ add_subdirectory(Sample)
 if (${BUILD_EDITOR})
     add_subdirectory(Editor)
 endif()
+
+file(GLOB engine_cmake_libs CMake/*.cmake)
+install(
+    FILES ${engine_cmake_libs}
+    DESTINATION ${SUB_PROJECT_NAME}/CMake
+)
