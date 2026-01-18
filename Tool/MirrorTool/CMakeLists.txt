@@ -5,7 +5,6 @@ exp_add_library(
     PUBLIC_INC Include
     PUBLIC_LIB Mirror
     PUBLIC_MERGE_LIB libclang::libclang clipp::clipp
-    NOT_INSTALL
 )
 
 file(GLOB exe_sources ExeSrc/*.cpp)
