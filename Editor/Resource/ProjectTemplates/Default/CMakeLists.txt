@@ -1,5 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION %{cmakeMinVersion})
 project(%{projectName}%)
 
-include(ExternalProject)
-include(GenerateExportHeader)
+%{commonCMakeScripts}
