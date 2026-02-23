@@ -19,7 +19,19 @@ jobs:
   build:
     strategy:
       matrix:
-        os: ['windows-latest', 'macOS-latest']
+        include:
+          - os: 'windows-latest'
+            generator: 'Ninja'
+          - os: 'windows-latest'
+            generator: 'Ninja Multi-Config'
+          - os: 'windows-latest'
+            generator: 'Visual Studio 17 2022'
+          - os: 'macOS-latest'
+            generator: 'Ninja'
+          - os: 'macOS-latest'
+            generator: 'Ninja Multi-Config'
+          - os: 'macOS-latest'
+            generator: 'Unix Makefiles'
 
     runs-on: ${{ matrix.os }}
 
@@ -58,7 +70,7 @@ jobs:
         run: conan remote add explosion https://kindem.online/artifactory/api/conan/conan
 
       - name: Configure Engine
-        run: cmake -B ${{github.workspace}}/build -G=Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCI=ON
+        run: cmake -B ${{github.workspace}}/build -G "${{matrix.generator}}" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCI=ON
 
       - name: Build Engine
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j ${{env.MAKE_THREAD_NUM}}
@@ -71,7 +83,7 @@ jobs:
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target install -j ${{env.MAKE_THREAD_NUM}}
 
       - name: Configure Test Project
-        run: cmake -S ${{github.workspace}}/TestProject -B ${{github.workspace}}/TestProject/build -G=Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENGINE_ROOT=${{github.workspace}}/Installed
+        run: cmake -S ${{github.workspace}}/TestProject -B ${{github.workspace}}/TestProject/build -G "${{matrix.generator}}" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENGINE_ROOT=${{github.workspace}}/Installed
 
       - name: Build Test Project
         run: cmake --build ${{github.workspace}}/TestProject/build --config ${{env.BUILD_TYPE}} -j ${{env.MAKE_THREAD_NUM}}
