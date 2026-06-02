@@ -48,7 +48,22 @@ class DXCConan(ConanFile):
         predefined_params_file = os.path.join(self.source_folder, "cmake", "caches", "PredefinedParams.cmake")
 
         cmake = CMake(self)
-        cmake.configure(cli_args=["-C", predefined_params_file, f"-DCMAKE_INSTALL_PREFIX={install_folder}"])
+        # Disable every test sub-tree:
+        #   * HLSL_INCLUDE_TESTS=ON (set by PredefinedParams.cmake) drags in TAEF
+        #     via projects/dxilconv/unittests, which isn't shipped with the SDK.
+        #   * SPIRV_BUILD_TESTS=ON (also from PredefinedParams) builds GoogleTest.
+        #   * LLVM/CLANG_INCLUDE_TESTS=ON (CMake default) wires `check-all` up to
+        #     `ExecHLSLTests`/`dxc_batch`, which only exist when HLSL tests are on
+        #     and break configure once we turn them off.
+        # Command line -D values take precedence over the -C cache file.
+        cmake.configure(cli_args=[
+            "-C", predefined_params_file,
+            f"-DCMAKE_INSTALL_PREFIX={install_folder}",
+            "-DHLSL_INCLUDE_TESTS=OFF",
+            "-DSPIRV_BUILD_TESTS=OFF",
+            "-DLLVM_INCLUDE_TESTS=OFF",
+            "-DCLANG_INCLUDE_TESTS=OFF",
+        ])
         cmake.build()
         cmake.build(target="install-distribution")
 

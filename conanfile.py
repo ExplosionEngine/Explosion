@@ -19,8 +19,8 @@ class ExplosionConan(ConanFile):
 
         # private repo
         self.requires("glfw/3.4-exp")
-        self.requires("libclang/21.1.7-exp")
-        self.requires("qt/6.10.1-exp")
+        self.requires("libclang/22.1.6-exp")
+        self.requires("qt/6.10.3-exp")
         self.requires("debugbreak/1.0-exp")
         self.requires("rapidjson/cci.20250205-exp")
         self.requires("assimp/6.0.2-exp")

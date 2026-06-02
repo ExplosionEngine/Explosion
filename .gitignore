@@ -17,6 +17,7 @@ ThirdParty/Lib
 ThirdParty/ConanRecipes/**/src
 ThirdParty/ConanRecipes/**/build
 ThirdParty/ConanRecipes/**/CMakeUserPresets.json
+aqtinstall.log
 
 # Test Project
 TestProject/.idea
