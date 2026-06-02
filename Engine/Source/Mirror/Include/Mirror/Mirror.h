@@ -563,7 +563,7 @@ namespace Mirror {
 
         template <typename... Args> Any Construct(Args&&... args) const;
         template <typename... Args> Any New(Args&&... args) const;
-        template <typename... Args> Any InplaceNew(Args&&... args) const;
+        template <typename... Args> Any InplaceNew(void* ptr, Args&&... args) const;
 
         const std::string& GetOwnerName() const;
         const Id& GetOwnerId() const;
@@ -3600,9 +3600,9 @@ namespace Mirror {
     }
 
     template <typename ... Args>
-    Any Constructor::InplaceNew(Args&&... args) const
+    Any Constructor::InplaceNew(void* ptr, Args&&... args) const
     {
-        return InplaceNewDyn(ForwardAsArgList(std::forward<Args>(args)...));
+        return InplaceNewDyn(ptr, ForwardAsArgList(std::forward<Args>(args)...));
     }
 
     template <typename C>
@@ -3710,7 +3710,7 @@ namespace Mirror {
     template <Common::CppEnum E>
     bool EnumValue::Compare(const E& value) const
     {
-        return Compare(ForwardAsArg(value));
+        return CompareDyn(ForwardAsArg(value));
     }
 
     template <Common::CppEnum E>

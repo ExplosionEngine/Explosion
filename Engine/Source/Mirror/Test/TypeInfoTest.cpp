@@ -63,3 +63,66 @@ TEST(TypeTest, TypeTraitsTest)
     ASSERT_TRUE((std::is_same_v<Mirror::Internal::MemberFunctionTraits<decltype(&TestClass::Add)>::RetType, int>));
     ASSERT_TRUE((std::is_same_v<Mirror::Internal::MemberFunctionTraits<decltype(&TestClass::Add)>::ArgsTupleType, std::tuple<int>>));
 }
+
+TEST(TypeTest, TypeFlagsTest)
+{
+    const auto* intInfo = Mirror::GetTypeInfo<int>();
+    ASSERT_FALSE(intInfo->isConst);
+    ASSERT_FALSE(intInfo->isPointer);
+    ASSERT_FALSE(intInfo->isLValueReference);
+    ASSERT_FALSE(intInfo->isClass);
+    ASSERT_TRUE(intInfo->isArithmetic);
+    ASSERT_TRUE(intInfo->isIntegral);
+    ASSERT_FALSE(intInfo->isFloatingPoint);
+
+    const auto* constIntRefInfo = Mirror::GetTypeInfo<const int&>();
+    ASSERT_FALSE(constIntRefInfo->isConst);
+    ASSERT_TRUE(constIntRefInfo->isLValueReference);
+    ASSERT_TRUE(constIntRefInfo->isLValueConstReference);
+    ASSERT_TRUE(constIntRefInfo->isReference);
+
+    const auto* intPtrInfo = Mirror::GetTypeInfo<int*>();
+    ASSERT_TRUE(intPtrInfo->isPointer);
+    ASSERT_FALSE(intPtrInfo->isConstPointer);
+
+    const auto* constIntPtrInfo = Mirror::GetTypeInfo<const int*>();
+    ASSERT_TRUE(constIntPtrInfo->isPointer);
+    ASSERT_TRUE(constIntPtrInfo->isConstPointer);
+
+    const auto* floatInfo = Mirror::GetTypeInfo<float>();
+    ASSERT_TRUE(floatInfo->isArithmetic);
+    ASSERT_FALSE(floatInfo->isIntegral);
+    ASSERT_TRUE(floatInfo->isFloatingPoint);
+
+    const auto* arrayInfo = Mirror::GetTypeInfo<int[3]>();
+    ASSERT_TRUE(arrayInfo->isArray);
+}
+
+TEST(TypeTest, GetTypeIdTest)
+{
+    ASSERT_EQ(Mirror::GetTypeId<int>(), Mirror::GetTypeInfo<int>()->id);
+    ASSERT_EQ(Mirror::GetTypeId<float>(), Mirror::GetTypeInfo<float>()->id);
+    ASSERT_NE(Mirror::GetTypeId<int>(), Mirror::GetTypeId<float>());
+}
+
+TEST(TypeTest, RemovePointerTypeTest)
+{
+    const auto* intPtrInfo = Mirror::GetTypeInfo<int*>();
+    ASSERT_EQ(intPtrInfo->removePointerType, Mirror::GetTypeInfo<int>()->id);
+
+    const auto* constIntPtrInfo = Mirror::GetTypeInfo<const int*>();
+    ASSERT_EQ(constIntPtrInfo->removePointerType, Mirror::GetTypeInfo<const int>()->id);
+}
+
+TEST(TypeTest, EqualComparableFlagTest)
+{
+    struct NotEq { };
+    struct YesEq {
+        bool operator==(const YesEq&) const { return true; }
+        bool operator!=(const YesEq&) const { return false; }
+    };
+
+    ASSERT_TRUE(Mirror::GetTypeInfo<int>()->equalComparable);
+    ASSERT_TRUE(Mirror::GetTypeInfo<YesEq>()->equalComparable);
+    ASSERT_FALSE(Mirror::GetTypeInfo<NotEq>()->equalComparable);
+}

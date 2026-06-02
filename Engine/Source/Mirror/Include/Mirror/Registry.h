@@ -660,6 +660,7 @@ namespace Mirror {
 
         Enum::ConstructParams params;
         params.id = inId;
+        params.typeInfo = GetTypeInfo<T>();
 
         Enum::typeToIdMap[typeId] = inId;
         return EnumRegistry<T>(EmplaceEnum(inId, std::move(params)));

@@ -63,3 +63,36 @@ struct EClass() C3 : C2 {
 
     EProperty() int c;
 };
+
+// Fixture with a default constructor + a category meta + a base, for testing
+// Class::GetDefaultObject / Class::FindWithCategory / Class::Cast etc.
+struct EClass(category=animal) C4 {
+    EClassBody(C4)
+
+    EProperty() int v;
+};
+
+// Another fixture in the same "animal" category to make FindWithCategory non-trivial.
+struct EClass(category=animal) C5 {
+    EClassBody(C5)
+
+    EProperty() int w;
+};
+
+// Fixture in a different category to verify the filter does discriminate.
+struct EClass(category=plant) C6 {
+    EClassBody(C6)
+};
+
+// Fixture with a transient member, for testing MemberVariable::IsTransient.
+struct EClass() C7 {
+    EClassBody(C7)
+
+    EProperty() int normal;
+    EProperty(transient=true) int trans;
+};
+
+// Fixture with float / int / bool / int64 metas, for ReflNode::GetMetaInt32/Int64/Float etc.
+struct EClass(boolMeta=true, intMeta=42, int64Meta=1234567890123, floatMeta=3.5) C8 {
+    EClassBody(C8)
+};
