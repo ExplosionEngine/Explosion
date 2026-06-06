@@ -25,3 +25,24 @@ conan export-pkg qt/conanfile.py --version="6.10.1-exp"
 # test stage
 conan test qt/test_package qt/6.10.1-exp
 ```
+
+To build every recipe at once, use the `build_recipes.py` helper. It walks each
+recipe directory, picks the latest version (the top-most entry in
+`conandata.yml`) and builds them one-by-one in dependency order. Each recipe
+lists the platforms it supports under a `platforms` key in its `conandata.yml`
+(currently `Windows-x86_64` and/or `Macos-armv8`); recipes that do not target
+the current host are skipped. If any recipe fails the script stops immediately
+and prints a summary.
+
+```shell
+cd ThirdParty/ConanRecipes
+# build every recipe for the current host
+python build_recipes.py
+
+# build everything, then upload to a remote (upload only runs if every
+# recipe built successfully)
+python build_recipes.py --upload \
+    --remote <remote> \
+    --remote-url <remote-url> \
+    --remote-user <user> --remote-password <password>
+```

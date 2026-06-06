@@ -1,3 +1,5 @@
+platforms:
+  - Macos-armv8
 sources:
   "1.4.1-exp":
     commit: "db445ff2042d9ce348c439ad8451112f354b8d2a"

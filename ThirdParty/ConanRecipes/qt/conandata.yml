@@ -1,2 +1,5 @@
+platforms:
+  - Windows-x86_64
+  - Macos-armv8
 versions:
   - "6.10.3-exp"

@@ -1,3 +1,6 @@
+platforms:
+  - Windows-x86_64
+  - Macos-armv8
 sources:
   "22.1.6-exp":
     Windows-x86_64:

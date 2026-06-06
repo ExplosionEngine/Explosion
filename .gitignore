@@ -17,7 +17,11 @@ ThirdParty/Lib
 ThirdParty/ConanRecipes/**/src
 ThirdParty/ConanRecipes/**/build
 ThirdParty/ConanRecipes/**/CMakeUserPresets.json
+!ThirdParty/ConanRecipes/build_recipes.py
 aqtinstall.log
+
+# Claude
+CLAUDE.md
 
 # Test Project
 TestProject/.idea
