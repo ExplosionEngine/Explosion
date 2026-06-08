@@ -1,6 +1,6 @@
 # ConanRecipes
 
-This repository stores all private Conan recipes used by the explosion game engine. Typically, you don't need to build them separately, as all recipes and precompiled binaries have been uploaded to our private artifact repository at [https://kindem.online/artifactory/api/conan/conan](https://kindem.online/artifactory/api/conan/conan)
+This repository stores all private Conan recipes used by the explosion game engine. Typically, you don't need to build them separately, as all recipes and precompiled binaries have been uploaded to our private artifact repository at [https://conan.kindem.online/artifactory/api/conan/conan](https://conan.kindem.online/artifactory/api/conan/conan)
 . The CMake scripts in the explosion game engine will automatically download and install all dependencies from this repository.
 
 If you have extremely poor network connectivity, you may use these Conan recipes to locally build the required third-party dependencies for the engine.
