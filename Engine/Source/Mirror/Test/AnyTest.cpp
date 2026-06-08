@@ -1477,3 +1477,629 @@ TEST(AnyTest, StdTupleViewTest)
     });
     ASSERT_EQ(count, 3);
 }
+
+TEST(AnyTest, StdTupleViewCreateAndConstTraverseTest)
+{
+    Any a0 = std::tuple<int, bool, std::string> { 1, true, "hello" };
+    const StdTupleView v0(a0.Ref());
+
+    const Any e0 = v0.CreateElement(0);
+    ASSERT_EQ(e0.Type()->id, GetTypeInfo<int>()->id);
+    const Any e1 = v0.CreateElement(2);
+    ASSERT_EQ(e1.Type()->id, GetTypeInfo<std::string>()->id);
+
+    int count = 0;
+    v0.ConstTraverse([&](const Any& inRef, size_t inIndex) -> void {
+        if (inIndex == 0) {
+            ASSERT_EQ(inRef.As<const int&>(), 1);
+        } else if (inIndex == 2) {
+            ASSERT_EQ(inRef.As<const std::string&>(), "hello");
+        }
+        count++;
+    });
+    ASSERT_EQ(count, 3);
+}
+
+TEST(AnyTest, StdVariantViewTest)
+{
+    using Var = std::variant<int, std::string, float>;
+
+    Var v { 42 };
+    Any a0 = std::ref(v);
+    const StdVariantView view(a0.Ref());
+
+    ASSERT_EQ(view.TypeNum(), 3);
+    ASSERT_EQ(view.TypeByIndex(0)->id, GetTypeInfo<int>()->id);
+    ASSERT_EQ(view.TypeByIndex(1)->id, GetTypeInfo<std::string>()->id);
+    ASSERT_EQ(view.TypeByIndex(2)->id, GetTypeInfo<float>()->id);
+
+    ASSERT_EQ(view.Index(), 0);
+    ASSERT_EQ(view.GetElement(0).As<const int&>(), 42);
+    ASSERT_EQ(view.GetConstElement(0).As<const int&>(), 42);
+
+    bool visited = false;
+    view.Visit([&](const Any& inAny) -> void {
+        ASSERT_EQ(inAny.As<const int&>(), 42);
+        visited = true;
+    });
+    ASSERT_TRUE(visited);
+}
+
+TEST(AnyTest, StdVariantViewEmplaceAndCreateTest)
+{
+    using Var = std::variant<int, std::string, float>;
+
+    Var v;
+    Any a0 = std::ref(v);
+    const StdVariantView view(a0.Ref());
+
+    const Any newStr = view.CreateElement(1);
+    ASSERT_EQ(newStr.Type()->id, GetTypeInfo<std::string>()->id);
+
+    Any tmp = std::string("hello");
+    view.Emplace(1, tmp);
+    ASSERT_EQ(view.Index(), 1);
+    ASSERT_EQ(view.GetConstElement(1).As<const std::string&>(), "hello");
+
+    Any tmpFloat = 3.14f;
+    view.Emplace(2, tmpFloat);
+    ASSERT_EQ(view.Index(), 2);
+    ASSERT_EQ(view.GetConstElement(2).As<const float&>(), 3.14f);
+}
+
+TEST(AnyTest, StdOptionalViewMutationTest)
+{
+    std::optional<int> v;
+    Any a0 = std::ref(v);
+    const StdOptionalView view(a0.Ref());
+    ASSERT_FALSE(view.HasValue());
+
+    Any tmp = 7;
+    view.Emplace(tmp);
+    ASSERT_TRUE(view.HasValue());
+    ASSERT_EQ(view.Value().As<const int&>(), 7);
+
+    view.Reset();
+    ASSERT_FALSE(view.HasValue());
+
+    view.EmplaceDefault();
+    ASSERT_TRUE(view.HasValue());
+    ASSERT_EQ(view.Value().As<const int&>(), 0);
+
+    ASSERT_EQ(view.ConstValue().As<const int&>(), 0);
+}
+
+TEST(AnyTest, StdPairViewMutationTest)
+{
+    std::pair<int, std::string> p { 1, "abc" };
+    Any a0 = std::ref(p);
+    const StdPairView view(a0.Ref());
+
+    ASSERT_EQ(view.Key().As<const int&>(), 1);
+    ASSERT_EQ(view.Value().As<const std::string&>(), "abc");
+    ASSERT_EQ(view.ConstKey().As<const int&>(), 1);
+    ASSERT_EQ(view.ConstValue().As<const std::string&>(), "abc");
+
+    view.Key().As<int&>() = 100;
+    view.Value().As<std::string&>() = "xyz";
+    ASSERT_EQ(p.first, 100);
+    ASSERT_EQ(p.second, "xyz");
+
+    view.Reset();
+    ASSERT_EQ(p.first, 0);
+    ASSERT_EQ(p.second, "");
+}
+
+TEST(AnyTest, StdVectorViewExtraTest)
+{
+    Any a0 = std::vector<int> {};
+    const StdVectorView view(a0.Ref());
+    ASSERT_EQ(view.Size(), 0);
+
+    view.Reserve(16);
+    ASSERT_EQ(view.Size(), 0);
+
+    view.Resize(3);
+    ASSERT_EQ(view.Size(), 3);
+    view.At(0).As<int&>() = 1;
+    view.At(1).As<int&>() = 2;
+    view.At(2).As<int&>() = 3;
+    ASSERT_EQ(view.At(2).As<const int&>(), 3);
+
+    view.EmplaceDefaultBack();
+    ASSERT_EQ(view.Size(), 4);
+    ASSERT_EQ(view.At(3).As<const int&>(), 0);
+
+    view.Clear();
+    ASSERT_EQ(view.Size(), 0);
+}
+
+TEST(AnyTest, StdListViewConstTraverseTest)
+{
+    std::list<int> t0 = { 10, 20, 30 };
+    Any a0 = std::ref(t0);
+    const StdListView view(a0.Ref());
+    ASSERT_EQ(view.Size(), 3);
+
+    std::vector<int> visited;
+    view.ConstTraverse([&](const Any& inRef) -> void {
+        visited.push_back(inRef.As<const int&>());
+    });
+    ASSERT_EQ(visited, (std::vector<int> { 10, 20, 30 }));
+
+    view.EmplaceDefaultFront();
+    view.EmplaceDefaultBack();
+    ASSERT_EQ(view.Size(), 5);
+
+    view.Clear();
+    ASSERT_EQ(view.Size(), 0);
+}
+
+TEST(AnyTest, StdSetViewExtraTest)
+{
+    Any a0 = std::set<int> { 1, 2, 3 };
+    const StdSetView view(a0.Ref());
+    ASSERT_TRUE(view.Contains(Any(1)));
+    ASSERT_TRUE(view.Contains(Any(2)));
+    ASSERT_FALSE(view.Contains(Any(99)));
+
+    view.Erase(Any(2));
+    ASSERT_FALSE(view.Contains(Any(2)));
+    ASSERT_EQ(view.Size(), 2);
+
+    const Any created = view.CreateElement();
+    ASSERT_EQ(created.Type()->id, GetTypeInfo<int>()->id);
+
+    view.Clear();
+    ASSERT_EQ(view.Size(), 0);
+}
+
+TEST(AnyTest, StdUnorderedSetViewExtraTest)
+{
+    Any a0 = std::unordered_set<int> {};
+    const StdUnorderedSetView view(a0.Ref());
+
+    view.Reserve(16);
+    view.Emplace(Any(1));
+    view.Emplace(Any(2));
+    ASSERT_EQ(view.Size(), 2);
+    ASSERT_TRUE(view.Contains(Any(1)));
+    ASSERT_FALSE(view.Contains(Any(99)));
+
+    view.Erase(Any(1));
+    ASSERT_FALSE(view.Contains(Any(1)));
+
+    const Any created = view.CreateElement();
+    ASSERT_EQ(created.Type()->id, GetTypeInfo<int>()->id);
+
+    view.Clear();
+    ASSERT_EQ(view.Size(), 0);
+}
+
+TEST(AnyTest, StdMapViewExtraTest)
+{
+    std::map<int, std::string> m = { { 1, "a" }, { 2, "b" } };
+    Any a0 = std::ref(m);
+    const StdMapView view(a0.Ref());
+    ASSERT_EQ(view.Size(), 2);
+    ASSERT_TRUE(view.Contains(Any(1)));
+    ASSERT_FALSE(view.Contains(Any(99)));
+    ASSERT_EQ(view.ConstAt(Any(1)).As<const std::string&>(), "a");
+
+    view.Erase(Any(1));
+    ASSERT_FALSE(view.Contains(Any(1)));
+    ASSERT_EQ(view.Size(), 1);
+
+    const Any newKey = view.CreateKey();
+    const Any newValue = view.CreateValue();
+    ASSERT_EQ(newKey.Type()->id, GetTypeInfo<int>()->id);
+    ASSERT_EQ(newValue.Type()->id, GetTypeInfo<std::string>()->id);
+
+    view.Clear();
+    ASSERT_EQ(view.Size(), 0);
+}
+
+TEST(AnyTest, StdUnorderedMapViewExtraTest)
+{
+    Any a0 = std::unordered_map<int, std::string> {};
+    const StdUnorderedMapView view(a0.Ref());
+
+    view.Reserve(16);
+    view.Emplace(Any(1), Any(std::string("a")));
+    ASSERT_EQ(view.Size(), 1);
+    ASSERT_TRUE(view.Contains(Any(1)));
+
+    view.Erase(Any(1));
+    ASSERT_FALSE(view.Contains(Any(1)));
+
+    const Any newKey = view.CreateKey();
+    const Any newValue = view.CreateValue();
+    ASSERT_EQ(newKey.Type()->id, GetTypeInfo<int>()->id);
+    ASSERT_EQ(newValue.Type()->id, GetTypeInfo<std::string>()->id);
+}
+
+TEST(AnyTest, HasTemplateViewTest)
+{
+    Any a0 = std::vector<int> { 1, 2, 3 };
+    ASSERT_TRUE(a0.HasTemplateView());
+    ASSERT_EQ(a0.GetTemplateViewId(), StdVectorView::id);
+
+    Any a1 = 1;
+    ASSERT_FALSE(a1.HasTemplateView());
+
+    ASSERT_TRUE(a0.CanAsTemplateView<StdVectorView>());
+    ASSERT_FALSE(a0.CanAsTemplateView<StdListView>());
+}
+
+TEST(AnyTest, OperatorIndexTest)
+{
+    int v0[] = { 7, 8, 9 };
+    Any a0 = v0;
+    ASSERT_EQ(a0[0].As<int&>(), 7);
+    ASSERT_EQ(a0[1].As<int&>(), 8);
+
+    a0[2].As<int&>() = 100;
+    ASSERT_EQ(a0[2].As<const int&>(), 100);
+
+    const Any a1 = v0;
+    ASSERT_EQ(a1[0].As<const int&>(), 7);
+}
+
+TEST(AnyTest, MemberFuncMoveAssignTest)
+{
+    Any a0 = AnyMoveAssignTest();
+    Any a1 = AnyMoveAssignTest();
+    ASSERT_FALSE(a0.As<const AnyMoveAssignTest&>().called);
+
+    a0.MoveAssign(std::move(a1));
+    ASSERT_TRUE(a0.As<const AnyMoveAssignTest&>().called);
+}
+
+TEST(AnyTest, ForwardAsAnyTest)
+{
+    Any a0 = ForwardAsAny(42);
+    ASSERT_TRUE(a0.IsMemoryHolder());
+    ASSERT_EQ(a0.As<int>(), 42);
+
+    int v0 = 7;
+    Any a1 = ForwardAsAny(v0);
+    ASSERT_TRUE(a1.IsNonConstRef());
+    ASSERT_EQ(a1.As<int&>(), 7);
+
+    const int v1 = 8; // NOLINT
+    Any a2 = ForwardAsAny(v1);
+    ASSERT_TRUE(a2.IsConstRef());
+    ASSERT_EQ(a2.As<const int&>(), 8);
+}
+
+TEST(AnyTest, ForwardAsAnyByValueTest)
+{
+    int v0 = 7;
+    Any a0 = ForwardAsAnyByValue(v0);
+    ASSERT_TRUE(a0.IsMemoryHolder());
+    ASSERT_EQ(a0.As<int>(), 7);
+    ASSERT_NE(a0.Data(), &v0);
+
+    Any a1 = ForwardAsAnyByValue(42);
+    ASSERT_TRUE(a1.IsMemoryHolder());
+    ASSERT_EQ(a1.As<int>(), 42);
+}
+
+TEST(AnyTest, ForwardAsArgListTest)
+{
+    int v0 = 1;
+    const float v1 = 2.0f; // NOLINT
+
+    ArgumentList args = ForwardAsArgList(v0, v1, 3.0);
+    ASSERT_EQ(args.size(), 3);
+    ASSERT_TRUE(args[0].IsNonConstRef());
+    ASSERT_TRUE(args[1].IsConstRef());
+    ASSERT_TRUE(args[2].IsMemoryHolder());
+
+    ASSERT_EQ(args[0].As<int&>(), 1);
+    ASSERT_EQ(args[1].As<const float&>(), 2.0f);
+    ASSERT_EQ(args[2].As<const double&>(), 3.0);
+}
+
+TEST(AnyTest, ForwardAsArgListByValueTest)
+{
+    int v0 = 1;
+    ArgumentList args = ForwardAsArgListByValue(v0, 2.0f);
+    ASSERT_EQ(args.size(), 2);
+    ASSERT_TRUE(args[0].IsMemoryHolder());
+    ASSERT_TRUE(args[1].IsMemoryHolder());
+    ASSERT_EQ(args[0].As<const int&>(), 1);
+    ASSERT_EQ(args[1].As<const float&>(), 2.0f);
+}
+
+TEST(AnyTest, ArgumentBasicTest)
+{
+    Any a0 = 7;
+    Argument arg0 = a0; // NOLINT
+    ASSERT_FALSE(arg0.IsConstRef());
+    ASSERT_TRUE(arg0.IsMemoryHolder());
+    ASSERT_EQ(arg0.Type()->id, GetTypeInfo<int>()->id);
+    ASSERT_EQ(arg0.As<const int&>(), 7);
+
+    int v0 = 9;
+    Any a1 = std::ref(v0);
+    Argument arg1 = a1; // NOLINT
+    ASSERT_TRUE(arg1.IsRef());
+    ASSERT_TRUE(arg1.IsNonConstRef());
+    ASSERT_EQ(*arg1.TryAs<int>(), 9);
+
+    const Any a2 = 10;
+    Argument arg2 = a2; // NOLINT
+    ASSERT_EQ(arg2.As<int>(), 10);
+
+    Argument arg3 = Any(20); // NOLINT
+    ASSERT_EQ(arg3.As<int>(), 20);
+}
+
+TEST(AnyTest, ArgumentTypeInspectTest)
+{
+    int v0 = 9;
+    Any a0 = std::ref(v0);
+    Argument arg0 = a0; // NOLINT
+    ASSERT_EQ(arg0.Type()->id, GetTypeInfo<int&>()->id);
+    ASSERT_EQ(arg0.RemoveRefType()->id, GetTypeInfo<int>()->id);
+    ASSERT_EQ(arg0.AddPointerType()->id, GetTypeInfo<int*>()->id);
+
+    Any a1 = &v0;
+    Argument arg1 = a1; // NOLINT
+    ASSERT_EQ(arg1.RemovePointerType()->id, GetTypeInfo<int>()->id);
+}
+
+TEST(AnyTest, ConvertibleFreeFunctionTest)
+{
+    const TypeInfoCompact intType { GetTypeInfo<int>(), GetTypeInfo<int>(), GetTypeInfo<int>() };
+    const TypeInfoCompact intRefType { GetTypeInfo<int&>(), GetTypeInfo<int>(), GetTypeInfo<int>() };
+    const TypeInfoCompact intConstRefType { GetTypeInfo<const int&>(), GetTypeInfo<const int>(), GetTypeInfo<int>() };
+    const TypeInfoCompact intPtrType { GetTypeInfo<int*>(), GetTypeInfo<int*>(), GetTypeInfo<int>() };
+    const TypeInfoCompact constIntPtrType { GetTypeInfo<const int*>(), GetTypeInfo<const int*>(), GetTypeInfo<const int>() };
+    const TypeInfoCompact floatType { GetTypeInfo<float>(), GetTypeInfo<float>(), GetTypeInfo<float>() };
+
+    ASSERT_TRUE(Mirror::Convertible(intType, intType, nullptr));
+    ASSERT_TRUE(Mirror::Convertible(intType, intRefType, nullptr));
+    ASSERT_TRUE(Mirror::Convertible(intType, intConstRefType, nullptr));
+    ASSERT_FALSE(Mirror::Convertible(intType, floatType, nullptr));
+
+    ASSERT_TRUE(Mirror::PointerConvertible(intPtrType, intPtrType));
+    ASSERT_TRUE(Mirror::PointerConvertible(intPtrType, constIntPtrType));
+    ASSERT_FALSE(Mirror::PointerConvertible(constIntPtrType, intPtrType));
+    ASSERT_FALSE(Mirror::PointerConvertible(intType, intPtrType));
+}
+
+TEST(AnyTest, GetDynamicClassTest)
+{
+    AnyDerivedClassTest derived {};
+    Any a0 = std::ref(derived);
+    const Class* derivedClass = a0.GetDynamicClass();
+    ASSERT_TRUE(derivedClass != nullptr);
+    ASSERT_EQ(derivedClass->GetName(), "AnyDerivedClassTest");
+}
+
+TEST(AnyTest, ResetClearsTypeTest)
+{
+    Any a0 = 1;
+    ASSERT_FALSE(a0.Empty());
+    ASSERT_TRUE(a0);
+
+    a0.Reset();
+    ASSERT_TRUE(a0.Empty());
+    ASSERT_FALSE(a0);
+
+    a0 = 2.0f;
+    ASSERT_FALSE(a0.Empty());
+    ASSERT_EQ(a0.TypeId(), GetTypeInfo<float>()->id);
+}
+
+TEST(AnyTest, OperatorEqualEmptyTest)
+{
+    Any a0;
+    Any a1;
+    ASSERT_TRUE(a0.Empty());
+    ASSERT_TRUE(a1.Empty());
+    // Both empty Anys do not call rtti->equal, but TypeId() asserts on rtti != nullptr,
+    // so we only check non-empty equality cases here. The real semantics of operator==
+    // are exercised in OperatorEqualTest.
+    Any a2 = 3;
+    Any a3 = 3;
+    Any a4 = 4;
+    ASSERT_TRUE(a2 == a3);
+    ASSERT_TRUE(a2 != a4);
+}
+
+TEST(AnyTest, ArrayAssignTest)
+{
+    int v0[] = { 1, 2, 3 };
+    Any a0;
+    a0 = v0;
+    ASSERT_TRUE(a0.IsMemoryHolder());
+    ASSERT_EQ(a0.ArrayLength(), 3);
+    ASSERT_EQ(a0.At(0).As<int&>(), 1);
+
+    int v1[] = { 4, 5 };
+    a0 = std::move(v1);
+    ASSERT_TRUE(a0.IsMemoryHolder());
+    ASSERT_EQ(a0.ArrayLength(), 2);
+    ASSERT_EQ(a0.At(1).As<int&>(), 5);
+
+    const int v2[] = { 7, 8, 9 }; // NOLINT
+    Any a1;
+    a1 = std::ref(v2);
+    ASSERT_TRUE(a1.IsConstRef());
+    ASSERT_EQ(a1.ArrayLength(), 3);
+    ASSERT_EQ(a1.At(0).As<const int&>(), 7);
+}
+
+TEST(AnyTest, CopyMoveAssignFromRvalueTest)
+{
+    // CopyAssign(Any&&) — value-category overload: takes an rvalue Any and copies its content.
+    Any a0 = AnyCopyAssignTest();
+    ASSERT_FALSE(a0.As<const AnyCopyAssignTest&>().called);
+
+    a0.CopyAssign(Any(AnyCopyAssignTest()));
+    ASSERT_TRUE(a0.As<const AnyCopyAssignTest&>().called);
+
+    // MoveAssign(const Any&) — needs the source to be a non-const ref.
+    AnyMoveAssignTest tmp;
+    Any a1 = AnyMoveAssignTest();
+    ASSERT_FALSE(a1.As<const AnyMoveAssignTest&>().called);
+    Any srcRef = std::ref(tmp);
+    const Any& constSrcRef = srcRef;
+    a1.MoveAssign(constSrcRef);
+    ASSERT_TRUE(a1.As<const AnyMoveAssignTest&>().called);
+}
+
+TEST(AnyTest, ConstAnyCopyAssignTest)
+{
+    // The const-qualified CopyAssign requires `this` to be a non-const ref Any.
+    AnyCopyAssignTest backing;
+    Any holder = std::ref(backing);
+    const Any& holderRef = holder;
+    ASSERT_FALSE(backing.called);
+
+    Any rhs = AnyCopyAssignTest();
+    holderRef.CopyAssign(rhs);
+    ASSERT_TRUE(backing.called);
+}
+
+TEST(AnyTest, ConstAnyMoveAssignTest)
+{
+    AnyMoveAssignTest backing;
+    Any holder = std::ref(backing);
+    const Any& holderRef = holder;
+    ASSERT_FALSE(backing.called);
+
+    Any rhs = AnyMoveAssignTest();
+    holderRef.MoveAssign(rhs);
+    ASSERT_TRUE(backing.called);
+}
+
+TEST(AnyTest, ArgumentAssignmentTest)
+{
+    Any a0 = 1;
+    Any a1 = 2;
+
+    Argument arg = a0;     // NOLINT
+    ASSERT_EQ(arg.As<int>(), 1);
+
+    arg = a1;              // operator=(Any&)
+    ASSERT_EQ(arg.As<int>(), 2);
+
+    const Any a2 = 3;
+    arg = a2;              // operator=(const Any&)
+    ASSERT_EQ(arg.As<int>(), 3);
+
+    arg = Any(4);          // operator=(Any&&)
+    ASSERT_EQ(arg.As<int>(), 4);
+}
+
+TEST(AnyTest, ArgumentGetDynamicClassTest)
+{
+    AnyDerivedClassTest d {};
+    Any a0 = std::ref(d);
+    Argument arg = a0; // NOLINT
+    const Class* dynClass = arg.GetDynamicClass();
+    ASSERT_NE(dynClass, nullptr);
+    ASSERT_EQ(dynClass->GetName(), "AnyDerivedClassTest");
+}
+
+TEST(AnyTest, PolymorphismConvertibleTest)
+{
+    AnyDerivedClassTest derived {};
+    const Class* derivedClass = Class::Find<AnyDerivedClassTest>();
+    ASSERT_NE(derivedClass, nullptr);
+
+    // Pointer up-cast: derived* → base*.
+    {
+        const TypeInfoCompact srcType {
+            GetTypeInfo<AnyDerivedClassTest*>(),
+            GetTypeInfo<AnyDerivedClassTest*>(),
+            GetTypeInfo<AnyDerivedClassTest>()
+        };
+        const TypeInfoCompact dstType {
+            GetTypeInfo<AnyBaseClassTest*>(),
+            GetTypeInfo<AnyBaseClassTest*>(),
+            GetTypeInfo<AnyBaseClassTest>()
+        };
+        ASSERT_TRUE(Mirror::PolymorphismConvertible(srcType, dstType, nullptr));
+    }
+
+    // Reference up-cast: derived& → base&.
+    {
+        const TypeInfoCompact srcType {
+            GetTypeInfo<AnyDerivedClassTest&>(),
+            GetTypeInfo<AnyDerivedClassTest>(),
+            GetTypeInfo<AnyDerivedClassTest>()
+        };
+        const TypeInfoCompact dstType {
+            GetTypeInfo<AnyBaseClassTest&>(),
+            GetTypeInfo<AnyBaseClassTest>(),
+            GetTypeInfo<AnyBaseClassTest>()
+        };
+        ASSERT_TRUE(Mirror::PolymorphismConvertible(srcType, dstType, nullptr));
+    }
+
+    // Down-cast without dynamic type info: should fail.
+    {
+        const TypeInfoCompact srcType {
+            GetTypeInfo<AnyBaseClassTest*>(),
+            GetTypeInfo<AnyBaseClassTest*>(),
+            GetTypeInfo<AnyBaseClassTest>()
+        };
+        const TypeInfoCompact dstType {
+            GetTypeInfo<AnyDerivedClassTest*>(),
+            GetTypeInfo<AnyDerivedClassTest*>(),
+            GetTypeInfo<AnyDerivedClassTest>()
+        };
+        ASSERT_FALSE(Mirror::PolymorphismConvertible(srcType, dstType, nullptr));
+        // With dynamic class info pointing to derived, down-cast becomes legal.
+        ASSERT_TRUE(Mirror::PolymorphismConvertible(srcType, dstType, derivedClass));
+    }
+
+    // Unrelated types are never polymorphism-convertible.
+    {
+        const TypeInfoCompact srcType {
+            GetTypeInfo<int*>(),
+            GetTypeInfo<int*>(),
+            GetTypeInfo<int>()
+        };
+        const TypeInfoCompact dstType {
+            GetTypeInfo<float*>(),
+            GetTypeInfo<float*>(),
+            GetTypeInfo<float>()
+        };
+        ASSERT_FALSE(Mirror::PolymorphismConvertible(srcType, dstType, nullptr));
+    }
+}
+
+TEST(AnyTest, NonRefArgumentVariantTest)
+{
+    // Build an Argument that owns its Any (operator=(Any&&) path).
+    Argument arg;
+    arg = Any(123);
+    ASSERT_EQ(arg.As<int>(), 123);
+    ASSERT_EQ(arg.Type()->id, GetTypeInfo<int>()->id);
+    ASSERT_TRUE(arg.IsMemoryHolder());
+}
+
+TEST(AnyTest, ClassCastViaPolyClassTest)
+{
+    // AnyDerivedClassTest2 / AnyBaseClassTest2 use EPolyClassBody (virtual GetClass);
+    // PolyAsTest above already exercises As<Derived*>/As<Derived&>, so Class::Cast
+    // should round-trip cleanly here.
+    AnyDerivedClassTest2 derived(1, 2.0f, "3");
+    const Class& dc = Class::Get<AnyDerivedClassTest2>();
+
+    // Ref cast via Cast.
+    Any anyRef = std::ref(derived);
+    Any castRef = dc.Cast(anyRef);
+    ASSERT_FALSE(castRef.Empty());
+
+    // Pointer cast via Cast.
+    Any anyPtr = &derived;
+    Any castPtr = dc.Cast(anyPtr);
+    ASSERT_FALSE(castPtr.Empty());
+}

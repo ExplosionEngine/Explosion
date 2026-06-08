@@ -55,7 +55,7 @@ jobs:
         uses: conan-io/setup-conan@v1
 
       - name: Config Conan Remote
-        run: conan remote add explosion https://kindem.online/artifactory/api/conan/conan
+        run: conan remote add explosion https://conan.kindem.online/artifactory/api/conan/conan
 
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -G=Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCI=ON

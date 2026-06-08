@@ -223,3 +223,39 @@ TEST(SerializationTest, MetaTypeJsonSerializationTest)
     PerformJsonSerializationTest<const EnumValue*>(nullptr, R"(["",""])");
     PerformJsonSerializationTest<const EnumValue*>(&enun->GetValue("a"), R"(["SerializationTestEnum","a"])");
 }
+
+TEST(SerializationTest, AnySerializationTest)
+{
+    static Common::Path fileName = "../Test/Generated/Mirror/SerializationTest.AnySerializationTest.bin";
+    {
+        Common::BinaryFileSerializeStream stream(fileName.String());
+
+        Mirror::Any value = SerializationTestStruct0 { 7, 8.0f, "9" };
+        value.Serialize(stream);
+    }
+    {
+        Common::BinaryFileDeserializeStream stream(fileName.String());
+
+        SerializationTestStruct0 restored {};
+        Mirror::Any holder = std::ref(restored);
+        const auto result = holder.Deserialize(stream);
+        ASSERT_TRUE(result.first);
+        ASSERT_EQ(restored.a, 7);
+        ASSERT_EQ(restored.b, 8.0f);
+        ASSERT_EQ(restored.c, "9");
+    }
+}
+
+TEST(SerializationTest, AnyJsonSerializationTest)
+{
+    rapidjson::Document document;
+    Mirror::Any value = SerializationTestStruct0 { 1, 2.0f, "3" };
+    value.JsonSerialize(document, document.GetAllocator());
+
+    SerializationTestStruct0 restored {};
+    Mirror::Any holder = std::ref(restored);
+    holder.JsonDeserialize(document);
+    ASSERT_EQ(restored.a, 1);
+    ASSERT_EQ(restored.b, 2.0f);
+    ASSERT_EQ(restored.c, "3");
+}

@@ -1,3 +1,14 @@
+platforms:
+  - Windows-x86_64
+  - Macos-armv8
 sources:
-  "21.1.7-exp":
-    url: "https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-21.1.7.tar.gz"
+  "22.1.6-exp":
+    Windows-x86_64:
+      url: "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.6/clang%2Bllvm-22.1.6-x86_64-pc-windows-msvc.tar.xz"
+      sha256: "657343edf361ca463bd642e39c74b251c6338b96cdbd55ff277555298b027696"
+    Linux-x86_64:
+      url: "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.6/LLVM-22.1.6-Linux-X64.tar.xz"
+      sha256: "c5ac8ef89ca39d30cb32e9b83772f995dd891c685ebc188d593c943a64d5f8b5"
+    Macos-armv8:
+      url: "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.6/LLVM-22.1.6-macOS-ARM64.tar.xz"
+      sha256: "8059d9d9eeb059c30d812b4a37291888f8dcba04d2b5ace61fd12d2904eaa0e9"

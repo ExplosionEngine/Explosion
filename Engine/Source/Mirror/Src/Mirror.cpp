@@ -339,7 +339,7 @@ namespace Mirror {
         Assert(!Empty() && !inOther.Empty() && arrayLength == inOther.arrayLength && rtti == inOther.rtti);
 
         for (auto i = 0; i < ElementNum(); i++) {
-            rtti->copyAssign(Data(i), inOther.Data(i));
+            rtti->moveAssign(Data(i), inOther.Data(i));
         }
     }
 
@@ -2224,7 +2224,7 @@ namespace Mirror {
 
     void StdListView::ConstTraverse(const ElementTraverser& inTraverser) const
     {
-        rtti->traverse(ref, inTraverser);
+        rtti->constTraverse(ref, inTraverser);
     }
 
     Any StdListView::EmplaceFront(const Argument& inTempObj) const
@@ -2555,16 +2555,18 @@ namespace Mirror {
     StdVariantView::StdVariantView(const Any& inRef)
         : ref(inRef)
     {
+        Assert(ref.IsRef() && ref.CanAsTemplateView<StdVariantView>());
+        rtti = static_cast<const StdVariantRtti*>(ref.GetTemplateViewRtti());
     }
 
     size_t StdVariantView::TypeNum() const
     {
-        return rtti->TypeNum();
+        return rtti->typeNum();
     }
 
     const TypeInfo* StdVariantView::TypeByIndex(size_t inIndex) const
     {
-        return rtti->TypeByIndex(inIndex);
+        return rtti->typeByIndex(inIndex);
     }
 
     Any StdVariantView::CreateElement(size_t inIndex) const

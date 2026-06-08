@@ -1,6 +1,6 @@
 # ConanRecipes
 
-This repository stores all private Conan recipes used by the explosion game engine. Typically, you don't need to build them separately, as all recipes and precompiled binaries have been uploaded to our private artifact repository at [https://kindem.online/artifactory/api/conan/conan](https://kindem.online/artifactory/api/conan/conan)
+This repository stores all private Conan recipes used by the explosion game engine. Typically, you don't need to build them separately, as all recipes and precompiled binaries have been uploaded to our private artifact repository at [https://conan.kindem.online/artifactory/api/conan/conan](https://conan.kindem.online/artifactory/api/conan/conan)
 . The CMake scripts in the explosion game engine will automatically download and install all dependencies from this repository.
 
 If you have extremely poor network connectivity, you may use these Conan recipes to locally build the required third-party dependencies for the engine.
@@ -26,19 +26,23 @@ conan export-pkg qt/conanfile.py --version="6.10.1-exp"
 conan test qt/test_package qt/6.10.1-exp
 ```
 
-# Windows User Notice
-On the Windows platform, we consider some Visual Studio components as part of the system toolchain. These components are not automatically configured in the conan script, so you will need to install them manually:
-
-* ATL
-* Windows SDK
-* Windows Driver Kit
-
-And some lib may build failed with long build tree path in development mode (like qt-webengine), in this case, you can use the commands to map conan recipes working directory as a driver and execute all conan commands in the driver root:
+To build every recipe at once, use the `build_recipes.py` helper. It walks each
+recipe directory, picks the latest version (the top-most entry in
+`conandata.yml`) and builds them one-by-one in dependency order. Each recipe
+lists the platforms it supports under a `platforms` key in its `conandata.yml`
+(currently `Windows-x86_64` and/or `Macos-armv8`); recipes that do not target
+the current host are skipped. If any recipe fails the script stops immediately
+and prints a summary.
 
 ```shell
-# map
-subst z: path/to/engine/ThirdParty/ConanRecipes
+cd ThirdParty/ConanRecipes
+# build every recipe for the current host
+python build_recipes.py
 
-# unmap
-subst z: /d
+# build everything, then upload to a remote (upload only runs if every
+# recipe built successfully)
+python build_recipes.py --upload \
+    --remote <remote> \
+    --remote-url <remote-url> \
+    --remote-user <user> --remote-password <password>
 ```
