@@ -29,3 +29,9 @@ if (${MSVC})
         NOMINMAX=1
     )
 endif ()
+
+# This project and its downstream consumers reference Qt only through the versioned Qt6:: targets. Suppressing the
+# versionless Qt:: aliases stops the single-config Qt host tools from triggering "IMPORTED_LOCATION not set ...
+# configuration <cfg>" errors in the IDE file-API codemodel on non-Release builds, where they only carry a Release
+# import while Debug/RelWithDebInfo/MinSizeRel are mapped onto it.
+set(QT_NO_CREATE_VERSIONLESS_TARGETS TRUE)
