@@ -28,3 +28,7 @@ TestProject/.idea
 TestProject/.vscode
 TestProject/cmake-build*
 TestProject/build*
+
+# macOS
+.DS_Store
+**/.DS_Store
