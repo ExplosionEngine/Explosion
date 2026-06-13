@@ -46,6 +46,11 @@ jobs:
         with:
           node-version: 24
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
         with:
@@ -56,6 +61,14 @@ jobs:
 
       - name: Config Conan Remote
         run: conan remote add explosion https://conan.kindem.online/artifactory/api/conan/conan
+
+      # Register the in-repo recipes in the local cache so the engine's 'conan install --build=missing'
+      # resolves them from this checkout: unchanged recipes hash to the revision already published on the
+      # remote (binaries are downloaded), changed ones get built locally, making recipe PRs self-contained.
+      - name: Export Conan Recipes
+        run: |
+          pip install pyyaml
+          python ThirdParty/ConanRecipes/build_recipes.py --export-only
 
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -G=Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCI=ON

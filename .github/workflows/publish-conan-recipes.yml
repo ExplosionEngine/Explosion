@@ -1,0 +1,82 @@
+name: Publish Conan Recipes
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'ThirdParty/ConanRecipes/**'
+      - '.github/workflows/publish-conan-recipes.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: publish-conan-recipes
+
+env:
+  CONAN_REMOTE_NAME: explosion
+  CONAN_REMOTE_URL: https://conan.kindem.online/artifactory/api/conan/conan
+  CMAKE_VERSION: '4.1.2'
+
+jobs:
+  publish:
+    # Guard against forks: pushes to a fork's master must not run (and could not upload anyway,
+    # since secrets are only configured on the canonical repository).
+    if: github.repository == 'ExplosionEngine/Explosion'
+
+    strategy:
+      # Platforms publish independently: a failure on one OS must not cancel the other mid-upload.
+      fail-fast: false
+      matrix:
+        # cppstd is pinned per platform to match the binaries already on the remote; consumers on a
+        # higher standard (the engine uses C++20) still match via Conan's default compatibility plugin.
+        include:
+          - os: windows-latest
+            cppstd: '17'
+          - os: macOS-latest
+            cppstd: gnu17
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Set XCode Version
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+        if: runner.os == 'macOS'
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: ${{env.CMAKE_VERSION}}
+
+      - name: Setup Conan
+        uses: conan-io/setup-conan@v1
+
+      - name: Detect Conan Profile
+        run: conan profile detect --force
+
+      - name: Config Conan Remote
+        run: conan remote add ${{ env.CONAN_REMOTE_NAME }} ${{ env.CONAN_REMOTE_URL }}
+
+      - name: Install Python Dependencies
+        run: pip install pyyaml
+
+      # --build=missing (the script default) downloads binaries the remote already has for the same
+      # recipe revision, so only recipes actually changed by the triggering push get rebuilt.
+      - name: Build And Upload Recipes
+        run: >-
+          python ThirdParty/ConanRecipes/build_recipes.py
+          --conan-arg=--settings=compiler.cppstd=${{ matrix.cppstd }}
+          --upload
+          --remote ${{ env.CONAN_REMOTE_NAME }}
+          --remote-user ${{ secrets.CONAN_REMOTE_USER }}
+          --remote-password ${{ secrets.CONAN_REMOTE_PASSWORD }}

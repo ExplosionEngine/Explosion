@@ -5,6 +5,11 @@ Each recipe is built one-by-one in dependency order for the latest version (the
 top entry in conandata.yml), filtered by the recipe's `platforms` list. The
 first failure stops the run and prints a summary. Uploading is opt-in and only
 runs once every recipe has built successfully.
+
+With --export-only the script just runs 'conan export' for every version of
+every recipe, so a subsequent 'conan install --build=missing' resolves recipes
+from the local cache and builds whatever the remote has no binaries for. CI
+uses this to validate recipe changes together with the engine build.
 """
 
 from __future__ import annotations
@@ -45,7 +50,8 @@ class Recipe:
 
         data = yaml.safe_load(self.conandata.read_text(encoding="utf-8")) or {}
         self.name = self._parse_name() or self.dir_name
-        self.version = latest_version(data)
+        self.versions = list_versions(data)
+        self.version = self.versions[0] if self.versions else None
         self.platforms = data.get("platforms") or []
         self.requires = data.get("requires") or []
 
@@ -62,14 +68,14 @@ class Recipe:
         return f"{self.name}/{self.version}"
 
 
-def latest_version(data: dict) -> str | None:
+def list_versions(data: dict) -> list[str]:
     sources = data.get("sources")
     if isinstance(sources, dict) and sources:
-        return next(iter(sources))
+        return [str(v) for v in sources]
     versions = data.get("versions")
     if isinstance(versions, list) and versions:
-        return versions[0]
-    return None
+        return [str(v) for v in versions]
+    return []
 
 
 def discover_recipes(root: Path) -> list[Recipe]:
@@ -104,8 +110,9 @@ def order_by_dependencies(recipes: list[Recipe]) -> list[Recipe]:
     return ordered
 
 
-def run(cmd: list[str], cwd: Path | None = None) -> int:
-    print(f"\n$ {' '.join(cmd)}", flush=True)
+def run(cmd: list[str], cwd: Path | None = None, redact: set[str] | None = None) -> int:
+    shown = " ".join("***" if redact and arg in redact else arg for arg in cmd)
+    print(f"\n$ {shown}", flush=True)
     return subprocess.run(cmd, cwd=str(cwd) if cwd else None).returncode
 
 
@@ -140,6 +147,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--skip", action="append", default=[], help="skip these recipe names (repeatable)"
     )
+    parser.add_argument(
+        "--export-only",
+        action="store_true",
+        help="only 'conan export' every version of every recipe; no build, no platform filter",
+    )
 
     upload = parser.add_argument_group("upload")
     upload.add_argument(
@@ -157,7 +169,22 @@ def parse_args() -> argparse.Namespace:
     args = parser.parse_args()
     if args.upload and not args.remote:
         parser.error("--upload requires --remote")
+    if args.export_only and args.upload:
+        parser.error("--export-only cannot be combined with --upload")
     return args
+
+
+def export_all(args: argparse.Namespace, recipes: list[Recipe]):
+    count = 0
+    for recipe in recipes:
+        if not recipe.versions:
+            sys.exit(f"error: could not determine versions from {recipe.conandata}")
+        for version in recipe.versions:
+            cmd = [args.conan, "export", f"{recipe.dir_name}/conanfile.py", "--version", version]
+            if run(cmd, cwd=args.recipes_root) != 0:
+                sys.exit(f"error: failed to export {recipe.name}/{version}")
+            count += 1
+    print(f"\nExported {count} recipe version(s).", flush=True)
 
 
 def build_all(args: argparse.Namespace, recipes: list[Recipe], host: str):
@@ -215,9 +242,11 @@ def upload_all(args: argparse.Namespace, built: list[Recipe]):
 
     if args.remote_user is not None:
         login = [args.conan, "remote", "login", args.remote, args.remote_user]
+        redact: set[str] = set()
         if args.remote_password is not None:
             login += ["-p", args.remote_password]
-        if run(login) != 0:
+            redact.add(args.remote_password)
+        if run(login, redact=redact) != 0:
             sys.exit("error: failed to log in to remote")
 
     for recipe in built:
@@ -250,9 +279,6 @@ def main():
     if not root.is_dir():
         sys.exit(f"error: recipes root not found: {root}")
 
-    host = current_platform()
-    print(f"Host platform: {host}", flush=True)
-
     recipes = discover_recipes(root)
     if args.only:
         recipes = [r for r in recipes if r.name in args.only or r.dir_name in args.only]
@@ -260,6 +286,13 @@ def main():
         recipes = [r for r in recipes if r.name not in args.skip and r.dir_name not in args.skip]
     if not recipes:
         sys.exit("error: no recipes to build")
+
+    if args.export_only:
+        export_all(args, recipes)
+        return
+
+    host = current_platform()
+    print(f"Host platform: {host}", flush=True)
 
     recipes = order_by_dependencies(recipes)
     print("Build order: " + ", ".join(r.name for r in recipes), flush=True)

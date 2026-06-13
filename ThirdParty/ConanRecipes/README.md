@@ -45,4 +45,28 @@ python build_recipes.py --upload \
     --remote <remote> \
     --remote-url <remote-url> \
     --remote-user <user> --remote-password <password>
+
+# just register every recipe version in the local conan cache (no build);
+# a later 'conan install --build=missing' then builds whatever the remote
+# has no binaries for
+python build_recipes.py --export-only
 ```
+
+## CI
+
+Recipe changes are validated and published automatically:
+
+- Every pull request runs the engine build workflow, which first runs
+  `build_recipes.py --export-only`. Unchanged recipes hash to the same
+  revision already published on the remote so their binaries are simply
+  downloaded, while recipes changed by the PR are built from source inside
+  the job. A PR can therefore change recipes and engine code together and
+  be validated atomically.
+- After a push to `master` that touches `ThirdParty/ConanRecipes`, the
+  `Publish Conan Recipes` workflow builds the changed recipes on Windows
+  and macOS and uploads them to the remote (credentials come from the
+  `CONAN_REMOTE_USER` / `CONAN_REMOTE_PASSWORD` repository secrets). It can
+  also be re-run manually via `workflow_dispatch` if an upload failed.
+
+To keep remote revisions in sync with git, avoid uploading from local
+machines; let the publish workflow be the only writer.
