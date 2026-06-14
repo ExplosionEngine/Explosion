@@ -132,7 +132,10 @@ def parse_args() -> argparse.Namespace:
         "--build", default="missing", help="conan --build policy (passed as --build=<value>)"
     )
     parser.add_argument(
-        "--profile", action="append", default=[], help="conan profile (repeatable)"
+        "--profile",
+        action="append",
+        default=[],
+        help="conan profile applied to both host and build (repeatable)",
     )
     parser.add_argument(
         "--conan-arg",
@@ -193,7 +196,7 @@ def build_all(args: argparse.Namespace, recipes: list[Recipe], host: str):
 
     create_extra: list[str] = []
     for profile in args.profile:
-        create_extra += ["-pr", profile]
+        create_extra += ["-pr:h", profile, "-pr:b", profile]
     create_extra += args.conan_args
 
     for index, recipe in enumerate(recipes, start=1):
