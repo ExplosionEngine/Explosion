@@ -128,7 +128,7 @@ namespace Common {
         static const Vec<T, 4> unit;
         static const Vec<T, 4> negaUnitX;
         static const Vec<T, 4> negaUnitY;
-        static const Vec<T, 4> negaUintZ;
+        static const Vec<T, 4> negaUnitZ;
         static const Vec<T, 4> negaUnitW;
         static const Vec<T, 4> negaUnit;
     };
@@ -492,7 +492,7 @@ namespace Common {
     const Vec<T, 4> VecConsts<T, 4>::negaUnitY = Vec<T, 4>(0, -1, 0, 0);
 
     template <typename T>
-    const Vec<T, 4> VecConsts<T, 4>::negaUintZ = Vec<T, 4>(0, 0, -1, 0);
+    const Vec<T, 4> VecConsts<T, 4>::negaUnitZ = Vec<T, 4>(0, 0, -1, 0);
 
     template <typename T>
     const Vec<T, 4> VecConsts<T, 4>::negaUnitW = Vec<T, 4>(0, 0, 0, -1);

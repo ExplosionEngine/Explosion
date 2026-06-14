@@ -434,7 +434,7 @@ namespace Common {
     template <typename T>
     Vec<T, 4> Transform<T>::TransformPosition(const Vec<T, 4>& inPosition) const
     {
-        Mat<T, 4, 1> posColMat = Mat<T, 4, 1>::FromColVecs(inPosition);
+        Mat<T, 4, 1> posColMat = Mat<T, 4, 1>::FromColVecs(Vec<T, 4>(inPosition));
         return (GetTransformMatrix() * posColMat).Col(0);
     }
 

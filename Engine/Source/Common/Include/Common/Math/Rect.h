@@ -219,7 +219,7 @@ namespace Common {
     template <typename T>
     T Rect<T>::Size() const
     {
-        Vec<T, 3> diagonal = this->max - this->min;
+        Vec<T, 2> diagonal = this->max - this->min;
         return diagonal.Model() / T(2);
     }
 
