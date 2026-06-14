@@ -10,22 +10,22 @@ class ExplosionConan(ConanFile):
         self.requires("cityhash/1.0.1")
         self.requires("gtest/1.17.0")
         self.requires("taskflow/3.10.0")
-        self.requires("vulkan-headers/1.4.313.0")
-        self.requires("vulkan-loader/1.4.313.0")
+        self.requires("vulkan-headers/1.4.350.0")
+        self.requires("vulkan-loader/1.4.350.0")
         self.requires("vulkan-memory-allocator/3.3.0")
-        self.requires("spirv-cross/1.4.313.0")
+        self.requires("spirv-cross/1.4.350.0")
+        self.requires("vulkan-validationlayers/1.4.350.0")
+        self.requires("glfw/3.4")
+        self.requires("rapidjson/cci.20250205")
         if self.settings.os == "Windows":
             self.requires("directx-headers/1.610.2")
 
         # private repo
-        self.requires("glfw/3.4-exp")
         self.requires("libclang/22.1.6-exp")
         self.requires("qt/6.10.3-exp")
         self.requires("debugbreak/1.0-exp")
-        self.requires("rapidjson/cci.20250205-exp")
         self.requires("assimp/6.0.2-exp")
         self.requires("clipp/1.2.3-exp")
         self.requires("dxc/1.8.2505.1-exp")
-        self.requires("vulkan-validationlayers/1.4.313.0-exp")
         if self.settings.os == "Macos":
             self.requires("molten-vk/1.4.1-exp")
