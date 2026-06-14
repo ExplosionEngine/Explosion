@@ -29,7 +29,7 @@ jobs:
         # cppstd is pinned per platform to match the binaries already on the remote; consumers on a
         # higher standard (the engine uses C++20) still match via Conan's default compatibility plugin.
         include:
-          - os: windows-latest
+          - os: windows-2022
             cppstd: '17'
           - os: macOS-latest
             cppstd: gnu17
