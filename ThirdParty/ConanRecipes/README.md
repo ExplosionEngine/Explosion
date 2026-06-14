@@ -52,6 +52,13 @@ python build_recipes.py --upload \
 python build_recipes.py --export-only
 ```
 
+## Windows notes
+
+Some recipes build code that needs ATL (e.g. `atlbase.h`), which a stock Visual
+Studio C++ installation does not ship. If a build fails with a missing-ATL
+error, open the Visual Studio Installer and add the **C++ ATL** component
+(Modify -> Individual components -> "C++ ATL for latest build tools").
+
 ## CI
 
 Recipe changes are validated and published automatically:
