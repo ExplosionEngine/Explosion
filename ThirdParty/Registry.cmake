@@ -19,17 +19,24 @@ find_package(clipp REQUIRED GLOBAL)
 find_package(dxc REQUIRED GLOBAL)
 find_package(VulkanHeaders REQUIRED GLOBAL)
 find_package(VulkanLoader REQUIRED GLOBAL)
-find_package(VulkanValidationLayers REQUIRED GLOBAL)
+find_package(vulkan-validationlayers REQUIRED GLOBAL)
 find_package(spirv-cross REQUIRED GLOBAL)
+
+# The official vulkan-validationlayers package only ships a runtime layer with no headers or link libraries, so the
+# generator declares no usable target. Recreate it as an imported target so it can carry the RUNTIME_DEP layer files
+# and still be linked by RHI-Vulkan the same way as before.
+if (NOT TARGET vulkan-validationlayers::vulkan-validationlayers)
+    add_library(vulkan-validationlayers::vulkan-validationlayers INTERFACE IMPORTED GLOBAL)
+endif ()
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     find_package(DirectX-Headers REQUIRED GLOBAL)
     set_target_properties(assimp::assimp PROPERTIES RUNTIME_DEP "${assimp_INCLUDE_DIR}/../bin/assimp-vc${MSVC_TOOLSET_VERSION}-mt.dll")
     set_target_properties(libclang::libclang PROPERTIES RUNTIME_DEP "${libclang_INCLUDE_DIR}/../bin/libclang.dll")
     set_target_properties(dxc::dxc PROPERTIES RUNTIME_DEP "${dxc_INCLUDE_DIR}/../bin/dxil.dll;${dxc_INCLUDE_DIR}/../bin/dxcompiler.dll")
-    set_target_properties(vulkan-validationlayers::vulkan-validationlayers PROPERTIES RUNTIME_DEP "${VulkanValidationLayers_INCLUDE_DIR}/../bin/VkLayer_khronos_validation.dll;${VulkanValidationLayers_INCLUDE_DIR}/../bin/VkLayer_khronos_validation.json")
+    set_target_properties(vulkan-validationlayers::vulkan-validationlayers PROPERTIES RUNTIME_DEP "${vulkan-validationlayers_PACKAGE_FOLDER_RELEASE}/bin/VkLayer_khronos_validation.dll;${vulkan-validationlayers_PACKAGE_FOLDER_RELEASE}/bin/VkLayer_khronos_validation.json")
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     find_package(MoltenVK REQUIRED GLOBAL)
-    set_target_properties(vulkan-validationlayers::vulkan-validationlayers PROPERTIES RUNTIME_DEP "${VulkanValidationLayers_INCLUDE_DIR}/../lib/libVkLayer_khronos_validation.dylib;${VulkanValidationLayers_INCLUDE_DIR}/../share/vulkan/explicit_layer.d/VkLayer_khronos_validation.json")
+    set_target_properties(vulkan-validationlayers::vulkan-validationlayers PROPERTIES RUNTIME_DEP "${vulkan-validationlayers_PACKAGE_FOLDER_RELEASE}/lib/libVkLayer_khronos_validation.dylib;${vulkan-validationlayers_PACKAGE_FOLDER_RELEASE}/res/vulkan/explicit_layer.d/VkLayer_khronos_validation.json")
     set_target_properties(molten-vk::molten-vk PROPERTIES RUNTIME_DEP "${MoltenVK_INCLUDE_DIR}/../lib/libMoltenVK.dylib;${MoltenVK_INCLUDE_DIR}/../lib/MoltenVK_icd.json")
 endif ()
