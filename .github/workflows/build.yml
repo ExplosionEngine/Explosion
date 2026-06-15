@@ -18,8 +18,11 @@ env:
 jobs:
   build:
     strategy:
+      # Linux runs alongside Windows/macOS, but the engine's own Linux support is
+      # not yet verified -- keep a failing Linux leg from cancelling the others.
+      fail-fast: false
       matrix:
-        os: ['windows-2022', 'macOS-latest']
+        os: ['windows-2022', 'macOS-latest', 'ubuntu-latest']
 
     runs-on: ${{ matrix.os }}
 

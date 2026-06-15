@@ -30,8 +30,8 @@ To build every recipe at once, use the `build_recipes.py` helper. It walks each
 recipe directory, picks the latest version (the top-most entry in
 `conandata.yml`) and builds them one-by-one in dependency order. Each recipe
 lists the platforms it supports under a `platforms` key in its `conandata.yml`
-(currently `Windows-x86_64` and/or `Macos-armv8`); recipes that do not target
-the current host are skipped. If any recipe fails the script stops immediately
+(currently `Windows-x86_64`, `Macos-armv8` and/or `Linux-x86_64`); recipes that
+do not target the current host are skipped. If any recipe fails the script stops immediately
 and prints a summary.
 
 ```shell
@@ -70,8 +70,8 @@ Recipe changes are validated and published automatically:
   the job. A PR can therefore change recipes and engine code together and
   be validated atomically.
 - After a push to `master` that touches `ThirdParty/ConanRecipes`, the
-  `Publish Conan Recipes` workflow builds the changed recipes on Windows
-  and macOS and uploads them to the remote (credentials come from the
+  `Publish Conan Recipes` workflow builds the changed recipes on Windows,
+  macOS and Linux and uploads them to the remote (credentials come from the
   `CONAN_REMOTE_USER` / `CONAN_REMOTE_PASSWORD` repository secrets). It can
   also be re-run manually via `workflow_dispatch` if an upload failed.
 

@@ -33,6 +33,8 @@ jobs:
             cppstd: '17'
           - os: macOS-latest
             cppstd: gnu17
+          - os: ubuntu-latest
+            cppstd: gnu17
 
     runs-on: ${{ matrix.os }}
 
