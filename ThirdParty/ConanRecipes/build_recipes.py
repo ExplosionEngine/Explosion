@@ -31,7 +31,7 @@ from pathlib import Path
 import yaml
 
 
-SUPPORTED_PLATFORMS = ("Windows-x86_64", "Macos-armv8")
+SUPPORTED_PLATFORMS = ("Windows-x86_64", "Macos-armv8", "Linux-x86_64")
 
 # 'conan graph info' binary states that mean a matching binary already exists (in the local cache or on
 # a remote) and so needs neither building nor downloading-to-rebuild. We skip 'conan create' for these
@@ -46,6 +46,8 @@ def current_platform() -> str:
         return "Windows-x86_64"
     if system == "Darwin" and machine in ("arm64", "aarch64"):
         return "Macos-armv8"
+    if system == "Linux" and machine in ("amd64", "x86_64"):
+        return "Linux-x86_64"
     sys.exit(
         f"error: unsupported host {system}/{platform.machine()}; "
         f"only {', '.join(SUPPORTED_PLATFORMS)} are supported"
