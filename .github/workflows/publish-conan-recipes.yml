@@ -47,6 +47,20 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         if: runner.os == 'Windows'
 
+      # The Linux leg runs Qt's test_package, a headless QWebEngineView smoke test, which needs:
+      #   - GL dev files (libOpenGL.so, libGLX.so, GL/gl.h) for CMake's FindOpenGL at configure time, since
+      #     Qt6::Gui transitively requires WrapOpenGL; runners ship only the GL runtime libraries.
+      #   - QtWebEngine's Chromium runtime libs (NSS/NSPR, ALSA, libxkbfile) so libQt6WebEngineCore loads.
+      # The headless run env (QT_QPA_PLATFORM=offscreen, QTWEBENGINE_DISABLE_SANDBOX=1) is set by the qt
+      # recipe's test_package itself, so it is not configured here.
+      - name: Setup Linux Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-dev libglu1-mesa-dev \
+            libnss3 libnspr4 libxkbfile1 libasound2t64
+        if: runner.os == 'Linux'
+
       - name: Checkout Repo
         uses: actions/checkout@v4
 

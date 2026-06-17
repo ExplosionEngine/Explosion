@@ -41,6 +41,14 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         if: runner.os == 'Windows'
 
+      # Qt's prebuilt Qt6::Gui transitively requires WrapOpenGL, so CMake's FindOpenGL needs the GL dev
+      # files (libOpenGL.so, libGLX.so, GL/gl.h). The runners only ship the runtime libraries by default.
+      - name: Setup Linux Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev
+        if: runner.os == 'Linux'
+
       - name: Checkout Repo
         uses: actions/checkout@v4
 
