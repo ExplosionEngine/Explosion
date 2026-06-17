@@ -124,7 +124,11 @@ exp_add_resources_copy_command(
 # ---- end shaders -----------------------------------------------------------------------------------
 
 # ---- begin web project -----------------------------------------------------------------------------
-find_program(npm_executable NAMES npm.cmd npm REQUIRED NO_CACHE)
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    find_program(npm_executable NAMES npm.cmd npm REQUIRED NO_CACHE)
+else ()
+    find_program(npm_executable NAMES npm REQUIRED NO_CACHE)
+endif ()
 message("Perform web project npm install......")
 execute_process(
     COMMAND ${CMAKE_COMMAND} -E env ${npm_executable} install --no-fund --registry=https://registry.npmmirror.com
