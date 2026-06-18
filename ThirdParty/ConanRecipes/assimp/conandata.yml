@@ -1,6 +1,7 @@
 platforms:
   - Windows-x86_64
   - Macos-armv8
+  - Linux-x86_64
 sources:
   "6.0.2-exp":
     url: "https://github.com/assimp/assimp/archive/refs/tags/v6.0.2.tar.gz"

@@ -24,5 +24,9 @@ class TestPackageConan(ConanFile):
             bin_path = os.path.join(self.cpp.build.bindir, "test_package")
             if self.settings.os == "Macos":
                 self.run(f"open {bin_path}.app", env="conanrun")
+            elif self.settings.os == "Linux":
+                # Run the QWebEngineView smoke test headlessly: offscreen avoids needing an X display, and
+                # disabling Chromium's sandbox keeps it from aborting under restricted/headless environments.
+                self.run(f"env QT_QPA_PLATFORM=offscreen QTWEBENGINE_DISABLE_SANDBOX=1 {bin_path}", env="conanrun")
             else:
                 self.run(bin_path, env="conanrun")

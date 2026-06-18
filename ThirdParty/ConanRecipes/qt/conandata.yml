@@ -1,5 +1,6 @@
 platforms:
   - Windows-x86_64
   - Macos-armv8
+  - Linux-x86_64
 versions:
   - "6.10.3-exp"

@@ -65,7 +65,7 @@ namespace Runtime::Internal {
 
 namespace Runtime::Internal {
     template <>
-    static void UpdateSceneProxyContent<DirectionalLight, Render::LightSceneProxy>(Render::LightSceneProxy& outSceneProxy, const DirectionalLight& inComponent)
+    inline void UpdateSceneProxyContent<DirectionalLight, Render::LightSceneProxy>(Render::LightSceneProxy& outSceneProxy, const DirectionalLight& inComponent)
     {
         outSceneProxy.type = Render::LightType::directional;
         outSceneProxy.color = inComponent.color;
@@ -73,7 +73,7 @@ namespace Runtime::Internal {
     }
 
     template <>
-    static void UpdateSceneProxyContent<PointLight, Render::LightSceneProxy>(Render::LightSceneProxy& outSceneProxy, const PointLight& inComponent)
+    inline void UpdateSceneProxyContent<PointLight, Render::LightSceneProxy>(Render::LightSceneProxy& outSceneProxy, const PointLight& inComponent)
     {
         outSceneProxy.type = Render::LightType::point;
         outSceneProxy.color = inComponent.color;
@@ -82,7 +82,7 @@ namespace Runtime::Internal {
     }
 
     template <>
-    static void UpdateSceneProxyContent<SpotLight, Render::LightSceneProxy>(Render::LightSceneProxy& outSceneProxy, const SpotLight& inComponent)
+    inline void UpdateSceneProxyContent<SpotLight, Render::LightSceneProxy>(Render::LightSceneProxy& outSceneProxy, const SpotLight& inComponent)
     {
         outSceneProxy.type = Render::LightType::spot;
         outSceneProxy.color = inComponent.color;

@@ -74,7 +74,9 @@ class DXCConan(ConanFile):
             copy(self, "d3d12shader.h", os.path.join(self.source_folder, "external", "DirectX-Headers", "include", "directx"), os.path.join(self.package_folder, "include", "dxc"))
             copy(self, "dxil.dll", os.path.join(self.build_folder, "bin"), os.path.join(self.package_folder, "bin"))
             copy(self, "dxcompiler.lib", os.path.join(self.build_folder, "lib"), os.path.join(self.package_folder, "lib"))
-        elif self.settings.os == "Macos":
+        elif self.settings.os in ("Macos", "Linux"):
+            # install-distribution drops the shared compiler (libdxcompiler.dylib /
+            # libdxcompiler.so) under installed/lib on both Unix-likes.
             copy(self, "*", os.path.join(self.build_folder, "installed", "lib"), os.path.join(self.package_folder, "lib"))
 
     def package_info(self):

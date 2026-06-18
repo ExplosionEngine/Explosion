@@ -10,11 +10,19 @@ With --export-only the script just runs 'conan export' for every version of
 every recipe, so a subsequent 'conan install --build=missing' resolves recipes
 from the local cache and builds whatever the remote has no binaries for. CI
 uses this to validate recipe changes together with the engine build.
+
+Before building each recipe the script exports it, resolves the package id for the
+current profile, then asks both the local cache and the remote whether that exact
+recipe-revision + package-id binary already exists. A recipe found on the remote is
+skipped with no download, rebuild, or no-op re-upload; one found only in the local
+cache skips the rebuild but is still uploaded so the local binary reaches the remote.
+Pass --no-skip-existing to force every supported recipe through 'conan create'.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import platform
 import re
 import subprocess
@@ -25,7 +33,7 @@ from pathlib import Path
 import yaml
 
 
-SUPPORTED_PLATFORMS = ("Windows-x86_64", "Macos-armv8")
+SUPPORTED_PLATFORMS = ("Windows-x86_64", "Macos-armv8", "Linux-x86_64")
 
 
 def current_platform() -> str:
@@ -35,6 +43,8 @@ def current_platform() -> str:
         return "Windows-x86_64"
     if system == "Darwin" and machine in ("arm64", "aarch64"):
         return "Macos-armv8"
+    if system == "Linux" and machine in ("amd64", "x86_64"):
+        return "Linux-x86_64"
     sys.exit(
         f"error: unsupported host {system}/{platform.machine()}; "
         f"only {', '.join(SUPPORTED_PLATFORMS)} are supported"
@@ -116,6 +126,85 @@ def run(cmd: list[str], cwd: Path | None = None, redact: set[str] | None = None)
     return subprocess.run(cmd, cwd=str(cwd) if cwd else None).returncode
 
 
+def run_capture(cmd: list[str], cwd: Path | None = None) -> tuple[int, str]:
+    print(f"\n$ {' '.join(cmd)}", flush=True)
+    proc = subprocess.run(cmd, cwd=str(cwd) if cwd else None, stdout=subprocess.PIPE, text=True)
+    return proc.returncode, proc.stdout
+
+
+def graph_recipe_node(graph_json: str, reference: str) -> dict | None:
+    try:
+        nodes = json.loads(graph_json).get("graph", {}).get("nodes", {})
+    except (json.JSONDecodeError, AttributeError):
+        return None
+    for node in nodes.values():
+        if (node.get("ref") or "").split("#", 1)[0] == reference:
+            return node
+    return None
+
+
+def list_has_binary(list_json: str, reference: str, package_id: str) -> bool:
+    # 'conan list' reports each scope (the local cache or a remote) as either an {"error": ...} payload
+    # when the reference is absent, or a revisions -> packages tree when it is present; the binary exists
+    # there only if our package id shows up under some revision of that tree.
+    name_version = reference.split("#", 1)[0]
+    try:
+        data = json.loads(list_json)
+    except json.JSONDecodeError:
+        return False
+    for scope in data.values():
+        if not isinstance(scope, dict) or "error" in scope:
+            continue
+        revisions = (scope.get(name_version) or {}).get("revisions") or {}
+        for revision in revisions.values():
+            if package_id in (revision.get("packages") or {}):
+                return True
+    return False
+
+
+def conan_list_has(args: argparse.Namespace, reference: str, package_id: str, remote: str | None) -> bool:
+    cmd = [args.conan, "list", f"{reference}:{package_id}", "--format=json"]
+    if remote:
+        cmd += ["-r", remote]
+    code, out = run_capture(cmd, cwd=args.recipes_root)
+    if code != 0:
+        return False
+    return list_has_binary(out, reference, package_id)
+
+
+def package_status(args: argparse.Namespace, recipe: Recipe, create_extra: list[str]) -> str:
+    # Export so the local recipe revision (a hash of the recipe's contents) lands in the cache, then
+    # resolve the package id for the current profile via 'conan graph info'. With both in hand, query the
+    # local cache and (when a remote is configured) the remote for that exact recipe-revision +
+    # package-id binary -- 'conan graph info' alone cannot tell the two apart, since a cache hit masks the
+    # remote. Returns "remote" if published, "local" if only cached locally, else "build". Any
+    # uncertainty -- a failed export/query, unparseable output, a missing id -- yields "build", so the
+    # pre-check only ever short-circuits a sure hit, never a guess.
+    export = [args.conan, "export", f"{recipe.dir_name}/conanfile.py", "--version", recipe.version]
+    if run(export, cwd=args.recipes_root) != 0:
+        return "build"
+
+    info = [args.conan, "graph", "info", f"--requires={recipe.reference}", "--format=json"]
+    if args.remote:
+        info += ["-r", args.remote]
+    info += create_extra
+    code, out = run_capture(info, cwd=args.recipes_root)
+    if code != 0:
+        return "build"
+
+    node = graph_recipe_node(out, recipe.reference)
+    reference = (node or {}).get("ref") or ""
+    package_id = (node or {}).get("package_id")
+    if "#" not in reference or not package_id:
+        return "build"
+
+    if args.remote and conan_list_has(args, reference, package_id, args.remote):
+        return "remote"
+    if conan_list_has(args, reference, package_id, None):
+        return "local"
+    return "build"
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build and optionally upload all Conan recipes.",
@@ -155,6 +244,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="only 'conan export' every version of every recipe; no build, no platform filter",
     )
+    parser.add_argument(
+        "--skip-existing",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="before building, query the remote and skip any recipe whose binary is already published",
+    )
 
     upload = parser.add_argument_group("upload")
     upload.add_argument(
@@ -193,6 +288,8 @@ def export_all(args: argparse.Namespace, recipes: list[Recipe]):
 def build_all(args: argparse.Namespace, recipes: list[Recipe], host: str):
     built: list[Recipe] = []
     skipped: list[tuple[Recipe, str]] = []
+    local: list[Recipe] = []
+    present: list[Recipe] = []
 
     create_extra: list[str] = []
     for profile in args.profile:
@@ -202,13 +299,25 @@ def build_all(args: argparse.Namespace, recipes: list[Recipe], host: str):
     for index, recipe in enumerate(recipes, start=1):
         header = f"[{index}/{len(recipes)}] {recipe.name}"
         if recipe.version is None:
-            fail(args, built, skipped, recipe,
+            fail(args, built, skipped, local, present, recipe,
                  f"could not determine latest version from {recipe.conandata}")
         if not recipe.supports(host):
             reason = f"not built on {host} (platforms: {recipe.platforms or 'none'})"
             print(f"\n=== {header} -- SKIP: {reason} ===", flush=True)
             skipped.append((recipe, reason))
             continue
+
+        if args.skip_existing:
+            status = package_status(args, recipe, create_extra)
+            if status == "remote":
+                print(f"\n=== {header} -- {recipe.reference} already on remote, skipping ===", flush=True)
+                present.append(recipe)
+                continue
+            if status == "local":
+                print(f"\n=== {header} -- {recipe.reference} only in local cache, skipping build ===",
+                      flush=True)
+                local.append(recipe)
+                continue
 
         print(f"\n=== {header} -- building {recipe.reference} ===", flush=True)
         start = time.time()
@@ -220,25 +329,23 @@ def build_all(args: argparse.Namespace, recipes: list[Recipe], host: str):
         code = run(cmd, cwd=args.recipes_root)
         elapsed = time.time() - start
         if code != 0:
-            fail(args, built, skipped, recipe,
+            fail(args, built, skipped, local, present, recipe,
                  f"'conan create' exited with code {code} after {elapsed:.0f}s")
         print(f"--- {recipe.reference} built in {elapsed:.0f}s ---", flush=True)
         built.append(recipe)
 
-    return built, skipped
+    return built, skipped, local, present
 
 
-def fail(args, built, skipped, recipe: Recipe, message: str):
+def fail(args, built, skipped, local, present, recipe: Recipe, message: str):
     print(f"\n!!! BUILD FAILED: {recipe.name} -- {message}", file=sys.stderr, flush=True)
-    print_summary(built, skipped, failed=recipe)
+    print_summary(built, skipped, local, present, failed=recipe)
     if args.upload:
         print("\nUpload skipped: not all recipes built successfully.", flush=True)
     sys.exit(1)
 
 
-def upload_all(args: argparse.Namespace, built: list[Recipe]):
-    print("\n=== uploading packages ===", flush=True)
-
+def configure_remote(args: argparse.Namespace):
     if args.remote_url:
         if run([args.conan, "remote", "add", "--force", args.remote, args.remote_url]) != 0:
             sys.exit("error: failed to register remote")
@@ -252,26 +359,33 @@ def upload_all(args: argparse.Namespace, built: list[Recipe]):
         if run(login, redact=redact) != 0:
             sys.exit("error: failed to log in to remote")
 
-    for recipe in built:
+
+def upload_all(args: argparse.Namespace, recipes: list[Recipe]):
+    print("\n=== uploading packages ===", flush=True)
+    for recipe in recipes:
         print(f"\n--- uploading {recipe.reference} ---", flush=True)
         if run([args.conan, "upload", recipe.reference, "-r", args.remote, "--confirm"]) != 0:
             sys.exit(f"error: failed to upload {recipe.reference}")
-    print(f"\nUploaded {len(built)} package(s) to '{args.remote}'.", flush=True)
+    print(f"\nUploaded {len(recipes)} package(s) to '{args.remote}'.", flush=True)
 
 
-def print_summary(built, skipped, failed: Recipe | None = None):
+def print_summary(built, skipped, local, present, failed: Recipe | None = None):
     print("\n" + "=" * 60, flush=True)
     print("SUMMARY", flush=True)
     print("=" * 60, flush=True)
     for recipe in built:
         print(f"  [OK]      {recipe.reference}", flush=True)
+    for recipe in present:
+        print(f"  [REMOTE]  {recipe.reference} (already published)", flush=True)
+    for recipe in local:
+        print(f"  [LOCAL]   {recipe.reference} (only in local cache)", flush=True)
     for recipe, reason in skipped:
         print(f"  [SKIP]    {recipe.name} ({reason})", flush=True)
     if failed is not None:
         print(f"  [FAILED]  {failed.reference}", flush=True)
     print(
-        f"\nbuilt: {len(built)}  skipped: {len(skipped)}"
-        + ("  failed: 1" if failed is not None else ""),
+        f"\nbuilt: {len(built)}  on-remote: {len(present)}  local-only: {len(local)}  "
+        f"skipped: {len(skipped)}" + ("  failed: 1" if failed is not None else ""),
         flush=True,
     )
 
@@ -300,14 +414,19 @@ def main():
     recipes = order_by_dependencies(recipes)
     print("Build order: " + ", ".join(r.name for r in recipes), flush=True)
 
-    built, skipped = build_all(args, recipes, host)
-    print_summary(built, skipped)
+    # Log in before building so the per-recipe pre-check can query the remote for existing binaries.
+    if args.upload:
+        configure_remote(args)
+
+    built, skipped, local, present = build_all(args, recipes, host)
+    print_summary(built, skipped, local, present)
 
     if args.upload:
-        if not built:
-            print("\nNothing was built; skipping upload.", flush=True)
+        to_upload = built + local
+        if not to_upload:
+            print("\nNothing to upload; every recipe was already on the remote.", flush=True)
         else:
-            upload_all(args, built)
+            upload_all(args, to_upload)
     print("\nAll done.", flush=True)
 
 

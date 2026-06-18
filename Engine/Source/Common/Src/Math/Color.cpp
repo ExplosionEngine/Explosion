@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <sstream>
+#include <iomanip>
 
 #include <Common/Math/Color.h>
 #include <Common/Math/Common.h>
@@ -59,7 +60,11 @@ namespace Common {
     std::string Color::ToHexString() const
     {
         std::stringstream result;
-        result << "0x" << std::hex << r << std::hex << g << std::hex << b << std::hex << a;
+        result << "0x" << std::hex << std::setfill('0')
+            << std::setw(2) << static_cast<uint32_t>(r)
+            << std::setw(2) << static_cast<uint32_t>(g)
+            << std::setw(2) << static_cast<uint32_t>(b)
+            << std::setw(2) << static_cast<uint32_t>(a);
         return result.str();
     }
 
@@ -136,10 +141,10 @@ namespace Common {
     }
 
     const Color ColorConsts::white = Color(255, 255, 255, 255);
-    const Color ColorConsts::black = Color(0, 0, 0, 1);
-    const Color ColorConsts::red = Color(1, 0, 0, 1);
-    const Color ColorConsts::green = Color(0, 1, 0, 1);
-    const Color ColorConsts::blue = Color(0, 0, 1, 1);
+    const Color ColorConsts::black = Color(0, 0, 0, 255);
+    const Color ColorConsts::red = Color(255, 0, 0, 255);
+    const Color ColorConsts::green = Color(0, 255, 0, 255);
+    const Color ColorConsts::blue = Color(0, 0, 255, 255);
 
     const LinearColor LinearColorConsts::white = LinearColor(1.0f, 1.0f, 1.0f, 1.0f);
     const LinearColor LinearColorConsts::black = LinearColor(0.0f, 0.0f, 0.0f, 1.0f);

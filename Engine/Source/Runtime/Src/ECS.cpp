@@ -763,7 +763,7 @@ namespace Runtime {
         return Runtime::ConstRuntimeView { *this, inFilter };
     }
 
-    EventsObserverDyn ECRegistry::EventsObserverDyn(CompClass inClass)
+    Runtime::EventsObserverDyn ECRegistry::EventsObserverDyn(CompClass inClass)
     {
         return Runtime::EventsObserverDyn { *this, inClass };
     }
@@ -795,7 +795,7 @@ namespace Runtime {
         iter->second.onRemove.Broadcast(*this, inEntity);
     }
 
-    Observer ECRegistry::Observer()
+    Runtime::Observer ECRegistry::Observer()
     {
         return Runtime::Observer { *this };
     }

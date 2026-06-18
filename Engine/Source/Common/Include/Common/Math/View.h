@@ -73,7 +73,7 @@ namespace Common {
     template <typename T>
     ViewTransform<T> ViewTransform<T>::LookAt(const Vec<T, 3>& inPosition, const Vec<T, 3>& inTargetPosition, const Vec<T, 3>& inUpDirection)
     {
-        return Transform<T>::LookAt(inPosition, inTargetPosition, inUpDirection);
+        return ViewTransform<T>(Transform<T>::LookAt(inPosition, inTargetPosition, inUpDirection));
     }
 
     template <typename T>

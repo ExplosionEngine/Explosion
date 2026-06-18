@@ -26,7 +26,10 @@ namespace Common {
 #elif PLATFORM_MACOS
         pthread_setname_np(name.c_str());
 #else
-        pthread_setname_np(thread.native_handle(), name.c_str());
+        // SetThreadName always runs inside the freshly spawned thread, so name the current thread via pthread_self();
+        // reading thread.native_handle() here would race with the std::thread move-assignment in the constructor and
+        // could observe a null handle, crashing pthread_setname_np.
+        pthread_setname_np(pthread_self(), name.c_str());
 #endif
     }
 

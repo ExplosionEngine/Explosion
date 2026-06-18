@@ -24,7 +24,7 @@ class AssimpConan(ConanFile):
         check_min_cppstd(self, 17)
 
     def requirements(self):
-        self.requires("zlib/1.3.1")
+        self.requires("zlib/[>=1.3.1 <2]")
 
     def build_requirements(self):
         self.tool_requires("ninja/[>=1.12]")

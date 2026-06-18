@@ -2,6 +2,7 @@
 // Created by johnk on 2024/4/14.
 //
 
+#include <algorithm>
 #include <locale>
 #include <codecvt>
 #include <regex>

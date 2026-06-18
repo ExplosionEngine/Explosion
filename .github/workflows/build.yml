@@ -18,8 +18,11 @@ env:
 jobs:
   build:
     strategy:
+      # Linux runs alongside Windows/macOS, but the engine's own Linux support is
+      # not yet verified -- keep a failing Linux leg from cancelling the others.
+      fail-fast: false
       matrix:
-        os: ['windows-2022', 'macOS-latest']
+        os: ['windows-2022', 'macOS-latest', 'ubuntu-latest']
 
     runs-on: ${{ matrix.os }}
 
@@ -37,6 +40,14 @@ jobs:
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
         if: runner.os == 'Windows'
+
+      # Qt's prebuilt Qt6::Gui transitively requires WrapOpenGL, so CMake's FindOpenGL needs the GL dev
+      # files (libOpenGL.so, libGLX.so, GL/gl.h). The runners only ship the runtime libraries by default.
+      - name: Setup Linux Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev
+        if: runner.os == 'Linux'
 
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -61,6 +72,15 @@ jobs:
 
       - name: Config Conan Remote
         run: conan remote add explosion https://conan.kindem.online/artifactory/api/conan/conan
+
+      # xorg/system (pulled in transitively by Qt on Linux) declares its X11 dev packages as system
+      # requirements; let Conan install them via apt instead of erroring out in the default 'check' mode.
+      - name: Allow Conan System Package Install
+        run: |
+          conf="$(conan config home)/global.conf"
+          echo "tools.system.package_manager:mode=install" >> "$conf"
+          echo "tools.system.package_manager:sudo=True" >> "$conf"
+        if: runner.os == 'Linux'
 
       # Register the in-repo recipes in the local cache so the engine's 'conan install --build=missing'
       # resolves them from this checkout: unchanged recipes hash to the revision already published on the

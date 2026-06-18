@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_UNITY_BUILD ${USE_UNITY_BUILD})
 set(CMAKE_EXPORT_COMPILE_COMMANDS ${EXPORT_COMPILE_COMMANDS})
 
+# Static libraries such as Common get linked into the engine's shared libraries, so on ELF platforms every object must be
+# position-independent or the shared link fails with "relocation ... can not be used when making a shared object".
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 if (${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
     set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/Installed CACHE PATH "" FORCE)
 endif()

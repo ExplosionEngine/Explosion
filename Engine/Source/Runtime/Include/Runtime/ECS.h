@@ -499,7 +499,7 @@ namespace Runtime {
         Runtime::RuntimeView RuntimeView(const RuntimeFilter& inFilter);
         Runtime::ConstRuntimeView RuntimeView(const RuntimeFilter& inFilter) const;
         Runtime::ConstRuntimeView ConstRuntimeView(const RuntimeFilter& inFilter) const;
-        EventsObserverDyn EventsObserverDyn(CompClass inClass);
+        Runtime::EventsObserverDyn EventsObserverDyn(CompClass inClass);
 
         // global component static
         template <typename G, typename... Args> G& GEmplace(Args&&... inArgs);
@@ -530,7 +530,7 @@ namespace Runtime {
         size_t GCompCount() const;
 
         // comp observer
-        Observer Observer();
+        Runtime::Observer Observer();
 
         // serialization
         void Save(ECArchive& outArchive) const;

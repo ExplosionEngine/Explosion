@@ -4,6 +4,8 @@
 
 #include <sstream>
 #include <format>
+#include <cstdio>
+#include <array>
 
 #include <Common/String.h>
 #include <MirrorTool/Parser.h>
@@ -413,6 +415,41 @@ namespace MirrorTool {
 }
 
 namespace MirrorTool {
+#if PLATFORM_LINUX
+    // The conan libclang package ships only libclang.so, without clang's builtin headers (stddef.h, stdarg.h, ...) or any
+    // system include paths, so query the host GCC for the directories it searches and feed them to clang verbatim.
+    static std::vector<std::string> GetHostSystemIncludeDirs()
+    {
+        FILE* pipe = popen("g++ -E -x c++ - -v < /dev/null 2>&1", "r");
+        if (pipe == nullptr) {
+            return {};
+        }
+
+        std::string output;
+        std::array<char, 256> buffer {};
+        while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+            output += buffer.data();
+        }
+        pclose(pipe);
+
+        std::vector<std::string> result;
+        bool withinSearchList = false;
+        for (const std::string& line : Common::StringUtils::Split(output, "\n")) {
+            if (line.find("#include <...> search starts here:") != std::string::npos) {
+                withinSearchList = true;
+            } else if (line.find("End of search list.") != std::string::npos) {
+                break;
+            } else if (withinSearchList) {
+                const size_t start = line.find_first_not_of(" \t");
+                if (start != std::string::npos) {
+                    result.emplace_back(line.substr(start));
+                }
+            }
+        }
+        return result;
+    }
+#endif
+
     Parser::Parser(std::string inSourceFile, std::vector<std::string> inHeaderDirs, std::vector<std::string> inFrameworkDirs)
         : sourceFile(std::move(inSourceFile))
         , headerDirs(std::move(inHeaderDirs))
@@ -446,10 +483,16 @@ namespace MirrorTool {
             std::format("-I/Library/Developer/CommandLineTools/usr/lib/clang/{}/include", __clang_major__),
             "-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include",
             "-I/Library/Developer/CommandLineTools/usr/include",
-#elif DPLATFORM_LINUX
+#elif PLATFORM_LINUX
             "-DPLATFORM_LINUX=1",
 #endif
         };
+#if PLATFORM_LINUX
+        for (const std::string& systemIncludeDir : GetHostSystemIncludeDirs()) {
+            argumentStrs.emplace_back("-isystem");
+            argumentStrs.emplace_back(systemIncludeDir);
+        }
+#endif
         argumentStrs.reserve(argumentStrs.size() + headerDirs.size());
         for (const std::string& headerDir : headerDirs) {
             argumentStrs.emplace_back(std::string("-I") + headerDir);

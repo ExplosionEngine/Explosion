@@ -84,7 +84,7 @@ namespace Common {
 
         Quaternion& operator+=(const Quaternion& rhs);
         Quaternion& operator-=(const Quaternion& rhs);
-        Quaternion& operator*=(T rhs) const;
+        Quaternion& operator*=(T rhs);
         Quaternion& operator*=(const Quaternion& rhs);
         Quaternion& operator/=(T rhs);
 
@@ -97,6 +97,9 @@ namespace Common {
         // when axis faced to us, ccw as positive direction
         Vec<T, 3> RotateVector(const Vec<T, 3>& inVector) const;
         Mat<T, 4, 4> GetRotationMatrix() const;
+
+        template <typename IT>
+        Quaternion<IT> CastTo() const;
     };
 
     template <typename T>
@@ -541,7 +544,7 @@ namespace Common {
     }
 
     template <typename T>
-    Quaternion<T>& Quaternion<T>::operator*=(T rhs) const
+    Quaternion<T>& Quaternion<T>::operator*=(T rhs)
     {
         this->w *= rhs;
         this->x *= rhs;
@@ -553,7 +556,7 @@ namespace Common {
     template <typename T>
     Quaternion<T>& Quaternion<T>::operator*=(const Quaternion& rhs)
     {
-        *this = this * rhs;
+        *this = *this * rhs;
         return *this;
     }
 
@@ -610,7 +613,7 @@ namespace Common {
     template <typename T>
     T Quaternion<T>::Dot(const Quaternion& rhs) const
     {
-        return this->w * rhs.w * this->x * rhs.x + this->y * rhs.y + this->z * rhs.z;
+        return this->w * rhs.w + this->x * rhs.x + this->y * rhs.y + this->z * rhs.z;
     }
 
     template <typename T>
@@ -643,4 +646,15 @@ namespace Common {
         );
     }
 
+    template <typename T>
+    template <typename IT>
+    Quaternion<IT> Quaternion<T>::CastTo() const
+    {
+        Quaternion<IT> result;
+        result.w = static_cast<IT>(this->w);
+        result.x = static_cast<IT>(this->x);
+        result.y = static_cast<IT>(this->y);
+        result.z = static_cast<IT>(this->z);
+        return result;
+    }
 }
