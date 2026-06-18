@@ -6,6 +6,12 @@
 
 #include <string>
 
+// GCC and Clang in GNU mode predefine the bare macro `linux` as 1, which collides with the linux enumerators below.
+// Drop it so the lowercase enumerator stays valid; the canonical `__linux__` is unaffected.
+#ifdef linux
+#undef linux
+#endif
+
 namespace Common {
     enum class DevelopmentPlatform {
         windows,

@@ -29,7 +29,7 @@ namespace Runtime {
         systemGraph = inSystemGraph;
     }
 
-    PlayStatus World::PlayStatus() const
+    Runtime::PlayStatus World::PlayStatus() const
     {
         return playStatus;
     }

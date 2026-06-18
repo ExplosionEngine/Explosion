@@ -175,7 +175,7 @@ namespace Editor {
     struct QtJsonSerializer<int64_t> {
         static void QtJsonSerialize(QJsonValue& outJsonValue, int64_t inValue)
         {
-            outJsonValue = inValue;
+            outJsonValue = static_cast<qint64>(inValue);
         }
 
         static void QtJsonDeserialize(const QJsonValue& inJsonValue, int64_t& outValue)
@@ -191,7 +191,7 @@ namespace Editor {
     struct QtJsonSerializer<uint64_t> {
         static void QtJsonSerialize(QJsonValue& outJsonValue, uint64_t inValue)
         {
-            outJsonValue = static_cast<int64_t>(inValue);
+            outJsonValue = static_cast<qint64>(inValue);
         }
 
         static void QtJsonDeserialize(const QJsonValue& inJsonValue, uint64_t& outValue)

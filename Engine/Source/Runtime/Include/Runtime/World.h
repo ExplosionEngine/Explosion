@@ -28,7 +28,7 @@ namespace Runtime {
 
         World(std::string inName, Client* inClient, PlayType inPlayType);
         void SetSystemGraph(const SystemGraph& inSystemGraph);
-        PlayStatus PlayStatus() const;
+        Runtime::PlayStatus PlayStatus() const;
         bool Stopped() const;
         bool Playing() const;
         bool Paused() const;

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cmath>
 #include <fstream>
 #include <string>
 #include <optional>
