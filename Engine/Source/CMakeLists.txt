@@ -2,6 +2,10 @@ if (${BUILD_TEST})
     add_subdirectory(Test)
 endif()
 
+if (${BUILD_BENCHMARK})
+    add_subdirectory(Benchmark)
+endif()
+
 add_subdirectory(Common)
 add_subdirectory(Core)
 add_subdirectory(Mirror)

@@ -9,6 +9,7 @@ class ExplosionConan(ConanFile):
         self.requires("stb/cci.20230920")
         self.requires("cityhash/1.0.1")
         self.requires("gtest/1.17.0")
+        self.requires("benchmark/1.9.5")
         self.requires("taskflow/3.10.0")
         self.requires("vulkan-headers/1.4.350.0")
         self.requires("vulkan-loader/1.4.350.0")
