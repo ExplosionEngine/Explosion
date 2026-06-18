@@ -73,6 +73,15 @@ jobs:
       - name: Config Conan Remote
         run: conan remote add explosion https://conan.kindem.online/artifactory/api/conan/conan
 
+      # xorg/system (pulled in transitively by Qt on Linux) declares its X11 dev packages as system
+      # requirements; let Conan install them via apt instead of erroring out in the default 'check' mode.
+      - name: Allow Conan System Package Install
+        run: |
+          conf="$(conan config home)/global.conf"
+          echo "tools.system.package_manager:mode=install" >> "$conf"
+          echo "tools.system.package_manager:sudo=True" >> "$conf"
+        if: runner.os == 'Linux'
+
       # Register the in-repo recipes in the local cache so the engine's 'conan install --build=missing'
       # resolves them from this checkout: unchanged recipes hash to the revision already published on the
       # remote (binaries are downloaded), changed ones get built locally, making recipe PRs self-contained.
