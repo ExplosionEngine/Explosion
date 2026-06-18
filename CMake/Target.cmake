@@ -386,7 +386,7 @@ endfunction()
 function(exp_add_library)
     set(options NOT_INSTALL)
     set(singleValueArgs NAME TYPE)
-    set(multiValueArgs SRC PRIVATE_INC PUBLIC_INC PRIVATE_LINK PUBLIC_LINK PRIVATE_LIB PUBLIC_LIB REFLECT)
+    set(multiValueArgs SRC PRIVATE_INC PUBLIC_INC PRIVATE_LINK PUBLIC_LINK PRIVATE_LIB PUBLIC_LIB PRIVATE_COMPILE_OPT PUBLIC_COMPILE_OPT REFLECT)
     cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if ("${arg_TYPE}" STREQUAL "SHARED")
@@ -454,6 +454,11 @@ function(exp_add_library)
         ${arg_NAME}
         PRIVATE ${arg_PRIVATE_LIB}
         PUBLIC ${arg_PUBLIC_LIB}
+    )
+    target_compile_options(
+        ${arg_NAME}
+        PRIVATE ${arg_PRIVATE_COMPILE_OPT}
+        PUBLIC ${arg_PUBLIC_COMPILE_OPT}
     )
 
     if ("${arg_TYPE}" STREQUAL "SHARED")

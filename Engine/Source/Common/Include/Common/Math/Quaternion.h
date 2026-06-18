@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <Common/Math/Simd.h>
 #include <Common/Math/Half.h>
 #include <Common/Math/Matrix.h>
 #include <Common/Serialization.h>
@@ -61,18 +62,18 @@ namespace Common {
     // +x -> from screen outer to inner
     // +y -> from left to right
     // +z -> from bttom to up
-    template <typename T>
+    template <typename T, MathBackend B = MathBackend::defaultBackend>
     struct Quaternion : QuaternionBase<T> {
         static Quaternion FromEulerZYX(T inAngleX, T inAngleY, T inAngleZ);
         static Quaternion FromEulerZYX(const Radian<T>& inRadianX, const Radian<T>& inRadianY, const Radian<T>& inRadianZ);
 
         Quaternion();
         Quaternion(T inW, T inX, T inY, T inZ);
-        Quaternion(const Vec<T, 3>& inAxis, float inAngle);
-        Quaternion(const Vec<T, 3>& inAxis, const Radian<T>& inRadian);
-        Quaternion(const Quaternion& inValue);
-        Quaternion(Quaternion&& inValue) noexcept;
-        Quaternion& operator=(const Quaternion& inValue);
+        Quaternion(const Vec<T, 3, B>& inAxis, float inAngle);
+        Quaternion(const Vec<T, 3, B>& inAxis, const Radian<T>& inRadian);
+        Quaternion(const Quaternion& inValue) = default;
+        Quaternion(Quaternion&& inValue) noexcept = default;
+        Quaternion& operator=(const Quaternion& inValue) = default;
 
         bool operator==(const Quaternion& rhs) const;
         bool operator!=(const Quaternion& rhs) const;
@@ -88,24 +89,24 @@ namespace Common {
         Quaternion& operator*=(const Quaternion& rhs);
         Quaternion& operator/=(T rhs);
 
-        Vec<T, 3> ImaginaryPart() const;
+        Vec<T, 3, B> ImaginaryPart() const;
         T Model() const;
         Quaternion Negatived() const;
         Quaternion Conjugated() const;
         Quaternion Normalized() const;
         T Dot(const Quaternion& rhs) const;
         // when axis faced to us, ccw as positive direction
-        Vec<T, 3> RotateVector(const Vec<T, 3>& inVector) const;
-        Mat<T, 4, 4> GetRotationMatrix() const;
+        Vec<T, 3, B> RotateVector(const Vec<T, 3, B>& inVector) const;
+        Mat<T, 4, 4, B> GetRotationMatrix() const;
 
         template <typename IT>
-        Quaternion<IT> CastTo() const;
+        Quaternion<IT, B> CastTo() const;
     };
 
-    template <typename T>
+    template <typename T, MathBackend B = MathBackend::defaultBackend>
     struct QuatConsts {
-        static const Quaternion<T> zero;
-        static const Quaternion<T> identity;
+        static const Quaternion<T, B> zero;
+        static const Quaternion<T, B> identity;
     };
 
     using HAngle = Angle<HFloat>;
@@ -160,13 +161,13 @@ namespace Common {
         }
     };
 
-    template <Serializable T>
-    struct Serializer<Quaternion<T>> {
+    template <Serializable T, MathBackend B>
+    struct Serializer<Quaternion<T, B>> {
         static constexpr size_t typeId
             = HashUtils::StrCrc32("Common::Quaternion")
             + Serializer<T>::typeId;
 
-        static size_t Serialize(BinarySerializeStream& stream, const Quaternion<T>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Quaternion<T, B>& value)
         {
             size_t serialized = 0;
             serialized += Serializer<T>::Serialize(stream, value.w);
@@ -176,7 +177,7 @@ namespace Common {
             return serialized;
         }
 
-        static size_t Deserialize(BinaryDeserializeStream& stream, Quaternion<T>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Quaternion<T, B>& value)
         {
             size_t deserialized = 0;
             deserialized += Serializer<T>::Deserialize(stream, value.w);
@@ -203,9 +204,9 @@ namespace Common {
         }
     };
 
-    template <StringConvertible T>
-    struct StringConverter<Quaternion<T>> {
-        static std::string ToString(const Quaternion<T>& inValue)
+    template <StringConvertible T, MathBackend B>
+    struct StringConverter<Quaternion<T, B>> {
+        static std::string ToString(const Quaternion<T, B>& inValue)
         {
             return std::format(
                 "({}, {}, {}, {})",
@@ -242,9 +243,9 @@ namespace Common {
         }
     };
 
-    template <JsonSerializable T>
-    struct JsonSerializer<Quaternion<T>> {
-        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Quaternion<T>& inValue)
+    template <JsonSerializable T, MathBackend B>
+    struct JsonSerializer<Quaternion<T, B>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Quaternion<T, B>& inValue)
         {
             rapidjson::Value xJson;
             JsonSerializer<T>::JsonSerialize(xJson, inAllocator, inValue.w);
@@ -265,7 +266,7 @@ namespace Common {
             outJsonValue.PushBack(wJson, inAllocator);
         }
 
-        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Quaternion<T>& outValue)
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Quaternion<T, B>& outValue)
         {
             if (!inJsonValue.IsArray() || inJsonValue.Size() != 4) {
                 return;
@@ -274,6 +275,112 @@ namespace Common {
             JsonSerializer<T>::JsonDeserialize(inJsonValue[1], outValue.x);
             JsonSerializer<T>::JsonDeserialize(inJsonValue[2], outValue.y);
             JsonSerializer<T>::JsonDeserialize(inJsonValue[3], outValue.z);
+        }
+    };
+}
+
+namespace Common::Internal {
+    // Per-backend dispatch for quaternion arithmetic. The primary template is the scalar implementation, so any
+    // (T, B) without a specialization degrades gracefully to scalar; the SIMD specialization follows immediately after.
+    template <typename T, MathBackend B>
+    struct QuatOps {
+        using Q = Quaternion<T, B>;
+
+        static Q Add(const Q& a, const Q& b)
+        {
+            Q result;
+            result.w = a.w + b.w;
+            result.x = a.x + b.x;
+            result.y = a.y + b.y;
+            result.z = a.z + b.z;
+            return result;
+        }
+
+        static Q Sub(const Q& a, const Q& b)
+        {
+            Q result;
+            result.w = a.w - b.w;
+            result.x = a.x - b.x;
+            result.y = a.y - b.y;
+            result.z = a.z - b.z;
+            return result;
+        }
+
+        static Q MulScalar(const Q& a, T b)
+        {
+            Q result;
+            result.w = a.w * b;
+            result.x = a.x * b;
+            result.y = a.y * b;
+            result.z = a.z * b;
+            return result;
+        }
+
+        static Q DivScalar(const Q& a, T b)
+        {
+            Q result;
+            result.w = a.w / b;
+            result.x = a.x / b;
+            result.y = a.y / b;
+            result.z = a.z / b;
+            return result;
+        }
+
+        static Q Mul(const Q& a, const Q& b)
+        {
+            Q result;
+            result.w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
+            result.x = a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y;
+            result.y = a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x;
+            result.z = a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w;
+            return result;
+        }
+
+        static T Dot(const Q& a, const Q& b)
+        {
+            return a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z;
+        }
+    };
+
+    // QuaternionBase<float> stores x, y, z, w as four contiguous floats, so &q.x is the base of a 16-byte block that
+    // maps to an unaligned 128-bit load/store. The element-wise ops and the dot product map onto the F32x4 wrapper
+    // directly; the Hamilton product is expressed as four broadcast-and-permute terms (see Mul).
+    template <>
+    struct QuatOps<float, MathBackend::simd> {
+        using Q = Quaternion<float, MathBackend::simd>;
+
+        static Q Add(const Q& a, const Q& b) { Q r; Simd::MapBinary<4>(&r.x, &a.x, &b.x, Simd::AddOp {}); return r; }
+        static Q Sub(const Q& a, const Q& b) { Q r; Simd::MapBinary<4>(&r.x, &a.x, &b.x, Simd::SubOp {}); return r; }
+
+        static Q MulScalar(const Q& a, float b) { Q r; Simd::MapScalar<4>(&r.x, &a.x, b, Simd::MulOp {}); return r; }
+        static Q DivScalar(const Q& a, float b) { Q r; Simd::MapScalar<4>(&r.x, &a.x, b, Simd::DivOp {}); return r; }
+
+        // Hamilton product, with both quaternions loaded as (x, y, z, w). Each row of the product is one component of
+        // a broadcast against a sign-flipped permutation of b, summed across the four components of a:
+        //   result = aw*(bx,by,bz,bw) + ax*(bw,-bz,by,-bx) + ay*(bz,bw,-bx,-by) + az*(-by,bx,bw,-bz)
+        // The accumulation order matches the scalar reference above, so both backends produce identical results.
+        static Q Mul(const Q& a, const Q& b)
+        {
+            const Simd::F32x4 av = Simd::LoadU(&a.x);
+            const Simd::F32x4 bv = Simd::LoadU(&b.x);
+
+            const Simd::F32x4 sign0 = Simd::Set(1.0f, -1.0f, 1.0f, -1.0f);
+            const Simd::F32x4 sign1 = Simd::Set(1.0f, 1.0f, -1.0f, -1.0f);
+            const Simd::F32x4 sign2 = Simd::Set(-1.0f, 1.0f, 1.0f, -1.0f);
+
+            Simd::F32x4 acc = Simd::Mul(Simd::Splat<3>(av), bv);
+            acc = Simd::Add(acc, Simd::Mul(Simd::Splat<0>(av), Simd::Mul(Simd::Shuffle<3, 2, 1, 0>(bv), sign0)));
+            acc = Simd::Add(acc, Simd::Mul(Simd::Splat<1>(av), Simd::Mul(Simd::Shuffle<2, 3, 0, 1>(bv), sign1)));
+            acc = Simd::Add(acc, Simd::Mul(Simd::Splat<2>(av), Simd::Mul(Simd::Shuffle<1, 0, 3, 2>(bv), sign2)));
+
+            Q result;
+            Simd::StoreU(&result.x, acc);
+            return result;
+        }
+
+        static float Dot(const Q& a, const Q& b)
+        {
+            return Simd::Sum(Simd::Mul(Simd::LoadU(&a.x), Simd::LoadU(&b.x)));
         }
     };
 }
@@ -373,28 +480,28 @@ namespace Common {
         return this->value * 180.0f / pi;
     }
 
-    template <typename T>
-    const Quaternion<T> QuatConsts<T>::zero = Quaternion<T>();
+    template <typename T, MathBackend B>
+    const Quaternion<T, B> QuatConsts<T, B>::zero = Quaternion<T, B>();
 
-    template <typename T>
-    const Quaternion<T> QuatConsts<T>::identity = Quaternion<T>(1, 0, 0, 0);
+    template <typename T, MathBackend B>
+    const Quaternion<T, B> QuatConsts<T, B>::identity = Quaternion<T, B>(1, 0, 0, 0);
 
-    template <typename T>
-    Quaternion<T> Quaternion<T>::FromEulerZYX(T inAngleX, T inAngleY, T inAngleZ)
+    template <typename T, MathBackend B>
+    Quaternion<T, B> Quaternion<T, B>::FromEulerZYX(T inAngleX, T inAngleY, T inAngleZ)
     {
-        return Quaternion(VecConsts<T, 3>::unitZ, inAngleZ)
-            * Quaternion(VecConsts<T, 3>::unitY, inAngleY)
-            * Quaternion(VecConsts<T, 3>::unitX, inAngleX);
+        return Quaternion(VecConsts<T, 3, B>::unitZ, inAngleZ)
+            * Quaternion(VecConsts<T, 3, B>::unitY, inAngleY)
+            * Quaternion(VecConsts<T, 3, B>::unitX, inAngleX);
     }
 
-    template <typename T>
-    Quaternion<T> Quaternion<T>::FromEulerZYX(const Radian<T>& inRadianX, const Radian<T>& inRadianY, const Radian<T>& inRadianZ)
+    template <typename T, MathBackend B>
+    Quaternion<T, B> Quaternion<T, B>::FromEulerZYX(const Radian<T>& inRadianX, const Radian<T>& inRadianY, const Radian<T>& inRadianZ)
     {
         return FromEulerZYX(inRadianX.ToAngle(), inRadianY.ToAngle(), inRadianZ.ToAngle());
     }
 
-    template <typename T>
-    Quaternion<T>::Quaternion()
+    template <typename T, MathBackend B>
+    Quaternion<T, B>::Quaternion()
     {
         this->w = 0;
         this->x = 0;
@@ -402,8 +509,8 @@ namespace Common {
         this->z = 0;
     }
 
-    template <typename T>
-    Quaternion<T>::Quaternion(T inW, T inX, T inY, T inZ)
+    template <typename T, MathBackend B>
+    Quaternion<T, B>::Quaternion(T inW, T inX, T inY, T inZ)
     {
         this->w = inW;
         this->x = inX;
@@ -411,10 +518,10 @@ namespace Common {
         this->z = inZ;
     }
 
-    template <typename T>
-    Quaternion<T>::Quaternion(const Vec<T, 3>& inAxis, float inAngle)
+    template <typename T, MathBackend B>
+    Quaternion<T, B>::Quaternion(const Vec<T, 3, B>& inAxis, float inAngle)
     {
-        Vec<T, 3> axis = inAxis.Normalized();
+        Vec<T, 3, B> axis = inAxis.Normalized();
         T halfRadian = Angle<T>(inAngle).ToRadian() / 2.0f;
         T halfRadianSin = std::sin(halfRadian);
         T halfRadianCos = std::cos(halfRadian);
@@ -425,36 +532,14 @@ namespace Common {
         this->z = axis.z * halfRadianSin;
     }
 
-    template <typename T>
-    Quaternion<T>::Quaternion(const Vec<T, 3>& inAxis, const Radian<T>& inRadian)
+    template <typename T, MathBackend B>
+    Quaternion<T, B>::Quaternion(const Vec<T, 3, B>& inAxis, const Radian<T>& inRadian)
         : Quaternion(inAxis, inRadian.ToAngle())
     {
     }
 
-    template <typename T>
-    Quaternion<T>::Quaternion(const Quaternion& inValue)
-        : Quaternion(inValue.w, inValue.x, inValue.y, inValue.z)
-    {
-    }
-
-    template <typename T>
-    Quaternion<T>::Quaternion(Quaternion&& inValue) noexcept
-        : Quaternion(inValue.w, inValue.x, inValue.y, inValue.z)
-    {
-    }
-
-    template <typename T>
-    Quaternion<T>& Quaternion<T>::operator=(const Quaternion& inValue)
-    {
-        this->w = inValue.w;
-        this->x = inValue.x;
-        this->y = inValue.y;
-        this->z = inValue.z;
-        return *this;
-    }
-
-    template <typename T>
-    bool Quaternion<T>::operator==(const Quaternion& rhs) const
+    template <typename T, MathBackend B>
+    bool Quaternion<T, B>::operator==(const Quaternion& rhs) const
     {
         return CompareNumber(this->w, rhs.w)
             && CompareNumber(this->x, rhs.x)
@@ -462,130 +547,93 @@ namespace Common {
             && CompareNumber(this->z, rhs.z);
     }
 
-    template <typename T>
-    bool Quaternion<T>::operator!=(const Quaternion& rhs) const
+    template <typename T, MathBackend B>
+    bool Quaternion<T, B>::operator!=(const Quaternion& rhs) const
     {
         return !this->operator==(rhs);
     }
 
-    template <typename T>
-    Quaternion<T> Quaternion<T>::operator+(const Quaternion& rhs) const
+    template <typename T, MathBackend B>
+    Quaternion<T, B> Quaternion<T, B>::operator+(const Quaternion& rhs) const
     {
-        Quaternion result;
-        result.w = this->w + rhs.w;
-        result.x = this->x + rhs.x;
-        result.y = this->y + rhs.y;
-        result.z = this->z + rhs.z;
-        return result;
+        return Internal::QuatOps<T, B>::Add(*this, rhs);
     }
 
-    template <typename T>
-    Quaternion<T> Quaternion<T>::operator-(const Quaternion& rhs) const
+    template <typename T, MathBackend B>
+    Quaternion<T, B> Quaternion<T, B>::operator-(const Quaternion& rhs) const
     {
-        Quaternion result;
-        result.w = this->w - rhs.w;
-        result.x = this->x - rhs.x;
-        result.y = this->y - rhs.y;
-        result.z = this->z - rhs.z;
-        return result;
+        return Internal::QuatOps<T, B>::Sub(*this, rhs);
     }
 
-    template <typename T>
-    Quaternion<T> Quaternion<T>::operator*(T rhs) const
+    template <typename T, MathBackend B>
+    Quaternion<T, B> Quaternion<T, B>::operator*(T rhs) const
     {
-        Quaternion result;
-        result.w = this->w * rhs;
-        result.x = this->x * rhs;
-        result.y = this->y * rhs;
-        result.z = this->z * rhs;
-        return result;
+        return Internal::QuatOps<T, B>::MulScalar(*this, rhs);
     }
 
-    template <typename T>
-    Quaternion<T> Quaternion<T>::operator*(const Quaternion& rhs) const
+    template <typename T, MathBackend B>
+    Quaternion<T, B> Quaternion<T, B>::operator*(const Quaternion& rhs) const
     {
-        Quaternion result;
-        result.w = this->w * rhs.w - this->x * rhs.x - this->y * rhs.y - this->z * rhs.z;
-        result.x = this->w * rhs.x + this->x * rhs.w + this->y * rhs.z - this->z * rhs.y;
-        result.y = this->w * rhs.y - this->x * rhs.z + this->y * rhs.w + this->z * rhs.x;
-        result.z = this->w * rhs.z + this->x * rhs.y - this->y * rhs.x + this->z * rhs.w;
-        return result;
+        return Internal::QuatOps<T, B>::Mul(*this, rhs);
     }
 
-    template <typename T>
-    Quaternion<T> Quaternion<T>::operator/(T rhs) const
+    template <typename T, MathBackend B>
+    Quaternion<T, B> Quaternion<T, B>::operator/(T rhs) const
     {
-        Quaternion result;
-        result.w = this->w / rhs;
-        result.x = this->x / rhs;
-        result.y = this->y / rhs;
-        result.z = this->z / rhs;
-        return result;
+        return Internal::QuatOps<T, B>::DivScalar(*this, rhs);
     }
 
-    template <typename T>
-    Quaternion<T>& Quaternion<T>::operator+=(const Quaternion& rhs)
+    template <typename T, MathBackend B>
+    Quaternion<T, B>& Quaternion<T, B>::operator+=(const Quaternion& rhs)
     {
-        this->w += rhs.w;
-        this->x += rhs.x;
-        this->y += rhs.y;
-        this->z += rhs.z;
+        *this = Internal::QuatOps<T, B>::Add(*this, rhs);
         return *this;
     }
 
-    template <typename T>
-    Quaternion<T>& Quaternion<T>::operator-=(const Quaternion& rhs)
+    template <typename T, MathBackend B>
+    Quaternion<T, B>& Quaternion<T, B>::operator-=(const Quaternion& rhs)
     {
-        this->w -= rhs.w;
-        this->x -= rhs.x;
-        this->y -= rhs.y;
-        this->z -= rhs.z;
+        *this = Internal::QuatOps<T, B>::Sub(*this, rhs);
         return *this;
     }
 
-    template <typename T>
-    Quaternion<T>& Quaternion<T>::operator*=(T rhs)
+    template <typename T, MathBackend B>
+    Quaternion<T, B>& Quaternion<T, B>::operator*=(T rhs)
     {
-        this->w *= rhs;
-        this->x *= rhs;
-        this->y *= rhs;
-        this->z *= rhs;
+        *this = Internal::QuatOps<T, B>::MulScalar(*this, rhs);
         return *this;
     }
 
-    template <typename T>
-    Quaternion<T>& Quaternion<T>::operator*=(const Quaternion& rhs)
+    template <typename T, MathBackend B>
+    Quaternion<T, B>& Quaternion<T, B>::operator*=(const Quaternion& rhs)
     {
         *this = *this * rhs;
         return *this;
     }
 
-    template <typename T>
-    Quaternion<T>& Quaternion<T>::operator/=(T rhs)
+    template <typename T, MathBackend B>
+    Quaternion<T, B>& Quaternion<T, B>::operator/=(T rhs)
     {
-        this->w /= rhs;
-        this->x /= rhs;
-        this->y /= rhs;
-        this->z /= rhs;
+        *this = Internal::QuatOps<T, B>::DivScalar(*this, rhs);
         return *this;
     }
 
-    template <typename T>
-    Vec<T, 3> Quaternion<T>::ImaginaryPart() const
+    template <typename T, MathBackend B>
+    Vec<T, 3, B> Quaternion<T, B>::ImaginaryPart() const
     {
-        return Vec<T, 3>(this->x, this->y, this->z);
+        return Vec<T, 3, B>(this->x, this->y, this->z);
     }
 
-    template <typename T>
-    T Quaternion<T>::Model() const
+    template <typename T, MathBackend B>
+    T Quaternion<T, B>::Model() const
     {
-        return std::sqrt(this->w * this->w + this->x * this->x + this->y * this->y + this->z * this->z);
+        return std::sqrt(Internal::QuatOps<T, B>::Dot(*this, *this));
     }
 
-    template <typename T>
-    Quaternion<T> Quaternion<T>::Negatived() const
+    template <typename T, MathBackend B>
+    Quaternion<T, B> Quaternion<T, B>::Negatived() const
     {
-        Quaternion<T> result;
+        Quaternion result;
         result.w = -this->w;
         result.x = -this->x;
         result.y = -this->y;
@@ -593,10 +641,10 @@ namespace Common {
         return result;
     }
 
-    template <typename T>
-    Quaternion<T> Quaternion<T>::Conjugated() const
+    template <typename T, MathBackend B>
+    Quaternion<T, B> Quaternion<T, B>::Conjugated() const
     {
-        Quaternion<T> result;
+        Quaternion result;
         result.w = this->w;
         result.x = -this->x;
         result.y = -this->y;
@@ -604,28 +652,28 @@ namespace Common {
         return result;
     }
 
-    template <typename T>
-    Quaternion<T> Quaternion<T>::Normalized() const
+    template <typename T, MathBackend B>
+    Quaternion<T, B> Quaternion<T, B>::Normalized() const
     {
         return this->operator/(Model());
     }
 
-    template <typename T>
-    T Quaternion<T>::Dot(const Quaternion& rhs) const
+    template <typename T, MathBackend B>
+    T Quaternion<T, B>::Dot(const Quaternion& rhs) const
     {
-        return this->w * rhs.w + this->x * rhs.x + this->y * rhs.y + this->z * rhs.z;
+        return Internal::QuatOps<T, B>::Dot(*this, rhs);
     }
 
-    template <typename T>
-    Vec<T, 3> Quaternion<T>::RotateVector(const Vec<T, 3>& inVector) const
+    template <typename T, MathBackend B>
+    Vec<T, 3, B> Quaternion<T, B>::RotateVector(const Vec<T, 3, B>& inVector) const
     {
         Quaternion v = Quaternion(0, inVector.x, inVector.y, inVector.z);
         Quaternion v2 = Conjugated() * v * (*this);
-        return Vec<T, 3>(v2.x, v2.y, v2.z);
+        return Vec<T, 3, B>(v2.x, v2.y, v2.z);
     }
 
-    template <typename T>
-    Mat<T, 4, 4> Quaternion<T>::GetRotationMatrix() const
+    template <typename T, MathBackend B>
+    Mat<T, 4, 4, B> Quaternion<T, B>::GetRotationMatrix() const
     {
         T xx2 = this->x * this->x * 2;
         T yy2 = this->y * this->y * 2;
@@ -638,7 +686,7 @@ namespace Common {
         T xz2 = this->x * this->z * 2;
         T yz2 = this->y * this->z * 2;
 
-        return Mat<T, 4, 4>(
+        return Mat<T, 4, 4, B>(
             1 - yy2 - zz2, xy2 + wz2, xz2 - wy2, 0,
             xy2 - wz2, 1 - xx2 - zz2, yz2 + wx2, 0,
             xz2 + wy2, yz2 - wx2, 1 - xx2 - yy2, 0,
@@ -646,11 +694,11 @@ namespace Common {
         );
     }
 
-    template <typename T>
+    template <typename T, MathBackend B>
     template <typename IT>
-    Quaternion<IT> Quaternion<T>::CastTo() const
+    Quaternion<IT, B> Quaternion<T, B>::CastTo() const
     {
-        Quaternion<IT> result;
+        Quaternion<IT, B> result;
         result.w = static_cast<IT>(this->w);
         result.x = static_cast<IT>(this->x);
         result.y = static_cast<IT>(this->y);

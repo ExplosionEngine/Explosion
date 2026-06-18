@@ -1337,3 +1337,158 @@ TEST(MathTest, JsonSerializationTest)
             FltToJson(90.0f), FltToJson(512.0f), FltToJson(1024.0f), FltToJson(1.0f), FltToJson(500.0f),
             "}"));
 }
+
+// ==================================== Math backends ====================================
+// The scalar and simd backends must produce identical results (within epsilon) for every operation. These tests are
+// the regression guard for the SIMD specializations.
+
+TEST(MathTest, VectorBackendConsistencyTest)
+{
+    using VecScalar = Vec<float, 4, MathBackend::scalar>;
+    using VecSimd = Vec<float, 4, MathBackend::simd>;
+
+    const VecScalar as(1.0f, -2.0f, 3.5f, -4.25f);
+    const VecScalar bs(0.5f, 6.0f, -7.0f, 8.0f);
+    const VecSimd ai(1.0f, -2.0f, 3.5f, -4.25f);
+    const VecSimd bi(0.5f, 6.0f, -7.0f, 8.0f);
+
+    for (auto i = 0; i < 4; i++) {
+        ASSERT_FLOAT_EQ((as + bs)[i], (ai + bi)[i]);
+        ASSERT_FLOAT_EQ((as - bs)[i], (ai - bi)[i]);
+        ASSERT_FLOAT_EQ((as * bs)[i], (ai * bi)[i]);
+        ASSERT_FLOAT_EQ((as / bs)[i], (ai / bi)[i]);
+        ASSERT_FLOAT_EQ((as * 2.5f)[i], (ai * 2.5f)[i]);
+        ASSERT_FLOAT_EQ((as + 2.5f)[i], (ai + 2.5f)[i]);
+    }
+    ASSERT_FLOAT_EQ(as.Dot(bs), ai.Dot(bi));
+    ASSERT_FLOAT_EQ(as.Model(), ai.Model());
+
+    for (auto i = 0; i < 4; i++) {
+        ASSERT_FLOAT_EQ(as.Normalized()[i], ai.Normalized()[i]);
+    }
+}
+
+TEST(MathTest, MatrixBackendConsistencyTest)
+{
+    using MatScalar = Mat<float, 4, 4, MathBackend::scalar>;
+    using MatSimd = Mat<float, 4, 4, MathBackend::simd>;
+
+    const MatScalar as(
+        1.0f, 2.0f, 3.0f, 4.0f,
+        5.0f, 6.0f, 7.0f, 8.0f,
+        9.0f, 10.0f, 11.0f, 12.0f,
+        13.0f, 14.0f, 15.0f, 16.0f);
+    const MatScalar bs(
+        17.0f, 18.0f, 19.0f, 20.0f,
+        21.0f, 22.0f, 23.0f, 24.0f,
+        25.0f, 26.0f, 27.0f, 28.0f,
+        29.0f, 30.0f, 31.0f, 32.0f);
+    const MatSimd ai(
+        1.0f, 2.0f, 3.0f, 4.0f,
+        5.0f, 6.0f, 7.0f, 8.0f,
+        9.0f, 10.0f, 11.0f, 12.0f,
+        13.0f, 14.0f, 15.0f, 16.0f);
+    const MatSimd bi(
+        17.0f, 18.0f, 19.0f, 20.0f,
+        21.0f, 22.0f, 23.0f, 24.0f,
+        25.0f, 26.0f, 27.0f, 28.0f,
+        29.0f, 30.0f, 31.0f, 32.0f);
+
+    const Vec<float, 4, MathBackend::scalar> vs(2.0f, -3.0f, 5.0f, -7.0f);
+    const Vec<float, 4, MathBackend::simd> vi(2.0f, -3.0f, 5.0f, -7.0f);
+
+    const MatScalar mulS = as * bs;
+    const MatSimd mulI = ai * bi;
+    const MatScalar addS = as + bs;
+    const MatSimd addI = ai + bi;
+    const MatScalar scaleS = as * 3.0f;
+    const MatSimd scaleI = ai * 3.0f;
+    const MatScalar transS = as.Transpose();
+    const MatSimd transI = ai.Transpose();
+    const auto mulVecS = as * vs;
+    const auto mulVecI = ai * vi;
+    for (auto i = 0; i < 16; i++) {
+        ASSERT_FLOAT_EQ(mulS[i], mulI[i]);
+        ASSERT_FLOAT_EQ(addS[i], addI[i]);
+        ASSERT_FLOAT_EQ(scaleS[i], scaleI[i]);
+        ASSERT_FLOAT_EQ(transS[i], transI[i]);
+    }
+    for (auto i = 0; i < 4; i++) {
+        ASSERT_FLOAT_EQ(mulVecS[i], mulVecI[i]);
+    }
+
+    using Mat3Scalar = Mat<float, 3, 3, MathBackend::scalar>;
+    using Mat3Simd = Mat<float, 3, 3, MathBackend::simd>;
+
+    const Mat3Scalar a3s(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 10.0f);
+    const Mat3Scalar b3s(11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 20.0f);
+    const Mat3Simd a3i(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 10.0f);
+    const Mat3Simd b3i(11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 20.0f);
+
+    const Vec<float, 3, MathBackend::scalar> v3s(2.0f, -3.0f, 5.0f);
+    const Vec<float, 3, MathBackend::simd> v3i(2.0f, -3.0f, 5.0f);
+
+    const Mat3Scalar mul3S = a3s * b3s;
+    const Mat3Simd mul3I = a3i * b3i;
+    const Mat3Scalar add3S = a3s + b3s;
+    const Mat3Simd add3I = a3i + b3i;
+    const Mat3Scalar scale3S = a3s * 3.0f;
+    const Mat3Simd scale3I = a3i * 3.0f;
+    const Mat3Scalar trans3S = a3s.Transpose();
+    const Mat3Simd trans3I = a3i.Transpose();
+    const auto mulVec3S = a3s * v3s;
+    const auto mulVec3I = a3i * v3i;
+    for (auto i = 0; i < 9; i++) {
+        ASSERT_FLOAT_EQ(mul3S[i], mul3I[i]);
+        ASSERT_FLOAT_EQ(add3S[i], add3I[i]);
+        ASSERT_FLOAT_EQ(scale3S[i], scale3I[i]);
+        ASSERT_FLOAT_EQ(trans3S[i], trans3I[i]);
+    }
+    for (auto i = 0; i < 3; i++) {
+        ASSERT_FLOAT_EQ(mulVec3S[i], mulVec3I[i]);
+    }
+
+    // Deliberately asymmetric: a symmetric source has a symmetric adjugate, which would mask a transpose/column mix-up
+    // in the SIMD inverse.
+    const MatScalar invSrcS(
+        5.0f, 1.0f, 7.0f, 2.0f,
+        4.0f, 2.0f, 6.0f, 5.0f,
+        3.0f, 5.0f, 1.0f, 8.0f,
+        1.0f, 2.0f, 3.0f, 4.0f);
+    const MatSimd invSrcI(
+        5.0f, 1.0f, 7.0f, 2.0f,
+        4.0f, 2.0f, 6.0f, 5.0f,
+        3.0f, 5.0f, 1.0f, 8.0f,
+        1.0f, 2.0f, 3.0f, 4.0f);
+    const MatScalar invS = invSrcS.Inverse();
+    const MatSimd invI = invSrcI.Inverse();
+    for (auto i = 0; i < 16; i++) {
+        ASSERT_FLOAT_EQ(invS[i], invI[i]);
+    }
+}
+
+TEST(MathTest, QuaternionBackendConsistencyTest)
+{
+    using QuatScalar = Quaternion<float, MathBackend::scalar>;
+    using QuatSimd = Quaternion<float, MathBackend::simd>;
+
+    const QuatScalar as(1.0f, 2.0f, 3.0f, 4.0f);
+    const QuatScalar bs(5.0f, 6.0f, 7.0f, 8.0f);
+    const QuatSimd ai(1.0f, 2.0f, 3.0f, 4.0f);
+    const QuatSimd bi(5.0f, 6.0f, 7.0f, 8.0f);
+
+    const QuatScalar mulS = as * bs;
+    const QuatSimd mulI = ai * bi;
+    const QuatScalar addS = as + bs;
+    const QuatSimd addI = ai + bi;
+    ASSERT_FLOAT_EQ(mulS.w, mulI.w);
+    ASSERT_FLOAT_EQ(mulS.x, mulI.x);
+    ASSERT_FLOAT_EQ(mulS.y, mulI.y);
+    ASSERT_FLOAT_EQ(mulS.z, mulI.z);
+    ASSERT_FLOAT_EQ(addS.w, addI.w);
+    ASSERT_FLOAT_EQ(addS.x, addI.x);
+    ASSERT_FLOAT_EQ(addS.y, addI.y);
+    ASSERT_FLOAT_EQ(addS.z, addI.z);
+    ASSERT_FLOAT_EQ(as.Dot(bs), ai.Dot(bi));
+    ASSERT_FLOAT_EQ(as.Model(), ai.Model());
+}

@@ -7,34 +7,40 @@
 #include <cstdint>
 #include <utility>
 
+#include <Common/Math/Simd.h>
 #include <Common/Math/Half.h>
 #include <Common/Serialization.h>
 #include <Common/String.h>
 
+namespace Common {
+    template <typename T, uint8_t L, MathBackend B = MathBackend::defaultBackend> struct Vec;
+}
+
 namespace Common::Internal {
-    template <typename T, uint8_t L>
+    template <typename T, uint8_t L, MathBackend B>
     struct VecCrossResultTraits {
         using Type = T;
     };
 }
 
 namespace Common {
-    template <typename T, uint8_t L> struct Vec;
-
     template <uint8_t L> concept ValidVecDim = L >= 1 && L <= 4;
-    template <typename T, typename VT, uint8_t L> concept VecN = std::is_same_v<T, Vec<VT, L>>;
+    template <typename CheckT, typename VT, uint8_t L, MathBackend B> concept VecN = std::is_same_v<CheckT, Vec<VT, L, B>>;
 
-    template <typename T, uint8_t L>
+    template <typename T, uint8_t L, MathBackend B>
     requires ValidVecDim<L>
     struct BaseVec {};
 
-    template <typename T, uint8_t L>
-    struct Vec : BaseVec<T, L> {
+    template <typename T, uint8_t L, MathBackend B>
+    struct Vec : BaseVec<T, L, B> {
         using Type = T;
         static constexpr uint8_t dims = L;
+        static constexpr MathBackend backend = B;
 
         Vec();
         Vec(T inValue); // NOLINT
+        // Not defaulted: BaseVec aliases data via an anonymous union, and a union's copy/move members are implicitly
+        // deleted when a variant member (e.g. HFloat) has a non-trivial copy, so these stay element-wise.
         Vec(const Vec& other);
         Vec(Vec&& other) noexcept;
         Vec& operator=(const Vec& other);
@@ -71,66 +77,66 @@ namespace Common {
         Vec& operator/=(const Vec& rhs);
 
         template <typename IT>
-        Vec<IT, L> CastTo() const;
+        Vec<IT, L, B> CastTo() const;
 
         template <uint8_t... I>
-        Vec<T, sizeof...(I)> SubVec() const;
+        Vec<T, sizeof...(I), B> SubVec() const;
 
         T Model() const;
         Vec Normalized() const;
         void Normalize();
         T Dot(const Vec& rhs) const;
-        typename Internal::VecCrossResultTraits<T, L>::Type Cross(const Vec& rhs) const;
+        typename Internal::VecCrossResultTraits<T, L, B>::Type Cross(const Vec& rhs) const;
     };
 
-    template <typename T, uint8_t L>
+    template <typename T, uint8_t L, MathBackend B = MathBackend::defaultBackend>
     requires ValidVecDim<L>
     struct VecConsts {};
 
-    template <typename T>
-    struct VecConsts<T, 1> {
-        static const Vec<T, 1> zero;
-        static const Vec<T, 1> unit;
-        static const Vec<T, 1> negaUnit;
+    template <typename T, MathBackend B>
+    struct VecConsts<T, 1, B> {
+        static const Vec<T, 1, B> zero;
+        static const Vec<T, 1, B> unit;
+        static const Vec<T, 1, B> negaUnit;
     };
 
-    template <typename T>
-    struct VecConsts<T, 2> {
-        static const Vec<T, 2> zero;
-        static const Vec<T, 2> unitX;
-        static const Vec<T, 2> unitY;
-        static const Vec<T, 2> unit;
-        static const Vec<T, 2> negaUnitX;
-        static const Vec<T, 2> negaUnitY;
-        static const Vec<T, 2> negaUnit;
+    template <typename T, MathBackend B>
+    struct VecConsts<T, 2, B> {
+        static const Vec<T, 2, B> zero;
+        static const Vec<T, 2, B> unitX;
+        static const Vec<T, 2, B> unitY;
+        static const Vec<T, 2, B> unit;
+        static const Vec<T, 2, B> negaUnitX;
+        static const Vec<T, 2, B> negaUnitY;
+        static const Vec<T, 2, B> negaUnit;
     };
 
-    template <typename T>
-    struct VecConsts<T, 3> {
-        static const Vec<T, 3> zero;
-        static const Vec<T, 3> unitX;
-        static const Vec<T, 3> unitY;
-        static const Vec<T, 3> unitZ;
-        static const Vec<T, 3> unit;
-        static const Vec<T, 3> negaUnitX;
-        static const Vec<T, 3> negaUnitY;
-        static const Vec<T, 3> negaUnitZ;
-        static const Vec<T, 3> negaUnit;
+    template <typename T, MathBackend B>
+    struct VecConsts<T, 3, B> {
+        static const Vec<T, 3, B> zero;
+        static const Vec<T, 3, B> unitX;
+        static const Vec<T, 3, B> unitY;
+        static const Vec<T, 3, B> unitZ;
+        static const Vec<T, 3, B> unit;
+        static const Vec<T, 3, B> negaUnitX;
+        static const Vec<T, 3, B> negaUnitY;
+        static const Vec<T, 3, B> negaUnitZ;
+        static const Vec<T, 3, B> negaUnit;
     };
 
-    template <typename T>
-    struct VecConsts<T, 4> {
-        static const Vec<T, 4> zero;
-        static const Vec<T, 4> unitX;
-        static const Vec<T, 4> unitY;
-        static const Vec<T, 4> unitZ;
-        static const Vec<T, 4> unitW;
-        static const Vec<T, 4> unit;
-        static const Vec<T, 4> negaUnitX;
-        static const Vec<T, 4> negaUnitY;
-        static const Vec<T, 4> negaUnitZ;
-        static const Vec<T, 4> negaUnitW;
-        static const Vec<T, 4> negaUnit;
+    template <typename T, MathBackend B>
+    struct VecConsts<T, 4, B> {
+        static const Vec<T, 4, B> zero;
+        static const Vec<T, 4, B> unitX;
+        static const Vec<T, 4, B> unitY;
+        static const Vec<T, 4, B> unitZ;
+        static const Vec<T, 4, B> unitW;
+        static const Vec<T, 4, B> unit;
+        static const Vec<T, 4, B> negaUnitX;
+        static const Vec<T, 4, B> negaUnitY;
+        static const Vec<T, 4, B> negaUnitZ;
+        static const Vec<T, 4, B> negaUnitW;
+        static const Vec<T, 4, B> negaUnit;
     };
 
     using BVec1 = Vec<bool, 1>;
@@ -202,26 +208,26 @@ namespace Common::Internal {
         (void) std::initializer_list<int> { ([&]() -> void { subVec.data[SubVecIndex] = vec.data[VecIndex]; }(), 0)... };
     }
 
-    template <typename T>
-    struct VecCrossResultTraits<T, 2> {
+    template <typename T, MathBackend B>
+    struct VecCrossResultTraits<T, 2, B> {
         using Type = T;
     };
 
-    template <typename T>
-    struct VecCrossResultTraits<T, 3> {
-        using Type = Vec<T, 3>;
+    template <typename T, MathBackend B>
+    struct VecCrossResultTraits<T, 3, B> {
+        using Type = Vec<T, 3, B>;
     };
 }
 
 namespace Common {
-    template <Serializable T, uint8_t L>
-    struct Serializer<Vec<T, L>> {
+    template <Serializable T, uint8_t L, MathBackend B>
+    struct Serializer<Vec<T, L, B>> {
         static constexpr size_t typeId
             = Common::HashUtils::StrCrc32("Common::Vector")
             + Serializer<T>::typeId
             + L;
 
-        static size_t Serialize(BinarySerializeStream& stream, const Vec<T, L>& value)
+        static size_t Serialize(BinarySerializeStream& stream, const Vec<T, L, B>& value)
         {
             size_t serialized = 0;
             for (auto i = 0; i < L; i++) {
@@ -230,7 +236,7 @@ namespace Common {
             return serialized;
         }
 
-        static size_t Deserialize(BinaryDeserializeStream& stream, Vec<T, L>& value)
+        static size_t Deserialize(BinaryDeserializeStream& stream, Vec<T, L, B>& value)
         {
             size_t deserialized = 0;
             for (auto i = 0; i < L; i++) {
@@ -240,9 +246,9 @@ namespace Common {
         }
     };
 
-    template <StringConvertible T, uint8_t L>
-    struct StringConverter<Vec<T, L>> {
-        static std::string ToString(const Vec<T, L>& inValue)
+    template <StringConvertible T, uint8_t L, MathBackend B>
+    struct StringConverter<Vec<T, L, B>> {
+        static std::string ToString(const Vec<T, L, B>& inValue)
         {
             std::stringstream stream;
             stream << "(";
@@ -257,9 +263,9 @@ namespace Common {
         }
     };
 
-    template <JsonSerializable T, uint8_t L>
-    struct JsonSerializer<Vec<T, L>> {
-        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Vec<T, L>& inValue)
+    template <JsonSerializable T, uint8_t L, MathBackend B>
+    struct JsonSerializer<Vec<T, L, B>> {
+        static void JsonSerialize(rapidjson::Value& outJsonValue, rapidjson::Document::AllocatorType& inAllocator, const Vec<T, L, B>& inValue)
         {
             outJsonValue.SetArray();
             outJsonValue.Reserve(L, inAllocator);
@@ -270,7 +276,7 @@ namespace Common {
             }
         }
 
-        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Vec<T, L>& outValue)
+        static void JsonDeserialize(const rapidjson::Value& inJsonValue, Vec<T, L, B>& outValue)
         {
             if (!inJsonValue.IsArray() || inJsonValue.Size() != L) {
                 return;
@@ -283,8 +289,8 @@ namespace Common {
 }
 
 namespace Common {
-    template <typename T>
-    struct BaseVec<T, 1> {
+    template <typename T, MathBackend B>
+    struct BaseVec<T, 1, B> {
         BaseVec();
         BaseVec(T inX); // NOLINT
 
@@ -296,8 +302,8 @@ namespace Common {
         };
     };
 
-    template <typename T>
-    struct BaseVec<T, 2> {
+    template <typename T, MathBackend B>
+    struct BaseVec<T, 2, B> {
         BaseVec();
         BaseVec(T inValue); // NOLINT
         BaseVec(T inX, T inY);
@@ -311,8 +317,8 @@ namespace Common {
         };
     };
 
-    template <typename T>
-    struct BaseVec<T, 3> {
+    template <typename T, MathBackend B>
+    struct BaseVec<T, 3, B> {
         BaseVec();
         BaseVec(T inValue); // NOLINT
         BaseVec(T inX, T inY, T inZ);
@@ -327,8 +333,8 @@ namespace Common {
         };
     };
 
-    template <typename T>
-    struct BaseVec<T, 4> {
+    template <typename T, MathBackend B>
+    struct BaseVec<T, 4, B> {
         BaseVec();
         BaseVec(T inValue); // NOLINT
         BaseVec(T inX, T inY, T inZ, T inW);
@@ -344,190 +350,288 @@ namespace Common {
         };
     };
 
-    template <typename T>
-    BaseVec<T, 1>::BaseVec()
+    template <typename T, MathBackend B>
+    BaseVec<T, 1, B>::BaseVec()
         : x(0)
     {
     }
 
-    template <typename T>
-    BaseVec<T, 1>::BaseVec(T inX)
+    template <typename T, MathBackend B>
+    BaseVec<T, 1, B>::BaseVec(T inX)
         : x(inX)
     {
     }
 
-    template <typename T>
-    BaseVec<T, 2>::BaseVec()
+    template <typename T, MathBackend B>
+    BaseVec<T, 2, B>::BaseVec()
         : x(0)
     {
     }
 
-    template <typename T>
-    BaseVec<T, 2>::BaseVec(T inValue)
+    template <typename T, MathBackend B>
+    BaseVec<T, 2, B>::BaseVec(T inValue)
         : x(inValue), y(inValue)
     {
     }
 
-    template <typename T>
-    BaseVec<T, 2>::BaseVec(T inX, T inY)
+    template <typename T, MathBackend B>
+    BaseVec<T, 2, B>::BaseVec(T inX, T inY)
         : x(inX), y(inY)
     {
     }
 
-    template <typename T>
-    BaseVec<T, 3>::BaseVec()
+    template <typename T, MathBackend B>
+    BaseVec<T, 3, B>::BaseVec()
         : x(0)
     {
     }
 
-    template <typename T>
-    BaseVec<T, 3>::BaseVec(T inValue)
+    template <typename T, MathBackend B>
+    BaseVec<T, 3, B>::BaseVec(T inValue)
         : x(inValue), y(inValue), z(inValue)
     {
     }
 
-    template <typename T>
-    BaseVec<T, 3>::BaseVec(T inX, T inY, T inZ)
+    template <typename T, MathBackend B>
+    BaseVec<T, 3, B>::BaseVec(T inX, T inY, T inZ)
         : x(inX), y(inY), z(inZ)
     {
     }
 
-    template <typename T>
-    BaseVec<T, 4>::BaseVec()
+    template <typename T, MathBackend B>
+    BaseVec<T, 4, B>::BaseVec()
         : x(0)
     {
     }
 
-    template <typename T>
-    BaseVec<T, 4>::BaseVec(T inValue)
+    template <typename T, MathBackend B>
+    BaseVec<T, 4, B>::BaseVec(T inValue)
         : x(inValue), y(inValue), z(inValue), w(inValue)
     {
     }
 
-    template <typename T>
-    BaseVec<T, 4>::BaseVec(T inX, T inY, T inZ, T inW)
+    template <typename T, MathBackend B>
+    BaseVec<T, 4, B>::BaseVec(T inX, T inY, T inZ, T inW)
         : x(inX), y(inY), z(inZ), w(inW)
     {
     }
 
-    template <typename T>
-    const Vec<T, 1> VecConsts<T, 1>::zero = Vec<T, 1>();
+    template <typename T, MathBackend B>
+    const Vec<T, 1, B> VecConsts<T, 1, B>::zero = Vec<T, 1, B>();
 
-    template <typename T>
-    const Vec<T, 1> VecConsts<T, 1>::unit = Vec<T, 1>(1);
+    template <typename T, MathBackend B>
+    const Vec<T, 1, B> VecConsts<T, 1, B>::unit = Vec<T, 1, B>(1);
 
-    template <typename T>
-    const Vec<T, 1> VecConsts<T, 1>::negaUnit = Vec<T, 1>(-1);
+    template <typename T, MathBackend B>
+    const Vec<T, 1, B> VecConsts<T, 1, B>::negaUnit = Vec<T, 1, B>(-1);
 
-    template <typename T>
-    const Vec<T, 2> VecConsts<T, 2>::zero = Vec<T, 2>();
+    template <typename T, MathBackend B>
+    const Vec<T, 2, B> VecConsts<T, 2, B>::zero = Vec<T, 2, B>();
 
-    template <typename T>
-    const Vec<T, 2> VecConsts<T, 2>::unitX = Vec<T, 2>(1, 0);
+    template <typename T, MathBackend B>
+    const Vec<T, 2, B> VecConsts<T, 2, B>::unitX = Vec<T, 2, B>(1, 0);
 
-    template <typename T>
-    const Vec<T, 2> VecConsts<T, 2>::unitY = Vec<T, 2>(0, 1);
+    template <typename T, MathBackend B>
+    const Vec<T, 2, B> VecConsts<T, 2, B>::unitY = Vec<T, 2, B>(0, 1);
 
-    template <typename T>
-    const Vec<T, 2> VecConsts<T, 2>::unit = Vec<T, 2>(1, 1);
+    template <typename T, MathBackend B>
+    const Vec<T, 2, B> VecConsts<T, 2, B>::unit = Vec<T, 2, B>(1, 1);
 
-    template <typename T>
-    const Vec<T, 2> VecConsts<T, 2>::negaUnitX = Vec<T, 2>(-1, 0);
+    template <typename T, MathBackend B>
+    const Vec<T, 2, B> VecConsts<T, 2, B>::negaUnitX = Vec<T, 2, B>(-1, 0);
 
-    template <typename T>
-    const Vec<T, 2> VecConsts<T, 2>::negaUnitY = Vec<T, 2>(0, -1);
+    template <typename T, MathBackend B>
+    const Vec<T, 2, B> VecConsts<T, 2, B>::negaUnitY = Vec<T, 2, B>(0, -1);
 
-    template <typename T>
-    const Vec<T, 2> VecConsts<T, 2>::negaUnit = Vec<T, 2>(-1, -1);
+    template <typename T, MathBackend B>
+    const Vec<T, 2, B> VecConsts<T, 2, B>::negaUnit = Vec<T, 2, B>(-1, -1);
 
-    template <typename T>
-    const Vec<T, 3> VecConsts<T, 3>::zero = Vec<T, 3>();
+    template <typename T, MathBackend B>
+    const Vec<T, 3, B> VecConsts<T, 3, B>::zero = Vec<T, 3, B>();
 
-    template <typename T>
-    const Vec<T, 3> VecConsts<T, 3>::unitX = Vec<T, 3>(1, 0, 0);
+    template <typename T, MathBackend B>
+    const Vec<T, 3, B> VecConsts<T, 3, B>::unitX = Vec<T, 3, B>(1, 0, 0);
 
-    template <typename T>
-    const Vec<T, 3> VecConsts<T, 3>::unitY = Vec<T, 3>(0, 1, 0);
+    template <typename T, MathBackend B>
+    const Vec<T, 3, B> VecConsts<T, 3, B>::unitY = Vec<T, 3, B>(0, 1, 0);
 
-    template <typename T>
-    const Vec<T, 3> VecConsts<T, 3>::unitZ = Vec<T, 3>(0, 0, 1);
+    template <typename T, MathBackend B>
+    const Vec<T, 3, B> VecConsts<T, 3, B>::unitZ = Vec<T, 3, B>(0, 0, 1);
 
-    template <typename T>
-    const Vec<T, 3> VecConsts<T, 3>::unit = Vec<T, 3>(1, 1, 1);
+    template <typename T, MathBackend B>
+    const Vec<T, 3, B> VecConsts<T, 3, B>::unit = Vec<T, 3, B>(1, 1, 1);
 
-    template <typename T>
-    const Vec<T, 3> VecConsts<T, 3>::negaUnitX = Vec<T, 3>(-1, 0, 0);
+    template <typename T, MathBackend B>
+    const Vec<T, 3, B> VecConsts<T, 3, B>::negaUnitX = Vec<T, 3, B>(-1, 0, 0);
 
-    template <typename T>
-    const Vec<T, 3> VecConsts<T, 3>::negaUnitY = Vec<T, 3>(0, -1, 0);
+    template <typename T, MathBackend B>
+    const Vec<T, 3, B> VecConsts<T, 3, B>::negaUnitY = Vec<T, 3, B>(0, -1, 0);
 
-    template <typename T>
-    const Vec<T, 3> VecConsts<T, 3>::negaUnitZ = Vec<T, 3>(0, 0, -1);
+    template <typename T, MathBackend B>
+    const Vec<T, 3, B> VecConsts<T, 3, B>::negaUnitZ = Vec<T, 3, B>(0, 0, -1);
 
-    template <typename T>
-    const Vec<T, 3> VecConsts<T, 3>::negaUnit = Vec<T, 3>(-1, -1, -1);
+    template <typename T, MathBackend B>
+    const Vec<T, 3, B> VecConsts<T, 3, B>::negaUnit = Vec<T, 3, B>(-1, -1, -1);
 
-    template <typename T>
-    const Vec<T, 4> VecConsts<T, 4>::zero = Vec<T, 4>();
+    template <typename T, MathBackend B>
+    const Vec<T, 4, B> VecConsts<T, 4, B>::zero = Vec<T, 4, B>();
 
-    template <typename T>
-    const Vec<T, 4> VecConsts<T, 4>::unitX = Vec<T, 4>(1, 0, 0, 0);
+    template <typename T, MathBackend B>
+    const Vec<T, 4, B> VecConsts<T, 4, B>::unitX = Vec<T, 4, B>(1, 0, 0, 0);
 
-    template <typename T>
-    const Vec<T, 4> VecConsts<T, 4>::unitY = Vec<T, 4>(0, 1, 0, 0);
+    template <typename T, MathBackend B>
+    const Vec<T, 4, B> VecConsts<T, 4, B>::unitY = Vec<T, 4, B>(0, 1, 0, 0);
 
-    template <typename T>
-    const Vec<T, 4> VecConsts<T, 4>::unitZ = Vec<T, 4>(0, 0, 1, 0);
+    template <typename T, MathBackend B>
+    const Vec<T, 4, B> VecConsts<T, 4, B>::unitZ = Vec<T, 4, B>(0, 0, 1, 0);
 
-    template <typename T>
-    const Vec<T, 4> VecConsts<T, 4>::unitW = Vec<T, 4>(0, 0, 0, 1);
+    template <typename T, MathBackend B>
+    const Vec<T, 4, B> VecConsts<T, 4, B>::unitW = Vec<T, 4, B>(0, 0, 0, 1);
 
-    template <typename T>
-    const Vec<T, 4> VecConsts<T, 4>::unit = Vec<T, 4>(1, 1, 1, 1);
+    template <typename T, MathBackend B>
+    const Vec<T, 4, B> VecConsts<T, 4, B>::unit = Vec<T, 4, B>(1, 1, 1, 1);
 
-    template <typename T>
-    const Vec<T, 4> VecConsts<T, 4>::negaUnitX = Vec<T, 4>(-1, 0, 0, 0);
+    template <typename T, MathBackend B>
+    const Vec<T, 4, B> VecConsts<T, 4, B>::negaUnitX = Vec<T, 4, B>(-1, 0, 0, 0);
 
-    template <typename T>
-    const Vec<T, 4> VecConsts<T, 4>::negaUnitY = Vec<T, 4>(0, -1, 0, 0);
+    template <typename T, MathBackend B>
+    const Vec<T, 4, B> VecConsts<T, 4, B>::negaUnitY = Vec<T, 4, B>(0, -1, 0, 0);
 
-    template <typename T>
-    const Vec<T, 4> VecConsts<T, 4>::negaUnitZ = Vec<T, 4>(0, 0, -1, 0);
+    template <typename T, MathBackend B>
+    const Vec<T, 4, B> VecConsts<T, 4, B>::negaUnitZ = Vec<T, 4, B>(0, 0, -1, 0);
 
-    template <typename T>
-    const Vec<T, 4> VecConsts<T, 4>::negaUnitW = Vec<T, 4>(0, 0, 0, -1);
+    template <typename T, MathBackend B>
+    const Vec<T, 4, B> VecConsts<T, 4, B>::negaUnitW = Vec<T, 4, B>(0, 0, 0, -1);
 
-    template <typename T>
-    const Vec<T, 4> VecConsts<T, 4>::negaUnit = Vec<T, 4>(-1, -1, -1, -1);
+    template <typename T, MathBackend B>
+    const Vec<T, 4, B> VecConsts<T, 4, B>::negaUnit = Vec<T, 4, B>(-1, -1, -1, -1);
+}
 
-    template<typename T, uint8_t L>
-    Vec<T, L>::Vec() : BaseVec<T, L>(0)
+namespace Common::Internal {
+    // Per-backend dispatch for the hot element-wise arithmetic. The primary template is the original scalar loop, so
+    // any (T, L, B) without a dedicated specialization degrades gracefully to scalar (this includes B == simd for
+    // types/dims that have no SIMD path). This block sits after the BaseVec<T, 4, B> specialization because the SIMD
+    // specialization below is a full (non-template) specialization whose member bodies eagerly need Vec<float, 4, B>'s
+    // `data`.
+    template <typename T, uint8_t L, MathBackend B>
+    struct VecOps {
+        static Vec<T, L, B> Add(const Vec<T, L, B>& a, const Vec<T, L, B>& b)
+        {
+            Vec<T, L, B> result;
+            for (auto i = 0; i < L; i++) { result.data[i] = a.data[i] + b.data[i]; }
+            return result;
+        }
+
+        static Vec<T, L, B> Sub(const Vec<T, L, B>& a, const Vec<T, L, B>& b)
+        {
+            Vec<T, L, B> result;
+            for (auto i = 0; i < L; i++) { result.data[i] = a.data[i] - b.data[i]; }
+            return result;
+        }
+
+        static Vec<T, L, B> Mul(const Vec<T, L, B>& a, const Vec<T, L, B>& b)
+        {
+            Vec<T, L, B> result;
+            for (auto i = 0; i < L; i++) { result.data[i] = a.data[i] * b.data[i]; }
+            return result;
+        }
+
+        static Vec<T, L, B> Div(const Vec<T, L, B>& a, const Vec<T, L, B>& b)
+        {
+            Vec<T, L, B> result;
+            for (auto i = 0; i < L; i++) { result.data[i] = a.data[i] / b.data[i]; }
+            return result;
+        }
+
+        static Vec<T, L, B> AddScalar(const Vec<T, L, B>& a, T b)
+        {
+            Vec<T, L, B> result;
+            for (auto i = 0; i < L; i++) { result.data[i] = a.data[i] + b; }
+            return result;
+        }
+
+        static Vec<T, L, B> SubScalar(const Vec<T, L, B>& a, T b)
+        {
+            Vec<T, L, B> result;
+            for (auto i = 0; i < L; i++) { result.data[i] = a.data[i] - b; }
+            return result;
+        }
+
+        static Vec<T, L, B> MulScalar(const Vec<T, L, B>& a, T b)
+        {
+            Vec<T, L, B> result;
+            for (auto i = 0; i < L; i++) { result.data[i] = a.data[i] * b; }
+            return result;
+        }
+
+        static Vec<T, L, B> DivScalar(const Vec<T, L, B>& a, T b)
+        {
+            Vec<T, L, B> result;
+            for (auto i = 0; i < L; i++) { result.data[i] = a.data[i] / b; }
+            return result;
+        }
+
+        static T Dot(const Vec<T, L, B>& a, const Vec<T, L, B>& b)
+        {
+            T result = 0;
+            for (auto i = 0; i < L; i++) { result += a.data[i] * b.data[i]; }
+            return result;
+        }
+    };
+
+    // Vec<float, 4, simd> is backed by float[4] (16 bytes), so unaligned 128-bit loads/stores stay in bounds. Vec3 is
+    // intentionally left to the scalar primary template: its float[3] storage cannot be loaded with a 128-bit load
+    // without reading out of bounds, and a masked load would not beat the scalar loop.
+    template <>
+    struct VecOps<float, 4, MathBackend::simd> {
+        using V = Vec<float, 4, MathBackend::simd>;
+
+        static V Add(const V& a, const V& b) { V r; Simd::MapBinary<4>(r.data, a.data, b.data, Simd::AddOp {}); return r; }
+        static V Sub(const V& a, const V& b) { V r; Simd::MapBinary<4>(r.data, a.data, b.data, Simd::SubOp {}); return r; }
+        static V Mul(const V& a, const V& b) { V r; Simd::MapBinary<4>(r.data, a.data, b.data, Simd::MulOp {}); return r; }
+        static V Div(const V& a, const V& b) { V r; Simd::MapBinary<4>(r.data, a.data, b.data, Simd::DivOp {}); return r; }
+
+        static V AddScalar(const V& a, float b) { V r; Simd::MapScalar<4>(r.data, a.data, b, Simd::AddOp {}); return r; }
+        static V SubScalar(const V& a, float b) { V r; Simd::MapScalar<4>(r.data, a.data, b, Simd::SubOp {}); return r; }
+        static V MulScalar(const V& a, float b) { V r; Simd::MapScalar<4>(r.data, a.data, b, Simd::MulOp {}); return r; }
+        static V DivScalar(const V& a, float b) { V r; Simd::MapScalar<4>(r.data, a.data, b, Simd::DivOp {}); return r; }
+
+        static float Dot(const V& a, const V& b)
+        {
+            return Simd::Sum(Simd::Mul(Simd::LoadU(a.data), Simd::LoadU(b.data)));
+        }
+    };
+}
+
+namespace Common {
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B>::Vec() : BaseVec<T, L, B>(0)
     {
     }
 
-    template<typename T, uint8_t L>
-    Vec<T, L>::Vec(T inValue) : BaseVec<T, L>(inValue)
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B>::Vec(T inValue) : BaseVec<T, L, B>(inValue)
     {
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L>::Vec(const Vec& other)
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B>::Vec(const Vec& other)
     {
         for (auto i = 0; i < L; i++) {
             this->data[i] = other.data[i];
         }
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L>::Vec(Vec&& other) noexcept
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B>::Vec(Vec&& other) noexcept
     {
         for (auto i = 0; i < L; i++) {
             this->data[i] = std::move(other.data[i]);
         }
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L>& Vec<T, L>::operator=(const Vec& other)
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B>& Vec<T, L, B>::operator=(const Vec& other)
     {
         for (auto i = 0; i < L; i++) {
             this->data[i] = other.data[i];
@@ -535,26 +639,26 @@ namespace Common {
         return *this;
     }
 
-    template <typename T, uint8_t L>
+    template <typename T, uint8_t L, MathBackend B>
     template <typename... IT>
-    Vec<T, L>::Vec(IT&&... inValues) : BaseVec<T, L>(std::forward<IT>(inValues)...)
+    Vec<T, L, B>::Vec(IT&&... inValues) : BaseVec<T, L, B>(std::forward<IT>(inValues)...)
     {
     }
 
-    template <typename T, uint8_t L>
-    T& Vec<T, L>::operator[](uint32_t i)
-    {
-        return this->data[i];
-    }
-
-    template <typename T, uint8_t L>
-    T Vec<T, L>::operator[](uint32_t i) const
+    template <typename T, uint8_t L, MathBackend B>
+    T& Vec<T, L, B>::operator[](uint32_t i)
     {
         return this->data[i];
     }
 
-    template <typename T, uint8_t L>
-    bool Vec<T, L>::operator==(T rhs) const
+    template <typename T, uint8_t L, MathBackend B>
+    T Vec<T, L, B>::operator[](uint32_t i) const
+    {
+        return this->data[i];
+    }
+
+    template <typename T, uint8_t L, MathBackend B>
+    bool Vec<T, L, B>::operator==(T rhs) const
     {
         bool result = true;
         for (auto i = 0; i < L; i++) {
@@ -563,8 +667,8 @@ namespace Common {
         return result;
     }
 
-    template <typename T, uint8_t L>
-    bool Vec<T, L>::operator==(const Vec& rhs) const
+    template <typename T, uint8_t L, MathBackend B>
+    bool Vec<T, L, B>::operator==(const Vec& rhs) const
     {
         bool result = true;
         for (auto i = 0; i < L; i++) {
@@ -573,232 +677,174 @@ namespace Common {
         return result;
     }
 
-    template <typename T, uint8_t L>
-    bool Vec<T, L>::operator!=(T rhs) const
+    template <typename T, uint8_t L, MathBackend B>
+    bool Vec<T, L, B>::operator!=(T rhs) const
     {
         return !this->operator==(rhs);
     }
 
-    template <typename T, uint8_t L>
-    bool Vec<T, L>::operator!=(const Vec& rhs) const
+    template <typename T, uint8_t L, MathBackend B>
+    bool Vec<T, L, B>::operator!=(const Vec& rhs) const
     {
         return !this->operator==(rhs);
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L> Vec<T, L>::operator+(T rhs) const
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B> Vec<T, L, B>::operator+(T rhs) const
     {
-        Vec<T, L> result;
-        for (auto i = 0; i < L; i++) {
-            result.data[i] = this->data[i] + rhs;
-        }
-        return result;
+        return Internal::VecOps<T, L, B>::AddScalar(*this, rhs);
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L> Vec<T, L>::operator-(T rhs) const
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B> Vec<T, L, B>::operator-(T rhs) const
     {
-        Vec<T, L> result;
-        for (auto i = 0; i < L; i++) {
-            result.data[i] = this->data[i] - rhs;
-        }
-        return result;
+        return Internal::VecOps<T, L, B>::SubScalar(*this, rhs);
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L> Vec<T, L>::operator*(T rhs) const
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B> Vec<T, L, B>::operator*(T rhs) const
     {
-        Vec<T, L> result;
-        for (auto i = 0; i < L; i++) {
-            result.data[i] = this->data[i] * rhs;
-        }
-        return result;
+        return Internal::VecOps<T, L, B>::MulScalar(*this, rhs);
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L> Vec<T, L>::operator/(T rhs) const
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B> Vec<T, L, B>::operator/(T rhs) const
     {
-        Vec<T, L> result;
-        for (auto i = 0; i < L; i++) {
-            result.data[i] = this->data[i] / rhs;
-        }
-        return result;
+        return Internal::VecOps<T, L, B>::DivScalar(*this, rhs);
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L> Vec<T, L>::operator+(const Vec& rhs) const
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B> Vec<T, L, B>::operator+(const Vec& rhs) const
     {
-        Vec<T, L> result;
-        for (auto i = 0; i < L; i++) {
-            result.data[i] = this->data[i] + rhs.data[i];
-        }
-        return result;
+        return Internal::VecOps<T, L, B>::Add(*this, rhs);
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L> Vec<T, L>::operator-(const Vec& rhs) const
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B> Vec<T, L, B>::operator-(const Vec& rhs) const
     {
-        Vec<T, L> result;
-        for (auto i = 0; i < L; i++) {
-            result.data[i] = this->data[i] - rhs.data[i];
-        }
-        return result;
+        return Internal::VecOps<T, L, B>::Sub(*this, rhs);
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L> Vec<T, L>::operator*(const Vec& rhs) const
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B> Vec<T, L, B>::operator*(const Vec& rhs) const
     {
-        Vec<T, L> result;
-        for (auto i = 0; i < L; i++) {
-            result.data[i] = this->data[i] * rhs.data[i];
-        }
-        return result;
+        return Internal::VecOps<T, L, B>::Mul(*this, rhs);
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L> Vec<T, L>::operator/(const Vec& rhs) const
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B> Vec<T, L, B>::operator/(const Vec& rhs) const
     {
-        Vec<T, L> result;
-        for (auto i = 0; i < L; i++) {
-            result.data[i] = this->data[i] / rhs.data[i];
-        }
-        return result;
+        return Internal::VecOps<T, L, B>::Div(*this, rhs);
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L>& Vec<T, L>::operator+=(T rhs)
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B>& Vec<T, L, B>::operator+=(T rhs)
     {
-        for (auto i = 0; i < L; i++) {
-            this->data[i] += rhs;
-        }
+        *this = Internal::VecOps<T, L, B>::AddScalar(*this, rhs);
         return *this;
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L>& Vec<T, L>::operator-=(T rhs)
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B>& Vec<T, L, B>::operator-=(T rhs)
     {
-        for (auto i = 0; i < L; i++) {
-            this->data[i] -= rhs;
-        }
+        *this = Internal::VecOps<T, L, B>::SubScalar(*this, rhs);
         return *this;
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L>& Vec<T, L>::operator*=(T rhs)
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B>& Vec<T, L, B>::operator*=(T rhs)
     {
-        for (auto i = 0; i < L; i++) {
-            this->data[i] *= rhs;
-        }
+        *this = Internal::VecOps<T, L, B>::MulScalar(*this, rhs);
         return *this;
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L>& Vec<T, L>::operator/=(T rhs)
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B>& Vec<T, L, B>::operator/=(T rhs)
     {
-        for (auto i = 0; i < L; i++) {
-            this->data[i] /= rhs;
-        }
+        *this = Internal::VecOps<T, L, B>::DivScalar(*this, rhs);
         return *this;
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L>& Vec<T, L>::operator+=(const Vec& rhs)
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B>& Vec<T, L, B>::operator+=(const Vec& rhs)
     {
-        for (auto i = 0; i < L; i++) {
-            this->data[i] += rhs.data[i];
-        }
+        *this = Internal::VecOps<T, L, B>::Add(*this, rhs);
         return *this;
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L>& Vec<T, L>::operator-=(const Vec& rhs)
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B>& Vec<T, L, B>::operator-=(const Vec& rhs)
     {
-        for (auto i = 0; i < L; i++) {
-            this->data[i] -= rhs.data[i];
-        }
+        *this = Internal::VecOps<T, L, B>::Sub(*this, rhs);
         return *this;
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L>& Vec<T, L>::operator*=(const Vec& rhs)
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B>& Vec<T, L, B>::operator*=(const Vec& rhs)
     {
-        for (auto i = 0; i < L; i++) {
-            this->data[i] *= rhs.data[i];
-        }
+        *this = Internal::VecOps<T, L, B>::Mul(*this, rhs);
         return *this;
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L>& Vec<T, L>::operator/=(const Vec& rhs)
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B>& Vec<T, L, B>::operator/=(const Vec& rhs)
     {
-        for (auto i = 0; i < L; i++) {
-            this->data[i] /= rhs.data[i];
-        }
+        *this = Internal::VecOps<T, L, B>::Div(*this, rhs);
         return *this;
     }
 
-    template <typename T, uint8_t L>
+    template <typename T, uint8_t L, MathBackend B>
     template <typename IT>
-    Vec<IT, L> Vec<T, L>::CastTo() const
+    Vec<IT, L, B> Vec<T, L, B>::CastTo() const
     {
-        Vec<IT, L> result;
+        Vec<IT, L, B> result;
         for (auto i = 0; i < L; i++) {
             result.data[i] = static_cast<IT>(this->data[i]);
         }
         return result;
     }
 
-    template <typename T, uint8_t L>
+    template <typename T, uint8_t L, MathBackend B>
     template <uint8_t... I>
-    Vec<T, sizeof...(I)> Vec<T, L>::SubVec() const
+    Vec<T, sizeof...(I), B> Vec<T, L, B>::SubVec() const
     {
-        Vec<T, sizeof...(I)> result;
-        Internal::CopyValueToSubVec<Vec<T, L>, Vec<T, sizeof...(I)>, I...>(*this, result, std::make_index_sequence<sizeof...(I)> {});
+        Vec<T, sizeof...(I), B> result;
+        Internal::CopyValueToSubVec<Vec<T, L, B>, Vec<T, sizeof...(I), B>, I...>(*this, result, std::make_index_sequence<sizeof...(I)> {});
         return result;
     }
 
-    template <typename T, uint8_t L>
-    T Vec<T, L>::Model() const
+    template <typename T, uint8_t L, MathBackend B>
+    T Vec<T, L, B>::Model() const
     {
         static_assert(FloatingPoint<T>);
-        T temp = 0;
-        for (auto i = 0; i < L; i++) {
-            temp += this->data[i] * this->data[i];
-        }
-        return std::sqrt(temp);
+        return std::sqrt(Internal::VecOps<T, L, B>::Dot(*this, *this));
     }
 
-    template <typename T, uint8_t L>
-    Vec<T, L> Vec<T, L>::Normalized() const
+    template <typename T, uint8_t L, MathBackend B>
+    Vec<T, L, B> Vec<T, L, B>::Normalized() const
     {
         return this->operator/(Model());
     }
 
-    template <typename T, uint8_t L>
-    void Vec<T, L>::Normalize()
+    template <typename T, uint8_t L, MathBackend B>
+    void Vec<T, L, B>::Normalize()
     {
         T oneOverModel = static_cast<T>(1.0) / Model();
-        for (auto i = 0; i < L; i++) {
-            this->data[i] *= oneOverModel;
-        }
+        *this = Internal::VecOps<T, L, B>::MulScalar(*this, oneOverModel);
     }
 
-    template <typename T, uint8_t L>
-    T Vec<T, L>::Dot(const Vec& rhs) const
+    template <typename T, uint8_t L, MathBackend B>
+    T Vec<T, L, B>::Dot(const Vec& rhs) const
     {
         static_assert(FloatingPoint<T>);
-        T temp = 0;
-        for (auto i = 0; i < L; i++) {
-            temp += this->data[i] * rhs.data[i];
-        }
-        return temp;
+        return Internal::VecOps<T, L, B>::Dot(*this, rhs);
     }
 
-    template <typename T, uint8_t L>
-    typename Internal::VecCrossResultTraits<T, L>::Type Vec<T, L>::Cross(const Vec& rhs) const
+    template <typename T, uint8_t L, MathBackend B>
+    typename Internal::VecCrossResultTraits<T, L, B>::Type Vec<T, L, B>::Cross(const Vec& rhs) const
     {
         static_assert(FloatingPoint<T> && L >= 2 && L <= 3);
-        typename Internal::VecCrossResultTraits<T, L>::Type result;
+        typename Internal::VecCrossResultTraits<T, L, B>::Type result;
         if constexpr (L == 2) {
             result = this->x * rhs.y - this->y * rhs.x;
         } else {
